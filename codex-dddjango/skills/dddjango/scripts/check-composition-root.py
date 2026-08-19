@@ -4,16 +4,13 @@
 표준 트리에서 DI 조립(컴포지션 루트)은 BC 루트의 `composition_root/`(결선은 `dependency_wiring.py`
 — 트리 2~4행·#84·#85)가 소유한다(정본). driving 층은 `build_<use_case>()` 팩토리를
 매요청 호출만 하고, operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지
-않는다(Q-7). 이 백스톱은 배선이 정본을 벗어나거나 부재인 *구조적* 변종 셋을 차단한다:
-  - **off-tree `composition/` 폴더(V1)**: `application/<app>/composition/`에 배선 코드(provider 등)를
-    폴더로 둠 = 정본 트리에 없는 노드(루트가 폴더로 분열). 라이브 관측 변종(Codex `composition/
-    place_order_provider.py`).
-  - **단일 파일 `composition_root.py`(V2)**: 어디에 있든 트리에 없는 모양이다 — 정본은
-    BC 루트 «폴더» `composition_root/`(트리 2행)다.
-  - **정본 부재(V3)**: application 로직(command/query/service 등)을 가진 BC인데 BC 루트에
-    `composition_root/` 폴더가 *아예 없음* = 배선이 `di/`·`wiring/`·라우터·config 등으로
-    흩어졌거나 미생성(긍정 의무 미이행). 폴더 존재를 무조건이 아니라 *application 로직이
-    있을 때* 요구해 데이터소스 BC(빈 `application_layer`)는 면제한다.
+않는다(Q-7). 이 백스톱의 DI 레인은 정본 밖 구조 변종 중 **단일 파일 `composition_root.py`
+모양**만 차단한다(#497 «파일이 아니라 폴더» — tree-revision-spec): 어디에 있든 트리에 없는
+모양이고, 폴더 부재 상태라 tree 레인이 못 닿는 사건이다. 한때 이 레인이 함께 잡던 두 변종은
+check-layer-skeleton 소유로 이관해 여기서는 검사·방출하지 않는다(귀속 매핑표 v2 §3.2 —
+이중 계수 제거·소유자 실발화 실증 완료):
+  - off-tree `composition/` 폴더 = #81 «BC 루트 바로 아래 일곱 가지만» 사건.
+  - application 로직 보유 BC 의 `composition_root/` 부재 = #488 «고정 이름 칸» 사건.
 
 *왜 결정적 백스톱인가* — 배선 위치는 코더 구현 결정이고 테스트가 안 걸려 TDD Red로 안 잡힌다.
 discipline-reviewer 의미 게이트 한 점에만 의존하면 off-tree 폴더가 'Q-7 준수(어댑터를 operation
@@ -29,17 +26,10 @@ discipline-reviewer 의미 게이트 한 점에만 의존하면 off-tree 폴더�
      기존 커밋된 채 안 건드린 BC는 존중(§1.1) → 건너뜀.
   위 셋이 참인 BC에서(정본 = BC 루트 «폴더» `composition_root/` — 결선은 `dependency_wiring.py`,
   트리 2~4행):
-    - BC 루트 직속 `composition/`(`<bc>/composition/`)가 비-`__init__` `.py`를 담으면 blocker
-      (off-tree 폴더·V1). 빈 패키지·test 경로는 면제. 도메인 애그리거트 `domain_layer/composition/`은
-      BC 루트 직속이 아니라 애초에 대상이 아니다(거짓 양성 0).
-    - `composition_root.py` «단일 파일» 모양은 어디에 있든 blocker(V2) — 그 모양 자체가 트리에
-      없다. test 경로·`composition/` 안의 것(위 V1이 이미 잡음)은 면제.
-    - `application_layer`에 실 application 로직(비-`__init__` `.py`; `dto/`·test 제외)이 있는데 BC 루트
-      `composition_root/` 폴더가 없으면 blocker(부재·V3). command/query 만이 아니라 `service/`·`handler/`
-      등 application_layer 실 로직 전체가 신호다(빈 `command/` 만 남기고 `service/` 로 fold 하는 우회
-      봉쇄). 데이터소스 BC(`architecture-ddd` §3.2 «판정 소유→구조 이주» 상 `application_layer` 가 빈 계층)는 로직이 없어 면제(거짓 양성 0).
+    - `composition_root.py` «단일 파일» 모양은 어디에 있든 blocker(#497) — 그 모양 자체가 트리에
+      없다. test 경로·off-tree `composition/` 안의 것(#81 사건의 일부 — layer-skeleton 소유)은 면제.
       정본이 존재하되 *비어 있고 실배선이 딴 곳에* fold 된 알리바이는 형태로 못 가르므로
-      discipline-reviewer 의미 레인 몫이다(이 V3는 *부재*만 결정적으로 잡는다).
+      discipline-reviewer 의미 레인 몫이다.
 
 명시적 `dddjango-code-json` lane은 선택 API object, canonical BC registrar, project URLconf의
 직접 import provenance와 exactly-once 호출 관계를 함께 검사한다. preserve/auto에서는 이 의미
@@ -48,7 +38,10 @@ discipline-reviewer 의미 게이트 한 점에만 의존하면 off-tree 폴더�
 사용법: check-composition-root.py [TARGET_DIR] [--error-profile PROFILE ...]
 종료코드: 0=clean(또는 표준 레이아웃 미적용), 2=blocker(발견 출력), 1=사용 오류.
 구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
-추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
+추가 방출한다. 방출은 공용 ordered emitter(emit_all) 경유 — stdout 위반 라인 순서와
+레코드 순서가 같고, 라인은 레코드 필드의 순수 함수다(출력 계약 v2). code-profile
+category 의 #N 귀속/계약 잔류 판정과 tree↔code 동일 사건 선점 억제(#107·#108·#109·#440)는
+귀속 매핑표 v2 가 정본이다(정본 문서명: 2026-08-19-ontology-t2-1-attribution-map).
 """
 from __future__ import annotations
 
@@ -60,7 +53,7 @@ import subprocess
 import sys
 
 import checker_target
-from findings import ContractFindings, SliceFindings
+from findings import Candidates, ContractFindings, Findings, emit_all, lines
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -71,11 +64,12 @@ except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(
     print("분석 오류: standard_tree.py/anchor_diff.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
     sys.exit(1)
 
-# code-profile 레인(DI V1–V3·URLconf/registrar)은 rule-owner-map 규칙 0건이다 —
-# commands/dddjango.md:126 이 code 레인을 «rule 없는 별도 slice» 로 선언하고, ⓒ 18규칙
-# (#84·#85·#101·#105·#107~#112·#437·#440·#441·#497·#498·#500·#501·ⓓ#86·ⓓ#511)은
-# tree-slice 소유다. 그래서 이 레인의 레코드는 rule=null + contract_ref 로 나간다.
-CONTRACT_REF = "선행 계약(08-03 composition-root code-profile — DI V1–V3·URLconf/registrar) 소유"
+# code-profile 레인(URLconf/registrar)의 category 는 귀속 매핑표 v2 §3.1 에 따라 소유
+# 규칙 문면의 술어에 포섭되면 "#N" violation 으로(#107·#108·#109·#111·#437·#440),
+# 08-03 선행 계약 고유 술어면 rule=null + contract_ref 계약으로 방출한다. DI 레인의
+# 단일 파일 모양은 #497 violation 이고, off-tree composition/(#81)·composition_root/
+# 부재(#488)는 layer-skeleton 소유라 방출하지 않는다(타 소유자 이관 — §3.2).
+CONTRACT_REF = "선행 계약(08-03 composition-root code-profile — URLconf/registrar) 소유"
 
 SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango"}
 CODE_SKIP_DIRS = {
@@ -98,7 +92,9 @@ TEST_DIR_NAMES = {"test", "tests"}
 ERROR_PROFILES = {"auto", "dddjango-code-json", "preserve-established"}
 ROOT_API_CONSTRUCTORS = {"ninja.NinjaAPI", "ninja_extra.NinjaExtraAPI"}
 
-# 옛 단일 파일 모양(V2 검출용)과 off-tree 변종 폴더 이름(V1 검출용) — 정본은 `composition_root/` 폴더다.
+# 옛 단일 파일 모양(#497 검출용) — 정본은 `composition_root/` 폴더다. COMPOSITION_DIR 는
+# off-tree `composition/`(#81 — layer-skeleton 소유) 안 파일을 단일 파일 검사에서 면제하는
+# 경계 표지로만 남는다(그 폴더 자체는 여기서 검사하지 않는다 — 귀속 매핑표 v2 §3.2).
 COMPOSITION_FILE = "composition_root.py"
 COMPOSITION_DIR = "composition"
 
@@ -143,12 +139,11 @@ class Finding:
     lineno: int
     category: str
     shown: str
-
-    def render(self) -> str:
-        return (
-            f"  - {self.relative_path}:{self.lineno}  {self.category}"
-            f" — {self.shown}"
-        )
+    # 귀속 매핑표 v2 §3.1 — category 가 소유 규칙 문면의 술어에 포섭되면 "#N"(violation
+    # 방출), 08-03 선행 계약 잔류면 None(계약 방출 · rule=null + contract_ref).
+    rule: str | None = None
+    # 위반 심볼(U17) — 생성 지점 node 가 안정 이름을 아는 경우만 채우고, 불명이면 null.
+    symbol: str | None = None
 
 
 @dataclass(frozen=True)
@@ -617,10 +612,15 @@ def _path_is_under(path: Path, directory: Path) -> bool:
     return True
 
 
-def _filtered_di_findings(root: Path, inventory: CodeInventory) -> ContractFindings:
+def _filtered_di_findings(root: Path, inventory: CodeInventory) -> Findings:
+    """DI 레인 — 단일 파일 `composition_root.py` 모양만 #497 violation 으로 방출한다.
+
+    off-tree `composition/` 폴더(#81)·application 로직 BC 의 `composition_root/`
+    부재(#488)는 check-layer-skeleton 소유라 여기서는 검사·방출하지 않는다
+    (귀속 매핑표 v2 §3.2 — 타 소유자 이관·소유자 실발화 실증 완료). 라인·레코드는
+    호출측 emit_all 이 한 순서로 방출한다(출력 계약 v2)."""
     eligible = set(inventory.relative_paths)
-    # 라인 문면은 이 함수 소유 그대로 — 반환 집합이 곧 출력 집합이라 레코드가 그 거울이다.
-    findings: ContractFindings = ContractFindings(CONTRACT_REF)
+    findings: Findings = Findings(defer=True)
     for bc in _find_bc_dirs(root):
         if not _has_any_layer(bc):
             continue
@@ -639,49 +639,19 @@ def _filtered_di_findings(root: Path, inventory: CodeInventory) -> ContractFindi
             if not current_path_touched and not tracked_tree_changed:
                 continue
 
-        issues: list[str] = []
         composition_relative = bc_relative / COMPOSITION_DIR
-        payload = sorted(
-            path.name
-            for path in bc_paths
-            if _path_is_under(path, composition_relative)
-            and path.name != "__init__.py"
-            and (root / path).is_file()
-        )
-        if payload:
-            issues.append(
-                f"{COMPOSITION_DIR}/ 폴더에 배선 코드({', '.join(payload[:3])}) — DI 조립은 "
-                "BC 루트 «폴더» `composition_root/`(결선은 `dependency_wiring.py` — 트리 2~4행)가 소유한다"
-            )
-
         for path in bc_paths:
             if path.name != COMPOSITION_FILE or not (root / path).is_file():
                 continue
             local = path.relative_to(bc_relative)
             if _path_is_under(path, composition_relative):
-                continue
-            issues.append(
+                continue  # off-tree composition/ 안 — #81 사건의 일부(layer-skeleton 소유)
+            findings.add(
+                "#497",
+                bc_relative,
                 f"{local.as_posix()} — 단일 파일 `{COMPOSITION_FILE}` 모양은 트리에 없다 — "
-                "정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다"
+                "정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
             )
-
-        application_relative = bc_relative / "application_layer"
-        needs_root = any(
-            _path_is_under(path, application_relative)
-            and path.name != "__init__.py"
-            and "dto" not in path.relative_to(application_relative).parts
-            and (root / path).is_file()
-            for path in bc_paths
-        )
-        if needs_root and not (root / bc_relative / "composition_root").is_dir():
-            issues.insert(
-                0,
-                "`composition_root/` 부재 — application 로직(command/query/service 등)을 가진 BC는 "
-                "DI 조립을 BC 루트 폴더 `composition_root/`(결선은 `dependency_wiring.py` — 트리 2~4행)가 "
-                "소유한다(배선을 `di/`·`wiring/`·라우터·config 에 두지 않는다)",
-            )
-        for issue in issues:
-            findings.add(f"  - {bc_relative}: {issue}", where=bc_relative, msg=issue)
     return findings
 
 
@@ -1304,21 +1274,45 @@ def _registrar_parameter_states(
     return call_states
 
 
+def _node_symbol(node: ast.AST) -> str | None:
+    """위반 심볼(U17) — node 가 안정 이름을 가진 경우만 채우고, 그 밖은 null."""
+    if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+        return node.name
+    if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+        return node.target.id
+    return None
+
+
 def _append_finding(
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
     parsed: ParsedSource,
     node: ast.AST,
     category: str,
+    *,
+    rule: str | None = None,
 ) -> None:
     lineno = getattr(node, "lineno", 1)
     key = (parsed.relative_path, lineno, category)
     if key in seen:
         return
     seen.add(key)
-    lines = parsed.source.splitlines()
-    shown = lines[lineno - 1].strip() if 0 < lineno <= len(lines) else category
-    findings.append(Finding(parsed.relative_path, lineno, category, shown))
+    source_lines = parsed.source.splitlines()
+    shown = (
+        source_lines[lineno - 1].strip()
+        if 0 < lineno <= len(source_lines)
+        else category
+    )
+    findings.append(
+        Finding(
+            parsed.relative_path,
+            lineno,
+            category,
+            shown,
+            rule=rule,
+            symbol=_node_symbol(node),
+        )
+    )
 
 
 def _direct_registration_calls(parsed: ParsedSource) -> list[ast.Call]:
@@ -1331,17 +1325,28 @@ def _direct_registration_calls(parsed: ParsedSource) -> list[ast.Call]:
     ]
 
 
-def _bare_registration_decorators(parsed: ParsedSource) -> list[ast.Attribute]:
-    decorators: list[ast.Attribute] = []
-    for node in ast.walk(parsed.tree):
-        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            continue
-        decorators.extend(
-            decorator
-            for decorator in node.decorator_list
-            if isinstance(decorator, ast.Attribute)
-            and decorator.attr == "register_controllers"
+def _bare_registration_decorators(parsed: ParsedSource) -> list[tuple[ast.Attribute, bool]]:
+    """bare `X.register_controllers` decorator 수집 — 장식된 정의가 함수 본문 안인지의
+    discriminant 를 함께 돌려준다(귀속 매핑표 v2 §3.1 행6 분할: 모듈층 decorator 는
+    import 시 부작용, 함수 내부 정의의 decorator 는 호출 시 평가라 세 규칙 문면의
+    주어 밖·계약)."""
+    decorators: list[tuple[ast.Attribute, bool]] = []
+
+    def visit(node: ast.AST, in_function: bool) -> None:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            decorators.extend(
+                (decorator, in_function)
+                for decorator in node.decorator_list
+                if isinstance(decorator, ast.Attribute)
+                and decorator.attr == "register_controllers"
+            )
+        nested: bool = in_function or isinstance(
+            node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)
         )
+        for child in ast.iter_child_nodes(node):
+            visit(child, nested)
+
+    visit(parsed.tree, False)
     return decorators
 
 
@@ -1384,7 +1389,11 @@ def _analyze_registrar(
                 (item for item in ast.walk(parsed.tree) if getattr(item, "lineno", None) == fact.lineno),
                 parsed.tree,
             )
-            _append_finding(findings, seen, parsed, node, "registrar imports selected project API")
+            # #108 «전역 API 객체를 import 하지 않고 인자로 받는다» — 귀속 매핑표 v2 §3.1 행1.
+            _append_finding(
+                findings, seen, parsed, node,
+                "registrar imports selected project API", rule="#108",
+            )
 
     public_functions = [
         node
@@ -1395,18 +1404,22 @@ def _analyze_registrar(
     canonical_nodes = [node for node in public_functions if node.name == spec.function_name]
     for node in public_functions:
         if node.name != spec.function_name:
+            # #107 «등록 함수 하나만 갖는다» — 행2.
             _append_finding(
-                findings, seen, parsed, node, "additional public registrar function"
+                findings, seen, parsed, node,
+                "additional public registrar function", rule="#107",
             )
     canonical: ast.FunctionDef | None = None
     if len(canonical_nodes) != 1 or not isinstance(canonical_nodes[0], ast.FunctionDef):
         anchor: ast.AST = canonical_nodes[0] if canonical_nodes else parsed.tree
+        # #107 — 부재·중복·async 전부 «하나만» 위반(행3).
         _append_finding(
             findings,
             seen,
             parsed,
             anchor,
             f"exactly one sync {spec.function_name} function required",
+            rule="#107",
         )
     else:
         canonical = canonical_nodes[0]
@@ -1427,8 +1440,11 @@ def _analyze_registrar(
         if valid_signature:
             parameter_name = positional[0].arg
         else:
+            # #107 — 문면이 시그니처를 축자로 적는다(«def register_<bc>_api(api)» · 행4).
             _append_finding(
-                findings, seen, parsed, canonical, "registrar signature must be one required positional parameter"
+                findings, seen, parsed, canonical,
+                "registrar signature must be one required positional parameter",
+                rule="#107",
             )
 
     parameter_states = (
@@ -1443,37 +1459,59 @@ def _analyze_registrar(
     for call in _direct_registration_calls(parsed):
         direct_owner = _expression_dotted_name(call.func.value)
         parameter_state = parameter_states.get(id(call))
+        inside_canonical = canonical is not None and _canonical_lexical_owner(
+            call, canonical, parsed.tree, parents
+        )
         allowed = (
-            canonical is not None
+            inside_canonical
             and parameter_name is not None
             and direct_owner == parameter_name
-            and _canonical_lexical_owner(call, canonical, parsed.tree, parents)
             and parameter_state == "incoming"
         )
         if allowed:
             allowed_calls.append(call)
         elif (
-            canonical is not None
+            inside_canonical
             and parameter_name is not None
             and direct_owner == parameter_name
-            and _canonical_lexical_owner(call, canonical, parsed.tree, parents)
             and parameter_state == "ambiguous"
         ):
             analysis.append(
                 "canonical registrar API parameter provenance 분석 불능: "
                 f"{spec.function_name}:{call.lineno}"
             )
-        else:
+        elif inside_canonical:
+            # 행5ⓑ(U4 분할) — 함수 «안»이지만 receiver 가 incoming parameter 아님/
+            # rebound: #109 문면 밖 술어라 08-03 계약 유지.
             _append_finding(
-                findings, seen, parsed, call, "register_controllers outside canonical registrar owner"
+                findings, seen, parsed, call,
+                "registrar call on wrong receiver or rebound parameter",
             )
-    for decorator in _bare_registration_decorators(parsed):
-        _append_finding(
-            findings, seen, parsed, decorator, "register_controllers decorator side effect"
-        )
+        else:
+            # 행5ⓐ — #109 «등록은 그 함수 안에서만 하고 module top-level 에서 부르지
+            # 않는다(부작용 등록 금지)».
+            _append_finding(
+                findings, seen, parsed, call,
+                "register_controllers outside canonical registrar owner", rule="#109",
+            )
+    for decorator, in_function in _bare_registration_decorators(parsed):
+        if in_function:
+            # 행6ⓓ(U5 분할) — 중첩 함수 정의의 decorator 는 세 문면 어느 주어도 아님 — 계약.
+            _append_finding(
+                findings, seen, parsed, decorator,
+                "register_controllers decorator inside function body",
+            )
+        else:
+            # 행6ⓐ — registrar 모듈층 decorator = import 시 부작용 등록(#109).
+            _append_finding(
+                findings, seen, parsed, decorator,
+                "register_controllers decorator side effect", rule="#109",
+            )
     if canonical is not None and parameter_name is not None and not allowed_calls:
+        # #111 «…를 부르고 …뿐이다» — 직접 호출 부재는 «하는 일» 불이행(행7).
         _append_finding(
-            findings, seen, parsed, canonical, "canonical registrar has no direct register_controllers call"
+            findings, seen, parsed, canonical,
+            "canonical registrar has no direct register_controllers call", rule="#111",
         )
 
 
@@ -1524,14 +1562,18 @@ def _analyze_urlconf(
                     )
             continue
         if not _is_module_direct_call(call, parsed.tree, parents):
+            # #440 «명시적으로 부른다» — 조건부·간접 호출 위반(행8).
             _append_finding(
-                findings, seen, parsed, call, "registrar call must be a module-level direct event"
+                findings, seen, parsed, call,
+                "registrar call must be a module-level direct event", rule="#440",
             )
             continue
         events[resolved].append(call)
         if len(call.args) != 1 or call.keywords or isinstance(call.args[0], ast.Starred):
+            # #440 — 호출 형태 «register_<bc>_api(api)» 축자(행9).
             _append_finding(
-                findings, seen, parsed, call, "registrar URLconf call has wrong arity"
+                findings, seen, parsed, call,
+                "registrar URLconf call has wrong arity", rule="#440",
             )
             continue
         resolved_argument = _resolve_imported_expression(call.args[0], bindings, invalidated)
@@ -1543,14 +1585,26 @@ def _analyze_urlconf(
 
     for spec in specs:
         count = len(events[spec.full_path])
-        if count != 1:
-            anchor: ast.AST = events[spec.full_path][0] if events[spec.full_path] else parsed.tree
+        if count == 0:
+            # 행10ⓐ(U6 분할) — 0회는 #440 «각 BC 의 register_<bc>_api(api) 를 명시적으로
+            # 부른다» 축자 포섭. category 에 대상 함수명을 남긴다(등록 함수별 사건이
+            # 구분되어야 incident multiset 이 보존된다 — 출력 계약 v2 보존 표면).
             _append_finding(
                 findings,
                 seen,
                 parsed,
-                anchor,
-                f"{spec.function_name} must be called exactly once (actual {count})",
+                parsed.tree,
+                f"registrar call missing: {spec.function_name}",
+                rule="#440",
+            )
+        elif count > 1:
+            # 행10ⓑ — «정확히 한 번»은 #440 문면이 아니라 08-03 계약 문면에만 있다(V6).
+            _append_finding(
+                findings,
+                seen,
+                parsed,
+                events[spec.full_path][0],
+                f"duplicate registrar call: {spec.function_name} (actual {count})",
             )
 
 
@@ -1576,13 +1630,24 @@ def _composition_semantics(
         except UsageError as exc:
             analysis.append(str(exc))
         for call in _direct_registration_calls(api_source):
+            # 행5ⓐ — canonical 밖 파일의 등록 호출도 #109 «함수 안에서만» 위반.
             _append_finding(
-                findings, seen, api_source, call, "register_controllers outside canonical registrar owner"
+                findings, seen, api_source, call,
+                "register_controllers outside canonical registrar owner", rule="#109",
             )
-        for decorator in _bare_registration_decorators(api_source):
-            _append_finding(
-                findings, seen, api_source, decorator, "register_controllers decorator side effect"
-            )
+        for decorator, in_function in _bare_registration_decorators(api_source):
+            if in_function:
+                _append_finding(
+                    findings, seen, api_source, decorator,
+                    "register_controllers decorator inside function body",
+                )
+            else:
+                # 행6ⓑ — api.py 모듈층 사건의 주어는 #437 «닫힌 허용 목록».
+                _append_finding(
+                    findings, seen, api_source, decorator,
+                    "register_controllers decorator side effect in project api module",
+                    rule="#437",
+                )
 
     selected_api_module = _module_name(api_path)
     for spec in specs:
@@ -1595,13 +1660,24 @@ def _composition_semantics(
     urlconf = parsed.get(Path(config.urlconf_module or ""))
     if urlconf is not None:
         for call in _direct_registration_calls(urlconf):
+            # 행5ⓐ — canonical 밖 파일의 등록 호출도 #109 «함수 안에서만» 위반.
             _append_finding(
-                findings, seen, urlconf, call, "register_controllers outside canonical registrar owner"
+                findings, seen, urlconf, call,
+                "register_controllers outside canonical registrar owner", rule="#109",
             )
-        for decorator in _bare_registration_decorators(urlconf):
-            _append_finding(
-                findings, seen, urlconf, decorator, "register_controllers decorator side effect"
-            )
+        for decorator, in_function in _bare_registration_decorators(urlconf):
+            if in_function:
+                _append_finding(
+                    findings, seen, urlconf, decorator,
+                    "register_controllers decorator inside function body",
+                )
+            else:
+                # 행6ⓒ — URLconf 모듈층 사건의 주어는 #440 «라우터 등록만 한다».
+                _append_finding(
+                    findings, seen, urlconf, decorator,
+                    "register_controllers decorator side effect in URLconf module",
+                    rule="#440",
+                )
         if selected_api_object is not None and len(specs) == len(config.registrar_modules):
             _analyze_urlconf(
                 urlconf, specs, selected_api_object, analysis, findings, seen
@@ -1625,6 +1701,11 @@ def _composition_semantics(
 #        top-level 부작용 등록 금지·등록 밖 일 금지
 #   #437 <project>/api.py 닫힌 허용 목록 · #440/#441 <project>/urls.py 등록만
 #   #511(ⓓ) api/ 2차 축 — 계약 소유(OAuth 콜백은 webhook/<provider>/) 후보
+#
+# tree↔code 동일 사건 선점 억제(귀속 매핑표 v2 §5 overlap): code-profile 이 실분석한
+# registrar 파일의 #107·#108·#109 와 URLconf 파일의 #440 tree 사이트는 방출을 억제한다
+# (정밀 레인이 이긴다 — 대상 밖 파일·비-code 프로필은 tree 단독 그대로. #437 은 겹침
+# 미등재 — 관찰 대상이라 억제하지 않는다).
 
 _DRIVING_SEGMENTS = frozenset(
     {"driving_layer"}
@@ -1656,7 +1737,7 @@ def _slice_parse(path: Path) -> ast.Module | None:
         return None
 
 
-def _check_dependency_wiring(f: Path, rel: Path, findings: SliceFindings, candidates: SliceFindings) -> None:
+def _check_dependency_wiring(f: Path, rel: Path, findings: Findings, candidates: Candidates) -> None:
     mod = _slice_parse(f)
     if mod is None:
         return
@@ -1667,47 +1748,63 @@ def _check_dependency_wiring(f: Path, rel: Path, findings: SliceFindings, candid
             continue  # docstring
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             if not node.name.startswith("build_"):
-                msg: str = f"`{node.name}()` — dependency_wiring.py 에는 `build_<use_case>()` 팩토리만 온다(«만들기»와 «꽂기» 둘뿐)"
-                findings.add("#85", line=f"  [#85] {rel}: {msg}", where=rel, msg=msg)
+                findings.add(
+                    "#85",
+                    rel,
+                    f"`{node.name}()` — dependency_wiring.py 에는 `build_<use_case>()` 팩토리만 온다(«만들기»와 «꽂기» 둘뿐)",
+                )
             for sub in ast.walk(node):
                 if isinstance(sub, (ast.If, ast.IfExp)):
-                    where: str = f"{rel}:{sub.lineno}"
-                    msg = "결선 함수 안 조건문 — 물음: 이 분기는 업무를 가르는가(그렇다면 유스케이스로 내린다)?"
-                    candidates.add("#86", line=f"  [ⓓ#86] {where} {msg}", where=where, msg=msg, severity="info")
+                    candidates.add(
+                        "#86",
+                        f"{rel}:{sub.lineno}",
+                        "결선 함수 안 조건문",
+                        "이 분기는 업무를 가르는가(그렇다면 유스케이스로 내린다)?",
+                    )
                     break
             continue
-        where = f"{rel}:{node.lineno}"
-        msg = "dependency_wiring.py 최상단에는 import 와 build_* 팩토리만 온다"
-        findings.add("#85", line=f"  [#85] {where} {msg}", where=where, msg=msg)
+        findings.add(
+            "#85",
+            f"{rel}:{node.lineno}",
+            "dependency_wiring.py 최상단에는 import 와 build_* 팩토리만 온다",
+        )
 
 
-def _check_event_wiring(f: Path, rel: Path, findings: SliceFindings) -> None:
+def _check_event_wiring(f: Path, rel: Path, findings: Findings) -> None:
     mod = _slice_parse(f)
     if mod is None:
         return
     for node in ast.walk(mod):
         if isinstance(node, ast.Dict):
-            where: str = f"{rel}:{node.lineno}"
-            msg: str = "event_wiring.py 에서 표(dict)를 만들었다 — 표는 event_subscription/event_router.py 소유, 여기는 브로커에 «꽂는» 것만 한다"
-            findings.add("#498", line=f"  [#498] {where} {msg}", where=where, msg=msg)
+            findings.add(
+                "#498",
+                f"{rel}:{node.lineno}",
+                "event_wiring.py 에서 표(dict)를 만들었다 — 표는 event_subscription/event_router.py 소유, 여기는 브로커에 «꽂는» 것만 한다",
+            )
         elif isinstance(node, ast.Lambda):
-            where = f"{rel}:{node.lineno}"
-            msg = "구독으로 람다를 넘겼다 — 모듈 최상단 이름 있는 함수만(매번 다른 객체라 멱등이 깨진다)"
-            findings.add("#500", line=f"  [#500] {where} {msg}", where=where, msg=msg)
+            findings.add(
+                "#500",
+                f"{rel}:{node.lineno}",
+                "구독으로 람다를 넘겼다 — 모듈 최상단 이름 있는 함수만(매번 다른 객체라 멱등이 깨진다)",
+            )
         elif isinstance(node, ast.Call):
             fn = node.func
             nm = fn.attr if isinstance(fn, ast.Attribute) else getattr(fn, "id", "")
             if nm == "partial":
-                where = f"{rel}:{node.lineno}"
-                msg = "`functools.partial` 을 구독으로 넘겼다 — 모듈 최상단 이름 있는 함수만"
-                findings.add("#500", line=f"  [#500] {where} {msg}", where=where, msg=msg)
+                findings.add(
+                    "#500",
+                    f"{rel}:{node.lineno}",
+                    "`functools.partial` 을 구독으로 넘겼다 — 모듈 최상단 이름 있는 함수만",
+                )
         elif isinstance(node, ast.Attribute) and node.attr == "objects":
-            where = f"{rel}:{node.lineno}"
-            msg = "event_wiring.py 에서 DB 를 만졌다 — 모든 관리 명령에서 도는 자리다"
-            findings.add("#501", line=f"  [#501] {where} {msg}", where=where, msg=msg)
+            findings.add(
+                "#501",
+                f"{rel}:{node.lineno}",
+                "event_wiring.py 에서 DB 를 만졌다 — 모든 관리 명령에서 도는 자리다",
+            )
 
 
-def _check_composition_dir(bc: Path, bc_rel: Path, findings: SliceFindings, candidates: SliceFindings) -> None:
+def _check_composition_dir(bc: Path, bc_rel: Path, findings: Findings, candidates: Candidates) -> None:
     comp = bc / "composition_root"
     if not comp.is_dir():
         # 오배치(#84) — 층 폴더 안 composition_root/ 를 찾는다
@@ -1717,21 +1814,27 @@ def _check_composition_dir(bc: Path, bc_rel: Path, findings: SliceFindings, cand
                 continue
             for p in nested.rglob("composition_root"):
                 if p.is_dir():
-                    nested_rel: Path = bc_rel / p.relative_to(bc)
-                    nested_msg: str = "`composition_root/` 는 BC 루트에 둔다 — 네 층 폴더 어디에도 두지 않는다"
-                    findings.add("#84", line=f"  [#84] {nested_rel}: {nested_msg}", where=nested_rel, msg=nested_msg)
+                    findings.add(
+                        "#84",
+                        bc_rel / p.relative_to(bc),
+                        "`composition_root/` 는 BC 루트에 둔다 — 네 층 폴더 어디에도 두지 않는다",
+                    )
         return
     for p in sorted(comp.iterdir()):
         if p.name.startswith(".") or p.name == "__pycache__":
             continue
         if p.is_dir():
-            where: str = f"{bc_rel}/composition_root/{p.name}"
-            msg: str = "폴더 금지 — «결선 하나 = 파일 하나»(지금은 dependency_wiring.py 와 event_wiring.py 둘)"
-            findings.add("#497", line=f"  [#497] {where}: {msg}", where=where, msg=msg)
+            findings.add(
+                "#497",
+                f"{bc_rel}/composition_root/{p.name}",
+                "폴더 금지 — «결선 하나 = 파일 하나»(지금은 dependency_wiring.py 와 event_wiring.py 둘)",
+            )
         elif p.suffix == ".py" and p.name != "__init__.py" and p.name not in _WIRING_FILES:
-            where = f"{bc_rel}/composition_root/{p.name}"
-            msg = "결선 파일은 dependency_wiring.py·event_wiring.py 둘이다"
-            findings.add("#497", line=f"  [#497] {where}: {msg}", where=where, msg=msg)
+            findings.add(
+                "#497",
+                f"{bc_rel}/composition_root/{p.name}",
+                "결선 파일은 dependency_wiring.py·event_wiring.py 둘이다",
+            )
     dep = comp / "dependency_wiring.py"
     if dep.is_file():
         _check_dependency_wiring(dep, bc_rel / "composition_root/dependency_wiring.py", findings, candidates)
@@ -1740,7 +1843,7 @@ def _check_composition_dir(bc: Path, bc_rel: Path, findings: SliceFindings, cand
         _check_event_wiring(ev, bc_rel / "composition_root/event_wiring.py", findings)
 
 
-def _check_inner_driving_imports(bc: Path, bc_rel: Path, findings: SliceFindings) -> None:
+def _check_inner_driving_imports(bc: Path, bc_rel: Path, findings: Findings) -> None:
     for seg in _INNER_SEGMENTS:
         base = bc / seg
         files: list[Path] = []
@@ -1754,12 +1857,20 @@ def _check_inner_driving_imports(bc: Path, bc_rel: Path, findings: SliceFindings
                 continue
             for lineno, path_str in _slice_imports(mod):
                 if set(path_str.split(".")) & _DRIVING_SEGMENTS:
-                    where: str = f"{bc_rel / f.relative_to(bc)}:{lineno}"
-                    msg: str = f"`{path_str}` — BC 안쪽과 composition_root 은 driving 층을 import 하지 않는다(예외 없음 · rd-2)"
-                    findings.add("#101", line=f"  [#101] {where} {msg}", where=where, msg=msg)
+                    findings.add(
+                        "#101",
+                        f"{bc_rel / f.relative_to(bc)}:{lineno}",
+                        f"`{path_str}` — BC 안쪽과 composition_root 은 driving 층을 import 하지 않는다(예외 없음 · rd-2)",
+                    )
 
 
-def _check_api_dir(bc: Path, bc_rel: Path, findings: SliceFindings, candidates: SliceFindings) -> None:
+def _check_api_dir(
+    bc: Path,
+    bc_rel: Path,
+    findings: Findings,
+    candidates: Candidates,
+    code_registrars: frozenset[Path],
+) -> None:
     for driving_name in _DRIVING_SEGMENTS:
         api = bc / driving_name / "api"
         if not api.is_dir():
@@ -1771,55 +1882,94 @@ def _check_api_dir(bc: Path, bc_rel: Path, findings: SliceFindings, candidates: 
             if p.is_file() and p.suffix == ".py":
                 entry_rel: Path = api_rel / p.name
                 if p.name != "api_router.py" and ("api_router" in p.name or p.name.endswith("_router.py")):
-                    msg: str = "등록 파일 이름은 `api_router.py` 다 — `<bounded_context>_` 접두를 붙이지 않는다"
-                    findings.add("#112", line=f"  [#112] {entry_rel}: {msg}", where=entry_rel, msg=msg)
+                    findings.add(
+                        "#112",
+                        entry_rel,
+                        "등록 파일 이름은 `api_router.py` 다 — `<bounded_context>_` 접두를 붙이지 않는다",
+                    )
                 elif p.name not in ("api_router.py", "bc_error_schema.py", "__init__.py"):
-                    msg = "`api/` 직계 파일은 `api_router.py` 와 `bc_error_schema.py` 둘뿐이다"
-                    findings.add("#105", line=f"  [#105] {entry_rel}: {msg}", where=entry_rel, msg=msg)
+                    findings.add(
+                        "#105",
+                        entry_rel,
+                        "`api/` 직계 파일은 `api_router.py` 와 `bc_error_schema.py` 둘뿐이다",
+                    )
             elif p.is_dir() and any(tok in p.name.lower() for tok in _PROVIDERISH_TOKENS):
-                # 이 라인만 «— 물음:» 꼴이라 msg 는 물음 문면 그대로 싣는다(라인 문면은 무변).
+                # ⓓ#511 확정 튜플(귀속 매핑표 v2 부속 A-3) — msg 신규 저작·question 은
+                # «물음: » 접두 없이(공용 candidate 판형이 접두를 생성한다).
                 dir_rel: Path = api_rel / p.name
-                question: str = "물음: 이 입구의 계약을 바깥이 소유하는가(OAuth 콜백 포함)? 그러면 `webhook/<provider>/` 자리다"
-                candidates.add("#511", line=f"  [ⓓ#511] {dir_rel}/ — {question}",
-                               where=f"{dir_rel}/", msg=question, severity="info")
+                candidates.add(
+                    "#511",
+                    f"{dir_rel}/",
+                    "외부 소유 계약 입구 후보(provider 성 디렉터리)",
+                    "이 입구의 계약을 바깥이 소유하는가(OAuth 콜백 포함)? 그러면 `webhook/<provider>/` 자리다",
+                )
         router = api / "api_router.py"
         if router.is_file():
-            _check_api_router(router, api_rel / "api_router.py", bc.name, findings)
+            router_rel: Path = api_rel / "api_router.py"
+            _check_api_router(
+                router, router_rel, bc.name, findings,
+                suppress_overlap=router_rel in code_registrars,
+            )
 
 
-def _check_api_router(f: Path, rel: Path, bc_name: str, findings: SliceFindings) -> None:
+def _check_api_router(
+    f: Path, rel: Path, bc_name: str, findings: Findings, *, suppress_overlap: bool
+) -> None:
+    """suppress_overlap=True 면 tree #107·#108·#109 사이트를 방출하지 않는다 —
+    code-profile 이 이 registrar 파일을 실분석해 같은 사건을 더 정밀한 술어로 내는
+    대상이다(귀속 매핑표 v2 §5 overlap 선점 억제. #111 은 겹침 미등재라 그대로)."""
     mod = _slice_parse(f)
     if mod is None:
         return
     reg_fns = [n for n in mod.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
     named = [n for n in reg_fns if n.name.startswith("register_") and n.name.endswith("_api")]
     if len(named) != 1 or len(reg_fns) != len(named):
-        msg: str = f"`def register_{bc_name}_api(api)` 등록 함수 «하나»만 갖는다(지금 함수 {len(reg_fns)}개)"
-        findings.add("#107", line=f"  [#107] {rel}: {msg}", where=rel, msg=msg)
+        if not suppress_overlap:
+            findings.add(
+                "#107",
+                rel,
+                f"`def register_{bc_name}_api(api)` 등록 함수 «하나»만 갖는다(지금 함수 {len(reg_fns)}개)",
+            )
     elif len(named[0].args.args) != 1:
-        msg = f"등록 함수는 전역 API 를 «인자 하나»로 받는다 — `register_{bc_name}_api(api)`"
-        findings.add("#107", line=f"  [#107] {rel}: {msg}", where=rel, msg=msg)
+        if not suppress_overlap:
+            findings.add(
+                "#107",
+                rel,
+                f"등록 함수는 전역 API 를 «인자 하나»로 받는다 — `register_{bc_name}_api(api)`",
+            )
     for node in mod.body:
         if isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
             fn = node.value.func
             nm = fn.attr if isinstance(fn, ast.Attribute) else getattr(fn, "id", "")
-            where: str = f"{rel}:{node.lineno}"
             if nm in ("register_controllers", "add_router"):
-                msg = "module top-level 등록 호출 — 등록은 `register_<bc>_api(api)` 함수 «안»에서만 한다(부작용 등록 금지)"
-                findings.add("#109", line=f"  [#109] {where} {msg}", where=where, msg=msg)
+                if not suppress_overlap:
+                    findings.add(
+                        "#109",
+                        f"{rel}:{node.lineno}",
+                        "module top-level 등록 호출 — 등록은 `register_<bc>_api(api)` 함수 «안»에서만 한다(부작용 등록 금지)",
+                    )
             else:
-                msg = "api_router.py 의 일은 컨트롤러 import·`api.register_controllers(...)`·접두사/태그뿐이다"
-                findings.add("#111", line=f"  [#111] {where} {msg}", where=where, msg=msg)
+                findings.add(
+                    "#111",
+                    f"{rel}:{node.lineno}",
+                    "api_router.py 의 일은 컨트롤러 import·`api.register_controllers(...)`·접두사/태그뿐이다",
+                )
         elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.ClassDef)):
-            where = f"{rel}:{getattr(node, 'lineno', 0)}"
-            msg = "api_router.py 에 등록 밖 정의가 있다 — 컨트롤러 import 와 등록 함수만 둔다"
-            findings.add("#111", line=f"  [#111] {where} {msg}", where=where, msg=msg)
+            findings.add(
+                "#111",
+                f"{rel}:{getattr(node, 'lineno', 0)}",
+                "api_router.py 에 등록 밖 정의가 있다 — 컨트롤러 import 와 등록 함수만 둔다",
+            )
+    if suppress_overlap:
+        return
     for lineno, path_str in _slice_imports(mod):
         top = path_str.split(".")[0]
         if top not in _API_ROUTER_IMPORT_OK:
-            where = f"{rel}:{lineno}"
-            msg = f"`{path_str}` import — 전역 API 객체는 import 하지 않고 인자로 받는다(BC 가 프로젝트를 import 하지 않는다)"
-            findings.add("#108", line=f"  [#108] {where} {msg}", where=where, msg=msg)
+            findings.add(
+                "#108",
+                f"{rel}:{lineno}",
+                f"`{path_str}` import — 전역 API 객체는 import 하지 않고 인자로 받는다(BC 가 프로젝트를 import 하지 않는다)",
+            )
 
 
 def _find_project_dirs(root: Path) -> list[Path]:
@@ -1833,32 +1983,43 @@ def _find_project_dirs(root: Path) -> list[Path]:
     return out
 
 
-def _check_project_api(f: Path, rel: Path, findings: SliceFindings) -> None:
+def _check_project_api(f: Path, rel: Path, findings: Findings) -> None:
     mod = _slice_parse(f)
     if mod is None:
         return
     for lineno, path_str in _slice_imports(mod):
         if path_str.split(".")[0] == "application":
-            where: str = f"{rel}:{lineno}"
-            msg: str = f"`{path_str}` import — `<project>/api.py` 에는 전역 API 객체 하나와 프레임워크 오류 핸들러만 온다(BC import 금지)"
-            findings.add("#437", line=f"  [#437] {where} {msg}", where=where, msg=msg)
+            findings.add(
+                "#437",
+                f"{rel}:{lineno}",
+                f"`{path_str}` import — `<project>/api.py` 에는 전역 API 객체 하나와 프레임워크 오류 핸들러만 온다(BC import 금지)",
+            )
     for node in mod.body:
         if isinstance(node, ast.ClassDef):
-            where = f"{rel}:{node.lineno}"
-            msg = f"`{node.name}` 정의 — ErrorSchema·예외 목록·매핑은 전부 위반이다(닫힌 허용 목록)"
-            findings.add("#437", line=f"  [#437] {where} {msg}", where=where, msg=msg)
+            findings.add(
+                "#437",
+                f"{rel}:{node.lineno}",
+                f"`{node.name}` 정의 — ErrorSchema·예외 목록·매핑은 전부 위반이다(닫힌 허용 목록)",
+            )
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             deco_names = set()
             for d in node.decorator_list:
                 fn = d.func if isinstance(d, ast.Call) else d
                 deco_names.add(fn.attr if isinstance(fn, ast.Attribute) else getattr(fn, "id", ""))
             if "exception_handler" not in deco_names:
-                where = f"{rel}:{node.lineno}"
-                msg = f"`{node.name}()` — 프레임워크 오류 핸들러 밖의 함수는 이 파일에 오지 않는다"
-                findings.add("#437", line=f"  [#437] {where} {msg}", where=where, msg=msg)
+                findings.add(
+                    "#437",
+                    f"{rel}:{node.lineno}",
+                    f"`{node.name}()` — 프레임워크 오류 핸들러 밖의 함수는 이 파일에 오지 않는다",
+                )
 
 
-def _check_project_urls(f: Path, rel: Path, findings: SliceFindings) -> None:
+def _check_project_urls(
+    f: Path, rel: Path, findings: Findings, *, suppress_overlap: bool
+) -> None:
+    """suppress_overlap=True 면 tree #440 사이트를 방출하지 않는다 — code-profile 이
+    이 URLconf 를 실분석해 같은 사건(미호출 등)을 더 정밀한 술어로 내는 대상이다
+    (귀속 매핑표 v2 §5 overlap 선점 억제. #441 은 겹침 미등재라 그대로)."""
     mod = _slice_parse(f)
     if mod is None:
         return
@@ -1872,38 +2033,55 @@ def _check_project_urls(f: Path, rel: Path, findings: SliceFindings) -> None:
                 if a.name.startswith("register_") and a.name.endswith("_api"):
                     imported_regs[name] = node.lineno
                 else:
-                    where: str = f"{rel}:{node.lineno}"
-                    msg: str = f"`{node.module}.{a.name}` import — urls.py 가 BC 심볼을 쓰는 예외는 `register_<bc>_api` 명시 호출 하나뿐이다"
-                    findings.add("#441", line=f"  [#441] {where} {msg}", where=where, msg=msg)
+                    findings.add(
+                        "#441",
+                        f"{rel}:{node.lineno}",
+                        f"`{node.module}.{a.name}` import — urls.py 가 BC 심볼을 쓰는 예외는 `register_<bc>_api` 명시 호출 하나뿐이다",
+                    )
+    if suppress_overlap:
+        return
     called = {
         (n.func.id if isinstance(n.func, ast.Name) else getattr(n.func, "attr", ""))
         for n in ast.walk(mod) if isinstance(n, ast.Call)
     }
     for name, lineno in imported_regs.items():
         if name not in called:
-            call_where: str = f"{rel}:{lineno}"
-            call_msg: str = f"`{name}` 을 import 하고 부르지 않았다 — urls.py 는 각 BC 의 `register_<bc>_api(api)` 를 «명시적으로 부른다»"
-            findings.add("#440", line=f"  [#440] {call_where} {call_msg}", where=call_where, msg=call_msg)
+            findings.add(
+                "#440",
+                f"{rel}:{lineno}",
+                f"`{name}` 을 import 하고 부르지 않았다 — urls.py 는 각 BC 의 `register_<bc>_api(api)` 를 «명시적으로 부른다»",
+            )
 
 
-def _standard_tree_slice(root: Path) -> tuple[SliceFindings, SliceFindings]:
-    # 라인 문면은 각 _check_* 소유 그대로 — 레코드만 실규칙("#N")으로 얹는다(ⓓ 후보는 info).
-    findings: SliceFindings = SliceFindings()
-    candidates: SliceFindings = SliceFindings()
+def _standard_tree_slice(
+    root: Path,
+    code_registrars: frozenset[Path],
+    code_urlconf: Path | None,
+) -> tuple[Findings, Candidates]:
+    """구조화 엔트리 수집 — 라인은 공용 포매터(violation `[{rule}] {where}: {msg}` ·
+    candidate `[ⓓ{rule}] {where}: {msg} — 물음: {q}`)로 emit_all 이 생성한다(출력 계약 v2).
+    code_registrars/code_urlconf 는 code-profile 이 실분석한 파일 — 그 파일의 겹침 등재
+    tree 사이트(#107·#108·#109·#440)는 선점 억제한다(귀속 매핑표 v2 §5)."""
+    findings: Findings = Findings(defer=True)
+    candidates: Candidates = Candidates(defer=True)
     for bc in _find_bc_dirs(root):
         if not _has_any_layer(bc):
             continue
         bc_rel = bc.relative_to(root)
         _check_composition_dir(bc, bc_rel, findings, candidates)
         _check_inner_driving_imports(bc, bc_rel, findings)
-        _check_api_dir(bc, bc_rel, findings, candidates)
+        _check_api_dir(bc, bc_rel, findings, candidates, code_registrars)
     for d in _find_project_dirs(root):
         api_py = d / "api.py"
         if api_py.is_file():
             _check_project_api(api_py, api_py.relative_to(root), findings)
         urls_py = d / "urls.py"
         if urls_py.is_file():
-            _check_project_urls(urls_py, urls_py.relative_to(root), findings)
+            urls_rel: Path = urls_py.relative_to(root)
+            _check_project_urls(
+                urls_py, urls_rel, findings,
+                suppress_overlap=urls_rel == code_urlconf,
+            )
     return findings, candidates
 
 
@@ -1923,27 +2101,61 @@ def main(argv: list[str]) -> int:
             analysis, composition_findings = _composition_semantics(config, parsed)
             if analysis:
                 raise UsageError("; ".join(analysis))
-        di_findings = _filtered_di_findings(config.root, inventory)
-        tree_findings, tree_candidates = _standard_tree_slice(config.root)
+        di_findings: Findings = _filtered_di_findings(config.root, inventory)
+        # tree↔code 동일 사건 선점 억제 대상(귀속 매핑표 v2 §5 overlap) — code-profile 이
+        # 실분석한 registrar/URLconf 파일만. 비-code 프로필·대상 밖 파일은 tree 단독.
+        code_registrars: frozenset[Path] = frozenset()
+        code_urlconf: Path | None = None
+        if config.profile == "dddjango-code-json":
+            code_registrars = frozenset(
+                registrar
+                for raw in config.registrar_modules
+                if (registrar := Path(raw)) in parsed
+            )
+            urlconf_candidate: Path = Path(config.urlconf_module or "")
+            if urlconf_candidate in parsed:
+                code_urlconf = urlconf_candidate
+        tree_findings, tree_candidates = _standard_tree_slice(
+            config.root, code_registrars, code_urlconf
+        )
     except (UsageError, anchor_diff.AnchorDiffUsage) as exc:
         print(f"[check-composition-root] 사용 오류: {exc}", file=sys.stderr)
         return 1
     except SystemExit as exc:  # argparse --help
         return int(exc.code)
 
+    code_surfaces: list[Findings | ContractFindings] = []
     if composition_findings:
-        print("[check-composition-root] BLOCKER — API registrar/URLconf 조립 계약 위반:")
-        # 레코드는 출력 대상과 1:1 거울 — 라인 문면은 render() 소유 그대로(선행 계약 판형).
-        code_records = ContractFindings(CONTRACT_REF)
+        # 방출 표면 — 라인은 레코드 필드의 순수 함수(violation `[#N] {where}: {msg}` ·
+        # 계약 `- {where}: {msg}`)이고, stdout 인쇄 순서 = 레코드 순서(emit_all 불변식).
+        # 판정(#N/계약)이 갈릴 때마다 defer 컬렉션을 이어 붙여 현행 인쇄 순서를 보존한다.
+        def _violation_surface() -> Findings:
+            tail = code_surfaces[-1] if code_surfaces else None
+            if not isinstance(tail, Findings):
+                tail = Findings(defer=True)
+                code_surfaces.append(tail)
+            return tail
+
+        def _contract_surface() -> ContractFindings:
+            tail = code_surfaces[-1] if code_surfaces else None
+            if not isinstance(tail, ContractFindings):
+                tail = ContractFindings(CONTRACT_REF, defer=True)
+                code_surfaces.append(tail)
+            return tail
+
         for finding in composition_findings:
-            code_records.add(
-                finding.render(),
-                where=f"{finding.relative_path}:{finding.lineno}",
-                msg=f"{finding.category} — {finding.shown}",
-                symbol=finding.category,
-            )
-        for line in code_records:
-            print(line)
+            finding_where: str = f"{finding.relative_path}:{finding.lineno}"
+            finding_msg: str = f"{finding.category} — {finding.shown}"
+            if finding.rule is not None:
+                _violation_surface().add(
+                    finding.rule, finding_where, finding_msg, symbol=finding.symbol
+                )
+            else:
+                _contract_surface().add(
+                    where=finding_where, msg=finding_msg, symbol=finding.symbol
+                )
+        print("[check-composition-root] BLOCKER — API registrar/URLconf 조립 계약 위반:")
+        emit_all(*code_surfaces, printer=print)
         print(
             "  API 근거: implementation-django-ninja §2.2·discipline-houserules final.md §1. "
             "각 BC의 canonical `driving_layer/api/api_router.py`가 "
@@ -1956,8 +2168,7 @@ def main(argv: list[str]) -> int:
             "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 정본 폴더 "
             "`composition_root/` 밖에 있거나 부재다(off-tree `composition/` 폴더·단일 파일 모양·부재):"
         )
-        for finding in di_findings:
-            print(finding)
+        emit_all(di_findings, printer=print)
         print(
             "  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» "
             "`application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · "
@@ -1971,19 +2182,17 @@ def main(argv: list[str]) -> int:
         )
     if tree_findings:
         print("[check-composition-root] BLOCKER — 표준 트리 결선·등록 규율 위반 (트리 2~4·8·9·136·137행):")
-        for f in tree_findings:
-            print(f)
+        emit_all(tree_findings, printer=print)
     if tree_candidates:
         print("[check-composition-root] ⓓ 후보 — 기계가 후보를 좁혔다 · 마무리 물음은 discipline-reviewer 몫(exit 불산입):")
-        for c in tree_candidates:
-            print(c)
+        emit_all(tree_candidates, printer=print)
     if composition_findings or di_findings or tree_findings:
         if config.anchor is not None:
-            all_findings: list[str] = [
-                *(finding.render() for finding in composition_findings),
-                *di_findings,
-                *tree_findings,
-            ]
+            all_findings: list[str] = []
+            for surface in code_surfaces:
+                all_findings.extend(lines(surface))
+            all_findings.extend(lines(di_findings))
+            all_findings.extend(lines(tree_findings))
             try:
                 return anchor_diff.partition_exit(
                     script=Path(__file__).resolve(),

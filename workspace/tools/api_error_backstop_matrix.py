@@ -84,6 +84,8 @@ TARGET_ONLY_CHECKERS: Final = frozenset(
         "check-composition-root.py",
         "check-openapi-error-declaration.py",
         "check-response-schema-bypass.py",
+        # #81/#488 이관 실증 쌍(skeleton-* 케이스)용 — 트리 검사기·무옵션 positional 호출.
+        "check-layer-skeleton.py",
     }
 )
 PROFILE_REQUIRED_ARGUMENTS: Final = {
@@ -5077,9 +5079,13 @@ def composition_cases() -> list[Case]:
         Case("composition-clean-root-folder", COMPOSITION_CLEAN_FILES, "check-composition-root.py", (TARGET_DIR,), 0, ""),
         Case("composition-v2-single-root-file-off-tree", {"application/lesson/application_layer/use_case.py": "def run(): return None\n", "application/lesson/composition_root.py": "def build_use_case(): return object()\n"}, "check-composition-root.py", (TARGET_DIR,), 2, "BLOCKER"),
         Case("composition-legacy-clean-empty-application-layer-exempt", {"application/catalog/application_layer/__init__.py": ""}, "check-composition-root.py", (TARGET_DIR,), 0, ""),
-        Case("composition-legacy-v1-off-tree-folder", {**COMPOSITION_CLEAN_FILES, "application/lesson/composition/provider.py": "def provide(): return object()\n"}, "check-composition-root.py", (TARGET_DIR,), 2, "BLOCKER"),
+        # composition/ 폴더·composition_root/ 부재 사건은 #81/#488 소유(check-layer-skeleton)로
+        # 이관(귀속 매핑표 v2 §3.2 V2·V3) — CR 은 침묵이 정상. 발화 쪽 절반은 skeleton-* 2케이스.
+        Case("composition-legacy-v1-off-tree-folder", {**COMPOSITION_CLEAN_FILES, "application/lesson/composition/provider.py": "def provide(): return object()\n"}, "check-composition-root.py", (TARGET_DIR,), 0, "", note="#81/#488 이관 — CR 무발화 실증(U11)"),
+        Case("skeleton-owns-off-tree-composition-folder", {**COMPOSITION_CLEAN_FILES, "application/lesson/composition/provider.py": "def provide(): return object()\n"}, "check-layer-skeleton.py", (TARGET_DIR,), 2, "#81"),
+        Case("skeleton-owns-required-composition-root-absent", {"application/lesson/application_layer/use_case.py": "def run(): return None\n"}, "check-layer-skeleton.py", (TARGET_DIR,), 2, "고정 칸 `composition_root/` 부재"),
         Case("composition-legacy-v2-misplaced-composition-root", {"application/lesson/application_layer/use_case.py": "def run(): return None\n", "application/lesson/driven_layer/composition_root.py": "def build(): return object()\n"}, "check-composition-root.py", (TARGET_DIR,), 2, "BLOCKER"),
-        Case("composition-legacy-v3-required-root-absent", {"application/lesson/application_layer/use_case.py": "def run(): return None\n"}, "check-composition-root.py", (TARGET_DIR,), 2, "BLOCKER"),
+        Case("composition-legacy-v3-required-root-absent", {"application/lesson/application_layer/use_case.py": "def run(): return None\n"}, "check-composition-root.py", (TARGET_DIR,), 0, "", note="#81/#488 이관 — CR 무발화 실증(U11)"),
         Case("composition-code-clean-selected-registrars-called-once", REGISTRAR_FILES, "check-composition-root.py", composition_args(), 0, ""),
         Case("composition-code-clean-unselected-preserve-urlconf-registrar", {**REGISTRAR_FILES, "legacy/api.py": "api = object()\n", "legacy/urls.py": "from legacy.api import api\nfrom legacy.registrar import register_legacy_api\nregister_legacy_api(api)\n", "legacy/registrar.py": "def register_legacy_api(api): api.register_controllers(object)\n"}, "check-composition-root.py", composition_args(), 0, ""),
         Case("composition-registrar-rebinds-api-parameter", with_files(("application/lesson/driving_layer/api/api_router.py", "from .controller import LessonController\n\ndef register_lesson_api(api):\n    api = replacement_api\n    api.register_controllers(LessonController)\n"), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 2, "BLOCKER"),
@@ -5089,14 +5095,14 @@ def composition_cases() -> list[Case]:
         Case("composition-urlconf-omits-registrar-call", with_files(("config/urls.py", REGISTRAR_FILES["config/urls.py"].replace("register_catalog_api(api)\n", "")), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 2, "BLOCKER"),
         Case("composition-urlconf-duplicates-registrar-call", with_files(("config/urls.py", REGISTRAR_FILES["config/urls.py"] + "register_lesson_api(api)\n"), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 2, "BLOCKER"),
         Case("composition-registration-occurs-outside-registrar", with_files(("config/urls.py", REGISTRAR_FILES["config/urls.py"] + "api.register_controllers(object)\n"), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 2, "BLOCKER"),
-        Case("composition-code-v1-di-still-blocked", {**REGISTRAR_FILES, "application/lesson/composition/provider.py": "def provide(): return object()\n"}, "check-composition-root.py", composition_args(), 2, "BLOCKER"),
+        Case("composition-code-v1-di-still-blocked", {**REGISTRAR_FILES, "application/lesson/composition/provider.py": "def provide(): return object()\n"}, "check-composition-root.py", composition_args(), 0, "", note="#81/#488 이관 — CR 무발화 실증(U11)"),
         Case("composition-code-v2-di-still-blocked", {**REGISTRAR_FILES, "application/lesson/driven_layer/composition_root.py": "def build(): return object()\n"}, "check-composition-root.py", composition_args(), 2, "BLOCKER"),
-        Case("composition-code-v3-di-still-blocked", {**REGISTRAR_FILES, "application/lesson/application_layer/use_case.py": "def run(): return None\n"}, "check-composition-root.py", composition_args(), 2, "BLOCKER"),
+        Case("composition-code-v3-di-still-blocked", {**REGISTRAR_FILES, "application/lesson/application_layer/use_case.py": "def run(): return None\n"}, "check-composition-root.py", composition_args(), 0, "", note="#81/#488 이관 — CR 무발화 실증(U11)"),
         Case("composition-preserve-common-selectors-registrar-na", inactive_registrar_files, "check-composition-root.py", preserve_common_args, 0, ""),
         Case("composition-preserve-registrar-rules-na", inactive_registrar_files, "check-composition-root.py", preserve_selector_args, 0, ""),
         Case("composition-auto-registrar-rules-na", inactive_registrar_files, "check-composition-root.py", auto_selector_args, 0, ""),
-        Case("composition-preserve-existing-di-v3-still-runs", {**inactive_registrar_files, "application/legacy/application_layer/use_case.py": "def run(): return None\n"}, "check-composition-root.py", preserve_selector_args, 2, "BLOCKER"),
-        Case("composition-auto-existing-di-v1-still-runs", {**inactive_registrar_files, "application/legacy/domain_layer/model.py": "class Model: pass\n", "application/legacy/composition/provider.py": "def provide(): return object()\n"}, "check-composition-root.py", auto_selector_args, 2, "BLOCKER"),
+        Case("composition-preserve-existing-di-v3-still-runs", {**inactive_registrar_files, "application/legacy/application_layer/use_case.py": "def run(): return None\n"}, "check-composition-root.py", preserve_selector_args, 0, "", note="#81/#488 이관 — CR 무발화 실증(U11)"),
+        Case("composition-auto-existing-di-v1-still-runs", {**inactive_registrar_files, "application/legacy/domain_layer/model.py": "class Model: pass\n", "application/legacy/composition/provider.py": "def provide(): return object()\n"}, "check-composition-root.py", auto_selector_args, 0, "", note="#81/#488 이관 — CR 무발화 실증(U11)"),
         Case("composition-analysis-missing-urlconf-selector", REGISTRAR_FILES, "check-composition-root.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py", "--registrar-module", "application/lesson/driving_layer/api/api_router.py"), 1, "사용 오류", allowed_arg_issues=frozenset({"missing:--urlconf-module"})),
         Case("composition-analysis-missing-registrar-selector", REGISTRAR_FILES, "check-composition-root.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py", "--urlconf-module", "config/urls.py"), 1, "사용 오류", allowed_arg_issues=frozenset({"missing:--registrar-module"})),
         Case("composition-analysis-duplicate-urlconf-selector", REGISTRAR_FILES, "check-composition-root.py", composition_args("--urlconf-module", "config/urls.py"), 1, "사용 오류", allowed_arg_issues=frozenset({"cardinality:--urlconf-module"})),

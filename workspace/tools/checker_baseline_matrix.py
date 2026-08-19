@@ -244,7 +244,7 @@ EXPECTED: "dict[str, tuple[int, int, int, int, bool]]" = {
     # parsed 0·synthetic True = code 레인 발화가 아직 [#N] 라인 앵커 밖(구 문면)이라는
     # 정직한 기록 — 3단계 포매터 이행 시 parsed 증가로 갱신된다(사유 의무).
     "check-api-error-controller-contract.py::api_error_controller_code": (2, 0, 0, 5, True),
-    "check-composition-root.py::composition_root_single_file": (2, 0, 0, 4, True),
+    "check-composition-root.py::composition_root_single_file": (2, 1, 1, 2, False),
     "check-openapi-error-declaration.py::openapi_decl_missing": (2, 1, 1, 2, False),
     "check-error-centralization.py::error_centralization_code": (2, 1, 1, 4, False),
 }
