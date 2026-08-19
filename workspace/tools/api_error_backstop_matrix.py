@@ -2406,8 +2406,10 @@ def get_lesson(request):
         Case("schema-concrete-outside-canonical-module", with_files(("application/lesson/driving_layer/api/not_found.py", "from .bc_error_schema import LessonErrorSchema\nclass Other(LessonErrorSchema): pass\n")), "check-error-centralization.py", schema_args(), 2, "BLOCKER"),
         Case("schema-missing-enum", with_files(("application/lesson/driving_layer/api/bc_error_schema.py", missing_enum)), "check-error-centralization.py", schema_args(), 2, "BLOCKER"),
         # 두 번째 ErrorCode 컨테이너는 #117 소유(check-context-isolation)로 이관 — EC 는 침묵이
-        # 정상이다(귀속 매핑표 v2 행23ⓑ·30ⓑ·31). 발화 쪽 절반은 context-second-errorcode-* 3케이스.
-        Case("schema-duplicate-enum", with_files(("application/lesson/driving_layer/api/bc_error_schema.py", LESSON_ERROR_OUT + "\nclass OtherErrorCode(StrEnum):\n    BAD = 'bad'\n")), "check-error-centralization.py", schema_args(), 0, "", note="#117 이관 — EC 무발화 실증(U11)"),
+        # 정상이다(귀속 매핑표 v2 행23ⓑ·30ⓑ·31). 발화 쪽 절반은 context-second-errorcode-* 3케이스
+        # + 아래 pair 케이스(같은 모듈 문면 상수 공유 — 한쪽만 개정되면 쌍이 침묵 분리되는
+        # 것을 막는다 · 혼성 패널 M10).
+        Case("schema-duplicate-enum", with_files(("application/lesson/driving_layer/api/bc_error_schema.py", DUP_ENUM_MODULE)), "check-error-centralization.py", schema_args(), 0, "", note="#117 이관 — EC 무발화 실증(U11)"),
         Case("schema-missing-base", with_files(("application/lesson/driving_layer/api/bc_error_schema.py", missing_base)), "check-error-centralization.py", schema_args(), 2, "BLOCKER"),
         Case("schema-duplicate-base", with_files(("application/lesson/driving_layer/api/bc_error_schema.py", LESSON_ERROR_OUT + "\nclass AnotherErrorOut(FrameworkErrorSchema):\n    code: LessonErrorCode\n")), "check-error-centralization.py", schema_args(), 2, "BLOCKER"),
         Case("schema-base-extra-defaulted-field", with_files(("application/lesson/driving_layer/api/bc_error_schema.py", LESSON_ERROR_OUT.replace("    code: LessonErrorCode\n", "    code: LessonErrorCode\n    retryable: bool = False\n", 1))), "check-error-centralization.py", schema_args(), 2, "BLOCKER"),
@@ -4770,6 +4772,11 @@ def get_lesson(request):
 }
 
 
+# #117 이관 pair 의 공유 모듈 문면(M10) — EC 무발화(schema-duplicate-enum)와
+# context-isolation 발화(context-pair-duplicate-enum)가 같은 상수를 소비한다.
+DUP_ENUM_MODULE: Final = LESSON_ERROR_OUT + "\nclass OtherErrorCode(StrEnum):\n    BAD = 'bad'\n"
+
+
 def context_args(*extra: str) -> tuple[str, ...]:
     return (
         TARGET_DIR,
@@ -4923,6 +4930,7 @@ def load_lesson():
         Case("context-second-errorcode-class-in-module", with_files(("application/lesson/driving_layer/api/bc_error_schema.py", LESSON_ERROR_OUT + "\nclass LessonErrorCode(StrEnum):\n    DUP = 'dup'\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "#117"),
         Case("context-stray-strenum-in-error-module", with_files(("application/lesson/driving_layer/api/bc_error_schema.py", LESSON_ERROR_OUT + "\nclass LegacyCodes(StrEnum):\n    OLD = 'old'\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "#117"),
         Case("context-functional-enum-in-error-module", with_files(("application/lesson/driving_layer/api/bc_error_schema.py", LESSON_ERROR_OUT + "\nimport enum\nRetryCodes = enum.Enum('RetryCodes', ['LATER'])\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "#117"),
+        Case("context-pair-duplicate-enum", with_files(("application/lesson/driving_layer/api/bc_error_schema.py", DUP_ENUM_MODULE), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "#117", note="M10 pair — schema-duplicate-enum 과 동일 모듈 상수"),
         Case("context-upstream-domain-exception-in-acl-blocked", with_files(("application/lesson/driven_layer/adapter/anticorruption_layer/catalog/catalog_adapter.py", "from application.catalog.domain_layer.exceptions import CatalogMissing\nfrom application.lesson.domain_layer.exceptions import LessonCatalogUnavailable\n\n\ndef load_catalog(fetch):\n    try:\n        return fetch()\n    except CatalogMissing as exc:\n        raise LessonCatalogUnavailable() from exc\n"), ("application/catalog/domain_layer/exceptions.py", "class CatalogMissing(Exception): pass\n"), ("application/lesson/domain_layer/exceptions.py", "class LessonCatalogUnavailable(Exception): pass\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args("--scope-bc", "catalog"), 2, "blocker"),
         Case("context-clean-separated-preserve-scope", with_files(("legacy/api.py", "api = object()\n"), ("legacy/controller.py", "def legacy(request): return {'error': 'old'}\n"), base=CONTEXT_FILES), "check-context-isolation.py", preserve_args, 0, ""),
         Case("context-existing-s1-s3-directions-blocked", with_files(("application/lesson/domain_layer/service.py", "from application.lesson.domain_layer.model import Lesson\n"), ("application/catalog/published_service/public/contract/query.py", "class CatalogQuery: pass\n"), ("application/lesson/application_layer/use_catalog.py", "from application.catalog.published_service.public.contract.query import CatalogQuery\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args("--scope-bc", "catalog"), 2, "blocker"),
@@ -5090,6 +5098,10 @@ def composition_cases() -> list[Case]:
         Case("composition-code-clean-unselected-preserve-urlconf-registrar", {**REGISTRAR_FILES, "legacy/api.py": "api = object()\n", "legacy/urls.py": "from legacy.api import api\nfrom legacy.registrar import register_legacy_api\nregister_legacy_api(api)\n", "legacy/registrar.py": "def register_legacy_api(api): api.register_controllers(object)\n"}, "check-composition-root.py", composition_args(), 0, ""),
         Case("composition-registrar-rebinds-api-parameter", with_files(("application/lesson/driving_layer/api/api_router.py", "from .controller import LessonController\n\ndef register_lesson_api(api):\n    api = replacement_api\n    api.register_controllers(LessonController)\n"), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 2, "BLOCKER"),
         Case("composition-registrar-handler-sees-rebound-api-parameter", with_files(("application/lesson/driving_layer/api/api_router.py", "from .controller import LessonController\n\ndef register_lesson_api(api):\n    try:\n        api = replacement_api\n        raise RuntimeError\n    except RuntimeError:\n        api.register_controllers(LessonController)\n"), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 2, "BLOCKER"),
+        # M1 회귀 골든(혼성 패널) — code 레인 활성·«미적중» tree 실위반은 억제되지 않는다.
+        Case("composition-code-tree-private-fn-survives", with_files(("application/lesson/driving_layer/api/api_router.py", REGISTRAR_FILES["application/lesson/driving_layer/api/api_router.py"] + "\ndef _helper():\n    return None\n"), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 2, "#107"),
+        Case("composition-code-tree-foreign-import-survives", with_files(("application/lesson/driving_layer/api/api_router.py", "import requests\n" + REGISTRAR_FILES["application/lesson/driving_layer/api/api_router.py"]), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 2, "#108"),
+        Case("composition-code-tree-offspec-uncalled-survives", with_files(("application/billing/driving_layer/api/api_router.py", "def register_billing_api(api):\n    api.register_controllers(object)\n"), ("config/urls.py", REGISTRAR_FILES["config/urls.py"].replace("from application.catalog", "from application.billing.driving_layer.api.api_router import register_billing_api\nfrom application.catalog", 1)), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 2, "#440"),
         Case("composition-registrar-imports-project-api", with_files(("application/lesson/driving_layer/api/api_router.py", registrar_imports_api), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 2, "BLOCKER"),
         Case("composition-registrar-module-top-level-register-controllers", with_files(("application/lesson/driving_layer/api/api_router.py", top_level_registration), ("application/lesson/driving_layer/registration_probe.py", "class RegistrationProbe:\n    def register_controllers(self, controller): pass\n\n\nregistration_probe = RegistrationProbe()\n"), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 2, "BLOCKER"),
         Case("composition-urlconf-omits-registrar-call", with_files(("config/urls.py", REGISTRAR_FILES["config/urls.py"].replace("register_catalog_api(api)\n", "")), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 2, "BLOCKER"),

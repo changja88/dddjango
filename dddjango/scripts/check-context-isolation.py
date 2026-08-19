@@ -690,7 +690,9 @@ _ENUM_BASE_NAMES = {"Enum", "IntEnum", "StrEnum", "Flag", "IntFlag", "ReprEnum"}
 
 
 def _enum_local_names(mod: ast.Module, wanted: "set[str]") -> "set[str]":
-    names = set(wanted)
+    """`from enum import …(as 별칭)` 로 실제 들여온 이름만 — import 없는 맨 이름은
+    enum 계열이 아니다(혼성 패널 Y#8: 로컬 헬퍼 동명 오발화 차단)."""
+    names: "set[str]" = set()
     for n in mod.body:
         if isinstance(n, ast.ImportFrom) and n.module == "enum":
             for a in n.names:
@@ -699,11 +701,24 @@ def _enum_local_names(mod: ast.Module, wanted: "set[str]") -> "set[str]":
     return names
 
 
-def _names_enum(expr: ast.expr, local: "set[str]", tails: "set[str]") -> bool:
+def _enum_module_names(mod: ast.Module) -> "set[str]":
+    """`import enum (as 별칭)` 의 모듈 이름들 — Attribute 판은 이 receiver 만 매치(Y#8)."""
+    names: "set[str]" = set()
+    for n in mod.body:
+        if isinstance(n, ast.Import):
+            for a in n.names:
+                if a.name == "enum":
+                    names.add(a.asname or a.name)
+    return names
+
+
+def _names_enum(expr: ast.expr, local: "set[str]", tails: "set[str]",
+                enum_mods: "set[str]") -> bool:
     if isinstance(expr, ast.Name):
         return expr.id in local
     if isinstance(expr, ast.Attribute):
-        return expr.attr in tails
+        return (isinstance(expr.value, ast.Name) and expr.value.id in enum_mods
+                and expr.attr in tails)
     return False
 
 
@@ -724,17 +739,18 @@ def _check_canonical_module_containers(bc: Path, bc_rel: Path, out: Findings) ->
     rel = bc_rel / module.relative_to(bc)
     str_enum_local = _enum_local_names(mod, {"StrEnum"})
     call_local = _enum_local_names(mod, _ENUM_BASE_NAMES)
+    enum_mods = _enum_module_names(mod)
     canonical_seen = False
     for node in mod.body:
         if isinstance(node, ast.ClassDef):
             if node.name == canonical and not canonical_seen:
                 canonical_seen = True
                 continue
-            if node.name.endswith("ErrorCode") or any(_names_enum(b, str_enum_local, {"StrEnum"}) for b in node.bases):
+            if node.name.endswith("ErrorCode") or any(_names_enum(b, str_enum_local, {"StrEnum"}, enum_mods) for b in node.bases):
                 out.add("#117", f"{rel}:{node.lineno}", f"BC 안에 두 번째 ErrorCode 컨테이너를 두지 않는다 — 정본 오류 모듈의 컨테이너는 `{canonical}` 하나다")
         elif isinstance(node, (ast.Assign, ast.AnnAssign)):
             value = node.value
-            if isinstance(value, ast.Call) and _names_enum(value.func, call_local, _ENUM_BASE_NAMES):
+            if isinstance(value, ast.Call) and _names_enum(value.func, call_local, _ENUM_BASE_NAMES, enum_mods):
                 out.add("#117", f"{rel}:{node.lineno}", "BC 안에 두 번째 ErrorCode 컨테이너를 두지 않는다 — functional Enum 으로 컨테이너를 늘리지 않는다")
 
 

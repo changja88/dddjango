@@ -152,6 +152,10 @@ EXPECTED: "dict[str, tuple[int, int, int, str, str, str]]" = {
     "check-composition-root.py::composition_root_single_file": (2, 1, 0, "#497×1", "2c43cc1deddc1a8c", "2fc253839f16eb6c"),
     "check-openapi-error-declaration.py::openapi_decl_missing": (2, 1, 0, "#63×1", "238f374c04cdbc00", "95363305293051ff"),
     "check-error-centralization.py::error_centralization_code": (2, 3, 0, "#572×1,contract:선행 계약(08-04 API-error) 소유×2", "ca07fbbfc15d97c8", "4c7001115cd355de"),
+    "check-api-error-controller-contract.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "ff910566edd77355"),
+    "check-error-centralization.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "dd0e053b943ade19"),
+    "check-openapi-error-declaration.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "f2d1a02f508ad602"),
+    "check-response-schema-bypass.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a48e09bb1d2d8734"),
     "check-db-table.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "f74cd9a3af326bd2"),
     "check-domain-model.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "e5abbd3c9f18d0a2"),
     "check-event-publish.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "70efaa8b3073675d"),
@@ -189,7 +193,7 @@ def lane_plan(fixtures_dir: Path) -> "list[tuple[str, str, str, Path | None, Pat
         plan.append((f"{script}::{lane_dir}", script, lane_dir,
                      red_src if red_src.is_dir() else None,
                      green_src if green_src.is_dir() else None))
-    for script, guard_fx in GUARD_LANES:
+    for script, guard_fx, _a in GUARD_LANES:
         # 가드 레인(A-5 골든)은 red 축뿐 — «대상 0» 픽스처 자체가 발화 조건이라 green 짝 없음.
         plan.append((f"{script}::{GUARD_LANE}", script, GUARD_LANE, fixtures_dir / guard_fx, None))
     return plan
@@ -418,7 +422,7 @@ def main(argv: "list[str]") -> int:
         git_keys = {k for k in EXPECTED if "::" in k and k.split("::", 1)[1] in GIT_LANES}
         want_git = {f"{s}::{lane}" for s in GIT_AFFECTED for lane in GIT_LANES}
         guard_keys = {k for k in EXPECTED if k.endswith(f"::{GUARD_LANE}")}
-        want_guard = {f"{s}::{GUARD_LANE}" for s, _fx in GUARD_LANES}
+        want_guard = {f"{s}::{GUARD_LANE}" for s, _fx, _a in GUARD_LANES}
         if guard_keys != want_guard:
             print(f"재료 결손: 가드 레인 키 불일치 — 선언만: {sorted(want_guard - guard_keys)} · "
                   f"기대표만: {sorted(guard_keys - want_guard)}", file=sys.stderr)
