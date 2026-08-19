@@ -17,7 +17,9 @@ stdout 오염 금지: registry_gate 의 위반 라인 파싱 등 기존 소비�
   sentinel     "#N" 꼴 밖 표지 원문(해당 없으면 null)
   contract_ref 선행 계약 표기(해당 없으면 null)
   checker      검사기 파일 이름(예: check-domain-model.py)
-  file         라인 채널의 where 문자열 그대로(경로[:행] locator — v0 단순화 · 분해는 T2 IRI화 몫)
+  file         라인 채널의 where 문자열 그대로(경로[:행] locator — v0 단순화 · 분해는 T2 IRI화 몫).
+               where 는 str(where) 로 고정해 라인 문면과 레코드가 항상 같은 문자열이다
+               (기계 치환군 B/C형 8종이 Path 객체를 넘긴다 — json 직렬화 계약)
   symbol       위반 심볼 이름(검사기가 아는 경우에만 — v0 대표 2종은 위치 단위가
                파일·디렉터리라 null)
   severity     값 공간 3종 — SHACL 3값 대응과 현행 exit 의미론 매핑의 선언:
@@ -119,9 +121,10 @@ class Findings(list):
         super().__init__()
         self.checker: str = checker or _default_checker()
 
-    def add(self, rule: str, where: str, msg: str, symbol: "str | None" = None) -> None:
-        self.append(f"[{rule}] {where}: {msg}")
-        _emit(self.checker, rule, where, symbol, "violation", msg)
+    def add(self, rule: str, where: "str | Path", msg: str, symbol: "str | None" = None) -> None:
+        where_s: str = str(where)  # Path 호출자(B/C형)와 라인 문면·레코드 file 을 한 문자열로 고정
+        self.append(f"[{rule}] {where_s}: {msg}")
+        _emit(self.checker, rule, where_s, symbol, "violation", msg)
 
 
 class Candidates(list):
@@ -131,10 +134,11 @@ class Candidates(list):
         super().__init__()
         self.checker: str = checker or _default_checker()
 
-    def add(self, rule: str, where: str, msg: str, question: str,
+    def add(self, rule: str, where: "str | Path", msg: str, question: str,
             symbol: "str | None" = None) -> None:
-        self.append(f"[ⓓ{rule}] {where}: {msg} — 물음: {question}")
-        _emit(self.checker, rule, where, symbol, "info", f"{msg} — 물음: {question}")
+        where_s: str = str(where)
+        self.append(f"[ⓓ{rule}] {where_s}: {msg} — 물음: {question}")
+        _emit(self.checker, rule, where_s, symbol, "info", f"{msg} — 물음: {question}")
 
 
 class ContractFindings(list):
@@ -146,7 +150,7 @@ class ContractFindings(list):
         self.contract_ref: str = contract_ref
         self.checker: str = checker or _default_checker()
 
-    def add(self, line: str, where: str, msg: str, symbol: "str | None" = None) -> None:
+    def add(self, line: str, where: "str | Path", msg: str, symbol: "str | None" = None) -> None:
         self.append(line)
-        _emit(self.checker, None, where, symbol, "violation", msg,
+        _emit(self.checker, None, str(where), symbol, "violation", msg,
               contract_ref=self.contract_ref)
