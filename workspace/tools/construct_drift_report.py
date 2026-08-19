@@ -55,8 +55,8 @@ SEALED: "dict[str, str]" = {
     "check-common-container.py": "e245b1e",       # 계약 레인(3a68fe3) 직전
     "check-api-error-controller-contract.py": "77691d8",  # ⑤(c13d08e) 직전
     "check-error-centralization.py": "1e887e3",   # ②(5fbe8dd) 직전
-    "check-composition-root.py": "e245b1e",       # ④(77691d8) 직전
-    "check-openapi-error-declaration.py": "faea9d3",      # ③(36bd09c) 직전
+    "check-composition-root.py": "faea9d3",       # ④(77691d8) 직전 — Y#5 오봉인 교정
+    "check-openapi-error-declaration.py": "ee62c5c",      # ③(36bd09c) 직전 — Y#5 오봉인 교정
     "check-response-schema-bypass.py": "f164dd9",  # ①(ee62c5c) 직전
     "check-context-isolation.py": "36bd09c",      # #117 보강(1e887e3) 직전
 }
@@ -108,7 +108,21 @@ def _extract_old(commit: str, dest: Path) -> Path:
     return out / "dddjango" / "scripts"
 
 
+def _validate_sealed() -> None:
+    """오봉인 방지(혼성 패널 Y#5 — 변경 커밋의 자손으로 봉인하면 자기 비교가 된다):
+    봉인 커밋의 스크립트 blob 이 HEAD 와 동일하면 그 diff 는 무의미 — 즉사."""
+    for script, commit in SEALED.items():
+        proc = subprocess.run(
+            ["git", "-C", str(ROOT), "diff", "--quiet", commit, "HEAD", "--",
+             f"dddjango/scripts/{script}"], capture_output=True)
+        if proc.returncode == 0:
+            print(f"재료 결손: SEALED[{script}]={commit} 오봉인 — 봉인 시점과 HEAD 의 "
+                  f"스크립트가 동일(자기 비교). 변경 커밋의 부모로 재봉인하라", file=sys.stderr)
+            raise SystemExit(1)
+
+
 def measure() -> "dict[str, tuple[int, str, str]]":
+    _validate_sealed()
     got: "dict[str, tuple[int, str, str]]" = {}
     for script in SEALED:
         fixture = F / _RED[script]

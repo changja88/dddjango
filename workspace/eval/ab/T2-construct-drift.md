@@ -51,9 +51,45 @@ debt 매칭은 `[#N]` 태그 + 부분문자열이다(`anchor_diff.debt_match`). 
 +  - application/common: 횡단 버킷이 application/ 안에 있다 (내용: util.py)
 ```
 
-### check-composition-root.py — 구판 `e245b1e` (exit 2→2)
+### check-composition-root.py — 구판 `faea9d3` (exit 2→2)
 
-stdout **byte 무변**.
+변경 28행:
+
+```diff
+--- check-composition-root.py@faea9d3
++++ check-composition-root.py@신판
+@@ -5,4 +5,4 @@
+-  [#498] application/orders/composition_root/event_wiring.py:3 event_wiring.py 에서 표(dict)를 만들었다 — 표는 event_subscription/event_router.py 소유, 여기는 브로커에 «꽂는» 것만 한다
+-  [#500] application/orders/composition_root/event_wiring.py:8 구독으로 람다를 넘겼다 — 모듈 최상단 이름 있는 함수만(매번 다른 객체라 멱등이 깨진다)
+-  [#501] application/orders/composition_root/event_wiring.py:9 event_wiring.py 에서 DB 를 만졌다 — 모든 관리 명령에서 도는 자리다
+-  [#101] application/orders/application_layer/order/place_order/place_order_use_case.py:1 `application.orders.driving_layer.api.order.schema.schema_out` — BC 안쪽과 composition_root 은 driving 층을 import 하지 않는다(예외 없음 · rd-2)
++  [#498] application/orders/composition_root/event_wiring.py:3: event_wiring.py 에서 표(dict)를 만들었다 — 표는 event_subscription/event_router.py 소유, 여기는 브로커에 «꽂는» 것만 한다
++  [#500] application/orders/composition_root/event_wiring.py:8: 구독으로 람다를 넘겼다 — 모듈 최상단 이름 있는 함수만(매번 다른 객체라 멱등이 깨진다)
++  [#501] application/orders/composition_root/event_wiring.py:9: event_wiring.py 에서 DB 를 만졌다 — 모든 관리 명령에서 도는 자리다
++  [#101] application/orders/application_layer/order/place_order/place_order_use_case.py:1: `application.orders.driving_layer.api.order.schema.schema_out` — BC 안쪽과 composition_root 은 driving 층을 import 하지 않는다(예외 없음 · rd-2)
+@@ -12,8 +12,8 @@
+-  [#111] application/orders/driving_layer/api/api_router.py:4 api_router.py 에 등록 밖 정의가 있다 — 컨트롤러 import 와 등록 함수만 둔다
+-  [#109] application/orders/driving_layer/api/api_router.py:15 module top-level 등록 호출 — 등록은 `register_<bc>_api(api)` 함수 «안»에서만 한다(부작용 등록 금지)
+-  [#108] application/orders/driving_layer/api/api_router.py:1 `config.api` import — 전역 API 객체는 import 하지 않고 인자로 받는다(BC 가 프로젝트를 import 하지 않는다)
+-  [#437] config/api.py:2 `application.orders.domain_layer.order.exception.order_not_found` import — `<project>/api.py` 에는 전역 API 객체 하나와 프레임워크 오류 핸들러만 온다(BC import 금지)
+-  [#437] config/api.py:7 `ErrorSchema` 정의 — ErrorSchema·예외 목록·매핑은 전부 위반이다(닫힌 허용 목록)
+-  [#437] config/api.py:11 `map_order_errors()` — 프레임워크 오류 핸들러 밖의 함수는 이 파일에 오지 않는다
+-  [#441] config/urls.py:3 `application.orders.driving_layer.api.order.order_controller.OrderController` import — urls.py 가 BC 심볼을 쓰는 예외는 `register_<bc>_api` 명시 호출 하나뿐이다
+-  [#440] config/urls.py:2 `register_orders_api` 을 import 하고 부르지 않았다 — urls.py 는 각 BC 의 `register_<bc>_api(api)` 를 «명시적으로 부른다»
++  [#111] application/orders/driving_layer/api/api_router.py:4: api_router.py 에 등록 밖 정의가 있다 — 컨트롤러 import 와 등록 함수만 둔다
++  [#109] application/orders/driving_layer/api/api_router.py:15: module top-level 등록 호출 — 등록은 `register_<bc>_api(api)` 함수 «안»에서만 한다(부작용 등록 금지)
++  [#108] application/orders/driving_layer/api/api_router.py:1: `config.api` import — 전역 API 객체는 import 하지 않고 인자로 받는다(BC 가 프로젝트를 import 하지 않는다)
++  [#437] config/api.py:2: `application.orders.domain_layer.order.exception.order_not_found` import — `<project>/api.py` 에는 전역 API 객체 하나와 프레임워크 오류 핸들러만 온다(BC import 금지)
++  [#437] config/api.py:7: `ErrorSchema` 정의 — ErrorSchema·예외 목록·매핑은 전부 위반이다(닫힌 허용 목록)
++  [#437] config/api.py:11: `map_order_errors()` — 프레임워크 오류 핸들러 밖의 함수는 이 파일에 오지 않는다
++  [#441] config/urls.py:3: `application.orders.driving_layer.api.order.order_controller.OrderController` import — urls.py 가 BC 심볼을 쓰는 예외는 `register_<bc>_api` 명시 호출 하나뿐이다
++  [#440] config/urls.py:2: `register_orders_api` 을 import 하고 부르지 않았다 — urls.py 는 각 BC 의 `register_<bc>_api(api)` 를 «명시적으로 부른다»
+@@ -21,2 +21,2 @@
+-  [ⓓ#86] application/orders/composition_root/dependency_wiring.py:5 결선 함수 안 조건문 — 물음: 이 분기는 업무를 가르는가(그렇다면 유스케이스로 내린다)?
+-  [ⓓ#511] application/orders/driving_layer/api/oauth/ — 물음: 이 입구의 계약을 바깥이 소유하는가(OAuth 콜백 포함)? 그러면 `webhook/<provider>/` 자리다
++  [ⓓ#86] application/orders/composition_root/dependency_wiring.py:5: 결선 함수 안 조건문 — 물음: 이 분기는 업무를 가르는가(그렇다면 유스케이스로 내린다)?
++  [ⓓ#511] application/orders/driving_layer/api/oauth/: 외부 소유 계약 입구 후보(provider 성 디렉터리) — 물음: 이 입구의 계약을 바깥이 소유하는가(OAuth 콜백 포함)? 그러면 `webhook/<provider>/` 자리다
+```
 
 ### check-context-isolation.py — 구판 `36bd09c` (exit 2→2)
 
@@ -67,9 +103,21 @@ stdout **byte 무변**.
 
 stdout **byte 무변**.
 
-### check-openapi-error-declaration.py — 구판 `faea9d3` (exit 2→2)
+### check-openapi-error-declaration.py — 구판 `ee62c5c` (exit 2→2)
 
-stdout **byte 무변**.
+변경 6행:
+
+```diff
+--- check-openapi-error-declaration.py@ee62c5c
++++ check-openapi-error-declaration.py@신판
+@@ -2,3 +2,3 @@
+-  [#63] application/orders/driving_layer/api/order/order_controller.py:15 `openapi_extra` 의 responses 보충 — 오류 응답은 `response={status: <Bc>ErrorSchema}` 로 직접 선언한다
+-  [#63] application/orders/driving_layer/api/order/order_controller.py:19 `get_openapi_schema` override — 오류 응답은 operation 의 `response=` 직접 선언으로만 문서화한다
+-  [#63] application/orders/driving_layer/api/order/order_controller.py:23 `openapi_schema` monkeypatch — OpenAPI 를 사후 변형하지 않는다
++  [#63] application/orders/driving_layer/api/order/order_controller.py:15: `openapi_extra` 의 responses 보충 — 오류 응답은 `response={status: <Bc>ErrorSchema}` 로 직접 선언한다
++  [#63] application/orders/driving_layer/api/order/order_controller.py:19: `get_openapi_schema` override — 오류 응답은 operation 의 `response=` 직접 선언으로만 문서화한다
++  [#63] application/orders/driving_layer/api/order/order_controller.py:23: `openapi_schema` monkeypatch — OpenAPI 를 사후 변형하지 않는다
+```
 
 ### check-response-schema-bypass.py — 구판 `f164dd9` (exit 2→2)
 
