@@ -7,6 +7,8 @@ BC 오류와 ``response={status: <Bc>ErrorSchema}`` 선언의 일치를 검증�
 module의 수동 OpenAPI 후처리를 차단한다.
 
 종료코드: 0=clean, 1=사용/분석 오류, 2=blocker.
+구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
 """
 from __future__ import annotations
 
@@ -19,6 +21,7 @@ import subprocess
 import sys
 
 import checker_target
+from findings import SliceFindings
 from dataclasses import dataclass
 from http import HTTPStatus
 from pathlib import Path
@@ -3254,7 +3257,17 @@ def _print_repo_scan_findings(findings: list[str]) -> None:
         "선언하고 "
         "response={...} 엔 누락함(ninja 가 타입으로 미인지 = 선언 계약 밖):"
     )
+    records = SliceFindings()  # 라인 문면 무변 — 실제 출력 집합의 거울 레코드만 얹는다
     for finding in findings:
+        # "  - {rel}: {hits}" — 선두 장식을 뗀 문면이 msg, 경로 성분이 where.
+        stripped = finding[4:] if finding.startswith("  - ") else finding.strip()
+        where, separator, msg = stripped.partition(": ")
+        records.add(
+            "#63",
+            line=finding,
+            where=where if separator else "(repo-scan)",
+            msg=msg if separator else stripped,
+        )
         print(finding)
     print(
         "  근거: implementation-django-ninja §2.2 line111. 가능한 모든 status"
@@ -3270,8 +3283,17 @@ def _print_code_findings(findings: list[Finding]) -> None:
         "[check-openapi-error-declaration] BLOCKER — 직접 반환 BC 오류와 response= "
         "<Bc>ErrorSchema 계약 불일치 또는 수동 OpenAPI 후처리:"
     )
+    records = SliceFindings()  # 라인 문면 무변 — 실제 출력 집합의 거울 레코드만 얹는다
     for finding in findings:
-        print(finding.render())
+        line = finding.render()
+        records.add(
+            "#63",
+            line=line,
+            where=f"{finding.relative_path}:{finding.lineno}",
+            msg=finding.detail,
+            symbol=finding.category,
+        )
+        print(line)
     print(
         "  조치: 각 직접 반환 status를 같은 BC의 <Bc>ErrorSchema base로 선언하고, "
         "직접 반환하지 않는 BC 오류 광고와 "
@@ -3321,7 +3343,7 @@ def _dict_has_key(node: ast.AST, key: str) -> bool:
 
 
 def _tree_slice63(root: Path) -> list[str]:
-    findings: list[str] = []
+    findings = SliceFindings()
     files: list[Path] = []
     for p in sorted(root.rglob("*.py")):
         rel = p.relative_to(root)
@@ -3336,17 +3358,23 @@ def _tree_slice63(root: Path) -> list[str]:
         for node in ast.walk(mod):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 if node.name == "get_openapi_schema":
-                    findings.append(f"  [#63] {rel}:{node.lineno} `get_openapi_schema` override — 오류 응답은 operation 의 `response=` 직접 선언으로만 문서화한다")
+                    where = f"{rel}:{node.lineno}"
+                    msg = "`get_openapi_schema` override — 오류 응답은 operation 의 `response=` 직접 선언으로만 문서화한다"
+                    findings.add("#63", line=f"  [#63] {where} {msg}", where=where, msg=msg)
                 for deco in node.decorator_list:
                     if not isinstance(deco, ast.Call):
                         continue
                     for kw in deco.keywords:
                         if kw.arg == "openapi_extra" and _dict_has_key(kw.value, "responses"):
-                            findings.append(f"  [#63] {rel}:{node.lineno} `openapi_extra` 의 responses 보충 — 오류 응답은 `response={{status: <Bc>ErrorSchema}}` 로 직접 선언한다")
+                            where = f"{rel}:{node.lineno}"
+                            msg = "`openapi_extra` 의 responses 보충 — 오류 응답은 `response={status: <Bc>ErrorSchema}` 로 직접 선언한다"
+                            findings.add("#63", line=f"  [#63] {where} {msg}", where=where, msg=msg)
             elif isinstance(node, ast.Assign):
                 for t in node.targets:
                     if isinstance(t, ast.Attribute) and t.attr in ("openapi_schema", "get_openapi_schema"):
-                        findings.append(f"  [#63] {rel}:{node.lineno} `{t.attr}` monkeypatch — OpenAPI 를 사후 변형하지 않는다")
+                        where = f"{rel}:{node.lineno}"
+                        msg = f"`{t.attr}` monkeypatch — OpenAPI 를 사후 변형하지 않는다"
+                        findings.add("#63", line=f"  [#63] {where} {msg}", where=where, msg=msg)
     return findings
 
 
