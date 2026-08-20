@@ -36,6 +36,11 @@
 구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
 추가 방출한다. 위반 라인은 공용 포매터의 계약 문법 `- {where}: {msg}` 로 방출하며
 record 순서 = stdout 위반 라인 순서다(T2-1 출력 계약 v2).
+
+그래프 좌표(T2-2): 규범 정본 = 온톨로지 그래프(`ontology/rules/`) · 이 검사기의 #N ↔ Work 조인은
+  alias 대장(`ontology/wiring/aliases.ttl`)이 소유한다. 조인 확정: 없음(대장 미등재 — T3 이월).
+  미확정 #N 은 T3 이관에서 해소한다(현행 조인 3종 — 판단표
+  `workspace/design/2026-08-20-ontology-t2-2-alias-ledger.md` §2·§5).
 """
 from __future__ import annotations
 

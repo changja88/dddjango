@@ -33,6 +33,11 @@
 추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2). 방출은 공용 ordered emitter
 (emit_all) 경유 — stdout 위반·후보 라인 순서와 레코드 순서가 같고, 라인은 레코드
 필드의 순수 함수다(출력 계약 v2).
+
+그래프 좌표(T2-2): 규범 정본 = 온톨로지 그래프(`ontology/rules/`) · 이 검사기의 #N ↔ Work 조인은
+  alias 대장(`ontology/wiring/aliases.ttl`)이 소유한다. 조인 확정: 없음(대장 미등재 — T3 이월).
+  미확정 #N 은 T3 이관에서 해소한다(현행 조인 3종 — 판단표
+  `workspace/design/2026-08-20-ontology-t2-2-alias-ledger.md` §2·§5).
 """
 from __future__ import annotations
 
