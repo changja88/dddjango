@@ -180,8 +180,7 @@ def _write_introduced(dest: Path, anchor_sha: str, attributed: "list[str]",
         "anchor": anchor_sha,
         # 실런 식별자를 sidecar 가 **운반한다**(반증 레인 AT 과제 2): 이게 없으면 재생성 루프가
         # 남기는 용량 로그에 실런을 적을 경로가 없어 「전 사슬」이 게이트에서 끊긴다.
-        "experiment_run_id": next((r.get("experiment_run_id") for r in picked
-                                   if r.get("experiment_run_id")), None),
+        "experiment_run_id": _experiment_run_id(picked),
         "attributed_lines": attributed,
         "records": picked,
         "unmatched_lines": sorted(want - matched),
@@ -189,6 +188,25 @@ def _write_introduced(dest: Path, anchor_sha: str, attributed: "list[str]",
     dest.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"\n귀속 레코드 sidecar → {dest} "
           f"(레코드 {len(picked)} · 대응 없는 귀속 라인 {len(want - matched)})")
+
+
+def _experiment_run_id(picked: "list[dict]") -> "str | None":
+    """실런 식별자를 고른다 — 레코드 우선, 없으면 **환경**.
+
+    왜 환경 폴백이 필요한가(BK1 실측 2026-08-21): 앞선 판은 `picked` 안의 레코드에서만
+    id 를 꺼냈다. 그래서 **귀속 레코드가 0건인 런은 `introduced.json` 의 id 가 `null`** 이
+    된다 — 그런데 «귀속 0» 은 노출 게이트가 판정해야 할 바로 그 경우다. 실측에서 R03 의
+    `introduced.json` 이 `null` 로 나왔고 `contract.json` 만 id 를 실었다(그쪽은 레코드가
+    1건이었다). 사슬이 «끊기면 안 되는 지점에서 정확히 끊기는» 형태였다.
+
+    검사기는 레코드마다 같은 환경변수로 id 를 박으므로 두 경로의 값은 일치한다. 레코드가
+    있으면 그것을 쓰고(관측된 값이 정본), 없을 때만 환경을 읽는다.
+    """
+    from_records: "str | None" = next(
+        (r.get("experiment_run_id") for r in picked if r.get("experiment_run_id")), None)
+    if from_records:
+        return str(from_records)
+    return os.environ.get(findings.ENV_EXPERIMENT) or None
 
 
 def _contract_key(rec: "dict", prefixes: "tuple[str, ...]") -> str:
@@ -227,8 +245,7 @@ def _write_contract(dest: Path, anchor_sha: str, records: "list[dict]",
         "total": len(picked),                 # 신규(N∖L)만
         "legacy_residual": residual,          # 앵커에도 있던 것 — 보고만
         "by_checker": dict(sorted(by_checker.items())),
-        "experiment_run_id": next((r.get("experiment_run_id") for r in picked
-                                   if r.get("experiment_run_id")), None),
+        "experiment_run_id": _experiment_run_id(picked),
         "records": [{k: r.get(k) for k in
                      ("checker", "contract_ref", "sentinel", "file", "message",
                       "severity", "record_id", "experiment_run_id")} for r in picked],
