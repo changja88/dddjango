@@ -57,6 +57,10 @@ while true; do
       # 판이 좁으면 «Bash command» 가 두 줄로 쪼개지고 명령 상자가 │ 없이 들여쓰기만 쓴다.
       # 그래서 헤더는 낱말 단위로 찾는다.
       subj=$(print -r -- "$blk" | grep -E "Search\(|Glob\(|Grep\(|Read file|Bash|Edit file|Write\(|Update\(|WebFetch|WebSearch" | tail -1)
+      # 헤더를 끝내 못 찾는 경우가 반복됐다(판 폭·스크롤백·렌더 변형). 그때마다 MANUAL 로
+      # 떨어뜨리면 밤새 멈춘다. «모르면 멈춤»을 기본값으로 두지 않되 검사는 그대로 건다 —
+      # 아래 bash 분기의 위험 토큰 + 경로 가드를 통과해야 승인된다.
+      [ -z "$subj" ] && subj="Bash"
       body=$blk
       safe=0
       if print -r -- "$subj" | grep -qE "Search\(|Glob\(|Grep\(|Read file"; then
@@ -70,7 +74,17 @@ while true; do
         # 통째로 건너뛰어 무조건 승인이 되는 구멍이 생긴다(넓은 창의 산문 오탐보다 나쁘다).
         cmd=$(print -r -- "$blk" | grep -E '^[[:space:]]*│')
         [ -z "$cmd" ] && cmd=$(print -r -- "$blk" | tail -40)
-        if print -r -- "$cmd" | grep -qE '(^|[^a-zA-Z])(rm|curl|wget|ssh|scp|sudo|chmod|chown|kill|npm|pip|brew)[[:space:]]|git[[:space:]]+(push|reset[[:space:]]+--hard|clean)|pip[[:space:]]+install|>[[:space:]]*/(etc|usr|bin|System|Library)'; then
+        # 경로 가드 — 시스템 경로·홈 설정 파일이 보이면 사람이 본다.
+        if print -r -- "$cmd" | grep -qE '(^|[^A-Za-z0-9_./~-])/(etc|usr|bin|sbin|System|Library|Applications|Volumes|opt)/'; then
+          guard=1
+        elif print -r -- "$cmd" | grep -qE '~/\.[a-z]|/Users/[^/ ]+/\.(ssh|aws|gnupg|config|zshrc|zprofile|gitconfig|npmrc)'; then
+          guard=1
+        else
+          guard=0
+        fi
+        if [ $guard -eq 1 ]; then
+          safe=0
+        elif print -r -- "$cmd" | grep -qE '(^|[^a-zA-Z])(rm|curl|wget|ssh|scp|sudo|chmod|chown|kill|npm|pip|brew)[[:space:]]|git[[:space:]]+(push|reset[[:space:]]+--hard|clean)|pip[[:space:]]+install'; then
           safe=0
         else
           safe=1
