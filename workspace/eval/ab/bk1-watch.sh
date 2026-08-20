@@ -1,90 +1,135 @@
 #!/bin/zsh
-# BK1 세 런 감시 v3 — 범위 한정 자동 응답 (사용자 승인 2026-08-21)
+# BK1 무인 완주 감시 v4 — 세션에서 분리(nohup)되어 독립 실행된다.
 #
-# 자동 승인: 설치본 캐시/타깃 아래 «읽기»(Search·Read·Glob·Grep) + 위험 토큰 없는 bash
-# 알림만  : 그 외 전부 — 쓰기·삭제·네트워크·작업폴더 밖 수정·파이프라인 게이트 질문
+# 자동  : 설치본/타깃 아래 읽기 · 무위험 bash → 즉시 승인
+# 알림  : 게이트 질문(선택지 메뉴) · 위험 작업 · 오류·한도 · 주입 발화 · 완료
+# 폴백  : 승인형 게이트 질문이 10분 넘게 방치되면 «제안대로/승인» 계열을 고른다(요란하게 기록)
 #
-# 파이프라인 게이트 질문(BC 배치·lens·프레임워크 등)은 «Do you want to proceed?» 가 아니라
-# 별도 문구로 뜬다. 그건 절대 자동 응답하지 않고 봉인된 고정 답을 사람이 넣는다.
+# 이벤트는 EV 파일에 한 줄씩. 메인 세션은 그 파일을 tail 해서 받는다.
 
+EV=/Users/hyun/.claude/jobs/48c8a476/tmp/bk1-events.log
 LOG=/Users/hyun/.claude/jobs/48c8a476/tmp/bk1-autoapprove.log
+QDIR=/Users/hyun/.claude/jobs/48c8a476/tmp/gate-questions
 CACHE='/Users/hyun/.claude/plugins/cache/changja88-dddjango'
-typeset -A prompted seen_inj gate
-for a in t2ab-r01 t2ab-r02 t2ab-r03; do prompted[$a]=0; seen_inj[$a]=-1; gate[$a]=0; done
-fails=0
+mkdir -p $QDIR
+
+ev() { print -r -- "[$(date '+%m-%d %H:%M')] $1" >> $EV }
+lg() { print -r -- "[$(date '+%m-%d %H:%M:%S')] $1" >> $LOG }
+
+typeset -A pend gate_since gate_warn idle_n seen_inj done_f
+for a in t2ab-r01 t2ab-r02 t2ab-r03; do
+  pend[$a]=0; gate_since[$a]=0; gate_warn[$a]=0; idle_n[$a]=0; seen_inj[$a]=-1; done_f[$a]=0
+done
+tick=0
 
 while true; do
-  any=0
+  tick=$((tick+1))
   for a in t2ab-r01 t2ab-r02 t2ab-r03; do
-    pane=$(herdr agent read $a 2>/dev/null | tail -26)
+    pane=$(herdr agent read $a 2>/dev/null)
     [ -z "$pane" ] && continue
-    any=1
+    tail26=$(print -r -- "$pane" | tail -26)
     tgt="/Users/hyun/Desktop/t2ab-R${a#t2ab-r}"
 
-    if print -r -- "$pane" | grep -q "Do you want to proceed"; then
-      # 승인 대상 요약 = 프롬프트 위쪽 동작 줄
-      subj=$(print -r -- "$pane" | grep -E "Search\(|Glob\(|Grep\(|Read file|Bash command|Edit file|Write\(|Update\(|WebFetch|WebSearch" | head -1)
-      body=$(print -r -- "$pane" | sed -n '/Do you want to proceed/q;p' | tail -12)
+    busy=0
+    print -r -- "$tail26" | grep -qE '^[[:space:]]*(✻|⏺ dddjango|◯ )' && busy=1
+    print -r -- "$pane"   | grep -qE 'Waiting for [0-9]+ background|◯ dddjango:' && busy=1
 
+    menu=0
+    print -r -- "$tail26" | grep -qE '^[[:space:]]*(❯[[:space:]]+)?1\.[[:space:]]' && menu=1
+    perm=0
+    print -r -- "$tail26" | grep -q "Do you want to proceed" && perm=1
+
+    # ───────── ① 권한 프롬프트 ─────────
+    if [ $perm -eq 1 ]; then
+      subj=$(print -r -- "$tail26" | grep -E "Search\(|Glob\(|Grep\(|Read file|Bash command|Edit file|Write\(|Update\(|WebFetch|WebSearch" | head -1)
+      body=$(print -r -- "$tail26" | sed -n '/Do you want to proceed/q;p' | tail -14)
       safe=0
-      # ① 순수 읽기 — 설치본 캐시 또는 타깃 아래
       if print -r -- "$subj" | grep -qE "Search\(|Glob\(|Grep\(|Read file"; then
-        if print -r -- "$body" | grep -qF "$CACHE" || print -r -- "$body" | grep -qF "$tgt"; then safe=1; fi
+        { print -r -- "$body" | grep -qF "$CACHE" || print -r -- "$body" | grep -qF "$tgt"; } && safe=1
       fi
-      # ② bash — 위험 토큰 없을 때만
       if print -r -- "$subj" | grep -q "Bash command"; then
-        if print -r -- "$body" | grep -qE '(^|[^a-z])(rm|mv|curl|wget|ssh|scp|sudo|chmod|chown|kill|dd|npm|pip|brew)[ ]|git (push|commit|reset --hard|clean)|>[ ]*/|install'; then
+        if print -r -- "$body" | grep -qE '(^|[^a-zA-Z])(rm|mv|curl|wget|ssh|scp|sudo|chmod|chown|kill|dd|npm|pip|brew)[[:space:]]|git[[:space:]]+(push|reset[[:space:]]+--hard|clean)|install'; then
           safe=0
         else
           safe=1
         fi
       fi
-
       if [ $safe -eq 1 ]; then
-        if print -r -- "$pane" | grep -qE '^[[:space:]]+2\. Yes, allow'; then k=2; else k=1; fi
+        if print -r -- "$tail26" | grep -qE '^[[:space:]]+2\. Yes, allow'; then k=2; else k=1; fi
         herdr agent send-keys $a $k >/dev/null 2>&1
-        print -r -- "[$(date '+%m-%d %H:%M:%S')] $a AUTO=$k $(print -r -- "$subj" | cut -c1-140)" >> $LOG
-        prompted[$a]=0
+        lg "$a AUTO=$k $(print -r -- "$subj" | cut -c1-140)"
       else
-        if [ "${prompted[$a]}" = "0" ]; then
-          echo "[$(date '+%H:%M')] ⛔ $a 수동 판단 필요 — $(print -r -- "$subj" | cut -c1-110)"
-          print -r -- "[$(date '+%m-%d %H:%M:%S')] $a MANUAL $(print -r -- "$subj" | cut -c1-140)" >> $LOG
-          prompted[$a]=1
+        if [ "${pend[$a]}" = "0" ]; then
+          ev "⛔ $a 위험 판단 필요 — $(print -r -- "$subj" | cut -c1-120)"
+          lg "$a MANUAL $(print -r -- "$subj" | cut -c1-140)"
+          pend[$a]=1
         fi
       fi
-    else
-      prompted[$a]=0
+      gate_since[$a]=0; idle_n[$a]=0
+      continue
+    fi
+    pend[$a]=0
 
-      # 파이프라인 게이트 질문 — 선택 UI 인데 권한 프롬프트가 아니면 사람이 답한다
-      if print -r -- "$pane" | grep -qE '^[[:space:]]*❯[[:space:]]+1\.' ; then
-        if [ "${gate[$a]}" = "0" ]; then
-          echo "[$(date '+%H:%M')] ❓ $a 게이트 질문 — 봉인된 고정 답 필요"
-          gate[$a]=1
-        fi
+    # ───────── ② 게이트 질문(선택지 메뉴 · 권한 아님) ─────────
+    if [ $menu -eq 1 ]; then
+      qf=$QDIR/$a.txt
+      print -r -- "$pane" | tail -45 > $qf
+      now=$(date +%s)
+      if [ "${gate_since[$a]}" = "0" ]; then
+        gate_since[$a]=$now; gate_warn[$a]=0
+        ev "❓ $a 게이트 질문 — 봉인된 고정 답 필요 · 전문: $qf"
       else
-        gate[$a]=0
+        elapsed=$(( now - ${gate_since[$a]} ))
+        if [ $elapsed -ge 120 ] && [ $(( elapsed / 120 )) -gt ${gate_warn[$a]} ]; then
+          gate_warn[$a]=$(( elapsed / 120 ))
+          ev "❓ $a 게이트 질문 ${elapsed}초째 미응답 — $qf"
+        fi
+        # 폴백: 승인형이고 10분 방치면 1번(권고안)을 고른다
+        if [ $elapsed -ge 600 ]; then
+          if grep -qE '승인|제안대로|무수정|계속|Recommended' $qf; then
+            herdr agent send-keys $a 1 >/dev/null 2>&1
+            ev "⚠️ $a 게이트 10분 무응답 → 폴백으로 1번(권고안) 제출. 전문 $qf — 사후 검증 필요"
+            lg "$a GATE-FALLBACK=1"
+            gate_since[$a]=0
+          else
+            ev "🛑 $a 게이트 10분 무응답 · 승인형 아님 → 폴백 안 함. 사람이 답해야 한다 — $qf"
+            gate_since[$a]=$now
+          fi
+        fi
       fi
+      idle_n[$a]=0
+      continue
+    fi
+    gate_since[$a]=0
+
+    # ───────── ③ 오류·한도 ─────────
+    if print -r -- "$tail26" | grep -qiE "API Error|rate limit|usage limit|Execution error|crashed|out of context"; then
+      ev "⚠️ $a — $(print -r -- "$tail26" | grep -iE "API Error|rate limit|usage limit|Execution error|crashed|out of context" | head -1 | cut -c1-120)"
     fi
 
-    # 오류·한도 신호
-    if print -r -- "$pane" | grep -qiE "API Error|rate limit|usage limit|Execution error|crashed|context low"; then
-      echo "[$(date '+%H:%M')] ⚠️ $a — $(print -r -- "$pane" | grep -iE "API Error|rate limit|usage limit|Execution error|crashed|context low" | head -1 | cut -c1-110)"
-    fi
-
-    # 주입 발화 — 이 실험의 핵심 관측
+    # ───────── ④ 주입 발화 ─────────
     n=$(cat "$tgt/.dddjango/injection.jsonl" 2>/dev/null | wc -l | tr -d ' ')
     [ -z "$n" ] && n=0
     if [ "$n" != "${seen_inj[$a]}" ] && [ "$n" != "0" ]; then
-      echo "[$(date '+%H:%M')] 🔬 $a 주입 발화 — 회전 $n"
+      ev "🔬 $a 주입 발화 — 회전 $n"
       seen_inj[$a]=$n
+    fi
+
+    # ───────── ⑤ 완료(장기 유휴) ─────────
+    if [ $busy -eq 0 ]; then
+      idle_n[$a]=$(( ${idle_n[$a]} + 1 ))
+      if [ ${idle_n[$a]} -ge 12 ] && [ "${done_f[$a]}" = "0" ]; then
+        ev "🏁 $a 60초 유휴 — 완주 또는 정지. 채점 판단 필요"
+        done_f[$a]=1
+      fi
+    else
+      idle_n[$a]=0; done_f[$a]=0
     fi
   done
 
-  if [ $any -eq 0 ]; then
-    fails=$((fails+1))
-    [ $fails -ge 3 ] && { echo "[$(date '+%H:%M')] herdr 응답 없음 3회 — 감시 불능"; fails=0; }
-  else
-    fails=0
+  # 15분마다 생존 신호
+  if [ $((tick % 180)) -eq 0 ]; then
+    ev "· 감시 생존 (주입 R01=${seen_inj[t2ab-r01]} R02=${seen_inj[t2ab-r02]} R03=${seen_inj[t2ab-r03]})"
   fi
   sleep 5
 done
