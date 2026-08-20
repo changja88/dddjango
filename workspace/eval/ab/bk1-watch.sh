@@ -39,7 +39,10 @@ while true; do
     print -r -- "$pane"   | grep -qE 'Waiting for [0-9]+ background|◯ dddjango:' && busy=1
     print -r -- "$tail26" | grep -qE 'esc to interrupt|Interrupt' && busy=1
 
+    # 선택지가 길면 메뉴가 스크롤돼 «1.» 이 화면 밖으로 나간다 — 그러면 메뉴를 못 알아보고
+    # 유휴로 오인했다(R01 STOP-2). 항상 맨 아래 있는 안내 문구로 잡는다.
     menu=0
+    print -r -- "$tail26" | grep -qE 'Enter to select|Ready to submit' && menu=1
     print -r -- "$tail26" | grep -qE '^[[:space:]]*(❯[[:space:]]+)?1\.[[:space:]]' && menu=1
     perm=0
     print -r -- "$tail26" | grep -q "Do you want to proceed" && perm=1
@@ -47,7 +50,10 @@ while true; do
     # ───────── ① 권한 프롬프트 ─────────
     if [ $perm -eq 1 ]; then
       # 좁은 판에서 긴 명령이 줄바꿈되면 헤더가 수십 줄 위로 밀린다 — 창을 넉넉히 잡는다.
-      blk=$(print -r -- "$pane" | sed -n '1,/Do you want to proceed/p' | tail -400)
+      # 그리고 «첫» 프롬프트에서 자르면 안 된다: 스크롤백에 앞 프롬프트 잔상이 남아 있으면
+      # 거기서 끊겨 현재 프롬프트의 헤더를 통째로 놓친다(subj 가 비어 MANUAL 로 떨어졌다).
+      pn=$(print -r -- "$pane" | grep -n "Do you want to proceed" | tail -1 | cut -d: -f1)
+      blk=$(print -r -- "$pane" | sed -n "1,${pn}p" | tail -400)
       # 판이 좁으면 «Bash command» 가 두 줄로 쪼개지고 명령 상자가 │ 없이 들여쓰기만 쓴다.
       # 그래서 헤더는 낱말 단위로 찾는다.
       subj=$(print -r -- "$blk" | grep -E "Search\(|Glob\(|Grep\(|Read file|Bash|Edit file|Write\(|Update\(|WebFetch|WebSearch" | tail -1)
