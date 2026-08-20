@@ -554,7 +554,7 @@
         "workspace/tools/construct_drift_report.py": "281894ffb713088f4b150269915d3a1718604728ee10482f34b9eed7663a3af6",
         "workspace/tools/findings_count_matrix.py": "853e752f9ab6c7f6baca3b8ac5bc9880f95978d5e33b8c57cf9ee9063239f6d8",
         "workspace/tools/firing_probe.py": "09994ac306dbb06dfce46429bdd8701cdd39bf6964f515e596dbae3dbd918003",
-        "workspace/tools/manifest_seal.py": "0e48324afdb229a09353ed849e7ed58d276c0df22e1d2a3c8e737cc5c0677b9c",
+        "workspace/tools/manifest_seal.py": "43b5d79e7949825dde9a43fd95d1d1a7db41e0a5013ce5dcc3b79a54f0206e25",
         "workspace/tools/ontology-requirements.txt": "0329866c8aeec21f64af929ec52362d6a2ee3058cb9266025b147da367ee77ea",
         "workspace/tools/query_golden_check.py": "51617ef75f524841226d848c0fc8c76e6c4de8fb39b49ee395cdac31f8add129",
         "workspace/tools/regen_loop_prototype.py": "206d87a302058303fc68986275ea8624a27ea8fa0654fe2d4e94e71e33fc31f5",
@@ -581,7 +581,7 @@
         "workspace/eval/fixtures/api_error_contract/requirements.txt"
       ],
       "n_files": 32,
-      "tree_sha256": "338934d697996964a5e15d8a31c72d193655ce21653f01ac2e5b7040107a35e7",
+      "tree_sha256": "32bde1d7579eeab9bb5a1c027a9f20925758328f48a94169aab57680d7dc0fad",
       "why": "측정기. 실런 중 측정기가 바뀌면 앞뒤 런의 수치가 같은 자를 안 쓴 것이 된다(D11)."
     },
     "orders": {
@@ -873,8 +873,8 @@
     "source-claude": "aff4119079d1b2ad3900ecaf7c3213da8ae8ebb7ecc4b0d8e312099e4ea55867",
     "source-codex": "aff4119079d1b2ad3900ecaf7c3213da8ae8ebb7ecc4b0d8e312099e4ea55867"
   },
-  "sealed_commit": "62e6ee9b98d3b4b3a0a90441b2ab4dc288a9ece9",
-  "self_sha256": "ef2153dc8afc6e6e3f04ffd592e1f2a1948e7a72a4c998b4a148166158cbf837",
+  "sealed_commit": "e4f079ab1b9e7da0117aa0edd6c1eeb0750be5ef",
+  "self_sha256": "b9739fb8d3cee583d202748dc5a54493b15bc749431702429ff5c390150be8a5",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [
