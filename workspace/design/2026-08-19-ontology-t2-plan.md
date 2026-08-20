@@ -40,6 +40,15 @@
   - 판정 스칼라 = 결정적 검사기 위반 수 단독(severity=violation — 계수 규약은 T2-0b scorer 계약).
 - **estimand 명명(L-M #5·#6)**: B−A = «폐루프 정책 번들 효과»(루프+주입+재생성 예산) / C−B = «규칙 선별 층 효과»(동일 렌더러·동일 포맷·selector만 교체 전제 — T2-4). 두 대비 모두 발주 사례 연구로 한정.
 - **암 정의(L-N L-3·L-M #5)**: 세 암 모두 **T2 개작 완료판 파이프라인**(내부 plugin·검사기·gate byte-identical). A = `loop_enabled=off`·재생성 0 / B = 루프 on·스냅숏 markdown 조인 규칙 팩 / C = 루프 on·SPARQL 선별 규칙 팩. B·C 재생성 예산 동일 N=3. 실런 판형 = 무수정 승인 고정(게이트 반송 3암 공히 0 — 반송 지표는 판정 무관·§1 ② 의무 산출물로만).
+- **실험 측정 종료점(2026-08-20 사용자 승인 — 동결 개정 7)**: 런의 `measurement_complete` 와 Coordinator 의 `pipeline_complete`(G2 승인)를 **분리**한다. 세 암의 품질 채점 종료점은 G2 승인이 아니라 **암별 처치 종료 후 arm-independent 인수 테스트·frozen scorer 재실행을 마친 공통 post-treatment checkpoint** 다.
+  1. 최초 구현·감사·관련 테스트를 마치고 동결 인수 테스트가 통과한 상태를 **`S0` 로 봉인**한다.
+  2. 첫 결정적 게이트 receipt 후 암별 처치를 적용한다 — A = **null treatment**(재생성 0) / B·C = 동일 예산 N=3 폐루프 처치(위반 0 이면 조기 종료 가능하되 `no_progress` 는 **진단 플래그로만** 기록·종료 사유 아님).
+  3. 처치 종료 상태를 **`S1_x` 로 봉인**한다.
+  4. **세 암 모두** `S1_x` 에서 동결 인수 테스트와 frozen scorer 를 **새로 실행**한다.
+  5. 인수 테스트가 통과하고 기술 실패·scope 위반이 없는 경우에만 `V_x` 를 채점한다. 인수 실패는 판정 실패이며 `V=0` 으로 산입하지 않는다.
+  6. **G2 제시·승인은 어느 암에서도 채점 요건이 아니다.** `measurement_complete`·`acceptance_pass`·`pipeline_complete`·`g2_blocker_count`·`regen_turn_count`·`pre_gate_repair_cycles` 를 각각 기록한다.
+  7. 측정 종료 후 수행되는 현행 owner-remand·G1 회귀·G2 완료 작업은 **비채점 후속 처리**이며 봉인된 측정 snapshot 과 점수를 바꾸지 못한다(필요하면 별도 비채점 복제본에서 수행).
+  - 이에 따라 A 정의를 «off(현행 파이프라인의 G2 완료 상태)»가 아니라 **«공통 측정 wrapper 에서 null feedback treatment·재생성 0»**으로 하고, B−A estimand 를 **«동일 `S0` 에서 폐루프 정책 번들을 적용한 post-treatment 위반 수 차이»**로 한정한다. **처치 정의는 불변이고 바뀐 것은 채점 시점뿐이다.**
 - **런 유효성 규약(L-M #13)**: 런 시작 = 독립 세션 개시. 발주별 hard stop(§3). 기술 실패(모델 오류·인프라·scorer crash) = **같은 블록의 A/B/C triplet 전체 재실행+최초 기록 보존·사유 등재**. 산출물 미완성·STOP·인수 게이트 불통과 = **판정 실패**(0위반 산입 금지 — L-M #7). intention-to-treat: 유효 런 제외는 사전 등록 사유 목록만.
 - **발주 인수 게이트(L-M #7)**: 발주별 arm-independent 블랙박스 인수 테스트를 실런 전 동결(O-7=기존 고정 게이트 판형·O-4/O-5=발주문+인수 테스트 신규 저작 — T2-0b 봉인). 인수 통과본만 채점. LOC·파일 수·심볼 수를 노출량 공변량으로 기록.
 - **순서·레인 allocation(L-M #9)**: 18런의 발주×반복×암×순서×레인 배정표+공개 seed를 사전 등록(라틴 방진·각 암을 두 레인에 균형 배정). 블록 도중 환경 변화 시 triplet 재실행.
@@ -86,6 +95,8 @@ manifest 한 파일로 고정·해시 등재(첫 런 이후 어떤 변경도 = �
 - 메모리·지식 그래프·위반 이력 초기 스냅숏 해시.
 - 발주 3건 봉인: prompt bytes·baseline commit·gate 답·허용 도구·인수 테스트·**O-5 클린룸 리셋 앵커**(baseline commit·리셋 명령·리셋 후 동등성 해시 — 실증 1회 포함).
 - 18런 allocation 표+seed.
+- **설치본 신선도(2026-08-20 사용자 승인 «T2-0b 때 한 번에» — hard blocker)**: 서브에이전트는 working tree 가 아니라 **설치 cache 에서 로드**하므로(DEVLOG 실측) cache tree hash 를 기록하는 것만으로는 «방금 만든 source 와 같다»가 증명되지 않는다. **실측(2026-08-20)**: 설치 cache `2.11.0` ↔ source `2.12.0` · `.py` diff 30건 · **`findings.py` 가 cache 에 부재**(T2-1 공용 출력 모듈 전체 미반영). 따라서 manifest 봉인의 **선행조건**으로 ⓐ 사용자 승인 아래 설치본 갱신 ⓑ source ↔ Claude cache ↔ Codex cache 의 파일 목록·해시 **동등성** ⓒ 동일 red 픽스처로 **cache 경로에서 loop probe 재실행** 성공을 요구한다. T2-3 단계의 `plugin_loop_probe.py` 는 임시 materialized tree 로 artifact 를 검증했을 뿐 live cache 를 건드리지 않았다 — 그 재검증이 여기서 이뤄져야 한다.
+- **T2-3 fragment 병합**: 루프 core·selector·프롬프트 골든 byte·turn-log schema/version·반송 계수기와 픽스처 SHA·셸 B 실행 봉투(모델 ID·권한 모드·타임아웃)·환경 스위치(`DJR_LOOP_ENABLED`·`DJR_LOOP_SELECTOR`·`experiment_run_id` 전달 경로). 2026-08-20 실측 봉인값: scripts tree sha256 `51f0f9f075863a7d41745da9bb27fd7726d06c7e3142c7f76fa54bb88fd1dc91`(두 런타임 동일).
 
 ### T2-5. 3암 실런·판정·실런 후 처분
 
