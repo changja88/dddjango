@@ -68,6 +68,12 @@ verify-base:
 	PYTHONUTF8=1 python3 workspace/tools/api_error_backstop_matrix.py; \
 	diff -rq dddjango/scripts codex-dddjango/skills/dddjango/scripts --exclude=__pycache__
 
+# 설치본 위반 레코드 수집 (T2-2 — `.dddjango/violations/*.jsonl` → workspace/eval/violations/raw/)
+# 원천 지정: make collect-violations FROM="<dir1> <dir2>" (미지정 시 DJR_VIOLATIONS_DIR·저장소 설치본)
+collect-violations:
+	@set -euo pipefail; \
+	python3 workspace/tools/collect_violations.py $(foreach d,$(FROM),--from $(d))
+
 # 훅 단일 루트 설치 (T0 A8 — D2): core.hooksPath = workspace/hooks
 ontology-hooks:
 	@set -euo pipefail; \

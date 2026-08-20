@@ -36,3 +36,6 @@ workspace/develop/eval/*/latest-valid/
 *.bak
 *.swp
 *~
+
+# dddjango 도구 영역 — 설치본 위반 레코드(관측 부산물·T2-2)
+.dddjango/

@@ -60,6 +60,14 @@ def bc_shaped_target_reason(target: "Path | str") -> "str | None":
     p = Path(target)
     if not p.is_dir():
         return None
+    # 위반 레코드 sink 의 «대상 저장소» 등록(T2-2) — 27종이 전부 이 모듈을 거치므로
+    # 여기 한 곳이 설치본 기본 경로(`<root>/.dddjango/violations/`)를 봉인한다.
+    try:
+        import findings
+
+        findings.set_target(p)
+    except Exception:  # 레코드 채널은 «추가» 채널 — 등록 실패가 검사를 죽이지 않는다
+        pass
     if (p / "application").is_dir():
         return _interpreter_gap_reason(p)  # 루트 모양 — 호출 계약 정상·인터프리터 하한만 확인
     layers = [n for n in _BC_LAYER_DIRS if (p / n).is_dir()]

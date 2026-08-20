@@ -1,9 +1,20 @@
 """dddjango 검사기 공용 구조화 출력 모듈 v0 — 위반 레코드 스키마 findings/0 (T0 B2).
 
 역할: 검사기 출력의 «위반 = 1급 데이터» 통일(동결 블루프린트 E8)의 v0 부품.
-라인 채널(stdout)은 기존 규약 그대로 두고, 환경변수 DJR_FINDINGS_JSON=<파일 경로>가
-지정된 경우에만 JSON lines 레코드를 그 파일에 append 로 방출한다(추가 채널 —
-stdout 오염 금지: registry_gate 의 위반 라인 파싱 등 기존 소비자 무영향).
+라인 채널(stdout)은 기존 규약 그대로 두고 레코드는 «추가» 채널로만 나간다
+(stdout 오염 금지: registry_gate 의 위반 라인 파싱 등 기존 소비자 무영향).
+
+레코드 sink 우선순위(T2-2 — t2-plan §T2-2 L-7):
+  ① DJR_FINDINGS_JSON=<파일>   지정 파일에 append(하네스·스모크 계약 — 최우선·무변)
+  ② DJR_VIOLATIONS_DIR=<폴더>  `<UTC ISO>-<세션 8자>.jsonl` 로 원자 게시
+  ③ 설치본 기본                `<TARGET>/.dddjango/violations/` — **표식(.dddjango/)이
+                              이미 있을 때만** 켜진다(임의 프로젝트에 디렉터리를 새로
+                              만들지 않는다·hermetic 사본에는 표식이 없어 무영향).
+                              TARGET 등록은 checker_target 한 곳이 한다(27종 봉인점).
+②③ 은 **지연 개방**(첫 레코드에서만 임시 파일 개방 — 빈 파일 미생성)이고 프로세스
+종료 시 임시→최종 `os.replace` 로 원자 게시한다. 기록 실패는 sink 만 끄고 검사기의
+라인 출력·exit 를 바꾸지 않는다(의도적 fail-open — 관측이 처치를 오염시키지 않는다).
+수집은 저장소 측 `make collect-violations`(workspace/tools/collect_violations.py).
 무의존 표준 라이브러리 구현(E7 배포 경계 — scripts 동봉 가능 층). python3.9 호환.
 
 스키마 v0 (레코드 = JSON 한 줄 · 필드 추가=호환 확장, 기존 필드 의미 변경=버전 증가):
@@ -42,6 +53,7 @@ stdout 오염 금지: registry_gate 의 위반 라인 파싱 등 기존 소비�
 """
 from __future__ import annotations
 
+import atexit
 import json
 import os
 import re
@@ -50,6 +62,11 @@ import time
 from pathlib import Path
 
 ENV_VAR: str = "DJR_FINDINGS_JSON"
+# 설치본 위반 레코드 채널(T2-2 · t2-plan §T2-2 L-7) — 디렉터리 sink.
+ENV_DIR: str = "DJR_VIOLATIONS_DIR"
+ENV_SESSION: str = "DJR_SESSION_ID"
+INSTALL_MARKER: str = ".dddjango"   # 설치 표식(도구 영역 — F-C 관례)
+VIOLATIONS_SUBDIR: str = "violations"
 SCHEMA: str = "findings/0"
 SEVERITIES: "tuple[str, str, str]" = ("violation", "warning", "info")
 
@@ -81,6 +98,80 @@ class _Run:
 
 _run: "_Run | None" = None
 _sink_disabled: bool = False  # 쓰기 실패 후 프로세스 단위 비활성(라인 채널은 계속 산다)
+_target_root: "Path | None" = None      # checker_target 이 등록(27종 단일 봉인점)
+_dir_writer: "tuple | None" = None      # (handle, tmp, final) — 지연 개방
+
+
+def set_target(root: "str | Path") -> None:
+    """검사 대상 저장소 루트 등록 — 설치본 기본 sink 경로(`<root>/.dddjango/violations/`)
+    해석에만 쓴다. `checker_target.bc_shaped_target_reason` 한 곳이 호출한다."""
+    global _target_root
+    _target_root = Path(root)
+
+
+def _default_dir() -> "Path | None":
+    """설치 표식이 «이미 있을 때만» 기본 sink 를 켠다 — 임의 프로젝트에 디렉터리를
+    새로 만들지 않는다(놀람 최소화·하네스 hermetic 사본에도 표식이 없어 무영향)."""
+    if _target_root is None:
+        return None
+    marker: Path = _target_root / INSTALL_MARKER
+    return (marker / VIOLATIONS_SUBDIR) if marker.is_dir() else None
+
+
+def _sink_mode() -> "str | None":
+    """우선순위: 명시 파일(DJR_FINDINGS_JSON) → 명시 디렉터리 → 설치본 기본 디렉터리."""
+    if os.environ.get(ENV_VAR, "").strip():
+        return "file"
+    if os.environ.get(ENV_DIR, "").strip() or _default_dir() is not None:
+        return "dir"
+    return None
+
+
+def _session_tag() -> str:
+    raw: str = re.sub(r"[^0-9A-Za-z]", "", os.environ.get(ENV_SESSION, ""))[:8]
+    if raw:
+        return raw
+    import uuid
+
+    return uuid.uuid4().hex[:8]
+
+
+def _dir_handle():
+    """첫 레코드에서만 임시 파일을 연다(빈 파일 미생성 — lazy-open). 실패는 fail-open."""
+    global _dir_writer
+    if _dir_writer is not None:
+        return _dir_writer
+    d: str = os.environ.get(ENV_DIR, "").strip()
+    out: "Path | None" = Path(d) if d else _default_dir()
+    if out is None:
+        return None
+    out.mkdir(parents=True, exist_ok=True)
+    stamp: str = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+    final: Path = out / f"{stamp}-{_session_tag()}.jsonl"
+    if final.exists():  # 같은 초·같은 세션의 병렬 검사기 — pid 로 분리
+        final = out / f"{stamp}-{_session_tag()}-{os.getpid()}.jsonl"
+    tmp: Path = out / f".{final.name}.part"
+    _dir_writer = (open(tmp, "a", encoding="utf-8"), tmp, final)
+    atexit.register(_publish)
+    return _dir_writer
+
+
+def _publish() -> None:
+    """임시 → 최종 원자 게시(rename). 레코드 0건이면 게시하지 않는다."""
+    global _dir_writer
+    w = _dir_writer
+    if w is None:
+        return
+    _dir_writer = None
+    fh, tmp, final = w
+    try:
+        fh.close()
+        if tmp.stat().st_size == 0:
+            tmp.unlink()
+            return
+        os.replace(tmp, final)
+    except OSError:
+        pass  # 관측 부산물 — 게시 실패가 검사 결과를 바꾸지 않는다
 
 
 def _emit(checker: str, rule: "str | None", file: str, symbol: "str | None",
@@ -89,8 +180,8 @@ def _emit(checker: str, rule: "str | None", file: str, symbol: "str | None",
     global _run, _sink_disabled
     if _sink_disabled:
         return
-    path_s: str = os.environ.get(ENV_VAR, "").strip()
-    if not path_s:
+    mode: "str | None" = _sink_mode()
+    if mode is None:
         return
     if severity not in SEVERITIES:
         raise ValueError(f"severity 값 공간 밖: {severity!r} (허용: {SEVERITIES})")
@@ -114,16 +205,24 @@ def _emit(checker: str, rule: "str | None", file: str, symbol: "str | None",
         "message": message,
         "expression": None,
     }
+    line: str = json.dumps(record, ensure_ascii=False) + "\n"
     try:
-        with open(path_s, "a", encoding="utf-8") as fh:
-            fh.write(json.dumps(record, ensure_ascii=False) + "\n")
+        if mode == "file":
+            with open(os.environ[ENV_VAR].strip(), "a", encoding="utf-8") as fh:
+                fh.write(line)
+        else:
+            w = _dir_handle()
+            if w is None:
+                return
+            w[0].write(line)
     except OSError as exc:
         # 레코드는 «추가» 채널이다 — 쓰기 실패가 검사기의 라인 출력·exit 를 죽이면
         # 그 선언(«라인 출력·exit 의미론 무변»)이 거짓이 된다. 프로세스 단위로 sink 를
         # 끄고 한 번만 경고한다(T2-1 적대 검증 레인 R 1번 — 부모 없는 경로·읽기 전용에서
         # 27종 전부 FileNotFoundError 로 죽던 회귀).
         _sink_disabled = True
-        print(f"주의: 구조화 레코드 채널 비활성 — {ENV_VAR} 경로에 쓸 수 없다({exc})",
+        where: str = ENV_VAR if mode == "file" else f"{ENV_DIR}/설치본 위반 디렉터리"
+        print(f"주의: 구조화 레코드 채널 비활성 — {where} 경로에 쓸 수 없다({exc})",
               file=sys.stderr)
 
 
