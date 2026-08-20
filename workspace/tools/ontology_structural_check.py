@@ -6,8 +6,14 @@
 ① 규칙→담당(enforcedBy∨delegatedTo — 무소유 0) ② 검사기/에이전트→집행 규칙(역조인)
 ③ 절→블록 순서(절 내 1..n 연속·유일) ④ 규칙→블록→절→문서 역참조(+parentSection 허용)
 ⑤ Work→현행 Expression 왕복(revision·specializationOf 정합 — 위반 왕복은 골든 Violation로 실증)
+⑥ alias 함수성(동일 aliasText → 복수 Work 금지 · fail-closed)+⑥′ 미해소 alias(대상이 Work 폐포 밖)
 
-사용: PYTHONPATH=workspace/tools .venv/bin/python workspace/tools/ontology_structural_check.py [--report]
+⑥ 는 SHACL 로 대체 불가다 — `AliasEntryShape-aliasFor maxCount 1` 은 **노드 단위**라 «같은
+aliasText 를 가진 AliasEntry 두 노드»를 보지 못한다(교차 노드 유일성 미지원). 판정 근거는
+T2-2 귀속 판단표(`workspace/design/2026-08-20-ontology-t2-2-alias-ledger.md`) §4.
+
+사용: PYTHONPATH=workspace/tools .venv/bin/python workspace/tools/ontology_structural_check.py
+        [--report] [--self-test]
 exit 0 정합 / 1 위반 / 2 도구 오류
 """
 from __future__ import annotations
@@ -34,10 +40,91 @@ def load_graph(with_golden: bool):
     return g
 
 
+def alias_errors(g) -> "list[str]":
+    """⑥·⑥′ — alias 대장 무결성(T2-2). 골든 개체는 제외(④′·⑤′ 관용구 준용)."""
+    out: "list[str]" = []
+    # ⑥ 함수성: 같은 aliasText 가 서로 다른 Work 를 가리키면 위반(v3 E6 «모순 카탈로그»).
+    q6 = P + """SELECT ?t (COUNT(DISTINCT ?w) AS ?n) WHERE {
+      ?a a djr:AliasEntry ; djr:aliasText ?t ; djr:aliasFor ?w .
+      FILTER(!CONTAINS(STR(?a), "golden"))
+    } GROUP BY ?t HAVING (COUNT(DISTINCT ?w) > 1)"""
+    dup = list(g.query(q6))
+    if dup:
+        out.append("⑥ alias 함수성 위반 %d건: %s"
+                   % (len(dup), ", ".join(f"{r[0]}→{int(r[1])}Work" for r in dup[:5])))
+    # ⑥′ 미해소: aliasFor 대상이 Work 폐포 밖(오타·죽은 IRI·Work 아닌 개체).
+    q6b = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" + P + """SELECT ?a WHERE {
+      ?a a djr:AliasEntry ; djr:aliasFor ?w .
+      FILTER NOT EXISTS { ?w a ?cls . ?cls rdfs:subClassOf* djr:Work }
+    }"""
+    unresolved = [r for r in g.query(q6b) if "golden" not in str(r[0])]
+    if unresolved:
+        out.append("⑥′ 미해소 alias %d건: %s"
+                   % (len(unresolved), [str(r[0]).rsplit("#", 1)[-1] for r in unresolved[:5]]))
+    return out
+
+
+# 합성 그래프 — ⑥·⑥′ 가 «실제로 무는지» 증명한다(정본에 위반을 심는 red-first 대신).
+_SELF_TEST_TTL = f"""@prefix djr: <{DJR}> .
+djr:st-work-a a djr:Obligation .
+djr:st-work-b a djr:Prohibition .
+djr:st-alias-ok a djr:AliasEntry ; djr:aliasFor djr:st-work-a ;
+    djr:aliasText "rule#902" ; djr:aliasType djr:alias-unique .
+"""
+_SELF_TEST_DUP = f"""@prefix djr: <{DJR}> .
+djr:st-alias-d1 a djr:AliasEntry ; djr:aliasFor djr:st-work-a ;
+    djr:aliasText "rule#900" ; djr:aliasType djr:alias-unique .
+djr:st-alias-d2 a djr:AliasEntry ; djr:aliasFor djr:st-work-b ;
+    djr:aliasText "rule#900" ; djr:aliasType djr:alias-unique .
+"""
+_SELF_TEST_DEAD = f"""@prefix djr: <{DJR}> .
+djr:st-alias-dead a djr:AliasEntry ; djr:aliasFor djr:st-not-a-work ;
+    djr:aliasText "rule#901" ; djr:aliasType djr:alias-unique .
+"""
+
+
+def self_test() -> int:
+    from rdflib import Graph
+
+    def build(*extra: str):
+        g = Graph()
+        for f in sorted((REPO_ROOT / "ontology" / "vocab").glob("*.ttl")):
+            g.parse(f, format="turtle")  # subClassOf 폐포 재료
+        for ttl in (_SELF_TEST_TTL,) + extra:
+            g.parse(data=ttl, format="turtle")
+        return g
+
+    rows: "list[tuple[str, bool, str]]" = []
+    clean = alias_errors(build())
+    rows.append(("대조군(정상 alias 1건) — 위반 0", clean == [], f"{len(clean)}건"))
+    dup = alias_errors(build(_SELF_TEST_DUP))
+    rows.append(("⑥ 함수성 — 동일 aliasText→2 Work 검출",
+                 len(dup) == 1 and dup[0].startswith("⑥ "), "; ".join(dup) or "미검출"))
+    dead = alias_errors(build(_SELF_TEST_DEAD))
+    rows.append(("⑥′ 미해소 — aliasFor 가 Work 폐포 밖 검출",
+                 len(dead) == 1 and dead[0].startswith("⑥′"), "; ".join(dead) or "미검출"))
+    both = alias_errors(build(_SELF_TEST_DUP, _SELF_TEST_DEAD))
+    rows.append(("⑥+⑥′ 동시 검출", len(both) == 2, f"{len(both)}건"))
+    print("| self-test 단언 | 판정 | 실측 |")
+    print("|---|---|---|")
+    for name, ok, detail in rows:
+        print(f"| {name} | {'✓' if ok else '✗'} | {detail} |")
+    failed = [n for n, ok, _d in rows if not ok]
+    if failed:
+        print(f"[structural] self-test 실패: {failed}", file=sys.stderr)
+        return 2
+    print("[structural] self-test 통과: ⑥·⑥′ 검출력 4/4 실증")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--report", action="store_true", help="질의 결과 실물 출력(게이트 2 자료)")
+    ap.add_argument("--self-test", action="store_true",
+                    help="합성 그래프로 ⑥·⑥′ 검출력 실증(정본 무접촉)")
     args = ap.parse_args()
+    if args.self_test:
+        return self_test()
     g = load_graph(with_golden=True)
     errors: list[str] = []
 
@@ -106,6 +193,13 @@ def main() -> int:
       ?e prov:specializationOf ?w }"""
     violations_roundtrip = list(g.query(qv))
 
+    # ⑥·⑥′ alias 대장 무결성(T2-2 — fail-closed)
+    errors += alias_errors(g)
+    q_alias = P + """SELECT ?t ?w WHERE {
+      ?a a djr:AliasEntry ; djr:aliasText ?t ; djr:aliasFor ?w .
+      FILTER(!CONTAINS(STR(?a), "golden")) }"""
+    alias_rows = sorted((str(r[0]), str(r[1]).rsplit("#", 1)[-1]) for r in g.query(q_alias))
+
     # kind↔datatype 정합 (§16 저작 규약)
     from rdflib import Namespace
     from rdflib.namespace import RDF, XSD
@@ -134,10 +228,13 @@ def main() -> int:
         for owner, n in owners[:8]:
             print(f"    {str(owner).replace(DJR, 'djr:')} — {n}")
         print(f"[structural] ⑤ Violation→Work→Expression 왕복(골든 포함): {len(violations_roundtrip)}건 성립")
+        print(f"[structural] ⑥ alias 대장 {len(alias_rows)}건 · 해소 Work {len({w for _t, w in alias_rows})}종"
+              f" — 미등재 #N(조인 불가·T3 이월)은 판단표 §2·§5 소유"
+              f"{': ' + ', '.join(f'{t}→{w}' for t, w in alias_rows[:8]) if alias_rows else ''}")
 
     for e in errors:
         print(f"[structural] 위반: {e}", file=sys.stderr)
-    print(f"[structural] {'정합 — 5종 조인·순서·datatype 전부 성립' if not errors else f'위반 {len(errors)}건'}")
+    print(f"[structural] {'정합 — 6종 조인·순서·datatype·alias 전부 성립' if not errors else f'위반 {len(errors)}건'}")
     return 1 if errors else 0
 
 

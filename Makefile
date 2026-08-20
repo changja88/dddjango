@@ -41,7 +41,8 @@ verify-ontology:
 	python3 workspace/tools/ontology_ledger_check.py; \
 	echo "[verify-ontology 9/10] 렌더 동기 (투영물 == render(그래프))"; \
 	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_render_sync.py; \
-	echo "[verify-ontology 10/10] 구조 검증 (SPARQL 5종·순서·datatype)"; \
+	echo "[verify-ontology 10/10] 구조 검증 (SPARQL 6종·순서·datatype·alias 함수성)"; \
+	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_structural_check.py --self-test; \
 	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_structural_check.py
 
 # 기존 릴리즈 검증 세트 — 시스템 python3 유지 (실측 기반 보존, t0-plan A8)
