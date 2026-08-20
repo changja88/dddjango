@@ -63,8 +63,15 @@ while true; do
       [ -z "$subj" ] && subj="Bash"
       body=$blk
       safe=0
+      # 읽기는 그 자체로 위험하지 않다 — 리뷰어는 표준 라이브러리·Django 소스 등 온갖 경로를
+      # 읽는다(R02 가 python3.14 stdlib 를 읽으려다 멈췄다). 설치본·타깃만 허용하면 계속 멈춘다.
+      # 그래서 읽기는 기본 허용하되 **민감 경로**(홈 dot 설정·키)만 사람이 본다.
       if print -r -- "$subj" | grep -qE "Search\(|Glob\(|Grep\(|Read file"; then
-        { print -r -- "$body" | grep -qF "$CACHE" || print -r -- "$body" | grep -qF "$tgt"; } && safe=1
+        if print -r -- "$body" | grep -qE '/\.(ssh|aws|gnupg|docker|kube)/|/\.(zshrc|zprofile|bash_history|netrc|npmrc|pypirc)|/Users/[^/ ]+/\.claude/(settings|\.credentials)'; then
+          safe=0
+        else
+          safe=1
+        fi
       fi
       # 헤더가 «Bash command» 로 붙어 있기도 하고 좁은 판에서 «Bash» / «command» 로
       # 쪼개지기도 한다 — 탐지 패턴만 고치고 이 분기 조건을 안 고쳐서 한 번 더 놓쳤다.
@@ -82,9 +89,14 @@ while true; do
         else
           guard=0
         fi
+        # `find <상대경로> -name __pycache__ -type d -exec rm -rf {} +` 는 파이프라인이 검사기
+        # 실행 전마다 쓰는 정형구다. gitignore 된 빌드 산물만 지우고 대상이 이름으로 못박혀
+        # 있다. 이 형태만 문면에서 지운 뒤 나머지를 검사한다 — 일반 rm 은 계속 사람이 본다.
+        flat=$(print -r -- "$cmd" | sed -E 's/^[[:space:]]*│[[:space:]]?//' | tr '\n' ' ')
+        scrub=$(print -r -- "$flat" | sed -E 's/-name +"?__pycache__"? +-type +d +-exec +rm +-rf +\{\} +\+//g')
         if [ $guard -eq 1 ]; then
           safe=0
-        elif print -r -- "$cmd" | grep -qE '(^|[^a-zA-Z])(rm|curl|wget|ssh|scp|sudo|chmod|chown|kill|npm|pip|brew)[[:space:]]|git[[:space:]]+(push|reset[[:space:]]+--hard|clean)|pip[[:space:]]+install'; then
+        elif print -r -- "$scrub" | grep -qE '(^|[^a-zA-Z])(rm|curl|wget|ssh|scp|sudo|chmod|chown|kill|npm|pip|brew)[[:space:]]|git[[:space:]]+(push|reset[[:space:]]+--hard|clean)|pip[[:space:]]+install'; then
           safe=0
         else
           safe=1
