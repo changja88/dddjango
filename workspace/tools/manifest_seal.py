@@ -1075,16 +1075,27 @@ def check(claude_home: Path, codex_home: Path, draft_ok: bool,
             fails.append("sealed_commit 미지정 — 출처를 커밋에 고정하지 않았다")
         else:
             absent: "list[str]" = []
+            differ: "list[str]" = []
             for gname, g in (sealed.get("groups") or {}).items():
-                for rel in g.get("files", {}):
-                    r = subprocess.run(["git", "-C", str(ROOT), "cat-file", "-e",
+                for rel, want in g.get("files", {}).items():
+                    r = subprocess.run(["git", "-C", str(ROOT), "cat-file", "blob",
                                         f"{commit}:{rel}"], capture_output=True)
                     if r.returncode != 0:
                         absent.append(f"{gname}/{rel}")
+                        continue
+                    # 존재만 보면 «커밋에 있긴 한데 내용이 다른» 경우를 놓친다. 실행 비트는
+                    # blob 으로 알 수 없으므로 내용만 대조하고, 모드는 워킹트리 대조가 본다.
+                    if sha256_bytes(r.stdout + b"\0mode:-") != want and \
+                       sha256_bytes(r.stdout + b"\0mode:x") != want:
+                        differ.append(f"{gname}/{rel}")
             for a in absent[:8]:
                 fails.append(f"sealed_commit 에 부재 — {a}")
             if len(absent) > 8:
                 fails.append(f"… sealed_commit 부재 {len(absent) - 8}건 더")
+            for d in differ[:8]:
+                fails.append(f"sealed_commit 의 내용이 봉인값과 다르다 — {d}")
+            if len(differ) > 8:
+                fails.append(f"… sealed_commit 내용 불일치 {len(differ) - 8}건 더")
 
     # ⑧″ 설치본 대조 — 실런이 로드하는 것이 봉인한 것과 같은가
     if not draft_ok:
