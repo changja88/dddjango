@@ -44,9 +44,14 @@ while true; do
 
     # ───────── ① 권한 프롬프트 ─────────
     if [ $perm -eq 1 ]; then
-      # 긴 명령(heredoc 등)은 tail26 밖으로 밀려난다 — 프롬프트 위 120줄을 본다.
-      blk=$(print -r -- "$pane" | sed -n '1,/Do you want to proceed/p' | tail -120)
+      # 좁은 판에서 긴 명령이 줄바꿈되면 헤더가 수십 줄 위로 밀린다 — 창을 넉넉히 잡는다.
+      blk=$(print -r -- "$pane" | sed -n '1,/Do you want to proceed/p' | tail -400)
       subj=$(print -r -- "$blk" | grep -E "Search\(|Glob\(|Grep\(|Read file|Bash command|Edit file|Write\(|Update\(|WebFetch|WebSearch" | tail -1)
+      # 헤더를 끝내 못 찾아도 명령 상자(│)가 있으면 bash 프롬프트로 본다 — 헤더 부재가
+      # 곧 위험은 아니다. 안전 판정은 아래에서 명령 문면으로 따로 한다.
+      if [ -z "$subj" ] && print -r -- "$blk" | grep -qE '^[[:space:]]*│'; then
+        subj="Bash command"
+      fi
       body=$blk
       safe=0
       if print -r -- "$subj" | grep -qE "Search\(|Glob\(|Grep\(|Read file"; then
