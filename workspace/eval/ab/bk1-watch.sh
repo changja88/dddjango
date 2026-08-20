@@ -30,9 +30,12 @@ while true; do
     tail26=$(print -r -- "$pane" | tail -26)
     tgt="/Users/hyun/Desktop/t2ab-R${a#t2ab-r}"
 
+    # 스피너 글리프는 회전한다(✻ ✳ ✽ ✶ · …) — 글리프 대신 «경과·토큰 카운터»를 본다.
+    # 그 줄은 작업 중일 때만 뜬다: "… (5m 22s · ↓ 16.8k tokens)"
     busy=0
-    print -r -- "$tail26" | grep -qE '^[[:space:]]*(✻|⏺ dddjango|◯ )' && busy=1
+    print -r -- "$tail26" | grep -qE '\([0-9]+[ms][^)]*· ↓' && busy=1
     print -r -- "$pane"   | grep -qE 'Waiting for [0-9]+ background|◯ dddjango:' && busy=1
+    print -r -- "$tail26" | grep -qE 'esc to interrupt|Interrupt' && busy=1
 
     menu=0
     print -r -- "$tail26" | grep -qE '^[[:space:]]*(❯[[:space:]]+)?1\.[[:space:]]' && menu=1
