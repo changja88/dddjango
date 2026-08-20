@@ -1,0 +1,58 @@
+{
+  "runtime": {
+    "claude_model_id": "<예: claude-opus-4-8>",
+    "codex_model_id": "<예: gpt-5.6-sol>",
+    "permission_mode": "acceptEdits",
+    "thinking": "off",
+    "codex_reasoning_effort": "xhigh",
+    "allowed_tools": "<파이프라인 기본값의 실측 목록>"
+  },
+  "memory_projects": ["-Users-hyun-Desktop-broccoli-server"],
+  "orders": {
+    "O-7": {
+      "target_repo": "~/Desktop/dddjango-smoke-sample",
+      "artifacts": ["PROMPT.md", "setup.sh", "requirements.txt"],
+      "baseline_tests": {"green": 0, "red": 0},
+      "reset_anchor": {
+        "baseline_commit": "<clone 원본 HEAD>",
+        "reset_command": "rm -rf <타깃> && git clone ~/Desktop/dddjango-smoke-sample <타깃> && bash <타깃>/setup.sh",
+        "post_reset_tree_sha256": "<manifest_seal --tree-hash <타깃> 의 tracked_tree_sha256>",
+        "post_reset_untracked": [],
+        "post_reset_ignored": [],
+        "demonstrated_at": "2026-08-__"
+      }
+    },
+    "O-4": {
+      "target_repo": "<child_settings 워크트리>",
+      "artifacts": ["docs/rebuild/child_settings/spec.md",
+                    "docs/rebuild/child_settings/api_shape_pre_success.json",
+                    "docs/rebuild/child_settings/request.md",
+                    "docs/rebuild/child_settings/legacy_debt.txt"],
+      "baseline_tests": {"green": 0, "red": 0},
+      "reset_anchor": {
+        "baseline_commit": "<라운드 앵커>",
+        "reset_command": "<워크트리를 앵커로 되돌리는 정확한 명령>",
+        "post_reset_tree_sha256": "<tracked_tree_sha256>",
+        "post_reset_untracked": [],
+        "post_reset_ignored": [],
+        "demonstrated_at": "2026-08-__"
+      }
+    },
+    "O-5": {
+      "target_repo": "<delivery 워크트리>",
+      "artifacts": ["docs/rebuild/delivery/spec.md",
+                    "docs/rebuild/delivery/request.md",
+                    "docs/rebuild/delivery/legacy_debt.txt"],
+      "baseline_tests": {"green": 0, "red": 0},
+      "stub_induced_red": ["<스텁 기인 red 테스트 ID 전수 — 목록만 허용>"],
+      "reset_anchor": {
+        "baseline_commit": "<라운드 앵커>",
+        "reset_command": "<정확한 명령>",
+        "post_reset_tree_sha256": "<tracked_tree_sha256>",
+        "post_reset_untracked": [],
+        "post_reset_ignored": [],
+        "demonstrated_at": "2026-08-__"
+      }
+    }
+  }
+}
