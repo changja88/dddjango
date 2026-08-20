@@ -85,7 +85,7 @@ def run_tree(scripts: Path) -> "dict":
                                     "unmatched_lines": []}, ensure_ascii=False),
                         encoding="utf-8")
 
-        code, b, err = _cli(scripts, side, [], work)
+        code, b, err = _cli(scripts, side, ["--selector", "snapshot"], work)
         if code != 0:
             return {"errors": [f"snapshot CLI exit {code}: {err.strip()[:160]}"]}
         out["b_sha"] = hashlib.sha256(b.encode("utf-8")).hexdigest()
@@ -108,6 +108,14 @@ def run_tree(scripts: Path) -> "dict":
         code, _, _ = _cli(scripts, side, ["--selector", "bogus"], work)
         if code == 0:
             out["errors"].append("A4: 미지 selector 값이 통과했다")
+
+        # A4-③ selector 를 **아예 안 주면** 중단해야 한다(레인 AV 발견 4). 기본값이 있으면
+        # C암 런이 조용히 B 처치를 받고 exit 0 으로 끝나며, 로그를 뒤지기 전에는 아무도 모른다.
+        code, stdout_nosel, _ = _cli(scripts, side, [], work)
+        if code == 0:
+            out["errors"].append("A4: selector 미지정이 통과했다(조용한 snapshot 폴백)")
+        if stdout_nosel:
+            out["errors"].append("A4: selector 미지정인데 프롬프트가 나왔다")
 
         # A4-② 손상 팩 — 트리 사본에서 팩만 깨고 sparql 을 돌린다
         broken = work / "broken"

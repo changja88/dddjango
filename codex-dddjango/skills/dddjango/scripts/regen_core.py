@@ -252,24 +252,86 @@ def assemble_prompt(records: "list", rules: "list" = None) -> str:
 ENV_SELECTOR: str = "DJR_LOOP_SELECTOR"
 
 
+ENV_ENABLED: str = "DJR_LOOP_ENABLED"
+ENV_RUN_ID: str = "DJR_EXPERIMENT_RUN_ID"
+
+
+def _write_arm_receipt(path: str, os_mod, sys_mod) -> int:
+    """암 영수증 — «이 런이 어느 암으로 돌았는가»의 **양성 증거**.
+
+    A암은 루프를 안 돌리므로 `injection.jsonl` 이 아예 생기지 않는다. 그러면 산출물만으로는
+    ⓐ A로 돌았다 ⓑ B로 돌았는데 게이트가 green 이라 발화가 없었다 ⓒ B로 돌았는데 조율자가
+    step 6′ 를 건너뛰었다 — 셋이 구별되지 않는다. 셋의 판정 의미는 전혀 다르다(ⓐ 정상 ·
+    ⓑ 노출 0 · ⓒ 프로토콜 위반). 영수증은 그 구별을 **런 시작 시점에** 만든다.
+
+    스위치의 **원시 환경값**을 그대로 적는다 — 해석한 값을 적으면 해석기가 틀렸을 때 그 사실이
+    영수증에서 사라진다.
+    """
+    import hashlib
+    import pathlib
+    here = pathlib.Path(__file__).resolve().parent
+    files = {}
+    for name in ("regen_core.py", "rulepack.py", "rulepack.json"):
+        p = here / name
+        files[name] = (hashlib.sha256(p.read_bytes()).hexdigest() if p.is_file() else None)
+    row = {
+        "schema": "arm-receipt/0",
+        "env": {ENV_ENABLED: os_mod.environ.get(ENV_ENABLED),
+                ENV_SELECTOR: os_mod.environ.get(ENV_SELECTOR),
+                ENV_RUN_ID: os_mod.environ.get(ENV_RUN_ID)},
+        "scripts_dir": str(here),
+        "file_sha256": files,
+    }
+    try:
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(json.dumps(row, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
+    except OSError as exc:
+        print(f"[regen-core] 영수증 기록 실패: {exc}", file=sys_mod.stderr)
+        return 1
+    print(f"[regen-core] 암 영수증 기록 {path}", file=sys_mod.stderr)
+    return 0
+
+
 def _main(argv: "list" = None) -> int:
     import argparse
     import os
     import sys
 
     ap = argparse.ArgumentParser(description="재생성 주입 프롬프트 조립(셸 B 진입점)")
-    ap.add_argument("--introduced-json", required=True,
+    ap.add_argument("--introduced-json", default="",
                     help="게이트가 만든 귀속 sidecar(gate-introduced/0) — 이것만 입력이다")
     ap.add_argument("--scope", default="", help="범위 경로(쉼표 구분·부분 일치)")
-    ap.add_argument("--selector", default=os.environ.get(ENV_SELECTOR, "snapshot"),
+    # **기본값을 두지 않는다**(레인 AV 발견 4). 앞선 판은 `default="snapshot"` 이라, 실행자가
+    # `export` 를 빠뜨리거나 서브프로세스가 환경을 못 물려받으면 **C암 런이 조용히 B 처치를
+    # 받고 exit 0** 으로 끝났다 — 로그를 나중에 뒤지기 전에는 아무도 모른다. 팩 결손에만
+    # 걸려 있던 «조용한 폴백 금지»를 selector 미지정에도 건다.
+    ap.add_argument("--selector", default=os.environ.get(ENV_SELECTOR),
                     choices=("snapshot", "sparql"),
-                    help="snapshot=B암(그래프 미경유) · sparql=C암(규칙 팩)")
+                    help="snapshot=B암(그래프 미경유) · sparql=C암(규칙 팩) — **필수**. "
+                         f"{ENV_SELECTOR} 환경변수로도 준다. 둘 다 없으면 중단한다")
     ap.add_argument("--contract-json", default="",
                     help="게이트의 계약 companion sidecar(gate-contract/0) — `rule=null` 계수를 "
                          "용량 로그에 싣는다(개정 9 «계수 후 유효 유지»)")
     ap.add_argument("--capacity-log", default="",
                     help="용량·귀속 계상 jsonl(append) — 실런 기록용")
+    ap.add_argument("--arm-receipt", default="",
+                    help="암 영수증을 이 경로에 쓰고 종료한다(프롬프트 미생성). **세 암 모두** "
+                         "런 시작에 한 번 돌린다 — A암은 루프가 안 돌아 산출물이 없으므로, "
+                         "영수증이 없으면 «A로 돌았다»와 «B인데 게이트가 green 이었다»와 "
+                         "«조율자가 6′를 건너뛰었다»가 구별되지 않는다(레인 AV 발견 9)")
     args = ap.parse_args(argv)
+
+    if args.arm_receipt:
+        return _write_arm_receipt(args.arm_receipt, os, sys)
+
+    if not args.introduced_json:
+        print("[regen-core] --introduced-json 이 필요하다", file=sys.stderr)
+        return 1
+    if args.selector is None:
+        print(f"[regen-core] selector 미지정 — 중단한다. `--selector snapshot|sparql` 또는 "
+              f"`{ENV_SELECTOR}` 를 명시하라. 기본값을 두면 C암 런이 조용히 B 처치를 받는다.",
+              file=sys.stderr)
+        return 1
 
     try:
         payload = json.loads(open(args.introduced_json, encoding="utf-8").read())
@@ -294,11 +356,17 @@ def _main(argv: "list" = None) -> int:
             return 1
         records, rules, prov = select_graph(records, pack)
 
-    # 「C인데 규칙이 0건」은 프롬프트가 B와 같아진다 — **처치량이 정확히 0인 런**이다.
-    # 로그에 명시하지 않으면 이 런이 정상 C 런과 구별되지 않는다(사후 리뷰 AS-06).
-    uninformative: bool = args.selector == "sparql" and not rules
+    # 처치량 0 의 판정을 **정확 조인 기준**으로 세운다(레인 AV 발견 3).
+    # 앞선 판은 `not rules` 였다 — 규칙이 통째로 비었을 때만 켜졌다. 그런데 tier 2(검사기 축)
+    # 후보는 주입문 자신이 「candidate 를 근거로 다른 코드를 고치지 않는다」고 **행동을 금지**해
+    # 보내는 정보다. 정확 조인 0건 + 후보 31건인 런이 `uninformative=False` 로 «정상 C 런»이
+    # 되어 C−B 분모에 만점으로 들어가면, 투여량이 0에 가까운 런이 효과 없음의 증거로 쓰인다.
+    exact_n: int = sum(1 for r in (rules or []) if r.get("join") == "exact")
+    uninformative: bool = args.selector == "sparql" and exact_n == 0
     if uninformative:
-        print("[regen-core] C암인데 선별 규칙 0건 — 처치량 0(uninformative). "
+        detail = ("선별 규칙 0건" if not rules
+                  else f"정확 조인 0건(후보 {len(rules)}건뿐 — 후보는 행동 금지 정보다)")
+        print(f"[regen-core] C암인데 {detail} — 처치량 0(uninformative). "
               "C−B 유효쌍 분모에서 제외 대상이다.", file=sys.stderr)
 
     contract: "dict" = {}
@@ -312,19 +380,40 @@ def _main(argv: "list" = None) -> int:
     prompt = assemble_prompt(records, rules)
     if args.capacity_log:
         import hashlib
-        row = {"schema": "injection-capacity/2", "selector": args.selector,
+        import pathlib as _pl
+        # **실행 봉투를 회전마다 남긴다**(레인 AU 발견 7). 앞선 판은 selector 와 용량만 적어,
+        # 「그 회전이 어느 구현·어느 스위치로 돌았나」를 사후에 확인할 수 없었다. 스크립트
+        # 안에서 알 수 없는 값(모델 ID·권한 모드·타임아웃)은 **암 영수증**이 소유하고, 여기서는
+        # 알 수 있는 것 — 환경 스위치와 실행 코어의 해시 — 을 전부 적는다.
+        _here = _pl.Path(__file__).resolve().parent
+        _env = {k: os.environ.get(k) for k in (ENV_ENABLED, ENV_SELECTOR, ENV_RUN_ID)}
+        _core = {}
+        for _n in ("regen_core.py", "rulepack.py", "rulepack.json"):
+            _p = _here / _n
+            _core[_n] = (hashlib.sha256(_p.read_bytes()).hexdigest() if _p.is_file() else None)
+        try:
+            _turn = sum(1 for _ln in open(args.capacity_log, encoding="utf-8") if _ln.strip()) + 1
+        except OSError:
+            _turn = 1
+        row = {"schema": "injection-capacity/3", "selector": args.selector,
+               "turn": _turn, "env": _env, "core_sha256": _core,
+               "scripts_dir": str(_here),
                # 실런 식별자는 게이트 sidecar 가 운반한다(AT 과제 2 — 전 사슬).
                "experiment_run_id": payload.get("experiment_run_id"),
                "uninformative": uninformative,
                "uninjectable": {"total": contract.get("total", 0),
                                 "by_checker": contract.get("by_checker", {})},
                "violations_n": len(records), "rules_n": len(rules or []),
+               # exact 와 candidate 를 한 칸에 합치면 이름이 재는 것과 달라진다(AV 발견 3).
+               "exact_n": exact_n, "candidate_n": len(rules or []) - exact_n,
                "prompt_bytes": len(prompt.encode("utf-8")),
                "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
                "tiers": {str(t): sum(1 for p in prov if p["priority"] == t) for t in (1, 2, 3)},
                "deduped_n": sum(1 for p in prov if p["drop_reason"] == "duplicate"),
-               "hit_ratio": (round(sum(1 for p in prov if p["priority"] != 3) / len(prov), 4)
-                             if prov else None),
+               "exact_ratio": (round(sum(1 for p in prov if p["priority"] == 1) / len(prov), 4)
+                               if prov else None),
+               "candidate_ratio": (round(sum(1 for p in prov if p["priority"] == 2) / len(prov), 4)
+                                   if prov else None),
                "records_provenance": prov}
         with open(args.capacity_log, "a", encoding="utf-8") as fh:
             fh.write(json.dumps(row, ensure_ascii=False) + "\n")

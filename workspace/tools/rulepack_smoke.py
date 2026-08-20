@@ -208,7 +208,9 @@ def run(pack: "rp.Rulepack") -> "list":
                                         "unmatched_lines": []}, ensure_ascii=False),
                             encoding="utf-8")
             got = subprocess.run([sys.executable, str(ROOT / "dddjango" / "scripts" / "regen_core.py"),
-                                  "--introduced-json", str(side)],
+                                  "--introduced-json", str(side),
+                                  # selector 는 이제 명시 인자다(레인 AV 발견 4 — 기본값 폐지).
+                                  "--selector", "snapshot"],
                                  capture_output=True, text=True)
         return got.stdout == ref, f"CLI {len(got.stdout.encode())}B ↔ 오라클 {len(ref.encode())}B"
 

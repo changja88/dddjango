@@ -76,6 +76,9 @@ verify-base:
 	PYTHONUTF8=1 python3 workspace/tools/rulepack_smoke.py; \
 	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/derive_path_globs.py --check; \
 	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_rulepack.py --check; \
+	PYTHONUTF8=1 python3 workspace/tools/manifest_seal.py --check --draft; \
+	PYTHONUTF8=1 python3 workspace/tools/manifest_seal.py --self-test; \
+	PYTHONUTF8=1 python3 workspace/tools/ab_score.py --self-test; \
 	diff -rq dddjango/scripts codex-dddjango/skills/dddjango/scripts --exclude=__pycache__
 
 # 변이 자가검사 — 상시 verify 와 분리(T2-4 적대 리뷰 AQ-10: 검출력 증명은 무겁고 상시 아님).
@@ -96,11 +99,21 @@ verify-firing:
 # `verify` 는 firing probe 를 부르지 않으므로, stale cache 상태에서도 일반 검증은 green 이다.
 # **release 는 이 타깃을 부르지 않는다**(반증 레인 AT 4-2 — 앞선 문면은 과장이었다):
 # 설치본이 낡은 동안 release 를 막을 이유가 없고, 막아야 하는 것은 **C 실런**이다.
-# T2-5 runner 는 이 타깃 성공 없이 기동하지 않는다(엄격 모드 — ALLOW_STALE 무시).
+# **문면 정정(2026-08-20 전수 리뷰 AU 발견 5)**: 앞선 주석은 「T2-5 runner 는 이 타깃 성공
+# 없이 기동하지 않는다」고 적었으나 그런 runner 는 존재하지 않는다 — 실런 세션은 **사람이**
+# `claude`/`codex` 로 직접 기동하고(프로토콜 §2 ④ — 하네스 세션의 재귀 기동은 권한 분류기에
+# 차단된다), 이 타깃을 부르는 코드는 저장소 어디에도 없다. 즉 이것은 **자발적 진단 명령**이다.
+# 기동을 기계로 막을 자리가 없으므로 **채점 경계**에 건다: `--runready-receipt` 로 발행한
+# 영수증이 없거나 봉인본과 다르면 `ab_score.py` 가 채점을 거절한다. 막지 못하면 세지 않는다.
+#
+# **T2-0b manifest 엄격 대조가 여기 붙는다**(2026-08-20). 부속서에 `PENDING` 이 남아 있거나
+# status 가 `sealed` 가 아니면 red 다 — 그 red 가 «봉인 전에는 실런 금지»의 기계적 표현이다.
+# `verify` 는 `--draft` 로 부르므로 봉인 전에도 상시 검증은 green 이다(firing probe 와 같은 배치).
 verify-runready: verify verify-mutation
 	@set -euo pipefail; \
 	PYTHONUTF8=1 python3 workspace/tools/firing_probe.py; \
-	echo "[runready] 실런 진입 조건 충족 — 상시 검증 + 변이 검출력 + 발화 증명 전건 green"
+	PYTHONUTF8=1 python3 workspace/tools/manifest_seal.py --check; \
+	echo "[runready] 실런 진입 조건 충족 — 상시 검증 + 변이 검출력 + 발화 증명 + manifest 봉인"
 
 # 규칙 팩 재생성 — 그래프가 바뀌면 이걸 돌리고 커밋한다(투영물 · 직접 편집 금지)
 rulepack:
