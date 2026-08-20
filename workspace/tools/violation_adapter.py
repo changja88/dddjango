@@ -86,9 +86,16 @@ def _vid(work: str, file: str, symbol: "str | None", experiment: "str | None" = 
 
     **경로는 `regen_core.canonical_locator` 가 정규화한다**(AQ-03 — 재구현 금지): 라인번호만
     바뀐 같은 위반이 루프에서는 한 사건인데 여기서는 두 노드가 되던 갈라짐을 닫는다.
+
+    **실런 축은 접미다**(사후 리뷰 AS-11): 앞에 빈 필드를 붙이면 실런이 없는 기존 위반의 노드
+    IRI 까지 전부 바뀌어, 옛 그래프를 다시 적재할 때 같은 사건이 새 IRI 로 중복된다. 실런이
+    있을 때만 뒤에 덧붙여 **실런 없는 키는 T2-3 형식 그대로** 남긴다(라인번호 정규화는 의도된
+    변경이라 그 축에서만 달라진다).
     """
-    key = f"{experiment or ''}\x1f{work}\x1f{regen_core.canonical_locator(file)}\x1f{symbol or ''}"
-    return hashlib.sha256(key.encode("utf-8")).hexdigest()[:16]
+    parts: "list[str]" = [work, regen_core.canonical_locator(file), symbol or ""]
+    if experiment:                       # 실런 축은 **있을 때만 뒤에 붙는다**(사후 리뷰 AS-11)
+        parts.append(experiment)
+    return hashlib.sha256("\x1f".join(parts).encode("utf-8")).hexdigest()[:16]
 
 
 def _esc(s: str) -> str:

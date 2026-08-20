@@ -36,14 +36,24 @@ _LINE_SUFFIX: "re.Pattern" = re.compile(r":\d+\Z")
 
 
 def canonical_locator(file: "object") -> str:
-    """경로 정규화의 **단일 구현** — 라인번호 접미를 뗀다.
+    """경로 정규화 — 라인번호 접미를 뗀다. **문자열만 받는다**(fail-closed).
 
-    `identity()` 안에 숨어 있던 규칙을 밖으로 뺀 것이다(T2-4 적대 리뷰 AQ-03). 위반 그래프
+    `identity()` 안에 숨어 있던 규칙을 밖으로 뺀 것이다(T2-4 선행 리뷰 AQ-03). 위반 그래프
     어댑터는 `rule` 이 아니라 Work IRI 로 키를 잡아 `identity()` 를 그대로 쓸 수 없었고, 그래서
     자기 정규화를 **재구현**했다 — 실측상 `a.py:3` 과 `a.py:4` 가 루프에서는 같은 사건인데
-    어댑터에서는 서로 다른 노드가 됐다. 루프·어댑터·scorer 가 이 함수 하나를 호출한다.
+    어댑터에서는 서로 다른 노드가 됐다.
+
+    **어디까지 단일인가**(사후 리뷰 AS-12 — 앞선 주석은 «scorer 도 이걸 쓴다»고 했으나 거짓):
+    재생성 루프(`identity`·no-progress)와 위반 그래프 어댑터가 이 함수를 공유한다.
+    `findings_count_matrix` 의 violation_id 는 **raw** `(rule, file, symbol)` 해시로 남아 있다 —
+    그쪽은 stdout 계수 골든이라 라인번호까지 고정하는 것이 목적이고, 사건 동일성과 축이 다르다.
+    두 축을 합칠지는 T2-0b 봉인 때 확정한다(합치면 27종 EXPECTED 가 전부 바뀐다).
+
+    `None`·비문자를 조용히 `"None"` 으로 접으면 서로 다른 사건이 한 키로 뭉친다 — 거절한다.
     """
-    return _LINE_SUFFIX.sub("", str(file))
+    if not isinstance(file, str):
+        raise TypeError(f"canonical_locator: 문자열이 아니다({type(file).__name__}) — {file!r}")
+    return _LINE_SUFFIX.sub("", file)
 
 
 def identity(record: "dict") -> "tuple":
@@ -57,7 +67,7 @@ def identity(record: "dict") -> "tuple":
     모두 이것을 호출해야 «같은 위반»의 정의가 갈라지지 않는다.
     """
     return (record.get("rule"),
-            canonical_locator(record.get("file", "")),
+            canonical_locator(record.get("file") or ""),
             record.get("symbol"))
 
 _HEADER: "tuple[str, ...]" = (
@@ -153,6 +163,18 @@ def select_graph(records: "list", pack: "object") -> "tuple":
     **이질** 규범을 진술한다(실측 — Obligation 5·Exception 4·Prohibition 2가 한 블록 `b9`에
     묶여 있다). 팩 밖(tier 3)은 순위가 없어 **원래 순서 그대로 뒤에** 붙는다 = B와 같은 재료.
     """
+    # 중복 제거의 **대표를 결정적으로 고른다**(사후 리뷰 AS-02 확장 — G9 가 실측으로 잡았다).
+    # 「먼저 본 것을 남긴다」면 같은 identity 를 가지되 `file`·`message` 가 다른 레코드
+    # (`x.py:12` ↔ `x.py:99` — 라인번호만 다른 같은 위반)에서 **입력 순서가 주입 문면을
+    # 바꾼다**. 같은 multiset 은 같은 프롬프트여야 하므로 대표를 정렬로 고정한다.
+    rep: "dict" = {}
+    for rec in records:
+        key = identity(rec)
+        cand = (str(rec.get("file", "")), str(rec.get("message", "")),
+                str(rec.get("record_id", "")))
+        if key not in rep or cand < rep[key][0]:
+            rep[key] = (cand, rec)
+
     kept: "list" = []
     prov: "list" = []
     seen: "set" = set()
@@ -169,14 +191,22 @@ def select_graph(records: "list", pack: "object") -> "tuple":
             prov.append(row)
             continue
         seen.add(key)
-        kept.append((rank is None, rank if rank is not None else 0, tier, index, rec))
+        # 정렬 키 = `(순위 없음, tier, 순위, identity, 원래 자리)`.
+        # **tier 를 순위보다 앞에 둔다**(사후 리뷰 AS-02): 승인 계약이 `(tier, order_key,
+        # identity)` 인데 순위를 앞세우면 낮은 rank 의 tier 2 가 정확 조인(tier 1)을 앞질렀다.
+        # **identity 를 tie-breaker 로 둔다**: 원래 자리(index)를 최종 키로 쓰면 같은 multiset
+        # 이 입력 순서에 따라 다른 프롬프트를 냈다(실측 재현 — u1/u2 순열 뒤집기).
+        # tier 3 만 원래 자리를 쓴다 — 팩 밖은 B와 같은 재료·같은 순서여야 하기 때문이다.
+        unranked: bool = rank is None
+        kept.append((unranked, tier, rank if rank is not None else 0,
+                     index if unranked else 0, tuple(str(x) for x in key), rep[key][1]))
         prov.append(row)
 
-    kept.sort(key=lambda t: (t[0], t[1], t[2], t[3]))
-    ordered: "list" = [t[4] for t in kept]
+    kept.sort(key=lambda t: t[:5])
+    ordered: "list" = [t[5] for t in kept]
 
     picked: "list" = []
-    for _, _, _, _, rec in kept:
+    for rec in ordered:
         _, _, wids = pack.locate(rec)
         picked.extend(wids)
     return ordered, pack.rules(picked), prov
@@ -221,6 +251,9 @@ def _main(argv: "list" = None) -> int:
     ap.add_argument("--selector", default=os.environ.get(ENV_SELECTOR, "snapshot"),
                     choices=("snapshot", "sparql"),
                     help="snapshot=B암(그래프 미경유) · sparql=C암(규칙 팩)")
+    ap.add_argument("--contract-json", default="",
+                    help="게이트의 계약 companion sidecar(gate-contract/0) — `rule=null` 계수를 "
+                         "용량 로그에 싣는다(개정 9 «계수 후 유효 유지»)")
     ap.add_argument("--capacity-log", default="",
                     help="용량·귀속 계상 jsonl(append) — 실런 기록용")
     args = ap.parse_args(argv)
@@ -248,10 +281,28 @@ def _main(argv: "list" = None) -> int:
             return 1
         records, rules, prov = select_graph(records, pack)
 
+    # 「C인데 규칙이 0건」은 프롬프트가 B와 같아진다 — **처치량이 정확히 0인 런**이다.
+    # 로그에 명시하지 않으면 이 런이 정상 C 런과 구별되지 않는다(사후 리뷰 AS-06).
+    uninformative: bool = args.selector == "sparql" and not rules
+    if uninformative:
+        print("[regen-core] C암인데 선별 규칙 0건 — 처치량 0(uninformative). "
+              "C−B 유효쌍 분모에서 제외 대상이다.", file=sys.stderr)
+
+    contract: "dict" = {}
+    if args.contract_json:
+        try:
+            contract = json.loads(open(args.contract_json, encoding="utf-8").read())
+        except (OSError, ValueError) as exc:
+            print(f"[regen-core] 계약 sidecar 읽기 실패: {exc}", file=sys.stderr)
+            return 1
+
     prompt = assemble_prompt(records, rules)
     if args.capacity_log:
         import hashlib
         row = {"schema": "injection-capacity/2", "selector": args.selector,
+               "uninformative": uninformative,
+               "uninjectable": {"total": contract.get("total", 0),
+                                "by_checker": contract.get("by_checker", {})},
                "violations_n": len(records), "rules_n": len(rules or []),
                "prompt_bytes": len(prompt.encode("utf-8")),
                "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
@@ -262,7 +313,10 @@ def _main(argv: "list" = None) -> int:
                "records_provenance": prov}
         with open(args.capacity_log, "a", encoding="utf-8") as fh:
             fh.write(json.dumps(row, ensure_ascii=False) + "\n")
-    print(prompt)
+    # `print` 이 아니라 **write** 다: print 는 말미 LF 를 하나 더 붙여 B암 stdout 이 T2-3 보다
+    # 정확히 1 byte 길어졌다(사후 리뷰 AS-01 실측 — 576 → 577). 「B 프롬프트 byte 불변」은
+    # 함수 반환값이 아니라 **실제 진입점의 stdout** 에서 성립해야 한다.
+    sys.stdout.write(prompt)
     return 0
 
 

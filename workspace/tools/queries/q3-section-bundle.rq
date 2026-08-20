@@ -4,11 +4,12 @@
 # 계약: **블록 1개당 1행**. Work 행으로 복제하지 않는다(T2-4 적대 리뷰 AQ-01 — 텍스트 소유자는
 #       Block 이고 한 블록이 최대 11개 Work 를 진술한다. Work 로 조인하면 같은 문면이 11번
 #       반복되고 «규범 수»가 문면 용량으로 오독된다).
-# 입력: $SECTION(절 IRI) 또는 $SECTION_NUMBER — 호출자가 하나를 바인딩한다.
+# 입력: `$SECTION_NUMBER` **필수**. 미바인딩이면 FILTER 비교가 오류가 되어 0행이다
+#       (전량 반환이 아니라 fail-closed — 사후 리뷰 AS-15).
 PREFIX djr: <https://numchida.com/ns/djr#>
 
 SELECT ?section ?sectionNumber ?heading ?block ?blockOrder ?kind ?text
-       (GROUP_CONCAT(DISTINCT STR(?work); separator=";") AS ?statesNorms)
+       (GROUP_CONCAT(DISTINCT STR(?work); separator="\u001F") AS ?statesNorms)
 WHERE {
   ?section a djr:Section ;
            djr:sectionNumber ?sectionNumber ;
@@ -17,6 +18,7 @@ WHERE {
          djr:order ?blockOrder ;
          djr:kind ?kind ;
          djr:text ?text .
+  FILTER(STR(?sectionNumber) = STR($SECTION_NUMBER))
   OPTIONAL { ?block djr:statesNorm ?work }
 }
 GROUP BY ?section ?sectionNumber ?heading ?block ?blockOrder ?kind ?text

@@ -5,6 +5,9 @@
 # 처치에 넣으면 「O-7 산출 경로에 맞춰 글롭을 저작했다」는 의심만 떠안는다.
 # 따라서 이 질의의 결과는 **C 효과 주장에 사용하지 않는다**.
 #
+# 계약(사후 리뷰 AS-15): 이 질의는 **글롭 대장 전량**을 돌려준다 — SPARQL 에는 글롭 매칭이
+#       없으므로 «경로 → 규범» 좁히기는 소비자(`rulepack.norms_for_path`)가 수행하며,
+#       그 matcher 의 문법 준수는 별도 게이트(`rulepack_smoke` G7·G11)가 잠근다.
 # 글롭은 표준 트리에서 **기계 유도**된다(`workspace/tools/derive_path_globs.py`).
 # 문법은 폐쇄 정의이며 정적 셰이프(`SectionShape-pathGlob`)와 런타임 matcher
 # (`dddjango/scripts/rulepack.py`)가 **각각 별도 게이트**로 지킨다(AR 4-4).

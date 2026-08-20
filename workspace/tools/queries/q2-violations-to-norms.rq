@@ -10,7 +10,7 @@ PREFIX djr: <https://numchida.com/ns/djr#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
 SELECT ?work ?label (COUNT(DISTINCT ?violation) AS ?violationCount)
-       (GROUP_CONCAT(DISTINCT STR(?checker); separator=";") AS ?checkers)
+       (GROUP_CONCAT(DISTINCT STR(?checker); separator="\u001F") AS ?checkers)
 WHERE {
   ?violation a djr:Violation ;
              djr:experimentRun ?run ;

@@ -45,8 +45,32 @@ def observe() -> "dict":
     from rdflib import Literal
 
     prod = _graph()
-    runs = _graph([FIXTURES / "q2-runs.ttl"])
-    out: "dict" = {}
+    # Q2 재료는 **어댑터가 굽는다**(사후 리뷰 AS-10): 손으로 쓴 TTL 을 읽으면 findings →
+    # 어댑터 → 질의 사슬이 실제로 이어지는지 검증되지 않는다. 여기서 findings/0 레코드에
+    # `experiment_run_id` 를 실어 어댑터를 태우고, 그 산출 TTL 로 Q2 를 돈다.
+    import violation_adapter as va
+    base_rec = {"schema": "findings/0", "ts": "2026-08-20T00:00:00Z", "severity": "violation",
+                "sentinel": None, "contract_ref": None, "symbol": None, "expression": None}
+    recs = [
+        dict(base_rec, run_id="p-1", record_id="a:1", rule="#3", experiment_run_id="exp-A",
+             checker="check-context-isolation.py", file="application/a/x.py:12",
+             message="A런 전용 위반"),
+        dict(base_rec, run_id="p-2", record_id="a:2", rule="#488", experiment_run_id="exp-A",
+             checker="check-layer-skeleton.py", file="application/b/__init__.py",
+             message="두 런에 재발(A)"),
+        dict(base_rec, run_id="p-3", record_id="b:1", rule="#488", experiment_run_id="exp-B",
+             checker="check-layer-skeleton.py", file="application/b/__init__.py",
+             message="두 런에 재발(B)"),
+    ]
+    ttl, tally = va.convert(recs, va.load_alias_map())
+    from rdflib import Graph
+    runs = _graph()
+    runs.parse(data=("@prefix djr: <https://numchida.com/ns/djr#> .\n"
+                     "@prefix sh: <http://www.w3.org/ns/shacl#> .\n"
+                     "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n" + ttl),
+               format="turtle")
+    out: "dict" = {"adapter": {"joined": tally["joined"],
+                               "nodes": ttl.count(" a djr:Violation")}}
 
     # Q1 — 경로 축(처치 밖 카탈로그). 양성: 글롭 4건. 음성: 절이 아닌 주어 0건.
     rows = list(prod.query((QUERIES / "q1-path-to-norms.rq").read_text(encoding="utf-8")))
@@ -63,13 +87,13 @@ def observe() -> "dict":
     out["q2:미바인딩"] = sorted(f"{_local(r.work)}×{int(r.violationCount)}"
                               for r in runs.query(q2))
 
-    # Q3 — 절 묶음. **블록 1개당 1행**(Work 행 복제 금지 — AQ-01).
+    # Q3 — 절 묶음. **블록 1개당 1행**(Work 행 복제 금지 — AQ-01) + **입력 필수**(AS-15).
     q3 = (QUERIES / "q3-section-bundle.rq").read_text(encoding="utf-8")
-    rows3 = list(prod.query(q3))
-    per: "dict[str, int]" = {}
-    for r in rows3:
-        per[str(r.sectionNumber)] = per.get(str(r.sectionNumber), 0) + 1
-    out["q3"] = {"blocks_per_section": dict(sorted(per.items())), "rows": len(rows3)}
+    for number in ("6.1", "3.2"):
+        rows3 = list(prod.query(q3, initBindings={"SECTION_NUMBER": Literal(number)}))
+        out[f"q3:{number}"] = {"rows": len(rows3),
+                               "sections": sorted({str(r.sectionNumber) for r in rows3})}
+    out["q3:미바인딩"] = len(list(prod.query(q3)))
 
     # Q4 — 주입 조립 정렬 키. Work 1건당 1행.
     rows4 = list(prod.query((QUERIES / "q4-injection-order.rq").read_text(encoding="utf-8")))
@@ -113,6 +137,12 @@ def main(argv: "list[str] | None" = None) -> int:
         diffs.append("q2 미등록 런이 결과를 냈다 — run 격리 파손")
     if got.get("q2:미바인딩"):
         diffs.append("q2 가 $RUN 미바인딩에서 결과를 냈다 — 전역 스캔(격리 파손)")
+    if got.get("q3:미바인딩"):
+        diffs.append("q3 가 $SECTION_NUMBER 미바인딩에서 결과를 냈다 — 전량 반환(입력 계약 파손)")
+    if got.get("q3:6.1") == got.get("q3:3.2"):
+        diffs.append("q3 가 입력에 따라 다른 부분집합을 내지 않는다(공허 통과)")
+    if (got.get("adapter") or {}).get("nodes") != 3:
+        diffs.append(f"어댑터가 실런 3사건을 3노드로 굽지 않았다: {got.get('adapter')}")
     if "R-0120×1" not in got.get("q2:exp-A", []) or "R-0120×1" not in got.get("q2:exp-B", []):
         diffs.append("런 간 재발이 양쪽에 보존되지 않는다(어댑터 사건 노드 축 파손)")
 

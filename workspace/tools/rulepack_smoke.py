@@ -186,6 +186,84 @@ def run(pack: "rp.Rulepack") -> "list":
                     fails += 1
         return fails == 3, f"{fails}/3"
 
+    def g8():
+        """**CLI stdout** 을 T2-3 커밋의 함수 출력과 대조 — 독립 오라클(사후 리뷰 AS-01·AS-05).
+
+        G2 는 같은 모듈의 함수를 부르는 자기 참조 대조라 `print` 가 붙인 말미 LF 1 byte 를
+        보지 못했다. 여기서는 ⓐ 오라클을 `git show bdf126c:` 로 **그 시점 소스에서** 얻고
+        ⓑ 비교 대상을 **subprocess stdout** 으로 잡는다. 실제 셸 B 가 쓰는 경로가 이쪽이다.
+        """
+        import subprocess
+        src = subprocess.run(["git", "show", "bdf126c:dddjango/scripts/regen_core.py"],
+                             capture_output=True, text=True, cwd=str(ROOT))
+        if src.returncode != 0:
+            return False, "T2-3 커밋 소스 취득 실패"
+        ns: "dict" = {}
+        exec(compile(src.stdout, "t2-3", "exec"), ns)          # noqa: S102 — 골든 오라클
+        ref: str = ns["assemble_prompt"](ns["select_records"](FIXTURE))
+        with tempfile.TemporaryDirectory() as d:
+            side = Path(d) / "introduced.json"
+            side.write_text(json.dumps({"schema": "gate-introduced/0", "anchor": "x",
+                                        "attributed_lines": ["a"], "records": FIXTURE,
+                                        "unmatched_lines": []}, ensure_ascii=False),
+                            encoding="utf-8")
+            got = subprocess.run([sys.executable, str(ROOT / "dddjango" / "scripts" / "regen_core.py"),
+                                  "--introduced-json", str(side)],
+                                 capture_output=True, text=True)
+        return got.stdout == ref, f"CLI {len(got.stdout.encode())}B ↔ 오라클 {len(ref.encode())}B"
+
+    def g9():
+        """순열 불변 — 같은 multiset 은 같은 프롬프트여야 한다(사후 리뷰 AS-02)."""
+        import itertools
+        # tier 3(팩 밖)은 **B와 같은 원래 순서**를 유지하는 것이 계약이라 순열 불변 대상이
+        # 아니다. 여기서는 tier 1·2 만으로 잰다(중복 1건 포함 — 대표 선택도 결정적이어야 한다).
+        ranked = [r for r in FIXTURE if pack.locate(r)[0] != rp.TIER_NONE]
+        seen: "set" = set()
+        for perm in itertools.permutations(ranked):
+            ordered, rules, _ = rc.select_graph(list(perm), pack)
+            seen.add(rc.assemble_prompt(ordered, rules))
+        return len(seen) == 1, f"tier1·2 {len(ranked)}건 순열 {len(seen)}종 프롬프트"
+
+    def g10():
+        """손상 팩은 `PackError` 이고 tier 3 폴백이 아니다(사후 리뷰 AS-07)."""
+        import copy
+        base = json.loads((ROOT / "dddjango" / "scripts" / "rulepack.json")
+                          .read_text(encoding="utf-8"))
+        muts = (("works 비움", lambda d: d.update({"works": {}})),
+                ("alias 손상", lambda d: d["by_alias"].update({"#3": "R-MISSING"})),
+                ("checker 손상", lambda d: d["by_checker"].update({"x.py": ["R-MISSING"]})),
+                ("checker 빈목록", lambda d: d["by_checker"].update({"x.py": []})),
+                ("글롭 문법", lambda d: d["by_path"].append(
+                    {"glob": "a/***/b", "section": "s", "works": []})))
+        missed = []
+        for name, f in muts:
+            d = copy.deepcopy(base)
+            f(d)
+            try:
+                rp.Rulepack(d)
+                missed.append(name)
+            except rp.PackError:
+                pass
+        return not missed, f"손상 {len(muts)}종 · 미검출 {missed or 0}"
+
+    def g11():
+        """글롭 문법 폐쇄 — 정적·런타임이 같은 parser 를 쓴다(사후 리뷰 AS-14)."""
+        bad = ("a/***/b", "a//b", "a/../b", "/absolute/**", "a/", "***", "a/**/**/b", "")
+        leaked = []
+        for g in bad:
+            try:
+                rp.compile_glob(g)
+                leaked.append(g)
+            except ValueError:
+                pass
+        ok_cases = ("application/*/domain_layer/**", "application/*/**", "a/**/b")
+        for g in ok_cases:
+            try:
+                rp.compile_glob(g)
+            except ValueError:
+                leaked.append(f"정상인데 거절: {g}")
+        return not leaked, f"음성 {len(bad)}·양성 {len(ok_cases)} · 이탈 {leaked or 0}"
+
     for name, fn in (("G1 팩 검사기 키 ⊆ 로스터", g1),
                      ("G2 B암 byte 불변(T2-3 판형 독립 재구성)", g2),
                      ("G3a C 중복 제거 + 집합 보존", g3a),
@@ -195,7 +273,11 @@ def run(pack: "rp.Rulepack") -> "list":
                      ("G4 본문 미동봉(팩·프롬프트 공히)", g4),
                      ("G5 주입 경계(적대 명칭·적대 문면)", g5),
                      ("G6 fail-closed(부재·손상·스키마)", g6),
-                     ("G7 Q1 matcher conformance(글롭 단위 10케이스)", g7)):
+                     ("G7 Q1 matcher conformance(글롭 단위 10케이스)", g7),
+                     ("G8 CLI stdout ↔ T2-3 독립 오라클", g8),
+                     ("G9 순열 불변(같은 multiset = 같은 프롬프트)", g9),
+                     ("G10 손상 팩 fail-closed(5종)", g10),
+                     ("G11 글롭 문법 폐쇄(음성 8·양성 3)", g11)):
         _check(out, name, fn)
     return out
 
@@ -209,6 +291,9 @@ _MUTATIONS: "tuple" = (
     ("M6 <rules> 블록 누락", "norules"),
     ("M7 selector 무시(항상 snapshot)", "ignore"),
     ("M8 escape 제거", "escape"),
+    ("M9 중복 대표를 first-seen 으로", "firstseen"),
+    ("M10 팩 참조 무결성 검사 제거", "norefcheck"),
+    ("M11 글롭 문법 검사 제거", "noglobcheck"),
 )
 
 
@@ -216,10 +301,12 @@ def _mutate(kind: str, pack: "rp.Rulepack") -> "tuple":
     """(복원 함수, 변이된 pack) — 변이는 **실제 방어 지점**을 건드린다."""
     orig_select, orig_block, orig_locate = rc.select_graph, rc._data_block, type(pack).locate
     orig_rank = type(pack).rank
+    orig_refs, orig_validate = type(pack)._validate_refs, rp.validate_glob
 
     def restore() -> None:
         rc.select_graph, rc._data_block = orig_select, orig_block
         type(pack).locate, type(pack).rank = orig_locate, orig_rank
+        type(pack)._validate_refs, rp.validate_glob = orig_refs, orig_validate
 
     if kind == "order":
         type(pack).rank = lambda self, wid: 0
@@ -249,6 +336,21 @@ def _mutate(kind: str, pack: "rp.Rulepack") -> "tuple":
         rc.select_graph = norules
     elif kind == "ignore":
         rc.select_graph = lambda records, pk: (list(records), [], [])
+    elif kind == "firstseen":
+        def firstseen(records, pk):
+            seen, uniq = set(), []
+            for r in records:
+                k = rc.identity(r)
+                if k in seen:
+                    continue
+                seen.add(k)
+                uniq.append(r)
+            return orig_select(uniq, pk)
+        rc.select_graph = firstseen
+    elif kind == "norefcheck":
+        type(pack)._validate_refs = lambda self: None
+    elif kind == "noglobcheck":
+        rp.validate_glob = lambda glob: list(str(glob).split("/"))
     elif kind == "escape":
         rc._data_block = lambda tag, items: [
             f"<{tag}>", json.dumps(items, ensure_ascii=False, indent=2, sort_keys=True),

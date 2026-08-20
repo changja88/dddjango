@@ -1,6 +1,8 @@
 # T2-4 사전 검증 질의 ④ — 주입 조립(번호·명칭 + 정렬 키)
 #
-# 용도: C암 selector 가 쓰는 `rulepack.json` 의 `works`·`order_key` 물질화.
+# 용도: C암 selector 가 쓰는 `rulepack.json` 의 `works`·`order_key` **물질화**.
+# 계약(사후 리뷰 AS-15): 입력 없이 **전량 반환**이 계약이다 — 팩을 통째로 굽는 질의이고,
+#       위반별 좁히기는 런타임의 `Rulepack.locate` 가 인덱스 조회로 수행한다.
 # 계약: Work 1건당 1행. 한 Work 를 진술하는 블록이 둘 이상이면 생성기가 fail-closed 한다
 #       (실측 2026-08-20: statesNorm 125 트리플 = 고유 Work 125 → 1:1).
 # 주의: `?sectionNumber` 는 "3.2"·"6.1" 같은 **문자열**이라 SPARQL ORDER BY 는 사전순이다.
@@ -11,9 +13,9 @@ PREFIX djr: <https://numchida.com/ns/djr#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
 SELECT ?work ?label ?document ?section ?sectionNumber ?block ?blockOrder ?expression
-       (GROUP_CONCAT(DISTINCT STR(?checker); separator=";") AS ?checkers)
-       (GROUP_CONCAT(DISTINCT STR(?agent); separator=";") AS ?agents)
-       (GROUP_CONCAT(DISTINCT STR(?aliasText); separator=";") AS ?aliases)
+       (GROUP_CONCAT(DISTINCT STR(?checker); separator="\u001F") AS ?checkers)
+       (GROUP_CONCAT(DISTINCT STR(?agent); separator="\u001F") AS ?agents)
+       (GROUP_CONCAT(DISTINCT STR(?aliasText); separator="\u001F") AS ?aliases)
 WHERE {
   ?block djr:statesNorm ?work ;
          djr:inSection ?section ;

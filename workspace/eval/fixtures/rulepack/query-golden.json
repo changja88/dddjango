@@ -1,4 +1,8 @@
 {
+  "adapter": {
+    "joined": 3,
+    "nodes": 3
+  },
   "q1": {
     "globs": [
       "application/*/**",
@@ -16,15 +20,19 @@
   ],
   "q2:exp-없음": [],
   "q2:미바인딩": [],
-  "q3": {
-    "blocks_per_section": {
-      "3.2": 9,
-      "6.1": 17,
-      "6.2": 36,
-      "8": 11
-    },
-    "rows": 73
+  "q3:3.2": {
+    "rows": 9,
+    "sections": [
+      "3.2"
+    ]
   },
+  "q3:6.1": {
+    "rows": 17,
+    "sections": [
+      "6.1"
+    ]
+  },
+  "q3:미바인딩": 0,
   "q4": {
     "distinct_works": 125,
     "rows": 125,

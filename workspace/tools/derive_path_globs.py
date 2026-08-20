@@ -65,16 +65,25 @@ def load_map() -> "list[dict]":
 
 
 def section_iri(doc: str, number: str, graph_dir: Path) -> str:
-    """절 IRI 는 그래프에서 찾는다 — 여기서 재구성하지 않는다(채번 규약 단일 출처)."""
-    pattern = re.compile(r"<(" + re.escape(DJR) + r"s/[^>]*)>\s+a\s+djr:Section\s*;")
-    text = (graph_dir / f"{doc}.ttl").read_text(encoding="utf-8")
-    for m in pattern.finditer(text):
-        iri = m.group(1)
-        tail = text[m.end():m.end() + 400]
-        hit = re.search(r'djr:sectionNumber\s+"([^"]+)"', tail)
-        if hit and hit.group(1) == number:
-            return iri
-    raise KeyError(f"{doc} §{number} 절 IRI 를 그래프에서 찾지 못했다")
+    """절 IRI 는 **그래프 질의**로 찾는다 — 정규식 TTL 파싱은 금지다(사후 리뷰 AS-13).
+
+    앞선 구현은 `<IRI> a djr:Section ;` 모양을 정규식으로 찾고 **그 뒤 400자**에서 첫
+    `sectionNumber` 를 집었다. 실측된 파손 3종: 접두 IRI 표기(`djr:s/foo`)는 못 찾고,
+    선언에서 401자 뒤의 번호도 못 찾으며, **번호 없는 절 A 뒤에 절 B 의 번호가 있으면 A 의
+    IRI 를 B 의 번호로 돌려준다** — 실패가 아니라 **틀린 `paths.ttl`** 을 만든다.
+
+    카디널리티도 함께 잠근다: `(문서, 절번호)` 는 정확히 1건이어야 한다.
+    """
+    from rdflib import Graph
+
+    g = Graph()
+    g.parse(graph_dir / f"{doc}.ttl", format="turtle")
+    q = f"""PREFIX djr: <{DJR}>
+    SELECT ?s WHERE {{ ?s a djr:Section ; djr:sectionNumber "{number}" }}"""
+    hits = sorted(str(r[0]) for r in g.query(q))
+    if len(hits) != 1:
+        raise KeyError(f"{doc} §{number} 절 IRI 카디널리티 {len(hits)} (정확히 1건이어야 한다)")
+    return hits[0]
 
 
 def render() -> "tuple[str, list[str]]":

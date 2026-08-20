@@ -9,7 +9,7 @@ CODEX_MANIFEST  := codex-dddjango/.codex-plugin/plugin.json
 # DRY=1 이면 실제 변경/커밋/푸시/Release 없이 시뮬레이션만 (버전 선택·기록 미리보기까지 실제 로직 실행)
 DRY ?= 0
 
-.PHONY: release ontology-env ontology-hooks verify verify-ontology verify-base
+.PHONY: release ontology-env ontology-hooks verify verify-ontology verify-base verify-mutation verify-firing verify-runready rulepack
 
 VENV_PY := .venv/bin/python
 
@@ -74,7 +74,7 @@ verify-base:
 	PYTHONUTF8=1 python3 workspace/tools/regen_loop_smoke.py; \
 	PYTHONUTF8=1 python3 workspace/tools/runtime_parity_check.py; \
 	PYTHONUTF8=1 python3 workspace/tools/rulepack_smoke.py; \
-	PYTHONUTF8=1 python3 workspace/tools/derive_path_globs.py --check; \
+	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/derive_path_globs.py --check; \
 	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_rulepack.py --check; \
 	diff -rq dddjango/scripts codex-dddjango/skills/dddjango/scripts --exclude=__pycache__
 
@@ -90,7 +90,15 @@ verify-mutation:
 verify-firing:
 	@set -euo pipefail; \
 	PYTHONUTF8=1 python3 workspace/tools/firing_probe.py \
-	  $(if $(ALLOW_STALE),--allow-stale-cache,)
+	  $(if $(filter 1,$(ALLOW_STALE)),--allow-stale-cache,)
+
+# **T2-5 실런 진입 게이트** — 이것만이 C 실런의 허가다(사후 리뷰 AS-04).
+# `verify` 는 firing probe 를 부르지 않으므로, stale cache 상태에서도 일반 검증은 green 이다.
+# 실런·release 전에는 반드시 이 타깃을 통과해야 한다(엄격 모드 — ALLOW_STALE 무시).
+verify-runready: verify verify-mutation
+	@set -euo pipefail; \
+	PYTHONUTF8=1 python3 workspace/tools/firing_probe.py; \
+	echo "[runready] 실런 진입 조건 충족 — 상시 검증 + 변이 검출력 + 발화 증명 전건 green"
 
 # 규칙 팩 재생성 — 그래프가 바뀌면 이걸 돌리고 커밋한다(투영물 · 직접 편집 금지)
 rulepack:

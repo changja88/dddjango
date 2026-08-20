@@ -35,6 +35,43 @@ class PackError(RuntimeError):
     """팩 부재·손상. 호출자는 이것을 잡아 **중단**해야 한다(폴백 금지)."""
 
 
+_SEGMENT_OK: "re.Pattern" = re.compile(r"\A[A-Za-z0-9_.*-]+\Z")
+
+
+def validate_glob(glob: str) -> "list":
+    """폐쇄 문법 검사 — 세그먼트 목록을 돌려주거나 `ValueError`. **문법의 단일 출처**다.
+
+    사후 리뷰 AS-14 가 실증했듯 «허용 문자 집합» 정규식만으로는 `a/***/b`·`a//b`·`a/../b`·
+    `/absolute/**`·`a/`·`a/**/**/b` 가 전부 통과한다 — 정적 셰이프·구조 검사·런타임 matcher 가
+    각자 다른 관용도를 갖고 있었다. 셋이 이 함수 하나를 부른다.
+
+    규칙: 저장소 상대 POSIX · 빈 세그먼트 금지(선행·후행·연속 `/`) · `..` 금지 ·
+    세그먼트는 `**` **단독**이거나 `[A-Za-z0-9_.*-]+` · `***` 이상 금지 · `**` 연속 금지.
+    """
+    if not isinstance(glob, str) or not glob:
+        raise ValueError(f"글롭이 비었거나 문자열이 아니다: {glob!r}")
+    if glob.startswith("/"):
+        raise ValueError(f"절대 경로 금지: {glob!r}")
+    segments: "list" = glob.split("/")
+    prev_star: bool = False
+    for seg in segments:
+        if seg == "":
+            raise ValueError(f"빈 세그먼트(선행·후행·연속 구분자) 금지: {glob!r}")
+        if seg == "..":
+            raise ValueError(f"상위 참조 금지: {glob!r}")
+        if seg == "**":
+            if prev_star:
+                raise ValueError(f"`**` 연속 금지: {glob!r}")
+            prev_star = True
+            continue
+        prev_star = False
+        if "**" in seg:
+            raise ValueError(f"`**` 는 세그먼트 단독이어야 한다: {glob!r}")
+        if not _SEGMENT_OK.match(seg):
+            raise ValueError(f"세그먼트 문자 집합 이탈: {seg!r} in {glob!r}")
+    return segments
+
+
 def compile_glob(glob: str) -> "re.Pattern":
     """폐쇄 문법 → 정규식. 정적 셰이프와 **다른 게이트**다(적대 리뷰 AR 4-4).
 
@@ -44,6 +81,7 @@ def compile_glob(glob: str) -> "re.Pattern":
 
     셰이프가 통과해도 이 구현이 다르게 동작할 수 있으므로 conformance 케이스 표가 따로 있다.
     """
+    validate_glob(glob)          # 문법 위반은 컴파일 전에 거절한다(관용 금지)
     out: "list" = []
     i: int = 0
     while i < len(glob):
@@ -86,6 +124,38 @@ class Rulepack:
         for wid, w in self.works.items():
             if "order_rank" not in w or "label" not in w:
                 raise PackError(f"{wid}: order_rank·label 결손 — 팩이 낡았다")
+        self._validate_refs()
+
+    def _validate_refs(self) -> None:
+        """참조 무결성 — **손상 팩과 정상 미등록 조회를 구분한다**(사후 리뷰 AS-07).
+
+        검증이 없으면 `works={}`·`by_alias["#3"]="R-MISSING"`·`by_checker[x]=[]` 가 전부
+        조용히 **tier 3(폴백)** 이 된다. 그러면 «C 처치가 걸리지 않은 런»이 «팩 밖이라 폴백한
+        정상 런»과 로그에서 구별되지 않는다 — A/B 를 오염시키는 정확한 경로다.
+        """
+        if not self.works:
+            raise PackError("works 가 비었다 — 빈 팩은 C 처치를 전건 폴백으로 만든다")
+        for alias, wid in self.by_alias.items():
+            if wid not in self.works:
+                raise PackError(f"by_alias[{alias}] → {wid} 가 works 에 없다(손상 참조)")
+        for checker, wids in self.by_checker.items():
+            if not wids:
+                raise PackError(f"by_checker[{checker}] 가 빈 목록이다(손상 참조)")
+            for wid in wids:
+                if wid not in self.works:
+                    raise PackError(f"by_checker[{checker}] → {wid} 가 works 에 없다")
+        for sec, entry in self.by_section.items():
+            for wid in entry.get("works", []):
+                if wid not in self.works:
+                    raise PackError(f"by_section[{sec}] → {wid} 가 works 에 없다")
+        for entry in self.by_path:
+            try:
+                validate_glob(entry.get("glob", ""))
+            except ValueError as exc:
+                raise PackError(f"by_path 글롭 문법 위반: {exc}")
+            for wid in entry.get("works", []):
+                if wid not in self.works:
+                    raise PackError(f"by_path[{entry.get('glob')}] → {wid} 가 works 에 없다")
 
     @classmethod
     def load(cls, path: "str | Path | None" = None) -> "Rulepack":

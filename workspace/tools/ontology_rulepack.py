@@ -37,7 +37,10 @@ GRAPH_DIRS: "tuple[str, str, str]" = ("rules", "wiring", "vocab")
 DEFAULT_OUT: Path = REPO_ROOT / "dddjango" / "scripts" / "rulepack.json"
 MIRROR_OUT: Path = (REPO_ROOT / "codex-dddjango" / "skills" / "dddjango"
                     / "scripts" / "rulepack.json")
-SEP: str = ";"   # GROUP_CONCAT 구분자 — 값에 섞이면 fail-closed
+# GROUP_CONCAT 구분자 = **unit separator**. `;` 였을 때 「값 안에 구분자가 섞였는가」 검사가
+# **도달 불가능**했다 — 이미 `;` 로 split 한 조각에서 `;` 를 다시 찾고 있었다(사후 리뷰 AS-08:
+# `check;evil.py` 가 두 키로 조용히 갈라졌다). IRI·명칭에 U+001F 는 들어갈 수 없다.
+SEP: str = "\x1f"
 _WORK_RE: "re.Pattern[str]" = re.compile(r"R-\d{4}\Z")
 
 
@@ -94,6 +97,9 @@ def build(root: "Path | None" = None) -> "tuple[dict, list[str]]":
         g.parse(f, format="turtle")
 
     rows = list(g.query((QUERIES / "q4-injection-order.rq").read_text(encoding="utf-8")))
+    if not rows:
+        # 공허 통과 방지(사후 리뷰 AS-08): Q4 가 0행이어도 빈 팩이 «정상 산출»됐다.
+        raise ValueError("Q4 가 0행 — 빈 팩은 C 처치를 전건 폴백으로 만든다(재료 결손)")
 
     works: "dict[str, dict]" = {}
     problems: "list[str]" = []
@@ -159,6 +165,14 @@ def build(root: "Path | None" = None) -> "tuple[dict, list[str]]":
         by_path.append({"glob": str(row.glob), "section": sec,
                         "works": list(by_section.get(sec, {}).get("works", []))})
     by_path.sort(key=lambda e: (e["glob"], e["section"]))
+    # 글롭 문법은 조회 모듈이 소유한다(사후 리뷰 AS-14 — 생성기·정적 검사·런타임이 같은 parser).
+    sys.path.insert(0, str(base / "dddjango" / "scripts"))
+    import rulepack as _rp
+    for entry in by_path:
+        try:
+            _rp.validate_glob(entry["glob"])
+        except ValueError as exc:
+            problems.append(f"글롭 문법 위반: {exc}")
 
     pack: "dict" = {
         "_generated": GENERATED_BY,

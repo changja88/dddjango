@@ -187,6 +187,37 @@ def _write_introduced(dest: Path, anchor_sha: str, attributed: "list[str]",
           f"(레코드 {len(picked)} · 대응 없는 귀속 라인 {len(want - matched)})")
 
 
+def _write_contract(dest: Path, anchor_sha: str, records: "list[dict]") -> None:
+    """`rule=null` 레코드(선행 계약·센티널)를 **계수 전용** companion sidecar 로 쓴다.
+
+    왜 별도인가(동결 개정 9 · 사후 리뷰 AS-03): 이 레코드들은 `[#N]` 라인을 내지 않아
+    귀속 정규식에 걸리지 않고, selector 도 `rule is None` 이면 버린다. 그래서 **주입에는
+    쓰이지 않지만 존재는 셈해야** 한다 — 사용자 결정 «계수 후 유효 유지»는 「이런 런을
+    통계에서 빼지 않되 비율은 기록한다」이므로, 셀 원자료가 여기서 만들어져야 한다.
+
+    이 sidecar 는 재생성 루프의 **입력이 아니다**. 계수·리포트 전용이다.
+    """
+    picked: "list[dict]" = [r for r in records if r.get("rule") is None]
+    by_checker: "dict[str, int]" = {}
+    for rec in picked:
+        name: str = str(rec.get("checker"))
+        by_checker[name] = by_checker.get(name, 0) + 1
+    payload: "dict[str, object]" = {
+        "schema": "gate-contract/0",
+        "anchor": anchor_sha,
+        "total": len(picked),
+        "by_checker": dict(sorted(by_checker.items())),
+        "experiment_run_id": next((r.get("experiment_run_id") for r in picked
+                                   if r.get("experiment_run_id")), None),
+        "records": [{k: r.get(k) for k in
+                     ("checker", "contract_ref", "sentinel", "file", "message",
+                      "severity", "record_id", "experiment_run_id")} for r in picked],
+    }
+    dest.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"계약 레코드 companion sidecar → {dest} "
+          f"(rule=null {len(picked)}건 · 검사기 {len(by_checker)}종 — 주입 대상 아님·계수 전용)")
+
+
 def main(argv: "list[str]") -> int:
     ap = _UsageParser(add_help=True)
     ap.add_argument("target")
@@ -196,6 +227,9 @@ def main(argv: "list[str]") -> int:
     ap.add_argument("--introduced-json", default=None,
                     help="귀속(N∖L) 위반의 구조화 레코드를 이 경로에 sidecar 로 쓴다 — "
                          "재생성 루프의 유일한 입력(legacy 잔존은 구조적으로 배제된다)")
+    ap.add_argument("--contract-json", default=None,
+                    help="`rule=null`(선행 계약·센티널) 레코드의 계수를 companion sidecar 로 "
+                         "쓴다 — 주입 대상이 아니라 «계수 후 유효 유지»(개정 9)의 원자료")
     ns = ap.parse_args(argv)
 
     root: Path = Path(ns.target).resolve()
@@ -298,6 +332,8 @@ def main(argv: "list[str]") -> int:
     if ns.introduced_json is not None:
         _write_introduced(Path(ns.introduced_json), anchor_sha, attributed,
                           n_records, cur_prefixes)
+    if ns.contract_json is not None:
+        _write_contract(Path(ns.contract_json), anchor_sha, n_records)
 
     print(f"\n판정: 귀속 {len(attributed)}건 → {'green(신규 위반 없음)' if not attributed else 'red'}")
     return 0 if not attributed else 2
