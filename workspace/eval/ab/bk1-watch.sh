@@ -82,9 +82,12 @@ while true; do
         cmd=$(print -r -- "$blk" | grep -E '^[[:space:]]*│')
         [ -z "$cmd" ] && cmd=$(print -r -- "$blk" | tail -40)
         # 경로 가드 — 시스템 경로·홈 설정 파일이 보이면 사람이 본다.
-        if print -r -- "$cmd" | grep -qE '(^|[^A-Za-z0-9_./~-])/(etc|usr|bin|sbin|System|Library|Applications|Volumes|opt)/'; then
+        # 단 «시스템 경로에 쓴다»와 «시스템 도구를 실행한다»는 다르다. /usr/bin/sed 같은
+        # 실행 호출까지 잡아 R03 의 뮤테이션 테스트를 멈춰 세웠다 — 실행 호출은 먼저 지운다.
+        gsrc=$(print -r -- "$cmd" | sed -E 's#(^|[;&|( ] *)/(usr/bin|usr/sbin|bin|sbin|usr/local/bin|opt/homebrew/bin)/[A-Za-z0-9_.+-]+#\1CMD#g')
+        if print -r -- "$gsrc" | grep -qE '(^|[^A-Za-z0-9_./~-])/(etc|usr|bin|sbin|System|Library|Applications|Volumes|opt)/'; then
           guard=1
-        elif print -r -- "$cmd" | grep -qE '~/\.[a-z]|/Users/[^/ ]+/\.(ssh|aws|gnupg|config|zshrc|zprofile|gitconfig|npmrc)'; then
+        elif print -r -- "$gsrc" | grep -qE '~/\.[a-z]|/Users/[^/ ]+/\.(ssh|aws|gnupg|config|zshrc|zprofile|gitconfig|npmrc)'; then
           guard=1
         else
           guard=0
