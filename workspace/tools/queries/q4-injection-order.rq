@@ -1,0 +1,30 @@
+# T2-4 사전 검증 질의 ④ — 주입 조립(번호·명칭 + 정렬 키)
+#
+# 용도: C암 selector 가 쓰는 `rulepack.json` 의 `works`·`order_key` 물질화.
+# 계약: Work 1건당 1행. 한 Work 를 진술하는 블록이 둘 이상이면 생성기가 fail-closed 한다
+#       (실측 2026-08-20: statesNorm 125 트리플 = 고유 Work 125 → 1:1).
+# 주의: `?sectionNumber` 는 "3.2"·"6.1" 같은 **문자열**이라 SPARQL ORDER BY 는 사전순이다.
+#       최종 정렬(자연 정렬)은 생성기가 소유한다 — 여기 ORDER BY 는 안정성 보조일 뿐이다.
+# 금지: 블록 리터럴(`djr:text`)은 **뽑지 않는다** — 설치본 팩에 규범 본문을 싣지 않는다
+#       (동결 E8 «전체 규범 재주입 금지» · 절차 정본 step 6′ · 개정 8).
+PREFIX djr: <https://numchida.com/ns/djr#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT ?work ?label ?document ?section ?sectionNumber ?block ?blockOrder ?expression
+       (GROUP_CONCAT(DISTINCT STR(?checker); separator=";") AS ?checkers)
+       (GROUP_CONCAT(DISTINCT STR(?agent); separator=";") AS ?agents)
+       (GROUP_CONCAT(DISTINCT STR(?aliasText); separator=";") AS ?aliases)
+WHERE {
+  ?block djr:statesNorm ?work ;
+         djr:inSection ?section ;
+         djr:order ?blockOrder .
+  ?section djr:inDocument ?document ;
+           djr:sectionNumber ?sectionNumber .
+  ?work skos:prefLabel ?label .
+  OPTIONAL { ?work djr:currentExpression ?expression }
+  OPTIONAL { ?work djr:enforcedBy ?checker }
+  OPTIONAL { ?work djr:delegatedTo ?agent }
+  OPTIONAL { ?aliasNode djr:aliasFor ?work ; djr:aliasText ?aliasText }
+}
+GROUP BY ?work ?label ?document ?section ?sectionNumber ?block ?blockOrder ?expression
+ORDER BY ?document ?sectionNumber ?blockOrder ?work

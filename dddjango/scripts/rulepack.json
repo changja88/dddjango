@@ -1,0 +1,2362 @@
+{
+  "_generated": "ontology_rulepack.py — 직접 편집 금지(투영물 · 정본은 ontology/ 그래프)",
+  "built_from": [
+    {
+      "path": "ontology/rules/architecture-ddd-final.ttl",
+      "sha256": "de898c76c7eede677cb6f3bc606275075e1e17b2d180aad0b43a06a13e4e4822"
+    },
+    {
+      "path": "ontology/rules/implementation-django-ninja-final.ttl",
+      "sha256": "10b914e7d810cd6765bd750e3a8702535986543e9261069eba593f39c51f3a28"
+    },
+    {
+      "path": "ontology/wiring/aliases.ttl",
+      "sha256": "c45ee00daca8690c26ee0c5f6113d0bc7bc2848f76faf53963b78af4f0eee909"
+    },
+    {
+      "path": "ontology/wiring/architecture-ddd-final.ttl",
+      "sha256": "048ea6a0abcaf40265f8c0a2436d96906148d0766a97bcfb4a6e5e44b8aa590d"
+    },
+    {
+      "path": "ontology/wiring/implementation-django-ninja-final.ttl",
+      "sha256": "252de596dc9b0a356c3fcbb491953d9328ab6551dab143662ba10d623337dc5b"
+    },
+    {
+      "path": "ontology/wiring/paths.ttl",
+      "sha256": "71a89824e8d29fd228f318f963b1cceafc8cfe6af4407f099ba9da6ace67bfd2"
+    },
+    {
+      "path": "ontology/wiring/registry.ttl",
+      "sha256": "7efb892a312351225625d6938183d30b03cbfa929d008daea4a7e9c07887b059"
+    },
+    {
+      "path": "ontology/vocab/djr.ttl",
+      "sha256": "49d6c469a328a80441fd8039e6e6298b2b84831cf1e15b2a53534daf44ef965e"
+    }
+  ],
+  "by_alias": {
+    "#3": "R-0124",
+    "#486": "R-0118",
+    "#488": "R-0120"
+  },
+  "by_checker": {
+    "check-api-error-controller-contract.py": [
+      "R-0002",
+      "R-0004",
+      "R-0007",
+      "R-0019",
+      "R-0026",
+      "R-0027",
+      "R-0048",
+      "R-0049",
+      "R-0050",
+      "R-0051",
+      "R-0052",
+      "R-0054",
+      "R-0055",
+      "R-0056",
+      "R-0057",
+      "R-0058",
+      "R-0059",
+      "R-0060",
+      "R-0061",
+      "R-0062",
+      "R-0063",
+      "R-0065",
+      "R-0068",
+      "R-0069",
+      "R-0070",
+      "R-0072",
+      "R-0073",
+      "R-0075",
+      "R-0076",
+      "R-0082",
+      "R-0093"
+    ],
+    "check-app-container.py": [
+      "R-0122"
+    ],
+    "check-business-vocabulary.py": [
+      "R-0075"
+    ],
+    "check-choices-literal-consumption.py": [
+      "R-0112"
+    ],
+    "check-composition-root.py": [
+      "R-0064"
+    ],
+    "check-context-isolation.py": [
+      "R-0124",
+      "R-0085"
+    ],
+    "check-db-table.py": [
+      "R-0119"
+    ],
+    "check-domain-model.py": [
+      "R-0106",
+      "R-0107",
+      "R-0108"
+    ],
+    "check-error-centralization.py": [
+      "R-0018",
+      "R-0019",
+      "R-0020",
+      "R-0029",
+      "R-0031",
+      "R-0032",
+      "R-0035",
+      "R-0036",
+      "R-0037",
+      "R-0038",
+      "R-0039",
+      "R-0040",
+      "R-0041",
+      "R-0042",
+      "R-0043",
+      "R-0044",
+      "R-0045",
+      "R-0046",
+      "R-0071"
+    ],
+    "check-layer-skeleton.py": [
+      "R-0118",
+      "R-0119",
+      "R-0120",
+      "R-0105"
+    ],
+    "check-ninja-boundary-middleware.py": [
+      "R-0005",
+      "R-0007"
+    ],
+    "check-openapi-error-declaration.py": [
+      "R-0078",
+      "R-0086",
+      "R-0087",
+      "R-0088",
+      "R-0089"
+    ],
+    "check-response-schema-bypass.py": [
+      "R-0091",
+      "R-0092"
+    ],
+    "check-synthetic-infra-exc.py": [
+      "R-0085"
+    ],
+    "check-transaction-boundary.py": [
+      "R-0108"
+    ],
+    "check-usecase-dto-placement.py": [
+      "R-0064"
+    ]
+  },
+  "by_path": [
+    {
+      "glob": "application/*/**",
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s051-8",
+      "works": [
+        "R-0098",
+        "R-0099",
+        "R-0100",
+        "R-0101",
+        "R-0102",
+        "R-0103",
+        "R-0104",
+        "R-0105"
+      ]
+    },
+    {
+      "glob": "application/*/domain_layer/**",
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "works": [
+        "R-0106",
+        "R-0107",
+        "R-0108",
+        "R-0109",
+        "R-0110",
+        "R-0111",
+        "R-0112",
+        "R-0113",
+        "R-0114",
+        "R-0115",
+        "R-0116",
+        "R-0117",
+        "R-0118",
+        "R-0119",
+        "R-0120",
+        "R-0121",
+        "R-0122",
+        "R-0123",
+        "R-0124",
+        "R-0125"
+      ]
+    },
+    {
+      "glob": "application/*/driving_layer/api/**",
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1",
+      "works": [
+        "R-0001",
+        "R-0002",
+        "R-0003",
+        "R-0004",
+        "R-0005",
+        "R-0006",
+        "R-0007",
+        "R-0008",
+        "R-0009"
+      ]
+    },
+    {
+      "glob": "application/*/driving_layer/api/**",
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "works": [
+        "R-0010",
+        "R-0011",
+        "R-0012",
+        "R-0013",
+        "R-0014",
+        "R-0015",
+        "R-0016",
+        "R-0017",
+        "R-0018",
+        "R-0019",
+        "R-0020",
+        "R-0021",
+        "R-0022",
+        "R-0023",
+        "R-0024",
+        "R-0025",
+        "R-0026",
+        "R-0027",
+        "R-0028",
+        "R-0029",
+        "R-0030",
+        "R-0031",
+        "R-0032",
+        "R-0033",
+        "R-0034",
+        "R-0035",
+        "R-0036",
+        "R-0037",
+        "R-0038",
+        "R-0039",
+        "R-0040",
+        "R-0041",
+        "R-0042",
+        "R-0043",
+        "R-0044",
+        "R-0045",
+        "R-0046",
+        "R-0047",
+        "R-0048",
+        "R-0049",
+        "R-0050",
+        "R-0051",
+        "R-0052",
+        "R-0053",
+        "R-0054",
+        "R-0055",
+        "R-0056",
+        "R-0057",
+        "R-0058",
+        "R-0059",
+        "R-0060",
+        "R-0061",
+        "R-0062",
+        "R-0063",
+        "R-0064",
+        "R-0065",
+        "R-0066",
+        "R-0067",
+        "R-0068",
+        "R-0069",
+        "R-0070",
+        "R-0071",
+        "R-0072",
+        "R-0073",
+        "R-0074",
+        "R-0075",
+        "R-0076",
+        "R-0077",
+        "R-0078",
+        "R-0079",
+        "R-0080",
+        "R-0081",
+        "R-0082",
+        "R-0083",
+        "R-0084",
+        "R-0085",
+        "R-0086",
+        "R-0087",
+        "R-0088",
+        "R-0089",
+        "R-0090",
+        "R-0091",
+        "R-0092",
+        "R-0093",
+        "R-0094",
+        "R-0095",
+        "R-0096",
+        "R-0097"
+      ]
+    }
+  ],
+  "by_section": {
+    "dddjango/skills/architecture-ddd/references/final.md/s017-3.2": {
+      "number": "3.2",
+      "works": [
+        "R-0106",
+        "R-0107",
+        "R-0108",
+        "R-0109",
+        "R-0110",
+        "R-0111",
+        "R-0112",
+        "R-0113",
+        "R-0114",
+        "R-0115",
+        "R-0116",
+        "R-0117",
+        "R-0118",
+        "R-0119",
+        "R-0120",
+        "R-0121",
+        "R-0122",
+        "R-0123",
+        "R-0124",
+        "R-0125"
+      ]
+    },
+    "dddjango/skills/architecture-ddd/references/final.md/s051-8": {
+      "number": "8",
+      "works": [
+        "R-0098",
+        "R-0099",
+        "R-0100",
+        "R-0101",
+        "R-0102",
+        "R-0103",
+        "R-0104",
+        "R-0105"
+      ]
+    },
+    "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1": {
+      "number": "6.1",
+      "works": [
+        "R-0001",
+        "R-0002",
+        "R-0003",
+        "R-0004",
+        "R-0005",
+        "R-0006",
+        "R-0007",
+        "R-0008",
+        "R-0009"
+      ]
+    },
+    "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2": {
+      "number": "6.2",
+      "works": [
+        "R-0010",
+        "R-0011",
+        "R-0012",
+        "R-0013",
+        "R-0014",
+        "R-0015",
+        "R-0016",
+        "R-0017",
+        "R-0018",
+        "R-0019",
+        "R-0020",
+        "R-0021",
+        "R-0022",
+        "R-0023",
+        "R-0024",
+        "R-0025",
+        "R-0026",
+        "R-0027",
+        "R-0028",
+        "R-0029",
+        "R-0030",
+        "R-0031",
+        "R-0032",
+        "R-0033",
+        "R-0034",
+        "R-0035",
+        "R-0036",
+        "R-0037",
+        "R-0038",
+        "R-0039",
+        "R-0040",
+        "R-0041",
+        "R-0042",
+        "R-0043",
+        "R-0044",
+        "R-0045",
+        "R-0046",
+        "R-0047",
+        "R-0048",
+        "R-0049",
+        "R-0050",
+        "R-0051",
+        "R-0052",
+        "R-0053",
+        "R-0054",
+        "R-0055",
+        "R-0056",
+        "R-0057",
+        "R-0058",
+        "R-0059",
+        "R-0060",
+        "R-0061",
+        "R-0062",
+        "R-0063",
+        "R-0064",
+        "R-0065",
+        "R-0066",
+        "R-0067",
+        "R-0068",
+        "R-0069",
+        "R-0070",
+        "R-0071",
+        "R-0072",
+        "R-0073",
+        "R-0074",
+        "R-0075",
+        "R-0076",
+        "R-0077",
+        "R-0078",
+        "R-0079",
+        "R-0080",
+        "R-0081",
+        "R-0082",
+        "R-0083",
+        "R-0084",
+        "R-0085",
+        "R-0086",
+        "R-0087",
+        "R-0088",
+        "R-0089",
+        "R-0090",
+        "R-0091",
+        "R-0092",
+        "R-0093",
+        "R-0094",
+        "R-0095",
+        "R-0096",
+        "R-0097"
+      ]
+    }
+  },
+  "schema": "rulepack/1",
+  "works": {
+    "R-0001": {
+      "agents": [
+        "agent-design-review-api"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1/b1",
+      "block_order": 1,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0001@2026-08-19",
+      "label": "상태 코드 의미의 architecture-api 위임",
+      "order_rank": 28,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1",
+      "section_number": "6.1"
+    },
+    "R-0002": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1/b15",
+      "block_order": 15,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0002@2026-08-19",
+      "label": "retryable BC 503의 Retry-After 컨트롤러 설정",
+      "order_rank": 29,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1",
+      "section_number": "6.1"
+    },
+    "R-0003": {
+      "agents": [
+        "command-dddjango"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1/b15",
+      "block_order": 15,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0003@2026-08-19",
+      "label": "503/409 선택의 명세 §5/G1 소유",
+      "order_rank": 30,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1",
+      "section_number": "6.1"
+    },
+    "R-0004": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1/b15",
+      "block_order": 15,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0004@2026-08-19",
+      "label": "raw 인프라 예외의 controller 임의 분류 금지",
+      "order_rank": 31,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1",
+      "section_number": "6.1"
+    },
+    "R-0005": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1/b16",
+      "block_order": 16,
+      "checkers": [
+        "check-ninja-boundary-middleware.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0005@2026-08-19",
+      "label": "406/415의 ninja 경계 내 처리·전역 미들웨어 가로채기 금지",
+      "order_rank": 32,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1",
+      "section_number": "6.1"
+    },
+    "R-0006": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1/b17",
+      "block_order": 17,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0006@2026-08-19",
+      "label": "Django Ninja validation 응답의 framework 소유(기본 status·body)",
+      "order_rank": 33,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1",
+      "section_number": "6.1"
+    },
+    "R-0007": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1/b17",
+      "block_order": 17,
+      "checkers": [
+        "check-api-error-controller-contract.py",
+        "check-ninja-boundary-middleware.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0007@2026-08-19",
+      "label": "framework validation body의 BC 식별자 전역 변환 금지",
+      "order_rank": 34,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1",
+      "section_number": "6.1"
+    },
+    "R-0008": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1/b17",
+      "block_order": 17,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0008@2026-08-19",
+      "label": "framework body의 안정 공개 계약 주장 금지",
+      "order_rank": 35,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1",
+      "section_number": "6.1"
+    },
+    "R-0009": {
+      "agents": [
+        "command-dddjango"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1/b17",
+      "block_order": 17,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0009@2026-08-19",
+      "label": "별도 공개 계약의 G1 선승인",
+      "order_rank": 36,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1",
+      "section_number": "6.1"
+    },
+    "R-0010": {
+      "agents": [
+        "agent-design-review-api"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b1",
+      "block_order": 1,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0010@2026-08-19",
+      "label": "오류 프로필 선택의 architecture-api §5.4 위임",
+      "order_rank": 37,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0011": {
+      "agents": [
+        "agent-design-review-api"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b1",
+      "block_order": 1,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0011@2026-08-19",
+      "label": "배포 범위 계약 보존·신규 범위 기본 dddjango-code-json",
+      "order_rank": 38,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0012": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b2",
+      "block_order": 2,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0012@2026-08-19",
+      "label": "플러그인 공통 body property 부재(기본값 미규정)",
+      "order_rank": 39,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0013": {
+      "agents": [
+        "agent-design-review-api"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b2",
+      "block_order": 2,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0013@2026-08-19",
+      "label": "기존 프로젝트의 관찰 shape 기준선 보존",
+      "order_rank": 40,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0014": {
+      "agents": [
+        "command-dddjango"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b2",
+      "block_order": 2,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0014@2026-08-19",
+      "label": "신규 scope shape의 G1 slot 6 선제안·명시 승인",
+      "order_rank": 41,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0015": {
+      "agents": [
+        "command-dddjango"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b2",
+      "block_order": 2,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0015@2026-08-19",
+      "label": "기준선 property 변경은 별도 contract 변경",
+      "order_rank": 42,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0016": {
+      "agents": [
+        "command-dddjango"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b2",
+      "block_order": 2,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0016@2026-08-19",
+      "label": "명시 승인 전 코드 선변경 금지",
+      "order_rank": 43,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0017": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b2",
+      "block_order": 2,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0017@2026-08-19",
+      "label": "예시 필드명들의 plugin 기본값 취급 금지",
+      "order_rank": 44,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0018": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b3",
+      "block_order": 3,
+      "checkers": [
+        "check-error-centralization.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0018@2026-08-19",
+      "label": "승인 shape의 동적 요소 단순화·alias 우회 금지",
+      "order_rank": 45,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0019": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b3",
+      "block_order": 3,
+      "checkers": [
+        "check-api-error-controller-contract.py",
+        "check-error-centralization.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0019@2026-08-19",
+      "label": "임의 Python 의미의 DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED 상시 발행",
+      "order_rank": 46,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0020": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b3",
+      "block_order": 3,
+      "checkers": [
+        "check-error-centralization.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0020@2026-08-19",
+      "label": "canonical module 직접 import-time mutation의 구조 위반 차단",
+      "order_rank": 47,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0021": {
+      "agents": [
+        "command-dddjango"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b3",
+      "block_order": 3,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0021@2026-08-19",
+      "label": "타 checker 진단으로 marker 제거 금지",
+      "order_rank": 48,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0022": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b3",
+      "block_order": 3,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0022@2026-08-19",
+      "label": "dependency pin 검토는 일회성 분석(영구 테스트 자동 생성 금지)",
+      "order_rank": 49,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0023": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b3",
+      "block_order": 3,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0023@2026-08-19",
+      "label": "mounted wire 후보의 add/update 시 §8–§9 recipe 검증",
+      "order_rank": 50,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0024": {
+      "agents": [
+        "agent-design-review-api",
+        "agent-discipline-reviewer",
+        "command-dddjango"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b3",
+      "block_order": 3,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0024@2026-08-19",
+      "label": "RESOLVED_DYNAMIC_ERROR_SHAPE_ANALYSIS 해소 조건(양 리뷰어 확인+Coordinator)",
+      "order_rank": 51,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0025": {
+      "agents": [
+        "command-dddjango"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b3",
+      "block_order": 3,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0025@2026-08-19",
+      "label": "해소가 별도 승인·타 blocker를 대신하지 않음",
+      "order_rank": 52,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0026": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b3",
+      "block_order": 3,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0026@2026-08-19",
+      "label": "schema 소유 경계 밖 model config mutation의 보존 경로 불인정",
+      "order_rank": 53,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0027": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b3",
+      "block_order": 3,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0027@2026-08-19",
+      "label": "선택 module 직접 mutation·직접 import한 module-level callable 경로 차단",
+      "order_rank": 54,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0028": {
+      "agents": [
+        "agent-design-review-api",
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b3",
+      "block_order": 3,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0028@2026-08-19",
+      "label": "AST 증명 범위 밖 경로의 checker 통과 면제 금지(리뷰어 직접 읽기)",
+      "order_rank": 55,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0029": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b4",
+      "block_order": 4,
+      "checkers": [
+        "check-error-centralization.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0029@2026-08-19",
+      "label": "공통 오류 모듈 단일 경로(framework/ninja/framework_error_schema.py)",
+      "order_rank": 56,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0030": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b4",
+      "block_order": 4,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0030@2026-08-19",
+      "label": "framework/ninja/ 공유 폴더의 타 module 공존 허용",
+      "order_rank": 57,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0031": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b7",
+      "block_order": 7,
+      "checkers": [
+        "check-error-centralization.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0031@2026-08-19",
+      "label": "공통 FrameworkErrorSchema의 승인 core shape 한정 소유",
+      "order_rank": 58,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0032": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b7",
+      "block_order": 7,
+      "checkers": [
+        "check-error-centralization.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0032@2026-08-19",
+      "label": "공통 파일에 concrete·catalog 추가·shape 밖 발명 금지",
+      "order_rank": 59,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0033": {
+      "agents": [
+        "command-dddjango"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b7",
+      "block_order": 7,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0033@2026-08-19",
+      "label": "다른 계약 scope의 G1 개별 승인",
+      "order_rank": 60,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0034": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b7",
+      "block_order": 7,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0034@2026-08-19",
+      "label": "기존 공용 경로의 승인 동등 계약 우선 재사용",
+      "order_rank": 61,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0035": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b8",
+      "block_order": 8,
+      "checkers": [
+        "check-error-centralization.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0035@2026-08-19",
+      "label": "BC 오류 언어의 bc_error_schema.py 단일 파일 집약",
+      "order_rank": 62,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0036": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b9",
+      "block_order": 9,
+      "checkers": [
+        "check-error-centralization.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0036@2026-08-19",
+      "label": "BC 오류 파일의 <Bc>ErrorCode(StrEnum) 정확히 하나",
+      "order_rank": 63,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0037": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b10",
+      "block_order": 10,
+      "checkers": [
+        "check-error-centralization.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0037@2026-08-19",
+      "label": "공통 상속·식별자 좁힘 <Bc>ErrorSchema 정확히 하나",
+      "order_rank": 64,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0038": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b11",
+      "block_order": 11,
+      "checkers": [
+        "check-error-centralization.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0038@2026-08-19",
+      "label": "사건별 concrete ErrorSchema subclass의 같은 파일 배치",
+      "order_rank": 65,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0039": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b12",
+      "block_order": 12,
+      "checkers": [
+        "check-error-centralization.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0039@2026-08-19",
+      "label": "BC 공개 식별자 문자열의 프로젝트 전역 유일성",
+      "order_rank": 66,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0040": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b14",
+      "block_order": 14,
+      "checkers": [
+        "check-error-centralization.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0040@2026-08-19",
+      "label": "BC base 식별자 field의 공통 metadata 보존·Enum 좁힘",
+      "order_rank": 67,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0041": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b14",
+      "block_order": 14,
+      "checkers": [
+        "check-error-centralization.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0041@2026-08-19",
+      "label": "좁힌 식별자 field의 default 상실 canon 예외(2026-08-15)",
+      "order_rank": 68,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0042": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b14",
+      "block_order": 14,
+      "checkers": [
+        "check-error-centralization.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0042@2026-08-19",
+      "label": "문자열 공통 default의 동일 wire value Enum member 표현",
+      "order_rank": 69,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0043": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b14",
+      "block_order": 14,
+      "checkers": [
+        "check-error-centralization.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0043@2026-08-19",
+      "label": "concrete 오류의 무인자 생성(전 required default)",
+      "order_rank": 70,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0044": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b14",
+      "block_order": 14,
+      "checkers": [
+        "check-error-centralization.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0044@2026-08-19",
+      "label": "concrete subclass의 신규 요소·drift 추가 금지·재선언 metadata 반복",
+      "order_rank": 71,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0045": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b14",
+      "block_order": 14,
+      "checkers": [
+        "check-error-centralization.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0045@2026-08-19",
+      "label": "타 profile 필드 혼합 금지",
+      "order_rank": 72,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0046": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b14",
+      "block_order": 14,
+      "checkers": [
+        "check-error-centralization.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0046@2026-08-19",
+      "label": "오류별 파일 분리·validation 전용 제2 schema 파일 금지",
+      "order_rank": 73,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0047": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b15",
+      "block_order": 15,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0047@2026-08-19",
+      "label": "승인된 단일 operation 사건의 BC base 직접 채움 허용",
+      "order_rank": 74,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0048": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b15",
+      "block_order": 15,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0048@2026-08-19",
+      "label": "BC base 직접 채움의 허용 범위 한정(concrete 인자 생성 우회 아님)",
+      "order_rank": 75,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0049": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b15",
+      "block_order": 15,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0049@2026-08-19",
+      "label": "직접 채움의 keyword 명시 범위(required+승인 optional만)",
+      "order_rank": 76,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0050": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b15",
+      "block_order": 15,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0050@2026-08-19",
+      "label": "다음 문장 두 인자 Status 반환",
+      "order_rank": 77,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0051": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b15",
+      "block_order": 15,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0051@2026-08-19",
+      "label": "unpacking·builder·factory·mapping table 우회 금지",
+      "order_rank": 78,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0052": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b16",
+      "block_order": 16,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0052@2026-08-19",
+      "label": "known failure의 식별자·status 선택은 BC controller 소유",
+      "order_rank": 79,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0053": {
+      "agents": [
+        "command-dddjango"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b16",
+      "block_order": 16,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0053@2026-08-19",
+      "label": "짧은 반복 mapping의 지역 중복 인정·10번 slot 승인 한 path",
+      "order_rank": 80,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0054": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b17",
+      "block_order": 17,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0054@2026-08-19",
+      "label": "exception path — try에 최외곽 application call 한 문장만",
+      "order_rank": 81,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0055": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b17",
+      "block_order": 17,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0055@2026-08-19",
+      "label": "구체 known exception만 catch·직접 두 인자 Status 반환",
+      "order_rank": 82,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0056": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b17",
+      "block_order": 17,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0056@2026-08-19",
+      "label": "status 표현의 허용 형태(literal·상수·승인 body field)",
+      "order_rank": 83,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0057": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b17",
+      "block_order": 17,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0057@2026-08-19",
+      "label": "성공 변환의 try 뒤 배치",
+      "order_rank": 84,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0058": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b18",
+      "block_order": 18,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0058@2026-08-19",
+      "label": "Result/None path — call 정확히 1회·try 없는 failure branch 직후 배치",
+      "order_rank": 85,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0059": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b18",
+      "block_order": 18,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0059@2026-08-19",
+      "label": "동일 구성 직접 수행·성공 변환 branch 뒤 배치",
+      "order_rank": 86,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0060": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b18",
+      "block_order": 18,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0060@2026-08-19",
+      "label": "예외·catch·helper·mapping table 꾸며내기 금지",
+      "order_rank": 87,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0061": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b21",
+      "block_order": 21,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0061@2026-08-19",
+      "label": "try 안 준비·분기·로그·성공 변환 금지",
+      "order_rank": 88,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0062": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b21",
+      "block_order": 21,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0062@2026-08-19",
+      "label": "광역 exception·자기 raise 즉시 catch 금지",
+      "order_rank": 89,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0063": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b21",
+      "block_order": 21,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0063@2026-08-19",
+      "label": "공개 의미별 catch 분리·수렴 시에만 tuple catch",
+      "order_rank": 90,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0064": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b22",
+      "block_order": 22,
+      "checkers": [
+        "check-composition-root.py",
+        "check-usecase-dto-placement.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0064@2026-08-19",
+      "label": "application DTO import·composition_root 조립",
+      "order_rank": 91,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0065": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b22",
+      "block_order": 22,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0065@2026-08-19",
+      "label": "call 뒤 branch의 직접 ErrorSchema 구성(helper 흉내 금지)",
+      "order_rank": 92,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0066": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b25",
+      "block_order": 25,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0066@2026-08-19",
+      "label": "native 성공 Result/None의 직접 반환 허용",
+      "order_rank": 93,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0067": {
+      "agents": [
+        "command-dddjango"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b25",
+      "block_order": 25,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0067@2026-08-19",
+      "label": "operation 의미는 12-slot이 결정(실패 은닉 규칙 아님)",
+      "order_rank": 94,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0068": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b27",
+      "block_order": 27,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0068@2026-08-19",
+      "label": "오류 헤더의 controller 소유·Status 생성자 header 전달 금지",
+      "order_rank": 95,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0069": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b27",
+      "block_order": 27,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0069@2026-08-19",
+      "label": "승인된 retryable 503의 주입 HttpResponse header 설정 절차",
+      "order_rank": 96,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0070": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b29",
+      "block_order": 29,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0070@2026-08-19",
+      "label": "오류 응답 helper·handler·builder 생성·호출 금지(추출 금지)",
+      "order_rank": 97,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0071": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b29",
+      "block_order": 29,
+      "checkers": [
+        "check-error-centralization.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0071@2026-08-19",
+      "label": "승인 common Schema 자체 hook의 exact shape 보존",
+      "order_rank": 98,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0072": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b29",
+      "block_order": 29,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0072@2026-08-19",
+      "label": "raw 응답·dict·tuple 오류·model_dump 직접 호출 금지",
+      "order_rank": 99,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0073": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b29",
+      "block_order": 29,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0073@2026-08-19",
+      "label": "controller의 exception→concrete mapping·Status 반환 직접 소유",
+      "order_rank": 100,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0074": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b29",
+      "block_order": 29,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0074@2026-08-19",
+      "label": "여러 controller의 짧은 반복 허용(명시성)",
+      "order_rank": 101,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0075": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b30",
+      "block_order": 30,
+      "checkers": [
+        "check-api-error-controller-contract.py",
+        "check-business-vocabulary.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0075@2026-08-19",
+      "label": "framework 오류(401·403·404·422·429·HttpError·500) framework 소유",
+      "order_rank": 102,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0076": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b30",
+      "block_order": 30,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0076@2026-08-19",
+      "label": "framework 오류의 BC 전환·전역 handler 가로채기 금지",
+      "order_rank": 103,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0077": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b30",
+      "block_order": 30,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0077@2026-08-19",
+      "label": "framework body의 wire contract 주장 금지",
+      "order_rank": 104,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0078": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b30",
+      "block_order": 30,
+      "checkers": [
+        "check-openapi-error-declaration.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0078@2026-08-19",
+      "label": "framework status의 BC response= 광고 금지",
+      "order_rank": 105,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0079": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b31",
+      "block_order": 31,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0079@2026-08-19",
+      "label": "authentication adapter 성공 반환 = identity/principal",
+      "order_rank": 106,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0080": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b31",
+      "block_order": 31,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0080@2026-08-19",
+      "label": "인증 실패 = None 반환 또는 AuthenticationError raise",
+      "order_rank": 107,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0081": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b31",
+      "block_order": 31,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0081@2026-08-19",
+      "label": "request.auth·인증 결과의 ErrorSchema 사용 금지",
+      "order_rank": 108,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0082": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b33",
+      "block_order": 33,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0082@2026-08-19",
+      "label": "raw 인프라 오류의 문자열·SQLSTATE 분류 금지",
+      "order_rank": 109,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0083": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b33",
+      "block_order": 33,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0083@2026-08-19",
+      "label": "기본 경로 = framework 미식별 500",
+      "order_rank": 110,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0084": {
+      "agents": [
+        "command-dddjango"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b33",
+      "block_order": 33,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0084@2026-08-19",
+      "label": "G1 승인 시에만 infra/ACL 정규화 후 구체 exception 직접 흐름",
+      "order_rank": 111,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0085": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b33",
+      "block_order": 33,
+      "checkers": [
+        "check-context-isolation.py",
+        "check-synthetic-infra-exc.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0085@2026-08-19",
+      "label": "인프라 예외 합성·타 BC exception 통과 금지",
+      "order_rank": 112,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0086": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b34",
+      "block_order": 34,
+      "checkers": [
+        "check-openapi-error-declaration.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0086@2026-08-19",
+      "label": "직접 반환 BC 오류 status의 response= BC base 매핑",
+      "order_rank": 113,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0087": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b34",
+      "block_order": 34,
+      "checkers": [
+        "check-openapi-error-declaration.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0087@2026-08-19",
+      "label": "OpenAPI status mapping에 BC base 사용(concrete는 runtime 고정)",
+      "order_rank": 114,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0088": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b34",
+      "block_order": 34,
+      "checkers": [
+        "check-openapi-error-declaration.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0088@2026-08-19",
+      "label": "미반환 framework status의 BC base 선언 금지",
+      "order_rank": 115,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0089": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b34",
+      "block_order": 34,
+      "checkers": [
+        "check-openapi-error-declaration.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0089@2026-08-19",
+      "label": "openapi_extra 보충·사후 변형 금지",
+      "order_rank": 116,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0090": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b34",
+      "block_order": 34,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0090@2026-08-19",
+      "label": "add/update 공개 후보의 mounted 생성 문서 확인",
+      "order_rank": 117,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0091": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b35",
+      "block_order": 35,
+      "checkers": [
+        "check-response-schema-bypass.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0091@2026-08-19",
+      "label": "선언 JSON 성공의 Ninja validation/serialization 경유",
+      "order_rank": 118,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0092": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b35",
+      "block_order": 35,
+      "checkers": [
+        "check-response-schema-bypass.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0092@2026-08-19",
+      "label": "framework-native 성공 carveout 4종 허용",
+      "order_rank": 119,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0093": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b35",
+      "block_order": 35,
+      "checkers": [
+        "check-api-error-controller-contract.py"
+      ],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0093@2026-08-19",
+      "label": "carveout의 오류 helper·raw 오류 응답 불허",
+      "order_rank": 120,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0094": {
+      "agents": [
+        "agent-design-review-api"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b36",
+      "block_order": 36,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0094@2026-08-19",
+      "label": "소비자 의존 기존 wire의 관찰 계약 그대로 보존",
+      "order_rank": 121,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0095": {
+      "agents": [
+        "agent-design-review-api"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b36",
+      "block_order": 36,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0095@2026-08-19",
+      "label": "보존 정당 근거 2종 한정(밖의 의존·비가역)",
+      "order_rank": 122,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0096": {
+      "agents": [
+        "agent-design-review-api"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b36",
+      "block_order": 36,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0096@2026-08-19",
+      "label": "brownfield·코드 자리의 보존 근거 불인정(자리는 리팩터링 대상)",
+      "order_rank": 123,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0097": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b36",
+      "block_order": 36,
+      "checkers": [],
+      "document": "dddjango/skills/implementation-django-ninja/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0097@2026-08-19",
+      "label": "carveout의 신규 helper 레시피·profile 혼합 제시 금지",
+      "order_rank": 124,
+      "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
+      "section_number": "6.2"
+    },
+    "R-0098": {
+      "agents": [
+        "agent-design-review-ddd"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s051-8/b3",
+      "block_order": 3,
+      "checkers": [],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0098@2026-08-19",
+      "label": "의사결정 1 — 엔티티는 애그리거트의 일부로만 사용",
+      "order_rank": 20,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s051-8",
+      "section_number": "8"
+    },
+    "R-0099": {
+      "agents": [
+        "agent-design-review-ddd"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s051-8/b4",
+      "block_order": 4,
+      "checkers": [],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0099@2026-08-19",
+      "label": "의사결정 2 — CQRS는 보조 패턴으로 선택 적용",
+      "order_rank": 21,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s051-8",
+      "section_number": "8"
+    },
+    "R-0100": {
+      "agents": [
+        "agent-design-review-ddd"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s051-8/b5",
+      "block_order": 5,
+      "checkers": [],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0100@2026-08-19",
+      "label": "의사결정 3 — 애그리거트가 도메인 서비스를 모르게 분리",
+      "order_rank": 22,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s051-8",
+      "section_number": "8"
+    },
+    "R-0101": {
+      "agents": [
+        "agent-design-review-ddd"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s051-8/b6",
+      "block_order": 6,
+      "checkers": [],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0101@2026-08-19",
+      "label": "의사결정 4 — 복수 애그리거트 수정은 결과적 일관성",
+      "order_rank": 23,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s051-8",
+      "section_number": "8"
+    },
+    "R-0102": {
+      "agents": [
+        "agent-design-review-ddd"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s051-8/b7",
+      "block_order": 7,
+      "checkers": [],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0102@2026-08-19",
+      "label": "의사결정 5 — 계층+DIP 기반 동기 흐름",
+      "order_rank": 24,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s051-8",
+      "section_number": "8"
+    },
+    "R-0103": {
+      "agents": [
+        "agent-design-review-ddd"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s051-8/b8",
+      "block_order": 8,
+      "checkers": [],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0103@2026-08-19",
+      "label": "의사결정 6 — 전략 설계 우선",
+      "order_rank": 25,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s051-8",
+      "section_number": "8"
+    },
+    "R-0104": {
+      "agents": [
+        "agent-design-review-ddd"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s051-8/b9",
+      "block_order": 9,
+      "checkers": [],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0104@2026-08-19",
+      "label": "의사결정 7 — 도메인 이벤트 디스패치 타이밍 명시",
+      "order_rank": 26,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s051-8",
+      "section_number": "8"
+    },
+    "R-0105": {
+      "agents": [
+        "agent-design-review-ddd"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s051-8/b10",
+      "block_order": 10,
+      "checkers": [
+        "check-layer-skeleton.py"
+      ],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0105@2026-08-19",
+      "label": "의사결정 8 — 4계층 명확 분리 패키지 구조",
+      "order_rank": 27,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s051-8",
+      "section_number": "8"
+    },
+    "R-0106": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b2",
+      "block_order": 2,
+      "checkers": [
+        "check-domain-model.py"
+      ],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0106@2026-08-19",
+      "label": "엔티티 동등성은 식별자로 판정(값 동일해도 식별자 상이면 다른 객체)",
+      "order_rank": 0,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    },
+    "R-0107": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b3",
+      "block_order": 3,
+      "checkers": [
+        "check-domain-model.py"
+      ],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0107@2026-08-19",
+      "label": "엔티티의 행동·불변식 캡슐화(빈혈 모델 금지)",
+      "order_rank": 1,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    },
+    "R-0108": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b7",
+      "block_order": 7,
+      "checkers": [
+        "check-domain-model.py",
+        "check-transaction-boundary.py"
+      ],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0108@2026-08-19",
+      "label": "판정·불변식의 도메인 소유와 프로덕션 실호출",
+      "order_rank": 2,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    },
+    "R-0109": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b7",
+      "block_order": 7,
+      "checkers": [],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0109@2026-08-19",
+      "label": "응용·리포지토리·인프라의 판정 대행·복제 금지",
+      "order_rank": 3,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    },
+    "R-0110": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b7",
+      "block_order": 7,
+      "checkers": [],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0110@2026-08-19",
+      "label": "판정의 SQL 이동 금지 — 인프라는 경합 가드만·충돌 시 도메인 재실행",
+      "order_rank": 4,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    },
+    "R-0111": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b8",
+      "block_order": 8,
+      "checkers": [],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0111@2026-08-19",
+      "label": "도메인 상태·종류 값의 StrEnum 단일 출처와 파생·import 방향",
+      "order_rank": 5,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    },
+    "R-0112": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b8",
+      "block_order": 8,
+      "checkers": [
+        "check-choices-literal-consumption.py"
+      ],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0112@2026-08-19",
+      "label": "값 집합 소비는 심볼로만·비교는 ==",
+      "order_rank": 6,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    },
+    "R-0113": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b8",
+      "block_order": 8,
+      "checkers": [],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0113@2026-08-19",
+      "label": "복합 상태 판정의 1차 시정은 애그리거트 술어·enum 프로퍼티",
+      "order_rank": 7,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    },
+    "R-0114": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b8",
+      "block_order": 8,
+      "checkers": [],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0114@2026-08-19",
+      "label": "검증·연산·불변식 붙은 값의 값 객체 승격",
+      "order_rank": 8,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    },
+    "R-0115": {
+      "agents": [
+        "agent-design-review-ddd"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b9",
+      "block_order": 9,
+      "checkers": [],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0115@2026-08-19",
+      "label": "새 판정이 얹히는 코드의 domain_layer 애그리거트 이주(평면 모델 판정 금지)",
+      "order_rank": 9,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    },
+    "R-0116": {
+      "agents": [
+        "agent-design-review-ddd"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b9",
+      "block_order": 9,
+      "checkers": [],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0116@2026-08-19",
+      "label": "이주 기준 항-(1) — 판정·불변식 소유 시 표준 구조 이주",
+      "order_rank": 10,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    },
+    "R-0117": {
+      "agents": [
+        "agent-design-review-ddd"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b9",
+      "block_order": 9,
+      "checkers": [],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0117@2026-08-19",
+      "label": "이주 기준 항-(2) — 단순 데이터 소스는 판정 실내용만 비움",
+      "order_rank": 11,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    },
+    "R-0118": {
+      "agents": [],
+      "aliases": [
+        "rule#486"
+      ],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b9",
+      "block_order": 9,
+      "checkers": [
+        "check-layer-skeleton.py"
+      ],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0118@2026-08-19",
+      "label": "표준 트리 골격의 예외 없는 빈 패키지 실현(깊이 면제 없음)",
+      "order_rank": 12,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    },
+    "R-0119": {
+      "agents": [
+        "agent-design-review-ddd"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b9",
+      "block_order": 9,
+      "checkers": [
+        "check-db-table.py",
+        "check-layer-skeleton.py"
+      ],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0119@2026-08-19",
+      "label": "데이터소스 BC 배치 — driven_layer ORM 실체·빈 애그리거트 골격·폴더명 도출",
+      "order_rank": 13,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    },
+    "R-0120": {
+      "agents": [],
+      "aliases": [
+        "rule#488"
+      ],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b9",
+      "block_order": 9,
+      "checkers": [
+        "check-layer-skeleton.py"
+      ],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0120@2026-08-19",
+      "label": "고정·재등장 칸의 빈 패키지 존속",
+      "order_rank": 14,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    },
+    "R-0121": {
+      "agents": [
+        "agent-discipline-reviewer"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b9",
+      "block_order": 9,
+      "checkers": [],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0121@2026-08-19",
+      "label": "test 의미군은 입장 심사 승인 시에만 생성",
+      "order_rank": 15,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    },
+    "R-0122": {
+      "agents": [],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b9",
+      "block_order": 9,
+      "checkers": [
+        "check-app-container.py"
+      ],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0122@2026-08-19",
+      "label": "루트 평면 <app>/ 금지",
+      "order_rank": 16,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    },
+    "R-0123": {
+      "agents": [
+        "agent-design-review-ddd"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b9",
+      "block_order": 9,
+      "checkers": [],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0123@2026-08-19",
+      "label": "골격 실현의 touched 한정(무관 기존 앱은 §4 존중)",
+      "order_rank": 17,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    },
+    "R-0124": {
+      "agents": [],
+      "aliases": [
+        "rule#3"
+      ],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b9",
+      "block_order": 9,
+      "checkers": [
+        "check-context-isolation.py"
+      ],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0124@2026-08-19",
+      "label": "컨텍스트 간 접근은 ACL·OHS로만(타 컨텍스트 내부 직접 import 금지)",
+      "order_rank": 18,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    },
+    "R-0125": {
+      "agents": [
+        "agent-design-review-ddd"
+      ],
+      "aliases": [],
+      "block": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b9",
+      "block_order": 9,
+      "checkers": [],
+      "document": "dddjango/skills/architecture-ddd/references/final.md",
+      "expression": "https://numchida.com/ns/djr#R-0125@2026-08-19",
+      "label": "이주의 신규 판정 한정(기존 배치 일괄 강제 금지 — 기존 배치는 빚)",
+      "order_rank": 19,
+      "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
+      "section_number": "3.2"
+    }
+  }
+}

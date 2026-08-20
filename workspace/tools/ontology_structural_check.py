@@ -1,4 +1,4 @@
-"""구조 검증 — SPARQL 조인 5종 + order 유일성 + kind↔datatype 정합 (T1-6, .venv 전용).
+"""구조 검증 — SPARQL 조인 7종 + order 유일성 + kind↔datatype·pathGlob 정합 (T1-6·T2-4, .venv 전용).
 
 «구조화 이득»의 실물 증명(게이트 2 항목 2): 산문일 때 불가능했던 조인 질의가
 그래프 정본 위에서 성립함을 상시 검증한다. 데이터 = rules+wiring+vocab 전량 병합.
@@ -308,6 +308,26 @@ def main() -> int:
     from rdflib import Namespace
     from rdflib.namespace import RDF, XSD
     djr = Namespace(DJR)
+
+    # ⑦ pathGlob 무결성(T2-4 — 적대 리뷰 AP-09 fail-closed).
+    # **셰이프만으로는 못 막는다**: `SectionShape` 는 `sh:targetClass djr:Section` 이므로
+    # 절이 **아닌** 주어에 붙은 pathGlob 은 타깃에 걸리지 않아 정수 리터럴도 conform 한다
+    # (실증됨). 주어 종별·문법·중복을 여기서 닫는다.
+    _GLOB_OK = re.compile(r"\A[A-Za-z0-9_*][A-Za-z0-9_*./-]*\Z")
+    glob_seen: "dict[str, list[str]]" = {}
+    for s, o in g_prod.subject_objects(djr.pathGlob):
+        if (s, RDF.type, djr.Section) not in g_prod:
+            errors.append(f"⑦ pathGlob 주어가 절이 아니다: {s}")
+            continue
+        text = str(o)
+        if o.datatype not in (None, XSD.string) or o.language is not None:
+            errors.append(f"⑦ pathGlob datatype 이탈: {s} — {o.datatype}/{o.language}")
+        if not _GLOB_OK.match(text) or ".." in text:
+            errors.append(f"⑦ pathGlob 문법 위반: {s} — {text!r}")
+        glob_seen.setdefault(text, []).append(str(s))
+    for text, owners_ in sorted(glob_seen.items()):
+        if len(owners_) > 1 and args.report:
+            print(f"[structural] 주의 글롭 공유 {text} ← 절 {len(owners_)}개(포함 관계는 의도된 층 중첩)")
     LANG_KINDS = {djr["kind-norm"], djr["kind-prose"], djr["kind-checklist-item"]}
     STR_KINDS = {djr["kind-code"], djr["kind-table-row"]}
     for b in g.subjects(RDF.type, djr.Block):
@@ -338,7 +358,7 @@ def main() -> int:
 
     for e in errors:
         print(f"[structural] 위반: {e}", file=sys.stderr)
-    print(f"[structural] {'정합 — 6종 조인·순서·datatype·alias 전부 성립' if not errors else f'위반 {len(errors)}건'}")
+    print(f"[structural] {'정합 — 7종 조인·순서·datatype·alias·pathGlob 전부 성립' if not errors else f'위반 {len(errors)}건'}")
     return 1 if errors else 0
 
 

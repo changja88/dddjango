@@ -12,7 +12,7 @@ djr:golden-expr-3 a djr:Expression ;
 
 djr:golden-violation-1 a djr:Violation ;
     djr:byChecker djr:golden-checker-3 ;
-    djr:experimentRun "exp-golden-a" ;
+    djr:experimentRun "exp-golden-a", "exp-golden-b" ;
     djr:severity sh:Violation ;
     djr:targetFile "apps/order/services.py" ;
     djr:violatesExpression djr:golden-expr-3 ;

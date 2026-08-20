@@ -123,6 +123,29 @@ def main() -> int:
                      f"{t[-1]['stop_reason'] if t else '—'}/{len(t)}회전", ok,
                      "고칠 것이 없으면 즉시 수렴"))
 
+        # T5 — C암 배선(`--selector sparql`): 같은 저장소·같은 앵커에서 B와 **프롬프트가 달라야**
+        # 한다. 여기까지 와야 「팩이 존재한다」가 아니라 「루프가 팩을 탄다」가 증명된다
+        # (적대 리뷰 AQ-04 — regen_core 단위 시험만으로는 배선 공백을 못 잡는다).
+        repo, anchor = G._make_repo(td, "t5")
+        _seed_violation(repo)
+        log_b = td / "t5b.jsonl"
+        code_b, _ = _run(repo, anchor, log_b, ["--dry-regen"])
+        tb = _turns(log_b)
+        repo2, anchor2 = G._make_repo(td, "t5c")
+        _seed_violation(repo2)
+        log_c = td / "t5c.jsonl"
+        code_c, out_c = _run(repo2, anchor2, log_c, ["--dry-regen", "--selector", "sparql"])
+        tc = _turns(log_c)
+        ok = (bool(tb) and bool(tc) and code_b == 0 and code_c == 0
+              and tb[0]["prompt_sha256"] != tc[0]["prompt_sha256"]
+              and tc[0].get("rules_n", 0) > 0
+              and tc[0].get("hit_ratio") is not None
+              and tb[0].get("rules_n", 0) == 0)
+        rows.append(("T5 C암 배선 발화", "프롬프트 상이·rules>0",
+                     f"b≠c {bool(tb) and bool(tc) and tb[0]['prompt_sha256'] != tc[0]['prompt_sha256']}"
+                     f" · rules {tc[0].get('rules_n') if tc else '—'}", ok,
+                     "루프가 실제로 팩을 탄다(단위 시험 아님)"))
+
     print("| 케이스 | 기대 | 실측 | 일치 | 비고 |")
     print("|---|---|---|---|---|")
     bad: int = 0

@@ -232,6 +232,16 @@ def run_loop(args) -> int:
     """
     target: Path = Path(args.target).resolve()
     scope: "list[str]" = [s for s in (args.scope or "").split(",") if s]
+    # C암 재료 — 팩 부재·손상은 **중단**이다(조용한 B 폴백 금지). 그 폴백은 «처치가 걸리지
+    # 않은 런»을 «정상 C 런»으로 위장시켜 A/B 전체를 오염시킨다(T2-3 SF-10 동형).
+    pack = None
+    if args.selector == "sparql":
+        import rulepack
+        try:
+            pack = rulepack.Rulepack.load()
+        except rulepack.PackError as exc:
+            print(f"[regen-loop] 규칙 팩 결손 — C암 실행 불가: {exc}", file=sys.stderr)
+            return 1
     turns: "list[dict]" = []
     prev_ids: "set | None" = None
     stop: str = "budget"
@@ -262,8 +272,13 @@ def run_loop(args) -> int:
             ids = {regen_core.identity(r) for r in scoped}
             no_progress = prev_ids is not None and ids == prev_ids
             prev_ids = ids
-            prompt = regen_core.assemble_prompt(scoped)
-            odd = regen_core.suspicious(scoped)
+            # C암(`sparql`)만 그래프 선별을 탄다 — B암(`snapshot`)의 프롬프트는 T2-3 과
+            # byte 동일하다(공정 통제의 근간 · rulepack_smoke G2 가 고정).
+            injected, rules, prov = scoped, None, []
+            if pack is not None:
+                injected, rules, prov = regen_core.select_graph(scoped, pack)
+            prompt = regen_core.assemble_prompt(injected, rules)
+            odd = regen_core.suspicious(injected)
             before = set(_changed_paths(target))
             rc, note = _regenerate(prompt, target, args.model, args.regen_timeout,
                                    args.dry_regen, getattr(args, "fake_regen", ""))
@@ -278,6 +293,13 @@ def run_loop(args) -> int:
                 "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
                 "prompt_bytes": len(prompt.encode("utf-8")),
                 "suspicious_fields": len(odd),
+                # 용량·귀속 계상(T2-4 §6 — 집계치만으로는 재현이 안 된다: 적대 리뷰 AR 4-3)
+                "rules_n": len(rules or []),
+                "tiers": {str(t): sum(1 for p in prov if p["priority"] == t) for t in (1, 2, 3)},
+                "hit_ratio": (round(sum(1 for p in prov if p["priority"] != 3) / len(prov), 4)
+                              if prov else None),
+                "deduped_n": sum(1 for p in prov if p["drop_reason"] == "duplicate"),
+                "records_provenance": prov,
                 "changed_outside_scope": outside,
                 "regen_exit": rc, "note": note,
                 "stop_reason": None,
@@ -333,8 +355,8 @@ def main() -> int:
     ap.add_argument("--max-turns", type=int, default=3, help="--run: 회전 예산(기본 3)")
     ap.add_argument("--regen-timeout", type=int, default=900)
     ap.add_argument("--model", default="", help="--run: 재생성 모델 고정(T2-0b 봉인 대상)")
-    ap.add_argument("--selector", default="snapshot", choices=("snapshot",),
-                    help="--run: 선별기(SPARQL 은 T2-4)")
+    ap.add_argument("--selector", default="snapshot", choices=("snapshot", "sparql"),
+                    help="--run: 선별기 — snapshot=B암(그래프 미경유) · sparql=C암(규칙 팩)")
     ap.add_argument("--turn-log", default="", help="--run: 회전 레코드 jsonl 경로")
     ap.add_argument("--fake-regen", default="",
                     help="--run: 재생성 대신 실행할 결정적 명령(하네스 전용 — 회전 전이 픽스처)")

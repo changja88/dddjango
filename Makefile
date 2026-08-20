@@ -41,9 +41,11 @@ verify-ontology:
 	python3 workspace/tools/ontology_ledger_check.py; \
 	echo "[verify-ontology 9/10] 렌더 동기 (투영물 == render(그래프))"; \
 	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_render_sync.py; \
-	echo "[verify-ontology 10/10] 구조 검증 (SPARQL 6종·순서·datatype·alias 함수성)"; \
+	echo "[verify-ontology 10/11] 구조 검증 (SPARQL 7종·순서·datatype·alias 함수성·pathGlob)"; \
 	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_structural_check.py --self-test; \
-	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_structural_check.py
+	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_structural_check.py; \
+	echo "[verify-ontology 11/11] 질의 카탈로그 골든 (Q1~Q4 양성·음성·run 격리)"; \
+	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/query_golden_check.py
 
 # 기존 릴리즈 검증 세트 — 시스템 python3 유지 (실측 기반 보존, t0-plan A8)
 verify-base:
@@ -71,7 +73,28 @@ verify-base:
 	PYTHONUTF8=1 python3 workspace/tools/regen_loop_prototype.py --self-test; \
 	PYTHONUTF8=1 python3 workspace/tools/regen_loop_smoke.py; \
 	PYTHONUTF8=1 python3 workspace/tools/runtime_parity_check.py; \
+	PYTHONUTF8=1 python3 workspace/tools/rulepack_smoke.py; \
+	PYTHONUTF8=1 python3 workspace/tools/derive_path_globs.py --check; \
+	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_rulepack.py --check; \
 	diff -rq dddjango/scripts codex-dddjango/skills/dddjango/scripts --exclude=__pycache__
+
+# 변이 자가검사 — 상시 verify 와 분리(T2-4 적대 리뷰 AQ-10: 검출력 증명은 무겁고 상시 아님).
+# 팩·selector 를 건드린 커밋은 이 타깃도 green 이어야 한다.
+verify-mutation:
+	@set -euo pipefail; \
+	PYTHONUTF8=1 python3 workspace/tools/rulepack_smoke.py --mutation-test
+
+# C암 발화 증명 — 4트리(source 2 + 설치 cache 2) × 5단언. **T2-5 실런 진입의 hard gate**.
+# 지금은 cache 가 2.11.0 이라 cache 두 레인이 red 인 것이 정상이고, 그 red 가 곧
+# «T2-0b 설치본 갱신 전에는 C 실런 금지»의 기계적 표현이다(개발 중에는 ALLOW_STALE=1).
+verify-firing:
+	@set -euo pipefail; \
+	PYTHONUTF8=1 python3 workspace/tools/firing_probe.py \
+	  $(if $(ALLOW_STALE),--allow-stale-cache,)
+
+# 규칙 팩 재생성 — 그래프가 바뀌면 이걸 돌리고 커밋한다(투영물 · 직접 편집 금지)
+rulepack:
+	@PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_rulepack.py
 
 # 설치본 위반 레코드 수집 (T2-2 — `.dddjango/violations/*.jsonl` → workspace/eval/violations/raw/)
 # 원천 지정: make collect-violations FROM="<dir1> <dir2>" (미지정 시 DJR_VIOLATIONS_DIR·저장소 설치본)

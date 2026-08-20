@@ -140,7 +140,7 @@ djr:PrefLabelShape-label a sh:PropertyShape ;
     sh:uniqueLang true .
 
 djr:SectionShape a sh:NodeShape ;
-    sh:property djr:SectionShape-headingCurrent, djr:SectionShape-headingSnapshot, djr:SectionShape-inDocument, djr:SectionShape-parentSection, djr:SectionShape-sectionNumber, djr:SectionShape-sectionOwner ;
+    sh:property djr:SectionShape-headingCurrent, djr:SectionShape-headingSnapshot, djr:SectionShape-inDocument, djr:SectionShape-parentSection, djr:SectionShape-pathGlob, djr:SectionShape-sectionNumber, djr:SectionShape-sectionOwner ;
     sh:targetClass djr:Section .
 
 djr:SectionShape-headingCurrent a sh:PropertyShape ;
@@ -165,6 +165,11 @@ djr:SectionShape-parentSection a sh:PropertyShape ;
     sh:maxCount 1 ;
     sh:nodeKind sh:IRI ;
     sh:path djr:parentSection .
+
+djr:SectionShape-pathGlob a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path djr:pathGlob ;
+    sh:pattern "^[A-Za-z0-9_*][A-Za-z0-9_*./-]*$" .
 
 djr:SectionShape-sectionNumber a sh:PropertyShape ;
     sh:datatype xsd:string ;
@@ -207,7 +212,7 @@ djr:TextIsString a sh:NodeShape ;
     sh:datatype xsd:string .
 
 djr:ViolationShape a sh:NodeShape ;
-    sh:property djr:ViolationShape-byChecker, djr:ViolationShape-detectedAt, djr:ViolationShape-evidence, djr:ViolationShape-runId, djr:ViolationShape-severity, djr:ViolationShape-targetFile, djr:ViolationShape-targetSymbol, djr:ViolationShape-violatesExpression, djr:ViolationShape-violatesWork ;
+    sh:property djr:ViolationShape-byChecker, djr:ViolationShape-detectedAt, djr:ViolationShape-evidence, djr:ViolationShape-experimentRun, djr:ViolationShape-runId, djr:ViolationShape-severity, djr:ViolationShape-targetFile, djr:ViolationShape-targetSymbol, djr:ViolationShape-violatesExpression, djr:ViolationShape-violatesWork ;
     sh:targetClass djr:Violation .
 
 djr:ViolationShape-byChecker a sh:PropertyShape ;
@@ -225,6 +230,11 @@ djr:ViolationShape-detectedAt a sh:PropertyShape ;
 djr:ViolationShape-evidence a sh:PropertyShape ;
     sh:datatype xsd:string ;
     sh:path djr:evidence .
+
+djr:ViolationShape-experimentRun a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:maxCount 1 ;
+    sh:path djr:experimentRun .
 
 djr:ViolationShape-runId a sh:PropertyShape ;
     sh:datatype xsd:string ;

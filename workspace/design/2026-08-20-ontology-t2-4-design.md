@@ -256,6 +256,8 @@ v1의 `plain|rulepack`은 T2-3 C3에서 **사용자 승인으로 확정된 값 �
 
 ## §5. 판단 V — 검증 자산
 
+**실물 좌표(구현분)**: `workspace/tools/rulepack_smoke.py`(G1~G6 9단언 · `--mutation-test` 변이 8종) · `workspace/tools/firing_probe.py`(V7 — 4트리 × 5단언) · `workspace/tools/ontology_rulepack.py --check`(V2) · make 타깃 `verify`(상시) / `verify-mutation` / `verify-firing`.
+
 | # | 자산 | 검출 대상 | 상시/별도 |
 |---|---|---|---|
 | **V1** | 질의 골든 4쌍(Q1 양성 2·음성 2 포함·Q2 양성+음성) | 질의 변조·정렬 비결정성·공허 통과 | 상시 |

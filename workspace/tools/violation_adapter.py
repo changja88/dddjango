@@ -10,8 +10,10 @@ t2-plan §T2-2 «위반 그래프 어댑터»의 최소 경로. **조인 성립�
 (rule=null+contract_ref)·미이관 `#N`·가드 센티널은 **현행 셰이프로는 노드를 만들 수 없다**.
 그 처분(셰이프 개정 A안 등)은 확정 전이며, 여기서는 **계수로만 보고**한다(침묵 탈락 금지).
 
-violation_id = (Work × 대상 파일 × 심볼) — 심볼 부재 시 (Work × 파일)로 강등(L-M #12).
-노드 IRI 는 그 셋의 sha16 이라 **재실행 결정성**을 갖는다(같은 사건 = 같은 노드).
+violation_id = (**실런** × Work × 라인 제거 경로 × 심볼) — 심볼 부재 시 (…× 파일)로 강등(L-M #12).
+노드 IRI 는 그 넷의 sha16 이라 **재실행 결정성**을 갖는다(같은 실런의 같은 사건 = 같은 노드).
+실런 축은 T2-4 리뷰 AQ-02 가 강제했다(런 간 재발이 접히며 뒤 런이 소실되던 결함), 경로 정규화는
+`regen_core.canonical_locator` 단일 출처를 쓴다(AQ-03 — 자체 재구현 금지).
 
 사용: PYTHONPATH=workspace/tools .venv/bin/python workspace/tools/violation_adapter.py
         --records <jsonl 또는 디렉터리>... [--out <ttl>] [--strip <경로 접두>] [--self-test]
@@ -26,6 +28,9 @@ import sys
 from pathlib import Path
 
 from ontology_canon import REPO_ROOT
+
+sys.path.insert(0, str(REPO_ROOT / "dddjango" / "scripts"))
+import regen_core  # noqa: E402  — 경로 정규화 단일 출처(canonical_locator)
 
 DJR = "https://numchida.com/ns/djr#"
 ALIASES: Path = REPO_ROOT / "ontology" / "wiring" / "aliases.ttl"
@@ -71,8 +76,18 @@ def _records(paths: "list[str]") -> "list[dict]":
     return recs
 
 
-def _vid(work: str, file: str, symbol: "str | None") -> str:
-    key = f"{work}\x1f{file}\x1f{symbol or ''}"
+def _vid(work: str, file: str, symbol: "str | None", experiment: "str | None" = None) -> str:
+    """사건 노드 키 = `(실런, Work, 라인 제거 경로, 심볼)` 의 sha16.
+
+    **실런을 키에 넣는 이유**(T2-4 적대 리뷰 AQ-02): 넣지 않으면 서로 다른 실런에서 재발한
+    같은 위반이 한 노드로 접히고 **뒤 런의 `runId` 가 통째로 사라진다**(실측: joined 2 →
+    노드 1 · runId 는 앞 런 값만 잔존). 그러면 «현재 런 한정» 질의가 원리상 성립하지 않는다.
+    한 런 **안**에서는 여전히 canonical identity 로 접힌다.
+
+    **경로는 `regen_core.canonical_locator` 가 정규화한다**(AQ-03 — 재구현 금지): 라인번호만
+    바뀐 같은 위반이 루프에서는 한 사건인데 여기서는 두 노드가 되던 갈라짐을 닫는다.
+    """
+    key = f"{experiment or ''}\x1f{work}\x1f{regen_core.canonical_locator(file)}\x1f{symbol or ''}"
     return hashlib.sha256(key.encode("utf-8")).hexdigest()[:16]
 
 
@@ -104,16 +119,21 @@ def convert(recs: "list[dict]", alias: "dict[str, tuple[str, str]]",
         if strip and f.startswith(strip):
             f = f[len(strip):].lstrip("/")
         sym = r.get("symbol")
-        vid = _vid(work, f, sym)
+        exp = r.get("experiment_run_id")
+        vid = _vid(work, f, sym, exp)
         tally["joined"] += 1
         if vid in seen:
-            continue  # 같은 violation_id 는 한 노드(재발은 runId 로 구분 — 계수는 조회가 한다)
+            continue  # 한 실런 안의 같은 사건은 한 노드(런 간 재발은 위 키가 갈라 놓는다)
         seen.add(vid)
         lines = [
             f"djr:v-{vid} a djr:Violation ;",
             f"    djr:byChecker <{DJR}c/{r['checker']}> ;",
             f'    djr:detectedAt "{r["ts"]}"^^xsd:dateTime ;',
             f'    djr:evidence "{_esc(r.get("message", ""))}" ;',
+        ]
+        if exp:
+            lines.append(f'    djr:experimentRun "{_esc(exp)}" ;')
+        lines += [
             f'    djr:runId "{_esc(r.get("run_id", ""))}" ;',
             f"    djr:severity {SEVERITY_IRI[r['severity']]} ;",
             f'    djr:targetFile "{_esc(f)}" ;',

@@ -1,0 +1,23 @@
+# T2-4 사전 검증 질의 ② — 위반 이력 → 관련 규범 (**현재 실런 한정**)
+#
+# 용도: 저장소 측 분석·리포트. **런타임 selector 가 아니다** — 런 도중의 선별은 게이트 sidecar
+#       가 방금 준 N∖L 만 보며, 여기서 과거 런을 보면 T2-0a 격리가 깨진다.
+# 계약: `$RUN` 미바인딩 실행은 도구가 **거부**한다(fail-closed — 전역 스캔 금지).
+# 전제: `djr:experimentRun` 은 T2-4 가 신설한 축이다(적대 리뷰 AQ-02). 그 전에는 `djr:runId`
+#       가 「검사기명+UTC+pid」인 **프로세스** 식별자라 같은 실런의 여러 검사기를 묶지 못했고,
+#       어댑터가 런 간 재발을 한 노드로 접어 뒤 런을 버렸다.
+PREFIX djr: <https://numchida.com/ns/djr#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT ?work ?label (COUNT(DISTINCT ?violation) AS ?violationCount)
+       (GROUP_CONCAT(DISTINCT STR(?checker); separator=";") AS ?checkers)
+WHERE {
+  ?violation a djr:Violation ;
+             djr:experimentRun ?run ;
+             djr:violatesWork ?work ;
+             djr:byChecker ?checker .
+  FILTER(STR(?run) = STR($RUN))
+  OPTIONAL { ?work skos:prefLabel ?label }
+}
+GROUP BY ?work ?label
+ORDER BY DESC(?violationCount) ?work

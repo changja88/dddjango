@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""findings/0 계수 골든 — 편입 검사기 × 레인 × {계수·13필드 oracle·stdout↔record 대조}.
+"""findings/0 계수 골든 — 편입 검사기 × 레인 × {계수·14필드 oracle·stdout↔record 대조}.
 
 T2-1 채점 하네스(D11 — t2-plan v1.1: «27종 전수 arm-blind red/green 계수 골든»)의
 레코드 채널 축: 공용 findings 모듈로 편입된 검사기마다 red fixture 에서
@@ -11,7 +11,7 @@ T2-1 보강 1단계(포매터 계약 §4-1) 확장:
 - 레인 키 공간: checker_baseline_matrix 와 동일 — 기본 red 레인 `"<script>"` +
   git 3레인·위험 레인 `"<script>::<lane>"`(선언·로더·git 구성·커스텀 argv 전부
   그쪽 import — 단일 출처). 위험 레인은 자기 good/ 을 같은 argv 의 green 축으로 갖는다.
-- findings/0 **13필드 전건 oracle**: 레코드마다 schema·checker(파일명 일치)·
+- findings/0 **14필드 전건 oracle**: 레코드마다 schema·checker(파일명 일치)·
   rule/sentinel/contract_ref 상호 배타·file 비어있지 않음·severity 값 공간·message
   비어있지 않음·expression null·ts UTC 형식·run_id 단일·record_id 유일+
   `{run_id}:{4자리 서수}` 연속 증가를 단언한다(위반 시 해당 행 red).
@@ -86,10 +86,14 @@ CONVERTED: "tuple[str, ...]" = tuple(sorted(script for script, _ in REGISTRY))
 
 CHECKER_TIMEOUT_S: int = 300  # 무기한 verify 정지 방지(적대 검증 레인 S 9번)
 
-# findings/0 의 13필드 전체(스키마 정본: dddjango/scripts/findings.py docstring).
+# findings/0 의 14필드 전체(스키마 정본: dddjango/scripts/findings.py docstring).
+# `experiment_run_id` 는 T2-4 확장 — 개발 런에서는 항상 null 이고 A/B 실런에서만 채워진다.
+# 필드 추가는 findings/0 의 호환 확장이며(스키마 정본 문면), 이 oracle 이 그 추가를
+# **의도한 것인지** 묻는 관문이다: 여기를 같이 고치지 않으면 27종 전건이 red 로 잡힌다.
 _FIELDS: "tuple[str, ...]" = (
     "schema", "run_id", "ts", "record_id", "rule", "sentinel", "contract_ref",
     "checker", "file", "symbol", "severity", "message", "expression",
+    "experiment_run_id",
 )
 _TS_RE: "re.Pattern[str]" = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\Z")
 _RULE_FORM: "re.Pattern[str]" = re.compile(r"#\d+\Z")
@@ -269,7 +273,7 @@ def _fingerprint(records: "list[dict]") -> str:
 
 
 def _record_oracle(script: str, records: "list[dict]") -> "list[str]":
-    """findings/0 13필드 전건 oracle — 위반 목록(비어 있으면 통과)."""
+    """findings/0 14필드 전건 oracle — 위반 목록(비어 있으면 통과)."""
     issues: "list[str]" = []
     run_ids = {r.get("run_id") for r in records}
     if records and len(run_ids) != 1:
@@ -521,7 +525,7 @@ def main(argv: "list[str]") -> int:
         for msg in problems.get(key, []):
             print(f"    · {msg}")
     print(f"레인 {len(got)} · 일치 {len(got) - mismatch} · 불일치 {mismatch} · "
-          f"대기 {len(waiting)} (green 축 전수 0레코드·13필드 oracle·"
+          f"대기 {len(waiting)} (green 축 전수 0레코드·14필드 oracle·"
           f"stdout↔record {'ordered' if strict_order else 'multiset'} 대조 포함)")
     return 0 if mismatch == 0 else 2
 

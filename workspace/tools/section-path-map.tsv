@@ -1,0 +1,5 @@
+doc	section_number	tree_row	rationale
+architecture-ddd-final	3.2	59	엔티티·판정·불변식 절 — 표준 트리 domain_layer 소관(애그리거트·값 객체·도메인 서비스)
+architecture-ddd-final	8	1	의사결정 요약 절 — 특정 층이 아니라 BC 전역 결정
+implementation-django-ninja-final	6.1	8	Status code mapping 절 — HTTP 응답 표면(driving_layer/api)
+implementation-django-ninja-final	6.2	8	dddjango-code-json 오류 프로필 절 — HTTP 오류 응답 표면(driving_layer/api)

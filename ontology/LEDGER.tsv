@@ -937,3 +937,5 @@ architecture-ddd-final	s051-8	f99c8c0d9579d55d756857b2a3349e7e45a0d143d1a58be482
 architecture-ddd-final	s017-3.2	f72075797a2748ed7e8440284b5062f8f45b77e10b75fd1ea26988afe7813f92	graph	f72075797a2748ed7e8440284b5062f8f45b77e10b75fd1ea26988afe7813f92	9	20	ceb3c6a	migrate:t1-pilot 2026-08-19 (commit 해시는 검수 패키지 단계 ⑦에서 기입)
 command-dddjango	s007	e42de6d2ec05af75c952a9ff84d6c092b07da976c360e5dc64acacf6aa54a185	prose	-	-	-	-	rebaseline:2026-08-20 V2/V3 DI 이관(#81/#488=layer-skeleton 소유 — 귀속 매핑표 v2 §3.2) 문면 동기
 command-dddjango	s007	93bdc36fa0a028935a2e2019e7464f09b5fe239d02c27469a65d9043ad47c3bb	prose	-	-	-	-	rebaseline:2026-08-20 T2-3 — step 6′ 재생성 루프 절 신설(DJR_LOOP_ENABLED=on 일 때만 발화·기본 off 경로 무변)
+command-dddjango	s007	93c4a385763bbbd811a08c4c4931287ddf4a7976d6030f3552a0d9f468935927	prose	-	-	-	-	rebaseline:2026-08-20 T2-4 — step 6ʹ 주입 재료 절 개정(동결 개정 8: DJR_LOOP_SELECTOR=sparql 일 때만 <rules> 번호·명칭 추가·본문 미동봉·snapshot 은 byte 불변)
+command-dddjango	s007	a26771a2161bcb0b9a15714328a787f50d1c7048642b4df17a8cd088b167c217	prose	-	-	-	-	rebaseline:2026-08-20 T2-4 — step 6ʹ 에 셸 B 스크립트 호출 문면 추가(regen_core.py CLI · 즉석 조립 금지 · exit 3=대상 0 · exit 1=팩 결손 중단)

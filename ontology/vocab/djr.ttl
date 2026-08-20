@@ -126,6 +126,9 @@ djr:enforcedBy a rdf:Property ;
 djr:evidence a rdf:Property ;
     skos:prefLabel "근거"@ko .
 
+djr:experimentRun a rdf:Property ;
+    skos:prefLabel "실험 실행 식별자"@ko .
+
 djr:headingCurrent a rdf:Property ;
     skos:prefLabel "현행 헤딩"@ko .
 

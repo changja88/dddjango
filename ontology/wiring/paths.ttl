@@ -1,0 +1,9 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s017-3.2> djr:pathGlob "application/*/domain_layer/**" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s051-8> djr:pathGlob "application/*/**" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1> djr:pathGlob "application/*/driving_layer/api/**" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> djr:pathGlob "application/*/driving_layer/api/**" .

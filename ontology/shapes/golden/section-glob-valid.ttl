@@ -1,0 +1,12 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+djr:golden-doc-2 a djr:Document ;
+    skos:prefLabel "골든 문서 2"@ko .
+
+djr:golden-section-2 a djr:Section ;
+    djr:headingSnapshot "## 9. 골든 절"@ko ;
+    djr:inDocument djr:golden-doc-2 ;
+    djr:pathGlob "application/*/domain_layer/**" ;
+    djr:sectionNumber "9" ;
+    djr:sectionOwner djr:owner-graph .

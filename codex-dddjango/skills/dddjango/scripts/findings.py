@@ -39,6 +39,10 @@
                  "info"      = 정보     (sh:Info 대응 — ⓓ 후보 채널 · 현행 exit 불산입)
   message      검사기 산출 메시지(ⓓ 후보는 «— 물음: …» 포함 — 라인 채널과 같은 문면)
   expression   null 예약 — T2 어댑터가 판정 시점 Expression 실값을 채운다
+  experiment_run_id
+               A/B 실런 네임스페이스(`DJR_EXPERIMENT_RUN_ID` — 미지정이면 null). run_id 가
+               프로세스 단위라 **같은 실런의 여러 검사기를 묶지 못하는** 공백을 메운다(T2-4).
+               null 이 정상값이며(개발 런) 실런에서만 채워진다 — 필드 추가는 호환 확장이다.
 
 사용(검사기 쪽):
   from findings import Findings, Candidates     # 출력 규약 준수군
@@ -65,6 +69,10 @@ ENV_VAR: str = "DJR_FINDINGS_JSON"
 # 설치본 위반 레코드 채널(T2-2 · t2-plan §T2-2 L-7) — 디렉터리 sink.
 ENV_DIR: str = "DJR_VIOLATIONS_DIR"
 ENV_SESSION: str = "DJR_SESSION_ID"
+# A/B 실런 네임스페이스(T2-4 · t2-plan §2 T2-0a 격리). 미지정이면 null 로 실린다 —
+# 이 필드가 없으면 «현재 런 한정» 질의(T2-4 Q2)가 원리상 성립하지 않는다: 기존 `run_id` 는
+# 「검사기명+UTC+pid」인 **프로세스** 식별자라 같은 런의 여러 검사기를 묶지 못한다.
+ENV_EXPERIMENT: str = "DJR_EXPERIMENT_RUN_ID"
 INSTALL_MARKER: str = ".dddjango"   # 설치 표식(도구 영역 — F-C 관례)
 VIOLATIONS_SUBDIR: str = "violations"
 SCHEMA: str = "findings/0"
@@ -204,6 +212,7 @@ def _emit(checker: str, rule: "str | None", file: str, symbol: "str | None",
         "severity": severity,
         "message": message,
         "expression": None,
+        "experiment_run_id": os.environ.get(ENV_EXPERIMENT) or None,
     }
     line: str = json.dumps(record, ensure_ascii=False) + "\n"
     try:

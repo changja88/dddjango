@@ -29,6 +29,7 @@ SECTIONS: "tuple[tuple[str, str, str], ...]" = (
 # 런타임 표기 차이 — 의미가 같고 표기만 다른 것만 정규화한다(내용 차이를 지우면 안 된다).
 NORMALIZE: "tuple[tuple[str, str], ...]" = (
     (r"\$\{CLAUDE_PLUGIN_ROOT\}/scripts/", "<PLUGIN>/scripts/"),
+    (r"\$\{SKILL_DIR\}/scripts/", "<PLUGIN>/scripts/"),   # codex 측 플러그인 루트 표기
     (r"`scripts/regen_core\.py`\(이 스킬 폴더 기준 — 실행 시 절대 경로로 편다\)",
      "`<PLUGIN>/scripts/regen_core.py`"),
     (r"`\$\{CLAUDE_PLUGIN_ROOT\}/scripts/regen_core\.py`", "`<PLUGIN>/scripts/regen_core.py`"),

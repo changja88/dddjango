@@ -1,0 +1,19 @@
+# T2-4 사전 검증 질의 ① — 경로/디렉터리 → 적용 규범
+#
+# **처치 밖 분석 카탈로그다**(적대 리뷰 AP-08 처분): C암 selector 는 경로 축을 쓰지 않는다.
+# 위반 레코드가 이미 `checker` 를 운반하므로 경로 축은 선별에 추가 정보를 주지 않는데,
+# 처치에 넣으면 「O-7 산출 경로에 맞춰 글롭을 저작했다」는 의심만 떠안는다.
+# 따라서 이 질의의 결과는 **C 효과 주장에 사용하지 않는다**.
+#
+# 글롭은 표준 트리에서 **기계 유도**된다(`workspace/tools/derive_path_globs.py`).
+# 문법은 폐쇄 정의이며 정적 셰이프(`SectionShape-pathGlob`)와 런타임 matcher
+# (`dddjango/scripts/rulepack.py`)가 **각각 별도 게이트**로 지킨다(AR 4-4).
+PREFIX djr: <https://numchida.com/ns/djr#>
+
+SELECT ?section ?sectionNumber ?glob
+WHERE {
+  ?section a djr:Section ;
+           djr:sectionNumber ?sectionNumber ;
+           djr:pathGlob ?glob .
+}
+ORDER BY ?glob ?section

@@ -123,6 +123,16 @@ def main() -> int:
                        "rule/file/message) — 셸 A(비인과 harness)와 셸 B(파이프라인 처치)가 "
                        "공유해 같은 byte 를 받는다 · regen_loop_prototype --self-test 가 "
                        "골든·owner-map 유출 0·injection 경계를 고정")
+            elif rel.name == "rulepack.py":
+                why = ("규칙 팩 조회 모듈(T2-4 — C암 selector 재료·무의존 stdlib) — 정본은 "
+                       "ontology/ 그래프이고 여기는 투영물 rulepack.json 을 읽기만 한다 "
+                       "(E7 배포 경계: rdflib 는 설치본 침투 금지) · 팩 부재·손상은 "
+                       "fail-closed(폴백 금지) · ontology_rulepack.py --check 가 신선도 고정")
+            elif rel.name == "rulepack.json":
+                why = ("규칙 팩 투영물(T2-4 — 빌드타임 사전 렌더 산출·직접 편집 금지) — "
+                       "저자는 workspace/tools/ontology_rulepack.py 하나뿐이고 "
+                       "«팩 == render(그래프)» 를 make verify 가 byte 로 대조한다 · "
+                       "본문(text) 미동봉·인덱스와 명칭만(동결 개정 8)")
             elif rel.name == "anchor_diff.py":
                 why = "scope-render 직접 계열 판정 차분 공용 모듈(2026-08-15 r2″ — registry 2·5·6·15·16번 --anchor 소비·registry_gate 동형 N∖L·빚 채널) — anchor_diff_smoke 가 행동 고정"
             else:
