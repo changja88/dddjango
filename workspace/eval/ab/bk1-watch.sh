@@ -33,7 +33,9 @@ while true; do
     # 스피너 글리프는 회전한다(✻ ✳ ✽ ✶ · …) — 글리프 대신 «경과·토큰 카운터»를 본다.
     # 그 줄은 작업 중일 때만 뜬다: "… (5m 22s · ↓ 16.8k tokens)"
     busy=0
-    print -r -- "$tail26" | grep -qE '\([0-9]+[ms][^)]*· ↓' && busy=1
+    # 카운터는 «(5m 33s · ↓ 16.8k tokens)» 이기도 «(5m 33s)» 이기도 하다 — 토큰 부분을
+    # 필수로 걸었다가 또 유휴로 오인했다. 시간만 있어도 작업 중이다.
+    print -r -- "$tail26" | grep -qE '\([0-9]+(m [0-9]+)?s' && busy=1
     print -r -- "$pane"   | grep -qE 'Waiting for [0-9]+ background|◯ dddjango:' && busy=1
     print -r -- "$tail26" | grep -qE 'esc to interrupt|Interrupt' && busy=1
 
@@ -46,20 +48,22 @@ while true; do
     if [ $perm -eq 1 ]; then
       # 좁은 판에서 긴 명령이 줄바꿈되면 헤더가 수십 줄 위로 밀린다 — 창을 넉넉히 잡는다.
       blk=$(print -r -- "$pane" | sed -n '1,/Do you want to proceed/p' | tail -400)
-      subj=$(print -r -- "$blk" | grep -E "Search\(|Glob\(|Grep\(|Read file|Bash command|Edit file|Write\(|Update\(|WebFetch|WebSearch" | tail -1)
-      # 헤더를 끝내 못 찾아도 명령 상자(│)가 있으면 bash 프롬프트로 본다 — 헤더 부재가
-      # 곧 위험은 아니다. 안전 판정은 아래에서 명령 문면으로 따로 한다.
-      if [ -z "$subj" ] && print -r -- "$blk" | grep -qE '^[[:space:]]*│'; then
-        subj="Bash command"
-      fi
+      # 판이 좁으면 «Bash command» 가 두 줄로 쪼개지고 명령 상자가 │ 없이 들여쓰기만 쓴다.
+      # 그래서 헤더는 낱말 단위로 찾는다.
+      subj=$(print -r -- "$blk" | grep -E "Search\(|Glob\(|Grep\(|Read file|Bash|Edit file|Write\(|Update\(|WebFetch|WebSearch" | tail -1)
       body=$blk
       safe=0
       if print -r -- "$subj" | grep -qE "Search\(|Glob\(|Grep\(|Read file"; then
         { print -r -- "$body" | grep -qF "$CACHE" || print -r -- "$body" | grep -qF "$tgt"; } && safe=1
       fi
-      if print -r -- "$subj" | grep -q "Bash command"; then
-        # 산문이 아니라 명령 상자(│ 로 시작하는 줄)만 본다 — 창을 넓히면 산문이 오탐을 낳는다.
-        cmd=$(print -r -- "$blk" | grep -E '^[[:space:]]*│' )
+      # 헤더가 «Bash command» 로 붙어 있기도 하고 좁은 판에서 «Bash» / «command» 로
+      # 쪼개지기도 한다 — 탐지 패턴만 고치고 이 분기 조건을 안 고쳐서 한 번 더 놓쳤다.
+      if print -r -- "$subj" | grep -q "Bash"; then
+        # 명령 상자는 판 폭에 따라 «│ …» 이기도 하고 들여쓰기만이기도 하다.
+        # │ 가 없으면 프롬프트 직전 40줄을 명령 문면으로 본다 — 비어 있으면 검사가
+        # 통째로 건너뛰어 무조건 승인이 되는 구멍이 생긴다(넓은 창의 산문 오탐보다 나쁘다).
+        cmd=$(print -r -- "$blk" | grep -E '^[[:space:]]*│')
+        [ -z "$cmd" ] && cmd=$(print -r -- "$blk" | tail -40)
         if print -r -- "$cmd" | grep -qE '(^|[^a-zA-Z])(rm|curl|wget|ssh|scp|sudo|chmod|chown|kill|npm|pip|brew)[[:space:]]|git[[:space:]]+(push|reset[[:space:]]+--hard|clean)|pip[[:space:]]+install|>[[:space:]]*/(etc|usr|bin|System|Library)'; then
           safe=0
         else
@@ -67,7 +71,9 @@ while true; do
         fi
       fi
       if [ $safe -eq 1 ]; then
-        if print -r -- "$tail26" | grep -qE '^[[:space:]]+2\. Yes, allow'; then k=2; else k=1; fi
+        # 세션 허용 문구는 두 가지다: «2. Yes, allow …» / «2. Yes, and don’t ask again for:»
+        # (굽은 아포스트로피 주의). 있으면 2 를 골라 이후 재질문을 없앤다.
+        if print -r -- "$tail26" | grep -qE '^[[:space:]]*2\. Yes, (allow|and don)'; then k=2; else k=1; fi
         herdr agent send-keys $a $k >/dev/null 2>&1
         lg "$a AUTO=$k $(print -r -- "$subj" | cut -c1-140)"
       else
