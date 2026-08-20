@@ -118,6 +118,11 @@ def main() -> int:
                 why = "registry 27종 로스터 단일 출처(라운드 1′ P3′) — registry_gate·bc_registry_run·fixture_matrix 소비 · glob 자기 검증"
             elif rel.name == "registry_gate.py":
                 why = "판정 차분 게이트(라운드 1′ P3′ — 귀속=N∖L·앵커 비선택·이관 빚 채널) — commands 6번 게이트 판정 주체 · registry_gate_smoke 6케이스가 행동 고정"
+            elif rel.name == "regen_core.py":
+                why = ("재생성 주입 코어(T2-3 — 선별·프롬프트 조립 단일 출처·E8 닫힌 필드 "
+                       "rule/file/message) — 셸 A(비인과 harness)와 셸 B(파이프라인 처치)가 "
+                       "공유해 같은 byte 를 받는다 · regen_loop_prototype --self-test 가 "
+                       "골든·owner-map 유출 0·injection 경계를 고정")
             elif rel.name == "anchor_diff.py":
                 why = "scope-render 직접 계열 판정 차분 공용 모듈(2026-08-15 r2″ — registry 2·5·6·15·16번 --anchor 소비·registry_gate 동형 N∖L·빚 채널) — anchor_diff_smoke 가 행동 고정"
             else:

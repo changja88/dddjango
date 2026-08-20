@@ -269,6 +269,28 @@ class FindingEntry:
         return self.msg
 
 
+def line_of_record(record: "dict") -> str:
+    """레코드 → stdout 라인 **역방향** 재구성(출력 계약 v2 §1 의 역함수).
+
+    `FindingEntry.line` 이 «엔트리 → 라인»이라면 이것은 «레코드 → 라인»이다. 두 함수가
+    같은 문법을 쓰므로 레코드만으로 stdout 라인을 되돌릴 수 있고, 그래서 «게이트가 고른
+    귀속 라인 ↔ 그 라인을 낸 레코드» 매칭이 성립한다(T2-3 게이트 sidecar).
+
+    이 구현이 단일 출처다 — 저장소 측 하네스(`findings_count_matrix`)도 이 함수를
+    import 해서 쓴다(두 곳에 복제하면 문법이 갈라진다).
+    """
+    rule = record.get("rule")
+    sev, f, m = record.get("severity"), record.get("file", ""), record.get("message", "")
+    if rule is not None:
+        return f"[ⓓ{rule}] {f}: {m}" if sev == "info" else f"[{rule}] {f}: {m}"
+    sent = record.get("sentinel")
+    if sent is not None:
+        # guard(대상-0 — file 은 "(target)" 고정)만 msg 원문 라인, 그 외 센티널
+        # («합성»·«바인딩»·«분석» — F0 격리)은 rule 자리 판형 그대로.
+        return m if f == "(target)" else f"[{sent}] {f}: {m}"
+    return f"- {f}: {m}"  # 계약(rule=null + contract_ref)
+
+
 def emit_all(*collections: "list", printer=None, indent: str = "  ") -> None:
     """유일한 방출 지점(출력 계약 v2 — W1): 한 루프에서 라인 인쇄와 레코드 방출을
     같은 순서로 수행한다. record 순서 = stdout 위반 라인 순서가 이 함수의 불변식.

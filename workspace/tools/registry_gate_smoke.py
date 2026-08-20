@@ -20,6 +20,7 @@ exit 0 = 전 케이스 일치 / exit 2 = 불일치 / exit 1 = 재료 결손.
 """
 from __future__ import annotations
 
+import json
 import shutil
 import os
 import subprocess
@@ -98,6 +99,32 @@ def main() -> int:
         (repo / "docs_note.md").write_text("harmless\n", encoding="utf-8")
         code, out = _gate(repo, anchor)
         rows.append(("B legacy-only green", 0, code, "잔존" in out and "귀속 0건" in out.replace("(N∖L) 0건", "귀속 0건"), "잔존 보고·귀속 0"))
+
+        # S — sidecar(T2-3): 귀속 레코드만 담고 legacy 는 구조적으로 배제되는가.
+        # 왜 필요한가: 소비자(재생성 루프)가 raw sink 를 직접 읽으면 앵커 실행 레코드까지
+        # 섞여 «legacy 잔존은 이 빌드에서 즉석 수리하지 않는다» 규율을 깨뜨린다(적대 리뷰
+        # AM#3·AN#3). 게이트가 L/N 을 다른 sink 로 받고 N∖L 에 해당하는 레코드만 낸다.
+        repo, _pre = _make_repo(td, "sidecar")
+        (repo / _VIOLATION_REL).parent.mkdir(parents=True, exist_ok=True)
+        (repo / _VIOLATION_REL).write_text(_VIOLATION_SRC, encoding="utf-8")
+        _git(repo, "add", "-A"); _git(repo, "commit", "-q", "-m", "legacy 포함 앵커")
+        anchor = _git(repo, "rev-parse", "HEAD").stdout.strip()
+        fresh: Path = repo / "application" / "orders" / "domain_layer" / "fresh_svc.py"
+        fresh.parent.mkdir(parents=True, exist_ok=True)
+        fresh.write_text("NEWCACHE = {}\n", encoding="utf-8")
+        side: Path = td / "introduced.json"
+        code, out = _gate(repo, anchor, ["--introduced-json", str(side)])
+        payload: dict = json.loads(side.read_text(encoding="utf-8")) if side.is_file() else {}
+        recs: "list[dict]" = payload.get("records", [])
+        side_ok: bool = (
+            bool(recs)
+            and all("fresh_svc" in str(r.get("file", "")) for r in recs)      # 신규만
+            and not any("schema_smoke" in str(r.get("file", "")) for r in recs)  # legacy 배제
+            and not any(str(r.get("file", "")).startswith("/") for r in recs)    # 경로 정규화
+            and not payload.get("unmatched_lines")                            # 전건 매칭
+        )
+        rows.append(("S sidecar 귀속만", 2, code, side_ok,
+                     "legacy 배제·스냅숏 경로 정규화·대응없는 귀속 0"))
 
         # C — A1 공격: 위반을 «선커밋»(앵커 이후) 후 무해 파일만 working 에
         repo, anchor = _make_repo(td, "precommit")

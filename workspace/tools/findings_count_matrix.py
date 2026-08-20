@@ -58,6 +58,7 @@ F: Path = ROOT / "workspace" / "eval" / "fixtures"
 
 sys.path.insert(0, str(S))
 sys.path.insert(0, str(ROOT / "workspace" / "tools"))
+import findings  # noqa: E402  — 라인 재구성 문법의 단일 출처(line_of_record)
 from checker_registry import REGISTRY  # noqa: E402
 from fixture_matrix import AUTO_PAIRS, PLAIN_PAIRS  # noqa: E402
 
@@ -322,17 +323,12 @@ def _stream_items(stdout: str) -> "list[tuple[str, str]]":
 def _reconstruct(r: dict) -> str:
     """레코드 필드만으로 stdout 라인을 재구성(포매터 계약 §1 — 라인=필드의 순수 함수).
     혼성 패널 M5: (severity, rule) 열 대조만으로는 message·file·계약·guard 문면
-    drift 를 못 잡는다(변이 실증) — 재구성 라인의 stdout 실재·순서를 게이트한다."""
-    rule = r.get("rule")
-    sev, f, m = r.get("severity"), r.get("file", ""), r.get("message", "")
-    if rule is not None:
-        return f"[ⓓ{rule}] {f}: {m}" if sev == "info" else f"[{rule}] {f}: {m}"
-    sent = r.get("sentinel")
-    if sent is not None:
-        # guard(대상-0 — file 은 "(target)" 고정)만 msg 원문 라인, 그 외 센티널
-        # («합성»·«바인딩»·«분석» — F0 격리)은 rule 자리 판형 그대로.
-        return m if f == "(target)" else f"[{sent}] {f}: {m}"
-    return f"- {f}: {m}"  # 계약(rule=null + contract_ref)
+    drift 를 못 잡는다(변이 실증) — 재구성 라인의 stdout 실재·순서를 게이트한다.
+
+    **구현은 `findings.line_of_record` 단일 출처를 위임 호출한다**(T2-3 — 게이트
+    sidecar 가 같은 재구성으로 «귀속 라인 ↔ 레코드»를 매칭하므로, 문법이 두 곳에
+    복제되면 갈라진다)."""
+    return findings.line_of_record(r)
 
 
 def _reconstruct_compare(stdout: str, records: "list[dict]") -> "list[str]":

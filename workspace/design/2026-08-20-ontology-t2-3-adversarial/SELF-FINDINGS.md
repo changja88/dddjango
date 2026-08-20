@@ -11,6 +11,25 @@
 | SF-4 | 확증(W5 해소) | `claude -p`는 **stdin 파이프 입력**(«useful for pipes»)·`--output-format json`(결과 메타 구조화)·`--model`(모델 고정)·`--permission-mode`를 지원 | `claude --help` 실측 — `-p, --print` 항목 및 `--input-format`/`--output-format`/`--model` 항목 | L6 확정: 프롬프트는 stdin, 결과는 `--output-format json`으로 받아 회전 레코드에 실측 메타를 남긴다. **`--model` 고정은 T2-0b manifest의 «모델 ID» 봉인 경로** — 봉인 목록에 CLI 인자로 등재 |
 | SF-5 | major | **편입점이 새 경로가 아니라 기존 반송 경로다.** 파이프라인은 이미 «귀속 red → 한꺼번에 coder/design/G1 로 반송»을 갖고 있다. C1은 새 배선이 아니라 **그 반송의 주입 재료를 규격화**하는 것으로 다시 규정해야 절차 개작 폭이 최소가 된다 | `dddjango.md`:137 «신규분이 하나라도 있으면 현행대로 직접 blocker(exit 2) 이며 한꺼번에 coder/design/G1 로 반송하고» | C1 재서술. 개작 폭이 줄면 W1(코퍼스 정본 개작 위험)도 함께 줄어든다 |
 
+## 구현 중 추가 발견 (2026-08-20 · 게이트 sidecar 실증 단계)
+
+| # | 심각도 | 발견 | 근거 | 처분 |
+|---|---|---|---|---|
+| SF-6 | major | **sidecar 레코드의 `file` 이 임시 스냅숏 절대 경로다.** 게이트는 `tempfile` 사본에서 검사기를 돌리므로 레코드의 file 은 `/var/folders/…/current/application/…` 이다. 이걸 그대로 주입하면 **모델이 존재하지 않는 경로를 고치려 한다** | hermetic 실증에서 실측 — `file='/var/folders/50/…/current/application/orders/domain_layer/fresh_svc.py'` | 대상 상대 경로로 되돌리고(`_strip_snapshot` — 라인번호는 보존) 원본은 `file_raw` 로 남긴다. 재실증에서 절대경로 잔존 0 확인 |
+| SF-7 | 확증(AM#6 보강) | **한 신규 파일에 검사기 4종이 겹쳐 발화**했다 — `#490`(layer-skeleton)·`#493`(public-surface)·`#249`(domain-model)·`#28`(naming) | 같은 hermetic 실증 | L2의 「발화 검사기 한정 + 종료 직전 27종 full audit」 판단을 실물이 뒷받침한다. AM#6이 든 «2종 겹침»보다 실제 겹침 폭이 크다 |
+
+## 하네스가 잡은 구현 결함 (2026-08-20 · 루프 후반부 단계)
+
+**AO 과제 2의 지적이 옳았음이 실증됐다** — `--dry-regen` 만으로는 잡을 수 없는 결함 3건을,
+AO가 요구한 `{X}→{X}→{X}→∅` 픽스처(T2)가 전부 적발했다.
+
+| # | 심각도 | 발견 | 처분 |
+|---|---|---|---|
+| SF-8 | **blocker** | **마지막 회전의 재생성 결과가 검증되지 않는다.** 각 회전의 재검사는 «다음 회전의 게이트»가 맡는데 마지막 회전에는 그 회전이 없다 — 3회전째에 실제로 수렴해도 `budget` 으로 오보고된다 | 예산 소진 시 **최종 재검사 1회**를 돌려 종료 사유를 확정한다(게이트가 27종을 도므로 L2의 «종료 직전 full audit» 을 겸한다) |
+| SF-9 | major | **stale sidecar** — 게이트가 계측 실패(exit 1)로 sidecar 를 쓰지 않으면 직전 회전의 파일이 남아 **낡은 귀속을 «현재»로** 읽는다 | 게이트 호출마다 sidecar 를 먼저 삭제 |
+| SF-10 | major | **계측 실패를 «수렴»으로 오독** — 최종 재검사에서 게이트가 exit 1 이면 위반이 0 인 것처럼 보인다(fail-open) | `gate_exit == 1 ∨ payload 없음` → `error`·exit 1(fail-closed) |
+| SF-11 | 픽스처 교훈 | «범위 안에 무해한 파일 하나»가 **무해하지 않았다** — `application/orders/regen_note.txt` 가 `#490`(트리가 이 층에 이름을 준 파일이 아니다)로 잡혔다. `.txt` 도 트리 규약 검사 표면이다 | 픽스처를 «위반을 커밋해 두고 삭제»로 교체(삭제도 dirty 라 공허 차분이 아니다) |
+
 ## 반영 예정 (v2에서)
 
 - L5 → 「범위」의 정의에 **귀속 교집합**을 추가(경로 필터 ∧ 귀속 집합).
