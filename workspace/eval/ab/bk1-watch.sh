@@ -41,14 +41,18 @@ while true; do
 
     # ───────── ① 권한 프롬프트 ─────────
     if [ $perm -eq 1 ]; then
-      subj=$(print -r -- "$tail26" | grep -E "Search\(|Glob\(|Grep\(|Read file|Bash command|Edit file|Write\(|Update\(|WebFetch|WebSearch" | head -1)
-      body=$(print -r -- "$tail26" | sed -n '/Do you want to proceed/q;p' | tail -14)
+      # 긴 명령(heredoc 등)은 tail26 밖으로 밀려난다 — 프롬프트 위 120줄을 본다.
+      blk=$(print -r -- "$pane" | sed -n '1,/Do you want to proceed/p' | tail -120)
+      subj=$(print -r -- "$blk" | grep -E "Search\(|Glob\(|Grep\(|Read file|Bash command|Edit file|Write\(|Update\(|WebFetch|WebSearch" | tail -1)
+      body=$blk
       safe=0
       if print -r -- "$subj" | grep -qE "Search\(|Glob\(|Grep\(|Read file"; then
         { print -r -- "$body" | grep -qF "$CACHE" || print -r -- "$body" | grep -qF "$tgt"; } && safe=1
       fi
       if print -r -- "$subj" | grep -q "Bash command"; then
-        if print -r -- "$body" | grep -qE '(^|[^a-zA-Z])(rm|mv|curl|wget|ssh|scp|sudo|chmod|chown|kill|dd|npm|pip|brew)[[:space:]]|git[[:space:]]+(push|reset[[:space:]]+--hard|clean)|install'; then
+        # 산문이 아니라 명령 상자(│ 로 시작하는 줄)만 본다 — 창을 넓히면 산문이 오탐을 낳는다.
+        cmd=$(print -r -- "$blk" | grep -E '^[[:space:]]*│' )
+        if print -r -- "$cmd" | grep -qE '(^|[^a-zA-Z])(rm|curl|wget|ssh|scp|sudo|chmod|chown|kill|npm|pip|brew)[[:space:]]|git[[:space:]]+(push|reset[[:space:]]+--hard|clean)|pip[[:space:]]+install|>[[:space:]]*/(etc|usr|bin|System|Library)'; then
           safe=0
         else
           safe=1
@@ -103,8 +107,10 @@ while true; do
     gate_since[$a]=0
 
     # ───────── ③ 오류·한도 ─────────
-    if print -r -- "$tail26" | grep -qiE "API Error|rate limit|usage limit|Execution error|crashed|out of context"; then
-      ev "⚠️ $a — $(print -r -- "$tail26" | grep -iE "API Error|rate limit|usage limit|Execution error|crashed|out of context" | head -1 | cut -c1-120)"
+    # 설계 명세 본문에 «rate limit» 같은 말이 나와 오탐이 났다 — 실제 오류 문면만 좁혀 본다.
+    ERRPAT='API Error:|rate_limit_error|Claude usage limit reached|You have run out of|Execution error|Killed: 9|Segmentation fault|Context low · Run /compact'
+    if print -r -- "$tail26" | grep -qE "$ERRPAT"; then
+      ev "⚠️ $a — $(print -r -- "$tail26" | grep -E "$ERRPAT" | head -1 | cut -c1-120)"
     fi
 
     # ───────── ④ 주입 발화 ─────────
