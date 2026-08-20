@@ -337,6 +337,7 @@
     "claude": {
       "checked": 68,
       "mismatch": [
+        "dddjango/.claude-plugin/plugin.json",
         "dddjango/commands/dddjango.md",
         "dddjango/scripts/regen_core.py"
       ],
@@ -347,6 +348,7 @@
     "codex": {
       "checked": 33,
       "mismatch": [
+        "codex-dddjango/.codex-plugin/plugin.json",
         "codex-dddjango/skills/dddjango/SKILL.md"
       ],
       "missing": [],
@@ -596,14 +598,14 @@
         "workspace/eval/ab/orders/O-4.md": "1b2025beec8480a260924f00755820c4736073de0ce689a6a271a49a783aee85",
         "workspace/eval/ab/orders/O-5.md": "e0cef5c0a1474243aa6a60718515bc61bb3ae8ebb235380e26e5e8848b268773",
         "workspace/eval/ab/orders/O-7.md": "6c6acf27e3b9ac36beb2975826ef8fa7bc09651745f383c366dc41383907c579",
-        "workspace/eval/ab/orders/README.md": "8a2ed162e7a6bf1eebe82cf30924bccba85c96b3e0f315f9ddbefc4355adc329"
+        "workspace/eval/ab/orders/README.md": "aa18f5794293b2778c4fe876e7c9e2d72963c1ed294ae2513fb8c4515e275648"
       },
       "globs": [
         "workspace/eval/ab/orders/*.md",
         "workspace/eval/ab/acceptance/**/*"
       ],
       "n_files": 6,
-      "tree_sha256": "2a252388a774efa610574d88cfd70b0bc17b211b4aee4dbb524eb2092835c802",
+      "tree_sha256": "d962f876d7149938706c718e9e05bdb49186ccb540637de1738dd4f6377266c9",
       "why": "발주문·고정 게이트 답·허용 도구·인수 테스트. 세 암이 **같은 발주**를 받았다는 주장의 근거가 이 파일들이다 — 문면이 흔들리면 비교가 성립하지 않는다."
     },
     "packs": {
@@ -642,7 +644,7 @@
       "files": {
         ".agents/plugins/marketplace.json": "0b9f42c0fc6c72f9eb17aec3bcaea6c1b1b82e9ec71ec2c541e809d9ac947c94",
         ".claude-plugin/marketplace.json": "ce89b1002c01d7a8342fac0c039ef96e6dec4848e85f12eb444256a7f3f5a0d2",
-        "codex-dddjango/.codex-plugin/plugin.json": "4767ab2094633d2450b0e71599bf2dc46b80424f02c3a5791be418e42e93272f",
+        "codex-dddjango/.codex-plugin/plugin.json": "5f2861e863abf745aaf8fa7aaed37d94bb9bc20dc9ebb9ac1b7bd89920def5a0",
         "codex-dddjango/skills/architecture-api/SKILL.md": "1f6c9659d8b9d230c2556c130c31d52031356c07eaafe00a10973ed7fcd8c5ab",
         "codex-dddjango/skills/architecture-api/references/final.md": "de55e4e87f2e5c78d4383c760ea0ce5604abde07411de56cfed73f04967fee9f",
         "codex-dddjango/skills/architecture-db/SKILL.md": "b1560b89855acd55e0722ddd0ad7e808b4679adb899d1b75364bb4ffe8521e1d",
@@ -674,7 +676,7 @@
         "codex-dddjango/skills/implementation-django/references/final.md": "5ebd8d757144ac7c16bddfe45741957c7afa7592580ad5dc63ab5a1737e64679",
         "codex-dddjango/skills/implementation-python/SKILL.md": "b9f224cb502fbb1b067f22a001a4726679fd697cb88c09fb8cb47bef034f7db8",
         "codex-dddjango/skills/implementation-python/references/final.md": "515279396fbd5428d67995fbb009a6c510d63f79372c4a0b4f99b681a4690e41",
-        "dddjango/.claude-plugin/plugin.json": "b646a165a7776406c4d46e69c355b2e744a4f0f3aa6522193982fb619d361f63",
+        "dddjango/.claude-plugin/plugin.json": "3759be9429154be29296af39cbf2dc97ecdd7fb2535107fddb50e77a21ba34d2",
         "dddjango/agents/acceptance-tester.md": "6a8ffdae73b2feddbd56e888e66732b69a9374a8fac89a8316d9c08d178b4dfc",
         "dddjango/agents/coder.md": "e84c6d82ebe9aecb1a8c4c73413d9b08badcc31a45b4c1252c10fb2686f8cc30",
         "dddjango/agents/design-architect.md": "b206af00ff173546ad4a229e14061a9bc98d80bc870f4bee61850159fa02c4fa",
@@ -716,24 +718,24 @@
         ".agents/plugins/marketplace.json"
       ],
       "n_files": 64,
-      "tree_sha256": "05d1d5f89a0dcd400d6db1a8bba22f1b023509a1962a6f1f6a03bacb5e62b0b9",
+      "tree_sha256": "afe304cc3d6f685ddee4c6317a6529dff569b5ab81340eae37d8561fade1e266",
       "why": "절차서가 **부르는 것들**. 서브에이전트 정의와 규범 산문(`references/final.md`)이 여기 있다 — 그중 ninja §6.1·§6.2 와 ddd §3.2 는 파일럿 이관 대상 클러스터 그 자체다. 절차서만 동결하고 이것들을 두면 봉투만 봉인하고 내용물을 열어 둔 것이다. 산문이 런 사이에 바뀌면 세 암이 같은 규범을 상대한 것이 아니게 되고, `coder.md` 한 줄이 바뀌면 처치와 무관하게 산출물이 달라진다."
     },
     "preregistration": {
       "files": {
-        "workspace/eval/ab/T2-0a-preregistration.md": "6dc83a89e04c99dc59fb1c4a75be2f89282912a297b522ba8b33f818e5d81aba"
+        "workspace/eval/ab/T2-0a-preregistration.md": "dcf674cc46a18d8a5147dcc2fe6962edc5734bbc15cf7415ecd483a0c3970f5e"
       },
       "globs": [
         "workspace/eval/ab/T2-0a-preregistration.md"
       ],
       "n_files": 1,
-      "tree_sha256": "cd4c20bafe53eb010e19f2c828c56eb70c5c1a1e97fc4393e721229c6b6b8784",
+      "tree_sha256": "3fcd5008231409cde295765dbefd396955f91bb24be71709fca97af46dba8d0c",
       "why": "분석 계획. 결과를 본 뒤 산식을 바꾸지 못하게 하는 **유일한** 장치다. 원래 t2-plan 안에 있었으나 그 파일은 진행 기록이 append 되는 살아 있는 문서라 «수정 금지»가 성립하지 않았다 — 그래서 떼어내 여기서 동결한다."
     },
     "protocol": {
       "files": {
         "Makefile": "92d05530355e8ebdcbfb9bddcbe2cbd9a75165b42e9e5e140c1678c152acc3f3",
-        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "0b0fd3ba6d191dda60b71a90a55c023524925ece512a215605ed56d73bf20ce3",
+        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "d9f447dd93a24bc1c4737f3271b418101bc6567276ede201e0a084e90f404218",
         "workspace/plan/2026-08-12-bc-rebuild-protocol.md": "a39ba66e58cb8bde5ad8f84d630b6fd9b04300f7130d4bbc2d149751c2f6c492",
         "workspace/plan/templates/request-template.md": "531bb5c0e9b147d51665981bc3218aa027ddc4170101ea920ecc8a87f7018fe4",
         "workspace/tools/openapi_shape.py": "ea564e3b0ce0550352935b7a572f93dfae404f1a1d24f0fd9d4acf6dc4bc4932",
@@ -748,7 +750,7 @@
         "workspace/design/2026-08-20-ontology-t2-0b-design.md"
       ],
       "n_files": 6,
-      "tree_sha256": "8ffb8a880cc11cb7ef29e3b1725ef62358493874368dec3e42629bf8b86d129c",
+      "tree_sha256": "0fba80ed0d0c353d75713b1ed2c72834c781d3723a995c08b19635f93769aa31",
       "why": "**전이 의존** — 발주문이 «그대로 따르라»고 가리키는 판형과, 인수 판정이 부르는 도구와, 게이트를 배선하는 Makefile. 이 중 하나만 바뀌어도 모델이 받는 요청문·허용 범위·STOP 규약·shape 합격 여부·실런 진입 조건이 바뀐다. 그런데 대조는 글롭에 든 것만 재전개하므로, 봉인 밖이면 그 변경은 드리프트가 아니었다(레인 AU 발견 4)."
     },
     "queries": {
@@ -849,8 +851,8 @@
     "n_files": 37
   },
   "plugin_versions": {
-    "claude": "2.13.0",
-    "codex": "2.13.0"
+    "claude": "2.14.0",
+    "codex": "2.14.0"
   },
   "schema": "t2-0b-manifest/1",
   "schemas": {
@@ -878,8 +880,8 @@
     "source-claude": "aff4119079d1b2ad3900ecaf7c3213da8ae8ebb7ecc4b0d8e312099e4ea55867",
     "source-codex": "aff4119079d1b2ad3900ecaf7c3213da8ae8ebb7ecc4b0d8e312099e4ea55867"
   },
-  "sealed_commit": "e18433b0b16bcb2479b9efd3f29ba61e45f59ab2",
-  "self_sha256": "38abc5e9faaf71550b5688edf477e1266a7507389ebe69a0f052f5ce77843919",
+  "sealed_commit": "5523ba772734c7844f051b4f7aa899ce432edd22",
+  "self_sha256": "75914bd51e92cd3b089d941148e512efe6aace975f1fa6d029f80d9c66a59ed0",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [

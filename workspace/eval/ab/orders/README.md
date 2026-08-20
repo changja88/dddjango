@@ -48,8 +48,11 @@ python3 workspace/tools/manifest_seal.py --tree-hash <타깃>     # 추적 해�
 # 2) 앞 런 산출물 제거 — .dddjango/ 는 미추적이라 git 리셋에 살아남는다
 rm -rf <타깃>/.dddjango
 
-# 3) 메모리 대피 확인 — 18런 전에 한 번 대피하고, 매 런 부재를 확인한다(삭제 아님)
-ls ~/.claude/projects/<타깃 키>/memory 2>/dev/null && echo "대피 안 됨 — 중단"
+# 3) 메모리 대피 — 첫 런 직전에 한 번, 매 런 부재 확인(삭제 아님 · 사전 등록 §8.1)
+SRC=~/.claude/projects/-Users-hyun-Desktop-broccoli-server/memory
+mv "$SRC" "$SRC.t2ab-evacuated"                      # 첫 런 직전 1회
+ls "$SRC" 2>/dev/null && echo "대피 안 됨 — 중단"    # 매 런
+# 18런 종료 후: mv "$SRC.t2ab-evacuated" "$SRC"  (대피 전 해시 b80b1b179f7fdec1… 로 복구 확인)
 
 # 4) 봉인 대조 — 이 런이 봉인된 그 구현으로 도는가
 python3 workspace/tools/manifest_seal.py --check
