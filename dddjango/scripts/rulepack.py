@@ -210,7 +210,7 @@ class Rulepack:
         out.sort(key=self.rank)
         return out
 
-    def rules(self, wids: "list") -> "list":
+    def rules(self, wids: "list", exact: "set" = None) -> "list":
         """Work 목록 → `<rules>` 항목(번호·명칭). `order_rank` 순·중복 제거.
 
         `rule` 자리에는 alias(`#N`)가 있으면 그것을, 없으면 Work 번호(`R-NNNN`)를 쓴다 —
@@ -224,9 +224,11 @@ class Rulepack:
             seen.add(wid)
             picked.append(wid)
         picked.sort(key=self.rank)
+        hit: "set" = exact or set()
         out: "list" = []
         for wid in picked:
             aliases: "list" = self.works[wid].get("aliases") or []
             number: str = ("#" + aliases[0].split("#", 1)[1]) if aliases else wid
-            out.append({"rule": number, "label": self.works[wid]["label"]})
+            out.append({"rule": number, "label": self.works[wid]["label"],
+                        "join": "exact" if wid in hit else "candidate"})
         return out

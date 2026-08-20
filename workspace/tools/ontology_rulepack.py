@@ -96,6 +96,14 @@ def build(root: "Path | None" = None) -> "tuple[dict, list[str]]":
     for f in files:
         g.parse(f, format="turtle")
 
+    # 구분자 혼입은 **질의 전에** 원 그래프에서 본다(반증 레인 AT 4-4): split 한 뒤 조각에서
+    # 구분자를 찾는 검사는 U+001F 로 바꿔도 여전히 **도달 불가능**하다(AS-08 과 동형). rdflib 는
+    # 리터럴의 `` 를 실제로 받아들이므로, 집계 대상 리터럴을 먼저 훑는다.
+    from rdflib import Literal as _Lit
+    for s_, p_, o_ in g:
+        if isinstance(o_, _Lit) and SEP in str(o_):
+            raise ValueError(f"리터럴에 구분자 U+001F 혼입 — 집계가 갈라진다: {s_} {p_}")
+
     rows = list(g.query((QUERIES / "q4-injection-order.rq").read_text(encoding="utf-8")))
     if not rows:
         # 공허 통과 방지(사후 리뷰 AS-08): Q4 가 0행이어도 빈 팩이 «정상 산출»됐다.

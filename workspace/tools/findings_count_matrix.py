@@ -95,6 +95,8 @@ _FIELDS: "tuple[str, ...]" = (
     "checker", "file", "symbol", "severity", "message", "expression",
     "experiment_run_id",
 )
+# 라인번호 접미 — `regen_core.canonical_locator` 와 **같은 규칙**(사건 동일성 축).
+_LINE_SUFFIX: "re.Pattern[str]" = re.compile(r":\d+\Z")
 _TS_RE: "re.Pattern[str]" = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\Z")
 _RULE_FORM: "re.Pattern[str]" = re.compile(r"#\d+\Z")
 # stdout 라인 앵커 — 위반은 registry_gate `_FINDING_RE` 동형, 후보는 ⓓ 판형.
@@ -104,79 +106,79 @@ _INFO_LINE: "re.Pattern[str]" = re.compile(r"^\s*\[ⓓ(#\d+)\]")
 # 키 -> (red_exit, violation수, info수, rule/sentinel 분포 요약, violation_id 집합 sha16,
 #        multiset fingerprint sha16 — W6 정식 병기(5단계): sorted[(rule|sentinel|
 #        contract_ref, file, symbol, message, occurrence_index)] 직렬화 해시)
-EXPECTED: "dict[str, tuple[int, int, int, str, str, str]]" = {
-    "check-api-error-controller-contract.py": (2, 9, 1, "#120×1,#121×1,#123×1,#124×1,#125×1,#126×1,#131×1,#132×1,#474×1,#62×1", "218a6d81f576dda3", "4ff2ead3db93a9fa"),
-    "check-app-container.py": (2, 1, 0, "contract:선행 규약(표준 트리 전신 — application/ 컨테이너 위치) 소유×1", "31240e8fe5840470", "44e58e3b16845aff"),
-    "check-broker-contract.py": (2, 22, 5, "#442×2,#443×2,#444×1,#518×1,#520×3,#521×1,#523×1,#524×2,#525×1,#527×1,#528×1,#529×1,#531×1,#532×1,#533×2,#534×1,#603×5", "11deccf9f90c6592", "e9cf0a9f6de4a278"),
-    "check-business-vocabulary.py": (2, 48, 5, "#119×1,#19×1,#294×1,#35×1,#39×1,#393×1,#395×1,#396×1,#398×1,#402×1,#407×2,#408×1,#412×1,#414×1,#415×1,#416×1,#417×1,#420×1,#423×1,#425×1,#426×1,#428×1,#434×1,#448×1,#46×2,#47×1,#52×1,#53×1,#560×1,#561×1,#562×2,#584×1,#585×2,#587×1,#606×2,#607×1,#615×2,#617×1,#618×1,#619×2,#620×1,#621×1,#622×1,#623×1,#624×2", "5d54270ca9386cdf", "34abc446bddb5f12"),
-    "check-choices-literal-consumption.py": (2, 3, 0, "contract:선행 계약(2026-07-06 상수 승격) 소유×3", "6253365c1e25da21", "2f961c306ed061c0"),
-    "check-common-container.py": (2, 2, 0, "contract:선행 규약(D38 승격/강등 — 루트 framework/ 배치) 소유×2", "7ddb14624648702f", "5b02b9878d9d83e0"),
-    "check-composition-root.py": (2, 18, 2, "#101×1,#105×1,#107×1,#108×1,#109×1,#111×1,#112×1,#437×3,#440×1,#441×1,#497×1,#498×1,#500×1,#501×1,#511×1,#84×1,#85×1,#86×1", "fe484815e50a3068", "4a97d85dfb5d47b9"),
-    "check-context-isolation.py": (2, 58, 4, "#102×1,#11×1,#110×1,#117×1,#13×1,#14×1,#146×1,#150×1,#151×1,#153×4,#154×1,#155×1,#157×1,#164×2,#166×1,#167×2,#168×1,#170×1,#185×1,#186×1,#2×2,#251×1,#288×1,#291×1,#292×1,#295×1,#312×1,#328×1,#347×1,#361×1,#363×1,#364×2,#431×2,#433×2,#450×2,#453×1,#455×1,#472×1,#473×2,#482×1,#483×2,#484×1,#51×1,#633×1,#634×1,#9×1,#93×1,#94×1,#95×1,#98×1", "1417df159b14cac7", "3e368604cf514e50"),
-    "check-db-table.py": (2, 26, 0, "#318×1,#324×2,#325×1,#326×2,#329×1,#330×2,#331×2,#332×1,#334×1,#335×2,#467×1,#535×1,#536×1,#537×1,#538×2,#630×2,#631×2,#632×1", "5b85011e45235434", "239a377ed7ebf3eb"),
-    "check-domain-model.py": (2, 48, 13, "#17×2,#249×1,#252×1,#253×1,#256×1,#257×2,#258×1,#259×1,#260×2,#261×1,#262×1,#263×1,#264×1,#266×1,#267×1,#268×2,#269×2,#270×1,#272×1,#275×1,#276×1,#289×1,#290×1,#298×1,#299×2,#300×1,#301×4,#302×1,#303×1,#304×1,#305×1,#307×1,#308×1,#310×1,#311×1,#315×1,#459×1,#505×1,#506×1,#542×1,#543×3,#546×1,#547×2,#548×2,#549×1,#550×1,#565×1,#8×1", "085ac733a6aa5b35", "f0f3e9ed0f41ec30"),
-    "check-error-centralization.py": (2, 5, 0, "#114×1,#568×2,#572×1,#636×1", "c3da2a9e89c47951", "cacda249ec94d135"),
-    "check-event-publish.py": (2, 20, 4, "#271×3,#279×1,#280×2,#502×1,#503×2,#504×1,#507×1,#508×1,#509×1,#564×2,#600×1,#601×1,#627×2,#7×2,#96×3", "06594a2b1253f981", "6027ffddfd7b2d9e"),
-    "check-idempotency-scope-creep.py": (2, 1, 0, "contract:선행 계약(architecture-api §13 멱등 스코프) 소유×1", "46b04bd6bcc4b9e5", "0de6db90334e6f41"),
-    "check-layer-skeleton.py": (2, 10, 0, "#488×7,#490×2,#81×1", "650a62bfa578c75d", "df23b4464c21dccb"),
-    "check-mechanism-ownership.py": (2, 6, 0, "#336×1,#337×1,#338×1,#593×3", "667832904ba25a08", "67400faf82fc3e1e"),
-    "check-missable-entrance.py": (2, 17, 4, "#172×1,#173×1,#174×2,#175×1,#179×2,#180×1,#181×2,#451×1,#512×2,#514×1,#515×2,#516×2,#517×2,#629×1", "2b604f3883227873", "85500a6f29199b00"),
-    "check-naming.py": (2, 29, 5, "#118×1,#148×1,#169×1,#247×2,#28×2,#30×1,#309×1,#33×1,#34×1,#340×1,#341×1,#342×1,#343×1,#344×2,#345×1,#348×2,#36×3,#382×1,#41×1,#43×1,#44×1,#481×1,#588×1,#589×1,#590×2,#87×1,#97×1", "67c3b8f630ac2347", "d26da9f6a129e645"),
-    "check-ninja-boundary-middleware.py": (2, 2, 0, "contract:선행 계약(08-04 API-error) 소유×2", "bcca745399dc645e", "fb84fc0e70f9f759"),
-    "check-openapi-error-declaration.py": (2, 3, 0, "#63×3", "21e2961d8fb1eb4f", "9598eff4f473e0cc"),
-    "check-port-adapter-pairing.py": (2, 79, 9, "#134×1,#212×2,#214×1,#215×1,#216×2,#218×1,#219×1,#220×2,#225×1,#227×1,#228×2,#231×1,#232×1,#233×2,#234×1,#235×1,#236×1,#238×1,#239×1,#240×1,#241×1,#242×1,#244×1,#245×1,#246×1,#313×1,#351×2,#352×1,#354×1,#356×1,#359×1,#367×1,#368×1,#369×1,#370×2,#373×1,#374×1,#376×1,#457×1,#460×1,#462×2,#464×1,#465×1,#476×2,#477×2,#480×1,#485×5,#545×2,#551×1,#552×4,#553×1,#554×1,#555×1,#556×1,#557×1,#566×1,#573×1,#574×1,#575×1,#576×1,#577×1,#578×1,#579×1,#580×1,#581×1,#582×1,#583×1,#594×2,#64×1", "1714fece63e1a322", "656bfbc7a87145dd"),
-    "check-public-surface-annotation.py": (2, 10, 2, "#358×2,#456×1,#493×7,#69×2", "7f50607021907d7f", "39773b5c7f7364e3"),
-    "check-response-schema-bypass.py": (2, 1, 0, "contract:선행 계약(08-04 API-error) 소유×1", "7425fefd479b2edc", "bfd73ca26e52466d"),
-    "check-synthetic-infra-exc.py": (2, 2, 0, "#129×1,sentinel:합성×1", "2e7e2fb7cccbac27", "518f4f7518bb9711"),
-    "check-test-config.py": (2, 14, 0, "#384×2,#385×1,#387×1,#388×1,#389×1,#390×2,#391×1,#392×1,#445×1,#446×1,#447×1,sentinel:바인딩×1", "3df1f227a35f1c83", "5467197844ea37d1"),
-    "check-transaction-boundary.py": (2, 13, 2, "#195×1,#197×1,#200×1,#282×1,#283×1,#285×1,#287×2,#355×2,#4×1,#597×1,#599×3", "4a583ba210af44e8", "c14c4f1d4f0cc6f0"),
-    "check-transient-overmapping.py": (2, 1, 0, "contract:선행 계약(08-04 API-error) 소유×1", "e4f6a367f28dd0d1", "849fa036f6fb55c8"),
-    "check-usecase-dto-placement.py": (2, 35, 5, "#139×1,#140×1,#142×1,#144×2,#182×1,#183×1,#188×2,#189×1,#190×1,#191×1,#192×1,#193×1,#194×1,#196×1,#201×1,#202×2,#205×1,#208×1,#210×1,#211×1,#539×1,#540×1,#541×1,#567×1,#569×3,#570×2,#571×2,#635×3,#67×1,#68×2", "378ab736baa677df", "ed61289ac2348cc9"),
-    "check-response-schema-bypass.py::git-clean": (0, 0, 0, "", "4f53cda18c2baa0c", "4f53cda18c2baa0c"),
-    "check-response-schema-bypass.py::git-modified": (2, 1, 0, "contract:선행 계약(08-04 API-error) 소유×1", "7425fefd479b2edc", "bfd73ca26e52466d"),
-    "check-response-schema-bypass.py::git-untracked": (2, 1, 0, "contract:선행 계약(08-04 API-error) 소유×1", "7425fefd479b2edc", "bfd73ca26e52466d"),
-    "check-app-container.py::git-clean": (0, 0, 0, "", "4f53cda18c2baa0c", "4f53cda18c2baa0c"),
-    "check-app-container.py::git-modified": (0, 0, 0, "", "4f53cda18c2baa0c", "4f53cda18c2baa0c"),
-    "check-app-container.py::git-untracked": (2, 1, 0, "contract:선행 규약(표준 트리 전신 — application/ 컨테이너 위치) 소유×1", "31240e8fe5840470", "44e58e3b16845aff"),
-    "check-idempotency-scope-creep.py::git-clean": (0, 0, 0, "", "4f53cda18c2baa0c", "4f53cda18c2baa0c"),
-    "check-idempotency-scope-creep.py::git-modified": (2, 1, 0, "contract:선행 계약(architecture-api §13 멱등 스코프) 소유×1", "46b04bd6bcc4b9e5", "0de6db90334e6f41"),
-    "check-idempotency-scope-creep.py::git-untracked": (2, 1, 0, "contract:선행 계약(architecture-api §13 멱등 스코프) 소유×1", "46b04bd6bcc4b9e5", "0de6db90334e6f41"),
-    "check-transient-overmapping.py::git-clean": (0, 0, 0, "", "4f53cda18c2baa0c", "4f53cda18c2baa0c"),
-    "check-transient-overmapping.py::git-modified": (0, 0, 0, "", "4f53cda18c2baa0c", "4f53cda18c2baa0c"),
-    "check-transient-overmapping.py::git-untracked": (2, 1, 0, "contract:선행 계약(08-04 API-error) 소유×1", "e4f6a367f28dd0d1", "849fa036f6fb55c8"),
-    "check-choices-literal-consumption.py::git-clean": (0, 0, 0, "", "4f53cda18c2baa0c", "4f53cda18c2baa0c"),
-    "check-choices-literal-consumption.py::git-modified": (0, 0, 0, "", "4f53cda18c2baa0c", "4f53cda18c2baa0c"),
-    "check-choices-literal-consumption.py::git-untracked": (0, 0, 0, "", "4f53cda18c2baa0c", "4f53cda18c2baa0c"),
-    "check-synthetic-infra-exc.py::git-clean": (2, 1, 0, "#129×1", "cb5389627def38b8", "5310eb2801147b90"),
-    "check-synthetic-infra-exc.py::git-modified": (2, 1, 0, "#129×1", "cb5389627def38b8", "5310eb2801147b90"),
-    "check-synthetic-infra-exc.py::git-untracked": (2, 2, 0, "#129×1,sentinel:합성×1", "2e7e2fb7cccbac27", "518f4f7518bb9711"),
-    "check-db-table.py::git-clean": (2, 24, 0, "#318×1,#324×2,#325×1,#326×2,#329×1,#330×2,#331×2,#332×1,#334×1,#335×2,#467×1,#535×1,#536×1,#537×1,#538×2,#631×2,#632×1", "c0a20513dc57285b", "60d814661bce27be"),
-    "check-db-table.py::git-modified": (2, 24, 0, "#318×1,#324×2,#325×1,#326×2,#329×1,#330×2,#331×2,#332×1,#334×1,#335×2,#467×1,#535×1,#536×1,#537×1,#538×2,#631×2,#632×1", "c0a20513dc57285b", "60d814661bce27be"),
-    "check-db-table.py::git-untracked": (2, 26, 0, "#318×1,#324×2,#325×1,#326×2,#329×1,#330×2,#331×2,#332×1,#334×1,#335×2,#467×1,#535×1,#536×1,#537×1,#538×2,#630×2,#631×2,#632×1", "5b85011e45235434", "239a377ed7ebf3eb"),
-    "check-api-error-controller-contract.py::api_error_controller_code": (2, 3, 0, "#59×1,#62×2", "97ef7c202f1d48d0", "54e3a219e3e20466"),
-    "check-composition-root.py::composition_root_single_file": (2, 1, 0, "#497×1", "2c43cc1deddc1a8c", "2fc253839f16eb6c"),
-    "check-openapi-error-declaration.py::openapi_decl_missing": (2, 1, 0, "#63×1", "238f374c04cdbc00", "95363305293051ff"),
-    "check-error-centralization.py::error_centralization_code": (2, 3, 0, "#572×1,contract:선행 계약(08-04 API-error) 소유×2", "ca07fbbfc15d97c8", "4c7001115cd355de"),
-    "check-api-error-controller-contract.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "ff910566edd77355"),
-    "check-error-centralization.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "dd0e053b943ade19"),
-    "check-openapi-error-declaration.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "f2d1a02f508ad602"),
-    "check-response-schema-bypass.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a48e09bb1d2d8734"),
-    "check-db-table.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "f74cd9a3af326bd2"),
-    "check-domain-model.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "e5abbd3c9f18d0a2"),
-    "check-event-publish.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "70efaa8b3073675d"),
-    "check-idempotency-scope-creep.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "1c333ae23667db21"),
-    "check-layer-skeleton.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "c8f6734063cabd64"),
-    "check-mechanism-ownership.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "ec77f36e5d019139"),
-    "check-missable-entrance.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "74ad02ff7de72a4e"),
-    "check-naming.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "383fa0eac3be9402"),
-    "check-ninja-boundary-middleware.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "cbe89ba066c8a5e4"),
-    "check-port-adapter-pairing.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "373fa76a51f104a1"),
-    "check-public-surface-annotation.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "598e021a96681874"),
-    "check-synthetic-infra-exc.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "62d865bb7162735f"),
-    "check-test-config.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "99873aba7f6ef8aa"),
-    "check-transaction-boundary.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "85fd98555b364d2b"),
-    "check-transient-overmapping.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "72512da19ab8fe60"),
-    "check-usecase-dto-placement.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "68ef0b7cef2acf9a"),
+EXPECTED: "dict[str, tuple[int, int, int, str, str, str, str]]" = {
+    "check-api-error-controller-contract.py": (2, 9, 1, "#120×1,#121×1,#123×1,#124×1,#125×1,#126×1,#131×1,#132×1,#474×1,#62×1", "218a6d81f576dda3", "60e27edf87f184ce", "4ff2ead3db93a9fa"),
+    "check-app-container.py": (2, 1, 0, "contract:선행 규약(표준 트리 전신 — application/ 컨테이너 위치) 소유×1", "31240e8fe5840470", "31240e8fe5840470", "44e58e3b16845aff"),
+    "check-broker-contract.py": (2, 22, 5, "#442×2,#443×2,#444×1,#518×1,#520×3,#521×1,#523×1,#524×2,#525×1,#527×1,#528×1,#529×1,#531×1,#532×1,#533×2,#534×1,#603×5", "11deccf9f90c6592", "72766c4d29d6c5fe", "e9cf0a9f6de4a278"),
+    "check-business-vocabulary.py": (2, 48, 5, "#119×1,#19×1,#294×1,#35×1,#39×1,#393×1,#395×1,#396×1,#398×1,#402×1,#407×2,#408×1,#412×1,#414×1,#415×1,#416×1,#417×1,#420×1,#423×1,#425×1,#426×1,#428×1,#434×1,#448×1,#46×2,#47×1,#52×1,#53×1,#560×1,#561×1,#562×2,#584×1,#585×2,#587×1,#606×2,#607×1,#615×2,#617×1,#618×1,#619×2,#620×1,#621×1,#622×1,#623×1,#624×2", "5d54270ca9386cdf", "23e514b9cb6522ea", "34abc446bddb5f12"),
+    "check-choices-literal-consumption.py": (2, 3, 0, "contract:선행 계약(2026-07-06 상수 승격) 소유×3", "6253365c1e25da21", "44e1429f9c74c1a3", "2f961c306ed061c0"),
+    "check-common-container.py": (2, 2, 0, "contract:선행 규약(D38 승격/강등 — 루트 framework/ 배치) 소유×2", "7ddb14624648702f", "7ddb14624648702f", "5b02b9878d9d83e0"),
+    "check-composition-root.py": (2, 18, 2, "#101×1,#105×1,#107×1,#108×1,#109×1,#111×1,#112×1,#437×3,#440×1,#441×1,#497×1,#498×1,#500×1,#501×1,#511×1,#84×1,#85×1,#86×1", "fe484815e50a3068", "47b0169bfcaeec08", "4a97d85dfb5d47b9"),
+    "check-context-isolation.py": (2, 58, 4, "#102×1,#11×1,#110×1,#117×1,#13×1,#14×1,#146×1,#150×1,#151×1,#153×4,#154×1,#155×1,#157×1,#164×2,#166×1,#167×2,#168×1,#170×1,#185×1,#186×1,#2×2,#251×1,#288×1,#291×1,#292×1,#295×1,#312×1,#328×1,#347×1,#361×1,#363×1,#364×2,#431×2,#433×2,#450×2,#453×1,#455×1,#472×1,#473×2,#482×1,#483×2,#484×1,#51×1,#633×1,#634×1,#9×1,#93×1,#94×1,#95×1,#98×1", "1417df159b14cac7", "1417df159b14cac7", "3e368604cf514e50"),
+    "check-db-table.py": (2, 26, 0, "#318×1,#324×2,#325×1,#326×2,#329×1,#330×2,#331×2,#332×1,#334×1,#335×2,#467×1,#535×1,#536×1,#537×1,#538×2,#630×2,#631×2,#632×1", "5b85011e45235434", "5b85011e45235434", "239a377ed7ebf3eb"),
+    "check-domain-model.py": (2, 48, 13, "#17×2,#249×1,#252×1,#253×1,#256×1,#257×2,#258×1,#259×1,#260×2,#261×1,#262×1,#263×1,#264×1,#266×1,#267×1,#268×2,#269×2,#270×1,#272×1,#275×1,#276×1,#289×1,#290×1,#298×1,#299×2,#300×1,#301×4,#302×1,#303×1,#304×1,#305×1,#307×1,#308×1,#310×1,#311×1,#315×1,#459×1,#505×1,#506×1,#542×1,#543×3,#546×1,#547×2,#548×2,#549×1,#550×1,#565×1,#8×1", "085ac733a6aa5b35", "1436844c71e99fac", "f0f3e9ed0f41ec30"),
+    "check-error-centralization.py": (2, 5, 0, "#114×1,#568×2,#572×1,#636×1", "c3da2a9e89c47951", "c3da2a9e89c47951", "cacda249ec94d135"),
+    "check-event-publish.py": (2, 20, 4, "#271×3,#279×1,#280×2,#502×1,#503×2,#504×1,#507×1,#508×1,#509×1,#564×2,#600×1,#601×1,#627×2,#7×2,#96×3", "06594a2b1253f981", "f6db284cc0757e6b", "6027ffddfd7b2d9e"),
+    "check-idempotency-scope-creep.py": (2, 1, 0, "contract:선행 계약(architecture-api §13 멱등 스코프) 소유×1", "46b04bd6bcc4b9e5", "46b04bd6bcc4b9e5", "0de6db90334e6f41"),
+    "check-layer-skeleton.py": (2, 10, 0, "#488×7,#490×2,#81×1", "650a62bfa578c75d", "650a62bfa578c75d", "df23b4464c21dccb"),
+    "check-mechanism-ownership.py": (2, 6, 0, "#336×1,#337×1,#338×1,#593×3", "667832904ba25a08", "667832904ba25a08", "67400faf82fc3e1e"),
+    "check-missable-entrance.py": (2, 17, 4, "#172×1,#173×1,#174×2,#175×1,#179×2,#180×1,#181×2,#451×1,#512×2,#514×1,#515×2,#516×2,#517×2,#629×1", "2b604f3883227873", "b118cdce098e16f7", "85500a6f29199b00"),
+    "check-naming.py": (2, 29, 5, "#118×1,#148×1,#169×1,#247×2,#28×2,#30×1,#309×1,#33×1,#34×1,#340×1,#341×1,#342×1,#343×1,#344×2,#345×1,#348×2,#36×3,#382×1,#41×1,#43×1,#44×1,#481×1,#588×1,#589×1,#590×2,#87×1,#97×1", "67c3b8f630ac2347", "df6f904c3e014366", "d26da9f6a129e645"),
+    "check-ninja-boundary-middleware.py": (2, 2, 0, "contract:선행 계약(08-04 API-error) 소유×2", "bcca745399dc645e", "bcca745399dc645e", "fb84fc0e70f9f759"),
+    "check-openapi-error-declaration.py": (2, 3, 0, "#63×3", "21e2961d8fb1eb4f", "092af2ec8ac77ccf", "9598eff4f473e0cc"),
+    "check-port-adapter-pairing.py": (2, 79, 9, "#134×1,#212×2,#214×1,#215×1,#216×2,#218×1,#219×1,#220×2,#225×1,#227×1,#228×2,#231×1,#232×1,#233×2,#234×1,#235×1,#236×1,#238×1,#239×1,#240×1,#241×1,#242×1,#244×1,#245×1,#246×1,#313×1,#351×2,#352×1,#354×1,#356×1,#359×1,#367×1,#368×1,#369×1,#370×2,#373×1,#374×1,#376×1,#457×1,#460×1,#462×2,#464×1,#465×1,#476×2,#477×2,#480×1,#485×5,#545×2,#551×1,#552×4,#553×1,#554×1,#555×1,#556×1,#557×1,#566×1,#573×1,#574×1,#575×1,#576×1,#577×1,#578×1,#579×1,#580×1,#581×1,#582×1,#583×1,#594×2,#64×1", "1714fece63e1a322", "9201e2e28dc310e1", "656bfbc7a87145dd"),
+    "check-public-surface-annotation.py": (2, 10, 2, "#358×2,#456×1,#493×7,#69×2", "7f50607021907d7f", "fa502276528518f0", "39773b5c7f7364e3"),
+    "check-response-schema-bypass.py": (2, 1, 0, "contract:선행 계약(08-04 API-error) 소유×1", "7425fefd479b2edc", "31ac0f0c6afe76c5", "bfd73ca26e52466d"),
+    "check-synthetic-infra-exc.py": (2, 2, 0, "#129×1,sentinel:합성×1", "2e7e2fb7cccbac27", "639e715f10dcde56", "518f4f7518bb9711"),
+    "check-test-config.py": (2, 14, 0, "#384×2,#385×1,#387×1,#388×1,#389×1,#390×2,#391×1,#392×1,#445×1,#446×1,#447×1,sentinel:바인딩×1", "3df1f227a35f1c83", "3df1f227a35f1c83", "5467197844ea37d1"),
+    "check-transaction-boundary.py": (2, 13, 2, "#195×1,#197×1,#200×1,#282×1,#283×1,#285×1,#287×2,#355×2,#4×1,#597×1,#599×3", "4a583ba210af44e8", "32b462b2a264d752", "c14c4f1d4f0cc6f0"),
+    "check-transient-overmapping.py": (2, 1, 0, "contract:선행 계약(08-04 API-error) 소유×1", "e4f6a367f28dd0d1", "195099bd5e6d93e3", "849fa036f6fb55c8"),
+    "check-usecase-dto-placement.py": (2, 35, 5, "#139×1,#140×1,#142×1,#144×2,#182×1,#183×1,#188×2,#189×1,#190×1,#191×1,#192×1,#193×1,#194×1,#196×1,#201×1,#202×2,#205×1,#208×1,#210×1,#211×1,#539×1,#540×1,#541×1,#567×1,#569×3,#570×2,#571×2,#635×3,#67×1,#68×2", "378ab736baa677df", "378ab736baa677df", "ed61289ac2348cc9"),
+    "check-response-schema-bypass.py::git-clean": (0, 0, 0, "", "4f53cda18c2baa0c", "4f53cda18c2baa0c", "4f53cda18c2baa0c"),
+    "check-response-schema-bypass.py::git-modified": (2, 1, 0, "contract:선행 계약(08-04 API-error) 소유×1", "7425fefd479b2edc", "31ac0f0c6afe76c5", "bfd73ca26e52466d"),
+    "check-response-schema-bypass.py::git-untracked": (2, 1, 0, "contract:선행 계약(08-04 API-error) 소유×1", "7425fefd479b2edc", "31ac0f0c6afe76c5", "bfd73ca26e52466d"),
+    "check-app-container.py::git-clean": (0, 0, 0, "", "4f53cda18c2baa0c", "4f53cda18c2baa0c", "4f53cda18c2baa0c"),
+    "check-app-container.py::git-modified": (0, 0, 0, "", "4f53cda18c2baa0c", "4f53cda18c2baa0c", "4f53cda18c2baa0c"),
+    "check-app-container.py::git-untracked": (2, 1, 0, "contract:선행 규약(표준 트리 전신 — application/ 컨테이너 위치) 소유×1", "31240e8fe5840470", "31240e8fe5840470", "44e58e3b16845aff"),
+    "check-idempotency-scope-creep.py::git-clean": (0, 0, 0, "", "4f53cda18c2baa0c", "4f53cda18c2baa0c", "4f53cda18c2baa0c"),
+    "check-idempotency-scope-creep.py::git-modified": (2, 1, 0, "contract:선행 계약(architecture-api §13 멱등 스코프) 소유×1", "46b04bd6bcc4b9e5", "46b04bd6bcc4b9e5", "0de6db90334e6f41"),
+    "check-idempotency-scope-creep.py::git-untracked": (2, 1, 0, "contract:선행 계약(architecture-api §13 멱등 스코프) 소유×1", "46b04bd6bcc4b9e5", "46b04bd6bcc4b9e5", "0de6db90334e6f41"),
+    "check-transient-overmapping.py::git-clean": (0, 0, 0, "", "4f53cda18c2baa0c", "4f53cda18c2baa0c", "4f53cda18c2baa0c"),
+    "check-transient-overmapping.py::git-modified": (0, 0, 0, "", "4f53cda18c2baa0c", "4f53cda18c2baa0c", "4f53cda18c2baa0c"),
+    "check-transient-overmapping.py::git-untracked": (2, 1, 0, "contract:선행 계약(08-04 API-error) 소유×1", "e4f6a367f28dd0d1", "195099bd5e6d93e3", "849fa036f6fb55c8"),
+    "check-choices-literal-consumption.py::git-clean": (0, 0, 0, "", "4f53cda18c2baa0c", "4f53cda18c2baa0c", "4f53cda18c2baa0c"),
+    "check-choices-literal-consumption.py::git-modified": (0, 0, 0, "", "4f53cda18c2baa0c", "4f53cda18c2baa0c", "4f53cda18c2baa0c"),
+    "check-choices-literal-consumption.py::git-untracked": (0, 0, 0, "", "4f53cda18c2baa0c", "4f53cda18c2baa0c", "4f53cda18c2baa0c"),
+    "check-synthetic-infra-exc.py::git-clean": (2, 1, 0, "#129×1", "cb5389627def38b8", "591973bd97c8910e", "5310eb2801147b90"),
+    "check-synthetic-infra-exc.py::git-modified": (2, 1, 0, "#129×1", "cb5389627def38b8", "591973bd97c8910e", "5310eb2801147b90"),
+    "check-synthetic-infra-exc.py::git-untracked": (2, 2, 0, "#129×1,sentinel:합성×1", "2e7e2fb7cccbac27", "639e715f10dcde56", "518f4f7518bb9711"),
+    "check-db-table.py::git-clean": (2, 24, 0, "#318×1,#324×2,#325×1,#326×2,#329×1,#330×2,#331×2,#332×1,#334×1,#335×2,#467×1,#535×1,#536×1,#537×1,#538×2,#631×2,#632×1", "c0a20513dc57285b", "c0a20513dc57285b", "60d814661bce27be"),
+    "check-db-table.py::git-modified": (2, 24, 0, "#318×1,#324×2,#325×1,#326×2,#329×1,#330×2,#331×2,#332×1,#334×1,#335×2,#467×1,#535×1,#536×1,#537×1,#538×2,#631×2,#632×1", "c0a20513dc57285b", "c0a20513dc57285b", "60d814661bce27be"),
+    "check-db-table.py::git-untracked": (2, 26, 0, "#318×1,#324×2,#325×1,#326×2,#329×1,#330×2,#331×2,#332×1,#334×1,#335×2,#467×1,#535×1,#536×1,#537×1,#538×2,#630×2,#631×2,#632×1", "5b85011e45235434", "5b85011e45235434", "239a377ed7ebf3eb"),
+    "check-api-error-controller-contract.py::api_error_controller_code": (2, 3, 0, "#59×1,#62×2", "97ef7c202f1d48d0", "3f624e3b1268f976", "54e3a219e3e20466"),
+    "check-composition-root.py::composition_root_single_file": (2, 1, 0, "#497×1", "2c43cc1deddc1a8c", "2c43cc1deddc1a8c", "2fc253839f16eb6c"),
+    "check-openapi-error-declaration.py::openapi_decl_missing": (2, 1, 0, "#63×1", "238f374c04cdbc00", "e272d6cb45778b56", "95363305293051ff"),
+    "check-error-centralization.py::error_centralization_code": (2, 3, 0, "#572×1,contract:선행 계약(08-04 API-error) 소유×2", "ca07fbbfc15d97c8", "9d0f1044b55df54a", "4c7001115cd355de"),
+    "check-api-error-controller-contract.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "ff910566edd77355"),
+    "check-db-table.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "f74cd9a3af326bd2"),
+    "check-domain-model.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "e5abbd3c9f18d0a2"),
+    "check-error-centralization.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "dd0e053b943ade19"),
+    "check-event-publish.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "70efaa8b3073675d"),
+    "check-idempotency-scope-creep.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "1c333ae23667db21"),
+    "check-layer-skeleton.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "c8f6734063cabd64"),
+    "check-mechanism-ownership.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "ec77f36e5d019139"),
+    "check-missable-entrance.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "74ad02ff7de72a4e"),
+    "check-naming.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "383fa0eac3be9402"),
+    "check-ninja-boundary-middleware.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "cbe89ba066c8a5e4"),
+    "check-openapi-error-declaration.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "f2d1a02f508ad602"),
+    "check-port-adapter-pairing.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "373fa76a51f104a1"),
+    "check-public-surface-annotation.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "598e021a96681874"),
+    "check-response-schema-bypass.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "a48e09bb1d2d8734"),
+    "check-synthetic-infra-exc.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "62d865bb7162735f"),
+    "check-test-config.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "99873aba7f6ef8aa"),
+    "check-transaction-boundary.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "85fd98555b364d2b"),
+    "check-transient-overmapping.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "72512da19ab8fe60"),
+    "check-usecase-dto-placement.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "68ef0b7cef2acf9a"),
 }
 
 
@@ -252,7 +254,17 @@ def _summarize(returncode: int, records: "list[dict]") -> "tuple[int, int, int, 
         for r in vio
     )
     ids_sha = hashlib.sha256(json.dumps(ids, ensure_ascii=False).encode()).hexdigest()[:16]
-    return returncode, len(vio), len(info), dist_s, ids_sha
+    # **사건 동일성 축을 함께 낸다**(T2-4 반증 레인 AT 과제 3): 위 `ids` 는 raw `file` 을 쓰므로
+    # 재생성이 코드를 고쳐 **라인이 밀리면 같은 위반이 다른 항목**이 된다. 판정 지표(위반 «수»)는
+    # 그대로지만 오탐 심의·사후 조인이 이 집합을 키로 쓰면 축이 어긋난다. raw 열을 **지우지 않고**
+    # (라인 고정이 계수 골든의 목적이다) 라인 제거 축을 한 열 더 두어 둘을 분리 관측한다.
+    canon = sorted(
+        (r.get("rule") or r.get("sentinel") or r.get("contract_ref") or "",
+         _LINE_SUFFIX.sub("", str(r.get("file", ""))), r.get("symbol") or "")
+        for r in vio
+    )
+    canon_sha = hashlib.sha256(json.dumps(canon, ensure_ascii=False).encode()).hexdigest()[:16]
+    return returncode, len(vio), len(info), dist_s, ids_sha, canon_sha
 
 
 def _fingerprint(records: "list[dict]") -> str:
@@ -481,7 +493,7 @@ def main(argv: "list[str]") -> int:
         for key, script, lane, red_src, _g in plan:
             if red_src is None:
                 continue
-            e, v, inf, _d, _h = got[key]
+            e, v, inf, _d, _h, _c = got[key]
             if lane in GIT_LANES:
                 ok = e in (0, 2) and (e != 2 or (v + inf) >= 1)
             else:
@@ -495,12 +507,12 @@ def main(argv: "list[str]") -> int:
                 for msg in problems.get(key, []):
                     print(f"  {key}: {msg}", file=sys.stderr)
             return 1
-        print('EXPECTED: "dict[str, tuple[int, int, int, str, str, str]]" = {')
+        print('EXPECTED: "dict[str, tuple[int, int, int, str, str, str, str]]" = {')
         for key, _script, _lane, red_src, _g in plan:
             if red_src is None:
                 continue
-            e, v, inf, dist, sha = got[key]
-            print(f'    "{key}": ({e}, {v}, {inf}, "{dist}", "{sha}", "{prints[key]}"),')
+            e, v, inf, dist, sha, canon = got[key]
+            print(f'    "{key}": ({e}, {v}, {inf}, "{dist}", "{sha}", "{canon}", "{prints[key]}"),')
         print("}")
         for key in waiting:
             print(f"# 레인 대기(픽스처 병행 제작 — 실측 후 등재): {key}", file=sys.stderr)
@@ -515,13 +527,13 @@ def main(argv: "list[str]") -> int:
                 print(f"  ✗ {key}: 기대 존재·재료 부재")
             continue
         cur = got[key] + (prints[key],)
-        e, v, inf, dist, sha, fp = cur
+        e, v, inf, dist, sha, canon, fp = cur
         want = EXPECTED.get(key)
         ok = cur == want and key not in problems
         if not ok:
             mismatch += 1
         mark = "✓" if ok else (f"✗ 기대 {want}" if cur != want else "✗ oracle·대조 위반")
-        print(f"| `{key}` | exit {e} | violation {v} | info {inf} | {sha} | {fp} | {mark} |")
+        print(f"| `{key}` | exit {e} | violation {v} | info {inf} | {sha} | {canon} | {fp} | {mark} |")
         for msg in problems.get(key, []):
             print(f"    · {msg}")
     print(f"레인 {len(got)} · 일치 {len(got) - mismatch} · 불일치 {mismatch} · "

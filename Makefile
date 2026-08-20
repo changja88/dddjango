@@ -94,7 +94,9 @@ verify-firing:
 
 # **T2-5 실런 진입 게이트** — 이것만이 C 실런의 허가다(사후 리뷰 AS-04).
 # `verify` 는 firing probe 를 부르지 않으므로, stale cache 상태에서도 일반 검증은 green 이다.
-# 실런·release 전에는 반드시 이 타깃을 통과해야 한다(엄격 모드 — ALLOW_STALE 무시).
+# **release 는 이 타깃을 부르지 않는다**(반증 레인 AT 4-2 — 앞선 문면은 과장이었다):
+# 설치본이 낡은 동안 release 를 막을 이유가 없고, 막아야 하는 것은 **C 실런**이다.
+# T2-5 runner 는 이 타깃 성공 없이 기동하지 않는다(엄격 모드 — ALLOW_STALE 무시).
 verify-runready: verify verify-mutation
 	@set -euo pipefail; \
 	PYTHONUTF8=1 python3 workspace/tools/firing_probe.py; \

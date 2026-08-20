@@ -45,68 +45,80 @@ FIXTURE: "list" = [
      "file": "z.py", "symbol": None, "message": "팩 밖", "severity": "violation"},
 ]
 
-# 트리 안에서 실행되는 드라이버 — 그 트리의 regen_core·rulepack 만 쓴다(저장소 것을 쓰면
-# «설치본에서 돈다»가 증명되지 않는다).
-DRIVER: str = r'''
-import hashlib, json, sys
-recs = json.loads(sys.argv[1])
-out = {"errors": []}
-try:
-    import regen_core as rc
-except Exception as exc:
-    print(json.dumps({"errors": [f"regen_core 부재: {exc}"]}, ensure_ascii=False)); raise SystemExit(0)
-b = rc.assemble_prompt(recs)
-out["b_sha"] = hashlib.sha256(b.encode("utf-8")).hexdigest()
-out["b_bytes"] = len(b.encode("utf-8"))
-try:
-    import rulepack as rp
-    pack = rp.Rulepack.load()
-except Exception as exc:
-    out["errors"].append(f"rulepack 부재·손상: {exc}")
-    print(json.dumps(out, ensure_ascii=False)); raise SystemExit(0)
-try:
-    ordered, rules, prov = rc.select_graph(recs, pack)
-except Exception as exc:
-    out["errors"].append(f"select_graph 부재: {exc}")
-    print(json.dumps(out, ensure_ascii=False)); raise SystemExit(0)
-c = rc.assemble_prompt(ordered, rules)
-out["c_sha"] = hashlib.sha256(c.encode("utf-8")).hexdigest()
-out["has_rules"] = "<rules>" in c
-out["rules_n"] = len(rules)
-out["identity_set"] = sorted(str(rc.identity(r)) for r in ordered)
-out["tiers"] = [p["priority"] for p in prov]
-out["order"] = [r.get("record_id") for r in ordered]
-# A4 — 손상 팩은 예외여야 한다(조용한 폴백 금지)
-try:
-    rp.Rulepack({"schema": "x/9"}); out["errors"].append("A4: 스키마 이탈이 통과했다")
-except Exception:
-    pass
-print(json.dumps(out, ensure_ascii=False))
-'''
-
-
 def _first(glob_root: Path, pattern: str) -> "Path | None":
     hits = sorted(glob_root.glob(pattern))
     return hits[-1] if hits else None
 
 
+def _cli(scripts: Path, side: Path, extra: "list", cwd: Path) -> "tuple":
+    """그 트리의 **실제 CLI** 를 subprocess 로 돌린다 → `(exit, stdout, stderr)`.
+
+    앞선 판은 드라이버가 `assemble_prompt`·`select_graph` 를 **직접 호출**해 `_main()` 을
+    우회했다(반증 레인 AT 4-2 실증: CLI 에서만 selector 를 snapshot 으로 강제하는 변이가
+    probe green 을 통과했다 — `probe_has_rules True` ↔ `cli_has_rules False`). 발화 증명은
+    **실런이 실제로 부르는 경로**에서 서야 한다.
+    """
+    proc = subprocess.run(
+        [sys.executable, str(scripts / "regen_core.py"), "--introduced-json", str(side), *extra],
+        capture_output=True, text=True, cwd=str(cwd),
+        env={"PYTHONPATH": str(scripts), "PATH": "/usr/bin:/bin",
+             "PYTHONUTF8": "1", "PYTHONDONTWRITEBYTECODE": "1"})
+    return proc.returncode, proc.stdout, proc.stderr
+
+
 def run_tree(scripts: Path) -> "dict":
+    """한 트리에 대해 A1~A5 를 **CLI 로** 실측한다."""
+    import hashlib
+    import shutil
+
+    out: "dict" = {"errors": []}
     if not scripts.is_dir():
         return {"errors": [f"트리 부재: {scripts}"]}
+    if not (scripts / "regen_core.py").is_file():
+        return {"errors": [f"regen_core.py 부재: {scripts}"]}
+
     with tempfile.TemporaryDirectory() as td:
-        drv = Path(td) / "driver.py"
-        drv.write_text(DRIVER, encoding="utf-8")
-        proc = subprocess.run(
-            [sys.executable, str(drv), json.dumps(FIXTURE, ensure_ascii=False)],
-            capture_output=True, text=True, cwd=str(scripts),
-            env={"PYTHONPATH": str(scripts), "PATH": "/usr/bin:/bin",
-                 "PYTHONUTF8": "1", "PYTHONDONTWRITEBYTECODE": "1"})
-    if proc.returncode != 0 or not proc.stdout.strip():
-        return {"errors": [f"드라이버 실패 exit {proc.returncode}: {proc.stderr.strip()[:200]}"]}
-    try:
-        return json.loads(proc.stdout.strip().splitlines()[-1])
-    except ValueError as exc:
-        return {"errors": [f"드라이버 출력 파싱 실패: {exc}"]}
+        work = Path(td)
+        side = work / "introduced.json"
+        side.write_text(json.dumps({"schema": "gate-introduced/0", "anchor": "x",
+                                    "attributed_lines": ["a"], "records": FIXTURE,
+                                    "unmatched_lines": []}, ensure_ascii=False),
+                        encoding="utf-8")
+
+        code, b, err = _cli(scripts, side, [], work)
+        if code != 0:
+            return {"errors": [f"snapshot CLI exit {code}: {err.strip()[:160]}"]}
+        out["b_sha"] = hashlib.sha256(b.encode("utf-8")).hexdigest()
+        out["b_bytes"] = len(b.encode("utf-8"))
+
+        cap = work / "cap.jsonl"
+        code, c, err = _cli(scripts, side, ["--selector", "sparql", "--capacity-log", str(cap)], work)
+        if code != 0:
+            out["errors"].append(f"sparql CLI exit {code}: {err.strip()[:160]}")
+            return out
+        out["c_sha"] = hashlib.sha256(c.encode("utf-8")).hexdigest()
+        out["has_rules"] = "<rules>" in c
+        row = json.loads(cap.read_text(encoding="utf-8").strip().splitlines()[-1])
+        out["rules_n"] = row["rules_n"]
+        out["tiers"] = row["tiers"]
+        out["identity_set"] = sorted(str(x["identity"]) for x in row["records_provenance"]
+                                     if x["drop_reason"] is None)
+
+        # A4-① 미지 selector 는 **argparse 단계에서** 거절되어야 한다(조용한 snapshot 금지)
+        code, _, _ = _cli(scripts, side, ["--selector", "bogus"], work)
+        if code == 0:
+            out["errors"].append("A4: 미지 selector 값이 통과했다")
+
+        # A4-② 손상 팩 — 트리 사본에서 팩만 깨고 sparql 을 돌린다
+        broken = work / "broken"
+        shutil.copytree(scripts, broken, ignore=shutil.ignore_patterns("__pycache__"))
+        (broken / "rulepack.json").write_text('{"schema":"x/9"}', encoding="utf-8")
+        code, stdout_broken, _ = _cli(broken, side, ["--selector", "sparql"], work)
+        if code == 0:
+            out["errors"].append("A4: 손상 팩이 fail-closed 하지 않았다")
+        if stdout_broken:
+            out["errors"].append("A4: 손상 팩인데 프롬프트가 나왔다(조용한 폴백)")
+    return out
 
 
 def main(argv: "list[str] | None" = None) -> int:

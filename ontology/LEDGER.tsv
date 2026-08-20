@@ -939,3 +939,4 @@ command-dddjango	s007	e42de6d2ec05af75c952a9ff84d6c092b07da976c360e5dc64acacf6aa
 command-dddjango	s007	93bdc36fa0a028935a2e2019e7464f09b5fe239d02c27469a65d9043ad47c3bb	prose	-	-	-	-	rebaseline:2026-08-20 T2-3 — step 6′ 재생성 루프 절 신설(DJR_LOOP_ENABLED=on 일 때만 발화·기본 off 경로 무변)
 command-dddjango	s007	93c4a385763bbbd811a08c4c4931287ddf4a7976d6030f3552a0d9f468935927	prose	-	-	-	-	rebaseline:2026-08-20 T2-4 — step 6ʹ 주입 재료 절 개정(동결 개정 8: DJR_LOOP_SELECTOR=sparql 일 때만 <rules> 번호·명칭 추가·본문 미동봉·snapshot 은 byte 불변)
 command-dddjango	s007	a26771a2161bcb0b9a15714328a787f50d1c7048642b4df17a8cd088b167c217	prose	-	-	-	-	rebaseline:2026-08-20 T2-4 — step 6ʹ 에 셸 B 스크립트 호출 문면 추가(regen_core.py CLI · 즉석 조립 금지 · exit 3=대상 0 · exit 1=팩 결손 중단)
+command-dddjango	s007	2848300d3bf45568d7781e36308163065b4d09e38878bef387b7b4ea84ffacf9	prose	-	-	-	-	rebaseline:2026-08-20 T2-4 사후 리뷰 반영 — step 6ʹ 에 계약 sidecar(--contract-json) 생성·소비 명령 추가(개정 9 계수 원자료·주입 대상 아님)

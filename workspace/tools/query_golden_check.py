@@ -41,6 +41,32 @@ def _local(value: str) -> str:
     return str(value).rsplit("#", 1)[-1]
 
 
+class UnboundQuery(ValueError):
+    """필수 입력이 없는 질의 실행 시도 — 도구가 **실행 전에** 거절한다."""
+
+
+def run_q2(graph, run: "str | None"):
+    """Q2 실행 wrapper — `$RUN` 부재를 **실행 전에** 거절한다(반증 레인 AT 4-3).
+
+    앞선 판은 「미바인딩이면 SPARQL FILTER 가 오류가 되어 0행」이라는 **부작용**에 기댔다.
+    그건 엔진 구현에 의존하는 우연이고, 판단표가 요구한 것은 도구의 **명시적 거절**이다.
+    """
+    if not run:
+        raise UnboundQuery("Q2 는 experiment_run_id 바인딩 없이 실행할 수 없다(전역 스캔 금지)")
+    from rdflib import Literal
+    q2 = (QUERIES / "q2-violations-to-norms.rq").read_text(encoding="utf-8")
+    return list(graph.query(q2, initBindings={"RUN": Literal(run)}))
+
+
+def run_q3(graph, section_number: "str | None"):
+    """Q3 실행 wrapper — `$SECTION_NUMBER` 부재를 실행 전에 거절한다."""
+    if not section_number:
+        raise UnboundQuery("Q3 는 절 번호 바인딩 없이 실행할 수 없다(전량 반환 금지)")
+    from rdflib import Literal
+    q3 = (QUERIES / "q3-section-bundle.rq").read_text(encoding="utf-8")
+    return list(graph.query(q3, initBindings={"SECTION_NUMBER": Literal(section_number)}))
+
+
 def observe() -> "dict":
     from rdflib import Literal
 
@@ -78,22 +104,22 @@ def observe() -> "dict":
 
     # Q2 — **양성 + 음성 동시**. exp-A 는 2 Work, exp-B 는 1 Work,
     #      두 런에 재발한 R-0120 은 **양쪽 모두 1건**으로 보여야 한다(런 간 재발 보존).
-    q2 = (QUERIES / "q2-violations-to-norms.rq").read_text(encoding="utf-8")
     for run in ("exp-A", "exp-B", "exp-없음"):
-        res = list(runs.query(q2, initBindings={"RUN": Literal(run)}))
+        res = run_q2(runs, run)
         out[f"q2:{run}"] = sorted(f"{_local(r.work)}×{int(r.violationCount)}" for r in res)
-    # 바인딩 **없이** 돌면 전역 스캔이 되어야 위험한데, `FILTER(STR(?run) = STR($RUN))` 의
-    # 미바인딩 비교는 오류가 되어 행을 **배제**한다 — 문법 차원에서 fail-closed 임을 고정한다.
-    out["q2:미바인딩"] = sorted(f"{_local(r.work)}×{int(r.violationCount)}"
-                              for r in runs.query(q2))
+    # wrapper 가 **실행 전에** 거절해야 한다 — 0행은 답이 아니다(AT 4-3).
+    for label, fn in (("q2", lambda: run_q2(runs, None)), ("q3", lambda: run_q3(prod, None))):
+        try:
+            fn()
+            out[f"{label}:미바인딩거절"] = False
+        except UnboundQuery:
+            out[f"{label}:미바인딩거절"] = True
 
     # Q3 — 절 묶음. **블록 1개당 1행**(Work 행 복제 금지 — AQ-01) + **입력 필수**(AS-15).
-    q3 = (QUERIES / "q3-section-bundle.rq").read_text(encoding="utf-8")
     for number in ("6.1", "3.2"):
-        rows3 = list(prod.query(q3, initBindings={"SECTION_NUMBER": Literal(number)}))
+        rows3 = run_q3(prod, number)
         out[f"q3:{number}"] = {"rows": len(rows3),
                                "sections": sorted({str(r.sectionNumber) for r in rows3})}
-    out["q3:미바인딩"] = len(list(prod.query(q3)))
 
     # Q4 — 주입 조립 정렬 키. Work 1건당 1행.
     rows4 = list(prod.query((QUERIES / "q4-injection-order.rq").read_text(encoding="utf-8")))
@@ -135,10 +161,9 @@ def main(argv: "list[str] | None" = None) -> int:
         diffs.append("q2:exp-A 가 비었다 — 양성 단언이 성립하지 않는다(공허 통과)")
     if got.get("q2:exp-없음"):
         diffs.append("q2 미등록 런이 결과를 냈다 — run 격리 파손")
-    if got.get("q2:미바인딩"):
-        diffs.append("q2 가 $RUN 미바인딩에서 결과를 냈다 — 전역 스캔(격리 파손)")
-    if got.get("q3:미바인딩"):
-        diffs.append("q3 가 $SECTION_NUMBER 미바인딩에서 결과를 냈다 — 전량 반환(입력 계약 파손)")
+    for label in ("q2", "q3"):
+        if not got.get(f"{label}:미바인딩거절"):
+            diffs.append(f"{label} wrapper 가 미바인딩을 거절하지 않았다(실행 전 거절 계약 파손)")
     if got.get("q3:6.1") == got.get("q3:3.2"):
         diffs.append("q3 가 입력에 따라 다른 부분집합을 내지 않는다(공허 통과)")
     if (got.get("adapter") or {}).get("nodes") != 3:

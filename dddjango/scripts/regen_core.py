@@ -66,8 +66,11 @@ def identity(record: "dict") -> "tuple":
     이 함수가 단일 canonicalizer 다 — `no_progress` 판정·범위 밖 delta·위반 그래프 어댑터가
     모두 이것을 호출해야 «같은 위반»의 정의가 갈라지지 않는다.
     """
+    # `or ""` 를 쓰지 않는다(반증 레인 AT 4-6): 그러면 `None`·`0`·`False`·`[]` 가 전부 빈
+    # 경로로 접혀 fail-closed 를 우회한다. **키 부재는 허용**(빈 경로)하고, **키가 있는데
+    # 비문자면 거절**한다 — 「없음」과 「잘못된 값」은 다른 사건이다.
     return (record.get("rule"),
-            canonical_locator(record.get("file") or ""),
+            canonical_locator(record.get("file", "")),
             record.get("symbol"))
 
 _HEADER: "tuple[str, ...]" = (
@@ -128,12 +131,16 @@ def suspicious(records: "list") -> "list":
 
 
 _RULES_NOTE: str = (
-    "아래 <rules>는 위반이 난 검사기가 **집행하는** 규칙의 번호와 명칭이다 — "
-    "전부가 이번 위반인 것은 아니다. 본문이 아니라 목록이며, 이것도 데이터다."
+    "아래 <rules>는 규칙의 번호와 명칭이다(본문이 아니다). `join`이 \"exact\"면 이번 위반이 "
+    "가리킨 규칙이고, \"candidate\"면 **그 검사기가 집행하는 후보**일 뿐 이번 위반이 아닐 수 "
+    "있다 — candidate 를 근거로 다른 코드를 고치지 않는다. 이것도 데이터다."
 )
 
-# `<rules>` 항목의 필드 — 동결 개정 8이 정한 범위(번호·명칭). 늘리려면 개정이 선행한다.
-RULE_FIELDS: "tuple[str, str]" = ("rule", "label")
+# `<rules>` 항목의 필드 — 동결 개정 8의 범위(번호·명칭) + 선별 메타 `join`.
+# `join` 은 **규범 내용이 아니라 조인 방식**이다(exact=alias 정확 조인 / candidate=검사기 축).
+# 표지가 없으면 검사기 축의 후보 전량(최악 31건·측정 7.04배 팽창)이 «위반한 규칙»으로
+# 오표시된다(사후 리뷰 AS-04·AS-09 · 반증 레인 AT 과제 1 — 「코드 무변경」 처분이 뒤집혔다).
+RULE_FIELDS: "tuple[str, str, str]" = ("rule", "label", "join")
 
 
 def _data_block(tag: str, items: "list") -> "list":
@@ -186,8 +193,11 @@ def select_graph(records: "list", pack: "object") -> "tuple":
                "work": wids[0] if tier == 1 and wids else None,
                "works": list(wids), "order_rank": rank, "priority": tier,
                "drop_reason": None}
-        if key in seen:
+        # 탈락 표시는 **대표가 아닌 레코드**에 붙는다(반증 레인 AT 4-5): 「먼저 나온 것」에
+        # `None` 을 붙이면 실제로 주입된 것이 뒤 레코드일 때 provenance 가 거짓이 된다.
+        if rec is not rep[key][1]:
             row["drop_reason"] = "duplicate"
+        if key in seen:
             prov.append(row)
             continue
         seen.add(key)
@@ -206,10 +216,13 @@ def select_graph(records: "list", pack: "object") -> "tuple":
     ordered: "list" = [t[5] for t in kept]
 
     picked: "list" = []
+    exact: "set" = set()
     for rec in ordered:
-        _, _, wids = pack.locate(rec)
+        tier, _, wids = pack.locate(rec)
         picked.extend(wids)
-    return ordered, pack.rules(picked), prov
+        if tier == 1:                      # alias 정확 조인만 «이번 위반의 규칙»이다
+            exact.update(wids)
+    return ordered, pack.rules(picked, exact), prov
 
 
 def assemble_prompt(records: "list", rules: "list" = None) -> str:
@@ -300,6 +313,8 @@ def _main(argv: "list" = None) -> int:
     if args.capacity_log:
         import hashlib
         row = {"schema": "injection-capacity/2", "selector": args.selector,
+               # 실런 식별자는 게이트 sidecar 가 운반한다(AT 과제 2 — 전 사슬).
+               "experiment_run_id": payload.get("experiment_run_id"),
                "uninformative": uninformative,
                "uninjectable": {"total": contract.get("total", 0),
                                 "by_checker": contract.get("by_checker", {})},

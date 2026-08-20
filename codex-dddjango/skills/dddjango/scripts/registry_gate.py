@@ -178,6 +178,10 @@ def _write_introduced(dest: Path, anchor_sha: str, attributed: "list[str]",
     payload: "dict[str, object]" = {
         "schema": "gate-introduced/0",
         "anchor": anchor_sha,
+        # 실런 식별자를 sidecar 가 **운반한다**(반증 레인 AT 과제 2): 이게 없으면 재생성 루프가
+        # 남기는 용량 로그에 실런을 적을 경로가 없어 「전 사슬」이 게이트에서 끊긴다.
+        "experiment_run_id": next((r.get("experiment_run_id") for r in picked
+                                   if r.get("experiment_run_id")), None),
         "attributed_lines": attributed,
         "records": picked,
         "unmatched_lines": sorted(want - matched),
@@ -187,7 +191,13 @@ def _write_introduced(dest: Path, anchor_sha: str, attributed: "list[str]",
           f"(레코드 {len(picked)} · 대응 없는 귀속 라인 {len(want - matched)})")
 
 
-def _write_contract(dest: Path, anchor_sha: str, records: "list[dict]") -> None:
+def _contract_key(rec: "dict", prefixes: "tuple[str, ...]") -> str:
+    return f"{rec.get('checker')} :: {_normalize(findings.line_of_record(rec), prefixes)}"
+
+
+def _write_contract(dest: Path, anchor_sha: str, records: "list[dict]",
+                    anchor_records: "list[dict]", prefixes: "tuple[str, ...]",
+                    anchor_prefixes: "tuple[str, ...]") -> None:
     """`rule=null` 레코드(선행 계약·센티널)를 **계수 전용** companion sidecar 로 쓴다.
 
     왜 별도인가(동결 개정 9 · 사후 리뷰 AS-03): 이 레코드들은 `[#N]` 라인을 내지 않아
@@ -196,8 +206,17 @@ def _write_contract(dest: Path, anchor_sha: str, records: "list[dict]") -> None:
     통계에서 빼지 않되 비율은 기록한다」이므로, 셀 원자료가 여기서 만들어져야 한다.
 
     이 sidecar 는 재생성 루프의 **입력이 아니다**. 계수·리포트 전용이다.
+
+    **앵커 차분을 적용한다**(반증 레인 AT 4-1): 앞선 판은 current 실행의 `rule=null` 을 통째로
+    셌다 — 그러면 `uninjectable_n` 이 「이번 빌드 신규」인지 「legacy 포함 총량」인지 알 수 없다.
+    귀속과 **같은 정규화·같은 N∖L 규칙**으로 신규분만 세고, legacy 는 따로 보고한다.
     """
-    picked: "list[dict]" = [r for r in records if r.get("rule") is None]
+    legacy: "set[str]" = {_contract_key(r, anchor_prefixes)
+                          for r in anchor_records if r.get("rule") is None}
+    picked: "list[dict]" = [r for r in records if r.get("rule") is None
+                            and _contract_key(r, prefixes) not in legacy]
+    residual: int = sum(1 for r in records if r.get("rule") is None
+                        and _contract_key(r, prefixes) in legacy)
     by_checker: "dict[str, int]" = {}
     for rec in picked:
         name: str = str(rec.get("checker"))
@@ -205,7 +224,8 @@ def _write_contract(dest: Path, anchor_sha: str, records: "list[dict]") -> None:
     payload: "dict[str, object]" = {
         "schema": "gate-contract/0",
         "anchor": anchor_sha,
-        "total": len(picked),
+        "total": len(picked),                 # 신규(N∖L)만
+        "legacy_residual": residual,          # 앵커에도 있던 것 — 보고만
         "by_checker": dict(sorted(by_checker.items())),
         "experiment_run_id": next((r.get("experiment_run_id") for r in picked
                                    if r.get("experiment_run_id")), None),
@@ -215,7 +235,8 @@ def _write_contract(dest: Path, anchor_sha: str, records: "list[dict]") -> None:
     }
     dest.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"계약 레코드 companion sidecar → {dest} "
-          f"(rule=null {len(picked)}건 · 검사기 {len(by_checker)}종 — 주입 대상 아님·계수 전용)")
+          f"(신규 rule=null {len(picked)}건 · legacy 잔존 {residual}건 · "
+          f"검사기 {len(by_checker)}종 — 주입 대상 아님·계수 전용)")
 
 
 def main(argv: "list[str]") -> int:
@@ -262,6 +283,9 @@ def main(argv: "list[str]") -> int:
         sink_n: Path = Path(td) / "records-current.jsonl"
         sink_l: Path = Path(td) / "records-anchor.jsonl"
         cur_prefixes: "tuple[str, ...]" = (str(cur) + "/", str(cur))
+        # 계약 sidecar 의 앵커 차분 재료 — 비-git 분기에서는 앵커가 없어 전량이 «신규»다.
+        l_records: "list[dict]" = []
+        anc_prefixes: "tuple[str, ...]" = ()
 
         if not is_git:
             print("주의: 비-git TARGET — 차분 불능이라 fail-closed(현재 위반 전량 귀속)")
@@ -294,6 +318,8 @@ def main(argv: "list[str]") -> int:
                 print(f"재료 결손: {exc}", file=sys.stderr)
                 return 1
             exits_l, l_set, _l_records = _run_registry(anc, sink_l)
+            l_records = _l_records
+            anc_prefixes = (str(anc) + "/", str(anc))
             l_set |= _parse_fail_findings(anc)
             exits_n, n_set, n_records = _run_registry(cur, sink_n)
             n_set |= _parse_fail_findings(cur)
@@ -333,7 +359,8 @@ def main(argv: "list[str]") -> int:
         _write_introduced(Path(ns.introduced_json), anchor_sha, attributed,
                           n_records, cur_prefixes)
     if ns.contract_json is not None:
-        _write_contract(Path(ns.contract_json), anchor_sha, n_records)
+        _write_contract(Path(ns.contract_json), anchor_sha, n_records,
+                        l_records, cur_prefixes, anc_prefixes)
 
     print(f"\n판정: 귀속 {len(attributed)}건 → {'green(신규 위반 없음)' if not attributed else 'red'}")
     return 0 if not attributed else 2
