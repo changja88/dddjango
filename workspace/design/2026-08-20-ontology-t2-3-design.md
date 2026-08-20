@@ -300,7 +300,12 @@ exit 0 = 미분류 0 ∧ effectuated 0(프로토콜 정상) / **exit 3 = 미분�
 
 ---
 
-## 5. 구현 순서 — **v2 개정(LEDGER 이동)**
+## 5. 구현 순서 — **v2 개정(LEDGER 이동)** · 착지 현황(2026-08-20)
+
+착지: ①~⑨ 전건. 커밋 사슬 `8768e05`(계수기) → `a717fa5`(sidecar·코어·루프) → 절차 개작.
+검증 자산: 계수기 픽스처 15 + 변이 5종 · 게이트 smoke 8 · 루프 smoke 4 · parity 1종(변이 3종 검출 확인) ·
+`plugin_loop_probe`(T2-3 exit 조건 ③④⑤). `make verify` 편입 완료.
+
 
 1. **픽스처 선행 저작** — `workspace/eval/fixtures/bounce_counter/` 13케이스 + `expected.json`.
 2. `session_bounce_counter.py` 구현 → 픽스처 13/13 → 실 세션 3파일 smoke.
