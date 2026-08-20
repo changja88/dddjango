@@ -716,13 +716,13 @@
     },
     "preregistration": {
       "files": {
-        "workspace/eval/ab/T2-0a-preregistration.md": "dcf674cc46a18d8a5147dcc2fe6962edc5734bbc15cf7415ecd483a0c3970f5e"
+        "workspace/eval/ab/T2-0a-preregistration.md": "8f8ae1a1dcf5a109c59adb63024157b79453d1881ed6df5dc44b042597eb29c7"
       },
       "globs": [
         "workspace/eval/ab/T2-0a-preregistration.md"
       ],
       "n_files": 1,
-      "tree_sha256": "3fcd5008231409cde295765dbefd396955f91bb24be71709fca97af46dba8d0c",
+      "tree_sha256": "bc3f6d568955d46ac31d696f8047b56f96daddd224691ff6a3ed2f9781974386",
       "why": "분석 계획. 결과를 본 뒤 산식을 바꾸지 못하게 하는 **유일한** 장치다. 원래 t2-plan 안에 있었으나 그 파일은 진행 기록이 append 되는 살아 있는 문서라 «수정 금지»가 성립하지 않았다 — 그래서 떼어내 여기서 동결한다."
     },
     "protocol": {
@@ -873,8 +873,8 @@
     "source-claude": "aff4119079d1b2ad3900ecaf7c3213da8ae8ebb7ecc4b0d8e312099e4ea55867",
     "source-codex": "aff4119079d1b2ad3900ecaf7c3213da8ae8ebb7ecc4b0d8e312099e4ea55867"
   },
-  "sealed_commit": "e4f079ab1b9e7da0117aa0edd6c1eeb0750be5ef",
-  "self_sha256": "b9739fb8d3cee583d202748dc5a54493b15bc749431702429ff5c390150be8a5",
+  "sealed_commit": "47ecce2553990cf85aff1f21ccc672b82019d863",
+  "self_sha256": "7a37a820d7b8f2b3f14cf71113da7e83b6c911dd615350b12ac360e997d9171b",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [
