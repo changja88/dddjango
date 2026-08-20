@@ -96,7 +96,9 @@ while true; do
         # 실행 전마다 쓰는 정형구다. gitignore 된 빌드 산물만 지우고 대상이 이름으로 못박혀
         # 있다. 이 형태만 문면에서 지운 뒤 나머지를 검사한다 — 일반 rm 은 계속 사람이 본다.
         flat=$(print -r -- "$cmd" | sed -E 's/^[[:space:]]*│[[:space:]]?//' | tr '\n' ' ')
-        scrub=$(print -r -- "$flat" | sed -E 's/-name +"?__pycache__"? +-type +d +-exec +rm +-rf +\{\} +\+//g')
+        # 탐색 시작점이 **상대 경로**일 때만 정형구로 인정한다. 경로를 안 보면
+        # `find / -name __pycache__ … -exec rm -rf {} +` 도 같이 통과해 버린다.
+        scrub=$(print -r -- "$flat" | sed -E 's#find +[A-Za-z0-9_.][A-Za-z0-9_./-]* +-name +"?__pycache__"? +-type +d +-exec +rm +-rf +\{\} +\+#FINDPYC#g')
         if [ $guard -eq 1 ]; then
           safe=0
         elif print -r -- "$scrub" | grep -qE '(^|[^a-zA-Z])(rm|curl|wget|ssh|scp|sudo|chmod|chown|kill|npm|pip|brew)[[:space:]]|git[[:space:]]+(push|reset[[:space:]]+--hard|clean)|pip[[:space:]]+install'; then
