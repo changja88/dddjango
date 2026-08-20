@@ -140,6 +140,7 @@
 - **폐쇄 인코딩 집합**: 공백·`#`·`%`·`` ` ``·`<`·`>`·`"`·`{`·`}`·`|`·`\`·`^`·C0/C1 제어문자**만** percent-encoding(`%` 자기 포함 — 가역성 성립). pct-encoding hex는 **대문자 고정**(정규형 — 게이트 ② 검사와 문면 일치). 한글·`§`·`·` 등 RFC 3987 ucschar는 원시 표기. NFC 고정. 왕복(인코딩→디코딩) 항등 픽스처 의무.
 - **게이트 ② 확장(T0 개작)**: djr 네임스페이스 IRI의 fragment 문법 검사(정규식 — rdflib가 위법 IRI를 무저항 통과시킴이 실측됐으므로 기계 백스톱).
 - 전 절/블록·Expression IRI는 `<전체 IRI>` 표기(§1 — PN_LOCAL 비허용 문자 `/`·`@` 포함).
+- **alias IRI**(T2-2) = djr 기저 + `alias-<공간>-<번호>`(예 `djr:alias-rule-486`) — PN_LOCAL 안전이라 접두 축약형을 쓴다. `#`는 fragment 금지 문자라 IRI 에 넣지 않고, **정본 문자열은 `djr:aliasText`**(동결 v2 문법 `rule#N` — 비한정 «#N»·전치 0 금지)가 진다. 대장 파일은 `wiring/aliases.ttl`(문서 횡단 선언 — `rules/`는 render manifest 대조로 exit 2). 함수성·해소·문법은 `ontology_structural_check.py` ⑥·⑥′·⑥″가 fail-closed 로 문다.
 - **djr:headingSnapshot = 채번 시점 헤딩 라인 전체 verbatim**(`### 6.2 …` — 레벨 포함, 렌더가 헤딩 라인을 재생성할 수 있게). 채번 후 불변 — 현행 헤딩은 djr:headingCurrent(개정 시 갱신). **djr:parentSection** 채택(절 트리 질의 — §7 어휘 개정 절차 경유, 안정화 선언 전 편입).
 
 ## 15. 이관 공정 절차서 (블루프린트 §4-2 실장 — 파일럿이 첫 실증)

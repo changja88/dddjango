@@ -1,0 +1,16 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+
+djr:alias-rule-3 a djr:AliasEntry ;
+    djr:aliasFor djr:R-0124 ;
+    djr:aliasText "rule#3" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-486 a djr:AliasEntry ;
+    djr:aliasFor djr:R-0118 ;
+    djr:aliasText "rule#486" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-488 a djr:AliasEntry ;
+    djr:aliasFor djr:R-0120 ;
+    djr:aliasText "rule#488" ;
+    djr:aliasType djr:alias-unique .
