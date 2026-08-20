@@ -1,0 +1,164 @@
+{
+  "P01-approved": {
+    "ambiguous": 0,
+    "approved": 1,
+    "effectuated": 0,
+    "exit": 0,
+    "freeform": 0,
+    "gate": 1,
+    "other_label": 0,
+    "post_approval": 0,
+    "requested": 0,
+    "suspect": 0
+  },
+  "P02-bounced-reentry": {
+    "ambiguous": 0,
+    "approved": 1,
+    "effectuated": 1,
+    "exit": 3,
+    "freeform": 0,
+    "gate": 2,
+    "other_label": 0,
+    "post_approval": 0,
+    "requested": 1,
+    "suspect": 0
+  },
+  "P02b-bounced-no-reentry": {
+    "ambiguous": 0,
+    "approved": 0,
+    "effectuated": 0,
+    "exit": 3,
+    "freeform": 0,
+    "gate": 1,
+    "other_label": 0,
+    "post_approval": 0,
+    "requested": 1,
+    "suspect": 0
+  },
+  "P03-freeform": {
+    "ambiguous": 0,
+    "approved": 0,
+    "effectuated": 0,
+    "exit": 3,
+    "freeform": 1,
+    "gate": 1,
+    "other_label": 0,
+    "post_approval": 0,
+    "requested": 0,
+    "suspect": 0
+  },
+  "P04-non-gate": {
+    "ambiguous": 0,
+    "approved": 0,
+    "effectuated": 0,
+    "exit": 0,
+    "freeform": 0,
+    "gate": 0,
+    "other_label": 0,
+    "post_approval": 0,
+    "requested": 0,
+    "suspect": 0
+  },
+  "P05-ambiguous": {
+    "ambiguous": 1,
+    "approved": 0,
+    "effectuated": 0,
+    "exit": 3,
+    "freeform": 0,
+    "gate": 0,
+    "other_label": 0,
+    "post_approval": 0,
+    "requested": 0,
+    "suspect": 0
+  },
+  "P06-multi-question": {
+    "ambiguous": 0,
+    "approved": 0,
+    "effectuated": 1,
+    "exit": 3,
+    "freeform": 0,
+    "gate": 1,
+    "other_label": 0,
+    "post_approval": 0,
+    "requested": 1,
+    "suspect": 0
+  },
+  "P07-post-approval": {
+    "ambiguous": 0,
+    "approved": 1,
+    "effectuated": 0,
+    "exit": 0,
+    "freeform": 0,
+    "gate": 1,
+    "other_label": 0,
+    "post_approval": 2,
+    "requested": 0,
+    "suspect": 0
+  },
+  "P08-suspect-tag": {
+    "ambiguous": 0,
+    "approved": 1,
+    "effectuated": 0,
+    "exit": 3,
+    "freeform": 0,
+    "gate": 1,
+    "other_label": 0,
+    "post_approval": 0,
+    "requested": 0,
+    "suspect": 1
+  },
+  "P09-two-sessions": {
+    "exit": 1
+  },
+  "P10-banner-other-completion": {
+    "ambiguous": 1,
+    "approved": 0,
+    "effectuated": 0,
+    "exit": 3,
+    "freeform": 0,
+    "gate": 0,
+    "other_label": 0,
+    "post_approval": 0,
+    "requested": 0,
+    "suspect": 0
+  },
+  "P11-duplicate-across-files": {
+    "ambiguous": 0,
+    "approved": 1,
+    "effectuated": 0,
+    "exit": 0,
+    "freeform": 0,
+    "gate": 1,
+    "other_label": 0,
+    "post_approval": 0,
+    "requested": 0,
+    "suspect": 0
+  },
+  "P12-id-conflict": {
+    "exit": 1
+  },
+  "P13-image-caption": {
+    "ambiguous": 0,
+    "approved": 1,
+    "effectuated": 0,
+    "exit": 0,
+    "freeform": 0,
+    "gate": 1,
+    "other_label": 0,
+    "post_approval": 0,
+    "requested": 0,
+    "suspect": 0
+  },
+  "P14-meta-only": {
+    "ambiguous": 0,
+    "approved": 1,
+    "effectuated": 0,
+    "exit": 0,
+    "freeform": 0,
+    "gate": 1,
+    "other_label": 0,
+    "post_approval": 0,
+    "requested": 0,
+    "suspect": 0
+  }
+}
