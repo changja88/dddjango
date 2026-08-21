@@ -4,6 +4,8 @@
 
 ## ⚡ 재개 요점 (최신이 맨 위)
 
+**🏁 01:34 스냅숏(08-22): R05(A) 완주 — HEAD `47cec94a` «rebuild(delivery): O5-ab-r1 — 클린룸 재구현»(6h49m·배선 INSTALLED_APPS 1행·허용 경로 밖 변경 0 자기보고).** R04(C)는 G2 직전 마지막 수렴 사이클(coder Sh 9건 수리 → 절단 없는 registry_gate 앵커 차분 — 코디 문면 «이번 clean 아니면 수렴 정지 판단»: 수렴 정지 STOP 오면 G1 STOP 규칙으로 답). R06(B)는 S4 진행(S1~S3✓·S5·G2 남음) — 예상 완주 새벽 2~3시. **관찰(채점 필수 항목): C암 주입 카운터 여전히 0 — 귀속 다수 실재했으므로 완주 후 `.dddjango` 회전·용량 로그(uninjectable 포함)로 발화 여부·이유 판정.** 인수·채점은 절차대로 세 런 모두 완주 후 일괄(R05 단독 선행 금지 아님 — 단 DB 경합 피하려 세 타깃 순차 실행). 판 사용량: R05 97%(리셋 임박)·R04 86%·R06 81% — 크레딧 초과 사용 켜져 있어 정지 없음 전망.
+
 **🚀 BK2 실행 중 — 21:00 스냅숏: 세 런 모두 Phase 2(구현).** R04(C) 구현·서브에이전트 2 병렬 · R05(A) 구현 [3/4] 슬라이스 5·S1 domain 착수 · R06(B) 구현 [4/4] — S1 백스톱 귀속 22건 → G1′ 설계 반송 사이클(정상 수렴 회로 — 반송 2회 초과 시에만 정지 규정). G1 설계 승인은 셋 다 통과(R04 는 19:53 «1 기본 승인(권장)» 답 — G1/G2 승인 질문은 항상 «기본 승인(권장)»=1 이 봉인 게이트 답과 정합). 사용량: 5h 창 57~70%(곧 리셋)·주간 11~14%·크레딧 초과 사용 켜짐.
 
 **compact 후 재개 절차**: ① 이 절 읽기 ② 감시 3종 생존 확인 — `bk2-watch.sh` v7(백그라운드 task) · **Monitor 즉응**(`tail -f bk2-events.log | grep "질문 대기|API Error|…"` — compact 후 죽어 있으면 재장착) · ScheduleWakeup 30분 안전망 ③ 게이트/STOP 질문은 «STOP 라운드 1» 선례 + G1 규칙으로 답(메뉴=`herdr agent send-keys <a> <숫자>` · 텍스트=`herdr agent prompt <a> "<답>"` — 판 Enter 는 불응 사례 있음) ④ 완주(세 타깃 `rebuild(delivery)` 커밋) 시: O-5 인수(직렬 전수 `uv run pytest -q --tb=no -rEf --continue-on-collection-errors` — 기준선 = preflight ⑹ 20건·debt 확장 2행 반영) → `ab_score.py` 3회(RUN_ID 환경) → BK2 판 3개 닫기 → **BK3 기동**(codex·O-5: 타깃 t2ab-R07~09 를 `d869e211` 생성 → debt 2행 저자 추가(45996614 문면) → 리셋·영수증 → codex 기동은 판 셸에서 `codex` — launcher No·No·Keep · 모델 기본값이 이미 gpt-5.6-sol xhigh · 요청문 그대로 제출).
