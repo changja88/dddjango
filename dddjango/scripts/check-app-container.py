@@ -119,7 +119,7 @@ def _git_query_root(root: Path) -> Path | None:
     """porcelain 을 물을 git 루트 — 대상 자신이 git 이면 그것, 아니면 게이트가 넘긴 원본.
 
     registry_gate 는 working tree 를 비-git 사본으로 스냅숏해 검사기를 돌린다(BK1 실측
-    2026-08-21). 그때 touched 판정이 fail-closed 로 붕괴해 무관 legacy(catalog)를
+    2026-08-21). 그때 touched 판정이 fail-closed 로 붕괴해 무관한 기존 앱(catalog)을
     귀속시켰다 — 사본과 내용이 같은 **원본** 루트(`DJR_SOURCE_GIT_ROOT`)가 있으면 그쪽
     porcelain 이 그대로 참이므로 그리로 묻는다. 변수가 없거나 git 이 아니면 기존
     fail-closed 그대로다(단독 실행·비-git 원본의 동작 무변)."""
