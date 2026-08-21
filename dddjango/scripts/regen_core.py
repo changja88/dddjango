@@ -341,6 +341,26 @@ def _main(argv: "list" = None) -> int:
     scope = [s for s in args.scope.split(",") if s]
     records = select_records(payload.get("records", []), scope)
     if not records:
+        # **수렴 회전도 용량 로그에 남긴다**(BK1 실측 2026-08-21). 앞선 판은 기록 없이
+        # `return 3` 이라, R03 이 루프를 실제로 불렀는데 `injection.jsonl` 이 아예 안 생겼다.
+        # 그러면 산출물만으로 «루프가 안 돌았다»와 «돌았는데 대상이 0이었다»가 구별되지
+        # 않는다 — 암 영수증이 닫은 반증 불가능성이 로그 층에서 되살아난다. 게이트 sidecar
+        # 의 id 유실과 같은 패턴이다: 0 인 경우가 판정 대상인데 0 인 경우만 기록이 사라진다.
+        if args.capacity_log:
+            import hashlib
+            _env = {k: os.environ.get(k) for k in (ENV_ENABLED, ENV_SELECTOR, ENV_RUN_ID)}
+            try:
+                _turn = sum(1 for _ln in open(args.capacity_log, encoding="utf-8")
+                            if _ln.strip()) + 1
+            except OSError:
+                _turn = 1
+            row = {"schema": "injection-capacity/3", "selector": args.selector,
+                   "turn": _turn, "env": _env,
+                   "experiment_run_id": payload.get("experiment_run_id"),
+                   "converged": True, "violations_n": 0, "rules_n": 0,
+                   "exact_n": 0, "candidate_n": 0, "prompt_bytes": 0}
+            with open(args.capacity_log, "a", encoding="utf-8") as fh:
+                fh.write(json.dumps(row, ensure_ascii=False) + "\n")
         print("[regen-core] 주입 대상 0 — 프롬프트를 만들지 않는다", file=sys.stderr)
         return 3
 
