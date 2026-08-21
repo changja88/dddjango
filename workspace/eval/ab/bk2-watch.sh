@@ -1,7 +1,9 @@
 #!/bin/zsh
-# BK2 감시 v7 — O-5 delivery 3런(t2ab-r04·r05·r06). 전자동(bypass) 봉투라 권한
+# BK2 감시 v8 — O-5 delivery 3런(t2ab-r04·r05·r06). 전자동(bypass) 봉투라 권한
 # 프롬프트가 없다 — 감시 대상은 ⓐ 게이트/STOP 질문(자동 응답 금지·알림만)
-# ⓑ 오류 문면 ⓒ 주입 발화 ⓓ 유휴(완주·정지). 5초 폴링.
+# ⓑ 오류 문면 ⓒ 주입 발화 ⓓ 유휴(완주·정지) ⓔ 한도 정지 자동 재개(v8 신설 —
+# 02:20 실측: Limit reached 중에도 프롬프트 제출로 즉시 재개됨. 질문 분기 통과
+# 후에만 도달하므로 STOP/게이트 질문을 자동 응답할 위험 없음). 5초 폴링.
 
 EV=/Users/hyun/.claude/jobs/48c8a476/tmp/bk2-events.log
 QDIR=/Users/hyun/.claude/jobs/48c8a476/tmp/gate-questions
@@ -9,8 +11,8 @@ mkdir -p $QDIR
 
 ev() { print -r -- "[$(date '+%m-%d %H:%M')] $1" >> $EV }
 
-typeset -A pend idle_n seen_inj done_f
-for a in t2ab-r04 t2ab-r05 t2ab-r06; do pend[$a]=0; idle_n[$a]=0; seen_inj[$a]=-1; done_f[$a]=0; done
+typeset -A pend idle_n seen_inj done_f lim_f
+for a in t2ab-r04 t2ab-r05 t2ab-r06; do pend[$a]=0; idle_n[$a]=0; seen_inj[$a]=-1; done_f[$a]=0; lim_f[$a]=0; done
 tick=0
 
 while true; do
@@ -39,6 +41,21 @@ while true; do
       continue
     fi
     pend[$a]=0
+
+    # ⓔ 한도 정지 자동 재개 — 정지 화면 고유 문면(Press ⏎ ... after reset)이 최근
+    # 15행에 있고 유휴일 때만. 질문 분기는 위에서 continue 되므로 여기 도달 = 질문 아님.
+    if [ $busy -eq 0 ] && print -r -- "$pane" | tail -15 | grep -q "to continue after reset"; then
+      if [ "${lim_f[$a]}" = "0" ]; then
+        ev "🔄 $a 한도 정지 감지 — 자동 재개 시도"
+        for i in {1..25}; do herdr agent send-keys $a backspace >/dev/null 2>&1; done
+        sleep 1
+        herdr agent prompt $a "이어서 진행해" >/dev/null 2>&1
+        lim_f[$a]=1
+      fi
+      idle_n[$a]=0
+      continue
+    fi
+    lim_f[$a]=0
 
     ERRPAT='API Error:|rate_limit_error|Claude usage limit reached|You have run out of|Execution error|Killed: 9|Unknown command'
     if print -r -- "$t" | grep -qE "$ERRPAT"; then
