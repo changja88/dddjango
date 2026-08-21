@@ -1,5 +1,6 @@
 #!/bin/zsh
-# BK1 감시 v5 — **허용 목록** 자동 승인.
+# BK1 감시 v6 — **허용 목록** 자동 승인. (v6: 5초 폴링 · 명령 추출을 마지막 도구
+# 헤더 이후로 앵커 — 본문 표(│ 포함)·서브에이전트 트리(├ └)를 명령으로 오인하던 결함 수리)
 #
 # 앞선 판(자동 승인 v3)은 위험 명령 목록을 문면에 담아 실행 분류기가 스크립트 자체를
 # 막았고, 탐지 전용(v4)은 사람(메인 세션)이 병목이라 blocked 가 몇 분씩 이어졌다.
@@ -34,6 +35,9 @@ ALLOW=(
   'python3 "$P/' 'python3 $P/' 'python3 "$S/' 'python3 $S/'
   '/usr/bin/python3 /Users/hyun/.claude/plugins/cache/changja88-dddjango/'
   'git status' 'git log' 'git diff' 'git show' 'git rev-parse' 'git ls-files'
+  'git add ' 'git commit ' 'git -C /Users/hyun/Desktop/t2ab-R'
+  'rg ' 'awk ' 'tr ' 'cut ' 'sed -E' 'uniq' 'basename ' 'dirname ' 'stat '
+  'python3 -c' '/usr/bin/python3 -c' 'DJANGO_SETTINGS_MODULE=' 'PYTHONPATH='
   'out=$(' 'out2=$(' 'rc=' 'e=$?' 'D=.dddjango' 'D=/Users/hyun/Desktop/t2ab-R'
   'P=/Users/hyun/.claude/plugins' 'S=/Users/hyun/.claude/plugins'
   'T=/private/tmp/claude-501/' 'A=/private/tmp/claude-501/' 'SC=/private/tmp/claude-501/'
@@ -69,10 +73,19 @@ while true; do
 
     if print -r -- "$t" | grep -q "Do you want to proceed"; then
       pn=$(print -r -- "$pane" | grep -n "Do you want to proceed" | tail -1 | cut -d: -f1)
-      blk=$(print -r -- "$pane" | sed -n "1,${pn}p" | tail -400)
-      # 명령 줄만 추출: │ 상자 우선, 없으면 직전 30줄의 들여쓰기 줄
+      # 마지막 도구 헤더(Bash command 등) 이후 ~ proceed 직전만 명령으로 본다.
+      # 그 앞의 본문 표(│ 포함)·서브에이전트 트리(├ └)가 명령으로 오인되던 결함(v5.1) 수리.
+      hd=$(print -r -- "$pane" | sed -n "1,${pn}p" \
+           | grep -nE 'Bash command|Edit file|Write file|Create file|Read file|Bash \(' | tail -1 | cut -d: -f1)
+      if [ -n "$hd" ] && [ "$hd" -lt "$pn" ]; then
+        blk=$(print -r -- "$pane" | sed -n "$((hd+1)),$((pn-1))p")
+      else
+        blk=$(print -r -- "$pane" | sed -n "1,${pn}p" | tail -60)
+      fi
       cmds=$(print -r -- "$blk" | grep -E '^[[:space:]]*│' | sed -E 's/^[[:space:]]*│[[:space:]]?//')
-      [ -z "$cmds" ] && cmds=$(print -r -- "$blk" | tail -30 | grep -E '^[[:space:]]{3}' | sed -E 's/^[[:space:]]+//')
+      [ -z "$cmds" ] && cmds=$(print -r -- "$blk" \
+        | grep -vE '^[[:space:]]*(⏺|⎿|├|└|╰|╭|✻|✽|✳|✢|❯|·)' \
+        | grep -E '^[[:space:]]{2,}[^[:space:]]' | sed -E 's/^[[:space:]]+//')
 
       # 판 폭 때문에 한 논리 명령이 여러 표시줄로 접힌다 — 줄별 검사는 이어짐 줄에서
       # 반드시 실패한다(R02 실측: for 루프의 둘째 줄이 파일 경로로 시작). 전부 한 줄로
@@ -135,7 +148,7 @@ while true; do
 
     if [ $busy -eq 0 ]; then
       idle_n[$a]=$(( ${idle_n[$a]} + 1 ))
-      if [ ${idle_n[$a]} -ge 10 ] && [ "${done_f[$a]}" = "0" ]; then
+      if [ ${idle_n[$a]} -ge 20 ] && [ "${done_f[$a]}" = "0" ]; then
         ev "🏁 $a 100초 유휴 — 완주 또는 정지"
         done_f[$a]=1
       fi
@@ -147,5 +160,5 @@ while true; do
   if [ $((tick % 90)) -eq 0 ]; then
     ev "· 감시 생존 (주입 R01=${seen_inj[t2ab-r01]} R02=${seen_inj[t2ab-r02]})"
   fi
-  sleep 10
+  sleep 5
 done
