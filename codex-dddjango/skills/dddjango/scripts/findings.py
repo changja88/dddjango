@@ -73,6 +73,11 @@ ENV_SESSION: str = "DJR_SESSION_ID"
 # 이 필드가 없으면 «현재 런 한정» 질의(T2-4 Q2)가 원리상 성립하지 않는다: 기존 `run_id` 는
 # 「검사기명+UTC+pid」인 **프로세스** 식별자라 같은 런의 여러 검사기를 묶지 못한다.
 ENV_EXPERIMENT: str = "DJR_EXPERIMENT_RUN_ID"
+# 게이트가 비-git 스냅숏 사본에서 검사기를 돌릴 때 «원본 git 루트»를 넘기는 채널(BK1 수리
+# 2026-08-21). 스냅숏은 .git 을 잃어 touched 판정이 fail-closed 로 붕괴하고, 그 오귀속이
+# BK1 세 런의 G2 를 전부 red 로 만들었다. git 을 봐야 하는 검사기는 자신이 비-git 일 때만
+# 이 루트로 질의한다 — 앵커 스냅숏 실행에는 게이트가 이 변수를 비워 기존 동작을 유지한다.
+ENV_GIT_ROOT: str = "DJR_SOURCE_GIT_ROOT"
 INSTALL_MARKER: str = ".dddjango"   # 설치 표식(도구 영역 — F-C 관례)
 VIOLATIONS_SUBDIR: str = "violations"
 SCHEMA: str = "findings/0"

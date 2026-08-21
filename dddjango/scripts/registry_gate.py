@@ -104,7 +104,9 @@ def _normalize(line: str, prefixes: "tuple[str, ...]") -> str:
 
 
 def _run_registry(target: Path,
-                  sink: "Path | None" = None) -> "tuple[dict[str, int], set[str], list[dict]]":
+                  sink: "Path | None" = None,
+                  git_root: "Path | None" = None,
+                  ) -> "tuple[dict[str, int], set[str], list[dict]]":
     """로스터 전체를 돌려 (검사기별 exit, 정규화 위반 라인 집합, 구조화 레코드)를 낸다.
 
     **sink 격리(T2-3)**: 검사기 서브프로세스는 부모 환경을 상속하므로, 격리하지 않으면
@@ -112,6 +114,12 @@ def _run_registry(target: Path,
     구분할 수 없다(`anchor_diff._run_lines` 가 T2-1 에서 같은 이유로 받은 수리를 이 게이트만
     못 받고 있었다 — 적대 리뷰 AM#3·AN#3). 여기서는 두 채널(`DJR_FINDINGS_JSON`·
     `DJR_VIOLATIONS_DIR`)을 **둘 다** 제거하고, 요청받은 sink 만 명시 지정한다.
+
+    **git 루트 전달(BK1 수리 2026-08-21)**: 스냅숏 사본은 .git 을 잃으므로 touched 판정이
+    필요한 검사기(check-app-container)가 fail-closed 로 붕괴해 무관 legacy 를 귀속시켰다
+    (세 런 공통 G2 red 의 근원). «현재» 스냅숏 실행에만 원본 루트를 넘긴다 — 스냅숏은
+    working tree 의 사본이라 원본 porcelain 이 그대로 참이다. 앵커 스냅숏은 커밋된
+    기준선이므로 넘기지 않는다(anchor 측 fail-closed 는 L 에만 실려 귀속을 만들지 않는다).
     """
     exits: "dict[str, int]" = {}
     lines: "set[str]" = set()
@@ -119,8 +127,11 @@ def _run_registry(target: Path,
     env: "dict[str, str]" = dict(os.environ)
     env.pop(findings.ENV_VAR, None)
     env.pop(findings.ENV_DIR, None)
+    env.pop(findings.ENV_GIT_ROOT, None)
     if sink is not None:
         env[findings.ENV_VAR] = str(sink)
+    if git_root is not None:
+        env[findings.ENV_GIT_ROOT] = str(git_root)
     for script, auto in REGISTRY:
         proc = subprocess.run(
             checker_argv(sys.executable, script, str(target), auto),
@@ -306,7 +317,7 @@ def main(argv: "list[str]") -> int:
 
         if not is_git:
             print("주의: 비-git TARGET — 차분 불능이라 fail-closed(현재 위반 전량 귀속)")
-            exits_n, n_set, n_records = _run_registry(cur, sink_n)
+            exits_n, n_set, n_records = _run_registry(cur, sink_n)  # 원본도 비-git — 넘길 루트 없음
             n_set |= _parse_fail_findings(cur)
             l_set: "set[str]" = set()
             exits_l: "dict[str, int]" = {}
@@ -338,7 +349,7 @@ def main(argv: "list[str]") -> int:
             l_records = _l_records
             anc_prefixes = (str(anc) + "/", str(anc))
             l_set |= _parse_fail_findings(anc)
-            exits_n, n_set, n_records = _run_registry(cur, sink_n)
+            exits_n, n_set, n_records = _run_registry(cur, sink_n, git_root=root)
             n_set |= _parse_fail_findings(cur)
 
     attributed: "list[str]" = sorted(n_set - l_set)

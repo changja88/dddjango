@@ -23,9 +23,9 @@
       - 프로젝트 설정 패키지 아님 (`settings.py`, 또는 `urls.py`+(`wsgi.py`|`asgi.py`) 보유 → 제외)
   차단하려면 후보 D 가 추가로 *모두* 만족:
     G2) *이번 변경* 이 D 에 새 도메인 작업을 더했다 = D 가 신규(untracked) 디렉터리이거나,
-        `D/migrations/` 아래 신규(untracked/added) 마이그레이션 파일이 있다. git 이 아니거나
-        판정 불가면 **스킵(차단 아님)** — 무관 레거시의 단순 수정은 새 마이그레이션이 없어 스킵.
-        (reviewer-FP: 비-git 전면 차단·무관 앱 단순 touch 차단 회피.)
+        `D/migrations/` 아래 신규(untracked/added) 마이그레이션 파일이 있다. git 이 아니고
+        원본 루트(`DJR_SOURCE_GIT_ROOT` — 게이트 스냅숏용, BK1 수리 2026-08-21)도 없으면
+        **fail-closed(전 후보 검사)** — 무관 레거시의 단순 수정은 새 마이그레이션이 없어 스킵.
     G3) `application/` 하위에 D 의 *실질 이주 대응 앱이 없다* — 디렉터리 `application/<D>/`
         존재만으론 면제 안 됨(빈 껍데기 `__init__.py` 토큰 회피 차단). `application/**/
         django_<D>/` 또는 `application/<D>/` 가 *실제 모델/마이그레이션 내용* 을 보유해야 면제.
@@ -44,11 +44,12 @@ record 순서 = stdout 위반 라인 순서다(T2-1 출력 계약 v2).
 """
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 
 import checker_target
-from findings import ContractFindings, emit_all
+from findings import ENV_GIT_ROOT, ContractFindings, emit_all
 from pathlib import Path
 
 # rule-owner-map 규칙 0건 — 선행 규약 소유(reverse_coverage PRIOR_CONTRACT_SCRIPTS 등재).
@@ -114,6 +115,24 @@ def _git_available(root: Path) -> bool:
     return (root / ".git").exists()
 
 
+def _git_query_root(root: Path) -> Path | None:
+    """porcelain 을 물을 git 루트 — 대상 자신이 git 이면 그것, 아니면 게이트가 넘긴 원본.
+
+    registry_gate 는 working tree 를 비-git 사본으로 스냅숏해 검사기를 돌린다(BK1 실측
+    2026-08-21). 그때 touched 판정이 fail-closed 로 붕괴해 무관 legacy(catalog)를
+    귀속시켰다 — 사본과 내용이 같은 **원본** 루트(`DJR_SOURCE_GIT_ROOT`)가 있으면 그쪽
+    porcelain 이 그대로 참이므로 그리로 묻는다. 변수가 없거나 git 이 아니면 기존
+    fail-closed 그대로다(단독 실행·비-git 원본의 동작 무변)."""
+    if _git_available(root):
+        return root
+    src = os.environ.get(ENV_GIT_ROOT, "").strip()
+    if src:
+        cand = Path(src)
+        if cand.is_dir() and _git_available(cand):
+            return cand
+    return None
+
+
 def _porcelain(root: Path, relpath: str) -> str | None:
     try:
         res = subprocess.run(
@@ -132,11 +151,14 @@ def _touched_with_new_domain(root: Path, d: Path) -> bool:
     """이번 변경이 D 에 새 도메인 작업을 더했나.
 
     git 이 없거나 판정이 불가하면 True — «전부 이번 작업으로 간주»한다(fail-closed ·
-    명세 조각 ⓐ). 비-git 스킵은 검사가 꺼진 것이지 깨끗한 것이 아니다."""
-    if not _git_available(root):
+    명세 조각 ⓐ). 비-git 스킵은 검사가 꺼진 것이지 깨끗한 것이 아니다.
+    게이트 스냅숏(비-git 사본)에서는 원본 루트(`DJR_SOURCE_GIT_ROOT`)로 묻는다 —
+    상대 경로는 사본과 원본에서 동일하다."""
+    qroot = _git_query_root(root)
+    if qroot is None:
         return True
     rel = d.relative_to(root).as_posix()
-    out = _porcelain(root, rel)
+    out = _porcelain(qroot, rel)
     if out is None:
         return True
     for line in out.splitlines():
@@ -210,8 +232,10 @@ def main(argv: list[str]) -> int:
     if app_container is None:
         return 0  # 표준 레이아웃(`application/`) 미적용 → §1.1 존중, 해당 없음.
 
-    if not _git_available(root):
+    if _git_query_root(root) is None:
         print("주의: git 저장소가 아니다 — touched 식별이 불가해 «전 후보»를 검사한다(fail-closed)")
+    elif not _git_available(root):
+        print("주의: 비-git 사본 — touched 판정은 게이트가 넘긴 원본 git 루트로 한다")
 
     # 라인 = 레코드 필드의 순수 함수(계약 문법 `- {where}: {msg}`) — emit_all 이
     # 인쇄와 레코드 방출을 같은 순서로 수행한다(출력 계약 v2).
