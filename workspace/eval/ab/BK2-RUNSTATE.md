@@ -4,7 +4,11 @@
 
 ## ⚡ 재개 요점 (최신이 맨 위)
 
-**🚀 BK2 기동됨(2026-08-21 18:16) — 세 런 병렬 실행 중. 감시 = `bk2-watch.sh` v7 + Monitor 즉응(게이트/오류/완주 이벤트에 수 초 내 반응).**
+**🚀 BK2 실행 중 — 19:15 스냅숏: 세 런 모두 Phase 1(설계) 진행.** R04(C) design-architect · R05(A) discipline-reviewer 감사 · R06(B) design-architect. STOP 라운드 1(+후속)은 닫힘.
+
+**compact 후 재개 절차**: ① 이 절 읽기 ② 감시 3종 생존 확인 — `bk2-watch.sh` v7(백그라운드 task) · **Monitor 즉응**(`tail -f bk2-events.log | grep "질문 대기|API Error|…"` — compact 후 죽어 있으면 재장착) · ScheduleWakeup 30분 안전망 ③ 게이트/STOP 질문은 «STOP 라운드 1» 선례 + G1 규칙으로 답(메뉴=`herdr agent send-keys <a> <숫자>` · 텍스트=`herdr agent prompt <a> "<답>"` — 판 Enter 는 불응 사례 있음) ④ 완주(세 타깃 `rebuild(delivery)` 커밋) 시: O-5 인수(직렬 전수 `uv run pytest -q --tb=no -rEf --continue-on-collection-errors` — 기준선 = preflight ⑹ 20건·debt 확장 2행 반영) → `ab_score.py` 3회(RUN_ID 환경) → BK2 판 3개 닫기 → **BK3 기동**(codex·O-5: 타깃 t2ab-R07~09 를 `d869e211` 생성 → debt 2행 저자 추가(45996614 문면) → 리셋·영수증 → codex 기동은 판 셸에서 `codex` — launcher No·No·Keep · 모델 기본값이 이미 gpt-5.6-sol xhigh · 요청문 그대로 제출).
+
+기동 기록(18:16): 세 판 [Opus 4.8 ◕ xhigh]·bypass·byte 동일 요청문(호출명 `/dddjango:dddjango`). 워크스페이스 정리(19:10 사용자 승인): BK1 계열 wH·wJ·wK·wM·wF 닫음 — 남은 실험 판 = wQ·wR·wS 뿐.
 
 ### STOP 라운드 1 — 재료 모순 (18:39~18:45 · 기록)
 
