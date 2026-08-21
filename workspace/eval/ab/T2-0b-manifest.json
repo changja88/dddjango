@@ -362,32 +362,21 @@
       "projects": {
         "-Users-hyun-Desktop-broccoli-server": {
           "exists": true,
-          "files": [
-            "MEMORY.md",
-            "dddjango-checker-arg-order.md",
-            "dddjango-checker-interactions.md",
-            "dddjango-registry-debt-line-normalization.md",
-            "rebuild-contract-boundary.md",
-            "rebuild-coordinator-decision-style.md",
-            "rebuild-precommit-mypy-stash-trap.md",
-            "rebuild-slice-registry-gate-cadence.md",
-            "rebuild-usecase-delegation-546-189.md",
-            "rebuild-xreview-recurring-findings.md"
-          ],
-          "n_files": 10,
-          "tree_sha256": "b80b1b179f7fdec188dd040a2c3e003a902f01ffdeef9d6ec5e14aed196a759d"
+          "files": [],
+          "n_files": 0,
+          "tree_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
         }
       }
     },
     "o5_cleanroom_anchor": {
-      "baseline_commit": "c5ee05a05e78e89d83370cf931af51d9c1eb6e56",
-      "demonstrated_at": "2026-08-21 (오염 주입 → 리셋 2회 — 해시 동일 재현·미추적 0)",
+      "baseline_commit": "d869e211c91426757b578936328c34a4885df678",
+      "demonstrated_at": "2026-08-21 (호출명 개정 후 재실증 — 오염→리셋 재현·미추적 0)",
       "post_reset_ignored": [
         ".venv"
       ],
-      "post_reset_tree_sha256": "ad0aa0c50e6a0aa6762a98c33a616a1542931994b586c62c42b4e4f79c67fb27",
+      "post_reset_tree_sha256": "c75e66713611d09115063f84e0ed32604aa4d7e4d3c30aee11379f6370f73c55",
       "post_reset_untracked": [],
-      "reset_command": "git -C <타깃> reset --hard c5ee05a0 && git -C <타깃> clean -fdx -e .venv  # 주의: rm -rf .dddjango 금지 — broccoli 는 .dddjango 일부(V1-era 15파일)가 git 추적이라 rm 은 추적 트리를 깨뜨린다(실증 2026-08-21). clean 이 미추적 런 산출물을 지운다"
+      "reset_command": "git -C <타깃> reset --hard d869e211 && git -C <타깃> clean -fdx -e .venv  # rm -rf .dddjango 금지(추적분 파괴 — 실증 2026-08-21)"
     },
     "orders": {
       "O-4": {
@@ -412,24 +401,24 @@
           "docs/rebuild/delivery/anchor-preflight.md": "9cb7f43d2c8d4792eb567fa7d2516957416e835341c8b1b3dd32423ed006dbf6",
           "docs/rebuild/delivery/api_shape_pre.json": "522a69d49c4971fbefae5129018af430a54d994381441d18e1251ac51fe54bf5",
           "docs/rebuild/delivery/legacy_debt.txt": "847c8a7fbe969293fcf66a0b61095816810c6a337600b1088855e017f4f6247a",
-          "docs/rebuild/delivery/request.md": "52aaae3a8c2330286886ba7456ba16baea78c660cb69f297eecde28a0d16c5ea",
+          "docs/rebuild/delivery/request.md": "3f809db033011c6a7b4b48fb3d39439084e35210d120c2d7c39e3d910a872250",
           "docs/rebuild/delivery/spec.md": "c0c5eb322db0f19e1ab8d68c5ff2e8aaabc94e052e8b79843bb0e12893029c51"
         },
-        "baseline_commit": "c5ee05a05e78e89d83370cf931af51d9c1eb6e56",
+        "baseline_commit": "d869e211c91426757b578936328c34a4885df678",
         "baseline_tests": {
           "green": 6962,
           "red": 20
         },
         "reachable": true,
         "reset_anchor": {
-          "baseline_commit": "c5ee05a05e78e89d83370cf931af51d9c1eb6e56",
-          "demonstrated_at": "2026-08-21 (오염 주입 → 리셋 2회 — 해시 동일 재현·미추적 0)",
+          "baseline_commit": "d869e211c91426757b578936328c34a4885df678",
+          "demonstrated_at": "2026-08-21 (호출명 개정 후 재실증 — 오염→리셋 재현·미추적 0)",
           "post_reset_ignored": [
             ".venv"
           ],
-          "post_reset_tree_sha256": "ad0aa0c50e6a0aa6762a98c33a616a1542931994b586c62c42b4e4f79c67fb27",
+          "post_reset_tree_sha256": "c75e66713611d09115063f84e0ed32604aa4d7e4d3c30aee11379f6370f73c55",
           "post_reset_untracked": [],
-          "reset_command": "git -C <타깃> reset --hard c5ee05a0 && git -C <타깃> clean -fdx -e .venv  # 주의: rm -rf .dddjango 금지 — broccoli 는 .dddjango 일부(V1-era 15파일)가 git 추적이라 rm 은 추적 트리를 깨뜨린다(실증 2026-08-21). clean 이 미추적 런 산출물을 지운다"
+          "reset_command": "git -C <타깃> reset --hard d869e211 && git -C <타깃> clean -fdx -e .venv  # rm -rf .dddjango 금지(추적분 파괴 — 실증 2026-08-21)"
         },
         "stub_induced_red": [
           "collection: application/entitlements/test/e2e/test_entitlement_granted_push_journey_acceptance.py",
@@ -450,7 +439,7 @@
           "application/pairing/test/integration/test_pairing_approval_family_snapshot_acceptance.py::test_replay_after_familyless_approval_uses_creation_time_null_snapshot"
         ],
         "target_repo": "/Users/hyun/.herdr/worktrees/broccoli-server/ab-t2-delivery-anchor",
-        "tracked_tree_sha256": "ad0aa0c50e6a0aa6762a98c33a616a1542931994b586c62c42b4e4f79c67fb27"
+        "tracked_tree_sha256": "c75e66713611d09115063f84e0ed32604aa4d7e4d3c30aee11379f6370f73c55"
       },
       "O-7": {
         "artifacts": {
@@ -509,7 +498,7 @@
         "orders.O-4.reset_anchor.post_reset_tree_sha256 이 sha256 이 아니다",
         "orders.O-4.reset_anchor.demonstrated_at 비어 있음",
         "orders.O-5.reset_anchor.post_reset_ignored: 리셋 후 잔여 1건 — 클린룸이 아니다 ['.venv']",
-        "initial_memory[-Users-hyun-Desktop-broccoli-server]: 메모리가 **대피되지 않았다**(n_files=10)"
+        "initial_memory[-Users-hyun-Desktop-broccoli-server]: 메모리가 **대피되지 않았다**(n_files=0)"
       ]
     },
     "why": "저장소 밖 재료 — 타깃 저장소·클린룸 앵커·실런 런타임. 측정에는 타깃 접근이 필요하다."
@@ -909,7 +898,7 @@
     "source-codex": "5cfc49b1d64aae26f22af527ef7e38c40cebdea814fab09c20113ec87a1699e4"
   },
   "sealed_commit": "c115b5c945eb53df53651cb34ac50499373c7cc2",
-  "self_sha256": "ee35b1a2d1bdd5f05ecebc81757245f1909c54a32ab9450915bc2a4a5a9715c6",
+  "self_sha256": "594b2e26b2ed86a4926714bde9e4fb5336993d8ebd45b40c4dfba8d8159c48a3",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [
