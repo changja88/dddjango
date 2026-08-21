@@ -359,124 +359,157 @@
   "external_annex": {
     "initial_memory": {
       "policy": "런 전 대피(이름 변경)·18런 뒤 복구. 삭제 금지. 런마다 사전 확인.",
-      "projects": "PENDING"
+      "projects": {
+        "-Users-hyun-Desktop-broccoli-server": {
+          "exists": true,
+          "files": [
+            "MEMORY.md",
+            "dddjango-checker-arg-order.md",
+            "dddjango-checker-interactions.md",
+            "dddjango-registry-debt-line-normalization.md",
+            "rebuild-contract-boundary.md",
+            "rebuild-coordinator-decision-style.md",
+            "rebuild-precommit-mypy-stash-trap.md",
+            "rebuild-slice-registry-gate-cadence.md",
+            "rebuild-usecase-delegation-546-189.md",
+            "rebuild-xreview-recurring-findings.md"
+          ],
+          "n_files": 10,
+          "tree_sha256": "b80b1b179f7fdec188dd040a2c3e003a902f01ffdeef9d6ec5e14aed196a759d"
+        }
+      }
     },
     "o5_cleanroom_anchor": {
-      "baseline_commit": "PENDING",
-      "demonstrated_at": "PENDING",
-      "post_reset_ignored": "PENDING",
-      "post_reset_tree_sha256": "PENDING",
-      "post_reset_untracked": "PENDING",
-      "reset_command": "PENDING"
+      "baseline_commit": "c5ee05a05e78e89d83370cf931af51d9c1eb6e56",
+      "demonstrated_at": "2026-08-21 (오염 주입 → 리셋 2회 — 해시 동일 재현·미추적 0)",
+      "post_reset_ignored": [
+        ".venv"
+      ],
+      "post_reset_tree_sha256": "ad0aa0c50e6a0aa6762a98c33a616a1542931994b586c62c42b4e4f79c67fb27",
+      "post_reset_untracked": [],
+      "reset_command": "git -C <타깃> reset --hard c5ee05a0 && git -C <타깃> clean -fdx -e .venv  # 주의: rm -rf .dddjango 금지 — broccoli 는 .dddjango 일부(V1-era 15파일)가 git 추적이라 rm 은 추적 트리를 깨뜨린다(실증 2026-08-21). clean 이 미추적 런 산출물을 지운다"
     },
     "orders": {
       "O-4": {
         "artifacts": {},
-        "baseline_commit": "PENDING",
-        "baseline_tests": "PENDING",
-        "reachable": false,
+        "baseline_commit": "8b70c471544f096c5db641ae1ca3702fc74b4e2e",
+        "baseline_tests": "PENDING — BK6 준비 시 앵커 재저작(기존 42a904ae 판형은 rebuild/standard-tree 이력에 실재하나 이 워크트리 브랜치는 아직 main 동일)",
+        "reachable": true,
         "reset_anchor": {
           "baseline_commit": "PENDING",
           "demonstrated_at": "PENDING",
-          "post_reset_ignored": "PENDING",
+          "post_reset_ignored": [],
           "post_reset_tree_sha256": "PENDING",
-          "post_reset_untracked": "PENDING",
+          "post_reset_untracked": [],
           "reset_command": "PENDING"
         },
-        "target_repo": "PENDING",
-        "tracked_tree_sha256": "PENDING"
+        "target_repo": "/Users/hyun/.herdr/worktrees/broccoli-server/ab-t2-child-settings-anchor",
+        "tracked_tree_sha256": "cebae78de465b507ef203976e8f309e658dd5c65827b1922ed7629d74dbfe94c"
       },
       "O-5": {
-        "artifacts": {},
-        "baseline_commit": "PENDING",
-        "baseline_tests": "PENDING",
-        "reachable": false,
-        "reset_anchor": {
-          "baseline_commit": "PENDING",
-          "demonstrated_at": "PENDING",
-          "post_reset_ignored": "PENDING",
-          "post_reset_tree_sha256": "PENDING",
-          "post_reset_untracked": "PENDING",
-          "reset_command": "PENDING"
+        "artifacts": {
+          "docs/rebuild/delivery/KEEP-LIST.txt": "2879df26a454955666129255bc239246103600366ff0157f4aae06b22d23bbda",
+          "docs/rebuild/delivery/anchor-preflight.md": "9cb7f43d2c8d4792eb567fa7d2516957416e835341c8b1b3dd32423ed006dbf6",
+          "docs/rebuild/delivery/api_shape_pre.json": "522a69d49c4971fbefae5129018af430a54d994381441d18e1251ac51fe54bf5",
+          "docs/rebuild/delivery/legacy_debt.txt": "847c8a7fbe969293fcf66a0b61095816810c6a337600b1088855e017f4f6247a",
+          "docs/rebuild/delivery/request.md": "52aaae3a8c2330286886ba7456ba16baea78c660cb69f297eecde28a0d16c5ea",
+          "docs/rebuild/delivery/spec.md": "c0c5eb322db0f19e1ab8d68c5ff2e8aaabc94e052e8b79843bb0e12893029c51"
         },
-        "stub_induced_red": "PENDING",
-        "target_repo": "PENDING",
-        "tracked_tree_sha256": "PENDING"
+        "baseline_commit": "c5ee05a05e78e89d83370cf931af51d9c1eb6e56",
+        "baseline_tests": {
+          "green": 6962,
+          "red": 20
+        },
+        "reachable": true,
+        "reset_anchor": {
+          "baseline_commit": "c5ee05a05e78e89d83370cf931af51d9c1eb6e56",
+          "demonstrated_at": "2026-08-21 (오염 주입 → 리셋 2회 — 해시 동일 재현·미추적 0)",
+          "post_reset_ignored": [
+            ".venv"
+          ],
+          "post_reset_tree_sha256": "ad0aa0c50e6a0aa6762a98c33a616a1542931994b586c62c42b4e4f79c67fb27",
+          "post_reset_untracked": [],
+          "reset_command": "git -C <타깃> reset --hard c5ee05a0 && git -C <타깃> clean -fdx -e .venv  # 주의: rm -rf .dddjango 금지 — broccoli 는 .dddjango 일부(V1-era 15파일)가 git 추적이라 rm 은 추적 트리를 깨뜨린다(실증 2026-08-21). clean 이 미추적 런 산출물을 지운다"
+        },
+        "stub_induced_red": [
+          "collection: application/entitlements/test/e2e/test_entitlement_granted_push_journey_acceptance.py",
+          "collection: application/notifications/test/integration/test_notification_list_acceptance.py",
+          "collection: application/notifications/test/integration/test_notification_snapshot_mixed_path_race.py",
+          "collection: application/notifications/test/integration/test_publish_notification_acceptance.py",
+          "collection: application/notifications/test/integration/test_publish_notification_failure_acceptance.py",
+          "collection: application/notifications/test/integration/test_publish_notification_family_acceptance.py",
+          "collection: application/pairing/test/integration/test_remote_pairing_acceptance.py",
+          "collection: application/pairing/test/integration/test_remote_push_fanout_integration.py",
+          "collection: application/pairing/test/integration/test_remote_requester_identity_acceptance.py",
+          "collection: application/usage_quota/test/integration/test_usage_quota_no_plan_request_notification.py",
+          "collection: application/usage_quota/test/integration/test_usage_quota_top_up_request_notification.py",
+          "application/accounts/test/integration/test_phone_verification_acceptance.py::test_register_phone_same_key_different_phone_returns_idempotency_conflict",
+          "application/accounts/test/integration/test_phone_verification_acceptance.py::test_register_phone_same_key_same_phone_replays_without_second_challenge",
+          "application/accounts/test/integration/test_phone_verification_acceptance.py::test_register_phone_sms_configuration_failure_returns_problem_without_state_change",
+          "application/pairing/test/integration/test_pairing_approval_family_snapshot_acceptance.py::test_family_backed_replay_preserves_captured_positive_family",
+          "application/pairing/test/integration/test_pairing_approval_family_snapshot_acceptance.py::test_replay_after_familyless_approval_uses_creation_time_null_snapshot"
+        ],
+        "target_repo": "/Users/hyun/.herdr/worktrees/broccoli-server/ab-t2-delivery-anchor",
+        "tracked_tree_sha256": "ad0aa0c50e6a0aa6762a98c33a616a1542931994b586c62c42b4e4f79c67fb27"
       },
       "O-7": {
-        "artifacts": {},
-        "baseline_commit": "PENDING",
-        "baseline_tests": "PENDING",
-        "reachable": false,
-        "reset_anchor": {
-          "baseline_commit": "PENDING",
-          "demonstrated_at": "PENDING",
-          "post_reset_ignored": "PENDING",
-          "post_reset_tree_sha256": "PENDING",
-          "post_reset_untracked": "PENDING",
-          "reset_command": "PENDING"
+        "artifacts": {
+          "PROMPT.md": "98cf7a1b7d315484e3383f3648e1e533a2edf8d8225d190d65abd34349bb4b82",
+          "requirements.txt": "fae14dc42076feba54ec4672c9575c761a2b91341a3324e3492f100caf2a8a4e",
+          "setup.sh": "dd21ac6afc4b6f9551a7548623528eafdbf6e59e5d549f74c644562444eae6db"
         },
-        "target_repo": "PENDING",
-        "tracked_tree_sha256": "PENDING"
+        "baseline_commit": "768d250bfa4046bfd6c3544ba2249b7e9a7c3523",
+        "baseline_tests": {
+          "green": 0,
+          "red": 0
+        },
+        "reachable": true,
+        "reset_anchor": {
+          "baseline_commit": "768d250bfa4046bfd6c3544ba2249b7e9a7c3523",
+          "demonstrated_at": "PENDING",
+          "post_reset_ignored": [],
+          "post_reset_tree_sha256": "PENDING — BK5(codex O-7) 기동 전 실증",
+          "post_reset_untracked": [],
+          "reset_command": "rm -rf <타깃> && git clone ~/Desktop/dddjango-smoke-sample <타깃> && bash <타깃>/setup.sh"
+        },
+        "target_repo": "/Users/hyun/Desktop/dddjango-smoke-sample",
+        "tracked_tree_sha256": "696c0df4aa8b826b7727072be814fbfd30bbdc1567c3334fc1c095ac67d55adb"
       }
     },
     "runtime": {
       "allowed_tools": "PENDING",
-      "claude_model_id": "PENDING",
-      "codex_model_id": "PENDING",
-      "codex_reasoning_effort": "PENDING",
+      "claude_model_id": "claude-opus-4-8",
+      "codex_model_id": "PENDING — BK3 기동 전 실측(사용자 지정 «sol»)",
+      "codex_reasoning_effort": "xhigh",
       "hard_stop": {
         "O-4": "기계 4h · 과금 10M",
         "O-5": "기계 8h · 과금 20M",
         "O-7": "기계 4h · 과금 10M"
       },
-      "permission_mode": "PENDING",
-      "thinking": "PENDING"
+      "permission_mode": "bypassPermissions(auto mode) — 사용자 지시 2026-08-21(개정 5): BK1 acceptEdits 의 Bash 병목 해소. STOP/게이트 질문은 여전히 정지",
+      "thinking": "effort xhigh (판 표기 실측 — BK1 과 동일)"
     },
     "status": "PENDING",
     "validation": {
       "ok": false,
       "problems": [
-        "runtime.claude_model_id",
-        "runtime.codex_model_id",
-        "runtime.permission_mode",
-        "runtime.thinking",
-        "runtime.codex_reasoning_effort",
         "runtime.allowed_tools",
-        "orders.O-7.target_repo",
-        "orders.O-7.baseline_commit",
-        "orders.O-7.tracked_tree_sha256",
-        "orders.O-7.baseline_tests",
-        "orders.O-7.reset_anchor.baseline_commit",
-        "orders.O-7.reset_anchor.reset_command",
-        "orders.O-7.reset_anchor.post_reset_tree_sha256",
-        "orders.O-7.reset_anchor.post_reset_untracked",
-        "orders.O-7.reset_anchor.post_reset_ignored",
         "orders.O-7.reset_anchor.demonstrated_at",
-        "orders.O-4.target_repo",
-        "orders.O-4.baseline_commit",
-        "orders.O-4.tracked_tree_sha256",
-        "orders.O-4.baseline_tests",
         "orders.O-4.reset_anchor.baseline_commit",
         "orders.O-4.reset_anchor.reset_command",
         "orders.O-4.reset_anchor.post_reset_tree_sha256",
-        "orders.O-4.reset_anchor.post_reset_untracked",
-        "orders.O-4.reset_anchor.post_reset_ignored",
         "orders.O-4.reset_anchor.demonstrated_at",
-        "orders.O-5.target_repo",
-        "orders.O-5.baseline_commit",
-        "orders.O-5.tracked_tree_sha256",
-        "orders.O-5.baseline_tests",
-        "orders.O-5.stub_induced_red",
-        "orders.O-5.reset_anchor.baseline_commit",
-        "orders.O-5.reset_anchor.reset_command",
-        "orders.O-5.reset_anchor.post_reset_tree_sha256",
-        "orders.O-5.reset_anchor.post_reset_untracked",
-        "orders.O-5.reset_anchor.post_reset_ignored",
-        "orders.O-5.reset_anchor.demonstrated_at",
-        "o5_cleanroom_anchor.baseline_commit",
-        "o5_cleanroom_anchor.reset_command",
-        "o5_cleanroom_anchor.post_reset_tree_sha256"
+        "runtime.allowed_tools: 비어 있거나 문자열이 아니다 ('PENDING')",
+        "orders.O-7.reset_anchor.post_reset_tree_sha256 이 sha256 이 아니다",
+        "orders.O-7.reset_anchor.demonstrated_at 비어 있음",
+        "orders.O-4.baseline_tests: {green:int, red:int} 가 아니다",
+        "orders.O-4.artifacts 가 비어 있다 — 발주 재료 해시가 없다",
+        "orders.O-4.reset_anchor.baseline_commit 비어 있음",
+        "orders.O-4.reset_anchor.reset_command 비어 있음",
+        "orders.O-4.reset_anchor.post_reset_tree_sha256 이 sha256 이 아니다",
+        "orders.O-4.reset_anchor.demonstrated_at 비어 있음",
+        "orders.O-5.reset_anchor.post_reset_ignored: 리셋 후 잔여 1건 — 클린룸이 아니다 ['.venv']",
+        "initial_memory[-Users-hyun-Desktop-broccoli-server]: 메모리가 **대피되지 않았다**(n_files=10)"
       ]
     },
     "why": "저장소 밖 재료 — 타깃 저장소·클린룸 앵커·실런 런타임. 측정에는 타깃 접근이 필요하다."
@@ -876,7 +909,7 @@
     "source-codex": "5cfc49b1d64aae26f22af527ef7e38c40cebdea814fab09c20113ec87a1699e4"
   },
   "sealed_commit": "c115b5c945eb53df53651cb34ac50499373c7cc2",
-  "self_sha256": "06f68e8d409974ba4d2ad5ee431bfda8638b3522cbd09f819f70634a91aad9b3",
+  "self_sha256": "ee35b1a2d1bdd5f05ecebc81757245f1909c54a32ab9450915bc2a4a5a9715c6",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [

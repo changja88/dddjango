@@ -4,7 +4,23 @@
 
 ## ⚡ 재개 요점 (최신이 맨 위)
 
-**단계: 앵커 저작 중.** 수리 3건 + 2.15.1 재릴리즈는 완료(BK1-RESULT 수리 목록 전건 종결).
+**단계: 앵커 완성 — 기동 준비 완료. 남은 선행 = 메모리 대피(사용자 한 줄)뿐.**
+
+| 확정값 | |
+|---|---|
+| 게이트 앵커 | `59ee1333` (앵커 커밋 — BC 116파일 삭제·스켈레톤 42·배선 1행) |
+| 기동 HEAD | `c5ee05a0` (요청문 커밋 — 해시 순환 규약) |
+| 발주문 | `docs/rebuild/delivery/request.md` (리터럴 게이트 1·1·0 ✅) |
+| baseline | 직렬 전수 6,962 passed · 기존 red 4(main 동일·lessons) · **스텁 기인 red 16**(전수 = preflight ⑹·부속서) |
+| 리셋 명령 | `git -C <타깃> reset --hard c5ee05a0 && git -C <타깃> clean -fdx -e .venv` — **`rm -rf .dddjango` 금지**(broccoli 는 .dddjango 일부가 git 추적 — rm 이 추적 트리를 깬다·실증됨). 재현 해시 `ad0aa0c5…` 2회 ✓ |
+| 타깃 3개 | `~/Desktop/t2ab-R04·R05·R06` (브랜치 `ab/t2ab-R0N`, `c5ee05a0`) — 생성됨 |
+| DB 분리 | 기동 env 에 `POSTGRES_TEST_DB=test_broccoli_r0N` (settings/test.py 지원 실측) — 동시 테스트 조건(O-4.md §2) |
+| 클린룸 | graphify 훅 재빌드 후 옛 구현 언급 **0** 실측 · pycache 소거 · 부속서(O-5) 실측 병합 완료 |
+| baseline 판형 주의 | `make test` 는 --maxfail=1, 병렬(-n auto)은 main 에서도 대량 에러(환경) — **판정·baseline 은 직렬 전수** `uv run pytest -q --tb=no -rEf --continue-on-collection-errors` |
+
+**기동 직전 체크리스트**: ① 메모리 대피 확인(`ls …/memory` 부재) ② 각 타깃 리셋 명령 실행+`--tree-hash` 로 `ad0aa0c5…` 확인 ③ 암 영수증(`<설치본 2.15.1 scripts>/regen_core.py --arm-receipt <타깃>/arm.json` — env 3종 실은 채) ④ REQUEST = request.md 그대로(3판 byte 동일 확인) ⑤ herdr 워크스페이스 env = `DJR_LOOP_ENABLED`·`DJR_LOOP_SELECTOR`·`DJR_EXPERIMENT_RUN_ID`·`POSTGRES_TEST_DB` ⑥ claude 기동 = `claude --model claude-opus-4-8 --dangerously-skip-permissions`(전자동 — launcher 질문 No·No·Keep) ⑦ 감시 v6 판형 재기동(에이전트 t2ab-r04·r05·r06).
+
+수리 3건 + 2.15.1 재릴리즈 완료(BK1-RESULT 수리 목록 전건 종결).
 
 | 항목 | 상태 |
 |---|---|
