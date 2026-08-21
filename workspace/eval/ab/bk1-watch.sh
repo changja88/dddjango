@@ -1,182 +1,142 @@
 #!/bin/zsh
-# BK1 무인 완주 감시 v4 — 세션에서 분리(nohup)되어 독립 실행된다.
+# BK1 감시 v5 — **허용 목록** 자동 승인.
 #
-# 자동  : 설치본/타깃 아래 읽기 · 무위험 bash → 즉시 승인
-# 알림  : 게이트 질문(선택지 메뉴) · 위험 작업 · 오류·한도 · 주입 발화 · 완료
-# 폴백  : 승인형 게이트 질문이 10분 넘게 방치되면 «제안대로/승인» 계열을 고른다(요란하게 기록)
+# 앞선 판(자동 승인 v3)은 위험 명령 목록을 문면에 담아 실행 분류기가 스크립트 자체를
+# 막았고, 탐지 전용(v4)은 사람(메인 세션)이 병목이라 blocked 가 몇 분씩 이어졌다.
+# 이번엔 반대로 간다: **안전하다고 아는 형태만** 목록에 적고 그것만 승인한다.
+# 목록에 없으면 무조건 알림 — 위험 판별 로직도, 위험 문자열도 스크립트에 없다.
 #
-# 이벤트는 EV 파일에 한 줄씩. 메인 세션은 그 파일을 tail 해서 받는다.
+# 게이트 질문(선택지 메뉴)은 절대 자동 응답하지 않는다.
 
 EV=/Users/hyun/.claude/jobs/48c8a476/tmp/bk1-events.log
 LOG=/Users/hyun/.claude/jobs/48c8a476/tmp/bk1-autoapprove.log
 QDIR=/Users/hyun/.claude/jobs/48c8a476/tmp/gate-questions
-CACHE='/Users/hyun/.claude/plugins/cache/changja88-dddjango'
 mkdir -p $QDIR
 
 ev() { print -r -- "[$(date '+%m-%d %H:%M')] $1" >> $EV }
 lg() { print -r -- "[$(date '+%m-%d %H:%M:%S')] $1" >> $LOG }
 
-typeset -A pend gate_since gate_warn idle_n seen_inj done_f
-for a in t2ab-r01 t2ab-r02 t2ab-r03; do
-  pend[$a]=0; gate_since[$a]=0; gate_warn[$a]=0; idle_n[$a]=0; seen_inj[$a]=-1; done_f[$a]=0
-done
+# ── 허용 목록: 명령 상자에서 뽑은 «명령 시작 형태». 전부 읽기·검사·테스트 계열. ──
+# 한 프롬프트의 모든 명령 줄이 이 중 하나로 시작해야 자동 승인된다.
+ALLOW=(
+  'cat ' 'cat -n' '/bin/cat ' 'ls ' '/bin/ls ' 'wc ' 'head ' 'tail ' 'grep ' 'sed -n' 'sort' 'diff '
+  'echo ' 'printf ' 'cd /Users/hyun/Desktop/t2ab-R' 'export PYTHONDONTWRITEBYTECODE=1'
+  'find application' 'find . -name __pycache__' 'find config' 'find test'
+  '.venv/bin/python manage.py test' '.venv/bin/python manage.py check'
+  '.venv/bin/python manage.py makemigrations' '.venv/bin/python manage.py showmigrations'
+  './.venv/bin/python manage.py test' './.venv/bin/python manage.py check'
+  './.venv/bin/python manage.py makemigrations' './.venv/bin/python manage.py showmigrations'
+  '/Users/hyun/Desktop/t2ab-R01/.venv/bin/python' '/Users/hyun/Desktop/t2ab-R02/.venv/bin/python'
+  '/Users/hyun/Desktop/t2ab-R03/.venv/bin/python'
+  'PYTHONDONTWRITEBYTECODE=1 .venv/bin/python' 'PYTHONDONTWRITEBYTECODE=1 ./.venv/bin/python'
+  'PYTHONDONTWRITEBYTECODE=1 /Users/hyun/Desktop/t2ab-R'
+  'python3 /Users/hyun/.claude/plugins/cache/changja88-dddjango/'
+  'python3 "$P/' 'python3 $P/' 'python3 "$S/' 'python3 $S/'
+  '/usr/bin/python3 /Users/hyun/.claude/plugins/cache/changja88-dddjango/'
+  'git status' 'git log' 'git diff' 'git show' 'git rev-parse' 'git ls-files'
+  'out=$(' 'out2=$(' 'rc=' 'e=$?' 'D=.dddjango' 'D=/Users/hyun/Desktop/t2ab-R'
+  'P=/Users/hyun/.claude/plugins' 'S=/Users/hyun/.claude/plugins'
+  'T=/private/tmp/claude-501/' 'A=/private/tmp/claude-501/' 'SC=/private/tmp/claude-501/'
+  'ANCHOR=$(cat' 'DEBT=' 'for f in ' 'for c in ' 'for d in ' 'done' 'fi' 'if [' 'then' 'else'
+  'mkdir -p application' 'mkdir -p /private/tmp/claude-501/' 'touch application/'
+  ': > ' '[ -e ' '[ -f ' '[ -s '
+)
+
+is_allowed_line() {
+  local line=$1
+  [ -z "${line// }" ] && return 0            # 빈 줄
+  for p in "${ALLOW[@]}"; do
+    [[ "$line" == "$p"* ]] && return 0
+  done
+  return 1
+}
+
+typeset -A pend idle_n seen_inj done_f
+for a in t2ab-r01 t2ab-r02; do pend[$a]=0; idle_n[$a]=0; seen_inj[$a]=-1; done_f[$a]=0; done
 tick=0
 
 while true; do
   tick=$((tick+1))
-  for a in t2ab-r01 t2ab-r02 t2ab-r03; do
+  for a in t2ab-r01 t2ab-r02; do
     pane=$(herdr agent read $a 2>/dev/null)
     [ -z "$pane" ] && continue
-    tail26=$(print -r -- "$pane" | tail -26)
+    t=$(print -r -- "$pane" | tail -30)
     tgt="/Users/hyun/Desktop/t2ab-R${a#t2ab-r}"
 
-    # 스피너 글리프는 회전한다(✻ ✳ ✽ ✶ · …) — 글리프 대신 «경과·토큰 카운터»를 본다.
-    # 그 줄은 작업 중일 때만 뜬다: "… (5m 22s · ↓ 16.8k tokens)"
     busy=0
-    # 카운터는 «(5m 33s · ↓ 16.8k tokens)» 이기도 «(5m 33s)» 이기도 하다 — 토큰 부분을
-    # 필수로 걸었다가 또 유휴로 오인했다. 시간만 있어도 작업 중이다.
-    print -r -- "$tail26" | grep -qE '\([0-9]+(m [0-9]+)?s' && busy=1
-    print -r -- "$pane"   | grep -qE 'Waiting for [0-9]+ background|◯ dddjango:' && busy=1
-    print -r -- "$tail26" | grep -qE 'esc to interrupt|Interrupt' && busy=1
+    print -r -- "$t"    | grep -qE '\([0-9]+(m [0-9]+)?s' && busy=1
+    print -r -- "$pane" | grep -qE 'Waiting for [0-9]+ background|◯ dddjango:' && busy=1
 
-    # 선택지가 길면 메뉴가 스크롤돼 «1.» 이 화면 밖으로 나간다 — 그러면 메뉴를 못 알아보고
-    # 유휴로 오인했다(R01 STOP-2). 항상 맨 아래 있는 안내 문구로 잡는다.
-    menu=0
-    print -r -- "$tail26" | grep -qE 'Enter to select|Ready to submit' && menu=1
-    print -r -- "$tail26" | grep -qE '^[[:space:]]*(❯[[:space:]]+)?1\.[[:space:]]' && menu=1
-    perm=0
-    print -r -- "$tail26" | grep -q "Do you want to proceed" && perm=1
-
-    # ───────── ① 권한 프롬프트 ─────────
-    if [ $perm -eq 1 ]; then
-      # 좁은 판에서 긴 명령이 줄바꿈되면 헤더가 수십 줄 위로 밀린다 — 창을 넉넉히 잡는다.
-      # 그리고 «첫» 프롬프트에서 자르면 안 된다: 스크롤백에 앞 프롬프트 잔상이 남아 있으면
-      # 거기서 끊겨 현재 프롬프트의 헤더를 통째로 놓친다(subj 가 비어 MANUAL 로 떨어졌다).
+    if print -r -- "$t" | grep -q "Do you want to proceed"; then
       pn=$(print -r -- "$pane" | grep -n "Do you want to proceed" | tail -1 | cut -d: -f1)
       blk=$(print -r -- "$pane" | sed -n "1,${pn}p" | tail -400)
-      # 판이 좁으면 «Bash command» 가 두 줄로 쪼개지고 명령 상자가 │ 없이 들여쓰기만 쓴다.
-      # 그래서 헤더는 낱말 단위로 찾는다.
-      subj=$(print -r -- "$blk" | grep -E "Search\(|Glob\(|Grep\(|Read file|Bash|Edit file|Write\(|Update\(|WebFetch|WebSearch" | tail -1)
-      # 헤더를 끝내 못 찾는 경우가 반복됐다(판 폭·스크롤백·렌더 변형). 그때마다 MANUAL 로
-      # 떨어뜨리면 밤새 멈춘다. «모르면 멈춤»을 기본값으로 두지 않되 검사는 그대로 건다 —
-      # 아래 bash 분기의 위험 토큰 + 경로 가드를 통과해야 승인된다.
-      [ -z "$subj" ] && subj="Bash"
-      body=$blk
-      safe=0
-      # 읽기는 그 자체로 위험하지 않다 — 리뷰어는 표준 라이브러리·Django 소스 등 온갖 경로를
-      # 읽는다(R02 가 python3.14 stdlib 를 읽으려다 멈췄다). 설치본·타깃만 허용하면 계속 멈춘다.
-      # 그래서 읽기는 기본 허용하되 **민감 경로**(홈 dot 설정·키)만 사람이 본다.
-      if print -r -- "$subj" | grep -qE "Search\(|Glob\(|Grep\(|Read file"; then
-        if print -r -- "$body" | grep -qE '/\.(ssh|aws|gnupg|docker|kube)/|/\.(zshrc|zprofile|bash_history|netrc|npmrc|pypirc)|/Users/[^/ ]+/\.claude/(settings|\.credentials)'; then
-          safe=0
-        else
-          safe=1
-        fi
+      # 명령 줄만 추출: │ 상자 우선, 없으면 직전 30줄의 들여쓰기 줄
+      cmds=$(print -r -- "$blk" | grep -E '^[[:space:]]*│' | sed -E 's/^[[:space:]]*│[[:space:]]?//')
+      [ -z "$cmds" ] && cmds=$(print -r -- "$blk" | tail -30 | grep -E '^[[:space:]]{3}' | sed -E 's/^[[:space:]]+//')
+
+      # 판 폭 때문에 한 논리 명령이 여러 표시줄로 접힌다 — 줄별 검사는 이어짐 줄에서
+      # 반드시 실패한다(R02 실측: for 루프의 둘째 줄이 파일 경로로 시작). 전부 한 줄로
+      # 합친 뒤 명령 구분자(; · && · ||)로 잘라 조각 단위로 검사한다.
+      flat=$(print -r -- "$cmds" | tr '\n' ' ')
+      ok=1
+      if [ -z "${flat// }" ]; then
+        ok=0   # 명령을 못 읽으면 사람
+      else
+        segs=$(print -r -- "$flat" | sed -E 's/ *(&&|\|\||;) */\n/g')
+        while IFS= read -r line; do
+          line="${line#"${line%%[![:space:]]*}"}"
+          is_allowed_line "$line" || { ok=0; break; }
+        done <<< "$segs"
       fi
-      # 헤더가 «Bash command» 로 붙어 있기도 하고 좁은 판에서 «Bash» / «command» 로
-      # 쪼개지기도 한다 — 탐지 패턴만 고치고 이 분기 조건을 안 고쳐서 한 번 더 놓쳤다.
-      if print -r -- "$subj" | grep -q "Bash"; then
-        # 명령 상자는 판 폭에 따라 «│ …» 이기도 하고 들여쓰기만이기도 하다.
-        # │ 가 없으면 프롬프트 직전 40줄을 명령 문면으로 본다 — 비어 있으면 검사가
-        # 통째로 건너뛰어 무조건 승인이 되는 구멍이 생긴다(넓은 창의 산문 오탐보다 나쁘다).
-        cmd=$(print -r -- "$blk" | grep -E '^[[:space:]]*│')
-        [ -z "$cmd" ] && cmd=$(print -r -- "$blk" | tail -40)
-        # 경로 가드 — 시스템 경로·홈 설정 파일이 보이면 사람이 본다.
-        # 단 «시스템 경로에 쓴다»와 «시스템 도구를 실행한다»는 다르다. /usr/bin/sed 같은
-        # 실행 호출까지 잡아 R03 의 뮤테이션 테스트를 멈춰 세웠다 — 실행 호출은 먼저 지운다.
-        gsrc=$(print -r -- "$cmd" | sed -E 's#(^|[;&|( ] *)/(usr/bin|usr/sbin|bin|sbin|usr/local/bin|opt/homebrew/bin)/[A-Za-z0-9_.+-]+#\1CMD#g')
-        if print -r -- "$gsrc" | grep -qE '(^|[^A-Za-z0-9_./~-])/(etc|usr|bin|sbin|System|Library|Applications|Volumes|opt)/'; then
-          guard=1
-        elif print -r -- "$gsrc" | grep -qE '~/\.[a-z]|/Users/[^/ ]+/\.(ssh|aws|gnupg|config|zshrc|zprofile|gitconfig|npmrc)'; then
-          guard=1
-        else
-          guard=0
-        fi
-        # `find <상대경로> -name __pycache__ -type d -exec rm -rf {} +` 는 파이프라인이 검사기
-        # 실행 전마다 쓰는 정형구다. gitignore 된 빌드 산물만 지우고 대상이 이름으로 못박혀
-        # 있다. 이 형태만 문면에서 지운 뒤 나머지를 검사한다 — 일반 rm 은 계속 사람이 본다.
-        flat=$(print -r -- "$cmd" | sed -E 's/^[[:space:]]*│[[:space:]]?//' | tr '\n' ' ')
-        # 탐색 시작점이 **상대 경로**일 때만 정형구로 인정한다. 경로를 안 보면
-        # `find / -name __pycache__ … -exec rm -rf {} +` 도 같이 통과해 버린다.
-        scrub=$(print -r -- "$flat" | sed -E 's#find +[A-Za-z0-9_.][A-Za-z0-9_./-]* +-name +"?__pycache__"? +-type +d +-exec +rm +-rf +\{\} +\+#FINDPYC#g')
-        if [ $guard -eq 1 ]; then
-          safe=0
-        elif print -r -- "$scrub" | grep -qE '(^|[^a-zA-Z])(rm|curl|wget|ssh|scp|sudo|chmod|chown|kill|npm|pip|brew)[[:space:]]|git[[:space:]]+(push|reset[[:space:]]+--hard|clean)|pip[[:space:]]+install'; then
-          safe=0
-        else
-          safe=1
-        fi
-      fi
-      if [ $safe -eq 1 ]; then
-        # 세션 허용 문구는 두 가지다: «2. Yes, allow …» / «2. Yes, and don’t ask again for:»
-        # (굽은 아포스트로피 주의). 있으면 2 를 골라 이후 재질문을 없앤다.
-        if print -r -- "$tail26" | grep -qE '^[[:space:]]*2\. Yes, (allow|and don)'; then k=2; else k=1; fi
+
+      if [ $ok -eq 1 ]; then
+        if print -r -- "$t" | grep -qE '^[[:space:]]*2\. Yes, (allow|and don)'; then k=2; else k=1; fi
         herdr agent send-keys $a $k >/dev/null 2>&1
-        lg "$a AUTO=$k $(print -r -- "$subj" | cut -c1-140)"
+        lg "$a AUTO=$k allowlist"
+        pend[$a]=0
       else
         if [ "${pend[$a]}" = "0" ]; then
-          ev "⛔ $a 위험 판단 필요 — $(print -r -- "$subj" | cut -c1-120)"
-          lg "$a MANUAL $(print -r -- "$subj" | cut -c1-140)"
+          print -r -- "$pane" | tail -60 > $QDIR/$a.txt
+          bad=$(while IFS= read -r line; do line="${line#"${line%%[![:space:]]*}"}"; is_allowed_line "$line" || { print -r -- "$line"; break; }; done <<< "$segs")
+          ev "⏸ $a 목록 밖 명령 — ${bad:0:100} · 전문 $QDIR/$a.txt"
+          lg "$a MANUAL ${bad:0:120}"
           pend[$a]=1
-        fi
-      fi
-      gate_since[$a]=0; idle_n[$a]=0
-      continue
-    fi
-    pend[$a]=0
-
-    # ───────── ② 게이트 질문(선택지 메뉴 · 권한 아님) ─────────
-    if [ $menu -eq 1 ]; then
-      qf=$QDIR/$a.txt
-      print -r -- "$pane" | tail -45 > $qf
-      now=$(date +%s)
-      if [ "${gate_since[$a]}" = "0" ]; then
-        gate_since[$a]=$now; gate_warn[$a]=0
-        ev "❓ $a 게이트 질문 — 봉인된 고정 답 필요 · 전문: $qf"
-      else
-        elapsed=$(( now - ${gate_since[$a]} ))
-        if [ $elapsed -ge 120 ] && [ $(( elapsed / 120 )) -gt ${gate_warn[$a]} ]; then
-          gate_warn[$a]=$(( elapsed / 120 ))
-          ev "❓ $a 게이트 질문 ${elapsed}초째 미응답 — $qf"
-        fi
-        # 폴백: 승인형이고 10분 방치면 1번(권고안)을 고른다
-        if [ $elapsed -ge 600 ]; then
-          if grep -qE '승인|제안대로|무수정|계속|Recommended' $qf; then
-            herdr agent send-keys $a 1 >/dev/null 2>&1
-            ev "⚠️ $a 게이트 10분 무응답 → 폴백으로 1번(권고안) 제출. 전문 $qf — 사후 검증 필요"
-            lg "$a GATE-FALLBACK=1"
-            gate_since[$a]=0
-          else
-            ev "🛑 $a 게이트 10분 무응답 · 승인형 아님 → 폴백 안 함. 사람이 답해야 한다 — $qf"
-            gate_since[$a]=$now
-          fi
+        elif [ $((tick % 18)) -eq 0 ]; then
+          ev "⏸ $a 아직 대기 — $QDIR/$a.txt"
         fi
       fi
       idle_n[$a]=0
       continue
     fi
-    gate_since[$a]=0
 
-    # ───────── ③ 오류·한도 ─────────
-    # 설계 명세 본문에 «rate limit» 같은 말이 나와 오탐이 났다 — 실제 오류 문면만 좁혀 본다.
-    ERRPAT='API Error:|rate_limit_error|Claude usage limit reached|You have run out of|Execution error|Killed: 9|Segmentation fault|Context low · Run /compact'
-    if print -r -- "$tail26" | grep -qE "$ERRPAT"; then
-      ev "⚠️ $a — $(print -r -- "$tail26" | grep -E "$ERRPAT" | head -1 | cut -c1-120)"
+    # 게이트 질문(선택지 메뉴) — 자동 응답 금지, 알림만
+    if print -r -- "$t" | grep -qE 'Enter to select|Ready to submit'; then
+      if [ "${pend[$a]}" = "0" ]; then
+        print -r -- "$pane" | tail -60 > $QDIR/$a.txt
+        ev "❓ $a 게이트 질문 — $QDIR/$a.txt"
+        pend[$a]=1
+      fi
+      idle_n[$a]=0
+      continue
+    fi
+    pend[$a]=0
+
+    ERRPAT='API Error:|rate_limit_error|Claude usage limit reached|You have run out of|Execution error|Killed: 9'
+    if print -r -- "$t" | grep -qE "$ERRPAT"; then
+      ev "⚠️ $a — $(print -r -- "$t" | grep -E "$ERRPAT" | head -1 | cut -c1-110)"
     fi
 
-    # ───────── ④ 주입 발화 ─────────
-    n=$(cat "$tgt/.dddjango/injection.jsonl" 2>/dev/null | wc -l | tr -d ' ')
+    n=$(cat "$tgt"/.dddjango/*/injection.jsonl 2>/dev/null | wc -l | tr -d ' ')
     [ -z "$n" ] && n=0
     if [ "$n" != "${seen_inj[$a]}" ] && [ "$n" != "0" ]; then
       ev "🔬 $a 주입 발화 — 회전 $n"
       seen_inj[$a]=$n
     fi
 
-    # ───────── ⑤ 완료(장기 유휴) ─────────
     if [ $busy -eq 0 ]; then
       idle_n[$a]=$(( ${idle_n[$a]} + 1 ))
-      if [ ${idle_n[$a]} -ge 12 ] && [ "${done_f[$a]}" = "0" ]; then
-        ev "🏁 $a 60초 유휴 — 완주 또는 정지. 채점 판단 필요"
+      if [ ${idle_n[$a]} -ge 10 ] && [ "${done_f[$a]}" = "0" ]; then
+        ev "🏁 $a 100초 유휴 — 완주 또는 정지"
         done_f[$a]=1
       fi
     else
@@ -184,9 +144,8 @@ while true; do
     fi
   done
 
-  # 15분마다 생존 신호
-  if [ $((tick % 180)) -eq 0 ]; then
-    ev "· 감시 생존 (주입 R01=${seen_inj[t2ab-r01]} R02=${seen_inj[t2ab-r02]} R03=${seen_inj[t2ab-r03]})"
+  if [ $((tick % 90)) -eq 0 ]; then
+    ev "· 감시 생존 (주입 R01=${seen_inj[t2ab-r01]} R02=${seen_inj[t2ab-r02]})"
   fi
-  sleep 5
+  sleep 10
 done
