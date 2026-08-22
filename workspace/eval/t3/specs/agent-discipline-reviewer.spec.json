@@ -1,0 +1,905 @@
+{
+  "schema": "migrate-spec/1",
+  "doc_key": "agent-discipline-reviewer",
+  "path": "dddjango/agents/discipline-reviewer.md",
+  "sections": [
+    {
+      "section_key": "s001",
+      "line_start": 1,
+      "line_end": 13,
+      "blocks": [
+        {
+          "lines": [2, 10],
+          "kind": "norm",
+          "norms": [
+            {"label": "3모드 호출 트리거(Phase 1 경량·Phase 2 구현 게이트·동적 shape 증명)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면 역할명 «Coordinator가 … 호출한다» + ④ 위임 기본값 표(command+agents 절차 층→Coordinator) — 27종 로스터 전수 실독 결과 에이전트 디스패치를 집행하는 검사기 0"},
+            {"label": "지정 모드 산출물의 독립 규율 감사·리포트 산출", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 위임 기본값 표(절차 층) — 감사 수행 여부 판정은 호출·수납 주체인 Coordinator"},
+            {"label": "감수자의 코드 직접 수정 금지", "class": "Prohibition", "delegatedTo": ["command-dddjango"], "basis": "④ 위임 기본값 표(절차 층) — 읽기 전용 계약 위반은 절차 위반이고 코드 대상 검사기 관할 밖"}
+          ]
+        },
+        {
+          "lines": [11, 13],
+          "kind": "norm",
+          "norms": [
+            {"label": "읽기 전용 독립 감수(클린코드·TDD·현행 계약 렌즈)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 위임 기본값 표(절차 층) · 문면이 감사 렌즈 3종을 스킬 위임으로 고정"},
+            {"label": "체크포인트 단발 감사(실시간 감시 아님)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 위임 기본값 표(절차 층) — 호출 시점 결정은 Coordinator 소유(s004와 동축)"}
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s002",
+      "line_start": 14,
+      "line_end": 31,
+      "blocks": [
+        {
+          "lines": [15, 17],
+          "kind": "norm",
+          "norms": [
+            {"label": "호출 시 3모드 중 하나의 명시", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면 주어가 Coordinator + ④ 위임 기본값 표(절차 층)"}
+          ]
+        },
+        {
+          "lines": [18, 18],
+          "kind": "norm",
+          "norms": [
+            {"label": "Phase 1 일반 scope 입력 수령(명세 초안·6열 최소 입장 표)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 입력 공급 주체가 Coordinator"},
+            {"label": "Error response contract scope의 project-wide production tree/inventory 추가 수령·독해", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 조건부 입력 공급 계약"},
+            {"label": "추가 evidence의 표면 전량 포함(module·API instance·profile·scope-bc/error-bc membership)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 · s006 inventory 대조의 전제 입력 — 완결성 판정은 Coordinator handback 축"},
+            {"label": "Phase 1 미수령 4종(구현 diff·테스트 조정 목록·실행 결과·슬라이스)", "class": "Prohibition", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 모드별 입력 경계"},
+            {"label": "production tree evidence와 Phase 2 implementation diff 혼동 금지", "class": "Prohibition", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 모드 혼선 방지 절차 규범"},
+            {"label": "입장 결정의 완결성·근거·중복·testability·단순성 점검", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — Phase 1 산출(입장 표) 감사 이행 여부는 Coordinator가 G1에서 확인"},
+            {"label": "명세 change inventory의 승인 스코프(+G0 ⓐ 빚 항목) 내포 확인", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면이 G0/G1 승인 스코프를 지목 + ④ 절차 층 기본값(스코프 승인 소유=Coordinator)"},
+            {"label": "스코프 밖 기존 파일 이동·재배선의 G1 전 발견 상신", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면 «G1 전에 발견으로 올린다» — 게이트 절차 소유 Coordinator"},
+            {"label": "리포트 말미 집행성 판정 1행 기재", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 리포트 형식 계약(리뷰어 3종 동형)"},
+            {"label": "집행성 판정 근거 형식(가능=확정 결정 3곳 인용·불가=막히는 항목 지목)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 산출 형식 계약"},
+            {"label": "인용 없는 «가능» 집행성 판정 무효", "class": "Prohibition", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 무효 선언의 판정자는 판정을 수납하는 Coordinator"}
+          ]
+        },
+        {
+          "lines": [19, 19],
+          "kind": "norm",
+          "norms": [
+            {"label": "Phase 2 입력 전량 수령(코드·테스트·승인 입장 표·조정 보고·diff·실행 결과·슬라이스)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 입력 공급 계약"},
+            {"label": "코드·테스트 직접 독해로 구현 감사 수행", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 감사 수행 이행 판정은 Coordinator"}
+          ]
+        },
+        {
+          "lines": [20, 20],
+          "kind": "norm",
+          "norms": [
+            {"label": "DYNAMIC 모드 발동 조건(잔여 exit 1 진단 전부가 DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED)", "class": "Exception", "enforcedBy": ["check-api-error-controller-contract.py", "check-error-centralization.py", "check-openapi-error-declaration.py"], "delegatedTo": ["command-dddjango"], "basis": "② marker 발행 실측 3종(controller-contract L1581·1590·1890 / error-centralization L2323 외 / openapi-error-declaration L2404) — 발동 조건이 «잔여 exit 1 전부가 marker»라 발행자 전원 배선 · §16 매핑 표는 controller 단독 기재라 표 자체가 과소(별도 상신) + ④ 모드 발동 판정은 Coordinator 절차"},
+            {"label": "Coordinator의 DYNAMIC 모드 명시 의무", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면 주어 Coordinator + ④ 절차 층 기본값"},
+            {"label": "동일성 증명 묶음 한정 수령", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 입력 한정 계약(하위 6항이 목록)"}
+          ]
+        },
+        {
+          "lines": [21, 21],
+          "kind": "norm",
+          "norms": [
+            {"label": "증거 1 — 12-slot과 action별 기준 evidence(reuse=관찰 baseline·create/approved-change=분리 승인)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 · L-G 관례(부모 «다음 묶음만 받는다»가 의무 동사 공급·항목별 독립 검사 가능)"}
+          ]
+        },
+        {
+          "lines": [22, 22],
+          "kind": "norm",
+          "norms": [
+            {"label": "증거 2 — 모든 checker의 exact command·exit·diagnostic", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면이 checker 실행 산출을 입력으로 지목 + ④ 검사기 실행 소유=Coordinator(Phase 2 step 6)"}
+          ]
+        },
+        {
+          "lines": [23, 23],
+          "kind": "norm",
+          "norms": [
+            {"label": "증거 3 — target dependency pin", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 · L-G 관례(항목별 독립 검사 가능)"}
+          ]
+        },
+        {
+          "lines": [24, 24],
+          "kind": "norm",
+          "norms": [
+            {"label": "증거 4 — common/BC model의 Field metadata·model_config·hook inventory·wire 직렬화 introspection", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 이 증거는 error-centralization이 그 자리에서 PROOF_REQUIRED로 «분석 불능»을 자인했을 때의 대체 경로라 «증거 대상=검사기 분석 대상 동일»은 집행이 아니다(enforcedBy 미병기) · 공급 주체는 Coordinator"}
+          ]
+        },
+        {
+          "lines": [25, 25],
+          "kind": "norm",
+          "norms": [
+            {"label": "증거 5 — direct BC-base 생성문별 승인 key·ErrorCode member·exact dump", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — controller-contract가 그 생성문에서 PROOF_REQUIRED를 발행한 자리의 대체 증거 경로라 대상 사상(寫像)일 뿐 집행 아님(enforcedBy 미병기) · 공급 주체 Coordinator"}
+          ]
+        },
+        {
+          "lines": [26, 27],
+          "kind": "norm",
+          "norms": [
+            {"label": "증거 6 — mount의 endpoint status/body/header와 generated OpenAPI", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — openapi-error-declaration도 이 표면에서 PROOF_REQUIRED를 발행(L2404)해 대체 증거를 부르는 쪽이라 집행 아님(enforcedBy 미병기) · 공급 주체 Coordinator"}
+          ]
+        },
+        {
+          "lines": [28, 29],
+          "kind": "norm",
+          "norms": [
+            {"label": "API reviewer 노트·확인 토큰 미수령(두 리뷰 독립)", "class": "Prohibition", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 독립성 보장은 입력 공급 주체 소유"},
+            {"label": "DYNAMIC 모드 감사 범위 한정(증거 완결성·재현성·기준선 동일성·canonical 소유권·helper 우회 부재)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 모드별 감사 범위 계약"},
+            {"label": "HTTP 의미론·public code 적정성·호환성의 중복 판정 금지(API reviewer 소유)", "class": "Prohibition", "delegatedTo": ["agent-design-review-api"], "basis": "① 문면이 소유자를 API reviewer로 명시 — 기본값 이탈의 문면 근거(§16 역도 성립 조항)"}
+          ]
+        },
+        {
+          "lines": [30, 31],
+          "kind": "norm",
+          "norms": [
+            {"label": "타 감수 노트 비열람 독립성(비작성자 근거)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 독립 감수 배치는 Coordinator 소유"}
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s003",
+      "line_start": 32,
+      "line_end": 42,
+      "blocks": [
+        {
+          "lines": [33, 35],
+          "kind": "norm",
+          "norms": [
+            {"label": "감수 리포트만 산출", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 산출물 계약"},
+            {"label": "감수 리포트 외 코드 직접 수정 금지", "class": "Prohibition", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 역할 경계 위반은 절차 판정(label을 자기 문면 L34 «코드를 직접 고치지 않는다» 한정으로 교정 — «반영은 코더» 보충은 s008 L128 소유)"},
+            {"label": "Phase 1 지적의 design-architect 반송", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면이 반송처를 지목 + ④ 라우팅 실행 소유 Coordinator"},
+            {"label": "Phase 2 지적의 소유자 표시 3종 라우팅(외부 계약 assertion·내부 assertion/구현·명세 구조 결정)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면이 acceptance-tester·coder·design-architect를 소유자로 지목 + ④ 라우팅 판정 Coordinator"},
+            {"label": "설계 오류의 Coordinator G1/G1' 반송", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면 주어가 Coordinator·게이트 절차"},
+            {"label": "발견 다수 시 심각도 순(blocker→important→nit) 번호 나열", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 리포트 형식 계약"}
+          ]
+        },
+        {
+          "lines": [36, 36],
+          "kind": "norm",
+          "norms": [
+            {"label": "발견 항목 형식(문제+근거 파일:라인+심각도 3단계)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 산출 형식 계약(리뷰어 3종 동형)"}
+          ]
+        },
+        {
+          "lines": [37, 38],
+          "kind": "norm",
+          "norms": [
+            {"label": "권고 항목 형식(변경 방법 제시)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 산출 형식 계약"}
+          ]
+        },
+        {
+          "lines": [39, 40],
+          "kind": "norm",
+          "norms": [
+            {"label": "무결 시 «규율 관점 이상 없음» 명시", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 무발견 보고의 명시 계약"}
+          ]
+        },
+        {
+          "lines": [41, 42],
+          "kind": "norm",
+          "norms": [
+            {"label": "RESOLVED 확인 토큰 발행의 3조건 한정(전 증거 동일·canonical 소유권/helper 금지 준수·타 exit 부재)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면의 토큰이 게이트 해소 절차 재료 + ④ marker 해소 절차는 Coordinator 소유(파일럿 판형 동축)"},
+            {"label": "누락·불일치·미승인·기준선 변동 시 blocker+정확 근거 제출·토큰 미발행", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 토큰 미발행 판정은 게이트 소유 Coordinator"},
+            {"label": "create|approved-change라는 이유만의 거부 금지", "class": "Prohibition", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 승인 경로 존중 규범"},
+            {"label": "별도 승인과의 동일성 검증", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 승인 evidence(사용자 shape 승인 문서) 대조는 검사기 입력 밖이고, 이 조항이 서는 자리는 검사기가 PROOF_REQUIRED로 분석 불능을 자인한 DYNAMIC 모드라 집행 아님(enforcedBy 미병기) · 승인 절차 소유 Coordinator"},
+            {"label": "이 산출의 shape 승인·API reviewer 독립 확인 갈음 금지", "class": "Prohibition", "delegatedTo": ["command-dddjango"], "basis": "① 문면이 API reviewer 독립 확인을 별도 요건으로 지목 + ④ 이중 확인 절차 소유 Coordinator"}
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s004",
+      "line_start": 43,
+      "line_end": 46,
+      "blocks": [
+        {
+          "lines": [44, 46],
+          "kind": "norm",
+          "norms": [
+            {"label": "감사 범위·시점의 Coordinator 결정과 받은 범위 한정 감사", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면 주어 Coordinator + ④ 절차 층 기본값"},
+            {"label": "Phase 1 lightweight의 전 scope 필수(G1 직전 입장 표 독립 감사)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면 «G1 직전 … 필수» — 게이트 절차 소유 Coordinator"},
+            {"label": "Error response contract scope의 12-slot·project-wide surface·ownership 추가 점검", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — scope별 감사 범위 계약(s006 본문과 짝)"},
+            {"label": "슬라이스 경량·홀리스틱 발동 기준의 파이프라인 정본 소유(커맨드 Phase 2 step 4·5)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면이 커맨드 Phase 2 step 4·5를 정본으로 역참조 — 값 소유 위임의 명시 사례"},
+            {"label": "여러 슬라이스에서의 재량 상향 호출 허용", "class": "Permission", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 호출 재량 주체가 Coordinator"}
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s005",
+      "line_start": 47,
+      "line_end": 55,
+      "blocks": [
+        {
+          "lines": [48, 49],
+          "kind": "norm",
+          "norms": [
+            {"label": "영구 test artifact 후보 전건의 여섯 열 행 등재 확인", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «본다»의 주어가 감수자 + 로스터 27종에 입장 표 형식 집행 검사기 0(테스트 산출물 규율은 discipline-* 기본값)"},
+            {"label": "decision 값의 일곱 값(add/update/reuse/retain/remove/reject/pending) 한정 확인", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 주어 · 검사기 비커버(입장 표는 문서 산출물)"},
+            {"label": "누락 열·미분류 후보·pending의 blocker 판정", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면이 심각도까지 규정 — 판정 주체 감수자"},
+            {"label": "일반 retain의 무편집", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 대상이 테스트 산출물 · 검사기 비커버"},
+            {"label": "명시 승인된 의미 보존 move/split/rename/reorganization만 무-Red 계약 보존 인정", "class": "Permission", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 조건부 허용의 판정 주체가 감수자 · 검사기 비커버"}
+          ]
+        },
+        {
+          "lines": [50, 50],
+          "kind": "norm",
+          "norms": [
+            {"label": "add/update의 3요소 제시 확인(승인 계약·독자 failure mechanism·기존 권위 coverage 차이)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 주어 · TDD 입장 규율은 검사기 비커버(§16 기본값 discipline-*)"},
+            {"label": "boundary 차이·recipe·피라미드·coverage 목표만의 add 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"},
+            {"label": "같은 제품 failure·독자 failure 부재 시 reuse(write 0)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"},
+            {"label": "공개 Python 후보의 사용자 승인 또는 deployed consumer evidence 요구", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 승인 evidence 확인은 감사 렌즈(승인 자체는 Coordinator 소유 절차와 구분)"}
+          ]
+        },
+        {
+          "lines": [51, 51],
+          "kind": "norm",
+          "norms": [
+            {"label": "비자격 후보 목록의 add 근거 불인정", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버(테스트 입장 규율)"},
+            {"label": "승인 public contract·독자 failure 부재 시 reject 또는 reuse 방향 반송", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 반송 대상 결정은 감사 렌즈 산출"},
+            {"label": "입장 행 없는 테스트 신규 의무화 금지", "class": "Prohibition", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 리뷰어 자기 산출(테스트 의무 발명)의 감독 주체는 Coordinator"}
+          ]
+        },
+        {
+          "lines": [52, 52],
+          "kind": "norm",
+          "norms": [
+            {"label": "remove/weaken의 3요소 요구(계약 종료 근거·exact target·남는 현행 보호 위치)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"},
+            {"label": "명세 침묵·구현 불일치·중복 추정만의 삭제 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"},
+            {"label": "migration 전용 테스트의 유지·제자리 갱신·종료 시 제거 수명 주기 보존", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버(migration 전용 테스트 판별은 의미 판정)"}
+          ]
+        },
+        {
+          "lines": [53, 53],
+          "kind": "norm",
+          "norms": [
+            {"label": "전 test diff hunk의 승인 행·독자 failure 대조", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 주어 · 검사기 비커버"},
+            {"label": "decision별 편집 허용 범위(add/update만 Red·edit / reuse·reject write 0 / retain 무편집 / remove·weaken 승인 target)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"},
+            {"label": "implementation-test의 적용 시점 한정(입장 승인 뒤 mechanics·assertion 품질)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면이 스킬 적용 순서를 규정 — 감수자 자기 렌즈 운용 규범"},
+            {"label": "recipe로 입장 결정 신설 금지", "class": "Prohibition", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 입장 결정 소유는 Phase 1 게이트(Coordinator·architect)"}
+          ]
+        },
+        {
+          "lines": [54, 55],
+          "kind": "norm",
+          "norms": [
+            {"label": "첫 Green 뒤 잔존 비계(loader·guard·대체 decorator·skip/xfail·helper)의 blocker 판정", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버(비계 판별은 의미 판정)"},
+            {"label": "비계를 만든 같은 역할의 즉시 제거", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면이 «만든 같은 역할»(coder·acceptance-tester)을 주체로 지목 — 역할 라우팅 소유 Coordinator"},
+            {"label": "기존 비계의 이번 실행 산출 간주·임의 삭제 유도 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 한정(거짓지적 방지 규범)"}
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s006",
+      "line_start": 56,
+      "line_end": 62,
+      "blocks": [
+        {
+          "lines": [57, 58],
+          "kind": "norm",
+          "norms": [
+            {"label": "12-slot과 현재 project-wide production tree/inventory 대조", "class": "Obligation", "enforcedBy": ["check-error-centralization.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring «project inventory correspondence» 검증 축 + ① 문면이 Phase 1 필수 대조로 지정 — 기계 대조의 의미 잔여는 감수자"},
+            {"label": "전 표면의 project-wide 확인(API/controller/URLconf/registrar module·instance·namespace/version·scope·scope-bc/error-bc·profile·module sharing)", "class": "Obligation", "enforcedBy": ["check-error-centralization.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring project inventory correspondence · ① 문면 «project-wide로 확인한다»"},
+            {"label": "inventory 누락·중복 module·profile 혼합 공유·API instance 복수의 blocker 및 Coordinator 승인 handback", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면 «checker가 추론하지 못해도 blocker이며 Coordinator의 승인 handback 대상» — 기본값 이탈의 명시 문면 근거"}
+          ]
+        },
+        {
+          "lines": [59, 59],
+          "kind": "norm",
+          "norms": [
+            {"label": "canonical common path·공통 FrameworkErrorSchema 하나·common 내 BC concrete 부재·slot 5/6 확인", "class": "Obligation", "enforcedBy": ["check-error-centralization.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring «validates the canonical common/BC FrameworkErrorSchema modules» — 기계 커버 + 승인 evidence 대조는 감수자"},
+            {"label": "reuse의 관찰된 기존 exact-shape evidence 요구", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 — evidence 관찰성은 형태 밖(검사기는 자기 입력 inventory를 전제·파일럿 순환 배선 교훈)"},
+            {"label": "create·approved-change의 분리된 명시적 사용자 shape 승인 evidence 요구(부재 시 blocker)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면이 일반 G1과 분리된 사용자 승인을 지목 — 승인 절차 소유 Coordinator"},
+            {"label": "public 오류 BC의 canonical bc_error_schema.py 단일 소유(ErrorCode·ErrorSchema·concrete 전부)", "class": "Obligation", "enforcedBy": ["check-error-centralization.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring canonical BC module 검증 + ④ #114 귀속(rule-owner-map ⓒ 4규칙 — error-centralization 소유)"},
+            {"label": "public 오류 없는 BC의 오류 선언 선제작 금지(빈 bc_error_schema.py는 고정 칸)", "class": "Prohibition", "enforcedBy": ["check-layer-skeleton.py", "check-error-centralization.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ 문면이 #114·#488을 인용 — #488 고정 칸은 layer-skeleton docstring 소유·#114는 error-centralization 소유"},
+            {"label": "Phase 2의 direct core 재선언·exact 복제·미승인 local Schema·inner-layer 의존·tree mismatch 미반송의 blocker", "class": "Obligation", "enforcedBy": ["check-error-centralization.py", "check-api-error-controller-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② 두 docstring의 canonical 소유권·controller 계약 축 + ① 문면이 미반송까지 blocker로 지정(의미 잔여는 감수자)"}
+          ]
+        },
+        {
+          "lines": [60, 60],
+          "kind": "norm",
+          "norms": [
+            {"label": "preserve-established scope의 승인 artifact evidence대로 유지", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "② error-centralization·controller-contract docstring이 preserve profile에 schema semantics 미적용을 명시 — 기계 밖 보존 판정은 감수자"},
+            {"label": "RFC 9457 artifact 사유의 code-profile 이주·두 profile 한 module 혼합 금지", "class": "Prohibition", "enforcedBy": ["check-error-centralization.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring project inventory correspondence(mixed-profile shared module) + ① 문면 금지 명문"},
+            {"label": "격리 범위의 한정(오류 응답 표면까지 — 파일트리·배선/등록·import 방향·테스트 규율은 profile 무관 표준)", "class": "Obligation", "enforcedBy": ["check-layer-skeleton.py", "check-context-isolation.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면이 #105~#112 등 표준 대조를 지목 + ④ 트리·배선 판정은 layer-skeleton(#486~#490)·context-isolation(#110·#431) 소유"}
+          ]
+        },
+        {
+          "lines": [61, 62],
+          "kind": "norm",
+          "norms": [
+            {"label": "discipline reviewer 소유 5종(physical placement·forbidden extraction/circumvention·import direction·controller structure·scope completeness)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면이 소유자를 직접 선언 — 위임 대상의 명문 근거"},
+            {"label": "public-code 적정성의 중복 판정 금지(API reviewer 소유)", "class": "Prohibition", "delegatedTo": ["agent-design-review-api"], "basis": "① 문면이 wire meaning·public code catalog·HTTP semantics·compatibility 소유를 API reviewer로 지목 — 기본값 이탈의 문면 근거"},
+            {"label": "OpenAPI/runtime 구현 기술 정확성의 acceptance-tester/coder·implementation-* 소유 표시", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면 술어가 «…소유로 표시한다»(감수자 리포트의 표시 의무) — P-C 판별자 ⒤ 표시·라우팅 의무는 리포트 수납 주체 Coordinator + ④ 절차 층 기본값(s003/b1 반송·표시 조항과 동일 자)"}
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s007",
+      "line_start": 63,
+      "line_end": 125,
+      "blocks": [
+        {
+          "lines": [64, 65],
+          "kind": "norm",
+          "norms": [
+            {"label": "구현 체크리스트의 Phase 2 implementation 한정 적용", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 모드별 적용 범위 계약"},
+            {"label": "Phase 1·DYNAMIC 모드에서 묶음 미수령을 이유로 한 항목 실패 처리 금지", "class": "Prohibition", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 모드별 거짓지적 방지 절차"}
+          ]
+        },
+        {
+          "lines": [66, 66],
+          "kind": "norm",
+          "norms": [
+            {"label": "승인 add/update 행 한정 Red→Green→Refactor 흔적·행위 검증", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · TDD 규율은 검사기 비커버(§16 기본값 discipline-tdd→discipline-reviewer)"},
+            {"label": "reuse/retain/reject 사유의 새 Red·case·assertion 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"}
+          ]
+        },
+        {
+          "lines": [67, 67],
+          "kind": "norm",
+          "norms": [
+            {"label": "행위중심 테스트·과도 mock의 리팩토링 내성 침해 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버(mock 과다는 의미 판정)"},
+            {"label": "AAA 구조·격리·좋은 테스트 4대 특성 점검", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"}
+          ]
+        },
+        {
+          "lines": [68, 68],
+          "kind": "norm",
+          "norms": [
+            {"label": "신규·확장 migration 전용 테스트 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버(discipline-tdd §5.5 인용)"},
+            {"label": "삭제·assertion 약화의 승인 remove/weaken 종료 근거·exact target 연결", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"},
+            {"label": "혼합 테스트 현행 assertion의 잔존 확인", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"},
+            {"label": "현재 구현에 맞추려는 올바른 failing test 삭제 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"},
+            {"label": "pending의 retain·완료 위장 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"}
+          ]
+        },
+        {
+          "lines": [69, 69],
+          "kind": "norm",
+          "norms": [
+            {"label": "현재 model·API 테스트의 migration forward/reverse 안전 대체 증거 주장 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"},
+            {"label": "suite green·무관 실패의 테스트 삭제·편집 확대 단독 근거 사용 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"}
+          ]
+        },
+        {
+          "lines": [70, 70],
+          "kind": "norm",
+          "norms": [
+            {"label": "승인 행의 계약·boundary·failure mechanism 동시 비교", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"},
+            {"label": "독자 failure 없는 인수↔단위 복제의 입장 위반 판정", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"},
+            {"label": "다른 failure mechanism을 가진 별도 add 행의 유효 인정", "class": "Permission", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 거짓지적 방지 허용 조항"},
+            {"label": "리뷰 중 발견 엣지의 즉석 테스트 의무화 금지(후보 설계 반송)", "class": "Prohibition", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 설계 반송 라우팅 소유 Coordinator"}
+          ]
+        },
+        {
+          "lines": [71, 71],
+          "kind": "norm",
+          "norms": [
+            {"label": "pytest 관용구 준수(함수형·assert·django_db 마커)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "② check-test-config 관할은 ⑴ settings 바인딩·⑵ test/ 구조·⑶ 환경축뿐이라 관용구 «형태»는 전 슬라이스 밖 — 기계 절반이 없어 enforcedBy 미병기(같은 블록의 #392·#387 조항만 병기 유지) · ④ 위임 기본값(implementation-test §7→감수자)"},
+            {"label": "mock 도구의 mocker 사용(raw unittest.mock 패치 폴백 위반)", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 명시 판정 · 검사기 비커버(implementation-test §7 인용)"},
+            {"label": "정당 import(create_autospec·ANY/call/PropertyMock)의 거짓지적 금지", "class": "Exception", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 거짓지적 방지 예외 — 감수자 판정 한정"},
+            {"label": "ORM 영속 픽스처의 factory_boy 사용", "class": "Obligation", "enforcedBy": ["check-test-config.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #392 factories/에는 factory_boy 픽스처만(test-config docstring 담당 규칙) — 자리 밖 픽스처는 감수자"},
+            {"label": "정확 필드 행·VO 직접 생성·objects.create 스파이의 정당 인정", "class": "Exception", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 거짓지적 방지 예외(implementation-test §20.5 인용)"},
+            {"label": "Django TestCase 회귀 금지(새 테스트는 무조건 pytest·관례 존중 예외 없음)", "class": "Prohibition", "enforcedBy": ["check-test-config.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #387 test/unit/의 django.test TestCase 금지(test-config 담당) + ② 바인딩 슬라이스 — 자리 밖 TestCase는 감수자"},
+            {"label": "over-mock(협력자까지 mock)의 raw-폴백 동급 이상 취급", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버(§16.1 Mockery)"}
+          ]
+        },
+        {
+          "lines": [72, 72],
+          "kind": "norm",
+          "norms": [
+            {"label": "Risky Write·outbox·constraint·concurrency criteria의 자동 테스트 의무화 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버(criteria는 candidate signal)"},
+            {"label": "승인 입장 행의 protected contract·독자 failure 실제 행사 감사", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"},
+            {"label": "add/update의 결정적 CAS 충돌·동시 요청 또는 동등 테스트 요구", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버(동시성 실현은 의미 판정)"},
+            {"label": "구조 가드만·순차 루프 경합 위장의 실패 판정", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"},
+            {"label": "다른 boundary 권위 테스트가 같은 failure를 잡을 때 reuse 유효(신규 요구 금지)", "class": "Permission", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 거짓지적 방지 허용 조항 — 감수자 판정"},
+            {"label": "criteria 있고 입장 행 없을 때 테스트 발명 금지·Phase 1 입장 누락 반송", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — Phase 1 반송 라우팅 소유 Coordinator"}
+          ]
+        },
+        {
+          "lines": [73, 73],
+          "kind": "norm",
+          "norms": [
+            {"label": "동치 암묵 가드 공존 + 구별 단언 부재 테스트의 important 판정(The Liar)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버(implementation-test §16.1)"},
+            {"label": "다층 방어 병행의 정상 인정(제약 제거가 아니라 테스트 귀속을 본다)", "class": "Exception", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 거짓지적 방지 예외(architecture-db §9.5 백스톱 병행 권장)"},
+            {"label": "near-mutation 판정의 그레이더 FC-2 소유·정적 신호 한정 관찰", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면이 판정 범위를 정적 신호로 한정 — 감수자 자기 렌즈 한정 규범(FC-2는 registry 밖 개체)"}
+          ]
+        },
+        {
+          "lines": [74, 74],
+          "kind": "norm",
+          "norms": [
+            {"label": "정확 경계값의 입장 표 candidate 선행", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"},
+            {"label": "승인 행이 특정한 경계의 입력·구별 단언 실제 행사 확인(계층 불문)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"},
+            {"label": "다른 승인 권위 테스트가 같은 failure를 행사하면 reuse 유효(단위 부재 지적 금지)", "class": "Permission", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 거짓지적 방지 허용 조항"},
+            {"label": "입장 행 부재·recipe만 있을 때 새 경계 테스트 요구 금지·설계 반송", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 설계 반송 라우팅 소유"},
+            {"label": "항진 단언·경합 위장·The Liar의 mechanics 위반 지적(즉석 처방 금지)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 판정 · 검사기 비커버"}
+          ]
+        },
+        {
+          "lines": [75, 75],
+          "kind": "norm",
+          "norms": [
+            {"label": "클린코드 6렌즈 점검(네이밍 정확성·함수 크기/단일 책임·캡슐화·DRY·오류 처리·SOLID)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ 위임 기본값 표(discipline-cleancode→discipline-reviewer) · 트리·명명 «값» 축은 houserules 백스톱 소유라 여기서는 일반 렌즈만"}
+          ]
+        },
+        {
+          "lines": [76, 76],
+          "kind": "norm",
+          "norms": [
+            {"label": "도메인 판정 메서드의 프로덕션 호출처 확인(테스트 전용=죽은 코드)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "② check-app-container docstring «판정-소유 형태(빈혈) 같은 의미 변종은 범위 밖(discipline-reviewer 몫)» — 명시 위임"},
+            {"label": "판정의 인프라 복제(repo SQL WHERE·update() kwargs·우회 서비스 분기)로 도메인 메서드 무력화 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "② 동상(app-container docstring 의미 변종 위임) · architecture-ddd §3.2 판정 소유 인용"},
+            {"label": "C형 빈혈(도메인 규칙 메서드 0개·판정이 인프라에만 존재)의 blocker 판정", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «전적으로 너의 의미 점검 몫» — 결정적 백스톱 부재 자인"},
+            {"label": "C형 빈혈 적출의 3점 확인(domain_layer 규칙 메서드 0개·외부 배치·이름 위장 변종)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면이 백스톱 부재를 명시(형태 매칭 FP/FN 양립 불가)"},
+            {"label": "판정·불변식 보유 도메인 메서드의 평면 ORM 모델 직접 부착 금지(domain_layer 이주)", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #249·#256(domain-model)은 «이주 목적지» domain_layer 안 골격만 보아 위반 현장(domain_layer 밖 평면 ORM 모델의 판정 메서드)을 못 본다 — 집행 아님(enforcedBy 미병기) · ② check-app-container docstring «판정-소유 형태(빈혈) 같은 의미 변종은 범위 밖(discipline-reviewer 몫)» + ① 판정 소유→구조 이주(architecture-ddd §3.2)는 감수자 전담"},
+            {"label": "판정 없는 순수 데이터 소스(필드·CheckConstraint만)의 평면 허용", "class": "Exception", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 거짓지적 방지 예외 — 데이터소스 면제 문면"},
+            {"label": "책임 배치·죽은 코드 규율 한정(쿼리 정확성 비판정)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «네가 본다» + 소유 경계 선언(s008 경계와 짝)"}
+          ]
+        },
+        {
+          "lines": [77, 77],
+          "kind": "norm",
+          "norms": [
+            {"label": "touched 코드 한정 관찰(untouched 기존 리터럴 grandfather 면제)", "class": "Exception", "enforcedBy": ["check-choices-literal-consumption.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring 1) «touched인 파일만 본다 … 기존 리터럴은 grandfather» 동일 게이트"},
+            {"label": "① 닫힌 집합 원소의 원시 리터럴 산재 important(1곳째부터 승격)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring «보지 않는 것(의미 레인 = discipline-reviewer 몫): … 닫힌 집합의 미승격» — 명시 위임(cleancode §2.14)"},
+            {"label": "①의 DRY 사안 중복 분류 금지(이중 계상 금지)", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면의 분류 배타 규범 — 감수자 자기 분류 규율"},
+            {"label": "② 선언된 Enum/choices의 리터럴 소비 important — 백스톱 사각 4변종(변수 우회·간접 queryset·비교식·__in) 직독", "class": "Obligation", "enforcedBy": ["check-choices-literal-consumption.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면이 결정적 백스톱 check-choices-literal-consumption을 직접 지목 + ② docstring 직접형 (a)(b) 한정·의미 레인 위임 일치"},
+            {"label": "심볼 치환의 판정 소유 위반 면책 금지(복합 판정은 빈혈 불릿 단일 분류)", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면의 분류 배타 규범"},
+            {"label": "③ domain의 models.TextChoices 역참조 important(값 집합 단일 출처=domain enum)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "② choices-literal docstring «계층 역참조»는 보지 않는 것(의미 레인) — 명시 위임(implementation-django §2.5)"},
+            {"label": "③의 구조 이주 사안 중복 분류 금지(값 집합 소유만 여기)", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면의 분류 배타 규범"},
+            {"label": "④ 외부 관찰 계약 기댓값의 프로덕션 Enum·상수 역수입 important(자기참조 오라클)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "② choices-literal docstring 3) 테스트 경로 면제(«테스트 기댓값 리터럴은 §15.4가 허용») — 기계 밖 오라클 자기참조는 감수자"},
+            {"label": "⑤ 발행 이벤트 봉투 discriminator의 domain StrEnum 미파생 important(birth-enum)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «대응 백스톱 없음 … 위치 판정은 전적으로 네 몫» — 백스톱 부재 자인(architecture-ddd §3.7)"},
+            {"label": "union-enum 동기 후보의 승인 입장 행 한정 mechanics 감사", "class": "Exception", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 조건부 한정 — 감수자 판정"},
+            {"label": "입장 행 부재 시 동기 테스트 즉석 요구 금지·candidate 설계 반송", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 설계 반송 라우팅 소유"},
+            {"label": "⑤의 제외 4종(버전 태그·상류 중계 소비 태그·데이터소스 BC·OHS contract wire Literal)", "class": "Exception", "enforcedBy": ["check-context-isolation.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ OHS contract 무의존 규칙 #472(context-isolation 담당) + ① 제외 목록의 판정은 감수자"},
+            {"label": "①과 ⑤의 배타 분류(한 사건은 하나로만)", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면의 분류 배타 규범"},
+            {"label": "거짓지적 방지 목록(테스트 심볼 단언·사람 대상 서술·정의부 우변·.value 파생·Literal 잠금·외부 프로토콜 문자열·설정 키·마이그레이션 historical value·pass-through·한 파일 로컬·다른 지식 동일 값)", "class": "Exception", "enforcedBy": ["check-choices-literal-consumption.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring 3)~5) 면제(마이그레이션 historical value·.value 평탄화·테스트 경로)와 문면 목록이 동축"}
+          ]
+        },
+        {
+          "lines": [78, 78],
+          "kind": "norm",
+          "norms": [
+            {"label": "엔진·연결 트랜잭션/락/격리 메커니즘의 설계 소유(명세 승인 없는 의미 변경 금지)", "class": "Prohibition", "enforcedBy": ["check-mechanism-ownership.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring ⑴ «프로덕션 DB 엔진의 트랜잭션·락·격리 메커니즘을 명세 승인 없이 커스텀 백엔드로 교체한 정확한 형태만 차단» — 축자 일치"},
+            {"label": "메커니즘 레드 플래그 9종의 blocker 판정(형태 불문 동일 위반)", "class": "Obligation", "enforcedBy": ["check-mechanism-ownership.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring AND 게이트는 ENGINE 교체·DatabaseWrapper만 커버 — 몽키패치·시그널·init_command·미들웨어·conftest 패치는 형태 밖(감수자)"},
+            {"label": "stock OPTIONS·안전 PRAGMA 화이트리스트·명세 명시 승인 메커니즘의 통과", "class": "Permission", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 거짓지적 방지 허용 목록 — 감수자 판정"},
+            {"label": "이번 diff 신규 변경 한정 관찰(기존 코드 존중)", "class": "Exception", "enforcedBy": ["check-mechanism-ownership.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring 4) «(git 레포면) 이번 변경에서 추가/수정됨» 동일 게이트"},
+            {"label": "프로덕션 경로 미배선 테스트 격리 전용 설정의 통과", "class": "Exception", "enforcedBy": ["check-mechanism-ownership.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring 1) «프로덕션(비테스트) settings» 한정과 동축"},
+            {"label": "책임 배치·소유권 규율 한정(ORM/쿼리 정확성 비판정)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «네가 본다» + 소유 경계 선언(s008과 짝)"}
+          ]
+        },
+        {
+          "lines": [79, 79],
+          "kind": "norm",
+          "norms": [
+            {"label": "canonical common module의 승인 shape 단일 소유·BC concrete 부재", "class": "Obligation", "enforcedBy": ["check-error-centralization.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring «validates the canonical common/BC FrameworkErrorSchema modules» — schema checker 축(§16 매핑 표)"},
+            {"label": "공통 shape 신설·변경 시 G1과 분리된 사용자 shape 승인 evidence 부재의 blocker", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면이 일반 G1과 분리된 명시 승인을 지목 — 승인 절차 소유 Coordinator"},
+            {"label": "public 오류 BC의 canonical bc_error_schema.py 단독 소유(ErrorCode·ErrorSchema·concrete 전부)", "class": "Obligation", "enforcedBy": ["check-error-centralization.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring BC schema 구성·wire-code uniqueness 검증 + ④ #114 귀속"},
+            {"label": "import 부재만으로 불충분(inner layer 계층 소유 판정 강화)", "class": "Obligation", "enforcedBy": ["check-context-isolation.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #2 «안쪽 두 칸은 구체 기술을 모른다»(context-isolation 담당)가 import 축을 커버 — 그 밖 운반 판정은 감수자"},
+            {"label": "import-free DTO·VO의 HTTP status/code 의미 inner layer 운반 blocker", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면이 import 없는 의미 운반을 지목 — 형태 밖(검사기 사각) 자인"},
+            {"label": "정당 도메인 status의 구별 기준(값 의미·소비 경로가 HTTP 선택과 무관)", "class": "Exception", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 거짓지적 방지 예외 — 감수자 판정"}
+          ]
+        },
+        {
+          "lines": [80, 80],
+          "kind": "norm",
+          "norms": [
+            {"label": "code-profile managed surface의 오류 helper/handler/factory/serializer/mapping 생성·호출 금지", "class": "Prohibition", "enforcedBy": ["check-api-error-controller-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring «direct controller-owned code-profile error mapping» 집행 — presentation helper 차단 축(파일럿 판형 동일)"},
+            {"label": "controller의 짧은 failure→prepared error→Status mapping 반복의 DRY 면책", "class": "Exception", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 거짓지적 방지 예외(의도된 명시성) — 감수자 판정"},
+            {"label": "성공 Schema·download·streaming·redirect·schema-less 204의 오류-helper 금지 밖", "class": "Exception", "enforcedBy": ["check-response-schema-bypass.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring framework-native 성공 carveout 구현(파일럿 L-F 실측 — carveout 4종은 response-schema-bypass 소관)"},
+            {"label": "승인 preserve-established handler의 범위 한정 보존(새 code-profile 정당화 재사용 금지)", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "② controller-contract docstring «preserve-established … add no new error-mapping semantics» — 보존 판정은 기계 밖"}
+          ]
+        },
+        {
+          "lines": [81, 81],
+          "kind": "norm",
+          "norms": [
+            {"label": "10번 slot 승인 path와 코드의 대조", "class": "Obligation", "enforcedBy": ["check-api-error-controller-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring controller 선택·계약 검증 + ① slot 승인 evidence 대조는 감수자"},
+            {"label": "exception path의 좁은 try(준비는 밖·try 안에 최외곽 application call 한 문장)", "class": "Obligation", "enforcedBy": ["check-api-error-controller-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring controller 계약 집행(파일럿 b-616~620 판형 동일)"},
+            {"label": "try 안 branch·성공 변환·logging 동거 금지", "class": "Prohibition", "enforcedBy": ["check-api-error-controller-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② 동상 — controller 계약"},
+            {"label": "같은 owning BC의 승인 concrete 예외 또는 concrete만 든 tuple 한정 catch", "class": "Obligation", "enforcedBy": ["check-api-error-controller-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② 동상 — controller 계약"},
+            {"label": "bare/Exception/BaseException·raw DB/SDK/framework·cross-BC·재수출 alias·비-concrete 혼합 tuple의 blocker", "class": "Prohibition", "enforcedBy": ["check-api-error-controller-contract.py", "check-context-isolation.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② controller-contract #62 «except Exception 금지» + ④ 타 BC 예외 축은 context-isolation(#12·#13) 소유"},
+            {"label": "자기 raise 즉시 catch·HttpError forwarding·re-raise·handler forwarding 금지", "class": "Prohibition", "enforcedBy": ["check-api-error-controller-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② 동상 — controller 계약(파일럿 b-652~656 판형)"},
+            {"label": "Result/None/outcome path의 1회 호출·인위적 try 없는 직후 branch 직접 mapping", "class": "Obligation", "enforcedBy": ["check-api-error-controller-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② 동상 — controller 계약(파일럿 b-621~625 판형)"},
+            {"label": "ACL/OHS의 승인 upstream failure 번역과 controller cross-BC catch의 구별", "class": "Exception", "enforcedBy": ["check-context-isolation.py", "check-synthetic-infra-exc.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #13 OHS 소비는 ACL뿐·#164 도메인 예외 번역(context-isolation) + #129 전수 명시 매핑(synthetic-infra-exc)"}
+          ]
+        },
+        {
+          "lines": [82, 82],
+          "kind": "norm",
+          "norms": [
+            {"label": "승인 concrete의 fixed value class default 제공·무인자 생성 가능", "class": "Obligation", "enforcedBy": ["check-error-centralization.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring schema contract backstop(파일럿 «concrete 오류의 무인자 생성» 동일 판형)"},
+            {"label": "class default의 직접 선언·승인 base 상속 택일(불필요 재선언 불요구)", "class": "Permission", "enforcedBy": ["check-error-centralization.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② 동상 — 재선언 metadata 축"},
+            {"label": "승인된 direct BC-base 생성의 keyword 명시 범위(required 전부+승인 optional만)", "class": "Obligation", "enforcedBy": ["check-api-error-controller-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring constructor keyword 집합 검증(파일럿 L-F 실측 — controller-contract 소관)"},
+            {"label": "catch·failed branch의 두 인자 Status 직접 반환", "class": "Obligation", "enforcedBy": ["check-api-error-controller-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② 동상 — controller 계약"},
+            {"label": "plugin의 status body property 요구 blocker", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "② 파일럿 L-F 중재 — 검사기는 자기 입력(inventory)을 전제하므로 순환 배선 해소·기본값 비채택 판정은 감수자"},
+            {"label": "승인 response header의 주입된 temporal HttpResponse 기입", "class": "Obligation", "enforcedBy": ["check-api-error-controller-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② 동상 — controller 계약(파일럿 b-733~737 판형)"},
+            {"label": "오류 tuple·raw Response/JsonResponse/HttpResponse·dict body·factory/serializer/helper indirection의 blocker", "class": "Prohibition", "enforcedBy": ["check-api-error-controller-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② 동상 — controller 계약"}
+          ]
+        },
+        {
+          "lines": [83, 83],
+          "kind": "norm",
+          "norms": [
+            {"label": "직접 반환 BC 오류 status의 response= 같은 BC base 선언", "class": "Obligation", "enforcedBy": ["check-openapi-error-declaration.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring «직접 반환하는 BC 오류와 response={status: <Bc>ErrorSchema} 선언의 일치를 검증»"},
+            {"label": "mapping tuple·runtime 반환·generated OpenAPI 3자의 완전·동일", "class": "Obligation", "enforcedBy": ["check-openapi-error-declaration.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② 동상 — OpenAPI checker"},
+            {"label": "framework-owned status(401·403·route 404·422·429·HttpError·500)의 BC 오류 직접 반환·BC base 광고 금지", "class": "Prohibition", "enforcedBy": ["check-openapi-error-declaration.py", "check-api-error-controller-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② OpenAPI 선언 축(openapi-error-declaration) + provenance 제한(controller-contract) — 파일럿 §6.2 판형과 동축"},
+            {"label": "auth backend 반환 계약(성공=identity/principal·실패=None 또는 AuthenticationError)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 지목 · 파일럿 판형에서도 auth adapter 계약은 위임 기본값(검사기 비커버)"},
+            {"label": "truthy FrameworkErrorSchema/Schema의 request.auth 주입 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 지목 · 검사기 비커버(s007 사각 목록 (g)와 동축)"},
+            {"label": "framework-established header dependency 은닉·명세 밖 header 날조 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 지목 · 검사기 비커버(숨은 의존은 형태 밖)"},
+            {"label": "status→BC base 선언만으로 subset 증명 불인정(runtime mapping case 검증 생략 금지)", "class": "Obligation", "enforcedBy": ["check-api-error-controller-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring controller 계약(실제 mapping case) + ① 생략 금지 판정은 감수자"}
+          ]
+        },
+        {
+          "lines": [84, 84],
+          "kind": "norm",
+          "norms": [
+            {"label": "오류 1~5축의 active dddjango-code-json scope 한정 적용", "class": "Obligation", "enforcedBy": ["check-api-error-controller-contract.py", "check-error-centralization.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② 두 docstring 공통 «The checker is deliberately profile-gated / profile- and source-selected»"},
+            {"label": "preserve-established scope의 승인 native forwarding·handler·body/return form·mapping 보존", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring «preserve-established … add no new error-mapping semantics» — 보존 판정은 기계 밖"},
+            {"label": "5축을 이유로 한 code-profile 이주 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 금지 명문 · 검사기 비커버"},
+            {"label": "profile 경계의 범위 한정(배선·등록은 profile 무관 규율 소유)", "class": "Exception", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면이 아래 배선 규율로 소유를 넘김 — 이중 계상 방지 규범"}
+          ]
+        },
+        {
+          "lines": [85, 85],
+          "kind": "norm",
+          "norms": [
+            {"label": "checker exit 0의 semantic compliance 증거 불인정", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «exit 0이어도 증거가 아니다» — 백스톱 사각 전담 선언"},
+            {"label": "checker 사각 7종(a~g)의 직독 의무", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면이 사각 목록을 감수자 직독 대상으로 지정 — 정의상 검사기 비커버(한 의무 동사의 목적어 열거라 단일 채번)"}
+          ]
+        },
+        {
+          "lines": [86, 86],
+          "kind": "norm",
+          "norms": [
+            {"label": "contract scope마다 project api.py의 API instance 단독 소유", "class": "Obligation", "enforcedBy": ["check-composition-root.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #105/#112 api/ 직계·등록 파일 규칙(composition-root 담당) + ① 문면 scope 단위 단일 instance"},
+            {"label": "BC api_router의 side-effect-free 자기 controller 한정 등록", "class": "Obligation", "enforcedBy": ["check-composition-root.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #107 «def register_<bc>_api(api)» 시그니처 축자 검사(composition-root 담당)"},
+            {"label": "project urls.py의 registrar 명시 1회 호출 후 API mount", "class": "Obligation", "enforcedBy": ["check-context-isolation.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #431 «허용은 urls.py의 register_<bc>_api(api) 호출»(context-isolation 담당)"},
+            {"label": "controller의 auto_import=False", "class": "Obligation", "enforcedBy": ["check-context-isolation.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #110 auto_import=False(context-isolation docstring 담당 규칙)"},
+            {"label": "project API import·module-top-level 등록·dynamic registrar·import-time side effect·scope 내 API 복수의 blocker", "class": "Prohibition", "enforcedBy": ["check-context-isolation.py", "check-composition-root.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #431 부작용 등록 금지(context-isolation) + composition-root DI 레인 — dynamic 변종은 사각(b21 (b))으로 감수자"},
+            {"label": "HTTP registrar와 DI-only composition_root/의 혼합 금지", "class": "Prohibition", "enforcedBy": ["check-composition-root.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring «DI 조립은 BC 루트의 composition_root/가 소유» + #497 단일 파일 변종 차단"},
+            {"label": "root-local catalog/mapping·registrar/composition lookalike의 직접 확인", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring «in-tree 파일 내장 변종은 discipline-reviewer 의미 레인 몫» — 명시 위임"},
+            {"label": "controller 형태의 승인 presentation 계약 보존", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 지목 · 검사기 비커버(승인 계약 대조)"},
+            {"label": "406/415 대응 사유의 class controller 함수형 전환·별도 API instance 격리 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "② check-ninja-boundary-middleware docstring의 406/415 언급은 «driving_layer 미들웨어의 settings.MIDDLEWARE 자가등록» 한 형태만 판정 대상이라 이 규범의 세 형태(함수형 Router 전환·별도 API instance 격리)를 검출하지 못한다 — 인접 사건군 참고일 뿐 집행 아님(enforcedBy 미병기) · ① 승인 presentation 계약 보존 판정은 감수자"},
+            {"label": "preserve-established scope의 registration/composition 표준 대조(보존 대상은 오류 wire 산출물)", "class": "Override", "enforcedBy": ["check-composition-root.py", "check-context-isolation.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면이 preserve 보존 원칙을 배선 축에서 눌러 이기는 우선 규칙(«preserve 가 보존하는 것은 … 배선이 아니다» — 구 문구 철회 명문·2026-08-12 라운드 1′ 실증)이라 class=Override(코퍼스 선례 implementation-django s015-2.5) + ④ 배선 규칙 소유 검사기 2종"},
+            {"label": "배선 표준화의 오류 profile 이주 함의 금지(오류 산출물은 slot 승인대로)", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 배타 규범 — 이중 계상·오적용 방지"},
+            {"label": "Phase 1 project-wide inventory·mixed-profile sharing 점검의 profile 무관 유지", "class": "Obligation", "enforcedBy": ["check-error-centralization.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring project inventory correspondence + ① profile 무관 명문"}
+          ]
+        },
+        {
+          "lines": [87, 87],
+          "kind": "norm",
+          "norms": [
+            {"label": "raw DB/SDK/network exception의 safe framework 500 유지", "class": "Obligation", "enforcedBy": ["check-api-error-controller-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring controller 계약(raw 예외 catch 차단) — 파일럿 §6.2 «기본 경로 = framework 미식별 500» 동축"},
+            {"label": "global recognizer·retryable handler·문자열/SQLSTATE 분류 요구·신설 금지", "class": "Prohibition", "enforcedBy": ["check-transient-overmapping.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring «dddjango-code-json에서는 custom handler/recognizer 자체가 … 위배 … 이 checker가 발화하지 않아도 근거가 되지 않는다 … ③ discipline-reviewer 의미 체크가 담당»"},
+            {"label": "G1 명시 승인 시에만 owning infra/ACL의 정규화 후 controller 직접 흐름 mapping", "class": "Exception", "delegatedTo": ["command-dddjango"], "basis": "① 문면이 G1 승인 조건을 지목 — 승인 절차 소유 Coordinator(파일럿 판형 동일)"},
+            {"label": "raw infrastructure exception 합성·controller 직접 catch 우회 금지", "class": "Prohibition", "enforcedBy": ["check-synthetic-infra-exc.py", "check-api-error-controller-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② synthetic-infra-exc docstring ⑴ 합성 금지(ACL-EX2) + controller-contract raw 예외 catch 차단"}
+          ]
+        },
+        {
+          "lines": [88, 88],
+          "kind": "norm",
+          "norms": [
+            {"label": "brownfield handler의 기존 permanent/retryable 구분 보존", "class": "Obligation", "enforcedBy": ["check-transient-overmapping.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring «G1에서 이미 승인된 preserve-established brownfield handler를 보존할 때 … 지키는 방어선»"},
+            {"label": "영구장애의 retryable 확대 금지", "class": "Prohibition", "enforcedBy": ["check-transient-overmapping.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring AND 게이트 2)3) — 분기 부재+retryable 반환 차단(헬퍼 무조건-True 위장은 저-recall로 감수자 몫)"},
+            {"label": "preserve compatibility 점검의 범위 한정(code-profile handler/recognizer 요구·허용 레시피 아님)", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 배타 규범 + ② docstring 동일 취지"}
+          ]
+        },
+        {
+          "lines": [89, 89],
+          "kind": "norm",
+          "norms": [
+            {"label": "unknown failure의 framework 500 경로 유지", "class": "Obligation", "enforcedBy": ["check-api-error-controller-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring controller 계약(미식별 실패의 framework 소유) — b23 n1과 동축"},
+            {"label": "배포 설정 확인(DEBUG=False·traceback/민감정보 비노출·BC 변환 부재)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 감수자 직독 · 27종 로스터에 배포 설정 보안 검사기 0(test-config는 환경 축 분할만)"},
+            {"label": "framework-owned body의 code/profile 형식 고정·exact-format 테스트 요구 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 거짓지적 방지 금지 조항 — 감수자 판정"}
+          ]
+        },
+        {
+          "lines": [90, 90],
+          "kind": "norm",
+          "norms": [
+            {"label": "복구 가능한 도메인·애플리케이션 오류의 view-local 재렌더·messages.error 보존", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «reviewer가 직접 본다» + ④ 위임 기본값(implementation-django-web §11→discipline-reviewer)"},
+            {"label": "인프라·미식별 시스템 오류의 중앙 handler500/500.html 경로", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 동상 — 서버렌더 독립 판정"},
+            {"label": "서버렌더 레드 플래그 4종(시스템 오류 삼킴·사용자 오류 500화·permanent/retryable 미구별 5xx·broad except 둔갑)의 important", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "② transient-overmapping docstring은 API 경계 exception_handler 한정 — HTML local middleware는 그 밖(감수자 직독)"},
+            {"label": "invalid POST 재렌더·승인 transient의 503 분류·HTMX error fragment의 정상 인정", "class": "Exception", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 거짓지적 방지 예외 — 감수자 판정"},
+            {"label": "서버렌더 규율의 독립성(API error profile·handler 유무 무관)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «reviewer가 직접 본다» — 소유 선언"}
+          ]
+        },
+        {
+          "lines": [91, 91],
+          "kind": "norm",
+          "norms": [
+            {"label": "외부 식별자·수치 입력 필드의 상한 미선언 important(5xx 오분류 방지)", "class": "Obligation", "enforcedBy": ["check-usecase-dto-placement.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #139 제약 선언은 schema_in.py에(usecase-dto-placement 담당 — 자리 축만) + ① 상한 유무 판정은 감수자(architecture-api §5.1)"},
+            {"label": "판정 기준의 상한 선언 유무 한정(구체 경계값 강요 금지)", "class": "Exception", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 거짓지적 방지 예외 — 값은 필드·DB 타입 몫"}
+          ]
+        },
+        {
+          "lines": [92, 92],
+          "kind": "norm",
+          "norms": [
+            {"label": "트리·배치·명명 값의 houserules final.md 단일 소유(이 문서에 값 미보유)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면이 값 정본을 §0~§4로 위임(값 사본 금지) — 판정 주체는 감수자"},
+            {"label": "① 코드와 final.md의 직접 대조", "class": "Obligation", "enforcedBy": ["check-layer-skeleton.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #486~#490 골격 백스톱(layer-skeleton 담당)이 존재·폐쇄 축을 커버 · ① 직접 대조는 감수자"},
+            {"label": "명세 부합만의 통과 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 금지 명문 — 감수자 판정 규율"},
+            {"label": "명세 자체의 §0 불변식·§2 골격·포트/칸 위치 위반 시 발견 상신(설계 반송)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면 «설계 반송» — 반송 라우팅 소유 Coordinator"},
+            {"label": "레이아웃 대조 기준의 표준 트리 고정(기존 배치 일치는 통과 사유 아님)", "class": "Override", "enforcedBy": ["check-layer-skeleton.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «소스 트리에 «기존 규약 존중» 케이스는 없다·기존 배치와의 일치는 통과 사유가 아니다»가 houserules §1.1 기존 규약 존중을 눌러 이기는 우선 규칙이라 class=Override(코퍼스 선례 implementation-django s015-2.5 «기존 배치는 입력이 아니다») + ② docstring «채택 저장소에서는 application/ 직계 전부가 BC» 고정 기준"},
+            {"label": "승인 test artifact의 기존 테스트 위치(§1.2) 예외 대조", "class": "Exception", "enforcedBy": ["check-test-config.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #383~#392 test/ 구조(test-config 담당) + ① 승인 위치 예외 판정은 감수자"},
+            {"label": "대조 대상의 이번 diff(승인 스코프 산출물) 한정", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "② 다수 검사기 docstring의 touched 한정 게이트와 동축 · 판정은 감수자"},
+            {"label": "범위 밖 legacy 잔존의 발견 불산입(빚 보고 채널·수리/이동 지시 금지)", "class": "Prohibition", "delegatedTo": ["command-dddjango"], "basis": "① 문면이 빚 보고 채널(G0 ⓐ)을 지목 — 빚 채널 소유 Coordinator"},
+            {"label": "승인 스코프 밖 기존 파일 이동·재배선 자체의 발견 판정(표준 트리 일치는 통과 사유 아님)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면 «설계 반송»(2026-08-13 라운드 2 실증) — 반송 라우팅 소유"},
+            {"label": "② 경로·AST 판정의 registry 백스톱 소유·재판정 금지(이중 계상 금지)", "class": "Prohibition", "enforcedBy": ["check-layer-skeleton.py"], "delegatedTo": ["command-dddjango"], "basis": "① 문면이 commands/dddjango.md registry 표를 소유자로 지목 — registry 실행 소유 Coordinator · ④ 트리 판정 대표 백스톱 layer-skeleton(#487 최우선 등록)"},
+            {"label": "백스톱 exit 0의 의미 준수 증거 불인정", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «exit 0을 의미 준수의 증거로 읽지 않는다» — 사각 전담 선언"},
+            {"label": "형태 밖 의미 변종(개명 폴더·빈-정본 위장·변수 우회·간접 재수출·이름 위장 클래스·모듈/lazy 싱글톤 공유) 직독", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "② check-composition-root docstring «형태로 못 가르므로 discipline-reviewer 의미 레인 몫» — 명시 위임"},
+            {"label": "③ 옛 이름 재등장의 트리 밖 칸 위반 판정(면제 불인정)", "class": "Prohibition", "enforcedBy": ["check-layer-skeleton.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ 문면이 #81·#490을 인용 — 둘 다 layer-skeleton docstring 담당 규칙"},
+            {"label": "④ 주석·docstring 언어의 프로젝트 관례(없으면 한국어) 일치 확인", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «기계 밖» 자인 + ④ 위임 기본값(discipline-houserules→discipline-reviewer)"},
+            {"label": "⑤ 타입 규율의 기계 전면 소유와 감수자 몫 한정(ⓓ#69 후보·역방향 어노테이트 오류)", "class": "Obligation", "enforcedBy": ["check-public-surface-annotation.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면이 check-public-surface-annotation을 직접 지목 + ② docstring #493 전면 집행·#69는 ⓓ 후보(마무리는 discipline-reviewer)"}
+          ]
+        },
+        {
+          "lines": [93, 93],
+          "kind": "norm",
+          "norms": [
+            {"label": "known failure 집합의 ACL 전수 번역(raw 통과 시 blocker)", "class": "Obligation", "enforcedBy": ["check-synthetic-infra-exc.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring ⑵ #129 «예외 번역은 알려진 구체 예외의 전수 명시 매핑» — 축자 동축"},
+            {"label": "import 없는 propagation·helper·재수출 우회의 직독", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «기계 밖이라 네가 직접 읽는다» — 사각 자인"},
+            {"label": "광범위 except Exception 요구 금지", "class": "Prohibition", "enforcedBy": ["check-synthetic-infra-exc.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② docstring #129 catch-all 번역 금지와 같은 축(요구도 금지)"},
+            {"label": "ACL·upstream repository 안에서 승인 concrete로 소진된 실패의 누수 불인정", "class": "Exception", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 거짓지적 방지 예외 — 감수자 판정"},
+            {"label": "raw DB/SDK/network unknown failure의 전수 집합 제외(safe framework 500 기본)", "class": "Exception", "enforcedBy": ["check-api-error-controller-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "② controller-contract docstring raw 예외 provenance 제한 · b23과 동축"}
+          ]
+        },
+        {
+          "lines": [94, 95],
+          "kind": "norm",
+          "norms": [
+            {"label": "ⓓ 후보 줄의 출력 계약(경로: 사실 — 물음 · exit 불산입)", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면이 검사기 출력 계약을 규정 + ④ 검사기 실행·출력 수납 소유 Coordinator(registry 표)"},
+            {"label": "ⓓ 후보 판정자의 단독 귀속(감수자)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «이 줄의 판정자는 너 하나다» — 위임 대상의 명문 근거"},
+            {"label": "후보별 답변·발견(심각도·근거·규칙 번호) 또는 기각 사유 1줄 기재", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 형식 규정 — 판정자 소유"},
+            {"label": "ⓓ 후보 무응답 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «무응답 금지 — 후보를 흘리면 그 규칙은 판정자가 없다»"},
+            {"label": "검사기 미방출 자리에도 동일 물음 적용(코드 직독 시 목록 사용)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 확대 적용 명문 — 사각 전담"},
+            {"label": "규칙 번호 정본성과 방출 검사기 매핑의 rule-owner-map 소유", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면이 매핑표(rule-owner-map)를 소유자로 지목 — registry·매핑표 소유 Coordinator"}
+          ]
+        },
+        {"lines": [96, 96], "kind": "table-row"},
+        {"lines": [97, 97], "kind": "table-row"},
+        {
+          "lines": [98, 98],
+          "kind": "table-row",
+          "norms": [
+            {"label": "ⓓ#181 멱등 물음(두 번 와도 결과가 같나)", "class": "Obligation", "enforcedBy": ["check-missable-entrance.py", "check-broker-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #181 담당=missable-entrance docstring(«멱등 물음의 소유자») · broker-contract가 #532에서 같은 물음 인용 — 후보 마무리는 감수자"}
+          ]
+        },
+        {
+          "lines": [99, 99],
+          "kind": "table-row",
+          "norms": [
+            {"label": "ⓓ#595 이름 안정 물음(공급자·계기·수단이 바뀌어도 이름이 그대로인가)", "class": "Obligation", "enforcedBy": ["check-business-vocabulary.py", "check-port-adapter-pairing.py", "check-missable-entrance.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ 병기 자 = 주 소유 + 쓰는-자리 방출자 전부(§4-⑦) — #595·#584=business-vocabulary · #594=port-adapter-pairing · #512=missable-entrance(docstring «#512 [ast+] webhook/<provider>/») · 후보 마무리는 감수자"}
+          ]
+        },
+        {
+          "lines": [100, 100],
+          "kind": "table-row",
+          "norms": [
+            {"label": "ⓓ#553 업무 규칙 물음(Q2)", "class": "Obligation", "enforcedBy": ["check-port-adapter-pairing.py", "check-business-vocabulary.py", "check-naming.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ 병기 자 = 주 소유 + 쓰는-자리 방출자 전부(§4-⑦) — #553·#475=port-adapter-pairing · #607=business-vocabulary(같은 술어 공유 docstring 명문) · #589=naming · #316은 담당 검사기 부재(grep 0)라 감수자 단독"}
+          ]
+        },
+        {
+          "lines": [101, 101],
+          "kind": "table-row",
+          "norms": [
+            {"label": "ⓓ#565 단계 이름 물음(업무가 이 단계 이름을 입으로 부르나)", "class": "Obligation", "enforcedBy": ["check-domain-model.py", "check-event-publish.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #565 담당=domain-model(도메인 Enum 값 ∩ 유스케이스 이름 후보) · #564 진행표 후보는 event-publish 소유(표의 쓰는 자리)"}
+          ]
+        },
+        {
+          "lines": [102, 102],
+          "kind": "table-row",
+          "norms": [
+            {"label": "ⓓ#590 문구 물음(이 값이 사람이 읽을 문구인가)", "class": "Obligation", "enforcedBy": ["check-naming.py", "check-business-vocabulary.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #590 담당=naming(문구의 자리 — docstring #588·#589·#590) · #618 locale/채널 후보는 business-vocabulary가 #590 물음 소유로 인용"}
+          ]
+        },
+        {
+          "lines": [103, 103],
+          "kind": "table-row",
+          "norms": [
+            {"label": "ⓓ#628 업무 어휘 물음(도메인 공개 심볼 토큰 집합)", "class": "Obligation", "enforcedBy": ["check-business-vocabulary.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «업무 어휘의 정의(#628)는 business_vocab.py가 진다» — 재료 실체까지 문면 일치"}
+          ]
+        },
+        {
+          "lines": [104, 104],
+          "kind": "table-row",
+          "norms": [
+            {"label": "ⓓ#11 손잡이 물음(연 쪽이 닫기까지 하나)", "class": "Obligation", "enforcedBy": ["check-context-isolation.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#11(경계 애너테이션의 Model/QuerySet은 확정, 그 외 후보)» — 후보 마무리는 감수자"}
+          ]
+        },
+        {
+          "lines": [105, 106],
+          "kind": "table-row",
+          "norms": [
+            {"label": "ⓓ#355 주어 물음(애그리거트인가 화면인가)", "class": "Obligation", "enforcedBy": ["check-transaction-boundary.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring #355 [ast+] 확정/후보 분업 명문 — bool·int 잔여 후보의 판정은 감수자"}
+          ]
+        },
+        {"lines": [107, 107], "kind": "prose"},
+        {
+          "lines": [108, 108],
+          "kind": "norm",
+          "norms": [
+            {"label": "ⓓ#82 BC 폴더 이름 물음(업무의 낱말인가·유사 변형 반송 후보)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #82 담당 검사기 부재(27종 전수 `#82` grep 0 — business-vocabulary도 미방출) · 재료 #628 토큰 소유는 집행이 아니라 재료 공급이라 enforcedBy 미병기(#492·#316과 동형) · 판정은 houserules §3 대조로 감수자"},
+            {"label": "ⓓ#36 정도 낱말 칸 물음(예/아니오로 답하는 물음이 붙나)", "class": "Obligation", "enforcedBy": ["check-naming.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring #36 [ast+] 확정/후보 — naming 담당"},
+            {"label": "ⓓ#17·#18 1차 축 이름 물음(Q1)", "class": "Obligation", "enforcedBy": ["check-domain-model.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #17/#18 담당=domain-model(naming은 «#17/#18(domain-model) 소유 — 중복 진단 금지» 명문)"}
+          ]
+        },
+        {
+          "lines": [109, 109],
+          "kind": "norm",
+          "norms": [
+            {"label": "ⓓ#151 창구 이름 물음(무엇을 해 주는가를 말하나)", "class": "Obligation", "enforcedBy": ["check-context-isolation.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ OHS 명명 규칙군(#482~#484 등) 담당=context-isolation · 후보 마무리는 감수자"},
+            {"label": "ⓓ#153 계약↔응용 DTO 변환 물음", "class": "Obligation", "enforcedBy": ["check-context-isolation.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ ACL/OHS 축 담당=context-isolation(#12·#13·#152~#155)"},
+            {"label": "ⓓ#171 예외 이름 분기 가능성 물음", "class": "Obligation", "enforcedBy": ["check-context-isolation.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#171(접미사뿐인 예외 이름)» 후보 — context-isolation 담당"},
+            {"label": "ⓓ#347 사용자 API 동시 수행 물음(admin feature)", "class": "Obligation", "enforcedBy": ["check-context-isolation.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#347(admin feature의 …)» 후보 방출 — context-isolation 담당"}
+          ]
+        },
+        {
+          "lines": [110, 110],
+          "kind": "norm",
+          "norms": [
+            {"label": "ⓓ#68 검사 값의 출처 물음(Q2)", "class": "Obligation", "enforcedBy": ["check-usecase-dto-placement.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #68 담당=usecase-dto-placement(검증 자리 규칙군 #139·#183과 같은 판)"},
+            {"label": "ⓓ#103 되돌려 굽기 여부 물음", "class": "Obligation", "enforcedBy": ["check-usecase-dto-placement.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #103 담당=usecase-dto-placement"},
+            {"label": "ⓓ#140 검증 위치 이탈 물음(Q2)", "class": "Obligation", "enforcedBy": ["check-usecase-dto-placement.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #140 담당=usecase-dto-placement(#183 validation 금지와 동축)"},
+            {"label": "ⓓ#191 판정이 되는 물음 이름(Q1)", "class": "Obligation", "enforcedBy": ["check-usecase-dto-placement.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #191 담당=usecase-dto-placement"},
+            {"label": "ⓓ#194 판정 주인이 유스케이스인가(Q2)", "class": "Obligation", "enforcedBy": ["check-usecase-dto-placement.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #194 담당=usecase-dto-placement"},
+            {"label": "ⓓ#69 런타임 검사 대신 테스트·타입 체커 몫 물음", "class": "Obligation", "enforcedBy": ["check-public-surface-annotation.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#69 (ast+ · ⓓ 후보) … 마무리는 discipline-reviewer» — 축자 위임"}
+          ]
+        },
+        {
+          "lines": [111, 111],
+          "kind": "norm",
+          "norms": [
+            {"label": "ⓓ#86 분기가 업무를 가르는가 물음(유스케이스 강등)", "class": "Obligation", "enforcedBy": ["check-composition-root.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#85/#86(ⓓ) dependency_wiring.py는 build_* 팩토리만 · 조건/계산은 후보»"},
+            {"label": "ⓓ#511 입구 계약의 외부 소유 물음(OAuth 콜백=webhook 자리)", "class": "Obligation", "enforcedBy": ["check-composition-root.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#511(ⓓ) api/ 2차 축 — 계약 소유 … 후보»"},
+            {"label": "ⓓ#125 입구가 변환·1회 호출을 넘는 로직 보유 물음", "class": "Obligation", "enforcedBy": ["check-api-error-controller-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «ⓓ#125는 route 함수 def 행 좌표» — controller-contract가 방출 소유"}
+          ]
+        },
+        {
+          "lines": [112, 112],
+          "kind": "norm",
+          "norms": [
+            {"label": "ⓓ#257 루트 메서드 뒤 불변식 물음(Q4)", "class": "Obligation", "enforcedBy": ["check-domain-model.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#257 [ast+] … 후보: 끝에 불변식 확인 없는 루트 메서드(Q4)»"},
+            {"label": "ⓓ#259 값인가 엔티티인가 물음(Q4)", "class": "Obligation", "enforcedBy": ["check-domain-model.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#259 [ast+] … 후보: id를 가진 value_object»"},
+            {"label": "ⓓ#268 타입 조합만으로 잘못된 값이 불가능한가(Q2)", "class": "Obligation", "enforcedBy": ["check-domain-model.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #268 담당=domain-model(값 객체 축)"},
+            {"label": "ⓓ#301 «없을 때» 판정의 루트 메서드 표현 가능성", "class": "Obligation", "enforcedBy": ["check-domain-model.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #301 담당=domain-model"},
+            {"label": "ⓓ#311 이름이 규칙 행위를 말하나", "class": "Obligation", "enforcedBy": ["check-domain-model.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #311 담당=domain-model"},
+            {"label": "ⓓ#547 동시 발생 차단·두 사용자 충돌 물음(Q4)", "class": "Obligation", "enforcedBy": ["check-domain-model.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #546/#547 담당=domain-model(«너무 갈린 쪽»만 기계) — 반대편은 s007 human 판정 #254"}
+          ]
+        },
+        {
+          "lines": [113, 113],
+          "kind": "norm",
+          "norms": [
+            {"label": "ⓓ#271 이름이 이미 일어난 사실을 말하나", "class": "Obligation", "enforcedBy": ["check-event-publish.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#271 [ast+] 사실 이름은 과거형 — 확정/후보»"},
+            {"label": "ⓓ#564 패턴이 아니라 진행표인가(단계 물음)", "class": "Obligation", "enforcedBy": ["check-event-publish.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#564 [ast+] 진행표 금지 — 후보»"}
+          ]
+        },
+        {
+          "lines": [114, 114],
+          "kind": "norm",
+          "norms": [
+            {"label": "ⓓ#285 수가 애그리거트 컬렉션을 세거나 합친 것인가", "class": "Obligation", "enforcedBy": ["check-transaction-boundary.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#285 [ast+] … bypass query 포트의 bool/int 반환 메서드는 ⓓ 후보»"}
+          ]
+        },
+        {
+          "lines": [115, 115],
+          "kind": "norm",
+          "norms": [
+            {"label": "ⓓ#520 사실이 안 나가면 내가 할 일이 있나", "class": "Obligation", "enforcedBy": ["check-broker-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#520 [ast+] … passive-aggressive command 후보»"},
+            {"label": "ⓓ#529 듣는 쪽이 따로 배포되나", "class": "Obligation", "enforcedBy": ["check-broker-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#529 [ast+] external을 가르는 물음»"},
+            {"label": "ⓓ#532 받는 쪽이 안 왔을 때·두 번 왔을 때를 메우나", "class": "Obligation", "enforcedBy": ["check-broker-contract.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ 실방출 문면 일치(«받는 쪽이 「안 왔을 때」와 「두 번 왔을 때」를 메우고 있나(#181·#629)»)"}
+          ]
+        },
+        {
+          "lines": [116, 116],
+          "kind": "norm",
+          "norms": [
+            {"label": "ⓓ#451 창구가 혼자서 답을 만들 수 있나", "class": "Obligation", "enforcedBy": ["check-missable-entrance.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#451 [ast+] … 후보: OHS 서비스가 if 분기에서 계약 예외를 raise»"},
+            {"label": "ⓓ#512 보내는 쪽 문서가 자기를 이 이름으로 부르나", "class": "Obligation", "enforcedBy": ["check-missable-entrance.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#512 [ast+] webhook/<provider>/ … 확정/후보»"},
+            {"label": "ⓓ#629 이 입구가 안 와도 업무가 돌아가나", "class": "Obligation", "enforcedBy": ["check-missable-entrance.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#629 [ast+] 후보(집합 차)» — missable-entrance 담당"}
+          ]
+        },
+        {
+          "lines": [117, 117],
+          "kind": "norm",
+          "norms": [
+            {"label": "ⓓ#343 운영 기능인가 장고 배선인가", "class": "Obligation", "enforcedBy": ["check-naming.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#343은 admin 가족이라 keyword 오배정을 이관받았다»(transaction-boundary가 이관 명문)"},
+            {"label": "ⓓ#589 조건이 업무 판정인가(Q2)", "class": "Obligation", "enforcedBy": ["check-naming.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #589 담당=naming(#588·#589·#590 문구의 자리 블록)"}
+          ]
+        },
+        {
+          "lines": [118, 118],
+          "kind": "norm",
+          "norms": [
+            {"label": "ⓓ#227 자료를 원시값 인자로 펴서 넘길 수 있나", "class": "Obligation", "enforcedBy": ["check-port-adapter-pairing.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#227[ast+] 자료는 원시값으로 안 될 때만(후보)»"},
+            {"label": "ⓓ#233 무엇을 알고 싶은가가 이름에 있나(Q1)", "class": "Obligation", "enforcedBy": ["check-port-adapter-pairing.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#233[ast+] 「무엇을 알고 싶은가」(확정: 기술·BC 토큰)»"},
+            {"label": "ⓓ#368 기계인가 값인가", "class": "Obligation", "enforcedBy": ["check-port-adapter-pairing.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #368 담당=port-adapter-pairing"},
+            {"label": "ⓓ#475 이 판정이 업무 규칙인가(Q2)", "class": "Obligation", "enforcedBy": ["check-port-adapter-pairing.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#475[ast+] 날것으로 업무 판정(후보)»"},
+            {"label": "ⓓ#485 이름이 무엇을 시키는지 말하나", "class": "Obligation", "enforcedBy": ["check-port-adapter-pairing.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#485[ast+] 메서드는 의도(확정: notify·handle·execute… / 후보: 동사 아님)»"}
+          ]
+        },
+        {
+          "lines": [119, 119],
+          "kind": "norm",
+          "norms": [
+            {"label": "ⓓ#425 재료의 뜻을 밖(HTTP·pytest·시간)이 정하나", "class": "Obligation", "enforcedBy": ["check-business-vocabulary.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #425 담당=business-vocabulary(#628 물음의 쓰는 자리로 문면 명시)"},
+            {"label": "ⓓ#448 낱말의 뜻을 저장소 밖이 정하나", "class": "Obligation", "enforcedBy": ["check-business-vocabulary.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #448 담당=business-vocabulary"},
+            {"label": "ⓓ#607 조건이 업무 규칙인가(Q2)", "class": "Obligation", "enforcedBy": ["check-business-vocabulary.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#607 [ast+] 업무 판정 후보(Q2 — #553 술어 공유)»"},
+            {"label": "ⓓ#619 이것이 원시값 하나로 되나", "class": "Obligation", "enforcedBy": ["check-business-vocabulary.py"], "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ docstring «#619 [ast+] 원시값 하나로 되는 자료 클래스 후보»"}
+          ]
+        },
+        {
+          "lines": [120, 120],
+          "kind": "norm",
+          "norms": [
+            {"label": "ⓓ#492 정본 문서 행이 «있어야 하나»인가 «어떻게 쓰나»인가", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "④ #492 담당 검사기 부재(27종 전수 grep 0 — 주어가 코드가 아니라 정본 문서) · ⓓ 판정자 단독 귀속 문면"}
+          ]
+        },
+        {
+          "lines": [121, 121],
+          "kind": "norm",
+          "norms": [
+            {"label": "human 판정 #254 — 너무 묶인 애그리거트 경계의 가짜 불변식 발견(설계 반송)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «검사기가 아예 없다(전적으로 네 몫)» + ④ #254 담당 검사기 부재(27종 전수 grep 0) — 반대편 #546·#547(domain-model)은 다른 규칙이라 병기하지 않는다(§16 역도 성립은 «담당» 검사기 도피 금지이지 반대편 병기 요구가 아님 · #547 docstring 실물 방향 불일치는 빚 채널 상신)"},
+            {"label": "human 판정 #316 — 재료 미수집 시에도 규칙 불해체(도메인→응용 조회→도메인 분절 직독)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «검사기가 아예 없다» + ④ #316 담당 검사기 부재(27종 전수 grep 0)"}
+          ]
+        },
+        {
+          "lines": [122, 123],
+          "kind": "norm",
+          "norms": [
+            {"label": "면제 조문 16종의 문면 정본 위임", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면 «문면은 정본 명세 소유» — 규칙 번호 정본 소유 Coordinator(registry·rule-owner-map 축)"},
+            {"label": "면제 조문 번호로 새 검사·새 의무 신설 금지", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 금지 명문 — 감수자 자기 판정 규율"},
+            {"label": "면제에 정확히 드는 후보·발견의 번호 인용 기각", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 형식 규정 — ⓓ 판정자 소유"}
+          ]
+        },
+        {
+          "lines": [124, 125],
+          "kind": "norm",
+          "norms": [
+            {"label": "로드 스킬 4종(cleancode·tdd·implementation-test·houserules) 절의 근거 인용", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 인용 의무 + ④ 위임 기본값 표(discipline-*·implementation-*→discipline-reviewer)"}
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s008",
+      "line_start": 126,
+      "line_end": 130,
+      "blocks": [
+        {
+          "lines": [127, 128],
+          "kind": "norm",
+          "norms": [
+            {"label": "코드·테스트 수정 금지(읽기 전용)", "class": "Prohibition", "delegatedTo": ["command-dddjango"], "basis": "④ 위임 기본값 표(command+agents 절차 층) — 역할 경계 위반 판정은 Coordinator"},
+            {"label": "반영 주체의 코더 귀속", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "① 문면이 coder를 반영 주체로 지목 + ④ 역할 라우팅 소유 Coordinator"}
+          ]
+        },
+        {
+          "lines": [129, 129],
+          "kind": "norm",
+          "norms": [
+            {"label": "기술 특화 구현 정확성 비판정(규율 렌즈 한정)", "class": "Prohibition", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 렌즈 경계 위반(월권)은 리포트 수납 주체가 판정"},
+            {"label": "구현 정확성=coder·implementation-*, 명세 부합=설계·인수 테스트의 소유 배분", "class": "Obligation", "delegatedTo": ["agent-coder", "agent-design-architect", "agent-acceptance-tester"], "basis": "① 문면 «…가 책임진다»는 판정 소유 배분 선언(감수자 행위 지시 없음) — P-C 판별자 ⑵로 지목 Agent 3종에 위임(implementation-* 스킬은 registry Agent 8종 밖이라 배선 제외) · s008/b2 n9와 같은 자"},
+            {"label": "구조 규율·책임 배치 규율·메커니즘-소유권 규율의 관찰 유지", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «보되» — 감수자 렌즈 포함 선언(s007 b12·b14와 짝)"},
+            {"label": "기술 구현 정확성(쿼리·ORM 관용구) 비관찰", "class": "Prohibition", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «여전히 보지 않는다» — 감수자 렌즈 배제 선언"},
+            {"label": "메커니즘-소유권의 소유권 축 한정(기술 정확성 판정 아님)", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면이 소유권/정확성을 명시 구분 — 감수자 렌즈 한정"},
+            {"label": "API 오류의 direct mapping·physical placement·forbidden extraction/circumvention·scope completeness 관찰 유지", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «보되» — s006 소유 경계와 동축"},
+            {"label": "public wire code·HTTP semantics·compatibility·ninja 기술 정확성의 타 소유(API reviewer·coder·implementation-*)", "class": "Prohibition", "delegatedTo": ["agent-design-review-api"], "basis": "① 문면이 API reviewer 소유를 지목 — 기본값 이탈의 문면 근거"},
+            {"label": "Risky Write 동시성 기준 실현(TDD 커버리지) 관찰 유지", "class": "Obligation", "delegatedTo": ["agent-discipline-reviewer"], "basis": "① 문면 «보되» — s007 b8과 짝"},
+            {"label": "동시성 시나리오 적정성·기술 정확성 비관찰(명세·acceptance-tester / coder·implementation-*)", "class": "Prohibition", "delegatedTo": ["agent-acceptance-tester", "agent-coder"], "basis": "① 문면이 전자=명세·acceptance-tester, 후자=코더·implementation-*로 소유 지목"}
+          ]
+        },
+        {
+          "lines": [130, 130],
+          "kind": "norm",
+          "norms": [
+            {"label": "스코프 확대 권고 금지", "class": "Prohibition", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 스코프 소유 Coordinator(G0/G1)"},
+            {"label": "스코프 의문의 발견 상신 한정", "class": "Obligation", "delegatedTo": ["command-dddjango"], "basis": "④ 절차 층 기본값 — 발견 수납·스코프 결정 소유 Coordinator"}
+          ]
+        }
+      ]
+    }
+  ]
+}

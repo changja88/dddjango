@@ -1,0 +1,4137 @@
+{
+  "schema": "migrate-spec/1",
+  "doc_key": "architecture-ddd-final",
+  "path": "dddjango/skills/architecture-ddd/references/final.md",
+  "restates_paths": {
+    "architecture-ddd-final": "dddjango/skills/architecture-ddd/references/final.md"
+  },
+  "sections": [
+    {
+      "section_key": "s051-8",
+      "line_start": 2058,
+      "line_end": 2072,
+      "blocks": [
+        {
+          "lines": [
+            2059,
+            2060
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            2061,
+            2061
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            2062,
+            2062
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "의사결정 1 — 엔티티는 애그리거트의 일부로만 사용",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "설계 의사결정 준수 판정 — 문서군 기본값(architecture-ddd 설계 시점→design-review-ddd)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2063,
+            2063
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "의사결정 2 — CQRS는 보조 패턴으로 선택 적용",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상 [adv 중재 정정 2026-08-19] L-E: 선택적 적용=허용"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2064,
+            2064
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "의사결정 3 — 애그리거트가 도메인 서비스를 모르게 분리",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2065,
+            2065
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "의사결정 4 — 복수 애그리거트 수정은 결과적 일관성",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2066,
+            2066
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "의사결정 5 — 계층+DIP 기반 동기 흐름",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2067,
+            2067
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "의사결정 6 — 전략 설계 우선",
+              "class": "Override",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상 [adv 중재 정정 2026-08-19] L-E: 우선 규칙"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2068,
+            2068
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "의사결정 7 — 도메인 이벤트 디스패치 타이밍 명시",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2069,
+            2069
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "의사결정 8 — 4계층 명확 분리 패키지 구조",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-layer-skeleton.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "4계층 골격은 check-layer-skeleton.py 집행(rule-owner-map #10·#20·#21)+설계 판정 병행"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2070,
+            2072
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s017-3.2",
+      "line_start": 539,
+      "line_end": 637,
+      "blocks": [
+        {
+          "lines": [
+            540,
+            543
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-ddd-final/s051-8/b3"
+          ],
+          "note": "blockquote [의사결정 #1] — 정본은 s051-8 의사결정 표 1행(Work R 미채번·restates 연결). 출처 라인 포함 verbatim"
+        },
+        {
+          "lines": [
+            544,
+            545
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "엔티티 동등성은 식별자로 판정(값 동일해도 식별자 상이면 다른 객체)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "basis": "L-G 채택(prose→norm) — docstring #259·#260 식별자 축 [adv 중재 정정 2026-08-19]"
+            }
+          ]
+        },
+        {
+          "lines": [
+            546,
+            547
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "엔티티의 행동·불변식 캡슐화(빈혈 모델 금지)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "L-G 채택(인용 프레임이나 «해야 한다» — 애매+포함, b7 W1 재진술 의심 비고) [adv 중재 정정 2026-08-19]"
+            }
+          ]
+        },
+        {
+          "lines": [
+            548,
+            581
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            582,
+            583
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            584,
+            631
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            632,
+            633
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "판정·불변식의 도메인 소유와 프로덕션 실호출",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py",
+                "check-transaction-boundary.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "rule-owner-map #17·#18 ast+(check-domain-model+discipline-reviewer)·P0 §3.2 커버 [adv 중재 정정 2026-08-19] L-F: #257 루트 경유(domain-model)+#195 root 호출 후 save 검사(transaction-boundary) 병기"
+            },
+            {
+              "label": "응용·리포지토리·인프라의 판정 대행·복제 금지",
+              "class": "Prohibition",
+              "enforcedBy": [],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "B1 빈혈/판정 인프라 누수 축(rule-owner-map #8) [adv 중재 정정 2026-08-19] L-F: 복제 조건식 의미 동등성은 정적 검사 밖 — reviewer 단독"
+            },
+            {
+              "label": "판정의 SQL 이동 금지 — 인프라는 경합 가드만·충돌 시 도메인 재실행",
+              "class": "Prohibition",
+              "enforcedBy": [],
+              "basis": "같은 축 — 판정 SQL 이동 차단(stock__gte 류 grep 계열·db §9.5 메커니즘 위임) [adv 중재 정정 2026-08-19] L-F: SQL predicate 검사가 docstring에 부재 — 의미 감사",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ]
+            }
+          ]
+        },
+        {
+          "lines": [
+            634,
+            635
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "도메인 상태·종류 값의 StrEnum 단일 출처와 파생·import 방향",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "4원 지목 없음 — 위임 기본값"
+            },
+            {
+              "label": "값 집합 소비는 심볼로만·비교는 ==",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "동상 [adv 중재 정정 2026-08-19] L-F: 리터럴 소비 백스톱(§2.14) 실재",
+              "enforcedBy": [
+                "check-choices-literal-consumption.py"
+              ]
+            },
+            {
+              "label": "복합 상태 판정의 1차 시정은 애그리거트 술어·enum 프로퍼티",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "검증·연산·불변식 붙은 값의 값 객체 승격",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "동상(이탈 근거 부족 — 기본값 유지)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            636,
+            637
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "새 판정이 얹히는 코드의 domain_layer 애그리거트 이주(평면 모델 판정 금지)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "이주 판단은 설계 시점 — 문서군 기본값(설계)"
+            },
+            {
+              "label": "이주 기준 항-(1) — 판정·불변식 소유 시 표준 구조 이주",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "이주 기준 항-(2) — 단순 데이터 소스는 판정 실내용만 비움",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상 [adv 중재 정정 2026-08-19] L-E: 조건 분기 한정"
+            },
+            {
+              "label": "표준 트리 골격의 예외 없는 빈 패키지 실현(깊이 면제 없음)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-layer-skeleton.py"
+              ],
+              "basis": "houserules §0 제1원칙 #486~#492 문면 지목 — docstring 집행"
+            },
+            {
+              "label": "데이터소스 BC 배치 — driven_layer ORM 실체·빈 애그리거트 골격·폴더명 도출",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-layer-skeleton.py",
+                "check-db-table.py"
+              ],
+              "basis": "동상(#489 포함) [adv 중재 정정 2026-08-19] L-F: driven ORM 배치=db-table·애그리거트 도출=설계 판정 병기",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ]
+            },
+            {
+              "label": "고정·재등장 칸의 빈 패키지 존속",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-layer-skeleton.py"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "test 의미군은 입장 심사 승인 시에만 생성",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "4원 지목 없음 — 기본값 [adv 중재 정정 2026-08-19] L-E: 승인 조건부 한정"
+            },
+            {
+              "label": "루트 평면 <app>/ 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-app-container.py"
+              ],
+              "basis": "#486·#490 문면 지목 [adv 중재 정정 2026-08-19] L-F: 루트 평면 앱 차단은 app-container(§0-1 집행) 소관"
+            },
+            {
+              "label": "골격 실현의 touched 한정(무관 기존 앱은 §4 존중)",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "한정 조항의 판정 주체=같은 축(설계)"
+            },
+            {
+              "label": "컨텍스트 간 접근은 ACL·OHS로만(타 컨텍스트 내부 직접 import 금지)",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-context-isolation.py"
+              ],
+              "basis": "rule-owner-map #1~#5"
+            },
+            {
+              "label": "이주의 신규 판정 한정(기존 배치 일괄 강제 금지 — 기존 배치는 빚)",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "한정 조항 동축"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s004-1.2",
+      "line_start": 11,
+      "line_end": 23,
+      "blocks": [
+        {
+          "lines": [
+            12,
+            14
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-ddd-final/s051-8/b8"
+          ],
+          "note": "[의사결정 #6] blockquote — 정본은 §8 의사결정 표 6행(Work 미승격·restates 연결)"
+        },
+        {
+          "lines": [
+            15,
+            16
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            17,
+            21
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "전략 설계 1단계 — 핵심 도메인 식별",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "문면 역할명 없음·검사기 docstring 27종에 전략 설계 순서 진단 부재 — 위임 기본값(architecture-ddd 설계 시점→design-review-ddd)"
+            },
+            {
+              "label": "전략 설계 2단계 — 바운디드 컨텍스트 설계",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상(경계 설계는 설계 시점 판정)"
+            },
+            {
+              "label": "전략 설계 3단계 — 컨텍스트 매핑 정의",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "전술 패턴은 전략 설계 다음에 적용",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상 — 순서 규범의 판정 주체는 Phase 1 설계 리뷰"
+            }
+          ]
+        },
+        {
+          "lines": [
+            22,
+            23
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "전술 중심 실무 가이드는 구현 단계 한정 활용",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "«활용하되» 조건부 허용 — 문헌 적용 범위 판정은 설계 시점(기본값)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s007-2.1",
+      "line_start": 36,
+      "line_end": 103,
+      "blocks": [
+        {
+          "lines": [
+            37,
+            39
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            40,
+            41
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            42,
+            46
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "도메인 전문가와 개발자의 공동 모델링",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "검사기 27종 docstring에 프로세스(모델링 협업) 진단 없음 — 위임 기본값(설계 시점)"
+            },
+            {
+              "label": "개발자 단독 모델링 후 검증 방식 배제",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상 — «~은 지식 탐구가 아니다» 정의형 부정(P0 애매 보수 포함 승계)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            47,
+            103
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s008-2.2",
+      "line_start": 104,
+      "line_end": 168,
+      "blocks": [
+        {
+          "lines": [
+            105,
+            107
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            108,
+            109
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            110,
+            111
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            112,
+            112
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            113,
+            113
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            114,
+            114
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "핵심(Core) 하위 도메인은 사내 구현 필수",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "표 셀 명령형 — 하위 도메인 유형 판정은 설계 시점(기본값)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            115,
+            115
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            116,
+            117
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            118,
+            119
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            120,
+            120
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            121,
+            121
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            122,
+            122
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            123,
+            123
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            124,
+            124
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            125,
+            126
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            127,
+            168
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s009-2.3",
+      "line_start": 169,
+      "line_end": 211,
+      "blocks": [
+        {
+          "lines": [
+            170,
+            172
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            173,
+            174
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "코드·문서·대화 전반의 동일 용어 사용",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-business-vocabulary.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "④ rule-owner-map 어휘 축은 check-business-vocabulary(#628 업무 어휘 정의 소유)이나 «전 매체 동일 용어»는 정적 진단 밖 — 설계 시점 병기"
+            }
+          ]
+        },
+        {
+          "lines": [
+            175,
+            179
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "유비쿼터스 언어는 기술 용어가 아닌 업무 용어로 구성",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-naming.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② check-naming docstring #28(원전 패턴 약어 금지)·#36(정도 낱말 칸 금지)·#43(패턴 낱말은 능력 이름에 안 온다)이 «이름은 업무 어휘» 축을 결정적으로 문다"
+            },
+            {
+              "label": "용어 1개 = 의미 1개(모호성 금지)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동일 축이나 의미 중복 판정은 정적 검사 밖 — 설계 시점 위임 기본값"
+            },
+            {
+              "label": "유비쿼터스 언어의 유효 범위는 BC 경계 안",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-business-vocabulary.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② check-business-vocabulary docstring 격리 절 #47·#52(계약의 업무 어휘 0·BC 이름 0)가 어휘의 BC 국지성을 집행"
+            }
+          ]
+        },
+        {
+          "lines": [
+            180,
+            181
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            182,
+            188
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            189,
+            211
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s010-2.4",
+      "line_start": 212,
+      "line_end": 253,
+      "blocks": [
+        {
+          "lines": [
+            213,
+            215
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            216,
+            217
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "같은 용어의 의미가 갈리면 BC를 분리",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "경계 설계 판정 — 위임 기본값(설계 시점). 분리 «이후» 격리는 check-context-isolation 소관이라 배선을 겹치지 않음"
+            }
+          ]
+        },
+        {
+          "lines": [
+            218,
+            222
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "BC는 물리적·소유권 경계 — 한 팀 단독 구현·유지관리",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "팀 토폴로지 판정은 검사기 표면 밖 — 위임 기본값(설계 시점)"
+            },
+            {
+              "label": "한 BC는 한 프로젝트 안에 머물며 유스케이스 집합을 포함",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            223,
+            224
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "하위 도메인↔BC 1:1은 목표이되 강제 아님",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "허용형 문면(«반드시 그래야 하는 것은 아니다») — 애매 보수 포함(P0 승계)·설계 시점 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            225,
+            253
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s011-2.5",
+      "line_start": 254,
+      "line_end": 362,
+      "blocks": [
+        {
+          "lines": [
+            255,
+            257
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            258,
+            259
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            260,
+            261
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            262,
+            262
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            263,
+            263
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            264,
+            264
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            265,
+            265
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "공유 커널은 중복 비용 > 조율 비용일 때만 채택",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "표 선택 기준 셀 — 공유 커널 채택은 설계 시점 판정(기본값)"
+            },
+            {
+              "label": "공유 커널의 공유 범위 최소화 필수",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상 — «필수» 마커 셀"
+            }
+          ]
+        },
+        {
+          "lines": [
+            266,
+            266
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            267,
+            267
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            268,
+            268
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            269,
+            269
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            270,
+            270
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            271,
+            271
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            272,
+            273
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "큰 진흙공 확산은 ACL로 방어",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-context-isolation.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "표 선택 기준 셀 명령형 — ACL 배치 자체는 check-context-isolation(#361·#363) 집행이나 «둘지 여부»는 설계 판정"
+            }
+          ]
+        },
+        {
+          "lines": [
+            274,
+            349
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            350,
+            354
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "ACL 선택 조건 — 외부·레거시 용어의 도메인 누수 위험",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "채택 조건절 — 설계 시점 기본값"
+            },
+            {
+              "label": "ACL 선택 조건 — 상·하류 lifecycle 상이",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "ACL 선택 조건 — 공개 통합 계약과 내부 모델의 의미 상이",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            355,
+            358
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "ACL 회피 조건 — 외부 모델이 이미 BC 언어와 일치",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "비채택 조건절 — 설계 시점 기본값"
+            },
+            {
+              "label": "ACL 회피 조건 — 단순 field rename 수준",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            359,
+            360
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "ACL은 경계 근처에 둔다",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-context-isolation.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② check-context-isolation docstring ACL 절 #361(상대 BC 하나=폴더 하나)·#363(<Bc><Capability>Adapter)이 ACL 자리를 집행"
+            },
+            {
+              "label": "번역 로직의 도메인 객체 내부 산발 배치 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-context-isolation.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "② 같은 절 #13(OHS 소비는 ACL 뿐)·#12 — 번역 창구 단일화"
+            },
+            {
+              "label": "번역 대상은 형태뿐 아니라 status·단위·식별자·lifecycle 의미",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "의미 번역 충실성은 정적 검사 밖 — 설계 시점 기본값"
+            },
+            {
+              "label": "published language·versioning은 architecture-api로 이양",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면이 `architecture-api` 소유를 직접 지정 — 기본값(design-review-ddd) 이탈의 문면 근거"
+            }
+          ]
+        },
+        {
+          "lines": [
+            361,
+            362
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-ddd-final/s026/b2"
+          ],
+          "norms": [
+            {
+              "label": "상수·Enum은 소유 BC 내부 자산 — 타 BC 직접 import 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-context-isolation.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "② check-context-isolation docstring 타 BC 절 #12(부를 수 있는 것은 OHS·published_event 둘)·#13"
+            },
+            {
+              "label": "BC 간 연결은 OHS 계약 타입 또는 wire value — 각자 선언은 published language 수용",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-context-isolation.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상 #12·#13 — 창구 한정이 곧 wire 수용 규율"
+            },
+            {
+              "label": "공용 승격은 «같은 변경 사유로 함께 수정» 근거가 명세에 있을 때만",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "공유 커널 결정은 설계 시점 판정 — 기본값"
+            },
+            {
+              "label": "승격 enum 배치는 houserules 표준 트리 — 공유 커널은 domain_layer의 유일 외부 의존",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "② check-domain-model docstring #8(domain_layer 밖으로 나가는 import 0)·#298(shared_value_object import 범위)이 예외 축을 집행"
+            }
+          ],
+          "note": "5번째 문장(발행 봉투 discriminator도 같은 원리)은 s026 birth-enum 정본의 재진술 — Work 미승격·블록 restates로 기록"
+        }
+      ]
+    },
+    {
+      "section_key": "s012-2.6",
+      "line_start": 363,
+      "line_end": 418,
+      "blocks": [
+        {
+          "lines": [
+            364,
+            366
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            367,
+            368
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            369,
+            369
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            370,
+            370
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            371,
+            371
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "핵심 도메인에 최고의 인재 투입",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "표 셀 명령형 — 인력 배치는 검사기 표면 밖·설계 시점 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            372,
+            372
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            373,
+            373
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            374,
+            374
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            375,
+            375
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            376,
+            376
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            377,
+            378
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            379,
+            418
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s016-3.1",
+      "line_start": 465,
+      "line_end": 538,
+      "blocks": [
+        {
+          "lines": [
+            466,
+            468
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            469,
+            470
+          ],
+          "kind": "prose",
+          "restates": [
+            "architecture-ddd-final/s016-3.1/b3"
+          ]
+        },
+        {
+          "lines": [
+            471,
+            476
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "값 객체 동등성은 속성 조합으로 판정(식별자 없음)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "② check-domain-model docstring #259(후보: id 를 가진 value_object — 자리 뒤바뀜 신호)·#260이 식별자↔값 객체 축을 문다"
+            },
+            {
+              "label": "값 객체는 반드시 불변",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "basis": "② check-domain-model #264 «값 객체 불변 — __init__/__post_init__ 밖 self 대입 금지» 문면 일치"
+            },
+            {
+              "label": "값 객체 setter 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "basis": "동상 #264(같은 술어의 금지 축)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            477,
+            538
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s019",
+      "line_start": 644,
+      "line_end": 820,
+      "blocks": [
+        {
+          "lines": [
+            645,
+            647
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "규칙 1 — 진짜 불변식을 일관성 경계 안에서 보호",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② check-domain-model #257(상태 변경은 루트를 지난다)이 불변식 보호 축의 결정적 부분·경계 «설정»은 설계 판정"
+            }
+          ]
+        },
+        {
+          "lines": [
+            648,
+            649
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "한 트랜잭션 = 애그리거트 하나",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-transaction-boundary.py"
+              ],
+              "basis": "② check-transaction-boundary docstring 선두 «「한 트랜잭션 = 애그리거트 하나」(D50) 축의 결정적 백스톱» 문면 일치(#195·#599)"
+            },
+            {
+              "label": "애그리거트 경계 = 불변식 동시 보장 범위",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "경계 «일치» 판정은 정적 검사 밖 — 설계 시점 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            650,
+            651
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "규칙 2 — 작은 애그리거트 설계",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "크기 판정은 검사기 표면 밖 — 설계 시점 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            652,
+            653
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "애그리거트는 루트+최소 속성·값 객체로 제한(Vernon 인용=규칙)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "P0 규약 ② 인용=규칙 승계 — 설계 시점 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            654,
+            655
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "규칙 3 — 다른 애그리거트는 ID로만 참조",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② check-domain-model #253(<A>/** 는 <B>/ 의 루트 모듈만 import)·#258(entity 직접 참조 금지)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            656,
+            657
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            658,
+            659
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "BC 경계를 넘는 ORM 관계(FK·O2O·M2M) 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-db-table.py"
+              ],
+              "basis": "② check-db-table docstring #631 «타 BC 모델을 FK·O2O·M2M 으로 참조 금지(문자열 참조 포함)» 문면 일치"
+            },
+            {
+              "label": "타 BC 애그리거트는 ID 값 참조 — 무결성은 ACL/OHS 조회와 상류 이벤트로",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-db-table.py",
+                "check-context-isolation.py"
+              ],
+              "basis": "② #631(ID 값 저장) + check-context-isolation #12·#13(창구는 OHS·published_event)"
+            },
+            {
+              "label": "FK 경계 3분 — 애그리거트 내부 자유·같은 BC 허용·다른 BC 금지",
+              "class": "Permission",
+              "enforcedBy": [
+                "check-db-table.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② #631의 대칭 허용 축(같은 BC 는 비대상)"
+            },
+            {
+              "label": "플랫폼 횡단 공유(AUTH_USER_MODEL·공유 커널 값객체)는 예외",
+              "class": "Exception",
+              "enforcedBy": [
+                "check-db-table.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② #631 예외 조항 — 판정 주체 병기(설계)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            660,
+            661
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "규칙 4 — 일관성 경계 밖은 결과적 일관성",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-transaction-boundary.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② check-transaction-boundary(D50 축)가 «한 트랜잭션 하나» 쪽을 집행·전환 판정은 설계"
+            }
+          ]
+        },
+        {
+          "lines": [
+            662,
+            663
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-ddd-final/s051-8/b6"
+          ],
+          "note": "[의사결정 #4] blockquote — 정본은 §8 의사결정 표 4행"
+        },
+        {
+          "lines": [
+            664,
+            667
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "동일 DB 단순 케이스의 복수 애그리거트 수정 용인(배경 이론)",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "원전 이론 조항 — 채택 여부 판정은 설계 시점"
+            },
+            {
+              "label": "dddjango 생성 코드의 정본은 「한 트랜잭션 = 애그리거트 하나」",
+              "class": "Override",
+              "enforcedBy": [
+                "check-transaction-boundary.py"
+              ],
+              "basis": "② check-transaction-boundary docstring 선두(D50·#546 축) — 원전 용인을 덮는 내부 정본"
+            },
+            {
+              "label": "분산 시 즉시 결과적 일관성으로 전환",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "분산 전환 판정은 설계 시점 기본값"
+            },
+            {
+              "label": "복수 애그리거트 수정 용인은 FK 결합을 허가하지 않음",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-db-table.py"
+              ],
+              "basis": "② check-db-table #631 — 런타임 원자성과 영속성 결합의 직교 선언"
+            },
+            {
+              "label": "「한 트랜잭션에 묶인다」를 BC 경계 FK 근거로 원용 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-db-table.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "동상 #631(같은 축의 논거 차단)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            668,
+            820
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s021-3.4",
+      "line_start": 838,
+      "line_end": 897,
+      "blocks": [
+        {
+          "lines": [
+            839,
+            841
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            842,
+            843
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "리포지토리는 애그리거트 단위로 영속성 처리",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-transaction-boundary.py"
+              ],
+              "basis": "② check-transaction-boundary #282(선언은 <aggregate>_repository.py)·#287(쓰기 인자는 애그리거트)·#355(반환 타입)"
+            },
+            {
+              "label": "인터페이스는 도메인에·구현은 인프라에(DIP)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-transaction-boundary.py",
+                "check-port-adapter-pairing.py"
+              ],
+              "basis": "② check-transaction-boundary #283(계약은 추상 메서드만) + check-port-adapter-pairing #460(구현은 driven_layer/adapter/)·#477(리포지토리 구현은 domain import 필수)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            844,
+            845
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "ORM이 도메인 모델을 import한다",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "basis": "② check-domain-model #8(domain_layer 의 밖으로 나가는 import 0)의 역방향 짝 — 인용=규칙(P0 규약 ②)"
+            },
+            {
+              "label": "도메인 모델의 ORM import 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "basis": "② check-domain-model #8 문면 정확 일치"
+            }
+          ]
+        },
+        {
+          "lines": [
+            846,
+            897
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s022-3.5",
+      "line_start": 898,
+      "line_end": 993,
+      "blocks": [
+        {
+          "lines": [
+            899,
+            902
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-ddd-final/s051-8/b5"
+          ],
+          "note": "출처 + [의사결정 #3] blockquote — 정본은 §8 의사결정 표 3행"
+        },
+        {
+          "lines": [
+            903,
+            904
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "도메인 서비스는 여러 애그리거트에 걸친 도메인 로직을 담당",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② check-domain-model #300(<aggregate>/domain_service/ 금지 — BC 레벨 한 칸뿐)이 자리를 집행"
+            },
+            {
+              "label": "도메인 서비스는 무상태(stateless)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "상태 보유 판정은 정적 검사 표면 밖 — 설계 시점 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            905,
+            908
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "상태 변경·상태 값 계산 로직은 도메인 서비스로 귀속",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "귀속 판정은 설계 시점(판정 소유 결정) — 기본값"
+            },
+            {
+              "label": "트랜잭션·조회/저장 조율은 응용 서비스로 귀속",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            909,
+            910
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "응용 서비스가 도메인 서비스를 호출 — 애그리거트는 순수 도메인 로직만",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② check-domain-model #8(domain_layer 밖 import 0) — 애그리거트가 서비스를 모르는 구조를 집행"
+            },
+            {
+              "label": "애그리거트는 외부 의존성을 받지 않는다",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "basis": "② check-domain-model #8·#301(루트 인자 축)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            911,
+            993
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s023-3.6",
+      "line_start": 994,
+      "line_end": 1091,
+      "blocks": [
+        {
+          "lines": [
+            995,
+            997
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            998,
+            999
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "응용 서비스는 비즈니스 로직을 직접 구현하지 않고 도메인에 위임",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-transaction-boundary.py",
+                "check-usecase-dto-placement.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "② check-transaction-boundary #195(루트 메서드 호출을 거치지 않는 쓰기 금지) + check-usecase-dto-placement #194(유스케이스 안 업무 규칙 ⓓ 후보)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1000,
+            1005
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "응용 서비스 책임 — 리포지토리에서 애그리거트 조회",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-transaction-boundary.py"
+              ],
+              "basis": "② check-transaction-boundary #195(save 인자는 같은 함수에서 루트 메서드 호출을 받은 객체)"
+            },
+            {
+              "label": "응용 서비스 책임 — 애그리거트 도메인 기능 실행",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-transaction-boundary.py"
+              ],
+              "basis": "동상 #195(UoW 를 받았는데 루트 메서드 호출 0 이면 위반)"
+            },
+            {
+              "label": "응용 서비스 책임 — 트랜잭션 관리",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-transaction-boundary.py"
+              ],
+              "basis": "② #197(읽기 전용은 UoW 를 받지 않는다)·#200(커밋 뒤 부작용은 unit_of_work.after_commit)"
+            },
+            {
+              "label": "응용 서비스 책임 — 결과 반환",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-usecase-dto-placement.py"
+              ],
+              "basis": "② check-usecase-dto-placement #635(execute 하나·계약 객체 하나 → result)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1006,
+            1009
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "응용 서비스의 도메인 로직 직접 구현 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-usecase-dto-placement.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "② check-usecase-dto-placement #194(유스케이스 안 업무 규칙 — ⓓ 후보, 마무리는 discipline-reviewer)"
+            },
+            {
+              "label": "응용 서비스의 표현 영역 의존 금지(HttpRequest 인자 금지)",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-usecase-dto-placement.py",
+                "check-event-publish.py"
+              ],
+              "basis": "② check-usecase-dto-placement #208(command 는 schema_in 타입을 쓰지 않는다 — driving import 금지) + check-event-publish #7(application_layer import 허용은 넷)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1010,
+            1091
+          ],
+          "kind": "code",
+          "norms": [
+            {
+              "label": "입력 자료·실행체 명명 계약 — <UseCase>Command / <UseCase>UseCase.execute",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-usecase-dto-placement.py"
+              ],
+              "basis": "① 문면이 #635 를 직접 인용 · ② check-usecase-dto-placement docstring 진입점 절 #635·자료 절 #201 문면 일치"
+            },
+            {
+              "label": "…Request/…Response는 OHS contract 전용 — 두 어휘 혼용 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-context-isolation.py"
+              ],
+              "basis": "① 문면이 #484 를 직접 인용 · ② check-context-isolation docstring OHS 절 «#482/#483/#484 명명»"
+            }
+          ],
+          "note": "예제 펜스 내부의 규범 주석 2건(#635·#484) — P0 규약 ③ 승계로 Work 승격. 블록 kind 는 code(펜스 전체 verbatim) 유지"
+        }
+      ]
+    },
+    {
+      "section_key": "s024-3.7",
+      "line_start": 1092,
+      "line_end": 1181,
+      "blocks": [
+        {
+          "lines": [
+            1093,
+            1096
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-ddd-final/s051-8/b9"
+          ],
+          "note": "출처 + [의사결정 #7] blockquote — 정본은 §8 의사결정 표 7행"
+        },
+        {
+          "lines": [
+            1097,
+            1098
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            1099,
+            1103
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "도메인 이벤트는 애그리거트 안에 수집한다(즉시 발행 금지)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "basis": "② check-domain-model #272 «루트는 이벤트를 기록만 한다 — publish/dispatch 호출 금지» 문면 일치"
+            },
+            {
+              "label": "디스패치는 uow.after_commit 한 경로(커밋 직전은 배경 이론)",
+              "class": "Override",
+              "enforcedBy": [
+                "check-usecase-dto-placement.py",
+                "check-transaction-boundary.py"
+              ],
+              "basis": "① 문면이 #539~#541 을 직접 인용 · ② check-usecase-dto-placement 발행 절 #541(커밋 «전» 발행 금지)·#539·#540 + check-transaction-boundary #200"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1104,
+            1181
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s025",
+      "line_start": 1182,
+      "line_end": 1199,
+      "blocks": [
+        {
+          "lines": [
+            1183,
+            1185
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "이벤트는 애그리거트와 같은 트랜잭션에 outbox 적재 후 별도 프로세스가 발행",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-broker-contract.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② check-broker-contract #603 «external 에 내용이 오면 딸림이 함께 선다 — ⑴outbox …»"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1186,
+            1187
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            1188,
+            1192
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Outbox 선택 조건 — 커밋 이후 외부 전달 유실 불허",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "채택 조건절 — 채택 판정은 설계 시점(기본값)"
+            },
+            {
+              "label": "Outbox 채택은 듣는 쪽이 별도 배포 단위일 때 한정",
+              "class": "Permission",
+              "enforcedBy": [
+                "check-broker-contract.py"
+              ],
+              "basis": "① 문면이 #529 를 직접 인용 · ② check-broker-contract #529 «external 을 가르는 물음 「듣는 쪽이 다른 배포 단위에 있나」»"
+            },
+            {
+              "label": "external 채택 시 outbox 필수 딸림",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-broker-contract.py"
+              ],
+              "basis": "① 문면 #603 인용 · ② check-broker-contract #603 문면 일치"
+            },
+            {
+              "label": "같은 저장소 소비자의 유실 불허는 cron_job→주인 OHS 폴링",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-missable-entrance.py"
+              ],
+              "basis": "① 문면 #626 인용 · ② check-missable-entrance #629 설명절 «메우는 길은 cron_job 이 주인에게 «묻는» 것(#626)»"
+            },
+            {
+              "label": "Outbox 선택 조건 — at-least-once 전달과 consumer 멱등성 설계 가능",
+              "class": "Permission",
+              "enforcedBy": [
+                "check-broker-contract.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② check-broker-contract #532(external 계약은 at-least-once 를 요구로 적는다)"
+            },
+            {
+              "label": "Outbox 선택 조건 — retry·dead-letter·dispatch ownership 필요",
+              "class": "Permission",
+              "enforcedBy": [
+                "check-broker-contract.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② check-broker-contract #603 ⑷데드레터 등 «선언 유무»"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1193,
+            1197
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Outbox 회피 조건 — 외부 부수효과 없음",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "비채택 조건절 — 설계 시점 기본값"
+            },
+            {
+              "label": "Outbox 회피 조건 — transaction.on_commit()으로 충분한 in-process 후속",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "Outbox 회피 조건 — 유실 수용 또는 운영 부담 과다",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1198,
+            1199
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Outbox 채택 시 명시 항목(트랜잭션·dispatcher owner·전달 보장·멱등 기준·retry 정책·발행 언어)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "명세 기재 의무 — 설계 시점 산출물 판정(기본값)"
+            },
+            {
+              "label": "전달 메커니즘 소유는 architecture-db(§9.7)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-db"
+              ],
+              "basis": "① 문면이 `architecture-db` 를 직접 지정 — 기본값 이탈의 문면 근거"
+            },
+            {
+              "label": "Django 트랜잭셔널 outbox 구체 구현 소유는 implementation-django(§16.5)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "① 문면이 `implementation-django` 지정 · 위임 기본값 표(implementation-*→discipline-reviewer)"
+            },
+            {
+              "label": "신뢰성 검증 항목은 discipline-tdd 입장 심사 제출 대상",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "① 문면이 `discipline-tdd` 지정 · 기본값 표(discipline-tdd→discipline-reviewer)"
+            },
+            {
+              "label": "add 결정 후 작성 mechanics만 implementation-test 소유",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "① 문면 `implementation-test` 지정 · 기본값 표 동상"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s026",
+      "line_start": 1200,
+      "line_end": 1209,
+      "blocks": [
+        {
+          "lines": [
+            1201,
+            1203
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "발행 봉투 판별자는 1종째부터 domain_layer StrEnum 하나로 선언(birth-enum)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② check-domain-model #269(<A>/event/ 는 BC 안에서 읽혀야)·#8(domain 소유)이 슬롯·소유 축을 집행 · 1종째 승격 판정 자체는 설계 시점"
+            },
+            {
+              "label": "이름 기반 승격 트리거 금지(type/kind 이름 사유 승격 금지)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "① 문면이 `discipline-cleancode` §2.14 로 위임 · 기본값 표(discipline-cleancode→discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1204,
+            1209
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "배치 — domain_layer/<aggregate>/event/event_type.py 슬롯",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-layer-skeleton.py"
+              ],
+              "basis": "① 문면이 `discipline-houserules` §2 지정 · ② check-layer-skeleton #489·#490(트리 폐쇄)이 슬롯을 집행"
+            },
+            {
+              "label": "발행 enum의 타 BC 직접 import 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-context-isolation.py"
+              ],
+              "basis": "② check-context-isolation #12·#13(부를 수 있는 것은 OHS·published_event 둘)"
+            },
+            {
+              "label": "경계-로컬(presentation 봉투 모듈) 배치 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-layer-skeleton.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "② check-layer-skeleton #490(트리에 없는 경로 금지) — 역방향 import 회피 사유는 문면"
+            },
+            {
+              "label": "파생 표기 — 봉투 Schema 태그는 Literal[EventType.X] 파생",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-choices-literal-consumption.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "② check-choices-literal-consumption(선언된 심볼의 리터럴 소비 백스톱) 부분 커버 · 잔여 의미 레인은 reviewer 몫(docstring «보지 않는 것»)"
+            },
+            {
+              "label": "union-enum 동기 검증은 독자 failure·미보호일 때만 add",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "① 문면이 `discipline-tdd` 입장 심사 지정 · 기본값 표"
+            },
+            {
+              "label": "승인 후 테스트 mechanics는 implementation-test §15.5",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "① 문면 `implementation-test` 지정 · 기본값 표"
+            },
+            {
+              "label": "ORM default·마이그레이션 경계는 .value 평탄화",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-choices-literal-consumption.py"
+              ],
+              "basis": "② check-choices-literal-consumption docstring 회피 5 «default=OrderStatus.PENDING.value(Attribute) 는 정상(.value 평탄화)» 문면 일치"
+            },
+            {
+              "label": "수명 — 멤버는 추가만 한다(append-only)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "정적 검사에 enum 이력 비교 진단 부재(27종 docstring 실독) — 위임 기본값(구현 시점 규범→discipline-reviewer)"
+            },
+            {
+              "label": "수명 — 멤버 값 변경·삭제 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "동상 — 이력 대조는 검사기 표면 밖"
+            },
+            {
+              "label": "이벤트 폐기는 삭제가 아니라 발행 중단+주석 표기",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "비호환 변경은 새 버전 태그 추가+upcasting",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "제외 — payload_schema_version 등 버전 태그는 리터럴 동결 유지",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "짝 조항(비대상 선언) — 구현 시점 판정 기본값"
+            },
+            {
+              "label": "제외 — 상류 중계 소비 측 스키마 태그 비대상",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "동상(published language 수용)"
+            },
+            {
+              "label": "제외 — OHS published contract의 discriminator 자리 비대상",
+              "class": "Exception",
+              "enforcedBy": [
+                "check-context-isolation.py"
+              ],
+              "basis": "② check-context-isolation OHS 절 #472 «contract 는 stdlib·같은 BC 계약만» — contract 무의존이 wire Literal 유지의 집행 근거"
+            },
+            {
+              "label": "드리프트 검증 후보도 입장 심사에서 판정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "① 문면이 `discipline-cleancode` §2.14 재예외로 위임 · 기본값 표"
+            },
+            {
+              "label": "소비 BC는 미지 event_type 처리 방침을 함께 정한다",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "27종 docstring 전수 실독 — 미지 타입 폴백·거부 방침(분기 완전성)을 무는 정적 진단 부재(check-event-publish #507 은 event_subscription 의 import 폭 규칙이라 접점 0) · 위임 기본값(설계 시점 방침 결정→design-review-ddd)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s029-4.1",
+      "line_start": 1333,
+      "line_end": 1356,
+      "blocks": [
+        {
+          "lines": [
+            1334,
+            1336
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "이름은 무엇(what)을 드러내고 어떻게(how)는 숨긴다",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-port-adapter-pairing.py",
+                "check-naming.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "② check-port-adapter-pairing #485 «메서드는 의도(확정: notify·handle·execute… / 후보: 동사 아님)» + check-naming #43(패턴 낱말은 능력 이름에 안 온다)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1337,
+            1356
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s030-4.2",
+      "line_start": 1357,
+      "line_end": 1373,
+      "blocks": [
+        {
+          "lines": [
+            1358,
+            1360
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "도메인 로직은 가능한 한 부작용 없는 함수로 배치",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "② check-domain-model #264(값 객체 불변 — self 대입 금지)가 대표 자리를 집행 · 잔여 «가능한 한» 판정은 구현 리뷰"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1361,
+            1373
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s031-4.3",
+      "line_start": 1374,
+      "line_end": 1390,
+      "blocks": [
+        {
+          "lines": [
+            1375,
+            1377
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "사후 조건·클래스 불변식의 명시적 선언",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "② check-domain-model #268 «후보: __init__/__post_init__ 에 raise 0 인 값 객체(잘못된 값이 불가능한가)» — 불변식 선언 축"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1378,
+            1390
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s032-4.4",
+      "line_start": 1391,
+      "line_end": 1394,
+      "blocks": [
+        {
+          "lines": [
+            1392,
+            1394
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "도메인의 자연스러운 경계선을 따라 설계를 분해",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "경계 분해 판정은 설계 시점 — 위임 기본값"
+            },
+            {
+              "label": "함께 변하는 것은 함께·따로 변하는 것은 분리",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상(변경 이유 기준 응집 판정)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s033-4.5",
+      "line_start": 1395,
+      "line_end": 1398,
+      "blocks": [
+        {
+          "lines": [
+            1396,
+            1398
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "클래스 간 결합 최소화 — 독립적 이해 가능성 확보",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "결합도 판정은 정적 검사 표면 밖 — 구현 시점 규범 기본값(discipline-reviewer)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s034-4.6",
+      "line_start": 1399,
+      "line_end": 1425,
+      "blocks": [
+        {
+          "lines": [
+            1400,
+            1402
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "연산의 닫힘 — 반환 타입을 인자 타입과 동일하게 정의",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "조건형 권고(애매 보수 포함·P0 승계) — 설계 시점 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1403,
+            1423
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            1424,
+            1425
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s035-5",
+      "line_start": 1426,
+      "line_end": 1429,
+      "blocks": [
+        {
+          "lines": [
+            1427,
+            1429
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-ddd-final/s051-8/b7"
+          ],
+          "note": "§5 서두 [의사결정 #5] blockquote 단일 블록 — 정본은 §8 의사결정 표 5행. 절 Work 0"
+        }
+      ]
+    },
+    {
+      "section_key": "s036-5.1",
+      "line_start": 1430,
+      "line_end": 1442,
+      "blocks": [
+        {
+          "lines": [
+            1431,
+            1433
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            1434,
+            1437
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            1438,
+            1442
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "의존은 상위→하위 단방향(하위→상위 금지)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-context-isolation.py"
+              ],
+              "basis": "② check-context-isolation 방향 절 #2·#251(domain 으로 들어오는 화살표)·#322 문면 일치"
+            },
+            {
+              "label": "도메인·응용·표현의 인프라 구현 기술 직접 사용 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-context-isolation.py",
+                "check-transaction-boundary.py"
+              ],
+              "basis": "② check-context-isolation #2(안쪽 두 칸은 구체 기술을 모른다) + check-transaction-boundary #4(application_layer import 에 django 금지)"
+            },
+            {
+              "label": "DIP — 도메인이 정의한 인터페이스를 인프라가 구현",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-port-adapter-pairing.py"
+              ],
+              "basis": "② check-port-adapter-pairing #457(선언 자리)·#460(구현 자리)·#351(선언↔구현 1:1)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s037-5.2",
+      "line_start": 1443,
+      "line_end": 1490,
+      "blocks": [
+        {
+          "lines": [
+            1444,
+            1446
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            1447,
+            1448
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "고수준 모듈은 저수준이 아니라 추상화에 의존",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-context-isolation.py",
+                "check-port-adapter-pairing.py"
+              ],
+              "basis": "② check-context-isolation #2·#9(driven 은 domain·port 만) + check-port-adapter-pairing #212(선언만·구현 0줄)"
+            },
+            {
+              "label": "인터페이스는 고수준 영역에 위치",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-port-adapter-pairing.py"
+              ],
+              "basis": "② check-port-adapter-pairing #457 «선언은 application_layer/port/ 아래뿐»·#313(domain_layer/<agg>/port/ 금지) — dddjango 구체화 자리"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1449,
+            1490
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s038-5.3",
+      "line_start": 1491,
+      "line_end": 1517,
+      "blocks": [
+        {
+          "lines": [
+            1492,
+            1494
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            1495,
+            1496
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "의존 방향은 항상 정책(도메인·응용) 쪽 — 포트는 역할·어댑터는 번역",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-context-isolation.py"
+              ],
+              "basis": "② check-context-isolation #2·#251(방향)이 결정적 부분을 집행"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1497,
+            1502
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "핵사고날 선택 조건 — 외부·레거시가 도메인 모델을 오염시킬 위험",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "아키텍처 스타일 채택 판정 — 설계 시점 기본값"
+            },
+            {
+              "label": "핵사고날 선택 조건 — 영속성 형태와 도메인 언어 상이",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "핵사고날 선택 조건 — 프레임워크 없는 유스케이스 테스트 가치",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "핵사고날 선택 조건 — 교체 가능성·장애 격리·계약 안정성 요구",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1503,
+            1507
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "핵사고날 회피 조건 — Django 관례가 더 명확",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "비채택 조건절 — 설계 시점 기본값"
+            },
+            {
+              "label": "핵사고날 회피 조건 — 포트가 기술명만 감춘 얇은 wrapper",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "핵사고날 회피 조건 — 단일 구현·저변동·테스트 seam 불요",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1508,
+            1512
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "포트 이름은 기술이 아니라 역할",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-port-adapter-pairing.py",
+                "check-naming.py"
+              ],
+              "basis": "② check-port-adapter-pairing #594(폴더 이름에 누가·언제·어떻게 금지)·#220(<Capability>Port) + check-naming #41"
+            },
+            {
+              "label": "포트 메서드는 좁고 유스케이스 언어를 따른다",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-port-adapter-pairing.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "② check-port-adapter-pairing #485(메서드는 의도)"
+            },
+            {
+              "label": "포트 입출력은 도메인·응용 DTO·값 객체·식별자",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-port-adapter-pairing.py"
+              ],
+              "basis": "② check-port-adapter-pairing #228(<data>_in/_out 에 도메인·유스케이스 DTO 금지)·#227"
+            },
+            {
+              "label": "구조적 협력은 Protocol 우선·상속/런타임 등록 필요 시 ABC",
+              "class": "Permission",
+              "enforcedBy": [
+                "check-port-adapter-pairing.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "② check-port-adapter-pairing #551(계약은 ABC+@abstract) — 선택 기준 잔여는 구현 리뷰"
+            },
+            {
+              "label": "모든 클래스에 인터페이스를 만들지 않는다",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "과잉 추상화 판정은 정적 검사 밖 — 구현 시점 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1513,
+            1517
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "인터페이스 어댑터 분류 — view·router·serializer·command·task·handler",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-port-adapter-pairing.py"
+              ],
+              "basis": "② check-port-adapter-pairing #319(네 갈래)·#460(구현 자리)"
+            },
+            {
+              "label": "인프라 어댑터 분류 — ORM 리포지토리·SDK·publisher·cache/filesystem",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-port-adapter-pairing.py"
+              ],
+              "basis": "동상 #319·#349·#367"
+            },
+            {
+              "label": "어댑터의 핵심 정책 소유 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-context-isolation.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "② check-context-isolation #2(안쪽 두 칸)·#9 구조 축 · 정책 «소유» 의미 판정은 reviewer"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s039-5.4",
+      "line_start": 1518,
+      "line_end": 1536,
+      "blocks": [
+        {
+          "lines": [
+            1519,
+            1522
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-ddd-final/s051-8/b4"
+          ],
+          "note": "출처 + [의사결정 #2] blockquote — 정본은 §8 의사결정 표 2행"
+        },
+        {
+          "lines": [
+            1523,
+            1524
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "CQRS는 보조 패턴으로 취급·일부 BC에만 선택 적용(Greg Young 인용=규칙)",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "P0 규약 ② 인용=규칙 승계 — 패턴 채택 범위 판정은 설계 시점"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1525,
+            1526
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "커맨드와 쿼리의 모델 분리",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-usecase-dto-placement.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② check-usecase-dto-placement #464(command/query 분할 금지 — 어댑터 층)·#201(자료 세 파일) 구조 축"
+            },
+            {
+              "label": "질문하는 행동이 대답을 바꾸지 않는다",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "② check-transaction-boundary #197 «읽기 전용 유스케이스는 UnitOfWork 를 받지 않는다»가 CQS 의 구조 절반(질문이 쓰기 기계를 들지 않는다)을 결정적으로 집행 — §16 역방향(담당 근거가 있는데 기본값 도피) 해소 · 잔여(변수 수준 부작용·조회 중 상태 변경)는 의미 레인이라 구현 리뷰 병기",
+              "enforcedBy": [
+                "check-transaction-boundary.py"
+              ]
+            },
+            {
+              "label": "전체가 아닌 필요 컨텍스트 한정 선택 적용",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "«안전하다» 애매 보수 포함(P0 승계) — 설계 시점 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1527,
+            1531
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "CQRS 선택 조건 — 쓰기 불변식과 읽기 projection의 모델 상이",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "채택 조건절 — 설계 시점 기본값"
+            },
+            {
+              "label": "CQRS 선택 조건 — 읽기 성능·비정규화·reporting이 커맨드 모델을 왜곡",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "CQRS 선택 조건 — 커맨드와 쿼리의 변경 이유 분리",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1532,
+            1536
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "CQRS 회피 조건 — selector·QuerySet 최적화로 충분",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "비채택 조건절 — 설계 시점 기본값"
+            },
+            {
+              "label": "CQRS 회피 조건 — 단순 CRUD를 더 어렵게만 만듦",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "CQRS 회피 조건 — eventual consistency 감당 기준 부재",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s040-5.5",
+      "line_start": 1537,
+      "line_end": 1604,
+      "blocks": [
+        {
+          "lines": [
+            1538,
+            1540
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            1541,
+            1542
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            1543,
+            1543
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            1544,
+            1544
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            1545,
+            1545
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "진화하는 질서 — 대규모 구조를 처음부터 완성하지 말고 함께 진화",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "표 셀 명령형(애매 보수 포함·P0 승계) — 대규모 구조는 설계 시점 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1546,
+            1546
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "시스템 은유 — 관통 비유를 찾아 명시화",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1547,
+            1547
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "책임 계층 — 도메인 모델을 책임 계층으로 구조화",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1548,
+            1548
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "지식 수준 — 운영 수준을 구성하는 메타 수준 분리",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1549,
+            1550
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "플러그형 컴포넌트 — 핵심 추상화와 구현을 플러그인으로 분리",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1551,
+            1602
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            1603,
+            1604
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s042-6.1",
+      "line_start": 1607,
+      "line_end": 1671,
+      "blocks": [
+        {
+          "lines": [
+            1608,
+            1610
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-ddd-final/s051-8/b10"
+          ],
+          "note": "[의사결정 #8] blockquote — 정본은 §8 의사결정 표 8행"
+        },
+        {
+          "lines": [
+            1611,
+            1659
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            1660,
+            1661
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "tests/ 레이아웃은 discipline-tdd 입장 심사 승인 후 적용",
+              "class": "Exception",
+              "enforcedBy": [
+                "check-test-config.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "① 문면이 `discipline-tdd` 지정 · ② check-test-config #383/#384(test/ 직계 자식 다섯)가 승인 후 구조를 집행"
+            },
+            {
+              "label": "구조 규칙만으로 빈 test 패키지·파일·case 생성 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-layer-skeleton.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "② check-layer-skeleton #489 «<…> 자리표시자 칸만 그 개념이 생길 때 생긴다» 문면 일치"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1662,
+            1667
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "domain 계층은 어디에도 의존하지 않는다",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "basis": "② check-domain-model #8 «domain_layer 의 밖으로 나가는 import 0» 문면 일치"
+            },
+            {
+              "label": "application 계층은 domain에만 의존",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-event-publish.py",
+                "check-transaction-boundary.py"
+              ],
+              "basis": "② check-event-publish #7(application_layer import 허용은 넷) + check-transaction-boundary #4(django import 금지)"
+            },
+            {
+              "label": "infrastructure 계층은 domain·application에 의존(인터페이스 구현)",
+              "class": "Permission",
+              "enforcedBy": [
+                "check-context-isolation.py"
+              ],
+              "basis": "② check-context-isolation #9 «driven 은 domain·port 만»·#322"
+            },
+            {
+              "label": "interface 계층은 application에 의존(유스케이스 호출)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-context-isolation.py",
+                "check-event-publish.py"
+              ],
+              "basis": "② check-context-isolation #93/#94/#95(driving 잎의 import 폭) + check-event-publish #96"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1668,
+            1669
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "프레임워크 제약 시 [A] 간소화 구조 차선 허용(원전 이론)",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "원전 이론 조항 — 채택 판정은 설계 시점"
+            },
+            {
+              "label": "[A] 간소화 구조를 dddjango 생성 코드에 적용 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-layer-skeleton.py"
+              ],
+              "basis": "② check-layer-skeleton #486·#490(트리에 없는 경로 금지)이 생성 코드 배치를 폐쇄"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1670,
+            1671
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "생성 코드 표준 파일트리 소유는 discipline-houserules",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-layer-skeleton.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "① 문면이 `discipline-houserules` 를 직접 지정 · ② check-layer-skeleton docstring «트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다»"
+            },
+            {
+              "label": "생성 코드 배치 권위는 §6.1이 아니라 houserules 문서",
+              "class": "Override",
+              "enforcedBy": [
+                "check-layer-skeleton.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "동상 — §6.1 을 이론적 배경으로 강등하는 권위 이양 조항"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s043-6.2",
+      "line_start": 1672,
+      "line_end": 1677,
+      "blocks": [
+        {
+          "lines": [
+            1673,
+            1675
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            1676,
+            1677
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Django ORM 적용(모델 분리 비용·서비스/셀렉터 경계) 소유는 implementation-django §16",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "① 문면이 `implementation-django` 지정 · 기본값 표(implementation-*→discipline-reviewer)"
+            }
+          ],
+          "restates": [
+            "architecture-ddd-final/s021-3.4/b3"
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s044-6.3",
+      "line_start": 1678,
+      "line_end": 1728,
+      "blocks": [
+        {
+          "lines": [
+            1679,
+            1681
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            1682,
+            1683
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Repository는 컬렉션 추상화·UnitOfWork는 트랜잭션 경계 단위",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-transaction-boundary.py",
+                "check-port-adapter-pairing.py"
+              ],
+              "basis": "② check-transaction-boundary #282·#283·#597(save/remove 접두) + check-port-adapter-pairing #240(uow 선언은 port/unit_of_work/)·#245(계약 셋)"
+            },
+            {
+              "label": "도메인·응용은 추상 인터페이스에만 의존·구체 구현은 인프라",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-port-adapter-pairing.py",
+                "check-context-isolation.py"
+              ],
+              "basis": "② check-port-adapter-pairing #460(구현 자리)·#476(선언↔구현 1:1) + check-context-isolation #9"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1684,
+            1726
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            1727,
+            1728
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Django 실현(Repository §16.3·UoW transaction.atomic §16.4) 소유는 implementation-django",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "① 문면이 `implementation-django` 지정 · 기본값 표(implementation-*→discipline-reviewer)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s046-6.5",
+      "line_start": 1843,
+      "line_end": 1911,
+      "blocks": [
+        {
+          "lines": [
+            1844,
+            1846
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            1847,
+            1848
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            1849,
+            1849
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            1850,
+            1850
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            1851,
+            1851
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            1852,
+            1853
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            1854,
+            1855
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "중간 단계 실패 시 완료 단계의 보상 행동 실행",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "27종 docstring 전수 실독 — 보상 흐름의 존재·실행을 진단하는 검사기 없음(check-event-publish #564 는 «진행표 금지 — saga/ 폴더는 ⓓ 후보»로 극성이 반대라 배선에서 뺐다) · 위임 기본값(architecture-ddd 설계 시점→design-review-ddd)"
+            },
+            {
+              "label": "보상 트랜잭션은 반드시 멱등",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-missable-entrance.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② check-missable-entrance #181 «멱등성은 유스케이스가 갖는다 … 「두 번 와도 결과가 같나」» — 단 #181 관할은 «놓칠 수 있는 입구(cron_job·webhook·event_subscription)가 부른 유스케이스»라 보상이 그 입구 뒤에 있을 때 한정한 부분 커버(자인) · 잔여(오케스트레이터 직접 호출 보상)는 설계 시점 위임"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1856,
+            1911
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s047-6.6",
+      "line_start": 1912,
+      "line_end": 1940,
+      "blocks": [
+        {
+          "lines": [
+            1913,
+            1915
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            1916,
+            1917
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "전술 패턴 만능 금지 — 단순 로직용 패턴도 알아야 한다",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "패턴 선택 지식 규범 — 설계 시점 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1918,
+            1919
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "트랜잭션 스크립트는 지원 하위 도메인에 적합",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "«적합하다» 권고형(애매 보수 포함·P0 승계) — 설계 시점 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1920,
+            1940
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s048-6.7",
+      "line_start": 1941,
+      "line_end": 1995,
+      "blocks": [
+        {
+          "lines": [
+            1942,
+            1944
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            1945,
+            1946
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "마이크로서비스 1개 = BC 1개 · 자체 DB 소유 · API/이벤트 통신",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-context-isolation.py",
+                "check-db-table.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② check-context-isolation #12·#13(창구는 OHS·published_event) + check-db-table #631(타 BC 모델 FK 금지 = DB 소유 분리)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1947,
+            1947
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            1948,
+            1948
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            1949,
+            1949
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            1950,
+            1950
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            1951,
+            1951
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            1952,
+            1952
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "Shared Kernel 공유 라이브러리는 최소화 필수",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "표 셀 «최소화 필수» — 공유 커널 결정은 설계 시점(기본값)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1953,
+            1954
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            1955,
+            1956
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            1957,
+            1995
+          ],
+          "kind": "code",
+          "restates": [
+            "architecture-ddd-final/s026/b1",
+            "architecture-ddd-final/s011-2.5/b19"
+          ],
+          "note": "펜스 내 주석(OrderEventType docstring·event_type 필드 주석)이 s026 birth-enum과 §2.5 wire 수용 원리의 사본 — 센서스가 계수 제외한 대로 Work 미승격, restates 만 연결"
+        }
+      ]
+    },
+    {
+      "section_key": "s049-6.8",
+      "line_start": 1996,
+      "line_end": 2019,
+      "blocks": [
+        {
+          "lines": [
+            1997,
+            1999
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "전술·구현 패턴은 도메인 전략을 대신하지 않는다",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "패턴 선택 절차의 선행 조건 — 설계 시점 기본값"
+            },
+            {
+              "label": "도메인 모델 확인 후 가장 가벼운 패턴을 순서대로 고른다",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2000,
+            2004
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "절차 1 — BC·애그리거트·불변식·유스케이스·외부 통합 경계 확인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "설계 절차 규범 — 위임 기본값(설계 시점)"
+            },
+            {
+              "label": "절차 2 — 실제 압력 분류",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "절차 3 — 현재 압력을 푸는 가장 가벼운 패턴 선택",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "절차 4 — 미선택 무거운 패턴과 사유 기록",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상(설계 산출물 기재 의무)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2005,
+            2006
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "단순 CRUD·지원 하위 도메인에 무거운 패턴 기본 도입 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-idempotency-scope-creep.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "③ 부분 커버(정직 기록) — 규범 문면의 열거(리포지토리·커스텀 UoW·CQRS·이벤트 소싱·saga·outbox·ACL)에 멱등성은 없다. check-idempotency-scope-creep 는 «미요청 무거운 산출물의 무단 도입 금지»라는 동일 원리의 인접 축(멱등성 저장·Idempotency-Key)만 결정적으로 차단하는 부분 커버이고, 열거된 7축 자체의 도입 판정은 설계 시점 위임"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2007,
+            2008
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Risky Write — 패턴 선택은 이 문서·세부 구현·검증은 소유 영역 이양",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "라우팅 선언 — 설계 시점 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2009,
+            2009
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            2010,
+            2010
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            2011,
+            2011
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "소유 — 패턴 결정은 이 문서(§5~§6)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "소유권 표 행(순수 규범·행 단위 계수) — 설계 시점 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2012,
+            2012
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "소유 — 트랜잭션 owner·부수효과 타이밍은 implementation-django §16",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-transaction-boundary.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "① 문면 `implementation-django` 지정 · ② check-transaction-boundary #200(after_commit)이 타이밍을 집행"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2013,
+            2013
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "소유 — 락·격리 수준·인덱스·rollout은 architecture-db",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-mechanism-ownership.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-db"
+              ],
+              "basis": "① 문면 `architecture-db` 지정(기본값 이탈 근거) · ② check-mechanism-ownership(DB 엔진 트랜잭션·락 메커니즘 교체 백스톱)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2014,
+            2014
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "소유 — 멱등성 저장·Idempotency-Key·status code는 architecture-api",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-idempotency-scope-creep.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 `architecture-api` 지정(기본값 이탈 근거) · ② check-idempotency-scope-creep 가 미요청 멱등 산출물 도입을 차단해 이 라우팅 행을 배후 집행 — 단 그 docstring 은 소유를 «architecture-db §9.6 Idempotency storage 집행»으로 적어 규범 문면(architecture-api)과 어긋난다(원문·검사기 간 소유 충돌 — 이관 스코프 밖·검수표 §4 자인 목록 ③)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2015,
+            2015
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "소유 — 테스트 후보 입장 결정은 discipline-tdd",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "① 문면 `discipline-tdd` 지정 · 기본값 표(discipline-tdd→discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2016,
+            2017
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "소유 — add된 통합·동시성·멱등성 테스트 mechanics는 implementation-test",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-test-config.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "① 문면 `implementation-test` 지정 · ② check-test-config(pytest↔settings 바인딩·test/ 구조)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2018,
+            2019
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s050-7",
+      "line_start": 2020,
+      "line_end": 2057,
+      "blocks": [
+        {
+          "lines": [
+            2021,
+            2023
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            2024,
+            2025
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            2026,
+            2030
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "복잡한 것을 불변성으로 감싸 복잡성을 낮춘다",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② check-domain-model #264(값 객체 불변)·#257(루트 경유) — 통찰의 기계 실현 축"
+            },
+            {
+              "label": "값 객체의 상태 관련 비즈니스 로직은 자기 경계 안에 둔다",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "② check-domain-model #264·#265(<A>/value_object/ 는 애그리거트 밖에서 안 쓰인다)"
+            },
+            {
+              "label": "비즈니스 로직은 불변성을 감싸 자유도를 줄인다",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② check-domain-model #257(상태 변경은 루트를 지난다) · 자유도 판정은 설계 리뷰"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2031,
+            2055
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            2056,
+            2057
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s052-9",
+      "line_start": 2073,
+      "line_end": 2093,
+      "blocks": [
+        {
+          "lines": [
+            2074,
+            2075
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            2076,
+            2076
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            2077,
+            2077
+          ],
+          "kind": "table-row",
+          "restates": [
+            "architecture-ddd-final/s010-2.4/b2",
+            "architecture-ddd-final/s010-2.4/b3"
+          ]
+        },
+        {
+          "lines": [
+            2078,
+            2078
+          ],
+          "kind": "table-row",
+          "restates": [
+            "architecture-ddd-final/s009-2.3/b2",
+            "architecture-ddd-final/s009-2.3/b3"
+          ]
+        },
+        {
+          "lines": [
+            2079,
+            2079
+          ],
+          "kind": "table-row",
+          "restates": [
+            "architecture-ddd-final/s011-2.5/b2"
+          ]
+        },
+        {
+          "lines": [
+            2080,
+            2080
+          ],
+          "kind": "table-row",
+          "restates": [
+            "architecture-ddd-final/s012-2.6/b2"
+          ]
+        },
+        {
+          "lines": [
+            2081,
+            2081
+          ],
+          "kind": "table-row",
+          "restates": [
+            "architecture-ddd-final/s016-3.1/b3"
+          ]
+        },
+        {
+          "lines": [
+            2082,
+            2082
+          ],
+          "kind": "table-row",
+          "restates": [
+            "architecture-ddd-final/s017-3.2/b2",
+            "architecture-ddd-final/s051-8/b3"
+          ]
+        },
+        {
+          "lines": [
+            2083,
+            2083
+          ],
+          "kind": "table-row",
+          "restates": [
+            "architecture-ddd-final/s019/b1",
+            "architecture-ddd-final/s019/b2",
+            "architecture-ddd-final/s019/b5"
+          ],
+          "norms": [
+            {
+              "label": "애그리거트 접근·상태 변경은 루트 경유만",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "② check-domain-model #257(상태 변경은 루트를 지난다)·#258(entity 직접 참조 금지 — 애그리거트 밖에서 붙잡는 것은 루트뿐) 문면 일치 · 원본 규범(둘째 문장은 restates 대상 s019/b1·b2·b5 어디에도 없음 — 문서 전수 확인, 산문 진술은 이 행이 유일) · 경계 «설정» 판정은 설계 시점 병기"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2084,
+            2084
+          ],
+          "kind": "table-row",
+          "restates": [
+            "architecture-ddd-final/s021-3.4/b2"
+          ]
+        },
+        {
+          "lines": [
+            2085,
+            2085
+          ],
+          "kind": "table-row",
+          "restates": [
+            "architecture-ddd-final/s022-3.5/b2",
+            "architecture-ddd-final/s022-3.5/b4"
+          ]
+        },
+        {
+          "lines": [
+            2086,
+            2086
+          ],
+          "kind": "table-row",
+          "restates": [
+            "architecture-ddd-final/s023-3.6/b2",
+            "architecture-ddd-final/s023-3.6/b3"
+          ]
+        },
+        {
+          "lines": [
+            2087,
+            2087
+          ],
+          "kind": "table-row",
+          "restates": [
+            "architecture-ddd-final/s024-3.7/b3"
+          ]
+        },
+        {
+          "lines": [
+            2088,
+            2088
+          ],
+          "kind": "table-row",
+          "restates": [
+            "architecture-ddd-final/s036-5.1/b3",
+            "architecture-ddd-final/s037-5.2/b2"
+          ]
+        },
+        {
+          "lines": [
+            2089,
+            2089
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "핵사고날 — 포트와 어댑터로 내부/외부 분리",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-port-adapter-pairing.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "센서스가 §9 핵사고날 행을 «주제 서술이라 사본 아님»으로 판정 — 유일 Work 승격 행. ② check-port-adapter-pairing #457·#460(선언·구현 자리)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2090,
+            2091
+          ],
+          "kind": "table-row",
+          "restates": [
+            "architecture-ddd-final/s039-5.4/b2",
+            "architecture-ddd-final/s039-5.4/b3"
+          ]
+        },
+        {
+          "lines": [
+            2092,
+            2093
+          ],
+          "kind": "prose"
+        }
+      ]
+    }
+  ]
+}

@@ -23,10 +23,12 @@
 ---
 
 ## 1. Django 설계 철학
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Django 공식 문서에 명시된 설계 철학은 모든 Django 코드 작성의 기반이다. **[DDP]**
 
 ### 1.1 전체 철학 (Overall)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 원칙 | 설명 |
 |------|------|
@@ -38,12 +40,14 @@ Django 공식 문서에 명시된 설계 철학은 모든 Django 코드 작성�
 | **Consistency** | 저수준(코딩 스타일)부터 고수준(사용 경험)까지 일관성을 유지한다. |
 
 ### 1.2 모델 철학 (Models) [DDP]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - **모델은 객체의 모든 측면을 캡슐화한다** -- Martin Fowler의 Active Record 패턴을 따른다.
 - 데이터와 데이터에 관한 메타정보(사람이 읽는 이름, 기본 정렬 등) 모두 모델 클래스에 정의한다.
 - 하나의 모델을 이해하는 데 필요한 모든 정보가 모델 안에 있어야 한다.
 
 ### 1.3 데이터베이스 API 철학 (Database API) [DDP]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 원칙 | 설명 |
 |------|------|
@@ -52,6 +56,7 @@ Django 공식 문서에 명시된 설계 철학은 모든 Django 코드 작성�
 | **Drop Into Raw SQL** | ORM은 지름길이지 끝이 아니다. 커스텀 SQL을 쉽게 작성할 수 있어야 한다. |
 
 ### 1.4 URL 설계 철학 (URL Design) [DDP]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - URL은 Python 함수명에 결합되면 안 된다 (Loose Coupling).
 - 어떤 URL 설계든 허용할 수 있는 **무한한 유연성**을 제공한다.
@@ -59,6 +64,7 @@ Django 공식 문서에 명시된 설계 철학은 모든 Django 코드 작성�
 - URL에 파일 확장자를 포함시키지 않는다.
 
 ### 1.5 템플릿 시스템 철학 (Template System) [DDP]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - **로직과 표현을 분리한다** -- 템플릿은 표현과 표현 관련 로직만 제어한다.
 - **프로그래밍 언어를 발명하지 않는다** -- 분기와 반복 등 표현에 필수적인 기능만 제공한다.
@@ -66,6 +72,7 @@ Django 공식 문서에 명시된 설계 철학은 모든 Django 코드 작성�
 - 안전과 보안이 기본이다 -- 악의적인 코드 실행을 원천 차단한다.
 
 ### 1.6 뷰 철학 (Views) [DDP]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - 뷰 작성은 Python 함수 작성만큼 단순해야 한다 -- 함수로 충분할 때 클래스를 인스턴스화하지 않는다.
 - 요청 객체를 전역 변수가 아닌 직접 전달받아 테스트를 쉽게 만든다.
@@ -78,12 +85,14 @@ Django 공식 문서에 명시된 설계 철학은 모든 Django 코드 작성�
 Django 공식 코딩 스타일은 PEP 8을 기반으로 하되, 고유한 규칙을 추가한다. **[DCS]**
 
 ### 2.1 포매팅 기본 규칙 [DCS]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - **black** 포매터를 사용한다.
 - 코드 줄 길이는 **88자** (black 기준), 문서/주석/독스트링은 **79자**.
 - Python은 **4칸 들여쓰기**, HTML 템플릿은 **2칸 들여쓰기**.
 
 ### 2.2 임포트 순서 [DCS]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 임포트는 다음 그룹 순서로 정렬하며, 그룹 내에서는 알파벳순으로 정렬한다.
 
@@ -121,6 +130,7 @@ except ImportError:
 - 여러 점 상대 임포트(`from ...utils import`)를 피하고 절대 임포트를 사용한다.
 
 ### 2.3 문자열 포매팅 [DCS]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 좋은 예: f-string 내에서 단순 속성 접근
@@ -142,6 +152,7 @@ _(f"Hello {user.name}")                      # X
 ```
 
 ### 2.4 모델 코딩 스타일 [DCS]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 class Person(models.Model):
@@ -177,6 +188,7 @@ class Person(models.Model):
 ```
 
 ### 2.5 선택지(Choices) 정의 [DCS]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 순수 인프라 필드(도메인 판정 없음): TextChoices 자체 선언
@@ -222,10 +234,12 @@ class OrderModel(models.Model):
 **소비 규율**: `choices`/Enum이 선언된 필드 값의 비교·분기·`.filter()`·대입·`default`는 반드시 심볼로 참조한다 — `.filter(status="pending")` 금지 → `.filter(status=OrderStatus.PENDING)`. 비교는 `==`(`is` 금지 — 필드 값은 plain str로 흐른다). 복합 상태 판정의 1차 시정은 애그리거트 술어·enum 프로퍼티다(`architecture-ddd` §3.2) — 심볼 치환이 판정 소유를 면책하지 않는다. 승격 판정·리터럴 허용 목록은 `discipline-cleancode` §2.14.
 
 ### 2.6 템플릿 코딩 스타일 [DCS]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 템플릿 코딩 스타일과 표현 계층 규칙은 `implementation-django-web`(§4)가 소유한다.
 
 ### 2.7 뷰 코딩 스타일 [DCS]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 좋은 예: 첫 번째 매개변수는 반드시 request
@@ -242,6 +256,7 @@ def my_view(req, article_id):   # req가 아닌 request 사용
 ## 3. 프로젝트 구조와 앱 설계
 
 ### 3.1 프로젝트 레이아웃 [TSD]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Two Scoops of Django가 권장하는 구조.
 
@@ -289,6 +304,7 @@ repository_root/
 > dddjango가 *생성하는 코드*의 구체 표준 파일트리는 `discipline-houserules` 스킬이 소유한다(표준 트리는 그 `references/final.md`) — §3.1의 설정 분할·앱 단위 조직을 토대로 구체화한 표준이며, 생성 코드 배치 권위는 그 문서가 갖는다. 여기 §3.1은 그 표준의 배경이다.
 
 ### 3.2 앱 분리 기준 [TSD]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 좋은 예: 앱은 하나의 응집된 도메인 개념에 대응
@@ -306,6 +322,7 @@ repository_root/
 - 앱 간 순환 의존이 생기면 설계를 재검토한다.
 
 ### 3.3 설정(Settings) 분리 [TSD] [DfP]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # config/settings/base.py
@@ -340,6 +357,7 @@ SECURE_HSTS_SECONDS = 31536000
 - `.env` 파일은 `.gitignore`에 추가한다.
 
 ### 3.4 settings 접근 시 주의사항 [DCS]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 나쁜 예: 모듈 최상위에서 settings 접근
@@ -363,6 +381,7 @@ def get_default_view():
 ## 4. 모델 설계 패턴
 
 ### 4.1 Fat Model, Thin View 원칙 [TSD]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 이 절은 평면 Django(기존 관례 유지보수) 맥락의 원칙이다 — dddjango 표준 4계층에서는 판정·불변식은 `domain_layer` 애그리거트 소유이고 평면 ORM 모델에 판정 메서드를 얹으면 blocker 다(`architecture-ddd` §3.2).
 
@@ -410,6 +429,7 @@ class OrderConfirmView(View):
 Django는 세 가지 모델 상속을 제공한다.
 
 #### Abstract Base Class (추상 베이스 클래스) -- 권장
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 좋은 예: 공통 필드를 추상 클래스로 추출
@@ -430,6 +450,7 @@ class Article(TimeStampedModel):
 - 여러 모델에서 공통 필드를 재사용할 때 가장 적합하다.
 
 #### Multi-table Inheritance -- 주의해서 사용
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 주의: 각 모델마다 별도 테이블 생성 + 암묵적 OneToOneField
@@ -467,6 +488,7 @@ class ExpensiveOrder(Order):
 - 기존 테이블 위에 다른 인터페이스를 제공할 때 유용하다.
 
 ### 4.3 필드 선택 가이드 [DDoc]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 나쁜 예: BooleanField 남발로 상태 폭발
@@ -499,6 +521,7 @@ class Task(models.Model):
 - `DecimalField`를 금액에 사용하고, `FloatField`는 피한다.
 
 ### 4.4 모델 유효성 검증 [DDoc]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 class Event(models.Model):
@@ -530,6 +553,7 @@ class Event(models.Model):
 ## 5. QuerySet과 Manager 패턴
 
 ### 5.1 Custom Manager와 QuerySet [DDoc] [TSD]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 class ArticleStatus(models.TextChoices):
@@ -574,6 +598,7 @@ class Article(models.Model):
 - Manager에서 `get_queryset()`을 오버라이드하여 기본 필터를 적용할 때는 주의한다 -- 관리자 페이지에서 예상과 다르게 동작할 수 있다.
 
 ### 5.2 QuerySet 최적화 필수 패턴 [DDoc]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 나쁜 예: N+1 문제 -- 각 book마다 author를 별도 쿼리
@@ -611,6 +636,7 @@ books = Book.objects.prefetch_related(
 | 조건부 프리페치 | `Prefetch()` 객체 |
 
 ### 5.3 only(), defer(), values() [DDoc]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # only(): 지정한 필드만 로드 (나머지는 지연 로드)
@@ -631,6 +657,7 @@ emails = User.objects.values_list("email", flat=True)
 - `values()` 후에 `only()`/`defer()`를 호출하면 `TypeError`가 발생한다.
 
 ### 5.4 annotate()와 aggregate() [DDoc]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 from django.db.models import Count, Avg, F, Q
@@ -658,6 +685,7 @@ authors = Author.objects.alias(
 - 최종 결과에 불필요한 계산 필드가 있으면 `alias()`를 사용하여 DB 부담을 줄인다.
 
 ### 5.5 bulk 연산 [DDoc]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 나쁜 예: 루프 내에서 개별 save()
@@ -685,24 +713,28 @@ Product.objects.filter(category="books").update(
 ---
 
 ## 6. 뷰 패턴: CBV vs FBV
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 서버 렌더링 화면의 뷰(CBV/FBV 선택, Generic CBV, Mixin, FBV 작성)는 표현 계층이므로 `implementation-django-web`(§2)가 소유한다. JSON API endpoint의 라우팅/스키마는 `implementation-django-ninja`, REST 계약은 `architecture-api`가 소유한다. 이 문서(코어)는 뷰가 호출하는 service/selector 경계(§16)만 다룬다.
 
 ---
 
 ## 7. 폼과 유효성 검증
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 웹 폼(Form/ModelForm 작성, 검증 순서, 커스텀 validator)은 표현 계층이므로 `implementation-django-web`(§6)가 소유한다. 다만 form과 model이 공유하는 durable invariant·validator는 model/DB 경계에서도 보장한다(§4 모델 설계). 도메인 규칙 자체는 `architecture-ddd`가 소유한다.
 
 ---
 
 ## 8. REST API 경계와 기존 DRF 유지보수
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 신규 REST API의 리소스 계약, HTTP 상태 코드, 오류 응답, pagination, versioning, idempotency는 Django 모델/ORM 구현 문제가 아니라 API 계약 문제로 먼저 다룬다. dddjango runtime에서는 greenfield endpoint 구현의 기본 경로를 Django Ninja Router/Schema로 두며, 이 문서의 DRF 내용은 기존 DRF 코드 유지보수, 레거시 migration review, 또는 이미 DRF를 표준으로 채택한 프로젝트 안에서만 적용한다.
 
 신규 코드에서 DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`를 기본 권장안처럼 제시하지 않는다. 기존 DRF surface를 다룰 때도 도메인 규칙은 serializer/viewset에 흩뿌리지 말고 모델 메서드, service, selector, database constraint 같은 Django-side boundary에 둔다.
 
 ### 8.1 기존 DRF Serializer 설계 [DRF]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 좋은 예: 읽기/쓰기 Serializer 분리
@@ -741,6 +773,7 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
 - 검증이 serializer에만 갇히면 다른 entry point에서 불변식이 깨질 수 있다. 여러 entry point가 공유하는 규칙은 모델, service, DB constraint로 올린다.
 
 ### 8.2 기존 DRF ViewSet과 Router [DRF]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 from rest_framework import viewsets, permissions
@@ -781,6 +814,7 @@ urlpatterns = router.urls
 - viewset은 HTTP adapter다. transaction owner, external side effect timing, domain state transition은 명시적인 model/service boundary로 빼서 재사용 가능하게 둔다.
 
 ### 8.3 Permission 패턴 [DRF]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 from rest_framework.permissions import BasePermission
@@ -798,6 +832,7 @@ class IsAuthorOrReadOnly(BasePermission):
 - 객체 레벨 권한은 `has_object_permission()`에서 처리.
 
 ### 8.4 Pagination 설정 [DRF]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # settings.py
@@ -817,6 +852,7 @@ class LargeResultsSetPagination(PageNumberPagination):
 - `APIView`를 직접 사용하면 수동으로 페이지네이션을 호출해야 한다.
 
 ### 8.5 기존 DRF API 버전 관리 [DRF]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # settings.py -- Accept Header 방식 (DRF 공식 권장)
@@ -852,10 +888,12 @@ class ArticleViewSet(viewsets.ModelViewSet):
 ---
 
 ## 9. 시그널 사용 가이드라인
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 시그널은 Django에서 가장 논쟁적인 기능 중 하나다. **올바른 사용 시나리오를 명확히 알아야 한다.**
 
 ### 9.1 시그널을 사용해야 하는 경우 [DDoc]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > BC «경계 간» 동작 트리거는 signal 이 아니라 `published_event/`·`event_subscription/` 소유다(#89·#90) — 아래 예는 같은 BC 내부·서드파티 모델 수신 한정.
 
@@ -881,6 +919,7 @@ def create_user_profile(sender, instance, created, **kwargs):
 - 많은 수의 모델에 같은 핸들러를 일괄 적용할 때
 
 ### 9.2 시그널을 피해야 하는 경우 (안티패턴) [HS]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 나쁜 예: 같은 앱 내에서 시그널 사용 -- 직접 호출이 더 명확
@@ -916,6 +955,7 @@ def order_create(*, user, items):
 ## 10. 마이그레이션 베스트 프랙티스
 
 ### 10.1 기본 원칙 [DDoc] [TSD]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 마이그레이션을 작게 유지한다
@@ -927,6 +967,7 @@ python manage.py sqlmigrate myapp 0002
 ```
 
 ### 10.2 데이터 마이그레이션 — 금지 [DDoc]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 **`migrations/` 에는 `makemigrations` 가 생성한 것만 둔다.** 사람이 `RunPython`/`RunSQL` 로 데이터를 채우는 마이그레이션 파일을 만들지 않는다. 마이그레이션은 「돌았다 / 안 돌았다」 두 상태뿐이라, §11.2 가 대형 backfill 에 요구하는 넷 — 배치 크기·pause 정책, 실패 배치의 멱등 재실행, 진행률·오류율 모니터링, 부분 완료 시 rollback/forward-fix 결정 — 을 구조적으로 하나도 만족시키지 못한다.
 
@@ -946,6 +987,7 @@ def forward_func(apps, schema_editor):
 - squash 정정: 데이터 마이그레이션은 기본값(`elidable=False`)에서 `squashmigrations` 때 **보존되며, 대신 그 지점에서 최적화가 끊긴다.** 지워지는 것은 `elidable=True` 를 명시했을 때뿐이다.
 
 ### 10.3 무중단(Zero-Downtime) 마이그레이션 [DfP]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 나쁜 예: NOT NULL 컬럼 추가와 동시에 배포
@@ -971,6 +1013,7 @@ class Migration(migrations.Migration):
 - `AddIndex`는 PostgreSQL에서 `CREATE INDEX CONCURRENTLY`를 사용하도록 설정할 수 있다.
 
 ### 10.4 이미 이주가 결정된 뒤의 마이그레이션 이력 보존 [TSD] [DfP]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 기존 Django 앱(이미 `0001_initial`·`db_table`·`label`을 가진 앱)이 판정·불변식을
 새로 소유해 표준 4계층 구조로 **이주가 이미 결정된 뒤**, 그 *마이그레이션 이력*을
@@ -1049,6 +1092,7 @@ class Migration(migrations.Migration):
 ## 11. 성능 최적화
 
 ### 11.1 N+1 문제 탐지와 해결 [DDoc]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 아래 profiler는 탐색에 사용할 수 있지만 query-count 테스트는 승인된 성능 계약과 독자 production
 failure가 중앙 입장 심사에서 `add/update`인 뒤에만 작성한다. 미입장 상태에서는 debug toolbar·silk·
@@ -1073,6 +1117,7 @@ class ArticleTestCase(TestCase):
 ```
 
 ### 11.2 데이터베이스 인덱스 전략 [DDoc]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 class ArticleStatus(models.TextChoices):  # module-level — Meta 스코프에서도 참조 가능(§2.5 소비 규율)
@@ -1107,6 +1152,7 @@ class Article(models.Model):
 - Django Debug Toolbar로 느린 쿼리를 식별하고, `EXPLAIN ANALYZE`로 확인한다.
 
 ### 11.3 save(update_fields=...) [DDoc]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 나쁜 예: 모든 필드를 업데이트
@@ -1122,6 +1168,7 @@ article.save(update_fields=["title"])  # title만 UPDATE
 - 업데이트되는 데이터 양을 줄여 성능이 개선된다.
 
 ### 11.4 exists()와 count() [DDoc]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 나쁜 예: 전체 쿼리셋을 평가하여 존재 여부 확인
@@ -1181,6 +1228,7 @@ def get_expensive_data():
 ```
 
 ### 12.2 캐시 무효화 패턴 [DDoc]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 버전 기반 캐시 키
@@ -1205,6 +1253,7 @@ class Article(models.Model):
 ## 13. 보안
 
 ### 13.1 Django 내장 보안 기능 [DDoc] [OWASP]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Django는 주요 웹 취약점에 대한 방어를 내장하고 있다.
 
@@ -1216,6 +1265,7 @@ Django는 주요 웹 취약점에 대한 방어를 내장하고 있다.
 | **Clickjacking** | `XFrameOptionsMiddleware` | `X_FRAME_OPTIONS = "DENY"` 설정 |
 
 ### 13.2 보안 설정 체크리스트 [DDoc] [OWASP]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # config/settings/production.py
@@ -1245,6 +1295,7 @@ X_FRAME_OPTIONS = "DENY"
 ```
 
 ### 13.3 Raw SQL 안전하게 사용 [DDoc]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 나쁜 예: 문자열 보간으로 SQL Injection 취약
@@ -1282,10 +1333,12 @@ class EditArticleView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
 ---
 
 ## 14. 테스트 패턴
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 이 절은 `discipline-tdd` 입장 심사에서 `add`/`update`된 테스트의 Django mechanics를 고르는 작성 recipe다. framework class·fixture·transaction framework 자체를 시험하기 위해 테스트를 만들지 않으며, 실제 승인된 테스트가 있을 때만 아래 class와 layout을 선택한다.
 
 ### 14.1 TestCase 선택 기준 [DDoc]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 클래스 | 특징 | 사용 시나리오 |
 |--------|------|-------------|
@@ -1356,6 +1409,7 @@ class ArticleServiceTest(TestCase):
 - `create_batch()`로 여러 객체를 한 번에 생성한다.
 
 ### 14.3 pytest-django 활용 [TDD]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 import pytest
@@ -1393,6 +1447,7 @@ class TestArticleAPI:
 - 쿼리 수가 승인된 성능 계약이고 독자 failure로 입장된 테스트에서만 `assertNumQueries`로 회귀를 방지한다.
 
 ### 14.4 테스트에서의 Django 공식 규칙 [DCS]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 좋은 예: assertIs(x, True) -- 타입까지 검증
@@ -1415,6 +1470,7 @@ def test_publish_sets_status(self):
 ## 15. 미들웨어
 
 ### 15.1 미들웨어 실행 순서 [DDoc]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```
 요청 -> SecurityMiddleware -> SessionMiddleware -> CommonMiddleware
@@ -1427,6 +1483,7 @@ def test_publish_sets_status(self):
 - `SecurityMiddleware`는 반드시 첫 번째, `SessionMiddleware`는 `AuthenticationMiddleware` 앞에 위치한다.
 
 ### 15.2 커스텀 미들웨어 작성 [DDoc]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 import time
@@ -1473,6 +1530,7 @@ class RequestTimingMiddleware:
 ## 16. Django와 서비스 레이어 아키텍처
 
 ### 16.1 서비스 레이어가 필요한 시점 [TSD] [HS] [CP]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Fat Model이 비대해졌다는 판단은 파일 길이보다 변경 이유와 orchestration 복잡도로 한다. 단순한 한 모델의 행위는 모델 메서드나 custom QuerySet으로 충분하며, service layer는 다음 기준 중 하나 이상이 실제로 있을 때 도입한다.
 
@@ -1485,6 +1543,7 @@ Fat Model이 비대해졌다는 판단은 파일 길이보다 변경 이유와 o
 파일 크기 자체는 보조 신호일 뿐이다. 실제로 함께 이해되고 함께 바뀌는 짧은 절차는 service로 억지 분리하지 않는다.
 
 ### 16.2 HackSoft 서비스/셀렉터 패턴 [HS]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # services.py -- 쓰기(Command) 로직
@@ -1524,6 +1583,7 @@ def article_list(*, author: User | None = None, status: str | None = None):
 - 검색 용이: `grep "def user_"` 로 모든 사용자 관련 동작을 찾을 수 있다.
 
 ### 16.3 DDD와 Django의 트레이드오프 [CP]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # Django ORM은 Active Record 패턴 -- 도메인 모델과 영속성 모델이 같은 객체
@@ -1556,6 +1616,7 @@ class ArticleRepository:
 - 서비스 레이어는 좋은 출발점 -- 뷰와 모델 사이에 얇은 계층을 두어 비즈니스 로직을 격리한다.
 
 ### 16.4 트랜잭션과 일관성 경계 [DDoc] [CP]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Django write flow는 use case 단위로 commit/rollback 경계를 정한다. 모든 코드를 큰 transaction으로 감싸는 것이 아니라, 함께 성공하거나 함께 실패해야 하는 최소 블록에 `transaction.atomic()`을 둔다.
 
@@ -1600,6 +1661,7 @@ Risky write를 구현하거나 리뷰할 때는 다음 항목을 명시한다.
 `verification candidates` 행은 테스트 의무가 아니며 결정은 `discipline-tdd`가 소유한다. DB unique/race/rollback/CAS가 다른 boundary와 독립된 production failure일 때만 coder가 `add`할 수 있고, HTTP 등이 같은 제품 failure를 이미 잡으며 독자 DB mechanism이 없으면 `reuse`한다. `add`된 테스트의 일반 DB-backed behavior에는 plain `@pytest.mark.django_db`를 쓰고, commit hook·lock·DB trigger·transaction isolation을 실제로 보호해야 할 때만 `@pytest.mark.django_db(transaction=True)`나 실제 DB 기반 integration test를 쓴다(기존 `TestCase` 스위트는 재작성하지 않는다 — 이 등가는 신규 `add` 에만). class 선택이나 transaction framework 자체는 새 테스트의 근거가 아니다.
 
 ### 16.5 트랜잭셔널 Outbox 구현 [DDoc]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 메시지 유실이 허용되지 않는 외부 발행은 Outbox로 구현한다(채택 기준은 `architecture-ddd` §3.7, 전달 보장·dead-letter 정책은 `architecture-db` §9.7). Django에서는 outbox 행을 비즈니스 write와 **같은 `transaction.atomic()` 블록**에서 저장하고, 별도 디스패처가 발행한다.
 
@@ -1730,6 +1792,7 @@ def public_page(request):
 ### 17.3 Django 5.2 주요 기능 (LTS) [DDoc]
 
 #### Composite Primary Key -- 복합 기본키
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 from django.db.models import CompositePrimaryKey

@@ -1,0 +1,379 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+
+djr:R-1368 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1369 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1370 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1371 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1372 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1373 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1374 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1375 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1376 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1377 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1378 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1379 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1380 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1381 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1382 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1383 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1384 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1385 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1386 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1387 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1388 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1389 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1390 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1391 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1392 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1393 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1394 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1395 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1396 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1397 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1398 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1399 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1400 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1401 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1402 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1403 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1404 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1405 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1406 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1407 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1408 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1409 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-choices-literal-consumption.py> .
+
+djr:R-1410 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1411 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1412 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1413 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1414 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1415 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1416 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1417 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1418 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1419 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1420 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1421 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1422 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1423 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1424 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1425 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1426 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1427 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1428 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1429 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1430 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1431 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1432 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1433 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1434 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1435 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1436 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1437 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1438 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1439 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1440 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1441 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1442 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1443 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1444 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1445 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1446 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1447 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1448 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1449 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1450 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1451 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1452 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1453 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1454 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1455 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1456 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1457 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1458 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1459 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1460 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1461 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1462 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api>, <https://numchida.com/ns/djr#a/agent-design-review-db>, <https://numchida.com/ns/djr#a/agent-design-review-ddd>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1463 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1464 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1465 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1466 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1467 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1468 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1469 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1470 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1471 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1472 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1473 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1474 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1475 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1476 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1477 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1478 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1479 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1480 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1481 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1482 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1483 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1484 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1485 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1486 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1487 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1488 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1489 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1490 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1491 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1492 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1493 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1494 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1495 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1496 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py> .
+
+djr:R-1497 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1498 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1499 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1500 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1501 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1502 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1503 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1504 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1505 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1506 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1507 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1508 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1509 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1510 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1511 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1512 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1513 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1514 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1515 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1516 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1517 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1518 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1519 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1520 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1521 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1522 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1523 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1524 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1525 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1526 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1527 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1528 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1529 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1530 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1531 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1532 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1533 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1534 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1535 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1536 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1537 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1538 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1539 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1540 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1541 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1542 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1543 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1544 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1545 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1546 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1547 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1548 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1549 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1550 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1551 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1552 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1553 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1554 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-1555 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .

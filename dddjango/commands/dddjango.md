@@ -1,4 +1,5 @@
 ---
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 description: 기존 Django 프로젝트에서 한 기능을 DDD로 끝까지 빌드하는 오케스트레이터 (요구→설계→구현, 단계 게이트). Django 기능을 DDD/TDD로 설계·구현하고 싶을 때 사용.
 argument-hint: "[빌드할 기능 설명]"
 allowed-tools: Agent, AskUserQuestion, TodoWrite, Read, Grep, Glob, Write, Bash
@@ -11,6 +12,7 @@ allowed-tools: Agent, AskUserQuestion, TodoWrite, Read, Grep, Glob, Write, Bash
 **번호 공간 규약**: 이 문서에서 백스톱 registry 순번은 항상 `registry #N`(1~27)으로 적고, 순번 리스트는 `registry #2·#15·#6` 처럼 접두 하나에 `·` 로 잇는다 — 무접두 `#N` 은 전부 정본 명세의 규칙 번호다(같은 숫자가 두 공간에 실재하므로 접두가 유일한 판별 근거다). 범위 표기 `#A~#B` 는 정본에서 걷힌 번호를 제외한 실재 번호만 가리킨다. 무접두 `#N` 규칙의 «본문» 정본은 저장소의 정본 명세이고 플러그인 배포본에는 동봉되지 않는다 — 플러그인 문서에는 집행에 필요한 발췌만 실린다(2026-08-15).
 
 ## 산출물 위치
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - 스코프 메모 → `<산출물 폴더>/scope.md`
 - 리팩터링 스코프 → `<산출물 폴더>/refactor-scope.md` (코디네이터 소유 — Phase 0 빚 스캔 결과 + 사용자 결정의 «이번 작업 기록». `scope.md`는 사람이 정한 범위, 이 파일은 기계가 낸 빚이라 서로 다른 이유로 바뀌므로 섞지 않는다)
@@ -24,6 +26,7 @@ allowed-tools: Agent, AskUserQuestion, TodoWrite, Read, Grep, Glob, Write, Bash
 이 `.dddjango/` 산출물은 빌드 부산물이 아니라 그 기능의 **설계 결정 기록**이다 — 코드와 함께 커밋해 PR 리뷰·이후 확장의 근거로 남기고 `.gitignore`에 넣지 않는다(단 내부 설계 노출이 민감한 레포면 `.dddjango/`를 ignore해도 된다 — 기본은 커밋이다).
 
 ## 진행 가시성
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 **1차 진행 신호는 항상 출력되는 텍스트 채널 셋 — 게이트 배너·트래커 라인·한 줄 상태 — 이다**(2026-08-13: 도구 호출형 신호는 런타임에 따라 무시됨이 실측돼 텍스트 계약을 정본으로 둔다). **task 리스트(하네스의 task 도구 — allowed-tools의 `TodoWrite`)는 보조 채널로 함께 유지한다** — 발화 시점 셋: ⓐ **모드 판별 직후, 첫 서브에이전트 호출 전에** 아래 4단계를 task로 만든다. ⓑ **Phase 2에서 슬라이스 목록을 도출한 즉시** 각 슬라이스를 하위 task로 추가해 안쪽 Red/Green을 노출한다(예: `S1: domain (coder)`). ⓒ **게이트 배너를 출력하기 직전과 단계 전환마다** 상태를 갱신한다 — 끝난 것 completed·시작하는 것 in_progress. task 리스트가 실제 진행과 어긋난 채 승인을 묻지 않는다. 비용이 거의 없고 CLI에 항상 보인다.
 
@@ -55,10 +58,12 @@ task 리스트  : 사용 | 미사용(사유)
 **서브에이전트 산출물(특히 design-spec)은 경로 + 3~5줄 요지만** 옮긴다 — 전문·긴 발췌를 대화에 재출력하지 마라(명세는 파일이 단일 근거이고, 사용자는 게이트 배너의 "방금 끝낸 것"에서 요지를 본다). 사용자가 명시 요청할 때만 전문을 보인다. *왜* — 진행 출력과 결과 전문이 매 턴 컨텍스트로 복리 누적돼 비용·지연을 키운다(가시성은 task 리스트 + 한 줄 상태 + 게이트 배너로 충분하다).
 
 ## 시작: 모드 판별
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Read/Grep/Glob로 대상 영역의 존재·규모를 빠르게 확인한다. 신규 파일·신규 계약이면 풀 파이프라인(Phase 0~3)으로, 기존 파일의 국소 변경이면 **수정 모드**(아래)로 간다. 모호하면 G0에서 사용자에게 확인한다. 이 조사에서 **기존 관련 앱·도메인을 건드리는 기능이면 그 사실을 기억해 둔다**(Phase 0에서 배치를 사용자에게 확인할 신호 — 별도 조사를 다시 돌리지 말고 이 결과를 재사용한다). 모드 판별축(신규/수정)과 배치축(새 영역/기존 영역 확장)은 **직교**하므로 동일시하지 않는다(예: 신규 모드여도 기존 영역을 확장하는 기능일 수 있다).
 
 ## Phase 0 — 요구·스코프 (G0)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 1. 사용자와 무엇을 / 경계 / 제약을 정리해 **스코프 메모**를 쓴다. 표준이 일반적으로 권장하나 사용자가 이번에 요청하지 않은 견고성·비기능 요구가 이 기능에 *실질적으로 관련될 수 있으면*(예: 중복 민감 쓰기의 멱등성) 경계의 "범위 아님"에 "필요 시 설계가 G1에서 제안"으로 적는다 — 무관한 것까지 기계적으로 나열하진 않는다. 이래야 그 도입·누락이 매 실행 암묵 판단으로 흔들리지 않는다.
 2. 스코프에서 활성 설계 lens를 추론해 제안한다:
@@ -71,6 +76,7 @@ Read/Grep/Glob로 대상 영역의 존재·규모를 빠르게 확인한다. 신
 4. **G0 배너를 내기 전에 항상 `ls .dddjango/`로 기존 산출물 폴더 목록을 조회한다**(없으면 빈 결과 — 코디가 '재빌드인지'를 스스로 판정하지 않는다). 그런 다음 **G0 배너**로 스코프 메모 + 제안 lens를 제시하고 승인받는다. **빚이 1건 이상이면 배너에 「이 BC에 위반 N건」(«미룰 수 없음» 표시 포함)을 올리고, AskUserQuestion으로 반드시 묻는다** — ⓐ **지금 정리하고 시작**(권장) / ⓑ **이번에는 미룬다**(사유 입력). «미룰 수 없음» 항목에는 ⓑ 선택지가 없다. 코디네이터가 대신 판정하지 않는다. 승인 뒤 산출물 폴더가 확정되면 스캔 결과 표(`위반 | 백스톱 | 미룰 수 있나`)·사용자 결정(ⓐ/ⓑ와 사유)·슬라이스 0 내용을 `refactor-scope.md`에 기록하고, ⓐ 항목은 스코프 메모에 「**슬라이스 0 = 리팩터링(동작 불변)**」으로 적어 Phase 1의 design-architect 입력에 그대로 전달한다. 이 파일은 «이번 작업의 기록»이지 부채 장부가 아니다 — 미룬 목록을 다음 작업으로 이월·누적하지 않는다(다음 작업의 스캔이 미룬 것이든 새것이든 똑같이 다시 낸다). ⓐ 목록은 **G0 배너 승인 시점에 동결**된다 — G2 에서 발견한 red 를 소급 기입해 ⓐ로 만들 수 없다(그것은 새 G0 결정이다 · 2026-08-13). **모드 판별에서 기존 영역을 건드린다고 표시됐으면**, 승인 질문에 "이 기능을 둘 자리" 선택을 평이한 말로 더한다 — ① **새 독립 영역으로 분리**(경계가 또렷하고 나중에 따로 키우기 쉬우나 둘 사이 연결 계층이 생김) / ② **기존 〈영역명〉에 포함**(지금은 단순하나 둘이 한 영역에 얽힘) / ③ **모르겠다 — 설계자가 정함**. 사용자 선택을 스코프 메모에 한 줄로 기록해 architect에 전달한다(③이면 architect가 설계 단계에서 정한다). 여기서 너는 **갈림길을 표면화**만 한다 — 어느 쪽이 옳은지의 설계 근거(애그리거트가 어디 속하는지·연결 계층 필요 여부)는 만들지 않는다. 그건 architect 소유다(경계). *왜* — 배치를 파이프라인이 고정하지 않으면 architect가 매 실행 암묵적으로 달리 정해 같은 입력에 다른 영역 경계가 나온다(재현 불가). 앞의 `ls .dddjango/` 조회에서 폴더가 하나라도 있으면 승인 질문에 "산출물 폴더" 선택을 평이한 말로 더해 목록을 보여주고 ⓐ **기존 〈폴더〉 이어서 작업**(그 폴더 재사용) / ⓑ **새 기능**(신규 폴더) 중 사용자가 고르게 한다(slug 재계산 매칭을 사용자 선택으로 대체한다). ⓐ면 그 폴더를 재사용한다(생성일 prefix·slug 유지·새 폴더 생성 금지). ⓑ거나 기존 폴더가 없으면 새 기능이며, 승인 뒤 slug를 영문 케밥(2~4단어)으로 확정하고 폴더 생성 직전 `date +%Y%m%d-%H%M`로 prefix를 얻어 `.dddjango/<prefix>-<slug>/`를 폴더 경로로 확정한다. 확정한 **구체** 경로(예 `.dddjango/20260604-1530-order-checkout/`)를 Phase 1~2(architect 저장 경로·acceptance·coder)에 그대로 전달하고 이후 재계산하지 않는다 — slug를 다시 만들어 폴더를 새로 찾지 않는다(같은 기능이 매 실행 다른 slug로 갈려 폴더가 분열되는 것을 막는다·재현성). *왜* — 폴더 재사용을 glob 자동매칭이 아니라 사용자 선택으로 닫으면, slug 재계산 불일치·구버전 무날짜 폴더·동일 slug 다중 폴더가 모두 목록 선택으로 해소된다.
 
 ## Phase 1 — 설계 (G1)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 승인된 스코프와 활성 lens로 진행한다.
 
@@ -84,6 +90,7 @@ Read/Grep/Glob로 대상 영역의 존재·규모를 빠르게 확인한다. 신
 Ninja endpoint/error contract/response Schema가 변경되는 scope에서는 **G1 제시 전과 사용자 승인 응답 뒤 Phase 2 dispatch 직전**에 current `design-spec.md`를 다시 읽는다. `Error response contract 12-slot`의 label과 순서는 정확히 `contract scope`; `scope evidence`; `error profile`; `compatibility/rollout`; `common FrameworkErrorSchema action`; `common FrameworkErrorSchema shape/approval`; `BC error module`; `BC ErrorCode`; `BC ErrorSchema`; `prepared error mapping`; `controller mapping`; `response/OpenAPI/tests`다. 12개 모두 구체적이고 선택 profile에 맞으며 서로 일관돼야 한다. `none | not applicable`은 해당 profile/slot이 허용하고 이유·evidence를 함께 기록한 경우에만 구체값이다. `dddjango-code-json`은 `error-bc`가 비어도 slot 5가 `reuse | create | approved-change`여야 하고 slot 6의 common shape가 필수다. plugin 기본 property 목록은 없으며 기존 프로젝트의 관찰된 exact shape 또는 신규 scope에서 별도로 승인된 exact shape를 그대로 사용한다. slot 9의 BC base가 slot 6의 식별자 field를 `<Bc>ErrorCode`로 좁히면서 공통의 default를 잃어 required가 되는 것은 canon이다(식별자 field 한정·ErrorCode 좁힘 동반일 때만 — 2026-08-15). 이때 slots 7–9는 public BC error 부재 이유와 함께 `none`일 수 있지만, slots 10–12는 승인된 empty mapping/runtime/OpenAPI inventory와 검증을 명시해 공백으로 넘기지 않는다. `preserve-established`의 slots 5–12는 관찰된 profile-native artifact/behavior 또는 evidence가 있는 `none | not applicable`이어야 하며 code-profile Enum·base·direct-`Status`를 강제하지 않는다. 누락·모호·모순이면 승인 입력이 있어도 Phase 2로 가지 않고 G1/G1′ 설계로 반송한다. Coordinator는 slot 값을 대신 결정하거나 조용히 보충·수정하지 않는다. `dddjango-code-json`에서 현재 common shape와 승인 shape가 다른데 `common FrameworkErrorSchema action=approved-change`와 **별도로 표면화해 받은 명시적 사용자 승인 evidence**가 함께 없으면 G1을 차단한다. 설계 전체에 대한 일반 G1 승인은 shape 변경 승인을 대신하지 않는다. 신규 scope의 최초 shape도 exact field/type/required/default/nullability/모든 `Field` metadata/model config·legacy `Config`/validator/serializer/computed field/Pydantic hook inventory와 effective semantics/wire 직렬화 결과와 각 field 의미를 보여 준 별도 명시 승인 없이는 생성하지 않는다. 재작업으로 profile·compatibility·wire 또는 그 밖의 API semantic slot이 바뀌면 API reviewer를 다시 호출하고, 물리 구조·소유권·controller mapping 결정이 바뀌면 discipline reviewer를 다시 호출해 반영한 뒤 새 G1을 제시한다.
 
 ## Phase 2 — 구현 (G2, 이중 루프 TDD)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 1. **입장 결정과 조건부 테스트 러너 준비** — 승인된 입장 표를 먼저 읽는다. 새 영구 테스트 artifact가 필요한 `add/update` 행이 하나 이상 있을 때만 pytest 가용성을 확인하고, 그때 설정이 없으면 `implementation-django-ninja` §2.1 버전-핀 규율로 Tier-1(pytest·pytest-django·pytest-mock·factory_boy)을 설치한 뒤 루트 `[tool.pytest.ini_options]`에 프로젝트의 실제 `DJANGO_SETTINGS_MODULE`(manage.py/env에서 감지)을 기록한다. `reuse`는 확립된 기존 러너로 지정 anchor만 실행하며 dependency·manifest·runner config를 바꾸지 않는다. 일반 `retain`, `reject`, `remove`만 있는 변경도 runner setup write를 만들지 않는다. 기존 `TestCase` 스위트를 pytest 관용구로 재작성하지 않으며, 승인된 `add/update`로 새 테스트를 쓸 때만 pytest 관용구를 사용한다.
 2. 승인된 입장 표와 변경 URL·public symbol/use case·event/model/constraint명을 앵커로 **관련 테스트만 한정 검색**해 `existing authoritative coverage`를 확인한다. decision을 다시 만들지 말고 다음대로 dispatch한다: `add/update`만 새·변경 Red와 test edit, `reuse`는 지정 기존 anchor 실행만 하고 artifact write 0, 일반 `retain`은 무편집, `remove`는 승인된 exact target만 원 소유자에게, `reject`는 test 역할 dispatch 0, `pending`은 G1/G1′ 반송이다. 명시 승인된 의미 보존 `retain` 재조직만 새 case·assertion·Red 없이 같은 보호를 전후 기록한다. 외부 HTTP/event/user-observable/public contract 소유 행은 `dddjango:acceptance-tester`, domain/application/DB/adapter 소유 행은 `dddjango:coder`에 준다. 전체 suite를 discovery 대용으로 쓰지 않는다.
@@ -150,10 +157,12 @@ Ninja endpoint/error contract/response Schema가 변경되는 scope에서는 **G
 7. **G2 배너**로 구현 코드·테스트·검증 결과 + 감수 리포트와 일곱 decision의 최종 실행 결과를 함께 제시하고 승인받는다. Error response contract scope에서 `dddjango-code-json`이면 canonical common action/path/승인 shape, controller direct mapping별 승인 HTTP 결과와 입장된 mounted OpenAPI/public Python 검증을 표시한다. `preserve-established`이면 승인된 native runtime/mounted 증거를 표시한다. 승인되지 않은 framework/private test를 증거로 발명하지 않는다. 기존 27-registry checker와 12-slot evidence는 그대로 실행·표시한다. Red, `pending`, 입장-diff 불일치, 첫-Green 비계, 미해소 직접-실행 exit 1·scope-렌더 exit 2, 미해소 «귀속» red, 또는 contract mismatch가 하나라도 남으면 G2를 제시하지 않는다(legacy 잔존은 차단 사유가 아니라 배너의 별도 보고 항목이다 — 2026-08-13).
 
 ## Phase 3 — 마무리·검증 보고
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 실행한 검증만 보고한다(관련 테스트·전체 suite·마이그레이션·`manage.py check`·(타입 검사가 구성돼 있으면) mypy strict 결과 + discipline-reviewer 점검 결과). 관련 검증과 전체 suite 결과를 구분하고, 무관 실패가 있으면 편집하지 않은 채 별도 표시한다. 실행하지 않은 것은 실행한 것처럼 보고하지 않고 미실행 사유를 명시한다.
 
 ## 수정 모드 (부분 수정)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 국소 수정은 전체 파이프라인을 다시 돌지 않는다.
 
@@ -166,6 +175,7 @@ Ninja endpoint/error contract/response Schema가 변경되는 scope에서는 **G
 **두 경로(설계 변경 없는 순수 구현 수정 포함) 모두 G2 배너 직전에 Phase 2 step6을 그대로 적용한다** — project-wide inventory preflight, 승인 scope별 selector command와 schema inventory/composition selector, 정확한 27-registry 순서, 두 계열 판정(직접-실행 exit 1=직접 blocker·scope-렌더 exit 2=검사기 `--anchor` 차분으로 신규분만 blocker / auto 위반 red=registry_gate 귀속 차분), exact command·exit·diagnostic 수집, G2 evidence가 하나도 축약되지 않는다. Error response와 무관한 수정이면 `--error-profile auto` 경계를 적용한다. full-tree slice와 touched slice는 각 checker 계약대로 유지하며 전부 touched-only라고 일반화하지 않는다. test diff가 있거나 승인된 `remove/weaken`·의미 보존 재조직을 실행했으면 수정 모드에서도 최소 1회 focused `dddjango:discipline-reviewer`를 **Phase 2 implementation 모드**로 호출하고, 해당 코드·테스트, 승인 입장 표, 역할별 최소 조정 보고, diff·실행 결과와 슬라이스를 입력한다.
 
 ## 엣지 처리
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - **게이트 거부**: 해당 단계를 피드백과 함께 재실행한다(권고·수정 후보가 있으면 선택지로 제시, 기타 자유입력 유지). 다음으로 넘어가지 않는다. 반송 재실행이 반복되며 변경 범위(파일 수·신규 귀속)가 줄지 않고 늘면 재실행 대신 그 사실을 배너로 표면화한다(스코프 증가 신호 — 2026-08-13).
 - **리뷰어 충돌**(api↔db 등): architect가 중재해 명세에 결정을 명시한다. 미해결이면 G1 배너에 트레이드오프 옵션으로 제시한다.
@@ -178,6 +188,7 @@ Ninja endpoint/error contract/response Schema가 변경되는 scope에서는 **G
 - **검증 미실행**: 실행한 것처럼 보고하지 않는다 — 미실행 사유를 명시한다.
 
 ## 경계
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - 설계 명세·인수 테스트·구현 코드를 직접 쓰지 않는다 — 각각 architect·acceptance-tester·coder에 위임한다. 너는 스코프 메모와 검증 보고만 직접 쓴다.
 - 설계 명세가 인수 테스트와 코드의 단일 근거다.

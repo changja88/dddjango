@@ -877,11 +877,11 @@ command-dddjango	E10	s003	3	2		진행 가시성	26	56	31	2f6f82ed323b43f7db1a0bb
 command-dddjango	E10	s004	4	2		시작: 모드 판별	57	60	4	1977e9b16ca7c8becd667720ff919a89fbe068b3b21c1be8fbc2d7d0d18328fb	Y	N	N
 command-dddjango	E10	s005	5	2		Phase 0 — 요구·스코프 (G0)	61	72	12	e859c5889c4c4d95ea3b34cfcfd88dc542bbc01f038f6e751ed49e3333e8d837	Y	N	N
 command-dddjango	E10	s006	6	2		Phase 1 — 설계 (G1)	73	85	13	3aad752e7f25dd51489b7e7603641bd8a3214c5ed4d5f76388a9101805ec478b	Y	N	N
-command-dddjango	E10	s007	7	2		Phase 2 — 구현 (G2, 이중 루프 TDD)	86	140	55	c1f0d29a598f5f21f37d30aea9b0d6cee8e68ef1765dfb8fe4aba4ab00ea4c69	Y	N	N
-command-dddjango	E10	s008	8	2		Phase 3 — 마무리·검증 보고	141	144	4	70f81856eaacf625306457f49cd108b45a5e27720ef92651bab3a807feeb0b99	Y	N	N
-command-dddjango	E10	s009	9	2		수정 모드 (부분 수정)	145	156	12	9f3b4e3e5c35c86b97f17f42198999a3b8137196f531c22b0424e6b371eb2f0a	Y	N	N
-command-dddjango	E10	s010	10	2		엣지 처리	157	168	12	a95172ba1aa237d40c5542468c4071d90767fa7b82ec3a9c9e2356a3bcc5f761	Y	N	N
-command-dddjango	E10	s011	11	2		경계	169	176	8	ccaa3b536a63ce6d4ae457e623ba329e639f66063a287aa6664292744dc524cf	Y	N	N
+command-dddjango	E10	s007	7	2		Phase 2 — 구현 (G2, 이중 루프 TDD)	86	151	66	faf21286735aba625924fb3162e0df1bf4f765c2eeeb71b84b09ab369f999252	Y	N	N
+command-dddjango	E10	s008	8	2		Phase 3 — 마무리·검증 보고	152	155	4	70f81856eaacf625306457f49cd108b45a5e27720ef92651bab3a807feeb0b99	Y	N	N
+command-dddjango	E10	s009	9	2		수정 모드 (부분 수정)	156	167	12	9f3b4e3e5c35c86b97f17f42198999a3b8137196f531c22b0424e6b371eb2f0a	Y	N	N
+command-dddjango	E10	s010	10	2		엣지 처리	168	179	12	a95172ba1aa237d40c5542468c4071d90767fa7b82ec3a9c9e2356a3bcc5f761	Y	N	N
+command-dddjango	E10	s011	11	2		경계	180	187	8	ccaa3b536a63ce6d4ae457e623ba329e639f66063a287aa6664292744dc524cf	Y	N	N
 agent-acceptance-tester	E10	s001	1	0		(전문)	1	14	14	3803c9a8fa7cc9cb6ea58fbb64cd572e7c7321be96a5842f85708305fe22355f	Y	N	N
 agent-acceptance-tester	E10	s002	2	2		입력	15	18	4	57f202ead2eafc4be4d02e30291f23b7346f683079ab7b165e67cc7987bd2515	Y	N	N
 agent-acceptance-tester	E10	s003	3	2		산출	19	22	4	9a717932afb146f346fce2994e75c1ca502b698622952d57c545664ba9f78bf4	Y	N	N

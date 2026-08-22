@@ -1,45 +1,45 @@
 {
-  "adapter": {
-    "joined": 3,
-    "nodes": 3
-  },
-  "q1": {
-    "globs": [
-      "application/*/**",
-      "application/*/domain_layer/**",
-      "application/*/driving_layer/api/**"
-    ],
-    "rows": 4
-  },
-  "q2:exp-A": [
-    "R-0120×1",
-    "R-0124×1"
+ "adapter": {
+  "joined": 3,
+  "nodes": 3
+ },
+ "q1": {
+  "globs": [
+   "application/*/**",
+   "application/*/domain_layer/**",
+   "application/*/driving_layer/api/**"
   ],
-  "q2:exp-B": [
-    "R-0120×1"
-  ],
-  "q2:exp-없음": [],
-  "q2:미바인딩거절": true,
-  "q3:3.2": {
-    "rows": 9,
-    "sections": [
-      "3.2"
-    ]
-  },
-  "q3:6.1": {
-    "rows": 17,
-    "sections": [
-      "6.1"
-    ]
-  },
-  "q3:미바인딩거절": true,
-  "q4": {
-    "distinct_works": 125,
-    "rows": 125,
-    "with_alias": [
-      "R-0118",
-      "R-0120",
-      "R-0124"
-    ]
-  }
+  "rows": 4
+ },
+ "q2:exp-A": [
+  "R-0120×1",
+  "R-0124×1"
+ ],
+ "q2:exp-B": [
+  "R-0120×1"
+ ],
+ "q2:exp-없음": [],
+ "q2:미바인딩거절": true,
+ "q3:3.2": {
+  "rows": 18,
+  "sections": [
+   "3.2"
+  ]
+ },
+ "q3:6.1": {
+  "rows": 23,
+  "sections": [
+   "6.1"
+  ]
+ },
+ "q3:미바인딩거절": true,
+ "q4": {
+  "distinct_works": 837,
+  "rows": 837,
+  "with_alias": [
+   "R-0118",
+   "R-0120",
+   "R-0124"
+  ]
+ }
 }

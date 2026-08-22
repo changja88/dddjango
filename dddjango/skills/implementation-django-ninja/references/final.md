@@ -1,4 +1,5 @@
 # Django Ninja API 구현 종합 가이드
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 
 > 이 문서는 Django Ninja로 REST API adapter를 구현할 때의 기준을 정리한다.
@@ -33,6 +34,7 @@
 ## 1. 범위와 책임 경계
 
 ### 1.1 Django Ninja skill의 역할
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Django Ninja skill은 HTTP 요청과 응답을 Django application/service/usecase로
 연결하는 adapter 구현을 다룬다. 핵심 책임은 다음이다.
@@ -47,6 +49,7 @@ Django Ninja skill은 HTTP 요청과 응답을 Django application/service/usecas
 - 실제 mount를 통과하는 Django client 기반 HTTP contract 검증 기준 제시
 
 ### 1.2 다른 source reference로 위임할 책임
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - REST resource, URL, HTTP method, status code, header, content negotiation,
   pagination strategy, versioning, rate limit, idempotency contract는
@@ -59,6 +62,7 @@ Django Ninja skill은 HTTP 요청과 응답을 Django application/service/usecas
   `implementation-test`가 담당한다.
 
 ### 1.3 Router thinness 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Router operation은 HTTP adapter다. 다음은 Router 안에 둘 수 있다.
 
@@ -81,6 +85,7 @@ Router operation은 HTTP adapter다. 다음은 Router 안에 둘 수 있다.
 ## 2. Router와 endpoint operation
 
 ### 2.1 Router 등록
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Django Ninja는 `NinjaAPI`와 `Router`를 통해 path operation을 등록한다.
 프로젝트의 API namespace와 versioning 방식이 이미 있으면 그 방식을 따른다.
@@ -98,6 +103,7 @@ Django Ninja는 `NinjaAPI`와 `Router`를 통해 path operation을 등록한다.
 - tag, summary, response schema가 OpenAPI에 필요한 만큼 드러나는가
 
 ### 2.2 Operation 선언
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Django Ninja operation은 decorator의 HTTP method, path, response 선언,
 operation 함수의 typed parameters로 API contract를 만든다. 여러 status code가
@@ -190,6 +196,7 @@ class OrderController:
 ```
 
 ### 2.3 클래스 컨트롤러 (ninja-extra) — 신규 표준
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 신규 표준 presentation 표면은 함수형 `@router.post` operation이 아니라 **ninja-extra
 `@api_controller` 클래스 컨트롤러**로 만든다. 함수형 Router operation(§2.2)은 레거시
@@ -306,6 +313,7 @@ def build_place_order() -> PlaceOrderUseCase:
 ## 3. Schema와 ModelSchema
 
 ### 3.1 Request/response schema 분리
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Django Ninja `Schema`는 Pydantic 기반 request/response contract다. 하나의
 model을 그대로 노출하는 방식보다, API contract에 맞는 create/update/list/detail
@@ -340,6 +348,7 @@ Python 계약이면 중앙 입장 심사로 판정할 수 있고, 공개 HTTP·w
 아니라 실제 mount 경계에서 검증한다.
 
 ### 3.2 ModelSchema 사용 기준
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 `ModelSchema`는 모델 필드를 API schema로 빠르게 매핑할 때 유용하지만, 다음을
 확인한 뒤 사용한다.
@@ -363,6 +372,7 @@ class ArticleOut(ModelSchema):
 ```
 
 ### 3.3 Resolver와 computed field
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Response schema의 computed field나 resolver는 표현 mapping에 한정한다. DB 조회,
 권한 판단, domain decision이 필요한 계산은 selector/service에서 끝낸 값을 받아
@@ -373,6 +383,7 @@ mapping한다.
 ## 4. 인증과 인가
 
 ### 4.1 Authentication
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Authentication은 caller identity를 판정한다. Django Ninja는 API, Router,
 operation 수준에 auth를 연결할 수 있다. 프로젝트의 기존 auth mechanism이 있으면
@@ -390,6 +401,7 @@ operation 수준에 auth를 연결할 수 있다. 프로젝트의 기존 auth me
 - local development를 제외한 API traffic은 HTTPS를 전제로 한다.
 
 ### 4.2 Authorization
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Authorization은 authenticated caller가 action/object에 접근할 수 있는지
 판정한다.
@@ -407,6 +419,7 @@ Authorization은 authenticated caller가 action/object에 접근할 수 있는�
 ## 5. Filtering, sorting, pagination
 
 ### 5.1 Filtering과 sorting
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Filtering, sorting, search parameter는 public API contract다. Django Ninja
 `FilterSchema`와 `Query[...]` binding은 query parameter validation과 OpenAPI
@@ -439,6 +452,7 @@ def list_orders(request, filters: Query[OrderFilter]):
 ```
 
 ### 5.2 Pagination
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Pagination strategy는 API contract가 결정한다.
 
@@ -827,6 +841,7 @@ framework-native carveout이다. 어느 carveout도 오류 helper나 raw 오류 
 helper·handler 레시피나 code-profile과의 혼합을 제시하지 않는다.
 
 ### 6.3 콘텐츠 협상 실패 (406/415)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 `406`/`415` 계약은 `architecture-api` §7.2에서 별도 승인한 경우에만 구현한다.
 새 code-profile의 모든 endpoint에 자동으로 강제하지 않는다.
@@ -854,6 +869,7 @@ helper·handler 레시피나 code-profile과의 혼합을 제시하지 않는다
 
 
 ## 7. Idempotency-Key
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Duplicate-prone POST, 특히 order/payment 생성은 `Idempotency-Key` 정책을
 API adapter만으로 처리하지 않는다. contract, durable storage, transaction,
@@ -873,6 +889,7 @@ concurrency behavior가 함께 결정되어야 한다.
 ---
 
 ## 8. OpenAPI
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Django Ninja는 typed operation과 schema에서 OpenAPI 문서를 생성한다. 구현 변경은
 runtime behavior뿐 아니라 generated schema의 client-visible contract를 바꿀 수 있다.
@@ -903,6 +920,7 @@ DRF-to-Ninja migration에서는 가능한 경우 기존 DRF schema와 Django Nin
 ## 9. Mounted Django client와 검증
 
 ### 9.1 공개 HTTP 검증 범위
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Django Ninja HTTP 항목도 먼저 `discipline-tdd`의 중앙 입장 심사를 거친다. 아래는 자동 테스트
 목록이 아니라 candidate이며, 승인된 공개 HTTP 계약과 독자 production failure가 `add/update`인
@@ -944,6 +962,7 @@ Framework 기본 401/403/404/422/429 body, Pydantic/Ninja 기본 직렬화, vali
 wire Enum·security 계약을 실제 mount에서 검증하는 테스트까지 금지하는 규칙은 아니다.
 
 ### 9.2 검증 보고 기준
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 검증 보고에는 실제 실행한 명령이나 검토한 artifact만 쓴다.
 
@@ -960,6 +979,7 @@ wire Enum·security 계약을 실제 mount에서 검증하는 테스트까지 �
 ---
 
 ## 10. DRF-to-Ninja migration
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, `rest_framework` 요청이
 greenfield work라면 Django Ninja 구현으로 전환한다. Legacy code review 또는 migration
@@ -985,6 +1005,7 @@ Django Ninja Router/Schema, service validation, controller-owned 오류 변환, 
 ---
 
 ## 11. 라우팅 기준
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - REST contract가 undecided이면 `architecture-api`를 먼저 사용한다.
 - DB consistency, idempotency storage, lock, transaction이 undecided이면

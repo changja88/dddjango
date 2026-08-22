@@ -21,7 +21,7 @@ implementation-django-web-skill	dddjango/skills/implementation-django-web/SKILL.
 implementation-django-web-final	dddjango/skills/implementation-django-web/references/final.md	424	E09
 discipline-houserules-skill	dddjango/skills/discipline-houserules/SKILL.md	83	E09
 discipline-houserules-final	dddjango/skills/discipline-houserules/references/final.md	242	E09
-command-dddjango	dddjango/commands/dddjango.md	176	E10
+command-dddjango	dddjango/commands/dddjango.md	187	E10
 agent-acceptance-tester	dddjango/agents/acceptance-tester.md	54	E10
 agent-coder	dddjango/agents/coder.md	71	E10
 agent-design-architect	dddjango/agents/design-architect.md	96	E10

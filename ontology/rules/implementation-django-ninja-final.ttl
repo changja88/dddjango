@@ -778,8 +778,2308 @@ djr:R-0097 a djr:Prohibition ;
     prov:specializationOf djr:R-0097 ;
     djr:revision 1 .
 
+djr:R-0649 a djr:Obligation ;
+    skos:prefLabel "REST 계약·ORM·테스트 세부의 source reference 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0649@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0649@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0649 ;
+    djr:revision 1 .
+
+djr:R-0650 a djr:Obligation ;
+    skos:prefLabel "Django Ninja = greenfield API 구현 기본 목표"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0650@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0650@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0650 ;
+    djr:revision 1 .
+
+djr:R-0651 a djr:Permission ;
+    skos:prefLabel "DRF 자료의 보조 근거 한정 사용(legacy review·비교·migration)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0651@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0651@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0651 ;
+    djr:revision 1 .
+
+djr:R-0652 a djr:Obligation ;
+    skos:prefLabel "Django Ninja skill의 소유 범위 = HTTP adapter 구현"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0652@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0652@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0652 ;
+    djr:revision 1 .
+
+djr:R-0653 a djr:Obligation ;
+    skos:prefLabel "REST 계약 요소의 architecture-api 결정 소유"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0653@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0653@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0653 ;
+    djr:revision 1 .
+
+djr:R-0654 a djr:Obligation ;
+    skos:prefLabel "애그리거트·정책·구조 패턴 선택의 architecture-ddd 결정 소유"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0654@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0654@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0654 ;
+    djr:revision 1 .
+
+djr:R-0655 a djr:Obligation ;
+    skos:prefLabel "ORM·서비스·트랜잭션·마이그레이션 구현의 implementation-django 담당"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0655@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0655@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0655 ;
+    djr:revision 1 .
+
+djr:R-0656 a djr:Obligation ;
+    skos:prefLabel "pytest fixture·test-double·동시성 mechanics의 implementation-test 담당"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0656@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0656@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0656 ;
+    djr:revision 1 .
+
+djr:R-0657 a djr:Obligation ;
+    skos:prefLabel "Router operation = HTTP adapter"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0657@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0657@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0657 ;
+    djr:revision 1 .
+
+djr:R-0658 a djr:Permission ;
+    skos:prefLabel "Router 내부 허용 책임 5종"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0658@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0658@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0658 ;
+    djr:revision 1 .
+
+djr:R-0659 a djr:Prohibition ;
+    skos:prefLabel "Router·Schema·FilterSchema 금지 책임 5종"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0659@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0659@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0659 ;
+    djr:revision 1 .
+
+djr:R-0660 a djr:Obligation ;
+    skos:prefLabel "path operation 등록 수단 = NinjaAPI·Router"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0660@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0660@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0660 ;
+    djr:revision 1 .
+
+djr:R-0661 a djr:Obligation ;
+    skos:prefLabel "기존 API namespace·versioning 관례 준수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0661@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0661@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0661 ;
+    djr:revision 1 .
+
+djr:R-0662 a djr:Obligation ;
+    skos:prefLabel "신규 도입 시 글로벌 임의 설치 금지·매니페스트 버전 핀 추가"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0662@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0662@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0662 ;
+    djr:revision 1 .
+
+djr:R-0663 a djr:Obligation ;
+    skos:prefLabel "핀 표기의 프로젝트 기존 관례 준수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0663@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0663@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0663 ;
+    djr:revision 1 .
+
+djr:R-0664 a djr:Prohibition ;
+    skos:prefLabel "버전 값의 버전-핀 규율 준수(기억·추정 버전 금지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0664@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0664@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0664 ;
+    djr:revision 1 .
+
+djr:R-0665 a djr:Obligation ;
+    skos:prefLabel "설치 시점 resolve 실버전을 호환 최신으로 핀 기록"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0665@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0665@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0665 ;
+    djr:revision 1 .
+
+djr:R-0666 a djr:Obligation ;
+    skos:prefLabel "django-ninja·django-ninja-extra 동일 적용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0666@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0666@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0666 ;
+    djr:revision 1 .
+
+djr:R-0667 a djr:Obligation ;
+    skos:prefLabel "INSTALLED_APPS·NinjaAPI 인스턴스·URL 런타임 배선 동반"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0667@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0667@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0667 ;
+    djr:revision 1 .
+
+djr:R-0668 a djr:Obligation ;
+    skos:prefLabel "django-ninja-extra 설치·INSTALLED_APPS 'ninja_extra' 등록"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0668@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0668@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0668 ;
+    djr:revision 1 .
+
+djr:R-0669 a djr:Obligation ;
+    skos:prefLabel "ninja-extra 핀 표기·버전 값 규율의 django-ninja 동일 적용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0669@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0669@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0669 ;
+    djr:revision 1 .
+
+djr:R-0670 a djr:Obligation ;
+    skos:prefLabel "신규 Router 추가 시 확인 5항 수행"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0670@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0670@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0670 ;
+    djr:revision 1 .
+
+djr:R-0671 a djr:Obligation ;
+    skos:prefLabel "operation contract 구성 = decorator 선언 + typed parameters"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0671@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0671@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0671 ;
+    djr:revision 1 .
+
+djr:R-0672 a djr:Obligation ;
+    skos:prefLabel "다중 status 시 response={status: Schema} 성공/오류 schema 분리"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0672@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0672@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0672 ;
+    djr:revision 1 .
+
+djr:R-0673 a djr:Obligation ;
+    skos:prefLabel "신규 표준 presentation 표면 = §2.3 ninja-extra 클래스 컨트롤러"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0673@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0673@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0673 ;
+    djr:revision 1 .
+
+djr:R-0674 a djr:Permission ;
+    skos:prefLabel "기존 함수형 Router의 확립 표면 보존"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0674@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0674@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0674 ;
+    djr:revision 1 .
+
+djr:R-0675 a djr:Prohibition ;
+    skos:prefLabel "오류 응답 이유의 클래스→함수형 강등 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0675@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0675@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0675 ;
+    djr:revision 1 .
+
+djr:R-0676 a djr:Obligation ;
+    skos:prefLabel "path·query·body 파라미터 명시 구분"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0676@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0676@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0676 ;
+    djr:revision 1 .
+
+djr:R-0677 a djr:Obligation ;
+    skos:prefLabel "request body와 response body의 별도 schema 사용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0677@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0677@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0677 ;
+    djr:revision 1 .
+
+djr:R-0678 a djr:Obligation ;
+    skos:prefLabel "create 성공 201·Location header 계약 준수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0678@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0678@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0678 ;
+    djr:revision 1 .
+
+djr:R-0679 a djr:Obligation ;
+    skos:prefLabel "delete·무본문 update의 204 사용·body 미반환"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0679@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0679@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0679 ;
+    djr:revision 1 .
+
+djr:R-0680 a djr:Obligation ;
+    skos:prefLabel "async operation의 Django async ORM 제약 확인"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0680@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0680@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0680 ;
+    djr:revision 1 .
+
+djr:R-0681 a djr:Obligation ;
+    skos:prefLabel "직접 반환 BC 오류 status의 BC base ErrorSchema 선언"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0681@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0681@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0681 ;
+    djr:revision 1 .
+
+djr:R-0682 a djr:Prohibition ;
+    skos:prefLabel "framework 소유 status의 BC 직접 반환·BC ErrorSchema 광고 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0682@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0682@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0682 ;
+    djr:revision 1 .
+
+djr:R-0683 a djr:Prohibition ;
+    skos:prefLabel "openapi_extra·override·monkeypatch·postprocessor 수동 선언/사후 변형 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0683@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0683@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0683 ;
+    djr:revision 1 .
+
+djr:R-0684 a djr:Obligation ;
+    skos:prefLabel "known exception의 구체 catch·no-arg concrete ErrorSchema Status 직접 반환"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0684@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0684@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0684 ;
+    djr:revision 1 .
+
+djr:R-0685 a djr:Prohibition ;
+    skos:prefLabel "tuple·raw Response/dict·helper/factory/serializer/mapper·등록 handler 우회 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0685@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0685@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0685 ;
+    djr:revision 1 .
+
+djr:R-0686 a djr:Obligation ;
+    skos:prefLabel "operation 문서화 — summary·description·tags decorator 인자"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0686@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0686@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0686 ;
+    djr:revision 1 .
+
+djr:R-0687 a djr:Obligation ;
+    skos:prefLabel "반환 타입 명시(정보 없는 타입 금지·실제 흐름 표현)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0687@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0687@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0687 ;
+    djr:revision 1 .
+
+djr:R-0688 a djr:Obligation ;
+    skos:prefLabel "선언 JSON 성공의 Schema·Status 반환"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0688@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0688@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0688 ;
+    djr:revision 1 .
+
+djr:R-0689 a djr:Permission ;
+    skos:prefLabel "framework-native 성공 carveout 4종 허용·오류 우회 불허"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0689@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0689@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0689 ;
+    djr:revision 1 .
+
+djr:R-0690 a djr:Obligation ;
+    skos:prefLabel "10번 slot 승인 한 경로 선택"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0690@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0690@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0690 ;
+    djr:revision 1 .
+
+djr:R-0691 a djr:Obligation ;
+    skos:prefLabel "exception path — try에 최외곽 application call 한 문장만"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0691@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0691@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0691 ;
+    djr:revision 1 .
+
+djr:R-0692 a djr:Obligation ;
+    skos:prefLabel "구체 exception·tuple만 catch·두 인자 Status 직접 반환"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0692@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0692@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0692 ;
+    djr:revision 1 .
+
+djr:R-0693 a djr:Obligation ;
+    skos:prefLabel "성공 변환의 try 뒤 배치"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0693@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0693@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0693 ;
+    djr:revision 1 .
+
+djr:R-0694 a djr:Obligation ;
+    skos:prefLabel "Result/None path — call 정확히 1회·try 없는 failed branch 직후 배치"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0694@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0694@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0694 ;
+    djr:revision 1 .
+
+djr:R-0695 a djr:Prohibition ;
+    skos:prefLabel "동일 ErrorSchema/header/Status 구성 직접 수행·예외·catch·helper·mapping table 꾸며내기 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0695@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0695@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0695 ;
+    djr:revision 1 .
+
+djr:R-0696 a djr:Obligation ;
+    skos:prefLabel "신규 표준 표면 = @api_controller 클래스 컨트롤러"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0696@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0696@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0696 ;
+    djr:revision 1 .
+
+djr:R-0697 a djr:Obligation ;
+    skos:prefLabel "함수형 Router operation의 레거시 취급·기존 형태 보존"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0697@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0697@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0697 ;
+    djr:revision 1 .
+
+djr:R-0698 a djr:Obligation ;
+    skos:prefLabel "touched(신규·수정) 표면의 클래스 컨트롤러화"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0698@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0698@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0698 ;
+    djr:revision 1 .
+
+djr:R-0699 a djr:Prohibition ;
+    skos:prefLabel "406/415·오류 응답 이유의 함수형 Router 강등 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0699@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0699@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0699 ;
+    djr:revision 1 .
+
+djr:R-0700 a djr:Obligation ;
+    skos:prefLabel "클래스 컨트롤러의 함수형 계약 보존(response=·Status·오류 변환 순서)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0700@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0700@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0700 ;
+    djr:revision 1 .
+
+djr:R-0701 a djr:Obligation ;
+    skos:prefLabel "변경 범위의 형태 한정(prefix→클래스 데코레이터·self 메서드)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0701@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0701@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0701 ;
+    djr:revision 1 .
+
+djr:R-0702 a djr:Obligation ;
+    skos:prefLabel "클래스 데코레이터의 prefix·tag 소유와 메서드 데코의 상대 경로"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0702@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0702@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0702 ;
+    djr:revision 1 .
+
+djr:R-0703 a djr:Obligation ;
+    skos:prefLabel "operation 메서드의 self 첫 인자"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0703@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0703@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0703 ;
+    djr:revision 1 .
+
+djr:R-0704 a djr:Obligation ;
+    skos:prefLabel "메서드명의 동사구 유지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0704@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0704@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0704 ;
+    djr:revision 1 .
+
+djr:R-0705 a djr:Obligation ;
+    skos:prefLabel "response=·Status·controller-owned 오류 처리·반환 타입의 §2.2 동일 보존"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0705@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0705@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0705 ;
+    djr:revision 1 .
+
+djr:R-0706 a djr:Prohibition ;
+    skos:prefLabel "ControllerBase 직접 상속 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0706@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0706@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0706 ;
+    djr:revision 1 .
+
+djr:R-0707 a djr:Obligation ;
+    skos:prefLabel "프로젝트 api.py의 NinjaExtraAPI 인스턴스 1개 소유"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0707@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0707@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0707 ;
+    djr:revision 1 .
+
+djr:R-0708 a djr:Obligation ;
+    skos:prefLabel "BC의 side-effect-free register_<bc>_api(api)만 노출"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0708@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0708@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0708 ;
+    djr:revision 1 .
+
+djr:R-0709 a djr:Obligation ;
+    skos:prefLabel "urls.py의 registrar 명시 1회 호출 후 mount"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0709@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0709@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0709 ;
+    djr:revision 1 .
+
+djr:R-0710 a djr:Prohibition ;
+    skos:prefLabel "BC 모듈 import만으로 registration 발생 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0710@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0710@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0710 ;
+    djr:revision 1 .
+
+djr:R-0711 a djr:Obligation ;
+    skos:prefLabel "명시 registrar 합성 controller의 auto_import=False"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0711@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0711@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0711 ;
+    djr:revision 1 .
+
+djr:R-0712 a djr:Obligation ;
+    skos:prefLabel "registrar의 자기 BC controller 한정 import·함수 밖 등록 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0712@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0712@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0712 ;
+    djr:revision 1 .
+
+djr:R-0713 a djr:Prohibition ;
+    skos:prefLabel "registrar의 config.api import·top-level register_controllers 호출 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0713@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0713@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0713 ;
+    djr:revision 1 .
+
+djr:R-0714 a djr:Prohibition ;
+    skos:prefLabel "urls.py 밖 registrar 호출·직접 controller 등록 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0714@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0714@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0714 ;
+    djr:revision 1 .
+
+djr:R-0715 a djr:Permission ;
+    skos:prefLabel "소비자 의존 확립 API 인스턴스의 승인 별도 scope 보존 허용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0715@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0715@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0715 ;
+    djr:revision 1 .
+
+djr:R-0716 a djr:Prohibition ;
+    skos:prefLabel "보존 근거의 «소비자 의존» 한정(«먼저 작성돼 있음» 불인정)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0716@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0716@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0716 ;
+    djr:revision 1 .
+
+djr:R-0717 a djr:Prohibition ;
+    skos:prefLabel "신규 BC마다 API 인스턴스 생성 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0717@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0717@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0717 ;
+    djr:revision 1 .
+
+djr:R-0718 a djr:Prohibition ;
+    skos:prefLabel "operation 본문의 Repository·Adapter 직접 생성 금지(Q-7)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0718@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0718@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0718 ;
+    djr:revision 1 .
+
+djr:R-0719 a djr:Obligation ;
+    skos:prefLabel "DI 조립의 composition_root/dependency_wiring.py 소유·build_<uc>() 매요청 호출"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0719@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0719@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0719 ;
+    djr:revision 1 .
+
+djr:R-0720 a djr:Obligation ;
+    skos:prefLabel "이벤트 구독 결선의 event_wiring.py 분리"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0720@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0720@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0720 ;
+    djr:revision 1 .
+
+djr:R-0721 a djr:Exception ;
+    skos:prefLabel "use-case 없는 순수 데이터소스 BC의 컴포지션 루트 생략"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0721@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0721@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0721 ;
+    djr:revision 1 .
+
+djr:R-0722 a djr:Prohibition ;
+    skos:prefLabel "컴포지션 루트의 단일 파일·BC당 1개(feature별 composition/ 분할 금지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0722@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0722@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0722 ;
+    djr:revision 1 .
+
+djr:R-0723 a djr:Prohibition ;
+    skos:prefLabel "config/api.py·api_router.py에 컴포지션 루트 혼입 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0723@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0723@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0723 ;
+    djr:revision 1 .
+
+djr:R-0724 a djr:Obligation ;
+    skos:prefLabel "컨트롤러 메서드의 매요청 build_<uc>() 호출"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0724@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0724@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0724 ;
+    djr:revision 1 .
+
+djr:R-0725 a djr:Prohibition ;
+    skos:prefLabel "모듈 레벨 전역 인스턴스 생성 금지(import 부작용)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0725@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0725@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0725 ;
+    djr:revision 1 .
+
+djr:R-0726 a djr:Obligation ;
+    skos:prefLabel "컴포지션 루트의 자기 BC infra/ACL 한정 import"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0726@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0726@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0726 ;
+    djr:revision 1 .
+
+djr:R-0727 a djr:Prohibition ;
+    skos:prefLabel "composition_root의 use-case DI 한정 소유(API instance·registration 미소유)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0727@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0727@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0727 ;
+    djr:revision 1 .
+
+djr:R-0728 a djr:Obligation ;
+    skos:prefLabel "ninja-extra의 INSTALLED_APPS 등록 필요"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0728@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0728@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0728 ;
+    djr:revision 1 .
+
+djr:R-0729 a djr:Obligation ;
+    skos:prefLabel "새 operation 배치의 탐색 순서 준수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0729@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0729@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0729 ;
+    djr:revision 1 .
+
+djr:R-0730 a djr:Obligation ;
+    skos:prefLabel "① driving_layer/api/의 @api_controller 클래스 grep"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0730@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0730@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0730 ;
+    djr:revision 1 .
+
+djr:R-0731 a djr:Obligation ;
+    skos:prefLabel "② 단일 컨트롤러 존재 시 그 메서드로 포함"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0731@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0731@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0731 ;
+    djr:revision 1 .
+
+djr:R-0732 a djr:Obligation ;
+    skos:prefLabel "③ 분할 시 리소스 일치 컨트롤러 포함·없으면 신규 리소스 컨트롤러"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0732@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0732@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0732 ;
+    djr:revision 1 .
+
+djr:R-0733 a djr:Obligation ;
+    skos:prefLabel "④ 컨트롤러 부재 시 <Aggregate>Controller 생성"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0733@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0733@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0733 ;
+    djr:revision 1 .
+
+djr:R-0734 a djr:Obligation ;
+    skos:prefLabel "model 직노출 대신 API contract별 schema 분리"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0734@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0734@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0734 ;
+    djr:revision 1 .
+
+djr:R-0735 a djr:Obligation ;
+    skos:prefLabel "request schema의 입력 형식·transport validation 한정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0735@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0735@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0735 ;
+    djr:revision 1 .
+
+djr:R-0736 a djr:Obligation ;
+    skos:prefLabel "response schema의 public field·type·nullable·enum 명시"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0736@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0736@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0736 ;
+    djr:revision 1 .
+
+djr:R-0737 a djr:Obligation ;
+    skos:prefLabel "domain invariant의 service/model/DB boundary 보장"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0737@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0737@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0737 ;
+    djr:revision 1 .
+
+djr:R-0738 a djr:Obligation ;
+    skos:prefLabel "field 제거·rename·type/required/status·error-shape 변경의 breaking change 취급"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0738@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0738@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0738 ;
+    djr:revision 1 .
+
+djr:R-0739 a djr:Obligation ;
+    skos:prefLabel "enum성 필드의 Literal·StrEnum 선언과 OpenAPI enum 노출"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0739@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0739@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0739 ;
+    djr:revision 1 .
+
+djr:R-0740 a djr:Obligation ;
+    skos:prefLabel "도메인 enum 파생·계약 안정성 필요 시 경계-로컬 Literal 고정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0740@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0740@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0740 ;
+    djr:revision 1 .
+
+djr:R-0741 a djr:Prohibition ;
+    skos:prefLabel "응답 조립·비교의 원시 리터럴 확산 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0741@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0741@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0741 ;
+    djr:revision 1 .
+
+djr:R-0742 a djr:Obligation ;
+    skos:prefLabel "발행 이벤트 봉투 discriminator의 1종째부터 domain StrEnum 파생 선언(birth-enum)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0742@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0742@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0742 ;
+    djr:revision 1 .
+
+djr:R-0743 a djr:Obligation ;
+    skos:prefLabel "Literal 파생이 discriminator의 유일 경로(평 Enum 불가)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0743@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0743@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0743 ;
+    djr:revision 1 .
+
+djr:R-0744 a djr:Prohibition ;
+    skos:prefLabel "enum 파생·문자열 Literal의 OpenAPI 계약 동등(계약 안정성 논거 불성립)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0744@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0744@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0744 ;
+    djr:revision 1 .
+
+djr:R-0745 a djr:Obligation ;
+    skos:prefLabel "버전 태그(payload_schema_version)의 리터럴 동결 유지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0745@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0745@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0745 ;
+    djr:revision 1 .
+
+djr:R-0746 a djr:Obligation ;
+    skos:prefLabel "union-enum 동기의 중앙 영구 테스트 입장 심사 candidate 취급"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0746@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0746@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0746 ;
+    djr:revision 1 .
+
+djr:R-0747 a djr:Exception ;
+    skos:prefLabel "add/update 시 직렬화 경계 검증 한정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0747@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0747@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0747 ;
+    djr:revision 1 .
+
+djr:R-0748 a djr:Prohibition ;
+    skos:prefLabel "봉투 union의 페이지네이션 응답 직접 조합 금지(vitalik/django-ninja#1308)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0748@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0748@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0748 ;
+    djr:revision 1 .
+
+djr:R-0749 a djr:Prohibition ;
+    skos:prefLabel "validator 위치·ValidationError.loc·기본 validation/직렬화의 영구 테스트 자격 부정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0749@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0749@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0749 ;
+    djr:revision 1 .
+
+djr:R-0750 a djr:Obligation ;
+    skos:prefLabel "공개 Python 계약의 중앙 심사 판정·공개 HTTP는 mount 경계 검증"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0750@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0750@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0750 ;
+    djr:revision 1 .
+
+djr:R-0751 a djr:Obligation ;
+    skos:prefLabel "ModelSchema 사용 전 확인 4항 수행"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0751@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0751@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0751 ;
+    djr:revision 1 .
+
+djr:R-0752 a djr:Obligation ;
+    skos:prefLabel "computed field·resolver의 표현 mapping 한정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0752@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0752@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0752 ;
+    djr:revision 1 .
+
+djr:R-0753 a djr:Obligation ;
+    skos:prefLabel "DB 조회·권한 판단·domain decision의 selector/service 선처리"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0753@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0753@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0753 ;
+    djr:revision 1 .
+
+djr:R-0754 a djr:Obligation ;
+    skos:prefLabel "기존 auth mechanism adapter 우선"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0754@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0754@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0754 ;
+    djr:revision 1 .
+
+djr:R-0755 a djr:Obligation ;
+    skos:prefLabel "API credential의 header 기반 전달 우선"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0755@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0755@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0755 ;
+    djr:revision 1 .
+
+djr:R-0756 a djr:Prohibition ;
+    skos:prefLabel "secret의 query parameter 배치 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0756@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0756@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0756 ;
+    djr:revision 1 .
+
+djr:R-0757 a djr:Obligation ;
+    skos:prefLabel "인증 실패·인증 필요의 401 응답"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0757@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0757@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0757 ;
+    djr:revision 1 .
+
+djr:R-0758 a djr:Obligation ;
+    skos:prefLabel "auth adapter의 성공 반환 = identity/principal"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0758@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0758@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0758 ;
+    djr:revision 1 .
+
+djr:R-0759 a djr:Obligation ;
+    skos:prefLabel "인증 실패의 None 반환 또는 framework AuthenticationError raise"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0759@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0759@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0759 ;
+    djr:revision 1 .
+
+djr:R-0760 a djr:Prohibition ;
+    skos:prefLabel "ErrorSchema의 auth 결과 반환·request.auth 저장 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0760@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0760@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0760 ;
+    djr:revision 1 .
+
+djr:R-0761 a djr:Prohibition ;
+    skos:prefLabel "framework 401의 BC 식별자 body 전역 변환 추가 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0761@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0761@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0761 ;
+    djr:revision 1 .
+
+djr:R-0762 a djr:Obligation ;
+    skos:prefLabel "local development 제외 API traffic의 HTTPS 전제"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0762@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0762@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0762 ;
+    djr:revision 1 .
+
+djr:R-0763 a djr:Permission ;
+    skos:prefLabel "단일 endpoint 단순 gate의 adapter 연결 허용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0763@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0763@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0763 ;
+    djr:revision 1 .
+
+djr:R-0764 a djr:Obligation ;
+    skos:prefLabel "다중 entry point 재사용 rule의 service/domain policy 이관"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0764@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0764@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0764 ;
+    djr:revision 1 .
+
+djr:R-0765 a djr:Obligation ;
+    skos:prefLabel "권한 없는 authenticated caller의 403 응답"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0765@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0765@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0765 ;
+    djr:revision 1 .
+
+djr:R-0766 a djr:Permission ;
+    skos:prefLabel "존재 은닉 resource의 계약상 404 사용 허용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0766@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0766@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0766 ;
+    djr:revision 1 .
+
+djr:R-0767 a djr:Obligation ;
+    skos:prefLabel "object-level permission의 query shape·selector·prefetch 동반 검토"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0767@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0767@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0767 ;
+    djr:revision 1 .
+
+djr:R-0768 a djr:Obligation ;
+    skos:prefLabel "filtering·sorting·search parameter = public API contract"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0768@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0768@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0768 ;
+    djr:revision 1 .
+
+djr:R-0769 a djr:Obligation ;
+    skos:prefLabel "허용 filter·sort key 명시"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0769@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0769@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0769 ;
+    djr:revision 1 .
+
+djr:R-0770 a djr:Prohibition ;
+    skos:prefLabel "user-controlled ORM field name 직수용 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0770@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0770@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0770 ;
+    djr:revision 1 .
+
+djr:R-0771 a djr:Prohibition ;
+    skos:prefLabel "DB table/model 내부 구조의 public parameter 누출 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0771@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0771@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0771 ;
+    djr:revision 1 .
+
+djr:R-0772 a djr:Obligation ;
+    skos:prefLabel "reusable read logic·쿼리 최적화·N+1 방지의 implementation-django selector 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0772@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0772@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0772 ;
+    djr:revision 1 .
+
+djr:R-0773 a djr:Obligation ;
+    skos:prefLabel "검색·sparse fieldset·복합 filter의 architecture-api 계약 선행"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0773@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0773@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0773 ;
+    djr:revision 1 .
+
+djr:R-0774 a djr:Obligation ;
+    skos:prefLabel "신규 표면의 §2.3 클래스 컨트롤러 형태 적용(예시는 원생 함수형)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0774@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0774@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0774 ;
+    djr:revision 1 .
+
+djr:R-0775 a djr:Obligation ;
+    skos:prefLabel "pagination strategy의 API contract 결정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0775@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0775@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0775 ;
+    djr:revision 1 .
+
+djr:R-0776 a djr:Obligation ;
+    skos:prefLabel "대규모·실시간·정합 민감 목록의 cursor/keyset 우선 검토"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0776@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0776@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0776 ;
+    djr:revision 1 .
+
+djr:R-0777 a djr:Obligation ;
+    skos:prefLabel "page size 상한 설정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0777@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0777@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0777 ;
+    djr:revision 1 .
+
+djr:R-0778 a djr:Obligation ;
+    skos:prefLabel "cursor/keyset의 stable indexed ordering 사용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0778@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0778@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0778 ;
+    djr:revision 1 .
+
+djr:R-0779 a djr:Obligation ;
+    skos:prefLabel "timestamp+id 병용 관례"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0779@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0779@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0779 ;
+    djr:revision 1 .
+
+djr:R-0780 a djr:Obligation ;
+    skos:prefLabel "다음 페이지 요청 metadata의 response 포함"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0780@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0780@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0780 ;
+    djr:revision 1 .
+
+djr:R-0781 a djr:Obligation ;
+    skos:prefLabel "framework pagination 기능 사용 시 strategy·response shape의 계약 정합"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0781@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0781@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0781 ;
+    djr:revision 1 .
+
+djr:R-0782 a djr:Obligation ;
+    skos:prefLabel "406/415 계약의 architecture-api §7.2 별도 승인 전제"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0782@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0782@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0782 ;
+    djr:revision 1 .
+
+djr:R-0783 a djr:Prohibition ;
+    skos:prefLabel "새 code-profile 전 endpoint 자동 강제 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0783@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0783@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0783 ;
+    djr:revision 1 .
+
+djr:R-0784 a djr:Obligation ;
+    skos:prefLabel "406 — 승인된 Accept 협상 operation만 Ninja 경계 header 검사"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0784@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0784@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0784 ;
+    djr:revision 1 .
+
+djr:R-0785 a djr:Obligation ;
+    skos:prefLabel "만족 표현 부재 시 framework HttpError(406) raise"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0785@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0785@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0785 ;
+    djr:revision 1 .
+
+djr:R-0786 a djr:Obligation ;
+    skos:prefLabel "415 — 별도 승인된 media type 제한 endpoint 한정 처리"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0786@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0786@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0786 ;
+    djr:revision 1 .
+
+djr:R-0787 a djr:Obligation ;
+    skos:prefLabel "Ninja-owned pre-body 경계 선택·공개 415 wire의 중앙 심사 candidate 제출"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0787@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0787@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0787 ;
+    djr:revision 1 .
+
+djr:R-0788 a djr:Obligation ;
+    skos:prefLabel "add/update 시 mounted Django client의 415 wire 검증"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0788@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0788@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0788 ;
+    djr:revision 1 .
+
+djr:R-0789 a djr:Obligation ;
+    skos:prefLabel "406/415의 framework HttpError body 그대로 사용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0789@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0789@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0789 ;
+    djr:revision 1 .
+
+djr:R-0790 a djr:Prohibition ;
+    skos:prefLabel "BC ErrorSchema·code·helper·custom handler·raw response 생성 및 response= 광고 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0790@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0790@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0790 ;
+    djr:revision 1 .
+
+djr:R-0791 a djr:Prohibition ;
+    skos:prefLabel "415 이유의 클래스 컨트롤러 → 함수형 Router 변경 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0791@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0791@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0791 ;
+    djr:revision 1 .
+
+djr:R-0792 a djr:Prohibition ;
+    skos:prefLabel "오류 이유의 함수형 Router → 클래스 컨트롤러 자동 변환 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0792@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0792@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0792 ;
+    djr:revision 1 .
+
+djr:R-0793 a djr:Prohibition ;
+    skos:prefLabel "request.body·json.loads 수동 본문 파싱 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0793@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0793@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0793 ;
+    djr:revision 1 .
+
+djr:R-0794 a djr:Obligation ;
+    skos:prefLabel "request body의 선언적 payload: Schema 수용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0794@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0794@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0794 ;
+    djr:revision 1 .
+
+djr:R-0795 a djr:Prohibition ;
+    skos:prefLabel "전역 middleware·root URL wrapper·별도 dispatcher의 Ninja 밖 status 합성 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0795@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0795@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0795 ;
+    djr:revision 1 .
+
+djr:R-0796 a djr:Obligation ;
+    skos:prefLabel "승인 부재 시 framework 현재 협상/파싱 동작 보존·공개 계약 주장 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0796@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0796@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0796 ;
+    djr:revision 1 .
+
+djr:R-0797 a djr:Prohibition ;
+    skos:prefLabel "Idempotency-Key 정책의 API adapter 단독 처리 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0797@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0797@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0797 ;
+    djr:revision 1 .
+
+djr:R-0798 a djr:Obligation ;
+    skos:prefLabel "contract·durable storage·transaction·concurrency의 공동 결정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0798@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0798@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0798 ;
+    djr:revision 1 .
+
+djr:R-0799 a djr:Obligation ;
+    skos:prefLabel "key 요구·TTL·scope·payload mismatch behavior의 API contract 배치"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0799@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0799@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0799 ;
+    djr:revision 1 .
+
+djr:R-0800 a djr:Obligation ;
+    skos:prefLabel "첫 요청 결과의 durable storage 저장"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0800@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0800@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0800 ;
+    djr:revision 1 .
+
+djr:R-0801 a djr:Obligation ;
+    skos:prefLabel "동일 key·동일 payload 재시도의 저장 첫 응답 반환"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0801@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0801@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0801 ;
+    djr:revision 1 .
+
+djr:R-0802 a djr:Prohibition ;
+    skos:prefLabel "가변 resource의 재조회 금지·첫 응답 snapshot 저장"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0802@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0802@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0802 ;
+    djr:revision 1 .
+
+djr:R-0803 a djr:Obligation ;
+    skos:prefLabel "동일 key·다른 payload의 conflict 처리"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0803@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0803@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0803 ;
+    djr:revision 1 .
+
+djr:R-0804 a djr:Obligation ;
+    skos:prefLabel "unique constraint·lock·transaction boundary의 architecture-db·implementation-django 소유"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0804@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0804@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0804 ;
+    djr:revision 1 .
+
+djr:R-0805 a djr:Obligation ;
+    skos:prefLabel "OpenAPI 항목의 중앙 영구 테스트 입장 심사 candidate 취급"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0805@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0805@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0805 ;
+    djr:revision 1 .
+
+djr:R-0806 a djr:Exception ;
+    skos:prefLabel "add/update 항목의 mounted API 생성 문서 검증 한정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0806@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0806@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0806 ;
+    djr:revision 1 .
+
+djr:R-0807 a djr:Prohibition ;
+    skos:prefLabel "isolated Schema·미등록 Router/controller 문서의 공개 OpenAPI 증거 부정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0807@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0807@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0807 ;
+    djr:revision 1 .
+
+djr:R-0808 a djr:Prohibition ;
+    skos:prefLabel "미실행 OpenAPI generation·schema diff의 실행 주장 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0808@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0808@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0808 ;
+    djr:revision 1 .
+
+djr:R-0809 a djr:Obligation ;
+    skos:prefLabel "DRF-to-Ninja migration의 schema 비교·차이 기록"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0809@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0809@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0809 ;
+    djr:revision 1 .
+
+djr:R-0810 a djr:Obligation ;
+    skos:prefLabel "HTTP 항목의 discipline-tdd 중앙 입장 심사 선행"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0810@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0810@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0810 ;
+    djr:revision 1 .
+
+djr:R-0811 a djr:Exception ;
+    skos:prefLabel "승인 공개 HTTP 계약·독자 production failure의 add/update 한정 테스트 작성"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0811@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0811@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0811 ;
+    djr:revision 1 .
+
+djr:R-0812 a djr:Obligation ;
+    skos:prefLabel "business rule의 승인된 domain/service boundary 검증"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0812@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0812@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0812 ;
+    djr:revision 1 .
+
+djr:R-0813 a djr:Obligation ;
+    skos:prefLabel "공개 HTTP 계약의 실제 URLconf mount Django client 호출"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0813@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0813@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0813 ;
+    djr:revision 1 .
+
+djr:R-0814 a djr:Prohibition ;
+    skos:prefLabel "ninja/ninja_extra TestClient 직접 감싼 결과의 공개 HTTP 영구 증거 부정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0814@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0814@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0814 ;
+    djr:revision 1 .
+
+djr:R-0815 a djr:Prohibition ;
+    skos:prefLabel "framework 기본 body·기본 직렬화·validator 배치·private 직접 호출의 test 자격 부정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0815@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0815@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0815 ;
+    djr:revision 1 .
+
+djr:R-0816 a djr:Prohibition ;
+    skos:prefLabel "근거 없는 오류 helper/handler 내부 unit test 작성 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0816@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0816@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0816 ;
+    djr:revision 1 .
+
+djr:R-0817 a djr:Override ;
+    skos:prefLabel "승인 공개 status/body/header·wire Enum·security 계약의 mount 검증 허용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0817@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0817@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0817 ;
+    djr:revision 1 .
+
+djr:R-0818 a djr:Obligation ;
+    skos:prefLabel "검증 보고의 실행 명령·검토 artifact 한정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0818@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0818@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0818 ;
+    djr:revision 1 .
+
+djr:R-0819 a djr:Obligation ;
+    skos:prefLabel "미실행 mounted client·pytest·OpenAPI·compatibility check의 Not run 명시"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0819@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0819@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0819 ;
+    djr:revision 1 .
+
+djr:R-0820 a djr:Prohibition ;
+    skos:prefLabel "Skill/reference loading command의 사용자 작업 검증 보고 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0820@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0820@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0820 ;
+    djr:revision 1 .
+
+djr:R-0821 a djr:Obligation ;
+    skos:prefLabel "greenfield DRF 요청의 Django Ninja 구현 전환"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0821@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0821@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0821 ;
+    djr:revision 1 .
+
+djr:R-0822 a djr:Obligation ;
+    skos:prefLabel "legacy review·migration 시 DRF를 source behavior로 읽고 target 계약과 비교"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0822@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0822@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0822 ;
+    djr:revision 1 .
+
+djr:R-0823 a djr:Prohibition ;
+    skos:prefLabel "DRF-specific abstraction의 greenfield 표준 유지 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0823@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0823@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0823 ;
+    djr:revision 1 .
+
+djr:R-0824 a djr:Obligation ;
+    skos:prefLabel "필요 behavior의 Ninja Router/Schema·service validation·controller 오류 변환·mounted 검증 이관"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0824@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0824@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0824 ;
+    djr:revision 1 .
+
+djr:R-0825 a djr:Obligation ;
+    skos:prefLabel "REST contract 미결 시 architecture-api 선행"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0825@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0825@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0825 ;
+    djr:revision 1 .
+
+djr:R-0826 a djr:Obligation ;
+    skos:prefLabel "DB 정합·멱등 저장·lock·transaction 미결 시 architecture-db·implementation-django 선행"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0826@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0826@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0826 ;
+    djr:revision 1 .
+
+djr:R-0827 a djr:Obligation ;
+    skos:prefLabel "도메인 불변식·상태 전이 미결 시 architecture-ddd 선행"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0827@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0827@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0827 ;
+    djr:revision 1 .
+
+djr:R-0828 a djr:Obligation ;
+    skos:prefLabel "계약 확정 후 Router/Schema 주작업의 implementation-django-ninja 사용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0828@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0828@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0828 ;
+    djr:revision 1 .
+
+djr:R-0829 a djr:Obligation ;
+    skos:prefLabel "테스트 세부 주작업의 implementation-test 사용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0829@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0829@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0829 ;
+    djr:revision 1 .
+
+djr:R-0830 a djr:Obligation ;
+    skos:prefLabel "risky domain work의 owning reference 동시 확인"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0830@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-0830@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-0830 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> a djr:Document ;
     skos:prefLabel "implementation-django-ninja-final"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s001> a djr:Section ;
+    djr:headingSnapshot "# Django Ninja API 구현 종합 가이드"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s001/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s001> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-0649, djr:R-0650, djr:R-0651 ;
+    djr:text "\n\n> 이 문서는 Django Ninja로 REST API adapter를 구현할 때의 기준을 정리한다.\n> REST 계약 자체는 `architecture-api` 스킬,\n> Django ORM, service, transaction, migration은\n> `implementation-django` 스킬,\n> pytest fixture와 test-double 세부 구현은\n> `implementation-test` 스킬을 기준으로 한다.\n>\n> Django Ninja는 greenfield API 구현의 기본 목표다. DRF 자료는 legacy review,\n> compatibility 비교, DRF-to-Ninja migration 때만 보조 근거로 사용한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s001/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 2 ;
+    djr:text "---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s004-1.1> a djr:Section ;
+    djr:headingSnapshot "### 1.1 Django Ninja skill의 역할"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "1.1" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s004-1.1/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s004-1.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-0652 ;
+    djr:text "\nDjango Ninja skill은 HTTP 요청과 응답을 Django application/service/usecase로\n연결하는 adapter 구현을 다룬다. 핵심 책임은 다음이다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s004-1.1/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s004-1.1> ;
+    djr:kind djr:kind-prose ;
+    djr:order 2 ;
+    djr:text "- Router 등록과 operation 선언\n- path/query/header/body 파라미터를 명시적 schema로 받기\n- authentication/authorization 연결\n- service/usecase 호출\n- domain/application error를 API error contract로 변환\n- response schema와 status code mapping\n- OpenAPI에 드러나는 계약 변화의 candidate·승인 뒤 검증 기준 제시\n- 실제 mount를 통과하는 Django client 기반 HTTP contract 검증 기준 제시\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s005-1.2> a djr:Section ;
+    djr:headingSnapshot "### 1.2 다른 source reference로 위임할 책임"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "1.2" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s005-1.2/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s005-1.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-0653 ;
+    djr:text "\n- REST resource, URL, HTTP method, status code, header, content negotiation,\n  pagination strategy, versioning, rate limit, idempotency contract는\n  `architecture-api`가 결정한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s005-1.2/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s005-1.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-0654 ;
+    djr:text "- aggregate, state transition, invariant, policy, usecase boundary, 구조 패턴\n  (repository/UoW/핵사고날/CQRS/outbox/ACL) 선택은 `architecture-ddd`가 결정한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s005-1.2/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s005-1.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-0655 ;
+    djr:text "- ORM query, selector, service, transaction, migration, cache, security\n  implementation은 `implementation-django`가 담당한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s005-1.2/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s005-1.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-0656 ;
+    djr:text "- pytest fixture, factory, mock/test-double, concurrency test mechanics는\n  `implementation-test`가 담당한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s006-1.3> a djr:Section ;
+    djr:headingSnapshot "### 1.3 Router thinness 원칙"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "1.3" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s006-1.3/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s006-1.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-0657, djr:R-0658 ;
+    djr:text "\nRouter operation은 HTTP adapter다. 다음은 Router 안에 둘 수 있다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s006-1.3/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s006-1.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 2 ;
+    djr:text "- request schema validation과 parameter binding\n- auth/permission hook 연결\n- service/usecase 호출\n- API-facing DTO 또는 schema로 response mapping\n- known application/domain exception을 BC `ErrorSchema`로 변환\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s006-1.3/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s006-1.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-0659 ;
+    djr:text "다음은 Router, Schema, FilterSchema에 두지 않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s006-1.3/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s006-1.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 4 ;
+    djr:text "- 핵심 business rule과 state transition\n- transaction ownership\n- 복잡한 ORM query construction과 N+1 최적화\n- 외부 SDK 호출 orchestration\n- 여러 entry point에서 재사용해야 하는 object/action authorization policy\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s006-1.3/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s006-1.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 5 ;
+    djr:text "---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s008-2.1> a djr:Section ;
+    djr:headingSnapshot "### 2.1 Router 등록"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "2.1" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s008-2.1/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s008-2.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-0660, djr:R-0661 ;
+    djr:text "\nDjango Ninja는 `NinjaAPI`와 `Router`를 통해 path operation을 등록한다.\n프로젝트의 API namespace와 versioning 방식이 이미 있으면 그 방식을 따른다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s008-2.1/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s008-2.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-0662, djr:R-0663, djr:R-0664, djr:R-0665, djr:R-0666, djr:R-0667 ;
+    djr:text "프로젝트에 Django Ninja가 아직 의존성으로 없는 신규 도입이면, 글로벌로 임의 설치하지 말고 의존성 매니페스트(`requirements/*.txt` 등, `implementation-django` §3.1)에 **버전을 핀해 추가**한다 — 핀 표기는 프로젝트의 기존 관례를 따른다(기존 항목이 `Django==4.2.30`처럼 정확 핀이면 `django-ninja==<버전>`으로 맞춘다). 버전 *값*(`<버전>`에 무엇을 핀할지)은 다음 버전-핀 규율을 따른다 — 기억 속/추정 버전을 쓰지 않는다. 설치 시점에 resolve한 실제 버전을 매니페스트(`requirements`/`pyproject`)에 핀으로 기록하되 기존 프레임워크 핀과 호환되는 최신으로 한다. `django-ninja`·`django-ninja-extra` 모두 동일하다. `INSTALLED_APPS`·`NinjaAPI` 인스턴스·URL 등록 같은 런타임 배선도 함께 둔다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s008-2.1/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s008-2.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-0668, djr:R-0669 ;
+    djr:text "신규 표준 presentation 표면은 클래스 컨트롤러(§2.3)이므로 **`django-ninja-extra`를 설치하고 `INSTALLED_APPS`에 `'ninja_extra'`를 등록한다**(`NinjaExtraAPI`·`register_controllers` 동작에 필요). 핀 표기·버전 값 규율은 위 `django-ninja`와 동일하다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s008-2.1/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s008-2.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-0670 ;
+    djr:text "새로운 Router를 추가할 때는 다음을 확인한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s008-2.1/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s008-2.1> ;
+    djr:kind djr:kind-prose ;
+    djr:order 5 ;
+    djr:text "- API root와 version prefix가 기존 convention과 일치하는가\n- operation path가 REST resource 계약과 일치하는가\n- operation method가 resource action의 safe/idempotent 의미와 맞는가\n- router-level auth와 operation-level auth override가 의도대로 적용되는가\n- tag, summary, response schema가 OpenAPI에 필요한 만큼 드러나는가\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> a djr:Section ;
+    djr:headingSnapshot "### 2.2 Operation 선언"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "2.2" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-0671, djr:R-0672 ;
+    djr:text "\nDjango Ninja operation은 decorator의 HTTP method, path, response 선언,\noperation 함수의 typed parameters로 API contract를 만든다. 여러 status code가\n가능한 경우 `response={status: Schema}` 형태로 성공/오류 schema를 분리한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 10 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b34> ;
+    djr:statesNorm djr:R-0683 ;
+    djr:text "- `openapi_extra`나 `get_openapi_schema` override·monkeypatch·postprocessor로 오류\n  응답을 수동 선언하거나 사후 변형하지 않는다. operation의 `response=`가 runtime과\n  OpenAPI가 함께 아는 계약이다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b11> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 11 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b29> ;
+    djr:statesNorm djr:R-0684, djr:R-0685 ;
+    djr:text "- known domain/application exception은 컨트롤러가 구체적으로 catch하고, 준비된\n  no-arg concrete `ErrorSchema`를 `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다. 오류\n  `(status, schema)` tuple, raw `Response`/dict, 오류 helper/factory/serializer/mapper,\n  등록 handler/decorator로 우회하지 않는다(§6.2).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b12> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 12 ;
+    djr:statesNorm djr:R-0686 ;
+    djr:text "- **operation을 문서화한다** — `summary`·`description`·`tags`를 decorator 인자로 주어 Swagger UI의 그룹과 설명을 채운다. 외부 client가 읽는 계약 문서다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b13> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 13 ;
+    djr:statesNorm djr:R-0687 ;
+    djr:text "- **반환 타입을 명시한다** — `-> object`처럼 정보 없는 타입을 쓰지 않는다. 직렬화 자체는 `response=`가 결정하지만, 반환 타입 annotation은 사람·mypy를 위한 계약 표현이다. 직접 반환하는 성공 Schema와 BC `ErrorSchema`/`Status`를 실제 흐름에 맞게 표현한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b14> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 14 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b35> ;
+    djr:statesNorm djr:R-0688, djr:R-0689 ;
+    djr:text "- 선언된 JSON 성공은 Schema 또는 `Status`로 반환한다. `FileResponse`,\n  `StreamingHttpResponse`, redirect, schema-less 204는 framework-native 성공\n  carveout이며 오류 응답 우회를 허용하지 않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b15> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 15 ;
+    djr:statesNorm djr:R-0690 ;
+    djr:text "Operation은 10번 slot이 승인한 **한 경로**를 선택한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b16> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 16 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b17> ;
+    djr:statesNorm djr:R-0691, djr:R-0692, djr:R-0693 ;
+    djr:text "- **exception path:** request를 준비한 뒤 `try`에는 최외곽 application call 한 문장만 둔다.\n  구체 exception 또는 구체 exception tuple만 catch하고, catch 안에서 no-arg concrete 또는\n  populated BC-base `ErrorSchema`, 필요하면 주입된 응답용 header를 만든 뒤 두 인자\n  `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다. 성공 변환은 `try` 뒤에 둔다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b17> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 17 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b18> ;
+    djr:statesNorm djr:R-0694, djr:R-0695 ;
+    djr:text "- **failed Result/`None`/outcome path:** application call을 정확히 한 번 한 뒤, `try` 없이\n  slot이 승인한 failed branch를 call 바로 다음에 둔다. 같은 ErrorSchema/header/두 인자 `Status`\n  구성을 직접 수행하며, 예외·catch·helper·mapping table을 꾸며내지 않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b18> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
+    djr:kind djr:kind-code ;
+    djr:order 18 ;
+    djr:text "```python\nfrom ninja import Status\nfrom ninja_extra import api_controller, route, status\n\nfrom application.order.application_layer.order.place_order.place_order_command import PlaceOrderCommand\nfrom application.order.composition_root.dependency_wiring import build_place_order\nfrom application.order.domain_layer.order.exception.insufficient_stock import InsufficientStock\nfrom application.order.domain_layer.order.exception.product_not_found import ProductNotFound\nfrom application.order.driving_layer.api.bc_error_schema import (\n    OrderErrorSchema,\n    OrderInsufficientStockError,\n    OrderProductNotFoundError,\n)\nfrom application.order.driving_layer.api.order.schema.schema_in import OrderIn\nfrom application.order.driving_layer.api.order.schema.schema_out import OrderOut\n\n\n@api_controller(\"/orders\", tags=[\"orders\"], auto_import=False)\nclass OrderController:\n    @route.post(\n        \"\",\n        response={201: OrderOut, 404: OrderErrorSchema, 409: OrderErrorSchema},\n        summary=\"주문 생성\",\n        description=\"재고가 충분하면 주문을 만들고 201, 부족하면 409로 거절한다.\",\n    )\n    def create_order(\n        self,\n        request,\n        payload: OrderIn,\n    ) -> Status[OrderOut | OrderErrorSchema]:\n        command = PlaceOrderCommand(\n            product_id=payload.product_id,\n            quantity=payload.quantity,\n        )\n        use_case = build_place_order()\n\n        try:\n            order = use_case.execute(command)\n        except ProductNotFound:\n            error = OrderProductNotFoundError()\n            return Status(status.HTTP_404_NOT_FOUND, error)\n        except InsufficientStock:\n            error = OrderInsufficientStockError()\n            return Status(status.HTTP_409_CONFLICT, error)\n\n        response = OrderOut(id=order.id, status=order.status)\n        return Status(status.HTTP_201_CREATED, response)\n```\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b1> ;
+    djr:statesNorm djr:R-0673, djr:R-0674, djr:R-0675 ;
+    djr:text "> **형태 선택.** 신규 표준 presentation 표면은 §2.3의 ninja-extra 클래스 컨트롤러다.\n> 기존 함수형 Router는 확립된 표면을 유지할 때 보존한다. 오류 응답 때문에 클래스\n> 컨트롤러를 함수형 Router로 바꾸지 않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 3 ;
+    djr:text "Operation 구현 기준:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-0676 ;
+    djr:text "- path parameter, query parameter, request body를 명확히 구분한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-0677 ;
+    djr:text "- request body와 response body는 별도 schema를 사용한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-0678 ;
+    djr:text "- create operation은 성공 시 `201`과 필요하면 `Location` header 계약을 맞춘다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-0679 ;
+    djr:text "- delete 또는 no-body update는 `204`를 사용하고 body를 반환하지 않는다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 8 ;
+    djr:statesNorm djr:R-0680 ;
+    djr:text "- async operation에서 ORM을 직접 호출하지 않도록 Django async ORM 제약을 확인한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 9 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b30>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b34> ;
+    djr:statesNorm djr:R-0681, djr:R-0682 ;
+    djr:text "- 직접 반환하는 BC 오류 status는 모두 `response={...}`에 그 BC의 base `ErrorSchema`로\n  선언한다. framework가 소유하는 401/403/route 404/422/429/일반 `HttpError`/미식별\n  500은 BC 오류로 직접 반환하지도, BC `ErrorSchema`로 광고하지도 않는다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> a djr:Section ;
+    djr:headingSnapshot "### 2.3 클래스 컨트롤러 (ninja-extra) — 신규 표준"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "2.3" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-0696, djr:R-0697, djr:R-0698, djr:R-0699 ;
+    djr:text "\n신규 표준 presentation 표면은 함수형 `@router.post` operation이 아니라 **ninja-extra\n`@api_controller` 클래스 컨트롤러**로 만든다. 함수형 Router operation(§2.2)은 레거시\n경로로 읽고 기존 형태를 보존한다. **touched(신규·수정) presentation 표면은 클래스\n컨트롤러로 만든다.** 406/415나 오류 응답을 이유로 클래스 컨트롤러를 함수형 Router로\n강등하지 않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-code ;
+    djr:order 10 ;
+    djr:text "```python\n# config/api.py — 프로젝트가 contract scope의 API 인스턴스 하나를 소유한다.\nfrom ninja_extra import NinjaExtraAPI\n\napi = NinjaExtraAPI()\n```\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b11> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-code ;
+    djr:order 11 ;
+    djr:text "```python\n# application/order/driving_layer/api/api_router.py\nfrom ninja_extra import NinjaExtraAPI\n\nfrom .order.order_controller import OrderController\n\n\ndef register_order_api(api: NinjaExtraAPI) -> None:\n    api.register_controllers(OrderController)\n```\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b12> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-code ;
+    djr:order 12 ;
+    djr:text "```python\n# config/urls.py — explicit composition과 mount를 함께 소유한다.\nfrom django.urls import path\n\nfrom application.order.driving_layer.api.api_router import register_order_api\nfrom config.api import api\n\nregister_order_api(api)\n\nurlpatterns = [\n    path(\"api/\", api.urls),\n]\n```\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b13> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 13 ;
+    djr:text "요점:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b14> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 14 ;
+    djr:statesNorm djr:R-0712 ;
+    djr:text "- registrar는 자기 BC controller만 import하며, 전달받은 `api`에 등록하는 함수 밖에서는\n  아무 등록도 하지 않는다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b15> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 15 ;
+    djr:statesNorm djr:R-0713 ;
+    djr:text "- registrar가 `config.api`를 import하거나 모듈 top-level에서 `register_controllers`를\n  호출하지 않는다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b16> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 16 ;
+    djr:statesNorm djr:R-0714 ;
+    djr:text "- 프로젝트 `urls.py` 밖에서 registrar를 몰래 호출하거나 직접 controller를 등록하지 않는다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b17> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 17 ;
+    djr:statesNorm djr:R-0715, djr:R-0716, djr:R-0717 ;
+    djr:text "- public/internal 또는 version별 API 인스턴스가 이미 독립 계약 surface로 확립돼 **소비자가\n  의존하는** 경우는 승인된 별도 scope로 보존할 수 있다 — 보존의 근거는 «소비자 의존»이지\n  «먼저 작성돼 있음»이 아니다. 신규 BC마다 API 인스턴스를 만드는 것은 scope 분리가 아니다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b18> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 18 ;
+    djr:statesNorm djr:R-0718, djr:R-0719, djr:R-0720, djr:R-0721 ;
+    djr:text "**컴포지션 루트(배선) — `composition_root/`.** operation/메서드 본문에서 `Django…Repository()`·`…Adapter()`를 직접 생성하면 presentation→infra 직접 결합(Q-7)이다. DI 조립은 BC 루트 `application/<bounded_context>/composition_root/`에 모은다 — 결선은 `dependency_wiring.py`가 소유하고 use-case마다 `build_<use_case>()` 팩토리를 두며, presentation은 컨트롤러 메서드에서 그 팩토리를 **호출만** 한다(매요청 조립). 이벤트 구독 결선은 `event_wiring.py`가 따로 진다. use-case 없는 순수 데이터소스 BC는 둘 게 없으니 생략한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b19> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-code ;
+    djr:order 19 ;
+    djr:text "```python\n# application/order/composition_root/dependency_wiring.py — BC 루트의 DI 결선. 구체 infra를 use-case에 주입.\nfrom application.order.application_layer.order.place_order.place_order_use_case import PlaceOrderUseCase\nfrom application.order.driven_layer.adapter.anticorruption_layer.catalog.product_stock_adapter import DjangoProductStockAdapter\nfrom application.order.driven_layer.adapter.persistence.repository.order_repository import DjangoOrderRepository\n\n\ndef build_place_order() -> PlaceOrderUseCase:\n    # 구체 infra를 고르는 유일한 곳 — 안쪽 계층은 domain repository/port 추상에만 의존(DIP).\n    return PlaceOrderUseCase(\n        order_repository=DjangoOrderRepository(),\n        product_stock_port=DjangoProductStockAdapter(),\n    )\n```\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-0700, djr:R-0701 ;
+    djr:text "클래스 컨트롤러는 함수형 operation의 계약을 그대로 보존한다 — `response={status: Schema}`\n선언과 Schema/`Status` 반환을 유지하며, known exception의 직접 `ErrorSchema` 변환 순서도\n§2.2와 같다. 바뀌는 것은 *형태*뿐이다: Router prefix가 클래스 데코레이터로,\noperation 함수가 `self` 첫 인자를 받는 메서드로 올라간다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b20> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 20 ;
+    djr:statesNorm djr:R-0722, djr:R-0723 ;
+    djr:text "- **단일 파일·BC당 1개**: 컴포지션 루트는 \"구체를 아는 유일한 곳\"이라 한 파일에 모은다 — feature별 `composition/` 폴더로 쪼개면 루트가 분열돼 패턴 위반이다. `config/api.py`나 `api_router.py`(HTTP 등록)에 섞지도 않는다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b21> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 21 ;
+    djr:statesNorm djr:R-0724, djr:R-0725 ;
+    djr:text "- **매요청 호출**: 컨트롤러 메서드에서 `use_case = build_place_order()` 후 `use_case.execute(command)`. 모듈 레벨 전역 인스턴스로 import 시점에 만들지 않는다(import 부작용·테스트 오버라이드 회피).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b22> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 22 ;
+    djr:statesNorm djr:R-0726, djr:R-0727 ;
+    djr:text "- **BC 격리**: order의 루트는 *자기 BC*의 infra/ACL만 import한다(`DjangoProductStockAdapter`는 order `driven_layer/adapter/anticorruption_layer/`; catalog는 직접 import 안 하고 OHS/ACL 경유). `composition_root/`(`dependency_wiring.py`)는 use-case DI만 소유하며 API instance·controller registration을 소유하지 않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b23> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 23 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s008-2.1/b3> ;
+    djr:statesNorm djr:R-0728 ;
+    djr:text "**설치.** ninja-extra는 별도 앱이다 — `INSTALLED_APPS += ['ninja_extra']`가 필요하다(의존성\n매니페스트 핀은 §2.1과 동일하다).\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b24> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 24 ;
+    djr:statesNorm djr:R-0729 ;
+    djr:text "**탐색 → 포함/생성 규칙 (새 operation 추가 시).** 새 operation을 둘 곳은 다음 순서로 정한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b25> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 25 ;
+    djr:statesNorm djr:R-0730 ;
+    djr:text "1. 해당 앱 `driving_layer/api/`에서 `@api_controller` 데코 클래스를 grep한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b26> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 26 ;
+    djr:statesNorm djr:R-0731 ;
+    djr:text "2. 단일 컨트롤러가 있으면 → 그 컨트롤러의 메서드로 포함한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b27> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 27 ;
+    djr:statesNorm djr:R-0732 ;
+    djr:text "3. 분할되어 여럿이면 → 리소스(URL prefix)가 일치하는 컨트롤러에 포함하고, 없으면 새 리소스\n   컨트롤러를 만든다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b28> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 28 ;
+    djr:statesNorm djr:R-0733 ;
+    djr:text "4. 컨트롤러가 없으면 → 새 `<Aggregate>Controller`를 생성한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b29> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 29 ;
+    djr:text "---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 3 ;
+    djr:text "요점:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-0702 ;
+    djr:text "- 클래스 데코레이터 `@api_controller(\"/orders\", tags=[...], auto_import=False)`가 resource\n  prefix·tag를 소유하고,\n  메서드 데코레이터 `@route.post(\"\")`가 그 prefix 기준 *상대* 경로를 잡는다(함수형의\n  `@router.post(\"/orders\")` 한 줄이 둘로 나뉜 것).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-0703, djr:R-0704 ;
+    djr:text "- operation 함수가 `self`를 첫 인자로 받는 메서드가 된다. 메서드명은 함수형과 같이 동사구를\n  유지한다(`create_order`).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-0705 ;
+    djr:text "- `response=`/`Status` 반환, controller-owned 오류 처리, 반환 타입 명시는 §2.2와\n  **동일하게 보존**한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-0706 ;
+    djr:text "- **`ControllerBase`를 직접 상속하지 않는다** — `@api_controller` 데코레이터가 컨트롤러 기반을\n  자동 주입한다(명시 상속은 중복이다).\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 8 ;
+    djr:statesNorm djr:R-0707, djr:R-0708, djr:R-0709, djr:R-0710 ;
+    djr:text "**등록 — 프로젝트 소유 API, BC 소유 registrar, URLconf 소유 합성.** contract scope 안에서\n프로젝트 `api.py`가 `NinjaExtraAPI` 인스턴스 하나를 소유한다. 각 BC는 project API를 import하지\n않는 side-effect-free `register_<bc>_api(api)`만 노출한다. 프로젝트 `urls.py`가 API와 registrar를\nimport하고, 각 registrar를 명시적으로 한 번 호출한 뒤 API를 mount한다. BC 모듈 import만으로\nregistration이 일어나면 안 된다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 9 ;
+    djr:statesNorm djr:R-0711 ;
+    djr:text "명시 registrar 합성을 선택한 controller는 `@api_controller(..., auto_import=False)`로\nNinja Extra auto-import를 끈다. 그래야 controller import가 global registry를 채우는\nside effect를 만들지 않고, 등록 집합과 시점은 `register_<bc>_api(api)`와 프로젝트\n`urls.py` 호출만으로 결정된다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s012-3.1> a djr:Section ;
+    djr:headingSnapshot "### 3.1 Request/response schema 분리"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "3.1" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s012-3.1/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s012-3.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-0734 ;
+    djr:text "\nDjango Ninja `Schema`는 Pydantic 기반 request/response contract다. 하나의\nmodel을 그대로 노출하는 방식보다, API contract에 맞는 create/update/list/detail\nschema를 분리한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s012-3.1/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s012-3.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-0735 ;
+    djr:text "- request schema는 입력 형식과 transport-level validation에 집중한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s012-3.1/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s012-3.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-0736 ;
+    djr:text "- response schema는 public field, type, nullable 여부, enum 값을 명시한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s012-3.1/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s012-3.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-0737 ;
+    djr:text "- domain invariant는 service/model/DB boundary에서 보장한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s012-3.1/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s012-3.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-0738 ;
+    djr:text "- field 제거, rename, type change, 새 required field, status-code/error-shape\n  change는 breaking change로 보고 version/deprecation을 검토한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s012-3.1/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s012-3.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-0739, djr:R-0740, djr:R-0741 ;
+    djr:text "- enum성 필드(상태·종류)는 `Literal[...]` 또는 `StrEnum`으로 선언해 OpenAPI 계약에\n  enum으로 노출한다. 도메인 enum에서 파생하되, 계약 안정성을 도메인 리팩터링과 분리해야\n  하면 경계-로컬 `Literal`로 고정한다(published language — `architecture-ddd` §2.5).\n  응답 조립·비교에 원시 리터럴을 흩지 않는다(`discipline-cleancode` §2.14 소비 규율).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s012-3.1/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s012-3.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-0742, djr:R-0743, djr:R-0744, djr:R-0745, djr:R-0746, djr:R-0747, djr:R-0748 ;
+    djr:text "- **발행 이벤트 봉투(태그드 유니온)의 discriminator는 1종째부터 domain `StrEnum` 파생으로\n  선언한다**(birth-enum — `architecture-ddd` §3.7). 각 이벤트 Schema의 태그는\n  `event_type: Literal[EventType.PARENT_SAFE_ALERT] = EventType.PARENT_SAFE_ALERT`,\n  봉투는 `Event = Annotated[Union[...], Field(discriminator=\"event_type\")]` — 평\n  (non-Literal) Enum 필드는 discriminator로 쓸 수 없으므로(Pydantic) Literal 파생이\n  유일 경로다. enum 파생과 문자열 Literal은 JSON schema가 동일하게 `const`로 렌더되므로\n  OpenAPI 계약은 불변 — \"계약 안정성 때문에 맨 Literal\"은 이 위치에서 성립하지 않는다.\n  `payload_schema_version` 등 버전 태그는 형태가 같아도 리터럴 동결 유지(발행 순간\n  동결되는 계약 표식 — §3.7 짝 조항). union-enum 동기는 중앙 영구 테스트 입장 심사의\n  candidate다. 승인된 공개 event wire literal과 독자 failure를 보호해 `add/update`인 경우에만\n  직렬화 경계에서 검증한다(`discipline-tdd`; mechanics는 `implementation-test` §15.5).\n  봉투 union을 페이지네이션 응답에 직접 조합하지 않는다\n  (ninja discriminated union+pagination의 OpenAPI 렌더 미해결 버그 — vitalik/django-ninja#1308).\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s012-3.1/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s012-3.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 8 ;
+    djr:statesNorm djr:R-0749, djr:R-0750 ;
+    djr:text "Schema의 validator 위치, `ValidationError.loc`, Pydantic/Ninja 기본 validation·직렬화는 그 자체로\n영구 테스트 자격이 아니다. 별도 사용자 승인 또는 실제 deployed consumer evidence가 있는 공개\nPython 계약이면 중앙 입장 심사로 판정할 수 있고, 공개 HTTP·wire 계약이면 isolated Schema 직접 호출이\n아니라 실제 mount 경계에서 검증한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s013-3.2> a djr:Section ;
+    djr:headingSnapshot "### 3.2 ModelSchema 사용 기준"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "3.2" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s013-3.2/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s013-3.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-0751 ;
+    djr:text "\n`ModelSchema`는 모델 필드를 API schema로 빠르게 매핑할 때 유용하지만, 다음을\n확인한 뒤 사용한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s013-3.2/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s013-3.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 2 ;
+    djr:text "- 내부 필드, 관리 필드, 보안 민감 필드가 노출되지 않는가\n- public API 용어와 DB/model 용어가 다를 때 무리하게 모델명을 노출하지 않는가\n- list/detail/create/update의 field set이 실제로 같은가\n- permission에 따라 field visibility가 달라지는 경우 별도 response mapping이\n  필요한가\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s013-3.2/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s013-3.2> ;
+    djr:kind djr:kind-code ;
+    djr:order 3 ;
+    djr:text "```python\nfrom ninja import ModelSchema\nfrom myapp.models import Article\n\n\n# 노출할 필드를 명시한다 -- 내부/관리/보안 민감 필드는 넣지 않는다\nclass ArticleOut(ModelSchema):\n    class Meta:\n        model = Article\n        fields = [\"id\", \"title\", \"published_at\"]\n```\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s014-3.3> a djr:Section ;
+    djr:headingSnapshot "### 3.3 Resolver와 computed field"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "3.3" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s014-3.3/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s014-3.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-0752, djr:R-0753 ;
+    djr:text "\nResponse schema의 computed field나 resolver는 표현 mapping에 한정한다. DB 조회,\n권한 판단, domain decision이 필요한 계산은 selector/service에서 끝낸 값을 받아\nmapping한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s014-3.3/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s014-3.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 2 ;
+    djr:text "---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1> a djr:Section ;
+    djr:headingSnapshot "### 4.1 Authentication"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "4.1" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-0754 ;
+    djr:text "\nAuthentication은 caller identity를 판정한다. Django Ninja는 API, Router,\noperation 수준에 auth를 연결할 수 있다. 프로젝트의 기존 auth mechanism이 있으면\n그 adapter를 우선한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1> ;
+    djr:kind djr:kind-prose ;
+    djr:order 2 ;
+    djr:text "기준:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-0755 ;
+    djr:text "- API credential은 `Authorization` header 같은 header 기반 전달을 우선한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-0756 ;
+    djr:text "- secret을 query parameter에 넣지 않는다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-0757 ;
+    djr:text "- 인증 실패 또는 인증 필요는 `401`로 응답한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b31> ;
+    djr:statesNorm djr:R-0758, djr:R-0759 ;
+    djr:text "- auth adapter는 성공 시 identity/principal을 반환한다. 실패는 `None`을 반환하거나\n  framework `AuthenticationError`를 raise한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b30>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b31> ;
+    djr:statesNorm djr:R-0760, djr:R-0761 ;
+    djr:text "- `ErrorSchema`를 auth 결과로 반환하거나 `request.auth`에 저장하지 않는다. framework 401을\n  BC 식별자 body로 바꾸는 전역 변환도 추가하지 않는다(§6.2).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 8 ;
+    djr:statesNorm djr:R-0762 ;
+    djr:text "- local development를 제외한 API traffic은 HTTPS를 전제로 한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s017-4.2> a djr:Section ;
+    djr:headingSnapshot "### 4.2 Authorization"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "4.2" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s017-4.2/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s017-4.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 1 ;
+    djr:text "\nAuthorization은 authenticated caller가 action/object에 접근할 수 있는지\n판정한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s017-4.2/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s017-4.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-0763 ;
+    djr:text "- 단일 endpoint에만 해당하는 단순 gate는 adapter에서 연결할 수 있다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s017-4.2/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s017-4.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-0764 ;
+    djr:text "- 여러 entry point에서 재사용되는 object/action rule은 service/domain policy로\n  옮긴다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s017-4.2/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s017-4.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-0765 ;
+    djr:text "- authenticated caller가 권한이 없으면 `403`으로 응답한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s017-4.2/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s017-4.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-0766 ;
+    djr:text "- 존재를 숨겨야 하는 resource는 API contract에 따라 `404`를 사용할 수 있다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s017-4.2/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s017-4.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-0767 ;
+    djr:text "- object-level permission은 필요한 query shape, selector, prefetch/select_related\n  기준과 함께 검토한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s017-4.2/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s017-4.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 7 ;
+    djr:text "---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s019-5.1> a djr:Section ;
+    djr:headingSnapshot "### 5.1 Filtering과 sorting"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "5.1" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s019-5.1/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s019-5.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-0768 ;
+    djr:text "\nFiltering, sorting, search parameter는 public API contract다. Django Ninja\n`FilterSchema`와 `Query[...]` binding은 query parameter validation과 OpenAPI\n가독성을 높일 수 있다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s019-5.1/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s019-5.1> ;
+    djr:kind djr:kind-prose ;
+    djr:order 2 ;
+    djr:text "기준:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s019-5.1/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s019-5.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-0769 ;
+    djr:text "- 허용 filter와 sort key를 명시한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s019-5.1/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s019-5.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-0770 ;
+    djr:text "- user-controlled ORM field name을 그대로 받지 않는다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s019-5.1/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s019-5.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-0771 ;
+    djr:text "- DB table/model 내부 구조가 public parameter에 새지 않게 한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s019-5.1/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s019-5.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-0772 ;
+    djr:text "- reusable read logic, query optimization, N+1 방지는 `implementation-django`의\n  selector/QuerySet method로 위임한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s019-5.1/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s019-5.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-0773 ;
+    djr:text "- 검색, sparse fieldset, 복합 filter는 `architecture-api`의 계약이 먼저 있어야 한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s019-5.1/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s019-5.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 8 ;
+    djr:statesNorm djr:R-0774 ;
+    djr:text "(아래는 Ninja 원생 함수형 예시다 — 이 플러그인의 신규 표면은 §2.3 의 클래스 컨트롤러 형태를 쓴다)\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s019-5.1/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s019-5.1> ;
+    djr:kind djr:kind-code ;
+    djr:order 9 ;
+    djr:text "```python\nfrom typing import Optional\nfrom ninja import FilterSchema, Query\n\n\nclass OrderFilter(FilterSchema):\n    status: Optional[str] = None       # 허용 filter key만 명시한다\n\n\n@router.get(\"/orders\", response=list[OrderOut])\ndef list_orders(request, filters: Query[OrderFilter]):\n    use_case = build_list_orders()   # dependency_wiring.py 팩토리 — 매요청 조립(아래 \"컴포지션 루트\")\n    return use_case.execute(ListOrdersQuery(filters=filters))\n```\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s020-5.2> a djr:Section ;
+    djr:headingSnapshot "### 5.2 Pagination"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "5.2" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s020-5.2/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s020-5.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-0775 ;
+    djr:text "\nPagination strategy는 API contract가 결정한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s020-5.2/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s020-5.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 2 ;
+    djr:text "- 작은 admin-like collection은 offset pagination이 단순하다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s020-5.2/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s020-5.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-0776 ;
+    djr:text "- 큰 collection, 실시간 목록, consistency-sensitive 목록은 cursor/keyset을\n  우선 검토한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s020-5.2/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s020-5.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-0777 ;
+    djr:text "- page size 상한을 둔다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s020-5.2/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s020-5.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-0778, djr:R-0779 ;
+    djr:text "- cursor/keyset은 stable indexed ordering을 사용한다. 일반적으로 timestamp와 id를\n  함께 쓴다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s020-5.2/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s020-5.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-0780 ;
+    djr:text "- response에는 다음 페이지를 요청할 수 있는 metadata를 포함한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s020-5.2/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s020-5.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-0781 ;
+    djr:text "Django Ninja의 pagination decorator나 `RouterPaginated` 같은 framework 기능을\n사용할 수 있지만, strategy와 response shape는 프로젝트 계약과 맞아야 한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s020-5.2/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s020-5.2> ;
+    djr:kind djr:kind-code ;
+    djr:order 8 ;
+    djr:text "```python\nfrom ninja.pagination import paginate, PageNumberPagination\n\n\n@router.get(\"/orders\", response=list[OrderOut])\n@paginate(PageNumberPagination)        # page size 상한 등은 NINJA_PAGINATION_* 설정으로\ndef list_orders(request):\n    use_case = build_list_orders()   # dependency_wiring.py 팩토리 — 매요청 조립\n    return use_case.execute(ListOrdersQuery())   # use case가 QuerySet 반환 → paginate가 페이지로 자른다\n```\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s020-5.2/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s020-5.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 9 ;
+    djr:text "---\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s022-6.1> a djr:Section ;
     djr:headingSnapshot "### 6.1 Status code mapping"@ko ;
@@ -1140,3 +3440,340 @@ djr:R-0097 a djr:Prohibition ;
     djr:order 9 ;
     djr:statesNorm djr:R-0036 ;
     djr:text "- `<Bc>ErrorCode(StrEnum)` 하나\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3> a djr:Section ;
+    djr:headingSnapshot "### 6.3 콘텐츠 협상 실패 (406/415)"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "6.3" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-0782, djr:R-0783 ;
+    djr:text "\n`406`/`415` 계약은 `architecture-api` §7.2에서 별도 승인한 경우에만 구현한다.\n새 code-profile의 모든 endpoint에 자동으로 강제하지 않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-0784, djr:R-0785 ;
+    djr:text "- **406**: 실제로 여러 응답 표현을 제공하고 `Accept` 협상이 승인된 operation만 Ninja\n  경계에서 header를 검사한다. 만족하는 표현이 없으면 framework\n  `HttpError(406, \"Not acceptable\")`를 raise한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-0786, djr:R-0787, djr:R-0788 ;
+    djr:text "- **415**: 지원 media type을 제한하는 계약이 별도 승인된 endpoint만 처리한다.\n  사용 중인 Django Ninja 버전에서 parser 예외가 다른 status로 정규화될 수 있으므로,\n  현재 presentation 스타일과 호환되는 Ninja-owned pre-body 경계를 선택하고\n  공개 415 wire를 중앙 입장 심사의 candidate로 제출한다. `add/update`이면 실제 URLconf에\n  mount된 Django client로 `HttpError(415, \"Unsupported media type\")`가 415로 나가는지 검증한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-0789, djr:R-0790 ;
+    djr:text "- 406/415는 framework `HttpError` body를 그대로 사용한다. BC `ErrorSchema`, code,\n  오류 helper, custom handler, raw response를 만들지 않고 BC `response={...}`에도\n  광고하지 않는다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b1> ;
+    djr:statesNorm djr:R-0791, djr:R-0792 ;
+    djr:text "- 클래스 컨트롤러를 415 때문에 함수형 Router로 바꾸지 않는다. 기존 함수형 Router도\n  오류 때문에 클래스 컨트롤러로 자동 변환하지 않는다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-0793, djr:R-0794 ;
+    djr:text "- 어느 경로에서도 `request.body`/`json.loads`로 본문을 수동 파싱하지 않는다.\n  request body는 선언적 `payload: Schema`가 받는다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-0795 ;
+    djr:text "- Django 전역 middleware, root URL wrapper, 별도 dispatcher처럼 Ninja 라우팅 밖에서\n  status를 합성하지 않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 8 ;
+    djr:statesNorm djr:R-0796 ;
+    djr:text "별도 승인이 없으면 framework의 현재 content negotiation/parsing 동작을 보존하고,\n그 body를 정확한 code-profile 공개 계약이라고 주장하지 않는다.\n\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s025-7> a djr:Section ;
+    djr:headingSnapshot "## 7. Idempotency-Key"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "7" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s025-7/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s025-7> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-0797, djr:R-0798 ;
+    djr:text "\nDuplicate-prone POST, 특히 order/payment 생성은 `Idempotency-Key` 정책을\nAPI adapter만으로 처리하지 않는다. contract, durable storage, transaction,\nconcurrency behavior가 함께 결정되어야 한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s025-7/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s025-7> ;
+    djr:kind djr:kind-prose ;
+    djr:order 2 ;
+    djr:text "기준:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s025-7/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s025-7> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-0799 ;
+    djr:text "- key 요구 여부, TTL, scope, payload mismatch behavior를 API contract에 둔다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s025-7/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s025-7> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-0800 ;
+    djr:text "- 첫 요청 결과를 DB 또는 Redis 등 durable storage에 저장한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s025-7/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s025-7> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-0801 ;
+    djr:text "- 같은 key와 같은 payload의 재시도는 저장된 첫 응답을 반환한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s025-7/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s025-7> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-0802 ;
+    djr:text "- 생성된 resource가 나중에 변할 수 있으면 현재 resource를 재조회하지 말고 첫 응답\n  snapshot 또는 immutable DTO를 저장한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s025-7/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s025-7> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-0803 ;
+    djr:text "- 같은 key와 다른 payload는 conflict로 처리한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s025-7/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s025-7> ;
+    djr:kind djr:kind-norm ;
+    djr:order 8 ;
+    djr:statesNorm djr:R-0804 ;
+    djr:text "- DB unique constraint, lock, transaction boundary는 `architecture-db`와\n  `implementation-django`가 소유한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s025-7/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s025-7> ;
+    djr:kind djr:kind-prose ;
+    djr:order 9 ;
+    djr:text "---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s026-8> a djr:Section ;
+    djr:headingSnapshot "## 8. OpenAPI"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "8" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s026-8/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s026-8> ;
+    djr:kind djr:kind-prose ;
+    djr:order 1 ;
+    djr:text "\nDjango Ninja는 typed operation과 schema에서 OpenAPI 문서를 생성한다. 구현 변경은\nruntime behavior뿐 아니라 generated schema의 client-visible contract를 바꿀 수 있다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s026-8/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s026-8> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-0805, djr:R-0806, djr:R-0807 ;
+    djr:text "아래 항목은 자동 테스트 목록이 아니라 중앙 영구 테스트 입장 심사의 candidate다. 공개 OpenAPI\n계약과 독자 failure를 보호해 `add/update`인 항목만 프로젝트 URLconf에 mount된 API가 생성하는\n문서에서 검증한다. isolated Schema나 미등록 Router/controller가 만든 문서는 공개 OpenAPI 증거가 아니다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s026-8/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s026-8> ;
+    djr:kind djr:kind-prose ;
+    djr:order 3 ;
+    djr:text "입장 심사 후보:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s026-8/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s026-8> ;
+    djr:kind djr:kind-prose ;
+    djr:order 4 ;
+    djr:text "- path, method, tag, operation id, summary\n- request body, query/path/header parameter\n- required/optional/nullable field\n- enum, format, default\n- status별 response schema\n- 직접 반환하는 BC status별 `<Bc>ErrorSchema` schema와 승인 식별자 field의 Enum 값\n- framework-owned status가 BC `ErrorSchema`로 잘못 광고되지 않는지\n- auth/security requirement\n- pagination/filtering parameter와 response metadata\n- deprecation/versioning note\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s026-8/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s026-8> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-0808, djr:R-0809 ;
+    djr:text "OpenAPI generation 또는 schema diff를 실행하지 않았다면 실행했다고 말하지 않는다.\nDRF-to-Ninja migration에서는 가능한 경우 기존 DRF schema와 Django Ninja schema를\n비교하고 차이를 기록한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s026-8/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s026-8> ;
+    djr:kind djr:kind-prose ;
+    djr:order 6 ;
+    djr:text "---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s028-9.1> a djr:Section ;
+    djr:headingSnapshot "### 9.1 공개 HTTP 검증 범위"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "9.1" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s028-9.1/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s028-9.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-0810, djr:R-0811, djr:R-0812 ;
+    djr:text "\nDjango Ninja HTTP 항목도 먼저 `discipline-tdd`의 중앙 입장 심사를 거친다. 아래는 자동 테스트\n목록이 아니라 candidate이며, 승인된 공개 HTTP 계약과 독자 production failure가 `add/update`인\n경우에만 테스트를 작성한다. Business rule은 승인된 domain/service boundary에서 검증한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s028-9.1/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s028-9.1> ;
+    djr:kind djr:kind-prose ;
+    djr:order 2 ;
+    djr:text "- request schema validation\n- status code와 header\n- response schema field/type\n- auth/permission wiring\n- 직접 반환한 BC 오류의 slot-6 exact body shape와 mapping별 HTTP status\n- pagination/filtering/sorting parameter\n- idempotency replay와 conflict\n- DRF-to-Ninja compatibility\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s028-9.1/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s028-9.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-0813, djr:R-0814 ;
+    djr:text "공개 HTTP 계약은 `django.test.Client` 또는 프로젝트가 이미 쓰는 동등한 Django client로 실제\nURLconf에 mount된 endpoint를 호출한다. `ninja.testing.TestClient(router)`나\n`ninja_extra.testing.TestClient(Controller)`로 미등록 Router/controller를 직접 감싼 결과는 공개\nmount·registrar·middleware·URL prefix를 통과하지 않으므로 공개 HTTP 계약의 영구 증거가 아니다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s028-9.1/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s028-9.1> ;
+    djr:kind djr:kind-code ;
+    djr:order 4 ;
+    djr:text "```python\nfrom django.test import Client\n\n\ndef test_create_order_returns_201():\n    client = Client()\n    res = client.post(\n        \"/api/orders\",  # 프로젝트 URLconf에 실제 mount된 경로\n        {\"product_id\": 7, \"quantity\": 2},\n        content_type=\"application/json\",\n    )\n    assert res.status_code == 201\n    assert res.json()[\"status\"] == \"created\"\n```\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s028-9.1/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s028-9.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-0815, djr:R-0816, djr:R-0817 ;
+    djr:text "Framework 기본 401/403/404/422/429 body, Pydantic/Ninja 기본 직렬화, validator 배치,\n`ValidationError.loc`, private/helper/handler 직접 호출은 그 자체로 test 자격이 아니다. 별도 승인된\n공개 Python consumer 계약은 중앙 입장 심사를 통과하면 그 공개 boundary에서 테스트할 수 있지만,\n그 근거가 없으면 오류 helper/handler 내부 unit test를 만들지 않는다. 승인된 공개 status/body/header,\nwire Enum·security 계약을 실제 mount에서 검증하는 테스트까지 금지하는 규칙은 아니다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s029-9.2> a djr:Section ;
+    djr:headingSnapshot "### 9.2 검증 보고 기준"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "9.2" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s029-9.2/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s029-9.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-0818 ;
+    djr:text "\n검증 보고에는 실제 실행한 명령이나 검토한 artifact만 쓴다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s029-9.2/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s029-9.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 2 ;
+    djr:text "- focused pytest path\n- mounted Django client test run\n- mounted API의 OpenAPI generation command 또는 generated document\n- schema comparison artifact\n- compatibility checklist\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s029-9.2/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s029-9.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-0819, djr:R-0820 ;
+    djr:text "실행하지 않은 mounted client, pytest, OpenAPI, compatibility check는 `Not run`으로\n분명히 표시한다. Skill/reference loading command는 사용자 작업 검증으로 보고하지\n않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s029-9.2/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s029-9.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 4 ;
+    djr:text "---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s030-10> a djr:Section ;
+    djr:headingSnapshot "## 10. DRF-to-Ninja migration"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "10" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s030-10/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s030-10> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-0821, djr:R-0822 ;
+    djr:text "\nDRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, `rest_framework` 요청이\ngreenfield work라면 Django Ninja 구현으로 전환한다. Legacy code review 또는 migration\n작업이라면 DRF behavior를 source behavior로 읽고 Django Ninja target contract와 비교한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s030-10/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s030-10> ;
+    djr:kind djr:kind-prose ;
+    djr:order 2 ;
+    djr:text "Migration checklist:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s030-10/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s030-10> ;
+    djr:kind djr:kind-prose ;
+    djr:order 3 ;
+    djr:text "- URL, path parameter, method\n- status code와 response body 존재 여부\n- request/response field 이름, type, nullable, required\n- validation error shape\n- auth/permission behavior\n- pagination, filtering, sorting\n- throttling/rate limiting\n- exception mapping과 선택한 오류 프로필 compatibility\n- OpenAPI schema\n- client deprecation/migration note\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s030-10/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s030-10> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-0823, djr:R-0824 ;
+    djr:text "DRF-specific abstraction을 새 greenfield 표준으로 유지하지 않는다. 필요한 behavior는\nDjango Ninja Router/Schema, service validation, controller-owned 오류 변환, mounted Django client 검증으로\n옮긴다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s030-10/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s030-10> ;
+    djr:kind djr:kind-prose ;
+    djr:order 5 ;
+    djr:text "---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s031-11> a djr:Section ;
+    djr:headingSnapshot "## 11. 라우팅 기준"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> ;
+    djr:sectionNumber "11" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s031-11/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s031-11> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-0825 ;
+    djr:text "\n- REST contract가 undecided이면 `architecture-api`를 먼저 사용한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s031-11/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s031-11> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-0826 ;
+    djr:text "- DB consistency, idempotency storage, lock, transaction이 undecided이면\n  `architecture-db`와 `implementation-django`를 먼저 사용한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s031-11/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s031-11> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-0827 ;
+    djr:text "- domain invariant/state transition이 undecided이면 `architecture-ddd`를 먼저 사용한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s031-11/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s031-11> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-0828 ;
+    djr:text "- Router/Schema 구현이 주 작업이고 계약이 충분히 정해졌으면\n  `implementation-django-ninja`를 사용한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s031-11/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s031-11> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-0829 ;
+    djr:text "- pytest fixture, factory, mock/test-double 세부 구현이 주 작업이면\n  `implementation-test`를 사용한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s031-11/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s031-11> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-0830 ;
+    djr:text "- risky domain work가 DDD, DB, API, Django, tests를 함께 건드리면 각 영역의\n  owning reference(`architecture-ddd`, `architecture-db`, `architecture-api`,\n  `implementation-django`)를 함께 확인한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s031-11/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s031-11> ;
+    djr:kind djr:kind-prose ;
+    djr:order 7 ;
+    djr:text "---\n\n"@ko .

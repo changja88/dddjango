@@ -9,6 +9,7 @@ DDD(Domain-Driven Design)는 복잡한 소프트웨어를 비즈니스 도메인
 > "DDD는 명시적으로 경계 지어진 컨텍스트 안에서 솔루션을 모델링하고, 다른 바운디드 컨텍스트와의 통합을 지원하는 것이다." -- Vaughn Vernon, DDD Distilled
 
 ### 1.2 전략 설계 우선 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > **[의사결정 #6] External 채택**: 전략 설계(바운디드 컨텍스트, 컨텍스트 맵)가 반드시 전술 패턴보다 먼저다.
 
@@ -34,6 +35,7 @@ Vernon은 많은 팀이 전술 패턴(Entity, Repository 등)에만 집중하는
 ## 2. 전략 패턴 (Strategic Patterns)
 
 ### 2.1 지식 탐구 (Knowledge Crunching)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: Eric Evans, "DDD" Part I
 
@@ -102,6 +104,7 @@ class Cargo:
 ```
 
 ### 2.2 도메인과 하위 도메인
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: [A][B][C], Evans 파란책, Millett
 
@@ -167,6 +170,7 @@ admin_panel = Subdomain(
 ```
 
 ### 2.3 유비쿼터스 언어 (Ubiquitous Language)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: [A][B][C], Evans 파란책
 
@@ -210,6 +214,7 @@ class Order:
 ```
 
 ### 2.4 바운디드 컨텍스트 (Bounded Context)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: [A][B][C], Evans 파란책
 
@@ -252,6 +257,7 @@ class Lead:
 ```
 
 ### 2.5 컨텍스트 맵 (Context Map)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: [B][C], Evans 파란책 Chapter 14, Open Group DDD Strategic Patterns
 
@@ -361,6 +367,7 @@ ACL은 경계 근처에 둔다. 여러 도메인 객체 내부에 번역 로직�
 **BC 간 enum·상수 공유 경계.** 상수·Enum은 기본적으로 그것을 소유한 바운디드 컨텍스트 내부 자산이다 — 다른 BC가 내부 Enum을 직접 import하지 않는다(유비쿼터스 언어는 BC 경계 안에서만 보편 §2.3; 같은 철자라도 컨텍스트마다 다른 개념). BC 간 연결은 OHS(`open_host_service/`) 계약 타입 또는 wire value로 하고, 같은 wire 값을 BC마다 각자 선언하는 것은 지식의 중복이 아니라 **published language 수용**이다 — 상대 모델의 의미가 어긋나면 그때 ACL로 번역한다. 공용 승격은 **공유 커널 결정**이다: 같은 철자를 넘어 같은 지식임이 확인되고, 결정 가능한 대리 기준으로 **두 BC가 같은 변경 사유로 함께 수정된다는 근거가 명세에 있을 때만** — 공유 범위 최소화 필수(위 표). 승격된 enum 의 배치는 `discipline-houserules` 표준 트리가 정하며, 공유 커널은 도메인의 일부로 취급되어 domain_layer가 의존할 수 있는 유일한 외부다(배치·의존 예외는 `discipline-houserules`). 발행 이벤트 봉투의 discriminator enum(§3.7 birth-enum)도 같은 원리다 — 발행 BC 내부 자산이고, 소비 BC는 wire 값을 각자 수용하며 발행 enum을 import하지 않는다.
 
 ### 2.6 증류 (Distillation)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: Evans 파란책 Chapter 15
 
@@ -463,6 +470,7 @@ class RouteOptimizer:
 ## 3. 전술 패턴 (Tactical Patterns)
 
 ### 3.1 값 객체 (Value Object)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: [A][B][C], Evans 파란책, Cosmic Python
 
@@ -643,6 +651,7 @@ class OrderRich:
 연관된 엔티티와 값 객체를 하나로 묶은 개념적 단위다. 일관성 관리의 기준이 되며, 트랜잭션 경계이기도 하다.
 
 #### Vernon의 4가지 설계 규칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 **규칙 1: 진짜 불변식을 일관성 경계 안에서 보호하라**
 
@@ -837,6 +846,7 @@ class Store:
 ```
 
 ### 3.4 리포지토리 (Repository)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: [A][B][C], Cosmic Python
 
@@ -897,6 +907,7 @@ class DjangoOrderRepository(OrderRepository):
 ```
 
 ### 3.5 도메인 서비스 (Domain Service)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: [A][B][C], Cosmic Python
 > **[의사결정 #3] External 채택**: 애그리거트가 도메인 서비스를 모르도록 분리한다.
@@ -993,6 +1004,7 @@ class OrderBad:
 ```
 
 ### 3.6 응용 서비스 (Application Service)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: [A][C], Cosmic Python
 
@@ -1091,6 +1103,7 @@ class OrderApplicationService:
 ```
 
 ### 3.7 도메인 이벤트 (Domain Event)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: [B][C], Jimmy Bogard, Cosmic Python
 > **[의사결정 #7] External 채택**: UoW 커밋 전후 디스패치 타이밍을 명시한다.
@@ -1181,6 +1194,7 @@ class UnitOfWork:
 ```
 
 #### Outbox 패턴
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 이벤트의 신뢰성 있는 발행을 보장하기 위해, 이벤트를 애그리거트와 같은 트랜잭션에서 Outbox 테이블에 저장하고, 별도 프로세스가 Outbox에서 이벤트를 읽어 메시지 브로커에 발행한다.
 
@@ -1199,6 +1213,7 @@ class UnitOfWork:
 **Outbox 채택 시 명시할 항목:** 애그리거트와 outbox 메시지를 쓰는 트랜잭션 owner, dispatcher owner, 전달 보장(delivery guarantee), consumer 멱등성 기준, retry/dead-letter 정책의 소유 영역, 발행 언어(published language) 필드. 전달 메커니즘(at-least-once, consumer 멱등성, retry/dead-letter, 디스패처 운영)은 `architecture-db`(§9.7)가 소유하고, Django 트랜잭셔널 outbox 구체 구현은 `implementation-django`(§16.5)가 담당한다. 신뢰성 검증 항목은 자동 테스트 세트가 아니라 `discipline-tdd` 입장 심사에 제출할 위험·failure 후보이며, `add` 결정 뒤의 작성 mechanics만 `implementation-test`가 담당한다.
 
 #### 발행 이벤트 타입 — 1종째부터 enum (birth-enum)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 **우리 BC가 발행하는 이벤트 봉투의 타입 판별자(discriminator — `event_type` 류)는 이벤트 종류가 1종일 때부터 domain_layer의 `StrEnum` 하나로 선언한다.** 트리거는 위치다: 발행 봉투의 판별자라는 구조 자체가 종류 확장의 증거이고, 이 값은 outbox 저장(위 Outbox·`implementation-django` §16.5)과 wire 노출로 §3.2 계층 소유의 승격 앵커(저장·계약 노출)에 기본 도달한다 — "분기가 생기면 승격"의 판정을 확장 시점의 코더에게 미루지 않고 탄생 시점에 확정한다(판단형 규칙은 준수율이 낮고, 승격 누락은 신호 없이 표류하며 이벤트가 늘수록 비쌈). 이름 기반 트리거는 여전히 금지다 — 이름이 type/kind라는 이유의 승격 금지, pass-through 상류 type 필드·데이터소스 BC 면제는 `discipline-cleancode` §2.14 그대로.
 
@@ -1332,6 +1347,7 @@ eligible_for_premium = (
 Evans가 제시하는 모델 코드의 품질 패턴 6가지다.
 
 ### 4.1 의도를 드러내는 인터페이스 (Intention-Revealing Interfaces)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 클래스와 메서드의 이름이 **무엇을 하는지**(what)를 드러내야 하며, **어떻게 하는지**(how)는 숨겨야 한다.
 
@@ -1356,6 +1372,7 @@ class Paint:
 ```
 
 ### 4.2 부작용 없는 함수 (Side-Effect-Free Functions)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 가능한 한 많은 도메인 로직을 부작용 없는 함수로 배치하라. 값 객체의 메서드가 대표적이다.
 
@@ -1373,6 +1390,7 @@ class Money:
 ```
 
 ### 4.3 단언 (Assertions)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 연산의 사후 조건(post-condition)과 클래스의 불변식(invariant)을 명시적으로 선언한다.
 
@@ -1390,14 +1408,17 @@ class BankAccount:
 ```
 
 ### 4.4 개념적 윤곽 (Conceptual Contours)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 도메인의 자연스러운 경계선을 따라 설계를 분해한다. **"함께 변하는 것은 함께 두고, 따로 변하는 것은 분리하라."**
 
 ### 4.5 독립형 클래스 (Standalone Classes)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 클래스 간 결합을 최소화하여 각 클래스를 독립적으로 이해할 수 있게 하라. 모든 불필요한 의존성을 제거하면 개별 개념의 복잡성이 크게 줄어든다.
 
 ### 4.6 연산의 닫힘 (Closure of Operations)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 반환 타입이 인자의 타입과 동일한 연산을 정의하면, 해당 타입의 인스턴스 집합 안에서 연산이 "닫혀" 있게 된다.
 
@@ -1425,10 +1446,12 @@ class Color:
 ---
 
 ## 5. 아키텍처
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > **[의사결정 #5] Internal 채택**: 계층+DIP 기반 동기적 흐름을 기본으로 한다 (메시지 주도는 별도 고급 주제로 다룸).
 
 ### 5.1 계층 아키텍처
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: [A][C]
 
@@ -1442,6 +1465,7 @@ class Color:
 - DIP를 적용하여 도메인 영역에 정의한 인터페이스를 인프라에서 구현한다
 
 ### 5.2 DIP (의존성 역전 원칙)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: [A][C]
 
@@ -1490,6 +1514,7 @@ class CalculateDiscountService:
 ```
 
 ### 5.3 핵사고날 아키텍처 (포트와 어댑터)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: [C]
 
@@ -1517,6 +1542,7 @@ class CalculateDiscountService:
 - 어댑터는 입력 검증, 인증 연결, DTO 변환, 유스케이스 호출, 응답 매핑을 담당할 수 있지만 핵심 정책을 소유하지 않는다.
 
 ### 5.4 CQRS (커맨드-쿼리 책임 분리)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: [C], Greg Young, Martin Fowler
 > **[의사결정 #2] External 채택**: CQRS는 보조 패턴으로 선택적 적용한다.
@@ -1536,6 +1562,7 @@ class CalculateDiscountService:
 - eventual consistency를 감당할 제품/운영 기준이 없다.
 
 ### 5.5 대규모 구조 (Large-Scale Structure)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: Evans 파란책 Chapter 16
 
@@ -1606,6 +1633,7 @@ class FormInstance:
 ## 6. 구현 패턴
 
 ### 6.1 패키지 구조
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > **[의사결정 #8] External 채택**: 4계층 명확 분리를 기본으로 한다.
 
@@ -1671,12 +1699,14 @@ my_project/
 > dddjango가 *생성하는 코드*의 구체 표준 파일트리는 `discipline-houserules` 스킬이 소유한다(표준 트리는 그 `references/final.md`) — §6.1의 4계층을 `application/<bounded_context>/{domain_layer, application_layer, driven_layer, driving_layer}/`로 구체화한 표준이며, 생성 코드 배치 권위는 그 문서가 갖는다. 여기 §6.1은 그 표준이 파생된 이론적 배경이다.
 
 ### 6.2 Data Mapper 패턴
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: Cosmic Python
 
 ORM은 도메인 모델을 임포트해야 하며, 도메인 모델이 ORM에 의존해서는 안 된다. Data Mapper 스타일의 구체 구현은 아래 §6.3 Repository + Unit of Work 코드를 따르고, Django ORM 환경에서의 적용(모델 분리 비용, 서비스/셀렉터 경계)은 `implementation-django`(§16)가 소유한다.
 
 ### 6.3 Repository + Unit of Work 패턴
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: Cosmic Python
 
@@ -1842,6 +1872,7 @@ class BankAccount(EventSourcedAggregate):
 ```
 
 ### 6.5 Saga 패턴 (분산 트랜잭션)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: Hector Garcia-Molina & Kenneth Salem, "Sagas" (1987)
 
@@ -1911,6 +1942,7 @@ class SagaOrchestrator:
 ```
 
 ### 6.6 단순한 비즈니스 로직 패턴
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: [B]
 
@@ -1940,6 +1972,7 @@ class FileConversionScript:
 ```
 
 ### 6.7 마이크로서비스와 DDD
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: Microsoft Learn -- Tactical DDD for Microservices
 
@@ -1995,6 +2028,7 @@ class InventoryACL:
 ```
 
 ### 6.8 패턴 선택 절차와 Risky Write 라우팅
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 전술/구현 패턴은 도메인 전략을 대신하지 않는다. 도메인 모델이 어느 정도 확인된 뒤, 다음 순서로 가장 가벼운 패턴을 고른다.
 
@@ -2019,6 +2053,7 @@ class InventoryACL:
 ---
 
 ## 7. 복잡성 관리 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: [B]
 
@@ -2073,6 +2108,7 @@ class ClassB:
 ---
 
 ## 9. 핵심 요약
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 구분 | 패턴 | 핵심 규칙 |
 |------|------|----------|

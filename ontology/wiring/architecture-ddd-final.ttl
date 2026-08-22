@@ -60,3 +60,429 @@ djr:R-0123 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-dd
 djr:R-0124 djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py> .
 
 djr:R-0125 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0461 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0462 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0463 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0464 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0465 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0466 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0467 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0468 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0469 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-business-vocabulary.py> .
+
+djr:R-0470 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-naming.py> .
+
+djr:R-0471 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0472 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-business-vocabulary.py> .
+
+djr:R-0473 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0474 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0475 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0476 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0477 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0478 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0479 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py> .
+
+djr:R-0480 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0481 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0482 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0483 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0484 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0485 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py> .
+
+djr:R-0486 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py> .
+
+djr:R-0487 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0488 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-0489 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py> .
+
+djr:R-0490 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py> .
+
+djr:R-0491 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0492 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0493 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0494 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0495 djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0496 djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0497 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0498 djr:enforcedBy <https://numchida.com/ns/djr#c/check-transaction-boundary.py> .
+
+djr:R-0499 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0500 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0501 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0502 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0503 djr:enforcedBy <https://numchida.com/ns/djr#c/check-db-table.py> .
+
+djr:R-0504 djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py>, <https://numchida.com/ns/djr#c/check-db-table.py> .
+
+djr:R-0505 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-db-table.py> .
+
+djr:R-0506 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-db-table.py> .
+
+djr:R-0507 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-transaction-boundary.py> .
+
+djr:R-0508 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0509 djr:enforcedBy <https://numchida.com/ns/djr#c/check-transaction-boundary.py> .
+
+djr:R-0510 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0511 djr:enforcedBy <https://numchida.com/ns/djr#c/check-db-table.py> .
+
+djr:R-0512 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-db-table.py> .
+
+djr:R-0513 djr:enforcedBy <https://numchida.com/ns/djr#c/check-transaction-boundary.py> .
+
+djr:R-0514 djr:enforcedBy <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py>, <https://numchida.com/ns/djr#c/check-transaction-boundary.py> .
+
+djr:R-0515 djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0516 djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0517 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0518 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0519 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0520 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0521 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0522 djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0523 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-transaction-boundary.py>, <https://numchida.com/ns/djr#c/check-usecase-dto-placement.py> .
+
+djr:R-0524 djr:enforcedBy <https://numchida.com/ns/djr#c/check-transaction-boundary.py> .
+
+djr:R-0525 djr:enforcedBy <https://numchida.com/ns/djr#c/check-transaction-boundary.py> .
+
+djr:R-0526 djr:enforcedBy <https://numchida.com/ns/djr#c/check-transaction-boundary.py> .
+
+djr:R-0527 djr:enforcedBy <https://numchida.com/ns/djr#c/check-usecase-dto-placement.py> .
+
+djr:R-0528 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-usecase-dto-placement.py> .
+
+djr:R-0529 djr:enforcedBy <https://numchida.com/ns/djr#c/check-event-publish.py>, <https://numchida.com/ns/djr#c/check-usecase-dto-placement.py> .
+
+djr:R-0530 djr:enforcedBy <https://numchida.com/ns/djr#c/check-usecase-dto-placement.py> .
+
+djr:R-0531 djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py> .
+
+djr:R-0532 djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0533 djr:enforcedBy <https://numchida.com/ns/djr#c/check-transaction-boundary.py>, <https://numchida.com/ns/djr#c/check-usecase-dto-placement.py> .
+
+djr:R-0534 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-broker-contract.py> .
+
+djr:R-0535 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0536 djr:enforcedBy <https://numchida.com/ns/djr#c/check-broker-contract.py> .
+
+djr:R-0537 djr:enforcedBy <https://numchida.com/ns/djr#c/check-broker-contract.py> .
+
+djr:R-0538 djr:enforcedBy <https://numchida.com/ns/djr#c/check-missable-entrance.py> .
+
+djr:R-0539 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-broker-contract.py> .
+
+djr:R-0540 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-broker-contract.py> .
+
+djr:R-0541 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0542 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0543 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0544 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0545 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-db> .
+
+djr:R-0546 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-0547 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-0548 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-0549 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0550 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-0551 djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
+
+djr:R-0552 djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py> .
+
+djr:R-0553 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
+
+djr:R-0554 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-choices-literal-consumption.py> .
+
+djr:R-0555 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-0556 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-0557 djr:enforcedBy <https://numchida.com/ns/djr#c/check-choices-literal-consumption.py> .
+
+djr:R-0558 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-0559 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-0560 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-0561 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-0562 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-0563 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-0564 djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py> .
+
+djr:R-0565 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-0566 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0567 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-naming.py>, <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py> .
+
+djr:R-0568 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0569 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0570 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0571 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0572 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-0573 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0574 djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py> .
+
+djr:R-0575 djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py>, <https://numchida.com/ns/djr#c/check-transaction-boundary.py> .
+
+djr:R-0576 djr:enforcedBy <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py> .
+
+djr:R-0577 djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py>, <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py> .
+
+djr:R-0578 djr:enforcedBy <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py> .
+
+djr:R-0579 djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py> .
+
+djr:R-0580 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0581 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0582 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0583 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0584 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0585 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0586 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0587 djr:enforcedBy <https://numchida.com/ns/djr#c/check-naming.py>, <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py> .
+
+djr:R-0588 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py> .
+
+djr:R-0589 djr:enforcedBy <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py> .
+
+djr:R-0590 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py> .
+
+djr:R-0591 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-0592 djr:enforcedBy <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py> .
+
+djr:R-0593 djr:enforcedBy <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py> .
+
+djr:R-0594 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py> .
+
+djr:R-0595 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0596 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-usecase-dto-placement.py> .
+
+djr:R-0597 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-transaction-boundary.py> .
+
+djr:R-0598 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0599 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0600 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0601 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0602 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0603 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0604 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0605 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0606 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0607 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0608 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0609 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0610 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-test-config.py> .
+
+djr:R-0611 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
+
+djr:R-0612 djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0613 djr:enforcedBy <https://numchida.com/ns/djr#c/check-event-publish.py>, <https://numchida.com/ns/djr#c/check-transaction-boundary.py> .
+
+djr:R-0614 djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py> .
+
+djr:R-0615 djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py>, <https://numchida.com/ns/djr#c/check-event-publish.py> .
+
+djr:R-0616 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0617 djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
+
+djr:R-0618 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
+
+djr:R-0619 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
+
+djr:R-0620 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-0621 djr:enforcedBy <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py>, <https://numchida.com/ns/djr#c/check-transaction-boundary.py> .
+
+djr:R-0622 djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py>, <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py> .
+
+djr:R-0623 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-0624 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0625 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-missable-entrance.py> .
+
+djr:R-0626 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0627 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0628 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py>, <https://numchida.com/ns/djr#c/check-db-table.py> .
+
+djr:R-0629 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0630 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0631 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0632 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0633 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0634 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0635 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0636 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-idempotency-scope-creep.py> .
+
+djr:R-0637 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0638 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-0639 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-transaction-boundary.py> .
+
+djr:R-0640 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-db> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-mechanism-ownership.py> .
+
+djr:R-0641 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-idempotency-scope-creep.py> .
+
+djr:R-0642 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-0643 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-test-config.py> .
+
+djr:R-0644 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0645 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0646 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0647 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-domain-model.py> .
+
+djr:R-0648 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py> .

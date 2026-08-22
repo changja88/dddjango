@@ -120,6 +120,7 @@
     padding: 0.05rem 0.5rem; border-radius: 99px; vertical-align: middle;
   }
   .st.next { background: var(--accent); color: var(--ground); }
+  .st.run { background: var(--accent); color: var(--ground); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); }
   .st.wait { background: var(--panel-2); color: var(--ink-faint); }
   .st.done { background: color-mix(in srgb, var(--accent) 20%, var(--ground)); color: var(--accent-ink); }
   .phase p { margin: 0.25rem 0 0; font-size: 0.87rem; color: var(--ink-soft); }
@@ -220,7 +221,13 @@
 <h1>온톨로지 적용 조감도</h1>
 <p class="lede">개발 완료까지 여기서 진행을 본다 — 이 페이지에는 <b>내가 확인할 것</b>과 <b>진행도</b>만. 세부 계획·근거·기록은 저장소 문서(블루프린트·진행 로그)에서 Claude가 관리한다.</p>
 
-<div class="banner"><span class="bk">실험 종결 — 운용 전환 · 2026-08-22 오후</span>
+<div class="banner"><span class="bk">T3 전량 이관 진행 중 — 웨이브 1/4 병합 완료 · 2026-08-22 저녁</span>
+<b>승인하신 ultracode 병렬(저작 Opus 5 · 적대 리뷰 Fable 5)로 웨이브 1(실사용 코어 7문서)을 완주·병합했습니다. 그래프 소유 절 4→239, Work 125→1,760(신규 1,635) — 전체 검증 사슬 green.</b>
+<p class="how"><b>웨이브 1 실적</b>: 병렬 파이프라인 60분(에이전트 21·오류 0) + 병합·검증. 적대 리뷰 지적 79건 중 70건 수리·9건 근거 기각(수리 거부 사유 기록). byte 등가는 도구가 기계 보장(마커 제거 후 잔차 0 — 전 절), 계수는 3원 검산(기대표 = 원장 = ISSUED 채번) 일치. 검수 재료는 <span class="mono">workspace/eval/t3/</span>(발주서·spec·worksheet·리뷰 findings·처분).</p>
+<p class="how"><b>남은 것</b>: 웨이브 2(중형 8문서·1,016문장) → 웨이브 3(소형 15문서) → 웨이브 4(재진술 소급 연결 + T3 게이트 조항 — 무접두 #N·alias 재검토·<b>병합 성능 실측은 완료: 게이트 ④ 전량 병합 106초(수용)</b>·선행 계약 6종 조인 + <u>rulepack q4가 무앵커 절 923 Work를 못 싣는 커버리지 공백 재평가</u>).</p>
+</div>
+
+<div class="banner info"><span class="bk">실험 종결 — 운용 전환 · 2026-08-22 오후</span>
 <b>결정하신 대로 A/B 실험을 즉시 종결했습니다(셋째 블록 3실행 중단·잔여 9런 취소). 채택: 그래프/정규화는 실사용하며 점진 보강, 폐루프는 기본 끔으로 존치.</b>
 <p class="how"><b>실험이 남긴 것</b>: 완주 6런 전부에서 «파이프라인은 루프 없이도 위반 0~1 천장에 도달»을 관측 — 루프가 이득을 낼 공간이 안 보인다는 신호입니다(단, 처치가 한 번도 발화하지 않아 <u>공식 판정으로서의 효과 측정은 0건인 채 종결</u> — 이 상태로 효과 유무를 주장하지 않습니다). 구축 단계에서 이미 회수된 이득(산문 정합 결함·검사기 불일치·미러 표류 적발, 저장소에 살아 있는 검증 장치들)은 실험과 무관하게 유지됩니다.</p>
 <p class="how"><b>운용 전환의 형태</b>: ① 그래프 트랙은 지금 파일럿 범위로 실사용하고, 실제 발주에서 걸리는 절부터 배치 단위로 점진 이관 ② 품질은 실험 대신 <b>운용 지표</b>로 — 위반 그래프 월별 집계 → 반복 위반 규칙을 개정 제안 큐로 ③ 폐루프 부품은 무해하게 잠들어 있고(기본 off), 반송이 유난한 발주가 생기면 그 발주에서만 켜서 국소 재평가.</p>
@@ -546,9 +553,9 @@ GROUP BY ?rule ORDER BY DESC(?n)
 </div>
 
 <div class="phase">
-  <div class="ph"><span class="pn">T3</span><span class="pt">전량 이관</span><span class="st next">개시 결정 ✓ 착수 준비</span></div>
-  <p>참조성 절 전량을 그래프 정본으로(배치당 ≤250문장), 산문은 렌더 투영물로 전환. <b>2026-08-22 사용자 결정으로 개시</b> — T2가 C−B 증거 없이 닫혔으므로 동결이 허용한 «구조 이득 명시 채택» 경로(미러 표류 소멸·개정 기계화·ID 통합)로 진행하며, 이 선택을 게이트 기록에 남김. 분모 = 게이트 1 동결 센서스(926절), 판형 = T1 파일럿(4단 게이트·byte 잔차 0·원장 재기준선·렌더 동기 검증).</p>
-  <div class="ask"><span class="k">내 확인</span>배치별 검수 + 전환 선언 승인</div>
+  <div class="ph"><span class="pn">T3</span><span class="pt">전량 이관</span><span class="st run">진행 중 — 웨이브 1/4 완료</span></div>
+  <p>참조성 절 전량을 그래프 정본으로, 산문은 렌더 투영물로 전환. «구조 이득 명시 채택» 경로(미러 표류 소멸·개정 기계화·ID 통합) — 분모 = 동결 센서스 REF 539절·3,235문장. <b>실행 판형(2026-08-22 사용자 승인)</b>: ultracode 병렬 — 문서별 «Opus 저작(spec JSON) → Fable 적대 리뷰 4렌즈 → 수리» 파이프라인, 병합·채번·byte 등가는 도구가 직렬 기계 보장. <b>웨이브 1 완료</b>: 그래프 소유 239절·Work 1,760 — verify 전체 green. 검수는 배치 동기 게이트 대신 «운용 중 상시 품질 체크»(사용자 지시)로 전환, 재료는 전부 <span class="mono">workspace/eval/t3/</span>에 보존.</p>
+  <div class="ask"><span class="k">내 확인</span>운용 중 상시 품질 체크(발견 시 개정 절차) + T3 완료 선언 승인</div>
 </div>
 <div class="gate">게이트 — T3 검수</div>
 
@@ -625,6 +632,7 @@ GROUP BY ?rule ORDER BY DESC(?n)
       <tr><td>2026-08-22</td><td>BK2 채점·수리 ⓐ 승인</td><td>완주 3·인수 통과·V 세 방식 0 동일 — 그러나 주입 0(원인: 코디 절차 미이행+발화 지점 설계) → <b>개정 10</b>(발화 지점 확대)·2.16.0 릴리즈 — 사용자 «승인»</td></tr>
       <tr><td>2026-08-22</td><td>BK3(codex) 기동·STOP 6건</td><td>codex 호출명 <span class="mono">$</span>접두 실측·개정 후 기동 — STOP 전건 기록 규칙 답(1건은 완료 조건 충돌로 답 교정)</td></tr>
       <tr><td>2026-08-22</td><td><b>T2 종료 게이트: 조정 판정</b></td><td><b>실험 조기 종결(사용자 «지금 즉시 전부 중단»)</b> — 잔여 9런 취소·유효 측정 0건 병기. 채택: 그래프/정규화 실사용·점진 이관(운용 평가 전환)·폐루프 기본 끔 존치. 사전 등록 v4 등재</td></tr>
+      <tr><td>2026-08-22</td><td><b>T3 웨이브 1 병합</b></td><td><b>실사용 코어 7문서 이관 완료(ultracode 병렬 — 사용자 승인 판형)</b> — REF 235절·Work 1,635 신규(누계 그래프 소유 239절·1,760 Work). 파이프라인 60분(에이전트 21·오류 0)·적대 리뷰 79건 처분·byte 잔차 0 전 절·계수 3원 검산 일치·verify 전체 green. 부수 처분: 센서스 개정 1(command 좌표 재동결 — 개정 10 드리프트 기계 검증 반영), 미러 파서 2건 개작(마커·preamble 절), q3/q4 골든 재검산 갱신, 게이트 ④ 성능 실측 106초(T3 게이트 조항 1건 완료)</td></tr>
       <tr><td>2026-08-22</td><td><b>T3 개시 결정</b></td><td><b>전량 이관 착수(사용자 결정)</b> — C−B 증거 없이 닫혔으므로 동결 §6의 대안 경로 «구조 이득 명시 채택»(미러 소멸·개정 기계화·ID 통합)으로 진행, 선택 기록. 실험 잔여물 전량 정리(워크트리 8·브랜치 9·DB 27·메모리 복구 검증 완료)</td></tr>
     </tbody>
   </table>

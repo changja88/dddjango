@@ -49,6 +49,7 @@ EXIT_STRUCTURE = 3
 EXIT_USAGE = 1
 
 P1_HEADING = "## P1 Source Sufficiency"
+GRAPH_MARKER = "<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->"  # ontology_render.MARKER와 문면 일치 의무
 
 
 class StructureError(Exception):
@@ -86,6 +87,8 @@ def split_at_body(path: Path) -> tuple[list[str], list[str]]:
         if s.startswith("|"):  # P1 표
             continue
         if s == "---":  # hr
+            continue
+        if s == GRAPH_MARKER:  # 그래프 소유 마커 — h1/(전문) 절 이관 시 preamble 구간에 놓인다(T3 웨이브 1 첫 실증)
             continue
         raise StructureError(
             f"{path}: 본문 헤딩 앞에 attribution 아닌 라인이 있음 → 앵커 신뢰 불가: {ln!r}"
@@ -160,6 +163,10 @@ def _excise_graph_sections(root: Path, skill: str, dep_body: str, src_body: str,
         if skey not in dep_secs:
             raise StructureError(f"{skill}: 그래프 소유 절 {skey} 이 배포 분할에 없음(구조 훼손)")
         dep_span = dep_secs[skey]["span"].decode("utf-8")
+        if dep_span not in dep_body:
+            # (전문)·h1 title 절이 그래프 소유가 된 경우 — 스팬이 본문 앞 preamble 구간에 있어
+            # inv1 비교 스코프(첫 '## ' 이후) 밖이다. 소스 미러 preamble은 애초에 비동기 대상.
+            continue
         src_matches = [s for s in src_secs
                        if _hashlib.sha256(s["span"]).hexdigest() == row["baseline_sha256"]]
         if len(src_matches) != 1:
