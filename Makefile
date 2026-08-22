@@ -1,15 +1,9 @@
 SHELL := /bin/bash
 
-# 릴리즈 대상 (dddjango)
-NAME            := dddjango
-PLUGIN          := dddjango
-CLAUDE_MANIFEST := dddjango/.claude-plugin/plugin.json
-CODEX_MANIFEST  := codex-dddjango/.codex-plugin/plugin.json
-
 # DRY=1 이면 실제 변경/커밋/푸시/Release 없이 시뮬레이션만 (버전 선택·기록 미리보기까지 실제 로직 실행)
 DRY ?= 0
 
-.PHONY: release ontology-env ontology-hooks verify verify-ontology verify-base verify-web verify-mutation verify-firing verify-runready rulepack
+.PHONY: release release-web _release ontology-env ontology-hooks verify verify-ontology verify-base verify-web verify-mutation verify-firing verify-runready rulepack
 
 VENV_PY := .venv/bin/python
 
@@ -151,11 +145,26 @@ ontology-env:
 	.venv/bin/pip install --quiet --no-deps -r workspace/tools/ontology-requirements.txt; \
 	.venv/bin/python workspace/tools/ontology_env_smoke.py
 
-# 새 버전 릴리즈: 버전 선택(patch/minor/major) → 두 마켓 manifest 동시 기록
+# 새 버전 릴리즈 — 플러그인별 타깃이 대상 변수만 지정하고 공통 절차(_release)를 부른다.
+#   release      : dddjango      (태그 dddjango--vX.Y.Z)
+#   release-web  : dddjango-web  (태그 dddjango-web--vX.Y.Z)
+# 절차: 버전 선택(현재/patch/minor/major) → 두 마켓 manifest 동시 기록
 #   → 커밋 → annotated 태그 → push(main+tag) → GitHub Release 페이지 생성.
 # git 태그 · Claude 마켓 버전 · Codex 마켓 버전을 하나의 버전으로 완전히 일치시킨다.
-# 미리보기:  make release DRY=1
-release:
+# 미리보기:  make release DRY=1 · make release-web DRY=1
+release: NAME := dddjango
+release: PLUGIN := dddjango
+release: CLAUDE_MANIFEST := dddjango/.claude-plugin/plugin.json
+release: CODEX_MANIFEST := codex-dddjango/.codex-plugin/plugin.json
+release: _release
+
+release-web: NAME := dddjango-web
+release-web: PLUGIN := dddjango-web
+release-web: CLAUDE_MANIFEST := dddjango-web/.claude-plugin/plugin.json
+release-web: CODEX_MANIFEST := codex-dddjango-web/.codex-plugin/plugin.json
+release-web: _release
+
+_release:
 	@set -euo pipefail; \
 	DRY="$(DRY)"; \
 	command -v jq >/dev/null || { echo "ERROR: jq 필요"; exit 1; }; \
@@ -183,12 +192,14 @@ release:
 	fi; \
 	major=$${CLAUDE_V%%.*}; rest=$${CLAUDE_V#*.}; minor=$${rest%%.*}; patch=$${rest##*.}; \
 	echo "현재 버전: v$$CLAUDE_V"; echo ""; \
+	echo "  0) current v$$CLAUDE_V   — 현재 버전 그대로 (첫 릴리즈·태그 누락 보완)"; \
 	echo "  1) patch  v$$major.$$minor.$$((patch+1))   — 버그 수정"; \
 	echo "  2) minor  v$$major.$$((minor+1)).0   — 새 기능"; \
 	echo "  3) major  v$$((major+1)).0.0   — 큰 변경"; \
 	echo ""; \
-	read -r -p "버전 선택 [1/2/3]: " choice; \
+	read -r -p "버전 선택 [0/1/2/3]: " choice; \
 	case "$$choice" in \
+		0) V="$$CLAUDE_V" ;; \
 		1) V="$$major.$$minor.$$((patch+1))" ;; \
 		2) V="$$major.$$((minor+1)).0" ;; \
 		3) V="$$((major+1)).0.0" ;; \
@@ -222,7 +233,7 @@ release:
 		echo "    [1] claude plugin validate $(PLUGIN) --strict"; \
 		echo "    [2] 검증 세트 — corpus·corpus_lint·checker_cross_matrix·spec_lint·checker_lint·tree_mirror·reverse_coverage·fixture_matrix·anchor_diff_smoke·backstop_matrix·scripts byte-copy"; \
 		echo "    [3] 두 manifest에 v$$V 기록 (위 미리보기)"; \
-		echo "    [4] git commit -m 'release: v$$V' (manifest 2곳)"; \
+		echo "    [4] git commit -m 'release: $(NAME) v$$V' (manifest 2곳 — 버전 무변경이면 커밋 생략)"; \
 		echo "    [5] git tag -a $$TAG -m '$(NAME) v$$V'"; \
 		echo "    [6] git push origin main && git push origin $$TAG"; \
 		echo "    [7] gh release create $$TAG --verify-tag --title '$(NAME) v$$V' --generate-notes"; \
@@ -239,7 +250,8 @@ release:
 		if [[ "$$NC" != "$$V" || "$$NX" != "$$V" ]]; then echo "ERROR: 버전 기록 검증 실패 (Claude=$$NC Codex=$$NX, 기대 $$V)"; exit 1; fi; \
 		echo "[4/7] 커밋"; \
 		git add $(CLAUDE_MANIFEST) $(CODEX_MANIFEST); \
-		git commit -m "release: v$$V"; \
+		if git diff --cached --quiet; then echo "  (버전 변경 없음 — 커밋 생략, 현재 HEAD에 태그만 생성)"; \
+		else git commit -m "release: $(NAME) v$$V"; fi; \
 		echo "[5/7] annotated 태그 $$TAG"; \
 		git tag -a "$$TAG" -m "$(NAME) v$$V"; \
 		echo "[6/7] push (main + tag)"; \

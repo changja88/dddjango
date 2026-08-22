@@ -90,11 +90,12 @@ md에서 `<!-- graph-owned: … -->` 마커가 붙은 절은 **직접 수정 금
 ## 6. 릴리즈
 
 ```bash
-make release          # 대화형: patch/minor/major 선택
-make release DRY=1    # 미리보기 (변경 없음)
+make release              # dddjango 릴리즈 — 대화형: current/patch/minor/major 선택
+make release-web          # dddjango-web 릴리즈 — 같은 절차, 대상만 다름
+make release DRY=1        # 미리보기 (변경 없음) — release-web DRY=1 도 동일
 ```
 
-main 브랜치·클린 worktree·origin 동기 상태에서만 진행된다. 두 마켓 manifest(`dddjango/.claude-plugin/plugin.json` · `codex-dddjango/.codex-plugin/plugin.json`)에 같은 버전을 기록하고, 커밋 → annotated 태그 `dddjango--vX.Y.Z` → push → GitHub Release까지 한 번에 간다.
+플러그인별 타깃이 대상 변수(manifest 2곳·태그 접두사)만 지정하고 공통 절차 `_release`를 부른다. main 브랜치·클린 worktree·origin 동기 상태에서만 진행된다. 두 마켓 manifest에 같은 버전을 기록하고, 커밋 → annotated 태그(`dddjango--vX.Y.Z` · `dddjango-web--vX.Y.Z`) → push → GitHub Release까지 한 번에 간다. 한 저장소에 두 릴리즈 시리즈가 태그 접두사로 나란히 쌓인다. 선택지 `0) current`는 버전 그대로 태그만 발행한다(첫 릴리즈·태그 누락 보완용 — manifest 무변경이면 커밋 없이 현재 HEAD에 태그).
 
 ## 7. 더 읽기
 
