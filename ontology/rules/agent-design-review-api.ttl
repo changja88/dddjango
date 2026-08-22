@@ -915,6 +915,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s003> ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s002/b1> ;
     djr:statesNorm djr:R-2614, djr:R-2615 ;
     djr:text "\n`DESIGN_CONTRACT_REVIEW`에서는 Coordinator가 architect의 설계 명세(초안)를 준다. 그 명세만 보고 다른 리뷰어의 노트나 구현 코드를 보지 않는다. 로드한 스킬 본문·references 참조는 이 제한 밖이다 — 제한 대상은 타 리뷰어의 노트·구현 코드다.\n\n"@ko .
 
@@ -970,6 +971,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s003/b1> ;
     djr:statesNorm djr:R-2617, djr:R-2618, djr:R-2619 ;
     djr:text "\n`DESIGN_CONTRACT_REVIEW`에서는 **계약 리뷰 노트만** 낸다. 명세를 직접 고치지 않는다(반영은 architect의 몫). 발견이 여러 개면 심각도 높은 순(blocker → important → nit)으로 번호를 매겨 나열하고, 각 항목은 다음 형식으로 쓴다:\n\n"@ko .
 
@@ -977,6 +979,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s003/b2> ;
     djr:statesNorm djr:R-2620 ;
     djr:text "- **발견**: 무엇이 문제인지 + 근거(명세의 해당 절 제목이나 인용 문구로 위치를 짚는다) + 심각도(blocker / important / nit).\n"@ko .
 
@@ -984,6 +987,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s003/b3> ;
     djr:statesNorm djr:R-2621 ;
     djr:text "- **권고**: 어떻게 바꾸면 되는지.\n\n"@ko .
 
@@ -991,6 +995,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s003/b4> ;
     djr:statesNorm djr:R-2622 ;
     djr:text "문제가 없으면 \"계약 관점 이상 없음\"이라고 분명히 적는다.\n\n"@ko .
 
@@ -998,6 +1003,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s003/b5> ;
     djr:statesNorm djr:R-2623, djr:R-2624, djr:R-2625 ;
     djr:text "`DESIGN_CONTRACT_REVIEW` 한정으로 노트 말미에 **집행성 판정 1행**을 남긴다(이 lens 범위 한정 · 2026-08-15): 명세의 계약 결정을 실행 역할(coder·acceptance-tester)이 추론 없이 집행할 수 있는가 — «집행 가능»이면 근거로 명세의 확정 결정 3곳을 인용하고, «집행 불가»면 막히는 절·문장을 지목한다. 인용 없는 «가능» 판정은 무효다. (`DYNAMIC_ERROR_SHAPE_PROOF_REVIEW`에는 적용하지 않는다 — 그 모드 산출은 확인 토큰 계약 그대로다.)\n\n"@ko .
 
@@ -1052,6 +1058,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s005> ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s004/b5> ;
     djr:statesNorm djr:R-2637, djr:R-2638, djr:R-2639, djr:R-2640 ;
     djr:text "- 영구 테스트 입장 표의 API/public contract 후보마다 승인·consumer/wire evidence, 독자 production failure, 기존 권위 coverage를 감사한다. 위험과 candidate는 제안할 수 있지만 decision 없이 테스트를 의무화하지 않는다. framework/Pydantic 기본 동작·private Schema metadata·helper mechanics는 별도 공개 Python consumer 계약이 없으면 `reject` 방향이며, `pending`은 G1 blocker다.\n\n"@ko .
 
@@ -1071,6 +1078,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006> ;
     djr:kind djr:kind-norm ;
     djr:order 10 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b10> ;
     djr:statesNorm djr:R-2671, djr:R-2672, djr:R-2673 ;
     djr:text "9. **`BC ErrorSchema`**: `dddjango-code-json`은 common exact shape를 보존하면서 slot 6의 식별자 field 하나를 해당 BC Enum으로 좁힌 base이고 public BC error가 없는 BC만 `none`인지 본다. 좁힌 식별자 field는 공통의 default를 잃어 required여도 canon이다(식별자 field 한정·ErrorCode 좁힘 동반일 때만 — 2026-08-15). `preserve-established`는 observed profile-native status-specific schema/response artifact 또는 evidenced `none | not applicable`인지 보고 BC base를 강제하지 않는다.\n"@ko .
 
@@ -1078,6 +1086,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006> ;
     djr:kind djr:kind-norm ;
     djr:order 11 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b11> ;
     djr:statesNorm djr:R-2674, djr:R-2675, djr:R-2676, djr:R-2677, djr:R-2678 ;
     djr:text "10. **`prepared error mapping`**: `dddjango-code-json`은 concrete domain/application exception 또는 failed Result → no-arg concrete `ErrorSchema`, 또는 event-specific 값으로 명시적으로 채운 BC base `ErrorSchema` → direct `Status(<승인된 HTTP status 표현>, error)` chain과 slot-6 exact literal body/approved header가 완전한지 본다. internal failure type과 output object를 혼동하면 blocker다. 공개 문자열은 `str(exc)`를 자동 사용하거나 sensitive data를 노출하면 안 된다. raw infra는 기본 500이고 approved stable public meaning만 consuming BC internal exception으로 정규화한 뒤 `ErrorSchema`을 만드는지 확인한다. `preserve-established`는 observed profile-native preparation/mapping 또는 evidenced `none | not applicable`인지 보고 code-profile chain을 강제하지 않는다.\n"@ko .
 
@@ -1085,6 +1094,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006> ;
     djr:kind djr:kind-norm ;
     djr:order 12 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b12> ;
     djr:statesNorm djr:R-2679, djr:R-2680, djr:R-2681, djr:R-2682, djr:R-2683, djr:R-2684, djr:R-2685 ;
     djr:text "11. **`controller mapping`**: `dddjango-code-json`은 slot 10의 internal failure 형태에 따라 두 path 중 하나가 선택됐는지 확인한다. exception path는 input preparation 뒤 정확히 한 번의 application call만 narrow `try`에 두고 승인된 concrete exception 또는 exception tuple만 catch해야 한다. failed Result/`None`/outcome path는 artificial `try`/`catch` 없이 application call을 정확히 한 번 실행하고 그 직후 직접 branch해야 하며, catch를 요구하거나 exception을 fabricate해 즉시 raise/catch하면 blocker다. 두 path 모두 승인된 no-arg concrete 또는 event-specific 값으로 채운 BC-base `ErrorSchema`을 만들고, approved header를 주입된 응답용(temporal) Django `HttpResponse`에 설정한 뒤 two-argument `Status(<literal/status constant 또는 slot-6 body field>, error)`를 직접 return하는지 확인한다. `status` body property를 요구하면 blocker다. error helper/handler/factory/serializer/table 또는 mapping 추출로 이 semantic contract를 우회하면 발견으로 올리고 물리적 우회 여부는 discipline-reviewer에게 보낸다. `preserve-established`는 observed profile-native controller/handler mapping 또는 evidenced `none | not applicable`인지 보고 direct `Status`를 강제하지 않는다.\n"@ko .
 
@@ -1099,6 +1109,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006> ;
     djr:kind djr:kind-norm ;
     djr:order 14 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b30> ;
     djr:statesNorm djr:R-2691, djr:R-2692 ;
     djr:text "- `dddjango-code-json`에서 framework-owned 401/403/route 404/422/429/general `HttpError`/unknown 500을 BC response로 광고하거나 변환하지 않았는지, established framework header dependency를 보존하고 테스트하는지 본다.\n"@ko .
 
@@ -1106,6 +1117,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006> ;
     djr:kind djr:kind-norm ;
     djr:order 15 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b31>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s024-6.3/b1> ;
     djr:statesNorm djr:R-2693, djr:R-2694, djr:R-2695, djr:R-2696 ;
     djr:text "- 모든 Ninja profile의 인증 실패는 `None`을 return하거나 framework `AuthenticationError`를 raise해야 한다. `AuthenticationError` object나 `ErrorSchema`을 return하거나 어느 것도 `request.auth`에 저장하면 blocker다. 별도 승인된 406/415는 tested version-compatible Ninja-owned pre-body/framework `HttpError` path여야 하고 함수형 `Router`나 global handler를 강제하면 안 된다. `preserve-established`는 관찰된 profile-native error body/협상 behavior를 보존해야 한다.\n"@ko .
 
@@ -1113,6 +1125,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006> ;
     djr:kind djr:kind-norm ;
     djr:order 16 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b35> ;
     djr:statesNorm djr:R-2697, djr:R-2698 ;
     djr:text "- native download/stream/redirect와 schema-less 204 carveout을 존중하는지 본다. 구조·파일 위치·import DRY와 helper-circumvention의 물리 판단은 discipline-reviewer 소유이며, 여기서는 그 선택 때문에 생긴 semantic contract inconsistency만 지적한다.\n"@ko .
 
@@ -1120,6 +1133,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006> ;
     djr:kind djr:kind-norm ;
     djr:order 17 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s004/b8> ;
     djr:statesNorm djr:R-2699, djr:R-2700 ;
     djr:text "- 영구 테스트 입장 표의 `remove/weaken` 행이 API 기대에 적용 가능한 지원 소비자·버전·deprecation/Sunset 의무의 실제 종료 evidence와 exact target을 제시하는가. 명세의 침묵이나 새 성공 응답 부재만으로 종료를 승인하지 않고 `pending`으로 반송한다.\n"@ko .
 
@@ -1134,6 +1148,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006> ;
     djr:kind djr:kind-norm ;
     djr:order 19 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004/b22> ;
     djr:statesNorm djr:R-2702, djr:R-2703, djr:R-2704 ;
     djr:text "- 엔드포인트 표면(URL)을 점검할 때, 신규 표준 표면은 ninja-extra **클래스 컨트롤러**라 **최종 URL = `@api_controller(\"/prefix\")`(클래스가 소유) + `@route.*(\"path\")` 메서드 경로의 합성**으로 읽는다. side-effect-free BC registrar가 `register_controllers`로 해당 승인 scope의 project API instance에 등록되고 URLconf가 명시적으로 registrar를 호출·mount하는 흐름까지 확인한다(prefix와 메서드 경로가 둘로 나뉘므로 한쪽만 보고 URL을 판단하지 않는다). 계약 lens는 형태(함수형/클래스) 중립이지만, 경로 합성과 등록을 모르면 endpoint surface를 잘못 읽는다.\n\n"@ko .
 
@@ -1148,6 +1163,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006> ;
     djr:kind djr:kind-norm ;
     djr:order 20 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s004/b9> ;
     djr:statesNorm djr:R-2705, djr:R-2706 ;
     djr:text "명세가 계약 lens 대상인데 위 항목 중 다뤄야 할 것을 통째로 빠뜨렸으면, 그 누락 자체를 발견으로 올린다. 로드한 architecture-api 스킬의 절을 근거로 인용한다.\n\n"@ko .
 
@@ -1209,6 +1225,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s007> ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s005/b1> ;
     djr:statesNorm djr:R-2707 ;
     djr:text "\n- 두 모드 모두 코드·명세를 수정하지 않는다(읽기 전용).\n"@ko .
 
@@ -1216,6 +1233,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s007> ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s005/b2> ;
     djr:statesNorm djr:R-2708 ;
     djr:text "- 도메인 규칙·애그리거트 경계는 ddd 리뷰어, 저장·트랜잭션·인덱스·멱등성 저장소는 db 리뷰어의 몫 — 그쪽으로 넘기고 계약에 집중한다.\n"@ko .
 
@@ -1223,5 +1241,6 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s007> ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s005/b3> ;
     djr:statesNorm djr:R-2709 ;
     djr:text "- 스코프를 넓히는 권고를 하지 않는다 — 스코프 의문은 발견으로만 올린다.\n"@ko .

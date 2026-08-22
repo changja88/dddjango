@@ -1086,6 +1086,7 @@ djr:R-2605 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s003> ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b4>, <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b8> ;
     djr:statesNorm djr:R-2488, djr:R-2489, djr:R-2490, djr:R-2491 ;
     djr:text "\n슬라이스를 통과시키는 구현 코드와 승인된 내부 test action만 산출한다. `add/update`는 먼저 올바른 Red를 확인하고, `reuse`는 anchor 실행만 하며 write 0, 일반 `retain`은 무편집, `remove`는 exact 승인 target만 제거하고, `reject`는 test write 0이다. 명시 승인된 의미 보존 `retain` 재조직만 새 case·assertion·Red 없이 전후 같은 보호를 유지한다. `path::test | decision | unique production failure | action | 변경 후 현행 보장 위치`로 보고한다.\n\n"@ko .
 
@@ -1098,6 +1099,7 @@ djr:R-2605 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b3> ;
     djr:statesNorm djr:R-2492, djr:R-2493, djr:R-2494, djr:R-2495, djr:R-2496, djr:R-2497, djr:R-2498 ;
     djr:text "\n- **구현 전에 명세의 패키지·테스트 구조 결정을 읽고, 새 파일을 그 레이아웃에 맞춰 배치한다.** 구조를 새로 결정하지 않고 명세를 집행한다 — `discipline-houserules`(표준 파일트리 `references/final.md`)로 평면 나열·개념 누적을 피하고 입장 표가 승인한 test artifact가 있을 때만 그 artifact를 의미군에 둔다. 구조 규칙만으로 test file·case·assertion·helper·move/split이나 빈 test package를 만들지 않는다. 명세에 구조 결정이 없으면 임의로 정하지 말고 보고한다(설계로 반송). **명세의 구조 결정이 표준 골격(`final.md` §0 제1원칙 — 고정·재등장 칸)을 빠뜨렸거나 평면으로 접었으면, 임의 보정도 그대로 집행도 하지 말고 보고한다(명세-표준 괴리 = 설계 반송).**\n"@ko .
 
@@ -1126,6 +1128,7 @@ djr:R-2605 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 13 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b4> ;
     djr:statesNorm djr:R-2539, djr:R-2540 ;
     djr:text "- 이번 실행의 Red만 위해 만든 loader/dynamic import guard/대체 decorator/skip/xfail/helper는 해당 surface의 첫 Green 직후 네가 제거한다. 작업 전부터 있던 비계를 이번 실행이 만든 것으로 간주해 임의 삭제하지 않는다.\n"@ko .
 
@@ -1140,6 +1143,7 @@ djr:R-2605 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 15 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004/b13> ;
     djr:statesNorm djr:R-2544, djr:R-2545, djr:R-2546, djr:R-2547 ;
     djr:text "- 승인된 tree/module/scope/profile과 관찰 tree가 다르면 조용히 적응하거나 파일을 만들지 않고 `TREE_CONTRACT_MISMATCH`로 `expected slot | observed path/contract | mismatch | required decision`을 반송한다. common `ErrorSchema`의 `reuse`는 관찰된 exact baseline과 일치해야 한다. `create`와 `approved-change`는 field/type/required/default/nullability/모든 `Field` metadata/model config·legacy `Config`/validator/serializer/computed field/Pydantic hook inventory와 effective semantics/wire 직렬화/field 의미 전체에 대해 일반 G1 승인과 분리된 명시적 사용자 승인 evidence가 없으면 구현 전에 `STOP_FOR_USER_APPROVAL`로 반송한다. 12-slot/profile이 빠지거나 모순돼도 추측하지 않고 설계로 반송한다.\n"@ko .
 
@@ -1161,6 +1165,7 @@ djr:R-2605 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 18 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b17> ;
     djr:statesNorm djr:R-2556, djr:R-2557, djr:R-2558, djr:R-2559, djr:R-2560 ;
     djr:text "- `dddjango-code-json`의 prepared concrete `ErrorSchema`은 인자 없이 생성한다. 사건 시점 값이 승인됐으면 BC base를 slot 6의 모든 required field와 그 사건에서 default override가 필요한 approved optional field로 직접 생성할 수 있다. slot 10이 exception path를 고르면 controller는 입력을 `try` 밖에서 준비하고 `try`에는 application call 문장 하나만 두며 승인된 concrete exception 또는 tuple만 catch한다. catch 직후 승인된 concrete/base `ErrorSchema`을 만들고, 승인 header는 **주입된 응답용(temporal) Django `HttpResponse`**에 먼저 쓴 뒤 `Status(<승인된 HTTP status 표현>, error)` 두 인자로 직접 반환한다. plugin이 `status` body property를 추가하거나 요구하지 않는다.\n"@ko .
 
@@ -1168,6 +1173,7 @@ djr:R-2605 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 19 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b18> ;
     djr:statesNorm djr:R-2561, djr:R-2562, djr:R-2563 ;
     djr:text "- `dddjango-code-json`의 slot 10이 failed Result/`None`/outcome path를 고르면 application call은 한 번만 실행해 결과를 받고 호출 직후 직접 failure branch를 둔다. 그 branch에서 승인된 no-arg concrete `ErrorSchema` 또는 모든 required field와 필요한 approved optional override만 채운 event-specific BC base를 만들고, 승인 header는 주입된 응답용(temporal) Django `HttpResponse`에 쓴 뒤 같은 두 인자 `Status(<승인된 HTTP status 표현>, error)`를 반환한다. 이 path를 위해 exception을 만들거나 raise/catch하지 않고 helper·mapping table도 만들지 않으며 catch가 있어야 한다고 요구하지 않는다.\n"@ko .
 
@@ -1175,6 +1181,7 @@ djr:R-2605 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s003-0/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s003-0/b3>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s003-0/b4>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s003-0/b5>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s003-0/b8> ;
     djr:statesNorm djr:R-2499, djr:R-2500, djr:R-2501, djr:R-2502 ;
     djr:text "- **골격 실현 의무.** 승인 스코프의 BC 를 새로 만들거나 touched 하면(touched = G0 스코프의 그 BC — 파일을 스친 사실이 아니라 · 명세가 골격 실현을 지시한 데이터소스 BC 포함) `final.md` §0·§1 의 골격을 실현한다 — 고정·재등장 칸은 내용이 없어도 폴더는 `__init__.py` 로, 파일은 빈 파일로 만든다(#488). `<…>` 자리표시자 칸은 그 개념이 실제로 생길 때만 만들고, 트리에 없는 칸은 만들지 않는다(#489·#490). 골격 위반은 `check-layer-skeleton` 이 다른 검사보다 먼저 잡고 반송한다(#487) — 검사기를 통과시키려 트리 밖 우회를 만들지 않는다.\n"@ko .
 
@@ -1182,6 +1189,7 @@ djr:R-2605 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 20 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b29> ;
     djr:statesNorm djr:R-2564, djr:R-2565, djr:R-2566 ;
     djr:text "- `dddjango-code-json`에서는 error `helper`, `handler`, `factory`, ErrorSchema→HTTP response `serializer`, exception→`ErrorSchema` mapping, handler 등록 decorator, central conversion point를 새 이름으로도 추출·호출·유지하지 않는다. controller의 짧은 직접 mapping은 반복한다. 이 금지는 success/download/stream/redirect/schema-less 204 mechanism과 승인된 common Schema의 Pydantic validator/serializer/decorator/hook에는 적용하지 않는다.\n"@ko .
 
@@ -1189,6 +1197,7 @@ djr:R-2605 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 21 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b17>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b2> ;
     djr:statesNorm djr:R-2567, djr:R-2568, djr:R-2569, djr:R-2570, djr:R-2571, djr:R-2572, djr:R-2573 ;
     djr:text "- **배선·등록 형태는 profile 무관 표준이다**(2026-08-12 라운드 1′): 승인 scope마다 API 하나, `auto_import=False` controller, side-effect-free BC registrar(`register_<bc>_api`), registrar를 명시적으로 호출해 API를 mount하는 root URL composition. import-time registration을 금지하며 BC `composition_root/`(`dependency_wiring.py` — final.md §1 트리 2~4행)가 dependency injection만 소유한다. framework 오류를 위해 함수형 `Router`를 발명하거나 강제하지 않는다. `preserve-established`가 유지하는 native 는 오류 wire 산출물(schema/handler/body)이지 registration/composition 이 아니다 — **기존 BC 의 배선 실물(`*_api_router.py` 동형)은 배선 결정의 입력이 아니다.** 이 표준의 관할은 승인 스코프가 낳는 산출물(신규 파일·기존 파일에 추가되는 줄)이다 — 승인 스코프 밖 기존 배선·배치는 어떤 위반 판정을 근거로도 이 작업에서 옮기지 않는다(강제 전파 금지 — 이동 권한은 G0 사용자 빚 결정→슬라이스 0 뿐 · `discipline-houserules` SKILL §1.1 판정 물음 · 2026-08-13).\n"@ko .
 
@@ -1203,6 +1212,7 @@ djr:R-2605 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 23 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004/b17> ;
     djr:statesNorm djr:R-2578, djr:R-2579, djr:R-2580, djr:R-2581, djr:R-2582, djr:R-2583 ;
     djr:text "- 입장 표의 `add/update` 대상과 `reuse` anchor를 skip/xfail 없이 실행한다. 일반 `retain/reject`를 실행 목록 확대나 새 test artifact의 근거로 쓰지 않는다. `dddjango-code-json`, 또는 preserve slot이 동일 mechanism을 명시 승인한 경우에는 주입된 응답용(temporal) Django `HttpResponse`에 쓴 승인 header가 mounted client response에 도달함을 증명한다. plugin fixture Green은 target-pin 증거가 아니다. code profile은 mounted full Django client로 생성 OpenAPI를 가져와 검사하며 controller/Router client만 실행하고 OpenAPI를 검증했다고 보고하지 않는다. `preserve-established`는 slot에 승인된 native mounted/runtime/OpenAPI 검증만 실행하고 code-profile 문서 경로·shape를 강제하지 않는다.\n"@ko .
 
@@ -1210,6 +1220,7 @@ djr:R-2605 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 24 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b17> ;
     djr:statesNorm djr:R-2584, djr:R-2585, djr:R-2586, djr:R-2587, djr:R-2588, djr:R-2589 ;
     djr:text "- JSON API presentation은 승인된 명세의 stack·controller·module 결정을 그대로 집행한다. `dddjango-code-json`의 새 표준 Ninja surface가 class controller로 승인됐다면 `implementation-django-ninja` §2.3의 `@api_controller` + `@route.*`를 사용한다. `preserve-established`는 승인된 native controller/Router/handler form을 바꾸지 않는다. 어느 profile에서도 406/415를 이유로 함수형 `Router`를 새로 강제하지 않는다. **단, 명세의 배선/등록 결정이 표준(#105~#112)과 어긋나면 그대로 집행하지 않고 `TREE_CONTRACT_MISMATCH`로 반송한다** — 명세 복종이 배선 답습의 통로가 되지 않게(라운드 1′ 실증: 명세 R1 이 «확립된 import-time 등록 규약 보존»을 결정으로 박자 coder 가 복종했다). 대칭으로, **명세가 승인 스코프 산출물 목록 밖 기존 파일의 이동·재배선을 결정으로 박아도 그대로 집행하지 않고 `TREE_CONTRACT_MISMATCH`로 반송한다** — 명세 복종이 강제 전파의 통로가 되지 않게(2026-08-13 라운드 2 실증: 명세가 «11 BC canonical 이관»을 결정으로 박자 100파일이 이동됐다).\n\n"@ko .
 
@@ -1217,6 +1228,7 @@ djr:R-2605 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004/b2> ;
     djr:statesNorm djr:R-2503, djr:R-2504, djr:R-2505, djr:R-2506 ;
     djr:text "- **결정 재방문 금지(2026-08-15).** 접근·해석을 한 번 정해 집행을 시작했으면 새 정보 없이 같은 결정을 다시 따져 뒤집지 않는다(정한 것의 재탐색은 사고 낭비다). 단 **승인 명세와 정본 표준(스킬 `references/final.md`) 간 충돌의 발견은 «새 정보»다** — 조용한 재해석·현장 절충 없이 기존 반송 축(설계 반송·`TREE_CONTRACT_MISMATCH`)으로 즉시 보고한다(재추론의 결함 검출 기능은 이 예외로 그대로 유지된다). 각 행·evidence 확인이나 검증 실행은 재방문이 아니다 — 그 확인 결과가 기존 해석과 어긋나면 그것이 곧 «새 정보»다.\n"@ko .
 
@@ -1224,6 +1236,7 @@ djr:R-2605 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004/b1> ;
     djr:statesNorm djr:R-2507, djr:R-2508 ;
     djr:text "- 각 test edit 전에 입력 행의 protected contract/evidence·unique production failure·existing authoritative coverage·decision·owner/path를 확인한다. 행이 없거나 owner가 아니면 만들거나 고치지 않는다.\n"@ko .
 
@@ -1238,6 +1251,7 @@ djr:R-2605 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004/b5> ;
     djr:statesNorm djr:R-2511, djr:R-2512, djr:R-2513 ;
     djr:text "- migration 파일·번호·dependency·operation·과거 model state·forward/reverse·DDL 자체를 검증하는 테스트를 새로 만들거나 새 case·assertion·시나리오로 확장하지 않는다. 기존 관련 migration 테스트의 기대 변경은 기존 assertion의 제자리 갱신·축소까지만 허용하며, 새 migration coverage가 필요하면 검증 공백을 보고한다.\n"@ko .
 
@@ -1245,6 +1259,7 @@ djr:R-2605 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 7 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004/b6>, <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004/b7> ;
     djr:statesNorm djr:R-2514, djr:R-2515 ;
     djr:text "- 현행 assertion과 종료 assertion이 섞였으면 현행 보장을 남기도록 분리·부분 갱신한다. 지원 중인 구 API·영속 데이터·발행 이벤트·회귀 불변식은 보존한다.\n"@ko .
 
@@ -1318,6 +1333,7 @@ djr:R-2605 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s006> ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s042-9.5/b11> ;
     djr:statesNorm djr:R-2598, djr:R-2599, djr:R-2600, djr:R-2601 ;
     djr:text "- 명세가 정한 **기술 메커니즘**(락 전략·동시성·격리 수준·저장 방식)은 architect의 설계 결정이다 — 구현 중 자기 판단으로 다른 메커니즘으로 대체하지 않는다. 이 '대체'는 **출처-불문**이다 — 커스텀 `DatabaseWrapper` 백엔드뿐 아니라 런타임 몽키패치·`connection_created` 시그널·`OPTIONS.init_command`로 `BEGIN`/PRAGMA 주입·`isolation_level` 조작·DB 미들웨어·테스트 conftest 패치 등 *어떤 형태로든* 엔진/연결의 트랜잭션·락·격리 의미를 바꾸면 같은 위반이고, 필요한 연결 튜닝은 stock `OPTIONS`로만 한다(`implementation-django` §16.4·`architecture-db` §9.5). 환경상 부족해 보이면(예: 개발 sqlite의 락 한계) 우회책을 만들지 말고 멈춰 설계로 반송하고, 명세에 메커니즘 결정이 비어 있어도 — 구조 결정이 빠졌을 때와 똑같이 — 임의로 정하지 말고 보고한다. *왜* — 코더가 보는 건 한 슬라이스·한 환경뿐이고, 메커니즘 선택은 운영 DB·전체 일관성까지 본 설계 판단이라 국소 정보로 뒤집으면 명세와 어긋난다.\n"@ko .
 

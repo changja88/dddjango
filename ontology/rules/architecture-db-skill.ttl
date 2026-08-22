@@ -262,6 +262,7 @@ djr:R-2839 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s019-4.2/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s021-5/b1> ;
     djr:statesNorm djr:R-2823, djr:R-2824 ;
     djr:text "\n- 성능 최적화 순서를 지킨다: 슬로우 쿼리 최적화 → 인덱스 적용 → 캐시 → 역정규화. 역정규화는 최후 수단이며, 정규화 먼저 한 뒤 필요한 경우에만 적용한다 (§4, §5)\n"@ko .
 
@@ -276,6 +277,7 @@ djr:R-2839 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s032-8/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s036-8.4/b1> ;
     djr:statesNorm djr:R-2827, djr:R-2828 ;
     djr:text "- 비즈니스 불변식이 DB 경계에서 지켜져야 하면 unique constraint·FK·check constraint를 사용하고, 제약조건 rollout은 lock risk를 고려한 단계적 순서를 따른다 (§8)\n"@ko .
 
@@ -283,6 +285,7 @@ djr:R-2839 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s041-9.4/b3>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s041-9.4/b4>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s041-9.4/b5>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s041-9.4/b6> ;
     djr:statesNorm djr:R-2829 ;
     djr:text "- 격리 수준은 필요 이상으로 높이지 않는다: 대부분의 OLTP는 Read Committed, 일관된 읽기가 필요하면 Repeatable Read, 정확성이 최우선인 금융·결제는 Serializable + retry (§9.4)\n"@ko .
 
@@ -290,6 +293,7 @@ djr:R-2839 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s043-9.6/b10>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s043-9.6/b11>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s043-9.6/b12>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s043-9.6/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s043-9.6/b4>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s043-9.6/b5>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s043-9.6/b7>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s043-9.6/b9> ;
     djr:statesNorm djr:R-2830, djr:R-2831, djr:R-2832 ;
     djr:text "- Risky Write(주문·결제·재고·예약·권한·ledger)에는 Transaction owner·Locking strategy·Idempotency storage·Side-effect timing·Isolation/retry와 위험·failure 후보인 Test criteria를 명시한다. Test criteria 자체는 테스트 의무가 아니며, 독자 DB failure와 기존 보호를 비교한 `discipline-tdd` 입장 결정이 `add`일 때만 coder가 새 테스트를 작성한다 (§9.6)\n"@ko .
 
@@ -297,6 +301,7 @@ djr:R-2839 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s043-9.6/b14>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s044-9.7/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s044-9.7/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s044-9.7/b6>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s044-9.7/b7> ;
     djr:statesNorm djr:R-2833, djr:R-2834, djr:R-2835 ;
     djr:text "- 외부 결제·알림·메시지 발행은 DB 트랜잭션 내부에서 실행하지 않는다. 메시지 유실이 허용되지 않으면 트랜잭셔널 Outbox로 at-least-once 전달을 보장하고, consumer는 중복 수신을 무시할 수 있어야 한다 (§9.7)\n"@ko .
 
@@ -304,6 +309,7 @@ djr:R-2839 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 7 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s052-11.1/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s052-11.1/b4>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s052-11.1/b5>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s052-11.1/b6>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s053-11.2/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s053-11.2/b3> ;
     djr:statesNorm djr:R-2836, djr:R-2837 ;
     djr:text "- 운영 컬럼·인덱스·constraint 변경은 Expand / Backfill / Contract 단계를 따르고, 대용량 backfill은 슬롯·lock risk를 고려한 배치 처리를 계획한다 (§11)\n\n"@ko .
 

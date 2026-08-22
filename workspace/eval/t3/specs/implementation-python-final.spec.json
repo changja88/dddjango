@@ -1,1919 +1,1928 @@
 {
-  "schema": "migrate-spec/1",
-  "doc_key": "implementation-python-final",
-  "path": "dddjango/skills/implementation-python/references/final.md",
-  "restates_paths": {
-    "implementation-python-final": "dddjango/skills/implementation-python/references/final.md"
-  },
-  "sections": [
+ "schema": "migrate-spec/1",
+ "doc_key": "implementation-python-final",
+ "path": "dddjango/skills/implementation-python/references/final.md",
+ "restates_paths": {
+  "implementation-python-final": "dddjango/skills/implementation-python/references/final.md",
+  "discipline-cleancode-final": "dddjango/skills/discipline-cleancode/references/final.md",
+  "discipline-houserules-skill": "dddjango/skills/discipline-houserules/SKILL.md"
+ },
+ "sections": [
+  {
+   "section_key": "s001",
+   "line_start": 1,
+   "line_end": 9,
+   "blocks": [
     {
-      "section_key": "s001",
-      "line_start": 1,
-      "line_end": 9,
-      "blocks": [
-        {
-          "lines": [
-            2,
-            7
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "클린코드 범용 원칙의 discipline-cleancode 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "문면이 discipline-cleancode 를 소유자로 직접 지목 — 그 문서군 기본값도 discipline-reviewer(§16 표) 라 일치"
-            },
-            {
-              "label": "Python 3.10+ 도입 기능 적극 채택·최신 패턴 기본 제시",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            8,
-            9
-          ],
-          "kind": "prose",
-          "note": "수평선 `---` + 절 말미 빈 줄"
-        }
-      ]
+     "lines": [
+      2,
+      7
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "클린코드 범용 원칙의 discipline-cleancode 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "문면이 discipline-cleancode 를 소유자로 직접 지목 — 그 문서군 기본값도 discipline-reviewer(§16 표) 라 일치"
+      },
+      {
+       "label": "Python 3.10+ 도입 기능 적극 채택·최신 패턴 기본 제시",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
     },
     {
-      "section_key": "s004-1.2",
-      "line_start": 32,
-      "line_end": 55,
-      "blocks": [
-        {
-          "lines": [
-            33,
-            35
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "Optional 타입으로 None 가능성 명시",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            36,
-            52
-          ],
-          "kind": "code"
-        },
-        {
-          "lines": [
-            53,
-            53
-          ],
-          "kind": "prose",
-          "note": "`Optional[X]`≡`Union[X,None]`·3.10+ `X | None` — 사실 서술(P0 계수 비산입)"
-        },
-        {
-          "lines": [
-            54,
-            55
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "mypy --strict-optional 로 None 처리 강제",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 (mypy 설정 축을 무는 검사기 없음 — check-test-config 관할은 3슬라이스 ⑴pytest↔settings 바인딩 ⑵`test/` 구조(#383~#392) ⑶`<project>/settings/` 환경축(#445~#447)이고 `[tool.mypy]`·`[tool.ruff]`·pyrightconfig.json 은 비관할)"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s005-1.3",
-      "line_start": 56,
-      "line_end": 82,
-      "blocks": [
-        {
-          "lines": [
-            57,
-            59
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "합 타입으로 비정상 상태 배제",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            60,
-            82
-          ],
-          "kind": "code"
-        }
-      ]
-    },
-    {
-      "section_key": "s007-1.5",
-      "line_start": 103,
-      "line_end": 121,
-      "blocks": [
-        {
-          "lines": [
-            104,
-            106
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "이종 데이터 딕셔너리의 TypedDict 사용",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            107,
-            121
-          ],
-          "kind": "code"
-        }
-      ]
-    },
-    {
-      "section_key": "s013-1.11",
-      "line_start": 277,
-      "line_end": 305,
-      "blocks": [
-        {
-          "lines": [
-            278,
-            280
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "Concatenate 용처 — 데코레이터의 매개변수 추가·제거",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [애매→포함(P0 승계) — 서술문이나 용처 지정이라 규범 채택]"
-            }
-          ]
-        },
-        {
-          "lines": [
-            281,
-            305
-          ],
-          "kind": "code"
-        }
-      ]
-    },
-    {
-      "section_key": "s014-1.12",
-      "line_start": 306,
-      "line_end": 331,
-      "blocks": [
-        {
-          "lines": [
-            307,
-            309
-          ],
-          "kind": "prose",
-          "note": "TypeIs↔TypeGuard 기능 차이 서술 — 규범 동사 없음"
-        },
-        {
-          "lines": [
-            310,
-            329
-          ],
-          "kind": "code"
-        },
-        {
-          "lines": [
-            330,
-            331
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "대부분의 경우 TypeIs 사용",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            },
-            {
-              "label": "TypeGuard 는 입력·출력 타입 비호환 특수 경우 한정",
-              "class": "Exception",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [L-E 준거: 조건 한정 → Exception]"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s025-3.3",
-      "line_start": 515,
-      "line_end": 529,
-      "blocks": [
-        {
-          "lines": [
-            516,
-            518
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "키별 디폴트는 dict 상속 + __missing__ 구현",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            519,
-            529
-          ],
-          "kind": "code"
-        }
-      ]
-    },
-    {
-      "section_key": "s032-4.4",
-      "line_start": 622,
-      "line_end": 642,
-      "blocks": [
-        {
-          "lines": [
-            623,
-            625
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "OHS 계약·승인된 failed-Result 경로의 결과 분기(raise 아님)",
-              "class": "Exception",
-              "enforcedBy": [
-                "check-context-isolation.py"
-              ],
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면이 전역규칙 #453·#454 를 직접 인용 ②check-context-isolation.py docstring OHS 절 «#453/#454 «없다»는 답» 실재 — 기본값 도피 금지(§16 역도) ④«승인된» 경로 판정·OHS 밖 일반 API 경계는 의미 레인이라 reviewer 병기"
-            }
-          ]
-        },
-        {
-          "lines": [
-            626,
-            642
-          ],
-          "kind": "code"
-        }
-      ]
-    },
-    {
-      "section_key": "s035-5.1",
-      "line_start": 666,
-      "line_end": 688,
-      "blocks": [
-        {
-          "lines": [
-            667,
-            669
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "데코레이터 메타데이터의 @wraps 보존",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            670,
-            688
-          ],
-          "kind": "code"
-        }
-      ]
-    },
-    {
-      "section_key": "s037-5.3",
-      "line_start": 726,
-      "line_end": 744,
-      "blocks": [
-        {
-          "lines": [
-            727,
-            729
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "메타클래스보다 클래스 데코레이터 사용",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            730,
-            742
-          ],
-          "kind": "code"
-        },
-        {
-          "lines": [
-            743,
-            744
-          ],
-          "kind": "prose",
-          "note": "수평선 `---`"
-        }
-      ]
-    },
-    {
-      "section_key": "s039-6.1",
-      "line_start": 747,
-      "line_end": 750,
-      "blocks": [
-        {
-          "lines": [
-            748,
-            750
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "재사용 애트리뷰트 로직의 디스크립터 사용",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [애매→포함(P0 승계) — 정의 서술에 용처 지정이 붙음]"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s040-6.2",
-      "line_start": 751,
-      "line_end": 825,
-      "blocks": [
-        {
-          "lines": [
-            752,
-            755
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "의사결정 #5 — 공식 Descriptor HowTo Guide 패턴 기본 채택",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            756,
-            821
-          ],
-          "kind": "code"
-        },
-        {
-          "lines": [
-            822,
-            823
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "__set_name__(3.6+) 이후 instance.__dict__ 직접 저장 권장(WeakKeyDictionary 레거시)",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [b1 의사결정 #5 와 요지 중복 — 축자 사본이 아니라 조건부 레거시 대비 권장문이라 별도 Work(P0 계수 2 승계)]"
-            }
-          ]
-        },
-        {
-          "lines": [
-            824,
-            825
-          ],
-          "kind": "prose",
-          "note": "수평선 `---`"
-        }
-      ]
-    },
-    {
-      "section_key": "s042-7.1",
-      "line_start": 828,
-      "line_end": 857,
-      "blocks": [
-        {
-          "lines": [
-            829,
-            831
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "평범한 공개 애트리뷰트 시작·필요 시 @property 전환",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            832,
-            857
-          ],
-          "kind": "code"
-        }
-      ]
-    },
-    {
-      "section_key": "s045-8.1",
-      "line_start": 882,
-      "line_end": 898,
-      "blocks": [
-        {
-          "lines": [
-            883,
-            885
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "상태 유지 훅은 클로저 대신 __call__ 클래스",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            886,
-            898
-          ],
-          "kind": "code"
-        }
-      ]
-    },
-    {
-      "section_key": "s046-8.2",
-      "line_start": 899,
-      "line_end": 918,
-      "blocks": [
-        {
-          "lines": [
-            900,
-            902
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "대체 생성자의 @classmethod 사용",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            903,
-            918
-          ],
-          "kind": "code"
-        }
-      ]
-    },
-    {
-      "section_key": "s048-8.4",
-      "line_start": 935,
-      "line_end": 956,
-      "blocks": [
-        {
-          "lines": [
-            936,
-            938
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "모든 클래스의 최소 __repr__ 구현",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            939,
-            956
-          ],
-          "kind": "code"
-        }
-      ]
-    },
-    {
-      "section_key": "s049-8.5",
-      "line_start": 957,
-      "line_end": 974,
-      "blocks": [
-        {
-          "lines": [
-            958,
-            970
-          ],
-          "kind": "code",
-          "note": "절 선두 구분자(958)를 첫 블록 선두 스팬에 귀속(§13 명문 예외)"
-        },
-        {
-          "lines": [
-            971,
-            971
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "__var 는 하위 클래스 필드명 충돌 방지 한정",
-              "class": "Exception",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [L-E 준거: 용도 한정 → Exception]"
-            }
-          ]
-        },
-        {
-          "lines": [
-            972,
-            974
-          ],
-          "kind": "prose",
-          "note": "_var 관례 서술 + 파이썬 모토 인용 — 규범 없는 연속 불릿 묶음"
-        }
-      ]
-    },
-    {
-      "section_key": "s050-8.6",
-      "line_start": 975,
-      "line_end": 994,
-      "blocks": [
-        {
-          "lines": [
-            976,
-            978
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "메타클래스 대신 __init_subclass__ 사용",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            979,
-            994
-          ],
-          "kind": "code"
-        }
-      ]
-    },
-    {
-      "section_key": "s053-8.9",
-      "line_start": 1047,
-      "line_end": 1065,
-      "blocks": [
-        {
-          "lines": [
-            1048,
-            1050
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "커스텀 컨테이너의 collections.abc 상속",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [애매→포함(P0 승계) — 효과 서술이나 조건부 지시로 채택]"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1051,
-            1063
-          ],
-          "kind": "code"
-        },
-        {
-          "lines": [
-            1064,
-            1065
-          ],
-          "kind": "prose",
-          "note": "수평선 `---`"
-        }
-      ]
-    },
-    {
-      "section_key": "s061-10.1",
-      "line_start": 1182,
-      "line_end": 1214,
-      "blocks": [
-        {
-          "lines": [
-            1183,
-            1206
-          ],
-          "kind": "code",
-          "note": "절 선두 구분자(1183)를 첫 블록 선두 스팬에 귀속(§13 명문 예외)"
-        },
-        {
-          "lines": [
-            1207,
-            1207
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "의미 있는 유한 상태의 Enum·StrEnum 표현",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "승격(미승격) 축은 check-choices-literal-consumption.py docstring 이 «보지 않는 것 — 닫힌 집합의 미승격(의미 레인 = discipline-reviewer 몫)» 으로 명시 배제 — 기본값 유지의 문면 근거"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1208,
-            1208
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "직렬화 문자열 + target 3.11+ 의 StrEnum 우선",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1209,
-            1209
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "StrEnum 불가 제약 시 str, Enum 조합",
-              "class": "Exception",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [L-E 준거: 제약 조건부 대안 → Exception]"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1210,
-            1210
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "작고 지역적인 분기 표현의 Literal 허용(의미·동작 결합 시 Enum·StrEnum)",
-              "class": "Permission",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [L-E 준거: 조건부 허용 → Permission. 판정 소유는 같은 절 1213 분업 항]"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1211,
-            1211
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "승격 판정·리터럴 허용 목록·소비 규율의 discipline-cleancode §2.14 소유 지정",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "문면이 discipline-cleancode §2.14 를 소유자로 직접 지목 — 그 문서군 기본값도 discipline-reviewer(§16 표)"
-            },
-            {
-              "label": "닫힌 집합의 1곳째부터 집합 단위 타입 승격(낱개 모듈 상수 나열 금지)",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "check-choices-literal-consumption.py docstring 이 «닫힌 집합의 미승격»을 명시 비대상으로 선언 — 검사기 비커버, 기본값 유지"
-            },
-            {
-              "label": "선언된 값의 비교·분기·대입은 심볼로만",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-choices-literal-consumption.py"
-              ],
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면이 cleancode §2.14 소비 규율 요지를 재진술 ②check-choices-literal-consumption.py docstring «선언된 choices 값의 리터럴 소비 결정적 백스톱(cleancode §2.14 소비 규율)» — 직접형 (a)default 리터럴·(b)filter/exclude 리터럴 한정 ④변수 우회·간접 queryset·비교식은 docstring 이 의미 레인으로 넘김 → reviewer 병기"
-            },
-            {
-              "label": "Enum 값 비교의 == 사용(is 금지)",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "check-choices-literal-consumption.py docstring «보지 않는 것 — 비교식(x.status == \"…\")» 명시 배제 — 검사기 비커버, 기본값 유지"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1212,
-            1212
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "파생 분류 집합 지식의 enum 소유",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            },
-            {
-              "label": "파생 집합 실현 — 프로퍼티 1순위·같은 모듈 frozenset(원소는 심볼)",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            },
-            {
-              "label": "소비처 모듈의 임의 frozenset 재정의 금지",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1213,
-            1214
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "도메인 개념 값 집합(상태·종류)의 Enum 귀속",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            },
-            {
-              "label": "외부 API 값 의존 계약의 Literal 귀속",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            },
-            {
-              "label": "Literal 로 잠긴 인자 자리의 리터럴 허용",
-              "class": "Permission",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [L-E 준거: 타입 체커 검증을 조건으로 한 허용]"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s063-10.3",
-      "line_start": 1231,
-      "line_end": 1253,
-      "blocks": [
-        {
-          "lines": [
-            1232,
-            1234
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "의사결정 #7 — dataclass(slots=True) 권장",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1235,
-            1251
-          ],
-          "kind": "code"
-        },
-        {
-          "lines": [
-            1252,
-            1253
-          ],
-          "kind": "prose",
-          "note": "slots=True 의 다중 상속 충돌 주의 — 설명(P0 계수 비산입)"
-        }
-      ]
-    },
-    {
-      "section_key": "s070-11.1",
-      "line_start": 1357,
-      "line_end": 1425,
-      "blocks": [
-        {
-          "lines": [
-            1358,
-            1418
-          ],
-          "kind": "code",
-          "note": "절 선두 구분자(1358)를 첫 블록 선두 스팬에 귀속(§13 명문 예외)"
-        },
-        {
-          "lines": [
-            1419,
-            1419
-          ],
-          "kind": "prose",
-          "note": "«**핵심 규칙**:» 라벨 행"
-        },
-        {
-          "lines": [
-            1420,
-            1420
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "연산자 미지원 시 NotImplemented 반환(raise 금지)",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1421,
-            1421
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "__eq__ 정의 시 해시 가능 객체의 __hash__ 동반 정의",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1422,
-            1423
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "@ 연산자의 __matmul__·__rmatmul__·__imatmul__ 구현",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1424,
-            1425
-          ],
-          "kind": "prose",
-          "note": "수평선 `---`"
-        }
-      ]
-    },
-    {
-      "section_key": "s071-12",
-      "line_start": 1426,
-      "line_end": 1431,
-      "blocks": [
-        {
-          "lines": [
-            1427,
-            1431
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "의사결정 #1 — pydantic v2 API 사용(v1 지원 중단)",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s072-12.0",
-      "line_start": 1432,
-      "line_end": 1443,
-      "blocks": [
-        {
-          "lines": [
-            1433,
-            1435
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "pydantic v2 의 외부 입력·런타임 검증 경계 사용",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1436,
-            1437
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "도메인 모델 기본 표현의 pydantic 고정 금지",
-              "class": "Prohibition",
-              "enforcedBy": [
-                "check-domain-model.py"
-              ],
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "②check-domain-model.py docstring «#8 [ast] domain_layer 의 밖으로 나가는 import 0 — django·다른 층·다른 BC·서드파티» — domain_layer 안의 pydantic(서드파티) 고정은 결정적으로 차단됨. domain_layer 밖 자리의 «기본 표현» 판정은 의미 레인 → reviewer 병기"
-            },
-            {
-              "label": "durable domain invariant 의 규칙 소유 경계 배치",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-domain-model.py"
-              ],
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "②check-domain-model.py docstring 이 값 객체·엔티티·애그리거트·도메인 서비스의 자리와 «#8 밖으로 나가는 import 0»를 소유 — domain_layer «안»의 자리·격리 축 한정 결정 백스톱(#8·#249~#315). invariant 가 domain 밖(pydantic validator·adapter·application service)에 안착하는 양태와 무엇이 durable invariant 인가의 판정은 검사 공백 — reviewer 병기 몫"
-            },
-            {
-              "label": "pydantic validator 의 도메인 규칙 소유 금지(boundary validation·parsing 한정)",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [ddd 파일럿 L-F 준거: 판정 대행·복제의 의미 동등성은 정적 검사 밖 — reviewer 단독]"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1438,
-            1438
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "BaseModel 의 외부 DTO·config·런타임 boundary 우선 사용",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1439,
-            1439
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "기표현 내부 domain object 의 pydantic 중복 domain model 금지",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1440,
-            1440
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "validation error 의 adapter·API·config 계층 변환",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            },
-            {
-              "label": "raw pydantic error shape 의 도메인 규칙 편입 금지",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1441,
-            1441
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "coercion 은닉 시 strict mode 활성화",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            },
-            {
-              "label": "외부 계약상 의도한 coercion 필드의 field-level 허용",
-              "class": "Exception",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [L-E 준거: «단,» 한정 조항 → Exception]"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1442,
-            1443
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "Ninja Schema 소유 경계의 별도 pydantic DTO 추가 전 implementation-django-ninja 기준 충돌 확인",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "문면이 implementation-django-ninja 기준을 직접 지목 — 그 문서군 기본값도 discipline-reviewer(§16 표) 라 기본값과 일치"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s081-13.5",
-      "line_start": 1611,
-      "line_end": 1614,
-      "blocks": [
-        {
-          "lines": [
-            1612,
-            1614
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "send·throw 대신 이터레이터 입력 또는 상태 클래스 사용",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [금지는 헤딩이 지고 본문은 대안 지시 1 — P0 계수 승계]"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s089-15.2",
-      "line_start": 1731,
-      "line_end": 1749,
-      "blocks": [
-        {
-          "lines": [
-            1732,
-            1734
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "API 모듈 최상위 Exception 정의와 모듈 예외 상속",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "27종 전수 실독 — 문면은 «API 모듈» 일반을 말하고 dddjango OHS 자리를 지목하지 않음. 유사 축인 check-context-isolation.py #166·#167·#168(기저 예외·상속·1클래스=1모듈)은 OHS contract/exception 한정이라 문면 근거 없이 배선하면 오배선 — 기본값 유지"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1735,
-            1749
-          ],
-          "kind": "code"
-        }
-      ]
-    },
-    {
-      "section_key": "s090-15.3",
-      "line_start": 1750,
-      "line_end": 1791,
-      "blocks": [
-        {
-          "lines": [
-            1751,
-            1753
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "의사결정 #4 — Python 3.13+ 의 @deprecated 사용",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1754,
-            1785
-          ],
-          "kind": "code"
-        },
-        {
-          "lines": [
-            1786,
-            1787
-          ],
-          "kind": "prose",
-          "note": "__deprecated__ 속성 자동 추가 — 설명(P0 계수 비산입)"
-        },
-        {
-          "lines": [
-            1788,
-            1789
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "3.13 미만의 warnings.warn(DeprecationWarning) 대체",
-              "class": "Exception",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [L-E 준거: 버전 조건부 대안 → Exception]"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1790,
-            1791
-          ],
-          "kind": "prose",
-          "note": "수평선 `---`"
-        }
-      ]
-    },
-    {
-      "section_key": "s092-16.1",
-      "line_start": 1794,
-      "line_end": 1816,
-      "blocks": [
-        {
-          "lines": [
-            1795,
-            1796
-          ],
-          "kind": "prose",
-          "note": "GIL 사실 서술 — 규범 동사 없음(P0 계수 비산입)"
-        },
-        {
-          "lines": [
-            1797,
-            1797
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "블로킹 I/O 한정 스레드 사용",
-              "class": "Permission",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [L-E 준거: 사용 조건 한정 → Permission]"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1798,
-            1799
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "CPU 병렬화의 multiprocessing·C 확장 기본",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1800,
-            1816
-          ],
-          "kind": "code"
-        }
-      ]
-    },
-    {
-      "section_key": "s093-16.2",
-      "line_start": 1817,
-      "line_end": 1858,
-      "blocks": [
-        {
-          "lines": [
-            1818,
-            1820
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "의사결정 #3 — 3.11+ asyncio.TaskGroup 기본 패턴",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1821,
-            1856
-          ],
-          "kind": "code"
-        },
-        {
-          "lines": [
-            1857,
-            1858
-          ],
-          "kind": "prose",
-          "note": "레거시 asyncio.gather 참고 — 설명(P0 계수 비산입)"
-        }
-      ]
-    },
-    {
-      "section_key": "s094-16.3",
-      "line_start": 1859,
-      "line_end": 1892,
-      "blocks": [
-        {
-          "lines": [
-            1860,
-            1862
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "의사결정 #2 — 3.13+ Free-threading 반영",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            1863,
-            1864
-          ],
-          "kind": "prose",
-          "note": "Free-threading 기능 서술"
-        },
-        {
-          "lines": [
-            1865,
-            1886
-          ],
-          "kind": "code"
-        },
-        {
-          "lines": [
-            1887,
-            1892
-          ],
-          "kind": "prose",
-          "note": "«현재 상태 (3.13)» 라벨 + 사실 목록 — 규범 없는 연속 불릿 묶음"
-        }
-      ]
-    },
-    {
-      "section_key": "s098-17",
-      "line_start": 1931,
-      "line_end": 1936,
-      "blocks": [
-        {
-          "lines": [
-            1932,
-            1936
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "의사결정 #6 — 3단계 프로파일링 체계 사용",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s109-19.4",
-      "line_start": 2126,
-      "line_end": 2136,
-      "blocks": [
-        {
-          "lines": [
-            2127,
-            2129
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "인코딩·디코딩의 최원거리 경계 수행(유니코드 샌드위치)",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            2130,
-            2136
-          ],
-          "kind": "code"
-        }
-      ]
-    },
-    {
-      "section_key": "s110-19.5",
-      "line_start": 2137,
-      "line_end": 2140,
-      "blocks": [
-        {
-          "lines": [
-            2138,
-            2140
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "for·while 뒤 else 사용 금지",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s111-19.6",
-      "line_start": 2141,
-      "line_end": 2164,
-      "blocks": [
-        {
-          "lines": [
-            2142,
-            2152
-          ],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "PEP 8 대상별 명명 스타일 표 준수",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "27종 전수 실독 — check-naming.py 는 dddjango 고유 축(#28 원전 패턴 약어·#30 자리표시자 접미·#41 폴더 패턴 낱말 등)이고 PEP 8 대소문자 관례를 무는 진단이 없음. §22.1 ruff select 에도 pep8-naming(\"N\")이 없음 — 기본값 유지의 문면 근거"
-            }
-          ],
-          "note": "표 머리행·구분행 포함 행 묶음 = 표 단위 1 규범(P0 방침 승계 — 행 단위 아님)"
-        },
-        {
-          "lines": [
-            2153,
-            2154
-          ],
-          "kind": "prose",
-          "note": "«밑줄 관례:» 라벨 행"
-        },
-        {
-          "lines": [
-            2155,
-            2162
-          ],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "밑줄 접두·접미 관례 표 준수",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "동상 — 27종 전수 실독 결과 밑줄 관례를 무는 검사기 없음(check-naming #30·#481 은 트리 폴더·파일 stem 축)"
-            }
-          ],
-          "note": "표 단위 1 규범"
-        },
-        {
-          "lines": [
-            2163,
-            2164
-          ],
-          "kind": "prose",
-          "note": "수평선 `---`"
-        }
-      ]
-    },
-    {
-      "section_key": "s112-20",
-      "line_start": 2165,
-      "line_end": 2168,
-      "blocks": [
-        {
-          "lines": [
-            2166,
-            2168
-          ],
-          "kind": "norm",
-          "restates": [
-            "implementation-python-final/s001/b1"
-          ],
-          "note": "cleancode 위임 재진술 — 정본은 같은 문서 s001/b1(서문 blockquote). §15 «정본 1곳만 Work 승격 + 사본 블록에 djr:restates»"
-        }
-      ]
-    },
-    {
-      "section_key": "s116-21",
-      "line_start": 2232,
-      "line_end": 2237,
-      "blocks": [
-        {
-          "lines": [
-            2233,
-            2235
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "구조 패턴 선택 기준의 architecture-ddd(§5·§6) 소유",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-ddd"
-              ],
-              "basis": "문면이 architecture-ddd §5·§6 을 소유자로 직접 지목 — 문서군 기본값 표의 architecture-ddd(설계 시점)→design-review-ddd 적용(기본값 이탈의 문면 근거)"
-            },
-            {
-              "label": "Django ORM 환경 적용의 implementation-django(§16) 담당",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "문면이 implementation-django §16 을 직접 지목 — 그 문서군 기본값도 discipline-reviewer(§16 표)"
-            },
-            {
-              "label": "본 문서 범위의 Python 경계 도구 한정",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            2236,
-            2237
-          ],
-          "kind": "prose",
-          "note": "수평선 `---`"
-        }
-      ]
-    },
-    {
-      "section_key": "s118-22.1",
-      "line_start": 2244,
-      "line_end": 2282,
-      "blocks": [
-        {
-          "lines": [
-            2245,
-            2282
-          ],
-          "kind": "code",
-          "norms": [
-            {
-              "label": "권장 pyproject.toml(ruff) 설정 준수",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 (ruff 설정 축을 무는 검사기 없음 — 문서 전체 check-*.py 언급 0건, P0 E03 §7)"
-            }
-          ],
-          "note": "예제가 아니라 구속 설정 블록 = 규범 1단위(P0 방침 승계) — 운반체가 code 라 kind=code 에 norms 부착"
-        }
-      ]
-    },
-    {
-      "section_key": "s121-23.1",
-      "line_start": 2330,
-      "line_end": 2354,
-      "blocks": [
-        {
-          "lines": [
-            2331,
-            2354
-          ],
-          "kind": "code",
-          "norms": [
-            {
-              "label": "mypy strict 모드 설정 준수",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ],
-          "note": "설정 블록 = 규범 1단위(P0 승계) · 절 선두 구분자(2331)를 첫 블록 선두 스팬에 귀속"
-        }
-      ]
-    },
-    {
-      "section_key": "s122-23.2",
-      "line_start": 2355,
-      "line_end": 2367,
-      "blocks": [
-        {
-          "lines": [
-            2356,
-            2367
-          ],
-          "kind": "code",
-          "norms": [
-            {
-              "label": "pyright strict 모드 설정 준수",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ],
-          "note": "설정 블록 = 규범 1단위(P0 승계) · 절 선두 구분자(2356) 귀속"
-        }
-      ]
-    },
-    {
-      "section_key": "s124-24",
-      "line_start": 2420,
-      "line_end": 2425,
-      "blocks": [
-        {
-          "lines": [
-            2421,
-            2423
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "테스트·디버깅의 implementation-test 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "문면이 implementation-test 를 소유자로 직접 지목 — 그 문서군 기본값도 discipline-reviewer(§16 표)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            2424,
-            2425
-          ],
-          "kind": "prose",
-          "note": "수평선 `---`"
-        }
-      ]
-    },
-    {
-      "section_key": "s126-25.1",
-      "line_start": 2428,
-      "line_end": 2441,
-      "blocks": [
-        {
-          "lines": [
-            2429,
-            2431
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "print 디버깅 시 repr 호출",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            2432,
-            2441
-          ],
-          "kind": "code"
-        }
-      ]
-    },
-    {
-      "section_key": "s129-26.1",
-      "line_start": 2469,
-      "line_end": 2493,
-      "blocks": [
-        {
-          "lines": [
-            2470,
-            2485
-          ],
-          "kind": "code",
-          "note": "절 선두 구분자(2470)를 첫 블록 선두 스팬에 귀속(§13 명문 예외)"
-        },
-        {
-          "lines": [
-            2486,
-            2486
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "모듈 독스트링 형식 — 첫 줄 목적 + 공개 함수·클래스 목록",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            2487,
-            2487
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "클래스 독스트링 형식 — 목적 + 중요 공개 애트리뷰트·메서드",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            2488,
-            2488
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "함수 독스트링 형식 — 목적 + Args + Returns + Raises",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            2489,
-            2489
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "스크립트 독스트링 형식 — 사용법 메시지(명령행 구문·환경 변수·입출력 파일)",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            }
-          ]
-        },
-        {
-          "lines": [
-            2490,
-            2491
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "어노테이션과 중복된 독스트링 타입 서술 삭제",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
-            },
-            {
-              "label": "타입 어노테이션 상시 유지(houserules «모든 이름 첫 대입에 타입»)",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-public-surface-annotation.py"
-              ],
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면이 houserules «모든 이름 첫 대입에 타입» 을 직접 인용 ②check-public-surface-annotation.py docstring «#493 모든 이름은 «첫 대입»에 타입을 적는다 — 시그니처·속성·지역 변수에 예외가 없다» ③P0 E03 §7 «check-public-surface-annotation.py(§1/§26 어노테이션 규율, #493)가 해당 규칙을 지목» ④문법 없는 여덟 자리·선언적 클래스 본문 면제는 의미 레인 → reviewer 병기"
-            }
-          ]
-        },
-        {
-          "lines": [
-            2492,
-            2493
-          ],
-          "kind": "prose",
-          "note": "수평선 `---`"
-        }
-      ]
+     "lines": [
+      8,
+      9
+     ],
+     "kind": "prose",
+     "note": "수평선 `---` + 절 말미 빈 줄"
     }
-  ]
+   ]
+  },
+  {
+   "section_key": "s004-1.2",
+   "line_start": 32,
+   "line_end": 55,
+   "blocks": [
+    {
+     "lines": [
+      33,
+      35
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "Optional 타입으로 None 가능성 명시",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      36,
+      52
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      53,
+      53
+     ],
+     "kind": "prose",
+     "note": "`Optional[X]`≡`Union[X,None]`·3.10+ `X | None` — 사실 서술(P0 계수 비산입)"
+    },
+    {
+     "lines": [
+      54,
+      55
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "mypy --strict-optional 로 None 처리 강제",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 (mypy 설정 축을 무는 검사기 없음 — check-test-config 관할은 3슬라이스 ⑴pytest↔settings 바인딩 ⑵`test/` 구조(#383~#392) ⑶`<project>/settings/` 환경축(#445~#447)이고 `[tool.mypy]`·`[tool.ruff]`·pyrightconfig.json 은 비관할)"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s005-1.3",
+   "line_start": 56,
+   "line_end": 82,
+   "blocks": [
+    {
+     "lines": [
+      57,
+      59
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "합 타입으로 비정상 상태 배제",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      60,
+      82
+     ],
+     "kind": "code"
+    }
+   ]
+  },
+  {
+   "section_key": "s007-1.5",
+   "line_start": 103,
+   "line_end": 121,
+   "blocks": [
+    {
+     "lines": [
+      104,
+      106
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "이종 데이터 딕셔너리의 TypedDict 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      107,
+      121
+     ],
+     "kind": "code"
+    }
+   ]
+  },
+  {
+   "section_key": "s013-1.11",
+   "line_start": 277,
+   "line_end": 305,
+   "blocks": [
+    {
+     "lines": [
+      278,
+      280
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "Concatenate 용처 — 데코레이터의 매개변수 추가·제거",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [애매→포함(P0 승계) — 서술문이나 용처 지정이라 규범 채택]"
+      }
+     ]
+    },
+    {
+     "lines": [
+      281,
+      305
+     ],
+     "kind": "code"
+    }
+   ]
+  },
+  {
+   "section_key": "s014-1.12",
+   "line_start": 306,
+   "line_end": 331,
+   "blocks": [
+    {
+     "lines": [
+      307,
+      309
+     ],
+     "kind": "prose",
+     "note": "TypeIs↔TypeGuard 기능 차이 서술 — 규범 동사 없음"
+    },
+    {
+     "lines": [
+      310,
+      329
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      330,
+      331
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "대부분의 경우 TypeIs 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      },
+      {
+       "label": "TypeGuard 는 입력·출력 타입 비호환 특수 경우 한정",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [L-E 준거: 조건 한정 → Exception]"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s025-3.3",
+   "line_start": 515,
+   "line_end": 529,
+   "blocks": [
+    {
+     "lines": [
+      516,
+      518
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "키별 디폴트는 dict 상속 + __missing__ 구현",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      519,
+      529
+     ],
+     "kind": "code"
+    }
+   ]
+  },
+  {
+   "section_key": "s032-4.4",
+   "line_start": 622,
+   "line_end": 642,
+   "blocks": [
+    {
+     "lines": [
+      623,
+      625
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "OHS 계약·승인된 failed-Result 경로의 결과 분기(raise 아님)",
+       "class": "Exception",
+       "enforcedBy": [
+        "check-context-isolation.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면이 전역규칙 #453·#454 를 직접 인용 ②check-context-isolation.py docstring OHS 절 «#453/#454 «없다»는 답» 실재 — 기본값 도피 금지(§16 역도) ④«승인된» 경로 판정·OHS 밖 일반 API 경계는 의미 레인이라 reviewer 병기"
+      }
+     ]
+    },
+    {
+     "lines": [
+      626,
+      642
+     ],
+     "kind": "code"
+    }
+   ]
+  },
+  {
+   "section_key": "s035-5.1",
+   "line_start": 666,
+   "line_end": 688,
+   "blocks": [
+    {
+     "lines": [
+      667,
+      669
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "데코레이터 메타데이터의 @wraps 보존",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      670,
+      688
+     ],
+     "kind": "code"
+    }
+   ]
+  },
+  {
+   "section_key": "s037-5.3",
+   "line_start": 726,
+   "line_end": 744,
+   "blocks": [
+    {
+     "lines": [
+      727,
+      729
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "메타클래스보다 클래스 데코레이터 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      730,
+      742
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      743,
+      744
+     ],
+     "kind": "prose",
+     "note": "수평선 `---`"
+    }
+   ]
+  },
+  {
+   "section_key": "s039-6.1",
+   "line_start": 747,
+   "line_end": 750,
+   "blocks": [
+    {
+     "lines": [
+      748,
+      750
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "재사용 애트리뷰트 로직의 디스크립터 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [애매→포함(P0 승계) — 정의 서술에 용처 지정이 붙음]"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s040-6.2",
+   "line_start": 751,
+   "line_end": 825,
+   "blocks": [
+    {
+     "lines": [
+      752,
+      755
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "의사결정 #5 — 공식 Descriptor HowTo Guide 패턴 기본 채택",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      756,
+      821
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      822,
+      823
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "__set_name__(3.6+) 이후 instance.__dict__ 직접 저장 권장(WeakKeyDictionary 레거시)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [b1 의사결정 #5 와 요지 중복 — 축자 사본이 아니라 조건부 레거시 대비 권장문이라 별도 Work(P0 계수 2 승계)]"
+      }
+     ]
+    },
+    {
+     "lines": [
+      824,
+      825
+     ],
+     "kind": "prose",
+     "note": "수평선 `---`"
+    }
+   ]
+  },
+  {
+   "section_key": "s042-7.1",
+   "line_start": 828,
+   "line_end": 857,
+   "blocks": [
+    {
+     "lines": [
+      829,
+      831
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "평범한 공개 애트리뷰트 시작·필요 시 @property 전환",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      832,
+      857
+     ],
+     "kind": "code"
+    }
+   ]
+  },
+  {
+   "section_key": "s045-8.1",
+   "line_start": 882,
+   "line_end": 898,
+   "blocks": [
+    {
+     "lines": [
+      883,
+      885
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "상태 유지 훅은 클로저 대신 __call__ 클래스",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      886,
+      898
+     ],
+     "kind": "code"
+    }
+   ]
+  },
+  {
+   "section_key": "s046-8.2",
+   "line_start": 899,
+   "line_end": 918,
+   "blocks": [
+    {
+     "lines": [
+      900,
+      902
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "대체 생성자의 @classmethod 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      903,
+      918
+     ],
+     "kind": "code"
+    }
+   ]
+  },
+  {
+   "section_key": "s048-8.4",
+   "line_start": 935,
+   "line_end": 956,
+   "blocks": [
+    {
+     "lines": [
+      936,
+      938
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "모든 클래스의 최소 __repr__ 구현",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      939,
+      956
+     ],
+     "kind": "code"
+    }
+   ]
+  },
+  {
+   "section_key": "s049-8.5",
+   "line_start": 957,
+   "line_end": 974,
+   "blocks": [
+    {
+     "lines": [
+      958,
+      970
+     ],
+     "kind": "code",
+     "note": "절 선두 구분자(958)를 첫 블록 선두 스팬에 귀속(§13 명문 예외)"
+    },
+    {
+     "lines": [
+      971,
+      971
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "__var 는 하위 클래스 필드명 충돌 방지 한정",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [L-E 준거: 용도 한정 → Exception]"
+      }
+     ]
+    },
+    {
+     "lines": [
+      972,
+      974
+     ],
+     "kind": "prose",
+     "note": "_var 관례 서술 + 파이썬 모토 인용 — 규범 없는 연속 불릿 묶음"
+    }
+   ]
+  },
+  {
+   "section_key": "s050-8.6",
+   "line_start": 975,
+   "line_end": 994,
+   "blocks": [
+    {
+     "lines": [
+      976,
+      978
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "메타클래스 대신 __init_subclass__ 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      979,
+      994
+     ],
+     "kind": "code"
+    }
+   ]
+  },
+  {
+   "section_key": "s053-8.9",
+   "line_start": 1047,
+   "line_end": 1065,
+   "blocks": [
+    {
+     "lines": [
+      1048,
+      1050
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "커스텀 컨테이너의 collections.abc 상속",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [애매→포함(P0 승계) — 효과 서술이나 조건부 지시로 채택]"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1051,
+      1063
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      1064,
+      1065
+     ],
+     "kind": "prose",
+     "note": "수평선 `---`"
+    }
+   ]
+  },
+  {
+   "section_key": "s061-10.1",
+   "line_start": 1182,
+   "line_end": 1214,
+   "blocks": [
+    {
+     "lines": [
+      1183,
+      1206
+     ],
+     "kind": "code",
+     "note": "절 선두 구분자(1183)를 첫 블록 선두 스팬에 귀속(§13 명문 예외)"
+    },
+    {
+     "lines": [
+      1207,
+      1207
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "의미 있는 유한 상태의 Enum·StrEnum 표현",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "승격(미승격) 축은 check-choices-literal-consumption.py docstring 이 «보지 않는 것 — 닫힌 집합의 미승격(의미 레인 = discipline-reviewer 몫)» 으로 명시 배제 — 기본값 유지의 문면 근거"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1208,
+      1208
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "직렬화 문자열 + target 3.11+ 의 StrEnum 우선",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1209,
+      1209
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "StrEnum 불가 제약 시 str, Enum 조합",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [L-E 준거: 제약 조건부 대안 → Exception]"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1210,
+      1210
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "작고 지역적인 분기 표현의 Literal 허용(의미·동작 결합 시 Enum·StrEnum)",
+       "class": "Permission",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [L-E 준거: 조건부 허용 → Permission. 판정 소유는 같은 절 1213 분업 항]"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1211,
+      1211
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "승격 판정·리터럴 허용 목록·소비 규율의 discipline-cleancode §2.14 소유 지정",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "문면이 discipline-cleancode §2.14 를 소유자로 직접 지목 — 그 문서군 기본값도 discipline-reviewer(§16 표)"
+      },
+      {
+       "label": "닫힌 집합의 1곳째부터 집합 단위 타입 승격(낱개 모듈 상수 나열 금지)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "check-choices-literal-consumption.py docstring 이 «닫힌 집합의 미승격»을 명시 비대상으로 선언 — 검사기 비커버, 기본값 유지"
+      },
+      {
+       "label": "선언된 값의 비교·분기·대입은 심볼로만",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-choices-literal-consumption.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면이 cleancode §2.14 소비 규율 요지를 재진술 ②check-choices-literal-consumption.py docstring «선언된 choices 값의 리터럴 소비 결정적 백스톱(cleancode §2.14 소비 규율)» — 직접형 (a)default 리터럴·(b)filter/exclude 리터럴 한정 ④변수 우회·간접 queryset·비교식은 docstring 이 의미 레인으로 넘김 → reviewer 병기"
+      },
+      {
+       "label": "Enum 값 비교의 == 사용(is 금지)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "check-choices-literal-consumption.py docstring «보지 않는 것 — 비교식(x.status == \"…\")» 명시 배제 — 검사기 비커버, 기본값 유지"
+      }
+     ],
+     "restates": [
+      "discipline-cleancode-final/s026-2.14/b3",
+      "discipline-cleancode-final/s026-2.14/b13"
+     ]
+    },
+    {
+     "lines": [
+      1212,
+      1212
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "파생 분류 집합 지식의 enum 소유",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      },
+      {
+       "label": "파생 집합 실현 — 프로퍼티 1순위·같은 모듈 frozenset(원소는 심볼)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      },
+      {
+       "label": "소비처 모듈의 임의 frozenset 재정의 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1213,
+      1214
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "도메인 개념 값 집합(상태·종류)의 Enum 귀속",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      },
+      {
+       "label": "외부 API 값 의존 계약의 Literal 귀속",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      },
+      {
+       "label": "Literal 로 잠긴 인자 자리의 리터럴 허용",
+       "class": "Permission",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [L-E 준거: 타입 체커 검증을 조건으로 한 허용]"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s063-10.3",
+   "line_start": 1231,
+   "line_end": 1253,
+   "blocks": [
+    {
+     "lines": [
+      1232,
+      1234
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "의사결정 #7 — dataclass(slots=True) 권장",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1235,
+      1251
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      1252,
+      1253
+     ],
+     "kind": "prose",
+     "note": "slots=True 의 다중 상속 충돌 주의 — 설명(P0 계수 비산입)"
+    }
+   ]
+  },
+  {
+   "section_key": "s070-11.1",
+   "line_start": 1357,
+   "line_end": 1425,
+   "blocks": [
+    {
+     "lines": [
+      1358,
+      1418
+     ],
+     "kind": "code",
+     "note": "절 선두 구분자(1358)를 첫 블록 선두 스팬에 귀속(§13 명문 예외)"
+    },
+    {
+     "lines": [
+      1419,
+      1419
+     ],
+     "kind": "prose",
+     "note": "«**핵심 규칙**:» 라벨 행"
+    },
+    {
+     "lines": [
+      1420,
+      1420
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "연산자 미지원 시 NotImplemented 반환(raise 금지)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1421,
+      1421
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "__eq__ 정의 시 해시 가능 객체의 __hash__ 동반 정의",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1422,
+      1423
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "@ 연산자의 __matmul__·__rmatmul__·__imatmul__ 구현",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1424,
+      1425
+     ],
+     "kind": "prose",
+     "note": "수평선 `---`"
+    }
+   ]
+  },
+  {
+   "section_key": "s071-12",
+   "line_start": 1426,
+   "line_end": 1431,
+   "blocks": [
+    {
+     "lines": [
+      1427,
+      1431
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "의사결정 #1 — pydantic v2 API 사용(v1 지원 중단)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s072-12.0",
+   "line_start": 1432,
+   "line_end": 1443,
+   "blocks": [
+    {
+     "lines": [
+      1433,
+      1435
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "pydantic v2 의 외부 입력·런타임 검증 경계 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1436,
+      1437
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "도메인 모델 기본 표현의 pydantic 고정 금지",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-domain-model.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-domain-model.py docstring «#8 [ast] domain_layer 의 밖으로 나가는 import 0 — django·다른 층·다른 BC·서드파티» — domain_layer 안의 pydantic(서드파티) 고정은 결정적으로 차단됨. domain_layer 밖 자리의 «기본 표현» 판정은 의미 레인 → reviewer 병기"
+      },
+      {
+       "label": "durable domain invariant 의 규칙 소유 경계 배치",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-domain-model.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-domain-model.py docstring 이 값 객체·엔티티·애그리거트·도메인 서비스의 자리와 «#8 밖으로 나가는 import 0»를 소유 — domain_layer «안»의 자리·격리 축 한정 결정 백스톱(#8·#249~#315). invariant 가 domain 밖(pydantic validator·adapter·application service)에 안착하는 양태와 무엇이 durable invariant 인가의 판정은 검사 공백 — reviewer 병기 몫"
+      },
+      {
+       "label": "pydantic validator 의 도메인 규칙 소유 금지(boundary validation·parsing 한정)",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [ddd 파일럿 L-F 준거: 판정 대행·복제의 의미 동등성은 정적 검사 밖 — reviewer 단독]"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1438,
+      1438
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "BaseModel 의 외부 DTO·config·런타임 boundary 우선 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1439,
+      1439
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "기표현 내부 domain object 의 pydantic 중복 domain model 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1440,
+      1440
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "validation error 의 adapter·API·config 계층 변환",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      },
+      {
+       "label": "raw pydantic error shape 의 도메인 규칙 편입 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1441,
+      1441
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "coercion 은닉 시 strict mode 활성화",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      },
+      {
+       "label": "외부 계약상 의도한 coercion 필드의 field-level 허용",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [L-E 준거: «단,» 한정 조항 → Exception]"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1442,
+      1443
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "Ninja Schema 소유 경계의 별도 pydantic DTO 추가 전 implementation-django-ninja 기준 충돌 확인",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "문면이 implementation-django-ninja 기준을 직접 지목 — 그 문서군 기본값도 discipline-reviewer(§16 표) 라 기본값과 일치"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s081-13.5",
+   "line_start": 1611,
+   "line_end": 1614,
+   "blocks": [
+    {
+     "lines": [
+      1612,
+      1614
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "send·throw 대신 이터레이터 입력 또는 상태 클래스 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [금지는 헤딩이 지고 본문은 대안 지시 1 — P0 계수 승계]"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s089-15.2",
+   "line_start": 1731,
+   "line_end": 1749,
+   "blocks": [
+    {
+     "lines": [
+      1732,
+      1734
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "API 모듈 최상위 Exception 정의와 모듈 예외 상속",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "27종 전수 실독 — 문면은 «API 모듈» 일반을 말하고 dddjango OHS 자리를 지목하지 않음. 유사 축인 check-context-isolation.py #166·#167·#168(기저 예외·상속·1클래스=1모듈)은 OHS contract/exception 한정이라 문면 근거 없이 배선하면 오배선 — 기본값 유지"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1735,
+      1749
+     ],
+     "kind": "code"
+    }
+   ]
+  },
+  {
+   "section_key": "s090-15.3",
+   "line_start": 1750,
+   "line_end": 1791,
+   "blocks": [
+    {
+     "lines": [
+      1751,
+      1753
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "의사결정 #4 — Python 3.13+ 의 @deprecated 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1754,
+      1785
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      1786,
+      1787
+     ],
+     "kind": "prose",
+     "note": "__deprecated__ 속성 자동 추가 — 설명(P0 계수 비산입)"
+    },
+    {
+     "lines": [
+      1788,
+      1789
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "3.13 미만의 warnings.warn(DeprecationWarning) 대체",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [L-E 준거: 버전 조건부 대안 → Exception]"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1790,
+      1791
+     ],
+     "kind": "prose",
+     "note": "수평선 `---`"
+    }
+   ]
+  },
+  {
+   "section_key": "s092-16.1",
+   "line_start": 1794,
+   "line_end": 1816,
+   "blocks": [
+    {
+     "lines": [
+      1795,
+      1796
+     ],
+     "kind": "prose",
+     "note": "GIL 사실 서술 — 규범 동사 없음(P0 계수 비산입)"
+    },
+    {
+     "lines": [
+      1797,
+      1797
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "블로킹 I/O 한정 스레드 사용",
+       "class": "Permission",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 [L-E 준거: 사용 조건 한정 → Permission]"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1798,
+      1799
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "CPU 병렬화의 multiprocessing·C 확장 기본",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1800,
+      1816
+     ],
+     "kind": "code"
+    }
+   ]
+  },
+  {
+   "section_key": "s093-16.2",
+   "line_start": 1817,
+   "line_end": 1858,
+   "blocks": [
+    {
+     "lines": [
+      1818,
+      1820
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "의사결정 #3 — 3.11+ asyncio.TaskGroup 기본 패턴",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1821,
+      1856
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      1857,
+      1858
+     ],
+     "kind": "prose",
+     "note": "레거시 asyncio.gather 참고 — 설명(P0 계수 비산입)"
+    }
+   ]
+  },
+  {
+   "section_key": "s094-16.3",
+   "line_start": 1859,
+   "line_end": 1892,
+   "blocks": [
+    {
+     "lines": [
+      1860,
+      1862
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "의사결정 #2 — 3.13+ Free-threading 반영",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1863,
+      1864
+     ],
+     "kind": "prose",
+     "note": "Free-threading 기능 서술"
+    },
+    {
+     "lines": [
+      1865,
+      1886
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      1887,
+      1892
+     ],
+     "kind": "prose",
+     "note": "«현재 상태 (3.13)» 라벨 + 사실 목록 — 규범 없는 연속 불릿 묶음"
+    }
+   ]
+  },
+  {
+   "section_key": "s098-17",
+   "line_start": 1931,
+   "line_end": 1936,
+   "blocks": [
+    {
+     "lines": [
+      1932,
+      1936
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "의사결정 #6 — 3단계 프로파일링 체계 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s109-19.4",
+   "line_start": 2126,
+   "line_end": 2136,
+   "blocks": [
+    {
+     "lines": [
+      2127,
+      2129
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "인코딩·디코딩의 최원거리 경계 수행(유니코드 샌드위치)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      2130,
+      2136
+     ],
+     "kind": "code"
+    }
+   ]
+  },
+  {
+   "section_key": "s110-19.5",
+   "line_start": 2137,
+   "line_end": 2140,
+   "blocks": [
+    {
+     "lines": [
+      2138,
+      2140
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "for·while 뒤 else 사용 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s111-19.6",
+   "line_start": 2141,
+   "line_end": 2164,
+   "blocks": [
+    {
+     "lines": [
+      2142,
+      2152
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "PEP 8 대상별 명명 스타일 표 준수",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "27종 전수 실독 — check-naming.py 는 dddjango 고유 축(#28 원전 패턴 약어·#30 자리표시자 접미·#41 폴더 패턴 낱말 등)이고 PEP 8 대소문자 관례를 무는 진단이 없음. §22.1 ruff select 에도 pep8-naming(\"N\")이 없음 — 기본값 유지의 문면 근거"
+      }
+     ],
+     "note": "표 머리행·구분행 포함 행 묶음 = 표 단위 1 규범(P0 방침 승계 — 행 단위 아님)"
+    },
+    {
+     "lines": [
+      2153,
+      2154
+     ],
+     "kind": "prose",
+     "note": "«밑줄 관례:» 라벨 행"
+    },
+    {
+     "lines": [
+      2155,
+      2162
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "밑줄 접두·접미 관례 표 준수",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 27종 전수 실독 결과 밑줄 관례를 무는 검사기 없음(check-naming #30·#481 은 트리 폴더·파일 stem 축)"
+      }
+     ],
+     "note": "표 단위 1 규범"
+    },
+    {
+     "lines": [
+      2163,
+      2164
+     ],
+     "kind": "prose",
+     "note": "수평선 `---`"
+    }
+   ]
+  },
+  {
+   "section_key": "s112-20",
+   "line_start": 2165,
+   "line_end": 2168,
+   "blocks": [
+    {
+     "lines": [
+      2166,
+      2168
+     ],
+     "kind": "norm",
+     "restates": [
+      "implementation-python-final/s001/b1"
+     ],
+     "note": "cleancode 위임 재진술 — 정본은 같은 문서 s001/b1(서문 blockquote). §15 «정본 1곳만 Work 승격 + 사본 블록에 djr:restates»"
+    }
+   ]
+  },
+  {
+   "section_key": "s116-21",
+   "line_start": 2232,
+   "line_end": 2237,
+   "blocks": [
+    {
+     "lines": [
+      2233,
+      2235
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "구조 패턴 선택 기준의 architecture-ddd(§5·§6) 소유",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-ddd"
+       ],
+       "basis": "문면이 architecture-ddd §5·§6 을 소유자로 직접 지목 — 문서군 기본값 표의 architecture-ddd(설계 시점)→design-review-ddd 적용(기본값 이탈의 문면 근거)"
+      },
+      {
+       "label": "Django ORM 환경 적용의 implementation-django(§16) 담당",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "문면이 implementation-django §16 을 직접 지목 — 그 문서군 기본값도 discipline-reviewer(§16 표)"
+      },
+      {
+       "label": "본 문서 범위의 Python 경계 도구 한정",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      2236,
+      2237
+     ],
+     "kind": "prose",
+     "note": "수평선 `---`"
+    }
+   ]
+  },
+  {
+   "section_key": "s118-22.1",
+   "line_start": 2244,
+   "line_end": 2282,
+   "blocks": [
+    {
+     "lines": [
+      2245,
+      2282
+     ],
+     "kind": "code",
+     "norms": [
+      {
+       "label": "권장 pyproject.toml(ruff) 설정 준수",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재 (ruff 설정 축을 무는 검사기 없음 — 문서 전체 check-*.py 언급 0건, P0 E03 §7)"
+      }
+     ],
+     "note": "예제가 아니라 구속 설정 블록 = 규범 1단위(P0 방침 승계) — 운반체가 code 라 kind=code 에 norms 부착"
+    }
+   ]
+  },
+  {
+   "section_key": "s121-23.1",
+   "line_start": 2330,
+   "line_end": 2354,
+   "blocks": [
+    {
+     "lines": [
+      2331,
+      2354
+     ],
+     "kind": "code",
+     "norms": [
+      {
+       "label": "mypy strict 모드 설정 준수",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ],
+     "note": "설정 블록 = 규범 1단위(P0 승계) · 절 선두 구분자(2331)를 첫 블록 선두 스팬에 귀속"
+    }
+   ]
+  },
+  {
+   "section_key": "s122-23.2",
+   "line_start": 2355,
+   "line_end": 2367,
+   "blocks": [
+    {
+     "lines": [
+      2356,
+      2367
+     ],
+     "kind": "code",
+     "norms": [
+      {
+       "label": "pyright strict 모드 설정 준수",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ],
+     "note": "설정 블록 = 규범 1단위(P0 승계) · 절 선두 구분자(2356) 귀속"
+    }
+   ]
+  },
+  {
+   "section_key": "s124-24",
+   "line_start": 2420,
+   "line_end": 2425,
+   "blocks": [
+    {
+     "lines": [
+      2421,
+      2423
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "테스트·디버깅의 implementation-test 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "문면이 implementation-test 를 소유자로 직접 지목 — 그 문서군 기본값도 discipline-reviewer(§16 표)"
+      }
+     ]
+    },
+    {
+     "lines": [
+      2424,
+      2425
+     ],
+     "kind": "prose",
+     "note": "수평선 `---`"
+    }
+   ]
+  },
+  {
+   "section_key": "s126-25.1",
+   "line_start": 2428,
+   "line_end": 2441,
+   "blocks": [
+    {
+     "lines": [
+      2429,
+      2431
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "print 디버깅 시 repr 호출",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      2432,
+      2441
+     ],
+     "kind": "code"
+    }
+   ]
+  },
+  {
+   "section_key": "s129-26.1",
+   "line_start": 2469,
+   "line_end": 2493,
+   "blocks": [
+    {
+     "lines": [
+      2470,
+      2485
+     ],
+     "kind": "code",
+     "note": "절 선두 구분자(2470)를 첫 블록 선두 스팬에 귀속(§13 명문 예외)"
+    },
+    {
+     "lines": [
+      2486,
+      2486
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "모듈 독스트링 형식 — 첫 줄 목적 + 공개 함수·클래스 목록",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      2487,
+      2487
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "클래스 독스트링 형식 — 목적 + 중요 공개 애트리뷰트·메서드",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      2488,
+      2488
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "함수 독스트링 형식 — 목적 + Args + Returns + Raises",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      2489,
+      2489
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "스크립트 독스트링 형식 — 사용법 메시지(명령행 구문·환경 변수·입출력 파일)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      }
+     ]
+    },
+    {
+     "lines": [
+      2490,
+      2491
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "어노테이션과 중복된 독스트링 타입 서술 삭제",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "4원 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer). check-*.py 27종 로스터 전수 실독 결과 담당 검사기 부재"
+      },
+      {
+       "label": "타입 어노테이션 상시 유지(houserules «모든 이름 첫 대입에 타입»)",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-public-surface-annotation.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면이 houserules «모든 이름 첫 대입에 타입» 을 직접 인용 ②check-public-surface-annotation.py docstring «#493 모든 이름은 «첫 대입»에 타입을 적는다 — 시그니처·속성·지역 변수에 예외가 없다» ③P0 E03 §7 «check-public-surface-annotation.py(§1/§26 어노테이션 규율, #493)가 해당 규칙을 지목» ④문법 없는 여덟 자리·선언적 클래스 본문 면제는 의미 레인 → reviewer 병기"
+      }
+     ],
+     "restates": [
+      "discipline-houserules-skill/s007-4/b1"
+     ]
+    },
+    {
+     "lines": [
+      2492,
+      2493
+     ],
+     "kind": "prose",
+     "note": "수평선 `---`"
+    }
+   ]
+  }
+ ]
 }

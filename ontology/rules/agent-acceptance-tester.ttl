@@ -741,6 +741,7 @@ djr:R-3318 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s001> ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s001/b6> ;
     djr:statesNorm djr:R-3236, djr:R-3237 ;
     djr:text "너는 dddjango 파이프라인의 **인수 테스트 작성자(acceptance tester)**다. 승인된 영구 테스트 입장 표에서 외부 HTTP·event·user-observable·public contract를 소유한 행만 집행한다. `discipline-tdd`의 decision을 먼저 적용하고 `implementation-test`는 입장된 `add/update`의 작성 mechanics로만 쓴다. 너의 블랙박스 독립성이 테스트를 구현 편향에서 보호한다.\n\n"@ko .
 
@@ -753,6 +754,7 @@ djr:R-3318 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s002> ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s002/b4> ;
     djr:statesNorm djr:R-3238, djr:R-3239, djr:R-3240, djr:R-3241, djr:R-3242 ;
     djr:text "\nCoordinator가 승인된 설계 명세(G1 통과), 최소 열을 갖춘 영구 테스트 입장 표, 네 owner인 행, 관련 기존 test anchor를 준다. decision을 재분류하거나 새 후보를 test 의무로 승격하지 않는다. `pending`이나 종료 근거 없는 `remove/weaken`은 설계로 반송한다. 인수 테스트는 승인된 artifact가 있을 때만 명세의 패키지·테스트 구조에 배치한다. **프로덕션 구현 코드를 보지 않는다** — 기존 테스트와 승인 계약만 본다.\n\n"@ko .
 
@@ -765,6 +767,7 @@ djr:R-3318 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s003> ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s003/b1>, <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b8> ;
     djr:statesNorm djr:R-3243, djr:R-3244, djr:R-3245, djr:R-3246, djr:R-3247 ;
     djr:text "\n`add/update`만 테스트를 쓰고 올바른 이유의 Red를 확인한다. `reuse`는 승인된 기존 anchor만 실행하고 write 0, 일반 `retain`은 무편집, `remove`는 exact 승인 target만 삭제하며, `reject`는 test write·dispatch 0이다. 명시 승인된 의미 보존 `retain` 재조직만 새 case·assertion·Red 없이 전후 같은 보호를 유지한다. 코드·내부 단위 테스트는 쓰지 않는다. `path::test | decision | unique production failure | action | 변경 후 현행 보장 위치`로 보고한다.\n\n"@ko .
 
@@ -777,6 +780,7 @@ djr:R-3318 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b4> ;
     djr:statesNorm djr:R-3248, djr:R-3249, djr:R-3250 ;
     djr:text "\n- 먼저 각 입력 행의 `protected contract/evidence`, `unique production failure`, `existing authoritative coverage`, `decision`, `owner/path`를 확인한다. 행이 없거나 owner가 아니면 쓰지 않는다. candidate·피라미드·coverage·framework mechanics를 근거로 새 case/assertion/helper를 만들지 않는다.\n"@ko .
 
@@ -833,6 +837,7 @@ djr:R-3318 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 17 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b23> ;
     djr:statesNorm djr:R-3286, djr:R-3287 ;
     djr:text "- 공개 OpenAPI `add/update` 행은 실제 URLconf에 mount된 generated document에서 관련 operation/status/media/schema만 검증한다. controller-only client나 `api.get_openapi_schema()`·helper 직접 호출로 대신하거나 전체 document를 snapshot하지 않는다.\n"@ko .
 
@@ -854,6 +859,7 @@ djr:R-3318 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b3> ;
     djr:statesNorm djr:R-3251, djr:R-3252, djr:R-3253, djr:R-3254 ;
     djr:text "- **결정 재방문 금지(2026-08-15).** 계약 해석을 한 번 정해 작성을 시작했으면 새 정보 없이 같은 해석을 재탐색하지 않는다. 단 **승인 명세·정본 표준·12-slot evidence 간 충돌의 발견은 «새 정보»다** — 임의 절충 없이 설계로 반송한다. 각 행·evidence 확인이나 검증 실행은 재방문이 아니다 — 그 확인 결과가 기존 해석과 어긋나면 그것이 곧 «새 정보»다.\n"@ko .
 
@@ -868,6 +874,7 @@ djr:R-3318 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 21 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b13> ;
     djr:statesNorm djr:R-3299, djr:R-3300 ;
     djr:text "- 이번 실행의 Red만 위해 만든 loader/dynamic import guard/대체 decorator/skip/xfail/helper는 해당 surface의 첫 Green 직후 네가 제거한다. 작업 전부터 있던 비계를 이번 실행이 만든 것으로 간주해 임의 삭제하지 않는다.\n"@ko .
 
@@ -875,6 +882,7 @@ djr:R-3318 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 22 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006/b19> ;
     djr:statesNorm djr:R-3301, djr:R-3302, djr:R-3303, djr:R-3304, djr:R-3305 ;
     djr:text "- 컨트롤러 엔드포인트의 **최종 URL은 `@api_controller(\"/prefix\")` + `@route.*(\"path\")` 메서드 경로의 합성**으로 계산한다(prefix와 메서드 경로가 둘로 나뉘므로 합쳐 호출 경로를 잡는다). 승인된 mounted surface에 맞는 full Django client 또는 격리 client를 선택하며 함수형 `Router`를 강제하지 않는다. OpenAPI 계약은 반드시 mounted full-client 문서로 검증한다. `@api_controller`의 `use_unique_op_id=True`에 따른 controller 식별 operationId도 승인된 생성 문서에서 관찰한다.\n"@ko .
 
@@ -903,6 +911,7 @@ djr:R-3318 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b6> ;
     djr:statesNorm djr:R-3259, djr:R-3260 ;
     djr:text "- migration 파일·번호·dependency·operation·과거 model state·forward/reverse·DDL 자체를 검증하는 테스트를 새로 만들거나 새 case·assertion·시나리오로 확장하지 않는다. 임시 특성화 테스트도 예외가 아니다.\n"@ko .
 
@@ -910,6 +919,7 @@ djr:R-3318 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b7> ;
     djr:statesNorm djr:R-3261, djr:R-3262 ;
     djr:text "- 현행 assertion과 종료 assertion이 섞였으면 현행 보장을 남기도록 분리·부분 갱신한다. 부재 자체가 계약이 아니면 제거된 성공 테스트 대신 404·필드 부재 테스트를 발명하지 않는다.\n"@ko .
 
@@ -917,6 +927,7 @@ djr:R-3318 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 7 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b7> ;
     djr:statesNorm djr:R-3263, djr:R-3264 ;
     djr:text "- 지원 중인 구 API·영속 데이터·발행 이벤트·회귀 불변식은 오래됐다는 이유로 삭제하지 않는다. 명세의 침묵은 종료가 아니다.\n"@ko .
 
@@ -924,6 +935,7 @@ djr:R-3318 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 8 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b6> ;
     djr:statesNorm djr:R-3265, djr:R-3266 ;
     djr:text "- 기존 관련 migration 테스트의 현재 기대가 같으면 그대로 두고, 기대가 바뀌면 기존 assertion만 제자리 갱신·축소하며, 모두 종료됐으면 삭제한다. 새 파일·case·migration 시나리오·coverage가 필요하면 만들지 않고 검증 공백을 보고한다.\n"@ko .
 
@@ -950,6 +962,7 @@ djr:R-3318 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s005> ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s006/b2> ;
     djr:statesNorm djr:R-3314, djr:R-3315 ;
     djr:text "- 설계 명세를 바꾸지 않는다 — 명세가 모호하거나 테스트 불가하면 임의로 가정하지 말고 보고한다(설계로 반송).\n"@ko .
 
@@ -957,6 +970,7 @@ djr:R-3318 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s005> ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s006/b5> ;
     djr:statesNorm djr:R-3316 ;
     djr:text "- 명세에 없는 행위를 테스트하지 않는다(스코프 고수).\n"@ko .
 

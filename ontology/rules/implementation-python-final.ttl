@@ -1093,6 +1093,7 @@ djr:R-2789 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s061-10.1> ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/references/final.md/s026-2.14/b13>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/references/final.md/s026-2.14/b3> ;
     djr:statesNorm djr:R-2737, djr:R-2738, djr:R-2739, djr:R-2740 ;
     djr:text "- 승격 판정(무엇을 Enum으로 만들지)·리터럴 허용 목록·소비 규율의 소유자는 `discipline-cleancode` §2.14다 — 요지: 닫힌 집합을 분기·판정에 쓰면 1곳째부터 집합 단위 타입으로(낱개 모듈 상수 나열 금지), 선언된 값의 비교·분기·대입은 심볼로만(`state == State.ACTIVE`). 비교는 `==`를 쓴다 — `is`는 문자열 Enum 값이 경계에서 plain str로 흐를 때 수화 누락 시 조용한 False를 만든다.\n"@ko .
 
@@ -1636,6 +1637,7 @@ djr:R-2789 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s129-26.1> ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4/b1> ;
     djr:statesNorm djr:R-2788, djr:R-2789 ;
     djr:text "- 타입 어노테이션과 중복되면 독스트링 쪽 타입 서술을 지운다(어노테이션은 항상 유지 — houserules «모든 이름 첫 대입에 타입»)\n\n"@ko .
 

@@ -228,6 +228,7 @@ djr:R-3006 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003> ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s001/b1> ;
     djr:statesNorm djr:R-2988 ;
     djr:text "- 네이밍·함수 설계·SOLID 등 기술무관 클린코드 원칙 → `discipline-cleancode`\n"@ko .
 
@@ -235,6 +236,7 @@ djr:R-3006 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003> ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s116-21/b1> ;
     djr:statesNorm djr:R-2989 ;
     djr:text "- Django 모델·ORM·서비스·트랜잭션·설정 구현 → `implementation-django`\n"@ko .
 
@@ -242,6 +244,7 @@ djr:R-3006 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003> ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s116-21/b1> ;
     djr:statesNorm djr:R-2990 ;
     djr:text "- repository/UoW/핵사고날/CQRS/outbox 구조 패턴 선택 → `architecture-ddd`\n"@ko .
 
@@ -249,6 +252,7 @@ djr:R-3006 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003> ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s124-24/b1> ;
     djr:statesNorm djr:R-2991 ;
     djr:text "- 테스트 코드 작성(pytest·픽스처·mock·더블) → `implementation-test`\n\n"@ko .
 
@@ -268,6 +272,7 @@ djr:R-3006 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 10 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s072-12.0/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s072-12.0/b2> ;
     djr:statesNorm djr:R-3002, djr:R-3003 ;
     djr:text "- pydantic v2는 경계(입력 검증) 전용, 도메인 진리값으로 사용 금지 (§12.0)\n"@ko .
 
@@ -275,6 +280,7 @@ djr:R-3006 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 11 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s118-22.1/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s121-23.1/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s122-23.2/b1> ;
     djr:statesNorm djr:R-3004 ;
     djr:text "- Ruff로 린트·포맷 통합, mypy/pyright strict 모드로 타입 보장 (§22–§23)\n\n"@ko .
 
@@ -282,6 +288,7 @@ djr:R-3006 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s005-1.3/b1> ;
     djr:statesNorm djr:R-2993 ;
     djr:text "- Union/Literal/NewType으로 상태 공간을 좁혀 잘못된 상태를 타입 레벨에서 차단 (§1.3–§1.4)\n"@ko .
 
@@ -296,6 +303,7 @@ djr:R-3006 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s063-10.3/b1> ;
     djr:statesNorm djr:R-2995 ;
     djr:text "- dataclass(slots, frozen, kw_only)로 불변 값 객체를 표현, NamedTuple은 불변 레코드에 (§10)\n"@ko .
 
@@ -303,6 +311,7 @@ djr:R-3006 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s042-7.1/b1> ;
     djr:statesNorm djr:R-2996 ;
     djr:text "- 디스크립터·@property는 검증과 지연 계산에만; 단순 필드는 평범한 애트리뷰트로 (§6–§7)\n"@ko .
 
@@ -310,6 +319,7 @@ djr:R-3006 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s081-13.5/b1> ;
     djr:statesNorm djr:R-2997, djr:R-2998 ;
     djr:text "- 제너레이터로 지연 평가, send/throw 금지 (§13.2, §13.5)\n"@ko .
 
@@ -324,6 +334,7 @@ djr:R-3006 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 8 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s089-15.2/b1> ;
     djr:statesNorm djr:R-3000 ;
     djr:text "- 예외는 도메인 최상위 클래스 정의 후 계층화; None 반환 대신 예외 발생 (§15)\n"@ko .
 
@@ -331,6 +342,7 @@ djr:R-3006 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 9 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s092-16.1/b3>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s093-16.2/b1> ;
     djr:statesNorm djr:R-3001 ;
     djr:text "- I/O 병목엔 asyncio.TaskGroup(3.11+), CPU 병목엔 멀티프로세싱 (§16)\n"@ko .
 

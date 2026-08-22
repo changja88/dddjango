@@ -2607,6 +2607,7 @@ djr:R-1932 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/references/final.md/s095-19.2.1> ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025/b2> ;
     djr:statesNorm djr:R-1881, djr:R-1882, djr:R-1883, djr:R-1884 ;
     djr:text "기댓값은 해당 decision row의 승인된 리터럴을 쓰되, dddjango가 고정하는 공통 오류 schema property\n목록은 없다. 기존 공통 오류 schema shape를 바꾸려면 별도의 명시적 사용자\n승인이 필요하며, 승인 전에는 변경도 그 변경을 전제로 한 assertion도 만들지 않는다.\n\n"@ko .
 
@@ -2911,6 +2912,7 @@ djr:R-1932 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/references/final.md/s105-20.5> ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s042-9.5/b11> ;
     djr:statesNorm djr:R-1929, djr:R-1930, djr:R-1931 ;
     djr:text "**연결 의미를 바꿔 테스트를 성립시키지 않는다.** SQLite에서 race를 *관찰*하려고 `BEGIN IMMEDIATE`·격리 수준·begin 모드가 필요해 보여도, 그것을 **커스텀 `DatabaseWrapper`/DB 백엔드로 구현하지 않는다** — 트랜잭션·락·격리 *메커니즘*은 architect가 소유하며(`architecture-db` §9.5 연결 설정 경계), 코더가 환경 한계를 이유로 임의 대체하는 것은 *출처-불문* 금지다(`implementation-django` §16.4). 필요한 연결 튜닝은 **stock `OPTIONS`만**으로 한다(IMMEDIATE는 `transaction_mode`[Django 5.1+], busy 대기는 `timeout`, 안전 PRAGMA 화이트리스트). 위 결정적 CAS-충돌 스파이는 애초에 이런 연결 조작이 필요 없다 — 그래서 §16.4 위반 압력 없이 동시성 기준을 검증한다.\n\n"@ko .
 

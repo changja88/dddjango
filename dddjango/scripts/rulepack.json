@@ -3,31 +3,31 @@
   "built_from": [
     {
       "path": "ontology/rules/agent-acceptance-tester.ttl",
-      "sha256": "fefd9a5db76c29d5021521cfe857ccf2dbbd50e842a1a5d9fdd33c96aeff434d"
+      "sha256": "6399e0771527bbd20eae0329f6903541d4e3ed23f8d583ecaf451173f0d7b8a7"
     },
     {
       "path": "ontology/rules/agent-coder.ttl",
-      "sha256": "f028108dea6fad13e8d39278ebcf826f1ee22e97061614796d6b7c062521cf8e"
+      "sha256": "3a9b17dd72dfd10304fc1f9bdc4489a02f59cf2755528edcdc9c6804f5d4806f"
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "dd33cd7d543da042907e613317b4ca65077ade0be8279fc790f89448f72ea03c"
+      "sha256": "61a045af9a4bcc2b15903e40be5efd389727a3ec923fefc50cae77cdc2d2ce1b"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
-      "sha256": "d780f78a7bf3b81d8c77beabaa77626f4fd08c76e43c68f094b0c2cb4e3a32c0"
+      "sha256": "243a0c62df266f2220587f6e83552473743422df4bd8fa963511f236012961a7"
     },
     {
       "path": "ontology/rules/agent-design-review-db.ttl",
-      "sha256": "dc00999ca182688cfb15fd0b7ee84b66172e455a2d6fb47278f80e127c6f59a4"
+      "sha256": "ce06e0268ed2b54793778d510224199e0c7373be8b4d19247947092e271f57ea"
     },
     {
       "path": "ontology/rules/agent-design-review-ddd.ttl",
-      "sha256": "56f0f27df3c9e80ad2132661035488b402fc5c68b700304568e65075a50d4b4a"
+      "sha256": "8ad4f95d7020171107a5a3ef2fa387da2f84e3b7f768269ac5e8ac55c304fc52"
     },
     {
       "path": "ontology/rules/agent-discipline-reviewer.ttl",
-      "sha256": "ab7a232d5297e6b3a2f4f10b9f5066b26608f197bb9c872708ddda55d243ba7f"
+      "sha256": "f212749dd7e624c3746bdefd7f282384223cdde8ce0cacfc927438a7a71fe2b3"
     },
     {
       "path": "ontology/rules/architecture-api-final.ttl",
@@ -35,7 +35,7 @@
     },
     {
       "path": "ontology/rules/architecture-api-skill.ttl",
-      "sha256": "5baa3fd0a0aebca492e1813fc3f60bd8f2974ee5876b5d8fa93d1d1a8e27e487"
+      "sha256": "b1bfe23e95d1ea361a52ef54c67166e8fa80b41d0437d47dede71dfea324f21d"
     },
     {
       "path": "ontology/rules/architecture-db-final.ttl",
@@ -43,7 +43,7 @@
     },
     {
       "path": "ontology/rules/architecture-db-skill.ttl",
-      "sha256": "9a38eedfa2f64868ece1ebe86f0fd4a3c889f1e3c930ac78ae8b28c7965bd26c"
+      "sha256": "b5a1f41ee798e64487af3a6ef04f3be6cdebd01413ded25157a75594a32c5e72"
     },
     {
       "path": "ontology/rules/architecture-ddd-final.ttl",
@@ -51,19 +51,19 @@
     },
     {
       "path": "ontology/rules/architecture-ddd-skill.ttl",
-      "sha256": "9b152d70e5f06ae0d51d0ad5bc886ce7dacec4e3c923d3588907610768f7598e"
+      "sha256": "b19060041be312fdd0c19e2030957abae7214e9e0e5892c030bf9044529fcadd"
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "249b01033359bbcab75f7d8eb7fd58f83f6fdfbdf9461bb511b36f6d61fdaae4"
+      "sha256": "6c9fbdfc83fd07261336cfeded49b0aa410fce278b59192168ff3abd863bb04f"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
-      "sha256": "10821e15d718696f1289a1c0805b044f39b39129e7b3ee62fbed561d0f098aa3"
+      "sha256": "4bd74da8f2974e7133d4125ac5d2c6e1757df80c3ba6ed3057150762c30dfff9"
     },
     {
       "path": "ontology/rules/discipline-cleancode-skill.ttl",
-      "sha256": "7497c73dc525d621a49e97c704cef61dd01d61104055fb04befc27e60c6e96b3"
+      "sha256": "fe14a2f3b6380340388568d403f2b1dbbfeb6c1ab8de14d646e2ec8a6162a127"
     },
     {
       "path": "ontology/rules/discipline-houserules-final.ttl",
@@ -71,7 +71,7 @@
     },
     {
       "path": "ontology/rules/discipline-houserules-skill.ttl",
-      "sha256": "eec551e9a052b1e1086adeaee6180d4c695ac0d1174717fef6798cb4ef2325ea"
+      "sha256": "58f9a4400244ae7111bbf5bd15c56fd140e54e57de907b0c617e8aa4502ecabd"
     },
     {
       "path": "ontology/rules/discipline-tdd-final.ttl",
@@ -79,11 +79,11 @@
     },
     {
       "path": "ontology/rules/discipline-tdd-skill.ttl",
-      "sha256": "91cbb7f0c3162adda9cc718a0f768366ae00d777ec239e5c991358fb528733b8"
+      "sha256": "2fa89ac5297f8f5e286b129541db0f97311cbc547fc3d10bb82bd1cbbf86a111"
     },
     {
       "path": "ontology/rules/implementation-django-final.ttl",
-      "sha256": "35a19dd10ff30758a695a2c12c497bf7e4ac1914a800091ef36ae4fdf25f2a40"
+      "sha256": "d5adbd8caf02a9cf3feccf30522d543cd64a06825d83c366e5be5644e89fabbf"
     },
     {
       "path": "ontology/rules/implementation-django-ninja-final.ttl",
@@ -91,11 +91,11 @@
     },
     {
       "path": "ontology/rules/implementation-django-ninja-skill.ttl",
-      "sha256": "57ce24f3760cda93eaf5f93d32a77f11aefb29b7213bb2c3029a17b6bcedf637"
+      "sha256": "c6e682e79ad6472ba6ba80895e37489f9454d15875ed1d27ce13c373f94c1fb0"
     },
     {
       "path": "ontology/rules/implementation-django-skill.ttl",
-      "sha256": "a853d5f97d3c5e7904a21b9d8b8aa8976ed19810846ad40718346d1be67a6aff"
+      "sha256": "6fb8459e068a48cb14ff92baa276d5bed23cb701400530b251a30084fa632b50"
     },
     {
       "path": "ontology/rules/implementation-django-web-final.ttl",
@@ -103,23 +103,23 @@
     },
     {
       "path": "ontology/rules/implementation-django-web-skill.ttl",
-      "sha256": "76adcdef7abb3c805f3cfd0e243429d4a1668b880f55ccbb70924f1901499ddb"
+      "sha256": "38a7ef5ec7631a8c09156789dd55a7be19c99a5292c3a89aae415c1490659255"
     },
     {
       "path": "ontology/rules/implementation-python-final.ttl",
-      "sha256": "008d651d8442db97ea4b438c2984e0a4279c168629cab726aa069180f567269b"
+      "sha256": "4b4052c857a172cbce180ebc94bd3f10745b2979cd982f5bf16feb89132eea29"
     },
     {
       "path": "ontology/rules/implementation-python-skill.ttl",
-      "sha256": "fb7236988bf47d83f5fe3392816da70e349209563bd08c73a90f10ff1e5dc500"
+      "sha256": "4366796d0a50101e333030f0ed10a8d8b21a710d2707146d060e02a56d7c1ce0"
     },
     {
       "path": "ontology/rules/implementation-test-final.ttl",
-      "sha256": "5f57729e5e47f81c318817380db6634b4f43deb2dc2d7c2b352588dd3f2ae251"
+      "sha256": "093f5ee433a388499f68e0a93cdaff6b754a3eb9cc98aacec037d0fdaa4c2755"
     },
     {
       "path": "ontology/rules/implementation-test-skill.ttl",
-      "sha256": "91470232d770fcfb1835e97d8346958e67d60af53c6b3a6aa6f5240d9f446334"
+      "sha256": "a42adfb50de3523232d52b11d7ea62b64cb52fe06aabc3628de681c5a1c1e7e4"
     },
     {
       "path": "ontology/wiring/agent-acceptance-tester.ttl",

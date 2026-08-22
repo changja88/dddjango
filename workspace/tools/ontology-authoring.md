@@ -141,6 +141,7 @@
 - **게이트 ② 확장(T0 개작)**: djr 네임스페이스 IRI의 fragment 문법 검사(정규식 — rdflib가 위법 IRI를 무저항 통과시킴이 실측됐으므로 기계 백스톱).
 - 전 절/블록·Expression IRI는 `<전체 IRI>` 표기(§1 — PN_LOCAL 비허용 문자 `/`·`@` 포함).
 - **alias IRI**(T2-2) = djr 기저 + `alias-<공간>-<번호>`(예 `djr:alias-rule-486`) — PN_LOCAL 안전이라 접두 축약형을 쓴다. `#`는 fragment 금지 문자라 IRI 에 넣지 않고, **정본 문자열은 `djr:aliasText`**(동결 v2 문법 `rule#N` — 비한정 «#N»·전치 0 금지)가 진다. 대장 파일은 `wiring/aliases.ttl`(문서 횡단 선언 — `rules/`는 render manifest 대조로 exit 2). 함수성·해소·문법은 `ontology_structural_check.py` ⑥·⑥′·⑥″가 fail-closed 로 문다.
+- **펜스 «내부» 번호는 블록 좌표가 아니다**(T3 웨이브 4 처분 ⓒ — 2026-08-22): 문서·에이전트가 «트리 N행»으로 가리키는 것은 `docs/file_tree.html`의 `data-r`(≡ `standard_tree.Row.r`)이고, 해소 주체는 `spec_lint.py` ③과 `tree_mirror_check.py` 삼중 동기다. 코드 펜스는 행 단위로 분해하지 않는다(§13 자연 단위 유지).
 - **djr:headingSnapshot = 채번 시점 헤딩 라인 전체 verbatim**(`### 6.2 …` — 레벨 포함, 렌더가 헤딩 라인을 재생성할 수 있게). 채번 후 불변 — 현행 헤딩은 djr:headingCurrent(개정 시 갱신). **djr:parentSection** 채택(절 트리 질의 — §7 어휘 개정 절차 경유, 안정화 선언 전 편입).
 
 ## 15. 이관 공정 절차서 (블루프린트 §4-2 실장 — 파일럿이 첫 실증)

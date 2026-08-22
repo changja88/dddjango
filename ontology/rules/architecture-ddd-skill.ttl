@@ -294,6 +294,7 @@ djr:R-2816 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s004-1.2/b3>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s004-1.2/b4>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s051-8/b8> ;
     djr:statesNorm djr:R-2796 ;
     djr:text "\n- 전략 설계가 전술 패턴보다 먼저다: 핵심 도메인 식별 → 바운디드 컨텍스트 설계 → 컨텍스트 맵 → 전술 패턴 적용. 전략 없이 전술 패턴만 적용하면 \"잘못된 경계에서 좋은 코드를 작성하는 결과\"가 된다 (§1.2, §2)\n"@ko .
 
@@ -301,6 +302,7 @@ djr:R-2816 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 10 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s049-6.8/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s049-6.8/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s049-6.8/b3>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s049-6.8/b4> ;
     djr:statesNorm djr:R-2814 ;
     djr:text "- 구현 패턴(Data Mapper, Repository+UoW, Event Sourcing, Saga, CQRS)은 명확한 필요가 확인된 시점에 선택하고, 패턴 선택 절차를 통해 Risky Write 라우팅을 포함해 결정한다 (§6.8)\n\n"@ko .
 
@@ -308,6 +310,7 @@ djr:R-2816 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s009-2.3/b3> ;
     djr:statesNorm djr:R-2797 ;
     djr:text "- 유비쿼터스 언어는 바운디드 컨텍스트 내에서만 유효하다 — 동일 개념도 컨텍스트가 다르면 다른 언어를 쓴다 (§2.3)\n"@ko .
 
@@ -315,6 +318,7 @@ djr:R-2816 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s019/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s019/b3>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s019/b5>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s019/b7>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s019/b8> ;
     djr:statesNorm djr:R-2798, djr:R-2799, djr:R-2800, djr:R-2801 ;
     djr:text "- 애그리거트는 Vernon의 4가지 규칙을 따른다: 진짜 불변식만 경계 안에서 보호, 최소 크기 설계, 타 애그리거트는 ID로만 참조(영속성/ORM 포함 — BC 경계 ORM FK 금지, 같은 BC 내 FK는 허용), 경계 밖 일관성은 결과적 일관성으로 달성 (§3.3)\n"@ko .
 
@@ -322,6 +326,7 @@ djr:R-2816 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s051-8/b3> ;
     djr:statesNorm djr:R-2802 ;
     djr:text "- 엔티티는 애그리거트의 일부로만 사용하고, 독립적으로 생성·접근하지 않는다 (§3.2, §8)\n"@ko .
 
@@ -329,6 +334,7 @@ djr:R-2816 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s022-3.5/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s022-3.5/b4>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s051-8/b5> ;
     djr:statesNorm djr:R-2803, djr:R-2804 ;
     djr:text "- 도메인 서비스는 여러 애그리거트에 걸친 무상태 도메인 로직에 사용하고, 애그리거트는 도메인 서비스를 직접 알지 않는다 (§3.5)\n"@ko .
 
@@ -336,6 +342,7 @@ djr:R-2816 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s023-3.6/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s023-3.6/b3>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s023-3.6/b4> ;
     djr:statesNorm djr:R-2805 ;
     djr:text "- 응용 서비스는 흐름 제어와 트랜잭션 관리만 담당하고, 비즈니스 로직을 두지 않는다 (§3.6)\n"@ko .
 
@@ -343,6 +350,7 @@ djr:R-2816 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 7 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s024-3.7/b3>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s051-8/b9> ;
     djr:statesNorm djr:R-2806, djr:R-2807 ;
     djr:text "- 도메인 이벤트는 애그리거트가 수집하고, UoW 커밋 직전(동일 트랜잭션 내 부수 효과) 또는 직후(외부 통합)에 디스패치 타이밍을 명시한다. 타이밍이 불명확하면 이벤트 유실이나 트랜잭션 불일치가 발생한다 (§3.7)\n"@ko .
 
@@ -350,6 +358,7 @@ djr:R-2816 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 8 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s026/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s026/b2> ;
     djr:statesNorm djr:R-2808, djr:R-2809, djr:R-2810, djr:R-2811 ;
     djr:text "- 발행 이벤트 봉투의 discriminator(`event_type` 류)는 1종째부터 domain_layer `StrEnum`으로 선언하고(birth-enum) append-only로 유지한다 — 버전 태그(`payload_schema_version`)는 리터럴 동결, 소비 BC는 발행 enum을 import하지 않는다 (§3.7)\n"@ko .
 
@@ -357,6 +366,7 @@ djr:R-2816 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 9 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s036-5.1/b3>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s037-5.2/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s051-8/b10> ;
     djr:statesNorm djr:R-2812, djr:R-2813 ;
     djr:text "- 아키텍처는 4계층+DIP를 기본으로 한다: 도메인이 인프라를 직접 알지 않도록 도메인 영역에 인터페이스를 두고 인프라에서 구현한다 (§5.1, §5.2)\n"@ko .
 

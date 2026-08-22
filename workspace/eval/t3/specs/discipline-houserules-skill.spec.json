@@ -1,1073 +1,1096 @@
 {
-  "schema": "migrate-spec/1",
-  "doc_key": "discipline-houserules-skill",
-  "path": "dddjango/skills/discipline-houserules/SKILL.md",
-  "restates_paths": {
-    "discipline-houserules-skill": "dddjango/skills/discipline-houserules/SKILL.md"
-  },
-  "sections": [
+ "schema": "migrate-spec/1",
+ "doc_key": "discipline-houserules-skill",
+ "path": "dddjango/skills/discipline-houserules/SKILL.md",
+ "restates_paths": {
+  "discipline-houserules-skill": "dddjango/skills/discipline-houserules/SKILL.md",
+  "discipline-houserules-final": "dddjango/skills/discipline-houserules/references/final.md"
+ },
+ "sections": [
+  {
+   "section_key": "s001",
+   "line_start": 1,
+   "line_end": 6,
+   "blocks": [
     {
-      "section_key": "s001",
-      "line_start": 1,
-      "line_end": 6,
-      "blocks": [
-        {
-          "lines": [
-            2,
-            2
-          ],
-          "kind": "prose"
-        },
-        {
-          "lines": [
-            3,
-            3
-          ],
-          "kind": "norm",
-          "restates": [
-            "discipline-houserules-skill/s003/b2",
-            "discipline-houserules-skill/s003/b4",
-            "discipline-houserules-skill/s003/b7"
-          ],
-          "norms": [
-            {
-              "label": "배치·타입 부착·주석 언어를 정하거나 검수할 때 로드",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 — frontmatter description 은 스킬 라우터의 로드 트리거 문면 · ②27종 전수 실독 결과 스킬 로드·선택 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
-            },
-            {
-              "label": "신규 모듈·BC·테스트·프로젝트 레이아웃·코드 규약 결정 시 필수 사용",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 — frontmatter description 은 스킬 라우터의 로드 트리거 문면 · ②27종 전수 실독 결과 스킬 로드·선택 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
-            },
-            {
-              "label": "트리와 규칙 «값»의 단일 출처는 references/final.md",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 — frontmatter description 은 스킬 라우터의 로드 트리거 문면 · ②27종 전수 실독 결과 스킬 로드·선택 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
-            },
-            {
-              "label": "보편 클린코드·Python 타입 지식·테스트 타입 조직의 타 스킬 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
-            }
-          ]
-        },
-        {
-          "lines": [
-            4,
-            4
-          ],
-          "kind": "prose"
-        },
-        {
-          "lines": [
-            5,
-            6
-          ],
-          "kind": "prose"
-        }
-      ]
+     "lines": [
+      2,
+      2
+     ],
+     "kind": "prose"
     },
     {
-      "section_key": "s003",
-      "line_start": 9,
-      "line_end": 21,
-      "blocks": [
-        {
-          "lines": [
-            10,
-            12
-          ],
-          "kind": "prose"
-        },
-        {
-          "lines": [
-            13,
-            14
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "트리·칸·규칙 «값»은 final.md 단일 출처 소유 · SKILL.md 는 «언제 어떻게 읽나»만 소유",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "값을 SKILL.md 에 복제하지 않는다",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "무접두 #N 규칙 «본문» 정본은 저장소 정본 명세 — 플러그인 문서에는 집행 발췌만",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        },
-        {
-          "lines": [
-            15,
-            16
-          ],
-          "kind": "prose"
-        },
-        {
-          "lines": [
-            17,
-            17
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "코드 내부 구조(네이밍·함수 크기·SOLID)의 discipline-cleancode 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
-            }
-          ]
-        },
-        {
-          "lines": [
-            18,
-            18
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "DDD 계층·바운디드 컨텍스트 이론의 architecture-ddd 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
-            }
-          ]
-        },
-        {
-          "lines": [
-            19,
-            19
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "Django 프로젝트 레이아웃 관용의 implementation-django 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
-            }
-          ]
-        },
-        {
-          "lines": [
-            20,
-            21
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "테스트 타입 조직·conftest 메커니즘의 implementation-test §4.2 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
-            }
-          ]
-        }
-      ]
+     "lines": [
+      3,
+      3
+     ],
+     "kind": "norm",
+     "restates": [
+      "discipline-houserules-skill/s003/b2",
+      "discipline-houserules-skill/s003/b4",
+      "discipline-houserules-skill/s003/b7",
+      "discipline-houserules-final/s001/b1"
+     ],
+     "norms": [
+      {
+       "label": "배치·타입 부착·주석 언어를 정하거나 검수할 때 로드",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 — frontmatter description 은 스킬 라우터의 로드 트리거 문면 · ②27종 전수 실독 결과 스킬 로드·선택 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
+      },
+      {
+       "label": "신규 모듈·BC·테스트·프로젝트 레이아웃·코드 규약 결정 시 필수 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 — frontmatter description 은 스킬 라우터의 로드 트리거 문면 · ②27종 전수 실독 결과 스킬 로드·선택 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
+      },
+      {
+       "label": "트리와 규칙 «값»의 단일 출처는 references/final.md",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 — frontmatter description 은 스킬 라우터의 로드 트리거 문면 · ②27종 전수 실독 결과 스킬 로드·선택 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
+      },
+      {
+       "label": "보편 클린코드·Python 타입 지식·테스트 타입 조직의 타 스킬 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
+      }
+     ]
     },
     {
-      "section_key": "s004-1",
-      "line_start": 22,
-      "line_end": 33,
-      "blocks": [
-        {
-          "lines": [
-            23,
-            25
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "새 코드·테스트 배치는 아래 결정 순서를 따른다",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        },
-        {
-          "lines": [
-            26,
-            26
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "소스 파일트리는 언제나 dddjango 표준 — 기존 레이아웃은 트리 결정의 입력이 아니다",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-layer-skeleton.py"
-              ],
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py; 스코프·권한 판정은 기계 밖이라 위임 병기"
-            },
-            {
-              "label": "final.md §0 제1원칙과 §1 트리 140행을 읽고 그대로 실현",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-layer-skeleton.py"
-              ],
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py; 스코프·권한 판정은 기계 밖이라 위임 병기"
-            },
-            {
-              "label": "요약을 믿지 말고 문서를 읽는다",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "이 트리는 dddjango 자신의 표준 — 타 플러그인 것으로 오인해 치우기 금지",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "기존 소스 배치를 «확립된 규약»으로 읽지 않는다 — 옛 층 이름·옛 위치는 아직 안 갚은 빚",
-              "class": "Prohibition",
-              "enforcedBy": [
-                "check-layer-skeleton.py"
-              ],
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py; 스코프·권한 판정은 기계 밖이라 위임 병기"
-            },
-            {
-              "label": "「모든 BC 가 일관 사용」류 관찰은 반례가 아니라 이 규칙이 태어난 사고",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "집행 스코프 판정 물음은 «승인 스코프에 근거가 있는가» — «내가 만들거나 수정하는가»가 아니다",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "스코프 안 → 형태는 언제나 표준이고 기존 실물은 형태 결정의 입력이 아니다",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-layer-skeleton.py"
-              ],
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py; 스코프·권한 판정은 기계 밖이라 위임 병기"
-            },
-            {
-              "label": "스코프 밖 → 옮기지도 고치지도 않는다(정리·일관성·트리 밖 칸 위반·백스톱 red 어느 것도 이동 근거 아님)",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "위반 판정은 빚 기록 권한 · 이동 권한은 G0 사용자 ⓐ 결정→슬라이스 0 한 경로에서만",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "기존 파일 수정 시 표준은 추가·변경 줄의 형태만 — 기존 줄 전파·답습 금지",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "존치된 legacy 는 동결된 빚 — 신규 산출물의 형태 근거로 되읽기 금지",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "결정적 백스톱은 check-layer-skeleton 이고 다른 모든 검사보다 먼저 돈다(#487)",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-layer-skeleton.py"
-              ],
-              "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py"
-            }
-          ]
-        },
-        {
-          "lines": [
-            27,
-            27
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "승인된 test artifact 가 실제 있을 때만 의미군으로 조직",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "승인 artifact 는 기존 프로젝트 테스트 위치나 표준 위치(트리 105~111행)에 둔다",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-test-config.py"
-              ],
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "②check-test-config.py docstring ⑵ «트리 개정 명세 몫 — `test/` 구조 (트리 105~111행 · D56) #383/#384 `test/` 의 직계 자식은 다섯뿐» — 문면이 인용한 «final.md §1 트리 105~111행»과 행 범위 축자 일치 · registry Checker 등재; 승인 여부 판정은 기계 밖이라 위임 병기"
-            },
-            {
-              "label": "구조 규칙 자체는 테스트를 만들거나 기존 테스트를 자동 이동하지 않는다",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        },
-        {
-          "lines": [
-            28,
-            29
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "한 프로젝트 안에서 레이아웃 혼용 금지",
-              "class": "Prohibition",
-              "enforcedBy": [
-                "check-layer-skeleton.py"
-              ],
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py; 스코프·권한 판정은 기계 밖이라 위임 병기"
-            },
-            {
-              "label": "혼용 금지 규칙만으로 기존 테스트 이동 권한이 생기지 않는다",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        },
-        {
-          "lines": [
-            30,
-            31
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "검사기의 TARGET 은 저장소 루트(application/ 의 부모)",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-layer-skeleton.py"
-              ],
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py; 스코프·권한 판정은 기계 밖이라 위임 병기"
-            },
-            {
-              "label": "BC 폴더·application/ 컨테이너 TARGET 은 사용 오류 exit 1 로 거절된다",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-layer-skeleton.py"
-              ],
-              "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py"
-            },
-            {
-              "label": "게이트 증거는 판정 차분 — 앵커 대비 귀속 0 + legacy 잔존 별도 보고 · 귀속 red 의 «확립 규약» 수용 금지",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면이 집행 도구로 `scripts/registry_gate.py` 를 명시 — check-*.py 27종 로스터 밖이라 enforcedBy 대상이 아니다(registry.ttl Checker 개체 = scripts/check-*.py glob) · ②27종 전수 실독 결과 게이트 증거·차분 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
-            },
-            {
-              "label": "좁힌 TARGET·selector 로 얻은 green 은 게이트 증거가 아니다",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면이 집행 도구로 `scripts/registry_gate.py` 를 명시 — check-*.py 27종 로스터 밖이라 enforcedBy 대상이 아니다(registry.ttl Checker 개체 = scripts/check-*.py glob) · ②27종 전수 실독 결과 게이트 증거·차분 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
-            },
-            {
-              "label": "승인 스코프 밖 파일의 귀속은 1차 처방이 그 변경의 철회 — 수리·재설계 금지",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        },
-        {
-          "lines": [
-            32,
-            33
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "관찰이 결정 입력인 축은 닫힌 목록 여섯",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "목록 밖 축에서 기존 실물의 관찰은 결정의 입력이 아니다",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "배선 «값»은 Ninja 스택 조건부지만 ‹관찰 비입력› 원칙 자체는 무조건",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "‹관찰 비입력›은 신규 산출물의 형태 문장 — 스코프 밖 실물의 이동·수정 권한을 만들지 않는다",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        }
-      ]
+     "lines": [
+      4,
+      4
+     ],
+     "kind": "prose"
     },
     {
-      "section_key": "s005-2",
-      "line_start": 34,
-      "line_end": 37,
-      "blocks": [
-        {
-          "lines": [
-            35,
-            37
-          ],
-          "kind": "norm",
-          "restates": [
-            "discipline-houserules-skill/s003/b2",
-            "discipline-houserules-skill/s003/b7"
-          ],
-          "norms": [
-            {
-              "label": "코퍼스가 서로 다른 트리를 제시해도 런타임에 택일하지 않는다",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "final.md 가 단일 출처이고 코퍼스는 파생 배경 — 남는 변수 없음",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "테스트 타입 조직은 implementation-test §4.2 가 단독 소유",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s006-3",
-      "line_start": 38,
-      "line_end": 48,
-      "blocks": [
-        {
-          "lines": [
-            39,
-            41
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "배치 결정 누락·빚 답습 신호의 판정은 final.md 와 검사기가 한다",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-layer-skeleton.py"
-              ],
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py; 스코프·권한 판정은 기계 밖이라 위임 병기"
-            }
-          ]
-        },
-        {
-          "lines": [
-            42,
-            42
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "신호 — 새 모듈이 층 구분 없이 한 디렉터리에 모임(평면 답습)",
-              "class": "Prohibition",
-              "enforcedBy": [
-                "check-layer-skeleton.py"
-              ],
-              "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py"
-            }
-          ]
-        },
-        {
-          "lines": [
-            43,
-            43
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "신호 — BC 직계에 트리 밖 여덟째 칸(#81)",
-              "class": "Prohibition",
-              "enforcedBy": [
-                "check-layer-skeleton.py"
-              ],
-              "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py"
-            }
-          ]
-        },
-        {
-          "lines": [
-            44,
-            44
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "신호 — 골격 칸이 비었다고 생략(#488)",
-              "class": "Prohibition",
-              "enforcedBy": [
-                "check-layer-skeleton.py"
-              ],
-              "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py"
-            }
-          ]
-        },
-        {
-          "lines": [
-            45,
-            45
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "신호 — 옛 이름이 새 코드에 재등장(이관 종료 후 트리 밖 칸 위반 #81·#490)",
-              "class": "Prohibition",
-              "enforcedBy": [
-                "check-layer-skeleton.py"
-              ],
-              "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py"
-            }
-          ]
-        },
-        {
-          "lines": [
-            46,
-            46
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "신호 — check-layer-skeleton exit 2 를 «기존 코드라 면제»로 읽음",
-              "class": "Prohibition",
-              "enforcedBy": [
-                "check-layer-skeleton.py"
-              ],
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py; 스코프·권한 판정은 기계 밖이라 위임 병기"
-            }
-          ]
-        },
-        {
-          "lines": [
-            47,
-            48
-          ],
-          "kind": "norm",
-          "restates": [
-            "discipline-houserules-skill/s004-1/b5"
-          ],
-          "norms": [
-            {
-              "label": "신호 — 좁힌 TARGET·즉석 selector 로 얻은 green(게이트 증거는 저장소 루트 레지스트리 전체 1회뿐)",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면이 집행 도구로 `scripts/registry_gate.py` 를 명시 — check-*.py 27종 로스터 밖이라 enforcedBy 대상이 아니다(registry.ttl Checker 개체 = scripts/check-*.py glob) · ②27종 전수 실독 결과 게이트 증거·차분 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s007-4",
-      "line_start": 49,
-      "line_end": 60,
-      "blocks": [
-        {
-          "lines": [
-            50,
-            52
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "모든 이름은 «첫 대입»에 타입을 적는다 — 예외 0",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-public-surface-annotation.py"
-              ],
-              "basis": "②check-public-surface-annotation.py docstring «dddjango 타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·«#493 모든 이름은 «첫 대입»에 타입을 적는다 … 빠지는 것은 문법이 없는 여덟 자리뿐 … 재대입과 선언적 클래스 본문(ORM 모델 필드·ninja Schema 필드·enum 멤버)은 면제» 축자 일치 · ④rule-owner-map #493 → scripts/check-public-surface-annotation.py"
-            },
-            {
-              "label": "타입 부착 범위는 시그니처·모듈/클래스 변수·함수 지역 변수·테스트와 테스트 재료 전부",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-public-surface-annotation.py"
-              ],
-              "basis": "②check-public-surface-annotation.py docstring «dddjango 타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·«#493 모든 이름은 «첫 대입»에 타입을 적는다 … 빠지는 것은 문법이 없는 여덟 자리뿐 … 재대입과 선언적 클래스 본문(ORM 모델 필드·ninja Schema 필드·enum 멤버)은 면제» 축자 일치 · ④rule-owner-map #493 → scripts/check-public-surface-annotation.py"
-            },
-            {
-              "label": "「자명하니까 면제」를 두지 않는다 — 조건부 면제 금지",
-              "class": "Prohibition",
-              "enforcedBy": [
-                "check-public-surface-annotation.py"
-              ],
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "②check-public-surface-annotation.py docstring «dddjango 타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·«#493 모든 이름은 «첫 대입»에 타입을 적는다 … 빠지는 것은 문법이 없는 여덟 자리뿐 … 재대입과 선언적 클래스 본문(ORM 모델 필드·ninja Schema 필드·enum 멤버)은 면제» 축자 일치 · ④rule-owner-map #493 → scripts/check-public-surface-annotation.py; 「자명한가」 판단은 기계 밖이라 위임 병기"
-            }
-          ]
-        },
-        {
-          "lines": [
-            53,
-            54
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "빠지는 곳은 «문법이 없는 자리»뿐(면제가 아니라 불가능)",
-              "class": "Exception",
-              "enforcedBy": [
-                "check-public-surface-annotation.py"
-              ],
-              "basis": "②check-public-surface-annotation.py docstring «dddjango 타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·«#493 모든 이름은 «첫 대입»에 타입을 적는다 … 빠지는 것은 문법이 없는 여덟 자리뿐 … 재대입과 선언적 클래스 본문(ORM 모델 필드·ninja Schema 필드·enum 멤버)은 면제» 축자 일치 · ④rule-owner-map #493 → scripts/check-public-surface-annotation.py"
-            }
-          ]
-        },
-        {
-          "lines": [
-            55,
-            55
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "문법 부재 자리 ① for·with·except·언패킹·다중 대입·증강 대입",
-              "class": "Exception",
-              "enforcedBy": [
-                "check-public-surface-annotation.py"
-              ],
-              "basis": "②check-public-surface-annotation.py docstring «dddjango 타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·«#493 모든 이름은 «첫 대입»에 타입을 적는다 … 빠지는 것은 문법이 없는 여덟 자리뿐 … 재대입과 선언적 클래스 본문(ORM 모델 필드·ninja Schema 필드·enum 멤버)은 면제» 축자 일치 · ④rule-owner-map #493 → scripts/check-public-surface-annotation.py"
-            }
-          ]
-        },
-        {
-          "lines": [
-            56,
-            56
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "문법 부재 자리 ② 재대입·인스턴스 속성(타입은 클래스 본문에)",
-              "class": "Exception",
-              "enforcedBy": [
-                "check-public-surface-annotation.py"
-              ],
-              "basis": "②check-public-surface-annotation.py docstring «dddjango 타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·«#493 모든 이름은 «첫 대입»에 타입을 적는다 … 빠지는 것은 문법이 없는 여덟 자리뿐 … 재대입과 선언적 클래스 본문(ORM 모델 필드·ninja Schema 필드·enum 멤버)은 면제» 축자 일치 · ④rule-owner-map #493 → scripts/check-public-surface-annotation.py"
-            }
-          ]
-        },
-        {
-          "lines": [
-            57,
-            58
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "문법 부재 자리 ③ 프레임워크 선언(모델 필드·class Meta·enum 멤버)",
-              "class": "Exception",
-              "enforcedBy": [
-                "check-public-surface-annotation.py"
-              ],
-              "basis": "②check-public-surface-annotation.py docstring «dddjango 타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·«#493 모든 이름은 «첫 대입»에 타입을 적는다 … 빠지는 것은 문법이 없는 여덟 자리뿐 … 재대입과 선언적 클래스 본문(ORM 모델 필드·ninja Schema 필드·enum 멤버)은 면제» 축자 일치 · ④rule-owner-map #493 → scripts/check-public-surface-annotation.py"
-            }
-          ]
-        },
-        {
-          "lines": [
-            59,
-            60
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "pydantic·ninja Schema·dataclass 필드는 `x: T` 필수 — bare 대입은 규칙 위반 이전에 버그",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-public-surface-annotation.py"
-              ],
-              "basis": "②check-public-surface-annotation.py docstring «dddjango 타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·«#493 모든 이름은 «첫 대입»에 타입을 적는다 … 빠지는 것은 문법이 없는 여덟 자리뿐 … 재대입과 선언적 클래스 본문(ORM 모델 필드·ninja Schema 필드·enum 멤버)은 면제» 축자 일치 · ④rule-owner-map #493 → scripts/check-public-surface-annotation.py"
-            },
-            {
-              "label": "표준 문서군의 코드 예시는 적용 대상 밖 — 규칙은 생성하는 프로덕션·테스트 코드에 건다",
-              "class": "Exception",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s008-4.1",
-      "line_start": 61,
-      "line_end": 64,
-      "blocks": [
-        {
-          "lines": [
-            62,
-            64
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "주류(PEP 8·mypy 기본 관례)와 다른 선택임을 숨기지 않는다",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "mypy strict 는 시그니처만 강제 — 나머지는 백스톱과 감수자가 집행",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-public-surface-annotation.py"
-              ],
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "②check-public-surface-annotation.py docstring «dddjango 타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·«#493 모든 이름은 «첫 대입»에 타입을 적는다 … 빠지는 것은 문법이 없는 여덟 자리뿐 … 재대입과 선언적 클래스 본문(ORM 모델 필드·ninja Schema 필드·enum 멤버)은 면제» 축자 일치 · ④rule-owner-map #493 → scripts/check-public-surface-annotation.py; ①문면이 «백스톱과 감수자»를 이원 지목해 검사기+에이전트 병기"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s009-5",
-      "line_start": 65,
-      "line_end": 68,
-      "blocks": [
-        {
-          "lines": [
-            66,
-            68
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "기존 코드베이스의 주석 언어 관례를 우선한다",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "영어 주석이 지배적이면 영어로 맞춘다(일관성 최우선)",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "확립된 관례가 없으면 한국어로 쓴다",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "한 코드베이스 안에서 주석 언어를 섞지 않는다",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s011-6.1",
-      "line_start": 71,
-      "line_end": 74,
-      "blocks": [
-        {
-          "lines": [
-            72,
-            74
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "표준 도구셋은 기능 추가 흐름이 직접 다룬다 — 기존 도구 감지·존중, 부재 시 §2.1 버전-핀 규율 셋업(임의 글로벌 설치 금지)",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s012-6.2",
-      "line_start": 75,
-      "line_end": 83,
-      "blocks": [
-        {
-          "lines": [
-            76,
-            78
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "새 런타임 의존성의 버전 «값» 규칙 적용 조건 — 핀 표기·매니페스트 위치는 타 스킬 소유",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        },
-        {
-          "lines": [
-            79,
-            79
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "훈련 기억의 버전 번호를 적지 않는다",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "무핀 설치로 받은 실제 설치 버전을 매니페스트에 핀한다",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "무핀 설치는 resolve 수단일 뿐 최종 상태는 핀",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        },
-        {
-          "lines": [
-            80,
-            80
-          ],
-          "kind": "prose"
-        },
-        {
-          "lines": [
-            81,
-            81
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "'최신'은 기존 핀과 호환되는 최신이다",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "기존 프레임워크·핵심 의존성 핀 상향 금지 — 불가하면 보고(설계 반송)",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        },
-        {
-          "lines": [
-            82,
-            82
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "안정 릴리스만 택한다",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "resolve 결과가 pre/rc/dev 면 핀하지 말고 보고",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            },
-            {
-              "label": "직접 의존성만 매니페스트에 핀하고 전이 의존성은 락파일에 맡긴다",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        },
-        {
-          "lines": [
-            83,
-            83
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "막힌 환경 — 사설·제한 인덱스는 그 인덱스의 최신을 핀하고 resolve 불가면 기억값 금지·보고",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        }
-      ]
+     "lines": [
+      5,
+      6
+     ],
+     "kind": "prose"
     }
-  ]
+   ]
+  },
+  {
+   "section_key": "s003",
+   "line_start": 9,
+   "line_end": 21,
+   "blocks": [
+    {
+     "lines": [
+      10,
+      12
+     ],
+     "kind": "prose"
+    },
+    {
+     "lines": [
+      13,
+      14
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "트리·칸·규칙 «값»은 final.md 단일 출처 소유 · SKILL.md 는 «언제 어떻게 읽나»만 소유",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "값을 SKILL.md 에 복제하지 않는다",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "무접두 #N 규칙 «본문» 정본은 저장소 정본 명세 — 플러그인 문서에는 집행 발췌만",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ],
+     "restates": [
+      "discipline-houserules-final/s001/b1"
+     ]
+    },
+    {
+     "lines": [
+      15,
+      16
+     ],
+     "kind": "prose"
+    },
+    {
+     "lines": [
+      17,
+      17
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "코드 내부 구조(네이밍·함수 크기·SOLID)의 discipline-cleancode 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
+      }
+     ]
+    },
+    {
+     "lines": [
+      18,
+      18
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "DDD 계층·바운디드 컨텍스트 이론의 architecture-ddd 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
+      }
+     ]
+    },
+    {
+     "lines": [
+      19,
+      19
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "Django 프로젝트 레이아웃 관용의 implementation-django 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
+      }
+     ]
+    },
+    {
+     "lines": [
+      20,
+      21
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "테스트 타입 조직·conftest 메커니즘의 implementation-test §4.2 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s004-1",
+   "line_start": 22,
+   "line_end": 33,
+   "blocks": [
+    {
+     "lines": [
+      23,
+      25
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "새 코드·테스트 배치는 아래 결정 순서를 따른다",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ]
+    },
+    {
+     "lines": [
+      26,
+      26
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "소스 파일트리는 언제나 dddjango 표준 — 기존 레이아웃은 트리 결정의 입력이 아니다",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-layer-skeleton.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py; 스코프·권한 판정은 기계 밖이라 위임 병기"
+      },
+      {
+       "label": "final.md §0 제1원칙과 §1 트리 140행을 읽고 그대로 실현",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-layer-skeleton.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py; 스코프·권한 판정은 기계 밖이라 위임 병기"
+      },
+      {
+       "label": "요약을 믿지 말고 문서를 읽는다",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "이 트리는 dddjango 자신의 표준 — 타 플러그인 것으로 오인해 치우기 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "기존 소스 배치를 «확립된 규약»으로 읽지 않는다 — 옛 층 이름·옛 위치는 아직 안 갚은 빚",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-layer-skeleton.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py; 스코프·권한 판정은 기계 밖이라 위임 병기"
+      },
+      {
+       "label": "「모든 BC 가 일관 사용」류 관찰은 반례가 아니라 이 규칙이 태어난 사고",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "집행 스코프 판정 물음은 «승인 스코프에 근거가 있는가» — «내가 만들거나 수정하는가»가 아니다",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "스코프 안 → 형태는 언제나 표준이고 기존 실물은 형태 결정의 입력이 아니다",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-layer-skeleton.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py; 스코프·권한 판정은 기계 밖이라 위임 병기"
+      },
+      {
+       "label": "스코프 밖 → 옮기지도 고치지도 않는다(정리·일관성·트리 밖 칸 위반·백스톱 red 어느 것도 이동 근거 아님)",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "위반 판정은 빚 기록 권한 · 이동 권한은 G0 사용자 ⓐ 결정→슬라이스 0 한 경로에서만",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "기존 파일 수정 시 표준은 추가·변경 줄의 형태만 — 기존 줄 전파·답습 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "존치된 legacy 는 동결된 빚 — 신규 산출물의 형태 근거로 되읽기 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "결정적 백스톱은 check-layer-skeleton 이고 다른 모든 검사보다 먼저 돈다(#487)",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-layer-skeleton.py"
+       ],
+       "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py"
+      }
+     ],
+     "restates": [
+      "discipline-houserules-final/s003-0/b2",
+      "discipline-houserules-final/s003-0/b3",
+      "discipline-houserules-final/s014/b1",
+      "discipline-houserules-final/s003-0/b1"
+     ]
+    },
+    {
+     "lines": [
+      27,
+      27
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "승인된 test artifact 가 실제 있을 때만 의미군으로 조직",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "승인 artifact 는 기존 프로젝트 테스트 위치나 표준 위치(트리 105~111행)에 둔다",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-test-config.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-test-config.py docstring ⑵ «트리 개정 명세 몫 — `test/` 구조 (트리 105~111행 · D56) #383/#384 `test/` 의 직계 자식은 다섯뿐» — 문면이 인용한 «final.md §1 트리 105~111행»과 행 범위 축자 일치 · registry Checker 등재; 승인 여부 판정은 기계 밖이라 위임 병기"
+      },
+      {
+       "label": "구조 규칙 자체는 테스트를 만들거나 기존 테스트를 자동 이동하지 않는다",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ]
+    },
+    {
+     "lines": [
+      28,
+      29
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "한 프로젝트 안에서 레이아웃 혼용 금지",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-layer-skeleton.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py; 스코프·권한 판정은 기계 밖이라 위임 병기"
+      },
+      {
+       "label": "혼용 금지 규칙만으로 기존 테스트 이동 권한이 생기지 않는다",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ]
+    },
+    {
+     "lines": [
+      30,
+      31
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "검사기의 TARGET 은 저장소 루트(application/ 의 부모)",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-layer-skeleton.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py; 스코프·권한 판정은 기계 밖이라 위임 병기"
+      },
+      {
+       "label": "BC 폴더·application/ 컨테이너 TARGET 은 사용 오류 exit 1 로 거절된다",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-layer-skeleton.py"
+       ],
+       "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py"
+      },
+      {
+       "label": "게이트 증거는 판정 차분 — 앵커 대비 귀속 0 + legacy 잔존 별도 보고 · 귀속 red 의 «확립 규약» 수용 금지",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면이 집행 도구로 `scripts/registry_gate.py` 를 명시 — check-*.py 27종 로스터 밖이라 enforcedBy 대상이 아니다(registry.ttl Checker 개체 = scripts/check-*.py glob) · ②27종 전수 실독 결과 게이트 증거·차분 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
+      },
+      {
+       "label": "좁힌 TARGET·selector 로 얻은 green 은 게이트 증거가 아니다",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면이 집행 도구로 `scripts/registry_gate.py` 를 명시 — check-*.py 27종 로스터 밖이라 enforcedBy 대상이 아니다(registry.ttl Checker 개체 = scripts/check-*.py glob) · ②27종 전수 실독 결과 게이트 증거·차분 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
+      },
+      {
+       "label": "승인 스코프 밖 파일의 귀속은 1차 처방이 그 변경의 철회 — 수리·재설계 금지",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ]
+    },
+    {
+     "lines": [
+      32,
+      33
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "관찰이 결정 입력인 축은 닫힌 목록 여섯",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "목록 밖 축에서 기존 실물의 관찰은 결정의 입력이 아니다",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "배선 «값»은 Ninja 스택 조건부지만 ‹관찰 비입력› 원칙 자체는 무조건",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "‹관찰 비입력›은 신규 산출물의 형태 문장 — 스코프 밖 실물의 이동·수정 권한을 만들지 않는다",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s005-2",
+   "line_start": 34,
+   "line_end": 37,
+   "blocks": [
+    {
+     "lines": [
+      35,
+      37
+     ],
+     "kind": "norm",
+     "restates": [
+      "discipline-houserules-skill/s003/b2",
+      "discipline-houserules-skill/s003/b7"
+     ],
+     "norms": [
+      {
+       "label": "코퍼스가 서로 다른 트리를 제시해도 런타임에 택일하지 않는다",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "final.md 가 단일 출처이고 코퍼스는 파생 배경 — 남는 변수 없음",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "테스트 타입 조직은 implementation-test §4.2 가 단독 소유",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s006-3",
+   "line_start": 38,
+   "line_end": 48,
+   "blocks": [
+    {
+     "lines": [
+      39,
+      41
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "배치 결정 누락·빚 답습 신호의 판정은 final.md 와 검사기가 한다",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-layer-skeleton.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py; 스코프·권한 판정은 기계 밖이라 위임 병기"
+      }
+     ]
+    },
+    {
+     "lines": [
+      42,
+      42
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "신호 — 새 모듈이 층 구분 없이 한 디렉터리에 모임(평면 답습)",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-layer-skeleton.py"
+       ],
+       "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py"
+      }
+     ]
+    },
+    {
+     "lines": [
+      43,
+      43
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "신호 — BC 직계에 트리 밖 여덟째 칸(#81)",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-layer-skeleton.py"
+       ],
+       "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py"
+      }
+     ],
+     "restates": [
+      "discipline-houserules-final/s006/b1"
+     ]
+    },
+    {
+     "lines": [
+      44,
+      44
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "신호 — 골격 칸이 비었다고 생략(#488)",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-layer-skeleton.py"
+       ],
+       "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py"
+      }
+     ],
+     "restates": [
+      "discipline-houserules-final/s003-0/b3"
+     ]
+    },
+    {
+     "lines": [
+      45,
+      45
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "신호 — 옛 이름이 새 코드에 재등장(이관 종료 후 트리 밖 칸 위반 #81·#490)",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-layer-skeleton.py"
+       ],
+       "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py"
+      }
+     ],
+     "restates": [
+      "discipline-houserules-final/s013/b1"
+     ]
+    },
+    {
+     "lines": [
+      46,
+      46
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "신호 — check-layer-skeleton exit 2 를 «기존 코드라 면제»로 읽음",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-layer-skeleton.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 직접 지목 «결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487)»(같은 절 말미) · ②check-layer-skeleton.py docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»·«트리 데이터는 standard_tree.py(정본 140행의 기계 사본) 하나에서 온다» · ④rule-owner-map #486~#491·#81·#490 → scripts/check-layer-skeleton.py; 스코프·권한 판정은 기계 밖이라 위임 병기"
+      }
+     ],
+     "restates": [
+      "discipline-houserules-final/s014/b1"
+     ]
+    },
+    {
+     "lines": [
+      47,
+      48
+     ],
+     "kind": "norm",
+     "restates": [
+      "discipline-houserules-skill/s004-1/b5"
+     ],
+     "norms": [
+      {
+       "label": "신호 — 좁힌 TARGET·즉석 selector 로 얻은 green(게이트 증거는 저장소 루트 레지스트리 전체 1회뿐)",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면이 집행 도구로 `scripts/registry_gate.py` 를 명시 — check-*.py 27종 로스터 밖이라 enforcedBy 대상이 아니다(registry.ttl Checker 개체 = scripts/check-*.py glob) · ②27종 전수 실독 결과 게이트 증거·차분 판정 술어 0 · §16 표 discipline-houserules → agent-discipline-reviewer"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s007-4",
+   "line_start": 49,
+   "line_end": 60,
+   "blocks": [
+    {
+     "lines": [
+      50,
+      52
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "모든 이름은 «첫 대입»에 타입을 적는다 — 예외 0",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-public-surface-annotation.py"
+       ],
+       "basis": "②check-public-surface-annotation.py docstring «dddjango 타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·«#493 모든 이름은 «첫 대입»에 타입을 적는다 … 빠지는 것은 문법이 없는 여덟 자리뿐 … 재대입과 선언적 클래스 본문(ORM 모델 필드·ninja Schema 필드·enum 멤버)은 면제» 축자 일치 · ④rule-owner-map #493 → scripts/check-public-surface-annotation.py"
+      },
+      {
+       "label": "타입 부착 범위는 시그니처·모듈/클래스 변수·함수 지역 변수·테스트와 테스트 재료 전부",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-public-surface-annotation.py"
+       ],
+       "basis": "②check-public-surface-annotation.py docstring «dddjango 타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·«#493 모든 이름은 «첫 대입»에 타입을 적는다 … 빠지는 것은 문법이 없는 여덟 자리뿐 … 재대입과 선언적 클래스 본문(ORM 모델 필드·ninja Schema 필드·enum 멤버)은 면제» 축자 일치 · ④rule-owner-map #493 → scripts/check-public-surface-annotation.py"
+      },
+      {
+       "label": "「자명하니까 면제」를 두지 않는다 — 조건부 면제 금지",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-public-surface-annotation.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-public-surface-annotation.py docstring «dddjango 타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·«#493 모든 이름은 «첫 대입»에 타입을 적는다 … 빠지는 것은 문법이 없는 여덟 자리뿐 … 재대입과 선언적 클래스 본문(ORM 모델 필드·ninja Schema 필드·enum 멤버)은 면제» 축자 일치 · ④rule-owner-map #493 → scripts/check-public-surface-annotation.py; 「자명한가」 판단은 기계 밖이라 위임 병기"
+      }
+     ]
+    },
+    {
+     "lines": [
+      53,
+      54
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "빠지는 곳은 «문법이 없는 자리»뿐(면제가 아니라 불가능)",
+       "class": "Exception",
+       "enforcedBy": [
+        "check-public-surface-annotation.py"
+       ],
+       "basis": "②check-public-surface-annotation.py docstring «dddjango 타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·«#493 모든 이름은 «첫 대입»에 타입을 적는다 … 빠지는 것은 문법이 없는 여덟 자리뿐 … 재대입과 선언적 클래스 본문(ORM 모델 필드·ninja Schema 필드·enum 멤버)은 면제» 축자 일치 · ④rule-owner-map #493 → scripts/check-public-surface-annotation.py"
+      }
+     ]
+    },
+    {
+     "lines": [
+      55,
+      55
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "문법 부재 자리 ① for·with·except·언패킹·다중 대입·증강 대입",
+       "class": "Exception",
+       "enforcedBy": [
+        "check-public-surface-annotation.py"
+       ],
+       "basis": "②check-public-surface-annotation.py docstring «dddjango 타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·«#493 모든 이름은 «첫 대입»에 타입을 적는다 … 빠지는 것은 문법이 없는 여덟 자리뿐 … 재대입과 선언적 클래스 본문(ORM 모델 필드·ninja Schema 필드·enum 멤버)은 면제» 축자 일치 · ④rule-owner-map #493 → scripts/check-public-surface-annotation.py"
+      }
+     ]
+    },
+    {
+     "lines": [
+      56,
+      56
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "문법 부재 자리 ② 재대입·인스턴스 속성(타입은 클래스 본문에)",
+       "class": "Exception",
+       "enforcedBy": [
+        "check-public-surface-annotation.py"
+       ],
+       "basis": "②check-public-surface-annotation.py docstring «dddjango 타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·«#493 모든 이름은 «첫 대입»에 타입을 적는다 … 빠지는 것은 문법이 없는 여덟 자리뿐 … 재대입과 선언적 클래스 본문(ORM 모델 필드·ninja Schema 필드·enum 멤버)은 면제» 축자 일치 · ④rule-owner-map #493 → scripts/check-public-surface-annotation.py"
+      }
+     ]
+    },
+    {
+     "lines": [
+      57,
+      58
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "문법 부재 자리 ③ 프레임워크 선언(모델 필드·class Meta·enum 멤버)",
+       "class": "Exception",
+       "enforcedBy": [
+        "check-public-surface-annotation.py"
+       ],
+       "basis": "②check-public-surface-annotation.py docstring «dddjango 타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·«#493 모든 이름은 «첫 대입»에 타입을 적는다 … 빠지는 것은 문법이 없는 여덟 자리뿐 … 재대입과 선언적 클래스 본문(ORM 모델 필드·ninja Schema 필드·enum 멤버)은 면제» 축자 일치 · ④rule-owner-map #493 → scripts/check-public-surface-annotation.py"
+      }
+     ]
+    },
+    {
+     "lines": [
+      59,
+      60
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "pydantic·ninja Schema·dataclass 필드는 `x: T` 필수 — bare 대입은 규칙 위반 이전에 버그",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-public-surface-annotation.py"
+       ],
+       "basis": "②check-public-surface-annotation.py docstring «dddjango 타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·«#493 모든 이름은 «첫 대입»에 타입을 적는다 … 빠지는 것은 문법이 없는 여덟 자리뿐 … 재대입과 선언적 클래스 본문(ORM 모델 필드·ninja Schema 필드·enum 멤버)은 면제» 축자 일치 · ④rule-owner-map #493 → scripts/check-public-surface-annotation.py"
+      },
+      {
+       "label": "표준 문서군의 코드 예시는 적용 대상 밖 — 규칙은 생성하는 프로덕션·테스트 코드에 건다",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s008-4.1",
+   "line_start": 61,
+   "line_end": 64,
+   "blocks": [
+    {
+     "lines": [
+      62,
+      64
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "주류(PEP 8·mypy 기본 관례)와 다른 선택임을 숨기지 않는다",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "mypy strict 는 시그니처만 강제 — 나머지는 백스톱과 감수자가 집행",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-public-surface-annotation.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-public-surface-annotation.py docstring «dddjango 타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·«#493 모든 이름은 «첫 대입»에 타입을 적는다 … 빠지는 것은 문법이 없는 여덟 자리뿐 … 재대입과 선언적 클래스 본문(ORM 모델 필드·ninja Schema 필드·enum 멤버)은 면제» 축자 일치 · ④rule-owner-map #493 → scripts/check-public-surface-annotation.py; ①문면이 «백스톱과 감수자»를 이원 지목해 검사기+에이전트 병기"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s009-5",
+   "line_start": 65,
+   "line_end": 68,
+   "blocks": [
+    {
+     "lines": [
+      66,
+      68
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "기존 코드베이스의 주석 언어 관례를 우선한다",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "영어 주석이 지배적이면 영어로 맞춘다(일관성 최우선)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "확립된 관례가 없으면 한국어로 쓴다",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "한 코드베이스 안에서 주석 언어를 섞지 않는다",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s011-6.1",
+   "line_start": 71,
+   "line_end": 74,
+   "blocks": [
+    {
+     "lines": [
+      72,
+      74
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "표준 도구셋은 기능 추가 흐름이 직접 다룬다 — 기존 도구 감지·존중, 부재 시 §2.1 버전-핀 규율 셋업(임의 글로벌 설치 금지)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s012-6.2",
+   "line_start": 75,
+   "line_end": 83,
+   "blocks": [
+    {
+     "lines": [
+      76,
+      78
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "새 런타임 의존성의 버전 «값» 규칙 적용 조건 — 핀 표기·매니페스트 위치는 타 스킬 소유",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ]
+    },
+    {
+     "lines": [
+      79,
+      79
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "훈련 기억의 버전 번호를 적지 않는다",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "무핀 설치로 받은 실제 설치 버전을 매니페스트에 핀한다",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "무핀 설치는 resolve 수단일 뿐 최종 상태는 핀",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ]
+    },
+    {
+     "lines": [
+      80,
+      80
+     ],
+     "kind": "prose"
+    },
+    {
+     "lines": [
+      81,
+      81
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "'최신'은 기존 핀과 호환되는 최신이다",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "기존 프레임워크·핵심 의존성 핀 상향 금지 — 불가하면 보고(설계 반송)",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ]
+    },
+    {
+     "lines": [
+      82,
+      82
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "안정 릴리스만 택한다",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "resolve 결과가 pre/rc/dev 면 핀하지 말고 보고",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      },
+      {
+       "label": "직접 의존성만 매니페스트에 핀하고 전이 의존성은 락파일에 맡긴다",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ]
+    },
+    {
+     "lines": [
+      83,
+      83
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "막힌 환경 — 사설·제한 인덱스는 그 인덱스의 최신을 핀하고 resolve 불가면 기억값 금지·보고",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-houserules 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ]
+    }
+   ]
+  }
+ ]
 }

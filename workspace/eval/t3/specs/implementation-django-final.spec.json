@@ -1,2839 +1,4412 @@
 {
-  "schema": "migrate-spec/1",
-  "doc_key": "implementation-django-final",
-  "path": "dddjango/skills/implementation-django/references/final.md",
-  "restates_paths": {
-    "implementation-django-final": "dddjango/skills/implementation-django/references/final.md"
-  },
-  "sections": [
+ "schema": "migrate-spec/1",
+ "doc_key": "implementation-django-final",
+ "path": "dddjango/skills/implementation-django/references/final.md",
+ "restates_paths": {
+  "implementation-django-final": "dddjango/skills/implementation-django/references/final.md",
+  "architecture-ddd-final": "dddjango/skills/architecture-ddd/references/final.md",
+  "discipline-houserules-final": "dddjango/skills/discipline-houserules/references/final.md",
+  "architecture-db-final": "dddjango/skills/architecture-db/references/final.md",
+  "discipline-tdd-final": "dddjango/skills/discipline-tdd/references/final.md",
+  "implementation-test-final": "dddjango/skills/implementation-test/references/final.md"
+ },
+ "sections": [
+  {
+   "section_key": "s003-1",
+   "line_start": 25,
+   "line_end": 28,
+   "blocks": [
     {
-      "section_key": "s003-1",
-      "line_start": 25,
-      "line_end": 28,
-      "blocks": [
-        {
-          "lines": [26, 28],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "Django 설계 철학의 코드 작성 기반 준거",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «모든 Django 코드 작성의 기반이다»(P0 애매—보수적 포함 계승) · ②③④ 지목 없음 — 위임 기본값(implementation-* → discipline-reviewer)"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s004-1.1",
-      "line_start": 29,
-      "line_end": 39,
-      "blocks": [
-        { "lines": [30, 32], "kind": "table-row" },
-        { "lines": [33, 33], "kind": "table-row", "note": "Loose Coupling — 프레임워크 성질 설명(P0 비규범 판정)" },
-        {
-          "lines": [34, 34],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "Less Code — 최소 코드·보일러플레이트 배제",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①의무 표지 «작성되어야 하며» · 검사기 비커버(코드량 판정은 의미 레인) — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [35, 35], "kind": "table-row", "note": "Quick Development — 존재 이유 설명(비규범)" },
-        {
-          "lines": [36, 36],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "DRY — 고유 개념·데이터의 단일 장소",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①의무 표지 «존재해야 한다» · 중복 판정은 정적 형태로 안 갈림 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [37, 37],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "명시가 암시보다 낫다 — 마법의 조건부 사용",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①조건 표지 «~할 때만 사용한다» · 검사기 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [38, 39],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "저수준~고수준 일관성 유지",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①의무 표지 «유지한다» · 검사기 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s005-1.2",
-      "line_start": 40,
-      "line_end": 45,
-      "blocks": [
-        {
-          "lines": [41, 42],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "모델의 객체 전 측면 캡슐화",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①Active Record 캡슐화 지시 · ②check-domain-model 은 표준 트리 domain_layer 대상이라 평면 Django 모델 축은 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [43, 43],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "데이터·메타정보의 모델 클래스 정의",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①의무 표지 «정의한다» · 검사기 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [44, 45],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "모델 자기완결성",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①의무 표지 «있어야 한다» · 검사기 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s006-1.3",
-      "line_start": 46,
-      "line_end": 53,
-      "blocks": [
-        { "lines": [47, 49], "kind": "table-row" },
-        {
-          "lines": [50, 50],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "save() 명시적 호출 요구",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «명시적 호출 필요»(P0 애매—포함) · 검사기 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [51, 51], "kind": "table-row", "note": "Terse Syntax — 프레임워크 성질 설명(비규범)" },
-        {
-          "lines": [52, 53],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "커스텀 SQL 작성 용이성 보존",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «쉽게 작성할 수 있어야 한다» · 검사기 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s007-1.4",
-      "line_start": 54,
-      "line_end": 60,
-      "blocks": [
-        {
-          "lines": [55, 56],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "URL의 Python 함수명 결합 금지",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①금지 표지 «결합되면 안 된다» · 검사기 비커버(URLconf 축 검사기 없음) — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [57, 57], "kind": "prose", "note": "무한한 유연성 제공 — 프레임워크 성질 설명" },
-        {
-          "lines": [58, 58],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "예쁜 URL 우선",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «쉽거나 같아야 한다» · 검사기 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [59, 60],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "URL의 파일 확장자 포함 금지",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①금지 표지 «포함시키지 않는다» · 검사기 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s008-1.5",
-      "line_start": 61,
-      "line_end": 67,
-      "blocks": [
-        {
-          "lines": [62, 63],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "템플릿의 로직·표현 분리",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «분리한다» · ②check-naming #588·#589 는 표준 트리의 사람 문구·템플릿 업무 판정 축이라 이 일반 원칙은 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [64, 64],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "템플릿 기능의 표현 필수 범위 한정",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «프로그래밍 언어를 발명하지 않는다» · 검사기 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [65, 67], "kind": "prose", "note": "HTML 비종속·보안 기본 — 프레임워크 성질 설명(P0 비계수)" }
-      ]
-    },
-    {
-      "section_key": "s009-1.6",
-      "line_start": 68,
-      "line_end": 75,
-      "blocks": [
-        {
-          "lines": [69, 70],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "함수로 충분하면 클래스 미인스턴스화",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «인스턴스화하지 않는다» · 검사기 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [71, 71],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "요청 객체의 직접 전달",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «전역 변수가 아닌 직접 전달받아» · 검사기 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [72, 73],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "GET·POST 명확 구분",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «명확히 구분한다» · 검사기 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [74, 75], "kind": "prose" }
-      ]
-    },
-    {
-      "section_key": "s011-2.1",
-      "line_start": 80,
-      "line_end": 85,
-      "blocks": [
-        {
-          "lines": [81, 82],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "black 포매터 사용",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①도구 지목 있으나 ③P0 «백스톱 미지목»(발견 2) · 로스터 27종에 포매터 검사기 없음 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [83, 83],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "코드 88자·문서 79자 줄 길이",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "③P0 백스톱 미지목 · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [84, 85],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "Python 4칸·템플릿 2칸 들여쓰기",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "③P0 백스톱 미지목 · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s012-2.2",
-      "line_start": 86,
-      "line_end": 122,
-      "blocks": [
-        {
-          "lines": [87, 89],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "임포트 그룹 순서·그룹 내 알파벳 정렬",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «정렬하며» · 로스터의 import 규칙(context-isolation #2·#9 등)은 층·BC 방향 축이라 그룹 정렬은 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [90, 118], "kind": "code" },
-        {
-          "lines": [119, 119],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "isort 자동 정렬 사용",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①도구 지목 · ③P0 «검사기로 지목되진 않음» — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [120, 120],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "편의 임포트 사용",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «사용한다» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [121, 122],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "다중 점 상대 임포트 회피·절대 임포트",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «피하고 절대 임포트를 사용한다» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s013-2.3",
-      "line_start": 123,
-      "line_end": 143,
-      "blocks": [
-        {
-          "lines": [124, 143],
-          "kind": "code",
-          "norms": [
-            {
-              "label": "f-string 내 함수 호출 금지",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①코드 주석 «함수 호출 금지»(P0 발견 5 운반체) · 로스터 비커버 — 위임 기본값"
-            },
-            {
-              "label": "f-string 내 연산 금지",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①코드 주석 «연산 금지» · 로스터 비커버 — 위임 기본값"
-            },
-            {
-              "label": "번역 대상 문자열의 f-string 금지",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①코드 주석 «번역 대상 문자열에는 f-string을 사용하지 않는다» · ②check-naming #588 은 렌더 위치 축이라 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s014-2.4",
-      "line_start": 144,
-      "line_end": 178,
-      "blocks": [
-        {
-          "lines": [145, 178],
-          "kind": "code",
-          "norms": [
-            {
-              "label": "모델 내부 정의 순서 7단",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①코드 주석 1~7 번호 규칙이 규범 전 운반체(P0 발견 5) · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s015-2.5",
-      "line_start": 179,
-      "line_end": 223,
-      "blocks": [
-        { "lines": [180, 202], "kind": "code" },
-        {
-          "lines": [203, 204],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "값 집합 단일 출처는 domain_layer StrEnum",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «계층 소유 — 단일 출처는 domain_layer의 StrEnum이다» · ②choices-literal-consumption 은 «선언된 심볼의 존재»에 앵커된 소비 축만 보고 선언 계층 판정은 의미 레인 명시 — 위임 기본값"
-            },
-            {
-              "label": "TextChoices 자체 선언의 순수 인프라 필드 한정",
-              "class": "Exception",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «순수 인프라 필드에 한정한다» — 조건 한정 조항 · 검사기 비커버(도메인 판정 유무는 의미 판정)"
-            },
-            {
-              "label": "도메인 상태의 TextChoices 선언 금지",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «도메인 상태를 TextChoices로 선언하면 domain이 ORM 타입을 역참조»(architecture-ddd §3.2 인용) · 형태로 안 갈림 — 위임 기본값"
-            },
-            {
-              "label": "도메인 상태 필드의 domain Enum 파생",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «domain Enum에서 파생시킨다» · ②choices-literal-consumption 은 파생 형태 자체를 판정하지 않음(리터럴 소비만) — 위임 기본값"
-            },
-            {
-              "label": "도메인 판정 최초 발생 슬라이스의 파생형 전환",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «처음 생기는 슬라이스에서 파생형으로 전환한다» — 전환 시점 판정은 슬라이스 심사(의미 레인) · 위임 기본값"
-            },
-            {
-              "label": "기존 TextChoices 배치의 규약 부정(빚 선언)",
-              "class": "Override",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «규약이 아니라 아직 안 갚은 빚이다 — 기존 배치는 입력이 아니다»(discipline-houserules §1.1·§4 인용) — 우선 규칙 · 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [205, 219], "kind": "code" },
-        {
-          "lines": [220, 221],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "직렬화 자리의 StrEnum 멤버 직접 배치 금지",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «멤버를 직접 두면 EnumSerializer가 살아있는 enum 참조를 박는다» · ②choices-literal-consumption 은 비-Constant 를 정상 처리라 이 형태를 잡지 않음 — 위임 기본값"
-            },
-            {
-              "label": "domain Enum 파생의 .value 평탄화",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "②choices-literal-consumption docstring 5) 는 집행 규칙이 아니라 거짓양성 회피(면제) 조항이고, 구현부(167~174행)는 default=<문자열 Constant> 만 적출해 이 규범의 위반형 default=OrderStatus.PENDING(멤버 직접·.value 없음)을 정상 통과시킨다 — 커버 0(옆 규범 «멤버 직접 배치 금지»와 동일 근거·§4 메모 5 원칙)"
-            },
-            {
-              "label": "CheckConstraint·부분 인덱스 조건 값의 동일 파생",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «Q() 조건 값도 같은 파생으로 쓴다» · ②checker 의 (b) 직접 호출형은 filter/exclude 한정이라 Meta 조건식은 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [222, 223],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "choices·Enum 필드 값의 심볼 참조 의무",
-              "class": "Obligation",
-              "enforcedBy": ["check-choices-literal-consumption.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "②docstring 표제 «선언된 choices 값의 리터럴 소비 결정적 백스톱» + (a) default 리터럴 · (b) filter/exclude 리터럴 — 직접 커버 · 변수 우회 등 의미 레인은 reviewer 명시"
-            },
-            {
-              "label": "값 비교는 ==(is 금지)",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «비교는 ==(is 금지)» · ②docstring «보지 않는 것»에 비교식(x.status == …) 명시 제외 — 의미 레인(reviewer)"
-            },
-            {
-              "label": "복합 상태 판정의 1차 시정은 애그리거트 술어·enum 프로퍼티",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «심볼 치환이 판정 소유를 면책하지 않는다»(architecture-ddd §3.2) · ②check-app-container docstring «판정-소유 형태(빈혈) 같은 의미 변종은 범위 밖(discipline-reviewer 몫)» — 문면 근거 있는 위임"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s016-2.6",
-      "line_start": 224,
-      "line_end": 227,
-      "blocks": [
-        {
-          "lines": [225, 227],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "템플릿 코딩 스타일의 web §4 소유 위임",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «implementation-django-web(§4)가 소유한다» — 소유 포인터 · 검사기 비커버 · 위임 기본값(implementation-*)"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s017-2.7",
-      "line_start": 228,
-      "line_end": 241,
-      "blocks": [
-        {
-          "lines": [229, 239],
-          "kind": "code",
-          "norms": [
-            {
-              "label": "뷰 첫 매개변수는 반드시 request",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①코드 주석 «첫 번째 매개변수는 반드시 request»(P0 발견 5) · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [240, 241], "kind": "prose" }
-      ]
-    },
-    {
-      "section_key": "s019-3.1",
-      "line_start": 244,
-      "line_end": 290,
-      "blocks": [
-        { "lines": [245, 247], "kind": "prose" },
-        { "lines": [248, 286], "kind": "code" },
-        {
-          "lines": [287, 288],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "테스트 디렉터리 조직의 implementation-test §4.2 소유",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «implementation-test §4.2가 소유한다» — 소유 포인터 · 위임 기본값"
-            },
-            {
-              "label": "테스트 파일 평면 나열 금지",
-              "class": "Prohibition",
-              "enforcedBy": ["check-test-config.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "②docstring ⑵ #383/#384 «test/ 의 직계 자식은 다섯뿐 — unit/·integration/·e2e/·factories/·fake/»(+#596 직계 파일은 conftest.py·__init__.py 만) = 평면 나열의 결정적 백스톱이나 **표준 트리 test/ 한정** 커버다 — 이 규범의 운반체는 앱별 tests/ 배치 예시 문맥이고 금지문 자체는 배치 불문 일반형이라, 앱별 tests/ 변종의 평면 나열은 검사기 밖(reviewer). 표준 트리를 명시 지시하지 않는 문맥에 표준 트리 검사기를 부착하지 않는다는 §4 메모 7 기준과의 긴장은 «일반형 금지문의 표준 트리 부분집합만 결정적»으로 정리한다"
-            }
-          ]
-        },
-        {
-          "lines": [289, 290],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "생성 코드 표준 파일트리의 discipline-houserules 소유",
-              "class": "Obligation",
-              "enforcedBy": ["check-layer-skeleton.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «생성 코드 배치 권위는 그 문서가 갖는다» · ②check-layer-skeleton docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»"
-            },
-            {
-              "label": "§3.1의 배경 강등(배치 권위 아님)",
-              "class": "Override",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «여기 §3.1은 그 표준의 배경이다» — 권위 우선 규칙 · 문서 권위 판정은 의미 레인"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s020-3.2",
-      "line_start": 291,
-      "line_end": 307,
-      "blocks": [
-        { "lines": [292, 303], "kind": "code" },
-        {
-          "lines": [304, 304],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "앱 이름은 간결한 복수형 단어",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "②check-naming 로스터는 약어·패턴 낱말·접두접미 축이라 복수형 명명은 담당 규칙 부재 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [305, 305],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "한 문장 목적 서술 불가 시 앱 분리",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «분리가 필요하다» · 응집 판정은 의미 레인 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [306, 307],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "앱 간 순환 의존 시 설계 재검토",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "②check-context-isolation 은 표준 트리 BC 경계·층 방향 축(#12·#13·#600 등)이라 평면 Django 앱 순환은 대상 밖 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s021-3.3",
-      "line_start": 308,
-      "line_end": 341,
-      "blocks": [
-        { "lines": [309, 338], "kind": "code" },
-        {
-          "lines": [339, 339],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "비밀 정보 하드코딩 절대 금지",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①금지 표지 «절대 하드코딩하지 않는다» · ②check-test-config ⑶ 는 settings 환경축 분할(#445~#447)만 보고 비밀 값은 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [340, 341],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": ".env 파일의 gitignore 등재",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "로스터 27종에 .gitignore 를 읽는 검사기 없음 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s022-3.4",
-      "line_start": 342,
-      "line_end": 362,
-      "blocks": [
-        {
-          "lines": [343, 358],
-          "kind": "code",
-          "norms": [
-            {
-              "label": "모듈 최상위 settings 접근 회피",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①규칙이 좋은/나쁜 예 코드로만 표현(P0) · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [359, 360], "kind": "prose", "note": "settings.configure() 불가 — 사유 설명" },
-        { "lines": [361, 362], "kind": "prose" }
-      ]
-    },
-    {
-      "section_key": "s024-4.1",
-      "line_start": 365,
-      "line_end": 407,
-      "blocks": [
-        {
-          "lines": [366, 368],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "절 전체의 평면 Django 맥락 한정",
-              "class": "Exception",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①인용구 «이 절은 평면 Django(기존 관례 유지보수) 맥락의 원칙이다» — 조건 한정 조항 · 맥락 판정은 의미 레인"
-            },
-            {
-              "label": "표준 4계층의 평면 ORM 판정 메서드 blocker",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①인용구 «판정 메서드를 얹으면 blocker 다(architecture-ddd §3.2)» · ②check-app-container docstring «판정-소유 형태(빈혈) 같은 의미 변종은 범위 밖(discipline-reviewer 몫)» — 문면 근거 있는 위임"
-            }
-          ]
-        },
-        {
-          "lines": [369, 370],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "비즈니스 로직의 모델·서비스 배치",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «뷰가 아닌 모델(또는 서비스 레이어)에 둔다» · 평면 Django 축이라 표준 트리 검사기 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [371, 405], "kind": "code" },
-        {
-          "lines": [406, 407],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "모델 2000줄 초과 시 서비스 레이어 분리 검토",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «검토한다» — 판단형 규칙 · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s026",
-      "line_start": 412,
-      "line_end": 431,
-      "blocks": [
-        { "lines": [413, 428], "kind": "code" },
-        { "lines": [429, 429], "kind": "prose", "note": "조인 비용 없음 — 사유 설명" },
-        {
-          "lines": [430, 431],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "공통 필드 재사용 시 추상 베이스 클래스 권장",
-              "class": "Permission",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «가장 적합하다» — 권장(허용형) · P0 §4.2 분배 1(s026:1) · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s027",
-      "line_start": 432,
-      "line_end": 446,
-      "blocks": [
-        {
-          "lines": [433, 443],
-          "kind": "code",
-          "norms": [
-            {
-              "label": "다중 테이블 상속의 주의 사용",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①코드 주석 «주의: 각 모델마다 별도 테이블 생성 + 암묵적 OneToOneField» · P0 §4.2 분배 2 · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [444, 444], "kind": "prose", "note": "JOIN 성능 저하 — 사유 설명" },
-        {
-          "lines": [445, 446],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "추상 베이스 클래스+명시적 FK 우선",
-              "class": "Override",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «대부분의 경우 … 가 더 낫다» — MTI 대비 우선 규칙 · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s029-4.3",
-      "line_start": 469,
-      "line_end": 500,
-      "blocks": [
-        { "lines": [470, 494], "kind": "code" },
-        { "lines": [495, 495], "kind": "prose", "note": "CharField+TextChoices 가독성 — 비교 설명" },
-        {
-          "lines": [496, 496],
-          "kind": "norm",
-          "restates": ["implementation-django-final/s015-2.5/b2"],
-          "note": "도메인 판정 시 §2.5 계층 소유 전환 — 정본은 s015-2.5/b2(P0 발견 6 재진술 명기). Work 미승격"
-        },
-        { "lines": [497, 497], "kind": "prose", "note": "IntegerChoices 저장 효율 — 비교 설명" },
-        {
-          "lines": [498, 498],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "JSONField는 스키마 없는 데이터 한정",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «스키마 없는 데이터에만 사용하고, 구조화된 데이터에는 정규 필드» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [499, 500],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "금액 필드의 DecimalField 사용",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «DecimalField를 금액에 사용하고» · 로스터 비커버 — 위임 기본값"
-            },
-            {
-              "label": "금액 필드의 FloatField 회피",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «FloatField는 피한다» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s030-4.4",
-      "line_start": 501,
-      "line_end": 529,
-      "blocks": [
-        { "lines": [502, 523], "kind": "code" },
-        {
-          "lines": [524, 524],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "clean()의 Python 레벨 검증 수행",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «수행한다» · ②check-usecase-dto-placement #139 는 표준 트리 schema_in 축이라 모델 clean 은 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [525, 525],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "CheckConstraint 이중 방어",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «데이터베이스 레벨 제약도 함께 건다(이중 방어)» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [526, 527],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "full_clean() 호출 경로 확보",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «호출되도록 한다» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [528, 529], "kind": "prose" }
-      ]
-    },
-    {
-      "section_key": "s032-5.1",
-      "line_start": 532,
-      "line_end": 575,
-      "blocks": [
-        {
-          "lines": [533, 571],
-          "kind": "code",
-          "restates": ["implementation-django-final/s015-2.5/b5"],
-          "note": "코드 주석 «소비 규율(§2.5): 리터럴 아닌 심볼»(542행) — 정본은 s015-2.5/b5. Work 미승격"
-        },
-        {
-          "lines": [572, 572],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "QuerySet 메서드 체이닝 보장",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «체이닝을 가능하게 한다» · 로스터 비커버(표준 트리 리포지토리 축은 transaction-boundary #282~#287) — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [573, 573], "kind": "prose", "note": "as_manager() 승격 — 가능성 설명" },
-        {
-          "lines": [574, 575],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "get_queryset() 오버라이드 기본 필터 주의",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «주의한다» — 판단형 · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s033-5.2",
-      "line_start": 576,
-      "line_end": 612,
-      "blocks": [
-        { "lines": [577, 605], "kind": "code" },
-        { "lines": [606, 606], "kind": "prose" },
-        { "lines": [607, 608], "kind": "table-row" },
-        {
-          "lines": [609, 609],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "FK·O2O에는 select_related()",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①선택 기준 표 행이 규범 운반체 · 로스터 비커버(N+1 은 성능 축) — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [610, 610],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "M2M·역참조에는 prefetch_related()",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 표 행 운반 · 로스터 비커버"
-            }
-          ]
-        },
-        {
-          "lines": [611, 612],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "조건부 프리페치에는 Prefetch() 객체",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 표 행 운반 · 로스터 비커버"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s034-5.3",
-      "line_start": 613,
-      "line_end": 632,
-      "blocks": [
-        { "lines": [614, 628], "kind": "code" },
-        { "lines": [629, 629], "kind": "prose" },
-        {
-          "lines": [630, 630],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "프로파일링 없는 only()·defer() 공격적 사용 금지",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①금지 표지 «사용하지 않는다» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [631, 632], "kind": "prose" }
-      ]
-    },
-    {
-      "section_key": "s035-5.4",
-      "line_start": 633,
-      "line_end": 659,
-      "blocks": [
-        { "lines": [634, 656], "kind": "code" },
-        { "lines": [657, 657], "kind": "prose", "note": "annotate/filter 순서 — P0 설명 판정(비계수)" },
-        {
-          "lines": [658, 659],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "불필요 계산 필드의 alias() 사용",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «alias()를 사용하여 DB 부담을 줄인다» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s036-5.5",
-      "line_start": 660,
-      "line_end": 686,
-      "blocks": [
-        {
-          "lines": [661, 684],
-          "kind": "code",
-          "norms": [
-            {
-              "label": "루프 개별 save 대신 bulk 연산",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①규범이 좋은/나쁜 예 코드로만 표현(P0) · ②check-transaction-boundary #599 는 표준 트리 리포지토리 save_all 축이라 평면 bulk 는 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [685, 686], "kind": "prose" }
-      ]
-    },
-    {
-      "section_key": "s037-6",
-      "line_start": 687,
-      "line_end": 692,
-      "blocks": [
-        {
-          "lines": [688, 690],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "서버렌더 뷰의 implementation-django-web §2 소유",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «표현 계층이므로 implementation-django-web(§2)가 소유한다» — 소유 포인터 · 위임 기본값"
-            },
-            {
-              "label": "JSON API 라우팅·스키마와 REST 계약의 소유 분리",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «implementation-django-ninja, REST 계약은 architecture-api가 소유한다» — 소유 포인터 · 계약 설계 판정은 design-review-api 이나 이 문서 규범의 준수 판정은 기본값 유지"
-            },
-            {
-              "label": "코어 문서의 service·selector 경계 한정",
-              "class": "Exception",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «이 문서(코어)는 … 경계(§16)만 다룬다» — 범위 한정 조항 · 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [691, 692], "kind": "prose" }
-      ]
-    },
-    {
-      "section_key": "s038-7",
-      "line_start": 693,
-      "line_end": 698,
-      "blocks": [
-        {
-          "lines": [694, 696],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "웹 폼의 implementation-django-web §6 소유",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «implementation-django-web(§6)가 소유한다» — 소유 포인터 · 위임 기본값"
-            },
-            {
-              "label": "durable invariant의 model·DB 경계 보장",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «model/DB 경계에서도 보장한다» · ②로스터에 제약 설계 판정 검사기 없음 — 위임 기본값"
-            },
-            {
-              "label": "도메인 규칙의 architecture-ddd 소유",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «도메인 규칙 자체는 architecture-ddd가 소유한다» — 소유 포인터 · 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [697, 698], "kind": "prose" }
-      ]
-    },
-    {
-      "section_key": "s039-8",
-      "line_start": 699,
-      "line_end": 704,
-      "blocks": [
-        {
-          "lines": [700, 702],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "신규 REST 계약은 API 계약 문제로 선행 처리",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «API 계약 문제로 먼저 다룬다» — 소유 문서(architecture-api) 문면 미지정(P0) · 위임 기본값"
-            },
-            {
-              "label": "greenfield 기본 경로는 Django Ninja Router·Schema",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «기본 경로를 Django Ninja Router/Schema로 두며» · ②check-ninja-boundary-middleware 는 §6 경계 미들웨어 자가등록 축이라 기본 경로 선택은 비커버 — 위임 기본값"
-            },
-            {
-              "label": "DRF 내용의 유지보수·기채택 프로젝트 한정",
-              "class": "Exception",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «… 안에서만 적용한다» — 범위 한정 조항 · 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [703, 704],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "신규 코드의 DRF 기본 권장 금지",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①금지 표지 «기본 권장안처럼 제시하지 않는다» · 로스터 비커버 — 위임 기본값"
-            },
-            {
-              "label": "도메인 규칙의 Django-side boundary 배치",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «serializer/viewset에 흩뿌리지 말고 … Django-side boundary에 둔다» · ②check-app-container docstring 의 «판정-소유 형태는 discipline-reviewer 몫» — 문면 근거 있는 위임"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s040-8.1",
-      "line_start": 705,
-      "line_end": 742,
-      "blocks": [
-        { "lines": [706, 737], "kind": "code" },
-        {
-          "lines": [738, 738],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "시나리오별 Serializer 분리",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «분리하면 보안과 성능 모두 개선된다» · DRF 유지보수 축이라 로스터(ninja 계열) 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [739, 739],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "fields = __all__ 회피",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «피한다» · 로스터 비커버(DRF 표면) — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [740, 740], "kind": "prose", "note": "source 파라미터 — 가능성 설명" },
-        {
-          "lines": [741, 742],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "공유 규칙의 모델·service·DB constraint 상향",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «여러 entry point가 공유하는 규칙은 … 올린다» · ②check-usecase-dto-placement #139 는 표준 트리 schema_in 축 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s041-8.2",
-      "line_start": 743,
-      "line_end": 782,
-      "blocks": [
-        { "lines": [744, 777], "kind": "code" },
-        {
-          "lines": [778, 778],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "액션별 Serializer 분리(get_serializer_class 오버라이드)",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «분리한다» · DRF 유지보수 축 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [779, 780], "kind": "prose", "note": "@action 권한·DefaultRouter — 가능성 설명" },
-        {
-          "lines": [781, 782],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "트랜잭션·부수효과·상태 전이의 model·service 경계 분리",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «명시적인 model/service boundary로 빼서» · ②check-transaction-boundary 는 표준 트리 유스케이스·리포지토리 축이라 DRF viewset 은 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s042-8.3",
-      "line_start": 783,
-      "line_end": 799,
-      "blocks": [
-        { "lines": [784, 795], "kind": "code" },
-        {
-          "lines": [796, 796],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "전역 기본 permission의 settings 설정",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 지시 · DRF 표면이라 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [797, 797],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "ViewSet 레벨 permission 오버라이드",
-              "class": "Permission",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①허용 표지 «오버라이드» 선택지 제시 · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [798, 799],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "객체 레벨 권한은 has_object_permission()",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «에서 처리» — 자리 지정 · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s043-8.4",
-      "line_start": 800,
-      "line_end": 818,
-      "blocks": [
-        { "lines": [801, 815], "kind": "code" },
-        { "lines": [816, 816], "kind": "prose", "note": "Generic views 자동 적용 — 동작 설명" },
-        {
-          "lines": [817, 818],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "APIView 직접 사용 시 수동 페이지네이션 호출",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «호출해야 한다» · 로스터 비커버(DRF 표면) — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s044-8.5",
-      "line_start": 819,
-      "line_end": 853,
-      "blocks": [
-        { "lines": [820, 847], "kind": "code" },
-        {
-          "lines": [848, 848],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "AcceptHeaderVersioning 관행 채택",
-              "class": "Permission",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «best practice로 간주된다 … 다른 방식도 적합할 수 있다»(P0 애매—포함) — 허용형 · 로스터 비커버"
-            }
-          ]
-        },
-        { "lines": [849, 849], "kind": "prose", "note": "URLPathVersioning 직관성 — 비교 설명" },
-        {
-          "lines": [850, 851],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "필드 삭제·변경은 새 버전에서만",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «새 버전에서만 수행한다» · ②check-business-vocabulary #604 «계약은 가산만»은 framework capability 계약 축이라 DRF API 버전은 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [852, 853], "kind": "prose" }
-      ]
-    },
-    {
-      "section_key": "s045-9",
-      "line_start": 854,
-      "line_end": 857,
-      "blocks": [
-        {
-          "lines": [855, 857],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "시그널 사용 시나리오의 명확한 인지",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «명확히 알아야 한다» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s046-9.1",
-      "line_start": 858,
-      "line_end": 882,
-      "blocks": [
-        {
-          "lines": [859, 861],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "BC 경계 간 트리거의 signal 금지(published_event 소유)",
-              "class": "Prohibition",
-              "enforcedBy": ["check-event-publish.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①인용구 «signal 이 아니라 published_event/·event_subscription/ 소유다(#89·#90)» · ②check-event-publish docstring #502·#507·#508 이 published_event/·event_subscription/ 표면을 결정적으로 문다"
-            },
-            {
-              "label": "signal 예시의 같은 BC 내부·서드파티 수신 한정",
-              "class": "Exception",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①인용구 «아래 예는 같은 BC 내부·서드파티 모델 수신 한정» — 범위 한정 조항 · 의미 판정"
-            }
-          ]
-        },
-        { "lines": [862, 877], "kind": "code" },
-        { "lines": [878, 878], "kind": "prose" },
-        {
-          "lines": [879, 879],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "제어 불가 서드파티 모델 반응 시 signal 허용",
-              "class": "Permission",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①허용 조건 목록 «시그널이 적절한 경우» · 로스터 비커버(허용 조건 판정은 의미 레인) — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [880, 880],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "순환 의존 회피형 앱 간 통신 시 signal 허용",
-              "class": "Permission",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 허용 조건 목록 · 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [881, 882],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "다수 모델 일괄 핸들러 적용 시 signal 허용",
-              "class": "Permission",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 허용 조건 목록 · 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s047-9.2",
-      "line_start": 883,
-      "line_end": 915,
-      "blocks": [
-        {
-          "lines": [884, 907],
-          "kind": "code",
-          "norms": [
-            {
-              "label": "외부 부수효과의 커밋 전 실행 금지(§16.4 전제)",
-              "class": "Prohibition",
-              "enforcedBy": ["check-transaction-boundary.py", "check-usecase-dto-placement.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①코드 주석 «외부 부수효과는 커밋 전 실행 금지 — §16.4 on_commit 정렬이 전제다» · ②check-transaction-boundary #200 «커밋 뒤 부작용은 unit_of_work.after_commit» + usecase-dto-placement #541 «커밋 전 발행 금지 — .publish( 직접 호출은 uow.after_commit 밖» — 금지문이 부수효과 종류를 한정하지 않아 발행형도 위반형에 들어가므로 s078-16.4/1585 판과 배선을 일치시킨다(양쪽 다 .publish( 한정의 부분 커버 · email 등 나머지 부수효과는 reviewer)"
-            }
-          ]
-        },
-        { "lines": [908, 908], "kind": "prose" },
-        {
-          "lines": [909, 909],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "이미 결합된 컴포넌트 간 signal 회피",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①회피 조건 목록 «시그널을 피해야 하는 경우» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [910, 910],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "save()·delete() 오버라이드로 충분할 때 signal 회피",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 회피 조건 목록 · 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [911, 911],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "request_started·request_finished의 미들웨어 대체",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①회피 조건 목록 · ②check-ninja-boundary-middleware 의 판정 축은 «BC driving 자가정의 미들웨어의 자가등록 적출»뿐이라 시그널을 계속 써도 발화하지 않는다 — 커버 0(s072-15.1 순서 규범과 동형 판정)"
-            }
-          ]
-        },
-        { "lines": [912, 913], "kind": "prose", "note": "시그널 동기 실행·예외 전파 — 성질 설명" },
-        { "lines": [914, 915], "kind": "prose" }
-      ]
-    },
-    {
-      "section_key": "s049-10.1",
-      "line_start": 918,
-      "line_end": 928,
-      "blocks": [
-        {
-          "lines": [919, 928],
-          "kind": "code",
-          "norms": [
-            {
-              "label": "마이그레이션을 작게 유지",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①코드 주석 «작게 유지한다»(P0 발견 5) · 로스터 비커버 — 위임 기본값"
-            },
-            {
-              "label": "sqlmigrate로 실제 SQL 확인",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①코드 주석 «sqlmigrate로 실제 SQL을 확인한다» — 결정적 절차이나 로스터 27종에 해당 검사기 없음 — 위임 기본값"
-            },
-            {
-              "label": "마이그레이션 파일의 버전 관리 포함",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "②check-mechanism-ownership ⑵ #336(자리)·#337(파일명 꼴)은 VCS 포함 여부와 무관하다 — gitignore 된 마이그레이션도 자리·이름이 맞으면 통과하므로 위반형 커버 0. 쌍둥이 규범 «migrations/ gitignore 등재 금지»와 동일 근거(.gitignore·VCS 판독 검사기 부재)"
-            },
-            {
-              "label": "migrations/의 gitignore 등재 금지",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "로스터 27종에 .gitignore 를 읽는 검사기 없음 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s050-10.2",
-      "line_start": 929,
-      "line_end": 947,
-      "blocks": [
-        {
-          "lines": [930, 932],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "migrations/에는 makemigrations 산출물만",
-              "class": "Obligation",
-              "enforcedBy": ["check-mechanism-ownership.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "②check-mechanism-ownership #593 «migrations/ 안은 사람이 직접 손대지 않는다 — 도구 산출물 모양의 허용 목록 밖은 전부 위반»"
-            },
-            {
-              "label": "손 편집 RunPython·RunSQL 데이터 마이그레이션 금지",
-              "class": "Prohibition",
-              "enforcedBy": ["check-mechanism-ownership.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "②동 docstring #593 «operations 원소는 migrations.* 호출, RunPython/RunSQL 제외» — 문면 정확 일치"
-            }
-          ]
-        },
-        {
-          "lines": [933, 934],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "대량 채우기는 Expand→Backfill→Contract 배포 단계",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «배포 절차의 한 단계다» · 인용 §11.1 은 architecture-db 절 번호(P0 발견 1 표류) · 배포 절차 판정은 로스터 밖 — 위임 기본값"
-            },
-            {
-              "label": "backfill 코드의 저장소 루트 scripts/ 배치",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «트리 밖 저장소 루트 scripts/ 에 둔다(일회성 — 규정하지 않는다)» · ②check-layer-skeleton 은 BC 내부 폐쇄만 보므로 트리 밖 자리는 비커버 — 위임 기본값"
-            },
-            {
-              "label": "순서 결합 소량 정리의 단일 마이그레이션 접기 금지",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①금지 표지 «마이그레이션 파일 하나로 접지 않는다» · #593 은 손편집 형태 축이라 «접기» 판정은 의미 레인 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [935, 936], "kind": "prose", "note": "반례 도입문" },
-        { "lines": [937, 945], "kind": "code" },
-        {
-          "lines": [946, 947],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "squash 시 데이터 마이그레이션 보존 정정",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «지워지는 것은 elidable=True 를 명시했을 때뿐이다» — 사실 정정형 규범 · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s051-10.3",
-      "line_start": 948,
-      "line_end": 972,
-      "blocks": [
-        {
-          "lines": [949, 968],
-          "kind": "code",
-          "norms": [
-            {
-              "label": "NOT NULL 컬럼 추가의 3단계 배포",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①코드 주석 «좋은 예: 3단계 배포»가 규범 운반체 · 로스터 비커버(배포 순서는 절차 판정) — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [969, 969],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "대형 테이블 마이그레이션의 작은 단위 분할",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «분할한다» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [970, 970],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "PostgreSQL 무중단 도구 고려",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «고려한다» — 판단형 · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [971, 972], "kind": "prose", "note": "AddIndex CONCURRENTLY — 설정 가능성 설명" }
-      ]
-    },
-    {
-      "section_key": "s052-10.4",
-      "line_start": 973,
-      "line_end": 1048,
-      "blocks": [
-        {
-          "lines": [974, 984],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "이주 시점(WHEN)의 architecture-ddd §3.2 소유 분리",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «언제 이주하느냐는 여기 범위가 아니라 architecture-ddd §3.2가 정한다» — 소유 분리 선언 · ②check-app-container docstring 이 같은 §3.2 항-(2)를 위치 축으로만 집행한다고 명시 — 판정 주체는 reviewer"
-            }
-          ]
-        },
-        {
-          "lines": [985, 1019],
-          "kind": "code",
-          "norms": [
-            {
-              "label": "AppConfig label의 기존 값 유지",
-              "class": "Obligation",
-              "enforcedBy": ["check-db-table.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①코드 주석 «label 은 기존 값을 유지한다» · ②check-db-table apps #329 «label 명시»는 존재 축만 결정적 — 값 보존 판정은 의미 레인(reviewer)"
-            },
-            {
-              "label": "기존 테이블명의 db_table 명시 보존",
-              "class": "Obligation",
-              "enforcedBy": ["check-db-table.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "②check-db-table docstring 실문면은 «#630 신규 모델 Meta.db_table 존재 + 값 <app_label>_<entity_snake>»(구현부 417~420행 — 미명시·값 불일치 둘 다 blocker)이고 대상은 신규 파일 한정(추적된 기존 모델은 미검사) — 부분·충돌: 이주가 신규 파일로 떨어지므로 «미명시» 위반형은 결정적으로 커버되나, 보존명이 규약과 다르면(legacy tbl_product) #630 값 검사가 이 규범과 반대로 발화한다. 원문 §10.4(1037~1039행)의 «존재만 보고 값 형태는 보지 않는다»는 검사기 실물과 어긋난 서술(원문↔검사기 표류 — 소급 패스 상신). 충돌 해소·값 판정은 reviewer"
-            },
-            {
-              "label": "기존 0001_initial 불변(재작성·삭제 금지)",
-              "class": "Prohibition",
-              "enforcedBy": ["check-mechanism-ownership.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "②check-mechanism-ownership #593 «migrations/ 안은 사람이 직접 손대지 않는다 — 도구 산출물 모양 허용 목록 밖은 전부 위반» — 허용 목록을 깨는 손 편집 재작성만 결정적으로 잡는다. 원문이 명명한 대표 함정인 makemigrations 재생성(fresh initial)은 #593 주어(«사람») 밖이라 통과하고, 삭제도 존재하는 파일만 보는 검사기 밖이다 — 이력 정합(0002 연쇄·적용 기록) 판정 전체가 reviewer"
-            },
-            {
-              "label": "클래스 rename의 state-only 0002 반영",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①코드 주석 «state-only 로 반영한다 — database_operations=[]» · #593 허용 목록은 SeparateDatabaseAndState 를 통과시키므로 state-only 여부는 비커버 — 위임 기본값"
-            },
-            {
-              "label": "AlterModelTable 동반으로 state·실 db_table 정합",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①코드 주석 «AlterModelTable 을 state 에 함께 넣어 실제 db_table 과 맞춘다» · 로스터 비커버(드리프트 확인은 makemigrations --check 절차) — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1020, 1023],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "--fake-initial의 기본 도구 채택 금지",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «이 경로의 기본 도구가 아니다» · 로스터 비커버 — 위임 기본값"
-            },
-            {
-              "label": "이력 전무 legacy 앱 편입 시 조건부 사용",
-              "class": "Exception",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «때에만 조건부로 쓴다» — 조건 한정 조항 · 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1024, 1026],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "makemigrations --check 드리프트 0 확인",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면이 결정적 검증 절차를 명시(③P0 커버 판정의 한 축)이나 로스터 27종에 이 절차를 도는 검사기 없음 — 위임 기본값"
-            },
-            {
-              "label": "sqlmigrate로 0002의 DDL 미발행 확인",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 문면 명시 절차 · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1027, 1032],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "이주 완료 시 옛 루트 앱 통째 삭제",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «앱이 두 곳에 존재하는 미완 이주(discipline-houserules §0 배타성)» · ②check-app-container 는 문면이 명명한 실패 모드(move 를 copy 로 — 새 트리 완성 + 옛 루트 방치)에 구조적으로 발화하지 않는다: 옛 루트는 추적된 기존 디렉터리에 새 마이그레이션도 없어 G2 불성립이고, 성립해도 실질 이주 대응 앱이 이미 있으므로 G3 가 면제한다. 검사기가 커버하는 «미이주 방치»(대응 앱이 비었는데 옛 루트에 새 작업)는 이 규범의 위반형이 아니다 — 커버 0"
-            },
-            {
-              "label": "MIGRATION_MODULES 잔존 핀 금지",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①금지 표지 «잔존 핀도 두지 않는다» · 로스터에 settings MIGRATION_MODULES 를 읽는 검사기 없음 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1033, 1039],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "신규 db_table 규약 대비 이력 보존 우선",
-              "class": "Override",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면의 백스톱 지목은 이 Override 가 아니라 상대편 규범(신규 모델 db_table 규약 — discipline-houserules §4 소유)을 향한다 · ②docstring «기존 테이블명 보존(개명 강제 아님)»은 추적 모델 미검사를 밝히는 면제(부작위) 조항이라 이 Override 의 위반형(보존명을 규약으로 개명해 이력을 끊는 것)을 잡지 못한다 — 커버 0. 오히려 이주가 신규 파일로 떨어지면 #630 값 검사가 보존명을 blocker 로 내 규범과 대적한다(원문 §10.4↔#630 표류 — 소급 패스 상신). 면제 인용을 배선 근거로 쓰지 않는다(§4 메모 5 원칙)"
-            }
-          ]
-        },
-        {
-          "lines": [1040, 1046],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "마이그레이션 historical value 리터럴 동결",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "②check-choices-literal-consumption docstring 3) 은 migrations/ 를 «면제»하며 이 §10.4 동결을 오히려 규율로 인용 — 집행이 아니라 면제 근거이므로 enforcedBy 아님(위임 기본값)"
-            }
-          ]
-        },
-        { "lines": [1047, 1048], "kind": "prose" }
-      ]
-    },
-    {
-      "section_key": "s054-11.1",
-      "line_start": 1051,
-      "line_end": 1074,
-      "blocks": [
-        {
-          "lines": [1052, 1056],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "query-count 테스트는 중앙 입장 심사 이후에만 작성",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «중앙 입장 심사에서 add/update인 뒤에만 작성한다»(소유는 discipline-tdd) · 로스터에 테스트 입장 심사 검사기 없음 — 위임 기본값(discipline-tdd 문서군도 동일 기본값)"
-            },
-            {
-              "label": "미입장 상태의 exact query-count 테스트 금지",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①금지 표지 «만들지 않는다» · ②check-test-config 는 pytest 바인딩·test/ 구조 축이라 테스트 내용 판정은 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [1057, 1074], "kind": "code" }
-      ]
-    },
-    {
-      "section_key": "s055-11.2",
-      "line_start": 1075,
-      "line_end": 1108,
-      "blocks": [
-        {
-          "lines": [1076, 1103],
-          "kind": "code",
-          "restates": ["implementation-django-final/s015-2.5/b5"],
-          "note": "코드 주석 «module-level — Meta 스코프에서도 참조 가능(§2.5 소비 규율)»(1078행) — 정본은 s015-2.5/b5. Work 미승격"
-        },
-        { "lines": [1104, 1104], "kind": "prose" },
-        {
-          "lines": [1105, 1105],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "인덱스 대상은 filter·exclude·order_by 빈출 필드",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①«인덱스 추가 기준» 목록이 규범 운반체 · 로스터 비커버(인덱스 설계는 db 설계 축이나 이 문서 규범 준수 판정은 기본값)"
-            }
-          ]
-        },
-        {
-          "lines": [1106, 1106],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "프로파일링 후 인덱스 추가",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «프로파일링 후 추가한다» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1107, 1108],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "느린 쿼리의 EXPLAIN ANALYZE 확인",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «확인한다» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s056-11.3",
-      "line_start": 1109,
-      "line_end": 1123,
-      "blocks": [
-        {
-          "lines": [1110, 1120],
-          "kind": "code",
-          "norms": [
-            {
-              "label": "변경 필드 한정 save(update_fields=...)",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①규범이 좋은/나쁜 예 코드로만 표현(P0) · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [1121, 1123], "kind": "prose", "note": "덮어쓰기 방지·성능 — 사유 설명" }
-      ]
-    },
-    {
-      "section_key": "s057-11.4",
-      "line_start": 1124,
-      "line_end": 1143,
-      "blocks": [
-        {
-          "lines": [1125, 1141],
-          "kind": "code",
-          "norms": [
-            {
-              "label": "존재 확인은 exists()",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①규범이 좋은/나쁜 예 코드로만 표현(P0) · ②check-transaction-boundary #285 는 표준 트리 리포지토리 요약값 축이라 평면 쿼리셋은 비커버 — 위임 기본값"
-            },
-            {
-              "label": "개수 확인은 count()",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 좋은/나쁜 예 운반 · 로스터 비커버"
-            }
-          ]
-        },
-        { "lines": [1142, 1143], "kind": "prose" }
-      ]
-    },
-    {
-      "section_key": "s060-12.2",
-      "line_start": 1183,
-      "line_end": 1204,
-      "blocks": [
-        { "lines": [1184, 1198], "kind": "code" },
-        {
-          "lines": [1199, 1199],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "캐시 적합성 선판단",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «먼저 판단한다» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [1200, 1200], "kind": "prose", "note": "버전 키 — 효과 설명" },
-        {
-          "lines": [1201, 1202],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "운영 캐시는 Redis·Memcached",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «사용한다» · 로스터 비커버(기술 선택은 framework 축이나 검사기 담당 규칙 부재) — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [1203, 1204], "kind": "prose" }
-      ]
-    },
-    {
-      "section_key": "s062-13.1",
-      "line_start": 1207,
-      "line_end": 1217,
-      "blocks": [
-        { "lines": [1208, 1210], "kind": "prose" },
-        { "lines": [1211, 1212], "kind": "table-row" },
-        {
-          "lines": [1213, 1213],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "csrf_exempt의 극히 제한적 사용",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①표 «주의사항» 열이 규범 운반체(P0 발견 5) · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1214, 1214],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "safe·mark_safe 사용 주의",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 표 주의사항 열 운반 · 로스터 비커버"
-            }
-          ]
-        },
-        {
-          "lines": [1215, 1215],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "raw()·extra()의 직접 문자열 보간 금지",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①표 주의사항 열의 금지 표지 · 로스터 27종에 raw SQL 보간 검사기 없음 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1216, 1217],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "X_FRAME_OPTIONS DENY 설정",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 표 주의사항 열 운반 · 로스터 비커버(settings 값 검사기 없음)"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s063-13.2",
-      "line_start": 1218,
-      "line_end": 1246,
-      "blocks": [
-        {
-          "lines": [1219, 1246],
-          "kind": "code",
-          "norms": [
-            {
-              "label": "production 보안 설정 묶음 적용",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①코드 블록이 설정 묶음 규범 운반(P0 집계 1) · ②check-test-config ⑶ 는 settings 파일 «환경축 분할»만 보고 값은 비커버 — 위임 기본값"
-            },
-            {
-              "label": "manage.py check --deploy 실행",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①코드 주석 «# python manage.py check --deploy» — 결정적 도구이나 ③P0 «파이프라인 백스톱으로 지목된 건 아님»(발견 2) — 위임 기본값"
-            },
-            {
-              "label": "CSRF_COOKIE_HTTPONLY의 조건부 사용",
-              "class": "Exception",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①코드 주석 «보안 감사 요구사항이 있을 때만 사용» — 조건 한정 조항 · 로스터 비커버"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s064-13.3",
-      "line_start": 1247,
-      "line_end": 1262,
-      "blocks": [
-        {
-          "lines": [1248, 1262],
-          "kind": "code",
-          "norms": [
-            {
-              "label": "raw()의 파라미터화 쿼리 사용",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①규범이 좋은/나쁜 예 코드로만 표현(P0) · 로스터 비커버 — 위임 기본값"
-            },
-            {
-              "label": "extra()의 params 파라미터 사용",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 좋은/나쁜 예 운반 · 로스터 비커버"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s066-14",
-      "line_start": 1284,
-      "line_end": 1287,
-      "blocks": [
-        {
-          "lines": [1285, 1287],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "테스트 입장 심사의 discipline-tdd 소유",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «discipline-tdd 입장 심사에서 add/update된 테스트의 … 작성 recipe다» — 소유 명시 · 위임 기본값(discipline-tdd 문서군도 discipline-reviewer)"
-            },
-            {
-              "label": "framework 자체 시험 테스트 금지",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①금지 표지 «테스트를 만들지 않으며» · ②check-test-config 는 바인딩·구조 축이라 테스트 «대상» 판정은 비커버 — 위임 기본값"
-            },
-            {
-              "label": "승인된 테스트가 있을 때만 class·layout 선택",
-              "class": "Exception",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①조건 표지 «있을 때만 … 선택한다» — 조건 한정 조항 · 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s067-14.1",
-      "line_start": 1288,
-      "line_end": 1311,
-      "blocks": [
-        {
-          "lines": [1289, 1296],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "시나리오별 TestCase 선택 기준",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①선택 표 전체가 한 규범 운반(P0 집계 1) · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1297, 1298],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "신규 add 테스트의 pytest 관용구 의무",
-              "class": "Obligation",
-              "enforcedBy": ["check-test-config.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①인용구 «신규 add는 무조건 pytest 관용구다» · ②check-test-config ⑴ 이 pytest↔Django settings 바인딩을 결정적으로 문다(관용구 채택 전제 — 부분 커버)"
-            },
-            {
-              "label": "TestCase↔pytest 등가 매핑의 implementation-test §16 출처",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①인용구 «등가 … implementation-test §16» — 출처 포인터 · 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [1299, 1311], "kind": "code" }
-      ]
-    },
-    {
-      "section_key": "s069-14.3",
-      "line_start": 1358,
-      "line_end": 1394,
-      "blocks": [
-        { "lines": [1359, 1390], "kind": "code" },
-        {
-          "lines": [1391, 1391],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "@pytest.mark.django_db로 DB 접근 명시",
-              "class": "Obligation",
-              "enforcedBy": ["check-test-config.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «명시한다» · ②check-test-config #387 «test/unit/ 은 DB 를 켜지 않는다(django_db …)»·#389 «integration 은 진짜 DB를 켠다» — 마커 축 직접 커버"
-            }
-          ]
-        },
-        { "lines": [1392, 1392], "kind": "prose", "note": "픽스처 감축 효과 — 설명" },
-        {
-          "lines": [1393, 1394],
-          "kind": "norm",
-          "restates": ["implementation-django-final/s054-11.1/b1"],
-          "note": "assertNumQueries 입장 조건 — 정본은 s054-11.1/b1(P0가 §11.1 재진술로 명기). Work 미승격"
-        }
-      ]
-    },
-    {
-      "section_key": "s070-14.4",
-      "line_start": 1395,
-      "line_end": 1414,
-      "blocks": [
-        {
-          "lines": [1396, 1412],
-          "kind": "code",
-          "norms": [
-            {
-              "label": "assertIs(x, True)로 타입까지 검증",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①규칙이 코드 주석 형태(P0 발견 5) · 로스터 비커버(단언 형태는 의미 레인) — 위임 기본값"
-            },
-            {
-              "label": "assertRaisesMessage로 메시지까지 검증",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 코드 주석 운반 · 로스터 비커버"
-            },
-            {
-              "label": "테스트 독스트링의 기대 동작 직서술",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 코드 주석 운반 · 로스터 비커버"
-            }
-          ]
-        },
-        { "lines": [1413, 1414], "kind": "prose" }
-      ]
-    },
-    {
-      "section_key": "s072-15.1",
-      "line_start": 1417,
-      "line_end": 1428,
-      "blocks": [
-        { "lines": [1418, 1425], "kind": "code" },
-        { "lines": [1426, 1426], "kind": "prose", "note": "요청·응답 흐름 방향 — 동작 설명" },
-        {
-          "lines": [1427, 1428],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "SecurityMiddleware 최선두·Session은 Authentication 앞",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "②check-ninja-boundary-middleware 의 유일 판정은 «BC driving 층 자가정의 미들웨어의 전역 MIDDLEWARE 자가등록 적출»이다 — MIDDLEWARE 를 AST 로 읽는 유일 검사기라는 것은 데이터 소스 공유일 뿐 담당 규칙 근거가 아니고, 순서가 틀려도 자가등록이 아니면 exit 0 이라 위반형 커버 0(§16 역방향 문면 — 담당 근거 없는 부착은 오배선)"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s073-15.2",
-      "line_start": 1429,
-      "line_end": 1472,
-      "blocks": [
-        { "lines": [1430, 1466], "kind": "code" },
-        {
-          "lines": [1467, 1467],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "미들웨어의 경량 유지",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «가볍게 유지한다» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1468, 1468],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "미들웨어 하나 = 관심사 하나",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «하나의 관심사만 담당한다» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [1469, 1470], "kind": "prose", "note": "get_response 전후 실행 경로 — 동작 설명" },
-        { "lines": [1471, 1472], "kind": "prose" }
-      ]
-    },
-    {
-      "section_key": "s075-16.1",
-      "line_start": 1475,
-      "line_end": 1486,
-      "blocks": [
-        {
-          "lines": [1476, 1478],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "비대 판단은 변경 이유·orchestration 복잡도로",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «파일 길이보다 변경 이유와 orchestration 복잡도로 한다» — 판단형 규칙 · 로스터 비커버 — 위임 기본값"
-            },
-            {
-              "label": "서비스 레이어 도입은 기준 하나 이상 성립 시",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①조건 표지 «하나 이상이 실제로 있을 때 도입한다» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1479, 1479],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "도입 기준 — 복수 모델·애그리거트·어댑터 조율",
-              "class": "Permission",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①도입 허용 조건 목록 항 · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1480, 1480],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "도입 기준 — 복수 entry point 흐름 중복",
-              "class": "Permission",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 도입 허용 조건 목록 항"
-            }
-          ]
-        },
-        {
-          "lines": [1481, 1481],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "도입 기준 — use case의 명시적 트랜잭션 경계 소유",
-              "class": "Permission",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 도입 허용 조건 목록 항 · ②check-transaction-boundary 는 표준 트리 유스케이스 축이라 도입 «판단»은 비커버"
-            }
-          ]
-        },
-        {
-          "lines": [1482, 1482],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "도입 기준 — 외부 side effect와 DB write 정렬",
-              "class": "Permission",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 도입 허용 조건 목록 항"
-            }
-          ]
-        },
-        {
-          "lines": [1483, 1484],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "도입 기준 — persistence·orchestration 세부로 모델 난독화",
-              "class": "Permission",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 도입 허용 조건 목록 항"
-            }
-          ]
-        },
-        {
-          "lines": [1485, 1486],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "짧은 절차의 억지 서비스 분리 금지",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①금지 표지 «억지 분리하지 않는다» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s076-16.2",
-      "line_start": 1487,
-      "line_end": 1525,
-      "blocks": [
-        { "lines": [1488, 1518], "kind": "code" },
-        {
-          "lines": [1519, 1520],
-          "kind": "norm",
-          "restates": ["implementation-django-final/s015-2.5/b5"],
-          "note": "셋째 문장 «어느 경우든 상태 값은 심볼로만 소비한다(리터럴 비교 금지)» = §2.5 소비 규율 사본 — Work 미승격. 앞 두 문장은 이 절 고유 규범으로 승격",
-          "norms": [
-            {
-              "label": "예시의 평면 Django 관례 한정",
-              "class": "Exception",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «평면 Django(기존 관례) 예시다» — 이중 문맥 한정 조항 · 의미 판정"
-            },
-            {
-              "label": "표준 4계층의 상태 판정·전이 도메인 소유",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «도메인 애그리거트 소유이고 값 집합은 domain Enum에서 파생한다(architecture-ddd §3.2)» · ②check-app-container docstring «판정-소유 형태(빈혈) 같은 의미 변종은 범위 밖(discipline-reviewer 몫)»"
-            }
-          ]
-        },
-        {
-          "lines": [1521, 1522],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "서비스 네이밍 <entity>_<action>",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «네이밍 규칙» · ②check-naming #28 은 «service(단독 토큰)» 약어 금지 축이라 HackSoft 함수 네이밍은 담당 규칙 부재 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1523, 1523],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "접두사 네임스페이싱",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «묶는다» · check-naming 로스터에 접두 네임스페이싱 규칙 부재 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [1524, 1525], "kind": "prose", "note": "grep 검색 용이 — 효과 설명" }
-      ]
-    },
-    {
-      "section_key": "s077-16.3",
-      "line_start": 1526,
-      "line_end": 1557,
-      "blocks": [
-        { "lines": [1527, 1551], "kind": "code" },
-        { "lines": [1552, 1552], "kind": "prose" },
-        {
-          "lines": [1553, 1553],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "대부분 프로젝트는 모델 메서드+서비스 함수로 충분",
-              "class": "Permission",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «충분하다» — 허용형 실용 권고 · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1554, 1554],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "Repository 패턴의 점진 도입 한정",
-              "class": "Exception",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①조건 표지 «정말 복잡해질 때만 … 점진적으로 도입한다» — 조건 한정 조항 · 로스터 비커버"
-            }
-          ]
-        },
-        { "lines": [1555, 1557], "kind": "prose", "note": "패턴 강제 비용·서비스 레이어 출발점 — 사유 설명" }
-      ]
-    },
-    {
-      "section_key": "s078-16.4",
-      "line_start": 1558,
-      "line_end": 1601,
-      "blocks": [
-        {
-          "lines": [1559, 1561],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "commit·rollback 경계는 use case 단위",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «use case 단위로 경계를 정한다» · ②check-transaction-boundary 담당 규칙(#195·#197·#200)은 표준 트리 유스케이스 쓰기 축이라 평면 atomic 경계 «설정»은 비커버 — 위임 기본값"
-            },
-            {
-              "label": "atomic()은 최소 블록에 한정",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «모든 코드를 큰 transaction으로 감싸는 것이 아니라 … 최소 블록에 둔다» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1562, 1580],
-          "kind": "code",
-          "norms": [
-            {
-              "label": "표준 트리 응용 계층의 커밋 후 부작용은 uow.after_commit",
-              "class": "Obligation",
-              "enforcedBy": ["check-transaction-boundary.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①코드 주석 «uow.after_commit(...) 소유다(#200)» · ②check-transaction-boundary docstring #200 «응용이 transaction.on_commit·connection.in_atomic_block 을 직접 부르면 위반» — ④#200 정확 일치"
-            }
-          ]
-        },
-        {
-          "lines": [1581, 1581],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "atomic() owner는 application service",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «application service가 되는 경우가 많다» — 경향형 규범(보수적 포함) · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1582, 1582],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "select_for_update()는 pessimistic lock 필요 시에만",
-              "class": "Exception",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①조건 표지 «필요한 경우에만 사용한다» · ②check-domain-model #549 는 «수정 조회는 캐시 우회» 축이라 필요성 판정은 비커버 — 위임 기본값"
-            },
-            {
-              "label": "잠금 범위·backend 지원·lock 검증 가능성 확인",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «함께 확인한다» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1583, 1583],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "application-level check 단독 신뢰 금지",
-              "class": "Prohibition",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①금지 표지 «만 믿지 않는다» · 로스터 비커버 — 위임 기본값"
-            },
-            {
-              "label": "필수 불변식의 DB boundary 동반 설계",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «DB boundary와 함께 설계한다» · ②check-idempotency-scope-creep 은 미요청 멱등성 도입 «차단» 축이라 설계 의무는 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1584, 1584],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "커스텀 DB 백엔드 우회 금지(sqlite no-op 한계)",
-              "class": "Prohibition",
-              "enforcedBy": ["check-mechanism-ownership.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «커스텀 DB 백엔드(BEGIN IMMEDIATE 등)로 우회하지 말 것» · ②check-mechanism-ownership ⑴ «DatabaseWrapper 서브클래스 + 트랜잭션/락 의미 변경 마커» AND 게이트 — 정확 일치"
-            },
-            {
-              "label": "운영 정합용 잠금 코드 존치와 CheckConstraint 최종 방어선",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «잠금 코드는 두되 … CheckConstraint가 최종 방어선» · 로스터 비커버(제약 설계 판정) — 위임 기본값"
-            },
-            {
-              "label": "race 패자 IntegrityError의 표현 계층 상태 코드 변환",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «표현 계층에서 상태 코드(예: 409)로 변환한다» · ②check-transient-overmapping 은 OperationalError·DatabaseError 핸들러 축이고 IntegrityError 는 명시 제외 — 위임 기본값"
-            },
-            {
-              "label": "잠금 부족 시 백엔드 자작 대신 DB 아키텍처 검토 회귀",
-              "class": "Obligation",
-              "enforcedBy": ["check-mechanism-ownership.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «백엔드를 만들지 말고 architecture-db §9.5 로 돌린다» · ②동 검사기 ⑴ 이 «명세 승인 없이 커스텀 백엔드 교체»를 문다 — 회귀 절차 자체는 reviewer"
-            },
-            {
-              "label": "엔진·연결 의미 변경의 출처-불문 금지",
-              "class": "Prohibition",
-              "enforcedBy": ["check-mechanism-ownership.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «이 금지는 출처-불문이다 — 몽키패치·connection_created·OPTIONS init_command·isolation_level·미들웨어·conftest 패치» · ②검사기 ⑴ 은 ENGINE 점경로 축만 커버라 나머지 출처는 reviewer(부분 커버 명시)"
-            },
-            {
-              "label": "연결 튜닝은 stock OPTIONS 허용 목록 한정",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «stock OPTIONS로만 … 격리·락 의미를 바꾸는 변경은 설계가 명시 승인할 때만»(architecture-db §9.5) · 검사기 ⑴ 은 OPTIONS 키 목록을 보지 않음 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1585, 1585],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "외부 side effect의 커밋 전 실행 금지",
-              "class": "Prohibition",
-              "enforcedBy": ["check-transaction-boundary.py", "check-usecase-dto-placement.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «commit 전에 실행하지 않는다» · ②transaction-boundary #200 + usecase-dto-placement #541 «커밋 전 발행 금지 — .publish( 직접 호출은 uow.after_commit 밖»"
-            },
-            {
-              "label": "on_commit()으로 부수효과 시점 정렬",
-              "class": "Obligation",
-              "enforcedBy": ["check-transaction-boundary.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "②check-transaction-boundary #200 이 응용 계층의 정렬 창구를 uow.after_commit 으로 고정 — 평면 Django 의 on_commit 형태는 reviewer 병행"
-            }
-          ]
-        },
-        {
-          "lines": [1586, 1586],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "결정 불명확 시 DB 아키텍처 검토 선행",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «DB architecture 검토가 먼저다» · 로스터 비커버(절차 판정) — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1587, 1588],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "Idempotency-Key 계약과 DB idempotency storage 정합",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "②check-idempotency-scope-creep 은 §9.6 표제를 공유할 뿐 판정 축이 G0 «미요청 멱등성 도입 차단»(scope 가 미요청으로 단정 ∧ G1 승인 부재)이고, 정당 채택된 멱등성의 계약↔storage 불일치는 어떤 형태로도 잡지 않는다 — 커버 0. 같은 절 «필수 불변식의 DB boundary 동반 설계» 행과 동일 논거로 통일"
-            }
-          ]
-        },
-        {
-          "lines": [1589, 1590],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "risky write 구현·리뷰 시 체크리스트 명시",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «다음 항목을 명시한다» — 리뷰 절차 의무 · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        { "lines": [1591, 1592], "kind": "table-row" },
-        {
-          "lines": [1593, 1593],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "체크리스트 — transaction owner 명시",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①risky write 표 행이 규범 운반(P0 표 6행) · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1594, 1594],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "체크리스트 — lock·idempotency 수단 명시",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 표 행 운반 · ②idempotency-scope-creep 은 미요청 도입 축이라 «수단 명시»는 비커버"
-            }
-          ]
-        },
-        {
-          "lines": [1595, 1595],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "체크리스트 — DB constraint 명시",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 표 행 운반 · 로스터 비커버"
-            }
-          ]
-        },
-        {
-          "lines": [1596, 1596],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "체크리스트 — side effect timing 명시",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 표 행 운반 · 집행 축은 #200(위 1585 행)이 따로 짐"
-            }
-          ]
-        },
-        {
-          "lines": [1597, 1597],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "체크리스트 — isolation·retry 결정 명시",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 표 행 운반 · 로스터 비커버"
-            }
-          ]
-        },
-        {
-          "lines": [1598, 1599],
-          "kind": "table-row",
-          "norms": [
-            {
-              "label": "체크리스트 — verification candidates와 근거 명시",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "동상 — 표 행 운반 · 입장 결정 소유는 discipline-tdd(문서군 기본값도 discipline-reviewer)"
-            }
-          ]
-        },
-        {
-          "lines": [1600, 1601],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "verification candidates 행의 비의무성·discipline-tdd 소유",
-              "class": "Exception",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «테스트 의무가 아니며 결정은 discipline-tdd가 소유한다» — 면제 조항 · 위임 기본값"
-            },
-            {
-              "label": "독자 production failure일 때만 add·아니면 reuse",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①조건 표지 «때만 … add할 수 있고 … reuse한다» · 로스터에 입장 심사 검사기 없음 — 위임 기본값"
-            },
-            {
-              "label": "add 테스트의 django_db 마커 선택 기준",
-              "class": "Obligation",
-              "enforcedBy": ["check-test-config.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «plain @pytest.mark.django_db … 보호해야 할 때만 transaction=True(기존 TestCase 스위트는 재작성하지 않는다)» · ②check-test-config #387·#389 가 DB 신호 축을 결정적으로 문다(부분 커버)"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "section_key": "s079-16.5",
-      "line_start": 1602,
-      "line_end": 1667,
-      "blocks": [
-        {
-          "lines": [1603, 1605],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "유실 불허 외부 발행의 Outbox 구현",
-              "class": "Obligation",
-              "enforcedBy": ["check-broker-contract.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "②check-broker-contract #603 «external 에 내용이 오면 딸림이 함께 선다 — ⑴outbox …»(선언 유무 측정) — 부분 커버 · 채택 판정은 reviewer"
-            },
-            {
-              "label": "채택 기준·전달 보장의 타 문서 소유",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «채택 기준은 architecture-ddd §3.7, 전달 보장·dead-letter 정책은 architecture-db §9.7» — 소유 포인터 · 위임 기본값"
-            },
-            {
-              "label": "outbox 행과 비즈니스 write의 동일 atomic 블록 저장",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «같은 transaction.atomic() 블록에서 저장하고» · ②check-transaction-boundary 담당 규칙 11종(#4·#195·#197·#200·#282·#283·#285·#287·#355·#597·#599)은 애그리거트 리포지토리·유스케이스 쓰기 축이라 outbox 행 동반 저장은 비커버(#546 은 이 검사기 담당이 아니라 진단 메시지 내 원리 인용일 뿐 — 진단 소유는 check-domain-model 응용 축이고 그 역시 «한 트랜잭션 = 애그리거트 하나» 판정이라 비커버) — 위임 기본값"
-            },
-            {
-              "label": "발행은 별도 디스패처가 수행",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «별도 디스패처가 발행한다» · ②check-event-publish 는 published_event 표면 축 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1606, 1636],
-          "kind": "code",
-          "restates": ["implementation-django-final/s015-2.5/b5"],
-          "note": "코드 주석 «값은 OrderEventType에서만 -- 대입·filter 소비도 심볼로(§2.5 소비 규율)»(1615행) — 정본은 s015-2.5/b5. 나머지 주석의 birth-enum 규범은 이 블록에서 승격",
-          "norms": [
-            {
-              "label": "발행 이벤트 종류의 birth-enum 단일 출처",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①코드 주석 «발행 이벤트 종류의 단일 출처 (1종째부터 enum·append-only: birth-enum, architecture-ddd §3.7)» · ②check-event-publish #504 는 «사실 하나=파일 하나» 축이라 enum 단일 출처는 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1637, 1638],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "디스패처 자리는 driving_layer/cron_job/(management/commands 금지)",
-              "class": "Obligation",
-              "enforcedBy": ["check-layer-skeleton.py", "check-missable-entrance.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «#58 — application/**/management/commands/ 금지» · ②check-layer-skeleton docstring «#58 … 금지 경로(management/commands)» + check-missable-entrance #172·#174 «예약 실행 입구는 driving_layer/cron_job/ · <job>_cron_job.py»"
-            },
-            {
-              "label": "미발행 행의 select_for_update(skip_locked=True) 잠금",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «잠그고» · 로스터 비커버(경합 가드 형태 검사는 #599 의 save_all 축 한정) — 위임 기본값"
-            },
-            {
-              "label": "발행 성공 시 published_at 기록",
-              "class": "Obligation",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «published_at을 찍는다» · 로스터 비커버 — 위임 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [1639, 1640],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "management command 예시의 배경 한정",
-              "class": "Exception",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①인용구 «아래 예시는 … 배경이다 — 표준 트리 코드는 cron_job/ 껍데기에서 부른다» — 범위 한정 조항 · 의미 판정"
-            }
-          ]
-        },
-        { "lines": [1641, 1662], "kind": "code" },
-        {
-          "lines": [1663, 1663],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "at-least-once 전제의 소비자 멱등",
-              "class": "Obligation",
-              "enforcedBy": ["check-broker-contract.py", "check-missable-entrance.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "②check-broker-contract #532 «external 계약은 at-least-once 를 요구로 적는다» + check-missable-entrance #181 «멱등성은 유스케이스가 갖는다 — 두 번 와도 결과가 같나»"
-            }
-          ]
-        },
-        {
-          "lines": [1664, 1665],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "유실 허용 in-process 후속은 on_commit()으로 충분",
-              "class": "Permission",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «outbox 없이 transaction.on_commit()으로 충분하다(§16.4)» — 허용형 · ②표준 트리에서는 #200 이 uow.after_commit 을 요구하므로 평면 맥락 한정 판정은 reviewer"
-            }
-          ]
-        },
-        { "lines": [1666, 1667], "kind": "prose" }
-      ]
-    },
-    {
-      "section_key": "s087",
-      "line_start": 1732,
-      "line_end": 1747,
-      "blocks": [
-        { "lines": [1733, 1743], "kind": "code" },
-        { "lines": [1744, 1744], "kind": "prose", "note": "pk 튜플 — 기능 설명" },
-        {
-          "lines": [1745, 1745],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "복합 PK 예시의 같은 BC 내 가정 한정",
-              "class": "Exception",
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «FK는 같은 BC 내 가정이다» — 조건 한정 조항 · 의미 판정"
-            },
-            {
-              "label": "BC 경계 ORM FK 금지 — 값 참조",
-              "class": "Prohibition",
-              "enforcedBy": ["check-db-table.py"],
-              "delegatedTo": ["agent-discipline-reviewer"],
-              "basis": "①문면 «BC 경계 ORM FK 금지 — architecture-ddd §3.3 규칙3» · ②check-db-table 모델 #631 «타 BC 모델을 FK·O2O·M2M 으로 참조 금지(문자열 참조 포함)» — 정확 일치"
-            }
-          ]
-        },
-        { "lines": [1746, 1747], "kind": "prose", "note": "복합 PK 제약사항 — 기능 한계 설명" }
-      ]
+     "lines": [
+      26,
+      28
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "Django 설계 철학의 코드 작성 기반 준거",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «모든 Django 코드 작성의 기반이다»(P0 애매—보수적 포함 계승) · ②③④ 지목 없음 — 위임 기본값(implementation-* → discipline-reviewer)"
+      }
+     ]
     }
-  ]
+   ]
+  },
+  {
+   "section_key": "s004-1.1",
+   "line_start": 29,
+   "line_end": 39,
+   "blocks": [
+    {
+     "lines": [
+      30,
+      32
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      33,
+      33
+     ],
+     "kind": "table-row",
+     "note": "Loose Coupling — 프레임워크 성질 설명(P0 비규범 판정)"
+    },
+    {
+     "lines": [
+      34,
+      34
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "Less Code — 최소 코드·보일러플레이트 배제",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①의무 표지 «작성되어야 하며» · 검사기 비커버(코드량 판정은 의미 레인) — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      35,
+      35
+     ],
+     "kind": "table-row",
+     "note": "Quick Development — 존재 이유 설명(비규범)"
+    },
+    {
+     "lines": [
+      36,
+      36
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "DRY — 고유 개념·데이터의 단일 장소",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①의무 표지 «존재해야 한다» · 중복 판정은 정적 형태로 안 갈림 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      37,
+      37
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "명시가 암시보다 낫다 — 마법의 조건부 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①조건 표지 «~할 때만 사용한다» · 검사기 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      38,
+      39
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "저수준~고수준 일관성 유지",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①의무 표지 «유지한다» · 검사기 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s005-1.2",
+   "line_start": 40,
+   "line_end": 45,
+   "blocks": [
+    {
+     "lines": [
+      41,
+      42
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "모델의 객체 전 측면 캡슐화",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①Active Record 캡슐화 지시 · ②check-domain-model 은 표준 트리 domain_layer 대상이라 평면 Django 모델 축은 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      43,
+      43
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "데이터·메타정보의 모델 클래스 정의",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①의무 표지 «정의한다» · 검사기 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      44,
+      45
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "모델 자기완결성",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①의무 표지 «있어야 한다» · 검사기 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s006-1.3",
+   "line_start": 46,
+   "line_end": 53,
+   "blocks": [
+    {
+     "lines": [
+      47,
+      49
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      50,
+      50
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "save() 명시적 호출 요구",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «명시적 호출 필요»(P0 애매—포함) · 검사기 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      51,
+      51
+     ],
+     "kind": "table-row",
+     "note": "Terse Syntax — 프레임워크 성질 설명(비규범)"
+    },
+    {
+     "lines": [
+      52,
+      53
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "커스텀 SQL 작성 용이성 보존",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «쉽게 작성할 수 있어야 한다» · 검사기 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s007-1.4",
+   "line_start": 54,
+   "line_end": 60,
+   "blocks": [
+    {
+     "lines": [
+      55,
+      56
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "URL의 Python 함수명 결합 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①금지 표지 «결합되면 안 된다» · 검사기 비커버(URLconf 축 검사기 없음) — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      57,
+      57
+     ],
+     "kind": "prose",
+     "note": "무한한 유연성 제공 — 프레임워크 성질 설명"
+    },
+    {
+     "lines": [
+      58,
+      58
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "예쁜 URL 우선",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «쉽거나 같아야 한다» · 검사기 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      59,
+      60
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "URL의 파일 확장자 포함 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①금지 표지 «포함시키지 않는다» · 검사기 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s008-1.5",
+   "line_start": 61,
+   "line_end": 67,
+   "blocks": [
+    {
+     "lines": [
+      62,
+      63
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "템플릿의 로직·표현 분리",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «분리한다» · ②check-naming #588·#589 는 표준 트리의 사람 문구·템플릿 업무 판정 축이라 이 일반 원칙은 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      64,
+      64
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "템플릿 기능의 표현 필수 범위 한정",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «프로그래밍 언어를 발명하지 않는다» · 검사기 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      65,
+      67
+     ],
+     "kind": "prose",
+     "note": "HTML 비종속·보안 기본 — 프레임워크 성질 설명(P0 비계수)"
+    }
+   ]
+  },
+  {
+   "section_key": "s009-1.6",
+   "line_start": 68,
+   "line_end": 75,
+   "blocks": [
+    {
+     "lines": [
+      69,
+      70
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "함수로 충분하면 클래스 미인스턴스화",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «인스턴스화하지 않는다» · 검사기 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      71,
+      71
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "요청 객체의 직접 전달",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «전역 변수가 아닌 직접 전달받아» · 검사기 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      72,
+      73
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "GET·POST 명확 구분",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «명확히 구분한다» · 검사기 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      74,
+      75
+     ],
+     "kind": "prose"
+    }
+   ]
+  },
+  {
+   "section_key": "s011-2.1",
+   "line_start": 80,
+   "line_end": 85,
+   "blocks": [
+    {
+     "lines": [
+      81,
+      82
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "black 포매터 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①도구 지목 있으나 ③P0 «백스톱 미지목»(발견 2) · 로스터 27종에 포매터 검사기 없음 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      83,
+      83
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "코드 88자·문서 79자 줄 길이",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "③P0 백스톱 미지목 · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      84,
+      85
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "Python 4칸·템플릿 2칸 들여쓰기",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "③P0 백스톱 미지목 · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s012-2.2",
+   "line_start": 86,
+   "line_end": 122,
+   "blocks": [
+    {
+     "lines": [
+      87,
+      89
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "임포트 그룹 순서·그룹 내 알파벳 정렬",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «정렬하며» · 로스터의 import 규칙(context-isolation #2·#9 등)은 층·BC 방향 축이라 그룹 정렬은 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      90,
+      118
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      119,
+      119
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "isort 자동 정렬 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①도구 지목 · ③P0 «검사기로 지목되진 않음» — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      120,
+      120
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "편의 임포트 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «사용한다» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      121,
+      122
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "다중 점 상대 임포트 회피·절대 임포트",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «피하고 절대 임포트를 사용한다» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s013-2.3",
+   "line_start": 123,
+   "line_end": 143,
+   "blocks": [
+    {
+     "lines": [
+      124,
+      143
+     ],
+     "kind": "code",
+     "norms": [
+      {
+       "label": "f-string 내 함수 호출 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①코드 주석 «함수 호출 금지»(P0 발견 5 운반체) · 로스터 비커버 — 위임 기본값"
+      },
+      {
+       "label": "f-string 내 연산 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①코드 주석 «연산 금지» · 로스터 비커버 — 위임 기본값"
+      },
+      {
+       "label": "번역 대상 문자열의 f-string 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①코드 주석 «번역 대상 문자열에는 f-string을 사용하지 않는다» · ②check-naming #588 은 렌더 위치 축이라 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s014-2.4",
+   "line_start": 144,
+   "line_end": 178,
+   "blocks": [
+    {
+     "lines": [
+      145,
+      178
+     ],
+     "kind": "code",
+     "norms": [
+      {
+       "label": "모델 내부 정의 순서 7단",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①코드 주석 1~7 번호 규칙이 규범 전 운반체(P0 발견 5) · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s015-2.5",
+   "line_start": 179,
+   "line_end": 223,
+   "blocks": [
+    {
+     "lines": [
+      180,
+      202
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      203,
+      204
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "값 집합 단일 출처는 domain_layer StrEnum",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «계층 소유 — 단일 출처는 domain_layer의 StrEnum이다» · ②choices-literal-consumption 은 «선언된 심볼의 존재»에 앵커된 소비 축만 보고 선언 계층 판정은 의미 레인 명시 — 위임 기본값"
+      },
+      {
+       "label": "TextChoices 자체 선언의 순수 인프라 필드 한정",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «순수 인프라 필드에 한정한다» — 조건 한정 조항 · 검사기 비커버(도메인 판정 유무는 의미 판정)"
+      },
+      {
+       "label": "도메인 상태의 TextChoices 선언 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «도메인 상태를 TextChoices로 선언하면 domain이 ORM 타입을 역참조»(architecture-ddd §3.2 인용) · 형태로 안 갈림 — 위임 기본값"
+      },
+      {
+       "label": "도메인 상태 필드의 domain Enum 파생",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «domain Enum에서 파생시킨다» · ②choices-literal-consumption 은 파생 형태 자체를 판정하지 않음(리터럴 소비만) — 위임 기본값"
+      },
+      {
+       "label": "도메인 판정 최초 발생 슬라이스의 파생형 전환",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «처음 생기는 슬라이스에서 파생형으로 전환한다» — 전환 시점 판정은 슬라이스 심사(의미 레인) · 위임 기본값"
+      },
+      {
+       "label": "기존 TextChoices 배치의 규약 부정(빚 선언)",
+       "class": "Override",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «규약이 아니라 아직 안 갚은 빚이다 — 기존 배치는 입력이 아니다»(discipline-houserules §1.1·§4 인용) — 우선 규칙 · 위임 기본값"
+      }
+     ],
+     "restates": [
+      "architecture-ddd-final/s017-3.2/b8",
+      "discipline-houserules-final/s014/b1"
+     ]
+    },
+    {
+     "lines": [
+      205,
+      219
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      220,
+      221
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "직렬화 자리의 StrEnum 멤버 직접 배치 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «멤버를 직접 두면 EnumSerializer가 살아있는 enum 참조를 박는다» · ②choices-literal-consumption 은 비-Constant 를 정상 처리라 이 형태를 잡지 않음 — 위임 기본값"
+      },
+      {
+       "label": "domain Enum 파생의 .value 평탄화",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②choices-literal-consumption docstring 5) 는 집행 규칙이 아니라 거짓양성 회피(면제) 조항이고, 구현부(167~174행)는 default=<문자열 Constant> 만 적출해 이 규범의 위반형 default=OrderStatus.PENDING(멤버 직접·.value 없음)을 정상 통과시킨다 — 커버 0(옆 규범 «멤버 직접 배치 금지»와 동일 근거·§4 메모 5 원칙)"
+      },
+      {
+       "label": "CheckConstraint·부분 인덱스 조건 값의 동일 파생",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «Q() 조건 값도 같은 파생으로 쓴다» · ②checker 의 (b) 직접 호출형은 filter/exclude 한정이라 Meta 조건식은 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      222,
+      223
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "choices·Enum 필드 값의 심볼 참조 의무",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-choices-literal-consumption.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②docstring 표제 «선언된 choices 값의 리터럴 소비 결정적 백스톱» + (a) default 리터럴 · (b) filter/exclude 리터럴 — 직접 커버 · 변수 우회 등 의미 레인은 reviewer 명시"
+      },
+      {
+       "label": "값 비교는 ==(is 금지)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «비교는 ==(is 금지)» · ②docstring «보지 않는 것»에 비교식(x.status == …) 명시 제외 — 의미 레인(reviewer)"
+      },
+      {
+       "label": "복합 상태 판정의 1차 시정은 애그리거트 술어·enum 프로퍼티",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «심볼 치환이 판정 소유를 면책하지 않는다»(architecture-ddd §3.2) · ②check-app-container docstring «판정-소유 형태(빈혈) 같은 의미 변종은 범위 밖(discipline-reviewer 몫)» — 문면 근거 있는 위임"
+      }
+     ],
+     "restates": [
+      "architecture-ddd-final/s017-3.2/b8"
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s016-2.6",
+   "line_start": 224,
+   "line_end": 227,
+   "blocks": [
+    {
+     "lines": [
+      225,
+      227
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "템플릿 코딩 스타일의 web §4 소유 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «implementation-django-web(§4)가 소유한다» — 소유 포인터 · 검사기 비커버 · 위임 기본값(implementation-*)"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s017-2.7",
+   "line_start": 228,
+   "line_end": 241,
+   "blocks": [
+    {
+     "lines": [
+      229,
+      239
+     ],
+     "kind": "code",
+     "norms": [
+      {
+       "label": "뷰 첫 매개변수는 반드시 request",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①코드 주석 «첫 번째 매개변수는 반드시 request»(P0 발견 5) · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      240,
+      241
+     ],
+     "kind": "prose"
+    }
+   ]
+  },
+  {
+   "section_key": "s019-3.1",
+   "line_start": 244,
+   "line_end": 290,
+   "blocks": [
+    {
+     "lines": [
+      245,
+      247
+     ],
+     "kind": "prose"
+    },
+    {
+     "lines": [
+      248,
+      286
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      287,
+      288
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "테스트 디렉터리 조직의 implementation-test §4.2 소유",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «implementation-test §4.2가 소유한다» — 소유 포인터 · 위임 기본값"
+      },
+      {
+       "label": "테스트 파일 평면 나열 금지",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-test-config.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②docstring ⑵ #383/#384 «test/ 의 직계 자식은 다섯뿐 — unit/·integration/·e2e/·factories/·fake/»(+#596 직계 파일은 conftest.py·__init__.py 만) = 평면 나열의 결정적 백스톱이나 **표준 트리 test/ 한정** 커버다 — 이 규범의 운반체는 앱별 tests/ 배치 예시 문맥이고 금지문 자체는 배치 불문 일반형이라, 앱별 tests/ 변종의 평면 나열은 검사기 밖(reviewer). 표준 트리를 명시 지시하지 않는 문맥에 표준 트리 검사기를 부착하지 않는다는 §4 메모 7 기준과의 긴장은 «일반형 금지문의 표준 트리 부분집합만 결정적»으로 정리한다"
+      }
+     ]
+    },
+    {
+     "lines": [
+      289,
+      290
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "생성 코드 표준 파일트리의 discipline-houserules 소유",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-layer-skeleton.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «생성 코드 배치 권위는 그 문서가 갖는다» · ②check-layer-skeleton docstring «표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱»"
+      },
+      {
+       "label": "§3.1의 배경 강등(배치 권위 아님)",
+       "class": "Override",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «여기 §3.1은 그 표준의 배경이다» — 권위 우선 규칙 · 문서 권위 판정은 의미 레인"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s020-3.2",
+   "line_start": 291,
+   "line_end": 307,
+   "blocks": [
+    {
+     "lines": [
+      292,
+      303
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      304,
+      304
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "앱 이름은 간결한 복수형 단어",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-naming 로스터는 약어·패턴 낱말·접두접미 축이라 복수형 명명은 담당 규칙 부재 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      305,
+      305
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "한 문장 목적 서술 불가 시 앱 분리",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «분리가 필요하다» · 응집 판정은 의미 레인 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      306,
+      307
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "앱 간 순환 의존 시 설계 재검토",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-context-isolation 은 표준 트리 BC 경계·층 방향 축(#12·#13·#600 등)이라 평면 Django 앱 순환은 대상 밖 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s021-3.3",
+   "line_start": 308,
+   "line_end": 341,
+   "blocks": [
+    {
+     "lines": [
+      309,
+      338
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      339,
+      339
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "비밀 정보 하드코딩 절대 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①금지 표지 «절대 하드코딩하지 않는다» · ②check-test-config ⑶ 는 settings 환경축 분할(#445~#447)만 보고 비밀 값은 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      340,
+      341
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": ".env 파일의 gitignore 등재",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "로스터 27종에 .gitignore 를 읽는 검사기 없음 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s022-3.4",
+   "line_start": 342,
+   "line_end": 362,
+   "blocks": [
+    {
+     "lines": [
+      343,
+      358
+     ],
+     "kind": "code",
+     "norms": [
+      {
+       "label": "모듈 최상위 settings 접근 회피",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①규칙이 좋은/나쁜 예 코드로만 표현(P0) · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      359,
+      360
+     ],
+     "kind": "prose",
+     "note": "settings.configure() 불가 — 사유 설명"
+    },
+    {
+     "lines": [
+      361,
+      362
+     ],
+     "kind": "prose"
+    }
+   ]
+  },
+  {
+   "section_key": "s024-4.1",
+   "line_start": 365,
+   "line_end": 407,
+   "blocks": [
+    {
+     "lines": [
+      366,
+      368
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "절 전체의 평면 Django 맥락 한정",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①인용구 «이 절은 평면 Django(기존 관례 유지보수) 맥락의 원칙이다» — 조건 한정 조항 · 맥락 판정은 의미 레인"
+      },
+      {
+       "label": "표준 4계층의 평면 ORM 판정 메서드 blocker",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①인용구 «판정 메서드를 얹으면 blocker 다(architecture-ddd §3.2)» · ②check-app-container docstring «판정-소유 형태(빈혈) 같은 의미 변종은 범위 밖(discipline-reviewer 몫)» — 문면 근거 있는 위임"
+      }
+     ],
+     "restates": [
+      "architecture-ddd-final/s017-3.2/b9"
+     ]
+    },
+    {
+     "lines": [
+      369,
+      370
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "비즈니스 로직의 모델·서비스 배치",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «뷰가 아닌 모델(또는 서비스 레이어)에 둔다» · 평면 Django 축이라 표준 트리 검사기 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      371,
+      405
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      406,
+      407
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "모델 2000줄 초과 시 서비스 레이어 분리 검토",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «검토한다» — 판단형 규칙 · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s026",
+   "line_start": 412,
+   "line_end": 431,
+   "blocks": [
+    {
+     "lines": [
+      413,
+      428
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      429,
+      429
+     ],
+     "kind": "prose",
+     "note": "조인 비용 없음 — 사유 설명"
+    },
+    {
+     "lines": [
+      430,
+      431
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "공통 필드 재사용 시 추상 베이스 클래스 권장",
+       "class": "Permission",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «가장 적합하다» — 권장(허용형) · P0 §4.2 분배 1(s026:1) · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s027",
+   "line_start": 432,
+   "line_end": 446,
+   "blocks": [
+    {
+     "lines": [
+      433,
+      443
+     ],
+     "kind": "code",
+     "norms": [
+      {
+       "label": "다중 테이블 상속의 주의 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①코드 주석 «주의: 각 모델마다 별도 테이블 생성 + 암묵적 OneToOneField» · P0 §4.2 분배 2 · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      444,
+      444
+     ],
+     "kind": "prose",
+     "note": "JOIN 성능 저하 — 사유 설명"
+    },
+    {
+     "lines": [
+      445,
+      446
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "추상 베이스 클래스+명시적 FK 우선",
+       "class": "Override",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «대부분의 경우 … 가 더 낫다» — MTI 대비 우선 규칙 · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s029-4.3",
+   "line_start": 469,
+   "line_end": 500,
+   "blocks": [
+    {
+     "lines": [
+      470,
+      494
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      495,
+      495
+     ],
+     "kind": "prose",
+     "note": "CharField+TextChoices 가독성 — 비교 설명"
+    },
+    {
+     "lines": [
+      496,
+      496
+     ],
+     "kind": "norm",
+     "restates": [
+      "implementation-django-final/s015-2.5/b2"
+     ],
+     "note": "도메인 판정 시 §2.5 계층 소유 전환 — 정본은 s015-2.5/b2(P0 발견 6 재진술 명기). Work 미승격"
+    },
+    {
+     "lines": [
+      497,
+      497
+     ],
+     "kind": "prose",
+     "note": "IntegerChoices 저장 효율 — 비교 설명"
+    },
+    {
+     "lines": [
+      498,
+      498
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "JSONField는 스키마 없는 데이터 한정",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «스키마 없는 데이터에만 사용하고, 구조화된 데이터에는 정규 필드» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      499,
+      500
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "금액 필드의 DecimalField 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «DecimalField를 금액에 사용하고» · 로스터 비커버 — 위임 기본값"
+      },
+      {
+       "label": "금액 필드의 FloatField 회피",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «FloatField는 피한다» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s030-4.4",
+   "line_start": 501,
+   "line_end": 529,
+   "blocks": [
+    {
+     "lines": [
+      502,
+      523
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      524,
+      524
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "clean()의 Python 레벨 검증 수행",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «수행한다» · ②check-usecase-dto-placement #139 는 표준 트리 schema_in 축이라 모델 clean 은 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      525,
+      525
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "CheckConstraint 이중 방어",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «데이터베이스 레벨 제약도 함께 건다(이중 방어)» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      526,
+      527
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "full_clean() 호출 경로 확보",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «호출되도록 한다» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      528,
+      529
+     ],
+     "kind": "prose"
+    }
+   ]
+  },
+  {
+   "section_key": "s032-5.1",
+   "line_start": 532,
+   "line_end": 575,
+   "blocks": [
+    {
+     "lines": [
+      533,
+      571
+     ],
+     "kind": "code",
+     "restates": [
+      "implementation-django-final/s015-2.5/b5"
+     ],
+     "note": "코드 주석 «소비 규율(§2.5): 리터럴 아닌 심볼»(542행) — 정본은 s015-2.5/b5. Work 미승격"
+    },
+    {
+     "lines": [
+      572,
+      572
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "QuerySet 메서드 체이닝 보장",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «체이닝을 가능하게 한다» · 로스터 비커버(표준 트리 리포지토리 축은 transaction-boundary #282~#287) — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      573,
+      573
+     ],
+     "kind": "prose",
+     "note": "as_manager() 승격 — 가능성 설명"
+    },
+    {
+     "lines": [
+      574,
+      575
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "get_queryset() 오버라이드 기본 필터 주의",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «주의한다» — 판단형 · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s033-5.2",
+   "line_start": 576,
+   "line_end": 612,
+   "blocks": [
+    {
+     "lines": [
+      577,
+      605
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      606,
+      606
+     ],
+     "kind": "prose"
+    },
+    {
+     "lines": [
+      607,
+      608
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      609,
+      609
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "FK·O2O에는 select_related()",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①선택 기준 표 행이 규범 운반체 · 로스터 비커버(N+1 은 성능 축) — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      610,
+      610
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "M2M·역참조에는 prefetch_related()",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 표 행 운반 · 로스터 비커버"
+      }
+     ]
+    },
+    {
+     "lines": [
+      611,
+      612
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "조건부 프리페치에는 Prefetch() 객체",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 표 행 운반 · 로스터 비커버"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s034-5.3",
+   "line_start": 613,
+   "line_end": 632,
+   "blocks": [
+    {
+     "lines": [
+      614,
+      628
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      629,
+      629
+     ],
+     "kind": "prose"
+    },
+    {
+     "lines": [
+      630,
+      630
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "프로파일링 없는 only()·defer() 공격적 사용 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①금지 표지 «사용하지 않는다» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      631,
+      632
+     ],
+     "kind": "prose"
+    }
+   ]
+  },
+  {
+   "section_key": "s035-5.4",
+   "line_start": 633,
+   "line_end": 659,
+   "blocks": [
+    {
+     "lines": [
+      634,
+      656
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      657,
+      657
+     ],
+     "kind": "prose",
+     "note": "annotate/filter 순서 — P0 설명 판정(비계수)"
+    },
+    {
+     "lines": [
+      658,
+      659
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "불필요 계산 필드의 alias() 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «alias()를 사용하여 DB 부담을 줄인다» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s036-5.5",
+   "line_start": 660,
+   "line_end": 686,
+   "blocks": [
+    {
+     "lines": [
+      661,
+      684
+     ],
+     "kind": "code",
+     "norms": [
+      {
+       "label": "루프 개별 save 대신 bulk 연산",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①규범이 좋은/나쁜 예 코드로만 표현(P0) · ②check-transaction-boundary #599 는 표준 트리 리포지토리 save_all 축이라 평면 bulk 는 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      685,
+      686
+     ],
+     "kind": "prose"
+    }
+   ]
+  },
+  {
+   "section_key": "s037-6",
+   "line_start": 687,
+   "line_end": 692,
+   "blocks": [
+    {
+     "lines": [
+      688,
+      690
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "서버렌더 뷰의 implementation-django-web §2 소유",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «표현 계층이므로 implementation-django-web(§2)가 소유한다» — 소유 포인터 · 위임 기본값"
+      },
+      {
+       "label": "JSON API 라우팅·스키마와 REST 계약의 소유 분리",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «implementation-django-ninja, REST 계약은 architecture-api가 소유한다» — 소유 포인터 · 계약 설계 판정은 design-review-api 이나 이 문서 규범의 준수 판정은 기본값 유지"
+      },
+      {
+       "label": "코어 문서의 service·selector 경계 한정",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «이 문서(코어)는 … 경계(§16)만 다룬다» — 범위 한정 조항 · 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      691,
+      692
+     ],
+     "kind": "prose"
+    }
+   ]
+  },
+  {
+   "section_key": "s038-7",
+   "line_start": 693,
+   "line_end": 698,
+   "blocks": [
+    {
+     "lines": [
+      694,
+      696
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "웹 폼의 implementation-django-web §6 소유",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «implementation-django-web(§6)가 소유한다» — 소유 포인터 · 위임 기본값"
+      },
+      {
+       "label": "durable invariant의 model·DB 경계 보장",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «model/DB 경계에서도 보장한다» · ②로스터에 제약 설계 판정 검사기 없음 — 위임 기본값"
+      },
+      {
+       "label": "도메인 규칙의 architecture-ddd 소유",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «도메인 규칙 자체는 architecture-ddd가 소유한다» — 소유 포인터 · 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      697,
+      698
+     ],
+     "kind": "prose"
+    }
+   ]
+  },
+  {
+   "section_key": "s039-8",
+   "line_start": 699,
+   "line_end": 704,
+   "blocks": [
+    {
+     "lines": [
+      700,
+      702
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "신규 REST 계약은 API 계약 문제로 선행 처리",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «API 계약 문제로 먼저 다룬다» — 소유 문서(architecture-api) 문면 미지정(P0) · 위임 기본값"
+      },
+      {
+       "label": "greenfield 기본 경로는 Django Ninja Router·Schema",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «기본 경로를 Django Ninja Router/Schema로 두며» · ②check-ninja-boundary-middleware 는 §6 경계 미들웨어 자가등록 축이라 기본 경로 선택은 비커버 — 위임 기본값"
+      },
+      {
+       "label": "DRF 내용의 유지보수·기채택 프로젝트 한정",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «… 안에서만 적용한다» — 범위 한정 조항 · 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      703,
+      704
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "신규 코드의 DRF 기본 권장 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①금지 표지 «기본 권장안처럼 제시하지 않는다» · 로스터 비커버 — 위임 기본값"
+      },
+      {
+       "label": "도메인 규칙의 Django-side boundary 배치",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «serializer/viewset에 흩뿌리지 말고 … Django-side boundary에 둔다» · ②check-app-container docstring 의 «판정-소유 형태는 discipline-reviewer 몫» — 문면 근거 있는 위임"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s040-8.1",
+   "line_start": 705,
+   "line_end": 742,
+   "blocks": [
+    {
+     "lines": [
+      706,
+      737
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      738,
+      738
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "시나리오별 Serializer 분리",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «분리하면 보안과 성능 모두 개선된다» · DRF 유지보수 축이라 로스터(ninja 계열) 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      739,
+      739
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "fields = __all__ 회피",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «피한다» · 로스터 비커버(DRF 표면) — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      740,
+      740
+     ],
+     "kind": "prose",
+     "note": "source 파라미터 — 가능성 설명"
+    },
+    {
+     "lines": [
+      741,
+      742
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "공유 규칙의 모델·service·DB constraint 상향",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «여러 entry point가 공유하는 규칙은 … 올린다» · ②check-usecase-dto-placement #139 는 표준 트리 schema_in 축 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s041-8.2",
+   "line_start": 743,
+   "line_end": 782,
+   "blocks": [
+    {
+     "lines": [
+      744,
+      777
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      778,
+      778
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "액션별 Serializer 분리(get_serializer_class 오버라이드)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «분리한다» · DRF 유지보수 축 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      779,
+      780
+     ],
+     "kind": "prose",
+     "note": "@action 권한·DefaultRouter — 가능성 설명"
+    },
+    {
+     "lines": [
+      781,
+      782
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "트랜잭션·부수효과·상태 전이의 model·service 경계 분리",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «명시적인 model/service boundary로 빼서» · ②check-transaction-boundary 는 표준 트리 유스케이스·리포지토리 축이라 DRF viewset 은 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s042-8.3",
+   "line_start": 783,
+   "line_end": 799,
+   "blocks": [
+    {
+     "lines": [
+      784,
+      795
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      796,
+      796
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "전역 기본 permission의 settings 설정",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 지시 · DRF 표면이라 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      797,
+      797
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "ViewSet 레벨 permission 오버라이드",
+       "class": "Permission",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①허용 표지 «오버라이드» 선택지 제시 · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      798,
+      799
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "객체 레벨 권한은 has_object_permission()",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «에서 처리» — 자리 지정 · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s043-8.4",
+   "line_start": 800,
+   "line_end": 818,
+   "blocks": [
+    {
+     "lines": [
+      801,
+      815
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      816,
+      816
+     ],
+     "kind": "prose",
+     "note": "Generic views 자동 적용 — 동작 설명"
+    },
+    {
+     "lines": [
+      817,
+      818
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "APIView 직접 사용 시 수동 페이지네이션 호출",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «호출해야 한다» · 로스터 비커버(DRF 표면) — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s044-8.5",
+   "line_start": 819,
+   "line_end": 853,
+   "blocks": [
+    {
+     "lines": [
+      820,
+      847
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      848,
+      848
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "AcceptHeaderVersioning 관행 채택",
+       "class": "Permission",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «best practice로 간주된다 … 다른 방식도 적합할 수 있다»(P0 애매—포함) — 허용형 · 로스터 비커버"
+      }
+     ]
+    },
+    {
+     "lines": [
+      849,
+      849
+     ],
+     "kind": "prose",
+     "note": "URLPathVersioning 직관성 — 비교 설명"
+    },
+    {
+     "lines": [
+      850,
+      851
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "필드 삭제·변경은 새 버전에서만",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «새 버전에서만 수행한다» · ②check-business-vocabulary #604 «계약은 가산만»은 framework capability 계약 축이라 DRF API 버전은 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      852,
+      853
+     ],
+     "kind": "prose"
+    }
+   ]
+  },
+  {
+   "section_key": "s045-9",
+   "line_start": 854,
+   "line_end": 857,
+   "blocks": [
+    {
+     "lines": [
+      855,
+      857
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "시그널 사용 시나리오의 명확한 인지",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «명확히 알아야 한다» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s046-9.1",
+   "line_start": 858,
+   "line_end": 882,
+   "blocks": [
+    {
+     "lines": [
+      859,
+      861
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "BC 경계 간 트리거의 signal 금지(published_event 소유)",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-event-publish.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①인용구 «signal 이 아니라 published_event/·event_subscription/ 소유다(#89·#90)» · ②check-event-publish docstring #502·#507·#508 이 published_event/·event_subscription/ 표면을 결정적으로 문다"
+      },
+      {
+       "label": "signal 예시의 같은 BC 내부·서드파티 수신 한정",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①인용구 «아래 예는 같은 BC 내부·서드파티 모델 수신 한정» — 범위 한정 조항 · 의미 판정"
+      }
+     ]
+    },
+    {
+     "lines": [
+      862,
+      877
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      878,
+      878
+     ],
+     "kind": "prose"
+    },
+    {
+     "lines": [
+      879,
+      879
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "제어 불가 서드파티 모델 반응 시 signal 허용",
+       "class": "Permission",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①허용 조건 목록 «시그널이 적절한 경우» · 로스터 비커버(허용 조건 판정은 의미 레인) — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      880,
+      880
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "순환 의존 회피형 앱 간 통신 시 signal 허용",
+       "class": "Permission",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 허용 조건 목록 · 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      881,
+      882
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "다수 모델 일괄 핸들러 적용 시 signal 허용",
+       "class": "Permission",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 허용 조건 목록 · 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s047-9.2",
+   "line_start": 883,
+   "line_end": 915,
+   "blocks": [
+    {
+     "lines": [
+      884,
+      907
+     ],
+     "kind": "code",
+     "norms": [
+      {
+       "label": "외부 부수효과의 커밋 전 실행 금지(§16.4 전제)",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-transaction-boundary.py",
+        "check-usecase-dto-placement.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①코드 주석 «외부 부수효과는 커밋 전 실행 금지 — §16.4 on_commit 정렬이 전제다» · ②check-transaction-boundary #200 «커밋 뒤 부작용은 unit_of_work.after_commit» + usecase-dto-placement #541 «커밋 전 발행 금지 — .publish( 직접 호출은 uow.after_commit 밖» — 금지문이 부수효과 종류를 한정하지 않아 발행형도 위반형에 들어가므로 s078-16.4/1585 판과 배선을 일치시킨다(양쪽 다 .publish( 한정의 부분 커버 · email 등 나머지 부수효과는 reviewer)"
+      }
+     ]
+    },
+    {
+     "lines": [
+      908,
+      908
+     ],
+     "kind": "prose"
+    },
+    {
+     "lines": [
+      909,
+      909
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "이미 결합된 컴포넌트 간 signal 회피",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①회피 조건 목록 «시그널을 피해야 하는 경우» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      910,
+      910
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "save()·delete() 오버라이드로 충분할 때 signal 회피",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 회피 조건 목록 · 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      911,
+      911
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "request_started·request_finished의 미들웨어 대체",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①회피 조건 목록 · ②check-ninja-boundary-middleware 의 판정 축은 «BC driving 자가정의 미들웨어의 자가등록 적출»뿐이라 시그널을 계속 써도 발화하지 않는다 — 커버 0(s072-15.1 순서 규범과 동형 판정)"
+      }
+     ]
+    },
+    {
+     "lines": [
+      912,
+      913
+     ],
+     "kind": "prose",
+     "note": "시그널 동기 실행·예외 전파 — 성질 설명"
+    },
+    {
+     "lines": [
+      914,
+      915
+     ],
+     "kind": "prose"
+    }
+   ]
+  },
+  {
+   "section_key": "s049-10.1",
+   "line_start": 918,
+   "line_end": 928,
+   "blocks": [
+    {
+     "lines": [
+      919,
+      928
+     ],
+     "kind": "code",
+     "norms": [
+      {
+       "label": "마이그레이션을 작게 유지",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①코드 주석 «작게 유지한다»(P0 발견 5) · 로스터 비커버 — 위임 기본값"
+      },
+      {
+       "label": "sqlmigrate로 실제 SQL 확인",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①코드 주석 «sqlmigrate로 실제 SQL을 확인한다» — 결정적 절차이나 로스터 27종에 해당 검사기 없음 — 위임 기본값"
+      },
+      {
+       "label": "마이그레이션 파일의 버전 관리 포함",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-mechanism-ownership ⑵ #336(자리)·#337(파일명 꼴)은 VCS 포함 여부와 무관하다 — gitignore 된 마이그레이션도 자리·이름이 맞으면 통과하므로 위반형 커버 0. 쌍둥이 규범 «migrations/ gitignore 등재 금지»와 동일 근거(.gitignore·VCS 판독 검사기 부재)"
+      },
+      {
+       "label": "migrations/의 gitignore 등재 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "로스터 27종에 .gitignore 를 읽는 검사기 없음 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s050-10.2",
+   "line_start": 929,
+   "line_end": 947,
+   "blocks": [
+    {
+     "lines": [
+      930,
+      932
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "migrations/에는 makemigrations 산출물만",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-mechanism-ownership.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-mechanism-ownership #593 «migrations/ 안은 사람이 직접 손대지 않는다 — 도구 산출물 모양의 허용 목록 밖은 전부 위반»"
+      },
+      {
+       "label": "손 편집 RunPython·RunSQL 데이터 마이그레이션 금지",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-mechanism-ownership.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②동 docstring #593 «operations 원소는 migrations.* 호출, RunPython/RunSQL 제외» — 문면 정확 일치"
+      }
+     ],
+     "restates": [
+      "architecture-db-final/s053-11.2/b2"
+     ]
+    },
+    {
+     "lines": [
+      933,
+      934
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "대량 채우기는 Expand→Backfill→Contract 배포 단계",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «배포 절차의 한 단계다» · 인용 §11.1 은 architecture-db 절 번호(P0 발견 1 표류) · 배포 절차 판정은 로스터 밖 — 위임 기본값"
+      },
+      {
+       "label": "backfill 코드의 저장소 루트 scripts/ 배치",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «트리 밖 저장소 루트 scripts/ 에 둔다(일회성 — 규정하지 않는다)» · ②check-layer-skeleton 은 BC 내부 폐쇄만 보므로 트리 밖 자리는 비커버 — 위임 기본값"
+      },
+      {
+       "label": "순서 결합 소량 정리의 단일 마이그레이션 접기 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①금지 표지 «마이그레이션 파일 하나로 접지 않는다» · #593 은 손편집 형태 축이라 «접기» 판정은 의미 레인 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      935,
+      936
+     ],
+     "kind": "prose",
+     "note": "반례 도입문"
+    },
+    {
+     "lines": [
+      937,
+      945
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      946,
+      947
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "squash 시 데이터 마이그레이션 보존 정정",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «지워지는 것은 elidable=True 를 명시했을 때뿐이다» — 사실 정정형 규범 · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s051-10.3",
+   "line_start": 948,
+   "line_end": 972,
+   "blocks": [
+    {
+     "lines": [
+      949,
+      968
+     ],
+     "kind": "code",
+     "norms": [
+      {
+       "label": "NOT NULL 컬럼 추가의 3단계 배포",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①코드 주석 «좋은 예: 3단계 배포»가 규범 운반체 · 로스터 비커버(배포 순서는 절차 판정) — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      969,
+      969
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "대형 테이블 마이그레이션의 작은 단위 분할",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «분할한다» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      970,
+      970
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "PostgreSQL 무중단 도구 고려",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «고려한다» — 판단형 · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      971,
+      972
+     ],
+     "kind": "prose",
+     "note": "AddIndex CONCURRENTLY — 설정 가능성 설명"
+    }
+   ]
+  },
+  {
+   "section_key": "s052-10.4",
+   "line_start": 973,
+   "line_end": 1048,
+   "blocks": [
+    {
+     "lines": [
+      974,
+      984
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "이주 시점(WHEN)의 architecture-ddd §3.2 소유 분리",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «언제 이주하느냐는 여기 범위가 아니라 architecture-ddd §3.2가 정한다» — 소유 분리 선언 · ②check-app-container docstring 이 같은 §3.2 항-(2)를 위치 축으로만 집행한다고 명시 — 판정 주체는 reviewer"
+      }
+     ]
+    },
+    {
+     "lines": [
+      985,
+      1019
+     ],
+     "kind": "code",
+     "norms": [
+      {
+       "label": "AppConfig label의 기존 값 유지",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-db-table.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①코드 주석 «label 은 기존 값을 유지한다» · ②check-db-table apps #329 «label 명시»는 존재 축만 결정적 — 값 보존 판정은 의미 레인(reviewer)"
+      },
+      {
+       "label": "기존 테이블명의 db_table 명시 보존",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-db-table.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-db-table docstring 실문면은 «#630 신규 모델 Meta.db_table 존재 + 값 <app_label>_<entity_snake>»(구현부 417~420행 — 미명시·값 불일치 둘 다 blocker)이고 대상은 신규 파일 한정(추적된 기존 모델은 미검사) — 부분·충돌: 이주가 신규 파일로 떨어지므로 «미명시» 위반형은 결정적으로 커버되나, 보존명이 규약과 다르면(legacy tbl_product) #630 값 검사가 이 규범과 반대로 발화한다. 원문 §10.4(1037~1039행)의 «존재만 보고 값 형태는 보지 않는다»는 검사기 실물과 어긋난 서술(원문↔검사기 표류 — 소급 패스 상신). 충돌 해소·값 판정은 reviewer"
+      },
+      {
+       "label": "기존 0001_initial 불변(재작성·삭제 금지)",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-mechanism-ownership.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-mechanism-ownership #593 «migrations/ 안은 사람이 직접 손대지 않는다 — 도구 산출물 모양 허용 목록 밖은 전부 위반» — 허용 목록을 깨는 손 편집 재작성만 결정적으로 잡는다. 원문이 명명한 대표 함정인 makemigrations 재생성(fresh initial)은 #593 주어(«사람») 밖이라 통과하고, 삭제도 존재하는 파일만 보는 검사기 밖이다 — 이력 정합(0002 연쇄·적용 기록) 판정 전체가 reviewer"
+      },
+      {
+       "label": "클래스 rename의 state-only 0002 반영",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①코드 주석 «state-only 로 반영한다 — database_operations=[]» · #593 허용 목록은 SeparateDatabaseAndState 를 통과시키므로 state-only 여부는 비커버 — 위임 기본값"
+      },
+      {
+       "label": "AlterModelTable 동반으로 state·실 db_table 정합",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①코드 주석 «AlterModelTable 을 state 에 함께 넣어 실제 db_table 과 맞춘다» · 로스터 비커버(드리프트 확인은 makemigrations --check 절차) — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1020,
+      1023
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "--fake-initial의 기본 도구 채택 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «이 경로의 기본 도구가 아니다» · 로스터 비커버 — 위임 기본값"
+      },
+      {
+       "label": "이력 전무 legacy 앱 편입 시 조건부 사용",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «때에만 조건부로 쓴다» — 조건 한정 조항 · 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1024,
+      1026
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "makemigrations --check 드리프트 0 확인",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면이 결정적 검증 절차를 명시(③P0 커버 판정의 한 축)이나 로스터 27종에 이 절차를 도는 검사기 없음 — 위임 기본값"
+      },
+      {
+       "label": "sqlmigrate로 0002의 DDL 미발행 확인",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 문면 명시 절차 · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1027,
+      1032
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "이주 완료 시 옛 루트 앱 통째 삭제",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «앱이 두 곳에 존재하는 미완 이주(discipline-houserules §0 배타성)» · ②check-app-container 는 문면이 명명한 실패 모드(move 를 copy 로 — 새 트리 완성 + 옛 루트 방치)에 구조적으로 발화하지 않는다: 옛 루트는 추적된 기존 디렉터리에 새 마이그레이션도 없어 G2 불성립이고, 성립해도 실질 이주 대응 앱이 이미 있으므로 G3 가 면제한다. 검사기가 커버하는 «미이주 방치»(대응 앱이 비었는데 옛 루트에 새 작업)는 이 규범의 위반형이 아니다 — 커버 0"
+      },
+      {
+       "label": "MIGRATION_MODULES 잔존 핀 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①금지 표지 «잔존 핀도 두지 않는다» · 로스터에 settings MIGRATION_MODULES 를 읽는 검사기 없음 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1033,
+      1039
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "신규 db_table 규약 대비 이력 보존 우선",
+       "class": "Override",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면의 백스톱 지목은 이 Override 가 아니라 상대편 규범(신규 모델 db_table 규약 — discipline-houserules §4 소유)을 향한다 · ②docstring «기존 테이블명 보존(개명 강제 아님)»은 추적 모델 미검사를 밝히는 면제(부작위) 조항이라 이 Override 의 위반형(보존명을 규약으로 개명해 이력을 끊는 것)을 잡지 못한다 — 커버 0. 오히려 이주가 신규 파일로 떨어지면 #630 값 검사가 보존명을 blocker 로 내 규범과 대적한다(원문 §10.4↔#630 표류 — 소급 패스 상신). 면제 인용을 배선 근거로 쓰지 않는다(§4 메모 5 원칙)"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1040,
+      1046
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "마이그레이션 historical value 리터럴 동결",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-choices-literal-consumption docstring 3) 은 migrations/ 를 «면제»하며 이 §10.4 동결을 오히려 규율로 인용 — 집행이 아니라 면제 근거이므로 enforcedBy 아님(위임 기본값)"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1047,
+      1048
+     ],
+     "kind": "prose"
+    }
+   ]
+  },
+  {
+   "section_key": "s054-11.1",
+   "line_start": 1051,
+   "line_end": 1074,
+   "blocks": [
+    {
+     "lines": [
+      1052,
+      1056
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "query-count 테스트는 중앙 입장 심사 이후에만 작성",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «중앙 입장 심사에서 add/update인 뒤에만 작성한다»(소유는 discipline-tdd) · 로스터에 테스트 입장 심사 검사기 없음 — 위임 기본값(discipline-tdd 문서군도 동일 기본값)"
+      },
+      {
+       "label": "미입장 상태의 exact query-count 테스트 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①금지 표지 «만들지 않는다» · ②check-test-config 는 pytest 바인딩·test/ 구조 축이라 테스트 내용 판정은 비커버 — 위임 기본값"
+      }
+     ],
+     "restates": [
+      "discipline-tdd-final/s025-5.5/b2"
+     ]
+    },
+    {
+     "lines": [
+      1057,
+      1074
+     ],
+     "kind": "code"
+    }
+   ]
+  },
+  {
+   "section_key": "s055-11.2",
+   "line_start": 1075,
+   "line_end": 1108,
+   "blocks": [
+    {
+     "lines": [
+      1076,
+      1103
+     ],
+     "kind": "code",
+     "restates": [
+      "implementation-django-final/s015-2.5/b5"
+     ],
+     "note": "코드 주석 «module-level — Meta 스코프에서도 참조 가능(§2.5 소비 규율)»(1078행) — 정본은 s015-2.5/b5. Work 미승격"
+    },
+    {
+     "lines": [
+      1104,
+      1104
+     ],
+     "kind": "prose"
+    },
+    {
+     "lines": [
+      1105,
+      1105
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "인덱스 대상은 filter·exclude·order_by 빈출 필드",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①«인덱스 추가 기준» 목록이 규범 운반체 · 로스터 비커버(인덱스 설계는 db 설계 축이나 이 문서 규범 준수 판정은 기본값)"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1106,
+      1106
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "프로파일링 후 인덱스 추가",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «프로파일링 후 추가한다» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1107,
+      1108
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "느린 쿼리의 EXPLAIN ANALYZE 확인",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «확인한다» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s056-11.3",
+   "line_start": 1109,
+   "line_end": 1123,
+   "blocks": [
+    {
+     "lines": [
+      1110,
+      1120
+     ],
+     "kind": "code",
+     "norms": [
+      {
+       "label": "변경 필드 한정 save(update_fields=...)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①규범이 좋은/나쁜 예 코드로만 표현(P0) · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1121,
+      1123
+     ],
+     "kind": "prose",
+     "note": "덮어쓰기 방지·성능 — 사유 설명"
+    }
+   ]
+  },
+  {
+   "section_key": "s057-11.4",
+   "line_start": 1124,
+   "line_end": 1143,
+   "blocks": [
+    {
+     "lines": [
+      1125,
+      1141
+     ],
+     "kind": "code",
+     "norms": [
+      {
+       "label": "존재 확인은 exists()",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①규범이 좋은/나쁜 예 코드로만 표현(P0) · ②check-transaction-boundary #285 는 표준 트리 리포지토리 요약값 축이라 평면 쿼리셋은 비커버 — 위임 기본값"
+      },
+      {
+       "label": "개수 확인은 count()",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 좋은/나쁜 예 운반 · 로스터 비커버"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1142,
+      1143
+     ],
+     "kind": "prose"
+    }
+   ]
+  },
+  {
+   "section_key": "s060-12.2",
+   "line_start": 1183,
+   "line_end": 1204,
+   "blocks": [
+    {
+     "lines": [
+      1184,
+      1198
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      1199,
+      1199
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "캐시 적합성 선판단",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «먼저 판단한다» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1200,
+      1200
+     ],
+     "kind": "prose",
+     "note": "버전 키 — 효과 설명"
+    },
+    {
+     "lines": [
+      1201,
+      1202
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "운영 캐시는 Redis·Memcached",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «사용한다» · 로스터 비커버(기술 선택은 framework 축이나 검사기 담당 규칙 부재) — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1203,
+      1204
+     ],
+     "kind": "prose"
+    }
+   ]
+  },
+  {
+   "section_key": "s062-13.1",
+   "line_start": 1207,
+   "line_end": 1217,
+   "blocks": [
+    {
+     "lines": [
+      1208,
+      1210
+     ],
+     "kind": "prose"
+    },
+    {
+     "lines": [
+      1211,
+      1212
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      1213,
+      1213
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "csrf_exempt의 극히 제한적 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①표 «주의사항» 열이 규범 운반체(P0 발견 5) · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1214,
+      1214
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "safe·mark_safe 사용 주의",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 표 주의사항 열 운반 · 로스터 비커버"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1215,
+      1215
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "raw()·extra()의 직접 문자열 보간 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①표 주의사항 열의 금지 표지 · 로스터 27종에 raw SQL 보간 검사기 없음 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1216,
+      1217
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "X_FRAME_OPTIONS DENY 설정",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 표 주의사항 열 운반 · 로스터 비커버(settings 값 검사기 없음)"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s063-13.2",
+   "line_start": 1218,
+   "line_end": 1246,
+   "blocks": [
+    {
+     "lines": [
+      1219,
+      1246
+     ],
+     "kind": "code",
+     "norms": [
+      {
+       "label": "production 보안 설정 묶음 적용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①코드 블록이 설정 묶음 규범 운반(P0 집계 1) · ②check-test-config ⑶ 는 settings 파일 «환경축 분할»만 보고 값은 비커버 — 위임 기본값"
+      },
+      {
+       "label": "manage.py check --deploy 실행",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①코드 주석 «# python manage.py check --deploy» — 결정적 도구이나 ③P0 «파이프라인 백스톱으로 지목된 건 아님»(발견 2) — 위임 기본값"
+      },
+      {
+       "label": "CSRF_COOKIE_HTTPONLY의 조건부 사용",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①코드 주석 «보안 감사 요구사항이 있을 때만 사용» — 조건 한정 조항 · 로스터 비커버"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s064-13.3",
+   "line_start": 1247,
+   "line_end": 1262,
+   "blocks": [
+    {
+     "lines": [
+      1248,
+      1262
+     ],
+     "kind": "code",
+     "norms": [
+      {
+       "label": "raw()의 파라미터화 쿼리 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①규범이 좋은/나쁜 예 코드로만 표현(P0) · 로스터 비커버 — 위임 기본값"
+      },
+      {
+       "label": "extra()의 params 파라미터 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 좋은/나쁜 예 운반 · 로스터 비커버"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s066-14",
+   "line_start": 1284,
+   "line_end": 1287,
+   "blocks": [
+    {
+     "lines": [
+      1285,
+      1287
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "테스트 입장 심사의 discipline-tdd 소유",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «discipline-tdd 입장 심사에서 add/update된 테스트의 … 작성 recipe다» — 소유 명시 · 위임 기본값(discipline-tdd 문서군도 discipline-reviewer)"
+      },
+      {
+       "label": "framework 자체 시험 테스트 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①금지 표지 «테스트를 만들지 않으며» · ②check-test-config 는 바인딩·구조 축이라 테스트 «대상» 판정은 비커버 — 위임 기본값"
+      },
+      {
+       "label": "승인된 테스트가 있을 때만 class·layout 선택",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①조건 표지 «있을 때만 … 선택한다» — 조건 한정 조항 · 위임 기본값"
+      }
+     ],
+     "restates": [
+      "discipline-tdd-final/s025-5.5/b15"
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s067-14.1",
+   "line_start": 1288,
+   "line_end": 1311,
+   "blocks": [
+    {
+     "lines": [
+      1289,
+      1296
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "시나리오별 TestCase 선택 기준",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①선택 표 전체가 한 규범 운반(P0 집계 1) · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1297,
+      1298
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "신규 add 테스트의 pytest 관용구 의무",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-test-config.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①인용구 «신규 add는 무조건 pytest 관용구다» · ②check-test-config ⑴ 이 pytest↔Django settings 바인딩을 결정적으로 문다(관용구 채택 전제 — 부분 커버)"
+      },
+      {
+       "label": "TestCase↔pytest 등가 매핑의 implementation-test §16 출처",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①인용구 «등가 … implementation-test §16» — 출처 포인터 · 위임 기본값"
+      }
+     ],
+     "restates": [
+      "implementation-test-final/s103-20.3/b1"
+     ]
+    },
+    {
+     "lines": [
+      1299,
+      1311
+     ],
+     "kind": "code"
+    }
+   ]
+  },
+  {
+   "section_key": "s069-14.3",
+   "line_start": 1358,
+   "line_end": 1394,
+   "blocks": [
+    {
+     "lines": [
+      1359,
+      1390
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      1391,
+      1391
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "@pytest.mark.django_db로 DB 접근 명시",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-test-config.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «명시한다» · ②check-test-config #387 «test/unit/ 은 DB 를 켜지 않는다(django_db …)»·#389 «integration 은 진짜 DB를 켠다» — 마커 축 직접 커버"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1392,
+      1392
+     ],
+     "kind": "prose",
+     "note": "픽스처 감축 효과 — 설명"
+    },
+    {
+     "lines": [
+      1393,
+      1394
+     ],
+     "kind": "norm",
+     "restates": [
+      "implementation-django-final/s054-11.1/b1"
+     ],
+     "note": "assertNumQueries 입장 조건 — 정본은 s054-11.1/b1(P0가 §11.1 재진술로 명기). Work 미승격"
+    }
+   ]
+  },
+  {
+   "section_key": "s070-14.4",
+   "line_start": 1395,
+   "line_end": 1414,
+   "blocks": [
+    {
+     "lines": [
+      1396,
+      1412
+     ],
+     "kind": "code",
+     "norms": [
+      {
+       "label": "assertIs(x, True)로 타입까지 검증",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①규칙이 코드 주석 형태(P0 발견 5) · 로스터 비커버(단언 형태는 의미 레인) — 위임 기본값"
+      },
+      {
+       "label": "assertRaisesMessage로 메시지까지 검증",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 코드 주석 운반 · 로스터 비커버"
+      },
+      {
+       "label": "테스트 독스트링의 기대 동작 직서술",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 코드 주석 운반 · 로스터 비커버"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1413,
+      1414
+     ],
+     "kind": "prose"
+    }
+   ]
+  },
+  {
+   "section_key": "s072-15.1",
+   "line_start": 1417,
+   "line_end": 1428,
+   "blocks": [
+    {
+     "lines": [
+      1418,
+      1425
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      1426,
+      1426
+     ],
+     "kind": "prose",
+     "note": "요청·응답 흐름 방향 — 동작 설명"
+    },
+    {
+     "lines": [
+      1427,
+      1428
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "SecurityMiddleware 최선두·Session은 Authentication 앞",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-ninja-boundary-middleware 의 유일 판정은 «BC driving 층 자가정의 미들웨어의 전역 MIDDLEWARE 자가등록 적출»이다 — MIDDLEWARE 를 AST 로 읽는 유일 검사기라는 것은 데이터 소스 공유일 뿐 담당 규칙 근거가 아니고, 순서가 틀려도 자가등록이 아니면 exit 0 이라 위반형 커버 0(§16 역방향 문면 — 담당 근거 없는 부착은 오배선)"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s073-15.2",
+   "line_start": 1429,
+   "line_end": 1472,
+   "blocks": [
+    {
+     "lines": [
+      1430,
+      1466
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      1467,
+      1467
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "미들웨어의 경량 유지",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «가볍게 유지한다» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1468,
+      1468
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "미들웨어 하나 = 관심사 하나",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «하나의 관심사만 담당한다» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1469,
+      1470
+     ],
+     "kind": "prose",
+     "note": "get_response 전후 실행 경로 — 동작 설명"
+    },
+    {
+     "lines": [
+      1471,
+      1472
+     ],
+     "kind": "prose"
+    }
+   ]
+  },
+  {
+   "section_key": "s075-16.1",
+   "line_start": 1475,
+   "line_end": 1486,
+   "blocks": [
+    {
+     "lines": [
+      1476,
+      1478
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "비대 판단은 변경 이유·orchestration 복잡도로",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «파일 길이보다 변경 이유와 orchestration 복잡도로 한다» — 판단형 규칙 · 로스터 비커버 — 위임 기본값"
+      },
+      {
+       "label": "서비스 레이어 도입은 기준 하나 이상 성립 시",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①조건 표지 «하나 이상이 실제로 있을 때 도입한다» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1479,
+      1479
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "도입 기준 — 복수 모델·애그리거트·어댑터 조율",
+       "class": "Permission",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①도입 허용 조건 목록 항 · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1480,
+      1480
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "도입 기준 — 복수 entry point 흐름 중복",
+       "class": "Permission",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 도입 허용 조건 목록 항"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1481,
+      1481
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "도입 기준 — use case의 명시적 트랜잭션 경계 소유",
+       "class": "Permission",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 도입 허용 조건 목록 항 · ②check-transaction-boundary 는 표준 트리 유스케이스 축이라 도입 «판단»은 비커버"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1482,
+      1482
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "도입 기준 — 외부 side effect와 DB write 정렬",
+       "class": "Permission",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 도입 허용 조건 목록 항"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1483,
+      1484
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "도입 기준 — persistence·orchestration 세부로 모델 난독화",
+       "class": "Permission",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 도입 허용 조건 목록 항"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1485,
+      1486
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "짧은 절차의 억지 서비스 분리 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①금지 표지 «억지 분리하지 않는다» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s076-16.2",
+   "line_start": 1487,
+   "line_end": 1525,
+   "blocks": [
+    {
+     "lines": [
+      1488,
+      1518
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      1519,
+      1520
+     ],
+     "kind": "norm",
+     "restates": [
+      "implementation-django-final/s015-2.5/b5",
+      "architecture-ddd-final/s017-3.2/b8"
+     ],
+     "note": "셋째 문장 «어느 경우든 상태 값은 심볼로만 소비한다(리터럴 비교 금지)» = §2.5 소비 규율 사본 — Work 미승격. 앞 두 문장은 이 절 고유 규범으로 승격",
+     "norms": [
+      {
+       "label": "예시의 평면 Django 관례 한정",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «평면 Django(기존 관례) 예시다» — 이중 문맥 한정 조항 · 의미 판정"
+      },
+      {
+       "label": "표준 4계층의 상태 판정·전이 도메인 소유",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «도메인 애그리거트 소유이고 값 집합은 domain Enum에서 파생한다(architecture-ddd §3.2)» · ②check-app-container docstring «판정-소유 형태(빈혈) 같은 의미 변종은 범위 밖(discipline-reviewer 몫)»"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1521,
+      1522
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "서비스 네이밍 <entity>_<action>",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «네이밍 규칙» · ②check-naming #28 은 «service(단독 토큰)» 약어 금지 축이라 HackSoft 함수 네이밍은 담당 규칙 부재 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1523,
+      1523
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "접두사 네임스페이싱",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «묶는다» · check-naming 로스터에 접두 네임스페이싱 규칙 부재 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1524,
+      1525
+     ],
+     "kind": "prose",
+     "note": "grep 검색 용이 — 효과 설명"
+    }
+   ]
+  },
+  {
+   "section_key": "s077-16.3",
+   "line_start": 1526,
+   "line_end": 1557,
+   "blocks": [
+    {
+     "lines": [
+      1527,
+      1551
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      1552,
+      1552
+     ],
+     "kind": "prose"
+    },
+    {
+     "lines": [
+      1553,
+      1553
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "대부분 프로젝트는 모델 메서드+서비스 함수로 충분",
+       "class": "Permission",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «충분하다» — 허용형 실용 권고 · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1554,
+      1554
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "Repository 패턴의 점진 도입 한정",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①조건 표지 «정말 복잡해질 때만 … 점진적으로 도입한다» — 조건 한정 조항 · 로스터 비커버"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1555,
+      1557
+     ],
+     "kind": "prose",
+     "note": "패턴 강제 비용·서비스 레이어 출발점 — 사유 설명"
+    }
+   ]
+  },
+  {
+   "section_key": "s078-16.4",
+   "line_start": 1558,
+   "line_end": 1601,
+   "blocks": [
+    {
+     "lines": [
+      1559,
+      1561
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "commit·rollback 경계는 use case 단위",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «use case 단위로 경계를 정한다» · ②check-transaction-boundary 담당 규칙(#195·#197·#200)은 표준 트리 유스케이스 쓰기 축이라 평면 atomic 경계 «설정»은 비커버 — 위임 기본값"
+      },
+      {
+       "label": "atomic()은 최소 블록에 한정",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «모든 코드를 큰 transaction으로 감싸는 것이 아니라 … 최소 블록에 둔다» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1562,
+      1580
+     ],
+     "kind": "code",
+     "norms": [
+      {
+       "label": "표준 트리 응용 계층의 커밋 후 부작용은 uow.after_commit",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-transaction-boundary.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①코드 주석 «uow.after_commit(...) 소유다(#200)» · ②check-transaction-boundary docstring #200 «응용이 transaction.on_commit·connection.in_atomic_block 을 직접 부르면 위반» — ④#200 정확 일치"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1581,
+      1581
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "atomic() owner는 application service",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «application service가 되는 경우가 많다» — 경향형 규범(보수적 포함) · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1582,
+      1582
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "select_for_update()는 pessimistic lock 필요 시에만",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①조건 표지 «필요한 경우에만 사용한다» · ②check-domain-model #549 는 «수정 조회는 캐시 우회» 축이라 필요성 판정은 비커버 — 위임 기본값"
+      },
+      {
+       "label": "잠금 범위·backend 지원·lock 검증 가능성 확인",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «함께 확인한다» · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1583,
+      1583
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "application-level check 단독 신뢰 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①금지 표지 «만 믿지 않는다» · 로스터 비커버 — 위임 기본값"
+      },
+      {
+       "label": "필수 불변식의 DB boundary 동반 설계",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «DB boundary와 함께 설계한다» · ②check-idempotency-scope-creep 은 미요청 멱등성 도입 «차단» 축이라 설계 의무는 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1584,
+      1584
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "커스텀 DB 백엔드 우회 금지(sqlite no-op 한계)",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-mechanism-ownership.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «커스텀 DB 백엔드(BEGIN IMMEDIATE 등)로 우회하지 말 것» · ②check-mechanism-ownership ⑴ «DatabaseWrapper 서브클래스 + 트랜잭션/락 의미 변경 마커» AND 게이트 — 정확 일치"
+      },
+      {
+       "label": "운영 정합용 잠금 코드 존치와 CheckConstraint 최종 방어선",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «잠금 코드는 두되 … CheckConstraint가 최종 방어선» · 로스터 비커버(제약 설계 판정) — 위임 기본값"
+      },
+      {
+       "label": "race 패자 IntegrityError의 표현 계층 상태 코드 변환",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «표현 계층에서 상태 코드(예: 409)로 변환한다» · ②check-transient-overmapping 은 OperationalError·DatabaseError 핸들러 축이고 IntegrityError 는 명시 제외 — 위임 기본값"
+      },
+      {
+       "label": "잠금 부족 시 백엔드 자작 대신 DB 아키텍처 검토 회귀",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-mechanism-ownership.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «백엔드를 만들지 말고 architecture-db §9.5 로 돌린다» · ②동 검사기 ⑴ 이 «명세 승인 없이 커스텀 백엔드 교체»를 문다 — 회귀 절차 자체는 reviewer"
+      },
+      {
+       "label": "엔진·연결 의미 변경의 출처-불문 금지",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-mechanism-ownership.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «이 금지는 출처-불문이다 — 몽키패치·connection_created·OPTIONS init_command·isolation_level·미들웨어·conftest 패치» · ②검사기 ⑴ 은 ENGINE 점경로 축만 커버라 나머지 출처는 reviewer(부분 커버 명시)"
+      },
+      {
+       "label": "연결 튜닝은 stock OPTIONS 허용 목록 한정",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «stock OPTIONS로만 … 격리·락 의미를 바꾸는 변경은 설계가 명시 승인할 때만»(architecture-db §9.5) · 검사기 ⑴ 은 OPTIONS 키 목록을 보지 않음 — 위임 기본값"
+      }
+     ],
+     "restates": [
+      "architecture-db-final/s042-9.5/b11"
+     ]
+    },
+    {
+     "lines": [
+      1585,
+      1585
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "외부 side effect의 커밋 전 실행 금지",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-transaction-boundary.py",
+        "check-usecase-dto-placement.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «commit 전에 실행하지 않는다» · ②transaction-boundary #200 + usecase-dto-placement #541 «커밋 전 발행 금지 — .publish( 직접 호출은 uow.after_commit 밖»"
+      },
+      {
+       "label": "on_commit()으로 부수효과 시점 정렬",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-transaction-boundary.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-transaction-boundary #200 이 응용 계층의 정렬 창구를 uow.after_commit 으로 고정 — 평면 Django 의 on_commit 형태는 reviewer 병행"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1586,
+      1586
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "결정 불명확 시 DB 아키텍처 검토 선행",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «DB architecture 검토가 먼저다» · 로스터 비커버(절차 판정) — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1587,
+      1588
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "Idempotency-Key 계약과 DB idempotency storage 정합",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-idempotency-scope-creep 은 §9.6 표제를 공유할 뿐 판정 축이 G0 «미요청 멱등성 도입 차단»(scope 가 미요청으로 단정 ∧ G1 승인 부재)이고, 정당 채택된 멱등성의 계약↔storage 불일치는 어떤 형태로도 잡지 않는다 — 커버 0. 같은 절 «필수 불변식의 DB boundary 동반 설계» 행과 동일 논거로 통일"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1589,
+      1590
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "risky write 구현·리뷰 시 체크리스트 명시",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «다음 항목을 명시한다» — 리뷰 절차 의무 · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1591,
+      1592
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      1593,
+      1593
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "체크리스트 — transaction owner 명시",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①risky write 표 행이 규범 운반(P0 표 6행) · 로스터 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1594,
+      1594
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "체크리스트 — lock·idempotency 수단 명시",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 표 행 운반 · ②idempotency-scope-creep 은 미요청 도입 축이라 «수단 명시»는 비커버"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1595,
+      1595
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "체크리스트 — DB constraint 명시",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 표 행 운반 · 로스터 비커버"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1596,
+      1596
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "체크리스트 — side effect timing 명시",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 표 행 운반 · 집행 축은 #200(위 1585 행)이 따로 짐"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1597,
+      1597
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "체크리스트 — isolation·retry 결정 명시",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 표 행 운반 · 로스터 비커버"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1598,
+      1599
+     ],
+     "kind": "table-row",
+     "norms": [
+      {
+       "label": "체크리스트 — verification candidates와 근거 명시",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — 표 행 운반 · 입장 결정 소유는 discipline-tdd(문서군 기본값도 discipline-reviewer)"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1600,
+      1601
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "verification candidates 행의 비의무성·discipline-tdd 소유",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «테스트 의무가 아니며 결정은 discipline-tdd가 소유한다» — 면제 조항 · 위임 기본값"
+      },
+      {
+       "label": "독자 production failure일 때만 add·아니면 reuse",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①조건 표지 «때만 … add할 수 있고 … reuse한다» · 로스터에 입장 심사 검사기 없음 — 위임 기본값"
+      },
+      {
+       "label": "add 테스트의 django_db 마커 선택 기준",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-test-config.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «plain @pytest.mark.django_db … 보호해야 할 때만 transaction=True(기존 TestCase 스위트는 재작성하지 않는다)» · ②check-test-config #387·#389 가 DB 신호 축을 결정적으로 문다(부분 커버)"
+      }
+     ],
+     "restates": [
+      "discipline-tdd-final/s025-5.5/b35"
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s079-16.5",
+   "line_start": 1602,
+   "line_end": 1667,
+   "blocks": [
+    {
+     "lines": [
+      1603,
+      1605
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "유실 불허 외부 발행의 Outbox 구현",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-broker-contract.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-broker-contract #603 «external 에 내용이 오면 딸림이 함께 선다 — ⑴outbox …»(선언 유무 측정) — 부분 커버 · 채택 판정은 reviewer"
+      },
+      {
+       "label": "채택 기준·전달 보장의 타 문서 소유",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «채택 기준은 architecture-ddd §3.7, 전달 보장·dead-letter 정책은 architecture-db §9.7» — 소유 포인터 · 위임 기본값"
+      },
+      {
+       "label": "outbox 행과 비즈니스 write의 동일 atomic 블록 저장",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «같은 transaction.atomic() 블록에서 저장하고» · ②check-transaction-boundary 담당 규칙 11종(#4·#195·#197·#200·#282·#283·#285·#287·#355·#597·#599)은 애그리거트 리포지토리·유스케이스 쓰기 축이라 outbox 행 동반 저장은 비커버(#546 은 이 검사기 담당이 아니라 진단 메시지 내 원리 인용일 뿐 — 진단 소유는 check-domain-model 응용 축이고 그 역시 «한 트랜잭션 = 애그리거트 하나» 판정이라 비커버) — 위임 기본값"
+      },
+      {
+       "label": "발행은 별도 디스패처가 수행",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «별도 디스패처가 발행한다» · ②check-event-publish 는 published_event 표면 축 — 위임 기본값"
+      }
+     ],
+     "restates": [
+      "architecture-ddd-final/s025/b1"
+     ]
+    },
+    {
+     "lines": [
+      1606,
+      1636
+     ],
+     "kind": "code",
+     "restates": [
+      "implementation-django-final/s015-2.5/b5",
+      "architecture-ddd-final/s026/b1"
+     ],
+     "note": "코드 주석 «값은 OrderEventType에서만 -- 대입·filter 소비도 심볼로(§2.5 소비 규율)»(1615행) — 정본은 s015-2.5/b5. 나머지 주석의 birth-enum 규범은 이 블록에서 승격",
+     "norms": [
+      {
+       "label": "발행 이벤트 종류의 birth-enum 단일 출처",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①코드 주석 «발행 이벤트 종류의 단일 출처 (1종째부터 enum·append-only: birth-enum, architecture-ddd §3.7)» · ②check-event-publish #504 는 «사실 하나=파일 하나» 축이라 enum 단일 출처는 비커버 — 위임 기본값"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1637,
+      1638
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "디스패처 자리는 driving_layer/cron_job/(management/commands 금지)",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-layer-skeleton.py",
+        "check-missable-entrance.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «#58 — application/**/management/commands/ 금지» · ②check-layer-skeleton docstring «#58 … 금지 경로(management/commands)» + check-missable-entrance #172·#174 «예약 실행 입구는 driving_layer/cron_job/ · <job>_cron_job.py»"
+      },
+      {
+       "label": "미발행 행의 select_for_update(skip_locked=True) 잠금",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «잠그고» · 로스터 비커버(경합 가드 형태 검사는 #599 의 save_all 축 한정) — 위임 기본값"
+      },
+      {
+       "label": "발행 성공 시 published_at 기록",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «published_at을 찍는다» · 로스터 비커버 — 위임 기본값"
+      }
+     ],
+     "restates": [
+      "discipline-houserules-final/s008/b2"
+     ]
+    },
+    {
+     "lines": [
+      1639,
+      1640
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "management command 예시의 배경 한정",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①인용구 «아래 예시는 … 배경이다 — 표준 트리 코드는 cron_job/ 껍데기에서 부른다» — 범위 한정 조항 · 의미 판정"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1641,
+      1662
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      1663,
+      1663
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "at-least-once 전제의 소비자 멱등",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-broker-contract.py",
+        "check-missable-entrance.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-broker-contract #532 «external 계약은 at-least-once 를 요구로 적는다» + check-missable-entrance #181 «멱등성은 유스케이스가 갖는다 — 두 번 와도 결과가 같나»"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1664,
+      1665
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "유실 허용 in-process 후속은 on_commit()으로 충분",
+       "class": "Permission",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «outbox 없이 transaction.on_commit()으로 충분하다(§16.4)» — 허용형 · ②표준 트리에서는 #200 이 uow.after_commit 을 요구하므로 평면 맥락 한정 판정은 reviewer"
+      }
+     ]
+    },
+    {
+     "lines": [
+      1666,
+      1667
+     ],
+     "kind": "prose"
+    }
+   ]
+  },
+  {
+   "section_key": "s087",
+   "line_start": 1732,
+   "line_end": 1747,
+   "blocks": [
+    {
+     "lines": [
+      1733,
+      1743
+     ],
+     "kind": "code"
+    },
+    {
+     "lines": [
+      1744,
+      1744
+     ],
+     "kind": "prose",
+     "note": "pk 튜플 — 기능 설명"
+    },
+    {
+     "lines": [
+      1745,
+      1745
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "복합 PK 예시의 같은 BC 내 가정 한정",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «FK는 같은 BC 내 가정이다» — 조건 한정 조항 · 의미 판정"
+      },
+      {
+       "label": "BC 경계 ORM FK 금지 — 값 참조",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-db-table.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «BC 경계 ORM FK 금지 — architecture-ddd §3.3 규칙3» · ②check-db-table 모델 #631 «타 BC 모델을 FK·O2O·M2M 으로 참조 금지(문자열 참조 포함)» — 정확 일치"
+      }
+     ],
+     "restates": [
+      "architecture-ddd-final/s019/b7"
+     ]
+    },
+    {
+     "lines": [
+      1746,
+      1747
+     ],
+     "kind": "prose",
+     "note": "복합 PK 제약사항 — 기능 한계 설명"
+    }
+   ]
+  }
+ ]
 }

@@ -2994,6 +2994,7 @@ djr:R-0460 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s006> ;
     djr:kind djr:kind-norm ;
     djr:order 8 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b10> ;
     djr:statesNorm djr:R-0247, djr:R-0248, djr:R-0249, djr:R-0250, djr:R-0251, djr:R-0252, djr:R-0253, djr:R-0254, djr:R-0255, djr:R-0256, djr:R-0257, djr:R-0258 ;
     djr:text "Ninja endpoint/error contract/response Schema가 변경되는 scope에서는 **G1 제시 전과 사용자 승인 응답 뒤 Phase 2 dispatch 직전**에 current `design-spec.md`를 다시 읽는다. `Error response contract 12-slot`의 label과 순서는 정확히 `contract scope`; `scope evidence`; `error profile`; `compatibility/rollout`; `common FrameworkErrorSchema action`; `common FrameworkErrorSchema shape/approval`; `BC error module`; `BC ErrorCode`; `BC ErrorSchema`; `prepared error mapping`; `controller mapping`; `response/OpenAPI/tests`다. 12개 모두 구체적이고 선택 profile에 맞으며 서로 일관돼야 한다. `none | not applicable`은 해당 profile/slot이 허용하고 이유·evidence를 함께 기록한 경우에만 구체값이다. `dddjango-code-json`은 `error-bc`가 비어도 slot 5가 `reuse | create | approved-change`여야 하고 slot 6의 common shape가 필수다. plugin 기본 property 목록은 없으며 기존 프로젝트의 관찰된 exact shape 또는 신규 scope에서 별도로 승인된 exact shape를 그대로 사용한다. slot 9의 BC base가 slot 6의 식별자 field를 `<Bc>ErrorCode`로 좁히면서 공통의 default를 잃어 required가 되는 것은 canon이다(식별자 field 한정·ErrorCode 좁힘 동반일 때만 — 2026-08-15). 이때 slots 7–9는 public BC error 부재 이유와 함께 `none`일 수 있지만, slots 10–12는 승인된 empty mapping/runtime/OpenAPI inventory와 검증을 명시해 공백으로 넘기지 않는다. `preserve-established`의 slots 5–12는 관찰된 profile-native artifact/behavior 또는 evidence가 있는 `none | not applicable`이어야 하며 code-profile Enum·base·direct-`Status`를 강제하지 않는다. 누락·모호·모순이면 승인 입력이 있어도 Phase 2로 가지 않고 G1/G1′ 설계로 반송한다. Coordinator는 slot 값을 대신 결정하거나 조용히 보충·수정하지 않는다. `dddjango-code-json`에서 현재 common shape와 승인 shape가 다른데 `common FrameworkErrorSchema action=approved-change`와 **별도로 표면화해 받은 명시적 사용자 승인 evidence**가 함께 없으면 G1을 차단한다. 설계 전체에 대한 일반 G1 승인은 shape 변경 승인을 대신하지 않는다. 신규 scope의 최초 shape도 exact field/type/required/default/nullability/모든 `Field` metadata/model config·legacy `Config`/validator/serializer/computed field/Pydantic hook inventory와 effective semantics/wire 직렬화 결과와 각 field 의미를 보여 준 별도 명시 승인 없이는 생성하지 않는다. 재작업으로 profile·compatibility·wire 또는 그 밖의 API semantic slot이 바뀌면 API reviewer를 다시 호출하고, 물리 구조·소유권·controller mapping 결정이 바뀌면 discipline reviewer를 다시 호출해 반영한 뒤 새 G1을 제시한다.\n\n"@ko .
 
@@ -3083,6 +3084,7 @@ djr:R-0460 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/references/final.md/s025-5.5/b17> ;
     djr:statesNorm djr:R-0264, djr:R-0265, djr:R-0266, djr:R-0267, djr:R-0268 ;
     djr:text "2. 승인된 입장 표와 변경 URL·public symbol/use case·event/model/constraint명을 앵커로 **관련 테스트만 한정 검색**해 `existing authoritative coverage`를 확인한다. decision을 다시 만들지 말고 다음대로 dispatch한다: `add/update`만 새·변경 Red와 test edit, `reuse`는 지정 기존 anchor 실행만 하고 artifact write 0, 일반 `retain`은 무편집, `remove`는 승인된 exact target만 원 소유자에게, `reject`는 test 역할 dispatch 0, `pending`은 G1/G1′ 반송이다. 명시 승인된 의미 보존 `retain` 재조직만 새 case·assertion·Red 없이 같은 보호를 전후 기록한다. 외부 HTTP/event/user-observable/public contract 소유 행은 `dddjango:acceptance-tester`, domain/application/DB/adapter 소유 행은 `dddjango:coder`에 준다. 전체 suite를 discovery 대용으로 쓰지 않는다.\n"@ko .
 
@@ -3237,6 +3239,7 @@ djr:R-0460 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b13> ;
     djr:statesNorm djr:R-0273, djr:R-0274, djr:R-0275, djr:R-0276, djr:R-0277 ;
     djr:text "4. 슬라이스마다 `dddjango:coder`를 호출한다 — 입력: 승인 명세·패키지 구조·관련 입장 행·acceptance 결과(있으면)·이번 제품 구현 슬라이스·플러그인 설치 루트 절대 경로(검사기 확장-리터럴 호출용 · 2026-08-15). coder는 자기 소유의 `add/update`만 단위 Red→Green→Refactor로 편집하고, `remove`는 exact target만 제거한다. `reuse/reject`에서 내부 test write를 만들거나 외부 계약 테스트를 수정하지 않는다. 이번 실행이 Red를 위해 만든 loader/dynamic import guard/대체 decorator/skip/xfail/helper는 만든 동일 역할을 첫 Green 직후 다시 호출해 즉시 제거하며, 작업 전 기존 비계를 임의 삭제하지 않는다.\n"@ko .
 
@@ -3391,6 +3394,7 @@ djr:R-0460 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
     djr:kind djr:kind-norm ;
     djr:order 8 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s003/b1> ;
     djr:statesNorm djr:R-0290, djr:R-0291, djr:R-0292 ;
     djr:text "   - 각 작성 역할은 필요한 최소 근거만 `path::test | decision | unique production failure | action | 변경 후 현행 보장 위치`로 반환한다. `reuse`는 실행한 anchor, `remove`는 exact target과 종료 근거, 의미 보존 재조직은 전후 보호 위치를 쓴다. 별도 장부·snapshot·receipt·state machine은 만들지 않는다.\n"@ko .
 

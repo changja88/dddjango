@@ -1,524 +1,586 @@
 {
-  "schema": "migrate-spec/1",
-  "doc_key": "discipline-cleancode-skill",
-  "path": "dddjango/skills/discipline-cleancode/SKILL.md",
-  "restates_paths": {
-    "discipline-cleancode-skill": "dddjango/skills/discipline-cleancode/SKILL.md"
-  },
-  "sections": [
+ "schema": "migrate-spec/1",
+ "doc_key": "discipline-cleancode-skill",
+ "path": "dddjango/skills/discipline-cleancode/SKILL.md",
+ "restates_paths": {
+  "discipline-cleancode-skill": "dddjango/skills/discipline-cleancode/SKILL.md",
+  "discipline-cleancode-final": "dddjango/skills/discipline-cleancode/references/final.md"
+ },
+ "sections": [
+  {
+   "section_key": "s001",
+   "line_start": 1,
+   "line_end": 6,
+   "blocks": [
     {
-      "section_key": "s001",
-      "line_start": 1,
-      "line_end": 6,
-      "blocks": [
-        {
-          "lines": [
-            2,
-            2
-          ],
-          "kind": "prose"
-        },
-        {
-          "lines": [
-            3,
-            3
-          ],
-          "kind": "norm",
-          "restates": [
-            "discipline-cleancode-skill/s003/b1",
-            "discipline-cleancode-skill/s003/b2",
-            "discipline-cleancode-skill/s003/b3"
-          ],
-          "norms": [
-            {
-              "label": "클린코드 원칙 필요 시 스킬 로드",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 — frontmatter description 은 스킬 라우터의 로드 트리거 문면 · ②check-*.py 27종 전수 실독 결과 스킬 로드·위임 판정 술어 0(에이전트 호출·스킬 선택은 검사기 관할 밖) · §16 표 discipline-cleancode → agent-discipline-reviewer"
-            },
-            {
-              "label": "Python 관용구·Django 특화 패턴의 타 스킬 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 — frontmatter description 은 스킬 라우터의 로드 트리거 문면 · ②check-*.py 27종 전수 실독 결과 스킬 로드·위임 판정 술어 0(에이전트 호출·스킬 선택은 검사기 관할 밖) · §16 표 discipline-cleancode → agent-discipline-reviewer"
-            }
-          ]
-        },
-        {
-          "lines": [
-            4,
-            4
-          ],
-          "kind": "prose"
-        },
-        {
-          "lines": [
-            5,
-            6
-          ],
-          "kind": "prose"
-        }
-      ]
+     "lines": [
+      2,
+      2
+     ],
+     "kind": "prose"
     },
     {
-      "section_key": "s003",
-      "line_start": 9,
-      "line_end": 17,
-      "blocks": [
-        {
-          "lines": [
-            10,
-            12
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "언어 비종속 클린코드 원칙 필요 시 로드",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 — frontmatter description 은 스킬 라우터의 로드 트리거 문면 · ②check-*.py 27종 전수 실독 결과 스킬 로드·위임 판정 술어 0(에이전트 호출·스킬 선택은 검사기 관할 밖) · §16 표 discipline-cleancode → agent-discipline-reviewer"
-            }
-          ]
-        },
-        {
-          "lines": [
-            13,
-            13
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "Python 관용구·PEP8·타입 힌트·docstring 기계 규칙의 implementation-python 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-cleancode → agent-discipline-reviewer"
-            }
-          ]
-        },
-        {
-          "lines": [
-            14,
-            14
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "Django 모델·ORM·서비스 레이어 특화 패턴의 implementation-django 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-cleancode → agent-discipline-reviewer"
-            }
-          ]
-        },
-        {
-          "lines": [
-            15,
-            15
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "도메인 전략·애그리거트·바운디드 컨텍스트의 architecture-ddd 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-cleancode → agent-discipline-reviewer"
-            }
-          ]
-        },
-        {
-          "lines": [
-            16,
-            17
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "테스트 코드 작성법의 implementation-test 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-cleancode → agent-discipline-reviewer"
-            }
-          ]
-        }
-      ]
+     "lines": [
+      3,
+      3
+     ],
+     "kind": "norm",
+     "restates": [
+      "discipline-cleancode-skill/s003/b1",
+      "discipline-cleancode-skill/s003/b2",
+      "discipline-cleancode-skill/s003/b3"
+     ],
+     "norms": [
+      {
+       "label": "클린코드 원칙 필요 시 스킬 로드",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 — frontmatter description 은 스킬 라우터의 로드 트리거 문면 · ②check-*.py 27종 전수 실독 결과 스킬 로드·위임 판정 술어 0(에이전트 호출·스킬 선택은 검사기 관할 밖) · §16 표 discipline-cleancode → agent-discipline-reviewer"
+      },
+      {
+       "label": "Python 관용구·Django 특화 패턴의 타 스킬 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 — frontmatter description 은 스킬 라우터의 로드 트리거 문면 · ②check-*.py 27종 전수 실독 결과 스킬 로드·위임 판정 술어 0(에이전트 호출·스킬 선택은 검사기 관할 밖) · §16 표 discipline-cleancode → agent-discipline-reviewer"
+      }
+     ]
     },
     {
-      "section_key": "s004",
-      "line_start": 18,
-      "line_end": 31,
-      "blocks": [
-        {
-          "lines": [
-            19,
-            20
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "이름은 의도를 드러낸다 — 한 개념 한 단어·품사·범위 비례 길이",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        },
-        {
-          "lines": [
-            21,
-            21
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "매직 값·상수 승격의 판정 원리 적용(닫힌 집합 승격·심볼 소비·허용 목록·birth-enum·wire Literal 재예외)",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-choices-literal-consumption.py"
-              ],
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "②check-choices-literal-consumption.py docstring 선두 «cleancode §2.14 소비 규율» 직접 § 인용(«선언된 심볼은 심볼로만 소비» 항의 결정적 부분집합 집행) + registry Checker 등재 + ③P0 «백스톱 부분 커버»; 같은 docstring 의 «보지 않는 것(의미 레인 = discipline-reviewer 몫)» 선언 때문에 위임 병기 — discipline-cleancode-final s026-2.14 배선과 동형"
-            }
-          ]
-        },
-        {
-          "lines": [
-            22,
-            22
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "함수는 작게 한 가지만 — 추상화 수준 통일·인수 최소·플래그 금지·명령조회 분리·부수효과 금지",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        },
-        {
-          "lines": [
-            23,
-            23
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "인터페이스 주석 필수·구현 주석 최소화",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        },
-        {
-          "lines": [
-            24,
-            24
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "모듈은 깊게 — 단순 인터페이스 뒤 강력 기능·얕은 모듈과 레드 플래그 경계",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        },
-        {
-          "lines": [
-            25,
-            25
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "행동이 상태를 결정한다 — 묻지 말고 시켜라·조건문의 다형성 대체·로직과 데이터 동거",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        },
-        {
-          "lines": [
-            26,
-            26
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "SOLID 5원칙 적용 — 같은 이유는 모으고 다른 이유는 분리",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        },
-        {
-          "lines": [
-            27,
-            27
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "DRY 는 지식의 중복을 금지한다 — 코드 유사성이 아닌 비즈니스 지식 단위 판단",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        },
-        {
-          "lines": [
-            28,
-            28
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "오류는 설계로 먼저 제거하고 불가하면 예외 — 보호절·DbC·방어적 프로그래밍",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        },
-        {
-          "lines": [
-            29,
-            29
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "코드 스멜 감지·리팩토링 제거 — 기능 보존 검증하며 작은 단계",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        },
-        {
-          "lines": [
-            30,
-            31
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "레거시는 Seam 보호 후 개선 — 임시 특성화 probe 의 영구 계약 고정 금지",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        }
-      ]
+     "lines": [
+      4,
+      4
+     ],
+     "kind": "prose"
     },
     {
-      "section_key": "s005",
-      "line_start": 32,
-      "line_end": 56,
-      "blocks": [
-        {
-          "lines": [
-            33,
-            35
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "주제별 상세는 references/final.md 의 해당 절을 따른다",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        },
-        {
-          "lines": [
-            36,
-            37
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            38,
-            38
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            39,
-            39
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            40,
-            40
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            41,
-            41
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            42,
-            42
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            43,
-            43
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            44,
-            44
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            45,
-            45
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            46,
-            46
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            47,
-            47
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            48,
-            48
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            49,
-            49
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            50,
-            50
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            51,
-            51
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            52,
-            52
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            53,
-            53
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            54,
-            54
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            55,
-            56
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "final.md 는 필요한 항목만 읽는다(전체 로드 불필요)",
-              "class": "Permission",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
-            }
-          ]
-        }
-      ]
+     "lines": [
+      5,
+      6
+     ],
+     "kind": "prose"
     }
-  ]
+   ]
+  },
+  {
+   "section_key": "s003",
+   "line_start": 9,
+   "line_end": 17,
+   "blocks": [
+    {
+     "lines": [
+      10,
+      12
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "언어 비종속 클린코드 원칙 필요 시 로드",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 — frontmatter description 은 스킬 라우터의 로드 트리거 문면 · ②check-*.py 27종 전수 실독 결과 스킬 로드·위임 판정 술어 0(에이전트 호출·스킬 선택은 검사기 관할 밖) · §16 표 discipline-cleancode → agent-discipline-reviewer"
+      }
+     ]
+    },
+    {
+     "lines": [
+      13,
+      13
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "Python 관용구·PEP8·타입 힌트·docstring 기계 규칙의 implementation-python 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-cleancode → agent-discipline-reviewer"
+      }
+     ]
+    },
+    {
+     "lines": [
+      14,
+      14
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "Django 모델·ORM·서비스 레이어 특화 패턴의 implementation-django 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-cleancode → agent-discipline-reviewer"
+      }
+     ]
+    },
+    {
+     "lines": [
+      15,
+      15
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "도메인 전략·애그리거트·바운디드 컨텍스트의 architecture-ddd 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-cleancode → agent-discipline-reviewer"
+      }
+     ]
+    },
+    {
+     "lines": [
+      16,
+      17
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "테스트 코드 작성법의 implementation-test 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 역할명 «→ <스킬명>»(경계 위임 선언) · ②27종 전수 실독 결과 스킬 경계 판정 술어 0 · §16 표 discipline-cleancode → agent-discipline-reviewer"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s004",
+   "line_start": 18,
+   "line_end": 31,
+   "blocks": [
+    {
+     "lines": [
+      19,
+      20
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "이름은 의도를 드러낸다 — 한 개념 한 단어·품사·범위 비례 길이",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ],
+     "restates": [
+      "discipline-cleancode-final/s013-2.1/b1",
+      "discipline-cleancode-final/s017-2.5/b1",
+      "discipline-cleancode-final/s018-2.6/b1",
+      "discipline-cleancode-final/s016-2.4/b1"
+     ]
+    },
+    {
+     "lines": [
+      21,
+      21
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "매직 값·상수 승격의 판정 원리 적용(닫힌 집합 승격·심볼 소비·허용 목록·birth-enum·wire Literal 재예외)",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-choices-literal-consumption.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-choices-literal-consumption.py docstring 선두 «cleancode §2.14 소비 규율» 직접 § 인용(«선언된 심볼은 심볼로만 소비» 항의 결정적 부분집합 집행) + registry Checker 등재 + ③P0 «백스톱 부분 커버»; 같은 docstring 의 «보지 않는 것(의미 레인 = discipline-reviewer 몫)» 선언 때문에 위임 병기 — discipline-cleancode-final s026-2.14 배선과 동형"
+      }
+     ],
+     "restates": [
+      "discipline-cleancode-final/s026-2.14/b3",
+      "discipline-cleancode-final/s026-2.14/b13",
+      "discipline-cleancode-final/s026-2.14/b9",
+      "discipline-cleancode-final/s026-2.14/b7",
+      "discipline-cleancode-final/s026-2.14/b8",
+      "discipline-cleancode-final/s026-2.14/b12"
+     ]
+    },
+    {
+     "lines": [
+      22,
+      22
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "함수는 작게 한 가지만 — 추상화 수준 통일·인수 최소·플래그 금지·명령조회 분리·부수효과 금지",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ],
+     "restates": [
+      "discipline-cleancode-final/s028-3.1/b1",
+      "discipline-cleancode-final/s029-3.2/b1",
+      "discipline-cleancode-final/s030-3.3/b1",
+      "discipline-cleancode-final/s031-3.4/b1",
+      "discipline-cleancode-final/s032-3.5/b1",
+      "discipline-cleancode-final/s033-3.6/b1",
+      "discipline-cleancode-final/s034-3.7/b1"
+     ]
+    },
+    {
+     "lines": [
+      23,
+      23
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "인터페이스 주석 필수·구현 주석 최소화",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ],
+     "restates": [
+      "discipline-cleancode-final/s041-4.2/b1",
+      "discipline-cleancode-final/s040-4.1/b2",
+      "discipline-cleancode-final/s056-6.4/b2",
+      "discipline-cleancode-final/s057-6.5/b1"
+     ]
+    },
+    {
+     "lines": [
+      24,
+      24
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "모듈은 깊게 — 단순 인터페이스 뒤 강력 기능·얕은 모듈과 레드 플래그 경계",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ],
+     "restates": [
+      "discipline-cleancode-final/s028-3.1/b2"
+     ]
+    },
+    {
+     "lines": [
+      25,
+      25
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "행동이 상태를 결정한다 — 묻지 말고 시켜라·조건문의 다형성 대체·로직과 데이터 동거",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ],
+     "restates": [
+      "discipline-cleancode-final/s063-8.1/b1",
+      "discipline-cleancode-final/s064-8.2/b1",
+      "discipline-cleancode-final/s065-8.3/b1",
+      "discipline-cleancode-final/s067-8.5/b1"
+     ]
+    },
+    {
+     "lines": [
+      26,
+      26
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "SOLID 5원칙 적용 — 같은 이유는 모으고 다른 이유는 분리",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ],
+     "restates": [
+      "discipline-cleancode-final/s070-9.1/b1",
+      "discipline-cleancode-final/s072-9.2/b1",
+      "discipline-cleancode-final/s073-9.3/b1",
+      "discipline-cleancode-final/s074-9.4/b1",
+      "discipline-cleancode-final/s075-9.5/b1"
+     ]
+    },
+    {
+     "lines": [
+      27,
+      27
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "DRY 는 지식의 중복을 금지한다 — 코드 유사성이 아닌 비즈니스 지식 단위 판단",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ],
+     "restates": [
+      "discipline-cleancode-final/s101-13.1/b2"
+     ]
+    },
+    {
+     "lines": [
+      28,
+      28
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "오류는 설계로 먼저 제거하고 불가하면 예외 — 보호절·DbC·방어적 프로그래밍",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ],
+     "restates": [
+      "discipline-cleancode-final/s091-12.1/b1",
+      "discipline-cleancode-final/s092-12.2/b2",
+      "discipline-cleancode-final/s095-12.5/b1",
+      "discipline-cleancode-final/s096-12.6/b1",
+      "discipline-cleancode-final/s097-12.7/b1"
+     ]
+    },
+    {
+     "lines": [
+      29,
+      29
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "코드 스멜 감지·리팩토링 제거 — 기능 보존 검증하며 작은 단계",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ]
+    },
+    {
+     "lines": [
+      30,
+      31
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "레거시는 Seam 보호 후 개선 — 임시 특성화 probe 의 영구 계약 고정 금지",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ],
+     "restates": [
+      "discipline-cleancode-final/s127-16.3/b1",
+      "discipline-cleancode-final/s128-16.4/b1",
+      "discipline-cleancode-final/s129-16.5/b1",
+      "discipline-cleancode-final/s129-16.5/b2"
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s005",
+   "line_start": 32,
+   "line_end": 56,
+   "blocks": [
+    {
+     "lines": [
+      33,
+      35
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "주제별 상세는 references/final.md 의 해당 절을 따른다",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ]
+    },
+    {
+     "lines": [
+      36,
+      37
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      38,
+      38
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      39,
+      39
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      40,
+      40
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      41,
+      41
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      42,
+      42
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      43,
+      43
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      44,
+      44
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      45,
+      45
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      46,
+      46
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      47,
+      47
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      48,
+      48
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      49,
+      49
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      50,
+      50
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      51,
+      51
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      52,
+      52
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      53,
+      53
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      54,
+      54
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      55,
+      56
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "final.md 는 필요한 항목만 읽는다(전체 로드 불필요)",
+       "class": "Permission",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "registry Agent 등재 · §16 위임 기본값 표(discipline-cleancode 문서군 → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례); check-*.py 27종 docstring 선두 전수 실독 결과 이 규범을 지목하는 ①역할명·②§ 인용·③P0 커버 근거 0"
+      }
+     ]
+    }
+   ]
+  }
+ ]
 }

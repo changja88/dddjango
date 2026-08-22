@@ -1,590 +1,627 @@
 {
-  "schema": "migrate-spec/1",
-  "doc_key": "architecture-api-skill",
-  "path": "dddjango/skills/architecture-api/SKILL.md",
-  "restates_paths": {
-    "architecture-api-skill": "dddjango/skills/architecture-api/SKILL.md"
-  },
-  "sections": [
+ "schema": "migrate-spec/1",
+ "doc_key": "architecture-api-skill",
+ "path": "dddjango/skills/architecture-api/SKILL.md",
+ "restates_paths": {
+  "architecture-api-skill": "dddjango/skills/architecture-api/SKILL.md",
+  "architecture-api-final": "dddjango/skills/architecture-api/references/final.md"
+ },
+ "sections": [
+  {
+   "section_key": "s001",
+   "line_start": 1,
+   "line_end": 6,
+   "blocks": [
     {
-      "section_key": "s001",
-      "line_start": 1,
-      "line_end": 6,
-      "blocks": [
-        {
-          "lines": [
-            2,
-            2
-          ],
-          "kind": "prose",
-          "note": "frontmatter name — 런타임 메타. 헤딩 라인은 1행 `---`"
-        },
-        {
-          "lines": [
-            3,
-            3
-          ],
-          "kind": "norm",
-          "restates": [
-            "architecture-api-skill/s003/b1",
-            "architecture-api-skill/s003/b2",
-            "architecture-api-skill/s003/b3",
-            "architecture-api-skill/s003/b4",
-            "architecture-api-skill/s003/b5"
-          ],
-          "note": "description = s003 의 압축 사본(§15 사본→정본 단일 방향). description 의 위임처는 ninja·web·ddd·db 넷이라 s003/b6(implementation-django)은 대상 밖 — 겹치는 블록만 연결. 표기 혼재(«dddjango:architecture-ddd» 콜론 접두)는 문면 그대로 verbatim",
-          "norms": [
-            {
-              "label": "로드 조건 — REST/HTTP 계약(엔드포인트·상태 코드·에러 프로필·버전/하위 호환성·OpenAPI)의 신규 정의·변경 시 선행 로드",
-              "class": "Obligation",
-              "delegatedTo": [
-                "command-dddjango",
-                "agent-design-review-api"
-              ],
-              "basis": "①문면 «…새로 정의하거나 변경할 때 먼저 로드한다» + 센서스 E08 s001 비고 «frontmatter = 라우터 트리거(애매→포함)» · ②check-*.py 27종 docstring 선두 전수 실독 — 스킬 로드·라우팅 술어 0 · §16 위임 기본값 표(architecture-api→agent-design-review-api) + 스킬 배분 소유 Coordinator 병기(agent-coder s004 선례)"
-            },
-            {
-              "label": "경계 위임 — JSON 직렬화·라우터, 서버렌더 표현계층, 도메인 모델·애그리거트, 데이터 신뢰성·트랜잭션의 타 스킬 이양",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer",
-                "agent-design-review-ddd",
-                "agent-design-review-db"
-              ],
-              "basis": "①문면이 implementation-django-ninja·implementation-django-web·architecture-ddd·architecture-db 를 수임처로 직접 지목 — §16 표의 수임 문서군 기본값 병기(implementation-*→discipline-reviewer · architecture-ddd→design-review-ddd · architecture-db→design-review-db) · ②27종 docstring 에 스킬 간 위임 술어 0 · ninja s022-6.1 판례 준거"
-            }
-          ]
-        },
-        {
-          "lines": [
-            4,
-            4
-          ],
-          "kind": "prose",
-          "note": "user-invocable = 플랫폼 메타"
-        },
-        {
-          "lines": [
-            5,
-            6
-          ],
-          "kind": "prose",
-          "note": "종결 `---` + 후행 빈 줄(§13)"
-        }
-      ]
+     "lines": [
+      2,
+      2
+     ],
+     "kind": "prose",
+     "note": "frontmatter name — 런타임 메타. 헤딩 라인은 1행 `---`"
     },
     {
-      "section_key": "s003",
-      "line_start": 9,
-      "line_end": 18,
-      "blocks": [
-        {
-          "lines": [
-            10,
-            12
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "로드 조건 — REST API 계약 결정·변경 시 로드",
-              "class": "Obligation",
-              "delegatedTo": [
-                "command-dddjango",
-                "agent-design-review-api"
-              ],
-              "basis": "①문면 «…결정하거나 변경할 때 로드한다» — s001 description 의 정본 진술(사본 = s001/b2) · ②27종 전수 — 스킬 로드 술어 0 · §16 기본값 + 스킬 배분 Coordinator 병기(s001/b2 와 동일 처분)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            13,
-            13
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "JSON 직렬화·Router·Schema 구현의 implementation-django-ninja 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면이 화살표로 수임처를 직접 지목 · §16 표 implementation-*→agent-discipline-reviewer(기본값 일치) · ②27종 전수 — 스킬 관할 배분 술어 0(오류 계약 4종은 profile·selector 계약 축이지 스킬 경계 축이 아니다)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            14,
-            14
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "서버렌더 표현계층(템플릿·폼·HTMX)의 implementation-django-web 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "동상 — ①문면 지목 · §16 표 implementation-*→discipline-reviewer"
-            }
-          ]
-        },
-        {
-          "lines": [
-            15,
-            15
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "도메인 전략·애그리거트·경계 설계의 architecture-ddd 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-ddd"
-              ],
-              "basis": "①문면이 architecture-ddd 를 수임처로 직접 지목 · §16 표 architecture-ddd→agent-design-review-ddd(설계 시점)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            16,
-            16
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "데이터 신뢰성·트랜잭션·outbox 전달의 architecture-db 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-db"
-              ],
-              "basis": "①문면이 architecture-db 를 수임처로 직접 지목 · §16 표 architecture-db→agent-design-review-db"
-            }
-          ]
-        },
-        {
-          "lines": [
-            17,
-            18
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "Django ORM·서비스 레이어 구현의 implementation-django 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "동상 — ①문면 지목 · §16 표 implementation-*→discipline-reviewer. 이 블록은 s001 description 에 대응 문면이 없어 restates 대상 밖"
-            }
-          ]
-        }
-      ]
+     "lines": [
+      3,
+      3
+     ],
+     "kind": "norm",
+     "restates": [
+      "architecture-api-skill/s003/b1",
+      "architecture-api-skill/s003/b2",
+      "architecture-api-skill/s003/b3",
+      "architecture-api-skill/s003/b4",
+      "architecture-api-skill/s003/b5"
+     ],
+     "note": "description = s003 의 압축 사본(§15 사본→정본 단일 방향). description 의 위임처는 ninja·web·ddd·db 넷이라 s003/b6(implementation-django)은 대상 밖 — 겹치는 블록만 연결. 표기 혼재(«dddjango:architecture-ddd» 콜론 접두)는 문면 그대로 verbatim",
+     "norms": [
+      {
+       "label": "로드 조건 — REST/HTTP 계약(엔드포인트·상태 코드·에러 프로필·버전/하위 호환성·OpenAPI)의 신규 정의·변경 시 선행 로드",
+       "class": "Obligation",
+       "delegatedTo": [
+        "command-dddjango",
+        "agent-design-review-api"
+       ],
+       "basis": "①문면 «…새로 정의하거나 변경할 때 먼저 로드한다» + 센서스 E08 s001 비고 «frontmatter = 라우터 트리거(애매→포함)» · ②check-*.py 27종 docstring 선두 전수 실독 — 스킬 로드·라우팅 술어 0 · §16 위임 기본값 표(architecture-api→agent-design-review-api) + 스킬 배분 소유 Coordinator 병기(agent-coder s004 선례)"
+      },
+      {
+       "label": "경계 위임 — JSON 직렬화·라우터, 서버렌더 표현계층, 도메인 모델·애그리거트, 데이터 신뢰성·트랜잭션의 타 스킬 이양",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer",
+        "agent-design-review-ddd",
+        "agent-design-review-db"
+       ],
+       "basis": "①문면이 implementation-django-ninja·implementation-django-web·architecture-ddd·architecture-db 를 수임처로 직접 지목 — §16 표의 수임 문서군 기본값 병기(implementation-*→discipline-reviewer · architecture-ddd→design-review-ddd · architecture-db→design-review-db) · ②27종 docstring 에 스킬 간 위임 술어 0 · ninja s022-6.1 판례 준거"
+      }
+     ]
     },
     {
-      "section_key": "s004",
-      "line_start": 19,
-      "line_end": 29,
-      "blocks": [
-        {
-          "lines": [
-            20,
-            21
-          ],
-          "kind": "norm",
-          "note": "콜론 뒤 «PUT 전체 교체 / PATCH 부분 수정 / POST non-idempotent»는 같은 축(메서드 의미론)의 구체화 조각이라 1 Work",
-          "norms": [
-            {
-              "label": "RFC 9110 의미론 우선 — 메서드 안전성·멱등성 준수와 PUT/PATCH/POST 의미 구분",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-api"
-              ],
-              "basis": "①문면 역할명 0 · ②27종 docstring 전수 실독 — HTTP 메서드 안전성·멱등성 술어 0(오류 계약 4종은 error wire·status 축) · §16 위임 기본값 표(architecture-api→design-review-api). 발주서·P0 비고대로 final §2 에는 대응 규범이 0이라 이 지시력은 SKILL 고유 — 검수표 §3 에 기록"
-            }
-          ]
-        },
-        {
-          "lines": [
-            22,
-            22
-          ],
-          "kind": "norm",
-          "note": "설계 규칙(Obligation)과 동사 포함 금지(Prohibition)는 class 가 갈려 2 Work — final s013-3.1 이 명명 규칙을 행마다 분해한 판형과 정합",
-          "norms": [
-            {
-              "label": "URL 리소스 설계 — 명사·복수형·케밥케이스",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-api"
-              ],
-              "basis": "①문면 역할명 0 · ②check-naming docstring 은 저장소 파이썬 경로·심볼 이름 축(#28·#30·#33·#41)이라 REST URL 명명은 비커버(final s013-3.1/b2 basis 와 동일 실측) · §16 기본값"
-            },
-            {
-              "label": "URL 의 동사 행위 포함 금지",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-design-review-api"
-              ],
-              "basis": "동상 — 금지 형식 문면 · 검사 공백 → 기본값"
-            }
-          ]
-        },
-        {
-          "lines": [
-            23,
-            23
-          ],
-          "kind": "norm",
-          "note": "한 불릿에 프로필 선택 계약 9축이 들어 있다 — final s024-5.4/b1~b6 의 Work 분해와 1:1. 채번 순 = 절 시작 등장 순(보존·기본 선택·shape 승인·조건부 RFC·혼합 금지·주어 한정·레시피 의무·preserve 배제(괄호 삽입 — 레시피 절 뒤에서 시작)·G1 표면화)",
-          "norms": [
-            {
-              "label": "확립 배포 계약의 우선 보존",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-api"
-              ],
-              "basis": "①문면 «기존 배포 계약을 먼저 보존하고» · ②check-error-centralization docstring «auto·preserve-established 는 schema semantics 미적용»(profile gate) — 보존 판정은 검사기 밖 · §16 기본값(final s024-5.4/b2 배선과 동일)"
-            },
-            {
-              "label": "신규 dddjango Ninja 범위의 dddjango-code-json 선택",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-api"
-              ],
-              "basis": "①문면 «…을 선택한다» — 프로필 «선택» 판정은 API 계약 설계(final s024-5.4/b1·b3 배선 · ninja s023-6.2 «오류 프로필 선택의 architecture-api §5.4 위임» 판례) · ②검사기는 선택 «후» 실현만 본다"
-            },
-            {
-              "label": "shape 변경의 별도 사용자 승인 — 플러그인 기본 property 목록 부재",
-              "class": "Obligation",
-              "delegatedTo": [
-                "command-dddjango",
-                "agent-design-review-api"
-              ],
-              "basis": "①문면 «별도 사용자 승인이 필요하다» — 승인 evidence 존재 판정은 G1 게이트 소유(Coordinator · final s024-5.4/b6 «G1 표면화(STOP)»→command-dddjango 판례) · 12-slot·shape 계약 심사판은 design-review-api 병기 · ②27종 전수 — 사용자 승인 evidence 술어 0. 앞선 «기본 property 목록은 없으며»는 사실 전제라 미채번"
-            },
-            {
-              "label": "RFC 9457 Problem Details 의 별도 요구 시 한정 선택",
-              "class": "Exception",
-              "delegatedTo": [
-                "agent-design-review-api"
-              ],
-              "basis": "①문면 «별도 요구가 있을 때만» = 조건 한정(L-E 유형) · §16 기본값(final s024-5.4/b4 Exception 과 동형)"
-            },
-            {
-              "label": "두 프로필 wire 필드의 한 범위 혼합 금지",
-              "class": "Prohibition",
-              "enforcedBy": [
-                "check-error-centralization.py"
-              ],
-              "basis": "②§16 역할명→검사기 매핑 표 «schema checker» = check-error-centralization · docstring «dddjango-code-json validates the canonical common/BC FrameworkErrorSchema modules, project inventory correspondence, wire-code uniqueness» 가 wire 필드 혼입을 집행(final s024-5.4/b5 배선과 동일)"
-            },
-            {
-              "label": "혼합 금지의 주어 한정 — 구현 레시피의 프로필 편입 금지",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-design-review-api"
-              ],
-              "basis": "①문면 «혼합 금지의 주어는 wire 필드다» = 금지 범위 해석 규칙(구현 레시피는 프로필 소속이 아니다) · 해석 판정은 API 설계 리뷰(final s024-5.4/b6 동명 Work 와 같은 축·class)"
-            },
-            {
-              "label": "신규 범위의 RFC 9457 wire 채택 시에도 표준 controller 레시피 구현",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-api-error-controller-contract.py"
-              ],
-              "basis": "②§16 매핑 표 «controller checker» = check-api-error-controller-contract · docstring «Enforce direct controller-owned code-profile error mapping … analyzes only selected controllers owned by an error-bc» — 표준 레시피(controller 소유·직접 매핑)가 검사기 계약 그 자체(final s024-5.4/b6 배선과 동일)"
-            },
-            {
-              "label": "preserve-established 범위의 관할 배제 — native 보존 관할",
-              "class": "Exception",
-              "delegatedTo": [
-                "agent-design-review-api"
-              ],
-              "basis": "①문면 괄호 «preserve-established 범위는 native 보존 관할 — 이 문장의 대상 아님» = 적용 범위 한정 · ②check-error-centralization·check-api-error-controller-contract docstring «auto and preserve-established … add no new error-mapping semantics» profile gate 와 정합(final s024-5.4/b6 Exception 동형). 채번 위치: 이 괄호 조문은 자기를 감싼 레시피 절(«신규 범위는 … 구현하고») **뒤에** 시작하므로 §13 «문장 등장 순 = 채번 순»대로 레시피 Work 다음에 온다"
-            },
-            {
-              "label": "profile 미열거 조합 채택 시 G1 표면화(STOP)",
-              "class": "Obligation",
-              "delegatedTo": [
-                "command-dddjango"
-              ],
-              "basis": "①문면이 «G2 게이트 취급 … profile 열거에 없어 채택 시 G1 표면화(STOP) 대상» 이라 게이트 절차를 지목 — 절차 소유는 Coordinator(§16 기본값 이탈의 문면 근거 · final s024-5.4/b6 동일 배선)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            24,
-            24
-          ],
-          "kind": "norm",
-          "note": "계약 «기록»과 체크리스트 «검토»는 행위 대상이 갈려 2 Work(체크리스트 항목 열거는 조각이라 미분리)",
-          "norms": [
-            {
-              "label": "요청/응답 계약의 상태 코드별 body·header·schema 명시 기록",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-response-schema-bypass.py"
-              ],
-              "delegatedTo": [
-                "agent-design-review-api"
-              ],
-              "basis": "②check-response-schema-bypass docstring «Block direct raw 200-203 returns that bypass a declared Ninja schema» — 성공 2xx 의 «선언 schema 경유» 부분 백스톱이라 정본 architecture-api-final s022-5.2/b1(«상태 코드별 본문 존재 여부·schema 분리 정의» — 같은 검사기·같은 부분 백스톱 논거) 배선을 승계한다(§16 «역도 성립»). 커버 범위는 **성공 2xx schema 우회 1축 한정**이고 header 표면·오류 표면·«명시 기록» 행위 자체(정의 존재 여부)는 검사 공백 → §16 기본값 병기. 준거 정정: s021-5.1 은 b1~b8 전건 기본값(E 0)이라 «계열 배선과 동일»이 성립하지만, s022-5.2 는 b1=check-response-schema-bypass·b5=check-openapi-error-declaration 이라 기본값 계열이 아니다(b5 의 오류 표면 축은 이 Work 가 아니라 28–29행 OpenAPI Work 가 진다)"
-            },
-            {
-              "label": "엔드포인트 변경마다 계약 체크리스트(Resource·Method·Request·Response·Error·Auth·Compatibility·OpenAPI) 검토",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-api"
-              ],
-              "basis": "①문면 역할명 0 · ②③④ 지목 0 → §16 기본값(final s023-5.3/b1 «엔드포인트 설계·변경 시 계약 체크리스트 병행 검토» 배선과 동일)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            25,
-            25
-          ],
-          "kind": "norm",
-          "note": "«선택하고 선택 기준을 명시한다» — 뒷절은 같은 결정 대상의 기록 의무라 병합(1 Work)",
-          "norms": [
-            {
-              "label": "데이터 특성(정렬 안정성·실시간성·딥 페이지) 기반 페이지네이션 방식 선택과 기준 명시",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-api"
-              ],
-              "basis": "①문면 역할명 0 · ②27종 전수 — 페이지네이션 술어 0 · §16 기본값(final s042-9.2 선택 기준 표 배선과 동일)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            26,
-            26
-          ],
-          "kind": "norm",
-          "note": "문면이 (§10, §11) 두 절을 명시 귀속 — 분리 신호(agent-coder 계수 규율 «서로 다른 규칙 번호 명시 귀속»)라 2 Work",
-          "norms": [
-            {
-              "label": "버전 전략(URL·헤더·쿼리파라미터)의 API 변경 전 결정",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-api"
-              ],
-              "basis": "①문면 §10 귀속 · ②27종 전수 — 버전 전략 술어 0 · §16 기본값(final s047-10.3/b1 «단일 버전 전략의 일관 적용» 배선과 동일)"
-            },
-            {
-              "label": "하위 호환성·Deprecation 프로세스의 API 변경 전 결정",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-api"
-              ],
-              "basis": "①문면 §11 귀속 · ②breaking 판정을 계산하는 검사기 없음(final s049-11.1 basis 실측) · §16 기본값(final s049-11.1·s050-11.2 배선과 동일)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            27,
-            27
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "duplicate-sensitive 요청의 Idempotency-Key 정책(scope·replay·conflict 계약) 확정",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-api"
-              ],
-              "basis": "①문면 역할명 0 · ②check-idempotency-scope-creep 은 «G1 승인 없는 미요청 멱등성 추가 금지»(G0) 축이라 «정책을 정한다» 의무는 비커버(final s021-5.1/b6 basis 와 동일 논거 · 도피 아닌 실측 기본값) · §16 기본값(final s060-13.3/b1 배선과 동일)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            28,
-            29
-          ],
-          "kind": "norm",
-          "note": "대시 뒤는 같은 행위(OpenAPI 반영)의 구체화라 1 Work",
-          "norms": [
-            {
-              "label": "모든 계약 결정의 OpenAPI 반영 — path·method·schema·response·security·header 전수 기술",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-openapi-error-declaration.py"
-              ],
-              "delegatedTo": [
-                "agent-design-review-api"
-              ],
-              "basis": "②check-openapi-error-declaration docstring «positional/auto/preserve 실행은 기존 openapi_extra.responses 저장소 전수 검사를 보존 … dddjango-code-json 은 operation 이 직접 반환하는 BC 오류와 response={status: <Bc>ErrorSchema} 선언의 일치를 검증» — 오류 표면 한정 부분 커버 · 나머지 표면(path·method·security·header)은 검사 공백이라 §16 기본값 병기(final s065-14.3/b1 배선과 동일)"
-            }
-          ]
-        }
-      ]
+     "lines": [
+      4,
+      4
+     ],
+     "kind": "prose",
+     "note": "user-invocable = 플랫폼 메타"
     },
     {
-      "section_key": "s005",
-      "line_start": 30,
-      "line_end": 51,
-      "blocks": [
-        {
-          "lines": [
-            31,
-            33
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "주제별 라우팅 준거 — references/final.md 해당 절 준수",
-              "class": "Obligation",
-              "delegatedTo": [
-                "command-dddjango",
-                "agent-design-review-api"
-              ],
-              "basis": "①문면 «해당 절을 따른다» — 준거 문서 로드·인용 축 · ②27종 docstring 에 문서 로드·인용 술어 0 · §16 기본값 + 로드 절차 소유 Coordinator 병기(agent-design-architect s005 선례)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            34,
-            34
-          ],
-          "kind": "table-row",
-          "note": "머리행 — 라우팅 표 행은 매핑이라 규범 미계수(P0 승계·db 판과 동일 패턴)"
-        },
-        {
-          "lines": [
-            35,
-            35
-          ],
-          "kind": "table-row",
-          "note": "구분행"
-        },
-        {
-          "lines": [
-            36,
-            36
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            37,
-            37
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            38,
-            38
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            39,
-            39
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            40,
-            40
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            41,
-            41
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            42,
-            42
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            43,
-            43
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            44,
-            44
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            45,
-            45
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            46,
-            46
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            47,
-            47
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            48,
-            48
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            49,
-            50
-          ],
-          "kind": "table-row",
-          "note": "마지막 데이터 행 + 후행 빈 줄(§13)"
-        },
-        {
-          "lines": [
-            51,
-            51
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "필요 항목 한정 독해 — 전체 로드 불필요",
-              "class": "Exception",
-              "delegatedTo": [
-                "command-dddjango",
-                "agent-design-review-api"
-              ],
-              "basis": "①문면 괄호 «(전체 로드 불필요)» = 전량 로드 의무의 면제 조문이라 Exception(agent-design-review-api s003 판례) · ②27종 docstring 에 로드 범위 술어 0 · §16 기본값 + 로드 절차 Coordinator 병기"
-            }
-          ]
-        }
-      ]
+     "lines": [
+      5,
+      6
+     ],
+     "kind": "prose",
+     "note": "종결 `---` + 후행 빈 줄(§13)"
     }
-  ]
+   ]
+  },
+  {
+   "section_key": "s003",
+   "line_start": 9,
+   "line_end": 18,
+   "blocks": [
+    {
+     "lines": [
+      10,
+      12
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "로드 조건 — REST API 계약 결정·변경 시 로드",
+       "class": "Obligation",
+       "delegatedTo": [
+        "command-dddjango",
+        "agent-design-review-api"
+       ],
+       "basis": "①문면 «…결정하거나 변경할 때 로드한다» — s001 description 의 정본 진술(사본 = s001/b2) · ②27종 전수 — 스킬 로드 술어 0 · §16 기본값 + 스킬 배분 Coordinator 병기(s001/b2 와 동일 처분)"
+      }
+     ]
+    },
+    {
+     "lines": [
+      13,
+      13
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "JSON 직렬화·Router·Schema 구현의 implementation-django-ninja 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면이 화살표로 수임처를 직접 지목 · §16 표 implementation-*→agent-discipline-reviewer(기본값 일치) · ②27종 전수 — 스킬 관할 배분 술어 0(오류 계약 4종은 profile·selector 계약 축이지 스킬 경계 축이 아니다)"
+      }
+     ]
+    },
+    {
+     "lines": [
+      14,
+      14
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "서버렌더 표현계층(템플릿·폼·HTMX)의 implementation-django-web 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — ①문면 지목 · §16 표 implementation-*→discipline-reviewer"
+      }
+     ]
+    },
+    {
+     "lines": [
+      15,
+      15
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "도메인 전략·애그리거트·경계 설계의 architecture-ddd 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-ddd"
+       ],
+       "basis": "①문면이 architecture-ddd 를 수임처로 직접 지목 · §16 표 architecture-ddd→agent-design-review-ddd(설계 시점)"
+      }
+     ]
+    },
+    {
+     "lines": [
+      16,
+      16
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "데이터 신뢰성·트랜잭션·outbox 전달의 architecture-db 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-db"
+       ],
+       "basis": "①문면이 architecture-db 를 수임처로 직접 지목 · §16 표 architecture-db→agent-design-review-db"
+      }
+     ]
+    },
+    {
+     "lines": [
+      17,
+      18
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "Django ORM·서비스 레이어 구현의 implementation-django 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "동상 — ①문면 지목 · §16 표 implementation-*→discipline-reviewer. 이 블록은 s001 description 에 대응 문면이 없어 restates 대상 밖"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s004",
+   "line_start": 19,
+   "line_end": 29,
+   "blocks": [
+    {
+     "lines": [
+      20,
+      21
+     ],
+     "kind": "norm",
+     "note": "콜론 뒤 «PUT 전체 교체 / PATCH 부분 수정 / POST non-idempotent»는 같은 축(메서드 의미론)의 구체화 조각이라 1 Work",
+     "norms": [
+      {
+       "label": "RFC 9110 의미론 우선 — 메서드 안전성·멱등성 준수와 PUT/PATCH/POST 의미 구분",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-api"
+       ],
+       "basis": "①문면 역할명 0 · ②27종 docstring 전수 실독 — HTTP 메서드 안전성·멱등성 술어 0(오류 계약 4종은 error wire·status 축) · §16 위임 기본값 표(architecture-api→design-review-api). 발주서·P0 비고대로 final §2 에는 대응 규범이 0이라 이 지시력은 SKILL 고유 — 검수표 §3 에 기록"
+      }
+     ]
+    },
+    {
+     "lines": [
+      22,
+      22
+     ],
+     "kind": "norm",
+     "note": "설계 규칙(Obligation)과 동사 포함 금지(Prohibition)는 class 가 갈려 2 Work — final s013-3.1 이 명명 규칙을 행마다 분해한 판형과 정합",
+     "norms": [
+      {
+       "label": "URL 리소스 설계 — 명사·복수형·케밥케이스",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-api"
+       ],
+       "basis": "①문면 역할명 0 · ②check-naming docstring 은 저장소 파이썬 경로·심볼 이름 축(#28·#30·#33·#41)이라 REST URL 명명은 비커버(final s013-3.1/b2 basis 와 동일 실측) · §16 기본값"
+      },
+      {
+       "label": "URL 의 동사 행위 포함 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-design-review-api"
+       ],
+       "basis": "동상 — 금지 형식 문면 · 검사 공백 → 기본값"
+      }
+     ],
+     "restates": [
+      "architecture-api-final/s013-3.1/b2",
+      "architecture-api-final/s013-3.1/b3",
+      "architecture-api-final/s013-3.1/b4"
+     ]
+    },
+    {
+     "lines": [
+      23,
+      23
+     ],
+     "kind": "norm",
+     "note": "한 불릿에 프로필 선택 계약 9축이 들어 있다 — final s024-5.4/b1~b6 의 Work 분해와 1:1. 채번 순 = 절 시작 등장 순(보존·기본 선택·shape 승인·조건부 RFC·혼합 금지·주어 한정·레시피 의무·preserve 배제(괄호 삽입 — 레시피 절 뒤에서 시작)·G1 표면화)",
+     "norms": [
+      {
+       "label": "확립 배포 계약의 우선 보존",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-api"
+       ],
+       "basis": "①문면 «기존 배포 계약을 먼저 보존하고» · ②check-error-centralization docstring «auto·preserve-established 는 schema semantics 미적용»(profile gate) — 보존 판정은 검사기 밖 · §16 기본값(final s024-5.4/b2 배선과 동일)"
+      },
+      {
+       "label": "신규 dddjango Ninja 범위의 dddjango-code-json 선택",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-api"
+       ],
+       "basis": "①문면 «…을 선택한다» — 프로필 «선택» 판정은 API 계약 설계(final s024-5.4/b1·b3 배선 · ninja s023-6.2 «오류 프로필 선택의 architecture-api §5.4 위임» 판례) · ②검사기는 선택 «후» 실현만 본다"
+      },
+      {
+       "label": "shape 변경의 별도 사용자 승인 — 플러그인 기본 property 목록 부재",
+       "class": "Obligation",
+       "delegatedTo": [
+        "command-dddjango",
+        "agent-design-review-api"
+       ],
+       "basis": "①문면 «별도 사용자 승인이 필요하다» — 승인 evidence 존재 판정은 G1 게이트 소유(Coordinator · final s024-5.4/b6 «G1 표면화(STOP)»→command-dddjango 판례) · 12-slot·shape 계약 심사판은 design-review-api 병기 · ②27종 전수 — 사용자 승인 evidence 술어 0. 앞선 «기본 property 목록은 없으며»는 사실 전제라 미채번"
+      },
+      {
+       "label": "RFC 9457 Problem Details 의 별도 요구 시 한정 선택",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-design-review-api"
+       ],
+       "basis": "①문면 «별도 요구가 있을 때만» = 조건 한정(L-E 유형) · §16 기본값(final s024-5.4/b4 Exception 과 동형)"
+      },
+      {
+       "label": "두 프로필 wire 필드의 한 범위 혼합 금지",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-error-centralization.py"
+       ],
+       "basis": "②§16 역할명→검사기 매핑 표 «schema checker» = check-error-centralization · docstring «dddjango-code-json validates the canonical common/BC FrameworkErrorSchema modules, project inventory correspondence, wire-code uniqueness» 가 wire 필드 혼입을 집행(final s024-5.4/b5 배선과 동일)"
+      },
+      {
+       "label": "혼합 금지의 주어 한정 — 구현 레시피의 프로필 편입 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-design-review-api"
+       ],
+       "basis": "①문면 «혼합 금지의 주어는 wire 필드다» = 금지 범위 해석 규칙(구현 레시피는 프로필 소속이 아니다) · 해석 판정은 API 설계 리뷰(final s024-5.4/b6 동명 Work 와 같은 축·class)"
+      },
+      {
+       "label": "신규 범위의 RFC 9457 wire 채택 시에도 표준 controller 레시피 구현",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-api-error-controller-contract.py"
+       ],
+       "basis": "②§16 매핑 표 «controller checker» = check-api-error-controller-contract · docstring «Enforce direct controller-owned code-profile error mapping … analyzes only selected controllers owned by an error-bc» — 표준 레시피(controller 소유·직접 매핑)가 검사기 계약 그 자체(final s024-5.4/b6 배선과 동일)"
+      },
+      {
+       "label": "preserve-established 범위의 관할 배제 — native 보존 관할",
+       "class": "Exception",
+       "delegatedTo": [
+        "agent-design-review-api"
+       ],
+       "basis": "①문면 괄호 «preserve-established 범위는 native 보존 관할 — 이 문장의 대상 아님» = 적용 범위 한정 · ②check-error-centralization·check-api-error-controller-contract docstring «auto and preserve-established … add no new error-mapping semantics» profile gate 와 정합(final s024-5.4/b6 Exception 동형). 채번 위치: 이 괄호 조문은 자기를 감싼 레시피 절(«신규 범위는 … 구현하고») **뒤에** 시작하므로 §13 «문장 등장 순 = 채번 순»대로 레시피 Work 다음에 온다"
+      },
+      {
+       "label": "profile 미열거 조합 채택 시 G1 표면화(STOP)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "command-dddjango"
+       ],
+       "basis": "①문면이 «G2 게이트 취급 … profile 열거에 없어 채택 시 G1 표면화(STOP) 대상» 이라 게이트 절차를 지목 — 절차 소유는 Coordinator(§16 기본값 이탈의 문면 근거 · final s024-5.4/b6 동일 배선)"
+      }
+     ],
+     "restates": [
+      "architecture-api-final/s024-5.4/b1",
+      "architecture-api-final/s024-5.4/b2",
+      "architecture-api-final/s024-5.4/b3",
+      "architecture-api-final/s024-5.4/b4",
+      "architecture-api-final/s024-5.4/b5",
+      "architecture-api-final/s024-5.4/b6",
+      "architecture-api-final/s025/b1",
+      "architecture-api-final/s025/b2",
+      "architecture-api-final/s025/b3",
+      "architecture-api-final/s025/b4"
+     ]
+    },
+    {
+     "lines": [
+      24,
+      24
+     ],
+     "kind": "norm",
+     "note": "계약 «기록»과 체크리스트 «검토»는 행위 대상이 갈려 2 Work(체크리스트 항목 열거는 조각이라 미분리)",
+     "norms": [
+      {
+       "label": "요청/응답 계약의 상태 코드별 body·header·schema 명시 기록",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-response-schema-bypass.py"
+       ],
+       "delegatedTo": [
+        "agent-design-review-api"
+       ],
+       "basis": "②check-response-schema-bypass docstring «Block direct raw 200-203 returns that bypass a declared Ninja schema» — 성공 2xx 의 «선언 schema 경유» 부분 백스톱이라 정본 architecture-api-final s022-5.2/b1(«상태 코드별 본문 존재 여부·schema 분리 정의» — 같은 검사기·같은 부분 백스톱 논거) 배선을 승계한다(§16 «역도 성립»). 커버 범위는 **성공 2xx schema 우회 1축 한정**이고 header 표면·오류 표면·«명시 기록» 행위 자체(정의 존재 여부)는 검사 공백 → §16 기본값 병기. 준거 정정: s021-5.1 은 b1~b8 전건 기본값(E 0)이라 «계열 배선과 동일»이 성립하지만, s022-5.2 는 b1=check-response-schema-bypass·b5=check-openapi-error-declaration 이라 기본값 계열이 아니다(b5 의 오류 표면 축은 이 Work 가 아니라 28–29행 OpenAPI Work 가 진다)"
+      },
+      {
+       "label": "엔드포인트 변경마다 계약 체크리스트(Resource·Method·Request·Response·Error·Auth·Compatibility·OpenAPI) 검토",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-api"
+       ],
+       "basis": "①문면 역할명 0 · ②③④ 지목 0 → §16 기본값(final s023-5.3/b1 «엔드포인트 설계·변경 시 계약 체크리스트 병행 검토» 배선과 동일)"
+      }
+     ],
+     "restates": [
+      "architecture-api-final/s022-5.2/b1",
+      "architecture-api-final/s023-5.3/b1"
+     ]
+    },
+    {
+     "lines": [
+      25,
+      25
+     ],
+     "kind": "norm",
+     "note": "«선택하고 선택 기준을 명시한다» — 뒷절은 같은 결정 대상의 기록 의무라 병합(1 Work)",
+     "norms": [
+      {
+       "label": "데이터 특성(정렬 안정성·실시간성·딥 페이지) 기반 페이지네이션 방식 선택과 기준 명시",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-api"
+       ],
+       "basis": "①문면 역할명 0 · ②27종 전수 — 페이지네이션 술어 0 · §16 기본값(final s042-9.2 선택 기준 표 배선과 동일)"
+      }
+     ],
+     "restates": [
+      "architecture-api-final/s042-9.2/b2",
+      "architecture-api-final/s042-9.2/b3",
+      "architecture-api-final/s042-9.2/b4"
+     ]
+    },
+    {
+     "lines": [
+      26,
+      26
+     ],
+     "kind": "norm",
+     "note": "문면이 (§10, §11) 두 절을 명시 귀속 — 분리 신호(agent-coder 계수 규율 «서로 다른 규칙 번호 명시 귀속»)라 2 Work",
+     "norms": [
+      {
+       "label": "버전 전략(URL·헤더·쿼리파라미터)의 API 변경 전 결정",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-api"
+       ],
+       "basis": "①문면 §10 귀속 · ②27종 전수 — 버전 전략 술어 0 · §16 기본값(final s047-10.3/b1 «단일 버전 전략의 일관 적용» 배선과 동일)"
+      },
+      {
+       "label": "하위 호환성·Deprecation 프로세스의 API 변경 전 결정",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-api"
+       ],
+       "basis": "①문면 §11 귀속 · ②breaking 판정을 계산하는 검사기 없음(final s049-11.1 basis 실측) · §16 기본값(final s049-11.1·s050-11.2 배선과 동일)"
+      }
+     ],
+     "restates": [
+      "architecture-api-final/s047-10.3/b1"
+     ]
+    },
+    {
+     "lines": [
+      27,
+      27
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "duplicate-sensitive 요청의 Idempotency-Key 정책(scope·replay·conflict 계약) 확정",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-api"
+       ],
+       "basis": "①문면 역할명 0 · ②check-idempotency-scope-creep 은 «G1 승인 없는 미요청 멱등성 추가 금지»(G0) 축이라 «정책을 정한다» 의무는 비커버(final s021-5.1/b6 basis 와 동일 논거 · 도피 아닌 실측 기본값) · §16 기본값(final s060-13.3/b1 배선과 동일)"
+      }
+     ],
+     "restates": [
+      "architecture-api-final/s060-13.3/b1",
+      "architecture-api-final/s021-5.1/b6"
+     ]
+    },
+    {
+     "lines": [
+      28,
+      29
+     ],
+     "kind": "norm",
+     "note": "대시 뒤는 같은 행위(OpenAPI 반영)의 구체화라 1 Work",
+     "norms": [
+      {
+       "label": "모든 계약 결정의 OpenAPI 반영 — path·method·schema·response·security·header 전수 기술",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-openapi-error-declaration.py"
+       ],
+       "delegatedTo": [
+        "agent-design-review-api"
+       ],
+       "basis": "②check-openapi-error-declaration docstring «positional/auto/preserve 실행은 기존 openapi_extra.responses 저장소 전수 검사를 보존 … dddjango-code-json 은 operation 이 직접 반환하는 BC 오류와 response={status: <Bc>ErrorSchema} 선언의 일치를 검증» — 오류 표면 한정 부분 커버 · 나머지 표면(path·method·security·header)은 검사 공백이라 §16 기본값 병기(final s065-14.3/b1 배선과 동일)"
+      }
+     ],
+     "restates": [
+      "architecture-api-final/s065-14.3/b1"
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s005",
+   "line_start": 30,
+   "line_end": 51,
+   "blocks": [
+    {
+     "lines": [
+      31,
+      33
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "주제별 라우팅 준거 — references/final.md 해당 절 준수",
+       "class": "Obligation",
+       "delegatedTo": [
+        "command-dddjango",
+        "agent-design-review-api"
+       ],
+       "basis": "①문면 «해당 절을 따른다» — 준거 문서 로드·인용 축 · ②27종 docstring 에 문서 로드·인용 술어 0 · §16 기본값 + 로드 절차 소유 Coordinator 병기(agent-design-architect s005 선례)"
+      }
+     ]
+    },
+    {
+     "lines": [
+      34,
+      34
+     ],
+     "kind": "table-row",
+     "note": "머리행 — 라우팅 표 행은 매핑이라 규범 미계수(P0 승계·db 판과 동일 패턴)"
+    },
+    {
+     "lines": [
+      35,
+      35
+     ],
+     "kind": "table-row",
+     "note": "구분행"
+    },
+    {
+     "lines": [
+      36,
+      36
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      37,
+      37
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      38,
+      38
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      39,
+      39
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      40,
+      40
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      41,
+      41
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      42,
+      42
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      43,
+      43
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      44,
+      44
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      45,
+      45
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      46,
+      46
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      47,
+      47
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      48,
+      48
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      49,
+      50
+     ],
+     "kind": "table-row",
+     "note": "마지막 데이터 행 + 후행 빈 줄(§13)"
+    },
+    {
+     "lines": [
+      51,
+      51
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "필요 항목 한정 독해 — 전체 로드 불필요",
+       "class": "Exception",
+       "delegatedTo": [
+        "command-dddjango",
+        "agent-design-review-api"
+       ],
+       "basis": "①문면 괄호 «(전체 로드 불필요)» = 전량 로드 의무의 면제 조문이라 Exception(agent-design-review-api s003 판례) · ②27종 docstring 에 로드 범위 술어 0 · §16 기본값 + 로드 절차 Coordinator 병기"
+      }
+     ]
+    }
+   ]
+  }
+ ]
 }

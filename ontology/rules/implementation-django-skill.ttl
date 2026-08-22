@@ -299,6 +299,7 @@ djr:R-2893 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s017-3.2/b9>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s024-4.1/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s024-4.1/b2> ;
     djr:statesNorm djr:R-2878, djr:R-2879 ;
     djr:text "\n- 비즈니스 로직은 뷰가 아니라 모델·도메인에 — 평면 Django 맥락은 fat model(§4.1), dddjango 표준 4계층은 `domain_layer` 애그리거트 소유(`architecture-ddd` §3.2)\n"@ko .
 
@@ -306,6 +307,7 @@ djr:R-2893 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s075-16.1/b1> ;
     djr:statesNorm djr:R-2880 ;
     djr:text "- 서비스 레이어 도입 시점과 HackSoft service/selector 패턴 (§16.1–§16.2)\n"@ko .
 
@@ -313,6 +315,7 @@ djr:R-2893 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s078-16.4/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s078-16.4/b7> ;
     djr:statesNorm djr:R-2881, djr:R-2882 ;
     djr:text "- 트랜잭션·일관성 경계는 `transaction.atomic()`, 외부 부수효과는 `transaction.on_commit()` (§16.4)\n"@ko .
 
@@ -320,6 +323,7 @@ djr:R-2893 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s079-16.5/b1> ;
     djr:statesNorm djr:R-2883 ;
     djr:text "- 메시지 유실이 불가하면 트랜잭셔널 outbox로 구현 (§16.5 — 채택 기준 `architecture-ddd` §3.7, 전달 보장 `architecture-db` §9.7)\n"@ko .
 
@@ -327,6 +331,7 @@ djr:R-2893 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s015-2.5/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s015-2.5/b4>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s015-2.5/b5> ;
     djr:statesNorm djr:R-2884, djr:R-2885, djr:R-2886, djr:R-2887 ;
     djr:text "- Choices 계층 소유: 도메인 상태 값 집합은 domain Enum 파생(TextChoices 자체 선언은 순수 인프라 필드 한정), `default=`는 `.value` 평탄화, 비교·`.filter()`는 심볼로만 (§2.5, 마이그레이션 동결 §10.4)\n"@ko .
 
@@ -341,6 +346,7 @@ djr:R-2893 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 7 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s049-10.1/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s051-10.3/b1> ;
     djr:statesNorm djr:R-2889 ;
     djr:text "- 마이그레이션은 안전·무중단 순서 준수 (§10)\n"@ko .
 
@@ -348,6 +354,7 @@ djr:R-2893 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 8 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s022-3.4/b1> ;
     djr:statesNorm djr:R-2890, djr:R-2891 ;
     djr:text "- 설정은 환경별 분리, 직접 접근 주의 (§3.3–§3.4)\n\n"@ko .
 

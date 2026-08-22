@@ -2745,6 +2745,7 @@ djr:R-1147 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s005> ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b13>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/references/final.md/s025-5.5/b36> ;
     djr:statesNorm djr:R-0901, djr:R-0902, djr:R-0903 ;
     djr:text "- **첫 Green 비계**: 이번 실행에서 Red만 위해 만든 loader/dynamic import guard/대체 decorator/skip/xfail/helper가 해당 surface의 첫 Green 뒤 남아 있으면 blocker다. 만든 같은 역할이 즉시 제거해야 하며, 작업 전부터 있던 비계를 이번 실행이 만들었다고 간주해 임의 삭제하게 하지 않는다.\n\n"@ko .
 
@@ -2930,6 +2931,7 @@ djr:R-1147 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;
     djr:kind djr:kind-norm ;
     djr:order 28 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s009-5/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s001/b1> ;
     djr:statesNorm djr:R-1052, djr:R-1053, djr:R-1054, djr:R-1055, djr:R-1056, djr:R-1057, djr:R-1058, djr:R-1059, djr:R-1060, djr:R-1061, djr:R-1062, djr:R-1063, djr:R-1064, djr:R-1065, djr:R-1066 ;
     djr:text "- **파일트리·구조·명명 준수 — 값은 정본, 기계 판정은 백스톱**: 트리·배치·명명의 «값»(어느 칸·어느 이름·어느 층·어느 파일)은 전부 `discipline-houserules` `references/final.md` §0(제1원칙)·§1(표준 트리 140행)·§2(골격 규칙)·§3(명명)·§4(이관 — brownfield=빚)가 소유한다 — 이 문서에는 값을 두지 않는다(값 사본은 썩는다 — 낡은 사본이 정본과 어긋난 사고가 이 절의 전신이다). 절차: ① 코드를 final.md 와 «직접» 대조한다 — 명세 부합만으로 통과시키지 않으며, **명세 자체가 §0 불변식·§2 골격 규칙·포트/칸 위치를 어긴 채 통과했으면 그 자체를 발견으로 올린다(설계 반송 — 명세 정당화는 면제 사유가 아니다)**. 레이아웃 대조 기준은 언제나 표준 트리다(houserules SKILL §1 — 소스 트리에 «기존 규약 존중» 케이스는 없다·기존 배치와의 일치는 통과 사유가 아니다; 승인된 test artifact 의 기존 테스트 위치(§1.2)만 예외로 그 위치와 대조한다). 이 대조의 대상은 **이번 작업의 diff(승인 스코프의 산출물)**다 — 범위 밖 legacy 잔존은 발견이 아니라 빚 보고 채널이고 거기서 수리·이동 지시를 만들지 않으며, 반대로 명세·구현이 승인 스코프 산출물 목록 밖 기존 파일을 이동·재배선했으면 «표준 트리 일치»는 통과 사유가 아니라 **그 이동 자체가 발견(설계 반송)**이다(2026-08-13 라운드 2 실증: 리뷰어가 «filesystem matches approved inventory»로 11 BC 이관을 통과시켰다). ② 경로·AST 로 서는 판정은 registry 결정적 백스톱(`commands/dddjango.md` 의 registry 표)이 소유한다 — 백스톱이 잡는 위반을 재판정하지 않고(이중 계상 금지), 반대로 **백스톱 exit 0 을 «의미 준수»의 증거로 읽지 않는다** — 형태로 못 가르는 의미 변종(개명 폴더·빈-정본 위장·변수 우회·간접 재수출·helper 재수출·이름-위장 클래스·모듈/lazy 싱글톤 공유 — build 팩토리가 반환·주입하는 객체가 import 나 첫 호출 시점 1회 생성으로 요청 간 공유되는 매요청 계약 위반 포함)은 네가 직접 읽는다. ③ 옛 이름 재등장은 트리 밖 칸 위반(#81·#490 — §4 이관 종료)이고 면제로 읽지 않는다. ④ 주석·docstring 언어가 프로젝트 관례(없으면 한국어)와 일치하는지도 여기서 본다(기계 밖). ⑤ 타입 규율은 `check-public-surface-annotation` 이 전면(시그니처·지역·속성·모듈/클래스) 기계 소유다 — 네 몫은 ⓓ#69 후보의 물음과, 면제 자리에 억지로 어노테이트해 ORM/enum 을 깨뜨리는 역방향 오류뿐이다.\n"@ko .
 
@@ -3019,6 +3021,7 @@ djr:R-1147 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/references/final.md/s025-5.5/b46> ;
     djr:statesNorm djr:R-0925, djr:R-0926, djr:R-0927, djr:R-0928, djr:R-0929 ;
     djr:text "- **현행 계약 테스트 수명 주기**: 신규·확장 migration 전용 테스트가 없는가. 삭제·assertion 약화가 승인된 `remove/weaken` 행의 명시적 종료 근거와 exact target에 연결됐는가. 혼합 테스트의 현행 assertion이 다른 test/assertion에 살아 있는가. 현재 구현에 맞추려고 올바른 failing test를 삭제하지 않았는가. `pending`을 retain이나 완료로 위장하지 않았는가. 근거 `discipline-tdd` §5.5.\n"@ko .
 
@@ -3039,6 +3042,7 @@ djr:R-1147 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;
     djr:kind djr:kind-norm ;
     djr:order 42 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s006/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s011-3/b2> ;
     djr:statesNorm djr:R-1086, djr:R-1087, djr:R-1088 ;
     djr:text "  - 트리·골격 — #82 이 BC 폴더 이름이 업무의 낱말인가(#628 토큰 0회 후보 · 애그리거트명과 한 글자·복수형 «유사 변형»(`ordering` vs `order`)이면 반송 후보 — houserules final.md §3) · #36 이 이름에 예/아니오로 답하는 물음이 붙나 · #17·#18 이 이름이 업무의 낱말인가(Q1).\n"@ko .
 

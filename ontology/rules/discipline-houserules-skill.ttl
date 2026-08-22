@@ -620,7 +620,7 @@ djr:R-3173 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s001> ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
-    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b4>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b7> ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b4>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b7>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s001/b1> ;
     djr:statesNorm djr:R-3099, djr:R-3100, djr:R-3101, djr:R-3102 ;
     djr:text "description: dddjango 플러그인 고유 하우스룰 — ①표준 파일트리(BC 골격 140행·배치 결정 순서·이관/브라운필드 취급) ②타입 어노테이션(모든 이름의 첫 대입에 필수) ③코드 주석·docstring 언어 규율. 코드를 어느 파일/디렉터리에 둘지·어떻게 타입을 달지·주석을 어느 언어로 쓸지 정하거나 검수할 때 로드한다. 새 모듈·BC·테스트를 만들거나 프로젝트 레이아웃·코드 규약을 결정·점검하는 상황이면 반드시 사용. 트리와 규칙 «값»의 단일 출처는 references/final.md 다. 보편 클린코드는 dddjango:discipline-cleancode, Python 타입 지식은 implementation-python, 테스트 타입 조직은 dddjango:implementation-test(§4.2).\n"@ko .
 
@@ -651,6 +651,7 @@ djr:R-3173 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003> ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s001/b1> ;
     djr:statesNorm djr:R-3103, djr:R-3104, djr:R-3105 ;
     djr:text "**값과 절차를 가른다** — 트리·칸·규칙의 «값»은 전부 `references/final.md` 가 단일 출처로 소유하고, 이 SKILL.md 는 «언제 어떻게 읽나»(결정 순서·중재·신호)만 소유한다. 값을 여기에 복제하지 않는다 — 사본은 조용히 낡아 다음 재저작이 낡은 사본을 신뢰원으로 삼는다. 이 단일 출처의 관할은 트리·골격·명명 «값»이다 — 무접두 `#N` 규칙의 «본문» 정본은 저장소의 정본 명세이고 플러그인 배포본에는 동봉되지 않으며, 플러그인 문서에는 집행에 필요한 발췌만 실린다(2026-08-15).\n\n"@ko .
 
@@ -705,6 +706,7 @@ djr:R-3173 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s003-0/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s003-0/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s003-0/b3>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s014/b1> ;
     djr:statesNorm djr:R-3111, djr:R-3112, djr:R-3113, djr:R-3114, djr:R-3115, djr:R-3116, djr:R-3117, djr:R-3118, djr:R-3119, djr:R-3120, djr:R-3121, djr:R-3122, djr:R-3123 ;
     djr:text "1. **소스 파일트리는 언제나 dddjango 표준 파일트리다 — 기존 레이아웃은 트리 결정의 입력이 아니다.** `references/final.md` 가 전부다 — **§0 제1원칙**(골격은 내용과 무관 · 고정 칸은 빈 채로도 · 트리 밖 칸은 반환)과 **§1 트리 140행**을 읽고 그대로 실현한다. 요약을 믿지 말고 문서를 읽는다. 이 트리(`driving_layer`/`driven_layer` 4계층)는 **dddjango 자신의 표준**이다 — 다른 플러그인(dddart 등) 것으로 오인해 옆으로 치우지 마라. 대상 저장소의 기존 소스 배치는 — **몇 개 앱이 얼마나 일관되게 쓰고 있든** — «확립된 규약»으로 읽지 않는다: 옛 층 이름·옛 위치는 규약이 아니라 **아직 안 갚은 빚**이고(`final.md` §4 이관 종료 후엔 트리 밖 칸 위반), 답습하면 빚을 늘리는 것이다. 「모든 BC 가 일관 사용(실측)」류의 관찰은 이 규칙의 반례가 아니라 이 규칙이 태어난 사고다(2026-08-12 라운드 1 — legacy 15개를 앵커 삼아 V1 트리를 신축 BC 에 재생산). **표준의 집행 스코프 — 판정 물음은 「이 파일(또는 기존 파일 안의 이 줄)을 낳는 근거가 승인 스코프(G0 스코프 메모·승인 명세의 산출물 목록·슬라이스 0 목록)에 있는가」다** — «내가 만들거나 수정하는가»가 아니다(수정하기로 한 결정이 스코프를 만드는 순환 — 2026-08-13 라운드 2 「수정한 legacy 를 그대로 두는 면제는 없다」의 실패 양식). **있다** → 형태는 언제나 표준이고, 기존 실물(같은 파일의 이웃 줄·타 BC 동형물 포함)은 형태 결정의 입력이 아니다. **없다** → 이 작업의 것이 아니다: 표준 위반으로 보여도 옮기지도 고치지도 않는다 — «의미 보존 이동»·«정리»·«일관성»·트리 밖 칸 위반(#81·#490)·백스톱 red·«면제는 없다» 어느 것도 이동의 근거가 아니다. **위반 판정은 빚을 기록할 권한이고, 기존 코드를 옮길 권한은 G0 빚 질문의 사용자 ⓐ 결정→슬라이스 0, 한 경로에서만 나온다.** 기존 파일을 수정할 때 표준이 정하는 것은 **추가·변경되는 줄**의 형태뿐이다 — 같은 파일의 기존 줄은 고치지도(전파 금지) 본뜨지도(답습 금지) 않는다. 존치된 legacy 는 «확립 규약»이 아니라 **동결된 빚**이다 — 존치를 신규 산출물의 형태 근거로 되읽지 않는다. 결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487).\n"@ko .
 
@@ -774,6 +776,7 @@ djr:R-3173 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3> ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s006/b1> ;
     djr:statesNorm djr:R-3143 ;
     djr:text "- BC 직계에 트리 밖 여덟째 칸이 생겼다(#81 — `utils/`·`helpers/` 류).\n"@ko .
 
@@ -781,6 +784,7 @@ djr:R-3173 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3> ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s003-0/b3> ;
     djr:statesNorm djr:R-3144 ;
     djr:text "- 골격 칸이 비었다고 생략됐다(#488 — 빈 칸도 `__init__.py`·빈 파일로 실현한다).\n"@ko .
 
@@ -788,6 +792,7 @@ djr:R-3173 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3> ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s013/b1> ;
     djr:statesNorm djr:R-3145 ;
     djr:text "- 옛 이름이 새 코드에 다시 나타난다(`presentation_layer/`·`infra_layer/`·`published_service/` … — 이관은 종료됐고(`final.md` §4) 이제 트리 밖 칸 위반 #81·#490 이다).\n"@ko .
 
@@ -795,6 +800,7 @@ djr:R-3173 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3> ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s014/b1> ;
     djr:statesNorm djr:R-3146 ;
     djr:text "- `check-layer-skeleton` 의 exit 2 를 «기존 코드라 면제»로 읽는다 — 빚은 면제가 아니다(`final.md` §4).\n"@ko .
 

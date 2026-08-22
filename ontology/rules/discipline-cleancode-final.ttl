@@ -1859,6 +1859,7 @@ djr:R-1555 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/references/final.md/s026-2.14> ;
     djr:kind djr:kind-norm ;
     djr:order 12 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/references/final.md/s078-15.4/b1> ;
     djr:statesNorm djr:R-1407, djr:R-1408 ;
     djr:text "- 테스트에서 외부 관찰 계약을 검증하는 **assert 기댓값** — 오히려 리터럴을 강제한다(프로덕션 상수 역수입은 자기참조 오라클; `implementation-test` §15.4). 테스트의 arrange/act(픽스처·필터 준비)는 심볼 권장 — 두 규율은 위치로 갈린다.\n"@ko .
 
@@ -3885,6 +3886,7 @@ djr:R-1555 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/references/final.md/s142> ;
     djr:kind djr:kind-table-row ;
     djr:order 30 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004/b10> ;
     djr:statesNorm djr:R-1555 ;
     djr:text "| 리팩토링 | 코드 스멜 감지 및 기법 적용 | [Ref] |\n" .
 

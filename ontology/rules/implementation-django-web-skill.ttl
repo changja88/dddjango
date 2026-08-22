@@ -236,7 +236,7 @@ djr:R-2984 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s001> ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
-    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s003/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s003/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s003/b3>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s003/b4> ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s003/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s003/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s003/b3>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s003/b4>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s001/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s002-1/b4>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s002-1/b5>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s002-1/b6> ;
     djr:statesNorm djr:R-2958, djr:R-2959 ;
     djr:text "description: Django 서버렌더 표현계층 구현 지식 — TemplateView/Generic CBV/FBV 선택, Context 준비, 템플릿·base template·includes/components, Static files·CSS·JS, Web forms·POST flow, HTMX fragment·AJAX, CSRF·XSS·보안 설정, View auth·permission, Render acceptance checks. Django 서버렌더 뷰·템플릿·폼·HTMX 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. Django 코어(모델·ORM·트랜잭션)는 implementation-django, JSON API 어댑터는 implementation-django-ninja, REST 계약 설계는 architecture-api로 위임.\n"@ko .
 
@@ -261,6 +261,7 @@ djr:R-2984 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s003> ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s002-1/b1> ;
     djr:statesNorm djr:R-2960 ;
     djr:text "\nDjango TemplateView·Generic CBV/FBV·템플릿·웹폼·HTMX fragment·CSRF·view auth·render acceptance checks 코드를 설계·작성할 때 로드한다. 경계:\n\n"@ko .
 
@@ -268,6 +269,7 @@ djr:R-2984 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s003> ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s002-1/b4> ;
     djr:statesNorm djr:R-2961 ;
     djr:text "- REST 리소스·HTTP 상태·Problem Details·OpenAPI 계약 → `architecture-api`\n"@ko .
 
@@ -275,6 +277,7 @@ djr:R-2984 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s003> ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s002-1/b5> ;
     djr:statesNorm djr:R-2962 ;
     djr:text "- Django Ninja Router/Schema/API 어댑터 구현 → `implementation-django-ninja`\n"@ko .
 
@@ -282,6 +285,7 @@ djr:R-2984 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s003> ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s002-1/b6> ;
     djr:statesNorm djr:R-2963 ;
     djr:text "- 모델·QuerySet·Manager·마이그레이션·트랜잭션 → `implementation-django`\n"@ko .
 
@@ -289,6 +293,7 @@ djr:R-2984 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s003> ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s002-1/b7> ;
     djr:statesNorm djr:R-2964 ;
     djr:text "- DB locking·isolation·index·rollout/backfill → `architecture-db`\n"@ko .
 
@@ -296,6 +301,7 @@ djr:R-2984 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s003> ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s002-1/b8> ;
     djr:statesNorm djr:R-2965 ;
     djr:text "- pytest 픽스처·테스트더블·상세 테스트 구현 → `implementation-test`\n"@ko .
 
@@ -303,6 +309,7 @@ djr:R-2984 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s003> ;
     djr:kind djr:kind-norm ;
     djr:order 7 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s002-1/b9> ;
     djr:statesNorm djr:R-2966 ;
     djr:text "- 도메인 상태 전이·정책·불변식 → `architecture-ddd`\n\n"@ko .
 
@@ -315,6 +322,7 @@ djr:R-2984 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s002-1/b10>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s003-2/b9> ;
     djr:statesNorm djr:R-2967, djr:R-2968 ;
     djr:text "\n- 뷰는 얇은 어댑터: 요청 처리·auth/permission·form·context 조율·서비스 호출·응답 렌더링만 (§1)\n"@ko .
 
@@ -322,6 +330,7 @@ djr:R-2984 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s003-2/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s003-2/b8> ;
     djr:statesNorm djr:R-2969, djr:R-2970 ;
     djr:text "- TemplateView/Generic CBV/FBV 선택은 흐름 복잡도 기준, mixin이 깊어지면 재검토 (§2)\n"@ko .
 
@@ -329,6 +338,7 @@ djr:R-2984 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s003-2/b9>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s004-3/b1> ;
     djr:statesNorm djr:R-2971, djr:R-2972 ;
     djr:text "- context에는 표시 값만; 도메인 동작은 서비스/usecase boundary로 분리 (§3)\n"@ko .
 
@@ -336,6 +346,7 @@ djr:R-2984 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s002-1/b10>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s005-4/b1> ;
     djr:statesNorm djr:R-2973 ;
     djr:text "- 템플릿은 presentation과 presentation-related branching만 담당 (§4)\n"@ko .
 
@@ -343,6 +354,7 @@ djr:R-2984 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s007-6/b7>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s007-6/b8>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s011-10/b7> ;
     djr:statesNorm djr:R-2974 ;
     djr:text "- web form은 GET·valid POST·invalid POST·redirect·form error 경로를 모두 처리 (§6)\n"@ko .
 
@@ -350,6 +362,7 @@ djr:R-2984 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s008-7/b4> ;
     djr:statesNorm djr:R-2975 ;
     djr:text "- HTMX fragment는 method·auth·permission·CSRF를 function/class view와 동일하게 보호 (§7)\n"@ko .
 
@@ -357,6 +370,7 @@ djr:R-2984 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 7 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s009-8/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s009-8/b6> ;
     djr:statesNorm djr:R-2976 ;
     djr:text "- CSRF·XSS 설정과 보안 헤더는 Django 보안 프리미티브로 유지 (§8)\n"@ko .
 
@@ -364,6 +378,7 @@ djr:R-2984 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 8 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s011-10/b1> ;
     djr:statesNorm djr:R-2977, djr:R-2978 ;
     djr:text "- render acceptance 보고는 실제 실행한 검증만 기재, 미실행은 미실행으로 명시 (§10)\n"@ko .
 
@@ -371,6 +386,7 @@ djr:R-2984 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 9 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s012-11/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s012-11/b3>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s012-11/b5>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s012-11/b6> ;
     djr:statesNorm djr:R-2979, djr:R-2980, djr:R-2981, djr:R-2982 ;
     djr:text "- 에러는 출처로 분류 — 도메인 예외는 view-local 재렌더, 시스템·미식별은 `handler500`, transient는 미들웨어 503 (§11)\n\n"@ko .
 

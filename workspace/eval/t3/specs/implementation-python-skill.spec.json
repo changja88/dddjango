@@ -1,630 +1,671 @@
 {
-  "schema": "migrate-spec/1",
-  "doc_key": "implementation-python-skill",
-  "path": "dddjango/skills/implementation-python/SKILL.md",
-  "restates_paths": {
-    "implementation-python-skill": "dddjango/skills/implementation-python/SKILL.md"
-  },
-  "sections": [
+ "schema": "migrate-spec/1",
+ "doc_key": "implementation-python-skill",
+ "path": "dddjango/skills/implementation-python/SKILL.md",
+ "restates_paths": {
+  "implementation-python-skill": "dddjango/skills/implementation-python/SKILL.md",
+  "implementation-python-final": "dddjango/skills/implementation-python/references/final.md"
+ },
+ "sections": [
+  {
+   "section_key": "s001",
+   "line_start": 1,
+   "line_end": 6,
+   "blocks": [
     {
-      "section_key": "s001",
-      "line_start": 1,
-      "line_end": 6,
-      "blocks": [
-        {
-          "lines": [
-            2,
-            2
-          ],
-          "kind": "prose"
-        },
-        {
-          "lines": [
-            3,
-            3
-          ],
-          "kind": "norm",
-          "restates": [
-            "implementation-python-skill/s003/b1",
-            "implementation-python-skill/s003/b2",
-            "implementation-python-skill/s003/b3",
-            "implementation-python-skill/s003/b4",
-            "implementation-python-skill/s003/b5"
-          ],
-          "norms": [
-            {
-              "label": "Python 관용구·타입·Protocol/ABC·경계 도구 코드 작업 시 우선 로드",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 — 프론트매터 description 은 스킬 라우터 트리거(«…먼저 로드한다») · ②check-*.py 27종 docstring 선두 전수 실독 — 스킬 로드 라우팅을 집행하는 검사기 0 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer)"
-            },
-            {
-              "label": "경계 밖 주제의 discipline-cleancode·implementation-django·architecture-ddd·implementation-test 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer",
-                "agent-design-review-ddd"
-              ],
-              "basis": "①문면이 위임 상대 4종을 직접 지정 · ④§16 기본값(discipline-*·implementation-* → discipline-reviewer) + architecture-ddd 행은 명시 문면 우선(파일럿 L-F 중재 판례 · implementation-python-final s116-21 b1 «구조 패턴 선택 기준의 architecture-ddd 소유»→design-review-ddd 동일 배선)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            4,
-            4
-          ],
-          "kind": "prose"
-        },
-        {
-          "lines": [
-            5,
-            6
-          ],
-          "kind": "prose"
-        }
-      ]
+     "lines": [
+      2,
+      2
+     ],
+     "kind": "prose"
     },
     {
-      "section_key": "s003",
-      "line_start": 9,
-      "line_end": 17,
-      "blocks": [
-        {
-          "lines": [
-            10,
-            12
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "Python 특화 구현 결정이 주 작업일 때 로드",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 «…주 작업일 때 로드한다» · ②check-*.py 27종 docstring 선두 전수 실독 — 스킬 로드 조건 판정 술어 0 · ④§16 기본값(implementation-*)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            13,
-            13
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "기술무관 클린코드 원칙의 discipline-cleancode 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 위임 화살표 «→ discipline-cleancode» · ④§16 기본값 표 — discipline-cleancode 문서군의 기본 Agent 도 discipline-reviewer(rule-owner-map ⓓ)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            14,
-            14
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "Django 모델·ORM·서비스·트랜잭션·설정 구현의 implementation-django 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 «→ implementation-django» · ②check-*.py 27종 docstring 선두 전수 실독 — 스킬 간 관할 이관을 집행하는 검사기 0 · ④§16 기본값(implementation-*)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            15,
-            15
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "repository/UoW/핵사고날/CQRS/outbox 구조 패턴 선택의 architecture-ddd 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-ddd"
-              ],
-              "basis": "①문면이 architecture-ddd 를 직접 지정 — 명시 문면이 기본값에 우선(파일럿 L-F 중재) · ④§16 기본값 표 architecture-ddd 설계 시점 행 → agent-design-review-ddd · implementation-python-final s116-21 b1 동일 배선 선례"
-            }
-          ]
-        },
-        {
-          "lines": [
-            16,
-            17
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "테스트 코드 작성의 implementation-test 위임",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 «→ implementation-test» · ④§16 기본값(implementation-*) · implementation-python-final s124-24 b1 «테스트·디버깅의 implementation-test 위임» 동일 배선"
-            }
-          ]
-        }
-      ]
+     "lines": [
+      3,
+      3
+     ],
+     "kind": "norm",
+     "restates": [
+      "implementation-python-skill/s003/b1",
+      "implementation-python-skill/s003/b2",
+      "implementation-python-skill/s003/b3",
+      "implementation-python-skill/s003/b4",
+      "implementation-python-skill/s003/b5"
+     ],
+     "norms": [
+      {
+       "label": "Python 관용구·타입·Protocol/ABC·경계 도구 코드 작업 시 우선 로드",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 — 프론트매터 description 은 스킬 라우터 트리거(«…먼저 로드한다») · ②check-*.py 27종 docstring 선두 전수 실독 — 스킬 로드 라우팅을 집행하는 검사기 0 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer)"
+      },
+      {
+       "label": "경계 밖 주제의 discipline-cleancode·implementation-django·architecture-ddd·implementation-test 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer",
+        "agent-design-review-ddd"
+       ],
+       "basis": "①문면이 위임 상대 4종을 직접 지정 · ④§16 기본값(discipline-*·implementation-* → discipline-reviewer) + architecture-ddd 행은 명시 문면 우선(파일럿 L-F 중재 판례 · implementation-python-final s116-21 b1 «구조 패턴 선택 기준의 architecture-ddd 소유»→design-review-ddd 동일 배선)"
+      }
+     ]
     },
     {
-      "section_key": "s004",
-      "line_start": 18,
-      "line_end": 31,
-      "blocks": [
-        {
-          "lines": [
-            19,
-            20
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "타입 어노테이션의 전 코드베이스 일관 적용(Optional→X | None·PEP 695 우선)",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-public-surface-annotation.py"
-              ],
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "②check-public-surface-annotation.py docstring 선두 «타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·#493 — «전 코드베이스 일관 적용» 축을 결정적으로 집행 · ③Optional→X | None·PEP 695 표기 축은 비커버(의미 레인) · ④§16 기본값 병기 · implementation-python-final s129-26.1 b6 동일 배선 선례"
-            }
-          ]
-        },
-        {
-          "lines": [
-            21,
-            21
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "Union/Literal/NewType 으로 상태 공간 축소(잘못된 상태의 타입 레벨 차단)",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "②check-*.py 27종 docstring 선두 전수 실독 — 타입 표현 선택 술어 0 · ④§16 기본값 · implementation-python-final s005-1.3 b1 «합 타입으로 비정상 상태 배제» 동축"
-            }
-          ]
-        },
-        {
-          "lines": [
-            22,
-            22
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "Protocol 구조적 서브타이핑 기본·ABC 는 런타임 등록 한정",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "②check-*.py 27종 docstring 선두 전수 실독 — Protocol/ABC 선택 술어 0 · ④§16 기본값 · ③센서스 P0 특이2 역전 — final §9 본문에 대응 규범 없음(스킬 고유 규범)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            23,
-            23
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "dataclass(slots·frozen·kw_only) 의 불변 값 객체 표현·NamedTuple 의 불변 레코드 표현",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "②check-*.py 27종 docstring 선두 전수 실독 — dataclass 옵션 선택 술어 0 · ④§16 기본값 · implementation-python-final s063-10.3 b1 «dataclass(slots=True) 권장» 동축 · ③check-domain-model.py #264 «값 객체 불변 — __init__/__post_init__ 밖 self 대입 금지»는 VO 불변 «행위» 집행 축(인접)이라 본 Work 의 «표현 수단 선택»(dataclass 옵션·NamedTuple) 축은 비커버 — §16 «기본값 도피» 역심사 기록"
-            }
-          ]
-        },
-        {
-          "lines": [
-            24,
-            24
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "디스크립터·@property 의 검증·지연 계산 한정 사용(단순 필드는 평범한 애트리뷰트)",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "②check-*.py 27종 docstring 선두 전수 실독 — 애트리뷰트 접근 형태 술어 0 · ④§16 기본값 · implementation-python-final s042-7.1 b1 «평범한 공개 애트리뷰트 시작·필요 시 @property 전환» 동축"
-            }
-          ]
-        },
-        {
-          "lines": [
-            25,
-            25
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "제너레이터를 통한 지연 평가 사용",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 «제너레이터로 지연 평가» · ②check-*.py 27종 docstring 선두 전수 실독 — 제너레이터 프로토콜 술어 0 · ③센서스 P0 특이2 역전 — §13.2(지연 평가) 축은 final 본문 무규범(스킬 고유 규범) · ④§16 기본값(implementation-*)"
-            },
-            {
-              "label": "제너레이터 send·throw 사용 금지",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 «send/throw 금지» — 앞 절과 deontic class 가 달라 별도 Work(묶음 «py-test-skills» 공통 분할 기준) · ②check-*.py 27종 docstring 선두 전수 실독 — 제너레이터 프로토콜 술어 0 · ③implementation-python-final s081-13.5 b1 «send·throw 대신 이터레이터 입력 또는 상태 클래스 사용»(Obligation) 의 금지면 동축 · ④§16 기본값(implementation-*)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            26,
-            26
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "커스텀 컨텍스트 매니저로 리소스 해제를 with 문에 명시",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "②check-*.py 27종 docstring 선두 전수 실독 — 컨텍스트 매니저 술어 0 · ④§16 기본값 · ③센서스 P0 특이2 역전 — final §14 본문에 대응 규범 없음(스킬 고유 규범)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            27,
-            27
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "도메인 최상위 예외 클래스 정의 후 계층화와 None 반환 대신 예외 발생",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "②check-*.py 27종 docstring 선두 전수 실독 — 예외 계층 설계 술어 0(check-synthetic-infra-exc 는 driven 층 인프라 예외 합성 축) · ④§16 기본값 · implementation-python-final s089-15.2 b1 동축"
-            }
-          ]
-        },
-        {
-          "lines": [
-            28,
-            28
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "I/O 병목의 asyncio.TaskGroup(3.11+)·CPU 병목의 멀티프로세싱 선택",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "②check-*.py 27종 docstring 선두 전수 실독 — 동시성 수단 선택 술어 0 · ④§16 기본값 · implementation-python-final s092-16.1 b3·s093-16.2 b1 동축"
-            }
-          ]
-        },
-        {
-          "lines": [
-            29,
-            29
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "pydantic v2 의 경계(입력 검증) 전용 사용",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 «pydantic v2는 경계(입력 검증) 전용» · ②check-*.py 27종 docstring 선두 전수 실독 — «경계 전용» 사용 범위 판정 술어 0(check-domain-model 은 도메인 층 import 경계 축) · ③implementation-python-final s072-12.0 b1 «pydantic v2 의 외부 입력·런타임 검증 경계 사용»(Obligation) 동일 — 정본 2 Work 구성 복원 · ④§16 기본값(implementation-*)"
-            },
-            {
-              "label": "pydantic v2 의 도메인 진리값 사용 금지",
-              "class": "Prohibition",
-              "enforcedBy": [
-                "check-domain-model.py"
-              ],
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 «도메인 진리값으로 사용 금지» — 앞 절과 deontic class 가 달라 별도 Work(묶음 공통 분할 기준) · ②check-domain-model.py docstring «#8 [ast] domain_layer 의 밖으로 나가는 import 0 — django·다른 층·다른 BC·서드파티» — 도메인 층의 pydantic(서드파티) 반입을 결정적으로 차단 · ③implementation-python-final s072-12.0 b2 «도메인 모델 기본 표현의 pydantic 고정 금지»(Prohibition)가 같은 규범을 check-domain-model.py 로 배선한 선례 · ④§16 기본값 병기"
-            }
-          ]
-        },
-        {
-          "lines": [
-            30,
-            31
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "Ruff 린트·포맷 통합과 mypy/pyright strict 모드 적용",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "②check-*.py 27종 docstring 선두 전수 실독 — ruff·mypy 설정을 집행하는 검사기 0(check-test-config 는 pytest↔Django settings 바인딩 축) · ④§16 기본값 · implementation-python-final s118-22.1·s121-23.1·s122-23.2 동축"
-            }
-          ]
-        }
-      ]
+     "lines": [
+      4,
+      4
+     ],
+     "kind": "prose"
     },
     {
-      "section_key": "s005",
-      "line_start": 32,
-      "line_end": 68,
-      "blocks": [
-        {
-          "lines": [
-            33,
-            35
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "주제별 references/final.md 해당 절 준수",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 «…해당 절을 따른다» — 상세 규범의 정본 위치 지정 · ②check-*.py 27종 docstring 선두 전수 실독 — 문서 라우팅 술어 0 · ④§16 기본값(implementation-*)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            36,
-            37
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            38,
-            38
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            39,
-            39
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            40,
-            40
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            41,
-            41
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            42,
-            42
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            43,
-            43
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            44,
-            44
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            45,
-            45
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            46,
-            46
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            47,
-            47
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            48,
-            48
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            49,
-            49
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            50,
-            50
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            51,
-            51
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            52,
-            52
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            53,
-            53
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            54,
-            54
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            55,
-            55
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            56,
-            56
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            57,
-            57
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            58,
-            58
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            59,
-            59
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            60,
-            60
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            61,
-            61
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            62,
-            62
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            63,
-            63
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            64,
-            64
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            65,
-            65
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            66,
-            67
-          ],
-          "kind": "table-row"
-        },
-        {
-          "lines": [
-            68,
-            68
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "필요한 항목만 부분 로드(전체 로드 불필요)",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-discipline-reviewer"
-              ],
-              "basis": "①문면 «필요한 항목만 읽는다(전체 로드 불필요)» · ②check-*.py 27종 docstring 선두 전수 실독 — 로드 범위 술어 0 · ④§16 기본값(implementation-*)"
-            }
-          ]
-        }
-      ]
+     "lines": [
+      5,
+      6
+     ],
+     "kind": "prose"
     }
-  ]
+   ]
+  },
+  {
+   "section_key": "s003",
+   "line_start": 9,
+   "line_end": 17,
+   "blocks": [
+    {
+     "lines": [
+      10,
+      12
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "Python 특화 구현 결정이 주 작업일 때 로드",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «…주 작업일 때 로드한다» · ②check-*.py 27종 docstring 선두 전수 실독 — 스킬 로드 조건 판정 술어 0 · ④§16 기본값(implementation-*)"
+      }
+     ]
+    },
+    {
+     "lines": [
+      13,
+      13
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "기술무관 클린코드 원칙의 discipline-cleancode 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 위임 화살표 «→ discipline-cleancode» · ④§16 기본값 표 — discipline-cleancode 문서군의 기본 Agent 도 discipline-reviewer(rule-owner-map ⓓ)"
+      }
+     ],
+     "restates": [
+      "implementation-python-final/s001/b1"
+     ]
+    },
+    {
+     "lines": [
+      14,
+      14
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "Django 모델·ORM·서비스·트랜잭션·설정 구현의 implementation-django 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «→ implementation-django» · ②check-*.py 27종 docstring 선두 전수 실독 — 스킬 간 관할 이관을 집행하는 검사기 0 · ④§16 기본값(implementation-*)"
+      }
+     ],
+     "restates": [
+      "implementation-python-final/s116-21/b1"
+     ]
+    },
+    {
+     "lines": [
+      15,
+      15
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "repository/UoW/핵사고날/CQRS/outbox 구조 패턴 선택의 architecture-ddd 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-ddd"
+       ],
+       "basis": "①문면이 architecture-ddd 를 직접 지정 — 명시 문면이 기본값에 우선(파일럿 L-F 중재) · ④§16 기본값 표 architecture-ddd 설계 시점 행 → agent-design-review-ddd · implementation-python-final s116-21 b1 동일 배선 선례"
+      }
+     ],
+     "restates": [
+      "implementation-python-final/s116-21/b1"
+     ]
+    },
+    {
+     "lines": [
+      16,
+      17
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "테스트 코드 작성의 implementation-test 위임",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «→ implementation-test» · ④§16 기본값(implementation-*) · implementation-python-final s124-24 b1 «테스트·디버깅의 implementation-test 위임» 동일 배선"
+      }
+     ],
+     "restates": [
+      "implementation-python-final/s124-24/b1"
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s004",
+   "line_start": 18,
+   "line_end": 31,
+   "blocks": [
+    {
+     "lines": [
+      19,
+      20
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "타입 어노테이션의 전 코드베이스 일관 적용(Optional→X | None·PEP 695 우선)",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-public-surface-annotation.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-public-surface-annotation.py docstring 선두 «타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱»·#493 — «전 코드베이스 일관 적용» 축을 결정적으로 집행 · ③Optional→X | None·PEP 695 표기 축은 비커버(의미 레인) · ④§16 기본값 병기 · implementation-python-final s129-26.1 b6 동일 배선 선례"
+      }
+     ]
+    },
+    {
+     "lines": [
+      21,
+      21
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "Union/Literal/NewType 으로 상태 공간 축소(잘못된 상태의 타입 레벨 차단)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-*.py 27종 docstring 선두 전수 실독 — 타입 표현 선택 술어 0 · ④§16 기본값 · implementation-python-final s005-1.3 b1 «합 타입으로 비정상 상태 배제» 동축"
+      }
+     ],
+     "restates": [
+      "implementation-python-final/s005-1.3/b1"
+     ]
+    },
+    {
+     "lines": [
+      22,
+      22
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "Protocol 구조적 서브타이핑 기본·ABC 는 런타임 등록 한정",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-*.py 27종 docstring 선두 전수 실독 — Protocol/ABC 선택 술어 0 · ④§16 기본값 · ③센서스 P0 특이2 역전 — final §9 본문에 대응 규범 없음(스킬 고유 규범)"
+      }
+     ]
+    },
+    {
+     "lines": [
+      23,
+      23
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "dataclass(slots·frozen·kw_only) 의 불변 값 객체 표현·NamedTuple 의 불변 레코드 표현",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-*.py 27종 docstring 선두 전수 실독 — dataclass 옵션 선택 술어 0 · ④§16 기본값 · implementation-python-final s063-10.3 b1 «dataclass(slots=True) 권장» 동축 · ③check-domain-model.py #264 «값 객체 불변 — __init__/__post_init__ 밖 self 대입 금지»는 VO 불변 «행위» 집행 축(인접)이라 본 Work 의 «표현 수단 선택»(dataclass 옵션·NamedTuple) 축은 비커버 — §16 «기본값 도피» 역심사 기록"
+      }
+     ],
+     "restates": [
+      "implementation-python-final/s063-10.3/b1"
+     ]
+    },
+    {
+     "lines": [
+      24,
+      24
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "디스크립터·@property 의 검증·지연 계산 한정 사용(단순 필드는 평범한 애트리뷰트)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-*.py 27종 docstring 선두 전수 실독 — 애트리뷰트 접근 형태 술어 0 · ④§16 기본값 · implementation-python-final s042-7.1 b1 «평범한 공개 애트리뷰트 시작·필요 시 @property 전환» 동축"
+      }
+     ],
+     "restates": [
+      "implementation-python-final/s042-7.1/b1"
+     ]
+    },
+    {
+     "lines": [
+      25,
+      25
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "제너레이터를 통한 지연 평가 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «제너레이터로 지연 평가» · ②check-*.py 27종 docstring 선두 전수 실독 — 제너레이터 프로토콜 술어 0 · ③센서스 P0 특이2 역전 — §13.2(지연 평가) 축은 final 본문 무규범(스킬 고유 규범) · ④§16 기본값(implementation-*)"
+      },
+      {
+       "label": "제너레이터 send·throw 사용 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «send/throw 금지» — 앞 절과 deontic class 가 달라 별도 Work(묶음 «py-test-skills» 공통 분할 기준) · ②check-*.py 27종 docstring 선두 전수 실독 — 제너레이터 프로토콜 술어 0 · ③implementation-python-final s081-13.5 b1 «send·throw 대신 이터레이터 입력 또는 상태 클래스 사용»(Obligation) 의 금지면 동축 · ④§16 기본값(implementation-*)"
+      }
+     ],
+     "restates": [
+      "implementation-python-final/s081-13.5/b1"
+     ]
+    },
+    {
+     "lines": [
+      26,
+      26
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "커스텀 컨텍스트 매니저로 리소스 해제를 with 문에 명시",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-*.py 27종 docstring 선두 전수 실독 — 컨텍스트 매니저 술어 0 · ④§16 기본값 · ③센서스 P0 특이2 역전 — final §14 본문에 대응 규범 없음(스킬 고유 규범)"
+      }
+     ]
+    },
+    {
+     "lines": [
+      27,
+      27
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "도메인 최상위 예외 클래스 정의 후 계층화와 None 반환 대신 예외 발생",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-*.py 27종 docstring 선두 전수 실독 — 예외 계층 설계 술어 0(check-synthetic-infra-exc 는 driven 층 인프라 예외 합성 축) · ④§16 기본값 · implementation-python-final s089-15.2 b1 동축"
+      }
+     ],
+     "restates": [
+      "implementation-python-final/s089-15.2/b1"
+     ]
+    },
+    {
+     "lines": [
+      28,
+      28
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "I/O 병목의 asyncio.TaskGroup(3.11+)·CPU 병목의 멀티프로세싱 선택",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-*.py 27종 docstring 선두 전수 실독 — 동시성 수단 선택 술어 0 · ④§16 기본값 · implementation-python-final s092-16.1 b3·s093-16.2 b1 동축"
+      }
+     ],
+     "restates": [
+      "implementation-python-final/s092-16.1/b3",
+      "implementation-python-final/s093-16.2/b1"
+     ]
+    },
+    {
+     "lines": [
+      29,
+      29
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "pydantic v2 의 경계(입력 검증) 전용 사용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «pydantic v2는 경계(입력 검증) 전용» · ②check-*.py 27종 docstring 선두 전수 실독 — «경계 전용» 사용 범위 판정 술어 0(check-domain-model 은 도메인 층 import 경계 축) · ③implementation-python-final s072-12.0 b1 «pydantic v2 의 외부 입력·런타임 검증 경계 사용»(Obligation) 동일 — 정본 2 Work 구성 복원 · ④§16 기본값(implementation-*)"
+      },
+      {
+       "label": "pydantic v2 의 도메인 진리값 사용 금지",
+       "class": "Prohibition",
+       "enforcedBy": [
+        "check-domain-model.py"
+       ],
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «도메인 진리값으로 사용 금지» — 앞 절과 deontic class 가 달라 별도 Work(묶음 공통 분할 기준) · ②check-domain-model.py docstring «#8 [ast] domain_layer 의 밖으로 나가는 import 0 — django·다른 층·다른 BC·서드파티» — 도메인 층의 pydantic(서드파티) 반입을 결정적으로 차단 · ③implementation-python-final s072-12.0 b2 «도메인 모델 기본 표현의 pydantic 고정 금지»(Prohibition)가 같은 규범을 check-domain-model.py 로 배선한 선례 · ④§16 기본값 병기"
+      }
+     ],
+     "restates": [
+      "implementation-python-final/s072-12.0/b1",
+      "implementation-python-final/s072-12.0/b2"
+     ]
+    },
+    {
+     "lines": [
+      30,
+      31
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "Ruff 린트·포맷 통합과 mypy/pyright strict 모드 적용",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-*.py 27종 docstring 선두 전수 실독 — ruff·mypy 설정을 집행하는 검사기 0(check-test-config 는 pytest↔Django settings 바인딩 축) · ④§16 기본값 · implementation-python-final s118-22.1·s121-23.1·s122-23.2 동축"
+      }
+     ],
+     "restates": [
+      "implementation-python-final/s118-22.1/b1",
+      "implementation-python-final/s121-23.1/b1",
+      "implementation-python-final/s122-23.2/b1"
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s005",
+   "line_start": 32,
+   "line_end": 68,
+   "blocks": [
+    {
+     "lines": [
+      33,
+      35
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "주제별 references/final.md 해당 절 준수",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «…해당 절을 따른다» — 상세 규범의 정본 위치 지정 · ②check-*.py 27종 docstring 선두 전수 실독 — 문서 라우팅 술어 0 · ④§16 기본값(implementation-*)"
+      }
+     ]
+    },
+    {
+     "lines": [
+      36,
+      37
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      38,
+      38
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      39,
+      39
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      40,
+      40
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      41,
+      41
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      42,
+      42
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      43,
+      43
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      44,
+      44
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      45,
+      45
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      46,
+      46
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      47,
+      47
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      48,
+      48
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      49,
+      49
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      50,
+      50
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      51,
+      51
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      52,
+      52
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      53,
+      53
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      54,
+      54
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      55,
+      55
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      56,
+      56
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      57,
+      57
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      58,
+      58
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      59,
+      59
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      60,
+      60
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      61,
+      61
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      62,
+      62
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      63,
+      63
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      64,
+      64
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      65,
+      65
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      66,
+      67
+     ],
+     "kind": "table-row"
+    },
+    {
+     "lines": [
+      68,
+      68
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "필요한 항목만 부분 로드(전체 로드 불필요)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-discipline-reviewer"
+       ],
+       "basis": "①문면 «필요한 항목만 읽는다(전체 로드 불필요)» · ②check-*.py 27종 docstring 선두 전수 실독 — 로드 범위 술어 0 · ④§16 기본값(implementation-*)"
+      }
+     ]
+    }
+   ]
+  }
+ ]
 }

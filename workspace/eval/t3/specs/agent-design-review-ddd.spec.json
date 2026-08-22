@@ -1,580 +1,625 @@
 {
-  "schema": "migrate-spec/1",
-  "doc_key": "agent-design-review-ddd",
-  "path": "dddjango/agents/design-review-ddd.md",
-  "sections": [
+ "schema": "migrate-spec/1",
+ "doc_key": "agent-design-review-ddd",
+ "path": "dddjango/agents/design-review-ddd.md",
+ "sections": [
+  {
+   "section_key": "s001",
+   "line_start": 1,
+   "line_end": 10,
+   "blocks": [
     {
-      "section_key": "s001",
-      "line_start": 1,
-      "line_end": 10,
-      "blocks": [
-        {
-          "lines": [
-            2,
-            2
-          ],
-          "kind": "prose"
-        },
-        {
-          "lines": [
-            3,
-            3
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "Phase 1 설계 단계의 Coordinator 호출 대상",
-              "class": "Obligation",
-              "delegatedTo": [
-                "command-dddjango"
-              ],
-              "basis": "①문면 — 프론트매터 description 이 Coordinator 라우팅 트리거 · ④§16 위임 기본값 표(command+agents 절차 층→Coordinator) · ②check-*.py 27종 docstring 선두 전수 실독 — 에이전트 호출·라우팅 술어 0"
-            },
-            {
-              "label": "architect 설계 명세의 도메인 관점(애그리거트 경계·불변식·도메인 이벤트) 단일 lens 독립 리뷰와 리뷰 노트 산출",
-              "class": "Obligation",
-              "delegatedTo": [
-                "command-dddjango"
-              ],
-              "basis": "①문면 «…도메인 관점으로만 독립 리뷰하고 리뷰 노트를 낸다» · ④절차 층 기본값 — lens 수행 여부 판정 주체는 리뷰 노트를 수납하는 Coordinator(리뷰어 3종 동형 배선)"
-            },
-            {
-              "label": "명세·코드 직접 수정 금지",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "command-dddjango"
-              ],
-              "basis": "④절차 층 기본값 — 읽기 전용 계약 위반은 절차 위반이고 코드 산출물 대상 검사기 27종의 관할 밖(s005 b1 과 동축 — 검수표 §4 재진술 의심)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            4,
-            4
-          ],
-          "kind": "prose"
-        },
-        {
-          "lines": [
-            5,
-            6
-          ],
-          "kind": "prose"
-        },
-        {
-          "lines": [
-            7,
-            8
-          ],
-          "kind": "prose"
-        },
-        {
-          "lines": [
-            9,
-            10
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "도메인 관점 단일 lens 의 읽기 전용 독립 비평 수행",
-              "class": "Obligation",
-              "delegatedTo": [
-                "command-dddjango"
-              ],
-              "basis": "①문면 «*도메인 관점 하나로만* 독립적으로 비평하는 읽기 전용 리뷰어다» · ④절차 층 기본값 — 첫 문장은 역할 선언 서술, 셋째 문장은 근거 서술이라 무규범(agent-design-review-api/s001 판정 승계)"
-            }
-          ]
-        }
-      ]
+     "lines": [
+      2,
+      2
+     ],
+     "kind": "prose"
     },
     {
-      "section_key": "s002",
-      "line_start": 11,
-      "line_end": 14,
-      "blocks": [
-        {
-          "lines": [
-            12,
-            14
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "명세 한정 열람 — 타 리뷰어 노트·구현 코드 열람 금지(편향 방지)",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "command-dddjango"
-              ],
-              "basis": "④절차 층 기본값 — 입력 묶음 공급·독립성 보장 주체가 Coordinator · ②27종 전수 실독 — 리뷰 입력 격리를 보는 검사기 0(agent-design-review-db/s002 와 **절 스팬 해시 동일**한 축자 사본 — 교차 문서라 restates 유예 §3)"
-            },
-            {
-              "label": "로드한 스킬 본문·references 참조의 제한 밖 인정",
-              "class": "Exception",
-              "delegatedTo": [
-                "command-dddjango"
-              ],
-              "basis": "①문면이 제한 대상을 «타 리뷰어의 노트·구현 코드»로 자기 한정 · ④동상"
-            }
-          ]
-        }
-      ]
+     "lines": [
+      3,
+      3
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "Phase 1 설계 단계의 Coordinator 호출 대상",
+       "class": "Obligation",
+       "delegatedTo": [
+        "command-dddjango"
+       ],
+       "basis": "①문면 — 프론트매터 description 이 Coordinator 라우팅 트리거 · ④§16 위임 기본값 표(command+agents 절차 층→Coordinator) · ②check-*.py 27종 docstring 선두 전수 실독 — 에이전트 호출·라우팅 술어 0"
+      },
+      {
+       "label": "architect 설계 명세의 도메인 관점(애그리거트 경계·불변식·도메인 이벤트) 단일 lens 독립 리뷰와 리뷰 노트 산출",
+       "class": "Obligation",
+       "delegatedTo": [
+        "command-dddjango"
+       ],
+       "basis": "①문면 «…도메인 관점으로만 독립 리뷰하고 리뷰 노트를 낸다» · ④절차 층 기본값 — lens 수행 여부 판정 주체는 리뷰 노트를 수납하는 Coordinator(리뷰어 3종 동형 배선)"
+      },
+      {
+       "label": "명세·코드 직접 수정 금지",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "command-dddjango"
+       ],
+       "basis": "④절차 층 기본값 — 읽기 전용 계약 위반은 절차 위반이고 코드 산출물 대상 검사기 27종의 관할 밖(s005 b1 과 동축 — 검수표 §4 재진술 의심)"
+      }
+     ],
+     "restates": [
+      "agent-design-review-db/s001/b2"
+     ]
     },
     {
-      "section_key": "s003",
-      "line_start": 15,
-      "line_end": 27,
-      "blocks": [
-        {
-          "lines": [
-            16,
-            18
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "도메인 리뷰 노트 한정 산출",
-              "class": "Obligation",
-              "delegatedTo": [
-                "command-dddjango"
-              ],
-              "basis": "④절차 층 기본값 — 산출물 종류 계약(리뷰어 3종 동형)이고 수납 주체가 Coordinator"
-            },
-            {
-              "label": "명세 직접 수정 금지(반영은 architect 소유)",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "command-dddjango",
-                "agent-design-architect"
-              ],
-              "basis": "①문면 «반영은 architect의 몫» — 판정 소유 배분 지목(P-C) · ④절차 층 기본값 · s001 b2 3번째 Work 와 동축(재진술 의심 — 검수표 §4)"
-            },
-            {
-              "label": "발견 다수 시 심각도 순(blocker→important→nit) 번호 나열",
-              "class": "Obligation",
-              "delegatedTo": [
-                "command-dddjango"
-              ],
-              "basis": "④절차 층 기본값 — 리포트 형식 계약(리뷰어 3종+discipline 4중 동형)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            19,
-            19
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "발견 항목 형식(문제+근거 위치 인용+심각도 3단계)",
-              "class": "Obligation",
-              "delegatedTo": [
-                "command-dddjango"
-              ],
-              "basis": "④절차 층 기본값 — 산출 형식 계약(agent-design-review-api/s004 b2 의 같은 불릿 1 Work 채번 선례 승계)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            20,
-            21
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "권고 항목 형식(변경 방법 제시)",
-              "class": "Obligation",
-              "delegatedTo": [
-                "command-dddjango"
-              ],
-              "basis": "④동상 — 동형 4중"
-            }
-          ]
-        },
-        {
-          "lines": [
-            22,
-            23
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "무결 시 «도메인 관점 이상 없음» 명시",
-              "class": "Obligation",
-              "delegatedTo": [
-                "command-dddjango"
-              ],
-              "basis": "④절차 층 기본값 — 무발견 보고의 명시 계약(침묵과 무결의 구분이 게이트 판정 재료) · b6 의 «대조 표 없는 이상 없음 무효»가 이 선언의 성립 조건을 좁힌다"
-            }
-          ]
-        },
-        {
-          "lines": [
-            24,
-            25
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "집행성 판정 1행 기재(가능=명세 확정 결정 3곳 인용·불가=막히는 절·문장 지목)",
-              "class": "Obligation",
-              "delegatedTo": [
-                "command-dddjango"
-              ],
-              "basis": "④절차 층 기본값 — 리포트 형식 계약이고 판정 수납자가 Coordinator(리뷰어 3종+discipline 4중 동형) · ②27종에 집행성 술어 0"
-            },
-            {
-              "label": "인용 없는 «집행 가능» 판정 무효",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "command-dddjango"
-              ],
-              "basis": "④절차 층 기본값 — 무효 선언의 판정자는 판정을 수납·집행하는 Coordinator"
-            }
-          ]
-        },
-        {
-          "lines": [
-            26,
-            27
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "판정-소유 대조 표 기재(명세의 비즈니스 판정·불변식마다 «판정 → 배정 위치(애그리거트·도메인 서비스 메서드)» 1행 대조)",
-              "class": "Obligation",
-              "delegatedTo": [
-                "command-dddjango",
-                "agent-design-review-ddd"
-              ],
-              "basis": "④절차 층 기본값(산출 형식 수납 주체) + §16 기본값 표 architecture-ddd 설계 시점 행 — 대조 «행위» 자체는 도메인 lens 심사 · ①문면이 기준을 architecture-ddd references §3.6 원문으로 지정 · command-dddjango/s006 구문검사와는 계약 쌍(사본 아님 — 검수표 §3)"
-            },
-            {
-              "label": "응용 서비스·인프라 경로 잔류 판정 행의 blocker 상신",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-domain-model.py",
-                "check-transaction-boundary.py"
-              ],
-              "delegatedTo": [
-                "agent-design-review-ddd"
-              ],
-              "basis": "②check-domain-model #257 «상태 변경은 루트를 지난다 — 확정: 응용·입구의 «속성 접근 후 메서드 호출»» + check-transaction-boundary #195 «상태를 바꾸는 유스케이스는 애그리거트를 건너뛰지 않는다» — 판정이 응용·인프라에 남은 «코드 형태»를 결정적으로 집행하는 부분 커버(설계 단계 대조 표 판정은 미커버) · ①문면 «그 행을 blocker로 올린다» · ④기본값 표 ddd 행 · 앞 절과 행위 대상(표 작성 ↔ blocker 판정)이 갈려 분리 채번"
-            },
-            {
-              "label": "비즈니스 판정·불변식 0건 시 «판정 없음» 1행 갈음(빈 표 반송 방지)",
-              "class": "Exception",
-              "delegatedTo": [
-                "command-dddjango"
-              ],
-              "basis": "①문면 «표 대신 «판정 없음» 1행으로 갈음한다(빈 표 반송 방지)» 조건 한정 · ④절차 층 기본값(반송 판정 소유)"
-            },
-            {
-              "label": "대조 표(또는 «판정 없음» 1행) 없는 «도메인 관점 이상 없음» 무효",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "command-dddjango"
-              ],
-              "basis": "④절차 층 기본값 — 무효 선언의 판정자는 산출을 수납하는 Coordinator(b4 의 무결 보고 계약과 쌍)"
-            }
-          ]
-        }
-      ]
+     "lines": [
+      4,
+      4
+     ],
+     "kind": "prose"
     },
     {
-      "section_key": "s004",
-      "line_start": 28,
-      "line_end": 39,
-      "blocks": [
-        {
-          "lines": [
-            29,
-            30
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "애그리거트 경계의 일관성 단위 적합성 점검",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-domain-model.py"
-              ],
-              "delegatedTo": [
-                "agent-design-review-ddd"
-              ],
-              "basis": "②docstring #249 «domain_layer 자식 = 애그리거트들 + shared_value_object + domain_service»·#256 «애그리거트 폴더엔 폴더와 같은 이름의 <aggregate>.py + 루트 클래스»·#299 애그리거트 꼴 — 경계의 «형태»를 결정적으로 집행하는 부분 커버(경계 «선택»이 일관성 단위로 옳은가는 미커버) · ①심사형 술어 + ④§16 기본값 표 architecture-ddd 설계 시점 행"
-            },
-            {
-              "label": "불변식의 애그리거트 내부 보장 점검",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-domain-model.py"
-              ],
-              "delegatedTo": [
-                "agent-design-review-ddd"
-              ],
-              "basis": "②#257 상태 변경의 루트 경유·#264 «값 객체 불변 — __init__/__post_init__ 밖 self 대입 금지»·#289/#290 불변식 예외의 exception/ 폴더 — 불변식 «자리» 축 집행(부분 커버: 불변식 내용의 충분성은 미커버) · ④동상 · 한 문장 안 두 심사 대상(경계 ↔ 불변식)이라 분리 채번"
-            }
-          ]
-        },
-        {
-          "lines": [
-            31,
-            31
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "각 비즈니스 판정·불변식의 도메인 애그리거트·도메인 서비스 메서드 배정과 응용 서비스 프로덕션 경로 실행 명세 확인(인프라 배치 부재 포함)",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-domain-model.py",
-                "check-transaction-boundary.py"
-              ],
-              "delegatedTo": [
-                "agent-design-review-ddd"
-              ],
-              "basis": "②#257(응용·입구의 속성 접근 후 메서드 호출 = 확정 위반)·#304 «도메인 서비스는 리포지토리를 받지도 부르지도 않는다» + transaction-boundary #195·#287 «쓰기 인자는 애그리거트다 — update_* 필드 갱신·조건/필드 인자면 위반» — 빈혈·조건부 UPDATE 누수의 코드 측 축 집행(부분 커버: 명세 단계 배정 확인은 미커버) · ①문면이 근거로 architecture-ddd §3.2·§3.6 지목 · ④기본값 표 ddd 행 · 긍정면(도메인 배정)과 부정면(인프라 배치 금지)은 같은 축이라 1 Work"
-            },
-            {
-              "label": "경합 시나리오의 경합 가드(version/CAS)와 비즈니스 판정 실행 지점 분리 기재 확인",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-transaction-boundary.py"
-              ],
-              "delegatedTo": [
-                "agent-design-review-ddd"
-              ],
-              "basis": "②#599 «save_all() 조건 셋 — ㉡맨 bulk_update(경합 가드 없음)면 위반» — 경합 가드 부재의 한 형태만 집행하는 부분 커버(조건부 UPDATE 누수 일반·명세 기재 축은 미커버) · ④기본값 표 ddd 행"
-            }
-          ]
-        },
-        {
-          "lines": [
-            32,
-            32
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "판정·불변식 이주와 데이터소스 골격 실현 «값»의 architecture-ddd references §3.2 항-(1)·항-(2) 소유",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-ddd"
-              ],
-              "basis": "①문면이 값 정본을 §3.2 항-(1)·항-(2)로 지정 · ②check-app-container docstring 이 같은 항을 인용(«`architecture-ddd` §3.2 «판정 소유→구조 이주» 항-(2) 2026-06-08 개정») — 다만 «값의 소유처 지시» 자체는 기계 집행 대상이 아니라 미배선 · ④§16 기본값 표 ddd 행"
-            },
-            {
-              "label": "평면 모델 위 판정 잔류 금지(항-(1)) 대조",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-app-container.py"
-              ],
-              "delegatedTo": [
-                "agent-design-review-ddd",
-                "agent-discipline-reviewer"
-              ],
-              "basis": "②check-app-container docstring 의 긍정 선언 «이 좁은 결정적 그물이 «위치» 한 축을 모델 무관하게 집행한다» + 회귀 표본 «smoke4·smoke6: 기존 `catalog/` 가 루트 평면 + 새 마이그레이션/판정 적재인데 `application/` 로 이주 안 함» — 이 규범의 주술어(판정을 얹는 코드가 평면에 «남는다»)와 같은 위치 축을 결정적으로 집행하는 부분 커버 · 한계 ⑴ G2(신규 디렉터리이거나 `D/migrations/` 아래 신규 마이그레이션)가 없으면 «판정 메서드만 얹은» 국면엔 미발화 ⑵ 같은 docstring 이 판정-소유 «형태»(빈혈) 의미 변종을 범위 밖(discipline-reviewer 몫)으로 명시 이양하므로 그 잔여를 ⓓ 로 병기 ⑶ 명세 대조 축(설계 단계)은 전건 미커버 · §16 «역도 성립»(docstring 이 §3.2 항-(2)를 이름으로 인용)은 이 Work 가 아니라 같은 블록 항-(2) Work 에서 서므로 여기 근거로 쓰지 않는다 — 두 Work 가 같은 검사기를 공유하는 것은 항-(1)·항-(2)가 «위치»라는 한 기계 축을 공유하기 때문이고, 축이 어긋난 병기를 벌한 api F5 의 이중 계상과는 형이 다르다(경계선 기준 검수표 §0 P-D) · ④기본값 표 ddd 행 + ⓓ"
-            },
-            {
-              "label": "데이터소스 사유의 위치·4계층·빈 애그리거트 골격 실현 면제 금지(항-(2) — 실내용 면제는 판정 .py 코드 한정·깊이 면제 폐지)",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-app-container.py",
-                "check-layer-skeleton.py"
-              ],
-              "delegatedTo": [
-                "agent-design-review-ddd"
-              ],
-              "basis": "②check-app-container «데이터소스 면제는 *판정 실내용(.py)* 에 한정하고 위치·4계층·애그리거트 골격은 무조건이다; 이 스크립트는 그중 *위치* 한 축만 본다» + check-layer-skeleton #486 «어느 BC 를 열어도 골격이 그대로»·#488 고정 칸 필수·#490 트리 밖 경로 위반 — 위치·골격 두 축을 결정적으로 집행 · ①문면이 houserules final.md §0·§1 을 칸의 값 정본으로 인용 · ④기본값 표 ddd 행"
-            },
-            {
-              "label": "판정 기준의 «판정·불변식 소유» 고정(«레거시냐»가 기준 아님)",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-ddd"
-              ],
-              "basis": "①문면 «기준은 \"레거시냐\"가 아니라 \"판정·불변식 소유냐\"다» — 독립 종결절의 판정 기준 규정 · ②검사 공백(레거시 여부는 코드 형태에 안 나타남) · ④기본값 표 ddd 행"
-            }
-          ]
-        },
-        {
-          "lines": [
-            33,
-            33
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "상태 전이의 도메인 규칙 적합성 점검",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-ddd"
-              ],
-              "basis": "①심사형 술어(«맞는가») + ④기본값 표 ddd 행 · ②27종 전수 — 상태 전이 «내용» 판정 술어 0(check-domain-model 은 루트 경유 «형태»만 본다)"
-            },
-            {
-              "label": "누락 규칙·엣지 부재 점검",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-ddd"
-              ],
-              "basis": "④동상 — 규칙 완결성 판정은 의미 레인(검사 공백) · 한 문장 안 두 심사 대상(전이 적합성 ↔ 누락)이라 분리 채번"
-            }
-          ]
-        },
-        {
-          "lines": [
-            34,
-            34
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "유비쿼터스 언어의 명세 전반 일관 사용 점검",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-business-vocabulary.py"
-              ],
-              "delegatedTo": [
-                "agent-design-review-ddd"
-              ],
-              "basis": "②docstring «업무 어휘·framework 격리 검사기 — «이 낱말의 뜻을 누가 정하나»(D24·D38·D47) … 업무 어휘의 정의(#628)는 business_vocab.py(공유 데이터 모듈)가 진다» — 코드 측 어휘 소유·격리 축 집행 · 한계(경계선 사례): «같은 낱말이 같은 뜻으로 쓰였는가»라는 **일관성 자체의 술어는 27종에 0**이고, 여기서 인정하는 것은 #628 단일 출처 강제가 코드에서 뜻의 분기를 원천 차단하는 **간접 커버** 하나뿐이다(#47·#52 의 framework 격리는 이 규범의 축이 아니라 배제) · 명세 문면의 어휘 «일관» 사용 판정은 전건 미커버 — 존치 판단의 경계선 기준은 검수표 §0 P-D · ④기본값 표 ddd 행"
-            }
-          ]
-        },
-        {
-          "lines": [
-            35,
-            35
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "컨텍스트 경계 적절성 점검",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-ddd"
-              ],
-              "basis": "①심사형 술어 + ④기본값 표 ddd 행 · ②경계 «선택»의 적절성 판정 술어는 27종에 0(check-context-isolation 은 이미 그어진 경계의 침범만 본다)"
-            },
-            {
-              "label": "컨텍스트 간 접근의 ACL/open_host_service 한정 명세 확인(타 컨텍스트 domain_layer/driven_layer 직접 import 금지)",
-              "class": "Obligation",
-              "enforcedBy": [
-                "check-context-isolation.py"
-              ],
-              "delegatedTo": [
-                "agent-design-review-ddd"
-              ],
-              "basis": "②docstring 타 BC 군 «#12 부를 수 있는 것은 OHS·published_event 둘 · #13 OHS 소비는 ACL 뿐» — 문면이 인용한 architecture-ddd §2.5 축을 코드에서 결정적으로 집행 · 명세 «기재» 확인 축은 미커버(부분 커버) · ④기본값 표 ddd 행"
-            }
-          ]
-        },
-        {
-          "lines": [
-            36,
-            37
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "도메인 이벤트 채택 여부 판단(과채택/누락) 타당성 점검",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-ddd"
-              ],
-              "basis": "④기본값 표 ddd 행 · ②배제 심의 — check-event-publish 는 «사실은 과거형이고, 표면은 published_event/ 하나이고, 구독은 껍데기다»라는 구조·명명 축이라 «채택할 것인가»의 판단 술어가 0(전수 실독)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            38,
-            39
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "도메인 lens 대상 항목의 통째 누락 자체를 발견으로 상신",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-ddd"
-              ],
-              "basis": "①문면 «그 누락 자체를 발견으로 올린다» + ④기본값 표 ddd 행"
-            },
-            {
-              "label": "architecture-ddd 스킬 절 인용 근거 제시",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-ddd"
-              ],
-              "basis": "④동상 — 인용 대상이 architecture-ddd 스킬이라 같은 lens 소유"
-            }
-          ]
-        }
-      ]
+     "lines": [
+      5,
+      6
+     ],
+     "kind": "prose"
     },
     {
-      "section_key": "s005",
-      "line_start": 40,
-      "line_end": 44,
-      "blocks": [
-        {
-          "lines": [
-            41,
-            42
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "코드·명세 수정 금지(읽기 전용)",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "command-dddjango"
-              ],
-              "basis": "④절차 층 기본값 — 읽기 전용 계약 위반은 절차 위반(s001 b2 3번째 Work 와 동축 재진술 의심 · 검수표 §4)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            43,
-            43
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "계약(상태코드·멱등성)·데이터(인덱스·트랜잭션) 관심사의 api/db 리뷰어 이관과 도메인 집중",
-              "class": "Obligation",
-              "delegatedTo": [
-                "agent-design-review-api",
-                "agent-design-review-db"
-              ],
-              "basis": "①문면이 두 lens 를 소유자로 직접 지목(P-C) + ④§16 위임 기본값 표 architecture-api / architecture-db 행 · agent-design-review-db/s005 와 서로를 지목하는 거울 문장(교차 문서 유예 §3)"
-            }
-          ]
-        },
-        {
-          "lines": [
-            44,
-            44
-          ],
-          "kind": "norm",
-          "norms": [
-            {
-              "label": "스코프 확대 권고 금지(스코프 의문은 발견으로만 상신)",
-              "class": "Prohibition",
-              "delegatedTo": [
-                "command-dddjango"
-              ],
-              "basis": "④절차 층 기본값 — 스코프 승인·확대 판정은 G0/G1 소유 Coordinator · dash 뒤 절은 같은 금지의 긍정면이라 1 Work(agent-design-review-api 판정 승계) · 축자 동일 4중(교차 문서 유예 §3)"
-            }
-          ]
-        }
-      ]
+     "lines": [
+      7,
+      8
+     ],
+     "kind": "prose"
+    },
+    {
+     "lines": [
+      9,
+      10
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "도메인 관점 단일 lens 의 읽기 전용 독립 비평 수행",
+       "class": "Obligation",
+       "delegatedTo": [
+        "command-dddjango"
+       ],
+       "basis": "①문면 «*도메인 관점 하나로만* 독립적으로 비평하는 읽기 전용 리뷰어다» · ④절차 층 기본값 — 첫 문장은 역할 선언 서술, 셋째 문장은 근거 서술이라 무규범(agent-design-review-api/s001 판정 승계)"
+      }
+     ],
+     "restates": [
+      "agent-design-review-db/s001/b6"
+     ]
     }
-  ]
+   ]
+  },
+  {
+   "section_key": "s002",
+   "line_start": 11,
+   "line_end": 14,
+   "blocks": [
+    {
+     "lines": [
+      12,
+      14
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "명세 한정 열람 — 타 리뷰어 노트·구현 코드 열람 금지(편향 방지)",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "command-dddjango"
+       ],
+       "basis": "④절차 층 기본값 — 입력 묶음 공급·독립성 보장 주체가 Coordinator · ②27종 전수 실독 — 리뷰 입력 격리를 보는 검사기 0(agent-design-review-db/s002 와 **절 스팬 해시 동일**한 축자 사본 — 교차 문서라 restates 유예 §3)"
+      },
+      {
+       "label": "로드한 스킬 본문·references 참조의 제한 밖 인정",
+       "class": "Exception",
+       "delegatedTo": [
+        "command-dddjango"
+       ],
+       "basis": "①문면이 제한 대상을 «타 리뷰어의 노트·구현 코드»로 자기 한정 · ④동상"
+      }
+     ],
+     "restates": [
+      "agent-design-review-api/s003/b1"
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s003",
+   "line_start": 15,
+   "line_end": 27,
+   "blocks": [
+    {
+     "lines": [
+      16,
+      18
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "도메인 리뷰 노트 한정 산출",
+       "class": "Obligation",
+       "delegatedTo": [
+        "command-dddjango"
+       ],
+       "basis": "④절차 층 기본값 — 산출물 종류 계약(리뷰어 3종 동형)이고 수납 주체가 Coordinator"
+      },
+      {
+       "label": "명세 직접 수정 금지(반영은 architect 소유)",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "command-dddjango",
+        "agent-design-architect"
+       ],
+       "basis": "①문면 «반영은 architect의 몫» — 판정 소유 배분 지목(P-C) · ④절차 층 기본값 · s001 b2 3번째 Work 와 동축(재진술 의심 — 검수표 §4)"
+      },
+      {
+       "label": "발견 다수 시 심각도 순(blocker→important→nit) 번호 나열",
+       "class": "Obligation",
+       "delegatedTo": [
+        "command-dddjango"
+       ],
+       "basis": "④절차 층 기본값 — 리포트 형식 계약(리뷰어 3종+discipline 4중 동형)"
+      }
+     ],
+     "restates": [
+      "agent-design-review-api/s004/b1"
+     ]
+    },
+    {
+     "lines": [
+      19,
+      19
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "발견 항목 형식(문제+근거 위치 인용+심각도 3단계)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "command-dddjango"
+       ],
+       "basis": "④절차 층 기본값 — 산출 형식 계약(agent-design-review-api/s004 b2 의 같은 불릿 1 Work 채번 선례 승계)"
+      }
+     ],
+     "restates": [
+      "agent-design-review-api/s004/b2"
+     ]
+    },
+    {
+     "lines": [
+      20,
+      21
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "권고 항목 형식(변경 방법 제시)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "command-dddjango"
+       ],
+       "basis": "④동상 — 동형 4중"
+      }
+     ],
+     "restates": [
+      "agent-design-review-api/s004/b3"
+     ]
+    },
+    {
+     "lines": [
+      22,
+      23
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "무결 시 «도메인 관점 이상 없음» 명시",
+       "class": "Obligation",
+       "delegatedTo": [
+        "command-dddjango"
+       ],
+       "basis": "④절차 층 기본값 — 무발견 보고의 명시 계약(침묵과 무결의 구분이 게이트 판정 재료) · b6 의 «대조 표 없는 이상 없음 무효»가 이 선언의 성립 조건을 좁힌다"
+      }
+     ],
+     "restates": [
+      "agent-design-review-api/s004/b4"
+     ]
+    },
+    {
+     "lines": [
+      24,
+      25
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "집행성 판정 1행 기재(가능=명세 확정 결정 3곳 인용·불가=막히는 절·문장 지목)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "command-dddjango"
+       ],
+       "basis": "④절차 층 기본값 — 리포트 형식 계약이고 판정 수납자가 Coordinator(리뷰어 3종+discipline 4중 동형) · ②27종에 집행성 술어 0"
+      },
+      {
+       "label": "인용 없는 «집행 가능» 판정 무효",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "command-dddjango"
+       ],
+       "basis": "④절차 층 기본값 — 무효 선언의 판정자는 판정을 수납·집행하는 Coordinator"
+      }
+     ],
+     "restates": [
+      "agent-design-review-api/s004/b5"
+     ]
+    },
+    {
+     "lines": [
+      26,
+      27
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "판정-소유 대조 표 기재(명세의 비즈니스 판정·불변식마다 «판정 → 배정 위치(애그리거트·도메인 서비스 메서드)» 1행 대조)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "command-dddjango",
+        "agent-design-review-ddd"
+       ],
+       "basis": "④절차 층 기본값(산출 형식 수납 주체) + §16 기본값 표 architecture-ddd 설계 시점 행 — 대조 «행위» 자체는 도메인 lens 심사 · ①문면이 기준을 architecture-ddd references §3.6 원문으로 지정 · command-dddjango/s006 구문검사와는 계약 쌍(사본 아님 — 검수표 §3)"
+      },
+      {
+       "label": "응용 서비스·인프라 경로 잔류 판정 행의 blocker 상신",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-domain-model.py",
+        "check-transaction-boundary.py"
+       ],
+       "delegatedTo": [
+        "agent-design-review-ddd"
+       ],
+       "basis": "②check-domain-model #257 «상태 변경은 루트를 지난다 — 확정: 응용·입구의 «속성 접근 후 메서드 호출»» + check-transaction-boundary #195 «상태를 바꾸는 유스케이스는 애그리거트를 건너뛰지 않는다» — 판정이 응용·인프라에 남은 «코드 형태»를 결정적으로 집행하는 부분 커버(설계 단계 대조 표 판정은 미커버) · ①문면 «그 행을 blocker로 올린다» · ④기본값 표 ddd 행 · 앞 절과 행위 대상(표 작성 ↔ blocker 판정)이 갈려 분리 채번"
+      },
+      {
+       "label": "비즈니스 판정·불변식 0건 시 «판정 없음» 1행 갈음(빈 표 반송 방지)",
+       "class": "Exception",
+       "delegatedTo": [
+        "command-dddjango"
+       ],
+       "basis": "①문면 «표 대신 «판정 없음» 1행으로 갈음한다(빈 표 반송 방지)» 조건 한정 · ④절차 층 기본값(반송 판정 소유)"
+      },
+      {
+       "label": "대조 표(또는 «판정 없음» 1행) 없는 «도메인 관점 이상 없음» 무효",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "command-dddjango"
+       ],
+       "basis": "④절차 층 기본값 — 무효 선언의 판정자는 산출을 수납하는 Coordinator(b4 의 무결 보고 계약과 쌍)"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s004",
+   "line_start": 28,
+   "line_end": 39,
+   "blocks": [
+    {
+     "lines": [
+      29,
+      30
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "애그리거트 경계의 일관성 단위 적합성 점검",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-domain-model.py"
+       ],
+       "delegatedTo": [
+        "agent-design-review-ddd"
+       ],
+       "basis": "②docstring #249 «domain_layer 자식 = 애그리거트들 + shared_value_object + domain_service»·#256 «애그리거트 폴더엔 폴더와 같은 이름의 <aggregate>.py + 루트 클래스»·#299 애그리거트 꼴 — 경계의 «형태»를 결정적으로 집행하는 부분 커버(경계 «선택»이 일관성 단위로 옳은가는 미커버) · ①심사형 술어 + ④§16 기본값 표 architecture-ddd 설계 시점 행"
+      },
+      {
+       "label": "불변식의 애그리거트 내부 보장 점검",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-domain-model.py"
+       ],
+       "delegatedTo": [
+        "agent-design-review-ddd"
+       ],
+       "basis": "②#257 상태 변경의 루트 경유·#264 «값 객체 불변 — __init__/__post_init__ 밖 self 대입 금지»·#289/#290 불변식 예외의 exception/ 폴더 — 불변식 «자리» 축 집행(부분 커버: 불변식 내용의 충분성은 미커버) · ④동상 · 한 문장 안 두 심사 대상(경계 ↔ 불변식)이라 분리 채번"
+      }
+     ]
+    },
+    {
+     "lines": [
+      31,
+      31
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "각 비즈니스 판정·불변식의 도메인 애그리거트·도메인 서비스 메서드 배정과 응용 서비스 프로덕션 경로 실행 명세 확인(인프라 배치 부재 포함)",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-domain-model.py",
+        "check-transaction-boundary.py"
+       ],
+       "delegatedTo": [
+        "agent-design-review-ddd"
+       ],
+       "basis": "②#257(응용·입구의 속성 접근 후 메서드 호출 = 확정 위반)·#304 «도메인 서비스는 리포지토리를 받지도 부르지도 않는다» + transaction-boundary #195·#287 «쓰기 인자는 애그리거트다 — update_* 필드 갱신·조건/필드 인자면 위반» — 빈혈·조건부 UPDATE 누수의 코드 측 축 집행(부분 커버: 명세 단계 배정 확인은 미커버) · ①문면이 근거로 architecture-ddd §3.2·§3.6 지목 · ④기본값 표 ddd 행 · 긍정면(도메인 배정)과 부정면(인프라 배치 금지)은 같은 축이라 1 Work"
+      },
+      {
+       "label": "경합 시나리오의 경합 가드(version/CAS)와 비즈니스 판정 실행 지점 분리 기재 확인",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-transaction-boundary.py"
+       ],
+       "delegatedTo": [
+        "agent-design-review-ddd"
+       ],
+       "basis": "②#599 «save_all() 조건 셋 — ㉡맨 bulk_update(경합 가드 없음)면 위반» — 경합 가드 부재의 한 형태만 집행하는 부분 커버(조건부 UPDATE 누수 일반·명세 기재 축은 미커버) · ④기본값 표 ddd 행"
+      }
+     ],
+     "restates": [
+      "architecture-ddd-final/s017-3.2/b7"
+     ]
+    },
+    {
+     "lines": [
+      32,
+      32
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "판정·불변식 이주와 데이터소스 골격 실현 «값»의 architecture-ddd references §3.2 항-(1)·항-(2) 소유",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-ddd"
+       ],
+       "basis": "①문면이 값 정본을 §3.2 항-(1)·항-(2)로 지정 · ②check-app-container docstring 이 같은 항을 인용(«`architecture-ddd` §3.2 «판정 소유→구조 이주» 항-(2) 2026-06-08 개정») — 다만 «값의 소유처 지시» 자체는 기계 집행 대상이 아니라 미배선 · ④§16 기본값 표 ddd 행"
+      },
+      {
+       "label": "평면 모델 위 판정 잔류 금지(항-(1)) 대조",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-app-container.py"
+       ],
+       "delegatedTo": [
+        "agent-design-review-ddd",
+        "agent-discipline-reviewer"
+       ],
+       "basis": "②check-app-container docstring 의 긍정 선언 «이 좁은 결정적 그물이 «위치» 한 축을 모델 무관하게 집행한다» + 회귀 표본 «smoke4·smoke6: 기존 `catalog/` 가 루트 평면 + 새 마이그레이션/판정 적재인데 `application/` 로 이주 안 함» — 이 규범의 주술어(판정을 얹는 코드가 평면에 «남는다»)와 같은 위치 축을 결정적으로 집행하는 부분 커버 · 한계 ⑴ G2(신규 디렉터리이거나 `D/migrations/` 아래 신규 마이그레이션)가 없으면 «판정 메서드만 얹은» 국면엔 미발화 ⑵ 같은 docstring 이 판정-소유 «형태»(빈혈) 의미 변종을 범위 밖(discipline-reviewer 몫)으로 명시 이양하므로 그 잔여를 ⓓ 로 병기 ⑶ 명세 대조 축(설계 단계)은 전건 미커버 · §16 «역도 성립»(docstring 이 §3.2 항-(2)를 이름으로 인용)은 이 Work 가 아니라 같은 블록 항-(2) Work 에서 서므로 여기 근거로 쓰지 않는다 — 두 Work 가 같은 검사기를 공유하는 것은 항-(1)·항-(2)가 «위치»라는 한 기계 축을 공유하기 때문이고, 축이 어긋난 병기를 벌한 api F5 의 이중 계상과는 형이 다르다(경계선 기준 검수표 §0 P-D) · ④기본값 표 ddd 행 + ⓓ"
+      },
+      {
+       "label": "데이터소스 사유의 위치·4계층·빈 애그리거트 골격 실현 면제 금지(항-(2) — 실내용 면제는 판정 .py 코드 한정·깊이 면제 폐지)",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-app-container.py",
+        "check-layer-skeleton.py"
+       ],
+       "delegatedTo": [
+        "agent-design-review-ddd"
+       ],
+       "basis": "②check-app-container «데이터소스 면제는 *판정 실내용(.py)* 에 한정하고 위치·4계층·애그리거트 골격은 무조건이다; 이 스크립트는 그중 *위치* 한 축만 본다» + check-layer-skeleton #486 «어느 BC 를 열어도 골격이 그대로»·#488 고정 칸 필수·#490 트리 밖 경로 위반 — 위치·골격 두 축을 결정적으로 집행 · ①문면이 houserules final.md §0·§1 을 칸의 값 정본으로 인용 · ④기본값 표 ddd 행"
+      },
+      {
+       "label": "판정 기준의 «판정·불변식 소유» 고정(«레거시냐»가 기준 아님)",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-ddd"
+       ],
+       "basis": "①문면 «기준은 \"레거시냐\"가 아니라 \"판정·불변식 소유냐\"다» — 독립 종결절의 판정 기준 규정 · ②검사 공백(레거시 여부는 코드 형태에 안 나타남) · ④기본값 표 ddd 행"
+      }
+     ],
+     "restates": [
+      "architecture-ddd-final/s017-3.2/b9"
+     ]
+    },
+    {
+     "lines": [
+      33,
+      33
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "상태 전이의 도메인 규칙 적합성 점검",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-ddd"
+       ],
+       "basis": "①심사형 술어(«맞는가») + ④기본값 표 ddd 행 · ②27종 전수 — 상태 전이 «내용» 판정 술어 0(check-domain-model 은 루트 경유 «형태»만 본다)"
+      },
+      {
+       "label": "누락 규칙·엣지 부재 점검",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-ddd"
+       ],
+       "basis": "④동상 — 규칙 완결성 판정은 의미 레인(검사 공백) · 한 문장 안 두 심사 대상(전이 적합성 ↔ 누락)이라 분리 채번"
+      }
+     ]
+    },
+    {
+     "lines": [
+      34,
+      34
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "유비쿼터스 언어의 명세 전반 일관 사용 점검",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-business-vocabulary.py"
+       ],
+       "delegatedTo": [
+        "agent-design-review-ddd"
+       ],
+       "basis": "②docstring «업무 어휘·framework 격리 검사기 — «이 낱말의 뜻을 누가 정하나»(D24·D38·D47) … 업무 어휘의 정의(#628)는 business_vocab.py(공유 데이터 모듈)가 진다» — 코드 측 어휘 소유·격리 축 집행 · 한계(경계선 사례): «같은 낱말이 같은 뜻으로 쓰였는가»라는 **일관성 자체의 술어는 27종에 0**이고, 여기서 인정하는 것은 #628 단일 출처 강제가 코드에서 뜻의 분기를 원천 차단하는 **간접 커버** 하나뿐이다(#47·#52 의 framework 격리는 이 규범의 축이 아니라 배제) · 명세 문면의 어휘 «일관» 사용 판정은 전건 미커버 — 존치 판단의 경계선 기준은 검수표 §0 P-D · ④기본값 표 ddd 행"
+      }
+     ]
+    },
+    {
+     "lines": [
+      35,
+      35
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "컨텍스트 경계 적절성 점검",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-ddd"
+       ],
+       "basis": "①심사형 술어 + ④기본값 표 ddd 행 · ②경계 «선택»의 적절성 판정 술어는 27종에 0(check-context-isolation 은 이미 그어진 경계의 침범만 본다)"
+      },
+      {
+       "label": "컨텍스트 간 접근의 ACL/open_host_service 한정 명세 확인(타 컨텍스트 domain_layer/driven_layer 직접 import 금지)",
+       "class": "Obligation",
+       "enforcedBy": [
+        "check-context-isolation.py"
+       ],
+       "delegatedTo": [
+        "agent-design-review-ddd"
+       ],
+       "basis": "②docstring 타 BC 군 «#12 부를 수 있는 것은 OHS·published_event 둘 · #13 OHS 소비는 ACL 뿐» — 문면이 인용한 architecture-ddd §2.5 축을 코드에서 결정적으로 집행 · 명세 «기재» 확인 축은 미커버(부분 커버) · ④기본값 표 ddd 행"
+      }
+     ]
+    },
+    {
+     "lines": [
+      36,
+      37
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "도메인 이벤트 채택 여부 판단(과채택/누락) 타당성 점검",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-ddd"
+       ],
+       "basis": "④기본값 표 ddd 행 · ②배제 심의 — check-event-publish 는 «사실은 과거형이고, 표면은 published_event/ 하나이고, 구독은 껍데기다»라는 구조·명명 축이라 «채택할 것인가»의 판단 술어가 0(전수 실독)"
+      }
+     ]
+    },
+    {
+     "lines": [
+      38,
+      39
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "도메인 lens 대상 항목의 통째 누락 자체를 발견으로 상신",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-ddd"
+       ],
+       "basis": "①문면 «그 누락 자체를 발견으로 올린다» + ④기본값 표 ddd 행"
+      },
+      {
+       "label": "architecture-ddd 스킬 절 인용 근거 제시",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-ddd"
+       ],
+       "basis": "④동상 — 인용 대상이 architecture-ddd 스킬이라 같은 lens 소유"
+      }
+     ],
+     "restates": [
+      "agent-design-review-api/s006/b20"
+     ]
+    }
+   ]
+  },
+  {
+   "section_key": "s005",
+   "line_start": 40,
+   "line_end": 44,
+   "blocks": [
+    {
+     "lines": [
+      41,
+      42
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "코드·명세 수정 금지(읽기 전용)",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "command-dddjango"
+       ],
+       "basis": "④절차 층 기본값 — 읽기 전용 계약 위반은 절차 위반(s001 b2 3번째 Work 와 동축 재진술 의심 · 검수표 §4)"
+      }
+     ],
+     "restates": [
+      "agent-design-review-api/s007/b1"
+     ]
+    },
+    {
+     "lines": [
+      43,
+      43
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "계약(상태코드·멱등성)·데이터(인덱스·트랜잭션) 관심사의 api/db 리뷰어 이관과 도메인 집중",
+       "class": "Obligation",
+       "delegatedTo": [
+        "agent-design-review-api",
+        "agent-design-review-db"
+       ],
+       "basis": "①문면이 두 lens 를 소유자로 직접 지목(P-C) + ④§16 위임 기본값 표 architecture-api / architecture-db 행 · agent-design-review-db/s005 와 서로를 지목하는 거울 문장(교차 문서 유예 §3)"
+      }
+     ]
+    },
+    {
+     "lines": [
+      44,
+      44
+     ],
+     "kind": "norm",
+     "norms": [
+      {
+       "label": "스코프 확대 권고 금지(스코프 의문은 발견으로만 상신)",
+       "class": "Prohibition",
+       "delegatedTo": [
+        "command-dddjango"
+       ],
+       "basis": "④절차 층 기본값 — 스코프 승인·확대 판정은 G0/G1 소유 Coordinator · dash 뒤 절은 같은 금지의 긍정면이라 1 Work(agent-design-review-api 판정 승계) · 축자 동일 4중(교차 문서 유예 §3)"
+      }
+     ],
+     "restates": [
+      "agent-design-review-api/s007/b3"
+     ]
+    }
+   ]
+  }
+ ],
+ "restates_paths": {
+  "agent-design-review-db": "dddjango/agents/design-review-db.md",
+  "agent-design-review-ddd": "dddjango/agents/design-review-ddd.md",
+  "agent-design-review-api": "dddjango/agents/design-review-api.md",
+  "architecture-ddd-final": "dddjango/skills/architecture-ddd/references/final.md"
+ }
 }
