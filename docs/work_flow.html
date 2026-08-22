@@ -5029,7 +5029,7 @@
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-3" x="40" y="424" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
         <rect data-graph-role="structural-frame" data-composition-frame-kind="exception-lane" data-composition-frame-id="lane-3-exception" x="46" y="430" width="628" height="92" rx="8" class="c-security-group" stroke-width="1"/>
-        <text x="54" y="446" class="t-security" font-size="10" font-weight="600">EX / web 설계 (조건부)</text>
+        <text x="54" y="446" class="t-security" font-size="10" font-weight="600">EX / web 설계 (조건부·계획)</text>
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-4" x="40" y="548" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
         <text x="54" y="570" class="t-dim" font-size="10" font-weight="600">05 / 구현 에이전트</text>
@@ -5064,20 +5064,20 @@
         <path data-edge-from="design" data-edge-to="g1" data-edge-label="상정" data-edge-key="2" data-edge-id="e-design-g1" data-composition-points="227,341;227,119;254,119" d="M 227 341 L 227 119 L 254 119" class="a-security" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
         <path data-edge-from="g1" data-edge-to="red" data-edge-label="입장 표" data-edge-key="3" data-edge-id="e-g1-red" data-composition-points="300,145;300,589" d="M 300 145 L 300 589" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="red" data-edge-to="slice" data-edge-key="4" data-edge-id="e-red-slice" data-composition-points="346,615;384,615" d="M 346 615 L 384 615" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="slice" data-edge-to="checkers" data-edge-label="게이트" data-edge-key="5" data-edge-id="e-slice-checkers" data-composition-points="430,649;430,713" d="M 430 649 L 430 713" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="slice" data-edge-to="checkers" data-edge-label="게이트" data-edge-key="5" data-edge-id="e-slice-checkers" data-composition-points="430,641;430,713" d="M 430 641 L 430 713" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
         <path data-edge-from="checkers" data-edge-to="registry" data-edge-key="6" data-edge-id="e-checkers-registry" data-composition-points="476,739;579,739" d="M 476 739 L 579 739" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
         <path data-edge-from="registry" data-edge-to="audit" data-edge-key="7" data-edge-id="e-registry-audit" data-composition-points="625,713;625,641" d="M 625 713 L 625 641" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
         <path data-edge-from="audit" data-edge-to="g2" data-edge-key="8" data-edge-id="e-audit-g2" data-composition-points="671,615;692,615;692,119;671,119" d="M 671 615 L 692 615 L 692 119 L 671 119" class="a-security" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
         <path data-edge-from="g2" data-edge-to="report" data-edge-label="승인" data-edge-key="9" data-edge-id="e-g2-report" data-composition-points="625,145;625,166;625,166;625,217" d="M 625 145 L 625 166 L 625 166 L 625 217" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="registry" data-edge-to="slice" data-edge-label="귀속 red 반송" data-edge-key="10" data-edge-id="e-registry-slice" data-composition-points="625,713;625,662;430,662;430,649" d="M 625 713 L 625 662 L 430 662 L 430 649" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="registry" data-edge-to="slice" data-edge-label="귀속 red 반송" data-edge-key="10" data-edge-id="e-registry-slice" data-composition-points="671,739;712,739;712,48;430,48;430,589" d="M 671 739 L 712 739 L 712 48 L 430 48 L 430 589" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="registry" data-edge-to="loop" data-edge-label="on일 때" data-edge-key="11" data-edge-id="e-registry-loop" data-composition-points="625,765;625,863;546,863" d="M 625 765 L 625 863 L 546 863" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="rulepack" data-edge-to="loop" data-edge-label="조인" data-edge-key="12" data-edge-id="e-rulepack-loop" data-composition-points="500,961;500,910;500,910;500,889" d="M 500 961 L 500 910 L 500 910 L 500 889" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="graph" data-edge-to="skills" data-edge-label="렌더 투영" data-edge-key="13" data-edge-id="e-graph-skills" data-composition-points="130,987;250,987" d="M 130 987 L 250 987" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="graph" data-edge-to="rulepack" data-edge-label="q4 소성" data-edge-key="14" data-edge-id="e-graph-rulepack" data-composition-points="130,987;130,1045;454,1045;454,987" d="M 130 987 L 130 1045 L 454 1045 L 454 987" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="skills" data-edge-to="red" data-edge-label="에이전트 지식 로드" data-edge-key="15" data-edge-id="e-skills-design" data-composition-points="300,961;300,786;300,786;300,641" d="M 300 961 L 300 786 L 300 786 L 300 641" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="design" data-edge-to="web-design" data-edge-label="web 표면 있을 때만" data-edge-key="16" data-edge-id="e-design-webdesign" data-composition-points="220,393;220,457" d="M 220 393 L 220 457" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="web-design" data-edge-to="g1" data-edge-label="화면 명세 합본" data-edge-key="17" data-edge-id="e-webdesign-g1" data-composition-points="266,491;300,491;300,145" d="M 266 491 L 300 491 L 300 145" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="web-design" data-edge-to="design" data-edge-label="계약 부족 반송" data-edge-key="18" data-edge-id="e-webdesign-design" data-composition-points="266,491;284,491;284,367;272,367" d="M 266 491 L 284 491 L 284 367 L 272 367" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="design" data-edge-to="web-design" data-edge-label="web 표면 있을 때만" data-edge-key="16" data-edge-id="e-design-webdesign" data-composition-points="220,393;220,465" d="M 220 393 L 220 465" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="web-design" data-edge-to="g1" data-edge-label="화면 명세" data-edge-key="17" data-edge-id="e-webdesign-g1" data-composition-points="220,517;220,540;380,540;380,119;346,119" d="M 220 517 L 220 540 L 380 540 L 380 119 L 346 119" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="web-design" data-edge-to="design" data-edge-label="계약 반송" data-edge-key="18" data-edge-id="e-webdesign-design" data-composition-points="266,491;284,491;284,367;272,367" d="M 266 491 L 284 491 L 284 367 L 272 367" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="reviews" data-edge-to="design" data-edge-label="리뷰 노트" data-edge-key="19" data-edge-id="e-reviews-design" data-composition-points="130,367;168,367" d="M 130 367 L 168 367" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
 
         <!-- Nodes -->
@@ -5117,16 +5117,15 @@
           <text data-detail="context" x="625" y="131" class="t-muted" font-size="6.3" text-anchor="middle">완료 · 대가 한 줄 병기</text>
         </g>
 
-        <g id="node-scope" data-node-id="scope" data-node-label="Phase 0" tabindex="0" role="button" aria-label="Focus Phase 0, 빚 스캔·G0, Coordinator — /dddjango › Phase 0–1 · 요구와 설계" aria-pressed="false" data-node-kind="backend" data-node-sublabel="빚 스캔·G0" data-node-tag="G0" data-node-context="Coordinator — /dddjango › Phase 0–1 · 요구와 설계">
-          <title>Phase 0 · 빚 스캔·G0 · Coordinator — /dddjango › Phase 0–1 · 요구와 설계 · G0</title>
-          <rect x="46" y="209" width="84" height="68" rx="6" class="c-mask"/>
-          <rect x="46" y="209" width="84" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(52 215) scale(0.6875)">
+        <g id="node-scope" data-node-id="scope" data-node-label="Phase 0" tabindex="0" role="button" aria-label="Focus Phase 0, 빚 스캔·G0, Coordinator — /dddjango › Phase 0–1 · 요구와 설계" aria-pressed="false" data-node-kind="backend" data-node-sublabel="빚 스캔·G0" data-node-context="Coordinator — /dddjango › Phase 0–1 · 요구와 설계">
+          <title>Phase 0 · 빚 스캔·G0 · Coordinator — /dddjango › Phase 0–1 · 요구와 설계</title>
+          <rect x="46" y="217" width="84" height="52" rx="6" class="c-mask"/>
+          <rect x="46" y="217" width="84" height="52" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(52 223) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label data-detail-anchor x="88" y="230" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Phase 0</text>
-          <text data-detail="context" x="88" y="247" class="t-muted" font-size="8" text-anchor="middle">빚 스캔·G0</text>
-        <text data-detail="fine" x="88" y="265" class="t-backend" font-size="7" text-anchor="middle">G0</text>
+          <text data-node-label data-detail-anchor x="88" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Phase 0</text>
+          <text data-detail="context" x="88" y="255" class="t-muted" font-size="8" text-anchor="middle">빚 스캔·G0</text>
         </g>
 
         <g id="node-report" data-node-id="report" data-node-label="Phase 3" tabindex="0" role="button" aria-label="Focus Phase 3, 보고 · 게이트 기록, Coordinator — /dddjango › Phase 3 · 보고" aria-pressed="false" data-node-kind="backend" data-node-sublabel="보고 · 게이트 기록" data-node-context="Coordinator — /dddjango › Phase 3 · 보고">
@@ -5162,16 +5161,15 @@
           <text data-detail="context" x="300" y="627" class="t-muted" font-size="8" text-anchor="middle">acceptance-tester</text>
         </g>
 
-        <g id="node-slice" data-node-id="slice" data-node-label="coder" tabindex="0" role="button" aria-label="Focus coder, TDD · 스킬 선택, 구현 에이전트 › Phase 2 · 구현 (이중 루프 TDD)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="TDD · 스킬 선택" data-node-tag="화면 시 impl-ui" data-node-context="구현 에이전트 › Phase 2 · 구현 (이중 루프 TDD)">
-          <title>coder · TDD · 스킬 선택 · 구현 에이전트 › Phase 2 · 구현 (이중 루프 TDD) · 화면 시 impl-ui</title>
-          <rect x="384" y="581" width="92" height="68" rx="6" class="c-mask"/>
-          <rect x="384" y="581" width="92" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(390 587) scale(0.6875)">
+        <g id="node-slice" data-node-id="slice" data-node-label="coder" tabindex="0" role="button" aria-label="Focus coder, TDD · 화면 시 +impl-ui, 구현 에이전트 › Phase 2 · 구현 (이중 루프 TDD)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="TDD · 화면 시 +impl-ui" data-node-context="구현 에이전트 › Phase 2 · 구현 (이중 루프 TDD)">
+          <title>coder · TDD · 화면 시 +impl-ui · 구현 에이전트 › Phase 2 · 구현 (이중 루프 TDD)</title>
+          <rect x="384" y="589" width="92" height="52" rx="6" class="c-mask"/>
+          <rect x="384" y="589" width="92" height="52" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(390 595) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label data-detail-anchor x="430" y="602" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">coder</text>
-          <text data-detail="context" x="430" y="619" class="t-muted" font-size="8" text-anchor="middle">TDD · 스킬 선택</text>
-        <text data-detail="fine" x="430" y="637" class="t-backend" font-size="7" text-anchor="middle">화면 시 impl-ui</text>
+          <text data-node-label data-detail-anchor x="430" y="610" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">coder</text>
+          <text data-detail="context" x="430" y="627" class="t-muted" font-size="6.3" text-anchor="middle">TDD · 화면 시 +impl-ui</text>
         </g>
 
         <g id="node-audit" data-node-id="audit" data-node-label="규율 감사" tabindex="0" role="button" aria-label="Focus 규율 감사, discipline-reviewer, 구현 에이전트 › Phase 3 · 보고" aria-pressed="false" data-node-kind="backend" data-node-sublabel="discipline-reviewer" data-node-context="구현 에이전트 › Phase 3 · 보고">
@@ -5259,19 +5257,18 @@
           <text data-detail="context" x="500" y="999" class="t-muted" font-size="8" text-anchor="middle">SPARQL 소성</text>
         </g>
 
-        <g id="node-web-design" data-node-id="web-design" data-node-label="화면 설계" tabindex="0" role="button" aria-label="Focus 화면 설계, design-architect-web, web 설계 (조건부) › Phase 0–1 · 요구와 설계" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="design-architect-web" data-node-tag="계획·조건부" data-node-context="web 설계 (조건부) › Phase 0–1 · 요구와 설계">
-          <title>화면 설계 · design-architect-web · web 설계 (조건부) › Phase 0–1 · 요구와 설계 · 계획·조건부</title>
-          <rect x="174" y="457" width="92" height="68" rx="6" class="c-mask"/>
-          <rect x="174" y="457" width="92" height="68" rx="6" class="c-frontend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(180 463) scale(0.6875)">
+        <g id="node-web-design" data-node-id="web-design" data-node-label="화면 설계" tabindex="0" role="button" aria-label="Focus 화면 설계, design-architect-web, web 설계 (조건부·계획) › Phase 0–1 · 요구와 설계" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="design-architect-web" data-node-context="web 설계 (조건부·계획) › Phase 0–1 · 요구와 설계">
+          <title>화면 설계 · design-architect-web · web 설계 (조건부·계획) › Phase 0–1 · 요구와 설계</title>
+          <rect x="174" y="465" width="92" height="52" rx="6" class="c-mask"/>
+          <rect x="174" y="465" width="92" height="52" rx="6" class="c-frontend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(180 471) scale(0.6875)">
             <rect x="2" y="3" width="12" height="10" rx="2"/>
             <path d="M2 6.5h12"/>
             <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
             <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
-          <text data-node-label data-detail-anchor x="220" y="478" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">화면 설계</text>
-          <text data-detail="context" x="220" y="495" class="t-muted" font-size="7" text-anchor="middle">design-architect-web</text>
-        <text data-detail="fine" x="220" y="513" class="t-frontend" font-size="7" text-anchor="middle">계획·조건부</text>
+          <text data-node-label data-detail-anchor x="220" y="486" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">화면 설계</text>
+          <text data-detail="context" x="220" y="503" class="t-muted" font-size="7" text-anchor="middle">design-architect-web</text>
         </g>
 
         <g id="node-reviews" data-node-id="reviews" data-node-label="리뷰 셋" tabindex="0" role="button" aria-label="Focus 리뷰 셋, review api·db·ddd, 설계 에이전트 › Phase 0–1 · 요구와 설계" aria-pressed="false" data-node-kind="backend" data-node-sublabel="review api·db·ddd" data-node-context="설계 에이전트 › Phase 0–1 · 요구와 설계">
@@ -5301,8 +5298,8 @@
         </g>
 
         <g data-detail="context" data-edge-from="slice" data-edge-to="checkers" data-edge-label="게이트" data-edge-key="5" data-edge-id="e-slice-checkers">
-          <rect x="364.6" y="653" width="38.8" height="14" rx="3" class="c-mask"/>
-          <text x="384" y="663" class="t-muted" font-size="8" text-anchor="middle">게이트</text>
+          <rect x="364.6" y="645" width="38.8" height="14" rx="3" class="c-mask"/>
+          <text x="384" y="655" class="t-muted" font-size="8" text-anchor="middle">게이트</text>
         </g>
 
 
@@ -5312,8 +5309,8 @@
           <text x="625" y="156" class="t-backend" font-size="8" text-anchor="middle">승인</text>
         </g>
         <g data-detail="context" data-edge-from="registry" data-edge-to="slice" data-edge-label="귀속 red 반송" data-edge-key="10" data-edge-id="e-registry-slice">
-          <rect x="491.3" y="654" width="72.4" height="14" rx="3" class="c-mask"/>
-          <text x="527.5" y="664" class="t-database" font-size="8" text-anchor="middle">귀속 red 반송</text>
+          <rect x="534.8" y="42" width="72.4" height="14" rx="3" class="c-mask"/>
+          <text x="571" y="52" class="t-database" font-size="8" text-anchor="middle">귀속 red 반송</text>
         </g>
         <g data-detail="context" data-edge-from="registry" data-edge-to="loop" data-edge-label="on일 때" data-edge-key="11" data-edge-id="e-registry-loop">
           <rect x="603.2" y="804" width="43.6" height="14" rx="3" class="c-mask"/>
@@ -5339,13 +5336,13 @@
           <rect x="103.80000000000001" y="397" width="96.39999999999999" height="14" rx="3" class="c-mask"/>
           <text x="152" y="407" class="t-database" font-size="8" text-anchor="middle">web 표면 있을 때만</text>
         </g>
-        <g data-detail="context" data-edge-from="web-design" data-edge-to="g1" data-edge-label="화면 명세 합본" data-edge-key="17" data-edge-id="e-webdesign-g1">
-          <rect x="307.4" y="298" width="77.2" height="14" rx="3" class="c-mask"/>
-          <text x="346" y="308" class="t-database" font-size="8" text-anchor="middle">화면 명세 합본</text>
+        <g data-detail="context" data-edge-from="web-design" data-edge-to="g1" data-edge-label="화면 명세" data-edge-key="17" data-edge-id="e-webdesign-g1">
+          <rect x="313.4" y="309.5" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
+          <text x="340" y="319.5" class="t-database" font-size="8" text-anchor="middle">화면 명세</text>
         </g>
-        <g data-detail="context" data-edge-from="web-design" data-edge-to="design" data-edge-label="계약 부족 반송" data-edge-key="18" data-edge-id="e-webdesign-design">
-          <rect x="341.4" y="409" width="77.2" height="14" rx="3" class="c-mask"/>
-          <text x="380" y="419" class="t-database" font-size="8" text-anchor="middle">계약 부족 반송</text>
+        <g data-detail="context" data-edge-from="web-design" data-edge-to="design" data-edge-label="계약 반송" data-edge-key="18" data-edge-id="e-webdesign-design">
+          <rect x="315.4" y="409" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
+          <text x="342" y="419" class="t-database" font-size="8" text-anchor="middle">계약 반송</text>
         </g>
         <g data-detail="context" data-edge-from="reviews" data-edge-to="design" data-edge-label="리뷰 노트" data-edge-key="19" data-edge-id="e-reviews-design">
           <rect x="122.4" y="323" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
@@ -5355,29 +5352,29 @@
         <!-- Legend -->
         <g data-legend data-legend-bridge>
           <text x="20" y="1048" class="t-primary" font-size="12" font-weight="650">Legend</text>
-          <g data-legend-semantic-kind="frontend" data-legend-kind="frontend" data-legend-label="User UI" data-legend-x="20" data-legend-baseline="1068" data-legend-width="74">
+          <g data-legend-semantic-kind="frontend" data-legend-kind="frontend" data-legend-label="web 에이전트 (계획)" data-legend-x="20" data-legend-baseline="1068" data-legend-width="126">
             <rect x="20" y="1060" width="14" height="9" rx="2" class="c-frontend" stroke-width="1"/>
-            <text x="42" y="1068" class="t-muted" font-size="7.5" font-weight="500">User UI</text>
+            <text x="42" y="1068" class="t-muted" font-size="7.5" font-weight="500">web 에이전트 (계획)</text>
           </g>
-          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Agent logic" data-legend-x="101" data-legend-baseline="1068" data-legend-width="91">
-            <rect x="101" y="1060" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
-            <text x="123" y="1068" class="t-muted" font-size="7.5" font-weight="500">Agent logic</text>
+          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="에이전트" data-legend-x="153" data-legend-baseline="1068" data-legend-width="78">
+            <rect x="153" y="1060" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+            <text x="175" y="1068" class="t-muted" font-size="7.5" font-weight="500">에이전트</text>
           </g>
-          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="Policy" data-legend-x="199" data-legend-baseline="1068" data-legend-width="70">
-            <rect x="199" y="1060" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
-            <text x="221" y="1068" class="t-muted" font-size="7.5" font-weight="500">Policy</text>
+          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="게이트·판정" data-legend-x="238" data-legend-baseline="1068" data-legend-width="91">
+            <rect x="238" y="1060" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+            <text x="260" y="1068" class="t-muted" font-size="7.5" font-weight="500">게이트·판정</text>
           </g>
-          <g data-legend-semantic-kind="messagebus" data-legend-kind="messagebus" data-legend-label="Tool action" data-legend-x="276" data-legend-baseline="1068" data-legend-width="91">
-            <rect x="276" y="1060" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
-            <text x="298" y="1068" class="t-muted" font-size="7.5" font-weight="500">Tool action</text>
+          <g data-legend-semantic-kind="messagebus" data-legend-kind="messagebus" data-legend-label="폐루프 도구" data-legend-x="336" data-legend-baseline="1068" data-legend-width="91">
+            <rect x="336" y="1060" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
+            <text x="358" y="1068" class="t-muted" font-size="7.5" font-weight="500">폐루프 도구</text>
           </g>
-          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="Context / trace" data-legend-x="374" data-legend-baseline="1068" data-legend-width="109">
-            <rect x="374" y="1060" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
-            <text x="396" y="1068" class="t-muted" font-size="7.5" font-weight="500">Context / trace</text>
+          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="온톨로지 정본·산출물" data-legend-x="434" data-legend-baseline="1068" data-legend-width="130">
+            <rect x="434" y="1060" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+            <text x="456" y="1068" class="t-muted" font-size="7.5" font-weight="500">온톨로지 정본·산출물</text>
           </g>
-          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="External system" data-legend-x="490" data-legend-baseline="1068" data-legend-width="109">
-            <rect x="490" y="1060" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
-            <text x="512" y="1068" class="t-muted" font-size="7.5" font-weight="500">External system</text>
+          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="사용자" data-legend-x="571" data-legend-baseline="1068" data-legend-width="70">
+            <rect x="571" y="1060" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
+            <text x="593" y="1068" class="t-muted" font-size="7.5" font-weight="500">사용자</text>
           </g>
         </g>
       </svg>

@@ -62,7 +62,29 @@
   "viewBox": [
    740,
    1100
-  ]
+  ],
+  "legend": {
+   "entries": {
+    "backend": {
+     "label": "에이전트"
+    },
+    "frontend": {
+     "label": "web 에이전트 (계획)"
+    },
+    "security": {
+     "label": "게이트·판정"
+    },
+    "messagebus": {
+     "label": "폐루프 도구"
+    },
+    "database": {
+     "label": "온톨로지 정본·산출물"
+    },
+    "external": {
+     "label": "사용자"
+    }
+   }
+  }
  },
  "lanes": [
   {
@@ -79,7 +101,7 @@
   },
   {
    "id": "web-track",
-   "label": "web 설계 (조건부)",
+   "label": "web 설계 (조건부·계획)",
    "variant": "exception"
   },
   {
@@ -168,7 +190,6 @@
    "type": "backend",
    "label": "Phase 0",
    "sublabel": "빚 스캔·G0",
-   "tag": "G0",
    "width": 84
   },
   {
@@ -202,8 +223,7 @@
    "col": 3,
    "type": "backend",
    "label": "coder",
-   "sublabel": "TDD · 스킬 선택",
-   "tag": "화면 시 impl-ui"
+   "sublabel": "TDD · 화면 시 +impl-ui"
   },
   {
    "id": "audit",
@@ -269,8 +289,7 @@
    "col": 1,
    "type": "frontend",
    "label": "화면 설계",
-   "sublabel": "design-architect-web",
-   "tag": "계획·조건부"
+   "sublabel": "design-architect-web"
   },
   {
    "id": "reviews",
@@ -347,19 +366,19 @@
    "label": "게이트",
    "variant": "default",
    "labelDx": -46,
+   "labelDy": 24,
    "route": "straight",
    "fromSide": "bottom",
-   "toSide": "top",
-   "labelDy": 24
+   "toSide": "top"
   },
   {
    "id": "e-checkers-registry",
    "from": "checkers",
    "to": "registry",
    "variant": "default",
+   "route": "straight",
    "fromSide": "right",
-   "toSide": "left",
-   "route": "straight"
+   "toSide": "left"
   },
   {
    "id": "e-registry-audit",
@@ -393,10 +412,25 @@
    "label": "귀속 red 반송",
    "variant": "dashed",
    "role": "error",
-   "fromSide": "top",
-   "toSide": "bottom",
-   "labelSegment": 1,
-   "labelDy": 12
+   "labelSegment": 2,
+   "fromSide": "right",
+   "toSide": "top",
+   "via": [
+    [
+     712,
+     739
+    ],
+    [
+     712,
+     48
+    ],
+    [
+     430,
+     48
+    ]
+   ],
+   "labelDx": 0,
+   "labelDy": 14
   },
   {
    "id": "e-registry-loop",
@@ -462,22 +496,35 @@
    "id": "e-webdesign-g1",
    "from": "web-design",
    "to": "g1",
-   "label": "화면 명세 합본",
+   "label": "화면 명세",
    "variant": "dashed",
-   "fromSide": "right",
-   "toSide": "bottom",
-   "channelX": 322,
-   "labelSegment": 1,
-   "labelDx": 46
+   "fromSide": "bottom",
+   "toSide": "right",
+   "labelSegment": 2,
+   "labelDx": -40,
+   "via": [
+    [
+     220,
+     540
+    ],
+    [
+     380,
+     540
+    ],
+    [
+     380,
+     119
+    ]
+   ]
   },
   {
    "id": "e-webdesign-design",
    "from": "web-design",
    "to": "design",
-   "label": "계약 부족 반송",
+   "label": "계약 반송",
    "variant": "dashed",
    "role": "error",
-   "labelDx": 96,
+   "labelDx": 58,
    "fromSide": "right",
    "toSide": "right",
    "labelSegment": 1,
