@@ -1,0 +1,930 @@
+{
+  "schema": "migrate-spec/1",
+  "doc_key": "implementation-django-ninja-skill",
+  "path": "dddjango/skills/implementation-django-ninja/SKILL.md",
+  "restates_paths": {
+    "implementation-django-ninja-skill": "dddjango/skills/implementation-django-ninja/SKILL.md"
+  },
+  "sections": [
+    {
+      "section_key": "s001",
+      "line_start": 1,
+      "line_end": 6,
+      "blocks": [
+        {
+          "lines": [
+            2,
+            2
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            3,
+            3
+          ],
+          "kind": "norm",
+          "restates": [
+            "implementation-django-ninja-skill/s003/b1",
+            "implementation-django-ninja-skill/s003/b2",
+            "implementation-django-ninja-skill/s003/b3",
+            "implementation-django-ninja-skill/s003/b4",
+            "implementation-django-ninja-skill/s003/b5"
+          ],
+          "norms": [
+            {
+              "label": "Router·Schema·API 어댑터 코드 작성·리팩터링 시 이 스킬 선로드",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer",
+                "command-dddjango"
+              ],
+              "basis": "①문면 «…먼저 로드한다» — frontmatter description 은 스킬 로드 트리거(행 단위 norm) · ②27종 전수 — 스킬 로드·라우팅 술어 0 · §16 기본값 + 절차 층 Coordinator(스킬 부착 결정 주체)"
+            },
+            {
+              "label": "REST 계약·도메인 규칙·ORM/트랜잭션·테스트 mechanics 의 소유 스킬 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api",
+                "agent-design-review-ddd",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…로 위임» 4건 · ②27종 — 위임 경계 술어 0 · §16 문서군 표(architecture-api→design-review-api · architecture-ddd→design-review-ddd · implementation-django/-test→discipline-reviewer) · ninja-final s005-1.2 b1~b4 동일 축 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            4,
+            4
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            5,
+            6
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s003",
+      "line_start": 9,
+      "line_end": 17,
+      "blocks": [
+        {
+          "lines": [
+            10,
+            12
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Django Ninja 어댑터 설계·작성 작업의 스킬 로드 조건",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer",
+                "command-dddjango"
+              ],
+              "basis": "①문면 «…코드를 설계·작성할 때 로드한다» · ②27종 — 로드 판정 술어 0 · §16 기본값 + 절차 층 Coordinator · ninja-final s004-1.1 b1 동일 축"
+            }
+          ]
+        },
+        {
+          "lines": [
+            13,
+            13
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "REST 계약 요소의 architecture-api 위임(idempotency 저장소·retention 은 architecture-db)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api",
+                "agent-design-review-db"
+              ],
+              "basis": "①문면 두 소유 명시 «→ architecture-api (idempotency 저장소·retention은 architecture-db)» · ②27종 — 계약 결정 소유 술어 0 · §16 문서군 표 2행 · ninja-final s005-1.2 b1(계약 축)+s025-7 b8(저장소 축) 배선 종합"
+            }
+          ]
+        },
+        {
+          "lines": [
+            14,
+            14
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "애그리거트·상태 전이·구조 패턴의 architecture-ddd 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "①문면 «→ architecture-ddd» · ②27종 — 구조 패턴 채택 판정 술어 0 · §16 문서군 표 · ninja-final s005-1.2 b2 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            15,
+            15
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "ORM·셀렉터·서비스·트랜잭션·마이그레이션·캐시·보안 구현의 implementation-django 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «→ implementation-django» · ②27종 — 스킬 경계 술어 0 · §16 기본값(implementation-* → discipline-reviewer) · ninja-final s005-1.2 b3 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            16,
+            17
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "pytest 픽스처·팩토리·mock·동시성 테스트 구현의 implementation-test 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «→ implementation-test» · ②27종 — 동상 · §16 기본값 · ninja-final s005-1.2 b4 동일 배선"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s004",
+      "line_start": 18,
+      "line_end": 37,
+      "blocks": [
+        {
+          "lines": [
+            19,
+            20
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Router operation 의 HTTP 어댑터 유지",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «Router는 HTTP 어댑터로 얇게»(§1.3) · ②27종 전수 — 어댑터 «두께» 의미 판정 술어 0 · §16 기본값 · ninja-final s006-1.3 b1 «Router operation = HTTP adapter»(E 없음·discipline-reviewer) 동일 배선"
+            },
+            {
+              "label": "Router 책임의 4종 한정",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-context-isolation.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-context-isolation docstring «방향 … #93/#94/#95 driving 잎의 import 폭» — 실물 진단은 loc∈{api, driving, cron_job, event_subscription}에서 #93(application_layer/port import)·#94(driven_layer import)·#95(domain 에서 가져올 수 있는 것은 exception·값 객체뿐)라 어댑터 밖 책임 유입을 import 폭으로 결정적으로 문다 · ①문면 «요청 바인딩·auth hook·서비스 호출·응답 매핑만» · ninja-final s006-1.3 b3 동일 배선. #96 소유자 check-event-publish.py 병기는 심사 후 기각 — ⒜ #96 은 `api_router.py`를 잎에서 명시 제외하고(docstring «api_router.py·event_router.py 는 잎이 아니다 — #99» · `WIRING_FILES` 실물) ⒝ 남는 겹침면(controller 잎의 domain_layer·port 선언 import)은 위 #93·#95 가 같은 위반면을 이미 문다(저장소 «중복 진단 금지» 규약)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            21,
+            21
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "request/response schema 의 명시 분리",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-usecase-dto-placement.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-usecase-dto-placement docstring «#208 command 는 schema_in 과 같은 타입을 쓰지 않는다»·«#143/#144 schema_out 은 result 로 만든다 — 도메인·ORM 타입 노출 금지» — 요청/응답 계약 분리 축 커버 · ①문면 §3.1–§3.2 · ninja-final s009-2.2 b5·s012-3.1 b1 동일 배선"
+            },
+            {
+              "label": "ModelSchema 의 내부 구현 보호 확실 시 한정 사용",
+              "class": "Exception",
+              "enforcedBy": [
+                "check-usecase-dto-placement.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «ModelSchema는 내부 구현 보호가 확실할 때만» — 조건부 허용이라 Exception · ②동 docstring #143/#144(ORM 타입 노출 금지)가 위반면을 문다 · ninja-final s013-3.2 b1 «ModelSchema 사용 전 확인 4항» 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            22,
+            22
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "발행 이벤트 discriminator 의 1종째 domain StrEnum·Literal 파생(birth-enum)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "①문면 «1종째부터 domain StrEnum + Literal[EventType.X] 파생(birth-enum)» · ②27종 — 봉투 discriminator 출처 판정 술어 0 · §16 문서군(도메인 enum 출처 = 설계 결정 → design-review-ddd) · ninja-final s012-3.1 b7 동일 배선"
+            },
+            {
+              "label": "버전 태그의 리터럴 동결",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "①문면 «버전 태그는 리터럴 동결» · ②27종 — 계약 버전 태그 술어 0 · ninja-final s012-3.1 b7 «버전 태그(payload_schema_version)의 리터럴 동결 유지» 동일 배선"
+            },
+            {
+              "label": "union-enum 동기의 중앙 test admission 후보 취급",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «중앙 test admission 후보이며» · ②27종 — 영구 테스트 입장 심사 술어 0(check-test-config 는 배치·바인딩만) · §16 기본값 + rule-owner-map ⓓ(입장 감사 = discipline-reviewer) · ninja-final s012-3.1 b7 동일 배선"
+            },
+            {
+              "label": "승인 공개 wire·독자 failure 의 add/update 한정 검증",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «승인된 공개 wire와 독자 failure가 add/update일 때만 검증한다» — 조건부 허용 · ②27종 — decision 별 test action 술어 0 · ninja-final s012-3.1 b7 Exception 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            23,
+            23
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Schema·framework 오류·OpenAPI·HTTP 검증의 중앙 test admission 후보 취급",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «중앙 test admission 후보다» · ②27종 — 입장 심사 술어 0 · §16 기본값 + rule-owner-map ⓓ · ninja-final s026-8 b2·s028-9.1 b1 동일 배선"
+            },
+            {
+              "label": "mechanics recipe 의 add/update 승인 뒤 한정 적용",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «add/update 뒤에만 mechanics recipe를 적용하고» — 조건부 허용 · ②27종 — decision 별 적용 조건 술어 0 · ninja-final s028-9.1 b1 Exception 동일 배선"
+            },
+            {
+              "label": "공개 HTTP 의 실제 URLconf mounted Django client 검증",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-test-config.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-test-config docstring ⑴ «pytest 설정은 존재하는데 pytest-django 를 Django settings 에 묶지 못하면 테스트 수집이 조용히 실패한다» — 무는 것은 pytest↔settings 바인딩이지 mounted 검증 자체가 아니다. 이 규범에 대해서는 «실행 전제의 백스톱»(바인딩이 깨지면 mounted client 검증이 0 collected 로 조용히 사라진다) · ①문면 «실제 URLconf에 mount된 Django client로» · ninja-final s028-9.1 b3(E=check-test-config) 동일 배선"
+            },
+            {
+              "label": "공개 OpenAPI 의 mounted API 생성 문서 검증",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-test-config.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «공개 OpenAPI는 그 mounted API가 생성한 문서로 검증한다» · ②동 docstring ⑴(pytest↔settings 바인딩)은 생성 문서 확인의 «실행 전제»만 무는 백스톱이고 mounted 여부 자체를 판정하지 않는다 · ninja-final s026-8 b2(Exception E=check-test-config) 동일 배선"
+            },
+            {
+              "label": "승인 공개 Python consumer 부재 시 validator 위치·loc·기본 직렬화·private 호출의 test 자격 부정",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-business-vocabulary.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-business-vocabulary docstring «#53 HTTP 로만 구동(모델·팩토리 import 0)» — 공개 경계 밖 표면을 test 근거로 삼는 형태를 문다 · ①문면 «… test 자격이 아니며» · ninja-final s028-9.1 b5 동일 배선"
+            },
+            {
+              "label": "오류 helper/handler 내부 unit test 생성 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «오류 helper/handler 내부 unit test는 만들지 않는다» · ②27종 — test «생성 근거» 판정 술어 0(check-test-config 는 자리·형태만) · §16 기본값 + rule-owner-map ⓓ · ninja-final s028-9.1 b5 둘째 규범 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            24,
+            24
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "공통 FrameworkErrorSchema property 의 플러그인 기본값 부재",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «dddjango는 공통 FrameworkErrorSchema property를 정하지 않는다» — 기본값 발명 금지 · ②27종 — «플러그인이 정한 바 없음»은 검사 대상 형태가 없다 · ninja-final s023-6.2 b2 «플러그인 공통 body property 부재» 동일 배선"
+            },
+            {
+              "label": "reuse 의 관찰 exact shape 보존",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «reuse는 관찰된 exact shape를 보존한다» · ②27종 — 관찰 기준선 대조 술어 0 · §16 문서군(계약 shape 판정 → design-review-api) · ninja-final s023-6.2 b2 «기존 프로젝트의 관찰 shape 기준선 보존» 동일 배선"
+            },
+            {
+              "label": "create·approved-change 의 G1 slot 6 분리 명시 승인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "①문면 «신규 G1 slot 6에서 … 일반 G1과 분리해 명시 승인받는다» · ②27종 — G1 승인 절차 술어 0 · §16 절차 층(승인 게이트 판정 = Coordinator) · ninja-final s023-6.2 b2 «신규 scope shape의 G1 slot 6 선제안·명시 승인» 동일 배선"
+            },
+            {
+              "label": "공통 오류 모듈의 framework/ninja/framework_error_schema.py 단일 경로",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "②check-error-centralization docstring «validates the canonical common/BC FrameworkErrorSchema modules, project inventory correspondence» — 단일 경로를 결정적으로 문다 · ①문면 «공통 오류 모듈은 framework/ninja/framework_error_schema.py 하나다» · ninja-final s023-6.2 b4 동일 배선"
+            },
+            {
+              "label": "승인 common Schema hook 의 보존(HTTP 오류 변환·handler 금지 대상 제외)",
+              "class": "Exception",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "①문면 «보존 대상이며 아래 HTTP 오류 변환·handler 금지 대상이 아니다» — 금지의 예외 조문 · ②동 docstring(canonical common module 의 shape 검증) · ninja-final s023-6.2 b29 «승인 common Schema 자체 hook의 exact shape 보존» 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            25,
+            25
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "BC 오류 언어의 api/bc_error_schema.py 단일 파일 집약",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "②check-error-centralization docstring «canonical common/BC FrameworkErrorSchema modules … wire-code uniqueness» · ④check-naming #118 «BC 오류 파일은 bc_error_schema.py» 로 파일명 축 보강 · ①문면 «하나에 … 를 둔다» · ninja-final s023-6.2 b8·b9·b10·b11 동일 배선"
+            },
+            {
+              "label": "BC·concrete 의 공통 annotation/nullability·Field metadata 보존",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "②동 docstring(BC schema contract backstop) · ①문면 «공통 annotation/nullability·Field metadata를 보존하고» · ninja-final s023-6.2 b14 «BC base 식별자 field의 공통 metadata 보존» 동일 배선"
+            },
+            {
+              "label": "추가 필드·validator·child model_config·URI/instance·다중 오류 schema 파일 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "①문면 금지 열거 · ②동 docstring(정본 모듈 밖 shape 발명 차단) · ninja-final s023-6.2 b14 «concrete subclass의 신규 요소·drift 추가 금지»·«오류별 파일 분리·validation 전용 제2 schema 파일 금지» 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            26,
+            26
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "controller 의 좁은 try 에 application call 정확히 1개 배치",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "②check-api-error-controller-contract docstring «Enforce direct controller-owned code-profile error mapping … analyzes only selected controllers owned by an error-bc» · ①문면 «정확히 한 application call만 좁은 try에» · ninja-final s023-6.2 b17 «exception path — try에 최외곽 application call 한 문장만» 동일 배선"
+            },
+            {
+              "label": "구체 known exception 한정 catch",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "②동 docstring(controller 소유 오류 매핑 계약) · ①문면 «구체 known exception을 catch한다» · ninja-final s023-6.2 b17 둘째 규범 동일 배선"
+            },
+            {
+              "label": "concrete 오류 준비 후 Status 직접 반환",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "②동 docstring · ①문면 «Status(<승인된 HTTP status 표현>, error)로 직접 반환하고» · ninja-final s023-6.2 b17·b15 동일 배선"
+            },
+            {
+              "label": "성공 변환의 try 뒤 배치",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "②동 docstring · ①문면 «성공 변환은 try 뒤에서 한다» · ninja-final s023-6.2 b17 «성공 변환의 try 뒤 배치» 동일 배선"
+            },
+            {
+              "label": "status body property 미요구",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «status body property는 요구하지 않는다» — 비요구 조항이라 위반 형태가 없고 ②27종 전수에도 대응 술어 0(검사 대상 아님) · §16 기본값 — 오해 시정 판정은 discipline-reviewer"
+            },
+            {
+              "label": "오류 tuple·raw Response/dict·helper/factory/serializer/mapper·handler 등록·generic builder 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "②동 docstring(직접 매핑 강제 = 우회 형태 차단) · ①문면 금지 열거 · ninja-final s023-6.2 b29 «오류 응답 helper·handler·builder 생성·호출 금지»·b18 «예외·catch·helper·mapping table 꾸며내기 금지» 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            27,
+            27
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "직접 반환 BC 오류 status 의 response= 같은 BC base 선언",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-openapi-error-declaration.py"
+              ],
+              "basis": "②check-openapi-error-declaration docstring «선택된 operation이 직접 반환하는 BC 오류와 response={status: <Bc>ErrorSchema} 선언의 일치를 검증» — 문면 그대로 · ①문면 §6.2·§8 · ninja-final s023-6.2 b34 동일 배선"
+            },
+            {
+              "label": "framework-owned status 의 BC 오류 변환·광고 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-business-vocabulary.py",
+                "check-openapi-error-declaration.py",
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "②check-openapi-error-declaration(선언 일치)·check-api-error-controller-contract(controller 직접 매핑 계약) 양 docstring · ②·④check-business-vocabulary #119 «401·403·404·422·429·HttpError 는 framework 소유(BC 재선언 금지)» — 실물 진단이 «BC 클래스가 HttpError 를 상속»(재선언 형태)이라 «BC 오류로 변환» 축의 결정적 위반면 · ①문면 열거 · 이 규범은 정본 s023-6.2 b30 의 소유 선언(E=[check-business-vocabulary, check-api-error-controller-contract])·전환 금지(E=[check-api-error-controller-contract])·광고 금지(E=[check-openapi-error-declaration]) 세 규범을 한 문장에 접었으므로 세 검사기의 합집합으로 배선(§16 «담당 검사기 근거가 있는데 빠뜨리면 오배선»)"
+            },
+            {
+              "label": "framework body 의 정확한 code-profile 계약 주장 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «body를 정확한 code-profile 계약이라 주장하지 않는다» — 보고·주장 축이라 코드 형태가 없다 · ②27종 — 주장 술어 0 · ninja-final s023-6.2 b30 «framework body의 wire contract 주장 금지»(E 없음) 동일 배선"
+            },
+            {
+              "label": "openapi_extra 보충·OpenAPI override·monkeypatch·postprocessor 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-openapi-error-declaration.py"
+              ],
+              "basis": "②동 docstring «선택 API module의 수동 OpenAPI 후처리를 차단한다» — 문면 그대로 · ①문면 §8 · ninja-final s023-6.2 b34 «openapi_extra 보충·사후 변형 금지»·s009-2.2 b10 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            28,
+            28
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "프로젝트 api.py 의 NinjaExtraAPI 단일 소유",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-composition-root.py"
+              ],
+              "basis": "②check-composition-root docstring «명시적 dddjango-code-json lane은 선택 API object, canonical BC registrar, project URLconf의 직접 import provenance와 exactly-once 호출 관계를 함께 검사한다» · ①문면 «api.py가 NinjaExtraAPI 하나를 소유하고» · ninja-final s010-2.3 b8 동일 배선"
+            },
+            {
+              "label": "명시 registrar 소유 controller 의 auto_import=False",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-context-isolation.py"
+              ],
+              "basis": "②check-context-isolation docstring «#110 auto_import=False» — 규칙 번호로 직접 지목 · ①문면 «@api_controller(..., auto_import=False)로 … side effect를 끈다» · ninja-final s010-2.3 b9 동일 배선"
+            },
+            {
+              "label": "BC 의 side-effect-free register_<bc>_api(api) 노출",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-composition-root.py"
+              ],
+              "basis": "②동 docstring(canonical BC registrar 의 exactly-once 호출 관계) · ④check-context-isolation #431 «부작용 등록 금지» · ①문면 «side-effect-free register_<bc>_api(api)를 노출하고» · ninja-final s010-2.3 b8 동일 배선"
+            },
+            {
+              "label": "urls.py 의 registrar 명시 호출·mount",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-composition-root.py"
+              ],
+              "basis": "②동 docstring(project URLconf 직접 import provenance·exactly-once) · ①문면 «urls.py가 registrar를 명시 호출·mount하며» · ninja-final s010-2.3 b8·b16 동일 배선"
+            },
+            {
+              "label": "composition_root/(dependency_wiring.py) 의 use-case DI 한정 소유",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-composition-root.py"
+              ],
+              "basis": "②check-composition-root docstring «DI 조립(컴포지션 루트)은 BC 루트의 composition_root/(결선은 dependency_wiring.py — 트리 2~4행·#84·#85)가 소유한다» — 문면 그대로 · ①문면 §2.3 · ninja-final s010-2.3 b22 «composition_root의 use-case DI 한정 소유» 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            29,
+            29
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "auth 실패의 None 반환 또는 framework AuthenticationError",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «auth 실패는 None 또는 framework AuthenticationError이며» · ②27종 — auth hook 반환 형태 술어 0 · §16 기본값 · ninja-final s023-6.2 b31 «인증 실패 = None 반환 또는 AuthenticationError raise»(E 없음) 동일 배선"
+            },
+            {
+              "label": "request.auth 의 ErrorSchema 사용 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «request.auth에 ErrorSchema를 넣지 않는다» · ②27종 — 인증 결과 적재 술어 0 · ninja-final s023-6.2 b31 «request.auth·인증 결과의 ErrorSchema 사용 금지» 동일 배선"
+            },
+            {
+              "label": "raw infra 실패의 기본 500",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «raw infra 실패는 기본 500이고» · ②27종 — 기본 경로 술어 0(check-transient-overmapping 은 503/409 과잉매핑 형태만) · ninja-final s023-6.2 b33 «기본 경로 = framework 미식별 500» 동일 배선"
+            },
+            {
+              "label": "승인된 안정 의미 한정 infra/ACL 의 자기 BC exception 정규화",
+              "class": "Exception",
+              "enforcedBy": [
+                "check-synthetic-infra-exc.py",
+                "check-context-isolation.py"
+              ],
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «승인된 안정 의미만 … 정규화한다» — 조건부 허용 · ②check-synthetic-infra-exc docstring «driven 경계가 계산된 transient/경합을 신호하려고 raw 인프라 DB 예외를 from 없이 새로 생성해 raise 한 형태만 차단»·«#129 전수 명시 매핑»(합성 위반면) · ②check-context-isolation docstring «ACL #473 기저 예외를 잡는다»·«#291/#292 예외의 자리 셋»·«타 BC #12/#13»(자기 BC exception 이 아닌 것의 통과 위반면) · ninja-final s023-6.2 b33 은 Exception(D=command-dddjango) + 금지 규범(E=[check-synthetic-infra-exc, check-context-isolation])로 나뉘어 있고, SKILL 문면이 둘을 한 조문에 접었으므로 두 검사기를 합집합으로 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            30,
+            30
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "선언된 JSON 성공의 Schema/Status 반환",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-response-schema-bypass.py"
+              ],
+              "basis": "②check-response-schema-bypass docstring «Block direct raw 200-203 returns that bypass a declared Ninja schema» — 문면 그대로 · ①문면 «선언된 JSON 성공은 Schema/Status로 반환한다» · ninja-final s009-2.2 b14·s023-6.2 b35 동일 배선"
+            },
+            {
+              "label": "native 성공 carveout 4종 허용(오류 응답 우회 불허)",
+              "class": "Permission",
+              "enforcedBy": [
+                "check-response-schema-bypass.py",
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "①문면 «FileResponse·StreamingHttpResponse·redirect·schema-less 204는 성공 native carveout이며 오류 응답 우회를 허용하지 않는다» · ②response-schema-bypass(성공 우회면)+api-error-controller-contract(오류 경로) 양 docstring · ninja-final s009-2.2 b14 Permission 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            31,
+            31
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "operation 의 summary·description·tags 문서화",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «summary·description·tags로 문서화하고» · ②27종 — 문서화 인자 술어 0 · §16 기본값 · ninja-final s009-2.2 b12 동일 배선"
+            },
+            {
+              "label": "반환 타입 명시(object 금지)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-public-surface-annotation.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-public-surface-annotation docstring «#493 모든 이름은 «첫 대입»에 타입을 적는다 — 시그니처·속성·지역 변수에 예외가 없다»·«#358 … 이름 붙인 정적 타입뿐» — 반환 애너테이션 축 커버 · ①문면 «반환 타입을 명시한다(object 금지)» · ninja-final s009-2.2 b13 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            32,
+            32
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Idempotency-Key 의 계약 정의 endpoint 한정",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-idempotency-scope-creep.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②check-idempotency-scope-creep docstring «태스크가 요청하지 않은 멱등성(Idempotency-Key 필수·전용 record 테이블·replay store)을 … silent 의무화해 코드로 구현하는 회귀를 차단» — 문면 그대로 · ①문면 «계약에 정의된 endpoint에만» · ninja-final s025-7 b1 동일 배선"
+            },
+            {
+              "label": "키 정책(scope·replay·conflict)의 architecture-api 결정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «키 정책(scope·replay·conflict)은 architecture-api» · ②27종 — 정책 결정 소유 술어 0 · §16 문서군 표 · ninja-final s025-7 b3 동일 배선"
+            },
+            {
+              "label": "저장소·retention(테이블·unique constraint·fingerprint)의 architecture-db 결정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-db"
+              ],
+              "basis": "①문면 «저장소·retention … 은 architecture-db가 결정» — 소유자를 architecture-db 하나로만 지목하므로 db 단독 위임 · ②27종 — 저장소 설계 술어 0(check-db-table 은 앱 규율만) · §16 문서군 표 · 정본 ninja-final s025-7 b8 은 D=[agent-design-review-db, agent-discipline-reviewer]이지만 그 문면이 implementation-django 축(«unique constraint·lock·transaction boundary»)을 함께 지목한 결과이고 SKILL 문면에는 그 축이 없다 — 목적지 일부 일치(«동일 배선» 아님)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            33,
+            33
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "공개 OpenAPI add/update 후보의 mounted 생성 문서 확인",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-test-config.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «add/update이면 mounted API의 생성 문서를 확인한다»(§8) · ②check-test-config docstring ⑴ 바인딩(생성 문서 확인의 실행 전제) · ninja-final s026-8 b2(E=check-test-config)·s023-6.2 b34(D=discipline-reviewer) 종합"
+            }
+          ]
+        },
+        {
+          "lines": [
+            34,
+            34
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "신규 API 의 Django Ninja 목표",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «신규 API는 Django Ninja 목표» · ②27종 — 프레임워크 선택 술어 0 · §16 기본값 · ninja-final s030-10 b1·s001 b1(«Django Ninja = greenfield API 구현 기본 목표») 동일 배선 — s001 b2 는 무규범 prose 라 앵커 아님"
+            },
+            {
+              "label": "DRF 의 legacy·migration 맥락 한정 보조",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «DRF는 legacy·migration 맥락에서만 보조» — 한정 허용 · ②27종 — 술어 0 · ninja-final s001 b1 셋째 규범(Permission «DRF 자료의 보조 근거 한정 사용(legacy review·비교·migration)») 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            35,
+            35
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "신규 도입 시 의존성 매니페스트 버전 핀 추가",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «의존성 매니페스트에 버전 핀으로 추가»(§2.1) · ②27종 — 매니페스트·핀 술어 0 · §16 기본값 · ninja-final s008-2.1 b2 동일 배선"
+            },
+            {
+              "label": "글로벌 임의 설치 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 괄호 «글로벌 임의 설치 금지» — 별개 행위(설치 경로) 금지 · ②27종 — 술어 0 · ninja-final s008-2.1 b2 동일 축 배선"
+            },
+            {
+              "label": "핀 표기의 프로젝트 기존 관례 준수",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «핀 표기는 프로젝트 기존 관례» · ②27종 — 표기 관례 술어 0 · ninja-final s008-2.1 b2 «핀 표기의 프로젝트 기존 관례 준수» 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            36,
+            37
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "라우팅 결정 전 계약·DB·도메인 미결의 소유 스킬 선행",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api",
+                "agent-design-review-db",
+                "agent-design-review-ddd",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «각 소유 스킬 먼저»(§11) · ②27종 — 결정 선후 술어 0 · §16 문서군 표 3종 병기 · ninja-final s031-11 b1(api)·b2(db+구현)·b3(ddd) 세 규범의 압축 사본이라 소유 Agent 를 합집합으로 배선"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s005",
+      "line_start": 38,
+      "line_end": 56,
+      "blocks": [
+        {
+          "lines": [
+            39,
+            41
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "주제별 references/final.md 해당 절 준거",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «주제별로 … 해당 절을 따른다» · ②27종 — 참조 문서 준거 술어 0 · §16 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            42,
+            43
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            44,
+            44
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            45,
+            45
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            46,
+            46
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            47,
+            47
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            48,
+            48
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            49,
+            49
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            50,
+            50
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            51,
+            51
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            52,
+            52
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            53,
+            53
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            54,
+            55
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            56,
+            56
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "절 단위 필요 항목 한정 로드",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «필요한 항목만 읽는다(전체 로드 불필요)» · ②27종 — 로드 범위 술어 0 · §16 기본값. 표 11행은 주제→절 매핑 목차라 규범 비계수(발주서 비고 승계)"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

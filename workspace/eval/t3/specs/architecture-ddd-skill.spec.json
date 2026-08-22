@@ -1,0 +1,558 @@
+{
+  "schema": "migrate-spec/1",
+  "doc_key": "architecture-ddd-skill",
+  "path": "dddjango/skills/architecture-ddd/SKILL.md",
+  "restates_paths": {
+    "architecture-ddd-skill": "dddjango/skills/architecture-ddd/SKILL.md"
+  },
+  "sections": [
+    {
+      "section_key": "s001",
+      "line_start": 1,
+      "line_end": 6,
+      "blocks": [
+        {
+          "lines": [
+            2,
+            2
+          ],
+          "kind": "prose",
+          "note": "frontmatter name 키 — 런타임 메타(규범 아님). 헤딩 라인은 1행 `---`(무앵커 선두 절의 headingSnapshot)"
+        },
+        {
+          "lines": [
+            3,
+            3
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-ddd-skill/s003/b1",
+            "architecture-ddd-skill/s003/b2",
+            "architecture-ddd-skill/s003/b3",
+            "architecture-ddd-skill/s003/b4"
+          ],
+          "note": "description 은 s003(언제 쓰나)의 압축 사본 — 센서스 «상호 재진술» 쌍을 §15 «사본→정본» 단일 방향으로 건다(정본 = 본문 절 s003). 부분 재진술이라 Work 는 유지",
+          "norms": [
+            {
+              "label": "로드 조건 — 도메인 언어·비즈니스 정책·애그리거트/컨텍스트 경계·도메인 이벤트 채택 결정 시 선행 로드",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-ddd"
+              ],
+              "basis": "①문면 «…결정할 때 먼저 로드한다» + 센서스 E01 s001 비고 «frontmatter description = 라우터 트리거 문면» · ②check-*.py 27종 docstring 선두 전수 실독 — 스킬 로드·라우팅 술어 0(검사 공백) · §16 위임 기본값 표(architecture-ddd→agent-design-review-ddd) + 스킬 배분 소유는 Coordinator(agent-coder s004 «작업 축별 스킬 선택 사용»→command-dddjango 선례) 병기"
+            },
+            {
+              "label": "경계 위임 — Django 구현 코드·outbox/트랜잭션 설계·API 계약의 타 스킬 이양",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer",
+                "agent-design-review-db",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면이 implementation-django·architecture-db·architecture-api 를 수임처로 직접 지목 — §16 표의 각 수임 문서군 기본값 병기(implementation-*→discipline-reviewer · architecture-db→design-review-db · architecture-api→design-review-api). ninja s022-6.1 «상태 코드 의미의 architecture-api 위임»→agent-design-review-api 판례 준거 · ②27종 docstring 에 스킬 간 위임 술어 0"
+            }
+          ]
+        },
+        {
+          "lines": [
+            4,
+            4
+          ],
+          "kind": "prose",
+          "note": "user-invocable 은 플랫폼 메타(agent-coder s001 의 name·tools·skills 처분과 동형)"
+        },
+        {
+          "lines": [
+            5,
+            6
+          ],
+          "kind": "prose",
+          "note": "종결 `---` + 후행 빈 줄(§13 — 블록 간 구분자는 선행 블록 후행 귀속)"
+        }
+      ]
+    },
+    {
+      "section_key": "s003",
+      "line_start": 9,
+      "line_end": 16,
+      "blocks": [
+        {
+          "lines": [
+            10,
+            12
+          ],
+          "kind": "norm",
+          "note": "헤딩 직후 빈 줄(10)을 선두 귀속 + 본문 11 + 후행 빈 줄 12",
+          "norms": [
+            {
+              "label": "로드 조건 — 도메인 언어·정책/상태 전이·애그리거트/BC 경계·도메인 이벤트 채택 불명확 시 로드",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-ddd"
+              ],
+              "basis": "①문면 «…불명확할 때 로드한다» — s001 description 의 정본 진술(사본 = s001/b2) · ②27종 docstring 전수 — 스킬 로드 술어 0 · §16 기본값(architecture-ddd→design-review-ddd) + 스킬 배분 Coordinator 병기(s001/b2 와 동일 처분)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            13,
+            13
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Django ORM·서비스 레이어·outbox 구현의 implementation-django 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면이 화살표로 수임처를 직접 지목 · §16 표 implementation-*→agent-discipline-reviewer(기본값 일치·이탈 아님) · ②27종 docstring 에 스킬 경계 술어 0(implementation-python-final s001 «클린코드 위임»→discipline-reviewer 판례 동형)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            14,
+            14
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "outbox 전달 보장·트랜잭션 격리·Risky Write 설계의 architecture-db 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-db"
+              ],
+              "basis": "①문면이 architecture-db 를 수임처로 직접 지목 · §16 표 architecture-db→agent-design-review-db · ②27종 전수 — 스킬 간 위임 술어 0(db 실체 규범의 집행 배선은 수임 문서 architecture-db-final s043-9.6·s044-9.7 이 진다)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            15,
+            16
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "REST API 계약·엔드포인트 설계의 architecture-api 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "①문면이 architecture-api 를 수임처로 직접 지목 · §16 표 architecture-api→agent-design-review-api · ②27종 전수 — 위임 술어 0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s004",
+      "line_start": 17,
+      "line_end": 29,
+      "blocks": [
+        {
+          "lines": [
+            18,
+            19
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "전략 설계 우선 — 전술 패턴에 앞선 핵심 도메인 식별·BC 설계·컨텍스트 맵 순서",
+              "class": "Override",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "①문면 «전술 패턴보다 먼저다» = 다른 규범(전술 패턴 적용)을 눌러 이기는 우선 규칙 → final s051-8/b8 «의사결정 6 — 전략 설계 우선» Override 와 동일 축(L-E 판례) · ②27종 docstring 에 설계 순서 술어 0 · §16 기본값(설계 시점→design-review-ddd). 둘째 문장 «전략 없이 …결과가 된다»는 근거 서술이라 미채번"
+            }
+          ]
+        },
+        {
+          "lines": [
+            20,
+            20
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "유비쿼터스 언어의 BC 내 한정 유효 — 컨텍스트가 다르면 다른 언어",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-business-vocabulary.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "②check-business-vocabulary 격리 절 #47(capability 계약의 업무 어휘 0)·#52(BC 이름 0 — «BC 하나를 지웠을 때 바뀌면 안 올린다»)·#616/#617·#587·#426·#562 가 «업무 어휘는 BC 밖 공용 자리(framework/·pure·test)로 나가지 않는다»는 BC 국지성의 한 면을 집행 — 정본 architecture-ddd-final s009-2.3/b3 W3(«유효 범위는 BC 경계 안» · 같은 basis #47·#52) 배선을 승계한다(§16 «역도 성립» — 담당 docstring 근거가 있는데 기본값 도피는 오배선). 커버 범위는 **공용 자리로의 어휘·BC 이름 유출 1축 한정**이고, 문면 후반 «동일 개념도 컨텍스트가 다르면 다른 언어» = 컨텍스트 간 의미 분기 판정은 검사 공백(check-context-isolation 은 분리 «이후» import 격리라 시점이 달라 겹치지 않음 — final s010-2.4/b2 basis 의 비중첩 논거) → §16 기본값 병기"
+            }
+          ]
+        },
+        {
+          "lines": [
+            21,
+            21
+          ],
+          "kind": "norm",
+          "note": "문면이 스스로 «4가지 규칙»이라 규칙 수를 선언한 열거라 규칙마다 분리 채번(단순 입력·목록 열거의 비계수 규율과 구분) — final s019 의 규칙 1~4 Work 분해와 1:1",
+          "norms": [
+            {
+              "label": "Vernon 규칙 1 — 진짜 불변식만 일관성 경계 안에서 보호",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "②check-domain-model #257 «상태 변경은 루트를 지난다»가 불변식 보호의 결정적 축 · 경계 «설정» 판정은 설계 시점(final s019/b1 배선 준거)"
+            },
+            {
+              "label": "Vernon 규칙 2 — 최소 크기 애그리거트 설계",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "②27종 전수 — 크기 판정 술어 0(check-domain-model #547 «루트 비대»는 ⓓ 후보라 exit 불산입 = 집행 아님) · §16 기본값(final s019/b3 동형)"
+            },
+            {
+              "label": "Vernon 규칙 3 — 타 애그리거트 ID 참조 한정(영속성/ORM 포함 · BC 경계 ORM FK 금지 · 같은 BC FK 허용)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py",
+                "check-db-table.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "②check-domain-model #253(<A>/** 는 <B>/ 루트 모듈만 import)·#258(entity 직접 참조 금지) + check-db-table #631 «타 BC 모델을 FK·O2O·M2M 으로 참조 금지(문자열 참조 포함)» 문면 축자 일치 · 같은 BC 허용면 판정은 설계(final s019/b5·b7 배선 종합)"
+            },
+            {
+              "label": "Vernon 규칙 4 — 경계 밖 일관성은 결과적 일관성으로 달성",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-transaction-boundary.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "②check-transaction-boundary docstring 선두 «「한 트랜잭션 = 애그리거트 하나」(D50) 축의 결정적 백스톱»(#195·#599)이 경계 «안쪽»을 집행 · 결과적 일관성 전환 판정은 설계(final s019/b8 준거)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            22,
+            22
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "엔티티의 애그리거트 일부 한정 사용 — 독립 생성·접근 금지",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "②check-domain-model #258 «entity/ 직접 참조 금지 — 애그리거트 밖에서 붙잡는 것은 루트뿐»·#252(1차에 entity/ 금지)가 문면과 축자 대응 → §16 «역도 성립»(담당 검사기 docstring 근거가 있는데 기본값 도피 금지) 적용. final s051-8/b3 는 «의사결정 표» 행이라 설계 판정 단독이었으나 이 불릿은 구현 시점 운영 원칙이라 집행 축 병기 · 설계 판정은 기본값 유지"
+            }
+          ]
+        },
+        {
+          "lines": [
+            23,
+            23
+          ],
+          "kind": "norm",
+          "note": "«…에 사용하고, 애그리거트는 … 알지 않는다» — 주어·행위 대상이 갈리고 class 도 갈려 2 Work(final s022-3.5/b2·b4 분해와 동형)",
+          "norms": [
+            {
+              "label": "도메인 서비스의 다-애그리거트 무상태 로직 한정 사용",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "②check-domain-model #300(<aggregate>/domain_service/ 금지 — BC 레벨 한 칸뿐)·#302(무상태 — __init__ self 상태·모듈 가변 전역 금지)·#310(무상태 규칙 하나=파일 하나) · «여러 애그리거트에 걸치는가» 해당성 판정은 설계(final s022-3.5/b2 준거)"
+            },
+            {
+              "label": "애그리거트의 도메인 서비스 직접 인지 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "②check-domain-model #8(domain_layer 밖으로 나가는 import 0)·#303(domain_service import 허용 = 루트·값 객체·예외·형제 서비스)·#301(루트 인자 축) — final s022-3.5/b4 «애그리거트는 외부 의존성을 받지 않는다» 와 같은 축"
+            }
+          ]
+        },
+        {
+          "lines": [
+            24,
+            24
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "응용 서비스의 흐름 제어·트랜잭션 관리 한정 — 비즈니스 로직 금지",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-transaction-boundary.py",
+                "check-usecase-dto-placement.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-transaction-boundary #195(루트 메서드 호출을 거치지 않는 쓰기 금지)·#197·#200 + check-usecase-dto-placement #194(유스케이스 안 업무 규칙 — ⓓ 후보) · final s023-3.6/b2 배선과 동일. 긍정면(담당 한정)과 부정면(로직 금지)은 같은 축의 재진술이라 1 Work"
+            }
+          ]
+        },
+        {
+          "lines": [
+            25,
+            25
+          ],
+          "kind": "norm",
+          "note": "둘째 문장 «타이밍이 불명확하면 … 발생한다»는 근거 서술이라 미채번",
+          "norms": [
+            {
+              "label": "도메인 이벤트의 애그리거트 수집",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "basis": "②check-domain-model #272 «루트는 이벤트를 기록만 한다 — publish/dispatch 호출 금지»·#542(사실은 애그리거트가 만든다)·#543(창구는 pull_events 하나) 문면 일치(final s024-3.7/b3 첫 Work 배선 준거)"
+            },
+            {
+              "label": "디스패치 타이밍의 명시 — UoW 커밋 직전(동일 트랜잭션 부수효과) 또는 직후(외부 통합)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "②27종 docstring 전수 — «타이밍을 명시한다»(설계 기록) 술어 0. check-usecase-dto-placement #541(커밋 «전» 발행 금지 — `.publish(` 직접 호출은 uow.after_commit 밖)·#539·#540 과 check-transaction-boundary #200(커밋 뒤 부작용은 after_commit)은 정본 final s024-3.7/b3 W2(«디스패치는 uow.after_commit 한 경로 — 커밋 직전은 배경 이론» **Override**)를 집행하는 술어다. 이 Work 의 문면은 «직전 또는 직후» 두 가지를 남기므로 그 검사기를 달면 기계가 문면이 허용하는 «직전» 가지를 위반으로 물게 된다 — 상충 규범의 배선 복사(§16 오배선)라 enforcedBy 를 비우고 §16 기본값(설계 시점→design-review-ddd) 단독으로 둔다. 문면 차이(두 선택지 vs Override 단일 경로)는 검수표 §3 유예 #12 에 «부분 재진술이냐 불일치냐» 판정 재료로 남긴다"
+            }
+          ]
+        },
+        {
+          "lines": [
+            26,
+            26
+          ],
+          "kind": "norm",
+          "note": "한 불릿에 선언·수명·제외·소비 4축이 들어 있어 4 Work — final s026(§3.7 birth-enum) 의 Work 분해와 1:1",
+          "norms": [
+            {
+              "label": "발행 봉투 discriminator 의 1종째 domain_layer StrEnum 선언(birth-enum)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "②check-domain-model #8(domain 소유)·#269(<A>/event/ 는 BC 안에서 읽힘)가 슬롯·소유 축을 집행 · «1종째 승격» 판정은 설계 시점(final s026/b1 배선 준거)"
+            },
+            {
+              "label": "discriminator enum 멤버의 append-only 유지",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②27종 docstring 전수 실독 — enum 이력 대조(«추가만인가») 진단 부재(검사 공백) · §16 기본값의 구현 시점 축(final s026/b2 «수명 — 멤버는 추가만» 배선과 동일)"
+            },
+            {
+              "label": "버전 태그(payload_schema_version)의 리터럴 동결 — birth-enum 비대상",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "짝 조항(비대상 선언)이라 Exception — final s026/b2 «제외 — payload_schema_version 등 버전 태그는 리터럴 동결 유지» Exception 과 동형 · 검사 공백"
+            },
+            {
+              "label": "소비 BC 의 발행 enum 직접 import 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-context-isolation.py"
+              ],
+              "basis": "②check-context-isolation 타 BC 절 #12 «부를 수 있는 것은 OHS·published_event 둘»·#13 — final s026/b2 «발행 enum의 타 BC 직접 import 금지» 배선과 동일"
+            }
+          ]
+        },
+        {
+          "lines": [
+            27,
+            27
+          ],
+          "kind": "norm",
+          "note": "콜론 뒤가 독립 종결절(«…구현한다»)이고 행위 대상이 계층 채택↔인터페이스 배치로 갈려 2 Work(19행의 콜론 뒤 «조각 나열»과 구분)",
+          "norms": [
+            {
+              "label": "아키텍처 기본형 — 4계층+DIP",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-layer-skeleton.py",
+                "check-context-isolation.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "②check-layer-skeleton #486~#490(4계층 골격 존재·폐쇄) + check-context-isolation 방향 절 #1·#2·#9·#251·#322 · final s051-8/b10(의사결정 8 — check-layer-skeleton)·s036-5.1/b3 배선 준거"
+            },
+            {
+              "label": "도메인 영역 인터페이스 선언·인프라 구현 — 도메인의 인프라 직접 인지 금지",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-port-adapter-pairing.py",
+                "check-domain-model.py"
+              ],
+              "basis": "②check-port-adapter-pairing #457(선언은 application_layer/port/ 아래뿐)·#460(구현은 driven_layer/adapter/)·#351(선언↔구현 1:1) + check-domain-model #8(domain_layer 밖으로 나가는 import 0) · final s036-5.1/b3 «DIP»·s037-5.2/b2 배선 준거"
+            }
+          ]
+        },
+        {
+          "lines": [
+            28,
+            29
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "구현 패턴의 필요 확인 시점 선택 — 패턴 선택 절차 경유(Risky Write 라우팅 포함) 결정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd",
+                "agent-design-review-db"
+              ],
+              "basis": "②27종 전수 — 패턴 채택 «시점·절차» 술어 0(check-event-publish #564 saga/·process_manager/ 는 ⓓ 후보라 exit 불산입) · §16 기본값(설계 시점→design-review-ddd) + 문면의 «Risky Write 라우팅»은 architecture-db §9.6 소유 어휘라 db lens 병기(final db s043-9.6/b8 «Idempotency-Key 계약을 architecture-api 와 정합»→design-review-api 병기 판례와 동형). «선택 시점»과 «절차 경유 결정»은 같은 결정 대상의 두 면이라 1 Work"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s005",
+      "line_start": 30,
+      "line_end": 45,
+      "blocks": [
+        {
+          "lines": [
+            31,
+            33
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "주제별 라우팅 준거 — references/final.md 해당 절 준수",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-ddd"
+              ],
+              "basis": "①문면 «해당 절을 따른다» — 준거 문서 로드·인용 축 · ②27종 docstring 에 문서 로드·인용 술어 0(검사 공백) · §16 기본값 + 로드 절차 소유 Coordinator 병기(agent-design-architect s005 «로드한 스킬 절 인용에 의한 판단 정당화»→command-dddjango 선례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            34,
+            34
+          ],
+          "kind": "table-row",
+          "note": "머리행 — 주제→§ 라우팅 표(매핑이라 규범 미계수·P0 승계)"
+        },
+        {
+          "lines": [
+            35,
+            35
+          ],
+          "kind": "table-row",
+          "note": "구분행"
+        },
+        {
+          "lines": [
+            36,
+            36
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            37,
+            37
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            38,
+            38
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            39,
+            39
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            40,
+            40
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            41,
+            41
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            42,
+            42
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            43,
+            44
+          ],
+          "kind": "table-row",
+          "note": "마지막 데이터 행 + 후행 빈 줄(§13 선행 블록 귀속)"
+        },
+        {
+          "lines": [
+            45,
+            45
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "필요 항목 한정 독해 — 전체 로드 불필요",
+              "class": "Exception",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-ddd"
+              ],
+              "basis": "①문면 괄호 «(전체 로드 불필요)» = 전량 로드 의무의 면제 조문이라 Exception(agent-design-review-api s003 «로드한 스킬 본문·references 참조는 제한 밖» Exception 판례) · ②27종 docstring 에 로드 범위 술어 0 · §16 기본값 + 로드 절차 Coordinator 병기"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

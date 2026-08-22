@@ -1,0 +1,477 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+djr:R-3053 a djr:Obligation ;
+    skos:prefLabel "TDD 사이클 설계·학파 선택·테스트 생성·수명 주기·검증 우선순위 결정 시 로드"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3053@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3053@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3053 ;
+    djr:revision 1 .
+
+djr:R-3054 a djr:Obligation ;
+    skos:prefLabel "테스트 코드 작성법(mock·assert·픽스처·pytest 메커니즘)의 implementation-test 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3054@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3054@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3054 ;
+    djr:revision 1 .
+
+djr:R-3055 a djr:Obligation ;
+    skos:prefLabel "TDD 운용·학파 선택·테스트 목록 시작점·AI 보조 명세 활용이 불명확할 때 로드"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3055@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3055@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3055 ;
+    djr:revision 1 .
+
+djr:R-3056 a djr:Obligation ;
+    skos:prefLabel "pytest fixture·mock·assert·팩토리 상세 작성법의 implementation-test 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3056@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3056@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3056 ;
+    djr:revision 1 .
+
+djr:R-3057 a djr:Obligation ;
+    skos:prefLabel "테스트 코드 품질(가독성·구조·냄새) 원칙의 discipline-cleancode 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3057@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3057@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3057 ;
+    djr:revision 1 .
+
+djr:R-3058 a djr:Obligation ;
+    skos:prefLabel "Django TestClient·API 테스트 메커니즘의 implementation-django 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3058@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3058@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3058 ;
+    djr:revision 1 .
+
+djr:R-3059 a djr:Obligation ;
+    skos:prefLabel "migration 전용·DB-backed 현행 동작 테스트 기술적 식별의 implementation-test 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3059@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3059@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3059 ;
+    djr:revision 1 .
+
+djr:R-3060 a djr:Obligation ;
+    skos:prefLabel "TDD 목표 — 작동하는 깔끔한 코드와 두려움 없이 변경할 용기"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3060@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3060@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3060 ;
+    djr:revision 1 .
+
+djr:R-3061 a djr:Obligation ;
+    skos:prefLabel "Red-Green-Refactor 순서 준수 — 실패 테스트 먼저·통과 후에만 리팩토링"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3061@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3061@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3061 ;
+    djr:revision 1 .
+
+djr:R-3062 a djr:Obligation ;
+    skos:prefLabel "고전 학파 기본·협력 구조 설계 목적 한정 런던 학파 선택"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3062@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3062@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3062 ;
+    djr:revision 1 .
+
+djr:R-3063 a djr:Obligation ;
+    skos:prefLabel "좋은 테스트 4대 기둥 준수와 리팩토링 내성 비타협"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3063@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3063@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3063 ;
+    djr:revision 1 .
+
+djr:R-3064 a djr:Prohibition ;
+    skos:prefLabel "테스트 목록의 후보 지위 — test artifact 작성 의무 아님"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3064@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3064@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3064 ;
+    djr:revision 1 .
+
+djr:R-3065 a djr:Obligation ;
+    skos:prefLabel "전 영구 test artifact 변경 전 §5.5 입장 심사와 의미 보존 재조직의 새 case·Red 0"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3065@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3065@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3065 ;
+    djr:revision 1 .
+
+djr:R-3066 a djr:Obligation ;
+    skos:prefLabel "영구 테스트의 판정 기준 — 승인된 현행 계약·독자 실패·기존 권위 coverage"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3066@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3066@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3066 ;
+    djr:revision 1 .
+
+djr:R-3067 a djr:Permission ;
+    skos:prefLabel "공개 Python 계약의 자격 근거 택일(별도 사용자 승인 또는 deployed consumer evidence)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3067@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3067@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3067 ;
+    djr:revision 1 .
+
+djr:R-3068 a djr:Prohibition ;
+    skos:prefLabel "pending 의 G1 차단과 reuse·reject 의 test artifact write 0"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3068@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3068@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3068 ;
+    djr:revision 1 .
+
+djr:R-3069 a djr:Prohibition ;
+    skos:prefLabel "migration 전용 테스트의 신규 생성·새 case·assertion·시나리오 확장 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3069@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3069@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3069 ;
+    djr:revision 1 .
+
+djr:R-3070 a djr:Obligation ;
+    skos:prefLabel "과거 버그 출신이라도 현행 계약을 검증하는 회귀 테스트 보존"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3070@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3070@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3070 ;
+    djr:revision 1 .
+
+djr:R-3071 a djr:Obligation ;
+    skos:prefLabel "초록 막대 전략 순서 — 가짜로 구현하기→삼각측량→명백한 구현"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3071@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3071@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3071 ;
+    djr:revision 1 .
+
+djr:R-3072 a djr:Obligation ;
+    skos:prefLabel "테스트 격리와 AAA 패턴 구조화"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3072@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3072@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3072 ;
+    djr:revision 1 .
+
+djr:R-3073 a djr:Obligation ;
+    skos:prefLabel "Mock 보다 출력·상태 검증 우선(Mock 과다는 리팩토링 내성 약화)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3073@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3073@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3073 ;
+    djr:revision 1 .
+
+djr:R-3074 a djr:Prohibition ;
+    skos:prefLabel "Outside-In 이중 루프의 바깥·안쪽 테스트 자동 의무화 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3074@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3074@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3074 ;
+    djr:revision 1 .
+
+djr:R-3075 a djr:Obligation ;
+    skos:prefLabel "Walking Skeleton 의 실제 얇은 E2E 행동 요건"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3075@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3075@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3075 ;
+    djr:revision 1 .
+
+djr:R-3076 a djr:Obligation ;
+    skos:prefLabel "AI 보조 TDD 의 테스트=명세 — 개발자가 테스트 작성·AI 구현은 통과 후 검증"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3076@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3076@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3076 ;
+    djr:revision 1 .
+
+djr:R-3077 a djr:Obligation ;
+    skos:prefLabel "주제별 references/final.md 해당 절 준수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3077@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3077@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3077 ;
+    djr:revision 1 .
+
+djr:R-3078 a djr:Obligation ;
+    skos:prefLabel "필요한 항목만 부분 로드(전체 로드 불필요)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3078@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3078@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3078 ;
+    djr:revision 1 .
+
+<https://numchida.com/ns/djr#d/dddjango/skills/discipline-tdd/SKILL.md> a djr:Document ;
+    skos:prefLabel "discipline-tdd-skill"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s001> a djr:Section ;
+    djr:headingSnapshot "---"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-tdd/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s001/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 1 ;
+    djr:text "name: discipline-tdd\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s001/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s001> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s003/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s003/b2> ;
+    djr:statesNorm djr:R-3053, djr:R-3054 ;
+    djr:text "description: TDD 실천 규율 — Red-Green-Refactor 사이클, 언제·왜 TDD를 하는가, 고전 학파 vs 런던 학파, 좋은 단위 테스트의 4대 특성, 현행 계약 기반 영구 테스트 입장·중복 판정·수명 주기, Outside-In TDD·이중 루프, 리팩토링 패턴, BDD와 TDD의 관계, AI 보조 TDD. TDD 사이클 설계·학파 선택·테스트 생성·유지·갱신·분리·삭제·검증 우선순위 결정이 필요하면 로드한다. 테스트 코드 작성법(mock 사용법·assert·픽스처·pytest 메커니즘)은 implementation-test로 위임.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s001/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 3 ;
+    djr:text "user-invocable: false\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s001/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 4 ;
+    djr:text "---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s003> a djr:Section ;
+    djr:headingSnapshot "## 언제 쓰나"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-tdd/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s003/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-3055 ;
+    djr:text "\nTDD 사이클을 어떻게 운용할지, 어떤 학파를 선택할지, 테스트 목록을 어디서 시작할지, AI 보조 구현 시 테스트를 어떻게 명세로 활용할지가 불명확할 때 로드한다. 경계:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s003/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-3056 ;
+    djr:text "- pytest fixture·mock·assert·팩토리 상세 작성법 → `implementation-test`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s003/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-3057 ;
+    djr:text "- 테스트 코드 품질(가독성·구조·냄새) 원칙 → `discipline-cleancode`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s003/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-3058 ;
+    djr:text "- Django TestClient·API 테스트 메커니즘 → `implementation-django`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s003/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-3059 ;
+    djr:text "- migration 전용 테스트와 DB-backed 현행 동작 테스트의 기술적 식별 → `implementation-test`\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004> a djr:Section ;
+    djr:headingSnapshot "## 핵심 운영 원칙"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-tdd/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-3060 ;
+    djr:text "\n- TDD의 목표는 작동하는 깔끔한 코드다: 두려움 없이 변경할 수 있는 용기가 핵심 (§1.1–§1.2)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 10 ;
+    djr:statesNorm djr:R-3073 ;
+    djr:text "- Mock보다 출력·상태 검증을 우선한다: Mock 과다 사용은 리팩토링 내성을 약화시킨다 (§7.6)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004/b11> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 11 ;
+    djr:statesNorm djr:R-3074, djr:R-3075 ;
+    djr:text "- Outside-In 이중 루프도 바깥·안쪽 테스트를 자동 의무화하지 않는다. Walking Skeleton은 실제 얇은 E2E 행동이다 (§9.1–§9.2)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004/b12> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 12 ;
+    djr:statesNorm djr:R-3076 ;
+    djr:text "- AI 보조 TDD에서 테스트는 명세다: 개발자가 테스트를 작성하고, AI 구현은 테스트를 통과한 후 검증한다 (§17.1–§17.4)\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-3061 ;
+    djr:text "- Red-Green-Refactor 순서를 지켜라: 실패하는 테스트 먼저, 통과 후에만 리팩토링 (§2.1)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-3062 ;
+    djr:text "- 고전 학파(상태 검증)를 기본으로, 협력 구조 설계가 목적일 때만 런던 학파(행위 검증)를 선택한다 (§3.1–§3.4)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-3063 ;
+    djr:text "- 좋은 테스트의 4대 기둥: 회귀 방지, 리팩토링 내성, 빠른 피드백, 유지 보수성 — 리팩토링 내성은 타협하지 않는다 (§4.1–§4.4)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-3064, djr:R-3065 ;
+    djr:text "- 테스트 목록은 후보일 뿐이다. 모든 영구 test artifact의 add/update/move/split/rename/remove/weaken·재조직 전에 §5.5 입장 심사를 거치며, 의미 보존 재조직은 새 case·Red 없이 전후 보호가 같아야 한다 (§5.1–§5.3)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-3066, djr:R-3067, djr:R-3068 ;
+    djr:text "- 영구 테스트는 승인된 현행 계약·독자 실패·기존 권위 coverage를 판정한다. 공개 Python 계약은 별도 사용자 승인 또는 deployed consumer evidence 중 하나로 자격을 얻는다. `pending`은 G1을 막고 `reuse`·`reject`는 test artifact write가 0이다 (§5.5)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-3069, djr:R-3070 ;
+    djr:text "- migration 전용 테스트는 새로 만들거나 새 case·assertion·시나리오로 확장하지 않는다. 과거 버그에서 태어났어도 현행 계약을 검증하는 회귀 테스트는 보존한다 (§5.5)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 8 ;
+    djr:statesNorm djr:R-3071 ;
+    djr:text "- 초록 막대 전략: 가짜로 구현하기 → 삼각측량 → 명백한 구현 순으로 진행 (§6.1–§6.3)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 9 ;
+    djr:statesNorm djr:R-3072 ;
+    djr:text "- 테스트는 격리하고, AAA 패턴으로 구조화하라: Arrange-Act-Assert (§7.1–§7.2)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005> a djr:Section ;
+    djr:headingSnapshot "## 상세 레퍼런스"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-tdd/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-3077 ;
+    djr:text "\n주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 10 ;
+    djr:text "| Outside-In TDD와 이중 루프 (Double Loop·Walking Skeleton·Mock Roles) | §9 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005/b11> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 11 ;
+    djr:text "| 디자인 패턴과 TDD (값 객체·널 객체·팩토리 메서드) | §10 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005/b12> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 12 ;
+    djr:text "| 리팩토링 패턴 (차이점 일치·변화 격리·메서드 추출·인터페이스 추출) | §11 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005/b13> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 13 ;
+    djr:text "| 테스트 냄새 카탈로그 (행위 냄새·코드 냄새) | §12 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005/b14> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 14 ;
+    djr:text "| BDD와 TDD의 관계 (TDD→ATDD→BDD 진화 경로) | §16 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005/b15> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 15 ;
+    djr:text "| TDD와 AI 코딩의 관계 (TDD as Prompt Engineering·dddjango Admission 확장 6단계) | §17 |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005/b16> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 16 ;
+    djr:statesNorm djr:R-3078 ;
+    djr:text "각 절은 [`references/final.md`](references/final.md)에서 필요한 항목만 읽는다(전체 로드 불필요).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 2 ;
+    djr:text "| 주제 | 절 |\n|---|---|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 3 ;
+    djr:text "| TDD 핵심 철학 (목표·용기) | §1 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 4 ;
+    djr:text "| TDD 사이클 (Red-Green-Refactor·pytest 예시) | §2 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 5 ;
+    djr:text "| TDD 학파 비교 (고전 vs 런던·상태 vs 행위 검증·Inside-Out vs Outside-In) | §3 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 6 ;
+    djr:text "| 좋은 단위 테스트의 4대 특성 (회귀 방지·리팩토링 내성·피드백·유지보수) | §4 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 7 ;
+    djr:text "| 빨간 막대 패턴 (후보 목록·영구 테스트 입장 심사·현행 계약 수명 주기·Red 비계 제거) | §5 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 8 ;
+    djr:text "| 초록 막대 패턴 (가짜 구현·삼각측량·명백한 구현) | §6 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 9 ;
+    djr:text "| 테스팅 패턴 (격리·AAA·테스트 데이터·명명·Mock 우선순위) | §7 |\n" .

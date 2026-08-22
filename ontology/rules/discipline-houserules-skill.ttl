@@ -1,0 +1,941 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+djr:R-3099 a djr:Obligation ;
+    skos:prefLabel "배치·타입 부착·주석 언어를 정하거나 검수할 때 로드"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3099@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3099@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3099 ;
+    djr:revision 1 .
+
+djr:R-3100 a djr:Obligation ;
+    skos:prefLabel "신규 모듈·BC·테스트·프로젝트 레이아웃·코드 규약 결정 시 필수 사용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3100@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3100@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3100 ;
+    djr:revision 1 .
+
+djr:R-3101 a djr:Obligation ;
+    skos:prefLabel "트리와 규칙 «값»의 단일 출처는 references/final.md"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3101@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3101@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3101 ;
+    djr:revision 1 .
+
+djr:R-3102 a djr:Obligation ;
+    skos:prefLabel "보편 클린코드·Python 타입 지식·테스트 타입 조직의 타 스킬 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3102@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3102@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3102 ;
+    djr:revision 1 .
+
+djr:R-3103 a djr:Obligation ;
+    skos:prefLabel "트리·칸·규칙 «값»은 final.md 단일 출처 소유 · SKILL.md 는 «언제 어떻게 읽나»만 소유"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3103@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3103@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3103 ;
+    djr:revision 1 .
+
+djr:R-3104 a djr:Prohibition ;
+    skos:prefLabel "값을 SKILL.md 에 복제하지 않는다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3104@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3104@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3104 ;
+    djr:revision 1 .
+
+djr:R-3105 a djr:Obligation ;
+    skos:prefLabel "무접두 #N 규칙 «본문» 정본은 저장소 정본 명세 — 플러그인 문서에는 집행 발췌만"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3105@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3105@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3105 ;
+    djr:revision 1 .
+
+djr:R-3106 a djr:Obligation ;
+    skos:prefLabel "코드 내부 구조(네이밍·함수 크기·SOLID)의 discipline-cleancode 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3106@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3106@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3106 ;
+    djr:revision 1 .
+
+djr:R-3107 a djr:Obligation ;
+    skos:prefLabel "DDD 계층·바운디드 컨텍스트 이론의 architecture-ddd 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3107@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3107@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3107 ;
+    djr:revision 1 .
+
+djr:R-3108 a djr:Obligation ;
+    skos:prefLabel "Django 프로젝트 레이아웃 관용의 implementation-django 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3108@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3108@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3108 ;
+    djr:revision 1 .
+
+djr:R-3109 a djr:Obligation ;
+    skos:prefLabel "테스트 타입 조직·conftest 메커니즘의 implementation-test §4.2 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3109@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3109@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3109 ;
+    djr:revision 1 .
+
+djr:R-3110 a djr:Obligation ;
+    skos:prefLabel "새 코드·테스트 배치는 아래 결정 순서를 따른다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3110@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3110@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3110 ;
+    djr:revision 1 .
+
+djr:R-3111 a djr:Obligation ;
+    skos:prefLabel "소스 파일트리는 언제나 dddjango 표준 — 기존 레이아웃은 트리 결정의 입력이 아니다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3111@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3111@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3111 ;
+    djr:revision 1 .
+
+djr:R-3112 a djr:Obligation ;
+    skos:prefLabel "final.md §0 제1원칙과 §1 트리 140행을 읽고 그대로 실현"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3112@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3112@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3112 ;
+    djr:revision 1 .
+
+djr:R-3113 a djr:Obligation ;
+    skos:prefLabel "요약을 믿지 말고 문서를 읽는다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3113@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3113@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3113 ;
+    djr:revision 1 .
+
+djr:R-3114 a djr:Prohibition ;
+    skos:prefLabel "이 트리는 dddjango 자신의 표준 — 타 플러그인 것으로 오인해 치우기 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3114@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3114@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3114 ;
+    djr:revision 1 .
+
+djr:R-3115 a djr:Prohibition ;
+    skos:prefLabel "기존 소스 배치를 «확립된 규약»으로 읽지 않는다 — 옛 층 이름·옛 위치는 아직 안 갚은 빚"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3115@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3115@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3115 ;
+    djr:revision 1 .
+
+djr:R-3116 a djr:Prohibition ;
+    skos:prefLabel "「모든 BC 가 일관 사용」류 관찰은 반례가 아니라 이 규칙이 태어난 사고"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3116@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3116@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3116 ;
+    djr:revision 1 .
+
+djr:R-3117 a djr:Obligation ;
+    skos:prefLabel "집행 스코프 판정 물음은 «승인 스코프에 근거가 있는가» — «내가 만들거나 수정하는가»가 아니다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3117@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3117@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3117 ;
+    djr:revision 1 .
+
+djr:R-3118 a djr:Obligation ;
+    skos:prefLabel "스코프 안 → 형태는 언제나 표준이고 기존 실물은 형태 결정의 입력이 아니다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3118@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3118@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3118 ;
+    djr:revision 1 .
+
+djr:R-3119 a djr:Prohibition ;
+    skos:prefLabel "스코프 밖 → 옮기지도 고치지도 않는다(정리·일관성·트리 밖 칸 위반·백스톱 red 어느 것도 이동 근거 아님)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3119@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3119@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3119 ;
+    djr:revision 1 .
+
+djr:R-3120 a djr:Obligation ;
+    skos:prefLabel "위반 판정은 빚 기록 권한 · 이동 권한은 G0 사용자 ⓐ 결정→슬라이스 0 한 경로에서만"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3120@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3120@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3120 ;
+    djr:revision 1 .
+
+djr:R-3121 a djr:Prohibition ;
+    skos:prefLabel "기존 파일 수정 시 표준은 추가·변경 줄의 형태만 — 기존 줄 전파·답습 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3121@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3121@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3121 ;
+    djr:revision 1 .
+
+djr:R-3122 a djr:Prohibition ;
+    skos:prefLabel "존치된 legacy 는 동결된 빚 — 신규 산출물의 형태 근거로 되읽기 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3122@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3122@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3122 ;
+    djr:revision 1 .
+
+djr:R-3123 a djr:Obligation ;
+    skos:prefLabel "결정적 백스톱은 check-layer-skeleton 이고 다른 모든 검사보다 먼저 돈다(#487)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3123@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3123@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3123 ;
+    djr:revision 1 .
+
+djr:R-3124 a djr:Obligation ;
+    skos:prefLabel "승인된 test artifact 가 실제 있을 때만 의미군으로 조직"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3124@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3124@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3124 ;
+    djr:revision 1 .
+
+djr:R-3125 a djr:Obligation ;
+    skos:prefLabel "승인 artifact 는 기존 프로젝트 테스트 위치나 표준 위치(트리 105~111행)에 둔다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3125@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3125@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3125 ;
+    djr:revision 1 .
+
+djr:R-3126 a djr:Prohibition ;
+    skos:prefLabel "구조 규칙 자체는 테스트를 만들거나 기존 테스트를 자동 이동하지 않는다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3126@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3126@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3126 ;
+    djr:revision 1 .
+
+djr:R-3127 a djr:Prohibition ;
+    skos:prefLabel "한 프로젝트 안에서 레이아웃 혼용 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3127@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3127@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3127 ;
+    djr:revision 1 .
+
+djr:R-3128 a djr:Prohibition ;
+    skos:prefLabel "혼용 금지 규칙만으로 기존 테스트 이동 권한이 생기지 않는다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3128@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3128@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3128 ;
+    djr:revision 1 .
+
+djr:R-3129 a djr:Obligation ;
+    skos:prefLabel "검사기의 TARGET 은 저장소 루트(application/ 의 부모)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3129@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3129@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3129 ;
+    djr:revision 1 .
+
+djr:R-3130 a djr:Obligation ;
+    skos:prefLabel "BC 폴더·application/ 컨테이너 TARGET 은 사용 오류 exit 1 로 거절된다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3130@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3130@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3130 ;
+    djr:revision 1 .
+
+djr:R-3131 a djr:Obligation ;
+    skos:prefLabel "게이트 증거는 판정 차분 — 앵커 대비 귀속 0 + legacy 잔존 별도 보고 · 귀속 red 의 «확립 규약» 수용 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3131@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3131@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3131 ;
+    djr:revision 1 .
+
+djr:R-3132 a djr:Prohibition ;
+    skos:prefLabel "좁힌 TARGET·selector 로 얻은 green 은 게이트 증거가 아니다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3132@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3132@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3132 ;
+    djr:revision 1 .
+
+djr:R-3133 a djr:Obligation ;
+    skos:prefLabel "승인 스코프 밖 파일의 귀속은 1차 처방이 그 변경의 철회 — 수리·재설계 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3133@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3133@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3133 ;
+    djr:revision 1 .
+
+djr:R-3134 a djr:Obligation ;
+    skos:prefLabel "관찰이 결정 입력인 축은 닫힌 목록 여섯"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3134@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3134@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3134 ;
+    djr:revision 1 .
+
+djr:R-3135 a djr:Prohibition ;
+    skos:prefLabel "목록 밖 축에서 기존 실물의 관찰은 결정의 입력이 아니다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3135@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3135@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3135 ;
+    djr:revision 1 .
+
+djr:R-3136 a djr:Obligation ;
+    skos:prefLabel "배선 «값»은 Ninja 스택 조건부지만 ‹관찰 비입력› 원칙 자체는 무조건"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3136@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3136@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3136 ;
+    djr:revision 1 .
+
+djr:R-3137 a djr:Prohibition ;
+    skos:prefLabel "‹관찰 비입력›은 신규 산출물의 형태 문장 — 스코프 밖 실물의 이동·수정 권한을 만들지 않는다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3137@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3137@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3137 ;
+    djr:revision 1 .
+
+djr:R-3138 a djr:Prohibition ;
+    skos:prefLabel "코퍼스가 서로 다른 트리를 제시해도 런타임에 택일하지 않는다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3138@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3138@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3138 ;
+    djr:revision 1 .
+
+djr:R-3139 a djr:Obligation ;
+    skos:prefLabel "final.md 가 단일 출처이고 코퍼스는 파생 배경 — 남는 변수 없음"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3139@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3139@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3139 ;
+    djr:revision 1 .
+
+djr:R-3140 a djr:Obligation ;
+    skos:prefLabel "테스트 타입 조직은 implementation-test §4.2 가 단독 소유"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3140@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3140@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3140 ;
+    djr:revision 1 .
+
+djr:R-3141 a djr:Obligation ;
+    skos:prefLabel "배치 결정 누락·빚 답습 신호의 판정은 final.md 와 검사기가 한다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3141@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3141@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3141 ;
+    djr:revision 1 .
+
+djr:R-3142 a djr:Prohibition ;
+    skos:prefLabel "신호 — 새 모듈이 층 구분 없이 한 디렉터리에 모임(평면 답습)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3142@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3142@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3142 ;
+    djr:revision 1 .
+
+djr:R-3143 a djr:Prohibition ;
+    skos:prefLabel "신호 — BC 직계에 트리 밖 여덟째 칸(#81)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3143@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3143@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3143 ;
+    djr:revision 1 .
+
+djr:R-3144 a djr:Prohibition ;
+    skos:prefLabel "신호 — 골격 칸이 비었다고 생략(#488)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3144@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3144@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3144 ;
+    djr:revision 1 .
+
+djr:R-3145 a djr:Prohibition ;
+    skos:prefLabel "신호 — 옛 이름이 새 코드에 재등장(이관 종료 후 트리 밖 칸 위반 #81·#490)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3145@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3145@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3145 ;
+    djr:revision 1 .
+
+djr:R-3146 a djr:Prohibition ;
+    skos:prefLabel "신호 — check-layer-skeleton exit 2 를 «기존 코드라 면제»로 읽음"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3146@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3146@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3146 ;
+    djr:revision 1 .
+
+djr:R-3147 a djr:Prohibition ;
+    skos:prefLabel "신호 — 좁힌 TARGET·즉석 selector 로 얻은 green(게이트 증거는 저장소 루트 레지스트리 전체 1회뿐)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3147@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3147@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3147 ;
+    djr:revision 1 .
+
+djr:R-3148 a djr:Obligation ;
+    skos:prefLabel "모든 이름은 «첫 대입»에 타입을 적는다 — 예외 0"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3148@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3148@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3148 ;
+    djr:revision 1 .
+
+djr:R-3149 a djr:Obligation ;
+    skos:prefLabel "타입 부착 범위는 시그니처·모듈/클래스 변수·함수 지역 변수·테스트와 테스트 재료 전부"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3149@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3149@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3149 ;
+    djr:revision 1 .
+
+djr:R-3150 a djr:Prohibition ;
+    skos:prefLabel "「자명하니까 면제」를 두지 않는다 — 조건부 면제 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3150@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3150@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3150 ;
+    djr:revision 1 .
+
+djr:R-3151 a djr:Exception ;
+    skos:prefLabel "빠지는 곳은 «문법이 없는 자리»뿐(면제가 아니라 불가능)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3151@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3151@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3151 ;
+    djr:revision 1 .
+
+djr:R-3152 a djr:Exception ;
+    skos:prefLabel "문법 부재 자리 ① for·with·except·언패킹·다중 대입·증강 대입"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3152@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3152@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3152 ;
+    djr:revision 1 .
+
+djr:R-3153 a djr:Exception ;
+    skos:prefLabel "문법 부재 자리 ② 재대입·인스턴스 속성(타입은 클래스 본문에)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3153@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3153@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3153 ;
+    djr:revision 1 .
+
+djr:R-3154 a djr:Exception ;
+    skos:prefLabel "문법 부재 자리 ③ 프레임워크 선언(모델 필드·class Meta·enum 멤버)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3154@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3154@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3154 ;
+    djr:revision 1 .
+
+djr:R-3155 a djr:Obligation ;
+    skos:prefLabel "pydantic·ninja Schema·dataclass 필드는 `x: T` 필수 — bare 대입은 규칙 위반 이전에 버그"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3155@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3155@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3155 ;
+    djr:revision 1 .
+
+djr:R-3156 a djr:Exception ;
+    skos:prefLabel "표준 문서군의 코드 예시는 적용 대상 밖 — 규칙은 생성하는 프로덕션·테스트 코드에 건다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3156@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3156@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3156 ;
+    djr:revision 1 .
+
+djr:R-3157 a djr:Obligation ;
+    skos:prefLabel "주류(PEP 8·mypy 기본 관례)와 다른 선택임을 숨기지 않는다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3157@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3157@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3157 ;
+    djr:revision 1 .
+
+djr:R-3158 a djr:Obligation ;
+    skos:prefLabel "mypy strict 는 시그니처만 강제 — 나머지는 백스톱과 감수자가 집행"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3158@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3158@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3158 ;
+    djr:revision 1 .
+
+djr:R-3159 a djr:Obligation ;
+    skos:prefLabel "기존 코드베이스의 주석 언어 관례를 우선한다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3159@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3159@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3159 ;
+    djr:revision 1 .
+
+djr:R-3160 a djr:Obligation ;
+    skos:prefLabel "영어 주석이 지배적이면 영어로 맞춘다(일관성 최우선)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3160@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3160@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3160 ;
+    djr:revision 1 .
+
+djr:R-3161 a djr:Obligation ;
+    skos:prefLabel "확립된 관례가 없으면 한국어로 쓴다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3161@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3161@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3161 ;
+    djr:revision 1 .
+
+djr:R-3162 a djr:Prohibition ;
+    skos:prefLabel "한 코드베이스 안에서 주석 언어를 섞지 않는다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3162@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3162@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3162 ;
+    djr:revision 1 .
+
+djr:R-3163 a djr:Obligation ;
+    skos:prefLabel "표준 도구셋은 기능 추가 흐름이 직접 다룬다 — 기존 도구 감지·존중, 부재 시 §2.1 버전-핀 규율 셋업(임의 글로벌 설치 금지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3163@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3163@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3163 ;
+    djr:revision 1 .
+
+djr:R-3164 a djr:Obligation ;
+    skos:prefLabel "새 런타임 의존성의 버전 «값» 규칙 적용 조건 — 핀 표기·매니페스트 위치는 타 스킬 소유"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3164@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3164@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3164 ;
+    djr:revision 1 .
+
+djr:R-3165 a djr:Prohibition ;
+    skos:prefLabel "훈련 기억의 버전 번호를 적지 않는다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3165@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3165@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3165 ;
+    djr:revision 1 .
+
+djr:R-3166 a djr:Obligation ;
+    skos:prefLabel "무핀 설치로 받은 실제 설치 버전을 매니페스트에 핀한다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3166@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3166@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3166 ;
+    djr:revision 1 .
+
+djr:R-3167 a djr:Obligation ;
+    skos:prefLabel "무핀 설치는 resolve 수단일 뿐 최종 상태는 핀"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3167@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3167@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3167 ;
+    djr:revision 1 .
+
+djr:R-3168 a djr:Obligation ;
+    skos:prefLabel "'최신'은 기존 핀과 호환되는 최신이다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3168@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3168@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3168 ;
+    djr:revision 1 .
+
+djr:R-3169 a djr:Prohibition ;
+    skos:prefLabel "기존 프레임워크·핵심 의존성 핀 상향 금지 — 불가하면 보고(설계 반송)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3169@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3169@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3169 ;
+    djr:revision 1 .
+
+djr:R-3170 a djr:Obligation ;
+    skos:prefLabel "안정 릴리스만 택한다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3170@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3170@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3170 ;
+    djr:revision 1 .
+
+djr:R-3171 a djr:Prohibition ;
+    skos:prefLabel "resolve 결과가 pre/rc/dev 면 핀하지 말고 보고"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3171@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3171@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3171 ;
+    djr:revision 1 .
+
+djr:R-3172 a djr:Obligation ;
+    skos:prefLabel "직접 의존성만 매니페스트에 핀하고 전이 의존성은 락파일에 맡긴다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3172@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3172@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3172 ;
+    djr:revision 1 .
+
+djr:R-3173 a djr:Obligation ;
+    skos:prefLabel "막힌 환경 — 사설·제한 인덱스는 그 인덱스의 최신을 핀하고 resolve 불가면 기억값 금지·보고"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3173@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3173@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3173 ;
+    djr:revision 1 .
+
+<https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/SKILL.md> a djr:Document ;
+    skos:prefLabel "discipline-houserules-skill"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s001> a djr:Section ;
+    djr:headingSnapshot "---"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s001/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 1 ;
+    djr:text "name: discipline-houserules\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s001/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s001> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b4>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b7> ;
+    djr:statesNorm djr:R-3099, djr:R-3100, djr:R-3101, djr:R-3102 ;
+    djr:text "description: dddjango 플러그인 고유 하우스룰 — ①표준 파일트리(BC 골격 140행·배치 결정 순서·이관/브라운필드 취급) ②타입 어노테이션(모든 이름의 첫 대입에 필수) ③코드 주석·docstring 언어 규율. 코드를 어느 파일/디렉터리에 둘지·어떻게 타입을 달지·주석을 어느 언어로 쓸지 정하거나 검수할 때 로드한다. 새 모듈·BC·테스트를 만들거나 프로젝트 레이아웃·코드 규약을 결정·점검하는 상황이면 반드시 사용. 트리와 규칙 «값»의 단일 출처는 references/final.md 다. 보편 클린코드는 dddjango:discipline-cleancode, Python 타입 지식은 implementation-python, 테스트 타입 조직은 dddjango:implementation-test(§4.2).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s001/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 3 ;
+    djr:text "user-invocable: false\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s001/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 4 ;
+    djr:text "---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003> a djr:Section ;
+    djr:headingSnapshot "## 무엇이고 왜"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003> ;
+    djr:kind djr:kind-prose ;
+    djr:order 1 ;
+    djr:text "\n이 스킬은 **dddjango 플러그인이 만드는 코드에 한정된 집안 규칙(house rules)**이다. `discipline-cleancode`·`discipline-tdd` 가 책에서 온 *보편* 규율인 것과 달리, 여기 담긴 것은 \"우리는 이렇게 한다\"는 **플러그인 고유의 강제**다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-3103, djr:R-3104, djr:R-3105 ;
+    djr:text "**값과 절차를 가른다** — 트리·칸·규칙의 «값»은 전부 `references/final.md` 가 단일 출처로 소유하고, 이 SKILL.md 는 «언제 어떻게 읽나»(결정 순서·중재·신호)만 소유한다. 값을 여기에 복제하지 않는다 — 사본은 조용히 낡아 다음 재저작이 낡은 사본을 신뢰원으로 삼는다. 이 단일 출처의 관할은 트리·골격·명명 «값»이다 — 무접두 `#N` 규칙의 «본문» 정본은 저장소의 정본 명세이고 플러그인 배포본에는 동봉되지 않으며, 플러그인 문서에는 집행에 필요한 발췌만 실린다(2026-08-15).\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003> ;
+    djr:kind djr:kind-prose ;
+    djr:order 3 ;
+    djr:text "경계:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-3106 ;
+    djr:text "- 코드 *내부* 구조(네이밍·함수 크기·SOLID) → `discipline-cleancode`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-3107 ;
+    djr:text "- DDD 계층·바운디드 컨텍스트 *이론* → `architecture-ddd` — 표준 트리가 파생된 배경\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-3108 ;
+    djr:text "- Django 프로젝트 *레이아웃 관용* → `implementation-django`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-3109 ;
+    djr:text "- 테스트 *타입 조직*(unit/integration/e2e)·conftest 메커니즘 → `implementation-test` (§4.2)\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> a djr:Section ;
+    djr:headingSnapshot "## §1 파일트리 결정 순서"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/SKILL.md> ;
+    djr:sectionNumber "1" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-3110 ;
+    djr:text "\n새 코드·테스트를 배치할 때 아래를 따른다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-3111, djr:R-3112, djr:R-3113, djr:R-3114, djr:R-3115, djr:R-3116, djr:R-3117, djr:R-3118, djr:R-3119, djr:R-3120, djr:R-3121, djr:R-3122, djr:R-3123 ;
+    djr:text "1. **소스 파일트리는 언제나 dddjango 표준 파일트리다 — 기존 레이아웃은 트리 결정의 입력이 아니다.** `references/final.md` 가 전부다 — **§0 제1원칙**(골격은 내용과 무관 · 고정 칸은 빈 채로도 · 트리 밖 칸은 반환)과 **§1 트리 140행**을 읽고 그대로 실현한다. 요약을 믿지 말고 문서를 읽는다. 이 트리(`driving_layer`/`driven_layer` 4계층)는 **dddjango 자신의 표준**이다 — 다른 플러그인(dddart 등) 것으로 오인해 옆으로 치우지 마라. 대상 저장소의 기존 소스 배치는 — **몇 개 앱이 얼마나 일관되게 쓰고 있든** — «확립된 규약»으로 읽지 않는다: 옛 층 이름·옛 위치는 규약이 아니라 **아직 안 갚은 빚**이고(`final.md` §4 이관 종료 후엔 트리 밖 칸 위반), 답습하면 빚을 늘리는 것이다. 「모든 BC 가 일관 사용(실측)」류의 관찰은 이 규칙의 반례가 아니라 이 규칙이 태어난 사고다(2026-08-12 라운드 1 — legacy 15개를 앵커 삼아 V1 트리를 신축 BC 에 재생산). **표준의 집행 스코프 — 판정 물음은 「이 파일(또는 기존 파일 안의 이 줄)을 낳는 근거가 승인 스코프(G0 스코프 메모·승인 명세의 산출물 목록·슬라이스 0 목록)에 있는가」다** — «내가 만들거나 수정하는가»가 아니다(수정하기로 한 결정이 스코프를 만드는 순환 — 2026-08-13 라운드 2 「수정한 legacy 를 그대로 두는 면제는 없다」의 실패 양식). **있다** → 형태는 언제나 표준이고, 기존 실물(같은 파일의 이웃 줄·타 BC 동형물 포함)은 형태 결정의 입력이 아니다. **없다** → 이 작업의 것이 아니다: 표준 위반으로 보여도 옮기지도 고치지도 않는다 — «의미 보존 이동»·«정리»·«일관성»·트리 밖 칸 위반(#81·#490)·백스톱 red·«면제는 없다» 어느 것도 이동의 근거가 아니다. **위반 판정은 빚을 기록할 권한이고, 기존 코드를 옮길 권한은 G0 빚 질문의 사용자 ⓐ 결정→슬라이스 0, 한 경로에서만 나온다.** 기존 파일을 수정할 때 표준이 정하는 것은 **추가·변경되는 줄**의 형태뿐이다 — 같은 파일의 기존 줄은 고치지도(전파 금지) 본뜨지도(답습 금지) 않는다. 존치된 legacy 는 «확립 규약»이 아니라 **동결된 빚**이다 — 존치를 신규 산출물의 형태 근거로 되읽지 않는다. 결정적 백스톱은 `check-layer-skeleton` 이고 다른 모든 검사보다 먼저 돈다(#487).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-3124, djr:R-3125, djr:R-3126 ;
+    djr:text "2. **승인된 test artifact 가 실제 있을 때만 의미군으로 조직한다.** 중앙 test admission 이 `add/update` 한 artifact 또는 의미 보존 재조직이 별도 승인된 기존 artifact 만, 기존 프로젝트 테스트 위치나 표준 위치(BC `test/` 의 자식 — `final.md` §1 트리 105~111행)에 둔다. 구조 규칙 자체는 test file/case/assertion 을 만들거나 기존 테스트를 자동 이동하지 않는다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-3127, djr:R-3128 ;
+    djr:text "3. **한 프로젝트 안에서 레이아웃을 혼용하지 않는다.** 이 규칙만으로 기존 테스트 이동 권한이 생기지는 않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-3129, djr:R-3130, djr:R-3131, djr:R-3132, djr:R-3133 ;
+    djr:text "**백스톱 실행 계약** — 검사기의 TARGET 은 «저장소 루트»다(`application/` 의 부모). BC 폴더나 `application/` 컨테이너 자체를 주면 검사기가 사용 오류 exit 1 로 거절한다(라운드 1 실측: BC 폴더 호출이 «표준 미채택 clean» 조용 통과를 낳았다 — 그 사각은 닫혔다). **게이트 판정은 판정 차분이다**(라운드 1′ — brownfield 의 legacy red 가 «전체 green» 계약을 영구 불능으로 만들던 모순의 해소): 게이트 증거는 «Phase 2 진입 앵커 대비 **귀속(신규 위반) 0** + legacy 잔존 별도 보고»(`scripts/registry_gate.py`)다 — legacy 잔존이 게이트를 차단하지는 않지만, **귀속 red 를 «확립 규약» 논리로 수용하는 것도 금지**다. 검사기를 골라 좁힌 TARGET·selector 로 얻은 green 은 게이트 증거가 아니다. 승인 스코프의 산출물 목록에 없는 파일에서 귀속이 나면 1차 처방은 **그 변경의 철회**다 — 수리·재설계로 귀속을 0으로 만드는 것이 아니다(2026-08-13 라운드 2 — 귀속 138건을 «해소 목록»으로 읽은 재설계 소용돌이).\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-3134, djr:R-3135, djr:R-3136, djr:R-3137 ;
+    djr:text "**관찰이 결정 입력인 축은 닫힌 목록이다**(라운드 1 「트리 답습」·라운드 1′ 「배선 답습」의 봉인 — 2026-08-12): ① 오류 wire 계약(12-slot `preserve-established`) ② API 스택 «정체»(근거=소비자 의존) ③ 주석 언어(§5) ④ 도구·러너(§6.1) ⑤ 승인 test artifact 의 기존 위치(§1.2) ⑥ 지원 중 행동 계약. **여기 없는 축 — 파일트리·배선/등록·import 방향·테스트 규율·값 집합 선언·인증 경로·admin 구조·OpenAPI 문서 후가공 … — 에서 기존 실물의 관찰은 결정의 입력이 아니다.** 배선 «값»(#105~#112)은 Ninja 스택 조건부지만, ‹관찰 비입력› 원칙 자체는 무조건이다. 그리고 이 원칙은 **신규 산출물의 형태** 문장이다 — 승인 스코프 밖 기존 실물을 옮기거나 고칠 권한을 만들지 않는다(§1.1 판정 물음: 위반 판정은 빚 기록 권한일 뿐, 이동 권한은 G0 사용자 ⓐ 결정→슬라이스 0 한 경로).\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s005-2> a djr:Section ;
+    djr:headingSnapshot "## §2 충돌 중재"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/SKILL.md> ;
+    djr:sectionNumber "2" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s005-2/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s005-2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b7> ;
+    djr:statesNorm djr:R-3138, djr:R-3139, djr:R-3140 ;
+    djr:text "\n코퍼스(`architecture-ddd` ↔ `implementation-django`)가 서로 다른 트리를 제시해도 **런타임에 택일하지 않는다** — `references/final.md` 가 단일 출처이고 코퍼스는 그 표준이 파생된 배경이다. 남는 변수는 없다(§1.1 — 트리는 무조건 표준). 테스트 타입 조직은 `implementation-test` §4.2 가 단독 소유한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3> a djr:Section ;
+    djr:headingSnapshot "## §3 구조 결정이 빠졌다는 신호"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/SKILL.md> ;
+    djr:sectionNumber "3" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-3141 ;
+    djr:text "\n다음이 보이면 배치 결정을 건너뛰었거나 빚을 답습한 신호다 — 판정은 `final.md` 와 검사기가 한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-3142 ;
+    djr:text "- 새 모듈이 층 구분 없이 한 디렉터리에 모인다(평면 답습).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-3143 ;
+    djr:text "- BC 직계에 트리 밖 여덟째 칸이 생겼다(#81 — `utils/`·`helpers/` 류).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-3144 ;
+    djr:text "- 골격 칸이 비었다고 생략됐다(#488 — 빈 칸도 `__init__.py`·빈 파일로 실현한다).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-3145 ;
+    djr:text "- 옛 이름이 새 코드에 다시 나타난다(`presentation_layer/`·`infra_layer/`·`published_service/` … — 이관은 종료됐고(`final.md` §4) 이제 트리 밖 칸 위반 #81·#490 이다).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-3146 ;
+    djr:text "- `check-layer-skeleton` 의 exit 2 를 «기존 코드라 면제»로 읽는다 — 빚은 면제가 아니다(`final.md` §4).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b5> ;
+    djr:statesNorm djr:R-3147 ;
+    djr:text "- 검사기 green 을 좁힌 TARGET(BC 폴더·`application/` 컨테이너)이나 즉석 selector 조합으로 얻었다 — 게이트 증거는 저장소 루트 레지스트리 전체 1회뿐이다(§1 백스톱 실행 계약).\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4> a djr:Section ;
+    djr:headingSnapshot "## §4 타입 어노테이션"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/SKILL.md> ;
+    djr:sectionNumber "4" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-3148, djr:R-3149, djr:R-3150 ;
+    djr:text "\n**모든 이름은 «첫 대입»에 타입을 적는다 — 예외 0.** 함수·메서드 시그니처(인자·반환), 모듈 변수, 클래스 변수, **함수 지역 변수**, 테스트와 테스트 재료(`test/fake/`·`factories/`)까지 전부다. 「자명하니까 면제」를 두지 않는다 — 조건부 면제는 매 실행 흔들리는 암묵 판단으로 돌아온다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-3151 ;
+    djr:text "**빠지는 곳은 «문법이 없는 자리»뿐이다(면제가 아니라 불가능):**\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-3152 ;
+    djr:text "- `for x in xs:` · `with f() as x:` · `except E as e:` · 언패킹(`a, b = pair`) · 다중 대입(`a = b = 0`) · 증강 대입(`x += 1`)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-3153 ;
+    djr:text "- 재대입(첫 바인딩에서 1회만 단다) · 인스턴스 속성 `self.x = ...`(타입은 클래스 본문에 `x: T`)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-3154 ;
+    djr:text "- 프레임워크 선언: Django 모델 필드(`name = models.CharField(...)`) · `class Meta` 옵션 · enum 멤버(`RED = 1`) — 달면 프레임워크 의미가 오작동한다\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-3155, djr:R-3156 ;
+    djr:text "pydantic·ninja `Schema`·`dataclass` 필드는 `x: T` 가 있어야 동작한다 — bare 대입이면 규칙 위반이기 전에 버그다. 표준 문서군의 코드 예시는 개념 전달용 발췌라 적용 대상이 아니다 — 규칙은 생성하는 프로덕션·테스트 코드에 건다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s008-4.1> a djr:Section ;
+    djr:headingSnapshot "### §4.1 왜 전부인가"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/SKILL.md> ;
+    djr:sectionNumber "4.1" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s008-4.1/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s008-4.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-3157, djr:R-3158 ;
+    djr:text "\n타입 추론은 기계에게는 공짜지만 **읽는 사람에게는 노동이다** — 호출 결과의 타입을 알려면 독자가 시그니처를 따라가 «추론을 재연»해야 한다. 이 플러그인은 그 노동을 코드 작성 시점에 한 번 지불하는 쪽을 택한다. 부수 효과로 판정이 결정적이 된다 — 「자명한가」를 묻지 않으므로 검사가 런마다 흔들리지 않는다. 주류(PEP 8·mypy 기본 관례)의 「추론 가능한 지역 변수엔 비권장」과 다른 선택임을 숨기지 않는다. mypy strict 는 시그니처만 강제하므로 나머지는 백스톱과 감수자가 집행한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s009-5> a djr:Section ;
+    djr:headingSnapshot "## §5 코드 주석·docstring 언어"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/SKILL.md> ;
+    djr:sectionNumber "5" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s009-5/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s009-5> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-3159, djr:R-3160, djr:R-3161, djr:R-3162 ;
+    djr:text "\n**기존 코드베이스의 주석 언어 관례를 우선한다.** 영어 주석이 지배적이면 영어로 맞춘다(일관성 최우선). 확립된 관례가 없으면 **한국어**로 쓴다. 언어는 코드 동작이 아니라 사람의 유지보수를 위한 것이므로, 한 코드베이스 안에서 섞지 않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s011-6.1> a djr:Section ;
+    djr:headingSnapshot "### §6.1 부트스트랩·표준 도구셋"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/SKILL.md> ;
+    djr:sectionNumber "6.1" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s011-6.1/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s011-6.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-3163 ;
+    djr:text "\n표준 도구셋(패키지 매니저 uv·ruff·mypy strict·django-stubs·pydantic·pytest)은 기능 추가 흐름이 **직접 다룬다** — 기존 프로젝트의 도구·패키지 매니저를 감지해 존중하고(§1.1), 기능에 필요한 표준 도구가 없으면 `implementation-django-ninja` §2.1 버전-핀 규율로 셋업한다(임의 글로벌 설치 금지).\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s012-6.2> a djr:Section ;
+    djr:headingSnapshot "### §6.2 새 런타임 의존성의 버전 선택"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/SKILL.md> ;
+    djr:sectionNumber "6.2" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s012-6.2/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s012-6.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-3164 ;
+    djr:text "\n기능에 새 런타임 의존성이 필요한데 그 패키지에 기존 제약이 없으면 (버전 *값* 규칙 — 핀 *표기*·매니페스트 위치는 `implementation-django-ninja` §2.1·`implementation-django` 소유):\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s012-6.2/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s012-6.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-3165, djr:R-3166, djr:R-3167 ;
+    djr:text "- **훈련 기억의 버전 번호를 적지 않는다.** 무핀 설치(`uv add <pkg>`/`pip install <pkg>`)로 받은 *실제 설치 버전*을 매니페스트에 핀한다. 무핀 설치는 *resolve 수단*일 뿐 **최종 상태는 핀**이다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s012-6.2/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s012-6.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 3 ;
+    djr:text "- **왜**: 기억 기반 버전은 모델 컷오프에 묶여 낡고, 런타임마다 달라 비결정적이다. resolve 후 핀은 실제 최신을 반영하고, 핀이 박힌 뒤 모든 설치는 결정적이다(비결정성을 최초 도입 1회로 격리).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s012-6.2/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s012-6.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-3168, djr:R-3169 ;
+    djr:text "- **'최신'은 *기존 핀과 호환되는* 최신이다.** 무핀 resolve 가 기존 프레임워크·핵심 의존성 핀을 올리려 들면 호환 한계 신호다 — 올리지 말고 기존 핀 안에서 가능한 최신을 핀하거나, 불가하면 보고한다(설계 반송).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s012-6.2/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s012-6.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-3170, djr:R-3171, djr:R-3172 ;
+    djr:text "- **안정 릴리스만 택한다.** resolve 결과가 pre/rc/dev 면 핀하지 말고 보고한다. 직접 의존성만 매니페스트에 핀하고, 전이 의존성은 락파일에 맡긴다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s012-6.2/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s012-6.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-3173 ;
+    djr:text "- **막힌 환경**: 인덱스가 사설/제한적이면 그 인덱스의 최신을 핀하고, resolve 자체가 불가(오프라인·샌드박스)하면 기억값으로 채우지 말고 보고한다.\n"@ko .

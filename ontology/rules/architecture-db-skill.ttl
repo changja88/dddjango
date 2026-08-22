@@ -1,0 +1,417 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+djr:R-2817 a djr:Obligation ;
+    skos:prefLabel "로드 조건 — 데이터 신뢰성·인덱스 전략·트랜잭션 경계·outbox 전달 보장·스키마 rollout 결정 시 선행 로드"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2817@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2817@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2817 ;
+    djr:revision 1 .
+
+djr:R-2818 a djr:Obligation ;
+    skos:prefLabel "경계 위임 — Django ORM·마이그레이션 코드 구현과 도메인 이벤트 채택 여부의 타 스킬 이양"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2818@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2818@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2818 ;
+    djr:revision 1 .
+
+djr:R-2819 a djr:Obligation ;
+    skos:prefLabel "로드 조건 — 관계형 DB 아키텍처 결정(모델링·인덱스·제약조건·격리·락·멱등성 저장소·outbox 전달·rollout) 필요 시 로드"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2819@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2819@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2819 ;
+    djr:revision 1 .
+
+djr:R-2820 a djr:Obligation ;
+    skos:prefLabel "Django ORM·마이그레이션 코드 작성의 implementation-django 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2820@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2820@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2820 ;
+    djr:revision 1 .
+
+djr:R-2821 a djr:Obligation ;
+    skos:prefLabel "도메인 이벤트 채택 여부·애그리거트 경계의 architecture-ddd 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2821@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2821@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2821 ;
+    djr:revision 1 .
+
+djr:R-2822 a djr:Obligation ;
+    skos:prefLabel "REST 계약·API 멱등성 키 정책의 architecture-api 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2822@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2822@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2822 ;
+    djr:revision 1 .
+
+djr:R-2823 a djr:Obligation ;
+    skos:prefLabel "성능 최적화 순서 준수 — 슬로우 쿼리 최적화→인덱스 적용→캐시→역정규화"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2823@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2823@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2823 ;
+    djr:revision 1 .
+
+djr:R-2824 a djr:Obligation ;
+    skos:prefLabel "역정규화의 최후 수단 한정 — 정규화 선행 후 필요한 경우에만 적용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2824@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2824@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2824 ;
+    djr:revision 1 .
+
+djr:R-2825 a djr:Obligation ;
+    skos:prefLabel "인덱스 구성 규율 — 복합(선택도 높은 컬럼 우선)·커버링(Index-Only Scan)·부분(쓰기 비용 최소화)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2825@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2825@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2825 ;
+    djr:revision 1 .
+
+djr:R-2826 a djr:Obligation ;
+    skos:prefLabel "인덱스 설계의 실제 액세스 패턴 기반 결정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2826@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2826@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2826 ;
+    djr:revision 1 .
+
+djr:R-2827 a djr:Obligation ;
+    skos:prefLabel "DB 경계 불변식의 제약조건 보호 — unique·FK·check constraint"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2827@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2827@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2827 ;
+    djr:revision 1 .
+
+djr:R-2828 a djr:Obligation ;
+    skos:prefLabel "제약조건 rollout 의 lock risk 고려 단계적 순서"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2828@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2828@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2828 ;
+    djr:revision 1 .
+
+djr:R-2829 a djr:Prohibition ;
+    skos:prefLabel "격리 수준의 필요 이상 상향 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2829@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2829@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2829 ;
+    djr:revision 1 .
+
+djr:R-2830 a djr:Obligation ;
+    skos:prefLabel "Risky Write 의 Consistency Block 항목 명시 — transaction owner·locking·idempotency storage·side-effect timing·isolation/retry·test criteria"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2830@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2830@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2830 ;
+    djr:revision 1 .
+
+djr:R-2831 a djr:Exception ;
+    skos:prefLabel "Test criteria 의 테스트 의무 부인 — 위험·failure 후보 기록에 한정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2831@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2831@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2831 ;
+    djr:revision 1 .
+
+djr:R-2832 a djr:Obligation ;
+    skos:prefLabel "입장 결정이 add 일 때만 coder 의 신규 테스트 작성"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2832@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2832@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2832 ;
+    djr:revision 1 .
+
+djr:R-2833 a djr:Prohibition ;
+    skos:prefLabel "외부 결제·알림·메시지 발행의 DB 트랜잭션 내부 실행 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2833@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2833@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2833 ;
+    djr:revision 1 .
+
+djr:R-2834 a djr:Obligation ;
+    skos:prefLabel "메시지 유실 불허 시 트랜잭셔널 Outbox 의 at-least-once 전달 보장"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2834@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2834@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2834 ;
+    djr:revision 1 .
+
+djr:R-2835 a djr:Obligation ;
+    skos:prefLabel "consumer 의 중복 수신 무시 가능성"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2835@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2835@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2835 ;
+    djr:revision 1 .
+
+djr:R-2836 a djr:Obligation ;
+    skos:prefLabel "운영 스키마 변경의 Expand / Backfill / Contract 단계 준수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2836@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2836@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2836 ;
+    djr:revision 1 .
+
+djr:R-2837 a djr:Obligation ;
+    skos:prefLabel "대용량 backfill 의 슬롯·lock risk 고려 배치 처리 계획"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2837@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2837@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2837 ;
+    djr:revision 1 .
+
+djr:R-2838 a djr:Obligation ;
+    skos:prefLabel "주제별 라우팅 준거 — references/final.md 해당 절 준수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2838@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2838@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2838 ;
+    djr:revision 1 .
+
+djr:R-2839 a djr:Exception ;
+    skos:prefLabel "필요 항목 한정 독해 — 전체 로드 불필요"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2839@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2839@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2839 ;
+    djr:revision 1 .
+
+<https://numchida.com/ns/djr#d/dddjango/skills/architecture-db/SKILL.md> a djr:Document ;
+    skos:prefLabel "architecture-db-skill"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s001> a djr:Section ;
+    djr:headingSnapshot "---"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-db/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s001/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 1 ;
+    djr:text "name: architecture-db\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s001/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s001> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s003/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s003/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s003/b3> ;
+    djr:statesNorm djr:R-2817, djr:R-2818 ;
+    djr:text "description: 관계형 데이터베이스 설계 지식 — ERD·정규화·역정규화, 인덱스 아키텍처(B+Tree·복합·커버링·부분), 제약조건·중복 방지·멱등성 저장소, 트랜잭션·격리 수준·락·Risky Write, outbox 전달 보장, 쿼리 최적화(EXPLAIN ANALYZE·N+1), 운영 rollout/backfill/migration safety, 계층·상속 모델링 패턴. 데이터 신뢰성·인덱스 전략·트랜잭션 경계·outbox 전달 보장·스키마 rollout을 결정할 때 먼저 로드한다. Django ORM·마이그레이션 코드 구현은 implementation-django, 도메인 이벤트 채택 여부는 architecture-ddd로 위임.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s001/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 3 ;
+    djr:text "user-invocable: false\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s001/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 4 ;
+    djr:text "---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s003> a djr:Section ;
+    djr:headingSnapshot "## 언제 쓰나"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-db/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s003/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2819 ;
+    djr:text "\n관계형 DB 아키텍처 결정(데이터 모델링·인덱스 설계·제약조건·트랜잭션 격리·락 전략·멱등성 저장소·outbox 전달·rollout 안전성)이 필요할 때 로드한다. 경계:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s003/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2820 ;
+    djr:text "- Django ORM·마이그레이션 코드 작성 → `implementation-django`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s003/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2821 ;
+    djr:text "- 도메인 이벤트 채택 여부·애그리거트 경계 → `architecture-ddd`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s003/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-2822 ;
+    djr:text "- REST 계약·API 멱등성 키 정책 → `architecture-api`\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004> a djr:Section ;
+    djr:headingSnapshot "## 핵심 운영 원칙"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-db/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2823, djr:R-2824 ;
+    djr:text "\n- 성능 최적화 순서를 지킨다: 슬로우 쿼리 최적화 → 인덱스 적용 → 캐시 → 역정규화. 역정규화는 최후 수단이며, 정규화 먼저 한 뒤 필요한 경우에만 적용한다 (§4, §5)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2825, djr:R-2826 ;
+    djr:text "- 복합 인덱스는 선택도 높은 컬럼을 앞에, 커버링 인덱스로 Index-Only Scan을 목표로, 부분 인덱스로 쓰기 비용을 최소화한다 — 인덱스 설계는 실제 액세스 패턴 기반으로 결정한다 (§7)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2827, djr:R-2828 ;
+    djr:text "- 비즈니스 불변식이 DB 경계에서 지켜져야 하면 unique constraint·FK·check constraint를 사용하고, 제약조건 rollout은 lock risk를 고려한 단계적 순서를 따른다 (§8)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-2829 ;
+    djr:text "- 격리 수준은 필요 이상으로 높이지 않는다: 대부분의 OLTP는 Read Committed, 일관된 읽기가 필요하면 Repeatable Read, 정확성이 최우선인 금융·결제는 Serializable + retry (§9.4)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-2830, djr:R-2831, djr:R-2832 ;
+    djr:text "- Risky Write(주문·결제·재고·예약·권한·ledger)에는 Transaction owner·Locking strategy·Idempotency storage·Side-effect timing·Isolation/retry와 위험·failure 후보인 Test criteria를 명시한다. Test criteria 자체는 테스트 의무가 아니며, 독자 DB failure와 기존 보호를 비교한 `discipline-tdd` 입장 결정이 `add`일 때만 coder가 새 테스트를 작성한다 (§9.6)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-2833, djr:R-2834, djr:R-2835 ;
+    djr:text "- 외부 결제·알림·메시지 발행은 DB 트랜잭션 내부에서 실행하지 않는다. 메시지 유실이 허용되지 않으면 트랜잭셔널 Outbox로 at-least-once 전달을 보장하고, consumer는 중복 수신을 무시할 수 있어야 한다 (§9.7)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-2836, djr:R-2837 ;
+    djr:text "- 운영 컬럼·인덱스·constraint 변경은 Expand / Backfill / Contract 단계를 따르고, 대용량 backfill은 슬롯·lock risk를 고려한 배치 처리를 계획한다 (§11)\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005> a djr:Section ;
+    djr:headingSnapshot "## 상세 레퍼런스"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-db/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2838 ;
+    djr:text "\n주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 10 ;
+    djr:text "| 인덱스 설계 베스트 프랙티스 | §7 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005/b11> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 11 ;
+    djr:text "| 제약조건과 중복 방지 | §8 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005/b12> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 12 ;
+    djr:text "| 트랜잭션, 격리 수준, 락 | §9 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005/b13> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 13 ;
+    djr:text "| 쿼리 최적화 | §10 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005/b14> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 14 ;
+    djr:text "| 운영 rollout, backfill, migration safety | §11 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005/b15> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 15 ;
+    djr:text "| 데이터 모델링 패턴: 계층 구조 | §12 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005/b16> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 16 ;
+    djr:text "| 데이터 모델링 패턴: 상속과 다형성 | §13 |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005/b17> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 17 ;
+    djr:statesNorm djr:R-2839 ;
+    djr:text "각 절은 [`references/final.md`](references/final.md)에서 필요한 항목만 읽는다(전체 로드 불필요).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 2 ;
+    djr:text "| 주제 | 절 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 3 ;
+    djr:text "|---|---|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 4 ;
+    djr:text "| 데이터베이스 모델링 프로세스 | §1 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 5 ;
+    djr:text "| 개념적 데이터 모델링 (ERD) | §2 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 6 ;
+    djr:text "| 정규화 (1NF — BCNF) | §3 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 7 ;
+    djr:text "| 역정규화 (Denormalization) | §4 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 8 ;
+    djr:text "| 성능 최적화 순서 | §5 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 9 ;
+    djr:text "| 인덱스 아키텍처: B+Tree | §6 |\n" .

@@ -1,0 +1,511 @@
+{
+  "schema": "migrate-spec/1",
+  "doc_key": "architecture-db-skill",
+  "path": "dddjango/skills/architecture-db/SKILL.md",
+  "restates_paths": {
+    "architecture-db-skill": "dddjango/skills/architecture-db/SKILL.md"
+  },
+  "sections": [
+    {
+      "section_key": "s001",
+      "line_start": 1,
+      "line_end": 6,
+      "blocks": [
+        {
+          "lines": [
+            2,
+            2
+          ],
+          "kind": "prose",
+          "note": "frontmatter name — 런타임 메타. 헤딩 라인은 1행 `---`"
+        },
+        {
+          "lines": [
+            3,
+            3
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-db-skill/s003/b1",
+            "architecture-db-skill/s003/b2",
+            "architecture-db-skill/s003/b3"
+          ],
+          "note": "description = s003 의 압축 사본(§15 사본→정본 단일 방향). description 의 위임처는 implementation-django·architecture-ddd 둘뿐이라 s003/b4(architecture-api)는 대상 밖 — 실제 겹치는 블록만 연결",
+          "norms": [
+            {
+              "label": "로드 조건 — 데이터 신뢰성·인덱스 전략·트랜잭션 경계·outbox 전달 보장·스키마 rollout 결정 시 선행 로드",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-db"
+              ],
+              "basis": "①문면 «…결정할 때 먼저 로드한다» + 센서스 E08 s001 비고 «frontmatter = 라우터 트리거» · ②check-*.py 27종 docstring 선두 전수 실독 — 스킬 로드·라우팅 술어 0 · §16 위임 기본값 표(architecture-db→agent-design-review-db) + 스킬 배분 소유 Coordinator 병기(agent-coder s004 «작업 축별 스킬 선택 사용» 선례)"
+            },
+            {
+              "label": "경계 위임 — Django ORM·마이그레이션 코드 구현과 도메인 이벤트 채택 여부의 타 스킬 이양",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer",
+                "agent-design-review-ddd"
+              ],
+              "basis": "①문면이 implementation-django·architecture-ddd 를 수임처로 직접 지목 — §16 표의 수임 문서군 기본값 병기(implementation-*→discipline-reviewer · architecture-ddd→design-review-ddd) · ②27종 docstring 에 스킬 간 위임 술어 0. [센서스 codex DIFF 비고: codex 판 description 에 미치환 구명 architecture-ddd 지시 — 이 코퍼스 정본은 현재 문면]"
+            }
+          ]
+        },
+        {
+          "lines": [
+            4,
+            4
+          ],
+          "kind": "prose",
+          "note": "user-invocable = 플랫폼 메타"
+        },
+        {
+          "lines": [
+            5,
+            6
+          ],
+          "kind": "prose",
+          "note": "종결 `---` + 후행 빈 줄(§13)"
+        }
+      ]
+    },
+    {
+      "section_key": "s003",
+      "line_start": 9,
+      "line_end": 16,
+      "blocks": [
+        {
+          "lines": [
+            10,
+            12
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "로드 조건 — 관계형 DB 아키텍처 결정(모델링·인덱스·제약조건·격리·락·멱등성 저장소·outbox 전달·rollout) 필요 시 로드",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-db"
+              ],
+              "basis": "①문면 «…필요할 때 로드한다» — s001 description 의 정본 진술(사본 = s001/b2) · ②27종 전수 — 스킬 로드 술어 0 · §16 기본값 + 스킬 배분 Coordinator 병기(s001/b2 와 동일 처분)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            13,
+            13
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Django ORM·마이그레이션 코드 작성의 implementation-django 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면이 화살표로 수임처를 직접 지목 · §16 표 implementation-*→agent-discipline-reviewer(기본값 일치) · ②27종 전수 — 스킬 경계 술어 0(check-mechanism-ownership ⑵ 는 migrations «파일» 규율이라 스킬 관할 배분과 다른 판)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            14,
+            14
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "도메인 이벤트 채택 여부·애그리거트 경계의 architecture-ddd 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "①문면이 architecture-ddd 를 수임처로 직접 지목 · §16 표 architecture-ddd→agent-design-review-ddd(설계 시점) · ②27종 전수 — 위임 술어 0"
+            }
+          ]
+        },
+        {
+          "lines": [
+            15,
+            16
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "REST 계약·API 멱등성 키 정책의 architecture-api 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "①문면이 architecture-api 를 수임처로 직접 지목 · §16 표 architecture-api→agent-design-review-api · ②check-idempotency-scope-creep 은 «미요청 멱등성 채택 금지»(G0) 축이라 «키 정책 관할 배분»은 비커버(final api s021-5.1/b6 basis 와 동일 논거)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s004",
+      "line_start": 17,
+      "line_end": 26,
+      "blocks": [
+        {
+          "lines": [
+            18,
+            19
+          ],
+          "kind": "norm",
+          "note": "두 문장 — 순서 준수(§5)와 역정규화 최후 수단(§4)이 행위 대상이 갈려 2 Work",
+          "norms": [
+            {
+              "label": "성능 최적화 순서 준수 — 슬로우 쿼리 최적화→인덱스 적용→캐시→역정규화",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-db"
+              ],
+              "basis": "①문면 역할명 0 · ②27종 docstring 선두 전수 실독 — 쿼리 성능·최적화 순서 술어 0(검사기는 구조·배치·계약만 본다) · ③④ 지목 0 → §16 위임 기본값 표(architecture-db→agent-design-review-db · final s021-5 계열 배선과 동일)"
+            },
+            {
+              "label": "역정규화의 최후 수단 한정 — 정규화 선행 후 필요한 경우에만 적용",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-db"
+              ],
+              "basis": "final s019-4.2/b1 «정규화 먼저 · 필요한 경우에만 역정규화» 와 동형 규범 · ②27종 전수 — 정규형 판정 술어 0 → §16 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            20,
+            20
+          ],
+          "kind": "norm",
+          "note": "대시 뒤 «인덱스 설계는 실제 액세스 패턴 기반으로 결정한다»는 구성 규칙과 별개의 결정 근거 규범(final s031-7.4 가 같은 축을 별도 Work 로 분해) — 2 Work",
+          "norms": [
+            {
+              "label": "인덱스 구성 규율 — 복합(선택도 높은 컬럼 우선)·커버링(Index-Only Scan)·부분(쓰기 비용 최소화)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-db"
+              ],
+              "basis": "①문면 역할명 0 · ②27종 전수 — 인덱스 컬럼 순서·커버링 술어 0 · §16 기본값(final s028-7.1/b3 배선과 동일 — 전건 기본값). 준거 정정: 커버링(§7.2)·부분(§7.3)에 대응하는 final 절은 **NAR(대응 Work 부재 — 센서스가 규범 0으로 판정)**이라 승계할 배선이 없다(검수표 §3 유예 #3 과 정합)"
+            },
+            {
+              "label": "인덱스 설계의 실제 액세스 패턴 기반 결정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-db"
+              ],
+              "basis": "동상 — final s031-7.4/b4 «읽기/쓰기 비율에 따른 인덱스 증감 결정»·b6(도입 전 벤치마크)와 같은 결정 근거 축 · 검사 공백 → 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            21,
+            21
+          ],
+          "kind": "norm",
+          "note": "«사용하고, … rollout 은 … 순서를 따른다» — 제약조건 «사용»과 «rollout 순서»는 행위 대상이 달라 2 Work(final §8 ↔ §11 축 분리와 정합)",
+          "norms": [
+            {
+              "label": "DB 경계 불변식의 제약조건 보호 — unique·FK·check constraint",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-db"
+              ],
+              "basis": "①문면 역할명 0 · ②27종 전수 — DB 제약조건 선언 술어 0(check-db-table 은 앱 규율·#630 db_table 값·#631 타 BC FK 축이라 «불변식을 제약조건으로 보호하는가»는 비커버) · §16 기본값(final s032-8/b1 배선과 동일)"
+            },
+            {
+              "label": "제약조건 rollout 의 lock risk 고려 단계적 순서",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-db"
+              ],
+              "basis": "동상 — final s036-8.4·s054-11.3(제약조건 rollout·lock risk) 축 · 검사 공백 → 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            22,
+            22
+          ],
+          "kind": "norm",
+          "note": "콜론 뒤 «OLTP→Read Committed …»는 선택지 매핑 조각이라 분리 채번하지 않는다(19행 콜론 나열과 같은 처분)",
+          "norms": [
+            {
+              "label": "격리 수준의 필요 이상 상향 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-db"
+              ],
+              "basis": "①문면 «높이지 않는다» = 금지형 · ②27종 전수 — 격리 수준 설정 술어 0(check-mechanism-ownership ⑴ 은 «커스텀 DB 백엔드로 메커니즘 교체» 형태만 차단하고 격리 «수준 선택»은 비커버) · §16 기본값(final s041-9.4/b6 Prohibition 과 동형)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            23,
+            23
+          ],
+          "kind": "norm",
+          "note": "둘째 문장의 «-며» 연결은 대등 — 테스트 의무 부인(Exception)과 add 한정 작성(Obligation)은 class·행위 대상이 갈려 분리. 항목 열거(transaction owner…)는 명시 대상 조각이라 미분리",
+          "norms": [
+            {
+              "label": "Risky Write 의 Consistency Block 항목 명시 — transaction owner·locking·idempotency storage·side-effect timing·isolation/retry·test criteria",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-idempotency-scope-creep.py",
+                "check-transaction-boundary.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-db"
+              ],
+              "basis": "②check-idempotency-scope-creep docstring 선두 «architecture-db §9.6 Idempotency storage 집행» 직접 지목(커버 범위는 «G1 승인 없는 미요청 멱등성 산출물» 1종) + check-transaction-boundary #200(커밋 뒤 부작용은 after_commit — side-effect timing 축) · «명시» 행위 자체와 나머지 항목(transaction owner·locking·isolation/retry)은 검사 공백 → §16 기본값 병기(final s043-9.6/b1·b7·b9 배선 종합)"
+            },
+            {
+              "label": "Test criteria 의 테스트 의무 부인 — 위험·failure 후보 기록에 한정",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면이 discipline-tdd 입장 결정을 지목 → §16 표(discipline-tdd→agent-discipline-reviewer) · final s043-9.6/b11 Exception 과 동형 · ②27종 전수 — 입장 표 술어 0"
+            },
+            {
+              "label": "입장 결정이 add 일 때만 coder 의 신규 테스트 작성",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면이 «독자 DB failure 와 기존 보호 비교»·«discipline-tdd 입장 결정»·«coder» 를 지목 — 입장 표 판정 소유는 discipline-reviewer(s005 영구 테스트 입장 감사) · §16 표(discipline-tdd→discipline-reviewer) · final s043-9.6/b12 배선과 동일"
+            }
+          ]
+        },
+        {
+          "lines": [
+            24,
+            24
+          ],
+          "kind": "norm",
+          "note": "금지(트랜잭션 내부 실행)·보장(Outbox at-least-once)·소비자(중복 무시)의 세 행위 대상 — 3 Work(final s044-9.7 분해와 정합)",
+          "norms": [
+            {
+              "label": "외부 결제·알림·메시지 발행의 DB 트랜잭션 내부 실행 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-transaction-boundary.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-db"
+              ],
+              "basis": "②check-transaction-boundary #200 «커밋 뒤 부작용은 unit_of_work.after_commit — 응용이 transaction.on_commit·connection.in_atomic_block 직접 호출이면 위반»·#4(application_layer 의 django import 0) · final s043-9.6/b14 배선의 **부분 승계**(정본 b14 실물 = E:[check-transaction-boundary, check-usecase-dto-placement, check-broker-contract]·D:[agent-discipline-reviewer]). 갈린 이유: 정본 b14 는 «트랜잭션 밖 handoff + 유실 불허 시 Outbox»를 한 Work 로 지지만 SKILL 24행은 두 문장으로 갈려 Outbox 축(#603·#532)은 같은 블록의 별도 Work 가 check-broker-contract 로 따로 지고, check-usecase-dto-placement #541 은 «발행» 자리 규율이라 이 Work(«외부 부수효과의 실행 위치») 축 밖이다 · D 는 정본의 discipline-reviewer 대신 §16 문서군 기본값(architecture-db→agent-design-review-db)을 유지했다(이 문서 전체의 기본값 처분과 정합 — 검수표 §4 기록)"
+            },
+            {
+              "label": "메시지 유실 불허 시 트랜잭셔널 Outbox 의 at-least-once 전달 보장",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-broker-contract.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-db"
+              ],
+              "basis": "②check-broker-contract #603 ⑴outbox(«선언 유무»만 잰다)·#532 «external 계약은 at-least-once 를 «요구로» 적는다» · 실제 전달 보장 «동작»은 검사 공백(선언 존재만 집행) → 기본값 병기(final s044-9.7/b2·b5·b6 배선 준거)"
+            },
+            {
+              "label": "consumer 의 중복 수신 무시 가능성",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-missable-entrance.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-missable-entrance #181 «멱등성은 유스케이스가 갖는다» — check-broker-contract docstring 이 «멱등 물음의 소유자는 #181» 로 명시 위임(#532 절) · 확정/후보 혼합이라 잔여 의미 축은 구현 리뷰(final s044-9.7/b7 배선과 동일)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            25,
+            26
+          ],
+          "kind": "norm",
+          "note": "«단계를 따르고, 대용량 backfill 은 … 계획한다» — 단계 준수와 배치 계획은 대상이 갈려 2 Work",
+          "norms": [
+            {
+              "label": "운영 스키마 변경의 Expand / Backfill / Contract 단계 준수",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-db"
+              ],
+              "basis": "①문면 역할명 0 · ②27종 전수 — 마이그레이션 «단계 순서» 술어 0(check-mechanism-ownership ⑵ #336~#338·#593 은 마이그레이션 파일 자리·모양 규율) · §16 기본값(final s051-11/b1·s052-11.1/b1 배선과 동일)"
+            },
+            {
+              "label": "대용량 backfill 의 슬롯·lock risk 고려 배치 처리 계획",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-db"
+              ],
+              "basis": "동상 — final s053-11.2(Backfill 위험)·s054-11.3(lock risk) 축 · 검사 공백 → 기본값"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s005",
+      "line_start": 27,
+      "line_end": 47,
+      "blocks": [
+        {
+          "lines": [
+            28,
+            30
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "주제별 라우팅 준거 — references/final.md 해당 절 준수",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-db"
+              ],
+              "basis": "①문면 «해당 절을 따른다» — 준거 문서 로드·인용 축 · ②27종 docstring 에 문서 로드·인용 술어 0 · §16 기본값 + 로드 절차 소유 Coordinator 병기(agent-design-architect s005 선례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            31,
+            31
+          ],
+          "kind": "table-row",
+          "note": "머리행 — 라우팅 표 행은 매핑이라 규범 미계수(P0 승계)"
+        },
+        {
+          "lines": [
+            32,
+            32
+          ],
+          "kind": "table-row",
+          "note": "구분행"
+        },
+        {
+          "lines": [
+            33,
+            33
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            34,
+            34
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            35,
+            35
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            36,
+            36
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            37,
+            37
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            38,
+            38
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            39,
+            39
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            40,
+            40
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            41,
+            41
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            42,
+            42
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            43,
+            43
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            44,
+            44
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            45,
+            46
+          ],
+          "kind": "table-row",
+          "note": "마지막 데이터 행 + 후행 빈 줄(§13)"
+        },
+        {
+          "lines": [
+            47,
+            47
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "필요 항목 한정 독해 — 전체 로드 불필요",
+              "class": "Exception",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-db"
+              ],
+              "basis": "①문면 괄호 «(전체 로드 불필요)» = 전량 로드 의무의 면제 조문이라 Exception(agent-design-review-api s003 판례) · ②27종 docstring 에 로드 범위 술어 0 · §16 기본값 + 로드 절차 Coordinator 병기"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,534 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+djr:R-2985 a djr:Obligation ;
+    skos:prefLabel "Python 관용구·타입·Protocol/ABC·경계 도구 코드 작업 시 우선 로드"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2985@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2985@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2985 ;
+    djr:revision 1 .
+
+djr:R-2986 a djr:Obligation ;
+    skos:prefLabel "경계 밖 주제의 discipline-cleancode·implementation-django·architecture-ddd·implementation-test 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2986@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2986@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2986 ;
+    djr:revision 1 .
+
+djr:R-2987 a djr:Obligation ;
+    skos:prefLabel "Python 특화 구현 결정이 주 작업일 때 로드"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2987@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2987@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2987 ;
+    djr:revision 1 .
+
+djr:R-2988 a djr:Obligation ;
+    skos:prefLabel "기술무관 클린코드 원칙의 discipline-cleancode 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2988@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2988@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2988 ;
+    djr:revision 1 .
+
+djr:R-2989 a djr:Obligation ;
+    skos:prefLabel "Django 모델·ORM·서비스·트랜잭션·설정 구현의 implementation-django 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2989@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2989@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2989 ;
+    djr:revision 1 .
+
+djr:R-2990 a djr:Obligation ;
+    skos:prefLabel "repository/UoW/핵사고날/CQRS/outbox 구조 패턴 선택의 architecture-ddd 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2990@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2990@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2990 ;
+    djr:revision 1 .
+
+djr:R-2991 a djr:Obligation ;
+    skos:prefLabel "테스트 코드 작성의 implementation-test 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2991@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2991@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2991 ;
+    djr:revision 1 .
+
+djr:R-2992 a djr:Obligation ;
+    skos:prefLabel "타입 어노테이션의 전 코드베이스 일관 적용(Optional→X | None·PEP 695 우선)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2992@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2992@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2992 ;
+    djr:revision 1 .
+
+djr:R-2993 a djr:Obligation ;
+    skos:prefLabel "Union/Literal/NewType 으로 상태 공간 축소(잘못된 상태의 타입 레벨 차단)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2993@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2993@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2993 ;
+    djr:revision 1 .
+
+djr:R-2994 a djr:Obligation ;
+    skos:prefLabel "Protocol 구조적 서브타이핑 기본·ABC 는 런타임 등록 한정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2994@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2994@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2994 ;
+    djr:revision 1 .
+
+djr:R-2995 a djr:Obligation ;
+    skos:prefLabel "dataclass(slots·frozen·kw_only) 의 불변 값 객체 표현·NamedTuple 의 불변 레코드 표현"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2995@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2995@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2995 ;
+    djr:revision 1 .
+
+djr:R-2996 a djr:Obligation ;
+    skos:prefLabel "디스크립터·@property 의 검증·지연 계산 한정 사용(단순 필드는 평범한 애트리뷰트)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2996@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2996@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2996 ;
+    djr:revision 1 .
+
+djr:R-2997 a djr:Obligation ;
+    skos:prefLabel "제너레이터를 통한 지연 평가 사용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2997@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2997@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2997 ;
+    djr:revision 1 .
+
+djr:R-2998 a djr:Prohibition ;
+    skos:prefLabel "제너레이터 send·throw 사용 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2998@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2998@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2998 ;
+    djr:revision 1 .
+
+djr:R-2999 a djr:Obligation ;
+    skos:prefLabel "커스텀 컨텍스트 매니저로 리소스 해제를 with 문에 명시"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2999@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2999@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2999 ;
+    djr:revision 1 .
+
+djr:R-3000 a djr:Obligation ;
+    skos:prefLabel "도메인 최상위 예외 클래스 정의 후 계층화와 None 반환 대신 예외 발생"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3000@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3000@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3000 ;
+    djr:revision 1 .
+
+djr:R-3001 a djr:Obligation ;
+    skos:prefLabel "I/O 병목의 asyncio.TaskGroup(3.11+)·CPU 병목의 멀티프로세싱 선택"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3001@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3001@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3001 ;
+    djr:revision 1 .
+
+djr:R-3002 a djr:Obligation ;
+    skos:prefLabel "pydantic v2 의 경계(입력 검증) 전용 사용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3002@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3002@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3002 ;
+    djr:revision 1 .
+
+djr:R-3003 a djr:Prohibition ;
+    skos:prefLabel "pydantic v2 의 도메인 진리값 사용 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3003@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3003@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3003 ;
+    djr:revision 1 .
+
+djr:R-3004 a djr:Obligation ;
+    skos:prefLabel "Ruff 린트·포맷 통합과 mypy/pyright strict 모드 적용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3004@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3004@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3004 ;
+    djr:revision 1 .
+
+djr:R-3005 a djr:Obligation ;
+    skos:prefLabel "주제별 references/final.md 해당 절 준수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3005@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3005@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3005 ;
+    djr:revision 1 .
+
+djr:R-3006 a djr:Obligation ;
+    skos:prefLabel "필요한 항목만 부분 로드(전체 로드 불필요)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3006@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3006@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3006 ;
+    djr:revision 1 .
+
+<https://numchida.com/ns/djr#d/dddjango/skills/implementation-python/SKILL.md> a djr:Document ;
+    skos:prefLabel "implementation-python-skill"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s001> a djr:Section ;
+    djr:headingSnapshot "---"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-python/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s001/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 1 ;
+    djr:text "name: implementation-python\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s001/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s001> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003/b3>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003/b4>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003/b5> ;
+    djr:statesNorm djr:R-2985, djr:R-2986 ;
+    djr:text "description: Python 언어 특화 구현 지식 — 타입 힌트·타입 시스템, 구조적 패턴 매칭, 컬렉션·데이터 구조, 함수 설계, 데코레이터, 디스크립터, @property, 클래스 설계, Protocol 심화, Enum/dataclass/NamedTuple, 연산자 오버로딩, pydantic v2, 이터레이터·제너레이터, 컨텍스트 매니저, 예외 처리, 동시성·병렬성, 성능 프로파일링, f-문자열, Python 관용 표현, 디자인 패턴, Ruff, mypy/pyright, 디버깅, 독스트링, 정밀 연산, Python 3.14 변경사항. Python 관용구·타입·Protocol/ABC·경계 도구 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. 기술무관 클린코드 원칙은 dddjango:discipline-cleancode, Django 프레임워크는 implementation-django, 구조 패턴 선택은 dddjango:architecture-ddd, 테스트 코드 작성은 implementation-test로 위임.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s001/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 3 ;
+    djr:text "user-invocable: false\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s001/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 4 ;
+    djr:text "---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003> a djr:Section ;
+    djr:headingSnapshot "## 언제 쓰나"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-python/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2987 ;
+    djr:text "\nPython 언어 관용구·타입 시스템·Protocol/ABC·dataclass·제너레이터·동시성·Ruff·mypy 등 Python 특화 구현 결정이 주 작업일 때 로드한다. 경계:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2988 ;
+    djr:text "- 네이밍·함수 설계·SOLID 등 기술무관 클린코드 원칙 → `discipline-cleancode`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2989 ;
+    djr:text "- Django 모델·ORM·서비스·트랜잭션·설정 구현 → `implementation-django`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-2990 ;
+    djr:text "- repository/UoW/핵사고날/CQRS/outbox 구조 패턴 선택 → `architecture-ddd`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-2991 ;
+    djr:text "- 테스트 코드 작성(pytest·픽스처·mock·더블) → `implementation-test`\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> a djr:Section ;
+    djr:headingSnapshot "## 핵심 운영 원칙"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-python/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2992 ;
+    djr:text "\n- 타입 어노테이션은 전 코드베이스에 일관 적용, Optional→X | None, 최신 PEP 695 문법 우선 (§1)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 10 ;
+    djr:statesNorm djr:R-3002, djr:R-3003 ;
+    djr:text "- pydantic v2는 경계(입력 검증) 전용, 도메인 진리값으로 사용 금지 (§12.0)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004/b11> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 11 ;
+    djr:statesNorm djr:R-3004 ;
+    djr:text "- Ruff로 린트·포맷 통합, mypy/pyright strict 모드로 타입 보장 (§22–§23)\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2993 ;
+    djr:text "- Union/Literal/NewType으로 상태 공간을 좁혀 잘못된 상태를 타입 레벨에서 차단 (§1.3–§1.4)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2994 ;
+    djr:text "- Protocol로 구조적 서브타이핑, ABC는 런타임 등록이 필요할 때만 (§9)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-2995 ;
+    djr:text "- dataclass(slots, frozen, kw_only)로 불변 값 객체를 표현, NamedTuple은 불변 레코드에 (§10)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-2996 ;
+    djr:text "- 디스크립터·@property는 검증과 지연 계산에만; 단순 필드는 평범한 애트리뷰트로 (§6–§7)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-2997, djr:R-2998 ;
+    djr:text "- 제너레이터로 지연 평가, send/throw 금지 (§13.2, §13.5)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-2999 ;
+    djr:text "- 커스텀 컨텍스트 매니저로 리소스 해제를 with문으로 명확히 (§14)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 8 ;
+    djr:statesNorm djr:R-3000 ;
+    djr:text "- 예외는 도메인 최상위 클래스 정의 후 계층화; None 반환 대신 예외 발생 (§15)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 9 ;
+    djr:statesNorm djr:R-3001 ;
+    djr:text "- I/O 병목엔 asyncio.TaskGroup(3.11+), CPU 병목엔 멀티프로세싱 (§16)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> a djr:Section ;
+    djr:headingSnapshot "## 상세 레퍼런스"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-python/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-3005 ;
+    djr:text "\n주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 10 ;
+    djr:text "| 클래스 설계: Python 특화 패턴 | §8 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b11> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 11 ;
+    djr:text "| Protocol 심화 | §9 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b12> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 12 ;
+    djr:text "| Enum, dataclass, NamedTuple | §10 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b13> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 13 ;
+    djr:text "| 연산자 오버로딩과 Python 데이터 모델 심화 | §11 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b14> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 14 ;
+    djr:text "| pydantic v2 | §12 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b15> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 15 ;
+    djr:text "| 이터레이터, 제너레이터, 컴프리헨션 | §13 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b16> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 16 ;
+    djr:text "| 컨텍스트 매니저와 with문 | §14 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b17> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 17 ;
+    djr:text "| 예외 처리 | §15 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b18> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 18 ;
+    djr:text "| 동시성과 병렬성 | §16 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b19> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 19 ;
+    djr:text "| 성능 프로파일링과 최적화 | §17 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 2 ;
+    djr:text "| 주제 | 절 |\n|---|---|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b20> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 20 ;
+    djr:text "| f-문자열 개선과 PEG 파서 | §18 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b21> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 21 ;
+    djr:text "| 파이썬다운 관용 표현 | §19 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b22> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 22 ;
+    djr:text "| 디자인 패턴 (Python 고유 구현) | §20 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b23> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 23 ;
+    djr:text "| Ruff — 통합 린터/포매터 | §22 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b24> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 24 ;
+    djr:text "| mypy/pyright 최신 기능 | §23 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b25> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 25 ;
+    djr:text "| 디버깅 기법 | §25 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b26> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 26 ;
+    djr:text "| 독스트링과 문서화 | §26 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b27> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 27 ;
+    djr:text "| 정밀 연산 | §27 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b28> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 28 ;
+    djr:text "| Python 3.14 주요 변경사항 | §28 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b29> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 29 ;
+    djr:text "| Python 3.10–3.14 변경사항 요약 (치트시트) | 부록 A |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 3 ;
+    djr:text "| 타입 힌트와 타입 시스템 | §1 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b30> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 30 ;
+    djr:text "| 타입 시스템 진화 요약 (치트시트) | 부록 B |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b31> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 31 ;
+    djr:text "| 주요 매직 메서드 요약 (치트시트) | 부록 C |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b32> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 32 ;
+    djr:statesNorm djr:R-3006 ;
+    djr:text "각 절은 [`references/final.md`](references/final.md)에서 필요한 항목만 읽는다(전체 로드 불필요).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 4 ;
+    djr:text "| 구조적 패턴 매칭 (match/case) | §2 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 5 ;
+    djr:text "| 컬렉션 선택과 데이터 구조 | §3 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 6 ;
+    djr:text "| 함수 설계: Python 특화 기법 | §4 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 7 ;
+    djr:text "| 데코레이터 | §5 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 8 ;
+    djr:text "| 디스크립터 | §6 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 9 ;
+    djr:text "| @property와 애트리뷰트 접근 | §7 |\n" .

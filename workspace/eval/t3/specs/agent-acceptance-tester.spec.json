@@ -1,0 +1,1144 @@
+{
+  "schema": "migrate-spec/1",
+  "doc_key": "agent-acceptance-tester",
+  "path": "dddjango/agents/acceptance-tester.md",
+  "sections": [
+    {
+      "section_key": "s001",
+      "line_start": 1,
+      "line_end": 14,
+      "blocks": [
+        {
+          "lines": [
+            2,
+            2
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            3,
+            3
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Phase 2 구현 시작 시 Coordinator 호출 대상",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "①문면 — 프론트매터 description 이 Coordinator 라우팅 트리거 · ④§16 위임 기본값 표(command+agents 절차 층→Coordinator) · ②check-*.py 27종 docstring 선두 전수 실독 — 에이전트 호출·라우팅 술어 0"
+            },
+            {
+              "label": "승인 현행 외부 계약·관련 테스트 대조와 입장 표 add/update 승인 외부 계약 한정 바깥 루프 Red 작성",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…`add/update`로 승인된 외부 계약만 바깥 루프 Red로 만든다» · ②27종 전수 — 입장 표 decision·소유 행 판정 술어 0(검사 공백) · ④§16 기본값 + rule-owner-map ⓓ(영구 테스트 입장 감사 = discipline-reviewer)"
+            },
+            {
+              "label": "구현 미열람 블랙박스 유지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "①문면 «구현을 보지 않는 블랙박스다» · ②27종 전수 — 리뷰·작성 입력 격리 술어 0 · ④절차 층 기본값(입력 공급·독립성 보장 주체가 Coordinator) · s002 b1-5 와 동축(재진술 의심 — 검수표 §4-④ ⑵ · 소급 패스 통합 후보 #3 ↔ #11)"
+            },
+            {
+              "label": "구현 코드 작성 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-coder"
+              ],
+              "basis": "①문면 «구현 코드는 쓰지 않는다» + s005 b1 «(coder의 몫)»이 소유자를 직접 지목(P-C) · ④절차 층 기본값 · agent-coder 병기는 거울 판형(agent-coder/s006 b1 이 인수·API 통합 테스트 소유를 acceptance-tester 로 지목) · s003 b1-4·s005 b1-1 과 동축 3각(재진술 의심 — 검수표 §4-④ ⑴ · 소급 패스 통합 후보 #4 ↔ #15 ↔ #81)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            4,
+            4
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            5,
+            10
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            11,
+            12
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            13,
+            14
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "승인 영구 테스트 입장 표의 외부 HTTP·event·user-observable·public contract 소유 행 한정 집행",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…소유한 행만 집행한다» · ②27종 전수 — 입장 표 owner 열 판정 술어 0 · ④§16 기본값 + rule-owner-map ⓓ(agent-coder/s001 b6 동형 배선)"
+            },
+            {
+              "label": "discipline-tdd decision 선적용과 implementation-test 의 입장된 add/update 작성 mechanics 한정 사용",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 — 스킬 우선순위(decision 층 ↔ mechanics 층)는 한 축의 규범이라 1 Work(agent-coder/s001 b6 판정 승계) · ②27종에 스킬 적용 순서 술어 0 · ④기본값 + discipline-reviewer 심사"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s002",
+      "line_start": 15,
+      "line_end": 18,
+      "blocks": [
+        {
+          "lines": [
+            16,
+            18
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "승인 설계 명세(G1 통과)·최소 열 입장 표·owner 행·관련 기존 test anchor 수령",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "①문면 «Coordinator가 … 준다» · ④절차 층 기본값 — 입력 묶음 공급 주체가 Coordinator · ②27종 docstring 에 입력 공급 술어 0"
+            },
+            {
+              "label": "decision 재분류·새 후보의 test 의무 승격 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «재분류하거나 새 후보를 test 의무로 승격하지 않는다» · ②27종 — decision 분류 술어 0(검사 공백) · ④기본값 + rule-owner-map ⓓ(입장 감사)"
+            },
+            {
+              "label": "pending·종료 근거 없는 remove/weaken 의 설계 반송",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-architect"
+              ],
+              "basis": "①문면 «설계로 반송한다» — 명세 보정 소유는 architect(P-C) · ④반송 수리 주체는 Coordinator · ②검사 공백(입장 표 상태 술어 0)"
+            },
+            {
+              "label": "승인 artifact 존재 한정 인수 테스트 배치와 명세의 패키지·테스트 구조 준수",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-test-config.py"
+              ],
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-test-config docstring ⑵ «`test/` 의 직계 자식은 다섯뿐 — `unit/`·`integration/`·`e2e/`…»(#383/#384) — 테스트 산출물 «배치» 축을 결정적으로 집행(agent-coder/s004 b1 의 같은 축 배선 승계) · 승인 artifact 유무 판정은 미커버(부분 커버)라 ⓓ 병기 · ④절차 층 기본값"
+            },
+            {
+              "label": "프로덕션 구현 코드 열람 금지(기존 테스트·승인 계약 한정)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "①문면 «**프로덕션 구현 코드를 보지 않는다**» · ②27종 — 열람 대상 격리 술어 0 · ④절차 층 기본값(블랙박스 독립성 보장 주체) · s001 b2-3 과 동축(재진술 의심 — 검수표 §4-④ ⑵ · 소급 패스 통합 후보 #3 ↔ #11 · 이 쪽이 «기존 테스트·승인 계약만» 대체 근거를 덧붙인 한정판)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s003",
+      "line_start": 19,
+      "line_end": 22,
+      "blocks": [
+        {
+          "lines": [
+            20,
+            22
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "add/update 한정 테스트 작성과 올바른 이유의 Red 확인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «`add/update`만 테스트를 쓰고 올바른 이유의 Red를 확인한다» · ②27종 — Red 사유 판정 술어 0 · ④기본값 + ⓓ(agent-coder/s003 b1 동형)"
+            },
+            {
+              "label": "decision 별 행위 계약(reuse 는 승인 anchor 실행·write 0 · 일반 retain 무편집 · remove 는 exact 승인 target · reject 는 test write·dispatch 0)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "동상 — 입장 표 행 대조는 discipline-reviewer 소유, 게이트 판정은 Coordinator · ②검사 공백"
+            },
+            {
+              "label": "명시 승인된 의미 보존 retain 재조직 한정(새 case·assertion·Red 없이 전후 동일 보호 유지)",
+              "class": "Exception",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "동상 — 조건부 허용(재조직 한정)이라 Exception(agent-coder/s003 b1 세 번째 Work 와 동형 판정) · 검사 공백"
+            },
+            {
+              "label": "코드·내부 단위 테스트 작성 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-coder"
+              ],
+              "basis": "①문면 «코드·내부 단위 테스트는 쓰지 않는다» + s005 b1 «(coder의 몫)» 소유자 지목(P-C) · ④기본값 · s001 b2-4·s005 b1-1 과 동축 3각(재진술 의심 — 검수표 §4-④ ⑴ · 소급 패스 통합 후보 #4 ↔ #15 ↔ #81)"
+            },
+            {
+              "label": "보고 형식 리터럴(path::test | decision | unique production failure | action | 변경 후 현행 보장 위치)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "①문면 리터럴 · ④기본값 — 보고 형식 준수 판정은 Coordinator(agent-coder/s003·command-dddjango/s007 과 3중 사본이나 교차 문서라 restates 유예 §3)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s004",
+      "line_start": 23,
+      "line_end": 48,
+      "blocks": [
+        {
+          "lines": [
+            24,
+            25
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "각 입력 행의 protected contract/evidence·unique production failure·existing authoritative coverage·decision·owner/path 선확인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «먼저 … 확인한다»(agent-coder/s004 b4 동형 문장) · ②27종 — 입장 표 행 대조 술어 0 · ④기본값 + ⓓ"
+            },
+            {
+              "label": "행 부재·비-owner 시 테스트 작성 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "동상 — owner 판정은 입장 표 감사 소유(검사 공백)"
+            },
+            {
+              "label": "candidate·피라미드·coverage·framework mechanics 근거의 새 case/assertion/helper 생성 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…근거로 새 case/assertion/helper를 만들지 않는다» · ②27종 — 테스트 생성 «근거» 술어 0 · ④기본값 + ⓓ(discipline-tdd 규율 심사)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            26,
+            26
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "새 정보 없는 계약 해석 재탐색 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "②27종 전수 — 사고 절차(재탐색) 술어 0 · ④절차 층 기본값(agent-coder/s004 b3 동형 배선)"
+            },
+            {
+              "label": "승인 명세·정본 표준·12-slot evidence 간 충돌 발견의 «새 정보» 인정",
+              "class": "Exception",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "①문면 «단 … 충돌의 발견은 «새 정보»다» · ④예외 성립 판정은 반송 축 수리 주체"
+            },
+            {
+              "label": "임의 절충 금지와 설계 반송",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-architect"
+              ],
+              "basis": "①문면 «임의 절충 없이 설계로 반송한다» — 명세 보정 소유는 architect · ④반송 수리 주체 Coordinator"
+            },
+            {
+              "label": "각 행·evidence 확인과 검증 실행의 재방문 비해당(확인 결과의 해석 충돌은 «새 정보»)",
+              "class": "Exception",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "①문면 축자 — 두 종결절이 같은 축(재방문 범위 정의)이라 1 Work(agent-coder/s004 b3 의 같은 문장 판정 승계) · ④절차 해석 규범(검사 공백)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            27,
+            27
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "외부 관찰 행위·계약(HTTP 상태·응답 형태·관찰 가능한 상태 변화) 한정 검증",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «외부에서 관찰되는 행위·계약만 검증한다» · ②27종 — 테스트가 무엇을 단언하는지 보는 술어 0 · ④기본값 + ⓓ(discipline-tdd 바깥 루프 규율 심사)"
+            },
+            {
+              "label": "내부 구현 디테일 검증 금지(coder 단위 테스트 영역)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-coder"
+              ],
+              "basis": "①문면 «그것은 coder의 단위 테스트 영역이다» — 판정 소유 배분 직접 지목(P-C) · ④기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            28,
+            28
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "테스트 오라클의 승인 현행 계약 고정(현재 구현 아님)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «테스트 오라클은 … 승인된 현행 계약이다» · ②27종 — 오라클 출처 술어 0 · ④기본값 + ⓓ(discipline-tdd 오라클 규율)"
+            },
+            {
+              "label": "기존 테스트·구현과의 상이를 이유로 한 현행 계약 약화 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "동상 — 계약 약화 판정은 의미 레인(검사 공백)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            29,
+            29
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "migration 파일·번호·dependency·operation·과거 model state·forward/reverse·DDL 검증 테스트의 신규 생성·확장 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-mechanism-ownership ⑵(#336 위치·#337 번호 꼴·#593 손편집 금지)는 마이그레이션 «파일» 규율이고 «그 파일을 검증하는 테스트의 존재»에는 술어가 없다 → 축 상이로 배제(심의 기록) · ④기본값 + rule-owner-map ⓓ(migration 전용 테스트 구분은 discipline-tdd 소유)"
+            },
+            {
+              "label": "임시 특성화 테스트의 예외 부인",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «임시 특성화 테스트도 예외가 아니다» — 앞 금지의 적용 범위를 넓히는 독립 종결절이라 분리 채번 · ④동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            30,
+            30
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "현행·종료 assertion 혼재 시 현행 보장 잔존 분리·부분 갱신",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 축자(agent-coder/s004 b7 첫 문장과 동일 문면 — 교차 문서 재진술 유예) · ②검사 공백 · ④기본값 + ⓓ"
+            },
+            {
+              "label": "부재가 계약이 아닌 경우 제거된 성공 테스트 대체용 404·필드 부재 테스트 발명 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…발명하지 않는다» · ②27종 — 계약 종료 의미 판정 술어 0 · ④기본값 + ⓓ"
+            }
+          ]
+        },
+        {
+          "lines": [
+            31,
+            31
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "지원 중 구 API·영속 데이터·발행 이벤트·회귀 불변식의 노후 사유 삭제 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «오래됐다는 이유로 삭제하지 않는다»(agent-coder/s004 b7 둘째 문장의 긍정면 «보존한다»와 거울 — 교차 문서 유예) · ④기본값 + ⓓ"
+            },
+            {
+              "label": "명세 침묵의 계약 종료 불인정",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-architect"
+              ],
+              "basis": "①문면 «명세의 침묵은 종료가 아니다» — 종료 evidence 는 명세 소유(architect) · ④반송·게이트 판정은 Coordinator"
+            }
+          ]
+        },
+        {
+          "lines": [
+            32,
+            32
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "기존 관련 migration 테스트의 기대별 처분(동일=존치·변경=기존 assertion 제자리 갱신·축소 한정·전건 종료=삭제)",
+              "class": "Exception",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 — 세 분기가 같은 대상(기존 migration 테스트)의 조건 분기라 1 Work(agent-coder/s004 b6 의 «제자리 갱신·축소 한정 허용» Exception 판형 승계) · ②검사 공백 · ④기본값 + ⓓ"
+            },
+            {
+              "label": "새 파일·case·migration 시나리오·coverage 필요 시 생성 금지와 검증 공백 보고",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "①문면 «만들지 않고 검증 공백을 보고한다» — «-지 않고»로 물린 방식 한정이라 1 Work · ④보고 수신 주체는 Coordinator"
+            }
+          ]
+        },
+        {
+          "lines": [
+            33,
+            33
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "입장된 단일 행위의 가독 표현과 테스트 분리에 의한 case 증식 금지",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…표현하되 테스트 분리 자체로 새 case를 늘리지 않는다» — 같은 행위의 상·하한이라 1 Work · ②검사 공백 · ④기본값 + ⓓ"
+            }
+          ]
+        },
+        {
+          "lines": [
+            34,
+            34
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "각 변경 테스트가 덮는 승인 행·독자 failure 명시",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «discipline 감수자가 이를 본다» — 판정 주체 직접 지목(P-C) · ④기본값 병기(보고 수납 Coordinator)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            35,
+            35
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "안정 계약 검증에 따른 리팩터 중 불변성",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②27종 — 테스트의 리팩터 내성 술어 0(검사 공백) · ④기본값 + ⓓ(discipline-tdd 4대 특성 심사)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            36,
+            36
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "implementation-test 계약 테스트 패턴·discipline-tdd 바깥 루프·architecture-api·architecture-ddd 계약·행위 정의 근거 준수",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer",
+                "agent-design-review-api",
+                "agent-design-review-ddd"
+              ],
+              "basis": "①문면이 네 스킬을 근거로 지목 · ④§16 위임 기본값 표를 문서군별로 적용 — implementation-test·discipline-tdd→discipline-reviewer(ⓓ) · architecture-api→design-review-api · architecture-ddd→design-review-ddd · ②mounted client 축은 check-composition-root 가 registrar/URLconf provenance 만 보고 «테스트 client 선택»에는 술어가 없어 배제(심의)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            37,
+            37
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "12-slot 오류 scope 의 승인 profile·1~12번 slot 전체를 입장 심사 contract evidence 로 독해",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "②code-profile 3종(error-centralization·api-error-controller-contract·openapi-error-declaration) docstring 은 코드 측 산출물만 보고 명세 12-slot 독해 술어 0 · ④절차 층 기본값 + 12-slot 심사판(design-review-api)"
+            },
+            {
+              "label": "add/update 행이 참조한 public runtime/wire subset 한정 테스트 오라클 사용",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «…subset만 테스트 오라클로 쓴다» — 앞 절과 목적어(심사 재료 ↔ 오라클 범위)가 갈려 분리 채번 · ②검사 공백 · ④동상"
+            },
+            {
+              "label": "profile·status·shape·header 의 기존 구현·기존 테스트·파일명 추론·발명 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «추론하거나 발명하지 않는다» · ②27종 — 오라클 출처 추론 금지 술어 0 · ④동상"
+            },
+            {
+              "label": "12-slot/profile 결측·상호 모순 시 설계 반송",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-architect",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «설계로 반송한다» — 명세 보정 소유 architect · ④반송 수리 Coordinator + 12-slot 심사판"
+            },
+            {
+              "label": "dddjango-code-json 공통 shape 의 정의(영구 plugin 상수 아님 — 6번 slot 의 exact field/type/required/default/nullability·Field metadata·model config·validator/serializer/computed field·Pydantic hook inventory 와 effective semantics/wire 의미 계약)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면이 shape 정본을 6번 slot 으로 고정(«영구 plugin 상수가 아니라 6번 slot 의 exact field/type/… 계약이다») · ④§16 위임 기본값 표(command+agents 절차 층→Coordinator) + 12-slot 심사판(design-review-api) · ②27종 전수 — code-profile 3종은 자기 입력 inventory 로 shape 를 «전제»할 뿐 shape 정본이 무엇인가를 판정하는 술어가 0이라 enforcedBy 를 비웠다(순환 배선 회피) · 부기(근거 유형 아님 — §16 4원 밖이라 표지를 달지 않는다): 파일럿 ninja §6.2 동일 규범의 adv 중재 정정과 agent-design-review-api spec 의 slot 6 D-only 처분이 같은 결론이다"
+            },
+            {
+              "label": "shape 별도 승인의 직접 Python/Schema 테스트 자동 입장 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «자동 입장시키지 않는다» · ②검사 공백(입장 판정은 명세 산출물) · ④동상"
+            },
+            {
+              "label": "reuse 의 관찰된 기존 exact-shape evidence 요구",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «`reuse`에는 관찰된 기존 exact-shape evidence가 있어야 하고» — 뒤 절(create/approved-change)과 대상이 갈려 분리 채번(agent-coder/s004 b15 의 같은 두 갈래 분리 판형 승계) · ②검사 공백"
+            },
+            {
+              "label": "create·approved-change 의 일반 G1 분리 명시 사용자 shape-승인 evidence 요구와 부재 시 STOP_FOR_USER_APPROVAL 반송",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 STOP_FOR_USER_APPROVAL 리터럴 · ②27종 grep 실측 해당 토큰 보유 검사기 0 · ④승인 정지 절차 소유 Coordinator + 12-slot 심사판 · s004 b19-3 과 동축(같은 profile 축의 다른 국면 — «승인 evidence 없으면 종료·확정 불가» · 재진술 의심 — 검수표 §4-④ ⑶ · 소급 패스 통합 후보 #47 ↔ #61)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            38,
+            38
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "직접 Schema/Python shape 테스트의 별도 add/update 승인 공개 Python consumer 계약 한정",
+              "class": "Exception",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «…승인된 경우에만» 조건 한정 · ②검사 공백(입장 표 행 판정) · ④기본값 + 12-slot 심사판"
+            },
+            {
+              "label": "Pydantic private API·validator 위치·ValidationError.loc·callable source digest·model config/hook inventory·framework 기본 직렬화/coercion 의 자동 제품 테스트 불인정",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «자동 제품 테스트가 아니다» · ②error-centralization 은 canonical module·wire-code uniqueness 만 보고 private mechanics 의 테스트화 여부 술어 0 · ④동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            39,
+            39
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "입장된 HTTP add/update 행의 실제 mounted Django client request 검증(승인 status/body/error-sensitive header·비노출 의미)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "①§16 매핑 표 «controller checker» 역할명 + 실장 확인 — 승인 header 의 주입 HttpResponse 대입 형태·two-argument Status 직접 반환을 정적 집행하는 인접 부분 커버이나 «mounted client 로 도달을 검증»하는 테스트 의무 자체는 미커버(agent-coder/s004 b23 의 같은 판형) · ④12-slot 심사판 병기"
+            },
+            {
+              "label": "helper/factory/serializer/mapping/handler 내부의 직접 테스트 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "②check-api-error-controller-contract 는 helper/handler 경유 «매핑 구현»을 차단할 뿐 «그 helper 를 테스트하는가»에는 술어가 없다 → 축 상이로 미병기(심의 기록) · ④기본값 + 심사판"
+            }
+          ]
+        },
+        {
+          "lines": [
+            40,
+            40
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "framework-owned 401/403/route 404/422/429/general HttpError/unknown 500 의 별도 승인 행 한정 status·민감정보 비노출 smoke",
+              "class": "Exception",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «별도 승인 행이 있을 때만» 조건 한정 · ②framework 소유 오류 열거의 코드 측 축은 check-business-vocabulary #119(BC 재선언 금지)이나 «테스트 smoke 허용 범위» 술어는 0 → 배제 심의 · ④12-slot 심사판"
+            },
+            {
+              "label": "별도 승인·실제 consumer evidence 있는 public wire field 의 해당 field 한정 exact 단언(전체 body snapshot·private/framework mechanics 확대 금지)",
+              "class": "Permission",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «…할 수 있지만 … 확대하지 않는다» — 같은 행위(단언)의 상·하한이라 1 Work · ②검사 공백 · ④동상"
+            },
+            {
+              "label": "명세에 없는 endpoint/backend/header 발명 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 축자 · ④기본값 + 심사판(스코프 확대 판정은 게이트 소유)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            41,
+            41
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "공개 OpenAPI add/update 행의 실제 URLconf mounted generated document 한정 검증(관련 operation/status/media/schema)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-openapi-error-declaration.py"
+              ],
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring «`dddjango-code-json` profile은 선택된 operation이 직접 반환하는 BC 오류와 `response={status: <Bc>ErrorSchema}` 선언의 일치를 검증»(§16 «OpenAPI checker» 역할명) — 선언 일치 축 집행 · mounted 실행 방식·검증 보고 축은 미커버(부분 커버 · agent-coder/s004 b23 동형) · ④심사판 병기"
+            },
+            {
+              "label": "controller-only client·api.get_openapi_schema()·helper 직접 호출 대체와 전체 document snapshot 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 축자 · ②검사기는 저장소의 선언을 볼 뿐 테스트의 문서 취득 «경로»에는 술어 0 · ④동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            42,
+            42
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "native success download/stream/redirect/schema-less 204 의 해당 계약 retain/add/update 행에 따른 유지·작성",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-response-schema-bypass.py"
+              ],
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring «Block direct raw 200-203 returns that bypass a declared Ninja schema» + 실장의 «File/stream/redirect and schema-less 204 paths remain framework-native carve-outs» carveout 실측(agent-design-review-api·agent-coder 양판 동형 승계) — carveout 존중 축 집행 · 테스트 유지 의무 자체는 미커버 · ④심사판 병기"
+            },
+            {
+              "label": "ErrorSchema 규칙을 사유로 한 새 smoke 자동 추가 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «…자동 추가하지 않는다» — 앞 절과 행위 대상(기존 계약 유지 ↔ 신규 smoke 생성)이 갈려 분리 채번 · ②검사 공백 · ④동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            43,
+            43
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "preserve-established 의 2~4·10~12번 slot 관찰·승인 status/body/header/media type/OpenAPI 한정 검증",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-openapi-error-declaration.py"
+              ],
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring «positional/auto/preserve 실행은 기존 `openapi_extra.responses` 저장소 전수 검사를 보존한다» — preserve 경로에도 OpenAPI 선언 축 일부 집행(부분 커버) · slot 범위 한정 판정은 심사 몫 · ④심사판"
+            },
+            {
+              "label": "해당 profile evidence 의 RFC 9457 기록 한정 RFC field·application/problem+json 기대",
+              "class": "Exception",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «…기록한 경우에만» 조건 한정 · ②27종에 RFC 9457·problem+json 술어 0(전수 실독) · ④심사판"
+            },
+            {
+              "label": "기존 RFC 테스트 종료·변경의 승인 설계 명세 기록 product-contract evidence 요구",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-architect",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «승인된 설계 명세에 기록된 현재 product-contract evidence가 필요하다» — 명세 기록 소유는 architect · ④게이트 판정 Coordinator + 심사판 · s004 b13-8 과 동축(같은 profile 축의 다른 국면 — STOP 조항의 «승인 evidence 요구»와 짝 · 재진술 의심 — 검수표 §4-④ ⑶ · 소급 패스 통합 후보 #47 ↔ #61)"
+            },
+            {
+              "label": "미기록 사용자 대화·tester 추론의 종료 근거 불인정",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «종료 근거가 아니다» · ②검사 공백 · ④동상"
+            },
+            {
+              "label": "code-profile shape 혼입 강제 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «code-profile shape를 섞어 강제하지 않는다» · ②배제 심의 — check-error-centralization 의 «Positional-only, `auto`, and `preserve-established` invocations do not apply schema semantics» 는 검사기 자신의 preserve 실행 한정 선언(비집행 선언)이고, 실장의 `_is_production_path` 가 `test`/`tests` 디렉터리·`test_*`·`*_test.py`·`conftest.py` 를 전수 배제하므로 이 규범의 위반 표면(tester 가 preserve scope 에 code-json shape 를 강제 단언하는 «테스트»)에 구조적으로 발화 불가 → enforcedBy 철회(agent-design-review-api spec 의 같은 축 규범 «preserve scope 의 code-profile module·Enum·base·direct-Status 혼입 금지»도 E 공란이라 초판 basis 의 «preserve 계열 배선과 동형» 원용은 오독이었다 — 그쪽 preserve 배선이 E 를 진 자리는 심사 대상이 «코드 산출물»인 slot 규범뿐) · 27종 전수 — 테스트 측 shape 강제 술어 0 · ④절차 층 기본값 + 12-slot 심사판"
+            }
+          ]
+        },
+        {
+          "lines": [
+            44,
+            44
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "error helper/handler/factory/serializer/mapping·Status·Schema 생성 등 내부 구현의 직접 테스트 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "②controller-contract 는 helper 경유 «매핑 구현»만 차단하고 테스트 대상 선택 술어 0(b15 와 같은 축 상이 심의) · ④기본값 + 심사판"
+            },
+            {
+              "label": "실제 pytest Red command 와 관련 failing assertion/traceback 보고",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "①문면 «보고하고» · ②27종은 자기 실행 사실을 보고하지 않음(검사 공백) · ④절차 층 기본값(보고 수신 주체)"
+            },
+            {
+              "label": "skip/xfail 사용 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②27종 전수 — skip/xfail 술어 0(agent-coder/s004 b23 의 같은 판정) · ④기본값 + rule-owner-map ⓓ · 앞 절과 행위 대상(보고 ↔ 테스트 표기)이 갈려 분리 채번"
+            },
+            {
+              "label": "전건 종료된 removal-only 의 가짜 negative Red 생성 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «가짜 negative Red를 만들지 않는다» · ②검사 공백 · ④기본값 + ⓓ"
+            }
+          ]
+        },
+        {
+          "lines": [
+            45,
+            45
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "이번 실행 Red 전용 비계(loader·dynamic import guard·대체 decorator·skip/xfail·helper)의 첫 Green 직후 제거",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 축자 · ②27종 — 비계 수명 술어 0 · ④기본값 + ⓓ(agent-coder/s004 b13 과 **byte-축자 사본** — 교차 문서라 restates 유예 §3)"
+            },
+            {
+              "label": "작업 전 존재 비계의 이번 실행 산물 간주·임의 삭제 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "동상 — 같은 축자 사본 블록의 둘째 문장(agent-coder 판 둘째 Work 와 대응)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            46,
+            46
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "컨트롤러 엔드포인트 최종 URL 의 @api_controller prefix + @route.* 메서드 경로 합성 계산",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "④§16 기본값 + 계약 lens — @api_controller «형태·경로 합성» 술어는 27종에 0(check-context-isolation 은 이미 붙은 데코의 auto_import=False(#110)만 본다 · agent-design-review-api 의 같은 규범 판정 승계) · ①문면이 합성 규칙을 리터럴로 규정"
+            },
+            {
+              "label": "승인 mounted surface 에 맞는 full Django client 또는 격리 client 선택",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "②검사 공백(테스트 client 선택 술어 0) · ④기본값 + 심사판"
+            },
+            {
+              "label": "함수형 Router 강제 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "②check-ninja-boundary-middleware 의 담당 술어는 `driving_layer` 자가 정의 미들웨어의 `settings.MIDDLEWARE` 자가등록 하나뿐이라 Router 형태에는 구조적으로 발화 불가(agent-coder 적대 리뷰 R2-5 수리 판정 승계 — 미병기) · ④기본값 + 심사판"
+            },
+            {
+              "label": "OpenAPI 계약의 mounted full-client 문서 한정 검증",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-openapi-error-declaration.py"
+              ],
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring 의 선언 일치 검증 축(부분 커버 — mounted 취득 «경로» 요구는 미커버) · ①문면 «반드시 mounted full-client 문서로 검증한다» · ④심사판"
+            },
+            {
+              "label": "use_unique_op_id=True 에 따른 controller 식별 operationId 의 승인 생성 문서 관찰",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "②27종 grep 실측 — operationId·use_unique_op_id 술어 0 · ④기본값 + 심사판"
+            }
+          ]
+        },
+        {
+          "lines": [
+            47,
+            48
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "add/update 신규·변경 Red 작성 시 한정 테스트 러너 가용성 확인",
+              "class": "Exception",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…써야 할 때만 … 확인한다» 조건 한정 · ②검사 공백 · ④기본값 + ⓓ"
+            },
+            {
+              "label": "pytest 설정 부재 시 implementation-django-ninja §2.1 버전-핀 규율로 pytest 스택 셋업 후 Red 실행",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-test-config.py"
+              ],
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-test-config docstring ⑴ «pytest 설정 파일(pytest.ini·tox.ini·setup.cfg·pyproject.toml)은 *존재* 하는데 pytest-django 를 Django settings 에 묶지 못하면 테스트 수집이 조용히 실패한다» — 셋업 «결과»의 바인딩 축을 결정적으로 집행하는 부분 커버 · 같은 docstring 의 «설정이 아예 없는 것(manage.py test 관례)은 위반이 아니다»가 «셋업 개시» 의무의 비커버 증거(agent-coder 의 같은 판정과 정합) → 잔여 축 ⓓ 병기 · ①문면이 §2.1 버전-핀 규율 인용"
+            },
+            {
+              "label": "reuse 의 확립된 기존 러너 anchor 실행 한정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «`reuse`는 확립된 기존 러너로 anchor만 실행하고» · ②검사 공백 · ④기본값 + ⓓ"
+            },
+            {
+              "label": "일반 retain·remove·reject 의 dependency·manifest·runner config 변경 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 — 앞 절과 decision 대상이 갈려 분리 채번 · ②27종 — 매니페스트 «값» 검사 술어 0 · ④기본값 + ⓓ"
+            },
+            {
+              "label": "승인된 새 인수 테스트의 pytest 관용구(함수형 + assert + @pytest.mark.django_db + 픽스처) 작성",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-test-config ⑴ 은 설정 «존재» 시 바인딩만 보고 관용구 형태(함수형·assert·마커)에는 술어 0 — 27종 전수 실독 결과 비커버라 enforcedBy 공란(agent-coder 의 pytest 채택 규범 판정과 동일 근거) · ④기본값 + ⓓ"
+            },
+            {
+              "label": "기존 TestCase 스위트 재작성·빈 tests.py 사유 새 test artifact 생성 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 축자 · ②동상(검사 공백) · ④기본값 + ⓓ"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s005",
+      "line_start": 49,
+      "line_end": 54,
+      "blocks": [
+        {
+          "lines": [
+            50,
+            51
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "구현 코드·내부 단위 테스트 작성 금지(coder 소유)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-coder"
+              ],
+              "basis": "①문면 «(coder의 몫)» 소유자 직접 지목(P-C) · ②27종에 테스트 소유권 술어 0 · ④절차 층 기본값 · s001 b2-4·s003 b1-4 와 동축 3각(재진술 의심 — 검수표 §4-④ ⑴ · 소급 패스 통합 후보 #4 ↔ #15 ↔ #81)"
+            },
+            {
+              "label": "외부 계약 단언 API 통합 테스트의 파일 위치 무관 자기 소유",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-coder"
+              ],
+              "basis": "①문면 «파일 위치와 무관하게 네 소유다» + agent-coder/s006 b1 의 거울 지목(«acceptance-tester/설계가 소유») · ④기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            52,
+            52
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "설계 명세 변경 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-architect"
+              ],
+              "basis": "①문면 «설계 명세를 바꾸지 않는다» — 명세 소유는 architect · ④기본값(agent-coder/s006 b2 동형 2분할 판정 승계)"
+            },
+            {
+              "label": "명세 모호·테스트 불가 시 임의 가정 금지와 설계 반송 보고",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-architect"
+              ],
+              "basis": "①문면 «임의로 가정하지 말고 보고한다(설계로 반송)» — 독립 종결절이고 행위 대상(명세 변경 ↔ 보고)이 갈려 분리 채번 · ④반송 수리 Coordinator"
+            }
+          ]
+        },
+        {
+          "lines": [
+            53,
+            53
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "명세에 없는 행위의 테스트 금지(스코프 고수)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "②check-idempotency-scope-creep 은 «태스크가 요청하지 않은 멱등성 산출물(전용 record 테이블·replay store·operation 오케스트레이션)»의 코드 추가만 차단해 대상이 «테스트 케이스»가 아니다 — agent-coder/s006 b5 가 «명세·슬라이스 밖 기능 생성»에 이 검사기를 병기한 것과 대상이 갈리므로 배제(축 상이 심의) · ④절차 층 기본값(스코프 승인 판정은 G0/G1 소유)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            54,
+            54
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Coordinator 제공 관련 경로 밖 전체 suite 탐색·정리 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "①문면 «Coordinator가 준 관련 경로 밖으로 … 탐색·정리하지 않는다» — 경로 묶음 공급 주체가 판정자 · ②검사 공백 · ④절차 층 기본값"
+            },
+            {
+              "label": "전체 suite 의 무관 실패 무편집 보고",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "①문면 «편집하지 않고 보고한다» — 독립 종결절·행위 대상 상이(탐색 범위 ↔ 무관 실패 처분)라 분리 채번 · ④보고 수신 주체"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

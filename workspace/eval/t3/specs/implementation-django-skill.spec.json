@@ -1,0 +1,558 @@
+{
+  "schema": "migrate-spec/1",
+  "doc_key": "implementation-django-skill",
+  "path": "dddjango/skills/implementation-django/SKILL.md",
+  "restates_paths": {
+    "implementation-django-skill": "dddjango/skills/implementation-django/SKILL.md"
+  },
+  "sections": [
+    {
+      "section_key": "s001",
+      "line_start": 1,
+      "line_end": 6,
+      "blocks": [
+        {
+          "lines": [
+            2,
+            2
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            3,
+            3
+          ],
+          "kind": "norm",
+          "restates": [
+            "implementation-django-skill/s003/b1",
+            "implementation-django-skill/s003/b2",
+            "implementation-django-skill/s003/b3",
+            "implementation-django-skill/s003/b4"
+          ],
+          "norms": [
+            {
+              "label": "Django 코어 코드 작성·리팩터링 시 이 스킬 선로드",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer",
+                "command-dddjango"
+              ],
+              "basis": "①문면 «…먼저 로드한다» — frontmatter description 은 스킬 로드 트리거(행 단위 prose/norm 판정) · ②check-*.py 27종 docstring 전수 실독: 스킬 로드·라우팅 술어 0(검사 공백) · §16 기본값(implementation-* → discipline-reviewer)에 절차 층 Coordinator 병기 — 스킬 부착 결정은 파이프라인 소유"
+            },
+            {
+              "label": "표현계층·JSON API·신규 REST 계약의 소유 스킬 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «…로 위임» 3건 · ②27종 전수 — 문서 간 위임 경계 술어 0 · §16 문서군 표(implementation-django-web·-ninja = 구현 규율 → discipline-reviewer · architecture-api = 계약 → design-review-api) · ninja-final s005-1.2 b1·b3 동일 축 배선 준용"
+            }
+          ]
+        },
+        {
+          "lines": [
+            4,
+            4
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            5,
+            6
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s003",
+      "line_start": 9,
+      "line_end": 19,
+      "blocks": [
+        {
+          "lines": [
+            10,
+            12
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Django 코어 설계·작성 작업의 스킬 로드 조건",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer",
+                "command-dddjango"
+              ],
+              "basis": "①문면 «…코드를 설계·작성할 때 로드한다» · ②27종 전수 — 스킬 로드 판정 술어 0 · §16 기본값 + 절차 층 Coordinator(로드 시점 판정 주체)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            13,
+            13
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "서버렌더 표현계층의 implementation-django-web 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «→ implementation-django-web» · ②27종 전수 — 스킬 경계 라우팅 술어 0 · §16 기본값(implementation-* 문서군 → discipline-reviewer) · web-final s002-1 b5 동일 위임 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            14,
+            14
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "JSON API 어댑터의 implementation-django-ninja 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «→ implementation-django-ninja» · ②27종 — 동상(검사 공백) · §16 기본값 · web-final s002-1 b5·ninja-final s005-1.2 b3 판형"
+            }
+          ]
+        },
+        {
+          "lines": [
+            15,
+            15
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "신규 REST API 계약 설계의 architecture-api 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «→ architecture-api» · ②27종 — 계약 설계 소유 판정 술어 0 · §16 문서군 표(architecture-api → design-review-api) · ninja-final s005-1.2 b1 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            16,
+            16
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "도메인 전략·애그리거트·도메인이벤트 채택의 architecture-ddd 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "①문면 «→ architecture-ddd» · ②27종 — 채택 여부 판정 술어 0(check-domain-model 은 구조 폐쇄만) · §16 문서군 표(architecture-ddd 설계 시점 → design-review-ddd) · ninja-final s005-1.2 b2 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            17,
+            17
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "DB 신뢰성·인덱스·격리·outbox 전달 보장의 architecture-db 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-db"
+              ],
+              "basis": "①문면 «→ architecture-db» · ②27종 — 격리 수준·전달 보장 판정 술어 0(check-transaction-boundary 는 경계 형태만) · §16 문서군 표(architecture-db → design-review-db) · ninja-final s025-7 저장소 축 배선 준용"
+            }
+          ]
+        },
+        {
+          "lines": [
+            18,
+            19
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Python 관용구·클린코드 원칙의 소유 스킬 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «→ implementation-python, … → discipline-cleancode» — 한 불릿의 두 인접 라우팅은 같은 축(언어·보편 규율 이관)이라 1 Work(ninja-final s005-1.2 b1 의 괄호 병기 상대 1 Work 처리 판형) · ②27종 — 술어 0 · §16 기본값"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s004",
+      "line_start": 20,
+      "line_end": 30,
+      "blocks": [
+        {
+          "lines": [
+            21,
+            22
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "비즈니스 로직의 뷰 밖 배치(평면 맥락 fat model)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «뷰가 아니라 모델·도메인에 — 평면 Django 맥락은 fat model(§4.1)» · ②27종 전수 — 로직 «의미» 배치 판정 술어 0(check-usecase-dto-placement 는 DTO 자리·check-domain-model 은 구조 폐쇄) · §16 기본값 · implementation-django-final s024-4.1 «비즈니스 로직의 모델·서비스 배치»(E 없음·discipline-reviewer)와 동일 배선"
+            },
+            {
+              "label": "표준 4계층의 domain_layer 애그리거트 판정 소유",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면이 «architecture-ddd §3.2»를 명시 지목 · ②27종 전수 — 판정 소유 «의미» 축 미커버(check-app-container 는 §3.2 중 위치 한 축만·docstring 명시) · ③P0 발견 7(final 규칙 압축 재진술) · architecture-ddd-final s017-3.2 b9 «새 판정이 얹히는 코드의 domain_layer 애그리거트 이주»(E 없음·design-review-ddd) 정합 + 구현 시점 축 discipline-reviewer 병기"
+            }
+          ]
+        },
+        {
+          "lines": [
+            23,
+            23
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "서비스 레이어 도입 시점과 HackSoft service/selector 패턴 준거",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «(§16.1–§16.2)» · ②27종 전수 — 서비스 도입 «시점» 판정 술어 0 · §16 기본값 · django-final s075-16.1·s076-16.2 전 규범 discipline-reviewer 배선 승계"
+            }
+          ]
+        },
+        {
+          "lines": [
+            24,
+            24
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "트랜잭션·일관성 경계의 transaction.atomic() 소유",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 §16.4 · ②check-transaction-boundary docstring 은 #4(application_layer 의 django import 0)·#200(after_commit)만 — «최소 블록 한정» 형태는 미커버 · django-final s078-16.4 b1 «atomic()은 최소 블록에 한정»(E 없음)과 동일 배선"
+            },
+            {
+              "label": "외부 부수효과의 transaction.on_commit() 시점 정렬",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-transaction-boundary.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-transaction-boundary docstring «#200 커밋 뒤 부작용은 unit_of_work.after_commit(…) — 응용이 transaction.on_commit·connection.in_atomic_block 을 직접 부르면 위반» — 부수효과 시점 축을 결정적으로 문다 · ①문면 §16.4 · django-final s078-16.4 b7 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            25,
+            25
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "유실 불가 메시지의 트랜잭셔널 outbox 구현",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-broker-contract.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-broker-contract docstring «#603 external 에 내용이 오면 딸림이 함께 선다 — ⑴outbox …»·«#529 듣는 쪽이 다른 배포 단위인가» — outbox 채택면을 문다 · ①문면 §16.5 · django-final s079-16.5 b1 동일 배선. 괄호의 «채택 기준 architecture-ddd §3.7·전달 보장 architecture-db §9.7»은 소유 좌표 안내라 비계수(s005 표와 같은 규율)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            26,
+            26
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "도메인 상태 값 집합의 domain Enum 파생",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «도메인 상태 값 집합은 domain Enum 파생» · ②27종 — 값 집합 «출처» 판정 술어 0(check-choices-literal-consumption 은 선언된 심볼의 소비면만) · django-final s015-2.5 b2 «값 집합 단일 출처는 domain_layer StrEnum»(E 없음) 동일 배선"
+            },
+            {
+              "label": "TextChoices 자체 선언의 순수 인프라 필드 한정",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 괄호 «TextChoices 자체 선언은 순수 인프라 필드 한정» — 조건부 허용이라 Exception · ②27종 — 필드의 «도메인/인프라» 성격 판정 술어 0 · django-final s015-2.5 b2 동명 Exception 배선 승계"
+            },
+            {
+              "label": "default= 의 .value 평탄화",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-choices-literal-consumption.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-choices-literal-consumption docstring «(a) 같은 필드 호출 안에서 choices= 가 심볼 출처인데 default=\"리터럴\" 을 쓴 경우»·«5) default=OrderStatus.PENDING.value(Attribute) 등은 정상(.value 평탄화 — implementation-django §2.5)» — 이 규범을 이름으로 지목 · ①문면 §2.5"
+            },
+            {
+              "label": "비교·.filter() 값의 심볼 참조 한정",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-choices-literal-consumption.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②동 docstring «(b) 심볼-choices 필드가 확인된 모델의 <Model>.objects.filter/exclude(<field>=\"리터럴\")» — .filter() 축 직접 커버(변수 우회·비교식은 의미 레인=discipline-reviewer 몫이라 병기) · django-final s015-2.5 b5 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            27,
+            27
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "QuerySet 최적화·N+1 방지의 selector/QuerySet 메서드 소유",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «(§5, §11.1)» · ②27종 전수 — 쿼리 형태·N+1 술어 0(check-transaction-boundary 는 쓰기 경계·check-usecase-dto-placement 는 DTO 자리) · django-final s032-5.1·s054-11.1 discipline-reviewer 배선 승계"
+            }
+          ]
+        },
+        {
+          "lines": [
+            28,
+            28
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "마이그레이션의 안전·무중단 순서 준수",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «(§10)» · ②27종 전수 — check-mechanism-ownership 은 migrations 의 자리(#336)·이름(#337)·도메인 import(#338)·손편집(#593)만 보고 «무중단 순서» 술어는 0 → 검사 공백 · §16 기본값 · django-final s049-10.1 전 규범 discipline-reviewer 배선 승계"
+            }
+          ]
+        },
+        {
+          "lines": [
+            29,
+            30
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "설정의 환경별 분리",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-test-config.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-test-config docstring ⑶ «<project>/settings/ 환경축 — #445 갈리는 축은 환경 하나뿐(기능별 분할 파일 금지)·#446 환경 하나=파일 하나·#447 공통 설정은 base» — 환경별 분리를 결정적으로 집행 · ①문면 «설정은 환경별 분리»(§3.3) · §16 «기본값 도피 금지» 적용(담당 검사기 docstring 근거 성립)"
+            },
+            {
+              "label": "settings 직접 접근 주의(모듈 최상위 회피)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «직접 접근 주의»(§3.4) — «주의»는 약형 요구라 Obligation(정본 s022-3.4 b1 은 같은 축을 Prohibition «모듈 최상위 settings 접근 회피»로 세웠다 · 재진술 쌍이지만 class 는 문면 강도 차이로 갈린다 — 소급 패스 주의) · ②27종 — 모듈 최상위 settings 접근 술어 0 · django-final s022-3.4 b1(E 없음·discipline-reviewer) 동일 배선"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s005",
+      "line_start": 31,
+      "line_end": 53,
+      "blocks": [
+        {
+          "lines": [
+            32,
+            34
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "주제별 references/final.md 해당 절 준거",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «주제별로 … 해당 절을 따른다» · ②27종 전수 — 참조 문서 로딩·준거 술어 0 · §16 기본값(implementation-* → discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            35,
+            36
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            37,
+            37
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            38,
+            38
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            39,
+            39
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            40,
+            40
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            41,
+            41
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            42,
+            42
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            43,
+            43
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            44,
+            44
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            45,
+            45
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            46,
+            46
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            47,
+            47
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            48,
+            48
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            49,
+            49
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            50,
+            50
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            51,
+            52
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            53,
+            53
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "절 단위 필요 항목 한정 로드",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «필요한 항목만 읽는다(전체 로드 불필요)» · ②27종 — 로드 범위 술어 0 · §16 기본값. 표 15행은 주제→§ 라우팅 목차라 규범 비계수(P0 규약 승계)"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

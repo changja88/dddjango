@@ -1,4 +1,5 @@
 ---
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 name: architecture-api
 description: REST/HTTP API 계약 설계 지식 — 리소스·메서드 의미론, 요청/응답 계약, 상태 코드, dddjango-code-json 기본과 선택형 RFC 9457 에러 프로필, 페이지네이션·버전관리·하위 호환성·Rate Limiting·멱등성 키·OpenAPI. REST/HTTP 계약(엔드포인트 설계, 상태 코드 선택, 에러 프로필, 버전·하위 호환성 결정, OpenAPI 반영)을 새로 정의하거나 변경할 때 먼저 로드한다. JSON 직렬화·라우터 구현은 implementation-django-ninja, 서버렌더 표현계층은 implementation-django-web, 도메인 모델·애그리거트는 dddjango:architecture-ddd, 데이터 신뢰성·트랜잭션은 architecture-db로 위임.
 user-invocable: false
@@ -7,6 +8,7 @@ user-invocable: false
 # REST API 계약 설계
 
 ## 언제 쓰나
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 REST API 계약(리소스 설계, HTTP 메서드 의미론, 상태 코드, 요청/응답 본문·헤더, 에러 형식, 페이지네이션, 버전 관리, 하위 호환성, Rate Limiting, 멱등성 키, OpenAPI)을 결정하거나 변경할 때 로드한다. 경계:
 
@@ -17,6 +19,7 @@ REST API 계약(리소스 설계, HTTP 메서드 의미론, 상태 코드, 요�
 - Django ORM·서비스 레이어 구현 → `implementation-django`
 
 ## 핵심 운영 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - RFC 9110 HTTP 의미론 우선: 메서드 안전성·멱등성을 정확히 지키고, PUT은 전체 교체, PATCH는 부분 수정, POST는 non-idempotent 생성으로 구분 (§2)
 - URL은 명사·복수형·케밥케이스 리소스로 설계하고 동사 행위를 URL에 포함하지 않는다 (§3)
@@ -28,6 +31,7 @@ REST API 계약(리소스 설계, HTTP 메서드 의미론, 상태 코드, 요�
 - 모든 계약 결정은 OpenAPI에 반영한다 — path·method·schema·response·security·header를 빠짐없이 기술한다 (§14)
 
 ## 상세 레퍼런스
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:
 

@@ -1,4 +1,5 @@
 ---
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 name: implementation-python
 description: Python 언어 특화 구현 지식 — 타입 힌트·타입 시스템, 구조적 패턴 매칭, 컬렉션·데이터 구조, 함수 설계, 데코레이터, 디스크립터, @property, 클래스 설계, Protocol 심화, Enum/dataclass/NamedTuple, 연산자 오버로딩, pydantic v2, 이터레이터·제너레이터, 컨텍스트 매니저, 예외 처리, 동시성·병렬성, 성능 프로파일링, f-문자열, Python 관용 표현, 디자인 패턴, Ruff, mypy/pyright, 디버깅, 독스트링, 정밀 연산, Python 3.14 변경사항. Python 관용구·타입·Protocol/ABC·경계 도구 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. 기술무관 클린코드 원칙은 dddjango:discipline-cleancode, Django 프레임워크는 implementation-django, 구조 패턴 선택은 dddjango:architecture-ddd, 테스트 코드 작성은 implementation-test로 위임.
 user-invocable: false
@@ -7,6 +8,7 @@ user-invocable: false
 # Python 언어 특화 구현
 
 ## 언제 쓰나
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Python 언어 관용구·타입 시스템·Protocol/ABC·dataclass·제너레이터·동시성·Ruff·mypy 등 Python 특화 구현 결정이 주 작업일 때 로드한다. 경계:
 
@@ -16,6 +18,7 @@ Python 언어 관용구·타입 시스템·Protocol/ABC·dataclass·제너레이
 - 테스트 코드 작성(pytest·픽스처·mock·더블) → `implementation-test`
 
 ## 핵심 운영 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - 타입 어노테이션은 전 코드베이스에 일관 적용, Optional→X | None, 최신 PEP 695 문법 우선 (§1)
 - Union/Literal/NewType으로 상태 공간을 좁혀 잘못된 상태를 타입 레벨에서 차단 (§1.3–§1.4)
@@ -30,6 +33,7 @@ Python 언어 관용구·타입 시스템·Protocol/ABC·dataclass·제너레이
 - Ruff로 린트·포맷 통합, mypy/pyright strict 모드로 타입 보장 (§22–§23)
 
 ## 상세 레퍼런스
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:
 

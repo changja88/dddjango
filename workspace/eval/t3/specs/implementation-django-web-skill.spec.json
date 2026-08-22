@@ -1,0 +1,542 @@
+{
+  "schema": "migrate-spec/1",
+  "doc_key": "implementation-django-web-skill",
+  "path": "dddjango/skills/implementation-django-web/SKILL.md",
+  "restates_paths": {
+    "implementation-django-web-skill": "dddjango/skills/implementation-django-web/SKILL.md"
+  },
+  "sections": [
+    {
+      "section_key": "s001",
+      "line_start": 1,
+      "line_end": 6,
+      "blocks": [
+        {
+          "lines": [
+            2,
+            2
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            3,
+            3
+          ],
+          "kind": "norm",
+          "restates": [
+            "implementation-django-web-skill/s003/b1",
+            "implementation-django-web-skill/s003/b2",
+            "implementation-django-web-skill/s003/b3",
+            "implementation-django-web-skill/s003/b4"
+          ],
+          "norms": [
+            {
+              "label": "서버렌더 뷰·템플릿·폼·HTMX 코드 작성·리팩터링 시 이 스킬 선로드",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer",
+                "command-dddjango"
+              ],
+              "basis": "①문면 «…먼저 로드한다» — frontmatter description 은 스킬 로드 트리거(행 단위 norm) · ②check-*.py 27종 전수 — 스킬 로드·라우팅 술어 0 · §16 기본값(implementation-* → discipline-reviewer) + 절차 층 Coordinator(스킬 부착 결정 주체)"
+            },
+            {
+              "label": "Django 코어·JSON API 어댑터·REST 계약의 소유 스킬 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «…로 위임» 3건 · ②27종 — 위임 경계 술어 0 · §16 문서군 표(implementation-django·-ninja → discipline-reviewer · architecture-api → design-review-api) · web-final s001 b1 «REST API 계약·Ninja 구현의 architecture-api·implementation-django-ninja 기준 준거»(design-review-api+discipline-reviewer) 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            4,
+            4
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            5,
+            6
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s003",
+      "line_start": 9,
+      "line_end": 19,
+      "blocks": [
+        {
+          "lines": [
+            10,
+            12
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "서버렌더 표현계층 설계·작성 작업의 스킬 로드 조건",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer",
+                "command-dddjango"
+              ],
+              "basis": "①문면 «…코드를 설계·작성할 때 로드한다» · ②27종 — 로드 판정 술어 0 · §16 기본값 + 절차 층 Coordinator · web-final s002-1 b1 «서버 렌더링 웹 화면 구현의 implementation-django-web 담당» 동일 축"
+            }
+          ]
+        },
+        {
+          "lines": [
+            13,
+            13
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "REST 리소스·HTTP 상태·Problem Details·OpenAPI 계약의 architecture-api 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «→ architecture-api» · ②27종 — 계약 설계 소유 술어 0 · §16 문서군 표 · web-final s002-1 b4 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            14,
+            14
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Django Ninja Router/Schema/API 어댑터 구현의 implementation-django-ninja 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «→ implementation-django-ninja» · ②27종 — 스킬 경계 술어 0 · §16 기본값 · web-final s002-1 b5 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            15,
+            15
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "모델·QuerySet·Manager·마이그레이션·트랜잭션의 implementation-django 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «→ implementation-django» · ②27종 — 동상 · §16 기본값 · web-final s002-1 b6 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            16,
+            16
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "DB locking·isolation·index·rollout/backfill 의 architecture-db 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-db"
+              ],
+              "basis": "①문면 «→ architecture-db» · ②27종 — 격리·인덱스 설계 술어 0 · §16 문서군 표 · web-final s002-1 b7 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            17,
+            17
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "pytest 픽스처·테스트더블·상세 테스트 구현의 implementation-test 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «→ implementation-test» · ②27종 — 테스트 mechanics 소유 술어 0 · §16 기본값 · web-final s002-1 b8 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            18,
+            19
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "도메인 상태 전이·정책·불변식의 architecture-ddd 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "①문면 «→ architecture-ddd» · ②27종 — 도메인 정책 결정 술어 0 · §16 문서군 표 · web-final s002-1 b9 «도메인 상태 전이·정책·불변식의 architecture-ddd 선결정» 동일 배선"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s004",
+      "line_start": 20,
+      "line_end": 31,
+      "blocks": [
+        {
+          "lines": [
+            21,
+            22
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "뷰의 얇은 어댑터 유지",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «뷰는 얇은 어댑터»(§1) · ②27종 전수 — 뷰 두께 «의미» 판정 술어 0(check-ninja-boundary-middleware 는 전역 미들웨어 자가등록만) · §16 기본값 · web-final s003-2 b9 «view 의 thin adapter 유지» 동일 배선"
+            },
+            {
+              "label": "뷰 책임의 6종 한정(도메인 동작 비소유)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «요청 처리·auth/permission·form·context 조율·서비스 호출·응답 렌더링만» — 폐쇄 한정 · ②27종 — 술어 0 · web-final s002-1 b10 «웹 view·template 의 domain behavior 비소유»+«view 의 조합 책임 한정» 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            23,
+            23
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "TemplateView/Generic CBV/FBV 선택의 흐름 복잡도 기준",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «선택은 흐름 복잡도 기준»(§2) · ②27종 — 뷰 종류 선택 술어 0 · §16 기본값 · web-final s003-2 b1 3규범(선택 기준) 압축 사본 배선 승계"
+            },
+            {
+              "label": "mixin 심화 CBV 의 재검토",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «mixin이 깊어지면 재검토» · ②27종 — MRO·mixin 깊이 술어 0 · web-final s003-2 b8 «mixin 이 깊어지는 CBV — 재검토…» 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            24,
+            24
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "context 의 표시 값 한정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «context에는 표시 값만»(§3) · ②27종 — context 적재 값 술어 0 · web-final s004-3 b1 «view·context builder … 표시 값 준비» 동일 배선"
+            },
+            {
+              "label": "도메인 동작의 서비스/usecase boundary 분리",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «도메인 동작은 서비스/usecase boundary로 분리» — 행위 대상이 다른 별개 규범 · ②27종 — 배치 «의미» 술어 0(check-usecase-dto-placement 는 application_layer 자료 배치만) · web-final s003-2 b9 «쓰기 유스케이스·다중 모델 동작의 service/usecase boundary 이전» 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            25,
+            25
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "템플릿의 presentation·presentation-related branching 한정 담당",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 §4 · ②check-naming #589 «[ast+] 템플릿 업무 판정 후보 — {% if %} 조건의 비교 연산·업무 어휘(Q2)»가 이 규범의 위반면을 정확히 겨냥하지만 ast+ «후보» 채널이라 exit 불산입이고 마무리는 discipline-reviewer 몫 — 결정적 집행이 아니므로 enforcedBy 비배선(#588 «사람 문구는 템플릿에 — 유스케이스·도메인의 render_to_string·gettext 호출»은 반대 방향 축이라 이 규범과 무관) · 정본 web-final s005-4 b1·s002-1 b10 도 E=None 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            26,
+            26
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "web form 의 GET·valid POST·invalid POST·redirect·form error 전 경로 처리",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 §6 · ②27종 — 폼 흐름 경로 커버 술어 0 · §16 기본값 · web-final s007-6 b7·b8·s011-10 b7 압축 사본 배선 승계"
+            }
+          ]
+        },
+        {
+          "lines": [
+            27,
+            27
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "HTMX fragment 의 method·auth·permission·CSRF 동급 보호",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 §7 · ②27종 — CSRF·permission 적용 술어 0(check-ninja-boundary-middleware 는 JSON 경계 축) · web-final s008-7 b4 «state-changing HTMX/AJAX 의 non-HTMX POST 동급 auth·permission·CSRF 검증» 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            28,
+            28
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "CSRF·XSS 설정·보안 헤더의 Django 보안 프리미티브 유지",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 §8 · ②27종 — 보안 설정·미들웨어 순서 술어 0 · §16 기본값 · web-final s009-8 b1·b6 압축 사본 배선 승계"
+            }
+          ]
+        },
+        {
+          "lines": [
+            29,
+            29
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "render acceptance 보고의 실행 검증 한정 기재",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «실제 실행한 검증만 기재»(§10) · ②27종 — 보고 정직성 술어 0 · §16 기본값 + rule-owner-map ⓓ · web-final s011-10 b1 동일 배선"
+            },
+            {
+              "label": "미실행 검증의 미실행 명시",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «미실행은 미실행으로 명시» — 별개 행위(누락 고지) · ②27종 — 동상 · web-final s011-10 b1 둘째 규범 동일 배선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            30,
+            31
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "에러의 출처 기준 분류",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «에러는 출처로 분류»(§11) · ②27종 — 분류 기준 술어 0 · web-final s012-11 b1 «service/usecase 예외의 출처 분류» 동일 배선"
+            },
+            {
+              "label": "도메인 예외의 view-local 재렌더",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «도메인 예외는 view-local 재렌더» · ②27종 — narrow except·재렌더 형태 술어 0 · web-final s012-11 b3 동일 배선"
+            },
+            {
+              "label": "시스템·미식별 에러의 handler500 처리",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «시스템·미식별은 handler500» · ②27종 — handler500 회부 술어 0 · web-final s012-11 b5 동일 배선"
+            },
+            {
+              "label": "transient 의 미들웨어 503 매핑",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-transient-overmapping.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-transient-overmapping docstring «transient 인프라 예외 핸들러가 영구장애 변종을 구별하는 분기 없이 클래스 통째를 retryable status(503/409)로 무조건 매핑한 정확한 형태만 차단» — 이 규범의 오적용면을 결정적으로 문다 · ①문면 «transient는 미들웨어 503» · web-final s012-11 b6 동일 배선"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s005",
+      "line_start": 32,
+      "line_end": 50,
+      "blocks": [
+        {
+          "lines": [
+            33,
+            35
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "주제별 references/final.md 해당 절 준거",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «주제별로 … 해당 절을 따른다» · ②27종 — 참조 문서 준거 술어 0 · §16 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            36,
+            37
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            38,
+            38
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            39,
+            39
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            40,
+            40
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            41,
+            41
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            42,
+            42
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            43,
+            43
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            44,
+            44
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            45,
+            45
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            46,
+            46
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            47,
+            47
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            48,
+            49
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            50,
+            50
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "절 단위 필요 항목 한정 로드",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «필요한 항목만 읽는다(전체 로드 불필요)» · ②27종 — 로드 범위 술어 0 · §16 기본값. 표 11행은 주제↔§N 매핑 목차라 규범 비계수(P0 승계)"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

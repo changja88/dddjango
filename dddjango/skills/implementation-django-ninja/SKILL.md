@@ -1,4 +1,5 @@
 ---
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 name: implementation-django-ninja
 description: Django Ninja JSON API 어댑터 구현 지식 — Router/Schema/Operation, controller-owned <Bc>ErrorSchema, registrar 합성, 인증·인가, 필터링·정렬·페이지네이션, Idempotency-Key, OpenAPI 계약 확인, mounted Django client HTTP 계약 검증, DRF-to-Ninja 마이그레이션. Router·Schema·API 어댑터 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. REST 계약 설계는 architecture-api, 도메인 규칙·구조 패턴은 dddjango:architecture-ddd, Django ORM·서비스·트랜잭션은 implementation-django, 테스트 픽스처·더블 구현은 implementation-test로 위임.
 user-invocable: false
@@ -7,6 +8,7 @@ user-invocable: false
 # Django Ninja JSON API 구현
 
 ## 언제 쓰나
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Django Ninja Router/Schema/Operation·controller-owned <Bc>ErrorSchema·API registrar·인증·필터링·페이지네이션·OpenAPI·mounted Django client 코드를 설계·작성할 때 로드한다. 경계:
 
@@ -16,6 +18,7 @@ Django Ninja Router/Schema/Operation·controller-owned <Bc>ErrorSchema·API regi
 - pytest 픽스처·팩토리·mock·테스트더블·동시성 테스트 구현 → `implementation-test`
 
 ## 핵심 운영 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - Router는 HTTP 어댑터로 얇게: 요청 바인딩·auth hook·서비스 호출·응답 매핑만 (§1.3)
 - Request/Response schema는 명시적으로 분리, ModelSchema는 내부 구현 보호가 확실할 때만 (§3.1–§3.2)
@@ -36,6 +39,7 @@ Django Ninja Router/Schema/Operation·controller-owned <Bc>ErrorSchema·API regi
 - 라우팅 결정 전 계약·DB·도메인이 미결이면 각 소유 스킬 먼저 (§11)
 
 ## 상세 레퍼런스
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:
 

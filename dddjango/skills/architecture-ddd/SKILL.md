@@ -1,4 +1,5 @@
 ---
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 name: architecture-ddd
 description: 도메인 주도 설계(DDD) 지식 — 전략 패턴(바운디드 컨텍스트·유비쿼터스 언어·컨텍스트 맵·증류·이벤트 스토밍), 전술 패턴(값 객체·엔티티·애그리거트·리포지토리·도메인 서비스·응용 서비스·도메인 이벤트·Specification), 유연한 설계, 아키텍처(계층+DIP·핵사고날·CQRS), 구현 패턴(패키지 구조·Data Mapper·Repository+UoW·Event Sourcing·Saga·패턴 선택). 도메인 언어·비즈니스 정책·애그리거트 경계·컨텍스트 경계·도메인 이벤트 채택을 결정할 때 먼저 로드한다. Django 구현 코드는 implementation-django, outbox 전달 보장과 트랜잭션 설계는 architecture-db, API 계약은 architecture-api로 위임.
 user-invocable: false
@@ -7,6 +8,7 @@ user-invocable: false
 # 도메인 주도 설계 (DDD)
 
 ## 언제 쓰나
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 도메인 언어(유비쿼터스 언어), 비즈니스 정책·상태 전이, 애그리거트 경계, 바운디드 컨텍스트 경계, 도메인 이벤트 채택 여부가 불명확할 때 로드한다. 경계:
 
@@ -15,6 +17,7 @@ user-invocable: false
 - REST API 계약·엔드포인트 설계 → `architecture-api`
 
 ## 핵심 운영 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - 전략 설계가 전술 패턴보다 먼저다: 핵심 도메인 식별 → 바운디드 컨텍스트 설계 → 컨텍스트 맵 → 전술 패턴 적용. 전략 없이 전술 패턴만 적용하면 "잘못된 경계에서 좋은 코드를 작성하는 결과"가 된다 (§1.2, §2)
 - 유비쿼터스 언어는 바운디드 컨텍스트 내에서만 유효하다 — 동일 개념도 컨텍스트가 다르면 다른 언어를 쓴다 (§2.3)
@@ -28,6 +31,7 @@ user-invocable: false
 - 구현 패턴(Data Mapper, Repository+UoW, Event Sourcing, Saga, CQRS)은 명확한 필요가 확인된 시점에 선택하고, 패턴 선택 절차를 통해 Risky Write 라우팅을 포함해 결정한다 (§6.8)
 
 ## 상세 레퍼런스
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:
 

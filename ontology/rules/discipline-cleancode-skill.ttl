@@ -1,0 +1,446 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+djr:R-3079 a djr:Obligation ;
+    skos:prefLabel "클린코드 원칙 필요 시 스킬 로드"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3079@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3079@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3079 ;
+    djr:revision 1 .
+
+djr:R-3080 a djr:Obligation ;
+    skos:prefLabel "Python 관용구·Django 특화 패턴의 타 스킬 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3080@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3080@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3080 ;
+    djr:revision 1 .
+
+djr:R-3081 a djr:Obligation ;
+    skos:prefLabel "언어 비종속 클린코드 원칙 필요 시 로드"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3081@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3081@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3081 ;
+    djr:revision 1 .
+
+djr:R-3082 a djr:Obligation ;
+    skos:prefLabel "Python 관용구·PEP8·타입 힌트·docstring 기계 규칙의 implementation-python 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3082@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3082@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3082 ;
+    djr:revision 1 .
+
+djr:R-3083 a djr:Obligation ;
+    skos:prefLabel "Django 모델·ORM·서비스 레이어 특화 패턴의 implementation-django 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3083@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3083@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3083 ;
+    djr:revision 1 .
+
+djr:R-3084 a djr:Obligation ;
+    skos:prefLabel "도메인 전략·애그리거트·바운디드 컨텍스트의 architecture-ddd 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3084@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3084@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3084 ;
+    djr:revision 1 .
+
+djr:R-3085 a djr:Obligation ;
+    skos:prefLabel "테스트 코드 작성법의 implementation-test 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3085@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3085@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3085 ;
+    djr:revision 1 .
+
+djr:R-3086 a djr:Obligation ;
+    skos:prefLabel "이름은 의도를 드러낸다 — 한 개념 한 단어·품사·범위 비례 길이"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3086@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3086@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3086 ;
+    djr:revision 1 .
+
+djr:R-3087 a djr:Obligation ;
+    skos:prefLabel "매직 값·상수 승격의 판정 원리 적용(닫힌 집합 승격·심볼 소비·허용 목록·birth-enum·wire Literal 재예외)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3087@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3087@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3087 ;
+    djr:revision 1 .
+
+djr:R-3088 a djr:Obligation ;
+    skos:prefLabel "함수는 작게 한 가지만 — 추상화 수준 통일·인수 최소·플래그 금지·명령조회 분리·부수효과 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3088@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3088@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3088 ;
+    djr:revision 1 .
+
+djr:R-3089 a djr:Obligation ;
+    skos:prefLabel "인터페이스 주석 필수·구현 주석 최소화"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3089@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3089@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3089 ;
+    djr:revision 1 .
+
+djr:R-3090 a djr:Obligation ;
+    skos:prefLabel "모듈은 깊게 — 단순 인터페이스 뒤 강력 기능·얕은 모듈과 레드 플래그 경계"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3090@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3090@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3090 ;
+    djr:revision 1 .
+
+djr:R-3091 a djr:Obligation ;
+    skos:prefLabel "행동이 상태를 결정한다 — 묻지 말고 시켜라·조건문의 다형성 대체·로직과 데이터 동거"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3091@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3091@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3091 ;
+    djr:revision 1 .
+
+djr:R-3092 a djr:Obligation ;
+    skos:prefLabel "SOLID 5원칙 적용 — 같은 이유는 모으고 다른 이유는 분리"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3092@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3092@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3092 ;
+    djr:revision 1 .
+
+djr:R-3093 a djr:Prohibition ;
+    skos:prefLabel "DRY 는 지식의 중복을 금지한다 — 코드 유사성이 아닌 비즈니스 지식 단위 판단"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3093@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3093@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3093 ;
+    djr:revision 1 .
+
+djr:R-3094 a djr:Obligation ;
+    skos:prefLabel "오류는 설계로 먼저 제거하고 불가하면 예외 — 보호절·DbC·방어적 프로그래밍"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3094@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3094@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3094 ;
+    djr:revision 1 .
+
+djr:R-3095 a djr:Obligation ;
+    skos:prefLabel "코드 스멜 감지·리팩토링 제거 — 기능 보존 검증하며 작은 단계"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3095@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3095@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3095 ;
+    djr:revision 1 .
+
+djr:R-3096 a djr:Obligation ;
+    skos:prefLabel "레거시는 Seam 보호 후 개선 — 임시 특성화 probe 의 영구 계약 고정 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3096@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3096@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3096 ;
+    djr:revision 1 .
+
+djr:R-3097 a djr:Obligation ;
+    skos:prefLabel "주제별 상세는 references/final.md 의 해당 절을 따른다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3097@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3097@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3097 ;
+    djr:revision 1 .
+
+djr:R-3098 a djr:Permission ;
+    skos:prefLabel "final.md 는 필요한 항목만 읽는다(전체 로드 불필요)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3098@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3098@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3098 ;
+    djr:revision 1 .
+
+<https://numchida.com/ns/djr#d/dddjango/skills/discipline-cleancode/SKILL.md> a djr:Document ;
+    skos:prefLabel "discipline-cleancode-skill"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s001> a djr:Section ;
+    djr:headingSnapshot "---"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-cleancode/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s001/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 1 ;
+    djr:text "name: discipline-cleancode\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s001/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s001> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s003/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s003/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s003/b3> ;
+    djr:statesNorm djr:R-3079, djr:R-3080 ;
+    djr:text "description: 기술 무관 클린코드 규율 — 네이밍, 함수 설계, 추상화·캡슐화, 깊은 모듈 설계, 객체 설계 원칙, SOLID, 상태 관리, 오류 처리, 중복 제거·DRY, 협력·의존성 관리, 리팩토링, 레거시 코드, 설계 철학. 코드를 새로 작성하거나 리팩터링할 때 명명·함수 형태·책임·캡슐화·추상화·SOLID·중복·오류 처리 원칙이 필요하면 로드한다. Python 언어 관용구·PEP8 기계적 규칙은 implementation-python, Django 특화 패턴은 implementation-django로 위임.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s001/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 3 ;
+    djr:text "user-invocable: false\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s001/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 4 ;
+    djr:text "---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s003> a djr:Section ;
+    djr:headingSnapshot "## 언제 쓰나"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-cleancode/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s003/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-3081 ;
+    djr:text "\n언어 비종속적 클린코드 원칙(명명, 함수 설계, 캡슐화, SOLID, 중복, 오류 처리, 리팩토링)이 필요한 코드 작성·리뷰·리팩터링 시 로드한다. 경계:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s003/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-3082 ;
+    djr:text "- Python 언어 관용구·PEP8·타입 힌트·docstring 기계적 규칙 → `implementation-python`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s003/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-3083 ;
+    djr:text "- Django 모델·ORM·서비스 레이어 특화 패턴 → `implementation-django`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s003/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-3084 ;
+    djr:text "- 도메인 전략·애그리거트·바운디드 컨텍스트 → `architecture-ddd`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s003/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-3085 ;
+    djr:text "- 테스트 코드 작성법(mock·픽스처·assert) → `implementation-test`\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004> a djr:Section ;
+    djr:headingSnapshot "## 핵심 운영 원칙"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-cleancode/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-3086 ;
+    djr:text "\n- 이름은 의도를 드러내라: 한 개념에 한 단어, 클래스는 명사·메서드는 동사, 이름 길이는 범위에 비례 (§2)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 10 ;
+    djr:statesNorm djr:R-3095 ;
+    djr:text "- 코드 스멜을 감지하고 리팩토링 기법으로 제거하라: 기능 보존을 검증하며 작은 단계로 진행 (§15)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004/b11> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 11 ;
+    djr:statesNorm djr:R-3096 ;
+    djr:text "- 레거시 코드는 Seam을 찾아 보호한 후 개선하라: Sprout·Wrap과 non-migration 임시 특성화 probe를 쓰되, 현재 구현 포착을 영구 계약으로 고정하지 않는다 (§16)\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-3087 ;
+    djr:text "- 매직 값·상수 승격은 판정 원리로: 닫힌 집합을 분기·판정에 쓰면 1곳째부터 집합 타입, 선언된 심볼은 심볼로만 소비(`==` 비교), 허용 목록(사람 대상 서술·정의부·테스트 외부 계약 기댓값 등)은 리터럴 유지; 발행 이벤트 봉투 discriminator는 1종째부터 enum(birth-enum), 버전 태그는 리터럴 동결, OHS published contract(`open_host_service/*/contract/`)의 discriminator는 wire Literal 유지(재예외 — houserules §2) (§2.14)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-3088 ;
+    djr:text "- 함수는 작게, 한 가지만 해라: 추상화 수준 통일, 인수 최소화, 플래그 인수 금지, 명령·조회 분리, 부수 효과 금지 (§3)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-3089 ;
+    djr:text "- 인터페이스 주석은 필수, 구현 주석은 최소화: what을 공개하고 how는 은닉 (§4, §6.4–§6.5)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-3090 ;
+    djr:text "- 모듈은 깊게 설계하라: 강력한 기능을 단순한 인터페이스 뒤에 숨기고, 얕은 모듈·레드 플래그를 경계 (§7)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-3091 ;
+    djr:text "- 행동이 상태를 결정한다: 묻지 말고 시켜라, 조건문은 다형성으로 대체, 로직과 데이터를 함께 (§8)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-3092 ;
+    djr:text "- SOLID 5원칙을 적용하라: SRP·OCP·LSP·ISP·DIP — 같은 이유로 바뀌는 것은 모으고, 다른 이유는 분리 (§9)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 8 ;
+    djr:statesNorm djr:R-3093 ;
+    djr:text "- DRY는 지식의 중복을 금지한다: 코드 유사성이 아닌 비즈니스 지식 단위로 판단 (§13)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 9 ;
+    djr:statesNorm djr:R-3094 ;
+    djr:text "- 오류는 설계로 먼저 제거하고, 불가하면 예외를 사용하라: 보호절·DbC·방어적 프로그래밍 (§12)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> a djr:Section ;
+    djr:headingSnapshot "## 상세 레퍼런스"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/discipline-cleancode/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-3097 ;
+    djr:text "\n주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 10 ;
+    djr:text "| 객체 설계 원칙 (TDA·다형성·위임·변화율 분리) | §8 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b11> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 11 ;
+    djr:text "| SOLID 원칙 (SRP·OCP·LSP·ISP·DIP) | §9 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b12> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 12 ;
+    djr:text "| 디자인 패턴 (팩토리·값 객체·전략·옵저버·템플릿 메서드 등) | §10 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b13> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 13 ;
+    djr:text "| 상태 관리 (범위·생명주기·값 객체·공용 vs 가변 상태) | §11 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b14> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 14 ;
+    djr:text "| 오류 처리 (오류 제거·예외·보호절·DbC·방어적 프로그래밍) | §12 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b15> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 15 ;
+    djr:text "| 중복 제거와 DRY (지식 단위 중복·지역적 변화) | §13 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b16> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 16 ;
+    djr:text "| 협력과 의존성 관리 (응집력·결합력·합성 우선·직교성) | §14 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b17> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 17 ;
+    djr:text "| 리팩토링 (코드 스멜 카탈로그·기법·테이블 주도 방법) | §15 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b18> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 18 ;
+    djr:text "| 레거시 코드 다루기 (Seam·Sprout·Wrap·임시 특성화 probe) | §16 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b19> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 19 ;
+    djr:text "| 설계 철학과 프로세스 (두 번 설계·YAGNI·깨진 창문·추적탄) | §17 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 2 ;
+    djr:text "| 주제 | 절 |\n|---|---|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b20> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 20 ;
+    djr:statesNorm djr:R-3098 ;
+    djr:text "\n각 절은 [`references/final.md`](references/final.md)에서 필요한 항목만 읽는다(전체 로드 불필요).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 3 ;
+    djr:text "| 클린 코드란 무엇인가 (복잡성 본질·제1 명령) | §1 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 4 ;
+    djr:text "| 이름 짓기 (의도·구분·한정자·불리언·루프 변수·매직 값과 상수 승격 §2.14) | §2 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 5 ;
+    djr:text "| 함수와 메서드 설계 (크기·추상화·인수·부수효과·대칭성) | §3 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 6 ;
+    djr:text "| 주석과 문서화 (인터페이스 주석 필수·구현 주석 최소화) | §4 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 7 ;
+    djr:text "| 코드 형식과 구조 (형식·행 길이·일관성·자동화) | §5 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 8 ;
+    djr:text "| 추상화와 캡슐화 (인터페이스 코딩·상태 캡슐화·정보 은닉) | §6 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 9 ;
+    djr:text "| 깊은 모듈 설계 (깊은 vs 얕은·전략적 프로그래밍·레드 플래그) | §7 |\n" .

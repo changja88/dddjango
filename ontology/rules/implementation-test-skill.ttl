@@ -1,0 +1,736 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+djr:R-3007 a djr:Obligation ;
+    skos:prefLabel "테스트 코드·픽스처·테스트더블·계약 검증 코드 작성·리팩터링 시 우선 로드"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3007@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3007@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3007 ;
+    djr:revision 1 .
+
+djr:R-3008 a djr:Obligation ;
+    skos:prefLabel "테스트 수명 주기의 discipline-tdd 위임과 Django 구현의 implementation-django 계열 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3008@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3008@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3008 ;
+    djr:revision 1 .
+
+djr:R-3009 a djr:Obligation ;
+    skos:prefLabel "테스트 코드·계약 검증·커버리지·Mutation·BDD·동시성 테스트 작성 시 로드"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3009@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3009@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3009 ;
+    djr:revision 1 .
+
+djr:R-3010 a djr:Obligation ;
+    skos:prefLabel "discipline-tdd §5.5 입장 결정 완료 후 add·update·명시 승인 retain 재조직 mechanics 한정 제공"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3010@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3010@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3010 ;
+    djr:revision 1 .
+
+djr:R-3011 a djr:Prohibition ;
+    skos:prefLabel "retain 재조직의 새 case·assertion·Red 생성 금지(전후 동일 보호 유지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3011@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3011@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3011 ;
+    djr:revision 1 .
+
+djr:R-3012 a djr:Prohibition ;
+    skos:prefLabel "후보·reuse·reject 의 새 test file·case·assertion·helper 의무 전환 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3012@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3012@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3012 ;
+    djr:revision 1 .
+
+djr:R-3013 a djr:Obligation ;
+    skos:prefLabel "TDD 방법론·테스트 수명 주기의 discipline-tdd 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3013@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3013@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3013 ;
+    djr:revision 1 .
+
+djr:R-3014 a djr:Obligation ;
+    skos:prefLabel "Django 모델·ORM·서비스 레이어 구현의 implementation-django 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3014@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3014@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3014 ;
+    djr:revision 1 .
+
+djr:R-3015 a djr:Obligation ;
+    skos:prefLabel "Ninja Router/Schema·mounted public HTTP·adapter-local client 계약 구현의 implementation-django-ninja 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3015@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3015@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3015 ;
+    djr:revision 1 .
+
+djr:R-3016 a djr:Obligation ;
+    skos:prefLabel "Django 뷰·템플릿·폼·HTMX 구현의 implementation-django-web 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3016@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3016@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3016 ;
+    djr:revision 1 .
+
+djr:R-3017 a djr:Obligation ;
+    skos:prefLabel "recipe 적용 전 discipline-tdd §5.5 decision row 확인"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3017@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3017@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3017 ;
+    djr:revision 1 .
+
+djr:R-3018 a djr:Obligation ;
+    skos:prefLabel "recipe 적용 범위 한정 — add·update 와 명시 승인된 retain 의미 보존 재조직"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3018@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3018@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3018 ;
+    djr:revision 1 .
+
+djr:R-3019 a djr:Prohibition ;
+    skos:prefLabel "retain 재조직의 새 case·assertion·Red 0 과 reuse·reject 의 test artifact write 0"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3019@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3019@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3019 ;
+    djr:revision 1 .
+
+djr:R-3020 a djr:Prohibition ;
+    skos:prefLabel "피라미드·coverage·속도·도구 예시의 add 근거 사용 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3020@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3020@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3020 ;
+    djr:revision 1 .
+
+djr:R-3021 a djr:Obligation ;
+    skos:prefLabel "입장된 행동을 증명하는 최소 테스트 범위 선택"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3021@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3021@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3021 ;
+    djr:revision 1 .
+
+djr:R-3022 a djr:Prohibition ;
+    skos:prefLabel "유효한 domain/application/DB/adapter/public contract 테스트의 상위 계층 사유 강등·생략 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3022@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3022@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3022 ;
+    djr:revision 1 .
+
+djr:R-3023 a djr:Obligation ;
+    skos:prefLabel "오라클 기준의 migration 전용 테스트 ↔ DB-backed 현행 동작 테스트 식별"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3023@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3023@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3023 ;
+    djr:revision 1 .
+
+djr:R-3024 a djr:Obligation ;
+    skos:prefLabel "본 절의 기술적 식별 한정 — 수명 주기는 discipline-tdd 소유"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3024@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3024@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3024 ;
+    djr:revision 1 .
+
+djr:R-3025 a djr:Obligation ;
+    skos:prefLabel "테스트 러너·작성의 pytest(pytest-django) 기본 — 함수형·assert·@pytest.mark.django_db·픽스처"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3025@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3025@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3025 ;
+    djr:revision 1 .
+
+djr:R-3026 a djr:Obligation ;
+    skos:prefLabel "테스트 더블의 역할·리스크 기준 선택(Stub→상태·Mock→상호작용·Fake→가벼운 협력자)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3026@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3026@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3026 ;
+    djr:revision 1 .
+
+djr:R-3027 a djr:Obligation ;
+    skos:prefLabel "mock 도구의 pytest-mock mocker 픽스처 사용(자동 teardown)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3027@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3027@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3027 ;
+    djr:revision 1 .
+
+djr:R-3028 a djr:Prohibition ;
+    skos:prefLabel "raw unittest.mock 폴백 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3028@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3028@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3028 ;
+    djr:revision 1 .
+
+djr:R-3029 a djr:Prohibition ;
+    skos:prefLabel "«적극적» 해석의 mock·도구 추가 확대 금지(경계 전용 도구 업그레이드 한정)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3029@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3029@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3029 ;
+    djr:revision 1 .
+
+djr:R-3030 a djr:Obligation ;
+    skos:prefLabel "픽스처의 명시적·격리적 작성과 conftest 계층 공유 범위 최소화"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3030@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3030@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3030 ;
+    djr:revision 1 .
+
+djr:R-3031 a djr:Obligation ;
+    skos:prefLabel "상태·결과 우선 검증과 화이트박스(내부 구현) 검증 회피"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3031@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3031@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3031 ;
+    djr:revision 1 .
+
+djr:R-3032 a djr:Obligation ;
+    skos:prefLabel "승인된 property-based case 의 Hypothesis 표현과 승인 재현 경계의 @example 고정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3032@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3032@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3032 ;
+    djr:revision 1 .
+
+djr:R-3033 a djr:Prohibition ;
+    skos:prefLabel "도구의 입력 생성 능력을 새 테스트 근거로 사용 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3033@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3033@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3033 ;
+    djr:revision 1 .
+
+djr:R-3034 a djr:Obligation ;
+    skos:prefLabel "ORM 영속 픽스처 기본의 factory_boy 채택과 최소 필요 상태·DB fixture 최소화"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3034@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3034@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3034 ;
+    djr:revision 1 .
+
+djr:R-3035 a djr:Obligation ;
+    skos:prefLabel "승인된 동시성·idempotency·CAS case 의 DB-backed mechanics 사용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3035@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3035@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3035 ;
+    djr:revision 1 .
+
+djr:R-3036 a djr:Permission ;
+    skos:prefLabel "승인 테스트 유효성 점검의 coverage·mutmut 진단 도구 사용 허용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3036@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3036@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3036 ;
+    djr:revision 1 .
+
+djr:R-3037 a djr:Prohibition ;
+    skos:prefLabel "수치·생존 mutant 자체의 새 case·assertion 근거 사용 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3037@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3037@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3037 ;
+    djr:revision 1 .
+
+djr:R-3038 a djr:Obligation ;
+    skos:prefLabel "AAA·assertion 선택·Free Ride 방지·테스트 분리의 가독성 recipe 지위"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3038@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3038@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3038 ;
+    djr:revision 1 .
+
+djr:R-3039 a djr:Prohibition ;
+    skos:prefLabel "가독성 recipe 의 새 case·assertion 승인 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3039@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3039@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3039 ;
+    djr:revision 1 .
+
+djr:R-3040 a djr:Obligation ;
+    skos:prefLabel "외부 계약 검증 assert 기댓값의 리터럴 표기(프로덕션 상수 역수입 금지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3040@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3040@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3040 ;
+    djr:revision 1 .
+
+djr:R-3041 a djr:Permission ;
+    skos:prefLabel "도메인 내부 단위 테스트의 심볼 단언·arrange 심볼 사용 허용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3041@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3041@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3041 ;
+    djr:revision 1 .
+
+djr:R-3042 a djr:Obligation ;
+    skos:prefLabel "Django Ninja 오류의 입장된 HTTP mapping 한정 — 실제 mount 된 Django client 로 status/body/승인 header 검증"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3042@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3042@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3042 ;
+    djr:revision 1 .
+
+djr:R-3043 a djr:Obligation ;
+    skos:prefLabel "plugin 기본 오류 schema property 목록 부재와 shape 변경의 별도 명시 사용자 승인 요건"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3043@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3043@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3043 ;
+    djr:revision 1 .
+
+djr:R-3044 a djr:Obligation ;
+    skos:prefLabel "공개 OpenAPI 계약 검증의 실제 mount 생성 문서 관련 operation/status/schema 한정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3044@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3044@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3044 ;
+    djr:revision 1 .
+
+djr:R-3045 a djr:Prohibition ;
+    skos:prefLabel "미승인 Pydantic private introspection·framework 기본 직렬화·error helper/factory/serializer/mapping/handler 내부 unit test 작성 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3045@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3045@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3045 ;
+    djr:revision 1 .
+
+djr:R-3046 a djr:Obligation ;
+    skos:prefLabel "framework 기본 body 의 입장된 public wire 계약 시 consumer 의존 관련 field 한정 검증"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3046@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3046@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3046 ;
+    djr:revision 1 .
+
+djr:R-3047 a djr:Obligation ;
+    skos:prefLabel "발행 이벤트 union-enum 동기 검증의 입장 후 recipe 지위(자동 세트 아님)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3047@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3047@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3047 ;
+    djr:revision 1 .
+
+djr:R-3048 a djr:Permission ;
+    skos:prefLabel "독자 published/wire drift failure + 기존 보호 부재 시에만 add 허용(자명 반복 구조는 reuse·reject)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3048@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3048@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3048 ;
+    djr:revision 1 .
+
+djr:R-3049 a djr:Obligation ;
+    skos:prefLabel "migration 전용·DB-backed 현행 동작 테스트의 식별·수명 주기 기존 규칙 준수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3049@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3049@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3049 ;
+    djr:revision 1 .
+
+djr:R-3050 a djr:Prohibition ;
+    skos:prefLabel "테스트 안티패턴(복잡한 조건문·프로덕션 로직 재사용·숨겨진 의존성) 회피"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3050@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3050@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3050 ;
+    djr:revision 1 .
+
+djr:R-3051 a djr:Obligation ;
+    skos:prefLabel "주제별 references/final.md 해당 절 준수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3051@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3051@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3051 ;
+    djr:revision 1 .
+
+djr:R-3052 a djr:Obligation ;
+    skos:prefLabel "필요한 항목만 부분 로드(전체 로드 불필요)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3052@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-3052@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-3052 ;
+    djr:revision 1 .
+
+<https://numchida.com/ns/djr#d/dddjango/skills/implementation-test/SKILL.md> a djr:Document ;
+    skos:prefLabel "implementation-test-skill"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s001> a djr:Section ;
+    djr:headingSnapshot "---"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-test/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s001/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 1 ;
+    djr:text "name: implementation-test\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s001/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s001> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003/b3>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003/b4>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003/b5> ;
+    djr:statesNorm djr:R-3007, djr:R-3008 ;
+    djr:text "description: 테스트 코드 작성법 종합 지식 — 테스트 전략·피라미드, migration 전용 테스트와 DB-backed 현행 동작 테스트의 기술적 구분, pytest 구조·픽스처·마커·플러그인, Mock·테스트더블, Property-Based Testing, 팩토리, 시간·HTTP 모킹, 통합 테스트, 커버리지, 테스트 품질·안티패턴, Mutation Testing, BDD, mounted Django client API 계약, Idempotency·동시성 테스트, 디버깅. 테스트 코드·픽스처·테스트더블·계약 검증 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. 무엇을 테스트하고 기존 테스트를 유지·갱신·분리·삭제할지는 discipline-tdd, Django 구현은 implementation-django 계열로 위임.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s001/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 3 ;
+    djr:text "user-invocable: false\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s001/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 4 ;
+    djr:text "---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003> a djr:Section ;
+    djr:headingSnapshot "## 언제 쓰나"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-test/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-3009, djr:R-3010, djr:R-3011, djr:R-3012 ;
+    djr:text "\n테스트 코드·픽스처·더블·factory·계약 검증·커버리지·Mutation·BDD·동시성 테스트 코드를 작성할 때 로드한다. 이 skill은 `discipline-tdd` §5.5가 영구 테스트 입장 결정을 끝낸 **뒤** `add`·`update`와 명시 승인된 `retain` 의미 보존 재조직의 작성 mechanics만 제공한다. `retain` 재조직은 새 case·assertion·Red를 만들지 않고 전후 같은 보호를 유지한다. 후보나 `reuse`·`reject`를 새 test file·case·assertion·helper 의무로 바꾸지 않는다. 경계:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-3013 ;
+    djr:text "- TDD 방법론과 테스트 수명 주기(무엇을 검증하고 유지·갱신·분리·삭제하는가) → `discipline-tdd`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-3014 ;
+    djr:text "- Django 모델·ORM·서비스 레이어 구현 → `implementation-django`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-3015 ;
+    djr:text "- Django Ninja Router/Schema·mounted public HTTP와 adapter-local client 계약 구현 → `implementation-django-ninja`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-3016 ;
+    djr:text "- Django 뷰·템플릿·폼·HTMX 구현 → `implementation-django-web`\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> a djr:Section ;
+    djr:headingSnapshot "## 핵심 운영 원칙"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-test/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s003/b1> ;
+    djr:statesNorm djr:R-3017, djr:R-3018, djr:R-3019, djr:R-3020 ;
+    djr:text "\n- **먼저 `discipline-tdd` §5.5의 decision row를 확인한다.** `add`·`update`와 명시 승인된 `retain` 의미 보존 재조직에만 아래 recipe를 적용한다. `retain` 재조직은 새 case·assertion·Red가 없고, `reuse`·`reject`에서는 test artifact write가 0이다. 피라미드·coverage·속도·도구 예시는 `add`의 근거가 아니다 (§1)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 10 ;
+    djr:statesNorm djr:R-3032, djr:R-3033 ;
+    djr:text "- 승인된 property-based case를 Hypothesis로 표현하고, 승인된 재현 경계는 @example로 고정한다. 도구가 입력을 많이 만들 수 있다는 사실은 새 테스트 근거가 아니다 (§8)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b11> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 11 ;
+    djr:statesNorm djr:R-3034 ;
+    djr:text "- ORM 영속 픽스처의 기본은 **factory_boy**(만능 아님 — 정확 필드 행·VO/dataclass 직접 생성은 정당); 최소 필요 상태만 지정, DB fixture 최소화 (§9)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b12> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 12 ;
+    djr:statesNorm djr:R-3035 ;
+    djr:text "- 승인된 동시성·idempotency·CAS case가 DB 의미론을 보호하면 DB-backed mechanics를 쓴다 (§20)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b13> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 13 ;
+    djr:statesNorm djr:R-3036, djr:R-3037 ;
+    djr:text "- 승인된 테스트의 유효성을 살필 때 coverage나 mutmut를 진단 도구로 쓸 수 있지만, 수치·생존 mutant 자체가 새 case/assertion 근거는 아니다 (§13, §17)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b14> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 14 ;
+    djr:statesNorm djr:R-3038, djr:R-3039 ;
+    djr:text "- AAA(Arrange-Act-Assert), assertion 선택, Free Ride 방지와 테스트 분리는 이미 입장된 case의 가독성 recipe다. 새 case/assertion을 승인하지 않는다 (§3.4, §15.2, §16)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b15> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 15 ;
+    djr:statesNorm djr:R-3040, djr:R-3041 ;
+    djr:text "- 외부 계약(HTTP 응답·DB 저장값·이벤트) 검증의 assert 기댓값은 리터럴로 — 프로덕션 상수 역수입은 자기참조 오라클; 도메인 내부 단위 테스트의 심볼 단언과 arrange의 심볼 사용은 허용 (§15.4)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b16> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 16 ;
+    djr:statesNorm djr:R-3042, djr:R-3043, djr:R-3044, djr:R-3045, djr:R-3046 ;
+    djr:text "- Django Ninja 오류는 입장된 HTTP mapping만 실제 mount된 Django client로 status/body/승인 header를 검증한다. plugin 기본 오류 schema property 목록은 없고 shape 변경은 별도 명시 사용자 승인이 필요하다. 공개 OpenAPI 계약은 실제 mount된 생성 문서의 관련 operation/status/schema만 검증한다. 별도 승인 또는 실제 consumer evidence가 없는 Pydantic private introspection·framework 기본 직렬화와 error helper/factory/serializer/mapping/handler 내부 unit test는 만들지 않는다. framework 기본 body라도 입장된 public wire 계약이면 consumer가 의존하는 관련 field만 검증한다 (§19.2)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b17> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 17 ;
+    djr:statesNorm djr:R-3047, djr:R-3048 ;
+    djr:text "- 발행 이벤트의 union-enum 동기 검증도 자동 세트가 아니라 입장 후 recipe다. 실제 published/wire drift의 독자 failure가 있고 기존 보호가 없을 때만 `add`할 수 있으며, 구조가 서로를 자명하게 반복하면 `reuse`·`reject`한다 (§15.5)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b18> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 18 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b3> ;
+    djr:statesNorm djr:R-3049 ;
+    djr:text "- migration 전용 테스트와 DB-backed 현행 동작 테스트의 식별·수명 주기는 기존 규칙을 그대로 따른다 (§1.4, `discipline-tdd` §5.5)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b19> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 19 ;
+    djr:statesNorm djr:R-3050 ;
+    djr:text "- 테스트 안티패턴(복잡한 조건문·프로덕션 로직 재사용·숨겨진 의존성)을 피한다 (§16 — 상수 역수입 오라클은 §15.4)\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-3021, djr:R-3022 ;
+    djr:text "- 입장된 행동을 증명하는 가장 작은 테스트 범위를 선택한다. 유효한 domain/application/DB/adapter/public contract 테스트를 단순히 상위 계층이라는 이유로 낮추거나 생략하지 않는다 (§1)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-3023, djr:R-3024 ;
+    djr:text "- migration 파일·번호·과거 state·forward/reverse가 오라클이면 migration 전용 테스트이고, 현재 model·ORM·service·API·DB constraint가 오라클이면 DB-backed 현행 동작 테스트다. 이 절은 기술적으로 식별만 하고 수명 주기는 `discipline-tdd`에 넘긴다 (§1.4)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-3025 ;
+    djr:text "- 테스트 러너·작성은 **pytest(pytest-django)** 기본 — 함수형 + `assert` + `@pytest.mark.django_db`(DB 접근 명시) + 픽스처 (§3, §4, §19.4)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-3026 ;
+    djr:text "- 테스트 더블은 역할과 리스크 기준으로 선택: Stub→상태 검증, Mock→상호작용 검증, Fake→가벼운 협력자 (§2, §7.1)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-3027, djr:R-3028 ;
+    djr:text "- mock이 필요할 때(외부 경계 한정 — 기존 §7.1 교리 불변)의 **도구는 pytest-mock `mocker` 픽스처**(자동 teardown); raw `unittest.mock` 폴백 금지 (§7)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-3029 ;
+    djr:text "- **적극적 = 경계에서 수제 대신 전용 도구로 *업그레이드*하는 것이지, 더 많이 *mock·도구 추가*하는 것이 아니다.**\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 8 ;
+    djr:statesNorm djr:R-3030 ;
+    djr:text "- 픽스처는 명시적·격리적으로 작성, conftest 계층을 활용해 공유 범위 최소화 (§3.7, §4.2)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 9 ;
+    djr:statesNorm djr:R-3031 ;
+    djr:text "- 검증은 상태·결과 우선, 화이트박스(내부 구현) 검증 회피 (§7.1, §15.3)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> a djr:Section ;
+    djr:headingSnapshot "## 상세 레퍼런스"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-test/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-3051 ;
+    djr:text "\n주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 10 ;
+    djr:text "| Property-Based Testing (Hypothesis) | §8 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b11> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 11 ;
+    djr:text "| 테스트 데이터 팩토리 (factory_boy + Faker) | §9 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b12> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 12 ;
+    djr:text "| 시간 모킹 (freezegun / time-machine) | §10 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b13> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 13 ;
+    djr:text "| HTTP 모킹 (responses / aioresponses) | §11 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b14> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 14 ;
+    djr:text "| Docker 기반 통합 테스트 (testcontainers) | §12 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b15> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 15 ;
+    djr:text "| 커버리지 설정 (coverage.py) | §13 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b16> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 16 ;
+    djr:text "| 멀티환경 테스트 (tox / nox) | §14 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b17> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 17 ;
+    djr:text "| 테스트 코드 품질 원칙 (외부 계약 기댓값 리터럴 §15.4 포함) | §15 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b18> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 18 ;
+    djr:text "| 테스트 안티패턴 | §16 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b19> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 19 ;
+    djr:text "| Mutation Testing | §17 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 2 ;
+    djr:text "| 주제 | 절 |\n|---|---|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b20> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 20 ;
+    djr:text "| BDD pytest-bdd 구현 | §18 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b21> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 21 ;
+    djr:text "| Django Ninja TestClient API 계약 테스트 | §19 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b22> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 22 ;
+    djr:text "| Idempotency와 동시성 테스트 | §20 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b23> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 23 ;
+    djr:text "| 테스트 디버깅 기법 | §21 |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b24> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 24 ;
+    djr:statesNorm djr:R-3052 ;
+    djr:text "각 절은 [`references/final.md`](references/final.md)에서 필요한 항목만 읽는다(전체 로드 불필요).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 3 ;
+    djr:text "| 테스트 전략과 피라미드, migration 전용 테스트 기술 식별 | §1 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 4 ;
+    djr:text "| 테스트 더블 분류 체계 | §2 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 5 ;
+    djr:text "| pytest 기본 구조와 Fixture | §3 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 6 ;
+    djr:text "| pytest 심화 설정 | §4 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 7 ;
+    djr:text "| pytest 마커 시스템 | §5 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 8 ;
+    djr:text "| pytest 플러그인 생태계 | §6 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-test/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 9 ;
+    djr:text "| Mock과 테스트 더블 실전 | §7 |\n" .

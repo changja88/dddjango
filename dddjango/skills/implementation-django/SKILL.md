@@ -1,4 +1,5 @@
 ---
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 name: implementation-django
 description: Django 코어 구현 지식 — 모델·ORM·QuerySet/Manager, 마이그레이션, 서비스·셀렉터 레이어, 트랜잭션 경계, 설정·미들웨어·캐싱·보안·시그널, 트랜잭셔널 outbox 구현. Django 모델·ORM·서비스 레이어·트랜잭션 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. 표현계층(템플릿/폼/HTMX)은 implementation-django-web, JSON API는 implementation-django-ninja, 신규 REST 계약은 architecture-api로 위임.
 user-invocable: false
@@ -7,6 +8,7 @@ user-invocable: false
 # Django 코어 구현
 
 ## 언제 쓰나
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Django 코어(모델·ORM·서비스 레이어·트랜잭션·설정·마이그레이션·시그널·캐싱·보안) 코드를 설계·작성할 때 로드한다. 경계:
 
@@ -18,6 +20,7 @@ Django 코어(모델·ORM·서비스 레이어·트랜잭션·설정·마이그�
 - Python 관용구 → `implementation-python`, 클린코드 원칙 → `discipline-cleancode`
 
 ## 핵심 운영 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - 비즈니스 로직은 뷰가 아니라 모델·도메인에 — 평면 Django 맥락은 fat model(§4.1), dddjango 표준 4계층은 `domain_layer` 애그리거트 소유(`architecture-ddd` §3.2)
 - 서비스 레이어 도입 시점과 HackSoft service/selector 패턴 (§16.1–§16.2)
@@ -29,6 +32,7 @@ Django 코어(모델·ORM·서비스 레이어·트랜잭션·설정·마이그�
 - 설정은 환경별 분리, 직접 접근 주의 (§3.3–§3.4)
 
 ## 상세 레퍼런스
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:
 

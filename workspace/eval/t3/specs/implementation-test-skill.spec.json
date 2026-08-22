@@ -1,0 +1,840 @@
+{
+  "schema": "migrate-spec/1",
+  "doc_key": "implementation-test-skill",
+  "path": "dddjango/skills/implementation-test/SKILL.md",
+  "restates_paths": {
+    "implementation-test-skill": "dddjango/skills/implementation-test/SKILL.md"
+  },
+  "sections": [
+    {
+      "section_key": "s001",
+      "line_start": 1,
+      "line_end": 6,
+      "blocks": [
+        {
+          "lines": [
+            2,
+            2
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            3,
+            3
+          ],
+          "kind": "norm",
+          "restates": [
+            "implementation-test-skill/s003/b1",
+            "implementation-test-skill/s003/b2",
+            "implementation-test-skill/s003/b3",
+            "implementation-test-skill/s003/b4",
+            "implementation-test-skill/s003/b5"
+          ],
+          "norms": [
+            {
+              "label": "테스트 코드·픽스처·테스트더블·계약 검증 코드 작성·리팩터링 시 우선 로드",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 — 프론트매터 description 은 스킬 라우터 트리거(«…먼저 로드한다») · ②check-*.py 27종 docstring 선두 전수 실독 — 스킬 로드 라우팅을 집행하는 검사기 0 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "테스트 수명 주기의 discipline-tdd 위임과 Django 구현의 implementation-django 계열 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면이 위임 상대를 직접 지정(«…는 discipline-tdd, Django 구현은 implementation-django 계열로 위임») · ④§16 기본값 — discipline-tdd·implementation-* 문서군 모두 agent-discipline-reviewer"
+            }
+          ]
+        },
+        {
+          "lines": [
+            4,
+            4
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            5,
+            6
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s003",
+      "line_start": 9,
+      "line_end": 17,
+      "blocks": [
+        {
+          "lines": [
+            10,
+            12
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "테스트 코드·계약 검증·커버리지·Mutation·BDD·동시성 테스트 작성 시 로드",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…작성할 때 로드한다» · ②check-*.py 27종 docstring 선두 전수 실독 — 스킬 로드 조건 판정 술어 0 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "discipline-tdd §5.5 입장 결정 완료 후 add·update·명시 승인 retain 재조직 mechanics 한정 제공",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…입장 결정을 끝낸 뒤 … 작성 mechanics만 제공한다» · ③implementation-test-final s001 b1 «discipline-tdd §5.5 입장 결정 이후 사용» 동일 규범의 3중 사본 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "retain 재조직의 새 case·assertion·Red 생성 금지(전후 동일 보호 유지)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «새 case·assertion·Red를 만들지 않고» · ③implementation-test-final s001 b1 동일 라벨 선례 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "후보·reuse·reject 의 새 test file·case·assertion·helper 의무 전환 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…의무로 바꾸지 않는다» · ③implementation-test-final s001 b1 «candidate·reuse·reject의 테스트 산출물 의무 전환 금지» 동일 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            13,
+            13
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "TDD 방법론·테스트 수명 주기의 discipline-tdd 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «→ discipline-tdd» · ④§16 기본값 표 discipline-tdd 행 → agent-discipline-reviewer"
+            }
+          ]
+        },
+        {
+          "lines": [
+            14,
+            14
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Django 모델·ORM·서비스 레이어 구현의 implementation-django 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «→ implementation-django» · ②check-*.py 27종 docstring 선두 전수 실독 — 스킬 간 관할 이관 술어 0 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            15,
+            15
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Ninja Router/Schema·mounted public HTTP·adapter-local client 계약 구현의 implementation-django-ninja 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «→ implementation-django-ninja» — 위임 상대가 implementation-* 문서군이라 기본값 유지(architecture-api 를 지목하지 않음) · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            16,
+            17
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Django 뷰·템플릿·폼·HTMX 구현의 implementation-django-web 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «→ implementation-django-web» · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s004",
+      "line_start": 18,
+      "line_end": 39,
+      "blocks": [
+        {
+          "lines": [
+            19,
+            20
+          ],
+          "kind": "norm",
+          "restates": [
+            "implementation-test-skill/s003/b1"
+          ],
+          "norms": [
+            {
+              "label": "recipe 적용 전 discipline-tdd §5.5 decision row 확인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «먼저 discipline-tdd §5.5의 decision row를 확인한다» · ③implementation-test-final s001 b1 동축 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "recipe 적용 범위 한정 — add·update 와 명시 승인된 retain 의미 보존 재조직",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…에만 아래 recipe를 적용한다» · ③final s001 b1 «recipe 적용 범위는 add·update·승인된 retain 재조직 한정» 동일 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "retain 재조직의 새 case·assertion·Red 0 과 reuse·reject 의 test artifact write 0",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 두 절이 같은 «쓰기 0» 축이라 1 Work · ③discipline-tdd-final s025-5.5 b17 동축(단 pending 조항은 여기 없음) · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "피라미드·coverage·속도·도구 예시의 add 근거 사용 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…는 add의 근거가 아니다» · ③implementation-test-final s004-1.1 b7 «피라미드 모양·coverage 수치·속도만으로 add 금지» 동일 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            21,
+            21
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "입장된 행동을 증명하는 최소 테스트 범위 선택",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-*.py 27종 docstring 선두 전수 실독 — 테스트 범위 선택 술어 0(check-test-config 는 test/ 층 구조·DB 신호 축) · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "유효한 domain/application/DB/adapter/public contract 테스트의 상위 계층 사유 강등·생략 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…낮추거나 생략하지 않는다» · ③implementation-test-final s004-1.1 b10 동축 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            22,
+            22
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "오라클 기준의 migration 전용 테스트 ↔ DB-backed 현행 동작 테스트 식별",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면이 오라클 기준 2분법을 규정 · ③implementation-test-final s007-1.4 b3·b4 «오라클 기준» 동일 · ②check-*.py 27종 docstring 선두 전수 실독 — 오라클 종류 판정 술어 0 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "본 절의 기술적 식별 한정 — 수명 주기는 discipline-tdd 소유",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…식별만 하고 수명 주기는 discipline-tdd에 넘긴다» · ③final s007-1.4 b1 동일 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            23,
+            23
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "테스트 러너·작성의 pytest(pytest-django) 기본 — 함수형·assert·@pytest.mark.django_db·픽스처",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-test-config.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-test-config.py docstring ⑴ «pytest ↔ Django settings 바인딩»과 ⑵ «#387 test/unit 은 DB 를 켜지 않는다(django_db …)» — pytest-django 채택과 django_db 마커 축을 결정적으로 집행 · ③implementation-test-final s021-4.1 b1 이 같은 축을 check-test-config.py 로 배선한 선례 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례) 병기(함수형·assert 스타일은 미커버)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            24,
+            24
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "테스트 더블의 역할·리스크 기준 선택(Stub→상태·Mock→상호작용·Fake→가벼운 협력자)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-*.py 27종 docstring 선두 전수 실독 — 더블 종류 선택 술어 0 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례) · discipline-tdd-final s038-8 b1 «테스트 더블 분류·Python 구현의 implementation-test 위임» 수임 축"
+            }
+          ]
+        },
+        {
+          "lines": [
+            25,
+            25
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "mock 도구의 pytest-mock mocker 픽스처 사용(자동 teardown)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «도구는 pytest-mock mocker 픽스처» · ③discipline-tdd-final s036-7.6 b1 «Mock 경계의 도구는 pytest-mock mocker 픽스처» 동일 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "raw unittest.mock 폴백 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «raw unittest.mock 폴백 금지» — 앞 절과 deontic class 가 달라 별도 Work · ②check-*.py 27종 docstring 선두 전수 실독 — mock 라이브러리 선택 술어 0 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            26,
+            26
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "«적극적» 해석의 mock·도구 추가 확대 금지(경계 전용 도구 업그레이드 한정)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…더 많이 mock·도구 추가하는 것이 아니다» · ③implementation-test-final s034-7.1 b1 «과도한 Mock(Mockery) 회피» 동축 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            27,
+            27
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "픽스처의 명시적·격리적 작성과 conftest 계층 공유 범위 최소화",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-*.py 27종 docstring 선두 전수 실독 — 픽스처 스코프 술어 0(check-test-config 는 test/ 직계 파일이 conftest.py·__init__.py 뿐이라는 «위치»만 봄) · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례) · implementation-test-final s011-3.2 b1 동축"
+            }
+          ]
+        },
+        {
+          "lines": [
+            28,
+            28
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "상태·결과 우선 검증과 화이트박스(내부 구현) 검증 회피",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "③implementation-test-final s034-7.1 b2 «검증 방식 우선순위 준수(출력→상태→통신)»·discipline-tdd-final s036-7.6 b1 동일 축 · ②check-*.py 27종 docstring 선두 전수 실독 — 단언 대상 술어 0 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            29,
+            29
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "승인된 property-based case 의 Hypothesis 표현과 승인 재현 경계의 @example 고정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "③implementation-test-final s042-8 b1 «PBT 적용은 §5.5 입장된 속성 계약 한정» 동축 · ②check-*.py 27종 docstring 선두 전수 실독 — PBT 술어 0 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "도구의 입력 생성 능력을 새 테스트 근거로 사용 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…사실은 새 테스트 근거가 아니다» · ③final s042-8 b1 «입력 생성 능력만으로 … 추가 금지» 동일 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            30,
+            30
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "ORM 영속 픽스처 기본의 factory_boy 채택과 최소 필요 상태·DB fixture 최소화",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "③implementation-test-final s049-9.1 b3 «ORM 애그리거트·엔티티 영속 픽스처의 기본은 factory_boy» 동일 · ②check-test-config.py 는 팩토리 «위치»(test/factories/) 축만 집행하고 이 규범의 «기본 도구 선택»은 미커버 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            31,
+            31
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "승인된 동시성·idempotency·CAS case 의 DB-backed mechanics 사용",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "③implementation-test-final s100-20 b2 동축 · ②check-idempotency-scope-creep.py 는 프로덕션 멱등성 «산출물»의 미요청 확장 축이라 테스트 mechanics 비커버 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            32,
+            32
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "승인 테스트 유효성 점검의 coverage·mutmut 진단 도구 사용 허용",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…진단 도구로 쓸 수 있지만» · ③implementation-test-final s083-17 b1 «절 범위는 입장된 테스트의 감지력 진단 mechanics» 동축 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "수치·생존 mutant 자체의 새 case·assertion 근거 사용 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…근거는 아니다» — 앞 절과 deontic class 가 달라 별도 Work · ③final s067-13 b1·s083-17 b1 동일 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            33,
+            33
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "AAA·assertion 선택·Free Ride 방지·테스트 분리의 가독성 recipe 지위",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…이미 입장된 case의 가독성 recipe다» · ③implementation-test-final s013-3.4 b1·s081-16.1 b10 동축 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "가독성 recipe 의 새 case·assertion 승인 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «새 case/assertion을 승인하지 않는다» · ③final s081-16.1 b10 «assertion 분리 시 별도 테스트 자동 생성 금지» 동일 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            34,
+            34
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "외부 계약 검증 assert 기댓값의 리터럴 표기(프로덕션 상수 역수입 금지)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…기댓값은 리터럴로 — 프로덕션 상수 역수입은 자기참조 오라클» · ③implementation-test-final s078-15.4 b1 동일 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "도메인 내부 단위 테스트의 심볼 단언·arrange 심볼 사용 허용",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…허용» — 앞 절과 deontic class 가 달라 별도 Work · ③final s078-15.4 b3 «경계① 도메인 내부 단위 테스트의 심볼 단언 허용»·«경계③ arrange/act 는 심볼 사용 권장» 동일 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            35,
+            35
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Django Ninja 오류의 입장된 HTTP mapping 한정 — 실제 mount 된 Django client 로 status/body/승인 header 검증",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "③implementation-test-final s092-19 b2 «공개 HTTP 계약은 mount 된 endpoint 를 Django test client 로 검증» 동일 · ②check-api-error-controller-contract.py·check-openapi-error-declaration.py 는 프로덕션 컨트롤러·OpenAPI 선언 축이고 테스트 코드 축 술어 0 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "plugin 기본 오류 schema property 목록 부재와 shape 변경의 별도 명시 사용자 승인 요건",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "③implementation-test-final s094-19.2 b1 «오류 Schema 존재·직렬화 사실만으로 테스트 생성 금지» 동축 · ②check-*.py 27종 docstring 선두 전수 실독 — 사용자 승인 요건 판정 술어 0 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "공개 OpenAPI 계약 검증의 실제 mount 생성 문서 관련 operation/status/schema 한정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②check-openapi-error-declaration.py 는 프로덕션 openapi_extra.responses 선언·operation↔schema 일치를 집행하나 «테스트가 무엇을 검증하는가»는 관할 밖 · ③final s092-19 b1 동축 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "미승인 Pydantic private introspection·framework 기본 직렬화·error helper/factory/serializer/mapping/handler 내부 unit test 작성 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…만들지 않는다» · ③discipline-tdd-final s025-5.5 b34 «내부 Schema·helper 직접 호출 introspection의 공개 wire 대체 금지» 동축 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "framework 기본 body 의 입장된 public wire 계약 시 consumer 의존 관련 field 한정 검증",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…관련 field만 검증한다» · ③final s092-19 b2 동축 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            36,
+            36
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "발행 이벤트 union-enum 동기 검증의 입장 후 recipe 지위(자동 세트 아님)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…자동 세트가 아니라 입장 후 recipe다» · ③implementation-test-final s079-15.5 b1 «union-enum 동기 구조는 테스트 의무가 아닌 candidate signal» 동일 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "독자 published/wire drift failure + 기존 보호 부재 시에만 add 허용(자명 반복 구조는 reuse·reject)",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…때만 add할 수 있으며» — 조건부 허용 · ③final s079-15.5 b1·b2 동축 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            37,
+            37
+          ],
+          "kind": "norm",
+          "restates": [
+            "implementation-test-skill/s004/b3"
+          ],
+          "norms": [
+            {
+              "label": "migration 전용·DB-backed 현행 동작 테스트의 식별·수명 주기 기존 규칙 준수",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면이 §1.4 와 discipline-tdd §5.5 를 준거로 지정 · ③discipline-tdd-final s025-5.5 b46·b47 동축 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            38,
+            39
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "테스트 안티패턴(복잡한 조건문·프로덕션 로직 재사용·숨겨진 의존성) 회피",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…를 피한다» · ③implementation-test-final s081-16.1 계열 동축 · ②check-*.py 27종 docstring 선두 전수 실독 — 테스트 코드 냄새 술어 0 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s005",
+      "line_start": 40,
+      "line_end": 68,
+      "blocks": [
+        {
+          "lines": [
+            41,
+            43
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "주제별 references/final.md 해당 절 준수",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…해당 절을 따른다» — 상세 규범의 정본 위치 지정 · ②check-*.py 27종 docstring 선두 전수 실독 — 문서 라우팅 술어 0 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            44,
+            45
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            46,
+            46
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            47,
+            47
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            48,
+            48
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            49,
+            49
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            50,
+            50
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            51,
+            51
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            52,
+            52
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            53,
+            53
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            54,
+            54
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            55,
+            55
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            56,
+            56
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            57,
+            57
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            58,
+            58
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            59,
+            59
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            60,
+            60
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            61,
+            61
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            62,
+            62
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            63,
+            63
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            64,
+            64
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            65,
+            65
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            66,
+            67
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            68,
+            68
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "필요한 항목만 부분 로드(전체 로드 불필요)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «필요한 항목만 읽는다(전체 로드 불필요)» · ②check-*.py 27종 docstring 선두 전수 실독 — 로드 범위 술어 0 · ④§16 위임 기본값 표(implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

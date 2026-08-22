@@ -1,4 +1,5 @@
 ---
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 name: architecture-db
 description: 관계형 데이터베이스 설계 지식 — ERD·정규화·역정규화, 인덱스 아키텍처(B+Tree·복합·커버링·부분), 제약조건·중복 방지·멱등성 저장소, 트랜잭션·격리 수준·락·Risky Write, outbox 전달 보장, 쿼리 최적화(EXPLAIN ANALYZE·N+1), 운영 rollout/backfill/migration safety, 계층·상속 모델링 패턴. 데이터 신뢰성·인덱스 전략·트랜잭션 경계·outbox 전달 보장·스키마 rollout을 결정할 때 먼저 로드한다. Django ORM·마이그레이션 코드 구현은 implementation-django, 도메인 이벤트 채택 여부는 architecture-ddd로 위임.
 user-invocable: false
@@ -7,6 +8,7 @@ user-invocable: false
 # 데이터베이스 설계
 
 ## 언제 쓰나
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 관계형 DB 아키텍처 결정(데이터 모델링·인덱스 설계·제약조건·트랜잭션 격리·락 전략·멱등성 저장소·outbox 전달·rollout 안전성)이 필요할 때 로드한다. 경계:
 
@@ -15,6 +17,7 @@ user-invocable: false
 - REST 계약·API 멱등성 키 정책 → `architecture-api`
 
 ## 핵심 운영 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - 성능 최적화 순서를 지킨다: 슬로우 쿼리 최적화 → 인덱스 적용 → 캐시 → 역정규화. 역정규화는 최후 수단이며, 정규화 먼저 한 뒤 필요한 경우에만 적용한다 (§4, §5)
 - 복합 인덱스는 선택도 높은 컬럼을 앞에, 커버링 인덱스로 Index-Only Scan을 목표로, 부분 인덱스로 쓰기 비용을 최소화한다 — 인덱스 설계는 실제 액세스 패턴 기반으로 결정한다 (§7)
@@ -25,6 +28,7 @@ user-invocable: false
 - 운영 컬럼·인덱스·constraint 변경은 Expand / Backfill / Contract 단계를 따르고, 대용량 backfill은 슬롯·lock risk를 고려한 배치 처리를 계획한다 (§11)
 
 ## 상세 레퍼런스
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:
 

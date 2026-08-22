@@ -1,0 +1,467 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+djr:R-2869 a djr:Obligation ;
+    skos:prefLabel "Django 코어 코드 작성·리팩터링 시 이 스킬 선로드"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2869@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2869@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2869 ;
+    djr:revision 1 .
+
+djr:R-2870 a djr:Obligation ;
+    skos:prefLabel "표현계층·JSON API·신규 REST 계약의 소유 스킬 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2870@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2870@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2870 ;
+    djr:revision 1 .
+
+djr:R-2871 a djr:Obligation ;
+    skos:prefLabel "Django 코어 설계·작성 작업의 스킬 로드 조건"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2871@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2871@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2871 ;
+    djr:revision 1 .
+
+djr:R-2872 a djr:Obligation ;
+    skos:prefLabel "서버렌더 표현계층의 implementation-django-web 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2872@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2872@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2872 ;
+    djr:revision 1 .
+
+djr:R-2873 a djr:Obligation ;
+    skos:prefLabel "JSON API 어댑터의 implementation-django-ninja 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2873@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2873@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2873 ;
+    djr:revision 1 .
+
+djr:R-2874 a djr:Obligation ;
+    skos:prefLabel "신규 REST API 계약 설계의 architecture-api 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2874@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2874@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2874 ;
+    djr:revision 1 .
+
+djr:R-2875 a djr:Obligation ;
+    skos:prefLabel "도메인 전략·애그리거트·도메인이벤트 채택의 architecture-ddd 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2875@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2875@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2875 ;
+    djr:revision 1 .
+
+djr:R-2876 a djr:Obligation ;
+    skos:prefLabel "DB 신뢰성·인덱스·격리·outbox 전달 보장의 architecture-db 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2876@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2876@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2876 ;
+    djr:revision 1 .
+
+djr:R-2877 a djr:Obligation ;
+    skos:prefLabel "Python 관용구·클린코드 원칙의 소유 스킬 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2877@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2877@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2877 ;
+    djr:revision 1 .
+
+djr:R-2878 a djr:Obligation ;
+    skos:prefLabel "비즈니스 로직의 뷰 밖 배치(평면 맥락 fat model)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2878@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2878@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2878 ;
+    djr:revision 1 .
+
+djr:R-2879 a djr:Obligation ;
+    skos:prefLabel "표준 4계층의 domain_layer 애그리거트 판정 소유"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2879@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2879@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2879 ;
+    djr:revision 1 .
+
+djr:R-2880 a djr:Obligation ;
+    skos:prefLabel "서비스 레이어 도입 시점과 HackSoft service/selector 패턴 준거"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2880@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2880@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2880 ;
+    djr:revision 1 .
+
+djr:R-2881 a djr:Obligation ;
+    skos:prefLabel "트랜잭션·일관성 경계의 transaction.atomic() 소유"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2881@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2881@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2881 ;
+    djr:revision 1 .
+
+djr:R-2882 a djr:Obligation ;
+    skos:prefLabel "외부 부수효과의 transaction.on_commit() 시점 정렬"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2882@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2882@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2882 ;
+    djr:revision 1 .
+
+djr:R-2883 a djr:Obligation ;
+    skos:prefLabel "유실 불가 메시지의 트랜잭셔널 outbox 구현"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2883@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2883@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2883 ;
+    djr:revision 1 .
+
+djr:R-2884 a djr:Obligation ;
+    skos:prefLabel "도메인 상태 값 집합의 domain Enum 파생"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2884@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2884@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2884 ;
+    djr:revision 1 .
+
+djr:R-2885 a djr:Exception ;
+    skos:prefLabel "TextChoices 자체 선언의 순수 인프라 필드 한정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2885@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2885@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2885 ;
+    djr:revision 1 .
+
+djr:R-2886 a djr:Obligation ;
+    skos:prefLabel "default= 의 .value 평탄화"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2886@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2886@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2886 ;
+    djr:revision 1 .
+
+djr:R-2887 a djr:Obligation ;
+    skos:prefLabel "비교·.filter() 값의 심볼 참조 한정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2887@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2887@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2887 ;
+    djr:revision 1 .
+
+djr:R-2888 a djr:Obligation ;
+    skos:prefLabel "QuerySet 최적화·N+1 방지의 selector/QuerySet 메서드 소유"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2888@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2888@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2888 ;
+    djr:revision 1 .
+
+djr:R-2889 a djr:Obligation ;
+    skos:prefLabel "마이그레이션의 안전·무중단 순서 준수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2889@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2889@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2889 ;
+    djr:revision 1 .
+
+djr:R-2890 a djr:Obligation ;
+    skos:prefLabel "설정의 환경별 분리"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2890@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2890@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2890 ;
+    djr:revision 1 .
+
+djr:R-2891 a djr:Obligation ;
+    skos:prefLabel "settings 직접 접근 주의(모듈 최상위 회피)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2891@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2891@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2891 ;
+    djr:revision 1 .
+
+djr:R-2892 a djr:Obligation ;
+    skos:prefLabel "주제별 references/final.md 해당 절 준거"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2892@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2892@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2892 ;
+    djr:revision 1 .
+
+djr:R-2893 a djr:Obligation ;
+    skos:prefLabel "절 단위 필요 항목 한정 로드"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2893@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2893@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2893 ;
+    djr:revision 1 .
+
+<https://numchida.com/ns/djr#d/dddjango/skills/implementation-django/SKILL.md> a djr:Document ;
+    skos:prefLabel "implementation-django-skill"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s001> a djr:Section ;
+    djr:headingSnapshot "---"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s001/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 1 ;
+    djr:text "name: implementation-django\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s001/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s001> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s003/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s003/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s003/b3>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s003/b4> ;
+    djr:statesNorm djr:R-2869, djr:R-2870 ;
+    djr:text "description: Django 코어 구현 지식 — 모델·ORM·QuerySet/Manager, 마이그레이션, 서비스·셀렉터 레이어, 트랜잭션 경계, 설정·미들웨어·캐싱·보안·시그널, 트랜잭셔널 outbox 구현. Django 모델·ORM·서비스 레이어·트랜잭션 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. 표현계층(템플릿/폼/HTMX)은 implementation-django-web, JSON API는 implementation-django-ninja, 신규 REST 계약은 architecture-api로 위임.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s001/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 3 ;
+    djr:text "user-invocable: false\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s001/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 4 ;
+    djr:text "---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s003> a djr:Section ;
+    djr:headingSnapshot "## 언제 쓰나"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s003/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2871 ;
+    djr:text "\nDjango 코어(모델·ORM·서비스 레이어·트랜잭션·설정·마이그레이션·시그널·캐싱·보안) 코드를 설계·작성할 때 로드한다. 경계:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s003/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2872 ;
+    djr:text "- 서버렌더 표현계층(뷰=어댑터·템플릿·웹폼·HTMX/CSRF) → `implementation-django-web`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s003/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2873 ;
+    djr:text "- JSON API 어댑터(Router/Schema) → `implementation-django-ninja`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s003/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-2874 ;
+    djr:text "- 신규 REST API 계약 설계 → `architecture-api`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s003/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-2875 ;
+    djr:text "- 도메인 전략·애그리거트·도메인이벤트 채택 → `architecture-ddd`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s003/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-2876 ;
+    djr:text "- DB 신뢰성·인덱스·트랜잭션 격리·outbox 전달 보장 → `architecture-db`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s003/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-2877 ;
+    djr:text "- Python 관용구 → `implementation-python`, 클린코드 원칙 → `discipline-cleancode`\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004> a djr:Section ;
+    djr:headingSnapshot "## 핵심 운영 원칙"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2878, djr:R-2879 ;
+    djr:text "\n- 비즈니스 로직은 뷰가 아니라 모델·도메인에 — 평면 Django 맥락은 fat model(§4.1), dddjango 표준 4계층은 `domain_layer` 애그리거트 소유(`architecture-ddd` §3.2)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2880 ;
+    djr:text "- 서비스 레이어 도입 시점과 HackSoft service/selector 패턴 (§16.1–§16.2)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2881, djr:R-2882 ;
+    djr:text "- 트랜잭션·일관성 경계는 `transaction.atomic()`, 외부 부수효과는 `transaction.on_commit()` (§16.4)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-2883 ;
+    djr:text "- 메시지 유실이 불가하면 트랜잭셔널 outbox로 구현 (§16.5 — 채택 기준 `architecture-ddd` §3.7, 전달 보장 `architecture-db` §9.7)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-2884, djr:R-2885, djr:R-2886, djr:R-2887 ;
+    djr:text "- Choices 계층 소유: 도메인 상태 값 집합은 domain Enum 파생(TextChoices 자체 선언은 순수 인프라 필드 한정), `default=`는 `.value` 평탄화, 비교·`.filter()`는 심볼로만 (§2.5, 마이그레이션 동결 §10.4)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-2888 ;
+    djr:text "- QuerySet 최적화·N+1 방지는 selector/QuerySet 메서드로 (§5, §11.1)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-2889 ;
+    djr:text "- 마이그레이션은 안전·무중단 순서 준수 (§10)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 8 ;
+    djr:statesNorm djr:R-2890, djr:R-2891 ;
+    djr:text "- 설정은 환경별 분리, 직접 접근 주의 (§3.3–§3.4)\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> a djr:Section ;
+    djr:headingSnapshot "## 상세 레퍼런스"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2892 ;
+    djr:text "\n주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 10 ;
+    djr:text "| 마이그레이션 베스트 프랙티스 | §10 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005/b11> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 11 ;
+    djr:text "| 성능 최적화 (N+1·인덱스) | §11 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005/b12> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 12 ;
+    djr:text "| 캐싱 전략 | §12 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005/b13> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 13 ;
+    djr:text "| 보안 | §13 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005/b14> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 14 ;
+    djr:text "| 테스트 패턴 | §14 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005/b15> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 15 ;
+    djr:text "| 미들웨어 | §15 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005/b16> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 16 ;
+    djr:text "| 서비스 레이어·트랜잭션·outbox | §16 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005/b17> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 17 ;
+    djr:text "| Django 5.x 새 기능 | §17 |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005/b18> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 18 ;
+    djr:statesNorm djr:R-2893 ;
+    djr:text "각 절은 [`references/final.md`](references/final.md)에서 필요한 항목만 읽는다(전체 로드 불필요).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 2 ;
+    djr:text "| 주제 | 절 |\n|---|---|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 3 ;
+    djr:text "| 설계 철학 | §1 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 4 ;
+    djr:text "| 코딩 스타일·임포트 순서·Choices 정의(계층 소유·`.value` 평탄화·소비 규율 §2.5) | §2 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 5 ;
+    djr:text "| 프로젝트/앱/설정 분리 | §3 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 6 ;
+    djr:text "| 모델 설계 (fat model·상속·필드·검증) | §4 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 7 ;
+    djr:text "| QuerySet과 Manager | §5 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 8 ;
+    djr:text "| REST API 경계와 기존 DRF 유지보수 | §8 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 9 ;
+    djr:text "| 시그널 가이드라인 | §9 |\n" .

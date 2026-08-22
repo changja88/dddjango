@@ -27,15 +27,15 @@
   ]
  },
  "q3:6.1": {
-  "rows": 29,
+  "rows": 30,
   "sections": [
    "6.1"
   ]
  },
  "q3:미바인딩거절": true,
  "q4": {
-  "distinct_works": 1611,
-  "rows": 1611,
+  "distinct_works": 1693,
+  "rows": 1693,
   "with_alias": [
    "R-0118",
    "R-0120",

@@ -1,0 +1,550 @@
+{
+  "schema": "migrate-spec/1",
+  "doc_key": "discipline-tdd-skill",
+  "path": "dddjango/skills/discipline-tdd/SKILL.md",
+  "restates_paths": {
+    "discipline-tdd-skill": "dddjango/skills/discipline-tdd/SKILL.md"
+  },
+  "sections": [
+    {
+      "section_key": "s001",
+      "line_start": 1,
+      "line_end": 6,
+      "blocks": [
+        {
+          "lines": [
+            2,
+            2
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            3,
+            3
+          ],
+          "kind": "norm",
+          "restates": [
+            "discipline-tdd-skill/s003/b1",
+            "discipline-tdd-skill/s003/b2"
+          ],
+          "norms": [
+            {
+              "label": "TDD 사이클 설계·학파 선택·테스트 생성·수명 주기·검증 우선순위 결정 시 로드",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 — 프론트매터 description 은 스킬 라우터 트리거(«…필요하면 로드한다») · ②check-*.py 27종 docstring 선두 전수 실독 — 스킬 로드 라우팅을 집행하는 검사기 0 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "테스트 코드 작성법(mock·assert·픽스처·pytest 메커니즘)의 implementation-test 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면이 위임 상대를 직접 지정 · ③discipline-tdd-final s038-8 b1 «테스트 더블 분류·Python 구현의 implementation-test 위임» 동축 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            4,
+            4
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            5,
+            6
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s003",
+      "line_start": 9,
+      "line_end": 17,
+      "blocks": [
+        {
+          "lines": [
+            10,
+            12
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "TDD 운용·학파 선택·테스트 목록 시작점·AI 보조 명세 활용이 불명확할 때 로드",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…불명확할 때 로드한다» · ②check-*.py 27종 docstring 선두 전수 실독 — 스킬 로드 조건 판정 술어 0 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            13,
+            13
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "pytest fixture·mock·assert·팩토리 상세 작성법의 implementation-test 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «→ implementation-test» · ③discipline-tdd-final s038-8 b1 동일 위임 스텁의 요약 사본 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            14,
+            14
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "테스트 코드 품질(가독성·구조·냄새) 원칙의 discipline-cleancode 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «→ discipline-cleancode» · ④§16 기본값 표 discipline-cleancode 행 → agent-discipline-reviewer"
+            }
+          ]
+        },
+        {
+          "lines": [
+            15,
+            15
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Django TestClient·API 테스트 메커니즘의 implementation-django 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «→ implementation-django» · ②check-*.py 27종 docstring 선두 전수 실독 — 스킬 간 관할 이관 술어 0 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            16,
+            17
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "migration 전용·DB-backed 현행 동작 테스트 기술적 식별의 implementation-test 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «→ implementation-test» · ③discipline-tdd-final s025-5.5 b46 «기술적 식별 예시의 implementation-test §1.4 위임» 동일 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s004",
+      "line_start": 18,
+      "line_end": 32,
+      "blocks": [
+        {
+          "lines": [
+            19,
+            20
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "TDD 목표 — 작동하는 깔끔한 코드와 두려움 없이 변경할 용기",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «TDD의 목표는 … 용기가 핵심» — 가치 선언이나 후속 규범의 보수(保守)를 포함(센서스 P0 승계) · ②check-*.py 27종 docstring 선두 전수 실독 — TDD 목표 판정 술어 0 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            21,
+            21
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Red-Green-Refactor 순서 준수 — 실패 테스트 먼저·통과 후에만 리팩토링",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «순서를 지켜라» · ③discipline-tdd-final s006-2.1 b1 Red/Green/Refactor 3 Work 의 요약 사본 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            22,
+            22
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "고전 학파 기본·협력 구조 설계 목적 한정 런던 학파 선택",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…기본으로, … 목적일 때만 … 선택한다» — 조건 내장 단일 선택 규칙 · ③discipline-tdd-final s012-3.4 b7 «저장소 기본은 고전 학파» 동축 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            23,
+            23
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "좋은 테스트 4대 기둥 준수와 리팩토링 내성 비타협",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…리팩토링 내성은 타협하지 않는다» — 4대 기둥 준수의 강조 절 · ③discipline-tdd-final s015-4.2 b1 동축 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            24,
+            24
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "테스트 목록의 후보 지위 — test artifact 작성 의무 아님",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «테스트 목록은 후보일 뿐이다» · ③discipline-tdd-final s021-5.1 b1 «후보 목록은 탐색 메모 — test artifact 작성 의무 아님»(Prohibition) 동일 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "전 영구 test artifact 변경 전 §5.5 입장 심사와 의미 보존 재조직의 새 case·Red 0",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…전에 §5.5 입장 심사를 거치며 …» · ③discipline-tdd-final s025-5.5 b2·b17 동축 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            25,
+            25
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "영구 테스트의 판정 기준 — 승인된 현행 계약·독자 실패·기존 권위 coverage",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «영구 테스트는 … 판정한다» · ③discipline-tdd-final s025-5.5 b1·b5~b7 심사 열의 요약 사본 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "공개 Python 계약의 자격 근거 택일(별도 사용자 승인 또는 deployed consumer evidence)",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «… 중 하나로 자격을 얻는다» · ③discipline-tdd-final s025-5.5 b34 «공개 Python 계약의 근거 택일 입장»(Permission) 동일 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "pending 의 G1 차단과 reuse·reject 의 test artifact write 0",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «pending은 G1을 막고 reuse·reject는 test artifact write가 0이다» · ③discipline-tdd-final s025-5.5 b17 에서 pending 차단 조항은 command-dddjango(게이트 승인 주체)로, write 0 조항은 discipline-reviewer 로 배선된 선례 — 한 문장 압축이라 두 소유자 병기 · 센서스 P0 표류 의심 기록(final 원문은 G1/G1preview·Phase 2 를 모두 막지만 스킬 사본은 G1 만 언급)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            26,
+            26
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "migration 전용 테스트의 신규 생성·새 case·assertion·시나리오 확장 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…만들거나 … 확장하지 않는다» · ③discipline-tdd-final s025-5.5 b46 «migration 전용 테스트 신규 생성·확장 금지» 동일 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "과거 버그 출신이라도 현행 계약을 검증하는 회귀 테스트 보존",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…회귀 테스트는 보존한다» — 스킬 사본은 보존을 의무로 진술(final s025-5.5 b37 은 같은 내용을 Permission «유효 회귀 테스트»로 진술 — 압축 시 강도 상향) · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            27,
+            27
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "초록 막대 전략 순서 — 가짜로 구현하기→삼각측량→명백한 구현",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…순으로 진행» · ③discipline-tdd-final s027-6.1 b1 동축 · ②check-*.py 27종 docstring 선두 전수 실독 — 구현 진행 순서 술어 0 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            28,
+            28
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "테스트 격리와 AAA 패턴 구조화",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «격리하고 … 구조화하라» — 같은 deontic class 의 병렬 절이라 1 Work · ③discipline-tdd-final s031-7.1 b1·b2 동축 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            29,
+            29
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Mock 보다 출력·상태 검증 우선(Mock 과다는 리팩토링 내성 약화)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…우선한다» + 뒤 절은 근거 진술 · ③discipline-tdd-final s036-7.6 b1 «검증 방식 우선순위 — 출력 기반 > 상태 기반 > 통신 기반» 동일 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            30,
+            30
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Outside-In 이중 루프의 바깥·안쪽 테스트 자동 의무화 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…자동 의무화하지 않는다» · ③discipline-tdd-final s040-9.1 b1 «이중 루프라는 이유만으로 양쪽 테스트가 자동 의무가 되지 않음» 동일 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            },
+            {
+              "label": "Walking Skeleton 의 실제 얇은 E2E 행동 요건",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «Walking Skeleton은 실제 얇은 E2E 행동이다» — 형태 요건 규정 · ②check-*.py 27종 docstring 선두 전수 실독 — E2E 골격 판정 술어 0 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            31,
+            32
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "AI 보조 TDD 의 테스트=명세 — 개발자가 테스트 작성·AI 구현은 통과 후 검증",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «개발자가 테스트를 작성하고, AI 구현은 테스트를 통과한 후 검증한다» · ③discipline-tdd-final s066-17.1 b2 동축 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s005",
+      "line_start": 33,
+      "line_end": 53,
+      "blocks": [
+        {
+          "lines": [
+            34,
+            36
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "주제별 references/final.md 해당 절 준수",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «…해당 절을 따른다» — 상세 규범의 정본 위치 지정 · ②check-*.py 27종 docstring 선두 전수 실독 — 문서 라우팅 술어 0 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            37,
+            38
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            39,
+            39
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            40,
+            40
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            41,
+            41
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            42,
+            42
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            43,
+            43
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            44,
+            44
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            45,
+            45
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            46,
+            46
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            47,
+            47
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            48,
+            48
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            49,
+            49
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            50,
+            50
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            51,
+            52
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            53,
+            53
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "필요한 항목만 부분 로드(전체 로드 불필요)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «필요한 항목만 읽는다(전체 로드 불필요)» · ②check-*.py 27종 docstring 선두 전수 실독 — 로드 범위 술어 0 · ④§16 위임 기본값 표(discipline-tdd·implementation-* → agent-discipline-reviewer · rule-owner-map ⓓ 유일 관례)"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

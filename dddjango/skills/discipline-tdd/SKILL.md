@@ -1,4 +1,5 @@
 ---
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 name: discipline-tdd
 description: TDD 실천 규율 — Red-Green-Refactor 사이클, 언제·왜 TDD를 하는가, 고전 학파 vs 런던 학파, 좋은 단위 테스트의 4대 특성, 현행 계약 기반 영구 테스트 입장·중복 판정·수명 주기, Outside-In TDD·이중 루프, 리팩토링 패턴, BDD와 TDD의 관계, AI 보조 TDD. TDD 사이클 설계·학파 선택·테스트 생성·유지·갱신·분리·삭제·검증 우선순위 결정이 필요하면 로드한다. 테스트 코드 작성법(mock 사용법·assert·픽스처·pytest 메커니즘)은 implementation-test로 위임.
 user-invocable: false
@@ -7,6 +8,7 @@ user-invocable: false
 # TDD 실천 규율
 
 ## 언제 쓰나
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 TDD 사이클을 어떻게 운용할지, 어떤 학파를 선택할지, 테스트 목록을 어디서 시작할지, AI 보조 구현 시 테스트를 어떻게 명세로 활용할지가 불명확할 때 로드한다. 경계:
 
@@ -16,6 +18,7 @@ TDD 사이클을 어떻게 운용할지, 어떤 학파를 선택할지, 테스�
 - migration 전용 테스트와 DB-backed 현행 동작 테스트의 기술적 식별 → `implementation-test`
 
 ## 핵심 운영 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - TDD의 목표는 작동하는 깔끔한 코드다: 두려움 없이 변경할 수 있는 용기가 핵심 (§1.1–§1.2)
 - Red-Green-Refactor 순서를 지켜라: 실패하는 테스트 먼저, 통과 후에만 리팩토링 (§2.1)
@@ -31,6 +34,7 @@ TDD 사이클을 어떻게 운용할지, 어떤 학파를 선택할지, 테스�
 - AI 보조 TDD에서 테스트는 명세다: 개발자가 테스트를 작성하고, AI 구현은 테스트를 통과한 후 검증한다 (§17.1–§17.4)
 
 ## 상세 레퍼런스
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:
 

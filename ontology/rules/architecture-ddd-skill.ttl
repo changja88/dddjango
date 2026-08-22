@@ -1,0 +1,440 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+djr:R-2790 a djr:Obligation ;
+    skos:prefLabel "로드 조건 — 도메인 언어·비즈니스 정책·애그리거트/컨텍스트 경계·도메인 이벤트 채택 결정 시 선행 로드"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2790@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2790@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2790 ;
+    djr:revision 1 .
+
+djr:R-2791 a djr:Obligation ;
+    skos:prefLabel "경계 위임 — Django 구현 코드·outbox/트랜잭션 설계·API 계약의 타 스킬 이양"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2791@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2791@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2791 ;
+    djr:revision 1 .
+
+djr:R-2792 a djr:Obligation ;
+    skos:prefLabel "로드 조건 — 도메인 언어·정책/상태 전이·애그리거트/BC 경계·도메인 이벤트 채택 불명확 시 로드"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2792@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2792@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2792 ;
+    djr:revision 1 .
+
+djr:R-2793 a djr:Obligation ;
+    skos:prefLabel "Django ORM·서비스 레이어·outbox 구현의 implementation-django 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2793@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2793@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2793 ;
+    djr:revision 1 .
+
+djr:R-2794 a djr:Obligation ;
+    skos:prefLabel "outbox 전달 보장·트랜잭션 격리·Risky Write 설계의 architecture-db 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2794@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2794@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2794 ;
+    djr:revision 1 .
+
+djr:R-2795 a djr:Obligation ;
+    skos:prefLabel "REST API 계약·엔드포인트 설계의 architecture-api 위임"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2795@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2795@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2795 ;
+    djr:revision 1 .
+
+djr:R-2796 a djr:Override ;
+    skos:prefLabel "전략 설계 우선 — 전술 패턴에 앞선 핵심 도메인 식별·BC 설계·컨텍스트 맵 순서"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2796@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2796@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2796 ;
+    djr:revision 1 .
+
+djr:R-2797 a djr:Obligation ;
+    skos:prefLabel "유비쿼터스 언어의 BC 내 한정 유효 — 컨텍스트가 다르면 다른 언어"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2797@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2797@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2797 ;
+    djr:revision 1 .
+
+djr:R-2798 a djr:Obligation ;
+    skos:prefLabel "Vernon 규칙 1 — 진짜 불변식만 일관성 경계 안에서 보호"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2798@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2798@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2798 ;
+    djr:revision 1 .
+
+djr:R-2799 a djr:Obligation ;
+    skos:prefLabel "Vernon 규칙 2 — 최소 크기 애그리거트 설계"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2799@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2799@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2799 ;
+    djr:revision 1 .
+
+djr:R-2800 a djr:Obligation ;
+    skos:prefLabel "Vernon 규칙 3 — 타 애그리거트 ID 참조 한정(영속성/ORM 포함 · BC 경계 ORM FK 금지 · 같은 BC FK 허용)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2800@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2800@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2800 ;
+    djr:revision 1 .
+
+djr:R-2801 a djr:Obligation ;
+    skos:prefLabel "Vernon 규칙 4 — 경계 밖 일관성은 결과적 일관성으로 달성"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2801@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2801@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2801 ;
+    djr:revision 1 .
+
+djr:R-2802 a djr:Obligation ;
+    skos:prefLabel "엔티티의 애그리거트 일부 한정 사용 — 독립 생성·접근 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2802@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2802@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2802 ;
+    djr:revision 1 .
+
+djr:R-2803 a djr:Obligation ;
+    skos:prefLabel "도메인 서비스의 다-애그리거트 무상태 로직 한정 사용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2803@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2803@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2803 ;
+    djr:revision 1 .
+
+djr:R-2804 a djr:Prohibition ;
+    skos:prefLabel "애그리거트의 도메인 서비스 직접 인지 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2804@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2804@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2804 ;
+    djr:revision 1 .
+
+djr:R-2805 a djr:Obligation ;
+    skos:prefLabel "응용 서비스의 흐름 제어·트랜잭션 관리 한정 — 비즈니스 로직 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2805@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2805@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2805 ;
+    djr:revision 1 .
+
+djr:R-2806 a djr:Obligation ;
+    skos:prefLabel "도메인 이벤트의 애그리거트 수집"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2806@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2806@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2806 ;
+    djr:revision 1 .
+
+djr:R-2807 a djr:Obligation ;
+    skos:prefLabel "디스패치 타이밍의 명시 — UoW 커밋 직전(동일 트랜잭션 부수효과) 또는 직후(외부 통합)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2807@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2807@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2807 ;
+    djr:revision 1 .
+
+djr:R-2808 a djr:Obligation ;
+    skos:prefLabel "발행 봉투 discriminator 의 1종째 domain_layer StrEnum 선언(birth-enum)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2808@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2808@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2808 ;
+    djr:revision 1 .
+
+djr:R-2809 a djr:Obligation ;
+    skos:prefLabel "discriminator enum 멤버의 append-only 유지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2809@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2809@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2809 ;
+    djr:revision 1 .
+
+djr:R-2810 a djr:Exception ;
+    skos:prefLabel "버전 태그(payload_schema_version)의 리터럴 동결 — birth-enum 비대상"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2810@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2810@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2810 ;
+    djr:revision 1 .
+
+djr:R-2811 a djr:Prohibition ;
+    skos:prefLabel "소비 BC 의 발행 enum 직접 import 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2811@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2811@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2811 ;
+    djr:revision 1 .
+
+djr:R-2812 a djr:Obligation ;
+    skos:prefLabel "아키텍처 기본형 — 4계층+DIP"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2812@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2812@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2812 ;
+    djr:revision 1 .
+
+djr:R-2813 a djr:Obligation ;
+    skos:prefLabel "도메인 영역 인터페이스 선언·인프라 구현 — 도메인의 인프라 직접 인지 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2813@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2813@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2813 ;
+    djr:revision 1 .
+
+djr:R-2814 a djr:Obligation ;
+    skos:prefLabel "구현 패턴의 필요 확인 시점 선택 — 패턴 선택 절차 경유(Risky Write 라우팅 포함) 결정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2814@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2814@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2814 ;
+    djr:revision 1 .
+
+djr:R-2815 a djr:Obligation ;
+    skos:prefLabel "주제별 라우팅 준거 — references/final.md 해당 절 준수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2815@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2815@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2815 ;
+    djr:revision 1 .
+
+djr:R-2816 a djr:Exception ;
+    skos:prefLabel "필요 항목 한정 독해 — 전체 로드 불필요"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2816@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2816@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2816 ;
+    djr:revision 1 .
+
+<https://numchida.com/ns/djr#d/dddjango/skills/architecture-ddd/SKILL.md> a djr:Document ;
+    skos:prefLabel "architecture-ddd-skill"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s001> a djr:Section ;
+    djr:headingSnapshot "---"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-ddd/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s001/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 1 ;
+    djr:text "name: architecture-ddd\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s001/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s001> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s003/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s003/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s003/b3>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s003/b4> ;
+    djr:statesNorm djr:R-2790, djr:R-2791 ;
+    djr:text "description: 도메인 주도 설계(DDD) 지식 — 전략 패턴(바운디드 컨텍스트·유비쿼터스 언어·컨텍스트 맵·증류·이벤트 스토밍), 전술 패턴(값 객체·엔티티·애그리거트·리포지토리·도메인 서비스·응용 서비스·도메인 이벤트·Specification), 유연한 설계, 아키텍처(계층+DIP·핵사고날·CQRS), 구현 패턴(패키지 구조·Data Mapper·Repository+UoW·Event Sourcing·Saga·패턴 선택). 도메인 언어·비즈니스 정책·애그리거트 경계·컨텍스트 경계·도메인 이벤트 채택을 결정할 때 먼저 로드한다. Django 구현 코드는 implementation-django, outbox 전달 보장과 트랜잭션 설계는 architecture-db, API 계약은 architecture-api로 위임.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s001/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 3 ;
+    djr:text "user-invocable: false\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s001/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s001> ;
+    djr:kind djr:kind-prose ;
+    djr:order 4 ;
+    djr:text "---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s003> a djr:Section ;
+    djr:headingSnapshot "## 언제 쓰나"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-ddd/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s003/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2792 ;
+    djr:text "\n도메인 언어(유비쿼터스 언어), 비즈니스 정책·상태 전이, 애그리거트 경계, 바운디드 컨텍스트 경계, 도메인 이벤트 채택 여부가 불명확할 때 로드한다. 경계:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s003/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2793 ;
+    djr:text "- Django ORM·서비스 레이어·outbox 구현 → `implementation-django`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s003/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2794 ;
+    djr:text "- outbox 전달 보장·트랜잭션 격리·Risky Write 설계 → `architecture-db`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s003/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s003> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-2795 ;
+    djr:text "- REST API 계약·엔드포인트 설계 → `architecture-api`\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> a djr:Section ;
+    djr:headingSnapshot "## 핵심 운영 원칙"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-ddd/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2796 ;
+    djr:text "\n- 전략 설계가 전술 패턴보다 먼저다: 핵심 도메인 식별 → 바운디드 컨텍스트 설계 → 컨텍스트 맵 → 전술 패턴 적용. 전략 없이 전술 패턴만 적용하면 \"잘못된 경계에서 좋은 코드를 작성하는 결과\"가 된다 (§1.2, §2)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 10 ;
+    djr:statesNorm djr:R-2814 ;
+    djr:text "- 구현 패턴(Data Mapper, Repository+UoW, Event Sourcing, Saga, CQRS)은 명확한 필요가 확인된 시점에 선택하고, 패턴 선택 절차를 통해 Risky Write 라우팅을 포함해 결정한다 (§6.8)\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2797 ;
+    djr:text "- 유비쿼터스 언어는 바운디드 컨텍스트 내에서만 유효하다 — 동일 개념도 컨텍스트가 다르면 다른 언어를 쓴다 (§2.3)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2798, djr:R-2799, djr:R-2800, djr:R-2801 ;
+    djr:text "- 애그리거트는 Vernon의 4가지 규칙을 따른다: 진짜 불변식만 경계 안에서 보호, 최소 크기 설계, 타 애그리거트는 ID로만 참조(영속성/ORM 포함 — BC 경계 ORM FK 금지, 같은 BC 내 FK는 허용), 경계 밖 일관성은 결과적 일관성으로 달성 (§3.3)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-2802 ;
+    djr:text "- 엔티티는 애그리거트의 일부로만 사용하고, 독립적으로 생성·접근하지 않는다 (§3.2, §8)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-2803, djr:R-2804 ;
+    djr:text "- 도메인 서비스는 여러 애그리거트에 걸친 무상태 도메인 로직에 사용하고, 애그리거트는 도메인 서비스를 직접 알지 않는다 (§3.5)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-2805 ;
+    djr:text "- 응용 서비스는 흐름 제어와 트랜잭션 관리만 담당하고, 비즈니스 로직을 두지 않는다 (§3.6)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-2806, djr:R-2807 ;
+    djr:text "- 도메인 이벤트는 애그리거트가 수집하고, UoW 커밋 직전(동일 트랜잭션 내 부수 효과) 또는 직후(외부 통합)에 디스패치 타이밍을 명시한다. 타이밍이 불명확하면 이벤트 유실이나 트랜잭션 불일치가 발생한다 (§3.7)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 8 ;
+    djr:statesNorm djr:R-2808, djr:R-2809, djr:R-2810, djr:R-2811 ;
+    djr:text "- 발행 이벤트 봉투의 discriminator(`event_type` 류)는 1종째부터 domain_layer `StrEnum`으로 선언하고(birth-enum) append-only로 유지한다 — 버전 태그(`payload_schema_version`)는 리터럴 동결, 소비 BC는 발행 enum을 import하지 않는다 (§3.7)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 9 ;
+    djr:statesNorm djr:R-2812, djr:R-2813 ;
+    djr:text "- 아키텍처는 4계층+DIP를 기본으로 한다: 도메인이 인프라를 직접 알지 않도록 도메인 영역에 인터페이스를 두고 인프라에서 구현한다 (§5.1, §5.2)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005> a djr:Section ;
+    djr:headingSnapshot "## 상세 레퍼런스"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-ddd/SKILL.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2815 ;
+    djr:text "\n주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 10 ;
+    djr:text "| 복잡성 관리 원칙 | §7 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005/b11> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 11 ;
+    djr:text "| 의사결정 요약 | §8 |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005/b12> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 12 ;
+    djr:statesNorm djr:R-2816 ;
+    djr:text "각 절은 [`references/final.md`](references/final.md)에서 필요한 항목만 읽는다(전체 로드 불필요).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 2 ;
+    djr:text "| 주제 | 절 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 3 ;
+    djr:text "|---|---|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 4 ;
+    djr:text "| DDD란 무엇인가 | §1 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 5 ;
+    djr:text "| 전략 패턴 (바운디드 컨텍스트·유비쿼터스 언어·컨텍스트 맵·증류·이벤트 스토밍·팀 토폴로지) | §2 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 6 ;
+    djr:text "| 전술 패턴 (값 객체·엔티티·애그리거트·리포지토리·도메인 서비스·응용 서비스·도메인 이벤트·Specification) | §3 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 7 ;
+    djr:text "| 유연한 설계 | §4 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 8 ;
+    djr:text "| 아키텍처 (계층+DIP·핵사고날·CQRS·대규모 구조) | §5 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/SKILL.md/s005> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 9 ;
+    djr:text "| 구현 패턴 (패키지 구조·Data Mapper·Repository+UoW·Event Sourcing·Saga·패턴 선택) | §6 |\n" .

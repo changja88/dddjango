@@ -1,4 +1,5 @@
 ---
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 name: implementation-django-web
 description: Django 서버렌더 표현계층 구현 지식 — TemplateView/Generic CBV/FBV 선택, Context 준비, 템플릿·base template·includes/components, Static files·CSS·JS, Web forms·POST flow, HTMX fragment·AJAX, CSRF·XSS·보안 설정, View auth·permission, Render acceptance checks. Django 서버렌더 뷰·템플릿·폼·HTMX 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. Django 코어(모델·ORM·트랜잭션)는 implementation-django, JSON API 어댑터는 implementation-django-ninja, REST 계약 설계는 architecture-api로 위임.
 user-invocable: false
@@ -7,6 +8,7 @@ user-invocable: false
 # Django 서버렌더 표현계층 구현
 
 ## 언제 쓰나
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Django TemplateView·Generic CBV/FBV·템플릿·웹폼·HTMX fragment·CSRF·view auth·render acceptance checks 코드를 설계·작성할 때 로드한다. 경계:
 
@@ -18,6 +20,7 @@ Django TemplateView·Generic CBV/FBV·템플릿·웹폼·HTMX fragment·CSRF·vi
 - 도메인 상태 전이·정책·불변식 → `architecture-ddd`
 
 ## 핵심 운영 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - 뷰는 얇은 어댑터: 요청 처리·auth/permission·form·context 조율·서비스 호출·응답 렌더링만 (§1)
 - TemplateView/Generic CBV/FBV 선택은 흐름 복잡도 기준, mixin이 깊어지면 재검토 (§2)
@@ -30,6 +33,7 @@ Django TemplateView·Generic CBV/FBV·템플릿·웹폼·HTMX fragment·CSRF·vi
 - 에러는 출처로 분류 — 도메인 예외는 view-local 재렌더, 시스템·미식별은 `handler500`, transient는 미들웨어 503 (§11)
 
 ## 상세 레퍼런스
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:
 

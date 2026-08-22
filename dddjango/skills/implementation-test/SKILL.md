@@ -1,4 +1,5 @@
 ---
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 name: implementation-test
 description: 테스트 코드 작성법 종합 지식 — 테스트 전략·피라미드, migration 전용 테스트와 DB-backed 현행 동작 테스트의 기술적 구분, pytest 구조·픽스처·마커·플러그인, Mock·테스트더블, Property-Based Testing, 팩토리, 시간·HTTP 모킹, 통합 테스트, 커버리지, 테스트 품질·안티패턴, Mutation Testing, BDD, mounted Django client API 계약, Idempotency·동시성 테스트, 디버깅. 테스트 코드·픽스처·테스트더블·계약 검증 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. 무엇을 테스트하고 기존 테스트를 유지·갱신·분리·삭제할지는 discipline-tdd, Django 구현은 implementation-django 계열로 위임.
 user-invocable: false
@@ -7,6 +8,7 @@ user-invocable: false
 # 테스트 코드 작성법 종합
 
 ## 언제 쓰나
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 테스트 코드·픽스처·더블·factory·계약 검증·커버리지·Mutation·BDD·동시성 테스트 코드를 작성할 때 로드한다. 이 skill은 `discipline-tdd` §5.5가 영구 테스트 입장 결정을 끝낸 **뒤** `add`·`update`와 명시 승인된 `retain` 의미 보존 재조직의 작성 mechanics만 제공한다. `retain` 재조직은 새 case·assertion·Red를 만들지 않고 전후 같은 보호를 유지한다. 후보나 `reuse`·`reject`를 새 test file·case·assertion·helper 의무로 바꾸지 않는다. 경계:
 
@@ -16,6 +18,7 @@ user-invocable: false
 - Django 뷰·템플릿·폼·HTMX 구현 → `implementation-django-web`
 
 ## 핵심 운영 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - **먼저 `discipline-tdd` §5.5의 decision row를 확인한다.** `add`·`update`와 명시 승인된 `retain` 의미 보존 재조직에만 아래 recipe를 적용한다. `retain` 재조직은 새 case·assertion·Red가 없고, `reuse`·`reject`에서는 test artifact write가 0이다. 피라미드·coverage·속도·도구 예시는 `add`의 근거가 아니다 (§1)
 - 입장된 행동을 증명하는 가장 작은 테스트 범위를 선택한다. 유효한 domain/application/DB/adapter/public contract 테스트를 단순히 상위 계층이라는 이유로 낮추거나 생략하지 않는다 (§1)
@@ -38,6 +41,7 @@ user-invocable: false
 - 테스트 안티패턴(복잡한 조건문·프로덕션 로직 재사용·숨겨진 의존성)을 피한다 (§16 — 상수 역수입 오라클은 §15.4)
 
 ## 상세 레퍼런스
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:
 

@@ -1,4 +1,5 @@
 ---
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 name: discipline-cleancode
 description: 기술 무관 클린코드 규율 — 네이밍, 함수 설계, 추상화·캡슐화, 깊은 모듈 설계, 객체 설계 원칙, SOLID, 상태 관리, 오류 처리, 중복 제거·DRY, 협력·의존성 관리, 리팩토링, 레거시 코드, 설계 철학. 코드를 새로 작성하거나 리팩터링할 때 명명·함수 형태·책임·캡슐화·추상화·SOLID·중복·오류 처리 원칙이 필요하면 로드한다. Python 언어 관용구·PEP8 기계적 규칙은 implementation-python, Django 특화 패턴은 implementation-django로 위임.
 user-invocable: false
@@ -7,6 +8,7 @@ user-invocable: false
 # 클린코드 규율
 
 ## 언제 쓰나
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 언어 비종속적 클린코드 원칙(명명, 함수 설계, 캡슐화, SOLID, 중복, 오류 처리, 리팩토링)이 필요한 코드 작성·리뷰·리팩터링 시 로드한다. 경계:
 
@@ -16,6 +18,7 @@ user-invocable: false
 - 테스트 코드 작성법(mock·픽스처·assert) → `implementation-test`
 
 ## 핵심 운영 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - 이름은 의도를 드러내라: 한 개념에 한 단어, 클래스는 명사·메서드는 동사, 이름 길이는 범위에 비례 (§2)
 - 매직 값·상수 승격은 판정 원리로: 닫힌 집합을 분기·판정에 쓰면 1곳째부터 집합 타입, 선언된 심볼은 심볼로만 소비(`==` 비교), 허용 목록(사람 대상 서술·정의부·테스트 외부 계약 기댓값 등)은 리터럴 유지; 발행 이벤트 봉투 discriminator는 1종째부터 enum(birth-enum), 버전 태그는 리터럴 동결, OHS published contract(`open_host_service/*/contract/`)의 discriminator는 wire Literal 유지(재예외 — houserules §2) (§2.14)
@@ -30,6 +33,7 @@ user-invocable: false
 - 레거시 코드는 Seam을 찾아 보호한 후 개선하라: Sprout·Wrap과 non-migration 임시 특성화 probe를 쓰되, 현재 구현 포착을 영구 계약으로 고정하지 않는다 (§16)
 
 ## 상세 레퍼런스
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:
 
