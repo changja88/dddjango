@@ -47,6 +47,13 @@ codex plugin add dddjango@changja88-dddjango
 
 > 두 마켓 모두 같은 GitHub 레포(`changja88/dddjango`)에서 받습니다. 설치 후 세션을 재시작하세요.
 
+화면(웹 표현계층)까지 만들려면 자매 플러그인 **dddjango-web**을 함께 설치한다:
+
+```
+/plugin install dddjango-web@changja88-dddjango          # Claude Code
+codex plugin add dddjango-web@changja88-dddjango         # Codex
+```
+
 ---
 
 ## 업데이트
@@ -279,6 +286,18 @@ dddjango는 작업 규모를 보고 알맞게 움직인다.
 - **에이전트 7개**: `design-architect`, `design-review-ddd`, `design-review-api`, `design-review-db`, `acceptance-tester`, `coder`, `discipline-reviewer`
 - **스킬 11개**: 아키텍처(`architecture-ddd`/`-api`/`-db`), 규율(`discipline-houserules`/`-cleancode`/`-tdd`), 구현(`implementation-django`/`-django-ninja`/`-django-web`/`-python`/`-test`)
 - **결정적 백스톱 27종**: 구조·계약 회귀를 G2 직전에 자동 차단하는 파이썬 검사 스크립트
+
+---
+
+## 자매 플러그인: dddjango-web
+
+`/dddjango-web <화면 요구>` — dddjango가 만든 **실물 API 계약만 소비**해 화면(웹 표현계층)을 빌드하는 **독립 플러그인**이다.
+
+- **시나리오 3종**: 클로드 디자인 시안 반영 · 기존 웹페이지 카피(외형은 같게, HTML 구조는 표준으로 재구축) · 기존 화면 수정
+- **표준**: 순수 HTML + HTMX + CSS(커스텀 JS 없음) · 요청 구동 MVVM(view/view_model/state + 템플릿) · design_system 토큰
+- **경계**: `web/` 트리는 «내부의 외부 클라이언트» — 백엔드 코드를 import하지 않고(백스톱이 차단) in-process HTTP로 계약만 소비한다. 필요한 API가 없으면 `/dddjango`로 발주를 안내한다.
+- **구성**: 커맨드 1(`/dddjango-web`) · 에이전트 4(`design-architect-web`·`design-review-web`·`coder-web`·`discipline-reviewer-web`) · 스킬 4(`architecture-web`·`implementation-ui`·`discipline-web-houserules`·`discipline-cleancode`) · 백스톱 검사 24종(구조·격리·명명·순수성) + 시안 절단 도구
+- **검증**: 자동 테스트 대신 결정적 백스톱 + 규율 감사 + 게이트에서 **사용자 육안 확인**(`runserver`로 시안과 대조)
 
 ---
 

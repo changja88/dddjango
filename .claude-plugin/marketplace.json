@@ -14,6 +14,16 @@
         "ref": "main"
       },
       "category": "Coding"
+    },
+    {
+      "name": "dddjango-web",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/changja88/dddjango.git",
+        "path": "dddjango-web",
+        "ref": "main"
+      },
+      "category": "Coding"
     }
   ]
 }

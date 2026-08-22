@@ -336,99 +336,25 @@
   "cache_parity": {
     "claude": {
       "checked": 68,
-      "mismatch": [
-        "dddjango/.claude-plugin/plugin.json",
-        "dddjango/agents/acceptance-tester.md",
-        "dddjango/agents/coder.md",
-        "dddjango/agents/design-architect.md",
-        "dddjango/agents/design-review-api.md",
-        "dddjango/agents/design-review-db.md",
-        "dddjango/agents/design-review-ddd.md",
-        "dddjango/agents/discipline-reviewer.md",
-        "dddjango/commands/dddjango.md",
-        "dddjango/scripts/check-api-error-controller-contract.py",
-        "dddjango/scripts/check-app-container.py",
-        "dddjango/scripts/check-broker-contract.py",
-        "dddjango/scripts/check-business-vocabulary.py",
-        "dddjango/scripts/check-choices-literal-consumption.py",
-        "dddjango/scripts/check-common-container.py",
-        "dddjango/scripts/check-composition-root.py",
-        "dddjango/scripts/check-context-isolation.py",
-        "dddjango/scripts/check-db-table.py",
-        "dddjango/scripts/check-domain-model.py",
-        "dddjango/scripts/check-error-centralization.py",
-        "dddjango/scripts/check-event-publish.py",
-        "dddjango/scripts/check-idempotency-scope-creep.py",
-        "dddjango/scripts/check-layer-skeleton.py",
-        "dddjango/scripts/check-mechanism-ownership.py",
-        "dddjango/scripts/check-missable-entrance.py",
-        "dddjango/scripts/check-naming.py",
-        "dddjango/scripts/check-ninja-boundary-middleware.py",
-        "dddjango/scripts/check-openapi-error-declaration.py",
-        "dddjango/scripts/check-port-adapter-pairing.py",
-        "dddjango/scripts/check-public-surface-annotation.py",
-        "dddjango/scripts/check-response-schema-bypass.py",
-        "dddjango/scripts/check-synthetic-infra-exc.py",
-        "dddjango/scripts/check-test-config.py",
-        "dddjango/scripts/check-transaction-boundary.py",
-        "dddjango/scripts/check-transient-overmapping.py",
-        "dddjango/scripts/check-usecase-dto-placement.py",
-        "dddjango/scripts/rulepack.json",
-        "dddjango/scripts/rulepack.py",
-        "dddjango/skills/architecture-api/SKILL.md",
-        "dddjango/skills/architecture-api/references/final.md",
-        "dddjango/skills/architecture-db/SKILL.md",
-        "dddjango/skills/architecture-db/references/final.md",
-        "dddjango/skills/architecture-ddd/SKILL.md",
-        "dddjango/skills/architecture-ddd/references/final.md",
-        "dddjango/skills/discipline-cleancode/SKILL.md",
-        "dddjango/skills/discipline-cleancode/references/final.md",
-        "dddjango/skills/discipline-houserules/SKILL.md",
-        "dddjango/skills/discipline-houserules/references/final.md",
-        "dddjango/skills/discipline-tdd/SKILL.md",
-        "dddjango/skills/discipline-tdd/references/final.md",
-        "dddjango/skills/implementation-django-ninja/SKILL.md",
-        "dddjango/skills/implementation-django-ninja/references/final.md",
-        "dddjango/skills/implementation-django-web/SKILL.md",
-        "dddjango/skills/implementation-django-web/references/final.md",
-        "dddjango/skills/implementation-django/SKILL.md",
-        "dddjango/skills/implementation-django/references/final.md",
-        "dddjango/skills/implementation-python/SKILL.md",
-        "dddjango/skills/implementation-python/references/final.md",
-        "dddjango/skills/implementation-test/SKILL.md",
-        "dddjango/skills/implementation-test/references/final.md"
-      ],
+      "mismatch": [],
       "missing": [],
-      "root": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.16.0",
-      "status": "drift"
+      "root": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.0",
+      "status": "ok"
     },
     "codex": {
       "checked": 33,
-      "mismatch": [
-        "codex-dddjango/.codex-plugin/plugin.json",
-        "codex-dddjango/skills/architecture-api/references/final.md",
-        "codex-dddjango/skills/architecture-db/references/final.md",
-        "codex-dddjango/skills/dddjango-architecture-ddd/references/final.md",
-        "codex-dddjango/skills/dddjango-discipline-cleancode/references/final.md",
-        "codex-dddjango/skills/dddjango-discipline-houserules/references/final.md",
-        "codex-dddjango/skills/dddjango-implementation-test/references/final.md",
-        "codex-dddjango/skills/discipline-tdd/references/final.md",
-        "codex-dddjango/skills/implementation-django-ninja/references/final.md",
-        "codex-dddjango/skills/implementation-django-web/references/final.md",
-        "codex-dddjango/skills/implementation-django/references/final.md",
-        "codex-dddjango/skills/implementation-python/references/final.md"
-      ],
+      "mismatch": [],
       "missing": [],
-      "root": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.16.0",
-      "status": "drift"
+      "root": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.17.0",
+      "status": "ok"
     }
   },
   "claude_install": {
-    "git_commit_sha": "b84a7bfcde66eb6fc174ba4bcc646b3e47cdd1b7",
-    "install_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.16.0",
+    "git_commit_sha": "fbcdd9c1781eaa3128b11da02ffdf5015116fc16",
+    "install_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.0",
     "key": "dddjango@changja88-dddjango",
     "source": "installed_plugins.json",
-    "version": "2.16.0"
+    "version": "2.17.0"
   },
   "external_annex": {
     "initial_memory": {
@@ -788,7 +714,7 @@
     "plugin_payload": {
       "files": {
         ".agents/plugins/marketplace.json": "0b9f42c0fc6c72f9eb17aec3bcaea6c1b1b82e9ec71ec2c541e809d9ac947c94",
-        ".claude-plugin/marketplace.json": "ce89b1002c01d7a8342fac0c039ef96e6dec4848e85f12eb444256a7f3f5a0d2",
+        ".claude-plugin/marketplace.json": "2ab8baa47e88eb8fd0b51644b7e1e422c6e3f194520476db4ee1b1a8a693c4c4",
         "codex-dddjango/.codex-plugin/plugin.json": "0a2bcace8043e587235d456835ab11d65eaae35d6ceab58f49f1582840e03279",
         "codex-dddjango/skills/architecture-api/SKILL.md": "1f6c9659d8b9d230c2556c130c31d52031356c07eaafe00a10973ed7fcd8c5ab",
         "codex-dddjango/skills/architecture-api/references/final.md": "36166881faa891e87f4575a131c6e3e5c2d5a71c9b47f1819225aa175e475e68",
@@ -863,7 +789,7 @@
         ".agents/plugins/marketplace.json"
       ],
       "n_files": 64,
-      "tree_sha256": "50e32900eea20f5bd5ab1292d074b0429ad2508a3d96f7ea503f87e992138998",
+      "tree_sha256": "6232d526b876a69e3bb4faca5302872a1bf182253eca8c47fad0f02f4a8bcc21",
       "why": "절차서가 **부르는 것들**. 서브에이전트 정의와 규범 산문(`references/final.md`)이 여기 있다 — 그중 ninja §6.1·§6.2 와 ddd §3.2 는 파일럿 이관 대상 클러스터 그 자체다. 절차서만 동결하고 이것들을 두면 봉투만 봉인하고 내용물을 열어 둔 것이다. 산문이 런 사이에 바뀌면 세 암이 같은 규범을 상대한 것이 아니게 되고, `coder.md` 한 줄이 바뀌면 처치와 무관하게 산출물이 달라진다."
     },
     "preregistration": {
@@ -879,8 +805,8 @@
     },
     "protocol": {
       "files": {
-        "Makefile": "92d05530355e8ebdcbfb9bddcbe2cbd9a75165b42e9e5e140c1678c152acc3f3",
-        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "6fb5b666a297fa1d7e614fc4311874a89d63755d623801c1dd544a9c97e70db7",
+        "Makefile": "020be06ff956b5c6e43d7085d32e9cc242cfd8907c5bd3af7b83940c7f3b77a4",
+        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "279923e5462fd309b89c4b94b05a874a8d50b652bd6fc4770b39074e89138b41",
         "workspace/plan/2026-08-12-bc-rebuild-protocol.md": "a39ba66e58cb8bde5ad8f84d630b6fd9b04300f7130d4bbc2d149751c2f6c492",
         "workspace/plan/templates/request-template.md": "531bb5c0e9b147d51665981bc3218aa027ddc4170101ea920ecc8a87f7018fe4",
         "workspace/tools/openapi_shape.py": "ea564e3b0ce0550352935b7a572f93dfae404f1a1d24f0fd9d4acf6dc4bc4932",
@@ -895,7 +821,7 @@
         "workspace/design/2026-08-20-ontology-t2-0b-design.md"
       ],
       "n_files": 6,
-      "tree_sha256": "95256739b78894787e98e2bb688ea603291a21a0c7a1dcf1d0e5b66ba872a166",
+      "tree_sha256": "453ba207517bdd6c37ec308584293ba51dce569d7edc76d4c91b013ebfbf4171",
       "why": "**전이 의존** — 발주문이 «그대로 따르라»고 가리키는 판형과, 인수 판정이 부르는 도구와, 게이트를 배선하는 Makefile. 이 중 하나만 바뀌어도 모델이 받는 요청문·허용 범위·STOP 규약·shape 합격 여부·실런 진입 조건이 바뀐다. 그런데 대조는 글롭에 든 것만 재전개하므로, 봉인 밖이면 그 변경은 드리프트가 아니었다(레인 AU 발견 4)."
     },
     "queries": {
@@ -1018,16 +944,16 @@
     ]
   },
   "script_trees": {
-    "cache-claude": "5cfc49b1d64aae26f22af527ef7e38c40cebdea814fab09c20113ec87a1699e4",
-    "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.16.0/scripts",
-    "cache-codex": "5cfc49b1d64aae26f22af527ef7e38c40cebdea814fab09c20113ec87a1699e4",
-    "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.16.0/skills/dddjango/scripts",
+    "cache-claude": "f2cbdf63ed533e7452663907df3de94b580d410dc052fe7e9057144f157bf843",
+    "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.0/scripts",
+    "cache-codex": "f2cbdf63ed533e7452663907df3de94b580d410dc052fe7e9057144f157bf843",
+    "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.17.0/skills/dddjango/scripts",
     "source-claude": "f2cbdf63ed533e7452663907df3de94b580d410dc052fe7e9057144f157bf843",
     "source-codex": "f2cbdf63ed533e7452663907df3de94b580d410dc052fe7e9057144f157bf843"
   },
-  "sealed_commit": "86bfe210a484fe61a0d8a1b4f3c4712e1fde24db",
-  "self_sha256": "8e0c4e771ca604b54ef754f5c7f5ebc9705444a486838ca2138a6c29031951e5",
-  "status": "sealed",
+  "sealed_commit": "bca511057dabc19f10045cbc249636d4f1894795",
+  "self_sha256": "2e2ca65ce4a623b03a6361c4bb3ca08f43174e5d433e5ed5ab5d74c5df8fda12",
+  "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [
       "<run_id — 런마다 다름·격리 네임스페이스>"

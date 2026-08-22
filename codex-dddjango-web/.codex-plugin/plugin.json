@@ -1,0 +1,42 @@
+{
+  "name": "dddjango-web",
+  "version": "0.1.0",
+  "description": "기존 Django 프로젝트의 화면(web 표현계층)을 시안 충실 재현과 MVVM+HTMX 구조 규율로 화면 요구→설계→구현까지 단계 게이트로 빌드하는 오케스트레이터. 코디네이터가 전문 역할 서브에이전트를 디스패치하고, 백엔드 BC는 실물 API 계약으로만 소비한다.",
+  "author": {
+    "name": "changja88",
+    "email": "dev@numchida.com"
+  },
+  "homepage": "https://github.com/changja88/dddjango",
+  "repository": "https://github.com/changja88/dddjango",
+  "license": "MIT",
+  "keywords": [
+    "django",
+    "web",
+    "htmx",
+    "mvvm",
+    "design-system",
+    "orchestrator",
+    "subagents",
+    "codex"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "dddjango-web",
+    "shortDescription": "Django 화면을 시안 충실 재현·MVVM+HTMX로 게이트 빌드",
+    "longDescription": "dddjango-web은 기존 Django 프로젝트에 화면(web 표현계층)을 요청 구동 MVVM(view/view_model/state)+HTMX 규율로 추가한다. /dddjango-web 코디네이터가 design-architect-web·design-review-web·coder-web·discipline-reviewer-web 역할을 서브에이전트로 디스패치하고, G0(화면 요구)·G1(설계)·G2(구현) 게이트마다 사용자 승인을 받는다. 백엔드 BC는 실물 API 계약(URL+JSON)으로만 소비하며 없는 API는 /dddjango 발주로 안내한다. multi_agent 기능 필요.",
+    "developerName": "changja88",
+    "category": "Coding",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/changja88/dddjango",
+    "defaultPrompt": [
+      "주문 목록 화면을 이 시안대로 dddjango-web으로 빌드해줘.",
+      "이 Django 프로젝트에 상품 상세 화면을 MVVM+HTMX로 추가해줘.",
+      "기존 장바구니 화면에 쿠폰 입력 섹션을 추가해줘."
+    ],
+    "brandColor": "#0C4A6E"
+  }
+}

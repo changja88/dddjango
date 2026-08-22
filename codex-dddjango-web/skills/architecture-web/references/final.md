@@ -1,0 +1,130 @@
+# dddjango-web 프레젠테이션 아키텍처
+
+## 목차
+
+- §1. web 트랙의 정의와 경계 — 내부의 외부 클라이언트
+- §2. 3단 판별 — 상태 조립 1단 + 표현 2단
+- §3. 삼총사 작성 규율 — view·view_model·state
+- §4. section·widget 작성 규율 — dumb 표현 조각과 HTMX 재렌더
+- §5. 승격·이동 규칙 — 성장 시 단 이동
+- §6. 계약 소비 — client 전속·스냅샷 체계
+- §7. 라우팅 — 리터럴의 단일 출처
+- §8. design_system 사용 — 토큰·component 재사용
+
+---
+
+## §1. web 트랙의 정의와 경계 — 내부의 외부 클라이언트
+
+web은 **«내부의 외부 클라이언트»**다 — 같은 저장소의 `web/` 영역에 살지만, 백엔드 BC를 **실물 API 계약(URL+JSON)으로만** 소비한다. `application/**` import는 0이다 — *왜*: import 한 줄이 뚫리는 순간 web은 백엔드 내부 사정에 결합되고, 화면 수정이 백엔드 회귀를 부르는 통로가 된다. 필요한 API가 없으면 임의 가정하지 않는다 — Coordinator를 경유해 **«/dddjango로 발주»**를 안내한다(§6). BC·DDD 개념은 다루지 않는다 — 단위는 화면이다(내비게이션 영역 > 화면).
+
+- **요청 구동 MVVM**: 구조 표준은 view/view_model/state 삼총사 + 템플릿이다. VM은 **무상태 조립기**다 — 매 요청 새로 조립되고 요청이 끝나면 사라진다. watch·구독·상주 상태는 존재하지 않는다. 갱신 표준은 HTMX 부분 재렌더다(§4).
+- **형상 공리**: 형상(배치·생김새)의 유일 근거는 **동결된 시안**(이미지 또는 시안 HTML)이다. 명세에 산문 레이아웃 서술 금지 — *왜*: 산문은 시안과 어긋나는 두 번째 형상 출처가 된다. 시안은 **재현하되 직수입하지 않는다** — 마크업·클래스·인라인 스타일 복붙 금지, 구조는 이 코퍼스의 규범으로 재구축한다. 재현 절차는 implementation-ui §2 소유.
+- **기술 제약**: 순수 HTML + HTMX + CSS만 쓴다. JS 프레임워크·커스텀 JavaScript 금지 — JS는 vendored htmx가 유일하다.
+
+**handoff** — 이 스킬이 안 다루는 것:
+
+| 상황 | 넘길 곳 |
+|---|---|
+| 파일·폴더·명명·import 방향 **사실** | discipline-web-houserules |
+| HTML·삼총사 .py·client·urls **표기** | implementation-ui |
+| 백엔드 API의 존재·형태 자체 | /dddjango 발주 (§6) |
+| 호스트 배선(settings·urls 편입·정적 서빙) | Coordinator(커맨드 Phase 0 전제조건 검사) |
+
+## §2. 3단 판별 — 상태 조립 1단 + 표현 2단
+
+3단은 크기가 아니라 **상태 조립 / 화면 전속 / 재사용**으로 가른다. VM을 갖는 단은 view 하나뿐이고, section·widget은 VM·client의 존재를 모르는 순수 템플릿 조각이다 — humble view를 구조로 보장한다.
+
+**판별 절차** — 위에서부터 순서대로, 처음 해당하는 것이 답:
+
+| # | 질문 | 답 |
+|---|---|---|
+| 1 | 상태 조립(VM)이 필요한가 — client 호출·표시 판정·표시 값 계산이 있는가? | **view** — 삼총사(`<view>_view.py`·`<view>_view_model.py`·`<view>_state.py`)로 생성 |
+| 2 | 한 화면 전속인가 — 그 화면의 state나 맥락을 아는가? | **section** |
+| 3 | BC 어휘(계약 응답의 업무 개념)를 아는가? | 예 → **widget** / 아니오 → `design_system/component/`(§8) |
+
+- 상태 조립이 전혀 없는 정적 화면은 view+템플릿만으로 성립한다(view_model·state·form 미생성 — undecidable-web §1).
+- 갈리는 경계의 판별 신호는 공유 reference `undecidable-web.md`(discipline-web-houserules 동봉) 소유 — VM 필요성 §1·전속/맥락 §2·widget↔design_system §3.
+- 영역 귀속은 undecidable-web §4 — Coordinator가 G0 배너의 배치축 3선택으로 표면화해 **사용자가 판정**한다. 설계자는 ③ «설계자가 정함» 위임 시에만 결정한다.
+- 파일·폴더·명명 사실은 discipline-web-houserules 소유 — 이 절은 단을 *고르는* 절차만 정한다.
+
+## §3. 삼총사 작성 규율 — view·view_model·state
+
+| 파일 | 역할 | 규율 |
+|---|---|---|
+| `<view>_view.py` | 얇은 진입점 | URL 바인딩·VM 호출·render·fragment 요청 소유(§4)뿐 — **판단 금지** |
+| `<view>_view_model.py` | 표시 상태 조립 | client 호출과 응답→표시 값 조립의 **유일한 자리** — 표시 판정의 거주지 |
+| `<view>_state.py` | 표시 상태 | **불변 dataclass** — 템플릿이 아는 유일한 모양 |
+
+- **view는 진입점뿐이다** — 요청을 받아 VM을 부르고 받은 state로 render한다. 표시 판정·값 가공이 view에 생기면 VM으로 옮긴다. *왜*: 판정이 view에 스미면 같은 판정이 페이지 경로와 fragment 경로(§4)에 중복되고 어긋난다.
+- **VM이 표시 판정의 유일한 자리다** — "품절이면 회색" 같은 응답→표시 매핑, 빈 목록·오류 표시의 분기 결정이 전부 여기 산다. 템플릿에는 결정이 끝난 값만 넘긴다.
+- **state는 불변 dataclass다** — client 응답 모델·ORM 객체 같은 패키지 타입을 템플릿에 직노출하지 않는다. *왜*: 템플릿이 응답 모델을 직접 알면 계약 변경이 템플릿 전체로 번진다 — state가 완충이다. state 필드는 템플릿이 그대로 표시할 프리미티브(str·int·bool과 그 리스트)와 중첩 dataclass다 — 단 예외로 **Django Form 1종을 허용**한다(검증 실패 재렌더 시 form을 state 필드로 운반하고, 템플릿은 그 필드로 form을 렌더한다).
+- **forms↔VM 분담**: 입력 검증은 Django form, 표시 상태는 VM이다. form은 종류 폴더 `form/`의 `<view>_form.py`(클래스 `<View>Form`)에 산다 — 입력 form이 있는 화면만 생성한다(조건 생성). form이 VM 대신 표시 판정을 하지 않고, VM이 form 대신 필드 검증을 하지 않는다.
+
+## §4. section·widget 작성 규율 — dumb 표현 조각과 HTMX 재렌더
+
+둘 다 **dumb**하다 — 판단 금지, state가 이미 결정해 둔 값에 따른 표시 분기(`{% if %}`)만 한다.
+
+| 단 | 정의 | 규율 |
+|---|---|---|
+| `section/` — 한 화면 **전속** 구획 | 그 화면의 state·맥락을 안다 | **소속 화면 접두 필수**(`<view>_<section>.html`) · **HTMX 부분 재렌더 단위**(hx-target) |
+| `widget/` — 영역 내 **재사용** 조각 | 화면 비전속 | **명시 context 전달만** — `{% include "…" with … only %}` 판형 · 파일명에 화면 이름 금지 |
+
+- 접두 규칙의 의미: section의 화면 접두는 "전속"의 선언이고, widget의 화면 이름 금지는 "재사용"의 선언이다 — 이름이 곧 단의 계약을 드러낸다.
+- **fragment 진입점(URL)은 소속 view가 소유한다** — 새 파일 유형을 만들지 않는다. view가 fragment 요청을 받아 같은 VM으로 state를 조립하고 section 템플릿만 render한다. *왜*: 페이지와 fragment가 같은 VM을 지나므로 두 경로의 표시 판정이 어긋날 수 없다.
+- **fragment에도 페이지와 같은 auth·CSRF를 적용한다** — 부분 재렌더는 완화 사유가 아니다.
+- widget의 `only`가 규율의 핵심이다 — 부모 context 상속에 기대기 시작하면 화면 전속으로 오배치된 것이다(undecidable-web §2 신호).
+
+## §5. 승격·이동 규칙 — 성장 시 단 이동
+
+성장하면 단을 옮긴다 — 단의 정의를 깨면서 제자리에 머무르지 않는다:
+
+| 신호 | 이동 |
+|---|---|
+| section이 **두 번째 화면**에서 필요해짐 | 화면 state 의존을 벗겨 **widget으로** |
+| widget이 **두 번째 영역**에서 필요해짐 | BC 어휘를 탈피해 **`design_system/component/`로 승격**(§8) — 탈피 불가하면 **설계 반송**(타 영역 복제 금지) |
+| section·widget에 **상태 조립**이 필요해짐 — client 호출·표시 판정이 생김 | **view 삼총사로 승격** |
+| BC 어휘 없이도 성립하는 순수 시각 부품이 됨 | **`design_system/component/`로**(§8) |
+
+- **수평 격리**: 타 영역의 widget은 include하지 않는다 — 교차 영역 재사용은 BC 어휘 탈피 후 design_system 승격을 경유하고, 탈피 불가하면 설계 반송이다.
+- 역방향 절제: state 렌더 또는 명시 context만으로 성립하면 view로 승격하지 않는다 — 불필요한 삼총사 양산 금지(undecidable-web §1).
+
+## §6. 계약 소비 — client 전속·스냅샷 체계
+
+**호출 코드는 `client/` 전속이다** — URL 조립·요청·파싱·오류 변환은 전부 client 모듈에 산다. view·VM이 직접 주소를 부르지 않는다 — VM은 client 함수를 호출할 뿐이고, view·템플릿은 client의 존재도 모른다. 공통 호출기(base client)는 만들지 않는다.
+
+- **in-process HTTP**: 파이썬 코드로 주소를 불러 JSON을 받는다 — 네트워크 없음·미들웨어 경유. 대상은 **driving_layer api 표면만**이다.
+- **응답은 web 소유 응답 모델로 파싱한다** — driving_layer schema import 금지. *왜*: schema를 import하는 순간 «실물 API 계약만 소비»가 «내부 코드 공유»로 붕괴한다.
+- **계약 오류는 client exception으로 표현한다** — 상태 코드·오류 응답의 해석은 client가 끝내고, VM은 exception 단위로 표시 판정(§3)만 한다.
+- **없는 API는 가정하지 않는다** — 필요한 엔드포인트가 동결본에 없으면 임의 가정하지 말고 Coordinator 경유 **«/dddjango로 발주»**를 안내한다(§1).
+
+**계약 스냅샷 체계** — 계약은 추측이 아니라 **동결된 스냅샷**이 사실의 출처다. 기능 산출물 폴더에 2종이 산다:
+
+| 산출물 | 생성 시점 | 내용 | 독자 |
+|---|---|---|---|
+| `openapi-full.json` | G0(스코프 게이트) 승인 직후 **동결** | OpenAPI 원본 **전체** | design-architect-web·design-review-web |
+| `server-contract.json` | G1(설계 게이트) 승인 직후 **기계 절단** | 명세가 인용한 paths + `$ref` 전이 폐쇄 | coder-web |
+
+- **coder-web은 경량본(`server-contract.json`)만 본다** — full본 재해석 금지. 에이전트는 받은 스냅샷을 사실로 쓰되 **갱신하지 않는다**(동결·재동결은 Coordinator 소유).
+- 격리는 결정적 백스톱 WI 패밀리(러너 backstop.py)가 기계 강제한다: `web/**`의 `application.`·`framework.` 내부 import 0 · 호출 코드 client 전속 · client 대상 URL은 driving_layer api 표면만.
+
+## §7. 라우팅 — 리터럴의 단일 출처
+
+두 세계의 URL 리터럴은 거처가 다르다:
+
+| 리터럴 | 유일 거처 | 참조 방법 |
+|---|---|---|
+| web 자신의 path·name | 영역 `urls.py`(루트 `web/urls.py`가 합산) | `{% url %}`(템플릿)·`reverse`(파이썬) **이름만** — 하드코딩 경로 금지 |
+| BC API의 URL | `client/` 모듈 — 계약의 일부(§6) | VM은 client 함수만 호출 |
+
+- *왜* 이름 참조만인가: 경로 개편이 영역 urls.py 한 곳 수정으로 끝난다 — 템플릿·py에 흩어진 경로 문자열은 침묵하는 404가 된다.
+- fragment 라우트도 같은 규율이다 — 소속 view(§4)의 영역 urls.py에 이름 붙은 path로 정의하고, 템플릿의 hx-get/hx-post도 `{% url %}`로 참조한다.
+
+## §8. design_system 사용 — 토큰·component 재사용
+
+design_system은 **BC 어휘를 모르는 시각 요소**의 자리다. web 코드가 그것을 *쓰는* 규율이 이 절이다:
+
+- **시각 값은 foundation 토큰만**: 색·타이포·간격·radius·그림자는 `foundation/tokens.css`의 custom property로만 쓴다 — 템플릿·CSS에 리터럴(`#1a73e8`·`13px` 류) 금지. *왜*: 리터럴이 흩어지면 시안 변경이 전 파일 수색이 된다 — 토큰이 시각 값의 단일 출처다.
+- **component 재사용 우선**: 새 부품을 만들기 전에 기존 `component/`를 대조한다 — 같은 생김새의 두 번째 구현은 만드는 순간 빚이다.
+- **크기 전수 연결(설계자 소유)**: 시안에서 절단된 토큰(색·치수)은 설계 명세가 **전수** 채택 또는 기각한다 — 빈칸 0. 빈칸은 coder-web이 그 값을 흘릴 자리다. 이 전수 연결은 design-architect-web의 명세 소유다.
+- **BC 어휘 금지 — 입장 차단**: 업무 어휘가 필요한 부품은 애초에 design_system에 들이지 않는다 — 들여놓고 나중에 widget으로 강등하는 절차가 아니라 입장 자체가 불가다. BC 어휘가 필요한 표시 매핑(상태→색 클래스 등)은 VM의 표시 값 조립(§3)이다 — web에는 ui_extension이 없고 VM이 그 자리다.
+- **부품군 1차·직속 파일 금지**: component 파일은 `component/<부품군>/` 아래에만 둔다 — 분류 안 되는 부품이 생기면 정크드로어가 아니라 새 부품군 폴더를 만든다.

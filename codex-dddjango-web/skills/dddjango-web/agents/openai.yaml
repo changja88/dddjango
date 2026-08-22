@@ -1,0 +1,4 @@
+interface:
+  display_name: "dddjango-web"
+  short_description: "Django 화면을 시안 충실 재현·MVVM+HTMX로 게이트로 빌드"
+  default_prompt: "Use dddjango-web to build one screen into an existing Django project's web presentation layer with design-faithful reproduction and MVVM+HTMX discipline: scope (G0) → design (G1) → implementation (G2), dispatching design-architect-web, design-review-web, coder-web, and discipline-reviewer-web as subagents. Consumes backend only through real API contracts. Requires multi_agent."

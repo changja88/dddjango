@@ -9,13 +9,18 @@ CODEX_MANIFEST  := codex-dddjango/.codex-plugin/plugin.json
 # DRY=1 이면 실제 변경/커밋/푸시/Release 없이 시뮬레이션만 (버전 선택·기록 미리보기까지 실제 로직 실행)
 DRY ?= 0
 
-.PHONY: release ontology-env ontology-hooks verify verify-ontology verify-base verify-mutation verify-firing verify-runready rulepack
+.PHONY: release ontology-env ontology-hooks verify verify-ontology verify-base verify-web verify-mutation verify-firing verify-runready rulepack
 
 VENV_PY := .venv/bin/python
 
 # 저장소 검증 세트 단일 출처 (D1 — release [2/7] 이 이 타깃을 호출)
 # 롤백·중단 시 되돌림: 아래 의존에서 verify-ontology 한 줄 삭제 (t0-plan §7)
-verify: verify-ontology verify-base
+verify: verify-ontology verify-base verify-web
+
+verify-web:
+	@set -euo pipefail; \
+	echo "[verify-web] dddjango-web 픽스처(백스톱·절단 도구)"; \
+	bash dddjango-web/scripts/test/run_fixtures.sh
 
 # 온톨로지 단 — .venv 파이썬 고정 (T0 A8)
 verify-ontology:

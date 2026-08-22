@@ -1,10 +1,10 @@
 # dddjango-web 플러그인 빌드 — 통합 스펙 (정본)
 
-- 상태: **1단계 진행 중** · 시작 2026-08-23
+- 상태: **4단계 적용 완료(2026-08-23) — 플러그인 v0.1.0 빌드 종료.** 이 문서는 빌드 기록·결정 대장으로 보존된다. 이후 플러그인 수정은 `dddjango-web/` 실물이 정본(산문 — 직접 수정)이다.
 - 계획(사용자 확정 2026-08-23): **① 목표를 정한다 → ② dddart를 철저하게 분석한다 → ③ 버릴 부분/현지화할 부분/그대로 가져올 부분을 구분한다 → ④ 적용한다**
 - 이력: 초기 계획(dddjango 안에 web 트랙 내장 — 에이전트 1+스킬 2+Coordinator 개정)은 D9(별개 플러그인)·D11(dddart 전수 현지화)로 대체됐다. 결정 이력은 아래 결정 대장에 보존한다. **계획 구조의 리셋이지 결정의 리셋이 아니다** — 확정 결정은 재논의 없이 승계.
 
-## 1단계 — 목표 [목표 선언 확정 대기]
+## 1단계 — 목표 [**완료 2026-08-23**]
 
 ### 1.1 목표 선언 (**확정 2026-08-23 — 사용자**)
 
@@ -102,7 +102,7 @@ web/
 
 주요 발견: ①클로드 디자인 절단 도구 체인 실재(extract_design·extract_dc·fetch_images — 시나리오 ①② 직결) ②discipline-cleancode 원본이 dddjango 소스판(예제만 Dart 치환 — 복원 저비용) ③extract_layout은 미소비 ④완료 선언(=dddart 게이트 판형)에 백스톱 green+규율 감사 포함.
 
-## 3단계 — 3처분 분류 [**대조표 초안 2026-08-23 — 갈림 4건 사용자 결정 대기**]
+## 3단계 — 3처분 분류 [**완료 2026-08-23**]
 
 ### 처분 대조표 (파일 단위 — 절 단위 세부는 4단계 작성 시 각 스펙에서)
 
@@ -147,7 +147,7 @@ web/
 3. **갈림 ③ 결정: ㉮** — green 판정 = `python -m py_compile`(문법) + `manage.py check` 경량 조합
 4. **갈림 ④ 결정: 계약 스냅샷 체계 전체 차용** — G0 동결 → G1 기계 절단 → coder-web은 경량본만
 
-## 4단계 — 적용 [웨이브 계획 — 착수 승인 대기]
+## 4단계 — 적용 [**완료 2026-08-23 — W0~W4·R1~R4 전체 green**]
 
 **최종 플러그인 구성**(3단계 처분 확정 결과):
 
@@ -198,4 +198,7 @@ codex-dddjango-web/                   # 의미·byte 미러
 - 2026-08-23 **2단계 완료**: dddart 전수 분석 3병렬(A 커맨드·에이전트 / B 스킬 11종 / C 스크립트·부속) — 산출물 3파일 영속화. **3단계 처분 대조표 초안 작성** — 자동 해소 3건(N5=coder-web·D3=신설·tracer→발주 안내), 갈림 4건 사용자 결정 대기.
 - 2026-08-23 **3단계 완료**: 갈림 4건 전건 결정(①cleancode 차용 ②reviewer-web 신설 ③green=py_compile+manage.py check ④계약 체계 전체 차용). 4단계 착수 승인(+웨이브별 적대 리뷰 삽입 — 사용자 지시).
 - 2026-08-23 **W0·W1·R1 완료**: 스캐폴딩+스킬 4종 작성, R1 적대 리뷰 66건(blocker 11) 전건 처분·수정 — form/ 종류 폴더(트리 v3.1)·client 메커니즘 재설계·배선 소관 확정(P1~P9). make verify green·커밋 push(6334188).
-- 2026-08-23 **W2 완료**: 에이전트 4종(design-architect-web 73행·design-review-web 45행·coder-web 58행·discipline-reviewer-web 69행) + 커맨드 dddjango-web.md(192행 — 게이트 판형·배선 검사 6종·발주 안내 축·화면 확인 게이트). **R2 적대 리뷰(배선 정합+드라이런) 실행 중 · W3 스크립트 3병렬(backstop/추출 3종/계약 절단 — Python·픽스처 자가 검증) 병행 착수.**
+- 2026-08-23 **W2 완료**: 에이전트 4종(design-architect-web 73행·design-review-web 45행·coder-web 58행·discipline-reviewer-web 69행) + 커맨드 dddjango-web.md(192행 — 게이트 판형·배선 검사 6종·발주 안내 축·화면 확인 게이트).
+- 2026-08-23 **R2 완료**: 배선 정합+드라이런 51건(blocker 6 — 폴더 확정 순서·합치기 가드·첫 실행 시퀀싱·htmx 소유·영역 판정 검증 단절) 전건 처분·수정(수정-E 커맨드 14처분·수정-F 에이전트·스킬 8건).
+- 2026-08-23 **W3 완료**: backstop.py(검사 24종 WS8/WI4/WN8/WP4)·extract_design/dc/fetch_images·extract_contract — Python 표준 라이브러리·픽스처 3파일. **R3 green**: 픽스처 101단언 PASS·snake_case 교차 결함(도구 slug 하이픈↔WN8) 패치.
+- 2026-08-23 **W4 완료**: `plugin validate --strict` 통과 · marketplace.json 등재 · Makefile verify-web 편입 · README «자매 플러그인» 절 · AGENTS.md·DEVELOPMENT.md 저장소 지도 · codex-dddjango-web 미러(31파일·byte 20/20) · work_flow.html 현행화(validate 9종 0오류·기하 불변) · 조감도 연혁 · 메모리(dddjango-web-plugin 신설). R4 최종 감사 + make verify 전체로 마감.

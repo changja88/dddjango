@@ -21,6 +21,13 @@ dddjango/                 ← Claude Code 설치본 (플러그인)
 
 codex-dddjango/           ← Codex 설치본 미러 (scripts는 byte 동일을 verify가 강제)
 
+dddjango-web/             ← 자매 플러그인 (웹 표현계층 빌더 — /dddjango-web)
+                           전 파일 «산문 정본» — 온톨로지 코퍼스 밖. graph-owned 절이 없고
+                           md·py를 직접 수정한다. 픽스처는 make verify(verify-web)가 실행.
+                           빌드 스펙 정본: workspace/design/2026-08-23-web-presentation-layer-spec.md
+
+codex-dddjango-web/       ← dddjango-web의 Codex 설치본 미러
+
 workspace/                ← 메인테이너 전용 (배포되지 않음)
 ├── tools/                 검증 도구 사슬 · ontology-authoring.md(저작 규약 정본)
 ├── design/ plan/ eval/    설계·리뷰·실험 기록 (판정 판례 보존)

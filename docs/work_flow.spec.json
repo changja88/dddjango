@@ -48,7 +48,7 @@
    },
    {
     "id": "web-track",
-    "label": "web 트랙 (계획)",
+    "label": "dddjango-web",
     "focus": [
      "scope",
      "design",
@@ -56,7 +56,7 @@
      "g1",
      "slice"
     ],
-    "note": "web 표면이 있을 때만 도는 조건부 트랙(08-22 합의·계획)."
+    "note": "별개 플러그인 — 실물 API 계약만 소비, 부족하면 /dddjango 발주."
    }
   ],
   "viewBox": [
@@ -69,7 +69,7 @@
      "label": "에이전트"
     },
     "frontend": {
-     "label": "web 에이전트 (계획)"
+     "label": "dddjango-web 에이전트"
     },
     "security": {
      "label": "게이트·판정"
@@ -101,8 +101,7 @@
   },
   {
    "id": "web-track",
-   "label": "web 설계 (조건부·계획)",
-   "variant": "exception"
+   "label": "dddjango-web 플러그인"
   },
   {
    "id": "impl-agents",
@@ -140,8 +139,7 @@
    "id": "ph-report",
    "label": "Phase 3 · 보고",
    "fromCol": 5,
-   "toCol": 5,
-   "variant": "dashed"
+   "toCol": 5
   }
  ],
  "mainPath": [
@@ -483,7 +481,7 @@
    "id": "e-design-webdesign",
    "from": "design",
    "to": "web-design",
-   "label": "web 표면 있을 때만",
+   "label": "별개 커맨드",
    "variant": "dashed",
    "role": "branch",
    "labelDx": -68,
@@ -582,13 +580,12 @@
   },
   {
    "dot": "emerald",
-   "title": "web 트랙 — 참여자와 스킬 (계획 · 08-22 합의)",
+   "title": "dddjango-web — 별개 플러그인",
    "items": [
-    "Phase 0: Coordinator가 «web 화면 표면 유무»를 판정 — 없으면 이 트랙 전체를 생략한다",
-    "design-architect-web(신설 에이전트): 입력은 승인된 API 계약+화면 요구뿐(BC 내부 명세 열람 금지) — architecture-web(신설 스킬: web 트리 · page/section/component 판별·승격 · design_system · 계약 소비)을 로드. 계약 부족 발견은 Coordinator 경유로 BC 설계에 반송",
-    "coder의 스킬 선택이 관건: web 화면 코드 → implementation-ui(신설: HTML·컴포넌트·토큰 표기) + implementation-django-web(뷰·폼·보안·에러) · BC 코드 → implementation-django · implementation-django-ninja",
-    "경계: web 코드는 application/** import 금지 — driving_layer의 HTTP 계약을 in-process 계약 클라이언트로 소비한다",
-    "미결 2: web 트리 «값»의 거처(discipline-houserules 증설 vs architecture-web 소유) · 기존 implementation-django-web §4·§5 관할(수술 vs 위임)"
+    "/dddjango-web 커맨드가 자체 게이트를 돈다 — G0(배선 검사)·G1(계약 절단)·G2(사용자 육안). 완료 = 백스톱 green + 규율 감사 + 사용자 육안",
+    "에이전트 4: design-architect-web · design-review-web · coder-web · discipline-reviewer-web",
+    "스킬 4: architecture-web · implementation-ui · discipline-web-houserules · discipline-cleancode — 결정적 백스톱 24종(WS/WI/WN/WP)",
+    "경계: 실물 API 계약만 소비한다 — 계약이 부족하면 /dddjango에 발주. 테스트 없음(육안+백스톱)"
    ]
   }
  ]
