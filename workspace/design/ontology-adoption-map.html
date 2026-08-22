@@ -632,6 +632,7 @@ GROUP BY ?rule ORDER BY DESC(?n)
       <tr><td>2026-08-22</td><td>BK2 채점·수리 ⓐ 승인</td><td>완주 3·인수 통과·V 세 방식 0 동일 — 그러나 주입 0(원인: 코디 절차 미이행+발화 지점 설계) → <b>개정 10</b>(발화 지점 확대)·2.16.0 릴리즈 — 사용자 «승인»</td></tr>
       <tr><td>2026-08-22</td><td>BK3(codex) 기동·STOP 6건</td><td>codex 호출명 <span class="mono">$</span>접두 실측·개정 후 기동 — STOP 전건 기록 규칙 답(1건은 완료 조건 충돌로 답 교정)</td></tr>
       <tr><td>2026-08-22</td><td><b>T2 종료 게이트: 조정 판정</b></td><td><b>실험 조기 종결(사용자 «지금 즉시 전부 중단»)</b> — 잔여 9런 취소·유효 측정 0건 병기. 채택: 그래프/정규화 실사용·점진 이관(운용 평가 전환)·폐루프 기본 끔 존치. 사전 등록 v4 등재</td></tr>
+      <tr><td>2026-08-22</td><td><b>운용 정비 — 저장소 정리·개발 가이드</b></td><td>적대 리뷰 원시 로그 30파일(29MB)·종결 실험 감시 스크립트 3종 삭제 — 판정 md·판례는 전량 보존, git 이력으로 복구 가능. <b><span class="mono">docs/DEVELOPMENT.md</span> 신설</b>: 정본(그래프)/투영물(스킬 md)/소성물(rulepack) 3층 구조·규범 수정 표준 루프·검증·릴리즈 절차를 메인테이너 가이드로 문서화(README 링크). verify green 확인 후 커밋</td></tr>
       <tr><td>2026-08-22</td><td><b>T3 완료(웨이브 4 마감)</b></td><td><b>재진술 소급 428 주입(djr:restates 616·댕글링 0) + 마감 처분 4건 적용 — T3 종결</b>. 처분 = tree-coords ⓒ(조인 대상 아님 확정) · alias 3→28(#486 취소·#488→R-3181 재귀속·contract# 공간 신설·#N 편입 기각 유지) · q4 전량 포함(팩 Work 3,400·역방향 fail-closed 신설) · contract_ref 7종 조인(어댑터 계약 레인·R-0122 왕복 실증). 처분 3건은 적용 전 적대 리뷰 경유 — blocker 6건(query 골든 누락·self-test 하드코딩·docstring 자기모순·어댑터 키 파손·rulepack 사슬·팩 오염) 전건 수정 반영. 검사기 docstring 27종 동기(대장 교차검증 0 불일치). 총괄 = T3-REPORT.md · 릴리즈 2.17.0 예정</td></tr>
       <tr><td>2026-08-22</td><td><b>T3 웨이브 3 병합 — 이관 물량 완료</b></td><td><b>소형 15문서(5묶음) 이관 완료 → 그래프 소유 539절 = REF 분모 전량·Work 3,400</b>. 적대 리뷰 43건 처분(수리 41·기각 2)·byte 잔차 0·3원 검산 일치·q3/q4 골든 원장 검산 갱신(q4 1,693)·미러 11/11·verify 2회 green. 30문서 전부 그래프 소유 절 보유 — 남은 작업 = 웨이브 4 마감(재진술 소급·#N/alias 재검토·contract_ref 조인·q4 커버리지 재평가·총괄 리포트)</td></tr>
       <tr><td>2026-08-22</td><td><b>T3 웨이브 2 병합</b></td><td><b>중형 8문서 이관 완료</b> — REF 220절·Work 1,029 신규(누계 그래프 소유 459절·2,789 Work — REF 분모의 85%). 적대 리뷰 81건 처분·byte 잔차 0·3원 검산 일치·미러 11/11·verify green. 한도 정지 1회를 resumeFromRunId 재개로 무손실 통과(저작 8/8·리뷰 8/8 캐시 재사용·수리만 재실행)</td></tr>
@@ -641,7 +642,7 @@ GROUP BY ?rule ORDER BY DESC(?n)
   </table>
 </div>
 
-<p class="note">세부 문서(Claude 관리): <b>동결 후보 정본</b> <span class="mono">workspace/design/2026-08-18-ontology-blueprint-v3.md</span> (v3.2) · 진행 로그 <span class="mono">2026-08-18-ontology-adoption-log.md</span> · 보강 조사 <span class="mono">-v3-research/</span> · 적대 리뷰·중재 <span class="mono">-v3-adversarial/</span> · 배경 학습은 <a href="https://claude.ai/code/artifact/70af9350-e115-46cc-9101-e91764cf5311">온톨로지 학습 지도</a>.</p>
+<p class="note">세부 문서(Claude 관리): <b>동결 후보 정본</b> <span class="mono">workspace/design/2026-08-18-ontology-blueprint-v3.md</span> (v3.2) · 진행 로그 <span class="mono">2026-08-18-ontology-adoption-log.md</span> · 보강 조사 <span class="mono">-v3-research/</span> · 적대 리뷰·중재 <span class="mono">-v3-adversarial/</span> · 배경 학습은 <a href="../../docs/ontology-study-map.html">온톨로지 학습 지도</a>(로컬 <span class="mono">docs/</span>).</p>
 </div>
 </body>
 </html>
