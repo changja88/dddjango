@@ -336,39 +336,32 @@
   "cache_parity": {
     "claude": {
       "checked": 68,
-      "mismatch": [
-        "dddjango/.claude-plugin/plugin.json",
-        "dddjango/commands/dddjango.md"
-      ],
+      "mismatch": [],
       "missing": [],
-      "root": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.15.1",
-      "status": "drift"
+      "root": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.16.0",
+      "status": "ok"
     },
     "codex": {
       "checked": 33,
-      "mismatch": [
-        "codex-dddjango/.codex-plugin/plugin.json",
-        "codex-dddjango/skills/dddjango/SKILL.md"
-      ],
+      "mismatch": [],
       "missing": [],
-      "root": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.15.1",
-      "status": "drift"
+      "root": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.16.0",
+      "status": "ok"
     }
   },
   "claude_install": {
-    "git_commit_sha": "c115b5c945eb53df53651cb34ac50499373c7cc2",
-    "install_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.15.1",
+    "git_commit_sha": "b84a7bfcde66eb6fc174ba4bcc646b3e47cdd1b7",
+    "install_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.16.0",
     "key": "dddjango@changja88-dddjango",
     "source": "installed_plugins.json",
-    "version": "2.15.1"
+    "version": "2.16.0"
   },
   "external_annex": {
     "initial_memory": {
       "policy": "런 전 대피(이름 변경)·18런 뒤 복구. 삭제 금지. 런마다 사전 확인.",
       "projects": {
         "-Users-hyun-Desktop-broccoli-server": {
-          "exists": true,
-          "files": [],
+          "exists": false,
           "n_files": 0,
           "tree_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
         }
@@ -406,11 +399,11 @@
           "docs/rebuild/delivery/KEEP-LIST.txt": "2879df26a454955666129255bc239246103600366ff0157f4aae06b22d23bbda",
           "docs/rebuild/delivery/anchor-preflight.md": "9cb7f43d2c8d4792eb567fa7d2516957416e835341c8b1b3dd32423ed006dbf6",
           "docs/rebuild/delivery/api_shape_pre.json": "522a69d49c4971fbefae5129018af430a54d994381441d18e1251ac51fe54bf5",
-          "docs/rebuild/delivery/legacy_debt.txt": "847c8a7fbe969293fcf66a0b61095816810c6a337600b1088855e017f4f6247a",
+          "docs/rebuild/delivery/legacy_debt.txt": "1e0205485c18c821561f9461afdfe05a4ff88f45ed14193500d69411016880a9",
           "docs/rebuild/delivery/request.md": "3f809db033011c6a7b4b48fb3d39439084e35210d120c2d7c39e3d910a872250",
           "docs/rebuild/delivery/spec.md": "c0c5eb322db0f19e1ab8d68c5ff2e8aaabc94e052e8b79843bb0e12893029c51"
         },
-        "baseline_commit": "d869e211c91426757b578936328c34a4885df678",
+        "baseline_commit": "459966140c065e7cc5fbb6354addcf5dd3a7cb56",
         "baseline_tests": {
           "green": 6962,
           "red": 20
@@ -445,7 +438,7 @@
           "application/pairing/test/integration/test_pairing_approval_family_snapshot_acceptance.py::test_replay_after_familyless_approval_uses_creation_time_null_snapshot"
         ],
         "target_repo": "/Users/hyun/.herdr/worktrees/broccoli-server/ab-t2-delivery-anchor",
-        "tracked_tree_sha256": "c75e66713611d09115063f84e0ed32604aa4d7e4d3c30aee11379f6370f73c55"
+        "tracked_tree_sha256": "aba671357836c78ece035f4bdeb8065345b4e8bdb8d2f4ac7f90155745c329fc"
       },
       "O-7": {
         "artifacts": {
@@ -503,8 +496,7 @@
         "orders.O-4.reset_anchor.reset_command 비어 있음",
         "orders.O-4.reset_anchor.post_reset_tree_sha256 이 sha256 이 아니다",
         "orders.O-4.reset_anchor.demonstrated_at 비어 있음",
-        "orders.O-5.reset_anchor.post_reset_ignored: 리셋 후 잔여 1건 — 클린룸이 아니다 ['.venv']",
-        "initial_memory[-Users-hyun-Desktop-broccoli-server]: 메모리가 **대피되지 않았다**(n_files=0)"
+        "orders.O-5.reset_anchor.post_reset_ignored: 리셋 후 잔여 1건 — 클린룸이 아니다 ['.venv']"
       ]
     },
     "why": "저장소 밖 재료 — 타깃 저장소·클린룸 앵커·실런 런타임. 측정에는 타깃 접근이 필요하다."
@@ -758,7 +750,7 @@
     "protocol": {
       "files": {
         "Makefile": "92d05530355e8ebdcbfb9bddcbe2cbd9a75165b42e9e5e140c1678c152acc3f3",
-        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "7987ef55e005073a919266169bf17ab3eaf7051f9fbfc8bc9d5e2f8b362033ff",
+        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "586124fc5a9c49e6c0df6ebb93b8c3d4d5ad14cc90a61f2b4cbf5fb0f9f503e3",
         "workspace/plan/2026-08-12-bc-rebuild-protocol.md": "a39ba66e58cb8bde5ad8f84d630b6fd9b04300f7130d4bbc2d149751c2f6c492",
         "workspace/plan/templates/request-template.md": "531bb5c0e9b147d51665981bc3218aa027ddc4170101ea920ecc8a87f7018fe4",
         "workspace/tools/openapi_shape.py": "ea564e3b0ce0550352935b7a572f93dfae404f1a1d24f0fd9d4acf6dc4bc4932",
@@ -773,7 +765,7 @@
         "workspace/design/2026-08-20-ontology-t2-0b-design.md"
       ],
       "n_files": 6,
-      "tree_sha256": "ac23b6d0046995807209b38c08b03f10555d6ec419db2fc2b61988163bd7a7f7",
+      "tree_sha256": "eb95895535adafb1def4646541f3351a54106a52f468c30f6ee2f86b328ee0a5",
       "why": "**전이 의존** — 발주문이 «그대로 따르라»고 가리키는 판형과, 인수 판정이 부르는 도구와, 게이트를 배선하는 Makefile. 이 중 하나만 바뀌어도 모델이 받는 요청문·허용 범위·STOP 규약·shape 합격 여부·실런 진입 조건이 바뀐다. 그런데 대조는 글롭에 든 것만 재전개하므로, 봉인 밖이면 그 변경은 드리프트가 아니었다(레인 AU 발견 4)."
     },
     "queries": {
@@ -897,14 +889,14 @@
   },
   "script_trees": {
     "cache-claude": "5cfc49b1d64aae26f22af527ef7e38c40cebdea814fab09c20113ec87a1699e4",
-    "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.15.1/scripts",
+    "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.16.0/scripts",
     "cache-codex": "5cfc49b1d64aae26f22af527ef7e38c40cebdea814fab09c20113ec87a1699e4",
-    "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.15.1/skills/dddjango/scripts",
+    "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.16.0/skills/dddjango/scripts",
     "source-claude": "5cfc49b1d64aae26f22af527ef7e38c40cebdea814fab09c20113ec87a1699e4",
     "source-codex": "5cfc49b1d64aae26f22af527ef7e38c40cebdea814fab09c20113ec87a1699e4"
   },
-  "sealed_commit": "4ba46889c87a22b28ac2fd9ccc5b8b4248569519",
-  "self_sha256": "6df1e067da3f9bb7bcb4055e591c295c07e92aeba6aa654dafda815943708613",
+  "sealed_commit": "b84a7bfcde66eb6fc174ba4bcc646b3e47cdd1b7",
+  "self_sha256": "c1185b740c43736f6be35dfdb95abec675adc753eb808120c4c25fd480cb4622",
   "status": "sealed",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [
