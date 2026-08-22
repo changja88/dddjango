@@ -95,6 +95,7 @@ web/
 | 신규 `<view>/` (화면 개념) | `view/`·`view_model/`·`state/`·`section/` 종류 4폴더 전부 — `form/`은 입력 form이 있는 화면에서 첫 Form 때 생성(골격 대상 아님, exception.py 판형) |
 | 신규 `client/<bc>/` | `<capability>_client.py` + `response/` — `exception.py`는 첫 계약 오류 표현 때 생성(골격 대상 아님) |
 
+- `static/js/`의 vendored htmx 파일: htmx 파일 실물의 입수·설치는 Coordinator의 web 배선 전제조건(ⓕ) 소관 — 골격 검사는 존재만 본다.
 - **마커 파일**: Python 패키지 폴더(`.py`가 사는 곳 — `view/`·`view_model/`·`state/`·`form/`·`client/` 계열)는 비어 있어도 `__init__.py`를 둔다. HTML 전용 폴더(`section/`·`widget/`·`design_system/component/`)는 git이 빈 디렉터리를 추적하지 않으므로 비면 `.gitkeep`을 둔다. 두 마커 파일은 «직속 파일 금지»의 명시 예외다.
 - design_system은 foundation·component **2칸 시작** — `theme/`·`util/`은 *만들지 않는 칸*이다. 실수요가 생기면 그때 증설하고, 미리 파지 않는다.
 - **test/ 없음 — web 트랙은 자동 테스트를 두지 않는다.** `test/` 폴더·`test_*.py`·빈 테스트 파일을 만들지 않는다. 검증 채널은 사용자 육안 확인 + 결정적 백스톱(§7) + 규율 감사다.
@@ -132,7 +133,7 @@ web/
 | `design_system/component/<부품군>/` | 수식·변형 | `<component>.html` | `button/primary_button.html` |
 | `static/js/` | **vendored htmx 단일** — 원명 그대로 | (vendored htmx 파일) | `htmx.min.js` — 커스텀 `.js`·타 라이브러리 신설 금지(§5⑤) |
 | `static/css/` | 기능·범위 | `<이름>.css` | 파일명 snake_case — 시각 값은 tokens.css의 `var()` 참조 |
-| `static/images/` | 시안 자산 | `<이름>.<확장자>` — snake_case | 시안 이미지 착지 칸 — fetch 도구·asset-manifest 배선(에셋 규율은 implementation-ui 소유) |
+| `static/images/` | 시안 자산 | `<이름>.<확장자>` — snake_case | 시안 이미지 착지 칸 — 절단 도구가 snake_case로 정규화해 착지·fetch 도구·asset-manifest 배선(에셋 규율은 implementation-ui 소유) |
 
 - 부품군 폴더 = 파일 접미사 — `button/` 안은 `*_button.html`. 축약(`btn`)·직속 파일·정크드로어 군(`widget/`·`etc/`) 금지.
 - 접미사는 전체 표기다 — `_view_model.py`를 `_vm.py`로, `_state.py`를 `_st.py`로 축약하지 않는다.
@@ -186,6 +187,7 @@ python "${CLAUDE_PLUGIN_ROOT}"/scripts/backstop.py <대상 프로젝트 루트> 
 - **exit 계약**: 0 = 통과 / 1 = 미실행(전제 실패 — 통과가 아니다) / 2 = blocker 발견·일괄 반송.
 - **게이트 의미론**: 구조·명명은 **added**(새로 만든 파일·디렉터리)만, 격리·순수성은 touched 파일의 **added 줄**만, 골격 완비는 **신규 단위**(영역·화면 개념·client BC 폴더)만. → **레거시(기존 drift)에는 불발화한다** — "새 코드부터 표준" 원칙의 기계 집행.
 - `--all`은 게이트 무시 전역 감사용 — 레거시 프로젝트에서 발견 폭주가 정상이며 파이프라인 게이트 용도가 아니다.
+- 순환 등 래칫형 검사가 도입되면 기준선은 `.dddjango-web/backstop-baseline.json`(커밋 대상).
 - **green 판정 보조**: web 트랙은 자동 테스트가 없으므로 러너와 별개로 `python -m py_compile`(신규 `.py` 문법) + `manage.py check`(Django 시스템 검사)를 green 판정 보조로 쓴다.
 - **CSS 병치 결정**: design_system CSS(tokens.css)는 `design_system/foundation/` **병치**가 결정이다 — 화면 CSS(`static/css/`)와 별개다. 병치 파일의 정적 서빙은 커맨드의 web 배선이 해결한다(아래 handoff).
 - **호스트 배선 handoff**: 호스트 프로젝트 배선(INSTALLED_APPS·TEMPLATES DIRS·STATICFILES_DIRS 프리픽스 튜플·ROOT_URLCONF include·`ALLOWED_HOSTS`의 "testserver"·vendored htmx 설치)은 **커맨드(Coordinator Phase 0 «web 배선 전제조건 검사») 소관**이다 — 이 스킬은 배선을 규정하지 않는다.

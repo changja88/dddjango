@@ -196,4 +196,6 @@ codex-dddjango-web/                   # 의미·byte 미러
 - 2026-08-23 **계획 리셋(사용자)**: 4단계 구조(목표→분석→3처분→적용)로 정본 재작성. 확정 결정·규범 자산 전량 승계.
 - 2026-08-23 **1단계 완료**: 목표 선언 확정(사용 시나리오 3종·완료 선언=dddart 동일·D12 순수 HTML+HTMX+CSS·non-goals). 차이 5축 확인.
 - 2026-08-23 **2단계 완료**: dddart 전수 분석 3병렬(A 커맨드·에이전트 / B 스킬 11종 / C 스크립트·부속) — 산출물 3파일 영속화. **3단계 처분 대조표 초안 작성** — 자동 해소 3건(N5=coder-web·D3=신설·tracer→발주 안내), 갈림 4건 사용자 결정 대기.
-- 2026-08-23 **3단계 완료**: 갈림 4건 전건 결정(①cleancode 차용 ②reviewer-web 신설 ③green=py_compile+manage.py check ④계약 체계 전체 차용). 4단계 웨이브 계획(W0~W4) 수립 — 착수 승인 대기.
+- 2026-08-23 **3단계 완료**: 갈림 4건 전건 결정(①cleancode 차용 ②reviewer-web 신설 ③green=py_compile+manage.py check ④계약 체계 전체 차용). 4단계 착수 승인(+웨이브별 적대 리뷰 삽입 — 사용자 지시).
+- 2026-08-23 **W0·W1·R1 완료**: 스캐폴딩+스킬 4종 작성, R1 적대 리뷰 66건(blocker 11) 전건 처분·수정 — form/ 종류 폴더(트리 v3.1)·client 메커니즘 재설계·배선 소관 확정(P1~P9). make verify green·커밋 push(6334188).
+- 2026-08-23 **W2 완료**: 에이전트 4종(design-architect-web 73행·design-review-web 45행·coder-web 58행·discipline-reviewer-web 69행) + 커맨드 dddjango-web.md(192행 — 게이트 판형·배선 검사 6종·발주 안내 축·화면 확인 게이트). **R2 적대 리뷰(배선 정합+드라이런) 실행 중 · W3 스크립트 3병렬(backstop/추출 3종/계약 절단 — Python·픽스처 자가 검증) 병행 착수.**

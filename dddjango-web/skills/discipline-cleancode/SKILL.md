@@ -27,7 +27,7 @@ user-invocable: false
 - 오류는 설계로 먼저 제거하고, 불가하면 예외를 사용하라: 보호절·DbC·방어적 프로그래밍 (§12)
 - 코드 스멜을 감지하고 리팩토링 기법으로 제거하라: 기능 보존을 검증하며 작은 단계로 진행 (§15)
 - 레거시 코드는 Seam을 찾아 보호한 후 개선하라: Sprout·Wrap과 임시 특성화 probe를 쓰되 현재 구현 포착을 영구 계약으로 고정하지 않는다 — 동작 보존 안전망은 py_compile·`manage.py check`·결정적 백스톱·사용자 육안이다 (§16)
-- **반복>상속(dddjango-web 결정)**: BaseView·BaseViewModel·공용 렌더 헬퍼·Mixin 금지 — 표시 지식의 중복은 view_model·design_system으로 모으고, 표기의 반복(fragment 분기·include 호출)은 정식 예제를 그대로 반복한다 (§18)
+- **반복>상속(dddjango-web 결정)**: BaseView·BaseViewModel·공용 렌더 헬퍼·Mixin 금지 — 표시 지식의 중복은 view_model·state·design_system으로 모으고, 표기의 반복(fragment 분기·include 호출)은 정식 예제를 그대로 반복한다 (§18)
 
 ## 상세 레퍼런스
 

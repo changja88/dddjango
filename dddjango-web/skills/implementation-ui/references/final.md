@@ -47,6 +47,7 @@
 - 명세에 배치 서술이 없는 것은 정상이다 — 반송 사유가 아니다. 형상 근거는 산문이 아니라 시안이다.
 - 시안이 없으면 coder-web 재량 + 기존 design_system 관례로 짓는다 — placeholder나 임의 발명으로 빈 곳을 조용히 채우지 않는다.
 - 시안이 있는데 재현 불가한 요소(입수 불가 폰트·동적 효과 등)는 근사로 처리하되, **무엇이 근사인지 보고에 표면화한다** — 조용한 저하 금지.
+- 정적 화면 한정 진행에서는 시안의 데이터성 텍스트(목록 행·수치)를 견본 값으로 그대로 렌더한다 — 실데이터 연결은 계약 확보 후 후속 작업이다.
 
 ## §3. 삼총사 표기 — view·view_model·state
 
@@ -91,7 +92,7 @@ Python 최소 관용구: 타입 힌트는 전면이다 — 모든 함수 매개�
 - URL은 `{% url %}`, 정적 자원은 `{% static %}` — 경로 하드코딩 금지.
 - 일반 POST form 안에는 `{% csrf_token %}`을 둔다 — HTMX 요청의 토큰은 §5의 `hx-headers`.
 - `|safe`는 근거 있는 신뢰 콘텐츠에 한해 최소로 쓴다.
-- `base/base.html`은 «거의 빈» 골격이다 — 공통 문서 구조·내비 셸·공통 block만 두고, 화면 내용이 base로 새면 위반이다.
+- `base/base.html`의 입장 목록은 discipline-web-houserules의 판별 절차(undecidable-web §6)가 단독 소유한다 — 공통 문서 골격·내비 셸 외 화면 어휘 금지.
 - 병치 템플릿(base/·화면 폴더의 .html)을 `{% extends %}`·`{% include %}` 경로로 찾는 것은 TEMPLATES `DIRS` 배선이 전제다 — 배선은 커맨드 Phase 0 소관(§1 handoff).
 
 ```html
@@ -137,7 +138,7 @@ widget(영역 재사용 조각)과 design_system component(전역 순수 부품)
 
 ## §7. 토큰·CSS·에셋 표기
 
-**토큰.** `design_system/foundation/tokens.css`가 `:root` custom properties로 색·타이포·간격·radius·그림자를 정의한다. CSS와 템플릿의 스타일 값은 `var(--…)`만 쓴다 — 리터럴(`#2563eb`·`14px` 직접 기입) 금지. *왜*: 시안 값이 토큰 한 곳에 모여야 충실도 대조와 일괄 변경이 성립한다. 시안 절단 산출물(tokens.css 초안)이 있으면 그 토큰 이름을 그대로 쓴다 — 발명 금지. tokens.css가 `{% static %}` 경유로 서빙되는 것은 STATICFILES_DIRS 프리픽스 튜플 배선이 전제다 — 배선은 커맨드 Phase 0 소관(§1 handoff).
+**토큰.** `design_system/foundation/tokens.css`가 `:root` custom properties로 색·타이포·간격·radius·그림자를 정의한다. CSS와 템플릿의 스타일 값은 `var(--…)`만 쓴다 — 리터럴(`#2563eb`·`14px` 직접 기입) 금지. *왜*: 시안 값이 토큰 한 곳에 모여야 충실도 대조와 일괄 변경이 성립한다. 시안 절단 산출물(design-tokens.json)이 있으면 그 토큰 이름을 그대로 쓴다 — 발명 금지. tokens.css가 `{% static %}` 경유로 서빙되는 것은 STATICFILES_DIRS 프리픽스 튜플 배선이 전제다 — 배선은 커맨드 Phase 0 소관(§1 handoff).
 
 ```css
 :root {
@@ -152,7 +153,7 @@ widget(영역 재사용 조각)과 design_system component(전역 순수 부품)
 }
 ```
 
-**이미지.** 시안의 정적 이미지는 동결 단계(fetch_images)가 `static/images/`에 내려받아 `asset-manifest.json`(src→`local_path`→`token` 매핑·단일 SSOT)으로 절단한다. 명세가 가리킨 이미지는 manifest의 **같은 `src` 행**으로 조인해 `local_path`를 정확 값 그대로 가져온다 — 추정·눈대중·발명 금지(server-contract를 경량본에서 인용하듯). `token` 열은 web에서 소비하지 않는다 — 추출 도구 산출 호환용이다. 템플릿 배선은 `local_path`를 `{% static %}` 경유로 참조하는 것만이고 raw 경로 문자열은 금지다. manifest가 없으면 이 항목은 적용되지 않는다 — 없는 이미지를 placeholder로 조용히 채우지 않는다.
+**이미지.** 시안의 정적 이미지는 동결 단계(fetch_images)가 `static/images/`에 내려받아 `asset-manifest.json`(src→`local_path`→`token` 매핑·단일 SSOT)으로 절단한다. 명세가 가리킨 이미지는 manifest의 **같은 `src` 행**으로 조인해 `local_path`를 정확 값 그대로 가져온다 — 추정·눈대중·발명 금지(server-contract를 경량본에서 인용하듯). `token` 열은 web에서 소비하지 않는다 — 추출 도구 산출 호환용이다. 착지 파일명은 절단 도구가 snake_case로 정규화하며, 정규화 후 `local_path`가 SSOT다. 템플릿 배선은 `local_path`를 `{% static %}` 경유로 참조하는 것만이고 raw 경로 문자열은 금지다. manifest가 없으면 이 항목은 적용되지 않는다 — 없는 이미지를 placeholder로 조용히 채우지 않는다.
 
 ## §8. client 표기 — in-process HTTP
 

@@ -102,10 +102,10 @@ web은 **«내부의 외부 클라이언트»**다 — 같은 저장소의 `web/
 | 산출물 | 생성 시점 | 내용 | 독자 |
 |---|---|---|---|
 | `openapi-full.json` | G0(스코프 게이트) 승인 직후 **동결** | OpenAPI 원본 **전체** | design-architect-web·design-review-web |
-| `server-contract.json` | G1(설계 게이트) 승인 직후 **기계 절단** | 명세가 인용한 paths + `$ref` 전이 폐쇄 | coder-web·G2 검증 |
+| `server-contract.json` | G1(설계 게이트) 승인 직후 **기계 절단** | 명세가 인용한 paths + `$ref` 전이 폐쇄 | coder-web |
 
 - **coder-web은 경량본(`server-contract.json`)만 본다** — full본 재해석 금지. 에이전트는 받은 스냅샷을 사실로 쓰되 **갱신하지 않는다**(동결·재동결은 Coordinator 소유).
-- 격리는 결정적 백스톱(check-web-isolation — WI 패밀리)이 기계 강제한다: `web/**`의 `application.`·`framework.` 내부 import 0 · 호출 코드 client 전속 · client 대상 URL은 driving_layer api 표면만.
+- 격리는 결정적 백스톱 WI 패밀리(러너 backstop.py)가 기계 강제한다: `web/**`의 `application.`·`framework.` 내부 import 0 · 호출 코드 client 전속 · client 대상 URL은 driving_layer api 표면만.
 
 ## §7. 라우팅 — 리터럴의 단일 출처
 
