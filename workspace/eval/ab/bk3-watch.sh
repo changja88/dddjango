@@ -25,8 +25,9 @@ while true; do
     busy=0
     print -r -- "$t" | grep -qE 'esc to interrupt|Thinking|Working' && busy=1
 
-    # 질문/입력 대기 — 자동 응답 금지, 알림만 (codex request_user_input·선택지 문면)
-    if print -r -- "$t" | grep -qE '^\s*\? |▶ |Select an option|awaiting your (answer|input)'; then
+    # 질문/입력 대기 — 자동 응답 금지, 알림만 (codex request_user_input·선택지 문면).
+    # ▶ 는 파이프라인 진행 표시줄([▶ 설계])에도 쓰여 «행 시작 들여쓰기+▶, 대괄호 없음»으로 한정(v1 오탐 수정).
+    if print -r -- "$t" | grep -E '^\s+▶ ' | grep -qv '\[' || print -r -- "$t" | grep -qE '^\s*\? |Select an option|awaiting your (answer|input)'; then
       if [ "${pend[$a]}" = "0" ]; then
         print -r -- "$pane" | tail -60 > $QDIR/bk3-$a.txt
         ev "❓ BK3 $a 질문 대기 — $QDIR/bk3-$a.txt"
