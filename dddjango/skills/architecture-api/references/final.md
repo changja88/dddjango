@@ -89,6 +89,7 @@ PATCH는 메서드 자체가 멱등하다고 보장되지 않는다. 다만 patc
 ## 3. URL/리소스 설계 규칙
 
 ### 3.1 명명 규칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 규칙 | 좋음 | 나쁨 |
 |------|------|------|
@@ -99,6 +100,7 @@ PATCH는 메서드 자체가 멱등하다고 보장되지 않는다. 다만 patc
 | DB 구조 비반영 | `/products` | `/tbl_products` |
 
 ### 3.2 계층적 하위 리소스
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 부모-자식 관계에 슬래시를 사용한다. **3단계 이상 깊이는 피한다.**
 
@@ -136,6 +138,7 @@ GET /products?q=keyboard                     # 검색
 | 5xx | Server Error | 서버 오류 (재시도 시 성공할 수 있음) |
 
 ### 4.2 API에서 자주 사용하는 상태 코드
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 **성공 (2xx):**
 
@@ -168,6 +171,7 @@ GET /products?q=keyboard                     # 검색
 **낙관적 동시성/CAS 재시도 루프의 *소진*도 경계 실패 모드다**: 유한 재시도 루프를 설계하면 '재시도 상한 초과(쓰기 경합 미해소)'는 happy-path 밖이지만 *경계로 관찰되는* 결과다 — status 표에서 누락하지 말고 **재시도 가능(retryable) status를 배정**한다(승인된 `Retry-After`를 가진 503 또는 409 — 둘 다 정당, 선택은 멱등성·재시도 UX 트레이드오프로 §5/G1). `Retry-After`를 공개하는 경우 §5.4의 경계에 따라 controller가 그 헤더를 소유한다. *어느 쪽이든 표에서 누락 금지*가 의무이고 둘 중 선택은 설계자가 임의 확정하지 않는다(미매핑 시 기본 500 누수).
 
 ### 4.3 PRG (POST/Redirect/GET) 패턴
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 POST 주문 후 303으로 GET 결과 페이지로 리다이렉트하여 새로고침 시 중복 주문 방지.
 
@@ -176,10 +180,12 @@ POST 주문 후 303으로 GET 결과 페이지로 리다이렉트하여 새로�
 ---
 
 ## 5. 요청/응답 계약
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상태 코드, 헤더, 에러 형식의 조합이다. 클라이언트가 의존할 수 있는 항목은 명시적으로 기록한다.
 
 ### 5.1 요청 계약
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - 필수 필드와 선택 필드를 구분한다
 - 필드 타입, 형식, 단위, 허용 범위, 기본값을 명시한다
@@ -191,6 +197,7 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 - `PATCH`는 patch document 형식과 idempotent 여부를 별도로 판단한다
 
 ### 5.2 응답 계약
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - 상태 코드별 응답 본문 존재 여부와 schema를 분리해 정의한다
 - `201 Created`는 가능한 경우 `Location` 헤더로 새 자원 URI를 제공한다
@@ -200,6 +207,7 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 - 캐시, rate limit, retry, deprecation, idempotency replay처럼 클라이언트 동작을 바꾸는 헤더는 응답 계약에 포함한다
 
 ### 5.3 계약 체크리스트
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 엔드포인트를 설계하거나 변경할 때 다음을 함께 검토한다.
 
@@ -219,6 +227,7 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 ---
 
 ### 5.4 에러 프로필 선택
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 에러 wire contract는 다음 우선순위로 하나를 선택한다.
 
@@ -231,6 +240,7 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 이 절이 고르는 것은 **wire 계약**(필드 집합·media type)이지 구현 형태가 아니며, 이 문단의 주어는 **신규 범위**(②·③으로 wire 프로필을 새로 고르는 산출물)다 — preserve-established(우선순위 ①) 범위는 native 메커니즘 보존이 관할이라(12-slot 계약 소유) 이 문단의 대상이 아니고, 확립 native 구현·배선을 표준 레시피로 옮길 근거가 되지 않는다. 신규 범위는 ③으로 RFC 9457 wire 를 선택해도 표준 controller 레시피(controller 소유·좁은 try·`bc_error_schema.py`·직접 `Status` 반환 — 레시피의 정본은 구현 스킬·검사기 계약이고 이 절은 wire 만 소유한다)로 구현한다: **«RFC 9457 wire + 표준 레시피»는 wire 규칙상 모순이 아니다**(2026-08-13 — 스팩이 이 조합을 표현하려 프로필 «이름»을 차용해 문면 모순이 된 사례 반영). 단 **G2 게이트·12-slot 의 profile 표기는 현재 `dddjango-code-json | preserve-established` 두 값뿐**이라 이 조합의 게이트 취급은 아직 열거에 없다 — 채택하려면 그 취급 결정을 G1 에서 표면화하라(STOP 대상이며, 스팩·플러그인 문면이 실제로 충돌하는 경우도 여전히 STOP 대상이다)(G1/G2=파이프라인의 설계/구현 승인 게이트 · 12-slot=오류 계약 기록표 `Error response contract 12-slot` · STOP=`STOP_FOR_USER_APPROVAL` — 사용자 결정으로만 진행). 위 혼합 금지의 주어는 wire 필드다 — 구현 레시피를 프로필의 일부로 읽지 않는다.
 
 #### `dddjango-code-json` (새 dddjango Ninja 범위의 기본)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - media type은 `application/json`이다.
 - 플러그인이 정한 body property 목록은 없다. 기존 범위는 관찰된 exact 오류 schema shape를 보존하고, 신규 범위는 exact field set·type·required/default·nullable·Field metadata·model config/legacy Config·validator/serializer/computed field/Pydantic hook inventory와 effective semantics·wire 직렬화를 일반 G1 승인과 분리해 명시 승인받는다.
@@ -241,10 +251,12 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 - framework-owned 401/403, route 404, 422, 429, `HttpError`, 500의 기본 응답은 이 code 계약의 body가 아니며, 그 본문이 정확하고 안정적인 공개 계약이라고 주장하지 않는다.
 
 #### framework 기본 응답과 공개 헤더의 경계
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 프레임워크 기본 401/403/route 404/422/429/`HttpError`/500을 전역 handler나 helper로 BC body로 바꾸어 헤더를 합성하지 않는다. 확립된 계약이 401의 `WWW-Authenticate` 또는 429의 `Retry-After`를 요구하면 그 헤더는 보존하고 별도 설계한다. presentation controller가 직접 공개하는 retryable BC 오류는 승인된 `Retry-After` 헤더를 그 controller가 소유한다.
 
 ## 6. RFC 9457 에러 응답 형식
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 이 절은 §5.4에서 RFC 9457 프로필을 선택한 API 범위에만 적용한다. `dddjango-code-json` 범위에는 적용하지 않는다. (wire 형식의 절이다 — 신규 RFC 범위의 구현 형태는 §5.4 마지막 문단의 단서를 따른다.)
 
@@ -261,6 +273,7 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 | `instance` | URI | 이 특정 발생의 식별자 |
 
 ### 6.2 예시
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```json
 HTTP/1.1 403 Forbidden
@@ -280,6 +293,7 @@ Content-Type: application/problem+json
 `balance`와 `accounts`는 **확장 필드**. 문제 유형 정의에서 추가 가능. 클라이언트는 인식하지 못하는 확장 필드를 무시해야 한다.
 
 ### 6.3 핵심 규칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - `type`은 문서화 역할을 하는 안정적 URI
 - `title`은 **유형**(재사용), `detail`은 **특정 발생**
@@ -301,6 +315,7 @@ Content-Type: application/problem+json
 | Content-Length | 바이트 단위 길이 | `1024` |
 
 ### 7.2 콘텐츠 협상 (Content Negotiation)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 클라이언트가 선호하는 표현을 요청하는 방식.
 
@@ -346,6 +361,7 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 ## 8. 인증과 인가
 
 ### 8.1 인증 vs 인가
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 구분 | 인증 (Authentication) | 인가 (Authorization) |
 |------|---------------------|---------------------|
@@ -360,6 +376,7 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 - **구현/프로필 경계**: 테스트한 Django Ninja 기본 401은 이 challenge를 제공하지 않을 수 있다. 이미 배포되었거나 공개적으로 요구된 계약은 challenge를 보존하고, 기본 동작과 맞지 않으면 G1에서 별도 설계로 되돌린다. code-profile body를 강제하려고 전역 handler나 helper로 challenge를 합성하지 않는다.
 
 ### 8.2 인증 메커니즘 선택 기준
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 방식 | 적합 | 특징 |
 |------|------|------|
@@ -368,6 +385,7 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 | **JWT (Bearer Token)** | 무상태 인증, 마이크로서비스 | 자체 포함(self-contained), 만료 관리 필요 |
 
 ### 8.3 API 요청의 보안 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - **비밀 정보를 쿼리 파라미터에 담지 않는다** — URL은 서버/프록시 로그에 기록됨
 - 인증 정보는 `Authorization` 헤더에 전달
@@ -376,6 +394,7 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 > 출처: Go_Deeper/Wiki/Http/StatusCode, Go_Deeper/Wiki/OAuth, Go_Deeper/Book/Architecture/DesigningAPIS
 
 ### 8.4 토큰 수명과 스코프
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Bearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 명시한다. 401을 생성하는 Bearer 서버는 §8.1의 RFC 9110 challenge 규칙을 지키며, 다음은 그 challenge가 포함하는 Bearer 계약의 표면이다.
 
@@ -405,6 +424,7 @@ Bearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 �
 **성능 차이**: PostgreSQL 100만 건에서 cursor 기반이 offset 기반보다 **17배 빠름**.
 
 ### 9.2 선택 기준
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 상황 | 권장 |
 |------|------|
@@ -413,6 +433,7 @@ Bearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 �
 | 고성능 읽기 중심 API | Keyset (인덱스 활용) |
 
 ### 9.3 실전 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - 인덱싱된, 불변, 유니크한 필드(타임스탬프 + ID 조합)를 커서로 사용
 - 커서를 불투명하게 인코딩(base64)하여 클라이언트가 토큰으로 취급하도록
@@ -441,6 +462,7 @@ Bearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 �
 - 요청별 오버라이드 가능
 
 ### 10.3 실전 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - 하나의 전략을 선택하고 **일관되게** 적용
 - 일반 패턴: URL path로 메이저 버전, 헤더로 마이너 조정
@@ -453,6 +475,7 @@ Bearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 �
 ## 11. 하위 호환성과 Deprecation
 
 ### 11.1 Breaking vs Non-Breaking Change
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 변경 유형 | Breaking? | 예시 |
 |----------|:---------:|------|
@@ -467,6 +490,7 @@ Bearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 �
 | 에러 형식 변경 | **O** | 에러 응답 구조 변경 |
 
 ### 11.2 Deprecation 프로세스
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 1. **Deprecation 공지**: API 문서에 명시, 변경 이력에 기록
 2. **Sunset 헤더**: 응답에 만료 날짜 포함
@@ -479,6 +503,7 @@ Bearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 �
 5. **제거**: 마이그레이션 기간 종료 후 제거
 
 ### 11.3 실전 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - **추가는 자유, 제거는 금지** (Additive changes only)
 - Breaking change가 필요하면 새 버전을 만든다
@@ -508,6 +533,7 @@ X-RateLimit-Remaining: 0
 ```
 
 ### 12.3 알고리즘 선택 기준
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 알고리즘 | 특징 | 적합 |
 |---------|------|------|
@@ -517,6 +543,7 @@ X-RateLimit-Remaining: 0
 | **Leaky Bucket** | 일정 출력, 버스트 없음 | 트래픽 셰이핑 |
 
 ### 12.4 실전 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - 비용 큰 작업(인증, DB) **전에** rate limit 검사
 - 확립된 429 계약의 `Retry-After` 헤더는 보존한다. 프레임워크 기본 429에 전역적으로 헤더를 합성하지 않으며, presentation controller가 직접 공개하는 retryable BC 오류만 승인된 `Retry-After` 헤더를 그 controller가 소유한다.
@@ -533,6 +560,7 @@ X-RateLimit-Remaining: 0
 POST는 멱등하지 않다. 네트워크 장애로 서버는 처리했지만 클라이언트가 응답을 못 받으면, 재시도 시 중복 생성 위험.
 
 ### 13.2 Idempotency-Key 패턴
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```
 POST /v1/charges
@@ -550,6 +578,7 @@ Content-Type: application/json
 5. POST에만 적용 — GET, PUT, DELETE는 이미 멱등
 
 ### 13.3 계약 결정 사항
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 `Idempotency-Key`를 받는 엔드포인트는 다음을 API 계약으로 정한다.
 
@@ -568,6 +597,7 @@ Replay는 현재 자원 상태를 다시 조회해 새 응답을 만드는 것�
 **요청 fingerprint로 충돌 판정**: "동일 key, 다른 request content"를 판정하려면, 최초 요청 페이로드에서 생성한 fingerprint(예: 본문 hash)를 key와 함께 저장하고 후속 요청의 fingerprint와 비교한다. 일치하면 replay, 불일치하면 충돌이다. IETF Idempotency-Key 초안은 fingerprint 불일치(다른 페이로드)에는 `422 Unprocessable Content` + 문서 링크(`Link` 헤더)를, 처리 중인 최초 요청과 겹친 동시 재시도(아래 Concurrency)에는 `409 Conflict`를 권고한다. 일부 구현(Stripe 등)은 불일치에 `409`/`400`을 쓰기도 한다. 선택한 프로필의 public code 또는 RFC Problem Details를 계약에 명시한다.
 
 ### 13.4 실전 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - 결제, 주문 생성 등 **중복이 치명적인 POST**에 필수(dddjango 파이프라인: 채택은 G0/G1 사용자 결정이다 — 미요청이면 기본 미적용·설계가 G1 에서 제안만 한다)
 - 멱등성 키를 내구성 있는 저장소(DB, Redis)에 보관
@@ -594,6 +624,7 @@ OpenAPI(구 Swagger)는 REST API를 기술하는 표준 명세 형식이다. 201
 - 클라이언트 SDK 자동 생성
 
 ### 14.3 반영해야 할 계약 표면
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 API 계약이 바뀌면 OpenAPI에 다음 표면을 함께 반영한다.
 
@@ -608,6 +639,7 @@ API 계약이 바뀌면 OpenAPI에 다음 표면을 함께 반영한다.
 - versioning metadata와 compatibility note
 
 ### 14.4 실전 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - API 설계 시 OpenAPI 명세를 함께 유지하여 문서와 구현의 불일치 방지
 - 명세 작성 도구(Swagger Editor, Stoplight 등) 활용

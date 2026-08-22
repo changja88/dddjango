@@ -1,0 +1,3264 @@
+{
+  "schema": "migrate-spec/1",
+  "doc_key": "architecture-api-final",
+  "path": "dddjango/skills/architecture-api/references/final.md",
+  "restates_paths": {
+    "architecture-api-final": "dddjango/skills/architecture-api/references/final.md"
+  },
+  "sections": [
+    {
+      "section_key": "s013-3.1",
+      "line_start": 91,
+      "line_end": 100,
+      "blocks": [
+        {
+          "lines": [
+            92,
+            94
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            95,
+            95
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "리소스 경로의 명사 사용(동사 금지)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ② check-naming.py docstring 은 저장소 파이썬 경로·심볼 이름 축(#28·#30·#33·#41)이라 REST URL 명명 비커버 ③④ 지목 없음 — 위임 기본값(architecture-api→design-review-api)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            96,
+            96
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "컬렉션 리소스의 복수 명사",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            97,
+            97
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "케밥 케이스·소문자 경로",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            98,
+            98
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "후행 슬래시 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 — 금지 형식 문면"
+            }
+          ]
+        },
+        {
+          "lines": [
+            99,
+            100
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "DB 구조의 URL 반영 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 — 금지 형식 문면"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s014-3.2",
+      "line_start": 101,
+      "line_end": 110,
+      "blocks": [
+        {
+          "lines": [
+            102,
+            104
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "부모-자식 관계의 슬래시 표현",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ② check-naming.py docstring 은 저장소 파이썬 경로·심볼 이름 축(#28·#30·#33·#41)이라 REST URL 명명 비커버 ③④ 지목 없음 — 위임 기본값(architecture-api→design-review-api)"
+            },
+            {
+              "label": "3단계 이상 깊이 회피",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 — «피한다» 회피 문면(강조 표기)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            105,
+            110
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s018-4.2",
+      "line_start": 138,
+      "line_end": 169,
+      "blocks": [
+        {
+          "lines": [
+            139,
+            141
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            142,
+            143
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            144,
+            144
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "200 OK 매핑(GET·PUT·PATCH 성공)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ② status 의미론을 보는 검사기 없음(check-transient-overmapping.py 는 transient 인프라 예외의 무분기 retryable 과잉매핑 차단이라 역방향) ③④ 지목 없음 — 위임 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            145,
+            145
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "201 Created 매핑(POST 생성·Location 헤더)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ② status 의미론을 보는 검사기 없음(check-transient-overmapping.py 는 transient 인프라 예외의 무분기 retryable 과잉매핑 차단이라 역방향) ③④ 지목 없음 — 위임 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            146,
+            146
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "202 Accepted 매핑(비동기 접수)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ② status 의미론을 보는 검사기 없음(check-transient-overmapping.py 는 transient 인프라 예외의 무분기 retryable 과잉매핑 차단이라 역방향) ③④ 지목 없음 — 위임 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            147,
+            148
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "204 No Content 매핑(DELETE 성공·무본문)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            149,
+            150
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            151,
+            152
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            153,
+            153
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "400 Bad Request 매핑(형식 오류·유효성 실패)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            154,
+            154
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "401 Unauthorized 매핑(인증 필요)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            155,
+            155
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "403 Forbidden 매핑(인가 부족)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            156,
+            156
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "404 Not Found 매핑(자원 없음·존재 은닉)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            157,
+            157
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "409 Conflict 매핑(자원 충돌)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            158,
+            158
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "422 Unprocessable Entity 매핑(의미적 처리 불가)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            159,
+            160
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "429 Too Many Requests 매핑(Rate Limit 초과)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            161,
+            162
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            163,
+            164
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            165,
+            165
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "500 Internal Server Error 매핑(애매하면 500)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            166,
+            167
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "503 Service Unavailable 매핑(과부하·정비·Retry-After 가능)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            168,
+            169
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-api-final/s026/b1"
+          ],
+          "note": "W2(«§5.4의 경계에 따라 controller가 그 헤더를 소유») — 문면이 §5.4를 명시 지목하는 s026 b1 W3의 부분 재진술(s056-12.4 b2와 동형 처리). W1·W3은 재진술 아님",
+          "norms": [
+            {
+              "label": "CAS 재시도 소진의 retryable status 배정(표 누락 금지)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ② status 의미론을 보는 검사기 없음(check-transient-overmapping.py 는 transient 인프라 예외의 무분기 retryable 과잉매핑 차단이라 역방향) ③④ 지목 없음 — 위임 기본값"
+            },
+            {
+              "label": "Retry-After 공개 시 controller 소유",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "② docstring «Enforce direct controller-owned code-profile error mapping» + §16 매핑 표 «controller checker» ④ T1 파일럿 ninja §6.1 «retryable BC 503의 Retry-After 컨트롤러 설정»과 동일 축"
+            },
+            {
+              "label": "503/409 선택의 설계자 임의 확정 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면이 «§5/G1»(게이트 절차)을 선택 소유로 지목 — 기본값 이탈 근거(파일럿 «503/409 선택의 명세 §5/G1 소유» 선례) · 표 누락 판정은 API 설계 리뷰 병기"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s019-4.3",
+      "line_start": 170,
+      "line_end": 177,
+      "blocks": [
+        {
+          "lines": [
+            171,
+            173
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "PRG로 새로고침 중복 제출 방지",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api) [P0 승계 — 보수 포함]"
+            }
+          ]
+        },
+        {
+          "lines": [
+            174,
+            177
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s020-5",
+      "line_start": 178,
+      "line_end": 181,
+      "blocks": [
+        {
+          "lines": [
+            179,
+            181
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "클라이언트 의존 항목의 명시 기록",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api) [애매→포함 규약 적용]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s021-5.1",
+      "line_start": 182,
+      "line_end": 192,
+      "blocks": [
+        {
+          "lines": [
+            183,
+            184
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "필수 필드·선택 필드 구분",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            185,
+            185
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "필드 타입·형식·단위·허용 범위·기본값 명시",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            186,
+            186
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "수치·외부 식별자 입력의 도메인/스토리지 상한 포함",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ② 입력 상한 부재로 인한 5xx 오분류를 보는 검사기 없음 — 위임 기본값"
+            },
+            {
+              "label": "계약 계층의 구체 경계값(매직넘버) 고정 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면이 «implementation에 위임»을 지목 — 값 결정은 구현 계층이나 계약 계층의 금지 판정 자체는 API 설계 리뷰"
+            }
+          ]
+        },
+        {
+          "lines": [
+            187,
+            187
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "query parameter의 조회 표현 조정 용도 한정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 — 위임 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            188,
+            188
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "비밀 값·인증 정보의 query parameter 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ② URL 로그 노출을 보는 검사기 없음 — 위임 기본값(§8.3 b1 부분 재진술의 정본)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            189,
+            189
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "POST 본문 정의와 duplicate-sensitive 요청의 Idempotency-Key 정책 확정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "② check-idempotency-scope-creep.py 는 «미요청 채택 금지»(G0) 축이라 «정책을 정한다» 의무 비커버 — 위임 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            190,
+            190
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "PUT 전체 교체의 누락 필드 처리 명시",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 — 위임 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            191,
+            192
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "PATCH 문서 형식·멱등 여부 개별 판단",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 — 위임 기본값"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s022-5.2",
+      "line_start": 193,
+      "line_end": 201,
+      "blocks": [
+        {
+          "lines": [
+            194,
+            195
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "상태 코드별 본문 존재 여부·schema 분리 정의",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-response-schema-bypass.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "② docstring «Block direct raw 200-203 returns that bypass a declared Ninja schema» — 선언 schema 경유의 **부분 백스톱**(선언된 schema 우회만 차단하고 «정의» 존재는 검사하지 않는다 — 정의 의무 자체의 소유는 위임)(파일럿 §6.3 b35 «선언 JSON 성공의 Ninja validation 경유» 선례) ④ 계약 «정의» 판정은 API 설계 리뷰 병기"
+            }
+          ]
+        },
+        {
+          "lines": [
+            196,
+            196
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "201 Created의 Location 헤더 제공",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            197,
+            197
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "202 Accepted의 접수 응답·결과 확인 방법 제공",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            198,
+            198
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "204 No Content의 무본문 계약화",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            199,
+            199
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "오류 응답의 media type·필드·status별 schema 문서화",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-openapi-error-declaration.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "② docstring «openapi_extra.responses 전수 검사 · response={status: <Bc>ErrorSchema} 선언 일치 검증» — 오류 응답 선언 축 집행(파일럿 b34 선례) ④ 프로필·media type 판정은 API 설계 리뷰 병기"
+            }
+          ]
+        },
+        {
+          "lines": [
+            200,
+            201
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "클라이언트 동작 변경 헤더의 응답 계약 포함",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s023-5.3",
+      "line_start": 202,
+      "line_end": 220,
+      "blocks": [
+        {
+          "lines": [
+            203,
+            205
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "엔드포인트 설계·변경 시 계약 체크리스트 병행 검토",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            206,
+            207
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            208,
+            208
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            209,
+            209
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            210,
+            210
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            211,
+            211
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            212,
+            212
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            213,
+            213
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            214,
+            214
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            215,
+            216
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            217,
+            220
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s024-5.4",
+      "line_start": 221,
+      "line_end": 232,
+      "blocks": [
+        {
+          "lines": [
+            222,
+            224
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "에러 wire contract의 우선순위 단일 선택",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ④ 파일럿 ninja §6.2 b1 «오류 프로필 선택의 architecture-api §5.4 위임»의 정본 — 프로필 선택은 API 계약 설계 판정"
+            }
+          ]
+        },
+        {
+          "lines": [
+            225,
+            225
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "① 배포된 에러 계약·공개 헤더 보존",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 · ② check-error-centralization.py docstring «preserve-established 는 schema semantics 미적용» — 보존 판정은 검사기 밖(파일럿 L-F 정정과 같은 근거)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            226,
+            226
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "② 신규 dddjango Ninja 범위의 기본 dddjango-code-json 선택",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            227,
+            228
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "③ RFC 9457의 조건부 선택 한정",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 [L-E 유형: «…있을 때만» 조건 한정]"
+            }
+          ]
+        },
+        {
+          "lines": [
+            229,
+            230
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "한 API 범위의 RFC·code wire 필드 혼합 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "① 문면 역할명 없음(«wire 필드»는 대상 어휘일 뿐 역할명 아님) ② §16 매핑 표 «schema checker»=check-error-centralization.py · docstring 의 canonical schema shape 검증 축 ④ 파일럿 b14 «타 profile 필드 혼합 금지» 선례"
+            },
+            {
+              "label": "code 프로필의 type·about:blank·URI 요구·problem+json 삽입 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "동상 — 같은 검사 축"
+            }
+          ]
+        },
+        {
+          "lines": [
+            231,
+            232
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "wire 계약 한정 — preserve-established 범위의 관할 배제",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면이 주어를 «신규 범위»로 한정 ② docstring 의 profile-gate(preserve 는 schema semantics 미적용)와 정합 — 관할 판정은 API 설계 리뷰"
+            },
+            {
+              "label": "확립 native 구현·배선의 표준 레시피 이전 근거 불인정",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "신규 RFC wire 범위의 표준 controller 레시피 구현",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "① 문면 «표준 controller 레시피(controller 소유·좁은 try·bc_error_schema.py·직접 Status 반환)» ② controller checker docstring 집행 축"
+            },
+            {
+              "label": "G2·12-slot 미열거 조합의 G1 표면화(STOP)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "① 문면이 G1·G2·12-slot·STOP 절차를 지목 — 절차 소유 Coordinator(기본값 이탈 근거·파일럿 선례)"
+            },
+            {
+              "label": "혼합 금지의 주어는 wire 필드 — 구현 레시피의 프로필 편입 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 해석 규칙 — 판정은 API 설계 리뷰"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s025",
+      "line_start": 233,
+      "line_end": 242,
+      "blocks": [
+        {
+          "lines": [
+            234,
+            235
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "code 프로필 media type = application/json",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "② check-error-centralization.py docstring 은 schema 모듈·wire-code 축이라 media type 비커버 — 위임 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            236,
+            236
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "플러그인 지정 body property 목록 부재(기본 목록 가정 금지)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④ 파일럿 §6.2 b2 «플러그인 공통 body property 부재» 선례 — 검사기는 자기 입력(inventory)을 전제하므로 순환 배선 해소, 판정은 위임"
+            },
+            {
+              "label": "기존 범위 관찰 shape 보존·신규 범위 표면의 분리 명시 승인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api",
+                "command-dddjango"
+              ],
+              "basis": "② docstring «preserve-established … do not apply schema semantics» — 보존 판정은 API 설계 리뷰 ① 문면 «일반 G1 승인과 분리해 명시 승인» — 승인 절차는 Coordinator 병기"
+            }
+          ]
+        },
+        {
+          "lines": [
+            237,
+            237
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "기준선 shape 변경의 별도 public contract 변경 취급",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 파일럿 §6.2 b2 «기준선 property 변경은 별도 contract 변경»→Coordinator 선례 · 승인 등급 판정은 절차 소유"
+            },
+            {
+              "label": "호환성 영향·전환 범위 제시 후 명시적 사용자 승인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "동상 — 승인 절차 소유"
+            }
+          ]
+        },
+        {
+          "lines": [
+            238,
+            238
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "공통 필드의 BC ErrorCode(StrEnum) 좁힘과 안정적 공개 식별자",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "② docstring «wire-code uniqueness, and narrow direct raw-string discriminator forms» ④ 파일럿 b9 «<Bc>ErrorCode(StrEnum) 정확히 하나» 선례"
+            },
+            {
+              "label": "식별자 필드명 미고정",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면이 필드명 고정을 명시 거부 — 형태 판정은 API 설계 리뷰(검사기는 이름을 세지 않음)"
+            },
+            {
+              "label": "공개 구별 가능 실패 한정 값 부여·내부 예외 합류 허용",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "② 공개 구별 가능성은 정적 검사 밖(파일럿의 표명 판정 처리와 동형) — 위임 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            239,
+            239
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "HTTP status 계약의 body property 존재 요구·가정 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            },
+            {
+              "label": "status field 존재 시 실제 status 일치·부재 시 controller literal/status 소유",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "① 문면 «controller의 literal/status 상수가 계약을 소유» ② controller checker docstring(파일럿 b17 «status 표현의 허용 형태(literal·상수)» 선례)"
+            },
+            {
+              "label": "공개 문자열의 str(exc) 자동 사용·민감 내부 정보 누설 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "② 민감 정보 판정은 정적 검사 밖(파일럿의 표명·의미 판정 처리와 동형) — 위임 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            240,
+            240
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "배포된 public 식별자 변경의 breaking change 취급",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api) · §11.1 판정 표와 같은 축"
+            },
+            {
+              "label": "클라이언트 Enum 하나 = 계약 하나 소비",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "12-slot rollout의 동시 전환·version split 기록",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "① 문면이 12-slot(오류 계약 기록표) 절차를 지목 — 절차 소유 Coordinator(파일럿 b25 «12-slot이 결정» 선례)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            241,
+            242
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "framework 기본 응답의 code 계약 body 배제·공개 계약 주장 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "② controller checker docstring 의 framework-owned 경계(파일럿 b30 «framework 오류 framework 소유»·«framework body의 wire contract 주장 금지» 두 축) — 주장 표명 판정은 API 설계 리뷰 병기"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s026",
+      "line_start": 243,
+      "line_end": 246,
+      "blocks": [
+        {
+          "lines": [
+            244,
+            246
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "framework 기본 응답의 전역 handler·helper 변환과 헤더 합성 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "② docstring «Enforce direct controller-owned code-profile error mapping» — 중앙 handler 소유 차단이 검사기 계약 그 자체 [파일럿 L-F: exception_handler·catch-all 금지는 controller-contract 실재 · ninja-boundary 는 settings.MIDDLEWARE 한정이라 비대상]"
+            },
+            {
+              "label": "확립 계약의 WWW-Authenticate·Retry-After 헤더 보존과 별도 설계",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "② preserve-established 는 schema semantics 미적용(docstring) — 보존 판정은 API 설계 리뷰"
+            },
+            {
+              "label": "controller 직접 공개 retryable BC 오류의 Retry-After controller 소유",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "② controller checker docstring ④ 파일럿 §6.1 b15 «retryable BC 503의 Retry-After 컨트롤러 설정»과 동일 축"
+            }
+          ],
+          "note": "전역 합성 금지·Retry-After controller 소유 정본 — 직접 restates: s018-4.2 b20·s033-7.2 b14·s036-8.1 b9·s056-12.4 b2 (s039-8.4 b5 는 s036-8.1 b9 경유 간접)"
+        }
+      ]
+    },
+    {
+      "section_key": "s027-6",
+      "line_start": 247,
+      "line_end": 250,
+      "blocks": [
+        {
+          "lines": [
+            248,
+            250
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "RFC 9457 절의 적용 범위 자기 한정(§5.4 선택 범위)",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api) [L-E 유형: «…범위에만» 한정]"
+            },
+            {
+              "label": "dddjango-code-json 범위 미적용",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "신규 RFC 범위 구현 형태의 §5.4 단서 준수",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면이 §5.4 마지막 문단(표준 controller 레시피)을 지목 ② controller checker docstring — s024-5.4 b6 n3 과 같은 축"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s029-6.2",
+      "line_start": 263,
+      "line_end": 281,
+      "blocks": [
+        {
+          "lines": [
+            264,
+            279
+          ],
+          "kind": "code",
+          "note": "절 선두 구분자(264)는 §13 «첫 블록 선두 귀속»으로 code 블록에 포함 — 이 절은 선행 블록이 없는 예외 경우"
+        },
+        {
+          "lines": [
+            280,
+            281
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "미인식 확장 필드의 클라이언트 무시 의무",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s030-6.3",
+      "line_start": 282,
+      "line_end": 291,
+      "blocks": [
+        {
+          "lines": [
+            283,
+            284
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "type의 안정적 문서화 URI",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            285,
+            285
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "title=유형 재사용·detail=특정 발생 분리",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            286,
+            287
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "RFC 프로필 범위 공개 에러 응답의 일관 적용",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            288,
+            291
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s033-7.2",
+      "line_start": 303,
+      "line_end": 331,
+      "blocks": [
+        {
+          "lines": [
+            304,
+            306
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            307,
+            308
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            309,
+            309
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            310,
+            310
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            311,
+            312
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            313,
+            314
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            315,
+            318
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            319,
+            320
+          ],
+          "kind": "prose",
+          "note": "«구체적인 것이 우선한다» — q값 해석 서술(P0 미계수 승계)"
+        },
+        {
+          "lines": [
+            321,
+            322
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            323,
+            324
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            325,
+            325
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "406 Not Acceptable 매핑(응답 표현 협상 실패)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ② status 의미론을 보는 검사기 없음(check-transient-overmapping.py 는 transient 인프라 예외의 무분기 retryable 과잉매핑 차단이라 역방향) ③④ 지목 없음 — 위임 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            326,
+            327
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "415 Unsupported Media Type 매핑(요청 페이로드 거절)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            328,
+            329
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "406/415 혼동 금지(응답 협상 vs 요청 페이로드)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 — 금지 문면"
+            }
+          ]
+        },
+        {
+          "lines": [
+            330,
+            331
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-api-final/s026/b1"
+          ],
+          "norms": [
+            {
+              "label": "406/415 계약의 별도 승인 범위 한정",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api) [L-E 유형: «별도 승인된 범위에서만» 한정]"
+            },
+            {
+              "label": "검증된 Ninja-owned pre-body 경계의 framework HttpError 흐름 사용",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-ninja-boundary-middleware.py"
+              ],
+              "basis": "② docstring 대표 회귀 = «406/415 콘텐츠 협상을 request.path 하드코딩한 전역 미들웨어로 자작» · «django-ninja 는 협상/임의 status 를 경계 안에서 네이티브로 낸다(§6.3)» ④ 파일럿 §6.1 b16 «406/415의 ninja 경계 내 처리» 선례"
+            },
+            {
+              "label": "parser 예외 정규화 차이의 실제 415 응답 확인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "② 실제 응답 status 확인은 정적 검사 밖(mounted client 계약 검증은 implementation-test 소관) — 위임 기본값"
+            },
+            {
+              "label": "전역 middleware·helper·handler의 status·body 합성 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-ninja-boundary-middleware.py",
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "① 문면이 middleware 와 handler 두 경로를 병기 ② MIDDLEWARE 자가등록은 ninja-boundary docstring, 전역 handler/helper 는 controller-contract docstring ④ 파일럿 b17 «두 경로 병기» 선례 — s026 b1 정본의 부분 재진술"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s036-8.1",
+      "line_start": 348,
+      "line_end": 361,
+      "blocks": [
+        {
+          "lines": [
+            349,
+            351
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            352,
+            352
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            353,
+            353
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            354,
+            354
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            355,
+            356
+          ],
+          "kind": "table-row",
+          "restates": [
+            "architecture-api-final/s036-8.1/b8"
+          ],
+          "note": "«실패 시» 행의 인증 열 = b8(359 RFC 9110 challenge 의무)의 거의 축자 사본 — 미승격 사본이라 §15대로 restates 만 건다(인가 열 «권한 부족 메시지»는 규범 아님)"
+        },
+        {
+          "lines": [
+            357,
+            357
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            358,
+            358
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            359,
+            359
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "401 생성 시 적용 가능한 WWW-Authenticate challenge 필수(RFC 9110)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ② HTTP challenge 발행을 보는 검사기 없음 — 위임 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            360,
+            361
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-api-final/s026/b1"
+          ],
+          "norms": [
+            {
+              "label": "확립·공개 요구 계약의 challenge 보존과 G1 별도 설계 복귀",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api",
+                "command-dddjango"
+              ],
+              "basis": "① 문면이 G1(설계 승인 게이트)을 지목 — 절차 소유 Coordinator 병기 · 보존 판정은 API 설계 리뷰"
+            },
+            {
+              "label": "code-profile body 강제용 전역 handler·helper challenge 합성 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "② controller checker docstring(중앙 handler 소유 차단) — s026 b1 정본의 부분 재진술"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s037-8.2",
+      "line_start": 362,
+      "line_end": 369,
+      "blocks": [
+        {
+          "lines": [
+            363,
+            365
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            366,
+            366
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "API Key의 서버 간·내부 API 적합",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api) [선택지 매핑 표 = 조건부 허용(L-E «선택 적용=허용» 유형)]"
+            }
+          ]
+        },
+        {
+          "lines": [
+            367,
+            367
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "OAuth 2.0의 서드파티 권한 위임 적합",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            368,
+            369
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "JWT(Bearer Token)의 무상태·마이크로서비스 적합",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s038-8.3",
+      "line_start": 370,
+      "line_end": 377,
+      "blocks": [
+        {
+          "lines": [
+            371,
+            372
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-api-final/s021-5.1/b5"
+          ],
+          "norms": [
+            {
+              "label": "비밀 정보의 쿼리 파라미터 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ② 검사기 없음 — 위임 기본값 · s021-5.1 b5 정본의 부분 재진술"
+            }
+          ]
+        },
+        {
+          "lines": [
+            373,
+            373
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "인증 정보의 Authorization 헤더 전달",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            374,
+            375
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "전 API 통신의 HTTPS 사용",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            376,
+            377
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s039-8.4",
+      "line_start": 378,
+      "line_end": 394,
+      "blocks": [
+        {
+          "lines": [
+            379,
+            381
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Bearer 토큰 만료·권한 범위의 계약 명시",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            },
+            {
+              "label": "401 생성 Bearer 서버의 §8.1 challenge 규칙 준수",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 — §8.1 규칙의 적용 선언"
+            }
+          ]
+        },
+        {
+          "lines": [
+            382,
+            383
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            384,
+            384
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "invalid_token의 401 + Bearer error challenge 매핑",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ② status 의미론을 보는 검사기 없음(check-transient-overmapping.py 는 transient 인프라 예외의 무분기 retryable 과잉매핑 차단이라 역방향) ③④ 지목 없음 — 위임 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            385,
+            386
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "insufficient_scope의 403 + scope 안내 매핑",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            387,
+            387
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-api-final/s036-8.1/b8",
+            "architecture-api-final/s036-8.1/b9"
+          ],
+          "norms": [
+            {
+              "label": "토큰 만료의 401 인증 실패 귀속",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            },
+            {
+              "label": "401 생성 시 challenge의 인증 방법·오류 원인 안내",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 — §8.1 challenge 의무의 Bearer 재진술"
+            },
+            {
+              "label": "확립 Bearer challenge 보존과 기본 401 차이의 G1 별도 설계",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api",
+                "command-dddjango"
+              ],
+              "basis": "① 문면이 G1 을 지목 — 절차 소유 Coordinator 병기 · 보존 판정은 API 설계 리뷰"
+            },
+            {
+              "label": "프레임워크 기본 401의 전역 handler·helper 헤더 합성 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "② controller checker docstring(중앙 handler 소유 차단) — s036-8.1 b9·s026 b1 과 같은 축"
+            }
+          ]
+        },
+        {
+          "lines": [
+            388,
+            388
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "scope의 허용 작업 범위 정의",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            },
+            {
+              "label": "scope 부족 시 403+insufficient_scope 응답과 필요 scope 안내",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            389,
+            390
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "토큰 수명·refresh 흐름·scope 집합의 API 계약 고정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            },
+            {
+              "label": "토큰 검증·발급 구현의 인증 라이브러리·프레임워크 귀속",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 — 소유 경계 선언"
+            }
+          ]
+        },
+        {
+          "lines": [
+            391,
+            394
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s042-9.2",
+      "line_start": 407,
+      "line_end": 414,
+      "blocks": [
+        {
+          "lines": [
+            408,
+            410
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            411,
+            411
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "소규모·관리자 대시보드의 Offset 권장",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api) [«권장» 열 = 선택지 매핑 → 조건부 허용]"
+            }
+          ]
+        },
+        {
+          "lines": [
+            412,
+            412
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "실시간 피드·무한 스크롤·대용량의 Cursor 권장",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            413,
+            414
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "고성능 읽기 중심 API의 Keyset 권장",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s043-9.3",
+      "line_start": 415,
+      "line_end": 425,
+      "blocks": [
+        {
+          "lines": [
+            416,
+            417
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "커서는 인덱싱·불변·유니크 필드",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            418,
+            418
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "커서의 불투명 인코딩(base64)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            419,
+            419
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "페이지당 100–200개 결과 권장",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 [단일 권장값 = 준수 대상 기본값]"
+            }
+          ]
+        },
+        {
+          "lines": [
+            420,
+            421
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "응답의 has_more·next_cursor 포함",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            422,
+            425
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s047-10.3",
+      "line_start": 443,
+      "line_end": 452,
+      "blocks": [
+        {
+          "lines": [
+            444,
+            445
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "단일 버전 전략의 일관 적용",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            446,
+            446
+          ],
+          "kind": "prose",
+          "note": "«일반 패턴» 불릿 — 서술(P0 미계수 승계)"
+        },
+        {
+          "lines": [
+            447,
+            448
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "버전 관리 방식 문서화와 마이그레이션 경로 제공",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            449,
+            452
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s049-11.1",
+      "line_start": 455,
+      "line_end": 468,
+      "blocks": [
+        {
+          "lines": [
+            456,
+            458
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            459,
+            459
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "응답 필드 추가의 non-breaking 판정",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ② breaking 판정을 계산하는 검사기 없음 ④ §11.3 «추가는 자유»와 같은 축 — 위임 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            460,
+            460
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "선택 요청 파라미터 추가의 non-breaking 판정",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            461,
+            461
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "필드 제거의 breaking 판정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 — breaking 판정 의무"
+            }
+          ]
+        },
+        {
+          "lines": [
+            462,
+            462
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "필드 이름 변경의 breaking 판정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 — breaking 판정 의무"
+            }
+          ]
+        },
+        {
+          "lines": [
+            463,
+            463
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "필드 타입 변경의 breaking 판정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 — breaking 판정 의무"
+            }
+          ]
+        },
+        {
+          "lines": [
+            464,
+            464
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "필수 파라미터 추가의 breaking 판정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 — breaking 판정 의무"
+            }
+          ]
+        },
+        {
+          "lines": [
+            465,
+            465
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "URL 경로 변경의 breaking 판정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 — breaking 판정 의무"
+            }
+          ]
+        },
+        {
+          "lines": [
+            466,
+            466
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "상태 코드 변경의 breaking 판정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 — breaking 판정 의무"
+            }
+          ]
+        },
+        {
+          "lines": [
+            467,
+            468
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "에러 형식 변경의 breaking 판정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s050-11.2",
+      "line_start": 469,
+      "line_end": 480,
+      "blocks": [
+        {
+          "lines": [
+            470,
+            471
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "① Deprecation 공지의 문서·변경 이력 기록",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            472,
+            472
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "② Sunset 헤더의 만료 날짜 응답 포함",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            473,
+            476
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            477,
+            477
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "③ 최소 6개월~1년 마이그레이션 기간 유지",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            478,
+            478
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "④ 대체 API·마이그레이션 가이드 제공",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            479,
+            480
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "⑤ 마이그레이션 기간 종료 후 제거",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s051-11.3",
+      "line_start": 481,
+      "line_end": 488,
+      "blocks": [
+        {
+          "lines": [
+            482,
+            483
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "추가는 자유·제거 금지(Additive changes only)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            484,
+            484
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "breaking change 필요 시 새 버전 생성",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            485,
+            486
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "미인식 필드 무시 설계(Robustness Principle)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            487,
+            488
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s055-12.3",
+      "line_start": 510,
+      "line_end": 518,
+      "blocks": [
+        {
+          "lines": [
+            511,
+            513
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            514,
+            514
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "Token Bucket의 퍼블릭 API 기본 적합",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api) [«적합» 열 = 선택지 매핑 → 조건부 허용]"
+            }
+          ]
+        },
+        {
+          "lines": [
+            515,
+            515
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "Sliding Window의 정확한 제어 적합",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            516,
+            516
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "Fixed Window의 간단한 내부 API 적합",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            517,
+            518
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "Leaky Bucket의 트래픽 셰이핑 적합",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s056-12.4",
+      "line_start": 519,
+      "line_end": 528,
+      "blocks": [
+        {
+          "lines": [
+            520,
+            521
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "비용 큰 작업 전 rate limit 검사",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            522,
+            522
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-api-final/s026/b1"
+          ],
+          "norms": [
+            {
+              "label": "확립 429 계약의 Retry-After 헤더 보존",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "② preserve-established 는 schema semantics 미적용(docstring) — 보존 판정은 API 설계 리뷰"
+            },
+            {
+              "label": "기본 429의 전역 헤더 합성 금지와 controller 직접 공개 오류 한정 소유",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "② controller checker docstring(중앙 handler 소유 차단·controller 소유 헤더) ④ 파일럿 §6.1 b15 동일 축 — s026 b1 정본의 부분 재진술"
+            }
+          ]
+        },
+        {
+          "lines": [
+            523,
+            524
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "rate limit 정책의 API 문서 기재",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            525,
+            528
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s059-13.2",
+      "line_start": 535,
+      "line_end": 551,
+      "blocks": [
+        {
+          "lines": [
+            536,
+            544
+          ],
+          "kind": "code",
+          "note": "절 선두 구분자(536)는 §13 «첫 블록 선두 귀속»으로 code 블록에 포함"
+        },
+        {
+          "lines": [
+            545,
+            545
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            546,
+            546
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "① 클라이언트의 고유 키 생성(V4 UUID 권장)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            547,
+            547
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-api-final/s060-13.3/b10"
+          ],
+          "note": "W2(«HTTP status·응답 표현은 presentation이 소유한다(application·domain은 status를 만들지 않는다; §13.3)») — 문면이 §13.3을 직접 지목하는 s060-13.3 b10 W3·W4의 부분 재진술. W1은 재진술 아님",
+          "norms": [
+            {
+              "label": "② 첫 요청 도메인 outcome의 응용 계층 트랜잭션 저장",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "② check-transaction-boundary.py 는 «한 트랜잭션 = 애그리거트 하나»·UoW 축이라 멱등 outcome 저장 비커버 — 위임 기본값(db §9.6 과 상호 참조)"
+            },
+            {
+              "label": "② HTTP status·응답 표현의 presentation 소유(application·domain의 status 생성 금지)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "① 문면 «presentation이 소유» ② controller checker docstring — §13.3 b10 과 같은 축"
+            }
+          ]
+        },
+        {
+          "lines": [
+            548,
+            548
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "③ 동일 키 후속 요청의 저장 결과 반환",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            549,
+            549
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "④ 키의 24시간 만료(일반 정책)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            550,
+            551
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "⑤ POST 한정 적용(GET·PUT·DELETE 제외)",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 [L-E 유형: 적용 범위 한정]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s060-13.3",
+      "line_start": 552,
+      "line_end": 569,
+      "blocks": [
+        {
+          "lines": [
+            553,
+            555
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Idempotency-Key 수용 엔드포인트의 계약 결정 의무",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            556,
+            557
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            558,
+            558
+          ],
+          "kind": "table-row",
+          "note": "«적용 여부» — 결정 항목(의무 동사 없음·미계수)"
+        },
+        {
+          "lines": [
+            559,
+            559
+          ],
+          "kind": "table-row",
+          "note": "«Key scope» — 결정 항목"
+        },
+        {
+          "lines": [
+            560,
+            560
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "Replay — 최초 operation outcome 재현과 프로필 대응 HTTP 응답 매핑",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            561,
+            561
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "Conflict — 다른 request content의 충돌 응답(신규 작업 처리 금지)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            562,
+            562
+          ],
+          "kind": "table-row",
+          "note": "«Retention» — 결정 항목"
+        },
+        {
+          "lines": [
+            563,
+            563
+          ],
+          "kind": "table-row",
+          "note": "«Concurrency» — 결정 항목"
+        },
+        {
+          "lines": [
+            564,
+            565
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "Storage — 내구성 저장소·transaction/lock 정책의 DB 설계 연결",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-db",
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면이 «DB 설계로 연결»을 명시 지목 — 문서군 기본값(design-review-api) 이탈의 문면 근거 · architecture-db s043-9.6(Idempotency storage)와 규칙 쌍"
+            }
+          ]
+        },
+        {
+          "lines": [
+            566,
+            567
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Replay의 최초 처리 outcome 재현(현재 상태 재조회 금지)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            },
+            {
+              "label": "가변 자원의 최초 응답 snapshot·동등 안정 결과 보관",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "outcome의 트랜잭션 기록과 owning presentation controller의 status·표현 매핑",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 «owning presentation controller» ② controller checker docstring(controller-owned mapping)"
+            },
+            {
+              "label": "중앙 error handler 소유 금지·application·domain의 status catch·생성·저장 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "② controller checker docstring — 중앙 handler 차단이 검사기 계약 그 자체(파일럿 b30 선례)"
+            },
+            {
+              "label": "byte 동일 replay 보관 시에도 status 결정의 presentation 소유 유지",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "동상 — controller 소유 축(조건부 보관 허용의 단서)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            568,
+            569
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "요청 fingerprint 저장과 후속 요청 비교로 충돌 판정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api) · db §9.6 저장 축과 상호 참조"
+            },
+            {
+              "label": "fingerprint 일치=replay·불일치=충돌 판정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "선택 프로필의 public code·Problem Details 계약 명시",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s061-13.4",
+      "line_start": 570,
+      "line_end": 581,
+      "blocks": [
+        {
+          "lines": [
+            571,
+            572
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "중복이 치명적인 POST의 Idempotency-Key 필수",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            },
+            {
+              "label": "dddjango 파이프라인 채택의 G0/G1 사용자 결정·미요청 기본 미적용",
+              "class": "Override",
+              "enforcedBy": [
+                "check-idempotency-scope-creep.py"
+              ],
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "② docstring «멱등성 스코프크립(C3) 결정적 백스톱 (G0=확장금지) … 태스크가 요청하지 않은 멱등성을 … silent 의무화 차단 · G1 채택 승인 없이 accepted scope 밖 추가 금지» 정면 커버 ① 문면이 G0/G1 사용자 결정을 지목 — 절차 소유 Coordinator 병기"
+            }
+          ]
+        },
+        {
+          "lines": [
+            573,
+            573
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "멱등성 키의 내구성 저장소 보관",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api) [저장 메커니즘은 db 축과 상호 참조]"
+            }
+          ]
+        },
+        {
+          "lines": [
+            574,
+            574
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "동일 키 동시 요청의 레이스 컨디션 처리",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            575,
+            575
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-api-final/s060-13.3/b11"
+          ],
+          "norms": [
+            {
+              "label": "fingerprint 불일치의 충돌 처리와 status·프로필 계약 선택",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api) · s060-13.3 b11 정본의 부분 재진술"
+            }
+          ]
+        },
+        {
+          "lines": [
+            576,
+            577
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "PRG 대 Idempotency-Key의 문제 유형별 선택",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api) [두 선택지 모두 정당한 조건부 안내 → 허용]"
+            }
+          ]
+        },
+        {
+          "lines": [
+            578,
+            581
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s065-14.3",
+      "line_start": 596,
+      "line_end": 609,
+      "blocks": [
+        {
+          "lines": [
+            597,
+            599
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "API 계약 변경 시 OpenAPI 표면 병행 반영",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-openapi-error-declaration.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "② docstring «positional/auto/preserve 실행은 openapi_extra.responses 저장소 전수 검사 … response={status: <Bc>ErrorSchema} 선언 일치 검증» — 표면 중 error response 축을 집행 ④ 나머지 표면(path·parameter·pagination·versioning) 판정은 API 설계 리뷰 병기"
+            }
+          ]
+        },
+        {
+          "lines": [
+            600,
+            600
+          ],
+          "kind": "prose",
+          "note": "표면 목록 9 불릿 — 열거(P0 미계수 승계). §13 자연 단위 «불릿»과 이 문서의 전 절 관례(1불릿=1블록)에 맞춰 불릿별 분리"
+        },
+        {
+          "lines": [
+            601,
+            601
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            602,
+            602
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            603,
+            603
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            604,
+            604
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            605,
+            605
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            606,
+            606
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            607,
+            607
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            608,
+            609
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s066-14.4",
+      "line_start": 610,
+      "line_end": 619,
+      "blocks": [
+        {
+          "lines": [
+            611,
+            612
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "설계 시 OpenAPI 명세 병행 유지",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "① 문면 역할명 없음 ②③④ 검사기 docstring·P0 커버·registry 지목 없음 — 위임 기본값 표(architecture-api→design-review-api)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            613,
+            613
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "명세 작성 도구 활용",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상 [지시형 불릿 — 괄호는 «상황→선택지 매핑»이 아니라 도구 예시. 허용되는 것은 도구 선택뿐이라 §4.2 «단일 지시값=준수 대상» 규약을 따름]"
+            }
+          ]
+        },
+        {
+          "lines": [
+            614,
+            615
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "OpenAPI 최신 상태 유지(테스트·SDK·문서·호환성 리뷰 동일 계약)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            616,
+            619
+          ],
+          "kind": "prose"
+        }
+      ]
+    }
+  ]
+}

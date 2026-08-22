@@ -1,4 +1,5 @@
 # Python 언어 특화 가이드
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 
 > Python에서만 적용되는 관례, 패턴, 기법을 정리한 문서.
@@ -30,6 +31,7 @@ def close_kitchen(point_in_time: datetime) -> None:
 - 타입 체커: mypy, pyright, pyre, pytype
 
 ### 1.2 Optional과 None 처리 [단단한 파이썬]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 None은 모든 변수에 할당될 수 있어서 "10억 달러짜리 실수"라 불린다. Optional 타입으로 None의 존재를 명시하라.
 
@@ -54,6 +56,7 @@ if user is not None:
 - mypy `--strict-optional` 옵션으로 None 처리를 강제하라.
 
 ### 1.3 Union과 합 타입으로 상태 공간 제어 [단단한 파이썬]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 곱 타입(Product Type)은 모든 필드 조합을 허용하여 유효하지 않은 상태가 생긴다. 합 타입(Sum Type)을 사용해 비정상 상태를 배제하라.
 
@@ -101,6 +104,7 @@ get_user(42)           # 타입 체커 에러
 ```
 
 ### 1.5 TypedDict: 이종 딕셔너리 타입 지정 [단단한 파이썬]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 외부 API, JSON 등 이종 데이터를 담는 딕셔너리에는 TypedDict를 사용하라.
 
@@ -275,6 +279,7 @@ def greet(name: str, greeting: str = "Hello") -> str:
 ```
 
 ### 1.11 Concatenate: 매개변수 추가/제거 [PEP 612]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 `Concatenate`는 데코레이터가 원래 함수에 매개변수를 추가하거나 제거할 때 사용한다.
 
@@ -304,6 +309,7 @@ def get_data(query: str) -> list[str]:
 ```
 
 ### 1.12 TypeIs vs TypeGuard: 타입 좁히기 [PEP 742, PEP 647]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 `TypeIs`(3.13+)는 `TypeGuard`(3.10+)의 개선판으로, if/else 양쪽 분기 모두에서 타입 좁히기가 가능하다.
 
@@ -513,6 +519,7 @@ votes[key].append(who)
 ```
 
 ### 3.3 __missing__으로 키별 디폴트 값 생성 [파이썬코딩의기술]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 defaultdict의 팩토리 함수는 인자를 받을 수 없다. 키에 따라 다른 디폴트 값이 필요하면 dict를 상속하고 `__missing__`을 구현하라.
 
@@ -620,6 +627,7 @@ found = {
 ```
 
 ### 4.4 None 반환 대신 예외 발생 [파이썬코딩의기술]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > dddjango 경계 단서: OHS 계약·승인된 failed-Result 경로에서는 «부재·거절은 답»(#453·#454)이라 raise 가 아니라 결과 분기다 — 이 절의 예외 우선은 그 밖의 일반 API 다.
 
@@ -664,6 +672,7 @@ stats = get_stats(lengths)  # Stats 객체 반환
 ## 5. 데코레이터
 
 ### 5.1 functools.wraps 필수 사용 [파이썬코딩의기술] [슬기로운 파이썬 트릭]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 데코레이터를 적용하면 원래 함수의 메타데이터(이름, 독스트링)가 사라진다. `@wraps`로 보존하라.
 
@@ -724,6 +733,7 @@ class LoginEvent: ...
 ```
 
 ### 5.3 클래스 데코레이터: 메타클래스 대안 [파이썬코딩의기술]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 합성 가능한 클래스 확장이 필요하면 메타클래스보다 클래스 데코레이터를 사용하라.
 
@@ -745,10 +755,12 @@ class TraceDict(dict):
 ## 6. 디스크립터
 
 ### 6.1 디스크립터 프로토콜 [파이썬코딩의기술] [파이썬 클린코드 2nd]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 디스크립터는 `__get__`, `__set__`, `__delete__`, `__set_name__` 중 하나 이상을 구현한 클래스이다. `@property`의 일반화이며, 재사용 가능한 애트리뷰트 로직에 사용한다.
 
 ### 6.2 디스크립터 검증 프레임워크: ABC 기반 패턴 [Python 공식 Descriptor HowTo Guide]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > **의사결정 #5**: External 채택. Python 공식 Descriptor HowTo Guide 패턴을 기본으로 사용한다.
 > `instance.__dict__` 직접 저장이 더 단순하고 공식 가이드의 권장 패턴이다. `WeakKeyDictionary`는 `__set_name__` 이전 시대의 우회 방법이다.
@@ -826,6 +838,7 @@ emp.department = "engineering"  # OK
 ## 7. @property와 애트리뷰트 접근
 
 ### 7.1 세터/게터 대신 평범한 애트리뷰트 [파이썬코딩의기술]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 파이썬에서 명시적 세터/게터는 파이썬답지 않다. 단순 공개 애트리뷰트로 시작하고, 나중에 로직이 필요하면 `@property`로 전환하라.
 
@@ -880,6 +893,7 @@ data.foo     # 'foo을 위한 값' (__getattr__ 호출, 이후 캐시)
 ## 8. 클래스 설계: Python 특화 패턴
 
 ### 8.1 __call__로 호출 가능한 객체 [파이썬코딩의기술]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 상태를 유지하는 훅이 필요하면 클로저 대신 `__call__`을 구현한 클래스를 사용하라.
 
@@ -897,6 +911,7 @@ result = defaultdict(counter, current)  # 함수 자리에 사용 가능
 ```
 
 ### 8.2 @classmethod를 팩토리 메서드로 활용 [파이썬코딩의기술] [슬기로운 파이썬 트릭]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 파이썬은 `__init__` 하나만 허용한다. 대체 생성자가 필요하면 `@classmethod`를 사용하라.
 
@@ -933,6 +948,7 @@ class MyClass:
 ```
 
 ### 8.4 __repr__과 __str__ [슬기로운 파이썬 트릭] [파이썬코딩의기술]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 모든 클래스에 최소한 `__repr__`은 구현하라. `__str__`이 없으면 `__repr__`이 대신 사용된다.
 
@@ -955,6 +971,7 @@ print([car])     # 컨테이너 내부는 항상 __repr__
 ```
 
 ### 8.5 비공개(__) 대신 보호(_) 애트리뷰트 [파이썬코딩의기술]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 # 나쁜 예: 이중 밑줄 남용
@@ -973,6 +990,7 @@ class MyClass:
 - 파이썬 모토: "우리는 모두 책임질 줄 아는 성인이다."
 
 ### 8.6 __init_subclass__로 하위 클래스 검증 (3.6+) [파이썬코딩의기술]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 메타클래스 대신 `__init_subclass__`를 사용하라. 더 단순하고 합성 가능하다.
 
@@ -1045,6 +1063,7 @@ class DatacenterRack(ToDictMixin, JsonMixin):
 ```
 
 ### 8.9 collections.abc로 커스텀 컨테이너 [파이썬코딩의기술] [단단한 파이썬]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 커스텀 컨테이너를 만들 때 `collections.abc`를 상속하면 필수 메서드 누락을 방지한다.
 
@@ -1180,6 +1199,7 @@ assert isinstance(FakeCloser(), HasClose)  # True! 시그니처 불일치인데�
 ## 10. Enum, dataclass, NamedTuple
 
 ### 10.1 Enum/StrEnum: 상수 그룹화 [단단한 파이썬] [Python 공식 문서]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 from enum import Enum, StrEnum, auto
@@ -1229,6 +1249,7 @@ class Dish:
 ```
 
 ### 10.3 dataclass(slots=True): 메모리 최적화 (3.10+) [Python dataclasses 공식 문서]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > **의사결정 #7**: External 채택. `dataclass(slots=True)` 사용을 권장한다.
 
@@ -1355,6 +1376,7 @@ car._asdict()   # dict 변환
 > 출처: Fluent Python 2nd Edition (Luciano Ramalho, O'Reilly 2022)
 
 ### 11.1 연산자 오버로딩 규칙 [Fluent Python 2nd]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 import math
@@ -1424,12 +1446,14 @@ print(v1 @ v2)       # 8                -- __matmul__ (내적)
 ---
 
 ## 12. pydantic v2 -- 런타임 검증의 새 표준
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: [pydantic v2 공식 문서](https://docs.pydantic.dev/latest/), [Migration Guide](https://docs.pydantic.dev/latest/migration/)
 >
 > **의사결정 #1**: External 채택. pydantic v2 API를 사용한다. v1 API는 공식 지원 중단되었다.
 
 ### 12.0 pydantic v2 boundary 결정
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 pydantic v2는 외부 입력과 런타임 검증 경계에서 사용한다. API payload, 외부 JSON, config, settings-like data, message payload처럼 시스템 밖에서 들어오거나 시스템 밖으로 나가는 데이터의 shape와 coercion을 명시하는 데 적합하다.
 
@@ -1609,6 +1633,7 @@ def animate():
 ```
 
 ### 13.5 send, throw 사용 금지 [파이썬코딩의기술]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 제너레이터의 `send()`와 `throw()`는 양방향 통신을 제공하지만 가독성이 매우 나쁘다. 대신 이터레이터를 입력으로 전달하거나 상태를 가진 클래스를 사용하라.
 
@@ -1729,6 +1754,7 @@ finally:
 ```
 
 ### 15.2 최상위 예외 클래스 정의 [파이썬코딩의기술]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 API 모듈에는 최상위 Exception을 정의하여 모든 모듈 예외가 이를 상속하게 하라.
 
@@ -1748,6 +1774,7 @@ except my_module.MyModuleError:
 ```
 
 ### 15.3 @deprecated로 지원 중단 표시 (3.13+) [PEP 702]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > **의사결정 #4**: External 채택. Python 3.13+에서는 `@deprecated`를 사용한다.
 
@@ -1792,6 +1819,7 @@ process("ok")   # 경고 없음
 ## 16. 동시성과 병렬성
 
 ### 16.1 GIL과 스레드 선택 기준 [파이썬코딩의기술]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - **GIL**: CPython에서 한 번에 하나의 스레드만 바이트코드 실행.
 - **스레드 사용**: 블로킹 I/O 시 (파일, 네트워크). GIL은 시스템 콜 전에 해제됨.
@@ -1815,6 +1843,7 @@ class LockingCounter:
 ```
 
 ### 16.2 asyncio.TaskGroup: 구조적 동시성 (3.11+) [PEP 654]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > **의사결정 #3**: External 채택. Python 3.11+에서는 `asyncio.TaskGroup`을 기본 패턴으로 권장한다.
 
@@ -1857,6 +1886,7 @@ async def handle_errors():
 > **레거시 참고**: 3.11 미만에서는 `asyncio.gather`가 유효하지만, `return_exceptions=True` 사용 시 예외가 결과에 섞이고 첫 번째 에러만 표면화되는 문제가 있다.
 
 ### 16.3 Free-Threaded Python (3.13+) [PEP 703]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > **의사결정 #2**: External 채택. Python 3.13+의 Free-threading을 반영한다.
 
@@ -1929,6 +1959,7 @@ queue.get()                # 비어 있으면 블록
 ---
 
 ## 17. 성능 프로파일링과 최적화
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: High Performance Python 2nd Edition (Micha Gorelick, Ian Ozsvald, O'Reilly 2020)
 >
@@ -2124,6 +2155,7 @@ if container: ...       # 비어 있지 않음
 ```
 
 ### 19.4 bytes와 str 분리 (유니코드 샌드위치) [파이썬코딩의기술]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 인코딩/디코딩은 인터페이스의 가장 먼 경계에서 수행하라.
 
@@ -2135,10 +2167,12 @@ def to_str(bytes_or_str):
 ```
 
 ### 19.5 for/while 뒤 else 금지 [파이썬코딩의기술]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 루프 뒤 else 블록은 루프가 완료되면 실행된다. 직관에 반하므로 사용하지 마라.
 
 ### 19.6 명명 규칙 [PEP 8] [슬기로운 파이썬 트릭]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 대상 | 스타일 | 예시 |
 |------|--------|------|
@@ -2163,6 +2197,7 @@ def to_str(bytes_or_str):
 ---
 
 ## 20. 디자인 패턴 (Python 고유 구현)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 범용 디자인 패턴의 개념은 `discipline-cleancode` 스킬을 참조한다.
 
@@ -2230,6 +2265,7 @@ config = Config.from_env()
 ---
 
 ## 21. Repository / Unit of Work
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Repository, Unit of Work, 핵사고날(포트/어댑터), CQRS, outbox, ACL 등 구조 패턴의 선택 기준은 `architecture-ddd`(§5 아키텍처, §6 구현 패턴)가 소유하고, Django ORM 환경에서의 적용은 `implementation-django`(§16 서비스 레이어)가 담당한다. 이 문서는 그 패턴들을 표현할 때 쓰는 Python 경계 도구(`Protocol`/ABC, 타입 기반 협력)만 다룬다.
 
@@ -2242,6 +2278,7 @@ Repository, Unit of Work, 핵사고날(포트/어댑터), CQRS, outbox, ACL 등 
 Ruff는 Rust로 작성된 초고속 Python 린터/포매터로, 약 50개 flake8 플러그인의 규칙을 재구현하며, Flake8, Black, isort 등을 대체한다. 기존 도구 대비 10-100배 빠르다.
 
 ### 22.1 권장 pyproject.toml 설정
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```toml
 [tool.ruff]
@@ -2328,6 +2365,7 @@ else:
 > 출처: [mypy 문서](https://mypy.readthedocs.io/en/stable/), [pyright 설정 가이드](https://microsoft.github.io/pyright/)
 
 ### 23.1 mypy strict 모드 설정
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```toml
 # pyproject.toml
@@ -2353,6 +2391,7 @@ disallow_untyped_defs = false
 ```
 
 ### 23.2 pyright strict 모드
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```json
 // pyrightconfig.json
@@ -2418,6 +2457,7 @@ def handle_result(result: Result) -> str:
 ---
 
 ## 24. 테스트
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 테스트와 디버깅은 `implementation-test` 스킬을 참조한다.
 
@@ -2426,6 +2466,7 @@ def handle_result(result: Result) -> str:
 ## 25. 디버깅 기법 [파이썬코딩의기술]
 
 ### 25.1 repr 문자열 활용
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 디버깅을 할 때 `print`를 사용한다면 `repr`을 호출해서 타입이 다른 경우에도 명확히 차이를 볼 수 있게 만들어야 한다.
 
@@ -2467,6 +2508,7 @@ def compute(data):
 ## 26. 독스트링과 문서화
 
 ### 26.1 독스트링 규칙 [파이썬코딩의기술]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 def find_anagrams(word: str) -> list[str]:

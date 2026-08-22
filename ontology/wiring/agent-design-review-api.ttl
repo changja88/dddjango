@@ -1,0 +1,238 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+
+djr:R-2606 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2607 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2608 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2609 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2610 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2611 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py>, <https://numchida.com/ns/djr#c/check-error-centralization.py>, <https://numchida.com/ns/djr#c/check-openapi-error-declaration.py> .
+
+djr:R-2612 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2613 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2614 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2615 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2616 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2617 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2618 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect>, <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2619 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2620 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2621 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2622 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2623 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2624 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2625 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2626 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2627 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2628 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2629 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer>, <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2630 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2631 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-error-centralization.py> .
+
+djr:R-2632 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2633 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2634 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2635 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-db> .
+
+djr:R-2636 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2637 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2638 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2639 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2640 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2641 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2642 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py>, <https://numchida.com/ns/djr#c/check-error-centralization.py>, <https://numchida.com/ns/djr#c/check-openapi-error-declaration.py> .
+
+djr:R-2643 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2644 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2645 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api>, <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2646 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-error-centralization.py> .
+
+djr:R-2647 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2648 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-error-centralization.py> .
+
+djr:R-2649 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2650 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2651 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api>, <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2652 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2653 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2654 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2655 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2656 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-error-centralization.py> .
+
+djr:R-2657 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api>, <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2658 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api>, <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-error-centralization.py> .
+
+djr:R-2659 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-error-centralization.py> .
+
+djr:R-2660 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2661 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2662 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api>, <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2663 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2664 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-error-centralization.py> .
+
+djr:R-2665 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-error-centralization.py> .
+
+djr:R-2666 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-2667 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-error-centralization.py> .
+
+djr:R-2668 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2669 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2670 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-error-centralization.py> .
+
+djr:R-2671 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-error-centralization.py> .
+
+djr:R-2672 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-error-centralization.py> .
+
+djr:R-2673 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-error-centralization.py> .
+
+djr:R-2674 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py> .
+
+djr:R-2675 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py> .
+
+djr:R-2676 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2677 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py>, <https://numchida.com/ns/djr#c/check-synthetic-infra-exc.py> .
+
+djr:R-2678 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py> .
+
+djr:R-2679 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py> .
+
+djr:R-2680 djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py> .
+
+djr:R-2681 djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py> .
+
+djr:R-2682 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py> .
+
+djr:R-2683 djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py> .
+
+djr:R-2684 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py> .
+
+djr:R-2685 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py> .
+
+djr:R-2686 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-openapi-error-declaration.py> .
+
+djr:R-2687 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2688 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2689 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-openapi-error-declaration.py> .
+
+djr:R-2690 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2691 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py>, <https://numchida.com/ns/djr#c/check-business-vocabulary.py>, <https://numchida.com/ns/djr#c/check-openapi-error-declaration.py> .
+
+djr:R-2692 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2693 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2694 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2695 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-ninja-boundary-middleware.py> .
+
+djr:R-2696 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2697 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-response-schema-bypass.py> .
+
+djr:R-2698 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-2699 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2700 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api>, <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2701 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2702 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2703 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-composition-root.py> .
+
+djr:R-2704 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2705 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2706 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> .
+
+djr:R-2707 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-2708 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-db>, <https://numchida.com/ns/djr#a/agent-design-review-ddd> .
+
+djr:R-2709 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .

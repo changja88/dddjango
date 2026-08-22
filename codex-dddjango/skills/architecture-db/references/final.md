@@ -35,6 +35,7 @@
 | 물리적 모델링 | 인덱스, 파티셔닝, 성능 최적화 | 물리 스키마 |
 
 ### 1.2 업무 파악 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - **말을 믿지 말자** — UI를 만들어서 상호 일치된 합의안을 갖자
 - 개념적 데이터 모델링이 가장 중요하다. 이것을 잘 했다면 이후 단계는 자연스럽게 따라온다
@@ -56,6 +57,7 @@ ERD(Entity Relationship Diagram)는 데이터 구조를 시각적으로 표현�
 | 관계 (Relation) | 엔티티 간 연결 | PK, FK |
 
 ### 2.2 ERD 작성 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 1. 연관된 정보를 담고 있는 **덩어리를 찾는다**
 2. 그룹별로 조회가 가능하고 조인에 유리하도록 **적절히 분리**한다
@@ -63,6 +65,7 @@ ERD(Entity Relationship Diagram)는 데이터 구조를 시각적으로 표현�
    - 적절히 분리된 그룹: 그룹별 조회 가능 + 조인 활용
 
 ### 2.3 식별자 (Primary Key)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 키 종류 | 설명 |
 |---------|------|
@@ -131,6 +134,7 @@ DepartmentName은 DepartmentID에 종속, StudentID에 이행 종속
 ```
 
 ### 3.4 정규화 핵심 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 각 정규형은 특정 이상(갱신/삽입/삭제 anomaly)을 순차적으로 제거한다. 과도한 정규화는 JOIN 증가로 읽기 성능 저하, 과소 정규화는 데이터 불일치 유발. **언제 멈출지가 아키텍처 트레이드오프**이지만, 기본 원칙은 **정규화를 먼저 하고, 필요한 경우에만 역정규화**하는 것이다.
 
@@ -149,6 +153,7 @@ DepartmentName은 DepartmentID에 종속, StudentID에 이행 종속
 - 역정규화는 **중복을 허용하여 JOIN을 없애서** 읽기 성능을 올리는 작업이다
 
 ### 4.2 핵심 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 **반드시 정규화를 먼저 하고, 필요한 경우에 역정규화한다. 읽기가 많다고 바로 역정규화하는 것은 잘못된 접근이다.**
 
@@ -167,6 +172,7 @@ DepartmentName은 DepartmentID에 종속, StudentID에 이행 종속
 ---
 
 ## 5. 성능 최적화 순서
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 물리적 데이터 모델링 단계에서 성능이 핵심이다. 다음 순서를 반드시 지킨다:
 
@@ -223,6 +229,7 @@ DepartmentName은 DepartmentID에 종속, StudentID에 이행 종속
 ## 7. 인덱스 설계 베스트 프랙티스
 
 ### 7.1 복합 인덱스 컬럼 순서
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 복합 인덱스는 선언 순서대로 정렬된 B-tree이다.
 
@@ -261,6 +268,7 @@ CREATE UNIQUE INDEX uq_email_active ON users (email) WHERE deleted_at IS NULL;
 작은 인덱스 = 적은 저장소, 빠른 스캔, 저렴한 유지보수.
 
 ### 7.4 인덱스 설계 일반 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 원칙 | 설명 |
 |------|------|
@@ -274,10 +282,12 @@ CREATE UNIQUE INDEX uq_email_active ON users (email) WHERE deleted_at IS NULL;
 ---
 
 ## 8. 제약조건과 중복 방지
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 DB가 강제할 수 있는 불변식은 애플리케이션 validation만으로 남기지 않고 제약조건으로 보호한다. 제약조건은 도메인 규칙, 데이터 정합성, 중복 방지, 동시 요청 방어를 함께 담당한다.
 
 ### 8.1 제약조건 선택 기준
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 제약조건 | 사용 기준 | 주의 |
 |----------|----------|------|
@@ -288,6 +298,7 @@ DB가 강제할 수 있는 불변식은 애플리케이션 validation만으로 �
 | Not Null | 필수 속성 또는 필수 관계 | 기존 데이터 backfill 후 적용 |
 
 ### 8.2 FK 삭제 정책
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 정책 | 적합한 경우 | 위험 |
 |------|------------|------|
@@ -301,6 +312,7 @@ Cascade는 편의 기능이 아니라 소유권 결정이다. 감사, 결제, le
 **BC 경계 FK 금지**: FK는 *같은 바운디드 컨텍스트(앱) 안*에서만 쓴다 — 타 BC 모델을 `ForeignKey`로 참조하면 모듈 간 DB 결합(상류 테이블 형상·삭제정책이 하류로 누수, 마이그레이션이 상류에 묶임)이 생긴다. 타 BC는 ID 값 참조 + 앱 레벨/ACL 무결성으로 한다(`architecture-ddd` §3.3 규칙3 영속성 확장).
 
 ### 8.3 중복 방지와 멱등성 저장소
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 중복 방지는 같은 비즈니스 사건이 두 번 저장되거나 처리되는 것을 막는 설계다.
 
@@ -321,6 +333,7 @@ Idempotency storage는 API 계약과 연결되지만, DB 설계에서는 최소�
 - retention/cleanup: 보관 기간과 cleanup이 unique constraint 의미를 깨지 않는지
 
 ### 8.4 제약조건 rollout 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 기존 데이터가 있는 테이블에 새 제약조건을 추가할 때는 데이터 정리와 rollout 순서를 먼저 설계한다.
 
@@ -361,6 +374,7 @@ Idempotency storage는 API 계약과 연결되지만, DB 설계에서는 최소�
 | Serializable | 불가 | 불가 | 불가 | 불가 |
 
 ### 9.4 실전 선택 가이드
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 격리 수준 | 적합한 경우 | 주의 |
 |-----------|-----------|------|
@@ -371,6 +385,7 @@ Idempotency storage는 API 계약과 연결되지만, DB 설계에서는 최소�
 **핵심**: 격리 수준이 높을수록 안전하지만, 동시성이 낮아지고 직렬화 실패가 발생할 수 있다. 필요 이상으로 높은 격리 수준은 불필요한 성능 저하를 초래한다.
 
 ### 9.5 락과 동시성 제어
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 격리 수준만으로 비즈니스 불변식이 보호되지 않으면 제약조건이나 명시적 락을 함께 설계한다.
 
@@ -391,6 +406,7 @@ Idempotency storage는 API 계약과 연결되지만, DB 설계에서는 최소�
 **낙관적 동시성 메커니즘(판정은 도메인이 소유).** 판정·불변식 소유는 도메인 책임이다 — 비즈니스 판정(예: `stock>=qty`, `balance>=amount`)을 SQL `WHERE`나 ORM 호출로 옮기면 같은 판정의 도메인 메서드가 프로덕션에서 호출되지 않는 죽은 코드가 되어 빈혈이 된다(원칙 `architecture-ddd` §3.2 빈혈 차단). 따라서 동시성 안전이 필요해도 판정을 SQL로 옮기지 않고, **리포지토리·영속화 계층은 도메인 메서드 결과만 저장하고 판정을 재수행하지 않는다**: 인프라엔 경합 가드만 둔다 — 낙관적 `version`/CAS 조건부 원자 UPDATE(`WHERE`엔 `version`만, 비즈니스 판정은 제외). 선언적 불변식 백스톱(`stock>=0` CHECK, 위 엔진 의존성 단락)은 최후 안전망으로 병행하되 이는 *불변식*이지 트랜잭션 입력 *판정*(`stock>=qty`)이 아니다. `QuerySet.update()`가 0행이면(`Model.save()`로 저장하면 이 경합 가드가 사라진다) 경합이므로 응용 서비스가 재조회 후 *도메인 메서드부터* 재실행한다(재시도 상한·격리 수준별 재시도는 §9.6 Isolation/retry, `version` 컬럼 추가는 §11 rollout backfill 안전을 따른다). `version`은 애그리거트 루트가 소유·증가시킨다. 낙관적 전제는 *충돌 희소*이므로, 고경합 핫 로우는 운영 엔진에서 비관적 락도 고려한다(처리량 트레이드오프는 위 락 범위 원칙).
 
 ### 9.6 Risky Write Consistency Block
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 주문, 결제, 재고, 예약, 환불, 권한, ledger처럼 중복이나 race가 치명적인 쓰기에는 다음 항목을 명시한다.
 
@@ -414,6 +430,7 @@ Idempotency storage는 API 계약과 연결되지만, DB 설계에서는 최소�
 > 출처: [PostgreSQL Documentation: Transaction Isolation](https://www.postgresql.org/docs/current/transaction-iso.html)
 
 ### 9.7 Commit 후 메시지 전달과 Outbox
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 DB 상태 변경과 외부 메시지 발행을 함께 해야 할 때, 둘은 서로 다른 시스템이라 원자적으로 묶이지 않는다. "DB 커밋 -> 브로커 발행" 순서는 커밋 후 발행 직전 장애 시 메시지가 유실되고, "브로커 발행 -> DB 커밋" 순서는 롤백 시 존재하지 않는 사실에 대한 메시지가 나간다. 이 **이중 쓰기(dual write)** 문제는 유실이 치명적일 때 Outbox로 해결한다(듣는 쪽이 별도 배포 단위일 때만 — #529 · in-repo 소비자의 유실 불허는 받는 쪽 `cron_job/`→주인 OHS 폴링 #626).
 
@@ -435,6 +452,7 @@ DB 상태 변경과 외부 메시지 발행을 함께 해야 할 때, 둘은 서
 ## 10. 쿼리 최적화
 
 ### 10.1 EXPLAIN ANALYZE 읽기
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```sql
 EXPLAIN ANALYZE SELECT * FROM users WHERE email = 'test@example.com';
@@ -493,6 +511,7 @@ SELECT * FROM books WHERE author_id IN (1, 2, 3, ...);
 ```
 
 ### 10.5 쿼리 최적화 일반 원칙
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 원칙 | 설명 |
 |------|------|
@@ -506,10 +525,12 @@ SELECT * FROM books WHERE author_id IN (1, 2, 3, ...);
 ---
 
 ## 11. 운영 rollout, backfill, migration safety
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Architecture-db는 migration file 구현법이 아니라 운영 중 데이터 구조를 바꾸는 안전한 순서와 DB 위험을 결정한다. Django `RunPython`, `apps.get_model()`, `sqlmigrate`, migration class 작성은 `implementation-django`로 넘긴다.
 
 ### 11.1 Expand / Backfill / Contract
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 운영 DB 변경은 기존 코드와 새 코드가 동시에 동작하는 시간을 고려한다.
 
@@ -522,6 +543,7 @@ Architecture-db는 migration file 구현법이 아니라 운영 중 데이터 �
 컬럼 rename이나 type 변경처럼 기존 코드와 충돌하기 쉬운 변경은 한 번에 바꾸지 않고 add/copy/switch/drop으로 쪼갠다.
 
 ### 11.2 Backfill 위험
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 대형 backfill은 데이터 정합성 문제뿐 아니라 운영 부하를 만든다.
 
@@ -532,6 +554,7 @@ Architecture-db는 migration file 구현법이 아니라 운영 중 데이터 �
 - 부분 완료 상태에서 rollback할지 forward-fix할지 미리 정한다.
 
 ### 11.3 Index와 constraint lock risk
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Index와 constraint 추가는 DB 종류와 옵션에 따라 쓰기를 막거나 지연시킬 수 있다.
 
@@ -544,6 +567,7 @@ Index와 constraint 추가는 DB 종류와 옵션에 따라 쓰기를 막거나 
 | FK 추가 | orphan row 때문에 실패, 쓰기 비용 증가 | orphan cleanup과 cascade/delete 정책 결정 |
 
 ### 11.4 실패 대응
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 운영 변경 계획은 rollback만 적지 말고 forward-fix도 함께 검토한다.
 
@@ -556,6 +580,7 @@ Index와 constraint 추가는 DB 종류와 옵션에 따라 쓰기를 막거나 
 | 성능 저하 | index 제거/재작성, batch 중단, query fallback |
 
 ### 11.5 Rollout 산출물
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 DB architecture 답변에서 운영 변경을 다루면 다음을 남긴다.
 
@@ -628,6 +653,7 @@ SELECT ancestor_id FROM node_closure WHERE descendant_id = 'C' AND depth > 0;
 ```
 
 ### 12.4 선택 가이드
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 상황 | 권장 패턴 |
 |------|----------|
@@ -692,6 +718,7 @@ CREATE TABLE trucks (
 ```
 
 ### 13.4 다형적 연관 (Polymorphic Associations)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 하나의 자식 엔티티가 여러 부모 타입과 관계를 맺는 패턴.
 
@@ -707,6 +734,7 @@ CREATE TABLE comments (
 **한계**: DB 레벨에서 FK 제약을 강제할 수 없다. 참조 무결성은 애플리케이션 레벨에서 보장해야 한다.
 
 ### 13.5 선택 가이드
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 상황 | 권장 패턴 |
 |------|----------|

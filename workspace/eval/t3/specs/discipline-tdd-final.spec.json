@@ -1,0 +1,2998 @@
+{
+  "schema": "migrate-spec/1",
+  "doc_key": "discipline-tdd-final",
+  "path": "dddjango/skills/discipline-tdd/references/final.md",
+  "restates_paths": {
+    "discipline-tdd-final": "dddjango/skills/discipline-tdd/references/final.md"
+  },
+  "sections": [
+    {
+      "section_key": "s001",
+      "line_start": 1,
+      "line_end": 7,
+      "blocks": [
+        {
+          "lines": [
+            2,
+            7
+          ],
+          "kind": "norm",
+          "restates": [
+            "discipline-tdd-final/s025-5.5/b17"
+          ],
+          "note": "둘째 문장(«reuse·reject에서는 새 test artifact를 만들지 않는다»)은 §5.5 b17의 축자 사본 — Work 미승격, restates로만 연결",
+          "norms": [
+            {
+              "label": "문서 전역 — 테스트 작성·Red는 §5.5 add/update 결정을 전제",
+              "class": "Override",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s006-2.1",
+      "line_start": 29,
+      "line_end": 44,
+      "blocks": [
+        {
+          "lines": [
+            30,
+            36
+          ],
+          "kind": "code",
+          "norms": [
+            {
+              "label": "Red — add/update 승인 테스트의 실패 확인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "Green — 통과를 위한 최소 코드 작성",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "Refactor — 중복 제거와 코드 정리",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            37,
+            38
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            39,
+            39
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "상세 1단계 — 승인된 테스트 작성",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "오퍼레이션의 코드 표현 형태 선행 구상",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            40,
+            40
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "상세 2단계 — 실행 가능하게 만들기",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "명백한 깔끔한 해법의 즉시 입력",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "수 분 소요 예상 시 적어 두고 초록 막대로 복귀",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            41,
+            42
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "상세 3단계 — 올바르게 만들기",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "중복 제거 후 초록 막대 복귀",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            43,
+            44
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "작동하는 것 우선 — 분할 정복",
+              "class": "Override",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s012-3.4",
+      "line_start": 202,
+      "line_end": 214,
+      "blocks": [
+        {
+          "lines": [
+            203,
+            204
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            205,
+            205
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            206,
+            206
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            207,
+            207
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            208,
+            208
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            209,
+            210
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            211,
+            212
+          ],
+          "kind": "norm",
+          "restates": [
+            "discipline-tdd-final/s036-7.6/b1"
+          ],
+          "note": "강등 선언은 §7.6에 없는 고유 Override라 Work 유지 · 두 규칙 문면(고전 학파 기본·Mock 격리 한정)은 §7.6 b1과 겹쳐 restates 병기",
+          "norms": [
+            {
+              "label": "상황별 선택표의 배경 지식 강등 — 저장소 기본은 고전 학파·Mock은 외부 의존성 격리 한정",
+              "class": "Override",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            213,
+            214
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s015-4.2",
+      "line_start": 240,
+      "line_end": 252,
+      "blocks": [
+        {
+          "lines": [
+            241,
+            243
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "회귀 방지는 전 테스트의 설계 원칙",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "테스트 설계 시점의 회귀 방지력 고려",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            244,
+            245
+          ],
+          "kind": "norm",
+          "restates": [
+            "discipline-tdd-final/s025-5.5/b12",
+            "discipline-tdd-final/s025-5.5/b2"
+          ],
+          "note": "부분 재진술 2건 — ⑴ 첫 문장(«장애 보고 시 §5.5 candidate로 두고 승인 계약·독자 production failure·기존 권위 coverage를 확인한다»)은 b2(398행) 심사 행 확정 의무의 3열(protected contract/evidence·unique production failure·existing authoritative coverage)을 한 문장으로 압축한 재서술이라 b2 병기(s069-17.4/b1 Admission 행과 동형 압축). 다만 «장애 보고»라는 트리거와 절차 배치는 §5.5에 없어 Work는 유지. ⑵ 둘째 문장 앞절(«같은 failure면 reuse»)은 b12 reuse 정의의 재서술이라 미승격이고, 뒷절의 회귀 테스트 형태 의무(«그 장애로 실패하고 통과하면 수정됐다고 볼 수 있는»)는 §5.5(b10 add는 형태 기준 무언급)에 없어 Work 승격",
+          "norms": [
+            {
+              "label": "장애 보고 시 §5.5 candidate 선행 — 계약·독자 failure·기존 coverage 확인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "회귀 테스트 형태 — 보고된 장애로 실패하고 수정 시 통과",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            246,
+            252
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s018-4.5",
+      "line_start": 294,
+      "line_end": 344,
+      "blocks": [
+        {
+          "lines": [
+            295,
+            296
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            297,
+            297
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            298,
+            298
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            299,
+            299
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            300,
+            301
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            302,
+            303
+          ],
+          "kind": "norm",
+          "restates": [
+            "discipline-tdd-final/s036-7.6/b1"
+          ],
+          "note": "첫 문장(«출력>상태>통신 순으로 선호하라»)은 소유를 선언한 §7.6 b1의 사본 — Work 미승격",
+          "norms": [
+            {
+              "label": "비즈니스 로직의 순수 함수 추출로 출력 기반 테스트 극대화",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            304,
+            344
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s021-5.1",
+      "line_start": 357,
+      "line_end": 375,
+      "blocks": [
+        {
+          "lines": [
+            358,
+            360
+          ],
+          "kind": "norm",
+          "restates": [
+            "discipline-tdd-final/s025-5.5/b2"
+          ],
+          "note": "셋째 문장(«각 후보는 §5.5 통과 add·update일 때만 Red»)은 §5.5 b2 심사 의무의 재진술 — Work 미승격",
+          "norms": [
+            {
+              "label": "착수 전 테스트 후보 목록 작성",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "후보 목록은 탐색 메모 — test artifact 작성 의무 아님",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "테스트 코드의 대상 코드 직전 작성 권고",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            361,
+            362
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "후보 목록은 행위·정책 경계를 드러내는 검토 목록",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "사용자 제시 경계 예시 하나가 후보 범위를 닫지 않음",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "결과가 바뀌는 경계와 가장 가까운 바깥 값·보완 상태 병기",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            363,
+            364
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "결합 정책의 축별 허용·거부 사례 분리",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "한 축의 거부 사례가 다른 축의 거부 사례를 대신하지 않음",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "포함형 유효 기간의 마지막 유효일·다음 날 양쪽 후보 등재",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            365,
+            375
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s022-5.2",
+      "line_start": 376,
+      "line_end": 379,
+      "blocks": [
+        {
+          "lines": [
+            377,
+            379
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "다음 테스트 선택 기준 — 새 지식·구현 확신",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "아는 것에서 모르는 것으로 진행",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s023-5.3",
+      "line_start": 380,
+      "line_end": 389,
+      "blocks": [
+        {
+          "lines": [
+            381,
+            383
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "시작 테스트 — 아무 일도 하지 않는 경우 우선",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "가르침이 있으면서 빠르게 구현 가능한 테스트 선택",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            384,
+            389
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s024-5.4",
+      "line_start": 390,
+      "line_end": 393,
+      "blocks": [
+        {
+          "lines": [
+            391,
+            393
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "테스트를 통한 설명 요청과 설명",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s025-5.5",
+      "line_start": 394,
+      "line_end": 464,
+      "blocks": [
+        {
+          "lines": [
+            395,
+            397
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "영구 테스트의 오라클은 현재 승인된 요구·설계·지원 계약",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "현재 구현·기존 테스트는 조사 증거에 불과",
+              "class": "Override",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "계약 위반 구현 앞에서 테스트 삭제·약화 금지 — 구현 수정",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            398,
+            399
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "영구 test artifact 변경 전 최소 심사 행 확정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "후보 목록·피라미드·coverage·과거 버그·상위 실패는 심사 우회 근거 아님",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            400,
+            400
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            401,
+            402
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            403,
+            403
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "protected contract/evidence 열 기재",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            404,
+            404
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "unique production failure 열 기재",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            405,
+            405
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "existing authoritative coverage 열 기재",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            406,
+            407
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "owner/path 열 기재",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            408,
+            409
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "decision의 일곱 값 완결",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            410,
+            410
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "decision `add` — 독자 production failure 보호 신규 영구 테스트",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            411,
+            411
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "decision `update` — 승인된 계약 변경에 맞춘 기존 테스트 갱신",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            412,
+            412
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "decision `reuse` — 기존 권위 테스트 중복 시 신규 테스트 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "boundary가 달라도 조건 성립 시 reuse 판정",
+              "class": "Override",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            413,
+            413
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "decision `retain` — 기존 테스트의 현행 보호 의미 유지",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            414,
+            414
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "decision `remove` — 명시적 계약 종료 근거 하의 지정 assertion·test만 제거",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            415,
+            415
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "decision `reject` — 비자격 후보의 영구 테스트 승격 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            416,
+            417
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "decision `pending` — 근거·계약·중복 불명확 시 사용자·설계 결정 요청",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            418,
+            419
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "pending의 G1/G1′ 승인·Phase 2 완료 차단",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "①문면이 G1/G1′ 승인·Phase 2 완료(«Coordinator 게이트 명칭» 명시)를 지목 — §16 표 command+agents(절차 층)→command-dddjango(기본값 이탈·문면 근거)"
+            },
+            {
+              "label": "reuse·reject의 test artifact write 0",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "retain 재조직은 새 case·assertion·Red 없이 동일 계약·failure 보호",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "재조직이 없으면 기존 artifact 무수정",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "remove는 명세 침묵·구현 불일치만으로 선택 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            420,
+            421
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "영구 테스트 보호 대상 목록(자격 화이트리스트)",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            422,
+            422
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            423,
+            423
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            424,
+            424
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            425,
+            425
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            426,
+            426
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            427,
+            428
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            429,
+            430
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "영구 테스트 비자격 항목 목록(블랙리스트)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            431,
+            431
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            432,
+            432
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            433,
+            433
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            434,
+            434
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            435,
+            435
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            436,
+            436
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            437,
+            437
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            438,
+            439
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            440,
+            441
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "meta/introspection 형식만을 이유로 한 일괄 금지 배제",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "공개 Python 계약의 근거 택일 입장(승인 근거 또는 deployed consumer evidence)",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "두 근거의 충돌·불명확 시에만 pending",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "내부 Schema·helper 직접 호출 introspection의 공개 wire 대체 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            442,
+            443
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "중복 판정 3요소 비교 — boundary 차이만으로 add 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "타 boundary 동일 failure·독자 mechanism 부재 시 reuse",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "상위 테스트 버그 발견만을 이유로 한 unit test 자동 복제 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "층이 달라도 failure mechanism이 독립일 때만 각각 add",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "테스트 분리는 가독성 recipe — 새 case 입장 근거 아님",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            444,
+            445
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "이번 실행 Red 전용 비계의 첫 Green 직후 제거",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "정상 import·행동 assertion만 존치·기존 비계 임의 삭제 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            446,
+            447
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "현재 계약의 범위 — 구 API·저장 데이터·발행 이벤트·보안/규제 의무 포함",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "과거 버그 출신이라도 현행 계약을 검증하면 유효 회귀 테스트",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "유지 근거가 과거 구현·종료 계약·버그 번호뿐이면 history-only",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            448,
+            449
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "새 명세의 침묵은 종료 승인 아님",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "의무 종료의 설계 명시·호환성 근거 요건",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "충돌·불명확 시 pending 설계 반송 — 삭제·약화·구현 완료 차단",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "T4 동상(pending 설계 반송=절차 게이트) + 테스트 삭제·약화 차단의 규율 심사는 본 문서군 기본값 agent-discipline-reviewer 병기"
+            }
+          ]
+        },
+        {
+          "lines": [
+            450,
+            451
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "조정 대상은 변경 계약·코드 경로를 직접 검증하는 관련 테스트 한정",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            452,
+            452
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "조정 ⑴ 기대 동일 시 유지",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            453,
+            453
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "조정 ⑵ 승인된 입력·결과 변경 시 assertion 갱신·올바른 Red 확인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            454,
+            454
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "조정 ⑶ 현행·종료 assertion 혼재 시 분리 또는 부분 갱신",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "파일 전체 삭제 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            455,
+            455
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "조정 ⑷ 전 기대 명시 종료 시 테스트 삭제",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "부재가 계약이 아니면 관성적 404·필드 부재 테스트 대체 생성 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            456,
+            456
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "조정 ⑸ 구현만 계약과 다르면 테스트 유지·구현 수정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            457,
+            458
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "조정 ⑹ suite 전체 실패 사실만으로 대상 확대 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            459,
+            460
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "migration 전용 테스트 신규 생성·확장 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "기존 migration 테스트의 유지·제자리 갱신·종료 시 삭제",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "새 migration 시나리오 필요 부분은 테스트 발명 없이 검증 공백 보고",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "기술적 식별 예시의 `implementation-test` §1.4 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면이 `implementation-test`를 명시 위임처로 지목 — §16 표 implementation-*→agent-discipline-reviewer(동일 기본값·이탈 아님)·②지목 검사기 0"
+            }
+          ]
+        },
+        {
+          "lines": [
+            461,
+            462
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "현행 model·ORM·service·API·DB constraint 검증 DB-backed 테스트 허용",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "현재 model 테스트의 migration 검증 대체 주장 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            463,
+            464
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s027-6.1",
+      "line_start": 467,
+      "line_end": 489,
+      "blocks": [
+        {
+          "lines": [
+            468,
+            470
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "승인된 실패 테스트 후 첫 구현은 상수 반환",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "상수의 변수 수식 치환",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            471,
+            484
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            485,
+            486
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            487,
+            487
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            488,
+            489
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s028-6.2",
+      "line_start": 490,
+      "line_end": 505,
+      "blocks": [
+        {
+          "lines": [
+            491,
+            493
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "예가 둘 이상일 때에만 추상화",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            494,
+            503
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            504,
+            505
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "추상화 방향이 불확실할 때의 삼각측량 사용 권고",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s029-6.3",
+      "line_start": 506,
+      "line_end": 511,
+      "blocks": [
+        {
+          "lines": [
+            507,
+            509
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "단순 연산의 즉시 구현",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "구현 확신이 있을 때 명백한 구현 채택 권고",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            510,
+            511
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s031-7.1",
+      "line_start": 514,
+      "line_end": 538,
+      "blocks": [
+        {
+          "lines": [
+            515,
+            517
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "테스트의 상호 독립·실행 순서 독립",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "독립성 달성 전략은 공유 상태 제거",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            518,
+            519
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "pytest fixture로 테스트별 독립 상태 생성",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            520,
+            538
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s032-7.2",
+      "line_start": 539,
+      "line_end": 560,
+      "blocks": [
+        {
+          "lines": [
+            540,
+            542
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "테스트 최종 코드 구조는 AAA 패턴",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "사고는 Assert First·최종 코드는 위에서 아래 순서로 정리",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            543,
+            544
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Assert First 사고법 — 단언 역추적으로 필요한 설정 도출",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            545,
+            560
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s033-7.3",
+      "line_start": 561,
+      "line_end": 566,
+      "blocks": [
+        {
+          "lines": [
+            562,
+            563
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "읽기 쉽고 따라가기 좋은 테스트 데이터 사용",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            564,
+            564
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "데이터 간 차이에는 의미 부여",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            565,
+            566
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "동일 상수의 다의 사용 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s034-7.4",
+      "line_start": 567,
+      "line_end": 578,
+      "blocks": [
+        {
+          "lines": [
+            568,
+            570
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "기대값·실제값의 관계 드러내기",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            571,
+            578
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s035-7.5",
+      "line_start": 579,
+      "line_end": 598,
+      "blocks": [
+        {
+          "lines": [
+            580,
+            584
+          ],
+          "kind": "code",
+          "norms": [
+            {
+              "label": "테스트 명명 패턴 [단위]_[상태/조건]_[기대 행위] 준수",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            585,
+            598
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s036-7.6",
+      "line_start": 599,
+      "line_end": 602,
+      "blocks": [
+        {
+          "lines": [
+            600,
+            602
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "검증 방식 우선순위 — 출력 기반 > 상태 기반 > 통신 기반",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "Mock은 외부 의존성 격리 한정·핵심 로직은 실제 객체 출력/상태 검증",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "Mock 우선순위표·구체 사용법의 `implementation-test` §7 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면이 `implementation-test`를 명시 위임처로 지목 — §16 표 implementation-*→agent-discipline-reviewer(동일 기본값·이탈 아님)·②지목 검사기 0"
+            },
+            {
+              "label": "Mock 경계의 도구는 pytest-mock `mocker` 픽스처 — 고전 학파 기본 불변",
+              "class": "Override",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s037-7.7",
+      "line_start": 603,
+      "line_end": 609,
+      "blocks": [
+        {
+          "lines": [
+            604,
+            605
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            606,
+            607
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "팀 프로그래밍 — 테스트 성공 상태로 종료",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            608,
+            609
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s038-8",
+      "line_start": 610,
+      "line_end": 615,
+      "blocks": [
+        {
+          "lines": [
+            611,
+            613
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "테스트 더블 분류·Python 구현의 `implementation-test` 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면이 `implementation-test`를 명시 위임처로 지목 — §16 표 implementation-*→agent-discipline-reviewer(동일 기본값·이탈 아님)·②지목 검사기 0"
+            }
+          ]
+        },
+        {
+          "lines": [
+            614,
+            615
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s040-9.1",
+      "line_start": 618,
+      "line_end": 670,
+      "blocks": [
+        {
+          "lines": [
+            619,
+            621
+          ],
+          "kind": "norm",
+          "restates": [
+            "discipline-tdd-final/s025-5.5/b2"
+          ],
+          "note": "말미 문장(«각 영구 테스트 후보는 §5.5를 통과해야 한다»)은 §5.5 b2 심사 의무의 재진술 — Work 미승격",
+          "norms": [
+            {
+              "label": "이중 루프라는 이유만으로 양쪽 테스트가 자동 의무가 되지 않음",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            622,
+            636
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            637,
+            670
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s041-9.2",
+      "line_start": 671,
+      "line_end": 694,
+      "blocks": [
+        {
+          "lines": [
+            672,
+            674
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Walking Skeleton — 가장 얇은 실제 기능으로 빌드·배포·테스트 end-to-end 확인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            675,
+            676
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Walking Skeleton의 availability test 대체 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "관찰 가능한 얇은 end-to-end 행동이 있을 때만 영구 테스트 후보",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            677,
+            694
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s042-9.3",
+      "line_start": 695,
+      "line_end": 698,
+      "blocks": [
+        {
+          "lines": [
+            696,
+            698
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Mock의 대상은 객체가 아니라 역할",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "프로덕션 코드의 역할(인터페이스) 의존·테스트의 역할 Mock",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "Protocol 정의·`mocker.Mock(spec=)` 구체 구현의 `implementation-test` §7 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면이 `implementation-test`를 명시 위임처로 지목 — §16 표 implementation-*→agent-discipline-reviewer(동일 기본값·이탈 아님)·②지목 검사기 0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s043-9.4",
+      "line_start": 699,
+      "line_end": 728,
+      "blocks": [
+        {
+          "lines": [
+            700,
+            702
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Tell, Don't Ask — 정보를 받아 계산하지 말고 객체에 지시",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            703,
+            726
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            727,
+            728
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s045-10.1",
+      "line_start": 746,
+      "line_end": 770,
+      "blocks": [
+        {
+          "lines": [
+            747,
+            749
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "값 객체의 생성 후 불변 유지(별칭 문제 차단)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            750,
+            770
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s046-10.2",
+      "line_start": 771,
+      "line_end": 793,
+      "blocks": [
+        {
+          "lines": [
+            772,
+            774
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "널 객체의 정상 객체 동일 프로토콜 제공",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            775,
+            793
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s047-10.3",
+      "line_start": 794,
+      "line_end": 815,
+      "blocks": [
+        {
+          "lines": [
+            795,
+            797
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "팩토리 메서드로 생성 유연성 확보",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            798,
+            813
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            814,
+            815
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s049-11.1",
+      "line_start": 818,
+      "line_end": 821,
+      "blocks": [
+        {
+          "lines": [
+            819,
+            821
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "합칠 두 코드를 단계적으로 닮아가게 수정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "완전히 동일해지면 둘을 합치기",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s050-11.2",
+      "line_start": 822,
+      "line_end": 825,
+      "blocks": [
+        {
+          "lines": [
+            823,
+            825
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "변경 대상 부분의 선행 격리",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s051-11.3",
+      "line_start": 826,
+      "line_end": 855,
+      "blocks": [
+        {
+          "lines": [
+            827,
+            829
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "표현 양식 변경 시 데이터 일시 중복",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            830,
+            831
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            832,
+            832
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "이주 1단계 — 새 포맷 인스턴스 변수 추가",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            833,
+            833
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "이주 2단계 — 기존 세팅 지점에서 새 변수 동시 세팅",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            834,
+            834
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "이주 3단계 — 기존 변수 사용처의 새 변수 전환",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            835,
+            835
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "이주 4단계 — 기존 포맷 제거",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            836,
+            837
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "이주 5단계 — 새 포맷에 맞춘 외부 인터페이스 변경",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            838,
+            855
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s052-11.4",
+      "line_start": 856,
+      "line_end": 876,
+      "blocks": [
+        {
+          "lines": [
+            857,
+            859
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "길고 복잡한 메서드 일부의 별도 메서드 분리·호출",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            860,
+            876
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s053-11.5",
+      "line_start": 877,
+      "line_end": 880,
+      "blocks": [
+        {
+          "lines": [
+            878,
+            880
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "꼬이거나 산재한 제어 흐름의 메서드 인라인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s054-11.6",
+      "line_start": 881,
+      "line_end": 910,
+      "blocks": [
+        {
+          "lines": [
+            882,
+            884
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "두 번째 구현 추가 시 Protocol 인터페이스 추출",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            885,
+            910
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s055-11.7",
+      "line_start": 911,
+      "line_end": 914,
+      "blocks": [
+        {
+          "lines": [
+            912,
+            914
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "메서드를 어울리는 클래스로 이동하고 호출로 대체",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s056-11.8",
+      "line_start": 915,
+      "line_end": 920,
+      "blocks": [
+        {
+          "lines": [
+            916,
+            918
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "복잡한 메서드의 메서드 객체화",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            919,
+            920
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s058-12.1",
+      "line_start": 923,
+      "line_end": 958,
+      "blocks": [
+        {
+          "lines": [
+            924,
+            926
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            927,
+            927
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            928,
+            928
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            929,
+            929
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            930,
+            930
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            931,
+            931
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            932,
+            932
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            933,
+            933
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            934,
+            935
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            936,
+            956
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            957,
+            958
+          ],
+          "kind": "norm",
+          "restates": [
+            "discipline-tdd-final/s025-5.5/b35"
+          ],
+          "note": "두 문장 전량이 §5.5 b35 말미(442행 «테스트를 나누는 행위는 가독성 recipe일 뿐 새 case의 입장 근거가 아니다»)와 중복 판정의 준축자 사본 — «냄새 해결책»은 적용 문맥 부가일 뿐 별개 실행위가 없어 §15 «정본 1곳만 Work 승격»대로 2문장 강등"
+        }
+      ]
+    },
+    {
+      "section_key": "s060-13",
+      "line_start": 993,
+      "line_end": 998,
+      "blocks": [
+        {
+          "lines": [
+            994,
+            996
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "레거시 코드 다루기의 `discipline-cleancode` 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면이 `discipline-cleancode` 스킬을 명시 위임처로 지목 — §16 표 discipline-cleancode→agent-discipline-reviewer(동일 기본값)·②지목 검사기 0"
+            }
+          ]
+        },
+        {
+          "lines": [
+            997,
+            998
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s061-14",
+      "line_start": 999,
+      "line_end": 1004,
+      "blocks": [
+        {
+          "lines": [
+            1000,
+            1002
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Property-Based Testing의 `implementation-test` 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면이 `implementation-test`를 명시 위임처로 지목 — §16 표 implementation-*→agent-discipline-reviewer(동일 기본값·이탈 아님)·②지목 검사기 0"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1003,
+            1004
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s062-15",
+      "line_start": 1005,
+      "line_end": 1010,
+      "blocks": [
+        {
+          "lines": [
+            1006,
+            1008
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Mutation Testing의 `implementation-test` 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면이 `implementation-test`를 명시 위임처로 지목 — §16 표 implementation-*→agent-discipline-reviewer(동일 기본값·이탈 아님)·②지목 검사기 0"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1009,
+            1010
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s064-16.1",
+      "line_start": 1013,
+      "line_end": 1033,
+      "blocks": [
+        {
+          "lines": [
+            1014,
+            1016
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            1017,
+            1021
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            1022,
+            1022
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            1023,
+            1023
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            1024,
+            1024
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            1025,
+            1025
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            1026,
+            1026
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            1027,
+            1027
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            1028,
+            1029
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            1030,
+            1031
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "pytest-bdd 구현 상세의 `implementation-test` 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면이 `implementation-test`를 명시 위임처로 지목 — §16 표 implementation-*→agent-discipline-reviewer(동일 기본값·이탈 아님)·②지목 검사기 0"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1032,
+            1033
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s066-17.1",
+      "line_start": 1036,
+      "line_end": 1047,
+      "blocks": [
+        {
+          "lines": [
+            1037,
+            1039
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            1040,
+            1041
+          ],
+          "kind": "norm",
+          "restates": [
+            "discipline-tdd-final/s025-5.5/b2"
+          ],
+          "note": "첫 문장의 조건절이 §5.5 b2 심사 전제를 되풀이 — 주절(AI 결합 허용)이 §5.5에 없어 Work 유지, 겹침은 restates로 표시",
+          "norms": [
+            {
+              "label": "§5.5 입장 테스트에 한한 AI 코딩 도구 결합 허용",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "기능 요구·AI 위험은 새 영구 테스트의 자동 승인 근거 아님",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1042,
+            1047
+          ],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s069-17.4",
+      "line_start": 1085,
+      "line_end": 1097,
+      "blocks": [
+        {
+          "lines": [
+            1086,
+            1095
+          ],
+          "kind": "code",
+          "restates": [
+            "discipline-tdd-final/s025-5.5/b2"
+          ],
+          "note": "Admission 행은 §5.5 심사의 압축 사본이나 «6단계 중 2단계»라는 절차 배치 의무는 §5.5에 없어 Work 유지 — 겹침은 restates로 표시",
+          "norms": [
+            {
+              "label": "TDAID 1단계 Plan — 요구사항에서 테스트 candidate 도출",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "TDAID 2단계 Admission — 계약·독자 failure·기존 coverage로 decision 확정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "TDAID 3단계 Red — add/update 승인 실패 테스트 작성",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "TDAID 4단계 Green — 테스트를 통과하는 구현(AI 보조)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "TDAID 5단계 Refactor — 코드 품질 개선(AI+개발자)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            },
+            {
+              "label": "TDAID 6단계 Validate — AI 생성 코드의 정확성·보안·성능 최종 검증",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 역할명 0·②check-*.py 27종 docstring 선두 전수 실독 결과 § 인용 0·③P0 커버 0 — ④registry Agent 등재 + §16 위임 기본값 표(discipline-tdd→agent-discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1096,
+            1097
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s070-18",
+      "line_start": 1098,
+      "line_end": 1103,
+      "blocks": [
+        {
+          "lines": [
+            1099,
+            1101
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Python 테스트 도구 생태계의 `implementation-test` 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면이 `implementation-test`를 명시 위임처로 지목 — §16 표 implementation-*→agent-discipline-reviewer(동일 기본값·이탈 아님)·②지목 검사기 0"
+            }
+          ]
+        },
+        {
+          "lines": [
+            1102,
+            1103
+          ],
+          "kind": "prose"
+        }
+      ]
+    }
+  ]
+}

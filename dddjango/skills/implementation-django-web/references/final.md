@@ -1,4 +1,5 @@
 # Django Web 구현 가이드
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 
 > Django template, TemplateView/Generic CBV, web form, static asset, HTMX fragment, CSRF-aware AJAX, render acceptance check를 위한 전용 source reference다.
@@ -18,6 +19,7 @@
 ---
 
 ## 1. 책임 범위와 handoff
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 `implementation-django-web`은 서버 렌더링 웹 화면 구현을 담당한다. 포함 범위는 TemplateView, Generic CBV/FBV 선택, templates, base template, includes/components, static files, CSS/JS, web forms, HTMX fragment, AJAX/HTMX CSRF, view auth/permission, render acceptance checks다.
 
@@ -35,6 +37,7 @@
 웹 view와 template은 domain behavior를 소유하지 않는다. view는 request handling, auth/permission, form/context orchestration, service/usecase 호출, response rendering을 조합한다. template은 presentation과 presentation-related branching만 담당한다. **[DDP] [dddjango-django]**
 
 ## 2. TemplateView, Generic CBV, FBV 선택
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 TemplateView는 읽기 전용 페이지에서 context 준비가 주요 작업일 때 적합하다. ListView, DetailView, CreateView, UpdateView, FormView 같은 Generic CBV는 일반 CRUD나 form flow의 보일러플레이트를 줄일 때 사용한다. 복잡한 custom flow는 FBV가 더 명시적이면 FBV를 선택한다. **[DDoc] [TSD] [dddjango-django]**
 
@@ -97,6 +100,7 @@ def article_create(request):
 ```
 
 ## 3. Context 준비와 표시 값
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Template에 raw domain object를 그대로 넘겨 template이 fallback, 권한, query shape, domain rule을 결정하게 만들지 않는다. view, context builder, selector, view-model helper에서 화면 언어에 맞는 이름과 표시 값을 준비한다.
 
@@ -109,6 +113,7 @@ Template에 raw domain object를 그대로 넘겨 template이 fallback, 권한, 
 - template variable 이름은 화면 언어와 맞춘다. 내부 모델 필드 이름을 그대로 노출할 필요는 없다.
 
 ## 4. Templates, base template, includes/components
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Template은 presentation과 presentation-related branching을 맡는다. 가격 계산, 상태 전이, permission policy, 복잡한 data selection, hidden database work는 template에 두지 않는다. **[DDP] [DCS]**
 
@@ -148,6 +153,7 @@ Template style 기준:
 ```
 
 ## 5. Static files, CSS, JavaScript
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Static asset은 프로젝트의 기존 pipeline을 따른다. app-specific asset은 프로젝트가 `app/static/app_name/...` 구조를 쓰는 경우 앱 가까이에 둔다. shared design-system 또는 global asset은 기존 shared static 위치를 따른다. **[DDoc] [dddjango-django]**
 
@@ -161,6 +167,7 @@ Static asset은 프로젝트의 기존 pipeline을 따른다. app-specific asset
 - deployment asset resolution을 바꾸거나 manifest/static hashing과 관련된 변경이면 `collectstatic` 실행 또는 미실행 사유를 보고한다.
 
 ## 6. Web forms와 POST flow
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Form은 input shape, presentation error, user-facing validation message를 담당한다. durable domain invariant는 model/service/DB boundary에서도 보장되어야 한다. **[DDoc] [TSD] [dddjango-django]**
 
@@ -205,6 +212,7 @@ class ArticleForm(forms.ModelForm):
 ```
 
 ## 7. HTMX fragment와 AJAX
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 HTMX view는 web adapter다. 서버의 domain behavior는 model/service/usecase boundary에 두고, view는 request method, auth, permission, form/context orchestration, fragment 또는 redirect response를 조합한다. **[HTMX] [DDoc]**
 
@@ -236,6 +244,7 @@ def toggle_like(request, pk):
 ```
 
 ## 8. CSRF, XSS, security setting
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 `CsrfViewMiddleware`는 좁고 문서화된 예외가 없으면 유지한다. POST form에는 `{% csrf_token %}`을 사용한다. State-changing AJAX/HTMX 요청은 프로젝트의 header 또는 form pattern으로 CSRF token을 보낸다. `@csrf_exempt`는 대체 보호가 명확한 작은 경계에서만 사용한다. **[DDoc] [OWASP]**
 
@@ -249,6 +258,7 @@ def toggle_like(request, pk):
 - raw SQL이 web context 준비에 필요하면 user input을 SQL string에 보간하지 말고 parameterized query를 사용한다. QuerySet/Manager는 `implementation-django`, DB 성능 설계는 `architecture-db`로 넘긴다.
 
 ## 9. View auth와 permission
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Protected page는 render 전에 view-level auth와 permission을 확인한다. Template은 prepared context에 따라 버튼이나 링크를 숨길 수 있지만 authorization decision을 소유하지 않는다. **[DDoc] [dddjango-django]**
 
@@ -260,6 +270,7 @@ Protected page는 render 전에 view-level auth와 permission을 확인한다. T
 - unauthorized, forbidden, redirect behavior는 프로젝트 표준과 테스트 기대에 맞춘다.
 
 ## 10. Render acceptance checks
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Web 구현을 마칠 때는 실행한 검증만 보고한다. render/browser/collectstatic/security check를 실행하지 않았다면 미실행으로 명시한다. 아래 test-shaped 증거는 자동 의무가 아니라 중앙 입장 심사의 candidate 또는 `add/update` 뒤 mechanics recipe다. 승인된 render·wire·security 계약과 독자 failure를 보호하는 테스트는 허용하되 `reuse/reject`에서는 새 test artifact를 만들지 않는다.
 
@@ -279,6 +290,7 @@ Web 구현을 마칠 때는 실행한 검증만 보고한다. render/browser/col
 완료 보고에는 실제 실행한 명령, 테스트 대상, 실패/미실행 항목을 분리해 적는다. Validator나 test가 해당 requirement를 직접 덮는지 확인하지 않고 넓은 완료를 주장하지 않는다.
 
 ## 11. 서버렌더 에러 처리
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Service/usecase가 던진 예외는 **출처로 분류**해 처리 자리를 가른다 — service가 raise한 도메인/애플리케이션 예외는 view가 잡아 사용자 언어로 변환하고(view-local), 인프라·프레임워크·미식별 예외(`OperationalError`·`IntegrityError`·미식별 `Exception`)는 view가 잡지 않고 전파해 중앙이 처리한다. "사용자가 행동을 바꿔 풀 수 있나"는 1차 분류 기준이 아니라(결제 거절·권한·동시성 충돌에서 흔들린다) 도메인 예외를 잡은 *뒤* 폼 재렌더냐 거부 안내냐를 정하는 2차 신호다. 이 절은 서버렌더 HTML 경로만 소유하며, JSON API 오류 표현과 섞지 않는다. **[DDoc] [dddjango-django]**
 

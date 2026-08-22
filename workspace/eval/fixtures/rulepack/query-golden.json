@@ -21,21 +21,21 @@
  "q2:exp-없음": [],
  "q2:미바인딩거절": true,
  "q3:3.2": {
-  "rows": 18,
+  "rows": 27,
   "sections": [
    "3.2"
   ]
  },
  "q3:6.1": {
-  "rows": 23,
+  "rows": 29,
   "sections": [
    "6.1"
   ]
  },
  "q3:미바인딩거절": true,
  "q4": {
-  "distinct_works": 837,
-  "rows": 837,
+  "distinct_works": 1611,
+  "rows": 1611,
   "with_alias": [
    "R-0118",
    "R-0120",

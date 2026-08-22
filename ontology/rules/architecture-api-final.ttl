@@ -1,0 +1,2844 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+djr:R-1933 a djr:Obligation ;
+    skos:prefLabel "리소스 경로의 명사 사용(동사 금지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1933@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1933@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1933 ;
+    djr:revision 1 .
+
+djr:R-1934 a djr:Obligation ;
+    skos:prefLabel "컬렉션 리소스의 복수 명사"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1934@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1934@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1934 ;
+    djr:revision 1 .
+
+djr:R-1935 a djr:Obligation ;
+    skos:prefLabel "케밥 케이스·소문자 경로"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1935@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1935@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1935 ;
+    djr:revision 1 .
+
+djr:R-1936 a djr:Prohibition ;
+    skos:prefLabel "후행 슬래시 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1936@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1936@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1936 ;
+    djr:revision 1 .
+
+djr:R-1937 a djr:Prohibition ;
+    skos:prefLabel "DB 구조의 URL 반영 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1937@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1937@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1937 ;
+    djr:revision 1 .
+
+djr:R-1938 a djr:Obligation ;
+    skos:prefLabel "부모-자식 관계의 슬래시 표현"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1938@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1938@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1938 ;
+    djr:revision 1 .
+
+djr:R-1939 a djr:Prohibition ;
+    skos:prefLabel "3단계 이상 깊이 회피"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1939@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1939@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1939 ;
+    djr:revision 1 .
+
+djr:R-1940 a djr:Obligation ;
+    skos:prefLabel "200 OK 매핑(GET·PUT·PATCH 성공)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1940@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1940@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1940 ;
+    djr:revision 1 .
+
+djr:R-1941 a djr:Obligation ;
+    skos:prefLabel "201 Created 매핑(POST 생성·Location 헤더)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1941@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1941@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1941 ;
+    djr:revision 1 .
+
+djr:R-1942 a djr:Obligation ;
+    skos:prefLabel "202 Accepted 매핑(비동기 접수)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1942@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1942@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1942 ;
+    djr:revision 1 .
+
+djr:R-1943 a djr:Obligation ;
+    skos:prefLabel "204 No Content 매핑(DELETE 성공·무본문)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1943@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1943@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1943 ;
+    djr:revision 1 .
+
+djr:R-1944 a djr:Obligation ;
+    skos:prefLabel "400 Bad Request 매핑(형식 오류·유효성 실패)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1944@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1944@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1944 ;
+    djr:revision 1 .
+
+djr:R-1945 a djr:Obligation ;
+    skos:prefLabel "401 Unauthorized 매핑(인증 필요)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1945@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1945@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1945 ;
+    djr:revision 1 .
+
+djr:R-1946 a djr:Obligation ;
+    skos:prefLabel "403 Forbidden 매핑(인가 부족)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1946@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1946@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1946 ;
+    djr:revision 1 .
+
+djr:R-1947 a djr:Obligation ;
+    skos:prefLabel "404 Not Found 매핑(자원 없음·존재 은닉)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1947@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1947@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1947 ;
+    djr:revision 1 .
+
+djr:R-1948 a djr:Obligation ;
+    skos:prefLabel "409 Conflict 매핑(자원 충돌)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1948@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1948@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1948 ;
+    djr:revision 1 .
+
+djr:R-1949 a djr:Obligation ;
+    skos:prefLabel "422 Unprocessable Entity 매핑(의미적 처리 불가)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1949@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1949@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1949 ;
+    djr:revision 1 .
+
+djr:R-1950 a djr:Obligation ;
+    skos:prefLabel "429 Too Many Requests 매핑(Rate Limit 초과)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1950@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1950@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1950 ;
+    djr:revision 1 .
+
+djr:R-1951 a djr:Obligation ;
+    skos:prefLabel "500 Internal Server Error 매핑(애매하면 500)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1951@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1951@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1951 ;
+    djr:revision 1 .
+
+djr:R-1952 a djr:Obligation ;
+    skos:prefLabel "503 Service Unavailable 매핑(과부하·정비·Retry-After 가능)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1952@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1952@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1952 ;
+    djr:revision 1 .
+
+djr:R-1953 a djr:Obligation ;
+    skos:prefLabel "CAS 재시도 소진의 retryable status 배정(표 누락 금지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1953@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1953@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1953 ;
+    djr:revision 1 .
+
+djr:R-1954 a djr:Obligation ;
+    skos:prefLabel "Retry-After 공개 시 controller 소유"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1954@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1954@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1954 ;
+    djr:revision 1 .
+
+djr:R-1955 a djr:Prohibition ;
+    skos:prefLabel "503/409 선택의 설계자 임의 확정 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1955@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1955@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1955 ;
+    djr:revision 1 .
+
+djr:R-1956 a djr:Obligation ;
+    skos:prefLabel "PRG로 새로고침 중복 제출 방지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1956@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1956@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1956 ;
+    djr:revision 1 .
+
+djr:R-1957 a djr:Obligation ;
+    skos:prefLabel "클라이언트 의존 항목의 명시 기록"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1957@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1957@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1957 ;
+    djr:revision 1 .
+
+djr:R-1958 a djr:Obligation ;
+    skos:prefLabel "필수 필드·선택 필드 구분"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1958@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1958@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1958 ;
+    djr:revision 1 .
+
+djr:R-1959 a djr:Obligation ;
+    skos:prefLabel "필드 타입·형식·단위·허용 범위·기본값 명시"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1959@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1959@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1959 ;
+    djr:revision 1 .
+
+djr:R-1960 a djr:Obligation ;
+    skos:prefLabel "수치·외부 식별자 입력의 도메인/스토리지 상한 포함"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1960@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1960@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1960 ;
+    djr:revision 1 .
+
+djr:R-1961 a djr:Prohibition ;
+    skos:prefLabel "계약 계층의 구체 경계값(매직넘버) 고정 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1961@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1961@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1961 ;
+    djr:revision 1 .
+
+djr:R-1962 a djr:Obligation ;
+    skos:prefLabel "query parameter의 조회 표현 조정 용도 한정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1962@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1962@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1962 ;
+    djr:revision 1 .
+
+djr:R-1963 a djr:Prohibition ;
+    skos:prefLabel "비밀 값·인증 정보의 query parameter 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1963@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1963@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1963 ;
+    djr:revision 1 .
+
+djr:R-1964 a djr:Obligation ;
+    skos:prefLabel "POST 본문 정의와 duplicate-sensitive 요청의 Idempotency-Key 정책 확정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1964@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1964@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1964 ;
+    djr:revision 1 .
+
+djr:R-1965 a djr:Obligation ;
+    skos:prefLabel "PUT 전체 교체의 누락 필드 처리 명시"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1965@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1965@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1965 ;
+    djr:revision 1 .
+
+djr:R-1966 a djr:Obligation ;
+    skos:prefLabel "PATCH 문서 형식·멱등 여부 개별 판단"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1966@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1966@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1966 ;
+    djr:revision 1 .
+
+djr:R-1967 a djr:Obligation ;
+    skos:prefLabel "상태 코드별 본문 존재 여부·schema 분리 정의"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1967@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1967@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1967 ;
+    djr:revision 1 .
+
+djr:R-1968 a djr:Obligation ;
+    skos:prefLabel "201 Created의 Location 헤더 제공"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1968@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1968@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1968 ;
+    djr:revision 1 .
+
+djr:R-1969 a djr:Obligation ;
+    skos:prefLabel "202 Accepted의 접수 응답·결과 확인 방법 제공"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1969@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1969@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1969 ;
+    djr:revision 1 .
+
+djr:R-1970 a djr:Obligation ;
+    skos:prefLabel "204 No Content의 무본문 계약화"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1970@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1970@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1970 ;
+    djr:revision 1 .
+
+djr:R-1971 a djr:Obligation ;
+    skos:prefLabel "오류 응답의 media type·필드·status별 schema 문서화"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1971@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1971@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1971 ;
+    djr:revision 1 .
+
+djr:R-1972 a djr:Obligation ;
+    skos:prefLabel "클라이언트 동작 변경 헤더의 응답 계약 포함"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1972@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1972@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1972 ;
+    djr:revision 1 .
+
+djr:R-1973 a djr:Obligation ;
+    skos:prefLabel "엔드포인트 설계·변경 시 계약 체크리스트 병행 검토"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1973@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1973@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1973 ;
+    djr:revision 1 .
+
+djr:R-1974 a djr:Obligation ;
+    skos:prefLabel "에러 wire contract의 우선순위 단일 선택"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1974@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1974@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1974 ;
+    djr:revision 1 .
+
+djr:R-1975 a djr:Obligation ;
+    skos:prefLabel "① 배포된 에러 계약·공개 헤더 보존"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1975@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1975@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1975 ;
+    djr:revision 1 .
+
+djr:R-1976 a djr:Obligation ;
+    skos:prefLabel "② 신규 dddjango Ninja 범위의 기본 dddjango-code-json 선택"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1976@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1976@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1976 ;
+    djr:revision 1 .
+
+djr:R-1977 a djr:Exception ;
+    skos:prefLabel "③ RFC 9457의 조건부 선택 한정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1977@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1977@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1977 ;
+    djr:revision 1 .
+
+djr:R-1978 a djr:Prohibition ;
+    skos:prefLabel "한 API 범위의 RFC·code wire 필드 혼합 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1978@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1978@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1978 ;
+    djr:revision 1 .
+
+djr:R-1979 a djr:Prohibition ;
+    skos:prefLabel "code 프로필의 type·about:blank·URI 요구·problem+json 삽입 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1979@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1979@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1979 ;
+    djr:revision 1 .
+
+djr:R-1980 a djr:Exception ;
+    skos:prefLabel "wire 계약 한정 — preserve-established 범위의 관할 배제"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1980@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1980@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1980 ;
+    djr:revision 1 .
+
+djr:R-1981 a djr:Prohibition ;
+    skos:prefLabel "확립 native 구현·배선의 표준 레시피 이전 근거 불인정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1981@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1981@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1981 ;
+    djr:revision 1 .
+
+djr:R-1982 a djr:Obligation ;
+    skos:prefLabel "신규 RFC wire 범위의 표준 controller 레시피 구현"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1982@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1982@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1982 ;
+    djr:revision 1 .
+
+djr:R-1983 a djr:Obligation ;
+    skos:prefLabel "G2·12-slot 미열거 조합의 G1 표면화(STOP)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1983@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1983@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1983 ;
+    djr:revision 1 .
+
+djr:R-1984 a djr:Prohibition ;
+    skos:prefLabel "혼합 금지의 주어는 wire 필드 — 구현 레시피의 프로필 편입 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1984@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1984@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1984 ;
+    djr:revision 1 .
+
+djr:R-1985 a djr:Obligation ;
+    skos:prefLabel "code 프로필 media type = application/json"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1985@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1985@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1985 ;
+    djr:revision 1 .
+
+djr:R-1986 a djr:Prohibition ;
+    skos:prefLabel "플러그인 지정 body property 목록 부재(기본 목록 가정 금지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1986@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1986@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1986 ;
+    djr:revision 1 .
+
+djr:R-1987 a djr:Obligation ;
+    skos:prefLabel "기존 범위 관찰 shape 보존·신규 범위 표면의 분리 명시 승인"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1987@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1987@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1987 ;
+    djr:revision 1 .
+
+djr:R-1988 a djr:Obligation ;
+    skos:prefLabel "기준선 shape 변경의 별도 public contract 변경 취급"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1988@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1988@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1988 ;
+    djr:revision 1 .
+
+djr:R-1989 a djr:Obligation ;
+    skos:prefLabel "호환성 영향·전환 범위 제시 후 명시적 사용자 승인"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1989@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1989@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1989 ;
+    djr:revision 1 .
+
+djr:R-1990 a djr:Obligation ;
+    skos:prefLabel "공통 필드의 BC ErrorCode(StrEnum) 좁힘과 안정적 공개 식별자"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1990@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1990@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1990 ;
+    djr:revision 1 .
+
+djr:R-1991 a djr:Permission ;
+    skos:prefLabel "식별자 필드명 미고정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1991@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1991@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1991 ;
+    djr:revision 1 .
+
+djr:R-1992 a djr:Obligation ;
+    skos:prefLabel "공개 구별 가능 실패 한정 값 부여·내부 예외 합류 허용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1992@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1992@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1992 ;
+    djr:revision 1 .
+
+djr:R-1993 a djr:Prohibition ;
+    skos:prefLabel "HTTP status 계약의 body property 존재 요구·가정 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1993@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1993@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1993 ;
+    djr:revision 1 .
+
+djr:R-1994 a djr:Obligation ;
+    skos:prefLabel "status field 존재 시 실제 status 일치·부재 시 controller literal/status 소유"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1994@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1994@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1994 ;
+    djr:revision 1 .
+
+djr:R-1995 a djr:Prohibition ;
+    skos:prefLabel "공개 문자열의 str(exc) 자동 사용·민감 내부 정보 누설 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1995@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1995@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1995 ;
+    djr:revision 1 .
+
+djr:R-1996 a djr:Obligation ;
+    skos:prefLabel "배포된 public 식별자 변경의 breaking change 취급"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1996@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1996@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1996 ;
+    djr:revision 1 .
+
+djr:R-1997 a djr:Obligation ;
+    skos:prefLabel "클라이언트 Enum 하나 = 계약 하나 소비"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1997@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1997@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1997 ;
+    djr:revision 1 .
+
+djr:R-1998 a djr:Obligation ;
+    skos:prefLabel "12-slot rollout의 동시 전환·version split 기록"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1998@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1998@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1998 ;
+    djr:revision 1 .
+
+djr:R-1999 a djr:Prohibition ;
+    skos:prefLabel "framework 기본 응답의 code 계약 body 배제·공개 계약 주장 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1999@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-1999@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-1999 ;
+    djr:revision 1 .
+
+djr:R-2000 a djr:Prohibition ;
+    skos:prefLabel "framework 기본 응답의 전역 handler·helper 변환과 헤더 합성 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2000@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2000@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2000 ;
+    djr:revision 1 .
+
+djr:R-2001 a djr:Obligation ;
+    skos:prefLabel "확립 계약의 WWW-Authenticate·Retry-After 헤더 보존과 별도 설계"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2001@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2001@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2001 ;
+    djr:revision 1 .
+
+djr:R-2002 a djr:Obligation ;
+    skos:prefLabel "controller 직접 공개 retryable BC 오류의 Retry-After controller 소유"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2002@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2002@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2002 ;
+    djr:revision 1 .
+
+djr:R-2003 a djr:Exception ;
+    skos:prefLabel "RFC 9457 절의 적용 범위 자기 한정(§5.4 선택 범위)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2003@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2003@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2003 ;
+    djr:revision 1 .
+
+djr:R-2004 a djr:Prohibition ;
+    skos:prefLabel "dddjango-code-json 범위 미적용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2004@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2004@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2004 ;
+    djr:revision 1 .
+
+djr:R-2005 a djr:Obligation ;
+    skos:prefLabel "신규 RFC 범위 구현 형태의 §5.4 단서 준수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2005@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2005@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2005 ;
+    djr:revision 1 .
+
+djr:R-2006 a djr:Obligation ;
+    skos:prefLabel "미인식 확장 필드의 클라이언트 무시 의무"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2006@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2006@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2006 ;
+    djr:revision 1 .
+
+djr:R-2007 a djr:Obligation ;
+    skos:prefLabel "type의 안정적 문서화 URI"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2007@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2007@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2007 ;
+    djr:revision 1 .
+
+djr:R-2008 a djr:Obligation ;
+    skos:prefLabel "title=유형 재사용·detail=특정 발생 분리"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2008@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2008@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2008 ;
+    djr:revision 1 .
+
+djr:R-2009 a djr:Obligation ;
+    skos:prefLabel "RFC 프로필 범위 공개 에러 응답의 일관 적용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2009@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2009@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2009 ;
+    djr:revision 1 .
+
+djr:R-2010 a djr:Obligation ;
+    skos:prefLabel "406 Not Acceptable 매핑(응답 표현 협상 실패)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2010@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2010@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2010 ;
+    djr:revision 1 .
+
+djr:R-2011 a djr:Obligation ;
+    skos:prefLabel "415 Unsupported Media Type 매핑(요청 페이로드 거절)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2011@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2011@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2011 ;
+    djr:revision 1 .
+
+djr:R-2012 a djr:Prohibition ;
+    skos:prefLabel "406/415 혼동 금지(응답 협상 vs 요청 페이로드)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2012@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2012@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2012 ;
+    djr:revision 1 .
+
+djr:R-2013 a djr:Exception ;
+    skos:prefLabel "406/415 계약의 별도 승인 범위 한정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2013@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2013@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2013 ;
+    djr:revision 1 .
+
+djr:R-2014 a djr:Obligation ;
+    skos:prefLabel "검증된 Ninja-owned pre-body 경계의 framework HttpError 흐름 사용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2014@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2014@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2014 ;
+    djr:revision 1 .
+
+djr:R-2015 a djr:Obligation ;
+    skos:prefLabel "parser 예외 정규화 차이의 실제 415 응답 확인"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2015@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2015@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2015 ;
+    djr:revision 1 .
+
+djr:R-2016 a djr:Prohibition ;
+    skos:prefLabel "전역 middleware·helper·handler의 status·body 합성 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2016@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2016@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2016 ;
+    djr:revision 1 .
+
+djr:R-2017 a djr:Obligation ;
+    skos:prefLabel "401 생성 시 적용 가능한 WWW-Authenticate challenge 필수(RFC 9110)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2017@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2017@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2017 ;
+    djr:revision 1 .
+
+djr:R-2018 a djr:Obligation ;
+    skos:prefLabel "확립·공개 요구 계약의 challenge 보존과 G1 별도 설계 복귀"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2018@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2018@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2018 ;
+    djr:revision 1 .
+
+djr:R-2019 a djr:Prohibition ;
+    skos:prefLabel "code-profile body 강제용 전역 handler·helper challenge 합성 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2019@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2019@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2019 ;
+    djr:revision 1 .
+
+djr:R-2020 a djr:Permission ;
+    skos:prefLabel "API Key의 서버 간·내부 API 적합"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2020@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2020@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2020 ;
+    djr:revision 1 .
+
+djr:R-2021 a djr:Permission ;
+    skos:prefLabel "OAuth 2.0의 서드파티 권한 위임 적합"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2021@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2021@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2021 ;
+    djr:revision 1 .
+
+djr:R-2022 a djr:Permission ;
+    skos:prefLabel "JWT(Bearer Token)의 무상태·마이크로서비스 적합"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2022@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2022@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2022 ;
+    djr:revision 1 .
+
+djr:R-2023 a djr:Prohibition ;
+    skos:prefLabel "비밀 정보의 쿼리 파라미터 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2023@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2023@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2023 ;
+    djr:revision 1 .
+
+djr:R-2024 a djr:Obligation ;
+    skos:prefLabel "인증 정보의 Authorization 헤더 전달"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2024@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2024@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2024 ;
+    djr:revision 1 .
+
+djr:R-2025 a djr:Obligation ;
+    skos:prefLabel "전 API 통신의 HTTPS 사용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2025@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2025@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2025 ;
+    djr:revision 1 .
+
+djr:R-2026 a djr:Obligation ;
+    skos:prefLabel "Bearer 토큰 만료·권한 범위의 계약 명시"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2026@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2026@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2026 ;
+    djr:revision 1 .
+
+djr:R-2027 a djr:Obligation ;
+    skos:prefLabel "401 생성 Bearer 서버의 §8.1 challenge 규칙 준수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2027@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2027@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2027 ;
+    djr:revision 1 .
+
+djr:R-2028 a djr:Obligation ;
+    skos:prefLabel "invalid_token의 401 + Bearer error challenge 매핑"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2028@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2028@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2028 ;
+    djr:revision 1 .
+
+djr:R-2029 a djr:Obligation ;
+    skos:prefLabel "insufficient_scope의 403 + scope 안내 매핑"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2029@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2029@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2029 ;
+    djr:revision 1 .
+
+djr:R-2030 a djr:Obligation ;
+    skos:prefLabel "토큰 만료의 401 인증 실패 귀속"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2030@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2030@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2030 ;
+    djr:revision 1 .
+
+djr:R-2031 a djr:Obligation ;
+    skos:prefLabel "401 생성 시 challenge의 인증 방법·오류 원인 안내"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2031@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2031@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2031 ;
+    djr:revision 1 .
+
+djr:R-2032 a djr:Obligation ;
+    skos:prefLabel "확립 Bearer challenge 보존과 기본 401 차이의 G1 별도 설계"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2032@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2032@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2032 ;
+    djr:revision 1 .
+
+djr:R-2033 a djr:Prohibition ;
+    skos:prefLabel "프레임워크 기본 401의 전역 handler·helper 헤더 합성 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2033@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2033@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2033 ;
+    djr:revision 1 .
+
+djr:R-2034 a djr:Obligation ;
+    skos:prefLabel "scope의 허용 작업 범위 정의"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2034@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2034@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2034 ;
+    djr:revision 1 .
+
+djr:R-2035 a djr:Obligation ;
+    skos:prefLabel "scope 부족 시 403+insufficient_scope 응답과 필요 scope 안내"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2035@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2035@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2035 ;
+    djr:revision 1 .
+
+djr:R-2036 a djr:Obligation ;
+    skos:prefLabel "토큰 수명·refresh 흐름·scope 집합의 API 계약 고정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2036@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2036@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2036 ;
+    djr:revision 1 .
+
+djr:R-2037 a djr:Obligation ;
+    skos:prefLabel "토큰 검증·발급 구현의 인증 라이브러리·프레임워크 귀속"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2037@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2037@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2037 ;
+    djr:revision 1 .
+
+djr:R-2038 a djr:Permission ;
+    skos:prefLabel "소규모·관리자 대시보드의 Offset 권장"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2038@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2038@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2038 ;
+    djr:revision 1 .
+
+djr:R-2039 a djr:Permission ;
+    skos:prefLabel "실시간 피드·무한 스크롤·대용량의 Cursor 권장"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2039@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2039@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2039 ;
+    djr:revision 1 .
+
+djr:R-2040 a djr:Permission ;
+    skos:prefLabel "고성능 읽기 중심 API의 Keyset 권장"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2040@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2040@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2040 ;
+    djr:revision 1 .
+
+djr:R-2041 a djr:Obligation ;
+    skos:prefLabel "커서는 인덱싱·불변·유니크 필드"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2041@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2041@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2041 ;
+    djr:revision 1 .
+
+djr:R-2042 a djr:Obligation ;
+    skos:prefLabel "커서의 불투명 인코딩(base64)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2042@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2042@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2042 ;
+    djr:revision 1 .
+
+djr:R-2043 a djr:Obligation ;
+    skos:prefLabel "페이지당 100–200개 결과 권장"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2043@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2043@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2043 ;
+    djr:revision 1 .
+
+djr:R-2044 a djr:Obligation ;
+    skos:prefLabel "응답의 has_more·next_cursor 포함"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2044@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2044@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2044 ;
+    djr:revision 1 .
+
+djr:R-2045 a djr:Obligation ;
+    skos:prefLabel "단일 버전 전략의 일관 적용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2045@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2045@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2045 ;
+    djr:revision 1 .
+
+djr:R-2046 a djr:Obligation ;
+    skos:prefLabel "버전 관리 방식 문서화와 마이그레이션 경로 제공"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2046@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2046@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2046 ;
+    djr:revision 1 .
+
+djr:R-2047 a djr:Permission ;
+    skos:prefLabel "응답 필드 추가의 non-breaking 판정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2047@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2047@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2047 ;
+    djr:revision 1 .
+
+djr:R-2048 a djr:Permission ;
+    skos:prefLabel "선택 요청 파라미터 추가의 non-breaking 판정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2048@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2048@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2048 ;
+    djr:revision 1 .
+
+djr:R-2049 a djr:Obligation ;
+    skos:prefLabel "필드 제거의 breaking 판정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2049@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2049@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2049 ;
+    djr:revision 1 .
+
+djr:R-2050 a djr:Obligation ;
+    skos:prefLabel "필드 이름 변경의 breaking 판정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2050@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2050@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2050 ;
+    djr:revision 1 .
+
+djr:R-2051 a djr:Obligation ;
+    skos:prefLabel "필드 타입 변경의 breaking 판정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2051@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2051@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2051 ;
+    djr:revision 1 .
+
+djr:R-2052 a djr:Obligation ;
+    skos:prefLabel "필수 파라미터 추가의 breaking 판정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2052@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2052@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2052 ;
+    djr:revision 1 .
+
+djr:R-2053 a djr:Obligation ;
+    skos:prefLabel "URL 경로 변경의 breaking 판정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2053@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2053@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2053 ;
+    djr:revision 1 .
+
+djr:R-2054 a djr:Obligation ;
+    skos:prefLabel "상태 코드 변경의 breaking 판정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2054@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2054@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2054 ;
+    djr:revision 1 .
+
+djr:R-2055 a djr:Obligation ;
+    skos:prefLabel "에러 형식 변경의 breaking 판정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2055@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2055@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2055 ;
+    djr:revision 1 .
+
+djr:R-2056 a djr:Obligation ;
+    skos:prefLabel "① Deprecation 공지의 문서·변경 이력 기록"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2056@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2056@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2056 ;
+    djr:revision 1 .
+
+djr:R-2057 a djr:Obligation ;
+    skos:prefLabel "② Sunset 헤더의 만료 날짜 응답 포함"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2057@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2057@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2057 ;
+    djr:revision 1 .
+
+djr:R-2058 a djr:Obligation ;
+    skos:prefLabel "③ 최소 6개월~1년 마이그레이션 기간 유지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2058@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2058@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2058 ;
+    djr:revision 1 .
+
+djr:R-2059 a djr:Obligation ;
+    skos:prefLabel "④ 대체 API·마이그레이션 가이드 제공"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2059@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2059@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2059 ;
+    djr:revision 1 .
+
+djr:R-2060 a djr:Obligation ;
+    skos:prefLabel "⑤ 마이그레이션 기간 종료 후 제거"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2060@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2060@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2060 ;
+    djr:revision 1 .
+
+djr:R-2061 a djr:Prohibition ;
+    skos:prefLabel "추가는 자유·제거 금지(Additive changes only)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2061@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2061@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2061 ;
+    djr:revision 1 .
+
+djr:R-2062 a djr:Obligation ;
+    skos:prefLabel "breaking change 필요 시 새 버전 생성"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2062@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2062@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2062 ;
+    djr:revision 1 .
+
+djr:R-2063 a djr:Obligation ;
+    skos:prefLabel "미인식 필드 무시 설계(Robustness Principle)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2063@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2063@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2063 ;
+    djr:revision 1 .
+
+djr:R-2064 a djr:Permission ;
+    skos:prefLabel "Token Bucket의 퍼블릭 API 기본 적합"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2064@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2064@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2064 ;
+    djr:revision 1 .
+
+djr:R-2065 a djr:Permission ;
+    skos:prefLabel "Sliding Window의 정확한 제어 적합"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2065@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2065@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2065 ;
+    djr:revision 1 .
+
+djr:R-2066 a djr:Permission ;
+    skos:prefLabel "Fixed Window의 간단한 내부 API 적합"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2066@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2066@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2066 ;
+    djr:revision 1 .
+
+djr:R-2067 a djr:Permission ;
+    skos:prefLabel "Leaky Bucket의 트래픽 셰이핑 적합"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2067@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2067@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2067 ;
+    djr:revision 1 .
+
+djr:R-2068 a djr:Obligation ;
+    skos:prefLabel "비용 큰 작업 전 rate limit 검사"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2068@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2068@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2068 ;
+    djr:revision 1 .
+
+djr:R-2069 a djr:Obligation ;
+    skos:prefLabel "확립 429 계약의 Retry-After 헤더 보존"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2069@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2069@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2069 ;
+    djr:revision 1 .
+
+djr:R-2070 a djr:Prohibition ;
+    skos:prefLabel "기본 429의 전역 헤더 합성 금지와 controller 직접 공개 오류 한정 소유"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2070@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2070@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2070 ;
+    djr:revision 1 .
+
+djr:R-2071 a djr:Obligation ;
+    skos:prefLabel "rate limit 정책의 API 문서 기재"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2071@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2071@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2071 ;
+    djr:revision 1 .
+
+djr:R-2072 a djr:Obligation ;
+    skos:prefLabel "① 클라이언트의 고유 키 생성(V4 UUID 권장)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2072@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2072@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2072 ;
+    djr:revision 1 .
+
+djr:R-2073 a djr:Obligation ;
+    skos:prefLabel "② 첫 요청 도메인 outcome의 응용 계층 트랜잭션 저장"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2073@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2073@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2073 ;
+    djr:revision 1 .
+
+djr:R-2074 a djr:Obligation ;
+    skos:prefLabel "② HTTP status·응답 표현의 presentation 소유(application·domain의 status 생성 금지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2074@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2074@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2074 ;
+    djr:revision 1 .
+
+djr:R-2075 a djr:Obligation ;
+    skos:prefLabel "③ 동일 키 후속 요청의 저장 결과 반환"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2075@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2075@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2075 ;
+    djr:revision 1 .
+
+djr:R-2076 a djr:Obligation ;
+    skos:prefLabel "④ 키의 24시간 만료(일반 정책)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2076@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2076@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2076 ;
+    djr:revision 1 .
+
+djr:R-2077 a djr:Exception ;
+    skos:prefLabel "⑤ POST 한정 적용(GET·PUT·DELETE 제외)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2077@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2077@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2077 ;
+    djr:revision 1 .
+
+djr:R-2078 a djr:Obligation ;
+    skos:prefLabel "Idempotency-Key 수용 엔드포인트의 계약 결정 의무"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2078@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2078@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2078 ;
+    djr:revision 1 .
+
+djr:R-2079 a djr:Obligation ;
+    skos:prefLabel "Replay — 최초 operation outcome 재현과 프로필 대응 HTTP 응답 매핑"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2079@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2079@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2079 ;
+    djr:revision 1 .
+
+djr:R-2080 a djr:Obligation ;
+    skos:prefLabel "Conflict — 다른 request content의 충돌 응답(신규 작업 처리 금지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2080@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2080@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2080 ;
+    djr:revision 1 .
+
+djr:R-2081 a djr:Obligation ;
+    skos:prefLabel "Storage — 내구성 저장소·transaction/lock 정책의 DB 설계 연결"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2081@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2081@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2081 ;
+    djr:revision 1 .
+
+djr:R-2082 a djr:Obligation ;
+    skos:prefLabel "Replay의 최초 처리 outcome 재현(현재 상태 재조회 금지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2082@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2082@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2082 ;
+    djr:revision 1 .
+
+djr:R-2083 a djr:Obligation ;
+    skos:prefLabel "가변 자원의 최초 응답 snapshot·동등 안정 결과 보관"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2083@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2083@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2083 ;
+    djr:revision 1 .
+
+djr:R-2084 a djr:Obligation ;
+    skos:prefLabel "outcome의 트랜잭션 기록과 owning presentation controller의 status·표현 매핑"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2084@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2084@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2084 ;
+    djr:revision 1 .
+
+djr:R-2085 a djr:Prohibition ;
+    skos:prefLabel "중앙 error handler 소유 금지·application·domain의 status catch·생성·저장 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2085@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2085@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2085 ;
+    djr:revision 1 .
+
+djr:R-2086 a djr:Obligation ;
+    skos:prefLabel "byte 동일 replay 보관 시에도 status 결정의 presentation 소유 유지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2086@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2086@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2086 ;
+    djr:revision 1 .
+
+djr:R-2087 a djr:Obligation ;
+    skos:prefLabel "요청 fingerprint 저장과 후속 요청 비교로 충돌 판정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2087@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2087@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2087 ;
+    djr:revision 1 .
+
+djr:R-2088 a djr:Obligation ;
+    skos:prefLabel "fingerprint 일치=replay·불일치=충돌 판정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2088@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2088@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2088 ;
+    djr:revision 1 .
+
+djr:R-2089 a djr:Obligation ;
+    skos:prefLabel "선택 프로필의 public code·Problem Details 계약 명시"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2089@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2089@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2089 ;
+    djr:revision 1 .
+
+djr:R-2090 a djr:Obligation ;
+    skos:prefLabel "중복이 치명적인 POST의 Idempotency-Key 필수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2090@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2090@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2090 ;
+    djr:revision 1 .
+
+djr:R-2091 a djr:Override ;
+    skos:prefLabel "dddjango 파이프라인 채택의 G0/G1 사용자 결정·미요청 기본 미적용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2091@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2091@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2091 ;
+    djr:revision 1 .
+
+djr:R-2092 a djr:Obligation ;
+    skos:prefLabel "멱등성 키의 내구성 저장소 보관"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2092@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2092@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2092 ;
+    djr:revision 1 .
+
+djr:R-2093 a djr:Obligation ;
+    skos:prefLabel "동일 키 동시 요청의 레이스 컨디션 처리"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2093@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2093@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2093 ;
+    djr:revision 1 .
+
+djr:R-2094 a djr:Obligation ;
+    skos:prefLabel "fingerprint 불일치의 충돌 처리와 status·프로필 계약 선택"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2094@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2094@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2094 ;
+    djr:revision 1 .
+
+djr:R-2095 a djr:Permission ;
+    skos:prefLabel "PRG 대 Idempotency-Key의 문제 유형별 선택"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2095@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2095@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2095 ;
+    djr:revision 1 .
+
+djr:R-2096 a djr:Obligation ;
+    skos:prefLabel "API 계약 변경 시 OpenAPI 표면 병행 반영"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2096@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2096@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2096 ;
+    djr:revision 1 .
+
+djr:R-2097 a djr:Obligation ;
+    skos:prefLabel "설계 시 OpenAPI 명세 병행 유지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2097@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2097@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2097 ;
+    djr:revision 1 .
+
+djr:R-2098 a djr:Obligation ;
+    skos:prefLabel "명세 작성 도구 활용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2098@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2098@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2098 ;
+    djr:revision 1 .
+
+djr:R-2099 a djr:Obligation ;
+    skos:prefLabel "OpenAPI 최신 상태 유지(테스트·SDK·문서·호환성 리뷰 동일 계약)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2099@2026-08-22> .
+
+<https://numchida.com/ns/djr#R-2099@2026-08-22> a djr:Expression ;
+    prov:specializationOf djr:R-2099 ;
+    djr:revision 1 .
+
+<https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> a djr:Document ;
+    skos:prefLabel "architecture-api-final"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s013-3.1> a djr:Section ;
+    djr:headingSnapshot "### 3.1 명명 규칙"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "3.1" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s013-3.1/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s013-3.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 1 ;
+    djr:text "\n| 규칙 | 좋음 | 나쁨 |\n|------|------|------|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s013-3.1/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s013-3.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-1933 ;
+    djr:text "| 명사 사용 (동사 아님) | `/orders` | `/create-order` |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s013-3.1/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s013-3.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-1934 ;
+    djr:text "| 복수 명사 (컬렉션) | `/customers/5` | `/customer/5` |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s013-3.1/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s013-3.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-1935 ;
+    djr:text "| 케밥 케이스, 소문자 | `/order-items` | `/orderItems`, `/order_items` |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s013-3.1/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s013-3.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-1936 ;
+    djr:text "| 후행 슬래시 없음 | `/orders` | `/orders/` |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s013-3.1/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s013-3.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-1937 ;
+    djr:text "| DB 구조 비반영 | `/products` | `/tbl_products` |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s014-3.2> a djr:Section ;
+    djr:headingSnapshot "### 3.2 계층적 하위 리소스"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "3.2" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s014-3.2/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s014-3.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-1938, djr:R-1939 ;
+    djr:text "\n부모-자식 관계에 슬래시를 사용한다. **3단계 이상 깊이는 피한다.**\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s014-3.2/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s014-3.2> ;
+    djr:kind djr:kind-code ;
+    djr:order 2 ;
+    djr:text "```\nGET /customers/5/orders          # 고객 5의 주문 목록\nGET /customers/5/orders/10       # 고객 5의 주문 10\nGET /customers/5/orders/10/items # 3단계 — 허용하되 더 깊이는 피함\n```\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> a djr:Section ;
+    djr:headingSnapshot "### 4.2 API에서 자주 사용하는 상태 코드"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "4.2" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 1 ;
+    djr:text "\n**성공 (2xx):**\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 10 ;
+    djr:statesNorm djr:R-1945 ;
+    djr:text "| 401 | Unauthorized | **인증** 필요 (누구인지 모름) |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b11> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 11 ;
+    djr:statesNorm djr:R-1946 ;
+    djr:text "| 403 | Forbidden | **인가** 부족 (누구인지는 알지만 권한 없음) |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b12> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 12 ;
+    djr:statesNorm djr:R-1947 ;
+    djr:text "| 404 | Not Found | 자원 없음 (또는 존재를 숨기기 위해) |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b13> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 13 ;
+    djr:statesNorm djr:R-1948 ;
+    djr:text "| 409 | Conflict | 자원 충돌 (중복 생성, 동시 수정) |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b14> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 14 ;
+    djr:statesNorm djr:R-1949 ;
+    djr:text "| 422 | Unprocessable Entity | 문법은 맞지만 의미적으로 처리 불가 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b15> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 15 ;
+    djr:statesNorm djr:R-1950 ;
+    djr:text "| 429 | Too Many Requests | Rate Limit 초과 |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b16> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 16 ;
+    djr:text "**서버 오류 (5xx):**\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b17> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 17 ;
+    djr:text "| 코드 | 의미 | API 용도 |\n|------|------|----------|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b18> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 18 ;
+    djr:statesNorm djr:R-1951 ;
+    djr:text "| 500 | Internal Server Error | 서버 문제. 애매하면 500 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b19> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 19 ;
+    djr:statesNorm djr:R-1952 ;
+    djr:text "| 503 | Service Unavailable | 일시 과부하/정비. Retry-After 헤더 가능 |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 2 ;
+    djr:text "| 코드 | 의미 | API 용도 |\n|------|------|----------|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b20> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 20 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s026/b1> ;
+    djr:statesNorm djr:R-1953, djr:R-1954, djr:R-1955 ;
+    djr:text "**낙관적 동시성/CAS 재시도 루프의 *소진*도 경계 실패 모드다**: 유한 재시도 루프를 설계하면 '재시도 상한 초과(쓰기 경합 미해소)'는 happy-path 밖이지만 *경계로 관찰되는* 결과다 — status 표에서 누락하지 말고 **재시도 가능(retryable) status를 배정**한다(승인된 `Retry-After`를 가진 503 또는 409 — 둘 다 정당, 선택은 멱등성·재시도 UX 트레이드오프로 §5/G1). `Retry-After`를 공개하는 경우 §5.4의 경계에 따라 controller가 그 헤더를 소유한다. *어느 쪽이든 표에서 누락 금지*가 의무이고 둘 중 선택은 설계자가 임의 확정하지 않는다(미매핑 시 기본 500 누수).\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-1940 ;
+    djr:text "| 200 | OK | GET, PUT, PATCH 성공 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-1941 ;
+    djr:text "| 201 | Created | POST로 자원 생성 성공. Location 헤더에 새 자원 URI |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-1942 ;
+    djr:text "| 202 | Accepted | 비동기 처리 접수됨 (배치, 장시간 작업) |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-1943 ;
+    djr:text "| 204 | No Content | DELETE 성공. 응답 본문 없음 |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 7 ;
+    djr:text "**클라이언트 오류 (4xx):**\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 8 ;
+    djr:text "| 코드 | 의미 | API 용도 |\n|------|------|----------|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s018-4.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 9 ;
+    djr:statesNorm djr:R-1944 ;
+    djr:text "| 400 | Bad Request | 잘못된 요청 형식, 유효성 검증 실패 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s019-4.3> a djr:Section ;
+    djr:headingSnapshot "### 4.3 PRG (POST/Redirect/GET) 패턴"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "4.3" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s019-4.3/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s019-4.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-1956 ;
+    djr:text "\nPOST 주문 후 303으로 GET 결과 페이지로 리다이렉트하여 새로고침 시 중복 주문 방지.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s019-4.3/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s019-4.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 2 ;
+    djr:text "> 출처: Go_Deeper/Wiki/Http/StatusCode, RFC 9110\n\n---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s020-5> a djr:Section ;
+    djr:headingSnapshot "## 5. 요청/응답 계약"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "5" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s020-5/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s020-5> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-1957 ;
+    djr:text "\nAPI 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상태 코드, 헤더, 에러 형식의 조합이다. 클라이언트가 의존할 수 있는 항목은 명시적으로 기록한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s021-5.1> a djr:Section ;
+    djr:headingSnapshot "### 5.1 요청 계약"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "5.1" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s021-5.1/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s021-5.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-1958 ;
+    djr:text "\n- 필수 필드와 선택 필드를 구분한다\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s021-5.1/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s021-5.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-1959 ;
+    djr:text "- 필드 타입, 형식, 단위, 허용 범위, 기본값을 명시한다\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s021-5.1/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s021-5.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-1960, djr:R-1961 ;
+    djr:text "- 외부 식별자·수치 입력의 허용 범위에는 도메인/스토리지 *상한*도 포함한다(하한만 두지 말 것) — 미설정 시 거대 입력이 스토리지 오버플로로 500이 되어 클라이언트 입력 오류(400/422 클래스)가 5xx로 오분류된다. 상한 *값*은 필드·DB 타입에 맞춰 정하고 구체 경계값(매직넘버)은 이 계약 계층에 박지 않는다(implementation에 위임)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s021-5.1/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s021-5.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-1962 ;
+    djr:text "- query parameter는 필터링, 정렬, 검색, sparse fieldset, pagination처럼 조회 표현을 조정하는 데 사용한다\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s021-5.1/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s021-5.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-1963 ;
+    djr:text "- 비밀 값이나 인증 정보는 query parameter에 넣지 않는다\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s021-5.1/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s021-5.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-1964 ;
+    djr:text "- `POST`는 생성 또는 non-idempotent action 요청 본문을 명확히 정의하고, duplicate-sensitive 요청은 `Idempotency-Key` 정책을 함께 정한다\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s021-5.1/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s021-5.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-1965 ;
+    djr:text "- `PUT`은 전체 교체 계약이므로 누락 필드가 어떻게 처리되는지 명시한다\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s021-5.1/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s021-5.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 8 ;
+    djr:statesNorm djr:R-1966 ;
+    djr:text "- `PATCH`는 patch document 형식과 idempotent 여부를 별도로 판단한다\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2> a djr:Section ;
+    djr:headingSnapshot "### 5.2 응답 계약"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "5.2" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-1967 ;
+    djr:text "\n- 상태 코드별 응답 본문 존재 여부와 schema를 분리해 정의한다\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-1968 ;
+    djr:text "- `201 Created`는 가능한 경우 `Location` 헤더로 새 자원 URI를 제공한다\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-1969 ;
+    djr:text "- `202 Accepted`는 작업 접수 응답과 결과 확인 방법을 함께 제공한다\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-1970 ;
+    djr:text "- `204 No Content`는 응답 본문이 없다는 점을 계약으로 둔다\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-1971 ;
+    djr:text "- 오류 응답은 선택한 에러 프로필의 media type·필드·상태 코드별 schema를 문서화한다\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s022-5.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-1972 ;
+    djr:text "- 캐시, rate limit, retry, deprecation, idempotency replay처럼 클라이언트 동작을 바꾸는 헤더는 응답 계약에 포함한다\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3> a djr:Section ;
+    djr:headingSnapshot "### 5.3 계약 체크리스트"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "5.3" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-1973 ;
+    djr:text "\n엔드포인트를 설계하거나 변경할 때 다음을 함께 검토한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 10 ;
+    djr:text "| OpenAPI | path/method/schema/response/security/header 반영 |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3/b11> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 11 ;
+    djr:text "> 출처: Microsoft REST API Design, Google API Design Guide, RFC 9110, OpenAPI Initiative\n\n---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 2 ;
+    djr:text "| 항목 | 확인 내용 |\n|------|-----------|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 3 ;
+    djr:text "| Resource | 클라이언트가 식별하는 자원과 URI |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 4 ;
+    djr:text "| Method | 안전성, 멱등성, 생성/교체/부분 수정/삭제 의미 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 5 ;
+    djr:text "| Request | body/query/path/header 필드와 validation |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 6 ;
+    djr:text "| Response | 상태 코드별 body/header/schema |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 7 ;
+    djr:text "| Error | 선택한 에러 프로필, status별 body/header/schema, public code 또는 RFC type |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 8 ;
+    djr:text "| Auth | authentication/authorization 요구사항 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s023-5.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 9 ;
+    djr:text "| Compatibility | breaking change 여부와 version/deprecation 필요성 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s024-5.4> a djr:Section ;
+    djr:headingSnapshot "### 5.4 에러 프로필 선택"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "5.4" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s024-5.4/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s024-5.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-1974 ;
+    djr:text "\n에러 wire contract는 다음 우선순위로 하나를 선택한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s024-5.4/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s024-5.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-1975 ;
+    djr:text "1. 이미 배포된 API의 에러 계약이 있으면 그 계약을 보존한다. `WWW-Authenticate`나 `Retry-After`처럼 이미 공개된 헤더도 이 계약의 일부이며, 프레임워크 기본 응답과의 차이는 별도 설계로 다룬다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s024-5.4/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s024-5.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-1976 ;
+    djr:text "2. 새 dddjango Django Ninja 범위는 기본으로 `dddjango-code-json`을 선택한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s024-5.4/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s024-5.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-1977 ;
+    djr:text "3. RFC 9457은 외부 표준, 기존 소비자, 또는 별도 요구가 있을 때만 선택한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s024-5.4/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s024-5.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-1978, djr:R-1979 ;
+    djr:text "한 API 범위 안에서는 RFC 프로필과 code 프로필의 wire 필드를 섞지 않는다. 특히 code 프로필에 `type`, `about:blank`, URI 요구사항이나 `application/problem+json`을 끼워 넣지 않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s024-5.4/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s024-5.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-1980, djr:R-1981, djr:R-1982, djr:R-1983, djr:R-1984 ;
+    djr:text "이 절이 고르는 것은 **wire 계약**(필드 집합·media type)이지 구현 형태가 아니며, 이 문단의 주어는 **신규 범위**(②·③으로 wire 프로필을 새로 고르는 산출물)다 — preserve-established(우선순위 ①) 범위는 native 메커니즘 보존이 관할이라(12-slot 계약 소유) 이 문단의 대상이 아니고, 확립 native 구현·배선을 표준 레시피로 옮길 근거가 되지 않는다. 신규 범위는 ③으로 RFC 9457 wire 를 선택해도 표준 controller 레시피(controller 소유·좁은 try·`bc_error_schema.py`·직접 `Status` 반환 — 레시피의 정본은 구현 스킬·검사기 계약이고 이 절은 wire 만 소유한다)로 구현한다: **«RFC 9457 wire + 표준 레시피»는 wire 규칙상 모순이 아니다**(2026-08-13 — 스팩이 이 조합을 표현하려 프로필 «이름»을 차용해 문면 모순이 된 사례 반영). 단 **G2 게이트·12-slot 의 profile 표기는 현재 `dddjango-code-json | preserve-established` 두 값뿐**이라 이 조합의 게이트 취급은 아직 열거에 없다 — 채택하려면 그 취급 결정을 G1 에서 표면화하라(STOP 대상이며, 스팩·플러그인 문면이 실제로 충돌하는 경우도 여전히 STOP 대상이다)(G1/G2=파이프라인의 설계/구현 승인 게이트 · 12-slot=오류 계약 기록표 `Error response contract 12-slot` · STOP=`STOP_FOR_USER_APPROVAL` — 사용자 결정으로만 진행). 위 혼합 금지의 주어는 wire 필드다 — 구현 레시피를 프로필의 일부로 읽지 않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025> a djr:Section ;
+    djr:headingSnapshot "#### `dddjango-code-json` (새 dddjango Ninja 범위의 기본)"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-1985 ;
+    djr:text "\n- media type은 `application/json`이다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-1986, djr:R-1987 ;
+    djr:text "- 플러그인이 정한 body property 목록은 없다. 기존 범위는 관찰된 exact 오류 schema shape를 보존하고, 신규 범위는 exact field set·type·required/default·nullable·Field metadata·model config/legacy Config·validator/serializer/computed field/Pydantic hook inventory와 effective semantics·wire 직렬화를 일반 G1 승인과 분리해 명시 승인받는다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-1988, djr:R-1989 ;
+    djr:text "- 기준선 shape의 property 추가·삭제·이름·타입·존재성·변환 규칙·의미 변경은 일반 기능 승인이 아니라 별도 public contract 변경이다. 호환성 영향과 server/client/test 전환 범위를 보여 준 뒤 명시적 사용자 승인을 받는다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-1990, djr:R-1991, djr:R-1992 ;
+    djr:text "- 승인 shape의 한 공통 필드를 BC `ErrorCode(StrEnum)`으로 좁혀 안정적인 공개 식별자를 제공한다. 그 필드명은 고정하지 않는다. public하게 구별되거나 관찰 가능한 실패에만 값을 부여하며, 여러 내부 예외는 하나의 public 식별자로 합쳐질 수 있다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-1993, djr:R-1994, djr:R-1995 ;
+    djr:text "- HTTP status 계약은 body property의 존재를 요구하거나 가정하지 않는다. 승인 shape에 status field가 있으면 실제 HTTP status와 일치시켜야 하지만, 그런 field가 없으면 controller의 literal/status 상수가 계약을 소유한다. 공개 문자열은 `str(exc)`를 자동 사용하거나 민감한 내부 정보를 누설하지 않는다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-1996, djr:R-1997, djr:R-1998 ;
+    djr:text "- 배포된 public 식별자의 변경은 breaking change다. 한 클라이언트 Enum은 하나의 계약을 소비한다. 실제 클라이언트 migration은 별도 작업이지만, 12-slot rollout에는 동시 전환인지 version split인지 기록한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-1999 ;
+    djr:text "- framework-owned 401/403, route 404, 422, 429, `HttpError`, 500의 기본 응답은 이 code 계약의 body가 아니며, 그 본문이 정확하고 안정적인 공개 계약이라고 주장하지 않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s026> a djr:Section ;
+    djr:headingSnapshot "#### framework 기본 응답과 공개 헤더의 경계"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s026/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s026> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2000, djr:R-2001, djr:R-2002 ;
+    djr:text "\n프레임워크 기본 401/403/route 404/422/429/`HttpError`/500을 전역 handler나 helper로 BC body로 바꾸어 헤더를 합성하지 않는다. 확립된 계약이 401의 `WWW-Authenticate` 또는 429의 `Retry-After`를 요구하면 그 헤더는 보존하고 별도 설계한다. presentation controller가 직접 공개하는 retryable BC 오류는 승인된 `Retry-After` 헤더를 그 controller가 소유한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s027-6> a djr:Section ;
+    djr:headingSnapshot "## 6. RFC 9457 에러 응답 형식"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "6" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s027-6/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s027-6> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2003, djr:R-2004, djr:R-2005 ;
+    djr:text "\n이 절은 §5.4에서 RFC 9457 프로필을 선택한 API 범위에만 적용한다. `dddjango-code-json` 범위에는 적용하지 않는다. (wire 형식의 절이다 — 신규 RFC 범위의 구현 형태는 §5.4 마지막 문단의 단서를 따른다.)\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s029-6.2> a djr:Section ;
+    djr:headingSnapshot "### 6.2 예시"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "6.2" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s029-6.2/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s029-6.2> ;
+    djr:kind djr:kind-code ;
+    djr:order 1 ;
+    djr:text "\n```json\nHTTP/1.1 403 Forbidden\nContent-Type: application/problem+json\n\n{\n  \"type\": \"https://example.com/probs/out-of-credit\",\n  \"title\": \"You do not have enough credit.\",\n  \"status\": 403,\n  \"detail\": \"Your current balance is 30, but that costs 50.\",\n  \"instance\": \"/account/12345/msgs/abc\",\n  \"balance\": 30,\n  \"accounts\": [\"/account/12345\", \"/account/67890\"]\n}\n```\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s029-6.2/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s029-6.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2006 ;
+    djr:text "`balance`와 `accounts`는 **확장 필드**. 문제 유형 정의에서 추가 가능. 클라이언트는 인식하지 못하는 확장 필드를 무시해야 한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s030-6.3> a djr:Section ;
+    djr:headingSnapshot "### 6.3 핵심 규칙"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "6.3" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s030-6.3/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s030-6.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2007 ;
+    djr:text "\n- `type`은 문서화 역할을 하는 안정적 URI\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s030-6.3/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s030-6.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2008 ;
+    djr:text "- `title`은 **유형**(재사용), `detail`은 **특정 발생**\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s030-6.3/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s030-6.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2009 ;
+    djr:text "- RFC 프로필을 선택한 API 범위의 공개 에러 응답에 이 형식을 일관되게 적용\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s030-6.3/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s030-6.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 4 ;
+    djr:text "> 출처: IETF RFC 9457\n\n---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2> a djr:Section ;
+    djr:headingSnapshot "### 7.2 콘텐츠 협상 (Content Negotiation)"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "7.2" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 1 ;
+    djr:text "\n클라이언트가 선호하는 표현을 요청하는 방식.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 10 ;
+    djr:text "| 상황 | 상태 코드 | 의미 |\n|------|----------|------|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2/b11> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 11 ;
+    djr:statesNorm djr:R-2010 ;
+    djr:text "| 서버가 Accept/Accept-* 를 만족하는 표현을 만들 수 없음 (응답 측) | `406 Not Acceptable` | 가용 표현 특성 목록을 본문에 제공하거나, 정책상 기본 표현으로 대체 응답할 수 있다 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2/b12> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 12 ;
+    djr:statesNorm djr:R-2011 ;
+    djr:text "| 요청 본문의 Content-Type/Content-Encoding을 이 메서드·리소스가 지원하지 않음 (요청 측) | `415 Unsupported Media Type` | 서버가 요청 페이로드 형식을 처리할 수 없어 거절한다 |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2/b13> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 13 ;
+    djr:statesNorm djr:R-2012 ;
+    djr:text "406은 **응답** 표현을 협상하지 못한 경우, 415는 **요청** 페이로드 형식을 받아들이지 못한 경우다. 둘을 혼동하지 않는다. (RFC 9110 §15.5.7, §15.5.16)\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2/b14> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 14 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s026/b1> ;
+    djr:statesNorm djr:R-2013, djr:R-2014, djr:R-2015, djr:R-2016 ;
+    djr:text "> `406`/`415` 계약이 별도 승인된 범위에서만 `implementation-django-ninja` §6.3을 따른다. 사용 중인 Django Ninja 버전과 presentation 스타일에 맞는, 검증된 Ninja-owned pre-body 경계에서 framework `HttpError` 흐름을 사용한다. 특히 parser 예외는 버전에 따라 다른 status로 정규화될 수 있으므로 실제 응답이 415인지 확인한다. 전역 middleware/helper/handler로 status나 body를 합성하지 않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 2 ;
+    djr:text "| 요청 헤더 | 협상 대상 |\n|----------|----------|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 3 ;
+    djr:text "| Accept | 미디어 타입 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 4 ;
+    djr:text "| Accept-Language | 자연 언어 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 5 ;
+    djr:text "| Accept-Encoding | 압축 방식 |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 6 ;
+    djr:text "**Quality Values (q값)**: 0~1 사이 값으로 우선순위 지정. 생략 시 1.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2> ;
+    djr:kind djr:kind-code ;
+    djr:order 7 ;
+    djr:text "```\nAccept-Language: ko-KR,ko;q=0.9,en-US;q=0.8\n```\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 8 ;
+    djr:text "구체적인 것이 우선한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s033-7.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 9 ;
+    djr:text "**협상 실패 시 상태 코드**:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1> a djr:Section ;
+    djr:headingSnapshot "### 8.1 인증 vs 인가"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "8.1" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 1 ;
+    djr:text "\n| 구분 | 인증 (Authentication) | 인가 (Authorization) |\n|------|---------------------|---------------------|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 2 ;
+    djr:text "| 질문 | \"너는 누구인가?\" | \"너는 이걸 할 수 있는가?\" |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 3 ;
+    djr:text "| 시점 | 인가보다 먼저 | 인증 후에 수행 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 4 ;
+    djr:text "| HTTP 코드 | 401 Unauthorized | 403 Forbidden |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 5 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b8> ;
+    djr:text "| 실패 시 | 서버가 401을 생성하면 적용 가능한 `WWW-Authenticate` challenge를 보냄 | 권한 부족 메시지 |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1> ;
+    djr:kind djr:kind-prose ;
+    djr:order 6 ;
+    djr:text "- 인증이 있어야 인가가 있다\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1> ;
+    djr:kind djr:kind-prose ;
+    djr:order 7 ;
+    djr:text "- 401은 이름이 Unauthorized지만 실제로는 **인증(Authentication)** 오류다\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 8 ;
+    djr:statesNorm djr:R-2017 ;
+    djr:text "- **RFC 9110 규칙**: 서버가 401 응답을 생성하면 적용 가능한 `WWW-Authenticate` challenge를 반드시 보낸다. 이것은 에러 body 프로필과 별개의 HTTP 의미론이다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 9 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s026/b1> ;
+    djr:statesNorm djr:R-2018, djr:R-2019 ;
+    djr:text "- **구현/프로필 경계**: 테스트한 Django Ninja 기본 401은 이 challenge를 제공하지 않을 수 있다. 이미 배포되었거나 공개적으로 요구된 계약은 challenge를 보존하고, 기본 동작과 맞지 않으면 G1에서 별도 설계로 되돌린다. code-profile body를 강제하려고 전역 handler나 helper로 challenge를 합성하지 않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s037-8.2> a djr:Section ;
+    djr:headingSnapshot "### 8.2 인증 메커니즘 선택 기준"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "8.2" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s037-8.2/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s037-8.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 1 ;
+    djr:text "\n| 방식 | 적합 | 특징 |\n|------|------|------|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s037-8.2/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s037-8.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2020 ;
+    djr:text "| **API Key** | 서버 간 통신, 내부 API | 단순, 사용자 식별 불가 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s037-8.2/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s037-8.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2021 ;
+    djr:text "| **OAuth 2.0** | 서드파티 접근 권한 위임 | 표준화, 복잡하지만 유연 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s037-8.2/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s037-8.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-2022 ;
+    djr:text "| **JWT (Bearer Token)** | 무상태 인증, 마이크로서비스 | 자체 포함(self-contained), 만료 관리 필요 |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s038-8.3> a djr:Section ;
+    djr:headingSnapshot "### 8.3 API 요청의 보안 원칙"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "8.3" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s038-8.3/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s038-8.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s021-5.1/b5> ;
+    djr:statesNorm djr:R-2023 ;
+    djr:text "\n- **비밀 정보를 쿼리 파라미터에 담지 않는다** — URL은 서버/프록시 로그에 기록됨\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s038-8.3/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s038-8.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2024 ;
+    djr:text "- 인증 정보는 `Authorization` 헤더에 전달\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s038-8.3/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s038-8.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2025 ;
+    djr:text "- 모든 API 통신에 HTTPS 사용\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s038-8.3/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s038-8.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 4 ;
+    djr:text "> 출처: Go_Deeper/Wiki/Http/StatusCode, Go_Deeper/Wiki/OAuth, Go_Deeper/Book/Architecture/DesigningAPIS\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4> a djr:Section ;
+    djr:headingSnapshot "### 8.4 토큰 수명과 스코프"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "8.4" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2026, djr:R-2027 ;
+    djr:text "\nBearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 명시한다. 401을 생성하는 Bearer 서버는 §8.1의 RFC 9110 challenge 규칙을 지키며, 다음은 그 challenge가 포함하는 Bearer 계약의 표면이다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 2 ;
+    djr:text "| 상황 | 상태 코드 | WWW-Authenticate | 의미 |\n|------|----------|------------------|------|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2028 ;
+    djr:text "| 토큰 만료·폐기·변조 (`invalid_token`) | `401 Unauthorized` | `Bearer error=\"invalid_token\"` | 재인증하거나 refresh로 새 토큰을 발급받는다 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-2029 ;
+    djr:text "| 토큰은 유효하나 권한 범위 부족 (`insufficient_scope`) | `403 Forbidden` | `Bearer error=\"insufficient_scope\", scope=\"...\"` | 필요한 scope를 응답에 안내할 수 있다 |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b8>, <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s036-8.1/b9> ;
+    djr:statesNorm djr:R-2030, djr:R-2031, djr:R-2032, djr:R-2033 ;
+    djr:text "- 토큰 만료는 401이며 인증(§8.1) 실패다. 서버가 이 401을 생성하면 `WWW-Authenticate` challenge로 인증 방법과 오류 원인을 안내한다. 이미 배포되었거나 공개적으로 요구된 Bearer 계약의 challenge는 보존하고, 테스트한 Django Ninja 기본 401이 제공하지 못하는 차이는 G1에서 별도 설계한다. 프레임워크 기본 401에 전역 handler나 helper로 이 헤더를 합성하여 code-profile body를 강제하지 않는다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-2034, djr:R-2035 ;
+    djr:text "- scope는 토큰이 허용하는 작업 범위다. 엔드포인트가 요구하는 scope와 토큰의 scope를 비교해 부족하면 403 + `insufficient_scope`로 응답하고, 확립된 Bearer 계약이 정하면 필요한 scope를 헤더로 알린다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-2036, djr:R-2037 ;
+    djr:text "- 토큰 수명, refresh 흐름, scope 집합은 API 계약으로 고정한다. 토큰 검증·발급의 구체 구현은 인증 라이브러리/프레임워크가 담당한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s039-8.4> ;
+    djr:kind djr:kind-prose ;
+    djr:order 8 ;
+    djr:text "> 출처: IETF RFC 6750 (OAuth 2.0 Bearer Token Usage §3 WWW-Authenticate Response Header, §3.1 Error Codes)\n\n---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s042-9.2> a djr:Section ;
+    djr:headingSnapshot "### 9.2 선택 기준"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "9.2" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s042-9.2/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s042-9.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 1 ;
+    djr:text "\n| 상황 | 권장 |\n|------|------|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s042-9.2/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s042-9.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2038 ;
+    djr:text "| 소규모 데이터, 관리자 대시보드 | Offset (단순, 페이지 번호 제공) |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s042-9.2/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s042-9.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2039 ;
+    djr:text "| 실시간 피드, 무한 스크롤, 대용량 | Cursor (일관성 + 성능) |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s042-9.2/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s042-9.2> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-2040 ;
+    djr:text "| 고성능 읽기 중심 API | Keyset (인덱스 활용) |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s043-9.3> a djr:Section ;
+    djr:headingSnapshot "### 9.3 실전 원칙"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "9.3" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s043-9.3/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s043-9.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2041 ;
+    djr:text "\n- 인덱싱된, 불변, 유니크한 필드(타임스탬프 + ID 조합)를 커서로 사용\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s043-9.3/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s043-9.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2042 ;
+    djr:text "- 커서를 불투명하게 인코딩(base64)하여 클라이언트가 토큰으로 취급하도록\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s043-9.3/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s043-9.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2043 ;
+    djr:text "- 페이지당 100-200개 결과 권장\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s043-9.3/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s043-9.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-2044 ;
+    djr:text "- 응답에 `has_more` 또는 `next_cursor` 포함\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s043-9.3/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s043-9.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 5 ;
+    djr:text "> 출처: Stripe API - Pagination, Slack API - Pagination\n\n---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s047-10.3> a djr:Section ;
+    djr:headingSnapshot "### 10.3 실전 원칙"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "10.3" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s047-10.3/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s047-10.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2045 ;
+    djr:text "\n- 하나의 전략을 선택하고 **일관되게** 적용\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s047-10.3/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s047-10.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 2 ;
+    djr:text "- 일반 패턴: URL path로 메이저 버전, 헤더로 마이너 조정\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s047-10.3/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s047-10.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2046 ;
+    djr:text "- 버전 관리 방식을 문서화하고 마이그레이션 경로 제공\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s047-10.3/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s047-10.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 4 ;
+    djr:text "> 출처: Stripe Blog - API Versioning\n\n---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1> a djr:Section ;
+    djr:headingSnapshot "### 11.1 Breaking vs Non-Breaking Change"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "11.1" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 1 ;
+    djr:text "\n| 변경 유형 | Breaking? | 예시 |\n|----------|:---------:|------|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 10 ;
+    djr:statesNorm djr:R-2055 ;
+    djr:text "| 에러 형식 변경 | **O** | 에러 응답 구조 변경 |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2047 ;
+    djr:text "| 필드 추가 (응답) | X | 새 필드 `created_at` 추가 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2048 ;
+    djr:text "| 필드 추가 (요청, 선택) | X | 선택적 파라미터 `filter` 추가 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-2049 ;
+    djr:text "| 필드 제거 | **O** | 기존 `name` 필드 삭제 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-2050 ;
+    djr:text "| 필드 이름 변경 | **O** | `name` → `full_name` |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-2051 ;
+    djr:text "| 필드 타입 변경 | **O** | `id: int` → `id: string` |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-2052 ;
+    djr:text "| 필수 파라미터 추가 | **O** | 새 필수 필드 `email` 추가 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 8 ;
+    djr:statesNorm djr:R-2053 ;
+    djr:text "| URL 경로 변경 | **O** | `/users` → `/accounts` |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s049-11.1> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 9 ;
+    djr:statesNorm djr:R-2054 ;
+    djr:text "| 상태 코드 변경 | **O** | 200 → 201 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s050-11.2> a djr:Section ;
+    djr:headingSnapshot "### 11.2 Deprecation 프로세스"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "11.2" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s050-11.2/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s050-11.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2056 ;
+    djr:text "\n1. **Deprecation 공지**: API 문서에 명시, 변경 이력에 기록\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s050-11.2/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s050-11.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2057 ;
+    djr:text "2. **Sunset 헤더**: 응답에 만료 날짜 포함\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s050-11.2/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s050-11.2> ;
+    djr:kind djr:kind-code ;
+    djr:order 3 ;
+    djr:text "   ```\n   Sunset: Sat, 01 Mar 2025 00:00:00 GMT\n   Deprecation: true\n   ```\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s050-11.2/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s050-11.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-2058 ;
+    djr:text "3. **마이그레이션 기간**: 최소 6개월~1년 유지\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s050-11.2/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s050-11.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-2059 ;
+    djr:text "4. **대체 API 안내**: 새 엔드포인트 또는 버전으로의 마이그레이션 가이드 제공\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s050-11.2/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s050-11.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-2060 ;
+    djr:text "5. **제거**: 마이그레이션 기간 종료 후 제거\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s051-11.3> a djr:Section ;
+    djr:headingSnapshot "### 11.3 실전 원칙"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "11.3" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s051-11.3/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s051-11.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2061 ;
+    djr:text "\n- **추가는 자유, 제거는 금지** (Additive changes only)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s051-11.3/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s051-11.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2062 ;
+    djr:text "- Breaking change가 필요하면 새 버전을 만든다\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s051-11.3/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s051-11.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2063 ;
+    djr:text "- 클라이언트가 인식하지 못하는 필드를 무시하도록 설계 (Robustness Principle: \"보내는 것은 엄격하게, 받는 것은 관대하게\")\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s051-11.3/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s051-11.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 4 ;
+    djr:text "---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s055-12.3> a djr:Section ;
+    djr:headingSnapshot "### 12.3 알고리즘 선택 기준"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "12.3" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s055-12.3/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s055-12.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 1 ;
+    djr:text "\n| 알고리즘 | 특징 | 적합 |\n|---------|------|------|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s055-12.3/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s055-12.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2064 ;
+    djr:text "| **Token Bucket** | 제어된 버스트 허용 | 퍼블릭 API 기본 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s055-12.3/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s055-12.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2065 ;
+    djr:text "| **Sliding Window** | 부드러움, 경계 문제 없음 | 정확한 제어 필요 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s055-12.3/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s055-12.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-2066 ;
+    djr:text "| **Fixed Window** | 단순, 저오버헤드 | 간단한 내부 API |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s055-12.3/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s055-12.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-2067 ;
+    djr:text "| **Leaky Bucket** | 일정 출력, 버스트 없음 | 트래픽 셰이핑 |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s056-12.4> a djr:Section ;
+    djr:headingSnapshot "### 12.4 실전 원칙"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "12.4" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s056-12.4/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s056-12.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2068 ;
+    djr:text "\n- 비용 큰 작업(인증, DB) **전에** rate limit 검사\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s056-12.4/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s056-12.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s026/b1> ;
+    djr:statesNorm djr:R-2069, djr:R-2070 ;
+    djr:text "- 확립된 429 계약의 `Retry-After` 헤더는 보존한다. 프레임워크 기본 429에 전역적으로 헤더를 합성하지 않으며, presentation controller가 직접 공개하는 retryable BC 오류만 승인된 `Retry-After` 헤더를 그 controller가 소유한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s056-12.4/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s056-12.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2071 ;
+    djr:text "- Rate limit 정책을 API 문서에 명확히 기재\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s056-12.4/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s056-12.4> ;
+    djr:kind djr:kind-prose ;
+    djr:order 4 ;
+    djr:text "> 출처: GitHub Docs - Rate Limits, IETF Draft - RateLimit Headers\n\n---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s059-13.2> a djr:Section ;
+    djr:headingSnapshot "### 13.2 Idempotency-Key 패턴"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "13.2" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s059-13.2/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s059-13.2> ;
+    djr:kind djr:kind-code ;
+    djr:order 1 ;
+    djr:text "\n```\nPOST /v1/charges\nIdempotency-Key: KG5LxSFa3M4fcVng\nContent-Type: application/json\n\n{\"amount\": 2000, \"currency\": \"usd\"}\n```\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s059-13.2/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s059-13.2> ;
+    djr:kind djr:kind-prose ;
+    djr:order 2 ;
+    djr:text "**동작 방식**:\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s059-13.2/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s059-13.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2072 ;
+    djr:text "1. 클라이언트가 고유 키 생성 (V4 UUID 권장)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s059-13.2/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s059-13.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3/b10> ;
+    djr:statesNorm djr:R-2073, djr:R-2074 ;
+    djr:text "2. 서버가 첫 요청의 결과를 저장 — 도메인 outcome은 응용 계층(트랜잭션)이 저장하고, HTTP status·응답 표현은 presentation이 소유한다(application·domain은 status를 만들지 않는다; §13.3)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s059-13.2/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s059-13.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-2075 ;
+    djr:text "3. 동일 키의 후속 요청은 저장된 결과를 반환\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s059-13.2/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s059-13.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-2076 ;
+    djr:text "4. 키는 24시간 후 만료 (일반적 정책)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s059-13.2/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s059-13.2> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-2077 ;
+    djr:text "5. POST에만 적용 — GET, PUT, DELETE는 이미 멱등\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3> a djr:Section ;
+    djr:headingSnapshot "### 13.3 계약 결정 사항"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "13.3" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2078 ;
+    djr:text "\n`Idempotency-Key`를 받는 엔드포인트는 다음을 API 계약으로 정한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 10 ;
+    djr:statesNorm djr:R-2082, djr:R-2083, djr:R-2084, djr:R-2085, djr:R-2086 ;
+    djr:text "Replay는 현재 자원 상태를 다시 조회해 새 응답을 만드는 것이 아니라, 최초 처리 outcome을 재현하는 것이다. 생성된 자원이 이후 바뀔 수 있다면 최초 응답 snapshot 또는 이에 준하는 안정적인 결과를 보관한다. 멱등성 저장은 도메인/응용 outcome을 트랜잭션에 기록하고, owning presentation controller가 최초·replay outcome을 HTTP status와 선택한 프로필의 응답 표현으로 매핑한다. 그 매핑을 중앙 error handler가 소유하지 않으며, application·domain은 status를 catch·생성·저장하지 않는다. byte 단위로 동일한 replay가 계약상 필요하면 presentation이 렌더한 응답을 보관하되, status 결정 소유는 여전히 presentation이다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3/b11> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 11 ;
+    djr:statesNorm djr:R-2087, djr:R-2088, djr:R-2089 ;
+    djr:text "**요청 fingerprint로 충돌 판정**: \"동일 key, 다른 request content\"를 판정하려면, 최초 요청 페이로드에서 생성한 fingerprint(예: 본문 hash)를 key와 함께 저장하고 후속 요청의 fingerprint와 비교한다. 일치하면 replay, 불일치하면 충돌이다. IETF Idempotency-Key 초안은 fingerprint 불일치(다른 페이로드)에는 `422 Unprocessable Content` + 문서 링크(`Link` 헤더)를, 처리 중인 최초 요청과 겹친 동시 재시도(아래 Concurrency)에는 `409 Conflict`를 권고한다. 일부 구현(Stripe 등)은 불일치에 `409`/`400`을 쓰기도 한다. 선택한 프로필의 public code 또는 RFC Problem Details를 계약에 명시한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 2 ;
+    djr:text "| 항목 | 기준 |\n|------|------|\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 3 ;
+    djr:text "| 적용 여부 | endpoint가 key를 허용하는지, 필수로 요구하는지 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 4 ;
+    djr:text "| Key scope | caller, operation, tenant, resource owner 등 어떤 범위에서 unique한지 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-2079 ;
+    djr:text "| Replay | 동일 key와 동일 request는 최초 operation outcome을 재현하고, 선택한 에러 프로필에 맞는 HTTP 응답으로 매핑 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-2080 ;
+    djr:text "| Conflict | 동일 key와 다른 request content는 새 작업으로 처리하지 않고 충돌로 응답 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 7 ;
+    djr:text "| Retention | key와 최초 결과를 얼마 동안 보관하는지 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 8 ;
+    djr:text "| Concurrency | 같은 key의 동시 요청 race를 어떻게 직렬화하거나 거절하는지 |\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3> ;
+    djr:kind djr:kind-table-row ;
+    djr:order 9 ;
+    djr:statesNorm djr:R-2081 ;
+    djr:text "| Storage | 내구성 있는 저장소와 transaction/lock 정책은 DB 설계로 연결 |\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s061-13.4> a djr:Section ;
+    djr:headingSnapshot "### 13.4 실전 원칙"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "13.4" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s061-13.4/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s061-13.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2090, djr:R-2091 ;
+    djr:text "\n- 결제, 주문 생성 등 **중복이 치명적인 POST**에 필수(dddjango 파이프라인: 채택은 G0/G1 사용자 결정이다 — 미요청이면 기본 미적용·설계가 G1 에서 제안만 한다)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s061-13.4/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s061-13.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2092 ;
+    djr:text "- 멱등성 키를 내구성 있는 저장소(DB, Redis)에 보관\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s061-13.4/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s061-13.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2093 ;
+    djr:text "- 동일 키의 동시 요청에 대한 레이스 컨디션 처리 필요\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s061-13.4/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s061-13.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s060-13.3/b11> ;
+    djr:statesNorm djr:R-2094 ;
+    djr:text "- 동일 key와 다른 request content(fingerprint 불일치)는 충돌로 처리한다 — status(`422`/`409` 등)와 선택한 에러 프로필을 계약에서 고른다(§13.3)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s061-13.4/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s061-13.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-2095 ;
+    djr:text "- browser form resubmission이 주된 문제이면 PRG를 고려하고, API client retry가 주된 문제이면 `Idempotency-Key`를 우선한다\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s061-13.4/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s061-13.4> ;
+    djr:kind djr:kind-prose ;
+    djr:order 6 ;
+    djr:text "> 출처: Stripe API - Idempotent Requests, Stripe Blog - Idempotency, IETF Draft - Idempotency-Key\n\n---\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3> a djr:Section ;
+    djr:headingSnapshot "### 14.3 반영해야 할 계약 표면"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "14.3" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2096 ;
+    djr:text "\nAPI 계약이 바뀌면 OpenAPI에 다음 표면을 함께 반영한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 10 ;
+    djr:text "- versioning metadata와 compatibility note\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 2 ;
+    djr:text "- path, HTTP method, operationId, tag\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 3 ;
+    djr:text "- path/query/header parameter와 request body schema\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 4 ;
+    djr:text "- 상태 코드별 response body schema와 header\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 5 ;
+    djr:text "- 선택한 에러 프로필의 error response (RFC 9457을 선택한 경우 Problem Details)\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 6 ;
+    djr:text "- authentication/authorization security requirement\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 7 ;
+    djr:text "- pagination parameter와 response metadata\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 8 ;
+    djr:text "- rate limit, retry, deprecation, sunset header\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s065-14.3> ;
+    djr:kind djr:kind-prose ;
+    djr:order 9 ;
+    djr:text "- `Idempotency-Key` header와 replay/conflict behavior 설명\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s066-14.4> a djr:Section ;
+    djr:headingSnapshot "### 14.4 실전 원칙"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> ;
+    djr:sectionNumber "14.4" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s066-14.4/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s066-14.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-2097 ;
+    djr:text "\n- API 설계 시 OpenAPI 명세를 함께 유지하여 문서와 구현의 불일치 방지\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s066-14.4/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s066-14.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-2098 ;
+    djr:text "- 명세 작성 도구(Swagger Editor, Stoplight 등) 활용\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s066-14.4/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s066-14.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-2099 ;
+    djr:text "- 테스트, client SDK, 문서, compatibility review가 같은 계약을 보도록 OpenAPI를 최신 상태로 유지\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s066-14.4/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s066-14.4> ;
+    djr:kind djr:kind-prose ;
+    djr:order 4 ;
+    djr:text "> 출처: Go_Deeper/Book/Architecture/DesigningAPIS\n\n---\n\n"@ko .

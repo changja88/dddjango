@@ -1,4 +1,5 @@
 # TDD 개발 방법론 가이드
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 이 문서에서 “테스트 작성”이나 Red를 말하는 모든 절은 §5.5의 영구 테스트 입장 심사에서
 > `add`·`update`로 결정된 행을 전제로 한다. 요구·버그·피라미드·예제는 먼저 candidate일 뿐이며,
@@ -27,6 +28,7 @@ TDD는 프로그래밍하면서 나타나는 **두려움을 관리하는 방법*
 ## 2. TDD 사이클 (Red-Green-Refactor)
 
 ### 2.1 기본 사이클 [테스트주도 개발]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```
 Red   --> `add/update`로 승인된 작은 테스트가 실패하는 것을 확인한다
@@ -200,6 +202,7 @@ def test_money_addition():
 ```
 
 ### 3.4 실전 권고: 상황별 선택
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 상황 | 권장 접근법 |
 |------|-----------|
@@ -238,6 +241,7 @@ Vladimir Khorikov는 좋은 단위 테스트의 가치를 평가하는 4가지 �
 | **유지보수성** | 테스트를 이해하고 실행하기 쉬운가 | 테스트 크기, 외부 의존성 수 |
 
 ### 4.2 회귀 방지의 위상 [Khorikov]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 회귀 방지(Protection against Regressions)는 단순히 버그 발견 시 사후에 작성하는 회귀 테스트를 넘어, **모든 테스트가 처음부터 갖춰야 할 설계 원칙**이다. 테스트 설계 시점부터 "이 테스트가 향후 회귀를 얼마나 잘 방지하는가"를 고려해야 한다.
 
@@ -292,6 +296,7 @@ def test_trivial():
 ```
 
 ### 4.5 세 가지 테스트 스타일 [Khorikov]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | 스타일 | 검증 대상 | 회귀 방지 | 리팩토링 내성 | 유지보수성 |
 |--------|----------|:---------:|:-----------:|:---------:|
@@ -355,6 +360,7 @@ def test_communication_based(mocker):
 ## 5. 빨간 막대 패턴 (테스트를 언제, 어디에 작성할 것인가) [테스트주도 개발]
 
 ### 5.1 테스트 후보 목록
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 시작하기 전에 검토할 **테스트 후보 목록을 적어 둘 것**. 이 목록은 탐색 메모이지 test file·case·assertion·helper 작성 의무가 아니다. 각 후보는 §5.5의 영구 테스트 입장 심사를 통과한 `add`·`update`일 때만 Red가 된다. 테스트 코드는 테스트 대상이 되는 코드를 작성하기 직전에 작성하는 것이 좋다.
 
@@ -374,10 +380,12 @@ def test_coupon_rejects_day_after_expiration():
 ```
 
 ### 5.2 한 단계 테스트
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 목록에서 다음 테스트를 고를 때 기준: **새로운 무언가를 가르쳐 줄 수 있으며, 구현할 수 있다는 확신이 드는 테스트**를 고른다. 아는 것에서 모르는 것으로 방향을 잡는다.
 
 ### 5.3 시작 테스트
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 오퍼레이션이 **아무 일도 하지 않는 경우를 먼저 테스트**한다. 뭔가를 가르쳐 줄 수 있으면서도 빠르게 구현할 수 있는 테스트를 선택하라.
 
@@ -388,10 +396,12 @@ def test_empty_cart_total():
 ```
 
 ### 5.4 설명 테스트
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 자동화된 테스트가 널리 쓰이게 하려면 **테스트를 통해 설명을 요청하고, 테스트를 통해 설명**해야 한다.
 
 ### 5.5 영구 테스트 입장 심사와 현행 계약 수명 주기
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 영구 테스트의 오라클은 현재 구현이 아니라 **현재 승인된 요구·설계·지원 계약**이다. 현재 구현과 기존 테스트는 조사 증거일 뿐이다. 구현이 현재 계약을 어기면 올바른 실패 테스트를 구현에 맞춰 삭제·약화하지 않고 구현을 고친다.
 
@@ -465,6 +475,7 @@ Django migration 파일·번호·dependency graph·operation·적용 순서·과
 ## 6. 초록 막대 패턴 (테스트를 통과시키는 전략) [테스트주도 개발]
 
 ### 6.1 가짜로 구현하기 (Fake It)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 `add/update`로 승인된 실패 테스트를 만든 후 첫 번째 구현은 **상수를 반환**하게 하여 일단 통과시킨다. 그 후 상수를 변수를 사용하는 수식으로 변경한다.
 
@@ -488,6 +499,7 @@ def summary(run_count, fail_count):
 - **범위 조절**: 하나의 구체적인 예에서 시작해서 일반화하면 쓸데없는 고민으로 혼동하는 일을 예방한다
 
 ### 6.2 삼각측량 (Triangulation)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 추상화 과정을 테스트로 주도할 때 최대한 보수적으로 하는 방법: **예가 두 개 이상일 때에만 추상화**한다.
 
@@ -504,6 +516,7 @@ def plus(a, b):
 어떻게 올바르게 추상화할 것인지 감잡기 어려울 때 사용하면 좋다.
 
 ### 6.3 명백한 구현 (Obvious Implementation)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 단순한 연산들은 그냥 구현해버린다. 어떻게 구현해야 할지 확신이 들면 그렇게 하는 것이 좋다.
 
@@ -512,6 +525,7 @@ def plus(a, b):
 ## 7. 테스팅 패턴 [테스트주도 개발]
 
 ### 7.1 테스트 격리
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 각각의 테스트는 서로 독립적이어야 하며, **실행 순서에서도 독립적**이어야 한다. 이를 달성하기 위한 구체적 전략은 **공유 상태 제거**이다. [xUnit Test Patterns]
 
@@ -537,6 +551,7 @@ def test_add_item_stable(fresh_list):
 ```
 
 ### 7.2 AAA 패턴: Arrange-Act-Assert [Osherove]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 테스트의 최종 코드 구조는 AAA 패턴을 따른다. 사고 과정에서는 Assert First(단언 우선)로 목적부터 정하되, 최종 코드는 위에서 아래로 자연스럽게 읽히도록 정리한다.
 
@@ -559,12 +574,14 @@ def test_transfer_funds():
 ```
 
 ### 7.3 테스트 데이터
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - 테스트를 읽을 때 쉽고 따라가기 좋을 만한 데이터를 사용하라
 - 데이터 간에 차이가 있다면 그 속에 **어떤 의미가 있어야** 한다
 - 동일한 상수를 여러 의미로 쓰지 마라 (예: `plus(2, 2)` 대신 `plus(2, 3)`)
 
 ### 7.4 명백한 데이터
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 테스트 자체에 예상되는 값과 실제 값을 포함하고, 이 둘 사이의 **관계를 드러내기 위해 노력**하라.
 
@@ -577,6 +594,7 @@ assert exchange(100, "USD", "GBP") == 100 / 2 * (1 - 0.015)
 ```
 
 ### 7.5 테스트 명명 규칙 [Osherove]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```
 [테스트 대상 단위]_[상태/조건]_[기대 행위]
@@ -597,10 +615,12 @@ def test_withdraw__amount_exceeds_balance__returns_insufficient_funds():
 ```
 
 ### 7.6 Mock보다 출력·상태 검증을 우선한다 [Khorikov]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 TDD로 구현을 몰아갈 때 검증 방식은 **출력 기반 > 상태 기반 > 통신 기반(Mock)** 순으로 선호한다. Mock은 외부 의존성(DB, API, 파일시스템, 결제, 알림 등) 격리에만 쓰고, 핵심 로직은 실제 객체의 출력/상태로 검증한다. 이는 무엇을 어떻게 검증할지에 대한 실천 원칙이며, Mock 우선순위표와 구체적 사용법(`Mock(spec=)`, `side_effect`, 호출/순서 검증)은 작성법이므로 `implementation-test` §7을 따른다. Mock이 필요한 경계에서의 *도구*는 pytest-mock `mocker` 픽스처다(자동 teardown) — 고전 학파 기본(§3 실제 협력 객체)은 불변이고 *도구만* 격상한다(무엇을·얼마나 mock할지는 위 우선순위가 소유).
 
 ### 7.7 깨진 테스트 / 깨끗한 체크인 [테스트주도 개발]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 - **혼자 프로그래밍**: 테스트가 깨진 상태로 끝마치면 다음에 어디서부터 시작할지 좋은 단서가 된다
 - **팀 프로그래밍**: 테스트가 성공한 상태로 끝마친다
@@ -608,6 +628,7 @@ TDD로 구현을 몰아갈 때 검증 방식은 **출력 기반 > 상태 기반 
 ---
 
 ## 8. 테스트 더블 분류 체계
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 테스트 더블의 상세 분류와 Python 구현은 `implementation-test` 스킬을 참조한다.
 
@@ -616,6 +637,7 @@ TDD로 구현을 몰아갈 때 검증 방식은 **출력 기반 > 상태 기반 
 ## 9. Outside-In TDD와 이중 루프 [Freeman & Pryce - GOOS]
 
 ### 9.1 이중 루프 TDD (Double Loop TDD)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 "Growing Object-Oriented Software, Guided by Tests"의 핵심 개념. 바깥 루프(인수 테스트)와 안쪽 루프(단위 테스트)는 서로 다른 피드백 범위를 제공하지만, 이중 루프라는 이유만으로 같은 계약의 양쪽 테스트가 자동 의무가 되지는 않는다. 각 영구 테스트 후보는 §5.5를 통과해야 한다.
 
@@ -669,6 +691,7 @@ def test_registration_service_saves_user(mocker):
 ```
 
 ### 9.2 Walking Skeleton [Freeman & Pryce - GOOS]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 GOOS의 첫 번째 단계: **가장 얇은 슬라이스의 실제 기능**을 구현하여 빌드, 배포, 테스트가 끝까지(end-to-end) 동작하는 것을 확인한다.
 
@@ -693,10 +716,12 @@ def test_walking_skeleton_health_check(client):
 ```
 
 ### 9.3 Mock Roles, Not Objects [Freeman, Pryce, Mackinnon, Walnes -- OOPSLA 2004]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Mock의 대상은 구체적인 객체가 아니라 **역할(Role)** 이다. 프로덕션 코드는 구체 구현 클래스(예: `StripeGateway`, `SmtpSender`)가 아니라 역할(인터페이스)에 의존하고, 테스트는 그 역할을 Mock한다. 역할을 `Protocol`로 정의하고 `mocker.Mock(spec=...)`로 대체하는 구체 구현은 작성법이므로 `implementation-test` §7을 따른다.
 
 ### 9.4 Tell, Don't Ask 원칙 [Freeman & Pryce - GOOS]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > "객체에게 정보를 요청해서 우리가 답을 계산하지 말고, 우리가 진짜 원하는 것을 객체에게 말하라(Tell)."
 
@@ -744,6 +769,7 @@ TDD의 각 단계에서 사용되는 디자인 패턴:
 | 수집 매개 변수 | O | O |
 
 ### 10.1 값 객체 (Value Object)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 객체가 생성된 이후 그 값이 절대 변하지 않게 하여 별칭 문제가 발생하지 않게 한다.
 
@@ -769,6 +795,7 @@ def test_money_immutable():
 ```
 
 ### 10.2 널 객체 (Null Object)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 특별한 상황을 표현하는 새로운 객체를 만들어, 다른 정상적인 상황을 나타내는 객체와 동일한 프로토콜을 제공한다.
 
@@ -792,6 +819,7 @@ def get_security_manager() -> SecurityManager:
 ```
 
 ### 10.3 팩토리 메서드 (Factory Method)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 생성자를 쓰는 대신 일반 메서드에서 객체를 생성하여 유연성을 확보한다.
 
@@ -816,14 +844,17 @@ def test_multiplication():
 ## 11. 리팩토링 패턴 [테스트주도 개발]
 
 ### 11.1 차이점 일치시키기
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 비슷해 보이는 두 코드 조각을 합치려면, 두 코드가 **단계적으로 닮아가게끔 수정**한다. 완전히 동일해지면 둘을 합친다.
 
 ### 11.2 변화 격리하기
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 객체나 메서드의 일부만 바꾸려면, 일단 바꿔야 할 부분을 격리한다. 격리 방법에는 **메서드 추출하기**, 객체 추출하기, 메서드 객체 등이 있다.
 
 ### 11.3 데이터 이주시키기
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 표현 양식을 변경하려면 **일시적으로 데이터를 중복**시킨다.
 
@@ -854,6 +885,7 @@ class TestSuite:
 ```
 
 ### 11.4 메서드 추출하기
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 길고 복잡한 메서드의 일부분을 **별도의 메서드로 분리**해내고 이를 호출하게 한다.
 
@@ -875,10 +907,12 @@ def generate_report(data):
 ```
 
 ### 11.5 메서드 인라인
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 너무 꼬여있거나 산재한 제어 흐름을 단순화하려면, 메서드를 호출하는 부분을 **호출될 메서드의 본문으로 교체**한다.
 
 ### 11.6 인터페이스 추출하기
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 오퍼레이션에 대한 두 번째 구현을 추가하려면, 공통되는 오퍼레이션을 담고 있는 **인터페이스(Protocol)**를 만든다.
 
@@ -909,10 +943,12 @@ class InMemoryRepository:
 ```
 
 ### 11.7 메서드 옮기기
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 메서드를 원래 있어야 할 장소로 옮기려면, 어울리는 클래스에 메서드를 추가해주고 그것을 호출하게 하라.
 
 ### 11.8 메서드 객체
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 여러 개의 매개 변수와 지역 변수를 갖는 복잡한 메서드를 표현하려면, 메서드를 꺼내서 객체로 만든다.
 
@@ -921,6 +957,7 @@ class InMemoryRepository:
 ## 12. 테스트 냄새 카탈로그 [Meszaros - xUnit Test Patterns]
 
 ### 12.1 행위 냄새 (Behavior Smells)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 테스트를 실행할 때 발생하는 문제들.
 
@@ -991,18 +1028,21 @@ def test_calculate_shipping_fee_for_domestic_order():
 ---
 
 ## 13. 레거시 코드 다루기
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 레거시 코드 다루기는 `discipline-cleancode` 스킬을 참조한다.
 
 ---
 
 ## 14. Property-Based Testing
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Property-Based Testing은 `implementation-test` 스킬을 참조한다.
 
 ---
 
 ## 15. Mutation Testing
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Mutation Testing은 `implementation-test` 스킬을 참조한다.
 
@@ -1011,6 +1051,7 @@ Mutation Testing은 `implementation-test` 스킬을 참조한다.
 ## 16. BDD (Behavior-Driven Development) [Cucumber, pytest-bdd]
 
 ### 16.1 TDD와 BDD의 관계
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 BDD는 TDD의 **진화형**이다. TDD가 개발자 중심의 코드 정확성에 집중한다면, BDD는 비즈니스 요구사항을 자연어로 표현하여 이해관계자와의 소통을 중시한다.
 
@@ -1034,6 +1075,7 @@ pytest-bdd 구현 상세는 `implementation-test` 스킬을 참조한다.
 ## 17. TDD와 AI 코딩의 관계
 
 ### 17.1 TDD as Prompt Engineering
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > "TDD는 프롬프트 엔지니어링이다. 테스트가 AI에게 '무엇을' 만들고 '언제 완료인지'를 알려준다."
 
@@ -1083,6 +1125,7 @@ def test_parse_korean_date_edge_cases():
 | 과도한 신뢰 | Red-Green 사이클이 점진적 검증을 강제 |
 
 ### 17.4 dddjango Admission을 추가한 TDAID 6단계
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```
 1. Plan      : 기능 요구사항에서 테스트 candidate를 도출
@@ -1096,6 +1139,7 @@ def test_parse_korean_date_edge_cases():
 ---
 
 ## 18. Python 테스트 생태계 심화
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Python 테스트 도구 생태계는 `implementation-test` 스킬을 참조한다.
 

@@ -1,0 +1,1440 @@
+{
+  "schema": "migrate-spec/1",
+  "doc_key": "agent-design-review-api",
+  "path": "dddjango/agents/design-review-api.md",
+  "sections": [
+    {
+      "section_key": "s001",
+      "line_start": 1,
+      "line_end": 11,
+      "blocks": [
+        {
+          "lines": [
+            2,
+            2
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            3,
+            3
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Coordinator 호출 대상(파이프라인 진입 트리거)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "①문면 «dddjango 파이프라인에서 Coordinator가 호출한다» — 프론트매터 description 이 라우팅 트리거 · ④§16 위임 기본값 표(command+agents 절차 층→Coordinator). check-*.py 27종 docstring 선두 전수 실독 — 에이전트 디스패치를 집행하는 검사기 0"
+            },
+            {
+              "label": "모드별 리뷰 수행(Phase 1 계약 독립 리뷰·Phase 2 증거 동일성 읽기 전용 확인)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 절차 층 기본값 — 어느 모드를 수행했는지의 판정 주체는 모드를 지정·수납하는 Coordinator(s002 b3 기본 모드 조항과 동축)"
+            },
+            {
+              "label": "명세·코드 직접 수정 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 절차 층 기본값 — 읽기 전용 계약 위반은 절차 위반이고 코드 산출물 대상 검사기 27종의 관할 밖(s007 b1과 동축 — 검수표 §4 재진술 의심)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            4,
+            4
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            5,
+            7
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            8,
+            9
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            10,
+            11
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Coordinator가 명시한 단일 모드의 읽기 전용 수행",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "①문면 «Coordinator가 명시한 한 모드만 읽기 전용으로 수행한다» + ④ 절차 층 기본값(모드 지정 주체=Coordinator)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s002",
+      "line_start": 12,
+      "line_end": 18,
+      "blocks": [
+        {
+          "lines": [
+            13,
+            14
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "기본 모드(DESIGN_CONTRACT_REVIEW)의 계약 관점 단일 lens 독립 비평",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 절차 층 기본값 — 모드 계약(단일 lens·독립성) 준수 판정은 리뷰 노트를 수납하는 Coordinator · ①문면이 architect 통합 설계 명세를 대상으로 지목"
+            }
+          ]
+        },
+        {
+          "lines": [
+            15,
+            16
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Phase 2 예외 모드의 발동 조건 한정(잔여 exit 1 diagnostic 전부가 DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED)",
+              "class": "Exception",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py",
+                "check-error-centralization.py",
+                "check-openapi-error-declaration.py"
+              ],
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "①문면이 marker 를 발동 조건으로 지목 + ②실측: 이 marker 를 실제 발행하는 검사기는 code-profile 3종(§16 매핑 표 «controller checker» 발행 + grep 실측 error-centralization·openapi-error-declaration 공동 발행) · ④발동 여부 판정은 Coordinator"
+            },
+            {
+              "label": "증거 동일성 확인 한정 — shape 신규 승인 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 절차 층 기본값 — shape 승인 권한은 G1 사용자 승인 소유이고 이 모드 산출은 확인 토큰 계약뿐(s004 b6와 동축)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            17,
+            18
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "모드 미명시 시 기본 모드 처리",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 절차 층 기본값 — 모드 명시 누락의 처분 판정은 호출 주체 Coordinator"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s003",
+      "line_start": 19,
+      "line_end": 31,
+      "blocks": [
+        {
+          "lines": [
+            20,
+            22
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "타 리뷰어 노트·구현 코드 열람 금지(명세만 근거)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 절차 층 기본값 — 입력 묶음 공급·독립성 보장 주체가 Coordinator · 27종 docstring 전수 실독 — 리뷰 입력 격리를 보는 검사기 0"
+            },
+            {
+              "label": "로드한 스킬 본문·references 참조는 제한 밖",
+              "class": "Exception",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 동상 — 제한 범위를 좁히는 한정 조항(문면이 제한 대상을 타 리뷰어 노트·구현 코드로 자기 한정)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            23,
+            24
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Phase 2 입력의 타 리뷰어 노트 미수령(독립성 유지)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 절차 층 기본값 — 무엇을 주고 주지 않는지는 입력 공급 주체 Coordinator 의 계약"
+            }
+          ]
+        },
+        {
+          "lines": [
+            25,
+            25
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            26,
+            26
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            27,
+            27
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            28,
+            28
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            29,
+            29
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            30,
+            31
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s004",
+      "line_start": 32,
+      "line_end": 44,
+      "blocks": [
+        {
+          "lines": [
+            33,
+            35
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "계약 리뷰 노트만 산출",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 절차 층 기본값 — 산출물 종류 계약(리뷰어 3종 동형)이고 수납 주체가 Coordinator"
+            },
+            {
+              "label": "명세 직접 수정 금지(반영은 architect 소유)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-architect"
+              ],
+              "basis": "④ 절차 층 기본값 + ①문면 «반영은 architect의 몫» — 판정 소유 배분 지목(P-C ⑵)이라 architect 병기 · 동축 재진술 의심(norm 3·102 와 «수정 금지» 3각 — 검수표 §4-④ · adv F10 반영)"
+            },
+            {
+              "label": "발견 다수 시 심각도 순(blocker→important→nit) 번호 나열",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 절차 층 기본값 — 리포트 형식 계약(agent-discipline-reviewer s003 b1 동형 문장과 같은 자)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            36,
+            36
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "발견 항목 형식(문제+근거 위치 인용+심각도 3단계)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 절차 층 기본값 — 산출 형식 계약(리뷰어 3종·discipline 4중 동형 · 검수표 §3 R2)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            37,
+            38
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "권고 항목 형식(변경 방법 제시)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 절차 층 기본값 — 산출 형식 계약(동형 4중)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            39,
+            40
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "무결 시 «계약 관점 이상 없음» 명시",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 절차 층 기본값 — 무발견 보고의 명시 계약(침묵과 무결의 구분이 게이트 판정 재료)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            41,
+            42
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "집행성 판정 1행 기재(가능=확정 결정 3곳 인용·불가=막히는 절·문장 지목)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 절차 층 기본값 — 리포트 형식 계약이고 판정 수납자가 Coordinator(리뷰어 3종+discipline 4중 동형 · 검수표 §3 R1)"
+            },
+            {
+              "label": "인용 없는 «집행 가능» 판정 무효",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 절차 층 기본값 — 무효 선언의 판정자는 판정을 수납·집행하는 Coordinator"
+            },
+            {
+              "label": "DYNAMIC_ERROR_SHAPE_PROOF_REVIEW 비적용(그 모드 산출은 확인 토큰 계약 그대로)",
+              "class": "Exception",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 절차 층 기본값 — 모드별 산출 계약의 적용 범위 한정(범위 판정은 모드 지정 주체)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            43,
+            44
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "RESOLVED 확인 토큰 발행의 한정 조건(전 증거 정확 일치·타 exit 1/2 부재)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "①문면의 토큰이 게이트 해소 절차 재료 + ④marker 해소 절차는 Coordinator 소유. enforcedBy 미병기 근거 = 이 조항이 서는 자리는 검사기가 DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED 로 분석 불능을 자인한 모드라 기계 집행이 없다(agent-discipline-reviewer s003 b5 대칭 판형)"
+            },
+            {
+              "label": "누락·불일치·미승인·기준선 변동 시 blocker+정확 근거 제출·토큰 미발행",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 절차 층 기본값 — 토큰 미발행 판정은 게이트 소유 Coordinator"
+            },
+            {
+              "label": "create|approved-change라는 이유만의 거부 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 절차 층 기본값 — 승인 경로 존중 규범(승인 evidence 대조는 검사기 입력 밖)"
+            },
+            {
+              "label": "이 산출의 shape 승인 갈음·discipline reviewer 독립 확인 갈음 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면이 discipline reviewer 의 독립 확인을 별도 요건으로 지목(P-C ⑵ — 그 확인을 실제 수행하는 주체) + ④이중 확인 절차 소유 Coordinator"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s005",
+      "line_start": 45,
+      "line_end": 53,
+      "blocks": [
+        {
+          "lines": [
+            46,
+            47
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "리소스·URL·HTTP 메서드·상태 코드의 의미론 적합성 점검",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 술어가 심사 행위(«…맞는가») + ④§16 위임 기본값 표 architecture-api 행. 27종 전수 실독 — 리소스·메서드 의미론 판정 검사기 0(URL 표면의 기계 축은 s006 b19 registrar provenance 뿐)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            48,
+            48
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "요청/응답 계약의 완전성 점검(media type·fields·필수성·status-specific schema)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring «validates the canonical common/BC FrameworkErrorSchema modules … wire-code uniqueness» — 코드 측 field/shape 축 한정 집행이고 명세의 계약 완전성 심사는 미집행(부분 커버 명시) + ④기본값 표 api 행"
+            },
+            {
+              "label": "RFC 9457 media type/fields 점검의 preserve-established 선택 scope 한정",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "①문면의 조건 한정 + ②preserve 경로는 schema semantics 미적용(«preserve still validates the selectors it supplies») — RFC 필드 술어는 27종에 0"
+            }
+          ]
+        },
+        {
+          "lines": [
+            49,
+            49
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "실패 상태 코드의 정확성 점검(401/403 인증·인가, 406/415 협상, 409/422 충돌·검증)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 — 27종 실독 결과 «상태 코드 선택이 의미론에 맞는가» 술어 0. [adv F5·F9 반영 — E 철회] check-business-vocabulary #119(축=framework 소유 status 의 BC 재선언·광고 금지 → norm 86 에 정배선) · check-ninja-boundary-middleware(축=자작 전역 미들웨어 차단 → norm 90 에 정배선) · check-transient-overmapping(축=infra 예외의 무조건 retryable 매핑 차단) 3종은 모두 오용-차단 축이라 norm 29 의 «축 반대» 배제와 같은 강도로 배제했다(§0 절제 목록)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            50,
+            50
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "멱등성 키 정책(scope·replay·conflict) 정의 여부 점검",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 유지. 기본값 도피 아님의 근거 = check-idempotency-scope-creep 은 docstring상 «미요청 멱등성의 silent 도입 차단»(G0=확장금지)이라 축이 반대이고 «정책이 정의됐는가» 술어가 없다"
+            },
+            {
+              "label": "저장소·retention 축의 db 리뷰어 이관",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-db"
+              ],
+              "basis": "①문면 «저장소·retention은 데이터 측면 — db 리뷰어로» 지목(P-C ⑵) + ④기본값 표 architecture-db 행"
+            }
+          ]
+        },
+        {
+          "lines": [
+            51,
+            51
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "버전·하위호환 유지와 breaking change 마이그레이션 경로 점검",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 — 27종 grep 실측 Sunset·deprecation 술어 0(검사 공백은 심사판 몫)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            52,
+            53
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "입장 표 API/public contract 후보의 4요소 감사(승인·consumer/wire evidence·독자 production failure·기존 권위 coverage)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 + ①문면 술어 «감사한다» — 입장 표는 명세 산출물이라 코드 검사기 관할 밖"
+            },
+            {
+              "label": "decision 없는 테스트 의무화 금지(위험·candidate 제안은 허용)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④동상 — 제안 권한과 의무화 금지가 한 축의 상·하한이라 1 Work"
+            },
+            {
+              "label": "framework/Pydantic 기본 동작·private Schema metadata·helper mechanics의 reject 기본 방향(별도 공개 Python consumer 계약 부재 시)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④동상 — 후보 유형별 기본 판정 방향(파일럿 ninja §6.2 slot 12 «자동 제품 테스트 전환 금지» 축과 동형)"
+            },
+            {
+              "label": "`pending` 의 G1 blocker 효과",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "①문면 «`pending`은 G1 blocker다» — 게이트 통과 판정 소유는 Coordinator(P-A)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s006",
+      "line_start": 54,
+      "line_end": 79,
+      "blocks": [
+        {
+          "lines": [
+            55,
+            57
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Ninja 오류 계약 신규·변경 scope의 12-slot 존재·순서·상호 일관·evidence/compatibility 검토",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 술어 «검토한다» + ④기본값 표 api 행 — 12-slot 은 명세 carrier 라 27종 docstring 에 대응 술어 없음"
+            },
+            {
+              "label": "Slots 5–12 code-profile constraint의 dddjango-code-json 한정 적용",
+              "class": "Exception",
+              "enforcedBy": [
+                "check-error-centralization.py",
+                "check-api-error-controller-contract.py",
+                "check-openapi-error-declaration.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring 3종이 모두 profile 게이팅 명시(«deliberately profile-gated» / «profile- and source-selected» / «positional/auto/preserve 실행은 … 보존») — 조건 적용이 기계로 집행됨"
+            },
+            {
+              "label": "preserve-established 각 slot의 profile-native canonical artifact/behavior 또는 evidenced none|not applicable 기록",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②preserve 경로는 «add no new error-mapping semantics»·«do not apply schema semantics» 라 기록 요구가 미집행(검사 공백) + ④기본값 표 api 행"
+            },
+            {
+              "label": "preserve scope의 code-profile module·Enum·base·direct-Status 혼입 금지(blocker)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②동상 — 혼입 판정 술어가 preserve 경로에 없어 계약 lens 심사 몫(파일럿 §6.2 «기존 프로젝트의 관찰 shape 기준선 보존» 배선과 동축)"
+            },
+            {
+              "label": "slot 누락·실제 ambiguity/conflict·필요한 STOP_FOR_USER_APPROVAL 누락의 blocker 판정",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api",
+                "command-dddjango"
+              ],
+              "basis": "①문면이 STOP_FOR_USER_APPROVAL 을 지목 + ②27종 grep 실측 해당 토큰 보유 검사기 0 · ④사용자 승인 정지 절차는 Coordinator 소유라 병기"
+            }
+          ]
+        },
+        {
+          "lines": [
+            58,
+            58
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "slot 1 — surface·profile·instance/namespace/version·BC/error-BC·module·consumer/OpenAPI evidence·module sharing 열거 확인",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring «project inventory correspondence» 검증(코드 측 inventory 대응) + ④기본값 표 api 행 — 명세 열거의 완결성 자체는 심사 몫(부분 커버)"
+            },
+            {
+              "label": "slot 1 — repository/greenfield/absent artifact의 경로 표기·명시값 확인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 — planned/absent 표기는 명세 기재 규율이라 코드 검사기 관할 밖"
+            }
+          ]
+        },
+        {
+          "lines": [
+            59,
+            59
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "slot 2 — repository module/artifact의 project-relative path·observation 입증 확인",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring «project inventory correspondence» — 저장소 실물 대응 축만 기계 집행(입증 기재 형식은 심사)"
+            },
+            {
+              "label": "slot 2 — external·사용자 발언·runtime OpenAPI evidence와 planned artifact의 planned path 입증 허용",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 — 저장소 밖 증거의 인정 범위는 계약 판정"
+            },
+            {
+              "label": "slot 2 — 같은 profile reuse의 dedupe 확인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④동상"
+            },
+            {
+              "label": "slot 2 — external/planned evidence 자체를 이유로 한 정지 금지·실제 모호·상충·불완전 때만 STOP_FOR_USER_APPROVAL",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-api",
+                "command-dddjango"
+              ],
+              "basis": "①문면이 STOP 발동의 상·하한을 한 문장으로 규정(부정면=같은 축의 하한이라 1 Work) + ④정지 절차 소유 Coordinator 병기"
+            }
+          ]
+        },
+        {
+          "lines": [
+            60,
+            60
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "slot 3 — 신규 scope의 dddjango-code-json / 관찰 계약의 preserve-established 확인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 · 파일럿 ninja §6.2 «오류 프로필 선택의 architecture-api 위임» 판형과 동축 — profile 은 검사기에 CLI selector 로 주어질 뿐 검사기가 고르지 않는다"
+            },
+            {
+              "label": "slot 3 — 두 profile 동시 요구·dependency/file name 기반 profile 추론 금지(blocker)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④동상 — 추론 금지의 판정자는 profile 을 고르는 계약 lens"
+            },
+            {
+              "label": "slot 3 — RFC 9457의 preserve profile-native 계약 인정과 위반 정의(선택 profile↔wire/implementation mismatch)",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④동상 — RFC 술어는 27종에 0(검사 공백)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            61,
+            61
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "slot 4 — 배포 public code/wire 변경의 breaking 취급과 support consumer·동시 migration/version split·deprecation/Sunset 종료 근거 확인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 — grep 실측 Sunset 술어 보유 검사기 0"
+            },
+            {
+              "label": "slot 4 — code-json client의 contract당 단일 Enum 소비 / preserve client의 profile-native consumer contract 유지 확인",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring «canonical common/BC FrameworkErrorSchema modules … wire-code uniqueness» — 단일 Enum·code 유일성 축 집행(consumer 유지 축은 미커버)"
+            },
+            {
+              "label": "slot 4 — preserve+RFC scope 기존 RFC test 종료·변경의 compatibility evidence·승인 요건",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api",
+                "command-dddjango"
+              ],
+              "basis": "①문면이 explicit user approval 을 요건으로 지목 → 승인 절차 소유 Coordinator 병기 + ④기본값 표 api 행"
+            }
+          ]
+        },
+        {
+          "lines": [
+            62,
+            62
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "slot 5 — code-json common action의 reuse|create|approved-change 한정·none 금지·approved-change 승인 evidence 확인",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api",
+                "command-dddjango"
+              ],
+              "basis": "②docstring «validates the canonical common/BC FrameworkErrorSchema modules» — common artifact 실재 축 집행 · ①approved-change 의 explicit user approval 은 G1 절차라 Coordinator 병기"
+            },
+            {
+              "label": "slot 5 — preserve의 profile-native action 또는 evidenced none|not applicable 인정·common ErrorSchema 미강제",
+              "class": "Exception",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring «preserve … do not apply schema semantics» — common Schema 미강제가 검사기 실동작으로 집행됨"
+            }
+          ]
+        },
+        {
+          "lines": [
+            63,
+            63
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "slot 6 — code-json common shape의 plugin 기본 property 부재",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 유지 — 파일럿 §6.2 동일 규범의 adv 중재 정정(L-F: 검사기는 자기 입력 inventory 를 전제하므로 순환 배선이라 enforcedBy 철회)을 승계하고 심사판이라 판정 주체만 api 로"
+            },
+            {
+              "label": "slot 6 — 기존 scope 관찰 shape 기준선·신규 scope의 exact field set/metadata/hook inventory·식별자 field 제안 확인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②preserve 경로 schema semantics 미적용(docstring) — shape 제안·기준선 판정은 검사기 입력이지 산출이 아님 + ④기본값 표 api 행(파일럿 동형 배선)"
+            },
+            {
+              "label": "slot 6 — 신규 shape·기준선 property/type/존재성/변환·의미 변경의 G1 분리 explicit user approval evidence 요구",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «일반 G1 승인과 분리된 explicit user approval» — 승인 절차 소유 Coordinator(파일럿 §6.2 «G1 slot 6 선제안·명시 승인» 배선과 동축)"
+            },
+            {
+              "label": "slot 6 — preserve의 observed wire/media type/schema/handler shape·approval 확인과 새 recipe 대체 금지",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 — preserve 경로 schema semantics 미적용이라 보존 판정은 계약 lens"
+            }
+          ]
+        },
+        {
+          "lines": [
+            64,
+            64
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "slot 7 — error-BC별 side-effect-free module 존재·public BC error 없는 BC만 none 확인",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring «validates the canonical common/BC FrameworkErrorSchema modules» — BC 오류 module 실재 축 집행(파일럿 §6.2 «BC 오류 언어의 단일 파일 집약»과 동축)"
+            },
+            {
+              "label": "slot 7 — preserve의 profile-native module/handler artifact 또는 evidenced none|not applicable 인정·BC module 미강제",
+              "class": "Exception",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②동상 — preserve 경로 schema semantics 미적용이 곧 «BC module 미강제»의 기계 실현"
+            },
+            {
+              "label": "slot 7 — 물리 배치·helper 우회 판정의 discipline-reviewer 이관",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "①문면 «물리 배치나 helper 우회 판정은 discipline-reviewer에게 보낸다» 지목(P-C ⑵) + ④위임 기본값 표 discipline 행"
+            }
+          ]
+        },
+        {
+          "lines": [
+            65,
+            65
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "slot 8 — client-distinguishable·observable 최소 public code의 단일 string Enum 확인",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring «wire-code uniqueness» + canonical BC module 검증 — 단일 Enum 축 집행"
+            },
+            {
+              "label": "slot 8 — 여러 internal failure의 code 공유 허용과 안정 body field 요구 범위 한정(slot 6/10 지정분)",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 — 허용 범위 판정은 계약 lens(검사기는 code 유일성만 본다)"
+            },
+            {
+              "label": "slot 8 — title property 발명 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 유지 — 27종 grep 실측 title property 술어 0(검사 공백 확인 · 기본값 도피 아님)"
+            },
+            {
+              "label": "slot 8 — preserve의 profile-native code taxonomy/Enum 또는 evidenced none|not applicable 인정·BC Enum 미강제",
+              "class": "Exception",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring preserve 경로 schema semantics 미적용 — Enum 미강제의 기계 실현"
+            }
+          ]
+        },
+        {
+          "lines": [
+            66,
+            66
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "slot 9 — common exact shape 보존+식별자 field 하나의 BC Enum 좁힘 base·public BC error 없는 BC만 none 확인",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring canonical BC module + «narrow direct raw-string discriminator forms» — 좁힘 base 축 집행"
+            },
+            {
+              "label": "slot 9 — 좁힌 식별자 field의 default 상실 canon 예외(식별자 field 한정·ErrorCode 좁힘 동반 · 2026-08-15)",
+              "class": "Exception",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②동상 · 파일럿 ninja §6.2 의 같은 canon 예외가 이 검사기로 배선된 선례(날짜 스탬프 동일 축)"
+            },
+            {
+              "label": "slot 9 — preserve의 status-specific schema/response artifact 또는 evidenced none|not applicable 인정·BC base 미강제",
+              "class": "Exception",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring preserve 경로 schema semantics 미적용"
+            }
+          ]
+        },
+        {
+          "lines": [
+            67,
+            67
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "slot 10 — concrete exception/failed Result → no-arg concrete ErrorSchema 또는 값 채운 BC base → direct Status chain과 slot-6 exact literal body/approved header 완전성 확인",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring «Enforce direct controller-owned code-profile error mapping» + 실물 진단 문자열 «direct two-argument Status(<approved HTTP status>, error)» — chain 축 집행"
+            },
+            {
+              "label": "slot 10 — internal failure type과 output object 혼동 금지(blocker)",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②동상 — 선택 controller 의 mapping 형태 판정이 검사기 계약 그 자체"
+            },
+            {
+              "label": "slot 10 — 공개 문자열의 str(exc) 자동 사용·sensitive data 노출 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 유지 — 27종 grep 실측 str(exc) 노출·sensitive 술어 0(controller 검사기의 str(exc) 는 자기 오류 수집 코드라 규범 술어 아님)"
+            },
+            {
+              "label": "slot 10 — raw infra 기본 500·승인된 안정 public meaning만 consuming BC internal exception 정규화 후 ErrorSchema 생성 확인",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py",
+                "check-synthetic-infra-exc.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②check-synthetic-infra-exc docstring «인프라 예외 합성 금지 + #129 전수 명시 매핑» 이 정규화 경로의 코드 측 짝 · controller-contract 는 정규화 뒤 매핑 형태 집행(파일럿 §6.2 «인프라 예외 합성 금지» 배선과 동축) — «기본 500» 판정 일반은 여전히 미집행. [adv F9 심의] check-transient-overmapping 은 docstring 자기 선언이 «G1 승인된 preserve-established handler 방어선»·저-recall AND 게이트이고 의미 렌즈를 architect·discipline 로 명시 이양하므로 code-json 분기인 이 규범에 병기하지 않았다(§0 절제 목록에 배제 근거 등재)"
+            },
+            {
+              "label": "slot 10 — preserve의 profile-native preparation/mapping 또는 evidenced none|not applicable 인정·code-profile chain 미강제",
+              "class": "Exception",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring «auto 와 preserve-established 는 … add no new error-mapping semantics» — chain 미강제의 기계 실현"
+            }
+          ]
+        },
+        {
+          "lines": [
+            68,
+            68
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "slot 11 — slot 10의 internal failure 형태에 따른 두 path 중 하나 선택 확인",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring 선택 controller 분석 + 실물 진단 «one narrow exception or try-free Result path»"
+            },
+            {
+              "label": "slot 11 — exception path의 narrow try 안 application call 정확히 1회·승인 concrete exception/tuple 한정 catch",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "②동상 — narrow try 축이 검사기 계약 그 자체(파일럿 §6.2 «exception path» 배선과 동형)"
+            },
+            {
+              "label": "slot 11 — Result/None/outcome path의 artificial try/catch 부재·call 1회+직후 branch·exception fabricate 금지(blocker)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "②동상(파일럿 §6.2 «Result/None path — call 정확히 1회·try 없는 failure branch» 배선과 동형)"
+            },
+            {
+              "label": "slot 11 — 두 path 공통의 승인 ErrorSchema 생성·approved header의 주입 HttpResponse 설정·two-argument Status 직접 return 확인",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②실물 HTTP_RESPONSE 상수 + «direct two-argument Status» 진단 — header 주입·반환 형태 축 집행 · [adv F3 반영] 원문 술어가 «…return하는지 확인한다»(심사)라 §0 P-B 판별대로 D 병기(같은 블록 norm 74 와 동일 판별자 · 직접 요구형 75·76·78 과 구분)"
+            },
+            {
+              "label": "slot 11 — status body property 요구 금지(blocker)",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "②실물 판정 keyword.arg in {status, status_code} — status 표현 축 집행"
+            },
+            {
+              "label": "slot 11 — helper/handler/factory/serializer/table·mapping 추출 우회의 발견 상신과 물리적 우회 판정의 discipline-reviewer 이관",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "②진단 «helper/handler/raw …» 차단(기계 절반) + ①문면이 물리 판정을 discipline-reviewer 로 지목(P-C ⑵ · 파일럿 §6.2 동형)"
+            },
+            {
+              "label": "slot 11 — preserve의 profile-native controller/handler mapping 또는 evidenced none|not applicable 인정·direct Status 미강제",
+              "class": "Exception",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring preserve 경로 «no new error-mapping semantics»"
+            }
+          ]
+        },
+        {
+          "lines": [
+            69,
+            70
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "slot 12 — 승인 status/body/header·mounted runtime·공개 generated OpenAPI 후보의 입장 표 행 연결 확인",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-openapi-error-declaration.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring «선택된 operation이 직접 반환하는 BC 오류와 response={status: <Bc>ErrorSchema} 선언의 일치를 검증» — OpenAPI 축 집행(입장 표 연결 자체는 심사)"
+            },
+            {
+              "label": "slot 12 — Pydantic private metadata·validator 위치·framework 기본 직렬화의 자동 제품 테스트 전환 금지(blocker)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 — 테스트 입장 판정은 명세 산출물 심사(파일럿 §6.2 «dependency pin 검토는 일회성 분석» 축과 동형)"
+            },
+            {
+              "label": "slot 12 — 공개 Python consumer 계약의 HTTP 별도 행 요구",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④동상"
+            },
+            {
+              "label": "slot 12 — preserve의 media type/fields/status-specific schema·handler와 test/OpenAPI evidence 또는 none|not applicable 확인",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-openapi-error-declaration.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring «positional/auto/preserve 실행은 기존 openapi_extra.responses 저장소 전수 검사를 보존» — preserve 경로에도 OpenAPI 축 일부 집행"
+            },
+            {
+              "label": "slot 12 — framework-owned 오류·auth/header smoke의 승인 계약·독자 failure 행 한정 허용과 exact framework body snapshot 미요구",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 — smoke 허용 범위는 입장 표 심사(검사기는 선언 일치만 본다)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            71,
+            71
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "framework-owned 401/403/route 404/422/429/general HttpError/unknown 500의 BC response 광고·전환 부재 확인",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-openapi-error-declaration.py",
+                "check-business-vocabulary.py",
+                "check-api-error-controller-contract.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④#119 framework 소유 열거(check-business-vocabulary 담당 목록) + ②openapi-error-declaration 의 response= 선언 일치 검증(광고 축) + controller-contract 의 매핑 provenance(전환 축) — 파일럿 §6.2 3종 병기 판형과 동형"
+            },
+            {
+              "label": "established framework header dependency 보존·테스트 확인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 — header dependency 보존 술어는 27종에 없음(테스트 존재 판정은 입장 표 심사)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            72,
+            72
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "모든 Ninja profile의 인증 실패는 None 반환 또는 framework AuthenticationError raise",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 — 27종 grep 실측 AuthenticationError 술어 0(파일럿 §6.2 동일 규범도 기본값 위임)"
+            },
+            {
+              "label": "AuthenticationError object·ErrorSchema 반환·request.auth 저장 금지(blocker)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④동상 — 파일럿 «request.auth·인증 결과의 ErrorSchema 사용 금지»와 동축"
+            },
+            {
+              "label": "별도 승인된 406/415의 tested version-compatible Ninja-owned pre-body/framework HttpError path 한정·함수형 Router/global handler 강제 금지",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-ninja-boundary-middleware.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring «406/415 콘텐츠 협상을 request.path 하드코딩한 전역 미들웨어로 자작 … django-ninja 는 협상/임의 status 를 경계 안에서 네이티브로 낸다(§6.3)» — grep 실측 406/415 보유 유일 검사기(전역 handler 강제 축 집행)"
+            },
+            {
+              "label": "preserve의 관찰된 profile-native error body·협상 behavior 보존",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 — preserve 보존 판정은 계약 lens"
+            }
+          ]
+        },
+        {
+          "lines": [
+            73,
+            73
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "native download/stream/redirect·schema-less 204 carveout 존중 확인",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-response-schema-bypass.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring «Block direct raw 200-203 returns that bypass a declared Ninja schema» + grep 실측 204 carveout 구현 보유 — 파일럿 §6.2 «framework-native 성공 carveout 4종 허용» 배선과 동형"
+            },
+            {
+              "label": "구조·파일 위치·import DRY·helper-circumvention 물리 판단의 discipline-reviewer 소유와 semantic contract inconsistency 한정 지적",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer",
+                "agent-design-review-api"
+              ],
+              "basis": "①문면 «물리 판단은 discipline-reviewer 소유이며, 여기서는 … semantic contract inconsistency만 지적한다» — 판정 소유 배분(P-C ⑵)의 포함·배제 양면이라 두 Agent 병기"
+            }
+          ]
+        },
+        {
+          "lines": [
+            74,
+            74
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "입장 표 remove/weaken 행의 실제 종료 evidence·exact target 제시 심사",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 — 종료 evidence 판정은 계약 lens(27종에 deprecation/Sunset 술어 0)"
+            },
+            {
+              "label": "명세 침묵·새 성공 응답 부재만으로의 종료 승인 금지·pending 반송",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api",
+                "command-dddjango"
+              ],
+              "basis": "④기본값 표 api 행 + ①pending 은 게이트 재료라 반송 처리 주체 Coordinator 병기(s005 «pending 은 G1 blocker»와 동축)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            75,
+            75
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "페이지네이션·정렬·필터·레이트리밋 계약의 일관성 점검",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 — 27종에 페이지네이션·레이트리밋 술어 0"
+            }
+          ]
+        },
+        {
+          "lines": [
+            76,
+            77
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "신규 표준 표면의 최종 URL 합성 독법(@api_controller prefix + @route 메서드 경로)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 — @api_controller «형태 요구» 술어는 27종에 0(check-context-isolation 은 이미 붙은 데코의 auto_import=False(#110)만 본다 · 형태 축 검사 공백)"
+            },
+            {
+              "label": "BC registrar의 register_controllers 등록과 URLconf 명시 호출·mount 흐름 확인(한쪽만 보고 URL 판단 금지)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-composition-root.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "②docstring «선택 API object, canonical BC registrar, project URLconf의 직접 import provenance와 exactly-on[ce]» + grep 실측 register_controllers 보유 유일 검사기 — registrar/URLconf provenance 축 한정 집행"
+            },
+            {
+              "label": "계약 lens의 컨트롤러 형태(함수형/클래스) 중립",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 — 형태 요구 술어 부재(위 실독)와 문면의 중립 선언이 정합"
+            }
+          ]
+        },
+        {
+          "lines": [
+            78,
+            79
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "계약 lens 대상 항목의 통째 누락 자체를 발견으로 상신",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④기본값 표 api 행 + ①문면 «그 누락 자체를 발견으로 올린다»"
+            },
+            {
+              "label": "architecture-api 스킬 절 인용 근거 제시",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "④동상 — 인용 대상이 api 스킬이라 같은 lens 소유"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s007",
+      "line_start": 80,
+      "line_end": 84,
+      "blocks": [
+        {
+          "lines": [
+            81,
+            82
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "두 모드 모두 코드·명세 수정 금지(읽기 전용)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 절차 층 기본값 — 읽기 전용 계약 위반은 절차 위반(s001 b2 3번째 규범과 동축 재진술 의심 · 검수표 §4)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            83,
+            83
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "도메인 규칙·애그리거트 경계의 ddd 리뷰어, 저장·트랜잭션·인덱스·멱등성 저장소의 db 리뷰어 이관",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd",
+                "agent-design-review-db"
+              ],
+              "basis": "①문면이 두 lens 를 소유자로 지목(P-C ⑵) + ④§16 위임 기본값 표 architecture-ddd / architecture-db 행"
+            }
+          ]
+        },
+        {
+          "lines": [
+            84,
+            84
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "스코프를 넓히는 권고 금지(스코프 의문은 발견으로만 상신)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "④ 절차 층 기본값 — 스코프 승인·확대 판정은 G0/G1 소유 Coordinator(리뷰어 3종+discipline 4중 동형 · 검수표 §3 R3)"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

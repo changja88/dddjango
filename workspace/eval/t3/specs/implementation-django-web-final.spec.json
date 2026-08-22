@@ -1,0 +1,1495 @@
+{
+  "schema": "migrate-spec/1",
+  "doc_key": "implementation-django-web-final",
+  "path": "dddjango/skills/implementation-django-web/references/final.md",
+  "restates_paths": {
+    "implementation-django-web-final": "dddjango/skills/implementation-django-web/references/final.md"
+  },
+  "sections": [
+    {
+      "section_key": "s001",
+      "line_start": 1,
+      "line_end": 19,
+      "blocks": [
+        {
+          "lines": [2, 7],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "모델·ORM·마이그레이션·트랜잭션·서비스 일반 구현의 implementation-django 소유",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①문면 «`implementation-django` 스킬이 소유한다» 소유 위임 명시 · ②27종 docstring 에 문서 소유 판정 술어 없음 · ③P0 E09 머리말 행 ③백스톱 «불명» — §16 위임 기본값(implementation-* → discipline-reviewer)"
+            },
+            {
+              "label": "REST API 계약·Ninja 구현의 architecture-api·implementation-django-ninja 기준 준거",
+              "class": "Obligation",
+              "delegatedTo": ["agent-design-review-api", "agent-discipline-reviewer"],
+              "basis": "①문면이 두 스킬을 직접 지정(명시 문면 우선) — architecture-api 축은 §16 표 design-review-api, implementation-django-ninja 축은 implementation-* 기본값 · ②check-api-error-controller-contract·check-openapi-error-declaration 은 선택 controller/operation 분석이라 «어느 스킬 기준을 따르나» 판정은 비커버"
+            }
+          ]
+        },
+        {
+          "lines": [8, 17],
+          "kind": "prose"
+        },
+        {
+          "lines": [18, 19],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s002-1",
+      "line_start": 20,
+      "line_end": 36,
+      "blocks": [
+        {
+          "lines": [21, 23],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "서버 렌더링 웹 화면 구현의 implementation-django-web 담당",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①스코프 선언 «담당한다»(P0 보수 포함 2건 중 첫째) · ②로스터 27종에 문서 관할 판정 술어 없음 — 위임 기본값"
+            },
+            {
+              "label": "포함 범위 열거의 스코프 한정",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①문면 «포함 범위는 …다» 열거(P0 보수 포함 둘째) · 검사기 비커버 — 위임 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [24, 25],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "해당 상황의 타 reference·skill 이관 의무",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «넘긴다» · ②이관 판정 술어는 27종 docstring 어디에도 없음 — 위임 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [26, 27],
+          "kind": "table-row"
+        },
+        {
+          "lines": [28, 28],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "REST resource·HTTP status·Problem Details·OpenAPI 계약의 architecture-api 이관",
+              "class": "Obligation",
+              "delegatedTo": ["agent-design-review-api"],
+              "basis": "①문면이 architecture-api 를 직접 지정 — §16 표 architecture-api → design-review-api(명시 문면·기본값 합치)"
+            }
+          ]
+        },
+        {
+          "lines": [29, 29],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "Django Ninja Router/Schema/API 구현의 implementation-django-ninja 이관",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①문면이 implementation-django-ninja 지정 · implementation-* 기본값(동일 귀착)"
+            }
+          ]
+        },
+        {
+          "lines": [30, 30],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "모델·QuerySet·Manager·migration·transaction 의 implementation-django 이관",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①문면 지정 · ②check-db-table·check-transaction-boundary 는 표준 트리 driven_layer/application_layer 산출물 축이라 «어느 스킬로 넘기나» 판정은 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [31, 31],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "DB locking·isolation·index·rollout/backfill 의 architecture-db 이관",
+              "class": "Obligation",
+              "delegatedTo": ["agent-design-review-db"],
+              "basis": "①문면이 architecture-db 지정 — §16 표 architecture-db → design-review-db"
+            }
+          ]
+        },
+        {
+          "lines": [32, 32],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "pytest fixture·test double·테스트 mechanics 의 implementation-test 이관",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①문면 지정 · ②check-test-config 는 pytest↔settings 바인딩·test/ 구조(#383~#392) 축이라 이관 판정 비커버 — implementation-* 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [33, 34],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "도메인 상태 전이·정책·불변식의 architecture-ddd 선결정",
+              "class": "Obligation",
+              "delegatedTo": ["agent-design-review-ddd"],
+              "basis": "①문면 «화면 전에 도메인 규칙 결정이 필요할 때» = 설계 시점 — §16 표 architecture-ddd 설계 시점 행(design-review-ddd)"
+            }
+          ]
+        },
+        {
+          "lines": [35, 36],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "웹 view·template 의 domain behavior 비소유",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «소유하지 않는다» · ②check-domain-model #257 확정 신호는 «응용·입구의 속성 접근 후 메서드 호출»(루트 우회)로 domain_layer 밖을 겨누지만 판정 스캔이 BC `application_layer` 한정이고, 표준 트리 driving_layer 칸은 api/·webhook/·open_host_service/·cron_job/·event_subscription/ 뿐이라 서버렌더 view 는 대상 집합 밖이다(트리 칸 부재). 규범 폭(view·template 의 domain behavior 소유 일반 금지)도 그 신호보다 넓다 · check-business-vocabulary 는 framework/ 어휘 축이라 template 축 비커버 — 기본값"
+            },
+            {
+              "label": "view 의 조합 책임 한정(request handling·auth/permission·form/context orchestration·service 호출·rendering)",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①문면 «조합한다» · ②check-usecase-dto-placement #210(컨트롤러는 result 만 보고 응답 구성)은 표준 트리 driving_layer/api 축이라 서버렌더 view 비커버 — 기본값"
+            },
+            {
+              "label": "template 의 presentation·presentation-related branching 한정 담당",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①한정 표지 «만 담당한다» · 검사기 비커버 — 기본값. §4 선두(s005-4/b1)가 같은 규범을 재진술하므로 §15 «정본 1곳» 규율에 따라 이 블록을 정본으로 채택"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s003-2",
+      "line_start": 37,
+      "line_end": 98,
+      "blocks": [
+        {
+          "lines": [38, 40],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "읽기 전용·context 준비 주작업 페이지의 TemplateView 적합",
+              "class": "Permission",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①권고 표지 «적합하다»(P0 보수 포함 1건) — 강제가 아니라 허용 · 검사기 비커버 — 기본값"
+            },
+            {
+              "label": "일반 CRUD·form flow 보일러플레이트의 Generic CBV 사용",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «사용한다» · 검사기 비커버 — 기본값"
+            },
+            {
+              "label": "명시성이 앞서는 custom flow 의 FBV 선택",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①조건 표지 «더 명시적이면 …선택한다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [41, 42],
+          "kind": "prose"
+        },
+        {
+          "lines": [43, 44],
+          "kind": "table-row"
+        },
+        {
+          "lines": [45, 45],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "read-only page — TemplateView·context_data 표시 값 준비",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①표 행 권장+주의(행당 1규범 계수 규약) · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [46, 46],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "목록/상세 — ListView/DetailView·relationship traversal 의 select_related/prefetch_related 검토",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①표 행 · ②N+1·query shape 판정 검사기는 로스터에 없음(check-db-table 은 모델 파일·db_table 축) — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [47, 47],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "생성/수정 form — FormView/CreateView/UpdateView·form_valid() 에 durable invariant 몰기 금지",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «몰아넣지 않는다» · ②check-transaction-boundary #195 는 표준 트리 유스케이스의 애그리거트 경유 축이라 Django form_valid() 축은 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [48, 48],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "method별 custom branch flow — FBV·request 첫 인자·GET/POST 흐름 명시",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①표 행 · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [49, 50],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "mixin 이 깊어지는 CBV — 재검토·한 관심사 한정·MRO 복잡 시 FBV/service boundary",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①표 행 «재검토» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [51, 52],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "view 의 thin adapter 유지",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «유지한다» · 검사기 비커버 — 기본값"
+            },
+            {
+              "label": "반복 read logic·성능 민감 query shape 의 selector/QuerySet/Manager 이전",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «옮긴다» · 검사기 비커버 — 기본값"
+            },
+            {
+              "label": "쓰기 유스케이스·다중 모델 동작의 service/usecase boundary 이전",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «옮긴다» · ②check-transaction-boundary 는 application_layer 내부 쓰기 규율(#195·#4·#197) 축이라 view→service 이전 여부 판정은 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [53, 98],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s004-3",
+      "line_start": 99,
+      "line_end": 110,
+      "blocks": [
+        {
+          "lines": [100, 102],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "raw domain object 전달로 template 이 fallback·권한·query shape·domain rule 을 결정하게 만들기 금지",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «만들지 않는다» · ②check-usecase-dto-placement #143/#144(schema_out 은 result 로 구성·도메인 노출 금지)는 ninja schema 축이라 template context 축 비커버 — 기본값"
+            },
+            {
+              "label": "view·context builder·selector·view-model helper 의 화면 언어 이름·표시 값 준비",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «준비한다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [103, 104],
+          "kind": "prose"
+        },
+        {
+          "lines": [105, 105],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "optional field 표시 값의 project-standard placeholder 변환 후 context 적재",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «넣는다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [106, 106],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "template 의 domain field raw fallback 직접 결정 금지",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «직접 결정하지 않는다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [107, 107],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "optional display path 의 중앙 영구 테스트 입장 심사 candidate 취급",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①문면이 «중앙 영구 테스트 입장 심사»(소유 discipline-tdd) 지목 · ②로스터에 입장 심사 검사기 없음 — §16 기본값 표 discipline-* 행 = discipline-reviewer"
+            },
+            {
+              "label": "승인 표시 계약·독자 failure 의 add/update 한정 render/context 경계 확인·구조 규칙만의 테스트 생성 금지",
+              "class": "Exception",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①조건부 한정 «…이면 …하고, 그렇지 않으면 …만들지 않는다» · ②check-test-config 는 pytest 바인딩·test/ 구조 축이라 테스트 «내용» 판정 비커버 — 기본값"
+            },
+            {
+              "label": "None ↔ blank string 공개 구분 여부의 같은 입장 심사 판정",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①문면 «같은 심사에서 판정한다» — 판정 주체 명시(P0 E09 §3 비고와 일치) · 기본값 귀착"
+            }
+          ]
+        },
+        {
+          "lines": [108, 108],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "목록 화면 relationship 순회의 view/query layer N+1 선검토",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «먼저 검토한다» · ②N+1 판정 술어는 27종 어디에도 없음 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [109, 110],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "template variable 이름의 화면 언어 정합",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «맞춘다» · ②check-naming 은 표준 트리 경로·클래스 이름 축(#28·#30·#33 등)이라 template 변수명 비커버 — 기본값"
+            },
+            {
+              "label": "내부 모델 필드 이름의 그대로 노출 불요",
+              "class": "Permission",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①문면 «노출할 필요는 없다» = 약한 허용 → Permission · 검사기 비커버 — 기본값"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s005-4",
+      "line_start": 111,
+      "line_end": 149,
+      "blocks": [
+        {
+          "lines": [112, 114],
+          "kind": "norm",
+          "restates": ["implementation-django-web-final/s002-1/b10"],
+          "norms": [
+            {
+              "label": "가격 계산·상태 전이·permission policy·복잡한 data selection·hidden database work 의 template 배치 금지",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «두지 않는다» · 검사기 비커버 — 기본값. 같은 블록 첫 문장(template 책임 한정)은 §1 b10 3번째 Work 의 재진술이라 §15 «정본 1곳만 Work 승격»에 따라 비승격하고 restates 로 연결"
+            }
+          ]
+        },
+        {
+          "lines": [115, 116],
+          "kind": "prose"
+        },
+        {
+          "lines": [117, 117],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "template inheritance 채택 시 공통 document structure·navigation·global asset·공통 block 의 base template 배치",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①조건부 의무 «…사용하면 …둔다» · ②표준 트리 templates 칸(트리 87~88행)은 check-db-table·check-layer-skeleton 의 경로 축이고 base template 구성 규칙은 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [118, 118],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "`{% extends %}` 의 첫 비주석 줄 배치",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «둔다» · 검사기 비커버(27종 중 템플릿 문법 검사 술어 0) — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [119, 119],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "block 의 역할 드러나는 이름·block 이름으로 닫기",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «붙이고 …닫는다» · ②check-naming 은 Python 경로·클래스 이름 축이라 template block 이름 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [120, 121],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "page-specific CSS/JS 의 프로젝트 static convention block opt-in",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «opt in 한다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [122, 123],
+          "kind": "prose"
+        },
+        {
+          "lines": [124, 124],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "반복·동시 변경 UI fragment 의 include/component 분리",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①조건부 의무 «…때 분리한다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [125, 125],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "include context 의 필요 변수 명시 전달",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «전달한다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [126, 127],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "짧은 snippet 전부의 include 화 금지",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «만들지 않는다» · 검사기 비커버 — 기본값"
+            },
+            {
+              "label": "재사용이 이해·일관성을 실제로 높일 때만 분리",
+              "class": "Exception",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①한정 표지 «…때만 분리한다» — 앞 금지의 예외 조건 · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [128, 129],
+          "kind": "prose"
+        },
+        {
+          "lines": [130, 130],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "`{{ variable }}`·`{% tag %}` 안 한 칸 공백",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «둔다»([DCS] 근거) · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [131, 131],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "복수 template library load 의 알파벳순 유지",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «유지한다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [132, 132],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "HTML template indentation 의 프로젝트 관례 준수",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «따르며» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [133, 133],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "`{% load static %}`·`{% static %}` 사용",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «사용한다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [134, 135],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "`|safe`·`mark_safe()` 의 trusted/sanitized·의도·근거 한정 사용",
+              "class": "Exception",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①한정 표지 «…한해 …있을 때만 사용한다» — autoescape 기본(§8)의 예외 조건 · 검사기 비커버(XSS 축 정적 검사 술어 0) — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [136, 149],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s006-5",
+      "line_start": 150,
+      "line_end": 162,
+      "blocks": [
+        {
+          "lines": [151, 153],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "static asset 의 기존 pipeline 준수",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «따른다» · 검사기 비커버 — 기본값"
+            },
+            {
+              "label": "app-specific asset 의 앱 근접 배치(프로젝트가 app/static/app_name 구조를 쓰는 경우)",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①조건부 의무 «…쓰는 경우 …둔다» · ②check-layer-skeleton #490(트리 밖 경로 금지)은 표준 트리 BC 하위를 보는데 이 문장은 «프로젝트 기존 관례»를 전제한 조건부라 트리 폐쇄 축과 대상이 다름 — 기본값(경계 판단은 검수표)"
+            },
+            {
+              "label": "shared design-system·global asset 의 기존 shared static 위치 준수",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «따른다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [154, 155],
+          "kind": "prose"
+        },
+        {
+          "lines": [156, 156],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "hardcoded static URL 대신 `{% static %}` 사용",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «사용한다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [157, 157],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "page-specific CSS/JS 변경 시 같은 변경에서 rendered template 연결",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «연결한다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [158, 158],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "미참조 page-specific asset 의 unfinished work 판정",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①판정 지시 «unfinished work 로 본다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [159, 159],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "inline script 의 작고 template-local 한정 허용",
+              "class": "Permission",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①허용 표지 «…일 때만 허용한다» · 검사기 비커버 — 기본값"
+            },
+            {
+              "label": "domain data transformation 의 template JavaScript 배치 금지",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «넣지 않는다» · ②check-business-vocabulary 는 framework/ 파이썬 모듈의 업무 어휘 축(#47·#52)이라 template JS 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [160, 160],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "STATIC_URL·STATIC_ROOT·STATICFILES_DIRS·storage backend·bundler·manifest hashing 의 기존 설정 준수",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «따른다» · ②check-test-config ⑶ 은 `<project>/settings/` 환경축(#445~#447) 축이라 static 설정 값 축은 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [161, 162],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "deployment asset resolution·manifest hashing 변경 시 collectstatic 실행·미실행 사유 보고",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «보고한다» · ③P0 E09 §5 행 «collectstatic 실행 또는 미실행 사유 보고 — 보고 의무이지 검사기 지목 아님» 명문 — 기본값"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s007-6",
+      "line_start": 163,
+      "line_end": 206,
+      "blocks": [
+        {
+          "lines": [164, 166],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "form 의 input shape·presentation error·user-facing validation message 담당",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «담당한다» · 검사기 비커버 — 기본값"
+            },
+            {
+              "label": "durable domain invariant 의 model/service/DB boundary 보장",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «보장되어야 한다» · ②check-transaction-boundary #195/#287 은 표준 트리 유스케이스·리포지토리 쓰기 인자 축이라 «form 밖에서도 보장» 판정은 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [167, 168],
+          "kind": "prose"
+        },
+        {
+          "lines": [169, 169],
+          "kind": "prose"
+        },
+        {
+          "lines": [170, 170],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "`ModelForm.Meta.fields` 의 명시 나열",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «명시적으로 나열한다» · 검사기 비커버(로스터에 Django form AST 술어 0) — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [171, 171],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "`fields = \"__all__\"`·`exclude` 회피(프로젝트 명시 수용 시 예외)",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «피한다» + 명시 수용 예외 조건 · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [172, 172],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "form·model field 공통 input validation 의 custom validator 재사용 검토",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «검토한다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [173, 173],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "일반 web form 의 POST/Redirect/GET 기본 선택",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «기본 선택지로 둔다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [174, 175],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "invalid POST 의 form error·입력 값 회복 가능 렌더링",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «렌더링한다» · 검사기 비커버 — 기본값(§11 b3 view-local 재렌더 규범과 같은 축이나 문장 주어가 form 경로라 별도 Work)"
+            }
+          ]
+        },
+        {
+          "lines": [176, 206],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s008-7",
+      "line_start": 207,
+      "line_end": 237,
+      "blocks": [
+        {
+          "lines": [208, 210],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "domain behavior 의 model/service/usecase boundary 배치와 view 의 조합 한정",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «두고 …조합한다»(선행 «HTMX view 는 web adapter다» 정의문은 P0 승계로 비계수) · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [211, 212],
+          "kind": "prose"
+        },
+        {
+          "lines": [213, 213],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "HTMX fragment template 의 소형 유지·의도적 재사용 시에만 공통 fragment",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «유지하고 …둔다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [214, 214],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "state-changing HTMX/AJAX 의 non-HTMX POST 동급 auth·permission·CSRF 검증",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «적용한다» · ②check-ninja-boundary-middleware 는 BC driving_layer 자가정의 미들웨어의 전역 등록 축이라 CSRF 검증 적용 여부는 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [215, 215],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "non-JavaScript fallback 기대 시 progressive enhancement path 유지",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①조건부 의무 «…기대하면 …유지한다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [216, 216],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "resource contract·status matrix·schema·Problem Details 필요 시 ninja/architecture-api 이관",
+              "class": "Obligation",
+              "delegatedTo": ["agent-design-review-api", "agent-discipline-reviewer"],
+              "basis": "①문면이 implementation-django-ninja·architecture-api 를 직접 지목 — architecture-api 축은 §16 표 design-review-api, ninja 축은 implementation-* 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [217, 218],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "HTMX-specific header·response behavior 의 UI contract 취급·domain logic 혼합 금지",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «섞지 않는다» · ②check-business-vocabulary #119(framework 소유 status 열거)는 ninja 오류 경계 축이라 HTMX 헤더 축 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [219, 228],
+          "kind": "code"
+        },
+        {
+          "lines": [229, 237],
+          "kind": "code"
+        }
+      ]
+    },
+    {
+      "section_key": "s009-8",
+      "line_start": 238,
+      "line_end": 250,
+      "blocks": [
+        {
+          "lines": [239, 241],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "`CsrfViewMiddleware` 유지(좁고 문서화된 예외 부재 시)",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «유지한다» · ③P0 E09 §8 «커버»는 Django 내장 `check --deploy` 지목이고 플러그인 27종은 CSRF 미들웨어 축 술어 0 — 기본값"
+            },
+            {
+              "label": "POST form 의 `{% csrf_token %}` 사용",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «사용한다» · 검사기 비커버 — 기본값"
+            },
+            {
+              "label": "state-changing AJAX/HTMX 의 프로젝트 header·form pattern CSRF token 전송",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «보낸다» · 검사기 비커버 — 기본값"
+            },
+            {
+              "label": "`@csrf_exempt` 의 대체 보호 명확한 작은 경계 한정 사용",
+              "class": "Exception",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①한정 표지 «…에서만 사용한다» — CsrfViewMiddleware 유지 규범의 예외 조건 · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [242, 243],
+          "kind": "prose"
+        },
+        {
+          "lines": [244, 244],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Django template autoescaping 기본 신뢰",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «신뢰한다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [245, 245],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "untrusted value 의 JavaScript context 직접 주입 금지",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «주입하지 않는다» · 검사기 비커버 — 기본값"
+            },
+            {
+              "label": "프로젝트 escaping pattern 준수",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «따른다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [246, 246],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "`CSRF_COOKIE_HTTPONLY` 의 프로젝트 요구·Django caveat 병행 고려",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «함께 고려한다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [247, 247],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "security·session·CSRF·auth·message·frame option 미들웨어 ordering 보존",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «보존한다» · ②check-ninja-boundary-middleware 는 settings.MIDDLEWARE 항목 중 BC driving_layer 경로만 적출(순서 축 아님) — 비커버, 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [248, 248],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "security setting 변경 시 `manage.py check --deploy` 실행·미실행 사유 보고",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "③P0 E09 §8 행 ③백스톱 «커버» — 다만 지목 대상이 Django 내장 결정적 검사이고 registry 개체(dddjango/scripts/check-*.py 27종) 밖이라 enforcedBy 불가 · 보고 의무 이행 판정은 §16 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [249, 250],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "raw SQL 의 user input 보간 금지·parameterized query 사용",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «보간하지 말고» · 검사기 비커버(SQL 문자열 축 술어 0) — 기본값"
+            },
+            {
+              "label": "QuerySet/Manager 의 implementation-django·DB 성능 설계의 architecture-db 이관",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer", "agent-design-review-db"],
+              "basis": "①문면이 두 문서를 직접 지목 — implementation-django 축은 implementation-* 기본값, architecture-db 축은 §16 표 design-review-db"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s010-9",
+      "line_start": 251,
+      "line_end": 261,
+      "blocks": [
+        {
+          "lines": [252, 254],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "protected page 의 render 전 view-level auth·permission 확인",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «확인한다» · 검사기 비커버(27종에 view 인가 술어 0) — 기본값"
+            },
+            {
+              "label": "template 의 authorization decision 비소유(표시 숨김만 허용)",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «소유하지 않는다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [255, 256],
+          "kind": "prose"
+        },
+        {
+          "lines": [257, 257],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "FBV 의 프로젝트 표준 `login_required`·`permission_required`·method decorator 사용",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «사용한다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [258, 258],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "CBV 의 `LoginRequiredMixin`·`PermissionRequiredMixin`·프로젝트 표준 mixin 사용",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «사용한다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [259, 259],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "domain rule 결합 permission policy 의 architecture-ddd·application service boundary 선결정",
+              "class": "Obligation",
+              "delegatedTo": ["agent-design-review-ddd"],
+              "basis": "①문면이 architecture-ddd 를 지목하고 «먼저 결정한다» = 설계 시점 — §16 표 architecture-ddd 설계 시점 행(design-review-ddd)"
+            }
+          ]
+        },
+        {
+          "lines": [260, 261],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "unauthorized·forbidden·redirect 동작의 프로젝트 표준·테스트 기대 정합",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «맞춘다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s011-10",
+      "line_start": 262,
+      "line_end": 280,
+      "blocks": [
+        {
+          "lines": [263, 265],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "web 구현 완료 시 실행한 검증만 보고",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «보고한다» · ②로스터 27종은 산출물 정적 검사라 «보고 정직성» 판정 비커버 — 기본값"
+            },
+            {
+              "label": "render/browser/collectstatic/security check 미실행의 미실행 명시",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «명시한다» · 검사기 비커버 — 기본값"
+            },
+            {
+              "label": "test-shaped 증거의 비자동의무·중앙 입장 심사 candidate 또는 add/update 뒤 recipe 취급",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①문면이 «중앙 입장 심사»(discipline-tdd 소유) 지목 · ②입장 심사 검사기 없음 — §16 기본값 표 discipline-* 행"
+            },
+            {
+              "label": "승인 계약·독자 failure 보호 테스트 허용·`reuse/reject` 의 신규 test artifact 생성 금지",
+              "class": "Exception",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①조건부 허용+금지 «허용하되 …만들지 않는다» · ②check-test-config 는 test/ 구조 축이라 artifact 생성 «승인 여부» 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [266, 267],
+          "kind": "prose"
+        },
+        {
+          "lines": [268, 269],
+          "kind": "table-row"
+        },
+        {
+          "lines": [270, 270],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "template/context 변경 — add/update 뒤 render test·test client response·context assertion과 미실행 사유 보고",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①검증 행렬 행(행당 1규범 계수 규약) · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [271, 271],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "optional display value — 승인 None/blank/missing path 의 context/render assertion·raw fallback 은 unfinished",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①검증 행렬 행 · §3 b5 입장 심사 규범과 같은 축이나 여기는 증거·gap 기준을 운반 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [272, 272],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "static CSS/JS 변경 — rendered HTML static reference·참조 경로 존재·미참조 시 unfinished",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①검증 행렬 행 · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [273, 273],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "form 변경 — GET·valid POST·invalid POST·redirect·form error assertion과 CSRF/auth 미확인 시 residual risk",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①검증 행렬 행 · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [274, 274],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "HTMX 변경 — fragment response·method/auth/permission/CSRF·redirect/header 증거와 API-like 계약 시 handoff",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer", "agent-design-review-api"],
+              "basis": "①검증 행렬 행 + gap 열이 implementation-django-ninja/architecture-api handoff 를 지목 — API 계약 축은 §16 표 design-review-api 병기"
+            }
+          ]
+        },
+        {
+          "lines": [275, 275],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "service 예외 처리(§11) — 도메인 예외 200 폼 재렌더·미식별/영구 handler500·transient 503+Retry-After·HTMX 에러 fragment 증거",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①검증 행렬 행이 §11 을 참조 좌표로 지목 · ②검사기 축(transient-overmapping·synthetic-infra-exc)은 §11 정본 규범이 지고 이 행은 «증거·gap 기준»이라 리뷰어 판정 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [276, 276],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "security setting 변경 — `check --deploy` 또는 project-specific security check·미실행 사유",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①검증 행렬 행 · ③§8 «커버» 지목은 Django 내장 검사라 registry 밖 — 기본값(§8 b7 과 동일 판단)"
+            }
+          ]
+        },
+        {
+          "lines": [277, 278],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "visible UI 변경 — browser check·screenshot·render test 증거와 browser 미실행의 실행 보고 금지",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①검증 행렬 행(기대 증거 의무 + gap 열 허위 보고 금지) · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [279, 280],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "완료 보고의 실행 명령·테스트 대상·실패/미실행 분리 기재",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «분리해 적는다» · 검사기 비커버 — 기본값"
+            },
+            {
+              "label": "직접 커버 확인 없는 넓은 완료 주장 금지",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «주장하지 않는다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s012-11",
+      "line_start": 281,
+      "line_end": 424,
+      "blocks": [
+        {
+          "lines": [282, 284],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "service/usecase 예외의 출처 분류 — 도메인 예외는 view-local 변환·인프라/프레임워크/미식별은 비포획 전파",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①문면 «출처로 분류해 처리 자리를 가른다» · ②check-synthetic-infra-exc ⑵#129 는 driven 층 catch-all 번역 축이라 view 층 분류 규범 비커버 · ③P0 E09 §11 «커버»는 transient-overmapping·synthetic-infra-exc·error-centralization 대응을 뜻하고 이 분류 문장은 미대응 — 기본값"
+            },
+            {
+              "label": "«사용자가 행동을 바꿔 풀 수 있나» 의 1차 분류 기준 사용 금지(2차 신호 한정)",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «1차 분류 기준이 아니라 …2차 신호다» · 검사기 비커버 — 기본값"
+            },
+            {
+              "label": "이 절의 서버렌더 HTML 경로 한정 소유·JSON API 오류 표현 혼합 금지",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «섞지 않는다» · ②check-error-centralization 은 profile-gated(dddjango-code-json)이고 대상이 canonical FrameworkErrorSchema 모듈·inventory 라 HTML 경로 혼합 판정은 소스 선택 밖 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [285, 286],
+          "kind": "prose"
+        },
+        {
+          "lines": [287, 287],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "도메인 예외의 narrow except 포획·폼 재렌더(입력 보존·messages.error·200·PRG)",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «재렌더한다·싣는다» · ②check-api-error-controller-contract 는 ninja controller 오류 매핑 축(JSON profile)이라 HTML view-local 재렌더 비커버 — 기본값"
+            },
+            {
+              "label": "`except Exception` 광범위 catch 금지",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «금지다» + 문면이 `discipline-cleancode` 구체적 예외 처리 지목 · ②check-synthetic-infra-exc ⑵#129 는 «driven 층»의 catch-all 뒤 새 예외 생성 형태만 차단이라 view(driving) 층 광범위 catch 는 대상 밖 — discipline-* 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [288, 288],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "사용자 에러의 `handler500` 회부 금지",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «보내지 않는다»(나머지 두 문장은 빈 Context·시그니처 사실 서술이라 비계수) · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [289, 289],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "시스템 에러(미식별·영구장애)의 중앙 `handler500` 처리 — view 비포획 전파",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①문면 «view 가 잡지 않고 전파하면» 처리 자리 지정 · ②check-transient-overmapping 은 handler 의 통째 retryable 매핑 축이라 handler500 경로 지정은 비커버 — 기본값"
+            },
+            {
+              "label": "custom handler view 의 `request` 인자 전용·`HttpResponseServerError` 반환",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «받고 …반환한다» · ②check-public-surface-annotation 은 «첫 대입 타입»(#493) 축이라 시그니처 «인자 구성» 판정은 비커버 — 기본값"
+            },
+            {
+              "label": "`500.html` 의 프로젝트 단일 배치(view 별 에러 페이지 금지)",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «만들지 않는다» · ②check-layer-skeleton #490(트리 밖 경로) 은 BC 하위 폐쇄 축이라 프로젝트 템플릿 개수 판정 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [290, 290],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "재시도로 해소되는 경합의 `process_exception` 미들웨어 retryable(503+`Retry-After`) 매핑",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①문면 «미들웨어가 유일한 중앙 자리다» · ②check-transient-overmapping 은 «분기 없는 통째 503» 차단 축이라 매핑 자리 지정은 비커버 · check-ninja-boundary-middleware 는 BC driving_layer 자가정의 미들웨어의 전역 자가등록 축이라 프로젝트 레벨 미들웨어와 무관 — 기본값"
+            },
+            {
+              "label": "retryable 판정의 Django HTML 미들웨어 private predicate 배치",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «둔다»(소비자 유일 조건 명시) · ②framework 승격 축 검사기(check-business-vocabulary #19·#395)는 표준 트리 framework/ 자식 구성만 보고 predicate 소유 자리는 비커버 — 기본값"
+            },
+            {
+              "label": "predicate 의 승인 신호·SQLSTATE 한정 인식과 예외 원문·SQL·secret 의 응답·로그 노출 금지",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «되돌려 주지 않는다» · ②check-transient-overmapping AND 조건 2 는 «영구장애 구별 분기 부재»만 보고 신호 목록·노출 금지는 비커버 — 기본값"
+            },
+            {
+              "label": "명시 `__cause__` 우선·`__suppress_context__` 거짓일 때만 `__context__` 추적(`from None` 원인 복원 금지)",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «되살리지 않는다» · ②check-transient-overmapping 은 `__cause__`/`__context__` 접근을 «분기 있음»의 신호로만 읽고 추적 순서 규범은 비커버 — 기본값"
+            },
+            {
+              "label": "영구장애의 `None` 반환·handler500 전파 — OperationalError 클래스 통째 503 금지",
+              "class": "Prohibition",
+              "enforcedBy": ["check-transient-overmapping.py"],
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "②docstring «영구장애 변종을 구별하는 분기 없이 클래스 통째를 retryable status(503/409)로 무조건 매핑한 정확한 형태만 차단»가 이 문장의 금지형(AND 조건 2·3)과 대응 — **다만 부분 커버**: AND 조건 1(핸들러 판별)의 발견 신호는 `@*.exception_handler(OperationalError|DatabaseError)` 데코 또는 `exc: OperationalError|DatabaseError` 파라미터 어노테이션뿐이고(구현 `_is_target_handler`), docstring 이 대상을 «API 경계 … 핸들러»로 선언한다. 이 규범의 주형인 무어노테이션 `def process_exception(self, request, exception)` 형태는 그 신호 밖이라 기계 침묵한다(docstring 이 «register-only+무어노테이션 핸들러는 일부러 잡지 않는다 — 저-recall» 로 자인). 어노테이션형 변종(예 `def _to_response(exc: DatabaseError)` 무분기 503)만 실제 차단되며 스캔 범위는 경로 무관 프로덕션 `*.py` 전량이라 HTML 경계에서도 그 변종은 잡힌다 · ③P0 E09 §11 ③백스톱 «커버»가 이 검사기를 명시 대응으로 지목(절 단위 대응 판정) · 저-recall 잔여 전부(무어노테이션 미들웨어 주형·헬퍼 무조건-True 위장·register-only)는 docstring 지시대로 discipline-reviewer 의미 체크가 지므로 리뷰어 병기가 주(主) 소유"
+            },
+            {
+              "label": "미들웨어의 503 반환 한정·도메인 폼 `render` 금지(폼 재렌더는 view-local 몫)",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «render 하지 않는다» · ②check-transient-overmapping 은 status 반환 형태만 보고 응답 본문 종류(폼 렌더)는 비커버 — 기본값"
+            },
+            {
+              "label": "공유 경계 2 이상일 때만 `framework/django/` 승격 검토·선행 공통 추상화 금지",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «만들지 않는다» · ②check-business-vocabulary 는 framework/ 자식 구성(#395)·기술 축(#19) 집행이고 check-common-container 는 `application/framework|common` 컨테이너 레벨 축이라 «승격 시점» 판정은 어느 쪽도 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [291, 291],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "계산된 transient 의 인프라 예외 합성 금지 — 도메인 transient 마커 raise·미들웨어 타입 매핑",
+              "class": "Prohibition",
+              "enforcedBy": ["check-synthetic-infra-exc.py"],
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "②docstring ⑴ «driven 경계가 계산된 transient/경합을 신호하려고 raw 인프라 DB 예외(OperationalError·DatabaseError·IntegrityError)를 from 없이 새로 생성해 raise 한 형태만 차단(ACL-EX2)» — ACL 축 정확 대응 · ③P0 E09 §11 «커버» 지목 3종 중 하나 · 검사기 대상이 `driven_layer` 한정이라 앱(application_layer) 소진 판정 축은 리뷰어 병기 · 문면 말미 «`discipline-houserules` §2» 참조는 P0 특이 발견 3 의 표류 의심 지점(현행 §2 = 충돌 중재/골격)"
+            }
+          ]
+        },
+        {
+          "lines": [292, 292],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "retryable 판정·응답 표현의 JSON API 경로 공유 금지",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «공유하지 않는다» · ②check-api-error-controller-contract 는 선택된 ninja controller·error-BC 모듈만 분석하므로 HTML 경계의 공유 여부는 소스 선택 밖 — 기본값"
+            },
+            {
+              "label": "서버렌더 transient 의 HTML 503 소유·JSON 오류 schema/helper/응답 객체의 HTML 경로 import 금지",
+              "class": "Prohibition",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①금지 표지 «import 하지 않는다» · ②check-error-centralization 은 canonical FrameworkErrorSchema 모듈·inventory 대응·wire-code 유일성 축이라 HTML 경로의 import 방향은 비커버 · check-context-isolation 은 BC·층 방향 축(#7·#12·#95)이라 profile 간 import 는 대상 밖 — 기본값(도피 아님: 두 docstring 모두 대상 집합을 명시)"
+            }
+          ]
+        },
+        {
+          "lines": [293, 293],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "HTMX 요청의 도메인 에러 fragment swap(전체 `500.html` 금지)",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «swap 한다» · 검사기 비커버(HTMX 응답 형태 술어 0) — 기본값"
+            },
+            {
+              "label": "`HX-Request` 분기·에러 fragment(200/422)·HTMX 맥락 시스템 에러/503 의 명세 표면 처리",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «분기해 …내고 …처리한다» · 검사기 비커버 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [294, 295],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "반복되는 `try → except <DomainError> → render` 의 단일 패턴·CBV `form_invalid()` 통합",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «묶는다» · 검사기 비커버 — 기본값"
+            },
+            {
+              "label": "다수 도메인 예외의 공통 베이스 단일 except·메시지 매핑 테이블(난립 금지는 HTML 경계 한정)",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①의무 표지 «쓴다» + 괄호가 적용 범위를 HTML 경계로 한정 · ②반대 규율인 ninja §6.2(concrete catch·직접 mapping 반복)는 check-api-error-controller-contract 소관이며 이 문장의 주어는 HTML 경계라 배선 대상 아님 — 기본값"
+            }
+          ]
+        },
+        {
+          "lines": [296, 304],
+          "kind": "code"
+        },
+        {
+          "lines": [305, 362],
+          "kind": "code"
+        },
+        {
+          "lines": [363, 365],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "middleware 테스트의 관찰 응답(503·status header·handler500 pass-through) 검증·private predicate 직접 고정 금지",
+              "class": "Obligation",
+              "delegatedTo": ["agent-discipline-reviewer"],
+              "basis": "①문면 «중앙 입장 심사 … mechanics» + «관찰 응답을 검증한다»(펜스 사이 산문 1 — P0 보수 포함) · ②check-test-config 는 pytest↔settings 바인딩·test/ 구조 축이라 테스트 «내용» 판정 비커버 — §16 기본값(discipline-tdd 축도 discipline-reviewer)"
+            }
+          ]
+        },
+        {
+          "lines": [366, 397],
+          "kind": "code"
+        },
+        {
+          "lines": [398, 424],
+          "kind": "code"
+        }
+      ]
+    }
+  ]
+}

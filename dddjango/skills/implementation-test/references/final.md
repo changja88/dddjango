@@ -1,4 +1,5 @@
 # Python 테스트 코드 작성 종합 가이드
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 
 > 이 문서는 `discipline-tdd` §5.5가 영구 테스트 입장 결정을 끝낸 **뒤** 사용하는 테스트 코드 작성 mechanics다. `add`·`update`와 명시 승인된 `retain` 의미 보존 재조직에만 이 문서의 recipe를 적용한다. `retain` 재조직은 새 case·assertion·Red를 만들지 않고 전후 같은 보호를 유지한다. candidate나 `reuse`·`reject`를 새 test file·case·assertion·helper 의무로 바꾸지 않으며, 무엇을 테스트하고 유지·갱신·분리·삭제할지는 `discipline-tdd`가 소유한다.
@@ -35,6 +36,7 @@
 ## 1. 테스트 전략과 피라미드
 
 ### 1.1 Martin Fowler의 테스트 피라미드
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Mike Cohn이 "Succeeding with Agile"에서 처음 제안하고, Martin Fowler가 확장한 개념이다.
 
@@ -68,6 +70,7 @@ Mike Cohn이 "Succeeding with Agile"에서 처음 제안하고, Martin Fowler가
 > 출처: [The Practical Test Pyramid - Ham Vocke](https://martinfowler.com/articles/practical-test-pyramid.html), [Test Pyramid - Martin Fowler](https://martinfowler.com/bliki/TestPyramid.html)
 
 ### 1.2 Google의 SMURF 프레임워크
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Google Testing Blog(2024.10)에서 발표한 테스트 피라미드의 확장 모델이다. 테스트 스위트가 성장하면서 단순한 피라미드만으로는 부족한 트레이드오프를 다루기 위한 5가지 차원을 제시한다.
 
@@ -98,6 +101,7 @@ Google은 테스트를 유형(unit/integration/e2e)보다 **크기(size)**로 �
 > 출처: [Software Engineering at Google - Chapter 11](https://abseil.io/resources/swe-book/html/ch11.html), [Google Testing Blog: Just Say No to More End-to-End Tests](https://testing.googleblog.com/2015/04/just-say-no-to-more-end-to-end-tests.html)
 
 ### 1.4 Migration 전용 테스트와 DB-backed 현행 동작 테스트 식별
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 이 절은 테스트의 **기술적 오라클**만 식별한다. 무엇을 만들고 기존 테스트를 유지·갱신·분리·삭제할지는 `discipline-tdd` §5.5가 소유한다.
 
@@ -111,6 +115,7 @@ Django 테스트 DB 준비 과정에서 migration이 내부 실행된다는 사�
 ---
 
 ## 2. 테스트 더블 분류 체계
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Meszaros의 5분류를 기본으로 사용한다. 테스트 의도를 명확히 전달하고, Mock과 Stub의 혼용을 방지하기 위해 세밀한 분류가 필요하다. [Unit Testing - Khorikov]
 
@@ -150,6 +155,7 @@ class TestCalculator:
 ```
 
 ### 3.2 Fixture (setUp/tearDown) [테스트주도 개발 + 파이썬코딩의기술]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 여러 테스트에서 공통으로 사용하는 객체들을 생성할 때 픽스처를 사용한다.
 
@@ -236,6 +242,7 @@ def db_connection(database_server):
 | TestSuite | `pytest.mark` 또는 디렉토리 구조 |
 
 ### 3.4 단언(Assertion) [테스트주도 개발]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 이 절은 이미 입장된 case가 승인 의미를 분명하게 판정하도록 assertion을 쓰는 recipe다. assertion 문법이나 더 많은 값을 단언할 수 있다는 사실은 새 case/assertion의 입장 근거가 아니다. 프로그램이 자동으로 코드가 동작하는지 판단하도록 하고, 승인된 결과를 컴퓨터가 검증하게 한다.
 
@@ -257,6 +264,7 @@ def test_assertions():
 ```
 
 ### 3.5 예외 테스트 [테스트주도 개발]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 예외가 발생하는 것이 정상인 경우에는, 예상되는 예외를 잡아서 무시하고, 예외가 발생하지 않은 경우에 한해서 테스트가 실패하게 만든다.
 
@@ -301,6 +309,7 @@ def client(app):
 ```
 
 ### 3.8 monkeypatch를 활용한 환경 격리
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 def test_api_url(monkeypatch):
@@ -345,6 +354,7 @@ pytest --lf
 ## 4. pytest 심화 설정
 
 ### 4.1 pyproject.toml 종합 설정
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 pytest-django는 `DJANGO_SETTINGS_MODULE`로 settings를 잡고 DB 라이프사이클을 관리한다. 값은 **프로젝트의 `manage.py`/환경에서 감지한 실제 settings 경로**(흔히 평면 `config.settings`)를 쓴다 — `<project>.settings.test`처럼 settings 분할이 **실제로 존재할 때만** test 모듈을 가리키고, 분할이 없으면 평면 모듈을 그대로 쓴다(`settings.test`를 임의로 하드코딩하지 않는다).
 
@@ -396,6 +406,7 @@ log_cli_level = "INFO"
 > **Django에서 `filterwarnings = ["error", ...]` 같은 전역 경고-에러는 두지 않는다** — Django·서드파티가 흘리는 Deprecation 경고가 그린 테스트 스위트를 레드바로 만들어 의미 없는 실패를 낳는다. 경고는 pytest 기본값으로 두거나, 잡으려면 **명시적으로 범위가 좁은 `error::...` 한두 줄**(자기 코드가 내는 특정 경고 카테고리·모듈)로만 한정한다.
 
 ### 4.2 conftest.py 계층 구조
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 conftest.py는 디렉토리별로 배치할 수 있으며, pytest가 테스트 수집 시 각 디렉토리의 conftest.py를 자동으로 로드한다. 하지만 아래 구조는 생성 목록이 아니다. 입장 표의 `owner/path`에 실제 승인된 test artifact가 있는 branch만 만들고, 그 테스트가 실제 공유하는 fixture가 있을 때만 가장 좁은 공통 경로에 `conftest.py`를 둔다. 사용하지 않는 디렉터리·`conftest.py`·예시 test file·빈 package를 만들지 않는다. 의미군 위치의 단일 출처는 `discipline-houserules` §2다.
 
@@ -533,6 +544,7 @@ def test_analytics_query(db_connection):
 ---
 
 ## 6. pytest 플러그인 생태계
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 테스트 스택 동반 패키지(pytest-django, factory_boy, freezegun, responses 등)를 새로 들일 때는 훈련 기억의 버전을 적지 말고 **`implementation-django-ninja` §2.1 버전-핀 규율**(무핀으로 resolve → *실제 설치 버전*을 매니페스트에 핀)을 따른다 — resolve가 기존 Django/핵심 의존성 핀을 올리려 들면 호환 한계 신호이니 기존 핀 안에서 핀하거나 보고한다(설계 반송). 핀 *표기*·매니페스트 위치는 `implementation-django` §3.1·`implementation-django-ninja` §2.1 소유.
 
@@ -581,6 +593,7 @@ def test_update_user():
 > 출처: [pytest-xdist Documentation](https://pytest-xdist.readthedocs.io/en/stable/distribution.html)
 
 ### 6.2 pytest-asyncio: 비동기 테스트
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```bash
 pip install pytest-asyncio
@@ -623,6 +636,7 @@ async def test_with_client(async_client):
 > 출처: [pytest-asyncio Documentation](https://pytest-asyncio.readthedocs.io/en/latest/concepts.html)
 
 ### 6.3 pytest-cov: 커버리지 통합
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 pytest-cov는 입장된 테스트가 실행하는 경로를 진단하는 도구다. 수치 threshold를 새로 걸어 suite를
 실패시키거나 미달 line을 새 test admission 근거로 쓰지 않는다. 프로젝트에 이미 별도 승인된 조직
@@ -697,10 +711,12 @@ timeout = 30
 ---
 
 ## 7. Mock과 테스트 더블 실전
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 기본 mock 도구는 pytest-mock `mocker` 픽스처다(자동 teardown). 패치는 `mocker.patch`/`mocker.patch.object`, 유틸은 `mocker.Mock`/`MagicMock`/`AsyncMock`/`ANY`/`call`/`sentinel`/`PropertyMock`/`seal`/`mock_open`, autospec은 `mocker.patch(..., autospec=True)`. **유일한 예외는 standalone `create_autospec`** — 패치 밖에서 쓸 때만 `from unittest.mock import create_autospec`. raw `unittest.mock`로 패치하지 않는다. (이 절은 mock의 *도구*만 정한다 — *무엇을·얼마나* mock하는지의 교리는 §7.1이 불변으로 소유한다.)
 
 ### 7.1 검증 방식 우선순위 [Unit Testing - Khorikov + 파이썬코딩의기술]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Mock 사용 범위에 대한 올바른 접근: 의존성 주입으로 테스트 용이성을 확보하되, **과도한 Mock은 안티패턴**("Mockery")이다. 검증 방식은 다음 우선순위를 따른다.
 
@@ -747,6 +763,7 @@ def test_fetch_weather(mocker):
 ```
 
 ### 7.3 의존 관계 캡슐화로 모킹을 쉽게 만들기 [파이썬코딩의기술]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 테스트 코드를 처음 보고 이해하기 어렵다면, 더 나은 추상화를 사용하여 목이나 테스트를 더 쉽게 작성할 수 있다.
 
@@ -821,6 +838,7 @@ def test_latency_fluctuation(mocker):
 ```
 
 ### 7.5 AsyncMock: 비동기 함수 모킹
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Python 3.8+에서 제공되며, 비동기 함수를 모킹할 때 사용한다.
 
@@ -954,6 +972,7 @@ def test_retry_logic(mocker):
 > 출처: [Python unittest.mock 공식 문서](https://docs.python.org/3/library/unittest.mock.html), [unittest.mock - getting started](https://docs.python.org/3/library/unittest.mock-examples.html)
 
 ### 7.8 호출 순서 검증
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 여러 호출의 **순서**가 중요하면 `assert_has_calls` 또는 `mock_calls`로 순서를 검증한다. (개별 호출 여부만 보는 `assert_called_once_with`로는 순서를 보장하지 못한다.)
 
@@ -980,6 +999,7 @@ def test_lifecycle_order(mocker):
 ---
 
 ## 8. Property-Based Testing (Hypothesis)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 이 절은 `discipline-tdd` §5.5에서 `add`·`update`된 속성 계약을 표현하는 mechanics다. Hypothesis가 수백 가지 입력을 생성하거나 경계값을 찾을 수 있다는 이유만으로 새 영구 테스트·`@example`·assertion을 추가하지 않는다.
 
@@ -1145,6 +1165,7 @@ TestSetMachine = SetMachine.TestCase
 ## 9. 테스트 데이터 팩토리 (factory_boy + Faker)
 
 ### 9.1 기본 개념
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 factory_boy는 테스트 객체 생성을 위한 "청사진" 역할을 한다. JSON fixture 파일 대신 Python 코드로 테스트 데이터를 선언적으로 정의한다.
 
@@ -1316,6 +1337,7 @@ class UserFactory(factory.django.DjangoModelFactory):
 ---
 
 ## 10. 시간 모킹 (freezegun / time-machine)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 시간 모킹에는 전용 라이브러리를 사용한다. monkeypatch로 datetime을 직접 교체하는 방식은 패치 대상 모듈 경로를 정확히 지정해야 하고, 여러 모듈에서 datetime을 import하면 누락이 발생하므로 비권장한다.
 
@@ -1581,6 +1603,7 @@ def test_any_http_library():
 ---
 
 ## 12. Docker 기반 통합 테스트 (testcontainers)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 testcontainers-python은 실제 Docker 컨테이너를 사용하여 통합 테스트를 수행한다. mock이나 인메모리 대체물이 아닌 **실제 서비스**로 테스트한다.
 
@@ -1692,6 +1715,7 @@ def test_full_integration(services):
 ---
 
 ## 13. 커버리지 설정 (coverage.py)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 coverage는 입장된 테스트가 어떤 코드를 실행하는지 진단하는 도구다. 미달 수치나 uncovered line만으로 제품 계약과 독자 failure가 생기지는 않으므로, coverage 목표를 채우기 위한 새 case/assertion을 만들지 않는다.
 
@@ -1776,6 +1800,7 @@ coverage report
 ---
 
 ## 14. 멀티환경 테스트 (tox / nox)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 여러 Python 버전과 의존성 조합에서 테스트를 자동 실행하는 도구이다. 라이브러리 개발 시 필수적이다.
 
@@ -1892,6 +1917,7 @@ nox -l
 ## 15. 테스트 코드 품질 원칙
 
 ### 15.1 FIRST 원칙 [Clean Code - Robert C. Martin]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 **F - Fast (빠르게)**
 테스트는 빨라야 한다. 느리면 자주 실행하지 않게 되고, 문제를 늦게 발견한다.
@@ -1976,6 +2002,7 @@ def test_calculation():
 > 출처: Robert C. Martin, "Clean Code" (2008), [FIRST Principles - DZone](https://dzone.com/articles/first-principles-solid-rules-for-tests)
 
 ### 15.2 AAA 패턴 (Arrange-Act-Assert)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Bill Wake가 처음 명명한 테스트 구조화 패턴이다. 이 절의 AAA·Act 분리·관련 assert 기준은 이미 입장된 case를 읽기 쉽게 표현하는 recipe다. 하나의 테스트를 여러 함수로 나눌 수 있거나 Free Ride를 발견했다는 사실이 새 case/assertion의 근거는 아니다. AAA 패턴을 기본으로 하되, **논리적으로 하나의 승인 행위를 검증하는 관련 assert는 허용**한다.
 
@@ -2035,6 +2062,7 @@ def test_reactivated_user_is_active():
 > 출처: [AAA Pattern - Semaphore](https://semaphore.io/blog/aaa-pattern-test-automation), [Manning: Making Better Unit Tests](https://freecontent.manning.com/making-better-unit-tests-part-1-the-aaa-pattern/), Clean Code (Robert C. Martin)
 
 ### 15.3 화이트박스 테스트를 피하라 [테스트주도 개발 + Codepipes Blog]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 구현 세부사항에 결합하지 않는 테스트를 작성해야 한다. 이 문제는 **설계 관점**과 **테스트 기법 관점** 양쪽에서 접근해야 한다.
 
@@ -2055,6 +2083,7 @@ def test_sort_returns_sorted_list():
 ```
 
 ### 15.4 외부 계약 기댓값은 리터럴로 — 프로덕션 상수 역수입 금지 [Google Testing Blog] [Khorikov]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 외부 관찰 계약(HTTP 응답 본문·DB 저장값·발행 이벤트 payload)을 검증하는 테스트의 **assert 기댓값**은 완성형 리터럴로 하드코딩한다. 프로덕션 Enum·상수를 import해 기댓값으로 재사용하면 상수 값이 잘못 바뀌어도 테스트가 함께 통과하는 자기참조 오라클(동어반복)이 된다 — wire·DB에 노출된 `.value`는 published/영속 계약이라 그 변경은 내부 리팩터링이 아니라 계약 파괴이고, 리터럴 기댓값의 시끄러운 실패가 의도된 보호다. BC 사유 DB라도 기존 행과의 호환 자체가 계약이다.
 
@@ -2069,6 +2098,7 @@ assert response.json()["status"] == "delivered"
 경계 셋: ① **도메인 내부 단위 테스트**의 심볼 단언(`assert order.status == OrderStatus.DELIVERED`)은 허용 — 거기서의 계약은 전이 행위이지 철자가 아니고, 철자 회귀는 위 계약 테스트가 잡는다. ② 리터럴 동결 대상은 **철자가 곧 계약인 값**(enum 코드·상태 문자열·필드명)이다 — 계산 결과값의 기댓값 표현은 `discipline-tdd` '명백한 데이터'가 소유한다(SUT를 호출하지 않는 독립 산식으로 관계를 드러내는 것 허용). ③ 테스트의 **arrange/act**(픽스처 생성·`.filter()` 준비)는 심볼 사용을 권장한다 — 리터럴 강제는 외부 계약을 관찰하는 assert에만 적용되므로 프로덕션 소비 규율(`discipline-cleancode` §2.14)과 같은 테스트 안에서 충돌하지 않는다.
 
 ### 15.5 발행 이벤트 봉투의 union-enum 동기 후보
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 태그드 유니온과 `StrEnum` 파생을 함께 쓰는 구조는 테스트 의무가 아니라 `discipline-tdd` §5.5의 candidate signal이다. 실제 published/wire consumer가 두 목록의 드리프트 때문에 이벤트를 발행·역직렬화·디스패치하지 못하는 **독자 production failure**가 있고, 기존 권위 있는 wire/consumer 테스트가 그 failure를 보호하지 않을 때만 `add`할 수 있다.
 
@@ -2079,6 +2109,7 @@ assert response.json()["status"] == "delivered"
 ## 16. 테스트 안티패턴
 
 ### 16.1 코드 수준 안티패턴
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 **The Liar (거짓말쟁이)**
 실행은 되지만 실제로 검증하는 것이 없는 테스트.
@@ -2186,6 +2217,7 @@ def test_render_page():
 ```
 
 ### 16.2 전략 수준 안티패턴 [Codepipes Blog]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 1. **입장된 독립 integration failure가 있는데 그 boundary 보호가 없음** (반대 방향도 동일 — 단순히 한 계층만 존재한다는 이유로 다른 계층 테스트를 추가하지 않음)
 2. **잘못된 테스트 유형 선택**: 단위 테스트로 충분한데 E2E로 작성
@@ -2201,6 +2233,7 @@ def test_render_page():
 ---
 
 ## 17. Mutation Testing [mutmut]
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 이 절은 이미 입장된 테스트가 주장한 failure를 실제로 감지하는지 진단하는 mechanics다. mutation score·생존 mutant·도구 권고는 새 영구 test case/assertion을 승인하지 않는다. 생존 mutant는 `discipline-tdd` §5.5의 candidate로 보내며, 제품 계약과 독자 failure가 없거나 기존 보호와 중복이면 `reject`·`reuse`한다.
 
@@ -2277,6 +2310,7 @@ def test_discount_strong():
 ```
 
 ### 17.5 뮤테이션 점수 목표
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 뮤테이션 점수는 진단 정보이지 목표 quota나 완료 조건이 아니다. 생존 mutant를 분석하되, 승인된 제품 계약의 독자 failure가 확인된 `add/update`에만 테스트를 작성한다.
 
@@ -2375,6 +2409,7 @@ def error_occurred(order_result, message):
 ---
 
 ## 19. Django Ninja API 계약 테스트
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 이 절의 client·assert 예시는 `discipline-tdd` §5.5에서 입장된 API 계약의 작성 mechanics다. framework 동작이나 도구 사용법을 확인하기 위해 endpoint·status·Schema 테스트를 추가하지 않는다.
 
@@ -2383,6 +2418,7 @@ Django Ninja의 **공개 HTTP 계약**은 실제 URLconf에 mount된 endpoint를
 `ninja.testing.TestClient(router)`나 `ninja_extra.testing.TestClient(Controller)`는 별도 입장된 **adapter-local 계약**에서 mount와 무관한 독자 failure를 보호할 때만 쓸 수 있다. middleware·URL resolver·registrar를 통과하지 않으므로 public HTTP/OpenAPI 증거를 대신하지 못하고, 같은 failure를 mounted 테스트가 이미 보호하면 `reuse`다.
 
 ### 19.1 Mounted 공개 응답 계약
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 from django.test import Client
@@ -2407,11 +2443,13 @@ def test_order_detail_contract(order_factory):
 검증 대상은 입장된 public API contract다. 내부 service 호출 여부, private helper, ORM query 문자열처럼 구현 세부사항은 직접 검증하지 않는다.
 
 ### 19.2 요청 검증과 오류 응답
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 `discipline-tdd` §5.5의 decision row가 `add`·`update`인 오류 계약에만 이 절을 적용한다.
 오류 Schema가 존재하거나 framework가 응답을 직렬화한다는 사실만으로 테스트를 만들지 않는다.
 
 #### 19.2.1 승인된 HTTP 오류 계약
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 승인된 controller mapping은 실제 URLconf에 mount된 Django client 요청으로 관찰한다. application
 collaborator가 승인된 구체 예외를 내게 하고, 응답의 HTTP status, 승인된 body와 error-sensitive
@@ -2429,6 +2467,7 @@ framework-owned 401/403/route 404/422/429/`HttpError`/500은 별도 입장 행�
 리터럴로 검증한다. 전체 framework body snapshot이나 private metadata까지 넓히지 않는다.
 
 #### 19.2.2 공개 Python Schema 계약
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Schema를 Python에서 직접 검증하는 테스트를 일괄 금지하지 않는다. HTTP와 별개로 실제 public
 Python consumer 또는 승인된 지원 계약이 확인되면 **별도 decision row**로 입장시켜, 그 consumer가
@@ -2444,6 +2483,7 @@ Python consumer 또는 승인된 지원 계약이 확인되면 **별도 decision
 - nominal inheritance나 Python/Django/Pydantic 기본 동작만 확인하는 assertion
 
 #### 19.2.3 공개 OpenAPI 계약
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 OpenAPI가 승인된 public consumer contract이면 실제 URLconf에 mount된 문서 endpoint를 Django
 client로 요청하고, 관련 operation·status·media type·schema만 검증한다. 전체 document나 무관한
@@ -2455,6 +2495,7 @@ operation/status/schema drift를 보호하면 새 테스트를 만들지 않는�
 
 
 ### 19.3 인증, 페이지네이션, 필터링
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 def test_order_list_requires_auth():
@@ -2477,6 +2518,7 @@ def test_order_list_pagination_contract(auth_headers, order_factory):
 인증 우회, user fixture, header 이름은 프로젝트의 auth contract에 맞춘다. 권한/페이지네이션/필터링 계약이 불명확하면 API 설계를 먼저 확정한다.
 
 ### 19.4 pytest-django DB 접근 선택
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Django ORM을 사용하는 API 테스트는 pytest-django의 DB access 규칙을 따른다. 기본적으로 DB 접근은 차단되며, DB가 필요한 테스트는 `pytest.mark.django_db`, `db`, `transactional_db` 중 하나로 의도를 명시한다.
 
@@ -2504,12 +2546,14 @@ def test_order_detail_reads_database(order_factory):
 ---
 
 ## 20. Idempotency와 동시성 테스트
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 이 절의 idempotency·transaction·race·CAS·spy recipe는 `discipline-tdd` §5.5에서 `add`·`update`된 case의 mechanics다. 동시성이라는 주제, DB 사용, 예제의 존재, 결정성·속도 개선만으로 새 테스트 수를 늘리지 않는다. domain/application/DB/adapter/public contract에서 독립 failure mechanism이 확인되면 각각 유효할 수 있고, 기존 권위 테스트가 같은 계약·boundary·failure를 보호하면 `reuse`한다.
 
 입장된 중복 요청, 재시도, race condition, row lock 계약은 일반 unit test만으로 충분히 보호되지 않을 수 있다. 보호하려는 failure mechanism에 DB unique constraint, transaction, lock, idempotency storage가 관여하면 integration/API contract mechanics를 선택한다.
 
 ### 20.1 Idempotency replay 계약
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Idempotency-Key를 지원하는 write API는 같은 key와 같은 payload의 재전송이 같은 결과를 반환하거나 기존 처리 결과를 재사용해야 한다. 서로 다른 payload가 같은 key를 재사용하면 충돌로 실패해야 한다.
 
@@ -2567,6 +2611,7 @@ def test_create_order_idempotency_rejects_payload_mismatch(auth_headers):
 정확한 status code와 response body는 `architecture-api`에서 정한 idempotency contract를 따른다. 저장소 스키마, uniqueness, transaction boundary가 불명확하면 `architecture-db`를 먼저 사용한다.
 
 ### 20.2 중복 생성 방지와 DB 제약
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 import pytest
@@ -2584,6 +2629,7 @@ def test_idempotency_key_is_unique_per_actor(idempotency_record_factory, user):
 서비스 계층 test와 DB unique constraint 후보가 서로 다른 failure mechanism을 보호하고 기존 DB 보장이 없다면 DB-backed `add`가 될 수 있다. 같은 계약·boundary·failure를 이미 보호하면 별도 테스트를 만들지 않는다. 입장된 DB 제약이 동작의 일부라면 mock repository로 대체하지 않는다.
 
 ### 20.3 Transaction과 row lock 테스트
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Django `TestCase` 계열은 각 테스트를 transaction으로 감싸므로 `select_for_update()`의 transaction 요구를 정확히 드러내지 못할 수 있다. row lock, commit/rollback, 별도 connection 관찰을 테스트할 때는 `TransactionTestCase` 또는 pytest-django의 `transaction=True`를 사용한다. **이 `TransactionTestCase → @pytest.mark.django_db(transaction=True)/transactional_db` 매핑은 실제 transaction 경계·스레드 race 테스트(§20.3·§20.4)에만 적용한다** — 단일 connection·단일 스레드로 충분한 결정적 테스트(§20.5 CAS-충돌 스파이)에까지 `transaction=True`를 다는 것은 연결 의미를 바꾸는 과(過)번역이다(거기선 plain `@pytest.mark.django_db`).
 
@@ -2612,6 +2658,7 @@ def test_inventory_reservation_uses_transactional_lock(product_factory):
 이 예시는 transaction-capable test 선택을 보여주는 최소 형태다. 실제 동시성 보장은 두 connection, thread/process, lock timeout, `nowait=True`/`skip_locked=True`, 또는 DB별 격리 수준까지 포함해 검증해야 할 수 있다.
 
 ### 20.4 Race condition 재현 테스트
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 ```python
 from concurrent.futures import ThreadPoolExecutor
@@ -2639,6 +2686,7 @@ def test_only_one_concurrent_reservation_succeeds(product_factory):
 > 출처: [Django testing tools](https://docs.djangoproject.com/en/dev/topics/testing/tools/), [Django QuerySet select_for_update](https://docs.djangoproject.com/en/4.0/ref/models/querysets/#select-for-update), [pytest-django Database access](https://pytest-django.readthedocs.io/en/latest/database.html)
 
 ### 20.5 결정적 CAS-충돌 재시도 테스트 (스파이)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 입장된 CAS 재시도 failure를 결정적으로 검증해야 할 때 이 recipe를 쓴다. §20.4의 스레드 race 테스트는 실제 경합을 관찰하지만 SQLite에서 비결정적이고 flaky하기 쉽다. 실제 스레드 없이 *다른 트랜잭션이 먼저 `version`을 올린 상황*을 흉내 내 CAS 0행을 1회 강제하고, 쓰기 연산이 재조회→도메인 메서드 재실행으로 일관되게 수렴하는지 검증할 수 있다. 이 결정적 recipe가 스레드 테스트를 자동으로 추가하거나 복제할 근거는 아니다.
 
@@ -2679,6 +2727,7 @@ def test_cas_conflict_once_then_retry_converges():
 ---
 
 ## 21. 테스트 디버깅 기법
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 범용 Python 디버깅(repr, pdb, breakpoint)은 `implementation-python` 스킬을 참조한다.
 
