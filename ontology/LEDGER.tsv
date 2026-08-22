@@ -941,3 +941,4 @@ command-dddjango	s007	93c4a385763bbbd811a08c4c4931287ddf4a7976d6030f3552a0d9f468
 command-dddjango	s007	a26771a2161bcb0b9a15714328a787f50d1c7048642b4df17a8cd088b167c217	prose	-	-	-	-	rebaseline:2026-08-20 T2-4 — step 6ʹ 에 셸 B 스크립트 호출 문면 추가(regen_core.py CLI · 즉석 조립 금지 · exit 3=대상 0 · exit 1=팩 결손 중단)
 command-dddjango	s007	2848300d3bf45568d7781e36308163065b4d09e38878bef387b7b4ea84ffacf9	prose	-	-	-	-	rebaseline:2026-08-20 T2-4 사후 리뷰 반영 — step 6ʹ 에 계약 sidecar(--contract-json) 생성·소비 명령 추가(개정 9 계수 원자료·주입 대상 아님)
 command-dddjango	s007	acaae20e76d5c75f34e0ab70e6c944edb1022678f6851cc7150c29bd0b663c8c	prose	-	-	-	-	rebaseline:2026-08-20 T2-0b 전수 리뷰 반영 — step 6ʹ 호출 문면에 --selector 명시 인자 추가(기본값 폐지·미지정이면 exit 1 중단 · 레인 AV 발견 4)
+command-dddjango	s007	faf21286735aba625924fb3162e0df1bf4f765c2eeeb71b84b09ab369f999252	prose	-	-	-	-	rebaseline:2026-08-22 동결 개정 10 — step 6ʹ 발화 지점 확대(«6번 한정»→«귀속 red 의 모든 반송 전»·회전 계상 런 전체 누적·반송 메시지 6ʹ 결과 명기 의무 — BK2 처치 0회 발화 판정)
