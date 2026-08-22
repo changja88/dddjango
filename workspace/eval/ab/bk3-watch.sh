@@ -23,7 +23,8 @@ while true; do
     t=$(print -r -- "$pane" | tail -30)
 
     busy=0
-    print -r -- "$t" | grep -qE 'esc to interrupt|Thinking|Working' && busy=1
+    # «esc to interrupt» 는 터미널 폭에 잘려 «esc to in…» 이 되므로 접두 매칭(v1.2 오탐 수정)
+    print -r -- "$t" | grep -qE 'esc to in|Thinking|Working|Waiting for agents|• Calling|• Started' && busy=1
 
     # 질문/입력 대기 — 자동 응답 금지, 알림만 (codex request_user_input·선택지 문면).
     # ▶ 는 파이프라인 진행 표시줄([▶ 설계])에도 쓰여 «행 시작 들여쓰기+▶, 대괄호 없음»으로 한정(v1 오탐 수정).
