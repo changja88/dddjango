@@ -64,7 +64,17 @@ byte-exact로 미러하고, checker script는 별도 byte mirror로 검증한다
   함께 커밋한다.
 - 검사기 `dddjango/scripts/check-*.py`는 `codex-dddjango/skills/dddjango/scripts/`와
   **byte 동일 미러** — 항상 양쪽을 함께 갱신한다.
-- 커밋 전 `make verify` green을 확인한다. 릴리즈는 `make release`만 사용한다.
+- 커밋 전 `make verify` green을 확인한다. 릴리즈는 make 릴리즈 타깃만 사용한다(아래 «배포» 절).
+
+## 배포 — 이원화 릴리즈
+
+- dddjango와 dddjango-web은 **한 저장소·두 릴리즈 시리즈**로 이원화해 관리한다 —
+  버전·태그·GitHub Release가 플러그인별로 완전히 독립이다
+  (태그 `dddjango--vX.Y.Z` · `dddjango-web--vX.Y.Z`).
+- **배포는 반드시 make 릴리즈 타깃으로만 한다**: dddjango는 `make release`,
+  dddjango-web은 `make release-web`. 마켓 등재가 `ref: main`이라 push만으로도 설치본
+  내용이 바뀌지만, 그러면 버전 이력이 깃에 남지 않는다 — 수동 push를 배포로 간주하지 않는다.
+- 절차 상세(선택지 `0) current` 포함)는 `docs/DEVELOPMENT.md` §6.
 
 ## 변경 방식
 
