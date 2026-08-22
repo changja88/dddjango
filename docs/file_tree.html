@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>dddjango 표준 트리 — 수정본 (작업 중)</title>
+<title>dddjango 표준 트리</title>
 
 <style>
   :root {
@@ -713,7 +713,7 @@
 <div class="wrap">
 
 <header class="top">
-  <p class="kicker">dddjango 플러그인 · 표준 파일트리 수정본 · 작업 중</p>
+  <p class="kicker">dddjango 플러그인 · 표준 파일트리 · 확정 — v2.0.0(08-12)부터 현행</p>
   <h1>겉에서 안으로 — 한 겹씩 닫는다</h1>
 </header>
 
@@ -3473,6 +3473,21 @@ class NinjaOrderController:                       <span class="c"># 기술은 �
   이중 수용을 걷어 <b>플러그인은 이제 새 트리만 안다</b>. 남은 것은 <b>적용 루프</b>다:
   리뷰로 굳히고 → 배포하고 → BC 하나씩 적용하며 <b>발견되는 문제로 플러그인을 고치고</b> →
   수렴하면 속도를 올리고 → 마지막에 전부를 일괄 적용한다.</p>
+  <p><b>현재 위치(08-22)</b> — <b>1~3번은 끝났고 4번 루프가 열려 있다</b>.
+  라운드 1·1′(<code>child_settings</code>)이 돌아 «발견 결함 → fixture 고정 → 플러그인 수정»
+  회로를 실증했지만 둘 다 <b>불통과(미랜딩)</b>, 후속 발주(billing S4-r1)는 발주문·앵커까지
+  준비된 채 <b>기동 보류</b><span class="dim">(08-15 사용자 결정)</span>다. 그 자리에 계획 밖의
+  트랙 하나가 끼어들어 끝났다 — <b>온톨로지 이관</b><span class="dim">(08-18~08-22 · 현행
+  릴리즈 v2.17.0)</span>. 규범 정본이 md 문서에서 <b>RDF 그래프</b>(<code>ontology/rules/*.ttl</code>
+  — 30 문서 키 · 참조성 539절 · 규범 Work 3,400)로 옮겨졌고, 이제 규범 수정은 «그래프 수정 →
+  게이트 → md 재투영 → rulepack 재소성» 루프를 탄다(절차 정본: <code>docs/DEVELOPMENT.md</code>).
+  이 문서의 1·2장, 즉 <b>트리 규칙 자체는 그 이관에서 바뀌지 않았다</b> — 옮겨진 것은 규범의
+  «저장 형식과 수정 경로»다. 그 트랙의 A/B 실험(T2)은 <b>이 루프의 클린룸 판형을 실험 차량으로
+  빌려</b> 두 블록 여섯 런을 완주시켰고 — BK1(O-7 합성 스모크 ×3런) · BK2(O-5
+  <code>delivery</code> ×3런 · 인수 전수 green) — 처치 발화 0 으로 측정 자체는 실패해 조기
+  종결됐지만<span class="dim">(채택은 «구조 이득 명시» 경로)</span>, 그 과정에서 <b>게이트 결함
+  수리와 동결 개정 10(v2.16.0)이 플러그인에 환류</b>됐다. 남은 일은 그대로다 — <b>4번 공식 루프
+  재개</b>, 자도 그대로다(연속 2 BC 무수정).</p>
   <p><b>재료(08-12 실측)</b> — <code>broccoli-server</code> 는 BC <b>16개 전부 옛 트리</b>,
   옛 이름 잔존 <b>72건</b><span class="dim">(lessons 7 · products 6 · entitlements 6 · accounts 5 ·
   그 외 11개 BC 각 3~4 · billing 3 · 루트 <code>common/</code> 포함 · accounts 는 <code>test/</code> 안 잔존도)</span>.
@@ -3499,19 +3514,21 @@ class NinjaOrderController:                       <span class="c"># 기술은 �
 <li class="plan done"><div class="pn">1</div><div class="pb"><h3>통합 적대적 리뷰 — 원안 1+2 를 한 리뷰로 <span class="pst">끝</span></h3><p>미커밋 <b>150파일</b><span class='dim'>(신규 76 · 수정 74)</span> diff 전체를 <b>렌즈 넷</b>으로 적대적 리뷰한다(ultracode) — <b>① 수정계획 대비 구현 완전성</b>(5번 계획·㉡ 런북대로 됐나) · <b>② 코퍼스 정합</b>(명세·검사기·미러·산문이 같은 말을 하나) · <b>③ 규칙 간 모순</b> · <b>④ 과적합</b>(<code>broccoli-server</code> 실측이 «정한» 규칙이 남았나). 발견은 즉시 수정한다. <em>같은 작업 트리를 두 번 돌지 않으려고 원안 1(구현 리뷰)·2(전체 상태 리뷰)를 렌즈로 합쳤다.</em></p><dl class="pmeta"><dt>산출물</dt><dd>리뷰 리포트 + 수정 반영된 작업 트리</dd><dt>「끝났다」의 자</dt><dd>지적 전부 해소 + 검증 9종 green<span class='dim'>(spec_lint · tree_mirror · corpus · checker_lint ㉢ · reverse_coverage · fixture 57 · byte-copy 29 · backstop 675 · LEGACY grep 0)</span></dd></dl></div></li>
 <li class="plan done"><div class="pn">2</div><div class="pb"><h3>커밋 + 플러그인 배포 — major bump <span class="pst">끝</span></h3><p>㉡ 원칙대로 <b>V1 걷기는 revert 가능한 한 커밋</b>으로 구성한다(커밋 실행은 사용자 확인을 받는다). 이중 수용 제거는 <b>하위호환 단절</b>이므로 버전은 <b>v1.2.2 → v2.0.0</b>(major)다. 배포 후 <code>broccoli-server</code> 쪽에서 새 버전이 로드되는지 확인한다.</p><dl class="pmeta"><dt>산출물</dt><dd>커밋(들) + v2.0.0 릴리스</dd><dt>「끝났다」의 자</dt><dd><code>make release</code> 통과 + <code>broccoli-server</code> 에서 새 버전 확인</dd></dl></div></li>
 <li class="plan done"><div class="pn">3</div><div class="pb"><h3>선행 이관 «추가 ①» — BC 밖 전역 작업 <span class="pst">끝</span></h3><p>BC 리빌드가 아닌 <b>전역 작업 하나</b>를 BC 루프보다 먼저 한다. ⑴ 리빌드 <b>브랜치 신설</b> + 기존 테스트 전체 green 을 <b>baseline 으로 기록</b> · ⑵ 루트 <code>common/</code> → <code>framework/</code> 이동 + 16개 BC 의 import <b>전역 재작성</b>(기계적 · 동작 불변) — 검사기 정본이 <code>framework/ninja/framework_error_schema.py</code> 라 <b>이게 없으면 어느 BC 도 registry green 이 될 수 없다</b> · ⑶ <code>broccoli-server</code> 의 <code>CLAUDE.md</code>·<code>AGENTS.md</code> 현행화 — 옛 트리 서술이 남으면 리빌드 에이전트가 낡은 지침을 따른다. <em>운영 중이 아니라서 DB·migrations 보존 자는 걷었다 — 동작 등가는 테스트가 잰다.</em> <em><span class='dim'>08-12 실측: 워크트리 <code>broccoli-rebuild</code>(브랜치 rebuild/standard-tree) · baseline 7200 green → 이관 후 7200 green 동일 · 이관 커밋 012a6440 · 루트 common 잔존 소멸(gate 71→70) · 업무 낱말 2건은 framework 부적격이라 BC 로 — child_report_topic→lessons test 재료(실사용처가 lessons 테스트뿐) · notification_navigation→notifications value_object(delivery 직접 import 는 legacy 빚 — 그 BC 라운드가 갚는다).</span></em></p><dl class="pmeta"><dt>산출물</dt><dd>브랜치 + baseline 기록 + <code>framework/</code> 이관 커밋</dd><dt>「끝났다」의 자</dt><dd>테스트 green(=baseline 동일) + <code>migration_gate</code> 잔존 감소(루트 <code>common</code> 소멸)</dd></dl></div></li>
-<li class="plan todo"><div class="pn">4</div><div class="pb"><h3>BC 클린룸 리빌드 루프 «추가 ②③» <span class="pst">아직</span></h3><p>방법 정본은 <b>라운드 프로토콜</b>(<code>workspace/plan/2026-08-12-bc-rebuild-protocol.md</code>) — 라운드마다 같은 일곱 걸음이다: <b>BC 선택</b>(라운드 1 은 <code>child_settings</code> 고정 — 최소 크기·인바운드 0 이라 하네스 첫 검증을 겸한다 · 이후 시드 무작위로 재현 가능) → <b>스팩 추출</b>(요구 수준 <code>spec.md</code> + 이름 지운 <code>api_shape_pre.json</code> — 테스트 케이스 목록은 안 옮긴다) → <b>BC 삭제</b>(운영 아님 — migrations 포함 전부) → <b>클린룸 재구현</b>(<code>/dddjango</code> 파이프라인 · 옛 구현·옛 테스트·git 이력 열람 금지) → <b>기계 판정 3축</b>(API shape diff 0 · 전체 테스트 green · registry 27종+<code>migration_gate</code> 0) → <b>정성 평가 둘</b>(독립 <b>AI 평가</b> + <b>사람 평가</b> — 옛 테스트는 오라클이 아니라 <b>채점 재료</b>: 시나리오 누락으로 <b>테스트 작성 능력</b>을 재고, 설계 질·spec 충실·옛 구현 대비를 소견으로 남긴다 · <b>둘 다 받아야 라운드가 닫힌다</b>) → 삼분 처분·대장 기록. <em>옛 테스트를 남겨 돌리면 파이프라인의 테스트 작성 능력을 잴 수 없다 — 그래서 클린룸이다.</em><br><b>문제 발견 시</b> «추가 ③»: 먼저 <b>fixture/matrix 케이스로 고정</b> → 플러그인 수정 → 검증 8종 재실행. 고정 없이 고치면 다음 BC 에서 재발해도 못 잡는다. 규칙 «값»이 바뀌면 <b>eval v5 unfreeze/새 epoch</b> 절차가 딸려온다.</p><dl class="pmeta"><dt>산출물</dt><dd>라운드 대장 + BC 별 재구현 커밋 + 문제마다 fixture 케이스 + 플러그인 수정</dd><dt>「끝났다」의 자</dt><dd><b>연속 2개 BC 가 플러그인 무수정으로 통과</b></dd></dl></div></li>
+<li class="plan doing"><div class="pn">4</div><div class="pb"><h3>BC 클린룸 리빌드 루프 «추가 ②③» <span class="pst">하는 중</span></h3><p>방법 정본은 <b>라운드 프로토콜</b>(<code>workspace/plan/2026-08-12-bc-rebuild-protocol.md</code>) — 라운드마다 같은 일곱 걸음이다: <b>BC 선택</b>(라운드 1 은 <code>child_settings</code> 고정 — 최소 크기·인바운드 0 이라 하네스 첫 검증을 겸한다 · 이후 시드 무작위로 재현 가능) → <b>스팩 추출</b>(요구 수준 <code>spec.md</code> + 이름 지운 <code>api_shape_pre.json</code> — 테스트 케이스 목록은 안 옮긴다) → <b>BC 삭제</b>(운영 아님 — migrations 포함 전부) → <b>클린룸 재구현</b>(<code>/dddjango</code> 파이프라인 · 옛 구현·옛 테스트·git 이력 열람 금지) → <b>기계 판정 3축</b>(API shape diff 0 · 전체 테스트 green · registry 27종+<code>migration_gate</code> 0) → <b>정성 평가 둘</b>(독립 <b>AI 평가</b> + <b>사람 평가</b> — 옛 테스트는 오라클이 아니라 <b>채점 재료</b>: 시나리오 누락으로 <b>테스트 작성 능력</b>을 재고, 설계 질·spec 충실·옛 구현 대비를 소견으로 남긴다 · <b>둘 다 받아야 라운드가 닫힌다</b>) → 삼분 처분·대장 기록. <em>옛 테스트를 남겨 돌리면 파이프라인의 테스트 작성 능력을 잴 수 없다 — 그래서 클린룸이다.</em><br><b>문제 발견 시</b> «추가 ③»: 먼저 <b>fixture/matrix 케이스로 고정</b> → 플러그인 수정 → 검증 8종 재실행. 고정 없이 고치면 다음 BC 에서 재발해도 못 잡는다. 규칙 «값»이 바뀌면 <b>eval v5 unfreeze/새 epoch</b> 절차가 딸려온다.<br><b>실측(08-22 현재)</b> — 라운드 1·1′(<code>child_settings</code>) 완주·불통과(미랜딩) — 발견 결함은 «추가 ③» 회로대로 플러그인 수정으로 환류됐다(<code>workspace/plan/2026-08-12-round1-plugin-fixes.md</code>·<code>round1b</code>). 이후 온톨로지 트랙의 A/B(BK1·BK2)가 같은 클린룸 판형으로 여섯 런을 추가 완주 — 랜딩은 아니지만 하네스·게이트·인수 스위트가 실전 검증됐다. <b>랜딩된 BC 는 아직 0.</b></p><dl class="pmeta"><dt>산출물</dt><dd>라운드 대장 + BC 별 재구현 커밋 + 문제마다 fixture 케이스 + 플러그인 수정</dd><dt>「끝났다」의 자</dt><dd><b>연속 2개 BC 가 플러그인 무수정으로 통과</b></dd></dl></div></li>
 <li class="plan todo"><div class="pn">5</div><div class="pb"><h3>플러그인 속도 개선 <span class="pst">아직</span></h3><p><b>정확도 수렴(4번 종료) 뒤에만</b> 시작한다. 검사기·파이프라인의 병목을 실측하고 <b>판정 불변</b>을 조건으로 개선한다.</p><dl class="pmeta"><dt>산출물</dt><dd>속도판 플러그인</dd><dt>「끝났다」의 자</dt><dd>검증 8종 green 유지 + 병목 수치 개선 기록</dd></dl></div></li>
 <li class="plan todo"><div class="pn">6</div><div class="pb"><h3>속도판 평가 — A/B + 랜덤 BC <span class="pst">아직</span></h3><p><b>㋐ 이미 리빌드된 BC 전부를 재실행</b>해 정확판 vs 속도판 <b>판정 diff 0</b> 을 확인한다(A/B — 속도 개선이 깨뜨리는 것은 대개 판정 동일성이라, 신선한 BC 하나보다 이게 강하고 싸다) · <b>㋑ 랜덤 BC 1개</b>를 4번 라운드 프로토콜 그대로 신규 리빌드·평가한다.</p><dl class="pmeta"><dt>산출물</dt><dd>A/B 판정 diff 기록 + BC 리빌드 커밋</dd><dt>「끝났다」의 자</dt><dd>diff 0 + 4번과 같은 자(플러그인 무수정 통과)</dd></dl></div></li>
 <li class="plan todo"><div class="pn">7</div><div class="pb"><h3>ultracode 전체 리빌드 <span class="pst">아직</span></h3><p>남은 BC 전부를 ultracode 로 <b>일괄 리빌드</b>하고 4번 라운드 프로토콜의 자로 평가한다.</p><dl class="pmeta"><dt>산출물</dt><dd>16개 BC 전부 새 트리</dd><dt>「끝났다」의 자</dt><dd><b><code>migration_gate</code> exit 0 + registry 27종 green + 전체 테스트 green</b> — 전체 완료 판정</dd></dl></div></li>
 
   </ol>
   <aside class="note">
-    <p><b>이 계획 밖에 있는 것 하나 — 지금 프로덕션에서 돌고 있는 버그</b><span class="dim">(08-12 재확인 · 여전히 살아 있다)</span></p>
+    <p><b>이 계획 밖에 있는 것 하나 — 지금 프로덕션에서 돌고 있는 버그</b><span class="dim">(08-19 O-5 발주 등록 시 존치 재확인)</span></p>
     <p><code>delivery</code> 가 스위치도 없이 <code>FakeAlimtalkGateway</code> 를 꽂아
     <b>거짓 성공</b>을 만든다(<code>composition_root:54</code>). 클린룸 리빌드에서 이 버그는
     «스팩으로 나를지, 고칠지»의 판정 문제가 된다(프로토콜 ⑦-⑶ 옛 코드 버그 갈래 — 사용자 판정).
     트리 이관과 무관하므로 <b>따로</b> 다루되, 늦어도 4번에서 <code>delivery</code>
-    차례가 오기 전에 끝낸다.</p>
+    차례가 오기 전에 끝낸다.
+    <span class="dim">08-22 — BK2(O-5)가 delivery 를 클린룸으로 세 번 재구현해 인수까지
+    통과시켰지만 실험 산출물이라 랜딩되지 않았다 — 프로덕션 쪽 버그는 이 실험으로 바뀐 게 없다.</span></p>
   </aside>
 </section>
 </div>

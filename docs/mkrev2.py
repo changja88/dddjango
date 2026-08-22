@@ -6547,6 +6547,8 @@ TIPS = """  var TIPS = {
 #    옛 0~8 계획(트리 재저작 → 플러그인 재작성)은 08-12 에 전부 끝나 걷어냈다 —
 #    경과 기록은 workspace/plan/ 과 메모리에 있다. 지금 계획 = broccoli-server
 #    리빌드 7단계(08-12 사용자 확정 · 원안 7단계 + 추가 ①②③·통합 편입).
+#    08-22 현행화 — 4번 doing: 라운드 1·1′ 불통과·온톨로지 트랙 삽입(v2.17.0)은
+#    본문 «현재 위치» 문단과 4번 실측 주석·delivery 버그 노트가 말한다.
 # (n, 제목, 상태, 무엇을 하나, 산출물, 「끝났다」의 자)
 PLAN = [
  (1, "통합 적대적 리뷰 — 원안 1+2 를 한 리뷰로", "done",
@@ -6579,7 +6581,7 @@ PLAN = [
   "notification_navigation→notifications value_object(delivery 직접 import 는 legacy 빚 — 그 BC 라운드가 갚는다).</span></em>",
   "브랜치 + baseline 기록 + <code>framework/</code> 이관 커밋",
   "테스트 green(=baseline 동일) + <code>migration_gate</code> 잔존 감소(루트 <code>common</code> 소멸)"),
- (4, "BC 클린룸 리빌드 루프 «추가 ②③»", "todo",
+ (4, "BC 클린룸 리빌드 루프 «추가 ②③»", "doing",
   "방법 정본은 <b>라운드 프로토콜</b>(<code>workspace/plan/2026-08-12-bc-rebuild-protocol.md</code>) — "
   "라운드마다 같은 일곱 걸음이다: <b>BC 선택</b>(라운드 1 은 <code>child_settings</code> 고정 — 최소 크기·"
   "인바운드 0 이라 하네스 첫 검증을 겸한다 · 이후 시드 무작위로 재현 가능) → <b>스팩 추출</b>"
@@ -6591,7 +6593,11 @@ PLAN = [
   "설계 질·spec 충실·옛 구현 대비를 소견으로 남긴다 · <b>둘 다 받아야 라운드가 닫힌다</b>) → 삼분 처분·대장 기록. "
   "<em>옛 테스트를 남겨 돌리면 파이프라인의 테스트 작성 능력을 잴 수 없다 — 그래서 클린룸이다.</em><br>"
   "<b>문제 발견 시</b> «추가 ③»: 먼저 <b>fixture/matrix 케이스로 고정</b> → 플러그인 수정 → 검증 8종 재실행. "
-  "고정 없이 고치면 다음 BC 에서 재발해도 못 잡는다. 규칙 «값»이 바뀌면 <b>eval v5 unfreeze/새 epoch</b> 절차가 딸려온다.",
+  "고정 없이 고치면 다음 BC 에서 재발해도 못 잡는다. 규칙 «값»이 바뀌면 <b>eval v5 unfreeze/새 epoch</b> 절차가 딸려온다.<br>"
+  "<b>실측(08-22 현재)</b> — 라운드 1·1′(<code>child_settings</code>) 완주·불통과(미랜딩) — 발견 결함은 "
+  "«추가 ③» 회로대로 플러그인 수정으로 환류됐다(<code>workspace/plan/2026-08-12-round1-plugin-fixes.md</code>·"
+  "<code>round1b</code>). 이후 온톨로지 트랙의 A/B(BK1·BK2)가 같은 클린룸 판형으로 여섯 런을 추가 완주 — "
+  "랜딩은 아니지만 하네스·게이트·인수 스위트가 실전 검증됐다. <b>랜딩된 BC 는 아직 0.</b>",
   "라운드 대장 + BC 별 재구현 커밋 + 문제마다 fixture 케이스 + 플러그인 수정",
   "<b>연속 2개 BC 가 플러그인 무수정으로 통과</b>"),
  (5, "플러그인 속도 개선", "todo",
@@ -6639,7 +6645,7 @@ body = """<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>dddjango 표준 트리 — 수정본 (작업 중)</title>
+<title>dddjango 표준 트리</title>
 
 @@STYLE@@
 </head>
@@ -6648,7 +6654,7 @@ body = """<!doctype html>
 <div class="wrap">
 
 <header class="top">
-  <p class="kicker">dddjango 플러그인 · 표준 파일트리 수정본 · 작업 중</p>
+  <p class="kicker">dddjango 플러그인 · 표준 파일트리 · 확정 — v2.0.0(08-12)부터 현행</p>
   <h1>겉에서 안으로 — 한 겹씩 닫는다</h1>
 </header>
 
@@ -6834,6 +6840,21 @@ body = """<!doctype html>
   이중 수용을 걷어 <b>플러그인은 이제 새 트리만 안다</b>. 남은 것은 <b>적용 루프</b>다:
   리뷰로 굳히고 → 배포하고 → BC 하나씩 적용하며 <b>발견되는 문제로 플러그인을 고치고</b> →
   수렴하면 속도를 올리고 → 마지막에 전부를 일괄 적용한다.</p>
+  <p><b>현재 위치(08-22)</b> — <b>1~3번은 끝났고 4번 루프가 열려 있다</b>.
+  라운드 1·1′(<code>child_settings</code>)이 돌아 «발견 결함 → fixture 고정 → 플러그인 수정»
+  회로를 실증했지만 둘 다 <b>불통과(미랜딩)</b>, 후속 발주(billing S4-r1)는 발주문·앵커까지
+  준비된 채 <b>기동 보류</b><span class="dim">(08-15 사용자 결정)</span>다. 그 자리에 계획 밖의
+  트랙 하나가 끼어들어 끝났다 — <b>온톨로지 이관</b><span class="dim">(08-18~08-22 · 현행
+  릴리즈 v2.17.0)</span>. 규범 정본이 md 문서에서 <b>RDF 그래프</b>(<code>ontology/rules/*.ttl</code>
+  — 30 문서 키 · 참조성 539절 · 규범 Work 3,400)로 옮겨졌고, 이제 규범 수정은 «그래프 수정 →
+  게이트 → md 재투영 → rulepack 재소성» 루프를 탄다(절차 정본: <code>docs/DEVELOPMENT.md</code>).
+  이 문서의 1·2장, 즉 <b>트리 규칙 자체는 그 이관에서 바뀌지 않았다</b> — 옮겨진 것은 규범의
+  «저장 형식과 수정 경로»다. 그 트랙의 A/B 실험(T2)은 <b>이 루프의 클린룸 판형을 실험 차량으로
+  빌려</b> 두 블록 여섯 런을 완주시켰고 — BK1(O-7 합성 스모크 ×3런) · BK2(O-5
+  <code>delivery</code> ×3런 · 인수 전수 green) — 처치 발화 0 으로 측정 자체는 실패해 조기
+  종결됐지만<span class="dim">(채택은 «구조 이득 명시» 경로)</span>, 그 과정에서 <b>게이트 결함
+  수리와 동결 개정 10(v2.16.0)이 플러그인에 환류</b>됐다. 남은 일은 그대로다 — <b>4번 공식 루프
+  재개</b>, 자도 그대로다(연속 2 BC 무수정).</p>
   <p><b>재료(08-12 실측)</b> — <code>broccoli-server</code> 는 BC <b>16개 전부 옛 트리</b>,
   옛 이름 잔존 <b>72건</b><span class="dim">(lessons 7 · products 6 · entitlements 6 · accounts 5 ·
   그 외 11개 BC 각 3~4 · billing 3 · 루트 <code>common/</code> 포함 · accounts 는 <code>test/</code> 안 잔존도)</span>.
@@ -6860,12 +6881,14 @@ body = """<!doctype html>
 @@PLAN@@
   </ol>
   <aside class="note">
-    <p><b>이 계획 밖에 있는 것 하나 — 지금 프로덕션에서 돌고 있는 버그</b><span class="dim">(08-12 재확인 · 여전히 살아 있다)</span></p>
+    <p><b>이 계획 밖에 있는 것 하나 — 지금 프로덕션에서 돌고 있는 버그</b><span class="dim">(08-19 O-5 발주 등록 시 존치 재확인)</span></p>
     <p><code>delivery</code> 가 스위치도 없이 <code>FakeAlimtalkGateway</code> 를 꽂아
     <b>거짓 성공</b>을 만든다(<code>composition_root:54</code>). 클린룸 리빌드에서 이 버그는
     «스팩으로 나를지, 고칠지»의 판정 문제가 된다(프로토콜 ⑦-⑶ 옛 코드 버그 갈래 — 사용자 판정).
     트리 이관과 무관하므로 <b>따로</b> 다루되, 늦어도 4번에서 <code>delivery</code>
-    차례가 오기 전에 끝낸다.</p>
+    차례가 오기 전에 끝낸다.
+    <span class="dim">08-22 — BK2(O-5)가 delivery 를 클린룸으로 세 번 재구현해 인수까지
+    통과시켰지만 실험 산출물이라 랜딩되지 않았다 — 프로덕션 쪽 버그는 이 실험으로 바뀐 게 없다.</span></p>
   </aside>
 </section>
 </div>
