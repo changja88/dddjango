@@ -1,16 +1,141 @@
 @prefix djr: <https://numchida.com/ns/djr#> .
 
+djr:alias-contract-app-container a djr:AliasEntry ;
+    djr:aliasFor djr:R-0122 ;
+    djr:aliasText "contract#check-app-container.py" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-contract-choices-literal-consumption a djr:AliasEntry ;
+    djr:aliasFor djr:R-1186 ;
+    djr:aliasText "contract#check-choices-literal-consumption.py" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-contract-common-container a djr:AliasEntry ;
+    djr:aliasFor djr:R-3191 ;
+    djr:aliasText "contract#check-common-container.py" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-contract-idempotency-scope-creep a djr:AliasEntry ;
+    djr:aliasFor djr:R-1662 ;
+    djr:aliasText "contract#check-idempotency-scope-creep.py" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-contract-ninja-boundary-middleware a djr:AliasEntry ;
+    djr:aliasFor djr:R-0795 ;
+    djr:aliasText "contract#check-ninja-boundary-middleware.py" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-contract-response-schema-bypass a djr:AliasEntry ;
+    djr:aliasFor djr:R-0091 ;
+    djr:aliasText "contract#check-response-schema-bypass.py" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-contract-transient-overmapping a djr:AliasEntry ;
+    djr:aliasFor djr:R-1040 ;
+    djr:aliasText "contract#check-transient-overmapping.py" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-10 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3196 ;
+    djr:aliasText "rule#10" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-178 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3207 ;
+    djr:aliasText "rule#178" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-187 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3211 ;
+    djr:aliasText "rule#187" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-20 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3208 ;
+    djr:aliasText "rule#20" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-21 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3209 ;
+    djr:aliasText "rule#21" ;
+    djr:aliasType djr:alias-unique .
+
 djr:alias-rule-3 a djr:AliasEntry ;
     djr:aliasFor djr:R-0124 ;
     djr:aliasText "rule#3" ;
     djr:aliasType djr:alias-unique .
 
-djr:alias-rule-486 a djr:AliasEntry ;
-    djr:aliasFor djr:R-0118 ;
-    djr:aliasText "rule#486" ;
+djr:alias-rule-314 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3212 ;
+    djr:aliasText "rule#314" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-430 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3218 ;
+    djr:aliasText "rule#430" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-432 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3219 ;
+    djr:aliasText "rule#432" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-436 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3220 ;
+    djr:aliasText "rule#436" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-487 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3178 ;
+    djr:aliasText "rule#487" ;
     djr:aliasType djr:alias-unique .
 
 djr:alias-rule-488 a djr:AliasEntry ;
-    djr:aliasFor djr:R-0120 ;
+    djr:aliasFor djr:R-3181 ;
     djr:aliasText "rule#488" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-489 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3182 ;
+    djr:aliasText "rule#489" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-491 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3186 ;
+    djr:aliasText "rule#491" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-58 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3210 ;
+    djr:aliasText "rule#58" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-72 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3230 ;
+    djr:aliasText "rule#72" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-74 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3229 ;
+    djr:aliasText "rule#74" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-82 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3195 ;
+    djr:aliasText "rule#82" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-88 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3200 ;
+    djr:aliasText "rule#88" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-89 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3201 ;
+    djr:aliasText "rule#89" ;
+    djr:aliasType djr:alias-unique .
+
+djr:alias-rule-92 a djr:AliasEntry ;
+    djr:aliasFor djr:R-3206 ;
+    djr:aliasText "rule#92" ;
     djr:aliasType djr:alias-unique .

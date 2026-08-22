@@ -54,7 +54,13 @@ def _namespaces():
 _DJR_NS, _RDF_NS, _PROV_NS = _namespaces()
 
 
-_ALIAS_TEXT_RE = re.compile(r"^rule#[1-9][0-9]*$")   # v2 동결 문법(비한정 «#N»·전치 0 금지)
+_ALIAS_TEXT_RE = re.compile(r"^(rule#[1-9][0-9]*|contract#check-[a-z0-9-]+\.py)$")  # v2 동결 문법 + T3 계약 레인(«비한정 #N»·전치 0 금지)
+# contract# 공간(T3 게이트 조항 처분): 선행 계약 레인 검사기 7종만 — 등재는 enforcedBy 간선 동반 의무.
+_PRIOR_CONTRACT_SCRIPTS = {
+    "check-app-container.py", "check-choices-literal-consumption.py", "check-common-container.py",
+    "check-idempotency-scope-creep.py", "check-ninja-boundary-middleware.py",
+    "check-response-schema-bypass.py", "check-transient-overmapping.py",
+}
 _WORK_IRI_RE = re.compile(r"#R-\d{4}$")              # 채번 대장 형식
 _OWNER_ROW_RE = re.compile(r"^\|\s*(\d+)\s*\|", re.MULTILINE)
 
@@ -98,8 +104,15 @@ def alias_errors(g, issued: "set[str]", rule_numbers: "set[str]") -> "list[str]"
         text, work = str(t), str(w)
         if not _ALIAS_TEXT_RE.match(text):
             bad_syn.append(f"{name}:{text!r}(문법)")
-        elif text.split("#", 1)[1] not in rule_numbers:
-            bad_syn.append(f"{name}:{text!r}(원장 미실재)")
+        elif text.startswith("rule#"):
+            if text.split("#", 1)[1] not in rule_numbers:
+                bad_syn.append(f"{name}:{text!r}(원장 미실재)")
+        else:  # contract# — 레인 검사기 실재 + enforcedBy 간선 실재(배선 없는 계약 조인 금지)
+            script = text.split("#", 1)[1]
+            if script not in _PRIOR_CONTRACT_SCRIPTS:
+                bad_syn.append(f"{name}:{text!r}(선행 계약 레인 밖 검사기)")
+            elif (w, _DJR_NS.enforcedBy, _DJR_NS[f"c/{script}"]) not in g:
+                bad_syn.append(f"{name}:{text!r}(enforcedBy 간선 부재)")
         m = _WORK_IRI_RE.search(work)
         if m is None:
             bad_res.append(f"{name}→{work.rsplit('#', 1)[-1]}(채번 형식 아님)")
@@ -173,6 +186,14 @@ _ST_CASES: "tuple[tuple[str, str, bool], ...]" = (
     ("⑥″ 비한정 문법(#10)", _st_alias("st-bare-hash", "R-9001", "#10"), True),
     ("⑥″ 전치 0(rule#010)", _st_alias("st-zero", "R-9001", "rule#010"), True),
     ("⑥″ 원장 미실재 번호(rule#99999)", _st_alias("st-ghost", "R-9001", "rule#99999"), True),
+    # contract# 공간(T3 계약 레인) — 문법 통과·레인 밖·간선 부재 3축
+    ("⑥″ contract 문법 통과(간선 실재)",
+     _st_alias("st-c-ok", "R-9001", "contract#check-app-container.py")
+     + f"\ndjr:R-9001 djr:enforcedBy <{DJR}c/check-app-container.py> .\n", False),
+    ("⑥″ contract 레인 밖 검사기",
+     _st_alias("st-c-out", "R-9001", "contract#check-naming.py"), True),
+    ("⑥″ contract enforcedBy 간선 부재",
+     _st_alias("st-c-noedge", "R-9001", "contract#check-common-container.py"), True),
 )
 
 

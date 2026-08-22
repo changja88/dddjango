@@ -35,11 +35,13 @@ from checker_registry import REGISTRY  # noqa: E402
 
 # 픽스처: tier 1(alias 2건) · tier 1 중복 1건 · tier 3(팩 밖) 1건.
 FIXTURE: "list" = [
-    {"rule": "#3", "checker": "check-context-isolation.py", "record_id": "r:1",
+    # 쌍 선택이 M1(정렬 키 제거)의 검출 조건이다: 동순위 tie-break 가 identity(rule 사전순)라
+    # 정순(rank: R-0124 1658 < R-3196 ~2100)과 사전순("#10" < "#3")이 반대인 쌍이어야 한다.
+    {"rule": "#10", "checker": "check-layer-skeleton.py", "record_id": "r:1",
+     "file": "application/b/composition_root/x.py", "symbol": None,
+     "message": "칸 인지 산개", "severity": "violation"},
+    {"rule": "#3", "checker": "check-context-isolation.py", "record_id": "r:2",
      "file": "application/a/x.py:12", "symbol": "X", "message": "ACL 위반",
-     "severity": "violation"},
-    {"rule": "#488", "checker": "check-layer-skeleton.py", "record_id": "r:2",
-     "file": "application/b/__init__.py", "symbol": None, "message": "빈 패키지 결손",
      "severity": "violation"},
     {"rule": "#3", "checker": "check-context-isolation.py", "record_id": "r:3",
      "file": "application/a/x.py:99", "symbol": "X", "message": "ACL 위반",
@@ -97,6 +99,7 @@ def run(pack: "rp.Rulepack") -> "list":
         ordered, _, _ = rc.select_graph(FIXTURE, pack)
         same = {rc.identity(r) for r in ordered} == {rc.identity(r) for r in FIXTURE}
         ids = [r["record_id"] for r in ordered]
+        # 기대 순서는 order_rank 소유 — T3 q4 개정(전량 포함)으로 R-0124(1658) < R-3196(2100대).
         return same and ids == ["r:2", "r:1", "r:4"], f"{ids}"
 
     def g3b():
@@ -117,7 +120,7 @@ def run(pack: "rp.Rulepack") -> "list":
         alias 는 파일럿에 3건뿐이라 이 단언이 없으면 축이 죽어도 아무도 모른다.
         """
         _, _, prov = rc.select_graph(FIXTURE, pack)
-        first = prov[0]
+        first = next(p for p in prov if p["record_id"] == "r:2")  # 위치 아닌 id — 픽스처 재배열 내성
         rules = pack.rules(first["works"])
         return (first["join_type"] == "alias" and first["work"] == "R-0124"
                 and [r["rule"] for r in rules] == ["#3"]), \

@@ -42,9 +42,10 @@ CLI 호환 심: registry 가 렌더하는 `--error-profile`·selector 들은 «�
 추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
 
 그래프 좌표(T2-2): 규범 정본 = 온톨로지 그래프(`ontology/rules/`) · 이 검사기의 #N ↔ Work 조인은
-  alias 대장(`ontology/wiring/aliases.ttl`)이 소유한다. 조인 확정: rule#3 → djr:R-0124.
-  미확정 #N 은 T3 이관에서 해소한다(현행 조인 3종 — 판단표
-  `workspace/design/2026-08-20-ontology-t2-2-alias-ledger.md` §2·§5).
+  alias 대장(`ontology/wiring/aliases.ttl`)이 소유한다. 조인 확정: rule#3 → djr:R-0124 · rule#74 → djr:R-3229 ·
+  rule#432 → djr:R-3219.
+  미확정 #N 은 T3 이관에서 해소한다(대장 28종 — T3 게이트 조항 처분 2026-08-22 ·
+  판단표 v2 + `workspace/eval/t3/memos/`).
 """
 from __future__ import annotations
 

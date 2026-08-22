@@ -129,6 +129,7 @@ E7 배포 경계(M13)와 설치 cache 실행(M14) 때문이다. 팩은 커밋되
     "order_key":  {"R-NNNN": [document, section_number_natural, block_order, "R-NNNN"]} }
   ```
 - **배열 정렬 키 전수 고정**(AQ-11 — `sort_keys`는 배열을 정렬하지 않는다): `built_from`=경로 사전순 · `checkers`/`aliases`=문자열 사전순 · `by_checker[*]`/`by_section works`=`order_key` 순 · `by_path`=glob 사전순.
+- **T3 q4 개정(2026-08-22 — 스키마 `rulepack/1` 유지)**: 팩이 그래프 Work **전량**(무앵커 절 포함 3,400)을 담게 되면서 `works.*.section_number`·`by_section.*.number` 값 공간이 `string | null` 로 확대. 정렬 키는 절 IRI 말단 서수(sNNN) 기반으로 이동(생성기 소유 — 무앵커 절 포함 전량에 존재). 두 필드의 소비자 0건 실측이라 조회 모듈 무변. `aliases` 필드는 **rule# 공간 한정**(contract# 계약 레인은 그래프 전용 — D12), 생성기에 rule# AliasEntry ⊆ by_alias 역방향 fail-closed 검사 신설.
 - 직렬화: `json.dumps(…, ensure_ascii=False, indent=2, sort_keys=True)` + 말미 개행.
 
 ### P3. 팩은 **투영물**이다 — v2 신설

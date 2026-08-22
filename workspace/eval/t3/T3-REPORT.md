@@ -38,9 +38,17 @@
 - **tree-coords(트리 N행 좌표)**: **ⓒ 채택·적용 완료** — 좌표 정본은 코퍼스 밖(`docs/file_tree.html data-r`), authoring §14 규약 1행 신설, worksheet §3 10·11번 «유예 기각» 전환. 별건 등재 2건: ① anchor_integrity_check에 트리 행 해소 백스톱 ⑦ 신설(≈20행 — 댕글링 좌표 방지) ② tree_mirror_check `--write` ↔ owner-graph 이중 기록자 처분(㉠ splice가 rules TTL 리터럴을 소스로 — **트리 개정 전 필수**).
 - **hash-n-alias / contract-ref / q4-coverage**: 적용 전 적대 리뷰 경유(T2-2 선례 — 판단표 리뷰가 거짓 alias 4건을 막았음). 결과는 §5에 추기.
 
-## 5. alias·contract#·q4 처분 결과
+## 5. alias·contract#·q4 처분 결과 (2026-08-22 — 적대 리뷰 경유 후 적용 완료)
 
-(적대 리뷰 완료 후 추기)
+리뷰 판정: hash-n-alias·contract-ref = **apply_with_fixes**(blocker 각 3 — 전건 수정안 첨부), q4-coverage = **apply**. 리뷰 findings 정본 = `reviews/memo-*-findings.md`. 적용 내역:
+
+- **alias 대장 3→28엔트리**(`wiring/aliases.ttl`): rule# 21(유지 #3·재귀속 #488→R-3181·신설 19 — 조건 A/B의 restates 선행은 소급 패스로 이미 충족 확인) + **contract# 7 신설**(선행 계약 레인 — 검사기 파일명 키·enforcedBy 간선 동반 의무). **rule#486→R-0118 취소**(합성 규칙 판명 — v2가 #119에 적용한 사유 동일). 무접두 #N 본문 편입은 **기각 유지**(정본 동일성 30종/538 = 5.6% — 계수 근거). reg#N·결정#N·slot#N 공간은 보류·소멸 등재(메모 §4).
+- **⑥″ 2공간 문법**(structural_check): `rule#N | contract#check-*.py` + contract 축은 레인 7종 실재·enforcedBy 간선 fail-closed. self-test 9→**12/12**.
+- **violation_adapter**: 2형 키(rule=#N·contract=원문), 계약 레인 조인 경로(«contract_joined/unjoined» 계수 분리 — 혼성 3종은 후자 잔존), self-test 하드코딩 제거(대장 파생 — 재귀속 재발 방지). **#488→R-3181 end-to-end 재실증 + R-0122 계약 왕복 실증** green.
+- **q4 전량 포함 개정**: 무앵커 절 Work 1,707 포함(팩 = Work 3,400 전량), 정렬 키 = 절 IRI 서수(생성기 소유), rule# AliasEntry ⊆ by_alias **역방향 fail-closed 신설**, contract# 레인은 팩 제외(그래프 전용 — D12). 스키마 `rulepack/1` 유지(두 필드 소비자 0 실측 — rulepack.py docstring·T2-4 설계 정본 기입). 질의 골든 재기록 diff 검수: q2 재귀속 반영·q4 3,400·with_alias 28·q1/q3 불변.
+- **검사기 docstring 27종 동기**(리뷰 B3 자기모순 수정 반영): layer-skeleton 9조인 · contract 레인 7종 · #74→R-3229 21종(제외 2종은 checker_lint 소유 명기) — 대장 교차검증 mismatch 0·codex 미러 27종 byte 동일.
+- **검증**: rulepack 스모크 14/14 · 변이 11/11 전건 검출(M1 검출 조건 재구성 — 픽스처 쌍을 정순↔identity 사전순 역전으로) · 계수 기대표 AliasEntryShape 30 green · make verify 전체 green.
+- **사용자 확인 잔여**(q4 메모 §8 — 적용은 완료·이의 시 되돌림 가능): ① q4 전량 포함이 설치본 계약 변경(2.17.0 탑재) ② 스키마 rulepack/1 유지 판단 ③ tier 2 주입 상한은 폐루프 재개 시 별건 심의.
 
 ## 6. 잔여·이월 (T3 밖)
 

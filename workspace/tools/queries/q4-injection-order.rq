@@ -5,8 +5,9 @@
 #       위반별 좁히기는 런타임의 `Rulepack.locate` 가 인덱스 조회로 수행한다.
 # 계약: Work 1건당 1행. 한 Work 를 진술하는 블록이 둘 이상이면 생성기가 fail-closed 한다
 #       (실측 2026-08-20: statesNorm 125 트리플 = 고유 Work 125 → 1:1).
-# 주의: `?sectionNumber` 는 "3.2"·"6.1" 같은 **문자열**이라 SPARQL ORDER BY 는 사전순이다.
-#       최종 정렬(자연 정렬)은 생성기가 소유한다 — 여기 ORDER BY 는 안정성 보조일 뿐이다.
+# 주의: 무앵커 절(sectionNumber 부재 — (전문)·frontmatter·h1)도 전량 포함한다(T3 q4 개정 —
+#       «전량 반환이 계약»의 전량이 이제 진짜 전량이다). 최종 정렬은 생성기가 절 IRI 말단
+#       서수(sNNN) 키로 소유한다 — 여기 ORDER BY 는 안정성 보조일 뿐이다.
 # 금지: 블록 리터럴(`djr:text`)은 **뽑지 않는다** — 설치본 팩에 규범 본문을 싣지 않는다
 #       (동결 E8 «전체 규범 재주입 금지» · 절차 정본 step 6′ · 개정 8).
 PREFIX djr: <https://numchida.com/ns/djr#>
@@ -20,8 +21,8 @@ WHERE {
   ?block djr:statesNorm ?work ;
          djr:inSection ?section ;
          djr:order ?blockOrder .
-  ?section djr:inDocument ?document ;
-           djr:sectionNumber ?sectionNumber .
+  ?section djr:inDocument ?document .
+  OPTIONAL { ?section djr:sectionNumber ?sectionNumber }
   ?work skos:prefLabel ?label .
   OPTIONAL { ?work djr:currentExpression ?expression }
   OPTIONAL { ?work djr:enforcedBy ?checker }

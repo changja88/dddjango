@@ -58,7 +58,9 @@ def load_alias_map(root: "Path | None" = None) -> "dict[str, tuple[str, str]]":
     for t, w, e in g.query(q):
         text = str(t)
         if text.startswith("rule#"):
-            out["#" + text.split("#", 1)[1]] = (str(w), str(e))
+            out["#" + text.split("#", 1)[1]] = (str(w), str(e))  # rule 레인 키 = 레코드 판형의 무접두 #N
+        elif text.startswith("contract#"):
+            out[text] = (str(w), str(e))  # 계약 레인 키 = aliasText 원문(«contract#check-*.py»)
     return out
 
 
@@ -104,20 +106,30 @@ def _esc(s: str) -> str:
 
 def convert(recs: "list[dict]", alias: "dict[str, tuple[str, str]]",
             strip: str = "") -> "tuple[str, dict[str, int]]":
-    tally = {"joined": 0, "rule_unjoined": 0, "contract": 0, "sentinel": 0, "other": 0}
+    tally = {"joined": 0, "rule_unjoined": 0, "contract_joined": 0, "contract_unjoined": 0,
+             "sentinel": 0, "other": 0}
     blocks: "list[str]" = []
     seen: "set[str]" = set()
     for r in recs:
         rule = r.get("rule")
         if rule is None:
             if r.get("contract_ref"):
-                tally["contract"] += 1
+                # 계약 레인 조인(T3 게이트 조항 처분) — 검사기당 유일 규범을 대장이 문다(⑥ 함수성).
+                c_hit = alias.get("contract#" + str(r.get("checker") or ""))
+                if c_hit is None:
+                    tally["contract_unjoined"] += 1  # 혼성 3종 등 — 침묵 탈락 금지(계수 보고)
+                    continue
+                rule = "contract"
+                hit = c_hit
+                tally["contract_joined"] += 1
             elif r.get("sentinel"):
                 tally["sentinel"] += 1
+                continue
             else:
                 tally["other"] += 1
-            continue
-        hit = alias.get(rule)
+                continue
+        else:
+            hit = alias.get(rule)
         if hit is None:
             tally["rule_unjoined"] += 1
             continue
@@ -128,7 +140,8 @@ def convert(recs: "list[dict]", alias: "dict[str, tuple[str, str]]",
         sym = r.get("symbol")
         exp = r.get("experiment_run_id")
         vid = _vid(work, f, sym, exp)
-        tally["joined"] += 1
+        if rule != "contract":
+            tally["joined"] += 1  # rule 레인 계수(계약 레인은 contract_joined 가 이미 셌다)
         if vid in seen:
             continue  # 한 실런 안의 같은 사건은 한 노드(런 간 재발은 위 키가 갈라 놓는다)
         seen.add(vid)
@@ -165,14 +178,21 @@ def self_test() -> int:
            "checker": "check-layer-skeleton.py", "file": "application/shop/composition_root",
            "symbol": None, "severity": "violation", "message": "고정 칸 부재", "expression": None}
     noise = dict(rec, rule="#999999", message="미조인")
-    ttl, tally = convert([rec, noise], alias)
-    ok_join = tally["joined"] == 1 and tally["rule_unjoined"] == 1
-    ok_work = "R-0120" in ttl and "violatesExpression" in ttl
+    crec = dict(rec, record_id="st-run:0002", rule=None, checker="check-app-container.py",
+                contract_ref="선행 계약(08-04 API-error) 소유", message="계약 레인")
+    ttl, tally = convert([rec, noise, crec], alias)
+    ok_join = tally["joined"] == 1 and tally["rule_unjoined"] == 1 and tally["contract_joined"] == 1
+    # 기대 Work 는 하드코딩하지 않고 대장에서 파생(재귀속 재발 방지 — 메모 리뷰 B2)
+    exp_rule = alias.get("#488", ("", ""))[0].rsplit("#", 1)[-1]
+    exp_contract = alias.get("contract#check-app-container.py", ("", ""))[0].rsplit("#", 1)[-1]
+    ok_work = bool(exp_rule) and exp_rule in ttl and "violatesExpression" in ttl
+    ok_contract = bool(exp_contract) and exp_contract in ttl
     print("| self-test 단언 | 판정 | 실측 |")
     print("|---|---|---|")
-    print(f"| 대장 조인(#488→Work) | {'✓' if ok_join else '✗'} | {tally} |")
-    print(f"| Work·Expression 실값 적재 | {'✓' if ok_work else '✗'} | {'R-0120 왕복' if ok_work else ttl[:80]} |")
-    if not (ok_join and ok_work):
+    print(f"| 대장 조인(#488→Work·contract#→Work) | {'✓' if ok_join else '✗'} | {tally} |")
+    print(f"| Work·Expression 실값 적재 | {'✓' if ok_work else '✗'} | {(exp_rule + ' 왕복') if ok_work else ttl[:80]} |")
+    print(f"| 계약 레인 적재 | {'✓' if ok_contract else '✗'} | {(exp_contract + ' 왕복') if ok_contract else ttl[:80]} |")
+    if not (ok_join and ok_work and ok_contract):
         print("[violation-adapter] self-test 실패", file=sys.stderr)
         return 2
     print(f"[violation-adapter] self-test 통과 — 대장 {len(alias)}종 조인 가능")
@@ -207,7 +227,8 @@ def main(argv: "list[str]") -> int:
     else:
         sys.stdout.write(ttl)
     print(f"[violation-adapter] 레코드 {len(recs)} — 적재 {tally['joined']} · "
-          f"미조인 #N {tally['rule_unjoined']} · 선행 계약 {tally['contract']} · "
+          f"미조인 #N {tally['rule_unjoined']} · 계약 조인 {tally['contract_joined']} · "
+          f"계약 미조인 {tally['contract_unjoined']} · "
           f"센티널 {tally['sentinel']} · 기타 {tally['other']}", file=sys.stderr)
     return 0
 

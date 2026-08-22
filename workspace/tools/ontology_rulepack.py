@@ -124,7 +124,8 @@ def build(root: "Path | None" = None) -> "tuple[dict, list[str]]":
         label: str = str(r.label)
         checkers: "list[str]" = sorted(_local(c) for c in _split(r.checkers))
         agents: "list[str]" = sorted(_local(a) for a in _split(r.agents))
-        aliases: "list[str]" = sorted(_split(r.aliases))
+        # 계약 레인 alias(contract#…)는 그래프 전용 — 팩에는 rule# 공간만 싣는다(D12 문면·T3 처분).
+        aliases: "list[str]" = sorted(a for a in _split(r.aliases) if not a.startswith("contract#"))
         for field, values in (("checkers", checkers), ("aliases", aliases)):
             for v in values:
                 if SEP in v:
@@ -133,7 +134,7 @@ def build(root: "Path | None" = None) -> "tuple[dict, list[str]]":
             "label": label,
             "document": _local(str(r.document)),
             "section": _local(str(r.section)),
-            "section_number": str(r.sectionNumber),
+            "section_number": str(r.sectionNumber) if r.sectionNumber is not None else None,
             "block": _local(str(r.block)),
             "block_order": int(r.blockOrder),
             "expression": str(r.expression) if r.expression is not None else None,
@@ -141,8 +142,10 @@ def build(root: "Path | None" = None) -> "tuple[dict, list[str]]":
             "agents": agents,
             "aliases": aliases,
         }
-        ordered.append((str(r.document), _natural(str(r.sectionNumber)),
-                        int(r.blockOrder), wid))
+        # 정렬 키 = 절 IRI 말단 서수(sNNN — 무앵커 절 포함 전량에 존재·문서 내 등장 순). T3 q4 개정.
+        sec_local = _local(str(r.section))
+        sec_ord = int(re.match(r"s(\d+)", sec_local.rsplit("/", 1)[-1]).group(1))
+        ordered.append((str(r.document), sec_ord, int(r.blockOrder), wid))
 
     for rank, (_, _, _, wid) in enumerate(sorted(ordered)):
         works[wid]["order_rank"] = rank
@@ -193,9 +196,25 @@ def build(root: "Path | None" = None) -> "tuple[dict, list[str]]":
         "by_section": by_section,
     }
 
+    # 재발 방지(T3 q4 개정 — 역방향 fail-closed): 그래프의 rule# 공간 AliasEntry 전량이
+    # by_alias 에 실렸는가. contract# 레인은 설계상 팩 밖(그래프 전용)이라 검사 대상이 아니다.
+    graph_rule_aliases: "set[str]" = set()
+    for row in g.query(
+            "PREFIX djr: <https://numchida.com/ns/djr#>\n"
+            "SELECT ?t WHERE { ?a a djr:AliasEntry ; djr:aliasText ?t }"):
+        t = str(row.t)
+        if t.startswith("rule#"):
+            graph_rule_aliases.add("#" + t.split("#", 1)[1])
+    missing_aliases = sorted(graph_rule_aliases - set(by_alias))
+    if missing_aliases:
+        problems.append(f"rule# AliasEntry {len(missing_aliases)}건이 by_alias 에 없다(커버리지 공백): "
+                        + ", ".join(missing_aliases[:8]))
+
     unreached: "list[str]" = sorted(w for w, v in works.items() if not v["checkers"])
+    anchorless = sorted(w for w, v in works.items() if v["section_number"] is None)
     report: "list[str]" = [
         f"[rulepack] Work {len(works)} · 검사기 {len(by_checker)} · alias {len(by_alias)} · 절 {len(by_section)}",
+        f"[rulepack] 무앵커 절 Work {len(anchorless)}건 포함(T3 q4 개정 — 전량 반환이 진짜 전량)",
         f"[rulepack] 검사기 도달 불가 규범 {len(unreached)}건 — selector 진입로 없음(침묵 탈락 금지)",
         f"[rulepack] 재료 ttl {len(files)}개 · 본문(text) 미동봉 — 개정 8",
         f"[rulepack] 경로 글롭 {len(by_path)}건(Q1 — 처치 밖 카탈로그)",

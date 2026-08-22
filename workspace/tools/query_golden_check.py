@@ -103,7 +103,7 @@ def observe() -> "dict":
     out["q1"] = {"globs": sorted({str(r.glob) for r in rows}), "rows": len(rows)}
 
     # Q2 — **양성 + 음성 동시**. exp-A 는 2 Work, exp-B 는 1 Work,
-    #      두 런에 재발한 R-0120 은 **양쪽 모두 1건**으로 보여야 한다(런 간 재발 보존).
+    #      두 런에 재발한 #488 의 조인 Work(대장 파생)는 **양쪽 모두 1건**으로 보여야 한다(런 간 재발 보존).
     for run in ("exp-A", "exp-B", "exp-없음"):
         res = run_q2(runs, run)
         out[f"q2:{run}"] = sorted(f"{_local(r.work)}×{int(r.violationCount)}" for r in res)
@@ -168,7 +168,11 @@ def main(argv: "list[str] | None" = None) -> int:
         diffs.append("q3 가 입력에 따라 다른 부분집합을 내지 않는다(공허 통과)")
     if (got.get("adapter") or {}).get("nodes") != 3:
         diffs.append(f"어댑터가 실런 3사건을 3노드로 굽지 않았다: {got.get('adapter')}")
-    if "R-0120×1" not in got.get("q2:exp-A", []) or "R-0120×1" not in got.get("q2:exp-B", []):
+    # 재발 규칙(#488)의 기대 Work 는 하드코딩하지 않고 대장에서 파생한다(재귀속 재발 방지 —
+    # T3 마감 리뷰 B2 판형: R-0120→R-3181 재귀속 때 이 단언이 낡은 값으로 남았던 자리).
+    from violation_adapter import load_alias_map
+    recur = load_alias_map().get("#488", ("", ""))[0].rsplit("#", 1)[-1] + "×1"
+    if recur == "×1" or recur not in got.get("q2:exp-A", []) or recur not in got.get("q2:exp-B", []):
         diffs.append("런 간 재발이 양쪽에 보존되지 않는다(어댑터 사건 노드 축 파손)")
 
     for d in diffs:

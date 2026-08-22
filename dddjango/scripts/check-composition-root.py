@@ -44,9 +44,9 @@ category 의 #N 귀속/계약 잔류 판정과 tree↔code 동일 사건 선점 
 귀속 매핑표 v2 가 정본이다(정본 문서명: 2026-08-19-ontology-t2-1-attribution-map).
 
 그래프 좌표(T2-2): 규범 정본 = 온톨로지 그래프(`ontology/rules/`) · 이 검사기의 #N ↔ Work 조인은
-  alias 대장(`ontology/wiring/aliases.ttl`)이 소유한다. 조인 확정: 없음(대장 미등재 — T3 이월).
-  미확정 #N 은 T3 이관에서 해소한다(현행 조인 3종 — 판단표
-  `workspace/design/2026-08-20-ontology-t2-2-alias-ledger.md` §2·§5).
+  alias 대장(`ontology/wiring/aliases.ttl`)이 소유한다. 조인 확정: rule#488 → djr:R-3181.
+  미확정 #N 은 T3 이관에서 해소한다(대장 28종 — T3 게이트 조항 처분 2026-08-22 ·
+  판단표 v2 + `workspace/eval/t3/memos/`).
 """
 from __future__ import annotations
 

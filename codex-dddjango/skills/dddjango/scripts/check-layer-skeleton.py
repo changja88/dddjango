@@ -31,9 +31,11 @@
 추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
 
 그래프 좌표(T2-2): 규범 정본 = 온톨로지 그래프(`ontology/rules/`) · 이 검사기의 #N ↔ Work 조인은
-  alias 대장(`ontology/wiring/aliases.ttl`)이 소유한다. 조인 확정: rule#486 → djr:R-0118 · rule#488 → djr:R-0120.
-  미확정 #N 은 T3 이관에서 해소한다(현행 조인 3종 — 판단표
-  `workspace/design/2026-08-20-ontology-t2-2-alias-ledger.md` §2·§5).
+  alias 대장(`ontology/wiring/aliases.ttl`)이 소유한다. 조인 확정: rule#10 → djr:R-3196 · rule#58 → djr:R-3210 ·
+  rule#74 → djr:R-3229 · rule#314 → djr:R-3212 · rule#436 → djr:R-3220 · rule#487 → djr:R-3178 ·
+  rule#488 → djr:R-3181 · rule#489 → djr:R-3182 · rule#491 → djr:R-3186.
+  미확정 #N 은 T3 이관에서 해소한다(대장 28종 — T3 게이트 조항 처분 2026-08-22 ·
+  판단표 v2 + `workspace/eval/t3/memos/`).
 """
 from __future__ import annotations
 
