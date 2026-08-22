@@ -21,7 +21,7 @@
      "g2",
      "report"
     ],
-    "note": "사용자 게이트 3개(G0·G1·G2)를 통과하는 본선 — Coordinator는 코드를 쓰지 않고 위임·판정만 한다."
+    "note": "사용자 게이트 G0·G1·G2를 지나는 본선 — Coordinator는 위임·판정만 한다."
    },
    {
     "id": "ontology-layer",
@@ -32,7 +32,7 @@
      "rulepack",
      "red"
     ],
-    "note": "규범 정본은 그래프(Turtle)다 — 에이전트가 읽는 스킬 md는 렌더 투영물, rulepack은 빌드타임 SPARQL 소성물."
+    "note": "규범 정본은 그래프(Turtle) — 스킬 md는 렌더 투영물, rulepack은 소성물."
    },
    {
     "id": "backstop-loop",
@@ -44,7 +44,7 @@
      "slice",
      "rulepack"
     ],
-    "note": "검사기 red 중 귀속분(N∖L)만 반송된다. 6′ 재생성 루프는 DJR_LOOP_ENABLED=on일 때만 — 기본 off."
+    "note": "검사기 red 중 귀속분(N∖L)만 반송 — 6′ 루프는 기본 off."
    },
    {
     "id": "web-track",
@@ -56,11 +56,11 @@
      "g1",
      "slice"
     ],
-    "note": "08-22 설계 합의만 반영한 계획 — web은 API 계약만 보는 내부의 외부 클라이언트. 표면이 없으면 트랙 전체 생략."
+    "note": "web 표면이 있을 때만 도는 조건부 트랙(08-22 합의·계획)."
    }
   ],
   "viewBox": [
-   810,
+   740,
    1100
   ]
  },
@@ -79,7 +79,7 @@
   },
   {
    "id": "web-track",
-   "label": "web 설계 (계획 · 조건부)",
+   "label": "web 설계 — web 표면 있을 때만 (계획)",
    "variant": "exception"
   },
   {
@@ -118,7 +118,8 @@
    "id": "ph-report",
    "label": "Phase 3 · 보고",
    "fromCol": 5,
-   "toCol": 5
+   "toCol": 5,
+   "variant": "dashed"
   }
  ],
  "mainPath": [
@@ -198,7 +199,8 @@
    "col": 3,
    "type": "backend",
    "label": "coder",
-   "sublabel": "TDD · 스킬 선택"
+   "sublabel": "TDD · 스킬 선택",
+   "tag": "화면 시 impl-ui"
   },
   {
    "id": "audit",
@@ -429,10 +431,10 @@
    "id": "e-design-webdesign",
    "from": "design",
    "to": "web-design",
-   "label": "계약 확정 후",
+   "label": "web 표면 있을 때만",
    "variant": "dashed",
    "role": "branch",
-   "labelDx": -54,
+   "labelDx": -68,
    "route": "straight",
    "fromSide": "bottom",
    "toSide": "top",
