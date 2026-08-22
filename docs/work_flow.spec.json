@@ -79,7 +79,7 @@
   },
   {
    "id": "web-track",
-   "label": "web 설계 — web 표면 있을 때만 (계획)",
+   "label": "web 설계 (조건부)",
    "variant": "exception"
   },
   {
@@ -142,7 +142,8 @@
    "col": 0,
    "type": "external",
    "label": "발주",
-   "sublabel": "/dddjango"
+   "sublabel": "/dddjango",
+   "width": 84
   },
   {
    "id": "g1",
@@ -157,8 +158,8 @@
    "lane": "user",
    "col": 5,
    "type": "security",
-   "label": "G2 완료 승인",
-   "sublabel": "대가 한 줄 병기"
+   "label": "G2 승인",
+   "sublabel": "완료 · 대가 한 줄 병기"
   },
   {
    "id": "scope",
@@ -167,23 +168,25 @@
    "type": "backend",
    "label": "Phase 0",
    "sublabel": "빚 스캔·G0",
-   "tag": "G0"
+   "tag": "G0",
+   "width": 84
   },
   {
    "id": "report",
    "lane": "coordinator",
    "col": 5,
    "type": "backend",
-   "label": "Phase 3 보고",
-   "sublabel": "게이트 기록"
+   "label": "Phase 3",
+   "sublabel": "보고 · 게이트 기록"
   },
   {
    "id": "design",
    "lane": "design-agents",
    "col": 1,
    "type": "backend",
-   "label": "설계 통합·중재",
-   "sublabel": "design-architect"
+   "label": "설계 통합",
+   "sublabel": "design-architect",
+   "width": 104
   },
   {
    "id": "red",
@@ -239,8 +242,9 @@
    "lane": "ontology",
    "col": 0,
    "type": "database",
-   "label": "그래프 정본",
-   "sublabel": "Work 3,400"
+   "label": "그래프",
+   "sublabel": "정본 · Work 3,400",
+   "width": 84
   },
   {
    "id": "skills",
@@ -248,7 +252,8 @@
    "col": 2,
    "type": "database",
    "label": "스킬 30문서",
-   "sublabel": "투영 539절"
+   "sublabel": "투영 539절",
+   "width": 100
   },
   {
    "id": "rulepack",
@@ -272,8 +277,9 @@
    "lane": "design-agents",
    "col": 0,
    "type": "backend",
-   "label": "독립 리뷰 셋",
-   "sublabel": "review api·db·ddd"
+   "label": "리뷰 셋",
+   "sublabel": "review api·db·ddd",
+   "width": 84
   }
  ],
  "edges": [
@@ -281,7 +287,19 @@
    "id": "e-order-scope",
    "from": "order",
    "to": "scope",
-   "variant": "default"
+   "variant": "default",
+   "fromSide": "left",
+   "toSide": "left",
+   "via": [
+    [
+     26,
+     119
+    ],
+    [
+     26,
+     243
+    ]
+   ]
   },
   {
    "id": "e-scope-design",
