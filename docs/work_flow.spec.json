@@ -30,7 +30,7 @@
      "graph",
      "skills",
      "rulepack",
-     "design"
+     "red"
     ],
     "note": "규범 정본은 그래프(Turtle)다 — 에이전트가 읽는 스킬 md는 렌더 투영물, rulepack은 빌드타임 SPARQL 소성물."
    },
@@ -45,11 +45,23 @@
      "rulepack"
     ],
     "note": "검사기 red 중 귀속분(N∖L)만 반송된다. 6′ 재생성 루프는 DJR_LOOP_ENABLED=on일 때만 — 기본 off."
+   },
+   {
+    "id": "web-track",
+    "label": "web 트랙 (계획)",
+    "focus": [
+     "scope",
+     "design",
+     "web-design",
+     "g1",
+     "slice"
+    ],
+    "note": "08-22 설계 합의만 반영한 계획 — web은 API 계약만 보는 내부의 외부 클라이언트. 표면이 없으면 트랙 전체 생략."
    }
   ],
   "viewBox": [
    1000,
-   980
+   1100
   ]
  },
  "lanes": [
@@ -64,6 +76,11 @@
   {
    "id": "design-agents",
    "label": "설계 에이전트"
+  },
+  {
+   "id": "web-track",
+   "label": "web 설계 (계획 · 조건부)",
+   "variant": "exception"
   },
   {
    "id": "impl-agents",
@@ -164,8 +181,8 @@
    "lane": "design-agents",
    "col": 1,
    "type": "backend",
-   "label": "설계",
-   "sublabel": "리뷰 4렌즈"
+   "label": "설계 통합·중재",
+   "sublabel": "design-architect"
   },
   {
    "id": "red",
@@ -173,23 +190,23 @@
    "col": 2,
    "type": "backend",
    "label": "인수 Red",
-   "sublabel": "블랙박스"
+   "sublabel": "acceptance-tester"
   },
   {
    "id": "slice",
    "lane": "impl-agents",
    "col": 3,
    "type": "backend",
-   "label": "구현 TDD",
-   "sublabel": "coder"
+   "label": "coder",
+   "sublabel": "TDD · 스킬 선택"
   },
   {
    "id": "audit",
    "lane": "impl-agents",
    "col": 5,
    "type": "backend",
-   "label": "감사",
-   "sublabel": "규율 최종"
+   "label": "규율 감사",
+   "sublabel": "discipline-reviewer"
   },
   {
    "id": "checkers",
@@ -210,7 +227,7 @@
   {
    "id": "loop",
    "lane": "loop",
-   "col": 2,
+   "col": 4,
    "type": "messagebus",
    "label": "6′ 재생성",
    "sublabel": "주입 ≤3회전"
@@ -238,6 +255,23 @@
    "type": "database",
    "label": "rulepack",
    "sublabel": "SPARQL 소성"
+  },
+  {
+   "id": "web-design",
+   "lane": "web-track",
+   "col": 1,
+   "type": "frontend",
+   "label": "화면 설계",
+   "sublabel": "design-architect-web",
+   "tag": "계획·조건부"
+  },
+  {
+   "id": "reviews",
+   "lane": "design-agents",
+   "col": 0,
+   "type": "backend",
+   "label": "독립 리뷰 셋",
+   "sublabel": "review api·db·ddd"
   }
  ],
  "edges": [
@@ -261,20 +295,30 @@
    "from": "design",
    "to": "g1",
    "label": "상정",
-   "variant": "security"
+   "variant": "security",
+   "labelDy": 24,
+   "labelDx": 24
   },
   {
    "id": "e-g1-red",
    "from": "g1",
    "to": "red",
    "label": "입장 표",
-   "variant": "emphasis"
+   "variant": "emphasis",
+   "route": "straight",
+   "fromSide": "bottom",
+   "toSide": "top",
+   "labelDx": 30,
+   "labelDy": 24
   },
   {
    "id": "e-red-slice",
    "from": "red",
    "to": "slice",
-   "variant": "default"
+   "variant": "default",
+   "route": "straight",
+   "fromSide": "right",
+   "toSide": "left"
   },
   {
    "id": "e-slice-checkers",
@@ -282,7 +326,11 @@
    "to": "checkers",
    "label": "게이트",
    "variant": "default",
-   "labelDx": 28
+   "labelDx": -46,
+   "route": "straight",
+   "fromSide": "bottom",
+   "toSide": "top",
+   "labelDy": 24
   },
   {
    "id": "e-checkers-registry",
@@ -297,8 +345,10 @@
    "id": "e-registry-audit",
    "from": "registry",
    "to": "audit",
-   "label": "green",
-   "variant": "default"
+   "variant": "default",
+   "route": "straight",
+   "fromSide": "top",
+   "toSide": "bottom"
   },
   {
    "id": "e-audit-g2",
@@ -323,25 +373,10 @@
    "label": "귀속 red 반송",
    "variant": "dashed",
    "role": "error",
-   "fromSide": "left",
-   "toSide": "top",
-   "via": [
-    [
-     556,
-     615
-    ],
-    [
-     556,
-     418
-    ],
-    [
-     430,
-     418
-    ]
-   ],
-   "labelSegment": 2,
-   "labelDx": 0,
-   "labelDy": -12
+   "fromSide": "top",
+   "toSide": "bottom",
+   "labelSegment": 1,
+   "labelDy": 12
   },
   {
    "id": "e-registry-loop",
@@ -350,37 +385,6 @@
    "label": "on일 때",
    "variant": "dashed",
    "role": "branch"
-  },
-  {
-   "id": "e-loop-slice",
-   "from": "loop",
-   "to": "slice",
-   "label": "재생성",
-   "variant": "dashed",
-   "role": "return",
-   "toSide": "right",
-   "fromSide": "right",
-   "via": [
-    [
-     365,
-     739
-    ],
-    [
-     365,
-     445
-    ],
-    [
-     520,
-     445
-    ],
-    [
-     520,
-     491
-    ]
-   ],
-   "labelSegment": 1,
-   "labelDx": -28,
-   "labelDy": -30
   },
   {
    "id": "e-rulepack-loop",
@@ -416,10 +420,66 @@
   {
    "id": "e-skills-design",
    "from": "skills",
-   "to": "design",
+   "to": "red",
    "label": "에이전트 지식 로드",
    "variant": "dashed",
    "role": "branch"
+  },
+  {
+   "id": "e-design-webdesign",
+   "from": "design",
+   "to": "web-design",
+   "label": "계약 확정 후",
+   "variant": "dashed",
+   "role": "branch",
+   "labelDx": -54,
+   "route": "straight",
+   "fromSide": "bottom",
+   "toSide": "top",
+   "labelDy": 24
+  },
+  {
+   "id": "e-webdesign-g1",
+   "from": "web-design",
+   "to": "g1",
+   "label": "화면 명세 합본",
+   "variant": "dashed",
+   "fromSide": "right",
+   "toSide": "bottom",
+   "channelX": 322,
+   "labelSegment": 1,
+   "labelDx": 46
+  },
+  {
+   "id": "e-webdesign-design",
+   "from": "web-design",
+   "to": "design",
+   "label": "계약 부족 반송",
+   "variant": "dashed",
+   "role": "error",
+   "labelDx": 96,
+   "fromSide": "right",
+   "toSide": "right",
+   "labelSegment": 1,
+   "via": [
+    [
+     284,
+     491
+    ],
+    [
+     284,
+     367
+    ]
+   ]
+  },
+  {
+   "id": "e-reviews-design",
+   "from": "reviews",
+   "to": "design",
+   "label": "리뷰 노트",
+   "variant": "dashed",
+   "role": "branch",
+   "labelDy": -24
   }
  ],
  "cards": [
@@ -440,7 +500,7 @@
     "스킬 30문서의 참조성 539절 = 그래프의 렌더 투영물(graph-owned 마커) — byte 등가를 도구가 상시 단언",
     "규범 Work 3,400 · 재진술 연결 616 · alias 대장 28(rule# 21 + 선행 계약 contract# 7)",
     "규범 수정은 ontology/rules/ 정본에서 → 게이트 → 렌더 재투영 → 원장(LEDGER) — 문서 직접 수정은 훅이 차단",
-    "스킬 md 로드는 설계·구현 에이전트 공통(그림은 설계 간선 하나로 대표) · 위반 레코드는 위반 그래프에 축적 — 월별 집계가 개정 제안 큐"
+    "스킬 md 로드는 설계·구현 에이전트 공통(그림은 인수 간선 하나로 대표) · 위반 레코드는 위반 그래프에 축적 — 월별 집계가 개정 제안 큐"
    ]
   },
   {
@@ -451,6 +511,17 @@
     "테스트 입장 표가 테스트의 운명을 결정: add/update만 Red, reuse는 anchor 실행만, pending은 G1 반송",
     "검사기 red는 귀속분(앵커 차분 N∖L)만 반송 — legacy 잔존은 이 빌드에서 면책",
     "6′ 폐루프는 기본 off(T2 실험 종결 처분) — 켜면 반송 전 rulepack 조인 규범 좌표를 주입해 최대 3회전 재생성"
+   ]
+  },
+  {
+   "dot": "emerald",
+   "title": "web 트랙 — 참여자와 스킬 (계획 · 08-22 합의)",
+   "items": [
+    "Phase 0: Coordinator가 «web 화면 표면 유무»를 판정 — 없으면 이 트랙 전체를 생략한다",
+    "design-architect-web(신설 에이전트): 입력은 승인된 API 계약+화면 요구뿐(BC 내부 명세 열람 금지) — architecture-web(신설 스킬: web 트리 · page/section/component 판별·승격 · design_system · 계약 소비)을 로드. 계약 부족 발견은 Coordinator 경유로 BC 설계에 반송",
+    "coder의 스킬 선택이 관건: web 화면 코드 → implementation-ui(신설: HTML·컴포넌트·토큰 표기) + implementation-django-web(뷰·폼·보안·에러) · BC 코드 → implementation-django · implementation-django-ninja",
+    "경계: web 코드는 application/** import 금지 — driving_layer의 HTTP 계약을 in-process 계약 클라이언트로 소비한다",
+    "미결 2: web 트리 «값»의 거처(discipline-houserules 증설 vs architecture-web 소유) · 기존 implementation-django-web §4·§5 관할(수술 vs 위임)"
    ]
   }
  ]
