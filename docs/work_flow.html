@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="archify 2.14.0">
-  <title>dddjango 파이프라인 — 에이전트·스킬 지도 Diagram</title>
+  <meta name="generator" content="archify 2.15.0">
+  <title>dddjango 파이프라인 실동작 지도 Diagram</title>
   <script>
     // Resolve the theme before first paint so light-preference users don't
     // see a dark flash. The toolbar script below re-applies with UI state.
@@ -586,6 +586,7 @@
       justify-content: center;
       min-height: 0;
       padding: 0.75rem;
+      padding-bottom: calc(0.75rem + var(--archify-nav-reserve));
     }
     html[data-present="true"]:not([data-embed="true"]) .diagram-container > svg {
       width: 100%;
@@ -722,10 +723,12 @@
     }
 
     .diagram-container {
+      --archify-nav-reserve: 0px;
       background: var(--panel);
       border-radius: 1rem;
       border: 1px solid var(--panel-border);
       padding: 1.5rem;
+      padding-bottom: calc(1.5rem + var(--archify-nav-reserve));
       overflow: hidden;
       position: relative;
     }
@@ -1052,7 +1055,7 @@
     .overview-map {
       position: absolute;
       right: 1rem;
-      bottom: 4.15rem;
+      bottom: calc(4.15rem + var(--archify-nav-reserve));
       z-index: 12;
       width: 11.25rem;
       overflow: hidden;
@@ -1085,6 +1088,36 @@
       padding: 0.42rem 0.48rem 0.38rem 0.55rem;
       border-bottom: 1px solid var(--toolbar-border);
       background: linear-gradient(110deg, color-mix(in srgb, var(--frontend-fill) 45%, transparent), transparent 68%);
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+    }
+    .overview-map[data-panel-dragging="true"] .overview-map-head { cursor: grabbing; }
+    .overview-map[data-placement-invalid="true"] {
+      border-color: var(--security-stroke);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--security-stroke) 34%, transparent), 0 16px 42px rgba(0, 0, 0, 0.3);
+    }
+    .overview-map[data-compact="true"] {
+      width: 7.4rem;
+    }
+    .overview-map[data-compact="true"] .overview-map-head {
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.24rem;
+      min-height: 1.5rem;
+      padding: 0.05rem 0.16rem 0.05rem 0.32rem;
+      border-bottom: 0;
+    }
+    .overview-map[data-compact="true"] .overview-map-live,
+    .overview-map[data-compact="true"] .overview-map-copy,
+    .overview-map[data-compact="true"] .overview-map-surface,
+    .overview-map[data-compact="true"] .overview-map-hint {
+      display: none;
+    }
+    .overview-map[data-compact="true"] .overview-map-expand { display: inline-flex; }
+    .overview-map[data-compact="true"] .overview-map-close {
+      width: 1.15rem;
+      height: 1.15rem;
+      font-size: 0.72rem;
     }
     .overview-map-live {
       width: 0.42rem;
@@ -1115,6 +1148,26 @@
       white-space: nowrap;
       text-overflow: ellipsis;
     }
+    .overview-map-expand {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      height: 1.2rem;
+      padding: 0 0.34rem;
+      overflow: hidden;
+      border: 0;
+      border-radius: 0.3rem;
+      background: transparent;
+      color: var(--frontend-stroke);
+      font: inherit;
+      font-size: 0.49rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      cursor: pointer;
+    }
     .overview-map-close {
       width: 1.55rem;
       height: 1.55rem;
@@ -1127,8 +1180,11 @@
       font-size: 0.9rem;
       cursor: pointer;
     }
+    .overview-map-expand:hover,
+    .overview-map-expand:focus-visible,
     .overview-map-close:hover,
     .overview-map-close:focus-visible { background: var(--toolbar-hover); }
+    .overview-map-expand:focus-visible,
     .overview-map-close:focus-visible,
     .overview-map-surface:focus-visible,
     .overview-map-node:focus-visible {
@@ -1210,6 +1266,24 @@
       color: var(--frontend-stroke);
       background: var(--toolbar-hover);
     }
+    .overview-map-feedback {
+      position: absolute;
+      right: 1rem;
+      bottom: 4.15rem;
+      z-index: 13;
+      max-width: min(16rem, calc(100% - 2rem));
+      padding: 0.38rem 0.55rem;
+      border: 1px solid color-mix(in srgb, var(--frontend-stroke) 52%, var(--toolbar-border));
+      border-radius: 0.5rem;
+      background: var(--toolbar-menu-bg);
+      color: var(--toolbar-text);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      font-size: 0.52rem;
+      line-height: 1.35;
+      pointer-events: none;
+    }
+    .overview-map-feedback[hidden] { display: none; }
+    .focus-chip[data-radar-yielded="true"] { display: none !important; }
     .diagram-nav #btn-route-probe[aria-pressed="true"] {
       color: var(--backend-stroke);
       background: var(--toolbar-hover);
@@ -1226,7 +1300,7 @@
     .semantic-lens {
       position: absolute;
       right: 1rem;
-      bottom: 4.15rem;
+      bottom: calc(4.15rem + var(--archify-nav-reserve));
       z-index: 24;
       width: min(20rem, calc(100% - 2rem));
       overflow: hidden;
@@ -1401,7 +1475,7 @@
     .route-probe {
       position: absolute;
       left: 1rem;
-      bottom: 1rem;
+      bottom: calc(1rem + var(--archify-nav-reserve));
       z-index: 12;
       width: min(46rem, calc(100% - 25rem));
       min-width: 18rem;
@@ -1683,6 +1757,11 @@
       text-transform: uppercase;
     }
     .semantic-passport-meta [data-passport="tag"] { color: var(--cloud-stroke); }
+    .semantic-passport-meta [data-passport="brand"] {
+      border-color: color-mix(in srgb, var(--messagebus-stroke) 52%, var(--toolbar-border));
+      color: var(--messagebus-stroke);
+      font-weight: 700;
+    }
     .semantic-passport-meta [hidden] { display: none; }
     html[data-preset="blueprint"] .semantic-passport-meta span,
     html[data-preset="blueprint"] .semantic-passport-meta code { border-radius: 0.1rem; }
@@ -2795,11 +2874,15 @@
        scrolling at 900–1080px heights. */
     @media (min-width: 768px) and (max-height: 1100px) {
       .header { margin-bottom: 1rem; }
-      .diagram-container { padding: 0.875rem; }
+      .diagram-container {
+        padding: 0.875rem;
+        padding-bottom: calc(0.875rem + var(--archify-nav-reserve));
+      }
       .cards { margin-top: 1rem; }
       .card { padding: 1rem; }
     }
     @media (min-width: 768px) and (max-height: 920px) {
+      body { padding-block: 1.25rem; }
       .header { margin-bottom: 0.875rem; }
       .cards { margin-top: 0.75rem; }
     }
@@ -2916,6 +2999,7 @@
       svg[data-chapter-preview] [data-node-id],
       svg[data-chapter-preview] [data-edge-from] { opacity: 1 !important; filter: none !important; }
       .diagram-container, .card { box-shadow: none; border-color: #e2e8f0; }
+      .diagram-container { --archify-nav-reserve: 0px !important; }
       html[data-preset="signal-flow"] .diagram-container,
       html[data-preset="signal-flow"] .card { background: #ffffff; }
       .cards { grid-template-columns: 1fr 1fr; }
@@ -3567,16 +3651,17 @@
         width: min(10.25rem, calc(100% - 1rem));
       }
       .overview-map[data-docked="true"] {
-        right: 0.5rem;
+        right: var(--archify-radar-right, 0.5rem);
         top: var(--archify-radar-top, 0.5rem);
         bottom: auto;
         transform: none !important;
       }
       .overview-map[data-docked="true"][data-dock-side="left"] {
         right: auto;
-        left: 0.5rem;
+        left: var(--archify-radar-left, 0.5rem);
       }
       .overview-map-surface { height: 4rem; }
+      .overview-map-feedback { right: 0.5rem; bottom: 3.7rem; }
       .semantic-lens {
         right: 0.5rem;
         bottom: 3.7rem;
@@ -3887,6 +3972,27 @@
     svg .s-security   { color: var(--security-stroke); }
     svg .s-messagebus { color: var(--messagebus-stroke); }
     svg .s-external   { color: var(--external-stroke); }
+
+    /* Brand Marks are authored identity badges. Their color is contained
+       inside one neutral plate so vendor color never replaces Archify's
+       semantic node and relationship vocabulary. */
+    svg .brand-mark { pointer-events: none; }
+    svg .brand-mark-badge { fill: #fff; stroke: none; }
+    svg .brand-mark-frame {
+      fill: none;
+      stroke: #cbd5e1;
+      stroke-width: 0.8;
+      vector-effect: non-scaling-stroke;
+    }
+    svg .brand-mark-fallback {
+      fill: none;
+      stroke: #475569;
+      stroke-width: 1.15;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    svg[data-preset="blueprint"] .brand-mark-badge,
+    svg[data-preset="blueprint"] .brand-mark-frame { rx: 1px; }
 
     /* Reading Depth is a viewer-only level-of-detail layer. MAP preserves the
        authored structure and primary labels, READ restores relationship labels
@@ -4303,6 +4409,9 @@
       opacity: 0.94;
       animation: archify-intent-trace-flow 1.15s linear 1 both;
     }
+    /* Direction names describe each edge relative to the focused node only.
+       The cloned geometry already runs from the authored source to target, so
+       incoming and outgoing signals must share the same playback direction. */
     .intent-trace-flow[data-direction="out"] {
       stroke: var(--frontend-stroke);
       filter: drop-shadow(0 0 4px var(--frontend-stroke));
@@ -4310,7 +4419,7 @@
     .intent-trace-flow[data-direction="in"] {
       stroke: var(--database-stroke);
       filter: drop-shadow(0 0 4px var(--database-stroke));
-      animation-direction: reverse;
+      animation-direction: normal;
     }
     .intent-trace-flow[data-direction="loop"] {
       stroke: var(--security-stroke);
@@ -4836,11 +4945,11 @@
     <div class="header">
       <div class="header-row">
         <div class="pulse-dot"></div>
-        <h1>dddjango 파이프라인 — 에이전트·스킬 지도</h1>
+        <h1>dddjango 파이프라인 실동작 지도</h1>
       </div>
     </div>
 
-    <script id="archify-guided-views-data" type="application/json">[{"id":"v_design","label":"Phase 1 — 설계는 누가 하나","focus":["g0","architect","rddd","rapi","rdb","rdisc","arch_final","g1"],"note":"design-architect가 명세 초안을 쓰고, 리뷰 4종이 한 응답 병렬 다발로 초안만 받아 검토한다. 반영·중재 후 G1."},{"id":"v_build","label":"Phase 2 — 구현은 누가 하나","focus":["g1","acc","coder","audit","backstop","g2"],"note":"acceptance-tester가 외부 계약 Red를 먼저, coder가 슬라이스 직렬로 구현, discipline-reviewer 감사 후 백스톱 27종."},{"id":"v_gates","label":"게이트 — 판정은 누가 하나","focus":["g0","g1","backstop","g2"],"note":"G0·G1·G2 승인은 사용자, 백스톱 판정은 기계(스킬 scripts 검사기). Coordinator는 배차·집행만 하고 코드를 쓰지 않는다."}]</script>
+    <script id="archify-guided-views-data" type="application/json">[{"id":"main-pipeline","label":"발주에서 보고까지","focus":["order","scope","design","g1","red","slice","checkers","registry","audit","g2","report"],"note":"사용자 게이트 3개(G0·G1·G2)를 통과하는 본선 — Coordinator는 코드를 쓰지 않고 위임·판정만 한다."},{"id":"ontology-layer","label":"온톨로지가 있는 곳","focus":["graph","skills","rulepack","design"],"note":"규범 정본은 그래프(Turtle)다 — 에이전트가 읽는 스킬 md는 렌더 투영물, rulepack은 빌드타임 SPARQL 소성물."},{"id":"backstop-loop","label":"백스톱과 폐루프","focus":["checkers","registry","loop","slice","rulepack"],"note":"검사기 red 중 귀속분(N∖L)만 반송된다. 6′ 재생성 루프는 DJR_LOOP_ENABLED=on일 때만 — 기본 off."}]</script>
 
     <div class="guided-views no-print" id="guided-views" hidden aria-label="Guided diagram views">
       <button id="guided-view-prev" type="button" aria-label="Previous guided view" title="Previous guided view ([)">&#8592;</button>
@@ -4883,8 +4992,8 @@
 
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="read">
-      <svg viewBox="0 0 800 900" role="img" aria-labelledby="archify-diagram-title archify-diagram-description" data-preset="classic" data-quality-profile="showcase">
-        <title id="archify-diagram-title">dddjango 파이프라인 — 에이전트·스킬 지도</title>
+      <svg viewBox="0 0 1000 980" role="img" aria-labelledby="archify-diagram-title archify-diagram-description" data-preset="classic" data-quality-profile="showcase">
+        <title id="archify-diagram-title">dddjango 파이프라인 실동작 지도</title>
         <desc id="archify-diagram-description">A workflow diagram generated by Archify.</desc>
         <!-- Definitions -->
         <defs>
@@ -4910,247 +5019,318 @@
 
         <!-- Swimlanes -->
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-0" x="40" y="52" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / Coordinator — /dddjango 커맨드(메인 세션 · 게이트 G0·G1·G2 소유 · 코드는 쓰지 않는다)</text>
+        <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / 사용자 (게이트 소유)</text>
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-1" x="40" y="176" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="198" class="t-dim" font-size="10" font-weight="600">02 / dddjango:design-architect — 통합 설계 명세·테스트 입장 표(스킬 5종 → 카드①)</text>
+        <text x="54" y="198" class="t-dim" font-size="10" font-weight="600">02 / Coordinator — /dddjango</text>
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-2" x="40" y="300" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="322" class="t-dim" font-size="10" font-weight="600">03 / 설계 리뷰 서브에이전트 — 아래 규율 경량과 함께 병렬 다발(한 응답 안 동시 호출)</text>
+        <text x="54" y="322" class="t-dim" font-size="10" font-weight="600">03 / 설계 에이전트</text>
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-3" x="40" y="424" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="446" class="t-dim" font-size="10" font-weight="600">04 / 구현 — dddjango:acceptance-tester · dddjango:coder(스킬 → 카드②)</text>
+        <text x="54" y="446" class="t-dim" font-size="10" font-weight="600">04 / 구현 에이전트</text>
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-4" x="40" y="548" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="570" class="t-dim" font-size="10" font-weight="600">05 / dddjango:discipline-reviewer — 경량(설계)·감사(구현) 두 모드(스킬 → 카드①)</text>
+        <text x="54" y="570" class="t-dim" font-size="10" font-weight="600">05 / 결정적 백스톱 — scripts/</text>
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-5" x="40" y="672" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="694" class="t-dim" font-size="10" font-weight="600">06 / 결정적 백스톱 — Coordinator가 실행 · dddjango 스킬 scripts/ 검사기(카드③)</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="exception-lane" data-composition-frame-id="lane-5-exception" x="46" y="678" width="628" height="92" rx="8" class="c-security-group" stroke-width="1"/>
+        <text x="54" y="694" class="t-security" font-size="10" font-weight="600">EX / 폐루프 6′ (기본 off)</text>
+
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-6" x="40" y="796" width="640" height="104" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="818" class="t-dim" font-size="10" font-weight="600">07 / 온톨로지 층 (빌드타임 정본)</text>
 
         <!-- Phase headers -->
-
+        <line x1="42" y1="35" x2="266" y2="35" class="a-default" stroke-width="1.1"/>
+        <rect x="42" y="27" width="224" height="16" rx="4" class="c-mask"/>
+        <text x="154" y="39" class="t-muted" font-size="8" font-weight="600" text-anchor="middle">Phase 0–1 · 요구와 설계</text>
+        <line x1="254" y1="35" x2="546" y2="35" class="a-emphasis" stroke-width="1.1"/>
+        <rect x="254" y="27" width="292" height="16" rx="4" class="c-mask"/>
+        <text x="400" y="39" class="t-backend" font-size="8" font-weight="600" text-anchor="middle">Phase 2 · 구현 (이중 루프 TDD)</text>
+        <line x1="579" y1="35" x2="671" y2="35" class="a-default" stroke-width="1.1"/>
+        <rect x="579" y="27" width="92" height="16" rx="4" class="c-mask"/>
+        <text x="625" y="39" class="t-muted" font-size="8" font-weight="600" text-anchor="middle">Phase 3 · 보고</text>
 
         <!-- Workflow groups -->
 
 
         <!-- Edge paths -->
-        <path data-edge-from="g0" data-edge-to="architect" data-edge-label="승인 스코프" data-edge-key="0" data-edge-id="e_scope" data-composition-points="136,119;136,166;155,166;155,236" d="M 136 119 L 136 166 L 155 166 L 155 236" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="architect" data-edge-to="rddd" data-edge-label="초안만 전달" data-edge-key="1" data-edge-id="e_fan_ddd" data-composition-points="155,250;155,290;136,290;136,367" d="M 155 250 L 155 290 L 136 290 L 136 367" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="architect" data-edge-to="rapi" data-edge-key="2" data-edge-id="e_fan_api" data-composition-points="220,277;220,290;220,290;220,333" d="M 220 277 L 220 290 L 220 290 L 220 333" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="architect" data-edge-to="rdb" data-edge-key="3" data-edge-id="e_fan_db" data-composition-points="285,243;285,290;375,290;375,367" d="M 285 243 L 285 290 L 375 290 L 375 367" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="architect" data-edge-to="rdisc" data-edge-key="4" data-edge-id="e_fan_disc" data-composition-points="155,243;28,243;28,615;235,615" d="M 155 243 L 28 243 L 28 615 L 235 615" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="rdisc" data-edge-to="arch_final" data-edge-label="리뷰 노트 4벌" data-edge-key="5" data-edge-id="e_note" data-composition-points="235,615;34,615;34,40;430,40;430,217" d="M 235 615 L 34 615 L 34 40 L 430 40 L 430 217" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="arch_final" data-edge-to="g1" data-edge-key="6" data-edge-id="e_final" data-composition-points="430,217;430,73;500,73;500,93" d="M 430 217 L 430 73 L 500 73 L 500 93" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="g1" data-edge-to="acc" data-edge-label="입장 표 배차" data-edge-key="7" data-edge-id="e_dispatch" data-composition-points="500,145;500,290;500,290;500,457" d="M 500 145 L 500 290 L 500 290 L 500 457" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="acc" data-edge-to="coder" data-edge-label="바깥 Red 인계" data-edge-key="8" data-edge-id="e_red" data-composition-points="548,491;577,491" d="M 548 491 L 577 491" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="coder" data-edge-to="audit" data-edge-key="9" data-edge-id="e_audit" data-composition-points="625,525;625,538;625,538;625,581" d="M 625 525 L 625 538 L 625 538 L 625 581" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="audit" data-edge-to="backstop" data-edge-key="10" data-edge-id="e_backstop" data-composition-points="625,649;625,662;625,662;625,705" d="M 625 649 L 625 662 L 625 662 L 625 705" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="backstop" data-edge-to="g2" data-edge-label="27종 green·귀속 0" data-edge-key="11" data-edge-id="e_green" data-composition-points="680,739;700,739;700,119;680,119" d="M 680 739 L 700 739 L 700 119 L 680 119" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="backstop" data-edge-to="coder" data-edge-label="위반 반송" data-edge-key="12" data-edge-id="e_bounce" data-composition-points="625,773;726,773;726,491;673,491" d="M 625 773 L 726 773 L 726 491 L 673 491" class="a-security" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="order" data-edge-to="scope" data-edge-key="0" data-edge-id="e-order-scope" data-composition-points="88,145;88,166;88,166;88,209" d="M 88 145 L 88 166 L 88 166 L 88 209" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="scope" data-edge-to="design" data-edge-label="G0 승인 후 위임" data-edge-key="1" data-edge-id="e-scope-design" data-composition-points="88,277;88,367;174,367" d="M 88 277 L 88 367 L 174 367" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="design" data-edge-to="g1" data-edge-label="상정" data-edge-key="2" data-edge-id="e-design-g1" data-composition-points="220,341;220,119;254,119" d="M 220 341 L 220 119 L 254 119" class="a-security" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="g1" data-edge-to="red" data-edge-label="입장 표" data-edge-key="3" data-edge-id="e-g1-red" data-composition-points="300,145;300,290;300,290;300,465" d="M 300 145 L 300 290 L 300 290 L 300 465" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="red" data-edge-to="slice" data-edge-key="4" data-edge-id="e-red-slice" data-composition-points="346,491;384,491" d="M 346 491 L 384 491" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="slice" data-edge-to="checkers" data-edge-label="게이트" data-edge-key="5" data-edge-id="e-slice-checkers" data-composition-points="430,517;430,538;430,538;430,589" d="M 430 517 L 430 538 L 430 538 L 430 589" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="checkers" data-edge-to="registry" data-edge-key="6" data-edge-id="e-checkers-registry" data-composition-points="476,615;579,615" d="M 476 615 L 579 615" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="registry" data-edge-to="audit" data-edge-label="green" data-edge-key="7" data-edge-id="e-registry-audit" data-composition-points="625,589;625,538;625,538;625,517" d="M 625 589 L 625 538 L 625 538 L 625 517" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="audit" data-edge-to="g2" data-edge-key="8" data-edge-id="e-audit-g2" data-composition-points="671,491;692,491;692,119;671,119" d="M 671 491 L 692 491 L 692 119 L 671 119" class="a-security" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="g2" data-edge-to="report" data-edge-label="승인" data-edge-key="9" data-edge-id="e-g2-report" data-composition-points="625,145;625,166;625,166;625,217" d="M 625 145 L 625 166 L 625 166 L 625 217" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="registry" data-edge-to="slice" data-edge-label="귀속 red 반송" data-edge-key="10" data-edge-id="e-registry-slice" data-composition-points="579,615;556,615;556,418;430,418;430,465" d="M 579 615 L 556 615 L 556 418 L 430 418 L 430 465" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="registry" data-edge-to="loop" data-edge-label="on일 때" data-edge-key="11" data-edge-id="e-registry-loop" data-composition-points="625,641;625,732;346,732" d="M 625 641 L 625 732 L 346 732" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="loop" data-edge-to="slice" data-edge-label="재생성" data-edge-key="12" data-edge-id="e-loop-slice" data-composition-points="346,739;365,739;365,445;520,445;520,491;476,491" d="M 346 739 L 365 739 L 365 445 L 520 445 L 520 491 L 476 491" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="rulepack" data-edge-to="loop" data-edge-label="조인" data-edge-key="13" data-edge-id="e-rulepack-loop" data-composition-points="500,837;500,746;346,746" d="M 500 837 L 500 746 L 346 746" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="graph" data-edge-to="skills" data-edge-label="렌더 투영" data-edge-key="14" data-edge-id="e-graph-skills" data-composition-points="134,863;254,863" d="M 134 863 L 254 863" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="graph" data-edge-to="rulepack" data-edge-label="q4 소성" data-edge-key="15" data-edge-id="e-graph-rulepack" data-composition-points="134,863;134,921;454,921;454,863" d="M 134 863 L 134 921 L 454 921 L 454 863" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="skills" data-edge-to="design" data-edge-label="에이전트 지식 로드" data-edge-key="16" data-edge-id="e-skills-design" data-composition-points="254,863;220,863;220,393" d="M 254 863 L 220 863 L 220 393" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
 
         <!-- Nodes -->
-        <g id="node-g0" data-node-id="g0" data-node-label="G0 게이트" tabindex="0" role="button" aria-label="Focus G0 게이트, 스코프·빚 스캔 승인, Coordinator — /dddjango 커맨드(메인 세션 · 게이트 G0·G1·G2 소유 · 코드는 쓰지 않는다)" aria-pressed="false" data-node-kind="security" data-node-sublabel="스코프·빚 스캔 승인" data-node-context="Coordinator — /dddjango 커맨드(메인 세션 · 게이트 G0·G1·G2 소유 · 코드는 쓰지 않는다)">
-          <title>G0 게이트 · 스코프·빚 스캔 승인 · Coordinator — /dddjango 커맨드(메인 세션 · 게이트 G0·G1·G2 소유 · 코드는 쓰지 않는다)</title>
-          <rect x="40" y="93" width="96" height="52" rx="6" class="c-mask"/>
-          <rect x="40" y="93" width="96" height="52" rx="6" class="c-security" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(46 99) scale(0.6875)">
+        <g id="node-order" data-node-id="order" data-node-label="발주" tabindex="0" role="button" aria-label="Focus 발주, /dddjango, 사용자 (게이트 소유) › Phase 0–1 · 요구와 설계" aria-pressed="false" data-node-kind="external" data-node-sublabel="/dddjango" data-node-context="사용자 (게이트 소유) › Phase 0–1 · 요구와 설계">
+          <title>발주 · /dddjango · 사용자 (게이트 소유) › Phase 0–1 · 요구와 설계</title>
+          <rect x="42" y="93" width="92" height="52" rx="6" class="c-mask"/>
+          <rect x="42" y="93" width="92" height="52" rx="6" class="c-external" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(48 99) scale(0.6875)">
+            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
+            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
+          </g>
+          <text data-node-label data-detail-anchor x="88" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">발주</text>
+          <text data-detail="context" x="88" y="131" class="t-muted" font-size="8" text-anchor="middle">/dddjango</text>
+        </g>
+
+        <g id="node-g1" data-node-id="g1" data-node-label="G1 승인" tabindex="0" role="button" aria-label="Focus G1 승인, 명세·입장 표, 사용자 (게이트 소유) › Phase 2 · 구현 (이중 루프 TDD)" aria-pressed="false" data-node-kind="security" data-node-sublabel="명세·입장 표" data-node-context="사용자 (게이트 소유) › Phase 2 · 구현 (이중 루프 TDD)">
+          <title>G1 승인 · 명세·입장 표 · 사용자 (게이트 소유) › Phase 2 · 구현 (이중 루프 TDD)</title>
+          <rect x="254" y="93" width="92" height="52" rx="6" class="c-mask"/>
+          <rect x="254" y="93" width="92" height="52" rx="6" class="c-security" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(260 99) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-detail-anchor x="88" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">G0 게이트</text>
-          <text data-detail="context" x="88" y="131" class="t-muted" font-size="7.7" text-anchor="middle">스코프·빚 스캔 승인</text>
+          <text data-node-label data-detail-anchor x="300" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">G1 승인</text>
+          <text data-detail="context" x="300" y="131" class="t-muted" font-size="8" text-anchor="middle">명세·입장 표</text>
         </g>
 
-        <g id="node-g1" data-node-id="g1" data-node-label="G1 게이트" tabindex="0" role="button" aria-label="Focus G1 게이트, 설계 승인(사용자), Coordinator — /dddjango 커맨드(메인 세션 · 게이트 G0·G1·G2 소유 · 코드는 쓰지 않는다)" aria-pressed="false" data-node-kind="security" data-node-sublabel="설계 승인(사용자)" data-node-context="Coordinator — /dddjango 커맨드(메인 세션 · 게이트 G0·G1·G2 소유 · 코드는 쓰지 않는다)">
-          <title>G1 게이트 · 설계 승인(사용자) · Coordinator — /dddjango 커맨드(메인 세션 · 게이트 G0·G1·G2 소유 · 코드는 쓰지 않는다)</title>
-          <rect x="445" y="93" width="110" height="52" rx="6" class="c-mask"/>
-          <rect x="445" y="93" width="110" height="52" rx="6" class="c-security" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(451 99) scale(0.6875)">
+        <g id="node-g2" data-node-id="g2" data-node-label="G2 완료 승인" tabindex="0" role="button" aria-label="Focus G2 완료 승인, 대가 한 줄 병기, 사용자 (게이트 소유) › Phase 3 · 보고" aria-pressed="false" data-node-kind="security" data-node-sublabel="대가 한 줄 병기" data-node-context="사용자 (게이트 소유) › Phase 3 · 보고">
+          <title>G2 완료 승인 · 대가 한 줄 병기 · 사용자 (게이트 소유) › Phase 3 · 보고</title>
+          <rect x="579" y="93" width="92" height="52" rx="6" class="c-mask"/>
+          <rect x="579" y="93" width="92" height="52" rx="6" class="c-security" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(585 99) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-detail-anchor x="500" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">G1 게이트</text>
-          <text data-detail="context" x="500" y="131" class="t-muted" font-size="8" text-anchor="middle">설계 승인(사용자)</text>
+          <text data-node-label data-detail-anchor x="625" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">G2 완료 승인</text>
+          <text data-detail="context" x="625" y="131" class="t-muted" font-size="8" text-anchor="middle">대가 한 줄 병기</text>
         </g>
 
-        <g id="node-g2" data-node-id="g2" data-node-label="G2 게이트" tabindex="0" role="button" aria-label="Focus G2 게이트, 완료 승인(사용자), Coordinator — /dddjango 커맨드(메인 세션 · 게이트 G0·G1·G2 소유 · 코드는 쓰지 않는다)" aria-pressed="false" data-node-kind="security" data-node-sublabel="완료 승인(사용자)" data-node-context="Coordinator — /dddjango 커맨드(메인 세션 · 게이트 G0·G1·G2 소유 · 코드는 쓰지 않는다)">
-          <title>G2 게이트 · 완료 승인(사용자) · Coordinator — /dddjango 커맨드(메인 세션 · 게이트 G0·G1·G2 소유 · 코드는 쓰지 않는다)</title>
-          <rect x="570" y="93" width="110" height="52" rx="6" class="c-mask"/>
-          <rect x="570" y="93" width="110" height="52" rx="6" class="c-security" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(576 99) scale(0.6875)">
+        <g id="node-scope" data-node-id="scope" data-node-label="Phase 0" tabindex="0" role="button" aria-label="Focus Phase 0, 빚 스캔·G0, Coordinator — /dddjango › Phase 0–1 · 요구와 설계" aria-pressed="false" data-node-kind="backend" data-node-sublabel="빚 스캔·G0" data-node-tag="G0" data-node-context="Coordinator — /dddjango › Phase 0–1 · 요구와 설계">
+          <title>Phase 0 · 빚 스캔·G0 · Coordinator — /dddjango › Phase 0–1 · 요구와 설계 · G0</title>
+          <rect x="42" y="209" width="92" height="68" rx="6" class="c-mask"/>
+          <rect x="42" y="209" width="92" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(48 215) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label data-detail-anchor x="88" y="230" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Phase 0</text>
+          <text data-detail="context" x="88" y="247" class="t-muted" font-size="8" text-anchor="middle">빚 스캔·G0</text>
+        <text data-detail="fine" x="88" y="265" class="t-backend" font-size="7" text-anchor="middle">G0</text>
+        </g>
+
+        <g id="node-report" data-node-id="report" data-node-label="Phase 3 보고" tabindex="0" role="button" aria-label="Focus Phase 3 보고, 게이트 기록, Coordinator — /dddjango › Phase 3 · 보고" aria-pressed="false" data-node-kind="backend" data-node-sublabel="게이트 기록" data-node-context="Coordinator — /dddjango › Phase 3 · 보고">
+          <title>Phase 3 보고 · 게이트 기록 · Coordinator — /dddjango › Phase 3 · 보고</title>
+          <rect x="579" y="217" width="92" height="52" rx="6" class="c-mask"/>
+          <rect x="579" y="217" width="92" height="52" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(585 223) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label data-detail-anchor x="625" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Phase 3 보고</text>
+          <text data-detail="context" x="625" y="255" class="t-muted" font-size="8" text-anchor="middle">게이트 기록</text>
+        </g>
+
+        <g id="node-design" data-node-id="design" data-node-label="설계" tabindex="0" role="button" aria-label="Focus 설계, 리뷰 4렌즈, 설계 에이전트 › Phase 0–1 · 요구와 설계" aria-pressed="false" data-node-kind="backend" data-node-sublabel="리뷰 4렌즈" data-node-context="설계 에이전트 › Phase 0–1 · 요구와 설계">
+          <title>설계 · 리뷰 4렌즈 · 설계 에이전트 › Phase 0–1 · 요구와 설계</title>
+          <rect x="174" y="341" width="92" height="52" rx="6" class="c-mask"/>
+          <rect x="174" y="341" width="92" height="52" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(180 347) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label data-detail-anchor x="220" y="362" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">설계</text>
+          <text data-detail="context" x="220" y="379" class="t-muted" font-size="8" text-anchor="middle">리뷰 4렌즈</text>
+        </g>
+
+        <g id="node-red" data-node-id="red" data-node-label="인수 Red" tabindex="0" role="button" aria-label="Focus 인수 Red, 블랙박스, 구현 에이전트 › Phase 2 · 구현 (이중 루프 TDD)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="블랙박스" data-node-context="구현 에이전트 › Phase 2 · 구현 (이중 루프 TDD)">
+          <title>인수 Red · 블랙박스 · 구현 에이전트 › Phase 2 · 구현 (이중 루프 TDD)</title>
+          <rect x="254" y="465" width="92" height="52" rx="6" class="c-mask"/>
+          <rect x="254" y="465" width="92" height="52" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(260 471) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label data-detail-anchor x="300" y="486" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">인수 Red</text>
+          <text data-detail="context" x="300" y="503" class="t-muted" font-size="8" text-anchor="middle">블랙박스</text>
+        </g>
+
+        <g id="node-slice" data-node-id="slice" data-node-label="구현 TDD" tabindex="0" role="button" aria-label="Focus 구현 TDD, coder, 구현 에이전트 › Phase 2 · 구현 (이중 루프 TDD)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="coder" data-node-context="구현 에이전트 › Phase 2 · 구현 (이중 루프 TDD)">
+          <title>구현 TDD · coder · 구현 에이전트 › Phase 2 · 구현 (이중 루프 TDD)</title>
+          <rect x="384" y="465" width="92" height="52" rx="6" class="c-mask"/>
+          <rect x="384" y="465" width="92" height="52" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(390 471) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label data-detail-anchor x="430" y="486" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">구현 TDD</text>
+          <text data-detail="context" x="430" y="503" class="t-muted" font-size="8" text-anchor="middle">coder</text>
+        </g>
+
+        <g id="node-audit" data-node-id="audit" data-node-label="감사" tabindex="0" role="button" aria-label="Focus 감사, 규율 최종, 구현 에이전트 › Phase 3 · 보고" aria-pressed="false" data-node-kind="backend" data-node-sublabel="규율 최종" data-node-context="구현 에이전트 › Phase 3 · 보고">
+          <title>감사 · 규율 최종 · 구현 에이전트 › Phase 3 · 보고</title>
+          <rect x="579" y="465" width="92" height="52" rx="6" class="c-mask"/>
+          <rect x="579" y="465" width="92" height="52" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(585 471) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label data-detail-anchor x="625" y="486" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">감사</text>
+          <text data-detail="context" x="625" y="503" class="t-muted" font-size="8" text-anchor="middle">규율 최종</text>
+        </g>
+
+        <g id="node-checkers" data-node-id="checkers" data-node-label="검사기 27" tabindex="0" role="button" aria-label="Focus 검사기 27, AST, 결정적 백스톱 — scripts/ › Phase 2 · 구현 (이중 루프 TDD)" aria-pressed="false" data-node-kind="security" data-node-sublabel="AST" data-node-context="결정적 백스톱 — scripts/ › Phase 2 · 구현 (이중 루프 TDD)">
+          <title>검사기 27 · AST · 결정적 백스톱 — scripts/ › Phase 2 · 구현 (이중 루프 TDD)</title>
+          <rect x="384" y="589" width="92" height="52" rx="6" class="c-mask"/>
+          <rect x="384" y="589" width="92" height="52" rx="6" class="c-security" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(390 595) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-detail-anchor x="625" y="114" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">G2 게이트</text>
-          <text data-detail="context" x="625" y="131" class="t-muted" font-size="8" text-anchor="middle">완료 승인(사용자)</text>
+          <text data-node-label data-detail-anchor x="430" y="610" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">검사기 27</text>
+          <text data-detail="context" x="430" y="627" class="t-muted" font-size="8" text-anchor="middle">AST</text>
         </g>
 
-        <g id="node-architect" data-node-id="architect" data-node-label="설계 명세 초안" tabindex="0" role="button" aria-label="Focus 설계 명세 초안, design-architect, dddjango:design-architect — 통합 설계 명세·테스트 입장 표(스킬 5종 → 카드①)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="design-architect" data-node-tag="스킬 5종(카드①)" data-node-context="dddjango:design-architect — 통합 설계 명세·테스트 입장 표(스킬 5종 → 카드①)">
-          <title>설계 명세 초안 · design-architect · dddjango:design-architect — 통합 설계 명세·테스트 입장 표(스킬 5종 → 카드①) · 스킬 5종(카드①)</title>
-          <rect x="155" y="209" width="130" height="68" rx="6" class="c-mask"/>
-          <rect x="155" y="209" width="130" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(161 215) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
-          </g>
-          <text data-detail-anchor x="220" y="230" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">설계 명세 초안</text>
-          <text data-detail="context" x="220" y="247" class="t-muted" font-size="8" text-anchor="middle">design-architect</text>
-        <text data-detail="fine" x="220" y="265" class="t-backend" font-size="7" text-anchor="middle">스킬 5종(카드①)</text>
-        </g>
-
-        <g id="node-arch_final" data-node-id="arch_final" data-node-label="명세 확정" tabindex="0" role="button" aria-label="Focus 명세 확정, 노트 반영·중재, dddjango:design-architect — 통합 설계 명세·테스트 입장 표(스킬 5종 → 카드①)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="노트 반영·중재" data-node-context="dddjango:design-architect — 통합 설계 명세·테스트 입장 표(스킬 5종 → 카드①)">
-          <title>명세 확정 · 노트 반영·중재 · dddjango:design-architect — 통합 설계 명세·테스트 입장 표(스킬 5종 → 카드①)</title>
-          <rect x="375" y="217" width="110" height="52" rx="6" class="c-mask"/>
-          <rect x="375" y="217" width="110" height="52" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(381 223) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
-          </g>
-          <text data-detail-anchor x="430" y="238" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">명세 확정</text>
-          <text data-detail="context" x="430" y="255" class="t-muted" font-size="8" text-anchor="middle">노트 반영·중재</text>
-        </g>
-
-        <g id="node-rddd" data-node-id="rddd" data-node-label="도메인 리뷰" tabindex="0" role="button" aria-label="Focus 도메인 리뷰, design-review-ddd, 설계 리뷰 서브에이전트 — 아래 규율 경량과 함께 병렬 다발(한 응답 안 동시 호출)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="design-review-ddd" data-node-tag="architecture-ddd" data-node-context="설계 리뷰 서브에이전트 — 아래 규율 경량과 함께 병렬 다발(한 응답 안 동시 호출)">
-          <title>도메인 리뷰 · design-review-ddd · 설계 리뷰 서브에이전트 — 아래 규율 경량과 함께 병렬 다발(한 응답 안 동시 호출) · architecture-ddd</title>
-          <rect x="40" y="333" width="96" height="68" rx="6" class="c-mask"/>
-          <rect x="40" y="333" width="96" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(46 339) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
-          </g>
-          <text data-detail-anchor x="88" y="354" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">도메인 리뷰</text>
-          <text data-detail="context" x="88" y="371" class="t-muted" font-size="8" text-anchor="middle">design-review-ddd</text>
-        <text data-detail="fine" x="88" y="389" class="t-backend" font-size="7" text-anchor="middle">architecture-ddd</text>
-        </g>
-
-        <g id="node-rapi" data-node-id="rapi" data-node-label="API 계약 리뷰" tabindex="0" role="button" aria-label="Focus API 계약 리뷰, design-review-api, 설계 리뷰 서브에이전트 — 아래 규율 경량과 함께 병렬 다발(한 응답 안 동시 호출)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="design-review-api" data-node-tag="architecture-api·tdd" data-node-context="설계 리뷰 서브에이전트 — 아래 규율 경량과 함께 병렬 다발(한 응답 안 동시 호출)">
-          <title>API 계약 리뷰 · design-review-api · 설계 리뷰 서브에이전트 — 아래 규율 경량과 함께 병렬 다발(한 응답 안 동시 호출) · architecture-api·tdd</title>
-          <rect x="155" y="333" width="130" height="68" rx="6" class="c-mask"/>
-          <rect x="155" y="333" width="130" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(161 339) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
-          </g>
-          <text data-detail-anchor x="220" y="354" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">API 계약 리뷰</text>
-          <text data-detail="context" x="220" y="371" class="t-muted" font-size="8" text-anchor="middle">design-review-api</text>
-        <text data-detail="fine" x="220" y="389" class="t-backend" font-size="7" text-anchor="middle">architecture-api·tdd</text>
-        </g>
-
-        <g id="node-rdb" data-node-id="rdb" data-node-label="데이터 리뷰" tabindex="0" role="button" aria-label="Focus 데이터 리뷰, design-review-db, 설계 리뷰 서브에이전트 — 아래 규율 경량과 함께 병렬 다발(한 응답 안 동시 호출)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="design-review-db" data-node-tag="architecture-db·tdd" data-node-context="설계 리뷰 서브에이전트 — 아래 규율 경량과 함께 병렬 다발(한 응답 안 동시 호출)">
-          <title>데이터 리뷰 · design-review-db · 설계 리뷰 서브에이전트 — 아래 규율 경량과 함께 병렬 다발(한 응답 안 동시 호출) · architecture-db·tdd</title>
-          <rect x="375" y="333" width="110" height="68" rx="6" class="c-mask"/>
-          <rect x="375" y="333" width="110" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(381 339) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
-          </g>
-          <text data-detail-anchor x="430" y="354" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">데이터 리뷰</text>
-          <text data-detail="context" x="430" y="371" class="t-muted" font-size="8" text-anchor="middle">design-review-db</text>
-        <text data-detail="fine" x="430" y="389" class="t-backend" font-size="7" text-anchor="middle">architecture-db·tdd</text>
-        </g>
-
-        <g id="node-rdisc" data-node-id="rdisc" data-node-label="경량 규율 점검" tabindex="0" role="button" aria-label="Focus 경량 규율 점검, discipline-reviewer, dddjango:discipline-reviewer — 경량(설계)·감사(구현) 두 모드(스킬 → 카드①)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="discipline-reviewer" data-node-tag="경량·스킬 4종(카드①)" data-node-context="dddjango:discipline-reviewer — 경량(설계)·감사(구현) 두 모드(스킬 → 카드①)">
-          <title>경량 규율 점검 · discipline-reviewer · dddjango:discipline-reviewer — 경량(설계)·감사(구현) 두 모드(스킬 → 카드①) · 경량·스킬 4종(카드①)</title>
-          <rect x="235" y="581" width="130" height="68" rx="6" class="c-mask"/>
-          <rect x="235" y="581" width="130" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(241 587) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
-          </g>
-          <text data-detail-anchor x="300" y="602" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">경량 규율 점검</text>
-          <text data-detail="context" x="300" y="619" class="t-muted" font-size="8" text-anchor="middle">discipline-reviewer</text>
-        <text data-detail="fine" x="300" y="637" class="t-backend" font-size="7" text-anchor="middle">경량·스킬 4종(카드①)</text>
-        </g>
-
-        <g id="node-acc" data-node-id="acc" data-node-label="바깥 루프 Red" tabindex="0" role="button" aria-label="Focus 바깥 루프 Red, acceptance-tester, 구현 — dddjango:acceptance-tester · dddjango:coder(스킬 → 카드②)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="acceptance-tester" data-node-tag="스킬 5종(카드②)" data-node-context="구현 — dddjango:acceptance-tester · dddjango:coder(스킬 → 카드②)">
-          <title>바깥 루프 Red · acceptance-tester · 구현 — dddjango:acceptance-tester · dddjango:coder(스킬 → 카드②) · 스킬 5종(카드②)</title>
-          <rect x="452" y="457" width="96" height="68" rx="6" class="c-mask"/>
-          <rect x="452" y="457" width="96" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(458 463) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
-          </g>
-          <text data-detail-anchor x="500" y="478" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">바깥 루프 Red</text>
-          <text data-detail="context" x="500" y="495" class="t-muted" font-size="8" text-anchor="middle">acceptance-tester</text>
-        <text data-detail="fine" x="500" y="513" class="t-backend" font-size="7" text-anchor="middle">스킬 5종(카드②)</text>
-        </g>
-
-        <g id="node-coder" data-node-id="coder" data-node-label="슬라이스 구현" tabindex="0" role="button" aria-label="Focus 슬라이스 구현, coder·직렬 TDD, 구현 — dddjango:acceptance-tester · dddjango:coder(스킬 → 카드②)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="coder·직렬 TDD" data-node-tag="스킬 8종(카드②)" data-node-context="구현 — dddjango:acceptance-tester · dddjango:coder(스킬 → 카드②)">
-          <title>슬라이스 구현 · coder·직렬 TDD · 구현 — dddjango:acceptance-tester · dddjango:coder(스킬 → 카드②) · 스킬 8종(카드②)</title>
-          <rect x="577" y="457" width="96" height="68" rx="6" class="c-mask"/>
-          <rect x="577" y="457" width="96" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(583 463) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
-          </g>
-          <text data-detail-anchor x="625" y="478" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">슬라이스 구현</text>
-          <text data-detail="context" x="625" y="495" class="t-muted" font-size="8" text-anchor="middle">coder·직렬 TDD</text>
-        <text data-detail="fine" x="625" y="513" class="t-backend" font-size="7" text-anchor="middle">스킬 8종(카드②)</text>
-        </g>
-
-        <g id="node-audit" data-node-id="audit" data-node-label="구현 규율 감사" tabindex="0" role="button" aria-label="Focus 구현 규율 감사, discipline-reviewer, dddjango:discipline-reviewer — 경량(설계)·감사(구현) 두 모드(스킬 → 카드①)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="discipline-reviewer" data-node-tag="Phase 2 모드·G2 직전" data-node-context="dddjango:discipline-reviewer — 경량(설계)·감사(구현) 두 모드(스킬 → 카드①)">
-          <title>구현 규율 감사 · discipline-reviewer · dddjango:discipline-reviewer — 경량(설계)·감사(구현) 두 모드(스킬 → 카드①) · Phase 2 모드·G2 직전</title>
-          <rect x="570" y="581" width="110" height="68" rx="6" class="c-mask"/>
-          <rect x="570" y="581" width="110" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(576 587) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
-          </g>
-          <text data-detail-anchor x="625" y="602" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">구현 규율 감사</text>
-          <text data-detail="context" x="625" y="619" class="t-muted" font-size="8" text-anchor="middle">discipline-reviewer</text>
-        <text data-detail="fine" x="625" y="637" class="t-backend" font-size="7" text-anchor="middle">Phase 2 모드·G2 직전</text>
-        </g>
-
-        <g id="node-backstop" data-node-id="backstop" data-node-label="검사기 27종" tabindex="0" role="button" aria-label="Focus 검사기 27종, 앵커 차분·귀속 판정, 결정적 백스톱 — Coordinator가 실행 · dddjango 스킬 scripts/ 검사기(카드③)" aria-pressed="false" data-node-kind="security" data-node-sublabel="앵커 차분·귀속 판정" data-node-tag="스킬 scripts/*.py" data-node-context="결정적 백스톱 — Coordinator가 실행 · dddjango 스킬 scripts/ 검사기(카드③)">
-          <title>검사기 27종 · 앵커 차분·귀속 판정 · 결정적 백스톱 — Coordinator가 실행 · dddjango 스킬 scripts/ 검사기(카드③) · 스킬 scripts/*.py</title>
-          <rect x="570" y="705" width="110" height="68" rx="6" class="c-mask"/>
-          <rect x="570" y="705" width="110" height="68" rx="6" class="c-security" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(576 711) scale(0.6875)">
+        <g id="node-registry" data-node-id="registry" data-node-label="귀속 판정" tabindex="0" role="button" aria-label="Focus 귀속 판정, N∖L, 결정적 백스톱 — scripts/ › Phase 3 · 보고" aria-pressed="false" data-node-kind="security" data-node-sublabel="N∖L" data-node-context="결정적 백스톱 — scripts/ › Phase 3 · 보고">
+          <title>귀속 판정 · N∖L · 결정적 백스톱 — scripts/ › Phase 3 · 보고</title>
+          <rect x="579" y="589" width="92" height="52" rx="6" class="c-mask"/>
+          <rect x="579" y="589" width="92" height="52" rx="6" class="c-security" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(585 595) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-detail-anchor x="625" y="726" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">검사기 27종</text>
-          <text data-detail="context" x="625" y="743" class="t-muted" font-size="8" text-anchor="middle">앵커 차분·귀속 판정</text>
-        <text data-detail="fine" x="625" y="761" class="t-security" font-size="7" text-anchor="middle">스킬 scripts/*.py</text>
+          <text data-node-label data-detail-anchor x="625" y="610" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">귀속 판정</text>
+          <text data-detail="context" x="625" y="627" class="t-muted" font-size="8" text-anchor="middle">N∖L</text>
+        </g>
+
+        <g id="node-loop" data-node-id="loop" data-node-label="6′ 재생성" tabindex="0" role="button" aria-label="Focus 6′ 재생성, 주입 ≤3회전, 폐루프 6′ (기본 off) › Phase 2 · 구현 (이중 루프 TDD)" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="주입 ≤3회전" data-node-context="폐루프 6′ (기본 off) › Phase 2 · 구현 (이중 루프 TDD)">
+          <title>6′ 재생성 · 주입 ≤3회전 · 폐루프 6′ (기본 off) › Phase 2 · 구현 (이중 루프 TDD)</title>
+          <rect x="254" y="713" width="92" height="52" rx="6" class="c-mask"/>
+          <rect x="254" y="713" width="92" height="52" rx="6" class="c-messagebus" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(260 719) scale(0.6875)">
+            <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
+            <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
+            <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
+            <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
+          </g>
+          <text data-node-label data-detail-anchor x="300" y="734" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">6′ 재생성</text>
+          <text data-detail="context" x="300" y="751" class="t-muted" font-size="8" text-anchor="middle">주입 ≤3회전</text>
+        </g>
+
+        <g id="node-graph" data-node-id="graph" data-node-label="그래프 정본" tabindex="0" role="button" aria-label="Focus 그래프 정본, Work 3,400, 온톨로지 층 (빌드타임 정본) › Phase 0–1 · 요구와 설계" aria-pressed="false" data-node-kind="database" data-node-sublabel="Work 3,400" data-node-context="온톨로지 층 (빌드타임 정본) › Phase 0–1 · 요구와 설계">
+          <title>그래프 정본 · Work 3,400 · 온톨로지 층 (빌드타임 정본) › Phase 0–1 · 요구와 설계</title>
+          <rect x="42" y="837" width="92" height="52" rx="6" class="c-mask"/>
+          <rect x="42" y="837" width="92" height="52" rx="6" class="c-database" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(48 843) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-node-label data-detail-anchor x="88" y="858" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">그래프 정본</text>
+          <text data-detail="context" x="88" y="875" class="t-muted" font-size="8" text-anchor="middle">Work 3,400</text>
+        </g>
+
+        <g id="node-skills" data-node-id="skills" data-node-label="스킬 30문서" tabindex="0" role="button" aria-label="Focus 스킬 30문서, 투영 539절, 온톨로지 층 (빌드타임 정본) › Phase 2 · 구현 (이중 루프 TDD)" aria-pressed="false" data-node-kind="database" data-node-sublabel="투영 539절" data-node-context="온톨로지 층 (빌드타임 정본) › Phase 2 · 구현 (이중 루프 TDD)">
+          <title>스킬 30문서 · 투영 539절 · 온톨로지 층 (빌드타임 정본) › Phase 2 · 구현 (이중 루프 TDD)</title>
+          <rect x="254" y="837" width="92" height="52" rx="6" class="c-mask"/>
+          <rect x="254" y="837" width="92" height="52" rx="6" class="c-database" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(260 843) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-node-label data-detail-anchor x="300" y="858" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">스킬 30문서</text>
+          <text data-detail="context" x="300" y="875" class="t-muted" font-size="8" text-anchor="middle">투영 539절</text>
+        </g>
+
+        <g id="node-rulepack" data-node-id="rulepack" data-node-label="rulepack" tabindex="0" role="button" aria-label="Focus rulepack, SPARQL 소성, 온톨로지 층 (빌드타임 정본) › Phase 2 · 구현 (이중 루프 TDD)" aria-pressed="false" data-node-kind="database" data-node-sublabel="SPARQL 소성" data-node-context="온톨로지 층 (빌드타임 정본) › Phase 2 · 구현 (이중 루프 TDD)">
+          <title>rulepack · SPARQL 소성 · 온톨로지 층 (빌드타임 정본) › Phase 2 · 구현 (이중 루프 TDD)</title>
+          <rect x="454" y="837" width="92" height="52" rx="6" class="c-mask"/>
+          <rect x="454" y="837" width="92" height="52" rx="6" class="c-database" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(460 843) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-node-label data-detail-anchor x="500" y="858" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">rulepack</text>
+          <text data-detail="context" x="500" y="875" class="t-muted" font-size="8" text-anchor="middle">SPARQL 소성</text>
         </g>
 
         <!-- Edge labels -->
-        <g data-detail="context" data-edge-from="g0" data-edge-to="architect" data-edge-label="승인 스코프" data-edge-key="0" data-edge-id="e_scope">
-          <rect x="114.1" y="146" width="62.8" height="14" rx="3" class="c-mask"/>
-          <text x="145.5" y="156" class="t-backend" font-size="8" text-anchor="middle">승인 스코프</text>
+
+        <g data-detail="context" data-edge-from="scope" data-edge-to="design" data-edge-label="G0 승인 후 위임" data-edge-key="1" data-edge-id="e-scope-design">
+          <rect x="47" y="290" width="82" height="14" rx="3" class="c-mask"/>
+          <text x="88" y="300" class="t-backend" font-size="8" text-anchor="middle">G0 승인 후 위임</text>
         </g>
-        <g data-detail="context" data-edge-from="architect" data-edge-to="rddd" data-edge-label="초안만 전달" data-edge-key="1" data-edge-id="e_fan_ddd">
-          <rect x="114.1" y="282" width="62.8" height="14" rx="3" class="c-mask"/>
-          <text x="145.5" y="292" class="t-muted" font-size="8" text-anchor="middle">초안만 전달</text>
+        <g data-detail="context" data-edge-from="design" data-edge-to="g1" data-edge-label="상정" data-edge-key="2" data-edge-id="e-design-g1">
+          <rect x="205" y="220" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="220" y="230" class="t-security" font-size="8" text-anchor="middle">상정</text>
         </g>
-
-
-
-        <g data-detail="context" data-edge-from="rdisc" data-edge-to="arch_final" data-edge-label="리뷰 노트 4벌" data-edge-key="5" data-edge-id="e_note">
-          <rect x="195.8" y="18" width="72.4" height="14" rx="3" class="c-mask"/>
-          <text x="232" y="28" class="t-database" font-size="8" text-anchor="middle">리뷰 노트 4벌</text>
+        <g data-detail="context" data-edge-from="g1" data-edge-to="red" data-edge-label="입장 표" data-edge-key="3" data-edge-id="e-g1-red">
+          <rect x="278.2" y="270" width="43.6" height="14" rx="3" class="c-mask"/>
+          <text x="300" y="280" class="t-backend" font-size="8" text-anchor="middle">입장 표</text>
         </g>
 
-        <g data-detail="context" data-edge-from="g1" data-edge-to="acc" data-edge-label="입장 표 배차" data-edge-key="7" data-edge-id="e_dispatch">
-          <rect x="518.2" y="197.5" width="67.6" height="14" rx="3" class="c-mask"/>
-          <text x="552" y="207.5" class="t-backend" font-size="8" text-anchor="middle">입장 표 배차</text>
-        </g>
-        <g data-detail="context" data-edge-from="acc" data-edge-to="coder" data-edge-label="바깥 Red 인계" data-edge-key="8" data-edge-id="e_red">
-          <rect x="526.3" y="445" width="72.4" height="14" rx="3" class="c-mask"/>
-          <text x="562.5" y="455" class="t-backend" font-size="8" text-anchor="middle">바깥 Red 인계</text>
+        <g data-detail="context" data-edge-from="slice" data-edge-to="checkers" data-edge-label="게이트" data-edge-key="5" data-edge-id="e-slice-checkers">
+          <rect x="438.6" y="518" width="38.8" height="14" rx="3" class="c-mask"/>
+          <text x="458" y="528" class="t-muted" font-size="8" text-anchor="middle">게이트</text>
         </g>
 
-
-        <g data-detail="context" data-edge-from="backstop" data-edge-to="g2" data-edge-label="27종 green·귀속 0" data-edge-key="11" data-edge-id="e_green">
-          <rect x="654.2" y="289" width="91.6" height="14" rx="3" class="c-mask"/>
-          <text x="700" y="299" class="t-backend" font-size="8" text-anchor="middle">27종 green·귀속 0</text>
+        <g data-detail="context" data-edge-from="registry" data-edge-to="audit" data-edge-label="green" data-edge-key="7" data-edge-id="e-registry-audit">
+          <rect x="608" y="518" width="34" height="14" rx="3" class="c-mask"/>
+          <text x="625" y="528" class="t-muted" font-size="8" text-anchor="middle">green</text>
         </g>
-        <g data-detail="context" data-edge-from="backstop" data-edge-to="coder" data-edge-label="위반 반송" data-edge-key="12" data-edge-id="e_bounce">
-          <rect x="729.4" y="612" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
-          <text x="756" y="622" class="t-security" font-size="8" text-anchor="middle">위반 반송</text>
+
+        <g data-detail="context" data-edge-from="g2" data-edge-to="report" data-edge-label="승인" data-edge-key="9" data-edge-id="e-g2-report">
+          <rect x="610" y="146" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="625" y="156" class="t-backend" font-size="8" text-anchor="middle">승인</text>
+        </g>
+        <g data-detail="context" data-edge-from="registry" data-edge-to="slice" data-edge-label="귀속 red 반송" data-edge-key="10" data-edge-id="e-registry-slice">
+          <rect x="456.8" y="386" width="72.4" height="14" rx="3" class="c-mask"/>
+          <text x="493" y="396" class="t-database" font-size="8" text-anchor="middle">귀속 red 반송</text>
+        </g>
+        <g data-detail="context" data-edge-from="registry" data-edge-to="loop" data-edge-label="on일 때" data-edge-key="11" data-edge-id="e-registry-loop">
+          <rect x="463.7" y="712" width="43.6" height="14" rx="3" class="c-mask"/>
+          <text x="485.5" y="722" class="t-database" font-size="8" text-anchor="middle">on일 때</text>
+        </g>
+        <g data-detail="context" data-edge-from="loop" data-edge-to="slice" data-edge-label="재생성" data-edge-key="12" data-edge-id="e-loop-slice">
+          <rect x="317.6" y="542" width="38.8" height="14" rx="3" class="c-mask"/>
+          <text x="337" y="552" class="t-database" font-size="8" text-anchor="middle">재생성</text>
+        </g>
+        <g data-detail="context" data-edge-from="rulepack" data-edge-to="loop" data-edge-label="조인" data-edge-key="13" data-edge-id="e-rulepack-loop">
+          <rect x="497" y="761.5" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="512" y="771.5" class="t-database" font-size="8" text-anchor="middle">조인</text>
+        </g>
+        <g data-detail="context" data-edge-from="graph" data-edge-to="skills" data-edge-label="렌더 투영" data-edge-key="14" data-edge-id="e-graph-skills">
+          <rect x="151.4" y="819" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
+          <text x="178" y="829" class="t-database" font-size="8" text-anchor="middle">렌더 투영</text>
+        </g>
+        <g data-detail="context" data-edge-from="graph" data-edge-to="rulepack" data-edge-label="q4 소성" data-edge-key="15" data-edge-id="e-graph-rulepack">
+          <rect x="272.2" y="901" width="43.6" height="14" rx="3" class="c-mask"/>
+          <text x="294" y="911" class="t-database" font-size="8" text-anchor="middle">q4 소성</text>
+        </g>
+        <g data-detail="context" data-edge-from="skills" data-edge-to="design" data-edge-label="에이전트 지식 로드" data-edge-key="16" data-edge-id="e-skills-design">
+          <rect x="171.8" y="618" width="96.39999999999999" height="14" rx="3" class="c-mask"/>
+          <text x="220" y="628" class="t-database" font-size="8" text-anchor="middle">에이전트 지식 로드</text>
         </g>
 
         <!-- Legend -->
         <g data-legend data-legend-bridge>
-          <text x="20" y="800" class="t-primary" font-size="12" font-weight="650">Legend</text>
-          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Agent logic" data-legend-x="20" data-legend-baseline="820" data-legend-width="91">
-            <rect x="20" y="812" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
-            <text x="42" y="820" class="t-muted" font-size="7.5" font-weight="500">Agent logic</text>
+          <text x="20" y="924" class="t-primary" font-size="12" font-weight="650">Legend</text>
+          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Agent logic" data-legend-x="20" data-legend-baseline="944" data-legend-width="91">
+            <rect x="20" y="936" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+            <text x="42" y="944" class="t-muted" font-size="7.5" font-weight="500">Agent logic</text>
           </g>
-          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="Policy" data-legend-x="118" data-legend-baseline="820" data-legend-width="70">
-            <rect x="118" y="812" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
-            <text x="140" y="820" class="t-muted" font-size="7.5" font-weight="500">Policy</text>
+          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="Policy" data-legend-x="118" data-legend-baseline="944" data-legend-width="70">
+            <rect x="118" y="936" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+            <text x="140" y="944" class="t-muted" font-size="7.5" font-weight="500">Policy</text>
+          </g>
+          <g data-legend-semantic-kind="messagebus" data-legend-kind="messagebus" data-legend-label="Tool action" data-legend-x="195" data-legend-baseline="944" data-legend-width="91">
+            <rect x="195" y="936" width="14" height="9" rx="2" class="c-messagebus" stroke-width="1"/>
+            <text x="217" y="944" class="t-muted" font-size="7.5" font-weight="500">Tool action</text>
+          </g>
+          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="Context / trace" data-legend-x="293" data-legend-baseline="944" data-legend-width="109">
+            <rect x="293" y="936" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+            <text x="315" y="944" class="t-muted" font-size="7.5" font-weight="500">Context / trace</text>
+          </g>
+          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="External system" data-legend-x="409" data-legend-baseline="944" data-legend-width="109">
+            <rect x="409" y="936" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
+            <text x="431" y="944" class="t-muted" font-size="7.5" font-weight="500">External system</text>
           </g>
         </g>
       </svg>
@@ -5237,6 +5417,7 @@
               <span id="focus-kind" data-passport="kind"></span>
               <span id="focus-context" data-passport="context" hidden></span>
               <span id="focus-tag" data-passport="tag" hidden></span>
+              <span id="focus-brand" data-passport="brand" hidden></span>
               <code id="focus-id" data-passport="id"></code>
             </div>
             <div class="semantic-passport-evidence" id="focus-evidence" hidden aria-label="Verified source evidence">
@@ -5317,11 +5498,13 @@
             <strong id="overview-map-title">Semantic radar</strong>
             <small id="overview-map-status" aria-live="polite">Building overview</small>
           </span>
+          <button class="overview-map-expand" id="overview-map-expand" type="button" aria-label="Open full semantic radar">Open radar</button>
           <button class="overview-map-close" id="overview-map-close" type="button" aria-label="Close semantic radar">&#215;</button>
         </div>
         <div class="overview-map-surface" id="overview-map-surface" tabindex="0" role="group" aria-label="Diagram overview. Click a node to focus it, or use arrow keys to pan."></div>
         <div class="overview-map-hint" aria-hidden="true"><span>Click node</span><span>Drag to pan</span></div>
       </div>
+      <p class="overview-map-feedback no-print" id="overview-map-feedback" role="status" aria-live="polite" hidden>Semantic radar needs more MAP space.</p>
       <div class="diagram-nav no-print" role="toolbar" aria-label="Diagram view controls">
         <button id="btn-route-probe" type="button" aria-label="Trace a directed route" aria-pressed="false" aria-controls="route-probe" title="Trace route (R)">PATH</button>
         <button id="btn-overview-map" type="button" aria-label="Open semantic radar" aria-expanded="false" aria-controls="overview-map" title="Semantic radar (M)">MAP</button>
@@ -5339,38 +5522,39 @@
       <div class="card">
         <div class="card-header">
           <div class="card-dot cyan"></div>
-          <h3>① 설계·감사 역할 — 로드 스킬(frontmatter 정본 · 전부 dddjango: 접두 · tdd=discipline-tdd)</h3>
+          <h3>기술 스택 — 두 세계의 경계</h3>
         </div>
         <ul>
-          <li>&bull; design-architect: architecture-ddd · architecture-api · architecture-db · discipline-houserules · discipline-tdd</li>
-          <li>&bull; design-review-ddd: architecture-ddd</li>
-          <li>&bull; design-review-api: architecture-api · discipline-tdd</li>
-          <li>&bull; design-review-db: architecture-db · discipline-tdd</li>
-          <li>&bull; discipline-reviewer(경량·감사 공통): discipline-cleancode · discipline-tdd · implementation-test · discipline-houserules</li>
+          <li>&bull; 정본층(메인테이너 저장소 전용): Turtle(RDF)+RDFS 어휘 · SHACL 검증(pySHACL) · RDFC-1.0 정규화 해시 · SPARQL 질의(rdflib)</li>
+          <li>&bull; 4단 저작 게이트: 파스 → 정본 직렬화 diff=0 → RDFC 해시 불변 → SHACL — 커밋마다 기계 차단</li>
+          <li>&bull; 설치본(플러그인): 표준 라이브러리만 — rulepack.json 인덱스 조회 + 검사기 AST. rdflib 침투 금지(동결 E7)</li>
+          <li>&bull; DB·서버 없음 — 전부 git 안의 파일. 릴리즈 2.17.0 기준</li>
         </ul>
       </div>
 
       <div class="card">
         <div class="card-header">
           <div class="card-dot violet"></div>
-          <h3>② 구현 역할 — 로드 스킬</h3>
+          <h3>온톨로지가 있는 곳</h3>
         </div>
         <ul>
-          <li>&bull; acceptance-tester: discipline-tdd · implementation-test · architecture-api · architecture-ddd · implementation-django-ninja</li>
-          <li>&bull; coder: implementation-django · implementation-django-ninja · implementation-django-web · implementation-python · discipline-tdd · implementation-test · discipline-cleancode · discipline-houserules</li>
+          <li>&bull; 스킬 30문서의 참조성 539절 = 그래프의 렌더 투영물(graph-owned 마커) — byte 등가를 도구가 상시 단언</li>
+          <li>&bull; 규범 Work 3,400 · 재진술 연결 616 · alias 대장 28(rule# 21 + 선행 계약 contract# 7)</li>
+          <li>&bull; 규범 수정은 ontology/rules/ 정본에서 → 게이트 → 렌더 재투영 → 원장(LEDGER) — 문서 직접 수정은 훅이 차단</li>
+          <li>&bull; 스킬 md 로드는 설계·구현 에이전트 공통(그림은 설계 간선 하나로 대표) · 위반 레코드는 위반 그래프에 축적 — 월별 집계가 개정 제안 큐</li>
         </ul>
       </div>
 
       <div class="card">
         <div class="card-header">
           <div class="card-dot amber"></div>
-          <h3>③ Coordinator·백스톱 규약</h3>
+          <h3>결정이 이루어지는 곳</h3>
         </div>
         <ul>
-          <li>&bull; /dddjango 커맨드가 Coordinator — 게이트 G0·G1·G2 제시·서브에이전트 배차·백스톱 실행 전담, 코드는 쓰지 않는다</li>
-          <li>&bull; 서브에이전트·스킬 지정은 항상 dddjango: 한정 표기 — 동명 플러그인 충돌 차단(v2.10.0+)</li>
-          <li>&bull; 백스톱 = dddjango 스킬 scripts/의 check-*.py 27 registry + registry_gate.py(앵커 차분·귀속) + anchor_diff.py</li>
-          <li>&bull; 슬라이스 ≥3이면 슬라이스별 discipline-reviewer 경량 감사가 추가로 붙는다</li>
+          <li>&bull; 사용자 게이트 G0·G1·G2 — 닫힌 선택지 + 대가 한 줄, AskUserQuestion 채널, STOP 기록이 정본</li>
+          <li>&bull; 테스트 입장 표가 테스트의 운명을 결정: add/update만 Red, reuse는 anchor 실행만, pending은 G1 반송</li>
+          <li>&bull; 검사기 red는 귀속분(앵커 차분 N∖L)만 반송 — legacy 잔존은 이 빌드에서 면책</li>
+          <li>&bull; 6′ 폐루프는 기본 off(T2 실험 종결 처분) — 켜면 반송 전 rulepack 조인 규범 좌표를 주입해 최대 3회전 재생성</li>
         </ul>
       </div>
     </div>
@@ -7295,7 +7479,8 @@
           beacon.classList.add('source-evidence-beacon');
           beacon.setAttribute('data-source-evidence-beacon', '');
           beacon.setAttribute('aria-hidden', 'true');
-          beacon.setAttribute('transform', 'translate(' + (box.x + box.width - 35) + ' ' + (box.y + 5) + ')');
+          var brandOffset = node.hasAttribute('data-node-brand') ? 24 : 0;
+          beacon.setAttribute('transform', 'translate(' + (box.x + box.width - 35 - brandOffset) + ' ' + (box.y + 5) + ')');
           var title = document.createElementNS(svgNamespace, 'title');
           title.textContent = label;
           var plate = document.createElementNS(svgNamespace, 'rect');
@@ -7702,6 +7887,7 @@
         setPassportValue(kind, node.getAttribute('data-node-kind') || 'node');
         setPassportValue(context, node.getAttribute('data-node-context'));
         setPassportValue(tag, node.getAttribute('data-node-tag'));
+        setPassportValue(document.getElementById('focus-brand'), node.getAttribute('data-node-brand'));
         semanticId.textContent = id;
         semanticId.hidden = false;
         renderSourceEvidence(id);
@@ -8350,6 +8536,45 @@
           preferred = nodeCenter - chip.offsetHeight / 2;
         }
         var top = Math.max(minTop, Math.min(maxTop, preferred));
+        var chipRect = chip.getBoundingClientRect();
+        var safeGap = 10;
+        var protectViewerChrome = !mobile || compactOnMobile || previewingOnMobile;
+        var protectedRects = (protectViewerChrome
+          ? [svg.querySelector('[data-legend]'), container.querySelector('.diagram-nav')]
+          : [])
+          .filter(function (element) {
+            if (!element || element.hidden) return false;
+            var style = window.getComputedStyle(element);
+            return style.display !== 'none' && style.visibility !== 'hidden';
+          })
+          .map(function (element) { return element.getBoundingClientRect(); })
+          .filter(function (rect) {
+            return rect.width > 0 && rect.height > 0 &&
+              chipRect.left < rect.right + safeGap && chipRect.right > rect.left - safeGap;
+          });
+        if (protectedRects.length) {
+          var candidates = [top, minTop, maxTop];
+          protectedRects.forEach(function (rect) {
+            candidates.push(
+              rect.top - containerRect.top - chip.offsetHeight - safeGap,
+              rect.bottom - containerRect.top + safeGap
+            );
+          });
+          var valid = candidates.map(function (candidate) {
+            return Math.max(minTop, Math.min(maxTop, candidate));
+          }).filter(function (candidate, index, all) {
+            if (all.indexOf(candidate) !== index) return false;
+            var candidateTop = containerRect.top + candidate;
+            var candidateBottom = candidateTop + chip.offsetHeight;
+            return protectedRects.every(function (rect) {
+              return candidateBottom <= rect.top - safeGap || candidateTop >= rect.bottom + safeGap;
+            });
+          });
+          valid.sort(function (first, second) {
+            return Math.abs(first - preferred) - Math.abs(second - preferred);
+          });
+          if (valid.length) top = valid[0];
+        }
         chip.style.top = Math.round(top) + 'px';
         if (Archify.radar && typeof Archify.radar.sync === 'function') Archify.radar.sync();
       }
@@ -8621,7 +8846,7 @@
         var target = event.target;
         if (chip.hidden || !target || typeof target.closest !== 'function' || chip.contains(target)) return;
         if (container.getAttribute('data-just-panned') === 'true') return;
-        if (target.closest('[data-node-id], [data-relationship-hit-key]')) return;
+        if (target.closest('[data-node-id], [data-relationship-hit-key], .overview-map')) return;
         clear();
       }, true);
       window.addEventListener('scroll', requestLensPlacement, { passive: true });
@@ -10558,6 +10783,46 @@
        embed, presentation, print, and non-wide diagrams retain their own
        established layout contracts.
        ============================================================ */
+    Archify.waitForStableLayout = function (options) {
+      options = options || {};
+      var maximumFrames = Math.max(1, Number(options.maximumFrames) || 240);
+      var fontsReady = document.fonts && document.fonts.ready
+        ? document.fonts.ready.catch(function () {})
+        : Promise.resolve();
+      return fontsReady.then(function () {
+        if (typeof options.schedule === 'function') options.schedule();
+        return new Promise(function (resolve, reject) {
+          var previous = '';
+          var stableFrames = 0;
+          var sampledFrames = 0;
+          function sample() {
+            sampledFrames += 1;
+            if (typeof options.pending === 'function' && options.pending()) {
+              previous = '';
+              stableFrames = 0;
+            } else {
+              var current = typeof options.snapshot === 'function' ? options.snapshot() : '';
+              if (current === previous) stableFrames += 1;
+              else {
+                previous = current;
+                stableFrames = 0;
+              }
+              if (stableFrames >= 3) {
+                resolve({ stable: true, snapshot: current, sampledFrames: sampledFrames });
+                return;
+              }
+            }
+            if (sampledFrames >= maximumFrames) {
+              reject(new Error(options.timeoutMessage || 'Layout did not reach stable dimensions.'));
+              return;
+            }
+            requestAnimationFrame(sample);
+          }
+          requestAnimationFrame(sample);
+        });
+      });
+    };
+
     Archify.readerLayout = (function () {
       var html = document.documentElement;
       var body = document.body;
@@ -10677,6 +10942,31 @@
         if (frame) return;
         frame = requestAnimationFrame(measure);
       }
+      function stableSnapshot() {
+        var shellRect = shell ? shell.getBoundingClientRect() : { width: 0, height: 0 };
+        var diagramRect = diagram ? diagram.getBoundingClientRect() : { width: 0, height: 0 };
+        return [
+          lastWidth,
+          html.getAttribute('data-reader-layout') || '',
+          html.getAttribute('data-reader-overflow') || '',
+          Math.ceil(document.documentElement.scrollWidth),
+          Math.ceil(document.documentElement.scrollHeight),
+          Math.ceil(document.body.scrollWidth),
+          Math.ceil(document.body.scrollHeight),
+          Math.round(shellRect.width * 100) / 100,
+          Math.round(shellRect.height * 100) / 100,
+          Math.round(diagramRect.width * 100) / 100,
+          Math.round(diagramRect.height * 100) / 100
+        ].join('|');
+      }
+      function whenStable() {
+        return Archify.waitForStableLayout({
+          schedule: schedule,
+          pending: function () { return Boolean(frame || settleFrame); },
+          snapshot: stableSnapshot,
+          timeoutMessage: 'Adaptive reader layout did not reach stable dimensions.'
+        });
+      }
 
       window.addEventListener('resize', schedule, { passive: true });
       window.addEventListener('load', schedule, { once: true });
@@ -10696,8 +10986,212 @@
       return {
         measure: measure,
         schedule: schedule,
+        whenStable: whenStable,
         active: function () { return html.getAttribute('data-reader-layout') === 'adaptive'; },
         receipt: function () { return { ratio: ratio, width: lastWidth }; }
+      };
+    })();
+
+    /* ============================================================
+       Viewer Chrome Layout — keep HTML controls clear of the canonical SVG
+       legend without changing authored geometry. The dock keeps its existing
+       position unless its zero-reserve position would cover the legend; only
+       then does a small bottom safe rail become part of the reader budget.
+       ============================================================ */
+    Archify.viewerChromeLayout = (function () {
+      var html = document.documentElement;
+      var container = document.querySelector('.diagram-container');
+      var svg = container && container.querySelector(':scope > svg');
+      var nav = container && container.querySelector('.diagram-nav');
+      var legend = svg && svg.querySelector('[data-legend]');
+      var frame = 0;
+      var settleFrame = 0;
+      var reserve = 0;
+      var collisionLatched = false;
+      var probingBaseline = false;
+      var probePromise = null;
+      var baselineIntersectionArea = 0;
+      var lastReceipt = null;
+      var SAFE_GAP = 10;
+
+      function visible(element) {
+        if (!element || element.hidden) return false;
+        var style = window.getComputedStyle(element);
+        return style.display !== 'none' && style.visibility !== 'hidden';
+      }
+      function usable(rect) {
+        return Boolean(rect && rect.width > 0 && rect.height > 0);
+      }
+      function intersectionArea(a, b) {
+        var width = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+        var height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+        return width * height;
+      }
+      function eligible() {
+        return Boolean(
+          container && svg && nav && legend &&
+          window.innerWidth > 720 &&
+          html.getAttribute('data-embed') !== 'true' &&
+          (!window.matchMedia || !window.matchMedia('print').matches) &&
+          visible(nav) && visible(legend)
+        );
+      }
+      function writeReserve(next, options) {
+        options = options || {};
+        next = Math.max(0, Math.ceil(next));
+        if (Math.abs(next - reserve) < 1) return false;
+        reserve = next;
+        if (reserve) {
+          container.style.setProperty('--archify-nav-reserve', reserve + 'px');
+          container.setAttribute('data-nav-safe-rail', 'true');
+        } else {
+          container.style.removeProperty('--archify-nav-reserve');
+          container.removeAttribute('data-nav-safe-rail');
+        }
+        if (Archify.readerLayout && typeof Archify.readerLayout.schedule === 'function') {
+          Archify.readerLayout.schedule();
+        }
+        if (options.quiet !== true) {
+          if (settleFrame) cancelAnimationFrame(settleFrame);
+          settleFrame = requestAnimationFrame(function () {
+            settleFrame = 0;
+            schedule();
+          });
+        }
+        return true;
+      }
+      function clear() {
+        collisionLatched = false;
+        baselineIntersectionArea = 0;
+        writeReserve(0, { quiet: probingBaseline });
+        lastReceipt = {
+          eligible: false,
+          active: false,
+          reserve: 0,
+          gap: SAFE_GAP,
+          baselineIntersectionArea: 0,
+          intersectionArea: 0
+        };
+        return lastReceipt;
+      }
+      function measure() {
+        frame = 0;
+        if (probingBaseline) return null;
+        if (!eligible()) return clear();
+
+        var navRect = nav.getBoundingClientRect();
+        var legendRect = legend.getBoundingClientRect();
+        var svgRect = svg.getBoundingClientRect();
+        if (!usable(navRect) || !usable(legendRect) || !usable(svgRect)) return clear();
+
+        var actualIntersectionArea = intersectionArea(navRect, legendRect);
+        if (!collisionLatched && reserve === 0) {
+          baselineIntersectionArea = actualIntersectionArea;
+          if (actualIntersectionArea > 0) {
+            collisionLatched = true;
+            if (writeReserve(Math.max(0, svgRect.bottom + SAFE_GAP - navRect.top))) return null;
+          }
+        } else if (collisionLatched && reserve > 0 && actualIntersectionArea > 0) {
+          /* Once zero-reserve geometry proves a collision, keep that decision
+             latched while Adaptive Reader incorporates the rail. If the first
+             rail is not quite tall enough (notably in Presentation flex
+             layout), grow only by the remaining vertical overlap. */
+          var remaining = Math.max(1, legendRect.bottom + SAFE_GAP - navRect.top);
+          if (writeReserve(reserve + remaining)) return null;
+        }
+
+        navRect = nav.getBoundingClientRect();
+        legendRect = legend.getBoundingClientRect();
+        lastReceipt = {
+          eligible: true,
+          active: reserve > 0,
+          reserve: reserve,
+          gap: SAFE_GAP,
+          baselineIntersectionArea: Math.round(baselineIntersectionArea * 100) / 100,
+          intersectionArea: Math.round(intersectionArea(navRect, legendRect) * 100) / 100
+        };
+        return lastReceipt;
+      }
+      function reprobe() {
+        if (probingBaseline) return probePromise || Promise.resolve(false);
+        if (!reserve && !collisionLatched) {
+          schedule();
+          return Promise.resolve(false);
+        }
+        probingBaseline = true;
+        collisionLatched = false;
+        baselineIntersectionArea = 0;
+        writeReserve(0, { quiet: true });
+        var readerReady = Archify.readerLayout && typeof Archify.readerLayout.whenStable === 'function'
+          ? Archify.readerLayout.whenStable().catch(function () {})
+          : Promise.resolve();
+        probePromise = readerReady.then(function () {
+          probingBaseline = false;
+          probePromise = null;
+          schedule();
+          return true;
+        });
+        return probePromise;
+      }
+      function schedule() {
+        if (frame) return;
+        frame = requestAnimationFrame(measure);
+      }
+      function stableSnapshot() {
+        var containerRect = container ? container.getBoundingClientRect() : { width: 0, height: 0 };
+        var navRect = nav ? nav.getBoundingClientRect() : { top: 0, left: 0 };
+        var legendRect = legend ? legend.getBoundingClientRect() : { top: 0, left: 0 };
+        return [
+          reserve,
+          Math.round(containerRect.width * 100) / 100,
+          Math.round(containerRect.height * 100) / 100,
+          Math.round(navRect.left * 100) / 100,
+          Math.round(navRect.top * 100) / 100,
+          Math.round(legendRect.left * 100) / 100,
+          Math.round(legendRect.top * 100) / 100,
+          collisionLatched ? 'latched' : 'clear',
+          lastReceipt ? lastReceipt.intersectionArea : ''
+        ].join('|');
+      }
+      function whenStable() {
+        return Archify.waitForStableLayout({
+          schedule: schedule,
+          pending: function () { return Boolean(frame || settleFrame || probingBaseline); },
+          snapshot: stableSnapshot,
+          timeoutMessage: 'Viewer chrome layout did not reach stable dimensions.'
+        });
+      }
+
+      window.addEventListener('resize', reprobe, { passive: true });
+      window.addEventListener('load', schedule, { once: true });
+      window.addEventListener('beforeprint', schedule);
+      window.addEventListener('afterprint', reprobe);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(reprobe).catch(function () {});
+      if (typeof ResizeObserver === 'function') {
+        var resizeObserver = new ResizeObserver(schedule);
+        [nav, legend].forEach(function (element) { if (element) resizeObserver.observe(element); });
+      }
+      if (typeof MutationObserver === 'function') {
+        var contentObserver = new MutationObserver(function (records) {
+          var viewerModeChanged = records.some(function (record) { return record.target === html; });
+          if (viewerModeChanged) reprobe();
+          else schedule();
+        });
+        if (legend) contentObserver.observe(legend, { attributes: true, childList: true, subtree: true });
+        contentObserver.observe(html, {
+          attributes: true,
+          attributeFilter: ['data-embed', 'data-present', 'data-preset', 'data-theme']
+        });
+      }
+      schedule();
+
+      return {
+        measure: measure,
+        schedule: schedule,
+        reprobe: reprobe,
+        whenStable: whenStable,
+        active: function () { return reserve > 0; },
+        receipt: function () { return lastReceipt || measure(); }
       };
     })();
 
@@ -10806,6 +11300,9 @@
         container.classList.toggle('is-pannable', state.scale > 1);
         svg.setAttribute('data-view-scale', String(state.scale));
         if (Archify.radar && typeof Archify.radar.sync === 'function') Archify.radar.sync();
+        if (Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.schedule === 'function') {
+          Archify.viewerChromeLayout.schedule();
+        }
       }
       function sampleRenderedState() {
         var transform = '';
@@ -10918,6 +11415,9 @@
         else stopCameraMotion('reset', false);
         state = { scale: 1, x: 0, y: 0, mode: 'overview' };
         apply();
+        if (Archify.viewerChromeLayout && typeof Archify.viewerChromeLayout.reprobe === 'function') {
+          Archify.viewerChromeLayout.reprobe();
+        }
       }
       function centerAt(logicalX, logicalY, options) {
         options = options || {};
@@ -11196,18 +11696,32 @@
       var container = document.querySelector('.diagram-container');
       var diagram = container.querySelector(':scope > svg');
       var panel = document.getElementById('overview-map');
+      var panelHead = panel.querySelector('.overview-map-head');
       var surface = document.getElementById('overview-map-surface');
       var status = document.getElementById('overview-map-status');
       var trigger = document.getElementById('btn-overview-map');
       var closeBtn = document.getElementById('overview-map-close');
+      var expandBtn = document.getElementById('overview-map-expand');
+      var feedback = document.getElementById('overview-map-feedback');
+      var navigation = container.querySelector('.diagram-nav');
+      var passport = document.getElementById('focus-chip');
       var namespace = 'http://www.w3.org/2000/svg';
       var viewBox = diagram.viewBox && diagram.viewBox.baseVal;
       var mapSvg = document.createElementNS(namespace, 'svg');
       var nodeLayer = document.createElementNS(namespace, 'g');
       var viewport = document.createElementNS(namespace, 'rect');
       var nodes = [];
-      var drag = null;
+      var viewportDrag = null;
+      var panelDrag = null;
+      var manualPosition = null;
+      var lastPlacement = null;
+      var requestedOpen = false;
+      var passportYielded = false;
+      var passportPreviousAriaHidden = null;
       var syncFrame = 0;
+      var spaceRetryTimer = 0;
+      var spaceRetryCount = 0;
+      var placementGap = 16;
 
       mapSvg.setAttribute('role', 'group');
       mapSvg.setAttribute('aria-label', 'Semantic diagram radar nodes');
@@ -11252,56 +11766,294 @@
         status.textContent = nodes.length + ' nodes · full map';
         return true;
       }
-      function updateDocking() {
-        if (panel.hidden) return;
-        var containerRect = container.getBoundingClientRect();
-        var intersectsWindow = containerRect.bottom > 12 && containerRect.top < window.innerHeight - 12;
-        if (!intersectsWindow) {
-          panel.removeAttribute('data-docked');
-          panel.removeAttribute('data-dock-side');
-          panel.style.removeProperty('--archify-radar-right');
-          panel.style.removeProperty('--archify-radar-left');
-          panel.style.removeProperty('--archify-radar-top');
-          return;
-        }
-        var active = diagram.querySelector('[data-focus-selected]');
-        var activeRect = active ? active.getBoundingClientRect() : null;
-        var dockLeft = !!(activeRect && activeRect.left + activeRect.width / 2 > window.innerWidth / 2);
-        var right = Math.max(16, window.innerWidth - Math.min(containerRect.right - 16, window.innerWidth - 16));
-        var left = Math.max(16, Math.min(containerRect.left + 16, window.innerWidth - panel.offsetWidth - 16));
-        var topLimit = Math.max(16, containerRect.top + 16);
-        var bottomLimit = Math.min(window.innerHeight - 16, containerRect.bottom - 16);
-        var panelLeft = dockLeft ? left : window.innerWidth - right - panel.offsetWidth;
-        var panelRight = panelLeft + panel.offsetWidth;
+      function visibleRect(element) {
+        if (!element || element.hidden) return null;
+        var rect = element.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0 || rect.right <= 0 || rect.bottom <= 0 || rect.left >= window.innerWidth || rect.top >= window.innerHeight) return null;
+        return { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height };
+      }
+      function panelRectAt(position) {
+        return {
+          left: position.left,
+          top: position.top,
+          right: position.left + panel.offsetWidth,
+          bottom: position.top + panel.offsetHeight,
+          width: panel.offsetWidth,
+          height: panel.offsetHeight
+        };
+      }
+      function rectsIntersect(first, second, gap) {
+        gap = Number(gap) || 0;
+        return first.left < second.right + gap &&
+          first.right > second.left - gap &&
+          first.top < second.bottom + gap &&
+          first.bottom > second.top - gap;
+      }
+      function intersectionArea(first, second) {
+        var width = Math.max(0, Math.min(first.right, second.right) - Math.max(first.left, second.left));
+        var height = Math.max(0, Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top));
+        return width * height;
+      }
+      function clamp(value, minimum, maximum) {
+        if (maximum < minimum) return minimum;
+        return Math.max(minimum, Math.min(maximum, value));
+      }
+      function placementContext() {
+        var containerRect = visibleRect(container);
+        if (!containerRect) return null;
+        var controlRect = visibleRect(navigation);
+        var left = Math.max(placementGap, containerRect.left + placementGap);
+        var top = Math.max(placementGap, containerRect.top + placementGap);
+        var right = Math.min(window.innerWidth - placementGap, containerRect.right - placementGap);
+        var bottom = Math.min(window.innerHeight - placementGap, containerRect.bottom - placementGap);
+        if (controlRect) bottom = Math.min(bottom, controlRect.top - placementGap);
         var lens = document.getElementById('focus-chip');
-        var lensRect = lens && !lens.hidden ? lens.getBoundingClientRect() : null;
-        var blockers = [activeRect, lensRect].filter(function (rect) {
-          return rect && rect.right > panelLeft && rect.left < panelRight;
+        var lensRect = visibleRect(lens);
+        var legendRect = visibleRect(diagram.querySelector('[data-legend]'));
+        var active = diagram.querySelector('[data-focus-selected]');
+        var activeRect = visibleRect(active);
+        return {
+          bounds: { left: left, top: top, right: right, bottom: bottom },
+          hardBlockers: [lensRect, controlRect, legendRect].filter(Boolean),
+          softBlockers: [activeRect].filter(Boolean),
+          preferredSide: !activeRect || activeRect.left + activeRect.width / 2 > window.innerWidth / 2 ? 'left' : 'right'
+        };
+      }
+      function positionIsValid(position, context) {
+        if (!position || !context) return false;
+        var rect = panelRectAt(position);
+        var bounds = context.bounds;
+        if (rect.left < bounds.left || rect.top < bounds.top || rect.right > bounds.right || rect.bottom > bounds.bottom) return false;
+        return context.hardBlockers.every(function (blocker) { return !rectsIntersect(rect, blocker, placementGap); });
+      }
+      function cornerCandidates(context) {
+        var bounds = context.bounds;
+        var left = bounds.left;
+        var right = Math.max(left, bounds.right - panel.offsetWidth);
+        var top = bounds.top;
+        var bottom = Math.max(top, bounds.bottom - panel.offsetHeight);
+        var preferredLeft = context.preferredSide === 'left' ? left : right;
+        var alternateLeft = context.preferredSide === 'left' ? right : left;
+        return [
+          { left: preferredLeft, top: bottom },
+          { left: alternateLeft, top: bottom },
+          { left: preferredLeft, top: top },
+          { left: alternateLeft, top: top }
+        ].filter(function (candidate, index, all) {
+          return all.findIndex(function (other) { return other.left === candidate.left && other.top === candidate.top; }) === index;
         });
-        var desiredTop = bottomLimit - panel.offsetHeight;
-        var candidates = [desiredTop, topLimit];
-        blockers.forEach(function (rect) {
-          candidates.push(rect.top - 10 - panel.offsetHeight, rect.bottom + 10);
+      }
+      function nearbyCandidates(context, reference) {
+        var bounds = context.bounds;
+        var maximumLeft = bounds.right - panel.offsetWidth;
+        var maximumTop = bounds.bottom - panel.offsetHeight;
+        var requested = reference ? {
+          left: clamp(reference.left, bounds.left, maximumLeft),
+          top: clamp(reference.top, bounds.top, maximumTop)
+        } : null;
+        var horizontal = [bounds.left, maximumLeft];
+        var vertical = [bounds.top, maximumTop];
+        if (requested) {
+          horizontal.push(requested.left);
+          vertical.push(requested.top);
+        }
+        context.hardBlockers.forEach(function (blocker) {
+          horizontal.push(
+            blocker.left - placementGap - panel.offsetWidth,
+            blocker.right + placementGap
+          );
+          vertical.push(
+            blocker.top - placementGap - panel.offsetHeight,
+            blocker.bottom + placementGap
+          );
         });
-        var valid = candidates.filter(function (candidate) {
-          if (candidate < topLimit || candidate + panel.offsetHeight > bottomLimit) return false;
-          return blockers.every(function (rect) {
-            return candidate + panel.offsetHeight <= rect.top - 10 || candidate >= rect.bottom + 10;
-          });
+        horizontal = horizontal.map(function (left) { return clamp(left, bounds.left, maximumLeft); });
+        vertical = vertical.map(function (top) { return clamp(top, bounds.top, maximumTop); });
+        var candidates = [];
+        horizontal.forEach(function (left) {
+          vertical.forEach(function (top) { candidates.push({ left: left, top: top }); });
         });
-        valid.sort(function (a, b) { return Math.abs(a - desiredTop) - Math.abs(b - desiredTop); });
-        var top = valid.length ? valid[0] : Math.max(topLimit, desiredTop);
-        top = Math.min(window.innerHeight - panel.offsetHeight - 16, top);
+        return candidates.filter(function (candidate, index, all) {
+          return all.findIndex(function (other) { return other.left === candidate.left && other.top === candidate.top; }) === index;
+        });
+      }
+      function placementScore(position, context, reference, softWeight) {
+        var rect = panelRectAt(position);
+        var referenceLeft = reference ? reference.left : (context.preferredSide === 'left' ? context.bounds.left : context.bounds.right - panel.offsetWidth);
+        var referenceTop = reference ? reference.top : context.bounds.bottom - panel.offsetHeight;
+        var distance = Math.pow(position.left - referenceLeft, 2) + Math.pow(position.top - referenceTop, 2);
+        var softOverlap = context.softBlockers.reduce(function (total, blocker) { return total + intersectionArea(rect, blocker); }, 0);
+        return distance + softOverlap * softWeight;
+      }
+      function chooseRadarPlacement(context, reference, options) {
+        options = options || {};
+        var softWeight = Number.isFinite(options.softWeight) ? options.softWeight : 100;
+        var candidates = nearbyCandidates(context, reference).concat(cornerCandidates(context));
+        var valid = candidates.filter(function (candidate) { return positionIsValid(candidate, context); });
+        valid.sort(function (first, second) {
+          return placementScore(first, context, reference, softWeight) - placementScore(second, context, reference, softWeight);
+        });
+        return valid.length ? valid[0] : null;
+      }
+      function applyPlacement(position, remember) {
+        var useLeft = position.left + panel.offsetWidth / 2 <= window.innerWidth / 2;
         panel.setAttribute('data-docked', 'true');
-        panel.setAttribute('data-dock-side', dockLeft ? 'left' : 'right');
-        panel.style.setProperty('--archify-radar-right', Math.round(right) + 'px');
-        panel.style.setProperty('--archify-radar-left', Math.round(left) + 'px');
-        panel.style.setProperty('--archify-radar-top', Math.round(Math.max(16, top)) + 'px');
+        panel.setAttribute('data-dock-side', useLeft ? 'left' : 'right');
+        if (useLeft) {
+          panel.style.setProperty('--archify-radar-left', Math.round(position.left) + 'px');
+          panel.style.removeProperty('--archify-radar-right');
+        } else {
+          panel.style.setProperty('--archify-radar-right', Math.round(window.innerWidth - position.left - panel.offsetWidth) + 'px');
+          panel.style.removeProperty('--archify-radar-left');
+        }
+        panel.style.setProperty('--archify-radar-top', Math.round(position.top) + 'px');
+        if (remember !== false) lastPlacement = { left: position.left, top: position.top };
+      }
+      function resetDockingStyles() {
+        panel.removeAttribute('data-docked');
+        panel.removeAttribute('data-dock-side');
+        panel.removeAttribute('data-panel-dragging');
+        panel.removeAttribute('data-placement-invalid');
+        panel.removeAttribute('data-placement-degraded');
+        panel.removeAttribute('data-placement-unavailable');
+        panel.removeAttribute('data-compact');
+        panel.removeAttribute('title');
+        panel.style.removeProperty('visibility');
+        panel.style.removeProperty('--archify-radar-right');
+        panel.style.removeProperty('--archify-radar-left');
+        panel.style.removeProperty('--archify-radar-top');
+      }
+      function updateDocking() {
+        var options = arguments[0] || {};
+        if (panel.hidden) return false;
+        if (panelDrag) return true;
+        panel.removeAttribute('data-compact');
+        panel.removeAttribute('data-placement-degraded');
+        panel.removeAttribute('data-placement-invalid');
+        panel.removeAttribute('data-placement-unavailable');
+        panel.removeAttribute('title');
+        panel.style.removeProperty('visibility');
+        var context = placementContext();
+        if (!context) {
+          resetDockingStyles();
+          return false;
+        }
+        var reference = manualPosition || lastPlacement;
+        var placementOptions = { softWeight: manualPosition ? 0 : 100 };
+        var placement = manualPosition && positionIsValid(manualPosition, context)
+          ? manualPosition
+          : chooseRadarPlacement(context, reference, placementOptions);
+        var compact = false;
+        if (!placement && options.allowCompact !== false) {
+          compact = true;
+          panel.setAttribute('data-compact', 'true');
+          panel.setAttribute('data-placement-degraded', 'true');
+          panel.setAttribute('title', 'Radar compacted to avoid covering the Semantic Passport or MAP controls.');
+          context = placementContext();
+          placement = chooseRadarPlacement(context, reference, placementOptions);
+        }
+        if (!placement) {
+          resetDockingStyles();
+          panel.setAttribute('data-placement-unavailable', 'true');
+          return false;
+        }
+        if (manualPosition && !compact) manualPosition = { left: placement.left, top: placement.top };
+        applyPlacement(placement, true);
+        return true;
+      }
+      function clearSpaceRetry() {
+        if (spaceRetryTimer) window.clearTimeout(spaceRetryTimer);
+        spaceRetryTimer = 0;
+      }
+      function yieldPassport() {
+        if (!passport || passport.hidden || passportYielded) return passportYielded;
+        passportPreviousAriaHidden = passport.getAttribute('aria-hidden');
+        passportYielded = true;
+        passport.setAttribute('data-radar-yielded', 'true');
+        passport.setAttribute('aria-hidden', 'true');
+        return true;
+      }
+      function restorePassport() {
+        if (!passport || !passportYielded) return;
+        passportYielded = false;
+        passport.removeAttribute('data-radar-yielded');
+        if (passportPreviousAriaHidden === null) passport.removeAttribute('aria-hidden');
+        else passport.setAttribute('aria-hidden', passportPreviousAriaHidden);
+        passportPreviousAriaHidden = null;
+      }
+      function reflectVisible() {
+        panel.hidden = false;
+        panel.removeAttribute('data-placement-unavailable');
+        trigger.setAttribute('aria-expanded', 'true');
+        trigger.removeAttribute('data-radar-space-limited');
+        trigger.setAttribute('aria-label', 'Close semantic radar');
+        trigger.title = 'Semantic radar (M)';
+        feedback.hidden = true;
+      }
+      function scheduleSpaceRetry() {
+        if (!requestedOpen || spaceRetryTimer || spaceRetryCount >= 4) return;
+        spaceRetryCount += 1;
+        spaceRetryTimer = window.setTimeout(function () {
+          spaceRetryTimer = 0;
+          attemptRequestedOpen();
+        }, 60);
+      }
+      function reflectUnavailable() {
+        restorePassport();
+        panel.hidden = true;
+        panel.setAttribute('data-placement-unavailable', 'true');
+        trigger.setAttribute('aria-expanded', 'false');
+        trigger.setAttribute('aria-label', 'Cancel semantic radar waiting for more MAP space');
+        trigger.setAttribute('data-radar-space-limited', 'true');
+        trigger.title = 'Semantic radar needs more visible MAP space';
+        feedback.hidden = false;
+        scheduleSpaceRetry();
+      }
+      function attemptRequestedOpen(options) {
+        options = options || {};
+        if (!requestedOpen) return false;
+        panel.hidden = false;
+        if (!updateDocking(options)) {
+          reflectUnavailable();
+          return false;
+        }
+        clearSpaceRetry();
+        spaceRetryCount = 0;
+        reflectVisible();
+        sync();
+        if (options.focus === true && !panel.hasAttribute('data-compact')) surface.focus();
+        return true;
+      }
+      function expandCompactRadar() {
+        if (!requestedOpen || panel.hidden || !panel.hasAttribute('data-compact')) return false;
+        yieldPassport();
+        if (!updateDocking({ allowCompact: false })) {
+          restorePassport();
+          if (!updateDocking()) {
+            reflectUnavailable();
+            return false;
+          }
+        }
+        reflectVisible();
+        sync();
+        if (!panel.hasAttribute('data-compact')) surface.focus();
+        return !panel.hasAttribute('data-compact');
       }
       function syncNow() {
         syncFrame = 0;
         if (panel.hidden || !Archify.view || typeof Archify.view.logicalViewport !== 'function') return;
-        updateDocking();
+        if (!updateDocking()) {
+          reflectUnavailable();
+          return;
+        }
+        if (passportYielded && panel.hasAttribute('data-compact')) {
+          restorePassport();
+          if (!updateDocking()) {
+            reflectUnavailable();
+            return;
+          }
+        }
+        reflectVisible();
         var visible = Archify.view.logicalViewport();
         if (!visible) return;
         viewport.setAttribute('x', String(visible.x));
@@ -11322,6 +12074,10 @@
         });
       }
       function sync() {
+        if (requestedOpen && panel.hidden) {
+          attemptRequestedOpen();
+          return;
+        }
         if (syncFrame) return;
         syncFrame = requestAnimationFrame(syncNow);
       }
@@ -11332,25 +12088,31 @@
         if (next && Archify.semanticLens && Archify.semanticLens.isOpen()) {
           Archify.semanticLens.close({ restoreFocus: false });
         }
-        panel.hidden = !next;
-        trigger.setAttribute('aria-expanded', next ? 'true' : 'false');
-        trigger.setAttribute('aria-label', next ? 'Close semantic radar' : 'Open semantic radar');
+        requestedOpen = next;
         if (next) {
+          clearSpaceRetry();
+          spaceRetryCount = 0;
           build();
-          updateDocking();
-          sync();
-          if (options.focus === true) surface.focus();
+          attemptRequestedOpen(options);
         } else {
-          panel.removeAttribute('data-docked');
-          panel.removeAttribute('data-dock-side');
-          panel.style.removeProperty('--archify-radar-right');
-          panel.style.removeProperty('--archify-radar-left');
-          panel.style.removeProperty('--archify-radar-top');
+          clearSpaceRetry();
+          spaceRetryCount = 0;
+          viewportDrag = null;
+          panelDrag = null;
+          container.classList.remove('is-panning');
+          panel.hidden = true;
+          resetDockingStyles();
+          restorePassport();
+          feedback.hidden = true;
+          trigger.setAttribute('aria-expanded', 'false');
+          trigger.removeAttribute('data-radar-space-limited');
+          trigger.setAttribute('aria-label', 'Open semantic radar');
+          trigger.title = 'Semantic radar (M)';
           if (options.restoreFocus === true) trigger.focus();
         }
         return next;
       }
-      function toggle() { return setOpen(panel.hidden, { focus: false }); }
+      function toggle() { return setOpen(!requestedOpen, { focus: false }); }
       function close(options) { return setOpen(false, options); }
       function bringNodeIntoWindow(node) {
         var delay = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 540;
@@ -11395,31 +12157,91 @@
         Archify.view.centerAt(point.x, point.y, { minimumScale: 1.5, instant: true });
         sync();
       }
-      function endDrag(event) {
-        if (!drag) return;
-        drag = null;
+      function endViewportDrag(event) {
+        if (!viewportDrag) return;
+        viewportDrag = null;
         panel.removeAttribute('data-dragging');
         container.classList.remove('is-panning');
         try { surface.releasePointerCapture(event.pointerId); } catch (_) {}
       }
+      function beginPanelDrag(event) {
+        if (event.button !== 0 || event.target.closest('button, a, input, [role="button"]')) return;
+        var context = placementContext();
+        if (!context) return;
+        var rect = panel.getBoundingClientRect();
+        event.preventDefault();
+        event.stopPropagation();
+        panelDrag = {
+          pointerId: event.pointerId,
+          originX: event.clientX,
+          originY: event.clientY,
+          start: { left: rect.left, top: rect.top },
+          current: { left: rect.left, top: rect.top },
+          previousManual: manualPosition ? { left: manualPosition.left, top: manualPosition.top } : null
+        };
+        panel.setAttribute('data-panel-dragging', 'true');
+        try { panelHead.setPointerCapture(event.pointerId); } catch (_) {}
+      }
+      function movePanelDrag(event) {
+        if (!panelDrag || panelDrag.pointerId !== event.pointerId) return;
+        var context = placementContext();
+        if (!context) return;
+        event.preventDefault();
+        event.stopPropagation();
+        var bounds = context.bounds;
+        var position = {
+          left: clamp(panelDrag.start.left + event.clientX - panelDrag.originX, bounds.left, bounds.right - panel.offsetWidth),
+          top: clamp(panelDrag.start.top + event.clientY - panelDrag.originY, bounds.top, bounds.bottom - panel.offsetHeight)
+        };
+        panelDrag.current = position;
+        if (positionIsValid(position, context)) panel.removeAttribute('data-placement-invalid');
+        else panel.setAttribute('data-placement-invalid', 'true');
+        applyPlacement(position, false);
+      }
+      function finishPanelDrag(event, cancel) {
+        if (!panelDrag || panelDrag.pointerId !== event.pointerId) return;
+        event.preventDefault();
+        event.stopPropagation();
+        var activeDrag = panelDrag;
+        panelDrag = null;
+        panel.removeAttribute('data-panel-dragging');
+        panel.removeAttribute('data-placement-invalid');
+        try { panelHead.releasePointerCapture(event.pointerId); } catch (_) {}
+        var context = placementContext();
+        if (!context) return;
+        if (cancel) {
+          manualPosition = activeDrag.previousManual;
+          lastPlacement = { left: activeDrag.start.left, top: activeDrag.start.top };
+          updateDocking();
+          return;
+        }
+        var requested = activeDrag.current;
+        manualPosition = { left: requested.left, top: requested.top };
+        updateDocking();
+      }
 
       trigger.addEventListener('click', toggle);
       closeBtn.addEventListener('click', function () { close({ restoreFocus: true }); });
+      expandBtn.addEventListener('click', expandCompactRadar);
+      panelHead.addEventListener('pointerdown', beginPanelDrag);
+      panelHead.addEventListener('pointermove', movePanelDrag);
+      panelHead.addEventListener('pointerup', function (event) { finishPanelDrag(event, false); });
+      panelHead.addEventListener('pointercancel', function (event) { finishPanelDrag(event, true); });
       surface.addEventListener('pointerdown', function (event) {
         if (event.button !== 0 || event.target.closest('[data-radar-node-id]')) return;
         event.preventDefault();
-        drag = { pointerId: event.pointerId };
+        viewportDrag = { pointerId: event.pointerId };
         panel.setAttribute('data-dragging', 'true');
         container.classList.add('is-panning');
         try { surface.setPointerCapture(event.pointerId); } catch (_) {}
         navigate(event);
       });
       surface.addEventListener('pointermove', function (event) {
-        if (!drag || drag.pointerId !== event.pointerId) return;
+        if (!viewportDrag || viewportDrag.pointerId !== event.pointerId) return;
         navigate(event);
       });
-      surface.addEventListener('pointerup', endDrag);
-      surface.addEventListener('pointercancel', endDrag);
+      surface.addEventListener('pointerup', endViewportDrag);
+      surface.addEventListener('pointercancel', endViewportDrag);
       surface.addEventListener('click', function (event) {
         var node = event.target.closest('[data-radar-node-id]');
         if (node) focusNode(node.getAttribute('data-radar-node-id'));
@@ -11452,8 +12274,32 @@
         Archify.view.centerAt(x, y, { minimumScale: 1.5, instant: true });
         sync();
       });
-      window.addEventListener('resize', sync);
-      window.addEventListener('scroll', function () { updateDocking(); sync(); }, { passive: true });
+      document.addEventListener('keydown', function (event) {
+        if (!panelDrag || event.key !== 'Escape') return;
+        finishPanelDrag({
+          pointerId: panelDrag.pointerId,
+          preventDefault: function () { event.preventDefault(); },
+          stopPropagation: function () { event.stopPropagation(); }
+        }, true);
+      }, true);
+      function reflow() {
+        if (!requestedOpen) return;
+        clearSpaceRetry();
+        spaceRetryCount = 0;
+        sync();
+      }
+      window.addEventListener('resize', reflow);
+      window.addEventListener('scroll', reflow, { passive: true });
+      if (typeof ResizeObserver === 'function') {
+        var radarResizeObserver = new ResizeObserver(function (entries) {
+          if (!requestedOpen) return;
+          if (panel.hidden && entries.every(function (entry) { return entry.target === panel; })) return;
+          reflow();
+        });
+        [container, navigation, document.getElementById('focus-chip'), panel].filter(Boolean).forEach(function (element) {
+          radarResizeObserver.observe(element);
+        });
+      }
       requestAnimationFrame(build);
 
       return {
@@ -11462,7 +12308,7 @@
         toggle: toggle,
         sync: sync,
         focus: focusNode,
-        isOpen: function () { return !panel.hidden; },
+        isOpen: function () { return requestedOpen; },
         count: function () { return nodes.length; }
       };
     })();
@@ -11604,6 +12450,7 @@
         var sublabel = node.getAttribute('data-node-sublabel') || '';
         var context = node.getAttribute('data-node-context') || '';
         var tag = node.getAttribute('data-node-tag') || '';
+        var brand = node.getAttribute('data-node-brand') || '';
         var type = semanticType(node);
         var sources = Archify.sourceEvidence.node(id);
         var sourceSearch = sources.map(function (source) {
@@ -11616,9 +12463,10 @@
           sublabel: sublabel,
           context: context,
           tag: tag,
+          brand: brand,
           sources: sources,
           links: connectionsFor(id),
-          search: (id + ' ' + label + ' ' + type + ' ' + sublabel + ' ' + context + ' ' + tag + ' ' + sourceSearch + ' ' + text).toLowerCase(),
+          search: (id + ' ' + label + ' ' + type + ' ' + sublabel + ' ' + context + ' ' + tag + ' ' + sourceSearch + ' ' + text).toLowerCase() + ' ' + brand.toLowerCase(),
           node: node
         };
       });
@@ -13160,7 +14008,7 @@
       }
       function dockPanel(byId) {
         panel.removeAttribute('data-dock-side');
-        if (panel.hidden || !selectedKinds.length || window.innerWidth <= 720) return 'right';
+        if (panel.hidden || window.innerWidth <= 720) return 'right';
         var panelRect = panel.getBoundingClientRect();
         var containerRect = container.getBoundingClientRect();
         if (!panelRect.width || !panelRect.height) return 'right';
@@ -13173,6 +14021,17 @@
         var rightCandidate = { left: containerRect.right - 16 - width, right: containerRect.right - 16, top: top, bottom: panelRect.bottom };
         var leftScore = selectedRects.reduce(function (score, rect) { return score + overlapArea(leftCandidate, rect); }, 0);
         var rightScore = selectedRects.reduce(function (score, rect) { return score + overlapArea(rightCandidate, rect); }, 0);
+        var legend = svg.querySelector('[data-legend]');
+        var nav = container.querySelector('.diagram-nav');
+        var protectedRects = [legend, nav].filter(function (element) {
+          return element && !element.hidden && window.getComputedStyle(element).display !== 'none';
+        }).map(function (element) { return element.getBoundingClientRect(); });
+        leftScore += protectedRects.reduce(function (score, rect) {
+          return score + overlapArea(leftCandidate, rect) * 1000;
+        }, 0);
+        rightScore += protectedRects.reduce(function (score, rect) {
+          return score + overlapArea(rightCandidate, rect) * 1000;
+        }, 0);
         var side = leftScore < rightScore ? 'left' : 'right';
         panel.setAttribute('data-dock-side', side);
         return side;

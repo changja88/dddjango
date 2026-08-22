@@ -1,0 +1,457 @@
+{
+ "schema_version": 1,
+ "diagram_type": "workflow",
+ "meta": {
+  "title": "dddjango 파이프라인 실동작 지도",
+  "quality_profile": "showcase",
+  "views": [
+   {
+    "id": "main-pipeline",
+    "label": "발주에서 보고까지",
+    "focus": [
+     "order",
+     "scope",
+     "design",
+     "g1",
+     "red",
+     "slice",
+     "checkers",
+     "registry",
+     "audit",
+     "g2",
+     "report"
+    ],
+    "note": "사용자 게이트 3개(G0·G1·G2)를 통과하는 본선 — Coordinator는 코드를 쓰지 않고 위임·판정만 한다."
+   },
+   {
+    "id": "ontology-layer",
+    "label": "온톨로지가 있는 곳",
+    "focus": [
+     "graph",
+     "skills",
+     "rulepack",
+     "design"
+    ],
+    "note": "규범 정본은 그래프(Turtle)다 — 에이전트가 읽는 스킬 md는 렌더 투영물, rulepack은 빌드타임 SPARQL 소성물."
+   },
+   {
+    "id": "backstop-loop",
+    "label": "백스톱과 폐루프",
+    "focus": [
+     "checkers",
+     "registry",
+     "loop",
+     "slice",
+     "rulepack"
+    ],
+    "note": "검사기 red 중 귀속분(N∖L)만 반송된다. 6′ 재생성 루프는 DJR_LOOP_ENABLED=on일 때만 — 기본 off."
+   }
+  ],
+  "viewBox": [
+   1000,
+   980
+  ]
+ },
+ "lanes": [
+  {
+   "id": "user",
+   "label": "사용자 (게이트 소유)"
+  },
+  {
+   "id": "coordinator",
+   "label": "Coordinator — /dddjango"
+  },
+  {
+   "id": "design-agents",
+   "label": "설계 에이전트"
+  },
+  {
+   "id": "impl-agents",
+   "label": "구현 에이전트"
+  },
+  {
+   "id": "backstop",
+   "label": "결정적 백스톱 — scripts/"
+  },
+  {
+   "id": "loop",
+   "label": "폐루프 6′ (기본 off)",
+   "variant": "exception"
+  },
+  {
+   "id": "ontology",
+   "label": "온톨로지 층 (빌드타임 정본)"
+  }
+ ],
+ "phases": [
+  {
+   "id": "ph-design",
+   "label": "Phase 0–1 · 요구와 설계",
+   "fromCol": 0,
+   "toCol": 1
+  },
+  {
+   "id": "ph-impl",
+   "label": "Phase 2 · 구현 (이중 루프 TDD)",
+   "fromCol": 2,
+   "toCol": 4,
+   "variant": "emphasis"
+  },
+  {
+   "id": "ph-report",
+   "label": "Phase 3 · 보고",
+   "fromCol": 5,
+   "toCol": 5
+  }
+ ],
+ "mainPath": [
+  "order",
+  "scope",
+  "design",
+  "g1",
+  "red",
+  "slice",
+  "checkers",
+  "registry",
+  "audit",
+  "g2",
+  "report"
+ ],
+ "nodes": [
+  {
+   "id": "order",
+   "lane": "user",
+   "col": 0,
+   "type": "external",
+   "label": "발주",
+   "sublabel": "/dddjango"
+  },
+  {
+   "id": "g1",
+   "lane": "user",
+   "col": 2,
+   "type": "security",
+   "label": "G1 승인",
+   "sublabel": "명세·입장 표"
+  },
+  {
+   "id": "g2",
+   "lane": "user",
+   "col": 5,
+   "type": "security",
+   "label": "G2 완료 승인",
+   "sublabel": "대가 한 줄 병기"
+  },
+  {
+   "id": "scope",
+   "lane": "coordinator",
+   "col": 0,
+   "type": "backend",
+   "label": "Phase 0",
+   "sublabel": "빚 스캔·G0",
+   "tag": "G0"
+  },
+  {
+   "id": "report",
+   "lane": "coordinator",
+   "col": 5,
+   "type": "backend",
+   "label": "Phase 3 보고",
+   "sublabel": "게이트 기록"
+  },
+  {
+   "id": "design",
+   "lane": "design-agents",
+   "col": 1,
+   "type": "backend",
+   "label": "설계",
+   "sublabel": "리뷰 4렌즈"
+  },
+  {
+   "id": "red",
+   "lane": "impl-agents",
+   "col": 2,
+   "type": "backend",
+   "label": "인수 Red",
+   "sublabel": "블랙박스"
+  },
+  {
+   "id": "slice",
+   "lane": "impl-agents",
+   "col": 3,
+   "type": "backend",
+   "label": "구현 TDD",
+   "sublabel": "coder"
+  },
+  {
+   "id": "audit",
+   "lane": "impl-agents",
+   "col": 5,
+   "type": "backend",
+   "label": "감사",
+   "sublabel": "규율 최종"
+  },
+  {
+   "id": "checkers",
+   "lane": "backstop",
+   "col": 3,
+   "type": "security",
+   "label": "검사기 27",
+   "sublabel": "AST"
+  },
+  {
+   "id": "registry",
+   "lane": "backstop",
+   "col": 5,
+   "type": "security",
+   "label": "귀속 판정",
+   "sublabel": "N∖L"
+  },
+  {
+   "id": "loop",
+   "lane": "loop",
+   "col": 2,
+   "type": "messagebus",
+   "label": "6′ 재생성",
+   "sublabel": "주입 ≤3회전"
+  },
+  {
+   "id": "graph",
+   "lane": "ontology",
+   "col": 0,
+   "type": "database",
+   "label": "그래프 정본",
+   "sublabel": "Work 3,400"
+  },
+  {
+   "id": "skills",
+   "lane": "ontology",
+   "col": 2,
+   "type": "database",
+   "label": "스킬 30문서",
+   "sublabel": "투영 539절"
+  },
+  {
+   "id": "rulepack",
+   "lane": "ontology",
+   "col": 4,
+   "type": "database",
+   "label": "rulepack",
+   "sublabel": "SPARQL 소성"
+  }
+ ],
+ "edges": [
+  {
+   "id": "e-order-scope",
+   "from": "order",
+   "to": "scope",
+   "variant": "default"
+  },
+  {
+   "id": "e-scope-design",
+   "from": "scope",
+   "to": "design",
+   "label": "G0 승인 후 위임",
+   "variant": "emphasis",
+   "labelSegment": 0,
+   "labelDy": -12
+  },
+  {
+   "id": "e-design-g1",
+   "from": "design",
+   "to": "g1",
+   "label": "상정",
+   "variant": "security"
+  },
+  {
+   "id": "e-g1-red",
+   "from": "g1",
+   "to": "red",
+   "label": "입장 표",
+   "variant": "emphasis"
+  },
+  {
+   "id": "e-red-slice",
+   "from": "red",
+   "to": "slice",
+   "variant": "default"
+  },
+  {
+   "id": "e-slice-checkers",
+   "from": "slice",
+   "to": "checkers",
+   "label": "게이트",
+   "variant": "default",
+   "labelDx": 28
+  },
+  {
+   "id": "e-checkers-registry",
+   "from": "checkers",
+   "to": "registry",
+   "variant": "default",
+   "fromSide": "right",
+   "toSide": "left",
+   "route": "straight"
+  },
+  {
+   "id": "e-registry-audit",
+   "from": "registry",
+   "to": "audit",
+   "label": "green",
+   "variant": "default"
+  },
+  {
+   "id": "e-audit-g2",
+   "from": "audit",
+   "to": "g2",
+   "variant": "security",
+   "fromSide": "right",
+   "toSide": "right",
+   "route": "outside-right"
+  },
+  {
+   "id": "e-g2-report",
+   "from": "g2",
+   "to": "report",
+   "label": "승인",
+   "variant": "emphasis"
+  },
+  {
+   "id": "e-registry-slice",
+   "from": "registry",
+   "to": "slice",
+   "label": "귀속 red 반송",
+   "variant": "dashed",
+   "role": "error",
+   "fromSide": "left",
+   "toSide": "top",
+   "via": [
+    [
+     556,
+     615
+    ],
+    [
+     556,
+     418
+    ],
+    [
+     430,
+     418
+    ]
+   ],
+   "labelSegment": 2,
+   "labelDx": 0,
+   "labelDy": -12
+  },
+  {
+   "id": "e-registry-loop",
+   "from": "registry",
+   "to": "loop",
+   "label": "on일 때",
+   "variant": "dashed",
+   "role": "branch"
+  },
+  {
+   "id": "e-loop-slice",
+   "from": "loop",
+   "to": "slice",
+   "label": "재생성",
+   "variant": "dashed",
+   "role": "return",
+   "toSide": "right",
+   "fromSide": "right",
+   "via": [
+    [
+     365,
+     739
+    ],
+    [
+     365,
+     445
+    ],
+    [
+     520,
+     445
+    ],
+    [
+     520,
+     491
+    ]
+   ],
+   "labelSegment": 1,
+   "labelDx": -28,
+   "labelDy": -30
+  },
+  {
+   "id": "e-rulepack-loop",
+   "from": "rulepack",
+   "to": "loop",
+   "label": "조인",
+   "variant": "dashed",
+   "role": "branch",
+   "labelSegment": 0,
+   "labelDy": -10,
+   "labelDx": 12
+  },
+  {
+   "id": "e-graph-skills",
+   "from": "graph",
+   "to": "skills",
+   "label": "렌더 투영",
+   "variant": "dashed",
+   "fromSide": "right",
+   "toSide": "left",
+   "route": "straight",
+   "labelDy": -24,
+   "labelDx": -16
+  },
+  {
+   "id": "e-graph-rulepack",
+   "from": "graph",
+   "to": "rulepack",
+   "label": "q4 소성",
+   "variant": "dashed",
+   "route": "bottom-channel"
+  },
+  {
+   "id": "e-skills-design",
+   "from": "skills",
+   "to": "design",
+   "label": "에이전트 지식 로드",
+   "variant": "dashed",
+   "role": "branch"
+  }
+ ],
+ "cards": [
+  {
+   "dot": "cyan",
+   "title": "기술 스택 — 두 세계의 경계",
+   "items": [
+    "정본층(메인테이너 저장소 전용): Turtle(RDF)+RDFS 어휘 · SHACL 검증(pySHACL) · RDFC-1.0 정규화 해시 · SPARQL 질의(rdflib)",
+    "4단 저작 게이트: 파스 → 정본 직렬화 diff=0 → RDFC 해시 불변 → SHACL — 커밋마다 기계 차단",
+    "설치본(플러그인): 표준 라이브러리만 — rulepack.json 인덱스 조회 + 검사기 AST. rdflib 침투 금지(동결 E7)",
+    "DB·서버 없음 — 전부 git 안의 파일. 릴리즈 2.17.0 기준"
+   ]
+  },
+  {
+   "dot": "violet",
+   "title": "온톨로지가 있는 곳",
+   "items": [
+    "스킬 30문서의 참조성 539절 = 그래프의 렌더 투영물(graph-owned 마커) — byte 등가를 도구가 상시 단언",
+    "규범 Work 3,400 · 재진술 연결 616 · alias 대장 28(rule# 21 + 선행 계약 contract# 7)",
+    "규범 수정은 ontology/rules/ 정본에서 → 게이트 → 렌더 재투영 → 원장(LEDGER) — 문서 직접 수정은 훅이 차단",
+    "스킬 md 로드는 설계·구현 에이전트 공통(그림은 설계 간선 하나로 대표) · 위반 레코드는 위반 그래프에 축적 — 월별 집계가 개정 제안 큐"
+   ]
+  },
+  {
+   "dot": "amber",
+   "title": "결정이 이루어지는 곳",
+   "items": [
+    "사용자 게이트 G0·G1·G2 — 닫힌 선택지 + 대가 한 줄, AskUserQuestion 채널, STOP 기록이 정본",
+    "테스트 입장 표가 테스트의 운명을 결정: add/update만 Red, reuse는 anchor 실행만, pending은 G1 반송",
+    "검사기 red는 귀속분(앵커 차분 N∖L)만 반송 — legacy 잔존은 이 빌드에서 면책",
+    "6′ 폐루프는 기본 off(T2 실험 종결 처분) — 켜면 반송 전 rulepack 조인 규범 좌표를 주입해 최대 3회전 재생성"
+   ]
+  }
+ ]
+}
