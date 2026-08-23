@@ -64,7 +64,7 @@
   html, body { margin: 0; padding: 0; }
   body {
     background: var(--paper); color: var(--ink);
-    font-family: var(--sans); font-size: 15.5px; line-height: 1.78;
+    font-family: var(--sans); font-size: 17.5px; line-height: 1.78;
     -webkit-font-smoothing: antialiased; letter-spacing: -0.003em;
   }
   .wrap { max-width: 1420px; margin: 0 auto; padding: 0 26px; }
@@ -102,7 +102,7 @@
             text-transform: uppercase; color: var(--ink-3); }
   h1 { margin: 0; font-size: clamp(26px, 4.6vw, 37px); line-height: 1.24;
        font-weight: 800; letter-spacing: -0.035em; text-wrap: balance; }
-  .lede { font-size: 16.5px; color: var(--ink-2); max-width: 70ch; }
+  .lede { font-size: 18.5px; color: var(--ink-2); max-width: 70ch; }
   .lede b { color: var(--ink); font-weight: 700; }
 
   /* ── 범례 ── */
@@ -141,7 +141,7 @@
     .tree-two { grid-template-columns: 1fr 1fr; }
     .tree-two .tr, .tree-two .tree-head { grid-template-columns: minmax(0, 1fr) 46px 118px; }
   }
-  .tree { min-width: 0; font-family: var(--mono); font-size: 11.5px; line-height: 1.62; }
+  .tree { min-width: 0; font-family: var(--mono); font-size: 13.5px; line-height: 1.62; }
   /* 행 정렬은 stretch. baseline 은 핀·주석 유무에 따라 경로 칸을 위아래로 흔들어
      선을 어긋나게 했다. --lh 가 절대 px 라 모든 칸의 첫 줄 중심이 한 축에 놓인다. */
   .tr { display: grid; grid-template-columns: minmax(0, 1fr) 52px 118px;
@@ -249,8 +249,8 @@
               background: var(--flag); color: #fff; padding: 1px 6px; border-radius: 2px; }
   #tip .tvd { font-family: var(--mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em;
               padding: 1px 7px; border-radius: 2px; }
-  #tip .tt { font-size: 13.5px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.45; }
-  #tip .td { font-size: 12.5px; color: var(--ink-2); line-height: 1.62; }
+  #tip .tt { font-size: 15.5px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.45; }
+  #tip .td { font-size: 14.5px; color: var(--ink-2); line-height: 1.62; }
   #tip .td b { color: var(--ink); }
   #tip .tf { font-family: var(--mono); font-size: 9.5px; color: var(--ink-3); letter-spacing: 0.06em; }
 
@@ -263,8 +263,8 @@
         display: flex; flex-direction: column; gap: 5px; min-width: 0; }
   .rz > * { min-width: 0; }
   .rz:last-child { border-bottom: none; }
-  .rz > .k { font-family: var(--mono); font-size: 11.5px; font-weight: 700; color: var(--ink); }
-  .rz > .v { font-size: 13px; color: var(--ink-2); line-height: 1.65; }
+  .rz > .k { font-family: var(--mono); font-size: 13.5px; font-weight: 700; color: var(--ink); }
+  .rz > .v { font-size: 15px; color: var(--ink-2); line-height: 1.65; }
   .rz > .v b { color: var(--ink); }
   .rz:target { background: var(--flag-bg); box-shadow: inset 3px 0 0 var(--flag); }
   @media (min-width: 1200px) { .rationale.two { columns: 2; column-gap: 0; }
@@ -290,8 +290,8 @@
   .prob .ttl { font-size: 17px; font-weight: 800; letter-spacing: -0.025em; text-wrap: balance; }
   .prob .where { font-family: var(--mono); font-size: 11px; color: var(--ink-3);
     padding-bottom: 8px; border-bottom: 1px solid var(--rule-soft); overflow-wrap: anywhere; }
-  .prob p { font-size: 14px; line-height: 1.72; }
-  .prob .kv { display: grid; grid-template-columns: minmax(0, max-content) minmax(0,1fr); gap: 4px 14px; font-size: 13.5px; }
+  .prob p { font-size: 16px; line-height: 1.72; }
+  .prob .kv { display: grid; grid-template-columns: minmax(0, max-content) minmax(0,1fr); gap: 4px 14px; font-size: 15.5px; }
   .prob .kv dt { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.11em;
     text-transform: uppercase; color: var(--ink-3); padding-top: 4px;
     min-width: 0; overflow-wrap: anywhere; text-wrap: balance; }
@@ -318,7 +318,7 @@
   /* ── 공통 블록 ── */
   section > *, .prob > * { min-width: 0; }
   .tw { overflow-x: auto; border: 1px solid var(--rule); min-width: 0; }
-  table { border-collapse: collapse; width: 100%; min-width: 440px; background: var(--card); font-size: 13.5px; }
+  table { border-collapse: collapse; width: 100%; min-width: 440px; background: var(--card); font-size: 15.5px; }
   th, td { text-align: left; padding: 8px 13px; border-bottom: 1px solid var(--rule-soft);
            vertical-align: top; line-height: 1.58; }
   thead th { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase;
@@ -336,7 +336,7 @@
   .pairtbl td:first-child { border-right: 1px solid var(--rule-soft); }
   figure { margin: 0; }
   figure svg { display: block; width: 100%; height: auto; }
-  figcaption { font-size: 12.5px; line-height: 1.66; color: var(--ink-2); padding-top: 10px;
+  figcaption { font-size: 14.5px; line-height: 1.66; color: var(--ink-2); padding-top: 10px;
     border-top: 1px solid var(--rule-soft); margin-top: 10px; }
   figcaption b { color: var(--ink); }
   .figwrap { border: 1px solid var(--rule); background: var(--card); border-radius: 6px;
@@ -362,7 +362,7 @@
     padding: 13px 16px; display: flex; flex-direction: column; gap: 7px; max-width: 74ch; }
   aside.note .lbl { font-family: var(--mono); font-size: 10px; letter-spacing: 0.13em;
     text-transform: uppercase; color: var(--hex); font-weight: 700; }
-  aside.note p { font-size: 13.5px; max-width: none; }
+  aside.note p { font-size: 15.5px; max-width: none; }
   aside.note.settled { border-left-color: var(--ok); background: var(--ok-bg); }
   aside.note.settled .lbl { color: var(--ok); }
   tr.done { background: var(--ok-bg); }
@@ -374,12 +374,12 @@
     padding: 22px 20px; display: flex; flex-direction: column; gap: 8px; max-width: 74ch; }
   .empty-state .lbl { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.13em;
     text-transform: uppercase; color: var(--ink-3); font-weight: 700; }
-  .empty-state p { font-size: 13.5px; color: var(--ink-2); max-width: none; }
+  .empty-state p { font-size: 15.5px; color: var(--ink-2); max-width: none; }
   .warn-box { border-left: 2px solid var(--flag); background: var(--flag-bg);
     padding: 12px 15px; display: flex; flex-direction: column; gap: 6px; max-width: 74ch; }
   .warn-box .lbl { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
     text-transform: uppercase; color: var(--flag); font-weight: 700; }
-  .warn-box p { font-size: 13.5px; max-width: none; }
+  .warn-box p { font-size: 15.5px; max-width: none; }
   .colophon { margin-top: 38px; padding-top: 15px; border-top: 1px solid var(--rule-soft);
     font-family: var(--mono); font-size: 10.5px; line-height: 1.8; color: var(--ink-3); }
 
@@ -393,7 +393,7 @@
   }
   @media (max-width: 620px) {
     .wrap, .wide { padding: 0 15px; }
-    .tree { font-size: 10.5px; }
+    .tree { font-size: 12.5px; }
     .tr { --lh: 17px; }
     .tr .lin, .tree-head span:nth-child(2) { display: none; }
     .tr, .tree-head { grid-template-columns: minmax(0, 1fr) 118px; gap: 0 8px;
@@ -415,7 +415,7 @@
   .fz { border: 1px solid var(--rule); background: var(--card); padding: 11px 13px;
         display: flex; flex-direction: column; gap: 4px; border-top: 3px solid var(--hex); }
   .fz .fk { font-family: var(--mono); font-size: 10px; font-weight: 700; color: var(--hex); letter-spacing: 0.06em; }
-  .fz .fv { font-size: 12.5px; color: var(--ink-2); line-height: 1.55; }
+  .fz .fv { font-size: 14.5px; color: var(--ink-2); line-height: 1.55; }
   .fz .fv b { color: var(--ink); }
   .fz.filled { border-top-color: var(--ok); }
   .fz.filled .fk { color: var(--ok); }
@@ -511,7 +511,7 @@
   .tabrail .tr .pin{cursor:pointer}
   /* 왼쪽 트리에 «이름 규칙»을 같이 그린다 — 파일 이름 오른쪽에 붙는 옅은 칸.
      오른쪽 패널의 «이름» 줄이 긴 설명을 지고, 여기는 그 «결론»만 한 조각 진다. */
-  .tr .path .nmr{font-style:normal;font-family:var(--sans);font-size:10px;
+  .tr .path .nmr{font-style:normal;font-family:var(--sans);font-size:12px;
                  color:var(--ink-3);margin-left:auto;padding-left:14px;
                  white-space:nowrap;letter-spacing:-.1px}
   .tabrail .tr.pick .path .nmr{color:var(--ink-2)}
@@ -524,13 +524,13 @@
   .tabpane.on{display:block}
   .pane-hd{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;
            padding-bottom:9px;margin-bottom:12px;border-bottom:1px solid var(--rule-soft)}
-  .ph-n{font-family:var(--mono);font-size:15px;color:var(--ink);letter-spacing:-.3px}
-  .ph-s{font-size:11px;color:var(--ink-3)}
+  .ph-n{font-family:var(--mono);font-size:17px;color:var(--ink);letter-spacing:-.3px}
+  .ph-s{font-size:13px;color:var(--ink-3)}
 
   /* 한 칸씩 — 무엇이 오나 */
   .rd-hd{display:flex;align-items:baseline;gap:8px;margin:16px 0 8px;
          padding-top:12px;border-top:1px solid var(--rule)}
-  .rd-hd b{font-size:12px;color:var(--ink)}
+  .rd-hd b{font-size:14px;color:var(--ink)}
   .rd-c{font-size:10.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
   .rowdocs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
   .rd{padding:8px 9px;border-radius:7px;border:1px solid transparent;scroll-margin-top:8px}
@@ -538,26 +538,26 @@
   .rd.on{background:var(--hex-bg);border-color:var(--rule)}
   .rd-p{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;
         margin-left:calc(var(--d) * 9px)}
-  .rd-n{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink);
+  .rd-n{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--ink);
         letter-spacing:-.2px}
   .rd-p .tb-z{position:static}
   .rd-w{margin:5px 0 0;margin-left:calc(var(--d) * 9px);
-        font-size:12px;line-height:1.75;color:var(--ink-2)}
+        font-size:14px;line-height:1.75;color:var(--ink-2)}
   .rd-w b{color:var(--ink)}
-  .rd-w code{font-family:var(--mono);font-size:11px}
+  .rd-w code{font-family:var(--mono);font-size:13px}
   .rd-w em{font-style:normal;color:var(--ink-3)}
   .rd-r{margin:5px 0 0;margin-left:calc(var(--d) * 9px);
         padding-left:8px;border-left:2px solid var(--rule-soft);
-        font-size:11px;line-height:1.7;color:var(--ink-3)}
+        font-size:13px;line-height:1.7;color:var(--ink-3)}
   .rd-r b{color:var(--ink-2);font-weight:600}
-  .rd-r code{font-family:var(--mono);font-size:10.5px}
+  .rd-r code{font-family:var(--mono);font-size:12.5px}
   .rd-r em{font-style:normal}
   /* 이 칸의 «이름» 규칙 — 규칙 줄과 색으로 갈린다 */
   .rd-nm{margin:5px 0 0;margin-left:calc(var(--d) * 9px);
          padding-left:8px;border-left:2px solid var(--hex);
-         font-size:11px;line-height:1.7;color:var(--ink-3)}
+         font-size:13px;line-height:1.7;color:var(--ink-3)}
   .rd-nm b{color:var(--ink-2);font-weight:600}
-  .rd-nm code{font-family:var(--mono);font-size:10.5px}
+  .rd-nm code{font-family:var(--mono);font-size:12.5px}
   .rd-nm em{font-style:normal}
   .rd-nm .rd-k{color:var(--hex)}
   .rd-nm .no{color:var(--flag);font-weight:700}
@@ -577,10 +577,10 @@
   .pane-kv dt.no::after{background:var(--flag-bg)}
   .pane-kv dt.wy{color:var(--ok)}
   .pane-kv dt.wy::after{background:var(--ok-bg)}
-  .pane-kv dd{margin:0;font-size:12.5px;line-height:1.75;color:var(--ink-2)}
+  .pane-kv dd{margin:0;font-size:14.5px;line-height:1.75;color:var(--ink-2)}
   .pane-kv dd b{color:var(--ink)}
-  .pane-kv dd code{font-family:var(--mono);font-size:11.5px}
-  .pane-kv dd em{font-style:normal;color:var(--ink-3);font-size:11.5px}
+  .pane-kv dd code{font-family:var(--mono);font-size:13.5px}
+  .pane-kv dd em{font-style:normal;color:var(--ink-3);font-size:13.5px}
   .pane-kv dd .dim{color:var(--ink-3)}
   .pane-kv dd p{margin:0 0 9px}
   .pane-kv dd p:last-child{margin:0}
@@ -595,7 +595,7 @@
   .vkey b{font-weight:600}
 
   /* 트리 위 안내 한 문단 — 장 제목 셋을 걷어내고 이 자리 하나로 합쳤다 */
-  .tguide{margin:0 0 13px;font-size:12px;line-height:1.72;color:var(--ink-3)}
+  .tguide{margin:0 0 13px;font-size:14px;line-height:1.72;color:var(--ink-3)}
   .tguide b{color:var(--ink-2);font-weight:600}
   .tguide .tg-v{display:block;margin-top:2px}
 
@@ -622,9 +622,9 @@
     background: var(--sunk); color: var(--ink-3); }
   .plan.doing .pst { background: var(--flag-bg); color: var(--flag); }
   .plan.done .pst { background: var(--ok-bg); color: var(--ok); }
-  .plan .pb > p { margin: 0; font-size: 13.5px; line-height: var(--lh); color: var(--ink-2); }
+  .plan .pb > p { margin: 0; font-size: 15.5px; line-height: var(--lh); color: var(--ink-2); }
   .plan .pmeta { display: grid; grid-template-columns: max-content minmax(0, 1fr);
-    gap: 3px 14px; margin: 11px 0 0; font-size: 12px; }
+    gap: 3px 14px; margin: 11px 0 0; font-size: 14px; }
   .plan .pmeta dt { font-family: var(--mono); font-size: 10.5px; letter-spacing: .04em;
     color: var(--ink-3); padding-top: 2px; white-space: nowrap; }
   .plan .pmeta dd { margin: 0; color: var(--ink-2); }
@@ -652,7 +652,7 @@
   .fgo:hover rect,.fgo:focus-visible rect{fill:var(--hex-bg);stroke-width:2.2}
   .fgo:focus-visible{outline:2px solid var(--hex);outline-offset:2px;border-radius:5px}
   .fgo:hover text{fill:var(--hex)}
-  .flowhint{margin:0 0 10px;font-size:12px;color:var(--ink-3)}
+  .flowhint{margin:0 0 10px;font-size:14px;color:var(--ink-3)}
   .flowhint b{color:var(--ink-2)}
 
   /* 오른쪽 — 단계 목록 */
@@ -667,13 +667,13 @@
   .st{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;
       padding:7px 8px;border-radius:8px}
   .st:hover{background:var(--sunk)}
-  .st-n{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--ink-2);
+  .st-n{font-family:var(--mono);font-size:14.5px;font-weight:700;color:var(--ink-2);
         text-align:center;padding-top:1px}
   .st.sub{padding-left:26px}
   .st.sub .st-n{color:var(--ink-3);font-weight:400}
   .st-b{min-width:0;display:flex;flex-direction:column;gap:4px}
   .st-f{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
-  .stpath{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:-.2px;
+  .stpath{font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:-.2px;
           color:var(--ink);background:transparent;border:none;border-bottom:1px dashed var(--rule);
           padding:0;cursor:pointer;text-align:left;word-break:break-all}
   .stpath:hover{color:var(--hex);border-bottom-color:var(--hex)}
@@ -683,13 +683,13 @@
         border-radius:4px;white-space:nowrap}
   .st-sig{margin:0;background:var(--sunk);border:1px solid var(--rule-soft);border-radius:6px;
           padding:6px 9px;overflow-x:auto}
-  .st-sig code{font-family:var(--mono);font-size:10.5px;line-height:1.6;color:var(--ink-2);
+  .st-sig code{font-family:var(--mono);font-size:12.5px;line-height:1.6;color:var(--ink-2);
                white-space:pre;background:transparent;padding:0}
   .st-sig .c{color:var(--ink-3)}
   .st-sig b{color:var(--ink);font-weight:700}
-  .st-t{margin:0;font-size:11.5px;line-height:1.62;color:var(--ink-3);max-width:none}
+  .st-t{margin:0;font-size:13.5px;line-height:1.62;color:var(--ink-3);max-width:none}
   .st-t b{color:var(--ink-2);font-weight:600}
-  .st-t code{font-family:var(--mono);font-size:10px}
+  .st-t code{font-family:var(--mono);font-size:12px}
 
   /* 아래 — 이 흐름을 코드로 접으면 두 조각이다 */
   .flowcode{display:grid;gap:16px;margin-top:24px;align-items:start}
@@ -700,7 +700,7 @@
   .fc-h b{font-size:12.5px}
   .fc-h .stpath{font-size:10.5px;font-weight:400;color:var(--ink-3)}
   .fc pre{margin:0;padding:12px 14px;overflow-x:auto;background:transparent;border:none}
-  .fc pre code{font-family:var(--mono);font-size:11px;line-height:1.72;color:var(--ink-2);
+  .fc pre code{font-family:var(--mono);font-size:13px;line-height:1.72;color:var(--ink-2);
                white-space:pre;background:transparent;padding:0}
   .fc pre .c{color:var(--ink-3)}
   .fc pre .m{color:var(--hex);font-weight:700}
