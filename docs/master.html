@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>dddjango 문서 마스터</title>
+
+<style>
+  :root {
+    --paper:#F2F4F3; --card:#FAFBFA; --sunk:#E7EBEA;
+    --ink:#141D20; --ink-2:#4E5F64; --ink-3:#7E9095;
+    --rule:#C9D2D2; --rule-soft:#DDE4E3;
+    --accent:#1B6E6B; --accent-bg:#DCEDEC;
+    --sans:'Apple SD Gothic Neo', Pretendard, 'Noto Sans KR', 'Malgun Gothic', system-ui, sans-serif;
+    --mono:ui-monospace, 'SF Mono', SFMono-Regular, Menlo, 'Cascadia Mono', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#0F1618; --card:#182226; --sunk:#1E2A2E;
+      --ink:#E4EBEC; --ink-2:#9FB0B4; --ink-3:#74868B;
+      --rule:#2D3C42; --rule-soft:#223036;
+      --accent:#5FC0BC; --accent-bg:#122E2D;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#0F1618; --card:#182226; --sunk:#1E2A2E;
+    --ink:#E4EBEC; --ink-2:#9FB0B4; --ink-3:#74868B;
+    --rule:#2D3C42; --rule-soft:#223036;
+    --accent:#5FC0BC; --accent-bg:#122E2D;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; height:100%; }
+  body {
+    background: var(--paper); color: var(--ink);
+    font-family: var(--sans); font-size: 14px;
+    display: flex; height: 100vh; overflow: hidden;
+  }
+
+  /* ── 왼쪽 인덱스 ── */
+  aside {
+    width: 252px; flex: 0 0 252px; height: 100%;
+    border-right: 1px solid var(--rule);
+    background: var(--card);
+    display: flex; flex-direction: column;
+    padding: 22px 14px 16px;
+  }
+  .brand { padding: 0 10px 18px; border-bottom: 1px solid var(--rule-soft); }
+  .brand .kicker {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-3); margin: 0 0 6px;
+  }
+  .brand h1 { font-size: 17px; margin: 0; letter-spacing: -0.01em; }
+
+  nav { display: flex; flex-direction: column; gap: 6px; padding: 16px 0; flex: 1; }
+  nav a {
+    display: block; text-decoration: none; color: var(--ink-2);
+    padding: 10px 12px; border-radius: 10px; border: 1px solid transparent;
+    line-height: 1.45;
+  }
+  nav a .no {
+    font-family: var(--mono); font-size: 10px; color: var(--ink-3);
+    letter-spacing: 0.1em; display: block; margin-bottom: 2px;
+  }
+  nav a .t { font-weight: 700; color: var(--ink); font-size: 13.5px; display: block; }
+  nav a .s { font-size: 11.5px; color: var(--ink-3); display: block; margin-top: 1px; }
+  nav a:hover { background: var(--sunk); }
+  nav a.on {
+    background: var(--accent-bg); border-color: var(--accent);
+  }
+  nav a.on .no, nav a.on .t { color: var(--accent); }
+
+  .side-foot {
+    padding: 12px 10px 0; border-top: 1px solid var(--rule-soft);
+    font-size: 11px; color: var(--ink-3); line-height: 1.6;
+  }
+  .side-foot code { font-family: var(--mono); font-size: 10px; }
+  .side-foot a { color: var(--ink-3); }
+
+  /* ── 오른쪽 프레임 ── */
+  main { flex: 1; height: 100%; min-width: 0; }
+  main iframe {
+    width: 100%; height: 100%; border: none; display: block;
+    background: var(--paper);
+  }
+
+  /* 좁은 화면 — 인덱스를 위로 */
+  @media (max-width: 760px) {
+    body { flex-direction: column; overflow: auto; }
+    aside {
+      width: 100%; flex: none; height: auto;
+      border-right: none; border-bottom: 1px solid var(--rule);
+      padding: 14px;
+    }
+    nav { flex-direction: row; overflow-x: auto; padding: 10px 0 2px; }
+    nav a { flex: 0 0 auto; }
+    .brand { padding-bottom: 10px; }
+    .side-foot { display: none; }
+    main { height: calc(100vh - 150px); }
+  }
+</style>
+</head>
+<body>
+
+<aside>
+  <div class="brand">
+    <p class="kicker">dddjango · dddjango-web</p>
+    <h1>문서 마스터</h1>
+  </div>
+  <nav id="nav">
+    <a href="#work_flow" data-doc="work_flow.html">
+      <span class="no">01 · 파이프라인</span>
+      <span class="t">동작 흐름</span>
+      <span class="s">플러그인 실동작 · 온톨로지 적용 지점 · 기술 스택</span>
+    </a>
+    <a href="#file_tree" data-doc="file_tree.html">
+      <span class="no">02 · dddjango</span>
+      <span class="t">백엔드 표준 트리</span>
+      <span class="s">BC 골격 · 요청의 길 · 결정 대장</span>
+    </a>
+    <a href="#file_tree_web" data-doc="file_tree_web.html">
+      <span class="no">03 · dddjango-web</span>
+      <span class="t">웹 표준 트리</span>
+      <span class="s">화면 MVVM · HTMX 흐름 · 격리·백스톱</span>
+    </a>
+  </nav>
+  <div class="side-foot">
+    각 페이지는 독립 문서를 그대로 싣는다 — 원본:
+    <code>work_flow.html</code> · <code>file_tree.html</code> · <code>file_tree_web.html</code>
+  </div>
+</aside>
+
+<main>
+  <iframe id="frame" title="문서" src="work_flow.html"></iframe>
+</main>
+
+<script>
+  (function () {
+    var frame = document.getElementById("frame");
+    var links = Array.prototype.slice.call(document.querySelectorAll("#nav a"));
+
+    function show(hash, push) {
+      var link = null;
+      for (var i = 0; i < links.length; i++) {
+        if (links[i].getAttribute("href") === hash) { link = links[i]; break; }
+      }
+      if (!link) link = links[0];
+      for (var j = 0; j < links.length; j++) links[j].classList.toggle("on", links[j] === link);
+      var doc = link.getAttribute("data-doc");
+      if (frame.getAttribute("src") !== doc) frame.setAttribute("src", doc);
+      if (push && location.hash !== link.getAttribute("href")) {
+        location.hash = link.getAttribute("href");
+      }
+      try { localStorage.setItem("dddjango-master-page", link.getAttribute("href")); } catch (e) {}
+    }
+
+    links.forEach(function (a) {
+      a.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        show(a.getAttribute("href"), true);
+      });
+    });
+    window.addEventListener("hashchange", function () { show(location.hash, false); });
+
+    var start = location.hash;
+    if (!start) {
+      try { start = localStorage.getItem("dddjango-master-page") || ""; } catch (e) {}
+    }
+    show(start || "#work_flow", false);
+  })();
+</script>
+
+</body>
+</html>

@@ -33,7 +33,8 @@ workspace/                ← 메인테이너 전용 (배포되지 않음)
 ├── design/ plan/ eval/    설계·리뷰·실험 기록 (판정 판례 보존)
 └── hooks/                 pre-commit (훅 단일 루트)
 
-docs/                     ← 공식 문서 (이 문서 · work_flow.html · ontology-study-map.html
+docs/                     ← 공식 문서 (이 문서 · master.html — 통합 진입점(좌측 인덱스로 아래 3종 전환)
+                           · work_flow.html · ontology-study-map.html
                            · file_tree.html — dddjango 표준 트리 · file_tree_web.html — dddjango-web 표준 트리)
 ```
 
