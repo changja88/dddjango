@@ -153,6 +153,8 @@ widget(영역 재사용 조각)과 design_system component(전역 순수 부품)
 }
 ```
 
+**베이스 리셋.** 화면 CSS의 리셋 절은 box-sizing·html/body 여백 0과 함께 **UA 기본 스타일 정규화**를 포함한다 — 최소 `p { margin: 0; }` 등 문단·제목류 기본 마진 0. *왜*: 시안(컴포넌트 렌더·디자인 산출물)은 문단 기본 마진이 없는 세계라, `<p>`를 쓰는 순간 브라우저 UA 마진이 시안에 없는 간격을 만든다 — 필요한 간격은 리셋 위에 토큰으로 명시한다.
+
 **이미지.** 시안의 정적 이미지는 동결 단계(fetch_images)가 `static/images/`에 내려받아 `asset-manifest.json`(src→`local_path`→`token` 매핑·단일 SSOT)으로 절단한다. 명세가 가리킨 이미지는 manifest의 **같은 `src` 행**으로 조인해 `local_path`를 정확 값 그대로 가져온다 — 추정·눈대중·발명 금지(server-contract를 경량본에서 인용하듯). `token` 열은 web에서 소비하지 않는다 — 추출 도구 산출 호환용이다. 착지 파일명은 절단 도구가 snake_case로 정규화하며, 정규화 후 `local_path`가 SSOT다. 템플릿 배선은 `local_path`를 `{% static %}` 경유로 참조하는 것만이고 raw 경로 문자열은 금지다. manifest가 없으면 이 항목은 적용되지 않는다 — 없는 이미지를 placeholder로 조용히 채우지 않는다.
 
 ## §8. client 표기 — in-process HTTP
