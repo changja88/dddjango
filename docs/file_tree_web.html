@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>dddjango-web 표준 트리</title>
+
+<style>
+  :root {
+    --paper:#F2F4F3; --card:#FAFBFA; --sunk:#E7EBEA;
+    --ink:#141D20; --ink-2:#4E5F64; --ink-3:#7E9095;
+    --rule:#C9D2D2; --rule-soft:#DDE4E3; --tree-line:#9FADAD;
+
+    /* 구역 계보 — file_tree.html 팔레트 재사용, 의미만 web으로 현지화 */
+    --mvvm:#1B6E6B;  --mvvm-bg:#DCEDEC;   /* 화면 — 요청 구동 MVVM */
+    --ctr:#2B4C7E;   --ctr-bg:#E3EAF4;    /* 계약 — client, in-process HTTP */
+    --vis:#7A4478;   --vis-bg:#F0E4EF;    /* 시각 — design_system·static */
+    --own:#6E7A7E;   --own-bg:#E7EBEC;    /* 셸 — 컨테이너·배선 */
+
+    --flag:#A8442E;  --flag-bg:#F7E2DC;   /* 금지·반송 */
+    --ok:#2F6B4F;    --ok-bg:#DFEDE5;     /* 허용·조건 */
+
+    --sans:'Apple SD Gothic Neo', Pretendard, 'Noto Sans KR', 'Malgun Gothic', system-ui, sans-serif;
+    --mono:ui-monospace, 'SF Mono', SFMono-Regular, Menlo, 'Cascadia Mono', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#0F1618; --card:#182226; --sunk:#1E2A2E;
+      --ink:#E4EBEC; --ink-2:#9FB0B4; --ink-3:#74868B;
+      --rule:#2D3C42; --rule-soft:#223036; --tree-line:#4A5F66;
+      --mvvm:#5FC0BC; --mvvm-bg:#122E2D;
+      --ctr:#7BA3DC;  --ctr-bg:#16253A;
+      --vis:#C48FC1;  --vis-bg:#2A1E29;
+      --own:#93A2A6;  --own-bg:#1F2A2D;
+      --flag:#E08165; --flag-bg:#33201A;
+      --ok:#77BE99;   --ok-bg:#16281F;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#0F1618; --card:#182226; --sunk:#1E2A2E;
+    --ink:#E4EBEC; --ink-2:#9FB0B4; --ink-3:#74868B;
+    --rule:#2D3C42; --rule-soft:#223036; --tree-line:#4A5F66;
+    --mvvm:#5FC0BC; --mvvm-bg:#122E2D;
+    --ctr:#7BA3DC;  --ctr-bg:#16253A;
+    --vis:#C48FC1;  --vis-bg:#2A1E29;
+    --own:#93A2A6;  --own-bg:#1F2A2D;
+    --flag:#E08165; --flag-bg:#33201A;
+    --ok:#77BE99;   --ok-bg:#16281F;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; }
+  body {
+    background: var(--paper); color: var(--ink);
+    font-family: var(--sans); font-size: 15.5px; line-height: 1.78;
+    -webkit-font-smoothing: antialiased; letter-spacing: -0.003em;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 26px; }
+  .tail { padding-bottom: 110px; }
+
+  header.top { padding: 58px 0 8px; }
+  .kicker {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-3); margin: 0 0 14px;
+  }
+  h1 { font-size: 34px; line-height: 1.3; letter-spacing: -0.02em; margin: 0 0 6px; }
+  .lede { color: var(--ink-2); max-width: 760px; margin: 10px 0 0; }
+  .lede b { color: var(--ink); }
+
+  nav.toc {
+    display: flex; gap: 10px; flex-wrap: wrap; margin: 26px 0 0;
+    border-top: 1px solid var(--rule-soft); border-bottom: 1px solid var(--rule-soft);
+    padding: 12px 0;
+  }
+  nav.toc a {
+    font-family: var(--mono); font-size: 12px; color: var(--ink-2);
+    text-decoration: none; padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--rule);
+  }
+  nav.toc a:hover { color: var(--ink); border-color: var(--ink-3); }
+  nav.toc a .n { color: var(--ink-3); margin-right: 6px; }
+
+  section { padding: 44px 0 8px; }
+  section + section { border-top: 1px solid var(--rule-soft); }
+  .eyebrow {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--ink-3); margin: 0 0 6px;
+  }
+  h2 { font-size: 24px; letter-spacing: -0.015em; margin: 0 0 10px; }
+  .guide-p { color: var(--ink-2); max-width: 800px; margin: 0 0 20px; }
+  .guide-p b { color: var(--ink); }
+  code {
+    font-family: var(--mono); font-size: 0.88em;
+    background: var(--sunk); border-radius: 4px; padding: 1px 5px;
+  }
+
+  /* 범례 */
+  .legend { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 18px; }
+  .legend span {
+    font-family: var(--mono); font-size: 11px; padding: 3px 10px;
+    border-radius: 999px; font-weight: 700;
+  }
+  .z-mvvm { color: var(--mvvm); background: var(--mvvm-bg); }
+  .z-ctr  { color: var(--ctr);  background: var(--ctr-bg); }
+  .z-vis  { color: var(--vis);  background: var(--vis-bg); }
+  .z-own  { color: var(--own);  background: var(--own-bg); }
+
+  /* ── 트리 ── */
+  .tree-card {
+    background: var(--card); border: 1px solid var(--rule);
+    border-radius: 12px; overflow: hidden;
+  }
+  .tree-scroll { overflow-x: auto; }
+  .tree { min-width: 900px; }
+  .tree-head, .tr {
+    display: grid; grid-template-columns: 380px 1fr 128px;
+    gap: 14px; align-items: baseline; padding: 5px 16px;
+  }
+  .tree-head {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-3);
+    border-bottom: 1px solid var(--rule); padding-top: 12px; padding-bottom: 10px;
+    position: sticky; top: 0; background: var(--card);
+  }
+  .tr { border-bottom: 1px solid var(--rule-soft); }
+  .tr:last-child { border-bottom: none; }
+  .tr:hover { background: var(--sunk); }
+  .tr.part {
+    background: var(--sunk); border-top: 1px solid var(--rule);
+    padding-top: 8px; padding-bottom: 8px;
+  }
+  .tr.part:first-of-type { border-top: none; }
+  .path { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+  .path .gd { color: var(--tree-line); }
+  .path .nm { color: var(--ink); font-weight: 700; }
+  .path .nm.dir::after { content: ""; }
+  .path em.nmr {
+    font-style: normal; font-size: 10.5px; color: var(--ink-3); margin-left: 8px;
+  }
+  .desc { font-size: 13px; color: var(--ink-2); }
+  .desc b { color: var(--ink); }
+  .desc .no { color: var(--flag); font-weight: 700; }
+  .desc .yes { color: var(--ok); font-weight: 700; }
+  .pins { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+  .pin {
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    padding: 1px 7px; border-radius: 999px; white-space: nowrap;
+    border: 1px solid transparent; cursor: help;
+  }
+  .pin.ws { color: var(--own);  background: var(--own-bg); }
+  .pin.wi { color: var(--ctr);  background: var(--ctr-bg); }
+  .pin.wn { color: var(--mvvm); background: var(--mvvm-bg); }
+  .pin.wp { color: var(--flag); background: var(--flag-bg); }
+  .pin.dd { color: var(--ink-2); background: transparent; border-color: var(--rule); }
+
+  /* 구역 태그(파트 행) */
+  .ztag {
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    padding: 2px 9px; border-radius: 999px; margin-left: 10px; vertical-align: 1px;
+  }
+
+  /* 보조 카드 그리드 */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin: 22px 0 0; }
+  .card {
+    background: var(--card); border: 1px solid var(--rule); border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .card h3 { font-size: 14px; margin: 0 0 8px; letter-spacing: -0.01em; }
+  .card h3 .tag {
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 999px; margin-right: 8px; vertical-align: 1px;
+  }
+  .card p, .card ul { font-size: 13px; color: var(--ink-2); margin: 0; }
+  .card ul { padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+  .card b { color: var(--ink); }
+  .card .no { color: var(--flag); font-weight: 700; }
+  .card .yes { color: var(--ok); font-weight: 700; }
+
+  /* ── 흐름 ── */
+  .flow { display: flex; flex-direction: column; gap: 10px; margin: 20px 0 0; }
+  .fstep {
+    display: grid; grid-template-columns: 44px 340px 1fr; gap: 14px;
+    background: var(--card); border: 1px solid var(--rule); border-radius: 10px;
+    padding: 12px 16px; align-items: baseline;
+  }
+  .fstep .n {
+    font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--ink-3);
+  }
+  .fstep .where { font-family: var(--mono); font-size: 12px; color: var(--ink); font-weight: 700; }
+  .fstep .where .z { display: inline-block; margin-top: 3px; }
+  .fstep .what { font-size: 13px; color: var(--ink-2); }
+  .fstep .what b { color: var(--ink); }
+  .fstep .what .no { color: var(--flag); font-weight: 700; }
+  .fstep.b-mvvm { border-left: 3px solid var(--mvvm); }
+  .fstep.b-ctr  { border-left: 3px solid var(--ctr); }
+  .fstep.b-vis  { border-left: 3px solid var(--vis); }
+  .fstep.b-own  { border-left: 3px solid var(--own); }
+  .fnote { font-size: 13px; color: var(--ink-2); margin: 14px 0 0; max-width: 800px; }
+  .fnote b { color: var(--ink); }
+  h3.fsub { font-size: 16px; margin: 30px 0 4px; }
+  h3.fsub .m { font-family: var(--mono); font-size: 12px; color: var(--ink-3); font-weight: 400; margin-left: 8px; }
+
+  /* ── 규율 표 ── */
+  table.ruletab {
+    width: 100%; border-collapse: collapse; margin: 18px 0 0;
+    background: var(--card); border: 1px solid var(--rule); border-radius: 12px;
+    overflow: hidden; font-size: 13px;
+  }
+  table.ruletab { border-radius: 0; }
+  .tabcard { border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; margin: 18px 0 0; }
+  .tabcard .tsc { overflow-x: auto; }
+  table.ruletab th, table.ruletab td {
+    text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+  }
+  table.ruletab th {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-3); background: var(--sunk);
+    border-bottom: 1px solid var(--rule); white-space: nowrap;
+  }
+  table.ruletab tr:last-child td { border-bottom: none; }
+  table.ruletab td.k { font-family: var(--mono); font-size: 12px; font-weight: 700; white-space: nowrap; }
+  table.ruletab td { color: var(--ink-2); }
+  table.ruletab td b { color: var(--ink); }
+  table.ruletab td .no { color: var(--flag); font-weight: 700; }
+  table.ruletab td .yes { color: var(--ok); font-weight: 700; }
+
+  footer {
+    margin-top: 60px; padding-top: 18px; border-top: 1px solid var(--rule-soft);
+    font-size: 12px; color: var(--ink-3);
+  }
+  footer code { font-size: 11px; }
+</style>
+</head>
+<body>
+
+<div class="wrap tail">
+
+<header class="top">
+  <p class="kicker">dddjango-web 플러그인 · 표준 파일트리 · 확정 — v0.1.0(08-23)부터 현행</p>
+  <h1>Model이 없다 — 화면이 한 폴더, 지식은 한 방향</h1>
+  <p class="lede">web은 <b>«내부의 외부 클라이언트»</b>다. 같은 저장소의 <code>web/</code>에 살지만 백엔드 BC의 <b>실물 API 계약(URL+JSON)만</b> 소비하고, domain·use_case·infra를 소유하지도 import하지도 않는다. 화면 하나는 <b>요청 구동 MVVM 삼총사</b>(view·view_model·state)가 사는 한 폴더이고, 갱신 표준은 <b>HTMX 부분 재렌더</b>다. 값의 단일 출처는 <code>discipline-web-houserules references/final.md</code> — 이 문서는 그 읽기 지도다.</p>
+  <nav class="toc">
+    <a href="#tree"><span class="n">1장</span>표준 트리</a>
+    <a href="#flow"><span class="n">2장</span>흐름</a>
+    <a href="#rules"><span class="n">3장</span>격리·백스톱</a>
+  </nav>
+</header>
+
+<!-- ══════════════ 1장 · 트리 ══════════════ -->
+<section id="tree">
+  <p class="eyebrow">1장 · 표준 트리 v3.1</p>
+  <h2>web/ — 백엔드 트리와 공존하고, 계약으로만 만난다</h2>
+  <p class="guide-p">대상 프로젝트 최상위에서 <code>web/</code>은 백엔드 표준 트리(<code>application/</code>·<code>framework/</code>)와 <b>공존</b>한다. 분할 축은 셋 — <b>영역(<code>&lt;screen_area&gt;</code>) 1차 → 화면 개념(<code>&lt;view&gt;</code>) 1차 → 종류 폴더 2차</b>. 오른쪽 배지는 그 행을 지키는 백스톱 패밀리(<b>WS</b> 구조·골격 / <b>WI</b> 격리 / <b>WN</b> 명명 / <b>WP</b> 순수성)와 출처 결정(D번호)이다.</p>
+  <div class="legend">
+    <span class="z-own">셸 — 컨테이너·배선</span>
+    <span class="z-mvvm">화면 — 요청 구동 MVVM</span>
+    <span class="z-ctr">계약 — client · in-process HTTP</span>
+    <span class="z-vis">시각 — design_system · static</span>
+  </div>
+
+  <div class="tree-card"><div class="tree-scroll"><div class="tree">
+    <div class="tree-head"><span>경로 · 이름 규칙</span><span>무엇인가 · 정할 것</span><span style="text-align:right">규율</span></div>
+
+    <!-- 셸 -->
+    <div class="tr part">
+      <span class="path"><b class="nm">web/</b><span class="ztag z-own">셸</span></span>
+      <span class="desc"><b>컨테이너 루트.</b> 최초 생성 시 골격 완비 — 비어 있어도 표준 폴더를 전부 만든다(폴더는 무조건, 코드는 필요할 때만)</span>
+      <span class="pins"><span class="pin ws" title="WS 구조·골격">WS</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">├─ </span><b class="nm">urls.py</b><em class="nmr">고정 이름</em></span>
+      <span class="desc">전 영역 urls <b>include 합산만</b> — 자기 path 리터럴을 새로 만들지 않는다</span>
+      <span class="pins"><span class="pin wi" title="WI 격리 — 라우트 리터럴 거처 §5④">WI</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">├─ </span><b class="nm">apps.py</b><em class="nmr">고정 이름</em></span>
+      <span class="desc">AppConfig 클래스 <code>WebConfig</code></span>
+      <span class="pins"><span class="pin wn" title="WN 명명">WN</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">└─ </span><b class="nm dir">base/</b><span class="gd">base.html</span><em class="nmr">고정 이름</em></span>
+      <span class="desc"><b>«거의 빈» 규범</b> — 공통 문서 골격·내비 셸·전역 게이트만. <span class="no">화면 어휘 등장 금지</span> (판별: undecidable-web §6). <code>{% extends %}</code>를 받는 유일한 층</span>
+      <span class="pins"><span class="pin ws" title="WS 구조·골격">WS</span></span>
+    </div>
+
+    <!-- 화면 영역 -->
+    <div class="tr part">
+      <span class="path"><b class="nm">&lt;screen_area&gt;/</b><em class="nmr">예: orders/</em><span class="ztag z-mvvm">화면</span></span>
+      <span class="desc"><b>내비게이션 영역</b> — 전역 내비의 한 묶음(도메인·BC 경계 아님). 직속 허용은 <code>urls.py</code>·<code>widget/</code>·화면 폴더뿐 — <span class="no">그 외 직속 파일 금지</span>·중첩 금지(1단)·빈 영역 금지. 신설·귀속 판정은 G0 배치축(undecidable-web §4)</span>
+      <span class="pins"><span class="pin ws" title="WS 구조·골격">WS</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">├─ </span><b class="nm">urls.py</b><em class="nmr">고정 이름</em></span>
+      <span class="desc">영역 path·name <b>리터럴 단일 출처</b> — 페이지 <code>name="&lt;view&gt;"</code>, fragment <code>name="&lt;view&gt;_&lt;조각&gt;"</code>. 다른 어디서든 이름만 참조(<code>{% url %}</code>/<code>reverse</code>)</span>
+      <span class="pins"><span class="pin wi" title="WI 격리 — §5④">WI</span><span class="pin wn" title="WN 명명">WN</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">├─ </span><b class="nm dir">&lt;view&gt;/</b><em class="nmr">화면 개념 — 예: order_list/</em></span>
+      <span class="desc"><b>화면 개념 1차.</b> 첫 화면부터 종류 4폴더(view·view_model·state·section)로 시작 — 평면 단계 없음. 다른 화면 개념이 등장하면 <b>새 폴더</b>(기존 폴더에 얹지 않는다)</span>
+      <span class="pins"><span class="pin ws" title="WS 구조·골격">WS</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">│  ├─ </span><b class="nm dir">view/</b><span class="gd">&lt;view&gt;_view.py</span></span>
+      <span class="desc"><b>진입점</b> — URL 바인딩·VM 호출·render·fragment 분기 소유. <b>함수 뷰 고정</b>(CBV 아님) — 주 이름은 동명 함수 <code>order_list_view</code></span>
+      <span class="pins"><span class="pin wn" title="WN 명명 — 삼총사 접두">WN</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">│  │  </span><span class="gd">└ </span><b class="nm">&lt;view&gt;.html</b><em class="nmr">view와 병치</em></span>
+      <span class="desc"><b>페이지 템플릿</b> — 진입 코드와 한 폴더에서 함께 읽힌다. <code>{% extends "base.html" %}</code>하는 유일한 템플릿 층</span>
+      <span class="pins"><span class="pin wn" title="WN 명명">WN</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">│  ├─ </span><b class="nm dir">view_model/</b><span class="gd">&lt;view&gt;_view_model.py</span></span>
+      <span class="desc"><b>VM</b> — client 호출·표시 상태 조립. 클래스 <code>OrderListViewModel</code>(모듈 수준 조립 함수 허용). 접미 전체 표기 — <span class="no">_vm.py 축약 금지</span></span>
+      <span class="pins"><span class="pin wn" title="WN 명명">WN</span><span class="pin wi" title="WI — API 호출은 client 전속, VM은 client만 호출">WI</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">│  ├─ </span><b class="nm dir">state/</b><span class="gd">&lt;view&gt;_state.py</span></span>
+      <span class="desc"><b>표시 상태 dataclass</b> <code>OrderListState</code> — 템플릿이 읽는 유일한 것. 상주 상태·구독 없음(요청마다 조립)</span>
+      <span class="pins"><span class="pin wn" title="WN 명명">WN</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">│  ├─ </span><b class="nm dir">form/</b><span class="gd">&lt;view&gt;_form.py</span><em class="nmr">조건 생성</em></span>
+      <span class="desc">입력 검증 Django Form <code>OrderListForm</code> — <span class="yes">입력 form이 있는 화면만</span> 생성(골격 완비 비대상, exception.py 판형)</span>
+      <span class="pins"><span class="pin wn" title="WN 명명">WN</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">│  └─ </span><b class="nm dir">section/</b><span class="gd">&lt;view&gt;_&lt;section&gt;.html</span></span>
+      <span class="desc"><b>화면 전속 조각 · HTMX 재렌더 단위</b> — 소속 view 접두 <b>필수</b>(<code>order_list_filter_bar.html</code>). 받은 state 렌더만으로 성립하는 조각이 온다</span>
+      <span class="pins"><span class="pin wn" title="WN 명명 — 접두 필수">WN</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">└─ </span><b class="nm dir">widget/</b><span class="gd">&lt;widget&gt;.html</span><em class="nmr">영역 수준</em></span>
+      <span class="desc"><b>영역 재사용 조각</b>(BC 어휘 보유·화면 비전속) — 이름에 <span class="no">view 이름 금지</span>·명시 context만 전달. 화면 폴더 안에 widget/을 만들지 않는다. <span class="no">타 영역 include 금지</span>(§5⑦)</span>
+      <span class="pins"><span class="pin wn" title="WN 명명 — view 이름 금지">WN</span><span class="pin wi" title="WI — 수평 격리 §5⑦">WI</span></span>
+    </div>
+
+    <!-- 계약 -->
+    <div class="tr part">
+      <span class="path"><b class="nm">client/</b><span class="ztag z-ctr">계약</span></span>
+      <span class="desc"><b>계약 소비 전속 칸</b> — BC 1차. API 호출 코드는 언제나 여기(view·VM·템플릿 직접 호출 금지). 같은 BC의 capability가 늘면 폴더가 아니라 <b>파일이 는다</b></span>
+      <span class="pins"><span class="pin wi" title="WI 격리 — §5②">WI</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">└─ </span><b class="nm dir">&lt;bounded_context&gt;/</b><em class="nmr">백엔드 BC명</em></span>
+      <span class="desc">계약을 제공하는 백엔드 BC 하나가 폴더 하나</span>
+      <span class="pins"><span class="pin ws" title="WS 구조·골격">WS</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">&nbsp;&nbsp; ├─ </span><b class="nm">&lt;capability&gt;_client.py</b><em class="nmr">예: order_query_client.py</em></span>
+      <span class="desc"><b>계약 클라이언트</b> <code>OrderQueryClient</code> — <code>django.test.Client</code>로 <b>in-process HTTP</b>, 백엔드 driving_layer <b>api 표면만</b> 호출. BC API URL 리터럴의 <b>유일 거처</b>. <span class="no">application.·framework. import 0</span></span>
+      <span class="pins"><span class="pin wi" title="WI 격리 — §5①③④">WI</span><span class="pin wn" title="WN 명명">WN</span><span class="pin dd" title="결정 D5·D7 — 계약은 HTTP 표면만·절대 다른 것 호출 금지">D5·D7</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">&nbsp;&nbsp; ├─ </span><b class="nm dir">response/</b><span class="gd">&lt;response&gt;_response.py</span></span>
+      <span class="desc"><b>web 소유 응답 모델</b> <code>OrderSummaryResponse</code> — 백엔드 schema를 import하지 않고 계약 JSON을 자기 모델로 받는다</span>
+      <span class="pins"><span class="pin wn" title="WN 명명">WN</span><span class="pin wi" title="WI 격리">WI</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">&nbsp;&nbsp; └─ </span><b class="nm">exception.py</b><em class="nmr">고정 이름 · 조건 생성</em></span>
+      <span class="desc">계약 오류 표현 <code>*Exception</code> 모음 — 첫 계약 오류 표현 때 생성</span>
+      <span class="pins"><span class="pin wn" title="WN 명명">WN</span></span>
+    </div>
+
+    <!-- 시각 -->
+    <div class="tr part">
+      <span class="path"><b class="nm">design_system/</b><span class="ztag z-vis">시각</span></span>
+      <span class="desc"><b>foundation·component 2칸 시작</b> — theme/·util/은 <span class="no">만들지 않는 칸</span>(실수요가 생기면 그때 증설)</span>
+      <span class="pins"><span class="pin ws" title="WS 구조·골격">WS</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">├─ </span><b class="nm dir">foundation/</b><span class="gd">tokens.css</span><em class="nmr">고정 이름</em></span>
+      <span class="desc">색·타이포·간격 <b>토큰의 단일 출처</b>(<code>--color-*</code>·<code>--space-*</code>) — 화면 CSS는 <code>var()</code>로만 참조</span>
+      <span class="pins"><span class="pin wn" title="WN 명명">WN</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">└─ </span><b class="nm dir">component/&lt;부품군&gt;/</b><span class="gd">&lt;component&gt;.html</span></span>
+      <span class="desc"><b>BC 어휘 없는 순수 부품</b> — 부품군 1차·<span class="no">직속 파일 금지</span>·정크드로어 군 금지. 부품군 폴더 = 파일 접미사(<code>button/</code> 안은 <code>*_button.html</code>)</span>
+      <span class="pins"><span class="pin ws" title="WS 구조">WS</span><span class="pin wn" title="WN 명명 — view 이름 금지">WN</span></span>
+    </div>
+    <div class="tr part">
+      <span class="path"><b class="nm">static/</b><span class="ztag z-vis">시각</span></span>
+      <span class="desc">정적 서빙 — 프리픽스 경로 배선(STATICFILES_DIRS 튜플)은 커맨드 web 배선 소관</span>
+      <span class="pins"><span class="pin ws" title="WS 구조·골격">WS</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">├─ </span><b class="nm dir">css/</b><span class="gd">&lt;이름&gt;.css</span></span>
+      <span class="desc">화면 CSS — 시각 값은 tokens.css의 <code>var()</code> 참조(색·크기 리터럴은 교정 대상)</span>
+      <span class="pins"><span class="pin wn" title="WN 명명 — snake_case">WN</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">├─ </span><b class="nm dir">js/</b><span class="gd">htmx.min.js</span><em class="nmr">원명 그대로</em></span>
+      <span class="desc"><b>vendored htmx 단일</b> — <span class="no">커스텀 .js·타 라이브러리·inline &lt;script&gt; 전부 금지</span>. HTMX 속성·CSS로 표현 불가한 동작은 설계로 반송</span>
+      <span class="pins"><span class="pin wp" title="WP 순수성 — §5⑤">WP</span><span class="pin dd" title="결정 D12 — 순수 HTML+HTMX+CSS">D12</span></span>
+    </div>
+    <div class="tr">
+      <span class="path"><span class="gd">└─ </span><b class="nm dir">images/</b><span class="gd">&lt;이름&gt;.&lt;확장자&gt;</span></span>
+      <span class="desc"><b>시안 이미지 착지 칸</b> — 절단 도구가 snake_case로 정규화해 착지, fetch 도구·asset-manifest 배선(에셋 규율은 implementation-ui 소유)</span>
+      <span class="pins"><span class="pin wn" title="WN 명명 — snake_case">WN</span></span>
+    </div>
+  </div></div></div>
+
+  <div class="cards">
+    <div class="card">
+      <h3><span class="tag z-own">골격 완비</span>비어 있어도 형태를 유지한다</h3>
+      <ul>
+        <li><code>web/</code> 최초: urls·apps·base·tokens·component/·static 3칸 <b>전부 생성</b></li>
+        <li>신규 영역: <code>urls.py</code> + <code>widget/</code></li>
+        <li>신규 화면: 종류 4폴더 전부 — <b>form/만 조건 생성</b></li>
+        <li>마커: Python 패키지는 <code>__init__.py</code>, HTML 전용 폴더는 <code>.gitkeep</code></li>
+        <li><span class="no">test/ 없음</span> — web 트랙은 자동 테스트를 두지 않는다(육안 + 백스톱 + 규율 감사)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="tag z-mvvm">명명</span>종류는 폴더가, 접미사가 재확인</h3>
+      <ul>
+        <li>파일명 snake_case — <code>.py</code>는 주 클래스 하나(파일명의 PascalCase 대응)</li>
+        <li>삼총사+페이지 템플릿은 같은 접두 <b>1:1:1:1</b> — 접두는 view 파일 stem에서 <code>_view</code>를 뗀 것</li>
+        <li>검사 방향은 <b>VM 기준</b> — 정적 화면(약관·안내)은 view+템플릿만 허용</li>
+        <li>같은 개념은 위치가 달라도 <b>같은 철자·어순</b> (<span class="no">order_list ↔ list_order 금지</span>)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="tag z-ctr">입장 판별</span>조각은 어디에 두나</h3>
+      <ul>
+        <li>자기 표시 상태 조립 필요 → <b>새 <code>&lt;view&gt;/</code> 삼총사</b></li>
+        <li>한 화면 전속(받은 state 렌더만) → 그 화면 <code>section/</code></li>
+        <li>영역 재사용 + BC 어휘 보유 → <code>widget/</code></li>
+        <li>재사용 + BC 어휘 없음 → <code>design_system/component/</code></li>
+        <li>판별 <b>순서</b>는 architecture-web §2 단독 소유 — 회색지대 6종은 undecidable-web</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ 2장 · 흐름 ══════════════ -->
+<section id="flow">
+  <p class="eyebrow">2장 · 흐름</p>
+  <h2>「주문 목록」 하나를 끝까지 따라간다 — 두 번 지나간다</h2>
+  <p class="guide-p">첫 진입은 페이지 전체를, 이후 갱신은 <b>section 조각만</b> 다시 그린다. 두 경로 모두 지식은 <b>view → VM → client</b> 한 방향이고, 백엔드와는 계약(URL+JSON)으로만 만난다.</p>
+
+  <h3 class="fsub">A · 최초 진입 <span class="m">GET /orders/ — 페이지 전체 렌더</span></h3>
+  <div class="flow">
+    <div class="fstep b-own"><span class="n">1</span><span class="where">web/urls.py → orders/urls.py</span><span class="what">include 합산 → 영역 라우팅. <code>path("", order_list_view, name="order_list")</code> — 리터럴은 여기가 <b>유일 거처</b></span></div>
+    <div class="fstep b-mvvm"><span class="n">2</span><span class="where">view/order_list_view.py</span><span class="what"><b>함수 뷰 진입</b> — 요청을 받고 VM을 호출한다. 표시 판정을 여기서 하지 않는다(가벼운 흐름 제어만)</span></div>
+    <div class="fstep b-mvvm"><span class="n">3</span><span class="where">view_model/order_list_view_model.py</span><span class="what"><b>VM이 client를 호출</b>하고 응답을 표시 상태로 조립한다 — HTTP를 직접 부르지 않는다</span></div>
+    <div class="fstep b-ctr"><span class="n">4</span><span class="where">client/order/order_query_client.py</span><span class="what"><code>django.test.Client</code>로 <b>in-process HTTP</b> — 백엔드 driving_layer <b>api 표면만</b>. 같은 프로세스지만 <b>마치 외부처럼</b> URL+JSON으로만 만난다. <span class="no">python import 호출 금지(D7)</span></span></div>
+    <div class="fstep b-ctr"><span class="n">5</span><span class="where">client/order/response/</span><span class="what">계약 JSON → <b>web 소유 응답 모델</b>(<code>OrderSummaryResponse</code>)로 변환. 계약 오류는 <code>exception.py</code>의 표현으로</span></div>
+    <div class="fstep b-mvvm"><span class="n">6</span><span class="where">state/order_list_state.py</span><span class="what">VM이 응답을 <b>표시 상태 dataclass</b>로 조립해 view에 돌려준다 — 요청이 끝나면 상태도 끝(상주 없음)</span></div>
+    <div class="fstep b-mvvm"><span class="n">7</span><span class="where">view/order_list.html</span><span class="what"><code>render()</code> — 페이지 템플릿이 <code>{% extends "base.html" %}</code> 하고 <b>state만 읽으며</b> section·widget·component를 <code>{% include %}</code>로 합성한다</span></div>
+    <div class="fstep b-vis"><span class="n">8</span><span class="where">design_system · static</span><span class="what">tokens.css의 <code>var()</code>가 시각 값을, <code>static/js/htmx.min.js</code> 하나가 동적 속성을 공급한다 — 커스텀 JS 없이 완성</span></div>
+  </div>
+
+  <h3 class="fsub">B · 필터 적용 <span class="m">HTMX POST — section 조각만 재렌더</span></h3>
+  <div class="flow">
+    <div class="fstep b-vis"><span class="n">1</span><span class="where">section/order_list_filter_bar.html</span><span class="what"><code>hx-post="{% url 'order_list_filter_bar' %}"</code> — 라우트는 <b>이름으로만</b> 참조, 대상은 자기 조각(<code>hx-target</code>)</span></div>
+    <div class="fstep b-mvvm"><span class="n">2</span><span class="where">view/order_list_view.py</span><span class="what">같은 view의 <b>fragment 분기</b>가 받는다 — fragment 라우트도 <code>orders/urls.py</code>의 <code>name="order_list_filter_bar"</code></span></div>
+    <div class="fstep b-mvvm"><span class="n">3</span><span class="where">form/order_list_form.py</span><span class="what"><b>입력 검증</b> — Django Form(조건 생성된 화면만). 실패면 오류를 state에 담아 같은 조각을 다시 그린다</span></div>
+    <div class="fstep b-ctr"><span class="n">4</span><span class="where">VM → client → state</span><span class="what">A-3~6과 동일한 한 방향 — 경로가 짧아질 뿐 규율은 같다</span></div>
+    <div class="fstep b-mvvm"><span class="n">5</span><span class="where">render(section)</span><span class="what">페이지가 아니라 <b><code>order_list_filter_bar.html</code> 조각만</b> 렌더해 반환 — HTMX가 그 자리를 갈아끼운다</span></div>
+  </div>
+
+  <p class="fnote"><b>필요한 API가 없으면?</b> web에서 백엔드를 고치거나 계약을 가정하지 않는다 — <b>«/dddjango로 발주»를 안내</b>하고 멈춘다. 계약이 생긴 뒤 client부터 다시 잇는다.</p>
+</section>
+
+<!-- ══════════════ 3장 · 격리·백스톱 ══════════════ -->
+<section id="rules">
+  <p class="eyebrow">3장 · 격리 · 백스톱</p>
+  <h2>기계가 지키는 것 — 규율 7 + 검사 패밀리 4</h2>
+  <p class="guide-p">격리 규칙(§5)의 기계 판별 가능 부분은 결정적 러너 <code>scripts/backstop.py</code>가 게이트에서 검사한다. 발견은 <b>전부 blocker — 일괄 반송</b>이다. 러너가 못 보는 의미 판별 6종(view/section·화면 전속·BC 어휘·영역 귀속·두 번째 개념·base «거의 빈»)은 <code>undecidable-web.md</code>가 판별 절차의 단일 출처다.</p>
+
+  <div class="tabcard"><div class="tsc"><table class="ruletab">
+    <tr><th>격리</th><th>규칙</th><th>왜</th></tr>
+    <tr><td class="k">①</td><td><code>web/**</code>에서 <span class="no">application.·framework. import 0</span> — schema·타입 import도 금지</td><td>import 한 줄이 생기는 순간 계약이 코드 결합으로 바뀐다 — «내부의 외부 클라이언트»가 그냥 내부가 된다</td></tr>
+    <tr><td class="k">②</td><td>API 호출 코드는 <b>client/ 전속</b> — view·VM·템플릿의 직접 HTTP 금지</td><td>계약 소비 지점이 한 칸이어야 계약 변경이 한 칸에 갇힌다</td></tr>
+    <tr><td class="k">③</td><td>client가 부르는 URL은 백엔드 <b>api 표면 패턴만</b> — 서버렌더 페이지·admin 호출 금지</td><td>화면이 화면을 부르면 계약이 아니라 스크래핑이다</td></tr>
+    <tr><td class="k">④</td><td>라우트 리터럴 거처 2곳뿐 — web 자신은 <code>urls.py</code>, BC API는 그 <b>client 모듈</b></td><td>흩어진 URL 문자열은 깨진 링크의 온상 — 이름 참조만 남긴다</td></tr>
+    <tr><td class="k">⑤</td><td><b>D12 순수성</b> — <span class="no">커스텀 JS·inline &lt;script&gt;·타 라이브러리 금지</span>, JS는 vendored htmx 단일</td><td>표현 불가한 동작 요구는 우회 스크립트가 아니라 설계 반송으로</td></tr>
+    <tr><td class="k">⑥</td><td>지식은 <b>view → VM → client</b> 한 방향 — 템플릿은 <b>state만</b> 읽는다</td><td>역방향 참조가 생기면 요청 구동 MVVM의 교체 가능성이 죽는다</td></tr>
+    <tr><td class="k">⑦</td><td><span class="no">타 영역 widget include 금지</span> — 교차 재사용은 design_system 승격 경유, <span class="no">복제 금지</span></td><td>수평 결합은 영역 경계를 무의미하게 만든다</td></tr>
+  </table></div></div>
+
+  <div class="cards">
+    <div class="card">
+      <h3><span class="tag z-own">패밀리</span>백스톱 검사 4종</h3>
+      <ul>
+        <li><b>WS</b> 구조·골격 — 트리 §1·성장 §2·골격 §3</li>
+        <li><b>WI</b> 격리 — §5 (왼쪽 표)</li>
+        <li><b>WN</b> 명명 — §4 총괄표</li>
+        <li><b>WP</b> 순수성 — §5⑤ (D12)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="tag z-ctr">게이트</span>exit 계약 · 발화 범위</h3>
+      <ul>
+        <li>exit <b>0</b> 통과 · <b>1</b> 미실행(전제 실패 — <span class="no">통과 아님</span>) · <b>2</b> blocker 일괄 반송</li>
+        <li>구조·명명은 <b>added만</b>, 격리·순수성은 touched의 <b>added 줄만</b> — 레거시 drift에 불발화(«새 코드부터 표준»)</li>
+        <li><code>--all</code>은 전역 감사용 — 게이트 용도 아님</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="tag z-vis">green 보조</span>자동 테스트 없이 판정한다</h3>
+      <ul>
+        <li><code>python -m py_compile</code> — 신규 .py 문법</li>
+        <li><code>manage.py check</code> — Django 시스템 검사</li>
+        <li>+ 사용자 육안 확인 + discipline-reviewer-web 규율 감사</li>
+        <li>호스트 배선(INSTALLED_APPS·TEMPLATES·STATICFILES·htmx 설치)은 Coordinator Phase 0 소관</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  정본: <code>dddjango-web/skills/discipline-web-houserules/references/final.md</code> (트리 v3.1 — 스펙 §1.3㉠과 byte 동기) ·
+  빌드 스펙: <code>workspace/design/2026-08-23-web-presentation-layer-spec.md</code> ·
+  자매 문서: <code>docs/file_tree.html</code>(dddjango 백엔드 트리) · <code>docs/work_flow.html</code>(파이프라인 흐름)
+</footer>
+
+</div><!-- /wrap -->
+</body>
+</html>
