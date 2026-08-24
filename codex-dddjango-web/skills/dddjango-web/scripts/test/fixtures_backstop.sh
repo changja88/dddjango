@@ -59,6 +59,7 @@ mkproj() { # mkproj <dir> — Django풍 루트 + 표준 web/ 골격(green) + git
 </html>
 EOF
   printf ':root { --color-text: #222222; --color-primary: rgb(10, 20, 30); }\n' > "$p/web/design_system/foundation/tokens.css"
+  printf '/* 공용 keyframes·모션 유틸(motion-*) — 값 정의는 tokens.css */\n' > "$p/web/design_system/foundation/motion.css"
   printf '<button class="btn">ok</button>\n' > "$p/web/design_system/component/button/primary_button.html"
   printf 'body { color: var(--color-text); }\n' > "$p/web/static/css/site.css"
   printf '(function(){})();\n' > "$p/web/static/js/htmx.min.js"
@@ -378,6 +379,13 @@ assert "F22b WP1 vendored htmx 중복(1파일 위반) 발화" 2 "중복" - "$E" 
 rm "$P/web/static/js/htmx.js"
 OUT=$(run_backstop "$P" --diff-base "$BASE" --only wp1); E=$?
 assert "F22c WP1 control — htmx 단일이면 clean" 0 - "WP1" "$E" "$OUT"
+cp "$SCRIPTS/../assets/motion.js" "$P/web/static/js/motion.js"
+OUT=$(run_backstop "$P" --diff-base "$BASE" --only wp1,wp5); E=$?
+assert "F22d WP1·WP5 control — 판형 그대로의 motion.js 공존은 clean" 0 - "WP" "$E" "$OUT"
+printf '\nwindow.fetch("/x");\n' >> "$P/web/static/js/motion.js"
+OUT=$(run_backstop "$P" --diff-base "$BASE" --only wp5); E=$?
+assert "F22e WP5 motion.js 판형 이탈(수정) 발화" 2 "WP5" - "$E" "$OUT"
+rm "$P/web/static/js/motion.js"
 
 # ---------- F23: WP2 inline <script> 금지(htmx src 로드만 예외)
 P="$T/f23"; BASE=$(mkproj "$P")
@@ -389,6 +397,16 @@ EOF
 OUT=$(run_backstop "$P" --diff-base "$BASE" --only wp2); E=$?
 assert_count "F23 WP2 inline+CDN 2건(htmx src 짝 clean)" 2 "WP2" 2 "$E" "$OUT"
 
+# ---------- F23b: WP2 CDN 위장(id에 motion) 차단·vendored 정확 경로 clean
+P="$T/f23b"; BASE=$(mkproj "$P")
+cat > "$P/web/orders/order_list/section/order_list_tail.html" <<'EOF'
+<script src="https://cdn.example.com/x.js" id="motion-loader"></script>
+<script src="https://unpkg.com/htmx.org/dist/htmx.min.js"></script>
+<script src="{% static 'web/js/motion.js' %}" defer></script>
+EOF
+OUT=$(run_backstop "$P" --diff-base "$BASE" --only wp2); E=$?
+assert_count "F23b WP2 CDN 위장 2건(motion 정확 경로 짝 clean)" 2 "WP2" 2 "$E" "$OUT"
+
 # ---------- F24: WP3 인라인 이벤트 핸들러 속성 금지
 P="$T/f24"; BASE=$(mkproj "$P")
 cat > "$P/web/orders/order_list/section/order_list_actions.html" <<'EOF'
@@ -398,6 +416,17 @@ cat > "$P/web/orders/order_list/section/order_list_actions.html" <<'EOF'
 EOF
 OUT=$(run_backstop "$P" --diff-base "$BASE" --only wp3); E=$?
 assert_count "F24 WP3 onclick+hx-on 2건(hx 선언 속성 짝 clean)" 2 "WP3" 2 "$E" "$OUT"
+
+# ---------- F24b: WP3 htmx js: 채널·hx-trigger 조건식 금지
+P="$T/f24b"; BASE=$(mkproj "$P")
+cat > "$P/web/orders/order_list/section/order_list_filters.html" <<'EOF'
+<div hx-post="{% url 'order_list' %}" hx-vals='js:{x: compute()}'>bad</div>
+<form hx-headers='js:{"X-T": token()}'>bad</form>
+<div hx-get="{% url 'order_list' %}" hx-trigger="click[ctrlKey]">bad</div>
+<div hx-get="{% url 'order_list' %}" hx-vals='{"page": 2}' hx-trigger="click">ok</div>
+EOF
+OUT=$(run_backstop "$P" --diff-base "$BASE" --only wp3); E=$?
+assert_count "F24b WP3 js:·조건식 3건(정적 JSON·이벤트명 짝 clean)" 2 "WP3" 3 "$E" "$OUT"
 
 # ---------- F25: WP4 색 리터럴 — tokens.css만 예외
 P="$T/f25"; BASE=$(mkproj "$P")

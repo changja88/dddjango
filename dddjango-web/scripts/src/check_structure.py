@@ -65,10 +65,12 @@ def run_structure(ctx: BackstopContext) -> List[Finding]:
             out.append(Finding('WS4', f, None,
                 'design_system/ 직속 파일 금지 — foundation·component 2칸만',
                 '토큰이면 foundation/tokens.css로, 부품이면 component/<부품군>/으로.', '§1'))
-        if len(s) == 3 and s[1] == 'foundation' and s[2] != 'tokens.css' and s[2] not in MARKER_FILES:
+        if (len(s) == 3 and s[1] == 'foundation'
+                and s[2] not in ('tokens.css', 'motion.css') and s[2] not in MARKER_FILES):
             out.append(Finding('WS4', f, None,
-                'foundation 표준은 tokens.css 하나 — 시각 값의 단일 출처 보호',
-                '새 토큰은 tokens.css의 커스텀 프로퍼티로 합친다(파일 증설은 규약 개정이 먼저).', '§4'))
+                'foundation 표준은 tokens.css·motion.css 두 파일 — 시각 값·공용 모션의 단일 출처 보호',
+                '새 토큰은 tokens.css의 커스텀 프로퍼티로, 공용 keyframes·모션 유틸은 motion.css로 '
+                '합친다(파일 증설은 규약 개정이 먼저).', '§4'))
         if len(s) == 3 and s[1] == 'component' and s[2] not in MARKER_FILES:
             out.append(Finding('WS4', f, None,
                 'component/ 직속 파일 금지 — 부품군 1차',
@@ -88,7 +90,7 @@ def run_structure(ctx: BackstopContext) -> List[Finding]:
                 '분류 안 되는 부품은 정크드로어가 아니라 새 부품군 폴더를 만든다.', '§4'))
         if len(s) == 3 and s[1] == 'foundation':
             out.append(Finding('WS4', d + '/', None,
-                'foundation/ 하위 디렉터리 `%s/` — foundation은 평면(tokens.css)' % s[2],
+                'foundation/ 하위 디렉터리 `%s/` — foundation은 평면(tokens.css·motion.css)' % s[2],
                 '토큰은 tokens.css 하나로 합친다.', '§1'))
         if len(s) == 4 and s[1] == 'component':
             out.append(Finding('WS4', d + '/', None,
@@ -179,7 +181,8 @@ def _skeleton(ctx: BackstopContext) -> List[Finding]:
     # web/ 컨테이너 최초 (§3 표 1행)
     if ctx.is_added_dir(''):
         missing: List[str] = []
-        for rf in ('urls.py', 'apps.py', 'base/base.html', 'design_system/foundation/tokens.css'):
+        for rf in ('urls.py', 'apps.py', 'base/base.html', 'design_system/foundation/tokens.css',
+                   'design_system/foundation/motion.css'):
             if rf not in ctx.files_set:
                 missing.append(rf)
         need_dir('design_system/component', missing, 'design_system/component')

@@ -109,14 +109,14 @@ Python 최소 관용구: 타입 힌트는 전면이다 — 모든 함수 매개�
 
 section은 화면 전속 조각이자 HTMX 부분 재렌더 단위다(역할 규율은 architecture-web §4). 파일명은 `<view>_<section>.html` — 화면 접두 필수.
 
-- 동작은 htmx 허용 속성 목록으로만 표기한다 — `hx-get`·`hx-post`(URL은 `{% url %}`), `hx-target`(교체될 요소 선택자), `hx-swap`(교체 방식 — 조각 내부 교체는 기본 `innerHTML`, 요소 자체 교체는 `outerHTML`), `hx-headers`(state-changing의 CSRF 토큰), `hx-trigger`(발동 이벤트 — 기본 트리거로 충분하면 생략).
+- 동작은 htmx 허용 속성 목록으로만 표기한다 — `hx-get`·`hx-post`(URL은 `{% url %}`), `hx-target`(교체될 요소 선택자), `hx-swap`(교체 방식 — 조각 내부 교체는 기본 `innerHTML`, 요소 자체 교체는 `outerHTML` · 전환이 명세된 교체는 `swap:`/`settle:` 타이밍 수식어를 함께 — §7 모션 · `transition:true`는 금지), `hx-headers`(state-changing의 CSRF 토큰 — `js:` 접두 금지), `hx-trigger`(발동 이벤트 — 기본 트리거로 충분하면 생략 · 이벤트 이름만, `[조건식]` 대괄호 JS 금지).
 - method 의미론을 지킨다 — 조회 재렌더는 `hx-get`, state-changing은 `hx-post`.
 - state-changing(`hx-post`) 요청의 CSRF는 `hx-headers`의 토큰으로 보낸다 — 조회(`hx-get`)에는 붙이지 않는다.
 - state-changing 요청도 페이지 요청과 같은 auth·permission·CSRF를 통과해야 한다 — HTMX라고 보호 수준을 낮추지 않는다.
 - 페이지 템플릿이 section을 include할 때는 state를 명시 전달한다 — `{% include "..." with state=state %}` 판형. `only` 의무는 widget·component include 한정이다(§6).
 - fragment 응답은 소속 view가 해당 section 템플릿을 render한 HTML이다 — JSON 응답을 만들지 않는다.
-- **커스텀 JS 금지.** 동작은 htmx 속성으로만 표현하고, 템플릿 inline `<script>` 금지, `web/**`에 `.js` 파일 신설 금지 — *왜*: 이 플러그인의 기술 표면은 순수 HTML+HTMX+CSS이며, 백스톱이 위반을 기계 차단한다.
-- htmx 자체는 `static/js/`의 vendored 단일 파일이 유일한 JS다 — CDN `<script src>` 금지.
+- **커스텀 JS 금지.** 동작은 htmx 속성·CSS 모션·`data-motion` 선언(§7)으로만 표현하고, 템플릿 inline `<script>` 금지, `web/**`에 `.js` 파일 신설 금지 — *왜*: 이 플러그인의 기술 표면은 순수 HTML+HTMX+CSS이며, 백스톱이 위반을 기계 차단한다.
+- JS는 `static/js/`의 vendored 닫힌 2파일(`htmx.min.js`·`motion.js` — 조건 설치)뿐이다 — CDN `<script src>` 금지·motion.js 수정·확장 금지(백스톱이 플러그인 판형과 해시 대조).
 
 ```html
 {# order_list_rows.html을 소유한 화면 어디서든 — 조회 재렌더 트리거 판형(hx-get — CSRF 토큰 불요) #}
@@ -138,7 +138,7 @@ widget(영역 재사용 조각)과 design_system component(전역 순수 부품)
 
 ## §7. 토큰·CSS·에셋 표기
 
-**토큰.** `design_system/foundation/tokens.css`가 `:root` custom properties로 색·타이포·간격·radius·그림자를 정의한다. CSS와 템플릿의 스타일 값은 `var(--…)`만 쓴다 — 리터럴(`#2563eb`·`14px` 직접 기입) 금지. *왜*: 시안 값이 토큰 한 곳에 모여야 충실도 대조와 일괄 변경이 성립한다. 시안 절단 산출물(design-tokens.json)이 있으면 그 토큰 이름을 그대로 쓴다 — 발명 금지. tokens.css가 `{% static %}` 경유로 서빙되는 것은 STATICFILES_DIRS 프리픽스 튜플 배선이 전제다 — 배선은 커맨드 Phase 0 소관(§1 handoff).
+**토큰.** `design_system/foundation/tokens.css`가 `:root` custom properties로 색·타이포·간격·radius·그림자·모션 값(`--duration-*`·`--ease-*` 류)을 정의한다. CSS와 템플릿의 스타일 값은 `var(--…)`만 쓴다 — 리터럴(`#2563eb`·`14px` 직접 기입) 금지. *왜*: 시안 값이 토큰 한 곳에 모여야 충실도 대조와 일괄 변경이 성립한다. 시안 절단 산출물(design-tokens.json)이 있으면 그 토큰 이름을 그대로 쓴다 — 발명 금지. tokens.css가 `{% static %}` 경유로 서빙되는 것은 STATICFILES_DIRS 프리픽스 튜플 배선이 전제다 — 배선은 커맨드 Phase 0 소관(§1 handoff).
 
 ```css
 :root {
@@ -154,6 +154,14 @@ widget(영역 재사용 조각)과 design_system component(전역 순수 부품)
 ```
 
 **베이스 리셋.** 화면 CSS의 리셋 절은 box-sizing·html/body 여백 0과 함께 **UA 기본 스타일 정규화**를 포함한다 — 최소 `p { margin: 0; }` 등 문단·제목류 기본 마진 0. *왜*: 시안(컴포넌트 렌더·디자인 산출물)은 문단 기본 마진이 없는 세계라, `<p>`를 쓰는 순간 브라우저 UA 마진이 시안에 없는 간격을 만든다 — 필요한 간격은 리셋 위에 토큰으로 명시한다.
+
+**모션.** 근거는 설계 명세의 동적 표현 처분(architecture-web §8)뿐이다 — 명세에 없는 모션 발명 금지·«한계» 항목 구현 금지.
+
+- **상태 규칙**(`:hover`·`:focus-visible`·`transition`)은 해당 요소의 화면 CSS·component CSS에 직접 쓴다 — duration·easing 값은 tokens.css의 `var()` 참조.
+- **`@keyframes`**: 공용(스피너·페이드 류 재사용 모션)은 `design_system/foundation/motion.css`에 `motion-*` 이름으로, 화면 전속은 그 화면 CSS에 `<view>_` 접두로 둔다. motion.css에는 custom property 정의 금지 — keyframes·유틸 클래스 선언만(중간값 리터럴은 허용).
+- **htmx 교체 전환**: `htmx-swapping`(퇴장)·`htmx-settling`(진입)·`htmx-request`(요청 중 — 로딩 표시) 클래스에 CSS transition을 건다. 전환이 명세된 교체는 **`hx-swap`에 `swap:`/`settle:` 타이밍 수식어가 필수**다 — 예 `hx-swap="innerHTML swap:200ms settle:100ms"`. *왜*: htmx 기본은 swap 0ms·settle 20ms라 수식어 없이는 클래스가 transition보다 먼저 사라져 전환이 보이지 않는다. `hx-swap`의 `transition:true`(View Transitions)는 금지 — 전환 채널은 CSS 클래스 하나로 단일화한다.
+- **러너 소비**(motion.js가 설치된 빌드만): 명세가 «러너»로 채택한 항목만 요소에 `data-motion="<모션명>"`을 선언한다 — 러너가 뷰포트 진입 시 `motion-in` 클래스를 부여한다(one-shot). **초기 은닉은 `html.motion-ready` 하위 셀렉터 + `@media (prefers-reduced-motion: no-preference)` 안에서만** 쓴다 — 판형: `@media (prefers-reduced-motion: no-preference){ html.motion-ready [data-motion]{ opacity:0; } html.motion-ready [data-motion].motion-in{ opacity:1; transition: opacity var(--duration-reveal) var(--ease-out); } }`. *왜*: 러너 실패·차단·감속 선호 사용자에게 콘텐츠가 영구 숨김되지 않는다(motion-ready 없는 문서에서 은닉 규칙은 발화하지 않는다).
+- **base.html 로드 태그 판형**(base 입장은 `undecidable-web.md` §6): `<link rel="stylesheet" href="{% static 'design_system/foundation/motion.css' %}">` — tokens.css 다음 줄. motion.js가 설치된 빌드만 `<script src="{% static 'web/js/motion.js' %}" defer></script>` — htmx 태그 다음 줄·`defer` 필수.
 
 **이미지.** 시안의 정적 이미지는 동결 단계(fetch_images)가 `static/images/`에 내려받아 `asset-manifest.json`(src→`local_path`→`token` 매핑·단일 SSOT)으로 절단한다. 명세가 가리킨 이미지는 manifest의 **같은 `src` 행**으로 조인해 `local_path`를 정확 값 그대로 가져온다 — 추정·눈대중·발명 금지(server-contract를 경량본에서 인용하듯). `token` 열은 web에서 소비하지 않는다 — 추출 도구 산출 호환용이다. 착지 파일명은 절단 도구가 snake_case로 정규화하며, 정규화 후 `local_path`가 SSOT다. 템플릿 배선은 `local_path`를 `{% static %}` 경유로 참조하는 것만이고 raw 경로 문자열은 금지다. manifest가 없으면 이 항목은 적용되지 않는다 — 없는 이미지를 placeholder로 조용히 채우지 않는다.
 

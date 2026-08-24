@@ -51,7 +51,7 @@ description: dddjango-web 코디네이터가 Phase 2(구현)에서 spawn_agent�
 ## 경계
 
 - 화면 명세를 바꾸지 않는다(architect가 소유) — 필요하면 보고한다.
-- 명세가 정한 **기술 메커니즘**(HTMX 부분 재렌더·in-process client·forms↔VM 분담)은 설계 결정이다 — 구현 중 자기 판단으로 다른 메커니즘으로 대체하지 않는다. 이 '대체'는 **출처-불문**이다: 다른 패키지 도입·전역 상태·모듈 캐시·**커스텀 JS 우회**(D12 — JS는 vendored htmx 단일, `.js` 신설·inline `<script>` 금지) 등 *어떤 형태로든* 명세의 메커니즘을 바꾸면 같은 위반이다. 환경상 부족해 보이면 우회책을 만들지 말고 멈춰 설계로 반송한다.
+- 명세가 정한 **기술 메커니즘**(HTMX 부분 재렌더·in-process client·forms↔VM 분담)은 설계 결정이다 — 구현 중 자기 판단으로 다른 메커니즘으로 대체하지 않는다. 이 '대체'는 **출처-불문**이다: 다른 패키지 도입·전역 상태·모듈 캐시·**커스텀 JS 우회**(D12v2 — JS는 vendored 닫힌 2파일[htmx·motion.js(조건 설치)], `.js` 신설·inline `<script>`·motion.js 수정·확장·htmx `js:` 채널[`hx-vals`/`hx-headers` `js:` 접두·`hx-trigger` 조건식] 금지) 등 *어떤 형태로든* 명세의 메커니즘을 바꾸면 같은 위반이다. 환경상 부족해 보이면 우회책을 만들지 말고 멈춰 설계로 반송한다.
 - **`application/`·`framework/`·`<project>/` 등 web/ 밖 코드를 절대 수정하지 않는다** — web의 접점은 실물 API 계약(URL+JSON)뿐이고, 백스톱 격리(WI)가 위반을 기계 차단한다.
 - 새 의존성의 **버전 값은 훈련 기억으로 적지 않는다** — 설치가 필요하면 resolve된 실제 설치 버전을 쓰고, resolve가 불가하면 기억값으로 채우지 말고 보고한다.
 - 검증(py_compile·check)을 실행하지 않았으면 실행한 것처럼 보고하지 않는다 — 미실행 사유를 명시한다.

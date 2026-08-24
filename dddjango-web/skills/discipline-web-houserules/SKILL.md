@@ -36,7 +36,7 @@ dddjango-web이 만드는 `web/` 코드에 한정된 집안 규칙이다. **표�
 - G0 판정 없는 영역 신설, 영역 직속 파일(urls.py·widget/·화면 개념 폴더·마커 파일 외), 빈 영역, 영역 중첩, 영역 이름에 컨테이너명·종류명(final.md §1).
 - `web/**`에 `application.`·`framework.` import — driving_layer schema import 포함(final.md §5①).
 - view·VM·템플릿의 API URL 리터럴·직접 HTTP 호출 — client/ 밖(final.md §5②~④).
-- 커스텀 `.js` 파일 신설·템플릿 inline `<script>` — vendored htmx 외 JS(final.md §5⑤).
+- 커스텀 `.js` 파일 신설·템플릿 inline `<script>`·htmx 속성 JS 채널(`hx-on*`·`js:` 접두·`hx-trigger` 조건식) — vendored 닫힌 2종(htmx·motion) 외 JS·motion.js 판형 이탈(final.md §5⑤).
 - 삼총사 접두 불일치, section에 소속 view 접두 없음, widget·component 이름에 view 이름 등장.
 - web path·name 리터럴이 urls.py 밖에(템플릿 하드코딩 href·redirect), 또는 `web/urls.py`에 영역 리터럴 직접 정의(영역 include 합산만 — final.md §5④), 커스텀 templatetags 신설(`{% include %}` 전용).
 - design_system/component 직속 파일, component에 BC 어휘, 템플릿·CSS의 생 색·간격 리터럴(tokens.css 밖).

@@ -20,6 +20,7 @@ description: dddjango-web 코디네이터가 Phase 1(설계)에서 spawn_agent�
 - (있으면) `design-ref/` 경로 — 동결 시안(이미지 또는 시안 HTML). 형상(배치·생김새)의 유일 근거이되 **직수입하지 않는다** — 마크업·클래스·인라인 스타일을 명세로 옮기지 않고, 구조는 규범으로 재구축한다(architecture-web §1 형상 공리).
 - (있으면 — `has_design_tokens`) `design-tokens.json` 경로 — 시안에서 절단된 색·치수 토큰. 시각 명세의 단일 근거다 — 시안 값을 눈대중으로 추정하지 말고 이 토큰을 인용해 박는다.
 - (있으면 — `has_design_images`) `asset-manifest.json` 경로 — 시안 이미지 목록. 너는 *어느 이미지(src)가 어느 화면 조각에* 들어가는지 의미만 연결한다 — 착지 경로 문자열은 박지 않는다(coder-web이 manifest에서 src로 조인).
+- (있으면 — `has_motion_notes`) `motion-notes.md` 경로 — 동적 표현 관찰 기록(요소/트리거/효과 값/재현 분류). 동적 표현 전수 처분(architecture-web §8)의 유일한 입력이다 — 동결 시안·토큰엔 동적 상태가 담기지 않는다.
 - 설계 명세를 저장할 경로.
 - 영역 배치 판정(G0 ①/②/③ — undecidable-web §4). ① 신설 / ② 기존 영역 포함이면 주어진 판정을 파일 경로에 그대로 반영한다(스스로 뒤집지 않는다). ③ «설계자가 정함» 위임이면 네가 영역을 정하고 *왜*를 명세에 남긴다 — 네 결정이 곧 판정이다.
 - (있으면) **G1 override 입력**: 사용자가 G1에서 기본(미적용)을 뒤집었거나 미해결 옵션을 정한 결정. 형식 = `[항목] 기본=미적용 → 채택` 또는 `[항목] 옵션A → 옵션B`. 이 입력이 있으면 너는 그 결정만 반영하는 **좁은 재호출**이다 — **해당 절만 제자리 갱신하고 타 절은 불변**으로 둔다(전체 재작성 금지).
@@ -37,6 +38,7 @@ description: dddjango-web 코디네이터가 Phase 1(설계)에서 spawn_agent�
 - **삼총사·form 파일**: 각 view의 `<view>_view.py`·`<view>_view_model.py`·`<view>_state.py`·`<view>.html`. `<view>_form.py`는 **입력 form이 있는 화면만**(조건 생성 — houserules §3) — form 유무를 화면마다 명시한다.
 - **계약 소비 매핑**: 화면·조각별 소비 엔드포인트를 동결본에서 **정확 인용(method + path)** — G1 직후 기계 절단(`server-contract.json`)의 입력이다. client 모듈(`client/<bc>/<capability>_client.py`)과 web 소유 response 모델 목록, 계약 오류(exception)의 표시 귀결까지 결정한다(architecture-web §6).
 - **상태**: 각 state의 모양 — 템플릿이 그대로 표시할 프리미티브와 중첩 dataclass(패키지 타입 직노출 금지·예외는 검증 실패 재렌더용 Django Form 1종 — architecture-web §3), forms↔VM 분담(입력 검증은 form·표시 판정은 VM).
+- **동적 표현 처분**(motion-notes 입력이 있으면 항상): 관찰 기록 **전 항목**을 채택/기각/한계로 처분한다 — 빈칸 0(architecture-web §8·크기 전수 연결과 같은 판형). 채택 항목은 재현 분류(CSS/러너)와 값의 토큰 매핑까지 확정하고, **«러너» 채택이 1개 이상이면 그 사실을 명세에 명시한다**(Coordinator의 motion.js 조건 설치 근거). «한계» 항목(패럴랙스·제스처 류)은 구현하지 않음을 명세에 남긴다.
 - **design_system**: 재사용 항목(사전 조사로 실사한 것만 — 실사 없는 재사용 선언 금지)과 신설 component(부품군 폴더 포함). **토큰 전수 연결**: 절단된 색·치수 토큰을 **전수** 채택 또는 기각한다 — 빈칸 0(architecture-web §8 — 빈칸은 coder-web이 그 값을 흘릴 자리다). **이미지 정형 목록**: `has_design_images`면 manifest 항목 수만큼 1건씩 — 어느 화면의 어느 조각이 그 이미지를 렌더하는지(또는 왜 안 쓰는지) — `src`로 지목해 박는다.
 - **HTMX**: section별 부분 재렌더 단위(hx-target)와 fragment 라우트 — fragment 진입점은 소속 view가 소유하고 영역 urls.py에 이름 붙은 path로 온다(architecture-web §4·§7).
 - **행위 목록**: 사용자가 육안으로 확인할 **외부 관찰 행위**를 명시한다(예: "품절이면 담기 버튼 비활성", "검증 실패 시 해당 form 필드에 오류 표시") — G2 화면 확인 체크리스트의 근거다. 표시 항목에는 문구·색뿐 아니라 **서체·간격(줄간·블록 간)** 확인 단위를 포함하고, **명세가 위험·근사로 기록한 항목(폰트 대체 등)은 각 1건의 체크 항목으로 전환한다** — 기록만 된 위험은 검증 루프에 편입되지 않는다.

@@ -19,7 +19,7 @@ user-invocable: false
 
 - web은 «내부의 외부 클라이언트»다 — 백엔드 BC는 실물 API 계약(URL+JSON)으로만 소비, `application/**` import 0. 없는 API는 가정하지 않고 «/dddjango로 발주»를 안내한다 (§1·§6)
 - 요청 구동 MVVM — VM은 무상태 조립기로 매 요청 재조립된다. watch·구독·상주 상태 없음 (§1)
-- 형상의 유일 근거는 동결 시안 — 명세에 산문 레이아웃 서술 금지·재현하되 직수입 금지. 기술은 순수 HTML+HTMX+CSS뿐(JS는 vendored htmx 단일) (§1)
+- 형상의 유일 근거는 동결 시안 — 명세에 산문 레이아웃 서술 금지·재현하되 직수입 금지. 기술은 순수 HTML+HTMX+CSS뿐(JS는 vendored 2파일 — htmx·motion 러너[조건 설치], 화면 코드는 `data-motion` 선언만) (§1)
 - 3단은 크기가 아니라 상태 조립(view)/화면 전속(section)/재사용(widget)으로 가른다 — 판별은 위에서부터, 처음 해당하는 것이 답 (§2)
 - view는 얇은 진입점(URL 바인딩·VM 호출·render·fragment 소유)뿐 — 판단 금지, 표시 판정은 VM이 유일한 자리다 (§3)
 - state는 불변 dataclass·템플릿이 아는 유일한 모양 — 패키지 타입 직노출 금지(예외: 검증 실패 재렌더용 Django Form 1종 허용). 입력 검증=form(`form/` 조건 생성)·표시 상태=VM 분담 (§3)

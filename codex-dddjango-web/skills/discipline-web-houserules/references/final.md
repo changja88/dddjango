@@ -1,6 +1,6 @@
 # dddjango-web 표준 파일트리
 
-> **출처:** dddjango-web 통합 스펙(2026-08-23) §1.3㉠ web 표준 트리 v3.1 · 확정 결정 대장 D1~D12 · dddart discipline-houserules(검증 판형).
+> **출처:** dddjango-web 통합 스펙(2026-08-23) §1.3㉠ web 표준 트리 v3.2 · 확정 결정 대장 D1~D12(D12는 v2 — 2026-08-24 모션 축) · dddart discipline-houserules(검증 판형).
 > 본문 속 `(D숫자)`는 **출처 표기**(결정 대장 번호)이며 로드 대상이 아니다 — 규칙 자체는 본문에 자족적으로 서술된다. 로드 가능한 위임은 두 가지뿐: 타 스킬은 "스킬명 + 주제", 동봉 파일은 `undecidable-web.md`.
 
 ---
@@ -52,12 +52,13 @@ web/
       exception.py                     # 계약 오류 표현
   design_system/
     foundation/
-      tokens.css                       # 색·타이포·간격 토큰
+      tokens.css                       # 색·타이포·간격·모션 토큰
+      motion.css                       # 공용 keyframes·모션 유틸(motion-*) — 값 정의는 tokens.css
     component/
       <부품군>/
         <component>.html               # BC 어휘 없는 순수 부품 — 부품군 1차·직속 금지
   static/
-    css/  js/                          # htmx 포함 (js는 vendored htmx 단일 — D12)
+    css/  js/                          # htmx 포함 (js는 vendored 2종 — htmx·motion[조건 설치] — D12v2)
     images/                            # 시안 이미지 착지 (fetch 도구·asset-manifest 배선)
 ```
 
@@ -67,6 +68,7 @@ web/
 - **공존**: 대상 프로젝트 저장소 최상위에서 `web/`은 백엔드 표준 트리(`application/`·`framework/`·`<project>/`)와 **공존**한다. 두 세계는 트리 위치로 기계 구분되며, 연결은 실물 API 계약(URL+JSON)뿐이다(§5).
 - 페이지 템플릿(`<view>.html`)은 `view/` 폴더에 `.py`와 병치한다 — 화면의 진입 코드와 페이지 템플릿은 한 폴더에서 함께 읽힌다.
 - `form/`은 **조건 생성**이다 — 입력 form이 있는 화면만 `<view>_form.py`를 만든다(골격 완비 비대상 — §3, exception.py 판형). `static/images/`는 **시안 이미지 착지** 칸이다(fetch 도구·asset-manifest 배선 — 에셋 규율은 implementation-ui 소유).
+- `motion.css`는 **공용 모션의 거처**다 — 공용 `@keyframes`·모션 유틸 클래스(`motion-*` 명명·화면 어휘 금지)만 오고, custom property 정의는 모션 값(`--duration-*`·`--ease-*` 류) 포함 전부 `tokens.css`다. **화면 전속 `@keyframes`는 그 화면 CSS(`static/css/`)에 `<view>_` 접두로** 둔다 — 화면 어휘를 design_system에 넣지 않는다. `static/js/`의 `motion.js`는 동적 표현 발동 러너(vendored 고정물 — §5⑤)로, 설계 명세가 러너 분류 항목을 채택한 빌드에만 설치된다(**조건 설치**).
 - 각 폴더에 담기는 코드의 내용 규칙(동작 규율)은 architecture-web 소유다: 3단 판별 §2 / 삼총사 규율 §3 / section·widget §4 / 승격·이동 §5 / 계약 소비 §6 / 라우팅 §7 / design_system 사용 §8. 구현 표기는 implementation-ui 소유. 이 문서는 **어떤 폴더·파일·이름이 존재해야 하는가(사실)** 를 소유한다.
 
 **base/ 핵심 사실**: `base.html`은 «거의 빈» 규범이다 — 공통 문서 골격·내비 셸·전역 게이트만 오고, 화면 어휘가 등장하지 않는다(판별 절차는 `undecidable-web.md` §6).
@@ -90,12 +92,12 @@ web/
 
 | 단위 | 항상 생성 (전부) |
 |---|---|
-| `web/` 컨테이너 최초 | `urls.py`·`apps.py`·`base/base.html`·`design_system/foundation/tokens.css`·`design_system/component/`·`static/css/`·`static/js/`(vendored htmx 파일)·`static/images/` |
+| `web/` 컨테이너 최초 | `urls.py`·`apps.py`·`base/base.html`·`design_system/foundation/tokens.css`·`design_system/foundation/motion.css`·`design_system/component/`·`static/css/`·`static/js/`(vendored htmx 파일)·`static/images/` |
 | 신규 `<screen_area>/` | `urls.py` + `widget/` |
 | 신규 `<view>/` (화면 개념) | `view/`·`view_model/`·`state/`·`section/` 종류 4폴더 전부 — `form/`은 입력 form이 있는 화면에서 첫 Form 때 생성(골격 대상 아님, exception.py 판형) |
 | 신규 `client/<bc>/` | `<capability>_client.py` + `response/` — `exception.py`는 첫 계약 오류 표현 때 생성(골격 대상 아님) |
 
-- `static/js/`의 vendored htmx 파일: htmx 파일 실물의 입수·설치는 Coordinator의 web 배선 전제조건(ⓕ) 소관 — 골격 검사는 존재만 본다.
+- `static/js/`의 vendored JS: htmx 파일 실물의 입수·설치는 Coordinator의 web 배선 전제조건(ⓕ) 소관 — 골격 검사는 **htmx 존재만** 본다. `motion.js`는 조건 설치(명세의 러너 채택 항목 ≥1일 때 Coordinator가 플러그인 판형을 복사 — 커맨드 소관)라 골격·존재 검사 대상이 아니다 — 존재하면 순수성 검사(§5⑤)가 판형 일치를 검증한다.
 - **마커 파일**: Python 패키지 폴더(`.py`가 사는 곳 — `view/`·`view_model/`·`state/`·`form/`·`client/` 계열)는 비어 있어도 `__init__.py`를 둔다. HTML 전용 폴더(`section/`·`widget/`·`design_system/component/`)는 git이 빈 디렉터리를 추적하지 않으므로 비면 `.gitkeep`을 둔다. 두 마커 파일은 «직속 파일 금지»의 명시 예외다.
 - design_system은 foundation·component **2칸 시작** — `theme/`·`util/`은 *만들지 않는 칸*이다. 실수요가 생기면 그때 증설하고, 미리 파지 않는다.
 - **test/ 없음 — web 트랙은 자동 테스트를 두지 않는다.** `test/` 폴더·`test_*.py`·빈 테스트 파일을 만들지 않는다. 검증 채널은 사용자 육안 확인 + 결정적 백스톱(§7) + 규율 감사다.
@@ -129,10 +131,11 @@ web/
 | `client/<bc>/` | 계약 능력(capability) | `<capability>_client.py` | `order_query_client.py` → 클래스 `OrderQueryClient` |
 | `client/<bc>/response/` | 응답 모델 | `<response>_response.py` | `order_summary_response.py` → 클래스 `OrderSummaryResponse` |
 | `client/<bc>/` | 고정 | `exception.py` | 계약 오류 표현 `*Exception` 모음 |
-| `design_system/foundation/` | 고정 | `tokens.css` | CSS 커스텀 프로퍼티(`--color-*`·`--space-*` 류) — 시각 값의 단일 출처 |
+| `design_system/foundation/` | 고정 | `tokens.css` | CSS 커스텀 프로퍼티(`--color-*`·`--space-*`·`--duration-*`·`--ease-*` 류) — 시각 값(모션 값 포함)의 단일 출처 |
+| `design_system/foundation/` | 고정 | `motion.css` | 공용 `@keyframes`·모션 유틸 클래스 — 이름은 `motion-*` 고정(화면 어휘 금지)·custom property 정의 금지(값은 tokens.css, keyframes 중간값 리터럴만 허용) |
 | `design_system/component/<부품군>/` | 수식·변형 | `<component>.html` | `button/primary_button.html` |
-| `static/js/` | **vendored htmx 단일** — 원명 그대로 | (vendored htmx 파일) | `htmx.min.js` — 커스텀 `.js`·타 라이브러리 신설 금지(§5⑤) |
-| `static/css/` | 기능·범위 | `<이름>.css` | 파일명 snake_case — 시각 값은 tokens.css의 `var()` 참조 |
+| `static/js/` | **vendored 닫힌 2종** — 원명 그대로 | (vendored 파일) | `htmx.min.js`·`motion.js`(조건 설치 — 플러그인 판형 그대로) — 커스텀 `.js`·타 라이브러리 신설 금지(§5⑤) |
+| `static/css/` | 기능·범위 | `<이름>.css` | 파일명 snake_case — 시각 값은 tokens.css의 `var()` 참조·화면 전속 `@keyframes`는 `<view>_` 접두 |
 | `static/images/` | 시안 자산 | `<이름>.<확장자>` — snake_case | 시안 이미지 착지 칸 — 절단 도구가 snake_case로 정규화해 착지·fetch 도구·asset-manifest 배선(에셋 규율은 implementation-ui 소유) |
 
 - 부품군 폴더 = 파일 접미사 — `button/` 안은 `*_button.html`. 축약(`btn`)·직속 파일·정크드로어 군(`widget/`·`etc/`) 금지.
@@ -151,7 +154,7 @@ web/
 
 ④ **라우트 리터럴의 유일 거처 2곳** — web 자신의 path·name 리터럴은 `urls.py`뿐이다(영역 리터럴은 `<screen_area>/urls.py`, `web/urls.py`는 영역 include 합산만). 그 외 어디서든 — 템플릿 href·hx-get·redirect — `{% url %}`/`reverse`의 **이름만** 참조한다. BC API URL 리터럴은 그 계약의 client 모듈이 유일 거처다 — VM·view·템플릿에 API URL 문자열이 보이면 위반이다.
 
-⑤ **D12 순수성 — 커스텀 JavaScript 금지, JS는 vendored htmx 단일**: `web/**`에 `.js` 파일 신설 금지(vendored htmx 파일 제외), **다른 JS 라이브러리의 vendored 추가도 금지**(예외는 htmx 하나뿐이다), 템플릿 inline `<script>` 금지. 동작은 HTMX 속성과 CSS로 표현하고, 그걸로 표현 불가한 동작 요구는 우회 스크립트를 짜지 말고 설계로 반송한다.
+⑤ **D12 v2 순수성 — 커스텀 JavaScript 금지, JS는 vendored 닫힌 2파일**: `web/**`에 `.js` 파일 신설 금지 — 허용은 `static/js/`의 vendored `htmx.min.js`와 `motion.js`(동적 표현 발동 러너·조건 설치)뿐이고, **다른 JS 라이브러리의 vendored 추가도 금지**(닫힌 열거 — «vendored 형태면 된다»가 아니다). `motion.js`는 플러그인 판형 그대로만 둔다 — 수정·확장은 위반이며 백스톱이 판형 해시로 대조한다. 템플릿 inline `<script>` 금지 — 로드 태그는 base.html의 `{% static %}` 정확 경로 2종만이다(`undecidable-web.md` §6). **htmx 속성의 JS 채널도 금지다**: `hx-on*`, `hx-vals`/`hx-headers`의 `js:` 접두, `hx-trigger`의 `[조건식]`. 동작은 HTMX 속성·CSS 모션·`data-motion` 선언으로 표현하고, 그걸로 표현 불가한 동작 요구(패럴랙스·제스처 추종 류)는 우회 스크립트를 짜지 말고 설계로 반송한다.
 
 ⑥ **지식은 view → VM → client 한 방향** — 역방향 참조(client가 VM을, VM이 view·템플릿을 아는 것) 금지. **템플릿은 state만 읽는다** — 템플릿에서 VM 메서드 호출·client 접근 금지, widget에는 명시 context만 넘긴다.
 
@@ -189,8 +192,8 @@ python "${CLAUDE_PLUGIN_ROOT}"/scripts/backstop.py <대상 프로젝트 루트> 
 - `--all`은 게이트 무시 전역 감사용 — 레거시 프로젝트에서 발견 폭주가 정상이며 파이프라인 게이트 용도가 아니다.
 - 순환 등 래칫형 검사가 도입되면 기준선은 `.dddjango-web/backstop-baseline.json`(커밋 대상).
 - **green 판정 보조**: web 트랙은 자동 테스트가 없으므로 러너와 별개로 `python -m py_compile`(신규 `.py` 문법) + `manage.py check`(Django 시스템 검사)를 green 판정 보조로 쓴다.
-- **CSS 병치 결정**: design_system CSS(tokens.css)는 `design_system/foundation/` **병치**가 결정이다 — 화면 CSS(`static/css/`)와 별개다. 병치 파일의 정적 서빙은 커맨드의 web 배선이 해결한다(아래 handoff).
-- **호스트 배선 handoff**: 호스트 프로젝트 배선(INSTALLED_APPS·TEMPLATES DIRS·STATICFILES_DIRS 프리픽스 튜플·ROOT_URLCONF include·`ALLOWED_HOSTS`의 "testserver"·vendored htmx 설치)은 **커맨드(Coordinator Phase 0 «web 배선 전제조건 검사») 소관**이다 — 이 스킬은 배선을 규정하지 않는다.
+- **CSS 병치 결정**: design_system CSS(tokens.css·motion.css)는 `design_system/foundation/` **병치**가 결정이다 — 화면 CSS(`static/css/`)와 별개다. 병치 파일의 정적 서빙은 커맨드의 web 배선이 해결한다(아래 handoff).
+- **호스트 배선 handoff**: 호스트 프로젝트 배선(INSTALLED_APPS·TEMPLATES DIRS·STATICFILES_DIRS 프리픽스 튜플·ROOT_URLCONF include·`ALLOWED_HOSTS`의 "testserver"·vendored JS 설치[htmx — ⓕ·motion.js — 조건 설치])은 **커맨드(Coordinator Phase 0 «web 배선 전제조건 검사»·Phase 2 진입 준비) 소관**이다 — 이 스킬은 배선을 규정하지 않는다.
 - **반송 패밀리 → 교정 절 백링크**: WS(구조·골격) → §1 트리·§2 성장·§3 골격 / WI(격리) → §5 / WN(명명) → §4 / WP(순수성) → §5⑤.
 - **에이전트 분업**: 러너가 잡는 것(경로·격리·명명·순수성)은 흉내내지 말고 이 문서대로 만들면 통과한다. 러너가 못 보는 **의미 판별 6종**(view/section, 화면 전속, BC 어휘, 영역 귀속, 두 번째 개념, base «거의 빈»)은 `undecidable-web.md`가 판별 절차·배정의 단일 출처다.
 
@@ -205,7 +208,7 @@ python "${CLAUDE_PLUGIN_ROOT}"/scripts/backstop.py <대상 프로젝트 루트> 
 | 전역 `templates/<app>/` 트리 | 병치 트리 — 페이지 템플릿은 `view/`, 조각은 `section/`·`widget/`(§1) |
 | CBV 관성(TemplateView·ListView 상속) | 함수 뷰 + VM — 표시 판정은 VM으로(§4 view·view_model 행) |
 | view에서 context dict 직접 조립 | state dataclass(`<view>_state.py`) — 템플릿은 state만 읽는다(§5⑥) |
-| inline `<script>`·커스텀 `.js` | HTMX 속성으로 표현(§5⑤ — D12) |
+| inline `<script>`·커스텀 `.js` | HTMX 속성·CSS 모션·`data-motion` 선언으로 표현(§5⑤ — D12v2) |
 | 템플릿·CSS의 색·크기 리터럴 | tokens.css 토큰 — `var()` 참조(§4 tokens 행) |
 | 무네임스페이스 static 경로(`static/style.css` 류) | 프리픽스 경로 — STATICFILES_DIRS 프리픽스 튜플 배선 전제(§7 handoff) |
 

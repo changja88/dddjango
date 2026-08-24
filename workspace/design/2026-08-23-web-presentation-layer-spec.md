@@ -16,7 +16,7 @@
 >
 > - web은 **«내부의 외부 클라이언트»**다: 같은 저장소의 `web/` 영역에 살지만, 백엔드 BC의 **실물 API 계약(URL+JSON)만** in-process HTTP로 소비한다. `application/**` import는 0이며 결정적 백스톱이 강제한다. 필요한 API가 없으면 «/dddjango로 발주»를 안내한다.
 > - **BC·DDD 개념을 전혀 다루지 않는다** — 단위는 화면(내비게이션 영역 > 화면 개념)이다.
-> - **기술 제약(사용자 확정, D12)**: **순수 HTML + HTMX + CSS만 사용한다.** JS 프레임워크·커스텀 JavaScript 없음 — JS는 vendored htmx가 유일하다. 구조 표준은 **요청 구동 MVVM 삼총사**(view/view_model/state + 템플릿), 갱신 표준은 **HTMX 부분 재렌더**.
+> - **기술 제약(사용자 확정, D12 — v2 2026-08-24)**: **순수 HTML + HTMX + CSS만 사용한다.** JS 프레임워크·커스텀 JavaScript 없음 — JS는 vendored 닫힌 2파일(`static/js/`의 `htmx.min.js`·`motion.js`[동적 표현 발동 러너·조건 설치])뿐이며 그 외 vendored 추가도 금지다. 구조 표준은 **요청 구동 MVVM 삼총사**(view/view_model/state + 템플릿), 갱신 표준은 **HTMX 부분 재렌더**.
 > - **자동 테스트를 두지 않는다** — 검증은 사용자 육안 + 결정적 백스톱 + 규율 리뷰다.
 > - **완료 선언은 dddart 게이트 판형과 동일(사용자 확정)** — 결정적 백스톱 green + 규율 감사 + 게이트 배너에서 사용자 승인(화면은 육안 확인).
 > - 형상(배치·생김새)의 근거는 **동결된 시안**(이미지 또는 시안 HTML)이며, **재현하되 직수입하지 않는다**(마크업·클래스·인라인 스타일 복붙 금지 — 구조는 규범으로 재구축).
@@ -38,7 +38,7 @@
 | D9 | 제공 형태 | **결정 (사용자)** | **별개 플러그인 dddjango-web** — 같은 레포·마켓(Claude·Codex), dddjango 무수정. 접점 = 대상 프로젝트 공유·실물 API 계약 소비·격리 백스톱 |
 | D10 | dddjango 기존 서버렌더 세계 | **결정 (사용자)** | 유지(무수정)·공존 — 삭제하지 않고 dddjango-web 신설에 집중 |
 | D11 | 스펙 작성 방법 | **결정 (사용자)** | dddart 전수 인벤토리 → 3처분(버림/현지화/그대로) 대조표로 유도. 필터: BC/DDD 불요·테스트 없음·요청 구동·화면 단위·계약=실물 API |
-| D12 | 기술 제약 | **결정 (사용자)** | **순수 HTML+HTMX+CSS만.** JS 프레임워크·커스텀 JS 금지 — JS는 vendored htmx 단일. 백스톱 후보: web/**에 .js 신설 금지(htmx 제외)·템플릿 inline `<script>` 금지 |
+| D12 | 기술 제약 | **결정 (사용자 · v2 2026-08-24)** | **순수 HTML+HTMX+CSS만.** JS 프레임워크·커스텀 JS 금지 — JS는 vendored **닫힌 2파일**(`htmx.min.js`·`motion.js` — 동적 표현 발동 러너, 명세의 러너 채택 항목 ≥1일 때만 설치)이며 다른 JS 라이브러리의 vendored 추가도 금지. 화면 코드는 `data-motion` 선언만·motion.js 수정 금지(판형 해시 대조). 백스톱: WP — .js 화이트리스트(그룹별)·inline `<script>` 금지·htmx `js:` 채널 금지·해시 대조 |
 | — | 형상 SoT | **결정 (사용자)** | 시안(이미지 또는 시안 HTML)이 형상의 유일 근거·명세 산문 레이아웃 금지·«재현이지 직수입이 아니다»·시안 없으면 coder 재량+사용자 육안·충실도 대조는 리뷰 항목(시안 있을 때만) |
 | — | 갈림 이력 | 결정 | (a)영역=내비게이션 단위(경계 곤란 시 G0 배치축 3선택 판형) · (b)템플릿 병치 · (d)CSS 병치 · (e)templatetags 금지(`{% include %}` 전용) · (g)ui_extension 미차용(VM이 그 자리) · (h)theme/util 미차용 시작 · (i)라우트 리터럴 단일 출처 · test/ 없음 · 공통 호출기 없음 |
 
@@ -76,16 +76,17 @@ web/
       exception.py                     # 계약 오류 표현
   design_system/
     foundation/
-      tokens.css                       # 색·타이포·간격 토큰
+      tokens.css                       # 색·타이포·간격·모션 토큰
+      motion.css                       # 공용 keyframes·모션 유틸(motion-*) — 값 정의는 tokens.css
     component/
       <부품군>/
         <component>.html               # BC 어휘 없는 순수 부품 — 부품군 1차·직속 금지
   static/
-    css/  js/                          # htmx 포함 (js는 vendored htmx 단일 — D12)
+    css/  js/                          # htmx 포함 (js는 vendored 2종 — htmx·motion[조건 설치] — D12v2)
     images/                            # 시안 이미지 착지 (fetch 도구·asset-manifest 배선)
 ```
 
-(트리 v3.1 — 2026-08-23 R1 처분 Q1·Q2 반영: form/ 종류 폴더(조건 생성)·static/images/ 추가.)
+(트리 v3.2 — 2026-08-24 모션 축 반영: foundation/motion.css·static/js vendored 2종[D12v2]. v3.1 — 2026-08-23 R1 처분 Q1·Q2 반영: form/ 종류 폴더(조건 생성)·static/images/ 추가.)
 
 **㉡ architecture-web 스킬 절 구성 (확정)** — §1 정의와 경계(외부 클라이언트·요청 구동 MVVM·형상 공리·handoff 표) / §2 3단 판별표 / §3 삼총사 규율(view 진입점뿐·VM 표시 판단 유일 자리·state 불변·forms↔VM 분담) / §4 section·widget 규율(dumb·접두·HTMX 재렌더 단위) / §5 승격·이동 표(+역방향 절제) / §6 계약 소비(client 전속·api 표면만·발주 안내·백스톱 근거) / §7 라우팅(리터럴 단일 출처) / §8 design_system 사용(토큰 강제·재사용 우선·BC 어휘 금지)
 

@@ -52,7 +52,7 @@
 
 ## §6. base "거의 빈" — base.html 입장
 
-**절차**: base.html에 오는 것은 **공통 문서 골격**(head·tokens.css·vendored htmx 로드)·**내비 셸**·**전역 게이트**(전 화면 공통 차단·안내 요소 — 점검 배너 류)뿐이다. **화면 어휘 금지** — 특정 화면·특정 BC의 이름·문자열·분기가 base에 보이면 그 조각은 base 소속이 아니다: 화면 전속이면 그 화면 section, 영역 재사용이면 widget, 순수 시각이면 design_system/component.
+**절차**: base.html에 오는 것은 **공통 문서 골격**(head·tokens.css·motion.css `<link>`·vendored htmx 로드·**motion.js `<script defer>`는 설치된 빌드만** — 로드 태그는 전부 `{% static %}` 정확 경로)·**내비 셸**·**전역 게이트**(전 화면 공통 차단·안내 요소 — 점검 배너 류)뿐이다. **화면 어휘 금지** — 특정 화면·특정 BC의 이름·문자열·분기가 base에 보이면 그 조각은 base 소속이 아니다: 화면 전속이면 그 화면 section, 영역 재사용이면 widget, 순수 시각이면 design_system/component.
 
 **신호**: base.html에 특정 화면에서만 참여하는 블록·조건 분기가 는다 / base가 특정 화면의 state를 전제한다 / 내비에 도메인 데이터 표시(뱃지·카운트 류)가 필요해진다 — base가 조회하지 말고 그 데이터를 소유할 view를 정해 HTMX 조각으로 끼운다.
 

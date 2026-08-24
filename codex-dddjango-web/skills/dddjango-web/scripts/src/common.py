@@ -59,8 +59,10 @@ RESERVED_NAMES: Set[str] = CONTAINER_DIRS | KIND_DIRS | {'web', 'widget'}
 STATIC_DIRS: Set[str] = {'css', 'js', 'images'}
 # houserules §4 — component 정크드로어 군 금지
 JUNK_GROUPS: Set[str] = {'widget', 'etc'}
-# houserules §5⑤·§4 — vendored htmx 허용 경로(web-상대) — JS 유일 예외(D12)
+# houserules §5⑤·§4 — vendored JS 허용(web-상대) — 닫힌 2그룹(D12v2): htmx 변형 중 1 + motion.js
 HTMX_ALLOWED: Set[str] = {'static/js/htmx.min.js', 'static/js/htmx.js'}
+MOTION_JS: str = 'static/js/motion.js'
+VENDORED_JS_ALLOWED: Set[str] = HTMX_ALLOWED | {MOTION_JS}
 # houserules §4 총괄표 — 종류 폴더 ↔ py 접미사
 KIND_PY_SUFFIX: Dict[str, str] = {
     'view': '_view.py',
