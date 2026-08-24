@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import unicodedata
@@ -136,6 +137,26 @@ def check_djr_fragments(graph, registry: dict[str, str]) -> list[dict]:
     return errors
 
 
+_GRAPH_CACHE: dict[str, object] = {}
+_SHAPES_CACHE: dict[str, object] = {}
+
+
+def _cached_graph(path: Path):
+    """병합 재료 ttl 파스 캐시 — 프로세스당 1회만 파스한다(파일마다 전 재료 재파스 O(N²) 제거).
+
+    --write 의 정본형 재직렬화는 트리플 집합을 보존하므로(게이트 ③ RDFC-1.0 해시가 보증)
+    재작성 전 파스본을 계속 써도 병합 그래프의 트리플 집합은 동일하다."""
+    from rdflib import Graph
+
+    key = str(path.resolve())
+    g = _GRAPH_CACHE.get(key)
+    if g is None:
+        g = Graph()
+        g.parse(path, format="turtle")
+        _GRAPH_CACHE[key] = g
+    return g
+
+
 def merged_data_graph(file_graph, path: Path, root: Path):
     from rdflib import Graph
 
@@ -146,19 +167,25 @@ def merged_data_graph(file_graph, path: Path, root: Path):
         for extra in sorted(extra_dir.glob("*.ttl")):
             if extra.resolve() == path.resolve():
                 continue
-            merged.parse(extra, format="turtle")
+            for triple in _cached_graph(extra):
+                merged.add(triple)
     return merged
 
 
 def shapes_graph(root: Path):
     from rdflib import Graph
 
+    key = str(root.resolve())
+    if key in _SHAPES_CACHE:
+        return _SHAPES_CACHE[key]
     g = Graph()
     found = False
     for shp in sorted((root / "shapes").glob("*.ttl")):
         g.parse(shp, format="turtle")
         found = True
-    return g if found else None
+    result = g if found else None
+    _SHAPES_CACHE[key] = result
+    return result
 
 
 def run_gate(path: Path, registry: dict[str, str], write: bool, root: Path) -> dict:
@@ -257,6 +284,12 @@ def run_gate(path: Path, registry: dict[str, str], write: bool, root: Path) -> d
     return result
 
 
+def _gate_job(job: tuple) -> dict:
+    """프로세스 풀 워커 진입점 — check 모드 고정(write=False)."""
+    path_str, registry, root_str = job
+    return run_gate(Path(path_str), registry, False, Path(root_str))
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="온톨로지 4단 저작 게이트")
     ap.add_argument("files", nargs="*")
@@ -272,7 +305,19 @@ def main() -> int:
         print(f"[ontology-gate] 도구 오류: prefixes.ttl 등재 로드 실패 — {exc}")
         return 2
 
-    results = [run_gate(p, registry, args.write, root) for p in target_files(args.files, root)]
+    files = target_files(args.files, root)
+    workers = min(len(files), os.cpu_count() or 1)
+    if args.write or workers < 2 or len(files) < 8:
+        # --write 는 순차 유지 — 재작성 중 파일을 다른 워커가 병합 재료로 읽는 경합 방지.
+        # 소수 파일(저작 루프·스모크 임시 트리)은 풀 기동 비용이 더 커서 순차가 빠르다.
+        results = [run_gate(p, registry, args.write, root) for p in files]
+    else:
+        # check 모드는 저장소 읽기 전용 — 파일 단위 병렬(결과는 제출 순서로 수집 → 출력 결정론 유지)
+        from concurrent.futures import ProcessPoolExecutor
+
+        jobs = [(str(p), registry, str(root)) for p in files]
+        with ProcessPoolExecutor(max_workers=workers) as ex:
+            results = list(ex.map(_gate_job, jobs))
     report = {"schema": "gate-report/1", "results": results}
     failed = [r for r in results if r["verdict"] == "fail"]
 

@@ -3,13 +3,34 @@ SHELL := /bin/bash
 # DRY=1 이면 실제 변경/커밋/푸시/Release 없이 시뮬레이션만 (버전 선택·기록 미리보기까지 실제 로직 실행)
 DRY ?= 0
 
-.PHONY: release release-web _release ontology-env ontology-hooks verify verify-ontology verify-base verify-web verify-mutation verify-firing verify-runready rulepack
+.PHONY: release release-web _release ontology-env ontology-hooks verify verify-ontology verify-base verify-base-core verify-base-cross verify-base-backstop verify-base-regen verify-web verify-mutation verify-firing verify-runready rulepack
 
 VENV_PY := .venv/bin/python
 
 # 저장소 검증 세트 단일 출처 (D1 — release [2/7] 이 이 타깃을 호출)
-# 롤백·중단 시 되돌림: 아래 의존에서 verify-ontology 한 줄 삭제 (t0-plan §7)
-verify: verify-ontology verify-base verify-web
+# 세 타깃은 병렬 실행한다 — 전 도구의 verify 모드가 저장소 읽기 전용(쓰기는 --write/--emit
+# 플래그 뒤·임시 산출은 tempfile 격리)임을 정적 조사·동시 실행 실측(2026-08-24 green)으로
+# 확인했다. 총 소요 = 최장 타깃 하나(≈ verify-ontology). 로그는 타깃별로 받아 고정 순서로
+# 일괄 출력한다(GNU make 3.81 은 --output-sync 부재 — 인터리브 방지).
+# 롤백·중단 시 되돌림: VERIFY_TARGETS 에서 verify-ontology 삭제 (t0-plan §7)
+VERIFY_TARGETS := verify-ontology verify-base-core verify-base-cross verify-base-backstop verify-base-regen verify-web
+
+verify:
+	@set -euo pipefail; \
+	tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT; \
+	echo "[verify] 병렬 실행: $(VERIFY_TARGETS) — 타깃별 로그는 완료 시 일괄 출력(진행 중 무출력이 정상)"; \
+	pids=""; \
+	for t in $(VERIFY_TARGETS); do \
+		$(MAKE) --no-print-directory "$$t" > "$$tmp/$$t.log" 2>&1 & pids="$$pids $$t=$$!"; \
+	done; \
+	rc=0; \
+	for entry in $$pids; do \
+		t=$${entry%%=*}; pid=$${entry##*=}; \
+		if wait "$$pid"; then st="green"; else st="RED"; rc=1; fi; \
+		echo "===== [$$t] $$st ====="; \
+		cat "$$tmp/$$t.log"; \
+	done; \
+	exit $$rc
 
 verify-web:
 	@set -euo pipefail; \
@@ -46,14 +67,18 @@ verify-ontology:
 	echo "[verify-ontology 11/11] 질의 카탈로그 골든 (Q1~Q4 양성·음성·run 격리)"; \
 	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/query_golden_check.py
 
-# 기존 릴리즈 검증 세트 — 시스템 python3 유지 (실측 기반 보존, t0-plan A8)
-verify-base:
+# 기존 릴리즈 검증 세트 — 시스템 python3 유지 (실측 기반 보존, t0-plan A8).
+# 시간 균형 4그룹으로 분할 — `verify` 가 그룹을 병렬로 직접 띄운다(그룹 경계는 실측
+# 프로파일 기준: backstop 75s · cross 계열 69s · regen 계열 63s · 나머지 합 ~36s).
+# 이 타깃 단독 실행은 4그룹 순차와 같다(커버리지 동일).
+verify-base: verify-base-core verify-base-cross verify-base-backstop verify-base-regen
+
+verify-base-core:
 	@set -euo pipefail; \
 	if [[ -n "$${DJR_FINDINGS_JSON:-}" ]]; then echo "[preflight] DJR_FINDINGS_JSON 감지 — 외부 레코드 경로 격리 고지(차단 아님 — S#7): 메타 하네스(baseline·count·cross·fixture·backstop·findings-smoke)는 subprocess env 에서 스스로 제거한다. 잔여: gate 스모크 3종(registry·bc·anchor)은 미격리 — 지정 경로에 스모크 레코드가 append 될 수 있다"; fi; \
-	echo "[verify-base] 검증 세트 (corpus·corpus-lint·spec·checker·cross-matrix·tree·coverage·fixture·baseline·count-golden·findings-smoke·drift-golden·anchor-smoke·gate-smoke·backstop·bounce-counter·bounce-mutation·regen-golden·regen-loop·runtime-parity·byte-copy)"; \
+	echo "[verify-base-core] 검증 세트 (corpus·corpus-lint·spec·checker·tree·coverage·fixture·baseline·count-golden·findings-smoke·drift-golden·anchor-smoke·bounce-counter·bounce-mutation·paths·rulepack·manifest·ab-score·byte-copy)"; \
 	python3 workspace/tools/corpus_mirror_sync.py --check; \
 	PYTHONUTF8=1 python3 workspace/tools/corpus_lint.py; \
-	PYTHONUTF8=1 python3 workspace/tools/checker_cross_matrix.py; \
 	PYTHONUTF8=1 python3 workspace/tools/spec_lint.py; \
 	PYTHONUTF8=1 python3 workspace/tools/checker_lint.py; \
 	PYTHONUTF8=1 python3 workspace/tools/tree_mirror_check.py; \
@@ -64,21 +89,34 @@ verify-base:
 	PYTHONUTF8=1 python3 workspace/tools/findings_smoke.py; \
 	PYTHONUTF8=1 python3 workspace/tools/construct_drift_report.py; \
 	PYTHONUTF8=1 python3 workspace/tools/anchor_diff_smoke.py; \
-	PYTHONUTF8=1 python3 workspace/tools/registry_gate_smoke.py; \
-	PYTHONUTF8=1 python3 workspace/tools/bc_registry_smoke.py; \
-	PYTHONUTF8=1 python3 workspace/tools/api_error_backstop_matrix.py; \
 	PYTHONUTF8=1 python3 workspace/tools/session_bounce_counter.py --self-test; \
 	PYTHONUTF8=1 python3 workspace/tools/session_bounce_counter.py --mutation-test; \
-	PYTHONUTF8=1 python3 workspace/tools/regen_loop_prototype.py --self-test; \
-	PYTHONUTF8=1 python3 workspace/tools/regen_loop_smoke.py; \
-	PYTHONUTF8=1 python3 workspace/tools/runtime_parity_check.py; \
-	PYTHONUTF8=1 python3 workspace/tools/rulepack_smoke.py; \
 	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/derive_path_globs.py --check; \
 	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_rulepack.py --check; \
 	PYTHONUTF8=1 python3 workspace/tools/manifest_seal.py --check --draft; \
 	PYTHONUTF8=1 python3 workspace/tools/manifest_seal.py --self-test; \
 	PYTHONUTF8=1 python3 workspace/tools/ab_score.py --self-test; \
 	diff -rq dddjango/scripts codex-dddjango/skills/dddjango/scripts --exclude=__pycache__
+
+verify-base-cross:
+	@set -euo pipefail; \
+	echo "[verify-base-cross] 검증 세트 (cross-matrix·registry-gate-smoke·bc-registry-smoke)"; \
+	PYTHONUTF8=1 python3 workspace/tools/checker_cross_matrix.py; \
+	PYTHONUTF8=1 python3 workspace/tools/registry_gate_smoke.py; \
+	PYTHONUTF8=1 python3 workspace/tools/bc_registry_smoke.py
+
+verify-base-backstop:
+	@set -euo pipefail; \
+	echo "[verify-base-backstop] 검증 세트 (api-error backstop matrix)"; \
+	PYTHONUTF8=1 python3 workspace/tools/api_error_backstop_matrix.py
+
+verify-base-regen:
+	@set -euo pipefail; \
+	echo "[verify-base-regen] 검증 세트 (regen-golden·regen-loop·runtime-parity·rulepack-smoke)"; \
+	PYTHONUTF8=1 python3 workspace/tools/regen_loop_prototype.py --self-test; \
+	PYTHONUTF8=1 python3 workspace/tools/regen_loop_smoke.py; \
+	PYTHONUTF8=1 python3 workspace/tools/runtime_parity_check.py; \
+	PYTHONUTF8=1 python3 workspace/tools/rulepack_smoke.py
 
 # 변이 자가검사 — 상시 verify 와 분리(T2-4 적대 리뷰 AQ-10: 검출력 증명은 무겁고 상시 아님).
 # 팩·selector 를 건드린 커밋은 이 타깃도 green 이어야 한다.
@@ -167,62 +205,75 @@ release-web: _release
 _release:
 	@set -euo pipefail; \
 	DRY="$(DRY)"; \
-	command -v jq >/dev/null || { echo "ERROR: jq 필요"; exit 1; }; \
-	if [[ "$$DRY" != 1 ]]; then command -v gh >/dev/null || { echo "ERROR: gh(GitHub CLI) 필요"; exit 1; }; fi; \
-	if [[ "$$DRY" == 1 ]]; then echo "··· DRY-RUN 모드: 실제 변경/커밋/푸시 없음 ···"; echo ""; fi; \
+	if [ -t 1 ]; then ESC=$$(printf '\033'); B="$$ESC[1m"; DM="$$ESC[2m"; CY="$$ESC[36m"; GR="$$ESC[32m"; YE="$$ESC[33m"; RD="$$ESC[31m"; X="$$ESC[0m"; \
+	else B=""; DM=""; CY=""; GR=""; YE=""; RD=""; X=""; fi; \
+	HR="$${DM}────────────────────────────────────────────────────$${X}"; \
+	die() { printf '%s✖ %s%s\n' "$${RD}$${B}" "$$1" "$$X" >&2; exit 1; }; \
+	note() { printf '%s! %s%s\n' "$$YE" "$$1" "$$X"; }; \
+	STEP=0; T0=$$(date +%s); SS=$$T0; \
+	step() { STEP=$$((STEP+1)); SS=$$(date +%s); printf '\n%s▶ %d/7%s %s%s%s\n' "$${CY}$${B}" "$$STEP" "$$X" "$$B" "$$1" "$$X"; }; \
+	ok() { printf '  %s✓ %s%s %s(%d초)%s\n' "$$GR" "$$1" "$$X" "$$DM" "$$(($$(date +%s)-SS))" "$$X"; }; \
+	command -v jq >/dev/null || die "jq 필요"; \
+	if [[ "$$DRY" != 1 ]]; then command -v gh >/dev/null || die "gh(GitHub CLI) 필요"; fi; \
+	if [[ "$$DRY" == 1 ]]; then note "DRY-RUN 모드: 실제 변경/커밋/푸시 없음"; fi; \
 	CLAUDE_V=$$(jq -r '.version' $(CLAUDE_MANIFEST)); \
 	CODEX_V=$$(jq -r '.version' $(CODEX_MANIFEST)); \
-	if [[ -z "$$CLAUDE_V" || "$$CLAUDE_V" == "null" ]]; then echo "ERROR: $(CLAUDE_MANIFEST)에 version 없음"; exit 1; fi; \
-	if [[ "$$CLAUDE_V" != "$$CODEX_V" ]]; then echo "ERROR: 현재 버전 불일치 — Claude=$$CLAUDE_V Codex=$$CODEX_V"; exit 1; fi; \
-	if [[ ! "$$CLAUDE_V" =~ ^[0-9]+\.[0-9]+\.[0-9]+$$ ]]; then echo "ERROR: 현재 버전이 X.Y.Z 형식 아님: $$CLAUDE_V"; exit 1; fi; \
+	if [[ -z "$$CLAUDE_V" || "$$CLAUDE_V" == "null" ]]; then die "$(CLAUDE_MANIFEST)에 version 없음"; fi; \
+	if [[ "$$CLAUDE_V" != "$$CODEX_V" ]]; then die "현재 버전 불일치 — Claude=$$CLAUDE_V Codex=$$CODEX_V"; fi; \
+	if [[ ! "$$CLAUDE_V" =~ ^[0-9]+\.[0-9]+\.[0-9]+$$ ]]; then die "현재 버전이 X.Y.Z 형식 아님: $$CLAUDE_V"; fi; \
 	BR=$$(git rev-parse --abbrev-ref HEAD); \
 	if [[ "$$BR" != "main" ]]; then \
-		if [[ "$$DRY" == 1 ]]; then echo "[dry-run] 경고: main 브랜치 아님 ($$BR) — 실제 릴리즈는 차단됨"; \
-		else echo "ERROR: main 브랜치에서만 릴리즈 (현재 $$BR)"; exit 1; fi; \
+		if [[ "$$DRY" == 1 ]]; then note "[dry-run] 경고: main 브랜치 아님 ($$BR) — 실제 릴리즈는 차단됨"; \
+		else die "main 브랜치에서만 릴리즈 (현재 $$BR)"; fi; \
 	fi; \
 	if [[ -n "$$(git status --porcelain)" ]]; then \
-		if [[ "$$DRY" == 1 ]]; then echo "[dry-run] 경고: worktree dirty — 실제 릴리즈는 차단됨"; \
-		else echo "ERROR: worktree dirty — 커밋/스태시 후 진행"; git status --short; exit 1; fi; \
+		if [[ "$$DRY" == 1 ]]; then note "[dry-run] 경고: worktree dirty — 실제 릴리즈는 차단됨"; \
+		else git status --short >&2; die "worktree dirty — 커밋/스태시 후 진행"; fi; \
 	fi; \
 	if [[ "$$DRY" != 1 ]]; then \
-		git fetch --quiet origin main || { echo "ERROR: git fetch 실패"; exit 1; }; \
+		git fetch --quiet origin main || die "git fetch 실패"; \
 		if git rev-parse -q --verify origin/main >/dev/null; then \
-			if ! git merge-base --is-ancestor origin/main HEAD; then echo "ERROR: origin/main에 로컬에 없는 커밋 있음 — 먼저 pull"; exit 1; fi; \
+			if ! git merge-base --is-ancestor origin/main HEAD; then die "origin/main에 로컬에 없는 커밋 있음 — 먼저 pull"; fi; \
 		fi; \
 	fi; \
 	major=$${CLAUDE_V%%.*}; rest=$${CLAUDE_V#*.}; minor=$${rest%%.*}; patch=$${rest##*.}; \
-	echo "현재 버전: v$$CLAUDE_V"; echo ""; \
-	echo "  0) current v$$CLAUDE_V   — 현재 버전 그대로 (첫 릴리즈·태그 누락 보완)"; \
-	echo "  1) patch  v$$major.$$minor.$$((patch+1))   — 버그 수정"; \
-	echo "  2) minor  v$$major.$$((minor+1)).0   — 새 기능"; \
-	echo "  3) major  v$$((major+1)).0.0   — 큰 변경"; \
 	echo ""; \
-	read -r -p "버전 선택 [0/1/2/3]: " choice; \
+	printf '%s\n' "$$HR"; \
+	printf '  %s%s 릴리즈%s  %s현재 v%s%s\n' "$$B" "$(NAME)" "$$X" "$$DM" "$$CLAUDE_V" "$$X"; \
+	printf '%s\n' "$$HR"; \
+	printf '  %s0)%s current  %s%-10s%s %s현재 버전 그대로 (첫 릴리즈·태그 누락 보완)%s\n' "$${CY}$${B}" "$$X" "$$B" "v$$CLAUDE_V" "$$X" "$$DM" "$$X"; \
+	printf '  %s1)%s patch    %s%-10s%s %s버그 수정%s\n' "$${CY}$${B}" "$$X" "$$B" "v$$major.$$minor.$$((patch+1))" "$$X" "$$DM" "$$X"; \
+	printf '  %s2)%s minor    %s%-10s%s %s새 기능%s\n' "$${CY}$${B}" "$$X" "$$B" "v$$major.$$((minor+1)).0" "$$X" "$$DM" "$$X"; \
+	printf '  %s3)%s major    %s%-10s%s %s큰 변경%s\n' "$${CY}$${B}" "$$X" "$$B" "v$$((major+1)).0.0" "$$X" "$$DM" "$$X"; \
+	echo ""; \
+	read -r -p "  버전 선택 [0/1/2/3] › " choice; \
 	case "$$choice" in \
 		0) V="$$CLAUDE_V" ;; \
 		1) V="$$major.$$minor.$$((patch+1))" ;; \
 		2) V="$$major.$$((minor+1)).0" ;; \
 		3) V="$$((major+1)).0.0" ;; \
-		*) echo "잘못된 선택"; exit 1 ;; \
+		*) die "잘못된 선택" ;; \
 	esac; \
 	TAG="$(NAME)--v$$V"; \
 	if git rev-parse -q --verify "refs/tags/$$TAG" >/dev/null; then \
-		if [[ "$$DRY" == 1 ]]; then echo "[dry-run] 경고: 로컬 태그 $$TAG 이미 존재"; \
-		else echo "ERROR: 로컬 태그 $$TAG 이미 존재"; exit 1; fi; \
+		if [[ "$$DRY" == 1 ]]; then note "[dry-run] 경고: 로컬 태그 $$TAG 이미 존재"; \
+		else die "로컬 태그 $$TAG 이미 존재"; fi; \
 	fi; \
-	if [[ "$$DRY" != 1 && -n "$$(git ls-remote --tags origin "refs/tags/$$TAG")" ]]; then echo "ERROR: 원격 태그 $$TAG 이미 존재"; exit 1; fi; \
+	if [[ "$$DRY" != 1 && -n "$$(git ls-remote --tags origin "refs/tags/$$TAG")" ]]; then die "원격 태그 $$TAG 이미 존재"; fi; \
 	echo ""; \
-	echo "  릴리즈 요약"; \
-	echo "    대상      : $(NAME)"; \
-	echo "    버전      : v$$CLAUDE_V → v$$V"; \
-	echo "    git 태그  : $$TAG"; \
-	echo "    기록 대상 : $(CLAUDE_MANIFEST), $(CODEX_MANIFEST)"; \
-	echo "    원격      : origin/main + $$TAG + GitHub Release"; \
+	printf '%s\n' "$$HR"; \
+	printf '  %s릴리즈 요약%s\n' "$$B" "$$X"; \
+	printf '  %s대상%s        %s\n' "$$DM" "$$X" "$(NAME)"; \
+	printf '  %s버전%s        v%s %s→%s %sv%s%s\n' "$$DM" "$$X" "$$CLAUDE_V" "$$DM" "$$X" "$$B" "$$V" "$$X"; \
+	printf '  %sgit 태그%s    %s\n' "$$DM" "$$X" "$$TAG"; \
+	printf '  %s기록 대상%s   %s\n' "$$DM" "$$X" "$(CLAUDE_MANIFEST) · $(CODEX_MANIFEST)"; \
+	printf '  %s원격%s        origin/main + %s + GitHub Release\n' "$$DM" "$$X" "$$TAG"; \
+	printf '%s\n' "$$HR"; \
 	echo ""; \
-	read -r -p "진행할까요? [y/N]: " yn; \
-	if [[ "$$yn" != "y" && "$$yn" != "Y" ]]; then echo "취소됨."; exit 1; fi; \
+	read -r -p "  진행할까요? [y/N] › " yn; \
+	if [[ "$$yn" != "y" && "$$yn" != "Y" ]]; then note "취소됨."; exit 1; fi; \
 	if [[ "$$DRY" == 1 ]]; then \
-		echo ""; echo "[dry-run] 버전 기록 미리보기 (실제 파일 미변경):"; \
+		echo ""; note "[dry-run] 버전 기록 미리보기 (실제 파일 미변경):"; \
 		for f in $(CLAUDE_MANIFEST) $(CODEX_MANIFEST); do \
 			tmp=$$(mktemp); cp "$$f" "$$tmp"; \
 			sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$$V\"/" "$$tmp"; \
@@ -231,34 +282,44 @@ _release:
 		done; \
 		echo ""; echo "[dry-run] 실제 실행 시 수행할 단계 (미실행):"; \
 		echo "    [1] claude plugin validate $(PLUGIN) --strict"; \
-		echo "    [2] 검증 세트 — corpus·corpus_lint·checker_cross_matrix·spec_lint·checker_lint·tree_mirror·reverse_coverage·fixture_matrix·anchor_diff_smoke·backstop_matrix·scripts byte-copy"; \
+		echo "    [2] make verify (병렬 하네스 — verify-ontology · verify-base 4그룹 · verify-web)"; \
 		echo "    [3] 두 manifest에 v$$V 기록 (위 미리보기)"; \
 		echo "    [4] git commit -m 'release: $(NAME) v$$V' (manifest 2곳 — 버전 무변경이면 커밋 생략)"; \
 		echo "    [5] git tag -a $$TAG -m '$(NAME) v$$V'"; \
 		echo "    [6] git push origin main && git push origin $$TAG"; \
 		echo "    [7] gh release create $$TAG --verify-tag --title '$(NAME) v$$V' --generate-notes"; \
-		echo ""; echo "✅ [dry-run] v$$V 시뮬레이션 완료 — 실제 변경/커밋/푸시/Release 없음"; \
+		echo ""; printf '%s✔ [dry-run] v%s 시뮬레이션 완료 — 실제 변경/커밋/푸시/Release 없음%s\n' "$${GR}$${B}" "$$V" "$$X"; \
 	else \
-		echo "[1/7] manifest 검증 (claude --strict)"; \
+		step "manifest 검증 — claude plugin validate --strict"; \
 		claude plugin validate $(PLUGIN) --strict; \
-		echo "[2/7] 검증 세트 — make verify (verify-ontology + verify-base, D1 단일 출처)"; \
+		ok "manifest 유효"; \
+		step "검증 세트 — make verify (D1 단일 출처 · 병렬 하네스)"; \
 		$(MAKE) verify; \
-		echo "[3/7] 버전 기록 (Claude·Codex)"; \
+		ok "verify green"; \
+		step "버전 기록 — Claude·Codex 매니페스트"; \
 		sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$$V\"/" $(CLAUDE_MANIFEST); \
 		sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$$V\"/" $(CODEX_MANIFEST); \
 		NC=$$(jq -r '.version' $(CLAUDE_MANIFEST)); NX=$$(jq -r '.version' $(CODEX_MANIFEST)); \
-		if [[ "$$NC" != "$$V" || "$$NX" != "$$V" ]]; then echo "ERROR: 버전 기록 검증 실패 (Claude=$$NC Codex=$$NX, 기대 $$V)"; exit 1; fi; \
-		echo "[4/7] 커밋"; \
+		if [[ "$$NC" != "$$V" || "$$NX" != "$$V" ]]; then die "버전 기록 검증 실패 (Claude=$$NC Codex=$$NX, 기대 $$V)"; fi; \
+		ok "v$$V 기록 (2곳)"; \
+		step "커밋"; \
 		git add $(CLAUDE_MANIFEST) $(CODEX_MANIFEST); \
-		if git diff --cached --quiet; then echo "  (버전 변경 없음 — 커밋 생략, 현재 HEAD에 태그만 생성)"; \
-		else git commit -m "release: $(NAME) v$$V"; fi; \
-		echo "[5/7] annotated 태그 $$TAG"; \
+		if git diff --cached --quiet; then note "버전 변경 없음 — 커밋 생략, 현재 HEAD에 태그만 생성"; \
+		else git commit -m "release: $(NAME) v$$V"; ok "release 커밋"; fi; \
+		step "annotated 태그 $$TAG"; \
 		git tag -a "$$TAG" -m "$(NAME) v$$V"; \
-		echo "[6/7] push (main + tag)"; \
+		ok "태그 생성"; \
+		step "push — main + 태그"; \
 		git push origin main; \
 		git push origin "$$TAG"; \
-		echo "[7/7] GitHub Release 생성"; \
+		ok "push 완료"; \
+		step "GitHub Release 생성"; \
 		gh release create "$$TAG" --verify-tag --title "$(NAME) v$$V" --generate-notes; \
+		ok "Release 페이지 생성"; \
+		TOTAL=$$(($$(date +%s)-T0)); \
 		echo ""; \
-		echo "✅ $(NAME) v$$V 릴리즈 완료 — 태그 $$TAG · manifest 2곳 · GitHub Release"; \
+		printf '%s\n' "$$HR"; \
+		printf '%s✔ %s v%s 릴리즈 완료%s %s— 태그 %s · manifest 2곳 · GitHub Release · 총 %d분 %02d초%s\n' "$${GR}$${B}" "$(NAME)" "$$V" "$$X" "$$DM" "$$TAG" "$$((TOTAL/60))" "$$((TOTAL%60))" "$$X"; \
+		printf '  %s다음: /plugin 에서 설치본 갱신 필요 — 플러그인은 sha 캐시라 릴리즈만으로 반영되지 않는다%s\n' "$$YE" "$$X"; \
+		printf '%s\n' "$$HR"; \
 	fi

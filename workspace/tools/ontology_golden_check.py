@@ -10,6 +10,7 @@ exit 0 = 전 골든 기대 일치 / 1 = 불일치 존재
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -23,14 +24,27 @@ def violation_count(report_graph) -> int:
     return 0
 
 
+def _golden_job(job: tuple) -> bool:
+    """프로세스 풀 워커 — 골든 1건의 SHACL 판정(green 여부)을 돌려준다."""
+    path_str, root_str = job
+    from pyshacl import validate
+    from rdflib import Graph
+
+    path, root = Path(path_str), Path(root_str)
+    g = Graph()
+    g.parse(path, format="turtle")
+    data = merged_data_graph(g, path, root)
+    _, report_graph, _ = validate(
+        data_graph=data, shacl_graph=shapes_graph(root), inference="none", advanced=True
+    )
+    return violation_count(report_graph) == 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="골든 페어 red/green 하네스")
     ap.add_argument("--root", default=str(DEFAULT_ROOT))
     args = ap.parse_args()
     root = Path(args.root).resolve()
-
-    from pyshacl import validate
-    from rdflib import Graph
 
     shp = shapes_graph(root)
     if shp is None:
@@ -42,25 +56,36 @@ def main() -> int:
         print("[ontology-golden] 도구 오류: golden 페어 없음")
         return 2
 
-    mismatches = 0
+    expectations: list[tuple[Path, bool | None]] = []
     for path in goldens:
         name = path.stem
         if name.endswith("-valid"):
-            expect_green = True
+            expectations.append((path, True))
         elif name.endswith("-invalid"):
-            expect_green = False
+            expectations.append((path, False))
         else:
+            expectations.append((path, None))
+
+    # 골든은 서로 독립 — 파일 단위 병렬(결과는 제출 순서로 수집 → 출력 결정론 유지).
+    # 소수 골든이면 풀 기동 비용이 더 커서 순차.
+    jobs = [(str(p), str(root)) for p, expect in expectations if expect is not None]
+    workers = min(len(jobs), os.cpu_count() or 1)
+    if workers < 2 or len(jobs) < 4:
+        verdicts = [_golden_job(j) for j in jobs]
+    else:
+        from concurrent.futures import ProcessPoolExecutor
+
+        with ProcessPoolExecutor(max_workers=workers) as ex:
+            verdicts = list(ex.map(_golden_job, jobs))
+
+    verdict_iter = iter(verdicts)
+    mismatches = 0
+    for path, expect_green in expectations:
+        if expect_green is None:
             print(f"[ontology-golden] RED   {path.name}: 접미 규약(-valid/-invalid) 위반")
             mismatches += 1
             continue
-
-        g = Graph()
-        g.parse(path, format="turtle")
-        data = merged_data_graph(g, path, root)
-        _, report_graph, _ = validate(
-            data_graph=data, shacl_graph=shp, inference="none", advanced=True
-        )
-        actual_green = violation_count(report_graph) == 0
+        actual_green = next(verdict_iter)
         ok = actual_green == expect_green
         mark = "ok " if ok else "RED"
         detail = "green" if actual_green else "red"
