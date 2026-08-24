@@ -64,3 +64,13 @@ construct 골든 8/8 · bc_registry_smoke 3단언(순수 스텁 후보·통신 �
   (조인+극성 이중 방어로 커버 — 거짓 양성 3형 합본 픽스처 포함, 개별 분리는 후속 여지).
 - 관찰 정정: 계획 W7 의 «W6 이후 kkebi 에서 auto 가 실제 해석에 성공» 문장은 오예측 — auto 는
   code 판정을 갖지 않는 구조라 경고가 정상 잔존한다(후행표 실측과 일치).
+
+## 추기 2 — ⓒ 후행표 잔여 2종 (대조 리뷰 minor ⑧ 해소 · accept-matrix 원자료 실측)
+
+| 검사기 | billing | saju | tarot |
+|---|---|---|---|
+| check-api-error-controller-contract | exit 0→0 · 전/후 byte 동일 | 〃 | 〃 |
+| check-openapi-error-declaration | exit 0→0 · 전/후 byte 동일 | 〃 | 〃 |
+
+positional+auto 판형에서는 두 검사기 모두 3사본 전/후 완전 동일(exit·stdout·stderr) —
+후행표에 적을 변화 0. ㉮의 정적 판정 변화는 selector 판형의 EC 후행표(§ⓒ)가 소유한다.
