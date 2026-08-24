@@ -337,6 +337,7 @@
     "claude": {
       "checked": 68,
       "mismatch": [
+        "dddjango/scripts/check-port-adapter-pairing.py",
         "dddjango/scripts/rulepack.json",
         "dddjango/skills/discipline-houserules/references/final.md"
       ],
@@ -633,7 +634,7 @@
         "workspace/eval/fixtures/bounce_counter/expected.json": "2de2acde68dd4a255db02dc5316e1263bbb5fbb93b39b86e3b458007626189b9",
         "workspace/tools/collect_violations.py": "b1376af5cab3714a89f4a0b464e8d7c7d3b78ad42b1bfbd1dc74cfce0eff93de",
         "workspace/tools/construct_drift_report.py": "281894ffb713088f4b150269915d3a1718604728ee10482f34b9eed7663a3af6",
-        "workspace/tools/findings_count_matrix.py": "853e752f9ab6c7f6baca3b8ac5bc9880f95978d5e33b8c57cf9ee9063239f6d8",
+        "workspace/tools/findings_count_matrix.py": "47d450af7ad9f22a4a7210bce0843fd2ff5434c0e934ff2a772c18a24670b66e",
         "workspace/tools/firing_probe.py": "09994ac306dbb06dfce46429bdd8701cdd39bf6964f515e596dbae3dbd918003",
         "workspace/tools/manifest_seal.py": "43b5d79e7949825dde9a43fd95d1d1a7db41e0a5013ce5dcc3b79a54f0206e25",
         "workspace/tools/ontology-requirements.txt": "0329866c8aeec21f64af929ec52362d6a2ee3058cb9266025b147da367ee77ea",
@@ -662,7 +663,7 @@
         "workspace/eval/fixtures/api_error_contract/requirements.txt"
       ],
       "n_files": 32,
-      "tree_sha256": "62c2d2bc75dc397416270564ab1086c429cc29135c95bdd62269c249a2bd4864",
+      "tree_sha256": "af7876089987914c242e1b61645b1b2778978d94618858a1bc1310e9b3fff3c0",
       "why": "측정기. 실런 중 측정기가 바뀌면 앞뒤 런의 수치가 같은 자를 안 쓴 것이 된다(D11)."
     },
     "orders": {
@@ -874,7 +875,7 @@
         "dddjango/scripts/check-naming.py": "adf63f9aeb3299f1894bea8171989b4dfc90b20ffab18f54edac9fbe7e09ecec",
         "dddjango/scripts/check-ninja-boundary-middleware.py": "b2908a87f9882702f2b0103549225fa9310b091349a06203cd3a419e498e9378",
         "dddjango/scripts/check-openapi-error-declaration.py": "212b092180a02dc2586296911e1d46a1b2ee7506526eed758e6a8eb65ae14d76",
-        "dddjango/scripts/check-port-adapter-pairing.py": "d9329a2c8bf4f3450dcde4865322d66b20d604e60c854550326646cfd3a8be2e",
+        "dddjango/scripts/check-port-adapter-pairing.py": "63d2c64c08f040a2b6ff4c6101de3a948dbcfbf00197e6d431236bd666a9ed71",
         "dddjango/scripts/check-public-surface-annotation.py": "1ead79b36292120fbb3ee7370af93a342fe5f06c73c73dd9992aaab59a8fbca9",
         "dddjango/scripts/check-response-schema-bypass.py": "d148ac4ac18bd97c1a2f36913022bf3e5917a77f0e50cb0ec6ae243b7871054c",
         "dddjango/scripts/check-synthetic-infra-exc.py": "ad0b8c07cb489dcf97fcf7515b9bf5e270056142cb596fcd4ded87d1e67c2323",
@@ -905,7 +906,7 @@
         "workspace/tools/ab_score.py"
       ],
       "n_files": 38,
-      "tree_sha256": "43498cc168c261eea88b2ec60688b6fd249431216dbc2259daaea3dfbf7551a5",
+      "tree_sha256": "6d11675f76f60aed7db88afb0cf468a96c91904ab71e08494775599ba2a67841",
       "why": "판정 스칼라(결정적 검사기 위반 수)를 만드는 전부. 발주·암 산출물을 보기 전에 동결한다 — 산출물을 본 뒤 채점기를 만지면 판정 교락(L-M #4)."
     }
   },
@@ -953,11 +954,11 @@
     "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.0/scripts",
     "cache-codex": "f2cbdf63ed533e7452663907df3de94b580d410dc052fe7e9057144f157bf843",
     "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.17.0/skills/dddjango/scripts",
-    "source-claude": "bd2dd9997c91a9bfa1f909e35c28166903f1b241221cf3377a38d9e4e20b50d7",
-    "source-codex": "bd2dd9997c91a9bfa1f909e35c28166903f1b241221cf3377a38d9e4e20b50d7"
+    "source-claude": "e4f3099b9feb4cef3a94c447c87d0c23038f8b97f1d9d24e6151bb5bec7e5e9e",
+    "source-codex": "e4f3099b9feb4cef3a94c447c87d0c23038f8b97f1d9d24e6151bb5bec7e5e9e"
   },
-  "sealed_commit": "ab6d3b00e3ca88515d5d30753348eff00fd0d7db",
-  "self_sha256": "dbef12dd838a690f80f6cfeecae72ae85582532ad8b2f74a166a01c9860b746c",
+  "sealed_commit": "c8f2a6a112e37e0190f781cb85821a3a42887d79",
+  "self_sha256": "7ccb8d84480bd9f4667edad4f2ab2da6c22633d21620bc3f0d509a0c33ddb398",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [
