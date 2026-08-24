@@ -101,6 +101,12 @@ RISK_LANES: "tuple[tuple[str, str, tuple[str, ...]], ...]" = (
         "--project-code-error-module", "framework/ninja/framework_error_schema.py",
         "--project-code-error-module", "application/lesson/driving_layer/api/bc_error_schema.py",
     )),
+    # R-3401 병존형 canon 의 경계 회귀 — 공통이 nullable(비-bare)·Annotated-metadata
+    # 자리일 때 Literal 병존 우회가 새지 않음을 고정한다(계획 2026-08-24 §3).
+    ("check-error-centralization.py", "error_centralization_literal_edge", _RISK_SELECTOR_ARGS + (
+        "--project-code-error-module", "framework/ninja/framework_error_schema.py",
+        "--project-code-error-module", "application/lesson/driving_layer/api/bc_error_schema.py",
+    )),
 )
 _RISK_DIRS: "frozenset[str]" = frozenset(d for _s, d, _a in RISK_LANES)
 _RISK_ARGV: "dict[str, tuple[str, ...]]" = {d: a for _s, d, a in RISK_LANES}
@@ -288,7 +294,9 @@ EXPECTED: "dict[str, tuple[int, int, int, int, bool]]" = {
     "check-api-error-controller-contract.py::api_error_controller_code": (2, 3, 3, 2, False),
     "check-composition-root.py::composition_root_single_file": (2, 1, 1, 2, False),
     "check-openapi-error-declaration.py::openapi_decl_missing": (2, 1, 1, 2, False),
-    "check-error-centralization.py::error_centralization_code": (2, 1, 1, 4, False),
+    # unparsed 4→11: R-3401 경계 red 2 concrete(무 default Literal 5·좁힘값≠default 2) 추가(2026-08-24)
+    "check-error-centralization.py::error_centralization_code": (2, 1, 1, 11, False),
+    "check-error-centralization.py::error_centralization_literal_edge": (2, 0, 0, 5, True),
     "check-api-error-controller-contract.py::guard-zero": (2, 0, 0, 1, True),
     "check-error-centralization.py::guard-zero": (2, 0, 0, 1, True),
     "check-openapi-error-declaration.py::guard-zero": (2, 0, 0, 1, True),

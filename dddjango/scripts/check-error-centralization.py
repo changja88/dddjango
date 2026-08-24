@@ -1980,6 +1980,69 @@ def _default_is_none(value: ast.AST | None, bindings: dict[str, str]) -> bool:
     ) is None
 
 
+_BARE_SCALAR_ANNOTATION_SIGNATURES: frozenset[tuple] = frozenset(
+    ("symbol", name)
+    for name in ("str", "int", "float", "bool", "builtins.str", "builtins.int", "builtins.float", "builtins.bool")
+)
+
+
+def _literal_single_value(
+    annotation: ast.AST,
+    bindings: dict[str, str],
+) -> "ast.AST | None":
+    """최상위가 `Literal[<단일값>]`이면 그 값 노드 — Annotated 래핑·다중값은 None."""
+    if not isinstance(annotation, ast.Subscript):
+        return None
+    if _symbol_name(annotation.value, bindings) not in {
+        "Literal",
+        "typing.Literal",
+        "typing_extensions.Literal",
+    }:
+        return None
+    return None if isinstance(annotation.slice, ast.Tuple) else annotation.slice
+
+
+def _literal_narrowing_allowed(
+    field: ast.AnnAssign,
+    bindings: dict[str, str],
+    contract: CommonFieldContract,
+    *,
+    is_discriminator: bool,
+    enum_full: str,
+    enum_members: dict[str, str],
+) -> bool:
+    """병존형(단일값 Literal 좁힘 + 동일 plain `=` default) canon 판정 — R-3401.
+
+    경계 전건 충족일 때만 annotation 대조를 우회한다: 공통 field는 Field metadata
+    없는 벗겨진 스칼라 자리(식별자는 bare `<bc-error-code>` 자리), concrete 는
+    최상위 `Literal[단일값]`, default 는 plain `=` 표기로 좁힘값과 동일. 미충족은
+    기존 annotation category red 그대로다(`Field(default=…)` 병기는 metadata 판정
+    소관 유지)."""
+    literal_value = _literal_single_value(field.annotation, bindings)
+    if literal_value is None or contract.metadata:
+        return False
+    default_value = field.value
+    if default_value is None or _is_field_call(default_value, bindings):
+        return False
+    if is_discriminator:
+        if contract.discriminator_annotation != ("symbol", "<bc-error-code>"):
+            return False
+        member = _enum_member_name(literal_value, bindings, enum_full, enum_members)
+        if member is None:
+            return False
+        return _enum_member_name(default_value, bindings, enum_full, enum_members) == member
+    if contract.annotation not in _BARE_SCALAR_ANNOTATION_SIGNATURES:
+        return False
+    if not isinstance(literal_value, ast.Constant) or not isinstance(default_value, ast.Constant):
+        return False
+    scalar_name = str(contract.annotation[1]).rsplit(".", 1)[-1]
+    return (
+        type(literal_value.value).__name__ == scalar_name
+        and type(default_value.value) is type(literal_value.value)
+        and default_value.value == literal_value.value
+    )
+
+
 def _node_symbol(node: ast.AST) -> str | None:
     """위반 심볼(U17) — node 가 안정 이름을 가진 경우만 채우고, 그 밖은 null."""
     if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -3548,7 +3611,14 @@ def _analyze_bc_module(
                 )
                 expected_annotation = contract.annotation
                 category = "concrete field annotation/nullability must match common FrameworkErrorSchema"
-            if actual_annotation != expected_annotation:
+            if actual_annotation != expected_annotation and not _literal_narrowing_allowed(
+                field,
+                bindings_at_field,
+                contract,
+                is_discriminator=field_name == discriminator_field_name,
+                enum_full=enum_full,
+                enum_members=members,
+            ):
                 _append_finding(
                     findings,
                     seen,

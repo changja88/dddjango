@@ -587,3 +587,5 @@ djr:R-0828 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-revie
 djr:R-0829 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
 
 djr:R-0830 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3401 djr:enforcedBy <https://numchida.com/ns/djr#c/check-error-centralization.py> .

@@ -158,7 +158,10 @@ EXPECTED: "dict[str, tuple[int, int, int, str, str, str, str]]" = {
     "check-api-error-controller-contract.py::api_error_controller_code": (2, 3, 0, "#59×1,#62×2", "97ef7c202f1d48d0", "3f624e3b1268f976", "54e3a219e3e20466"),
     "check-composition-root.py::composition_root_single_file": (2, 1, 0, "#497×1", "2c43cc1deddc1a8c", "2c43cc1deddc1a8c", "2fc253839f16eb6c"),
     "check-openapi-error-declaration.py::openapi_decl_missing": (2, 1, 0, "#63×1", "238f374c04cdbc00", "e272d6cb45778b56", "95363305293051ff"),
-    "check-error-centralization.py::error_centralization_code": (2, 3, 0, "#572×1,contract:선행 계약(08-04 API-error) 소유×2", "ca07fbbfc15d97c8", "9d0f1044b55df54a", "4c7001115cd355de"),
+    # violation 3→10: R-3401 경계 red 2 concrete 추가(무 default Literal·좁힘값≠default — 2026-08-24)
+    "check-error-centralization.py::error_centralization_code": (2, 10, 0, "#572×1,contract:선행 계약(08-04 API-error) 소유×9", "8cc388050bc98292", "5a37989cbab5bfbf", "a3e955c997e3d5a4"),
+    # R-3401 경계 회귀 레인(nullable·Annotated 공통 자리 — 병존 우회 불가 고정)
+    "check-error-centralization.py::error_centralization_literal_edge": (2, 3, 0, "contract:선행 계약(08-04 API-error) 소유×3", "7d2a7b65a9d63ac3", "69deb8cfa13369c7", "9eaa1a7b6f4a23d3"),
     "check-api-error-controller-contract.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "ff910566edd77355"),
     "check-db-table.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "f74cd9a3af326bd2"),
     "check-domain-model.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683", "a660897a690a1683", "e5abbd3c9f18d0a2"),

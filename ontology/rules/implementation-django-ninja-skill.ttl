@@ -220,11 +220,17 @@ djr:R-2920 a djr:Obligation ;
 
 djr:R-2921 a djr:Obligation ;
     skos:prefLabel "BC·concrete 의 공통 annotation/nullability·Field metadata 보존"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2921@2026-08-22> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-2921@2026-08-24> .
 
 <https://numchida.com/ns/djr#R-2921@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2921 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2921@2026-08-24> a djr:Expression ;
+    prov:specializationOf djr:R-2921 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2921@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-2922 a djr:Prohibition ;
     skos:prefLabel "추가 필드·validator·child model_config·URI/instance·다중 오류 schema 파일 금지"@ko ;
@@ -707,7 +713,7 @@ djr:R-2957 a djr:Obligation ;
     djr:order 6 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b10>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b11>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b14>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b8>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b9> ;
     djr:statesNorm djr:R-2920, djr:R-2921, djr:R-2922 ;
-    djr:text "- 각 오류 BC는 `api/bc_error_schema.py` 하나에 `<Bc>ErrorCode(StrEnum)`·`<Bc>ErrorSchema`·no-arg concrete 오류를 둔다. BC/concrete는 공통 annotation/nullability·Field metadata를 보존하고, 추가 필드·validator·child model_config·URI/instance·다중 오류 schema 파일은 만들지 않는다 (§6.2)\n"@ko .
+    djr:text "- 각 오류 BC는 `api/bc_error_schema.py` 하나에 `<Bc>ErrorCode(StrEnum)`·`<Bc>ErrorSchema`·no-arg concrete 오류를 둔다. BC/concrete는 공통 annotation/nullability·Field metadata를 보존하고(§6.2가 승인한 단일값 Literal·동일 default 병존 좁힘은 예외), 추가 필드·validator·child model_config·URI/instance·다중 오류 schema 파일은 만들지 않는다 (§6.2)\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/SKILL.md/s004/b7> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/SKILL.md/s004> ;

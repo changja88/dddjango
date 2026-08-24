@@ -613,7 +613,12 @@ field는 공통의 default를 잃어 required여도 canon이다(식별자 field 
 문자열이면 같은 wire value의 Enum member로 표현한다. concrete 오류는 slot 6에서 해당
 concrete의 고정값으로 승인된 모든 required field에 default가 있어 인자 없이 생성한다.
 새 필드·validator·child `model_config`나 annotation/Field metadata drift를 concrete subclass에
-추가하지 않고, 승인 alias 등이 있는 field를 재선언하면 같은 metadata를 반복한다. URI·instance
+추가하지 않고, 승인 alias 등이 있는 field를 재선언하면 같은 metadata를 반복한다. 단 공통
+annotation이 Field metadata 없는 벗겨진 스칼라 자리(식별자 field는 base가 좁힌 Enum 자리)인
+concrete field는 slot 6에서 승인된 그 concrete의 고정값 하나의 `Literal`로 자리를 더 좁히고
+같은 값을 default로 병기해도 canon이다(plain `=` 표기 한정·좁힘값=default 동일·
+wrapper/nullability 좁힘 불포함·무인자 생성 계약은 그대로 만족 — 식별자형은 §3.1 이벤트
+discriminator와 같은 표기·비식별자는 스칼라 상수로 확장 · 2026-08-24). URI·instance
 같은 다른 profile 필드도 섞지 않는다. 오류마다 파일을 나누거나 validation 전용 두 번째 오류
 schema 파일을 만들지 않는다.
 
