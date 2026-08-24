@@ -347,12 +347,18 @@ djr:R-3216 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3217 a djr:Exception ;
-    skos:prefLabel "#429 — celery.py 항목은 «celery 채택» 전제의 조건부이고 <project>/ 파트는 이 목록이 관할(#491 밖)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3217@2026-08-22> .
+    skos:prefLabel "#429 — celery.py «채택» 전제는 정본 트리(표준) 수준 — 미채택 프로젝트도 빈 파일 보유(#488)·<project>/ 파트는 이 목록이 관할(#491 밖)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3217@2026-08-24> .
 
 <https://numchida.com/ns/djr#R-3217@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3217 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3217@2026-08-24> a djr:Expression ;
+    prov:specializationOf djr:R-3217 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3217@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3218 a djr:Prohibition ;
     skos:prefLabel "#430 — <project>/ 는 application/ 을 등록만 하고 타입으로 알지 않는다"@ko ;
@@ -755,7 +761,7 @@ djr:R-3231 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
     djr:statesNorm djr:R-3216, djr:R-3217 ;
-    djr:text "\n- **#429** — `<project>/` 에는 프레임워크가 «전역에 딱 하나»를 요구하는 것만 온다 — `api.py` · `urls.py` · `celery.py` · `settings/`. `celery.py` 항목은 «celery 채택» 전제에 묶인 조건부다 — 전제가 무산되면 이 목록도 다시 선다(#491 «조건부 없음»의 자리는 트리 1행 `application/**` 이라 여기 걸리지 않는다 — `<project>/` 파트는 이 목록이 관할한다).\n"@ko .
+    djr:text "\n- **#429** — `<project>/` 에는 프레임워크가 «전역에 딱 하나»를 요구하는 것만 온다 — `api.py` · `urls.py` · `celery.py` · `settings/`. `celery.py` 항목의 «celery 채택» 전제는 **정본 트리(표준) 수준**의 채택이다 — 개별 프로젝트의 채택 여부가 아니다. celery 를 안 쓰는 프로젝트도 이 칸을 «빈 파일»로 갖는다(#488 — 빈 `celery.py` 가 규범 준수의 정상 상태이고, 뒤에 celery 가 필요해지면 그 빈 파일이 착지 자리다). 표준이 celery 를 버리는 개정에서만 이 목록이 다시 선다(#491 «조건부 없음»의 자리는 트리 1행 `application/**` 이라 여기 걸리지 않는다 — `<project>/` 파트는 이 목록이 관할한다).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s010/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s010> ;

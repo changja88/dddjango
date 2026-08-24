@@ -67,7 +67,7 @@
     },
     {
       "path": "ontology/rules/discipline-houserules-final.ttl",
-      "sha256": "73606da39f35e76cb33977581f6b334e3e7b64e0e5c902af235a31b4a87210f4"
+      "sha256": "22c65fdd8dfe316c63a6278ebeebd4d6b300bf2b29c8be619fee2e538ec7d4c8"
     },
     {
       "path": "ontology/rules/discipline-houserules-skill.ttl",
@@ -57167,8 +57167,8 @@
         "check-layer-skeleton.py"
       ],
       "document": "dddjango/skills/discipline-houserules/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-3217@2026-08-22",
-      "label": "#429 — celery.py 항목은 «celery 채택» 전제의 조건부이고 <project>/ 파트는 이 목록이 관할(#491 밖)",
+      "expression": "https://numchida.com/ns/djr#R-3217@2026-08-24",
+      "label": "#429 — celery.py «채택» 전제는 정본 트리(표준) 수준 — 미채택 프로젝트도 빈 파일 보유(#488)·<project>/ 파트는 이 목록이 관할(#491 밖)",
       "order_rank": 2146,
       "section": "dddjango/skills/discipline-houserules/references/final.md/s010",
       "section_number": null
