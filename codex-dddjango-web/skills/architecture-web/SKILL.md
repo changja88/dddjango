@@ -27,6 +27,7 @@ description: dddjango-web 프레젠테이션 아키텍처 — view/section/widge
 - 호출 코드는 client/ 전속 — in-process HTTP·driving_layer api 표면만·web 소유 응답 모델 파싱(schema import 금지)·오류는 client exception. 계약은 동결 스냅샷이 사실의 출처 — coder-web은 기계 절단 경량본만 보고, 에이전트는 스냅샷을 갱신하지 않는다 (§6)
 - 라우트 리터럴 단일 출처 — 자기 화면 path·name은 urls.py, BC API URL은 client 모듈. 참조는 `{% url %}`/`reverse` 이름만 (§7)
 - 시각 값은 tokens.css 토큰만·component 재사용 우선·BC 어휘는 입장 불가 — BC 어휘 표시 매핑은 VM이 그 자리 (§8)
+- 렌더 실측(`render-audit.json`)이 있으면 texts·pinned **전수 처분·실측값 인용 의무**(눈대중 근사 금지 — 절단 토큰은 값 «풀»만·요소 결합은 실측만) + 고정 요소·스크롤 스킴의 배치 거동 결정은 설계자 소유(표기 판형은 implementation-ui §7) (§8)
 
 ## 상세 레퍼런스
 

@@ -51,6 +51,7 @@ Coordinator가 감사 범위와 시점을 정해 호출한다 — 너는 받은 
    - **골격 위장**: 폴더는 완비됐는데 코드가 틀린 자리에 산다 — 판정이 view/에, 응답 파싱이 client/response 밖 VM에, 표시 상태 조립이 템플릿에.
    - **격리 우회 형태**: client 밖 API 호출의 위장 — urllib·requests 직접 사용, HTTP 호출을 숨긴 헬퍼. **D12 우회** — inline 이벤트 핸들러 속성(`onclick=` 등)·`<script>` 위장·data-URI js·`hx-vals`/`hx-headers`의 `js:` 접두·`hx-trigger` 대괄호 조건식·motion.js 판형 이탈(내용 수정·확장 — 판형 해시는 백스톱이 대조하지만 의미 변종 위장은 네 소관).
    - **직수입 흔적**: 시안의 클래스명·인라인 스타일 잔재 — 토큰을 경유하지 않은 색·치수 리터럴.
+   - **고정 배치 무력화**: 감사 범위 CSS에 `position: sticky|fixed`가 grep으로 **히트하면 조상 사슬 대조가 의무다**(발견 여부 재량 아님) — sticky와 그 의도된 스크롤포트 사이의 중간 조상에 스크롤 컨테이너를 만드는 overflow(`hidden`·`auto`·`scroll` — 어느 축이든)가 있으면, fixed의 조상 사슬에 transform·filter·backdrop-filter·`will-change: transform`이 있으면 **blocker**다(선언은 정확해 보여도 다른 절의 규칙 한 줄이 조용히 죽인다 — implementation-ui §7 배치 거동 판형).
 6. **같은 개념 두 철자 · 두 번째 개념 평면 누적**: 같은 개념이 두 철자(어순 포함)로 존재하거나, 두 번째 화면 개념이 기존 화면 폴더에 평면 누적됐는가 — 1차 결정은 design-architect-web, 구현 중 2차 발견자는 coder-web이었고, 너는 최종 검증자다(undecidable-web §5).
 7. **시안 충실 재현의 규율 측면**: 근사·누락이 **보고 없이 조용히** 넘어간 흔적을 잡는다 — 시안의 요소가 구현에서 빠지거나 달라졌는데 coder-web의 보고에 그 사실이 없다. 시각 판정 자체는 G2 사용자 육안 소관이다 — 너는 «조용함»만 잡는다.
 

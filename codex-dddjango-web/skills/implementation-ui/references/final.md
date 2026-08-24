@@ -163,6 +163,14 @@ widget(영역 재사용 조각)과 design_system component(전역 순수 부품)
 - **러너 소비**(motion.js가 설치된 빌드만): 명세가 «러너»로 채택한 항목만 요소에 `data-motion="<모션명>"`을 선언한다 — 러너가 뷰포트 진입 시 `motion-in` 클래스를 부여한다(one-shot). **초기 은닉은 `html.motion-ready` 하위 셀렉터 + `@media (prefers-reduced-motion: no-preference)` 안에서만** 쓴다 — 판형: `@media (prefers-reduced-motion: no-preference){ html.motion-ready [data-motion]{ opacity:0; } html.motion-ready [data-motion].motion-in{ opacity:1; transition: opacity var(--duration-reveal) var(--ease-out); } }`. *왜*: 러너 실패·차단·감속 선호 사용자에게 콘텐츠가 영구 숨김되지 않는다(motion-ready 없는 문서에서 은닉 규칙은 발화하지 않는다).
 - **base.html 로드 태그 판형**(base 입장은 `undecidable-web.md` §6): `<link rel="stylesheet" href="{% static 'design_system/foundation/motion.css' %}">` — tokens.css 다음 줄. motion.js가 설치된 빌드만 `<script src="{% static 'web/js/motion.js' %}" defer></script>` — htmx 태그 다음 줄·`defer` 필수.
 
+**배치 거동(고정 오버레이).** 근거는 설계 명세의 배치 거동 결정(architecture-web §8)이다 — 명세에 없는 고정 요소 발명 금지.
+
+- 스크롤 중 화면에 붙는 바·헤더는 `position: sticky`(+`top`/`bottom` 명시)를 기본으로 한다. sticky는 **가장 가까운 스크롤 컨테이너**에 고정된다 — 따라서 sticky 요소와 그것이 붙어야 할 스크롤포트(문서 스크롤이면 뷰포트, 내부 스크롤 패널이면 그 패널) **사이의 중간 조상**에는 스크롤 컨테이너를 만드는 overflow 값(`hidden`·`auto`·`scroll` — 어느 축이든)을 두지 않는다. 의도한 스크롤 컨테이너 자체의 `overflow: auto|scroll`은 정당하다 — 그 안에 고정하려는 sticky의 기준이 바로 그것이다. *왜*: 선언(`position: sticky; bottom: 0`)이 정확해도 셸·래퍼의 overflow 한 줄이 기준 스크롤포트를 가로채 조용히 무력화한다 — 무력화된 바는 문서 끝에서는 보이므로 «끝까지 스크롤» 확인으로는 못 잡는다.
+- 래퍼·셸의 가로 삐짐 클립이 필요하면 `overflow-x: clip`을 쓴다 — 스크롤 컨테이너를 만들지 않는 유일한 클립이다(타 축의 visible 강등 없음). 단 `hidden`과 달리 BFC를 만들지 않으므로 필요 시 `display: flow-root`를 병용하고, 단일 축 clip에는 `overflow-clip-margin`이 적용되지 않는다. html/body **단독**의 `overflow-x: hidden`은 뷰포트로 전파되어 무해하나 일관성 위해 clip을 쓴다.
+- 말줄임(`overflow: hidden`+`text-overflow: ellipsis`) 리프·카드 이미지 클립처럼 **사슬 밖** 사용은 그대로 정당하다 — 금칙은 sticky/fixed와 스크롤포트 사이의 중간 조상에만 적용된다.
+- 문서 흐름 밖 전역 오버레이(모달 류)만 `fixed`로 한다. **fixed 요소의 조상 사슬에 transform·filter·backdrop-filter·`will-change: transform`이 있으면 containing block을 빼앗겨 무력화된다** — 진입 모션의 transform이 조상에 남지 않게 한다(모션 판형과의 인터롭).
+- sticky/fixed 바는 불투명 배경 토큰 필수 — 아래로 지나가는 콘텐츠가 비치지 않게 한다.
+
 **이미지.** 시안의 정적 이미지는 동결 단계(fetch_images)가 `static/images/`에 내려받아 `asset-manifest.json`(src→`local_path`→`token` 매핑·단일 SSOT)으로 절단한다. 명세가 가리킨 이미지는 manifest의 **같은 `src` 행**으로 조인해 `local_path`를 정확 값 그대로 가져온다 — 추정·눈대중·발명 금지(server-contract를 경량본에서 인용하듯). `token` 열은 web에서 소비하지 않는다 — 추출 도구 산출 호환용이다. 착지 파일명은 절단 도구가 snake_case로 정규화하며, 정규화 후 `local_path`가 SSOT다. 템플릿 배선은 `local_path`를 `{% static %}` 경유로 참조하는 것만이고 raw 경로 문자열은 금지다. manifest가 없으면 이 항목은 적용되지 않는다 — 없는 이미지를 placeholder로 조용히 채우지 않는다.
 
 ## §8. client 표기 — in-process HTTP
