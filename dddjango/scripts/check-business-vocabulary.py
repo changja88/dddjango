@@ -446,6 +446,14 @@ def _check_framework_test(root: Path, fw: Path, f: Findings) -> None:
 
 # ── pure — #560 · #561 · #562 ──────────────────────────────────────────────
 
+# #562 국소 stoplist — 범용 직렬화/컨테이너 영어가 BC 식별자 토큰화(예: get_successful_
+# transaction_keys → keys)로 업무 어휘에 섞여 pure/ 의 기술 용어와 동음 충돌하는 것만 차감한다.
+# 전역 STOPWORDS 가 아니라 이 함수 전용이다(타 검사기·격리 검사 무영향). 등재 시 그 시점
+# all_vocab 교집합을 대조해 업무 실어휘(예: envelope)가 아닌지 확인하고 여기에 사유를 남긴다.
+#   keys — RFC 8785 JCS 의 JSON object key 정렬 용어(kkebi jcs.py 실측 · 2026-08-25).
+_PURE_TECH_STOPWORDS = frozenset({"keys"})
+
+
 def _check_pure(root: Path, fw: Path, union: set, f: Findings) -> None:
     pure = fw / "pure"
     if not pure.is_dir():
@@ -472,7 +480,7 @@ def _check_pure(root: Path, fw: Path, union: set, f: Findings) -> None:
                               f"`{m}` — pure/ 는 밖의 저장소 파일을 import 하지 않는다"
                               "(같은 pure/ 안만 예외)")
         idents = _identifier_tokens(mod)
-        hit = sorted(idents & union)
+        hit = sorted((idents & union) - _PURE_TECH_STOPWORDS)
         if hit:
             f.add("#562", _rel(root, py),
                   f"pure/ 에 업무 어휘 {hit[:5]} — 한 글자라도 나오면 위반(Shared Kernel 차단 기계)")

@@ -311,6 +311,77 @@ def _has_identifier(cls: ast.ClassDef) -> bool:
     return False
 
 
+def _journal_pending_stores(cls: ast.ClassDef) -> "set[str]":
+    """저널 애그리거트 관용구(#543 부칙 2026-08-25)의 pending 저장소 이름 집합.
+
+    이벤트가 곧 도메인 실체인 저널 애그리거트(실체 `events` 저장소와 발행 대기 큐가 분리된
+    이중 구조)는 `pull_events()` 대신 «pending 조회 property + 실소거 창구»가 인정 형태다.
+    전건(전부 충족한 저장소만 인정 — fail-closed):
+      ① 사적(밑줄) 필드이고 실체 저장소 이름(`_events`/`events`)이 아니다(이중 구조 — 같은
+         이름이면 일반 관용구라 창구는 pull_events 하나다)
+      ② 어떤 메서드/property 가 그 저장소의 tuple 사본을 반환한다(`return tuple(self.<store>)`)
+      ③ 어떤 메서드 body 가 같은 저장소를 실제로 비운다(`.clear()` 또는 빈 재대입 — 이름
+         불문·행위 판별. no-op mark 디코이는 여기서 탈락한다)
+    """
+    private_fields: set[str] = set()
+    for node in ast.walk(cls):
+        if isinstance(node, ast.AnnAssign):
+            if isinstance(node.target, ast.Name):
+                private_fields.add(node.target.id)
+            elif isinstance(node.target, ast.Attribute) \
+                    and isinstance(node.target.value, ast.Name) \
+                    and node.target.value.id == "self":
+                private_fields.add(node.target.attr)
+        if isinstance(node, ast.Assign):
+            for t in node.targets:
+                if isinstance(t, ast.Attribute) and isinstance(t.value, ast.Name) \
+                        and t.value.id == "self":
+                    private_fields.add(t.attr)
+    private_fields = {
+        n for n in private_fields
+        if n.startswith("_") and n not in ("_events",)
+    }
+    queried: set[str] = set()
+    cleared: set[str] = set()
+
+    def _self_attr(node: ast.AST) -> str:
+        return node.attr if (
+            isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name)
+            and node.value.id == "self"
+        ) else ""
+
+    for m in [n for n in cls.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]:
+        # 생성자(초기화)의 빈 리스트 대입은 «비움»이 아니다 — 여기서 cleared 를 수집하면
+        # no-op mark 디코이가 초기화만으로 ③을 충족해 버린다(fail-closed).
+        is_ctor = m.name in ("__init__", "__post_init__")
+        for node in ast.walk(m):
+            if isinstance(node, ast.Return) and isinstance(node.value, ast.Call) \
+                    and isinstance(node.value.func, ast.Name) \
+                    and node.value.func.id == "tuple" and node.value.args:
+                store = _self_attr(node.value.args[0])
+                if store:
+                    queried.add(store)
+            if is_ctor:
+                continue
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
+                    and node.func.attr == "clear":
+                store = _self_attr(node.func.value)
+                if store:
+                    cleared.add(store)
+            if isinstance(node, ast.Assign):
+                for t in node.targets:
+                    store = _self_attr(t)
+                    if store and isinstance(node.value, (ast.List, ast.Tuple)) \
+                            and not getattr(node.value, "elts", None):
+                        cleared.add(store)
+            if isinstance(node, ast.AnnAssign) and node.value is not None:
+                store = _self_attr(node.target)
+                if store and isinstance(node.value, (ast.List, ast.Tuple)) \
+                        and not getattr(node.value, "elts", None):
+                    cleared.add(store)
+    return private_fields & queried & cleared
+
+
 def _check_root_class(root: Path, py: Path, cls: ast.ClassDef, f: Findings, cand: Candidates) -> None:
     has_events_attr = False
     has_pull = False
@@ -368,7 +439,7 @@ def _check_root_class(root: Path, py: Path, cls: ast.ClassDef, f: Findings, cand
                     cand.add("#257", _rel(root, py, m.lineno),
                              f"상태 변경 메서드 `{m.name}` 끝에 불변식 확인이 없다",
                              "Q4 — 이 메서드 뒤에도 불변식이 참인가")
-    if has_events_attr and not has_pull:
+    if has_events_attr and not has_pull and not _journal_pending_stores(cls):
         f.add("#543", _rel(root, py, cls.lineno),
               "이벤트 기록은 있는데 pull_events() 가 없다 — 꺼내는 창구는 그 하나다")
 

@@ -195,12 +195,18 @@ djr:R-2917 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2918 a djr:Obligation ;
-    skos:prefLabel "공통 오류 모듈의 framework/ninja/framework_error_schema.py 단일 경로"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2918@2026-08-22> .
+    skos:prefLabel "공통 오류 모듈의 정본 경로(기본 framework/ninja·승인 대체 framework/django_ninja — 저장소당 하나)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2918@2026-08-25> .
 
 <https://numchida.com/ns/djr#R-2918@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2918 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2918@2026-08-25> a djr:Expression ;
+    prov:specializationOf djr:R-2918 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2918@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-2919 a djr:Exception ;
     skos:prefLabel "승인 common Schema hook 의 보존(HTTP 오류 변환·handler 금지 대상 제외)"@ko ;
@@ -705,7 +711,7 @@ djr:R-2957 a djr:Obligation ;
     djr:order 5 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b29>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b4> ;
     djr:statesNorm djr:R-2915, djr:R-2916, djr:R-2917, djr:R-2918, djr:R-2919 ;
-    djr:text "- dddjango는 공통 `FrameworkErrorSchema` property를 정하지 않는다. `reuse`는 관찰된 exact shape를 보존한다. `create`와 `approved-change`는 신규 G1 slot 6에서 field/type/required/default/nullability/모든 `Field` metadata/model config·legacy `Config`/validator/serializer/computed field/Pydantic hook inventory와 effective semantics/wire 직렬화/field 의미 전체를 일반 G1과 분리해 명시 승인받는다. 공통 오류 모듈은 `framework/ninja/framework_error_schema.py` 하나다(`framework/ninja/`는 공유 `<technology>` 폴더 — 이 계약 밖 `<module>.py`와 공존). 승인된 common Schema의 Pydantic validator/serializer/decorator/hook은 보존 대상이며 아래 HTTP 오류 변환·handler 금지 대상이 아니다 (§6.2)\n"@ko .
+    djr:text "- dddjango는 공통 `FrameworkErrorSchema` property를 정하지 않는다. `reuse`는 관찰된 exact shape를 보존한다. `create`와 `approved-change`는 신규 G1 slot 6에서 field/type/required/default/nullability/모든 `Field` metadata/model config·legacy `Config`/validator/serializer/computed field/Pydantic hook inventory와 effective semantics/wire 직렬화/field 의미 전체를 일반 G1과 분리해 명시 승인받는다. 공통 오류 모듈은 `framework/ninja/framework_error_schema.py` 하나다(`framework/ninja/`는 공유 `<technology>` 폴더 — 이 계약 밖 `<module>.py`와 공존 · 명시 승인 대체 정본 `framework/django_ninja/error_schema.py` 포함 — 정본은 저장소당 하나·동시 실재 위반 2026-08-25). 승인된 common Schema의 Pydantic validator/serializer/decorator/hook은 보존 대상이며 아래 HTTP 오류 변환·handler 금지 대상이 아니다 (§6.2)\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/SKILL.md/s004/b6> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/SKILL.md/s004> ;

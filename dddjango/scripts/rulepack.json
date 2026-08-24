@@ -87,11 +87,11 @@
     },
     {
       "path": "ontology/rules/implementation-django-ninja-final.ttl",
-      "sha256": "90506de4fad8cb7e3d50ae3ea582d0ab57f580c6b4a97d3c71c75e51249e8d32"
+      "sha256": "24026f0a5c7d65cd4e8100a911e4e9f79d2c58d8291eed3e4216558c3cc93d15"
     },
     {
       "path": "ontology/rules/implementation-django-ninja-skill.ttl",
-      "sha256": "caeee764ab4e48c1fa061639796227ce6c7e9a21f7cab7de6c825404626565e6"
+      "sha256": "7eac63a2b08f3a0abdd6accb90fd654072eeafe62449fa24ab6196e0a1467924"
     },
     {
       "path": "ontology/rules/implementation-django-skill.ttl",
@@ -7953,8 +7953,8 @@
         "check-error-centralization.py"
       ],
       "document": "dddjango/skills/implementation-django-ninja/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-0029@2026-08-19",
-      "label": "공통 오류 모듈 단일 경로(framework/ninja/framework_error_schema.py)",
+      "expression": "https://numchida.com/ns/djr#R-0029@2026-08-25",
+      "label": "공통 오류 모듈 정본 경로(기본 framework/ninja·승인 대체 framework/django_ninja — 저장소당 하나)",
       "order_rank": 2562,
       "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
       "section_number": "6.2"
@@ -52582,8 +52582,8 @@
         "check-error-centralization.py"
       ],
       "document": "dddjango/skills/implementation-django-ninja/SKILL.md",
-      "expression": "https://numchida.com/ns/djr#R-2918@2026-08-22",
-      "label": "공통 오류 모듈의 framework/ninja/framework_error_schema.py 단일 경로",
+      "expression": "https://numchida.com/ns/djr#R-2918@2026-08-25",
+      "label": "공통 오류 모듈의 정본 경로(기본 framework/ninja·승인 대체 framework/django_ninja — 저장소당 하나)",
       "order_rank": 2361,
       "section": "dddjango/skills/implementation-django-ninja/SKILL.md/s004",
       "section_number": null

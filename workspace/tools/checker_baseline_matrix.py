@@ -107,6 +107,12 @@ RISK_LANES: "tuple[tuple[str, str, tuple[str, ...]], ...]" = (
         "--project-code-error-module", "framework/ninja/framework_error_schema.py",
         "--project-code-error-module", "application/lesson/driving_layer/api/bc_error_schema.py",
     )),
+    # R-0029/R-2918 리비전 2(#417 부칙 2026-08-25) — 승인 대체 정본 경로(framework/django_ninja)
+    # 변형 B 에서 green/red 판정이 동작함을 고정한다(error_centralization_code 의 B-개명 판형).
+    ("check-error-centralization.py", "error_centralization_canonical_alt", _RISK_SELECTOR_ARGS + (
+        "--project-code-error-module", "framework/django_ninja/error_schema.py",
+        "--project-code-error-module", "application/lesson/driving_layer/api/bc_error_schema.py",
+    )),
 )
 _RISK_DIRS: "frozenset[str]" = frozenset(d for _s, d, _a in RISK_LANES)
 _RISK_ARGV: "dict[str, tuple[str, ...]]" = {d: a for _s, d, a in RISK_LANES}
@@ -258,14 +264,21 @@ EXPECTED: "dict[str, tuple[int, int, int, int, bool]]" = {
     "check-db-table.py": (2, 26, 26, 2, False),
     "check-choices-literal-consumption.py": (2, 0, 0, 6, True),
     "check-usecase-dto-placement.py": (2, 35, 35, 7, False),
-    "check-transaction-boundary.py": (2, 13, 13, 3, False),
-    "check-domain-model.py": (2, 48, 47, 14, False),
-    "check-port-adapter-pairing.py": (2, 79, 79, 10, False),
+    # 2026-08-25 #197 측정 정밀화 경계 픽스처 +2(reconcile형·죽은 helper — red 유지 pin)
+    "check-transaction-boundary.py": (2, 15, 15, 3, False),
+    # 2026-08-25 #543 저널 carve-out 경계 +2raw/+1unique(no-op mark·일반 관용구 흉내 red)
+    "check-domain-model.py": (2, 50, 48, 14, False),
+    # 2026-08-25 #545/#365/#555 부칙 — 기존 #545×2 는 적용 술어로 비적용 전환(-2), 디코이
+    # 7형·극성 반례·ACL 위장·별칭 세탁 4형 신설(+13raw) · ⓓ 후보 2라인이 unparsed 로(+2)
+    # · 대조 리뷰 처분 — 동적 import(loanhub) red +1
+    "check-port-adapter-pairing.py": (2, 91, 88, 12, False),
     "check-event-publish.py": (2, 20, 20, 5, False),
     "check-broker-contract.py": (2, 22, 22, 6, False),
     "check-missable-entrance.py": (2, 17, 17, 5, False),
-    "check-naming.py": (2, 29, 29, 6, False),
-    "check-business-vocabulary.py": (2, 48, 48, 7, False),
+    # 2026-08-25 #33 models/ 자리 면제의 음성 경계 +1(_model 접미 아님 → red 유지)
+    "check-naming.py": (2, 30, 30, 6, False),
+    # 2026-08-25 #562 국소 stoplist 경계 — canon_json 은 #562 무발화·ⓓ#448 후보 1라인이 unparsed 로(+1)
+    "check-business-vocabulary.py": (2, 48, 48, 8, False),
     "check-response-schema-bypass.py::git-clean": (0, 0, 0, 0, False),
     "check-response-schema-bypass.py::git-modified": (2, 0, 0, 3, True),
     "check-response-schema-bypass.py::git-untracked": (2, 0, 0, 3, True),
@@ -297,6 +310,8 @@ EXPECTED: "dict[str, tuple[int, int, int, int, bool]]" = {
     # unparsed 4→11: R-3401 경계 red 2 concrete(무 default Literal 5·좁힘값≠default 2) 추가(2026-08-24)
     "check-error-centralization.py::error_centralization_code": (2, 1, 1, 11, False),
     "check-error-centralization.py::error_centralization_literal_edge": (2, 0, 0, 5, True),
+    # 2026-08-25 R-0029/R-2918 rev2 — 변형 B(django_ninja) 판형은 code 레인과 동형 계수
+    "check-error-centralization.py::error_centralization_canonical_alt": (2, 1, 1, 11, False),
     "check-api-error-controller-contract.py::guard-zero": (2, 0, 0, 1, True),
     "check-error-centralization.py::guard-zero": (2, 0, 0, 1, True),
     "check-openapi-error-declaration.py::guard-zero": (2, 0, 0, 1, True),

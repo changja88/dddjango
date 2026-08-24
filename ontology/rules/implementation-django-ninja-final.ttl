@@ -227,12 +227,18 @@ djr:R-0028 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0029 a djr:Obligation ;
-    skos:prefLabel "공통 오류 모듈 단일 경로(framework/ninja/framework_error_schema.py)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0029@2026-08-19> .
+    skos:prefLabel "공통 오류 모듈 정본 경로(기본 framework/ninja·승인 대체 framework/django_ninja — 저장소당 하나)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0029@2026-08-25> .
 
 <https://numchida.com/ns/djr#R-0029@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0029 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0029@2026-08-25> a djr:Expression ;
+    prov:specializationOf djr:R-0029 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0029@2026-08-19> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0030 a djr:Permission ;
     skos:prefLabel "framework/ninja/ 공유 폴더의 타 module 공존 허용"@ko ;
@@ -3414,7 +3420,7 @@ djr:R-3401 a djr:Exception ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
     djr:statesNorm djr:R-0029, djr:R-0030 ;
-    djr:text "새 단일-scope code-profile의 공통 오류 모듈은 `framework/ninja/framework_error_schema.py`\n하나다(validation 응답 schema가 필요하면 `framework_validation_error_schema.py`).\n`framework/ninja/`는 공유 `<technology>` 폴더라 이 계약 밖의 다른 `<module>.py`와 공존한다.\n\n"@ko .
+    djr:text "새 단일-scope code-profile의 공통 오류 모듈은 `framework/ninja/framework_error_schema.py`\n하나다(validation 응답 schema가 필요하면 `framework_validation_error_schema.py`).\n`framework/ninja/`는 공유 `<technology>` 폴더라 이 계약 밖의 다른 `<module>.py`와 공존한다.\n단 프로젝트가 명시 승인으로 채택한 대체 정본 경로 `framework/django_ninja/error_schema.py`도\n같은 계약의 정본이다 — 정본은 저장소당 하나이고 두 경로의 동시 실재는 위반이다(검사기\n사용 오류 · 2026-08-25).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b5> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;

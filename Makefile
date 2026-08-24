@@ -100,10 +100,11 @@ verify-base-core:
 
 verify-base-cross:
 	@set -euo pipefail; \
-	echo "[verify-base-cross] 검증 세트 (cross-matrix·registry-gate-smoke·bc-registry-smoke)"; \
+	echo "[verify-base-cross] 검증 세트 (cross-matrix·registry-gate-smoke·bc-registry-smoke·canonical-dual-smoke)"; \
 	PYTHONUTF8=1 python3 workspace/tools/checker_cross_matrix.py; \
 	PYTHONUTF8=1 python3 workspace/tools/registry_gate_smoke.py; \
-	PYTHONUTF8=1 python3 workspace/tools/bc_registry_smoke.py
+	PYTHONUTF8=1 python3 workspace/tools/bc_registry_smoke.py; \
+	PYTHONUTF8=1 python3 workspace/tools/canonical_dual_smoke.py
 
 verify-base-backstop:
 	@set -euo pipefail; \

@@ -40,7 +40,8 @@ FIXTURES: Path = ROOT / "workspace" / "eval" / "fixtures"
 
 # 개작 «직전» 실측 stdout 의 SHA-256(2026-08-19 · python3.9/3.14 동일 실측) — ㉠ 의 기준.
 BASELINE_SHA: "dict[str, str]" = {
-    "domain_model/bad_rules": "ab67c1ae12ecb06afa1fb1731f793efe30864f006a8db10b5315f6fb44e44b41",
+    # 2026-08-25 재실측 — #543 저널 carve-out 경계 픽스처 +2(no-op mark·일반 관용구 흉내)
+    "domain_model/bad_rules": "a5569b02e7847c7d375cbe44e9d9efc83d6c4e22a093388d9e414ddad10a1f3e",
     # 계약 레인 이행(3a68fe3)의 의도 변경 열거표 등재분 반영 — `[컨테이너] {rel}/  (내용: …)`
     # → `- {rel}: 횡단 버킷이 application/ 안에 있다 (내용: …)`(계약 문법 정형화).
     "common_container/bad_rules": "5ce9427209a475032bf19b5cf8f16d356e6e976f2119afe1639159cc8afd23fc",
@@ -63,7 +64,7 @@ DM_EXPECT_INFO: "dict[str, object]" = {
     "symbol": None,
     "severity": "info",
 }
-DM_COUNT_VIOLATION: int = 48
+DM_COUNT_VIOLATION: int = 50  # 2026-08-25 +2 — #543 경계 픽스처
 DM_COUNT_INFO: int = 13
 
 # CC-red 기대(선행 계약 — rule=null + contract_ref).
@@ -112,7 +113,7 @@ def _case_red_dm(td: Path, rows: "list[tuple[str, bool, str]]") -> None:
     recs: "list[dict]" = _load_records(rec_path)
     vio: "list[dict]" = [r for r in recs if r["severity"] == "violation"]
     info: "list[dict]" = [r for r in recs if r["severity"] == "info"]
-    rows.append(("DM-red 레코드 계수 48+13(㉡)",
+    rows.append(("DM-red 레코드 계수 50+13(㉡)",
                  len(vio) == DM_COUNT_VIOLATION and len(info) == DM_COUNT_INFO,
                  f"violation {len(vio)} · info {len(info)}"))
     rows.append(("DM-red 표본 violation 레코드(㉡)", any(_matches(r, DM_EXPECT_VIOLATION) for r in vio),

@@ -331,6 +331,81 @@ def _init_attr_repos(cls: ast.ClassDef) -> set[str]:
     return out
 
 
+def _uow_write_reach(fn: ast.FunctionDef | ast.AsyncFunctionDef,
+                     helpers: "dict[str, ast.FunctionDef | ast.AsyncFunctionDef]",
+                     attr_uows: set[str], attr_repos: set[str]) -> bool:
+    """#197 도달 범위의 쓰기-사용 판정(스펙 대장 #197 — 부칙 아님·측정 정밀화 2026-08-25).
+
+    «with uow» 진입 자체는 쓰기 API 사용이 아니다 — 그래야 읽기 전용+UoW 를 성문 문면대로
+    잡는다(kkebi reconcile 실물). 인정(하나라도 도달하면 True):
+      ⓐ repo save/remove·after_commit 직접 호출(uow.repository 수신자 형 포함)
+      ⓑ uow.repository 를 콜러블 «인자»로 전달(escape — 외부 콜러블이 그 리포지토리로
+         쓰기를 수행할 수 있다는 fail-open 인정 · kkebi import `_run_batch` 실물)
+    도달 범위 = 공개 메서드에서 self 헬퍼로의 추이 폐쇄(직접 호출·호출 인자 참조 전달 —
+    헬퍼→헬퍼 사슬 포함 · kkebi recover 2단 사슬 실증. 어디서도 안 닿는 죽은 헬퍼는
+    불산입). with 인식은 factory 호출형(`with self._factory()`)을 Call 언랩으로 받는다 —
+    언랩은 uow 별칭 수집에만 쓰인다.
+    """
+    scan: "list[ast.FunctionDef | ast.AsyncFunctionDef]" = [fn]
+    seen = {fn.name}
+    frontier = [fn]
+    while frontier:
+        cur = frontier.pop()
+        for node in ast.walk(cur):
+            if not isinstance(node, ast.Call):
+                continue
+            cands: list[str] = []
+            if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) \
+                    and node.func.value.id == "self":
+                cands.append(node.func.attr)
+            for a in list(node.args) + [kw.value for kw in node.keywords]:
+                if isinstance(a, ast.Attribute) and isinstance(a.value, ast.Name) \
+                        and a.value.id == "self":
+                    cands.append(a.attr)
+            for name in cands:
+                if name in helpers and name not in seen:
+                    seen.add(name)
+                    scan.append(helpers[name])
+                    frontier.append(helpers[name])
+    for g in scan:
+        uow_names = _uow_param_names(g)
+        repo_names = _repo_param_names(g)
+        aliases: set[str] = set(uow_names)
+        for node in ast.walk(g):
+            if isinstance(node, ast.With):
+                for item in node.items:
+                    expr = item.context_expr
+                    if isinstance(expr, ast.Call):
+                        expr = expr.func
+                    hit = (_attr_root(expr) in uow_names
+                           or (isinstance(expr, ast.Attribute) and expr.attr in attr_uows))
+                    if hit and isinstance(item.optional_vars, ast.Name):
+                        aliases.add(item.optional_vars.id)
+
+        def _is_uow_repo(nd: ast.AST) -> bool:
+            return (isinstance(nd, ast.Attribute) and nd.attr == "repository"
+                    and isinstance(nd.value, ast.Name) and nd.value.id in aliases)
+
+        for node in ast.walk(g):
+            if not isinstance(node, ast.Call):
+                continue
+            if isinstance(node.func, ast.Attribute):
+                recv, meth = node.func.value, node.func.attr
+                if meth == "after_commit":
+                    return True
+                if meth.split("_", 1)[0] in ("save", "remove"):
+                    if (isinstance(recv, ast.Name) and recv.id in repo_names) \
+                            or (isinstance(recv, ast.Attribute)
+                                and isinstance(recv.value, ast.Name)
+                                and recv.value.id == "self" and recv.attr in attr_repos) \
+                            or _is_uow_repo(recv):
+                        return True
+            for a in list(node.args) + [kw.value for kw in node.keywords]:
+                if _is_uow_repo(a):
+                    return True
+    return False
+
+
 def _check_use_case_writes(root: Path, bc: Path, f: Findings) -> None:
     app_layer = bc / "application_layer"
     if not app_layer.is_dir():
@@ -359,14 +434,21 @@ def _check_use_case_writes(root: Path, bc: Path, f: Findings) -> None:
                         if isinstance(target, ast.Attribute) and isinstance(value, ast.Name) \
                                 and value.id in uow_params:
                             attr_uows.add(target.attr)
+            helpers = {
+                m.name: m for m in cls.body
+                if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef))
+                and m.name.startswith("_") and m.name != "__init__"
+            }
             for m in cls.body:
                 if not isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef)) or m.name.startswith("_"):
                     continue
-                _check_execute_body(root, py, m, attr_repos, attr_uows, f)
+                _check_execute_body(root, py, m, attr_repos, attr_uows, helpers, f)
 
 
 def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFunctionDef,
-                        attr_repos: set[str], attr_uows: set[str], f: Findings) -> None:
+                        attr_repos: set[str], attr_uows: set[str],
+                        helpers: "dict[str, ast.FunctionDef | ast.AsyncFunctionDef]",
+                        f: Findings) -> None:
     repo_names = _repo_param_names(fn)
     uow_names = _uow_param_names(fn)
     has_uow = bool(uow_names or attr_uows)
@@ -382,15 +464,8 @@ def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFun
     factory_born: set[str] = set()       # 도메인 팩토리/생성자 호출로 태어난 이름
     attr_assigned: set[str] = set()      # obj.field = x 직접 대입을 받은 이름
     writes: list[tuple[str, ast.Call]] = []
-    uses_uow_api = False
 
     for node in ast.walk(fn):
-        if isinstance(node, ast.With):
-            for item in node.items:
-                r = _attr_root(item.context_expr)
-                if r in uow_names or (isinstance(item.context_expr, ast.Attribute)
-                                      and item.context_expr.attr in attr_uows):
-                    uses_uow_api = True
         if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call):
             fn_node = node.value.func
             if isinstance(fn_node, (ast.Name, ast.Attribute)) and len(node.targets) == 1 \
@@ -407,18 +482,15 @@ def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFun
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
             recv, meth = node.func.value, node.func.attr
             if _is_repo_recv(recv):
-                if meth in ("after_commit",):
-                    uses_uow_api = True
                 if meth.split("_", 1)[0] in ("save", "remove"):
                     arg = node.args[0] if node.args else None
                     writes.append((arg.id if isinstance(arg, ast.Name) else "", node))
             elif isinstance(recv, ast.Name):
                 method_called.add(recv.id)
-            if meth == "after_commit":
-                uses_uow_api = True
 
-    # #197 — UoW 를 받았는데 쓰기 API 를 하나도 안 쓴다.
-    if has_uow and not writes and not uses_uow_api:
+    # #197 — UoW 를 받았는데 도달 범위 어디에도 쓰기 API 가 없다(측정 정밀화 2026-08-25).
+    # «with uow» 진입 자체는 인정하지 않는다 — 읽기 전용+UoW 는 성문 문면 그대로 위반이다.
+    if has_uow and not _uow_write_reach(fn, helpers, attr_uows, attr_repos):
         f.add("#197", _rel(root, py, fn.lineno),
               f"`{fn.name}` 이 UnitOfWork 를 받는데 with/save/remove/after_commit 이 없다 — "
               "읽기 전용 유스케이스는 UnitOfWork 를 받지 않는다")

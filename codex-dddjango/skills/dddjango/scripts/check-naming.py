@@ -212,8 +212,16 @@ def _check_prefix_suffix(root: Path, bc: Path, f: Findings) -> None:
                       f"`{suf}` 재접미 — 폴더가 종류를 말하는 자리표시자 자리(`<{kind}>.py`)는 "
                       "접미사를 달지 않는다(가르는 자는 「이름이 곧 서술문인가」 — D41)")
         # #33 — 첫 토큰이 트리 폴더 이름인데 조상에 없다.
+        # 단 #335 가 소유하는 `django_<bc>/models/<entity>_model.py` 자리는 대상이 아니다 —
+        # entity 이름의 첫 토큰이 트리 폴더명과 겹치는 것은 #335 준수의 합법 귀결이다
+        # (예: EventStreamModel → event_stream_model.py · 스펙 대장 #33 부칙 2026-08-25).
         first = stem.split("_", 1)[0]
-        if first in _TREE_DIR_NAMES and first not in parts[:-1] and stem != first:
+        model_slot = (
+            stem.endswith("_model")
+            and py.parent.name == "models"
+            and py.parent.parent.name.startswith("django_")
+        )
+        if first in _TREE_DIR_NAMES and first not in parts[:-1] and stem != first and not model_slot:
             if not any(seg.startswith(first) for seg in parts[:-1]):
                 f.add("#33", _rel(root, py),
                       f"접두 `{first}_` 가 조상 폴더에 없다 — 접두는 자기가 «속한» 곳을 가리키고 "

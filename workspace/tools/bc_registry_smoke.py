@@ -50,6 +50,10 @@ def build_mini_repo(root: Path) -> None:
     _mk(acl)
     _mk(acl / "beta")
     _mk(acl / "vendorx")
+    # #365 부칙(2026-08-25) — 통신 축 import 를 가진 위장 ACL 은 blocker 를 유지해야 한다.
+    _mk(acl / "vendory")
+    (acl / "vendory" / "quote_adapter.py").write_text(
+        "import urllib.request\n", encoding="utf-8")
 
 
 def main() -> int:
@@ -63,18 +67,25 @@ def main() -> int:
         )
         out: str = proc.stdout + proc.stderr
     beta_hits: int = sum(1 for ln in out.splitlines() if "[#365]" in ln and "anticorruption_layer/beta" in ln)
-    vendor_hits: int = sum(1 for ln in out.splitlines() if "[#365]" in ln and "anticorruption_layer/vendorx" in ln)
+    # #365 부칙(2026-08-25): 순수 스텁(vendorx)은 후보(ⓓ) 발화 = 비침묵 · 통신 위장(vendory)은 blocker 유지.
+    vendor_cand: int = sum(1 for ln in out.splitlines() if "ⓓ#365" in ln and "anticorruption_layer/vendorx" in ln)
+    vendor_block: int = sum(1 for ln in out.splitlines() if "[#365]" in ln and "anticorruption_layer/vendory" in ln)
     bad: int = 0
     if beta_hits:
         print(f"✗ A 위반: 이웃 BC(beta) 대상 ACL 에 #365 과탐 {beta_hits}건 — 로스터 공급(ROSTER_AWARE) 부재")
         bad += 1
     else:
         print("✓ A: 이웃 BC 대상 ACL 과탐 0")
-    if not vendor_hits:
-        print("✗ B 위반: 로스터 밖(vendorx) ACL 의 #365 진양성이 침묵 — 규칙 레인 사멸")
+    if not vendor_cand:
+        print("✗ B 위반: 로스터 밖 순수 스텁(vendorx)의 ⓓ#365 후보가 침묵 — 비침묵 창구 사멸")
         bad += 1
     else:
-        print(f"✓ B: 로스터 밖 ACL 진양성 유지 ({vendor_hits}건)")
+        print(f"✓ B: 로스터 밖 순수 스텁 후보 발화 유지 ({vendor_cand}건)")
+    if not vendor_block:
+        print("✗ C 위반: 통신 위장(vendory) ACL 의 #365 blocker 가 침묵 — 규칙 레인 사멸")
+        bad += 1
+    else:
+        print(f"✓ C: 통신 위장 ACL blocker 유지 ({vendor_block}건)")
     return 2 if bad else 0
 
 

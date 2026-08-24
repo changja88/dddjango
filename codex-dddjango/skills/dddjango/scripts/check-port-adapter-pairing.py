@@ -403,6 +403,209 @@ def _check_domain_side(root: Path, bc: Path, f: Findings) -> None:
 
 # ── driven adapter — #319~#376 · #464~#583 ─────────────────────────────────
 
+def _aggregate_pending_api(domain: Path, agg: str) -> "tuple[str, set[str], set[str]]":
+    """#545 부칙(2026-08-25) 적용 술어 — («full»|«half»|«none», pending 저장소, 조회 표면).
+
+    적용은 이벤트 채택 애그리거트에 한한다(eventless root 에 가드를 강제하면 dead seam 뿐이다
+    — saju SajuChart·billing 6종 실증). 채택 판별(2원):
+      ⓑ 루트 파일의 pending 3요소 전건 — 사적 list 필드 + 그 필드의 조회 표면(tuple/bool/len/
+         list 사본 반환 또는 bare 반환) + **같은 필드를 실제로 비우는 소거/소모 창구**(clear·
+         빈 재대입 — 생성자 초기화는 제외. 소거 창구 요건이 SajuChart(_snapshots — append 만)
+         오탐을 차단한다) → «full»(가드 검사)
+      ⓐ ⓑ 미충족 + `event/` 비-`__init__` 실재 → «half»(반쪽 채택 — 가드 대상 API 가 없어
+         준수 불능이므로 후보 발화)
+      둘 다 아니면 «none»(비적용).
+    """
+    event_dir = domain / agg / "event"
+    event_adopted = event_dir.is_dir() and any(
+        p.suffix == ".py" and p.stem != "__init__" for p in event_dir.iterdir())
+    root_py = domain / agg / f"{agg}.py"
+    stores: set[str] = set()
+    queries: set[str] = set()
+    mod = _parse(root_py) if root_py.is_file() else None
+    if mod is not None:
+        for cls in [n for n in mod.body if isinstance(n, ast.ClassDef)]:
+            fields: set[str] = set()
+            for node in ast.walk(cls):
+                if isinstance(node, ast.AnnAssign):
+                    if isinstance(node.target, ast.Name):
+                        fields.add(node.target.id)
+                    elif isinstance(node.target, ast.Attribute) \
+                            and isinstance(node.target.value, ast.Name) \
+                            and node.target.value.id == "self":
+                        fields.add(node.target.attr)
+                if isinstance(node, ast.Assign):
+                    for t in node.targets:
+                        if isinstance(t, ast.Attribute) and isinstance(t.value, ast.Name) \
+                                and t.value.id == "self":
+                            fields.add(t.attr)
+            fields = {n for n in fields if n.startswith("_")}
+            queried: "dict[str, set[str]]" = {}
+            consumed: set[str] = set()
+            for m in [n for n in cls.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]:
+                is_ctor = m.name in ("__init__", "__post_init__")
+                for node in ast.walk(m):
+                    ret = node.value if isinstance(node, ast.Return) else None
+                    if isinstance(ret, ast.Call) and isinstance(ret.func, ast.Name) \
+                            and ret.func.id in ("tuple", "bool", "len", "list") and ret.args:
+                        a = ret.args[0]
+                        if isinstance(a, ast.Attribute) and isinstance(a.value, ast.Name) \
+                                and a.value.id == "self" and a.attr in fields:
+                            queried.setdefault(a.attr, set()).add(m.name)
+                    if isinstance(ret, ast.Attribute) and isinstance(ret.value, ast.Name) \
+                            and ret.value.id == "self" and ret.attr in fields:
+                        queried.setdefault(ret.attr, set()).add(m.name)
+                    if is_ctor:
+                        continue
+                    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
+                            and node.func.attr == "clear" \
+                            and isinstance(node.func.value, ast.Attribute) \
+                            and isinstance(node.func.value.value, ast.Name) \
+                            and node.func.value.value.id == "self" \
+                            and node.func.value.attr in fields:
+                        consumed.add(node.func.value.attr)
+                    if isinstance(node, ast.Assign):
+                        for t in node.targets:
+                            if isinstance(t, ast.Attribute) and isinstance(t.value, ast.Name) \
+                                    and t.value.id == "self" and t.attr in fields \
+                                    and isinstance(node.value, (ast.List, ast.Tuple)) \
+                                    and not getattr(node.value, "elts", None):
+                                consumed.add(t.attr)
+            # 채택 = 사적 저장소 + 실소거/소모 창구(둘이면 충분 — 08-15형 «store 직접
+            # 비소모 읽기»가 항상 가능한 가드 표면이다). 조회 표면(queried)은 가드 조인
+            # 인정 목록으로만 쓴다. 소거 창구 요건이 SajuChart(_snapshots — append 만)
+            # 류 조회-전용 스냅숏의 오탐을 차단한다.
+            for store in fields & consumed:
+                stores.add(store)
+                queries |= queried.get(store, set())
+    if stores:
+        return "full", stores, queries
+    if event_adopted:
+        return "half", set(), set()
+    return "none", set(), set()
+
+
+def _guard_polarity(test: ast.AST, target: ast.AST) -> "bool | None":
+    """질의 노드까지의 경로 극성 — True=잔존(truthy) 경로에서 raise 도달 · None=판별 불능.
+
+    부정형 블랙리스트: `not`·`== 0`/`is None`(0·None·False 비교)·판별 불능 래핑. `len(x) > 0`·
+    `!= 0`·`bool(x)`·bare truthy·or/and 합성(진리 유지)은 양성. 불인정이면 이 질의는 가드가
+    아니다(fail-closed — «빈-경우-raise» 정당 판정(event_stream)을 보존한다).
+    """
+    path: "list[ast.AST]" = []
+
+    def _find(node: ast.AST, anc: "list[ast.AST]") -> bool:
+        if node is target:
+            path.extend(anc)
+            return True
+        return any(_find(c, anc + [node]) for c in ast.iter_child_nodes(node))
+
+    if not _find(test, []):
+        return None
+    neg = 0
+    prev: ast.AST = target
+    for anc in reversed(path):
+        if isinstance(anc, ast.UnaryOp) and isinstance(anc.op, ast.Not):
+            neg += 1
+        elif isinstance(anc, ast.Compare):
+            if prev is not anc.left or len(anc.ops) != 1:
+                return None
+            op, cmpv = anc.ops[0], anc.comparators[0]
+            zeroish = isinstance(cmpv, ast.Constant) and (cmpv.value is None or cmpv.value == 0
+                                                          or cmpv.value is False)
+            if isinstance(op, (ast.Eq, ast.Is)) and zeroish:
+                neg += 1
+            elif isinstance(op, (ast.NotEq, ast.IsNot)) and zeroish:
+                pass
+            elif isinstance(op, (ast.Gt, ast.GtE)) and isinstance(cmpv, ast.Constant) \
+                    and cmpv.value == 0:
+                pass
+            else:
+                return None
+        elif isinstance(anc, ast.Call) and isinstance(anc.func, ast.Name) \
+                and anc.func.id in ("bool", "len", "tuple"):
+            pass
+        elif isinstance(anc, ast.BoolOp):
+            pass
+        else:
+            return None
+        prev = anc
+    return neg % 2 == 0
+
+
+def _save_event_guard_ok(save_fn: "ast.FunctionDef | ast.AsyncFunctionDef",
+                         stores: set, queries: set) -> bool:
+    """#545 의미 가드 창(부칙 2026-08-25) — 전건 충족 형태가 하나라도 있으면 True.
+
+    ① 수신자 = save 매개변수(+동일 함수 단순 별칭) ② 질의 대상 = 적용 술어가 인정한 pending
+    저장소/조회 표면(무관 질의 디코이 차단) ③ 극성 — 잔존(truthy) 경로의 raise(«빈-경우-
+    raise»·죽은 분기 불인정) ④ raise 가 truthy 분기(body)에 있고 같은 함수 handler 에
+    삼켜지지 않음 ⑤ 가드가 save body 의 첫 ORM 접촉(`objects` 체인) 이전. 이름 토큰의 단순
+    존재(죽은 분기·지역 이름·무관 수신자)는 가드가 아니다.
+    """
+    params = {a.arg for a in save_fn.args.args + save_fn.args.kwonlyargs if a.arg != "self"}
+    aliases = set(params)
+    for node in ast.walk(save_fn):
+        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Name) \
+                and node.value.id in aliases:
+            for t in node.targets:
+                if isinstance(t, ast.Name):
+                    aliases.add(t.id)
+    surface = stores | queries
+    orm_line: "int | None" = None
+    for node in ast.walk(save_fn):
+        if isinstance(node, ast.Attribute) and node.attr == "objects":
+            ln = getattr(node, "lineno", None)
+            if ln is not None and (orm_line is None or ln < orm_line):
+                orm_line = ln
+    tries = [n for n in ast.walk(save_fn) if isinstance(n, ast.Try)]
+
+    def _swallowed(raise_node: ast.Raise, host_if: ast.If) -> bool:
+        rname = ""
+        if isinstance(raise_node.exc, ast.Call) and isinstance(raise_node.exc.func, ast.Name):
+            rname = raise_node.exc.func.id
+        elif isinstance(raise_node.exc, ast.Name):
+            rname = raise_node.exc.id
+        for ty in tries:
+            in_body = any(raise_node in ast.walk(s) for s in ty.body)
+            if not in_body:
+                continue
+            for h in ty.handlers:
+                names: list[str] = []
+                if isinstance(h.type, ast.Name):
+                    names = [h.type.id]
+                elif isinstance(h.type, ast.Tuple):
+                    names = [e.id for e in h.type.elts if isinstance(e, ast.Name)]
+                elif h.type is None:
+                    return True
+                if any(n in _BROAD_HANDLER_NAMES or n == rname for n in names):
+                    return True
+        return False
+
+    for stmt in ast.walk(save_fn):
+        if not isinstance(stmt, ast.If):
+            continue
+        if isinstance(stmt.test, ast.Constant) and not stmt.test.value:
+            continue
+        if any(isinstance(c, ast.Constant) and c.value is False
+               for b in ast.walk(stmt.test)
+               if isinstance(b, ast.BoolOp) and isinstance(b.op, ast.And)
+               for c in b.values):
+            continue
+        hits = [n for n in ast.walk(stmt.test)
+                if isinstance(n, ast.Attribute) and n.attr in surface
+                and isinstance(n.value, ast.Name) and n.value.id in aliases]
+        if not any(_guard_polarity(stmt.test, q) is True for q in hits):
+            continue
+        if orm_line is not None and stmt.lineno >= orm_line:
+            continue
+        raises = [n for s in stmt.body for n in ast.walk(s)
+                  if isinstance(n, ast.Raise) and n.exc is not None]
+        if any(not _swallowed(r, stmt) for r in raises):
+            return True
+    return False
+
+
 def _check_driven(root: Path, bc: Path, agg_names: set, bc_vocab_set: set,
                   f: Findings, cand: Candidates) -> None:
     driven = _driven(bc)
@@ -460,15 +663,19 @@ def _check_driven(root: Path, bc: Path, agg_names: set, bc_vocab_set: set,
                           "잡는다(D44)")
                 for m in [n for n in cls.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]:
                     if m.name == "save":
-                        guard = any(
-                            isinstance(n, (ast.Attribute, ast.Name)) and
-                            (getattr(n, "attr", "") in ("_events", "pull_events")
-                             or getattr(n, "id", "") == "pull_events")
-                            for n in ast.walk(m))
-                        if not guard:
-                            f.add("#545", _rel(root, py, m.lineno),
-                                  "save() 에 «안 꺼낸 사실» 가드가 없다 — 남아 있으면 예외를 던진다"
-                                  "(사실 발행 세 걸음의 ②가 ③보다 앞이다 — D59)")
+                        # 스펙 대장 #545 부칙(2026-08-25) — 적용 술어(이벤트 채택 애그리거트
+                        # 한정) + 의미 가드 창(토큰 존재가 아니라 잔존-시-raise 의 의미 검사).
+                        mode, stores, queries = _aggregate_pending_api(domain, agg)
+                        if mode == "full":
+                            if not _save_event_guard_ok(m, stores, queries):
+                                f.add("#545", _rel(root, py, m.lineno),
+                                      "save() 에 «안 꺼낸 사실» 가드가 없다 — 남아 있으면 예외를 던진다"
+                                      "(사실 발행 세 걸음의 ②가 ③보다 앞이다 — D59)")
+                        elif mode == "half":
+                            cand.add("#545", _rel(root, py, m.lineno),
+                                     f"`{agg}` 는 event/ 만 있고 루트 pending 상태/API 가 없다 — "
+                                     "가드 대상이 없어 준수 불능(반쪽 채택)",
+                                     "이벤트 채택을 완성할 것인가, event/ 를 걷어낼 것인가")
         for missing in sorted(decl_stems - impl_stems):
             f.add("#351", _rel(root, repo_dir),
                   f"선언 `{missing}.py` 의 구현이 없다 — 선언마다 구현이 «정확히 하나» 있다")
@@ -540,6 +747,117 @@ def _check_driven(root: Path, bc: Path, agg_names: set, bc_vocab_set: set,
     _check_adapter_families(root, bc, adapter, agg_names, bc_vocab_set, f, cand)
 
 
+# #365 부칙(2026-08-25) — 통신 축: 이들 top-level import(또는 `__import__` 호출)가 하나라도
+# 있으면 «순수 스텁»이 아니다. SOCKET_LIBS(벤더)와 합집합으로 쓴다. importlib·asyncio 는
+# 동적 import·소켓 우회 채널이라 포함한다.
+_COMM_AXIS_STDLIB = frozenset({
+    "urllib", "http", "socket", "ssl", "subprocess", "importlib", "asyncio",
+    "ftplib", "xmlrpc", "telnetlib", "smtplib", "poplib", "imaplib", "socketserver",
+})
+
+
+def _acl_target_pure(root: Path, bc: Path, target_dir: Path) -> bool:
+    """스냅숏 부재 대상 ACL 의 구조 순수성 — import 가 자기 BC·framework·비통신 stdlib 뿐인가.
+
+    벤더(SOCKET_LIBS·미지의 서드파티)·통신 stdlib·`__import__` 호출이 하나라도 있으면 False
+    (fail-closed — 미지 top-level 은 서드파티로 간주해 불인정).
+    """
+    import sys as _sys
+    stdlib = getattr(_sys, "stdlib_module_names", frozenset())
+    for py in _py_files(target_dir):
+        mod = _parse(py)
+        if mod is None:
+            return False
+        for node in ast.walk(mod):
+            fulls: list[str] = []
+            if isinstance(node, ast.Import):
+                fulls = [alias.name for alias in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                if node.level:  # 상대 import — BC 안을 못 벗어난다
+                    continue
+                fulls = [node.module or ""]
+            elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name) \
+                    and node.func.id == "__import__":
+                return False
+            for full in fulls:
+                top = full.split(".", 1)[0]
+                if top in _COMM_AXIS_STDLIB or top in SOCKET_LIBS:
+                    return False
+                if top == "application":
+                    segs = full.split(".")
+                    if len(segs) < 2 or segs[1] != bc.name:
+                        return False
+                    continue
+                if top == "framework" or top in stdlib:
+                    continue
+                return False
+    return True
+
+
+_BROAD_HANDLER_NAMES = frozenset({"Exception", "BaseException"})
+
+
+def _is_declared_error_module(module: str, bc_name: str) -> bool:
+    """«같은 BC» 선언 오류 모듈 — port/**/exception.py(파일형)·domain_layer/**/exception(폴더형).
+
+    BC 세그먼트를 현 BC 와 대조한다(대조 리뷰 2026-08-25 — 타 BC 선언 오류의 재던짐은
+    이 인정의 대상이 아니다: 그 import 자체는 격리 규칙 소관이되 #555 는 fail-closed).
+    """
+    if not module.startswith("application."):
+        return False
+    segs = module.split(".")
+    if len(segs) < 2 or segs[1] != bc_name:
+        return False
+    if ".application_layer.port." in module and module.endswith(".exception"):
+        return True
+    if ".domain_layer." in module and (module.endswith(".exception") or ".exception." in module):
+        return True
+    return False
+
+
+def _handler_declared_error(root: Path, bc_name: str, mod: ast.Module, handler: ast.ExceptHandler) -> bool:
+    """#555 재던짐 인정 — handler 가 잡는 타입이 «계약이 선언한 실패»인가(전건 충족만 True).
+
+    ① 이름이 같은 BC 선언 오류 모듈에서의 ImportFrom 바인딩이고 ② 그 심볼이 대상 모듈의
+    ClassDef 이며(별칭 Assign 세탁 불인정) ③ 현 모듈 내 재바인딩이 없고 ④ 튜플이면 전 원소
+    충족. 광역 이름은 출처와 무관하게 불인정(블랙리스트 우선). Attribute 형·해석 불능은
+    불인정(fail-closed). builtin 상속 여부는 판별에 쓰지 않는다(포트 오류가 ValueError
+    서브클래스인 실물 — kkebi).
+    """
+    t = handler.type
+    if t is None:
+        return False
+    names = [t] if isinstance(t, ast.Name) else (list(t.elts) if isinstance(t, ast.Tuple) else None)
+    if not names or not all(isinstance(n, ast.Name) for n in names):
+        return False
+    imports: dict[str, tuple[str, str]] = {}  # 지역 이름 → (모듈, 원 심볼)
+    rebound: set[str] = set()
+    for node in mod.body:
+        if isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+            for alias in node.names:
+                imports[alias.asname or alias.name] = (node.module, alias.name)
+        if isinstance(node, ast.Assign):
+            for tgt in node.targets:
+                if isinstance(tgt, ast.Name):
+                    rebound.add(tgt.id)
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) \
+                and node.value is not None:
+            rebound.add(node.target.id)
+    for n in names:
+        if n.id in _BROAD_HANDLER_NAMES or n.id in rebound or n.id not in imports:
+            return False
+        module, symbol = imports[n.id]
+        if not _is_declared_error_module(module, bc_name):
+            return False
+        target = root / (module.replace(".", "/") + ".py")
+        target_mod = _parse(target) if target.is_file() else None
+        if target_mod is None:
+            return False
+        if not any(isinstance(s, ast.ClassDef) and s.name == symbol for s in target_mod.body):
+            return False
+    return True
+
+
 def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
                             bc_vocab_set: set, f: Findings, cand: Candidates) -> None:
     acl = adapter / "anticorruption_layer"
@@ -547,9 +865,18 @@ def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
         bcs = vocab.bc_names(root)
         for d in sorted(p for p in acl.iterdir() if p.is_dir() and p.name != "__pycache__"):
             if d.name not in bcs:
-                f.add("#365", _rel(root, d),
-                      f"acl/{d.name}/ — 우리가 못 고치고 계약이 저장소 밖인 상대는 "
-                      "external_system/ 이다(anticorruption_layer 는 «우리 다른 BC» 전용)")
+                # 스펙 대장 #365 부칙(2026-08-25) — «우리 BC»는 병렬 워크트리 개발로 이
+                # 스냅숏에 없는 자사 BC 를 포함한다. 대상 부재 시 구조 순수성(통신 축
+                # import 0 — 자기 BC·framework·비통신 stdlib 뿐)이면 후보로 강등하고,
+                # 통신 축이 하나라도 있으면 위반 유지(외부 시스템의 ACL 위장 차단).
+                if _acl_target_pure(root, bc, d):
+                    cand.add("#365", _rel(root, d),
+                             f"acl/{d.name}/ — 이 스냅숏에 없는 대상(순수 스텁 — 통신 import 0)",
+                             "병렬 워크트리에서 개발 중인 «우리 BC»인가, 외부 시스템인가")
+                else:
+                    f.add("#365", _rel(root, d),
+                          f"acl/{d.name}/ — 우리가 못 고치고 계약이 저장소 밖인 상대는 "
+                          "external_system/ 이다(anticorruption_layer 는 «우리 다른 BC» 전용)")
     ext = adapter / "external_system"
     if ext.is_dir():
         for p in sorted(ext.iterdir()):
@@ -614,14 +941,20 @@ def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
                               f"`{cls.name}` 이 포트 계약을 상속하지 않는다(D44)")
         # #319(갈래 판정)의 실체는 방향별 소유자가 진다 — ORM→#462 · 소켓→#367 ·
         # 벤더 폴더→#365 · 타 BC→ctx. 여기서 다시 물면 중복 진단이다.
-        # #554 · #555 — 예외 번역.
+        # #554 · #555 — 예외 번역. 측정 정밀화(2026-08-25): 이미 번역된 «계약이 선언한
+        # 실패»를 잡아 관찰(내구 기록) 후 그대로 재던지는 bare raise 는 벤더 누수가 아니다 —
+        # handler 타입을 보고 가린다(_handler_declared_error · 성문 #555 문면은 벤더·django
+        # 예외만 겨눈다 — kkebi billing 이관 어댑터 실물 판형).
         if "adapter" in parts:
             for node in ast.walk(mod):
                 if isinstance(node, ast.Try):
                     for h in node.handlers:
+                        h_declared = _handler_declared_error(root, bc.name, mod, h)
                         for n in ast.walk(h):
                             if isinstance(n, ast.Raise):
                                 if n.exc is None:
+                                    if h_declared:
+                                        continue
                                     f.add("#555", _rel(root, py, n.lineno),
                                           "벤더·django 예외를 «그대로» 위로 흘린다 — 전역 제약 ②가 "
                                           "«실패의 모양»으로 깨진다(계약이 선언한 실패로 바꾼다)")

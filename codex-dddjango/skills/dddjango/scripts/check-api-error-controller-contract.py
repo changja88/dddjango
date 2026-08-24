@@ -69,9 +69,34 @@ CODE_SKIP_DIRS = {
     "migrations",
     "generated",
 }
+# 정본 공용 오류 스키마 — 변형 집합(#417 부칙 2026-08-25). _select_canonical(root) 가 런
+# 시작에 대상 저장소의 변형을 확정해 전역을 재바인딩한다. 이중 실재는 사용 오류.
+_CANONICAL_VARIANTS: "tuple[tuple[str, str], ...]" = (
+    ("framework/ninja", "framework_error_schema"),
+    ("framework/django_ninja", "error_schema"),
+)
 COMMON_ERROR_PATH = Path("framework/ninja/framework_error_schema.py")
 COMMON_ERROR_MODULE = "framework.ninja.framework_error_schema"
 COMMON_ERROR_OUT = f"{COMMON_ERROR_MODULE}.FrameworkErrorSchema"
+COMMON_ERROR_BASENAME = "framework_error_schema"
+COMMON_ERROR_PACKAGE = "framework.ninja"
+
+
+def _select_canonical(root: Path) -> None:
+    """대상 저장소의 정본 변형 확정(EC 동형 — 표면 대장 2026-08-25 참조)."""
+    paths = [Path(d) / f"{b}.py" for d, b in _CANONICAL_VARIANTS]
+    present = [(root / p).is_file() for p in paths]
+    if all(present[:2]):
+        raise UsageError(
+            f"정본 공용 오류 스키마 이중 실재 — {paths[0]} 와 {paths[1]} 중 하나만 둔다"
+        )
+    d, b = _CANONICAL_VARIANTS[1] if (present[1] and not present[0]) else _CANONICAL_VARIANTS[0]
+    g = globals()
+    g["COMMON_ERROR_PATH"] = Path(d) / f"{b}.py"
+    g["COMMON_ERROR_MODULE"] = f"{d.replace('/', '.')}.{b}"
+    g["COMMON_ERROR_OUT"] = f"{g['COMMON_ERROR_MODULE']}.FrameworkErrorSchema"
+    g["COMMON_ERROR_BASENAME"] = b
+    g["COMMON_ERROR_PACKAGE"] = d.replace("/", ".")
 HTTP_METHODS = {"get", "post", "put", "patch", "delete", "head", "options"}
 ROUTER_CONSTRUCTORS = {"ninja.Router"}
 HANDLER_CONSTRUCTORS = {
@@ -4563,7 +4588,7 @@ def _schema_contract_mutation_nodes(
         return None
 
     def canonical_error_module(module: str, *, relative: bool = False) -> bool:
-        return module == "framework.ninja.framework_error_schema" or module.endswith(
+        return module == COMMON_ERROR_MODULE or module.endswith(
             "driving_layer.api.bc_error_schema"
         ) or (relative and module == "bc_error_schema")
 
@@ -4577,7 +4602,7 @@ def _schema_contract_mutation_nodes(
         return value.attr.endswith(("ErrorOut", "ErrorSchema", "Error")) and (
             root in error_schema_modules
             or ".driving_layer.api.bc_error_schema." in f".{dotted}."
-            or ".framework.ninja.framework_error_schema." in f".{dotted}."
+            or f".{COMMON_ERROR_MODULE}." in f".{dotted}."
         )
 
     def builtin_module_expression(value: ast.AST | None) -> bool:
@@ -5395,7 +5420,7 @@ def _schema_contract_mutation_nodes(
                 if (
                     alias.name == "bc_error_schema"
                     and (module.endswith("driving_layer.api") or (node.level > 0 and not module))
-                ) or (alias.name == "framework_error_schema" and module == "framework.ninja"):
+                ) or (alias.name == COMMON_ERROR_BASENAME and module == COMMON_ERROR_PACKAGE):
                     error_schema_modules.add(local)
             return
         if isinstance(node, ast.Import):
@@ -5834,7 +5859,7 @@ def _direct_external_entry_invocations(
             origin = resolved.origin
             canonical = (
                 ".driving_layer.api.bc_error_schema." in f".{origin}."
-                or ".framework.ninja.framework_error_schema." in f".{origin}."
+                or f".{COMMON_ERROR_MODULE}." in f".{origin}."
             )
             if canonical and origin.endswith(".model_config"):
                 kinds.add("config")
@@ -7013,6 +7038,7 @@ def _print_tree_blocks(tree_findings: Findings, tree_candidates: Candidates) -> 
 def main(argv: list[str]) -> int:
     try:
         config = _parse_config(argv[1:])
+        _select_canonical(config.root)  # #417 부칙 — 정본 변형 확정
     except UsageError as exc:
         print(
             f"[check-api-error-controller-contract] 사용 오류: {exc}",

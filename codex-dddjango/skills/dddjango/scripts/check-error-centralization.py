@@ -67,11 +67,43 @@ CODE_SKIP_DIRS = {
     "migrations",
     "generated",
 }
+# 정본 공용 오류 스키마 — 변형 집합(#417 부칙 2026-08-25 · 그래프 리비전 동반).
+# A = 표준 기본 · B = kkebi 승인 대체 경로(STOP 2026-08-23 16:44). 대상 저장소가 어느
+# 변형을 쓰는지는 _select_canonical(root) 가 런 시작에 확정해 아래 전역을 재바인딩한다.
+# 두 변형이 동시에 실재하면 정본 이중화 — 사용 오류다. 클래스명 축(FrameworkErrorSchema)
+# 은 변형과 무관하게 불변이다.
+_CANONICAL_VARIANTS: "tuple[tuple[str, str], ...]" = (
+    ("framework/ninja", "framework_error_schema"),
+    ("framework/django_ninja", "error_schema"),
+)
 COMMON_INIT = Path("framework/ninja/__init__.py")
 COMMON_ERROR = Path("framework/ninja/framework_error_schema.py")
 COMMON_VALIDATION = Path("framework/ninja/framework_validation_error_schema.py")
 COMMON_ERROR_MODULE = "framework.ninja.framework_error_schema"
 COMMON_ERROR_OUT = f"{COMMON_ERROR_MODULE}.FrameworkErrorSchema"
+
+
+def _select_canonical(root: Path) -> None:
+    """대상 저장소의 정본 변형을 확정해 COMMON_* 전역을 재바인딩한다(런당 1회).
+
+    선택 규칙: B 의 오류 모듈 실재 ∧ A 부재 → B · 둘 다 실재 → UsageError(정본 이중화 금지)
+    · 그 외 → A(부재 blocker 는 현행 유지). 재바인딩 방식은 전 사용처(17곳)가 모듈 전역을
+    읽는 현행 구조를 보존하는 최소 침습이다(표면 대장: workspace/design/
+    2026-08-25-canonical-path-surface-map.md).
+    """
+    paths = [Path(d) / f"{b}.py" for d, b in _CANONICAL_VARIANTS]
+    present = [(root / p).is_file() for p in paths]
+    if all(present[:2]):
+        raise UsageError(
+            f"정본 공용 오류 스키마 이중 실재 — {paths[0]} 와 {paths[1]} 중 하나만 둔다"
+        )
+    d, b = _CANONICAL_VARIANTS[1] if (present[1] and not present[0]) else _CANONICAL_VARIANTS[0]
+    g = globals()
+    g["COMMON_INIT"] = Path(d) / "__init__.py"
+    g["COMMON_ERROR"] = Path(d) / f"{b}.py"
+    g["COMMON_VALIDATION"] = Path(d) / "framework_validation_error_schema.py"
+    g["COMMON_ERROR_MODULE"] = f"{d.replace('/', '.')}.{b}"
+    g["COMMON_ERROR_OUT"] = f"{g['COMMON_ERROR_MODULE']}.FrameworkErrorSchema"
 NINJA_SCHEMA = "ninja.Schema"
 STR_ENUM = "enum.StrEnum"
 FIELD_FACTORIES = {
@@ -686,7 +718,7 @@ def _source_plan(
     union = code_paths | preserve_paths
     if COMMON_ERROR not in code_paths:
         analysis.append(
-            "code inventory에 framework/ninja/framework_error_schema.py가 필요함"
+            f"code inventory에 {COMMON_ERROR}가 필요함"
         )
     for path in union:
         if not _is_schema_candidate(path):
@@ -4800,6 +4832,7 @@ def _print_tree_findings(findings: Findings) -> None:
 def main(argv: list[str]) -> int:
     try:
         config = _parse_config(argv[1:])
+        _select_canonical(config.root)  # #417 부칙 — 정본 변형 확정(이중 실재는 사용 오류)
     except UsageError as exc:
         print(f"[check-error-centralization] 사용 오류: {exc}", file=sys.stderr)
         return 1
@@ -4959,6 +4992,29 @@ def main(argv: list[str]) -> int:
         # 앵커 모드 + 비 code-profile 실행 — tree 진단을 현행 그대로 인쇄·수집한다.
         _print_tree_findings(tree_findings)
         collected.extend(lines(tree_findings))
+
+    if config.profile in {None, "auto"}:
+        # ㉯(2026-08-25) — auto/무프로필은 code 계약을 판정하지 않는다. 비-placeholder 오류
+        # 스키마가 실재하면 «검사했다»는 오인이 없게 stderr 로 알린다(침묵 제거 — tarot 런
+        # refactor-scope 실증). exit·stdout·레코드는 불변: Coordinator 의 auto 의무 렌더와
+        # 하네스 계약을 깨지 않는 최소 개입이다(exit 1 fail-loud 는 교착이라 기각).
+        unexamined: list[str] = []
+        if (config.root / COMMON_ERROR).is_file() \
+                and not _skeleton_placeholder_module(config.root, COMMON_ERROR):
+            unexamined.append(str(COMMON_ERROR))
+        for bc_dir in _tree_bcs(config.root):
+            rel = bc_dir.relative_to(config.root) / "driving_layer" / "api" / "bc_error_schema.py"
+            if (config.root / rel).is_file() \
+                    and not _skeleton_placeholder_module(config.root, rel):
+                unexamined.append(str(rel))
+        if unexamined:
+            print(
+                "[check-error-centralization] 경고: auto/무프로필은 code 계약을 판정하지 않는다"
+                f" — 비-placeholder 오류 스키마 {len(unexamined)}건 미검사"
+                f"(예: {unexamined[0]}). code 판정은 --error-profile dddjango-code-json 과"
+                " selector 렌더가 소유한다",
+                file=sys.stderr,
+            )
 
     if collected:
         try:
