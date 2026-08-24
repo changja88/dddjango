@@ -218,9 +218,14 @@ def _check_prefix_suffix(root: Path, bc: Path, f: Findings) -> None:
                 f.add("#33", _rel(root, py),
                       f"접두 `{first}_` 가 조상 폴더에 없다 — 접두는 자기가 «속한» 곳을 가리키고 "
                       "옆 폴더 이름을 빌리지 않는다")
-        # #34 — 같은 접두 = 같은 스코프.
+        # #34 — application use-case boundary 안에서 같은 접두 = 같은 스코프.
+        is_use_case_boundary = (
+            len(parts) == 4
+            and parts[0] == "application_layer"
+            and parts[1] != "port"
+        )
         for suf in ("_command", "_query", "_result"):
-            if stem.endswith(suf) and py.parent.name not in ("port",):
+            if is_use_case_boundary and stem.endswith(suf):
                 base = stem[: -len(suf)]
                 if py.parent.name != base and "domain_bypass_query" not in parts:
                     f.add("#34", _rel(root, py),

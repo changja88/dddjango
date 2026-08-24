@@ -73,6 +73,20 @@ EXTRA_LANES: "list[tuple[str, str]]" = [
     ("check-usecase-dto-placement.py", "usecase_dto_domain_exception"),
 ]
 
+# Z-3A false-positive regression lanes. These fixtures express deliberate
+# non-adoption or a domain meaning that shares a suffix with boundary DTOs.
+NEGATIVE_LANES: "list[tuple[str, str, str]]" = [
+    ("check-broker-contract.py", "broker_contract", "no_adoption"),
+    ("check-composition-root.py", "composition_root", "no_api"),
+    ("check-usecase-dto-placement.py", "usecase_dto", "no_api"),
+    ("check-naming.py", "naming", "domain_results"),
+]
+
+POSITIVE_LANES: "list[tuple[str, str, str]]" = [
+    ("check-usecase-dto-placement.py", "usecase_dto", "registrar_only"),
+]
+
+
 # 로스터 단일 출처 대조(2026-08-12 P3′) — 쌍 목록이 checker_registry 와 어긋나면 재료 결손.
 sys.path.insert(0, str(S))
 from checker_registry import REGISTRY  # noqa: E402
@@ -96,6 +110,13 @@ def build_cases() -> "list[tuple[str, list[str], str, int]]":
         for sub, want in (("good", 0), ("bad_rules", 2)):
             fx = F / fixture / sub
             cases.append((f"{fixture}/{sub}", [sys.executable, str(S / script), str(fx)], f"{fixture}/{sub}", want))
+    for script, fixture, sub in NEGATIVE_LANES:
+        fx = F / fixture / sub
+        cases.append(
+            (f"{fixture}/{sub}", [sys.executable, str(S / script), str(fx)], f"{fixture}/{sub}", 0))
+    for script, fixture, sub in POSITIVE_LANES:
+        fx = F / fixture / sub
+        cases.append((f"{fixture}/{sub}", [sys.executable, str(S / script), str(fx)], f"{fixture}/{sub}", 2))
     for script, fixture in AUTO_PAIRS:
         for sub, want in (("good", 0), ("bad_rules", 2)):
             fx = F / fixture / sub

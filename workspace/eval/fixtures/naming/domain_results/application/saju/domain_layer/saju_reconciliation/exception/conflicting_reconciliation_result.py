@@ -1,0 +1,2 @@
+class ConflictingReconciliationResult(Exception):
+    pass

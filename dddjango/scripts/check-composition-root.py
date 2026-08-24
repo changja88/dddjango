@@ -1920,7 +1920,51 @@ def _check_inner_driving_imports(bc: Path, bc_rel: Path, findings: Findings) -> 
                     )
 
 
+def _project_uses_registrar(root: Path, registrar_name: str) -> bool:
+    for project in _find_project_dirs(root):
+        for module_path in (project / "api.py", project / "urls.py"):
+            if not module_path.is_file():
+                continue
+            mod = _slice_parse(module_path)
+            if mod is None:
+                continue
+            for node in ast.walk(mod):
+                if isinstance(node, ast.ImportFrom) and any(
+                    alias.name == registrar_name for alias in node.names
+                ):
+                    return True
+                if not isinstance(node, ast.Call):
+                    continue
+                called = node.func
+                if (
+                    isinstance(called, ast.Name) and called.id == registrar_name
+                ) or (
+                    isinstance(called, ast.Attribute) and called.attr == registrar_name
+                ):
+                    return True
+    return False
+
+
+def _has_concrete_api_surface(root: Path, api: Path, bc_name: str) -> bool:
+    router = api / "api_router.py"
+    if router.is_file() and router.stat().st_size > 0:
+        return True
+    if any(
+        p.name.endswith("_controller.py") and not set(p.parts) & CODE_SKIP_DIRS
+        for p in api.rglob("*.py")
+    ):
+        return True
+    webhook = api / "webhook"
+    if webhook.is_dir():
+        for entry in webhook.iterdir():
+            if entry.name.startswith(".") or entry.name in {"__init__.py", "__pycache__"}:
+                continue
+            return True
+    return _project_uses_registrar(root, f"register_{bc_name}_api")
+
+
 def _check_api_dir(
+    root: Path,
     bc: Path,
     bc_rel: Path,
     findings: Findings,
@@ -1960,7 +2004,7 @@ def _check_api_dir(
                     "이 입구의 계약을 바깥이 소유하는가(OAuth 콜백 포함)? 그러면 `webhook/<provider>/` 자리다",
                 )
         router = api / "api_router.py"
-        if router.is_file():
+        if router.is_file() and _has_concrete_api_surface(root, api, bc.name):
             router_rel: Path = api_rel / "api_router.py"
             _check_api_router(
                 router, router_rel, bc.name, findings, code_keys=code_keys
@@ -2139,7 +2183,7 @@ def _standard_tree_slice(
         bc_rel = bc.relative_to(root)
         _check_composition_dir(bc, bc_rel, findings, candidates)
         _check_inner_driving_imports(bc, bc_rel, findings)
-        _check_api_dir(bc, bc_rel, findings, candidates, code_keys)
+        _check_api_dir(root, bc, bc_rel, findings, candidates, code_keys)
     for d in _find_project_dirs(root):
         api_py = d / "api.py"
         if api_py.is_file():

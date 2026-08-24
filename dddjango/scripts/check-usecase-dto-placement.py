@@ -220,7 +220,61 @@ def _driving_api(bc: Path) -> Path | None:
     return None
 
 
-def _check_structure(bc: Path, bc_rel: Path, out: Findings) -> list[Path]:
+def _find_project_dirs(root: Path) -> list[Path]:
+    out: list[Path] = []
+    for p in sorted(root.rglob("urls.py")):
+        d = p.parent
+        if set(d.parts) & SKIP_DIRS or "application" in d.parts:
+            continue
+        if (d / "settings").is_dir() or (d / "settings.py").is_file() or (d / "api.py").is_file():
+            out.append(d)
+    return out
+
+
+def _project_uses_registrar(root: Path, registrar_name: str) -> bool:
+    for project in _find_project_dirs(root):
+        for module_path in (project / "api.py", project / "urls.py"):
+            if not module_path.is_file():
+                continue
+            mod = _parse(module_path)
+            if mod is None:
+                continue
+            for node in ast.walk(mod):
+                if isinstance(node, ast.ImportFrom) and any(
+                    alias.name == registrar_name for alias in node.names
+                ):
+                    return True
+                if not isinstance(node, ast.Call):
+                    continue
+                called = node.func
+                if (
+                    isinstance(called, ast.Name) and called.id == registrar_name
+                ) or (
+                    isinstance(called, ast.Attribute) and called.attr == registrar_name
+                ):
+                    return True
+    return False
+
+
+def _has_concrete_api_surface(root: Path, api: Path, bc_name: str) -> bool:
+    router = api / "api_router.py"
+    if router.is_file() and router.stat().st_size > 0:
+        return True
+    if any(
+        p.name.endswith("_controller.py") and not set(p.parts) & SKIP_DIRS
+        for p in api.rglob("*.py")
+    ):
+        return True
+    webhook = api / "webhook"
+    if webhook.is_dir():
+        for entry in webhook.iterdir():
+            if entry.name.startswith(".") or entry.name in {"__init__.py", "__pycache__"}:
+                continue
+            return True
+    return _project_uses_registrar(root, f"register_{bc_name}_api")
+
+
+def _check_structure(root: Path, bc: Path, bc_rel: Path, out: Findings) -> list[Path]:
     """구조 규칙 검사 후 <use_case>/ 폴더 목록을 돌려준다."""
     app = _app_layer(bc)
     if app is None:
@@ -245,7 +299,7 @@ def _check_structure(bc: Path, bc_rel: Path, out: Findings) -> list[Path]:
             out.add("#183", rel / p.relative_to(app), "`*_validation.py` 를 두지 않는다 — 검사 자리는 입구(schema_in)와 도메인 둘뿐이다")
 
     api = _driving_api(bc)
-    if api is not None:
+    if api is not None and _has_concrete_api_surface(root, api, bc.name):
         api_dirs, _ = _entries(api)
         api_areas = {p.name for p in api_dirs if p.name != "webhook"}
         app_areas = {p.name for p in areas}
@@ -609,7 +663,7 @@ def main(argv: list[str]) -> int:
 
         if app is not None:
             scanned_layers += 1
-            ucs = _check_structure(bc, bc_rel, findings)
+            ucs = _check_structure(target, bc, bc_rel, findings)
             for uc in ucs:
                 uc_rel = bc_rel / "application_layer" / uc.parent.name / uc.name
                 _check_use_case(uc, uc_rel, agg_names, findings, cand)

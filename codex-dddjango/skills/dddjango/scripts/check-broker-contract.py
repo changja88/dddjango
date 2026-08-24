@@ -389,7 +389,7 @@ def _check_external_obligations(root: Path, broker: Path, f: Findings) -> None:
     if not ext.is_dir():
         return
     contents = [p for p in ext.glob("*.py") if p.name != "__init__.py"]
-    if not contents:
+    if not contents or all(p.stat().st_size == 0 for p in contents):
         return
     broker_text = "\n".join((p.read_text(encoding="utf-8") for p in _py_files(broker)))
     repo_names = {
