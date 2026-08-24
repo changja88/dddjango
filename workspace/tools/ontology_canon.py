@@ -247,7 +247,11 @@ def rdfc10_hash(graph: Graph) -> str:
     ds = Dataset()
     for triple in graph:
         ds.add(triple)
-    canon = RDFCanon("sha256", ds, RDFCanonTimeTicker(60.0))
+    # RDFCanonTimeTicker 의 max_time 단위는 **밀리초**(time_ns/1e6 대비 비교)다 — 60.0 은
+    # 의도(60초)와 달리 60ms 예산이라, 게이트 병렬 워커 경합에서 djr-shapes(bnode 13·
+    # 무부하 12ms)의 canonize 가 비결정적으로 TimeoutError 를 냈다(2026-08-24 릴리즈 실측).
+    # 60초로 교정 — 독(poison) 그래프 가드로는 여전히 유효(정상 최대 대비 수천 배 여유).
+    canon = RDFCanon("sha256", ds, RDFCanonTimeTicker(60_000.0))
     with contextlib.redirect_stdout(io.StringIO()):
         text = canon.canonize()
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
