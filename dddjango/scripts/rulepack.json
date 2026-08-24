@@ -11,7 +11,7 @@
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "61a045af9a4bcc2b15903e40be5efd389727a3ec923fefc50cae77cdc2d2ce1b"
+      "sha256": "fc5b1c82bbcc22691938dae3da72db2ac0385cf756f730a471d4e944bbc01e31"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
@@ -33790,8 +33790,8 @@
         "check-context-isolation.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-1699@2026-08-22",
-      "label": "공개 함수 request/response 계약 시그니처와 예외 번역표 결정",
+      "expression": "https://numchida.com/ns/djr#R-1699@2026-08-24",
+      "label": "공개 함수 request/response 계약 시그니처·예외 번역표·보조 계약 타입 결정",
       "order_rank": 354,
       "section": "dddjango/agents/design-architect.md/s005",
       "section_number": null

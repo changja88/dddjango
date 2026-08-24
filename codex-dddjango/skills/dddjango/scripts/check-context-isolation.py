@@ -15,6 +15,7 @@ Kernel 없음)·#83(BC 삭제 내성)은 아래 각론 진단이 집행한다.
          #98 타 BC composition_root 금지 · #102 driving 중 OHS 만 · #51 test→타 BC test 금지
   OHS    #146 published_service 금지 · #149/#113 라우팅·등록 함수 금지 · #150 평면 .py 금지
          #152/#154/#155 service·contract 구조 · #156/#157/#159/#160 계약 1타입=1파일
+         (주 계약이 어노테이션으로 참조하는 보조 공개 dataclass 는 면제 — 2026-08-24 좁은 정합화)
          #162 응답에 도메인 금지 · #163 exception 은 서비스 스코프 · #164 도메인 예외 번역
          #166/#167/#168/#170 기저 예외·상속·1클래스=1모듈·_v1 금지 · #453/#454 «없다»는 답
          #455 사유는 코드로 · #472 contract 는 stdlib·같은 BC 계약만 · #482/#483/#484 명명
@@ -430,6 +431,78 @@ def _check_ohs_service(entry: Path, rel, out: Findings, cand: Candidates) -> set
     return ops
 
 
+# 계약 어휘 접미 — 보조 타입 면제 불가 이름(#484 «Result 금지»·R-0531 어휘 혼용 금지)
+_CONTRACT_VOCAB_SUFFIXES = ("Response", "Request", "Result", "Command", "Query")
+
+
+def _dataclass_local_names(mod: ast.Module) -> set[str]:
+    """`from dataclasses import dataclass(as 별칭)` 로 실제 들여온 이름만 — 이름만 같은
+    로컬 데코레이터를 dataclass 로 치지 않는다(혼성 패널 Y#8 — _enum_local_names 동형)."""
+    names: set[str] = set()
+    for n in mod.body:
+        if isinstance(n, ast.ImportFrom) and n.module == "dataclasses":
+            for a in n.names:
+                if a.name == "dataclass":
+                    names.add(a.asname or a.name)
+    return names
+
+
+def _dataclass_module_aliases(mod: ast.Module) -> set[str]:
+    names: set[str] = set()
+    for n in mod.body:
+        if isinstance(n, ast.Import):
+            for a in n.names:
+                if a.name == "dataclasses":
+                    names.add(a.asname or "dataclasses")
+    return names
+
+
+def _is_dataclass_def(cls: ast.ClassDef, local: set[str], mods: set[str]) -> bool:
+    for d in cls.decorator_list:
+        target = d.func if isinstance(d, ast.Call) else d
+        if isinstance(target, ast.Name) and target.id in local:
+            return True
+        if (isinstance(target, ast.Attribute) and target.attr == "dataclass"
+                and isinstance(target.value, ast.Name) and target.value.id in mods):
+            return True
+    return False
+
+
+def _contract_aux_exempt(mod: ast.Module, pubs: "list[ast.ClassDef]", suffix: str) -> set[str]:
+    """주 계약(`<Operation><suffix>`)의 필드 어노테이션이 직·간접 참조하는 같은 파일의
+    보조 공개 dataclass — 1타입=1파일·접미 강제의 면제 집합(2026-08-24 좁은 정합화).
+    자격 셋 전부: ① 주 계약에서 전이 참조(인용 forward-ref 포함 — _ann_idents) ② 계약
+    어휘 접미 아님 ③ import 검증된 @dataclass. 고정점 순회라 자기·상호 참조에 안전하다.
+    두 연산이 한 보조 타입을 공유하면 정의는 한 계약 파일에 두고 다른 계약이 같은 BC
+    계약 간 import(#472 허용)로 참조한다 — 파일별 중복 정의는 같은 지식 두 벌이다."""
+    local: set[str] = _dataclass_local_names(mod)
+    mods: set[str] = _dataclass_module_aliases(mod)
+    by_name: dict[str, ast.ClassDef] = {c.name: c for c in pubs}
+
+    def field_refs(cls: ast.ClassDef) -> set[str]:
+        refs: set[str] = set()
+        for s in cls.body:
+            if isinstance(s, ast.AnnAssign):
+                refs |= _ann_idents(s.annotation)
+        return refs
+
+    exempt: set[str] = set()
+    work: "list[ast.ClassDef]" = [c for c in pubs if c.name.endswith(suffix)]
+    seen: set[str] = {c.name for c in work}
+    while work:
+        cls = work.pop()
+        for name in field_refs(cls):
+            cand = by_name.get(name)
+            if cand is None or name in seen:
+                continue
+            seen.add(name)
+            if (not name.endswith(_CONTRACT_VOCAB_SUFFIXES)
+                    and _is_dataclass_def(cand, local, mods)):
+                exempt.add(name)
+                work.append(cand)
+    return exempt
+
+
 def _check_contract_kind(kind_dir: Path, suffix: str, one_file_rule: str, only_rule: str,
                          ops: set[str], srel, out: Findings) -> None:
     if not kind_dir.is_dir():
@@ -449,12 +522,15 @@ def _check_contract_kind(kind_dir: Path, suffix: str, one_file_rule: str, only_r
         if mod is None:
             continue
         pubs = [n for n in mod.body if isinstance(n, ast.ClassDef) and not n.name.startswith("_")]
-        if len(pubs) >= 2:
-            out.add(one_file_rule, rel, f"계약 타입 하나 = 파일 하나다 — 공개 클래스가 {len(pubs)}개다")
+        exempt: set[str] = _contract_aux_exempt(mod, pubs, suffix)
+        primaries = [c for c in pubs if c.name.endswith(suffix)]
+        surplus = [c for c in pubs if not c.name.endswith(suffix) and c.name not in exempt]
+        if len(pubs) >= 2 and (len(primaries) >= 2 or surplus):
+            out.add(one_file_rule, rel, f"계약 타입 하나 = 파일 하나다 — 공개 클래스가 {len(pubs)}개다(주 계약이 어노테이션으로 참조하는 보조 dataclass 만 예외)")
         for cls in pubs:
-            if not cls.name.endswith(suffix):
-                out.add("#484", rel, f"계약 클래스는 `<Operation>{suffix}` 다(`Result` 금지 — {only_rule}: 이 폴더에는 이 창구가 {'받는' if suffix == 'Request' else '돌려주는'} 타입만 온다) — `{cls.name}`")
-            if suffix == "Response":
+            if not cls.name.endswith(suffix) and cls.name not in exempt:
+                out.add("#484", rel, f"계약 클래스는 `<Operation>{suffix}` 다(`Result` 금지 — {only_rule}: 이 폴더에는 이 창구가 {'받는' if suffix == 'Request' else '돌려주는'} 타입과 그 구성 보조 dataclass 만 온다) — `{cls.name}`")
+            if suffix == "Response" and cls.name.endswith(suffix):
                 field_names = {
                     s.target.id for s in cls.body
                     if isinstance(s, ast.AnnAssign) and isinstance(s.target, ast.Name)
