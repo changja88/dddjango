@@ -1,7 +1,7 @@
 {
   "name": "dddjango-web",
   "displayName": "dddjango-web",
-  "version": "0.1.6",
+  "version": "1.0.0",
   "description": "Django 프로젝트의 화면(web 표현계층)을 시안 충실 재현과 MVVM+HTMX 구조 규율로 빌드하는 오케스트레이터. /dddjango-web으로 화면 요구·시안→설계→구현을 단계별 게이트로 빌드한다. 백엔드 BC는 실물 API 계약으로만 소비한다.",
   "author": {
     "name": "changja88",
