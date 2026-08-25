@@ -7,13 +7,18 @@
 글자 크기·유효 웨이트·행간·정렬·색·상대 위치·고정(pinned) 인벤토리·앱 컬럼
 폭뿐이고, 블록 유무·비텍스트 구성은 육안+시안 대조 소관이다.
 
-입력 JSON은 assets/render_audit.js(콘솔 스니펫)의 산출(audit_version 1)만
-받는다 — 스키마 불일치는 fail-loud(exit 1)로, 필드가 바뀐 스니펫과 수제
-JSON이 조용히 통과하지 못하게 한다.
+입력 JSON은 assets/render_audit.js(콘솔 스니펫)의 산출만 받는다 — 현행
+스키마는 audit_version 2(모션 인벤토리 포함)이고, 기존 동결본 보존을 위해
+v1도 수용한다(v1은 motion 축 미대조 — warn 고지). 신규 동결 검증은
+--require-version 2로 v2를 강제한다(구버전 스니펫 재사용 차단). 그 외
+스키마 불일치는 fail-loud(exit 1)로, 필드가 바뀐 스니펫과 수제 JSON이
+조용히 통과하지 못하게 한다. v2의 motion 축은 자동 조인하지 않는다
+(CSS-in-JS 해시 명명 — 조인 키 부재): 계수 요약·커버리지 경고까지만이고,
+판정 대조는 check_motion_spec.py(처분 표 ↔ web/ 트리) 소관이다.
 
 사용:
   python compare_render_audit.py <target.json> <impl.json>
-  python compare_render_audit.py --validate <audit.json>   # 동결 직후 스키마 검사
+  python compare_render_audit.py --validate [--require-version 2] <audit.json>  # 동결 직후 스키마 검사
 
 축·관용치:
   font-size  : float 파싱 후 ε 0.05px (직렬화 흔들림만 흡수 — rem 유래 소수 차는 실결함)
@@ -35,7 +40,10 @@ import json
 import re
 import sys
 
-AUDIT_VERSION = 1
+ACCEPTED_VERSIONS = {1, 2}
+CURRENT_VERSION = 2
+MOTION_LIST_FIELDS = ("transitions", "transitionRules", "keyframes", "animationRules",
+                      "hoverSelectors", "focusSelectors", "blind_spots", "caps_hit")
 FONT_EPS = 0.05
 LINE_EPS = 1.0
 CENTER_X_TOL = 0.05
@@ -51,7 +59,7 @@ def die(msg: str) -> None:
     sys.exit(1)
 
 
-def load_audit(path: str) -> dict:
+def load_audit(path: str, require_version: int | None = None) -> dict:
     try:
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
@@ -59,8 +67,10 @@ def load_audit(path: str) -> dict:
         die(f"읽기 실패: {path} ({e})")
     except json.JSONDecodeError as e:
         die(f"JSON 파싱 실패: {path} ({e})")
-    if not isinstance(data, dict) or data.get("audit_version") != AUDIT_VERSION:
-        die(f"audit_version {AUDIT_VERSION} 아님: {path} — render_audit.js 산출만 받는다")
+    if not isinstance(data, dict) or data.get("audit_version") not in ACCEPTED_VERSIONS:
+        die(f"audit_version {sorted(ACCEPTED_VERSIONS)} 아님: {path} — render_audit.js 산출만 받는다")
+    if require_version is not None and data.get("audit_version") != require_version:
+        die(f"audit_version {require_version} 필요(신규 동결은 현행 스니펫 전문 실행): {path} — v{data.get('audit_version')} 산출")
     for field in ("viewport", "column", "scroll", "texts", "pinned"):
         if field not in data:
             die(f"필수 필드 없음: {field} ({path})")
@@ -68,9 +78,37 @@ def load_audit(path: str) -> dict:
         for field in ("key", "text", "fontSize", "weight", "lineHeight", "textAlign", "color", "rect"):
             if field not in t:
                 die(f"texts[{i}]에 필드 없음: {field} ({path})")
+    if data.get("audit_version") == CURRENT_VERSION:
+        motion = data.get("motion")
+        if not isinstance(motion, dict):
+            die(f"필수 필드 없음: motion (v2 실측 — 스니펫 전문 실행 산출만 받는다) ({path})")
+        for field in MOTION_LIST_FIELDS:
+            if not isinstance(motion.get(field), list):
+                die(f"motion.{field} 리스트 아님/없음 ({path})")
+        sheets = motion.get("sheets")
+        if (not isinstance(sheets, dict)
+                or not isinstance(sheets.get("total"), int) or not isinstance(sheets.get("readable"), int)
+                or not isinstance(sheets.get("blocked"), list)):
+            die(f"motion.sheets 형식 위반(total·readable int·blocked list 필요) ({path})")
     if data.get("partial"):
         print(f"[warn] {path}: partial 실측(스니펫 오류 중단) — 결과가 불완전할 수 있다")
     return data
+
+
+def motion_coverage_warns(data: dict, path: str) -> list[str]:
+    """v2 motion의 준-커버리지 경고 — 발화해도 exit는 불변(배너 표면화용)."""
+    if data.get("audit_version") != CURRENT_VERSION:
+        return []
+    motion = data["motion"]
+    sheets = motion["sheets"]
+    warns: list[str] = []
+    if sheets.get("total", 0) == 0:
+        warns.append(f"{path}: 시트 0장 — 비개연 실측(스니펫 전문 실행·실페이지 여부 확인)")
+    if sheets.get("blocked"):
+        warns.append(f"{path}: 모션 인벤토리 부분성 — 접근 차단 시트 {len(sheets['blocked'])}장(cross-origin)")
+    if motion.get("blind_spots"):
+        warns.append(f"{path}: 측정 밖 모션 엔진 감지 — {' · '.join(map(str, motion['blind_spots'][:6]))}")
+    return warns
 
 
 def px(v: str) -> float | None:
@@ -139,16 +177,38 @@ def compare_pair(key: str, a: dict, b: dict, col_a: dict, col_b: dict, diffs: li
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) == 3 and argv[1] == "--validate":
-        data = load_audit(argv[2])
-        print(f"[compare-audit] validate OK: texts {len(data['texts'])}건 · pinned {len(data['pinned'])}건 · scroll={data['scroll'].get('mode')}")
+    if len(argv) >= 3 and argv[1] == "--validate":
+        rest = argv[2:]
+        require: int | None = None
+        if rest and rest[0] == "--require-version":
+            if len(rest) < 3 or not rest[1].isdigit():
+                die("사용: compare_render_audit.py --validate [--require-version N] <audit.json>")
+            require, rest = int(rest[1]), rest[2:]
+        if len(rest) != 1:
+            die("사용: compare_render_audit.py --validate [--require-version N] <audit.json>")
+        data = load_audit(rest[0], require_version=require)
+        for w in motion_coverage_warns(data, rest[0]):
+            print(f"[warn] {w}")
+        mo = data.get("motion") or {}
+        motion_note = (f" · motion tr {len(mo.get('transitions', []))}/kf {len(mo.get('keyframes', []))}"
+                       f"/hover {len(mo.get('hoverSelectors', []))}" if data.get("audit_version") == 2
+                       else " · v1(모션 축 없음)")
+        print(f"[compare-audit] validate OK: texts {len(data['texts'])}건 · pinned {len(data['pinned'])}건 · scroll={data['scroll'].get('mode')}{motion_note}")
         return 0
     if len(argv) != 3:
-        die("사용: compare_render_audit.py <target.json> <impl.json> | --validate <audit.json>")
+        die("사용: compare_render_audit.py <target.json> <impl.json> | --validate [--require-version N] <audit.json>")
 
     target, impl = load_audit(argv[1]), load_audit(argv[2])
     diffs: list[str] = []
     warns: list[str] = []
+
+    tver, iver = target.get("audit_version"), impl.get("audit_version")
+    if tver != iver:
+        warns.append(f"실측 버전 불일치 target=v{tver} impl=v{iver} — motion 축 미대조")
+    elif tver == 1:
+        warns.append("v1 실측 — motion 축 미대조(재실측 시 v2로 업그레이드 권장)")
+    for side in (target, impl):
+        warns.extend(motion_coverage_warns(side, argv[1] if side is target else argv[2]))
 
     tv, iv = target["viewport"], impl["viewport"]
     if tv.get("w") != iv.get("w"):
@@ -195,6 +255,13 @@ def main(argv: list[str]) -> int:
 
     only_t = sorted(set(tmap) - set(imap))
     only_i = sorted(set(imap) - set(tmap))
+
+    if tver == CURRENT_VERSION and iver == CURRENT_VERSION:
+        tm, im = target["motion"], impl["motion"]
+        print("INFO 모션 인벤토리(계수 요약 — 판정 대조는 check_motion_spec 소관): "
+              f"transitions {len(tm['transitions'])}↔{len(im['transitions'])} · "
+              f"keyframes {len(tm['keyframes'])}↔{len(im['keyframes'])} · "
+              f"hover {len(tm['hoverSelectors'])}↔{len(im['hoverSelectors'])}")
 
     for w in warns:
         print(f"[warn] {w}")

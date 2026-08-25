@@ -116,11 +116,78 @@ assert "S1 audit_version fail-loud" 1 "audit_version" - "$E" "$OUT"
 OUT=$(run_py compare_render_audit.py); E=$?
 assert "U1 사용법" 1 "사용" - "$E" "$OUT"
 
+# ---------- v2(모션 인벤토리) 표본 — 계획 2026-08-25 W3/W9
+python3 - "$T" <<'EOF'
+import copy, json, sys
+T = sys.argv[1]
+with open(f"{T}/target.json", encoding="utf-8") as f:
+    base = json.load(f)
+
+def dump(name, obj):
+    with open(f"{T}/{name}.json", "w", encoding="utf-8") as f:
+        json.dump(obj, f, ensure_ascii=False, sort_keys=True)
+
+m = {"transitions": [{"key": "button.cta", "property": "opacity", "duration": "0.3s", "easing": "ease"}],
+     "transitionRules": [{"selector": ".card:hover", "transition": "opacity 0.3s ease"}],
+     "keyframes": ["motion-fade"], "animationRules": [{"selector": ".spinner", "animation": "motion-fade 1s"}],
+     "hoverSelectors": [".card:hover"], "focusSelectors": [],
+     "sheets": {"total": 2, "readable": 2, "blocked": []}, "blind_spots": [], "caps_hit": []}
+b2 = copy.deepcopy(base); b2["audit_version"] = 2; b2["motion"] = copy.deepcopy(m); dump("target-v2", b2)
+dump("same-v2", copy.deepcopy(b2))
+v = copy.deepcopy(b2); del v["motion"]; dump("v2-no-motion", v)
+v = copy.deepcopy(b2); v["motion"]["sheets"] = {"total": 3, "readable": 2, "blocked": ["https://cdn.example.com/app.css"]}; dump("v2-blocked", v)
+v = copy.deepcopy(b2); v["motion"]["blind_spots"] = ["global:gsap"]; dump("v2-blind", v)
+v = copy.deepcopy(b2); v["motion"]["sheets"] = {"total": 0, "readable": 0, "blocked": []}; dump("v2-zerosheets", v)
+EOF
+
+# ---------- V2(positive control): v2 --validate 정상 + 모션 계수 표기
+OUT=$(run_py compare_render_audit.py --validate "$T/target-v2.json"); E=$?
+assert "V2 v2 validate 정상" 0 "motion tr 1/kf 1" - "$E" "$OUT"
+
+# ---------- S2: v2인데 motion 섹션 부재 → fail-loud exit 1
+OUT=$(run_py compare_render_audit.py --validate "$T/v2-no-motion.json"); E=$?
+assert "S2 v2 motion 부재 fail-loud" 1 "필수 필드 없음: motion" - "$E" "$OUT"
+
+# ---------- RV: 신규 동결 v2 강제 — --require-version 2에 v1 → exit 1
+OUT=$(run_py compare_render_audit.py --validate --require-version 2 "$T/target.json"); E=$?
+assert "RV require-version 2에 v1 거부" 1 "audit_version 2 필요" - "$E" "$OUT"
+
+# ---------- W1v: v1↔v1 — exit·diff 불변 + v1 고지 warn 1행
+OUT=$(run_py compare_render_audit.py "$T/target.json" "$T/same.json"); E=$?
+assert "W1v v1 수용 warn" 0 "v1 실측 — motion 축 미대조" "DIFF" "$E" "$OUT"
+
+# ---------- MIX: v1 target + v2 impl → 버전 불일치 warn·diff 판정 불변
+OUT=$(run_py compare_render_audit.py "$T/target.json" "$T/target-v2.json"); E=$?
+assert "MIX 버전 불일치 warn" 0 "실측 버전 불일치" "DIFF" "$E" "$OUT"
+
+# ---------- Wb: blocked 시트 → 부분성 warn (validate·exit 불변)
+OUT=$(run_py compare_render_audit.py --validate "$T/v2-blocked.json"); E=$?
+assert "Wb 차단 시트 부분성 warn" 0 "부분성" - "$E" "$OUT"
+
+# ---------- Ws: blind_spots → 측정 밖 엔진 warn
+OUT=$(run_py compare_render_audit.py --validate "$T/v2-blind.json"); E=$?
+assert "Ws 측정 밖 엔진 warn" 0 "측정 밖 모션 엔진" - "$E" "$OUT"
+
+# ---------- Wz: 시트 0장 → 비개연 실측 warn
+OUT=$(run_py compare_render_audit.py --validate "$T/v2-zerosheets.json"); E=$?
+assert "Wz 시트 0장 비개연 warn" 0 "비개연 실측" - "$E" "$OUT"
+
+# ---------- A1v2(positive control): v2 동일 실측 → diff 0 + 모션 계수 INFO
+OUT=$(run_py compare_render_audit.py "$T/target-v2.json" "$T/same-v2.json"); E=$?
+assert "A1v2 v2 동일 실측 diff 0" 0 "모션 인벤토리" "DIFF" "$E" "$OUT"
+
 # ---------- DET: 결정론 — 같은 red 입력 2회 byte 동일 출력
 O1=$(run_py compare_render_audit.py "$T/target.json" "$T/size-diff.json")
 O2=$(run_py compare_render_audit.py "$T/target.json" "$T/size-diff.json")
 if [ "$O1" = "$O2" ]; then PASS=$((PASS+1)); echo "PASS DET 결정론(2회 동일)"; else
   FAIL=$((FAIL+1)); echo "FAIL DET 결정론(2회 동일)"; diff <(echo "$O1") <(echo "$O2") | head -10 | sed 's/^/    /'
+fi
+
+# ---------- DETv2: v2 경로 결정론 — 2회 byte 동일
+O1=$(run_py compare_render_audit.py "$T/target-v2.json" "$T/v2-blocked.json")
+O2=$(run_py compare_render_audit.py "$T/target-v2.json" "$T/v2-blocked.json")
+if [ "$O1" = "$O2" ]; then PASS=$((PASS+1)); echo "PASS DETv2 결정론(2회 동일)"; else
+  FAIL=$((FAIL+1)); echo "FAIL DETv2 결정론(2회 동일)"; diff <(echo "$O1") <(echo "$O2") | head -10 | sed 's/^/    /'
 fi
 
 echo "----------------------------------------"

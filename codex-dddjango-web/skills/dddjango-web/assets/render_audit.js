@@ -6,15 +6,25 @@
  * 첫 붙여넣기에 브라우저가 "allow pasting" 타이핑을 요구할 수 있다.
  *
  * 수집: 뷰포트 · 앱 컬럼 후보 · 텍스트 리프 실측(크기/웨이트/행간/정렬/색/rect)
- *      · 고정(pinned) 요소 — 내부 2점(1/3·2/3) 스크롤 샘플링으로 rect 불변 판별.
- * 출력: JSON을 클립보드(copy)와 console.log 양쪽으로 — 대조는
- *      scripts/compare_render_audit.py가 결정론 수행한다(스키마 audit_version 1).
+ *      · 고정(pinned) 요소 — 내부 2점(1/3·2/3) 스크롤 샘플링으로 rect 불변 판별
+ *      · 모션 인벤토리(v2) — computed transition·CSSOM 규칙(@keyframes·transition·
+ *        :hover/:focus·@import 1단 하강)·시트 접근/측정 밖 엔진 자기 신고.
+ *        전부 동기·결정적(정적 페이지 기준 — 스크롤 샘플링이 lazy-load·리스너를
+ *        발화시키는 동적 페이지는 실행이 상태를 바꿀 수 있다) — 런타임 애니메이션
+ *        표본(getAnimations 류)은 채택하지 않는다(비결정·IO 리빌은 동기 실행 중
+ *        발화 전이라 관찰 불가 — 계획 2026-08-25 §3).
+ * 출력: JSON을 클립보드(copy)·console.log·window.__renderAudit 세 곳으로 —
+ *      대행 실행(세션 도구)은 실행 후 JSON.stringify(window.__renderAudit)를
+ *      도구의 평가 채널로 회수한다. 대조는 scripts/compare_render_audit.py가
+ *      결정론 수행한다(스키마 audit_version 2 · v1 하위 호환은 대조기 소관).
  */
 (() => {
   'use strict';
-  const AUDIT_VERSION = 1;
+  const AUDIT_VERSION = 2;
   const TEXT_CAP = 200;
   const PINNED_CAP = 20;
+  const MOTION_CAPS = { transitions: 100, transitionRules: 100, animationRules: 50,
+                        keyframes: 50, hoverSelectors: 100, focusSelectors: 100 };
 
   const norm = (s) =>
     s.normalize('NFC').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
@@ -49,6 +59,11 @@
     pinned: [],
     pinnedTruncated: false,
     partial: false,
+    // 골격 선대입 — 모션 블록 이전 단계에서 예외(partial)여도 v2 스키마가 성립한다
+    motion: { transitions: [], transitionRules: [], keyframes: [], animationRules: [],
+              hoverSelectors: [], focusSelectors: [],
+              sheets: { total: 0, readable: 0, blocked: [] },
+              blind_spots: [], caps_hit: [] },
   };
 
   const all = [...document.querySelectorAll('body *')];
@@ -133,6 +148,71 @@
       out.texts = texts;
     }
 
+    // 모션 인벤토리(v2) — 텍스트 실측과 같은 top-0 단계에서 동기 수집(골격은 선대입됨)
+    {
+      const m = out.motion;
+      const push = (name, item) => {
+        if (m[name].length < MOTION_CAPS[name]) m[name].push(item);
+        else if (!m.caps_hit.includes(name)) m.caps_hit.push(name);
+      };
+      // 요소 key: 텍스트 리프면 텍스트 키, 비텍스트는 태그.classList(정렬·최대 3) 시그니처
+      const elKey = (el) => {
+        const t = norm(el.textContent || '');
+        if (el.children.length === 0 && t.length >= 2) return keyOf(el.textContent || '');
+        const cls = [...el.classList].sort().slice(0, 3).join('.');
+        return el.tagName.toLowerCase() + (cls ? '.' + cls : '');
+      };
+      // 판별 술어는 duration/delay다 — transition-property의 초기값이 'all'이라 property로는 전 요소가 매치된다
+      const hasRealTime = (v) => String(v || '').split(',').some((s) => parseFloat(s) > 0);
+      for (const el of all) {
+        const r = rectOf(el);
+        if (!visible(el, r)) continue;
+        const cs = getComputedStyle(el);
+        if (hasRealTime(cs.transitionDuration) || hasRealTime(cs.transitionDelay)) {
+          push('transitions', { key: elKey(el), property: cs.transitionProperty.slice(0, 120),
+                                duration: cs.transitionDuration, easing: cs.transitionTimingFunction.slice(0, 120) });
+        }
+      }
+      // CSSOM 순회 — @keyframes 우선 판별 → @import 1단 하강(실패는 blocked 신고 —
+      // curl 동결 경로의 «@import 1단 재귀»와 같은 판형) → 그룹 규칙(@media·@supports·중첩) 재귀
+      const walkRules = (rules) => {
+        for (const rule of rules) {
+          if (rule.type === 7) { push('keyframes', String(rule.name)); continue; } // CSSKeyframesRule
+          if (rule.type === 3) { // CSSImportRule — document.styleSheets에 안 담긴다
+            try { if (rule.styleSheet) walkRules(rule.styleSheet.cssRules); }
+            catch (err) { m.sheets.blocked.push(String(rule.href || '(import)')); }
+            continue;
+          }
+          if (rule.selectorText && rule.style) {
+            const st = rule.style;
+            const sel = rule.selectorText.slice(0, 120);
+            // 실시간 규칙만 — «all 0s» 리셋류가 인벤토리·계수 게이트를 부풀리지 않게
+            if (hasRealTime(st.transitionDuration) || hasRealTime(st.transitionDelay))
+              push('transitionRules', { selector: sel,
+                transition: String(st.transition || [st.transitionProperty, st.transitionDuration, st.transitionTimingFunction].filter(Boolean).join(' ')).slice(0, 120) });
+            if (st.animationName && st.animationName !== 'none')
+              push('animationRules', { selector: sel,
+                animation: String(st.animation || [st.animationName, st.animationDuration].filter(Boolean).join(' ')).slice(0, 120) });
+            if (rule.selectorText.includes(':hover')) push('hoverSelectors', sel);
+            if (rule.selectorText.includes(':focus')) push('focusSelectors', sel);
+          }
+          if (rule.cssRules && rule.cssRules.length) walkRules(rule.cssRules);
+        }
+      };
+      const sheets = [...document.styleSheets, ...(document.adoptedStyleSheets || [])];
+      m.sheets.total = sheets.length;
+      for (const sh of sheets) {
+        try { walkRules(sh.cssRules); m.sheets.readable += 1; }
+        catch (err) { m.sheets.blocked.push(String((sh && sh.href) || '(inline/adopted)')); }
+      }
+      // 측정 밖 모션 엔진 자기 신고 — 전역 시그니처 + DOM 흔적(전역 미노출 번들 보완)
+      for (const g of ['gsap', 'anime', 'AOS', 'ScrollReveal', 'ScrollMagic', 'Velocity', 'lottie'])
+        if (window[g]) m.blind_spots.push('global:' + g);
+      for (const sel of ['[data-aos]', '.aos-init', '[data-scroll]', '[data-sr-id]'])
+        if (document.querySelector(sel)) m.blind_spots.push('dom:' + sel);
+      if (all.some((el) => el.shadowRoot)) m.blind_spots.push('dom:shadow-root'); // shadow 내부는 순회 밖
+    }
+
     // 고정(pinned) 요소 — 2점 스크롤 샘플링
     if (scrollable) {
       const box = scroller
@@ -174,7 +254,7 @@
         const cs = getComputedStyle(el);
         pinned.push({ position: cs.position, rect: s1.get(el), key: keyOf(el.textContent || ''), text: norm(el.textContent || '').slice(0, 60) });
       }
-      pinned.sort((a, b) => a.rect.y - b.rect.y || a.rect.x - b.rect.x || (a.key < b.key ? -1 : 1));
+      pinned.sort((a, b) => a.rect.y - b.rect.y || a.rect.x - b.rect.x || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
       if (pinned.length > PINNED_CAP) { out.pinnedTruncated = true; pinned.length = PINNED_CAP; }
       out.pinned = pinned;
     }
@@ -186,9 +266,14 @@
   }
 
   const json = JSON.stringify(out);
+  window.__renderAudit = out; // 대행 실행의 회수 채널 — JSON.stringify(window.__renderAudit)
   try { if (typeof copy === 'function') copy(json); } catch (e) { /* copy는 DevTools 전용 */ }
   console.log(json);
+  const mo = out.motion || {};
   return `[render-audit] texts ${out.texts.length}건 · pinned ${out.pinned.length}건 · scroll=${out.scroll.mode}` +
+    ` · motion tr ${(mo.transitions || []).length}/kf ${(mo.keyframes || []).length}/hover ${(mo.hoverSelectors || []).length}` +
+    ((mo.sheets && mo.sheets.blocked && mo.sheets.blocked.length) ? ` · 차단 시트 ${mo.sheets.blocked.length}` : '') +
+    ((mo.blind_spots || []).length ? ` · 측정 밖 엔진 ${mo.blind_spots.length}` : '') +
     (out.partial ? ' · PARTIAL(오류 발생 — error 필드 확인)' : '') +
     ' — JSON은 클립보드(copy)와 위 로그에 있습니다. 파일로 저장해 산출물 폴더에 동결하세요.';
 })();

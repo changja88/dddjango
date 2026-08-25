@@ -155,7 +155,7 @@ widget(영역 재사용 조각)과 design_system component(전역 순수 부품)
 
 **베이스 리셋.** 화면 CSS의 리셋 절은 box-sizing·html/body 여백 0과 함께 **UA 기본 스타일 정규화**를 포함한다 — 최소 `p { margin: 0; }` 등 문단·제목류 기본 마진 0. *왜*: 시안(컴포넌트 렌더·디자인 산출물)은 문단 기본 마진이 없는 세계라, `<p>`를 쓰는 순간 브라우저 UA 마진이 시안에 없는 간격을 만든다 — 필요한 간격은 리셋 위에 토큰으로 명시한다.
 
-**모션.** 근거는 설계 명세의 동적 표현 처분(architecture-web §8)뿐이다 — 명세에 없는 모션 발명 금지·«한계» 항목 구현 금지.
+**모션.** 근거는 설계 명세의 동적 표현 처분(architecture-web §8)뿐이다 — 명세에 없는 모션 발명 금지·«한계» 항목 구현 금지. **처분 표가 지정한 셀렉터·`@keyframes` 명·`data-motion` 토큰을 그대로 쓴다 — 개명·발명 금지**(`check_motion_spec`의 역스윕이 처분 표 밖 모션을 발견으로 잡는다 — 이 이름들이 조인 키다).
 
 - **상태 규칙**(`:hover`·`:focus-visible`·`transition`)은 해당 요소의 화면 CSS·component CSS에 직접 쓴다 — duration·easing 값은 tokens.css의 `var()` 참조.
 - **`@keyframes`**: 공용(스피너·페이드 류 재사용 모션)은 `design_system/foundation/motion.css`에 `motion-*` 이름으로, 화면 전속은 그 화면 CSS에 `<view>_` 접두로 둔다. motion.css에는 custom property 정의 금지 — keyframes·유틸 클래스 선언만(중간값 리터럴은 허용).

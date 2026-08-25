@@ -35,7 +35,10 @@ verify:
 verify-web:
 	@set -euo pipefail; \
 	echo "[verify-web] dddjango-web 픽스처(백스톱·절단 도구)"; \
-	bash dddjango-web/scripts/test/run_fixtures.sh
+	bash dddjango-web/scripts/test/run_fixtures.sh; \
+	echo "[verify-web] codex 미러 byte 대조(scripts·assets)"; \
+	diff -rq --exclude=__pycache__ dddjango-web/scripts codex-dddjango-web/skills/dddjango-web/scripts; \
+	diff -rq dddjango-web/assets codex-dddjango-web/skills/dddjango-web/assets
 
 # 온톨로지 단 — .venv 파이썬 고정 (T0 A8)
 verify-ontology:

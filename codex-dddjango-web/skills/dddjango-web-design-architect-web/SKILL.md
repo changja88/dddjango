@@ -20,7 +20,7 @@ description: dddjango-web 코디네이터가 Phase 1(설계)에서 spawn_agent�
 - (있으면) `design-ref/` 경로 — 동결 시안(이미지 또는 시안 HTML). 형상(배치·생김새)의 유일 근거이되 **직수입하지 않는다** — 마크업·클래스·인라인 스타일을 명세로 옮기지 않고, 구조는 규범으로 재구축한다(architecture-web §1 형상 공리).
 - (있으면 — `has_design_tokens`) `design-tokens.json` 경로 — 시안에서 절단된 색·치수 토큰. 시각 명세의 단일 근거다 — 시안 값을 눈대중으로 추정하지 말고 이 토큰을 인용해 박는다.
 - (있으면 — `has_design_images`) `asset-manifest.json` 경로 — 시안 이미지 목록. 너는 *어느 이미지(src)가 어느 화면 조각에* 들어가는지 의미만 연결한다 — 착지 경로 문자열은 박지 않는다(coder-web이 manifest에서 src로 조인).
-- (있으면 — `has_motion_notes`) `motion-notes.md` 경로 — 동적 표현 관찰 기록(요소/트리거/효과 값/재현 분류). 동적 표현 전수 처분(architecture-web §8)의 유일한 입력이다 — 동결 시안·토큰엔 동적 상태가 담기지 않는다.
+- (있으면 — `has_motion_notes`) `motion-notes.md` 경로 — 동적 표현 관찰 기록(기계가독 표 `| id | 요소 | 트리거 | 효과 | 재현 분류(예상) | 출처 |` — 상태 행 `(없음-확인)`/`(미관찰)` 포함). 동적 표현 전수 처분(architecture-web §8)의 유일한 입력이다 — 동결 시안·토큰엔 동적 상태가 담기지 않는다.
 - (있으면 — `has_render_audit`) `render-audit.json` 경로 — 목표 페이지의 렌더 실측(요소별 글자 크기·유효 웨이트·행간·정렬·색·rect + 고정(pinned) 요소). **렌더 실측 전수 처분·배치 거동 결정(architecture-web §8)의 입력이다** — 절단 토큰은 값의 «풀»만 주고 요소 결합은 실측만 준다. pinned 항목이 motion-notes 문답과 겹치면 실측 우선(문답은 실측 부재 시 폴백).
 - 설계 명세를 저장할 경로.
 - 영역 배치 판정(G0 ①/②/③ — undecidable-web §4). ① 신설 / ② 기존 영역 포함이면 주어진 판정을 파일 경로에 그대로 반영한다(스스로 뒤집지 않는다). ③ «설계자가 정함» 위임이면 네가 영역을 정하고 *왜*를 명세에 남긴다 — 네 결정이 곧 판정이다.
@@ -39,7 +39,7 @@ description: dddjango-web 코디네이터가 Phase 1(설계)에서 spawn_agent�
 - **삼총사·form 파일**: 각 view의 `<view>_view.py`·`<view>_view_model.py`·`<view>_state.py`·`<view>.html`. `<view>_form.py`는 **입력 form이 있는 화면만**(조건 생성 — houserules §3) — form 유무를 화면마다 명시한다.
 - **계약 소비 매핑**: 화면·조각별 소비 엔드포인트를 동결본에서 **정확 인용(method + path)** — G1 직후 기계 절단(`server-contract.json`)의 입력이다. client 모듈(`client/<bc>/<capability>_client.py`)과 web 소유 response 모델 목록, 계약 오류(exception)의 표시 귀결까지 결정한다(architecture-web §6).
 - **상태**: 각 state의 모양 — 템플릿이 그대로 표시할 프리미티브와 중첩 dataclass(패키지 타입 직노출 금지·예외는 검증 실패 재렌더용 Django Form 1종 — architecture-web §3), forms↔VM 분담(입력 검증은 form·표시 판정은 VM).
-- **동적 표현 처분**(motion-notes 입력이 있으면 항상): 관찰 기록 **전 항목**을 채택/기각/한계로 처분한다 — 빈칸 0(architecture-web §8·크기 전수 연결과 같은 판형). 채택 항목은 재현 분류(CSS/러너)와 값의 토큰 매핑까지 확정하고, **«러너» 채택이 1개 이상이면 그 사실을 명세에 명시한다**(Coordinator의 motion.js 조건 설치 근거). «한계» 항목(패럴랙스·제스처 류)은 구현하지 않음을 명세에 남긴다.
+- **동적 표현 처분**(motion-notes 입력이 있으면 항상): 관찰 기록 **전 항목**(모션 id `m*` 행 — 상태 행 제외)을 채택/기각/한계로 처분한다 — 빈칸 0(architecture-web §8·크기 전수 연결과 같은 판형). **처분은 §8의 기계가독 처분 표 판형으로 적는다**(헤더 `| note id | 처분 | 분류 | 구현 좌표 | 값 | 근거 |` byte 고정 — `check_motion_spec --spec-only`가 G1 직후 전수성·판형을 기계 검사하고 FINDING은 반송된다). css-\* 좌표의 셀렉터·@keyframes 명명은 네가 확정한다(형상 불서술 원칙의 명시 예외 — 모션 좌표 한정). 채택 항목은 재현 분류(CSS/러너)와 값의 토큰 매핑까지 확정하고, **«러너» 채택이 1개 이상이면 그 사실을 명세에 명시한다**(Coordinator의 motion.js 조건 설치 근거). «한계» 항목(패럴랙스·제스처 류)은 구현하지 않음을 명세에 남긴다.
 - **렌더 실측 전수·배치 거동 결정**(render-audit 입력이 있으면 항상): 실측 texts **전 항목**을 채택/기각으로 처분한다 — 빈칸 0(동적 표현 처분과 같은 판형). 채택 항목의 글자 크기·유효 웨이트·행간·정렬·색은 **실측값 인용으로 확정**하고 눈대중 근사 금지(스크린샷 육안은 실측 없는 항목의 보조일 뿐). 실측 pinned·시안 근거로 **고정 요소의 존재·앵커(top/bottom)·스크롤 스킴**(문서 스크롤 vs 내부 스크롤 패널)을 명세에 확정한다 — 재현 스킴은 등가면 된다(architecture-web §8 배치 거동 결정·표기 판형은 implementation-ui §7 소유).
 - **design_system**: 재사용 항목(사전 조사로 실사한 것만 — 실사 없는 재사용 선언 금지)과 신설 component(부품군 폴더 포함). **토큰 전수 연결**: 절단된 색·치수 토큰을 **전수** 채택 또는 기각한다 — 빈칸 0(architecture-web §8 — 빈칸은 coder-web이 그 값을 흘릴 자리다). **이미지 정형 목록**: `has_design_images`면 manifest 항목 수만큼 1건씩 — 어느 화면의 어느 조각이 그 이미지를 렌더하는지(또는 왜 안 쓰는지) — `src`로 지목해 박는다.
 - **HTMX**: section별 부분 재렌더 단위(hx-target)와 fragment 라우트 — fragment 진입점은 소속 view가 소유하고 영역 urls.py에 이름 붙은 path로 온다(architecture-web §4·§7).
@@ -68,7 +68,7 @@ view/section "상태 조립"·section "화면 전속"·widget↔design_system "B
 
 초안·수정을 완료로 넘기기 전 두 스캔을 각 1회 수행한다:
 
-- **자기모순 스캔** — 절 간 일관성: 같은 판정의 소유(어느 VM이 갖는지)·명명·시그니처가 절마다 일치하는지, 같은 개념이 두 철자로 적히거나 "두 번째 개념"의 분할 누락이 없는지(파일 목록 소유자는 너다 — undecidable-web §5). 그리고 **수량 대조**: 절단 토큰 수 = 채택+기각 항목 수 / 렌더 실측 texts·pinned 항목 수 = 실측 처분(채택+기각) 항목 수 / manifest 항목 수 = 이미지 정형 목록 항목 수 / 인용 엔드포인트 수 = client 함수·response 모델 대응 수(누락 0) — 어느 쪽에도 안 든 빈칸은 coder-web이 흘릴 자리다.
+- **자기모순 스캔** — 절 간 일관성: 같은 판정의 소유(어느 VM이 갖는지)·명명·시그니처가 절마다 일치하는지, 같은 개념이 두 철자로 적히거나 "두 번째 개념"의 분할 누락이 없는지(파일 목록 소유자는 너다 — undecidable-web §5). 그리고 **수량 대조**: 절단 토큰 수 = 채택+기각 항목 수 / 렌더 실측 texts·pinned 항목 수 = 실측 처분(채택+기각) 항목 수 / **motion-notes의 모션 id(`m*`) 행 수 = 처분 표 행 수(상태 행 제외)** / manifest 항목 수 = 이미지 정형 목록 항목 수 / 인용 엔드포인트 수 = client 함수·response 모델 대응 수(누락 0) — 어느 쪽에도 안 든 빈칸은 coder-web이 흘릴 자리다.
 - **백스톱 정합 스캔** — 파일 목록·명명을 houserules §4 총괄표와 **직접 대조**한다: 함수 뷰(`<view>_view.py` → 동명 함수 — CBV 아님) / form 클래스는 `<View>Form` / 접두 `<view>`는 view 파일 stem에서 `_view`를 뗀 것(`*_view_view_model.py` 류 금지) / section은 소속 view의 전체 접두 필수·widget과 component 이름에 view 이름 금지 / 접미사 전체 표기(`_vm.py` 축약 금지). **대조 없는 "명명 일치 ✔" 자기인증은 무효다** — 코드 작성 후 백스톱이 잡으면 막판 대수술이 된다.
 
 ## 경계
