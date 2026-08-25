@@ -336,10 +336,12 @@
   "cache_parity": {
     "claude": {
       "checked": 68,
-      "mismatch": [],
+      "mismatch": [
+        "dddjango/scripts/check-transaction-boundary.py"
+      ],
       "missing": [],
       "root": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.6",
-      "status": "ok"
+      "status": "drift"
     },
     "codex": {
       "checked": 33,
@@ -806,7 +808,7 @@
     "protocol": {
       "files": {
         "Makefile": "5903485ad946770dd8cf455dccb91a74b6d563990af862fcf0e60426cc1d701a",
-        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "3043863d607c41509005708056277fe7582152d8140fd4edfcafda63879d5cf0",
+        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "b26fe48e220945a6c4680063c6891873fb7cb7a26d837c820271bdb64018cae9",
         "workspace/plan/2026-08-12-bc-rebuild-protocol.md": "a39ba66e58cb8bde5ad8f84d630b6fd9b04300f7130d4bbc2d149751c2f6c492",
         "workspace/plan/templates/request-template.md": "531bb5c0e9b147d51665981bc3218aa027ddc4170101ea920ecc8a87f7018fe4",
         "workspace/tools/openapi_shape.py": "ea564e3b0ce0550352935b7a572f93dfae404f1a1d24f0fd9d4acf6dc4bc4932",
@@ -821,7 +823,7 @@
         "workspace/design/2026-08-20-ontology-t2-0b-design.md"
       ],
       "n_files": 6,
-      "tree_sha256": "90d8bbb20c45c4738944eab58a6c986e2aa62f1fc83dbd75bbaaafafebaafd51",
+      "tree_sha256": "bb2b5cd6d2dc6ebd1db1fefb388f390ca3436ed1bfdfa4857f983cb7606bf177",
       "why": "**전이 의존** — 발주문이 «그대로 따르라»고 가리키는 판형과, 인수 판정이 부르는 도구와, 게이트를 배선하는 Makefile. 이 중 하나만 바뀌어도 모델이 받는 요청문·허용 범위·STOP 규약·shape 합격 여부·실런 진입 조건이 바뀐다. 그런데 대조는 글롭에 든 것만 재전개하므로, 봉인 밖이면 그 변경은 드리프트가 아니었다(레인 AU 발견 4)."
     },
     "queries": {
@@ -874,7 +876,7 @@
         "dddjango/scripts/check-response-schema-bypass.py": "d148ac4ac18bd97c1a2f36913022bf3e5917a77f0e50cb0ec6ae243b7871054c",
         "dddjango/scripts/check-synthetic-infra-exc.py": "ad0b8c07cb489dcf97fcf7515b9bf5e270056142cb596fcd4ded87d1e67c2323",
         "dddjango/scripts/check-test-config.py": "c14a1af7a95577a1d98121804bfa55d5445b139ed3b0e0afcce5d09c74f3854d",
-        "dddjango/scripts/check-transaction-boundary.py": "24fbe41726af21dab6c1ad382fb699d5ae20a8e541e6859af55988a8cfe21ba0",
+        "dddjango/scripts/check-transaction-boundary.py": "be80d119c880c72505cb475db4f7c0ae4cb71eecb60d16d3ad5f98754f35d5ca",
         "dddjango/scripts/check-transient-overmapping.py": "5eb79653c2da9cd0bf2b7ae70281d5b0cb63e6954cf0622d8a46e1bc4f8ee504",
         "dddjango/scripts/check-usecase-dto-placement.py": "73effd6106136d3dff8bc4fca17b9eaea3b1ea031c37098d8795eea37d4979ee",
         "dddjango/scripts/checker_registry.py": "062c18929390e5ab0717cda21f2bc5c5ccf2c950ada33478eb051cf079d250cd",
@@ -900,7 +902,7 @@
         "workspace/tools/ab_score.py"
       ],
       "n_files": 38,
-      "tree_sha256": "43391b5dcf2fcaf82fa7100933d09bd38c047a292008c92b5b532f7abbccbb69",
+      "tree_sha256": "29e85a55ef4f8d71b4c12dc639e944923e2ba32337a6a31140708f3607bab28f",
       "why": "판정 스칼라(결정적 검사기 위반 수)를 만드는 전부. 발주·암 산출물을 보기 전에 동결한다 — 산출물을 본 뒤 채점기를 만지면 판정 교락(L-M #4)."
     }
   },
@@ -948,11 +950,11 @@
     "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.6/scripts",
     "cache-codex": "f5303f727e79a6e02eaf11122eb2c8cf4bf8907eb9d3ecd0755b2799c3da358a",
     "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.17.6/skills/dddjango/scripts",
-    "source-claude": "f5303f727e79a6e02eaf11122eb2c8cf4bf8907eb9d3ecd0755b2799c3da358a",
-    "source-codex": "f5303f727e79a6e02eaf11122eb2c8cf4bf8907eb9d3ecd0755b2799c3da358a"
+    "source-claude": "5faba121d7e0164ca8df447ebae969c2ebcb5ab67a635c9198ec6c38c77f25b7",
+    "source-codex": "5faba121d7e0164ca8df447ebae969c2ebcb5ab67a635c9198ec6c38c77f25b7"
   },
-  "sealed_commit": "e78f6c167dd40f507926fc962ad1ef28e95984b4",
-  "self_sha256": "b9881fae74f10b0d5d9d18b53731e85d2a0256351ae2d141b758f346ac302b0c",
+  "sealed_commit": "85d405280ad0985c54da7e3a9a0774365e356ca5",
+  "self_sha256": "62436f90a45cc75e8f2fee29bacd8a92fb0d1dcc890d55b907c2835d49e0dbd2",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [

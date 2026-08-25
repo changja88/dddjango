@@ -466,11 +466,15 @@ def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFun
     writes: list[tuple[str, ast.Call]] = []
 
     for node in ast.walk(fn):
-        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call):
-            fn_node = node.value.func
-            if isinstance(fn_node, (ast.Name, ast.Attribute)) and len(node.targets) == 1 \
-                    and isinstance(node.targets[0], ast.Name):
-                name = node.targets[0].id
+        target = value = None
+        if isinstance(node, ast.Assign) and len(node.targets) == 1:
+            target, value = node.targets[0], node.value
+        elif isinstance(node, ast.AnnAssign) and node.value is not None:
+            target, value = node.target, node.value
+        if isinstance(value, ast.Call) and isinstance(target, ast.Name):
+            fn_node = value.func
+            if isinstance(fn_node, (ast.Name, ast.Attribute)):
+                name = target.id
                 callee_root = _attr_root(fn_node)
                 if not _is_repo_recv(fn_node.value if isinstance(fn_node, ast.Attribute) else fn_node) \
                         and callee_root not in repo_names:
