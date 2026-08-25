@@ -67,43 +67,11 @@ CODE_SKIP_DIRS = {
     "migrations",
     "generated",
 }
-# 정본 공용 오류 스키마 — 변형 집합(#417 부칙 2026-08-25 · 그래프 리비전 동반).
-# A = 표준 기본 · B = kkebi 승인 대체 경로(STOP 2026-08-23 16:44). 대상 저장소가 어느
-# 변형을 쓰는지는 _select_canonical(root) 가 런 시작에 확정해 아래 전역을 재바인딩한다.
-# 두 변형이 동시에 실재하면 정본 이중화 — 사용 오류다. 클래스명 축(FrameworkErrorSchema)
-# 은 변형과 무관하게 불변이다.
-_CANONICAL_VARIANTS: "tuple[tuple[str, str], ...]" = (
-    ("framework/ninja", "framework_error_schema"),
-    ("framework/django_ninja", "error_schema"),
-)
 COMMON_INIT = Path("framework/ninja/__init__.py")
 COMMON_ERROR = Path("framework/ninja/framework_error_schema.py")
 COMMON_VALIDATION = Path("framework/ninja/framework_validation_error_schema.py")
 COMMON_ERROR_MODULE = "framework.ninja.framework_error_schema"
 COMMON_ERROR_OUT = f"{COMMON_ERROR_MODULE}.FrameworkErrorSchema"
-
-
-def _select_canonical(root: Path) -> None:
-    """대상 저장소의 정본 변형을 확정해 COMMON_* 전역을 재바인딩한다(런당 1회).
-
-    선택 규칙: B 의 오류 모듈 실재 ∧ A 부재 → B · 둘 다 실재 → UsageError(정본 이중화 금지)
-    · 그 외 → A(부재 blocker 는 현행 유지). 재바인딩 방식은 전 사용처(17곳)가 모듈 전역을
-    읽는 현행 구조를 보존하는 최소 침습이다(표면 대장: workspace/design/
-    2026-08-25-canonical-path-surface-map.md).
-    """
-    paths = [Path(d) / f"{b}.py" for d, b in _CANONICAL_VARIANTS]
-    present = [(root / p).is_file() for p in paths]
-    if all(present[:2]):
-        raise UsageError(
-            f"정본 공용 오류 스키마 이중 실재 — {paths[0]} 와 {paths[1]} 중 하나만 둔다"
-        )
-    d, b = _CANONICAL_VARIANTS[1] if (present[1] and not present[0]) else _CANONICAL_VARIANTS[0]
-    g = globals()
-    g["COMMON_INIT"] = Path(d) / "__init__.py"
-    g["COMMON_ERROR"] = Path(d) / f"{b}.py"
-    g["COMMON_VALIDATION"] = Path(d) / "framework_validation_error_schema.py"
-    g["COMMON_ERROR_MODULE"] = f"{d.replace('/', '.')}.{b}"
-    g["COMMON_ERROR_OUT"] = f"{g['COMMON_ERROR_MODULE']}.FrameworkErrorSchema"
 NINJA_SCHEMA = "ninja.Schema"
 STR_ENUM = "enum.StrEnum"
 FIELD_FACTORIES = {
@@ -4832,7 +4800,6 @@ def _print_tree_findings(findings: Findings) -> None:
 def main(argv: list[str]) -> int:
     try:
         config = _parse_config(argv[1:])
-        _select_canonical(config.root)  # #417 부칙 — 정본 변형 확정(이중 실재는 사용 오류)
     except UsageError as exc:
         print(f"[check-error-centralization] 사용 오류: {exc}", file=sys.stderr)
         return 1

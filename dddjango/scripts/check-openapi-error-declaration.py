@@ -49,30 +49,9 @@ HTTP_STATUS_CONSTANT_RE = re.compile(r"^HTTP_([1-5]\d\d)(?:_|$)")
 STATIC_LITERAL_PREFIX = "@static-literal:"
 HTTP_METHODS = {"delete", "get", "head", "options", "patch", "post", "put"}
 ROOT_API_CONSTRUCTORS = {"ninja.NinjaAPI", "ninja_extra.NinjaExtraAPI"}
-# 정본 공용 오류 스키마 — 변형 집합(#417 부칙 2026-08-25). _select_canonical(root) 가 런
-# 시작에 대상 저장소의 변형을 확정해 전역을 재바인딩한다. 이중 실재는 사용 오류.
-_CANONICAL_VARIANTS: "tuple[tuple[str, str], ...]" = (
-    ("framework/ninja", "framework_error_schema"),
-    ("framework/django_ninja", "error_schema"),
-)
 COMMON_ERROR_MODULE = "framework.ninja.framework_error_schema"
 COMMON_ERROR_OUT = f"{COMMON_ERROR_MODULE}.FrameworkErrorSchema"
 COMMON_ERROR_PATH = Path("framework/ninja/framework_error_schema.py")
-
-
-def _select_canonical(root: Path) -> None:
-    """대상 저장소의 정본 변형 확정(EC 동형 — 표면 대장 2026-08-25 참조)."""
-    paths = [Path(d) / f"{b}.py" for d, b in _CANONICAL_VARIANTS]
-    present = [(root / p).is_file() for p in paths]
-    if all(present[:2]):
-        raise UsageError(
-            f"정본 공용 오류 스키마 이중 실재 — {paths[0]} 와 {paths[1]} 중 하나만 둔다"
-        )
-    d, b = _CANONICAL_VARIANTS[1] if (present[1] and not present[0]) else _CANONICAL_VARIANTS[0]
-    g = globals()
-    g["COMMON_ERROR_PATH"] = Path(d) / f"{b}.py"
-    g["COMMON_ERROR_MODULE"] = f"{d.replace('/', '.')}.{b}"
-    g["COMMON_ERROR_OUT"] = f"{g['COMMON_ERROR_MODULE']}.FrameworkErrorSchema"
 
 SKIP_DIRS = {
     ".venv",
@@ -3469,7 +3448,6 @@ def _print_tree_findings(findings: Findings) -> None:
 def main(argv: list[str]) -> int:
     try:
         config = _parse_config(argv[1:])
-        _select_canonical(config.root)  # #417 부칙 — 정본 변형 확정
         if config.anchor is not None:
             # 재료 선검증 — 무발견 clean 이라도 resolve 불능 앵커·부재/형식 오류 빚
             # 파일·공허 차분이 침묵 exit 0 되지 않게 parse 직후 막는다(fail-closed).

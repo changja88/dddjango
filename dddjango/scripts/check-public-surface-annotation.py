@@ -13,7 +13,8 @@
   #358 Thin Read 구현(`adapter/**/domain_bypass_query/`)이 바깥으로 내보내는 것은
        «이름 붙인 정적 타입»뿐 — 반환 애너테이션에 `QuerySet`·`<Name>Model` 금지.
   #456 모양이 틀린 요청은 계약 위반이라 `contract/exception/` 이 아니라 테스트·타입
-       체커가 받는다 — OHS `contract/exception/` 에 요청 검증 계열 예외 클래스 금지.
+       체커가 받는다 — 판정은 raise «지점»(판정 ⑩): contract/ 안 raise·미raise 는 위반,
+       창구 서비스 outcome 매핑만 raise 하는 semantic published error 는 인정.
   #69  (ast+ · ⓓ 후보) 개발자 실수를 막는 검사는 런타임이 아니라 테스트·타입 체커의
        몫 — 프로덕션 `assert` · isinstance 가드 뒤 TypeError/ValueError raise 를
        후보로만 출력한다(exit 불산입 · 마무리는 discipline-reviewer).
@@ -302,12 +303,56 @@ def _check_thin_read(mod: ast.Module, rel: Path, out: Findings) -> None:
             out.add("#358", f"{rel}:{fn.lineno}", f"`{fn.name}()` 반환 타입에 `{', '.join(sorted(bad))}` — Thin Read 는 이름 붙인 정적 타입만 내보낸다(ORM 로우·QuerySet 금지)")
 
 
-def _check_contract_exceptions(mod: ast.Module, rel: Path, out: Findings) -> None:
-    """#456 — OHS contract/exception/ 에 요청 검증 계열 예외 클래스 금지."""
+def _raise_sites(service_dir: Path, name: str) -> "tuple[int, int]":
+    """창구 폴더 안 `raise <name>(...)` 지점 전수 — (contract쪽 수, 서비스쪽 수).
+
+    자리 기반 판별(판정 ⑩): raise 파일이 `contract/` 서브트리 안이면 contract쪽,
+    그 밖(창구 서비스 파일 등)이면 서비스쪽이다. 이름 매칭은 단순명(Name·Attribute 끝)이다.
+    """
+    contract_n = service_n = 0
+    for py in sorted(service_dir.rglob("*.py")):
+        try:
+            mod = ast.parse(py.read_text(encoding="utf-8"))
+        except (SyntaxError, OSError, UnicodeDecodeError):
+            continue
+        hits = 0
+        for node in ast.walk(mod):
+            if isinstance(node, ast.Raise) and node.exc is not None:
+                target = node.exc.func if isinstance(node.exc, ast.Call) else node.exc
+                ident = target.id if isinstance(target, ast.Name) else (
+                    target.attr if isinstance(target, ast.Attribute) else None)
+                if ident == name:
+                    hits += 1
+        if not hits:
+            continue
+        if "contract" in py.relative_to(service_dir).parts:
+            contract_n += hits
+        else:
+            service_n += hits
+    return contract_n, service_n
+
+
+def _check_contract_exceptions(f_abs: Path, mod: ast.Module, rel: Path, out: Findings) -> None:
+    """#456 — OHS contract/exception/ 의 «요청 검증 계열 이름» 예외는 raise 지점으로 판정한다
+    (판정 ⑩ 2026-08-25 — 이름 토큰 단독 판정 폐기): contract/ 안(팩토리·__post_init__)에서
+    raise 되면 형식 검증 — 같은 저장소 typed dataclass 호출에서 도달 불가한 방어이자 거짓
+    대외 계약(위반). 창구 서비스 쪽(outcome 매핑)에서만 raise 되면 semantic 실패 — 정당한
+    published error(인정). 어디서도 raise 안 되거나(죽은 대외 계약) 양쪽 다면 위반 유지."""
+    parts = f_abs.parts
+    ohs_idx = [i for i, seg in enumerate(parts) if seg in OHS_DIRS]
+    service_dir = Path(*parts[: ohs_idx[-1] + 2]) if ohs_idx else f_abs.parent
     for cls in (n for n in ast.walk(mod) if isinstance(n, ast.ClassDef)):
         low = cls.name.lower()
-        if any(tok in low for tok in VALIDATION_TOKENS):
-            out.add("#456", rel, f"`{cls.name}` — 모양이 틀린 요청은 계약 위반이라 테스트·타입 체커가 받는다(`contract/exception/` 의 자리가 아니다)")
+        if not any(tok in low for tok in VALIDATION_TOKENS):
+            continue
+        contract_n, service_n = _raise_sites(service_dir, cls.name)
+        if service_n and not contract_n:
+            continue  # semantic published error — 창구 outcome 매핑만 raise 한다
+        where = ("contract 안에서 raise 된다" if contract_n and not service_n
+                 else "contract·서비스 양쪽에서 raise 된다" if contract_n
+                 else "어디서도 raise 되지 않는다(죽은 대외 계약)")
+        out.add("#456", rel, f"`{cls.name}` — 모양이 틀린 요청은 계약 위반이라 테스트·타입 체커가 "
+                             f"받는다(`contract/exception/` 의 자리가 아니다 — {where})")
 
 
 def _collect_runtime_guards(mod: ast.Module, rel: Path, cands: Candidates) -> None:
@@ -374,7 +419,7 @@ def main(argv: list[str]) -> int:
         if (parts & DRIVEN_DIRS) and "domain_bypass_query" in parts:
             _check_thin_read(mod, rel, findings)
         if (parts & OHS_DIRS) and "contract" in parts and "exception" in parts:
-            _check_contract_exceptions(mod, rel, findings)
+            _check_contract_exceptions(f, mod, rel, findings)
         _collect_runtime_guards(mod, rel, candidates)
 
     if findings:

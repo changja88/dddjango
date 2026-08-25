@@ -18,7 +18,7 @@
          예외 비상속 · #465 _repository 접미 금지 · #475[ast+] 날것으로 업무 판정(후보)
   uow    #240 선언은 port/unit_of_work/ · #241 대화 계약과 «괄호»의 분리(포트에 uow
          메서드 ✗) · #242 exception.py 금지 · #244 <boundary>_unit_of_work.py · #245 계약
-         셋(열기·닫기·after_commit) · #246 리포지토리 노출 금지 · #374 구현 파일 자리 ·
+         셋(__enter__/__exit__/after_commit — exact-set·판정 ②) · #246 리포지토리 노출 금지 · #374 구현 파일 자리 ·
          #376 구현은 transaction.on_commit 으로 채움 · #476 선언↔구현 1:1(양방향) ·
          #566 on_commit robust 미지정이면 앞 콜백 실패로 통째 소실
   adapter #460 구현은 driven_layer/adapter/ 아래(django_<bc> 만 예외) · #319 네 갈래
@@ -368,13 +368,19 @@ def _check_uow_port(root: Path, uow: Path, f: Findings) -> None:
             continue
         for cls in [n for n in mod.body if isinstance(n, ast.ClassDef)]:
             methods = {m.name for m in cls.body if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef))}
-            extra = {m for m in methods if not m.startswith("__")} - {"after_commit"}
+            # #245 — 계약은 정확히 UOW_METHODS(판정 ② 2026-08-25 — dunder canon 실집행):
+            # with 문이 정상·예외·조기 return 전 경로에서 __exit__(커밋/롤백)를 보장한다.
+            # open/close 등 비-dunder 도, __call__ 등 여분 dunder 도 계약 밖이다.
+            extra = methods - UOW_METHODS
             if extra:
                 f.add("#245", _rel(root, py, cls.lineno),
-                      f"계약 밖 메서드 {sorted(extra)} — UnitOfWork 의 계약은 셋(열기·닫기·"
-                      "after_commit)뿐이다")
-            if "after_commit" not in methods:
-                f.add("#245", _rel(root, py, cls.lineno), "after_commit(callback) 이 없다 — 계약 셋 중 하나다")
+                      f"계약 밖 메서드 {sorted(extra)} — UnitOfWork 의 계약은 셋"
+                      "(__enter__/__exit__/after_commit)뿐이다")
+            missing = (UOW_METHODS - {"__init__"}) - methods
+            if missing:
+                f.add("#245", _rel(root, py, cls.lineno),
+                      f"계약 메서드 {sorted(missing)} 가 없다 — UnitOfWork 의 계약 셋"
+                      "(__enter__/__exit__/after_commit)은 전부가 와야 한다")
             for node in ast.walk(cls):
                 ann = None
                 if isinstance(node, ast.AnnAssign):
@@ -629,7 +635,10 @@ def _check_driven(root: Path, bc: Path, agg_names: set, bc_vocab_set: set,
     decl_stems = set()
     domain = bc / "domain_layer"
     if domain.is_dir():
-        decl_stems = {p.stem for p in domain.glob("*/*_repository.py")}
+        # 빈 골격 선언(주석·docstring뿐)은 선언이 아니다 — 구현 의무 제외, 단 그 자리에
+        # 구현이 실재하면 orphan 으로 잡힌다(빈 계약의 구현 — 판정 ④ 2026-08-25).
+        decl_stems = {p.stem for p in domain.glob("*/*_repository.py")
+                      if not checker_target.skeleton_placeholder(p)}
     impl_stems = set()
     if repo_dir.is_dir():
         for p in sorted(repo_dir.iterdir()):

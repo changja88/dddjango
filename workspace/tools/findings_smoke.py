@@ -41,7 +41,8 @@ FIXTURES: Path = ROOT / "workspace" / "eval" / "fixtures"
 # 개작 «직전» 실측 stdout 의 SHA-256(2026-08-19 · python3.9/3.14 동일 실측) — ㉠ 의 기준.
 BASELINE_SHA: "dict[str, str]" = {
     # 2026-08-25 재실측 — #543 저널 carve-out 경계 픽스처 +2(no-op mark·일반 관용구 흉내)
-    "domain_model/bad_rules": "a5569b02e7847c7d375cbe44e9d9efc83d6c4e22a093388d9e414ddad10a1f3e",
+    # 2026-08-25 판정 ④ — pass-only 루트 음성 fixture(#256 +1) 반영 재실측.
+    "domain_model/bad_rules": "4398d7d774da5d4d7bc6542bf5c5f19d0d99dbf6f3682a41a7c742803d3c415a",
     # 계약 레인 이행(3a68fe3)의 의도 변경 열거표 등재분 반영 — `[컨테이너] {rel}/  (내용: …)`
     # → `- {rel}: 횡단 버킷이 application/ 안에 있다 (내용: …)`(계약 문법 정형화).
     "common_container/bad_rules": "5ce9427209a475032bf19b5cf8f16d356e6e976f2119afe1639159cc8afd23fc",
@@ -64,7 +65,7 @@ DM_EXPECT_INFO: "dict[str, object]" = {
     "symbol": None,
     "severity": "info",
 }
-DM_COUNT_VIOLATION: int = 50  # 2026-08-25 +2 — #543 경계 픽스처
+DM_COUNT_VIOLATION: int = 51  # 2026-08-25 +2 — #543 경계 픽스처 · +1 — 판정 ④ pass-only 루트(#256)
 DM_COUNT_INFO: int = 13
 
 # CC-red 기대(선행 계약 — rule=null + contract_ref).

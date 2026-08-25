@@ -20,11 +20,33 @@ green 처리했다. 조용 통과 대신 소리내어 거절한다(#74 「조용
 """
 from __future__ import annotations
 
+import ast
 import re
 import sys
 from pathlib import Path
 
 _BC_LAYER_DIRS: "tuple[str, ...]" = ("domain_layer", "application_layer", "driving_layer", "driven_layer")
+
+
+def skeleton_placeholder(path: Path) -> bool:
+    """빈 골격 파일인가 — docstring 밖 문장이 0개(0바이트·공백·주석-only·docstring-only).
+
+    표준 트리가 자리만 요구해 만들어 둔 파일은 aggregate·구현 의무의 대상이 아니다
+    (판정 ④ 2026-08-25 — #256·#351 이 이 술어로 건너뛴다). 의미는 #114 렌더 계약의
+    `_skeleton_placeholder_module`(check-error-centralization — 그쪽은 root 상대 경로
+    서명이라 별도 실체)과 같다. `pass` 등 문장이 실재하거나 읽기·파싱 불능이면
+    placeholder 가 아니다(fail-closed — 기존 진단 유지).
+    """
+    try:
+        body = ast.parse(path.read_text(encoding="utf-8")).body
+    except (OSError, UnicodeError, SyntaxError, ValueError):
+        return False
+    return not body or (
+        len(body) == 1
+        and isinstance(body[0], ast.Expr)
+        and isinstance(body[0].value, ast.Constant)
+        and isinstance(body[0].value.value, str)
+    )
 
 
 def _interpreter_gap_reason(root: Path) -> "str | None":

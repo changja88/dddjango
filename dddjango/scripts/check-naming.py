@@ -22,7 +22,7 @@
   #118 [path] BC 오류 파일은 `bc_error_schema.py` — 옆 폴더 접두(`schema_bc_…`) 금지.
   #148 [path] 일반어가 된 약어는 풀지 않는다 — `application_programming_interface` 금지.
   #169 [path] 예외 계약 파일명 = 주 클래스명 snake_case.
-  #247 [ast]  UnitOfWork 는 `<Bc>UnitOfWork`, 구현은 접두(`Django<Bc>UnitOfWork`).
+  #247 [ast]  UnitOfWork 는 `<Bc>[<역할>]UnitOfWork`, 구현은 접두(`Django<Bc>[<역할>]UnitOfWork`) — 축약 불허·전수 판정(판정 ①).
   #309 [path] `service/` 로 줄이지 않는다 — `domain_service/` 그대로.
   #339 [path·면제] 어드민은 규정 밖 구역(자리·이름만) — 진단 0.
   #340 [path] admin/ 은 모델 하나 = 폴더 하나 — 직계 파일 금지.
@@ -270,20 +270,28 @@ def _check_name_pairs(root: Path, bc: Path, f: Findings) -> None:
         if py.name.endswith("bc_error_schema.py") and py.name != "bc_error_schema.py":
             f.add("#118", _rel(root, py),
                   "옆 폴더 이름을 접두로 달았다 — BC 오류 파일 이름은 `bc_error_schema.py` 그대로다")
-        # #247 — UnitOfWork 이름.
+        # #247 — UnitOfWork 이름(판정 ① 2026-08-25): 계약 `<Bc>[<역할>]UnitOfWork` ·
+        # 구현 `<기술접두><Bc>[<역할>]UnitOfWork`(접두 임의 — 동작 보존). 역할 수식어는
+        # CamelCase 1어절 이상 선택. 축약(`Uow` 등)·접미 이탈은 공개 클래스 전수 판정으로
+        # 가시화한다(불허 — 종전 endswith 가드는 비-UnitOfWork 접미를 불가시 처리했다).
         if "unit_of_work" in parts and py.stem != "__init__":
             mod = _parse(py)
-            expected = _camel(bc.name) + "UnitOfWork"
+            bc_camel = _camel(bc.name)
+            expected = bc_camel + "UnitOfWork"
+            port_re = re.compile(rf"^{bc_camel}([A-Z][A-Za-z0-9]*)?UnitOfWork$")
+            impl_re = re.compile(rf"^[A-Z][A-Za-z0-9]*{bc_camel}([A-Z][A-Za-z0-9]*)?UnitOfWork$")
+            in_port = "port" in parts
             for cls in [n for n in (mod.body if mod else []) if isinstance(n, ast.ClassDef)]:
-                if not cls.name.endswith("UnitOfWork"):
+                if cls.name.startswith("_"):
                     continue
-                in_port = "port" in parts
-                if in_port and cls.name != expected:
+                if in_port and not port_re.fullmatch(cls.name):
                     f.add("#247", _rel(root, py, cls.lineno),
-                          f"UnitOfWork 계약 이름 `{cls.name}` — `{expected}` 여야 한다")
-                if not in_port and not (cls.name.endswith(expected) and cls.name != expected):
+                          f"UnitOfWork 계약 이름 `{cls.name}` — `{expected}`"
+                          f"(역할이 있으면 `{bc_camel}<역할>UnitOfWork`) 꼴이어야 한다(축약 불허)")
+                if not in_port and not impl_re.fullmatch(cls.name):
                     f.add("#247", _rel(root, py, cls.lineno),
-                          f"구현 이름 `{cls.name}` — 같은 이름에 «접두»로 갈린다(`Django{expected}`)")
+                          f"구현 이름 `{cls.name}` — 같은 이름에 «접두»로 갈린다"
+                          f"(`Django{expected}` 꼴 — 역할 수식어는 계약과 공유·축약 불허)")
 
 
 # ── #87 · #97 — composition_root import 방향 ────────────────────────────────

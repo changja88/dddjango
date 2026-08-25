@@ -492,8 +492,8 @@ def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFun
     # «with uow» 진입 자체는 인정하지 않는다 — 읽기 전용+UoW 는 성문 문면 그대로 위반이다.
     if has_uow and not _uow_write_reach(fn, helpers, attr_uows, attr_repos):
         f.add("#197", _rel(root, py, fn.lineno),
-              f"`{fn.name}` 이 UnitOfWork 를 받는데 with/save/remove/after_commit 이 없다 — "
-              "읽기 전용 유스케이스는 UnitOfWork 를 받지 않는다")
+              f"`{fn.name}` 이 UnitOfWork 를 받는데 도달 범위에 save/remove/after_commit 이 없다"
+              "(with 진입만으로는 쓰기가 아니다) — 읽기 전용 유스케이스는 UnitOfWork 를 받지 않는다")
 
     # #195 — save 인자가 루트 메서드 호출을 받은 객체인가.
     for arg_name, call in writes:

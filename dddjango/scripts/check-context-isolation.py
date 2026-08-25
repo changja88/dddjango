@@ -473,11 +473,18 @@ def _contract_aux_exempt(mod: ast.Module, pubs: "list[ast.ClassDef]", suffix: st
     보조 공개 dataclass — 1타입=1파일·접미 강제의 면제 집합(2026-08-24 좁은 정합화).
     자격 셋 전부: ① 주 계약에서 전이 참조(인용 forward-ref 포함 — _ann_idents) ② 계약
     어휘 접미 아님 ③ import 검증된 @dataclass. 고정점 순회라 자기·상호 참조에 안전하다.
+    참조가 모듈 내 `type` 별칭(PEP 695)을 경유하면 별칭을 해소해 구성 클래스까지
+    따라간다(중첩 별칭 포함 — 판정 ⑦ 2026-08-25 · seen 가드라 순환에도 안전).
     두 연산이 한 보조 타입을 공유하면 정의는 한 계약 파일에 두고 다른 계약이 같은 BC
     계약 간 import(#472 허용)로 참조한다 — 파일별 중복 정의는 같은 지식 두 벌이다."""
     local: set[str] = _dataclass_local_names(mod)
     mods: set[str] = _dataclass_module_aliases(mod)
     by_name: dict[str, ast.ClassDef] = {c.name: c for c in pubs}
+    aliases: "dict[str, set[str]]" = {
+        n.name.id: _ann_idents(n.value)
+        for n in mod.body
+        if isinstance(n, ast.TypeAlias) and isinstance(n.name, ast.Name)
+    }
 
     def field_refs(cls: ast.ClassDef) -> set[str]:
         refs: set[str] = set()
@@ -487,19 +494,24 @@ def _contract_aux_exempt(mod: ast.Module, pubs: "list[ast.ClassDef]", suffix: st
         return refs
 
     exempt: set[str] = set()
-    work: "list[ast.ClassDef]" = [c for c in pubs if c.name.endswith(suffix)]
-    seen: set[str] = {c.name for c in work}
-    while work:
-        cls = work.pop()
-        for name in field_refs(cls):
-            cand = by_name.get(name)
-            if cand is None or name in seen:
-                continue
-            seen.add(name)
-            if (not name.endswith(_CONTRACT_VOCAB_SUFFIXES)
-                    and _is_dataclass_def(cand, local, mods)):
-                exempt.add(name)
-                work.append(cand)
+    primaries = [c for c in pubs if c.name.endswith(suffix)]
+    seen: set[str] = {c.name for c in primaries}
+    queue: "list[str]" = [name for c in primaries for name in field_refs(c)]
+    while queue:
+        name = queue.pop()
+        if name in seen:
+            continue
+        seen.add(name)
+        if name in aliases:  # PEP 695 별칭 — 구성 이름으로 해소(중첩은 이 순회가 잇는다)
+            queue.extend(aliases[name])
+            continue
+        cand = by_name.get(name)
+        if cand is None:
+            continue
+        if (not name.endswith(_CONTRACT_VOCAB_SUFFIXES)
+                and _is_dataclass_def(cand, local, mods)):
+            exempt.add(name)
+            queue.extend(field_refs(cand))
     return exempt
 
 

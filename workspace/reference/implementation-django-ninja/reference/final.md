@@ -544,9 +544,6 @@ reviewer가 직접 읽는다.
 새 단일-scope code-profile의 공통 오류 모듈은 `framework/ninja/framework_error_schema.py`
 하나다(validation 응답 schema가 필요하면 `framework_validation_error_schema.py`).
 `framework/ninja/`는 공유 `<technology>` 폴더라 이 계약 밖의 다른 `<module>.py`와 공존한다.
-단 프로젝트가 명시 승인으로 채택한 대체 정본 경로 `framework/django_ninja/error_schema.py`도
-같은 계약의 정본이다 — 정본은 저장소당 하나이고 두 경로의 동시 실재는 위반이다(검사기
-사용 오류 · 2026-08-25).
 
 ```text
 framework/ninja/

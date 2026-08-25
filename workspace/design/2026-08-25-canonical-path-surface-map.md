@@ -1,5 +1,10 @@
 # canonical 오류 스키마 경로 — 결합 표면 좌표 대장 (W6-2 · 구현 착수 조건)
 
+> **철회(2026-08-25 · 판정 ⑫)**: 이 대장이 설계한 변형 집합(㉮)은 유일 사용처(tarot)의 정본
+> 경로 전환 확정으로 원인이 소멸해 **되돌렸다** — `_CANONICAL_VARIANTS`·`_select_canonical`
+> 철거·단일 정본 복원·그래프 R-0029·R-2918 리비전 3 동반. 이 문서는 가산 당시의 표면 좌표
+> 기록으로 보존한다(리터럴→상수 재배선은 유지 — 단일 정본 값으로 수렴).
+
 - 기준: HEAD(=v2.17.3) `dddjango/scripts/` — 2026-08-25 grep 전수. 개조 방식 = 검사기별
   `_CANONICAL_VARIANTS` 정의 + `_select_canonical(root)`가 config 직후 전역 상수를 재바인딩.
   이중 실재는 UsageError(«정본 이중화») exit 1. 클래스명 `FrameworkErrorSchema` 축은 불변

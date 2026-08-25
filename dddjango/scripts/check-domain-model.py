@@ -236,6 +236,8 @@ def _check_aggregate(root: Path, bc: Path, agg: Path, f: Findings, cand: Candida
         f.add("#256", _rel(root, agg),
               f"`{agg.name}.py` 가 없다 — 애그리거트 루트 클래스 하나가 폴더와 같은 이름의 "
               "파일로 온다")
+    elif checker_target.skeleton_placeholder(root_py):
+        pass  # 빈 골격(주석·docstring뿐) — 루트 클래스 의무 제외 (판정 ④ 2026-08-25)
     else:
         mod = _parse(root_py)
         classes = _public_classes(mod) if mod else []
