@@ -7,15 +7,15 @@
     },
     {
       "path": "ontology/rules/agent-coder.ttl",
-      "sha256": "72ebe72e895a9e31299ac0dedf85231a30122755ecb828a4194d962aefbfca67"
+      "sha256": "c071862003ac0748b37734ae0a2bda2e81127f6e63f2e7e0e25b1018cdae506c"
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "fc5b1c82bbcc22691938dae3da72db2ac0385cf756f730a471d4e944bbc01e31"
+      "sha256": "44e5e68fb415a13e9e5ee42b21cc5f29bc0f7318750893871f18b2823a43695f"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
-      "sha256": "243a0c62df266f2220587f6e83552473743422df4bd8fa963511f236012961a7"
+      "sha256": "57ef55df0bdca5d574246ece24f072a3c5ea96191d2a1ca44fc38ffa326e1701"
     },
     {
       "path": "ontology/rules/agent-design-review-db.ttl",
@@ -27,7 +27,7 @@
     },
     {
       "path": "ontology/rules/agent-discipline-reviewer.ttl",
-      "sha256": "8d232e2db7ac0bc0a9cc86c389df6b127792f42360df16f27fe2da8f75da16d4"
+      "sha256": "8b7863a64a19e59d6ca7287b2a96b59118e491e08b4bcea0b0c9b2e8fcb939b6"
     },
     {
       "path": "ontology/rules/architecture-api-final.ttl",
@@ -59,7 +59,7 @@
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
-      "sha256": "4bd74da8f2974e7133d4125ac5d2c6e1757df80c3ba6ed3057150762c30dfff9"
+      "sha256": "4d7d42c43f0df94188f5d73cdcfe2dadd17899434aad4c3715d35337610f455c"
     },
     {
       "path": "ontology/rules/discipline-cleancode-skill.ttl",
@@ -87,7 +87,7 @@
     },
     {
       "path": "ontology/rules/implementation-django-ninja-final.ttl",
-      "sha256": "18aa6845dad6149e9f377a4234829b6f3c03dcda9555bb891d372bab509d3687"
+      "sha256": "a504ef23ecc2c8e3d418aad6bb2b54941198210b74a75726cfdac592d045b296"
     },
     {
       "path": "ontology/rules/implementation-django-ninja-skill.ttl",
@@ -107,7 +107,7 @@
     },
     {
       "path": "ontology/rules/implementation-python-final.ttl",
-      "sha256": "4b4052c857a172cbce180ebc94bd3f10745b2979cd982f5bf16feb89132eea29"
+      "sha256": "ad29e5b7bca534e373c4fd83b22364094bd166e7f52634ab2f9908d30239e689"
     },
     {
       "path": "ontology/rules/implementation-python-skill.ttl",
@@ -8398,8 +8398,8 @@
         "check-api-error-controller-contract.py"
       ],
       "document": "dddjango/skills/implementation-django-ninja/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-0058@2026-08-19",
-      "label": "Result/None path — call 정확히 1회·try 없는 failure branch 직후 배치",
+      "expression": "https://numchida.com/ns/djr#R-0058@2026-08-26",
+      "label": "`None` path — 조회의 «없다» 한정·call 정확히 1회·try 없는 `is None` branch 직후 배치",
       "order_rank": 2593,
       "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
       "section_number": "6.2"
@@ -8413,7 +8413,7 @@
         "check-api-error-controller-contract.py"
       ],
       "document": "dddjango/skills/implementation-django-ninja/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-0059@2026-08-19",
+      "expression": "https://numchida.com/ns/djr#R-0059@2026-08-26",
       "label": "동일 구성 직접 수행·성공 변환 branch 뒤 배치",
       "order_rank": 2594,
       "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
@@ -8428,8 +8428,8 @@
         "check-api-error-controller-contract.py"
       ],
       "document": "dddjango/skills/implementation-django-ninja/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-0060@2026-08-19",
-      "label": "예외·catch·helper·mapping table 꾸며내기 금지",
+      "expression": "https://numchida.com/ns/djr#R-0060@2026-08-26",
+      "label": "실패의 Result variant/outcome 반환 금지(#571)·예외·catch·helper·mapping table 꾸며내기 금지",
       "order_rank": 2595,
       "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
       "section_number": "6.2"
@@ -8489,7 +8489,7 @@
         "check-usecase-dto-placement.py"
       ],
       "document": "dddjango/skills/implementation-django-ninja/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-0064@2026-08-19",
+      "expression": "https://numchida.com/ns/djr#R-0064@2026-08-26",
       "label": "application DTO import·composition_root 조립",
       "order_rank": 2599,
       "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
@@ -8504,8 +8504,8 @@
         "check-api-error-controller-contract.py"
       ],
       "document": "dddjango/skills/implementation-django-ninja/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-0065@2026-08-19",
-      "label": "call 뒤 branch의 직접 ErrorSchema 구성(helper 흉내 금지)",
+      "expression": "https://numchida.com/ns/djr#R-0065@2026-08-26",
+      "label": "call 뒤 `is None` branch의 직접 ErrorSchema 구성(helper 흉내 금지)",
       "order_rank": 2600,
       "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
       "section_number": "6.2"
@@ -18162,8 +18162,8 @@
         "check-api-error-controller-contract.py"
       ],
       "document": "dddjango/skills/implementation-django-ninja/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-0694@2026-08-22",
-      "label": "Result/None path — call 정확히 1회·try 없는 failed branch 직후 배치",
+      "expression": "https://numchida.com/ns/djr#R-0694@2026-08-26",
+      "label": "`None` path — 조회의 «없다» 한정·call 정확히 1회·try 없는 `is None` branch 직후 배치",
       "order_rank": 2446,
       "section": "dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2",
       "section_number": "2.2"
@@ -18177,8 +18177,8 @@
         "check-api-error-controller-contract.py"
       ],
       "document": "dddjango/skills/implementation-django-ninja/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-0695@2026-08-22",
-      "label": "동일 ErrorSchema/header/Status 구성 직접 수행·예외·catch·helper·mapping table 꾸며내기 금지",
+      "expression": "https://numchida.com/ns/djr#R-0695@2026-08-26",
+      "label": "동일 ErrorSchema/header/Status 구성 직접 수행·실패의 Result variant/outcome 반환 금지(#571)·예외·catch·helper·mapping table 꾸며내기 금지",
       "order_rank": 2447,
       "section": "dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2",
       "section_number": "2.2"
@@ -22901,8 +22901,8 @@
         "check-api-error-controller-contract.py"
       ],
       "document": "dddjango/agents/discipline-reviewer.md",
-      "expression": "https://numchida.com/ns/djr#R-1001@2026-08-22",
-      "label": "Result/None/outcome path의 1회 호출·인위적 try 없는 직후 branch 직접 mapping",
+      "expression": "https://numchida.com/ns/djr#R-1001@2026-08-26",
+      "label": "`None` path(조회의 «없다» 한정)의 1회 호출·인위적 try 없는 직후 `is None` branch 직접 mapping·Result variant/outcome 분기 controller 는 blocker(#571)",
       "order_rank": 772,
       "section": "dddjango/agents/discipline-reviewer.md/s007",
       "section_number": null
@@ -30480,8 +30480,8 @@
       "block_order": 1,
       "checkers": [],
       "document": "dddjango/skills/discipline-cleancode/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-1490@2026-08-22",
-      "label": "OHS 계약·승인된 failed-Result 경로의 결과 분기 사용",
+      "expression": "https://numchida.com/ns/djr#R-1490@2026-08-26",
+      "label": "OHS 계약의 결과 분기·조회 use case 의 `None` 답 사용(실패의 Result 값 반환 금지 — #571)",
       "order_rank": 1962,
       "section": "dddjango/skills/discipline-cleancode/references/final.md/s092-12.2",
       "section_number": "12.2"
@@ -32388,8 +32388,8 @@
         "check-api-error-controller-contract.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-1614@2026-08-22",
-      "label": "slot 10 — code-json prepared error mapping chain 의 표 기록",
+      "expression": "https://numchida.com/ns/djr#R-1614@2026-08-26",
+      "label": "slot 10 — code-json prepared error mapping chain 의 표 기록(concrete exception 또는 조회의 `None`)",
       "order_rank": 269,
       "section": "dddjango/agents/design-architect.md/s005",
       "section_number": null
@@ -32474,8 +32474,8 @@
         "check-api-error-controller-contract.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-1619@2026-08-22",
-      "label": "slot 11 — code-json 의 두 path 중 하나 명시",
+      "expression": "https://numchida.com/ns/djr#R-1619@2026-08-26",
+      "label": "slot 11 — code-json 의 두 path(exception·조회 `None`) 중 하나 명시",
       "order_rank": 274,
       "section": "dddjango/agents/design-architect.md/s005",
       "section_number": null
@@ -32510,8 +32510,8 @@
         "check-api-error-controller-contract.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-1621@2026-08-22",
-      "label": "slot 11 — outcome path 의 인위적 try/catch 금지와 직후 직접 분기",
+      "expression": "https://numchida.com/ns/djr#R-1621@2026-08-26",
+      "label": "slot 11 — `None` path(조회의 «없다» 한정)의 인위적 try/catch 금지·직후 `is None` 분기·실패의 Result variant/outcome 설계 금지(#571)",
       "order_rank": 276,
       "section": "dddjango/agents/design-architect.md/s005",
       "section_number": null
@@ -33052,8 +33052,8 @@
         "check-api-error-controller-contract.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-1653@2026-08-22",
-      "label": "controller 의 예외 catch·ErrorSchema 생성 후 direct Status 반환",
+      "expression": "https://numchida.com/ns/djr#R-1653@2026-08-26",
+      "label": "controller 의 예외 catch 또는 조회 `None` 처리·ErrorSchema 생성 후 direct Status 반환",
       "order_rank": 308,
       "section": "dddjango/agents/design-architect.md/s005",
       "section_number": null
@@ -46677,7 +46677,7 @@
         "check-openapi-error-declaration.py"
       ],
       "document": "dddjango/agents/coder.md",
-      "expression": "https://numchida.com/ns/djr#R-2542@2026-08-22",
+      "expression": "https://numchida.com/ns/djr#R-2542@2026-08-26",
       "label": "dddjango-code-json 시 slot 5·6·7~9·1·11·12 산출물의 검색·보고",
       "order_rank": 147,
       "section": "dddjango/agents/coder.md/s004",
@@ -47007,8 +47007,8 @@
         "check-api-error-controller-contract.py"
       ],
       "document": "dddjango/agents/coder.md",
-      "expression": "https://numchida.com/ns/djr#R-2561@2026-08-22",
-      "label": "slot 10 failed Result/None/outcome path 의 단일 application call 실행과 호출 직후 직접 failure branch 배치",
+      "expression": "https://numchida.com/ns/djr#R-2561@2026-08-26",
+      "label": "slot 10 `None` path(조회의 «없다» 한정)의 단일 application call 실행과 호출 직후 `is None` branch 배치",
       "order_rank": 166,
       "section": "dddjango/agents/coder.md/s004",
       "section_number": null
@@ -47025,7 +47025,7 @@
         "check-api-error-controller-contract.py"
       ],
       "document": "dddjango/agents/coder.md",
-      "expression": "https://numchida.com/ns/djr#R-2562@2026-08-22",
+      "expression": "https://numchida.com/ns/djr#R-2562@2026-08-26",
       "label": "branch 의 no-arg concrete 또는 event-specific BC base 구성과 header 기록 후 동일 두 인자 Status 반환",
       "order_rank": 167,
       "section": "dddjango/agents/coder.md/s004",
@@ -47043,8 +47043,8 @@
         "check-api-error-controller-contract.py"
       ],
       "document": "dddjango/agents/coder.md",
-      "expression": "https://numchida.com/ns/djr#R-2563@2026-08-22",
-      "label": "이 path 를 위한 exception 생성·raise/catch·helper·mapping table 금지와 catch 필수 요구 금지",
+      "expression": "https://numchida.com/ns/djr#R-2563@2026-08-26",
+      "label": "이 path 를 위한 exception 생성·raise/catch·helper·mapping table 금지, 실패의 Result variant/outcome 반환 금지(#571), catch 필수 요구 금지",
       "order_rank": 168,
       "section": "dddjango/agents/coder.md/s004",
       "section_number": null
@@ -48815,8 +48815,8 @@
         "check-api-error-controller-contract.py"
       ],
       "document": "dddjango/agents/design-review-api.md",
-      "expression": "https://numchida.com/ns/djr#R-2674@2026-08-22",
-      "label": "slot 10 — concrete exception/failed Result → no-arg concrete ErrorSchema 또는 값 채운 BC base → direct Status chain과 slot-6 exact literal body/approved header 완전성 확인",
+      "expression": "https://numchida.com/ns/djr#R-2674@2026-08-26",
+      "label": "slot 10 — concrete exception/조회 `None` → no-arg concrete ErrorSchema 또는 값 채운 BC base → direct Status chain과 slot-6 exact literal body/approved header 완전성 확인",
       "order_rank": 484,
       "section": "dddjango/agents/design-review-api.md/s006",
       "section_number": null
@@ -48899,8 +48899,8 @@
         "check-api-error-controller-contract.py"
       ],
       "document": "dddjango/agents/design-review-api.md",
-      "expression": "https://numchida.com/ns/djr#R-2679@2026-08-22",
-      "label": "slot 11 — slot 10의 internal failure 형태에 따른 두 path 중 하나 선택 확인",
+      "expression": "https://numchida.com/ns/djr#R-2679@2026-08-26",
+      "label": "slot 11 — slot 10의 internal failure 형태에 따른 두 path(exception·조회 `None`) 중 하나 선택 확인",
       "order_rank": 489,
       "section": "dddjango/agents/design-review-api.md/s006",
       "section_number": null
@@ -48929,8 +48929,8 @@
         "check-api-error-controller-contract.py"
       ],
       "document": "dddjango/agents/design-review-api.md",
-      "expression": "https://numchida.com/ns/djr#R-2681@2026-08-22",
-      "label": "slot 11 — Result/None/outcome path의 artificial try/catch 부재·call 1회+직후 branch·exception fabricate 금지(blocker)",
+      "expression": "https://numchida.com/ns/djr#R-2681@2026-08-26",
+      "label": "slot 11 — `None` path(조회의 «없다» 한정)의 artificial try/catch 부재·call 1회+직후 `is None` branch·exception fabricate 금지·실패의 Result variant/outcome 설계는 blocker(#571)",
       "order_rank": 491,
       "section": "dddjango/agents/design-review-api.md/s006",
       "section_number": null
@@ -49539,8 +49539,8 @@
         "check-context-isolation.py"
       ],
       "document": "dddjango/skills/implementation-python/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-2720@2026-08-22",
-      "label": "OHS 계약·승인된 failed-Result 경로의 결과 분기(raise 아님)",
+      "expression": "https://numchida.com/ns/djr#R-2720@2026-08-26",
+      "label": "OHS 계약의 결과 분기·조회 use case 의 `None` 답(raise 아님)·그 밖 use case 실패는 예외(#571)",
       "order_rank": 3114,
       "section": "dddjango/skills/implementation-python/references/final.md/s032-4.4",
       "section_number": "4.4"

@@ -496,11 +496,17 @@ djr:R-2541 a djr:Obligation ;
 
 djr:R-2542 a djr:Obligation ;
     skos:prefLabel "dddjango-code-json 시 slot 5·6·7~9·1·11·12 산출물의 검색·보고"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2542@2026-08-22> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-2542@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-2542@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2542 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2542@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-2542 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2542@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-2543 a djr:Obligation ;
     skos:prefLabel "preserve-established 시 slot 승인 native artifact·behavior 의 해당 경로 검색·보고"@ko ;
@@ -647,28 +653,46 @@ djr:R-2560 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-2561 a djr:Obligation ;
-    skos:prefLabel "slot 10 failed Result/None/outcome path 의 단일 application call 실행과 호출 직후 직접 failure branch 배치"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2561@2026-08-22> .
+    skos:prefLabel "slot 10 `None` path(조회의 «없다» 한정)의 단일 application call 실행과 호출 직후 `is None` branch 배치"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2561@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-2561@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2561 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-2561@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-2561 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2561@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
+
 djr:R-2562 a djr:Obligation ;
     skos:prefLabel "branch 의 no-arg concrete 또는 event-specific BC base 구성과 header 기록 후 동일 두 인자 Status 반환"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2562@2026-08-22> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-2562@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-2562@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2562 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-2562@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-2562 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2562@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
+
 djr:R-2563 a djr:Prohibition ;
-    skos:prefLabel "이 path 를 위한 exception 생성·raise/catch·helper·mapping table 금지와 catch 필수 요구 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2563@2026-08-22> .
+    skos:prefLabel "이 path 를 위한 exception 생성·raise/catch·helper·mapping table 금지, 실패의 Result variant/outcome 반환 금지(#571), catch 필수 요구 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2563@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-2563@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2563 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2563@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-2563 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2563@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-2564 a djr:Prohibition ;
     skos:prefLabel "오류 helper·handler·factory·serializer·exception→ErrorSchema mapping·등록 decorator·central conversion point 의 개명 포함 추출·호출·유지 금지"@ko ;
@@ -1149,7 +1173,7 @@ djr:R-2605 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 14 ;
     djr:statesNorm djr:R-2541, djr:R-2542, djr:R-2543 ;
-    djr:text "- **Error response contract 12-slot preflight**: 구현 전에 승인된 `dddjango-code-json | preserve-established` profile과 1~12번 slot inventory의 **모든 project-relative 승인 경로**를 현재 tree에 대조한다. `dddjango-code-json`이면 5·6번의 common response directory와 canonical `ErrorSchema`; 7~9번의 모든 BC error module, `<Bc>ErrorCode` literal value, BC base, 모든 concrete의 무인자 생성; 1·11번의 선택 API/controller/URLconf/registrar module, root API import/mount, controller의 single application call 뒤 approved failed Result/`None`/outcome branch 또는 `try`·concrete `catch`·direct `Status` mapping; error helper/handler/factory/serializer/mapping lookalike; 12번의 response declaration, mounted generated OpenAPI와 관련 contract test를 검색해 보고한다. `preserve-established`이면 slot에 승인된 native canonical/schema/controller/handler/helper/composition/runtime/OpenAPI/test artifact와 behavior를 그 경로에서 검색해 보고한다.\n"@ko .
+    djr:text "- **Error response contract 12-slot preflight**: 구현 전에 승인된 `dddjango-code-json | preserve-established` profile과 1~12번 slot inventory의 **모든 project-relative 승인 경로**를 현재 tree에 대조한다. `dddjango-code-json`이면 5·6번의 common response directory와 canonical `ErrorSchema`; 7~9번의 모든 BC error module, `<Bc>ErrorCode` literal value, BC base, 모든 concrete의 무인자 생성; 1·11번의 선택 API/controller/URLconf/registrar module, root API import/mount, controller의 single application call 뒤 `try`·concrete `catch`·direct `Status` mapping 또는 조회 `None` path의 `is None` branch; error helper/handler/factory/serializer/mapping lookalike; 12번의 response declaration, mounted generated OpenAPI와 관련 contract test를 검색해 보고한다. `preserve-established`이면 slot에 승인된 native canonical/schema/controller/handler/helper/composition/runtime/OpenAPI/test artifact와 behavior를 그 경로에서 검색해 보고한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b15> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
@@ -1187,7 +1211,7 @@ djr:R-2605 a djr:Prohibition ;
     djr:order 19 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b18> ;
     djr:statesNorm djr:R-2561, djr:R-2562, djr:R-2563 ;
-    djr:text "- `dddjango-code-json`의 slot 10이 failed Result/`None`/outcome path를 고르면 application call은 한 번만 실행해 결과를 받고 호출 직후 직접 failure branch를 둔다. 그 branch에서 승인된 no-arg concrete `ErrorSchema` 또는 모든 required field와 필요한 approved optional override만 채운 event-specific BC base를 만들고, 승인 header는 주입된 응답용(temporal) Django `HttpResponse`에 쓴 뒤 같은 두 인자 `Status(<승인된 HTTP status 표현>, error)`를 반환한다. 이 path를 위해 exception을 만들거나 raise/catch하지 않고 helper·mapping table도 만들지 않으며 catch가 있어야 한다고 요구하지 않는다.\n"@ko .
+    djr:text "- `dddjango-code-json`의 slot 10이 `None` path를 고르면(조회 use case가 대상이 없어 `None`을 돌려주는 경우에 한한다) application call은 한 번만 실행해 결과를 받고 호출 직후 `if result is None:` branch를 둔다. 그 branch에서 승인된 no-arg concrete `ErrorSchema` 또는 모든 required field와 필요한 approved optional override만 채운 event-specific BC base를 만들고, 승인 header는 주입된 응답용(temporal) Django `HttpResponse`에 쓴 뒤 같은 두 인자 `Status(<승인된 HTTP status 표현>, error)`를 반환한다. 이 path를 위해 exception을 만들거나 raise/catch하지 않고, 실패를 Result variant·outcome 값으로 돌려주지도 않으며(`<use_case>_result.py`엔 성공 한 벌만 — #571; 둘 이상의 실패·사유 있는 실패는 exception path), helper·mapping table도 만들지 않고 catch가 있어야 한다고 요구하지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;

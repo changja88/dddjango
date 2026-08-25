@@ -631,7 +631,7 @@ found = {
 
 ### 4.4 None 반환 대신 예외 발생 [파이썬코딩의기술]
 
-> dddjango 경계 단서: OHS 계약·승인된 failed-Result 경로에서는 «부재·거절은 답»(#453·#454)이라 raise 가 아니라 결과 분기다 — 이 절의 예외 우선은 그 밖의 일반 API 다.
+> dddjango 경계 단서: OHS 계약에서는 «부재·거절은 답»(#453·#454)이라 raise 가 아니라 결과 분기이고, 조회 use case 의 «없다»는 `None` 이다(그 밖의 use case 실패는 예외 — `<use_case>_result.py` 엔 성공 한 벌만, #571) — 이 절의 예외 우선은 그 밖의 일반 API 다.
 
 ```python
 # 나쁜 예: None 반환 - 0과 구분 불가

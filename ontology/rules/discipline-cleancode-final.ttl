@@ -979,12 +979,18 @@ djr:R-1489 a djr:Override ;
     djr:revision 1 .
 
 djr:R-1490 a djr:Obligation ;
-    skos:prefLabel "OHS 계약·승인된 failed-Result 경로의 결과 분기 사용"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1490@2026-08-22> .
+    skos:prefLabel "OHS 계약의 결과 분기·조회 use case 의 `None` 답 사용(실패의 Result 값 반환 금지 — #571)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1490@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-1490@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1490 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1490@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-1490 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1490@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
 
 djr:R-1491 a djr:Exception ;
     skos:prefLabel "본 절 raise 우선의 적용 범위 한정"@ko ;
@@ -3004,7 +3010,7 @@ djr:R-1555 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
     djr:statesNorm djr:R-1489, djr:R-1490, djr:R-1491 ;
-    djr:text "\n> dddjango 경계 단서: «물건이 없다·이미 있다·규칙이 거절한다»는 예외가 아니라 «답»이다(#453·#454) — OHS 계약·승인된 failed-Result 경로에서는 raise 대신 결과 분기를 쓴다. 이 절의 raise 우선은 그 밖의 일반 오류 처리다.\n"@ko .
+    djr:text "\n> dddjango 경계 단서: «물건이 없다·이미 있다·규칙이 거절한다»는 예외가 아니라 «답»이다(#453·#454) — OHS 계약에서는 raise 대신 결과 분기를 쓰고, 조회 use case의 «없다»는 `None`이다. 유스케이스가 실패를 Result 값으로 돌려주는 방식은 쓰지 않는다(`<use_case>_result.py`엔 성공 한 벌만 — #571; 그 밖의 use case 실패는 예외다). 이 절의 raise 우선은 그 밖의 일반 오류 처리다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/references/final.md/s092-12.2/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-cleancode/references/final.md/s092-12.2> ;

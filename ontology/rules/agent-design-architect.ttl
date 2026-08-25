@@ -467,12 +467,18 @@ djr:R-1613 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-1614 a djr:Obligation ;
-    skos:prefLabel "slot 10 — code-json prepared error mapping chain 의 표 기록"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1614@2026-08-22> .
+    skos:prefLabel "slot 10 — code-json prepared error mapping chain 의 표 기록(concrete exception 또는 조회의 `None`)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1614@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-1614@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1614 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1614@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-1614 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1614@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-1615 a djr:Obligation ;
     skos:prefLabel "slot 10 — internal failure type 과 output object 의 구분"@ko ;
@@ -507,12 +513,18 @@ djr:R-1618 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-1619 a djr:Obligation ;
-    skos:prefLabel "slot 11 — code-json 의 두 path 중 하나 명시"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1619@2026-08-22> .
+    skos:prefLabel "slot 11 — code-json 의 두 path(exception·조회 `None`) 중 하나 명시"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1619@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-1619@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1619 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1619@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-1619 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1619@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-1620 a djr:Obligation ;
     skos:prefLabel "slot 11 — exception path 의 단일 application call·narrow try·승인 예외 한정 catch"@ko ;
@@ -523,12 +535,18 @@ djr:R-1620 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-1621 a djr:Prohibition ;
-    skos:prefLabel "slot 11 — outcome path 의 인위적 try/catch 금지와 직후 직접 분기"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1621@2026-08-22> .
+    skos:prefLabel "slot 11 — `None` path(조회의 «없다» 한정)의 인위적 try/catch 금지·직후 `is None` 분기·실패의 Result variant/outcome 설계 금지(#571)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1621@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-1621@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1621 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1621@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-1621 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1621@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
 
 djr:R-1622 a djr:Obligation ;
     skos:prefLabel "slot 11 — 승인 ErrorSchema 생성·header 설정 후 2인자 Status 직접 반환"@ko ;
@@ -779,12 +797,18 @@ djr:R-1652 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-1653 a djr:Obligation ;
-    skos:prefLabel "controller 의 예외 catch·ErrorSchema 생성 후 direct Status 반환"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1653@2026-08-22> .
+    skos:prefLabel "controller 의 예외 catch 또는 조회 `None` 처리·ErrorSchema 생성 후 direct Status 반환"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1653@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-1653@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1653 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1653@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-1653 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1653@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-1654 a djr:Prohibition ;
     skos:prefLabel "internal failure/output 구분과 error handler·helper·factory·serializer 추출 금지"@ko ;
@@ -1800,14 +1824,14 @@ djr:R-1760 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 11 ;
     djr:statesNorm djr:R-1614, djr:R-1615, djr:R-1616, djr:R-1617, djr:R-1618 ;
-    djr:text "10. **`prepared error mapping`**: `dddjango-code-json`이면 concrete domain/application exception 또는 failed Result → no-arg concrete `ErrorSchema`, 또는 event-specific 값으로 명시적으로 채운 BC base `ErrorSchema` → controller의 direct `Status(<승인된 HTTP status 표현>, error)` chain과 각 output의 slot-6 exact literal body/approved header를 표로 기록한다. internal failure type과 output object를 명확히 구분한다. 여러 internal failures가 하나의 public ErrorCode로 수렴할 수 있다. raw infra failure는 기본 500이고, 승인된 안정적 public meaning이 있을 때만 consuming BC의 internal exception으로 정규화한 뒤 `ErrorSchema`을 만든다. `preserve-established`이면 관찰된 profile-native preparation/mapping artifact·behavior 또는 evidence가 있는 `none | not applicable`을 기록하고 code-profile chain을 강제하지 않는다.\n"@ko .
+    djr:text "10. **`prepared error mapping`**: `dddjango-code-json`이면 concrete domain/application exception 또는 조회의 `None` → no-arg concrete `ErrorSchema`, 또는 event-specific 값으로 명시적으로 채운 BC base `ErrorSchema` → controller의 direct `Status(<승인된 HTTP status 표현>, error)` chain과 각 output의 slot-6 exact literal body/approved header를 표로 기록한다. internal failure type과 output object를 명확히 구분한다. 여러 internal failures가 하나의 public ErrorCode로 수렴할 수 있다. raw infra failure는 기본 500이고, 승인된 안정적 public meaning이 있을 때만 consuming BC의 internal exception으로 정규화한 뒤 `ErrorSchema`을 만든다. `preserve-established`이면 관찰된 profile-native preparation/mapping artifact·behavior 또는 evidence가 있는 `none | not applicable`을 기록하고 code-profile chain을 강제하지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b12> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
     djr:kind djr:kind-norm ;
     djr:order 12 ;
     djr:statesNorm djr:R-1619, djr:R-1620, djr:R-1621, djr:R-1622, djr:R-1623, djr:R-1624, djr:R-1625 ;
-    djr:text "11. **`controller mapping`**: `dddjango-code-json`이면 slot 10의 internal failure 형태에 따라 두 path 중 하나를 명시한다. exception path는 endpoint별 input preparation 뒤 정확히 한 번의 application call만 narrow `try`에 두고 승인된 concrete exception 또는 exception tuple만 catch한다. failed Result/`None`/outcome path는 artificial `try`/`catch` 없이 application call을 정확히 한 번 실행하고 그 직후 직접 branch하며 exception을 fabricate하거나 raise하지 않는다. 두 path 모두 승인된 no-arg concrete 또는 event-specific 값으로 채운 BC-base `ErrorSchema`을 만들고, 승인된 header를 주입된 응답용(temporal) Django `HttpResponse`에 설정한 뒤 two-argument `Status(<literal/status constant 또는 slot-6 body field>, error)`를 직접 return한다. `status` body property를 발명하지 않는다. error helper/handler/factory/serializer/table 또는 mapping 추출은 만들지 않는다. `preserve-established`이면 관찰된 profile-native controller/handler mapping 또는 evidence가 있는 `none | not applicable`을 기록하고 direct `Status`를 강제하지 않는다.\n"@ko .
+    djr:text "11. **`controller mapping`**: `dddjango-code-json`이면 slot 10의 internal failure 형태에 따라 두 path 중 하나를 명시한다. exception path는 endpoint별 input preparation 뒤 정확히 한 번의 application call만 narrow `try`에 두고 승인된 concrete exception 또는 exception tuple만 catch한다. `None` path는 조회 use case가 대상이 없어 `None`을 돌려주는 경우에만 고르고, artificial `try`/`catch` 없이 application call을 정확히 한 번 실행한 뒤 그 직후 `is None` branch하며 exception을 fabricate하거나 raise하지 않는다. 실패가 둘 이상이거나 사유가 있으면 exception path다 — 실패를 Result variant·outcome 값으로 설계하지 않는다(`<use_case>_result.py`엔 성공 한 벌만 — #571). 두 path 모두 승인된 no-arg concrete 또는 event-specific 값으로 채운 BC-base `ErrorSchema`을 만들고, 승인된 header를 주입된 응답용(temporal) Django `HttpResponse`에 설정한 뒤 two-argument `Status(<literal/status constant 또는 slot-6 body field>, error)`를 직접 return한다. `status` body property를 발명하지 않는다. error helper/handler/factory/serializer/table 또는 mapping 추출은 만들지 않는다. `preserve-established`이면 관찰된 profile-native controller/handler mapping 또는 evidence가 있는 `none | not applicable`을 기록하고 direct `Status`를 강제하지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b13> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
@@ -1842,7 +1866,7 @@ djr:R-1760 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 17 ;
     djr:statesNorm djr:R-1644, djr:R-1645, djr:R-1646, djr:R-1647, djr:R-1648, djr:R-1649, djr:R-1650, djr:R-1651, djr:R-1652, djr:R-1653, djr:R-1654, djr:R-1655, djr:R-1656, djr:R-1657, djr:R-1658 ;
-    djr:text "- **API 스택**(lens 무관, 새 API 표면이 생기면 항상 결정): 외부에 노출되는 새 HTTP/JSON API surface가 있으면 stack을 명세의 1급 결정으로 박는다. 프로젝트에 확립된 DRF·plain Django contract가 있으면 보존하고(«계약 profile» 축 — preserve-established; 파일트리 축이 아니다 — 트리는 `discipline-houserules` SKILL §1 로 언제나 표준), 없으면 Django Ninja를 적용한다. dependency가 아직 manifest에 없다는 사실만으로 plain으로 낮추거나 `preserve-established`로 바꾸지 않는다. 새 Ninja surface는 `NinjaExtraAPI` + `@api_controller` class controller(aggregate 단위)이고, 승인된 scope마다 profile에 맞는 project API instance 하나를 둔다. **composition(배선·등록)은 profile 무관 표준이다**(2026-08-12 라운드 1′): `auto_import=False`의 side-effect-free BC registrar(`register_<bc>_api`), URLconf의 explicit registrar call과 mount로 구성하며 import-time registration은 하지 않는다 — 기존 BC 의 배선 실물(`*_api_router.py` 동형)은 배선 결정의 입력이 아니고, preserve 를 배선 답습의 근거로 명세에 박지 않는다. 이 문장들은 **신규 산출물의 형태**를 정할 뿐 **기존 코드의 처분 권한**이 아니다 — 명세는 승인 스코프의 산출물 목록 밖 기존 파일의 이동·개명·재배선을 결정으로 박지 않는다: 기존 코드의 처분은 G0 빚 결정(ⓐ/ⓑ)이 확정하고 명세는 ⓐ 승인 항목만 슬라이스 0으로 옮겨 적는다(2026-08-13 라운드 2 실증 — 명세가 «canonical 이관·면제 없음»을 자가 결정으로 박자 11 BC 100파일이 이동됐다). BC `composition_root/`(`dependency_wiring.py`의 `build_*` 팩토리 — final.md §1 트리 2~4행)가 DI만 소유한다. Controller는 one-statement application call에서 concrete domain/application exception을 catch하거나 failed Result를 처리하고, no-arg concrete `ErrorSchema` 또는 event-specific 값으로 명시적으로 채운 BC base `ErrorSchema`을 만든 뒤 직접 `Status(<승인된 HTTP status 표현>, error)`를 반환한다. internal failure type과 output object를 명확히 구분하고 error handler/helper/factory/serializer로 빼지 않는다. `preserve-established`이면 관찰된 profile-native controller/handler/schema behavior를 보존하며 code-profile output/direct-`Status` recipe를 도입하지 않는다(보존 대상은 **오류 wire 산출물**까지 — registration/composition·트리·import 방향은 위 표준 그대로다). 성공 응답은 선언한 2xx `response` schema의 `Status`/schema 객체를 반환하고, 입력은 선언적 `payload: Schema`로 받는다. 406/415를 승인한 경우에도 tested version-compatible Ninja-owned pre-body/framework `HttpError` path를 쓰며 함수형 `Router`를 강제하거나 operation에서 raw body를 수동 parsing하지 않는다. **새 surface가 server-render HTML view면**(JSON API 아님) service의 domain/application exception은 view-local form re-render+`messages.error`(200), infra/unknown exception은 project `handler500`+`500.html`(`request`-only·empty Context), 승인된 transient contract는 `process_exception` retryable 503으로 표현하고 출처별 책임을 명세한다(`implementation-django-web` §11).\n"@ko .
+    djr:text "- **API 스택**(lens 무관, 새 API 표면이 생기면 항상 결정): 외부에 노출되는 새 HTTP/JSON API surface가 있으면 stack을 명세의 1급 결정으로 박는다. 프로젝트에 확립된 DRF·plain Django contract가 있으면 보존하고(«계약 profile» 축 — preserve-established; 파일트리 축이 아니다 — 트리는 `discipline-houserules` SKILL §1 로 언제나 표준), 없으면 Django Ninja를 적용한다. dependency가 아직 manifest에 없다는 사실만으로 plain으로 낮추거나 `preserve-established`로 바꾸지 않는다. 새 Ninja surface는 `NinjaExtraAPI` + `@api_controller` class controller(aggregate 단위)이고, 승인된 scope마다 profile에 맞는 project API instance 하나를 둔다. **composition(배선·등록)은 profile 무관 표준이다**(2026-08-12 라운드 1′): `auto_import=False`의 side-effect-free BC registrar(`register_<bc>_api`), URLconf의 explicit registrar call과 mount로 구성하며 import-time registration은 하지 않는다 — 기존 BC 의 배선 실물(`*_api_router.py` 동형)은 배선 결정의 입력이 아니고, preserve 를 배선 답습의 근거로 명세에 박지 않는다. 이 문장들은 **신규 산출물의 형태**를 정할 뿐 **기존 코드의 처분 권한**이 아니다 — 명세는 승인 스코프의 산출물 목록 밖 기존 파일의 이동·개명·재배선을 결정으로 박지 않는다: 기존 코드의 처분은 G0 빚 결정(ⓐ/ⓑ)이 확정하고 명세는 ⓐ 승인 항목만 슬라이스 0으로 옮겨 적는다(2026-08-13 라운드 2 실증 — 명세가 «canonical 이관·면제 없음»을 자가 결정으로 박자 11 BC 100파일이 이동됐다). BC `composition_root/`(`dependency_wiring.py`의 `build_*` 팩토리 — final.md §1 트리 2~4행)가 DI만 소유한다. Controller는 one-statement application call에서 concrete domain/application exception을 catch하거나 조회의 `None`을 처리하고, no-arg concrete `ErrorSchema` 또는 event-specific 값으로 명시적으로 채운 BC base `ErrorSchema`을 만든 뒤 직접 `Status(<승인된 HTTP status 표현>, error)`를 반환한다. internal failure type과 output object를 명확히 구분하고 error handler/helper/factory/serializer로 빼지 않는다. `preserve-established`이면 관찰된 profile-native controller/handler/schema behavior를 보존하며 code-profile output/direct-`Status` recipe를 도입하지 않는다(보존 대상은 **오류 wire 산출물**까지 — registration/composition·트리·import 방향은 위 표준 그대로다). 성공 응답은 선언한 2xx `response` schema의 `Status`/schema 객체를 반환하고, 입력은 선언적 `payload: Schema`로 받는다. 406/415를 승인한 경우에도 tested version-compatible Ninja-owned pre-body/framework `HttpError` path를 쓰며 함수형 `Router`를 강제하거나 operation에서 raw body를 수동 parsing하지 않는다. **새 surface가 server-render HTML view면**(JSON API 아님) service의 domain/application exception은 view-local form re-render+`messages.error`(200), infra/unknown exception은 project `handler500`+`500.html`(`request`-only·empty Context), 승인된 transient contract는 `process_exception` retryable 503으로 표현하고 출처별 책임을 명세한다(`implementation-django-web` §11).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b18> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;

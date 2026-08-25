@@ -1375,12 +1375,18 @@ djr:R-1000 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-1001 a djr:Obligation ;
-    skos:prefLabel "Result/None/outcome path의 1회 호출·인위적 try 없는 직후 branch 직접 mapping"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1001@2026-08-22> .
+    skos:prefLabel "`None` path(조회의 «없다» 한정)의 1회 호출·인위적 try 없는 직후 `is None` branch 직접 mapping·Result variant/outcome 분기 controller 는 blocker(#571)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1001@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-1001@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1001 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1001@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-1001 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1001@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
 
 djr:R-1002 a djr:Exception ;
     skos:prefLabel "ACL/OHS의 승인 upstream failure 번역과 controller cross-BC catch의 구별"@ko ;
@@ -2878,7 +2884,7 @@ djr:R-1147 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 17 ;
     djr:statesNorm djr:R-0995, djr:R-0996, djr:R-0997, djr:R-0998, djr:R-0999, djr:R-1000, djr:R-1001, djr:R-1002 ;
-    djr:text "- **API 오류 규율 3 — controller path·좁은 try·구체 catch(blocker)**: active `dddjango-code-json` scope에서 10번 slot이 승인한 path와 코드를 대조한다. exception path는 입력·request·use-case 준비를 `try` 밖에 두고 `try` 안에는 최외곽 application call 정확히 한 문장만 둔다. branch·성공 변환·logging을 함께 넣지 않으며, 같은 owning BC에서 import한 승인 concrete exception 또는 concrete만 든 tuple만 catch한다. bare/`Exception`/`BaseException`, raw DB·SDK·framework exception, controller의 cross-BC exception, broad base의 재수출 alias, non-concrete가 하나라도 섞인 tuple은 blocker다. managed `try` 안에서 방금 raise해 즉시 catch하기, `HttpError` forwarding, re-raise, handler forwarding도 금지한다. failed Result/`None`/outcome path는 application call을 정확히 한 번 수행하고 인위적 `try`·exception 없이 call 직후 승인된 failure branch에서 직접 mapping한다. ACL/OHS가 승인된 known upstream failure를 consuming BC의 own concrete exception으로 번역하는 것은 controller의 금지된 cross-BC catch와 구별한다.\n"@ko .
+    djr:text "- **API 오류 규율 3 — controller path·좁은 try·구체 catch(blocker)**: active `dddjango-code-json` scope에서 10번 slot이 승인한 path와 코드를 대조한다. exception path는 입력·request·use-case 준비를 `try` 밖에 두고 `try` 안에는 최외곽 application call 정확히 한 문장만 둔다. branch·성공 변환·logging을 함께 넣지 않으며, 같은 owning BC에서 import한 승인 concrete exception 또는 concrete만 든 tuple만 catch한다. bare/`Exception`/`BaseException`, raw DB·SDK·framework exception, controller의 cross-BC exception, broad base의 재수출 alias, non-concrete가 하나라도 섞인 tuple은 blocker다. managed `try` 안에서 방금 raise해 즉시 catch하기, `HttpError` forwarding, re-raise, handler forwarding도 금지한다. `None` path(조회의 «없다» 한정)는 application call을 정확히 한 번 수행하고 인위적 `try`·exception 없이 call 직후 `is None` branch에서 직접 mapping한다. 실패를 Result variant·outcome 값으로 돌려받아 분기하는 controller는 blocker다(`<use_case>_result.py`엔 성공 한 벌만 — #571; exception path여야 한다). ACL/OHS가 승인된 known upstream failure를 consuming BC의 own concrete exception으로 번역하는 것은 controller의 금지된 cross-BC catch와 구별한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007/b18> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;

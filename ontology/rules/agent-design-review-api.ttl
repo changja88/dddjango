@@ -547,12 +547,18 @@ djr:R-2673 a djr:Exception ;
     djr:revision 1 .
 
 djr:R-2674 a djr:Obligation ;
-    skos:prefLabel "slot 10 — concrete exception/failed Result → no-arg concrete ErrorSchema 또는 값 채운 BC base → direct Status chain과 slot-6 exact literal body/approved header 완전성 확인"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2674@2026-08-22> .
+    skos:prefLabel "slot 10 — concrete exception/조회 `None` → no-arg concrete ErrorSchema 또는 값 채운 BC base → direct Status chain과 slot-6 exact literal body/approved header 완전성 확인"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2674@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-2674@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2674 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2674@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-2674 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2674@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-2675 a djr:Prohibition ;
     skos:prefLabel "slot 10 — internal failure type과 output object 혼동 금지(blocker)"@ko ;
@@ -587,12 +593,18 @@ djr:R-2678 a djr:Exception ;
     djr:revision 1 .
 
 djr:R-2679 a djr:Obligation ;
-    skos:prefLabel "slot 11 — slot 10의 internal failure 형태에 따른 두 path 중 하나 선택 확인"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2679@2026-08-22> .
+    skos:prefLabel "slot 11 — slot 10의 internal failure 형태에 따른 두 path(exception·조회 `None`) 중 하나 선택 확인"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2679@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-2679@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2679 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2679@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-2679 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2679@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-2680 a djr:Obligation ;
     skos:prefLabel "slot 11 — exception path의 narrow try 안 application call 정확히 1회·승인 concrete exception/tuple 한정 catch"@ko ;
@@ -603,12 +615,18 @@ djr:R-2680 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2681 a djr:Obligation ;
-    skos:prefLabel "slot 11 — Result/None/outcome path의 artificial try/catch 부재·call 1회+직후 branch·exception fabricate 금지(blocker)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2681@2026-08-22> .
+    skos:prefLabel "slot 11 — `None` path(조회의 «없다» 한정)의 artificial try/catch 부재·call 1회+직후 `is None` branch·exception fabricate 금지·실패의 Result variant/outcome 설계는 blocker(#571)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2681@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-2681@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2681 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2681@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-2681 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2681@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
 
 djr:R-2682 a djr:Obligation ;
     skos:prefLabel "slot 11 — 두 path 공통의 승인 ErrorSchema 생성·approved header의 주입 HttpResponse 설정·two-argument Status 직접 return 확인"@ko ;
@@ -1088,7 +1106,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:order 11 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b11> ;
     djr:statesNorm djr:R-2674, djr:R-2675, djr:R-2676, djr:R-2677, djr:R-2678 ;
-    djr:text "10. **`prepared error mapping`**: `dddjango-code-json`은 concrete domain/application exception 또는 failed Result → no-arg concrete `ErrorSchema`, 또는 event-specific 값으로 명시적으로 채운 BC base `ErrorSchema` → direct `Status(<승인된 HTTP status 표현>, error)` chain과 slot-6 exact literal body/approved header가 완전한지 본다. internal failure type과 output object를 혼동하면 blocker다. 공개 문자열은 `str(exc)`를 자동 사용하거나 sensitive data를 노출하면 안 된다. raw infra는 기본 500이고 approved stable public meaning만 consuming BC internal exception으로 정규화한 뒤 `ErrorSchema`을 만드는지 확인한다. `preserve-established`는 observed profile-native preparation/mapping 또는 evidenced `none | not applicable`인지 보고 code-profile chain을 강제하지 않는다.\n"@ko .
+    djr:text "10. **`prepared error mapping`**: `dddjango-code-json`은 concrete domain/application exception 또는 조회의 `None` → no-arg concrete `ErrorSchema`, 또는 event-specific 값으로 명시적으로 채운 BC base `ErrorSchema` → direct `Status(<승인된 HTTP status 표현>, error)` chain과 slot-6 exact literal body/approved header가 완전한지 본다. internal failure type과 output object를 혼동하면 blocker다. 공개 문자열은 `str(exc)`를 자동 사용하거나 sensitive data를 노출하면 안 된다. raw infra는 기본 500이고 approved stable public meaning만 consuming BC internal exception으로 정규화한 뒤 `ErrorSchema`을 만드는지 확인한다. `preserve-established`는 observed profile-native preparation/mapping 또는 evidenced `none | not applicable`인지 보고 code-profile chain을 강제하지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006/b12> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006> ;
@@ -1096,7 +1114,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:order 12 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b12> ;
     djr:statesNorm djr:R-2679, djr:R-2680, djr:R-2681, djr:R-2682, djr:R-2683, djr:R-2684, djr:R-2685 ;
-    djr:text "11. **`controller mapping`**: `dddjango-code-json`은 slot 10의 internal failure 형태에 따라 두 path 중 하나가 선택됐는지 확인한다. exception path는 input preparation 뒤 정확히 한 번의 application call만 narrow `try`에 두고 승인된 concrete exception 또는 exception tuple만 catch해야 한다. failed Result/`None`/outcome path는 artificial `try`/`catch` 없이 application call을 정확히 한 번 실행하고 그 직후 직접 branch해야 하며, catch를 요구하거나 exception을 fabricate해 즉시 raise/catch하면 blocker다. 두 path 모두 승인된 no-arg concrete 또는 event-specific 값으로 채운 BC-base `ErrorSchema`을 만들고, approved header를 주입된 응답용(temporal) Django `HttpResponse`에 설정한 뒤 two-argument `Status(<literal/status constant 또는 slot-6 body field>, error)`를 직접 return하는지 확인한다. `status` body property를 요구하면 blocker다. error helper/handler/factory/serializer/table 또는 mapping 추출로 이 semantic contract를 우회하면 발견으로 올리고 물리적 우회 여부는 discipline-reviewer에게 보낸다. `preserve-established`는 observed profile-native controller/handler mapping 또는 evidenced `none | not applicable`인지 보고 direct `Status`를 강제하지 않는다.\n"@ko .
+    djr:text "11. **`controller mapping`**: `dddjango-code-json`은 slot 10의 internal failure 형태에 따라 두 path 중 하나가 선택됐는지 확인한다. exception path는 input preparation 뒤 정확히 한 번의 application call만 narrow `try`에 두고 승인된 concrete exception 또는 exception tuple만 catch해야 한다. `None` path는 조회 use case가 대상이 없어 `None`을 돌려주는 경우에만 선택돼야 하고, artificial `try`/`catch` 없이 application call을 정확히 한 번 실행한 뒤 그 직후 `is None` branch해야 하며, catch를 요구하거나 exception을 fabricate해 즉시 raise/catch하면 blocker다. 실패를 Result variant·outcome 값으로 설계한 명세는 blocker다(`<use_case>_result.py`엔 성공 한 벌만 — #571; exception path여야 한다). 두 path 모두 승인된 no-arg concrete 또는 event-specific 값으로 채운 BC-base `ErrorSchema`을 만들고, approved header를 주입된 응답용(temporal) Django `HttpResponse`에 설정한 뒤 two-argument `Status(<literal/status constant 또는 slot-6 body field>, error)`를 직접 return하는지 확인한다. `status` body property를 요구하면 blocker다. error helper/handler/factory/serializer/table 또는 mapping 추출로 이 semantic contract를 우회하면 발견으로 올리고 물리적 우회 여부는 discipline-reviewer에게 보낸다. `preserve-established`는 observed profile-native controller/handler mapping 또는 evidenced `none | not applicable`인지 보고 direct `Status`를 강제하지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006/b13> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006> ;

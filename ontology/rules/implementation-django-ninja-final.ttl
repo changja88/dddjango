@@ -471,28 +471,46 @@ djr:R-0057 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0058 a djr:Obligation ;
-    skos:prefLabel "Result/None path — call 정확히 1회·try 없는 failure branch 직후 배치"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0058@2026-08-19> .
+    skos:prefLabel "`None` path — 조회의 «없다» 한정·call 정확히 1회·try 없는 `is None` branch 직후 배치"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0058@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-0058@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0058 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-0058@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-0058 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0058@2026-08-19> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
+
 djr:R-0059 a djr:Obligation ;
     skos:prefLabel "동일 구성 직접 수행·성공 변환 branch 뒤 배치"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0059@2026-08-19> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-0059@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-0059@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0059 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-0059@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-0059 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0059@2026-08-19> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
+
 djr:R-0060 a djr:Prohibition ;
-    skos:prefLabel "예외·catch·helper·mapping table 꾸며내기 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0060@2026-08-19> .
+    skos:prefLabel "실패의 Result variant/outcome 반환 금지(#571)·예외·catch·helper·mapping table 꾸며내기 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0060@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-0060@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0060 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0060@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-0060 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0060@2026-08-19> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0061 a djr:Prohibition ;
     skos:prefLabel "try 안 준비·분기·로그·성공 변환 금지"@ko ;
@@ -520,19 +538,31 @@ djr:R-0063 a djr:Obligation ;
 
 djr:R-0064 a djr:Obligation ;
     skos:prefLabel "application DTO import·composition_root 조립"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0064@2026-08-19> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-0064@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-0064@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0064 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-0064@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-0064 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0064@2026-08-19> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
+
 djr:R-0065 a djr:Prohibition ;
-    skos:prefLabel "call 뒤 branch의 직접 ErrorSchema 구성(helper 흉내 금지)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0065@2026-08-19> .
+    skos:prefLabel "call 뒤 `is None` branch의 직접 ErrorSchema 구성(helper 흉내 금지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0065@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-0065@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0065 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0065@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-0065 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0065@2026-08-19> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0066 a djr:Permission ;
     skos:prefLabel "native 성공 Result/None의 직접 반환 허용"@ko ;
@@ -1181,20 +1211,32 @@ djr:R-0693 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0694 a djr:Obligation ;
-    skos:prefLabel "Result/None path — call 정확히 1회·try 없는 failed branch 직후 배치"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0694@2026-08-22> .
+    skos:prefLabel "`None` path — 조회의 «없다» 한정·call 정확히 1회·try 없는 `is None` branch 직후 배치"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0694@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-0694@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0694 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-0694@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-0694 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0694@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
+
 djr:R-0695 a djr:Prohibition ;
-    skos:prefLabel "동일 ErrorSchema/header/Status 구성 직접 수행·예외·catch·helper·mapping table 꾸며내기 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0695@2026-08-22> .
+    skos:prefLabel "동일 ErrorSchema/header/Status 구성 직접 수행·실패의 Result variant/outcome 반환 금지(#571)·예외·catch·helper·mapping table 꾸며내기 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0695@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-0695@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0695 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0695@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-0695 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0695@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0696 a djr:Obligation ;
     skos:prefLabel "신규 표준 표면 = @api_controller 클래스 컨트롤러"@ko ;
@@ -2516,7 +2558,7 @@ djr:R-3402 a djr:Prohibition ;
     djr:order 17 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b18> ;
     djr:statesNorm djr:R-0694, djr:R-0695 ;
-    djr:text "- **failed Result/`None`/outcome path:** application call을 정확히 한 번 한 뒤, `try` 없이\n  slot이 승인한 failed branch를 call 바로 다음에 둔다. 같은 ErrorSchema/header/두 인자 `Status`\n  구성을 직접 수행하며, 예외·catch·helper·mapping table을 꾸며내지 않는다.\n\n"@ko .
+    djr:text "- **`None` path:** 조회 use case가 대상이 없어 `None`을 돌려주는 경우에만 쓴다. application call을\n  정확히 한 번 한 뒤, `try` 없이 call 바로 다음 `if result is None:`에서 같은 ErrorSchema/header/두 인자\n  `Status` 구성을 직접 수행한다. 실패가 둘 이상이거나 사유가 있으면 exception path다 — 실패를 Result\n  variant·outcome 값으로 돌려주지 않고(`<use_case>_result.py`엔 성공 한 벌만 — #571), 예외·catch·helper·\n  mapping table을 꾸며내지 않는다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b18> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
@@ -3324,7 +3366,7 @@ djr:R-3402 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 18 ;
     djr:statesNorm djr:R-0058, djr:R-0059, djr:R-0060 ;
-    djr:text "2. **failed Result/`None`/outcome path:** 입력 Schema를 준비한 뒤 application call을 정확히\n   한 번 하고, `try` 없이 승인된 failure branch를 call 바로 다음에 둔다. 같은 ErrorSchema/header/\n   두 인자 Status 구성을 직접 수행하며, 성공 변환은 그 branch 뒤에 둔다. 예외·catch·helper·\n   mapping table을 꾸며내지 않는다.\n\n"@ko .
+    djr:text "2. **`None` path:** 조회 use case가 대상이 없어 `None`을 돌려주는 경우에만 쓴다. 입력 Schema를\n   준비한 뒤 application call을 정확히 한 번 하고, `try` 없이 call 바로 다음 `if result is None:`\n   branch에서 같은 ErrorSchema/header/두 인자 Status 구성을 직접 수행하며, 성공 변환은 그 branch\n   뒤에 둔다. 실패가 둘 이상이거나 사유가 있으면 exception path다 — 실패를 Result variant·outcome\n   값으로 돌려주지 않고(`<use_case>_result.py`엔 성공 한 벌만 — #571), 예외·catch·helper·mapping\n   table을 꾸며내지 않는다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b19> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
@@ -3357,19 +3399,19 @@ djr:R-3402 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 22 ;
     djr:statesNorm djr:R-0064, djr:R-0065 ;
-    djr:text "다음은 10번 slot이 `ReserveOrderInsufficientStockResult`를 승인된 failed Result로 정한\n경우의 controller-owned 직접 변환이다. application command/Result variant는 application\nlayer DTO에서 import하고 use case는 BC `composition_root`에서 조립한다. call 뒤 branch가 BC\n`ErrorSchema`를 만들며 예외 path나 presentation helper를 흉내 내지 않는다.\n\n"@ko .
+    djr:text "다음은 10번 slot이 조회의 «없다»를 `None` path로 정한 경우의 controller-owned 직접 변환이다.\napplication query/Result는 application layer DTO에서 import하고 use case는 BC `composition_root`에서\n조립한다. call 뒤 `is None` branch가 BC `ErrorSchema`를 만들며 예외 path나 presentation helper를\n흉내 내지 않는다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b23> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
     djr:kind djr:kind-code ;
     djr:order 23 ;
-    djr:text "```python\nfrom typing import assert_never\n\nfrom ninja import Status\nfrom ninja_extra import api_controller, route, status\n\nfrom application.order.application_layer.order.reserve_order.reserve_order_command import (\n    ReserveOrderCommand,\n)\nfrom application.order.application_layer.order.reserve_order.reserve_order_result import (\n    ReserveOrderInsufficientStockResult,\n    ReserveOrderResult,\n    ReserveOrderSucceededResult,\n)\nfrom application.order.composition_root.dependency_wiring import build_reserve_order\nfrom application.order.driving_layer.api.bc_error_schema import (\n    OrderErrorSchema,\n    OrderInsufficientStockError,\n)\nfrom application.order.driving_layer.api.order.schema.schema_in import OrderIn\nfrom application.order.driving_layer.api.order.schema.schema_out import OrderOut\n\n\n@api_controller(\"/orders\", tags=[\"orders\"], auto_import=False)\nclass OrderController:\n    @route.post(\n        \"/reserve\",\n        response={201: OrderOut, 409: OrderInsufficientStockError},\n        summary=\"주문 예약\",\n        description=\"재고가 부족하면 409, 가능하면 예약 주문을 만든다.\",\n    )\n    def reserve_order(\n        self,\n        request,\n        payload: OrderIn,\n    ) -> Status[OrderOut | OrderErrorSchema]:\n        command = ReserveOrderCommand(\n            order_id=payload.order_id,\n            quantity=payload.quantity,\n        )\n        use_case = build_reserve_order()\n        result: ReserveOrderResult = use_case.execute(command)\n\n        if isinstance(result, ReserveOrderInsufficientStockResult):\n            error = OrderInsufficientStockError()\n            return Status(status.HTTP_409_CONFLICT, error)\n\n        if isinstance(result, ReserveOrderSucceededResult):\n            response = OrderOut.from_result(result.order)\n            return Status(status.HTTP_201_CREATED, response)\n\n        assert_never(result)\n```\n\n" .
+    djr:text "```python\nfrom ninja import Status\nfrom ninja_extra import api_controller, route, status\n\nfrom application.order.application_layer.order.find_order_by_number.find_order_by_number_query import (\n    FindOrderByNumberQuery,\n)\nfrom application.order.application_layer.order.find_order_by_number.find_order_by_number_result import (\n    FindOrderByNumberResult,\n)\nfrom application.order.composition_root.dependency_wiring import build_find_order_by_number\nfrom application.order.driving_layer.api.bc_error_schema import OrderNotFoundError\nfrom application.order.driving_layer.api.order.schema.schema_out import OrderOut\n\n\n@api_controller(\"/orders\", tags=[\"orders\"], auto_import=False)\nclass OrderController:\n    @route.get(\n        \"/by-number/{order_number}\",\n        response={200: OrderOut, 404: OrderNotFoundError},\n        summary=\"주문 번호로 조회\",\n        description=\"주문 번호에 해당하는 주문이 없으면 404, 있으면 주문을 돌려준다.\",\n    )\n    def find_order_by_number(\n        self,\n        request,\n        order_number: str,\n    ) -> OrderOut | Status[OrderNotFoundError]:\n        query_value = FindOrderByNumberQuery(order_number=order_number)\n        use_case = build_find_order_by_number()\n        result: FindOrderByNumberResult | None = use_case.execute(query_value)\n\n        if result is None:\n            error = OrderNotFoundError()\n            return Status(status.HTTP_404_NOT_FOUND, error)\n\n        return OrderOut.from_result(result)\n```\n\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b24> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
     djr:kind djr:kind-prose ;
     djr:order 24 ;
-    djr:text "application-owned closed `ReserveOrderResult`와 `assert_never`가 mapping을 exhaustive하게 만든다.\n새 variant나 untyped 값은 `None`으로 조용히 반환되거나 BC 오류로 꾸며지지 않고 framework-owned\n500 계약 위반으로 드러난다.\n\n"@ko .
+    djr:text "`None`은 조회 use case가 계약으로 정한 «없다»라는 답이고, controller는 그것을 승인된 404 concrete로만\n옮긴다. 실패의 종류·사유를 Result variant나 outcome 값으로 실어 보내지 않는다 —\n`<use_case>_result.py`에는 성공했을 때의 모양 한 벌만 온다(#571). 그런 실패는 exception path의\nconcrete exception이다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b25> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;

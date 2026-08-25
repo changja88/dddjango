@@ -83,12 +83,18 @@ djr:R-2719 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2720 a djr:Exception ;
-    skos:prefLabel "OHS 계약·승인된 failed-Result 경로의 결과 분기(raise 아님)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2720@2026-08-22> .
+    skos:prefLabel "OHS 계약의 결과 분기·조회 use case 의 `None` 답(raise 아님)·그 밖 use case 실패는 예외(#571)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2720@2026-08-26> .
 
 <https://numchida.com/ns/djr#R-2720@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2720 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2720@2026-08-26> a djr:Expression ;
+    prov:specializationOf djr:R-2720 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2720@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
 
 djr:R-2721 a djr:Obligation ;
     skos:prefLabel "데코레이터 메타데이터의 @wraps 보존"@ko ;
@@ -807,7 +813,7 @@ djr:R-2789 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
     djr:statesNorm djr:R-2720 ;
-    djr:text "\n> dddjango 경계 단서: OHS 계약·승인된 failed-Result 경로에서는 «부재·거절은 답»(#453·#454)이라 raise 가 아니라 결과 분기다 — 이 절의 예외 우선은 그 밖의 일반 API 다.\n\n"@ko .
+    djr:text "\n> dddjango 경계 단서: OHS 계약에서는 «부재·거절은 답»(#453·#454)이라 raise 가 아니라 결과 분기이고, 조회 use case 의 «없다»는 `None` 이다(그 밖의 use case 실패는 예외 — `<use_case>_result.py` 엔 성공 한 벌만, #571) — 이 절의 예외 우선은 그 밖의 일반 API 다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s032-4.4/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s032-4.4> ;

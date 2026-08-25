@@ -144,9 +144,11 @@ Operation은 10번 slot이 승인한 **한 경로**를 선택한다.
   구체 exception 또는 구체 exception tuple만 catch하고, catch 안에서 no-arg concrete 또는
   populated BC-base `ErrorSchema`, 필요하면 주입된 응답용 header를 만든 뒤 두 인자
   `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다. 성공 변환은 `try` 뒤에 둔다.
-- **failed Result/`None`/outcome path:** application call을 정확히 한 번 한 뒤, `try` 없이
-  slot이 승인한 failed branch를 call 바로 다음에 둔다. 같은 ErrorSchema/header/두 인자 `Status`
-  구성을 직접 수행하며, 예외·catch·helper·mapping table을 꾸며내지 않는다.
+- **`None` path:** 조회 use case가 대상이 없어 `None`을 돌려주는 경우에만 쓴다. application call을
+  정확히 한 번 한 뒤, `try` 없이 call 바로 다음 `if result is None:`에서 같은 ErrorSchema/header/두 인자
+  `Status` 구성을 직접 수행한다. 실패가 둘 이상이거나 사유가 있으면 exception path다 — 실패를 Result
+  variant·outcome 값으로 돌려주지 않고(`<use_case>_result.py`엔 성공 한 벌만 — #571), 예외·catch·helper·
+  mapping table을 꾸며내지 않는다.
 
 ```python
 from ninja import Status
@@ -641,10 +643,12 @@ dictionary unpacking, builder, factory, mapping table로 field 작성을 우회�
    populated BC-base `ErrorSchema`, 필요하면 주입된 응답용 header를 만든 뒤 두 인자
    `Status(<승인된 HTTP status 표현>, error)`를 직접 반환한다. status 표현은 literal/Ninja
    status 상수 또는 slot 6이 실제로 승인한 body field 접근일 수 있다. 성공 변환은 `try` 뒤에 둔다.
-2. **failed Result/`None`/outcome path:** 입력 Schema를 준비한 뒤 application call을 정확히
-   한 번 하고, `try` 없이 승인된 failure branch를 call 바로 다음에 둔다. 같은 ErrorSchema/header/
-   두 인자 Status 구성을 직접 수행하며, 성공 변환은 그 branch 뒤에 둔다. 예외·catch·helper·
-   mapping table을 꾸며내지 않는다.
+2. **`None` path:** 조회 use case가 대상이 없어 `None`을 돌려주는 경우에만 쓴다. 입력 Schema를
+   준비한 뒤 application call을 정확히 한 번 하고, `try` 없이 call 바로 다음 `if result is None:`
+   branch에서 같은 ErrorSchema/header/두 인자 Status 구성을 직접 수행하며, 성공 변환은 그 branch
+   뒤에 둔다. 실패가 둘 이상이거나 사유가 있으면 exception path다 — 실패를 Result variant·outcome
+   값으로 돌려주지 않고(`<use_case>_result.py`엔 성공 한 벌만 — #571), 예외·catch·helper·mapping
+   table을 꾸며내지 않는다.
 
 §2.2가 sync concrete-catch 예시다. async와 동일한 contract는 다음과 같다.
 
@@ -677,68 +681,54 @@ raw DB/SDK exception을 catch하지 않고, 컨트롤러가 방금 raise한 예�
 않는다. 서로 다른 공개 의미가 필요한 known exception은 별도 catch와 concrete로 나누고,
 같은 공개 의미로 수렴할 때만 tuple catch를 쓴다.
 
-다음은 10번 slot이 `ReserveOrderInsufficientStockResult`를 승인된 failed Result로 정한
-경우의 controller-owned 직접 변환이다. application command/Result variant는 application
-layer DTO에서 import하고 use case는 BC `composition_root`에서 조립한다. call 뒤 branch가 BC
-`ErrorSchema`를 만들며 예외 path나 presentation helper를 흉내 내지 않는다.
+다음은 10번 slot이 조회의 «없다»를 `None` path로 정한 경우의 controller-owned 직접 변환이다.
+application query/Result는 application layer DTO에서 import하고 use case는 BC `composition_root`에서
+조립한다. call 뒤 `is None` branch가 BC `ErrorSchema`를 만들며 예외 path나 presentation helper를
+흉내 내지 않는다.
 
 ```python
-from typing import assert_never
-
 from ninja import Status
 from ninja_extra import api_controller, route, status
 
-from application.order.application_layer.order.reserve_order.reserve_order_command import (
-    ReserveOrderCommand,
+from application.order.application_layer.order.find_order_by_number.find_order_by_number_query import (
+    FindOrderByNumberQuery,
 )
-from application.order.application_layer.order.reserve_order.reserve_order_result import (
-    ReserveOrderInsufficientStockResult,
-    ReserveOrderResult,
-    ReserveOrderSucceededResult,
+from application.order.application_layer.order.find_order_by_number.find_order_by_number_result import (
+    FindOrderByNumberResult,
 )
-from application.order.composition_root.dependency_wiring import build_reserve_order
-from application.order.driving_layer.api.bc_error_schema import (
-    OrderErrorSchema,
-    OrderInsufficientStockError,
-)
-from application.order.driving_layer.api.order.schema.schema_in import OrderIn
+from application.order.composition_root.dependency_wiring import build_find_order_by_number
+from application.order.driving_layer.api.bc_error_schema import OrderNotFoundError
 from application.order.driving_layer.api.order.schema.schema_out import OrderOut
 
 
 @api_controller("/orders", tags=["orders"], auto_import=False)
 class OrderController:
-    @route.post(
-        "/reserve",
-        response={201: OrderOut, 409: OrderInsufficientStockError},
-        summary="주문 예약",
-        description="재고가 부족하면 409, 가능하면 예약 주문을 만든다.",
+    @route.get(
+        "/by-number/{order_number}",
+        response={200: OrderOut, 404: OrderNotFoundError},
+        summary="주문 번호로 조회",
+        description="주문 번호에 해당하는 주문이 없으면 404, 있으면 주문을 돌려준다.",
     )
-    def reserve_order(
+    def find_order_by_number(
         self,
         request,
-        payload: OrderIn,
-    ) -> Status[OrderOut | OrderErrorSchema]:
-        command = ReserveOrderCommand(
-            order_id=payload.order_id,
-            quantity=payload.quantity,
-        )
-        use_case = build_reserve_order()
-        result: ReserveOrderResult = use_case.execute(command)
+        order_number: str,
+    ) -> OrderOut | Status[OrderNotFoundError]:
+        query_value = FindOrderByNumberQuery(order_number=order_number)
+        use_case = build_find_order_by_number()
+        result: FindOrderByNumberResult | None = use_case.execute(query_value)
 
-        if isinstance(result, ReserveOrderInsufficientStockResult):
-            error = OrderInsufficientStockError()
-            return Status(status.HTTP_409_CONFLICT, error)
+        if result is None:
+            error = OrderNotFoundError()
+            return Status(status.HTTP_404_NOT_FOUND, error)
 
-        if isinstance(result, ReserveOrderSucceededResult):
-            response = OrderOut.from_result(result.order)
-            return Status(status.HTTP_201_CREATED, response)
-
-        assert_never(result)
+        return OrderOut.from_result(result)
 ```
 
-application-owned closed `ReserveOrderResult`와 `assert_never`가 mapping을 exhaustive하게 만든다.
-새 variant나 untyped 값은 `None`으로 조용히 반환되거나 BC 오류로 꾸며지지 않고 framework-owned
-500 계약 위반으로 드러난다.
+`None`은 조회 use case가 계약으로 정한 «없다»라는 답이고, controller는 그것을 승인된 404 concrete로만
+옮긴다. 실패의 종류·사유를 Result variant나 outcome 값으로 실어 보내지 않는다 —
+`<use_case>_result.py`에는 성공했을 때의 모양 한 벌만 온다(#571). 그런 실패는 exception path의
+concrete exception이다.
 
 반대로 use case가 계약상 Result/`None`을 native 성공으로 반환하면 controller가 그 값을 helper
 없이 직접 성공 계약으로 반환할 수 있다. `None`/Result 자체가 언제나 실패라는 뜻은 아니다.
