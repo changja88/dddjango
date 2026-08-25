@@ -10,26 +10,73 @@ VENV_PY := .venv/bin/python
 # 저장소 검증 세트 단일 출처 (D1 — release [2/7] 이 이 타깃을 호출)
 # 세 타깃은 병렬 실행한다 — 전 도구의 verify 모드가 저장소 읽기 전용(쓰기는 --write/--emit
 # 플래그 뒤·임시 산출은 tempfile 격리)임을 정적 조사·동시 실행 실측(2026-08-24 green)으로
-# 확인했다. 총 소요 = 최장 타깃 하나(≈ verify-ontology). 로그는 타깃별로 받아 고정 순서로
+# 확인했다. 총 소요 = 최장 타깃 하나(≈ verify-ontology).
+# 기본은 조용 모드(2026-08-25 사용자 확정): 타깃별 완료 한 줄(✓/✖) + TTY 제자리 갱신 진행
+# 줄 + 요약만 표출하고, 전체 로그는 /tmp/djr-verify.* 에 남긴다. RED 타깃만 전체 로그를
+# 그대로 출력한다(fail-loud 유지). VERBOSE=1 이면 종전처럼 타깃별 전체 로그를 고정 순서로
 # 일괄 출력한다(GNU make 3.81 은 --output-sync 부재 — 인터리브 방지).
 # 롤백·중단 시 되돌림: VERIFY_TARGETS 에서 verify-ontology 삭제 (t0-plan §7)
 VERIFY_TARGETS := verify-ontology verify-base-core verify-base-cross verify-base-backstop verify-base-regen verify-web
 
+VERBOSE ?= 0
+
 verify:
 	@set -euo pipefail; \
-	tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT; \
-	echo "[verify] 병렬 실행: $(VERIFY_TARGETS) — 타깃별 로그는 완료 시 일괄 출력(진행 중 무출력이 정상)"; \
-	pids=""; \
+	if [[ "$(VERBOSE)" == 1 ]]; then \
+		tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT; \
+		echo "[verify] 병렬 실행: $(VERIFY_TARGETS) — 타깃별 로그는 완료 시 일괄 출력(진행 중 무출력이 정상)"; \
+		pids=""; \
+		for t in $(VERIFY_TARGETS); do \
+			$(MAKE) --no-print-directory "$$t" > "$$tmp/$$t.log" 2>&1 & pids="$$pids $$t=$$!"; \
+		done; \
+		rc=0; \
+		for entry in $$pids; do \
+			t=$${entry%%=*}; pid=$${entry##*=}; \
+			if wait "$$pid"; then st="green"; else st="RED"; rc=1; fi; \
+			echo "===== [$$t] $$st ====="; \
+			cat "$$tmp/$$t.log"; \
+		done; \
+		exit $$rc; \
+	fi; \
+	logdir=$$(mktemp -d /tmp/djr-verify.XXXXXX); \
+	if [ -t 1 ]; then TTY=1; ESC=$$(printf '\033'); GR="$$ESC[32m"; RD="$$ESC[31m"; DM="$$ESC[2m"; X="$$ESC[0m"; CL="$$(printf '\r')$$ESC[K"; \
+	else TTY=0; GR=""; RD=""; DM=""; X=""; CL=""; fi; \
+	echo "[verify] 병렬 실행: $(VERIFY_TARGETS)"; \
+	printf '%s(전체 로그: %s · 상세 출력: make verify VERBOSE=1)%s\n' "$$DM" "$$logdir" "$$X"; \
+	T0=$$(date +%s); pids=""; n=0; \
 	for t in $(VERIFY_TARGETS); do \
-		$(MAKE) --no-print-directory "$$t" > "$$tmp/$$t.log" 2>&1 & pids="$$pids $$t=$$!"; \
+		$(MAKE) --no-print-directory "$$t" > "$$logdir/$$t.log" 2>&1 & pids="$$pids $$t=$$!"; n=$$((n+1)); \
 	done; \
-	rc=0; \
-	for entry in $$pids; do \
-		t=$${entry%%=*}; pid=$${entry##*=}; \
-		if wait "$$pid"; then st="green"; else st="RED"; rc=1; fi; \
-		echo "===== [$$t] $$st ====="; \
-		cat "$$tmp/$$t.log"; \
+	rc=0; reds=""; done_n=0; remaining="$$pids"; \
+	while [ -n "$$remaining" ]; do \
+		next=""; \
+		for entry in $$remaining; do \
+			t=$${entry%%=*}; pid=$${entry##*=}; \
+			if kill -0 "$$pid" 2>/dev/null; then next="$$next $$entry"; continue; fi; \
+			el=$$(($$(date +%s)-T0)); done_n=$$((done_n+1)); \
+			if wait "$$pid"; then \
+				printf '%s  %s✓ %s green%s %s(%d초)%s\n' "$$CL" "$$GR" "$$t" "$$X" "$$DM" "$$el" "$$X"; \
+			else \
+				rc=1; reds="$$reds $$t"; \
+				printf '%s  %s✖ %s RED%s %s(%d초)%s\n' "$$CL" "$$RD" "$$t" "$$X" "$$DM" "$$el" "$$X"; \
+			fi; \
+		done; \
+		remaining="$$next"; \
+		if [ -n "$$remaining" ]; then \
+			if [ "$$TTY" = 1 ]; then \
+				names=""; for e in $$remaining; do names="$$names $${e%%=*}"; done; \
+				printf '%s  %s⠿ 진행 중(%d/%d):%s%s %s(%d초)%s' "$$CL" "$$DM" "$$done_n" "$$n" "$$X" "$$names" "$$DM" "$$(($$(date +%s)-T0))" "$$X"; \
+			fi; \
+			sleep 1; \
+		fi; \
 	done; \
+	TOTAL=$$(($$(date +%s)-T0)); \
+	if [ "$$rc" = 0 ]; then \
+		printf '  %s✓ verify green — %d/%d%s %s(%d초 · 전체 로그: %s)%s\n' "$$GR" "$$n" "$$n" "$$X" "$$DM" "$$TOTAL" "$$logdir" "$$X"; \
+	else \
+		for t in $$reds; do echo "===== [$$t] RED — 전체 로그 ====="; cat "$$logdir/$$t.log"; done; \
+		printf '  %s✖ verify RED —%s%s %s(%d초 · 전체 로그: %s)%s\n' "$$RD" "$$X" "$$reds" "$$DM" "$$TOTAL" "$$logdir" "$$X"; \
+	fi; \
 	exit $$rc
 
 verify-web:
@@ -295,7 +342,8 @@ _release:
 		echo ""; printf '%s✔ [dry-run] v%s 시뮬레이션 완료 — 실제 변경/커밋/푸시/Release 없음%s\n' "$${GR}$${B}" "$$V" "$$X"; \
 	else \
 		step "manifest 검증 — claude plugin validate --strict"; \
-		claude plugin validate $(PLUGIN) --strict; \
+		if OUT=$$(claude plugin validate $(PLUGIN) --strict 2>&1); then :; \
+		else printf '%s\n' "$$OUT"; die "plugin validate red"; fi; \
 		ok "manifest 유효"; \
 		step "검증 세트 — make verify (D1 단일 출처 · 병렬 하네스)"; \
 		$(MAKE) verify; \
@@ -314,8 +362,8 @@ _release:
 		git tag -a "$$TAG" -m "$(NAME) v$$V"; \
 		ok "태그 생성"; \
 		step "push — main + 태그"; \
-		git push origin main; \
-		git push origin "$$TAG"; \
+		git push --quiet origin main; \
+		git push --quiet origin "$$TAG"; \
 		ok "push 완료"; \
 		step "GitHub Release 생성"; \
 		gh release create "$$TAG" --verify-tag --title "$(NAME) v$$V" --generate-notes; \
