@@ -3024,6 +3024,141 @@ def get_lesson_controller(request, lesson_id: int):
         "    result = get_lesson(lesson_id)",
         "    isinstance = custom_predicate\n    result = get_lesson(lesson_id)",
     )
+    # ── 2026-08-26 A-1(registry #15): failed Result «직접 branch» = call 직후 연속 if 체인 ·
+    # match(소진 증명 `case _` 포함) · `outcome = result.<field>` 별칭. 규범 캐논 예시(두 if +
+    # assert_never)가 red 였던 결함의 회귀 보호.
+    result_variant_use_cases = CONTROLLER_FILES[
+        "application/lesson/application_layer/use_cases.py"
+    ].replace(
+        "class LessonMissing(Exception):",
+        "class LessonSucceeded:\n"
+        "    pass\n\n\n"
+        "class LessonResult:\n"
+        "    class Missing:\n"
+        "        pass\n\n"
+        "    class Succeeded:\n"
+        "        pass\n\n\n"
+        "class LessonMissing(Exception):",
+    )
+    result_branch_head = """from typing import assert_never
+from ninja import Router, Status
+from application.lesson.application_layer.use_cases import LessonMissing, LessonResult, LessonSucceeded, get_lesson
+from application.lesson.driving_layer.api.bc_error_schema import LessonNotFoundError
+
+router = Router()
+
+
+@router.get('/{lesson_id}', response={200: dict, 404: LessonNotFoundError})
+def get_lesson_controller(request, lesson_id: int):
+    result = get_lesson(lesson_id)
+"""
+    canonical_two_if_result = result_branch_head + """    if isinstance(result, LessonMissing):
+        error = LessonNotFoundError()
+        return Status(error.status, error)
+    if isinstance(result, LessonSucceeded):
+        return result.lesson
+    assert_never(result)
+"""
+    if_elif_chain_result = result_branch_head + """    if isinstance(result, LessonMissing):
+        error = LessonNotFoundError()
+        return Status(error.status, error)
+    elif isinstance(result, LessonSucceeded):
+        return result.lesson
+    else:
+        assert_never(result)
+"""
+    match_class_result = result_branch_head + """    match result:
+        case LessonMissing():
+            error = LessonNotFoundError()
+            return Status(error.status, error)
+        case LessonSucceeded():
+            return result.lesson
+        case _ as unreachable:
+            assert_never(unreachable)
+"""
+    match_nested_variant_result = result_branch_head + """    match result:
+        case LessonResult.Missing():
+            error = LessonNotFoundError()
+            return Status(error.status, error)
+        case LessonResult.Succeeded():
+            return result.lesson
+        case _:
+            assert_never(result)
+"""
+    match_outcome_attribute_result = result_branch_head + """    match result.outcome:
+        case 'not_found':
+            error = LessonNotFoundError()
+            return Status(error.status, error)
+        case 'succeeded':
+            return result.payload
+        case _ as unreachable:
+            assert_never(unreachable)
+"""
+    match_outcome_alias_result = result_branch_head + """    outcome = result.outcome
+    match outcome:
+        case 'not_found':
+            error = LessonNotFoundError()
+            return Status(error.status, error)
+        case 'succeeded':
+            return result.payload
+        case _ as unreachable:
+            assert_never(unreachable)
+"""
+    match_arm_helper_result = match_class_result.replace(
+        "            error = LessonNotFoundError()",
+        "            error = build_missing_error()",
+    ).replace(
+        "router = Router()",
+        "router = Router()\n\n\ndef build_missing_error():\n    return LessonNotFoundError()",
+    )
+    second_if_separated_result = canonical_two_if_result.replace(
+        "    if isinstance(result, LessonSucceeded):",
+        "    extra = 1\n    if isinstance(result, LessonSucceeded):",
+    )
+    match_guard_result = match_class_result.replace(
+        "        case LessonMissing():",
+        "        case LessonMissing() if lesson_id > 0:",
+    )
+    match_other_subject_result = match_class_result.replace(
+        "    match result:",
+        "    other = lesson_id\n    match other:",
+    )
+    match_wildcard_mapping_result = result_branch_head + """    match result:
+        case LessonSucceeded():
+            return result.lesson
+        case _:
+            error = LessonNotFoundError()
+            return Status(error.status, error)
+"""
+    match_none_wildcard_result = result_branch_head + """    match result:
+        case None:
+            error = LessonNotFoundError()
+            return Status(error.status, error)
+        case _:
+            return result
+"""
+    match_none_class_success_result = result_branch_head + """    match result:
+        case None:
+            error = LessonNotFoundError()
+            return Status(error.status, error)
+        case LessonSucceeded():
+            return result.lesson
+        case _ as unreachable:
+            assert_never(unreachable)
+"""
+    if_none_elif_success_result = result_branch_head + """    if result is None:
+        error = LessonNotFoundError()
+        return Status(error.status, error)
+    elif isinstance(result, LessonSucceeded):
+        return result.lesson
+    else:
+        assert_never(result)
+"""
+    match_foreign_variant_result = match_class_result.replace(
+        "from application.lesson.driving_layer.api.bc_error_schema import LessonNotFoundError",
+        "from application.lesson.driving_layer.api.bc_error_schema import LessonNotFoundError\n"
+        "from application.billing.application_layer.use_cases import BillingMissing",
+    ).replace("        case LessonMissing():", "        case BillingMissing():")
     shadowed_isinstance_helper = mapping_helper.replace(
         "def convert(value):\n    if isinstance(value, LessonMissing):",
         "def convert(value):\n"
@@ -4722,7 +4857,7 @@ def observe(value=None):
         Case("controller-class-method-add-exception-handler-call", with_files(("application/lesson/driving_layer/controller.py", class_method_handler_call), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
         Case("controller-clean-arbitrary-nested-handler-receiver", with_files(("application/lesson/driving_layer/controller.py", arbitrary_handler_receiver), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
         Case("controller-analysis-shadowed-isinstance-result-predicate", with_files(("application/lesson/driving_layer/controller.py", shadowed_isinstance_result), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "사용 오류"),
-        Case("controller-clean-builtin-isinstance-result-predicate", with_files(("application/lesson/driving_layer/controller.py", builtin_isinstance_result), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-result-variant-isinstance-failure-branch-forbidden", with_files(("application/lesson/driving_layer/controller.py", builtin_isinstance_result), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "Result variant/outcome failure branch forbidden", note="2026-08-26 리비전 7호 — 실패를 Result 값으로 돌려받는 분기는 exception path 위반(#571)"),
         Case("controller-analysis-shadowed-isinstance-helper-predicate", with_files(("application/lesson/driving_layer/controller.py", mapping_controller), ("application/lesson/driving_layer/bridge.py", shadowed_isinstance_helper), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "사용 오류"),
         Case("controller-caught-exception-forwarded-in-container", with_files(("application/lesson/driving_layer/controller.py", forwarded_exception_container), ("application/lesson/driving_layer/forwarder.py", "def forward_error(exc): return exc\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "caught application exception forwarding forbidden"),
         Case("controller-clean-caught-exception-nested-lambda-scope", with_files(("application/lesson/driving_layer/controller.py", nested_lambda_exception_reference), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
@@ -4736,7 +4871,22 @@ def observe(value=None):
         Case("controller-fresh-analysis-ambiguous-branch-handler-receiver", with_files(("application/lesson/driving_layer/controller.py", ambiguous_branch_handler), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "사용 오류"),
         Case("controller-fresh-clean-arbitrary-branch-handler-receiver", with_files(("application/lesson/driving_layer/controller.py", arbitrary_branch_handler), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
         Case("controller-fresh-analysis-module-shadowed-isinstance-predicate", with_files(("application/lesson/driving_layer/controller.py", module_shadowed_isinstance_result), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "사용 오류"),
-        Case("controller-fresh-clean-true-builtin-isinstance-predicate", with_files(("application/lesson/driving_layer/controller.py", builtin_isinstance_result), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-fresh-true-builtin-isinstance-predicate-reaches-judgment", with_files(("application/lesson/driving_layer/controller.py", builtin_isinstance_result), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "Result variant/outcome failure branch forbidden", note="진짜 builtin isinstance 는 섀도잉 분석 불능이 아니라 판정(exit 2)까지 도달한다"),
+        Case("controller-result-variant-two-if-assert-never-forbidden", with_files(("application/lesson/driving_layer/controller.py", canonical_two_if_result), ("application/lesson/application_layer/use_cases.py", result_variant_use_cases), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "Result variant/outcome failure branch forbidden", note="2026-08-26 A-1 — ninja §6.2 캐논 예시(두 if + assert_never)가 exit 2 였던 결함"),
+        Case("controller-result-variant-if-elif-chain-forbidden", with_files(("application/lesson/driving_layer/controller.py", if_elif_chain_result), ("application/lesson/application_layer/use_cases.py", result_variant_use_cases), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "Result variant/outcome failure branch forbidden"),
+        Case("controller-result-variant-match-class-patterns-forbidden", with_files(("application/lesson/driving_layer/controller.py", match_class_result), ("application/lesson/application_layer/use_cases.py", result_variant_use_cases), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "Result variant/outcome failure branch forbidden"),
+        Case("controller-result-variant-match-nested-variant-forbidden", with_files(("application/lesson/driving_layer/controller.py", match_nested_variant_result), ("application/lesson/application_layer/use_cases.py", result_variant_use_cases), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "Result variant/outcome failure branch forbidden", note="#571 단일 top-level result 의 nested variant"),
+        Case("controller-result-variant-match-outcome-attribute-forbidden", with_files(("application/lesson/driving_layer/controller.py", match_outcome_attribute_result), ("application/lesson/application_layer/use_cases.py", result_variant_use_cases), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "Result variant/outcome failure branch forbidden"),
+        Case("controller-result-variant-match-outcome-alias-forbidden", with_files(("application/lesson/driving_layer/controller.py", match_outcome_alias_result), ("application/lesson/application_layer/use_cases.py", result_variant_use_cases), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "Result variant/outcome failure branch forbidden"),
+        Case("controller-result-match-arm-helper-delegation", with_files(("application/lesson/driving_layer/controller.py", match_arm_helper_result), ("application/lesson/application_layer/use_cases.py", result_variant_use_cases), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "[#126]", note="arm 안 helper 호출 — 모듈 수준 helper 자체가 #126 «factory/helper forbidden» 으로 먼저 잡힌다(기존 finding 유지)"),
+        Case("controller-result-second-if-separated-from-call", with_files(("application/lesson/driving_layer/controller.py", second_if_separated_result), ("application/lesson/application_layer/use_cases.py", result_variant_use_cases), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "must immediately follow its try-free call assignment"),
+        Case("controller-analysis-result-match-guard", with_files(("application/lesson/driving_layer/controller.py", match_guard_result), ("application/lesson/application_layer/use_cases.py", result_variant_use_cases), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "unsupported Result/error match candidate"),
+        Case("controller-analysis-result-match-other-subject", with_files(("application/lesson/driving_layer/controller.py", match_other_subject_result), ("application/lesson/application_layer/use_cases.py", result_variant_use_cases), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "unsupported Result/error match candidate"),
+        Case("controller-analysis-result-match-wildcard-mapping", with_files(("application/lesson/driving_layer/controller.py", match_wildcard_mapping_result), ("application/lesson/application_layer/use_cases.py", result_variant_use_cases), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "unsupported Result/error match candidate"),
+        Case("controller-clean-none-path-match-wildcard-success", with_files(("application/lesson/driving_layer/controller.py", match_none_wildcard_result), ("application/lesson/application_layer/use_cases.py", result_variant_use_cases), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, "", note="리비전 7호 `None` path — match 형태(case None + 성공 wildcard)"),
+        Case("controller-clean-none-path-match-class-success-assert-never", with_files(("application/lesson/driving_layer/controller.py", match_none_class_success_result), ("application/lesson/application_layer/use_cases.py", result_variant_use_cases), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-clean-none-path-if-elif-success", with_files(("application/lesson/driving_layer/controller.py", if_none_elif_success_result), ("application/lesson/application_layer/use_cases.py", result_variant_use_cases), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-analysis-result-match-foreign-variant", with_files(("application/lesson/driving_layer/controller.py", match_foreign_variant_result), ("application/lesson/application_layer/use_cases.py", result_variant_use_cases), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "unsupported Result/error match candidate"),
         Case("controller-fresh-caught-exception-forwarded-in-lambda-default", with_files(("application/lesson/driving_layer/controller.py", lambda_default_forwarding), ("application/lesson/driving_layer/forwarder.py", "def forward_error(value): return value\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "caught application exception forwarding forbidden"),
         Case("controller-fresh-caught-exception-forwarded-in-lambda-keyword-default", with_files(("application/lesson/driving_layer/controller.py", lambda_keyword_default_forwarding), ("application/lesson/driving_layer/forwarder.py", "def forward_error(value): return value\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "caught application exception forwarding forbidden"),
         Case("controller-fresh-clean-caught-exception-in-lambda-body-scope", with_files(("application/lesson/driving_layer/controller.py", lambda_body_forwarding_control), ("application/lesson/driving_layer/forwarder.py", "def forward_error(value): return value\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),

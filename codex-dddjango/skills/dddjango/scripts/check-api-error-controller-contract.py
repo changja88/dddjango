@@ -108,6 +108,12 @@ MATCH = getattr(ast, "Match", None)
 MATCH_AS = getattr(ast, "MatchAs", None)
 MATCH_STAR = getattr(ast, "MatchStar", None)
 MATCH_MAPPING = getattr(ast, "MatchMapping", None)
+# 2026-08-26 리비전 7호 — 12-slot 의 두 번째 갈래는 «조회의 `None` path» 뿐이다. 실패를
+# Result variant/outcome 값으로 돌려받아 분기하는 controller 는 exception path 위반(#571).
+RESULT_VARIANT_BRANCH_FORBIDDEN = (
+    "Result variant/outcome failure branch forbidden — known failures take the "
+    "exception path; a use-case result carries only the success shape (#571)"
+)
 
 
 class UsageError(Exception):
@@ -3415,17 +3421,35 @@ def _analyze_try(
         )
 
 
-def _result_test_name(test: ast.AST) -> str | None:
-    if (
+def _result_compare_kind(test: ast.AST) -> str | None:
+    """Result predicate 의 비교 형태 — `is None` → "none" · `== "<literal>"` → "literal"."""
+    if not (
         isinstance(test, ast.Compare)
         and len(test.ops) == 1
-        and isinstance(test.ops[0], ast.Is)
         and len(test.comparators) == 1
         and isinstance(test.comparators[0], ast.Constant)
-        and test.comparators[0].value is None
-        and isinstance(test.left, ast.Name)
     ):
-        return test.left.id
+        return None
+    constant = test.comparators[0].value
+    if isinstance(test.ops[0], ast.Is) and constant is None:
+        return "none"
+    if isinstance(test.ops[0], ast.Eq) and isinstance(constant, str):
+        return "literal"
+    return None
+
+
+def _subject_root_name(node: ast.AST) -> str | None:
+    """분기 주어(subject)의 뿌리 이름 — `result` · `result.<field>` · 별칭 이름."""
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+        return node.value.id
+    return None
+
+
+def _result_test_name(test: ast.AST) -> str | None:
+    if _result_compare_kind(test) is not None:
+        return _subject_root_name(test.left)
     if (
         isinstance(test, ast.Call)
         and isinstance(test.func, ast.Name)
@@ -3459,34 +3483,52 @@ def _builtin_isinstance_call(
     return True
 
 
+def _result_subject_name(
+    node: ast.AST, result_name: str, alias: str | None
+) -> str | None:
+    """분기 주어가 `result` · `result.<field>` · call 직후 별칭이면 그 뿌리 이름, 아니면 None."""
+    root = _subject_root_name(node)
+    if root is None:
+        return None
+    if isinstance(node, ast.Name):
+        if root == result_name or (alias is not None and root == alias):
+            return root
+        return None
+    return root if root == result_name else None
+
+
+def _direct_type_origin_valid(operation: Operation, node: ast.AST) -> bool | None:
+    """Result variant/exception 타입 노드의 own-BC 직접 import 판정 — `Name` 또는
+    `<Result>.<Variant>`(단일 top-level result 의 nested variant — #571) 한 단계만 본다."""
+    if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+        return _exception_origin_valid(operation, node.value)
+    return _exception_origin_valid(operation, node)
+
+
 def _supported_result_test(
     operation: Operation,
     test: ast.AST,
     result_name: str,
     analysis: list[str],
+    alias: str | None = None,
 ) -> bool:
-    if (
-        isinstance(test, ast.Compare)
-        and len(test.ops) == 1
-        and isinstance(test.ops[0], ast.Is)
-        and len(test.comparators) == 1
-        and isinstance(test.comparators[0], ast.Constant)
-        and test.comparators[0].value is None
-        and isinstance(test.left, ast.Name)
-        and test.left.id == result_name
-    ):
-        return True
+    # (a) `<subject> is None` · (c)/(d) `<subject> == "<literal>"` — subject 는 result ·
+    # result.<field> · call 직후 별칭(2026-08-26 A-1: 규범 «call 직후 직접 branch» 는
+    # predicate 형태를 `is None`/`isinstance` 둘로 좁히지 않는다).
+    if _result_compare_kind(test) is not None:
+        return _result_subject_name(test.left, result_name, alias) is not None
+    # (b) `isinstance(result, <DirectOwnBcType>)` — 타입은 Name 또는 `<Result>.<Variant>`.
     if (
         isinstance(test, ast.Call)
         and len(test.args) == 2
         and not test.keywords
         and isinstance(test.args[0], ast.Name)
         and test.args[0].id == result_name
-        and isinstance(test.args[1], ast.Name)
+        and isinstance(test.args[1], (ast.Name, ast.Attribute))
     ):
         if not _builtin_isinstance_call(operation, test, analysis):
             return False
-        validity = _exception_origin_valid(operation, test.args[1])
+        validity = _direct_type_origin_valid(operation, test.args[1])
         if validity is None:
             analysis.append(
                 f"{operation.parsed.relative_path}:{test.lineno} Result failure variant provenance 분석 불능"
@@ -3639,6 +3681,215 @@ def _try_assignment(statement: ast.stmt) -> tuple[str, ast.Call] | None:
     return _call_assignment(statement.body[0])
 
 
+def _result_alias(statement: ast.stmt, result_name: str) -> str | None:
+    """call 직후 한 문장의 단순 field 별칭 `outcome = result.<field>` (A-1 (d))."""
+    alias = _simple_assignment_target(statement)
+    value = _statement_value(statement)
+    if (
+        alias is None
+        or alias == result_name
+        or not isinstance(value, ast.Attribute)
+        or not isinstance(value.value, ast.Name)
+        or value.value.id != result_name
+    ):
+        return None
+    return alias
+
+
+def _analyze_result_if_chain(
+    operation: Operation,
+    node: ast.If,
+    result_name: str,
+    alias: str | None,
+    language: ErrorLanguage,
+    error_assignments: dict[str, set[int]],
+    analysis: list[str],
+    findings: list[Finding],
+    seen: set[tuple[Path, int, str]],
+    allowed_error_calls: set[int],
+    allowed_status_calls: set[int],
+    categories: tuple[str, str],
+) -> bool:
+    """`if/elif/…` 체인 하나를 Result 직접 branch 로 검사한다.
+
+    모든 arm 의 predicate 가 지원 형태여야 하고, 오류 동작이 있는 arm 은 mapping 본문
+    검증을 받는다. 성공 arm 은 success bypass 검사기 소유라 보지 않는다. 승인 predicate
+    가 없는 `else` arm 의 오류 mapping 은 «approved arm 소유 아님» 판정(아래 마지막 루프)
+    에 맡긴다."""
+    current: ast.stmt = node
+    while isinstance(current, ast.If):
+        if not _supported_result_test(operation, current.test, result_name, analysis, alias):
+            analysis.append(
+                f"{operation.parsed.relative_path}:{current.lineno} Result candidate predicate 분석 불능"
+            )
+            return False
+        if _branch_has_error_behavior(
+            operation, current.body, language, error_assignments, analysis
+        ):
+            if _result_compare_kind(current.test) != "none":
+                _append_finding(
+                    findings,
+                    seen,
+                    operation.parsed,
+                    current,
+                    RESULT_VARIANT_BRANCH_FORBIDDEN,
+                    requires_static_error_shape=True,
+                )
+            _validate_mapping_body(
+                operation,
+                current.body,
+                language,
+                analysis,
+                findings,
+                seen,
+                allowed_error_calls,
+                allowed_status_calls,
+                *categories,
+            )
+        orelse = current.orelse
+        if len(orelse) == 1 and isinstance(orelse[0], ast.If):
+            current = orelse[0]
+            continue
+        return True
+    return True
+
+
+def _match_exhaustive_wildcard(
+    operation: Operation, case: ast.AST, subject_names: set[str]
+) -> bool:
+    """`case _: assert_never(<subject>)` · `case _ as x: assert_never(x)` — 소진 증명 arm."""
+    pattern = case.pattern
+    if MATCH_AS is None or not isinstance(pattern, MATCH_AS):
+        return False
+    # `case _ as x` 는 MatchAs(pattern=MatchAs(_), name="x") 로 중첩 파싱된다.
+    inner = pattern.pattern
+    if inner is not None and not (
+        isinstance(inner, MATCH_AS) and inner.pattern is None and inner.name is None
+    ):
+        return False
+    if case.guard is not None:
+        return False
+    body = _without_docstrings(case.body)
+    if len(body) != 1 or not isinstance(body[0], ast.Expr):
+        return False
+    call = body[0].value
+    if not (
+        isinstance(call, ast.Call)
+        and isinstance(call.func, ast.Name)
+        and call.func.id == "assert_never"
+        and len(call.args) == 1
+        and not call.keywords
+        and isinstance(call.args[0], ast.Name)
+    ):
+        return False
+    if "assert_never" in operation.local_names:
+        return False
+    binding = operation.body_bindings.get("assert_never")
+    if (
+        binding is None
+        or binding.kind != "symbol_import"
+        or binding.origin not in {"typing.assert_never", "typing_extensions.assert_never"}
+    ):
+        return False
+    expected = {pattern.name} if pattern.name else subject_names
+    return call.args[0].id in expected
+
+
+def _supported_match_pattern(operation: Operation, pattern: ast.AST) -> bool | None:
+    """지원 case 패턴 — `"<literal>"` · `None` · `<DirectOwnBcType>()`(하위 패턴 없음).
+
+    None 은 타입 provenance 분석 불능(로컬 섀도잉·재바인딩)."""
+    if isinstance(pattern, ast.MatchValue):
+        return isinstance(pattern.value, ast.Constant) and isinstance(pattern.value.value, str)
+    if isinstance(pattern, ast.MatchSingleton):
+        return pattern.value is None
+    if isinstance(pattern, ast.MatchClass):
+        if pattern.patterns or pattern.kwd_attrs or pattern.kwd_patterns:
+            return False
+        return _direct_type_origin_valid(operation, pattern.cls)
+    return False
+
+
+def _analyze_result_match(
+    operation: Operation,
+    node: ast.AST,
+    result_name: str,
+    alias: str | None,
+    language: ErrorLanguage,
+    error_assignments: dict[str, set[int]],
+    analysis: list[str],
+    findings: list[Finding],
+    seen: set[tuple[Path, int, str]],
+    allowed_error_calls: set[int],
+    allowed_status_calls: set[int],
+    categories: tuple[str, str],
+) -> bool:
+    """`match` 직접 branch(A-1) — subject 는 result · result.<field> · 별칭, case 는
+    literal · None · `<DirectOwnBcType>()` 만, 마지막 `case _[ as x]: assert_never(…)` 는
+    소진 증명으로 매핑 arm 에 세지 않는다. 형태 밖이면 분석 불능을 적재하고 False."""
+    subject_names = {result_name} | ({alias} if alias is not None else set())
+    cases = list(node.cases)
+    if cases and _match_exhaustive_wildcard(operation, cases[-1], subject_names):
+        cases.pop()
+    supported = bool(cases)
+    for case in cases:
+        if case.guard is not None:
+            supported = False
+            break
+        if (
+            MATCH_AS is not None
+            and isinstance(case.pattern, MATCH_AS)
+            and case.pattern.pattern is None
+        ):
+            # `case _:` / `case x:` — 오류 동작이 없는 성공 arm 만 허용(오류 mapping 은
+            # 승인 predicate 가 없어 분석 불능).
+            if _branch_has_error_behavior(
+                operation, case.body, language, error_assignments, analysis
+            ):
+                supported = False
+                break
+            continue
+        validity = _supported_match_pattern(operation, case.pattern)
+        if validity is None:
+            analysis.append(
+                f"{operation.parsed.relative_path}:{case.pattern.lineno} Result failure variant provenance 분석 불능"
+            )
+            return False
+        if not validity:
+            supported = False
+            break
+    if not supported:
+        analysis.append(
+            f"{operation.parsed.relative_path}:{node.lineno} unsupported Result/error match candidate"
+        )
+        return False
+    for case in cases:
+        if _branch_has_error_behavior(
+            operation, case.body, language, error_assignments, analysis
+        ):
+            if not isinstance(case.pattern, ast.MatchSingleton):
+                _append_finding(
+                    findings,
+                    seen,
+                    operation.parsed,
+                    case.pattern,
+                    RESULT_VARIANT_BRANCH_FORBIDDEN,
+                    requires_static_error_shape=True,
+                )
+            _validate_mapping_body(
+                operation,
+                case.body,
+                language,
+                analysis,
+                findings,
+                seen,
+                allowed_error_calls,
+                allowed_status_calls,
+                *categories,
+            )
+    return True
+
+
 def _analyze_results(
     operation: Operation,
     language: ErrorLanguage,
@@ -3651,39 +3902,85 @@ def _analyze_results(
     body = _without_docstrings(operation.node.body)
     error_assignments = _known_error_assignments(operation, language, analysis)
     approved_branches: set[int] = set()
+    examined_matches: set[int] = set()
+    categories = (
+        "Result arm must directly construct FrameworkErrorSchema and return Status",
+        "Result arm delegates error construction to helper/factory/serializer",
+    )
 
-    for index in range(len(body) - 1):
+    # 규범 «call 직후 직접 branch»(2026-08-26 A-1): 단일 `if` 한 개가 아니라 call 바로
+    # 다음의 연속 `if/elif` 체인 여러 개, 또는 `match` 하나(소진 증명 `case _` 포함)다.
+    # 그 사이에 올 수 있는 문장은 `outcome = result.<field>` 별칭 한 줄뿐이다.
+    index = 0
+    while index < len(body) - 1:
         assignment = _call_assignment(body[index])
-        branch = body[index + 1]
-        if assignment is None or not isinstance(branch, ast.If):
-            continue
-        if _known_constructor(operation, assignment[1], language, analysis) is not None:
+        if assignment is None or _known_constructor(
+            operation, assignment[1], language, analysis
+        ) is not None:
             # A local FrameworkErrorSchema construction is mapping behavior, not the
             # application-call assignment that can causally own a Result arm.
+            index += 1
             continue
         result_name, _ = assignment
-        if not _candidate_branch(
-            operation, branch, language, error_assignments, analysis
-        ):
-            continue
-        if not _supported_result_test(operation, branch.test, result_name, analysis):
-            analysis.append(
-                f"{operation.parsed.relative_path}:{branch.lineno} Result candidate predicate 분석 불능"
-            )
-            continue
-        approved_branches.add(id(branch))
-        _validate_mapping_body(
-            operation,
-            branch.body,
-            language,
-            analysis,
-            findings,
-            seen,
-            allowed_error_calls,
-            allowed_status_calls,
-            "Result arm must directly construct FrameworkErrorSchema and return Status",
-            "Result arm delegates error construction to helper/factory/serializer",
-        )
+        cursor = index + 1
+        alias = _result_alias(body[cursor], result_name)
+        if alias is not None:
+            cursor += 1
+        while cursor < len(body):
+            branch = body[cursor]
+            if isinstance(branch, ast.If):
+                if not _candidate_branch(
+                    operation, branch, language, error_assignments, analysis
+                ):
+                    break
+                test_name = _result_test_name(branch.test)
+                if test_name is not None and test_name != result_name and test_name != alias:
+                    break
+                if not _analyze_result_if_chain(
+                    operation,
+                    branch,
+                    result_name,
+                    alias,
+                    language,
+                    error_assignments,
+                    analysis,
+                    findings,
+                    seen,
+                    allowed_error_calls,
+                    allowed_status_calls,
+                    categories,
+                ):
+                    break
+                approved_branches.add(id(branch))
+                cursor += 1
+                continue
+            if MATCH is not None and isinstance(branch, MATCH):
+                if _result_subject_name(branch.subject, result_name, alias) is None:
+                    break
+                if not _candidate_branch(
+                    operation, branch, language, error_assignments, analysis
+                ):
+                    break
+                examined_matches.add(id(branch))
+                if _analyze_result_match(
+                    operation,
+                    branch,
+                    result_name,
+                    alias,
+                    language,
+                    error_assignments,
+                    analysis,
+                    findings,
+                    seen,
+                    allowed_error_calls,
+                    allowed_status_calls,
+                    categories,
+                ):
+                    approved_branches.add(id(branch))
+                    cursor += 1
+                break
+            break
+        index = max(cursor, index + 1)
 
     for index, statement in enumerate(body):
         if not isinstance(statement, ast.If):
@@ -3739,6 +4036,8 @@ def _analyze_results(
 
     for node in _iter_lexical_nodes(operation.node.body):
         if MATCH is not None and isinstance(node, MATCH):
+            if id(node) in examined_matches:
+                continue
             if _candidate_branch(
                 operation, node, language, error_assignments, analysis
             ):
@@ -7125,7 +7424,7 @@ def main(argv: list[str]) -> int:
                 emit_all(*surfaces, printer=print)
                 print(
                     "  근거: known BC failures are mapped directly by their selected "
-                    "owner controller through one narrow exception or try-free Result "
+                    "owner controller through one narrow exception or try-free None "
                     "path and direct two-argument Status(<approved HTTP status>, error); helper/handler/raw "
                     "detours are not part of this contract."
                 )
