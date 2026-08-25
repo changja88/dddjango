@@ -15,6 +15,10 @@ VENV_PY := .venv/bin/python
 # 줄 + 요약만 표출하고, 전체 로그는 /tmp/djr-verify.* 에 남긴다. RED 타깃만 전체 로그를
 # 그대로 출력한다(fail-loud 유지). VERBOSE=1 이면 종전처럼 타깃별 전체 로그를 고정 순서로
 # 일괄 출력한다(GNU make 3.81 은 --output-sync 부재 — 인터리브 방지).
+# 진행 줄은 터미널 폭(stty size </dev/tty — 명령 치환 안 tput 은 크기 취득 불가)−8 로
+# 잘라 한 물리 줄을 보장한다 — 줄바꿈이 생기면
+# CR+EL 이 마지막 물리 줄만 지워 잔재가 매초 쌓인다(2026-08-25 실측 수리 — 여유 8은
+# 한글 더블폭 표시 보정). 카운터·경과를 이름 앞에 둬 잘려도 정보가 남는다.
 # 롤백·중단 시 되돌림: VERIFY_TARGETS 에서 verify-ontology 삭제 (t0-plan §7)
 VERIFY_TARGETS := verify-ontology verify-base-core verify-base-cross verify-base-backstop verify-base-regen verify-web
 
@@ -65,7 +69,12 @@ verify:
 		if [ -n "$$remaining" ]; then \
 			if [ "$$TTY" = 1 ]; then \
 				names=""; for e in $$remaining; do names="$$names $${e%%=*}"; done; \
-				printf '%s  %s⠿ 진행 중(%d/%d):%s%s %s(%d초)%s' "$$CL" "$$DM" "$$done_n" "$$n" "$$X" "$$names" "$$DM" "$$(($$(date +%s)-T0))" "$$X"; \
+				cols=$$(stty size </dev/tty 2>/dev/null | cut -d' ' -f2); \
+				{ [ -n "$$cols" ] && [ "$$cols" -gt 0 ]; } 2>/dev/null || cols=80; \
+				lim=$$((cols-8)); [ "$$lim" -lt 20 ] && lim=20; \
+				line="  ⠿ 진행 중($$done_n/$$n · $$(($$(date +%s)-T0))초):$$names"; \
+				if [ $${#line} -gt "$$lim" ]; then line="$${line:0:$$((lim-1))}…"; fi; \
+				printf '%s%s%s%s' "$$CL" "$$DM" "$$line" "$$X"; \
 			fi; \
 			sleep 1; \
 		fi; \
