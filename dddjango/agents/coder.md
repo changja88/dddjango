@@ -39,7 +39,7 @@ Coordinator가 다음을 준다:
 - **결정 재방문 금지(2026-08-15).** 접근·해석을 한 번 정해 집행을 시작했으면 새 정보 없이 같은 결정을 다시 따져 뒤집지 않는다(정한 것의 재탐색은 사고 낭비다). 단 **승인 명세와 정본 표준(스킬 `references/final.md`) 간 충돌의 발견은 «새 정보»다** — 조용한 재해석·현장 절충 없이 기존 반송 축(설계 반송·`TREE_CONTRACT_MISMATCH`)으로 즉시 보고한다(재추론의 결함 검출 기능은 이 예외로 그대로 유지된다). 각 행·evidence 확인이나 검증 실행은 재방문이 아니다 — 그 확인 결과가 기존 해석과 어긋나면 그것이 곧 «새 정보»다.
 - 각 test edit 전에 입력 행의 protected contract/evidence·unique production failure·existing authoritative coverage·decision·owner/path를 확인한다. 행이 없거나 owner가 아니면 만들거나 고치지 않는다.
 - `add/update` 행에서만 Red→Green→Refactor를 반복한다. candidate·도구 recipe·coverage·상위 테스트 실패를 단위 Red로 자동 복제하지 않는다.
-- migration 파일·번호·dependency·operation·과거 model state·forward/reverse·DDL 자체를 검증하는 테스트를 새로 만들거나 새 case·assertion·시나리오로 확장하지 않는다. 기존 관련 migration 테스트의 기대 변경은 기존 assertion의 제자리 갱신·축소까지만 허용하며, 새 migration coverage가 필요하면 검증 공백을 보고한다.
+- migration 파일·번호·dependency·operation·과거 model state·forward/reverse·DDL 자체를 검증하는 테스트를 만들지 않는다 — 절대 규칙이다. 기존 관련 migration 전용 테스트를 만나면 기대와 무관하게 삭제하며(`check-test-config` #637), 새 migration coverage가 필요하면 검증 공백을 보고한다.
 - 현행 assertion과 종료 assertion이 섞였으면 현행 보장을 남기도록 분리·부분 갱신한다. 지원 중인 구 API·영속 데이터·발행 이벤트·회귀 불변식은 보존한다.
 - 단위 테스트는 **무조건 pytest로** — 함수형 + `assert` + `mocker`(mock은 외부 경계 한정·`implementation-test` §7.1 교리 불변) + factory_boy(ORM 영속 픽스처의 기본; 정확 필드 행·VO/dataclass는 직접 생성) + `@pytest.mark.django_db`. 구현 중 새 테스트 도구(factory_boy·freezegun·responses)가 필요하면 `implementation-django-ninja` §2.1 버전-핀 규율로 매니페스트에 핀한다(글로벌 임의 설치 금지). 기존 프로젝트가 `manage.py test`/Django `TestCase` 관례여도 새 테스트는 pytest로 쓴다(예외 없음 — pytest-django가 기존 `TestCase`도 수집).
 - 입장된 내부 테스트는 승인된 domain/application/DB/adapter failure를 검증한다. 외부 테스트와 boundary가 달라도 독자 failure가 없으면 새 단위 테스트를 만들지 않는다.

@@ -949,48 +949,70 @@ def _absolute_from_module(relative_path: Path, node: ast.ImportFrom) -> str | No
     return ".".join(package) or None
 
 
+def _conditional_blocks(node: ast.stmt) -> list[list[ast.stmt]]:
+    """module-level 조건부 블록(If/Try)이 품는 문장 열 — 열마다 독립 실행 경로다."""
+    if isinstance(node, ast.If):
+        return [node.body, node.orelse]
+    if isinstance(node, ast.Try):
+        return [
+            [*node.body, *node.orelse],
+            *(handler.body for handler in node.handlers),
+            node.finalbody,
+        ]
+    return []
+
+
 def _import_state(
     parsed: ParsedSource,
 ) -> tuple[dict[int, dict[str, str]], dict[int, frozenset[str]], list[ImportFact]]:
-    bindings: dict[str, str] = {}
     before: dict[int, dict[str, str]] = {}
     invalidated_before: dict[int, frozenset[str]] = {}
-    invalidated: set[str] = set()
     facts: list[ImportFact] = []
     annotations_evaluated = _annotations_are_evaluated(parsed.tree)
-    for node in parsed.tree.body:
-        before[id(node)] = dict(bindings)
-        invalidated_before[id(node)] = frozenset(invalidated)
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                local = alias.asname or alias.name.split(".", 1)[0]
-                binding = alias.name if alias.asname else local
-                bindings[local] = binding
-                facts.append(
-                    ImportFact(alias.name, alias.name, local, binding, node.lineno)
-                )
-            continue
-        if isinstance(node, ast.ImportFrom):
-            module = _absolute_from_module(parsed.relative_path, node)
-            if module is not None:
+
+    def visit_block(
+        statements: list[ast.stmt], bindings: dict[str, str], invalidated: set[str]
+    ) -> None:
+        for node in statements:
+            before[id(node)] = dict(bindings)
+            invalidated_before[id(node)] = frozenset(invalidated)
+            if isinstance(node, ast.Import):
                 for alias in node.names:
-                    if alias.name == "*":
-                        continue
-                    local = alias.asname or alias.name
-                    full_path = f"{module}.{alias.name}"
-                    bindings[local] = full_path
+                    local = alias.asname or alias.name.split(".", 1)[0]
+                    binding = alias.name if alias.asname else local
+                    bindings[local] = binding
                     facts.append(
-                        ImportFact(module, full_path, local, full_path, node.lineno)
+                        ImportFact(alias.name, alias.name, local, binding, node.lineno)
                     )
                 continue
-        for target in _stored_attribute_targets(node):
-            resolved = _resolve_imported_expression(target, bindings, frozenset(invalidated))
-            if resolved is not None:
-                invalidated.add(resolved)
-        for name in _statement_bound_names(
-            node, annotations_evaluated=annotations_evaluated
-        ):
-            bindings.pop(name, None)
+            if isinstance(node, ast.ImportFrom):
+                module = _absolute_from_module(parsed.relative_path, node)
+                if module is not None:
+                    for alias in node.names:
+                        if alias.name == "*":
+                            continue
+                        local = alias.asname or alias.name
+                        full_path = f"{module}.{alias.name}"
+                        bindings[local] = full_path
+                        facts.append(
+                            ImportFact(module, full_path, local, full_path, node.lineno)
+                        )
+                    continue
+            # 조건부 블록 안의 import 는 그 블록 안 문장에만 보이는 지역 바인딩이다(feature
+            # flag `if settings.X:` · `try/except ImportError`). 블록 뒤의 module 상태는
+            # 아래 기존 규칙(블록이 묶는 이름 전부 pop)이 보수적으로 다룬다.
+            for block in _conditional_blocks(node):
+                visit_block(block, dict(bindings), set(invalidated))
+            for target in _stored_attribute_targets(node):
+                resolved = _resolve_imported_expression(target, bindings, frozenset(invalidated))
+                if resolved is not None:
+                    invalidated.add(resolved)
+            for name in _statement_bound_names(
+                node, annotations_evaluated=annotations_evaluated
+            ):
+                bindings.pop(name, None)
+
+    visit_block(parsed.tree.body, {}, set())
     return before, invalidated_before, facts
 
 
@@ -1125,15 +1147,15 @@ def _parent_map(tree: ast.AST) -> dict[int, ast.AST]:
     }
 
 
-def _top_statement(
-    node: ast.AST, tree: ast.Module, parents: dict[int, ast.AST]
+def _snapshot_statement(
+    node: ast.AST, parents: dict[int, ast.AST], before: dict[int, dict[str, str]]
 ) -> ast.stmt | None:
+    """node 를 품는 가장 안쪽 문장 중 import 상태 스냅숏이 있는 것(조건부 블록 안 문장 포함)."""
     current = node
     while id(current) in parents:
-        parent = parents[id(current)]
-        if parent is tree:
-            return current if isinstance(current, ast.stmt) else None
-        current = parent
+        if isinstance(current, ast.stmt) and id(current) in before:
+            return current
+        current = parents[id(current)]
     return None
 
 
@@ -1380,6 +1402,25 @@ def _registrar_spec(relative_path: Path) -> RegistrarSpec:
     )
 
 
+def _is_root_api_annotation(annotation: ast.expr, parsed: ParsedSource) -> bool:
+    """registrar 인자 annotation 이 ROOT_API_CONSTRUCTORS 중 하나로 resolve 되는가(문자열 annotation 포함)."""
+    expression: ast.AST = annotation
+    if isinstance(annotation, ast.Constant) and isinstance(annotation.value, str):
+        try:
+            expression = ast.parse(annotation.value, mode="eval").body
+        except SyntaxError:
+            return False
+    before, invalidated_before, _ = _import_state(parsed)
+    owner = next(
+        (node for node in parsed.tree.body if isinstance(node, ast.FunctionDef)
+         and node.lineno <= annotation.lineno <= (node.end_lineno or node.lineno)),
+        None,
+    )
+    bindings = before.get(id(owner), {}) if owner is not None else {}
+    invalidated = invalidated_before.get(id(owner), frozenset()) if owner is not None else frozenset()
+    return _resolve_imported_expression(expression, bindings, invalidated) in ROOT_API_CONSTRUCTORS
+
+
 def _analyze_registrar(
     parsed: ParsedSource,
     spec: RegistrarSpec,
@@ -1450,6 +1491,16 @@ def _analyze_registrar(
         )
         if valid_signature:
             parameter_name = positional[0].arg
+            annotation = positional[0].annotation
+            if annotation is not None and not _is_root_api_annotation(annotation, parsed):
+                # #107 — 축자 시그니처의 인자 타입은 «api: NinjaExtraAPI» 다. 그 형상을 본뜬
+                # Protocol·별칭·Any 로 대체하면 어댑터 층이 프레임워크 타입을 숨기는 군더더기다
+                # (2026-08-25 tarot 잔존 B-3 판정 — 규범 §2.3 축자).
+                _append_finding(
+                    findings, seen, parsed, annotation,
+                    "registrar parameter annotation must be the Ninja API type",
+                    rule="#107",
+                )
         else:
             # #107 — 문면이 시그니처를 축자로 적는다(«def register_<bc>_api(api)» · 행4).
             _append_finding(
@@ -1562,10 +1613,10 @@ def _analyze_urlconf(
     }
     expected_paths = set(events)
     for call in (node for node in ast.walk(parsed.tree) if isinstance(node, ast.Call)):
-        top = _top_statement(call, parsed.tree, parents)
-        bindings = before.get(id(top), {}) if top is not None else {}
+        owner = _snapshot_statement(call, parents, before)
+        bindings = before.get(id(owner), {}) if owner is not None else {}
         invalidated = (
-            invalidated_before.get(id(top), frozenset()) if top is not None else frozenset()
+            invalidated_before.get(id(owner), frozenset()) if owner is not None else frozenset()
         )
         resolved = _resolve_imported_expression(call.func, bindings, invalidated)
         if resolved not in expected_paths:
@@ -1772,7 +1823,9 @@ _STDLIB_OK = {
     "__future__", "typing", "collections", "functools", "itertools", "dataclasses",
     "enum", "abc", "datetime", "decimal", "uuid", "logging",
 }
-_API_ROUTER_IMPORT_OK = _STDLIB_OK | {"django", "ninja", "application", "framework"}
+# `ninja_extra` 는 규범 §2.3 registrar 시그니처(`api: NinjaExtraAPI`)가 요구하는 라이브러리 import 다 —
+# 빠져 있으면 #108(«전역 API 객체 import 금지»)이 캐논 예시 그대로의 코드를 오발화한다(2026-08-25 tarot 잔존 B-3 원인).
+_API_ROUTER_IMPORT_OK = _STDLIB_OK | {"django", "ninja", "ninja_extra", "application", "framework"}
 _PROVIDERISH_TOKENS = ("oauth", "callback", "sso")
 
 

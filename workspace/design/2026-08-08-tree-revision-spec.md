@@ -273,10 +273,10 @@ D45 축자가 *「기계가 후보를 좁히고 사람이 마무리한다」* �
 | 판정 | blocker | 검사기 | 이행 | 면제 | 계 |
 |---|---|---|---|---|---|
 | `path` | 150 | 9 | 4 | 5 | **168** |
-| `ast` | 276 | 7 | 4 | 1 | **288** |
+| `ast` | 277 | 7 | 4 | 1 | **289** |
 | `ast+` | 54 | 1 | 0 | 0 | **55** |
 | `human` | 6 | 3 | 2 | 16 | **27** |
-| **계** | **486** | **20** | **10** | **22** | **538** |
+| **계** | **487** | **20** | **10** | **22** | **539** |
 
 <span>*(3단계에서 24건이 들어와 447 → 471, 3차 리뷰 반영으로 10건이 들어와 481, T26·T27(D39) 반영으로 4건이 들어와 **485**, 그리고 **D40~D59 회수로 110건이 들어와 595** 가 됐다. 3차에서 허가문 9건이 blocker → `면제`, 검사 범위 6건이 → `검사기` 로 바로잡혔고, «파일 내용을 세는» path 9건이 `ast` 로, 크로스-BC·어휘 판정 4건이 `human` 으로, «두 번째 BC» 3건이 `human` → `ast` 로 옮겨갔다. 복합 제안(ast+human)은 상위 수단 하나로 적는다 — 판정 컬럼은 «충분한 최소 수단»이다. **회수분 110건의 갈림은 `ast` 57 · `human` 30 · `path` 23** 이다 — 신설 칸이 대부분 «파일 안의 모양»을 규정해서다.)*</span>
 
@@ -284,12 +284,12 @@ D45 축자가 *「기계가 후보를 좁히고 사람이 마무리한다」* �
 
 | | 몇 | 무엇 |
 |---|---|---|
-| `path`+`ast` 의 blocker | **426** | **결정적 백스톱** — 기계가 혼자 판정하고 반송한다 |
+| `path`+`ast` 의 blocker | **427** | **결정적 백스톱** — 기계가 혼자 판정하고 반송한다 |
 | `ast+` 의 blocker | **54** | **후보를 좁히는 검사** — 경고를 내고 리뷰어가 마무리한다. 술어 셋(확정·후보·물음)이 `2026-08-11-predicates.md` 에 있다 |
 | `human` 의 blocker | **6** | 기계 술어가 아예 없다 — `#254`·`#316`·`#526`·`#530`·`#563`·`#626` |
 
 <span>08-11 · C5 ㉰ — **옛 문면의 「`human` blocker 148」은 «소거법»으로 매겨진 수였다.** 「기계가 못 하면 human」이라 성질이 다른 것이 한 칸에 뭉쳐 있었고, 전수 재분류로 **131건이 `human` 을 벗고 `ast+` 가 신설됐다**. 남은 실질 `human` 은 **11건**이고 그중 blocker 는 **6건**이다.</span>
-**★ 그중 `#486~#492`(제1원칙)는 «다른 모든 검사보다 먼저» 도는 자리라 6번에서 별도 게이트로 뽑는다** — 골격이 어긋나면 나머지 **524개**를 돌릴 이유가 없다.
+**★ 그중 `#486~#492`(제1원칙)는 «다른 모든 검사보다 먼저» 도는 자리라 6번에서 별도 게이트로 뽑는다** — 골격이 어긋나면 나머지 **525개**를 돌릴 이유가 없다.
 
 ## 3단계 — 회수한 24건
 
@@ -436,7 +436,7 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 102 | 타 BC 는 `driving_layer` 중 `open_host_service/` 아래만 import 한다. | D11+D9 | `ast` | principle |  | **blocker** |
 | 103 | 입구가 값 객체를 쓰는 폭은 쿼리 문자열을 값 객체로 파싱하고 되돌릴 때 다시 문자열로 굽는 데까지다. | D11 | `ast+` | principle |  | **blocker** |
 | 105 | `api/` 바로 아래 «파일»은 `api_router.py` 와 `bc_error_schema.py` 둘뿐이고, 자식 «폴더»는 `<area>/` 와 `webhook/` 둘뿐이다. | 트리 8행+D6+D27+D53 | `path` | measured | `measured_ok` | **blocker** |
-| 107 | `api/api_router.py` 는 `def register_<bc>_api(api)` 등록 함수 하나만 갖는다. | 트리 9행+D6+D27 | `ast` | principle |  | **blocker** |
+| 107 | `api/api_router.py` 는 `def register_<bc>_api(api)` 등록 함수 하나만 갖는다 — 인자 타입은 `api: NinjaExtraAPI` 축자(그 형상을 본뜬 Protocol·별칭으로 대체하지 않는다 — 08-25 tarot 잔존 판정 4). | 트리 9행+D6+D27 | `ast` | principle |  | **blocker** |
 | 108 | `api_router.py` 는 전역 API 객체를 import 하지 않고 인자로 받는다 — BC 가 프로젝트를 import 하지 않는다. | 트리 9행+D6 | `ast` | principle |  | **blocker** |
 | 109 | 등록은 `register_<bc>_api(api)` 함수 안에서만 하고 module top-level 에서 `register_controllers` 를 부르지 않는다(부작용 등록 금지). | D6+D27 | `ast` | principle |  | **blocker** |
 | 110 | 등록되는 컨트롤러는 `@api_controller(..., auto_import=False)` 로 자동 등록을 끈다. | D6+D27 | `ast` | principle |  | **blocker** |
@@ -1163,6 +1163,7 @@ Phase 1 산출물 리뷰(렌즈③ «잃은 값»)의 회수다. **유실 확정
 | 634 | `<service>_service.py` 의 공개 표면은 모듈 수준 «함수»뿐이다 — 공개 클래스를 두지 않는다(계약 클래스는 `contract/` 에 산다 · `_` 사설은 자유). <span>08-11 · T60-3 복원(사용자 승인).</span> | 트리 24행 | `ast` | principle |  | **blocker** |
 | 635 | `<use_case>_use_case.py` 의 진입점은 클래스 하나이고 실행 메서드는 `execute` 하나다 — 자기 `<use_case>_command.py`/`_query.py` 의 계약 객체 하나를 받아 `<use_case>_result.py` 의 result(스트림이면 `Iterator[<UseCase>Result]` — D40)를 돌려준다. <span>08-11 · T60-4 복원(사용자 승인).</span> | 트리 41행 | `ast` | principle |  | **blocker** |
 | 636 | `bc_error_schema.py` 의 `<Bc>ErrorCode` 는 `StrEnum` 이다 — `Literal`·맨 문자열 상수 모음으로 대신하지 않는다(#572 가 정한 동거의 «타입» 축). <span>08-11 · T60-5 복원(사용자 승인).</span> | 트리 10행 | `ast` | principle |  | **blocker** |
+| 637 | `test/` 아래 어디에도 migration 산출물(파일·operation·적용 순서·과거 state·DDL)을 오라클로 삼는 테스트를 두지 않는다 — `migrations/` 는 `makemigrations` 가 생성한 것이라 테스트 대상이 아니며 기존 것도 삭제한다(신호: `django.db.migrations`·`MigrationExecutor`/`MigrationLoader`/`ProjectState`/`MigrationRecorder`·migration 모듈 import). <span>08-25 · tarot 잔존 판정 5(사용자 «절대 규칙» 확정) — `check-test-config`.</span> | 트리 130~134행 | `ast` | principle |  | **blocker** |
 
 ## 5차 적대적 리뷰 회수 — 20개 (596~619)
 

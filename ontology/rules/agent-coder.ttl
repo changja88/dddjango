@@ -235,20 +235,32 @@ djr:R-2510 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-2511 a djr:Prohibition ;
-    skos:prefLabel "migration 파일·번호·dependency·operation·과거 model state·forward/reverse·DDL 검증 테스트의 신규 생성·확장 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2511@2026-08-22> .
+    skos:prefLabel "migration 산출물 검증 테스트 생성 금지(절대 규칙)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2511@2026-08-25> .
 
 <https://numchida.com/ns/djr#R-2511@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2511 ;
     djr:revision 1 .
 
-djr:R-2512 a djr:Exception ;
-    skos:prefLabel "기존 migration 테스트 기대 변경의 제자리 갱신·축소 한정 허용"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2512@2026-08-22> .
+<https://numchida.com/ns/djr#R-2511@2026-08-25> a djr:Expression ;
+    prov:specializationOf djr:R-2511 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2511@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
+
+djr:R-2512 a djr:Obligation ;
+    skos:prefLabel "기존 migration 전용 테스트 삭제(절대 규칙)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2512@2026-08-25> .
 
 <https://numchida.com/ns/djr#R-2512@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2512 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2512@2026-08-25> a djr:Expression ;
+    prov:specializationOf djr:R-2512 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2512@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
 
 djr:R-2513 a djr:Obligation ;
     skos:prefLabel "새 migration coverage 필요 시 검증 공백 보고"@ko ;
@@ -1253,7 +1265,7 @@ djr:R-2605 a djr:Prohibition ;
     djr:order 6 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004/b5> ;
     djr:statesNorm djr:R-2511, djr:R-2512, djr:R-2513 ;
-    djr:text "- migration 파일·번호·dependency·operation·과거 model state·forward/reverse·DDL 자체를 검증하는 테스트를 새로 만들거나 새 case·assertion·시나리오로 확장하지 않는다. 기존 관련 migration 테스트의 기대 변경은 기존 assertion의 제자리 갱신·축소까지만 허용하며, 새 migration coverage가 필요하면 검증 공백을 보고한다.\n"@ko .
+    djr:text "- migration 파일·번호·dependency·operation·과거 model state·forward/reverse·DDL 자체를 검증하는 테스트를 만들지 않는다 — 절대 규칙이다. 기존 관련 migration 전용 테스트를 만나면 기대와 무관하게 삭제하며(`check-test-config` #637), 새 migration coverage가 필요하면 검증 공백을 보고한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b7> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;

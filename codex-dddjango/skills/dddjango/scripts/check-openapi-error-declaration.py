@@ -2500,7 +2500,7 @@ def _operation_requirements(
             )
             if instance is not None and instance.symbol.bc is not None:
                 status = _resolved_error_status(instance)
-                requirements.setdefault(status, set()).add(instance.symbol.bc)
+                requirements.setdefault(status, set()).add(instance.symbol.full_path)
             return
         targets, value = _assigned_value(statement)
         names = {name for target in targets for name in _target_names(target)}
@@ -2573,6 +2573,37 @@ def _schema_symbol(
     return None
 
 
+def _declared_schema_symbols(
+    expression: ast.expr,
+    bindings: dict[str, str],
+    catalog: dict[str, ErrorSymbol],
+) -> list[ErrorSymbol | str] | None:
+    """`response=` 값 하나가 선언하는 schema 집합 — `Union[A, B]`·`A | B` 는 원소로 편다. 해석 불능이면 None."""
+    if isinstance(expression, ast.BinOp) and isinstance(expression.op, ast.BitOr):
+        left = _declared_schema_symbols(expression.left, bindings, catalog)
+        right = _declared_schema_symbols(expression.right, bindings, catalog)
+        return None if left is None or right is None else [*left, *right]
+    if isinstance(expression, ast.Subscript) and _resolve_expression(
+        expression.value, bindings
+    ) == "typing.Union":
+        members = (
+            expression.slice.elts if isinstance(expression.slice, ast.Tuple) else [expression.slice]
+        )
+        symbols: list[ErrorSymbol | str] = []
+        for member in members:
+            resolved = _declared_schema_symbols(member, bindings, catalog)
+            if resolved is None:
+                return None
+            symbols.extend(resolved)
+        return symbols
+    symbol = _schema_symbol(expression, bindings, catalog)
+    return None if symbol is None else [symbol]
+
+
+def _schema_set_text(paths: set[str]) -> str:
+    return " | ".join(sorted(paths))
+
+
 def _response_findings(
     operation: Operation,
     requirements: dict[int, set[str]],
@@ -2606,12 +2637,7 @@ def _response_findings(
         uncertain.discard(status)
 
     findings: list[Finding] = []
-    base_by_bc = {
-        symbol.bc: symbol
-        for symbol in catalog.values()
-        if symbol.kind == "base" and symbol.bc is not None
-    }
-    for status, required_bcs in sorted(requirements.items()):
+    for status, returned in sorted(requirements.items()):
         if status in uncertain:
             raise UsageError(
                 "required response mapping overwrite 분석 불능: "
@@ -2634,35 +2660,38 @@ def _response_findings(
                 )
             )
             continue
-        schema = _schema_symbol(value, operation.bindings, catalog)
-        if schema is None:
+        declared = _declared_schema_symbols(value, operation.bindings, catalog)
+        if declared is None:
             raise UsageError(
                 "required response schema provenance 분석 불능: "
                 f"{operation.identity} status {status}"
             )
-        for bc in sorted(required_bcs):
-            expected = base_by_bc.get(bc)
-            if expected is None:
-                raise UsageError(f"required BC FrameworkErrorSchema base 분석 불능: {bc}")
-            if not isinstance(schema, ErrorSymbol) or schema.full_path != expected.full_path:
-                shown = schema.full_path if isinstance(schema, ErrorSymbol) else schema
-                findings.append(
-                    Finding(
-                        operation.relative_path,
-                        operation.decorator.lineno,
-                        "wrong-response-schema",
-                        f"{operation.identity} status {status}는 "
-                        f"{expected.full_path} 필요 (현재 {shown})",
-                        symbol=operation.function.name,
-                    )
+        declared_paths = {
+            symbol.full_path if isinstance(symbol, ErrorSymbol) else symbol
+            for symbol in declared
+        }
+        if declared_paths != returned:
+            # #63 — 선언은 그 status 에서 직접 반환하는 오류 타입 집합 «그대로» 다(단일이면 그
+            # concrete, 복수면 Union). base 로 뭉뚱그리면 OpenAPI 가 endpoint 별 code 를 잃고,
+            # 다른 타입을 적으면 문서가 거짓말한다(2026-08-25 개정 — concrete 선언 의무화).
+            findings.append(
+                Finding(
+                    operation.relative_path,
+                    operation.decorator.lineno,
+                    "wrong-response-schema",
+                    f"{operation.identity} status {status}는 직접 반환하는 오류 타입 그대로 "
+                    f"{_schema_set_text(returned)} 선언 필요 (현재 {_schema_set_text(declared_paths)})",
+                    symbol=operation.function.name,
                 )
+            )
 
     for status, value in sorted(final_values.items()):
         if status in uncertain or not 400 <= status <= 599:
             continue
-        schema = _schema_symbol(value, operation.bindings, catalog)
-        if not isinstance(schema, ErrorSymbol):
+        declared = _declared_schema_symbols(value, operation.bindings, catalog) or []
+        if not any(isinstance(schema, ErrorSymbol) for schema in declared):
             continue
+        schema = next(schema for schema in declared if isinstance(schema, ErrorSymbol))
         if not requirements.get(status):
             findings.append(
                 Finding(

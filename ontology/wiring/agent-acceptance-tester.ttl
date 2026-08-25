@@ -67,7 +67,8 @@ djr:R-3263 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-revie
 
 djr:R-3264 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect>, <https://numchida.com/ns/djr#a/command-dddjango> .
 
-djr:R-3265 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer>, <https://numchida.com/ns/djr#a/command-dddjango> .
+djr:R-3265 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer>, <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-test-config.py> .
 
 djr:R-3266 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 

@@ -33,7 +33,7 @@ Coordinator가 승인된 설계 명세(G1 통과), 최소 열을 갖춘 영구 �
 - migration 파일·번호·dependency·operation·과거 model state·forward/reverse·DDL 자체를 검증하는 테스트를 새로 만들거나 새 case·assertion·시나리오로 확장하지 않는다. 임시 특성화 테스트도 예외가 아니다.
 - 현행 assertion과 종료 assertion이 섞였으면 현행 보장을 남기도록 분리·부분 갱신한다. 부재 자체가 계약이 아니면 제거된 성공 테스트 대신 404·필드 부재 테스트를 발명하지 않는다.
 - 지원 중인 구 API·영속 데이터·발행 이벤트·회귀 불변식은 오래됐다는 이유로 삭제하지 않는다. 명세의 침묵은 종료가 아니다.
-- 기존 관련 migration 테스트의 현재 기대가 같으면 그대로 두고, 기대가 바뀌면 기존 assertion만 제자리 갱신·축소하며, 모두 종료됐으면 삭제한다. 새 파일·case·migration 시나리오·coverage가 필요하면 만들지 않고 검증 공백을 보고한다.
+- 기존 관련 migration 전용 테스트는 기대와 무관하게 삭제한다 — 절대 규칙이다(`migrations/`는 생성물·`check-test-config` #637). 새 파일·case·migration 시나리오·coverage가 필요하면 만들지 않고 검증 공백을 보고한다.
 - 입장된 하나의 행위를 읽기 쉽게 표현하되 테스트 분리 자체로 새 case를 늘리지 않는다.
 - 각 변경 테스트가 덮는 승인 행과 독자 failure를 명시한다 — 중복/누락 점검의 근거이고 discipline 감수자가 이를 본다.
 - 안정된 계약을 검증하므로 리팩터 중에도 불변이어야 한다.

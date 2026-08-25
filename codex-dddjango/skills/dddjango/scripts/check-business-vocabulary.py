@@ -70,6 +70,9 @@ DATA_STEMS_RE = re.compile(r"(_in|_out)$")
 CONTRACT_KIND = {"exception"}  # + *_port·*_in·*_out
 PURE_IMPURE = {"datetime", "time", "random", "secrets", "uuid", "os", "io", "socket", "subprocess"}
 FRAMEWORK_TYPES = {"ninja", "django", "rest_framework", "pydantic"}
+# <technology>/ 폴더 이름 하나가 여러 배포 패키지를 뜻하는 경우 — `ninja/` 는 django-ninja 와
+# 그 위의 django-ninja-extra(NinjaExtraAPI·api_controller — §2.3 api.py 소유)를 한 기술로 본다.
+TECHNOLOGY_LIBRARIES = {"ninja": frozenset({"ninja", "ninja_extra"})}
 CHANNEL_CONFIG_WORDS = {"host", "port", "url", "endpoint", "api_key", "token", "timeout",
                         "region", "bucket", "template_id"}
 MEANS_WORDS = {"client", "cache", "sync", "cron", "queue", "http", "rest", "sdk", "api",
@@ -215,13 +218,15 @@ def _check_technology(root: Path, techdir: Path, f: Findings) -> None:
         mod = _parse(py)
         if mod is None:
             continue
+        libraries = TECHNOLOGY_LIBRARIES.get(techdir.name, frozenset({techdir.name}))
         imports_lib = any(
-            (isinstance(n, ast.Import) and any(a.name.split(".")[0] == techdir.name for a in n.names))
-            or (isinstance(n, ast.ImportFrom) and (n.module or "").split(".")[0] == techdir.name)
+            (isinstance(n, ast.Import) and any(a.name.split(".")[0] in libraries for a in n.names))
+            or (isinstance(n, ast.ImportFrom) and (n.module or "").split(".")[0] in libraries)
             for n in ast.walk(mod))
         if not imports_lib:
+            shown = "`·`".join(sorted(libraries))
             f.add("#415", _rel(root, py),
-                  f"`{techdir.name}` 를 import 하지 않는다 — 여기는 «그 라이브러리의 타입 없이는 "
+                  f"`{shown}` 를 import 하지 않는다 — 여기는 «그 라이브러리의 타입 없이는 "
                   "문장이 성립하지 않는 코드»만 온다(아니면 pure/ 나 capability 다)")
 
 

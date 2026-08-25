@@ -120,8 +120,10 @@ Operation 구현 기준:
 - create operation은 성공 시 `201`과 필요하면 `Location` header 계약을 맞춘다.
 - delete 또는 no-body update는 `204`를 사용하고 body를 반환하지 않는다.
 - async operation에서 ORM을 직접 호출하지 않도록 Django async ORM 제약을 확인한다.
-- 직접 반환하는 BC 오류 status는 모두 `response={...}`에 그 BC의 base `ErrorSchema`로
-  선언한다. framework가 소유하는 401/403/route 404/422/429/일반 `HttpError`/미식별
+- 직접 반환하는 BC 오류 status는 모두 `response={...}`에 그 status에서 실제로 반환하는
+  오류 타입 그대로 선언한다 — concrete 하나면 그 concrete, 둘 이상이면 `Union[...]`(`A | B`),
+  명시값으로 채운 base 인스턴스면 base. 상위 base로 뭉뚱그리거나 반환하지 않는 타입을 적지
+  않는다(OpenAPI가 endpoint별 code를 정확히 드러낸다 — 2026-08-25). framework가 소유하는 401/403/route 404/422/429/일반 `HttpError`/미식별
   500은 BC 오류로 직접 반환하지도, BC `ErrorSchema`로 광고하지도 않는다.
 - `openapi_extra`나 `get_openapi_schema` override·monkeypatch·postprocessor로 오류
   응답을 수동 선언하거나 사후 변형하지 않는다. operation의 `response=`가 runtime과
@@ -155,7 +157,6 @@ from application.order.composition_root.dependency_wiring import build_place_ord
 from application.order.domain_layer.order.exception.insufficient_stock import InsufficientStock
 from application.order.domain_layer.order.exception.product_not_found import ProductNotFound
 from application.order.driving_layer.api.bc_error_schema import (
-    OrderErrorSchema,
     OrderInsufficientStockError,
     OrderProductNotFoundError,
 )
@@ -167,7 +168,7 @@ from application.order.driving_layer.api.order.schema.schema_out import OrderOut
 class OrderController:
     @route.post(
         "",
-        response={201: OrderOut, 404: OrderErrorSchema, 409: OrderErrorSchema},
+        response={201: OrderOut, 404: OrderProductNotFoundError, 409: OrderInsufficientStockError},
         summary="주문 생성",
         description="재고가 충분하면 주문을 만들고 201, 부족하면 409로 거절한다.",
     )
@@ -175,7 +176,7 @@ class OrderController:
         self,
         request,
         payload: OrderIn,
-    ) -> Status[OrderOut | OrderErrorSchema]:
+    ) -> Status[OrderOut | OrderProductNotFoundError | OrderInsufficientStockError]:
         command = PlaceOrderCommand(
             product_id=payload.product_id,
             quantity=payload.quantity,
@@ -268,7 +269,8 @@ urlpatterns = [
 요점:
 
 - registrar는 자기 BC controller만 import하며, 전달받은 `api`에 등록하는 함수 밖에서는
-  아무 등록도 하지 않는다.
+  아무 등록도 하지 않는다. `api` 인자의 타입은 `NinjaExtraAPI` 축자다 — 그 형상을 본뜬
+  Protocol·별칭 타입으로 대체하지 않는다(어댑터 층은 프레임워크 타입을 숨기지 않는다 — 2026-08-25).
 - registrar가 `config.api`를 import하거나 모듈 top-level에서 `register_controllers`를
   호출하지 않는다.
 - 프로젝트 `urls.py` 밖에서 registrar를 몰래 호출하거나 직접 controller를 등록하지 않는다.
@@ -649,7 +651,7 @@ dictionary unpacking, builder, factory, mapping table로 field 작성을 우회�
 ```python
 @route.get(
     "/{order_id}",
-    response={200: OrderOut, 404: OrderErrorSchema},
+    response={200: OrderOut, 404: OrderProductNotFoundError},
     summary="주문 조회",
     description="주문을 조회한다.",
 )
@@ -657,7 +659,7 @@ async def get_order(
     self,
     request,
     order_id: int,
-) -> OrderOut | Status[OrderErrorSchema]:
+) -> OrderOut | Status[OrderProductNotFoundError]:
     query_value = GetOrderQuery(order_id=order_id)
     use_case = build_get_order()
 
@@ -707,7 +709,7 @@ from application.order.driving_layer.api.order.schema.schema_out import OrderOut
 class OrderController:
     @route.post(
         "/reserve",
-        response={201: OrderOut, 409: OrderErrorSchema},
+        response={201: OrderOut, 409: OrderInsufficientStockError},
         summary="주문 예약",
         description="재고가 부족하면 409, 가능하면 예약 주문을 만든다.",
     )
@@ -762,7 +764,7 @@ from django.http import HttpResponse
 
 @route.post(
     "/retry",
-    response={200: OrderOut, 503: OrderErrorSchema},
+    response={200: OrderOut, 503: OrderTemporarilyUnavailableError},
     summary="주문 재시도",
     description="일시 경합이면 재시도 시점을 안내한다.",
 )
@@ -771,7 +773,7 @@ def retry_order(
     request,
     response: HttpResponse,
     payload: RetryOrderIn,
-) -> OrderOut | Status[OrderErrorSchema]:
+) -> OrderOut | Status[OrderTemporarilyUnavailableError]:
     command = RetryOrderCommand(order_id=payload.order_id)
     use_case = build_retry_order()
 
@@ -828,11 +830,13 @@ controller나 전역 recognizer가 문자열·SQLSTATE로 분류하지 않는다
 그대로 통과시키지 않는다.
 
 **응답 선언과 OpenAPI.** controller가 직접 반환할 수 있는 각 BC 오류 status는 operation의
-`response={...}`에서 같은 BC base `<Bc>ErrorSchema`에 매핑한다. concrete class는 runtime
-instance를 고정하지만 OpenAPI status mapping에는 BC base를 쓴다. 직접 반환하지 않는
-framework status는 BC base로 선언하지 않는다. 오류 응답 선언을 `openapi_extra`로 보충하거나
+`response={...}`에서 그 status에서 실제로 반환하는 오류 타입 집합과 정확히 같게 매핑한다 —
+concrete 하나면 그 concrete, 둘 이상이면 `Union[...]`(`A | B`), 명시값으로 채운 base 인스턴스면
+base. concrete class가 runtime instance를 고정하므로 OpenAPI도 그 concrete의 고정 code·message를
+endpoint별로 드러낸다 — base로 뭉뚱그려 선언하지 않는다(2026-08-25 개정). 직접 반환하지 않는
+framework status는 BC 오류로 선언하지 않는다. 오류 응답 선언을 `openapi_extra`로 보충하거나
 `get_openapi_schema` override, monkeypatch, postprocessor로 사후 변형하지 않는다. 공개 OpenAPI
-후보가 중앙 입장 심사에서 `add/update`이면 mounted API의 생성 문서에서 status별 BC base schema를 확인한다.
+후보가 중앙 입장 심사에서 `add/update`이면 mounted API의 생성 문서에서 status별로 선언한 오류 schema를 확인한다.
 
 선언된 JSON 성공은 Schema 또는 `Status`를 통해 Ninja의 validation/serialization을 탄다.
 `FileResponse`, `StreamingHttpResponse`, redirect, schema-less 204는 성공 응답의

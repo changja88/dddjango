@@ -547,3 +547,4 @@
 | 634 | ast | scripts/check-context-isolation.py | — | 신설 |  |
 | 635 | ast | scripts/check-usecase-dto-placement.py | — | 재작성 |  |
 | 636 | ast | scripts/check-error-centralization.py | — | 신설 |  |
+| 637 | ast | scripts/check-test-config.py | — | 신설 | 08-25 tarot 잔존 판정 5 — migration 전용 테스트 절대 금지(기존 포함) |

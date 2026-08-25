@@ -466,7 +466,7 @@ def test_empty_cart_total():
 - 현재 구현만 계약과 다르면 테스트를 유지하고 구현을 고친다.
 - 전체 suite에서 실패했다는 사실만으로 관련 테스트나 편집 대상으로 넓히지 않는다.
 
-Django migration 파일·번호·dependency graph·operation·적용 순서·과거 model state·forward/reverse·DDL 자체가 오라클인 migration 전용 테스트는 새로 만들거나 새 case·assertion·시나리오로 확장하지 않는다. 기존 관련 migration 테스트는 현재 기대가 같으면 그대로 유지하고, 승인된 기대가 바뀌면 기존 assertion만 제자리 갱신·축소할 수 있으며, 모든 기대가 종료됐으면 삭제한다. 새 migration 시나리오·coverage가 필요해야만 검증 가능한 부분은 테스트를 발명하지 않고 검증 공백으로 보고한다. 기술적 식별 예시는 `implementation-test` §1.4를 따른다.
+Django migration 파일·번호·dependency graph·operation·적용 순서·과거 model state·forward/reverse·DDL 자체가 오라클인 migration 전용 테스트는 만들지 않는다 — 절대 규칙이다. `migrations/`는 `makemigrations`가 생성한 산출물이라 테스트 대상이 아니며, 기존에 있던 migration 전용 테스트도 기대와 무관하게 삭제한다(`check-test-config` #637이 `django.db.migrations`·`MigrationExecutor`류·migration 모듈 import 신호로 결정적으로 잡는다 — 2026-08-25). 새 migration 시나리오·coverage가 필요해야만 검증 가능한 부분은 테스트를 발명하지 않고 검증 공백으로 보고한다. 기술적 식별 예시는 `implementation-test` §1.4를 따른다.
 
 현재 model·ORM·service·API·DB constraint를 검증하는 DB-backed 테스트는 migration history가 오라클이 아니므로 허용한다. migration 구현·rollout/backfill·이력 보존과 migration 검증 공백을 현재 model 테스트가 대신 증명한다고 주장하지 않는다.
 

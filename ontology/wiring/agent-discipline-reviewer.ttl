@@ -131,7 +131,8 @@ djr:R-0894 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-revie
 
 djr:R-0895 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
 
-djr:R-0896 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+djr:R-0896 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-test-config.py> .
 
 djr:R-0897 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
 
@@ -197,7 +198,8 @@ djr:R-0923 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-revie
 
 djr:R-0924 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
 
-djr:R-0925 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+djr:R-0925 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-test-config.py> .
 
 djr:R-0926 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
 

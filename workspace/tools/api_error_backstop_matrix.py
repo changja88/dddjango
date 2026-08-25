@@ -527,7 +527,7 @@ from application.lesson.driving_layer.api.bc_error_schema import LessonErrorSche
 router = Router()
 
 
-@router.get('/{lesson_id}', response={200: dict, 404: LessonErrorSchema})
+@router.get('/{lesson_id}', response={200: dict, 404: LessonNotFoundError})
 def get_lesson_controller(request, lesson_id: int):
     try:
         lesson = get_lesson(lesson_id)
@@ -578,7 +578,7 @@ from application.lesson.driving_layer.api.bc_error_schema import LessonErrorSche
 router = Router()
 
 
-@router.get("/{lesson_id}", response={200: dict, 404: LessonErrorSchema})
+@router.get("/{lesson_id}", response={200: dict, 404: LessonNotFoundError})
 def get_lesson_controller(request, lesson_id: int):
     try:
         lesson = get_lesson(lesson_id)
@@ -595,7 +595,7 @@ from application.lesson.driving_layer.api.bc_error_schema import LessonErrorSche
 router = Router()
 
 
-@router.get("/{lesson_id}", response={200: dict, 404: LessonErrorSchema})
+@router.get("/{lesson_id}", response={200: dict, 404: LessonNotFoundError})
 def get_lesson_controller(request, lesson_id: int):
     try:
         lesson = get_lesson(lesson_id)
@@ -5055,6 +5055,44 @@ def composition_cases() -> list[Case]:
         + "\nfrom .registration_probe import registration_probe\n"
         + "registration_probe.register_controllers(LessonController)\n"
     )
+    # 조건부 블록 import provenance(2026-08-25 tarot 잔존 A-1) — feature flag 로 감싼
+    # URLconf 는 «분석 불능(UsageError)» 이 아니라 #440 «module-level direct event» 판정이다.
+    flag_guarded_urlconf = """from django.conf import settings
+
+urlpatterns = []
+
+if settings.PUBLIC_API_ENABLED:
+    from application.catalog.driving_layer.api.api_router import register_catalog_api
+    from application.lesson.driving_layer.api.api_router import register_lesson_api
+    from config.api import api
+
+    register_catalog_api(api)
+    register_lesson_api(api)
+"""
+    try_else_urlconf = REGISTRAR_FILES["config/urls.py"].replace(
+        "from application.lesson.driving_layer.api.api_router import register_lesson_api\n",
+        "",
+    ).replace(
+        "register_lesson_api(api)\n",
+        "try:\n    from application.lesson.driving_layer.api.api_router import register_lesson_api\n"
+        "except ImportError:\n    pass\nelse:\n    register_lesson_api(api)\n",
+    )
+    # #107 — 인자 annotation 은 Ninja API 타입 축자(2026-08-25 tarot 잔존 B-3: 형상을 본뜬 Protocol 금지).
+    registrar_ninja_annotation = (
+        "from ninja_extra import NinjaExtraAPI\n\nfrom .controller import LessonController\n\n\n"
+        "def register_lesson_api(api: NinjaExtraAPI) -> None:\n    api.register_controllers(LessonController)\n"
+    )
+    registrar_string_annotation = registrar_ninja_annotation.replace("api: NinjaExtraAPI", 'api: "NinjaExtraAPI"')
+    registrar_protocol_annotation = (
+        "from typing import Any, Protocol\n\nfrom .controller import LessonController\n\n\n"
+        "class ControllerRegistrar(Protocol):\n    def register_controllers(self, *controllers: type[Any] | str) -> None: ...\n\n\n"
+        "def register_lesson_api(api: ControllerRegistrar) -> None:\n    api.register_controllers(LessonController)\n"
+    )
+    try_import_unconditional_call_urlconf = REGISTRAR_FILES["config/urls.py"].replace(
+        "from application.lesson.driving_layer.api.api_router import register_lesson_api\n",
+        "try:\n    from application.lesson.driving_layer.api.api_router import register_lesson_api\n"
+        "except ImportError:\n    register_lesson_api = None\n",
+    )
     preserve_selector_args = (
         TARGET_DIR,
         "--error-profile",
@@ -5106,6 +5144,12 @@ def composition_cases() -> list[Case]:
         Case("composition-registrar-module-top-level-register-controllers", with_files(("application/lesson/driving_layer/api/api_router.py", top_level_registration), ("application/lesson/driving_layer/registration_probe.py", "class RegistrationProbe:\n    def register_controllers(self, controller): pass\n\n\nregistration_probe = RegistrationProbe()\n"), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 2, "BLOCKER"),
         Case("composition-urlconf-omits-registrar-call", with_files(("config/urls.py", REGISTRAR_FILES["config/urls.py"].replace("register_catalog_api(api)\n", "")), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 2, "BLOCKER"),
         Case("composition-urlconf-duplicates-registrar-call", with_files(("config/urls.py", REGISTRAR_FILES["config/urls.py"] + "register_lesson_api(api)\n"), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 2, "BLOCKER"),
+        Case("composition-urlconf-flag-guarded-registrar-call", with_files(("config/urls.py", flag_guarded_urlconf), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 2, "registrar call must be a module-level direct event", note="조건부 블록 import provenance(A-1) — UsageError 아님"),
+        Case("composition-urlconf-try-else-registrar-call", with_files(("config/urls.py", try_else_urlconf), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 2, "registrar call must be a module-level direct event", note="try 본문 import 는 else 절에 보인다(A-1)"),
+        Case("composition-clean-registrar-ninja-api-annotation", with_files(("application/lesson/driving_layer/api/api_router.py", registrar_ninja_annotation), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 0, ""),
+        Case("composition-clean-registrar-string-annotation", with_files(("application/lesson/driving_layer/api/api_router.py", registrar_string_annotation), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 0, ""),
+        Case("composition-registrar-protocol-annotation", with_files(("application/lesson/driving_layer/api/api_router.py", registrar_protocol_annotation), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 2, "registrar parameter annotation must be the Ninja API type", note="#107 인자 타입 축자 — Protocol 대체 금지(B-3)"),
+        Case("composition-analysis-try-import-unconditional-call", with_files(("config/urls.py", try_import_unconditional_call_urlconf), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 1, "shadow/rebinding 분석 불능", note="조건부 import 의 블록 밖 호출은 fail-closed(A-1)"),
         Case("composition-registration-occurs-outside-registrar", with_files(("config/urls.py", REGISTRAR_FILES["config/urls.py"] + "api.register_controllers(object)\n"), base=REGISTRAR_FILES), "check-composition-root.py", composition_args(), 2, "BLOCKER"),
         Case("composition-code-v1-di-still-blocked", {**REGISTRAR_FILES, "application/lesson/composition/provider.py": "def provide(): return object()\n"}, "check-composition-root.py", composition_args(), 0, "", note="#81/#488 이관 — CR 무발화 실증(U11)"),
         Case("composition-code-v2-di-still-blocked", {**REGISTRAR_FILES, "application/lesson/driven_layer/composition_root.py": "def build(): return object()\n"}, "check-composition-root.py", composition_args(), 2, "BLOCKER"),
@@ -5138,7 +5182,7 @@ from application.lesson.driving_layer.api.bc_error_schema import LessonConflictE
 router = Router()
 
 
-@router.get("/{lesson_id}", response={200: dict, 404: LessonErrorSchema, 409: LessonErrorSchema})
+@router.get("/{lesson_id}", response={200: dict, 404: LessonNotFoundError, 409: LessonConflictError})
 def get_lesson(request, lesson_id: int):
     if lesson_id == 0:
         error = LessonNotFoundError()
@@ -5209,12 +5253,12 @@ def legacy(request):
     }
     clean_with_preserve = {**OPENAPI_FILES, **preserve_files}
     metadata_controller = OPENAPI_CONTROLLER.replace(
-        'response={200: dict, 404: LessonErrorSchema, 409: LessonErrorSchema})',
-        'response={200: dict, 404: LessonErrorSchema, 409: LessonErrorSchema}, openapi_extra={"security": [{"Bearer": []}], "examples": {"ok": {"value": {"id": 1}}}})',
+        'response={200: dict, 404: LessonNotFoundError, 409: LessonConflictError})',
+        'response={200: dict, 404: LessonNotFoundError, 409: LessonConflictError}, openapi_extra={"security": [{"Bearer": []}], "examples": {"ok": {"value": {"id": 1}}}})',
     )
     missing_409 = OPENAPI_CONTROLLER.replace(
-        "response={200: dict, 404: LessonErrorSchema, 409: LessonErrorSchema}",
-        "response={200: dict, 404: LessonErrorSchema}",
+        "response={200: dict, 404: LessonNotFoundError, 409: LessonConflictError}",
+        "response={200: dict, 404: LessonNotFoundError}",
     )
     framework_base = OPENAPI_CONTROLLER.replace(
         "    if lesson_id == 0:\n        error = LessonNotFoundError()\n        return Status(error.status, error)\n",
@@ -5223,8 +5267,8 @@ def legacy(request):
 
     def framework_advertisement(status: int) -> str:
         return framework_base.replace(
-            "response={200: dict, 404: LessonErrorSchema, 409: LessonErrorSchema}",
-            f"response={{200: dict, 409: LessonErrorSchema, {status}: LessonErrorSchema}}",
+            "response={200: dict, 404: LessonNotFoundError, 409: LessonConflictError}",
+            f"response={{200: dict, 409: LessonConflictError, {status}: LessonErrorSchema}}",
         )
 
     preserve_extra = """from ninja import Router
@@ -5251,8 +5295,8 @@ def legacy(request):
         "legacy",
     )
     framework_extra = OPENAPI_CONTROLLER.replace(
-        'response={200: dict, 404: LessonErrorSchema, 409: LessonErrorSchema})',
-        'response={200: dict, 404: LessonErrorSchema, 409: LessonErrorSchema}, openapi_extra={"responses": {"401": {"description": "unauthorized"}}})',
+        'response={200: dict, 404: LessonNotFoundError, 409: LessonConflictError})',
+        'response={200: dict, 404: LessonNotFoundError, 409: LessonConflictError}, openapi_extra={"responses": {"401": {"description": "unauthorized"}}})',
     )
     override_api = """from ninja_extra import NinjaExtraAPI
 
@@ -5510,7 +5554,7 @@ from application.lesson.driving_layer.api.bc_error_schema import LessonConflictE
 
 router = Router()
 
-@router.get('/{lesson_id}', response={200: dict, 404: LessonErrorSchema, 409: LessonErrorSchema})
+@router.get('/{lesson_id}', response={200: dict, 404: LessonNotFoundError, 409: LessonConflictError})
 def get_lesson(request, lesson_id: int):
     error = LessonNotFoundError()
     if lesson_id:
@@ -5657,7 +5701,7 @@ from application.lesson.driving_layer.api.bc_error_schema import LessonErrorSche
 router = Router()
 
 
-@router.get('/{lesson_id}', response={200: dict, 500: LessonErrorSchema})
+@router.get('/{lesson_id}', response={200: dict, 500: LessonNotFoundError})
 def get_lesson(request, lesson_id: int):
     error = LessonNotFoundError()
     return Status(error.http_status, error)
@@ -5885,7 +5929,7 @@ def wire_name(value: str) -> str:
         1,
     )
     nested_status_correct_controller = OPENAPI_CONTROLLER.replace(
-        "404: LessonErrorSchema", "500: LessonErrorSchema"
+        "404: LessonNotFoundError", "500: LessonNotFoundError"
     )
     sentinel_status_lesson = LESSON_ERROR_OUT.replace(
         "from enum import StrEnum",
@@ -5933,6 +5977,24 @@ class FrameworkErrorSchema(Schema):
         "from ninja import Schema",
         "from functools import cached_property\nfrom ninja import Schema",
     ).replace("    @property", "    @cached_property")
+    union_declaration_controller = """from typing import Union
+
+from ninja import Router, Status
+from application.lesson.driving_layer.api.bc_error_schema import LessonConflictError, LessonNotFoundError
+
+router = Router()
+
+
+@router.get("/{lesson_id}", response={200: dict, 404: Union[LessonNotFoundError, LessonConflictError]})
+def get_lesson(request, lesson_id: int):
+    if lesson_id == 0:
+        error = LessonNotFoundError()
+        return Status(404, error)
+    if lesson_id < 0:
+        error = LessonConflictError()
+        return Status(404, error)
+    return {"id": lesson_id}
+"""
     return [
         Case("openapi-nested-annotated-outer-status-default-wins", with_files(("application/lesson/driving_layer/api/bc_error_schema.py", nested_status_lesson), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
         Case("openapi-clean-nested-annotated-outer-status-declaration", with_files(("application/lesson/driving_layer/api/bc_error_schema.py", nested_status_lesson), ("application/lesson/driving_layer/controller.py", nested_status_correct_controller), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
@@ -5950,7 +6012,7 @@ class FrameworkErrorSchema(Schema):
         Case("openapi-clean-direct-base-aliased-status-override", with_files(("framework/ninja/framework_error_schema.py", ALIASED_STATUS_COMMON_ERROR_OUT), ("application/lesson/driving_layer/api/bc_error_schema.py", ALIASED_STATUS_LESSON_ERROR_OUT), ("application/lesson/driving_layer/controller.py", direct_alias_status_controller), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-clean-dict-alias-generator-direct-status", with_files(("framework/ninja/framework_error_schema.py", generated_alias_common), ("application/lesson/driving_layer/api/bc_error_schema.py", generated_alias_lesson), ("application/lesson/driving_layer/controller.py", generated_alias_controller), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-clean-legacy-config-alias-generator-direct-status", with_files(("framework/ninja/framework_error_schema.py", generated_alias_legacy_common), ("application/lesson/driving_layer/api/bc_error_schema.py", generated_alias_lesson), ("application/lesson/driving_layer/controller.py", generated_alias_controller), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
-        Case("openapi-analysis-digit-string-response-status", with_files(("application/lesson/driving_layer/controller.py", OPENAPI_CONTROLLER.replace("404: LessonErrorSchema", "'404': LessonErrorSchema")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 1, "사용 오류"),
+        Case("openapi-analysis-digit-string-response-status", with_files(("application/lesson/driving_layer/controller.py", OPENAPI_CONTROLLER.replace("404: LessonNotFoundError", "'404': LessonErrorSchema")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 1, "사용 오류"),
         Case("openapi-clean-statically-provable-custom-alias-generator", with_files(("framework/ninja/aliasing.py", 'def wire_name(value: str) -> str:\n    return f"wire_{value}"\n'), ("framework/ninja/framework_error_schema.py", custom_alias_openapi_common), ("application/lesson/driving_layer/api/bc_error_schema.py", generated_alias_lesson), ("application/lesson/driving_layer/controller.py", custom_alias_openapi_controller), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-analysis-custom-alias-generator-repr-conversion", with_files(("framework/ninja/aliasing.py", repr_alias_support), ("framework/ninja/framework_error_schema.py", custom_alias_openapi_common), ("application/lesson/driving_layer/api/bc_error_schema.py", generated_alias_lesson), ("application/lesson/driving_layer/controller.py", custom_alias_openapi_controller), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 1, "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED"),
         Case("openapi-analysis-custom-alias-generator-final-shadow", with_files(("framework/ninja/aliasing.py", shadowed_alias_support), ("framework/ninja/framework_error_schema.py", custom_alias_openapi_common), ("application/lesson/driving_layer/api/bc_error_schema.py", generated_alias_lesson), ("application/lesson/driving_layer/controller.py", custom_alias_openapi_controller), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 1, "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED"),
@@ -6052,15 +6114,21 @@ class FrameworkErrorSchema(Schema):
             0,
             "",
         ),
-        Case("openapi-clean-direct-404-409-same-bc-base", OPENAPI_FILES, "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-clean-direct-404-409-exact-concretes", OPENAPI_FILES, "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-clean-framework-statuses-not-advertised", OPENAPI_FILES, "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-clean-separated-preserve-response-behavior", clean_with_preserve, "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-clean-security-examples-metadata", with_files(("application/lesson/driving_layer/controller.py", metadata_controller), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-clean-empty-error-bc", empty_error_bc_files, "check-openapi-error-declaration.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py", "--controller-module", "application/lesson/driving_layer/controller.py", "--scope-bc", "lesson"), 0, ""),
         Case("openapi-returned-409-missing-from-response", with_files(("application/lesson/driving_layer/controller.py", missing_409), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
-        Case("openapi-returned-error-mapped-to-other-bc-base", with_files(("application/catalog/driving_layer/api/bc_error_schema.py", CATALOG_DUPLICATE_ERROR_OUT), ("application/lesson/driving_layer/controller.py", OPENAPI_CONTROLLER.replace("409: LessonErrorSchema", "409: CatalogErrorSchema").replace("from application.lesson.driving_layer.api.bc_error_schema import", "from application.catalog.driving_layer.api.bc_error_schema import CatalogErrorSchema\nfrom application.lesson.driving_layer.api.bc_error_schema import")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args("--scope-bc", "catalog", "--error-bc", "catalog"), 2, "BLOCKER"),
-        Case("openapi-returned-error-mapped-to-common-base", with_files(("application/lesson/driving_layer/controller.py", OPENAPI_CONTROLLER.replace("409: LessonErrorSchema", "409: FrameworkErrorSchema").replace("from ninja import Router, Status", "from ninja import Router, Status\nfrom framework.ninja.framework_error_schema import FrameworkErrorSchema")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
-        Case("openapi-returned-error-mapped-to-concrete", with_files(("application/lesson/driving_layer/controller.py", OPENAPI_CONTROLLER.replace("409: LessonErrorSchema", "409: LessonConflictError")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
+        Case("openapi-returned-error-mapped-to-other-bc-base", with_files(("application/catalog/driving_layer/api/bc_error_schema.py", CATALOG_DUPLICATE_ERROR_OUT), ("application/lesson/driving_layer/controller.py", OPENAPI_CONTROLLER.replace("409: LessonConflictError", "409: CatalogErrorSchema").replace("from application.lesson.driving_layer.api.bc_error_schema import", "from application.catalog.driving_layer.api.bc_error_schema import CatalogErrorSchema\nfrom application.lesson.driving_layer.api.bc_error_schema import")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args("--scope-bc", "catalog", "--error-bc", "catalog"), 2, "BLOCKER"),
+        Case("openapi-returned-error-mapped-to-common-base", with_files(("application/lesson/driving_layer/controller.py", OPENAPI_CONTROLLER.replace("409: LessonConflictError", "409: FrameworkErrorSchema").replace("from ninja import Router, Status", "from ninja import Router, Status\nfrom framework.ninja.framework_error_schema import FrameworkErrorSchema")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
+        # #63 개정(2026-08-25) — 선언은 직접 반환하는 오류 타입 집합 «그대로»: base 로 뭉뚱그리거나 다른 concrete 를 적으면 red.
+        Case("openapi-returned-error-mapped-to-bc-base", with_files(("application/lesson/driving_layer/controller.py", OPENAPI_CONTROLLER.replace("409: LessonConflictError", "409: LessonErrorSchema")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "wrong-response-schema"),
+        Case("openapi-returned-error-mapped-to-other-concrete", with_files(("application/lesson/driving_layer/controller.py", OPENAPI_CONTROLLER.replace("409: LessonConflictError", "409: LessonNotFoundError")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "wrong-response-schema"),
+        Case("openapi-clean-two-concretes-union-declaration", with_files(("application/lesson/driving_layer/controller.py", union_declaration_controller), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-clean-two-concretes-pipe-declaration", with_files(("application/lesson/driving_layer/controller.py", union_declaration_controller.replace("Union[LessonNotFoundError, LessonConflictError]", "LessonNotFoundError | LessonConflictError")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-two-concretes-declared-one", with_files(("application/lesson/driving_layer/controller.py", union_declaration_controller.replace("Union[LessonNotFoundError, LessonConflictError]", "LessonNotFoundError")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "wrong-response-schema"),
+        Case("openapi-two-concretes-declared-base", with_files(("application/lesson/driving_layer/controller.py", union_declaration_controller.replace("Union[LessonNotFoundError, LessonConflictError]", "LessonErrorSchema").replace("import LessonConflictError, LessonNotFoundError", "import LessonConflictError, LessonErrorSchema, LessonNotFoundError")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "wrong-response-schema"),
         Case("openapi-framework-401-bc-error-advertised", with_files(("application/lesson/driving_layer/controller.py", framework_advertisement(401)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
         Case("openapi-framework-403-bc-error-advertised", with_files(("application/lesson/driving_layer/controller.py", framework_advertisement(403)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
         Case("openapi-framework-route-404-bc-error-advertised", with_files(("application/lesson/driving_layer/controller.py", framework_advertisement(404)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
@@ -6073,7 +6141,7 @@ class FrameworkErrorSchema(Schema):
         Case("openapi-code-get-openapi-schema-postprocessor", with_files(("config/api.py", postprocessor_api), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
         Case("openapi-preserve-untouched-openapi-extra-blocked", {"legacy/api.py": "api = object()\n", "application/legacy/driving_layer/controller.py": preserve_extra}, "check-openapi-error-declaration.py", preserve_args, 2, "#63", baseline_files={"legacy/api.py": "api = object()\n", "application/legacy/driving_layer/controller.py": preserve_extra}),
         Case("openapi-preserve-touched-openapi-extra-blocked", {"legacy/api.py": "api = object()\n", "application/legacy/driving_layer/controller.py": preserve_extra}, "check-openapi-error-declaration.py", preserve_args, 2, "BLOCKER", baseline_files={"legacy/api.py": "api = object()\n", "application/legacy/driving_layer/controller.py": preserve_files["legacy/controller.py"]}),
-        Case("openapi-analysis-unresolved-required-response-mapping", with_files(("application/lesson/driving_layer/controller.py", OPENAPI_CONTROLLER.replace("response={200: dict, 404: LessonErrorSchema, 409: LessonErrorSchema}", "response=build_responses()")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 1, "사용 오류"),
+        Case("openapi-analysis-unresolved-required-response-mapping", with_files(("application/lesson/driving_layer/controller.py", OPENAPI_CONTROLLER.replace("response={200: dict, 404: LessonNotFoundError, 409: LessonConflictError}", "response=build_responses()")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 1, "사용 오류"),
         Case("openapi-analysis-api-controller-overlap", OPENAPI_FILES, "check-openapi-error-declaration.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py", "--controller-module", "config/api.py", "--scope-bc", "lesson", "--error-bc", "lesson"), 1, "사용 오류", allowed_arg_issues=frozenset({"overlap:--api-module/--controller-module"})),
         Case("openapi-analysis-selected-controller-syntax", with_files(("application/lesson/driving_layer/controller.py", "def broken(:\n"), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 1, "사용 오류"),
         Case("openapi-analysis-selected-controller-read", OPENAPI_FILES, "check-openapi-error-declaration.py", openapi_args("--controller-module", "application/lesson/driving_layer/missing.py"), 1, "사용 오류"),
@@ -6085,18 +6153,18 @@ class FrameworkErrorSchema(Schema):
         Case("openapi-fp-unignored-generated-path", {**OPENAPI_FILES, ".gitignore": "application/lesson/driving_layer/ignored_openapi.py\n", "application/lesson/driving_layer/generated/openapi.py": excluded_violation}, "check-openapi-error-declaration.py", (TARGET_DIR,), 0, "", baseline_files={**OPENAPI_FILES, ".gitignore": "application/lesson/driving_layer/ignored_openapi.py\n"}),
         Case("openapi-git-ignored-path-still-scanned", {**OPENAPI_FILES, ".gitignore": "application/lesson/driving_layer/ignored_openapi.py\n", "application/lesson/driving_layer/ignored_openapi.py": excluded_violation}, "check-openapi-error-declaration.py", (TARGET_DIR,), 2, "#63", baseline_files={**OPENAPI_FILES, ".gitignore": "application/lesson/driving_layer/ignored_openapi.py\n"}),
         Case("openapi-flow-match-return-missing-response", with_files(("application/lesson/driving_layer/controller.py", flow_controller(match_body)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2 if sys.version_info >= (3, 10) else 1, "BLOCKER" if sys.version_info >= (3, 10) else "사용 오류"),
-        Case("openapi-flow-match-return-correct-response", with_files(("application/lesson/driving_layer/controller.py", flow_controller(match_body, "{200: dict, 404: LessonErrorSchema}")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0 if sys.version_info >= (3, 10) else 1, "" if sys.version_info >= (3, 10) else "사용 오류"),
+        Case("openapi-flow-match-return-correct-response", with_files(("application/lesson/driving_layer/controller.py", flow_controller(match_body, "{200: dict, 404: LessonNotFoundError}")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0 if sys.version_info >= (3, 10) else 1, "" if sys.version_info >= (3, 10) else "사용 오류"),
         Case("openapi-flow-module-match-operation", with_files(("application/lesson/driving_layer/controller.py", module_match_controller), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2 if sys.version_info >= (3, 10) else 1, "BLOCKER" if sys.version_info >= (3, 10) else "사용 오류"),
         Case("openapi-flow-trystar-return-missing-response", with_files(("application/lesson/driving_layer/controller.py", flow_controller(trystar_body)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2 if sys.version_info >= (3, 11) else 1, "BLOCKER" if sys.version_info >= (3, 11) else "사용 오류"),
-        Case("openapi-flow-trystar-return-correct-response", with_files(("application/lesson/driving_layer/controller.py", flow_controller(trystar_body, "{200: dict, 404: LessonErrorSchema}")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0 if sys.version_info >= (3, 11) else 1, "" if sys.version_info >= (3, 11) else "사용 오류"),
+        Case("openapi-flow-trystar-return-correct-response", with_files(("application/lesson/driving_layer/controller.py", flow_controller(trystar_body, "{200: dict, 404: LessonNotFoundError}")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0 if sys.version_info >= (3, 11) else 1, "" if sys.version_info >= (3, 11) else "사용 오류"),
         Case("openapi-flow-if-join-missing-response", with_files(("application/lesson/driving_layer/controller.py", flow_controller(if_join_body)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
-        Case("openapi-flow-if-join-correct-response", with_files(("application/lesson/driving_layer/controller.py", flow_controller(if_join_body, "{200: dict, 404: LessonErrorSchema}")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-flow-if-join-correct-response", with_files(("application/lesson/driving_layer/controller.py", flow_controller(if_join_body, "{200: dict, 404: LessonNotFoundError}")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-flow-with-join-missing-response", with_files(("application/lesson/driving_layer/controller.py", flow_controller(with_join_body)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
-        Case("openapi-flow-with-join-correct-response", with_files(("application/lesson/driving_layer/controller.py", flow_controller(with_join_body, "{200: dict, 404: LessonErrorSchema}")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-flow-with-join-correct-response", with_files(("application/lesson/driving_layer/controller.py", flow_controller(with_join_body, "{200: dict, 404: LessonNotFoundError}")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-flow-try-join-missing-response", with_files(("application/lesson/driving_layer/controller.py", flow_controller(try_join_body)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
-        Case("openapi-flow-try-join-correct-response", with_files(("application/lesson/driving_layer/controller.py", flow_controller(try_join_body, "{200: dict, 404: LessonErrorSchema}")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-flow-try-join-correct-response", with_files(("application/lesson/driving_layer/controller.py", flow_controller(try_join_body, "{200: dict, 404: LessonNotFoundError}")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-flow-error-instance-alias-missing-response", with_files(("application/lesson/driving_layer/controller.py", flow_controller(alias_body)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
-        Case("openapi-flow-error-instance-alias-correct-response", with_files(("application/lesson/driving_layer/controller.py", flow_controller(alias_body, "{200: dict, 404: LessonErrorSchema}")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-flow-error-instance-alias-correct-response", with_files(("application/lesson/driving_layer/controller.py", flow_controller(alias_body, "{200: dict, 404: LessonNotFoundError}")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-analysis-error-instance-ambiguous-join", with_files(("application/lesson/driving_layer/controller.py", flow_controller(ambiguous_join_body)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 1, "사용 오류"),
         Case("openapi-framework-common-error-advertised", with_files(("application/lesson/driving_layer/controller.py", no_direct_common), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
         Case("openapi-framework-common-error-advertised-empty-error-bc", with_files(("application/lesson/driving_layer/controller.py", no_direct_common), ("application/lesson/driving_layer/api/bc_error_schema.py", "<REMOVE>"), base=OPENAPI_FILES), "check-openapi-error-declaration.py", empty_error_bc_args, 2, "BLOCKER"),

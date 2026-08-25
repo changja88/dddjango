@@ -250,7 +250,7 @@ EXPECTED: "dict[str, tuple[int, int, int, int, bool]]" = {
     "check-common-container.py": (2, 0, 0, 4, True),
     "check-idempotency-scope-creep.py": (2, 0, 0, 3, True),
     "check-public-surface-annotation.py": (2, 11, 11, 4, False),  # 2026-08-25 판정 ⑩ — contract 팩토리 raise 형상(#456 +1)
-    "check-test-config.py": (2, 13, 13, 2, False),
+    "check-test-config.py": (2, 14, 14, 2, False),
     "check-transient-overmapping.py": (2, 0, 0, 3, True),
     "check-synthetic-infra-exc.py": (2, 1, 1, 2, False),
     "check-api-error-controller-contract.py": (2, 9, 9, 3, False),

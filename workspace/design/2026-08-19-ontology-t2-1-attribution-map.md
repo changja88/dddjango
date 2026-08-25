@@ -160,6 +160,7 @@ SPEC:385 + L-P 반증 실패. `symbol=finding.category` 오입력 정정은 부�
 | #568 | «이름의 자는 «폴더 안이면 접두, 폴더 밖이면 접미»다 — schema/schema_in.py ↔ api/bc_error_schema.py.» | 890 | 486 |
 | #572 | «bc_error_schema.py 에는 응답 본문 클래스 `<Bc>ErrorSchema` 와 오류 코드 `<Bc>ErrorCode` 가 함께 온다 — … 〔08-15 승인 예외〕 BC base 가 공통 스키마의 «식별자 field» 하나를 자기 `<Bc>ErrorCode` 로 정확히 좁히면서 공통의 default 를 잃어 required 가 되는 모양은 canon … 그 밖의 required/default 의미 변경은 계속 위반.» | 894 | 490 |
 | #636 | «bc_error_schema.py 의 `<Bc>ErrorCode` 는 StrEnum 이다 — Literal·맨 문자열 상수 모음으로 대신하지 않는다.» | 1165 | 549 |
+| #637 | «`test/` 아래 어디에도 migration 산출물을 오라클로 삼는 테스트를 두지 않는다 — 기존 것도 삭제한다(절대 규칙).» | 1166 | R-2183·R-2184(discipline-tdd §5.5 — 2026-08-25 리비전 2) |
 
 인접(소유 밖): #117 «BC 안에 두 번째 ErrorCode 컨테이너를 두지 않는다»(SPEC:447)는 **check-context-isolation
 소유**(OWNER:108 — red 골든 #117×1 실재, `workspace/tools/findings_count_matrix.py:59`).

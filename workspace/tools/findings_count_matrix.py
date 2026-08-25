@@ -130,7 +130,7 @@ EXPECTED: "dict[str, tuple[int, int, int, str, str, str, str]]" = {
     "check-public-surface-annotation.py": (2, 11, 2, "#358×2,#456×2,#493×7,#69×2", "34ff47e8175502a0", "0fdc0e8539efed1d", "1cc9b3f642c76fbd"),
     "check-response-schema-bypass.py": (2, 1, 0, "contract:선행 계약(08-04 API-error) 소유×1", "7425fefd479b2edc", "31ac0f0c6afe76c5", "bfd73ca26e52466d"),
     "check-synthetic-infra-exc.py": (2, 2, 0, "#129×1,sentinel:합성×1", "2e7e2fb7cccbac27", "639e715f10dcde56", "518f4f7518bb9711"),
-    "check-test-config.py": (2, 14, 0, "#384×2,#385×1,#387×1,#388×1,#389×1,#390×2,#391×1,#392×1,#445×1,#446×1,#447×1,sentinel:바인딩×1", "3df1f227a35f1c83", "3df1f227a35f1c83", "5467197844ea37d1"),
+    "check-test-config.py": (2, 15, 0, "#384×2,#385×1,#387×1,#388×1,#389×1,#390×2,#391×1,#392×1,#445×1,#446×1,#447×1,#637×1,sentinel:바인딩×1", "454905a20eaacb3c", "454905a20eaacb3c", "29b46e78574ba579"),
     "check-transaction-boundary.py": (2, 15, 2, "#195×1,#197×3,#200×1,#282×1,#283×1,#285×1,#287×2,#355×2,#4×1,#597×1,#599×3", "45e141e436af9b25", "3af944a7f0fbcf6d", "14ed4a88580f4bcc"),
     "check-transient-overmapping.py": (2, 1, 0, "contract:선행 계약(08-04 API-error) 소유×1", "e4f6a367f28dd0d1", "195099bd5e6d93e3", "849fa036f6fb55c8"),
     "check-usecase-dto-placement.py": (2, 35, 5, "#139×1,#140×1,#142×1,#144×2,#182×1,#183×1,#188×2,#189×1,#190×1,#191×1,#192×1,#193×1,#194×1,#196×1,#201×1,#202×2,#205×1,#208×1,#210×1,#211×1,#539×1,#540×1,#541×1,#567×1,#569×3,#570×2,#571×2,#635×3,#67×1,#68×2", "378ab736baa677df", "378ab736baa677df", "ed61289ac2348cc9"),

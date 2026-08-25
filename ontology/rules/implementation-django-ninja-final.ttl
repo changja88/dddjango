@@ -695,28 +695,46 @@ djr:R-0085 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0086 a djr:Obligation ;
-    skos:prefLabel "직접 반환 BC 오류 status의 response= BC base 매핑"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0086@2026-08-19> .
+    skos:prefLabel "직접 반환 BC 오류 status의 response= 반환 타입 집합 매핑(concrete·Union·명시값 base)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0086@2026-08-25> .
 
 <https://numchida.com/ns/djr#R-0086@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0086 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-0086@2026-08-25> a djr:Expression ;
+    prov:specializationOf djr:R-0086 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0086@2026-08-19> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
+
 djr:R-0087 a djr:Obligation ;
-    skos:prefLabel "OpenAPI status mapping에 BC base 사용(concrete는 runtime 고정)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0087@2026-08-19> .
+    skos:prefLabel "OpenAPI status mapping에 반환 concrete 그대로 노출(base 뭉뚱그림 금지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0087@2026-08-25> .
 
 <https://numchida.com/ns/djr#R-0087@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0087 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-0087@2026-08-25> a djr:Expression ;
+    prov:specializationOf djr:R-0087 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0087@2026-08-19> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
+
 djr:R-0088 a djr:Prohibition ;
-    skos:prefLabel "미반환 framework status의 BC base 선언 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0088@2026-08-19> .
+    skos:prefLabel "미반환 framework status의 BC 오류 선언 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0088@2026-08-25> .
 
 <https://numchida.com/ns/djr#R-0088@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0088 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0088@2026-08-25> a djr:Expression ;
+    prov:specializationOf djr:R-0088 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0088@2026-08-19> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0089 a djr:Prohibition ;
     skos:prefLabel "openapi_extra 보충·사후 변형 금지"@ko ;
@@ -727,12 +745,18 @@ djr:R-0089 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0090 a djr:Obligation ;
-    skos:prefLabel "add/update 공개 후보의 mounted 생성 문서 확인"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0090@2026-08-19> .
+    skos:prefLabel "add/update 공개 후보의 mounted 생성 문서에서 선언 오류 schema 확인"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0090@2026-08-25> .
 
 <https://numchida.com/ns/djr#R-0090@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0090 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0090@2026-08-25> a djr:Expression ;
+    prov:specializationOf djr:R-0090 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0090@2026-08-19> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0091 a djr:Obligation ;
     skos:prefLabel "선언 JSON 성공의 Ninja validation/serialization 경유"@ko ;
@@ -1047,12 +1071,18 @@ djr:R-0680 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0681 a djr:Obligation ;
-    skos:prefLabel "직접 반환 BC 오류 status의 BC base ErrorSchema 선언"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0681@2026-08-22> .
+    skos:prefLabel "직접 반환 오류 타입 그대로의 response= 선언(concrete·Union·명시값 base — base 뭉뚱그림 금지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0681@2026-08-25> .
 
 <https://numchida.com/ns/djr#R-0681@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0681 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0681@2026-08-25> a djr:Expression ;
+    prov:specializationOf djr:R-0681 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0681@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
 
 djr:R-0682 a djr:Prohibition ;
     skos:prefLabel "framework 소유 status의 BC 직접 반환·BC ErrorSchema 광고 금지"@ko ;
@@ -2254,6 +2284,14 @@ djr:R-3401 a djr:Exception ;
     prov:specializationOf djr:R-3401 ;
     djr:revision 1 .
 
+djr:R-3402 a djr:Prohibition ;
+    skos:prefLabel "registrar 인자 타입의 Protocol·별칭 대체 금지(`api: NinjaExtraAPI` 축자 — 2026-08-25)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3402@2026-08-25> .
+
+<https://numchida.com/ns/djr#R-3402@2026-08-25> a djr:Expression ;
+    prov:specializationOf djr:R-3402 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> a djr:Document ;
     skos:prefLabel "implementation-django-ninja-final"@ko .
 
@@ -2484,7 +2522,7 @@ djr:R-3401 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
     djr:kind djr:kind-code ;
     djr:order 18 ;
-    djr:text "```python\nfrom ninja import Status\nfrom ninja_extra import api_controller, route, status\n\nfrom application.order.application_layer.order.place_order.place_order_command import PlaceOrderCommand\nfrom application.order.composition_root.dependency_wiring import build_place_order\nfrom application.order.domain_layer.order.exception.insufficient_stock import InsufficientStock\nfrom application.order.domain_layer.order.exception.product_not_found import ProductNotFound\nfrom application.order.driving_layer.api.bc_error_schema import (\n    OrderErrorSchema,\n    OrderInsufficientStockError,\n    OrderProductNotFoundError,\n)\nfrom application.order.driving_layer.api.order.schema.schema_in import OrderIn\nfrom application.order.driving_layer.api.order.schema.schema_out import OrderOut\n\n\n@api_controller(\"/orders\", tags=[\"orders\"], auto_import=False)\nclass OrderController:\n    @route.post(\n        \"\",\n        response={201: OrderOut, 404: OrderErrorSchema, 409: OrderErrorSchema},\n        summary=\"주문 생성\",\n        description=\"재고가 충분하면 주문을 만들고 201, 부족하면 409로 거절한다.\",\n    )\n    def create_order(\n        self,\n        request,\n        payload: OrderIn,\n    ) -> Status[OrderOut | OrderErrorSchema]:\n        command = PlaceOrderCommand(\n            product_id=payload.product_id,\n            quantity=payload.quantity,\n        )\n        use_case = build_place_order()\n\n        try:\n            order = use_case.execute(command)\n        except ProductNotFound:\n            error = OrderProductNotFoundError()\n            return Status(status.HTTP_404_NOT_FOUND, error)\n        except InsufficientStock:\n            error = OrderInsufficientStockError()\n            return Status(status.HTTP_409_CONFLICT, error)\n\n        response = OrderOut(id=order.id, status=order.status)\n        return Status(status.HTTP_201_CREATED, response)\n```\n\n" .
+    djr:text "```python\nfrom ninja import Status\nfrom ninja_extra import api_controller, route, status\n\nfrom application.order.application_layer.order.place_order.place_order_command import PlaceOrderCommand\nfrom application.order.composition_root.dependency_wiring import build_place_order\nfrom application.order.domain_layer.order.exception.insufficient_stock import InsufficientStock\nfrom application.order.domain_layer.order.exception.product_not_found import ProductNotFound\nfrom application.order.driving_layer.api.bc_error_schema import (\n    OrderInsufficientStockError,\n    OrderProductNotFoundError,\n)\nfrom application.order.driving_layer.api.order.schema.schema_in import OrderIn\nfrom application.order.driving_layer.api.order.schema.schema_out import OrderOut\n\n\n@api_controller(\"/orders\", tags=[\"orders\"], auto_import=False)\nclass OrderController:\n    @route.post(\n        \"\",\n        response={201: OrderOut, 404: OrderProductNotFoundError, 409: OrderInsufficientStockError},\n        summary=\"주문 생성\",\n        description=\"재고가 충분하면 주문을 만들고 201, 부족하면 409로 거절한다.\",\n    )\n    def create_order(\n        self,\n        request,\n        payload: OrderIn,\n    ) -> Status[OrderOut | OrderProductNotFoundError | OrderInsufficientStockError]:\n        command = PlaceOrderCommand(\n            product_id=payload.product_id,\n            quantity=payload.quantity,\n        )\n        use_case = build_place_order()\n\n        try:\n            order = use_case.execute(command)\n        except ProductNotFound:\n            error = OrderProductNotFoundError()\n            return Status(status.HTTP_404_NOT_FOUND, error)\n        except InsufficientStock:\n            error = OrderInsufficientStockError()\n            return Status(status.HTTP_409_CONFLICT, error)\n\n        response = OrderOut(id=order.id, status=order.status)\n        return Status(status.HTTP_201_CREATED, response)\n```\n\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
@@ -2541,7 +2579,7 @@ djr:R-3401 a djr:Exception ;
     djr:order 9 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b30>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b34> ;
     djr:statesNorm djr:R-0681, djr:R-0682 ;
-    djr:text "- 직접 반환하는 BC 오류 status는 모두 `response={...}`에 그 BC의 base `ErrorSchema`로\n  선언한다. framework가 소유하는 401/403/route 404/422/429/일반 `HttpError`/미식별\n  500은 BC 오류로 직접 반환하지도, BC `ErrorSchema`로 광고하지도 않는다.\n"@ko .
+    djr:text "- 직접 반환하는 BC 오류 status는 모두 `response={...}`에 그 status에서 실제로 반환하는\n  오류 타입 그대로 선언한다 — concrete 하나면 그 concrete, 둘 이상이면 `Union[...]`(`A | B`),\n  명시값으로 채운 base 인스턴스면 base. 상위 base로 뭉뚱그리거나 반환하지 않는 타입을 적지\n  않는다(OpenAPI가 endpoint별 code를 정확히 드러낸다 — 2026-08-25). framework가 소유하는 401/403/route 404/422/429/일반 `HttpError`/미식별\n  500은 BC 오류로 직접 반환하지도, BC `ErrorSchema`로 광고하지도 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> a djr:Section ;
     djr:headingSnapshot "### 2.3 클래스 컨트롤러 (ninja-extra) — 신규 표준"@ko ;
@@ -2584,8 +2622,8 @@ djr:R-3401 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-norm ;
     djr:order 14 ;
-    djr:statesNorm djr:R-0712 ;
-    djr:text "- registrar는 자기 BC controller만 import하며, 전달받은 `api`에 등록하는 함수 밖에서는\n  아무 등록도 하지 않는다.\n"@ko .
+    djr:statesNorm djr:R-0712, djr:R-3402 ;
+    djr:text "- registrar는 자기 BC controller만 import하며, 전달받은 `api`에 등록하는 함수 밖에서는\n  아무 등록도 하지 않는다. `api` 인자의 타입은 `NinjaExtraAPI` 축자다 — 그 형상을 본뜬\n  Protocol·별칭 타입으로 대체하지 않는다(어댑터 층은 프레임워크 타입을 숨기지 않는다 — 2026-08-25).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b15> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
@@ -3305,7 +3343,7 @@ djr:R-3401 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
     djr:kind djr:kind-code ;
     djr:order 20 ;
-    djr:text "```python\n@route.get(\n    \"/{order_id}\",\n    response={200: OrderOut, 404: OrderErrorSchema},\n    summary=\"주문 조회\",\n    description=\"주문을 조회한다.\",\n)\nasync def get_order(\n    self,\n    request,\n    order_id: int,\n) -> OrderOut | Status[OrderErrorSchema]:\n    query_value = GetOrderQuery(order_id=order_id)\n    use_case = build_get_order()\n\n    try:\n        order = await use_case.execute(query_value)\n    except (OrderNotFound, ArchivedOrderNotFound):\n        error = OrderProductNotFoundError()\n        return Status(status.HTTP_404_NOT_FOUND, error)\n\n    return OrderOut.from_result(order)\n```\n\n" .
+    djr:text "```python\n@route.get(\n    \"/{order_id}\",\n    response={200: OrderOut, 404: OrderProductNotFoundError},\n    summary=\"주문 조회\",\n    description=\"주문을 조회한다.\",\n)\nasync def get_order(\n    self,\n    request,\n    order_id: int,\n) -> OrderOut | Status[OrderProductNotFoundError]:\n    query_value = GetOrderQuery(order_id=order_id)\n    use_case = build_get_order()\n\n    try:\n        order = await use_case.execute(query_value)\n    except (OrderNotFound, ArchivedOrderNotFound):\n        error = OrderProductNotFoundError()\n        return Status(status.HTTP_404_NOT_FOUND, error)\n\n    return OrderOut.from_result(order)\n```\n\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b21> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
@@ -3325,7 +3363,7 @@ djr:R-3401 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
     djr:kind djr:kind-code ;
     djr:order 23 ;
-    djr:text "```python\nfrom typing import assert_never\n\nfrom ninja import Status\nfrom ninja_extra import api_controller, route, status\n\nfrom application.order.application_layer.order.reserve_order.reserve_order_command import (\n    ReserveOrderCommand,\n)\nfrom application.order.application_layer.order.reserve_order.reserve_order_result import (\n    ReserveOrderInsufficientStockResult,\n    ReserveOrderResult,\n    ReserveOrderSucceededResult,\n)\nfrom application.order.composition_root.dependency_wiring import build_reserve_order\nfrom application.order.driving_layer.api.bc_error_schema import (\n    OrderErrorSchema,\n    OrderInsufficientStockError,\n)\nfrom application.order.driving_layer.api.order.schema.schema_in import OrderIn\nfrom application.order.driving_layer.api.order.schema.schema_out import OrderOut\n\n\n@api_controller(\"/orders\", tags=[\"orders\"], auto_import=False)\nclass OrderController:\n    @route.post(\n        \"/reserve\",\n        response={201: OrderOut, 409: OrderErrorSchema},\n        summary=\"주문 예약\",\n        description=\"재고가 부족하면 409, 가능하면 예약 주문을 만든다.\",\n    )\n    def reserve_order(\n        self,\n        request,\n        payload: OrderIn,\n    ) -> Status[OrderOut | OrderErrorSchema]:\n        command = ReserveOrderCommand(\n            order_id=payload.order_id,\n            quantity=payload.quantity,\n        )\n        use_case = build_reserve_order()\n        result: ReserveOrderResult = use_case.execute(command)\n\n        if isinstance(result, ReserveOrderInsufficientStockResult):\n            error = OrderInsufficientStockError()\n            return Status(status.HTTP_409_CONFLICT, error)\n\n        if isinstance(result, ReserveOrderSucceededResult):\n            response = OrderOut.from_result(result.order)\n            return Status(status.HTTP_201_CREATED, response)\n\n        assert_never(result)\n```\n\n" .
+    djr:text "```python\nfrom typing import assert_never\n\nfrom ninja import Status\nfrom ninja_extra import api_controller, route, status\n\nfrom application.order.application_layer.order.reserve_order.reserve_order_command import (\n    ReserveOrderCommand,\n)\nfrom application.order.application_layer.order.reserve_order.reserve_order_result import (\n    ReserveOrderInsufficientStockResult,\n    ReserveOrderResult,\n    ReserveOrderSucceededResult,\n)\nfrom application.order.composition_root.dependency_wiring import build_reserve_order\nfrom application.order.driving_layer.api.bc_error_schema import (\n    OrderErrorSchema,\n    OrderInsufficientStockError,\n)\nfrom application.order.driving_layer.api.order.schema.schema_in import OrderIn\nfrom application.order.driving_layer.api.order.schema.schema_out import OrderOut\n\n\n@api_controller(\"/orders\", tags=[\"orders\"], auto_import=False)\nclass OrderController:\n    @route.post(\n        \"/reserve\",\n        response={201: OrderOut, 409: OrderInsufficientStockError},\n        summary=\"주문 예약\",\n        description=\"재고가 부족하면 409, 가능하면 예약 주문을 만든다.\",\n    )\n    def reserve_order(\n        self,\n        request,\n        payload: OrderIn,\n    ) -> Status[OrderOut | OrderErrorSchema]:\n        command = ReserveOrderCommand(\n            order_id=payload.order_id,\n            quantity=payload.quantity,\n        )\n        use_case = build_reserve_order()\n        result: ReserveOrderResult = use_case.execute(command)\n\n        if isinstance(result, ReserveOrderInsufficientStockResult):\n            error = OrderInsufficientStockError()\n            return Status(status.HTTP_409_CONFLICT, error)\n\n        if isinstance(result, ReserveOrderSucceededResult):\n            response = OrderOut.from_result(result.order)\n            return Status(status.HTTP_201_CREATED, response)\n\n        assert_never(result)\n```\n\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b24> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
@@ -3357,7 +3395,7 @@ djr:R-3401 a djr:Exception ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
     djr:kind djr:kind-code ;
     djr:order 28 ;
-    djr:text "```python\nfrom django.http import HttpResponse\n\n\n@route.post(\n    \"/retry\",\n    response={200: OrderOut, 503: OrderErrorSchema},\n    summary=\"주문 재시도\",\n    description=\"일시 경합이면 재시도 시점을 안내한다.\",\n)\ndef retry_order(\n    self,\n    request,\n    response: HttpResponse,\n    payload: RetryOrderIn,\n) -> OrderOut | Status[OrderErrorSchema]:\n    command = RetryOrderCommand(order_id=payload.order_id)\n    use_case = build_retry_order()\n\n    try:\n        order = use_case.execute(command)\n    except OrderContention:\n        response[\"Retry-After\"] = \"1\"\n        error = OrderTemporarilyUnavailableError()\n        return Status(status.HTTP_503_SERVICE_UNAVAILABLE, error)\n\n    return OrderOut.from_result(order)\n```\n\n" .
+    djr:text "```python\nfrom django.http import HttpResponse\n\n\n@route.post(\n    \"/retry\",\n    response={200: OrderOut, 503: OrderTemporarilyUnavailableError},\n    summary=\"주문 재시도\",\n    description=\"일시 경합이면 재시도 시점을 안내한다.\",\n)\ndef retry_order(\n    self,\n    request,\n    response: HttpResponse,\n    payload: RetryOrderIn,\n) -> OrderOut | Status[OrderTemporarilyUnavailableError]:\n    command = RetryOrderCommand(order_id=payload.order_id)\n    use_case = build_retry_order()\n\n    try:\n        order = use_case.execute(command)\n    except OrderContention:\n        response[\"Retry-After\"] = \"1\"\n        error = OrderTemporarilyUnavailableError()\n        return Status(status.HTTP_503_SERVICE_UNAVAILABLE, error)\n\n    return OrderOut.from_result(order)\n```\n\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b29> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
@@ -3405,7 +3443,7 @@ djr:R-3401 a djr:Exception ;
     djr:kind djr:kind-norm ;
     djr:order 34 ;
     djr:statesNorm djr:R-0086, djr:R-0087, djr:R-0088, djr:R-0089, djr:R-0090 ;
-    djr:text "**응답 선언과 OpenAPI.** controller가 직접 반환할 수 있는 각 BC 오류 status는 operation의\n`response={...}`에서 같은 BC base `<Bc>ErrorSchema`에 매핑한다. concrete class는 runtime\ninstance를 고정하지만 OpenAPI status mapping에는 BC base를 쓴다. 직접 반환하지 않는\nframework status는 BC base로 선언하지 않는다. 오류 응답 선언을 `openapi_extra`로 보충하거나\n`get_openapi_schema` override, monkeypatch, postprocessor로 사후 변형하지 않는다. 공개 OpenAPI\n후보가 중앙 입장 심사에서 `add/update`이면 mounted API의 생성 문서에서 status별 BC base schema를 확인한다.\n\n"@ko .
+    djr:text "**응답 선언과 OpenAPI.** controller가 직접 반환할 수 있는 각 BC 오류 status는 operation의\n`response={...}`에서 그 status에서 실제로 반환하는 오류 타입 집합과 정확히 같게 매핑한다 —\nconcrete 하나면 그 concrete, 둘 이상이면 `Union[...]`(`A | B`), 명시값으로 채운 base 인스턴스면\nbase. concrete class가 runtime instance를 고정하므로 OpenAPI도 그 concrete의 고정 code·message를\nendpoint별로 드러낸다 — base로 뭉뚱그려 선언하지 않는다(2026-08-25 개정). 직접 반환하지 않는\nframework status는 BC 오류로 선언하지 않는다. 오류 응답 선언을 `openapi_extra`로 보충하거나\n`get_openapi_schema` override, monkeypatch, postprocessor로 사후 변형하지 않는다. 공개 OpenAPI\n후보가 중앙 입장 심사에서 `add/update`이면 mounted API의 생성 문서에서 status별로 선언한 오류 schema를 확인한다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b35> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;

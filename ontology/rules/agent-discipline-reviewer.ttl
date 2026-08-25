@@ -523,12 +523,18 @@ djr:R-0895 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0896 a djr:Obligation ;
-    skos:prefLabel "migration 전용 테스트의 유지·제자리 갱신·종료 시 제거 수명 주기 보존"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0896@2026-08-22> .
+    skos:prefLabel "기존 migration 전용 테스트의 제거 요구(절대 규칙)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0896@2026-08-25> .
 
 <https://numchida.com/ns/djr#R-0896@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0896 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0896@2026-08-25> a djr:Expression ;
+    prov:specializationOf djr:R-0896 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0896@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
 
 djr:R-0897 a djr:Obligation ;
     skos:prefLabel "전 test diff hunk의 승인 행·독자 failure 대조"@ko ;
@@ -755,12 +761,18 @@ djr:R-0924 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0925 a djr:Prohibition ;
-    skos:prefLabel "신규·확장 migration 전용 테스트 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0925@2026-08-22> .
+    skos:prefLabel "migration 전용 테스트 부재(기존 포함·절대 규칙)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0925@2026-08-25> .
 
 <https://numchida.com/ns/djr#R-0925@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0925 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0925@2026-08-25> a djr:Expression ;
+    prov:specializationOf djr:R-0925 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0925@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
 
 djr:R-0926 a djr:Obligation ;
     skos:prefLabel "삭제·assertion 약화의 승인 remove/weaken 종료 근거·exact target 연결"@ko ;
@@ -1435,12 +1447,18 @@ djr:R-1009 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-1010 a djr:Obligation ;
-    skos:prefLabel "직접 반환 BC 오류 status의 response= 같은 BC base 선언"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1010@2026-08-22> .
+    skos:prefLabel "직접 반환 BC 오류 status의 response= 반환 타입 그대로 선언(concrete·Union·명시값 base)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1010@2026-08-25> .
 
 <https://numchida.com/ns/djr#R-1010@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1010 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1010@2026-08-25> a djr:Expression ;
+    prov:specializationOf djr:R-1010 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1010@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
 
 djr:R-1011 a djr:Obligation ;
     skos:prefLabel "mapping tuple·runtime 반환·generated OpenAPI 3자의 완전·동일"@ko ;
@@ -1451,12 +1469,18 @@ djr:R-1011 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-1012 a djr:Prohibition ;
-    skos:prefLabel "framework-owned status(401·403·route 404·422·429·HttpError·500)의 BC 오류 직접 반환·BC base 광고 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1012@2026-08-22> .
+    skos:prefLabel "framework-owned status(401·403·route 404·422·429·HttpError·500)의 BC 오류 직접 반환·BC 오류 광고 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1012@2026-08-25> .
 
 <https://numchida.com/ns/djr#R-1012@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1012 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1012@2026-08-25> a djr:Expression ;
+    prov:specializationOf djr:R-1012 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1012@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-1013 a djr:Obligation ;
     skos:prefLabel "auth backend 반환 계약(성공=identity/principal·실패=None 또는 AuthenticationError)"@ko ;
@@ -1483,12 +1507,18 @@ djr:R-1015 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-1016 a djr:Obligation ;
-    skos:prefLabel "status→BC base 선언만으로 subset 증명 불인정(runtime mapping case 검증 생략 금지)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1016@2026-08-22> .
+    skos:prefLabel "status→schema 선언만으로 subset 증명 불인정(runtime mapping case 검증 생략 금지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1016@2026-08-25> .
 
 <https://numchida.com/ns/djr#R-1016@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1016 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1016@2026-08-25> a djr:Expression ;
+    prov:specializationOf djr:R-1016 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1016@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-1017 a djr:Obligation ;
     skos:prefLabel "오류 1~5축의 active dddjango-code-json scope 한정 적용"@ko ;
@@ -2732,7 +2762,7 @@ djr:R-1147 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
     djr:statesNorm djr:R-0894, djr:R-0895, djr:R-0896 ;
-    djr:text "- **삭제·약화·재조직**: `remove/weaken`은 명시적 계약 종료 근거와 exact target, 변경 뒤 남는 현행 보호 위치를 요구한다. 명세의 침묵·현재 구현과의 불일치·중복 추정만으로 삭제하지 않는다. 기존 migration 전용 테스트의 유지·제자리 갱신·종료 시 제거 수명 주기는 보존한다.\n"@ko .
+    djr:text "- **삭제·약화·재조직**: `remove/weaken`은 명시적 계약 종료 근거와 exact target, 변경 뒤 남는 현행 보호 위치를 요구한다. 명세의 침묵·현재 구현과의 불일치·중복 추정만으로 삭제하지 않는다. 기존 migration 전용 테스트는 절대 규칙으로 제거 대상이다 — `remove` 근거 없이도 삭제를 요구한다(`migrations/`는 생성물·`check-test-config` #637).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s005/b5> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s005> ;
@@ -2862,7 +2892,7 @@ djr:R-1147 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 19 ;
     djr:statesNorm djr:R-1010, djr:R-1011, djr:R-1012, djr:R-1013, djr:R-1014, djr:R-1015, djr:R-1016 ;
-    djr:text "- **API 오류 규율 5 — returned status·OpenAPI·framework default(blocker)**: active `dddjango-code-json` scope에서 operation이 실제 직접 반환하는 모든 BC 오류 status는 `response={...}`에서 같은 BC base로 선언되어야 하고, 승인된 endpoint→status→BC-base mapping tuple·runtime 반환·generated OpenAPI의 status/schema 출현은 완전하며 서로 같아야 한다. framework-owned 401/403/route 404/422/429/general `HttpError`/unknown 500은 BC 오류로 직접 반환하거나 BC base로 광고하지 않는다. auth backend는 성공 시 identity/principal, 실패 시 `None` 또는 framework `AuthenticationError`만 반환·raise하며 truthy `FrameworkErrorSchema`/Schema를 `request.auth`에 넣지 않는다. framework-established header dependency를 숨기거나 명세에 없는 header를 꾸며내지 않는다. status→BC base 선언만으로 허용 식별자 subset이 증명되지 않으므로 실제 runtime mapping case 검증을 생략하지 않는다.\n"@ko .
+    djr:text "- **API 오류 규율 5 — returned status·OpenAPI·framework default(blocker)**: active `dddjango-code-json` scope에서 operation이 실제 직접 반환하는 모든 BC 오류 status는 `response={...}`에서 실제 반환하는 오류 타입 그대로(concrete·`Union`·명시값 base — base 뭉뚱그림 금지) 선언되어야 하고, 승인된 endpoint→status→schema mapping tuple·runtime 반환·generated OpenAPI의 status/schema 출현은 완전하며 서로 같아야 한다. framework-owned 401/403/route 404/422/429/general `HttpError`/unknown 500은 BC 오류로 직접 반환하거나 BC 오류로 광고하지 않는다. auth backend는 성공 시 identity/principal, 실패 시 `None` 또는 framework `AuthenticationError`만 반환·raise하며 truthy `FrameworkErrorSchema`/Schema를 `request.auth`에 넣지 않는다. framework-established header dependency를 숨기거나 명세에 없는 header를 꾸며내지 않는다. status→schema 선언만으로 허용 식별자 subset이 증명되지 않으므로 실제 runtime mapping case 검증을 생략하지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;
@@ -3023,7 +3053,7 @@ djr:R-1147 a djr:Obligation ;
     djr:order 4 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/references/final.md/s025-5.5/b46> ;
     djr:statesNorm djr:R-0925, djr:R-0926, djr:R-0927, djr:R-0928, djr:R-0929 ;
-    djr:text "- **현행 계약 테스트 수명 주기**: 신규·확장 migration 전용 테스트가 없는가. 삭제·assertion 약화가 승인된 `remove/weaken` 행의 명시적 종료 근거와 exact target에 연결됐는가. 혼합 테스트의 현행 assertion이 다른 test/assertion에 살아 있는가. 현재 구현에 맞추려고 올바른 failing test를 삭제하지 않았는가. `pending`을 retain이나 완료로 위장하지 않았는가. 근거 `discipline-tdd` §5.5.\n"@ko .
+    djr:text "- **현행 계약 테스트 수명 주기**: migration 전용 테스트가 없는가 — 신규는 물론 기존 것도(절대 규칙·`check-test-config` #637). 삭제·assertion 약화가 승인된 `remove/weaken` 행의 명시적 종료 근거와 exact target에 연결됐는가. 혼합 테스트의 현행 assertion이 다른 test/assertion에 살아 있는가. 현재 구현에 맞추려고 올바른 failing test를 삭제하지 않았는가. `pending`을 retain이나 완료로 위장하지 않았는가. 근거 `discipline-tdd` §5.5.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007/b40> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;

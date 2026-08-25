@@ -4,7 +4,7 @@ from application.lesson.driving_layer.api.bc_error_schema import LessonConflictE
 router = Router()
 
 
-@router.get("/{lesson_id}", response={200: dict, 404: LessonErrorSchema, 409: LessonErrorSchema})
+@router.get("/{lesson_id}", response={200: dict, 404: LessonNotFoundError, 409: LessonConflictError})
 def get_lesson(request, lesson_id: int):
     if lesson_id == 0:
         error = LessonNotFoundError()

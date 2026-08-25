@@ -166,9 +166,11 @@ djr:R-2181 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-revie
 
 djr:R-2182 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
 
-djr:R-2183 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+djr:R-2183 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-test-config.py> .
 
-djr:R-2184 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+djr:R-2184 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-test-config.py> .
 
 djr:R-2185 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
 

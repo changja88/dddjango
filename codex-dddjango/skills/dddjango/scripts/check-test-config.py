@@ -92,6 +92,9 @@ CONFTEST_MARKERS = (
 
 DB_TEST_BASES = {"TestCase", "TransactionTestCase", "LiveServerTestCase"}
 ENTRANCE_NAMES = {"Client", "TestClient", "TestAsyncClient", "APIClient"}
+# #637 — migration 산출물(파일·operation·적용 순서·과거 state·DDL)을 오라클로 삼는 테스트의 신호.
+# `migrations/` 는 makemigrations 가 생성한 것이라 테스트 대상이 아니다(discipline-tdd §5.5 — 절대 규칙).
+MIGRATION_ORACLE_NAMES = {"MigrationExecutor", "MigrationLoader", "MigrationRecorder", "ProjectState"}
 
 
 def _has_adoption_signal(bc_dir: Path) -> bool:
@@ -255,6 +258,32 @@ def _db_signals(mod: ast.Module) -> bool:
     return False
 
 
+def _migration_oracle_signal(mod: ast.Module) -> str | None:
+    """migration 산출물을 오라클로 삼는 첫 신호의 요지 — 없으면 None."""
+    for node in ast.walk(mod):
+        if isinstance(node, ast.Import):
+            for a in node.names:
+                if a.name.startswith("django.db.migrations") or ".migrations" in f".{a.name}":
+                    return f"import {a.name}"
+        elif isinstance(node, ast.ImportFrom):
+            module = node.module or ""
+            if module.startswith("django.db.migrations") or module.endswith(".migrations") or ".migrations." in module:
+                return f"from {module} import …"
+            if module == "django.db" and any(a.name == "migrations" for a in node.names):
+                return "from django.db import migrations"
+        elif isinstance(node, ast.Name) and node.id in MIGRATION_ORACLE_NAMES:
+            return node.id
+        elif isinstance(node, ast.Attribute) and node.attr in MIGRATION_ORACLE_NAMES:
+            return node.attr
+        elif isinstance(node, ast.Call):
+            fn = node.func
+            callee = fn.id if isinstance(fn, ast.Name) else (fn.attr if isinstance(fn, ast.Attribute) else "")
+            if callee == "import_module" and node.args and isinstance(node.args[0], ast.Constant) \
+                    and isinstance(node.args[0].value, str) and "migrations" in node.args[0].value:
+                return f'import_module("{node.args[0].value}")'
+    return None
+
+
 def _entrance_signals(mod: ast.Module) -> bool:
     for node in ast.walk(mod):
         if isinstance(node, (ast.Name, ast.Attribute)):
@@ -339,6 +368,9 @@ def _check_bc_test(bc: Path, bc_rel: Path, out: Findings) -> None:
         except (SyntaxError, OSError, UnicodeDecodeError):
             continue
         top = rel_in.parts[0] if len(rel_in.parts) > 1 else ""
+        signal = _migration_oracle_signal(mod)
+        if signal is not None:
+            out.add("#637", rel, f"migration 산출물을 오라클로 삼는 테스트는 만들지 않는다 — `migrations/` 는 Django 가 생성한 것이라 파일·operation·적용 순서·과거 state·DDL 자체를 검증하지 않는다(신호: {signal})")
         imports = _imports_of(mod)
         for p in imports:
             parts = p.split(".")

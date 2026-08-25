@@ -66,9 +66,11 @@ djr:R-2509 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-revie
 
 djr:R-2510 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer>, <https://numchida.com/ns/djr#a/command-dddjango> .
 
-djr:R-2511 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer>, <https://numchida.com/ns/djr#a/command-dddjango> .
+djr:R-2511 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer>, <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-test-config.py> .
 
-djr:R-2512 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer>, <https://numchida.com/ns/djr#a/command-dddjango> .
+djr:R-2512 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer>, <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-test-config.py> .
 
 djr:R-2513 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 

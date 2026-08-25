@@ -266,13 +266,19 @@ djr:R-3264 a djr:Prohibition ;
     prov:specializationOf djr:R-3264 ;
     djr:revision 1 .
 
-djr:R-3265 a djr:Exception ;
-    skos:prefLabel "기존 관련 migration 테스트의 기대별 처분(동일=존치·변경=기존 assertion 제자리 갱신·축소 한정·전건 종료=삭제)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3265@2026-08-22> .
+djr:R-3265 a djr:Obligation ;
+    skos:prefLabel "기존 migration 전용 테스트 삭제(절대 규칙)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3265@2026-08-25> .
 
 <https://numchida.com/ns/djr#R-3265@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3265 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3265@2026-08-25> a djr:Expression ;
+    prov:specializationOf djr:R-3265 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3265@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
 
 djr:R-3266 a djr:Obligation ;
     skos:prefLabel "새 파일·case·migration 시나리오·coverage 필요 시 생성 금지와 검증 공백 보고"@ko ;
@@ -937,7 +943,7 @@ djr:R-3318 a djr:Obligation ;
     djr:order 8 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b6> ;
     djr:statesNorm djr:R-3265, djr:R-3266 ;
-    djr:text "- 기존 관련 migration 테스트의 현재 기대가 같으면 그대로 두고, 기대가 바뀌면 기존 assertion만 제자리 갱신·축소하며, 모두 종료됐으면 삭제한다. 새 파일·case·migration 시나리오·coverage가 필요하면 만들지 않고 검증 공백을 보고한다.\n"@ko .
+    djr:text "- 기존 관련 migration 전용 테스트는 기대와 무관하게 삭제한다 — 절대 규칙이다(`migrations/`는 생성물·`check-test-config` #637). 새 파일·case·migration 시나리오·coverage가 필요하면 만들지 않고 검증 공백을 보고한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004/b9> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004> ;
