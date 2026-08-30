@@ -336,10 +336,12 @@
   "cache_parity": {
     "claude": {
       "checked": 68,
-      "mismatch": [],
+      "mismatch": [
+        "dddjango/scripts/check-composition-root.py"
+      ],
       "missing": [],
       "root": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.9",
-      "status": "ok"
+      "status": "drift"
     },
     "codex": {
       "checked": 33,
@@ -627,8 +629,8 @@
         "workspace/eval/fixtures/bounce_counter/P14-meta-only/session.jsonl": "13fc7ec40c1a98d6ec814a4549646588de5cb66545fc8d23fab8be519eec44ba",
         "workspace/eval/fixtures/bounce_counter/expected.json": "2de2acde68dd4a255db02dc5316e1263bbb5fbb93b39b86e3b458007626189b9",
         "workspace/tools/collect_violations.py": "b1376af5cab3714a89f4a0b464e8d7c7d3b78ad42b1bfbd1dc74cfce0eff93de",
-        "workspace/tools/construct_drift_report.py": "4359c2229ca12afed5538e0d840dd814b33bde9bef57f62a492a78246a48faf5",
-        "workspace/tools/findings_count_matrix.py": "92a002c74181274b7d6d9c2db4e6f2ac38fe849f36d9206446f897b032800aef",
+        "workspace/tools/construct_drift_report.py": "ecc91b8295661f7a6d67f09bdc2445232be9547b7de8fe71234f4ff56e975bf2",
+        "workspace/tools/findings_count_matrix.py": "838e1f0ef66b570cd2803c4b6ede8db91a799e5906b01f86d7d98063be1fcc88",
         "workspace/tools/firing_probe.py": "09994ac306dbb06dfce46429bdd8701cdd39bf6964f515e596dbae3dbd918003",
         "workspace/tools/manifest_seal.py": "43b5d79e7949825dde9a43fd95d1d1a7db41e0a5013ce5dcc3b79a54f0206e25",
         "workspace/tools/ontology-requirements.txt": "0329866c8aeec21f64af929ec52362d6a2ee3058cb9266025b147da367ee77ea",
@@ -657,7 +659,7 @@
         "workspace/eval/fixtures/api_error_contract/requirements.txt"
       ],
       "n_files": 32,
-      "tree_sha256": "545da8a0ace535e4da62c72896b0190b0ce65af58a1e17412766943f30be5c96",
+      "tree_sha256": "c2a2538bda6ba95bc148c90823930c9d94027daa49821f8c27436a40e3d0713c",
       "why": "측정기. 실런 중 측정기가 바뀌면 앞뒤 런의 수치가 같은 자를 안 쓴 것이 된다(D11)."
     },
     "orders": {
@@ -806,7 +808,7 @@
     "protocol": {
       "files": {
         "Makefile": "5903485ad946770dd8cf455dccb91a74b6d563990af862fcf0e60426cc1d701a",
-        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "4691d667f81aa5367df1ee89827f5261e72fbe9404d924cc7aa966a6a8aac943",
+        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "bd1418bf4f08130f8a981fd065d2432175992c08a7924d246debaa39c4fc3e31",
         "workspace/plan/2026-08-12-bc-rebuild-protocol.md": "a39ba66e58cb8bde5ad8f84d630b6fd9b04300f7130d4bbc2d149751c2f6c492",
         "workspace/plan/templates/request-template.md": "531bb5c0e9b147d51665981bc3218aa027ddc4170101ea920ecc8a87f7018fe4",
         "workspace/tools/openapi_shape.py": "ea564e3b0ce0550352935b7a572f93dfae404f1a1d24f0fd9d4acf6dc4bc4932",
@@ -821,7 +823,7 @@
         "workspace/design/2026-08-20-ontology-t2-0b-design.md"
       ],
       "n_files": 6,
-      "tree_sha256": "94b1e27622303075fbbf5703f2fc6eb0d62453a8a0671c2f9001141abf2dea9f",
+      "tree_sha256": "828a52f8def349fb06a9e2f6e089f8b8e698b9a04b05f50d427d8299ad5d46d1",
       "why": "**전이 의존** — 발주문이 «그대로 따르라»고 가리키는 판형과, 인수 판정이 부르는 도구와, 게이트를 배선하는 Makefile. 이 중 하나만 바뀌어도 모델이 받는 요청문·허용 범위·STOP 규약·shape 합격 여부·실런 진입 조건이 바뀐다. 그런데 대조는 글롭에 든 것만 재전개하므로, 봉인 밖이면 그 변경은 드리프트가 아니었다(레인 AU 발견 4)."
     },
     "queries": {
@@ -856,7 +858,7 @@
         "dddjango/scripts/check-business-vocabulary.py": "ee276d3db8584bfbe80d193b0b2452830d2e2db4013b1d204850fe1bf27c94e6",
         "dddjango/scripts/check-choices-literal-consumption.py": "da25193ef0ba72937a4c2b29a239e046fcec578eb7b68fa5d0586be6aa20c2b6",
         "dddjango/scripts/check-common-container.py": "631f81c25c203eeb6090bd1f5333cb07afd87d12bddd53cba5f23dbc5b08b343",
-        "dddjango/scripts/check-composition-root.py": "f98465a44c17af5d24e4b7ae732ce231253faaeed7668720c6ca4dcb211317e8",
+        "dddjango/scripts/check-composition-root.py": "ef9d260aaea4877e34f6ca0c68f334d69f65d01a65fa759e4ddf20af6d07e5ce",
         "dddjango/scripts/check-context-isolation.py": "a44587d4f2a48c42930f795a4cbea99e61d178beb71038a5befa629d10687369",
         "dddjango/scripts/check-db-table.py": "4e80db6e5343b237a2b436d731474e05a9bb63039f87af643632945c95ffdd78",
         "dddjango/scripts/check-domain-model.py": "677876ce69fca8dee54310db296636a45a7a365e9fa39617eca0f497c19266c6",
@@ -900,7 +902,7 @@
         "workspace/tools/ab_score.py"
       ],
       "n_files": 38,
-      "tree_sha256": "a0cbe9acc27c440f5855532e8f0d98b30e546617b0d0f7cb6aa9de6cbeab3d7e",
+      "tree_sha256": "fd9321738675906c92127a80becce16d9637d977122f314728c0835436298575",
       "why": "판정 스칼라(결정적 검사기 위반 수)를 만드는 전부. 발주·암 산출물을 보기 전에 동결한다 — 산출물을 본 뒤 채점기를 만지면 판정 교락(L-M #4)."
     }
   },
@@ -948,11 +950,11 @@
     "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.9/scripts",
     "cache-codex": "6f5af6332fd8076a2c365ea9231f8adcc5024e9a63097b94bddccc9f9b17d193",
     "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.17.9/skills/dddjango/scripts",
-    "source-claude": "6f5af6332fd8076a2c365ea9231f8adcc5024e9a63097b94bddccc9f9b17d193",
-    "source-codex": "6f5af6332fd8076a2c365ea9231f8adcc5024e9a63097b94bddccc9f9b17d193"
+    "source-claude": "89b10d956dc2e675e777ae71feaa7de1370de22af693178631dee29b5ff5b2f7",
+    "source-codex": "89b10d956dc2e675e777ae71feaa7de1370de22af693178631dee29b5ff5b2f7"
   },
-  "sealed_commit": "a42b659dbf2a008ece18da35609ea9972f035dc2",
-  "self_sha256": "553d5b479bfc15c61efda0477eccb9cd199ca5a45c24d910e0ba7bef5d8c3659",
+  "sealed_commit": "fc9c74ba4accbfd5e369999c6eadd777457afed8",
+  "self_sha256": "86f6937296f0bc37535a26121cd77537328689fbe13cfd30f8858f0f46c8955e",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [

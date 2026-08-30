@@ -1799,7 +1799,8 @@ def _code_overlap_keys(
 #   #84/#497 composition_root/ 는 BC 루트의 «폴더»·결선 하나=파일 하나
 #   #85/#86(ⓓ) dependency_wiring.py 는 build_* 팩토리만 · 조건/계산은 후보
 #   #498/#500/#501 event_wiring.py 는 꽂기만(표 금지·이름 있는 최상단 함수만·DB 금지)
-#   #101 BC 안쪽·composition_root 은 driving 층을 import 하지 않는다
+#   #101 BC 안쪽·composition_root 은 자기 BC 의 driving 층을 import 하지 않는다(타 BC 의
+#        open_host_service 소비는 #13·#102 축 — 2026-08-31 자기-BC 한정 부칙)
 #   #105/#112 api/ 직계 파일 둘뿐 · 등록 파일 이름은 api_router.py(접두 금지)
 #   #107/#108/#109/#111 api_router.py 의 등록 함수 하나·전역 API import 금지·
 #        top-level 부작용 등록 금지·등록 밖 일 금지
@@ -1952,6 +1953,19 @@ def _check_composition_dir(bc: Path, bc_rel: Path, findings: Findings, candidate
         _check_event_wiring(ev, bc_rel / "composition_root/event_wiring.py", findings)
 
 
+def _imports_other_bc_driving(path_str: str, own_bc: str) -> bool:
+    """`<container>.<bc>.driving_layer…` 꼴에서 `<bc>` 가 자기 BC 가 아니면 True.
+    타 BC driving 층의 소비면(`open_host_service/` 아래만 · ACL 에서만)은 #13·#102 가
+    check-context-isolation 에서 집행하므로 #101 은 자기 BC 의 driving 층만 본다 —
+    표준 트리 22~32행이 OHS 계약을 driving_layer 안에 두어 «예외 없음» 문면이 #13·#473 과
+    충돌했던 결함의 수리(스펙 #101 2026-08-31 부칙 · 첫 실사례 fortune_intent→llm_access)."""
+    parts = path_str.split(".")
+    for i, seg in enumerate(parts):
+        if seg in _DRIVING_SEGMENTS:
+            return i > 0 and parts[i - 1] != own_bc
+    return False
+
+
 def _check_inner_driving_imports(bc: Path, bc_rel: Path, findings: Findings) -> None:
     for seg in _INNER_SEGMENTS:
         base = bc / seg
@@ -1965,12 +1979,15 @@ def _check_inner_driving_imports(bc: Path, bc_rel: Path, findings: Findings) -> 
             if mod is None:
                 continue
             for lineno, path_str in _slice_imports(mod):
-                if set(path_str.split(".")) & _DRIVING_SEGMENTS:
-                    findings.add(
-                        "#101",
-                        f"{bc_rel / f.relative_to(bc)}:{lineno}",
-                        f"`{path_str}` — BC 안쪽과 composition_root 은 driving 층을 import 하지 않는다(예외 없음 · rd-2)",
-                    )
+                if not (set(path_str.split(".")) & _DRIVING_SEGMENTS):
+                    continue
+                if _imports_other_bc_driving(path_str, bc.name):
+                    continue  # 타 BC driving — 허용면(open_host_service · ACL)은 #13/#102 소관
+                findings.add(
+                    "#101",
+                    f"{bc_rel / f.relative_to(bc)}:{lineno}",
+                    f"`{path_str}` — BC 안쪽과 composition_root 은 자기 BC 의 driving 층을 import 하지 않는다(rd-2 · 타 BC 는 open_host_service 만 — #13/#102)",
+                )
 
 
 def _project_uses_registrar(root: Path, registrar_name: str) -> bool:
