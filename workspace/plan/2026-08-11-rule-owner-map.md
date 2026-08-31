@@ -554,3 +554,4 @@
 | 641 | path | scripts/check-layer-skeleton.py | — | 신설 | 09-01 동명 폴더 승격 — 1단 평평 |
 | 642 | ast | scripts/check-layer-skeleton.py | — | 신설 | 09-01 동명 폴더 승격 — 부품 출생 50행 하한 |
 | 643 | path | scripts/check-layer-skeleton.py | — | 신설 | 09-01 동명 폴더 승격 — 부품 0개 퇴화 |
+| 644 | ast+ | scripts/check-layer-skeleton.py | agents/discipline-reviewer.md | 신설 | 09-01 동명 폴더 승격 — ⓓ 캐스케이드 후보 신호 |
