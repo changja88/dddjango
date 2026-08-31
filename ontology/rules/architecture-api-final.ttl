@@ -380,11 +380,17 @@ djr:R-1979 a djr:Prohibition ;
 
 djr:R-1980 a djr:Exception ;
     skos:prefLabel "wire 계약 한정 — preserve-established 범위의 관할 배제"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1980@2026-08-22> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-1980@2026-09-01> .
 
 <https://numchida.com/ns/djr#R-1980@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1980 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1980@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-1980 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1980@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-1981 a djr:Prohibition ;
     skos:prefLabel "확립 native 구현·배선의 표준 레시피 이전 근거 불인정"@ko ;
@@ -1809,7 +1815,7 @@ djr:R-2099 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
     djr:statesNorm djr:R-1980, djr:R-1981, djr:R-1982, djr:R-1983, djr:R-1984 ;
-    djr:text "이 절이 고르는 것은 **wire 계약**(필드 집합·media type)이지 구현 형태가 아니며, 이 문단의 주어는 **신규 범위**(②·③으로 wire 프로필을 새로 고르는 산출물)다 — preserve-established(우선순위 ①) 범위는 native 메커니즘 보존이 관할이라(12-slot 계약 소유) 이 문단의 대상이 아니고, 확립 native 구현·배선을 표준 레시피로 옮길 근거가 되지 않는다. 신규 범위는 ③으로 RFC 9457 wire 를 선택해도 표준 controller 레시피(controller 소유·좁은 try·`bc_error_schema.py`·직접 `Status` 반환 — 레시피의 정본은 구현 스킬·검사기 계약이고 이 절은 wire 만 소유한다)로 구현한다: **«RFC 9457 wire + 표준 레시피»는 wire 규칙상 모순이 아니다**(2026-08-13 — 스팩이 이 조합을 표현하려 프로필 «이름»을 차용해 문면 모순이 된 사례 반영). 단 **G2 게이트·12-slot 의 profile 표기는 현재 `dddjango-code-json | preserve-established` 두 값뿐**이라 이 조합의 게이트 취급은 아직 열거에 없다 — 채택하려면 그 취급 결정을 G1 에서 표면화하라(STOP 대상이며, 스팩·플러그인 문면이 실제로 충돌하는 경우도 여전히 STOP 대상이다)(G1/G2=파이프라인의 설계/구현 승인 게이트 · 12-slot=오류 계약 기록표 `Error response contract 12-slot` · STOP=`STOP_FOR_USER_APPROVAL` — 사용자 결정으로만 진행). 위 혼합 금지의 주어는 wire 필드다 — 구현 레시피를 프로필의 일부로 읽지 않는다.\n\n"@ko .
+    djr:text "이 절이 고르는 것은 **wire 계약**(필드 집합·media type)이지 구현 형태가 아니며, 이 문단의 주어는 **신규 범위**(②·③으로 wire 프로필을 새로 고르는 산출물)다 — preserve-established(우선순위 ①) 범위는 native 메커니즘 보존이 관할이라(12-slot 계약 소유) 이 문단의 대상이 아니고, 확립 native 구현·배선을 표준 레시피로 옮길 근거가 되지 않는다. 이때 preserve-established **범위**의 보존 대상은 이미 배포된 표면·계약이다 — 신규 endpoint가 확립 namespace에 합류하는 사실은 wire 보존(①)의 근거일 뿐 신규 endpoint의 구현 스택·컨트롤러 형태의 근거가 아니고(형태·스택은 G1 스택 결정과 구현 스킬 소유), 신규 표면이 preserve wire 를 지는 조합의 게이트 취급 역시 뒤의 미열거 조합 조항대로 G1 에서 표면화한다(STOP). 신규 범위는 ③으로 RFC 9457 wire 를 선택해도 표준 controller 레시피(controller 소유·좁은 try·`bc_error_schema.py`·직접 `Status` 반환 — 레시피의 정본은 구현 스킬·검사기 계약이고 이 절은 wire 만 소유한다)로 구현한다: **«RFC 9457 wire + 표준 레시피»는 wire 규칙상 모순이 아니다**(2026-08-13 — 스팩이 이 조합을 표현하려 프로필 «이름»을 차용해 문면 모순이 된 사례 반영). 단 **G2 게이트·12-slot 의 profile 표기는 현재 `dddjango-code-json | preserve-established` 두 값뿐**이라 이 조합의 게이트 취급은 아직 열거에 없다 — 채택하려면 그 취급 결정을 G1 에서 표면화하라(STOP 대상이며, 스팩·플러그인 문면이 실제로 충돌하는 경우도 여전히 STOP 대상이다)(G1/G2=파이프라인의 설계/구현 승인 게이트 · 12-slot=오류 계약 기록표 `Error response contract 12-slot` · STOP=`STOP_FOR_USER_APPROVAL` — 사용자 결정으로만 진행). 위 혼합 금지의 주어는 wire 필드다 — 구현 레시피를 프로필의 일부로 읽지 않는다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025> a djr:Section ;
     djr:headingSnapshot "#### `dddjango-code-json` (새 dddjango Ninja 범위의 기본)"@ko ;

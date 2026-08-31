@@ -1030,6 +1030,14 @@ djr:R-2605 a djr:Prohibition ;
     prov:specializationOf djr:R-2605 ;
     djr:revision 1 .
 
+djr:R-3405 a djr:Override ;
+    skos:prefLabel "명세의 승인 evidence 참조 없는 신규 표면 함수형 결정에 대한 집행 금지와 TREE_CONTRACT_MISMATCH 반송"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3405@2026-09-01> .
+
+<https://numchida.com/ns/djr#R-3405@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-3405 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/agents/coder.md> a djr:Document ;
     skos:prefLabel "agent-coder"@ko .
 
@@ -1257,8 +1265,8 @@ djr:R-2605 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 24 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b17> ;
-    djr:statesNorm djr:R-2584, djr:R-2585, djr:R-2586, djr:R-2587, djr:R-2588, djr:R-2589 ;
-    djr:text "- JSON API presentation은 승인된 명세의 stack·controller·module 결정을 그대로 집행한다. `dddjango-code-json`의 새 표준 Ninja surface가 class controller로 승인됐다면 `implementation-django-ninja` §2.3의 `@api_controller` + `@route.*`를 사용한다. `preserve-established`는 승인된 native controller/Router/handler form을 바꾸지 않는다. 어느 profile에서도 406/415를 이유로 함수형 `Router`를 새로 강제하지 않는다. **단, 명세의 배선/등록 결정이 표준(#105~#112)과 어긋나면 그대로 집행하지 않고 `TREE_CONTRACT_MISMATCH`로 반송한다** — 명세 복종이 배선 답습의 통로가 되지 않게(라운드 1′ 실증: 명세 R1 이 «확립된 import-time 등록 규약 보존»을 결정으로 박자 coder 가 복종했다). 대칭으로, **명세가 승인 스코프 산출물 목록 밖 기존 파일의 이동·재배선을 결정으로 박아도 그대로 집행하지 않고 `TREE_CONTRACT_MISMATCH`로 반송한다** — 명세 복종이 강제 전파의 통로가 되지 않게(2026-08-13 라운드 2 실증: 명세가 «11 BC canonical 이관»을 결정으로 박자 100파일이 이동됐다).\n\n"@ko .
+    djr:statesNorm djr:R-2584, djr:R-2585, djr:R-2586, djr:R-2587, djr:R-2588, djr:R-2589, djr:R-3405 ;
+    djr:text "- JSON API presentation은 승인된 명세의 stack·controller·module 결정을 그대로 집행한다. `dddjango-code-json`의 새 표준 Ninja surface가 class controller로 승인됐다면 `implementation-django-ninja` §2.3의 `@api_controller` + `@route.*`를 사용한다. `preserve-established`는 승인된 native controller/Router/handler form을 바꾸지 않는다. 어느 profile에서도 406/415를 이유로 함수형 `Router`를 새로 강제하지 않는다. **단, 명세의 배선/등록 결정이 표준(#105~#112)과 어긋나면 그대로 집행하지 않고 `TREE_CONTRACT_MISMATCH`로 반송한다** — 명세 복종이 배선 답습의 통로가 되지 않게(라운드 1′ 실증: 명세 R1 이 «확립된 import-time 등록 규약 보존»을 결정으로 박자 coder 가 복종했다). 대칭으로, **명세가 승인 스코프 산출물 목록 밖 기존 파일의 이동·재배선을 결정으로 박아도 그대로 집행하지 않고 `TREE_CONTRACT_MISMATCH`로 반송한다** — 명세 복종이 강제 전파의 통로가 되지 않게(2026-08-13 라운드 2 실증: 명세가 «11 BC canonical 이관»을 결정으로 박자 100파일이 이동됐다). 같은 형식으로, **명세가 신규 HTTP/JSON API 표면의 함수형 Router·plain Django view 채택을 승인 evidence 참조(STOP 승인 기록 경로·발주서/사용자 명시 지시 인용) 없이 결정으로 박아도 그대로 집행하지 않고 `TREE_CONTRACT_MISMATCH`로 반송한다** — 명세 복종이 스택 답습의 통로가 되지 않게(2026-09-01 실증: 확립 plain 관찰이 신규 표면 함수형 확정의 근거로 쓰였다).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b3> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;

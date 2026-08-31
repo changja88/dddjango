@@ -204,8 +204,16 @@ class OrderController:
 신규 표준 presentation 표면은 함수형 `@router.post` operation이 아니라 **ninja-extra
 `@api_controller` 클래스 컨트롤러**로 만든다. 함수형 Router operation(§2.2)은 레거시
 경로로 읽고 기존 형태를 보존한다. **touched(신규·수정) presentation 표면은 클래스
-컨트롤러로 만든다.** 406/415나 오류 응답을 이유로 클래스 컨트롤러를 함수형 Router로
-강등하지 않는다.
+컨트롤러로 만든다(승인 evidence 참조를 가진 함수형 표면의 보존·수정은 그 기록이
+관할한다).** 406/415나 오류 응답을 이유로 클래스 컨트롤러를 함수형 Router로
+강등하지 않는다. 신규 표면(새로 노출하는
+endpoint)을 함수형 Router·plain Django view로 만드는 결정은 **승인 evidence 참조**
+(STOP 승인 기록 파일 경로 또는 발주서·사용자 명시 지시 인용)를 스택 결정과 함께 적은
+명세만 근거다(G1/STOP은 파이프라인 게이트 용어 — 파이프라인 밖에서는 사용자의 명시적
+지시 기록이 이에 준한다). 오류 wire 프로필(`preserve-established`)·확립 namespace
+합류·오류 응답·스트리밍 반환은 형태 근거가 아니며(스트리밍은 §2.2 framework-native
+carveout으로 클래스 컨트롤러 메서드가 반환한다), 그 참조 없는 함수형 결정은 집행하지
+않고 명세 반송으로 올린다.
 
 클래스 컨트롤러는 함수형 operation의 계약을 그대로 보존한다 — `response={status: Schema}`
 선언과 Schema/`Status` 반환을 유지하며, known exception의 직접 `ErrorSchema` 변환 순서도

@@ -435,12 +435,18 @@ djr:R-0179 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0180 a djr:Obligation ;
-    skos:prefLabel "확립 스택 있으면 정체를, 없으면 기본 Django Ninja 를 architect 가 §API스택 결정 순서로 정함"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0180@2026-08-22> .
+    skos:prefLabel "확립 스택 정체 식별 — 신규 표면 스택 확정은 §API스택 결정 순서(확립 존재 시 STOP 표면화·부재 시 기본 Ninja)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0180@2026-09-01> .
 
 <https://numchida.com/ns/djr#R-0180@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0180 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0180@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-0180 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0180@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
 
 djr:R-0181 a djr:Obligation ;
     skos:prefLabel "관찰 입력은 스택 «정체»뿐 — 사용 형태(등록·배선)는 언제나 표준 #105~#112"@ko ;
@@ -2926,7 +2932,7 @@ djr:R-0460 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 7 ;
     djr:statesNorm djr:R-0177, djr:R-0178, djr:R-0179, djr:R-0180, djr:R-0181, djr:R-0182, djr:R-0183, djr:R-0184 ;
-    djr:text "   lens는 *관심사*(계약·데이터의 유무)만 제안한다 — **어느 API 프레임워크로 구현하나(plain Django / Django Ninja / DRF)는 G0 결정 축이 아니다.** coordinator는 배너에서 framework를 결정 축으로 띄워 고르게 하거나 특정 스택을 추천하지 않는다(의존성이 requirements에 아직 없다는 사실은 plain으로 낮출 사유가 아니다 — 매니페스트에 없음 ≠ 설치 불가). 스택 판정은 `design-architect` 소유다(경계) — 기존 프로젝트에 확립된 API 스택이 있으면 그 **정체**(어느 프레임워크인가)를, 없으면 기본 Django Ninja를 architect가 §API스택 결정 순서로 정한다(관찰 입력은 스택 «정체»뿐 — **사용 형태(등록·배선)는 언제나 표준**이다 #105~#112 · 2026-08-12. 그 «언제나 표준»의 관할은 승인 스코프가 낳는 산출물(신규 파일·기존 파일에 추가되는 줄)이다 — 승인 스코프 밖 기존 배선·배치를 그 문장을 근거로 옮기지 않는다: 이동 권한은 G0 빚 결정→슬라이스 0 뿐 · 2026-08-13). 사용자가 스택을 명시(\"DRF로\")하거나 암시(serializer·ViewSet)하면 그 표현 그대로 스코프 메모에 기록해 architect에 넘긴다 — coordinator가 특정 스택으로 확정 해석하지 않고, 명시 제약은 architect가 1급 입력으로 존중한다. *왜* — coordinator가 framework를 G0 결정 축으로 즉흥 생성하면 architect 판정을 우회해 같은 입력에 스택이 갈린다(재현 불가).\n"@ko .
+    djr:text "   lens는 *관심사*(계약·데이터의 유무)만 제안한다 — **어느 API 프레임워크로 구현하나(plain Django / Django Ninja / DRF)는 G0 결정 축이 아니다.** coordinator는 배너에서 framework를 결정 축으로 띄워 고르게 하거나 특정 스택을 추천하지 않는다(의존성이 requirements에 아직 없다는 사실은 plain으로 낮출 사유가 아니다 — 매니페스트에 없음 ≠ 설치 불가). 스택 판정은 `design-architect` 소유다(경계) — 기존 프로젝트에 확립된 API 스택이 있으면 그 **정체**(어느 프레임워크인가)를 architect가 식별하고, 신규 표면의 스택 확정은 architect의 §API스택 결정 순서를 따른다(확립 스택 존재 시 스택 결정 자체를 `STOP_FOR_USER_APPROVAL`로 표면화 — G0 스코프 메모·발주서의 사용자 명시 스택 지시는 그 승인과 동격 · 확립 부재 시 기본 Django Ninja)(관찰 입력은 스택 «정체»뿐 — **사용 형태(등록·배선)는 언제나 표준**이다 #105~#112 · 2026-08-12. 그 «언제나 표준»의 관할은 승인 스코프가 낳는 산출물(신규 파일·기존 파일에 추가되는 줄)이다 — 승인 스코프 밖 기존 배선·배치를 그 문장을 근거로 옮기지 않는다: 이동 권한은 G0 빚 결정→슬라이스 0 뿐 · 2026-08-13). 사용자가 스택을 명시(\"DRF로\")하거나 암시(serializer·ViewSet)하면 그 표현 그대로 스코프 메모에 기록해 architect에 넘긴다 — coordinator가 특정 스택으로 확정 해석하지 않고, 명시 제약은 architect가 1급 입력으로 존중한다. *왜* — coordinator가 framework를 G0 결정 축으로 즉흥 생성하면 architect 판정을 우회해 같은 입력에 스택이 갈린다(재현 불가).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s005/b8> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s005> ;

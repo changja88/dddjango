@@ -3400,3 +3400,6 @@ R-3399	2026-08-22	rules/agent-design-review-ddd.ttl
 R-3400	2026-08-22	rules/agent-design-review-ddd.ttl
 R-3401	2026-08-24	rules/implementation-django-ninja-final.ttl
 R-3402	2026-08-25	rules/implementation-django-ninja-final.ttl
+R-3403	2026-09-01	rules/implementation-django-ninja-final.ttl
+R-3404	2026-09-01	rules/agent-discipline-reviewer.ttl
+R-3405	2026-09-01	rules/agent-coder.ttl

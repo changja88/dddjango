@@ -289,3 +289,5 @@ djr:R-2604 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
 djr:R-2605 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
     djr:enforcedBy <https://numchida.com/ns/djr#c/check-idempotency-scope-creep.py> .
+
+djr:R-3405 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect>, <https://numchida.com/ns/djr#a/command-dddjango> .
