@@ -284,11 +284,17 @@ djr:R-3133 a djr:Obligation ;
 
 djr:R-3134 a djr:Obligation ;
     skos:prefLabel "관찰이 결정 입력인 축은 닫힌 목록 여섯"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3134@2026-08-22> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-3134@2026-09-01> .
 
 <https://numchida.com/ns/djr#R-3134@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3134 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3134@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-3134 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3134@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3135 a djr:Prohibition ;
     skos:prefLabel "목록 밖 축에서 기존 실물의 관찰은 결정의 입력이 아니다"@ko ;
@@ -316,11 +322,17 @@ djr:R-3137 a djr:Prohibition ;
 
 djr:R-3138 a djr:Prohibition ;
     skos:prefLabel "코퍼스가 서로 다른 트리를 제시해도 런타임에 택일하지 않는다"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3138@2026-08-22> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-3138@2026-09-01> .
 
 <https://numchida.com/ns/djr#R-3138@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3138 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3138@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-3138 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3138@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3139 a djr:Obligation ;
     skos:prefLabel "final.md 가 단일 출처이고 코퍼스는 파생 배경 — 남는 변수 없음"@ko ;
@@ -602,6 +614,62 @@ djr:R-3173 a djr:Obligation ;
     prov:specializationOf djr:R-3173 ;
     djr:revision 1 .
 
+djr:R-3415 a djr:Obligation ;
+    skos:prefLabel "분할 공리 — 크기가 아니라 소관·응집(행 수는 감사 신호)·파이프라인 밖 gloss"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3415@2026-09-01> .
+
+<https://numchida.com/ns/djr#R-3415@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-3415 ;
+    djr:revision 1 .
+
+djr:R-3416 a djr:Obligation ;
+    skos:prefLabel "캐스케이드 ① 이동 — 수용성 확인·목적지 산출물 목록 한정·부품에도 적용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3416@2026-09-01> .
+
+<https://numchida.com/ns/djr#R-3416@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-3416 ;
+    djr:revision 1 .
+
+djr:R-3417 a djr:Obligation ;
+    skos:prefLabel "캐스케이드 ② 동명 폴더 승격 — 역할 밖 응집 술어(상태 클래스/참조 폐쇄 클러스터)·개별 50행 하한·관례 동거 예외·부품은 형제 분할"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3417@2026-09-01> .
+
+<https://numchida.com/ns/djr#R-3417@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-3417 ;
+    djr:revision 1 .
+
+djr:R-3418 a djr:Obligation ;
+    skos:prefLabel "캐스케이드 ③ 유지 — 본업 비대·역할 내 초대형은 한 파일"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3418@2026-09-01> .
+
+<https://numchida.com/ns/djr#R-3418@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-3418 ;
+    djr:revision 1 .
+
+djr:R-3419 a djr:Obligation ;
+    skos:prefLabel "감사 주도 배정 — coder 비발동·판정은 감사자·집행은 발견 반영"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3419@2026-09-01> .
+
+<https://numchida.com/ns/djr#R-3419@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-3419 ;
+    djr:revision 1 .
+
+djr:R-3420 a djr:Obligation ;
+    skos:prefLabel "승격 감사 신호 — 행위 칸 로스터 200행 무조건 방출·판정 의무만 diff 한정·재판정·신호 밖 판정 명기"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3420@2026-09-01> .
+
+<https://numchida.com/ns/djr#R-3420@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-3420 ;
+    djr:revision 1 .
+
+djr:R-3421 a djr:Obligation ;
+    skos:prefLabel "등가 조항 — 칸 행의 두 실현 승인·명세는 파일 표기·기존 파일 승격은 G0 한정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3421@2026-09-01> .
+
+<https://numchida.com/ns/djr#R-3421@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-3421 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/SKILL.md> a djr:Document ;
     skos:prefLabel "discipline-houserules-skill"@ko .
 
@@ -736,7 +804,28 @@ djr:R-3173 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
     djr:statesNorm djr:R-3134, djr:R-3135, djr:R-3136, djr:R-3137 ;
-    djr:text "**관찰이 결정 입력인 축은 닫힌 목록이다**(라운드 1 「트리 답습」·라운드 1′ 「배선 답습」의 봉인 — 2026-08-12): ① 오류 wire 계약(12-slot `preserve-established`) ② API 스택 «정체»(근거=소비자 의존) ③ 주석 언어(§5) ④ 도구·러너(§6.1) ⑤ 승인 test artifact 의 기존 위치(§1.2) ⑥ 지원 중 행동 계약. **여기 없는 축 — 파일트리·배선/등록·import 방향·테스트 규율·값 집합 선언·인증 경로·admin 구조·OpenAPI 문서 후가공 … — 에서 기존 실물의 관찰은 결정의 입력이 아니다.** 배선 «값»(#105~#112)은 Ninja 스택 조건부지만, ‹관찰 비입력› 원칙 자체는 무조건이다. 그리고 이 원칙은 **신규 산출물의 형태** 문장이다 — 승인 스코프 밖 기존 실물을 옮기거나 고칠 권한을 만들지 않는다(§1.1 판정 물음: 위반 판정은 빚 기록 권한일 뿐, 이동 권한은 G0 사용자 ⓐ 결정→슬라이스 0 한 경로).\n\n"@ko .
+    djr:text "**관찰이 결정 입력인 축은 닫힌 목록이다**(라운드 1 「트리 답습」·라운드 1′ 「배선 답습」의 봉인 — 2026-08-12): ① 오류 wire 계약(12-slot `preserve-established`) ② API 스택 «정체»(근거=소비자 의존) ③ 주석 언어(§5) ④ 도구·러너(§6.1) ⑤ 승인 test artifact 의 기존 위치(§1.2) ⑥ 지원 중 행동 계약. **여기 없는 축 — 파일트리·배선/등록·import 방향·테스트 규율·값 집합 선언·인증 경로·admin 구조·OpenAPI 문서 후가공 … — 에서 기존 실물의 관찰은 결정의 입력이 아니다.** 배선 «값»(#105~#112)은 Ninja 스택 조건부지만, ‹관찰 비입력› 원칙 자체는 무조건이다. 그리고 이 원칙은 **신규 산출물의 형태** 문장이다 — 승인 스코프 밖 기존 실물을 옮기거나 고칠 권한을 만들지 않는다(§1.1 판정 물음: 위반 판정은 빚 기록 권한일 뿐, 이동 권한은 G0 사용자 ⓐ 결정→슬라이스 0 한 경로). 그리고 닫힌 목록의 관찰 금지 대상은 **대상 저장소의 기존 실물**이다 — 이번 슬라이스 산출물의 자기 형상은 이 축의 주어가 아니며, «동명 폴더 승격» 캐스케이드(아래) 판정의 유일한 입력이다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b7> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 7 ;
+    djr:statesNorm djr:R-3415, djr:R-3416, djr:R-3417, djr:R-3418 ;
+    djr:text "**동명 폴더 승격 캐스케이드** — 칸 파일이 커질 때의 분할 판정이다(값·형태는 `references/final.md` §0 이 소유한다 — #490 교체형). 분할은 **크기가 아니라 소관·응집으로** 가른다 — 행 수는 트리거가 아니라 감사 신호다(`discipline-cleancode` §15.1 의 수치 스멜도 신호다). (명세·G0·감사자는 파이프라인 용어다 — 파이프라인 밖에서는 사용자의 명시적 작업 지시가 명세·G0 ⓐ에 준하고, 검수를 맡은 주체가 감사자에 준한다.)\n\n1. **이동(①)** — 커진 부분이 다른 기존 칸의 소관이면 그 칸으로 옮긴다. 단 이동 후보 칸이 실제로 받을 수 있는지(의존 방향 역류 없음·역할 계약 부합)를 확인한 뒤에만, 그리고 목적지가 승인 산출물 목록 안일 때만 — 목록 밖이면 보고(설계 반송)다. ①은 승격 폴더의 부품에도 그대로 적용된다.\n2. **동명 폴더 승격(②)** — 어느 칸 소관도 아닌 «역할 밖 응집 단위»가 생겼으면 승격한다. 술어(둘 다 충족): (a) 칸의 역할 계약 밖 top-level 정의로서, 자기 상태·수명을 가진 클래스이거나 — 본업 정의가 직접 참조하지 않거나 단일 진입 이름으로만 참조하는 사적 정의들이 **서로만 참조하는 닫힌 성분**을 이루는 무상태 클러스터(예: 모델군+상수+함수 쌍 — 상수 모음만·타입 별칭 모음만·함수 하나는 클러스터가 아니다) (b) 클러스터 **개별 50행 이상**(물리 행·빈 줄 제외). 관례 동거는 예외다(Django Model+Manager+QuerySet(+그 불변 예외)·admin panel+inline). 주어가 승격 폴더 내부 부품이면 ②의 실현은 하위 폴더가 아니라 **형제 부품 파일 분할**이다.\n3. **유지(③)** — 둘 다 아니면 한 파일(부품이면 한 부품 파일)을 유지한다. 전부 역할 내인 초대형 파일도 ③이다 — 크기는 트리거가 아니다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 8 ;
+    djr:statesNorm djr:R-3419, djr:R-3420 ;
+    djr:text "**감사 주도 배정** — coder 는 이 캐스케이드를 스스로 발동하지 않는다(항상 파일형으로 작성한다). 신호는 `check-layer-skeleton` 이 후보 채널(ⓓ)로 무조건 방출한다 — 주어는 행위 칸 실현(controller 2종·service·use_case·repo/bypass/uow 구현·adapter 3종·aggregate·domain_service — wiring 제외)과 그 칸의 승격 폴더 내부 .py(`__init__.py` 제외)의 200행 초과이고, 페이로드가 행수·top-level 정의 요약을 동봉한다(AST 산출은 백스톱 소유 — 감사자는 응집·소관·독립 변경 이유만 판정한다). **판정 의무의 주어만** «이번 diff 가 만들었거나 키운(판정 앵커 대비 물리 행수 순증>0) 파일»로 한정하고 그 적용자는 감사자다 — rename·`git mv` 는 «만들었음»으로 발화하고, 전 빌드 ③ 판정 파일은 역할 밖 후보가 새로 생긴 diff 에서만 재판정한다(판별 주체=감사자·판정은 감사 리포트에 기록한다). ①/② 판정은 권고가 아니라 반송 대상 발견이고 — coder 가 판단 없이 집행하며 발견의 클러스터 열거가 부품 파일 신설 근거다 — 신호 밖 허용 칸(schema_in/out 등)의 ② 판정은 홀리스틱 감사에서 허용하되 발견문에 «신호 밖 판정»을 명기한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;
+    djr:kind djr:kind-norm ;
+    djr:order 9 ;
+    djr:statesNorm djr:R-3421 ;
+    djr:text "**등가 조항** — «§1.1 판정 물음»의 낳는 근거 판정에서, 명세·승인 산출물 목록의 `<칸>.py` 행은 그 칸의 두 실현(파일·동명 폴더 승격 — #490 교체형)을 모두 승인한 것이다. 승격이 만드는 본체·부품·`__init__.py` 의 낳는 근거는 그 행과 감사 발견이고, 명세는 언제나 `<칸>.py` 로 적는다(실현 형태는 구현 단계 캐스케이드 판정 소유). 기존 파일의 동명 폴더 승격은 기존 코드 이동이다 — G0 빚 결정(ⓐ)→슬라이스 0 경로뿐이며, 슬라이스 0 이 낳는 칸 실현은 신규 산출물이다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s005-2> a djr:Section ;
     djr:headingSnapshot "## §2 충돌 중재"@ko ;
@@ -750,7 +839,7 @@ djr:R-3173 a djr:Obligation ;
     djr:order 1 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s003/b7> ;
     djr:statesNorm djr:R-3138, djr:R-3139, djr:R-3140 ;
-    djr:text "\n코퍼스(`architecture-ddd` ↔ `implementation-django`)가 서로 다른 트리를 제시해도 **런타임에 택일하지 않는다** — `references/final.md` 가 단일 출처이고 코퍼스는 그 표준이 파생된 배경이다. 남는 변수는 없다(§1.1 — 트리는 무조건 표준). 테스트 타입 조직은 `implementation-test` §4.2 가 단독 소유한다.\n\n"@ko .
+    djr:text "\n코퍼스(`architecture-ddd` ↔ `implementation-django`)가 서로 다른 트리를 제시해도 **런타임에 택일하지 않는다** — `references/final.md` 가 단일 출처이고 코퍼스는 그 표준이 파생된 배경이다. 남는 변수는 «실현 형태» 하나뿐이고 그 택일은 §1 의 동명 폴더 승격 캐스케이드가 소유한다(값의 변수가 아니다 — 트리는 무조건 표준·§1.1). 테스트 타입 조직은 `implementation-test` §4.2 가 단독 소유한다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3> a djr:Section ;
     djr:headingSnapshot "## §3 구조 결정이 빠졌다는 신호"@ko ;
