@@ -9,6 +9,10 @@ import 하는 유일한 트리 데이터다. **손으로 고치지 않는다** �
   fixed        고정 이름 — 부모가 있으면 반드시 있다(#488)
   placeholder  `<>` 첫 등장 — 그 개념이 실제로 생길 때 0개 이상(#489)
   reappear     `<>` 재등장 — 조상이 이미 연 낱말이라 값이 채워져 fixed 와 같다(#491)
+
+swappable=True 는 «동명 폴더 승격» 허용 표기다(#490 교체형 실현 — 파일 칸이
+`<이름>.py` ⇄ `<이름>/`(본체+`__init__.py`) 두 실현을 갖는다). 칸 유형이 아니라
+실현 형태의 직교 속성이며, 값의 정본은 docs/file_tree.html 의 data-sw 다.
 """
 from __future__ import annotations
 
@@ -16,7 +20,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 SOURCE: str = "docs/file_tree.html"
-SOURCE_SHA: str = "612f55e7ce52d5be"  # 생성 시점 정본 sha256[:16] — 출처 표시(동기 판정은 행 비교로 한다)
+SOURCE_SHA: str = "e0585441b2e6939d"  # 생성 시점 정본 sha256[:16] — 출처 표시(동기 판정은 행 비교로 한다)
 
 Kind = Literal["fixed", "placeholder", "reappear"]
 
@@ -27,6 +31,7 @@ class Row:
     depth: int
     name: str       # 리프 이름 — admin·templates 처럼 하위 경로를 품은 이름도 있다
     kind: Kind
+    swappable: bool = False  # 동명 폴더 승격 허용 표기(#490 교체형 — 정본은 data-sw)
 
 
 ROWS: tuple[Row, ...] = (
@@ -41,19 +46,19 @@ ROWS: tuple[Row, ...] = (
     Row(9, 3, 'api_router.py', 'fixed'),
     Row(10, 3, 'bc_error_schema.py', 'fixed'),
     Row(11, 3, '<area>/', 'placeholder'),
-    Row(12, 4, '<area>_controller.py', 'reappear'),
+    Row(12, 4, '<area>_controller.py', 'reappear', swappable=True),
     Row(13, 4, 'schema/', 'fixed'),
-    Row(14, 5, 'schema_in.py', 'fixed'),
-    Row(15, 5, 'schema_out.py', 'fixed'),
+    Row(14, 5, 'schema_in.py', 'fixed', swappable=True),
+    Row(15, 5, 'schema_out.py', 'fixed', swappable=True),
     Row(16, 3, 'webhook/', 'fixed'),
     Row(17, 4, '<provider>/', 'placeholder'),
-    Row(18, 5, '<provider>_controller.py', 'reappear'),
+    Row(18, 5, '<provider>_controller.py', 'reappear', swappable=True),
     Row(19, 5, 'schema/', 'fixed'),
-    Row(20, 6, 'schema_in.py', 'fixed'),
-    Row(21, 6, 'schema_out.py', 'fixed'),
+    Row(20, 6, 'schema_in.py', 'fixed', swappable=True),
+    Row(21, 6, 'schema_out.py', 'fixed', swappable=True),
     Row(22, 2, 'open_host_service/', 'fixed'),
     Row(23, 3, '<service>/', 'placeholder'),
-    Row(24, 4, '<service>_service.py', 'reappear'),
+    Row(24, 4, '<service>_service.py', 'reappear', swappable=True),
     Row(25, 4, 'contract/', 'fixed'),
     Row(26, 5, 'request/', 'fixed'),
     Row(27, 6, '<request>_request.py', 'placeholder'),
@@ -70,7 +75,7 @@ ROWS: tuple[Row, ...] = (
     Row(38, 1, 'application_layer/', 'fixed'),
     Row(39, 2, '<area>/', 'placeholder'),
     Row(40, 3, '<use_case>/', 'placeholder'),
-    Row(41, 4, '<use_case>_use_case.py', 'reappear'),
+    Row(41, 4, '<use_case>_use_case.py', 'reappear', swappable=True),
     Row(42, 4, '<use_case>_command.py', 'reappear'),
     Row(43, 4, '<use_case>_query.py', 'reappear'),
     Row(44, 4, '<use_case>_result.py', 'reappear'),
@@ -90,7 +95,7 @@ ROWS: tuple[Row, ...] = (
     Row(58, 4, '<boundary>_unit_of_work.py', 'placeholder'),
     Row(59, 1, 'domain_layer/', 'fixed'),
     Row(60, 2, '<aggregate>/', 'placeholder'),
-    Row(61, 3, '<aggregate>.py', 'reappear'),
+    Row(61, 3, '<aggregate>.py', 'reappear', swappable=True),
     Row(62, 3, 'entity/', 'fixed'),
     Row(63, 4, '<entity>.py', 'placeholder'),
     Row(64, 3, 'value_object/', 'fixed'),
@@ -103,7 +108,7 @@ ROWS: tuple[Row, ...] = (
     Row(71, 2, 'shared_value_object/', 'fixed'),
     Row(72, 3, '<value_object>.py', 'placeholder'),
     Row(73, 2, 'domain_service/', 'fixed'),
-    Row(74, 3, '<domain_service>.py', 'placeholder'),
+    Row(74, 3, '<domain_service>.py', 'placeholder', swappable=True),
     Row(75, 1, 'driven_layer/', 'fixed'),
     Row(76, 2, 'django_<bounded_context>/', 'reappear'),
     Row(77, 3, 'apps.py', 'fixed'),
@@ -121,19 +126,19 @@ ROWS: tuple[Row, ...] = (
     Row(89, 2, 'adapter/', 'fixed'),
     Row(90, 3, 'persistence/', 'fixed'),
     Row(91, 4, 'repository/', 'fixed'),
-    Row(92, 5, '<aggregate>_repository.py', 'placeholder'),
+    Row(92, 5, '<aggregate>_repository.py', 'placeholder', swappable=True),
     Row(93, 4, 'domain_bypass_query/', 'fixed'),
-    Row(94, 5, '<capability>_query.py', 'placeholder'),
+    Row(94, 5, '<capability>_query.py', 'placeholder', swappable=True),
     Row(95, 4, 'unit_of_work/', 'fixed'),
-    Row(96, 5, '<boundary>_unit_of_work.py', 'placeholder'),
+    Row(96, 5, '<boundary>_unit_of_work.py', 'placeholder', swappable=True),
     Row(97, 3, 'anticorruption_layer/', 'fixed'),
     Row(98, 4, '<other_bounded_context>/', 'placeholder'),
-    Row(99, 5, '<capability>_adapter.py', 'placeholder'),
+    Row(99, 5, '<capability>_adapter.py', 'placeholder', swappable=True),
     Row(100, 3, 'external_system/', 'fixed'),
     Row(101, 4, '<system>/', 'placeholder'),
-    Row(102, 5, '<capability>_adapter.py', 'placeholder'),
+    Row(102, 5, '<capability>_adapter.py', 'placeholder', swappable=True),
     Row(103, 3, '<capability>/', 'placeholder'),
-    Row(104, 4, '<technology>_adapter.py', 'placeholder'),
+    Row(104, 4, '<technology>_adapter.py', 'placeholder', swappable=True),
     Row(105, 1, 'test/', 'fixed'),
     Row(106, 2, 'unit/', 'fixed'),
     Row(107, 2, 'integration/', 'fixed'),

@@ -45,7 +45,7 @@ class StructureError(Exception):
     pass
 
 
-RowT = tuple[int, int, str, str]  # (r, depth, name, kind)
+RowT = tuple[int, int, str, str, bool]  # (r, depth, name, kind, swappable)
 
 
 def extract_canonical(root: Path) -> list[RowT]:
@@ -54,27 +54,30 @@ def extract_canonical(root: Path) -> list[RowT]:
         raise StructureError(f"정본 부재: {p}")
     text = p.read_text(encoding="utf-8")
     pat = re.compile(
-        r'<div data-r="(\d+)" class="tr[^"]*" style="--d:(\d+)">\s*<span class="path">(.*?)</span>',
+        r'<div data-r="(\d+)" class="tr[^"]*" style="--d:(\d+)"( data-sw="1")?>\s*<span class="path">(.*?)</span>',
         re.S,
     )
-    rows: list[tuple[int, int, str]] = []
+    rows: list[tuple[int, int, str, bool]] = []
     for m in pat.finditer(text):
-        nm = re.search(r'<b class="nm">(.*?)</b>', m.group(3))
-        name = html_mod.unescape(re.sub(r"<[^>]+>", "", nm.group(1) if nm else m.group(3))).strip()
-        rows.append((int(m.group(1)), int(m.group(2)), name))
-    if len(rows) != TREE_ROW_COUNT or [r for r, _, _ in rows] != list(range(1, TREE_ROW_COUNT + 1)):
+        nm = re.search(r'<b class="nm">(.*?)</b>', m.group(4))
+        name = html_mod.unescape(re.sub(r"<[^>]+>", "", nm.group(1) if nm else m.group(4))).strip()
+        swappable = m.group(3) is not None
+        if swappable and name.endswith("/"):
+            raise StructureError(f"data-sw 는 파일 칸에만 붙는다 — r{m.group(1)} {name}")
+        rows.append((int(m.group(1)), int(m.group(2)), name, swappable))
+    if len(rows) != TREE_ROW_COUNT or [r for r, _, _, _ in rows] != list(range(1, TREE_ROW_COUNT + 1)):
         raise StructureError(f"정본에서 {len(rows)}행 — {TREE_ROW_COUNT}행·연속 data-r 이어야 한다")
     # kind — 제1원칙 #491: 조상이 연 <토큰> 집합으로 셋 중 하나
     tok_pat = re.compile(r"<([a-z_]+)>")
     stack: list[tuple[int, set[str]]] = []
     out: list[RowT] = []
-    for r, d, name in rows:
+    for r, d, name, sw in rows:
         while stack and stack[-1][0] >= d:
             stack.pop()
         bound: set[str] = set().union(*[s[1] for s in stack]) if stack else set()
         toks = set(tok_pat.findall(name))
         kind = "fixed" if not toks else ("reappear" if toks <= bound else "placeholder")
-        out.append((r, d, name, kind))
+        out.append((r, d, name, kind, sw))
         stack.append((d, bound | toks))
     return out
 
@@ -91,11 +94,11 @@ def read_plugin(root: Path) -> list[RowT]:
     mod = importlib.util.module_from_spec(spec)
     sys.modules["standard_tree"] = mod  # dataclass 가 문자열 애너테이션을 풀 때 모듈 조회가 필요하다
     spec.loader.exec_module(mod)
-    return [(row.r, row.depth, row.name, row.kind) for row in mod.ROWS]
+    return [(row.r, row.depth, row.name, row.kind, bool(getattr(row, 'swappable', False))) for row in mod.ROWS]
 
 
 def render_block(rows: list[RowT]) -> str:
-    return "\n".join(f"{r:>3} " + "  " * d + name for r, d, name, _ in rows)
+    return "\n".join(f"{r:>3} " + "  " * d + name for r, d, name, *_ in rows)
 
 
 def read_final_block(root: Path) -> list[tuple[int, int, str]]:
@@ -116,7 +119,10 @@ def read_final_block(root: Path) -> list[tuple[int, int, str]]:
 
 def emit_plugin(rows: list[RowT], root: Path) -> None:
     sha = hashlib.sha256((root / CANON_REL).read_bytes()).hexdigest()[:16]
-    body = ",\n".join(f"    Row({r}, {d}, {name!r}, {kind!r})" for r, d, name, kind in rows)
+    body = ",\n".join(
+        f"    Row({r}, {d}, {name!r}, {kind!r}" + (", swappable=True)" if sw else ")")
+        for r, d, name, kind, sw in rows
+    )
     module = f'''"""dddjango 표준 파일트리 — 정본의 기계 가독 사본 (데이터 모듈 · 게이트 아님).
 
 정본은 저장소의 `docs/file_tree.html`(트리 140행)이고, 이 파일은 검사기 19종이
@@ -128,6 +134,10 @@ import 하는 유일한 트리 데이터다. **손으로 고치지 않는다** �
   fixed        고정 이름 — 부모가 있으면 반드시 있다(#488)
   placeholder  `<>` 첫 등장 — 그 개념이 실제로 생길 때 0개 이상(#489)
   reappear     `<>` 재등장 — 조상이 이미 연 낱말이라 값이 채워져 fixed 와 같다(#491)
+
+swappable=True 는 «동명 폴더 승격» 허용 표기다(#490 교체형 실현 — 파일 칸이
+`<이름>.py` ⇄ `<이름>/`(본체+`__init__.py`) 두 실현을 갖는다). 칸 유형이 아니라
+실현 형태의 직교 속성이며, 값의 정본은 docs/file_tree.html 의 data-sw 다.
 """
 from __future__ import annotations
 
@@ -146,6 +156,7 @@ class Row:
     depth: int
     name: str       # 리프 이름 — admin·templates 처럼 하위 경로를 품은 이름도 있다
     kind: Kind
+    swappable: bool = False  # 동명 폴더 승격 허용 표기(#490 교체형 — 정본은 data-sw)
 
 
 ROWS: tuple[Row, ...] = (
@@ -220,7 +231,7 @@ def main(argv: list[str]) -> int:
             diffs = [f"  r{c[0]}: 정본={c[1:]} ↔ 플러그인={p[1:]}" for c, p in zip(canon, plugin) if c != p]
             drift.append(f"A≠B ({len(diffs)}행):\n" + "\n".join(diffs[:10]))
         doc = read_final_block(root)
-        canon3 = [(r, d, n) for r, d, n, _ in canon]
+        canon3 = [(r, d, n) for r, d, n, *_ in canon]
         if doc != canon3:
             drift.append(f"A≠C (문서 블록 {len(doc)}행 ↔ 정본 {len(canon3)}행)")
     except StructureError as e:

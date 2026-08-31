@@ -1962,6 +1962,11 @@ def _nmr(g):
     return m.group(1) if m else ""
 
 
+# 동명 폴더 승격 허용 칸(규칙 #490 교체형 실현 — 배제 목록의 여집합 · 사유·값의 정본은
+# discipline-houserules final.md §0/§1. 파일 칸에만 붙는다 — 트리 행 번호(data-r)가 좌표다).
+SWAPPABLE_ROWS = {12, 14, 15, 18, 20, 21, 24, 41, 61, 74, 92, 94, 96, 99, 102, 104}
+
+
 def _tab_rail():
     o = []
     g = 0
@@ -1973,7 +1978,10 @@ def _tab_rail():
             h = _nmr(g)
             if h:
                 r = r.replace('</b></span>', '</b><em class="nmr">%s</em></span>' % h, 1)
-            rows.append(r.replace('<div class="tr ', '<div data-r="%d" class="tr ' % g, 1))
+            r = r.replace('<div class="tr ', '<div data-r="%d" class="tr ' % g, 1)
+            if g in SWAPPABLE_ROWS:  # 승격 허용 표기 — 이름·행 구조 불변(파서 계약: style 뒤 optional)
+                r = re.sub(r'(style="--d:\d+")>', r'\1 data-sw="1">', r, count=1)
+            rows.append(r)
         o.append(
             '        <div class="pgroup">\n'
             '        <button type="button" class="tabbtn%s" data-p="%s" role="tab" aria-selected="%s">'
