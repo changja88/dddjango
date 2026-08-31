@@ -7223,6 +7223,8 @@ def _tree_slice2(
                 for area in sorted(p for p in api.iterdir() if p.is_dir()):
                     if area.name in ("webhook", "__pycache__") or area.name.startswith("."):
                         continue
+                    if area.name in ("api_router", "bc_error_schema"):
+                        continue  # api 직계 «파일 칸»의 동명 폴더 — 배제 칸 승격 red 는 registry #4 소유(area 오인·이중 발화 방지)
                     area_rel = area.relative_to(root)
                     area_where = f"{area_rel}/"
                     if area.name.lower() in _TECH_DIR_TOKENS:
@@ -7234,12 +7236,13 @@ def _tree_slice2(
                         msg = "`api/<area>/` 이름은 안쪽 `application_layer/<area>/` 와 글자까지 같아야 한다"
                         findings.add("#121", area_where, msg)
                         finding_keys.append(None)
-                    entry = area / f"{area.name}_controller.py"
-                    if not entry.is_file():
+                    # 진입점 칸은 동명 폴더 승격 가능 — entry 는 실현(파일 또는 승격 본체)이다.
+                    entry = checker_target.slot_file(area / f"{area.name}_controller.py")
+                    if entry is None:
                         msg = f"진입점 `{area.name}_controller.py` 파일 하나가 온다"
                         findings.add("#123", area_where, msg)
                         finding_keys.append(None)
-                    for p in sorted(area.glob("*_controller.py")):
+                    for p in checker_target.slot_glob(area, "*_controller.py"):
                         if p != entry:
                             where = f"{p.relative_to(root)}"
                             msg = f"`api/<area>/` 의 진입점은 `{area.name}_controller.py` «하나»다"

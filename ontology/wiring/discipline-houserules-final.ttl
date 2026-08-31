@@ -139,7 +139,7 @@ djr:R-3409 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-revie
 
 djr:R-3410 djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
 
-djr:R-3411 djr:enforcedBy <https://numchida.com/ns/djr#c/check-transaction-boundary.py> .
+djr:R-3411 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-coder>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
 
 djr:R-3412 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-coder>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
 

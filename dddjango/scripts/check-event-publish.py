@@ -138,7 +138,8 @@ def _aggregate_public_methods(bc: Path) -> set[str]:
     for agg in domain.iterdir():
         if not agg.is_dir():
             continue
-        mod = _parse(agg / f"{agg.name}.py") if (agg / f"{agg.name}.py").is_file() else None
+        root_py = checker_target.slot_file(agg / f"{agg.name}.py")  # 동명 폴더 승격이면 본체(#271 재료)
+        mod = _parse(root_py) if root_py is not None else None
         if mod is None:
             continue
         for cls in [n for n in mod.body if isinstance(n, ast.ClassDef)]:

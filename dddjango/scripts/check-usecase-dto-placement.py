@@ -333,12 +333,14 @@ def _check_use_case(uc: Path, uc_rel: Path, agg_names: set[str], out: Findings, 
         if d.name == "dto":
             out.add("#201", uc_rel / d.name, "유스케이스 자료는 세 파일(`_command`·`_query`·`_result`)이다 — `dto/` 겹을 만들지 않는다")
 
-    entry = uc / f"{name}_use_case.py"
-    strays = [f for f in files if f.name.endswith("_use_case.py") and f.name != entry.name]
+    entry_name = f"{name}_use_case.py"
+    # 진입점 칸의 실현은 파일 또는 동명 폴더 승격(#490 교체형)의 본체다 — slot_file 이 판독한다.
+    entry = checker_target.slot_file(uc / entry_name)
+    strays = [f for f in files if f.name.endswith("_use_case.py") and f.name != entry_name]
     for f in strays:
         out.add("#190", uc_rel / f.name, "유스케이스 하나 = 폴더 하나 = 진입점 하나다 — 이 폴더의 진입점이 아니다")
-    if not entry.is_file():
-        out.add("#193", uc_rel / entry.name, f"진입점 파일 이름은 `{name}_use_case.py` 다 — 부재")
+    if entry is None:
+        out.add("#193", uc_rel / entry_name, f"진입점 파일 이름은 `{name}_use_case.py` 다 — 부재")
 
     # #191 후보 — 이름은 동사(자동 통과: 첫 토큰이 애그리거트 공개 메서드와 일치하는 경우는
     # 수집 비용 대비 이득이 낮아 후보에 포함하되, 애그리거트 «이름 그대로»와 명사 접미만 좁힌다)
@@ -371,10 +373,10 @@ def _check_use_case(uc: Path, uc_rel: Path, agg_names: set[str], out: Findings, 
                 if any(tok in c.name for tok in ("Error", "Failure", "Exception")):
                     out.add("#571", uc_rel / res_f.name, f"실패(`{c.name}`)는 result 에 오지 않는다")
 
-    if entry.is_file():
+    if entry is not None:
         mod = _parse(entry)
         if mod is not None:
-            _check_entry(mod, uc_rel / entry.name, out, cand)
+            _check_entry(mod, uc_rel / entry.relative_to(uc), out, cand)
 
 
 def _check_entry(mod: ast.Module, rel, out: Findings, cand: Candidates) -> None:
@@ -611,6 +613,8 @@ def _check_validation_raises(scan_root: Path, rel_base, cand: Candidates) -> Non
     """#68 후보 — 검증 목적 raise 가 허용 두 자리(schema_in.py·domain_layer/**) 밖."""
     for f in sorted(scan_root.rglob("*.py")):
         rp = f.relative_to(scan_root).parts
+        # 이름 판정이라 승격 schema_in 의 본체(`schema_in/schema_in.py`)도 자연히 면제된다 —
+        # 승격 폴더 안 «부품»은 면제하지 않는다(면제는 칸 실현에만 · #490 교체형).
         if set(rp) & SKIP_DIRS or "domain_layer" in rp or f.name == "schema_in.py":
             continue
         if rp[0] not in ("application_layer", *DRIVING_NAMES):
@@ -671,9 +675,9 @@ def main(argv: list[str]) -> int:
                     f = uc / f"{uc.name}{suffix}"
                     if f.is_file():
                         _check_dto_file(f, uc_rel / f.name, findings)
-                entry = uc / f"{uc.name}_use_case.py"
-                if entry.is_file():
-                    _check_event_steps(entry, uc_rel / entry.name, False, findings)
+                entry = checker_target.slot_file(uc / f"{uc.name}_use_case.py")
+                if entry is not None:
+                    _check_event_steps(entry, uc_rel / entry.relative_to(uc), False, findings)
             _check_cross_use(app, bc_rel / "application_layer", findings)
             _check_dto_names(app, bc_rel / "application_layer", findings)
             _check_boundary_names(app, bc_rel / "application_layer", findings)
@@ -694,7 +698,8 @@ def main(argv: list[str]) -> int:
         for layer_name in DRIVEN_NAMES:
             repo_dir = bc / layer_name / "adapter" / "persistence" / "repository"
             if repo_dir.is_dir():
-                for f in sorted(repo_dir.glob("*.py")):
+                # 승격 repo 구현의 본체도 판독한다(slot_glob) — pull_events 규율(#539)은 실현 형태와 무관하다.
+                for f in checker_target.slot_glob(repo_dir, "*.py"):
                     _check_event_steps(f, bc_rel / f.relative_to(bc), True, findings)
 
         _check_validation_raises(bc, bc_rel, cand)

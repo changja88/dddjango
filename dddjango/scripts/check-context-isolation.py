@@ -331,20 +331,24 @@ def _check_ohs(ohs: Path, bc: Path, bc_rel: Path, agg_names: set[str], all_bcs: 
         elif svc.name.removesuffix("_service") in agg_names or svc.name in agg_names:
             cand.add("#151", srel, f"창구 이름 `{svc.name}` 이 애그리거트 이름과 같다", "Q1(이 이름이 «무엇을 해 주는가»를 말하나)")
 
-        entry = svc / f"{svc.name}_service.py"
-        if not entry.is_file():
-            out.add("#152", srel / entry.name, f"창구의 진입점은 `{svc.name}_service.py` 하나다 — 부재")
+        entry_name = f"{svc.name}_service.py"
+        # 진입점 칸은 동명 폴더 승격 가능 — entry 는 실현(파일 또는 `<svc>_service/` 본체)이다.
+        entry = checker_target.slot_file(svc / entry_name)
+        if entry is None:
+            out.add("#152", srel / entry_name, f"창구의 진입점은 `{svc.name}_service.py` 하나다 — 부재")
         sdirs, sfiles = _entries(svc)
         for p in sdirs:
+            if p.name == f"{svc.name}_service" and (p / entry_name).is_file():
+                continue  # 본체 실존하는 승격 폴더 — 진입점 칸의 실현이다
             if p.name != "contract":
                 out.add("#154", srel / p.name, "`<service>/` 안은 `<service>_service.py` 와 `contract/` 둘로 구성한다")
         for p in sfiles:
-            if p.name not in (entry.name, "__init__.py"):
+            if p.name not in (entry_name, "__init__.py"):
                 out.add("#154", srel / p.name, "`<service>/` 안은 `<service>_service.py` 와 `contract/` 둘로 구성한다")
 
         ops: set[str] = set()
-        if entry.is_file():
-            ops = _check_ohs_service(entry, srel / entry.name, out, cand)
+        if entry is not None:
+            ops = _check_ohs_service(entry, srel / entry.relative_to(svc), out, cand)
 
         contract = svc / "contract"
         if contract.is_dir():
@@ -613,19 +617,27 @@ def _check_acl(acl: Path, bc: Path, bc_rel: Path, out: Findings) -> set[str]:
     partners: set[str] = set()
     for d in dirs:
         partners.add(d.name)
-        for f in sorted(d.glob("*.py")):
+        # 어댑터 칸은 동명 폴더 승격 가능 — 본체는 파일 칸과 동격이고, 승격 폴더의
+        # 부품도 import 검사(#473) 대상이다(격리 규칙은 폴더 전체가 주어다).
+        scan: "list[tuple[Path, bool]]" = [(f, True) for f in checker_target.slot_glob(d, "*.py")]
+        for sub in sorted(p for p in d.iterdir() if p.is_dir()):
+            body = sub / f"{sub.name}.py"
+            if body.is_file():
+                scan.extend((f, False) for f in sorted(sub.glob("*.py")) if f != body)
+        for f, is_slot in scan:
             if f.name == "__init__.py":
                 continue
-            rel = rel0 / d.name / f.name
+            rel = rel0 / d.name / f.relative_to(d)
             mod = _parse(f)
             if mod is None:
                 continue
             expected_prefix = _camel(d.name)
-            for cls in (n for n in mod.body if isinstance(n, ast.ClassDef) and not n.name.startswith("_")):
-                if not cls.name.endswith("Adapter"):
-                    out.add("#363", rel, f"ACL 어댑터 클래스 이름은 `<Bc><Capability>Adapter` 다 — `{cls.name}`")
-                elif not cls.name.startswith(expected_prefix):
-                    out.add("#363", rel, f"ACL 어댑터 이름은 상대 BC(`{expected_prefix}`)로 시작한다 — `{cls.name}`")
+            if is_slot:
+                for cls in (n for n in mod.body if isinstance(n, ast.ClassDef) and not n.name.startswith("_")):
+                    if not cls.name.endswith("Adapter"):
+                        out.add("#363", rel, f"ACL 어댑터 클래스 이름은 `<Bc><Capability>Adapter` 다 — `{cls.name}`")
+                    elif not cls.name.startswith(expected_prefix):
+                        out.add("#363", rel, f"ACL 어댑터 이름은 상대 BC(`{expected_prefix}`)로 시작한다 — `{cls.name}`")
             uses_ohs = any(
                 level == 0 and "open_host_service" in p.split(".")
                 for _n, p, level in _imports(mod)
@@ -683,7 +695,13 @@ def _check_uow_cross(bc: Path, bc_rel: Path, cross_ports: set[str], out: Finding
     app = bc / "application_layer"
     if not app.is_dir():
         return
-    for f in sorted(app.rglob("*_use_case.py")):
+    # 유스케이스 칸은 동명 폴더 승격 가능 — 부품의 `with uow:` 크로스 호출도 같은 규칙이라
+    # 승격 폴더(본체 실존) 내부 .py 전체를 스캔에 넣는다.
+    targets: "set[Path]" = set(app.rglob("*_use_case.py"))
+    for d in app.rglob("*_use_case"):
+        if d.is_dir() and (d / f"{d.name}.py").is_file():
+            targets.update(d.rglob("*.py"))
+    for f in sorted(targets):
         mod = _parse(f)
         if mod is None:
             continue
@@ -754,6 +772,7 @@ def _check_exception_spots(bc: Path, bc_rel: Path, out: Findings) -> None:
             if set(rp) & SKIP_DIRS or (rp and rp[0] == "port"):
                 continue
             if (p.is_file() and p.name == "exception.py") or (p.is_dir() and p.name == "exception"):
+                # 승격 부품에도 적용 — 예외 자리는 규범 전역·2026-09-01
                 out.add("#292", bc_rel / p.relative_to(bc), "application 쪽 예외 자리는 `port/<capability>/exception.py`(바깥 행위자의 죽음)뿐이다")
 
 
