@@ -64,17 +64,13 @@ SEALED: "dict[str, str]" = {
 # 신판 기본 red 레인 stdout sha256 (--emit-expected 재생성). domain-model·
 # common-container 는 findings_smoke.BASELINE_SHA 와 동일값(교차 골든 — 2026-08-20 실측).
 EXPECTED_SHA: "dict[str, str]" = {
-    # 2026-08-25 재실측 — #543 저널 carve-out 경계 픽스처 +2(findings_smoke 와 동일 사유)
-    # 2026-08-25 판정 ④ — pass-only 루트 음성 fixture(#256 +1) 반영 재실측.
     "check-domain-model.py": "4398d7d774da5d4d7bc6542bf5c5f19d0d99dbf6f3682a41a7c742803d3c415a",
     "check-common-container.py": "5ce9427209a475032bf19b5cf8f16d356e6e976f2119afe1639159cc8afd23fc",
     "check-api-error-controller-contract.py": "b883cb584e61d5b18ab527aebf9d4536a15b5519d49ece049e0f273298dcf1df",
     "check-error-centralization.py": "5d21b130e5a23bc5c5610ad3ebe29e880e526cd2338ff2377f00cb36294ff191",
-    # 2026-08-31 #101 자기-BC 한정 수리 — 메시지 문면 갱신 반영 재실측(위반 수 무변 #101×1).
     "check-composition-root.py": "81938fb23b67216c6fc24f8c39fc90564292d6526d09e828d452bc953f0c08ff",
     "check-openapi-error-declaration.py": "eef4b45829694c5e65eb0cd3c5efacddf58e3f3669e0c291d2730190111c3e34",
     "check-response-schema-bypass.py": "b1a77bebb4272f9eb817feb63f31b6715d52da9d0ad312a2f02d744717428793",
-    # 2026-08-25 판정 ⑦ — 별칭 미참조 무관 클래스 음성 fixture(#157·#484 +2) 반영 재실측.
     "check-context-isolation.py": "4622fb6fa1d4c1ddb607767b5283de71bb3d9c2bf4ca821701553a8d5a803747",
 }
 

@@ -156,7 +156,11 @@ def _check_path_words(root: Path, bc: Path, bc_vocab_set: set, tech: set,
             f.add("#309", rel, "`service/` — `domain_service/` 를 그대로 쓴다(줄이지 않는다)")
         if "application_programming_interface" in name:
             f.add("#148", rel, "일반어가 된 약어는 풀어 쓰지 않는다 — `api` 그대로 쓴다")
-        if name == "gateway" or name.endswith(("_port", "_adapter", "_gateway")):
+        # 동명 폴더 승격(#490 교체형)의 정본 형 — 폴더명+`.py` 본체가 폴더 안에 실존.
+        promoted = (d / f"{name}.py").is_file()
+        if name == "gateway" or (name.endswith(("_port", "_adapter", "_gateway")) and not promoted):
+            # 승격 폴더(본체 실존)는 칸 실현이라 #41 면제 — `*_port` 는 승격 배제 칸이라
+            # 면제 개념 밖이지만, 승격 시도 자체는 registry #4(#490)가 red 로 잡는다.
             f.add("#41", rel, "Port·Adapter·Gateway 는 폴더 이름에 나오지 않는다 — "
                               "파일이 접미사로 종류를 진다(`<capability>_port.py`)")
         if name in DEGREE_DENY and name not in _TREE_DIR_NAMES \
@@ -174,9 +178,11 @@ def _check_path_words(root: Path, bc: Path, bc_vocab_set: set, tech: set,
         parent = d.parent.name
         if parent and len(parent) >= 3 and parent not in ("application",) \
                 and parent not in NEW_LAYERS:
-            if name != parent and name.split("_", 1)[0] == parent:
+            if name != parent and name.split("_", 1)[0] == parent and not promoted:
                 # 첫 토큰이 부모 그대로일 때만 문다 — `order/place_order/` 같은
                 # `<area>/<use_case>/` 의 자연스러운 재등장은 반복이 아니다.
+                # 승격 폴더(promoted — `turn/turn_controller/` 류)는 칸 실현이라 면제하고,
+                # 완전 동명(`order/order/`)은 위 `name != parent` 가드가 원래 안 문다.
                 f.add("#481", rel, f"자식 폴더가 부모 `{parent}/` 의 낱말을 반복한다 — "
                                    "파일의 접두·접미 반복(#30·#568)만 정상이다")
         # #148 — 파일 쪽도 본다(아래 파일 루프와 별개로 폴더 이름은 여기서 끝).
@@ -232,14 +238,34 @@ def _check_prefix_suffix(root: Path, bc: Path, f: Findings) -> None:
             and parts[0] == "application_layer"
             and parts[1] != "port"
         )
+        # 승격 폴더(#490 교체형) 안은 한 층 더 깊다 — uc 폴더 기준 상대 판정. boundary 세 칸
+        # (`_command`·`_query`·`_result`)은 승격 배제라 유스케이스 «직계»만 정본이고, 승격
+        # 폴더 부품이 boundary 접미의 미끼 이름을 달아도 같은 #34 다.
+        in_promoted_part = (
+            len(parts) == 5
+            and parts[0] == "application_layer"
+            and parts[1] != "port"
+            and (py.parent / f"{py.parent.name}.py").is_file()
+        )
         for suf in ("_command", "_query", "_result"):
-            if is_use_case_boundary and stem.endswith(suf):
+            if not stem.endswith(suf) or "domain_bypass_query" in parts:
+                continue
+            if is_use_case_boundary:
                 base = stem[: -len(suf)]
-                if py.parent.name != base and "domain_bypass_query" not in parts:
+                if py.parent.name != base:
                     f.add("#34", _rel(root, py),
                           f"`{stem}.py` 가 `{py.parent.name}/` 에 있다 — `<use_case>{suf}` 는 "
                           f"«유스케이스당»이라 `{base}/` 폴더 안이어야 한다")
-        if stem in ("schema_in", "schema_out") and py.parent.name != "schema":
+            elif in_promoted_part:
+                f.add("#34", _rel(root, py),
+                      f"`{stem}.py` 가 승격 폴더 `{py.parent.name}/` 안에 있다 — "
+                      f"`<use_case>{suf}` 는 «유스케이스 직계» 파일 칸이다(boundary 칸은 승격 배제)")
+        # schema 칸은 승격 허용 — 정본 자리는 `schema/` 직계 또는 `schema/<동명 승격 폴더>/` 의
+        # 본체(`schema/schema_in/schema_in.py`)다. 승격 폴더 부품은 stem 이 달라 이 판정 밖이다.
+        schema_slot_ok = py.parent.name == "schema" or (
+            py.parent.name == stem and py.parent.parent.name == "schema"
+        )
+        if stem in ("schema_in", "schema_out") and not schema_slot_ok:
             f.add("#34", _rel(root, py),
                   f"`{stem}.py` 가 `schema/` 밖에 있다 — `schema_*` 는 «<area>/ 당» 하나, "
                   "`schema/` 직계다")
@@ -252,7 +278,9 @@ def _check_name_pairs(root: Path, bc: Path, f: Findings) -> None:
     if domain.is_dir():
         vo_stems = {p.stem for p in domain.glob("*/value_object/*.py") if p.stem != "__init__"}
         vo_stems |= {p.stem for p in domain.glob("shared_value_object/*.py") if p.stem != "__init__"}
-        ds_stems = {p.stem for p in domain.glob("domain_service/*.py") if p.stem != "__init__"}
+        # domain_service 는 승격 허용 칸 — 승격 본체(`domain_service/<이름>/<이름>.py`) stem 포함.
+        ds_stems = {p.stem for p in checker_target.slot_glob(domain / "domain_service", "*.py")
+                    if p.stem != "__init__"}
         for name in sorted(vo_stems & ds_stems):
             f.add("#44", _rel(root, domain / "domain_service" / f"{name}.py"),
                   f"도메인 서비스 `{name}` 이 같은 BC 의 값 객체와 겹친다 — 행위 이름으로 짓는다"

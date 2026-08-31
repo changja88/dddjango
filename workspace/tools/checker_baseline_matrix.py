@@ -244,12 +244,12 @@ EXPECTED: "dict[str, tuple[int, int, int, int, bool]]" = {
     "check-response-schema-bypass.py": (2, 0, 0, 3, True),
     "check-layer-skeleton.py": (2, 10, 10, 1, False),
     "check-openapi-error-declaration.py": (2, 3, 3, 1, False),
-    "check-context-isolation.py": (2, 60, 59, 6, False),  # 2026-08-25 판정 ⑦ — 별칭 미참조 무관 클래스 음성(#157·#484 +2)
+    "check-context-isolation.py": (2, 60, 59, 6, False),
     "check-app-container.py": (2, 0, 0, 4, True),
     "check-ninja-boundary-middleware.py": (2, 0, 0, 4, True),
     "check-common-container.py": (2, 0, 0, 4, True),
     "check-idempotency-scope-creep.py": (2, 0, 0, 3, True),
-    "check-public-surface-annotation.py": (2, 11, 11, 4, False),  # 2026-08-25 판정 ⑩ — contract 팩토리 raise 형상(#456 +1)
+    "check-public-surface-annotation.py": (2, 11, 11, 4, False),
     "check-test-config.py": (2, 14, 14, 2, False),
     "check-transient-overmapping.py": (2, 0, 0, 3, True),
     "check-synthetic-infra-exc.py": (2, 1, 1, 2, False),
@@ -258,20 +258,13 @@ EXPECTED: "dict[str, tuple[int, int, int, int, bool]]" = {
     "check-db-table.py": (2, 26, 26, 2, False),
     "check-choices-literal-consumption.py": (2, 0, 0, 6, True),
     "check-usecase-dto-placement.py": (2, 35, 35, 7, False),
-    # 2026-08-25 #197 측정 정밀화 경계 픽스처 +2(reconcile형·죽은 helper — red 유지 pin)
     "check-transaction-boundary.py": (2, 15, 15, 3, False),
-    # 2026-08-25 #543 저널 carve-out 경계 +2raw/+1unique(no-op mark·일반 관용구 흉내 red)
-    "check-domain-model.py": (2, 51, 49, 14, False),  # 2026-08-25 판정 ④ — pass-only 루트 음성(#256 +1)
-    # 2026-08-25 #545/#365/#555 부칙 — 기존 #545×2 는 적용 술어로 비적용 전환(-2), 디코이
-    # 7형·극성 반례·ACL 위장·별칭 세탁 4형 신설(+13raw) · ⓓ 후보 2라인이 unparsed 로(+2)
-    # · 대조 리뷰 처분 — 동적 import(loanhub) red +1
-    "check-port-adapter-pairing.py": (2, 96, 93, 12, False),  # 2026-08-25 판정 ②·④ — exact-set 3형(#245)+빈 선언 orphan(#351)+무짝 uow(#476) +5
+    "check-domain-model.py": (2, 51, 49, 14, False),
+    "check-port-adapter-pairing.py": (2, 96, 93, 12, False),
     "check-event-publish.py": (2, 20, 20, 5, False),
     "check-broker-contract.py": (2, 22, 22, 6, False),
     "check-missable-entrance.py": (2, 17, 17, 5, False),
-    # 2026-08-25 #33 models/ 자리 면제의 음성 경계 +1(_model 접미 아님 → red 유지)
-    "check-naming.py": (2, 33, 33, 6, False),  # 2026-08-25 판정 ① — 축약·비접두·접미 이탈 가시화(#247 +3)
-    # 2026-08-25 #562 국소 stoplist 경계 — canon_json 은 #562 무발화·ⓓ#448 후보 1라인이 unparsed 로(+1)
+    "check-naming.py": (2, 33, 33, 6, False),
     "check-business-vocabulary.py": (2, 48, 48, 8, False),
     "check-response-schema-bypass.py::git-clean": (0, 0, 0, 0, False),
     "check-response-schema-bypass.py::git-modified": (2, 0, 0, 3, True),
@@ -294,22 +287,15 @@ EXPECTED: "dict[str, tuple[int, int, int, int, bool]]" = {
     "check-db-table.py::git-clean": (2, 24, 24, 1, False),
     "check-db-table.py::git-modified": (2, 24, 24, 1, False),
     "check-db-table.py::git-untracked": (2, 26, 26, 1, False),
-    # 위험 레인 4종(2026-08-20 실측 — 픽스처 완성분·레인 커스텀 argv): auto 기본 호출은
-    # tree green 시 code 레인 미도달 exit 0(표 하단 관찰 라인) — selector 렌더로 실도달.
-    # parsed 0·synthetic True = code 레인 발화가 아직 [#N] 라인 앵커 밖(구 문면)이라는
-    # 정직한 기록 — 3단계 포매터 이행 시 parsed 증가로 갱신된다(사유 의무).
     "check-api-error-controller-contract.py::api_error_controller_code": (2, 3, 3, 2, False),
     "check-composition-root.py::composition_root_single_file": (2, 1, 1, 2, False),
     "check-openapi-error-declaration.py::openapi_decl_missing": (2, 1, 1, 2, False),
-    # unparsed 4→11: R-3401 경계 red 2 concrete(무 default Literal 5·좁힘값≠default 2) 추가(2026-08-24)
     "check-error-centralization.py::error_centralization_code": (2, 1, 1, 11, False),
     "check-error-centralization.py::error_centralization_literal_edge": (2, 0, 0, 5, True),
     "check-api-error-controller-contract.py::guard-zero": (2, 0, 0, 1, True),
-    "check-error-centralization.py::guard-zero": (2, 0, 0, 1, True),
-    "check-openapi-error-declaration.py::guard-zero": (2, 0, 0, 1, True),
-    "check-response-schema-bypass.py::guard-zero": (2, 0, 0, 1, True),
     "check-db-table.py::guard-zero": (2, 0, 0, 1, True),
     "check-domain-model.py::guard-zero": (2, 0, 0, 1, True),
+    "check-error-centralization.py::guard-zero": (2, 0, 0, 1, True),
     "check-event-publish.py::guard-zero": (2, 0, 0, 1, True),
     "check-idempotency-scope-creep.py::guard-zero": (2, 0, 0, 1, True),
     "check-layer-skeleton.py::guard-zero": (2, 0, 0, 1, True),
@@ -317,8 +303,10 @@ EXPECTED: "dict[str, tuple[int, int, int, int, bool]]" = {
     "check-missable-entrance.py::guard-zero": (2, 0, 0, 1, True),
     "check-naming.py::guard-zero": (2, 0, 0, 1, True),
     "check-ninja-boundary-middleware.py::guard-zero": (2, 0, 0, 1, True),
+    "check-openapi-error-declaration.py::guard-zero": (2, 0, 0, 1, True),
     "check-port-adapter-pairing.py::guard-zero": (2, 0, 0, 1, True),
     "check-public-surface-annotation.py::guard-zero": (2, 0, 0, 1, True),
+    "check-response-schema-bypass.py::guard-zero": (2, 0, 0, 1, True),
     "check-synthetic-infra-exc.py::guard-zero": (2, 0, 0, 1, True),
     "check-test-config.py::guard-zero": (2, 0, 0, 1, True),
     "check-transaction-boundary.py::guard-zero": (2, 0, 0, 1, True),

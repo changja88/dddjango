@@ -643,11 +643,17 @@ def _check_driven(root: Path, bc: Path, agg_names: set, bc_vocab_set: set,
     if repo_dir.is_dir():
         for p in sorted(repo_dir.iterdir()):
             if p.is_dir() and p.name != "__pycache__":
-                rule = "#464" if p.name in ("command", "query") else "#352"
-                msg = ("command/query 로 가르지 않는다 — 가르는 축은 「도메인을 거쳤나」다"
-                       if rule == "#464" else "리포지토리 구현은 폴더가 아니라 파일이다(애그리거트당 하나)")
-                f.add(rule, _rel(root, p), msg)
-        for py in sorted(repo_dir.glob("*_repository.py")):
+                if p.name in ("command", "query"):
+                    f.add("#464", _rel(root, p),
+                          "command/query 로 가르지 않는다 — 가르는 축은 「도메인을 거쳤나」다")
+                    continue
+                # 동명 폴더 승격(#490 교체형 — 2026-09-01): <agg>_repository/ 에 본체가
+                # 실존하면 본체를 구현 파일로 취급한다(형태 검증은 registry #4 소유).
+                if p.name.endswith("_repository") and (p / f"{p.name}.py").is_file():
+                    continue
+                f.add("#352", _rel(root, p),
+                      "리포지토리 구현은 폴더가 아니라 파일이다(애그리거트당 하나)")
+        for py in checker_target.slot_glob(repo_dir, "*_repository.py"):
             impl_stems.add(py.stem)
             agg = py.stem[: -len("_repository")]
             mod = _parse(py)
@@ -697,7 +703,7 @@ def _check_driven(root: Path, bc: Path, agg_names: set, bc_vocab_set: set,
     if thin.is_dir():
         contract_caps = {p.name for p in port_bypass.iterdir() if p.is_dir()} \
             if port_bypass.is_dir() else set()
-        for py in sorted(thin.glob("*_query.py")):
+        for py in checker_target.slot_glob(thin, "*_query.py"):
             capname = py.stem[: -len("_query")]
             if contract_caps and capname not in contract_caps:
                 f.add("#583", _rel(root, py),
@@ -720,7 +726,7 @@ def _check_driven(root: Path, bc: Path, agg_names: set, bc_vocab_set: set,
     decl_uows = {p.stem for p in port_uow.glob("*_unit_of_work.py")} if port_uow.is_dir() else set()
     impl_uows = set()
     if uow_impl.is_dir():
-        for py in sorted(uow_impl.glob("*.py")):
+        for py in checker_target.slot_glob(uow_impl, "*.py"):
             if py.name == "__init__.py":
                 continue
             if not py.stem.endswith("_unit_of_work"):
@@ -892,7 +898,7 @@ def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
             if p.is_file() and p.suffix == ".py" and p.name != "__init__.py":
                 f.add("#369", _rel(root, p), "external_system/ 직계 파일 — 벤더 하나 = 폴더 하나다")
         for system in sorted(p for p in ext.iterdir() if p.is_dir() and p.name != "__pycache__"):
-            for py in sorted(system.glob("*.py")):
+            for py in checker_target.slot_glob(system, "*.py"):
                 if py.name == "__init__.py":
                     continue
                 mod = _parse(py)
@@ -915,7 +921,11 @@ def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
         mod = _parse(py)
         if mod is None:
             continue
-        in_ext_adapter = "external_system" in parts and py.stem.endswith("_adapter")
+        # 동명 폴더 승격 — <capability>_adapter/ 승격 폴더 안 부품도 어댑터 몸통이다(#367 면제).
+        in_ext_adapter = "external_system" in parts and (
+            py.stem.endswith("_adapter")
+            or (py.parent.name.endswith("_adapter")
+                and (py.parent / f"{py.parent.name}.py").is_file()))
         for node in ast.walk(mod):
             if isinstance(node, (ast.Import, ast.ImportFrom)):
                 mods = [a.name for a in node.names] if isinstance(node, ast.Import) \
@@ -933,6 +943,10 @@ def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
                               "부르기는 입구다(셋을 한 칸에 뭉치면 위반)")
         if "adapter" in parts and py.stem.endswith("_adapter"):
             cap_dir = py.parent
+            # 동명 폴더 승격 — 본체(<technology>_adapter/<technology>_adapter.py)면
+            # 능력 폴더는 승격 폴더의 한 단 위다.
+            if cap_dir.name == py.stem:
+                cap_dir = cap_dir.parent
             if cap_dir.parent == adapter and cap_dir.name not in (
                     "persistence", "anticorruption_layer", "acl", "external_system"):
                 if py.stem == f"{cap_dir.name}_adapter":
@@ -993,6 +1007,11 @@ def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
         if (len(parts) == 3 and parts[0] == "adapter"
                 and parts[1] not in ("anticorruption_layer", "external_system")
                 and parts[2] == "django_adapter.py"):
+            continue
+        # 동명 폴더 승격 — django_adapter.py 가 django_adapter/ 로 승격돼도 면제는 유지된다.
+        if (len(parts) == 4 and parts[0] == "adapter"
+                and parts[1] not in ("anticorruption_layer", "external_system")
+                and parts[2] == "django_adapter" and parts[3] == "django_adapter.py"):
             continue
         mod = _parse(py)
         for node in ast.walk(mod) if mod else []:

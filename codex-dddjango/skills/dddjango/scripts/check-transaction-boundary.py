@@ -411,6 +411,10 @@ def _check_use_case_writes(root: Path, bc: Path, f: Findings) -> None:
     if not app_layer.is_dir():
         return
     for py in _py_files(app_layer):
+        # rglob+이름 필터라 동명 폴더 승격(#490 교체형)의 본체
+        # (`<uc>_use_case/<uc>_use_case.py`)도 그대로 걸린다 — slot_glob 등가.
+        # 승격 «부품»의 쓰기 호출 금지(«save 류는 본체에만»)는 승격 형태 규범 가족의
+        # 몫(check-layer-skeleton #638~)이라 여기서 스캔을 넓히지 않는다.
         if not py.name.endswith("_use_case.py"):
             continue
         mod = _parse(py)

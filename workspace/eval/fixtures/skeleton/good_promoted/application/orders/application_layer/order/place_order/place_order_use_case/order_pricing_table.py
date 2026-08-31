@@ -1,0 +1,60 @@
+def piece_0() -> None:
+    v_0: int = 0
+def piece_1() -> None:
+    v_1: int = 1
+def piece_2() -> None:
+    v_2: int = 2
+def piece_3() -> None:
+    v_3: int = 3
+def piece_4() -> None:
+    v_4: int = 4
+def piece_5() -> None:
+    v_5: int = 5
+def piece_6() -> None:
+    v_6: int = 6
+def piece_7() -> None:
+    v_7: int = 7
+def piece_8() -> None:
+    v_8: int = 8
+def piece_9() -> None:
+    v_9: int = 9
+def piece_10() -> None:
+    v_10: int = 10
+def piece_11() -> None:
+    v_11: int = 11
+def piece_12() -> None:
+    v_12: int = 12
+def piece_13() -> None:
+    v_13: int = 13
+def piece_14() -> None:
+    v_14: int = 14
+def piece_15() -> None:
+    v_15: int = 15
+def piece_16() -> None:
+    v_16: int = 16
+def piece_17() -> None:
+    v_17: int = 17
+def piece_18() -> None:
+    v_18: int = 18
+def piece_19() -> None:
+    v_19: int = 19
+def piece_20() -> None:
+    v_20: int = 20
+def piece_21() -> None:
+    v_21: int = 21
+def piece_22() -> None:
+    v_22: int = 22
+def piece_23() -> None:
+    v_23: int = 23
+def piece_24() -> None:
+    v_24: int = 24
+def piece_25() -> None:
+    v_25: int = 25
+def piece_26() -> None:
+    v_26: int = 26
+def piece_27() -> None:
+    v_27: int = 27
+def piece_28() -> None:
+    v_28: int = 28
+def piece_29() -> None:
+    v_29: int = 29

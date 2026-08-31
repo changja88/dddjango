@@ -229,7 +229,9 @@ def _check_webhook(root: Path, bc: Path, f: Findings, cand: Candidates) -> list[
                      f"webhook/{name}/ 이 역할 접미·업무 어휘와 겹친다",
                      "보내는 쪽 문서가 자기를 이 이름으로 부르나")
         schema = provider / "schema"
-        if not (schema / "schema_in.py").is_file() or not (schema / "schema_out.py").is_file():
+        # schema_in/out 칸은 동명 폴더 승격 가능 — 파일 또는 승격 실현(폴더+본체)을 인정한다.
+        if checker_target.slot_file(schema / "schema_in.py") is None \
+                or checker_target.slot_file(schema / "schema_out.py") is None:
             f.add("#515", _rel(root, provider),
                   "schema/schema_in.py·schema_out.py 겹이 없다 — 바깥이 보내는 모양과 우리가 "
                   "돌려주는 응답이 각각 산다(돌려주는 것이 ack 라는 보장은 없다)")

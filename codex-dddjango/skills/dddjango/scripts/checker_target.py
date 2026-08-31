@@ -23,6 +23,7 @@ from __future__ import annotations
 import ast
 import re
 import sys
+import fnmatch
 from pathlib import Path
 
 _BC_LAYER_DIRS: "tuple[str, ...]" = ("domain_layer", "application_layer", "driving_layer", "driven_layer")
@@ -103,3 +104,29 @@ def bc_shaped_target_reason(target: "Path | str") -> "str | None":
     ):
         return "TARGET 이 application/ 컨테이너 자체다 — 검사기의 대상은 저장소 루트다(application/ 의 부모)"
     return None
+
+# ── 동명 폴더 승격(#490 교체형) 경로 해소 — 2026-09-01 ──────────────────────
+
+def slot_file(expected: "Path") -> "Path | None":
+    """칸 경로 `<…>/<이름>.py` 의 실현 — 파일이면 그 파일, 유효 승격이면 본체, 없으면 None."""
+    if expected.is_file():
+        return expected
+    name = expected.name
+    if name.endswith(".py"):
+        promo = expected.parent / name[:-3]
+        body = promo / name
+        if promo.is_dir() and body.is_file():
+            return body
+    return None
+
+
+def slot_glob(directory: "Path", pattern: str) -> "list[Path]":
+    """단층 glob 의 승격 인지판 — `pattern` 파일 + (이름+`.py` 가 pattern 인 폴더의) 승격 본체."""
+    out: "list[Path]" = sorted(directory.glob(pattern))
+    if directory.is_dir():
+        for p in sorted(directory.iterdir()):
+            if p.is_dir():
+                body = p / (p.name + ".py")
+                if body.is_file() and fnmatch.fnmatch(p.name + ".py", pattern):
+                    out.append(body)
+    return out

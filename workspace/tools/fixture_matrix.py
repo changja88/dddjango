@@ -5,7 +5,7 @@
 fixture 에서 exit 2 가 나는지를 전수로 실측하고 표로 남긴다. eval v5 는
 FROZEN 이므로 실측은 이 fixture 결정 레인만 쓴다.
 
-케이스: skeleton 3 + 기존 15종×2 + API-error 3종×2(--error-profile auto)
+케이스: skeleton 5 + 기존 15종×2 + API-error 3종×2(--error-profile auto)
        + 신설 8종×2 + checker_lint 2 + 호출 계약 27 + 수정 사이클 레인 3×2 = 90.
 
 호출 계약 레인(라운드 1 P2 — 2026-08-12): TARGET 에 «BC 폴더»를 주면 검사기가
@@ -103,7 +103,8 @@ def build_cases() -> "list[tuple[str, list[str], str, int]]":
     """(라벨, argv, fixture 상대경로, 기대 exit)"""
     cases: list[tuple[str, list[str], str, int]] = []
     sk = "check-layer-skeleton.py"
-    for sub, want in (("good_bc", 0), ("bad_legacy_flat", 2), ("bad_missing", 2)):
+    for sub, want in (("good_bc", 0), ("bad_legacy_flat", 2), ("bad_missing", 2),
+                      ("good_promoted", 0), ("bad_promoted", 2)):
         fx = F / "skeleton" / sub
         cases.append((f"skeleton/{sub}", [sys.executable, str(S / sk), str(fx)], f"skeleton/{sub}", want))
     for script, fixture in PLAIN_PAIRS:

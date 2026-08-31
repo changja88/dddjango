@@ -23,7 +23,8 @@
   - 채택 신호원은 둘이다(#78): ⑴ 층 폴더 glob ⑵ Django 앱 마커.
 
 등록 순서: 이 검사는 다른 모든 검사보다 «먼저» 돌고, 걸리면 나머지를 돌리지 않는다(#487).
-내용 판정(#10·#628 등 ast 규칙)은 Phase 3 편입분이다 — 여기는 «존재·폐쇄»만 본다.
+내용 판정(#10·#628 등 ast 규칙)은 Phase 3 편입분이다 — 여기는 «존재·폐쇄»와 동명 폴더
+승격 실현의 형태 검증(#638~#643 · ⓓ#644 후보 신호 — 2026-09-01)만 본다.
 
 사용법: check-layer-skeleton.py [TARGET_DIR]   (기본: 현재 디렉터리)
 종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
@@ -39,11 +40,12 @@
 """
 from __future__ import annotations
 
+import ast as _ast
 import re
 import sys
 
 import checker_target
-from findings import Findings, emit_all, zero_target_guard
+from findings import Candidates, Findings, emit_all, zero_target_guard
 from pathlib import Path
 
 try:
@@ -84,6 +86,78 @@ def _has_adoption_signal(bc_dir: Path) -> bool:
     return has_layer or has_marker
 
 
+# ── 동명 폴더 승격(#490 교체형) — #638~#643 + ⓓ#644 ─────────────────────────
+
+# ⓓ#644 행위 칸 로스터 — 승격 허용 표기(swappable) 중 schema 4행(14·15·20·21) 제외
+# (houserules SKILL §1 감사 주도 배정 — 신호는 무조건 방출, 판정 의무의 diff 한정은 감사자 몫)
+PROMO_ACTION_ROWS = frozenset({12, 18, 24, 41, 61, 74, 92, 94, 96, 99, 102, 104})
+PROMO_SIGNAL_LINES = 200   # ⓓ#644 후보 문턱(물리 행·빈 줄 제외)
+PROMO_PART_MIN_LINES = 50  # #642 부품 출생 하한
+JUNK_DRAWER_NAMES = frozenset({"utils.py", "helpers.py", "util.py", "helper.py", "common.py", "misc.py"})
+_CASCADE_Q = "역할 밖 응집 단위가 있는가 — ①이동/②동명 폴더 승격/③유지 (houserules §1 캐스케이드)"
+
+
+def _phys_lines(path: Path) -> int:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (UnicodeDecodeError, OSError):
+        return 0
+    return sum(1 for line in text.splitlines() if line.strip())
+
+
+def _init_reexport_only(path: Path) -> bool:
+    """`__init__.py` 가 재수출 전용인가 — docstring · `from .<모듈> import <이름> as <이름>` · `__all__` 만."""
+    try:
+        mod = _ast.parse(path.read_text(encoding="utf-8"))
+    except (SyntaxError, UnicodeDecodeError, OSError):
+        return False
+    for i, node in enumerate(mod.body):
+        if i == 0 and isinstance(node, _ast.Expr) and isinstance(node.value, _ast.Constant) \
+                and isinstance(node.value.value, str):
+            continue
+        if isinstance(node, _ast.ImportFrom) and node.level >= 1:
+            continue
+        if isinstance(node, _ast.Assign) and all(
+                isinstance(tg, _ast.Name) and tg.id == "__all__" for tg in node.targets):
+            continue
+        if isinstance(node, _ast.AnnAssign) and isinstance(node.target, _ast.Name) \
+                and node.target.id == "__all__":
+            continue
+        return False
+    return True
+
+
+def _check_promoted(dir_path: Path, crow: "tree.Row", out: Findings, cand: Candidates) -> None:
+    """유효한 동명 폴더 승격의 형태 검증(#638~#643) + 행위 칸 ⓓ#644 신호."""
+    body = dir_path / (dir_path.name + ".py")
+    init = dir_path / "__init__.py"
+    if not body.is_file():
+        out.add("#638", dir_path, f"승격 폴더에 본체 `{dir_path.name}.py` 가 없다 — 위장 (트리 {crow.r}행)")
+    if not init.is_file():
+        out.add("#638", init, "승격 폴더에 재수출 전용 `__init__.py` 가 없다")
+    elif not _init_reexport_only(init):
+        out.add("#640", init, "`__init__.py` 는 재수출 전용이다 — from-as 재수출·`__all__`·docstring 밖 코드 동거 금지")
+    subdirs, files = _entries(dir_path)
+    for sd in subdirs:
+        out.add("#641", sd, "승격 폴더 내부는 1단 평평이다 — 부품 군집의 폴더 요구는 트리 개정 신호이지 중첩 근거가 아니다")
+    parts = [f for f in files if f.name not in ("__init__.py", dir_path.name + ".py")]
+    for f in parts:
+        if f.name in JUNK_DRAWER_NAMES:
+            out.add("#640", f, "승격 폴더 안 정크드로어 이름 — 부품은 응집 단위의 이름을 가진다")
+        n = _phys_lines(f)
+        if n < PROMO_PART_MIN_LINES:
+            out.add("#642", f, f"부품 {n}행 — 출생 하한 50행 미만(신규 여부는 게이트 앵커 차분이 가른다 · 기존분은 잔존 보고)")
+        if crow.r in PROMO_ACTION_ROWS and n > PROMO_SIGNAL_LINES:
+            cand.add("#644", f, f"행위 칸 승격 부품 {n}행(>{PROMO_SIGNAL_LINES}) — 캐스케이드 판정 의무 (트리 {crow.r}행)", _CASCADE_Q)
+    if body.is_file():
+        if not parts:
+            out.add("#643", dir_path, "부품 0개(본체+`__init__.py` 뿐)인 승격 폴더 — 환원 신호(파일 실현으로 되돌린다)")
+        if crow.r in PROMO_ACTION_ROWS:
+            n = _phys_lines(body)
+            if n > PROMO_SIGNAL_LINES:
+                cand.add("#644", body, f"행위 칸 실현 {n}행(>{PROMO_SIGNAL_LINES}) — 캐스케이드 판정 의무 (트리 {crow.r}행)", _CASCADE_Q)
+
+
 # ── 트리 대조 재귀 ──────────────────────────────────────────────────────────
 
 def _segments(row: "tree.Row") -> list[str]:
@@ -116,7 +190,7 @@ def _check_multi(dir_path: Path, shapes: list[list[str]], out: Findings) -> None
 
 
 def _check_level(dir_path: Path, row: "tree.Row", bindings: dict[str, str], out: Findings,
-                 skip: frozenset[str] = frozenset()) -> None:
+                 cand: Candidates, skip: frozenset[str] = frozenset()) -> None:
     """row(폴더 칸)의 실제 디렉터리 dir_path 를 트리 기대와 대조하고 재귀한다."""
     kids = tree.children(row)
     if not kids:  # 트리가 리프로 닫은 폴더 — 안은 작성자 재량(#490·#15)
@@ -126,6 +200,7 @@ def _check_level(dir_path: Path, row: "tree.Row", bindings: dict[str, str], out:
     fixed_files: dict[str, "tree.Row"] = {}
     dir_placeholder: "tree.Row | None" = None
     has_file_placeholder = False  # 자리표시자 «파일» 칸 — 이것이 있어야만 파일 이름이 자유다(#490)
+    file_placeholders: "list[tree.Row]" = []  # 승격(#490 교체형)·ⓓ#644 신호의 칸 대조용
     multi_shapes: dict[str, list[list[str]]] = {}
 
     for c in kids:
@@ -143,6 +218,7 @@ def _check_level(dir_path: Path, row: "tree.Row", bindings: dict[str, str], out:
                 fixed_files[tree.concrete_name(c, bindings)] = c
             else:
                 has_file_placeholder = True
+                file_placeholders.append(c)
 
     dirs, files = _entries(dir_path)
     dirs = [p for p in dirs if p.name not in skip]
@@ -157,10 +233,16 @@ def _check_level(dir_path: Path, row: "tree.Row", bindings: dict[str, str], out:
             continue
         if not (sub / "__init__.py").is_file():
             out.add("#488", sub, "고정 칸 폴더에 `__init__.py` 가 없다")
-        _check_level(sub, crow, bindings, out)
+        _check_level(sub, crow, bindings, out, cand)
     for name, crow in fixed_files.items():
-        if not (dir_path / name).is_file():
-            out.add("#488", dir_path / name, f"고정 파일 부재 — 비면 빈 파일로 만든다 (트리 {crow.r}행)")
+        target = dir_path / name
+        promo = dir_path / name[:-3] if name.endswith(".py") else None
+        if target.is_file():
+            continue
+        if getattr(crow, "swappable", False) and promo is not None and promo.is_dir() \
+                and (promo / name).is_file():
+            continue  # 유효한 승격 실현이 #488 충족이다(형태 검증은 dir 루프의 #638~#643)
+        out.add("#488", target, f"고정 파일 부재 — 비면 빈 파일로 만든다 (트리 {crow.r}행)")
 
     # #490 — 폴더 폐쇄: 칸이 아닌 폴더는 위반. 자리표시자 폴더가 있으면 나머지는 인스턴스다.
     if row.name.startswith("migrations"):
@@ -172,15 +254,43 @@ def _check_level(dir_path: Path, row: "tree.Row", bindings: dict[str, str], out:
             continue
         if p.name in multi_shapes:
             _check_multi(p, multi_shapes[p.name], out)
-        elif dir_placeholder is not None:
+            continue
+        kan_row = fixed_files.get(p.name + ".py")
+        if kan_row is None:
+            for fp in file_placeholders:
+                if _file_pattern_ok(p.name + ".py", tree.concrete_name(fp, bindings)):
+                    kan_row = fp
+                    break
+        if kan_row is not None:  # 파일 칸의 동명 폴더 — 승격 허용 여부로 갈린다(#490 교체형)
+            if getattr(kan_row, "swappable", False):
+                if (dir_path / (p.name + ".py")).is_file():
+                    out.add("#639", p, f"형제 `{p.name}.py` 와 승격 폴더의 공존 — import 는 패키지가 이겨 조용한 위장 중복이다")
+                _check_promoted(p, kan_row, out, cand)
+            else:
+                out.add("#490", p, f"승격 배제 칸의 동명 폴더 — 이 칸은 파일 실현만 갖는다 (트리 {kan_row.r}행)")
+            continue
+        if dir_placeholder is not None:
             inst_bind = dict(bindings)
             for tok in set(TOKEN.findall(dir_placeholder.name)):
                 inst_bind[tok] = p.name
-            _check_level(p, dir_placeholder, inst_bind, out)
+            _check_level(p, dir_placeholder, inst_bind, out, cand)
         elif p.name == "commands" and dir_path.name == "management":
             out.add("#58", p, "`management/commands/` 를 만들지 않는다")
         else:
             out.add("#490", p, "트리에 없는 칸이다 — 반환")
+
+    # ⓓ#644 — 행위 칸 «파일 실현»의 캐스케이드 후보 신호(무조건 방출 — diff 한정은 감사자 몫)
+    for f in files:
+        frow = fixed_files.get(f.name)
+        if frow is None:
+            for fp in file_placeholders:
+                if _file_pattern_ok(f.name, tree.concrete_name(fp, bindings)):
+                    frow = fp
+                    break
+        if frow is not None and frow.r in PROMO_ACTION_ROWS:
+            n = _phys_lines(f)
+            if n > PROMO_SIGNAL_LINES:
+                cand.add("#644", f, f"행위 칸 실현 {n}행(>{PROMO_SIGNAL_LINES}) — 캐스케이드 판정 의무 (트리 {frow.r}행)", _CASCADE_Q)
 
     # 파일 폐쇄 — 자리표시자 «파일» 칸이 있는 층만 이름이 자유다. 고정 파일 칸만 있는 층의
     # 추가 파일은 트리에 없는 경로다(#490 — 재량 조항은 «리프로 닫은 폴더»에만 걸린다).
@@ -203,7 +313,7 @@ def _check_banned_paths(bc_dir: Path, out: Findings) -> None:
             out.add("#393", p, "`framework/` 는 저장소 루트 소유다 — BC 아래에 두면 위반")
 
 
-def _check_bc(bc_dir: Path, out: Findings) -> None:
+def _check_bc(bc_dir: Path, out: Findings, cand: Candidates) -> None:
     bindings = {"bounded_context": bc_dir.name}
     root = tree.bc_root()
     allowed = {tree.concrete_name(c, bindings).rstrip("/") for c in tree.children(root)}
@@ -213,7 +323,7 @@ def _check_bc(bc_dir: Path, out: Findings) -> None:
         if p.name not in allowed:
             out.add("#81", p, "BC 직계는 일곱뿐이다 — 여덟째는 없다")
             pre_flagged.add(p.name)
-    _check_level(bc_dir, root, bindings, out, frozenset(pre_flagged))
+    _check_level(bc_dir, root, bindings, out, cand, frozenset(pre_flagged))
     _check_banned_paths(bc_dir, out)
 
 
@@ -330,9 +440,10 @@ def main(argv: list[str]) -> int:
         return 2
 
     findings = Findings(defer=True)
+    cand = Candidates(defer=True)  # ⓓ#644 — exit 불산입·귀속 정규식 밖(후보 채널)
     # 채택 저장소에서는 application/ 직계 «전부»가 BC 다(#486) — 신호 없는 평면 BC 도 검사한다.
     for bc in bcs:
-        _check_bc(bc, findings)
+        _check_bc(bc, findings, cand)
     if fw_dir.is_dir():
         _check_framework(fw_dir, findings)
     pkg, how = _find_project_pkg(target)
@@ -341,6 +452,7 @@ def main(argv: list[str]) -> int:
     elif how.startswith("후보"):
         print(f"주의: `<project>/` {how} — `<project>` 검사를 건너뛴다(오판 방지)")
 
+    emit_all(cand, printer=print, indent="")
     if findings:
         print(f"blocker {len(findings)}건 — 골격이 어긋나면 나머지 검사를 돌리지 않는다(#487)")
         emit_all(findings, printer=print, indent="  ")
