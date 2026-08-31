@@ -191,7 +191,7 @@
     },
     {
       "path": "ontology/wiring/discipline-houserules-final.ttl",
-      "sha256": "8c935610bb6653630a1d232e071ac93bcd1e6686657e31b71c867039f9a27706"
+      "sha256": "02b668bbb9bca07291420dcef63d25af62020c80fe7c4cd5ceb117a8c28d9f58"
     },
     {
       "path": "ontology/wiring/discipline-houserules-skill.ttl",
@@ -1244,7 +1244,6 @@
       "R-0613",
       "R-0621",
       "R-0639",
-      "R-3411",
       "R-2882",
       "R-1250",
       "R-1329",
@@ -60277,13 +60276,14 @@
       "section_number": "0"
     },
     "R-3411": {
-      "agents": [],
+      "agents": [
+        "agent-coder",
+        "agent-discipline-reviewer"
+      ],
       "aliases": [],
       "block": "dddjango/skills/discipline-houserules/references/final.md/s003-0/b10",
       "block_order": 10,
-      "checkers": [
-        "check-transaction-boundary.py"
-      ],
+      "checkers": [],
       "document": "dddjango/skills/discipline-houserules/references/final.md",
       "expression": "https://numchida.com/ns/djr#R-3411@2026-09-01",
       "label": "저장(save)류 쓰기 호출의 본체 한정",
