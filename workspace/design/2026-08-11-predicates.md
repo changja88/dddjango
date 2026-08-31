@@ -240,6 +240,7 @@ human 158  →  path 11 · ast 63 · ast+ 57 · human 27
 | 618 | ast+ | ㉠`_()`·`gettext`·`format_lazy`·`babel` 호출 0(=#588) ㉡필드 이름 ∩ 채널 설정 낱말(`host`·`port`·`url`·`endpoint`·`api_key`·`token`·`timeout`·`region`·`bucket`·`template_id`) ≠ ∅ → 위반 / 남는 후보는 #590 의 물음 |
 | 619 | ast+ | 후보: 자료 클래스 중 필드가 «하나»이거나 모든 필드가 표준 타입이고 계약 시그니처에서 한 번만 쓰이는 것 / 물음: 「이것이 원시값 하나로 되나」 (뒷문장 「#228 자동 성립」은 `framework/`→`domain_layer/` import 0 으로 이미 기계 확정) |
 | 629 | ast+ | 확정: 없음 / **후보: 집합 차** — `webhook/**`·`event_subscription/**` 이 부르는 유스케이스가 «쓰는» 애그리거트 집합 **A**, `cron_job/**` 이 부르는 유스케이스가 «쓰는» 집합 **B** → **A − B ≠ ∅ 이면 후보** (그 애그리거트는 바깥이 안 부르면 영영 안 채워진다) / 물음: 「이 입구가 «안 와도» 업무가 돌아가나」 |
+| 644 | ast+ | 후보 ⑴행위 칸 실현(파일 또는 승격 본체·부품 — `__init__.py` 제외)의 물리 행수(빈 줄 제외) >200 — `check-layer-skeleton` ⓓ 채널이 행수·top-level 요약 페이로드로 방출(무조건 방출·exit 불산입 — diff 한정은 감사자 몫) ⑵확정 위반은 형태 규칙 #638~#643 소유 / 물음: 「역할 밖 응집 단위가 있는가 — ①이동/②동명 폴더 승격/③유지(houserules §1 캐스케이드)」 |
 | 626 | **human** | **Q3** — 다만 **처방 이행**(받는 쪽에 `cron_job/` + `anticorruption_layer/<owner>/` 경로가 있나)은 `path` 로 «잰다» |
 | 627 | ast | 구독 경로 유스케이스 안에서 사실 payload 의 «식별자 아닌»(`*_id` 아닌) 필드가 애그리거트 생성·변경 인자 → `save()` 로 흐르면 위반. `+=`·`Sum`·`count` 로 자기 저장 필드를 집계해도 위반 |
 | 630 | ast | `models/**` 의 `Model` 하위 ClassDef 중 `Meta` 에 `abstract`/`proxy`/`managed=False` 가 없는 «신규»(diff 기준 추가) 클래스에 ⑴`db_table` 대입이 없거나 ⑵값 ≠ `<app_label>_` + snake(클래스명 − `Model`) 이면 위반. 기존 클래스는 테이블명 보존이라 면제 |

@@ -126,3 +126,23 @@ djr:R-3229 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-revie
 djr:R-3230 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
 
 djr:R-3231 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-3406 djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
+
+djr:R-3407 djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
+
+djr:R-3408 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
+
+djr:R-3409 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
+
+djr:R-3410 djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
+
+djr:R-3411 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-coder>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-3412 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-coder>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-3413 djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
+
+djr:R-3414 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .

@@ -511,7 +511,7 @@
   .tabrail .tr .pin{cursor:pointer}
   /* 왼쪽 트리에 «이름 규칙»을 같이 그린다 — 파일 이름 오른쪽에 붙는 옅은 칸.
      오른쪽 패널의 «이름» 줄이 긴 설명을 지고, 여기는 그 «결론»만 한 조각 진다. */
-  .tr .path .nmr{font-style:normal;font-family:var(--sans);font-size:12px;
+  .tr .path .nmr{font-style:normal;font-family:var(--sans);font-size:10px;
                  color:var(--ink-3);margin-left:auto;padding-left:14px;
                  white-space:nowrap;letter-spacing:-.1px}
   .tabrail .tr.pick .path .nmr{color:var(--ink-2)}
@@ -524,13 +524,13 @@
   .tabpane.on{display:block}
   .pane-hd{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;
            padding-bottom:9px;margin-bottom:12px;border-bottom:1px solid var(--rule-soft)}
-  .ph-n{font-family:var(--mono);font-size:17px;color:var(--ink);letter-spacing:-.3px}
-  .ph-s{font-size:13px;color:var(--ink-3)}
+  .ph-n{font-family:var(--mono);font-size:15px;color:var(--ink);letter-spacing:-.3px}
+  .ph-s{font-size:11px;color:var(--ink-3)}
 
   /* 한 칸씩 — 무엇이 오나 */
   .rd-hd{display:flex;align-items:baseline;gap:8px;margin:16px 0 8px;
          padding-top:12px;border-top:1px solid var(--rule)}
-  .rd-hd b{font-size:14px;color:var(--ink)}
+  .rd-hd b{font-size:12px;color:var(--ink)}
   .rd-c{font-size:10.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
   .rowdocs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
   .rd{padding:8px 9px;border-radius:7px;border:1px solid transparent;scroll-margin-top:8px}
@@ -538,26 +538,26 @@
   .rd.on{background:var(--hex-bg);border-color:var(--rule)}
   .rd-p{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;
         margin-left:calc(var(--d) * 9px)}
-  .rd-n{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--ink);
+  .rd-n{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink);
         letter-spacing:-.2px}
   .rd-p .tb-z{position:static}
   .rd-w{margin:5px 0 0;margin-left:calc(var(--d) * 9px);
-        font-size:14px;line-height:1.75;color:var(--ink-2)}
+        font-size:12px;line-height:1.75;color:var(--ink-2)}
   .rd-w b{color:var(--ink)}
-  .rd-w code{font-family:var(--mono);font-size:13px}
+  .rd-w code{font-family:var(--mono);font-size:11px}
   .rd-w em{font-style:normal;color:var(--ink-3)}
   .rd-r{margin:5px 0 0;margin-left:calc(var(--d) * 9px);
         padding-left:8px;border-left:2px solid var(--rule-soft);
-        font-size:13px;line-height:1.7;color:var(--ink-3)}
+        font-size:11px;line-height:1.7;color:var(--ink-3)}
   .rd-r b{color:var(--ink-2);font-weight:600}
-  .rd-r code{font-family:var(--mono);font-size:12.5px}
+  .rd-r code{font-family:var(--mono);font-size:10.5px}
   .rd-r em{font-style:normal}
   /* 이 칸의 «이름» 규칙 — 규칙 줄과 색으로 갈린다 */
   .rd-nm{margin:5px 0 0;margin-left:calc(var(--d) * 9px);
          padding-left:8px;border-left:2px solid var(--hex);
-         font-size:13px;line-height:1.7;color:var(--ink-3)}
+         font-size:11px;line-height:1.7;color:var(--ink-3)}
   .rd-nm b{color:var(--ink-2);font-weight:600}
-  .rd-nm code{font-family:var(--mono);font-size:12.5px}
+  .rd-nm code{font-family:var(--mono);font-size:10.5px}
   .rd-nm em{font-style:normal}
   .rd-nm .rd-k{color:var(--hex)}
   .rd-nm .no{color:var(--flag);font-weight:700}
@@ -577,10 +577,10 @@
   .pane-kv dt.no::after{background:var(--flag-bg)}
   .pane-kv dt.wy{color:var(--ok)}
   .pane-kv dt.wy::after{background:var(--ok-bg)}
-  .pane-kv dd{margin:0;font-size:14.5px;line-height:1.75;color:var(--ink-2)}
+  .pane-kv dd{margin:0;font-size:12.5px;line-height:1.75;color:var(--ink-2)}
   .pane-kv dd b{color:var(--ink)}
-  .pane-kv dd code{font-family:var(--mono);font-size:13.5px}
-  .pane-kv dd em{font-style:normal;color:var(--ink-3);font-size:13.5px}
+  .pane-kv dd code{font-family:var(--mono);font-size:11.5px}
+  .pane-kv dd em{font-style:normal;color:var(--ink-3);font-size:11.5px}
   .pane-kv dd .dim{color:var(--ink-3)}
   .pane-kv dd p{margin:0 0 9px}
   .pane-kv dd p:last-child{margin:0}
@@ -595,7 +595,7 @@
   .vkey b{font-weight:600}
 
   /* 트리 위 안내 한 문단 — 장 제목 셋을 걷어내고 이 자리 하나로 합쳤다 */
-  .tguide{margin:0 0 13px;font-size:14px;line-height:1.72;color:var(--ink-3);max-width:none}
+  .tguide{margin:0 0 13px;font-size:12px;line-height:1.72;color:var(--ink-3)}
   .tguide b{color:var(--ink-2);font-weight:600}
   .tguide .tg-v{display:block;margin-top:2px}
 
@@ -622,9 +622,9 @@
     background: var(--sunk); color: var(--ink-3); }
   .plan.doing .pst { background: var(--flag-bg); color: var(--flag); }
   .plan.done .pst { background: var(--ok-bg); color: var(--ok); }
-  .plan .pb > p { margin: 0; font-size: 15.5px; line-height: var(--lh); color: var(--ink-2); }
+  .plan .pb > p { margin: 0; font-size: 13.5px; line-height: var(--lh); color: var(--ink-2); }
   .plan .pmeta { display: grid; grid-template-columns: max-content minmax(0, 1fr);
-    gap: 3px 14px; margin: 11px 0 0; font-size: 14px; }
+    gap: 3px 14px; margin: 11px 0 0; font-size: 12px; }
   .plan .pmeta dt { font-family: var(--mono); font-size: 10.5px; letter-spacing: .04em;
     color: var(--ink-3); padding-top: 2px; white-space: nowrap; }
   .plan .pmeta dd { margin: 0; color: var(--ink-2); }
@@ -652,7 +652,7 @@
   .fgo:hover rect,.fgo:focus-visible rect{fill:var(--hex-bg);stroke-width:2.2}
   .fgo:focus-visible{outline:2px solid var(--hex);outline-offset:2px;border-radius:5px}
   .fgo:hover text{fill:var(--hex)}
-  .flowhint{margin:0 0 10px;font-size:14px;color:var(--ink-3)}
+  .flowhint{margin:0 0 10px;font-size:12px;color:var(--ink-3)}
   .flowhint b{color:var(--ink-2)}
 
   /* 오른쪽 — 단계 목록 */
@@ -667,13 +667,13 @@
   .st{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;
       padding:7px 8px;border-radius:8px}
   .st:hover{background:var(--sunk)}
-  .st-n{font-family:var(--mono);font-size:14.5px;font-weight:700;color:var(--ink-2);
+  .st-n{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--ink-2);
         text-align:center;padding-top:1px}
   .st.sub{padding-left:26px}
   .st.sub .st-n{color:var(--ink-3);font-weight:400}
   .st-b{min-width:0;display:flex;flex-direction:column;gap:4px}
   .st-f{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
-  .stpath{font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:-.2px;
+  .stpath{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:-.2px;
           color:var(--ink);background:transparent;border:none;border-bottom:1px dashed var(--rule);
           padding:0;cursor:pointer;text-align:left;word-break:break-all}
   .stpath:hover{color:var(--hex);border-bottom-color:var(--hex)}
@@ -683,13 +683,13 @@
         border-radius:4px;white-space:nowrap}
   .st-sig{margin:0;background:var(--sunk);border:1px solid var(--rule-soft);border-radius:6px;
           padding:6px 9px;overflow-x:auto}
-  .st-sig code{font-family:var(--mono);font-size:12.5px;line-height:1.6;color:var(--ink-2);
+  .st-sig code{font-family:var(--mono);font-size:10.5px;line-height:1.6;color:var(--ink-2);
                white-space:pre;background:transparent;padding:0}
   .st-sig .c{color:var(--ink-3)}
   .st-sig b{color:var(--ink);font-weight:700}
-  .st-t{margin:0;font-size:13.5px;line-height:1.62;color:var(--ink-3);max-width:none}
+  .st-t{margin:0;font-size:11.5px;line-height:1.62;color:var(--ink-3);max-width:none}
   .st-t b{color:var(--ink-2);font-weight:600}
-  .st-t code{font-family:var(--mono);font-size:12px}
+  .st-t code{font-family:var(--mono);font-size:10px}
 
   /* 아래 — 이 흐름을 코드로 접으면 두 조각이다 */
   .flowcode{display:grid;gap:16px;margin-top:24px;align-items:start}
@@ -700,7 +700,7 @@
   .fc-h b{font-size:12.5px}
   .fc-h .stpath{font-size:10.5px;font-weight:400;color:var(--ink-3)}
   .fc pre{margin:0;padding:12px 14px;overflow-x:auto;background:transparent;border:none}
-  .fc pre code{font-family:var(--mono);font-size:13px;line-height:1.72;color:var(--ink-2);
+  .fc pre code{font-family:var(--mono);font-size:11px;line-height:1.72;color:var(--ink-2);
                white-space:pre;background:transparent;padding:0}
   .fc pre .c{color:var(--ink-3)}
   .fc pre .m{color:var(--hex);font-weight:700}
@@ -734,6 +734,8 @@
       <div class="side-hd">
         <span class="t">application/&lt;bounded_context&gt;/</span>
       </div>
+      <p class="tguide"><b>왼쪽이 파일 트리, 오른쪽이 설명이다.</b> 파트를 누르면 그 아래로 트리가 펼쳐지고, 줄을 누르면 오른쪽의 그 칸으로 간다. 파트 순서는 요청이 <b>들어와 나가는 순서</b>다 — 루트 → 입구 → 조율 → 규칙 → 출구, 그다음이 테스트와 저장소 바깥이다.
+      <span class="tg-v">설명에 나오는 <b>원전 어휘</b>는 계보를 색으로 말한다 — <b class="v d">DDD</b> Evans · <b class="v c">Clean</b> Martin · <b class="v h">Hexagonal</b> Cockburn</span></p>
       <div class="tabwrap">
         <div class="tabrail" role="tablist">
         <div class="pgroup">
@@ -796,7 +798,7 @@
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g t"></i><b class="nm">&lt;area&gt;/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d7">D7</button></span>
         </div>
-        <div data-r="12" class="tr fixed" style="--d:4">
+        <div data-r="12" class="tr fixed" style="--d:4" data-sw="1">
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g v"></i><i class="g t"></i><b class="nm">&lt;area&gt;_controller.py</b><em class="nmr">&lt;기술&gt;&lt;Area&gt;Controller</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d7">D7</button><button type="button" class="pin d" data-k="d11">D11</button><button type="button" class="pin d" data-k="d27">D27</button><button type="button" class="pin d" data-k="d39">D39</button></span>
         </div>
@@ -804,11 +806,11 @@
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g v"></i><i class="g l"></i><b class="nm">schema/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d8">D8</button><button type="button" class="pin d" data-k="d10">D10</button></span>
         </div>
-        <div data-r="14" class="tr fixed" style="--d:5">
+        <div data-r="14" class="tr fixed" style="--d:5" data-sw="1">
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g v"></i><i class="g sp"></i><i class="g t"></i><b class="nm">schema_in.py</b><em class="nmr">고정 이름</em></span>
           <span class="flagcell"></span>
         </div>
-        <div data-r="15" class="tr fixed" style="--d:5">
+        <div data-r="15" class="tr fixed" style="--d:5" data-sw="1">
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g v"></i><i class="g sp"></i><i class="g l"></i><b class="nm">schema_out.py</b><em class="nmr">고정 이름</em></span>
           <span class="flagcell"></span>
         </div>
@@ -820,7 +822,7 @@
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g sp"></i><i class="g l"></i><b class="nm">&lt;provider&gt;/</b><em class="nmr">보내는 시스템 이름</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d53">D53</button></span>
         </div>
-        <div data-r="18" class="tr fixed" style="--d:5">
+        <div data-r="18" class="tr fixed" style="--d:5" data-sw="1">
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g sp"></i><i class="g sp"></i><i class="g t"></i><b class="nm">&lt;provider&gt;_controller.py</b><em class="nmr">&lt;Provider&gt;WebhookController</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d11">D11</button><button type="button" class="pin d" data-k="d27">D27</button></span>
         </div>
@@ -828,11 +830,11 @@
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g sp"></i><i class="g sp"></i><i class="g l"></i><b class="nm">schema/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d55">D55</button><button type="button" class="pin d" data-k="d54">D54</button><button type="button" class="pin d" data-k="d53">D53</button></span>
         </div>
-        <div data-r="20" class="tr fixed" style="--d:6">
+        <div data-r="20" class="tr fixed" style="--d:6" data-sw="1">
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g sp"></i><i class="g sp"></i><i class="g sp"></i><i class="g t"></i><b class="nm">schema_in.py</b></span>
           <span class="flagcell"></span>
         </div>
-        <div data-r="21" class="tr fixed" style="--d:6">
+        <div data-r="21" class="tr fixed" style="--d:6" data-sw="1">
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g sp"></i><i class="g sp"></i><i class="g sp"></i><i class="g l"></i><b class="nm">schema_out.py</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d55">D55</button><button type="button" class="pin d" data-k="d53">D53</button></span>
         </div>
@@ -844,7 +846,7 @@
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g l"></i><b class="nm">&lt;service&gt;/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d9">D9</button></span>
         </div>
-        <div data-r="24" class="tr fixed" style="--d:4">
+        <div data-r="24" class="tr fixed" style="--d:4" data-sw="1">
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g sp"></i><i class="g t"></i><b class="nm">&lt;service&gt;_service.py</b><em class="nmr">함수는 _command / _query</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d9">D9</button><button type="button" class="pin d" data-k="d11">D11</button><button type="button" class="pin d" data-k="d39">D39</button></span>
         </div>
@@ -922,7 +924,7 @@
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g l"></i><b class="nm">&lt;use_case&gt;/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d14">D14</button><button type="button" class="pin d" data-k="d28">D28</button></span>
         </div>
-        <div data-r="41" class="tr fixed" style="--d:4">
+        <div data-r="41" class="tr fixed" style="--d:4" data-sw="1">
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g sp"></i><i class="g t"></i><b class="nm">&lt;use_case&gt;_use_case.py</b><em class="nmr">_service · _app ✗</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d14">D14</button><button type="button" class="pin d" data-k="d42">D42</button><button type="button" class="pin d" data-k="d48">D48</button><button type="button" class="pin d" data-k="d43">D43</button><button type="button" class="pin d" data-k="d50">D50</button><button type="button" class="pin d" data-k="d58">D58</button><button type="button" class="pin d" data-k="d59">D59</button></span>
         </div>
@@ -1012,7 +1014,7 @@
           <span class="path"><i class="g v"></i><i class="g t"></i><b class="nm">&lt;aggregate&gt;/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d12">D12</button><button type="button" class="pin d" data-k="d42">D42</button><button type="button" class="pin d" data-k="d43">D43</button><button type="button" class="pin d" data-k="d50">D50</button></span>
         </div>
-        <div data-r="61" class="tr fixed" style="--d:3">
+        <div data-r="61" class="tr fixed" style="--d:3" data-sw="1">
           <span class="path"><i class="g v"></i><i class="g v"></i><i class="g t"></i><b class="nm">&lt;aggregate&gt;.py</b><em class="nmr">폴더 이름과 같다</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d12">D12</button><button type="button" class="pin d" data-k="d59">D59</button></span>
         </div>
@@ -1064,7 +1066,7 @@
           <span class="path"><i class="g v"></i><i class="g l"></i><b class="nm">domain_service/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d28">D28</button><button type="button" class="pin d" data-k="d13">D13</button><button type="button" class="pin d" data-k="d32">D32</button></span>
         </div>
-        <div data-r="74" class="tr fixed" style="--d:3">
+        <div data-r="74" class="tr fixed" style="--d:3" data-sw="1">
           <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g l"></i><b class="nm">&lt;domain_service&gt;.py</b><em class="nmr">무상태 규칙 이름</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d13">D13</button><button type="button" class="pin d" data-k="d28">D28</button></span>
         </div>
@@ -1146,7 +1148,7 @@
           <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g v"></i><i class="g t"></i><b class="nm">repository/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d15">D15</button><button type="button" class="pin d" data-k="d29">D29</button><button type="button" class="pin d" data-k="d37">D37</button></span>
         </div>
-        <div data-r="92" class="tr fixed" style="--d:5">
+        <div data-r="92" class="tr fixed" style="--d:5" data-sw="1">
           <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g v"></i><i class="g v"></i><i class="g l"></i><b class="nm">&lt;aggregate&gt;_repository.py</b><em class="nmr">Django&lt;Aggregate&gt;Repository</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d50">D50</button><button type="button" class="pin d" data-k="d15">D15</button><button type="button" class="pin d" data-k="d33">D33</button><button type="button" class="pin d" data-k="d59">D59</button></span>
         </div>
@@ -1154,7 +1156,7 @@
           <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g v"></i><i class="g t"></i><b class="nm">domain_bypass_query/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d29">D29</button><button type="button" class="pin d" data-k="d15">D15</button><button type="button" class="pin d" data-k="d41">D41</button></span>
         </div>
-        <div data-r="94" class="tr fixed" style="--d:5">
+        <div data-r="94" class="tr fixed" style="--d:5" data-sw="1">
           <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g v"></i><i class="g v"></i><i class="g l"></i><b class="nm">&lt;capability&gt;_query.py</b><em class="nmr">Django&lt;Capability&gt;DomainBypassQuery</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d29">D29</button><button type="button" class="pin d" data-k="d33">D33</button><button type="button" class="pin d" data-k="d41">D41</button></span>
         </div>
@@ -1162,7 +1164,7 @@
           <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g v"></i><i class="g l"></i><b class="nm">unit_of_work/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d31">D31</button><button type="button" class="pin d" data-k="d37">D37</button></span>
         </div>
-        <div data-r="96" class="tr fixed" style="--d:5">
+        <div data-r="96" class="tr fixed" style="--d:5" data-sw="1">
           <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g v"></i><i class="g sp"></i><i class="g l"></i><b class="nm">&lt;boundary&gt;_unit_of_work.py</b><em class="nmr">Django&lt;Boundary&gt;UnitOfWork</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d14">D14</button><button type="button" class="pin d" data-k="d4">D4</button><button type="button" class="pin d" data-k="d31">D31</button><button type="button" class="pin d" data-k="d49">D49</button></span>
         </div>
@@ -1174,7 +1176,7 @@
           <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g v"></i><i class="g l"></i><b class="nm">&lt;other_bounded_context&gt;/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d17">D17</button><button type="button" class="pin d" data-k="d35">D35</button></span>
         </div>
-        <div data-r="99" class="tr fixed" style="--d:5">
+        <div data-r="99" class="tr fixed" style="--d:5" data-sw="1">
           <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g v"></i><i class="g sp"></i><i class="g l"></i><b class="nm">&lt;capability&gt;_adapter.py</b><em class="nmr">&lt;Bc&gt;&lt;Capability&gt;Adapter</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d36">D36</button><button type="button" class="pin d" data-k="d17">D17</button><button type="button" class="pin d" data-k="d41">D41</button></span>
         </div>
@@ -1186,7 +1188,7 @@
           <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g v"></i><i class="g l"></i><b class="nm">&lt;system&gt;/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d18">D18</button></span>
         </div>
-        <div data-r="102" class="tr fixed" style="--d:5">
+        <div data-r="102" class="tr fixed" style="--d:5" data-sw="1">
           <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g v"></i><i class="g sp"></i><i class="g l"></i><b class="nm">&lt;capability&gt;_adapter.py</b><em class="nmr">&lt;System&gt;&lt;Capability&gt;Adapter</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d18">D18</button><button type="button" class="pin d" data-k="d17">D17</button><button type="button" class="pin d" data-k="d14">D14</button><button type="button" class="pin d" data-k="d41">D41</button></span>
         </div>
@@ -1194,7 +1196,7 @@
           <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g l"></i><b class="nm">&lt;capability&gt;/</b></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d17">D17</button><button type="button" class="pin d" data-k="d24">D24</button><button type="button" class="pin d" data-k="d37">D37</button></span>
         </div>
-        <div data-r="104" class="tr fixed" style="--d:4">
+        <div data-r="104" class="tr fixed" style="--d:4" data-sw="1">
           <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g sp"></i><i class="g l"></i><b class="nm">&lt;technology&gt;_adapter.py</b><em class="nmr">기술 + _adapter</em></span>
           <span class="flagcell keep"><button type="button" class="pin d" data-k="d57">D57</button><button type="button" class="pin d" data-k="d33">D33</button><button type="button" class="pin d" data-k="d41">D41</button></span>
         </div>

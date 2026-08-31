@@ -1962,6 +1962,11 @@ def _nmr(g):
     return m.group(1) if m else ""
 
 
+# 동명 폴더 승격 허용 칸(규칙 #490 교체형 실현 — 배제 목록의 여집합 · 사유·값의 정본은
+# discipline-houserules final.md §0/§1. 파일 칸에만 붙는다 — 트리 행 번호(data-r)가 좌표다).
+SWAPPABLE_ROWS = {12, 14, 15, 18, 20, 21, 24, 41, 61, 74, 92, 94, 96, 99, 102, 104}
+
+
 def _tab_rail():
     o = []
     g = 0
@@ -1973,7 +1978,10 @@ def _tab_rail():
             h = _nmr(g)
             if h:
                 r = r.replace('</b></span>', '</b><em class="nmr">%s</em></span>' % h, 1)
-            rows.append(r.replace('<div class="tr ', '<div data-r="%d" class="tr ' % g, 1))
+            r = r.replace('<div class="tr ', '<div data-r="%d" class="tr ' % g, 1)
+            if g in SWAPPABLE_ROWS:  # 승격 허용 표기 — 이름·행 구조 불변(파서 계약: style 뒤 optional)
+                r = re.sub(r'(style="--d:\d+")>', r'\1 data-sw="1">', r, count=1)
+            rows.append(r)
         o.append(
             '        <div class="pgroup">\n'
             '        <button type="button" class="tabbtn%s" data-p="%s" role="tab" aria-selected="%s">'
@@ -3799,7 +3807,7 @@ card(55, "경계 자료의 낱말 — 다섯이 서로 «다른 축»이었다",
         <dt><b>남은 위험 하나</b> — 플러그인이 <code>Result</code> 를 «다른 뜻»으로 쓴다</dt>
         <dd>플러그인 축자 — <em>「<b>exception path</b> … / <b>failed Result</b>/<code>None</code>/<b>outcome path</b> 는 artificial <code>try</code>/<code>catch</code> 없이 …」</em>.
         거기서 <code>Result</code> 는 <b>「실패를 «값»으로 돌려주는 방식」</b>(Rust·Kotlin 계보)이고 <b>exception path 의 «대안»</b>이다. 우리 트리는 <b>exception 노선</b>이다.
-        <b>막는 자리는 트리에 박았다</b> — <code>&lt;use_case&gt;_result.py</code> 행이 <em>「실패를 여기 담으면 위반 · 플러그인의 <code>failed Result</code> 는 <b>다른 낱말</b>」</em> 이라 적는다. <b>6번에서 플러그인 문면을 맞출 때 같이 정리한다.</b></dd>
+        <b>막는 자리는 트리에 박았다</b> — <code>&lt;use_case&gt;_result.py</code> 행이 <em>「실패를 여기 담으면 위반 · 플러그인의 <code>failed Result</code> 는 <b>다른 낱말</b>」</em> 이라 적는다. <b>6번에서 플러그인 문면을 맞출 때 같이 정리한다.</b> <b>→ 2026-08-26 정리됨(리비전 7호)</b>: 사용자 판정 «try/except 노선 유지» 아래 플러그인의 두 번째 갈래를 «<code>None</code> path — 조회 use case 가 대상이 없어 <code>None</code> 을 돌려주는 경우 한정»으로 좁히고 <code>failed Result·outcome</code> 낱말과 #571 위반 예시(<code>reserve_order_result.py</code> 의 실패 variant)를 ninja §2.2·§6.2, 에이전트 4종, cleancode §12.2·python §4.4 단서에서 걷어냈다(billing 런이 그 예시를 따라 outcome 다분기 Result 를 설계한 뒤 발견).</dd>
 
         <dt class="ans-dt">결정 ⑥ — 포트 자리표시자 <b><code>&lt;payload&gt;</code> → <code>&lt;data&gt;</code></b> · 헥사고날 어휘로 간다</dt>
         <dd class="ans-dd filled"><b>사용자가 축을 잡았다</b> — <em>「여기는 헥사고날이니 이쪽 어휘를 쓰는 게 맞겠다」</em>. <b>그 자로 재니 남는 낱말이 하나뿐이었다.</b>

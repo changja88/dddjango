@@ -230,9 +230,9 @@ def _check_layout(root: Path, bc: Path, f: Findings, cand: Candidates) -> None:
 # ── 애그리거트 한 폴더 — #256 · #260~#276 · #289 · #290 · #300 · #315 · #543 ──
 
 def _check_aggregate(root: Path, bc: Path, agg: Path, f: Findings, cand: Candidates) -> None:
-    root_py = agg / f"{agg.name}.py"
+    root_py = checker_target.slot_file(agg / f"{agg.name}.py")  # 동명 폴더 승격(#490 교체형)이면 본체
     root_cls_name = _camel(agg.name)
-    if not root_py.is_file():
+    if root_py is None:
         f.add("#256", _rel(root, agg),
               f"`{agg.name}.py` 가 없다 — 애그리거트 루트 클래스 하나가 폴더와 같은 이름의 "
               "파일로 온다")
@@ -288,6 +288,7 @@ def _check_aggregate(root: Path, bc: Path, agg: Path, f: Findings, cand: Candida
     if ev_dir.is_dir():
         _check_domain_events(root, bc, agg, ev_dir, f)
     # #263 — 같은 stem 의 ORM 모델은 _model 로 갈린다.
+    # 승격 부품 stem 포섭은 의도다(이름 충돌 회피 우선 — 2026-09-01).
     domain_stems = {p.stem for p in agg.rglob("*.py") if p.stem != "__init__"}
     for models_dir in bc.rglob("models"):
         if not models_dir.is_dir() or set(models_dir.parts) & SKIP_DIRS:
@@ -542,7 +543,7 @@ def _check_domain_services(root: Path, bc: Path, ds: Path, f: Findings, cand: Ca
     domain = bc / "domain_layer"
     agg_names = {d.name for d in _aggregate_dirs(domain)}
     root_classes = {_camel(n) for n in agg_names}
-    for py in sorted(ds.glob("*.py")):
+    for py in checker_target.slot_glob(ds, "*.py"):  # 승격 domain_service 본체 포함(부품은 #15 재량 — 제외)
         if py.name == "__init__.py":
             continue
         mod = _parse(py)
@@ -659,6 +660,10 @@ def _check_domain_wide(root: Path, bc: Path, all_bcs: list[Path], f: Findings) -
                                 f.add("#253", _rel(root, py, node.lineno),
                                       f"`{other}` 의 `{tail}` 모듈 import — 타 애그리거트는 "
                                       "«루트 모듈»만 import 한다")
+                            elif len(segs) >= 6:
+                                f.add("#253", _rel(root, py, node.lineno),
+                                      f"`{other}` 승격 루트의 부품 `{segs[5]}` import — 승격 루트가 "
+                                      f"공개하는 것은 «루트 모듈»(패키지 `{other}.{other}`)뿐이다")
                     elif top not in STDLIB:
                         f.add("#8", _rel(root, py, node.lineno),
                               f"`{m}` — domain_layer 의 밖으로 나가는 import 는 0 이다")
@@ -819,8 +824,8 @@ def _check_application_side(root: Path, bc: Path, f: Findings, cand: Candidates)
         for agg in _aggregate_dirs(domain):
             ents = [p for p in (agg / "entity").glob("*.py") if p.stem != "__init__"] \
                 if (agg / "entity").is_dir() else []
-            root_py = agg / f"{agg.name}.py"
-            if len(ents) >= 3 and root_py.is_file():
+            root_py = checker_target.slot_file(agg / f"{agg.name}.py")  # 승격이면 본체(#547 ⑶ 채널 복원)
+            if len(ents) >= 3 and root_py is not None:
                 mod = _parse(root_py)
                 has_coll = any(
                     isinstance(n, ast.AnnAssign) and _ann_names(n.annotation) & {"list", "List", "Sequence"}

@@ -107,7 +107,7 @@ def load_rules(spec_text: str) -> list[Rule]:
 def load_tree_rows(html_text: str) -> dict[int, str]:
     """정본 HTML 에서 data-r → 리프 이름. 트리 행 번호의 유일한 출처."""
     pat = re.compile(
-        r'<div data-r="(\d+)" class="tr[^"]*" style="--d:\d+">\s*<span class="path">(.*?)</span>',
+        r'<div data-r="(\d+)" class="tr[^"]*" style="--d:\d+"(?: data-sw="1")?>\s*<span class="path">(.*?)</span>',
         re.S,
     )
     rows: dict[int, str] = {}
