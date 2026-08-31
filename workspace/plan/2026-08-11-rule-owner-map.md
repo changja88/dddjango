@@ -548,3 +548,9 @@
 | 635 | ast | scripts/check-usecase-dto-placement.py | — | 재작성 |  |
 | 636 | ast | scripts/check-error-centralization.py | — | 신설 |  |
 | 637 | ast | scripts/check-test-config.py | — | 신설 | 08-25 tarot 잔존 판정 5 — migration 전용 테스트 절대 금지(기존 포함) |
+| 638 | path | scripts/check-layer-skeleton.py | — | 신설 | 09-01 동명 폴더 승격 — 본체 부재 위장 |
+| 639 | path | scripts/check-layer-skeleton.py | — | 신설 | 09-01 동명 폴더 승격 — 형제 공존 |
+| 640 | ast | scripts/check-layer-skeleton.py | — | 신설 | 09-01 동명 폴더 승격 — __init__ 재수출 전용·정크드로어 |
+| 641 | path | scripts/check-layer-skeleton.py | — | 신설 | 09-01 동명 폴더 승격 — 1단 평평 |
+| 642 | ast | scripts/check-layer-skeleton.py | — | 신설 | 09-01 동명 폴더 승격 — 부품 출생 50행 하한 |
+| 643 | path | scripts/check-layer-skeleton.py | — | 신설 | 09-01 동명 폴더 승격 — 부품 0개 퇴화 |
