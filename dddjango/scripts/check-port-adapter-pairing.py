@@ -996,8 +996,8 @@ def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
     # 갈래의 persistence 셋에는 «비애그리거트 ORM 쓰기 능력»의 칸이 없어(리포지토리=
     # 애그리거트 전용 #354 · bypass=조회 전용 #236) 그 능력 포트 구현이 여기 온다 —
     # admin 과 같은 «트리 짝맞춤» 계열(2호 실증: 실전 런의 정본 덱 적재·이관 대상
-    # 대량 프로모션 능력, 사용자 A안 승인). 성문 채번은 별건(houserules 출구 절
-    # 신설 필요 — 절 삽입은 section-key 마이그레이션 선행).
+    # 대량 프로모션 능력, 사용자 A안 승인). 성문 = houserules §5 «driven 출구
+    # 면제»(R-3423 — 리비전 10호 채번·#328 check-context-isolation 정합 동기).
     for py in _py_files(driven):
         parts = py.relative_to(driven).parts
         if "persistence" in parts or "models" in parts or py.parent.name == "models":

@@ -202,7 +202,27 @@ def _imports(mod: ast.Module):
 
 # ── 방향 매트릭스 ───────────────────────────────────────────────────────────
 
-def _apply_same_bc(loc: str, tgt: str, rel, mod_path: str, out: Findings) -> None:
+def _orm_writer_exempt(file_parts: tuple) -> bool:
+    """adapter/<capability>/ 의 django_adapter.py — #328 면제 (houserules §5 · R-3423).
+
+    비애그리거트 ORM 쓰기 능력의 기술 구현(2호 실증·사용자 A안). 값은
+    check-port-adapter-pairing 의 #462 면제와 동일하고 경로 기준만 BC 상대로 환산.
+    """
+    p = file_parts
+    if (len(p) == 4 and p[0] == "driven_layer" and p[1] == "adapter"
+            and p[2] not in ("anticorruption_layer", "external_system")
+            and p[3] == "django_adapter.py"):
+        return True
+    # 동명 폴더 승격 — django_adapter.py 가 django_adapter/ 로 승격돼도 면제는 유지된다.
+    if (len(p) == 5 and p[0] == "driven_layer" and p[1] == "adapter"
+            and p[2] not in ("anticorruption_layer", "external_system")
+            and p[3] == "django_adapter" and p[4] == "django_adapter.py"):
+        return True
+    return False
+
+
+def _apply_same_bc(loc: str, tgt: str, rel, mod_path: str, out: Findings,
+                   orm_writer: bool = False) -> None:
     if loc in ("api", "driving", "cron_job", "event_subscription"):
         if tgt == "app_port":
             out.add("#93", rel, f"driving 의 잎은 `application_layer/port/` 를 import 하지 않는다 — `{mod_path}`")
@@ -235,8 +255,8 @@ def _apply_same_bc(loc: str, tgt: str, rel, mod_path: str, out: Findings) -> Non
         if tgt in DRIVEN_SPOTS and tgt != "django":
             pass  # driven 내부 협력(persistence↔acl 등)은 이 검사기의 축이 아니다
         elif tgt == "django":
-            if loc != "persistence":
-                out.add("#328", rel, f"`django_<bc>` 를 import 하는 것은 `adapter/persistence/` 아래뿐이다 — `{mod_path}`")
+            if loc != "persistence" and not orm_writer:
+                out.add("#328", rel, f"`django_<bc>` 를 import 하는 것은 `adapter/persistence/` 아래와 `adapter/<capability>/` 의 django_adapter.py 뿐이다 — `{mod_path}`")
         elif tgt not in DOMAIN_SPOTS and tgt != "app_port":
             out.add("#9", rel, f"`driven_layer` 는 `domain_layer` 와 `application_layer/port/` 만 import 한다 — `{mod_path}`")
     elif loc == "published_event":
@@ -278,13 +298,14 @@ def _scan_imports(f: Path, bc: Path, bc_rel: Path, all_bcs: set[str], out: Findi
     if mod is None:
         return
     rel = bc_rel / f.relative_to(bc)
+    orm_writer = _orm_writer_exempt(file_parts)
     for node, mod_path, level in _imports(mod):
         if level > 0:
             target_parts = _resolve_relative(file_parts, level, mod_path or None)
             if target_parts is None:
                 out.add("#12", rel, "상대 import 가 BC 밖으로 탈출한다 — 타 BC 는 관문으로만 부른다")
                 continue
-            _apply_same_bc(loc, _spot(target_parts), rel, "." * level + mod_path, out)
+            _apply_same_bc(loc, _spot(target_parts), rel, "." * level + mod_path, out, orm_writer)
             continue
         parts = mod_path.split(".")
         if "application" in parts:
@@ -293,7 +314,7 @@ def _scan_imports(f: Path, bc: Path, bc_rel: Path, all_bcs: set[str], out: Findi
                 tgt_bc = parts[i + 1]
                 tgt = _spot(tuple(parts[i + 2:]))
                 if tgt_bc == bc.name:
-                    _apply_same_bc(loc, tgt, rel, mod_path, out)
+                    _apply_same_bc(loc, tgt, rel, mod_path, out, orm_writer)
                 else:
                     _apply_other_bc(loc, tgt, tgt_bc, rel, mod_path, out)
                 continue
