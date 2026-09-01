@@ -1684,6 +1684,70 @@ djr:R-1760 a djr:Obligation ;
     prov:specializationOf djr:R-1760 ;
     djr:revision 1 .
 
+djr:R-3424 a djr:Obligation ;
+    skos:prefLabel "설계 명세 기계가독 채널 상시 작성 — 산문 추론 0·부재 fail-closed 전사"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3424@2026-09-01> .
+
+<https://numchida.com/ns/djr#R-3424@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-3424 ;
+    djr:revision 1 .
+
+djr:R-3425 a djr:Obligation ;
+    skos:prefLabel "file-plan 정규 블록 — 1행 1경로·조치 태그·금지 표기·삽화↔블록 차분"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3425@2026-09-01> .
+
+<https://numchida.com/ns/djr#R-3425@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-3425 ;
+    djr:revision 1 .
+
+djr:R-3426 a djr:Obligation ;
+    skos:prefLabel "공개 심볼 전수 표기 — Base 닫힌 목록·유도표 생략=규약 준수 확약·계약 필드·중첩 타입 소속 명시"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3426@2026-09-01> .
+
+<https://numchida.com/ns/djr#R-3426@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-3426 ;
+    djr:revision 1 .
+
+djr:R-3427 a djr:Obligation ;
+    skos:prefLabel "경계 import 표 — 검사기 판정 관련 경계 import 전부(테스트 파일 포함)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3427@2026-09-01> .
+
+<https://numchida.com/ns/djr#R-3427@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-3427 ;
+    djr:revision 1 .
+
+djr:R-3428 a djr:Obligation ;
+    skos:prefLabel "물리 신호 어노테이션 — markers/base/client 정형·무기재=물리 신호 없음"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3428@2026-09-01> .
+
+<https://numchida.com/ns/djr#R-3428@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-3428 ;
+    djr:revision 1 .
+
+djr:R-3429 a djr:Obligation ;
+    skos:prefLabel "입장 표 header 영문 정본 6열 고정·셀 내 raw 파이프 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3429@2026-09-01> .
+
+<https://numchida.com/ns/djr#R-3429@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-3429 ;
+    djr:revision 1 .
+
+djr:R-3430 a djr:Obligation ;
+    skos:prefLabel "예외 번역표 기계 블록 — published 예외↔raise 창구 표"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3430@2026-09-01> .
+
+<https://numchida.com/ns/djr#R-3430@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-3430 ;
+    djr:revision 1 .
+
+djr:R-3431 a djr:Prohibition ;
+    skos:prefLabel "machine 마커 concrete 블록 한정 — 템플릿·예시 인용 부착 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3431@2026-09-01> .
+
+<https://numchida.com/ns/djr#R-3431@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-3431 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/agents/design-architect.md> a djr:Document ;
     skos:prefLabel "agent-design-architect"@ko .
 
@@ -1998,6 +2062,48 @@ djr:R-1760 a djr:Obligation ;
     djr:order 32 ;
     djr:statesNorm djr:R-1748, djr:R-1749 ;
     djr:text "  입장 표와 별도로 현재 계약의 유지·변경·종료·부재 의무를 짧게 설명해 각 행의 근거를 추적 가능하게 한다. 순수 구현 버그 수정도 관련 기존 coverage와 독자 failure를 판정해 `reuse/retain/add` 중 하나로 기록하며, 단순히 `테스트 계약 변화 없음`으로 심사를 생략하지 않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b33> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 33 ;
+    djr:statesNorm djr:R-3424, djr:R-3431 ;
+    djr:text "- **기계가독 채널(machine blocks)**(lens 무관, 항상 작성 — 12-slot 부재가 적법한 레인에서도 아래 블록·입장 표 규율은 상시다): 명세의 파일 계획·공개 심볼·경계 import·물리 신호·예외 번역은 산문 서술과 «별개로» 아래 다섯 정본 문법으로 성문한다 — pre-gate(`design_pregate.py`)는 이 채널만을 전사 재료로 쓰고 산문에서 추론하는 재료는 0이다. **채널에 없으면 «부재»로 전사된다(fail-closed)** — 부재가 위반이면 red 가 나는 것이 정답이다(예: 마커 무기재 → «설계가 물리 신호를 안 정했다»는 진탐). `<!-- machine: … -->` 마커는 **concrete 계획 블록에만** 단다 — 표준 140행 템플릿·예시 인용에 달지 않는다(인용과 실계획의 구별이 파서의 유일한 판별 근거다). *왜* — 21레인 실측에서 파일 계획 방언이 6종이라, 형식 규범 없이는 어떤 결정적 파싱도 성립하지 않았다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b34> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 34 ;
+    djr:statesNorm djr:R-3425 ;
+    djr:text "- **파일 계획 정규 블록**: `<!-- machine: file-plan -->` 마커 + ```paths 펜스. 1행 1경로(project-relative)에 조치 태그 `add|update|remove[@Ln]|empty` 를 병기하고 `#` 주석만 허용한다. 브레이스 전개·`·` 병렬·`*`/`…` 축약·미해소 `<placeholder>`·승격 폴더 표기(경로는 언제나 `<칸>.py` — 동명 폴더 승격은 구현 캐스케이드 소유)·**동일 경로의 태그 이중 서술**은 전부 형식 위반이다(이중 서술은 파서 결정 불능을 낳는다). glyph 트리 삽화를 남기려면 블록에서 렌더해 생성하거나 파서의 삽화↔블록 차분 판정을 받는다 — 같은 계획의 이중 표현이 서로 어긋나는 드리프트 축을 봉쇄한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b35> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 35 ;
+    djr:statesNorm djr:R-3426 ;
+    djr:text "- **공개 심볼 표기**: 자리표시자 실현 파일의 **공개 심볼 전부**를 `경로.py::Symbol(Base)` 꼴로 적는다(«대표 1회»가 아니라 전수다). Base 병기가 의무인 종류는 재량 목록이 아니라 **검사기 소스에서 기계 추출한 닫힌 목록**(소성물 `scripts/pregate_symbol_kinds.json` — rulepack 과 함께 재생성)이고, 명명규약으로 유도 가능한 생략은 **성문 유도표**(final.md §1 칸→베이스 결정표) 등재분에 한한다 — **생략 = 규약 준수 확약**이다(생략분은 자동 정규화되어 위반 예보가 불능이 된다: 규약을 벗어날 계획이면 반드시 명기). published-language 칸(contract/·published_error)의 심볼은 **필드 목록**(`code` 필드 유무 포함)을 병기하고, **주 계약이 참조하는 보조·중첩 타입은 소속 파일을 명세가 명시**한다 — 안 박으면 coder 가 즉흥 배치해 예보·판정이 그 파일을 못 본다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b36> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 36 ;
+    djr:statesNorm djr:R-3427 ;
+    djr:text "- **경계 import 표**: 검사기 판정에 관련되는 **경계 import 전부**를 `<!-- machine: boundary-imports -->` 마커의 ```imports 펜스(1행 = `<소비 파일> <import 문 그대로>`)로 성문한다 — 타 BC OHS/contract·framework 공통만이 아니라, domain/contract 칸의 서드파티 라이브러리와 **테스트 파일의 경계 import 전부**(factories/타 급·타 BC OHS/published 계약 소비)까지. 파일별 전체 import 를 강제하는 것은 아니다 — 경계만 성문한다(그 밖의 import 는 구현 재량).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b37> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 37 ;
+    djr:statesNorm djr:R-3428, djr:R-3429 ;
+    djr:text "- **물리 신호 어노테이션**: 영구 테스트 입장 표의 `owner/path` 셀 값 뒤에 정형 어노테이션 `[markers: django_db,…] [base: TestCase] [client: yes]` 를 단다 — 테스트 물리 신호(마커·베이스·클라이언트)의 유일한 전사 채널이다. **무기재 = «물리 신호 없음»으로 전사된다(fail-closed)** — 마커를 안 적으면 red 가 그 결손을 알린다. 입장 표 header 는 영문 정본 6열(`candidate | protected contract/evidence | unique production failure | existing authoritative coverage | decision | owner/path`)로 고정하고 셀 안에 raw `|` 를 두지 않는다 — 열 구조가 곧 파서 계약이라, 열이 흔들리면 어노테이션 채널이 통째로 죽는다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b38> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 38 ;
+    djr:statesNorm djr:R-3430 ;
+    djr:text "- **예외 번역표 기계 블록**: 이 명세가 이미 요구하는 예외 번역 산출물(도메인→published 매핑)을 `<!-- machine: exception-map -->` 마커의 ```exceptions 펜스(1행 = `<published 예외> <raise 창구 파일>`)로 성문한다 — 번역표에 없는 published 예외는 어느 창구도 raise 하지 않는 «죽은 계약»으로 예보된다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;

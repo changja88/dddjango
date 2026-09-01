@@ -105,3 +105,6 @@
 
 <https://numchida.com/ns/djr#c/check-usecase-dto-placement.py> a djr:Checker ;
     skos:prefLabel "check-usecase-dto-placement.py"@ko .
+
+<https://numchida.com/ns/djr#c/design_pregate.py> a djr:Checker ;
+    skos:prefLabel "design_pregate.py"@ko .
