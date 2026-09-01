@@ -1,0 +1,670 @@
+{
+  "schema": "pregate-symbol-kinds/0",
+  "source_sha": {
+    "check-api-error-controller-contract.py": "edcb5572fe06fe91",
+    "check-app-container.py": "89825155e2def314",
+    "check-broker-contract.py": "e6ffad609bc11c91",
+    "check-business-vocabulary.py": "09b39ca59eeb29ef",
+    "check-choices-literal-consumption.py": "c1f6a998f550c67c",
+    "check-common-container.py": "aa14a1f9ae49d157",
+    "check-composition-root.py": "4211f462ae69ee94",
+    "check-context-isolation.py": "f8a9ac961d80428c",
+    "check-db-table.py": "3858f5b128891feb",
+    "check-domain-model.py": "810f941cffe36aa0",
+    "check-error-centralization.py": "9f43e4ee63adf095",
+    "check-event-publish.py": "7d751a39960a42a0",
+    "check-idempotency-scope-creep.py": "434b125081b5523d",
+    "check-layer-skeleton.py": "1239352957c1c1f4",
+    "check-mechanism-ownership.py": "9ab3aaaf7218216f",
+    "check-missable-entrance.py": "a5b91c4088799c66",
+    "check-naming.py": "a4a2504a20517547",
+    "check-ninja-boundary-middleware.py": "e2f4aed8fef47305",
+    "check-openapi-error-declaration.py": "55fa227258a45e16",
+    "check-port-adapter-pairing.py": "c6ba961f13ad026c",
+    "check-public-surface-annotation.py": "404f199c1ade4f15",
+    "check-response-schema-bypass.py": "0fd510470a0ac985",
+    "check-synthetic-infra-exc.py": "f30d0f3e8320ee6b",
+    "check-test-config.py": "be92fd8340976280",
+    "check-transaction-boundary.py": "5660df577ba001e2",
+    "check-transient-overmapping.py": "c3dff5700493ecb6",
+    "check-usecase-dto-placement.py": "f73c218449e2ca28"
+  },
+  "kinds": [
+    {
+      "base": "*AppConfig",
+      "checkers": [
+        "check-db-table.py"
+      ],
+      "rules": [
+        "#329",
+        "#538"
+      ],
+      "import_hint": "from django.apps import AppConfig"
+    },
+    {
+      "base": "*DomainBypassQuery",
+      "checkers": [
+        "check-port-adapter-pairing.py"
+      ],
+      "rules": [
+        "#577"
+      ],
+      "import_hint": null
+    },
+    {
+      "base": "*Error",
+      "checkers": [
+        "check-usecase-dto-placement.py"
+      ],
+      "rules": [
+        "#210"
+      ],
+      "import_hint": null
+    },
+    {
+      "base": "*ErrorCode",
+      "checkers": [
+        "check-context-isolation.py",
+        "check-error-centralization.py"
+      ],
+      "rules": [
+        "#117",
+        "#572",
+        "#636"
+      ],
+      "import_hint": null
+    },
+    {
+      "base": "*ErrorSchema",
+      "checkers": [
+        "check-error-centralization.py"
+      ],
+      "rules": [
+        "#572"
+      ],
+      "import_hint": null
+    },
+    {
+      "base": "*Exception",
+      "checkers": [
+        "check-usecase-dto-placement.py"
+      ],
+      "rules": [
+        "#210"
+      ],
+      "import_hint": null
+    },
+    {
+      "base": "*Factory",
+      "checkers": [
+        "check-test-config.py"
+      ],
+      "rules": [
+        "#392"
+      ],
+      "import_hint": null
+    },
+    {
+      "base": "*Model",
+      "checkers": [
+        "check-choices-literal-consumption.py",
+        "check-context-isolation.py",
+        "check-db-table.py"
+      ],
+      "rules": [
+        "#11",
+        "#631",
+        "#632"
+      ],
+      "import_hint": null
+    },
+    {
+      "base": "*Port",
+      "checkers": [
+        "check-business-vocabulary.py",
+        "check-port-adapter-pairing.py"
+      ],
+      "rules": [
+        "#552",
+        "#577",
+        "#622"
+      ],
+      "import_hint": null
+    },
+    {
+      "base": "*Repository",
+      "checkers": [
+        "check-port-adapter-pairing.py"
+      ],
+      "rules": [
+        "#577"
+      ],
+      "import_hint": null
+    },
+    {
+      "base": "*UnitOfWork",
+      "checkers": [
+        "check-port-adapter-pairing.py"
+      ],
+      "rules": [
+        "#577"
+      ],
+      "import_hint": null
+    },
+    {
+      "base": "@abstractmethod",
+      "checkers": [
+        "check-port-adapter-pairing.py"
+      ],
+      "rules": [
+        "#212"
+      ],
+      "import_hint": "from abc import abstractmethod"
+    },
+    {
+      "base": "@attrs",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from attr import attrs"
+    },
+    {
+      "base": "@dataclass",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from dataclasses import dataclass"
+    },
+    {
+      "base": "@define",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from attrs import define"
+    },
+    {
+      "base": "@frozen",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from attrs import frozen"
+    },
+    {
+      "base": "ABC",
+      "checkers": [
+        "check-port-adapter-pairing.py"
+      ],
+      "rules": [
+        "#551"
+      ],
+      "import_hint": "from abc import ABC"
+    },
+    {
+      "base": "AbstractBaseUser",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from django.contrib.auth.models import AbstractBaseUser"
+    },
+    {
+      "base": "AbstractUser",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from django.contrib.auth.models import AbstractUser"
+    },
+    {
+      "base": "AdminSite",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from django.contrib.admin import AdminSite"
+    },
+    {
+      "base": "AppConfig",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from django.apps import AppConfig"
+    },
+    {
+      "base": "BaseException",
+      "checkers": [
+        "check-context-isolation.py"
+      ],
+      "rules": [
+        "#167"
+      ],
+      "import_hint": null
+    },
+    {
+      "base": "BaseModel",
+      "checkers": [
+        "check-choices-literal-consumption.py",
+        "check-context-isolation.py",
+        "check-db-table.py",
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#11",
+        "#493",
+        "#631",
+        "#632"
+      ],
+      "import_hint": "from pydantic import BaseModel"
+    },
+    {
+      "base": "Choices",
+      "checkers": [
+        "check-domain-model.py",
+        "check-event-publish.py",
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493",
+        "#564",
+        "#565"
+      ],
+      "import_hint": "from django.db.models import Choices"
+    },
+    {
+      "base": "DjangoModelFactory",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from factory.django import DjangoModelFactory"
+    },
+    {
+      "base": "Enum",
+      "checkers": [
+        "check-context-isolation.py",
+        "check-domain-model.py",
+        "check-error-centralization.py",
+        "check-event-publish.py",
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#117",
+        "#493",
+        "#564",
+        "#565"
+      ],
+      "import_hint": "from enum import Enum"
+    },
+    {
+      "base": "Exception",
+      "checkers": [
+        "check-business-vocabulary.py",
+        "check-context-isolation.py",
+        "check-usecase-dto-placement.py"
+      ],
+      "rules": [
+        "#167",
+        "#210",
+        "#294"
+      ],
+      "import_hint": null
+    },
+    {
+      "base": "Factory",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from factory import Factory"
+    },
+    {
+      "base": "Flag",
+      "checkers": [
+        "check-context-isolation.py",
+        "check-error-centralization.py",
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#117",
+        "#493"
+      ],
+      "import_hint": "from enum import Flag"
+    },
+    {
+      "base": "Form",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from django.forms import Form"
+    },
+    {
+      "base": "FrameworkErrorSchema",
+      "checkers": [
+        "check-api-error-controller-contract.py",
+        "check-error-centralization.py",
+        "check-openapi-error-declaration.py"
+      ],
+      "rules": [
+        "#63",
+        "#572"
+      ],
+      "import_hint": "from framework.ninja.framework_error_schema import FrameworkErrorSchema"
+    },
+    {
+      "base": "HttpError",
+      "checkers": [
+        "check-business-vocabulary.py"
+      ],
+      "rules": [
+        "#119"
+      ],
+      "import_hint": "from ninja.errors import HttpError"
+    },
+    {
+      "base": "HyperlinkedModelSerializer",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from rest_framework.serializers import HyperlinkedModelSerializer"
+    },
+    {
+      "base": "IntChoices",
+      "checkers": [
+        "check-event-publish.py"
+      ],
+      "rules": [
+        "#564"
+      ],
+      "import_hint": null
+    },
+    {
+      "base": "IntEnum",
+      "checkers": [
+        "check-context-isolation.py",
+        "check-domain-model.py",
+        "check-error-centralization.py",
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#117",
+        "#493",
+        "#565"
+      ],
+      "import_hint": "from enum import IntEnum"
+    },
+    {
+      "base": "IntFlag",
+      "checkers": [
+        "check-context-isolation.py",
+        "check-error-centralization.py",
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#117",
+        "#493"
+      ],
+      "import_hint": "from enum import IntFlag"
+    },
+    {
+      "base": "IntegerChoices",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from django.db.models import IntegerChoices"
+    },
+    {
+      "base": "LiveServerTestCase",
+      "checkers": [
+        "check-test-config.py"
+      ],
+      "rules": [
+        "#387",
+        "#389"
+      ],
+      "import_hint": "from django.test import LiveServerTestCase"
+    },
+    {
+      "base": "Model",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from django.db.models import Model"
+    },
+    {
+      "base": "ModelAdmin",
+      "checkers": [
+        "check-naming.py",
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#342",
+        "#493"
+      ],
+      "import_hint": "from django.contrib.admin import ModelAdmin"
+    },
+    {
+      "base": "ModelForm",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from django.forms import ModelForm"
+    },
+    {
+      "base": "ModelSerializer",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from rest_framework.serializers import ModelSerializer"
+    },
+    {
+      "base": "NamedTuple",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from typing import NamedTuple"
+    },
+    {
+      "base": "NinjaAPI",
+      "checkers": [
+        "check-composition-root.py",
+        "check-openapi-error-declaration.py"
+      ],
+      "rules": [
+        "#63",
+        "#437",
+        "#440"
+      ],
+      "import_hint": "from ninja import NinjaAPI"
+    },
+    {
+      "base": "NinjaExtraAPI",
+      "checkers": [
+        "check-composition-root.py",
+        "check-openapi-error-declaration.py"
+      ],
+      "rules": [
+        "#63",
+        "#437",
+        "#440"
+      ],
+      "import_hint": "from ninja_extra import NinjaExtraAPI"
+    },
+    {
+      "base": "PermissionsMixin",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from django.contrib.auth.models import PermissionsMixin"
+    },
+    {
+      "base": "ReprEnum",
+      "checkers": [
+        "check-context-isolation.py",
+        "check-error-centralization.py"
+      ],
+      "rules": [
+        "#117"
+      ],
+      "import_hint": "from enum import ReprEnum"
+    },
+    {
+      "base": "Schema",
+      "checkers": [
+        "check-error-centralization.py",
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from ninja import Schema"
+    },
+    {
+      "base": "Serializer",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from rest_framework.serializers import Serializer"
+    },
+    {
+      "base": "StackedInline",
+      "checkers": [
+        "check-naming.py",
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#342",
+        "#493"
+      ],
+      "import_hint": "from django.contrib.admin import StackedInline"
+    },
+    {
+      "base": "StrEnum",
+      "checkers": [
+        "check-context-isolation.py",
+        "check-domain-model.py",
+        "check-error-centralization.py",
+        "check-event-publish.py",
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#117",
+        "#493",
+        "#564",
+        "#565",
+        "#572",
+        "#636"
+      ],
+      "import_hint": "from enum import StrEnum"
+    },
+    {
+      "base": "TabularInline",
+      "checkers": [
+        "check-naming.py",
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#342",
+        "#493"
+      ],
+      "import_hint": "from django.contrib.admin import TabularInline"
+    },
+    {
+      "base": "TestCase",
+      "checkers": [
+        "check-test-config.py"
+      ],
+      "rules": [
+        "#387",
+        "#389"
+      ],
+      "import_hint": "from django.test import TestCase"
+    },
+    {
+      "base": "TextChoices",
+      "checkers": [
+        "check-domain-model.py",
+        "check-event-publish.py",
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493",
+        "#564",
+        "#565"
+      ],
+      "import_hint": "from django.db.models import TextChoices"
+    },
+    {
+      "base": "TransactionTestCase",
+      "checkers": [
+        "check-test-config.py"
+      ],
+      "rules": [
+        "#387",
+        "#389"
+      ],
+      "import_hint": "from django.test import TransactionTestCase"
+    },
+    {
+      "base": "TypedDict",
+      "checkers": [
+        "check-public-surface-annotation.py"
+      ],
+      "rules": [
+        "#493"
+      ],
+      "import_hint": "from typing import TypedDict"
+    }
+  ]
+}

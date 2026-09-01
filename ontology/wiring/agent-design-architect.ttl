@@ -474,3 +474,27 @@ djr:R-1758 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 djr:R-1759 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
 djr:R-1760 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3424 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/design_pregate.py> .
+
+djr:R-3425 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/design_pregate.py> .
+
+djr:R-3426 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/design_pregate.py> .
+
+djr:R-3427 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/design_pregate.py> .
+
+djr:R-3428 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/design_pregate.py> .
+
+djr:R-3429 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/design_pregate.py> .
+
+djr:R-3430 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/design_pregate.py> .
+
+djr:R-3431 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/design_pregate.py> .

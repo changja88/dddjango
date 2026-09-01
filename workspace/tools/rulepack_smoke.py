@@ -85,7 +85,7 @@ def _check(out: "list", name: str, fn) -> None:
 def run(pack: "rp.Rulepack") -> "list":
     """(이름, 통과여부, 실측) 9행."""
     out: "list" = []
-    roster = {script for script, _ in REGISTRY}
+    roster = {script for script, _ in REGISTRY} | {"design_pregate.py"}  # 레지스트리 밖 예보 게이트(R-3424~R-3431 enforcedBy — wiring/registry.ttl Checker 개체 실재)
 
     def g1():
         stray = sorted(set(pack.by_checker) - roster)

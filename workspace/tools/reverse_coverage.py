@@ -133,6 +133,15 @@ def main() -> int:
                        "저자는 workspace/tools/ontology_rulepack.py 하나뿐이고 "
                        "«팩 == render(그래프)» 를 make verify 가 byte 로 대조한다 · "
                        "본문(text) 미동봉·인덱스와 명칭만(동결 개정 8)")
+            elif rel.name == "design_pregate.py":
+                why = ("pre-gate 실행기(2026-09-01 — G1 승인 전 설계 명세 결정적 예보) — 기계가독 "
+                       "블록 5종을 팬텀 스텁으로 격리 사본에 실체화해 registry_gate 앵커 차분을 "
+                       "예보용으로 돌린다(관찰 모드·G2 비대체 — R-3432~R-3438) · "
+                       "pregate_fixture_run 이 green/red 픽스처로 행동 고정")
+            elif rel.name == "pregate_symbol_kinds.json":
+                why = ("pre-gate Base 병기 의무 종류 소성물(R-3426 — 검사기 소스 기계 추출 닫힌 목록) — "
+                       "저자는 workspace/tools/gen_pregate_symbol_kinds.py 하나뿐이고 --check 가 "
+                       "재생성 byte 동일·소재 소실·미등재 검사기를 red 로 고정")
             elif rel.name == "anchor_diff.py":
                 why = "scope-render 직접 계열 판정 차분 공용 모듈(2026-08-15 r2″ — registry 2·5·6·15·16번 --anchor 소비·registry_gate 동형 N∖L·빚 채널) — anchor_diff_smoke 가 행동 고정"
             else:
