@@ -49,9 +49,11 @@ ImportError fail-closed · ⓓ 후보 exit 불산입 · #604 는 git 없으면 �
 from __future__ import annotations
 
 import ast
+import io
 import re
 import subprocess
 import sys
+import tokenize
 
 import checker_target
 from findings import Candidates, Findings, emit_all
@@ -79,7 +81,8 @@ MEANS_WORDS = {"client", "cache", "sync", "cron", "queue", "http", "rest", "sdk"
                "nightly", "daily", "hourly", "weekly", "realtime", "driver", "gateway"}
 AUTH_TOKENS = {"auth", "authentication", "bearer"}
 CURATED_TECH = {"django", "ninja", "celery", "redis", "kafka", "smtp", "stripe", "postgres",
-                "postgresql", "mysql", "sqlite", "boto3", "s3", "sqs", "grpc", "drf", "rest"}
+                "postgresql", "mysql", "sqlite", "boto3", "s3", "sqs", "grpc", "drf", "rest",
+                "pydantic", "rest_framework"}
 
 
 def _parse(path: Path) -> ast.Module | None:
@@ -230,6 +233,57 @@ def _check_technology(root: Path, techdir: Path, f: Findings) -> None:
                   "문장이 성립하지 않는 코드»만 온다(아니면 pure/ 나 capability 다)")
 
 
+_DOTTED_PATH_RE = re.compile(r"^[A-Za-z_][\w.]*\.[\w.]+$")
+
+
+def _scrub_for_name_scan(source: str, keep_words: set) -> str:
+    """BC 이름 스캔(#52·#416·#426)용 사본 — 주석·산문 문자열을 공백으로 지운다.
+
+    구현 계약: 토큰 span 공백 치환(개행 보존)만 한다 — untokenize 재조립 금지(치환은
+    새 \\b 경계를 만들지 않아 스캔 결과가 원문의 부분집합으로 남는다). 원문 유지(스캔
+    대상 잔류)는 fail-closed 목록: dotted-path 꼴 문자열(모듈 경로 결합) · keep_words
+    정확 일치 단독 낱말 문자열(앱 라벨·라우팅 키 결합) · f-접두 문자열 전체(≤3.11 단일
+    토큰 ↔ 3.12+ FSTRING_* 분해의 버전 비결정 차단) · str 아닌 리터럴 · tokenize 실패
+    시 원문 전체."""
+    try:
+        tokens = list(tokenize.generate_tokens(io.StringIO(source).readline))
+    except (tokenize.TokenError, IndentationError, SyntaxError, ValueError):
+        return source
+    offsets: list[int] = []
+    off = 0
+    for line in source.splitlines(keepends=True):
+        offsets.append(off)
+        off += len(line)
+    buf = list(source)
+
+    def blank(tok: tokenize.TokenInfo) -> None:
+        srow, scol = tok.start
+        erow, ecol = tok.end
+        if srow - 1 >= len(offsets) or erow - 1 >= len(offsets):
+            return
+        for i in range(offsets[srow - 1] + scol, offsets[erow - 1] + ecol):
+            if buf[i] != "\n":
+                buf[i] = " "
+
+    for tok in tokens:
+        if tok.type == tokenize.COMMENT:
+            blank(tok)
+        elif tok.type == tokenize.STRING:
+            prefix = re.match(r"[A-Za-z]*", tok.string).group(0).lower()
+            if "f" in prefix:
+                continue  # f-string 은 통째 유지 — 버전 무관 fail-closed
+            try:
+                value = ast.literal_eval(tok.string)
+            except (ValueError, SyntaxError):
+                continue  # 해석 불가 리터럴 — 유지(fail-closed)
+            if not isinstance(value, str):
+                continue
+            if _DOTTED_PATH_RE.match(value) or value in keep_words:
+                continue
+            blank(tok)
+    return "".join(buf)
+
+
 # ── 격리 — #46 · #47 · #52 · #416 · #426 · #425 · #615~#619 · #587 ─────────
 
 def _check_isolation(root: Path, fw: Path, union: set, bc_names: set, agg_camels: set,
@@ -261,7 +315,10 @@ def _check_isolation(root: Path, fw: Path, union: set, bc_names: set, agg_camels
                     f.add("#46", _rel(root, py, node.lineno),
                           "framework 가 application/ 쪽을 import 한다 — 나가는 import 는 0 건이다")
         # BC 이름 등장 — 자리별로 #426(test) · #416(technology) · #52(그 밖).
-        name_hits = sorted(n for n in bc_names if re.search(rf"\b{re.escape(n)}\b", text))
+        # 스캔 대상은 스크럽 사본 — 주석·산문 문자열의 일반 어휘 충돌(무변경 framework
+        # 파일 × 일반 영단어 BC 이름)을 배제하고 코드 결합 채널만 남긴다(리비전 10호).
+        scan_text = _scrub_for_name_scan(text, bc_names)
+        name_hits = sorted(n for n in bc_names if re.search(rf"\b{re.escape(n)}\b", scan_text))
         if name_hits:
             if in_test:
                 f.add("#426", _rel(root, py),

@@ -78,6 +78,7 @@ DECLARATIVE_BASE_NAMES = {
     "TypedDict", "NamedTuple",
     "AppConfig", "ModelAdmin", "TabularInline", "StackedInline", "AdminSite",
     "Factory", "DjangoModelFactory",
+    "AbstractBaseUser", "AbstractUser", "PermissionsMixin",
 }
 DECLARATIVE_CLASS_NAMES = {"Meta", "Config"}
 DECLARATIVE_DECORATORS = {"dataclass", "define", "frozen", "attrs"}
