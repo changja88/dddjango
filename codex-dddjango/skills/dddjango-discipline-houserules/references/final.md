@@ -259,3 +259,11 @@ brownfield 는 코드의 속성이 아니라 규칙 변경의 그림자다 — �
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 Evans(바운디드 컨텍스트·애그리거트·유비쿼터스 언어) · Vernon(애그리거트=트랜잭션 경계) · Martin(의존 규칙·Humble Object) · Cockburn(포트와 어댑터 — «who triggers or is in charge of the conversation»). 각 칸의 결정 근거·기각 대안은 저장소 정본의 결정 카드 57장에 있다 — 이 문서는 «값»만 싣는다.
+## §5 driven 출구 면제 — 성문
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
+
+`django_<bounded_context>/` 와 ORM 모델을 import 할 수 있는 곳(driven 출구 허용면)은 셋뿐이다.
+
+- `adapter/persistence/` 아래 셋 — `repository/`·`domain_bypass_query/`·`unit_of_work/`.
+- `django_<bounded_context>/admin/` — admin 은 자기 앱의 모델을 안다.
+- `adapter/<capability>/` 의 `django_adapter.py` — **비애그리거트 ORM 쓰기 능력**의 django 기술 구현. persistence 셋에는 이 능력의 칸이 없어(리포지토리=애그리거트 전용 · bypass=조회 전용) 그 능력 포트 구현이 여기 온다. 동명 폴더 승격(`django_adapter/django_adapter.py`)에도 면제는 유지되고, `anticorruption_layer/`·`external_system/` 은 제외다(2호 실증·사용자 A안 — 리비전 10호 채번 · 집행 #328 `check-context-isolation`·#462 `check-port-adapter-pairing` 공동).
