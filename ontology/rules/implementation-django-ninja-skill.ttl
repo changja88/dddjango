@@ -331,12 +331,18 @@ djr:R-2931 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-2932 a djr:Prohibition ;
-    skos:prefLabel "openapi_extra 보충·OpenAPI override·monkeypatch·postprocessor 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2932@2026-08-22> .
+    skos:prefLabel "openapi_extra 보충·OpenAPI override·monkeypatch·postprocessor 금지 — 성공 메타데이터 보충 예외(fail-closed)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2932@2026-09-01> .
 
 <https://numchida.com/ns/djr#R-2932@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2932 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2932@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-2932 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2932@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-2933 a djr:Obligation ;
     skos:prefLabel "프로젝트 api.py 의 NinjaExtraAPI 단일 소유"@ko ;
@@ -753,7 +759,7 @@ djr:R-2957 a djr:Obligation ;
     djr:order 8 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b10>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b9>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b30>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b34> ;
     djr:statesNorm djr:R-2929, djr:R-2930, djr:R-2931, djr:R-2932 ;
-    djr:text "- 직접 반환하는 모든 BC 오류 status는 `response={...}`에 실제 반환하는 오류 타입 그대로 선언한다(concrete 하나=그 concrete·둘 이상=`Union`·명시값 base=base — base로 뭉뚱그리지 않는다). framework-owned 401/403/route 404/422/429/일반 `HttpError`/미식별 500은 BC 오류로 변환·광고하지 않으며 body를 정확한 code-profile 계약이라 주장하지 않는다. 오류 선언의 `openapi_extra` 보충과 OpenAPI override·monkeypatch·postprocessor도 금지한다 (§6.2·§8)\n"@ko .
+    djr:text "- 직접 반환하는 모든 BC 오류 status는 `response={...}`에 실제 반환하는 오류 타입 그대로 선언한다(concrete 하나=그 concrete·둘 이상=`Union`·명시값 base=base — base로 뭉뚱그리지 않는다). framework-owned 401/403/route 404/422/429/일반 `HttpError`/미식별 500은 BC 오류로 변환·광고하지 않으며 body를 정확한 code-profile 계약이라 주장하지 않는다. 오류 선언의 `openapi_extra` 보충과 OpenAPI override·monkeypatch·postprocessor도 금지한다 — 단 `response=`에 선언된 성공 status(100–399)의 리터럴 메타데이터 보충(⊆ 선언 집합)만 허용·그 밖 fail-closed(2026-09-01) (§6.2·§8)\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/SKILL.md/s004/b9> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/SKILL.md/s004> ;

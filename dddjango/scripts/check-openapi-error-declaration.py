@@ -3406,6 +3406,40 @@ def _dict_has_key(node: ast.AST, key: str) -> bool:
     return False
 
 
+def _success_only_supplement(
+    extra: ast.AST,
+    function: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> bool:
+    """`openapi_extra` 가 «성공 메타데이터 보충»이면 True — #63 tree 레인 허용면.
+
+    허용은 정확히 이 꼴뿐(리비전 10호 — houserules 아닌 ninja §2.2·§6.2 개정 성문):
+    top-level Dict 의 "responses" 값이 Dict 이고, 그 키 전부가 **리터럴**(정수·숫자
+    문자열)로 읽히며, 전부 100–399 화이트리스트 안이고, 그 status 집합이 operation
+    `response=` 선언 집합의 **부분집합**일 때. 그 밖 — 오류 status·범위 밖(0·600+)·
+    변수/상수 표현식 키·splat(`**` — 키 None)·중첩 responses·비-Dict — 은 전부
+    fail-closed 로 현행 방출을 유지한다."""
+    if not isinstance(extra, ast.Dict):
+        return False
+    responses: ast.AST | None = None
+    for key, value in zip(extra.keys, extra.values):
+        if isinstance(key, ast.Constant) and key.value == "responses":
+            responses = value
+            break
+    if responses is None or not isinstance(responses, ast.Dict):
+        return False
+    statuses: set[int] = set()
+    for status_key in responses.keys:
+        if status_key is None:
+            return False  # ** splat — 정적 해석 불가
+        status = _literal_status(status_key)
+        if status is None or not 100 <= status <= 399:
+            return False
+        statuses.add(status)
+    if not statuses:
+        return False
+    return statuses <= _scan_response_statuses(function)
+
+
 def _tree_slice63(root: Path) -> tuple[Findings, list[tuple[str, str, int]]]:
     """tree 3사이트 — 공용 포매터 violation 문법(B형 locator `{rel}:{lineno}` 정형화).
 
@@ -3437,8 +3471,10 @@ def _tree_slice63(root: Path) -> tuple[Findings, list[tuple[str, str, int]]]:
                         continue
                     for kw in deco.keywords:
                         if kw.arg == "openapi_extra" and _dict_has_key(kw.value, "responses"):
+                            if _success_only_supplement(kw.value, node):
+                                continue  # 성공 메타데이터 보충 — 허용(방출·overlap key 함께 생략)
                             where = f"{rel}:{node.lineno}"
-                            msg = "`openapi_extra` 의 responses 보충 — 오류 응답은 `response={status: <Bc>ErrorSchema}` 로 직접 선언한다"
+                            msg = "`openapi_extra` 의 responses 보충 — 오류 응답은 `response={status: <Bc>ErrorSchema}` 로 직접 선언한다(허용은 `response=` 에 선언된 성공 status 의 리터럴 메타데이터 보충뿐)"
                             findings.add("#63", where=where, msg=msg)
                             keys.append(("openapi-extra", rel.as_posix(), node.lineno))
             elif isinstance(node, ast.Assign):

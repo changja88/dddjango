@@ -384,7 +384,7 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 58 | application/**/management/commands/ 를 만들지 않는다. | D22 «결정 — 칸을 만들지 않는다» | `path` | measured | `measured_ok` | **blocker** |
 | 59 | 전역 예외 핸들러나 catch-all mapper 로 오류를 가로채지 않는다. | D27 ③ HTTP 표면 + D25(api.py 위반) | `ast` | principle |  | **blocker** |
 | 62 | except Exception 을 쓰지 않고, 폴백을 둘 경우 도메인·응용 base 단위 catch 로 한정한다. | D27 ③ 화살표(2차 리뷰 S11 로 조건절이 회복됐다) | `ast` | principle |  | **blocker** |
-| 63 | 오류 응답은 operation 이 response={status: <Bc>ErrorSchema} 로 직접 선언하고 openapi_extra 보충·get_openapi_schema override·monkeypatch·postprocessor 로 사후 변형하지 않는다. | D27 «OpenAPI 도 같다» | `ast` | principle |  | **blocker** |
+| 63 | 오류 응답은 operation 이 response={status: <Bc>ErrorSchema} 로 직접 선언하고 openapi_extra 보충·get_openapi_schema override·monkeypatch·postprocessor 로 사후 변형하지 않는다. <span>09-01 · 허용면 — 금지의 대상은 오류 응답(4xx·5xx) 항목이다: `response=` 로 직접 선언된 성공·리다이렉트 status(100–399)의 리터럴 메타데이터 보충(⊆ 선언 집합)은 허용, 오류 status 동거·변수/상수 키·`**` splat 은 fail-closed 위반(R-0089·R-0683·R-2932·R-0339 amendment). 알려진 커버리지 한계 — 변수 간접(`openapi_extra=EXTRA`)·`NinjaAPI(openapi_extra=…)` 생성자 레벨은 백스톱 미탐(규범 위반은 위반·리뷰어 소관).</span> | D27 «OpenAPI 도 같다» | `ast` | principle |  | **blocker** |
 | 64 | 포트 예외(application_layer/port/<capability>/exception.py)는 도메인 예외를 상속하지 않는다. | D27 «08-06 보강(R4)» + 트리 48행 | `ast` | principle |  | **blocker** |
 | 67 | application_layer/**/<use_case>_{command,query,result}.py 는 raise 하지 않는다 — 응용 DTO 는 검사하지 않는다. | D30 백스톱 S1 | `ast` | both | `measured_ok` | **blocker** |
 | 68 | 검사 자리는 값이 온 곳이 정한다 — 바깥에서 온 값은 입구 schema_in 이, 저장소에서 온 값은 애그리거트가 막고, 우리가 방금 만든 값은 아무도 검사하지 않는다. | D30 «그래서 규칙» | `ast+` | both | `measured_ok` | **blocker** |
@@ -586,7 +586,7 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 264 | `<aggregate>/value_object/` 안의 클래스는 불변이다 — 검사는 관례로 한다: `__init__` 밖에서 자기 속성 대입(`self.x = …`)이 없어야 한다. | 트리 64행+D12 | `ast` | principle |  | **blocker** |
 | 265 | `<aggregate>/value_object/` 의 값 객체는 그 애그리거트 밖에서는 쓰이지 않는다. | 트리 64행+D12 | `ast` | principle |  | **blocker** |
 | 266 | 다른 애그리거트가 그 값 객체를 쓰기 시작하는 순간 `shared_value_object/` 로 올린다. | 트리 64행+D12 | `ast` | principle |  | **blocker** |
-| 267 | 값 객체 하나 = 파일 하나다(애그리거트 안이든 `shared_value_object/` 든 같은 규칙이고 다른 것은 사는 폴더뿐이다). | 트리 65행+56행 | `ast` | principle |  | **blocker** |
+| 267 | 값 객체 하나 = 파일 하나다(애그리거트 안이든 `shared_value_object/` 든 같은 규칙이고 다른 것은 사는 폴더뿐이다). <span>09-01 · 계수 — 값 집합 Enum 계열(`StrEnum`·`Enum`·`IntEnum`·Choices 류)도 값 객체다(공개 클래스 계수 포함). 참고: ErrorSchema+ErrorCode 동거는 #572 소관(`bc_error_schema.py` 는 driving_layer 라 #267 대상 밖).</span> | 트리 65행+56행 | `ast` | principle |  | **blocker** |
 | 268 | 값 객체는 만들어지는 시점에 스스로 검증해 잘못된 값으로는 존재할 수 없어야 한다. | 트리 65행 | `ast+` | principle |  | **blocker** |
 | 269 | `<aggregate>/event/` 에는 이 BC 안에서 읽히는 «일어난 사실»만 온다. | 트리 66행+D13 | `ast` | principle |  | **blocker** |
 | 270 | 이 BC 안에서 읽는 사람이 없으면 그것은 이벤트가 아니라 «알림»이고 자리는 `application_layer/port/` 다. | 트리 66행+D13+D34 | `ast` | principle |  | **blocker** |
@@ -639,7 +639,7 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 325 | ORM 모델·마이그레이션·어드민이 사는 폴더는 `driven_layer/django_<bounded_context>/` 이고 그 자체가 장고 앱이다 — 폴더 이름은 `django_` + BC 이름이다. | 트리 76행+D15 | `path` | principle | `principle` | **blocker** |
 | 326 | `django_<bounded_context>/` 는 django 와 같은 폴더 안 말고 아무것도 import 하지 않는다 — `domain_layer` 도 금지다(잎). **예외(2026-08-12 D1′)**: 자기 BC domain VO(`value_object/`·`shared_value_object/`)의 **값 파생 전용** from-import 는 허용한다 — 나열·순회·멤버 참조까지이고, 호출(판정·행위)은 위반이다(`implementation-django` 「값 집합은 domain StrEnum 에서 파생」 요구와 정렬). | 트리 76행+D15 검사①+D20 검사② | `ast` | principle |  | **blocker** |
 | 327 | `django_<bounded_context>/admin/**` 는 driven_layer 화살표 검사와 잎 import 검사의 대상에서 뺀다. | D15 검사①+D20 검사①②+D21 | `path` | measured | `measured_ok` | **검사기** |
-| 328 | `django_<bounded_context>/` 를 import 하는 것은 `driven_layer/adapter/persistence/` 아래뿐이다. | D15 검사③+D20 검사③+D37 | `ast` | principle |  | **blocker** |
+| 328 | `django_<bounded_context>/` 를 import 하는 것은 `driven_layer/adapter/persistence/` 아래뿐이다. <span>09-01 · 면제 — `adapter/<capability>/` 의 `django_adapter.py`(동명 폴더 승격 꼴 포함·`anticorruption_layer/`·`external_system/` 제외)는 비애그리거트 ORM 쓰기 능력의 기술 구현으로 허용(houserules §5·R-3423 — 2호 실증·사용자 A안 성문화·#462 정합).</span> | D15 검사③+D20 검사③+D37 | `ast` | principle |  | **blocker** |
 | 329 | `apps.py` 의 AppConfig 는 `label` 을 명시 선언한다 — 기본값에 기대지 않는다. | 트리 77행+D15 검사④ | `ast` | principle |  | **blocker** |
 | 330 | `label` 값은 BC 이름과 같고, 폴더 이름은 그 값에 `django_` 를 붙인 것이다. | 트리 77행+D15 검사④ | `ast` | both | `measured_ok` | **blocker** |
 | 331 | BC 이름은 설치된 다른 앱의 `label` 과 겹치지 않는다 — 목록은 고정 나열이 아니라 «그 저장소에 설치된 앱 전부»다(`admin`·`auth`·`sessions` …). | 트리 77행+D15 | `ast` | principle |  | **blocker** |
@@ -688,7 +688,7 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 376 | 커밋 뒤 부작용은 UoW 의 `after_commit(callback)` 을 거치고, 그 구현은 `transaction.on_commit` 으로 채운다. | 트리 96행+D31 | `ast` | both | `measured_ok` | **blocker** |
 | 382 | 클래스에 `Gateway` 접미사를 쓰지 않는다 — 계약이면 `Port`, 구현이면 `Adapter` 로 흡수한다. | D33 | `ast` | principle |  | **blocker** |
 | 460 | 구현은 전부 `driven_layer/adapter/` 아래에 산다 — `django_<bounded_context>/` 만 그 밖이고, 그것은 «지키는 약속»이 없어서다. | D37+트리 89행 | `path` | principle |  | **blocker** |
-| 462 | ORM 모델을 import 하는 것은 `adapter/persistence/` 아래 셋(`repository/`·`domain_bypass_query/`·`unit_of_work/`)뿐이다 — 이 공통 규칙 하나가 그 겹 폴더를 정당화한다. | D37+트리 90행 | `ast` | principle |  | **blocker** |
+| 462 | ORM 모델을 import 하는 것은 `adapter/persistence/` 아래 셋(`repository/`·`domain_bypass_query/`·`unit_of_work/`)뿐이다 — 이 공통 규칙 하나가 그 겹 폴더를 정당화한다. <span>09-01 · 허용면 성문 — 셋에 더해 `django_<bc>/admin/`·`adapter/<capability>/` 의 `django_adapter.py`(승격 꼴 포함·ACL/external_system 제외)(houserules §5·R-3423).</span> | D37+트리 90행 | `ast` | principle |  | **blocker** |
 | 463 | `adapter/<capability>/` 인지의 판정은 3단이다 — ① 밖에 «상대»가 있나 → ② 없으면 «기술»이 필요한가 → ③ 계약에 업무 어휘가 있나. | D37+트리 103행 | `ast` | principle |  | **blocker** |
 | 464 | `repository/` 를 `command`·`query` 로 가르지 않는다 — 가르는 축은 「도메인을 거쳤나」이고, 애그리거트 리포지토리도 `find_by_id`·`exists`·`count` 로 읽는다. | D37 기각+트리 91행 | `path` | principle |  | **blocker** |
 | 465 | `domain_bypass_query/<capability>_query.py` 에 `_repository` 접미사를 붙이지 않는다 — 한 경로에 repository 가 두 번 나오고, 이 칸은 애그리거트를 안 거치므로 리포지토리가 아니다. 접미사는 `_query` 이고 선언·구현 양쪽이 함께 단다. | D37+D33+D41+트리 53·94행 | `path` | principle |  | **blocker** |
@@ -729,7 +729,7 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 413 | `framework/<technology>/` 는 그 기술을 아는 층만 부른다 — `domain_layer` 가 부르면 위반이다. | 트리 126행+D24 | `ast` | both | `measured_ok` | **blocker** |
 | 414 | `framework/<technology>/` 아래는 `<module>.py` 파일이고, `response/` 같은 방향 축 하위 폴더를 두지 않는다. | 트리 127행+D24 | `path` | both | `measured_ok` | **blocker** |
 | 415 | `framework/<technology>/<module>.py` 에는 «그 라이브러리의 타입 없이는 문장 자체가 성립하지 않는 코드»만 온다. | 트리 127행+D24 | `ast` | principle |  | **blocker** |
-| 416 | 그 모듈은 어느 BC 에 놓아도 똑같이 동작해야 한다 — BC 를 다 지워도 그대로 남는다. | 트리 127행+파트 framework | `ast` | principle |  | **blocker** |
+| 416 | 그 모듈은 어느 BC 에 놓아도 똑같이 동작해야 한다 — BC 를 다 지워도 그대로 남는다. <span>09-01 · 탐지 매체 — BC 이름 스캔(#426·#52 공유 스캔 동일)은 주석·산문 문자열을 제외한 스크럽 사본에 건다: 유지 = 코드 식별자·import 경로·dotted-path 문자열·BC 이름 정확 일치 단독 낱말·f-string(통째·버전 무관). 잔여 한계(리뷰어 소관) — 문자열 연결 조립·docstring 안 dotted-path·`reverse("bc:name")` 콜론 꼴·템플릿 경로.</span> | 트리 127행+파트 framework | `ast` | principle |  | **blocker** |
 | 417 | 프레임워크가 내는 오류의 공통 응답 스키마는 `framework/ninja/framework_error_schema.py`·`framework_validation_error_schema.py` 에 둔다 — **`bc_` 접두를 쓰지 않는다**(#33·#426: framework 는 BC 를 모른다). BC 의 오류 언어는 `driving_layer/api/bc_error_schema.py` 로 따로 산다. <span>2026-08-25 · **승인 대체 경로** — 프로젝트가 명시 승인으로 채택한 `framework/django_ninja/error_schema.py` 도 이 계약의 정본 경로다(그래프 R-0029 리비전 2 동반). 정본은 저장소당 하나 — 두 경로의 동시 실재는 위반이다(검사기 사용 오류).</span> <span>2026-08-25 · **승인 대체 경로 철회(되돌림)** — 대체 경로의 유일 사용처(tarot)가 재작업에서 정본 경로(`framework/ninja/framework_error_schema.py`)로 전환하기로 확정돼(판정 ⑫) 가산의 원인이 소멸했다. 변형 집합·선택 장치를 걷어내고 단일 정본으로 복원한다(그래프 R-0029·R-2918 리비전 3 동반). 되돌림 직후 tarot 정적 런의 신규 red 는 의도된 회복이다.</span> | 트리 127행+D24+D27+D33 | `path` | principle |  | **blocker** |
 | 420 | 인증은 «틀»(`BearerAuthentication(resolve)`)을 `framework/ninja/` 에 두고 토큰 «해석»은 각 BC 가 `open_host_service/` 로 공개한다 — BC 안에 인증 파일이 남지 않는다. 원리는 «틀/해석 분할»이고, Bearer 라는 방식·클래스명은 플러그인이 표준화한 채택 전제다(3차 T21). | D24 | `path` | measured | `measured_ok` | **blocker** |
 | 423 | `framework/test/` 는 «공유 뼈대 하나 = 파일 하나»다. | 트리 131행 | `path` | principle |  | **blocker** |

@@ -146,3 +146,5 @@ djr:R-3412 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-coder>, <https:/
 djr:R-3413 djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
 
 djr:R-3414 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-3423 djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py>, <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py> .

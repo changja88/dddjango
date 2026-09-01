@@ -69,9 +69,9 @@ EXPECTED_SHA: "dict[str, str]" = {
     "check-api-error-controller-contract.py": "b883cb584e61d5b18ab527aebf9d4536a15b5519d49ece049e0f273298dcf1df",
     "check-error-centralization.py": "5d21b130e5a23bc5c5610ad3ebe29e880e526cd2338ff2377f00cb36294ff191",
     "check-composition-root.py": "81938fb23b67216c6fc24f8c39fc90564292d6526d09e828d452bc953f0c08ff",
-    "check-openapi-error-declaration.py": "eef4b45829694c5e65eb0cd3c5efacddf58e3f3669e0c291d2730190111c3e34",
+    "check-openapi-error-declaration.py": "53913d1cb2da18896e15907695cd97157cadf51cfc4fa82bd24b8f3c0113f67b",
     "check-response-schema-bypass.py": "b1a77bebb4272f9eb817feb63f31b6715d52da9d0ad312a2f02d744717428793",
-    "check-context-isolation.py": "4622fb6fa1d4c1ddb607767b5283de71bb3d9c2bf4ca821701553a8d5a803747",
+    "check-context-isolation.py": "a0b9dbb4376705a6f97918f5f77c6303ec2195f5452ea33bb015856dd5368afd",
 }
 
 CHECKER_TIMEOUT_S: int = 300
