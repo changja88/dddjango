@@ -631,12 +631,18 @@ djr:R-3416 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3417 a djr:Obligation ;
-    skos:prefLabel "캐스케이드 ② 동명 폴더 승격 — 역할 밖 응집 술어(상태 클래스/참조 폐쇄 클러스터)·개별 50행 하한·관례 동거 예외·부품은 형제 분할"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3417@2026-09-01> .
+    skos:prefLabel "캐스케이드 ② 동명 폴더 승격 — 역할 밖 응집 술어(상태 클래스/참조 폐쇄 클러스터)·개별 50행 하한·관례 동거 예외·부품은 형제 분할·집행 전 모듈 객체 참조처 조사(패치 표면)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3417@2026-09-01b> .
 
 <https://numchida.com/ns/djr#R-3417@2026-09-01> a djr:Expression ;
     prov:specializationOf djr:R-3417 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3417@2026-09-01b> a djr:Expression ;
+    prov:specializationOf djr:R-3417 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3417@2026-09-01> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3418 a djr:Obligation ;
     skos:prefLabel "캐스케이드 ③ 유지 — 본업 비대·역할 내 초대형은 한 파일"@ko ;
@@ -811,7 +817,7 @@ djr:R-3421 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 7 ;
     djr:statesNorm djr:R-3415, djr:R-3416, djr:R-3417, djr:R-3418 ;
-    djr:text "**동명 폴더 승격 캐스케이드** — 칸 파일이 커질 때의 분할 판정이다(값·형태는 `references/final.md` §0 이 소유한다 — #490 교체형). 분할은 **크기가 아니라 소관·응집으로** 가른다 — 행 수는 트리거가 아니라 감사 신호다(`discipline-cleancode` §15.1 의 수치 스멜도 신호다). (명세·G0·감사자는 파이프라인 용어다 — 파이프라인 밖에서는 사용자의 명시적 작업 지시가 명세·G0 ⓐ에 준하고, 검수를 맡은 주체가 감사자에 준한다.)\n\n1. **이동(①)** — 커진 부분이 다른 기존 칸의 소관이면 그 칸으로 옮긴다. 단 이동 후보 칸이 실제로 받을 수 있는지(의존 방향 역류 없음·역할 계약 부합)를 확인한 뒤에만, 그리고 목적지가 승인 산출물 목록 안일 때만 — 목록 밖이면 보고(설계 반송)다. ①은 승격 폴더의 부품에도 그대로 적용된다.\n2. **동명 폴더 승격(②)** — 어느 칸 소관도 아닌 «역할 밖 응집 단위»가 생겼으면 승격한다. 술어(둘 다 충족): (a) 칸의 역할 계약 밖 top-level 정의로서, 자기 상태·수명을 가진 클래스이거나 — 본업 정의가 직접 참조하지 않거나 단일 진입 이름으로만 참조하는 사적 정의들이 **서로만 참조하는 닫힌 성분**을 이루는 무상태 클러스터(예: 모델군+상수+함수 쌍 — 상수 모음만·타입 별칭 모음만·함수 하나는 클러스터가 아니다) (b) 클러스터 **개별 50행 이상**(물리 행·빈 줄 제외). 관례 동거는 예외다(Django Model+Manager+QuerySet(+그 불변 예외)·admin panel+inline). 주어가 승격 폴더 내부 부품이면 ②의 실현은 하위 폴더가 아니라 **형제 부품 파일 분할**이다.\n3. **유지(③)** — 둘 다 아니면 한 파일(부품이면 한 부품 파일)을 유지한다. 전부 역할 내인 초대형 파일도 ③이다 — 크기는 트리거가 아니다.\n"@ko .
+    djr:text "**동명 폴더 승격 캐스케이드** — 칸 파일이 커질 때의 분할 판정이다(값·형태는 `references/final.md` §0 이 소유한다 — #490 교체형). 분할은 **크기가 아니라 소관·응집으로** 가른다 — 행 수는 트리거가 아니라 감사 신호다(`discipline-cleancode` §15.1 의 수치 스멜도 신호다). (명세·G0·감사자는 파이프라인 용어다 — 파이프라인 밖에서는 사용자의 명시적 작업 지시가 명세·G0 ⓐ에 준하고, 검수를 맡은 주체가 감사자에 준한다.)\n\n1. **이동(①)** — 커진 부분이 다른 기존 칸의 소관이면 그 칸으로 옮긴다. 단 이동 후보 칸이 실제로 받을 수 있는지(의존 방향 역류 없음·역할 계약 부합)를 확인한 뒤에만, 그리고 목적지가 승인 산출물 목록 안일 때만 — 목록 밖이면 보고(설계 반송)다. ①은 승격 폴더의 부품에도 그대로 적용된다.\n2. **동명 폴더 승격(②)** — 어느 칸 소관도 아닌 «역할 밖 응집 단위»가 생겼으면 승격한다. 술어(둘 다 충족): (a) 칸의 역할 계약 밖 top-level 정의로서, 자기 상태·수명을 가진 클래스이거나 — 본업 정의가 직접 참조하지 않거나 단일 진입 이름으로만 참조하는 사적 정의들이 **서로만 참조하는 닫힌 성분**을 이루는 무상태 클러스터(예: 모델군+상수+함수 쌍 — 상수 모음만·타입 별칭 모음만·함수 하나는 클러스터가 아니다) (b) 클러스터 **개별 50행 이상**(물리 행·빈 줄 제외). 관례 동거는 예외다(Django Model+Manager+QuerySet(+그 불변 예외)·admin panel+inline). 주어가 승격 폴더 내부 부품이면 ②의 실현은 하위 폴더가 아니라 **형제 부품 파일 분할**이다. 승격을 **집행하기 전에**(발견을 집행하는 coder 는 집행 전 · 기존 파일 승격(G0 ⓐ→슬라이스 0)의 제안·실행자는 제안 전), 대상 모듈을 **모듈 객체·모듈 경로 문자열로 참조하는 곳** — 테스트 fixture 의 monkeypatch, `unittest.mock.patch(\"pkg.mod.attr\")` 문자열형, settings 등 dotted-path 문자열 참조, 동적 import — 을 저장소 전수에서 조사해 발견 전건을 승격 슬라이스 스코프에 편입한다. 재수출 `__init__` 의 import 표면 불변은 **읽기 표면**만 보증하고 **패치 표면**은 보증하지 않는다(패치는 패키지 객체에 걸리고 본체 모듈 전역은 그대로 남는다). 스코프 밖 발견이면 집행 전 보고(설계 반송)다 — 감사자의 판정 재료는 현행 유지다.\n3. **유지(③)** — 둘 다 아니면 한 파일(부품이면 한 부품 파일)을 유지한다. 전부 역할 내인 초대형 파일도 ③이다 — 크기는 트리거가 아니다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b8> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;

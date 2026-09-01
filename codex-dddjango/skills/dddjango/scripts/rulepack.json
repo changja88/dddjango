@@ -71,7 +71,7 @@
     },
     {
       "path": "ontology/rules/discipline-houserules-skill.ttl",
-      "sha256": "afc5ef185ad9dc0d3d2eddf392287673c0f7f229f599bef95df5ba71e8f6345e"
+      "sha256": "9683adcef9a2fd7479628a845143c9544140dccd3a2da0324f43c092419ea999"
     },
     {
       "path": "ontology/rules/discipline-tdd-final.ttl",
@@ -60387,8 +60387,8 @@
       "block_order": 7,
       "checkers": [],
       "document": "dddjango/skills/discipline-houserules/SKILL.md",
-      "expression": "https://numchida.com/ns/djr#R-3417@2026-09-01",
-      "label": "캐스케이드 ② 동명 폴더 승격 — 역할 밖 응집 술어(상태 클래스/참조 폐쇄 클러스터)·개별 50행 하한·관례 동거 예외·부품은 형제 분할",
+      "expression": "https://numchida.com/ns/djr#R-3417@2026-09-01b",
+      "label": "캐스케이드 ② 동명 폴더 승격 — 역할 밖 응집 술어(상태 클래스/참조 폐쇄 클러스터)·개별 50행 하한·관례 동거 예외·부품은 형제 분할·집행 전 모듈 객체 참조처 조사(패치 표면)",
       "order_rank": 2072,
       "section": "dddjango/skills/discipline-houserules/SKILL.md/s004-1",
       "section_number": "1"
