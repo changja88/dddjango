@@ -1,0 +1,14 @@
+check-api-error-controller-contract.py :: [#121] application/fortune_reading/driving_layer/api/evidence/: `api/<area>/` 이름은 안쪽 `application_layer/<area>/` 와 글자까지 같아야 한다
+check-composition-root.py :: [#107] application/fortune_reading/driving_layer/api/api_router.py: `def register_fortune_reading_api(api)` 등록 함수 «하나»만 갖는다(지금 함수 0개)
+check-naming.py :: [#28] application/fortune_reading/test/e2e/typecheck_citation_ohs_consumer.py: 약어 ['ohs'] — 원전 패턴 이름은 풀어 쓴다
+check-port-adapter-pairing.py :: [#212] application/fortune_reading/application_layer/port/evidence_retrieval/evidence_retrieval_port.py:N: `retrieve` 에 구현이 있다 — port/ 에는 선언만 온다(구현은 한 줄도 없다 · #551)
+check-port-adapter-pairing.py :: [#212] application/fortune_reading/application_layer/port/query_translation/query_translation_port.py:N: `translate` 에 구현이 있다 — port/ 에는 선언만 온다(구현은 한 줄도 없다 · #551)
+check-port-adapter-pairing.py :: [#212] application/fortune_reading/application_layer/port/reading_bundle/reading_bundle_port.py:N: `pin` 에 구현이 있다 — port/ 에는 선언만 온다(구현은 한 줄도 없다 · #551)
+check-port-adapter-pairing.py :: [#576] application/fortune_reading/test/fake/fake_evidence_retrieval_port.py: `fake_evidence_retrieval_port` 의 짝이 될 «선언»이 없다 — 검사는 한 방향뿐이다(선언에 페이크를 강제하지는 않는다)
+check-port-adapter-pairing.py :: [#576] application/fortune_reading/test/fake/fake_query_translation_port.py: `fake_query_translation_port` 의 짝이 될 «선언»이 없다 — 검사는 한 방향뿐이다(선언에 페이크를 강제하지는 않는다)
+check-port-adapter-pairing.py :: [#576] application/fortune_reading/test/fake/fake_reading_bundle_port.py: `fake_reading_bundle_port` 의 짝이 될 «선언»이 없다 — 검사는 한 방향뿐이다(선언에 페이크를 강제하지는 않는다)
+check-usecase-dto-placement.py :: [#188] application/fortune_reading/application_layer/citation_validation: `<area>` 는 `driving_layer/api/<area>` 와 1:N 이다 — api 쪽에 `citation_validation/` 이 없다
+check-usecase-dto-placement.py :: [#188] application/fortune_reading/application_layer/evidence_provisioning: `<area>` 는 `driving_layer/api/<area>` 와 1:N 이다 — api 쪽에 `evidence_provisioning/` 이 없다
+check-usecase-dto-placement.py :: [#188] application/fortune_reading/driving_layer/api/evidence: `<area>` 는 `application_layer/<area>` 와 1:N 이다 — application_layer 쪽에 `evidence/` 이 없다
+check-usecase-dto-placement.py :: [#635] application/fortune_reading/application_layer/citation_validation/validate_citations/validate_citations_use_case.py: 실행 메서드는 `execute` 하나다 — `ValidateCitationsUseCase` 에 없다
+check-usecase-dto-placement.py :: [#635] application/fortune_reading/application_layer/evidence_provisioning/prepare_fortune_evidence/prepare_fortune_evidence_use_case.py: 진입점은 클래스 «하나»다 — 공개 클래스가 0개다

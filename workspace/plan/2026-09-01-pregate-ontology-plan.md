@@ -1,5 +1,7 @@
 # pre-gate 온톨로지 개정 계획서 — 절 지도·채번·문면 초안
 
+> **집행 후 주의(⑥ 감사 추기)**: §3 문면 초안 중 표 형식 표기(§3.9 imports·exception-map)는 집행 시 펜스 문법으로 정렬됐다 — 문면 정본은 성문된 규범과 파서다. 이 문서는 절 지도·채번의 기록으로만 소비하라.
+
 - 날짜: 2026-09-01 · 브랜치: `norm/pregate`
 - 지위: 설계 v3(`workspace/design/2026-09-01-pregate-design.md`) §4(형식 규범 신규 5+조임 2)·§5(파이프라인 삽입 1~7)·D4(트리거·앵커·대체 금지·리포트)의 **성문 계획서**. TTL 저작·집행은 별도 단계 — 이 문서는 Section/Block 배치와 «투영 후 md에 실릴 문면»까지만 확정한다.
 - 정찰 근거(실측): `ontology/ISSUED` 말미 = **R-3423**(다음 채번 R-3424부터) · 두 대상 문서 전 절 `sectionOwner = owner-graph` · 블록 order는 절 내 1..n 연속 강제(`ontology_structural_check.py` ③) · 절 신설은 «다음 미사용 서수»만(authoring §14 — 리비전 10호 s018-5 «밀림 0» 실증) · 신규 규범을 기존 블록에 싣는 statesNorm append + 텍스트 확장은 확립 관례(R-3403·R-3422 선례) · Expression 리비전 관례 = `<djr#R-NNNN@YYYY-MM-DD>` + `prov:wasRevisionOf` + `djr:revision n+1` + `djr:revisionKind`(같은 날 2건이면 `@YYYY-MM-DDb` — R-3417 선례).

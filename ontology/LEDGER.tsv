@@ -1533,4 +1533,4 @@ command-dddjango	s006	2b5dc9d57be956e62618ecaafa8487788173400a86c34e7ae401073963
 command-dddjango	s007	da1ed039cad2f9de44f48e5522d9a29fdd2133d33b505d09e2a2d88c4b97b963	graph	-	-	-	-	rebaseline:2026-09-01 pre-gate 성문 — R-3424~R-3438 신설·리비전 5건(R-0191·R-0243·R-0287·R-0419·R-0442 rev2 amendment)
 command-dddjango	s009	964ac96a22a17d57d8e4cf6c05f617585dd76a2bd862dc03ad50917434177068	graph	-	-	-	-	rebaseline:2026-09-01 pre-gate 성문 — R-3424~R-3438 신설·리비전 5건(R-0191·R-0243·R-0287·R-0419·R-0442 rev2 amendment)
 command-dddjango	s010	bcccb5eb0bc77a8d5a2c4065a0131aed2e90e327cda1180d1df5d3cd585eb43a	graph	-	-	-	-	rebaseline:2026-09-01 pre-gate 성문 — R-3424~R-3438 신설·리비전 5건(R-0191·R-0243·R-0287·R-0419·R-0442 rev2 amendment)
-agent-design-architect	s005	390758cfc24bf76a59a108624363171e81a7ca700a56373bbe052854353b6409	graph	-	-	-	-	rebaseline:2026-09-01 pre-gate 성문 — R-3424~R-3438 신설·리비전 5건(R-0191·R-0243·R-0287·R-0419·R-0442 rev2 amendment)
+agent-design-architect	s005	3d4948a4dd5931fc4736061fff4b577d1fcfbc79cf9fe24c3583baba3ef171c2	graph	-	-	-	-	rebaseline:2026-09-01 pre-gate 성문 — R-3424~R-3438 신설·리비전 5건(R-0191·R-0243·R-0287·R-0419·R-0442 rev2 amendment)

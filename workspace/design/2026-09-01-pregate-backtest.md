@@ -2,7 +2,7 @@
 
 - 날짜: 2026-09-01
 - 지위: 속도 리비전 절차 **④ 백테스트 게이트** 산출물. 설계 `2026-09-01-pregate-design.md` v2의 §7 절차(선행 분류·맹검 전사·프로토타입)를 집행한 결과.
-- 프로토타입·전 산출물: 세션 스크래치 `scratchpad/backtest/` — `proto/pregate_proto.py`(실행기)·`proto/transcript_parser.py`·전사본 3종·분류 대장 `classification.md`·런별 `run-*/introduced.json`.
+- 프로토타입·전 산출물: **`workspace/eval/pregate-backtest/`에 편입**(전사본 3종·분류 대장·런별 attributed/introduced·프로토타입 스크립트 — ⑥ 감사 관찰 ③ 반영). 원본 작업장은 세션 스크래치 `scratchpad/backtest/` — `proto/pregate_proto.py`(실행기)·`proto/transcript_parser.py`·전사본 3종·분류 대장 `classification.md`·런별 `run-*/introduced.json`.
 
 ## 1. 절차 준수 실증
 
