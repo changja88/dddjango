@@ -55,7 +55,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "b279e3a299ef283064aa80df09e05f02d51c1af5a9d4eb04994634b1e83c5fda"
+      "sha256": "7c761da083a209d4f8ba22076647452d626f297a90e646446f00c64f892f758e"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -87,11 +87,11 @@
     },
     {
       "path": "ontology/rules/implementation-django-ninja-final.ttl",
-      "sha256": "6c361ca60ff3dfcd99834923caa68bb47b3317255a1eae035047cea18a8de92f"
+      "sha256": "33999ff34045f31f9013abfdebc4334aa89c616e2dce5367e49a7f95d5ae2b56"
     },
     {
       "path": "ontology/rules/implementation-django-ninja-skill.ttl",
-      "sha256": "c0e0728bafb73a7073ba96d4fdf5b21bb2d03aae72422ebd9f82ebb1f58c7d4f"
+      "sha256": "0d97358351dbce42a3656d4d99e0ce7eafe7e0cb0e9306b5c5a41030e1623e67"
     },
     {
       "path": "ontology/rules/implementation-django-skill.ttl",
@@ -8907,8 +8907,8 @@
         "check-openapi-error-declaration.py"
       ],
       "document": "dddjango/skills/implementation-django-ninja/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-0089@2026-08-19",
-      "label": "openapi_extra 보충·사후 변형 금지",
+      "expression": "https://numchida.com/ns/djr#R-0089@2026-09-01",
+      "label": "openapi_extra 보충·사후 변형 금지 — 오류 항목 한정·성공 메타데이터 보충 허용(⊆ response=·리터럴·fail-closed)",
       "order_rank": 2645,
       "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
       "section_number": "6.2"
@@ -12716,8 +12716,8 @@
         "check-openapi-error-declaration.py"
       ],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-0339@2026-08-25",
-      "label": "registry #5 — OpenAPI 오류 선언 대조(반환 타입 그대로)·수동 후처리 금지 + 표준 트리 슬라이스",
+      "expression": "https://numchida.com/ns/djr#R-0339@2026-09-01",
+      "label": "registry #5 — OpenAPI 오류 선언 대조(반환 타입 그대로)·수동 후처리 금지 + 표준 트리 슬라이스(성공 메타데이터 보충 허용·fail-closed)",
       "order_rank": 1135,
       "section": "dddjango/commands/dddjango.md/s007",
       "section_number": null
@@ -18029,8 +18029,8 @@
         "check-openapi-error-declaration.py"
       ],
       "document": "dddjango/skills/implementation-django-ninja/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-0683@2026-08-22",
-      "label": "openapi_extra·override·monkeypatch·postprocessor 수동 선언/사후 변형 금지",
+      "expression": "https://numchida.com/ns/djr#R-0683@2026-09-01",
+      "label": "openapi_extra·override·monkeypatch·postprocessor 수동 선언/사후 변형 금지 — 성공 메타데이터 보충 예외(⊆ response=·리터럴·fail-closed)",
       "order_rank": 2455,
       "section": "dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2",
       "section_number": "2.2"
@@ -52851,8 +52851,8 @@
         "check-openapi-error-declaration.py"
       ],
       "document": "dddjango/skills/implementation-django-ninja/SKILL.md",
-      "expression": "https://numchida.com/ns/djr#R-2932@2026-08-22",
-      "label": "openapi_extra 보충·OpenAPI override·monkeypatch·postprocessor 금지",
+      "expression": "https://numchida.com/ns/djr#R-2932@2026-09-01",
+      "label": "openapi_extra 보충·OpenAPI override·monkeypatch·postprocessor 금지 — 성공 메타데이터 보충 예외(fail-closed)",
       "order_rank": 2395,
       "section": "dddjango/skills/implementation-django-ninja/SKILL.md/s004",
       "section_number": null

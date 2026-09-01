@@ -1725,8 +1725,8 @@ djr:R-0338 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0339 a djr:Prohibition ;
-    skos:prefLabel "registry #5 — OpenAPI 오류 선언 대조(반환 타입 그대로)·수동 후처리 금지 + 표준 트리 슬라이스"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0339@2026-08-25> .
+    skos:prefLabel "registry #5 — OpenAPI 오류 선언 대조(반환 타입 그대로)·수동 후처리 금지 + 표준 트리 슬라이스(성공 메타데이터 보충 허용·fail-closed)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0339@2026-09-01> .
 
 <https://numchida.com/ns/djr#R-0339@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0339 ;
@@ -1737,6 +1737,12 @@ djr:R-0339 a djr:Prohibition ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-0339@2026-08-22> ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-clarification .
+
+<https://numchida.com/ns/djr#R-0339@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-0339 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0339@2026-08-25> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0340 a djr:Prohibition ;
     skos:prefLabel "registry #6 — BC 간 접근 방향·OHS·ACL·UoW 크로스-BC 포트·경계 애너테이션"@ko ;
@@ -3143,7 +3149,7 @@ djr:R-0460 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 22 ;
     djr:statesNorm djr:R-0339 ;
-    djr:text "   5. `${CLAUDE_PLUGIN_ROOT}/scripts/check-openapi-error-declaration.py` — 표준 트리 슬라이스(#63 — openapi_extra·get_openapi_schema override·monkeypatch 금지, 프로필 무관 선행) + preserve touched 저장소 전수 검사와 code-profile의 실제 direct-return BC status ↔ 반환 오류 타입 집합 그대로의 `response` 선언 대조(concrete·`Union`·명시값 base — 2026-08-25 개정), framework status non-advertising, manual OpenAPI response postprocessing 금지.\n"@ko .
+    djr:text "   5. `${CLAUDE_PLUGIN_ROOT}/scripts/check-openapi-error-declaration.py` — 표준 트리 슬라이스(#63 — openapi_extra·get_openapi_schema override·monkeypatch 금지 — 단 `response=` 선언 성공 status(100–399)의 리터럴 메타데이터 보충(⊆ 선언 집합)은 허용·그 밖 fail-closed(2026-09-01), 프로필 무관 선행) + preserve touched 저장소 전수 검사와 code-profile의 실제 direct-return BC status ↔ 반환 오류 타입 집합 그대로의 `response` 선언 대조(concrete·`Union`·명시값 base — 2026-08-25 개정), framework status non-advertising, manual OpenAPI response postprocessing 금지.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b23> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;

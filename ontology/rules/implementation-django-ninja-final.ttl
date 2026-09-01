@@ -767,12 +767,18 @@ djr:R-0088 a djr:Prohibition ;
     djr:revisionKind djr:revision-clarification .
 
 djr:R-0089 a djr:Prohibition ;
-    skos:prefLabel "openapi_extra 보충·사후 변형 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0089@2026-08-19> .
+    skos:prefLabel "openapi_extra 보충·사후 변형 금지 — 오류 항목 한정·성공 메타데이터 보충 허용(⊆ response=·리터럴·fail-closed)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0089@2026-09-01> .
 
 <https://numchida.com/ns/djr#R-0089@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0089 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0089@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-0089 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0089@2026-08-19> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0090 a djr:Obligation ;
     skos:prefLabel "add/update 공개 후보의 mounted 생성 문서에서 선언 오류 schema 확인"@ko ;
@@ -1123,12 +1129,18 @@ djr:R-0682 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0683 a djr:Prohibition ;
-    skos:prefLabel "openapi_extra·override·monkeypatch·postprocessor 수동 선언/사후 변형 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0683@2026-08-22> .
+    skos:prefLabel "openapi_extra·override·monkeypatch·postprocessor 수동 선언/사후 변형 금지 — 성공 메타데이터 보충 예외(⊆ response=·리터럴·fail-closed)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0683@2026-09-01> .
 
 <https://numchida.com/ns/djr#R-0683@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0683 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0683@2026-09-01> a djr:Expression ;
+    prov:specializationOf djr:R-0683 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0683@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0684 a djr:Obligation ;
     skos:prefLabel "known exception의 구체 catch·no-arg concrete ErrorSchema Status 직접 반환"@ko ;
@@ -2519,7 +2531,7 @@ djr:R-3403 a djr:Obligation ;
     djr:order 10 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b34> ;
     djr:statesNorm djr:R-0683 ;
-    djr:text "- `openapi_extra`나 `get_openapi_schema` override·monkeypatch·postprocessor로 오류\n  응답을 수동 선언하거나 사후 변형하지 않는다. operation의 `response=`가 runtime과\n  OpenAPI가 함께 아는 계약이다.\n"@ko .
+    djr:text "- `openapi_extra`나 `get_openapi_schema` override·monkeypatch·postprocessor로 오류\n  응답을 수동 선언하거나 사후 변형하지 않는다. operation의 `response=`가 runtime과\n  OpenAPI가 함께 아는 계약이다. 예외는 하나 — `response=`로 직접 선언된 성공·리다이렉트\n  status(100–399)의 메타데이터 보충(header 문서화 등)은 허용한다: 보충 집합이 `response=`\n  선언 집합의 부분집합이고 키 전부 리터럴일 때만이며, 오류 status 동거·변수/상수 키·\n  `**` splat 은 위반이다(fail-closed — 2026-09-01).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b11> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2> ;
@@ -3499,7 +3511,7 @@ djr:R-3403 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 34 ;
     djr:statesNorm djr:R-0086, djr:R-0087, djr:R-0088, djr:R-0089, djr:R-0090 ;
-    djr:text "**응답 선언과 OpenAPI.** controller가 직접 반환할 수 있는 각 BC 오류 status는 operation의\n`response={...}`에서 그 status에서 실제로 반환하는 오류 타입 집합과 정확히 같게 매핑한다 —\nconcrete 하나면 그 concrete, 둘 이상이면 `Union[...]`(`A | B`), 명시값으로 채운 base 인스턴스면\nbase. concrete class가 runtime instance를 고정하므로 OpenAPI도 그 concrete의 고정 code·message를\nendpoint별로 드러낸다 — base로 뭉뚱그려 선언하지 않는다(2026-08-25 개정). 직접 반환하지 않는\nframework status는 BC 오류로 선언하지 않는다. 오류 응답 선언을 `openapi_extra`로 보충하거나\n`get_openapi_schema` override, monkeypatch, postprocessor로 사후 변형하지 않는다. 공개 OpenAPI\n후보가 중앙 입장 심사에서 `add/update`이면 mounted API의 생성 문서에서 status별로 선언한 오류 schema를 확인한다.\n\n"@ko .
+    djr:text "**응답 선언과 OpenAPI.** controller가 직접 반환할 수 있는 각 BC 오류 status는 operation의\n`response={...}`에서 그 status에서 실제로 반환하는 오류 타입 집합과 정확히 같게 매핑한다 —\nconcrete 하나면 그 concrete, 둘 이상이면 `Union[...]`(`A | B`), 명시값으로 채운 base 인스턴스면\nbase. concrete class가 runtime instance를 고정하므로 OpenAPI도 그 concrete의 고정 code·message를\nendpoint별로 드러낸다 — base로 뭉뚱그려 선언하지 않는다(2026-08-25 개정). 직접 반환하지 않는\nframework status는 BC 오류로 선언하지 않는다. 오류 응답 선언을 `openapi_extra`로 보충하거나\n`get_openapi_schema` override, monkeypatch, postprocessor로 사후 변형하지 않는다 — 이 금지의\n대상은 **오류 응답(4xx·5xx) 항목**이다. `response=`로 직접 선언된 성공·리다이렉트\nstatus(100–399)의 **메타데이터 보충**(header 문서화 등)은 허용한다: 보충 status 집합이\n`response=` 선언 집합의 부분집합이고 키 전부가 **리터럴**(정수·숫자 문자열)일 때만이며,\n오류 status 동거·변수/상수 표현식 키·`**` splat 은 위반이다(fail-closed — 2026-09-01 개정).\n성공 항목의 content/schema 기입은 기계 판정 밖이다 — `response=` 선언과의 문서 정합은\n리뷰어 소관. 공개 OpenAPI\n후보가 중앙 입장 심사에서 `add/update`이면 mounted API의 생성 문서에서 status별로 선언한 오류 schema를 확인한다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b35> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;

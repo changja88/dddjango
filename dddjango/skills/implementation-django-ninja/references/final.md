@@ -127,7 +127,10 @@ Operation 구현 기준:
   500은 BC 오류로 직접 반환하지도, BC `ErrorSchema`로 광고하지도 않는다.
 - `openapi_extra`나 `get_openapi_schema` override·monkeypatch·postprocessor로 오류
   응답을 수동 선언하거나 사후 변형하지 않는다. operation의 `response=`가 runtime과
-  OpenAPI가 함께 아는 계약이다.
+  OpenAPI가 함께 아는 계약이다. 예외는 하나 — `response=`로 직접 선언된 성공·리다이렉트
+  status(100–399)의 메타데이터 보충(header 문서화 등)은 허용한다: 보충 집합이 `response=`
+  선언 집합의 부분집합이고 키 전부 리터럴일 때만이며, 오류 status 동거·변수/상수 키·
+  `**` splat 은 위반이다(fail-closed — 2026-09-01).
 - known domain/application exception은 컨트롤러가 구체적으로 catch하고, 준비된
   no-arg concrete `ErrorSchema`를 `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다. 오류
   `(status, schema)` tuple, raw `Response`/dict, 오류 helper/factory/serializer/mapper,
@@ -833,7 +836,13 @@ concrete 하나면 그 concrete, 둘 이상이면 `Union[...]`(`A | B`), 명시�
 base. concrete class가 runtime instance를 고정하므로 OpenAPI도 그 concrete의 고정 code·message를
 endpoint별로 드러낸다 — base로 뭉뚱그려 선언하지 않는다(2026-08-25 개정). 직접 반환하지 않는
 framework status는 BC 오류로 선언하지 않는다. 오류 응답 선언을 `openapi_extra`로 보충하거나
-`get_openapi_schema` override, monkeypatch, postprocessor로 사후 변형하지 않는다. 공개 OpenAPI
+`get_openapi_schema` override, monkeypatch, postprocessor로 사후 변형하지 않는다 — 이 금지의
+대상은 **오류 응답(4xx·5xx) 항목**이다. `response=`로 직접 선언된 성공·리다이렉트
+status(100–399)의 **메타데이터 보충**(header 문서화 등)은 허용한다: 보충 status 집합이
+`response=` 선언 집합의 부분집합이고 키 전부가 **리터럴**(정수·숫자 문자열)일 때만이며,
+오류 status 동거·변수/상수 표현식 키·`**` splat 은 위반이다(fail-closed — 2026-09-01 개정).
+성공 항목의 content/schema 기입은 기계 판정 밖이다 — `response=` 선언과의 문서 정합은
+리뷰어 소관. 공개 OpenAPI
 후보가 중앙 입장 심사에서 `add/update`이면 mounted API의 생성 문서에서 status별로 선언한 오류 schema를 확인한다.
 
 선언된 JSON 성공은 Schema 또는 `Status`를 통해 Ninja의 validation/serialization을 탄다.
