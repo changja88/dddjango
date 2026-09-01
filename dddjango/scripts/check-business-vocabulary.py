@@ -79,7 +79,8 @@ MEANS_WORDS = {"client", "cache", "sync", "cron", "queue", "http", "rest", "sdk"
                "nightly", "daily", "hourly", "weekly", "realtime", "driver", "gateway"}
 AUTH_TOKENS = {"auth", "authentication", "bearer"}
 CURATED_TECH = {"django", "ninja", "celery", "redis", "kafka", "smtp", "stripe", "postgres",
-                "postgresql", "mysql", "sqlite", "boto3", "s3", "sqs", "grpc", "drf", "rest"}
+                "postgresql", "mysql", "sqlite", "boto3", "s3", "sqs", "grpc", "drf", "rest",
+                "pydantic", "rest_framework"}
 
 
 def _parse(path: Path) -> ast.Module | None:
