@@ -43,7 +43,7 @@
 
 **스키마**: `arm-receipt/0` · `findings/0` · `gate-contract/0` · `gate-introduced/0` · `injection-capacity/3` · `regen-prompt/1` · `rulepack/1`
 
-**미러**: 39파일 동일 · **설치본**: {'claude': '2.17.14', 'codex': '2.17.14'} · cache_parity claude=drift codex=drift
+**미러**: 39파일 동일 · **설치본**: {'claude': '2.17.15', 'codex': '2.17.15'} · cache_parity claude=drift codex=PENDING
 
 <!-- /MANIFEST-FACTS -->
 

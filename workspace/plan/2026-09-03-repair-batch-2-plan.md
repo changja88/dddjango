@@ -154,6 +154,20 @@ Part 1 선머지 → Part 2 rebase. 본 변경은 `main` 밖 헬퍼 1함수 + `m
    - 레인 1 `c489ac0` + media-library 명세: 전후 ID 집합 동일 + `_GroupMediaAssetItem {…}` 재구성 행이 파싱 통과·신규 ID 0(오차단 0).
    - 레인 3 재발화 리플레이: `625f6a6` + `2a12d18` 판 명세 + WIP 1개 → `--base 9906931` exit ≠3 / 미지정 exit 3.
 3. `make verify` 전 그룹 green + codex byte 미러 diff 0 + `ontology_gate` 4단 + 계수 3529 + q4 골든.
+
+### 7-2 실측 결과 (2026-09-03 구현 — 스크래치 `git clone` 사본 · 수리 전 = `a782dcd` 판 실행기 · 수리 후 = 본 배치 · 동일 트리 전후 비교, 레인 당시 실측 건수와 무관 · `--python` = 대상 venv py3.14)
+
+| 레인 | 트리 | 명세 | 수리 전 S₀ | 수리 후 S₁ | 판정 |
+|---|---|---|---|---|---|
+| 3 email-template | `9906931` | 라이브 `20260902-1842-…/design-spec.md` | exit 2 · 1건 {`0c3ee0342328` #593 `…/migrations/0001_initial.py`} | exit 0 · 0건 | S₁ = S₀ ∖ {`0c3ee0342328`} ✓ · 타 ID 소멸 0 |
+| 2 notification-bc | `7b0befd` | 라이브 `20260902-1458-…/design-spec.md`(`empty …/migrations/__init__.py`) | exit 2 · 1건 {`3dc440496a29` #14} | exit 2 · 1건 {`3dc440496a29`} | 유지·건수 1 불변 ✓ |
+| 1 media-library 원문 | `c489ac0` | 워크트리 `feat-fortune-reading/.dddjango/20260902-0128-…/design-spec.md` | exit 2 · 6건 {`0545691c4eac` #160 · `508cb023eceb` #392 · `749595497241` #376 · `8140c1c059f4` #329 · `992a5a0575bf` #332 · `cc49ccf434d0` #484} | exit 2 · 6건(동일) | 전후 ID 집합 동일 ✓ |
+| 1 media-library 재구성 | `c489ac0` | 위 명세 + `…/list_group_media_assets_result.py::_GroupMediaAssetItem {id: UUID, kind: str}` 행 삽입 | — | exit 2 · 6건(원문과 집합 동일) | 사설 타입 행 파싱 통과·신규 ID 0(오차단 0) ✓ |
+| 3 재발화 리플레이 | `625f6a6` + 미추적 WIP `…/email_notice_template/__init__.py` | `2a12d18` 판 명세(add 20건 중 7건이 트리 실존) | — | `--base 9906931` → exit 0 · 실체화 30 · 기실현 1 / 미지정 → exit 3(add 충돌 `email_notice_template_content.py`) | 재발화 판형 ✓ · 기본 경로 불변 ✓ |
+
+- 픽스처 러너: 묶음 base(green·green2·form-red·red — 헤더 4) · p1(green3 exit 0 · red2 exit 2 귀속 {#81, #325} 2건 — 헤더 각 1) · mid(E1 exit 0·사본 스텁·기실현 0 / E2 exit 0·기실현 1·스텁 대체(실물 #267 미혼입) / E3 exit 3 / E4 exit 3 — 헤더 4) + 유닛(파서 7케이스·compile 힌트·마이그레이션 정형 3파일 `_check_migration_file` Findings 0·전사 우선·블록 해시 4단언+CLI 동치·버전 probe Claude/Codex 레이아웃 동치·툴체인 행 형식) PASS.
+- 계수 실측: ExpressionShape 3522→**3529**(+7) · BlockShape 2896→**2897**(s006/b10) · Norm/Work 3447 불변 · q4 골든 3438/3438 불변 · LEDGER graph 절 rebaseline +6(command-dddjango s005·s006·s007·s009·s010 · agent-design-architect s005) · ISSUED 무변경.
+- 계획과 달라진 점: **s006/b10 은 `statesNorm` 없는 후속 블록**이다 — rulepack 생성기(`ontology_rulepack.py`)의 «1 Work = 1 Block» 계약(q4 주석·fail-closed)상 R-3432 를 b9·b10 둘이 진술할 수 없고 ISSUED 무변경 조건상 신규 채번도 불가하므로, R-3432(rev2 Expression)는 b9 에 남기고 b10 은 같은 문단의 속행(문서 내 선례 s010/b7 — statesNorm 없는 kind-norm 블록 45건)으로 뒀다. 렌더·계수(+1)·LEDGER 는 계획대로.
 4. 5단계 입력: §0 표의 코드 지점 ↔ diff 헝크 1:1 대조표 첨부.
 
 ## 8. 배포·이월
