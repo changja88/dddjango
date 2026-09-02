@@ -260,19 +260,31 @@ djr:R-3130 a djr:Obligation ;
 
 djr:R-3131 a djr:Obligation ;
     skos:prefLabel "게이트 증거는 판정 차분 — 앵커 대비 귀속 0 + legacy 잔존 별도 보고 · 귀속 red 의 «확립 규약» 수용 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3131@2026-08-22> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-3131@2026-09-03> .
 
 <https://numchida.com/ns/djr#R-3131@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3131 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-3131@2026-09-03> a djr:Expression ;
+    prov:specializationOf djr:R-3131 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3131@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3132 a djr:Prohibition ;
     skos:prefLabel "좁힌 TARGET·selector 로 얻은 green 은 게이트 증거가 아니다"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3132@2026-08-22> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-3132@2026-09-03> .
 
 <https://numchida.com/ns/djr#R-3132@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3132 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3132@2026-09-03> a djr:Expression ;
+    prov:specializationOf djr:R-3132 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3132@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3133 a djr:Obligation ;
     skos:prefLabel "승인 스코프 밖 파일의 귀속은 1차 처방이 그 변경의 철회 — 수리·재설계 금지"@ko ;
@@ -803,7 +815,7 @@ djr:R-3421 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
     djr:statesNorm djr:R-3129, djr:R-3130, djr:R-3131, djr:R-3132, djr:R-3133 ;
-    djr:text "**백스톱 실행 계약** — 검사기의 TARGET 은 «저장소 루트»다(`application/` 의 부모). BC 폴더나 `application/` 컨테이너 자체를 주면 검사기가 사용 오류 exit 1 로 거절한다(라운드 1 실측: BC 폴더 호출이 «표준 미채택 clean» 조용 통과를 낳았다 — 그 사각은 닫혔다). **게이트 판정은 판정 차분이다**(라운드 1′ — brownfield 의 legacy red 가 «전체 green» 계약을 영구 불능으로 만들던 모순의 해소): 게이트 증거는 «Phase 2 진입 앵커 대비 **귀속(신규 위반) 0** + legacy 잔존 별도 보고»(`scripts/registry_gate.py`)다 — legacy 잔존이 게이트를 차단하지는 않지만, **귀속 red 를 «확립 규약» 논리로 수용하는 것도 금지**다. 검사기를 골라 좁힌 TARGET·selector 로 얻은 green 은 게이트 증거가 아니다. 승인 스코프의 산출물 목록에 없는 파일에서 귀속이 나면 1차 처방은 **그 변경의 철회**다 — 수리·재설계로 귀속을 0으로 만드는 것이 아니다(2026-08-13 라운드 2 — 귀속 138건을 «해소 목록»으로 읽은 재설계 소용돌이).\n\n"@ko .
+    djr:text "**백스톱 실행 계약** — 검사기의 TARGET 은 «저장소 루트»다(`application/` 의 부모). BC 폴더나 `application/` 컨테이너 자체를 주면 검사기가 사용 오류 exit 1 로 거절한다(라운드 1 실측: BC 폴더 호출이 «표준 미채택 clean» 조용 통과를 낳았다 — 그 사각은 닫혔다). **게이트 판정은 판정 차분이다**(라운드 1′ — brownfield 의 legacy red 가 «전체 green» 계약을 영구 불능으로 만들던 모순의 해소): 게이트 증거는 «Phase 2 진입 앵커 대비 **귀속(신규 위반) 0** + legacy 잔존 별도 보고»(`scripts/registry_gate.py`)다(`<산출물 폴더>/approved-merges.txt` 가 있으면 `--approved-merge-file` 동반 — 발주자 승인 머지 목록의 provenance 증명으로 분리된 **승인 유입은 exit 제외·별도 보고(기록 의무·즉석 수리 금지)**, **상호작용 위반(파일 무변·미증명)은 귀속 유지·별도 표기** · 2026-09-03) — legacy 잔존이 게이트를 차단하지는 않지만, **귀속 red 를 «확립 규약» 논리로 수용하는 것도 금지**다. 검사기를 골라 좁힌 TARGET·selector 로 얻은 green 은 게이트 증거가 아니다 — **귀속 목록을 경로 필터(sed/grep)로 나눈 서술도 게이트 증거가 아니다**(유입 분리는 provenance 채널뿐 · 2026-09-03). 승인 스코프의 산출물 목록에 없는 파일에서 귀속이 나면 1차 처방은 **그 변경의 철회**다 — 수리·재설계로 귀속을 0으로 만드는 것이 아니다(2026-08-13 라운드 2 — 귀속 138건을 «해소 목록»으로 읽은 재설계 소용돌이).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b6> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;
@@ -905,7 +917,14 @@ djr:R-3421 a djr:Obligation ;
     djr:order 7 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b5> ;
     djr:statesNorm djr:R-3147 ;
-    djr:text "- 검사기 green 을 좁힌 TARGET(BC 폴더·`application/` 컨테이너)이나 즉석 selector 조합으로 얻었다 — 게이트 증거는 저장소 루트 레지스트리 전체 1회뿐이다(§1 백스톱 실행 계약).\n\n"@ko .
+    djr:text "- 검사기 green 을 좁힌 TARGET(BC 폴더·`application/` 컨테이너)이나 즉석 selector 조합으로 얻었다 — 게이트 증거는 저장소 루트 레지스트리 전체 1회뿐이다(§1 백스톱 실행 계약).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3/b8> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s006-3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 8 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b5> ;
+    djr:text "- 귀속 목록을 경로 필터(sed/grep)로 «타 레인 유입»과 «내 것»으로 나눈 서술로 green 을 주장했다 — 유입 분리는 게이트의 provenance 채널(`--approved-merge-file`)뿐이다(§1 백스톱 실행 계약).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4> a djr:Section ;
     djr:headingSnapshot "## §4 타입 어노테이션"@ko ;
