@@ -420,9 +420,9 @@ R-3427 rev2(확장·약화 없음) · R-3433 rev3(채널별 닫힌 정의·기�
 - 러너 계수(교차 m-1): 묶음별 리포트 파일 분리·기대값은 묶음별(Part 1 green3+red2 = 별도 리포트 각 1). LEDGER(교차 m-3): 관행대로 graph 절 rebaseline 행 +6.
 
 ## D-P2 (Part 2)
-- **B-1 사슬 검증 강화(해제)**: `anchor ∈ git rev-list --first-parent HEAD`(도달 필수) ∧ M ∈ 그 구간. 미도달 상태에서 목록 지정 → exit 1 «앵커가 HEAD first-parent 사슬 밖 — 승인 목록 판정 불가». 3사례 통과 실측(오차단 0). 픽스처 **P9**(역방향 합성 머지 → exit 1)·**P9′**(앵커 사슬 밖 → exit 1).
+- **B-1 사슬 검증 강화(해제)**: `anchor ∈ git rev-list --first-parent HEAD`(도달 필수) ∧ M ∈ 그 구간. 미도달 상태에서 목록 지정 → exit 1 «앵커가 HEAD first-parent 사슬 밖 — 승인 목록 판정 불가». 3사례 통과 실측(오차단 0). 픽스처 **P9**(역방향 합성 머지 → exit 1 — **HEAD=lane 한정**: main←lane 머지는 lane 의 first-parent 사슬 밖이라 사슬 검증이 잡는다)·**P9′**(앵커 사슬 밖 → exit 1). 발주자 등재를 전제한 잔여 경로(발주자가 합성 머지를 레인 사슬에 올린 경우)는 exit 1 이 아니라 **진단+custody** — 게이트가 `^2` 를 포함하는 ref 가 HEAD 브랜치뿐이면 «역방향/합성 머지 의심» 1행(exit 무변)·R-3439 에 발주자 append 전 «`^2` 가 main(상류) 이력에 있는지 확인» 절차(6단계 리뷰 P2 M-1 · 스모크 P12/P12′).
 - **M-1 custody 성문**: R-NEXT+0에 «도구는 소유를 검증하지 않는다 — 빚 목록과 같은 사용자 승인 입력» + 머지 표에 `^2` ref 도달성 정보 행(`git name-rev --refs='refs/*' M^2`) + G2 배너 열거 유지.
-- **M-2 측정 유효성**: M^1·M^2 어느 쪽이든 검사기 c 측정 무효(exit∉{0,2} ∨ 합성행 존재) → 해당 c 라인 전부 귀속 유지(사유 `측정 무효(M^1|M^2)`) — R-0372 «미파싱=측정 실패» 정합. 픽스처 **P10**(M^1에 SyntaxError 심기 → 귀속 유지). 스냅숏 실행은 `git_root=None`·`snapshot_anchor` 규약 명시.
+- **M-2 측정 유효성**: M^1·M^2 어느 쪽이든 검사기 c 측정 무효(exit∉{0,2} ∨ 합성행 존재 ∨ **스냅숏 실패** — 6단계 P2 M-2: `AnchorDiffUsage` 를 게이트가 포착해 `측정 무효(스냅숏 실패) — <M>` 로 귀속 유지·진단 절에 git 오류·traceback 0) → 해당 c 라인은 **그 머지에서의** 증명 기회를 잃는다 — **∃M 의미론**(6단계 P2 M-3): 다른 승인 머지가 증명하면 유입이고, 전 승인 머지가 무효/미증명이면 귀속 유지(사유 = 첫 무효 머지) — R-0372 «미파싱=측정 실패» 정합. 픽스처 **P10**(M^1에 SyntaxError 심기 → 귀속 유지). 스냅숏 실행은 `git_root=None`·`snapshot_anchor` 규약 명시.
 - **M-3 표기·표 정정**: `↳ 유입: M`은 **L 증명 머지** 기준. §4 «d892894뿐이면 유입 349·귀속 114» 삭제 → «부분 목록 시 잔여 라인에 `미승인 머지 경유 <sha>`로 누락 SHA 표면화 — 수치는 구현 후 실측 확정(라인 단위 L)».
 - m-1 사유 어휘 통합 `비머지 커밋 경유 <sha>`(레인/직접 구별 불가 인정)·kkebi 기대 «첫 승인 머지보다 앞선 비머지 = 1(e219608)». m-2 P0 마스킹 목록 성문(툴체인 행 전체·sidecar tempdir 경로·`ts`/`run_id`/`record_id`)·불변식 3종 유지. m-3 ① R-3131 rev2 «확립 규약 수용 금지» 절 보존 ② R-NEXT+0 «레인 first-parent 사슬 위의 2-부모 머지» ③ R-NEXT+2 처방에 «레인 설계 반송(레인 원인)» 병기 ④ «rulepack.json 재소성» 문면 ⑤ houserules §3 신호 +1행(경로 필터 서술). m-4 P4는 `application/promotion/` 완전 BC 캘리브레이션. m-5 스냅숏 수 진단 1행.
 - 교차: `anchor_diff.py` 봉인 그룹 = **scorer**. 신규 Work 3건은 `ontology/wiring/command-dddjango.ttl` `delegatedTo` 3행 필수·R-NEXT+1/+2는 **s007 새 블록 b13** 신설. codex 의미 미러 2파일(`dddjango/SKILL.md`·`dddjango-discipline-houserules/SKILL.md`). LEDGER +3.
@@ -440,7 +440,54 @@ R-3427 rev2(확장·약화 없음) · R-3433 rev3(채널별 닫힌 정의·기�
 
 ## D-통합
 - **릴리즈 단위: 단일 v2.17.16(3부 합산)** — 릴리즈마다 라이브 레인 캐시 교체 위험이 있으므로 1회로. 시점은 사용자 결정 게이트. 판별 = 리포트 헤더 버전 스탬프(행 수 휴리스틱 폐기).
-- 계수표 최종 기대: ExpressionShape **3543**(+7+9+5) · Norm/Work **3450**(+3) · Block **2897~2900**(s002/b9·s006/b10·s007/b13) · ISSUED **R-3439~3441** · LEDGER **+13** · BLIND_SPOTS **9**(Part 1 +1 문면·Part 3 +2).
+- 계수표 최종 기대: ExpressionShape **3544**(+7+9+5 + 6단계 R-3436 rev2 clarification 1 — 릴리즈된 09-01 Expression 이라 in-place 대상 아님) · Norm/Work **3450**(+3) · Block **2897~2900**(s002/b9·s006/b10·s007/b13) · ISSUED **R-3439~3441** · LEDGER **+19**(실측 — Part 1 +6 · Part 2 +4 · Part 3 +4 · 6단계 반영 +5) · BLIND_SPOTS **9**(Part 1 +1 문면·Part 3 +2).
 - 통합 절 1 정정: 세 Part 규범 ID 집합은 서로소 → rev 번호는 착지 순서와 무관. rebase 대상은 s006/b9·s002·s007 `djr:text`뿐. 통합 절 5 정정: Coordinator 규범엔 exit 수치 열거 없음(실재 지점 5곳은 D-P3 MAJOR-7).
 - `make verify-mutation`은 3 Part 전부(rulepack 재소성). codex 의미 미러 대상: Part 1 8곳·Part 2 2파일·Part 3 2파일.
 - 5단계 입력 추가: 1단계 C «kkebi 20머지» vs Part 2 «머지 7+비머지 8» 산정 기준 확정 · Part 3 오차단 0 스캔 결과표.
+
+---
+
+# 6단계 수정 — 5단계 적대 구현 리뷰 4기(Part 1·2·3·감사) 발견 전건 반영 (2026-09-03 · 브랜치 `norm/repair-batch-2`)
+
+원칙: 이번 배치에서 만든 미릴리즈 Expression 은 **in-place 문면 수정**(rev 번호 유지) · 릴리즈된 Expression(R-3436@09-01)은 새 rev. 격리 재현은 스크래치 `git archive HEAD dddjango/scripts`(수리 전 실행기 트리) vs 작업트리(수리 후)로 **수정 전 red → 수정 후 green** 을 실측했다.
+
+## 1. 발견 ↔ 수정 대조표
+
+| # | 발견 | 수정(파일:지점) | 재현 |
+|---|---|---|---|
+| **MAJOR A** | Part 1 ⑥ 기실현 add 앵커 오염 — archive→in_baseline→overlay→**anchor 커밋**→materialize 순서라 오버레이 실물이 L 에 남아 스텁 진단이 L∩N 잔존으로 빠짐 | `design_pregate.py` `lift_realized_adds`(신설 — 오버레이 직후·앵커 커밋 전 «기실현 add» 걷어내기) · `materialize(realized=…)` 시그니처(`explicit_base/in_baseline` 제거 — 사본 실존 add 는 기준선 실존뿐이라 항상 형식 red) · already-built 문면 «→ 앵커 스냅숏에서 제외·스텁 대체 예보 · 실체화 목록에도 계수»(m-5 이중 기재 구별) · docstring·`--base` help·BLIND_SPOTS 기실현 행 | `rv2/midlane-red-spec.md`(#267 2클래스): 수리 전 E1 exit 2(ID `43d13fe5f5f1`)·E2 exit 0(anchor 열 2) → 수리 후 **E1≡E2 exit 2·같은 ID**·anchor 열 0 |
+| **MAJOR B** | Part 3 F-1 `update` 대상 새 심볼 ⑶ 오차단 — `_realize_module` file-plan 루프가 update 를 실물로 fall-through | `PlanEntry.declared`(symbols 선언 이름 — 태그 무관·메서드 owner 포함) · `_parse_symbols` 기록 · `_realize_module` `planned-update` · `judge_name`→`judge_update_target`(선언 S′ / 현재 표면 K / U «update 대상 — 표면은 이 명세 이후 상태» · ⑵⑶ 비적용) · `ExistenceReport.self_update` + 집계 행 «자기 update 해소» · 러너 `_EXISTENCE_AGG_RE` 8군 | `rev5/e2e/update-newsym-spec.md`: 수리 전 exit 5(⑶ `TickingClock`) → **exit 0**(S′ 1) · `update-reexport-spec` 결손 0·S′ 1 |
+| P2 M-2 | `snapshot()/run()` 의 `AnchorDiffUsage` 미포착 → traceback·출력 소실 | `registry_gate._provenance_split` — 스냅숏 실패를 `res.snapshot_failures` 에 캐시 → `측정 무효(스냅숏 실패) — <M>` 귀속 유지 · 진단 절 «스냅숏 실패: <sha> — <git 오류>» · sidecar `chain.snapshot_failures` | PATH shim(`git archive <M^1>` 거절): 수리 전 exit 1·Traceback·판정 행 없음 → 수리 후 exit 2·귀속 3·판정 행 보존 · 스모크 **P11** |
+| P2 M-1 | 역방향/합성 머지 잔여 경로 미진단 | `anchor_diff.ApprovedMerge.parent2_only_head`(`for-each-ref --contains ^2` ⊆ {HEAD ref}) · `_print_inflow` «↳ 주의: ^2 … HEAD 브랜치뿐 — 역방향/합성 머지 의심(발주자 확인 · exit 무변)» · sidecar 필드 · R-3439 문면(append 전 `^2` 확인) · 스모크 P9 docstring «HEAD=lane 한정» · 계획 D-P2 B-1 문면 정정 | 스모크 **P12**(lane 이 임시 가지 머지 후 삭제 → 진단 1행·유입 3·exit 0) · **P12′**(정상 머지 진단 부재) |
+| P2 M-3 | 측정 무효 의미론 미성문 | `registry_gate` 모듈·`_provenance_split` docstring «L 은 ∃M — 전 승인 머지가 무효/미증명이면 귀속 유지» · 계획 D-P2 M-2 문면 · R-3441 b58 처방(`측정 무효` ∃M) | — |
+| P2 M-4 | R-3441 잔여 사유별 처방 결손 | b58 in-place: `유입 증명 실패(이중 원인)` → 레인 설계 반송 또는 STOP · `미승인 머지 경유 <sha>` → STOP → 발주자 목록 보완 후 재실행 | 렌더 `dddjango.md` · codex SKILL |
+| 감사 MINOR-1 | R-3440 «있는데 안 주면 게이트가 표면화» 오문 | b58 in-place: «플래그를 줬으나 목록에 SHA 가 빠지면 `미승인 머지 경유`로 표면화 · 플래그 자체를 안 주면 채널이 돌지 않으므로 증거 불비» | — |
+| 감사 MINOR-5 | s006/b9 «skip 한정» 헤더(«캐시 skip» 과 충돌) · D-통합 «LEDGER +13» | **R-3436 rev2(clarification)** «구형 명세 skip 한정(«캐시 skip» 과 별개)» + prefLabel(릴리즈된 09-01 Expression 이라 새 rev — 계수 3544) · D-통합 «LEDGER +19(실측)» | — |
+| 감사 MINOR-2 | ledger «v2.17.15 로드 세션» | `workspace/eval/pregate-observe/ledger.md` → «v2.17.16(수리 배치 2 — 5단계 리뷰 반영판) 로드 세션» | — |
+| P1 m-3 | R-0192 rev2 «같은 플러그인 버전이면 … 같은 측정» | s005/b8 in-place «같은 플러그인 버전·같은 실행 트리(registry_gate 헤더 «툴체인» 행의 digest)면 …(마켓 `ref: main` 이라 버전만으론 불충분)» | — |
+| P3 F-2 | BLIND_SPOTS «표면 밖» 문면 부정확 | `BLIND_SPOTS` 마지막 행을 결과별로(U = `import *`·`__getattr__`·네임스페이스 이름·파싱 실패·문법 불량·소비자 remove·update 미선언 / 관대 K = `TYPE_CHECKING`·update 현재 표면 / X = 저장소 밖 / ⑴ = gitignore 실물 / 행 없음 = 동적 import) · 설계 v4 §3-D4 동기 | — |
+| P3 F-3 | 세미콜론 복합행 첫 문만 판정 | `check_import_existence` — `ast.parse(stmt).body` **전 문 순회**(`judge_stmt`) | 유닛 «세미콜론 복합행 둘째 문 ⑴» · T=2 |
+| P3 F-4 | T 계수 의미(문서 = 이름 단위) 불일치 | `ExistenceReport` docstring 성문 + 소비자 remove 행은 이름 수로 계수 · `undecidable(reason, names)` 로 **U 도 이름 단위**(상대 탈출·remove 다이름의 항등식 위반 수리) · 설계 v4 | 유닛 T 이름 단위 4케이스(복합행 2 · remove 2이름 2 · 문법 불량 1 · 상대 탈출 2이름 2) |
+| P3 F-5 | 계약 실존 사각 행에 «기준선 이후 커밋분 부재(재발화 판형)» 미명시 | `BLIND_SPOTS` 계약 실존 행 + 설계 v4 | — |
+| P1 m-2 | 러너 E1 계수식 `and` 단락 관용 | `_count_built(report)` 헬퍼로 교체 | — |
+| §4 어노테이션(P1 m-1·P2 M-5) | 신규 행 무어노테이션 첫 대입 | 실행기·게이트·anchor_diff·러너·스모크 5파일의 무어노테이션 첫 대입을 파일 전체 기준 전건 정리(리뷰어 `ann_scan2.py` 재스캔 잔여 0 — `nonlocal` 재대입 1건은 첫 대입이 아니라 제외) · `acc: "hashlib._Hash"` → 해시 객체 어노테이션 자체 제거(`manifest: str` 1회 해시 — 공개 타입만) | 리뷰어 `ann_scan2.py` 재스캔 잔여 0(nonlocal 제외) |
+| 조감도 | pre-gate 행 잔존 «사각 6행»·«프로토콜 이월» | `ontology-adoption-map.html` :638 말미 «수리 배치 2(v2.17.16 후보) — Part 1~3 요지·판별=헤더 스탬프·사각 9행·exit 5» 1문 + 잔존 문면 정정 | — |
+| 러너 강화 | E2 단언·E2′ | E2 +«해소(L∖N) 0 ∧ check-domain-model anchor 열 0» · **E1′/E2′**(`midlane-red-spec.md` 신설 — 커밋 실물 vs 동내용 WIP → exit 2·2·같은 ID `#267`·E2′ 기실현 1·해소 0) · mid 헤더 6 · 유닛 update 대상 7행 · `imports-green-spec` 에 update 대상 소비 행(`update framework/test/frozen_clock.py` + symbols `TickingClock` + import 행 — 집계 5,5,2,1,1,1,0,0) | 수리 전 실행기에 새 러너 mid+imports 묶음: E2 «앵커 무오염 False»·E1′/E2′ «exit 2/0 · ID [267]/[]»·imports-green «exit 5» 3건 red → 수리 후 PASS |
+
+## 2. 검증(전건)
+
+`pregate_fixture_run.py` **PASS**(10종+E 계열 6단계+유닛) · `registry_gate_smoke.py` **30/30**(P11·P12·P12′ 신설 · P0′ 수리 전 사본 byte 동일 유지) · `anchor_diff_smoke.py` 14/14 · `make verify` 6/6 green(봉인 재발행 후) · `make verify-mutation` green · byte 미러 `diff -rq --exclude=__pycache__` 0 · 봉인 draft green · verify-ontology 11/11(계수 3544·q4 골든 불변).
+
+## 3. 회귀 조건 실측
+
+| 조건 | 실측 |
+|---|---|
+| A: E1≡E2(red 스텁) | midlane-red: 수리 전 exit 2/0 → 수리 후 **2/2 · ID `43d13fe5f5f1#267` 동일 · 해소 0 · anchor 열 0** |
+| A: 레인 3 리플레이(`625f6a6`+미추적 WIP `…/email_notice_template/__init__.py` · `--base 9906931`) | 실체화 30·기실현 1·exit 0 양쪽 동일 · **해소(L∖N) 4 → 0**(잔존 2868 불변) |
+| B: kkebi S2 | `dd876b7` ⑵×2 exit 5 · `5af8bb6` K×2 exit 4 · `217d815` ⑴×2 exit 5 — ID `e-1b851ecf1d2b`·`e-190ddf791b02` **전후 동일** |
+| B: 4레인 소급 | media-library `c489ac0` exit 2·6건·결손 0 / notification `1eb8507` exit 2·1건·결손 0 / email-template `9906931` exit 0·결손 0 / fortune-record `4ba4c1bf` exit 0·결손 0(**S′ 3** — update 대상 선언 이름이 K 에서 S′ 로 계수 이동·결손 무변) — exit·예보 ID·결손 **전건 불변** |
+
+## 4. 계수표
+
+ExpressionShape 3543 → **3544**(R-3436 rev2 clarification 1 — 릴리즈된 Expression 은 in-place 대상이 아니라는 원칙의 결과 · 나머지 5 규범은 in-place) · Norm/Work 3450 · Block 2900 · ISSUED 무변경 · LEDGER +5(command-dddjango s002·s005·s006·s007 · agent-design-architect s005) → 배치 누계 **+19** · BLIND_SPOTS 9행(문면만 변경).
+
