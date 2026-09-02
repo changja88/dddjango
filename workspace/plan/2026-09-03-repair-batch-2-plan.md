@@ -285,10 +285,10 @@ blob 판정은 ls-tree 사전만(머지 수 선형·수 초). L은 «후보 라�
 ## 1. 원인 확정
 | 계통 | 실측 | 원인 |
 |---|---|---|
-| SD형 — 상류 모듈 부재 | fortune-reading 개시 9분 STOP + G1 전 STOP. `9b354fb^`의 `application/`에 `fortune_calculation` 없음(0) · `138359f`(09-01 17:02)엔 있음 | pre-gate는 R-3427 채널을 **스텁 전사 재료로만** 소비(`_parse_imports` :410~431 → `entry.imports` → `render_stub` :615~620) — import **대상** 실존은 어디서도 안 봄. 검사기 27종도 import를 «경로 모양»으로만 판정(`check-context-isolation.py:182~200` — 부재 규칙 0). 부재는 사람이 STOP으로 찾거나(SD 5.5분) ImportError로 드러남(kkebi 144분) |
+| ~~SD형 — 상류 모듈 부재~~ **(v2 MAJOR-4 철회 — fortune_reading→fortune_calculation import 0 · 계약 fixture 의존이지 import 의존 아님)** | fortune-reading 개시 9분 STOP + G1 전 STOP. `9b354fb^`의 `application/`에 `fortune_calculation` 없음(0) · `138359f`(09-01 17:02)엔 있음 | pre-gate는 R-3427 채널을 **스텁 전사 재료로만** 소비(`_parse_imports` :410~431 → `entry.imports` → `render_stub` :615~620) — import **대상** 실존은 어디서도 안 봄. 검사기 27종도 import를 «경로 모양»으로만 판정(`check-context-isolation.py:182~200` — 부재 규칙 0). 부재는 사람이 STOP으로 찾거나(SD 5.5분) ImportError로 드러남(kkebi 144분) |
 | kkebi형 — 0B 자리표시자 | `STOP-s2-s3.md`(S1 @`dd876b7`): `profile_lookup_published_error.py`·`account_lookup_published_error.py` **0B 실측** → S2 착수 조건 미충족. 41호 병합 후 `5af8bb6` 137B → 재개. 현재 kkebi 0B `.py` 1,181(비-`__init__` 161) | 「파일은 있으나 계약이 비어 있음」은 `checker_target.skeleton_placeholder` 술어가 이미 정의하지만 pre-gate가 안 씀 |
 | 교차-워크트리 오판 | kkebi `STOP-365-identity-acl.md`: identity가 다른 워크트리라 #365가 «저장소 밖 계약»으로 오판 | 검사기는 타 워크트리를 모름 — 이 브랜치 기준 부재가 사실. 새 검사는 «**이 브랜치에 이 계약 모듈 없음**»으로 정직 명명 |
-시간 절감 수치는 주장하지 않음 — 기대 효과는 «kkebi형 0B/ImportError 반송 사전화·SD형 분 단위» 그대로.
+시간 절감 수치는 주장하지 않음 — 기대 효과는 «kkebi형 0B/ImportError 반송 사전화» **한정**(v2 MAJOR-4 — «SD형 분 단위»는 철회).
 
 ## 2. 변경 — 실행기 (`design_pregate.py` + codex byte 미러)
 원칙: **기존 경로(파서 결합·`render_stub`·`materialize`·`run_gate`·`_stable_id`)는 한 줄도 바꾸지 않는다** — 신설은 읽기 전용 판정 함수군 + 리포트/exit 배선뿐.
@@ -334,10 +334,45 @@ exit 2 공유 기각 근거: ⓐ 차단 승격이 «exit 2 = 차단»이라 공�
 4. **신규 픽스처**: 유닛 매트릭스 ⓐ~ⓟ(실존 확인·⑶ 미정의·⑵ 0B·⑵ docstring-only·⑴ 부재·자기 add 해소(⑶ 생략)·자기 `empty`·승격 폴더 재수출·서브모듈 형·서드파티 skip·`framework.*` 부재 ⑴·`import a.b.c`·상대 import·`import *` 불능·planned-remove ⑴·ID 안정성) + e2e 3종(합성 저장소 2 = `mini_repo` + `imports_overlay/`(`framework/test/frozen_clock.py`·0B `placeholder_helper.py`)): `imports-green-spec` exit 0 / `imports-red-spec` exit 5(⑴⑵⑶ 각 1) / `imports-update-only-spec` exit 5 + «실체화 0»(kkebi S2 판형). 러너 `_EXISTENCE_LINE_RE` 추가·append 계수 기대 갱신(**Part 1 green3와 합산 — §통합 참조**).
 5. **게이트 강도 불변**: 완화 0 · 강화는 권고 채널 추가뿐 · exit 5 비차단 · 비-add 소비자의 문법 불량은 판정 불능 메모(형식 반송 계수 보호).
 
+### 4-2 실측 결과 (2026-09-03 구현 — 스크래치 사본 `git clone`(spring_dream_server)·`git clone --shared`(kkebi-server) · 라이브 무접촉 · 수리 전 = HEAD `881d312` 판 실행기 · 수리 후 = 본 Part · `--python` = 각 대상 venv py3.14)
+
+**ⓐ 소급 대조(실명세 3레인 — 예보 ID 집합·exit 불변 + 계약 실존 결손 0)**
+
+| 레인 | 트리 | 명세 | 수리 전(HEAD) | 수리 후 | 계약 실존(행 R · 판정 T · K · S · X · U · 결손) |
+|---|---|---|---|---|---|
+| 1 media-library | `c489ac0` | 워크트리 `20260902-0128-…/design-spec.md` | exit 2 · 6건 | exit 2 · 6건 · **집합 동일** | 28 · 31 · **1**(`FrameworkErrorSchema`) · **10** · **20** · 0 · **0** — 계획 §4-2 ⓑ 예측(20·10·1) 그대로 |
+| 2 notification-bc | `1eb8507`(명세 `7b0befd`) | 라이브 `20260902-1458-…/design-spec.md` | exit 2 · 1건 {`3dc440496a29`} | exit 2 · 1건 · **집합 동일** | 22 · 25 · **5** · **12** · **8** · 0 · **0** — 계획 §4-2 ⓐ 예측(12·5·8) 그대로 |
+| 3 email-template | `9906931` | 라이브 `20260902-1842-…/design-spec.md` | exit 0 · 0건 | exit 0 · 0건 · **집합 동일** | 48 · 48 · 11 · 24 · 13 · 0 · **0**(신규 대조 — 기존 BC 확장 판형) |
+
+세 실명세 모두 exit 5 로 바뀌지 않았다(오차단 0 실전 증거) · 예보 ID 집합 diff 0 · 스텁 byte 불변(열거 함수 diff 0 — `render_stub`·`_class_stub`·`materialize`·`materialize_skeleton`·`run_gate`·`_stable_id`·`BASE_IMPORTS`·`parse_spec`·`_parse_file_plan`·`_parse_symbols`·`_parse_exception_map`·`_parse_signals`·`block_hash`·`_migration_stub`·`_overlay_dirty`·`_extract_archive` 16 심볼 AST 세그먼트 동일 — `_parse_imports` 만 행 보존·메모 문면 변경).
+
+**ⓑ 양 저장소 실코드 전수 import 자가 대조 스캔(D-P3 MAJOR-1 — 릴리즈 조건 · 실행기의 `check_import_existence` 그대로, `application/**`+`framework/**` 전 `.py` 최상위 import 전건)**
+
+| 저장소 | 파일 | 행 R | 이름 판정 T | 실존 확인 K | 저장소 밖 X | 판정 불능 U | **결손** |
+|---|---|---|---|---|---|---|---|
+| spring_dream_server `e9c1eb6` | 2,599 | 9,808 | 11,174 | 5,789 | 5,385 | 0 | **0** |
+| kkebi-server `6608fb0` | 3,520 | 11,371 | 12,894 | 7,282 | 5,612 | 0 | **0** |
+
+계수 항등식 T = K+S+X+U+결손 양쪽 성립. 판정군 결함 발견 0 — 수정 후 재스캔 불요. 검출력 대조(kkebi 사본에 합성 행 주입): `application.identity.nope_module` → ⑴ · 0B `share/…/event_router` 이름 import → ⑵(같은 파일 모듈 import 는 K — MAJOR-3 ⑵ 한정) · `profile_lookup_published_error import NotThere` → ⑶ · `ninja` → X · `import *` → U — 전건 기대대로.
+
+**ⓒ kkebi S2 판형 재현(`kkebi-s2-spec.md` — update 소비자 2·행 2)**
+
+| 트리 | 결과 | exit |
+|---|---|---|
+| `dd876b7`(S1 STOP 시점 — 두 published_error 0B) | `⑵ 자리표시자(0B — 기존 실물)` × 2 · «실체화 0 · 실존 결손 2건» | **5** |
+| `5af8bb6`(41호 병합 후 137B) | 실존 확인 K × 2 · 결손 0 | 4(실체화 0·결손 0) |
+| `217d815`(STOP-365 시점 — identity BC 전체 부재) | `⑴ 모듈 부재` × 2 · ID `e-1b851ecf1d2b`·`e-190ddf791b02` 가 `dd876b7` 의 ⑵ 와 **동일**(단계 무관 ID 안정성 실증) | **5** |
+
+승격 폴더 부품 판형(`promo-spec.md` @ sd `e9c1eb6`): `…issue_invoice_use_case.issue_invoice_failure import IssueInvoiceFailure` → 자기 add 해소 S(MAJOR-2) · `JsonValue` → K · 결손 0.
+
+- 픽스처 러너: 묶음 imports(합성 저장소 2 = `mini_repo` + `imports_overlay/` · 리포트 각 1) — `imports-green-spec` exit 0·집계 K2/S1/X1 / `imports-red-spec` exit 5·⑴⑵⑶ 각 1·귀속 0 / `imports-update-only-spec` exit 5·«실체화 0 · 실존 결손 1건» + 유닛 매트릭스 ⓐ~ⓟ + 델타 21항(TypeAlias·AsyncFunctionDef·Assign 튜플·AnnAssign·`import a.b`→`a`·as·If/Try/With 재귀·`__all__`·승격 폴더 부품/슬롯 S·empty/0B 모듈 import ⑵ 비적용·namespace-dir 이름 U/서브모듈 K·`import *` 재수출 U·`__getattr__` U·빈 패키지 `__init__` ⑵ 비적용→⑶·소비자 remove U·문법 불량 U·계수 항등식·⑵ 문면 3형·ID 합치기/형식/예보 정규식 불충돌·절 형식) — 변이 대조(AsyncFunctionDef 제거·승격 부품 규칙 제거)로 매트릭스 검출력 2/2 확인. 기존 묶음 base·p1·mid 는 exit·귀속·ID 동일(리포트 문자는 상시 절 추가로 달라진다 — 계획 MINOR 문면대로).
+- 계수 실측: ExpressionShape 3538→**3543**(+5 = R-3427·R-3433·R-3434·R-3437·R-3438) · BlockShape **2900 불변**(블록 신설 0) · Norm/Work 3450 불변 · ISSUED 무변경 · q4 골든 3441 불변 · LEDGER graph 절 rebaseline **+4**(command-dddjango s002·s003·s006 · agent-design-architect s005) · BLIND_SPOTS 7→**9**.
+- 계획과 달라진 점: ① 실행기 자체 인터프리터 하한 검사(MINOR)는 **실행 불능(exit 1)이 아니라 판정 불능 메모**로 — `--python`(검사기 인터프리터)과 달리 실행기 인터프리터 미달은 ⑶ 파싱 실패가 U 로 병기되므로 침묵이 아니고, Coordinator 실행 판형(`scripts/design_pregate.py … --report …`)이 실행기 인터프리터를 지정하지 않아 exit 1 승격은 운영 파괴 위험이 있다(리포트·stdout 에 «실행기 py X.Y < 대상 하한» 문면 병기). ② 집계 행에 `결손 D(항목 M)` 을 덧붙여 T = K+S+X+U+D 항등식을 리포트에서 닫았다(계획 문면 6계수 + 1). ③ `_realize_module` 의 기존 실물 승격 해소는 Python 의미론대로 `__init__.py` 패키지 우선(이름 표면 = `__init__` 재수출 — sd 실측 `turn_controller/__init__.py` 재수출 판형)이고 `checker_target.slot_file` 은 파일 실현 단계에 재사용했다 — `__init__` 없는 승격 본체(#490 형태 위반 상태)는 slot_file 의 본체 분기로 «모듈»이 되어 관대 방향이나 그 상태는 골격 검사기 소관이라 사각 병기로 둔다. ④ 리포트 «결손 소멸 ∧ R 감소» 대조는 실행기가 직전 리포트를 읽지 않고(출력이 이전 상태에 의존하지 않게) R 을 상시 실어 Coordinator 가 대조한다(D-P3 MAJOR-6 문면 그대로). ⑤ 유닛 매트릭스는 `_unit_checks` 확장이 아니라 별도 함수 `_existence_unit_checks`(검사기 27종 비의존·합성 사본 tempdir)로 두어 묶음 분리 판형(교차 m-1)과 정합시켰다.
+
 ## 5. 사례 정합 — 당시 행이 있었다면
 | 사례 | 기준선 | 기대 출력 |
 |---|---|---|
-| SD fortune-reading G1 전 | `9b354fb^` | `⑴ 모듈 부재 :: application.fortune_calculation.… import CalculateChartResponse` 1건 · exit 5(귀속 0 시) — 처분 `deferred`(소유 레인·해소=머지) → `138359f` 이후 소멸. #365와 상보(«저장소 밖?» vs «이 브랜치에 없음») |
+| ~~SD fortune-reading G1 전~~ | — | **v2 MAJOR-4 철회** — 당시 명세에 해당 import 행이 성립하지 않는다(계약 fixture 의존). 표본은 kkebi 2건 + 실명세 오차단 대조 3건 |
 | kkebi notification-settings-http S1 | `dd876b7` | `⑵ 자리표시자(0B — 기존 실물)` 2건 · «실체화 0 · 실존 결손 2건» exit 5 — S2 착수 조건의 기계 표현. `5af8bb6` 재실행 → 결손 0 = 재개 조건 기계 증거 |
 | kkebi STOP-365 | `217d815` | `⑴ 모듈 부재` × 행 수(identity BC 전체) · `deferred` — #365 오판 문면 정정. #365 자체 불변(이월) |
 적용 한정: 구형 명세(기계 블록 없음 — kkebi 0/20)는 R-3436대로 exit 4 — 신규·개정 명세 한정.
@@ -349,7 +384,7 @@ R-3134 주어는 «신규 산출물의 **형태**». 이 검사는 형태를 결
 R-3427 rev2(확장·약화 없음) · R-3433 rev3(채널별 닫힌 정의·기존 3라벨 불변) · R-3434 rev2 · R-3437 rev2(필드 추가) · R-3438 rev2(절 추가) · 무변경 정합 확인: R-3424(fail-closed 동형)·R-3425·R-3426(자기 add ⑶ 생략 근거)·R-3432·R-3435·R-3436(실체화 0 분기만 «결손→5» 세분)·R-3134·R-0459/0460·registry #13/#385/#365/#472 · `checker_target.skeleton_placeholder`·`standard_tree.children(None)` 재사용(재구현 금지).
 
 ## 8. 일반화
-의존: Python import 의미론·표준 트리 최상위·격리 사본. 무의존: herdr·STOP 규약·발주서·프로젝트명. 런타임 byte 미러 단일. 표본 외 ≥2(kkebi STOP-s2-s3 ⑵·STOP-365 ⑴) + SD ⑴ + 실명세 오차단 대조 2. 한정: 신규·개정 명세.
+의존: Python import 의미론·표준 트리 최상위·격리 사본. 무의존: herdr·STOP 규약·발주서·프로젝트명. 런타임 byte 미러 단일. 표본 외 ≥2(kkebi STOP-s2-s3 ⑵·STOP-365 ⑴) + 실명세 오차단 대조 3(SD ⑴ 은 v2 MAJOR-4 철회). 한정: 신규·개정 명세.
 
 ## 9. 검증 게이트
 1. `pregate_fixture_run.py` PASS — 기존 4종 문자 동일 + 유닛 ⓐ~ⓟ + e2e 3종. 2. 소급 대조 2건(ID diff 0·결손 0·exit 불변) 표 추기. 3. 온톨로지 4단 → `--apply command-dddjango agent-design-architect` → rulepack → verify 전 단. 4. codex 미러 byte + SKILL 2건 손 반영. 5. 봉인 재발행. 6. 5단계 3축: «결합 분기 diff 0»·«자기 add ⑶ 생략»·«exit 5 비차단» 드리프트. 7. 종점: 다음 레인 ledger «실존 결손/처분» 열 실측.
