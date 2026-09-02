@@ -154,6 +154,20 @@ Part 1 선머지 → Part 2 rebase. 본 변경은 `main` 밖 헬퍼 1함수 + `m
    - 레인 1 `c489ac0` + media-library 명세: 전후 ID 집합 동일 + `_GroupMediaAssetItem {…}` 재구성 행이 파싱 통과·신규 ID 0(오차단 0).
    - 레인 3 재발화 리플레이: `625f6a6` + `2a12d18` 판 명세 + WIP 1개 → `--base 9906931` exit ≠3 / 미지정 exit 3.
 3. `make verify` 전 그룹 green + codex byte 미러 diff 0 + `ontology_gate` 4단 + 계수 3529 + q4 골든.
+
+### 7-2 실측 결과 (2026-09-03 구현 — 스크래치 `git clone` 사본 · 수리 전 = `a782dcd` 판 실행기 · 수리 후 = 본 배치 · 동일 트리 전후 비교, 레인 당시 실측 건수와 무관 · `--python` = 대상 venv py3.14)
+
+| 레인 | 트리 | 명세 | 수리 전 S₀ | 수리 후 S₁ | 판정 |
+|---|---|---|---|---|---|
+| 3 email-template | `9906931` | 라이브 `20260902-1842-…/design-spec.md` | exit 2 · 1건 {`0c3ee0342328` #593 `…/migrations/0001_initial.py`} | exit 0 · 0건 | S₁ = S₀ ∖ {`0c3ee0342328`} ✓ · 타 ID 소멸 0 |
+| 2 notification-bc | `7b0befd` | 라이브 `20260902-1458-…/design-spec.md`(`empty …/migrations/__init__.py`) | exit 2 · 1건 {`3dc440496a29` #14} | exit 2 · 1건 {`3dc440496a29`} | 유지·건수 1 불변 ✓ |
+| 1 media-library 원문 | `c489ac0` | 워크트리 `feat-fortune-reading/.dddjango/20260902-0128-…/design-spec.md` | exit 2 · 6건 {`0545691c4eac` #160 · `508cb023eceb` #392 · `749595497241` #376 · `8140c1c059f4` #329 · `992a5a0575bf` #332 · `cc49ccf434d0` #484} | exit 2 · 6건(동일) | 전후 ID 집합 동일 ✓ |
+| 1 media-library 재구성 | `c489ac0` | 위 명세 + `…/list_group_media_assets_result.py::_GroupMediaAssetItem {id: UUID, kind: str}` 행 삽입 | — | exit 2 · 6건(원문과 집합 동일) | 사설 타입 행 파싱 통과·신규 ID 0(오차단 0) ✓ |
+| 3 재발화 리플레이 | `625f6a6` + 미추적 WIP `…/email_notice_template/__init__.py` | `2a12d18` 판 명세(add 20건 중 7건이 트리 실존) | — | `--base 9906931` → exit 0 · 실체화 30 · 기실현 1 / 미지정 → exit 3(add 충돌 `email_notice_template_content.py`) | 재발화 판형 ✓ · 기본 경로 불변 ✓ |
+
+- 픽스처 러너: 묶음 base(green·green2·form-red·red — 헤더 4) · p1(green3 exit 0 · red2 exit 2 귀속 {#81, #325} 2건 — 헤더 각 1) · mid(E1 exit 0·사본 스텁·기실현 0 / E2 exit 0·기실현 1·스텁 대체(실물 #267 미혼입) / E3 exit 3 / E4 exit 3 — 헤더 4) + 유닛(파서 7케이스·compile 힌트·마이그레이션 정형 3파일 `_check_migration_file` Findings 0·전사 우선·블록 해시 4단언+CLI 동치·버전 probe Claude/Codex 레이아웃 동치·툴체인 행 형식) PASS.
+- 계수 실측: ExpressionShape 3522→**3529**(+7) · BlockShape 2896→**2897**(s006/b10) · Norm/Work 3447 불변 · q4 골든 3438/3438 불변 · LEDGER graph 절 rebaseline +6(command-dddjango s005·s006·s007·s009·s010 · agent-design-architect s005) · ISSUED 무변경.
+- 계획과 달라진 점: **s006/b10 은 `statesNorm` 없는 후속 블록**이다 — rulepack 생성기(`ontology_rulepack.py`)의 «1 Work = 1 Block» 계약(q4 주석·fail-closed)상 R-3432 를 b9·b10 둘이 진술할 수 없고 ISSUED 무변경 조건상 신규 채번도 불가하므로, R-3432(rev2 Expression)는 b9 에 남기고 b10 은 같은 문단의 속행(문서 내 선례 s010/b7 — statesNorm 없는 kind-norm 블록 45건)으로 뒀다. 렌더·계수(+1)·LEDGER 는 계획대로.
 4. 5단계 입력: §0 표의 코드 지점 ↔ diff 헝크 1:1 대조표 첨부.
 
 ## 8. 배포·이월
@@ -233,6 +247,20 @@ blob 판정은 ls-tree 사전만(머지 수 선형·수 초). L은 «후보 라�
 | anchor-drift | HEAD=`99b3caa` · `--anchor b5392f0` | `7fd0433`·`d5d6d94`·`d892894` | 유입(파일) **462**(d892894 349·d5d6d94 113)·유입(상호작용) **1**(#416←d5d6d94)·귀속 **0**·**exit 0** → epoch 재앵커 불요. 목록이 `d892894`뿐이면 유입 349·귀속 114·exit 2 |
 | kkebi identity | kkebi 사본 HEAD=`c2b2bfd` · `--anchor a1a254a` · 빚에서 «범위 밖 4건» 제거 | 7머지 | 유입(파일) **2**·귀속 **2**(`settings/base.py` — `레인 커밋 수정`)·**exit 2**·진단 «비머지 4가 첫 승인 머지보다 앞섬». 잔여 2건은 현행 빚 STOP(결정적 사유 인용) |
 
+### 4-2 실측 결과 (2026-09-03 구현 — 스크래치 `git clone --shared` 사본 · 라이브 무접촉 · 시스템 python3 = 대상 venv 와 같은 3.14.7 이라 `--python` 판형 불요 · 수치는 라인 단위 L)
+
+| 사례 | 좌표 | 승인 목록 | 실측 | 계획 기대와의 차이 |
+|---|---|---|---|---|
+| accounts(STOP 시점) | HEAD `a000cd6` · `--anchor 03f8252` · 빚 = 당시 `legacy-debt.txt` | `a000cd6` | 유입(파일) **804**(전건 L 증명 머지 = a000cd6) · 귀속 **0** · 빚 **2** · **exit 0** · 스냅숏 2·검사기 재실행 2 · 21 s(수리 전 18 s) · 진단 «머지 34(승인 1·미승인 33) · 비머지 27» | 빚 «14»→실측 2(그 커밋의 빚 파일이 매칭하는 수 — 표의 14 는 후기 빚 파일 기준 오기) · 나머지 일치 |
+| accounts(레인 tip) | HEAD `b6e98bd` | first-parent 머지 39건 전건 | 유입(파일) **804**(a000cd6 1건이 전량 · 나머지 38 머지 파일 0) · 귀속 0 · 빚 3 · **exit 0** · 스냅숏 2 · 26 s | N = 804 로 확정 |
+| anchor-drift | HEAD `99b3caa` · `--anchor b5392f0` · 빚 없음 | `7fd0433`·`d5d6d94`·`d892894` | 유입(파일) **462**(L 증명 머지 기준 d5d6d94 **230** · d892894 **232** · 7fd0433 0) · 유입(상호작용) **1**(`#416 yeonhae_release.py` ← d5d6d94) · 귀속 **0** · **exit 0** · 스냅숏 6·검사기 재실행 10 · 75 s | 파일 수준 provenance(349/113)와 라인 수준 L 증명(232/230)이 다르다 — d892894 가 verbatim 전달한 5파일의 진단 상당수가 d5d6d94 시점에 이미 incoming 측에 있었으므로(파일이 두 머지에 걸쳐 갱신) L 은 첫 도입 머지(d5d6d94)에서 선다. «↳ 유입: M 은 L 증명 머지 기준»(D-P2 M-3)의 실증 |
+| anchor-drift 부분 목록 | 동상 | `d892894` 뿐 | 유입 **232** · 귀속 **231**(`미승인 머지 경유 d5d6d94` 113 · `유입 증명 실패(이중 원인 — 미승인 머지 d5d6d94 경유 가능)` 117 · `상호작용 미증명` 1) · **exit 2** | v1 표의 «유입 349·귀속 114» 삭제분의 실측 확정. 누락 SHA 가 두 사유 모두에 표면화된다(후자는 구현 중 추가 — F1 통과·L 실패 라인에 «전달 머지보다 앞선 미승인 머지가 p 를 바꿨다»는 힌트) |
+| kkebi identity | HEAD `c2b2bfd` · `--anchor a1a254a` · 빚 = 범위 밖 4건 제거본(26행) | first-parent 머지 7건 | 유입(파일) **2**(`#546` consultation ← 0b2b436 · `#493 web/home/urls.py` ← f2a66a8) · 귀속 **2**(`settings/base.py` ×2 — `레인 커밋 수정 c2b2bfd(승인 머지 f2a66a8 이후)`) · 빚 25 · **exit 2** · 스냅숏 4 · 13 s · 진단 «비머지 커밋 1건(e219608)이 첫 승인 머지보다 앞선다» | 일치(D-P2 m-1 정정 «비머지 1 = e219608» 포함) |
+
+- P0 증거: accounts(STOP 시점) 수리 전 실행기(`34c74a6` 판) 출력과 수리 후 flag 없는 출력이 툴체인 행만 마스킹하고 byte 동일(diff 0). 스모크 P0′ 는 같은 대조를 sidecar(ts/run_id/record_id/file_raw 마스킹)까지 상시화.
+- 스모크: 기존 8 + P0·P0′·P1·P7·P3ⓐ·P2·P2w·P2′·P3ⓑ·P3ⓒ·P3ⓓ·P4·P4′·P5·P6·P8·P9·P9′·P10 = 27 케이스 PASS(94 s). P4 캘리브레이션: `application/promotion/` 은 orders BC 사본(orders→promotion·order→coupon)이며 사본이 내는 진단은 orders 의 legacy 4건(#107·#329·#219·#635 — 빈 파일 골격)의 경로 복사본뿐이라 M 경유 «파일 4 + 상호작용 1» 전건 유입·귀속 0. P2′ 는 앵커에 파일이 실존하므로 #490 이 기존분이고 신규 2(#95·#96)가 `충돌 해소분` 귀속.
+- 계획과 달라진 점(구현): ① 사유 어휘에 실측 진단 정보를 병기 — `레인 커밋 수정 <sha>(승인 머지 <M> 이후)` · `미승인 머지 경유 <sha>` · `비머지 커밋 경유 <sha>` · `충돌 해소분(M≠M^2) — <M>` · `측정 무효(M^1|M^2) — <M>` · `유입 증명 실패(이중 원인[ — 미승인 머지 <sha> 경유 가능])` ② 측정 유효성(M-2)의 «합성행» = 검사기 미파싱 합성행 + **M^1/M^2 parse-fail 집합 비대칭**(같은 깨진 파일이 양쪽에 있으면 대칭이라 유효 — brownfield 의 legacy 깨진 파일이 채널 전체를 죽이지 않게) ③ «비머지 커밋이 첫 승인 머지보다 앞선다» 진단은 정상 레인(자기 커밋 뒤 첫 머지)에서도 발화하므로 문면을 «레인 자신의 커밋이면 정상 · main 직접 커밋이면 앵커가 분기점보다 앞선 것 — 도구는 구별하지 않는다»로 두고 SHA 는 6개까지 표기 ④ s007 는 이미 b57 까지 있어 «새 b13»은 불가 — 새 블록은 s007/b58(말미 후속 문단 — Part 1 s006/b10 판형)·R-3439 는 s002/b9 가 진술(모든 s002 블록이 statesNorm 을 가짐) · R-3440/R-3441 은 b58 하나가 진술(rulepack 계약은 «한 Work = 한 Block»이지 «한 Block = 한 Work»가 아니다 — s007/b46 이 14 Work 를 진술하는 선례) ⑤ houserules §3 신호 +1행은 s006-3/b8(s004-1/b5 재진술 · statesNorm 없음 — 선례 95건)이고 b7 의 후행 구분자 `\n\n`→`\n` 이양(리스트 연속) → LEDGER +4(s002·s007·s004-1·s006-3).
+
 ## 5. 코퍼스 정합
 - 규칙: R-0306·R-3131(amendment) · R-0307·R-3132(clarification) · R-0411·R-0372(amendment) · 신규 3 · s002 b9. R-0303(판정 차분) — 귀속 산식 무변(분할만) 무충돌. R-0309 — 강화. R-0310/R-3133 — Exception이 «변경 없는 귀속»에 한정·본체 약화 없음. R-0373(exit 1 = 측정 실패) — 신규 exit 1 사유 동류. R-0374/R-0376 — 승인 유입에도 즉석 수리 금지 동반. 검사기 27종·rulepack selector 무변.
 - 머리말 §5~10 «경로 매칭식 5계열 공격»과의 정합: ① base 자기 선택 — 앵커·승인 목록 모두 actor 밖·사슬 검증 ② #488 부재 — blob 없는 경로 귀속 유지 ③ 출력 형식 이질 — `findings` 레코드 단일 출처·대응 없으면 귀속 유지 ④ 빈 변경 집합 — 변경 집합 비사용·L이 incoming 존재 요구 ⑤ .gitignore — 커밋 blob 없으면 불성립. 머리말에 «provenance 차분 — 귀속의 분할이지 재정의가 아니다» 절 추가.
@@ -257,10 +285,10 @@ blob 판정은 ls-tree 사전만(머지 수 선형·수 초). L은 «후보 라�
 ## 1. 원인 확정
 | 계통 | 실측 | 원인 |
 |---|---|---|
-| SD형 — 상류 모듈 부재 | fortune-reading 개시 9분 STOP + G1 전 STOP. `9b354fb^`의 `application/`에 `fortune_calculation` 없음(0) · `138359f`(09-01 17:02)엔 있음 | pre-gate는 R-3427 채널을 **스텁 전사 재료로만** 소비(`_parse_imports` :410~431 → `entry.imports` → `render_stub` :615~620) — import **대상** 실존은 어디서도 안 봄. 검사기 27종도 import를 «경로 모양»으로만 판정(`check-context-isolation.py:182~200` — 부재 규칙 0). 부재는 사람이 STOP으로 찾거나(SD 5.5분) ImportError로 드러남(kkebi 144분) |
+| ~~SD형 — 상류 모듈 부재~~ **(v2 MAJOR-4 철회 — fortune_reading→fortune_calculation import 0 · 계약 fixture 의존이지 import 의존 아님)** | fortune-reading 개시 9분 STOP + G1 전 STOP. `9b354fb^`의 `application/`에 `fortune_calculation` 없음(0) · `138359f`(09-01 17:02)엔 있음 | pre-gate는 R-3427 채널을 **스텁 전사 재료로만** 소비(`_parse_imports` :410~431 → `entry.imports` → `render_stub` :615~620) — import **대상** 실존은 어디서도 안 봄. 검사기 27종도 import를 «경로 모양»으로만 판정(`check-context-isolation.py:182~200` — 부재 규칙 0). 부재는 사람이 STOP으로 찾거나(SD 5.5분) ImportError로 드러남(kkebi 144분) |
 | kkebi형 — 0B 자리표시자 | `STOP-s2-s3.md`(S1 @`dd876b7`): `profile_lookup_published_error.py`·`account_lookup_published_error.py` **0B 실측** → S2 착수 조건 미충족. 41호 병합 후 `5af8bb6` 137B → 재개. 현재 kkebi 0B `.py` 1,181(비-`__init__` 161) | 「파일은 있으나 계약이 비어 있음」은 `checker_target.skeleton_placeholder` 술어가 이미 정의하지만 pre-gate가 안 씀 |
 | 교차-워크트리 오판 | kkebi `STOP-365-identity-acl.md`: identity가 다른 워크트리라 #365가 «저장소 밖 계약»으로 오판 | 검사기는 타 워크트리를 모름 — 이 브랜치 기준 부재가 사실. 새 검사는 «**이 브랜치에 이 계약 모듈 없음**»으로 정직 명명 |
-시간 절감 수치는 주장하지 않음 — 기대 효과는 «kkebi형 0B/ImportError 반송 사전화·SD형 분 단위» 그대로.
+시간 절감 수치는 주장하지 않음 — 기대 효과는 «kkebi형 0B/ImportError 반송 사전화» **한정**(v2 MAJOR-4 — «SD형 분 단위»는 철회).
 
 ## 2. 변경 — 실행기 (`design_pregate.py` + codex byte 미러)
 원칙: **기존 경로(파서 결합·`render_stub`·`materialize`·`run_gate`·`_stable_id`)는 한 줄도 바꾸지 않는다** — 신설은 읽기 전용 판정 함수군 + 리포트/exit 배선뿐.
@@ -306,10 +334,45 @@ exit 2 공유 기각 근거: ⓐ 차단 승격이 «exit 2 = 차단»이라 공�
 4. **신규 픽스처**: 유닛 매트릭스 ⓐ~ⓟ(실존 확인·⑶ 미정의·⑵ 0B·⑵ docstring-only·⑴ 부재·자기 add 해소(⑶ 생략)·자기 `empty`·승격 폴더 재수출·서브모듈 형·서드파티 skip·`framework.*` 부재 ⑴·`import a.b.c`·상대 import·`import *` 불능·planned-remove ⑴·ID 안정성) + e2e 3종(합성 저장소 2 = `mini_repo` + `imports_overlay/`(`framework/test/frozen_clock.py`·0B `placeholder_helper.py`)): `imports-green-spec` exit 0 / `imports-red-spec` exit 5(⑴⑵⑶ 각 1) / `imports-update-only-spec` exit 5 + «실체화 0»(kkebi S2 판형). 러너 `_EXISTENCE_LINE_RE` 추가·append 계수 기대 갱신(**Part 1 green3와 합산 — §통합 참조**).
 5. **게이트 강도 불변**: 완화 0 · 강화는 권고 채널 추가뿐 · exit 5 비차단 · 비-add 소비자의 문법 불량은 판정 불능 메모(형식 반송 계수 보호).
 
+### 4-2 실측 결과 (2026-09-03 구현 — 스크래치 사본 `git clone`(spring_dream_server)·`git clone --shared`(kkebi-server) · 라이브 무접촉 · 수리 전 = HEAD `881d312` 판 실행기 · 수리 후 = 본 Part · `--python` = 각 대상 venv py3.14)
+
+**ⓐ 소급 대조(실명세 3레인 — 예보 ID 집합·exit 불변 + 계약 실존 결손 0)**
+
+| 레인 | 트리 | 명세 | 수리 전(HEAD) | 수리 후 | 계약 실존(행 R · 판정 T · K · S · X · U · 결손) |
+|---|---|---|---|---|---|
+| 1 media-library | `c489ac0` | 워크트리 `20260902-0128-…/design-spec.md` | exit 2 · 6건 | exit 2 · 6건 · **집합 동일** | 28 · 31 · **1**(`FrameworkErrorSchema`) · **10** · **20** · 0 · **0** — 계획 §4-2 ⓑ 예측(20·10·1) 그대로 |
+| 2 notification-bc | `1eb8507`(명세 `7b0befd`) | 라이브 `20260902-1458-…/design-spec.md` | exit 2 · 1건 {`3dc440496a29`} | exit 2 · 1건 · **집합 동일** | 22 · 25 · **5** · **12** · **8** · 0 · **0** — 계획 §4-2 ⓐ 예측(12·5·8) 그대로 |
+| 3 email-template | `9906931` | 라이브 `20260902-1842-…/design-spec.md` | exit 0 · 0건 | exit 0 · 0건 · **집합 동일** | 48 · 48 · 11 · 24 · 13 · 0 · **0**(신규 대조 — 기존 BC 확장 판형) |
+
+세 실명세 모두 exit 5 로 바뀌지 않았다(오차단 0 실전 증거) · 예보 ID 집합 diff 0 · 스텁 byte 불변(열거 함수 diff 0 — `render_stub`·`_class_stub`·`materialize`·`materialize_skeleton`·`run_gate`·`_stable_id`·`BASE_IMPORTS`·`parse_spec`·`_parse_file_plan`·`_parse_symbols`·`_parse_exception_map`·`_parse_signals`·`block_hash`·`_migration_stub`·`_overlay_dirty`·`_extract_archive` 16 심볼 AST 세그먼트 동일 — `_parse_imports` 만 행 보존·메모 문면 변경).
+
+**ⓑ 양 저장소 실코드 전수 import 자가 대조 스캔(D-P3 MAJOR-1 — 릴리즈 조건 · 실행기의 `check_import_existence` 그대로, `application/**`+`framework/**` 전 `.py` 최상위 import 전건)**
+
+| 저장소 | 파일 | 행 R | 이름 판정 T | 실존 확인 K | 저장소 밖 X | 판정 불능 U | **결손** |
+|---|---|---|---|---|---|---|---|
+| spring_dream_server `e9c1eb6` | 2,599 | 9,808 | 11,174 | 5,789 | 5,385 | 0 | **0** |
+| kkebi-server `6608fb0` | 3,520 | 11,371 | 12,894 | 7,282 | 5,612 | 0 | **0** |
+
+계수 항등식 T = K+S+X+U+결손 양쪽 성립. 판정군 결함 발견 0 — 수정 후 재스캔 불요. 검출력 대조(kkebi 사본에 합성 행 주입): `application.identity.nope_module` → ⑴ · 0B `share/…/event_router` 이름 import → ⑵(같은 파일 모듈 import 는 K — MAJOR-3 ⑵ 한정) · `profile_lookup_published_error import NotThere` → ⑶ · `ninja` → X · `import *` → U — 전건 기대대로.
+
+**ⓒ kkebi S2 판형 재현(`kkebi-s2-spec.md` — update 소비자 2·행 2)**
+
+| 트리 | 결과 | exit |
+|---|---|---|
+| `dd876b7`(S1 STOP 시점 — 두 published_error 0B) | `⑵ 자리표시자(0B — 기존 실물)` × 2 · «실체화 0 · 실존 결손 2건» | **5** |
+| `5af8bb6`(41호 병합 후 137B) | 실존 확인 K × 2 · 결손 0 | 4(실체화 0·결손 0) |
+| `217d815`(STOP-365 시점 — identity BC 전체 부재) | `⑴ 모듈 부재` × 2 · ID `e-1b851ecf1d2b`·`e-190ddf791b02` 가 `dd876b7` 의 ⑵ 와 **동일**(단계 무관 ID 안정성 실증) | **5** |
+
+승격 폴더 부품 판형(`promo-spec.md` @ sd `e9c1eb6`): `…issue_invoice_use_case.issue_invoice_failure import IssueInvoiceFailure` → 자기 add 해소 S(MAJOR-2) · `JsonValue` → K · 결손 0.
+
+- 픽스처 러너: 묶음 imports(합성 저장소 2 = `mini_repo` + `imports_overlay/` · 리포트 각 1) — `imports-green-spec` exit 0·집계 K2/S1/X1 / `imports-red-spec` exit 5·⑴⑵⑶ 각 1·귀속 0 / `imports-update-only-spec` exit 5·«실체화 0 · 실존 결손 1건» + 유닛 매트릭스 ⓐ~ⓟ + 델타 21항(TypeAlias·AsyncFunctionDef·Assign 튜플·AnnAssign·`import a.b`→`a`·as·If/Try/With 재귀·`__all__`·승격 폴더 부품/슬롯 S·empty/0B 모듈 import ⑵ 비적용·namespace-dir 이름 U/서브모듈 K·`import *` 재수출 U·`__getattr__` U·빈 패키지 `__init__` ⑵ 비적용→⑶·소비자 remove U·문법 불량 U·계수 항등식·⑵ 문면 3형·ID 합치기/형식/예보 정규식 불충돌·절 형식) — 변이 대조(AsyncFunctionDef 제거·승격 부품 규칙 제거)로 매트릭스 검출력 2/2 확인. 기존 묶음 base·p1·mid 는 exit·귀속·ID 동일(리포트 문자는 상시 절 추가로 달라진다 — 계획 MINOR 문면대로).
+- 계수 실측: ExpressionShape 3538→**3543**(+5 = R-3427·R-3433·R-3434·R-3437·R-3438) · BlockShape **2900 불변**(블록 신설 0) · Norm/Work 3450 불변 · ISSUED 무변경 · q4 골든 3441 불변 · LEDGER graph 절 rebaseline **+4**(command-dddjango s002·s003·s006 · agent-design-architect s005) · BLIND_SPOTS 7→**9**.
+- 계획과 달라진 점: ① 실행기 자체 인터프리터 하한 검사(MINOR)는 **실행 불능(exit 1)이 아니라 판정 불능 메모**로 — `--python`(검사기 인터프리터)과 달리 실행기 인터프리터 미달은 ⑶ 파싱 실패가 U 로 병기되므로 침묵이 아니고, Coordinator 실행 판형(`scripts/design_pregate.py … --report …`)이 실행기 인터프리터를 지정하지 않아 exit 1 승격은 운영 파괴 위험이 있다(리포트·stdout 에 «실행기 py X.Y < 대상 하한» 문면 병기). ② 집계 행에 `결손 D(항목 M)` 을 덧붙여 T = K+S+X+U+D 항등식을 리포트에서 닫았다(계획 문면 6계수 + 1). ③ `_realize_module` 의 기존 실물 승격 해소는 Python 의미론대로 `__init__.py` 패키지 우선(이름 표면 = `__init__` 재수출 — sd 실측 `turn_controller/__init__.py` 재수출 판형)이고 `checker_target.slot_file` 은 파일 실현 단계에 재사용했다 — `__init__` 없는 승격 본체(#490 형태 위반 상태)는 slot_file 의 본체 분기로 «모듈»이 되어 관대 방향이나 그 상태는 골격 검사기 소관이라 사각 병기로 둔다. ④ 리포트 «결손 소멸 ∧ R 감소» 대조는 실행기가 직전 리포트를 읽지 않고(출력이 이전 상태에 의존하지 않게) R 을 상시 실어 Coordinator 가 대조한다(D-P3 MAJOR-6 문면 그대로). ⑤ 유닛 매트릭스는 `_unit_checks` 확장이 아니라 별도 함수 `_existence_unit_checks`(검사기 27종 비의존·합성 사본 tempdir)로 두어 묶음 분리 판형(교차 m-1)과 정합시켰다.
+
 ## 5. 사례 정합 — 당시 행이 있었다면
 | 사례 | 기준선 | 기대 출력 |
 |---|---|---|
-| SD fortune-reading G1 전 | `9b354fb^` | `⑴ 모듈 부재 :: application.fortune_calculation.… import CalculateChartResponse` 1건 · exit 5(귀속 0 시) — 처분 `deferred`(소유 레인·해소=머지) → `138359f` 이후 소멸. #365와 상보(«저장소 밖?» vs «이 브랜치에 없음») |
+| ~~SD fortune-reading G1 전~~ | — | **v2 MAJOR-4 철회** — 당시 명세에 해당 import 행이 성립하지 않는다(계약 fixture 의존). 표본은 kkebi 2건 + 실명세 오차단 대조 3건 |
 | kkebi notification-settings-http S1 | `dd876b7` | `⑵ 자리표시자(0B — 기존 실물)` 2건 · «실체화 0 · 실존 결손 2건» exit 5 — S2 착수 조건의 기계 표현. `5af8bb6` 재실행 → 결손 0 = 재개 조건 기계 증거 |
 | kkebi STOP-365 | `217d815` | `⑴ 모듈 부재` × 행 수(identity BC 전체) · `deferred` — #365 오판 문면 정정. #365 자체 불변(이월) |
 적용 한정: 구형 명세(기계 블록 없음 — kkebi 0/20)는 R-3436대로 exit 4 — 신규·개정 명세 한정.
@@ -321,7 +384,7 @@ R-3134 주어는 «신규 산출물의 **형태**». 이 검사는 형태를 결
 R-3427 rev2(확장·약화 없음) · R-3433 rev3(채널별 닫힌 정의·기존 3라벨 불변) · R-3434 rev2 · R-3437 rev2(필드 추가) · R-3438 rev2(절 추가) · 무변경 정합 확인: R-3424(fail-closed 동형)·R-3425·R-3426(자기 add ⑶ 생략 근거)·R-3432·R-3435·R-3436(실체화 0 분기만 «결손→5» 세분)·R-3134·R-0459/0460·registry #13/#385/#365/#472 · `checker_target.skeleton_placeholder`·`standard_tree.children(None)` 재사용(재구현 금지).
 
 ## 8. 일반화
-의존: Python import 의미론·표준 트리 최상위·격리 사본. 무의존: herdr·STOP 규약·발주서·프로젝트명. 런타임 byte 미러 단일. 표본 외 ≥2(kkebi STOP-s2-s3 ⑵·STOP-365 ⑴) + SD ⑴ + 실명세 오차단 대조 2. 한정: 신규·개정 명세.
+의존: Python import 의미론·표준 트리 최상위·격리 사본. 무의존: herdr·STOP 규약·발주서·프로젝트명. 런타임 byte 미러 단일. 표본 외 ≥2(kkebi STOP-s2-s3 ⑵·STOP-365 ⑴) + 실명세 오차단 대조 3(SD ⑴ 은 v2 MAJOR-4 철회). 한정: 신규·개정 명세.
 
 ## 9. 검증 게이트
 1. `pregate_fixture_run.py` PASS — 기존 4종 문자 동일 + 유닛 ⓐ~ⓟ + e2e 3종. 2. 소급 대조 2건(ID diff 0·결손 0·exit 불변) 표 추기. 3. 온톨로지 4단 → `--apply command-dddjango agent-design-architect` → rulepack → verify 전 단. 4. codex 미러 byte + SKILL 2건 손 반영. 5. 봉인 재발행. 6. 5단계 3축: «결합 분기 diff 0»·«자기 add ⑶ 생략»·«exit 5 비차단» 드리프트. 7. 종점: 다음 레인 ledger «실존 결손/처분» 열 실측.
@@ -357,9 +420,9 @@ R-3427 rev2(확장·약화 없음) · R-3433 rev3(채널별 닫힌 정의·기�
 - 러너 계수(교차 m-1): 묶음별 리포트 파일 분리·기대값은 묶음별(Part 1 green3+red2 = 별도 리포트 각 1). LEDGER(교차 m-3): 관행대로 graph 절 rebaseline 행 +6.
 
 ## D-P2 (Part 2)
-- **B-1 사슬 검증 강화(해제)**: `anchor ∈ git rev-list --first-parent HEAD`(도달 필수) ∧ M ∈ 그 구간. 미도달 상태에서 목록 지정 → exit 1 «앵커가 HEAD first-parent 사슬 밖 — 승인 목록 판정 불가». 3사례 통과 실측(오차단 0). 픽스처 **P9**(역방향 합성 머지 → exit 1)·**P9′**(앵커 사슬 밖 → exit 1).
+- **B-1 사슬 검증 강화(해제)**: `anchor ∈ git rev-list --first-parent HEAD`(도달 필수) ∧ M ∈ 그 구간. 미도달 상태에서 목록 지정 → exit 1 «앵커가 HEAD first-parent 사슬 밖 — 승인 목록 판정 불가». 3사례 통과 실측(오차단 0). 픽스처 **P9**(역방향 합성 머지 → exit 1 — **HEAD=lane 한정**: main←lane 머지는 lane 의 first-parent 사슬 밖이라 사슬 검증이 잡는다)·**P9′**(앵커 사슬 밖 → exit 1). 발주자 등재를 전제한 잔여 경로(발주자가 합성 머지를 레인 사슬에 올린 경우)는 exit 1 이 아니라 **진단+custody** — 게이트가 `^2` 를 포함하는 ref 가 HEAD 브랜치뿐이면 «역방향/합성 머지 의심» 1행(exit 무변)·R-3439 에 발주자 append 전 «`^2` 가 main(상류) 이력에 있는지 확인» 절차(6단계 리뷰 P2 M-1 · 스모크 P12/P12′).
 - **M-1 custody 성문**: R-NEXT+0에 «도구는 소유를 검증하지 않는다 — 빚 목록과 같은 사용자 승인 입력» + 머지 표에 `^2` ref 도달성 정보 행(`git name-rev --refs='refs/*' M^2`) + G2 배너 열거 유지.
-- **M-2 측정 유효성**: M^1·M^2 어느 쪽이든 검사기 c 측정 무효(exit∉{0,2} ∨ 합성행 존재) → 해당 c 라인 전부 귀속 유지(사유 `측정 무효(M^1|M^2)`) — R-0372 «미파싱=측정 실패» 정합. 픽스처 **P10**(M^1에 SyntaxError 심기 → 귀속 유지). 스냅숏 실행은 `git_root=None`·`snapshot_anchor` 규약 명시.
+- **M-2 측정 유효성**: M^1·M^2 어느 쪽이든 검사기 c 측정 무효(exit∉{0,2} ∨ 합성행 존재 ∨ **스냅숏 실패** — 6단계 P2 M-2: `AnchorDiffUsage` 를 게이트가 포착해 `측정 무효(스냅숏 실패) — <M>` 로 귀속 유지·진단 절에 git 오류·traceback 0) → 해당 c 라인은 **그 머지에서의** 증명 기회를 잃는다 — **∃M 의미론**(6단계 P2 M-3): 다른 승인 머지가 증명하면 유입이고, 전 승인 머지가 무효/미증명이면 귀속 유지(사유 = 첫 무효 머지) — R-0372 «미파싱=측정 실패» 정합. 픽스처 **P10**(M^1에 SyntaxError 심기 → 귀속 유지). 스냅숏 실행은 `git_root=None`·`snapshot_anchor` 규약 명시.
 - **M-3 표기·표 정정**: `↳ 유입: M`은 **L 증명 머지** 기준. §4 «d892894뿐이면 유입 349·귀속 114» 삭제 → «부분 목록 시 잔여 라인에 `미승인 머지 경유 <sha>`로 누락 SHA 표면화 — 수치는 구현 후 실측 확정(라인 단위 L)».
 - m-1 사유 어휘 통합 `비머지 커밋 경유 <sha>`(레인/직접 구별 불가 인정)·kkebi 기대 «첫 승인 머지보다 앞선 비머지 = 1(e219608)». m-2 P0 마스킹 목록 성문(툴체인 행 전체·sidecar tempdir 경로·`ts`/`run_id`/`record_id`)·불변식 3종 유지. m-3 ① R-3131 rev2 «확립 규약 수용 금지» 절 보존 ② R-NEXT+0 «레인 first-parent 사슬 위의 2-부모 머지» ③ R-NEXT+2 처방에 «레인 설계 반송(레인 원인)» 병기 ④ «rulepack.json 재소성» 문면 ⑤ houserules §3 신호 +1행(경로 필터 서술). m-4 P4는 `application/promotion/` 완전 BC 캘리브레이션. m-5 스냅숏 수 진단 1행.
 - 교차: `anchor_diff.py` 봉인 그룹 = **scorer**. 신규 Work 3건은 `ontology/wiring/command-dddjango.ttl` `delegatedTo` 3행 필수·R-NEXT+1/+2는 **s007 새 블록 b13** 신설. codex 의미 미러 2파일(`dddjango/SKILL.md`·`dddjango-discipline-houserules/SKILL.md`). LEDGER +3.
@@ -377,7 +440,65 @@ R-3427 rev2(확장·약화 없음) · R-3433 rev3(채널별 닫힌 정의·기�
 
 ## D-통합
 - **릴리즈 단위: 단일 v2.17.16(3부 합산)** — 릴리즈마다 라이브 레인 캐시 교체 위험이 있으므로 1회로. 시점은 사용자 결정 게이트. 판별 = 리포트 헤더 버전 스탬프(행 수 휴리스틱 폐기).
-- 계수표 최종 기대: ExpressionShape **3543**(+7+9+5) · Norm/Work **3450**(+3) · Block **2897~2900**(s002/b9·s006/b10·s007/b13) · ISSUED **R-3439~3441** · LEDGER **+13** · BLIND_SPOTS **9**(Part 1 +1 문면·Part 3 +2).
+- 계수표 최종 기대: ExpressionShape **3544**(+7+9+5 + 6단계 R-3436 rev2 clarification 1 — 릴리즈된 09-01 Expression 이라 in-place 대상 아님) · Norm/Work **3450**(+3) · Block **2897~2900**(s002/b9·s006/b10·s007/b13) · ISSUED **R-3439~3441** · LEDGER **+20**(실측 — Part 1 +6 · Part 2 +4 · Part 3 +4 · 6단계 반영 +5 · 6단계 재검 +1) · BLIND_SPOTS **9**(Part 1 +1 문면·Part 3 +2).
 - 통합 절 1 정정: 세 Part 규범 ID 집합은 서로소 → rev 번호는 착지 순서와 무관. rebase 대상은 s006/b9·s002·s007 `djr:text`뿐. 통합 절 5 정정: Coordinator 규범엔 exit 수치 열거 없음(실재 지점 5곳은 D-P3 MAJOR-7).
 - `make verify-mutation`은 3 Part 전부(rulepack 재소성). codex 의미 미러 대상: Part 1 8곳·Part 2 2파일·Part 3 2파일.
 - 5단계 입력 추가: 1단계 C «kkebi 20머지» vs Part 2 «머지 7+비머지 8» 산정 기준 확정 · Part 3 오차단 0 스캔 결과표.
+
+---
+
+# 6단계 수정 — 5단계 적대 구현 리뷰 4기(Part 1·2·3·감사) 발견 전건 반영 (2026-09-03 · 브랜치 `norm/repair-batch-2`)
+
+원칙: 이번 배치에서 만든 미릴리즈 Expression 은 **in-place 문면 수정**(rev 번호 유지) · 릴리즈된 Expression(R-3436@09-01)은 새 rev. 격리 재현은 스크래치 `git archive HEAD dddjango/scripts`(수리 전 실행기 트리) vs 작업트리(수리 후)로 **수정 전 red → 수정 후 green** 을 실측했다.
+
+## 1. 발견 ↔ 수정 대조표
+
+| # | 발견 | 수정(파일:지점) | 재현 |
+|---|---|---|---|
+| **MAJOR A** | Part 1 ⑥ 기실현 add 앵커 오염 — archive→in_baseline→overlay→**anchor 커밋**→materialize 순서라 오버레이 실물이 L 에 남아 스텁 진단이 L∩N 잔존으로 빠짐 | `design_pregate.py` `lift_realized_adds`(신설 — 오버레이 직후·앵커 커밋 전 «기실현 add» 걷어내기) · `materialize(realized=…)` 시그니처(`explicit_base/in_baseline` 제거 — 사본 실존 add 는 기준선 실존뿐이라 항상 형식 red) · already-built 문면 «→ 앵커 스냅숏에서 제외·스텁 대체 예보 · 실체화 목록에도 계수»(m-5 이중 기재 구별) · docstring·`--base` help·BLIND_SPOTS 기실현 행 | `rv2/midlane-red-spec.md`(#267 2클래스): 수리 전 E1 exit 2(ID `43d13fe5f5f1`)·E2 exit 0(anchor 열 2) → 수리 후 **E1≡E2 exit 2·같은 ID**·anchor 열 0 |
+| **MAJOR B** | Part 3 F-1 `update` 대상 새 심볼 ⑶ 오차단 — `_realize_module` file-plan 루프가 update 를 실물로 fall-through | `PlanEntry.declared`(symbols 선언 이름 — 태그 무관·메서드 owner 포함) · `_parse_symbols` 기록 · `_realize_module` `planned-update` · `judge_name`→`judge_update_target`(선언 S′ / 현재 표면 K / U «update 대상 — 표면은 이 명세 이후 상태» · ⑵⑶ 비적용) · `ExistenceReport.self_update` + 집계 행 «자기 update 해소» · 러너 `_EXISTENCE_AGG_RE` 8군 | `rev5/e2e/update-newsym-spec.md`: 수리 전 exit 5(⑶ `TickingClock`) → **exit 0**(S′ 1) · `update-reexport-spec` 결손 0·S′ 1 |
+| P2 M-2 | `snapshot()/run()` 의 `AnchorDiffUsage` 미포착 → traceback·출력 소실 | `registry_gate._provenance_split` — 스냅숏 실패를 `res.snapshot_failures` 에 캐시 → `측정 무효(스냅숏 실패) — <M>` 귀속 유지 · 진단 절 «스냅숏 실패: <sha> — <git 오류>» · sidecar `chain.snapshot_failures` | PATH shim(`git archive <M^1>` 거절): 수리 전 exit 1·Traceback·판정 행 없음 → 수리 후 exit 2·귀속 3·판정 행 보존 · 스모크 **P11** |
+| P2 M-1 | 역방향/합성 머지 잔여 경로 미진단 | `anchor_diff.ApprovedMerge.parent2_only_head`(`for-each-ref --contains ^2` ⊆ {HEAD ref}) · `_print_inflow` «↳ 주의: ^2 … HEAD 브랜치뿐 — 역방향/합성 머지 의심(발주자 확인 · exit 무변)» · sidecar 필드 · R-3439 문면(append 전 `^2` 확인) · 스모크 P9 docstring «HEAD=lane 한정» · 계획 D-P2 B-1 문면 정정 | 스모크 **P12**(lane 이 임시 가지 머지 후 삭제 → 진단 1행·유입 3·exit 0) · **P12′**(정상 머지 진단 부재) |
+| P2 M-3 | 측정 무효 의미론 미성문 | `registry_gate` 모듈·`_provenance_split` docstring «L 은 ∃M — 전 승인 머지가 무효/미증명이면 귀속 유지» · 계획 D-P2 M-2 문면 · R-3441 b58 처방(`측정 무효` ∃M) | — |
+| P2 M-4 | R-3441 잔여 사유별 처방 결손 | b58 in-place: `유입 증명 실패(이중 원인)` → 레인 설계 반송 또는 STOP · `미승인 머지 경유 <sha>` → STOP → 발주자 목록 보완 후 재실행 | 렌더 `dddjango.md` · codex SKILL |
+| 감사 MINOR-1 | R-3440 «있는데 안 주면 게이트가 표면화» 오문 | b58 in-place: «플래그를 줬으나 목록에 SHA 가 빠지면 `미승인 머지 경유`로 표면화 · 플래그 자체를 안 주면 채널이 돌지 않으므로 증거 불비» | — |
+| 감사 MINOR-5 | s006/b9 «skip 한정» 헤더(«캐시 skip» 과 충돌) · D-통합 «LEDGER +13» | **R-3436 rev2(clarification)** «구형 명세 skip 한정(«캐시 skip» 과 별개)» + prefLabel(릴리즈된 09-01 Expression 이라 새 rev — 계수 3544) · D-통합 «LEDGER +19(실측)» | — |
+| 감사 MINOR-2 | ledger «v2.17.15 로드 세션» | `workspace/eval/pregate-observe/ledger.md` → «v2.17.16(수리 배치 2 — 5단계 리뷰 반영판) 로드 세션» | — |
+| P1 m-3 | R-0192 rev2 «같은 플러그인 버전이면 … 같은 측정» | s005/b8 in-place «같은 플러그인 버전·같은 실행 트리(registry_gate 헤더 «툴체인» 행의 digest)면 …(마켓 `ref: main` 이라 버전만으론 불충분)» | — |
+| P3 F-2 | BLIND_SPOTS «표면 밖» 문면 부정확 | `BLIND_SPOTS` 마지막 행을 결과별로(U = `import *`·`__getattr__`·네임스페이스 이름·파싱 실패·문법 불량·소비자 remove·update 미선언 / 관대 K = `TYPE_CHECKING`·update 현재 표면 / X = 저장소 밖 / ⑴ = gitignore 실물 / 행 없음 = 동적 import) · 설계 v4 §3-D4 동기 | — |
+| P3 F-3 | 세미콜론 복합행 첫 문만 판정 | `check_import_existence` — `ast.parse(stmt).body` **전 문 순회**(`judge_stmt`) | 유닛 «세미콜론 복합행 둘째 문 ⑴» · T=2 |
+| P3 F-4 | T 계수 의미(문서 = 이름 단위) 불일치 | `ExistenceReport` docstring 성문 + 소비자 remove 행은 이름 수로 계수 · `undecidable(reason, names)` 로 **U 도 이름 단위**(상대 탈출·remove 다이름의 항등식 위반 수리) · 설계 v4 | 유닛 T 이름 단위 4케이스(복합행 2 · remove 2이름 2 · 문법 불량 1 · 상대 탈출 2이름 2) |
+| P3 F-5 | 계약 실존 사각 행에 «기준선 이후 커밋분 부재(재발화 판형)» 미명시 | `BLIND_SPOTS` 계약 실존 행 + 설계 v4 | — |
+| P1 m-2 | 러너 E1 계수식 `and` 단락 관용 | `_count_built(report)` 헬퍼로 교체 | — |
+| §4 어노테이션(P1 m-1·P2 M-5) | 신규 행 무어노테이션 첫 대입 | 실행기·게이트·anchor_diff·러너·스모크 5파일의 무어노테이션 첫 대입을 파일 전체 기준 전건 정리(리뷰어 `ann_scan2.py` 재스캔 잔여 0 — `nonlocal` 재대입 1건은 첫 대입이 아니라 제외) · `acc: "hashlib._Hash"` → 해시 객체 어노테이션 자체 제거(`manifest: str` 1회 해시 — 공개 타입만) | 리뷰어 `ann_scan2.py` 재스캔 잔여 0(nonlocal 제외) |
+| 조감도 | pre-gate 행 잔존 «사각 6행»·«프로토콜 이월» | `ontology-adoption-map.html` :638 말미 «수리 배치 2(v2.17.16 후보) — Part 1~3 요지·판별=헤더 스탬프·사각 9행·exit 5» 1문 + 잔존 문면 정정 | — |
+| 러너 강화 | E2 단언·E2′ | E2 +«해소(L∖N) 0 ∧ check-domain-model anchor 열 0» · **E1′/E2′**(`midlane-red-spec.md` 신설 — 커밋 실물 vs 동내용 WIP → exit 2·2·같은 ID `#267`·E2′ 기실현 1·해소 0) · mid 헤더 6 · 유닛 update 대상 7행 · `imports-green-spec` 에 update 대상 소비 행(`update framework/test/frozen_clock.py` + symbols `TickingClock` + import 행 — 집계 5,5,2,1,1,1,0,0) | 수리 전 실행기에 새 러너 mid+imports 묶음: E2 «앵커 무오염 False»·E1′/E2′ «exit 2/0 · ID [267]/[]»·imports-green «exit 5» 3건 red → 수리 후 PASS |
+
+## 2. 검증(전건)
+
+`pregate_fixture_run.py` **PASS**(10종+E 계열 6단계+유닛) · `registry_gate_smoke.py` **30/30**(P11·P12·P12′ 신설 · P0′ 수리 전 사본 byte 동일 유지) · `anchor_diff_smoke.py` 14/14 · `make verify` 6/6 green(봉인 재발행 후) · `make verify-mutation` green · byte 미러 `diff -rq --exclude=__pycache__` 0 · 봉인 draft green · verify-ontology 11/11(계수 3544·q4 골든 불변).
+
+## 3. 회귀 조건 실측
+
+| 조건 | 실측 |
+|---|---|
+| A: E1≡E2(red 스텁) | midlane-red: 수리 전 exit 2/0 → 수리 후 **2/2 · ID `43d13fe5f5f1#267` 동일 · 해소 0 · anchor 열 0** |
+| A: 레인 3 리플레이(`625f6a6`+미추적 WIP `…/email_notice_template/__init__.py` · `--base 9906931`) | 실체화 30·기실현 1·exit 0 양쪽 동일 · **해소(L∖N) 4 → 0**(잔존 2868 불변) |
+| B: kkebi S2 | `dd876b7` ⑵×2 exit 5 · `5af8bb6` K×2 exit 4 · `217d815` ⑴×2 exit 5 — ID `e-1b851ecf1d2b`·`e-190ddf791b02` **전후 동일** |
+| B: 4레인 소급 | media-library `c489ac0` exit 2·6건·결손 0 / notification `1eb8507` exit 2·1건·결손 0 / email-template `9906931` exit 0·결손 0 / fortune-record `4ba4c1bf` exit 0·결손 0(**S′ 3** — update 대상 선언 이름이 K 에서 S′ 로 계수 이동·결손 무변) — exit·예보 ID·결손 **전건 불변** |
+
+## 4. 계수표
+
+ExpressionShape 3543 → **3544**(R-3436 rev2 clarification 1 — 릴리즈된 Expression 은 in-place 대상이 아니라는 원칙의 결과 · 나머지 5 규범은 in-place) · Norm/Work 3450 · Block 2900 · ISSUED 무변경 · LEDGER +5(command-dddjango s002·s005·s006·s007 · agent-design-architect s005) → 배치 누계 **+19** · BLIND_SPOTS 9행(문면만 변경).
+
+## 5. 6단계 재검(리뷰어 `rv6/`) 신규 발견 4건 반영 (2026-09-03)
+
+| # | 발견 | 수정 | 재현 전 → 후 |
+|---|---|---|---|
+| **MAJOR-1** | `_realize_module` update 분기가 실물 실존을 안 보고 `planned-update` 반환 → 사본 **부재** update 대상이 ⑴ 대신 S′/U/K 로 세탁(aa63a3f 회귀 — 7395db2 는 ⑴) | update 분기 `(copy / cand).is_file()` 아니면 `missing` 유지 · `_missing_detail()` ⑴ 문면 «모듈 부재 — update 대상 부재(계획↔실물 모순)» · docstring(«사본에 실물이 있을 때만») · BLIND_SPOTS ⑴ 방향에 «사본 부재 update 대상» · **R-3427 rev2 in-place**(«대상(사본에 실물이 있을 때만 — 부재면 ⑴ 모듈 부재)») · 설계 v4 §3-D4 · 러너 유닛 부재 update 3행(선언/미선언/`import M`) + ⑴ 문면 단언 | `rv6/attackB.py` ⓑ 4행: aa63a3f 판 exit 0(S′ 1 / U 1 / K 1 / K 1) → **exit 5 · ⑴×3 + ⑶×1**(ⓑ4 서브모듈 형은 패키지 `__init__` 표면 ⑶ — 7395db2 와 동일·같은 ID) · 유닛 3행 aa63a3f 판 red 4건 → green |
+| **MAJOR-2** | `parent2_only_head` 가 `containing − {head_ref}` 공집합 조건이라 `refs/remotes/origin/<lane>`·태그가 ^2 를 포함하면 진단 침묵(푸시된 실전 레인 = 항상 침묵) | `anchor_diff._counts_as_other_ref()` — HEAD 브랜치 ref·`refs/remotes/<remote>/<HEAD 브랜치명>`(remote = 첫 세그먼트 정확 일치)·`refs/tags/*` 제외 · 스모크 **P12r**(`update-ref refs/remotes/origin/lane M` + 태그 후에도 진단 1행) | `rv6/p12remote.py`: none 1 / remote-tracking **0** / tag **0** → 전건 **1**(exit 0·유입 3 무변) |
+| MINOR-1 | `snapshot()` 포착이 `AnchorDiffUsage` 뿐 | `except (anchor_diff.AnchorDiffUsage, OSError)` + 사유에 예외 클래스명 병기 | — |
+| MINOR-2 | «`--base` 미지정 경로 byte 동일» 문면(집계 행 문면은 변한다) | 모듈 docstring·`materialize`·`lift_realized_adds` → «판정(exit·귀속·ID) 동일 — 집계 행 문면은 판과 함께 변한다» | — |
+
+검증: 러너 PASS · 스모크 **31/31** · anchor_diff 14/14 · `make verify` 6/6(rulepack 재소성·봉인 재발행 후 core green) · byte 미러 0 · 4레인·kkebi S2 3트리 전후 불변(재실측). 규범: R-3427 rev2 in-place(계수 3544 유지) · 렌더 · LEDGER +1(agent-design-architect s005 → 배치 누계 +20) · codex `dddjango-design-architect/SKILL.md` 미러.
+
