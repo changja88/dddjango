@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """design-spec «pre-gate» 예보 실행기 — G1 승인 전 결정적 검증 게이트 (관찰 모드).
 
-왜 있나(설계 정본: workspace/design/2026-09-01-pregate-design.md v3 — §3 D1~D4·§4):
+왜 있나(설계 정본: workspace/design/2026-09-01-pregate-design.md v4 — §3 D1~D4·§4·§8 ⑷):
 승인된 설계 명세가 registry 결정 계약과 조인되지 않은 채 동결되어 G1 «이후»에
 반송되는 ③형 손실(레인당 평균 ≈34분)을, 명세의 기계가독 블록을 팬텀 스텁으로
 실체화한 격리 사본 위에서 registry 27종을 미리 돌려 «G1 승인 전 결정적 예보»로
@@ -21,6 +21,9 @@
               재사용)·apps.py 정형(#329/#535~#538)·e2e client 입구 상수(#390)·
               베이스 토큰 import 합성. 본문은 전부 `...`/`raise NotImplementedError`
               — C급은 판정 대상이 아님을 형태로 보증.
+  3′) 실존  — boundary-imports 행 **전부**를 실체화 뒤의 사본 위에서 3단 판정한다(읽기
+              전용 — 스텁·게이트 무접촉): ⑴ 모듈 부재 · ⑵ 자리표시자 · ⑶ 심볼 미정의.
+              결손은 registry 규칙 귀속이 아니라 별도 채널(안정 ID `e-…`)로 보고한다.
   4) 예보   — `registry_gate.py <사본> --anchor HEAD` 의 귀속(N∖L)이 «팬텀 유발
               위반»이다. `DJR_FINDINGS_JSON` 은 스크래치로 격리(실 저장소
               `.dddjango/violations/` 오염 금지).
@@ -44,6 +47,12 @@
                    `0001_` 만 `initial = True`)으로 보충하고 `migrations/__init__.py` 는 빈 파일이다.
   boundary-imports `<!-- machine: boundary-imports -->` + ```imports 펜스.
                    1행 = `<소비 파일 경로><탭|2+공백><import 문 그대로>`.
+                   행 전부가 «계약 실존» 3단 판정을 받는다 — 소비 파일의 태그·등재 여부와
+                   무관(update 소비자 포함 · 스텁 전사는 add 소비자만). 판정 기준은 **이 브랜치**의
+                   격리 사본(기준선 + dirty overlay + 이 명세의 add)이다: 저장소 밖(표준·서드파티)은
+                   검사 밖 · 이 명세가 add 하는 대상은 자기 해소(⑶ 생략 — symbols 채널 소관 · 승격
+                   폴더 부품 포함) · ⑵ 는 이름 import(`from M import n`)의 대상 M 이 모듈 실현일
+                   때만(모듈 import·패키지 `__init__` 은 ImportError 가 아니다). 결손은 권고·비차단.
   physical-signals 영구 테스트 입장 표(6열 정본 header)의 owner/path 셀 안 정형
                    어노테이션 `[markers: a,b] [base: X] [client: yes]` — 무기재 = 부재.
   exception-map    `<!-- machine: exception-map -->` + ```exceptions 펜스.
@@ -57,8 +66,9 @@
 
 사용: design_pregate.py <design-spec.md> <저장소 루트> [--base <git ref, 기본 HEAD>]
                         [--report <경로>] [--python <검사기 인터프리터>] [--keep] [--block-hash]
-exit 0 = 예보 green · 2 = 예보 red · 3 = 형식 red(파싱 오류·add 실존 충돌·금지 경로·
-태그 이중 서술) · 4 = skip(machine 블록 부재 또는 실체화 0 — 사유 명시) ·
+exit 0 = 예보 green · 2 = 예보 red(계약 실존 결손은 병기) · 3 = 형식 red(파싱 오류·add 실존
+충돌·금지 경로·태그 이중 서술) · 4 = skip(machine 블록 부재 또는 실체화 0·결손 0 — 사유 명시) ·
+5 = 계약 실존 결손 ≥1 ∧ (귀속 0 ∨ 실체화 0)(권고·비차단 — 차단 승격은 별도 게이트) ·
 1 = 실행 불능(venv/인터프리터·git 실패). 어느 경우도 침묵 없음.
 `--block-hash` 는 기계가독 블록 해시(sha256[:12] — 파서와 같은 추출)만 출력하고 exit 0 —
 Coordinator 의 캐시 skip 대조 전용(판정 무접촉). 매 실행 리포트 헤더가 같은 값을 병기한다.
@@ -88,8 +98,10 @@ SCRIPTS_DIR: Path = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 try:
     import standard_tree as tree  # noqa: E402  — 신규 BC 골격 전량(D2 ② 화이트리스트)의 유일 트리 데이터
-except ImportError:  # 데이터 모듈 없이는 골격 실체화 불가 — fail-closed(실행 불능)
-    print("실행 불능: standard_tree.py 를 찾지 못했다 — 실행기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    import checker_target as ct  # noqa: E402  — 자리표시자 술어·슬롯 실현(계약 실존 ⑵ — 재구현 금지)
+except ImportError:  # 데이터·술어 모듈 없이는 골격 실체화·실존 판정 불가 — fail-closed(실행 불능)
+    print("실행 불능: standard_tree.py / checker_target.py 를 찾지 못했다 — 실행기와 같은 폴더에 있어야 한다",
+          file=sys.stderr)
     sys.exit(1)
 
 MODE: str = "observe"  # 관찰 모드 상수(설계 §10 M2) — red 는 기록·권고이며 레인을 막지 않는다
@@ -200,10 +212,42 @@ class PlanEntry:
 
 
 @dataclass
+class ImportRow:
+    """boundary-imports 1행 원문 — 소비 파일의 태그·등재 여부와 무관하게 보존한다(계약 실존 판정의 입력)."""
+    consumer: str
+    stmt: str
+
+
+@dataclass
 class Plan:
     """명세 1부의 전사 결과 — 실체화 입력의 전부(산문 추론 재료 0)."""
     entries: "dict[str, PlanEntry]" = field(default_factory=dict)
     notes: "list[str]" = field(default_factory=list)  # 고아 채널 행·미반영 결합(침묵 금지)
+    import_rows: "list[ImportRow]" = field(default_factory=list)  # 계약 실존 판정 입력(전 행 — 스텁 전사와 별개)
+
+
+@dataclass
+class ExistenceDefect:
+    """계약 실존 결손 1항목 — 정체성은 (모듈, 이름)이고 단계(⑴⑵⑶)는 현재 상태다(소비자는 합친다)."""
+    stage: str    # ⑴ | ⑵ | ⑶
+    module: str   # 절대 점 경로(상대 import 는 소비 파일 기준 해소)
+    name: str     # import 한 이름 — 모듈 import 는 ""
+    detail: str   # 문면: 모듈 부재 · 자리표시자(형태 — 출처) · 심볼 미정의 `n`
+    consumers: "list[str]" = field(default_factory=list)
+
+
+@dataclass
+class ExistenceReport:
+    """계약 실존 집계 — 행 R · 이름 판정 T = K + S + X + U + 결손(이름 단위)."""
+    rows: int = 0         # R
+    judged: int = 0       # T
+    confirmed: int = 0    # K 실존 확인
+    self_add: int = 0     # S 자기 add 해소(⑶ 생략 — symbols 채널 소관)
+    outside: int = 0      # X 저장소 밖(검사 밖)
+    undecidable: int = 0  # U 판정 불능(사유 병기)
+    defective: int = 0    # 결손(이름 단위 — 항목은 (모듈, 이름) 합치기)
+    undecidable_notes: "list[str]" = field(default_factory=list)
+    defects: "list[ExistenceDefect]" = field(default_factory=list)
 
 
 class _UsageParser(argparse.ArgumentParser):
@@ -422,7 +466,9 @@ def _parse_symbols(rows: "list[str]", plan: Plan, errors: "list[str]") -> None:
 
 
 def _parse_imports(rows: "list[str]", plan: Plan, errors: "list[str]") -> None:
-    """```imports 펜스 → PlanEntry.imports 결합(import 문 원문 그대로)."""
+    """```imports 펜스 → Plan.import_rows 전 행 보존(계약 실존 판정 입력) + PlanEntry.imports 결합(add 소비자만 —
+    스텁 전사 원문 그대로). 비-add·미등재 소비자의 행은 스텁에 실리지 않을 뿐 실존 판정에는 포함된다(kkebi S2 —
+    update 소비자가 상류 계약을 소비하는 판형)."""
     for raw in rows:
         line: str = raw.strip()
         if not line or line.startswith("#"):
@@ -434,12 +480,13 @@ def _parse_imports(rows: "list[str]", plan: Plan, errors: "list[str]") -> None:
             continue
         path: str = m.group(1)
         stmt: str = m.group(2).strip()
+        plan.import_rows.append(ImportRow(consumer=path, stmt=stmt))
         entry: "PlanEntry | None" = plan.entries.get(path)
         if entry is None:
-            plan.notes.append(f"boundary-imports 고아 행(file-plan 미등재 — 미반영): {path}")
+            plan.notes.append(f"boundary-imports 스텁 미반영(file-plan 미등재 — 실존 판정에는 포함): {path}")
             continue
         if entry.tag != "add":
-            plan.notes.append(f"boundary-imports 미반영(비-add `{entry.tag}` 칸): {path}")
+            plan.notes.append(f"boundary-imports 스텁 미반영(비-add `{entry.tag}` 칸 — 실존 판정에는 포함): {path}")
             continue
         if stmt not in entry.imports:
             entry.imports.append(stmt)
@@ -1019,6 +1066,348 @@ def _stable_id(line: str) -> str:
     return hashlib.sha256(f"#{rule}+{where}".encode("utf-8")).hexdigest()[:12]
 
 
+# ── 계약 실존 — boundary-imports 3단 판정(읽기 전용 · 스텁·게이트 무접촉) ─────────
+
+_TYPE_ALIAS_NODE: "type | None" = getattr(ast, "TypeAlias", None)  # PEP 695 `type X = …` — py3.12+
+_TRY_NODES: "tuple[type, ...]" = tuple(t for t in (ast.Try, getattr(ast, "TryStar", None)) if t is not None)
+
+
+def _repo_root_packages() -> "frozenset[str]":
+    """표준 트리 최상위(depth-0) 칸의 첫 세그먼트 중 미해소 `<…>` 가 아닌 것 → {application, framework}.
+    `<project>/`(settings 패키지)는 사본 실존으로 잡는다(`_is_repo_target`). 하드코딩 아님 — `standard_tree` 재사용."""
+    out: "set[str]" = set()
+    for row in tree.children(None):
+        first: str = row.name.split("/", 1)[0]
+        if not first.startswith("<"):
+            out.add(first)
+    return frozenset(out)
+
+
+def _is_repo_target(copy: Path, top: str, plan: Plan) -> bool:
+    """import 최상위 세그먼트가 이 저장소의 것인가 — 표준 트리 최상위 ∨ 사본 실존(폴더·`.py`) ∨ file-plan 첫 세그먼트.
+    거짓 = «저장소 밖(표준 라이브러리·서드파티) — 검사 밖»(X 계수만)."""
+    if top in _repo_root_packages():
+        return True
+    if (copy / top).is_dir() or (copy / f"{top}.py").is_file():
+        return True
+    return any(PurePosixPath(p).parts[:1] == (top,) for p in plan.entries)
+
+
+def _resolve_relative(file_parts: "tuple[str, ...]", level: int,
+                      module: "str | None") -> "tuple[str, ...] | None":
+    """상대 import → 소비 파일 기준 절대 마디(check-context-isolation `_resolve_relative` 와 같은 산식).
+    None = 저장소 루트 밖 탈출(level 과다)."""
+    pkg: "list[str]" = list(file_parts[:-1])
+    up: int = level - 1
+    if up > len(pkg):
+        return None
+    base: "list[str]" = pkg[: len(pkg) - up]
+    if module:
+        base.extend(module.split("."))
+    return tuple(base)
+
+
+def _realize_module(copy: Path, parts: "list[str]", plan: Plan) -> "tuple[str, Path | None]":
+    """점 경로 마디 → (실현 종류, 실현 파일). 종류 ∈ planned-add | planned-empty | package | module | namespace-dir | missing.
+
+    순서: file-plan 조회(`<parts>.py`·`<parts>/__init__.py` 두 표기 — add = 자기 add · empty = 자기 empty · 비지연 remove =
+    missing · `remove@Ln` 은 G1 시점 상태 유지라 사본 실물로 판정) → **승격 폴더 부품**(상위 `<parts[:-1]>.py` 가
+    planned-add 슬롯이면 이 마디는 그 슬롯의 승격 폴더 부품 — R-3424 «경로는 언제나 <칸>.py» 표기의 부품이라 자기 add
+    해소) → `__init__.py`(패키지 — Python 은 패키지가 모듈보다 우선 · 기존 실물의 승격 폴더도 여기: 이름 표면 =
+    `__init__` 재수출) → `checker_target.slot_file`(슬롯 경로 → 파일 실현의 단일 술어 — 재구현 금지) → 디렉터리만
+    (네임스페이스 패키지 — ⑴ 통과·이름 판정 불능) → missing.
+    """
+    rel: str = "/".join(parts)
+    for cand in (f"{rel}.py", f"{rel}/__init__.py"):
+        entry: "PlanEntry | None" = plan.entries.get(cand)
+        if entry is None:
+            continue
+        if entry.tag == "add":
+            return "planned-add", None
+        if entry.tag == "empty":
+            return "planned-empty", copy / cand
+        if entry.tag == "remove" and not entry.deferred_remove:
+            return "missing", None
+    if len(parts) >= 2:
+        slot: "PlanEntry | None" = plan.entries.get("/".join(parts[:-1]) + ".py")
+        if slot is not None and slot.tag == "add":
+            return "planned-add", None
+    init_file: Path = copy / rel / "__init__.py"
+    if init_file.is_file():
+        return "package", init_file
+    realized: "Path | None" = ct.slot_file(copy / f"{rel}.py")
+    if realized is not None:
+        return "module", realized
+    if (copy / rel).is_dir():
+        return "namespace-dir", None
+    return "missing", None
+
+
+def _all_literal_names(value: "ast.expr | None") -> "set[str]":
+    """`__all__ = [...]`/`(...)` 의 문자열 상수 — 승격 폴더 `__init__` 재수출 선언 2형 중 하나(mypy strict 인정)."""
+    if isinstance(value, (ast.List, ast.Tuple)):
+        return {e.value for e in value.elts if isinstance(e, ast.Constant) and isinstance(e.value, str)}
+    return set()
+
+
+def _top_level_names(path: Path) -> "tuple[set[str], bool] | None":
+    """모듈 최상위 바인딩 이름 집합 + «표면 열림» 플래그 — None = 읽기·파싱 실패(판정 불능).
+
+    바인딩: ClassDef/FunctionDef/AsyncFunctionDef · Assign(튜플 풀기 — `ast.walk` 로 Name 전부)/AnnAssign/AugAssign(`__all__ +=`) ·
+    Import(`import a.b` → `a`)/ImportFrom alias(`asname or name` — 승격 폴더 `__init__` 의 `from .m import X as X` 재수출 인정) ·
+    `__all__` 문자열 · `type X = …`(PEP 695 · py3.12+). 최상위 If/Try/With 본문은 재귀(`TYPE_CHECKING` 가드·try-import 관용) —
+    함수·클래스 본문은 비재귀. 표면 열림 = `from … import *` 또는 모듈 `__getattr__` — 명시 바인딩에 없는 이름은 ⑶ 이 아니라
+    판정 불능이다(동적 표면은 표면 밖 — 사각 병기).
+    """
+    try:
+        module: ast.Module = ast.parse(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, SyntaxError, ValueError):
+        return None
+    names: "set[str]" = set()
+    open_surface: bool = False
+
+    def visit(body: "list[ast.stmt]") -> None:
+        nonlocal open_surface
+        for node in body:
+            if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+                names.add(node.name)
+                if node.name == "__getattr__":
+                    open_surface = True
+            elif isinstance(node, ast.Assign):
+                for target in node.targets:
+                    names.update(n.id for n in ast.walk(target) if isinstance(n, ast.Name))
+                if any(isinstance(t, ast.Name) and t.id == "__all__" for t in node.targets):
+                    names.update(_all_literal_names(node.value))
+            elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+                names.add(node.target.id)
+                if node.target.id == "__all__":
+                    names.update(_all_literal_names(node.value))
+            elif isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name) and node.target.id == "__all__":
+                names.update(_all_literal_names(node.value))
+            elif isinstance(node, ast.Import):
+                names.update((a.asname or a.name).split(".", 1)[0] for a in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                for a in node.names:
+                    if a.name == "*":
+                        open_surface = True
+                    else:
+                        names.add(a.asname or a.name)
+            elif _TYPE_ALIAS_NODE is not None and isinstance(node, _TYPE_ALIAS_NODE):
+                if isinstance(node.name, ast.Name):
+                    names.add(node.name.id)
+            elif isinstance(node, ast.If):
+                visit(node.body)
+                visit(node.orelse)
+            elif isinstance(node, _TRY_NODES):
+                visit(node.body)
+                visit(node.orelse)
+                visit(node.finalbody)
+                for handler in node.handlers:
+                    visit(handler.body)
+            elif isinstance(node, (ast.With, ast.AsyncWith)):
+                visit(node.body)
+
+    visit(module.body)
+    return names, open_surface
+
+
+def _existence_id(module: str, name: str) -> str:
+    """계약 실존 결손 안정 ID — `e-` + sha256(모듈+이름)[:12]. 단계(⑴⑵⑶)는 키 밖(⑴→⑵→해소로 변해도 ID 유지 —
+    처분 라벨 추적 키). 접두 `e-` 는 예보 ID(순수 12hex)·러너 정규식과 육안·기계 모두 불충돌."""
+    return "e-" + hashlib.sha256(f"{module}+{name}".encode("utf-8")).hexdigest()[:12]
+
+
+def _tracked_paths(copy: Path) -> "frozenset[str] | None":
+    """앵커 커밋에 실린 경로 집합(⑵ 출처 «기존 실물» 판별) — git 저장소가 아니면 None(유닛 합성 사본)."""
+    if not (copy / ".git").exists():
+        return None
+    proc: "subprocess.CompletedProcess[bytes]" = _git(copy, "ls-files", "-z", check=False)
+    if proc.returncode != 0:
+        return None
+    return frozenset(p for p in proc.stdout.decode("utf-8", "replace").split("\0") if p)
+
+
+def _placeholder_detail(copy: Path, kind: str, file: Path, tracked: "frozenset[str] | None") -> str:
+    """⑵ 문면 — 형태(0B | docstring/주석-only) + 출처(자기 `empty` | 기존 실물 | 골격 빈 칸)."""
+    shape: str = "0B" if file.stat().st_size == 0 else "docstring/주석-only"
+    if kind == "planned-empty":
+        origin: str = "자기 `empty`"
+    elif tracked is None or file.relative_to(copy).as_posix() in tracked:
+        origin = "기존 실물"
+    else:
+        origin = "골격 빈 칸(도구 산출 — file-plan 미등재)"
+    return f"자리표시자({shape} — {origin})"
+
+
+def check_import_existence(copy: Path, plan: Plan) -> ExistenceReport:
+    """boundary-imports 행 전부의 3단 실존 판정(읽기 전용) — materialize 뒤(자기 add 스텁·골격·`__init__` 체인·empty 가
+    실존하는 상태)·실체화-0 분기 앞에 부른다.
+
+    행마다 `ast.parse(stmt)` → `import a.b.c [as x]` 는 대상 모듈에 ⑴만(모듈 import 는 자리표시자여도 ImportError 가 아니다) ·
+    `from M import n…`(level>0 은 소비 파일 기준 상대 해소)은 이름마다 **서브모듈 우선**(`M.n` 이 실현되면 모듈 import 와
+    같다 — ⑴ 통과·⑵ 비적용) → 아니면 `M` 에 ⑴ → ⑵(`M` 이 모듈 실현이고 `checker_target.skeleton_placeholder` — 0B·공백·
+    주석/docstring-only · 패키지 `__init__` 은 제외) → ⑶(`n ∉ _top_level_names(M)`). **planned-add 대상은 ⑴⑵⑶ 전부
+    생략**(«자기 add 해소» S — symbols 문법이 모듈 상수·재수출을 표현 못 하므로 ⑶ 을 걸면 오차단 채널이 된다 · R-3426 소관).
+    저장소 밖 최상위는 X(검사 밖). 판정 불능 U = 문법 불량 stmt(비-add 소비자 — add 소비자는 compile 형식 red 가 별도로
+    잡는다) · `import *` · 상대 import 루트 탈출 · 네임스페이스 폴더+비서브모듈 이름 · 표면 열림(`*` 재수출·`__getattr__`) ·
+    파싱 실패 · 소비자 planned-remove. 결손은 (모듈, 이름) 쌍으로 합쳐 소비자를 병기한다.
+    """
+    rep: ExistenceReport = ExistenceReport(rows=len(plan.import_rows))
+    merged: "dict[tuple[str, str], ExistenceDefect]" = {}
+    tracked: "frozenset[str] | None" = _tracked_paths(copy)
+
+    def defect(stage: str, module: str, name: str, detail: str, consumer: str) -> None:
+        rep.defective += 1
+        key: "tuple[str, str]" = (module, name)
+        item: "ExistenceDefect | None" = merged.get(key)
+        if item is None:
+            item = ExistenceDefect(stage=stage, module=module, name=name, detail=detail)
+            merged[key] = item
+            rep.defects.append(item)
+        if consumer not in item.consumers:
+            item.consumers.append(consumer)
+
+    def undecidable(reason: str) -> None:
+        rep.undecidable += 1
+        rep.undecidable_notes.append(reason)
+
+    def judge_name(parts: "list[str]", module: str, name: str, consumer: str) -> None:
+        sub_kind: str = _realize_module(copy, parts + [name], plan)[0]
+        if sub_kind == "planned-add":
+            rep.self_add += 1
+            return
+        if sub_kind != "missing":
+            rep.confirmed += 1  # 서브모듈 실현 — 모듈 import 와 같다(⑵ 비적용)
+            return
+        kind, file = _realize_module(copy, parts, plan)
+        if kind == "planned-add":
+            rep.self_add += 1
+            return
+        if kind == "missing":
+            defect("⑴", module, name, "모듈 부재", consumer)
+            return
+        if kind == "namespace-dir" or file is None:
+            undecidable(f"네임스페이스 폴더(`__init__.py` 없음)의 비서브모듈 이름: {module} import {name} ← 소비 {consumer}")
+            return
+        if file.name != "__init__.py" and ct.skeleton_placeholder(file):
+            defect("⑵", module, name, _placeholder_detail(copy, kind, file, tracked), consumer)
+            return
+        surface: "tuple[set[str], bool] | None" = _top_level_names(file)
+        if surface is None:
+            undecidable(f"파싱·읽기 실패(실행기 py{sys.version_info[0]}.{sys.version_info[1]} — 대상 requires-python "
+                        f"하한 확인): {module} ← 소비 {consumer}")
+            return
+        if name in surface[0]:
+            rep.confirmed += 1
+            return
+        if surface[1]:
+            undecidable(f"이름 표면 열림(`import *` 재수출 또는 `__getattr__`): {module} import {name} ← 소비 {consumer}")
+            return
+        defect("⑶", module, name, f"심볼 미정의 `{name}`", consumer)
+
+    for row in plan.import_rows:
+        consumer_entry: "PlanEntry | None" = plan.entries.get(row.consumer)
+        if consumer_entry is not None and consumer_entry.tag == "remove" and not consumer_entry.deferred_remove:
+            rep.judged += 1
+            undecidable(f"소비자 제거(remove) — 판정 밖: {row.consumer} :: {row.stmt}")
+            continue
+        try:
+            node: ast.stmt = ast.parse(row.stmt).body[0]
+        except (SyntaxError, ValueError, IndexError):
+            rep.judged += 1
+            undecidable(f"문법 — import 문 파싱 불가(add 소비자는 compile 형식 red 가 별도로 잡는다): "
+                        f"{row.consumer} :: {row.stmt}")
+            continue
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                rep.judged += 1
+                parts: "list[str]" = alias.name.split(".")
+                if not _is_repo_target(copy, parts[0], plan):
+                    rep.outside += 1
+                    continue
+                kind: str = _realize_module(copy, parts, plan)[0]
+                if kind == "planned-add":
+                    rep.self_add += 1
+                elif kind == "missing":
+                    defect("⑴", alias.name, "", "모듈 부재", row.consumer)
+                else:
+                    rep.confirmed += 1
+            continue
+        if not isinstance(node, ast.ImportFrom):
+            rep.judged += 1
+            undecidable(f"import 문이 아니다: {row.consumer} :: {row.stmt}")
+            continue
+        if node.level:
+            resolved: "tuple[str, ...] | None" = _resolve_relative(
+                PurePosixPath(row.consumer).parts, node.level, node.module)
+            if not resolved:
+                rep.judged += len(node.names)
+                undecidable(f"상대 import 가 저장소 루트 밖으로 탈출: {row.consumer} :: {row.stmt}")
+                continue
+            parts = list(resolved)
+        else:
+            parts = (node.module or "").split(".")
+        module: str = ".".join(parts)
+        if not _is_repo_target(copy, parts[0], plan):
+            rep.judged += len(node.names)
+            rep.outside += len(node.names)
+            continue
+        for alias in node.names:
+            rep.judged += 1
+            if alias.name == "*":
+                undecidable(f"`import *` — 이름 판정 밖: {row.consumer} :: {row.stmt}")
+                continue
+            judge_name(parts, module, alias.name, row.consumer)
+    return rep
+
+
+def _existence_lines(existence: ExistenceReport) -> "list[str]":
+    """리포트 «계약 실존» 절 — 행 0 이어도 상시 출력(침묵 금지). 예보 항목 절과 already-built 절 사이.
+
+    집계 행은 행 수 R 을 언제나 싣는다 — 직전 리포트 대비 «결손 소멸 ∧ R 감소»(행 삭제·소비 철회)의 대조는 Coordinator 몫
+    (R-3433: 처분 `corrected(철회: <근거>)` 근거 병기 의무)."""
+    e: ExistenceReport = existence
+    lines: "list[str]" = [
+        "",
+        f"### 계약 실존 (boundary-imports 3단 · 결손 {len(e.defects)}건 · 안정 ID = e-sha256(모듈+이름)[:12])",
+        "",
+    ]
+    for d in e.defects:
+        target: str = f"{d.module} import {d.name}" if d.name else f"import {d.module}"
+        lines.append(f"- `{_existence_id(d.module, d.name)}` {d.stage} {d.detail} :: {target} ← 소비 {', '.join(d.consumers)}")
+    lines.append(f"- 집계: 행 {e.rows} · 이름 판정 {e.judged} · 실존 확인 {e.confirmed} · 자기 add 해소 {e.self_add} · "
+                 f"저장소 밖(검사 밖) {e.outside} · 판정 불능 {e.undecidable} · 결손 {e.defective}(항목 {len(e.defects)})")
+    for note in e.undecidable_notes:
+        lines.append(f"- 판정 불능: {note}")
+    if not e.defects:
+        lines.append(f"- (없음) — 명세가 선언한 경계 import 계약 전건 실존(저장소 밖 {e.outside}건은 검사 밖·"
+                     f"자기 add {e.self_add}건은 symbols 채널 소관)")
+    return lines
+
+
+def _print_existence(existence: ExistenceReport) -> None:
+    """stdout 블록 — 리포트 절과 같은 항목·집계(배너 재료)."""
+    print(f"\n== 계약 실존 결손 {len(existence.defects)}건 (boundary-imports 3단) ==")
+    for line in _existence_lines(existence)[3:]:
+        print(f"  {line[2:]}")
+
+
+def _own_interpreter_note(repo: Path) -> "str | None":
+    """실행기 자체 인터프리터 하한 검사 — 대상 `requires-python` 하한보다 낮으면 ⑶ AST 파싱이 3.12+ 문법 파일을 판정 불능으로
+    흘린다(침묵은 아니다 — U 로 병기). `--python` 은 검사기 인터프리터라 별도 게이트(`_interpreter_gap_reason`)다."""
+    pyproject: Path = repo / "pyproject.toml"
+    if not pyproject.is_file():
+        return None
+    m = _REQ_PY_RE.search(pyproject.read_text(encoding="utf-8", errors="replace"))
+    if m is None:
+        return None
+    lo: "tuple[int, int]" = (int(m.group(1)), int(m.group(2)))
+    if sys.version_info[:2] >= lo:
+        return None
+    return (f"실행기 인터프리터 py{sys.version_info[0]}.{sys.version_info[1]} < 대상 하한 {lo[0]}.{lo[1]} — 계약 실존 ⑶ 판정의 "
+            f"파싱 실패는 판정 불능으로 병기된다(실행기를 대상 venv 인터프리터로 실행하면 사라진다)")
+
+
 BLIND_SPOTS: "tuple[str, ...]" = (
     "C급(함수 본문·행위 규칙): 스텁 본문이 `...` 뿐이라 예보 표면 밖이다.",
     "④형(명세 내부 의미 모순·규범 과잉결정): 검출 대상이 아니다.",
@@ -1031,6 +1420,12 @@ BLIND_SPOTS: "tuple[str, ...]" = (
     "기실현 add(`--base` 명시 시 — 명시 `--base HEAD` 포함): 사본 = 기준선 트리 + (worktree−HEAD) 오버레이의 "
     "스텁 대체 — 기준선 이후 커밋분은 사본에 없다. 오버레이 실존 add 는 스텁으로 덮어써 예보하므로(실물 판정 "
     "혼입 0) 실물이 스텁과 다른 위반은 예보 표면 밖이고, 유일 판정자는 G2 앵커 차분이다.",
+    "계약 실존(boundary-imports 3단): 판정 기준은 **이 브랜치**의 격리 사본(기준선 + dirty overlay + 이 명세의 add)이다 — "
+    "다른 워크트리·미머지 브랜치의 실물은 보지 않는다(부재 = 결손 · 상류 소유 계약의 선행 대기는 `deferred` 처분으로 명세가 "
+    "소유 레인·해소 조건을 명시한다). 자기 add 대상의 이름 정의(⑶)는 symbols 채널 소관이라 생략한다. 결손은 권고·비차단(exit 5)이며 "
+    "G0 선행 조건 확인·상류 머지 판단을 대체하지 않는다.",
+    "계약 실존 표면 밖(판정 불능 U 로 병기): 동적 import(`importlib` 리터럴)·`import *`·`__getattr__` 표면·네임스페이스 폴더의 "
+    "이름·저장소 밖 패키지·AST 파싱 실패·`TYPE_CHECKING` 밖 조건부 바인딩·gitignore 된 실물(사본 밖).",
 )
 
 
@@ -1041,8 +1436,8 @@ def _executor_stamp(blk_hash: str) -> str:
 
 def write_report(report_path: Path, spec: Path, base_ref: str, base_sha: str, verdict: str,
                  attributed: "list[str]", mat: "dict[str, list[str]]",
-                 notes: "list[str]", blk_hash: str) -> None:
-    """예보 리포트 append(D4) — 헤더 상시 문구·안정 ID·사각 목록 병기."""
+                 notes: "list[str]", blk_hash: str, existence: ExistenceReport) -> None:
+    """예보 리포트 append(D4) — 헤더 상시 문구·안정 ID·계약 실존 절(상시)·사각 목록 병기."""
     now: str = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     lines: "list[str]" = [
         "",
@@ -1061,6 +1456,7 @@ def write_report(report_path: Path, spec: Path, base_ref: str, base_sha: str, ve
         lines.extend(f"- `{_stable_id(line)}` {line}" for line in attributed)
     else:
         lines.append("- (없음) — green 은 «설계 검증됨»이 아니라 «P/S/I급 위반 예보 0»이다.")
+    lines.extend(_existence_lines(existence))
     lines += ["", f"### already-built ({len(mat.get('already_built', []))}건) · "
                   f"미시뮬레이션 ({len(mat.get('unsimulated', []))}건)", ""]
     for item in mat.get("already_built", []):
@@ -1081,8 +1477,10 @@ def write_report(report_path: Path, spec: Path, base_ref: str, base_sha: str, ve
 
 
 def write_report_stub(report_path: "Path | None", spec: Path, base_ref: str, base_sha: str,
-                      verdict: str, detail: "list[str]", blk_hash: str) -> None:
-    """형식 red·skip 도 리포트에 사유를 남긴다(침묵 금지) — 예보 항목 없는 축약판."""
+                      verdict: str, detail: "list[str]", blk_hash: str,
+                      existence: "ExistenceReport | None" = None) -> None:
+    """형식 red·skip 도 리포트에 사유를 남긴다(침묵 금지) — 예보 항목 없는 축약판. 실체화-0 skip 은 계약 실존 절을
+    싣는다(결손 ≥1 이면 exit 5 의 근거 — kkebi S2 판형: update 소비자만의 명세)."""
     if report_path is None:
         return
     now: str = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -1097,6 +1495,8 @@ def write_report_stub(report_path: "Path | None", spec: Path, base_ref: str, bas
         "",
     ]
     lines.extend(f"- {item}" for item in detail)
+    if existence is not None:
+        lines.extend(_existence_lines(existence))
     lines.append("")
     report_path.parent.mkdir(parents=True, exist_ok=True)
     with report_path.open("a", encoding="utf-8") as fp:
@@ -1186,15 +1586,26 @@ def main(argv: "list[str]") -> int:
             write_report_stub(report_path, spec_path, base_ref, base_sha, "형식 red", [str(exc)], blk_hash)
             return 3
 
+        # 계약 실존 — materialize(+골격·`__init__` 체인) 뒤 · 실체화-0 분기 앞(update 소비자만의 명세도 판정한다).
+        existence: ExistenceReport = check_import_existence(copy, plan)
+        own_note: "str | None" = _own_interpreter_note(repo)
+        if own_note is not None:
+            existence.undecidable_notes.append(own_note)
+        defects: int = len(existence.defects)
+
         if not mat["materialized"]:
             reason = ("skip — 실체화 0건(add/empty/remove 실효 조치 없음): "
                       "게이트를 부르지 않는다(공허 차분 가드 · 사유 명시)")
+            verdict_stub: str = "skip" + (f" · 계약 실존 결손 {defects}건(권고·비차단)" if defects else "")
             print(reason)
             for item in mat["unsimulated"]:
                 print(f"  미시뮬레이션: {item}")
-            write_report_stub(report_path, spec_path, base_ref, base_sha, "skip",
-                              [reason] + [f"미시뮬레이션: {x}" for x in mat["unsimulated"]], blk_hash)
-            return 4
+            _print_existence(existence)
+            print(f"\n요약: 실체화 0 · 실존 결손 {defects}건 · 기준선 {base_sha[:12]} · 모드 관찰")
+            write_report_stub(report_path, spec_path, base_ref, base_sha, verdict_stub,
+                              [reason] + [f"미시뮬레이션: {x}" for x in mat["unsimulated"]], blk_hash,
+                              existence=existence)
+            return 5 if defects else 4
 
         print(f"# design_pregate — 예보 실행 · 기준선 {base_sha[:12]} (--base {base_ref}) · "
               f"모드 관찰({MODE}) · {_executor_stamp(blk_hash)}")
@@ -1210,16 +1621,21 @@ def main(argv: "list[str]") -> int:
         verdict: str = ("예보 green — P/S/I급 결정 계약 위반 예보 0(«설계 검증됨» 아님)"
                         if gate_exit == 0 else
                         f"예보 red — P/S/I급 결정 계약 위반 예보 {len(attributed)}건")
+        verdict += f" · 계약 실존 결손 {defects}건(권고·비차단)"
         print(f"\n== 예보 항목 {len(attributed)}건 ==")
         for line in attributed:
             print(f"  `{_stable_id(line)}` {line}")
         for note in plan.notes:
             print(f"  채널 메모: {note}")
+        _print_existence(existence)
         print(f"\n판정: {verdict}")
+        print(f"요약: 귀속 {len(attributed)}건 · 실존 결손 {defects}건 · 기준선 {base_sha[:12]} · 모드 관찰")
         if report_path is not None:
             write_report(report_path, spec_path, base_ref, base_sha, verdict,
-                         attributed, mat, plan.notes, blk_hash)
-        return 0 if gate_exit == 0 else 2
+                         attributed, mat, plan.notes, blk_hash, existence)
+        if gate_exit != 0:
+            return 2
+        return 5 if defects else 0
     except RunError as exc:
         print(f"실행 불능: {exc}", file=sys.stderr)
         return 1
