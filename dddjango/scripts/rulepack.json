@@ -11,7 +11,7 @@
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "09c4890e26e708c44f3d22466bab95f3cb2343dced850efe67305b984eb280a1"
+      "sha256": "7680ed45d4904ca507a5e93ebced8f4f97a841bb34fbb8b4814d1fb7c857e6d5"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
@@ -55,7 +55,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "e42eb6f8d4292533f05ecd91b67044ddd41d26241e189681a626a590389e6454"
+      "sha256": "31d80ea5d0505e7c8003e40003ec7d64b0fab9860a718985c41b8a97e549b6ca"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -60560,8 +60560,8 @@
         "design_pregate.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-3426@2026-09-01",
-      "label": "공개 심볼 전수 표기 — Base 닫힌 목록·유도표 생략=규약 준수 확약·계약 필드·중첩 타입 소속 명시",
+      "expression": "https://numchida.com/ns/djr#R-3426@2026-09-02",
+      "label": "공개 심볼 전수 표기 — Base 닫힌 목록·베이스 유도표 공집합·값 축 유도 2행 등재·수신자 관용 정규화·계약 필드·중첩 타입 소속 명시",
       "order_rank": 409,
       "section": "dddjango/agents/design-architect.md/s005",
       "section_number": null
@@ -60675,8 +60675,8 @@
       "block_order": 9,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3433@2026-09-01",
-      "label": "관찰 모드 red 처분 — 기록·권고 반송·처분 라벨 corrected|ignored|filtered append",
+      "expression": "https://numchida.com/ns/djr#R-3433@2026-09-02",
+      "label": "관찰 모드 red 처분 — 처분 라벨 닫힌 정의(corrected|ignored|filtered)·확인 증거 규칙·append 의무",
       "order_rank": 1066,
       "section": "dddjango/commands/dddjango.md/s006",
       "section_number": null
