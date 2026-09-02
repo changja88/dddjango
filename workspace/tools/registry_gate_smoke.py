@@ -33,8 +33,14 @@ main 위반 커밋 → lane 에서 `git merge --no-ff main`(M) → 판정». 고
        `유입 증명 실패(이중 원인)`·exit 2
   P7   빚+유입 공존(P1 + `#95 schema_smoke`)  → #95 빚 절·나머지 2 유입(빚 우선)·exit 0
   P8   앵커 비조상(무관 가지)                → «주의: 앵커 … 조상이 아니다» 1행·exit 현행(2)
-  P9   역방향 합성 머지(main←lane) 등재      → exit 1 «사슬 밖» / P9′ 앵커가 ^2 경유 → exit 1 «first-parent 사슬 밖»
+  P9   역방향 합성 머지(main←lane) 등재      → exit 1 «사슬 밖» — **HEAD=lane 한정**(main←lane 머지는 lane 의
+       first-parent 사슬에 없다) / P9′ 앵커가 ^2 경유 → exit 1 «first-parent 사슬 밖». 발주자가 합성 머지를 레인
+       사슬에 올린 잔여 경로는 exit 1 이 아니라 P12 진단+custody 다.
   P10  M^1 에 SyntaxError                   → `측정 무효(M^1)` 귀속 유지·exit 2
+  P11  M^1 스냅숏 실패(git archive 불능 — PATH shim) → `측정 무효(스냅숏 실패) — M` 귀속 3·exit 2·traceback 0·
+       판정 행 보존·진단 절에 git 오류(5단계 리뷰 P2 M-2)
+  P12  합성 머지 — lane 이 임시 가지를 머지하고 그 가지를 지움(^2 를 포함하는 ref 가 HEAD 브랜치뿐) → 머지 표에
+       «역방향/합성 머지 의심» 진단 1행·exit 무변(유입 3·exit 0)(P2 M-1)
 
 사용: python3 registry_gate_smoke.py
 exit 0 = 전 케이스 일치 / exit 2 = 불일치 / exit 1 = 재료 결손.
@@ -68,12 +74,12 @@ _VIOLATION_SRC: str = "from application.orders.domain_layer.order.order import O
 
 def _scrubbed_env() -> "dict[str, str]":
     """검사기 하위 실행 env — 사용자 DJR_FINDINGS_JSON 오염 차단(T2-1 적대 검증 레인 S 7번 잔여)."""
-    env = dict(os.environ)
+    env: "dict[str, str]" = dict(os.environ)
     env.pop("DJR_FINDINGS_JSON", None)
     return env
 
 def _git(repo: Path, *args: str) -> "subprocess.CompletedProcess[str]":
-    env = dict(os.environ, GIT_AUTHOR_DATE=_GIT_DATE, GIT_COMMITTER_DATE=_GIT_DATE)
+    env: "dict[str, str]" = dict(os.environ, GIT_AUTHOR_DATE=_GIT_DATE, GIT_COMMITTER_DATE=_GIT_DATE)
     return subprocess.run(["git", "-C", str(repo), *_GIT_ID, *args], capture_output=True, text=True, env=env)
 
 
@@ -82,7 +88,7 @@ def _make_repo(td: Path, name: str) -> "tuple[Path, str]":
     repo: Path = td / name
     shutil.copytree(BASE_FIXTURE, repo)
     for step in (("init", "-q"), ("add", "-A"), ("commit", "-q", "-m", "anchor")):
-        proc = _git(repo, *step)
+        proc: "subprocess.CompletedProcess[str]" = _git(repo, *step)
         if proc.returncode != 0:
             raise RuntimeError(f"git {step[0]} 실패: {proc.stderr.strip()}")
     return repo, _git(repo, "rev-parse", "HEAD").stdout.strip()
@@ -90,7 +96,7 @@ def _make_repo(td: Path, name: str) -> "tuple[Path, str]":
 
 def _gate(repo: Path, anchor: str, extra: "list[str] | None" = None,
           gate: "Path | None" = None) -> "tuple[int, str]":
-    proc = subprocess.run(
+    proc: "subprocess.CompletedProcess[str]" = subprocess.run(
         [sys.executable, str(gate or GATE), str(repo), "--anchor", anchor] + (extra or []),
         capture_output=True, text=True, env=_scrubbed_env(),
     )
@@ -105,7 +111,7 @@ def _head(repo: Path) -> str:
 
 def _commit_all(repo: Path, msg: str) -> str:
     _git(repo, "add", "-A")
-    proc = _git(repo, "commit", "-q", "--allow-empty", "-m", msg)
+    proc: "subprocess.CompletedProcess[str]" = _git(repo, "commit", "-q", "--allow-empty", "-m", msg)
     if proc.returncode != 0:
         raise RuntimeError(f"git commit 실패: {proc.stderr.strip()}")
     return _head(repo)
@@ -175,7 +181,7 @@ def _lane_merge_repo(td: Path, name: str, main_step, lane_step=None,
     main_step(repo)
     _commit_all(repo, "main change")
     _git(repo, "checkout", "-q", "lane")
-    proc = _git(repo, "merge", "-q", "--no-ff", "-m", "M merge main", "main")
+    proc: "subprocess.CompletedProcess[str]" = _git(repo, "merge", "-q", "--no-ff", "-m", "M merge main", "main")
     if proc.returncode != 0:
         raise RuntimeError(f"git merge 실패: {proc.stderr.strip()} {proc.stdout.strip()}")
     return repo, anchor, _head(repo)
@@ -190,7 +196,8 @@ def _approved(td: Path, name: str, *shas: str) -> Path:
 
 def _section(out: str, title: str) -> str:
     """`== <title> …` 절 본문(다음 `==` 절 전까지)."""
-    m = re.search(rf"^== {re.escape(title)}.*?$\n(.*?)(?=^== |^판정:|^귀속 레코드|\Z)", out, re.S | re.M)
+    m: "re.Match[str] | None" = re.search(
+        rf"^== {re.escape(title)}.*?$\n(.*?)(?=^== |^판정:|^귀속 레코드|\Z)", out, re.S | re.M)
     return m.group(1) if m else ""
 
 
@@ -228,9 +235,11 @@ def _pre_repair_gate(td: Path) -> "Path | None":
     """수리 전 실행기 트리(`_PRE_REPAIR_COMMIT` 의 dddjango/scripts) — import 동반 실행을 위해 트리째 푼다."""
     dest: Path = td / "pre-repair"
     dest.mkdir()
-    archive = subprocess.Popen(["git", "-C", str(ROOT), "archive", _PRE_REPAIR_COMMIT, "dddjango/scripts"],
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    untar = subprocess.run(["tar", "-x", "-C", str(dest)], stdin=archive.stdout, capture_output=True)
+    archive: "subprocess.Popen[bytes]" = subprocess.Popen(
+        ["git", "-C", str(ROOT), "archive", _PRE_REPAIR_COMMIT, "dddjango/scripts"],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    untar: "subprocess.CompletedProcess[bytes]" = subprocess.run(
+        ["tar", "-x", "-C", str(dest)], stdin=archive.stdout, capture_output=True)
     archive.stdout.close()  # type: ignore[union-attr]
     archive.communicate()
     if archive.returncode != 0 or untar.returncode != 0:
@@ -325,7 +334,7 @@ def main() -> int:
         rows.append(("E 빚 채널", 0, code, "이관 빚" in out and "schema_smoke" in out, "exit 제외·보고 필수"))
 
         # U — usage 오류: 알 수 없는 flag → 문면 계약 exit 1(F3 — argparse 기본 2 봉합).
-        proc = subprocess.run(
+        proc: "subprocess.CompletedProcess[str]" = subprocess.run(
             [sys.executable, str(GATE), str(repo), "--nope"],
             capture_output=True, text=True, env=_scrubbed_env(),
         )
@@ -429,10 +438,10 @@ def main() -> int:
         _main_edit(repo2)
         _commit_all(repo2, "main violation")
         _git(repo2, "checkout", "-q", "lane")
-        conflict = _git(repo2, "merge", "--no-ff", "-m", "M resolved", "main")
+        conflict: "subprocess.CompletedProcess[str]" = _git(repo2, "merge", "--no-ff", "-m", "M resolved", "main")
         _write(repo2, _VIOLATION_REL, _VIOLATION_SRC + "_BASE: int = 1  # lane\n")  # 해소분 = 양쪽 합성
         m2c: str = _commit_all(repo2, "M resolved")
-        parents2 = _git(repo2, "show", "-s", "--format=%P", m2c).stdout.split()
+        parents2: "list[str]" = _git(repo2, "show", "-s", "--format=%P", m2c).stdout.split()
         code, out = _gate(repo2, anchor2, ["--approved-merge-file", str(_approved(td, "p2c", m2c))])
         rows.append(("P2′ 충돌 해소분", 2, code,
                      conflict.returncode != 0 and len(parents2) == 2 and "귀속(N∖L) 2건" in out
@@ -554,6 +563,51 @@ def main() -> int:
                      out.count(f"↳ 귀속 유지: 측정 무효(M^1) — {m10[:12]}") == 3
                      and "[#parse-fail]" in _section(out, "귀속(N∖L)"),
                      "parse-fail 비대칭 → L 불성립"))
+
+        # P11 — M^1 스냅숏 실패(PATH shim 이 그 sha 의 `git archive` 만 거절) → 측정 무효(스냅숏 실패)·출력 보존
+        repo11, anchor11, m11 = _lane_merge_repo(td, "p11", _plant_violation)
+        p11_parent1: str = _git(repo11, "rev-parse", f"{m11}^1").stdout.strip()
+        shim: Path = td / "git-shim"
+        shim.mkdir()
+        (shim / "git").write_text(
+            '#!/bin/bash\nif [ "$3" = "archive" ] && [ "$4" = "$DJR_SMOKE_DENY_ARCHIVE" ]; then '
+            'echo "fatal: simulated: object $4 unavailable" >&2; exit 128; fi\nexec /usr/bin/git "$@"\n',
+            encoding="utf-8")
+        (shim / "git").chmod(0o755)
+        env11: "dict[str, str]" = dict(_scrubbed_env(), PATH=f"{shim}:{os.environ.get('PATH', '')}",
+                                       DJR_SMOKE_DENY_ARCHIVE=p11_parent1)
+        proc11: "subprocess.CompletedProcess[str]" = subprocess.run(
+            [sys.executable, str(GATE), str(repo11), "--anchor", anchor11,
+             "--approved-merge-file", str(_approved(td, "p11", m11))],
+            capture_output=True, text=True, env=env11)
+        out11: str = proc11.stdout + proc11.stderr
+        rows.append(("P11 스냅숏 실패 측정 무효", 2, proc11.returncode,
+                     "Traceback" not in out11 and "판정: 귀속 3건" in out11
+                     and out11.count(f"↳ 귀속 유지: 측정 무효(스냅숏 실패) — {m11[:12]}") == 3
+                     and f"스냅숏 실패(측정 무효 — 해당 머지의 후보 라인은 귀속 유지): {p11_parent1[:12]}" in out11,
+                     "AnchorDiffUsage 포착 → custody·출력 보존"))
+
+        # P12 — 합성 머지: lane 이 임시 가지 tmp 를 머지하고 tmp 를 지움 → ^2 를 포함하는 ref 가 lane(HEAD)뿐 → 진단 1행
+        repo12, anchor12 = _make_repo(td, "p12")
+        _git(repo12, "checkout", "-q", "-b", "lane")
+        _write(repo12, "lane_note.md", "lane work\n")
+        _commit_all(repo12, "lane work")
+        _git(repo12, "checkout", "-q", "-b", "tmp", "main")
+        _plant_violation(repo12)
+        _commit_all(repo12, "tmp change")
+        _git(repo12, "checkout", "-q", "lane")
+        _git(repo12, "merge", "-q", "--no-ff", "-m", "M merge tmp", "tmp")
+        m12: str = _head(repo12)
+        _git(repo12, "branch", "-D", "tmp")
+        code, out = _gate(repo12, anchor12, ["--approved-merge-file", str(_approved(td, "p12", m12))])
+        rows.append(("P12 합성 머지 ^2 ref 진단", 0, code,
+                     "↳ 주의: ^2" in out and "HEAD 브랜치뿐 — 역방향/합성 머지 의심" in out
+                     and out.count("↳ 유입:") == 3,
+                     "진단 1행·exit 무변(유입 3)"))
+        # 대조 — 정상 머지(P1 골격)에는 진단이 없다.
+        code, out = _gate(repo, anchor, ["--approved-merge-file", str(_approved(td, "p12n", m_sha))])
+        rows.append(("P12′ 정상 머지 진단 부재", 2, code, "역방향/합성 머지 의심" not in out,
+                     "^2 가 main 에 도달 → 진단 0(레인 후속 커밋 뒤 상태라 exit 2)"))
 
     print("| 케이스 | 기대 exit | 실측 | 내용 | 판정 |")
     print("|---|---|---|---|---|")

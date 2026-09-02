@@ -21,14 +21,18 @@
   red2-spec.md   — BC 직계 `migrations/` 오배치가 경로 기반 진탐(#81·#325)으로 남음을 고정
                    («표면 제외 금지» 증거): exit 2 + 귀속 규칙 집합·건수 일치.
 
-  묶음 mid(E 계열 — 별도 합성 저장소·리포트 1 — 헤더 4): `midlane-spec.md` 로 재발화 판형을 고정.
+  묶음 mid(E 계열 — 별도 합성 저장소·리포트 1 — 헤더 6): `midlane-spec.md`·`midlane-red-spec.md` 로 재발화 판형을 고정.
   E1 계획 add 가 기준선 이후 커밋에 실존 + `--base <기준선>` → exit 0 · 사본의 그 파일은 스텁 · 기실현 0
-  E2 계획 add 가 미커밋 WIP(의도 위반 실물) + `--base <기준선>` → exit 0 · «add(기실현» 1 · 사본은 스텁
+  E2 계획 add 가 미커밋 WIP(의도 위반 실물) + `--base <기준선>` → exit 0 · «add(기실현» 1 · 사본은 스텁 ·
+     **해소(L∖N) 0 ∧ check-domain-model anchor 열 0**(실물이 앵커 스냅숏에 안 실렸다는 증거)
+  E1′/E2′ red 변형(`midlane-red-spec.md` — 스텁 자체가 #267): 커밋 실물 / 동내용 미커밋 WIP → **둘 다 exit 2 · 같은
+     안정 ID · E2′ 해소 0·anchor 열 0**(5단계 리뷰 MAJOR A — 기실현 add 앵커 오염 회귀 가드)
   E3 E2 상태에서 `--base` 미지정 → exit 3(add 충돌 — 기본 경로 불변)
   E4 계획 add 가 기준선 트리에 실존 + `--base <기준선>` → exit 3(계획↔실물 모순 유지)
 
   묶음 imports(수리 배치 2 Part 3 — 계약 실존 3단 · 합성 저장소 2 = `mini_repo` + `imports_overlay/` · 리포트 각 1):
-  imports-green-spec.md       — 실존 확인 `FrozenClock`·서브모듈 형·자기 add 해소·서드파티(update 소비자) → 결손 0 · exit 0.
+  imports-green-spec.md       — 실존 확인 `FrozenClock`·서브모듈 형·자기 add 해소·서드파티(update 소비자)·**update 대상 새 심볼
+                                `TickingClock`(자기 update 해소 S′)** → 결손 0 · exit 0.
   imports-red-spec.md         — ⑴ 모듈 부재·⑵ 0B 자리표시자·⑶ 심볼 미정의 각 1 · registry 귀속 0 → **exit 5**(권고·비차단).
   imports-update-only-spec.md — file-plan `update` 뿐(실체화 0) + ⑵ 결손 1 → exit 5 + «실체화 0 · 실존 결손 1건»(kkebi S2 판형).
   실행기 exit 규약: 0 green · 2 귀속 red(결손 병기) · 3 형식 red · 4 skip(블록 부재 | 실체화 0·결손 0) · 5 결손 ≥1 ∧ (귀속 0 ∨ 실체화 0) · 1 실행 불능.
@@ -40,7 +44,8 @@
 (합성 사본 + 합성 Plan · 검사기 27종 비의존: 실존 확인·⑶ 미정의·⑵ 0B/docstring-only·⑴ 부재·자기 add ⑶ 생략·자기
 `empty` ⑵·승격 폴더 `__init__` 재수출·서브모듈 형·서드파티 X·`framework.*` 부재 ⑴·`import a.b.c`·상대 import·
 `import *` U·planned-remove ⑴/`remove@Ln` 실존·ID 안정성 + TypeAlias·AsyncFunctionDef·승격 폴더 부품 S·empty 모듈
-import ⑵ 비적용·namespace-dir 이름 U·`import *` 재수출/`__getattr__` U·빈 패키지 `__init__` ⑵ 비적용·계수 항등식).
+import ⑵ 비적용·namespace-dir 이름 U·`import *` 재수출/`__getattr__` U·빈 패키지 `__init__` ⑵ 비적용·계수 항등식 +
+**update 대상**(선언 이름 S′·현재 표면 K·미선언 U·0B 대상 ⑵ 비적용)·세미콜론 복합행 전 문 판정·T 이름 단위).
 
 불일치면 exit 1(실행 출력 첨부). 검사기·트리 개정이 pre-gate 스텁 오탐을 새로 만들면
 green 이 깨져 여기서 드러난다(설계 §9-3 드리프트 하네스의 픽스처 축).
@@ -56,6 +61,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import types
 from pathlib import Path
 
 REPO_ROOT: Path = Path(__file__).resolve().parents[2]
@@ -82,7 +88,10 @@ _FORECAST_RULE_RE: "re.Pattern[str]" = re.compile(r"^\s*`[0-9a-f]{12}` .*?\[#([\
 # 리포트(`- ` 불릿) 양쪽 문면을 같은 식으로 센다.
 _EXISTENCE_LINE_RE: "re.Pattern[str]" = re.compile(r"^\s*(?:- )?`e-[0-9a-f]{12}` ([⑴⑵⑶]) ", re.M)
 _EXISTENCE_AGG_RE: "re.Pattern[str]" = re.compile(
-    r"집계: 행 (\d+) · 이름 판정 (\d+) · 실존 확인 (\d+) · 자기 add 해소 (\d+) · 저장소 밖\(검사 밖\) (\d+) · 판정 불능 (\d+) · 결손 (\d+)")
+    r"집계: 행 (\d+) · 이름 판정 (\d+) · 실존 확인 (\d+) · 자기 add 해소 (\d+) · 자기 update 해소 (\d+) · "
+    r"저장소 밖\(검사 밖\) (\d+) · 판정 불능 (\d+) · 결손 (\d+)")
+_RESOLVED_RE: "re.Pattern[str]" = re.compile(r"해소\(L∖N\) (\d+)건")
+_DOMAIN_MODEL_ROW_RE: "re.Pattern[str]" = re.compile(r"\| `check-domain-model\.py` \| (\d+) \| (\d+) \|")
 _KEEP_RE: "re.Pattern[str]" = re.compile(r"\(--keep\) 격리 사본 보존: (\S+)")
 _BLOCK_HASH_RE: "re.Pattern[str]" = re.compile(r"블록 해시 ([0-9a-f]{12})")
 
@@ -104,10 +113,10 @@ def _run_pregate(spec: Path, repo: Path, report: Path,
         capture_output=True, text=True)
 
 
-def _load_module(path: Path, name: str):
+def _load_module(path: Path, name: str) -> "types.ModuleType":
     import importlib.util
-    spec = importlib.util.spec_from_file_location(name, path)
-    mod = importlib.util.module_from_spec(spec)
+    spec: "importlib.machinery.ModuleSpec | None" = importlib.util.spec_from_file_location(name, path)
+    mod: "types.ModuleType" = importlib.util.module_from_spec(spec)
     sys.modules[name] = mod
     spec.loader.exec_module(mod)
     return mod
@@ -126,7 +135,7 @@ def _unit_checks() -> "list[str]":
     """실행기 유닛 대조 — 수신자 정규화 무훼손·_snake 검사기 동치·future 단일 방출·파서 분류·
     마이그레이션 정형·블록 해시·버전 probe."""
     out: "list[str]" = []
-    dp = _load_module(EXECUTOR, "_pregate_exec")
+    dp: "types.ModuleType" = _load_module(EXECUTOR, "_pregate_exec")
     cases: "list[tuple[str, str]]" = [
         ("self, x: int", "x: int"), ("cls", ""), ("self", ""),
         ("self_x: int, y: int", "self_x: int, y: int"),  # 접두 유사 이름 무훼손
@@ -136,11 +145,11 @@ def _unit_checks() -> "list[str]":
         got: str = dp._strip_receiver(given)
         if got != want:
             out.append(f"_strip_receiver({given!r}) = {got!r} ≠ 기대 {want!r}")
-    ck = _load_module(REPO_ROOT / "dddjango" / "scripts" / "check-db-table.py", "_ck_db_table")
+    ck: "types.ModuleType" = _load_module(REPO_ROOT / "dddjango" / "scripts" / "check-db-table.py", "_ck_db_table")
     for name in ("HTTPLog", "OAuth2Token", "MediaAsset", "S3Asset", "APNs", "A"):
         if dp._snake(name) != ck._snake(name):
             out.append(f"_snake({name!r}) 실행기 {dp._snake(name)!r} ≠ 검사기 {ck._snake(name)!r} — 유도 드리프트")
-    entry = dp.PlanEntry(path="application/x/driven_layer/django_x/models/x_model.py", tag="add")
+    entry: "dp.PlanEntry" = dp.PlanEntry(path="application/x/driven_layer/django_x/models/x_model.py", tag="add")
     entry.imports.append("from __future__ import annotations")
     stub: str = dp.render_stub(entry)
     if stub.count("from __future__") != 1:
@@ -172,7 +181,7 @@ def _unit_checks() -> "list[str]":
     sym, errs = parse("M(Model) {kind}")
     if not errs or "`name = <식>`" not in errs[0]:
         out.append(f"파서: bare 필드 `kind` → 메시지에 «`name = <식>`» 기대 ≠ {errs}")
-    hint_entry = dp.PlanEntry(path="application/x/domain_layer/x.py", tag="add")
+    hint_entry: "dp.PlanEntry" = dp.PlanEntry(path="application/x/domain_layer/x.py", tag="add")
     hint_entry.symbols.append(dp.Symbol(name="_Helper", base="x: int"))
     try:
         compile(dp.render_stub(hint_entry), "unit", "exec")
@@ -197,21 +206,21 @@ def _unit_checks() -> "list[str]":
             out.append(f"마이그레이션 정형 {label} 에 `class Migration(migrations.Migration)` 부재")
         if ("initial = True" in text) != want_initial:
             out.append(f"마이그레이션 정형 {label}: `initial = True` 존재 {('initial = True' in text)} ≠ 기대 {want_initial}")
-    transcribed = dp.PlanEntry(path=mig_root + "0003_hand.py", tag="add")
+    transcribed: "dp.PlanEntry" = dp.PlanEntry(path=mig_root + "0003_hand.py", tag="add")
     transcribed.symbols.append(dp.Symbol(name="Migration", base="migrations.Migration",
                                          fields=["dependencies = []", "operations = []"]))
     if "계획 스텁" not in dp.render_stub(transcribed):
         out.append("마이그레이션 전사 우선 회귀: symbols 전사가 있는데 정형으로 덮였다")
     sys.path.insert(0, str(EXECUTOR.parent))
     import findings  # noqa: E402  — 검사기 Findings 컨테이너(직접 호출용)
-    mo = _load_module(REPO_ROOT / "dddjango" / "scripts" / "check-mechanism-ownership.py", "_ck_mech_own")
+    mo: "types.ModuleType" = _load_module(REPO_ROOT / "dddjango" / "scripts" / "check-mechanism-ownership.py", "_ck_mech_own")
     with tempfile.TemporaryDirectory() as td:
         for rel, text in ((mig_root + "__init__.py", init_stub), (mig_root + "0001_initial.py", first),
                           (mig_root + "0002_more.py", second)):
             f: Path = Path(td) / rel
             f.parent.mkdir(parents=True, exist_ok=True)
             f.write_text(text, encoding="utf-8")
-            found = findings.Findings("check-mechanism-ownership.py", defer=True)
+            found: "findings.Findings" = findings.Findings("check-mechanism-ownership.py", defer=True)
             mo._check_migration_file(f, Path(rel), found)
             if list(found):
                 out.append(f"마이그레이션 정형 {rel} 검사기 직접 호출 Findings ≠ 0: {list(found)}")
@@ -227,13 +236,14 @@ def _unit_checks() -> "list[str]":
         out.append("블록 해시가 symbols 블록 변경을 감지하지 못했다")
     if dp.block_hash(spec_text.replace("| (이번 슬라이스 없음) |", "| 바뀐 후보 |")) == h1:
         out.append("블록 해시가 영구 테스트 입장 표 변경을 감지하지 못했다")
-    cli = subprocess.run([sys.executable, str(EXECUTOR), str(FIXTURES / "green2-spec.md"), ".", "--block-hash"],
+    cli: "subprocess.CompletedProcess[str]" = subprocess.run(
+        [sys.executable, str(EXECUTOR), str(FIXTURES / "green2-spec.md"), ".", "--block-hash"],
                          capture_output=True, text=True)
     if cli.returncode != 0 or cli.stdout.strip() != f"블록 해시 {h1}":
         out.append(f"`--block-hash` CLI 출력 {cli.stdout.strip()!r}(exit {cli.returncode}) ≠ `블록 해시 {h1}`")
 
     # ③ 버전 probe 동치 — 두 스크립트 각자 보유 · Claude/Codex 레이아웃 2경로 · manifest 값과 일치.
-    rg = _load_module(GATE, "_registry_gate_mod")
+    rg: "types.ModuleType" = _load_module(GATE, "_registry_gate_mod")
     claude_v: str = json.loads(CLAUDE_MANIFEST.read_text(encoding="utf-8"))["version"]
     codex_v: str = json.loads(CODEX_MANIFEST.read_text(encoding="utf-8"))["version"]
     if dp.plugin_version() != claude_v:
@@ -241,7 +251,7 @@ def _unit_checks() -> "list[str]":
     if rg.plugin_version() != dp.plugin_version():
         out.append(f"버전 probe 불일치: registry_gate {rg.plugin_version()!r} ≠ design_pregate {dp.plugin_version()!r}")
     if CODEX_EXECUTOR.is_file():
-        dp_codex = _load_module(CODEX_EXECUTOR, "_pregate_exec_codex")
+        dp_codex: "types.ModuleType" = _load_module(CODEX_EXECUTOR, "_pregate_exec_codex")
         if dp_codex.plugin_version() != codex_v:
             out.append(f"Codex 레이아웃 probe {dp_codex.plugin_version()!r} ≠ Codex manifest {codex_v!r}")
     toolchain: str = rg._toolchain_line()
@@ -254,7 +264,7 @@ def _existence_unit_checks() -> "list[str]":
     """계약 실존 유닛 매트릭스 ⓐ~ⓟ + 델타(TypeAlias·AsyncFunctionDef·승격 폴더 부품·empty 모듈 import·namespace-dir·
     `import *` 재수출) — 합성 사본 디렉터리 + 합성 Plan 으로 `check_import_existence` 를 직접 부른다(git·검사기 비의존)."""
     out: "list[str]" = []
-    dp = _load_module(EXECUTOR, "_pregate_exec_existence")
+    dp: "types.ModuleType" = _load_module(EXECUTOR, "_pregate_exec_existence")
     if dp._repo_root_packages() != frozenset({"application", "framework"}):
         out.append(f"_repo_root_packages() = {sorted(dp._repo_root_packages())} ≠ {{application, framework}}")
     with tempfile.TemporaryDirectory() as td:
@@ -272,6 +282,8 @@ def _existence_unit_checks() -> "list[str]":
             dl + "dyn.py": "def __getattr__(name): ...\n",
             dl + "nsdir/leaf.py": "X = 1\n",
             dl + "stay.py": "class Stay: ...\n",
+            dl + "upd.py": "class Existing: ...\n",   # update 대상 — 현재 표면 {Existing} · symbols 선언 {NewName}
+            dl + "upd0.py": "",                        # 0B update 대상 — ⑵ 비적용 · 선언 {Planned}
             dl + "modern.py": ("async def fetch(): ...\na, (b, c) = 1, (2, 3)\nd: int = 4\nimport os.path\nimport json as js\n"
                               "if True:\n    from os import sep\ntry:\n    import nothing\nexcept ImportError:\n    nothing = None\n"
                               "with open(__file__) as fh:\n    W = 1\n__all__ = [\"listed\"]\n"),
@@ -282,11 +294,14 @@ def _existence_unit_checks() -> "list[str]":
             f: Path = copy / rel
             f.parent.mkdir(parents=True, exist_ok=True)
             f.write_text(text, encoding="utf-8")
-        plan = dp.Plan()
+        plan: "dp.Plan" = dp.Plan()
         for tag, rel in (("add", dl + "new_vo.py"), ("add", "application/shop/application_layer/uc/do_uc/do_uc_use_case.py"),
                          ("empty", dl + "blank.py"), ("remove", dl + "gone.py"), ("remove", dl + "stay.py"),
-                         ("update", dl + "consumer.py"), ("remove", dl + "leaver.py")):
+                         ("update", dl + "consumer.py"), ("remove", dl + "leaver.py"),
+                         ("update", dl + "upd.py"), ("update", dl + "upd0.py")):
             plan.entries[rel] = dp.PlanEntry(path=rel, tag=tag, deferred_remove=(rel.endswith("stay.py")))
+        plan.entries[dl + "upd.py"].declared.append("NewName")
+        plan.entries[dl + "upd0.py"].declared.append("Planned")
         (copy / dl / "blank.py").write_text("", encoding="utf-8")  # materialize 가 만든 자기 empty 상태
         consumer: str = dl + "consumer.py"
         rows: "list[tuple[str, str, str]]" = [
@@ -331,6 +346,16 @@ def _existence_unit_checks() -> "list[str]":
             ("import * 재수출 U", "from application.shop.domain_layer.star import Sku", "U"),
             ("__getattr__ U", "from application.shop.domain_layer.dyn import Anything", "U"),
             ("빈 패키지 __init__ (⑵ 비적용 → ⑶)", "from application.shop.domain_layer import Nothing", "⑶"),
+            # update 대상(MAJOR B) — 선언 이름 S′ · 현재 표면 K · 미선언·미실존 U · 0B 대상 ⑵ 비적용 · 모듈 import K
+            ("update 대상 선언 이름 S′", "from application.shop.domain_layer.upd import NewName", "S′"),
+            ("update 대상 현재 표면 K", "from application.shop.domain_layer.upd import Existing", "K"),
+            ("update 대상 미선언 U", "from application.shop.domain_layer.upd import Missing", "U"),
+            ("update 0B 대상 선언 S′(⑵ 비적용)", "from application.shop.domain_layer.upd0 import Planned", "S′"),
+            ("update 0B 대상 미선언 U(⑵ 비적용)", "from application.shop.domain_layer.upd0 import Other", "U"),
+            ("update 대상 모듈 import K", "import application.shop.domain_layer.upd0", "K"),
+            ("update 대상 서브모듈 형 K", "from application.shop.domain_layer import upd", "K"),
+            # 세미콜론 복합행 — 둘째 문(부재)도 판정된다(F-3)
+            ("세미콜론 복합행 둘째 문 ⑴", "import application.shop.domain_layer.sku; from application.shop.domain_layer.absent import Thing", "⑴"),
         ]
         for _, stmt, _ in rows:
             plan.import_rows.append(dp.ImportRow(consumer=consumer, stmt=stmt))
@@ -339,15 +364,17 @@ def _existence_unit_checks() -> "list[str]":
         plan.import_rows.append(dp.ImportRow(consumer=consumer, stmt="from application.shop.domain_layer.sku import"))
 
         def verdict_of(stmt: str) -> str:
-            single = dp.Plan(entries=plan.entries)
+            single: "dp.Plan" = dp.Plan(entries=plan.entries)
             single.import_rows.append(dp.ImportRow(consumer=consumer, stmt=stmt))
-            r = dp.check_import_existence(copy, single)
+            r: "dp.ExistenceReport" = dp.check_import_existence(copy, single)
             if r.defects:
                 return r.defects[0].stage
             if r.confirmed:
                 return "K"
             if r.self_add:
                 return "S"
+            if r.self_update:
+                return "S′"
             if r.outside:
                 return "X"
             return "U" if r.undecidable else "?"
@@ -356,9 +383,23 @@ def _existence_unit_checks() -> "list[str]":
             got: str = verdict_of(stmt)
             if got != want:
                 out.append(f"계약 실존 {label}: `{stmt}` → {got} ≠ 기대 {want}")
-        rep = dp.check_import_existence(copy, plan)
-        if rep.judged != rep.confirmed + rep.self_add + rep.outside + rep.undecidable + rep.defective:
-            out.append(f"계약 실존 계수 항등식 위반: T {rep.judged} ≠ K {rep.confirmed}+S {rep.self_add}+X {rep.outside}+U {rep.undecidable}+D {rep.defective}")
+        rep: "dp.ExistenceReport" = dp.check_import_existence(copy, plan)
+        if rep.judged != rep.confirmed + rep.self_add + rep.self_update + rep.outside + rep.undecidable + rep.defective:
+            out.append(f"계약 실존 계수 항등식 위반: T {rep.judged} ≠ K {rep.confirmed}+S {rep.self_add}+S′ {rep.self_update}"
+                       f"+X {rep.outside}+U {rep.undecidable}+D {rep.defective}")
+        # T 이름 단위(F-4) — 세미콜론 복합행 2 · 소비자 remove 2이름 2 · 문법 불량 1 · 상대 탈출 2이름 2(항등식 유지)
+        for label, consumer_path, stmt, want_t, want_u in (
+                ("세미콜론 복합행", consumer, "import application.shop.domain_layer.sku; from application.shop.domain_layer.absent import Thing", 2, 0),
+                ("소비자 remove 2이름", dl + "leaver.py", "from application.shop.domain_layer.sku import Sku, Nope", 2, 2),
+                ("문법 불량", consumer, "from application.shop.domain_layer.sku import", 1, 1),
+                ("상대 탈출 2이름", consumer, "from .....nowhere import x, y", 2, 2)):
+            one: "dp.Plan" = dp.Plan(entries=plan.entries)
+            one.import_rows.append(dp.ImportRow(consumer=consumer_path, stmt=stmt))
+            r1: "dp.ExistenceReport" = dp.check_import_existence(copy, one)
+            if r1.judged != want_t or r1.undecidable != want_u or r1.judged != (
+                    r1.confirmed + r1.self_add + r1.self_update + r1.outside + r1.undecidable + r1.defective):
+                out.append(f"T 이름 단위 {label}: T {r1.judged}(기대 {want_t}) · U {r1.undecidable}(기대 {want_u}) · 항등식 "
+                           f"{r1.confirmed}+{r1.self_add}+{r1.self_update}+{r1.outside}+{r1.undecidable}+{r1.defective}")
         if rep.rows != len(plan.import_rows):
             out.append(f"계약 실존 행 수 R {rep.rows} ≠ import_rows {len(plan.import_rows)}")
         if not any("소비자 제거" in n for n in rep.undecidable_notes) or not any("문법" in n for n in rep.undecidable_notes):
@@ -371,10 +412,10 @@ def _existence_unit_checks() -> "list[str]":
         if "자리표시자(0B — 자기 `empty`)" != details.get("application.shop.domain_layer.blank import Thing"):
             out.append(f"⑵ 문면(자기 empty) 불일치: {details.get('application.shop.domain_layer.blank import Thing')!r}")
         # ⓟ ID 안정성 — 같은 (모듈, 이름) 소비자 2개 → 항목 1·소비자 2 · 단계(⑴→⑵) 무관 · 예보 ID 정규식 불충돌.
-        two = dp.Plan(entries=plan.entries)
+        two: "dp.Plan" = dp.Plan(entries=plan.entries)
         two.import_rows.append(dp.ImportRow(consumer=consumer, stmt="from application.shop.domain_layer.absent import Thing"))
         two.import_rows.append(dp.ImportRow(consumer=dl + "other.py", stmt="from application.shop.domain_layer.absent import Thing"))
-        r2 = dp.check_import_existence(copy, two)
+        r2: "dp.ExistenceReport" = dp.check_import_existence(copy, two)
         if len(r2.defects) != 1 or len(r2.defects[0].consumers) != 2 or r2.defective != 2:
             out.append(f"ⓟ 결손 합치기 실패: 항목 {len(r2.defects)} · 소비자 {[d.consumers for d in r2.defects]} · D {r2.defective}")
         eid: str = dp._existence_id("application.shop.domain_layer.absent", "Thing")
@@ -400,7 +441,7 @@ def _header_count(report: Path) -> int:
 
 def _kept_copy_is_stub(proc: "subprocess.CompletedProcess[str]", rel: str) -> "bool | None":
     """`--keep` 사본에서 계획 경로가 스텁으로 실체화됐는지(실물이 아니라) 본다 — 사본은 검사 후 지운다."""
-    m = _KEEP_RE.search(proc.stdout)
+    m: "re.Match[str] | None" = _KEEP_RE.search(proc.stdout)
     if m is None:
         return None
     scratch: Path = Path(m.group(1))
@@ -478,8 +519,21 @@ def _run_p1_bundle(scratch: Path, failures: "list[str]") -> None:
         failures.append(f"[p1 red2] 리포트 append 횟수 {_header_count(report_r)} ≠ 기대 1")
 
 
+def _count_built(report: Path) -> int:
+    """리포트의 «already-built: add(기실현» 누적 행 수(묶음 리포트는 append 라 차분으로 센다)."""
+    return report.read_text(encoding="utf-8").count("already-built: add(기실현") if report.is_file() else 0
+
+
+def _anchor_clean(stdout: str) -> bool:
+    """E2/E2′ 증거 — 해소(L∖N) 0 ∧ check-domain-model anchor 열 0(실물이 앵커 스냅숏에 안 실렸다)."""
+    resolved: "re.Match[str] | None" = _RESOLVED_RE.search(stdout)
+    row: "re.Match[str] | None" = _DOMAIN_MODEL_ROW_RE.search(stdout)
+    return resolved is not None and resolved.group(1) == "0" and row is not None and row.group(1) == "0"
+
+
 def _run_mid_bundle(scratch: Path, failures: "list[str]") -> None:
     spec: Path = FIXTURES / "midlane-spec.md"
+    spec_red: Path = FIXTURES / "midlane-red-spec.md"
     report: Path = scratch / "pregate-report-mid.md"
 
     # E1 — 기준선 이후 커밋에 계획 add 실존 → `--base <기준선>` → 사본에는 없어 스텁 · 기실현 0.
@@ -488,9 +542,9 @@ def _run_mid_bundle(scratch: Path, failures: "list[str]") -> None:
     (repo / MID_ADD).write_text("class LaneMarker:\n    value: str\n", encoding="utf-8")
     _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "-m", "slice: lane marker")
-    e1 = _run_pregate(spec, repo, report, ["--base", base, "--keep"])
+    e1: "subprocess.CompletedProcess[str]" = _run_pregate(spec, repo, report, ["--base", base, "--keep"])
     stub_e1: "bool | None" = _kept_copy_is_stub(e1, MID_ADD)
-    built_e1: int = _header_count(report) and report.read_text(encoding="utf-8").count("already-built: add(기실현")
+    built_e1: int = _count_built(report)
     if e1.returncode != 0 or "already-built 0건" not in e1.stdout or built_e1 != 0 or stub_e1 is not True:
         failures.append(f"E1 기대 exit 0·기실현 0·사본 스텁 ≠ 실측 exit {e1.returncode} · "
                         f"기실현 {built_e1} · 스텁 {stub_e1}")
@@ -498,22 +552,24 @@ def _run_mid_bundle(scratch: Path, failures: "list[str]") -> None:
     else:
         print("E1: exit 0 · 사본 스텁 · 기실현 0 (커밋된 add 는 사본 밖) — 기대 일치")
 
-    # E2 — 미커밋 WIP(의도 위반 실물) → `--base <기준선>` → 기실현 1 · 스텁 대체(실물 판정 혼입 0).
+    # E2 — 미커밋 WIP(의도 위반 실물) → `--base <기준선>` → 기실현 1 · 스텁 대체(실물 판정 혼입 0) ·
+    # 해소 0 ∧ anchor 열 0(실물이 앵커 스냅숏에 안 실렸다 — MAJOR A 오염 가드).
     repo = _make_repo(scratch, "repo-mid-e2")
     base = _git(repo, "rev-parse", "HEAD")
     (repo / MID_ADD).write_text(MID_REAL_SRC, encoding="utf-8")
-    e2 = _run_pregate(spec, repo, report, ["--base", base, "--keep"])
+    e2: "subprocess.CompletedProcess[str]" = _run_pregate(spec, repo, report, ["--base", base, "--keep"])
     stub_e2: "bool | None" = _kept_copy_is_stub(e2, MID_ADD)
-    built_e2: int = report.read_text(encoding="utf-8").count("already-built: add(기실현") - built_e1
-    if e2.returncode != 0 or "already-built 1건" not in e2.stdout or built_e2 != 1 or stub_e2 is not True:
-        failures.append(f"E2 기대 exit 0·기실현 1·사본 스텁 ≠ 실측 exit {e2.returncode} · "
-                        f"기실현 {built_e2} · 스텁 {stub_e2}")
+    built_e2: int = _count_built(report) - built_e1
+    if (e2.returncode != 0 or "already-built 1건" not in e2.stdout or built_e2 != 1 or stub_e2 is not True
+            or not _anchor_clean(e2.stdout)):
+        failures.append(f"E2 기대 exit 0·기실현 1·사본 스텁·해소 0·anchor 열 0 ≠ 실측 exit {e2.returncode} · "
+                        f"기실현 {built_e2} · 스텁 {stub_e2} · 앵커 무오염 {_anchor_clean(e2.stdout)}")
         _dump("E2", e2)
     else:
-        print("E2: exit 0 · 기실현 1 · 스텁 대체(실물 #267 미혼입) — 기대 일치")
+        print("E2: exit 0 · 기실현 1 · 스텁 대체(실물 #267 미혼입) · 해소 0·anchor 열 0 — 기대 일치")
 
     # E3 — E2 상태에서 `--base` 미지정 → 기본 경로 불변(add 충돌 형식 red).
-    e3 = _run_pregate(spec, repo, report)
+    e3: "subprocess.CompletedProcess[str]" = _run_pregate(spec, repo, report)
     if e3.returncode != 3 or "add 충돌(실존)" not in e3.stdout:
         failures.append(f"E3 기대 exit 3(add 충돌) ≠ 실측 {e3.returncode}")
         _dump("E3", e3)
@@ -527,15 +583,38 @@ def _run_mid_bundle(scratch: Path, failures: "list[str]") -> None:
     _git(repo, "commit", "-q", "-m", "baseline already has lane marker")
     base = _git(repo, "rev-parse", "HEAD")
     (repo / "docs_note.md").write_text("harmless\n", encoding="utf-8")  # 공허 방지용 무해 dirty
-    e4 = _run_pregate(spec, repo, report, ["--base", base])
+    e4: "subprocess.CompletedProcess[str]" = _run_pregate(spec, repo, report, ["--base", base])
     if e4.returncode != 3 or "add 충돌(실존)" not in e4.stdout:
         failures.append(f"E4 기대 exit 3(기준선 실존 add) ≠ 실측 {e4.returncode}")
         _dump("E4", e4)
     else:
         print("E4: exit 3 (기준선 트리 실존 add — 계획↔실물 모순 유지) — 기대 일치")
 
-    if _header_count(report) != 4:
-        failures.append(f"[mid] 리포트 append 횟수 {_header_count(report)} ≠ 기대 4 ({report})")
+    # E1′/E2′ — red 변형(스텁 자체가 #267): 커밋 실물 vs 동내용 미커밋 WIP → 둘 다 exit 2 · 같은 ID(MAJOR A 회귀 가드).
+    repo = _make_repo(scratch, "repo-mid-e1r")
+    base = _git(repo, "rev-parse", "HEAD")
+    (repo / MID_ADD).write_text(MID_REAL_SRC, encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "slice: lane marker (2 classes)")
+    e1r: "subprocess.CompletedProcess[str]" = _run_pregate(spec_red, repo, report, ["--base", base])
+    ids_e1r: "list[str]" = sorted(set(_FORECAST_RULE_RE.findall(e1r.stdout)))
+    repo = _make_repo(scratch, "repo-mid-e2r")
+    base = _git(repo, "rev-parse", "HEAD")
+    (repo / MID_ADD).write_text(MID_REAL_SRC, encoding="utf-8")
+    e2r: "subprocess.CompletedProcess[str]" = _run_pregate(spec_red, repo, report, ["--base", base])
+    ids_e2r: "list[str]" = sorted(set(_FORECAST_RULE_RE.findall(e2r.stdout)))
+    if (e1r.returncode != 2 or e2r.returncode != 2 or ids_e1r != ids_e2r or ids_e1r != ["267"]
+            or "already-built 1건" not in e2r.stdout or not _anchor_clean(e2r.stdout)):
+        failures.append(f"E1′/E2′ 기대 exit 2·2·같은 ID(#267)·E2′ 기실현 1·해소 0·anchor 열 0 ≠ 실측 "
+                        f"exit {e1r.returncode}/{e2r.returncode} · ID {ids_e1r}/{ids_e2r} · "
+                        f"앵커 무오염 {_anchor_clean(e2r.stdout)}")
+        _dump("E1′", e1r)
+        _dump("E2′", e2r)
+    else:
+        print("E1′/E2′: exit 2·2 · 같은 ID(#267) · E2′ 기실현 1·해소 0·anchor 열 0 (기실현 add 앵커 무오염) — 기대 일치")
+
+    if _header_count(report) != 6:
+        failures.append(f"[mid] 리포트 append 횟수 {_header_count(report)} ≠ 기대 6 ({report})")
 
 
 def _run_imports_bundle(scratch: Path, failures: "list[str]") -> None:
@@ -553,20 +632,20 @@ def _run_imports_bundle(scratch: Path, failures: "list[str]") -> None:
         return text[at:] if at >= 0 else ""
 
     report_g: Path = scratch / "pregate-report-imports-green.md"
-    green = _run_pregate(FIXTURES / "imports-green-spec.md", repo, report_g)
-    agg = _EXISTENCE_AGG_RE.search(green.stdout)
+    green: "subprocess.CompletedProcess[str]" = _run_pregate(FIXTURES / "imports-green-spec.md", repo, report_g)
+    agg: "re.Match[str] | None" = _EXISTENCE_AGG_RE.search(green.stdout)
     counts: "tuple[int, ...]" = tuple(int(x) for x in agg.groups()) if agg else ()
     if (green.returncode != 0 or _FORECAST_RULE_RE.search(green.stdout) or _EXISTENCE_LINE_RE.search(green.stdout)
-            or counts != (4, 4, 2, 1, 1, 0, 0) or "요약: 귀속 0건 · 실존 결손 0건" not in green.stdout):
-        failures.append(f"imports-green-spec 기대 exit 0·결손 0·집계 (4,4,2,1,1,0,0) ≠ 실측 exit {green.returncode} · 집계 {counts}")
+            or counts != (5, 5, 2, 1, 1, 1, 0, 0) or "요약: 귀속 0건 · 실존 결손 0건" not in green.stdout):
+        failures.append(f"imports-green-spec 기대 exit 0·결손 0·집계 (5,5,2,1,1,1,0,0) ≠ 실측 exit {green.returncode} · 집계 {counts}")
         _dump("imports-green", green)
     else:
-        print("imports-green-spec: exit 0 · 결손 0 · 집계 K2/S1/X1 (실존 확인·서브모듈·자기 add·서드파티) — 기대 일치")
+        print("imports-green-spec: exit 0 · 결손 0 · 집계 K2/S1/S′1/X1 (실존 확인·서브모듈·자기 add·update 대상 새 심볼·서드파티) — 기대 일치")
     if _header_count(report_g) != 1 or "### 계약 실존 (boundary-imports 3단 · 결손 0건" not in section(report_g):
         failures.append(f"[imports green] 리포트 append {_header_count(report_g)} ≠ 1 또는 계약 실존 절 부재")
 
     report_r: Path = scratch / "pregate-report-imports-red.md"
-    red = _run_pregate(FIXTURES / "imports-red-spec.md", repo, report_r)
+    red: "subprocess.CompletedProcess[str]" = _run_pregate(FIXTURES / "imports-red-spec.md", repo, report_r)
     stages: "list[str]" = _EXISTENCE_LINE_RE.findall(red.stdout)
     if (red.returncode != 5 or sorted(stages) != ["⑴", "⑵", "⑶"] or _FORECAST_RULE_RE.search(red.stdout)
             or "요약: 귀속 0건 · 실존 결손 3건" not in red.stdout):
@@ -581,7 +660,7 @@ def _run_imports_bundle(scratch: Path, failures: "list[str]") -> None:
         failures.append(f"[imports red] 리포트 append {_header_count(report_r)} ≠ 1 또는 절 항목/헤더 병기 불일치")
 
     report_u: Path = scratch / "pregate-report-imports-update-only.md"
-    upd = _run_pregate(FIXTURES / "imports-update-only-spec.md", repo, report_u)
+    upd: "subprocess.CompletedProcess[str]" = _run_pregate(FIXTURES / "imports-update-only-spec.md", repo, report_u)
     stages_u: "list[str]" = _EXISTENCE_LINE_RE.findall(upd.stdout)
     if (upd.returncode != 5 or stages_u != ["⑵"] or "실체화 0건" not in upd.stdout
             or "요약: 실체화 0 · 실존 결손 1건" not in upd.stdout):
@@ -615,8 +694,8 @@ def main(argv: "list[str]") -> int:
             for f in failures:
                 print(f"  - {f}")
             return 1
-        print("\nPASS — pre-gate 픽스처 9종+E 계열 4단계+유닛 기대 일치 "
-              "(green×3 예보 0 · 형식 red exit 3 · red 귀속 3건·red2 귀속 2건 정합 · 재발화 판형 E1~E4 · "
+        print("\nPASS — pre-gate 픽스처 10종+E 계열 6단계+유닛 기대 일치 "
+              "(green×3 예보 0 · 형식 red exit 3 · red 귀속 3건·red2 귀속 2건 정합 · 재발화 판형 E1~E4+E1′/E2′ · "
               "계약 실존 imports 3종 exit 0/5/5 + 유닛 매트릭스)")
         return 0
     finally:

@@ -700,7 +700,7 @@
         "codex-dddjango/skills/dddjango/SKILL.md": "d8558bf3dd91048f74346984390b12ab094372dd030f9f5916c2f34d641fb993",
         "dddjango/commands/dddjango.md": "67b95640c51735b54cc88f38048688944ce4a4000ce03fc7f94d4197c6fea5c6",
         "dddjango/scripts/regen_core.py": "48181a610743fce534ea4d327d34878863da22b207a08ecc2a88ebbdcb05b763",
-        "dddjango/scripts/registry_gate.py": "b7b5b7eec5da06e66ecd4ab9d2909ff196dd7eb3788cf9f5f73fbb9baf29add6",
+        "dddjango/scripts/registry_gate.py": "26916d4d9420d15c325d392d549c3b698cc377511123910f2fb8695ad8d26ee6",
         "dddjango/scripts/rulepack.py": "f2144bc50f99cda8bc259a6250b642f605ffa7d1d5c1f8ebb57564cabce4abd3"
       },
       "globs": [
@@ -711,7 +711,7 @@
         "codex-dddjango/skills/dddjango/SKILL.md"
       ],
       "n_files": 5,
-      "tree_sha256": "333daf2f8fc18bababd7bb5fd9514e4947971ee093e6bc8095612296c5ed9b1b",
+      "tree_sha256": "42e17d17d277f7d73d9fe5cc43393dfb852fdf49ef5c04772655052de7a5d66a",
       "why": "3암이 공유하는 실행 경로. 암 사이 차이는 스위치 둘뿐이어야 하고, 그 «둘뿐»을 성립시키는 것이 이 파일들의 동일성이다."
     },
     "plugin_payload": {
@@ -851,7 +851,7 @@
     },
     "scorer": {
       "files": {
-        "dddjango/scripts/anchor_diff.py": "f34d7b75d53310c421b0eee33f53e293bbe7864bb868e7344aa569a536f44562",
+        "dddjango/scripts/anchor_diff.py": "9236b439aa9fcf63d8c6eed2c256b2c28daeed70399c004e0d0c65d7bc7e603a",
         "dddjango/scripts/business_vocab.py": "c891ebd3bb7406d96d82b7ba796367fab7c40aa15d104f5cc5682284e8625463",
         "dddjango/scripts/check-api-error-controller-contract.py": "5816b7eb626e1fb268f2ce47b4bb663843d673d0b294eea80647f4cf4008fad3",
         "dddjango/scripts/check-app-container.py": "5ad27ade9fc986f6c47833215b22495878c5e10ea851d475e91869bc155359cd",
@@ -903,7 +903,7 @@
         "workspace/tools/ab_score.py"
       ],
       "n_files": 38,
-      "tree_sha256": "45608c952b7f759847fb96b865bb633cb68101a2a87e0d23a34ec755210a6e76",
+      "tree_sha256": "290eb8170bff3221adec7a575aaee81562ad25053077dacc9bf0cf39ebf6a41b",
       "why": "판정 스칼라(결정적 검사기 위반 수)를 만드는 전부. 발주·암 산출물을 보기 전에 동결한다 — 산출물을 본 뒤 채점기를 만지면 판정 교락(L-M #4)."
     }
   },
@@ -951,11 +951,11 @@
     "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.15/scripts",
     "cache-codex": "PENDING",
     "cache-codex_error": "codex 설치 cache 후보 2개 — 어느 것이 로드되는지 결정 불가: ['2.17.14', '2.17.15']",
-    "source-claude": "a58aed9196764e88823a57f6e2d84b04108b66fb67d593a039226a1da2eb3d24",
-    "source-codex": "a58aed9196764e88823a57f6e2d84b04108b66fb67d593a039226a1da2eb3d24"
+    "source-claude": "a36ec87a735a2a93e9f2fb1b31039346724d5d28a69934fd86871ac55134efe0",
+    "source-codex": "a36ec87a735a2a93e9f2fb1b31039346724d5d28a69934fd86871ac55134efe0"
   },
-  "sealed_commit": "881d312dbce3165064235ec44229b19c8777bc3f",
-  "self_sha256": "fadf35fbe1303ebe77bc15c9d6a4c3f43775850223c681072a197cb7d5a48ec4",
+  "sealed_commit": "7395db2666d4ffea953789cd26dac2549c12b010",
+  "self_sha256": "a516ac7720c0dc39ccbb6d7f2b33ce19606ad0c4a87fe3ce1ba112358f0e2c05",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [

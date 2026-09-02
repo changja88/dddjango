@@ -36,7 +36,11 @@ legacy 위반이 상존해 「루트 registry 전체 green」이 문자 그대�
     L  ∃M∈𝓜: ℓ ∈ R_c(M^2) ∖ R_c(M^1) — 검사기 c 를 M^2(incoming)·M^1(레인 측 직전)
        스냅숏에서 재실행해 «incoming 측에는 있고 레인 측 직전에는 없던» 진단임을 증명
 
-  판정 불능(레코드 없음·비-blob 경로·worktree 수정·측정 무효)은 전부 귀속 유지(fail-closed)다.
+  판정 불능(레코드 없음·비-blob 경로·worktree 수정·측정 무효·스냅숏 실패)은 전부 귀속 유지(fail-closed)다.
+  L 은 **∃M 의미론**이다 — 승인 머지 하나에서라도 증명되면 유입이고, 전 승인 머지가 무효(측정 무효·
+  스냅숏 실패)이거나 미증명이면 귀속 유지다(사유는 첫 무효 머지 기준 — 무효는 그 머지의 증명 기회를 잃을 뿐
+  다른 머지의 증명을 막지 않는다). 스냅숏 실패(`git archive` 불능 등)는 traceback 이 아니라 그 머지의
+  후보 라인 사유 `측정 무효(스냅숏 실패) — <M>` 로 귀속 유지되고 진단 절에 git 오류를 싣는다(출력 소실 0).
   L 없는 blob-only 설계는 기각됐다 — 레인이 BC `promotion` 을 신설하고 승인 머지가 리터럴
   "promotion" 을 가진 파일을 verbatim 들여오면 F1 은 통과하나 원인은 레인의 BC 다(이중 원인);
   R(M) 이 아니라 R(M^2) 를 쓰는 이유가 이 반례다(R(M) 은 레인 측 산출물을 포함한다).
@@ -54,6 +58,10 @@ provenance 차분 — 귀속의 분할이지 재정의가 아니다
   경로 필터(sed/grep)로 나눈 서술은 게이트 증거가 아니다 — 유입 분리는 이 채널뿐이다.
   상호작용 위반(F2)은 증명되면 유입, 아니면 `상호작용 미증명` 으로 귀속 유지다(철회할 변경이
   없으므로 처방은 STOP_FOR_USER_APPROVAL — 빚 등재·상류 해소·레인 설계 반송).
+  역방향(main←lane) 머지는 HEAD=lane 이면 first-parent 사슬 밖이라 exit 1 이지만, 발주자가 합성
+  머지를 레인 사슬에 올린 잔여 경로는 도구가 구별하지 못한다 — 머지 표에 `^2` 의 ref 도달성을 싣고
+  `^2` 를 포함하는 ref 가 HEAD 브랜치뿐이면 «역방향/합성 머지 의심» 진단 1행을 낸다(exit 무변 ·
+  custody 는 발주자 소유).
 
 사용: python3 registry_gate.py <저장소 루트> --anchor <ref> [--legacy-debt-file <path>]
       [--approved-merge-file <path>] [--introduced-json <path>] [--contract-json <path>]
@@ -163,10 +171,8 @@ def _tree_digest() -> "tuple[str, int]":
     이 폴더에 살므로 «같은 버전·같은 digest = 같은 측정»이 성립한다(exact command 기록은 경로 pin 계약이 아니다)."""
     files: "list[Path]" = sorted(
         p for p in list(_SCRIPTS_DIR.glob("*.py")) + list(_SCRIPTS_DIR.glob("*.json")) if p.is_file())
-    acc: "hashlib._Hash" = hashlib.sha256()
-    for f in files:
-        acc.update(f"{f.name}\0{hashlib.sha256(f.read_bytes()).hexdigest()}\n".encode("utf-8"))
-    return acc.hexdigest()[:16], len(files)
+    manifest: str = "".join(f"{f.name}\0{hashlib.sha256(f.read_bytes()).hexdigest()}\n" for f in files)
+    return hashlib.sha256(manifest.encode("utf-8")).hexdigest()[:16], len(files)
 
 
 def _toolchain_line() -> str:
@@ -212,14 +218,14 @@ def _run_registry(target: Path,
     for script, auto in REGISTRY:
         if only is not None and script not in only:
             continue
-        proc = subprocess.run(
+        proc: "subprocess.CompletedProcess[str]" = subprocess.run(
             checker_argv(sys.executable, script, str(target), auto),
             capture_output=True, text=True, env=env,
         )
         exits[script] = proc.returncode
         parsed: int = 0
         for raw in (proc.stdout + "\n" + proc.stderr).splitlines():
-            m = _FINDING_RE.match(raw)
+            m: "re.Match[str] | None" = _FINDING_RE.match(raw)
             if m is None:
                 continue
             lines.add(f"{script} :: {_normalize(m.group(1), prefixes)}")
@@ -366,6 +372,7 @@ class _ProvenanceResult:
     chain: "list[anchor_diff.ChainCommit]"
     inflow: "list[tuple[str, str, str]]" = field(default_factory=list)   # (line, L 증명 머지 sha, 파일|상호작용)
     retained: "dict[str, str]" = field(default_factory=dict)             # line → 사유
+    snapshot_failures: "dict[str, str]" = field(default_factory=dict)    # sha → git 오류(진단 절 — 출력 소실 0)
     snapshots_run: int = 0
     checker_runs: int = 0
 
@@ -396,12 +403,14 @@ class _ProvenanceResult:
             "not_participating": [m.sha for m in self.merges if not m.participates],
             "snapshots_run": self.snapshots_run,
             "checker_runs": self.checker_runs,
+            "snapshot_failures": dict(sorted(self.snapshot_failures.items())),
         }
 
     def as_payload(self) -> "dict[str, object]":
         return {
             "approved_merges": [
                 {"sha": m.sha, "parent1": m.parent1, "parent2": m.parent2, "parent2_ref": m.parent2_ref,
+                 "parent2_only_head": m.parent2_only_head,
                  "subject": m.subject, "position": m.position, "memo": m.memo}
                 for m in self.merges],
             "inflow_lines": [{"line": line, "merge": m, "kind": k} for line, m, k in self.inflow],
@@ -412,7 +421,7 @@ class _ProvenanceResult:
 
 def _tree_blobs(root: Path, sha: str) -> "dict[str, str]":
     """커밋 트리의 경로→blob SHA 사전(`git ls-tree -r -z` 1회) — 디렉터리·서브모듈은 들어가지 않는다."""
-    proc = anchor_diff.run_git(root, "ls-tree", "-r", "-z", sha)
+    proc: "subprocess.CompletedProcess[str]" = anchor_diff.run_git(root, "ls-tree", "-r", "-z", sha)
     out: "dict[str, str]" = {}
     if proc.returncode != 0:
         return out
@@ -457,15 +466,19 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
     (i) 경로 (ii) W·F1·F2 blob 판정 (iii) 후보 라인의 검사기만 M^1·M^2 스냅숏(`anchor_diff.snapshot_anchor`
     · `git_root=None` — 스냅숏은 커밋 트리라 원본 porcelain 이 참이 아니다)에서 재실행해 R_c 캐시
     (iv) L 탐색 — F1 은 전달 머지 먼저·다음 first-parent 순, F2 는 first-parent 순 · 첫 적중 중단
-    (v) 후보 0 이면 스냅숏 0. 측정 무효(exit∉{0,2} ∨ 미파싱 합성행 ∨ M^1/M^2 parse-fail 집합 비대칭)는
-    그 검사기 라인 전부 귀속 유지(R-0372 «미파싱=측정 실패» 정합).
+    (v) 후보 0 이면 스냅숏 0. 측정 무효(exit∉{0,2} ∨ 미파싱 합성행 ∨ M^1/M^2 parse-fail 집합 비대칭 ∨ 스냅숏
+    실패)는 **그 머지에서의** 증명 기회만 잃는다 — L 은 ∃M 의미론이라 다른 승인 머지가 증명하면 유입이고,
+    전 승인 머지가 무효/미증명이면 귀속 유지(사유 = 첫 무효 머지 · `측정 무효(M^1|M^2) — <M>` 또는
+    `측정 무효(스냅숏 실패) — <M>` · R-0372 «미파싱=측정 실패» 정합). 스냅숏 실패는 `AnchorDiffUsage` 를 여기서
+    포착해 진단 절에 git 오류를 싣는다 — traceback 으로 출력 전체를 잃지 않는다.
     """
-    res = _ProvenanceResult(merges=merges, chain=chain)
+    res: _ProvenanceResult = _ProvenanceResult(merges=merges, chain=chain)
     active: "list[anchor_diff.ApprovedMerge]" = sorted(
         (m for m in merges if m.participates), key=lambda m: m.position or 0)
     if not attributed:
         return res
-    dirty_proc = anchor_diff.run_git(root, "status", "--porcelain", "--untracked-files=all", "-z")
+    dirty_proc: "subprocess.CompletedProcess[str]" = anchor_diff.run_git(
+        root, "status", "--porcelain", "--untracked-files=all", "-z")
     dirty: "set[str]" = set()
     for entry in dirty_proc.stdout.split("\0"):
         if len(entry) > 3:
@@ -532,15 +545,22 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
     if not candidates:
         return res
 
-    # (iii) 스냅숏·검사기 캐시
+    # (iii) 스냅숏·검사기 캐시 — 스냅숏 실패(git archive 불능 등)는 그 sha 의 측정을 무효로 캐시한다(재시도 0 ·
+    # traceback 0 — 후보 라인은 `측정 무효(스냅숏 실패) — <M>` 로 귀속 유지, git 오류는 진단 절에).
     snap_cache: "dict[str, Path]" = {}
     parse_fail_cache: "dict[str, set[str]]" = {}
     run_cache: "dict[tuple[str, str], tuple[bool, set[str]]]" = {}  # (sha, checker) → (유효, 라인)
 
-    def snapshot(sha: str) -> Path:
+    def snapshot(sha: str) -> "Path | None":
+        if sha in res.snapshot_failures:
+            return None
         if sha not in snap_cache:
             dest: Path = td / f"snap-{sha[:12]}"
-            anchor_diff.snapshot_anchor(root, sha, dest)
+            try:
+                anchor_diff.snapshot_anchor(root, sha, dest)
+            except anchor_diff.AnchorDiffUsage as exc:
+                res.snapshot_failures[sha] = str(exc).strip()
+                return None
             snap_cache[sha] = dest
             parse_fail_cache[sha] = {
                 l.split(" :: ", 1)[1].split(":", 1)[0] for l in _parse_fail_findings(dest)}
@@ -548,16 +568,19 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
         return snap_cache[sha]
 
     def run(sha: str, checker: str) -> "tuple[bool, set[str]]":
-        key = (sha, checker)
+        key: "tuple[str, str]" = (sha, checker)
         if key not in run_cache:
-            snap: Path = snapshot(sha)
-            exits, lines, _recs = _run_registry(snap, only=frozenset({checker}))
-            res.checker_runs += 1
-            valid: bool = exits.get(checker) in (0, 2) and not any(_SYNTHETIC_MARK in l for l in lines)
-            run_cache[key] = (valid, lines)
+            snap: "Path | None" = snapshot(sha)
+            if snap is None:
+                run_cache[key] = (False, set())
+            else:
+                exits, lines, _recs = _run_registry(snap, only=frozenset({checker}))
+                res.checker_runs += 1
+                valid: bool = exits.get(checker) in (0, 2) and not any(_SYNTHETIC_MARK in l for l in lines)
+                run_cache[key] = (valid, lines)
         return run_cache[key]
 
-    # (iv) L 탐색
+    # (iv) L 탐색 — ∃M: 어느 머지든 증명하면 유입 · 전건 무효/미증명이면 귀속 유지
     for line, p, checker, kind, deliver in candidates:
         order: "list[anchor_diff.ApprovedMerge]" = (
             [deliver] + [m for m in active if m is not deliver]) if deliver is not None else list(active)
@@ -566,6 +589,9 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
         for m in order:
             ok1, r1 = run(m.parent1, checker)
             ok2, r2 = run(m.parent2, checker)
+            if m.parent1 in res.snapshot_failures or m.parent2 in res.snapshot_failures:
+                invalid.append(f"측정 무효(스냅숏 실패) — {m.sha[:12]}")
+                continue
             symmetric: bool = parse_fail_cache[m.parent1] == parse_fail_cache[m.parent2]
             if not (ok1 and ok2 and symmetric):
                 sides: "list[str]" = []
@@ -598,7 +624,7 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
 
 
 def main(argv: "list[str]") -> int:
-    ap = _UsageParser(add_help=True)
+    ap: _UsageParser = _UsageParser(add_help=True)
     ap.add_argument("target")
     ap.add_argument("--anchor", required=False, default=None,
                     help="차분 기준(대장 앵커 또는 build-start 앵커) — actor 가 임의로 고르지 않는다")
@@ -612,7 +638,7 @@ def main(argv: "list[str]") -> int:
     ap.add_argument("--contract-json", default=None,
                     help="`rule=null`(선행 계약·센티널) 레코드의 계수를 companion sidecar 로 "
                          "쓴다 — 주입 대상이 아니라 «계수 후 유효 유지»(개정 9)의 원자료")
-    ns = ap.parse_args(argv)
+    ns: argparse.Namespace = ap.parse_args(argv)
 
     root: Path = Path(ns.target).resolve()
     if not root.is_dir():
@@ -674,12 +700,13 @@ def main(argv: "list[str]") -> int:
                 print("사용 오류: git 저장소에는 --anchor <ref> 가 필수다 — 라운드=대장 앵커 · "
                       "파이프라인=Phase 2 진입 직전 기록된 build-start 앵커", file=sys.stderr)
                 return 1
-            rev = anchor_diff.run_git(root, "rev-parse", "--verify", f"{ns.anchor}^{{commit}}")
+            rev: "subprocess.CompletedProcess[str]" = anchor_diff.run_git(
+                root, "rev-parse", "--verify", f"{ns.anchor}^{{commit}}")
             if rev.returncode != 0:
                 print(f"사용 오류: 앵커 {ns.anchor!r} resolve 불능 — {rev.stderr.strip()}", file=sys.stderr)
                 return 1
             anchor_sha = rev.stdout.strip()
-            head = anchor_diff.run_git(root, "rev-parse", "HEAD").stdout.strip()
+            head: str = anchor_diff.run_git(root, "rev-parse", "HEAD").stdout.strip()
             dirty: bool = bool(anchor_diff.run_git(root, "status", "--porcelain").stdout.strip())
             if anchor_sha == head and not dirty:
                 print("사용 오류: 앵커=HEAD 이고 working tree 가 clean — 차분이 공허하다. "
@@ -777,6 +804,9 @@ def _print_inflow(prov: _ProvenanceResult) -> None:
         files, inter = prov.per_merge(m.sha)
         print(f"  [M {m.sha[:12]}] {m.subject} · ^1 {m.parent1[:12]} · ^2 {m.parent2[:12]}({m.parent2_ref}) · "
               f"파일 {files} · 상호작용 {inter}")
+        if m.parent2_only_head:
+            print(f"    ↳ 주의: ^2 {m.parent2[:12]} 를 포함하는 ref 가 HEAD 브랜치뿐 — 역방향/합성 머지 의심"
+                  "(발주자 확인 — 등재 전 `^2` 가 main(상류) 이력에 있는지 확인 · exit 무변)")
     for line, m, kind in prov.inflow:
         print(f"  {line}")
         print(f"    ↳ 유입: {m[:12]}(L 증명) · {'파일 verbatim' if kind == '파일' else '상호작용'}")
@@ -789,6 +819,8 @@ def _print_provenance_diag(prov: _ProvenanceResult, anchor_sha: str) -> None:
     print(f"  first-parent 사슬 {anchor_sha[:12]}..HEAD: 커밋 {st['commits']} · 머지 {st['merges']}"
           f"(승인 {st['approved']} · 미승인 {len(st['unapproved_merges'])}) · 비머지 {st['non_merges']}")
     print(f"  스냅숏 실행 {st['snapshots_run']} · 검사기 재실행 {st['checker_runs']}")
+    for sha, why in prov.snapshot_failures.items():
+        print(f"  스냅숏 실패(측정 무효 — 해당 머지의 후보 라인은 귀속 유지): {sha[:12]} — {why}")
     unapproved: "list[str]" = list(st["unapproved_merges"])  # type: ignore[arg-type]
     if unapproved:
         print(f"  미승인 머지: {' '.join(sha[:12] for sha in unapproved)}")
