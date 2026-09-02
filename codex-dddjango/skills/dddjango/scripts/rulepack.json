@@ -11,7 +11,7 @@
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "7680ed45d4904ca507a5e93ebced8f4f97a841bb34fbb8b4814d1fb7c857e6d5"
+      "sha256": "7832b136f0e84134b2a1d6746b47b93a69be35d6a21b66b1fd626bdda8f4f226"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
@@ -55,7 +55,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "31d80ea5d0505e7c8003e40003ec7d64b0fab9860a718985c41b8a97e549b6ca"
+      "sha256": "5100a418745222e9e0dc70f4dbde641520c008fb58f8b68465f5061949820eaf"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -10495,7 +10495,7 @@
       "block_order": 8,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-0192@2026-08-22",
+      "expression": "https://numchida.com/ns/djr#R-0192@2026-09-03",
       "label": "27종 각각의 exact command·exit 기록 — 증거 없는 «빚 0»은 G0 blocker",
       "order_rank": 998,
       "section": "dddjango/commands/dddjango.md/s005",
@@ -11921,7 +11921,7 @@
       "block_order": 6,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-0287@2026-09-01",
+      "expression": "https://numchida.com/ns/djr#R-0287@2026-09-03",
       "label": "지적 라우팅 — 외부 assertion=acceptance-tester·내부/일반=coder·입장/설계=architect 경유 반송",
       "order_rank": 1098,
       "section": "dddjango/commands/dddjango.md/s007",
@@ -13134,7 +13134,7 @@
       "block_order": 46,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-0365@2026-09-01",
+      "expression": "https://numchida.com/ns/djr#R-0365@2026-09-03",
       "label": "렌더된 required command 와 나머지 required checker 를 정확히 1회 실행·exact command·exit·diagnostic 수집",
       "order_rank": 1176,
       "section": "dddjango/commands/dddjango.md/s007",
@@ -13965,7 +13965,7 @@
       "block_order": 3,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-0419@2026-09-01",
+      "expression": "https://numchida.com/ns/djr#R-0419@2026-09-03",
       "label": "Phase 1 step 5 와 동일하게 입장 표 갱신·배너에 decision 별 owner/path 나열",
       "order_rank": 1230,
       "section": "dddjango/commands/dddjango.md/s009",
@@ -14315,7 +14315,7 @@
       "block_order": 6,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-0442@2026-09-01",
+      "expression": "https://numchida.com/ns/djr#R-0442@2026-09-03",
       "label": "세 mismatch 토큰은 모두 design-architect/G1 반송·G2 차단",
       "order_rank": 1253,
       "section": "dddjango/commands/dddjango.md/s010",
@@ -60560,8 +60560,8 @@
         "design_pregate.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-3426@2026-09-02",
-      "label": "공개 심볼 전수 표기 — Base 닫힌 목록·베이스 유도표 공집합·값 축 유도 2행 등재·수신자 관용 정규화·계약 필드·중첩 타입 소속 명시",
+      "expression": "https://numchida.com/ns/djr#R-3426@2026-09-03",
+      "label": "공개 심볼 전수 표기 — Base 닫힌 목록·베이스 유도표 공집합·값 축 유도 3행 등재(마이그레이션 칸 결손 보충)·`_`+대문자 사설 타입·필드 대입식 허용·수신자 관용 정규화·계약 필드·중첩 타입 소속 명시",
       "order_rank": 409,
       "section": "dddjango/agents/design-architect.md/s005",
       "section_number": null
@@ -60660,8 +60660,8 @@
       "block_order": 9,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3432@2026-09-01",
-      "label": "pre-gate 실행 의무 — design-spec 내용 변경마다·배너 직전 최종본·override 후 dispatch 전 무조건",
+      "expression": "https://numchida.com/ns/djr#R-3432@2026-09-03",
+      "label": "pre-gate 실행 의무 — design-spec 내용 변경마다·배너 직전 최종본·override 후 dispatch 전 무조건 · 캐시 skip 은 `--block-hash` 동일 시만 + skip 행 기록 의무 · Phase 2 재발화는 `--base <G1 기준선 SHA>`·WIP 커밋/stash",
       "order_rank": 1065,
       "section": "dddjango/commands/dddjango.md/s006",
       "section_number": null
