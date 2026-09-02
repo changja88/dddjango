@@ -1,16 +1,16 @@
 # pre-gate 관찰 모드 실측 대장 (v2.17.14~)
 
 - 지위: 속도 리비전 ⑦ 관찰 모드의 실측 원장. 승격 판정(⑦′)의 근거 자료.
-- 판정 규칙(설계 v3 §8 — 09-02 증거 이원화 반영): 실전 레인 ≥2(신규 BC ≥1)에서 ⑴ 오탐 0 이원 판정(`ignored` red→실위반 확인 = G2 귀속 red 해소 트레이스 **또는** legacy-debt 매칭 기록(STOP 병기) / `corrected` red→재실행 green+명세 diff 귀속; 필터 건 별도 계수 — 라벨 닫힌 정의는 R-3433 rev2) ⑵ 커버 표면 미탐 0(G2 귀속 red ∩ P/S/I 표면 기계 대조) ⑶ 형식 반송 ≤1회/레인 + pre-gate 총 소요 보고.
+- 판정 규칙(설계 v4 §8 — 09-02 증거 이원화 · 09-03 Part 1 재발화 별도 계수 · 09-03 Part 3 실존 채널 반영): 실전 레인 ≥2(신규 BC ≥1)에서 ⑴ 오탐 0 이원 판정(`ignored` red→실위반 확인 = G2 귀속 red 해소 트레이스 **또는** legacy-debt 매칭 기록(STOP 병기) / `corrected` red→재실행 green+명세 diff 귀속; 필터 건 별도 계수 — 예보 항목 라벨 닫힌 정의는 R-3433 rev3 «예보 항목 corrected|ignored|filtered») ⑵ 커버 표면 미탐 0(G2 귀속 red ∩ P/S/I 표면 기계 대조) ⑶ 형식 반송 ≤1회/레인(분모는 정위치 형식 red — 중반 재발화 `--base` 판형은 별도 계수) + pre-gate 총 소요 보고 ⑷ **계약 실존 채널 별도 계수**(판정식 입력 아님): 결손 건수 · 처분 분포(`corrected | deferred | filtered` — `ignored` 없음) · 도구 오류(대상 실존인데 결손 — filtered 와 분리) · 오탐 = 도구 오류 · 미탐 = 행이 있었는데 ImportError/0B STOP · 차단 승격 전제 «도구 오류 0 ∧ 진탐 ≥1 over ≥2 레인»이되 exit 5 는 승격 후에도 비차단(별도 게이트). 리포트 판별은 헤더 `실행기: design_pregate.py · dddjango vX.Y.Z` 스탬프(v2.17.16 이후 «계약 실존» 절 상시).
 - 1차 자료 경로: 각 소비 워크트리 `.dddjango/<런 폴더>/{pregate-report.md, g2-registry-evidence.md}` + `docs/superpowers/orders/lane/STOP-*·REPORT-*`.
 
 ## 총괄 표
 
-| # | 레인 | 유형 | 런타임 | 실행 | 형식 red | 귀속 예보(최종) | corrected | ignored | filtered | G2 귀속 | 오탐 | 미탐 | ⑶ 형식 ≤1 |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | spring_dream_server media-library (09-02) | 신규 BC | Claude Opus 4.8 | 4회 | **2** | 15건 | 6축(진탐) | 0 | 15건(전건 적중) | **0** | **0** | **0** | **✗ (2회)** |
-| 2 | spring_dream_server notification (09-02) | 신규 BC | C 레인 | 4회 | **0** | 19건 | 4축(진탐) | 18건* | 1건*(#14 — 실질 진탐) | **0** | **0**(실질) | **0** | **✓ (0회)** |
-| 3 | spring_dream_server notification-email-template (09-02) | 기존 BC 확장 | Claude Opus 4.8 | 5회 | **1+2**† | 11건 | 3축†(진탐 2) | 2건†(실질 filtered) | 0 | **0** | **0**(실질) | **0** | **✓ (정위치 1회)** |
+| # | 레인 | 유형 | 런타임 | 실행 | 형식 red | 귀속 예보(최종) | corrected | ignored | filtered | G2 귀속 | 오탐 | 미탐 | ⑶ 형식 ≤1 | 실존 결손/처분 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | spring_dream_server media-library (09-02) | 신규 BC | Claude Opus 4.8 | 4회 | **2** | 15건 | 6축(진탐) | 0 | 15건(전건 적중) | **0** | **0** | **0** | **✗ (2회)** | 채널 부재(v2.17.15 이전) — 소급 재실행 결손 0(09-03) |
+| 2 | spring_dream_server notification (09-02) | 신규 BC | C 레인 | 4회 | **0** | 19건 | 4축(진탐) | 18건* | 1건*(#14 — 실질 진탐) | **0** | **0**(실질) | **0** | **✓ (0회)** | 채널 부재(v2.17.15 이전) — 소급 재실행 결손 0(09-03) |
+| 3 | spring_dream_server notification-email-template (09-02) | 기존 BC 확장 | Claude Opus 4.8 | 5회 | **1+2**† | 11건 | 3축†(진탐 2) | 2건†(실질 filtered) | 0 | **0** | **0**(실질) | **0** | **✓ (정위치 1회)** | 채널 부재(v2.17.15 이전) — 소급 재실행 결손 0(09-03) |
 
 \* 레인 2의 라벨은 설계 §8 의미론과 어긋나게 쓰였다(아래 상세·발견 ①): «ignored» 18건의 실질은 스텁 아티팩트 필터(=filtered 의미·G2 통과 18/18 적중), «filtered» #14의 실질은 진탐-수용(이관 빚 ⓐ 격리). 실질 재분류 기준으로 오탐 0.
 

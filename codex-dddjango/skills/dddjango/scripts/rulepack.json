@@ -11,7 +11,7 @@
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "7832b136f0e84134b2a1d6746b47b93a69be35d6a21b66b1fd626bdda8f4f226"
+      "sha256": "3c15e8600efa4ca57f6b4e76f1ceb8fa5792d7fc2573b3bbd929669c8b11479f"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
@@ -55,7 +55,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "4e5694cedd56749ccfec09ce16903a48c1ba3f3f04fb22e62e8d326d039503c7"
+      "sha256": "bd94ab4e423635326aaf89467245e850d8d668fd7c109a913d148c47ba57c1d5"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -60580,8 +60580,8 @@
         "design_pregate.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-3427@2026-09-01",
-      "label": "경계 import 표 — 검사기 판정 관련 경계 import 전부(테스트 파일 포함)",
+      "expression": "https://numchida.com/ns/djr#R-3427@2026-09-03",
+      "label": "경계 import 표 — 검사기 판정 관련 경계 import 전부(테스트 파일 포함) · 3단 실존 판정 입력(이 브랜치 기준 · 행 삭제 = 채널 은폐)",
       "order_rank": 410,
       "section": "dddjango/agents/design-architect.md/s005",
       "section_number": null
@@ -60678,8 +60678,8 @@
       "block_order": 9,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3433@2026-09-02",
-      "label": "관찰 모드 red 처분 — 처분 라벨 닫힌 정의(corrected|ignored|filtered)·확인 증거 규칙·append 의무",
+      "expression": "https://numchida.com/ns/djr#R-3433@2026-09-03",
+      "label": "관찰 모드 red 처분 — 채널별 닫힌 처분 라벨(예보 항목 corrected|ignored|filtered · 계약 실존 corrected|deferred|filtered)·확인 증거 규칙·append 의무",
       "order_rank": 1067,
       "section": "dddjango/commands/dddjango.md/s006",
       "section_number": null
@@ -60693,8 +60693,8 @@
       "block_order": 9,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3434@2026-09-01",
-      "label": "예보의 대체·축약 금지 — Phase 0 빚 스캔·G2 게이트 비대체·build_anchor 불간섭·HEAD 판형 유용 금지",
+      "expression": "https://numchida.com/ns/djr#R-3434@2026-09-03",
+      "label": "예보의 대체·축약 금지 — Phase 0 빚 스캔·G2 게이트 비대체·build_anchor 불간섭·HEAD 판형 유용 금지·계약 실존 채널의 G0 선행 조건·상류 머지 판단 비대체",
       "order_rank": 1068,
       "section": "dddjango/commands/dddjango.md/s006",
       "section_number": null
@@ -60738,8 +60738,8 @@
       "block_order": 10,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3437@2026-09-01",
-      "label": "G1/G1′ 배너 pre-gate 예보 1행 병기 — 최종본 결속(낡은 green 금지)",
+      "expression": "https://numchida.com/ns/djr#R-3437@2026-09-03",
+      "label": "G1/G1′ 배너 pre-gate 예보 1행 병기 — 귀속 N·실존 결손 M·최종본 결속(낡은 green 금지)",
       "order_rank": 964,
       "section": "dddjango/commands/dddjango.md/s003",
       "section_number": null
@@ -60753,8 +60753,8 @@
       "block_order": 8,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3438@2026-09-01",
-      "label": "pre-gate 예보 리포트 — pregate-report.md append·안정 ID·처분 라벨·헤더 병기",
+      "expression": "https://numchida.com/ns/djr#R-3438@2026-09-03",
+      "label": "pre-gate 예보 리포트 — pregate-report.md append·안정 ID·처분 라벨·계약 실존 절(e- ID·채널 한정 라벨)·헤더 병기",
       "order_rank": 945,
       "section": "dddjango/commands/dddjango.md/s002",
       "section_number": null

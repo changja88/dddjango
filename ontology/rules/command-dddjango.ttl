@@ -2823,8 +2823,8 @@ djr:R-3432 a djr:Obligation ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-3433 a djr:Obligation ;
-    skos:prefLabel "관찰 모드 red 처분 — 처분 라벨 닫힌 정의(corrected|ignored|filtered)·확인 증거 규칙·append 의무"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3433@2026-09-02> .
+    skos:prefLabel "관찰 모드 red 처분 — 채널별 닫힌 처분 라벨(예보 항목 corrected|ignored|filtered · 계약 실존 corrected|deferred|filtered)·확인 증거 규칙·append 의무"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3433@2026-09-03> .
 
 <https://numchida.com/ns/djr#R-3433@2026-09-01> a djr:Expression ;
     prov:specializationOf djr:R-3433 ;
@@ -2836,13 +2836,25 @@ djr:R-3433 a djr:Obligation ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-amendment .
 
+<https://numchida.com/ns/djr#R-3433@2026-09-03> a djr:Expression ;
+    prov:specializationOf djr:R-3433 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3433@2026-09-02> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3434 a djr:Prohibition ;
-    skos:prefLabel "예보의 대체·축약 금지 — Phase 0 빚 스캔·G2 게이트 비대체·build_anchor 불간섭·HEAD 판형 유용 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3434@2026-09-01> .
+    skos:prefLabel "예보의 대체·축약 금지 — Phase 0 빚 스캔·G2 게이트 비대체·build_anchor 불간섭·HEAD 판형 유용 금지·계약 실존 채널의 G0 선행 조건·상류 머지 판단 비대체"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3434@2026-09-03> .
 
 <https://numchida.com/ns/djr#R-3434@2026-09-01> a djr:Expression ;
     prov:specializationOf djr:R-3434 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3434@2026-09-03> a djr:Expression ;
+    prov:specializationOf djr:R-3434 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3434@2026-09-01> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3435 a djr:Permission ;
     skos:prefLabel "팬텀 스텁 = 스크립트의 결정적 투영물(격리 사본 한정) — 구현 코드 직접 작성 금지 경계 비저촉"@ko ;
@@ -2861,20 +2873,32 @@ djr:R-3436 a djr:Exception ;
     djr:revision 1 .
 
 djr:R-3437 a djr:Obligation ;
-    skos:prefLabel "G1/G1′ 배너 pre-gate 예보 1행 병기 — 최종본 결속(낡은 green 금지)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3437@2026-09-01> .
+    skos:prefLabel "G1/G1′ 배너 pre-gate 예보 1행 병기 — 귀속 N·실존 결손 M·최종본 결속(낡은 green 금지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3437@2026-09-03> .
 
 <https://numchida.com/ns/djr#R-3437@2026-09-01> a djr:Expression ;
     prov:specializationOf djr:R-3437 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-3437@2026-09-03> a djr:Expression ;
+    prov:specializationOf djr:R-3437 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3437@2026-09-01> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3438 a djr:Obligation ;
-    skos:prefLabel "pre-gate 예보 리포트 — pregate-report.md append·안정 ID·처분 라벨·헤더 병기"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3438@2026-09-01> .
+    skos:prefLabel "pre-gate 예보 리포트 — pregate-report.md append·안정 ID·처분 라벨·계약 실존 절(e- ID·채널 한정 라벨)·헤더 병기"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3438@2026-09-03> .
 
 <https://numchida.com/ns/djr#R-3438@2026-09-01> a djr:Expression ;
     prov:specializationOf djr:R-3438 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3438@2026-09-03> a djr:Expression ;
+    prov:specializationOf djr:R-3438 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3438@2026-09-01> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3439 a djr:Obligation ;
     skos:prefLabel "승인 머지 목록 approved-merges.txt — 발주자 소유·머지 승인 시 append·레인 first-parent 사슬 위 2-부모 머지만·도구는 소유를 검증하지 않는다"@ko ;
@@ -2994,7 +3018,7 @@ djr:R-3441 a djr:Exception ;
     djr:kind djr:kind-norm ;
     djr:order 8 ;
     djr:statesNorm djr:R-3438 ;
-    djr:text "- pre-gate 예보 리포트 → `<산출물 폴더>/pregate-report.md` (코디네이터 소유 — Phase 1 pre-gate 실행마다 예보 항목의 안정 ID(경로+규칙번호 해시)와 처분 라벨 `corrected | ignored | filtered` 를 append 하고, 기준선 SHA·프로필·커버 문면·사각 목록을 헤더에 병기한다. `design-spec.md` 와 별개 파일인 이유 — 예보는 명세의 일부가 아니라 명세에 «대한» 관측 기록이라 서로 다른 이유로 바뀐다)\n\n"@ko .
+    djr:text "- pre-gate 예보 리포트 → `<산출물 폴더>/pregate-report.md` (코디네이터 소유 — Phase 1 pre-gate 실행마다 예보 항목의 안정 ID(경로+규칙번호 해시)와 처분 라벨 `corrected | ignored | filtered` 를 append 하고, **계약 실존 절**(boundary-imports 3단 · 자체 안정 ID `e-<모듈+이름 해시>` · 채널 한정 라벨 `corrected | deferred | filtered` · 집계 행 R 상시)을 같은 리포트에 두며, 기준선 SHA·프로필·커버 문면·사각 목록을 헤더에 병기한다. skip 행의 종류(캐시 skip·실체화 0·구형 명세)는 관찰 대장 계수에서 합산한다. `design-spec.md` 와 별개 파일인 이유 — 예보는 명세의 일부가 아니라 명세에 «대한» 관측 기록이라 서로 다른 이유로 바뀐다)\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s002/b9> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s002> ;
@@ -3020,7 +3044,7 @@ djr:R-3441 a djr:Exception ;
     djr:kind djr:kind-norm ;
     djr:order 10 ;
     djr:statesNorm djr:R-0151, djr:R-0152, djr:R-0153, djr:R-0154, djr:R-0155, djr:R-0156, djr:R-0157, djr:R-3437 ;
-    djr:text "\n배너를 출력한 뒤 AskUserQuestion으로 승인 여부를 묻는다(승인 / 수정 요청). 배너 하단 두 필드는 상시 필드다(2026-08-17) — «task 리스트»는 보조 채널 이행 여부를, «슬라이스 감사»는 슬라이스별 실시/갈음을 매 게이트에 기재한다(해당 없는 게이트는 «해당 없음» — 조건부 자기보고가 아니라 무조건 필드라 조용한 생략이 없다). **닫힌 선택지를 제시할 때는 선택지마다 그 선택의 대가 한 줄을 병기한다**(2026-08-13 — 대가 없는 선택지 목록은 결정 비용을 사용자에게 전가한다). **감수 리포트 권고나 명백한 수정 후보가 있으면**(예: G2에서 discipline-reviewer가 남긴 구조 개선·리팩터 권고), 수정 요청 시 그 후보들을 AskUserQuestion 선택지로 제시하고(권고 1건=선택지, 복수면 multiSelect) **기타=자유입력은 항상 함께 유지**한다. 후보가 도구 옵션 한도를 넘으면 전체 번호 목록을 배너에 먼저 출력하고 도구 질문은 그 목록을 가리킨다 — 후보 무언 탈락 금지(2026-08-15 codex 동형 이식). 후보가 없으면 자유 피드백을 받는다. 단 discipline-reviewer 의 캐스케이드 ①/②(이동·동명 폴더 승격) 발견은 이 «권고» 채널이 아니라 반송 대상 발견이다 — 슬라이스 수와 무관하게 다음 게이트 전 원작성자 반영을 완료한다. 선택·입력된 피드백과 함께 해당 단계를 재실행한다. 사용자가 승인하기 전에는 다음 단계로 넘어가지 않는다. **G1/G1′ 배너에는 pre-gate 예보 1행을 병기한다** — 형식 `pre-gate: 귀속 N건 · 커버 P/S/I · 기준선 <SHA 축약>`(red 0 이면 `귀속 0` · 실체화 0 이면 `실체화 0 — skip` · 구형 명세 skip 이면 `skip(구형 명세)` · 실행 불능이면 그 사실 그대로 — 어느 경우도 침묵 없음). 이 1행은 언제나 **배너 직전 최종본**에 대한 것이다(Phase 1 pre-gate 문단 — 낡은 green 금지).\n\n"@ko .
+    djr:text "\n배너를 출력한 뒤 AskUserQuestion으로 승인 여부를 묻는다(승인 / 수정 요청). 배너 하단 두 필드는 상시 필드다(2026-08-17) — «task 리스트»는 보조 채널 이행 여부를, «슬라이스 감사»는 슬라이스별 실시/갈음을 매 게이트에 기재한다(해당 없는 게이트는 «해당 없음» — 조건부 자기보고가 아니라 무조건 필드라 조용한 생략이 없다). **닫힌 선택지를 제시할 때는 선택지마다 그 선택의 대가 한 줄을 병기한다**(2026-08-13 — 대가 없는 선택지 목록은 결정 비용을 사용자에게 전가한다). **감수 리포트 권고나 명백한 수정 후보가 있으면**(예: G2에서 discipline-reviewer가 남긴 구조 개선·리팩터 권고), 수정 요청 시 그 후보들을 AskUserQuestion 선택지로 제시하고(권고 1건=선택지, 복수면 multiSelect) **기타=자유입력은 항상 함께 유지**한다. 후보가 도구 옵션 한도를 넘으면 전체 번호 목록을 배너에 먼저 출력하고 도구 질문은 그 목록을 가리킨다 — 후보 무언 탈락 금지(2026-08-15 codex 동형 이식). 후보가 없으면 자유 피드백을 받는다. 단 discipline-reviewer 의 캐스케이드 ①/②(이동·동명 폴더 승격) 발견은 이 «권고» 채널이 아니라 반송 대상 발견이다 — 슬라이스 수와 무관하게 다음 게이트 전 원작성자 반영을 완료한다. 선택·입력된 피드백과 함께 해당 단계를 재실행한다. 사용자가 승인하기 전에는 다음 단계로 넘어가지 않는다. **G1/G1′ 배너에는 pre-gate 예보 1행을 병기한다** — 형식 `pre-gate: 귀속 N건 · 실존 결손 M건 · 커버 P/S/I · 기준선 <SHA 축약>`(실행기 stdout 의 `요약:` 행이 기계 출처 — red 0 이면 `귀속 0` · 결손 0 이면 `실존 결손 0` · 실체화 0 이면 `실체화 0 — skip`(결손 M>0 이면 `실체화 0 · 실존 결손 M건`) · 구형 명세 skip 이면 `skip(구형 명세)` · 실행 불능이면 그 사실 그대로 — 어느 경우도 침묵 없음). 이 1행은 언제나 **배너 직전 최종본**에 대한 것이다(Phase 1 pre-gate 문단 — 낡은 green 금지).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s003/b11> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s003> ;
@@ -3241,7 +3265,7 @@ djr:R-3441 a djr:Exception ;
     djr:kind djr:kind-norm ;
     djr:order 9 ;
     djr:statesNorm djr:R-3432, djr:R-3433, djr:R-3434, djr:R-3435, djr:R-3436 ;
-    djr:text "**pre-gate — 설계 명세 결정적 예보(관찰 모드)**: `design-spec.md` 내용이 바뀔 때마다 실행한다 — architect 초안 수신 직후(위 2의 리뷰 다발과 병렬 1회 — 조기 신호), 리뷰 반영·개정 수신마다, 그리고 **G1/G1′ 배너 제시 직전 최종본과 G1 override(②/③) 반영 후 Phase 2 dispatch 전에는 무조건**(배너의 예보 1행은 항상 최종본에 대한 것 — 낡은 green 금지). 실행 판형은 `scripts/design_pregate.py <산출물 폴더>/design-spec.md . --report <산출물 폴더>/pregate-report.md` 다(`scripts/…` 는 registry 게이트와 같은 규약 — 스킬 폴더의 절대 경로로 펴고 cwd 는 타깃 프로젝트 루트다 · 기계가독 블록 해시가 불변이면 재실행을 skip 한다 — 캐시가 직렬 비용을 없앤다). 팬텀 스텁·git 호출은 전부 스크립트가 격리 사본(저장소 트리 밖) 위에서 수행하는 **결정적 투영물**이라 «구현 코드는 직접 쓰지 않는다» 경계와 충돌하지 않는다 — 너는 이 절차를 위해 bare git 을 직접 치지 않는다. 이 실행은 **예보다**: red 는 게이트 차단이 아니라 pregate-report 기록 + 리뷰 노트와 같은 채널의 architect 반영 **권고**이고(관찰 모드 — 차단 승격 전까지), 명세 개정 승인마다 각 red 의 처분 라벨 `corrected | ignored | filtered` 를 pregate-report 에 append 한다(관찰 모드의 유일한 추가 절차 의무). **라벨의 뜻은 닫힌 정의다** — `corrected` = 개정으로 해소(다음 실행에서의 소멸이 증거) · `ignored` = 실위반으로 인지하되 개정하지 않음(실위반 확인 증거는 G2 귀속 red 해소 트레이스 **또는** legacy-debt 매칭 기록(STOP 병기) 둘 중 하나다 — 이관 빚 수용이 이 라벨이다) · `filtered` = pre-gate 도구(스텁·문법·시뮬레이션) 한계 판정(실코드 대조·기존 통과 선례 등 근거 병기 의무). 정의 밖 재량 라벨은 없다 — 같은 도구 한계를 레인마다 다른 라벨로 처분하면 승격 판정식이 오염된다(2026-09-02 관찰 레인 1·2 실측). **예보는 Phase 0 빚 스캔과 Phase 2 step 6(G2 registry 게이트)의 실행·증거 요구를 어떤 형태로도 대체·축약하지 않는다** — 예보의 기준선은 «스텁 제외 현재 상태»라 `build_anchor` 를 읽지도 쓰지도 않으며, HEAD 판형 게이트 결과를 G2 증거로 유용하는 것은 차분 세탁으로 금지다. green 의 뜻은 «설계 검증됨»이 아니라 «P/S/I급 결정 계약 위반 예보 0»이다(사각 목록·미시뮬레이션 목록은 리포트가 상시 병기한다). **skip 한정**: file-plan 기계 블록 부재로 실행을 건너뛰는 것은 **형식 규범 시행 전에 승인된 구형 명세에 한한다** — 신규·개정 명세는 블록이 의무이고, 너는 블록 존재를 구문 검사해(리뷰어 노트 구문 검사 판형 준용 — 존재 검사만, 원문 대조는 하지 않는다) 형식 위반이면 architect 에 반송한다. 차단 모드 승격과 함께 이 skip 조항은 폐지된다. *왜* — 승인 명세가 registry 결정 계약과 조인되지 않은 채 동결되면 그 위반은 G1 이후 반송(레인당 평균 ≈34분)으로야 드러난다: 같은 판정 의미론을 승인 전에 결정적으로 돌리면 그 손실이 배너의 예보 1행으로 당겨진다.\n\n"@ko .
+    djr:text "**pre-gate — 설계 명세 결정적 예보(관찰 모드)**: `design-spec.md` 내용이 바뀔 때마다 실행한다 — architect 초안 수신 직후(위 2의 리뷰 다발과 병렬 1회 — 조기 신호), 리뷰 반영·개정 수신마다, 그리고 **G1/G1′ 배너 제시 직전 최종본과 G1 override(②/③) 반영 후 Phase 2 dispatch 전에는 무조건**(배너의 예보 1행은 항상 최종본에 대한 것 — 낡은 green 금지). 실행 판형은 `scripts/design_pregate.py <산출물 폴더>/design-spec.md . --report <산출물 폴더>/pregate-report.md` 다(`scripts/…` 는 registry 게이트와 같은 규약 — 스킬 폴더의 절대 경로로 펴고 cwd 는 타깃 프로젝트 루트다 · 기계가독 블록 해시가 불변이면 재실행을 skip 한다 — 캐시가 직렬 비용을 없앤다). 팬텀 스텁·git 호출은 전부 스크립트가 격리 사본(저장소 트리 밖) 위에서 수행하는 **결정적 투영물**이라 «구현 코드는 직접 쓰지 않는다» 경계와 충돌하지 않는다 — 너는 이 절차를 위해 bare git 을 직접 치지 않는다. 이 실행은 **예보다**: red 는 게이트 차단이 아니라 pregate-report 기록 + 리뷰 노트와 같은 채널의 architect 반영 **권고**이고(관찰 모드 — 차단 승격 전까지), 명세 개정 승인마다 각 red 의 처분 라벨을 pregate-report 에 append 한다(관찰 모드의 유일한 추가 절차 의무). **라벨의 뜻은 채널별 닫힌 정의다** — **예보 항목(registry 귀속)의 처분 라벨은 `corrected | ignored | filtered`** 다: `corrected` = 개정으로 해소(다음 실행에서의 소멸이 증거) · `ignored` = 실위반으로 인지하되 개정하지 않음(실위반 확인 증거는 G2 귀속 red 해소 트레이스 **또는** legacy-debt 매칭 기록(STOP 병기) 둘 중 하나다 — 이관 빚 수용이 이 라벨이다) · `filtered` = pre-gate 도구(스텁·문법·시뮬레이션) 한계 판정(실코드 대조·기존 통과 선례 등 근거 병기 의무) — 이 채널에 `deferred` 는 없다(이연은 ignored+빚 매칭 또는 filtered 다). **계약 실존 결손(리포트 «계약 실존» 절 · 안정 ID `e-…`)의 처분 라벨은 `corrected | deferred | filtered`** 다(2026-09-03): `corrected` = 대상 실존 확보(다음 실행에서 실존 확인 K 증가·결손 소멸) 또는 경로 오기 정정(대상 기실존) — 행 삭제·소비 철회로 결손이 소멸하면 직전 리포트 대비 «결손 소멸 ∧ 행 수 R 감소»가 그것을 드러내며 처분은 `corrected(철회: <근거>)` 로 근거 병기 의무다(발주자 사안이면 STOP) · `deferred`(선행 대기) = 결손 대상이 상류 레인/후행 슬라이스 소유임을 명세가 명시하고 해소 조건을 병기한다 — 정형 `deferred(<소유 레인|Sn>; until <머지 SHA|Sn>)` 권고 · 증거는 조건 충족 시점 재실행에서의 소멸이다(dirty overlay·기준선 갱신이 자동 반영) · `filtered` = 도구 한계(네임스페이스 레이아웃·`import *`·파싱 불능 등 판정 불능 U 계열 — 근거 병기 의무) — 이 채널에 `ignored` 는 없다(부재는 수용 가능한 위반이 아니라 ImportError 예약이며 G2 귀속·legacy-debt 어느 증거도 성립하지 않는다). 실존 채널은 승격 판정식(P/S/I 표면 ∩ G2 귀속)의 **입력이 아니다** — 결손 건수·처분 분포·도구 오류를 별도 계수로만 보고한다(설계 v4 §8 ⑷). 각 채널의 정의 밖 재량 라벨은 없다 — 같은 도구 한계를 레인마다 다른 라벨로 처분하면 승격 판정식이 오염된다(2026-09-02 관찰 레인 1·2 실측). 결손은 권고다 — 도구가 레인을 세우지 않으며(exit 5 는 비차단), 선행 대기가 발주자 결정 사안이면 기존 STOP 규약(R-0459/R-0460)대로 상신한다. **예보는 Phase 0 빚 스캔과 Phase 2 step 6(G2 registry 게이트)의 실행·증거 요구를 어떤 형태로도 대체·축약하지 않는다** — 예보의 기준선은 «스텁 제외 현재 상태»라 `build_anchor` 를 읽지도 쓰지도 않으며, HEAD 판형 게이트 결과를 G2 증거로 유용하는 것은 차분 세탁으로 금지다. **계약 실존 채널도 G0 선행 조건 확인·상류 머지 판단(발주자 소관)을 대체하지 않는다 — 하드 검사가 아니다**(2026-09-03). green 의 뜻은 «설계 검증됨»이 아니라 «P/S/I급 결정 계약 위반 예보 0»이다(사각 목록·미시뮬레이션 목록은 리포트가 상시 병기한다). **skip 한정**: file-plan 기계 블록 부재로 실행을 건너뛰는 것은 **형식 규범 시행 전에 승인된 구형 명세에 한한다** — 신규·개정 명세는 블록이 의무이고, 너는 블록 존재를 구문 검사해(리뷰어 노트 구문 검사 판형 준용 — 존재 검사만, 원문 대조는 하지 않는다) 형식 위반이면 architect 에 반송한다. 차단 모드 승격과 함께 이 skip 조항은 폐지된다. *왜* — 승인 명세가 registry 결정 계약과 조인되지 않은 채 동결되면 그 위반은 G1 이후 반송(레인당 평균 ≈34분)으로야 드러난다: 같은 판정 의미론을 승인 전에 결정적으로 돌리면 그 손실이 배너의 예보 1행으로 당겨진다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> a djr:Section ;
     djr:headingSnapshot "## Phase 2 — 구현 (G2, 이중 루프 TDD)"@ko ;
