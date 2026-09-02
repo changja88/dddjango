@@ -40,7 +40,8 @@ main 위반 커밋 → lane 에서 `git merge --no-ff main`(M) → 판정». 고
   P11  M^1 스냅숏 실패(git archive 불능 — PATH shim) → `측정 무효(스냅숏 실패) — M` 귀속 3·exit 2·traceback 0·
        판정 행 보존·진단 절에 git 오류(5단계 리뷰 P2 M-2)
   P12  합성 머지 — lane 이 임시 가지를 머지하고 그 가지를 지움(^2 를 포함하는 ref 가 HEAD 브랜치뿐) → 머지 표에
-       «역방향/합성 머지 의심» 진단 1행·exit 무변(유입 3·exit 0)(P2 M-1)
+       «역방향/합성 머지 의심» 진단 1행·exit 무변(유입 3·exit 0)(P2 M-1) / P12r 같은 상태에 remote-tracking
+       `refs/remotes/origin/lane`·태그를 얹어도 진단 1행(HEAD 브랜치 자신으로 계수 — 6단계 재검 MAJOR-2)
 
 사용: python3 registry_gate_smoke.py
 exit 0 = 전 케이스 일치 / exit 2 = 불일치 / exit 1 = 재료 결손.
@@ -604,6 +605,13 @@ def main() -> int:
                      "↳ 주의: ^2" in out and "HEAD 브랜치뿐 — 역방향/합성 머지 의심" in out
                      and out.count("↳ 유입:") == 3,
                      "진단 1행·exit 무변(유입 3)"))
+        # P12r — remote-tracking(`refs/remotes/origin/lane`)·태그가 ^2 를 포함해도 HEAD 브랜치 자신으로 세어 진단 유지.
+        _git(repo12, "update-ref", "refs/remotes/origin/lane", m12)
+        _git(repo12, "tag", "lane-wip", m12)
+        code, out = _gate(repo12, anchor12, ["--approved-merge-file", str(_approved(td, "p12r", m12))])
+        rows.append(("P12r remote-tracking·태그 진단 유지", 0, code,
+                     out.count("역방향/합성 머지 의심") == 1 and out.count("↳ 유입:") == 3,
+                     "origin/lane·태그는 HEAD 브랜치 자신 — 진단 침묵 사각 폐쇄"))
         # 대조 — 정상 머지(P1 골격)에는 진단이 없다.
         code, out = _gate(repo, anchor, ["--approved-merge-file", str(_approved(td, "p12n", m_sha))])
         rows.append(("P12′ 정상 머지 진단 부재", 2, code, "역방향/합성 머지 의심" not in out,

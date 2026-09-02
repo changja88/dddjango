@@ -78,8 +78,8 @@ Coordinator 의 캐시 skip 대조 전용(판정 무접촉). 매 실행 리포�
 `--base` 명시(재발화 판형 — Phase 2 진입 후 명세 개정 재실행): 기준선 트리에 없던 계획 add 가
 오버레이에 실존하면 «기실현 add»다 — 앵커 커밋 «전»에 사본에서 걷어내고(앵커 스냅숏 L 무오염)
 스텁으로 실체화해 already-built 에 «기실현 — 스텁 대체 예보»로 기록한다(커밋된 add 와 같은 예보 —
-같은 ID·같은 exit). 기준선 트리에 실존하는 add 는 여전히 형식 red. 미지정(HEAD 기본)은 종전과 byte
-동일 동작.
+같은 ID·같은 exit). 기준선 트리에 실존하는 add 는 여전히 형식 red. 미지정(HEAD 기본)은 종전과 판정
+(exit·귀속·ID) 동일 — 집계 행 문면은 판과 함께 변한다.
 """
 from __future__ import annotations
 
@@ -965,7 +965,7 @@ def lift_realized_adds(copy: Path, plan: Plan, explicit_base: bool,
     스냅숏(L)에 남으면 그 자리의 스텁 진단이 N∖L 이 아니라 L∩N(잔존)으로 빠져 예보가 사라진다 — 커밋된 add
     (사본 밖 → 스텁)와 미커밋 add(오버레이)의 예보를 같게 만드는 유일한 자리다(5단계 리뷰 MAJOR A). 걷어낸
     경로는 `materialize` 가 스텁으로 실체화하고 already-built 에 «기실현»으로 기록한다. `--base` 미지정이면
-    공집합(기본 경로 byte 동일).
+    공집합(기본 경로 판정 동일).
     """
     if not explicit_base:
         return frozenset()
@@ -986,7 +986,8 @@ def materialize(copy: Path, plan: Plan, *, realized: "frozenset[str]" = frozense
     앵커 커밋 전에 사본에서 걷어낸 «기실현 add» 경로다 — 여기서는 다른 add 와 똑같이 스텁으로 실체화하고
     (materialized 에 계수) already-built 에도 «기실현 — 스텁 대체 예보»로 기록한다(이중 기재는 의도 —
     `empty(기실현)` 은 materialized 에 안 실리는 것과 구별). 사본에 실존하는 add 는 기준선 트리 실존(계획↔실물
-    모순)뿐이므로 여전히 형식 red 다. `--base` 미지정 경로는 byte 동일 동작이다.
+    모순)뿐이므로 여전히 형식 red 다. `--base` 미지정 경로는 판정(exit·귀속·ID) 동일이다 — 리포트의 집계 행 문면
+    (계약 실존 «자기 update 해소» 열 등)은 판과 함께 변한다.
 
     반환: materialized / already_built / unsimulated 목록(리포트 재료 — 침묵 금지).
     """
@@ -1151,7 +1152,8 @@ def _realize_module(copy: Path, parts: "list[str]", plan: Plan) -> "tuple[str, P
     namespace-dir | missing.
 
     순서: file-plan 조회(`<parts>.py`·`<parts>/__init__.py` 두 표기 — add = 자기 add · update = 자기 update(실현 파일 =
-    사본의 현재 실물 — 표면은 이 명세 이후 상태라 이름 판정은 `judge_name` 이 symbols 선언으로 가른다) · empty = 자기
+    사본의 현재 실물 — 표면은 이 명세 이후 상태라 이름 판정은 `judge_name` 이 symbols 선언으로 가른다 · **사본에 실물이
+    없으면 missing 그대로** — update 는 파일을 만들지 않으므로 부재는 ⑴ 이지 자기 해소가 아니다) · empty = 자기
     empty · 비지연 remove = missing · `remove@Ln` 은 G1 시점 상태 유지라 사본 실물로 판정) → **승격 폴더 부품**(상위
     `<parts[:-1]>.py` 가 planned-add 슬롯이면 이 마디는 그 슬롯의 승격 폴더 부품 — R-3424 «경로는 언제나 <칸>.py»
     표기의 부품이라 자기 add 해소) → `__init__.py`(패키지 — Python 은 패키지가 모듈보다 우선 · 기존 실물의 승격
@@ -1166,7 +1168,9 @@ def _realize_module(copy: Path, parts: "list[str]", plan: Plan) -> "tuple[str, P
         if entry.tag == "add":
             return "planned-add", None
         if entry.tag == "update":
-            return "planned-update", copy / cand
+            if (copy / cand).is_file():
+                return "planned-update", copy / cand
+            return "missing", None  # update 대상이 사본에 부재 = 계획↔실물 모순 — ⑴ 방향 유지(S′·K 로 세탁 금지)
         if entry.tag == "empty":
             return "planned-empty", copy / cand
         if entry.tag == "remove" and not entry.deferred_remove:
@@ -1184,6 +1188,16 @@ def _realize_module(copy: Path, parts: "list[str]", plan: Plan) -> "tuple[str, P
     if (copy / rel).is_dir():
         return "namespace-dir", None
     return "missing", None
+
+
+def _missing_detail(module: str, plan: Plan) -> str:
+    """⑴ 문면 — 부재 모듈이 file-plan `update` 대상이면 «update 대상 부재(계획↔실물 모순)» 로 병기(update 는 파일을 만들지 않는다)."""
+    rel: str = module.replace(".", "/")
+    for cand in (f"{rel}.py", f"{rel}/__init__.py"):
+        entry: "PlanEntry | None" = plan.entries.get(cand)
+        if entry is not None and entry.tag == "update":
+            return "모듈 부재 — update 대상 부재(계획↔실물 모순)"
+    return "모듈 부재"
 
 
 def _all_literal_names(value: "ast.expr | None") -> "set[str]":
@@ -1291,7 +1305,8 @@ def check_import_existence(copy: Path, plan: Plan) -> ExistenceReport:
     같다 — ⑴ 통과·⑵ 비적용) → 아니면 `M` 에 ⑴ → ⑵(`M` 이 모듈 실현이고 `checker_target.skeleton_placeholder` — 0B·공백·
     주석/docstring-only · 패키지 `__init__` 은 제외) → ⑶(`n ∉ _top_level_names(M)`). **planned-add 대상은 ⑴⑵⑶ 전부
     생략**(«자기 add 해소» S — symbols 문법이 모듈 상수·재수출을 표현 못 하므로 ⑶ 을 걸면 오차단 채널이 된다 · R-3426 소관).
-    **planned-update 대상**(file-plan `update` 칸)은 표면이 «이 명세 이후 상태»다 — 그 칸의 symbols 선언 이름은 «자기
+    **planned-update 대상**(file-plan `update` 칸 — **사본에 실물이 있을 때만**; 부재면 update 는 파일을 만들지 않으므로 ⑴ 유지)은
+    표면이 «이 명세 이후 상태»다 — 그 칸의 symbols 선언 이름은 «자기
     update 해소» S′(스텁 전사는 없지만 선언이 곧 계약), 미선언이면 현재 실물 표면에 있을 때만 K(update 가 그 이름을 지우는
     경우는 미탐 방향·관대 — 사각 병기), 둘 다 아니면 U(«update 대상 — 표면은 이 명세 이후 상태»); ⑵ 자리표시자는 update
     대상에 비적용(5단계 리뷰 MAJOR B — 오차단 폐쇄). 저장소 밖 최상위는 X(검사 밖). 판정 불능 U = 문법 불량 stmt(비-add
@@ -1346,7 +1361,7 @@ def check_import_existence(copy: Path, plan: Plan) -> ExistenceReport:
             rep.self_add += 1
             return
         if kind == "missing":
-            defect("⑴", module, name, "모듈 부재", consumer)
+            defect("⑴", module, name, _missing_detail(module, plan), consumer)
             return
         if kind == "namespace-dir" or file is None:
             undecidable(f"네임스페이스 폴더(`__init__.py` 없음)의 비서브모듈 이름: {module} import {name} ← 소비 {consumer}")
@@ -1386,7 +1401,7 @@ def check_import_existence(copy: Path, plan: Plan) -> ExistenceReport:
                 if kind == "planned-add":
                     rep.self_add += 1
                 elif kind == "missing":
-                    defect("⑴", alias.name, "", "모듈 부재", row.consumer)
+                    defect("⑴", alias.name, "", _missing_detail(alias.name, plan), row.consumer)
                 else:
                     rep.confirmed += 1  # planned-update 포함 — 모듈 import 는 실물 실존으로 족하다
             return
@@ -1507,7 +1522,8 @@ BLIND_SPOTS: "tuple[str, ...]" = (
     "폴더의 비서브모듈 이름·AST 파싱 실패·문법 불량 행·소비자 remove·update 대상의 미선언·미실존 이름 / 관대 K(미탐 "
     "방향) = `TYPE_CHECKING` 가드 안 바인딩(런타임 부재여도 최상위 바인딩으로 센다)·update 대상의 현재 표면 이름(update "
     "가 지우는 경우) / 검사 밖 X = 저장소 밖 패키지(표준·서드파티) / 결손 ⑴ 방향 = gitignore 된 실물(사본 밖 — 이 브랜치 "
-    "추적 기준) / 행 자체가 없다 = 동적 import(`importlib` 리터럴).",
+    "추적 기준)·사본에 부재한 `update` 대상(update 는 파일을 만들지 않는다 — 선언·미선언 무관) / 행 자체가 없다 = 동적 import"
+    "(`importlib` 리터럴).",
 )
 
 

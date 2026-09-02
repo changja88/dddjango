@@ -558,8 +558,8 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
             dest: Path = td / f"snap-{sha[:12]}"
             try:
                 anchor_diff.snapshot_anchor(root, sha, dest)
-            except anchor_diff.AnchorDiffUsage as exc:
-                res.snapshot_failures[sha] = str(exc).strip()
+            except (anchor_diff.AnchorDiffUsage, OSError) as exc:  # git/tar 불능 + mkdir·디스크 오류 — traceback 0
+                res.snapshot_failures[sha] = f"{type(exc).__name__}: {str(exc).strip()}"
                 return None
             snap_cache[sha] = dest
             parse_fail_cache[sha] = {

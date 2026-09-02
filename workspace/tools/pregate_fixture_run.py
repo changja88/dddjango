@@ -45,7 +45,7 @@
 `empty` ⑵·승격 폴더 `__init__` 재수출·서브모듈 형·서드파티 X·`framework.*` 부재 ⑴·`import a.b.c`·상대 import·
 `import *` U·planned-remove ⑴/`remove@Ln` 실존·ID 안정성 + TypeAlias·AsyncFunctionDef·승격 폴더 부품 S·empty 모듈
 import ⑵ 비적용·namespace-dir 이름 U·`import *` 재수출/`__getattr__` U·빈 패키지 `__init__` ⑵ 비적용·계수 항등식 +
-**update 대상**(선언 이름 S′·현재 표면 K·미선언 U·0B 대상 ⑵ 비적용)·세미콜론 복합행 전 문 판정·T 이름 단위).
+**update 대상**(선언 이름 S′·현재 표면 K·미선언 U·0B 대상 ⑵ 비적용·**사본 부재 대상은 ⑴ 유지**)·세미콜론 복합행 전 문 판정·T 이름 단위).
 
 불일치면 exit 1(실행 출력 첨부). 검사기·트리 개정이 pre-gate 스텁 오탐을 새로 만들면
 green 이 깨져 여기서 드러난다(설계 §9-3 드리프트 하네스의 픽스처 축).
@@ -298,10 +298,11 @@ def _existence_unit_checks() -> "list[str]":
         for tag, rel in (("add", dl + "new_vo.py"), ("add", "application/shop/application_layer/uc/do_uc/do_uc_use_case.py"),
                          ("empty", dl + "blank.py"), ("remove", dl + "gone.py"), ("remove", dl + "stay.py"),
                          ("update", dl + "consumer.py"), ("remove", dl + "leaver.py"),
-                         ("update", dl + "upd.py"), ("update", dl + "upd0.py")):
+                         ("update", dl + "upd.py"), ("update", dl + "upd0.py"), ("update", dl + "ghost.py")):
             plan.entries[rel] = dp.PlanEntry(path=rel, tag=tag, deferred_remove=(rel.endswith("stay.py")))
         plan.entries[dl + "upd.py"].declared.append("NewName")
         plan.entries[dl + "upd0.py"].declared.append("Planned")
+        plan.entries[dl + "ghost.py"].declared.append("Planned")  # 사본에 파일 없음 — 부재 update 대상
         (copy / dl / "blank.py").write_text("", encoding="utf-8")  # materialize 가 만든 자기 empty 상태
         consumer: str = dl + "consumer.py"
         rows: "list[tuple[str, str, str]]" = [
@@ -354,6 +355,10 @@ def _existence_unit_checks() -> "list[str]":
             ("update 0B 대상 미선언 U(⑵ 비적용)", "from application.shop.domain_layer.upd0 import Other", "U"),
             ("update 대상 모듈 import K", "import application.shop.domain_layer.upd0", "K"),
             ("update 대상 서브모듈 형 K", "from application.shop.domain_layer import upd", "K"),
+            # 사본에 부재한 update 대상(6단계 재검 MAJOR-1) — update 는 파일을 만들지 않으므로 ⑴ 유지(S′·K 세탁 금지)
+            ("부재 update 대상 선언 이름 ⑴", "from application.shop.domain_layer.ghost import Planned", "⑴"),
+            ("부재 update 대상 미선언 ⑴", "from application.shop.domain_layer.ghost import Other", "⑴"),
+            ("부재 update 대상 모듈 import ⑴", "import application.shop.domain_layer.ghost", "⑴"),
             # 세미콜론 복합행 — 둘째 문(부재)도 판정된다(F-3)
             ("세미콜론 복합행 둘째 문 ⑴", "import application.shop.domain_layer.sku; from application.shop.domain_layer.absent import Thing", "⑴"),
         ]
@@ -411,6 +416,8 @@ def _existence_unit_checks() -> "list[str]":
             out.append(f"⑵ 문면(docstring-only) 불일치: {details.get('application.shop.domain_layer.doc_only import Thing')!r}")
         if "자리표시자(0B — 자기 `empty`)" != details.get("application.shop.domain_layer.blank import Thing"):
             out.append(f"⑵ 문면(자기 empty) 불일치: {details.get('application.shop.domain_layer.blank import Thing')!r}")
+        if "모듈 부재 — update 대상 부재(계획↔실물 모순)" != details.get("application.shop.domain_layer.ghost import Planned"):
+            out.append(f"⑴ 문면(부재 update 대상) 불일치: {details.get('application.shop.domain_layer.ghost import Planned')!r}")
         # ⓟ ID 안정성 — 같은 (모듈, 이름) 소비자 2개 → 항목 1·소비자 2 · 단계(⑴→⑵) 무관 · 예보 ID 정규식 불충돌.
         two: "dp.Plan" = dp.Plan(entries=plan.entries)
         two.import_rows.append(dp.ImportRow(consumer=consumer, stmt="from application.shop.domain_layer.absent import Thing"))

@@ -508,11 +508,11 @@
     "graph": {
       "files": {
         "ontology/ISSUED": "96132834d79d194381bca6843b3f965d0e32612f044a2c9ff05a80ac3978d8d7",
-        "ontology/LEDGER.tsv": "011685e8dcc7a8d74fcce5fe2e2ff0ca262efd17865fa0afdff96d895c69aa41",
+        "ontology/LEDGER.tsv": "68e3507de53fb6db3398279b603d7cb1427e38e961e6fe96c0c6d09e6f05c514",
         "ontology/prefixes.ttl": "6268500a1c7c4da706e05e9a7e5e0e4b6e291c81a5341f694e07ca8948913157",
         "ontology/rules/agent-acceptance-tester.ttl": "010c438c687575db50ace4f05d32072fc3fd5eecdd737e8b98c2ae9dcd12f706",
         "ontology/rules/agent-coder.ttl": "d7370b777e091b46ac3987fa4334c019c673be3ceb1bb199defe45f6aa0e0029",
-        "ontology/rules/agent-design-architect.ttl": "1f15816804b4c1c7b596113f1983800438ef5fbb6c3559dac9db1f0d938a711a",
+        "ontology/rules/agent-design-architect.ttl": "5803791c26e918b3fdda921b6dd94837709da1639238bf0efb41b2e13f3339e1",
         "ontology/rules/agent-design-review-api.ttl": "48853f37804b28e277d256dbc9adfbf6eac7de3ba5cbe6a8841112a9ac4b94ff",
         "ontology/rules/agent-design-review-db.ttl": "48aee1aac8b4bbf0c9870e712d77be4fd3d41998a6c93b7ad042c0149e8bd3ab",
         "ontology/rules/agent-design-review-ddd.ttl": "042960f1a103e51f1ccf4b2a214c18736b98e9d9fbbfd6e8467418151132fb64",
@@ -604,7 +604,7 @@
         "ontology/**/*"
       ],
       "n_files": 92,
-      "tree_sha256": "ec20f2fc2399b2dfd08e31eef94a6494c524a6d7ca26d5437718cbb52ee608b3",
+      "tree_sha256": "6c3e1468904c89d50012612118d77dd757ef60644b1c63127ef7daadac158c60",
       "why": "C암 선별의 원천. 그래프가 바뀌면 팩 재생성이 필요하고, 재생성 없이 바뀌면 팩과 그래프가 어긋난 채 실런이 돈다."
     },
     "harness": {
@@ -684,7 +684,7 @@
     },
     "packs": {
       "files": {
-        "dddjango/scripts/rulepack.json": "663c450d432b54d56d4c945cfede35459025f97ab1f9256885ebb702cc689165",
+        "dddjango/scripts/rulepack.json": "b7083c8c6e6cd40f0e97958c28145bdb07dad180d44718c816ce1be1d3f33e8c",
         "workspace/eval/ab/T0-rule-owner-map-snapshot.md": "d3e75311118630d4c30bea1d69e7a1b31dc40dc3416f920a0f77ccfc37ad13ae"
       },
       "globs": [
@@ -692,7 +692,7 @@
         "workspace/eval/ab/T0-rule-owner-map-snapshot.md"
       ],
       "n_files": 2,
-      "tree_sha256": "22dd173e8fe06eb8f3a5f84de212946e89ea6da89c64763a1d33949afa4509c5",
+      "tree_sha256": "3ac38062123ee63029cd3c79ed93d533aa6b06fb02de74d2013499ebeeca4d71",
       "why": "C암 규칙 팩과 B암 재료. 팩이 바뀌면 처치 자체가 바뀐다."
     },
     "pipeline": {
@@ -700,7 +700,7 @@
         "codex-dddjango/skills/dddjango/SKILL.md": "3588e06965bf1f9264f95c484696959c9f9bd58f192393e1cb832c3ef79782a4",
         "dddjango/commands/dddjango.md": "89d130fdcef0f27e29bd1d140fdc85d50ef1adf8a150e9992d6d326e68b684ea",
         "dddjango/scripts/regen_core.py": "48181a610743fce534ea4d327d34878863da22b207a08ecc2a88ebbdcb05b763",
-        "dddjango/scripts/registry_gate.py": "26916d4d9420d15c325d392d549c3b698cc377511123910f2fb8695ad8d26ee6",
+        "dddjango/scripts/registry_gate.py": "f14fce3a6e1f52b7c5c1002b08057e1dc9b00ebdd5d10d4ff1f5d7ddd21d0392",
         "dddjango/scripts/rulepack.py": "f2144bc50f99cda8bc259a6250b642f605ffa7d1d5c1f8ebb57564cabce4abd3"
       },
       "globs": [
@@ -711,7 +711,7 @@
         "codex-dddjango/skills/dddjango/SKILL.md"
       ],
       "n_files": 5,
-      "tree_sha256": "4a06db6d00c0426acb3c717a4c006aa6903a23cf903d11a9ad335701cd42b77a",
+      "tree_sha256": "337521e90c761ab55497794b933d7136ea77e91905400c80a9359996823a47c9",
       "why": "3암이 공유하는 실행 경로. 암 사이 차이는 스위치 둘뿐이어야 하고, 그 «둘뿐»을 성립시키는 것이 이 파일들의 동일성이다."
     },
     "plugin_payload": {
@@ -727,7 +727,7 @@
         "codex-dddjango/skills/dddjango-architecture-ddd/SKILL.md": "15c77a2d01b561302e4fd455c43f15d277905771edf53536c1a1c6959fdeeaab",
         "codex-dddjango/skills/dddjango-architecture-ddd/references/final.md": "9632dd09c846e7cd8432115e3cd48da3854e719de12bed6ed8127ac046e4cb68",
         "codex-dddjango/skills/dddjango-coder/SKILL.md": "c28ce8be1b192264d912af729ba414945d7d48d10b85f492f9d2d0d5ae66aed8",
-        "codex-dddjango/skills/dddjango-design-architect/SKILL.md": "b1abf1c1bbd4c19d510d21ca02b0d6d5d56b99b5c0e41cf5499b4c474e51c72b",
+        "codex-dddjango/skills/dddjango-design-architect/SKILL.md": "7cebc07de9e6f6d2722b0cfb6f38c40bd652df99a6cbcc12393dc680c9f41a81",
         "codex-dddjango/skills/dddjango-design-review-api/SKILL.md": "5a087d9711b14c5c3c63361fc5832c07a3b305b634036870b80a8961605f978d",
         "codex-dddjango/skills/dddjango-design-review-db/SKILL.md": "89f6b6fff28434e1f70a80bba88c303fbe20ac12ed8df7c08a55370f059e7141",
         "codex-dddjango/skills/dddjango-design-review-ddd/SKILL.md": "740e3c9437845f5376a2a8a239ff7aca506e21333983680bfe16a5d3bd560f14",
@@ -753,7 +753,7 @@
         "dddjango/.claude-plugin/plugin.json": "73e7a3311f3552e76ca24fb8f93ed3515edb7b0281bc88fec0effcb7e1b8a4c1",
         "dddjango/agents/acceptance-tester.md": "0f57ccb3515bec4efe1447a39c4a6eb2363af2fb7098be6600d98276ba0f4874",
         "dddjango/agents/coder.md": "5c7ccee7270504e943e194d6334ee1c50f837c8c2f17e21f16b62ed83049d34a",
-        "dddjango/agents/design-architect.md": "7996d9aa8e4b23ab6c683b2a38c802203547275f97cff5637dffa650ca45d319",
+        "dddjango/agents/design-architect.md": "a496e185b054a09dc0bcf4fd7d5888bbe16ec77da06ae959799b1c7ea3cddeb7",
         "dddjango/agents/design-review-api.md": "4cfdaeebf4834219261df6363536d6eb3ae70515d94fe74232bef865957792cc",
         "dddjango/agents/design-review-db.md": "88cafc2533ead126e5a5ce088542b2e5ca08415af1c27b4a4235ff9c28721f03",
         "dddjango/agents/design-review-ddd.md": "1877a1d5d30da9045e7f037074bad55b41089109a52010d969b7e0a884d6579a",
@@ -792,7 +792,7 @@
         ".agents/plugins/marketplace.json"
       ],
       "n_files": 64,
-      "tree_sha256": "2091180c411c9dc82b7656693fa1ae81deb121aec95c3b45b3dd5d93e09e50ea",
+      "tree_sha256": "09832c73bc4706334e053817992fac41658ba43431c97892153c5b901517ba83",
       "why": "절차서가 **부르는 것들**. 서브에이전트 정의와 규범 산문(`references/final.md`)이 여기 있다 — 그중 ninja §6.1·§6.2 와 ddd §3.2 는 파일럿 이관 대상 클러스터 그 자체다. 절차서만 동결하고 이것들을 두면 봉투만 봉인하고 내용물을 열어 둔 것이다. 산문이 런 사이에 바뀌면 세 암이 같은 규범을 상대한 것이 아니게 되고, `coder.md` 한 줄이 바뀌면 처치와 무관하게 산출물이 달라진다."
     },
     "preregistration": {
@@ -851,7 +851,7 @@
     },
     "scorer": {
       "files": {
-        "dddjango/scripts/anchor_diff.py": "9236b439aa9fcf63d8c6eed2c256b2c28daeed70399c004e0d0c65d7bc7e603a",
+        "dddjango/scripts/anchor_diff.py": "d5dea62cfc7d658a05909595b69b9793bf1a5e63389b1723192d9d07be8b0f2c",
         "dddjango/scripts/business_vocab.py": "c891ebd3bb7406d96d82b7ba796367fab7c40aa15d104f5cc5682284e8625463",
         "dddjango/scripts/check-api-error-controller-contract.py": "5816b7eb626e1fb268f2ce47b4bb663843d673d0b294eea80647f4cf4008fad3",
         "dddjango/scripts/check-app-container.py": "5ad27ade9fc986f6c47833215b22495878c5e10ea851d475e91869bc155359cd",
@@ -903,14 +903,14 @@
         "workspace/tools/ab_score.py"
       ],
       "n_files": 38,
-      "tree_sha256": "290eb8170bff3221adec7a575aaee81562ad25053077dacc9bf0cf39ebf6a41b",
+      "tree_sha256": "3687aabba7a028216b85f67ecc017f5f15bff90f071f2ef636cdaf20b1f5b9d3",
       "why": "판정 스칼라(결정적 검사기 위반 수)를 만드는 전부. 발주·암 산출물을 보기 전에 동결한다 — 산출물을 본 뒤 채점기를 만지면 판정 교락(L-M #4)."
     }
   },
   "initial_state": {
     "issued_sha256": "96132834d79d194381bca6843b3f965d0e32612f044a2c9ff05a80ac3978d8d7",
-    "knowledge_graph_tree_sha256": "ec20f2fc2399b2dfd08e31eef94a6494c524a6d7ca26d5437718cbb52ee608b3",
-    "ledger_sha256": "011685e8dcc7a8d74fcce5fe2e2ff0ca262efd17865fa0afdff96d895c69aa41",
+    "knowledge_graph_tree_sha256": "6c3e1468904c89d50012612118d77dd757ef60644b1c63127ef7daadac158c60",
+    "ledger_sha256": "68e3507de53fb6db3398279b603d7cb1427e38e961e6fe96c0c6d09e6f05c514",
     "violation_history": {
       "dir": "workspace/eval/violations",
       "exists": false,
@@ -951,11 +951,11 @@
     "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.15/scripts",
     "cache-codex": "PENDING",
     "cache-codex_error": "codex 설치 cache 후보 2개 — 어느 것이 로드되는지 결정 불가: ['2.17.14', '2.17.15']",
-    "source-claude": "8746e27f38ffec504604282876fd9b7042d4e645abffd239df4f8231653e7fcb",
-    "source-codex": "8746e27f38ffec504604282876fd9b7042d4e645abffd239df4f8231653e7fcb"
+    "source-claude": "defde202feac531cd7c31726bbcbc5cf72f486ee7db8a4915c59e65006980dd4",
+    "source-codex": "defde202feac531cd7c31726bbcbc5cf72f486ee7db8a4915c59e65006980dd4"
   },
-  "sealed_commit": "aa63a3f37ccca3d801017339f005d7da57dee75d",
-  "self_sha256": "d234981654b5175464c89b8b4a735cfa16448e2beaad7dc7fa8821a988def80f",
+  "sealed_commit": "caad1c57b33b6c35d2aa944986d54b50f374e78d",
+  "self_sha256": "d7f59a2ac0b8e4cbcb6d9a53b48afb7ba8aeaf1f72d29e0843f9f2369535e84d",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [

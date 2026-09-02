@@ -208,8 +208,8 @@ class ApprovedMerge:
     position: "int | None"
     memo: str
     parent2_ref: str  # `git name-rev --refs='refs/*'` — ^2 의 ref 도달성(역방향 머지 오기입 가시화 재료)
-    # `git for-each-ref --contains ^2` 가 HEAD 브랜치 ref 뿐(또는 0)이면 참 — incoming 측이 상류(main) 이력에 없다는
-    # 뜻이라 역방향/합성 머지 의심 진단(exit 무변 · 발주자 확인)의 재료다. HEAD=lane 역방향은 사슬 검증이 exit 1 로
+    # `git for-each-ref --contains ^2` 가 HEAD 브랜치 자신(heads ref·`refs/remotes/*/<브랜치명>`·태그)뿐(또는 0)이면 참 —
+    # incoming 측이 상류(main) 이력에 없다는 뜻이라 역방향/합성 머지 의심 진단(exit 무변 · 발주자 확인)의 재료다. HEAD=lane 역방향은 사슬 검증이 exit 1 로
     # 잡지만, 발주자가 합성 머지를 레인 사슬에 올린 잔여 경로는 이 신호로만 표면화된다.
     parent2_only_head: bool = False
 
@@ -240,6 +240,19 @@ def first_parent_chain(root: Path, anchor_sha: str, head_sha: str) -> "list[Chai
     return None
 
 
+def _counts_as_other_ref(ref: str, head_ref: str, head_branch: str) -> bool:
+    """`^2` 를 포함하는 ref 중 «HEAD 브랜치 자신»으로 세지 않을 것만 참 — HEAD 브랜치 ref·그 remote-tracking
+    (`refs/remotes/*/<HEAD 브랜치명>`)·태그(`refs/tags/*` — 레인 위 태그는 레인 자신)는 제외한다. 푸시된 실전 레인에서
+    `origin/<lane>` 이 늘 `^2` 를 포함해 진단이 침묵하던 사각의 수리(6단계 재검 MAJOR-2)."""
+    if ref == head_ref or ref.startswith("refs/tags/"):
+        return False
+    if head_branch and ref.startswith("refs/remotes/"):
+        remote_rest: str = ref[len("refs/remotes/"):]  # `<remote>/<branch>` — remote 이름은 첫 세그먼트
+        if remote_rest.partition("/")[2] == head_branch:
+            return False
+    return True
+
+
 def load_approved_merges(path: Path, root: Path, anchor_sha: str,
                          head_sha: str) -> "tuple[list[ApprovedMerge], list[ChainCommit]]":
     """승인 머지 목록 로더 — registry_gate 가 import 한다(빚 로더와 같은 자리·같은 fail-closed).
@@ -262,6 +275,7 @@ def load_approved_merges(path: Path, root: Path, anchor_sha: str,
     position_of: "dict[str, int]" = {c.sha: i + 1 for i, c in enumerate(chain)}
     by_sha: "dict[str, ChainCommit]" = {c.sha: c for c in chain}
     head_ref: str = run_git(root, "symbolic-ref", "-q", "HEAD").stdout.strip()  # detached 면 ""
+    head_branch: str = head_ref.removeprefix("refs/heads/") if head_ref.startswith("refs/heads/") else ""
     out: "list[ApprovedMerge]" = []
     seen: "set[str]" = set()
     for raw in path.read_text(encoding="utf-8").splitlines():
@@ -293,7 +307,7 @@ def load_approved_merges(path: Path, root: Path, anchor_sha: str,
         parent2_ref: str = name_rev.stdout.strip() or "undefined"
         containing: "set[str]" = set(
             run_git(root, "for-each-ref", "--contains", parents[1], "--format=%(refname)").stdout.split())
-        only_head: bool = not (containing - {head_ref})
+        only_head: bool = not {r for r in containing if _counts_as_other_ref(r, head_ref, head_branch)}
         if run_git(root, "merge-base", "--is-ancestor", sha, anchor_sha).returncode == 0:
             out.append(ApprovedMerge(sha, parents[0], parents[1], subject, None, memo.strip(), parent2_ref, only_head))
             continue  # ⓓ 앵커 이전 — 판정 불참(목록은 유효)

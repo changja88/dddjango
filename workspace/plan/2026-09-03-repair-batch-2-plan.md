@@ -440,7 +440,7 @@ R-3427 rev2(확장·약화 없음) · R-3433 rev3(채널별 닫힌 정의·기�
 
 ## D-통합
 - **릴리즈 단위: 단일 v2.17.16(3부 합산)** — 릴리즈마다 라이브 레인 캐시 교체 위험이 있으므로 1회로. 시점은 사용자 결정 게이트. 판별 = 리포트 헤더 버전 스탬프(행 수 휴리스틱 폐기).
-- 계수표 최종 기대: ExpressionShape **3544**(+7+9+5 + 6단계 R-3436 rev2 clarification 1 — 릴리즈된 09-01 Expression 이라 in-place 대상 아님) · Norm/Work **3450**(+3) · Block **2897~2900**(s002/b9·s006/b10·s007/b13) · ISSUED **R-3439~3441** · LEDGER **+19**(실측 — Part 1 +6 · Part 2 +4 · Part 3 +4 · 6단계 반영 +5) · BLIND_SPOTS **9**(Part 1 +1 문면·Part 3 +2).
+- 계수표 최종 기대: ExpressionShape **3544**(+7+9+5 + 6단계 R-3436 rev2 clarification 1 — 릴리즈된 09-01 Expression 이라 in-place 대상 아님) · Norm/Work **3450**(+3) · Block **2897~2900**(s002/b9·s006/b10·s007/b13) · ISSUED **R-3439~3441** · LEDGER **+20**(실측 — Part 1 +6 · Part 2 +4 · Part 3 +4 · 6단계 반영 +5 · 6단계 재검 +1) · BLIND_SPOTS **9**(Part 1 +1 문면·Part 3 +2).
 - 통합 절 1 정정: 세 Part 규범 ID 집합은 서로소 → rev 번호는 착지 순서와 무관. rebase 대상은 s006/b9·s002·s007 `djr:text`뿐. 통합 절 5 정정: Coordinator 규범엔 exit 수치 열거 없음(실재 지점 5곳은 D-P3 MAJOR-7).
 - `make verify-mutation`은 3 Part 전부(rulepack 재소성). codex 의미 미러 대상: Part 1 8곳·Part 2 2파일·Part 3 2파일.
 - 5단계 입력 추가: 1단계 C «kkebi 20머지» vs Part 2 «머지 7+비머지 8» 산정 기준 확정 · Part 3 오차단 0 스캔 결과표.
@@ -490,4 +490,15 @@ R-3427 rev2(확장·약화 없음) · R-3433 rev3(채널별 닫힌 정의·기�
 ## 4. 계수표
 
 ExpressionShape 3543 → **3544**(R-3436 rev2 clarification 1 — 릴리즈된 Expression 은 in-place 대상이 아니라는 원칙의 결과 · 나머지 5 규범은 in-place) · Norm/Work 3450 · Block 2900 · ISSUED 무변경 · LEDGER +5(command-dddjango s002·s005·s006·s007 · agent-design-architect s005) → 배치 누계 **+19** · BLIND_SPOTS 9행(문면만 변경).
+
+## 5. 6단계 재검(리뷰어 `rv6/`) 신규 발견 4건 반영 (2026-09-03)
+
+| # | 발견 | 수정 | 재현 전 → 후 |
+|---|---|---|---|
+| **MAJOR-1** | `_realize_module` update 분기가 실물 실존을 안 보고 `planned-update` 반환 → 사본 **부재** update 대상이 ⑴ 대신 S′/U/K 로 세탁(aa63a3f 회귀 — 7395db2 는 ⑴) | update 분기 `(copy / cand).is_file()` 아니면 `missing` 유지 · `_missing_detail()` ⑴ 문면 «모듈 부재 — update 대상 부재(계획↔실물 모순)» · docstring(«사본에 실물이 있을 때만») · BLIND_SPOTS ⑴ 방향에 «사본 부재 update 대상» · **R-3427 rev2 in-place**(«대상(사본에 실물이 있을 때만 — 부재면 ⑴ 모듈 부재)») · 설계 v4 §3-D4 · 러너 유닛 부재 update 3행(선언/미선언/`import M`) + ⑴ 문면 단언 | `rv6/attackB.py` ⓑ 4행: aa63a3f 판 exit 0(S′ 1 / U 1 / K 1 / K 1) → **exit 5 · ⑴×3 + ⑶×1**(ⓑ4 서브모듈 형은 패키지 `__init__` 표면 ⑶ — 7395db2 와 동일·같은 ID) · 유닛 3행 aa63a3f 판 red 4건 → green |
+| **MAJOR-2** | `parent2_only_head` 가 `containing − {head_ref}` 공집합 조건이라 `refs/remotes/origin/<lane>`·태그가 ^2 를 포함하면 진단 침묵(푸시된 실전 레인 = 항상 침묵) | `anchor_diff._counts_as_other_ref()` — HEAD 브랜치 ref·`refs/remotes/<remote>/<HEAD 브랜치명>`(remote = 첫 세그먼트 정확 일치)·`refs/tags/*` 제외 · 스모크 **P12r**(`update-ref refs/remotes/origin/lane M` + 태그 후에도 진단 1행) | `rv6/p12remote.py`: none 1 / remote-tracking **0** / tag **0** → 전건 **1**(exit 0·유입 3 무변) |
+| MINOR-1 | `snapshot()` 포착이 `AnchorDiffUsage` 뿐 | `except (anchor_diff.AnchorDiffUsage, OSError)` + 사유에 예외 클래스명 병기 | — |
+| MINOR-2 | «`--base` 미지정 경로 byte 동일» 문면(집계 행 문면은 변한다) | 모듈 docstring·`materialize`·`lift_realized_adds` → «판정(exit·귀속·ID) 동일 — 집계 행 문면은 판과 함께 변한다» | — |
+
+검증: 러너 PASS · 스모크 **31/31** · anchor_diff 14/14 · `make verify` 6/6(rulepack 재소성·봉인 재발행 후 core green) · byte 미러 0 · 4레인·kkebi S2 3트리 전후 불변(재실측). 규범: R-3427 rev2 in-place(계수 3544 유지) · 렌더 · LEDGER +1(agent-design-architect s005 → 배치 누계 +20) · codex `dddjango-design-architect/SKILL.md` 미러.
 
