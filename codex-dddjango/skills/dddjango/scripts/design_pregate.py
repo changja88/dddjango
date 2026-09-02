@@ -322,12 +322,23 @@ def _parse_file_plan(rows: "list[str]", errors: "list[str]") -> "dict[str, PlanE
     return entries
 
 
+def _strip_receiver(params: str) -> str:
+    """선행 수신자 청크(무어노테이션 `self`/`cls` **완전 일치**)만 벗긴다 — 렌더가 수신자를 합성하므로
+    명세의 표기·무표기 양 관용을 같은 계획으로 정규화한다. 접두 유사 이름(`self_x`)·어노테이션
+    수신자(`self: Self`)는 건드리지 않는다(후자는 중복 합성 → compile 형식 red로 정직하게 귀결)."""
+    chunks: "list[str]" = _split_top(params)
+    if chunks and chunks[0] in ("self", "cls"):
+        return ", ".join(chunks[1:])
+    return params
+
+
 def _parse_symbol_rest(rest: str, errors: "list[str]", where: str) -> "Symbol | Method | None":
     """`::` 뒤 본문을 클래스/함수(Symbol) 또는 메서드(Method)로 파싱한다."""
     rest = rest.strip()
     mm = _METHOD_RE.match(rest)
     if mm is not None and "." in rest.split("(", 1)[0]:
-        return Method(name=f"{mm.group(1)}.{mm.group(2)}", params=(mm.group(3) or "").strip(),
+        return Method(name=f"{mm.group(1)}.{mm.group(2)}",
+                      params=_strip_receiver((mm.group(3) or "").strip()),
                       ret=(mm.group(4) or "").strip())
     fields_part: "str | None" = None
     head: str = rest
@@ -507,27 +518,78 @@ def parse_spec(text: str) -> "tuple[Plan | None, list[str]]":
     _parse_imports(blocks.get("boundary-imports", []), plan, errors)
     _parse_exception_map(blocks.get("exception-map", []), plan, errors)
     _parse_signals(text, plan)
-    # apps.py 정형(② 화이트리스트): django_* apps.py 심볼의 무기재 베이스는 AppConfig 규약 상수다.
+    # apps.py 정형(② 화이트리스트): django_* apps.py 심볼의 무기재 베이스는 AppConfig 규약 상수이고,
+    # 결손 필드(name/label)는 정형 값으로 보충한다 — 전사된 필드는 유지(전사 우선·일탈은 예보에 실린다).
     for entry in plan.entries.values():
         if entry.path.endswith("/apps.py") and "django_" in entry.path:
+            parent: PurePosixPath = PurePosixPath(entry.path).parent
+            parts: "tuple[str, ...]" = parent.parts
+            bc: str = parts[1] if len(parts) >= 2 and parts[0] == "application" else ""
+            dotted: str = ".".join(parts)
             for sym in entry.symbols:
-                if sym.kind == "class" and not sym.base:
+                if sym.kind != "class":
+                    continue
+                if not sym.base:
                     sym.base = "AppConfig"
+                if (sym.base or "").strip() != "AppConfig":
+                    continue
+                heads: "set[str]" = {f.split("=")[0].split(":")[0].strip() for f in sym.fields}
+                if "name" not in heads:
+                    sym.fields.append(f'name = "{dotted}"')
+                if "label" not in heads and bc:
+                    sym.fields.append(f'label = "{bc}"')
     return plan, errors
 
 
 # ── 스텁 렌더러 — D2 규약(본문은 `...`/`raise NotImplementedError` 뿐) ─────────
 
-def _class_stub(sym: Symbol) -> "list[str]":
-    """클래스 스텁 — 필드·enum 멤버는 전사 원문, 메서드 본문은 NotImplementedError."""
+_SNAKE_ACRONYM_RE = re.compile(r"([A-Z]+)([A-Z][a-z])")
+_SNAKE_BOUNDARY_RE = re.compile(r"([a-z\d])([A-Z])")
+_MODEL_DIR_RE = re.compile(r"^application/([^/]+)/driven_layer/django_[^/]+/models/[^/]+\.py$")
+
+
+def _snake(name: str) -> str:
+    """CamelCase → snake_case — check-db-table.py `_snake` 의 2-pass regex 문자 복제.
+    유도값의 byte 동치가 계약이다(재구현 드리프트 = 신규 #630 아티팩트)."""
+    s: str = _SNAKE_ACRONYM_RE.sub(r"\1_\2", name)
+    s = _SNAKE_BOUNDARY_RE.sub(r"\1_\2", s)
+    return s.lower()
+
+
+def _derived_db_table(path: str, class_name: str) -> "str | None":
+    """모델 칸의 `*Model` 클래스 → #630 유도 규칙의 기대 db_table. 그 외 None.
+    label 은 경로 bc(정형 label)와 동일 가정 — 커스텀 label 계획의 유도 불일치는 사각 병기."""
+    m = _MODEL_DIR_RE.match(path)
+    if m is None or not class_name.endswith("Model") or class_name == "Model":
+        return None
+    base: str = class_name[: -len("Model")]
+    return f"{m.group(1)}_{_snake(base)}"
+
+def _class_stub(sym: Symbol, meta_db_table: "str | None" = None) -> "list[str]":
+    """클래스 스텁 — 필드·enum 멤버는 전사 원문, 메서드 본문은 NotImplementedError.
+
+    base 가 정확히 `ABC`(원문 완전 일치)면 선언형으로 렌더한다: `@abstractmethod` + `...` —
+    #212/#283 판정은 데코레이터 유일 조건이라 실코드 선언 관례와 같은 판정 경로를 탄다.
+    `meta_db_table` 이 주어지고 필드에 `db_table` 전사가 없으면 `class Meta` 를 합성한다(#630
+    유도 규칙과 byte 동치 — 결손 시만·전사 우선)."""
     head: str = f"class {sym.name}({sym.base}):" if sym.base else f"class {sym.name}:"
     lines: "list[str]" = [head, '    """계획 스텁."""']
     body: "list[str]" = [f"    {chunk}" for chunk in sym.fields]
+    field_heads: "set[str]" = {f.split("=")[0].split(":")[0].strip() for f in sym.fields}
+    if meta_db_table is not None and "db_table" not in field_heads:
+        body.append("    class Meta:")
+        body.append(f'        db_table = "{meta_db_table}"')
+    declarative_abc: bool = (sym.base or "").strip() == "ABC"
     for meth in sym.methods:
         sig: str = f"self, {meth.params}" if meth.params else "self"
         ret: str = meth.ret or "object"
-        body.append(f"    def {meth.name}({sig}) -> {ret}:")
-        body.append("        raise NotImplementedError")
+        if declarative_abc:
+            body.append("    @abstractmethod")
+            body.append(f"    def {meth.name}({sig}) -> {ret}:")
+            body.append("        ...")
+        else:
+            body.append(f"    def {meth.name}({sig}) -> {ret}:")
+            body.append("        raise NotImplementedError")
     lines.extend(body if body else ["    ..."])
     return lines
 
@@ -551,6 +613,8 @@ def render_stub(entry: PlanEntry) -> str:
             lines.append(stmt)
             emitted.add(stmt)
     for stmt in entry.imports:
+        if stmt.startswith("from __future__"):
+            continue  # 최상단 하드코딩 1회가 유일한 자리 — 전사 재방출은 위치 오류(compile red)가 된다
         if stmt not in emitted:
             lines.append(stmt)
             emitted.add(stmt)
@@ -568,7 +632,7 @@ def render_stub(entry: PlanEntry) -> str:
             lines.append('    """계획 스텁."""')
             lines.append("    raise NotImplementedError")
         else:
-            lines.extend(_class_stub(sym))
+            lines.extend(_class_stub(sym, _derived_db_table(entry.path, sym.name)))
         lines.append("")
     for exc in entry.raises:
         lines.append(f"def _pregate_raise_{exc.lower()}() -> None:")
@@ -716,9 +780,10 @@ def materialize(copy: Path, plan: Plan) -> "dict[str, list[str]]":
                 raise FormError(f"add 충돌(실존): {entry.path} — 계획과 실물의 모순은 그 자체가 발견이다")
             stub: str = render_stub(entry)
             try:
-                ast.parse(stub)
-            except SyntaxError as exc:
-                raise FormError(f"스텁 렌더 파싱 불가: {entry.path} — {exc.msg} "
+                compile(stub, entry.path, "exec")  # symtable까지 — 중복 인자류는 ast.parse 가 못 잡는다
+            except (SyntaxError, ValueError) as exc:
+                detail: str = getattr(exc, "msg", None) or str(exc)
+                raise FormError(f"스텁 렌더 파싱 불가: {entry.path} — {detail} "
                                 "(기계 블록 전사 내용이 파이썬 문법 밖이다)")
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(stub, encoding="utf-8")
@@ -825,6 +890,8 @@ BLIND_SPOTS: "tuple[str, ...]" = (
     "앵커·상태 축: 예보 기준선은 «스텁 제외 현재 상태»다 — G2 build_anchor 차분과 다르며, "
     "HEAD 판형 게이트 결과의 G2 증거 유용은 차분 세탁으로 금지된다.",
     "미시뮬레이션: update 계획·후행 remove(@Ln)는 실체화하지 않는다 — 위 목록 병기.",
+    "정형 보충(apps.py name/label·모델 Meta.db_table): 결손 시 규약 유도값을 합성한다 — 기계 블록 "
+    "전사가 있으면 전사 우선이지만, «산문»으로만 규약 밖 값을 계획한 일탈은 예보 표면 밖이다.",
 )
 
 

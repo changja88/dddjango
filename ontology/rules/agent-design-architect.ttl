@@ -1701,12 +1701,18 @@ djr:R-3425 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3426 a djr:Obligation ;
-    skos:prefLabel "공개 심볼 전수 표기 — Base 닫힌 목록·유도표 생략=규약 준수 확약·계약 필드·중첩 타입 소속 명시"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3426@2026-09-01> .
+    skos:prefLabel "공개 심볼 전수 표기 — Base 닫힌 목록·베이스 유도표 공집합·값 축 유도 2행 등재·수신자 관용 정규화·계약 필드·중첩 타입 소속 명시"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3426@2026-09-02> .
 
 <https://numchida.com/ns/djr#R-3426@2026-09-01> a djr:Expression ;
     prov:specializationOf djr:R-3426 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3426@2026-09-02> a djr:Expression ;
+    prov:specializationOf djr:R-3426 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3426@2026-09-01> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3427 a djr:Obligation ;
     skos:prefLabel "경계 import 표 — 검사기 판정 관련 경계 import 전부(테스트 파일 포함)"@ko ;
@@ -2082,7 +2088,7 @@ djr:R-3431 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 35 ;
     djr:statesNorm djr:R-3426 ;
-    djr:text "- **공개 심볼 표기**: 자리표시자 실현 파일의 **공개 심볼 전부**를 `<!-- machine: symbols -->` 마커 + ```symbols 펜스에 적는다(«대표 1회»가 아니라 전수다) — 1행 = `경로.py::Symbol(Base) {필드, …}` · 메서드 행 `경로.py::Symbol.method(파라미터) -> 반환` · 필드 = `name: Type[ = default]` 또는 `NAME = \"literal\"`(enum 멤버). Base 병기가 의무인 종류는 재량 목록이 아니라 **검사기 소스에서 기계 추출한 닫힌 목록**(소성물 `scripts/pregate_symbol_kinds.json` — rulepack 과 함께 재생성)이고, 명명규약으로 유도 가능한 생략은 **성문 유도표**(final.md §1 칸→베이스 결정표 — **아직 성문 전이다: 성문 전에는 생략 허용분이 공집합이라 전 심볼을 명기한다**) 등재분에 한한다 — **생략 = 규약 준수 확약**이다(생략분은 자동 정규화되어 위반 예보가 불능이 된다: 규약을 벗어날 계획이면 반드시 명기). published-language 칸(contract/·published_error)의 심볼은 **필드 목록**(`code` 필드 유무 포함)을 병기하고, **주 계약이 참조하는 보조·중첩 타입은 소속 파일을 명세가 명시**한다 — 안 박으면 coder 가 즉흥 배치해 예보·판정이 그 파일을 못 본다.\n"@ko .
+    djr:text "- **공개 심볼 표기**: 자리표시자 실현 파일의 **공개 심볼 전부**를 `<!-- machine: symbols -->` 마커 + ```symbols 펜스에 적는다(«대표 1회»가 아니라 전수다) — 1행 = `경로.py::Symbol(Base) {필드, …}` · 메서드 행 `경로.py::Symbol.method(파라미터) -> 반환`(수신자는 무어노테이션 `self`/`cls` 에 한해 적어도·안 적어도 된다 — 실행기 파서가 정규화한다; 어노테이션 수신자는 중복 합성으로 형식 red 가 된다) · 필드 = `name: Type[ = default]` 또는 `NAME = \"literal\"`(enum 멤버). Base 병기가 의무인 종류는 재량 목록이 아니라 **검사기 소스에서 기계 추출한 닫힌 목록**(소성물 `scripts/pregate_symbol_kinds.json` — rulepack 과 함께 재생성)이고, 명명규약으로 유도 가능한 생략은 **성문 유도표**(final.md §1 칸→베이스 결정표 — **아직 성문 전이다: 성문 전에는 생략 허용분이 공집합이라 전 심볼을 명기한다**) 등재분에 한한다 — 단 **값 축 유도 2행은 성문 등재됐다**(2026-09-02): django_* `apps.py` 의 `name`(앱 폴더 전체 점 경로)/`label`(bc명) 정형과 models/ 칸 `*Model` 의 `Meta.db_table`(`<bc>_<entity_snake>` — #630 유도 규칙). 이 결손은 실행기가 규약 상수로 보충하므로 규약대로라면 생략해도 된다(규약 밖 값을 계획하면 반드시 기계 블록에 명기 — 산문 명기는 예보 표면 밖이다). **생략 = 규약 준수 확약**이다(생략분은 자동 정규화되어 위반 예보가 불능이 된다: 규약을 벗어날 계획이면 반드시 명기). published-language 칸(contract/·published_error)의 심볼은 **필드 목록**(`code` 필드 유무 포함)을 병기하고, **주 계약이 참조하는 보조·중첩 타입은 소속 파일을 명세가 명시**한다 — 안 박으면 coder 가 즉흥 배치해 예보·판정이 그 파일을 못 본다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b36> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
