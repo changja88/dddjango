@@ -1,4 +1,4 @@
-# 수리 배치 2 계획 v1 (v2.17.16 후보) — 3부 구성
+# 수리 배치 2 계획 v2 (v2.17.16 후보) — 3부 구성 + 3단계 리뷰 반영 델타(말미)
 
 - 날짜: 2026-09-03 · 지위: 루브릭(`2026-09-03-repair-batch-2-rubric.md`) 1단계 결과 표의 재정의 처방 7건을 3부로 분할한 계획 v1(3단계 적대 리뷰 전). 판형은 `2026-09-02-pregate-repair-plan.md` 준용 + 항목별 3축(코퍼스 정합·일반화·무손실).
 - 병합 순서: **Part 1(소규모 묶음) 선머지 → Part 2(대형 A) rebase → Part 3(대형 B)**. 근거: Part 1의 `registry_gate.py`·`design_pregate.py` 변경은 출력/파서 국한이고 Part 2·3은 판정 로직을 고침 — 헝크 비중첩.
@@ -340,3 +340,44 @@ R-3427 rev2(확장·약화 없음) · R-3433 rev3(채널별 닫힌 정의·기�
 5. **exit 코드 성문**: Part 3의 exit 5 신설은 Coordinator/설계 문서의 exit 열거(«0/2/3/4/1»)를 찾아 전부 갱신해야 한다 — 3단계 코퍼스 정합 리뷰 지정 항목.
 6. **1단계 C 수치 대조**: kkebi identity «20머지»(C) vs «머지 7+직접 4»(Part 2 실측) — 5단계에서 산정 기준 확정.
 7. **기록 정정**: 계획 지시문의 `fixtures/pregate/notification-design-spec.md` 경로는 저장소에 없음(스크래치 보관) — 소급 대조 출처는 워크트리 히스토리로 통일.
+
+
+---
+
+# v2 반영 델타 — 3단계 적대 리뷰 4기(Part 1·2·3·교차) 전건 반영 (2026-09-03)
+
+리뷰 결과: BLOCKER 1(Part 2 — 조건부 해제)·MAJOR 17·MINOR 30. 방향 변경·퀄리티 트레이드오프·게이트 완화 사유 없음 → 아래 델타를 v1 본문 위에 우선 적용해 구현한다(충돌 시 델타가 정본).
+
+## D-P1 (Part 1)
+- **④′** 검증됨. m-1: `_Class(Base)`의 base에 `:`가 있어 compile 실패하면 «`_`+대문자 선두는 클래스 — 사설 함수는 소문자 선두» 힌트를 형식 red 메시지에 병기. m-2: 5단계 대조표에 «동일 트리 전후 비교(레인 당시 15건과 무관)» 명기.
+- **⑤ 전사 우선 변형(m-3·m-4·m-5)**: «전사 불가 칸» 신개념 폐기. 마이그레이션 add에 symbols 전사가 있으면 **기존 렌더러로 전사 우선**(`migrations.Migration` base는 BASE_IMPORTS 밖·compile OK·검사기 base 무검사 — 리뷰 실측), 결손 시만 정형 스텁. `initial = True`는 `0001_`에만. `__init__.py`는 빈 파일. R-3426 rev3 문면은 «마이그레이션 칸의 결손 보충(값 축 유도 3행째)»으로 — b35 «전사 우선·결손 보충» 원리와 동형. 단조성 예외(RunPython 전사 예보 불능) 해소.
+- **⑧ 실행기 소형 변경으로 전환(M-1·M-2·m-6·m-7 + 교차 M-1)**: 해시 산출은 실행기 `--block-hash`(출력 전용·판정 무접촉 — 파서와 **같은 정규식**으로 기계 블록 4종+입장 표 추출 → sha256[:12]; sed/git 판형 폐기·OS 무관·git 0회). 실행기가 **매 실행 리포트 헤더에 `블록 해시 <값>` 병기**(리포트만으로 skip 대조 가능). Coordinator 규범: «`--block-hash` 값이 직전 실행 헤더 값과 같으면 skip 가능 — skip 행 `- pre-gate skip — 블록 해시 <값> 불변 · 기준선 <sha12> · 재실행 생략 <UTC> · 직전 예보 <UTC>` append 의무(`## pre-gate 예보` 문자열 비사용)». bare git 금지 문장 무접촉.
+- **③(m-8·m-9 + 교차 M-2·m-13)**: digest 대상을 `scripts/*.py + *.json`(`__pycache__` 제외) 전량으로(목록 논쟁 제거) + 인터프리터 `X.Y` 병기. R-0192 clarification은 «플러그인 버전» 기준만·digest 참조는 R-0365(G2)에 한정. **버전 판별은 사각 행 수 휴리스틱을 폐기하고 pregate-report 헤더 `실행기: design_pregate.py · dddjango vX.Y.Z · 블록 해시 <값>` 스탬프로 교체**(probe 헬퍼를 design_pregate.py에도 — 두 스크립트 독립 파일이라 각자 보유·유닛으로 동치 가드). ledger 헤더 판별표 동기.
+- **⑥ 스텁 대체 변형(M-3·m-10 + 교차 m-9)**: `--base` 명시 시 오버레이 실존 add는 **사본에서 스텁으로 덮어쓰기**(실물 판정 혼입 0 — E1/E2 의미 통일) + already-built «기실현(오버레이 실존 — 스텁 대체 예보)» 기록. BLIND_SPOTS 행 문면: «`--base` 명시 시 사본 = 기준선 트리 + (worktree−HEAD) 오버레이의 스텁 대체 — 기준선 이후 커밋분은 사본에 없다». 명시 `--base HEAD`도 재발화 판형임을 문면에. E1 단언 강화(materialized ∋ 경로 ∧ 기실현 0)·E2(미커밋 → 기실현 1·스텁 판정)·E3·E4 유지. R-3432 rev2 문면에서 «승격 ⑶ 계상» 평가 부기 제거(설계 v4·ledger로 이동)·**s006 새 블록 b10 신설**(기존 괄호 내부 삽입 금지).
+- 러너 계수(교차 m-1): 묶음별 리포트 파일 분리·기대값은 묶음별(Part 1 green3+red2 = 별도 리포트 각 1). LEDGER(교차 m-3): 관행대로 graph 절 rebaseline 행 +6.
+
+## D-P2 (Part 2)
+- **B-1 사슬 검증 강화(해제)**: `anchor ∈ git rev-list --first-parent HEAD`(도달 필수) ∧ M ∈ 그 구간. 미도달 상태에서 목록 지정 → exit 1 «앵커가 HEAD first-parent 사슬 밖 — 승인 목록 판정 불가». 3사례 통과 실측(오차단 0). 픽스처 **P9**(역방향 합성 머지 → exit 1)·**P9′**(앵커 사슬 밖 → exit 1).
+- **M-1 custody 성문**: R-NEXT+0에 «도구는 소유를 검증하지 않는다 — 빚 목록과 같은 사용자 승인 입력» + 머지 표에 `^2` ref 도달성 정보 행(`git name-rev --refs='refs/*' M^2`) + G2 배너 열거 유지.
+- **M-2 측정 유효성**: M^1·M^2 어느 쪽이든 검사기 c 측정 무효(exit∉{0,2} ∨ 합성행 존재) → 해당 c 라인 전부 귀속 유지(사유 `측정 무효(M^1|M^2)`) — R-0372 «미파싱=측정 실패» 정합. 픽스처 **P10**(M^1에 SyntaxError 심기 → 귀속 유지). 스냅숏 실행은 `git_root=None`·`snapshot_anchor` 규약 명시.
+- **M-3 표기·표 정정**: `↳ 유입: M`은 **L 증명 머지** 기준. §4 «d892894뿐이면 유입 349·귀속 114» 삭제 → «부분 목록 시 잔여 라인에 `미승인 머지 경유 <sha>`로 누락 SHA 표면화 — 수치는 구현 후 실측 확정(라인 단위 L)».
+- m-1 사유 어휘 통합 `비머지 커밋 경유 <sha>`(레인/직접 구별 불가 인정)·kkebi 기대 «첫 승인 머지보다 앞선 비머지 = 1(e219608)». m-2 P0 마스킹 목록 성문(툴체인 행 전체·sidecar tempdir 경로·`ts`/`run_id`/`record_id`)·불변식 3종 유지. m-3 ① R-3131 rev2 «확립 규약 수용 금지» 절 보존 ② R-NEXT+0 «레인 first-parent 사슬 위의 2-부모 머지» ③ R-NEXT+2 처방에 «레인 설계 반송(레인 원인)» 병기 ④ «rulepack.json 재소성» 문면 ⑤ houserules §3 신호 +1행(경로 필터 서술). m-4 P4는 `application/promotion/` 완전 BC 캘리브레이션. m-5 스냅숏 수 진단 1행.
+- 교차: `anchor_diff.py` 봉인 그룹 = **scorer**. 신규 Work 3건은 `ontology/wiring/command-dddjango.ttl` `delegatedTo` 3행 필수·R-NEXT+1/+2는 **s007 새 블록 b13** 신설. codex 의미 미러 2파일(`dddjango/SKILL.md`·`dddjango-discipline-houserules/SKILL.md`). LEDGER +3.
+
+## D-P3 (Part 3)
+- **MAJOR-1** `_top_level_names`에 `ast.TypeAlias`(PEP 695)·`AsyncFunctionDef` 추가 + 유닛 + **양 저장소 실코드 전수 import 자가 대조 스캔(오차단 0 증명 — 리뷰 프로토타입 `proto_existence.py` 판형)**을 검증 게이트 수동 채널로 편입(릴리즈 조건).
+- **MAJOR-2** `_realize_module` 승격 해소: 상위 `<parts[:-1]>.py`가 planned-add(슬롯)면 하위 부품은 «자기 add 해소»; 기존 실물은 `checker_target.slot_file` 역방향 판형 재사용(재구현 금지).
+- **MAJOR-3** ⑵ 자리표시자 판정은 «이름 import(`from M import n`)의 대상 M»에 한정 — 모듈 import(`import M`·`from P import M`)는 ⑵ 비적용(ImportError 아님). kind=module만·빈 패키지 `__init__` 제외(교차 m-8).
+- **MAJOR-4** §1·§5·§8의 SD fortune-reading 사례 삭제(fortune_reading→fortune_calculation import 0 — 계약 fixture 의존이지 import 의존 아님). 효과는 **kkebi형 한정**(S2 ⑵ 실측 재현 + STOP-365 ⑴)으로 재기술·1단계 표 «SD형 분 단위» 철회 주석.
+- **MAJOR-5 + 교차 M-3** 설계 v4 §8 ⑷ «실존 채널 계수·판정식» 신설: 결손 건수·처분 분포·**도구 오류**(대상 실존인데 결손 — filtered와 분리 계수)·오탐=도구 오류·미탐=행이 있었는데 ImportError/0B STOP 발생·차단 승격 전제 «도구 오류 0 ∧ 진탐 ≥1 over ≥2 레인»·**exit 5는 승격 후에도 비차단 유지(별도 게이트 전까지)**. §8 ⑶에 Part 1 «재발화 형식 red 별도 계수» 승계. ledger 열 정의 동기. 설계·ledger 산문 rebase 절차를 통합 절에.
+- **MAJOR-6** `corrected` = «대상 실존 확보(K 증가) 또는 경로 오기 정정(대상 기실존)» 한정; 행 삭제·소비 철회로 결손이 소멸하면 리포트가 «결손 소멸 ∧ 행 수 R 감소»를 표기하고 처분은 `corrected(철회: <근거>)` 근거 병기 의무(발주자 사안이면 STOP) — 라벨 집합 3 유지. R-3427 rev2 «채널 은폐» 문면과 정합.
+- **MAJOR-7** exit 열거 갱신 지점 전수: 실행기 docstring(양 미러)·**설계 D3(:74)**·조감도 :638·러너 docstring·R-3437. 
+- **교차 M-4** 예보 항목 채널에 «`deferred`는 없다(이연은 ignored+빚 매칭 또는 filtered)» 대칭 문면 + «각 채널의 정의 밖 재량 라벨은 없다».
+- MINOR: `_repo_root_packages` placeholder 필터·첫 세그먼트 명시 / `remove@Ln` 후행 제거 대상은 G1 시점 상태로 실존 판정 / U 명시(namespace-dir+비서브모듈·`import *`·`__getattr__`) / 사각 병기(TYPE_CHECKING·gitignore) / `deferred(<소유>; until <SHA|Sn>)` 정형 권고·린트 이월 / 실행기 인터프리터 하한 검사 / 조감도 갱신 / `import a.b` 바인딩 `a`·Assign 튜플 `ast.walk` / 실존 검사 삽입 지점 = materialize(+골격·`__init__` 체인) 뒤·실체화-0 분기 앞 / «파서 한 줄도» → 열거 함수 한정·«기존 4종 문자 동일» → exit·귀속·ID 동일 한정. LEDGER +4.
+
+## D-통합
+- **릴리즈 단위: 단일 v2.17.16(3부 합산)** — 릴리즈마다 라이브 레인 캐시 교체 위험이 있으므로 1회로. 시점은 사용자 결정 게이트. 판별 = 리포트 헤더 버전 스탬프(행 수 휴리스틱 폐기).
+- 계수표 최종 기대: ExpressionShape **3543**(+7+9+5) · Norm/Work **3450**(+3) · Block **2897~2900**(s002/b9·s006/b10·s007/b13) · ISSUED **R-3439~3441** · LEDGER **+13** · BLIND_SPOTS **9**(Part 1 +1 문면·Part 3 +2).
+- 통합 절 1 정정: 세 Part 규범 ID 집합은 서로소 → rev 번호는 착지 순서와 무관. rebase 대상은 s006/b9·s002·s007 `djr:text`뿐. 통합 절 5 정정: Coordinator 규범엔 exit 수치 열거 없음(실재 지점 5곳은 D-P3 MAJOR-7).
+- `make verify-mutation`은 3 Part 전부(rulepack 재소성). codex 의미 미러 대상: Part 1 8곳·Part 2 2파일·Part 3 2파일.
+- 5단계 입력 추가: 1단계 C «kkebi 20머지» vs Part 2 «머지 7+비머지 8» 산정 기준 확정 · Part 3 오차단 0 스캔 결과표.
