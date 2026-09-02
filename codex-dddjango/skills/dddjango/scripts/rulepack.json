@@ -11,7 +11,7 @@
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "3c15e8600efa4ca57f6b4e76f1ceb8fa5792d7fc2573b3bbd929669c8b11479f"
+      "sha256": "0afd03cb66ba65f887a931f37d1e07700e8532d5c1013750701a44616ce03763"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
@@ -55,7 +55,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "bd94ab4e423635326aaf89467245e850d8d668fd7c109a913d148c47ba57c1d5"
+      "sha256": "6c551057665a3de082689eae04a671d3e8b09b8c073ccbf93c13ce3a7e3e8ffd"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -60723,8 +60723,8 @@
       "block_order": 9,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3436@2026-09-01",
-      "label": "pre-gate skip 한정 — 형식 규범 시행 전 승인 명세 한정·블록 존재 구문 검사·차단 승격 시 폐지",
+      "expression": "https://numchida.com/ns/djr#R-3436@2026-09-03",
+      "label": "pre-gate 구형 명세 skip 한정 — 형식 규범 시행 전 승인 명세 한정·블록 존재 구문 검사·차단 승격 시 폐지(«캐시 skip» 과 구별)",
       "order_rank": 1070,
       "section": "dddjango/commands/dddjango.md/s006",
       "section_number": null
