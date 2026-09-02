@@ -24,9 +24,42 @@ legacy 위반이 상존해 「루트 registry 전체 green」이 문자 그대�
   모양을 «추가로» 복사할 근거가 아니다.
 - 비-git TARGET 은 fail-closed: 차분 불능이므로 현재 위반 전부를 귀속으로 본다.
 - 검사기가 red 인데 위반 라인을 못 파싱하면 그 검사기 몫을 합성 귀속으로 남긴다(fail-closed).
+- **승인 유입 채널(provenance 차분 · 2026-09-03)**: `--approved-merge-file` 의 발주자 승인
+  «main→레인 머지» 목록(줄 형식: `<SHA> [메모]`)이 주어지면, 빚 매칭 뒤 남은 귀속 라인 ℓ
+  (파일 p · 검사기 c)마다 다음을 결정적으로 증명한 것만 exit 에서 빼고 «승인 유입» 절로 보고한다:
+
+    승인 유입(ℓ) ⟺ W(p) ∧ (F1(p) ∨ F2(p)) ∧ L(ℓ)
+    W  worktree 의 p 가 HEAD 와 동일(porcelain 공백)
+    F1 ∃M∈𝓜: blob(M^1:p) ≠ blob(M:p) ∧ blob(M:p) = blob(M^2:p) = blob(HEAD:p)
+       — 승인 머지의 incoming 측에서 verbatim 전달·레인 미수정(충돌 해소분은 M≠M^2 라 탈락)
+    F2 blob(HEAD:p) = blob(anchor:p) — 파일 무변 = «상호작용 서명»(검사기 환경만 바뀜)
+    L  ∃M∈𝓜: ℓ ∈ R_c(M^2) ∖ R_c(M^1) — 검사기 c 를 M^2(incoming)·M^1(레인 측 직전)
+       스냅숏에서 재실행해 «incoming 측에는 있고 레인 측 직전에는 없던» 진단임을 증명
+
+  판정 불능(레코드 없음·비-blob 경로·worktree 수정·측정 무효)은 전부 귀속 유지(fail-closed)다.
+  L 없는 blob-only 설계는 기각됐다 — 레인이 BC `promotion` 을 신설하고 승인 머지가 리터럴
+  "promotion" 을 가진 파일을 verbatim 들여오면 F1 은 통과하나 원인은 레인의 BC 다(이중 원인);
+  R(M) 이 아니라 R(M^2) 를 쓰는 이유가 이 반례다(R(M) 은 레인 측 산출물을 포함한다).
+
+provenance 차분 — 귀속의 분할이지 재정의가 아니다
+  귀속 산식 N∖L 은 그대로다. 새 채널은 «감산»이 아니라 «분할»이다 — N∖L = 빚 ⊔ 승인 유입 ⊔
+  귀속(잔여)이고 어떤 라인도 인쇄되지 않는 채널로 가지 않는다. exit 에서 빠지는 유일한 새 경로는
+  «발주자 소유 목록 ∧ blob 3중 일치 ∧ R(M^2)∖R(M^1) 증명»이며 빚 채널과 같은 «사용자 승인 입력»
+  부류다(도구는 목록의 소유를 검증하지 않는다 — 앵커·빚 목록과 같은 자리). 위 다섯 계열 공격과의
+  정합: ① base 자기 선택 — 앵커도 승인 목록도 actor 밖이고, 앵커는 HEAD first-parent 사슬 위
+  (도달 필수)·머지는 그 구간 안이어야 한다(역방향 합성·타 가지 머지는 형식 오류) ② 부재(#488)
+  위반 — blob 없는 경로는 귀속 유지 ③ 출력 형식 이질 — `findings` 레코드가 단일 출처이고 대응
+  레코드가 없으면 귀속 유지 ④ 빈 변경 집합 — 변경 집합을 쓰지 않고 L 이 incoming 측 존재를
+  요구한다 ⑤ .gitignore 은닉 — 커밋 blob 이 없으면 F1·F2 가 성립하지 않는다. 귀속 목록을
+  경로 필터(sed/grep)로 나눈 서술은 게이트 증거가 아니다 — 유입 분리는 이 채널뿐이다.
+  상호작용 위반(F2)은 증명되면 유입, 아니면 `상호작용 미증명` 으로 귀속 유지다(철회할 변경이
+  없으므로 처방은 STOP_FOR_USER_APPROVAL — 빚 등재·상류 해소·레인 설계 반송).
 
 사용: python3 registry_gate.py <저장소 루트> --anchor <ref> [--legacy-debt-file <path>]
-exit 0 = 귀속 0 / exit 2 = 귀속 존재 / exit 1 = 사용 오류·재료 결손·공허 차분.
+      [--approved-merge-file <path>] [--introduced-json <path>] [--contract-json <path>]
+exit 0 = 귀속 0 / exit 2 = 귀속 존재 / exit 1 = 사용 오류·재료 결손·공허 차분·승인 목록 형식/사슬 오류.
+flag 가 없으면 출력·sidecar 는 이 채널 도입 전과 byte 동일하다(상시 진단 «앵커가 HEAD 의 조상이
+아니다» 1행만 병리 시 추가 — exit 무변).
 """
 from __future__ import annotations
 
@@ -40,6 +73,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from dataclasses import dataclass, field
 from pathlib import Path
 
 _SCRIPTS_DIR: Path = Path(__file__).resolve().parent
@@ -146,8 +180,11 @@ def _toolchain_line() -> str:
 def _run_registry(target: Path,
                   sink: "Path | None" = None,
                   git_root: "Path | None" = None,
+                  only: "frozenset[str] | None" = None,
                   ) -> "tuple[dict[str, int], set[str], list[dict]]":
-    """로스터 전체를 돌려 (검사기별 exit, 정규화 위반 라인 집합, 구조화 레코드)를 낸다.
+    """로스터 전체(또는 `only` 의 검사기만)를 돌려 (검사기별 exit, 정규화 위반 라인 집합, 구조화 레코드)를 낸다.
+
+    `only` 는 provenance 차분의 스냅숏 재실행 전용이다(후보 라인의 검사기 집합만 — 비용 한정).
 
     **sink 격리(T2-3)**: 검사기 서브프로세스는 부모 환경을 상속하므로, 격리하지 않으면
     앵커 실행과 현재 실행의 레코드가 **같은 파일에 뒤섞여** 소비자가 legacy 와 신규를
@@ -173,6 +210,8 @@ def _run_registry(target: Path,
     if git_root is not None:
         env[findings.ENV_GIT_ROOT] = str(git_root)
     for script, auto in REGISTRY:
+        if only is not None and script not in only:
+            continue
         proc = subprocess.run(
             checker_argv(sys.executable, script, str(target), auto),
             capture_output=True, text=True, env=env,
@@ -201,7 +240,8 @@ def _run_registry(target: Path,
 
 
 def _write_introduced(dest: Path, anchor_sha: str, attributed: "list[str]",
-                      records: "list[dict]", prefixes: "tuple[str, ...]") -> None:
+                      records: "list[dict]", prefixes: "tuple[str, ...]",
+                      provenance: "_ProvenanceResult | None" = None) -> None:
     """귀속(N∖L) 라인에 대응하는 **현재 실행 레코드만** sidecar 로 쓴다(T2-3).
 
     왜 게이트가 쓰는가: 귀속은 «앵커 대비 차분»이라 게이트만 알 수 있다. 소비자가 raw
@@ -236,6 +276,10 @@ def _write_introduced(dest: Path, anchor_sha: str, attributed: "list[str]",
         "records": picked,
         "unmatched_lines": sorted(want - matched),
     }
+    if provenance is not None:
+        # flag 시에만 키 추가 — 스키마 문자열은 유지(호환 확장 · flag 없으면 payload byte 동일).
+        # `attributed_lines`·`records` 는 잔여(승인 유입 제외)만이다 — 재생성 루프 입력에 유입이 섞이지 않는다.
+        payload["provenance"] = provenance.as_payload()
     dest.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"\n귀속 레코드 sidecar → {dest} "
           f"(레코드 {len(picked)} · 대응 없는 귀속 라인 {len(want - matched)})")
@@ -307,12 +351,261 @@ def _write_contract(dest: Path, anchor_sha: str, records: "list[dict]",
           f"검사기 {len(by_checker)}종 — 주입 대상 아님·계수 전용)")
 
 
+# ── provenance 차분(승인 유입 채널 · 2026-09-03) ────────────────────────────────────────
+# 판정식·공격 정합은 모듈 docstring 「승인 유입 채널」·「provenance 차분」 절이 정본이다.
+
+_TRAILING_LINENO_RE: "re.Pattern[str]" = re.compile(r"(:\d+)+$")
+_SYNTHETIC_MARK: str = "[진단 미파싱"
+
+
+@dataclass
+class _ProvenanceResult:
+    """분할 결과 — inflow(승인 유입)·retained(귀속 유지 사유)·chain(사슬 통계)."""
+
+    merges: "list[anchor_diff.ApprovedMerge]"
+    chain: "list[anchor_diff.ChainCommit]"
+    inflow: "list[tuple[str, str, str]]" = field(default_factory=list)   # (line, L 증명 머지 sha, 파일|상호작용)
+    retained: "dict[str, str]" = field(default_factory=dict)             # line → 사유
+    snapshots_run: int = 0
+    checker_runs: int = 0
+
+    @property
+    def inflow_lines(self) -> "set[str]":
+        return {line for line, _m, _k in self.inflow}
+
+    def per_merge(self, sha: str) -> "tuple[int, int]":
+        files: int = sum(1 for _l, m, k in self.inflow if m == sha and k == "파일")
+        inter: int = sum(1 for _l, m, k in self.inflow if m == sha and k == "상호작용")
+        return files, inter
+
+    def chain_stats(self) -> "dict[str, object]":
+        approved: "set[str]" = {m.sha for m in self.merges if m.participates}
+        merges_in_chain: "list[anchor_diff.ChainCommit]" = [c for c in self.chain if c.is_merge]
+        non_merges: "list[anchor_diff.ChainCommit]" = [c for c in self.chain if not c.is_merge]
+        first_approved: "int | None" = next(
+            (i for i, c in enumerate(self.chain) if c.sha in approved), None)
+        before: "list[str]" = [c.sha for i, c in enumerate(self.chain)
+                               if not c.is_merge and (first_approved is None or i < first_approved)]
+        return {
+            "commits": len(self.chain),
+            "merges": len(merges_in_chain),
+            "approved": len(approved & {c.sha for c in merges_in_chain}),
+            "unapproved_merges": [c.sha for c in merges_in_chain if c.sha not in approved],
+            "non_merges": len(non_merges),
+            "non_merges_before_first_approved": before,
+            "not_participating": [m.sha for m in self.merges if not m.participates],
+            "snapshots_run": self.snapshots_run,
+            "checker_runs": self.checker_runs,
+        }
+
+    def as_payload(self) -> "dict[str, object]":
+        return {
+            "approved_merges": [
+                {"sha": m.sha, "parent1": m.parent1, "parent2": m.parent2, "parent2_ref": m.parent2_ref,
+                 "subject": m.subject, "position": m.position, "memo": m.memo}
+                for m in self.merges],
+            "inflow_lines": [{"line": line, "merge": m, "kind": k} for line, m, k in self.inflow],
+            "retained_reasons": dict(sorted(self.retained.items())),
+            "chain": self.chain_stats(),
+        }
+
+
+def _tree_blobs(root: Path, sha: str) -> "dict[str, str]":
+    """커밋 트리의 경로→blob SHA 사전(`git ls-tree -r -z` 1회) — 디렉터리·서브모듈은 들어가지 않는다."""
+    proc = anchor_diff.run_git(root, "ls-tree", "-r", "-z", sha)
+    out: "dict[str, str]" = {}
+    if proc.returncode != 0:
+        return out
+    for entry in proc.stdout.split("\0"):
+        if not entry:
+            continue
+        meta, _, path = entry.partition("\t")
+        parts: "list[str]" = meta.split()
+        if len(parts) == 3 and parts[1] == "blob":
+            out[path] = parts[2]
+    return out
+
+
+def _line_paths(attributed: "list[str]", records: "list[dict]",
+                prefixes: "tuple[str, ...]") -> "dict[str, str | None]":
+    """귀속 라인 → 대상 상대 경로. 매칭 키는 `_write_introduced` 와 같다(`findings.line_of_record` → `_normalize`).
+
+    대응 레코드가 없으면 None(합성 fail-closed 귀속·레코드 채널 밖 진단 — 귀속 유지). `file` 의
+    스냅숏 절대 경로 접두·후행 `:행[:열]` 을 걷어 경로만 남긴다 — blob 존재 여부는 호출측이 본다.
+    """
+    want: "set[str]" = set(attributed)
+    out: "dict[str, str | None]" = {line: None for line in attributed}
+    for rec in records:
+        key: str = _contract_key(rec, prefixes)
+        if key not in want or out.get(key) is not None:
+            continue
+        rel: str = _strip_snapshot(str(rec.get("file", "")), prefixes)
+        rel = _TRAILING_LINENO_RE.sub("", rel).strip()
+        if rel.startswith("./"):
+            rel = rel[2:]
+        out[key] = rel or None
+    return out
+
+
+def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
+                      merges: "list[anchor_diff.ApprovedMerge]",
+                      chain: "list[anchor_diff.ChainCommit]",
+                      attributed: "list[str]", records: "list[dict]",
+                      prefixes: "tuple[str, ...]", td: Path) -> _ProvenanceResult:
+    """빚 매칭 뒤 남은 귀속을 «승인 유입 ⊔ 귀속(잔여)» 로 분할한다 — 어떤 라인도 버려지지 않는다.
+
+    (i) 경로 (ii) W·F1·F2 blob 판정 (iii) 후보 라인의 검사기만 M^1·M^2 스냅숏(`anchor_diff.snapshot_anchor`
+    · `git_root=None` — 스냅숏은 커밋 트리라 원본 porcelain 이 참이 아니다)에서 재실행해 R_c 캐시
+    (iv) L 탐색 — F1 은 전달 머지 먼저·다음 first-parent 순, F2 는 first-parent 순 · 첫 적중 중단
+    (v) 후보 0 이면 스냅숏 0. 측정 무효(exit∉{0,2} ∨ 미파싱 합성행 ∨ M^1/M^2 parse-fail 집합 비대칭)는
+    그 검사기 라인 전부 귀속 유지(R-0372 «미파싱=측정 실패» 정합).
+    """
+    res = _ProvenanceResult(merges=merges, chain=chain)
+    active: "list[anchor_diff.ApprovedMerge]" = sorted(
+        (m for m in merges if m.participates), key=lambda m: m.position or 0)
+    if not attributed:
+        return res
+    dirty_proc = anchor_diff.run_git(root, "status", "--porcelain", "--untracked-files=all", "-z")
+    dirty: "set[str]" = set()
+    for entry in dirty_proc.stdout.split("\0"):
+        if len(entry) > 3:
+            dirty.add(entry[3:])
+    blob_cache: "dict[str, dict[str, str]]" = {}
+
+    def blobs(sha: str) -> "dict[str, str]":
+        if sha not in blob_cache:
+            blob_cache[sha] = _tree_blobs(root, sha)
+        return blob_cache[sha]
+
+    head_blobs: "dict[str, str]" = blobs(head_sha)
+    anchor_blobs: "dict[str, str]" = blobs(anchor_sha)
+    chain_by_sha: "dict[str, int]" = {c.sha: i for i, c in enumerate(chain)}
+    paths: "dict[str, str | None]" = _line_paths(attributed, records, prefixes)
+
+    def last_toucher(p: str) -> "anchor_diff.ChainCommit | None":
+        for c in reversed(chain):  # 최신 → 오래된 순
+            parent_blobs: "dict[str, str]" = blobs(c.parents[0]) if c.parents else {}
+            if blobs(c.sha).get(p) != parent_blobs.get(p):
+                return c
+        return None
+
+    def retained_reason(p: str) -> str:
+        last: "anchor_diff.ChainCommit | None" = last_toucher(p)
+        if last is None:
+            return "유입 증명 실패(경로 추적 불능)"
+        approved: "dict[str, anchor_diff.ApprovedMerge]" = {m.sha: m for m in active}
+        if last.is_merge and last.sha in approved:
+            return f"충돌 해소분(M≠M^2) — {last.sha[:12]}"
+        if last.is_merge:
+            return f"미승인 머지 경유 {last.sha[:12]}"
+        delivered_before: "anchor_diff.ApprovedMerge | None" = next(
+            (m for m in active if chain_by_sha.get(m.sha, 1 << 30) < chain_by_sha[last.sha]
+             and blobs(m.sha).get(p) != blobs(m.parent1).get(p)), None)
+        if delivered_before is not None:
+            return f"레인 커밋 수정 {last.sha[:12]}(승인 머지 {delivered_before.sha[:12]} 이후)"
+        return f"비머지 커밋 경유 {last.sha[:12]}"
+
+    # (i)(ii) 후보 선별 — candidates: line → (path, checker, kind, 전달 머지)
+    candidates: "list[tuple[str, str, str, str, anchor_diff.ApprovedMerge | None]]" = []
+    for line in attributed:
+        checker: str = line.split(" :: ", 1)[0]
+        p: "str | None" = paths.get(line)
+        if p is None:
+            res.retained[line] = "레코드 없음"
+            continue
+        if p not in head_blobs:
+            res.retained[line] = "비-blob 경로"
+            continue
+        if p in dirty:
+            res.retained[line] = "worktree 수정 중"
+            continue
+        deliver: "anchor_diff.ApprovedMerge | None" = next(
+            (m for m in active
+             if blobs(m.parent1).get(p) != blobs(m.sha).get(p)
+             and blobs(m.sha).get(p) == blobs(m.parent2).get(p) == head_blobs[p]), None)
+        if deliver is not None:
+            candidates.append((line, p, checker, "파일", deliver))
+        elif head_blobs[p] == anchor_blobs.get(p):
+            candidates.append((line, p, checker, "상호작용", None))
+        else:
+            res.retained[line] = retained_reason(p)
+    if not candidates:
+        return res
+
+    # (iii) 스냅숏·검사기 캐시
+    snap_cache: "dict[str, Path]" = {}
+    parse_fail_cache: "dict[str, set[str]]" = {}
+    run_cache: "dict[tuple[str, str], tuple[bool, set[str]]]" = {}  # (sha, checker) → (유효, 라인)
+
+    def snapshot(sha: str) -> Path:
+        if sha not in snap_cache:
+            dest: Path = td / f"snap-{sha[:12]}"
+            anchor_diff.snapshot_anchor(root, sha, dest)
+            snap_cache[sha] = dest
+            parse_fail_cache[sha] = {
+                l.split(" :: ", 1)[1].split(":", 1)[0] for l in _parse_fail_findings(dest)}
+            res.snapshots_run += 1
+        return snap_cache[sha]
+
+    def run(sha: str, checker: str) -> "tuple[bool, set[str]]":
+        key = (sha, checker)
+        if key not in run_cache:
+            snap: Path = snapshot(sha)
+            exits, lines, _recs = _run_registry(snap, only=frozenset({checker}))
+            res.checker_runs += 1
+            valid: bool = exits.get(checker) in (0, 2) and not any(_SYNTHETIC_MARK in l for l in lines)
+            run_cache[key] = (valid, lines)
+        return run_cache[key]
+
+    # (iv) L 탐색
+    for line, p, checker, kind, deliver in candidates:
+        order: "list[anchor_diff.ApprovedMerge]" = (
+            [deliver] + [m for m in active if m is not deliver]) if deliver is not None else list(active)
+        proven: "str | None" = None
+        invalid: "list[str]" = []
+        for m in order:
+            ok1, r1 = run(m.parent1, checker)
+            ok2, r2 = run(m.parent2, checker)
+            symmetric: bool = parse_fail_cache[m.parent1] == parse_fail_cache[m.parent2]
+            if not (ok1 and ok2 and symmetric):
+                sides: "list[str]" = []
+                if not ok1 or (not symmetric and parse_fail_cache[m.parent1] - parse_fail_cache[m.parent2]):
+                    sides.append("M^1")
+                if not ok2 or (not symmetric and parse_fail_cache[m.parent2] - parse_fail_cache[m.parent1]):
+                    sides.append("M^2")
+                invalid.append(f"측정 무효({'|'.join(sides) or 'M^1|M^2'}) — {m.sha[:12]}")
+                continue
+            if line in r2 and line not in r1:
+                proven = m.sha
+                break
+        if proven is not None:
+            res.inflow.append((line, proven, kind))
+        elif invalid:
+            res.retained[line] = invalid[0]
+        elif kind == "파일":
+            # 전달 머지보다 앞선 «미승인» 머지가 p 를 바꿨다면 진단은 그때 들어왔을 수 있다 — 목록 누락을
+            # 표면화한다(부분 목록 실측: 이중 원인과 구별 불가 — 발주자가 목록을 보완하면 L 이 그 머지에서 선다).
+            earlier_unapproved: "list[str]" = [
+                c.sha for c in chain
+                if c.is_merge and c.sha not in {m.sha for m in active}
+                and deliver is not None and chain_by_sha[c.sha] < chain_by_sha.get(deliver.sha, 1 << 30)
+                and blobs(c.sha).get(p) != blobs(c.parents[0]).get(p)]
+            hint: str = (f" — 미승인 머지 {earlier_unapproved[-1][:12]} 경유 가능" if earlier_unapproved else "")
+            res.retained[line] = f"유입 증명 실패(이중 원인{hint})"
+        else:
+            res.retained[line] = "상호작용 미증명"
+    return res
+
+
 def main(argv: "list[str]") -> int:
     ap = _UsageParser(add_help=True)
     ap.add_argument("target")
     ap.add_argument("--anchor", required=False, default=None,
                     help="차분 기준(대장 앵커 또는 build-start 앵커) — actor 가 임의로 고르지 않는다")
     ap.add_argument("--legacy-debt-file", default=None)
+    ap.add_argument(anchor_diff.APPROVED_MERGE_FLAG, dest="approved_merge_file", default=None,
+                    help="발주자 승인 «main→레인 머지» 목록(`<SHA> [메모]`) — provenance 차분으로 증명된 "
+                         "승인 유입을 exit 에서 빼되 «승인 유입» 절로 반드시 보고한다(git TARGET 전용)")
     ap.add_argument("--introduced-json", default=None,
                     help="귀속(N∖L) 위반의 구조화 레코드를 이 경로에 sidecar 로 쓴다 — "
                          "재생성 루프의 유일한 입력(legacy 잔존은 구조적으로 배제된다)")
@@ -342,7 +635,21 @@ def main(argv: "list[str]") -> int:
             print(f"사용 오류: {exc}", file=sys.stderr)
             return 1
 
+    approved_path: "Path | None" = None
+    if ns.approved_merge_file is not None:
+        approved_path = Path(ns.approved_merge_file)
+        if not approved_path.is_file():
+            print(f"재료 결손: 승인 머지 목록 {approved_path} 없음", file=sys.stderr)
+            return 1
+
     is_git: bool = anchor_diff.is_git_worktree(root)
+    if approved_path is not None and not is_git:
+        print(f"사용 오류: {anchor_diff.APPROVED_MERGE_FLAG} 은 git 저장소 TARGET 에서만 쓸 수 있다 — "
+              "provenance 재료(커밋 blob·first-parent 사슬)가 없다", file=sys.stderr)
+        return 1
+    merges: "list[anchor_diff.ApprovedMerge]" = []
+    chain: "list[anchor_diff.ChainCommit]" = []
+    provenance: "_ProvenanceResult | None" = None
 
     with tempfile.TemporaryDirectory() as td:
         cur: Path = Path(td) / "current"
@@ -379,6 +686,17 @@ def main(argv: "list[str]") -> int:
                       "게이트는 구현 커밋 «전»에 돌리거나, 런 시작점 앵커를 지정하라(공허 green 차단).",
                       file=sys.stderr)
                 return 1
+            if anchor_diff.run_git(root, "merge-base", "--is-ancestor", anchor_sha, head).returncode != 0:
+                # 상시 진단(병리 시만 발화 · exit 무변) — 앵커가 이 가지의 과거가 아니면 차분은
+                # «이번 런»이 아니라 두 가지의 차이를 잰다. 승격은 별도 결정 게이트.
+                print(f"주의: 앵커 {anchor_sha[:12]} 는 HEAD {head[:12]} 의 조상이 아니다 — "
+                      "차분이 «이번 런의 변경»을 재지 않을 수 있다(앵커 재료를 확인하라 · exit 무변)")
+            if approved_path is not None:
+                try:
+                    merges, chain = anchor_diff.load_approved_merges(approved_path, root, anchor_sha, head)
+                except anchor_diff.AnchorDiffUsage as exc:
+                    print(f"사용 오류: {exc}", file=sys.stderr)
+                    return 1
             anc: Path = Path(td) / "anchor"
             try:
                 anchor_diff.snapshot_anchor(root, anchor_sha, anc)
@@ -392,17 +710,24 @@ def main(argv: "list[str]") -> int:
             exits_n, n_set, n_records = _run_registry(cur, sink_n, git_root=root)
             n_set |= _parse_fail_findings(cur)
 
-    attributed: "list[str]" = sorted(n_set - l_set)
-    resolved: "list[str]" = sorted(l_set - n_set)
-    residual: "list[str]" = sorted(l_set & n_set)
+        attributed: "list[str]" = sorted(n_set - l_set)
+        resolved: "list[str]" = sorted(l_set - n_set)
+        residual: "list[str]" = sorted(l_set & n_set)
 
-    debt: "list[str]" = []
-    if debt_rules:
-        rest: "list[str]" = []
-        for line in attributed:  # 라인은 이미 정규화돼 있다 — debt_match 코퍼스 그대로.
-            hit: bool = anchor_diff.debt_match(line, debt_rules)
-            (debt if hit else rest).append(line)
-        attributed = rest
+        debt: "list[str]" = []
+        if debt_rules:
+            rest: "list[str]" = []
+            for line in attributed:  # 라인은 이미 정규화돼 있다 — debt_match 코퍼스 그대로.
+                hit: bool = anchor_diff.debt_match(line, debt_rules)
+                (debt if hit else rest).append(line)
+            attributed = rest
+
+        if approved_path is not None:
+            # 순서: attributed → 빚 분리 → provenance 분리(빚 우선) → 잔여 = exit 근거.
+            provenance = _provenance_split(root, anchor_sha, head, merges, chain,
+                                           attributed, n_records, cur_prefixes, Path(td))
+            inflow_lines: "set[str]" = provenance.inflow_lines
+            attributed = [line for line in attributed if line not in inflow_lines]
 
     print(f"# registry_gate — 판정 차분 · {root.name} · 앵커 {anchor_sha[:12]}")
     print(_toolchain_line())
@@ -414,25 +739,68 @@ def main(argv: "list[str]") -> int:
     print(f"\n== 귀속(N∖L) {len(attributed)}건 ==")
     for line in attributed:
         print(f"  {line}")
+        if provenance is not None:
+            print(f"    ↳ 귀속 유지: {provenance.retained.get(line, '판정 미도달')}")
     if debt:
         print(f"\n== 이관 빚(승인 목록 매칭 — exit 제외·기록 의무) {len(debt)}건 ==")
         for line in debt:
             print(f"  {line}")
+    if provenance is not None:
+        _print_inflow(provenance)
     by_checker: "dict[str, int]" = {}
     for line in residual:
         by_checker[line.split(" :: ", 1)[0]] = by_checker.get(line.split(" :: ", 1)[0], 0) + 1
     print(f"\n== legacy 잔존(L∩N) {len(residual)}건 · 해소(L∖N) {len(resolved)}건 ==")
     for script in sorted(by_checker):
         print(f"  {script}: {by_checker[script]}")
+    if provenance is not None:
+        _print_provenance_diag(provenance, anchor_sha)
     if ns.introduced_json is not None:
         _write_introduced(Path(ns.introduced_json), anchor_sha, attributed,
-                          n_records, cur_prefixes)
+                          n_records, cur_prefixes, provenance)
     if ns.contract_json is not None:
         _write_contract(Path(ns.contract_json), anchor_sha, n_records,
                         l_records, cur_prefixes, anc_prefixes)
 
-    print(f"\n판정: 귀속 {len(attributed)}건 → {'green(신규 위반 없음)' if not attributed else 'red'}")
+    tail: str = f"(승인 유입 {len(provenance.inflow)}건 제외)" if provenance is not None else ""
+    print(f"\n판정: 귀속 {len(attributed)}건 → {'green(신규 위반 없음)' if not attributed else 'red'}{tail}")
     return 0 if not attributed else 2
+
+
+def _print_inflow(prov: _ProvenanceResult) -> None:
+    """«승인 유입» 절 — 머지 표(subject·부모·^2 ref 도달성 — 역방향 머지 오기입 가시화) + 라인별 L 증명 머지."""
+    print(f"\n== 승인 유입(발주자 승인 머지 경유 · provenance 증명 — exit 제외·기록 의무) {len(prov.inflow)}건 ==")
+    for m in prov.merges:
+        if not m.participates:
+            print(f"  [M {m.sha[:12]}] {m.subject} · 앵커 이전 — 판정 불참")
+            continue
+        files, inter = prov.per_merge(m.sha)
+        print(f"  [M {m.sha[:12]}] {m.subject} · ^1 {m.parent1[:12]} · ^2 {m.parent2[:12]}({m.parent2_ref}) · "
+              f"파일 {files} · 상호작용 {inter}")
+    for line, m, kind in prov.inflow:
+        print(f"  {line}")
+        print(f"    ↳ 유입: {m[:12]}(L 증명) · {'파일 verbatim' if kind == '파일' else '상호작용'}")
+
+
+def _print_provenance_diag(prov: _ProvenanceResult, anchor_sha: str) -> None:
+    """«provenance 진단» 절 — 사슬 통계·스냅숏 실행 수·«비머지 커밋이 첫 승인 머지보다 앞섬» 진단."""
+    st: "dict[str, object]" = prov.chain_stats()
+    print("\n== provenance 진단 ==")
+    print(f"  first-parent 사슬 {anchor_sha[:12]}..HEAD: 커밋 {st['commits']} · 머지 {st['merges']}"
+          f"(승인 {st['approved']} · 미승인 {len(st['unapproved_merges'])}) · 비머지 {st['non_merges']}")
+    print(f"  스냅숏 실행 {st['snapshots_run']} · 검사기 재실행 {st['checker_runs']}")
+    unapproved: "list[str]" = list(st["unapproved_merges"])  # type: ignore[arg-type]
+    if unapproved:
+        print(f"  미승인 머지: {' '.join(sha[:12] for sha in unapproved)}")
+    not_participating: "list[str]" = list(st["not_participating"])  # type: ignore[arg-type]
+    if not_participating:
+        print(f"  앵커 이전 목록(판정 불참): {' '.join(sha[:12] for sha in not_participating)}")
+    before: "list[str]" = list(st["non_merges_before_first_approved"])  # type: ignore[arg-type]
+    if before and st["approved"]:
+        shown: str = " ".join(sha[:12] for sha in before[:6]) + (f" 외 {len(before) - 6}" if len(before) > 6 else "")
+        print(f"  진단: 비머지 커밋 {len(before)}건({shown})이 첫 승인 머지보다 앞선다 — 레인 자신의 커밋이면 정상이고 "
+              "main 직접 커밋이면 앵커가 레인 분기점보다 앞선 것이다(도구는 둘을 구별하지 않는다 · "
+              "epoch 재앵커는 발주자 결정 · 도구는 재앵커하지 않는다)")
 
 
 if __name__ == "__main__":

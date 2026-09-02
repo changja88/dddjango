@@ -37,6 +37,7 @@ import re
 import subprocess
 import sys
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -50,6 +51,11 @@ BASELINE_FLAG: str = "--anchor-baseline"
 # 검사기(check-*.py) 소스는 이 리터럴을 직접 쓰지 않고 이 상수만 참조한다(checker_lint ㉢
 # 는 check-*.py 만 훑는다 — registry_gate 처럼 이 모듈은 그 낱말 규율 밖이다).
 DEBT_FLAG: str = "--legacy-debt-file"
+# 발주자 승인 «main→레인 머지» 목록 flag — registry_gate 의 provenance 차분 채널(2026-09-03).
+# 줄 형식 `<SHA> [메모]`(`//` 주석·빈 줄 허용). 빚 목록과 같은 «사용자 승인 입력» 부류다 —
+# 도구는 소유(누가 썼는가)를 검증하지 않고 형식·git 사실(ⓐ resolve · ⓑ 부모 2 · ⓒ 앵커..HEAD
+# first-parent 사슬 위 · ⓓ 앵커 이전이면 판정 불참)만 fail-closed 로 검증한다.
+APPROVED_MERGE_FLAG: str = "--approved-merge-file"
 
 _LINENO_RE: "re.Pattern[str]" = re.compile(r":\d+")
 
@@ -175,6 +181,117 @@ def load_debt(path: Path) -> "list[tuple[str, str]]":
             )
         out.append((parts[0], parts[1]))
     return out
+
+
+@dataclass(frozen=True)
+class ChainCommit:
+    """HEAD first-parent 사슬의 한 커밋 — 부모 순서(첫째=레인 측·둘째=incoming)와 subject."""
+
+    sha: str
+    parents: "tuple[str, ...]"
+    subject: str
+
+    @property
+    def is_merge(self) -> bool:
+        return len(self.parents) == 2
+
+
+@dataclass(frozen=True)
+class ApprovedMerge:
+    """승인 목록의 한 줄 — 검증 통과분. position 은 사슬 안 1-based 서수(앵커 다음 = 1 · 오래된 순)이고
+    None 이면 ⓓ «앵커 이전 — 판정 불참»(epoch 을 넘긴 목록 허용 — 목록 자체는 유효하되 이 런의 판정에 안 쓴다)."""
+
+    sha: str
+    parent1: str
+    parent2: str
+    subject: str
+    position: "int | None"
+    memo: str
+    parent2_ref: str  # `git name-rev --refs='refs/*'` — ^2 의 ref 도달성(역방향 머지 오기입 가시화 재료)
+
+    @property
+    def participates(self) -> bool:
+        return self.position is not None
+
+
+def first_parent_chain(root: Path, anchor_sha: str, head_sha: str) -> "list[ChainCommit] | None":
+    """HEAD 의 first-parent 사슬에서 앵커(제외)..HEAD(포함) 구간을 **오래된 순**으로 돌려준다.
+
+    앵커가 그 사슬 위에 없으면 None — «조상이지만 ^2 경유»(레인 시작점이 다른 가지에서 머지돼
+    들어온 경우)·«조상 아님» 둘 다 None 이다. 이 구간의 2-부모 커밋만이 «레인이 받은 머지»이고,
+    승인 목록의 SHA 는 이 구간 안에 있어야 한다(역방향 머지 — 레인을 main 으로 합친 커밋 — 는
+    이 사슬에 없으므로 형식 오류로 잡힌다).
+    """
+    log = run_git(root, "log", "--first-parent", "--format=%H%x1f%P%x1f%s", head_sha)
+    if log.returncode != 0:
+        return None
+    out: "list[ChainCommit]" = []
+    for raw in log.stdout.splitlines():
+        sha, _, rest = raw.partition("\x1f")
+        parents, _, subject = rest.partition("\x1f")
+        if sha == anchor_sha:
+            return list(reversed(out))
+        out.append(ChainCommit(sha, tuple(parents.split()), subject))
+    return None
+
+
+def load_approved_merges(path: Path, root: Path, anchor_sha: str,
+                         head_sha: str) -> "tuple[list[ApprovedMerge], list[ChainCommit]]":
+    """승인 머지 목록 로더 — registry_gate 가 import 한다(빚 로더와 같은 자리·같은 fail-closed).
+
+    줄 형식 `<SHA> [메모]`(빈 줄·`//` 주석 허용 — `load_debt` 동형). 검증(전부 AnchorDiffUsage → 호출측 exit 1):
+      ⓐ `rev-parse --verify <sha>^{commit}` 성공  ⓑ 부모 정확히 2(비머지·옥토퍼스 거절)
+      ⓒ 앵커가 HEAD first-parent 사슬 위(도달 필수 — 아니면 목록이 비어 있어도 판정 불가)
+         ∧ 머지가 앵커..HEAD 구간 안(역방향 합성·타 가지 머지 거절)
+      ⓓ 예외: `merge-base --is-ancestor M anchor` 참(앵커 이전 머지)이면 거절하지 않고 «판정 불참»으로 표시
+    반환 = (목록, 사슬). 중복 SHA 는 첫 줄만 남긴다.
+    """
+    chain: "list[ChainCommit] | None" = first_parent_chain(root, anchor_sha, head_sha)
+    if chain is None:
+        raise AnchorDiffUsage(
+            f"앵커 {anchor_sha[:12]} 가 HEAD first-parent 사슬 밖 — 승인 목록 판정 불가"
+            "(앵커가 조상이어도 ^2 경유면 사슬 밖이다 · 레인 시작점 앵커를 확인하라)"
+        )
+    position_of: "dict[str, int]" = {c.sha: i + 1 for i, c in enumerate(chain)}
+    by_sha: "dict[str, ChainCommit]" = {c.sha: c for c in chain}
+    out: "list[ApprovedMerge]" = []
+    seen: "set[str]" = set()
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line: str = raw.strip()
+        if not line or line.startswith("//"):
+            continue
+        token, _, memo = line.partition(" ")
+        if re.fullmatch(r"[0-9a-fA-F]{7,40}", token) is None:
+            raise AnchorDiffUsage(
+                f"승인 머지 목록 줄 형식 오류: {raw!r} — `<SHA> [메모]`(SHA 는 7~40 hex)"
+            )
+        rev = run_git(root, "rev-parse", "--verify", f"{token}^{{commit}}")
+        if rev.returncode != 0:
+            raise AnchorDiffUsage(f"승인 머지 {token!r} resolve 불능 — {rev.stderr.strip()}")
+        sha: str = rev.stdout.strip()
+        if sha in seen:
+            continue
+        seen.add(sha)
+        show = run_git(root, "show", "-s", "--format=%P%x1f%s", sha)
+        parents_raw, _, subject = show.stdout.rstrip("\n").partition("\x1f")
+        parents: "list[str]" = parents_raw.split()
+        if len(parents) != 2:
+            raise AnchorDiffUsage(
+                f"승인 머지 {sha[:12]} 의 부모가 {len(parents)}개 — 승인 목록은 2-부모 머지만 받는다"
+                "(비머지 커밋·squash·rebase 결과·옥토퍼스는 등재 대상이 아니다)"
+            )
+        name_rev = run_git(root, "name-rev", "--refs=refs/*", "--name-only", parents[1])
+        parent2_ref: str = name_rev.stdout.strip() or "undefined"
+        if run_git(root, "merge-base", "--is-ancestor", sha, anchor_sha).returncode == 0:
+            out.append(ApprovedMerge(sha, parents[0], parents[1], subject, None, memo.strip(), parent2_ref))
+            continue  # ⓓ 앵커 이전 — 판정 불참(목록은 유효)
+        if sha not in by_sha:
+            raise AnchorDiffUsage(
+                f"승인 머지 {sha[:12]} 가 앵커 {anchor_sha[:12]}..HEAD first-parent 사슬 밖 — "
+                "레인이 받은 머지가 아니다(역방향 머지·타 가지 머지는 등재 대상이 아니다)"
+            )
+        out.append(ApprovedMerge(sha, parents[0], parents[1], subject, position_of[sha], memo.strip(), parent2_ref))
+    return out, chain
 
 
 def debt_match(normalized_line: str, debt_rules: "list[tuple[str, str]]") -> bool:
