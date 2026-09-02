@@ -1,7 +1,7 @@
 # pre-gate 관찰 모드 실측 대장 (v2.17.14~)
 
 - 지위: 속도 리비전 ⑦ 관찰 모드의 실측 원장. 승격 판정(⑦′)의 근거 자료.
-- 판정 규칙(설계 v3 §8): 실전 레인 ≥2(신규 BC ≥1)에서 ⑴ 오탐 0 이원 판정(`ignored` red→G2 실측 전건 실위반 / `corrected` red→재실행 green+명세 diff 귀속; 필터 건 별도 계수) ⑵ 커버 표면 미탐 0(G2 귀속 red ∩ P/S/I 표면 기계 대조) ⑶ 형식 반송 ≤1회/레인 + pre-gate 총 소요 보고.
+- 판정 규칙(설계 v3 §8 — 09-02 증거 이원화 반영): 실전 레인 ≥2(신규 BC ≥1)에서 ⑴ 오탐 0 이원 판정(`ignored` red→실위반 확인 = G2 귀속 red 해소 트레이스 **또는** legacy-debt 매칭 기록(STOP 병기) / `corrected` red→재실행 green+명세 diff 귀속; 필터 건 별도 계수 — 라벨 닫힌 정의는 R-3433 rev2) ⑵ 커버 표면 미탐 0(G2 귀속 red ∩ P/S/I 표면 기계 대조) ⑶ 형식 반송 ≤1회/레인 + pre-gate 총 소요 보고.
 - 1차 자료 경로: 각 소비 워크트리 `.dddjango/<런 폴더>/{pregate-report.md, g2-registry-evidence.md}` + `docs/superpowers/orders/lane/STOP-*·REPORT-*`.
 
 ## 총괄 표
