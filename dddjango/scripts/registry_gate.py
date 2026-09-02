@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import json
 import os
 import re
@@ -41,7 +42,8 @@ import sys
 import tempfile
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+_SCRIPTS_DIR: Path = Path(__file__).resolve().parent
+sys.path.insert(0, str(_SCRIPTS_DIR))
 import anchor_diff  # noqa: E402  — git·앵커 스냅숏·빚 로더·빚 매칭 공용(복제 통합)
 import checker_target  # noqa: E402
 import findings  # noqa: E402  — sink 환경변수 이름·라인 재구성 문법의 단일 출처
@@ -101,6 +103,44 @@ def _strip_snapshot(text: str, prefixes: "tuple[str, ...]") -> str:
 def _normalize(line: str, prefixes: "tuple[str, ...]") -> str:
     """차분 키용 정규화 — 경로 제거 + 라인번호 정규화(상하 이동 오탐 방지)."""
     return _LINENO_RE.sub(":N", _strip_snapshot(line, prefixes))
+
+
+def plugin_version() -> str:
+    """플러그인 버전 probe — 설치 레이아웃 2경로(Claude `<plugin>/.claude-plugin/plugin.json` ·
+    Codex `<plugin>/skills/dddjango/scripts` 기준 `parents[2]/.codex-plugin/plugin.json`).
+    실패는 `(unknown)` — 판정 영향 0(헤더 «툴체인» 행 전용). design_pregate.py 도 같은 probe 를
+    각자 보유한다(두 스크립트는 독립 파일 — 러너 유닛이 동치를 가드한다)."""
+    candidates: "list[Path]" = [_SCRIPTS_DIR.parent / ".claude-plugin" / "plugin.json"]
+    if len(_SCRIPTS_DIR.parents) > 2:
+        candidates.append(_SCRIPTS_DIR.parents[2] / ".codex-plugin" / "plugin.json")
+    for manifest in candidates:
+        try:
+            version: object = json.loads(manifest.read_text(encoding="utf-8")).get("version")
+        except (OSError, ValueError, AttributeError):
+            continue
+        if isinstance(version, str) and version:
+            return version
+    return "(unknown)"
+
+
+def _tree_digest() -> "tuple[str, int]":
+    """실행 트리 digest — 같은 폴더의 `*.py`·`*.json` 전량(`__pycache__` 제외) 파일별 sha256 을
+    이름 순으로 결합한 sha256[:16] 과 파일 수. 판정 입력(검사기·로스터·트리 데이터·rulepack)이 전부
+    이 폴더에 살므로 «같은 버전·같은 digest = 같은 측정»이 성립한다(exact command 기록은 경로 pin 계약이 아니다)."""
+    files: "list[Path]" = sorted(
+        p for p in list(_SCRIPTS_DIR.glob("*.py")) + list(_SCRIPTS_DIR.glob("*.json")) if p.is_file())
+    acc: "hashlib._Hash" = hashlib.sha256()
+    for f in files:
+        acc.update(f"{f.name}\0{hashlib.sha256(f.read_bytes()).hexdigest()}\n".encode("utf-8"))
+    return acc.hexdigest()[:16], len(files)
+
+
+def _toolchain_line() -> str:
+    """헤더 «툴체인» 행 — 판정 도구의 정체(플러그인 버전·인터프리터·실행 트리 digest·경로)를 stdout 증거에
+    싣는다(R-0365 수집 의무로 자연히 G2 증거가 된다). 출력 전용 — 판정 무접촉."""
+    digest, count = _tree_digest()
+    return (f"툴체인: dddjango v{plugin_version()} · py{sys.version_info[0]}.{sys.version_info[1]} · "
+            f"실행 트리 digest {digest}({count}파일) · 경로 {_SCRIPTS_DIR}")
 
 
 def _run_registry(target: Path,
@@ -365,6 +405,7 @@ def main(argv: "list[str]") -> int:
         attributed = rest
 
     print(f"# registry_gate — 판정 차분 · {root.name} · 앵커 {anchor_sha[:12]}")
+    print(_toolchain_line())
     print("**귀속 0 ≠ 전체 clean** — 이 게이트는 «이번 런이 위반을 늘렸나»만 판정한다(legacy 격리).")
     print("| 검사기 | anchor | current |")
     print("|---|---|---|")

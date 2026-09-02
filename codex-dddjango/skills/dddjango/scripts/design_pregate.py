@@ -33,11 +33,15 @@
                    1행 = `<add|update|remove[@Ln]|empty><공백|탭><경로>` + 선택 `#` 주석.
                    브레이스·와일드카드·`<placeholder>`·동일 경로 이중 서술 = 형식 red.
   symbols          `<!-- machine: symbols -->` + ```symbols 펜스.
-                   1행 = `경로::Symbol[(Base)][ {필드, …}]`
+                   1행 = `경로::Symbol[(Base)][ {필드, …}]`     (Symbol = 대문자 또는 `_`+대문자
+                                                              선두 — 사설 보조 타입 `_Symbol` 도 클래스)
                        | `경로::Symbol.method(파라미터)[ -> 반환]`   (선행 클래스 행 필수)
-                       | `경로::snake_함수[(파라미터)][ -> 반환]`
-                   필드 = `name: Type[ = default]` | `NAME = "literal"`(enum 멤버).
+                       | `경로::snake_함수[(파라미터)][ -> 반환]`   (소문자 선두 — `_helper` 포함)
+                   필드 = `name: Type[ = default]` | `NAME = "literal"`(enum 멤버)
+                        | `name = <식>`(Django 필드 대입식 등) — bare 이름은 형식 red.
                    미등재 파일 = 심볼 부재(fail-closed).
+                   마이그레이션 칸(`migrations/NNNN_*.py`)은 symbols 결손 시 정형(Migration 클래스 1 ·
+                   `0001_` 만 `initial = True`)으로 보충하고 `migrations/__init__.py` 는 빈 파일이다.
   boundary-imports `<!-- machine: boundary-imports -->` + ```imports 펜스.
                    1행 = `<소비 파일 경로><탭|2+공백><import 문 그대로>`.
   physical-signals 영구 테스트 입장 표(6열 정본 header)의 owner/path 셀 안 정형
@@ -52,10 +56,15 @@
 `build_anchor` 를 읽지도 쓰지도 않는다(앵커 의미론).
 
 사용: design_pregate.py <design-spec.md> <저장소 루트> [--base <git ref, 기본 HEAD>]
-                        [--report <경로>] [--python <검사기 인터프리터>] [--keep]
+                        [--report <경로>] [--python <검사기 인터프리터>] [--keep] [--block-hash]
 exit 0 = 예보 green · 2 = 예보 red · 3 = 형식 red(파싱 오류·add 실존 충돌·금지 경로·
 태그 이중 서술) · 4 = skip(machine 블록 부재 또는 실체화 0 — 사유 명시) ·
 1 = 실행 불능(venv/인터프리터·git 실패). 어느 경우도 침묵 없음.
+`--block-hash` 는 기계가독 블록 해시(sha256[:12] — 파서와 같은 추출)만 출력하고 exit 0 —
+Coordinator 의 캐시 skip 대조 전용(판정 무접촉). 매 실행 리포트 헤더가 같은 값을 병기한다.
+`--base` 명시(재발화 판형 — Phase 2 진입 후 명세 개정 재실행): 기준선 트리에 없던 계획 add 가
+오버레이에 실존하면 «기실현 add»(already-built)로 기록하고 사본에서 스텁으로 덮어쓴다 — 기준선
+트리에 실존하는 add 는 여전히 형식 red. 미지정(HEAD 기본)은 종전과 byte 동일 동작.
 """
 from __future__ import annotations
 
@@ -127,10 +136,10 @@ _MARKER_RE: "re.Pattern[str]" = re.compile(r"<!--\s*machine:\s*([a-z-]+)\s*-->")
 _FENCE_OPEN_RE: "re.Pattern[str]" = re.compile(r"^```([A-Za-z-]*)\s*$")
 _SYM_LINE_RE: "re.Pattern[str]" = re.compile(r"^(\S+?)::(.+)$")
 _METHOD_RE: "re.Pattern[str]" = re.compile(
-    r"^([A-Z]\w*)\.([A-Za-z_]\w*)\((.*)\)\s*(?:->\s*(\S.*?))?\s*$")
+    r"^(_?[A-Z]\w*)\.([A-Za-z_]\w*)\((.*)\)\s*(?:->\s*(\S.*?))?\s*$")
 _FUNC_RE: "re.Pattern[str]" = re.compile(
     r"^([a-z_]\w*)\s*(?:\((.*)\))?\s*(?:->\s*(\S.*?))?\s*$")
-_CLASS_HEAD_RE: "re.Pattern[str]" = re.compile(r"^([A-Z]\w*)\s*(?:\((.*)\))?\s*$")
+_CLASS_HEAD_RE: "re.Pattern[str]" = re.compile(r"^(_?[A-Z]\w*)\s*(?:\((.*)\))?\s*$")
 _FIELD_RE: "re.Pattern[str]" = re.compile(r"^[A-Za-z_]\w*\s*[:=]\s*\S.*$")
 _IMPORT_ROW_RE: "re.Pattern[str]" = re.compile(
     r"^(\S+)(?:\t+| {2,})((?:from\s+\S+\s+import\s+.+|import\s+\S.*))$")
@@ -349,9 +358,13 @@ def _parse_symbol_rest(rest: str, errors: "list[str]", where: str) -> "Symbol | 
             return None
         fields_part = rest[brace_at + 1:-1]
         head = rest[:brace_at].strip()
-    if head[:1].islower() or head[:1] == "_":
+    # 분류식: 소문자 선두 = 함수 · 대문자 또는 `_`+대문자 선두 = 클래스(사설 보조 타입도 클래스다 —
+    # `_Item {…}`·`_Item(Base)` 를 함수로 흡수하면 무경고 함수 스텁이 검사기의 사설 면제 경로를 비껴간다).
+    is_function: bool = head[:1].islower() or (head[:1] == "_" and not head[1:2].isupper())
+    if is_function:
         if fields_part is not None:
-            errors.append(f"symbols 행 파싱 불가({where}): 함수에 필드 목록을 쓸 수 없다")
+            errors.append(f"symbols 행 파싱 불가({where}): 함수에 필드 목록을 쓸 수 없다"
+                          "(클래스는 대문자 또는 `_`+대문자 선두)")
             return None
         fm = _FUNC_RE.match(head)
         if fm is None:
@@ -367,7 +380,8 @@ def _parse_symbol_rest(rest: str, errors: "list[str]", where: str) -> "Symbol | 
     for chunk in _split_top(fields_part or ""):
         if _FIELD_RE.match(chunk) is None:
             errors.append(f"symbols 필드 파싱 불가({where}): `{chunk}` — "
-                          "`name: Type[ = default]` 또는 `NAME = \"literal\"` 만 허용")
+                          "`name: Type[ = default]` · `NAME = \"literal\"` · `name = <식>`"
+                          "(Django 필드 대입식 등)만 허용 — 타입도 값도 없는 bare 이름 불가")
             continue
         sym.fields.append(chunk)
     return sym
@@ -460,12 +474,13 @@ def _cells(row: str) -> "list[str]":
     return [c.strip() for c in row.strip().strip("|").split("|")]
 
 
-def _parse_signals(text: str, plan: Plan) -> None:
-    """영구 테스트 입장 표(정본 6열 header)의 owner/path 셀에서 [신규 4] 어노테이션 전사.
+def _signals_rows(text: str) -> "list[str]":
+    """영구 테스트 입장 표(정본 6열 header) 데이터 행의 원문 목록 — 파서와 블록 해시가 같은 스캔을 쓴다.
 
-    어노테이션이 하나도 없는 행은 «물리 신호 없음»과 같으므로 결합하지 않는다(fail-closed).
+    header 행·구분선은 제외하고 그 뒤 연속하는 `|` 행을 문서 순서로 모은다(표가 여럿이면 이어 붙인다).
     """
     lines: "list[str]" = text.splitlines()
+    rows: "list[str]" = []
     i: int = 0
     while i < len(lines):
         row: str = lines[i].strip()
@@ -474,36 +489,82 @@ def _parse_signals(text: str, plan: Plan) -> None:
             if i < len(lines) and re.fullmatch(r"[|\s:-]+", lines[i].strip() or "x"):
                 i += 1  # 구분선
             while i < len(lines) and lines[i].strip().startswith("|"):
-                cells: "list[str]" = _cells(lines[i])
+                rows.append(lines[i])
                 i += 1
-                if len(cells) != len(SIGNALS_HEADER):
-                    plan.notes.append(f"입장 표 행 열 수 불일치(무시): {cells[:1]}")
-                    continue
-                cell: str = cells[5]
-                markers_m = _ANN_MARKERS_RE.search(cell)
-                base_m = _ANN_BASE_RE.search(cell)
-                client_m = _ANN_CLIENT_RE.search(cell)
-                if markers_m is None and base_m is None and client_m is None:
-                    continue  # 무기재 = 물리 신호 없음
-                tick = re.search(r"`([^`]+)`", cell)
-                path: "str | None" = tick.group(1) if tick else next(
-                    (t for t in cell.split() if "/" in t and not t.startswith("[")), None)
-                if path is None:
-                    plan.notes.append(f"physical-signals 경로 해소 불가(owner/path 셀): {cell!r}")
-                    continue
-                entry: "PlanEntry | None" = plan.entries.get(path)
-                if entry is None or entry.tag != "add":
-                    plan.notes.append(f"physical-signals 미반영(미등재 또는 비-add): {path}")
-                    continue
-                sig: Signals = Signals()
-                if markers_m is not None:
-                    sig.markers = [t.strip() for t in markers_m.group(1).split(",") if t.strip()]
-                if base_m is not None:
-                    sig.base = base_m.group(1).strip()
-                sig.client = client_m is not None and client_m.group(1) == "yes"
-                entry.signals = sig
             continue
         i += 1
+    return rows
+
+
+def _parse_signals(text: str, plan: Plan) -> None:
+    """영구 테스트 입장 표(정본 6열 header)의 owner/path 셀에서 [신규 4] 어노테이션 전사.
+
+    어노테이션이 하나도 없는 행은 «물리 신호 없음»과 같으므로 결합하지 않는다(fail-closed).
+    """
+    for raw in _signals_rows(text):
+        cells: "list[str]" = _cells(raw)
+        if len(cells) != len(SIGNALS_HEADER):
+            plan.notes.append(f"입장 표 행 열 수 불일치(무시): {cells[:1]}")
+            continue
+        cell: str = cells[5]
+        markers_m = _ANN_MARKERS_RE.search(cell)
+        base_m = _ANN_BASE_RE.search(cell)
+        client_m = _ANN_CLIENT_RE.search(cell)
+        if markers_m is None and base_m is None and client_m is None:
+            continue  # 무기재 = 물리 신호 없음
+        tick = re.search(r"`([^`]+)`", cell)
+        path: "str | None" = tick.group(1) if tick else next(
+            (t for t in cell.split() if "/" in t and not t.startswith("[")), None)
+        if path is None:
+            plan.notes.append(f"physical-signals 경로 해소 불가(owner/path 셀): {cell!r}")
+            continue
+        entry: "PlanEntry | None" = plan.entries.get(path)
+        if entry is None or entry.tag != "add":
+            plan.notes.append(f"physical-signals 미반영(미등재 또는 비-add): {path}")
+            continue
+        sig: Signals = Signals()
+        if markers_m is not None:
+            sig.markers = [t.strip() for t in markers_m.group(1).split(",") if t.strip()]
+        if base_m is not None:
+            sig.base = base_m.group(1).strip()
+        sig.client = client_m is not None and client_m.group(1) == "yes"
+        entry.signals = sig
+
+
+def block_hash(text: str) -> str:
+    """기계가독 블록 해시 — 기계 블록 4종 + 영구 테스트 입장 표를 **파서와 같은 정규식·스캔**으로
+    추출해 문서 순서 원문(verbatim)으로 이어 붙인 sha256[:12]. 출력 전용(판정 무접촉·git 0회·OS 무관).
+
+    Coordinator 의 캐시 skip 판형(pre-gate 문단): `--block-hash` 값이 직전 실행 리포트 헤더의
+    `블록 해시` 와 같을 때만 재실행을 skip 할 수 있다 — 같은 입력이면 같은 값, 산문만 바뀌면 같은 값,
+    블록 한 글자가 바뀌면 다른 값이다(원문 기준이라 공백 변경도 재실행 쪽으로 기운다 — 안전 방향).
+    """
+    blocks: "dict[str, list[str]]" = _machine_blocks(text, [])
+    parts: "list[str]" = []
+    for name in MACHINE_FENCES:
+        parts.append(f"<!-- machine: {name} -->")
+        parts.extend(blocks.get(name, []))
+    parts.append("<!-- physical-signals -->")
+    parts.extend(_signals_rows(text))
+    return hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()[:12]
+
+
+def plugin_version() -> str:
+    """플러그인 버전 probe — 설치 레이아웃 2경로(Claude `<plugin>/.claude-plugin/plugin.json` ·
+    Codex `<plugin>/skills/dddjango/scripts` 기준 `parents[2]/.codex-plugin/plugin.json`).
+    실패는 `(unknown)` — 판정 영향 0(리포트 헤더 스탬프 전용). registry_gate.py 도 같은 probe 를
+    각자 보유한다(두 스크립트는 독립 파일 — 러너 유닛이 동치를 가드한다)."""
+    candidates: "list[Path]" = [SCRIPTS_DIR.parent / ".claude-plugin" / "plugin.json"]
+    if len(SCRIPTS_DIR.parents) > 2:
+        candidates.append(SCRIPTS_DIR.parents[2] / ".codex-plugin" / "plugin.json")
+    for manifest in candidates:
+        try:
+            version: object = json.loads(manifest.read_text(encoding="utf-8")).get("version")
+        except (OSError, ValueError, AttributeError):
+            continue
+        if isinstance(version, str) and version:
+            return version
+    return "(unknown)"
 
 
 def parse_spec(text: str) -> "tuple[Plan | None, list[str]]":
@@ -538,6 +599,31 @@ def parse_spec(text: str) -> "tuple[Plan | None, list[str]]":
                     sym.fields.append(f'name = "{dotted}"')
                 if "label" not in heads and bc:
                     sym.fields.append(f'label = "{bc}"')
+    # 마이그레이션 정형 보충(값 축 유도 3행째): `__init__.py` 는 빈 파일이라 어떤 채널 전사도 싣지
+    # 않고, `NNNN_*.py` 는 symbols 결손일 때만 정형으로 보충한다 — 그 경우 imports/raises 전사는
+    # 정형에 실리지 않으므로 채널 메모로 남기고 비운다(침묵 금지). symbols 전사가 있으면 전사 우선.
+    for entry in plan.entries.values():
+        if entry.tag != "add":
+            continue
+        is_init: bool = _MIGRATION_INIT_RE.match(entry.path) is not None
+        is_file: bool = _MIGRATION_FILE_RE.match(entry.path) is not None
+        if not (is_init or is_file):
+            continue
+        dropped: "list[str]" = []
+        if is_init and entry.symbols:
+            dropped.append(f"symbols {len(entry.symbols)}")
+        if (is_init or not entry.symbols) and entry.imports:
+            dropped.append(f"imports {len(entry.imports)}")
+        if (is_init or not entry.symbols) and entry.raises:
+            dropped.append(f"raises {len(entry.raises)}")
+        if not dropped:
+            continue
+        what: str = "빈 파일" if is_init else "정형 보충(symbols 결손)"
+        plan.notes.append(f"마이그레이션 {what} — 채널 전사 무시(도구 산출물 #593 · {', '.join(dropped)}): {entry.path}")
+        if is_init:
+            entry.symbols = []
+        entry.imports = []
+        entry.raises = []
     return plan, errors
 
 
@@ -546,6 +632,10 @@ def parse_spec(text: str) -> "tuple[Plan | None, list[str]]":
 _SNAKE_ACRONYM_RE = re.compile(r"([A-Z]+)([A-Z][a-z])")
 _SNAKE_BOUNDARY_RE = re.compile(r"([a-z\d])([A-Z])")
 _MODEL_DIR_RE = re.compile(r"^application/([^/]+)/driven_layer/django_[^/]+/models/[^/]+\.py$")
+# 마이그레이션 칸 — 위치 무관(오배치 진탐은 경로 기반 검사기 #336/#325/#81 소유 — 내용 불문이라 보존).
+# 파일 이름 꼴은 check-mechanism-ownership `MIGRATION_NAME_RE`(`^\d{4}_\w+\.py$`)와 동형.
+_MIGRATION_INIT_RE = re.compile(r"^(?:.+/)?migrations/__init__\.py$")
+_MIGRATION_FILE_RE = re.compile(r"^(?:.+/)?migrations/(\d{4}_\w+)\.py$")
 
 
 def _snake(name: str) -> str:
@@ -594,8 +684,35 @@ def _class_stub(sym: Symbol, meta_db_table: "str | None" = None) -> "list[str]":
     return lines
 
 
+def _migration_stub(entry: PlanEntry) -> "str | None":
+    """마이그레이션 칸의 정형 보충(값 축 유도 3행째 — 결손 시만·전사 우선). 그 외 칸은 None.
+
+    `migrations/__init__.py` 는 진짜 빈 파일이다(#593 — 도구가 빈 파일로 만든다 · 헤더도 방출하지
+    않는다). `migrations/NNNN_*.py` 는 symbols 전사가 없을 때만 makemigrations 산출물의 부분집합
+    모양으로 보충한다 — `Migration` 클래스 정확히 1 · 무어노테이션 `Assign`(검사기는 `AnnAssign`
+    을 #593 으로 본다) · `initial = True` 는 `0001_` 에만 · `django.db` import 는 비-저장소.
+    symbols 전사가 있으면 기존 렌더러가 전사 그대로 싣는다(`migrations.Migration` base 는
+    BASE_IMPORTS 밖이라 import 합성 0 — compile 은 이름을 해소하지 않는다).
+    """
+    if _MIGRATION_INIT_RE.match(entry.path):
+        return ""
+    m = _MIGRATION_FILE_RE.match(entry.path)
+    if m is None or entry.symbols:
+        return None
+    body: "list[str]" = ['"""pre-gate 팬텀 스텁 — 마이그레이션 정형(도구 산출물 모양 · #593)."""',
+                         "from django.db import migrations", "", "",
+                         "class Migration(migrations.Migration):"]
+    if m.group(1).startswith("0001_"):
+        body.append("    initial = True")
+    body += ["    dependencies = []", "    operations = []"]
+    return "\n".join(body) + "\n"
+
+
 def render_stub(entry: PlanEntry) -> str:
     """PlanEntry 하나 → 팬텀 스텁 본문. 산문 추론 재료 0 — 전사·상수·처분표뿐이다."""
+    canonical: "str | None" = _migration_stub(entry)
+    if canonical is not None:
+        return canonical
     lines: "list[str]" = ['"""pre-gate 팬텀 스텁."""', "from __future__ import annotations", ""]
     emitted: "set[str]" = set()
     sig: Signals = entry.signals or Signals()
@@ -767,8 +884,24 @@ def materialize_skeleton(copy: Path, bc_name: str) -> None:
     walk(tree.bc_root(), bc_dir, {"bounded_context": bc_name})
 
 
-def materialize(copy: Path, plan: Plan) -> "dict[str, list[str]]":
+def _compile_hint(entry: PlanEntry) -> str:
+    """compile 실패의 흔한 원인 힌트 — `_`+대문자 선두는 클래스로 분류되므로 `_Helper(x: int)` 처럼
+    파라미터를 base 자리에 적으면 `class _Helper(x: int):` 가 되어 문법 밖이다(사설 함수는 소문자 선두)."""
+    if any(sym.kind == "class" and sym.name.startswith("_") and ":" in sym.base
+           for sym in entry.symbols):
+        return " · 힌트: `_`+대문자 선두는 클래스로 분류된다 — 사설 함수는 소문자 선두로 적는다"
+    return ""
+
+
+def materialize(copy: Path, plan: Plan, *, explicit_base: bool = False,
+                in_baseline: "frozenset[str]" = frozenset(),
+                base_short: str = "") -> "dict[str, list[str]]":
     """태그 의미론(D2)대로 사본 위에 팬텀을 겹친다 — add 실존 충돌은 FormError.
+
+    **재발화 판형(`--base` 명시 — Phase 2 진입 후 명세 개정 재실행)**: 기준선 트리에 없던 계획 add 가
+    오버레이(worktree−HEAD)에 실존하면 «기실현 add»로 already-built 에 기록하고 **사본에서 스텁으로
+    덮어쓴다**(실물 판정 혼입 0 — 커밋된 add 와 같은 스텁 판정). 기준선 트리에 실존하는 add 는 여전히
+    형식 red(계획↔실물 모순)다. `--base` 미지정 경로는 byte 동일 동작이다.
 
     반환: materialized / already_built / unsimulated 목록(리포트 재료 — 침묵 금지).
     """
@@ -777,14 +910,17 @@ def materialize(copy: Path, plan: Plan) -> "dict[str, list[str]]":
         target: Path = copy / entry.path
         if entry.tag == "add":
             if target.exists():
-                raise FormError(f"add 충돌(실존): {entry.path} — 계획과 실물의 모순은 그 자체가 발견이다")
+                if not (explicit_base and entry.path not in in_baseline):
+                    raise FormError(f"add 충돌(실존): {entry.path} — 계획과 실물의 모순은 그 자체가 발견이다")
+                report["already_built"].append(
+                    f"add(기실현 — 기준선 {base_short} 부재·오버레이 실존 · 스텁 대체 예보): {entry.path}")
             stub: str = render_stub(entry)
             try:
                 compile(stub, entry.path, "exec")  # symtable까지 — 중복 인자류는 ast.parse 가 못 잡는다
             except (SyntaxError, ValueError) as exc:
                 detail: str = getattr(exc, "msg", None) or str(exc)
                 raise FormError(f"스텁 렌더 파싱 불가: {entry.path} — {detail} "
-                                "(기계 블록 전사 내용이 파이썬 문법 밖이다)")
+                                f"(기계 블록 전사 내용이 파이썬 문법 밖이다){_compile_hint(entry)}")
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(stub, encoding="utf-8")
             report["materialized"].append(entry.path)
@@ -890,14 +1026,22 @@ BLIND_SPOTS: "tuple[str, ...]" = (
     "앵커·상태 축: 예보 기준선은 «스텁 제외 현재 상태»다 — G2 build_anchor 차분과 다르며, "
     "HEAD 판형 게이트 결과의 G2 증거 유용은 차분 세탁으로 금지된다.",
     "미시뮬레이션: update 계획·후행 remove(@Ln)는 실체화하지 않는다 — 위 목록 병기.",
-    "정형 보충(apps.py name/label·모델 Meta.db_table): 결손 시 규약 유도값을 합성한다 — 기계 블록 "
+    "정형 보충(apps.py name/label·모델 Meta.db_table·마이그레이션 칸): 결손 시 규약 유도값을 합성한다 — 기계 블록 "
     "전사가 있으면 전사 우선이지만, «산문»으로만 규약 밖 값을 계획한 일탈은 예보 표면 밖이다.",
+    "기실현 add(`--base` 명시 시 — 명시 `--base HEAD` 포함): 사본 = 기준선 트리 + (worktree−HEAD) 오버레이의 "
+    "스텁 대체 — 기준선 이후 커밋분은 사본에 없다. 오버레이 실존 add 는 스텁으로 덮어써 예보하므로(실물 판정 "
+    "혼입 0) 실물이 스텁과 다른 위반은 예보 표면 밖이고, 유일 판정자는 G2 앵커 차분이다.",
 )
+
+
+def _executor_stamp(blk_hash: str) -> str:
+    """리포트 헤더 스탬프 — 버전 판별(행 수 휴리스틱 폐기)과 캐시 skip 대조(블록 해시)의 단일 자리."""
+    return f"실행기: design_pregate.py · dddjango v{plugin_version()} · 블록 해시 {blk_hash}"
 
 
 def write_report(report_path: Path, spec: Path, base_ref: str, base_sha: str, verdict: str,
                  attributed: "list[str]", mat: "dict[str, list[str]]",
-                 notes: "list[str]") -> None:
+                 notes: "list[str]", blk_hash: str) -> None:
     """예보 리포트 append(D4) — 헤더 상시 문구·안정 ID·사각 목록 병기."""
     now: str = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     lines: "list[str]" = [
@@ -905,7 +1049,7 @@ def write_report(report_path: Path, spec: Path, base_ref: str, base_sha: str, ve
         f"## pre-gate 예보 — {now} · {spec.name}",
         "",
         f"- 기준선 SHA: `{base_sha}` (--base {base_ref}) — «스텁 제외 현재 상태» · "
-        f"프로필: auto · 모드: 관찰({MODE}) · 실행기: design_pregate.py",
+        f"프로필: auto · 모드: 관찰({MODE}) · {_executor_stamp(blk_hash)}",
         f"- {NO_SUBSTITUTE}",
         f"- {COVER_NOTE}",
         f"- 판정: {verdict}",
@@ -937,7 +1081,7 @@ def write_report(report_path: Path, spec: Path, base_ref: str, base_sha: str, ve
 
 
 def write_report_stub(report_path: "Path | None", spec: Path, base_ref: str, base_sha: str,
-                      verdict: str, detail: "list[str]") -> None:
+                      verdict: str, detail: "list[str]", blk_hash: str) -> None:
     """형식 red·skip 도 리포트에 사유를 남긴다(침묵 금지) — 예보 항목 없는 축약판."""
     if report_path is None:
         return
@@ -946,7 +1090,8 @@ def write_report_stub(report_path: "Path | None", spec: Path, base_ref: str, bas
         "",
         f"## pre-gate 예보 — {now} · {spec.name}",
         "",
-        f"- 기준선 SHA: `{base_sha}` (--base {base_ref}) · 프로필: auto · 모드: 관찰({MODE})",
+        f"- 기준선 SHA: `{base_sha}` (--base {base_ref}) · 프로필: auto · 모드: 관찰({MODE}) · "
+        f"{_executor_stamp(blk_hash)}",
         f"- {NO_SUBSTITUTE}",
         f"- 판정: {verdict}",
         "",
@@ -964,11 +1109,15 @@ def main(argv: "list[str]") -> int:
     ap: _UsageParser = _UsageParser(add_help=True, description="design-spec pre-gate 예보 실행기")
     ap.add_argument("spec", help="설계 명세 markdown(기계 블록 §4 포함)")
     ap.add_argument("target", help="대상 저장소 루트(git)")
-    ap.add_argument("--base", default="HEAD", help="사본 기준 git ref(기본 HEAD)")
+    ap.add_argument("--base", default=None,
+                    help="사본 기준 git ref(기본 HEAD). 명시하면 재발화 판형 — 기준선 트리에 없던 계획 add 의 "
+                         "오버레이 실존은 «기실현 add»로 기록하고 스텁으로 대체한다(명시 `--base HEAD` 포함)")
     ap.add_argument("--report", default=None, help="예보 리포트 append 경로(D4)")
     ap.add_argument("--python", dest="python_bin", default=sys.executable,
                     help="검사기 인터프리터(대상 venv — 기본 sys.executable)")
     ap.add_argument("--keep", action="store_true", help="격리 사본·스크래치 보존(디버그)")
+    ap.add_argument("--block-hash", action="store_true",
+                    help="기계가독 블록 해시만 출력하고 끝낸다(출력 전용·판정 무접촉 — 캐시 skip 대조용)")
     ns: argparse.Namespace = ap.parse_args(argv)
 
     spec_path: Path = Path(ns.spec).resolve()
@@ -977,14 +1126,21 @@ def main(argv: "list[str]") -> int:
     if not spec_path.is_file():
         print(f"실행 불능: 명세 파일 없음 — {spec_path}", file=sys.stderr)
         return 1
+    text: str = spec_path.read_text(encoding="utf-8")
+    blk_hash: str = block_hash(text)
+    if ns.block_hash:
+        print(f"블록 해시 {blk_hash}")
+        return 0
     if not (repo / ".git").exists():
         print(f"실행 불능: git 저장소가 아니다 — {repo} (차분 예보는 git 앵커가 전제다)", file=sys.stderr)
         return 1
 
+    base_ref: str = ns.base or "HEAD"
+    explicit_base: bool = ns.base is not None
     rev: "subprocess.CompletedProcess[bytes]" = _git(repo, "rev-parse", "--verify",
-                                                     f"{ns.base}^{{commit}}", check=False)
+                                                     f"{base_ref}^{{commit}}", check=False)
     if rev.returncode != 0:
-        print(f"실행 불능: --base {ns.base!r} resolve 불능 — "
+        print(f"실행 불능: --base {base_ref!r} resolve 불능 — "
               f"{rev.stderr.decode('utf-8', 'replace').strip()}", file=sys.stderr)
         return 1
     base_sha: str = rev.stdout.decode("ascii").strip()
@@ -994,7 +1150,6 @@ def main(argv: "list[str]") -> int:
         print(f"실행 불능: {gap}", file=sys.stderr)
         return 1
 
-    text: str = spec_path.read_text(encoding="utf-8")
     plan_result: "tuple[Plan | None, list[str]]" = parse_spec(text)
     plan: "Plan | None" = plan_result[0]
     errors: "list[str]" = plan_result[1]
@@ -1002,12 +1157,12 @@ def main(argv: "list[str]") -> int:
         print(f"형식 red — {len(errors)}건 (기계 블록이 규범 문법 밖이다 · architect 반송 재료):")
         for err in errors:
             print(f"  {err}")
-        write_report_stub(report_path, spec_path, ns.base, base_sha, "형식 red", errors)
+        write_report_stub(report_path, spec_path, base_ref, base_sha, "형식 red", errors, blk_hash)
         return 3
     if plan is None:
         reason: str = "skip — machine 블록 부재(<!-- machine: file-plan --> 없음): 구형 명세 한정 조항"
         print(reason)
-        write_report_stub(report_path, spec_path, ns.base, base_sha, "skip", [reason])
+        write_report_stub(report_path, spec_path, base_ref, base_sha, "skip", [reason], blk_hash)
         return 4
 
     scratch: Path = Path(tempfile.mkdtemp(prefix="design-pregate-"))
@@ -1015,16 +1170,20 @@ def main(argv: "list[str]") -> int:
     try:
         copy.mkdir(parents=True)
         _extract_archive(repo, base_sha, copy)
+        # archive == 기준선 트리 — 오버레이 «전»에 계획 경로의 실존을 재서 «기준선 실존 add»(형식 red 유지)와
+        # «오버레이 실존 add»(재발화 판형의 기실현)를 가른다(git 추가 호출 0·결정적).
+        in_baseline: "frozenset[str]" = frozenset(p for p in plan.entries if (copy / p).exists())
         overlaid: "list[str]" = _overlay_dirty(repo, copy)
         _git(copy, "init", "-q")
         _git(copy, "add", "-A")
         _git(copy, "commit", "-q", "-m", "pregate-anchor", "--allow-empty")
 
         try:
-            mat: "dict[str, list[str]]" = materialize(copy, plan)
+            mat: "dict[str, list[str]]" = materialize(copy, plan, explicit_base=explicit_base,
+                                                      in_baseline=in_baseline, base_short=base_sha[:12])
         except FormError as exc:
             print(f"형식 red — {exc}")
-            write_report_stub(report_path, spec_path, ns.base, base_sha, "형식 red", [str(exc)])
+            write_report_stub(report_path, spec_path, base_ref, base_sha, "형식 red", [str(exc)], blk_hash)
             return 3
 
         if not mat["materialized"]:
@@ -1033,12 +1192,12 @@ def main(argv: "list[str]") -> int:
             print(reason)
             for item in mat["unsimulated"]:
                 print(f"  미시뮬레이션: {item}")
-            write_report_stub(report_path, spec_path, ns.base, base_sha, "skip",
-                              [reason] + [f"미시뮬레이션: {x}" for x in mat["unsimulated"]])
+            write_report_stub(report_path, spec_path, base_ref, base_sha, "skip",
+                              [reason] + [f"미시뮬레이션: {x}" for x in mat["unsimulated"]], blk_hash)
             return 4
 
-        print(f"# design_pregate — 예보 실행 · 기준선 {base_sha[:12]} (--base {ns.base}) · "
-              f"모드 관찰({MODE})")
+        print(f"# design_pregate — 예보 실행 · 기준선 {base_sha[:12]} (--base {base_ref}) · "
+              f"모드 관찰({MODE}) · {_executor_stamp(blk_hash)}")
         print(f"({NO_SUBSTITUTE})")
         print(f"실체화 {len(mat['materialized'])}건 · dirty overlay {len(overlaid)}건 · "
               f"미시뮬레이션 {len(mat['unsimulated'])}건 · already-built {len(mat['already_built'])}건")
@@ -1058,8 +1217,8 @@ def main(argv: "list[str]") -> int:
             print(f"  채널 메모: {note}")
         print(f"\n판정: {verdict}")
         if report_path is not None:
-            write_report(report_path, spec_path, ns.base, base_sha, verdict,
-                         attributed, mat, plan.notes)
+            write_report(report_path, spec_path, base_ref, base_sha, verdict,
+                         attributed, mat, plan.notes, blk_hash)
         return 0 if gate_exit == 0 else 2
     except RunError as exc:
         print(f"실행 불능: {exc}", file=sys.stderr)
