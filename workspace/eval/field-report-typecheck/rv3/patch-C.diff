@@ -1,0 +1,137 @@
+--- orig/check-public-surface-annotation.py	2026-09-03 17:30:44
++++ patched/check-public-surface-annotation.py	2026-09-03 17:33:47
+@@ -132,10 +132,47 @@
+     return ""
+ 
+ 
+-def _is_declarative_class(cls: ast.ClassDef) -> bool:
++def _import_bindings(mod: ast.Module) -> dict[str, str]:
++    """모듈 본문(if/try 하위 문 포함)의 import 바인딩 — 로컬 이름 → 원명.
++
++    `from enum import StrEnum as _StrEnum` → {"_StrEnum": "StrEnum"} ·
++    `import enum as e` → {"e": "enum"}. 함수·클래스 본문 안 import 는 보지 않는다."""
++    bindings: dict[str, str] = {}
++
++    def walk(stmts: list[ast.stmt]) -> None:
++        for st in stmts:
++            if isinstance(st, ast.ImportFrom):
++                for a in st.names:
++                    bindings[a.asname or a.name] = a.name
++            elif isinstance(st, ast.Import):
++                for a in st.names:
++                    top: str = a.name.split(".")[0]
++                    bindings[a.asname or top] = a.name if a.asname else top
++            elif isinstance(st, ast.If):
++                walk(st.body)
++                walk(st.orelse)
++            elif isinstance(st, ast.Try):
++                walk(st.body)
++                for h in st.handlers:
++                    walk(h.body)
++                walk(st.orelse)
++                walk(st.finalbody)
++
++    walk(mod.body)
++    return bindings
++
++
++def _base_name(b: ast.expr, bindings: dict[str, str]) -> str:
++    """Name base 는 import 바인딩으로 원명 해소(로컬 정의면 그대로) · Attribute 는 attr(receiver 무검사)."""
++    if isinstance(b, ast.Name):
++        return bindings.get(b.id, b.id)
++    return _name_of(b)
++
++
++def _is_declarative_class(cls: ast.ClassDef, bindings: dict[str, str]) -> bool:
+     if cls.name in DECLARATIVE_CLASS_NAMES:
+         return True
+-    if {_name_of(b) for b in cls.bases} & DECLARATIVE_BASE_NAMES:
++    if {_base_name(b, bindings) for b in cls.bases} & DECLARATIVE_BASE_NAMES:
+         return True
+     deco = set()
+     for d in cls.decorator_list:
+@@ -181,7 +218,7 @@
+ 
+ def _scan_stmts(
+     stmts: list[ast.stmt], scope: str, bound: set[str], rel: Path,
+-    out: Findings, declarative: bool,
++    out: Findings, declarative: bool, bindings: dict[str, str],
+ ) -> None:
+     """한 스코프의 문장열을 소스 순서로 걸으며 «첫 단순대입»의 타입 누락을 모은다.
+ 
+@@ -190,7 +227,7 @@
+     for stmt in stmts:
+         if isinstance(stmt, ast.ClassDef):
+             bound.add(stmt.name)
+-            _scan_class(stmt, rel, out)
++            _scan_class(stmt, rel, out, bindings)
+             continue
+         if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
+             bound.add(stmt.name)
+@@ -201,7 +238,7 @@
+             for va in (stmt.args.vararg, stmt.args.kwarg):
+                 if va is not None:
+                     fn_bound.add(va.arg)
+-            _scan_stmts(stmt.body, "function", fn_bound, rel, out, False)
++            _scan_stmts(stmt.body, "function", fn_bound, rel, out, False, bindings)
+             continue
+         if isinstance(stmt, ast.AnnAssign):
+             if isinstance(stmt.target, ast.Name):
+@@ -219,36 +256,36 @@
+                 _record_syntax_bindings(stmt, bound)  # 언패킹·다중·비-Name 타깃(문법 면제)
+             continue
+         if isinstance(stmt, (ast.If, ast.While)):
+-            _scan_stmts(stmt.body, scope, bound, rel, out, declarative)
+-            _scan_stmts(stmt.orelse, scope, bound, rel, out, declarative)
++            _scan_stmts(stmt.body, scope, bound, rel, out, declarative, bindings)
++            _scan_stmts(stmt.orelse, scope, bound, rel, out, declarative, bindings)
+             continue
+         if isinstance(stmt, (ast.For, ast.AsyncFor)):
+             _record_syntax_bindings(stmt.target, bound)
+-            _scan_stmts(stmt.body, scope, bound, rel, out, declarative)
+-            _scan_stmts(stmt.orelse, scope, bound, rel, out, declarative)
++            _scan_stmts(stmt.body, scope, bound, rel, out, declarative, bindings)
++            _scan_stmts(stmt.orelse, scope, bound, rel, out, declarative, bindings)
+             continue
+         if isinstance(stmt, (ast.With, ast.AsyncWith)):
+             for item in stmt.items:
+                 if item.optional_vars is not None:
+                     _record_syntax_bindings(item.optional_vars, bound)
+-            _scan_stmts(stmt.body, scope, bound, rel, out, declarative)
++            _scan_stmts(stmt.body, scope, bound, rel, out, declarative, bindings)
+             continue
+         if isinstance(stmt, ast.Try):
+-            _scan_stmts(stmt.body, scope, bound, rel, out, declarative)
++            _scan_stmts(stmt.body, scope, bound, rel, out, declarative, bindings)
+             for h in stmt.handlers:
+                 if h.name:
+                     bound.add(h.name)
+-                _scan_stmts(h.body, scope, bound, rel, out, declarative)
+-            _scan_stmts(stmt.orelse, scope, bound, rel, out, declarative)
+-            _scan_stmts(stmt.finalbody, scope, bound, rel, out, declarative)
++                _scan_stmts(h.body, scope, bound, rel, out, declarative, bindings)
++            _scan_stmts(stmt.orelse, scope, bound, rel, out, declarative, bindings)
++            _scan_stmts(stmt.finalbody, scope, bound, rel, out, declarative, bindings)
+             continue
+         _record_syntax_bindings(stmt, bound)  # AugAssign·Import·Expr(walrus 포함) — 기록만
+ 
+ 
+-def _scan_class(cls: ast.ClassDef, rel: Path, out: Findings) -> None:
+-    declarative = _is_declarative_class(cls)
++def _scan_class(cls: ast.ClassDef, rel: Path, out: Findings, bindings: dict[str, str]) -> None:
++    declarative = _is_declarative_class(cls, bindings)
+     bound: set[str] = set()
+-    _scan_stmts(cls.body, "class", bound, rel, out, declarative)
++    _scan_stmts(cls.body, "class", bound, rel, out, declarative, bindings)
+     if declarative:
+         return  # 선언적 본문 — 속성 규칙도 프레임워크 관용에 맡긴다
+     # 속성(#493) — self.x 의 첫 대입: 클래스 본문 `x: T` 나 `self.x: T = …` 가 어디에도 없으면 위반.
+@@ -416,7 +453,7 @@
+             continue
+         rel = f.relative_to(target)
+         parts = set(rel.parts)
+-        _scan_stmts(mod.body, "module", set(), rel, findings, False)
++        _scan_stmts(mod.body, "module", set(), rel, findings, False, _import_bindings(mod))
+         if (parts & DRIVEN_DIRS) and "domain_bypass_query" in parts:
+             _check_thin_read(mod, rel, findings)
+         if (parts & OHS_DIRS) and "contract" in parts and "exception" in parts:

@@ -1,0 +1,3 @@
+blocker 2건 — 타입 전면 규율 위반 (#493 «첫 대입에 타입» 외)
+  [#493] application/orders/driving_layer/api/catalog/schema/schema_in.py:6: 클래스 변수 `model_config` 의 첫 대입에 타입이 없다 — `name: T = …`
+  [#493] application/orders/driving_layer/api/catalog/schema/schema_in.py:11: 클래스 변수 `model_config` 의 첫 대입에 타입이 없다 — `name: T = …`

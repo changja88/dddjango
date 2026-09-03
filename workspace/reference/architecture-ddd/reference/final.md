@@ -489,6 +489,9 @@ class RouteOptimizer:
 - 반드시 불변이어야 한다 (setter 금지)
 - 부작용과 동시성 문제가 없다
 - [B] 값 객체가 유비쿼터스 언어 자체가 될 수 있다: `_countryCode: str` 대신 `_country: CountryCode`
+- 값 객체의 자기 검증은 **값의 불변식만** 검사한다(R-3442). 거부할 수 있는 것은 선언 타입의 **하위 타입** 값뿐이다(`bool`⊂`int`처럼 상속으로 통과하는 값). 거르는 형은 `type(x) is <거부할 하위 타입>`(예: `type(amount) is bool`)뿐이며, `type(x) is not <선언 타입>` 형은 승격 값까지 거부하므로 쓰지 않는다. 수치 탑 **승격**으로 통과하는 값(`float` 자리의 `int`·`complex` 자리의 `float`)은 시그니처가 수용을 약속한 것이므로 거부하지 않는다. `bool`은 값 의미가 다른 하위 타입이라 어느 수치 자리에서든 거부할 수 있다.
+- 선언 타입을 값 객체 안에서 **재검사하거나 강제 변환하지 않는다**(R-3443) — 타입은 시그니처가 약속하고 테스트·타입 체커가 지킨다. `object`/`Any`/JSON 입력의 타입 좁히기는 값 객체를 부르기 **전**에 경계(Data Mapper 복원·요청 Schema·폼 `cleaned_data`)가 담당한다.
+- 두 규범(R-3442·R-3443)의 적용 대상은 이번 작업이 새로 쓰는 값 객체와 **손대는 줄**이다 — 손대지 않는 기존 재검사는 소급 대상이 아니며 정리는 발주 소관이다.
 
 ```python
 from dataclasses import dataclass, replace
@@ -505,9 +508,9 @@ class Money:
     currency: str = "KRW"
 
     def __post_init__(self) -> None:
-        """자기 검증 (Self-Validation): 생성 시점에 불변식 강제"""
-        if not isinstance(self.amount, int):
-            object.__setattr__(self, "amount", int(self.amount))
+        """자기 검증 (Self-Validation): 값의 불변식만 — 타입은 시그니처가 약속하고 테스트·타입 체커가 지킨다"""
+        if type(self.amount) is bool:  # bool 은 int 의 하위 타입이라 타입 체커가 통과시킨다 — 값 검사에 속한다
+            raise ValueError(f"금액은 정수여야 합니다: {self.amount!r}")
         if self.amount < 0:
             raise ValueError(f"금액은 0 이상이어야 합니다: {self.amount}")
         if not self.currency:
@@ -520,7 +523,7 @@ class Money:
 
     def subtract(self, other: "Money") -> "Money":
         self._ensure_same_currency(other)
-        result = self.amount - other.amount
+        result: int = self.amount - other.amount
         if result < 0:
             raise ValueError("결과 금액이 음수입니다")
         return replace(self, amount=result)
@@ -546,7 +549,7 @@ class PhoneNumber:
     """전화번호 값 객체 [B] - 유효성 검사 로직을 캡슐화"""
     number: str
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         import re
         if not re.match(r"^\d{2,3}-\d{3,4}-\d{4}$", self.number):
             raise ValueError(f"유효하지 않은 전화번호: {self.number}")
