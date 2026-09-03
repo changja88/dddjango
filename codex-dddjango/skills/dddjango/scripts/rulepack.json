@@ -47,7 +47,7 @@
     },
     {
       "path": "ontology/rules/architecture-ddd-final.ttl",
-      "sha256": "d2aae824cced01cc270837aa42d8416e93575df9d758be322ca071a400ac7a28"
+      "sha256": "eb1d64c0f14cb50d0d8f97f166f47d25ae9a37ee876d7a5fcf1a21ffeb04de93"
     },
     {
       "path": "ontology/rules/architecture-ddd-skill.ttl",
@@ -60815,8 +60815,8 @@
       "block_order": 3,
       "checkers": [],
       "document": "dddjango/skills/architecture-ddd/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-3442@2026-09-03",
-      "label": "값 객체 자기 검증은 값의 불변식만 — 타입 체커 통과 값(bool⊂int)의 거부는 type(x) is T 형 · 신규·수정 값 객체에 적용",
+      "expression": "https://numchida.com/ns/djr#R-3442@2026-09-03b",
+      "label": "값 객체 자기 검증은 값의 불변식만 — 거부는 선언 타입의 하위 타입 값(bool⊂int)만 type(x) is <하위 타입> 형 · 승격 값(float 자리 int) 거부 금지 · 신규 값 객체·손대는 줄에 적용",
       "order_rank": 1661,
       "section": "dddjango/skills/architecture-ddd/references/final.md/s016-3.1",
       "section_number": "3.1"
@@ -60830,7 +60830,7 @@
       "block_order": 3,
       "checkers": [],
       "document": "dddjango/skills/architecture-ddd/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-3443@2026-09-03",
+      "expression": "https://numchida.com/ns/djr#R-3443@2026-09-03b",
       "label": "값 객체 안 선언 타입 재검사·강제 변환 금지 — 타입 좁히기는 값 객체 호출 전 경계(Data Mapper·요청 Schema·폼) 소유",
       "order_rank": 1662,
       "section": "dddjango/skills/architecture-ddd/references/final.md/s016-3.1",
