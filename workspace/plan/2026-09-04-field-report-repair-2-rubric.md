@@ -158,3 +158,5 @@
 - 조건 C1(브랜치 안 반영): «전부 `object` 치환 가능» 과대 문안 3곳 → «미러 13·factories 6 은 `object` 기계 치환 · 실질 5 는 좁힘 수리».
 - 조건 C2(사용자 고지 — 머지 브리프): 결정 밖 확장 = **R-3449 «재수출 경유도 같다» 조항**(정책 확장 · 발주측 4 BC·except 13 이 규범 빚 · 승인 명세 2건의 «선례» 와 충돌) · R-0284 rev3 ⓓ 동봉 채널(registry_gate 밖 — 루트 직접 실행 + 범위 필터 · 선례 #4 동형) · bare 의미 확장(증분 0) · 소급 8/10 → 10/14(factories 포함) · Phase 0 빚 스캔 변화(5/6 BC).
 - MINOR 이월(릴리즈 전 무관 · 다음 정합 배치): #645 docstring 검출 한계 2행(`Optional/Union/Annotated` 별칭 import 는 ⓓ 강등 · 프로젝트 재수출 `Any` 무발화) · R-3449 «도메인 어휘로 이름» 단서 · discipline-reviewer 병기 · spec #645 행 문구.
+
+**머지(2026-09-04)**: 사용자 «진행»(재수출 조항 유지) → main 로컬 머지 **11430ca**(--no-ff 동형 · 플럼빙 commit-tree — 다른 세션의 미커밋 파일이 checkout 을 막아 트리 동일 확인 후 update-ref · push 없음). 릴리즈는 사용자 요청 시.
