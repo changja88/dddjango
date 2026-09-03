@@ -1018,6 +1018,7 @@ class OrderBad:
 - 애그리거트의 도메인 기능을 실행한다
 - 트랜잭션을 관리한다
 - 결과를 리턴한다
+- port 예외를 **자기 영역의 예외**(`application_layer/<area>/exception.py`)로 번역한다 — driving 잎(컨트롤러·OHS)은 port 예외 **타입**에 의존하지 않는다(직접 import 든 use case 모듈의 재수출 경유든 같다 · #92/#93 은 import 경로만 본다) — 잎은 번역된 실패만 분기한다(`<use_case>_result.py` 엔 성공 한 벌 · #571)
 
 **응용 서비스가 하면 안 되는 것:**
 - 도메인 로직을 직접 구현하면 안 된다

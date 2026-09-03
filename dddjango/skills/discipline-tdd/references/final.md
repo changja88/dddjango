@@ -435,6 +435,7 @@ def test_empty_cart_total():
 - 현재 DB constraint·transaction·rollback·race·멱등성·repository round-trip
 - boundary adapter의 변환·정규화·fallback·known failure 번역
 - 별도 사용자 승인 근거 또는 실제 deployed consumer evidence 중 하나가 확인된 공개 Python 계약
+- composition root 의 **실배선 정합** — 진짜 `build_<use_case>()` 가 실 어댑터에 꽂는 callable 의 시그니처 일치(fake 는 프로세스 밖 경계뿐) · 팩토리를 통째 monkeypatch 한 테스트는 이 대상의 보호가 아니다
 
 다음 항목은 그 자체로 영구 테스트 자격이 아니다.
 

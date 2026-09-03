@@ -1297,8 +1297,8 @@ djr:R-0283 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0284 a djr:Obligation ;
-    skos:prefLabel "필수 입력 5종(코드+테스트·승인 입장 표·역할별 최소 조정 보고·test diff·실행 결과·슬라이스 목록)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0284@2026-09-01> .
+    skos:prefLabel "필수 입력 5종(코드+테스트·승인 입장 표·역할별 최소 조정 보고·test diff·실행 결과·슬라이스 목록) + ⓓ 후보 동봉(registry #4 200행 신호 · #11 명시 Any)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0284@2026-09-04> .
 
 <https://numchida.com/ns/djr#R-0284@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0284 ;
@@ -1308,6 +1308,12 @@ djr:R-0284 a djr:Obligation ;
     prov:specializationOf djr:R-0284 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-0284@2026-08-22> ;
     djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-0284@2026-09-04> a djr:Expression ;
+    prov:specializationOf djr:R-0284 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0284@2026-09-01> ;
+    djr:revision 3 ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-0285 a djr:Obligation ;
@@ -1827,12 +1833,18 @@ djr:R-0344 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0345 a djr:Obligation ;
-    skos:prefLabel "registry #11 — 타입 전면(#493)·Thin Read 반환(#358)·계약 검증 토큰(#456)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0345@2026-08-22> .
+    skos:prefLabel "registry #11 — 타입 전면(#493)·명시 Any(#645 — 시그니처 차단·변수/제네릭 안 ⓓ 후보)·Thin Read 반환(#358)·계약 검증 토큰(#456)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0345@2026-09-04> .
 
 <https://numchida.com/ns/djr#R-0345@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0345 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0345@2026-09-04> a djr:Expression ;
+    prov:specializationOf djr:R-0345 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0345@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0346 a djr:Obligation ;
     skos:prefLabel "registry #12 — `test/` 다섯 자식·`settings/` 환경축·pytest Django settings binding"@ko ;
@@ -3477,7 +3489,7 @@ djr:R-3445 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 28 ;
     djr:statesNorm djr:R-0345 ;
-    djr:text "   11. `${CLAUDE_PLUGIN_ROOT}/scripts/check-public-surface-annotation.py` — 타입 전면(#493 — 시그니처·지역·속성·모듈/클래스 «모든 이름 첫 대입», 문법 없는 자리만 면제)·Thin Read 반환(#358)·계약 검증 토큰(#456).\n"@ko .
+    djr:text "   11. `${CLAUDE_PLUGIN_ROOT}/scripts/check-public-surface-annotation.py` — 타입 전면(#493 — 시그니처·지역·속성·모듈/클래스 «모든 이름 첫 대입», 문법 없는 자리만 면제)·명시 `Any`(#645 — 시그니처는 차단·변수/제네릭 안은 ⓓ 후보)·Thin Read 반환(#358)·계약 검증 토큰(#456).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b29> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
@@ -3723,7 +3735,7 @@ djr:R-3445 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
     djr:statesNorm djr:R-0283, djr:R-0284, djr:R-0285, djr:R-0286, djr:R-0287 ;
-    djr:text "5. **규율 감사**: `dddjango:discipline-reviewer`를 **Phase 2 implementation 모드**로 호출한다 — 필수 입력은 코드+테스트, 승인 입장 표, 역할별 최소 조정 보고, test diff·실행 결과와 슬라이스 목록이다. 감사 호출 입력에 `check-layer-skeleton`(registry #4)의 ⓓ 후보 채널 출력(해당 범위 실행분 — 행위 칸 200행 초과 신호·페이로드)을 동봉한다. 기본은 G2 직전 1회, 슬라이스 ≥3이면 슬라이스별 경량 감사(마지막은 조건부 홀리스틱 갈음 가능) + 마지막 홀리스틱 1회다. reviewer는 각 test diff hunk를 decision과 unique production failure에 대조하고, `reuse/reject` write 0, 일반 `retain` 무편집, `remove/weaken` 종료 근거·exact target, 의미 보존 재조직의 전후 보호, 첫-Green 비계 잔존을 감사한다. 기존 migration lifecycle과 관련 테스트 보존 규칙도 그대로 감사한다. 외부 assertion 지적은 acceptance-tester, 내부 assertion과 일반 구현 지적은 coder, 입장/설계 오류는 design-architect를 거쳐 G1/G1′으로 반송한다(반송으로 `design-spec.md` 가 개정되면 **재승인 전에 Phase 1 pre-gate 를 재실행**하고 예보 1행을 재승인 배너에 병기한다 — Phase 1 pre-gate 문단 · Phase 2 중이면 재발화 판형: `--base <G1 기준선 SHA>` 명시·WIP 커밋/stash).\n"@ko .
+    djr:text "5. **규율 감사**: `dddjango:discipline-reviewer`를 **Phase 2 implementation 모드**로 호출한다 — 필수 입력은 코드+테스트, 승인 입장 표, 역할별 최소 조정 보고, test diff·실행 결과와 슬라이스 목록이다. 감사 호출 입력에 `check-layer-skeleton`(registry #4)의 ⓓ 후보 채널 출력(해당 범위 실행분 — 행위 칸 200행 초과 신호·페이로드)과 `check-public-surface-annotation`(registry #11)의 ⓓ 후보(#645 — 변수·제네릭 안의 명시 `Any` · 해당 범위 실행분)를 동봉한다. 기본은 G2 직전 1회, 슬라이스 ≥3이면 슬라이스별 경량 감사(마지막은 조건부 홀리스틱 갈음 가능) + 마지막 홀리스틱 1회다. reviewer는 각 test diff hunk를 decision과 unique production failure에 대조하고, `reuse/reject` write 0, 일반 `retain` 무편집, `remove/weaken` 종료 근거·exact target, 의미 보존 재조직의 전후 보호, 첫-Green 비계 잔존을 감사한다. 기존 migration lifecycle과 관련 테스트 보존 규칙도 그대로 감사한다. 외부 assertion 지적은 acceptance-tester, 내부 assertion과 일반 구현 지적은 coder, 입장/설계 오류는 design-architect를 거쳐 G1/G1′으로 반송한다(반송으로 `design-spec.md` 가 개정되면 **재승인 전에 Phase 1 pre-gate 를 재실행**하고 예보 1행을 재승인 배너에 병기한다 — Phase 1 pre-gate 문단 · Phase 2 중이면 재발화 판형: `--base <G1 기준선 SHA>` 명시·WIP 커밋/stash).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b7> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;

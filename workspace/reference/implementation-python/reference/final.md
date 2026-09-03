@@ -650,6 +650,8 @@ def careful_divide(a: float, b: float) -> float:
         raise ValueError('잘못된 입력')
 ```
 
+> dddjango 단서: 본문의 모든 경로가 `raise` 로 끝나 정상 반환이 없는 도우미는 `-> None` 이 아니라 `-> NoReturn`(3.11+ 는 `Never` 동치)으로 선언한다 — `-> None` 이면 호출부의 흐름 분석(도달 불가·미정의 가능 `possibly-undefined`)이 깨진다. `__init__` 의 생성 차단 가드는 타입 규약이 `-> None` 을 강제하므로 대상이 아니다.
+
 ### 4.5 언패킹 활용 [파이썬코딩의기술]
 
 ```python
