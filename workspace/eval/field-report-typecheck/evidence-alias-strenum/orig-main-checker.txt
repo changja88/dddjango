@@ -1,0 +1,7 @@
+blocker 6건 — 타입 전면 규율 위반 (#493 «첫 대입에 타입» 외)
+  [#493] application/fortune_reading/domain_layer/shared_value_object/abstention_reason.py:7: 클래스 변수 `NO_CANDIDATE` 의 첫 대입에 타입이 없다 — `name: T = …`
+  [#493] application/fortune_reading/domain_layer/shared_value_object/abstention_reason.py:8: 클래스 변수 `NO_EVIDENCE` 의 첫 대입에 타입이 없다 — `name: T = …`
+  [#493] application/fortune_reading/domain_layer/shared_value_object/abstention_reason.py:9: 클래스 변수 `INSUFFICIENT_EVIDENCE` 의 첫 대입에 타입이 없다 — `name: T = …`
+  [#493] application/fortune_reading/domain_layer/shared_value_object/book_usage_policy.py:7: 클래스 변수 `SINGLE` 의 첫 대입에 타입이 없다 — `name: T = …`
+  [#493] application/fortune_reading/domain_layer/shared_value_object/book_usage_policy.py:8: 클래스 변수 `SOURCE_AND_COMMENTARY` 의 첫 대입에 타입이 없다 — `name: T = …`
+  [#493] application/fortune_reading/domain_layer/shared_value_object/book_usage_policy.py:9: 클래스 변수 `COMPARE` 의 첫 대입에 타입이 없다 — `name: T = …`

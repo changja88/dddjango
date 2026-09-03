@@ -48,6 +48,8 @@
 | R-12 | **dddjango 발주 가이드**(배포본 `dddjango/README.md` + 템플릿) — 3부: G0 계약 최소본(목표·범위/비범위·허용 경로·상류 의존 실물·결정 전제·제약·수용 기준·결정 위임 범위·lens/런타임·머지 정책) · 운영 체크리스트(갱신 후 새 세션·상류 머지 후 개시·approved-merges.txt·exact 경로 pin 금지·exit 5 비차단·STOP 규약) · 템플릿. 산문 정본이되 내용은 렌더된 Coordinator Phase 0 문면에서만. 프로젝트 고유 관행(master.html·herdr·D-번호) 배제·kkebi 발주 문서로 일반성 대조 | 문서(신규) | 아니오 | 승격 배치 뒤 착수(사용자 09-03 «별개로») — 근거: STOP 25% 발주 모순·툴체인 pin STOP 2·approved-merges 미기재 위험·배포본 README 부재 | 09-03 대화 |
 | R-13 | **dddjango-web 발주 가이드**(`dddjango-web/` 안 별도) — 같은 3부 판형·공통 운영 규칙 문장 공유 · G0 입력은 화면 요구·동결 시안·실물 API 계약 스냅숏·design_system 토큰 · 상류 의존 절에 «대상 API 계약이 dddjango 레인으로 완주·머지된 뒤» 교차 참조 · 정합 대상 = web 커맨드 md(산문 정본) | 문서(신규) | 아니오 | R-12와 같은 시점 | 09-03 대화 |
 | R-14 | **현장 보고 A·C 규범 문면 수리**(`2026-09-03-field-report-spring-dream-typecheck.md` — 09-03 검증 완료) — A: 값 객체 예제(architecture-ddd final.md 490~505행·graph-owned·정본 `ontology/rules/architecture-ddd-final.ttl`)가 선언 타입을 isinstance 재검사·강제 변환 → «값의 불변식만» 예제로 교체 + 타입 좁히기는 object 입력 경계 소유 문장 · C: 하우스룰 §2 «첫 대입 타입 예외 0»(graph-owned `discipline-houserules-skill.ttl:422/940`)에 Enum/StrEnum 멤버 예외 명시(typing spec·mypy 2.3.1 거부 — 검사기 #493은 무충돌 확인) | 규범 리비전(소규모 2건) | 아니오 | **09-03 착수(사용자 «이거 먼저 수정») — 루브릭 `2026-09-03-field-report-repair-rubric.md` · ① 적대 리뷰 3기 진행 중** · 결정 게이트 3(범위·문면·릴리즈) — 증거: A 3레인(llm_access·query_translation·reading) 재현 8건 · C reading 3건+레인 간 해석 불일치 | 현장 보고 |
+| R-15 | **base 이름 문자열 비교 family** — (a) 다른 검사기 5종의 별칭 미해소(`check-context-isolation.py:615`·`check-db-table.py:180`·`check-domain-model.py:846`·`check-port-adapter-pairing.py:137`·`check-usecase-dto-placement.py:171`) (b) #493 검사기의 **로컬 중간 base 전이 면제**(spring 27·kkebi 99 클래스 — 전 BC `bc_error_schema.py` · 08-31 promotion `TranslatableModelForm` 주석 우회 현존 · 현재 발화 0) | 검사기 후보 | 아니오 | 발화 관측 시 — R-14 Part 2와 같은 helper 판형(모듈 import 바인딩 해소) · 전이 면제는 면제 «추가»라 무손실 증명 별도 | 현장 보고 ③ 리뷰 C |
+| R-16 | #493 검사기의 **파싱 실패 파일 조용한 green**(`check-public-surface-annotation.py` main — SyntaxError/OSError continue 후 «clean — 파일 N개»에 계수) — fail-closed 위반 후보 · 다른 검사기 동형 조사 필요 | 검사기 후보 | 아니오 | 다음 검사기 정합 배치 | 현장 보고 ③ 리뷰 A |
 
 ## 4. 권장 진행 순서 · 릴리즈 규칙
 
@@ -84,3 +86,4 @@ character_catalog Ninja 전환 · turn_controller 실분해 · #396 빚 1줄 제
 - 2026-09-03 R-12·R-13 등재 — 발주 가이드(dddjango/web 별개·판형 공유). 착수는 승격 배치 뒤.
 - 2026-09-03 현장 보고(typecheck) 검증 — A·C 성립(R-14 등재) · B 기각(발주측 소관·사용자 확정).
 - 2026-09-03 R-14 착수(사용자 확정 — 적대 리뷰 ①③⑤+감사 판형). B 기각 확정.
+- 2026-09-03 R-14 ②③ 완료(계획 v2·문면 확정) → ④ 구현(브랜치 fix/field-typecheck: 검사기 alias 해소·픽스처·EXPECTED 3종·그래프 리비전 R-3442/R-3443·렌더·rulepack·LEDGER·미러) · R-15·R-16 등재.

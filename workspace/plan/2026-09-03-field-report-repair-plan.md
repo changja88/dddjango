@@ -134,12 +134,12 @@ rdflib 편집+canon 재직렬화(왕복 byte 동일 선확인) → `ontology_gat
 ## 검수표(④·⑤ 기록 자리)
 | 항목 | 기대 | 실측 |
 |---|---|---|
-| 그래프 게이트 | green | |
-| 렌더 diff = 델타 문면·예제만 | 예 | |
-| target-counts N/W/E +2/+2/+2 · q4 3443 | 예 | |
-| corpus_mirror_sync 11/11 · codex byte cmp 0 | 예 | |
-| 새 예제 mypy full/plain 0 · #69 0 · #493 0 | 예 | |
-| 픽스처 good=0·bad_rules exit 2·EXPECTED #493×8 | 예 | |
-| 양 저장소 전/후 차분 0 | 예 | |
-| make verify 6/6 · 봉인 draft | 예 | |
-| 조감도 HTML 갱신 | 예 | |
+| 그래프 게이트 | green | green 90/90 (ontology_gate) |
+| 렌더 diff = 델타 문면·예제만 | 예 | 예 — final.md +7/−5(불릿 2·예제 4지점) · render-sync red 0 · ledger-check 위반 0 |
+| target-counts N/W/E +2/+2/+2 · q4 3443 | 예 | 3452/3452/3546 · hierarchy green · q4 emit 후 7종 일치 |
+| corpus_mirror_sync 11/11 · codex byte cmp 0 | 예 | 11/11 in-sync(소스 span 수동 교체 + --write) · 검사기 codex cmp 0 |
+| 새 예제 mypy full/plain 0 · #69 0 · #493 0 | 예 | 렌더 md 추출본: mypy 2.3.1 full 0 · plain 0 · #69/#493 0 |
+| 픽스처 good=0·bad_rules exit 2·EXPECTED #493×8 | 예 | good clean(16파일 · 수리 전 #493×3 오탐 재현) · bad #493×8(aliased_shadow +1) · fixture_matrix 73/73 · findings 73/73 · baseline 73/73 · cross 102/102 |
+| 양 저장소 전/후 차분 0 | 예 | spring_dream 3309/3309 · kkebi 345/345 · 사이드카 제거 · 증거 `evidence-alias-strenum/` orig 6 → patched 0 |
+| make verify 6/6 · 봉인 draft | 예 | 1차 red 2(봉인 드리프트·symbol_kinds 소성물 — 예상) → `manifest_seal --write`(status=draft)·`gen_pregate_symbol_kinds` 재소성 → **6/6 green**(177초) |
+| 조감도 HTML 갱신 | 예 | `ontology-adoption-map.html` 2026-09-03 행 추가 |
