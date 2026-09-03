@@ -1,0 +1,17 @@
+=== fortune-record / fortune_record  driving_layer exists=True  subdirs=['open_host_service', '__pycache__', 'cron_job', 'api', 'event_subscription']
+  -> driving_layer imports from application_layer.port: 0 (exception-class rows: 0)
+=== notification-email-template / notification  driving_layer exists=True  subdirs=['open_host_service', '__pycache__', 'cron_job', 'api', 'event_subscription']
+  -> driving_layer imports from application_layer.port: 0 (exception-class rows: 0)
+=== notification-bc / notification  driving_layer exists=True  subdirs=['open_host_service', '__pycache__', 'cron_job', 'api', 'event_subscription']
+  -> driving_layer imports from application_layer.port: 0 (exception-class rows: 0)
+=== notification-bc / accounts  driving_layer exists=True  subdirs=['open_host_service', '__pycache__', 'cron_job', 'api', 'event_subscription']
+  -> driving_layer imports from application_layer.port: 0 (exception-class rows: 0)
+=== fortune-reading / fortune_reading  driving_layer exists=True  subdirs=['open_host_service', '__pycache__', 'cron_job', 'api', 'event_subscription']
+  -> driving_layer imports from application_layer.port: 0 (exception-class rows: 0)
+=== chat-relay-2a / chat_relay  driving_layer exists=True  subdirs=['open_host_service', '__pycache__', 'cron_job', 'api', 'event_subscription']
+  -> driving_layer imports from application_layer.port: 0 (exception-class rows: 0)
+=== media-library / media_library  driving_layer exists=True  subdirs=['open_host_service', '__pycache__', 'cron_job', 'api', 'event_subscription']
+  -> driving_layer imports from application_layer.port: 0 (exception-class rows: 0)
+=== fortune-catalog / fortune_catalog  driving_layer exists=True  subdirs=['open_host_service', 'cron_job', 'api', 'event_subscription']
+  -> driving_layer imports from application_layer.port: 0 (exception-class rows: 0)
+TOTAL port-imports in driving leaves: 0 (exception rows 0)

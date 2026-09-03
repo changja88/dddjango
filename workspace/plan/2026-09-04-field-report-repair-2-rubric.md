@@ -39,6 +39,15 @@
 - **E**: 하우스룰 `discipline-houserules/SKILL.md` §4(graph-owned · 섹션 `s007-4` · b1 = R-3148/R-3149/R-3150 «모든 이름 첫 대입에 타입 — 예외 0» · «문법이 없는 자리» 목록 · 프레임워크 선언 예외 · «표준 문서군의 코드 예시는 개념 전달용 발췌라 적용 대상이 아니다») · §4.1 «왜 전부인가». 코퍼스 `Any` 언급 4건 전부 `architecture-ddd/references/final.md`(L485 R-3443 문장 «`object`/`Any`/JSON 입력의 타입 좁히기는 경계가 담당» · L1585~1619 Knowledge Level 예제 `values: dict[str, Any]`·`value: Any`). `Mapping[str, object]` 관용구 언급 0건. 검사기 #493 = `check-public-surface-annotation.py`(`_annotation_names` L341 · 함수 시그니처 L357~ · AnnAssign L379~ 순회).
 - **F·G·H**: 조사자 실측에 코퍼스 좌표 포함(F = implementation-django-ninja composition_root 절·implementation-test/discipline-test · G = architect boundary-imports 형식 규범·design_pregate 스텁 방출 · H = Coordinator 골격 문면·#219/#635/#218/#193/#576 조건).
 
+### G — boundary-imports 블록의 잎→port 소비 import 결손 (실측 2026-09-04)
+
+- **명세 7건 대조**(카탈로그·리딩은 수리 전 G1/P4 판본을 spring git `9ee721e`·`919440c` 에서 복원): 잎→`application_layer/port` 행이 블록에 있는 명세 **0/7**. 산문에서 잎이 port 예외를 소비한다고 적은 명세 = 카탈로그 G1(L167 명시 — 단 같은 명세 L57 은 «OHS 는 port 를 import 하지 않는다» → **명세 내부 모순**, 블록은 L57 쪽과 일치) · 리딩 P4(§5.10 암묵 — `failure.cause` 를 port 예외 타입으로 분기). notification-bc 는 use_case `__all__` 재수출 경유로 catch → 블록에 재수출 경로 행 있음(무영향). 나머지 4건 언급 없음.
+- **코드 실측**: 현재 7 BC driving 잎의 `application_layer.port` import **0**, spring 전 ref 이력에도 0(카탈로그 S4·리딩 P4 위반 코드는 커밋 전 수리 — REPORT/STOP 만 증거).
+- **#93 실발화 이력**: spring 3(openai-rag-generation 08-27 G1″ 블록 없음 · fortune-reading P4 09-02 STOP `#93·#96 6+6` 블록 있으나 port 행 0 · fortune-catalog Phase 2 S4 «설계 진화 3») + kkebi 2(tarot-reading 08-25 `#93(3)+#96(3)` · billing-payment-http 08-26) = **5 레인(블록 보유 2 + 블록 없는 3)**. pregate-report 의 `#93` 51회는 S3 사각 상용구(발화 아님).
+- **실행기 격리 실측**(복제 @`e1294f5` · `--base HEAD`): 카탈로그 G1 원본 블록(해시 `6cf8e2ffdfc3` = 실제 4번째 런과 일치) → exit 0 green 재현. 블록에 OHS→port 예외 import 2행 추가 → **exit 2 · `#93`×2 + `#96`×1 예보**. «블록에 적혔다면 예보됐다» 성립(`_parse_imports` L495~521 → `render_stub` L806~810 원문 방출 · 행 종류 무제한). S3 문면 «산문에만 적힌 경계 import 는 표면 밖» 은 카탈로그 G1 이후(`2fbc111`) 추가.
+- **규범 현황**: `design-architect.md` L90 = `s005/b36` → **R-3427 rev3**. 문면은 «검사기 판정에 관련되는 경계 import 전부» 라면서 열거는 타 BC·framework·서드파티·테스트뿐이고 «경계만 성문(그 밖은 구현 재량)» → 카탈로그 architect 는 **intra-BC 층 경계(잎→port)를 경계 아님으로 읽고 명세에 명문화**(현재 명세 L511). #93 은 `application_layer/port/**` 전체(예외 한정 아님 · checker L226~237 · 근거 하우스룰 #92). architecture-ddd 에 «use case 가 port 예외를 번역» 직접 성문 없음 — 설계 진화 3 은 #92/#93 귀결로 정합.
+- **판단 재료**: 동형 결손 ≥2 레인 **성립** · 성격 = 실행기 사각 아님, **R-3427 «경계» 독법의 채널 전사 결손** + 카탈로그 G1 내부 모순. 처방 방향은 «예외 소비 import» 한정이 아니라 «잎→port 등 검사기(#92/#93/#96)가 보는 **BC 내부 층 경계 import 도 블록 대상**» 으로 넓혀야 정합. 무손실: 조항 추가 시 형식 red = 현재 판본 0 · 당시 판본 2(명시 1·암묵 1). 미측정: 리딩 P4 위반 코드 원문 · kkebi 블록 대조(구형 20건 전부 블록 0) · 조항 후 반송 증가율.
+
 ## ① 공격 질문 (항목마다 필답 · 판정 병기)
 
 - D-1 «항상 raise 도우미 `-> None`» 이 플러그인이 만든 모양인가(코퍼스에 `-> None` raise 도우미 예제가 있는가) 아니면 코더 선택인가. 같은 저장소 다른 레인이 `NoReturn` 을 썼다면 «지식 부재» 가 아니라 «일관성» 문제 — 문면 1줄이 효과가 있는가(문면은 확률적 · B 기각으로 mypy 결정 실행은 없음). 표본 외(kkebi) 발생 유무.
