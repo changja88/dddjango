@@ -1,6 +1,6 @@
 # 현장 보고 — spring_dream_server mypy strict 전체 검사에서 드러난 dddjango 결함 3건 (2026-09-03)
 
-> **처분 상태 (dddjango 측 · 2026-09-03 갱신)** — 상세 회신: `2026-09-03-field-report-reply.md` · 절차: 루브릭 `2026-09-03-field-report-repair-rubric.md`·계획 `2026-09-03-field-report-repair-plan.md` · 증거 `workspace/eval/field-report-typecheck/`
+> **처분 상태 (dddjango 측 · 2026-09-04 갱신)** — 상세 회신: `2026-09-03-field-report-reply.md`(A·B·C) · **`2026-09-04-field-report-reply-2.md`(D·E·F·G·H + G 재수출 catch 4 BC 수리 가이드 §2 · E `Any` 정리 안내 §3)** · 절차: 루브릭 `2026-09-03-field-report-repair-rubric.md`·계획 `2026-09-03-field-report-repair-plan.md` · 증거 `workspace/eval/field-report-typecheck/`
 >
 > | # | 판정 | 처분 | 상태 |
 > |---|---|---|---|
