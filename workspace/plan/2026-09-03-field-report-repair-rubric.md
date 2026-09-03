@@ -55,3 +55,9 @@
 - Part 1 그래프: rdflib 편집+canon(왕복 byte 동일 선확인) — b4 예제 교체 · b3 불릿 2 + statesNorm · R-3442/R-3443 신설(rev 1) · wiring delegatedTo · ISSUED 2행 → gate 90/90 → render --apply → LEDGER s016-3.1 재기준선(ff912545…) → target-counts +2/+2/+2 → q4 emit(3443) → make rulepack(양쪽) → 소스 미러 span 교체 + corpus_mirror_sync --write(11/11) → render-sync·ledger-check green.
 - 검수표 실측: 계획서 말미 표(verify·봉인·조감도는 ⑤ 전 기입).
 - 라이브 저장소 접촉: 검사기 실행만(사이드카 4건 즉시 제거) · 파일 무변경.
+
+## 5·6단계 결과 (2026-09-03)
+- ⑤ 구현 적대 리뷰 3기: A 통과(MINOR 3) · B 통과(MINOR 2) · C BLOCKER 0·MAJOR 4(문면 결정성 2 → 미결 2 상신 · 예방 경로 → R-14b · 로드맵 stale → 정정)·MINOR 3 → 반영 커밋 49741cd.
+- ⑥ 독립 감사(`workspace/eval/field-report-typecheck/rv6-audit.md`): **조건부 머지 가능** — BLOCKER 0 · MAJOR 1(현장 보고 개정판 D·E 무처분) · MINOR 9 → 반영 커밋 68a5141(D·E 처분·R-18/R-19·C 추기 증거·B 기록 충돌 항목화·rev2 R2-1~3 정정).
+- ⑥ 재검(`rv6-recheck.md`): **머지 가능** — 조건 잔존 0 · 권고 MINOR 4(선택) · ledger MINOR 2 반영(본 커밋). `make verify` 6/6 재현 · 회귀 0.
+- 릴리즈 게이트 입력: 미결 2(R-3442 rev2 ⓐ/ⓑ) + B 기록 충돌 재확인 + 릴리즈 시점(즉시 v2.17.17 / pre-gate 승격 배치 동승).
