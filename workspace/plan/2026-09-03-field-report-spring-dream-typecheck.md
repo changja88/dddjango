@@ -13,9 +13,11 @@
 > | D(추기) | 항상 raise하는 도우미 `-> None` → `[possibly-undefined]` 증폭 | 플러그인이 만든 모양 아님(B가 잡음) · 문면 1줄 후보(implementation-python «항상 raise/exit 도우미는 `-> NoReturn`») | **R-18 등재** · 사용자 09-03: 조사 전 **보류** |
 > | E(추기) | `Any` 정책 부재 — «사용자 결정: 플러그인이 `Any`를 못 쓰게 강제(문면+검사기)» | 신규 규범(하우스룰 §4 절) + 검사기 #493 확장(«명시 `Any`» 위반) = 별도 수리 배치(적대 리뷰 판형) | **R-19 등재** · 사용자 09-03: 조사 전 **보류** — 착수 시 범위(시그니처 무조건·변수 주석 프레임워크 미러 조건부) 재확인 |
 > | B 재확인 | 개정판 «수정 우선순위(발주자와 합의)»가 B를 플러그인 1순위로 기록 | 사용자 재확인(09-03 파트 1): **기각 확정** — 게이트(실행·차단)는 프로젝트 소유 · 플러그인은 «생성 코드가 mypy strict·ruff와 충돌하지 않게 설계» 원칙만 소유(R-20 등재) | 종결(8eab0f0) |
-> | F(추가 19:30) | composition root 주입 callable ≡ 포트 Protocol 확인·실배선 테스트 부재(리딩 BC 1건 프로덕션 결함) — 제안 F-1·F-2 문면 2줄 | 접수 · ⓪ 검증 전(재현·표본 외 대조·무손실 판정 미실시) | 처분 결정 대기(검증 착수 / D·E와 같은 조사 전 보류) |
+> | F(추가 19:30) | composition root 주입 callable ≡ 포트 Protocol 확인·실배선 테스트 부재(리딩 BC 1건 프로덕션 결함) — 제안 F-1·F-2 문면 2줄 | 접수 · ⓪ 검증 전(재현·표본 외 대조·무손실 판정 미실시) | 제보 수정 단계(사용자 09-03: G-A 승격 뒤)에서 D·E·F·G·H 일괄 ⓪~⑥ |
+> | G(dddjango 추기) | 카탈로그 레인 발견 ⑪ — OHS의 port 예외 소비 import가 G1 boundary-imports 기계 블록에 없어(산문 §167만) #93이 Phase 2에서 발화 | architect 형식 규범(boundary-imports 완전성)에 «예외 소비 import 기재» 조항 후보 · 1레인 | 제보 수정 단계 · ⓪ 검증 전 |
+> | H(dddjango 추기) | 카탈로그 레인 발견 ⑫ — pre-content 골격의 «자리 실체화(빈 모듈)» ↔ #219/#635 «클래스 하나» 상충 → 제거 시 #218/#193/#576 캐스케이드(왕복 2회·≈14분) | Coordinator 골격 규범 또는 검사기 pre-content 면제 중 택일 후보 · 1레인 관측 | 제보 수정 단계 · ⓪ 검증 전 |
 >
-> 릴리즈: ⑥ 감사 조건 충족 → 재검 «머지 가능». 머지·rev2 집행됨(09-03). 남은 결정 = 릴리즈 시점(즉시 v2.17.17 / pre-gate 승격 배치 동승) · F 처분.
+> 릴리즈: 머지·rev2 집행됨(09-03 main 88a65a0 · 미push). **릴리즈는 사용자 요청 시까지 보류**(09-03 지시). 순서: G-A pre-gate 승격 → 제보 수정(D·E·F·G·H) → 릴리즈 요청 시 `make release`.
 
 작성: spring_dream_server 발주자 세션(Claude). 대상: dddjango 플러그인 v2.17.16 (`~/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.16`).
 계기: 2026-09-03 15:06 spring_dream_server 첫 `git push`(776커밋)에서 pre-push 훅(pre-commit: ruff·ruff format·mypy strict 전체)이 처음 돌아 mypy 171건·ruff format 미적용 189파일이 한꺼번에 노출됐다. 그중 dddjango 레인 산출물에서 나온 것을 원인별로 추적했다.
@@ -242,3 +244,19 @@ evidence_retrieval_port=RagRuntimeEvidenceRetrievalAdapter(run_retrieval=service
 
 - 수정 방향(발주자 결정 대기 2건): ① 런타임 embedder = Release가 pin한 로컬 모델 스냅숏(`model_snapshot.verify_model_snapshot_ref` → `load_local_embedder`)을 그대로 로드 ② 모델 재사용(캐시) 자리는 BC가 아니라 framework 런타임(`service_runtime`) — BC 안 모듈 전역·lazy 싱글톤은 플러그인 규칙 위반이므로. BC 배선은 `partial(…, data_root=data_root)`만 넘긴다.
 - 리딩 BC에 실배선 테스트 1개 추가(F-2 선례).
+
+## G·H. (dddjango 측 추기 · 2026-09-03 · 카탈로그 레인 발견 ⑪·⑫ — 사용자 지시로 이 파일에 병기)
+
+같은 프로젝트(spring_dream_server)의 fortune-catalog 레인(v2.17.16 · REPORT f6ef7ff)에서 관측된 플러그인 결손 후보 2건. 1차 자료: `workspace/eval/pregate-observe/ledger.md` 레인 4 «발견», spring REPORT «설계 진화» 3·«비고» lane 6. 둘 다 1레인 관측이라 제보 수정 단계에서 ⓪(재현·표본 외 대조·무손실 판정)부터 시작한다.
+
+### G. 산문 전용 계약 — boundary-imports 기계 블록에 예외 소비 import가 없다 (발견 ⑪)
+
+- 증상: driving 잎 OHS가 `application_layer/port/` 예외를 직접 import하는 경로가 G1 명세의 boundary-imports 블록(6행)에 없고 산문 §167에만 있었다 → pre-gate(기계 블록만 판정)가 보지 못하고 Phase 2 슬라이스에서 #93 발화 → use case가 port 예외를 app-layer 실패로 번역하도록 설계 진화(REPORT «설계 진화» 3).
+- 후보 처방: architect 형식 규범(«물리 신호 어노테이션»·boundary-imports 완전성)에 «예외 클래스 소비 import도 기재» 조항 1줄 — 기계 블록의 커버 표면을 산문 계약까지 넓힌다. 검사기 변경 없음(pre-gate는 블록을 읽을 뿐).
+- ⓪ 질문: 리딩·notification 등 다른 레인 명세에서 예외 소비 import가 블록 밖에 놓인 사례가 있는가(≥2 레인) · 조항 추가가 architect 반송(형식 red)을 늘리는가(무손실).
+
+### H. pre-content 골격 상충 — 자리 실체화 vs 존재-하나 규칙 (발견 ⑫)
+
+- 증상: 슬라이스 0 골격에서 빈 `_port.py`/`_use_case.py`를 만들면 #219/#635(«클래스 하나»)가 발화하고, 빈 파일을 지우면 #218/#193/#576이 캐스케이드로 발화 → 빈 자리 복원(왕복 2회·≈14분 · spring 커밋 59d08c7→99253ce→9c8814e).
+- 후보 처방(택일): ⓐ Coordinator 골격 규범에 «pre-content 골격은 자리 실체화 없이 첫 슬라이스가 채운다» ⓑ 해당 검사기에 pre-content(빈 모듈) 면제 — ⓑ는 면제 «추가»라 무손실 증명 별도.
+- ⓪ 질문: 다른 신규 BC 레인(kkebi 21런·spring 리딩)에서 같은 왕복이 있었는가 · 캐스케이드 3종의 발화 조건이 결정적으로 재현되는가.
