@@ -1214,6 +1214,14 @@ djr:R-2249 a djr:Obligation ;
     prov:specializationOf djr:R-2249 ;
     djr:revision 1 .
 
+djr:R-3450 a djr:Permission ;
+    skos:prefLabel "영구 테스트 보호 대상 — composition root 실배선 정합(진짜 build_<uc>() → 실 어댑터 callable 시그니처 일치 · fake 는 프로세스 밖 경계뿐 · 팩토리 통째 monkeypatch 는 이 대상의 보호 아님)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3450@2026-09-04> .
+
+<https://numchida.com/ns/djr#R-3450@2026-09-04> a djr:Expression ;
+    prov:specializationOf djr:R-3450 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/discipline-tdd/references/final.md> a djr:Document ;
     skos:prefLabel "discipline-tdd-final"@ko .
 
@@ -1606,7 +1614,8 @@ djr:R-2249 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/references/final.md/s025-5.5> ;
     djr:kind djr:kind-norm ;
     djr:order 24 ;
-    djr:text "- 별도 사용자 승인 근거 또는 실제 deployed consumer evidence 중 하나가 확인된 공개 Python 계약\n\n"@ko .
+    djr:statesNorm djr:R-3450 ;
+    djr:text "- 별도 사용자 승인 근거 또는 실제 deployed consumer evidence 중 하나가 확인된 공개 Python 계약\n- composition root 의 **실배선 정합** — 진짜 `build_<use_case>()` 가 실 어댑터에 꽂는 callable 의 시그니처 일치(fake 는 프로세스 밖 경계뿐) · 팩토리를 통째 monkeypatch 한 테스트는 이 대상의 보호가 아니다\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/references/final.md/s025-5.5/b25> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-tdd/references/final.md/s025-5.5> ;

@@ -18,6 +18,11 @@
   #69  (ast+ · ⓓ 후보) 개발자 실수를 막는 검사는 런타임이 아니라 테스트·타입 체커의
        몫 — 프로덕션 `assert` · isinstance 가드 뒤 TypeError/ValueError raise 를
        후보로만 출력한다(exit 불산입 · 마무리는 discipline-reviewer).
+  #645 명시 `Any` 금지 — 시그니처(인자·`*args/**kwargs`·반환)의 bare `Any`(`Optional[Any]`·
+       `Any | None`·`Any` 가 섞인 합집합·`Annotated[Any, …]`·문자열·별칭·`typing.Any`·미해소 `Any`
+       이름(fail-closed) 포함)는 위반 · 시그니처 안 nested(`dict[str, Any]`)와 변수·속성·클래스
+       필드의 `Any` 는 ⓓ 후보(exit 불산입). #493(주석 «존재»)과 독립. 검출 한계: `TypeAlias`
+       재별칭·`cast(Any, …)`·함수 본문/`with`/클래스 본문 안 import 는 표면 밖.
 
 문법 외 면제(도구·프로토콜 소유 — 사람이 짓는 자리가 아니다):
   - `migrations/`(#593 이 모양을 소유) · `manage.py`/`wsgi.py`/`asgi.py`(생성 골격).
@@ -336,6 +341,178 @@ def _scan_class(cls: ast.ClassDef, rel: Path, out: Findings, bindings: dict[str,
             out.add("#493", f"{rel}:{lineno}", f"속성 `self.{attr}` 의 첫 대입에 타입이 없다 — `self.{attr}: T = …` 또는 클래스 본문 `{attr}: T`")
 
 
+# ── #645 — 명시 `Any`(시그니처 bare = 위반 · 그 밖 = ⓓ 후보) ─────────────────
+ANY_MODULES = {"typing", "typing_extensions"}
+ANY_MSG = "검사 포기다 — `object`/정확 타입으로 받아 즉시 좁힌다(TypeIs·isinstance)"
+ANY_Q = "이 `Any` 를 `object`(즉시 좁힘)·정확 타입으로 바꿀 수 있나(프레임워크 계약이라도 우리 선언은 `object` 다)"
+
+
+def _any_bindings(mod: ast.Module) -> "tuple[set[str], set[str]]":
+    """`typing.Any`/`typing_extensions.Any` 로 해소되는 모듈 수준 로컬 이름 + typing 계열 모듈 별칭.
+
+    `_module_bindings` 는 출처 모듈을 버리고 원명만 남기므로 따로 센다(같은 걷기 규칙 —
+    if/try 하위 문 포함 · 뒤따르는 모듈 수준 재정의는 그림자 · 함수·클래스 본문 안 import 는 안 본다)."""
+    names: set[str] = {"Any"}  # fail-closed — 모듈 수준 비-Any 바인딩이 그림자하기 전까지 `Any` 이름은 Any 다
+    mods: set[str] = set()
+
+    def shadow(name: str) -> None:
+        names.discard(name)
+        mods.discard(name)
+
+    def walk(stmts: list[ast.stmt]) -> None:
+        for st in stmts:
+            if isinstance(st, ast.ImportFrom):
+                for a in st.names:
+                    local: str = a.asname or a.name
+                    shadow(local)
+                    if st.module in ANY_MODULES and a.name == "Any":
+                        names.add(local)
+            elif isinstance(st, ast.Import):
+                for a in st.names:
+                    local = a.asname or a.name.split(".")[0]
+                    shadow(local)
+                    if a.name in ANY_MODULES:
+                        mods.add(local)
+            elif isinstance(st, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+                shadow(st.name)
+            elif isinstance(st, ast.Assign):
+                for tg in st.targets:
+                    if isinstance(tg, ast.Name):
+                        shadow(tg.id)
+            elif isinstance(st, ast.AnnAssign) and isinstance(st.target, ast.Name):
+                shadow(st.target.id)
+            elif isinstance(st, ast.If):
+                walk(st.body)
+                walk(st.orelse)
+            elif isinstance(st, ast.Try):
+                walk(st.body)
+                for h in st.handlers:
+                    walk(h.body)
+                walk(st.orelse)
+                walk(st.finalbody)
+
+    walk(mod.body)
+    return names, mods
+
+
+def _is_any(node: ast.AST, names: set[str], mods: set[str]) -> bool:
+    if isinstance(node, ast.Name):
+        return node.id in names
+    if isinstance(node, ast.Attribute):
+        return node.attr == "Any" and isinstance(node.value, ast.Name) and node.value.id in mods
+    return False
+
+
+def _unstring(node: ast.AST) -> ast.AST:
+    """문자열 애너테이션(`"Any"`)은 재파싱한 표현으로 — 실패하면 그대로."""
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        try:
+            return ast.parse(node.value, mode="eval").body
+        except SyntaxError:
+            return node
+    return node
+
+
+def _union_members(node: ast.AST) -> "list[ast.AST] | None":
+    """`X | Y` · `Optional[X]` · `Union[X, Y]` 의 구성원(평탄화) — 합집합 꼴이 아니면 None."""
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
+        out: list[ast.AST] = []
+        for side in (node.left, node.right):
+            m = _union_members(_unstring(side))
+            out.extend(m if m is not None else [_unstring(side)])
+        return out
+    if isinstance(node, ast.Subscript) and _name_of(node.value) in ("Optional", "Union"):
+        sl = node.slice
+        elts = list(sl.elts) if isinstance(sl, ast.Tuple) else [sl]
+        out = []
+        for e in elts:
+            m = _union_members(_unstring(e))
+            out.extend(m if m is not None else [_unstring(e)])
+        if _name_of(node.value) == "Optional":
+            out.append(ast.Constant(value=None))
+        return out
+    return None
+
+
+def _explicit_any(ann: "ast.AST | None", names: set[str], mods: set[str]) -> "str | None":
+    """애너테이션의 명시 `Any` — "bare"(루트가 Any · `| None`/Optional/Union 을 평탄화한 구성원에 Any 가
+    하나라도 있음(Any 는 합집합을 삼킨다) · `Annotated[Any, …]` 의 루트) · "nested"(하위 어딘가에 Any —
+    제네릭 인자·Callable·type[]) · None. `Literal["Any"]` 의 문자열은 타입이 아니라 값이라 제외."""
+    if ann is None:
+        return None
+    node = _unstring(ann)
+    if _is_any(node, names, mods):
+        return "bare"
+    if isinstance(node, ast.Subscript) and _name_of(node.value) == "Annotated":
+        first = node.slice.elts[0] if isinstance(node.slice, ast.Tuple) and node.slice.elts else node.slice
+        if _explicit_any(first, names, mods) == "bare":
+            return "bare"
+    members = _union_members(node)
+    if members is not None:
+        rest = [m for m in members if not (isinstance(m, ast.Constant) and m.value is None)]
+        if rest and any(_is_any(m, names, mods) for m in rest):
+            return "bare"
+    literal_values: set[int] = set()
+    for n in ast.walk(node):
+        if isinstance(n, ast.Subscript) and _name_of(n.value) == "Literal":
+            literal_values |= {id(v) for v in ast.walk(n.slice)}
+    for n in ast.walk(node):
+        if id(n) in literal_values:
+            continue
+        if _is_any(n, names, mods):
+            return "nested"
+        if n is not node and isinstance(n, ast.Constant) and isinstance(n.value, str):
+            inner = _unstring(n)
+            if inner is not n and any(_is_any(m, names, mods) for m in ast.walk(inner)):
+                return "nested"
+    return None
+
+
+def _check_explicit_any(mod: ast.Module, rel: Path, out: Findings, cands: Candidates) -> None:
+    """#645 — 시그니처 bare `Any` 는 위반 · 시그니처 nested 와 변수/속성/클래스 필드의 `Any` 는 ⓓ 후보.
+    #493 과 독립이다(«존재»는 #493 · «내용»은 #645 — 같은 줄에서 둘 다 날 수 있다)."""
+    names, mods = _any_bindings(mod)
+    parent: dict[ast.AST, ast.AST] = {}
+    for node in ast.walk(mod):
+        for child in ast.iter_child_nodes(node):
+            parent[child] = node
+    hits: list[tuple[int, str, str, str]] = []  # (lineno, kind, where, msg)
+    for node in ast.walk(mod):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            in_class = isinstance(parent.get(node), ast.ClassDef)
+            is_static = any(_name_of(d) == "staticmethod" for d in node.decorator_list)
+            args = node.args
+            slots: list[tuple[str, "ast.AST | None"]] = []
+            for i, a in enumerate(list(args.posonlyargs) + list(args.args)):
+                if in_class and not is_static and i == 0 and a.arg in ("self", "cls"):
+                    continue
+                slots.append((a.arg, a.annotation))
+            slots += [(a.arg, a.annotation) for a in args.kwonlyargs]
+            slots += [(f"*{a.arg}", a.annotation) for a in (args.vararg, args.kwarg) if a is not None]
+            where = f"{rel}:{node.lineno}"
+            for label, ann in slots:
+                v = _explicit_any(ann, names, mods)
+                if v == "bare":
+                    hits.append((node.lineno, "v", where, f"`{node.name}()` 매개변수 `{label}` 가 `Any` 다 — {ANY_MSG}"))
+                elif v == "nested":
+                    hits.append((node.lineno, "c", where, f"`{node.name}()` 매개변수 `{label}` 의 타입 안에 `Any`"))
+            v = _explicit_any(node.returns, names, mods)
+            if v == "bare":
+                hits.append((node.lineno, "v", where, f"`{node.name}()` 반환 타입이 `Any` 다 — {ANY_MSG}"))
+            elif v == "nested":
+                hits.append((node.lineno, "c", where, f"`{node.name}()` 반환 타입 안에 `Any`"))
+        elif isinstance(node, ast.AnnAssign):
+            v = _explicit_any(node.annotation, names, mods)
+            if v is not None:
+                target = ast.unparse(node.target)
+                hits.append((node.lineno, "c", f"{rel}:{node.lineno}", f"`{target}` 주석에 `Any`({v})"))
+    for lineno, kind, where, msg in sorted(hits, key=lambda h: (h[0], h[1])):
+        if kind == "v":
+            out.add("#645", where, msg)
+        else:
+            cands.add("#645", where, msg, ANY_Q)
+
+
 # ── #358 · #456 · #69 ───────────────────────────────────────────────────────
 
 def _annotation_names(node: ast.AST) -> set[str]:
@@ -476,6 +653,7 @@ def main(argv: list[str]) -> int:
         rel = f.relative_to(target)
         parts = set(rel.parts)
         _scan_stmts(mod.body, "module", set(), rel, findings, False, _module_bindings(mod))
+        _check_explicit_any(mod, rel, findings, candidates)
         if (parts & DRIVEN_DIRS) and "domain_bypass_query" in parts:
             _check_thin_read(mod, rel, findings)
         if (parts & OHS_DIRS) and "contract" in parts and "exception" in parts:

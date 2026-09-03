@@ -1758,6 +1758,14 @@ djr:R-3443 a djr:Prohibition ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-clarification .
 
+djr:R-3449 a djr:Obligation ;
+    skos:prefLabel "port 예외의 번역은 use case — 도메인 예외 칸(domain_layer/<aggregate>/exception/)으로 번역 · driving 잎은 port 예외 타입 비의존(직접 import·재수출 경유 모두) · 잎은 번역된 실패만 분기"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3449@2026-09-04> .
+
+<https://numchida.com/ns/djr#R-3449@2026-09-04> a djr:Expression ;
+    prov:specializationOf djr:R-3449 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/architecture-ddd/references/final.md> a djr:Document ;
     skos:prefLabel "architecture-ddd-final"@ko .
 
@@ -2490,8 +2498,8 @@ djr:R-3443 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s023-3.6> ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
-    djr:statesNorm djr:R-0524, djr:R-0525, djr:R-0526, djr:R-0527 ;
-    djr:text "**응용 서비스의 책임:**\n- 리포지토리에서 애그리거트를 조회한다\n- 애그리거트의 도메인 기능을 실행한다\n- 트랜잭션을 관리한다\n- 결과를 리턴한다\n\n"@ko .
+    djr:statesNorm djr:R-0524, djr:R-0525, djr:R-0526, djr:R-0527, djr:R-3449 ;
+    djr:text "**응용 서비스의 책임:**\n- 리포지토리에서 애그리거트를 조회한다\n- 애그리거트의 도메인 기능을 실행한다\n- 트랜잭션을 관리한다\n- 결과를 리턴한다\n- port 예외를 **도메인 예외**(`domain_layer/<aggregate>/exception/<exception>.py` 칸)로 번역한다 — driving 잎(컨트롤러·OHS)은 port 예외 **타입**에 의존하지 않는다(직접 import 든 use case 모듈의 재수출 경유든 같다 · #92/#93 은 import 경로만 본다) — 잎은 번역된 실패만 분기한다(`<use_case>_result.py` 엔 성공 한 벌 · #571)\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s023-3.6/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s023-3.6> ;

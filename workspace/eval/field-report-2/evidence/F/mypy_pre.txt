@@ -1,0 +1,8 @@
+framework/technology/rag/runtime/service_runtime.py:345: error: Value of type "object" is not indexable  [index]
+framework/technology/rag/runtime/service_runtime.py:628: error: "object" has no attribute "get"  [attr-defined]
+framework/technology/rag/runtime/service_runtime.py:629: error: "object" has no attribute "get"  [attr-defined]
+framework/technology/rag/runtime/service_runtime.py:902: error: Argument 1 to "float" has incompatible type "object"; expected "str | Buffer | SupportsFloat | SupportsIndex"  [arg-type]
+application/fortune_reading/composition_root/dependency_wiring.py:42: error: Argument "run_retrieval" to "RagRuntimeEvidenceRetrievalAdapter" has incompatible type "def retrieve_release_evidence(*, data_root: Path, embedder: Embedder, work_id: str, rag_id: str, release_id: str, target_language: str, retrieval_contract_id: str, retrieval_contract_version: str, retrieval_contract_digest: str, query_terms: tuple[str, ...], content_roles: tuple[str, ...]) -> _ReleaseEvidenceResult"; expected "_RunRetrieval"  [arg-type]
+application/fortune_reading/composition_root/dependency_wiring.py:42: note: "_RunRetrieval.__call__" has type "def __call__(self, *, work_id: str, rag_id: str, release_id: str, target_language: str, retrieval_contract_id: str, retrieval_contract_version: str, retrieval_contract_digest: str, query_terms: tuple[str, ...], content_roles: tuple[str, ...]) -> Mapping[str, object]"
+Found 15 errors in 7 files (checked 1 source file)
+$R/.venv/bin/mypy --cache-dir $OUT/mypycache_pre --no-incremental   7.93s user 0.83s system 92% cpu 9.495 total

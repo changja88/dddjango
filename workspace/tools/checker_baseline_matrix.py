@@ -249,7 +249,7 @@ EXPECTED: "dict[str, tuple[int, int, int, int, bool]]" = {
     "check-ninja-boundary-middleware.py": (2, 0, 0, 4, True),
     "check-common-container.py": (2, 0, 0, 4, True),
     "check-idempotency-scope-creep.py": (2, 0, 0, 3, True),
-    "check-public-surface-annotation.py": (2, 12, 12, 4, False),
+    "check-public-surface-annotation.py": (2, 20, 20, 5, False),
     "check-test-config.py": (2, 14, 14, 2, False),
     "check-transient-overmapping.py": (2, 0, 0, 3, True),
     "check-synthetic-infra-exc.py": (2, 1, 1, 2, False),

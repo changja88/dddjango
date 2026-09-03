@@ -490,3 +490,6 @@ djr:R-0648 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-dd
 djr:R-3442 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
 
 djr:R-3443 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-3449 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-context-isolation.py> .

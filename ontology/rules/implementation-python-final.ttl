@@ -648,6 +648,14 @@ djr:R-2789 a djr:Obligation ;
     prov:specializationOf djr:R-2789 ;
     djr:revision 1 .
 
+djr:R-3446 a djr:Obligation ;
+    skos:prefLabel "항상 raise 로 끝나는 도우미는 -> NoReturn(3.11+ Never 동치) — -> None 은 호출부 흐름 분석(possibly-undefined·unreachable) 붕괴 · __init__ 생성 차단 가드는 타입 규약상 제외"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3446@2026-09-04> .
+
+<https://numchida.com/ns/djr#R-3446@2026-09-04> a djr:Expression ;
+    prov:specializationOf djr:R-3446 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/implementation-python/references/final.md> a djr:Document ;
     skos:prefLabel "implementation-python-final"@ko .
 
@@ -820,6 +828,13 @@ djr:R-2789 a djr:Obligation ;
     djr:kind djr:kind-code ;
     djr:order 2 ;
     djr:text "```python\n# 나쁜 예: None 반환 - 0과 구분 불가\ndef careful_divide(a, b):\n    try:\n        return a / b\n    except ZeroDivisionError:\n        return None\n\n# 좋은 예: 예외 발생 + 타입 힌트\ndef careful_divide(a: float, b: float) -> float:\n    \"\"\"Raises: ValueError: b가 0일 때\"\"\"\n    try:\n        return a / b\n    except ZeroDivisionError:\n        raise ValueError('잘못된 입력')\n```\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s032-4.4/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s032-4.4> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-3446 ;
+    djr:text "> dddjango 단서: 본문의 모든 경로가 `raise` 로 끝나 정상 반환이 없는 도우미는 `-> None` 이 아니라 `-> NoReturn`(3.11+ 는 `Never` 동치)으로 선언한다 — `-> None` 이면 호출부의 흐름 분석(도달 불가·미정의 가능 `possibly-undefined`)이 깨진다. `__init__` 의 생성 차단 가드는 타입 규약이 `-> None` 을 강제하므로 대상이 아니다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s035-5.1> a djr:Section ;
     djr:headingSnapshot "### 5.1 functools.wraps 필수 사용 [파이썬코딩의기술] [슬기로운 파이썬 트릭]"@ko ;

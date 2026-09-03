@@ -555,3 +555,4 @@
 | 642 | ast | scripts/check-layer-skeleton.py | — | 신설 | 09-01 동명 폴더 승격 — 부품 출생 50행 하한 |
 | 643 | path | scripts/check-layer-skeleton.py | — | 신설 | 09-01 동명 폴더 승격 — 부품 0개 퇴화 |
 | 644 | ast+ | scripts/check-layer-skeleton.py | agents/discipline-reviewer.md | 신설 | 09-01 동명 폴더 승격 — ⓓ 캐스케이드 후보 신호 |
+| 645 | ast+ | scripts/check-public-surface-annotation.py | agents/discipline-reviewer.md | 신설 | 09-04 현장 보고 E — 명시 `Any` 정책(시그니처 bare = 위반 · 제네릭 안·변수 = ⓓ 후보) |

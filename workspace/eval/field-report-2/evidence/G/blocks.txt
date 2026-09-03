@@ -1,0 +1,201 @@
+=== 20260830-1809-fortune-record  (block L564-L593, 27 rows)
+  L566: application/fortune_record/driving_layer/api/record_archive/schema/schema_out.py  from ninja import Schema
+  L567: application/fortune_record/driving_layer/api/record_archive/record_archive_controller.py  from django.http import HttpRequest, HttpResponse
+  L568: application/fortune_record/driving_layer/api/record_archive/record_archive_controller.py  from ninja import Query, Status
+  L569: application/fortune_record/driving_layer/api/record_archive/record_archive_controller.py  from ninja.security import django_auth
+  L570: application/fortune_record/driving_layer/api/record_archive/record_archive_controller.py  from ninja_extra import api_controller, route
+  L571: application/fortune_record/driving_layer/api/record_archive/record_archive_controller.py  from application.fortune_record.application_layer.record_archive.get_fortune_record.get_fortune_record_query import GetFortuneRecordQuery
+  L572: application/fortune_record/driving_layer/api/record_archive/record_archive_controller.py  from application.fortune_record.application_layer.record_archive.get_fortune_record.get_fortune_record_result import GetFortuneRecordResult
+  L573: application/fortune_record/driving_layer/api/record_archive/record_archive_controller.py  from application.fortune_record.application_layer.record_archive.get_fortune_record.get_fortune_record_use_case import GetFortuneRecordUseCase
+  L574: application/fortune_record/driving_layer/api/record_archive/record_archive_controller.py  from application.fortune_record.application_layer.record_archive.list_fortune_record_index_page.list_fortune_record_index_page_query import ListFortuneRecordIndexPageQuery
+  L575: application/fortune_record/driving_layer/api/record_archive/record_archive_controller.py  from application.fortune_record.application_layer.record_archive.list_fortune_record_index_page.list_fortune_record_index_page_result import ListFortuneRecordIndexPageResult
+  L576: application/fortune_record/driving_layer/api/record_archive/record_archive_controller.py  from application.fortune_record.application_layer.record_archive.list_fortune_record_index_page.list_fortune_record_index_page_use_case import ListFortuneRecordIndexPageUseCase
+  L577: application/fortune_record/driving_layer/api/record_archive/record_archive_controller.py  from application.fortune_record.composition_root.dependency_wiring import build_get_fortune_record_use_case, build_list_fortune_record_index_page_use_case
+  L578: application/fortune_record/driving_layer/api/record_archive/record_archive_controller.py  from application.fortune_record.driving_layer.api.bc_error_schema import FortuneRecordErrorSchema, FortuneRecordNotFoundError
+  L579: application/fortune_record/driving_layer/api/record_archive/record_archive_controller.py  from application.fortune_record.driving_layer.api.record_archive.schema.schema_out import FortuneRecordDetailOut, FortuneRecordIndexOut, FortuneRecordListOut
+  L580: application/fortune_record/test/e2e/test_fortune_record_api_detail.py  from application.fortune_record.test.factories.fortune_record_model_factory import FortuneRecordModelFactory
+  L581: application/fortune_record/test/e2e/test_fortune_record_api_confidentiality.py  from application.fortune_record.test.factories.fortune_record_model_factory import FortuneRecordModelFactory
+  L582: application/fortune_record/test/integration/test_record_archive_validation.py  from application.fortune_record.driven_layer.django_fortune_record.models.fortune_record_model import FortuneRecordModel
+  L583: application/fortune_record/test/integration/test_record_archive_validation.py  from application.fortune_record.driving_layer.open_host_service.record_archive.contract.request.save_fortune_record_request import SaveFortuneRecordRequest
+  L584: application/fortune_record/test/integration/test_record_archive_validation.py  from application.fortune_record.driving_layer.open_host_service.record_archive.record_archive_service import save_fortune_record_command
+  L585: application/fortune_record/test/integration/test_record_archive_validation.py  from application.fortune_record.test.fake import build_save_fortune_record_request
+  L586: application/fortune_record/test/integration/test_record_archive_get.py  from application.fortune_record.driving_layer.open_host_service.record_archive.contract.request.get_fortune_record_request import GetFortuneRecordRequest
+  L587: application/fortune_record/test/integration/test_record_archive_get.py  from application.fortune_record.driving_layer.open_host_service.record_archive.record_archive_service import get_fortune_record_query, save_fortune_record_command
+  L588: application/fortune_record/test/integration/test_record_archive_get.py  from application.fortune_record.test.fake import build_save_fortune_record_request
+  L589: application/fortune_record/test/integration/test_record_archive_snapshot_copy.py  from application.fortune_record.driving_layer.open_host_service.record_archive.contract.request.get_fortune_record_request import GetFortuneRecordRequest
+  L590: application/fortune_record/test/integration/test_record_archive_snapshot_copy.py  from application.fortune_record.driving_layer.open_host_service.record_archive.record_archive_service import get_fortune_record_query, save_fortune_record_command
+  L591: application/fortune_record/test/integration/test_record_archive_snapshot_copy.py  from application.fortune_record.test.fake import build_save_fortune_record_request
+  L592: application/fortune_record/test/fake/__init__.py  from application.fortune_record.driving_layer.open_host_service.record_archive.contract.request.save_fortune_record_request import SaveAnswerSnapshot, SaveCharacterSnapshot, SaveFortuneRecordRequest, SavePromptSetSnapshot, SaveRecordMeta, SaveRequestSnapshot
+  -> rows importing application_layer/port: 0
+  -> rows naming *Error/*Exception/exception: 1
+     EXC: application/fortune_record/driving_layer/api/record_archive/record_archive_controller.py  from application.fortune_record.driving_layer.api.bc_error_schema import FortuneRecordErrorSchema, FortuneRecordNotFoundError
+
+=== 20260902-1842-notification-email-template  (block L374-L424, 48 rows)
+  L376: application/notification/domain_layer/shared_value_object/email_notice_template_content.py	import re
+  L377: application/notification/domain_layer/shared_value_object/email_notice_template_content.py	import html
+  L378: application/notification/domain_layer/shared_value_object/email_notice_template_content.py	from application.notification.domain_layer.shared_value_object.email_notice_kind import EmailNoticeKind
+  L379: application/notification/domain_layer/shared_value_object/email_notice_template_content.py	from application.notification.domain_layer.shared_value_object.invalid_email_notice_template import InvalidEmailNoticeTemplate
+  L380: application/notification/driven_layer/adapter/persistence/domain_bypass_query/email_notice_template_query.py	from application.notification.driven_layer.django_notification.models.email_notice_template_model import EmailNoticeTemplateModel
+  L381: application/notification/driven_layer/adapter/email_notice_rendering/stored_template_adapter.py	from application.notification.application_layer.port.email_notice_rendering.email_notice_rendering_port import EmailNoticeRenderingPort
+  L382: application/notification/driven_layer/adapter/email_notice_rendering/stored_template_adapter.py	from application.notification.application_layer.port.email_notice_rendering.exception import EmailNoticeRenderingError
+  L383: application/notification/driven_layer/adapter/email_notice_rendering/stored_template_adapter.py	from application.notification.application_layer.port.email_notice_rendering.rendered_email_notice_out import RenderedEmailNoticeOut
+  L384: application/notification/driven_layer/adapter/email_notice_rendering/stored_template_adapter.py	from application.notification.application_layer.port.domain_bypass_query.email_notice_template.email_notice_template_query import EmailNoticeTemplateDomainBypassQuery
+  L385: application/notification/driven_layer/adapter/email_notice_rendering/stored_template_adapter.py	from application.notification.domain_layer.shared_value_object.email_notice_template_content import EmailNoticeTemplateContent
+  L386: application/notification/driven_layer/adapter/email_notice_rendering/stored_template_adapter.py	from application.notification.domain_layer.shared_value_object.invalid_email_notice_template import InvalidEmailNoticeTemplate
+  L387: application/notification/driven_layer/django_notification/models/email_notice_template_model.py	from django.db import models
+  L388: application/notification/driven_layer/django_notification/models/email_notice_template_model.py	from application.notification.domain_layer.shared_value_object.email_notice_kind import EmailNoticeKind
+  L389: application/notification/driven_layer/django_notification/admin/email_notice_template/form/email_notice_template_form.py	from typing import Any
+  L390: application/notification/driven_layer/django_notification/admin/email_notice_template/form/email_notice_template_form.py	from django import forms
+  L391: application/notification/driven_layer/django_notification/admin/email_notice_template/form/email_notice_template_form.py	from application.notification.driven_layer.django_notification.models.email_notice_template_model import EmailNoticeTemplateModel
+  L392: application/notification/driven_layer/django_notification/admin/email_notice_template/form/email_notice_template_form.py	from application.notification.domain_layer.shared_value_object.email_notice_template_content import EmailNoticeTemplateContent
+  L393: application/notification/driven_layer/django_notification/admin/email_notice_template/form/email_notice_template_form.py	from application.notification.domain_layer.shared_value_object.invalid_email_notice_template import InvalidEmailNoticeTemplate
+  L394: application/notification/driven_layer/django_notification/admin/email_notice_template/form/email_notice_template_form.py	from application.notification.domain_layer.shared_value_object.email_notice_kind import EmailNoticeKind
+  L395: application/notification/driven_layer/django_notification/admin/email_notice_template/panel.py	from django.contrib import admin
+  L396: application/notification/driven_layer/django_notification/admin/email_notice_template/panel.py	from django.http import HttpRequest
+  L397: application/notification/driven_layer/django_notification/admin/email_notice_template/panel.py	from application.notification.driven_layer.django_notification.models.email_notice_template_model import EmailNoticeTemplateModel
+  L398: application/notification/driven_layer/django_notification/admin/email_notice_template/panel.py	from application.notification.domain_layer.shared_value_object.email_notice_template_content import EmailNoticeTemplateContent
+  L399: application/notification/driven_layer/django_notification/admin/email_notice_template/panel.py	from application.notification.domain_layer.shared_value_object.email_notice_kind import EmailNoticeKind
+  L400: application/notification/composition_root/dependency_wiring.py	from application.notification.driven_layer.adapter.email_notice_rendering.stored_template_adapter import StoredTemplateEmailNoticeRenderingAdapter
+  L401: application/notification/composition_root/dependency_wiring.py	from application.notification.driven_layer.adapter.persistence.domain_bypass_query.email_notice_template_query import DjangoEmailNoticeTemplateDomainBypassQuery
+  L402: scripts/seed_notification_email_templates.py	from application.notification.driven_layer.django_notification.models.email_notice_template_model import EmailNoticeTemplateModel
+  L403: scripts/seed_notification_email_templates.py	from application.notification.domain_layer.shared_value_object.email_notice_kind import EmailNoticeKind
+  L404: application/notification/test/unit/test_email_notice_template_content.py	from application.notification.domain_layer.shared_value_object.email_notice_template_content import EmailNoticeTemplateContent
+  L405: application/notification/test/unit/test_email_notice_template_content.py	from application.notification.domain_layer.shared_value_object.invalid_email_notice_template import InvalidEmailNoticeTemplate
+  L406: application/notification/test/unit/test_email_notice_template_content.py	from application.notification.domain_layer.shared_value_object.email_notice_kind import EmailNoticeKind
+  L407: application/notification/test/integration/test_email_notice_rendering.py	from application.notification.driven_layer.adapter.email_notice_rendering.stored_template_adapter import StoredTemplateEmailNoticeRenderingAdapter
+  L408: application/notification/test/integration/test_email_notice_rendering.py	from application.notification.driven_layer.adapter.persistence.domain_bypass_query.email_notice_template_query import DjangoEmailNoticeTemplateDomainBypassQuery
+  L409: application/notification/test/integration/test_email_notice_rendering.py	from application.notification.driven_layer.django_notification.models.email_notice_template_model import EmailNoticeTemplateModel
+  L410: application/notification/test/integration/test_email_notice_rendering.py	from application.notification.application_layer.port.email_notice_rendering.exception import EmailNoticeRenderingError
+  L411: application/notification/test/integration/test_email_notice_rendering.py	from application.notification.domain_layer.shared_value_object.email_notice_kind import EmailNoticeKind
+  L412: application/notification/test/integration/test_email_notice_rendering.py	from scripts.seed_notification_email_templates import seed_notification_email_templates
+  L413: application/notification/test/integration/test_email_notice_template_seed.py	from application.notification.driven_layer.django_notification.models.email_notice_template_model import EmailNoticeTemplateModel
+  L414: application/notification/test/integration/test_email_notice_template_seed.py	from scripts.seed_notification_email_templates import seed_notification_email_templates
+  L415: application/notification/test/e2e/test_email_notice_template_admin.py	from django.contrib.auth import get_user_model
+  L416: application/notification/test/e2e/test_email_notice_template_admin.py	from django.test import Client
+  L417: application/notification/test/e2e/test_email_notice_template_admin.py	from django.urls import reverse
+  L418: application/notification/test/e2e/test_email_notice_template_admin.py	from application.notification.test.factories.email_notice_template_model_factory import EmailNoticeTemplateModelFactory
+  L419: application/notification/test/factories/email_notice_template_model_factory.py	import factory
+  L420: application/notification/test/factories/email_notice_template_model_factory.py	from factory.django import DjangoModelFactory
+  L421: application/notification/test/factories/email_notice_template_model_factory.py	from application.notification.driven_layer.django_notification.models.email_notice_template_model import EmailNoticeTemplateModel
+  L422: conftest.py	import pytest
+  L423: conftest.py	from scripts.seed_notification_email_templates import seed_notification_email_templates
+  -> rows importing application_layer/port: 5
+     PORT: application/notification/driven_layer/adapter/email_notice_rendering/stored_template_adapter.py	from application.notification.application_layer.port.email_notice_rendering.email_notice_rendering_port import EmailNoticeRenderingPort
+     PORT: application/notification/driven_layer/adapter/email_notice_rendering/stored_template_adapter.py	from application.notification.application_layer.port.email_notice_rendering.exception import EmailNoticeRenderingError
+     PORT: application/notification/driven_layer/adapter/email_notice_rendering/stored_template_adapter.py	from application.notification.application_layer.port.email_notice_rendering.rendered_email_notice_out import RenderedEmailNoticeOut
+     PORT: application/notification/driven_layer/adapter/email_notice_rendering/stored_template_adapter.py	from application.notification.application_layer.port.domain_bypass_query.email_notice_template.email_notice_template_query import EmailNoticeTemplateDomainBypassQuery
+     PORT: application/notification/test/integration/test_email_notice_rendering.py	from application.notification.application_layer.port.email_notice_rendering.exception import EmailNoticeRenderingError
+  -> rows naming *Error/*Exception/exception: 2
+     EXC: application/notification/driven_layer/adapter/email_notice_rendering/stored_template_adapter.py	from application.notification.application_layer.port.email_notice_rendering.exception import EmailNoticeRenderingError
+     EXC: application/notification/test/integration/test_email_notice_rendering.py	from application.notification.application_layer.port.email_notice_rendering.exception import EmailNoticeRenderingError
+
+=== 20260902-1458-notification-bc  (block L384-L408, 22 rows)
+  L386: application/accounts/driven_layer/adapter/anticorruption_layer/notification/verification_email_adapter.py	from application.notification.driving_layer.open_host_service.email_notice import email_notice_service
+  L387: application/accounts/driven_layer/adapter/anticorruption_layer/notification/verification_email_adapter.py	from application.notification.driving_layer.open_host_service.email_notice.contract.request.send_email_notice_request import SendEmailNoticeRequest
+  L388: application/accounts/driven_layer/adapter/anticorruption_layer/notification/verification_email_adapter.py	from application.notification.driving_layer.open_host_service.email_notice.contract.exception.email_notice_published_error import EmailNoticePublishedError
+  L389: application/accounts/driven_layer/adapter/anticorruption_layer/notification/verification_email_adapter.py	from application.accounts.application_layer.port.verification_email.verification_email_port import VerificationEmailPort
+  L390: application/accounts/driven_layer/adapter/anticorruption_layer/notification/verification_email_adapter.py	from application.accounts.application_layer.port.verification_email.exception import VerificationEmailDeliveryFailed
+  L391: application/accounts/driven_layer/adapter/anticorruption_layer/notification/verification_email_adapter.py	from application.accounts.domain_layer.account.value_object.language_code import LanguageCode
+  L392: application/accounts/driven_layer/adapter/anticorruption_layer/notification/verification_email_adapter.py	from application.accounts.domain_layer.shared_value_object.email_address import EmailAddress
+  L393: application/accounts/driven_layer/adapter/anticorruption_layer/notification/verification_email_adapter.py	from application.accounts.domain_layer.verification_code.value_object.verification_notice_kind import VerificationNoticeKind
+  L394: application/accounts/composition_root/dependency_wiring.py	from application.accounts.driven_layer.adapter.anticorruption_layer.notification.verification_email_adapter import NotificationVerificationEmailAdapter
+  L395: application/notification/driven_layer/adapter/external_system/ses/email_notice_transport_adapter.py	import boto3
+  L396: application/notification/driven_layer/adapter/external_system/ses/email_notice_transport_adapter.py	from botocore.config import Config
+  L397: application/notification/driven_layer/adapter/external_system/ses/email_notice_transport_adapter.py	from botocore.exceptions import BotoCoreError, ClientError
+  L398: application/notification/driven_layer/adapter/email_notice_transport/django_mailer_adapter.py	from django.core.mail import send_mail
+  L399: application/notification/driven_layer/adapter/email_notice_rendering/django_template_adapter.py	from django.template.loader import render_to_string
+  L400: application/notification/driven_layer/adapter/email_notice_rendering/django_template_adapter.py	from django.template import TemplateDoesNotExist
+  L401: application/notification/driving_layer/open_host_service/email_notice/email_notice_service.py	from application.notification.application_layer.email_notice.send_email_notice.send_email_notice_use_case import SendEmailNoticeUseCase, EmailNoticeTransportError, EmailNoticeRenderingError
+  L402: application/notification/driving_layer/open_host_service/email_notice/email_notice_service.py	from application.notification.domain_layer.shared_value_object.email_notice_kind import EmailNoticeKind
+  L403: application/notification/test/fake/email_notice_rendering_port.py	from application.notification.application_layer.port.email_notice_rendering.email_notice_rendering_port import EmailNoticeRenderingPort
+  L404: application/notification/test/fake/email_notice_rendering_port.py	from application.notification.application_layer.port.email_notice_rendering.exception import EmailNoticeRenderingError
+  L405: application/notification/test/fake/email_notice_transport_port.py	from application.notification.application_layer.port.email_notice_transport.email_notice_transport_port import EmailNoticeTransportPort
+  L406: application/notification/test/fake/email_notice_transport_port.py	from application.notification.application_layer.port.email_notice_transport.exception import EmailNoticeTransportError
+  L407: application/notification/test/unit/test_email_notice_ses_transport.py	import boto3
+  -> rows importing application_layer/port: 6
+     PORT: application/accounts/driven_layer/adapter/anticorruption_layer/notification/verification_email_adapter.py	from application.accounts.application_layer.port.verification_email.verification_email_port import VerificationEmailPort
+     PORT: application/accounts/driven_layer/adapter/anticorruption_layer/notification/verification_email_adapter.py	from application.accounts.application_layer.port.verification_email.exception import VerificationEmailDeliveryFailed
+     PORT: application/notification/test/fake/email_notice_rendering_port.py	from application.notification.application_layer.port.email_notice_rendering.email_notice_rendering_port import EmailNoticeRenderingPort
+     PORT: application/notification/test/fake/email_notice_rendering_port.py	from application.notification.application_layer.port.email_notice_rendering.exception import EmailNoticeRenderingError
+     PORT: application/notification/test/fake/email_notice_transport_port.py	from application.notification.application_layer.port.email_notice_transport.email_notice_transport_port import EmailNoticeTransportPort
+     PORT: application/notification/test/fake/email_notice_transport_port.py	from application.notification.application_layer.port.email_notice_transport.exception import EmailNoticeTransportError
+  -> rows naming *Error/*Exception/exception: 6
+     EXC: application/accounts/driven_layer/adapter/anticorruption_layer/notification/verification_email_adapter.py	from application.notification.driving_layer.open_host_service.email_notice.contract.exception.email_notice_published_error import EmailNoticePublishedError
+     EXC: application/accounts/driven_layer/adapter/anticorruption_layer/notification/verification_email_adapter.py	from application.accounts.application_layer.port.verification_email.exception import VerificationEmailDeliveryFailed
+     EXC: application/notification/driven_layer/adapter/external_system/ses/email_notice_transport_adapter.py	from botocore.exceptions import BotoCoreError, ClientError
+     EXC: application/notification/driving_layer/open_host_service/email_notice/email_notice_service.py	from application.notification.application_layer.email_notice.send_email_notice.send_email_notice_use_case import SendEmailNoticeUseCase, EmailNoticeTransportError, EmailNoticeRenderingError
+     EXC: application/notification/test/fake/email_notice_rendering_port.py	from application.notification.application_layer.port.email_notice_rendering.exception import EmailNoticeRenderingError
+     EXC: application/notification/test/fake/email_notice_transport_port.py	from application.notification.application_layer.port.email_notice_transport.exception import EmailNoticeTransportError
+
+=== 20260831-2331-fortune-reading  (block L1153-L1172, 17 rows)
+  L1155: application/fortune_reading/driving_layer/api/api_router.py  from ninja_extra import NinjaExtraAPI
+  L1156: application/fortune_reading/application_layer/port/evidence_retrieval/evidence_retrieval_port.py  from application.fortune_reading.application_layer.port.evidence_retrieval.retrieval_result_out import RetrievalResultOut
+  L1157: application/fortune_reading/test/fake/evidence_retrieval_port.py  from application.fortune_reading.application_layer.port.evidence_retrieval.evidence_retrieval_port import EvidenceRetrievalPort
+  L1158: application/fortune_reading/test/fake/query_translation_port.py  from application.fortune_reading.application_layer.port.query_translation.query_translation_port import QueryTranslationPort
+  L1159: application/fortune_reading/test/fake/reading_bundle_port.py  from application.fortune_reading.application_layer.port.reading_bundle.reading_bundle_port import ReadingBundlePort
+  L1160: application/fortune_reading/test/unit/test_crosswalk_candidate_bundle.py  from application.fortune_reading.application_layer.port.evidence_retrieval.retrieval_result_out import RetrievalResultOut as _RetrievalResultOut
+  L1161: tests/test_ontology_c11.py  from framework.technology.rag.runtime import service_runtime as runtime_module
+  L1162: application/fortune_reading/application_layer/evidence_provisioning/validate_citations/validate_citations_use_case.py  from application.fortune_reading.application_layer.evidence_provisioning.validate_citations.validate_citations_command import ValidateCitationsCommand
+  L1163: application/fortune_reading/application_layer/evidence_provisioning/validate_citations/validate_citations_use_case.py  from application.fortune_reading.application_layer.evidence_provisioning.validate_citations.validate_citations_result import ValidateCitationsResult
+  L1164: application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py  from application.fortune_reading.application_layer.evidence_provisioning.prepare_fortune_evidence.prepare_fortune_evidence_command import PrepareFortuneEvidenceCommand
+  L1165: application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py  from application.fortune_reading.application_layer.evidence_provisioning.prepare_fortune_evidence.prepare_fortune_evidence_use_case.prepare_fortune_evidence_failure import PrepareFortuneEvidenceFailure
+  L1166: application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py  from application.fortune_reading.application_layer.evidence_provisioning.prepare_fortune_evidence.prepare_fortune_evidence_use_case.prepare_fortune_evidence_failure import PrepareFortuneEvidenceFailureCategory
+  L1167: application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py  from application.fortune_reading.domain_layer.shared_value_object.reading_request import ReadingRequest
+  L1168: application/fortune_reading/driving_layer/open_host_service/evidence_provisioning/evidence_provisioning_service.py  from application.fortune_reading.application_layer.evidence_provisioning.prepare_fortune_evidence.prepare_fortune_evidence_command import PrepareFortuneEvidenceCommand
+  L1169: application/fortune_reading/driving_layer/open_host_service/evidence_provisioning/evidence_provisioning_service.py  from application.fortune_reading.application_layer.evidence_provisioning.prepare_fortune_evidence.prepare_fortune_evidence_use_case.prepare_fortune_evidence_failure import PrepareFortuneEvidenceFailure
+  L1170: application/fortune_reading/driving_layer/open_host_service/evidence_provisioning/evidence_provisioning_service.py  from application.fortune_reading.application_layer.evidence_provisioning.prepare_fortune_evidence.prepare_fortune_evidence_use_case.prepare_fortune_evidence_failure import PrepareFortuneEvidenceFailureCategory
+  L1171: application/fortune_reading/driving_layer/open_host_service/evidence_provisioning/evidence_provisioning_service.py  from application.fortune_reading.domain_layer.shared_value_object.reading_request import ReadingRequest
+  -> rows importing application_layer/port: 5
+     PORT: application/fortune_reading/application_layer/port/evidence_retrieval/evidence_retrieval_port.py  from application.fortune_reading.application_layer.port.evidence_retrieval.retrieval_result_out import RetrievalResultOut
+     PORT: application/fortune_reading/test/fake/evidence_retrieval_port.py  from application.fortune_reading.application_layer.port.evidence_retrieval.evidence_retrieval_port import EvidenceRetrievalPort
+     PORT: application/fortune_reading/test/fake/query_translation_port.py  from application.fortune_reading.application_layer.port.query_translation.query_translation_port import QueryTranslationPort
+     PORT: application/fortune_reading/test/fake/reading_bundle_port.py  from application.fortune_reading.application_layer.port.reading_bundle.reading_bundle_port import ReadingBundlePort
+     PORT: application/fortune_reading/test/unit/test_crosswalk_candidate_bundle.py  from application.fortune_reading.application_layer.port.evidence_retrieval.retrieval_result_out import RetrievalResultOut as _RetrievalResultOut
+  -> rows naming *Error/*Exception/exception: 0
+
+=== 20260903-2202-chat-relay-2a-generate-port-identity  (block L205-L208, 1 rows)
+  L207: application/chat_relay/test/e2e/test_chat_relay_room_character.py	from application.chat_relay.test.fake.process_runtime_port import ProcessRuntimeFake
+  -> rows importing application_layer/port: 0
+  -> rows naming *Error/*Exception/exception: 0
+
+=== 20260902-0128-media-library  (block L667-L697, 28 rows)
+  L669: application/media_library/driving_layer/api/bc_error_schema.py	from framework.ninja.framework_error_schema import FrameworkErrorSchema
+  L670: application/media_library/driving_layer/api/api_router.py	from ninja_extra import NinjaExtraAPI
+  L671: application/media_library/driving_layer/api/media_catalog/media_catalog_controller.py	from ninja_extra import api_controller, route
+  L672: application/media_library/driving_layer/api/media_catalog/media_catalog_controller.py	from ninja import Status
+  L673: application/media_library/driving_layer/api/media_catalog/media_catalog_controller.py	from django.http import HttpRequest, HttpResponse
+  L674: application/media_library/driving_layer/api/media_catalog/schema/schema_out.py	from ninja import Schema
+  L675: application/media_library/driven_layer/adapter/media_processing/pillow_adapter.py	from PIL import Image
+  L676: application/media_library/driven_layer/adapter/media_storage/django_storage_adapter.py	from django.core.files.storage import storages
+  L677: application/media_library/driven_layer/adapter/media_storage/django_storage_adapter.py	from django.core.files.base import ContentFile
+  L678: application/media_library/driven_layer/adapter/persistence/repository/media_asset_repository.py	from application.media_library.driven_layer.django_media_library.models.media_asset_model import MediaAssetModel
+  L679: application/media_library/driven_layer/adapter/persistence/repository/media_asset_repository.py	from application.media_library.domain_layer.media_asset.media_asset import MediaAsset
+  L680: application/media_library/driven_layer/adapter/persistence/repository/media_asset_repository.py	from application.media_library.domain_layer.media_asset.media_asset_repository import MediaAssetRepository
+  L681: application/media_library/driven_layer/adapter/persistence/repository/media_asset_repository.py	from application.media_library.domain_layer.media_asset.value_object.asset_key import AssetKey
+  L682: application/media_library/driven_layer/adapter/persistence/repository/media_asset_repository.py	from application.media_library.domain_layer.media_asset.value_object.group_name import GroupName
+  L683: application/media_library/driven_layer/adapter/persistence/repository/media_asset_repository.py	from application.media_library.domain_layer.media_asset.value_object.medium import Medium
+  L684: application/media_library/driven_layer/adapter/persistence/repository/media_asset_repository.py	from application.media_library.domain_layer.media_asset.value_object.mime_type import MimeType
+  L685: application/media_library/driven_layer/adapter/persistence/repository/media_asset_repository.py	from application.media_library.domain_layer.media_asset.value_object.stored_file import StoredFile
+  L686: application/media_library/driven_layer/adapter/persistence/repository/media_asset_repository.py	from application.media_library.domain_layer.media_asset.value_object.media_file_set import MediaFileSet
+  L687: application/media_library/driven_layer/adapter/persistence/unit_of_work/media_asset_unit_of_work.py	from django.db import transaction
+  L688: application/media_library/driven_layer/django_media_library/apps.py	from django.apps import AppConfig
+  L689: application/media_library/driven_layer/django_media_library/models/media_asset_model.py	from django.db import models
+  L690: application/media_library/driven_layer/django_media_library/admin/media_asset/panel.py	from django.contrib import admin
+  L691: application/media_library/driven_layer/django_media_library/admin/media_asset/form/media_asset_form.py	from django import forms
+  L692: application/media_library/driven_layer/django_media_library/admin/media_asset/feature/original_download.py	from django.http import FileResponse, HttpRequest
+  L693: application/media_library/test/factories/media_asset_model_factory.py	from application.media_library.driven_layer.django_media_library.models.media_asset_model import MediaAssetModel
+  L694: application/media_library/test/e2e/test_asset_by_key.py	from django.test import Client
+  L695: application/media_library/test/e2e/test_group_assets.py	from django.test import Client
+  L696: application/media_library/test/e2e/test_response_leak.py	from django.test import Client
+  -> rows importing application_layer/port: 0
+  -> rows naming *Error/*Exception/exception: 1
+     EXC: application/media_library/driving_layer/api/bc_error_schema.py	from framework.ninja.framework_error_schema import FrameworkErrorSchema
+
+=== 20260903-1214-fortune-catalog  (block L513-L520, 5 rows)
+  L515: application/fortune_catalog/composition_root/dependency_wiring.py    from framework.technology.rag.runtime import ontology_canonical
+  L516: application/fortune_catalog/composition_root/dependency_wiring.py    from framework.technology.rag.runtime import service_runtime
+  L517: application/fortune_catalog/driven_layer/adapter/relation_table/rag_runtime_adapter.py    from rdflib import Graph
+  L518: application/fortune_catalog/test/unit/test_pack_query_equivalence.py    from rdflib import Graph
+  L519: application/fortune_catalog/test/unit/test_relation_table_adapter_synthetic.py    from rdflib import Graph
+  -> rows importing application_layer/port: 0
+  -> rows naming *Error/*Exception/exception: 0

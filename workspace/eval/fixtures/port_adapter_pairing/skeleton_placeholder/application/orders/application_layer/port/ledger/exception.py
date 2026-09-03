@@ -1,0 +1,2 @@
+class LedgerUnavailable(Exception):
+    pass

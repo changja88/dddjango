@@ -1,0 +1,45 @@
+##### /Users/hyun/Desktop/spring_dream_server
+report files: 159
+--- TypeError|arg-type|시그니처 hits in report files ---
+docs/superpowers/orders/lane/STOP-fortune-reading-toolchain-path.md:85:Serena: T11 published base exception의 실제 생성자 시그니처 확인에 사용했다.
+docs/superpowers/orders/lane/REPORT-fortune-character-2.md:28:4. 옛 함수 3·`CHARACTER_CATALOG_URL_PATTERNS`·구 registrar 시그니처·`CHARACTER_NOT_FOUND_CODE/MESSAGE` 상수 **전부 삭제**(D37 — 별칭·재수출·호환층·잔존 0).
+docs/superpowers/orders/lane/STOP-chat-relay-2a-test-3-scope.md:42:- 이 응답이 G1 설계 승인을 겸한다 — **다른 항목(포트 시그니처·값 출처·튜플 순서·①②·update/retain·기계 블록)은 G1 승인됨.** ③만 add로 개정.
+docs/superpowers/orders/lane/STOP-fortune-reading-p2-registry-contract.md:57:  4. **port DTO(#574)**: use case의 `<data>_in` 생성 금지를 준수하는 방향으로 port 시그니처를 재설계한다.
+docs/superpowers/orders/lane/STOP-fortune-reading-l2-t16-runner-content-roles.md:24:TypeError: _ProjectionBackedRunner.__call__() got an unexpected keyword argument 'content_roles'
+docs/superpowers/orders/lane/STOP-fortune-reading-l2-t16-runner-content-roles.md:125:**사전 허용(재-STOP 금지):** 같은 이유(ninth keyword 미수용 `TypeError`)로 깨지는 fortune_reading `test/**`의 **기존** runner fake가 더
+docs/superpowers/orders/lane/STOP-chat-relay-2a-api-overload.md:26:- 나머지 설계(포트 시그니처·값 출처·튜플 순서·①②·update/retain·기계 블록)는 G1 승인 완료.
+docs/superpowers/orders/lane/STOP-chat-relay-G2.md:34:- mypy: coder 실측 329 files clean(포트 시그니처 전환 포함).
+docs/superpowers/orders/lane/REPORT-chat-relay-2a.md:12:- 신규 시그니처(순서 고정): `open(*, turn_id: UUID, account_id: int, room_id: UUID, character_id: UUID | None, summary: str | None, transcript: tuple[PromptItem, ...], deadline: datetime)`.
+docs/superpowers/orders/lane/REPORT-chat-relay-2a.md:20:- `10f0988` G1 설계 명세(포트 시그니처·입장 표·pre-gate skip) + STOP-test-3(테스트 ③ 편차 표면화)
+docs/superpowers/orders/lane/REPORT-chat-relay-2a.md:27:- `application_layer/port/generate_response/generate_response_port.py` — 추상 `open()` 시그니처·docstring
+docs/superpowers/orders/lane/REPORT-chat-relay-2a.md:29:- `driven_layer/adapter/anticorruption_layer/llm_access/generate_response_adapter.py` — 스텁 ACL 시그니처 동기화(동작 불변)
+docs/superpowers/orders/lane/REPORT-chat-relay-2a.md:32:- `test/fake/generate_response_port.py` — `open()` 시그니처 + `requests` 튜플 `(turn_id, account_id, room_id, character_id, summary, transcript, deadline)`(`[3]=character_id` 유지) + 애너테이션
+docs/superpowers/orders/lane/REPORT-chat-relay-2a.md:33:- `test/integration/test_external_port_transaction_boundaries.py` — `_TransactionProbeGeneration.open` 시그니처 동기화(기존 함수 무편집)
+docs/superpowers/orders/lane/STOP-fortune-reading-p2-abstained-trace-contract.md:127:- 근거: G1의 «trace 손실 0»은 유지해야 할 계약이고(C 기각 — 명시적 계약 완화), 같은 의미(근거 없음 + 그 경위)를 domain signal과 application carrier 두 객체로 나누는 B는 소유 분산과 새 공개 심볼 승인만 늘린다. A는 FR-3(외부 근거 없음 = reason c
+docs/superpowers/orders/lane/STOP-product-G2.md:101:| G2 VO | direct constructor 우회가 3건 DID NOT RAISE, LocalizedText 2건 TypeError인 Red 5건 | 네 값 객체 `__post_init__` 자기 검증과 factory 단일화, focused 26/26 Green |
+docs/superpowers/orders/lane/REPORT-chat-relay.md:54:| mypy | 329 files clean(포트 시그니처 PromptItem 전환 포함) |
+--- wiring|배선 hits count in report files ---
+docs/superpowers/orders/lane/STOP-media-library-G2.md:2
+docs/superpowers/orders/lane/STOP-media-library-G0.md:2
+docs/superpowers/orders/lane/STOP-chat-relay-G0.md:2
+docs/superpowers/orders/lane/REPORT-media-library.md:2
+docs/superpowers/orders/lane/STOP-wallet-G2.md:1
+docs/superpowers/orders/lane/STOP-wallet-G1.md:1
+docs/superpowers/orders/lane/STOP-wallet-G0.md:1
+docs/superpowers/orders/lane/STOP-notification-uow-cross-bc-debt.md:1
+docs/superpowers/orders/lane/STOP-notification-email-template-consumer-seed.md:1
+docs/superpowers/orders/lane/STOP-media-library-G1.md:1
+--- wiring|배선 lines mentioning 오류/결함/TypeError/불일치 ---
+##### /Users/hyun/Desktop/kkebi-server
+report files: 15
+--- TypeError|arg-type|시그니처 hits in report files ---
+.dddjango/20260823-2101-identity-bc/STOP-g2-web-next-owner-conflict.md:10:- 기존 session command/result/use-case 시그니처를 고치면 `identity-web-login-brief.md` v1의 “기존 6종과 그 유스케이스·어댑터 외부 계약 절대 불변”을 깬다. 반대로 새 web wrapper가 기존 use case를 호출하면 정본의 “웹 입구는 기존 유스케이스의 호출자”를 지키지
+.dddjango/20260823-2101-identity-bc/STOP-g2-web-usecase-standard-conflict.md:21:- 기존 6종 HTTP/public Python 계약, controller/schema/use-case/port/adapter 파일과 시그니처는 변경하지 않는다.
+--- wiring|배선 hits count in report files ---
+.dddjango/20260825-2220-restore-purchase/STOP-g2-attribution-disposition.md:7
+.dddjango/20260826-1644-notification-settings-http/STOP-s2-s3.md:5
+.dddjango/20260824-2302-review-bc/STOP-16-registrar-111.md:1
+.dddjango/20260823-2101-identity-bc/STOP-g2-registrar-111.md:1
+.dddjango/20260823-2101-identity-bc/STOP-g2-out-of-scope-registry-debt.md:1
+--- wiring|배선 lines mentioning 오류/결함/TypeError/불일치 ---
+.dddjango/20260825-2220-restore-purchase/STOP-g2-attribution-disposition.md:32:- **경로 LEAN**: ACL 현행 직접 import 유지(§F.1 승인·리뷰 통과) → #101·#13·#385를 **이관 빚 기록**(첫 cross-BC OHS 실배선·검사기 충돌). 재작업 최소. 대가: 빚 항목이 많고 ACL이 review 선례와 구조 불일치.

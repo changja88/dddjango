@@ -164,3 +164,5 @@ djr:R-2788 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-revie
 
 djr:R-2789 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
     djr:enforcedBy <https://numchida.com/ns/djr#c/check-public-surface-annotation.py> .
+
+djr:R-3446 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
