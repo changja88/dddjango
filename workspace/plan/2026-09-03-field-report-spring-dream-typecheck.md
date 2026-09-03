@@ -4,17 +4,18 @@
 >
 > | # | 판정 | 처분 | 상태 |
 > |---|---|---|---|
-> | A | **성립**(«죽은 조건» 전제는 과장 — float/bool 가드는 살아 있음) | `architecture-ddd` §3.1 Money 예제 교체 + 규범 신설 R-3442(자기 검증은 값 불변식만·신규·수정 값 객체 적용)·R-3443(재검사·강제 변환 금지·좁히기는 경계 소유) | 브랜치 `fix/field-typecheck` 착지(33b0bd7) · ⑤ 리뷰 통과 · ⑥ 감사 진입 · 문면 결정성 미결 2(판별 기준·적용 단위 — rev2 제안) 릴리즈 게이트 상신 |
+> | A | **성립**(«죽은 조건» 전제는 과장 — float/bool 가드는 살아 있음) | `architecture-ddd` §3.1 Money 예제 교체 + 규범 신설 R-3442(자기 검증은 값 불변식만·신규·수정 값 객체 적용)·R-3443(재검사·강제 변환 금지·좁히기는 경계 소유) | 브랜치 `fix/field-typecheck` 착지(33b0bd7) · ⑤ 통과 · ⑥ 감사+재검 **«머지 가능»**(73e1812) · 미결 2(판별 기준·적용 단위)는 rev2 제안으로 닫힘 → 사용자 결정 대기(ⓐ rev2 채택 / ⓑ 현행) |
 > | A 제안 3·4 | 범위 밖 / 기각 | 테스트 규율 추가는 1프로젝트 관행(과적합 경계) · 예제 mypy 스모크는 과적합 | 종결 |
 > | B | 사실 검증됨(23 run 중 mypy 무기록 8) — **기각·발주측 소관** | 프로젝트 툴체인 게이트는 pre-push 훅·발주서 체크리스트 소유 · R-12 발주 가이드에 1줄 반영 예정 | 종결(사용자 결정) |
 > | C | **불성립(문면)** — Enum 멤버 예외는 R-3154에 v1.0.0부터 성문 · 실물 원인 = 검사기 #493의 import 별칭(`StrEnum as _StrEnum`) 오탐 → 레인 주석 부착 우회 → mypy red | 검사기 수리: base·데코레이터 이름을 모듈 import 바인딩으로 원명 해소(그림자 pop) · 픽스처 good 2/bad 2 · 양 저장소 전/후 차분 0 · 증거 orig 6 → patched 0 | 착지(b2e1f42) · ⑤ 통과 · 잔재 2파일은 발주측 96e8719로 해소 확인 |
 >
 > | C 추기(09-03 개정판) | pydantic/ninja 별칭 3파일 19건 · 제안 2(one-public-symbol 계산 제외·별칭 없이 직접 import 문면) | 별칭 해소가 `Schema as _Schema`·`BaseModel as _BaseModel`에도 동일 적용(증거 `evidence-alias-schema/` orig 2 → 0) · 제안 2는 **기각** — 별칭은 이제 원명으로 풀리고 별칭 자체는 적법(#345는 정의만 계수 — 별칭 관행의 근거가 코퍼스에 없음) | 종결 |
-> | D(추기) | 항상 raise하는 도우미 `-> None` → `[possibly-undefined]` 증폭 | 플러그인이 만든 모양 아님(B가 잡음) · 문면 1줄 후보(implementation-python «항상 raise/exit 도우미는 `-> NoReturn`») | **R-18 등재**(극소·다음 규범 정합 배치) — 이번 배치 범위 밖 |
-> | E(추기) | `Any` 정책 부재 — «사용자 결정: 플러그인이 `Any`를 못 쓰게 강제(문면+검사기)» | 신규 규범(하우스룰 §4 절) + 검사기 #493 확장(«명시 `Any`» 위반) = 별도 수리 배치(적대 리뷰 판형) | **R-19 등재** — 착수 시점·범위(시그니처 무조건·변수 주석 프레임워크 미러 조건부)는 dddjango 세션에서 사용자 재확인 후 |
-> | B 재확인 | 개정판 «수정 우선순위(발주자와 합의)»가 B를 플러그인 1순위로 기록 | dddjango 세션의 사용자 판정(09-03)은 «B = 발주측 소관·기각» — **두 기록이 충돌** → 릴리즈 게이트에서 사용자 재확인 | 미결 |
+> | D(추기) | 항상 raise하는 도우미 `-> None` → `[possibly-undefined]` 증폭 | 플러그인이 만든 모양 아님(B가 잡음) · 문면 1줄 후보(implementation-python «항상 raise/exit 도우미는 `-> NoReturn`») | **R-18 등재** · 사용자 09-03: 조사 전 **보류** |
+> | E(추기) | `Any` 정책 부재 — «사용자 결정: 플러그인이 `Any`를 못 쓰게 강제(문면+검사기)» | 신규 규범(하우스룰 §4 절) + 검사기 #493 확장(«명시 `Any`» 위반) = 별도 수리 배치(적대 리뷰 판형) | **R-19 등재** · 사용자 09-03: 조사 전 **보류** — 착수 시 범위(시그니처 무조건·변수 주석 프레임워크 미러 조건부) 재확인 |
+> | B 재확인 | 개정판 «수정 우선순위(발주자와 합의)»가 B를 플러그인 1순위로 기록 | 사용자 재확인(09-03 파트 1): **기각 확정** — 게이트(실행·차단)는 프로젝트 소유 · 플러그인은 «생성 코드가 mypy strict·ruff와 충돌하지 않게 설계» 원칙만 소유(R-20 등재) | 종결(8eab0f0) |
+> | F(추가 19:30) | composition root 주입 callable ≡ 포트 Protocol 확인·실배선 테스트 부재(리딩 BC 1건 프로덕션 결함) — 제안 F-1·F-2 문면 2줄 | 접수 · ⓪ 검증 전(재현·표본 외 대조·무손실 판정 미실시) | 처분 결정 대기(검증 착수 / D·E와 같은 조사 전 보류) |
 >
-> 릴리즈: ⑥ 감사 «조건부 머지 가능»(BLOCKER 0 · 조건 = D·E 처분 기록 — 이 블록으로 충족) → 사용자 결정(즉시 v2.17.17 또는 pre-gate 승격 배치 동승 · R-3442 rev2 미결 2 동반).
+> 릴리즈: ⑥ 감사 조건 충족 → 재검 «머지 가능». 남은 결정 = main 로컬 머지(진행/보류) · R-3442 rev2(ⓐ/ⓑ) · 릴리즈 시점(즉시 v2.17.17 / pre-gate 승격 배치 동승).
 
 작성: spring_dream_server 발주자 세션(Claude). 대상: dddjango 플러그인 v2.17.16 (`~/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.16`).
 계기: 2026-09-03 15:06 spring_dream_server 첫 `git push`(776커밋)에서 pre-push 훅(pre-commit: ruff·ruff format·mypy strict 전체)이 처음 돌아 mypy 171건·ruff format 미적용 189파일이 한꺼번에 노출됐다. 그중 dddjango 레인 산출물에서 나온 것을 원인별로 추적했다.
@@ -28,6 +29,7 @@
 | C | `check-public-surface-annotation.py`(#493)가 `… import StrEnum as _StrEnum` / `Schema as _Schema` / `BaseModel as _BaseModel` 별칭 base를 선언적 클래스로 해소 못 함 → 레인이 enum 멤버 `: str`·pydantic `model_config: ConfigDict` 주석으로 우회 → mypy `[misc]` | Enum 2파일 6건(9/1 STOP) + **pydantic/ninja 3파일 19건(9/3 추기 실측)** = 25건 | `scripts/check-public-surface-annotation.py` `_is_declarative_class`(§C) + discipline 문면 한 줄(imported base 제외) + (선택) «선언형 base 별칭 import 금지» 규칙 | 검사기 (+문면) | **가능 · 소**: 모듈 import 별칭 → 원 이름 해소(AST `ImportFrom.asname`) 후 대조 + 프로브 3개(StrEnum·Schema·BaseModel). spring_dream 코드는 플러그인 대기 없이 수리(Enum 완료·pydantic 3파일은 2단계) | 미착수 |
 | D | 항상 raise하는 도우미 `-> None` → `[possibly-undefined]` 13건 증폭 | 도우미 1개 → 13건 | `implementation-python` 타입 힌트 절(§D) | 문면(선택) | **가능 · 극소**: 한 문장(`-> NoReturn`). 실질 해결은 B | 미착수 |
 | E | `Any` 정책 부재 — §4 «모든 이름에 타입»이 `Any`로 충족됨. 사용자 결정: **플러그인이 `Any`를 못 쓰게 강제** | 시그니처 `Any` 47(RAG 런타임 38·fabfile 7) · RAG 런타임 663줄 · 레인 BC 시그니처 0 | `discipline-houserules` §4 문면(§E) + `scripts/check-public-surface-annotation.py`에 «명시 `Any` 금지» 규칙 추가 | 문면 + 검사기 | **가능 · 중**: 검사기는 이미 모든 annotation을 AST로 순회하므로 `Any`(및 `typing.Any` 속성형) 탐지 추가는 작음. 프레임워크 경계(`clean() -> dict[str, Any]` 미러·`request.user`) 취급을 문면으로 정해야 함(예: 받는 즉시 좁히기 의무·시그니처 `Any` 0) | 미착수 |
+| F | (추가 9/3 19:30) composition root가 driven 어댑터에 **시그니처가 다른 함수를 그대로 주입**해도 걸리는 그물이 없다 — 설계 리뷰·discipline·테스트 규율 어디에도 «주입 callable ≡ 포트 Protocol» 확인과 «실배선 1회 실행» 요구가 없어, 리딩 16행 `dependency_wiring.py:42`가 인자 2개 부족한 함수를 꽂은 채 G2를 통과(실요청은 검색 단계에서 TypeError→500) | 리딩 BC 1건(프로덕션 결함) · 테스트 26곳 전부 팩토리 fake | `implementation-django-ninja` §composition_root 문면 한 줄(§F-1) + `implementation-test`/`discipline-test` 테스트 규율 한 줄(§F-2). B와 달리 mypy 실행 요구가 아님 | 문면 2줄 | **가능 · 극소**: 문장 2개. 검사기 불요(실배선 테스트가 잡음). 플러그인이 mypy를 돌리지 않는다는 방침(B 기각)과 양립 | 미착수 |
 
 상태 열은 dddjango 소유자가 갱신한다. spring_dream 발주자는 반영 릴리즈 버전을 `claude plugin list`로 확인한 뒤 A의 코드 13건을 정리한다.
 
@@ -209,3 +211,34 @@ uv run ruff format --check .                                                  # 
 - 판정: dddjango 레인 산출물은 시그니처 `Any`가 0이다(47 중 application 0). RAG 런타임(발주 03 «dddjango 미사용 codex 레인»)이 `Mapping[str, Any]` 중심으로 쓰여 mypy `[no-any-return]` 9건·`Any` 세탁의 주 발원지다. 따라서 이번 9건은 플러그인 문제가 아니지만, **플러그인에 `Any` 정책이 없는 것은 별개의 공백**이다.
 - **사용자 결정(2026-09-03): 플러그인이 `Any`를 못 쓰게 강제한다 — 문면과 검사기 둘 다 필수.**
 - 제안(문면): §4에 한 절 — "`Any`는 타입이 아니라 검사 포기다. 함수 시그니처에 `Any` 0. 경계 입력(JSON·폼 `cleaned_data`·`request.user`·무스텁 서드파티)은 `object` 또는 프레임워크가 주는 정확한 타입으로 받아 **받는 즉시** 좁힌다(TypeIs/isinstance/`type() is`). JSON 문서는 `Mapping[str, object]`." 결정적 검사(플러그인 소유): `check-public-surface-annotation.py`가 이미 모든 annotation 노드를 순회하므로 «명시 `Any`»(`Any`·`typing.Any`·`t.Any` 속성형, 제네릭 인자 안 포함) 발견 시 위반으로 출력하는 규칙을 추가한다 — 시그니처(인자·반환)는 무조건, 변수 주석은 프레임워크 미러 자리(Django `clean()`·`cleaned_data`·`request.user`)만 «받는 즉시 좁히기» 조건부 허용 여부를 문면으로 확정. 프로젝트 ruff `ANN401`은 이와 별개로 켤 수 있으나(spring_dream은 2026-08-26부터 ignore), 플러그인 검사가 있으면 프로젝트 설정에 의존하지 않는다.
+
+## F. (추가 · 2026-09-03 19:30) composition root의 어댑터 주입 — 시그니처 불일치를 걸러 줄 그물이 없다
+
+### 증상 (프로덕션 결함 · mypy `[arg-type]` 1건이 드러냄)
+
+```python
+# application/fortune_reading/composition_root/dependency_wiring.py:42 (리딩 16행 P4 커밋 585c9c6 · 2026-09-03 02:32)
+evidence_retrieval_port=RagRuntimeEvidenceRetrievalAdapter(run_retrieval=service_runtime.retrieve_release_evidence)
+```
+
+- 어댑터의 포트 Protocol `_RunRetrieval.__call__`은 키워드 인자 9개(`work_id, rag_id, release_id, target_language, retrieval_contract_id/version/digest, query_terms, content_roles`)를 받는다. 주입된 실물 `retrieve_release_evidence`는 그 9개에 더해 **`data_root: Path`·`embedder: Embedder`를 필수**로 요구한다(기본값 없음).
+- 어댑터는 9개로 호출하므로 실요청이 검색 단계에 도달하는 순간 `TypeError`가 나고, 컨트롤러의 catch 집합(`_PrepareFortuneEvidenceFailure`)이 아니라 500이 된다. 리딩 머지(`b349dc3`) 이후 main에서 실제 검색이 동작한 적이 없다.
+- mypy: `Argument "run_retrieval" to "RagRuntimeEvidenceRetrievalAdapter" has incompatible type "def retrieve_release_evidence(*, data_root: Path, embedder: Embedder, …)"; expected "_RunRetrieval"  [arg-type]`.
+
+### 왜 파이프라인을 통과했나
+
+1. **설계**: architect 명세는 이 함수의 시그니처(`data_root, embedder, work_id, …`)를 그대로 옮겨 적었지만(STOP L2 문서에도 등장) «`embedder`를 누가 어떻게 공급하는가»를 결정하지 않았다. design-review ddd/api/db 셋 다 driven 어댑터의 **미해결 의존**을 지적하지 않았다 — 리뷰 관점 목록에 «주입 callable의 시그니처 ≡ 포트 Protocol»이 없다.
+2. **구현·감사**: coder는 함수를 그대로 꽂았고 discipline reviewer도 지나쳤다. 하우스룰·implementation 문면에 «주입 callable은 포트 Protocol과 시그니처가 같아야 하고, 부족한 인자는 composition root가 `functools.partial`/클로저로 묶어 넘긴다»가 없다.
+3. **테스트**: 리딩 BC 테스트 26곳이 전부 `build_prepare_fortune_evidence_use_case`를 monkeypatch fake로 바꿔 끼운다(플러그인 문면 «매요청 호출 … 테스트 오버라이드 회피»가 이 방식을 정당화). 어댑터 단위 테스트는 9-인자 fake callable을 넣어 통과. **실배선(진짜 팩토리 → 진짜 어댑터 → 진짜 함수)을 한 번이라도 타는 테스트가 없다.**
+4. B(G2 mypy)가 있었으면 즉시 잡혔겠지만, B는 «플러그인이 mypy를 돌리지 않는다»로 종결됐다. 따라서 F는 **mypy 실행 요구가 아니라 문면 2줄**로 제안한다.
+
+### 제안 (문면 2줄 · 검사기 불요)
+
+- **F-1 `implementation-django-ninja` composition_root 절(«build_<use_case>() 팩토리» 문단)에 한 줄**: "어댑터 생성자에 주입하는 callable(함수·메서드·`partial`)은 **어댑터가 선언한 Protocol과 시그니처가 같아야 한다**. 실물 함수가 더 많은 인자를 요구하면 그 인자(경로·모델·설정)는 **composition root가 `functools.partial`/클로저로 묶어** 넘기고, 어댑터·use case는 모른다. 시그니처가 다른 함수를 그대로 꽂는 것은 #85 «만들기와 꽂기 둘뿐»의 «꽂기»가 아니라 미완성 배선이다."
+- **F-2 `implementation-test`(또는 `discipline-test`) 테스트 규율에 한 줄**: "BC마다 **composition root 실배선 테스트 1개** — 각 `build_<use_case>()`를 진짜로 호출해 만들어진 use case를 최소 한 경로 실행한다(외부 I/O는 데이터 루트·fixture로, LLM만 fake). 팩토리를 monkeypatch로 통째 갈아 끼우는 테스트는 이 1개를 대체하지 못한다." 이 테스트가 있으면 F 유형은 CI에서 직접 터진다.
+- design-review(api 또는 ddd) 관점 목록에 «driven 어댑터의 주입 의존(경로·모델·자격)이 명세에 공급처까지 적혀 있는가» 한 항목을 추가하면 설계 단계에서도 걸린다(선택).
+
+### spring_dream 쪽 후속(참고)
+
+- 수정 방향(발주자 결정 대기 2건): ① 런타임 embedder = Release가 pin한 로컬 모델 스냅숏(`model_snapshot.verify_model_snapshot_ref` → `load_local_embedder`)을 그대로 로드 ② 모델 재사용(캐시) 자리는 BC가 아니라 framework 런타임(`service_runtime`) — BC 안 모듈 전역·lazy 싱글톤은 플러그인 규칙 위반이므로. BC 배선은 `partial(…, data_root=data_root)`만 넘긴다.
+- 리딩 BC에 실배선 테스트 1개 추가(F-2 선례).
