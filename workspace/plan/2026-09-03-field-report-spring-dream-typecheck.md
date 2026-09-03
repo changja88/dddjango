@@ -9,7 +9,12 @@
 > | B | 사실 검증됨(23 run 중 mypy 무기록 8) — **기각·발주측 소관** | 프로젝트 툴체인 게이트는 pre-push 훅·발주서 체크리스트 소유 · R-12 발주 가이드에 1줄 반영 예정 | 종결(사용자 결정) |
 > | C | **불성립(문면)** — Enum 멤버 예외는 R-3154에 v1.0.0부터 성문 · 실물 원인 = 검사기 #493의 import 별칭(`StrEnum as _StrEnum`) 오탐 → 레인 주석 부착 우회 → mypy red | 검사기 수리: base·데코레이터 이름을 모듈 import 바인딩으로 원명 해소(그림자 pop) · 픽스처 good 2/bad 2 · 양 저장소 전/후 차분 0 · 증거 orig 6 → patched 0 | 착지(b2e1f42) · ⑤ 통과 · 잔재 2파일은 발주측 96e8719로 해소 확인 |
 >
-> 릴리즈: ⑥ 감사·재검 후 사용자 결정(즉시 v2.17.17 또는 pre-gate 승격 배치 동승).
+> | C 추기(09-03 개정판) | pydantic/ninja 별칭 3파일 19건 · 제안 2(one-public-symbol 계산 제외·별칭 없이 직접 import 문면) | 별칭 해소가 `Schema as _Schema`·`BaseModel as _BaseModel`에도 동일 적용(증거 `evidence-alias-schema/` orig 2 → 0) · 제안 2는 **기각** — 별칭은 이제 원명으로 풀리고 별칭 자체는 적법(#345는 정의만 계수 — 별칭 관행의 근거가 코퍼스에 없음) | 종결 |
+> | D(추기) | 항상 raise하는 도우미 `-> None` → `[possibly-undefined]` 증폭 | 플러그인이 만든 모양 아님(B가 잡음) · 문면 1줄 후보(implementation-python «항상 raise/exit 도우미는 `-> NoReturn`») | **R-18 등재**(극소·다음 규범 정합 배치) — 이번 배치 범위 밖 |
+> | E(추기) | `Any` 정책 부재 — «사용자 결정: 플러그인이 `Any`를 못 쓰게 강제(문면+검사기)» | 신규 규범(하우스룰 §4 절) + 검사기 #493 확장(«명시 `Any`» 위반) = 별도 수리 배치(적대 리뷰 판형) | **R-19 등재** — 착수 시점·범위(시그니처 무조건·변수 주석 프레임워크 미러 조건부)는 dddjango 세션에서 사용자 재확인 후 |
+> | B 재확인 | 개정판 «수정 우선순위(발주자와 합의)»가 B를 플러그인 1순위로 기록 | dddjango 세션의 사용자 판정(09-03)은 «B = 발주측 소관·기각» — **두 기록이 충돌** → 릴리즈 게이트에서 사용자 재확인 | 미결 |
+>
+> 릴리즈: ⑥ 감사 «조건부 머지 가능»(BLOCKER 0 · 조건 = D·E 처분 기록 — 이 블록으로 충족) → 사용자 결정(즉시 v2.17.17 또는 pre-gate 승격 배치 동승 · R-3442 rev2 미결 2 동반).
 
 작성: spring_dream_server 발주자 세션(Claude). 대상: dddjango 플러그인 v2.17.16 (`~/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.16`).
 계기: 2026-09-03 15:06 spring_dream_server 첫 `git push`(776커밋)에서 pre-push 훅(pre-commit: ruff·ruff format·mypy strict 전체)이 처음 돌아 mypy 171건·ruff format 미적용 189파일이 한꺼번에 노출됐다. 그중 dddjango 레인 산출물에서 나온 것을 원인별로 추적했다.

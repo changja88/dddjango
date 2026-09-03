@@ -77,7 +77,7 @@ rdflib 편집+canon 재직렬화(왕복 byte 동일 선확인) → `ontology_gat
 ---
 
 # 통합·순서·검증 게이트
-1. 브랜치 `fix/field-typecheck` — 커밋 ① Part 2 검사기+픽스처(수리 전 red 증명 커밋 포함) ② Part 1 그래프 리비전+렌더+rulepack+LEDGER ③ 미러(소스·codex) ④ 계수표·골든·봉인 draft.
+1. 브랜치 `fix/field-typecheck` — 커밋 ① Part 2 검사기+픽스처(수리 전 red 증명은 별도 커밋 대신 증거 폴더 `evidence-alias-*`의 orig 출력으로 보존 — ⑥ 감사 주석) ② Part 1 그래프 리비전+렌더+rulepack+LEDGER ③ 미러(소스·codex) ④ 계수표·골든·봉인 draft.
 2. `make verify` 6/6 green · 새 예제 mypy 0건 · 픽스처 매트릭스 green · 수리 전/후 census EXPECTED 대조.
 3. ⑤ 구현 적대 리뷰 → ⑥ 감사·재검 → 릴리즈 브리프(즉시 v2.17.17 / 승격 배치 동승).
 4. 현장 보고 회신 `2026-09-03-field-report-reply.md`: A 처분·C 정정(R-3154 기성문·alias 사각 수리·잔재 2파일은 발주측 정리)·B 처분(발주측 훅·체크리스트)·제안 3·4 처분.
@@ -120,7 +120,7 @@ rdflib 편집+canon 재직렬화(왕복 byte 동일 선확인) → `ontology_gat
 - 실측(A·C 독립): 교체본 mypy strict+warn_unreachable+redundant-expr **0** · plain strict **0**(원본 unreachable 1 + no-untyped-def 1) · `type(x) is bool` ⓓ#69 **0**.
 
 ## Part 2 델타
-- **D2-1 하네스 오독(MAJOR·A/B/C 일치)**: `fixture_matrix.py:111`의 2는 **기대 exit 코드** — 무변경. 실제 갱신: `findings_count_matrix.py:130` EXPECTED(#493×7→×8 + sha 3) · `checker_baseline_matrix.py:252` `(2,11,11,4,False)`→12 · `checker_cross_matrix` +1행 · `construct_drift` 무접촉(실측).
+- **D2-1 하네스 오독(MAJOR·A/B/C 일치)**: `fixture_matrix.py:111`의 2는 **기대 exit 코드** — 무변경. 실제 갱신: `findings_count_matrix.py:130` EXPECTED(#493×7→×8 + sha 3) · `checker_baseline_matrix.py:252` `(2,11,11,4,False)`→12 · `checker_cross_matrix` 무변(census는 비-0 exit만 기록 — ⑤ 정정) · `construct_drift` 무접촉(실측).
 - **D2-2 bad 픽스처 형상(MAJOR·A)**: 타 모듈 import는 #298·#488(신설 폴더 `__init__.py` 부재)을 함께 울림 → **같은 폴더 import + `__init__.py`×2**. 잔여 = domain-model ⓓ#268 info 1(실측·무해).
 - **D2-3 helper 판형·범위(A 권고 채택)**: 선례 인용을 `check-error-centralization._module_bindings`로 정정(context-isolation은 모듈 한정 판형). 신설 `_module_bindings(mod)`: 모듈 수준 `Import`/`ImportFrom` 바인딩(asname→원명) + **그림자 pop**(import 뒤 같은 이름의 모듈 수준 ClassDef/FunctionDef/Assign 재바인딩 시 바인딩 제거 — 반례 a21 폐쇄 3줄). 적용 대상 = **base(Name) + 데코레이터(Name·Call.func Name)** — `@_dataclass` 별칭(spring 54파일)이 같은 사각이라 같은 helper로 폐쇄. Attribute는 현행(attr 매치·receiver 무검사).
 - **D2-4 무손실 문면 정정(A)**: «진짜 검출 감소 경로 없음» → «1형 존재 — 동명 비선언 클래스의 별칭 import(기존 동명 사각의 확장·양 저장소 실측 0)». 정당 중간 base 별칭(a09)은 green→red 전환이 아니라 **불변**(전이 면제 비범위 유지).
@@ -153,7 +153,7 @@ rdflib 편집+canon 재직렬화(왕복 byte 동일 선확인) → `ontology_gat
 
 ## 미결 2 — 확정 문면(R-3442)의 결정성 (사용자 결정 · 릴리즈 게이트 동반 상신)
 - **MAJOR-1 판별 기준**: 현행 «타입 체커가 통과시키는 값의 거부는 값 검사(예: bool⊂int) · 시그니처가 수용을 약속한 값(예: float 자리의 int)은 거부하지 않는다»는 두 예가 모두 «체커 통과·시그니처 수용»이라 원리로 구분되지 않는다(레인이 str 하위 타입·IntEnum·complex 등에서 판별 불가 — 발주측은 같은 날 `type(timeout_seconds) is not float`를 4파일에 채택해 예시와 반대로 감).
-  - **rev2 제안(clarification)**: «거부할 수 있는 것은 선언 타입의 **하위 타입** 값뿐이다(`bool`⊂`int`처럼 상속으로 통과하는 값 — `type(x) is T`로 거른다). 수치 탑 **승격**으로 통과하는 값(`float` 자리의 `int`·`complex` 자리의 `float`)은 시그니처가 수용을 약속한 것이므로 거부하지 않는다.»
+  - **rev2 제안(clarification · ⑥ 감사 R2-1~3 반영)**: «거부할 수 있는 것은 선언 타입의 **하위 타입** 값뿐이다(`bool`⊂`int`처럼 상속으로 통과하는 값). 거르는 형은 `type(x) is <거부할 하위 타입>`(예: `type(amount) is bool`)뿐이며, `type(x) is not <선언 타입>` 형은 승격 값까지 거부하므로 쓰지 않는다. 수치 탑 **승격**으로 통과하는 값(`float` 자리의 `int`·`complex` 자리의 `float`)은 시그니처가 수용을 약속한 것이므로 거부하지 않는다. `bool`은 값 의미가 다른 하위 타입이라 어느 수치 자리에서든 거부할 수 있다.» + 적용 대상 문장을 R-3442·R-3443 공통으로(«두 규범의 적용 대상은 …»).
 - **MAJOR-3 적용 단위**: «적용 대상은 이번 작업이 새로 쓰거나 손대는 값 객체 … 손대는 슬라이스에서 제거한다»는 값 객체(파일) 단위라, 하우스룰의 «줄 단위 전파 금지»·discipline-reviewer touched-only 판정과 충돌(한 줄 수정 슬라이스가 파일 전체의 `type() is` 재검사 제거 의무를 켬 — kkebi 68행·spring 27행).
   - **rev2 제안**: «적용 대상은 이번 작업이 새로 쓰는 값 객체와 **손대는 줄**이다 — 손대지 않는 기존 재검사는 소급 대상이 아니며 정리는 발주 소관이다.»
 - 두 제안 모두 R-3442 Expression rev2(clarification)로 착지 가능 — 그래프·렌더·LEDGER·q4(리비전 +1)·rulepack·미러 재실행 1사이클(≈10분). 사용자가 ⓐ rev2 채택 / ⓑ 현행 유지(문면 확정 존중) 중 결정.

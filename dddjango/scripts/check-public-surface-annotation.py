@@ -145,7 +145,7 @@ def _name_of(node: ast.AST) -> str:
 
 
 def _module_bindings(mod: ast.Module) -> dict[str, str]:
-    """모듈 수준 import 바인딩 — 로컬 이름 → 원명(check-error-centralization `_module_bindings` 판형).
+    """모듈 수준 import 바인딩 — 로컬 이름 → 원명(check-error-centralization `_final_module_bindings` 판형).
 
     `from enum import StrEnum as _StrEnum` → {"_StrEnum": "StrEnum"} · `import enum as e` → {"e": "enum"}.
     if/try 하위 문은 걷고, 함수·클래스 본문 안 import 는 보지 않는다(base·데코레이터 표현에 못 쓰인다).

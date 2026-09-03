@@ -28,7 +28,7 @@
 | 항목 | 상태 | 완료 신호 |
 |---|---|---|
 | 수리 배치 3(R-5·R-6·R-7) — 루브릭 `2026-09-03-repair-batch-3-rubric.md` | 09-03 ⓪·① 완료 → **사용자 결정 ⓐ 보류·관찰 지속**(R-5d 처방 검증 상태로 대기·N-1 기각→R-1 이월) | 재개 트리거 = R-5 계열 ≥2 레인 발화 |
-| spring_dream_server fortune-catalog 레인 관전 = pre-gate 승격 재실측(§8 전 기준) + 배치 2 효과 실측 | 09-03 12:22 런 폴더 `20260903-1214-fortune-catalog` · G0 통과(e1294f5·신규 BC·lens=ddd 단독·빚 0) · **G1 승인 13:43(9ee721e)** — pre-gate 4회(v2.17.16 스탬프) 형식 red 0·corrected 2(#392·#576 진탐·다음 실행 소멸)·filtered/ignored 0·실존 결손 0·처분 라벨 기재 적법 | `REPORT-fortune-catalog*.md` 발행 → ledger 레인 4 행 |
+| spring_dream_server fortune-catalog 레인 = pre-gate 승격 재실측 + 배치 2 효과 실측 | **09-03 18:55 완주(REPORT f6ef7ff · ≈6h31m · STOP 0 · G2 귀속 0)** — pre-gate 4회 형식 0·corrected 2(진탐)·filtered/ignored 0·결손 0 → **§8 전 기준 충족** · ledger 레인 4 행 기재 · 발견 ⑩⑪⑫ | G-A 브리프 상신 |
 
 ## 3. 잔여 항목 (의존·성격)
 
@@ -48,10 +48,12 @@
 | R-12 | **dddjango 발주 가이드**(배포본 `dddjango/README.md` + 템플릿) — 3부: G0 계약 최소본(목표·범위/비범위·허용 경로·상류 의존 실물·결정 전제·제약·수용 기준·결정 위임 범위·lens/런타임·머지 정책) · 운영 체크리스트(갱신 후 새 세션·상류 머지 후 개시·approved-merges.txt·exact 경로 pin 금지·exit 5 비차단·STOP 규약) · 템플릿. 산문 정본이되 내용은 렌더된 Coordinator Phase 0 문면에서만. 프로젝트 고유 관행(master.html·herdr·D-번호) 배제·kkebi 발주 문서로 일반성 대조 | 문서(신규) | 아니오 | 승격 배치 뒤 착수(사용자 09-03 «별개로») — 근거: STOP 25% 발주 모순·툴체인 pin STOP 2·approved-merges 미기재 위험·배포본 README 부재 | 09-03 대화 |
 | R-13 | **dddjango-web 발주 가이드**(`dddjango-web/` 안 별도) — 같은 3부 판형·공통 운영 규칙 문장 공유 · G0 입력은 화면 요구·동결 시안·실물 API 계약 스냅숏·design_system 토큰 · 상류 의존 절에 «대상 API 계약이 dddjango 레인으로 완주·머지된 뒤» 교차 참조 · 정합 대상 = web 커맨드 md(산문 정본) | 문서(신규) | 아니오 | R-12와 같은 시점 | 09-03 대화 |
 | R-14 | **현장 보고(typecheck) 수리 — 브랜치 `fix/field-typecheck` ④⑤ 완료·⑥ 감사 진입** — A: 값 객체 예제 교체 + R-3442(Obligation)·R-3443(Prohibition) 신설(`architecture-ddd` s016-3.1 · wiring discipline-reviewer 위임) · C′: 검사기 #493 import 별칭 해소(모듈 바인딩·그림자 pop·base+데코레이터) — C 문면(«하우스룰 §2 Enum 예외 누락»)은 ①에서 **불성립**(R-3154 기성문·조사자 검색 누락), 실물 뿌리 = 검사기 alias 오탐 · B 기각(발주측). 증거 `workspace/eval/field-report-typecheck/`(rv1·rv3·rv5·evidence-alias-strenum orig 6→0) · 양 저장소 차분 0 · verify 6/6 | 규범 리비전 + 검사기 수리 | 아니오 | ⑥ 감사·재검 → 릴리즈 게이트(즉시 v2.17.17 / 승격 배치 동승) · **미결 2(⑤ C MAJOR-1·3)**: R-3442 판별 기준(bool⊂int vs int→float — 하위 타입/수치 탑 승격으로 1문장 닫기)·적용 단위(값 객체 단위 vs 손대는 줄 단위 — houserules 줄 단위 전파 금지와 정렬) → rev2 clarification 사용자 결정 | 현장 보고 |
-| R-15 | **base 이름 문자열 비교 family** — (a) 다른 검사기 5종의 별칭 미해소(`check-context-isolation.py:615`·`check-db-table.py:180`·`check-domain-model.py:846`·`check-port-adapter-pairing.py:137`·`check-usecase-dto-placement.py:171`) (b) #493 검사기의 **로컬 중간 base 전이 면제**(spring 27·kkebi 99 클래스 — 전 BC `bc_error_schema.py` · 08-31 promotion `TranslatableModelForm` 주석 우회 현존 · 현재 발화 0) | 검사기 후보 | 아니오 | 발화 관측 시 — R-14 Part 2와 같은 helper 판형(모듈 import 바인딩 해소) · 전이 면제는 면제 «추가»라 무손실 증명 별도 | 현장 보고 ③ 리뷰 C |
+| R-15 | **base 이름 문자열 비교 family** — (a) 다른 검사기 5종의 별칭 미해소(`check-context-isolation.py:615`·`check-db-table.py:180`·`check-domain-model.py:846`·`check-port-adapter-pairing.py:137`·`check-usecase-dto-placement.py:171`) (b) #493 검사기의 **로컬 중간 base 전이 면제**(spring 27·kkebi 99 클래스 — 전 BC `bc_error_schema.py` · 08-31 promotion `TranslatableModelForm` 주석 우회 현존 · 현재 발화 0) (c) #493 `TypeAlias` 첫 대입(`Power = dict[str, float]`) ↔ ruff UP040 충돌(kkebi 사용자 override 현존) | 검사기 후보 | 아니오 | 발화 관측 시 — R-14 Part 2와 같은 helper 판형(모듈 import 바인딩 해소) · 전이 면제는 면제 «추가»라 무손실 증명 별도 | 현장 보고 ③ 리뷰 C |
 | R-16 | #493 검사기의 **파싱 실패 파일 조용한 green**(`check-public-surface-annotation.py` main — SyntaxError/OSError continue 후 «clean — 파일 N개»에 계수) — fail-closed 위반 후보 · 다른 검사기 동형 조사 필요 | 검사기 후보 | 아니오 | 다음 검사기 정합 배치 | 현장 보고 ③ 리뷰 A |
 | R-14b | R-3442/3443의 **예방 경로 보강** — coder·discipline-reviewer는 `architecture-ddd`를 로드하지 않아(frontmatter) 관용구를 만드는 코더가 문면을 읽지 못함(⑤ C MAJOR-2). implementation-python 또는 coder md에 교차 참조 1줄 후보 · 문면의 «예방» 기대는 architect 명세 경유로 낮춤 | 규범 후보 | 아니오 | 다음 규범 정합 배치 | ⑤ 리뷰 C |
 | R-17 | `architecture-ddd/references/final.md` 다른 예제 2곳(628·777행) `__post_init__(self)` 무주석 잔존 — 하우스룰 §4 자기 위반(범위 밖) | 문면 후보 | 아니오 | 다음 규범 정합 배치 | ⑤ 리뷰 B |
+| R-18 | 현장 보고 D — implementation-python 타입 힌트 절에 «항상 `raise`/`sys.exit`로 끝나는 도우미는 `-> NoReturn`(`-> None`은 호출부 흐름 분석을 깨뜨림)» 1줄 | 문면 후보(극소) | 아니오 | 다음 규범 정합 배치 | 현장 보고 D |
+| R-19 | 현장 보고 E — **`Any` 정책**: 하우스룰 §4 절 신설(«`Any`는 검사 포기 · 시그니처 `Any` 0 · 경계 입력은 `object`/정확 타입으로 받아 즉시 좁힘 · JSON은 `Mapping[str, object]`») + 검사기 #493 확장(«명시 `Any`» 위반 — 시그니처 무조건 · 변수 주석의 프레임워크 미러 자리 조건부) — 발주자 세션이 «사용자 결정(문면+검사기 필수)»으로 기록 | 규범 + 검사기(중) | 아니오 | **사용자 재확인 후** 별도 수리 배치(⓪~⑥ 판형) — spring 시그니처 Any 47(application 0)·kkebi 대조 필요 | 현장 보고 E |
 
 ## 4. 권장 진행 순서 · 릴리즈 규칙
 
@@ -90,3 +92,5 @@ character_catalog Ninja 전환 · turn_controller 실분해 · #396 빚 1줄 제
 - 2026-09-03 R-14 착수(사용자 확정 — 적대 리뷰 ①③⑤+감사 판형). B 기각 확정.
 - 2026-09-03 R-14 ②③ 완료(계획 v2·문면 확정) → ④ 구현(브랜치 fix/field-typecheck: 검사기 alias 해소·픽스처·EXPECTED 3종·그래프 리비전 R-3442/R-3443·렌더·rulepack·LEDGER·미러) · R-15·R-16 등재.
 - 2026-09-03 R-14 ④ 착지(b2e1f42·33b0bd7·27342a3) → ⑤ 적대 리뷰 3기 통과(BLOCKER 0·MAJOR 4는 문면 결정성 2 + 예방 경로 1 + 문서 stale 1) → MINOR 반영 · R-14b·R-17 등재.
+- 2026-09-03 카탈로그 레인 완주 — 재실측 §8 전 기준 충족(ledger 레인 4) → G-A 승격 브리프 상신(R-1 이월 2 + 발견 ⑩ 집행선 동반). R-2는 표본 1·진탐 0으로 비승격 유지.
+- 2026-09-03 ⑥ 감사 «조건부 머지 가능» → 조건(D·E 처분) 반영 · R-18·R-19 등재 · B 기록 충돌(개정판 «1순위» vs 세션 «기각») 재확인 항목화.
