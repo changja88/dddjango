@@ -242,8 +242,9 @@ evidence_retrieval_port=RagRuntimeEvidenceRetrievalAdapter(run_retrieval=service
 
 ### spring_dream 쪽 후속(참고)
 
-- 수정 방향(발주자 결정 대기 2건): ① 런타임 embedder = Release가 pin한 로컬 모델 스냅숏(`model_snapshot.verify_model_snapshot_ref` → `load_local_embedder`)을 그대로 로드 ② 모델 재사용(캐시) 자리는 BC가 아니라 framework 런타임(`service_runtime`) — BC 안 모듈 전역·lazy 싱글톤은 플러그인 규칙 위반이므로. BC 배선은 `partial(…, data_root=data_root)`만 넘긴다.
-- 리딩 BC에 실배선 테스트 1개 추가(F-2 선례).
+- **수리 완료(2026-09-03 `36258bb`, 발주자 직접)**: ① 런타임 embedder = Release manifest `build_plan_ref` → Build Plan의 유일한 `model-snapshot:` 참조 → `verify_model_snapshot_ref`·`load_local_embedder`(framework `service_runtime.retrieve_release_evidence_with_local_embedder`, `functools.cache`로 프로세스당 1회) ② BC 배선은 `partial(…, data_root=data_root)`만 주입(#85 인라인 유지, BC 안 싱글톤 없음). 검증: mypy 122→121·registry_gate 귀속 0·make test 614+2096.
+- 리딩 BC 실배선 테스트 1개 추가(`test/unit/test_composition_root_wiring.py` — F-2 선례): 진짜 팩토리→실 어댑터→실 런타임→실 Release, fake는 LLM 경계 포트와 가중치 소재뿐. 옛 배선으로 되돌리면 `TypeError: missing 'data_root' and 'embedder'`로 실패함을 실측.
+- 작성 중 플러그인 검사기가 잡은 것 2건(F-2 문면에 함께 적을 정합 조건): 타 BC OHS 계약 import(#13·#385 → **자기 BC의 fake 포트**로 대체) · `test/integration/`은 실DB 자리(#389 → **`test/unit/`**에 둔다).
 
 ## G·H. (dddjango 측 추기 · 2026-09-03 · 카탈로그 레인 발견 ⑪·⑫ — 사용자 지시로 이 파일에 병기)
 
