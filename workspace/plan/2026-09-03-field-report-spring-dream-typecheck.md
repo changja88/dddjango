@@ -1,5 +1,16 @@
 # 현장 보고 — spring_dream_server mypy strict 전체 검사에서 드러난 dddjango 결함 3건 (2026-09-03)
 
+> **처분 상태 (dddjango 측 · 2026-09-03 갱신)** — 상세 회신: `2026-09-03-field-report-reply.md` · 절차: 루브릭 `2026-09-03-field-report-repair-rubric.md`·계획 `2026-09-03-field-report-repair-plan.md` · 증거 `workspace/eval/field-report-typecheck/`
+>
+> | # | 판정 | 처분 | 상태 |
+> |---|---|---|---|
+> | A | **성립**(«죽은 조건» 전제는 과장 — float/bool 가드는 살아 있음) | `architecture-ddd` §3.1 Money 예제 교체 + 규범 신설 R-3442(자기 검증은 값 불변식만·신규·수정 값 객체 적용)·R-3443(재검사·강제 변환 금지·좁히기는 경계 소유) | 브랜치 `fix/field-typecheck` 착지(33b0bd7) · ⑤ 리뷰 통과 · ⑥ 감사 진입 · 문면 결정성 미결 2(판별 기준·적용 단위 — rev2 제안) 릴리즈 게이트 상신 |
+> | A 제안 3·4 | 범위 밖 / 기각 | 테스트 규율 추가는 1프로젝트 관행(과적합 경계) · 예제 mypy 스모크는 과적합 | 종결 |
+> | B | 사실 검증됨(23 run 중 mypy 무기록 8) — **기각·발주측 소관** | 프로젝트 툴체인 게이트는 pre-push 훅·발주서 체크리스트 소유 · R-12 발주 가이드에 1줄 반영 예정 | 종결(사용자 결정) |
+> | C | **불성립(문면)** — Enum 멤버 예외는 R-3154에 v1.0.0부터 성문 · 실물 원인 = 검사기 #493의 import 별칭(`StrEnum as _StrEnum`) 오탐 → 레인 주석 부착 우회 → mypy red | 검사기 수리: base·데코레이터 이름을 모듈 import 바인딩으로 원명 해소(그림자 pop) · 픽스처 good 2/bad 2 · 양 저장소 전/후 차분 0 · 증거 orig 6 → patched 0 | 착지(b2e1f42) · ⑤ 통과 · 잔재 2파일은 발주측 96e8719로 해소 확인 |
+>
+> 릴리즈: ⑥ 감사·재검 후 사용자 결정(즉시 v2.17.17 또는 pre-gate 승격 배치 동승).
+
 작성: spring_dream_server 발주자 세션(Claude). 대상: dddjango 플러그인 v2.17.16 (`~/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.16`).
 계기: 2026-09-03 15:06 spring_dream_server 첫 `git push`(776커밋)에서 pre-push 훅(pre-commit: ruff·ruff format·mypy strict 전체)이 처음 돌아 mypy 171건·ruff format 미적용 189파일이 한꺼번에 노출됐다. 그중 dddjango 레인 산출물에서 나온 것을 원인별로 추적했다.
 
@@ -9,7 +20,7 @@
 |---|---|---|---|---|---|---|
 | A | 값 객체 템플릿이 선언 타입을 `isinstance`로 재검사 → mypy `[redundant-expr]` | 값 객체 6종 13건 | `architecture-ddd/references/final.md` 값 객체 예제(§A) + `discipline-test`/`implementation-test` 테스트 규율 한 줄 | 문면 | **가능 · 소**: 예제 코드 교체 + 문장 2개. 검사기 불요(B가 잡음) | 미착수 |
 | B | G2 완료 조건 "mypy·ruff clean"이 결정적 단계가 아니라 «실행했으면 보고» | 8/29·8/31·9/3 레인 산출물이 활성 mypy 규칙 위반 채 통과 · format 미적용 189파일 | `commands/dddjango.md` Phase 2 G2 직전 단계(§B) | 파이프라인 | **가능 · 중**: 3명령(`mypy --follow-imports=silent <BC>`·`ruff check`·`ruff format --check`) 결정적 실행 + exact command·exit·건수 lane-report 기록. 설정 실존 기계 확인. 1순위 | 미착수 |
-| C | `check-public-surface-annotation.py`(#493)가 `from enum import StrEnum as _StrEnum` 별칭 base를 선언적 클래스로 해소 못 함 → 레인이 `: str` 주석으로 우회 → mypy `[misc]` | 2파일 6건 (9/1 STOP에서 이미 보고) | `scripts/check-public-surface-annotation.py` `_is_declarative_class`(§C) + discipline 문면 한 줄(imported stdlib base 제외) | 검사기 | **가능 · 소**: 모듈 import 별칭 → 원 이름 해소(AST `ImportFrom.asname`) 후 대조 + 프로브 2개. spring_dream 코드는 플러그인 대기 없이 수리 | 미착수 |
+| C | `check-public-surface-annotation.py`(#493)가 `… import StrEnum as _StrEnum` / `Schema as _Schema` / `BaseModel as _BaseModel` 별칭 base를 선언적 클래스로 해소 못 함 → 레인이 enum 멤버 `: str`·pydantic `model_config: ConfigDict` 주석으로 우회 → mypy `[misc]` | Enum 2파일 6건(9/1 STOP) + **pydantic/ninja 3파일 19건(9/3 추기 실측)** = 25건 | `scripts/check-public-surface-annotation.py` `_is_declarative_class`(§C) + discipline 문면 한 줄(imported base 제외) + (선택) «선언형 base 별칭 import 금지» 규칙 | 검사기 (+문면) | **가능 · 소**: 모듈 import 별칭 → 원 이름 해소(AST `ImportFrom.asname`) 후 대조 + 프로브 3개(StrEnum·Schema·BaseModel). spring_dream 코드는 플러그인 대기 없이 수리(Enum 완료·pydantic 3파일은 2단계) | 미착수 |
 | D | 항상 raise하는 도우미 `-> None` → `[possibly-undefined]` 13건 증폭 | 도우미 1개 → 13건 | `implementation-python` 타입 힌트 절(§D) | 문면(선택) | **가능 · 극소**: 한 문장(`-> NoReturn`). 실질 해결은 B | 미착수 |
 | E | `Any` 정책 부재 — §4 «모든 이름에 타입»이 `Any`로 충족됨. 사용자 결정: **플러그인이 `Any`를 못 쓰게 강제** | 시그니처 `Any` 47(RAG 런타임 38·fabfile 7) · RAG 런타임 663줄 · 레인 BC 시그니처 0 | `discipline-houserules` §4 문면(§E) + `scripts/check-public-surface-annotation.py`에 «명시 `Any` 금지» 규칙 추가 | 문면 + 검사기 | **가능 · 중**: 검사기는 이미 모든 annotation을 AST로 순회하므로 `Any`(및 `typing.Any` 속성형) 탐지 추가는 작음. 프레임워크 경계(`clean() -> dict[str, Any]` 미러·`request.user`) 취급을 문면으로 정해야 함(예: 받는 즉시 좁히기 의무·시그니처 `Any` 0) | 미착수 |
 
@@ -144,11 +155,26 @@ class BookUsagePolicy(_StrEnum):
 - 2.17.16 실측(격리 프로브): `class A(_StrEnum): X = "x"` → `[#493] … 클래스 변수 X 의 첫 대입에 타입이 없다` · `class B(StrEnum): X = "x"` → 위반 없음.
 - 이력: 리딩 레인이 2026-09-01 `docs/superpowers/orders/lane/STOP-fortune-reading-strenum-registry-alias.md`로 같은 결함(당시 2.17.12)을 보고했다. 발주자 결정은 C(직접 `StrEnum` import = 저장소 표준 형상, 별칭 폐기)였고 세 파일은 되돌렸다. 그러나 이후 슬라이스에서 만든 두 파일이 다시 별칭을 쓰고, STOP 문서가 «금지된 workaround»라고 명시한 «멤버에 `: str` 주석 달기»로 #493을 우회했다. mypy 게이트(B)가 없어 통과했다.
 
+### 추기 (2026-09-03 18:40) — 같은 구멍이 pydantic/ninja base에도 열려 있다 (실측 19건)
+
+- 대상: `application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_out.py`(12)·`schema_in.py`(3)는 `from ninja import Schema as _Schema`, `framework/pydantic/cited_answer_schema.py`(4)는 `from pydantic import BaseModel as _BaseModel`. 세 파일 모두 `model_config: ConfigDict = ConfigDict(...)`로 주석을 달았고, pydantic이 `model_config`를 `ClassVar[ConfigDict]`로 선언해 두었으므로 mypy `[misc] Cannot override class variable (previously declared on base class "Schema") with instance variable`가 19건 난다. pydantic 문서 형상(`model_config = ConfigDict(...)`, 무주석)이 옳다.
+- 2.17.16 실측(fortune_reading BC 복사본 3변형, `check-public-surface-annotation.py .`):
+
+  | 변형 | #493 `model_config` 적발 |
+  |---|---|
+  | 현재(주석 있음 · `_Schema`) | 0 |
+  | 주석 제거 · `_Schema` 유지 | **12** (`클래스 변수 model_config 의 첫 대입에 타입이 없다`) |
+  | 주석 제거 · `Schema`로 별칭 해제 | 0 |
+
+  → 검사기가 올바른 코드를 막고, 레인이 검사기를 통과시키려 붙인 주석이 mypy 위반이 된다. `DECLARATIVE_BASE_NAMES`에 `Schema`·`BaseModel`은 이미 있으므로 문제는 오직 별칭 미해소다.
+- 별칭을 쓰는 동기도 플러그인 쪽에 있다: 위 제안 2의 one-public-symbol/file 계산이 import된 base를 공개 심볼로 세기 때문에 레인이 `_` 접두로 숨긴다. 저장소의 다른 BC(promotion·wallet·product·service_policy·media_library·fortune_record)는 `from ninja import Schema` 직접 import + 무주석 `model_config`라 0건이다 — 리딩 레인만 이 형상.
+- 재발 방지 옵션(선택): 검사기 수정과 별개로 «선언형 base(`Schema`·`BaseModel`·`StrEnum`·`Model` …)는 별칭 없이 직접 import한다»를 discipline 문면에 한 줄 두면, 검사기 수정 전 버전에서도 같은 우회가 생기지 않는다.
+
 ### 제안
 
-1. 검사기: `_is_declarative_class`가 모듈의 `import`/`from … import … as …`를 읽어 별칭을 원래 이름으로 해소한 뒤 `DECLARATIVE_BASE_NAMES`와 대조한다(`enum.StrEnum` 속성 형태도 포함). 프로브 2개(별칭·직접)를 검사기 스모크에 추가.
-2. 문면: 하우스룰 §4는 그대로. 다만 «imported stdlib base는 one-public-symbol/file 계산에서 제외»(9/1 발주자 결정)를 discipline 문면에 한 줄 명문화하면 레인이 별칭을 쓸 동기가 사라진다.
-3. spring_dream 쪽: 두 파일을 직접 import + 무주석 멤버로 되돌린다(6줄). 9/1 결정이 이미 있으므로 플러그인 수정을 기다리지 않는다.
+1. 검사기: `_is_declarative_class`가 모듈의 `import`/`from … import … as …`를 읽어 별칭을 원래 이름으로 해소한 뒤 `DECLARATIVE_BASE_NAMES`와 대조한다(`enum.StrEnum`·`pydantic.BaseModel` 속성 형태도 포함). 프로브 3개(`_StrEnum`·`_Schema`·`_BaseModel` 별칭 vs 직접)를 검사기 스모크에 추가.
+2. 문면: 하우스룰 §4는 그대로. 다만 «imported base(stdlib·pydantic·ninja·Django)는 one-public-symbol/file 계산에서 제외»(9/1 발주자 결정)를 discipline 문면에 한 줄 명문화하면 레인이 별칭을 쓸 동기가 사라진다. 선택으로 «선언형 base는 별칭 없이 직접 import» 한 줄을 더하면 검사기 수정 전에도 재발이 막힌다.
+3. spring_dream 쪽: Enum 두 파일은 직접 import + 무주석 멤버로 되돌렸다(2026-09-03 `96e8719`, 1단계). pydantic/ninja 세 파일은 별칭 해제 + `model_config` 주석 제거로 2단계에서 수리한다. 9/1 결정이 이미 있으므로 플러그인 수정을 기다리지 않는다.
 
 ## 재현 명령 (spring_dream_server 루트)
 

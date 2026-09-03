@@ -139,7 +139,21 @@ rdflib 편집+canon 재직렬화(왕복 byte 동일 선확인) → `ontology_gat
 | target-counts N/W/E +2/+2/+2 · q4 3443 | 예 | 3452/3452/3546 · hierarchy green · q4 emit 후 7종 일치 |
 | corpus_mirror_sync 11/11 · codex byte cmp 0 | 예 | 11/11 in-sync(소스 span 수동 교체 + --write) · 검사기 codex cmp 0 |
 | 새 예제 mypy full/plain 0 · #69 0 · #493 0 | 예 | 렌더 md 추출본: mypy 2.3.1 full 0 · plain 0 · #69/#493 0 |
-| 픽스처 good=0·bad_rules exit 2·EXPECTED #493×8 | 예 | good clean(16파일 · 수리 전 #493×3 오탐 재현) · bad #493×8(aliased_shadow +1) · fixture_matrix 73/73 · findings 73/73 · baseline 73/73 · cross 102/102 |
+| 픽스처 good=0·bad_rules exit 2·EXPECTED #493×8 | 예 | good clean(16파일 · 수리 전 #493×3 오탐 재현) · bad #493×8(aliased_shadow +1 · ⑤ 반영: 절대 import로 #298 소거) · fixture_matrix 102/102 · findings 73/73 · baseline 73/73 · cross 350/350 |
 | 양 저장소 전/후 차분 0 | 예 | spring_dream 3309/3309 · kkebi 345/345 · 사이드카 제거 · 증거 `evidence-alias-strenum/` orig 6 → patched 0 |
 | make verify 6/6 · 봉인 draft | 예 | 1차 red 2(봉인 드리프트·symbol_kinds 소성물 — 예상) → `manifest_seal --write`(status=draft)·`gen_pregate_symbol_kinds` 재소성 → **6/6 green**(177초) |
 | 조감도 HTML 갱신 | 예 | `ontology-adoption-map.html` 2026-09-03 행 추가 |
+| wiring 근거(D1-4) | delegatedTo만 | `#69` ⓓ 후보는 관련 신호일 뿐 집행선이 아니다(isinstance+raise 형 한정·exit 불산입) — enforcedBy 미기재 · 문장→Work: 불릿 1 → R-3442 · 불릿 2 → R-3443 |
+
+---
+
+# ⑤ 구현 적대 리뷰 반영 (2026-09-03 · 산출 `workspace/eval/field-report-typecheck/rv5/`)
+
+리뷰 결과: A 통과(MINOR 3) · B 통과(MINOR 2) · C BLOCKER 0·MAJOR 4·MINOR 3. 반영: bad 픽스처 절대 import(#298 소거) · docstring «if/try 밖 모듈 블록 미탐색» · 로드맵 R-14 현행화 + R-14b(예방 경로)·R-17(같은 문서 `__post_init__` 무주석 2곳) 등재 · 회신 수치 정정(무기록 8·«5표면» 총칭·주석 부착 = R-3154 위반 명시) · 검수표 하네스 수치·wiring 근거 행.
+
+## 미결 2 — 확정 문면(R-3442)의 결정성 (사용자 결정 · 릴리즈 게이트 동반 상신)
+- **MAJOR-1 판별 기준**: 현행 «타입 체커가 통과시키는 값의 거부는 값 검사(예: bool⊂int) · 시그니처가 수용을 약속한 값(예: float 자리의 int)은 거부하지 않는다»는 두 예가 모두 «체커 통과·시그니처 수용»이라 원리로 구분되지 않는다(레인이 str 하위 타입·IntEnum·complex 등에서 판별 불가 — 발주측은 같은 날 `type(timeout_seconds) is not float`를 4파일에 채택해 예시와 반대로 감).
+  - **rev2 제안(clarification)**: «거부할 수 있는 것은 선언 타입의 **하위 타입** 값뿐이다(`bool`⊂`int`처럼 상속으로 통과하는 값 — `type(x) is T`로 거른다). 수치 탑 **승격**으로 통과하는 값(`float` 자리의 `int`·`complex` 자리의 `float`)은 시그니처가 수용을 약속한 것이므로 거부하지 않는다.»
+- **MAJOR-3 적용 단위**: «적용 대상은 이번 작업이 새로 쓰거나 손대는 값 객체 … 손대는 슬라이스에서 제거한다»는 값 객체(파일) 단위라, 하우스룰의 «줄 단위 전파 금지»·discipline-reviewer touched-only 판정과 충돌(한 줄 수정 슬라이스가 파일 전체의 `type() is` 재검사 제거 의무를 켬 — kkebi 68행·spring 27행).
+  - **rev2 제안**: «적용 대상은 이번 작업이 새로 쓰는 값 객체와 **손대는 줄**이다 — 손대지 않는 기존 재검사는 소급 대상이 아니며 정리는 발주 소관이다.»
+- 두 제안 모두 R-3442 Expression rev2(clarification)로 착지 가능 — 그래프·렌더·LEDGER·q4(리비전 +1)·rulepack·미러 재실행 1사이클(≈10분). 사용자가 ⓐ rev2 채택 / ⓑ 현행 유지(문면 확정 존중) 중 결정.

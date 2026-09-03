@@ -31,7 +31,8 @@
 검출 한계 (선언적 클래스 판정 — 오탐·미탐 가능 형상 · 2026-09-03 alias 해소 이후):
   - base·데코레이터 이름은 **모듈 수준 import 바인딩**으로 원명을 푼다(`StrEnum as _StrEnum`
     → StrEnum · `dataclass as _dataclass` → dataclass). 같은 이름을 뒤에서 모듈 수준으로
-    재정의하면 그림자(바인딩 pop). 함수·클래스 본문 안 import 는 보지 않는다.
+    재정의하면 그림자(바인딩 pop). 함수·클래스 본문 안 import 와 if/try 밖의 모듈 블록
+    (`with`·`match` 등) 안 import 는 보지 않는다 — 그 형상은 별칭이면 원본과 같이 red 다.
   - `Attribute` base(`enum.StrEnum`·`models.Model`)는 attr 만 본다 — receiver 무검사.
   - 로컬 중간 base(`class _Base(StrEnum)` → `class X(_Base)`)의 전이 면제는 없다.
   - 원명 기준이라 동명 비선언 클래스의 별칭(`from x import Schema as _Schema`)은 면제되고,

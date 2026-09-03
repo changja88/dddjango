@@ -876,7 +876,7 @@
         "dddjango/scripts/check-ninja-boundary-middleware.py": "b2908a87f9882702f2b0103549225fa9310b091349a06203cd3a419e498e9378",
         "dddjango/scripts/check-openapi-error-declaration.py": "ebedc24d9b91b12614b6cd54beb2763b8146c54c41764b21cbd884ba8cee0bf2",
         "dddjango/scripts/check-port-adapter-pairing.py": "f988baa6c591267c0e8dc06844d49bcfda75a661a77ff62afecbdd3b63d142f1",
-        "dddjango/scripts/check-public-surface-annotation.py": "4b08ea5da98c3e32cd041a6830212a5bc4c36cd4464319b76757dcd771f189a6",
+        "dddjango/scripts/check-public-surface-annotation.py": "4eb3641c16cfbd842f59bcad260cf9c70e4e761e4f32f9160a54b2bb50f39ed5",
         "dddjango/scripts/check-response-schema-bypass.py": "d148ac4ac18bd97c1a2f36913022bf3e5917a77f0e50cb0ec6ae243b7871054c",
         "dddjango/scripts/check-synthetic-infra-exc.py": "ad0b8c07cb489dcf97fcf7515b9bf5e270056142cb596fcd4ded87d1e67c2323",
         "dddjango/scripts/check-test-config.py": "8339315d5f6b7b39bd9770ef0b0db1f4a28027c3292e012caedc99f2830b92fa",
@@ -906,7 +906,7 @@
         "workspace/tools/ab_score.py"
       ],
       "n_files": 38,
-      "tree_sha256": "f175d100da683d74dc8f9b73405a466d72266b60c1a2f3ab49dd4a2744c4d70b",
+      "tree_sha256": "4312e733ac8009f579aab88fea42e72b142e52e7c119d84b23de747126b3af90",
       "why": "판정 스칼라(결정적 검사기 위반 수)를 만드는 전부. 발주·암 산출물을 보기 전에 동결한다 — 산출물을 본 뒤 채점기를 만지면 판정 교락(L-M #4)."
     }
   },
@@ -954,11 +954,11 @@
     "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.16/scripts",
     "cache-codex": "defde202feac531cd7c31726bbcbc5cf72f486ee7db8a4915c59e65006980dd4",
     "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.17.16/skills/dddjango/scripts",
-    "source-claude": "255db445f710ef74e3838fdb0d968dc20695dbd9653e2f29f6d7982779f1d253",
-    "source-codex": "255db445f710ef74e3838fdb0d968dc20695dbd9653e2f29f6d7982779f1d253"
+    "source-claude": "7576d2a28a94bef92efd36923dafbfe03a17d3b7828937878f7fcf3ffee4f82c",
+    "source-codex": "7576d2a28a94bef92efd36923dafbfe03a17d3b7828937878f7fcf3ffee4f82c"
   },
-  "sealed_commit": "036a87481754bf28cbcd90f2d87a7c76f5e706e0",
-  "self_sha256": "b2aa4329cab1adebb1145bff0f13fe7afd692a96c29db50e201d71223a8919cd",
+  "sealed_commit": "27342a37d0a4a39862e8c367e6ea50b1f506391d",
+  "self_sha256": "f864c696312bf9733a43fb9144187005dc93d7c42b936499b057655620bc5145",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [

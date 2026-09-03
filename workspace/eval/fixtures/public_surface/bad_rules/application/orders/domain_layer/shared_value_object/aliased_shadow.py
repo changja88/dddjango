@@ -1,4 +1,4 @@
-from .plain_base import PlainBase as StrEnum
+from application.orders.domain_layer.shared_value_object.plain_base import PlainBase as StrEnum
 
 
 class Shadow(StrEnum):
