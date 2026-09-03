@@ -71,7 +71,7 @@
                         [--report <경로>] [--python <검사기 인터프리터>] [--keep] [--block-hash]
                         [--check-report <pregate-report.md>]
 exit 0 = 예보 green · 2 = 예보 red(계약 실존 결손은 병기) · 3 = 형식 red(파싱 오류 · machine 블록
-부재·공허 · add 충돌 · update/remove 대상 기준선 부재 · 금지 경로 · 태그 이중 서술) · 4 = skip(실체화 0·
+부재·공허 · add/empty 충돌 · update/remove 대상 기준선 부재 · 금지 경로 · 태그 이중 서술) · 4 = skip(실체화 0·
 결손 0 — 공허 차분 가드 · 사유 명시) · 5 = 계약 실존 결손 ≥1 ∧ (귀속 0 ∨ 실체화 0)(권고·비차단 —
 실존 채널의 차단 여부는 별도 게이트) · 1 = 실행 불능(venv/인터프리터·git 실패). 어느 경우도 침묵 없음 —
 모든 exit 0/2/3/4/5 경로가 `요약:` 1행을 낸다(배너 1행의 기계 출처).
@@ -982,7 +982,7 @@ def lift_realized_adds(copy: Path, plan: Plan, explicit_base: bool,
     lifted: "set[str]" = set()
     for path, entry in plan.entries.items():
         target: Path = copy / path
-        if entry.tag == "add" and path not in in_baseline and (target.is_file() or target.is_symlink()):
+        if entry.tag in ("add", "empty") and path not in in_baseline and (target.is_file() or target.is_symlink()):
             target.unlink()
             lifted.add(path)
     return frozenset(lifted)
@@ -1024,12 +1024,17 @@ def materialize(copy: Path, plan: Plan, *, realized: "frozenset[str]" = frozense
             target.write_text(stub, encoding="utf-8")
             report["materialized"].append(entry.path)
         elif entry.tag == "empty":
-            target.parent.mkdir(parents=True, exist_ok=True)
+            # add 와 같은 «새 파일» 태그 — 기준선 실존은 baseline_form_errors 가 앞서 형식 red 로 세우고, `--base` 재발화의
+            # 오버레이 실존(기실현)은 lift_realized_adds 가 걷어내 여기서 빈 파일로 다시 쓴다(실체화 계수 · 도피 봉쇄).
             if target.exists():
-                report["already_built"].append(f"empty(기실현): {entry.path}")
-            else:
-                target.write_text("", encoding="utf-8")
-                report["materialized"].append(entry.path)
+                raise FormError(f"empty 충돌(실존): {entry.path} — 계획과 실물의 모순은 그 자체가 발견이다")
+            if entry.path in realized:
+                report["already_built"].append(
+                    f"empty(기실현 — 기준선 {base_short} 부재·오버레이 실존 → 앵커 스냅숏에서 제외·빈 파일 대체 · "
+                    f"실체화 목록에도 계수): {entry.path}")
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("", encoding="utf-8")
+            report["materialized"].append(entry.path)
         elif entry.tag == "remove":
             if entry.deferred_remove:
                 report["unsimulated"].append(f"후행 remove(@Ln — G1 승인 시점 상태 유지): {entry.path}")
@@ -1662,6 +1667,11 @@ def baseline_form_errors(plan: Plan, copy: Path, in_baseline: "frozenset[str]", 
         elif entry.tag == "remove" and not entry.deferred_remove and not present:
             errors.append(f"remove 대상 부재: {path} — 기준선 {base_short} 에 없는 경로는 제거할 수 없다"
                           f"(고정 기준선에서 기실현 remove 는 실존이다 — 이미 지워진 경로는 행을 거둔다)")
+        elif entry.tag == "empty" and present:
+            # `empty` 는 add 와 같은 «새 파일» 태그다 — 기준선 실존을 already-built 로 통과시키면 기실현 add 를 empty 로
+            # 재라벨해 실체화 0 으로 도피하는 경로가 update 재라벨과 동형으로 남는다(6단계 감사 MAJOR-1).
+            errors.append(f"empty 충돌(실존): {path} — 새 빈 파일 자리가 기준선 {base_short} 에 이미 있다: "
+                          f"기실현이면 update 다(재라벨 도피 금지)")
     return errors, frozenset(promoted)
 
 

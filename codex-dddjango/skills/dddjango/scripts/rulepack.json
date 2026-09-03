@@ -11,7 +11,7 @@
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "ff91630397742ad3a2780ba133f1fbe9585f375eedc6a7c8871d8e6b18c1d42a"
+      "sha256": "83c6f22293f7f1824a23f276286f2f21711026e4f1fe1993e45f4cfd721e9ad4"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",

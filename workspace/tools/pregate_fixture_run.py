@@ -42,6 +42,7 @@
                            ⓑ 기준선에 유효 승격 형태(`promo/__init__.py`+`promo/promo.py`) 커밋 → 예외 통과·실체화 0 → exit 4 ·
                            ⓒ 승격 폴더 미커밋(오버레이만) → exit 3(오버레이 불인정).
   remove-target-spec.md  — 비후행 `remove` 기준선 부재 → exit 3 «remove 대상 부재» · 짝 remove-deferred-spec.md(`remove@L1`) → exit 4.
+  empty-conflict-spec.md — `empty` 가 기준선 실존 파일을 가리킴 → exit 3 «empty 충돌»(empty 재라벨 도피 봉쇄 — 6단계 감사).
   묶음 checkreport(`--check-report` — 전용 저장소·리포트): red-spec 실행 뒤 처분 행 append 를 단계별로 대조 —
   미라벨 3 → ignored 2 append 3(미기재 1) → corrected 3 → filtered 0 → 오염 행(무값 «블록 해시 갱신») 0 → 다른 명세 3(stale) ·
   형식 red 리포트 3 · 블록 부재 리포트 3 · skip·결손 리포트 0 · 해시 토큰 없는 구판 헤더 3 · 표 형식 처분(백틱 라벨) 3 · 리포트 부재 1.
@@ -735,6 +736,8 @@ def _run_enforce_bundle(scratch: Path, failures: "list[str]") -> None:
                  "update 대상 부재", report, "형식 red", failures)
     _expect_form("remove-target-spec", _run_pregate(FIXTURES / "remove-target-spec.md", repo, report),
                  "remove 대상 부재", report, "형식 red", failures)
+    _expect_form("empty-conflict-spec", _run_pregate(FIXTURES / "empty-conflict-spec.md", repo, report),
+                 "empty 충돌", report, "형식 red", failures)
     deferred: "subprocess.CompletedProcess[str]" = _run_pregate(FIXTURES / "remove-deferred-spec.md", repo, report)
     if deferred.returncode != 4 or "후행 remove" not in deferred.stdout:
         failures.append(f"remove-deferred-spec 기대 exit 4(후행 remove 판정 밖·실체화 0) ≠ 실측 {deferred.returncode}")
@@ -757,8 +760,8 @@ def _run_enforce_bundle(scratch: Path, failures: "list[str]") -> None:
         _dump("update-target promoted", promoted)
     else:
         print("update-target ⓑ(승격 형태 커밋): exit 4 · 예외 통과 문면 — 기대 일치")
-    if _header_count(report) != 7:
-        failures.append(f"[enforce] 리포트 append 횟수 {_header_count(report)} ≠ 기대 7 ({report})")
+    if _header_count(report) != 8:
+        failures.append(f"[enforce] 리포트 append 횟수 {_header_count(report)} ≠ 기대 8 ({report})")
 
 
 def _expect_check(label: str, proc: "subprocess.CompletedProcess[str]", code: int, failures: "list[str]",
@@ -864,7 +867,8 @@ def _enforce_unit_checks() -> "list[str]":
             ("remove 실존", [("remove", "a/existing.py", False)], [], set()),
             ("remove 부재", [("remove", "a/ghost.py", False)], ["remove 대상 부재"], set()),
             ("remove@Ln 부재(판정 밖)", [("remove", "a/ghost.py", True)], [], set()),
-            ("empty(판정 밖)", [("empty", "a/existing.py", False), ("empty", "a/new2.py", False)], [], set()),
+            ("empty 부재(정상)", [("empty", "a/new2.py", False)], [], set()),
+            ("empty 충돌(기준선 실존)", [("empty", "a/existing.py", False)], ["empty 충돌"], set()),
             ("일괄 열거", [("update", "a/g1.py", False), ("remove", "a/g2.py", False), ("add", "a/existing.py", False)],
              ["update 대상 부재", "remove 대상 부재", "add 충돌"], set()),
         ]

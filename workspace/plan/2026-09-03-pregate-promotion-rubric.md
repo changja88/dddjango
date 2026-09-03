@@ -101,3 +101,10 @@
 | C 하네스·봉인·기록 | BLOCKER 0 · MAJOR 0 · MINOR 7 | 러너 PASS 34행 · 봉인 check green · 계획 대비 전건 있음(부분 3 보강) · 발주측 첫 변화 3종 실물 · main fast-forward 가능·충돌 0 |
 
 반영: 계획 Δ7. 다음 = ⑥ 감사 + 재검 → 사용자 «머지» 게이트.
+
+## ⑥ 감사 + 재검 (09-04 — `rv6-audit.md` · 독립 감사 3차 시도에서 완료(1·2차 API 과부하 중단 · 산출물 없음))
+
+- **감사 판정: 조건부 머지 가능** — BLOCKER 0 · MAJOR 1 · MINOR 12. 검증됨: 사용자 결정 3건·Δ6 시점 ✓ · L1~L4 ID/e-ID/exit 재계수 동일 + HEAD 실행기로 L1·L3 재실행 동일 ✓ · 카탈로그 `--check-report` stale ✓ · 69분(창 합 — «≥» 근거 없음·mypy 커밋 포함 지적)·형식 red 6·kkebi 20/20 ✓ · 불리한 사실 명기 ✓.
+- **MAJOR-1 `empty` 재라벨 도피** → 브랜치 내 처방(ⓐ): `baseline_form_errors` 에 `empty ∧ 기준선 실존 → 형식 red «empty 충돌(실존)»` · `lift_realized_adds` 에 empty 포함(재발화의 기실현 empty 는 빈 파일 대체·실체화 계수) · `materialize` empty 실존 → FormError(add 동형) · 픽스처 `empty-conflict-spec.md`(enforce 묶음 헤더 8) · 유닛 «empty 충돌» · R-3425 1구(in-place · LEDGER +1 · codex 미러) · docstring «add/empty 충돌».
+- **조건 2** → 로드맵 §4 «설치본 승격 = `make release` 시 · 그 전 main push 금지» 기재 · 머지 커밋 본문에도 명기 예정. **조건 3** → ledger «문면 확정 후 실행기 정합 1건(관찰기 skip 스텁 ∧ 마커 0 → 불비 · 영향 레인 실측 0)» 기재.
+- **재검(자체 · 결정적)**: 러너 PASS(37 기대 일치 — 16종+enforce 8+checkreport 14+유닛) · 소급 재실행 L1~L4 exit·ID·e-ID·요약 행 불변(«empty 충돌» 오차단 0 — 감사의 125행/실존 0 사전 계산과 일치) · reading 좌표만 +empty 충돌 3(기실현 empty 재라벨 · 의도) · rulepack 정합 · 봉인 draft 재발행 · `make verify`(아래) · 검사기 27종 무변경 · 잔존 «관찰 모드» 0 · main 충돌 0.

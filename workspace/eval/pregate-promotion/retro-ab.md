@@ -30,3 +30,13 @@
 
 요약: 형식 red 1건(블록 부재) · 기준선 6608fb0d955c · 모드 차단
 ```
+
+## ⑥ 감사 MAJOR-1 반영 뒤 재실행 (09-04 · `<좌표>-new2.out` — 신 실행기 + `empty` 규칙)
+
+| 좌표 | new(⑤) → new2(⑥) | 비고 |
+|---|---|---|
+| L1~L4 | exit·귀속 ID·e-ID·요약 행 **전부 동일** | 4레인 empty 125행 중 기준선 실존 0 → «empty 충돌» 오차단 0(감사 사전 계산과 일치) |
+| R reading 최종본 | 형식 red 7 → **10**(remove 부재 7 · **empty 충돌 3**) | 기준선에 이미 있는 파일을 `empty` 로 적은 3행 = 기실현 empty 재라벨(update 재라벨과 동형 — 봉쇄 대상) |
+| R′ 재라벨 판형 | 형식 red 26 → **29**(update 부재 24 · remove 부재 2 · empty 충돌 3) | 같은 3행 |
+
+- 규칙: `empty ∧ 기준선 실존 → 형식 red «empty 충돌(실존)»` · `--base` 재발화의 오버레이 실존(기실현) empty 는 add 와 같이 걷어내 빈 파일로 대체(실체화 계수) · 기본 HEAD 경로의 오버레이 실존은 FormError(add 와 동형). 픽스처 `empty-conflict-spec.md` exit 3 · 유닛 «empty 충돌(기준선 실존)».

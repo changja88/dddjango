@@ -1,0 +1,14 @@
+형식 red — 10건 (계획↔기준선 모순 · architect 반송 재료):
+  remove 대상 부재: application/fortune_reading/test/e2e/test_crosswalk_candidate_bundle.py — 기준선 80431d9480f7 에 없는 경로는 제거할 수 없다(고정 기준선에서 기실현 remove 는 실존이다 — 이미 지워진 경로는 행을 거둔다)
+  remove 대상 부재: application/fortune_reading/test/e2e/test_active_bundle_matrix.py — 기준선 80431d9480f7 에 없는 경로는 제거할 수 없다(고정 기준선에서 기실현 remove 는 실존이다 — 이미 지워진 경로는 행을 거둔다)
+  remove 대상 부재: application/fortune_reading/test/e2e/test_open_host_services.py — 기준선 80431d9480f7 에 없는 경로는 제거할 수 없다(고정 기준선에서 기실현 remove 는 실존이다 — 이미 지워진 경로는 행을 거둔다)
+  remove 대상 부재: application/fortune_reading/test/e2e/typecheck_citation_open_host_service_consumer.py — 기준선 80431d9480f7 에 없는 경로는 제거할 수 없다(고정 기준선에서 기실현 remove 는 실존이다 — 이미 지워진 경로는 행을 거둔다)
+  remove 대상 부재: application/fortune_reading/test/e2e/test_evidence_api.py — 기준선 80431d9480f7 에 없는 경로는 제거할 수 없다(고정 기준선에서 기실현 remove 는 실존이다 — 이미 지워진 경로는 행을 거둔다)
+  remove 대상 부재: application/fortune_reading/test/e2e/test_evidence_provider_boundaries.py — 기준선 80431d9480f7 에 없는 경로는 제거할 수 없다(고정 기준선에서 기실현 remove 는 실존이다 — 이미 지워진 경로는 행을 거둔다)
+  remove 대상 부재: application/fortune_reading/test/e2e/test_evidence_bundle.py — 기준선 80431d9480f7 에 없는 경로는 제거할 수 없다(고정 기준선에서 기실현 remove 는 실존이다 — 이미 지워진 경로는 행을 거둔다)
+  empty 충돌(실존): application/fortune_reading/composition_root/event_wiring.py — 새 빈 파일 자리가 기준선 80431d9480f7 에 이미 있다: 기실현이면 update 다(재라벨 도피 금지)
+  empty 충돌(실존): application/fortune_reading/driving_layer/event_subscription/event_router.py — 새 빈 파일 자리가 기준선 80431d9480f7 에 이미 있다: 기실현이면 update 다(재라벨 도피 금지)
+  empty 충돌(실존): application/fortune_reading/driving_layer/open_host_service/citation_validation/contract/exception/citation_validation_published_error.py — 새 빈 파일 자리가 기준선 80431d9480f7 에 이미 있다: 기실현이면 update 다(재라벨 도피 금지)
+  승격 형태 예외 통과 1건: application/fortune_reading/application_layer/evidence_provisioning/prepare_fortune_evidence/prepare_fortune_evidence_use_case.py
+
+요약: 형식 red 10건(remove 대상 부재 7 · empty 충돌 3) · 기준선 80431d9480f7 · 모드 차단
