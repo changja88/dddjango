@@ -75,3 +75,33 @@
 ## 3·5단계 3축 · 심각도
 
 파트 1 루브릭 준용. 코퍼스 정합 = 건드리는 IRI·검사기·문법 성문 전수 열거(하우스룰 §4 절 신설 시 R-3148~3150 과 관계 명시 · 검사기 확장 시 docstring·registry·rulepack 5표면). 일반화 = Claude/Codex 동일·프로젝트 플래그 비의존·kkebi 대조. 무손실 = 검사기 검출 집합 변화는 «추가만»(E) · 게이트 강도 불변(G 는 예보 확대 · H 는 면제 추가 시 별도 증명).
+
+## 1단계 결과 (2026-09-04 — 적대 리뷰 3기 A 기술·B 규범·C 증거 · 산출 `workspace/eval/field-report-2/rv1/`)
+
+| 항목 | 판정 | 핵심 근거 |
+|---|---|---|
+| D 결손 | **검증됨(소)** | 코퍼스 `NoReturn` 0 · `-> None` raise 예제 0(펜스 374·def 862 재검). 형상 n=2/2저장소이나 **효과 n=1**(kkebi 건은 호출부 문장 위치라 mypy 증폭 0) · 두 레인 모두 Codex·동일 작성자·1건은 framework 경로(표식 없음) → 기준 4 «≥2레인» 에 걸침(C MAJOR: 독립성 약함) |
+| D 처방 | MINOR | 착지 implementation-python §4.4(`s032-4.4`) 새 블록 b3 · Obligation 1문장 · `sys.exit` 삭제(트리에 CLI 칸 없음 — 과잉). 우선순위 최하 |
+| E 결손 | **검증됨** | R-3148 은 «주석 존재» 규범 → `x: Any` 로 충족. 막는 도구 부재(ANN401 무효·`disallow_any_explicit` 없음·mypy 범위 `application/` 제외) 실증 |
+| E 조건부형 | **MAJOR(자기모순)** | «프레임워크 미러 자리 조건부 허용» 은 R-3150(조건부 면제 금지)과 충돌 · `object` 대체 프로브(django-stubs 플러그인 구성 후 재실행 · override 오류 0) → «불가능» 이 아니므로 **문면은 무조건형만 정합** |
+| E 검사기 형상 | **검증됨(조건부)** | 자리가 구조적으로 갈림(시그니처 211~226 / AnnAssign 265~268 / `self.x` 320~322) → **시그니처 bare `Any`(별표·`\| None`·`Optional`·문자열·별칭 포함) = 위반(exit 2) · 변수·제네릭 안 = ⓓ 후보(exit 불산입)** 가 결정적. 변수 자리의 «미러» 구분은 값 형상 화이트리스트뿐이라 비권장 → 문면+ⓓ. 사각 정정: `_annotation_names` 는 별칭 미해소 → `_module_bindings` 경유 · ninja `Schema` 필드 `x: Any` 취급은 ② 결정 |
+| E 소급 «18 red» | **MAJOR(과대)** | `registry_gate` 는 N∖L 귀속이라 legacy 잔존 차단 0 · 검사기가 `test/{factories,fake}` 도 보므로 실계수 24. 강도표(C · application 프로덕션): ① 시그니처 bare 0 = spring 8/kkebi 10(전부 치환 가능) · ② +변수 = 45/71(ninja Schema 필드 3 면제 결정 필요) · ③ +제네릭 안 = 120/133(Django `clean()` 미러 다수) → **① 채택 · ② 문면+ⓓ · ③ 기각** |
+| E 착지·표면 | MINOR | §4.2 신설보다 `s007-4` 새 블록 b7 · Work 2(R-3446 정책·R-3447 검사기 규칙) · `#644` 규칙 번호 후보 · 표면 7(검사기 docstring·registry 소개·rulepack·하우스룰 문면·픽스처 good/bad·codex 미러·Coordinator 133행) · 23.1 mypy 블록 무접촉 · Knowledge Level 예제 치환은 선택 |
+| F-1 | MINOR(문면 조건) | 1레인·기준 4 미충족이나 정적 검출 실증(불일치 1→0). #85 는 **최상단 `Assign` 도 red** → 문면은 «`build_*()` 본문 안에서 `partial`/클로저» 명시 필수. 검사기 승격 기각(사각 9종·mypy arg-type 부분 재구현·n=1) → R-0719 따름정리 **1문장** |
+| F-2 «BC 마다 1개» | **MAJOR(기각→축소형)** | discipline-tdd §5.5 quota 비자격·design-review-api «decision 없이 의무화 금지»·coder :37 과 3중 모순 · 착지 implementation-test 는 소유 오류(§5.5 소유) · 실배선 있는 BC 는 엄격 기준 3/16(+부분 1) · «26곳» 미재현(후보 11/16/21/22 모두 아님) → **discipline-tdd §5.5 «보호 대상» 1항**(composition root 실배선 1경로 = 보호 대상 후보 · 강제·소급 없음) · design-review 항목 추가 기각 |
+| G 결손 | **검증됨** | R-3427 «경계» 미정의·열거 전부 BC 밖 → «잎→port 는 경계 아님» 독법 자연. 잎→port 행 블록 0/7 · #93 실발화 5레인(블록 보유 2 = 조항 실효 n, 블록 없는 3 = 패턴 n) · 실행기 예보 성립(runB exit 2 재확인) · 차단 모드 red = G1 반송 → 1회 재설계로 종료(순환 없음) |
+| G 형태 | **MAJOR(범위)** | «예외 소비 import» 한정 = #93 정의(`port/**` 전체)와 부정합 · «층 경계 전부» = 과광 → 정합형 = **R-3427 clarification(경계 3분류: BC 밖 / BC 내부 층 경계 중 #92~#96 판정 대상 = 블록 의무 / 그 밖 재량)** + **architecture-ddd «port 예외 번역 책임 = use case» Work 1 신설**(≥4레인 재유도 방지) + S3 «add 소비자만 전사(브라운필드 update 잎 무효)» 병기 |
+| G 효과 | MINOR(과대) | «Phase 2 왕복 1회 절감» 아님 — 카탈로그 STOP 0·리딩 STOP-149 중 12/149 → **«예보 시점이 Phase 2 → G1 로 이동»** 으로 정직화. 실효 1~2레인 |
+| H 재현 | **검증됨** | 존재 5행 / 부재 12행 서로소(A·C 재실행 동일) · 13:42(게이트 red 2회 = 파일 왕복 1회) |
+| H «모순» 전제 | **MAJOR(과장)** | «하나»(#219/#635)는 **Work 0**(검사기 docstring·원장뿐) · 그래프 규범은 «빈 파일 실현» 만 말함 → 시점 차이로 양립. 진짜 결손 = «빈 파일 실현 상태에서 내용 규칙이 언제 서는가» 미성문. **R-0319 가 registry #2 한정으로 이미 pre-content 유예 선례** · R-3425 `empty` 태그(적법 계획)인데 pre-gate 스텁이 #219/#635 예보 red(리딩 pregate-report) = 같은 불일치 |
+| H ⓐ | **MAJOR(기각)** | 부재 상태 red 5→12 · R-2499·R-3181·R-3188 redefinition + #488 메시지 + `empty` 의미 재정의(최대) |
+| H ⓑ | **MAJOR(누수)** | `skeleton_placeholder` 선례(판정 ④)와 일관하나 순수 면제는 영구 잔존을 못 잡음. 단 C 정정: kkebi tarot «10일째» 는 과대(저장소 마지막 커밋 08-26 → ≈27h) · 그 칸엔 «하나» 규칙 자체가 없음 → ⓑ 기각 근거로 부적합 |
+| H ⓒ(골격 슬라이스 유예 문면) | A 권고 / B «단독 부족» | 슬라이스별 registry green 규범 없음(G2 step 6 만) · 3레인(promotion-pricing·saju·reading)이 이미 이 방식 · 검출 집합 무변. 그러나 문면만으로는 검사기·pre-gate 스텁의 red 를 못 막음(`empty` 계획이 매번 귀속 red → 처분 필요) |
+| H ⓓ(검사기 유예 + 형제-내용 조건 + R-3181 clarification) | B 권고 / A «0바이트 술어» 기각 | A 의 기각 사유(제3의 빈-술어)는 **`skeleton_placeholder` 재사용으로 해소** · «잔존은 시간 비인지» 는 «같은 칸 형제 파일에 내용이 있으면 발화» 가 결정적 대리 · 검출 집합 변화 = pre-content 상태만(HEAD 양 저장소 0바이트 `_port/_use_case` 0 · 픽스처 0 · 카탈로그 골격 5→0) → ⑤ 무손실 증명 가능 |
+| ⓒ 효과 전체 | MINOR(과대) | D 0~1건/저장소(확률) · E 시그니처 ≈1/BC(실질 세탁 kkebi 5 검출) · F 1/99 · G 실효 1~2 · H 1왕복 13m42s(타 3레인 비용 0) |
+
+### ① 결론 (결정 게이트 «범위 확정» 상신)
+
+- 합의(사용자 결정 불요): **D** 유지·축소(§4.4 b3 1문장 · `sys.exit` 삭제) · **F-1** 축소(R-0719 따름정리 1문장 · «`build_*()` 본문 안 partial») · **F-2** 축소형(discipline-tdd §5.5 보호 대상 1항 · 강제·소급 없음 · implementation-test 착지 철회) · **G** 재형식화(R-3427 clarification 경계 3분류 + architecture-ddd 번역 책임 Work 1 + S3 병기) · 현장 보고 «수정 우선순위» 문면(`discipline-test` 스킬 부재·«26곳»·«13건»·«47/0») 정정 추기.
+- 갈림 1 — **E 검사기 차단 범위**: ① 시그니처 bare `Any` 만 차단 + 변수·제네릭 안은 ⓓ 후보(리뷰 3기 공통 권고) / ② 문면만 / ③ 변수까지 차단(소급 45/71 · 기각).
+- 갈림 2 — **H 처방**: ⓒ 문면만(A) / ⓓ 검사기 유예(`skeleton_placeholder` 한정 · 형제-내용 발화 · R-3181 clarification · B) / ⓒ+ⓓ 병행(코디 추천 — 문면은 «삭제로 해소 금지», 검사기는 내용 생길 때까지 침묵).
