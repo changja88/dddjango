@@ -80,6 +80,9 @@ NEGATIVE_LANES: "list[tuple[str, str, str]]" = [
     ("check-composition-root.py", "composition_root", "no_api"),
     ("check-usecase-dto-placement.py", "usecase_dto", "no_api"),
     ("check-naming.py", "naming", "domain_results"),
+    # 결정 2(2026-09-04) — 내용 없는 골격 파일(skeleton_placeholder)은 내용 규칙(#219·#635)의 대상이 아니다.
+    ("check-port-adapter-pairing.py", "port_adapter_pairing", "skeleton_placeholder"),
+    ("check-usecase-dto-placement.py", "usecase_dto", "skeleton_placeholder"),
 ]
 
 POSITIVE_LANES: "list[tuple[str, str, str]]" = [

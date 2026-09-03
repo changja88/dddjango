@@ -473,8 +473,6 @@ EXPECTED: "dict[tuple[str, str], tuple[int, tuple[tuple[int, int], ...], tuple[t
     ('response_schema_bypass', 'check-usecase-dto-placement.py'): (2, (), (), '가드-red'),
     ('skeleton', 'check-composition-root.py'): (2, ((107, 1),), (), '최소성'),
     ('skeleton', 'check-db-table.py'): (2, ((329, 1),), (), '최소성'),
-    ('skeleton', 'check-port-adapter-pairing.py'): (2, ((219, 1),), (), '최소성'),
-    ('skeleton', 'check-usecase-dto-placement.py'): (2, ((635, 1),), (), '최소성'),
     ('synthetic_infra_exc', 'check-api-error-controller-contract.py'): (2, (), (), '가드-red'),
     ('synthetic_infra_exc', 'check-db-table.py'): (2, (), (), '가드-red'),
     ('synthetic_infra_exc', 'check-domain-model.py'): (2, (), (), '가드-red'),

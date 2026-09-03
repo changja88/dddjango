@@ -373,7 +373,8 @@ def _check_use_case(uc: Path, uc_rel: Path, agg_names: set[str], out: Findings, 
                 if any(tok in c.name for tok in ("Error", "Failure", "Exception")):
                     out.add("#571", uc_rel / res_f.name, f"실패(`{c.name}`)는 result 에 오지 않는다")
 
-    if entry is not None:
+    if entry is not None and not checker_target.skeleton_placeholder(entry):
+        # 내용 없는 골격 진입점은 내용 규칙(#635·#211·#194)의 대상이 아니다 — 존재 규칙 #193 은 위에서 선다(결정 2 · 2026-09-04)
         mod = _parse(entry)
         if mod is not None:
             _check_entry(mod, uc_rel / entry.relative_to(uc), out, cand)

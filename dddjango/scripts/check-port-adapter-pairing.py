@@ -242,6 +242,8 @@ def _check_capability_folder(root: Path, bc: Path, cap: Path, bc_vocab_set: set,
 
 def _check_port_contract(root: Path, cap: Path, py: Path, mod: ast.Module,
                          f: Findings, cand: Candidates) -> None:
+    if checker_target.skeleton_placeholder(py):
+        return  # 내용 없는 골격 파일 — 내용 규칙(#219·#551·#220·#241·#212·#485)의 대상이 아니다(결정 2 · 2026-09-04)
     classes = [n for n in mod.body if isinstance(n, ast.ClassDef) and not n.name.startswith("_")]
     if len(classes) != 1:
         f.add("#219", _rel(root, py), f"공개 클래스 {len(classes)}개 — 추상 인터페이스 «하나»가 온다")

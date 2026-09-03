@@ -49,9 +49,9 @@ exit 0 = 전 케이스 일치 / exit 2 = 불일치 / exit 1 = 재료 결손.
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
-import os
 import subprocess
 import sys
 import tempfile
@@ -233,20 +233,21 @@ def _mask_sidecar(path: Path) -> "dict | None":
 
 
 def _pre_repair_gate(td: Path) -> "Path | None":
-    """수리 전 실행기 트리(`_PRE_REPAIR_COMMIT` 의 dddjango/scripts) — import 동반 실행을 위해 트리째 푼다."""
+    """수리 전 «게이트»(`_PRE_REPAIR_COMMIT` 의 registry_gate.py)를 **현행 검사기 트리** 위에 덮어쓴 사본.
+
+    측정 대상은 게이트 불변(귀속·정규화·출력 판형)뿐이다 — 검사기 트리는 현행을 쓴다(검사기 규칙이
+    바뀌면(예: 2026-09-04 #219/#635 의 골격 파일 건너뜀) 옛 검사기의 발화가 diff 를 오염시키므로).
+    옛 게이트의 import 계약(findings·anchor_diff)이 현행 모듈과 맞아야 한다 — 어긋나면 스모크가 그 사실로 red 다."""
     dest: Path = td / "pre-repair"
-    dest.mkdir()
-    archive: "subprocess.Popen[bytes]" = subprocess.Popen(
-        ["git", "-C", str(ROOT), "archive", _PRE_REPAIR_COMMIT, "dddjango/scripts"],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    untar: "subprocess.CompletedProcess[bytes]" = subprocess.run(
-        ["tar", "-x", "-C", str(dest)], stdin=archive.stdout, capture_output=True)
-    archive.stdout.close()  # type: ignore[union-attr]
-    archive.communicate()
-    if archive.returncode != 0 or untar.returncode != 0:
+    shutil.copytree(GATE.parent, dest / "dddjango" / "scripts")
+    old_gate: "subprocess.CompletedProcess[bytes]" = subprocess.run(
+        ["git", "-C", str(ROOT), "show", f"{_PRE_REPAIR_COMMIT}:dddjango/scripts/registry_gate.py"],
+        capture_output=True)
+    if old_gate.returncode != 0:
         return None
     gate: Path = dest / "dddjango" / "scripts" / "registry_gate.py"
-    return gate if gate.is_file() else None
+    gate.write_bytes(old_gate.stdout)
+    return gate
 
 
 def main() -> int:

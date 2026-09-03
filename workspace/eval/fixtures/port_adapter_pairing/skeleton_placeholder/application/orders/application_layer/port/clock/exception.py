@@ -1,0 +1,2 @@
+class ClockUnavailable(Exception):
+    pass
