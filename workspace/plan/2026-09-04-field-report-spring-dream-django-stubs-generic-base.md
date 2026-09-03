@@ -11,6 +11,7 @@
 | S-1 | django-stubs가 제네릭으로 선언한 Django 기저(`ModelForm`·`ModelAdmin`·`TabularInline`/`StackedInline`·`BaseInlineFormSet`)를 **런타임은 subscript 못 한다**는 사실과 표준 처방(`TYPE_CHECKING` 별칭)이 플러그인 어디에도 없다 → 레인마다 다른 모양(맨몸 → mypy red / `# type: ignore[type-arg]` → 빚 은폐 / `TYPE_CHECKING` 별칭 → 정답) | BC 10개 · admin 클래스 40개: 맨몸 14(fortune_character, mypy 26건) · ignore 17(+속성 1줄, 8 BC) · 별칭 9(service_policy) | `implementation-django`(admin 절 신설) 또는 `implementation-django-web` §6 web form 절 + `discipline-houserules` §4 근처 한 문단 | 문면(정본 예시 포함) | **가능 · 소**: 예시 코드 1벌 + 문장 3개. 검사기 불요(프로젝트 mypy가 잡음) | 미착수 |
 | S-2 (선택) | Django 기저 `# type: ignore[type-arg]` 부착이 «통과»로 보여 8개 BC가 같은 방식으로 빚을 숨겼다 — 문면만으로는 다음 레인이 또 붙일 수 있다 | 17클래스 + 속성 1줄 | `scripts/check-public-surface-annotation.py`(#493) 확장 또는 신규 규칙: 클래스 기저·`inlines` 주석에 `type: ignore[type-arg]` = 위반 | 검사기 | **가능 · 소~중**: AST에서 `ClassDef` 줄의 `# type: ignore[type-arg]` 주석만 보면 된다. E(«명시 `Any` 금지»)와 같은 판형이라 그 배치에 얹을 수 있다 | 사용자 결정 대기 |
 | S-3 (발주측 소관 · 플러그인 아님) | fortune_character 빌드(8/30) lane-report가 mypy를 `spring_dream_server framework`에만 돌리고 «Success» — 자기 BC를 빼고 돌린 공허한 통과. 증분 fortune-character-2(9/2)도 같은 범위 | 레인 2회 | 없음. B 처분대로 발주서 G2 체크리스트가 소유(`uv run mypy --follow-imports=silent application/<bc>`) — 8/30 빌드는 체크리스트(9/3) 이전 | — | R-12 발주 가이드 1줄에 «최소 자기 BC 경로» 명시 여부만 확인 | 발주측 확인 |
+| S-4 (**사용자 결정 2026-09-04: 무조건 · 최대 타입 강제**) | 딕셔너리를 레코드(키 고정·이질 값)로 쓰는 모양을 플러그인이 만든다 — `dict/Mapping[str, object\|Any]` 주석이 비테스트 **1,110줄**(RAG 런타임 828 · 레인 BC 281). 값이 `object`로 뭉개져 사용 지점마다 `int(object)`·`object.get` 등 mypy red(P1 61건 + P2 9건) 또는 `Any`로 검사 소멸 | 1,110줄 · mypy 70건 | `discipline-houserules` §4 + `implementation-python`(TypedDict·pydantic 경계 파싱) + `architecture-ddd`(DTO/VO) 문면 · 검사기: 주석 `(dict\|Mapping)[…, object\|Any]` 위반 + `json.load(s)` 결과 무파싱 사용 | 문면 + 검사기 | **가능 · 중**: 주석 검사는 E(«명시 `Any` 금지»)와 같은 판형이라 그 배치에 얹는다. legacy 1,110줄은 앵커 차분으로 격리 | 미착수 |
 
 상태 열은 dddjango 소유자가 갱신한다.
 
@@ -184,3 +185,38 @@ sed -n 35,40p application/service_policy/driven_layer/django_service_policy/admi
 - fortune_character 26건 + notification 2건은 플러그인 문면 반영을 기다리지 않고 **service_policy 패턴으로 직접 상환**한다(사용자 방침 «방향 정해진 건 직접 수정»). 검증: 훅 범위 mypy 152→124 · ruff check/format 0 · `registry_gate --anchor <main HEAD>` 귀속 0 · `make test`. (2026-09-04 초안에서 이 수치까지 확인했고 사용자 지시로 롤백 — 재적용 시 같은 결과가 기대된다. 단, 기저 클래스가 바뀌면 그 클래스의 옛 #493 «첫 대입 타입 없음» 위반이 legacy에서 귀속으로 바뀌므로 `model/form/formset/extra/readonly_fields` 주석을 같은 커밋에서 붙여야 귀속 0이 된다.)
 - `# type: ignore[type-arg]` 18줄(8 BC)은 mypy 152건 밖이라 이번 상환 범위에 넣지 않는다. S-1/S-2 처분이 정해지면 한 번에 정리한다.
 - 앞으로 발주서 G2 체크리스트에 `grep -rn 'type: ignore\[type-arg\]' application/<bc>` 0 조건을 추가할지는 S-2 처분과 함께 결정한다.
+
+## S-4. 딕셔너리-레코드 금지 · `TypedDict`/pydantic 강제 (사용자 결정 2026-09-04 «무조건 · 최대한 타입을 강제»)
+
+### 결정
+
+발주자(사용자)가 P1 원인을 듣고 내린 결정: **레코드 모양의 딕셔너리 사용을 플러그인 차원에서 금지하고 `TypedDict`(내부 신뢰 데이터)·pydantic(외부 입력 검증 파싱)·dataclass/값 객체(도메인)를 강제한다.** 「최대한 타입을 강제」가 기준이다. 발주자 세션이 "조회표는 예외" 완화를 제안했으나 사용자가 «무조건»으로 재확인했다 — 아래 규칙은 그 결정을 기술적으로 표현 가능한 최대치로 옮긴 것이다(`TypedDict`는 키 고정 구조만 표현하므로 키가 데이터인 조회표는 «값 타입 구체 강제»가 상한이다).
+
+### 증상 · 규모 (spring_dream_server main `c20f525`)
+
+- mypy: P1 61건 + P2 9건 = **70건**(훅 범위 124건의 56%). 대표: `rag_builder/source_adapter.py:19` `SourceBlock.coordinate: Mapping[str, object]` → `coordinates.py`에서 `int(first["page_id"])` 11곳 `[call-overload]`, `cli.py` `"object" has no attribute "rag_id"` 10곳, `service_runtime.py` `object` 인덱스 6곳, `dict[str, object]` → rfc8785 `_Value` 6곳.
+- 주석 규모(비테스트): `grep -rnE '(dict|Mapping)\[str, (object|Any)\]' framework application | grep -v /test/` → **1,110줄**. 분포: `framework/technology/rag` 828 · **레인 BC 281**(fortune_reading 59 · llm_access 48 · chat_relay 35 · fortune_character 27 · fortune_calculation 24 · promotion 16 · fortune_catalog 14 · query_translation 11 · fortune_record 10 …). BC 281줄은 dddjango 레인 산출물이므로 플러그인이 만드는 모양이다.
+- 좌표 레코드의 실물 종류: `coordinates.py::_STRUCTURE_VALIDATORS` 6종 — `shidian_authorized_paragraph`·`shidian_authorized_paragraph_range`·`wikisource_fixed_revision_span`·`wikisource_fixed_revision_span_set`·`standard_intake_block`·`standard_intake_block_range`. 종류마다 필수 키가 다르다(`page_numbers`·`start_offset/end_offset`·`spans`·`block_id`·`start_block_id/end_block_id`).
+
+### 원인 — 플러그인 문면
+
+- 플러그인 2.17.16에서 `TypedDict`는 `implementation-python/references/final.md` §1.5 한 절(5줄)뿐이다 — «외부 API, JSON 등 이종 데이터를 담는 딕셔너리에는 TypedDict를 사용하라»는 **권고**이고, 하우스룰(`discipline-houserules`)·에이전트 프롬프트·검사기 어디에도 강제가 없다. 반대로 `architecture-ddd/references/final.md:1614`의 도메인 예시 `FormInstance.values: dict[str, Any]`는 스킬 문면 중 유일한 `dict[str, Any]` 예시다 — 권고 한 절 대 예시 한 줄이면 레인은 예시 쪽을 따른다(BC 281줄이 그 증거). «외부 JSON은 경계에서 검증 파싱한다»는 규칙은 없다.
+- `discipline-houserules` §4 «모든 이름에 타입»은 `Mapping[str, object]`로 충족된다 — `object`는 타입이지만 정보가 0이다. E(«명시 `Any` 금지»)만으로는 레인이 `Any` 대신 `object`로 옮겨 가는 것(현재 RAG 런타임의 모양)을 막지 못한다.
+
+### 규칙 (문면)
+
+1. 키가 정해진 이질 값 묶음(레코드)을 `dict`·`Mapping`으로 **선언·생성·반환하지 않는다.** 내부에서 만든 신뢰 데이터는 `TypedDict`(필요하면 `Literal` 판별 키로 union), 외부 입력 JSON·파일·HTTP body는 pydantic 모델로 **검증하며 파싱**, 도메인 값은 dataclass·값 객체.
+2. `dict`·`Mapping`은 키가 데이터인 조회표에만 쓰고, 값 타입은 구체 타입이어야 한다. 값 타입 `object`·`Any`는 위반. 임의 JSON을 그대로 통과시키는 자리만 재귀 별칭(`type JsonValue = bool | int | float | str | None | list[JsonValue] | dict[str, JsonValue]`)으로 선언한다.
+3. `json.load`·`json.loads`·`yaml.safe_load` 결과는 사용 전에 1번 모델로 파싱한다. `Any`인 채로 대입·반환·전달하지 않는다.
+4. `TypedDict`는 실행 시 검사가 없다 — 외부 경계에는 쓰지 않는다(2·3번과 짝). 내부 생산 데이터에만 쓴다.
+
+### 검사기 (제안)
+
+- (a) 주석 스캔: 함수 시그니처·변수·클래스 속성 주석에서 `(dict|Mapping|MutableMapping)[…, (object|Any)]` = 위반. AST `Subscript`만 보면 되고 오탐이 거의 없다. E의 «명시 `Any`» 검사와 같은 배치·같은 판형.
+- (b) `json.load(s)` 호출 결과가 pydantic `model_validate`/`TypeAdapter`/명시 파서 함수를 거치지 않고 대입·반환되는 자리 = 위반(1레인 실측 뒤 오탐률 확인).
+- legacy 1,110줄은 registry_gate 앵커 차분(N∖L)으로 격리된다 — 새 레인 산출물만 막힌다.
+
+### 발주측 처리 계획
+
+- P1 61건은 이 규칙대로 ⑤(좌표 `TypedDict` 6종 + `SourceBlock.coordinate`를 그 union으로)와 나머지 지점의 구체 타입화로 상환한다(대장 `docs/superpowers/plans/2026-09-04-mypy-debt-ledger.md` P1). 도우미 `as_int` 방식(④)은 채택하지 않는다.
+- mypy가 잡지 않는 나머지 1,040줄(`Any` 값 매핑 등)은 이번 상환 범위 밖 — 규칙 확정 뒤 RAG 런타임 타이핑 발주 후보.
