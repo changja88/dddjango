@@ -17,7 +17,7 @@
 > | G(dddjango 추기) | 카탈로그 레인 발견 ⑪ — OHS의 port 예외 소비 import가 G1 boundary-imports 기계 블록에 없어(산문 §167만) #93이 Phase 2에서 발화 · ① 리뷰 A 판정: 사각 계열이 아니라 **채널 전사 결손**(블록에 적혔다면 예보됐다 — 실행기는 선언 import를 스텁에 방출) | architect 형식 규범(boundary-imports 완전성)에 «예외 소비 import 기재» 조항 후보 · 1레인 · 승격 배치가 사각 목록 S3 문면에 «산문에만 적힌 경계 import 는 표면 밖» 반영(보고 정직화) | 제보 수정 단계 · ⓪ 검증 전(규범 조항) |
 > | H(dddjango 추기) | 카탈로그 레인 발견 ⑫ — pre-content 골격의 «자리 실체화(빈 모듈)» ↔ #219/#635 «클래스 하나» 상충 → 제거 시 #218/#193/#576 캐스케이드(왕복 2회·≈14분) | Coordinator 골격 규범 또는 검사기 pre-content 면제 중 택일 후보 · 1레인 관측 | 제보 수정 단계 · ⓪ 검증 전 |
 >
-> 릴리즈: 머지·rev2 집행됨(09-03 main 88a65a0 · 미push). **릴리즈는 사용자 요청 시까지 보류**(09-03 지시). 순서: G-A pre-gate 승격 → 제보 수정(D·E·F·G·H) → 릴리즈 요청 시 `make release`.
+> 릴리즈: 머지·rev2 집행됨(09-03 main 88a65a0) · G-A pre-gate 승격도 main 머지됨(09-04 191842a) · 전부 미push. **릴리즈는 사용자 요청 시까지 보류**. **다음 = 제보 수정 단계: D·E·G·H 일괄 ⓪~⑥**(F 는 발주측 자체 수리 완료 — 플러그인 문면 F-1/F-2 후보는 이 단계에서 함께 판정) → 릴리즈 요청 시 `make release`.
 
 작성: spring_dream_server 발주자 세션(Claude). 대상: dddjango 플러그인 v2.17.16 (`~/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.16`).
 계기: 2026-09-03 15:06 spring_dream_server 첫 `git push`(776커밋)에서 pre-push 훅(pre-commit: ruff·ruff format·mypy strict 전체)이 처음 돌아 mypy 171건·ruff format 미적용 189파일이 한꺼번에 노출됐다. 그중 dddjango 레인 산출물에서 나온 것을 원인별로 추적했다.
