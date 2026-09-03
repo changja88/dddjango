@@ -12,6 +12,7 @@
 | S-2 (선택) | Django 기저 `# type: ignore[type-arg]` 부착이 «통과»로 보여 8개 BC가 같은 방식으로 빚을 숨겼다 — 문면만으로는 다음 레인이 또 붙일 수 있다 | 17클래스 + 속성 1줄 | `scripts/check-public-surface-annotation.py`(#493) 확장 또는 신규 규칙: 클래스 기저·`inlines` 주석에 `type: ignore[type-arg]` = 위반 | 검사기 | **가능 · 소~중**: AST에서 `ClassDef` 줄의 `# type: ignore[type-arg]` 주석만 보면 된다. E(«명시 `Any` 금지»)와 같은 판형이라 그 배치에 얹을 수 있다 | 사용자 결정 대기 |
 | S-3 (발주측 소관 · 플러그인 아님) | fortune_character 빌드(8/30) lane-report가 mypy를 `spring_dream_server framework`에만 돌리고 «Success» — 자기 BC를 빼고 돌린 공허한 통과. 증분 fortune-character-2(9/2)도 같은 범위 | 레인 2회 | 없음. B 처분대로 발주서 G2 체크리스트가 소유(`uv run mypy --follow-imports=silent application/<bc>`) — 8/30 빌드는 체크리스트(9/3) 이전 | — | R-12 발주 가이드 1줄에 «최소 자기 BC 경로» 명시 여부만 확인 | 발주측 확인 |
 | S-4 (**사용자 결정 2026-09-04: 무조건 · 최대 타입 강제**) | 딕셔너리를 레코드(키 고정·이질 값)로 쓰는 모양을 플러그인이 만든다 — `dict/Mapping[str, object\|Any]` 주석이 비테스트 **1,110줄**(RAG 런타임 828 · 레인 BC 281). 값이 `object`로 뭉개져 사용 지점마다 `int(object)`·`object.get` 등 mypy red(P1 61건 + P2 9건) 또는 `Any`로 검사 소멸 | 1,110줄 · mypy 70건 | `discipline-houserules` §4 + `implementation-python`(TypedDict·pydantic 경계 파싱) + `architecture-ddd`(DTO/VO) 문면 · 검사기: 주석 `(dict\|Mapping)[…, object\|Any]` 위반 + `json.load(s)` 결과 무파싱 사용 | 문면 + 검사기 | **가능 · 중**: 주석 검사는 E(«명시 `Any` 금지»)와 같은 판형이라 그 배치에 얹는다. legacy 1,110줄은 앵커 차분으로 격리 | 미착수 |
+| S-5 | ninja 컨트롤러 반환 주석 `Status[A] \| Status[B]`(상자 둘)와 오류 응답 `response=` base 뭉뚱그림, 200 discriminated union의 `Schema`+`RootModel` 다중 상속을 문면이 막지 않고 검사기도 안 잡는다 — `Status` 불변성·메타클래스 충돌로 mypy strict red(P5 9건) | 리딩 BC 1개 · 9건(컨트롤러 5 · 스키마 2 · 파생 2) | `implementation-django-ninja` 문면 2문장 + 정본 예시 · `scripts/check-api-error-controller-contract.py` 규칙 (a)(b)(c) | 문면 + 검사기 | **가능 · 소** — AST 바인딩만으로 판정, 최소 수리 실측 완료(OpenAPI 바이트 불변) | 미착수 |
 
 상태 열은 dddjango 소유자가 갱신한다.
 
@@ -203,12 +204,25 @@ sed -n 35,40p application/service_policy/driven_layer/django_service_policy/admi
 - 플러그인 2.17.16에서 `TypedDict`는 `implementation-python/references/final.md` §1.5 한 절(5줄)뿐이다 — «외부 API, JSON 등 이종 데이터를 담는 딕셔너리에는 TypedDict를 사용하라»는 **권고**이고, 하우스룰(`discipline-houserules`)·에이전트 프롬프트·검사기 어디에도 강제가 없다. 반대로 `architecture-ddd/references/final.md:1614`의 도메인 예시 `FormInstance.values: dict[str, Any]`는 스킬 문면 중 유일한 `dict[str, Any]` 예시다 — 권고 한 절 대 예시 한 줄이면 레인은 예시 쪽을 따른다(BC 281줄이 그 증거). «외부 JSON은 경계에서 검증 파싱한다»는 규칙은 없다.
 - `discipline-houserules` §4 «모든 이름에 타입»은 `Mapping[str, object]`로 충족된다 — `object`는 타입이지만 정보가 0이다. E(«명시 `Any` 금지»)만으로는 레인이 `Any` 대신 `object`로 옮겨 가는 것(현재 RAG 런타임의 모양)을 막지 못한다.
 
-### 규칙 (문면)
+### 규칙 (문면) — 한 줄 규칙 + 결정표 (사용자 확정 2026-09-04)
 
-1. 키가 정해진 이질 값 묶음(레코드)을 `dict`·`Mapping`으로 **선언·생성·반환하지 않는다.** 내부에서 만든 신뢰 데이터는 `TypedDict`(필요하면 `Literal` 판별 키로 union), 외부 입력 JSON·파일·HTTP body는 pydantic 모델로 **검증하며 파싱**, 도메인 값은 dataclass·값 객체.
-2. `dict`·`Mapping`은 키가 데이터인 조회표에만 쓰고, 값 타입은 구체 타입이어야 한다. 값 타입 `object`·`Any`는 위반. 임의 JSON을 그대로 통과시키는 자리만 재귀 별칭(`type JsonValue = bool | int | float | str | None | list[JsonValue] | dict[str, JsonValue]`)으로 선언한다.
-3. `json.load`·`json.loads`·`yaml.safe_load` 결과는 사용 전에 1번 모델로 파싱한다. `Any`인 채로 대입·반환·전달하지 않는다.
-4. `TypedDict`는 실행 시 검사가 없다 — 외부 경계에는 쓰지 않는다(2·3번과 짝). 내부 생산 데이터에만 쓴다.
+**모든 JSON은 입구에서 `TypedDict`로 받는다. 받은 뒤 `object`·`Any`·`dict[str, …]`로 흘리지 않는다.**
+
+붙임 2 · 예외 1:
+1. 외부에서 온 JSON(파일·HTTP·타 시스템)은 **검증하며** 받는다 — `pydantic.TypeAdapter(그TypedDict).validate_json/validate_python`. `TypedDict`는 선언일 뿐 실행 시 검사가 없으므로 검증만 얹는다. 우리 코드가 만든 내부 JSON은 검증 없이 `TypedDict`.
+2. 키가 데이터인 JSON(조회표)은 `dict[str, 그TypedDict]` — 값 쪽을 `TypedDict`로 잡는다.
+- 예외: 구조를 정하지 않고 그대로 저장·전달하는 임의 JSON만 재귀 별칭 `type JsonValue = bool | int | float | str | None | list[JsonValue] | dict[str, JsonValue]`. `object`·`Any`가 아니라 이름 붙은 타입이다.
+
+레인이 바로 고르게 하는 결정표(문면 정본 후보):
+
+| 값의 모양 | 어디서 왔나 | 쓰는 도구 | 금지 |
+|---|---|---|---|
+| 키가 정해진 값 묶음(레코드) | 우리 코드가 만든 내부 데이터 | `TypedDict`(종류가 여럿이면 `Literal` 판별 키로 union) | `dict[str, object\|Any]` |
+| 키가 정해진 값 묶음 | 외부(파일 `json.load`·HTTP body·타 시스템) | `TypeAdapter(TypedDict)`·pydantic 모델로 **검증 파싱**. 파싱 전 값 사용 금지 | 검증 없는 `TypedDict`, `Any` 흘리기 |
+| 도메인 개념 | 도메인 계층 | dataclass·값 객체 | 딕셔너리 |
+| 키가 데이터인 모음(조회표) | 어디든 | `dict[K, V]`에 K·V 구체 타입(V가 레코드면 `TypedDict`) | 값 타입 `object`·`Any` |
+| 구조를 모르는 임의 JSON 통과 | 직렬화·저장 경계 | 재귀 별칭 `JsonValue` | `dict[str, object]`, `Any` |
+| 타입이 이미 있는 값 | 함수 반환·매개변수 | 실제 클래스(`BuildPlan` 등) | 자리표시 `object` |
 
 ### 검사기 (제안)
 
@@ -220,3 +234,31 @@ sed -n 35,40p application/service_policy/driven_layer/django_service_policy/admi
 
 - P1 61건은 이 규칙대로 ⑤(좌표 `TypedDict` 6종 + `SourceBlock.coordinate`를 그 union으로)와 나머지 지점의 구체 타입화로 상환한다(대장 `docs/superpowers/plans/2026-09-04-mypy-debt-ledger.md` P1). 도우미 `as_int` 방식(④)은 채택하지 않는다.
 - mypy가 잡지 않는 나머지 1,040줄(`Any` 값 매핑 등)은 이번 상환 범위 밖 — 규칙 확정 뒤 RAG 런타임 타이핑 발주 후보.
+
+## S-5. ninja `Status` 반환 주석 형태 · 오류 응답 base 뭉뚱그림 · 200 discriminated union의 `Schema`+`RootModel` 다중 상속 (mypy 대장 P5 · 2026-09-04)
+
+### 증상 (spring_dream_server main `f5ee428` · mypy 2.3.1 strict · 리딩 BC 16행 산출물)
+
+- `application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py:164` 반환 주석 `-> Status[EvidenceProvisionResponseSchema] | Status[_FortuneReadingErrorSchema]` + 본문 `return Status(400, _InvalidRequestErrorSchema())` 등 5곳 → `[return-value] got "Status[InvalidRequestErrorSchema]", expected "Status[EvidenceProvisionResponseSchema] | Status[FortuneReadingErrorSchema]"` **5건**. 원인은 `ninja.Status(Generic[T])`의 `T = TypeVar("T")`(불변) — `Status[하위]`는 `Status[기저]`의 하위 타입이 아니다. 같은 컨트롤러의 `response={200: …, 400: _FortuneReadingErrorSchema, 503: _FortuneReadingErrorSchema}`는 2026-08-25 개정 규칙(«base로 뭉뚱그려 선언하지 않는다»)과도 어긋나며 리딩 e2e(`test_evidence_openapi.py`)가 그 모양(`$ref …/FortuneReadingErrorSchema`, 400==503)을 동결 단언으로 고정했다.
+- `…/schema/schema_out.py:151` `class EvidenceProvisionResponseSchema(_Schema, _RootModel[_EvidenceProvision])`(200 discriminated union) → `[metaclass] Metaclass conflict`(ninja `Schema`는 `metaclass=ResolverMetaclass`, `RootModel`은 pydantic `ModelMetaclass`) + `[no-untyped-call] __init_subclass__` **2건** · 파생 `[call-arg] Unexpected keyword argument "root"` 컨트롤러 71·122 **2건**. 런타임은 정상.
+
+### 실측 (발주자 · 스크래치 mypy·ninja OpenAPI)
+
+- 형태별 mypy: `-> Status[Resp] | Status[Base]` + `Status(400, Concrete())` → **오류** · `-> Status[Resp | Base]`(상자 하나) → 통과(반환 문맥으로 `T` 추론) · `-> Status[Resp | C1 | C2 | C3 | C4]`(교리 예시 형태) → 통과 · 값 변수를 `e: Base = Concrete()`로 선언 → 통과.
+- `_Schema` 기저를 빼고 `class X(RootModel[Annotated[A | B, Field(discriminator="kind")]])`만 두면 mypy 통과 + `root=` 파생 2건 해소, OpenAPI 200 컴포넌트 6개 바이트 동일(sha256 `83b8f70c…` 동일). RootModel까지 없애고 `response={200: A | B}`로 쓰면 이름 붙은 컴포넌트가 사라지고 익명 `anyOf`(title "Response")로 렌더되며 discriminator 표기를 잃는다 — 계약 변경.
+- 오류 응답을 교리대로 `response={400: InvalidRequest, 503: RegistryMismatch | Temporary | ResourceLimit}`로 바꾸면 OpenAPI가 400 concrete `$ref`, 503 `anyOf` 3개로 바뀐다 — e2e 단언 2개 변경(OpenAPI 문서 변경 승인 사안).
+
+### 원인 — 플러그인 문면·검사기
+
+- `implementation-django-ninja/references/final.md`는 `-> Status[OrderOut | ErrA | ErrB]`(184) · `-> OrderOut | Status[Err]`(677·727·777)를 **예시로만** 보여 주고, 산문에 «반환 주석은 `Status` 하나에 union을 넣는다 / `Status[A] | Status[B]`는 불변성 때문에 금지»라는 규칙이 없다(`grep "반환 주석"` 0). 레인은 예시를 «`A | B` 형태면 된다»로 읽어 상자 둘로 썼다.
+- 200 discriminated union 응답(성공이 두 모양 이상)에 대한 문면이 없다 — `RootModel` 언급 0(`grep -rn RootModel skills/` = architecture-ddd 이벤트 봉투 `Annotated[Union, Field(discriminator)]` 1곳뿐). 레인이 «ninja 응답은 `Schema`여야 한다»는 직관으로 `Schema`+`RootModel` 다중 상속을 만들었다.
+- `scripts/check-api-error-controller-contract.py`는 `ninja.Status` 바인딩(`NINJA_STATUS`)과 반환 주석(`node.returns`, `BitOr`/`Subscript`)을 읽지만 (a) `Status[…]` 항이 둘 이상인 주석, (b) `response=`의 값이 같은 `bc_error_schema.py` 안에 하위 클래스를 가진 base인 경우를 위반으로 내지 않는다 — 리딩 16행 G2에서 이 검사기 0건(`.dddjango/20260831-2331-fortune-reading/`). 플러그인은 mypy를 돌리지 않으므로(S-3) 이 두 형태는 검사기 없이는 잡히지 않는다.
+
+### 제안
+
+- 문면(필수): implementation-django-ninja에 두 문장 추가 — «컨트롤러 반환 주석은 `Status` **하나**에 성공·오류 타입 union을 넣는다(`-> Status[Out | ErrA | ErrB]`). `Status[A] | Status[B]`는 `Status`가 불변이라 concrete 반환이 mypy strict에서 막히므로 금지.» · «성공 응답이 판별 키로 갈리는 union이면 `class XResponseSchema(RootModel[Annotated[A | B, Field(discriminator="kind")]])`로 두고 `Schema`를 함께 상속하지 않는다(메타클래스 충돌). `response={200: A | B}` 익명 union은 discriminator 표기를 잃으므로 쓰지 않는다.» 정본 예시에 두 형태를 각각 1개씩.
+- 검사기(제안·`check-api-error-controller-contract.py` 확장): (a) 반환 주석에 `ninja.Status` Subscript가 2개 이상 → 위반 «반환 주석의 `Status`는 하나» · (b) `response=` 값이 `bc_error_schema.py`에서 하위 클래스를 가진 base → 위반 «base 뭉뚱그림(2026-08-25)» · (c) `schema_out.py` 클래스가 `ninja.Schema`와 `pydantic.RootModel`을 함께 상속 → 위반. 셋 다 AST 바인딩만으로 판정 가능.
+
+### 발주측 처리 계획
+
+- P5 9건은 최소형으로 상환 후보: 반환 주석 1줄 `-> Status[EvidenceProvisionResponseSchema | _FortuneReadingErrorSchema]` + `_Schema` 기저 제거 1줄(OpenAPI 바이트 불변 실측). 교리 정렬(오류 응답 concrete 선언 + e2e 단언 2개 개정)은 OpenAPI 문서 변경 승인이 필요한 별도 결정.
