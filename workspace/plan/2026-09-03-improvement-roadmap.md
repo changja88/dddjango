@@ -22,19 +22,21 @@
 | 12 | 수리 배치 2(3부) | v2.17.16 | 09-03 | Part 1 파서·마이그레이션·버전 스탬프·툴체인 digest·`--base` 재발화 / Part 2 registry provenance·R-3439~3441 / Part 3 계약 실존 3단·exit 5 | `2026-09-03-repair-batch-2-{rubric,plan}.md` |
 | 13 | 관찰 실측 레인 3건(media-library·notification·email-template) | ledger | 09-02 | 오탐 0·미탐 0·③형 STOP 0 전 레인, 형식 반송 2·0·1 | pregate-observe/ledger.md |
 | 14 | v2.17.16 양 런타임 설치·봉인 재발행 | 커밋 | 09-03 | cache_parity ok·조감도 추기 | 45d6b7c·7e93b08 |
+| 15 | 현장 보고(typecheck) 수리 R-14 — 검사기 #493 별칭 해소 + R-3442·R-3443(rev2) | main 머지 | 09-03 | 6단계 적대 리뷰·감사·재검 | 88a65a0 |
+| 16 | **pre-gate 차단 승격(G-A · R-1)** — 실행기 enforce·회피 경로 봉쇄·`--check-report`·규범 8 리비전 + R-3444/R-3445 | **main 머지(미릴리즈)** | 09-04 | ①③⑤ 리뷰 9기 + ⑥ 감사 · 소급 A/B 4레인 동일 · 설치본 승격은 `make release` 시 | 191842a · `2026-09-03-pregate-promotion-{rubric,plan}.md` |
 
 ## 2. 진행 중
 
 | 항목 | 상태 | 완료 신호 |
 |---|---|---|
 | 수리 배치 3(R-5·R-6·R-7) — 루브릭 `2026-09-03-repair-batch-3-rubric.md` | 09-03 ⓪·① 완료 → **사용자 결정 ⓐ 보류·관찰 지속**(R-5d 처방 검증 상태로 대기·N-1 기각→R-1 이월) | 재개 트리거 = R-5 계열 ≥2 레인 발화 |
-| spring_dream_server fortune-catalog 레인 = pre-gate 승격 재실측 + 배치 2 효과 실측 | **09-03 18:55 완주(REPORT f6ef7ff · ≈6h31m · STOP 0 · G2 귀속 0)** — pre-gate 4회 형식 0·corrected 2(진탐)·filtered/ignored 0·결손 0 → **§8 전 기준 충족** · ledger 레인 4 행 기재 · 발견 ⑩⑪⑫ | G-A 브리프 상신됨 → 사용자 판정 대기 |
+| ~~spring_dream_server fortune-catalog 레인 = pre-gate 승격 재실측 + 배치 2 효과 실측~~(완료 → §1 16행) | **09-03 18:55 완주(REPORT f6ef7ff · ≈6h31m · STOP 0 · G2 귀속 0)** — pre-gate 4회 형식 0·corrected 2(진탐)·filtered/ignored 0·결손 0 → **§8 전 기준 충족** · ledger 레인 4 행 기재 · 발견 ⑩⑪⑫ | G-A 브리프 상신됨 → 사용자 판정 대기 |
 
 ## 3. 잔여 항목 (의존·성격)
 
 | R | 항목 | 성격 | 카탈로그 완주 의존 | 트리거·조건 | 출처 |
 |---|---|---|---|---|---|
-| R-1 | **승격 배치 ④ 구현 착지(브랜치 `feat/pregate-enforce` · 09-03 — ①③ 적대 리뷰 6기 반영 · 범위 ⓐ+D1 `--check-report`+D2 update 부재 형식 red · 문면 확정)** pre-gate 차단 승격 — `design_pregate.py` MODE 상수·R-3433/R-3436 개정(권고→반송 의무·skip 폐지)·manifest pipeline 그룹 등재 · **이월(09-03 ①): 카탈로그 #392 처분 실측 병기 1건 — «구조 규칙 filtered 제외» 는 R-3433 rev4 로 소화(ledger 승격 집행 절)** · 승격 후 이월: `--check-report` 불비 시 요약 행 «블록 해시 A≠B» 표기(실행기·러너·R-3444 문면 3곳 동시 개정 — 다음 배치) | 결정 게이트 | **예** | 레인 4 오탐 0·미탐 0·형식 ≤1 충족 → 10줄 브리프 → 승인 시 승격 배치 | 설계 v4 §8·ledger·배치 3 루브릭 ① |
+| R-1 | **완료 — main 머지 191842a(09-04 · 릴리즈 보류 · §1 16행)** pre-gate 차단 승격 — `design_pregate.py` MODE 상수·R-3433/R-3436 개정(권고→반송 의무·skip 폐지)·manifest pipeline 그룹 등재 · **이월(09-03 ①): 카탈로그 #392 처분 실측 병기 1건 — «구조 규칙 filtered 제외» 는 R-3433 rev4 로 소화(ledger 승격 집행 절)** · 승격 후 이월: `--check-report` 불비 시 요약 행 «블록 해시 A≠B» 표기(실행기·러너·R-3444 문면 3곳 동시 개정 — 다음 배치) | 결정 게이트 | **예** | 레인 4 오탐 0·미탐 0·형식 ≤1 충족 → 10줄 브리프 → 승인 시 승격 배치 | 설계 v4 §8·ledger·배치 3 루브릭 ① |
 | R-2 | 계약 실존 채널(exit 5) 차단 승격 — **09-03 판정: 비승격 유지**(카탈로그 레인 = 표본 1/2 · 행 6·결손 0·도구 오류 0·**진탐 0/1**) | 결정 게이트 | **예(+1 레인 · 진탐 ≥1)** | v2.17.16 레인 ≥2·도구 오류 0·진탐 ≥1 | 배치 2 Part 3 §10 · ledger 레인 4 |
 | R-3 | 앵커 비조상 exit 승격 | 결정 게이트 | 아니오(증거 축적 유리) | 별도 결정 | 배치 2 Part 2 §8 |
 | R-4 | Phase 2 main 머지 승인 시 `approved-merges.txt` 기록 | 운영(발주자) | 레인 중 | 미기록 시 provenance 채널 미발화 | 배치 2 Part 2 |
@@ -101,3 +103,4 @@ character_catalog Ninja 전환 · turn_controller 실분해 · #396 빚 1줄 제
 - 2026-09-03 파트 1 집행: R-3442 rev2 **ⓐ 채택·적용**(R-3442·R-3443 clarification · LEDGER +1 · ExpressionShape 3548) → `fix/field-typecheck` main 로컬 머지(push 없음). 발주측 현장 보고 추가 F(composition root 주입 시그니처 · 문면 2줄 제안) 접수 — ⓪ 검증 전·처분 결정 대기(검증 착수 / R-21 등재 보류).
 - 2026-09-03 카탈로그 종료 파생 처리(사용자 «1·2·3 진행»): R-2 비승격 유지 기록(표본 1/2·진탐 0) · 릴리즈는 사용자 요청 시까지 보류 · 발견 ⑪⑫를 현장 보고 파일에 G·H로 병기(제보 수정 단계에서 D·E·F와 일괄). G-A는 사용자 판정 대기.
 - 2026-09-03 파트 2 착수: G-A 승격 = §8 기계 판정 결과(사용자 «카탈로그를 기다린 이유») → 브랜치 `feat/pregate-enforce` · ① 리뷰(승격 근거 조건부 성립 — 검사기 불변 이월 · B BLOCKER update 재라벨 도피) → 범위 확정(ⓐ + D1 + D2 «둘 다 넣어») → ② 계획 · ③ 리뷰(B BLOCKER b10 이중 진술 → R-3445 신규) → 문면 확정 → ④ 구현: 실행기(MODE enforce · 블록 부재/공허/update·remove 부재 형식 red · `--check-report` · 사각 S1~S9) · 규범 8 리비전 + R-3444·R-3445 신규 + s007/b59 · 픽스처 5 + 러너 묶음 2 · codex 미러 · manifest pipeline/packs 등재.
+- 2026-09-04 파트 2 완료: ⑤ 반영(f6cbedd) · ⑥ 독립 감사 «조건부 머지 가능» → MAJOR-1(empty 재라벨 도피) 브랜치 내 봉쇄(64be8dc) · 사용자 «진행» → `feat/pregate-enforce` main 로컬 머지 191842a(push 없음 · 설치본 승격 = `make release` 시). 카탈로그 종료 파생 3건 전부 종결. 다음 = 제보 수정 단계(현장 보고 D·E·G·H) · 릴리즈는 사용자 요청 시.
