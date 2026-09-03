@@ -1,0 +1,1 @@
+TOTAL paths with 0-byte A→D→A: 0   (0-byte .py paths tracked: 1331)

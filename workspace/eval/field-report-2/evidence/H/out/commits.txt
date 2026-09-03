@@ -1,0 +1,123 @@
+checked out 99253ce
+## 99253ce-dev  (records=169)
+#219: 0건
+#635: 0건
+#218: 2건
+    application/fortune_catalog/application_layer/port/active_service_bundle — 계약 파일 이름이 폴더와 다르다 — `active_service_bundle_port.py` 여야 한다([])
+    application/fortune_catalog/application_layer/port/relation_table — 계약 파일 이름이 폴더와 다르다 — `relation_table_port.py` 여야 한다([])
+#193: 3건
+    application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case.py — 진입점 파일 이름은 `list_fortune_types_use_case.py` 다 — 부재
+    application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case.py — 진입점 파일 이름은 `resolve_fortune_support_use_case.py` 다 — 부재
+    application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case.py — 진입점 파일 이름은 `select_visible_fortune_candidates_use_case.py` 다 — 부재
+#576: 2건
+    application/fortune_catalog/test/fake/active_service_bundle_port.py — `active_service_bundle_port` 의 짝이 될 «선언»이 없다 — 검사는 한 방향뿐이다(선언에 페이크를 강제
+    application/fortune_catalog/test/fake/relation_table_port.py — `relation_table_port` 의 짝이 될 «선언»이 없다 — 검사는 한 방향뿐이다(선언에 페이크를 강제하지는 않는다
+## 99253ce-inst  (records=169)
+#219: 0건
+#635: 0건
+#218: 2건
+    application/fortune_catalog/application_layer/port/active_service_bundle — 계약 파일 이름이 폴더와 다르다 — `active_service_bundle_port.py` 여야 한다([])
+    application/fortune_catalog/application_layer/port/relation_table — 계약 파일 이름이 폴더와 다르다 — `relation_table_port.py` 여야 한다([])
+#193: 3건
+    application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case.py — 진입점 파일 이름은 `list_fortune_types_use_case.py` 다 — 부재
+    application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case.py — 진입점 파일 이름은 `resolve_fortune_support_use_case.py` 다 — 부재
+    application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case.py — 진입점 파일 이름은 `select_visible_fortune_candidates_use_case.py` 다 — 부재
+#576: 2건
+    application/fortune_catalog/test/fake/active_service_bundle_port.py — `active_service_bundle_port` 의 짝이 될 «선언»이 없다 — 검사는 한 방향뿐이다(선언에 페이크를 강제
+    application/fortune_catalog/test/fake/relation_table_port.py — `relation_table_port` 의 짝이 될 «선언»이 없다 — 검사는 한 방향뿐이다(선언에 페이크를 강제하지는 않는다
+checked out 9c8814e
+## 9c8814e-dev  (records=167)
+#219: 2건
+    application/fortune_catalog/application_layer/port/active_service_bundle/active_service_bundle_port.py — 공개 클래스 0개 — 추상 인터페이스 «하나»가 온다
+    application/fortune_catalog/application_layer/port/relation_table/relation_table_port.py — 공개 클래스 0개 — 추상 인터페이스 «하나»가 온다
+#635: 3건
+    application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case.py — 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+    application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case.py — 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+    application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case.py — 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+#218: 0건
+#193: 0건
+#576: 0건
+## 9c8814e-inst  (records=167)
+#219: 2건
+    application/fortune_catalog/application_layer/port/active_service_bundle/active_service_bundle_port.py — 공개 클래스 0개 — 추상 인터페이스 «하나»가 온다
+    application/fortune_catalog/application_layer/port/relation_table/relation_table_port.py — 공개 클래스 0개 — 추상 인터페이스 «하나»가 온다
+#635: 3건
+    application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case.py — 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+    application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case.py — 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+    application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case.py — 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+#218: 0건
+#193: 0건
+#576: 0건
+       0 application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case.py
+       0 application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case.py
+       0 application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case.py
+       0 application/fortune_catalog/application_layer/port/active_service_bundle/active_service_bundle_port.py
+       0 application/fortune_catalog/application_layer/port/relation_table/relation_table_port.py
+--- manual: deleted 5 (on 9c8814e)
+ D application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case.py
+ D application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case.py
+ D application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case.py
+ D application/fortune_catalog/application_layer/port/active_service_bundle/active_service_bundle_port.py
+ D application/fortune_catalog/application_layer/port/relation_table/relation_table_port.py
+## manual-deleted-dev  (records=169)
+#219: 0건
+#635: 0건
+#218: 2건
+    application/fortune_catalog/application_layer/port/active_service_bundle — 계약 파일 이름이 폴더와 다르다 — `active_service_bundle_port.py` 여야 한다([])
+    application/fortune_catalog/application_layer/port/relation_table — 계약 파일 이름이 폴더와 다르다 — `relation_table_port.py` 여야 한다([])
+#193: 3건
+    application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case.py — 진입점 파일 이름은 `list_fortune_types_use_case.py` 다 — 부재
+    application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case.py — 진입점 파일 이름은 `resolve_fortune_support_use_case.py` 다 — 부재
+    application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case.py — 진입점 파일 이름은 `select_visible_fortune_candidates_use_case.py` 다 — 부재
+#576: 2건
+    application/fortune_catalog/test/fake/active_service_bundle_port.py — `active_service_bundle_port` 의 짝이 될 «선언»이 없다 — 검사는 한 방향뿐이다(선언에 페이크를 강제
+    application/fortune_catalog/test/fake/relation_table_port.py — `relation_table_port` 의 짝이 될 «선언»이 없다 — 검사는 한 방향뿐이다(선언에 페이크를 강제하지는 않는다
+## manual-deleted-inst  (records=169)
+#219: 0건
+#635: 0건
+#218: 2건
+    application/fortune_catalog/application_layer/port/active_service_bundle — 계약 파일 이름이 폴더와 다르다 — `active_service_bundle_port.py` 여야 한다([])
+    application/fortune_catalog/application_layer/port/relation_table — 계약 파일 이름이 폴더와 다르다 — `relation_table_port.py` 여야 한다([])
+#193: 3건
+    application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case.py — 진입점 파일 이름은 `list_fortune_types_use_case.py` 다 — 부재
+    application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case.py — 진입점 파일 이름은 `resolve_fortune_support_use_case.py` 다 — 부재
+    application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case.py — 진입점 파일 이름은 `select_visible_fortune_candidates_use_case.py` 다 — 부재
+#576: 2건
+    application/fortune_catalog/test/fake/active_service_bundle_port.py — `active_service_bundle_port` 의 짝이 될 «선언»이 없다 — 검사는 한 방향뿐이다(선언에 페이크를 강제
+    application/fortune_catalog/test/fake/relation_table_port.py — `relation_table_port` 의 짝이 될 «선언»이 없다 — 검사는 한 방향뿐이다(선언에 페이크를 강제하지는 않는다
+--- manual: restored 5 empty
+## manual-restored-dev  (records=167)
+#219: 2건
+    application/fortune_catalog/application_layer/port/active_service_bundle/active_service_bundle_port.py — 공개 클래스 0개 — 추상 인터페이스 «하나»가 온다
+    application/fortune_catalog/application_layer/port/relation_table/relation_table_port.py — 공개 클래스 0개 — 추상 인터페이스 «하나»가 온다
+#635: 3건
+    application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case.py — 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+    application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case.py — 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+    application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case.py — 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+#218: 0건
+#193: 0건
+#576: 0건
+## manual-restored-inst  (records=167)
+#219: 2건
+    application/fortune_catalog/application_layer/port/active_service_bundle/active_service_bundle_port.py — 공개 클래스 0개 — 추상 인터페이스 «하나»가 온다
+    application/fortune_catalog/application_layer/port/relation_table/relation_table_port.py — 공개 클래스 0개 — 추상 인터페이스 «하나»가 온다
+#635: 3건
+    application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case.py — 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+    application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case.py — 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+    application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case.py — 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+#218: 0건
+#193: 0건
+#576: 0건
+--- manual: comment-only
+## manual-comment-dev  (records=167)
+#219: 2건
+    application/fortune_catalog/application_layer/port/active_service_bundle/active_service_bundle_port.py — 공개 클래스 0개 — 추상 인터페이스 «하나»가 온다
+    application/fortune_catalog/application_layer/port/relation_table/relation_table_port.py — 공개 클래스 0개 — 추상 인터페이스 «하나»가 온다
+#635: 3건
+    application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case.py — 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+    application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case.py — 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+    application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case.py — 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+#218: 0건
+#193: 0건
+#576: 0건
+DONE

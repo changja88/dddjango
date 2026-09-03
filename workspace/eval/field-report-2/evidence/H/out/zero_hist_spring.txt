@@ -1,0 +1,26 @@
+ADA  application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case.py
+      A0  59d08c7 2026-09-03 13:55:30 +0900 dddjango(fortune-catalog):
+      D0  99253ce 2026-09-03 14:05:40 +0900 dddjango(fortune-catalog):
+      A0  9c8814e 2026-09-03 14:09:12 +0900 dddjango(fortune-catalog):
+      M+  725fbe0 2026-09-03 14:37:36 +0900 dddjango(fortune-catalog):
+ADA  application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case.py
+      A0  59d08c7 2026-09-03 13:55:30 +0900 dddjango(fortune-catalog):
+      D0  99253ce 2026-09-03 14:05:40 +0900 dddjango(fortune-catalog):
+      A0  9c8814e 2026-09-03 14:09:12 +0900 dddjango(fortune-catalog):
+      M+  725fbe0 2026-09-03 14:37:36 +0900 dddjango(fortune-catalog):
+ADA  application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case.py
+      A0  59d08c7 2026-09-03 13:55:30 +0900 dddjango(fortune-catalog):
+      D0  99253ce 2026-09-03 14:05:40 +0900 dddjango(fortune-catalog):
+      A0  9c8814e 2026-09-03 14:09:12 +0900 dddjango(fortune-catalog):
+      M+  725fbe0 2026-09-03 14:37:36 +0900 dddjango(fortune-catalog):
+ADA  application/fortune_catalog/application_layer/port/active_service_bundle/active_service_bundle_port.py
+      A0  59d08c7 2026-09-03 13:55:30 +0900 dddjango(fortune-catalog):
+      D0  99253ce 2026-09-03 14:05:40 +0900 dddjango(fortune-catalog):
+      A0  9c8814e 2026-09-03 14:09:12 +0900 dddjango(fortune-catalog):
+      M+  725fbe0 2026-09-03 14:37:36 +0900 dddjango(fortune-catalog):
+ADA  application/fortune_catalog/application_layer/port/relation_table/relation_table_port.py
+      A0  59d08c7 2026-09-03 13:55:30 +0900 dddjango(fortune-catalog):
+      D0  99253ce 2026-09-03 14:05:40 +0900 dddjango(fortune-catalog):
+      A0  9c8814e 2026-09-03 14:09:12 +0900 dddjango(fortune-catalog):
+      M+  725fbe0 2026-09-03 14:37:36 +0900 dddjango(fortune-catalog):
+TOTAL paths with 0-byte A→D→A: 5   (0-byte .py paths tracked: 886)
