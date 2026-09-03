@@ -85,7 +85,7 @@
 | E 결손 | **검증됨** | R-3148 은 «주석 존재» 규범 → `x: Any` 로 충족. 막는 도구 부재(ANN401 무효·`disallow_any_explicit` 없음·mypy 범위 `application/` 제외) 실증 |
 | E 조건부형 | **MAJOR(자기모순)** | «프레임워크 미러 자리 조건부 허용» 은 R-3150(조건부 면제 금지)과 충돌 · `object` 대체 프로브(django-stubs 플러그인 구성 후 재실행 · override 오류 0) → «불가능» 이 아니므로 **문면은 무조건형만 정합** |
 | E 검사기 형상 | **검증됨(조건부)** | 자리가 구조적으로 갈림(시그니처 211~226 / AnnAssign 265~268 / `self.x` 320~322) → **시그니처 bare `Any`(별표·`\| None`·`Optional`·문자열·별칭 포함) = 위반(exit 2) · 변수·제네릭 안 = ⓓ 후보(exit 불산입)** 가 결정적. 변수 자리의 «미러» 구분은 값 형상 화이트리스트뿐이라 비권장 → 문면+ⓓ. 사각 정정: `_annotation_names` 는 별칭 미해소 → `_module_bindings` 경유 · ninja `Schema` 필드 `x: Any` 취급은 ② 결정 |
-| E 소급 «18 red» | **MAJOR(과대)** | `registry_gate` 는 N∖L 귀속이라 legacy 잔존 차단 0 · 검사기가 `test/{factories,fake}` 도 보므로 실계수 24. 강도표(C · application 프로덕션): ① 시그니처 bare 0 = spring 8/kkebi 10(전부 치환 가능) · ② +변수 = 45/71(ninja Schema 필드 3 면제 결정 필요) · ③ +제네릭 안 = 120/133(Django `clean()` 미러 다수) → **① 채택 · ② 문면+ⓓ · ③ 기각** |
+| E 소급 «18 red» | **MAJOR(과대)** | `registry_gate` 는 N∖L 귀속이라 legacy 잔존 차단 0 · 검사기가 `test/{factories,fake}` 도 보므로 실계수 24. 강도표(C · application 프로덕션): ① 시그니처 bare 0 = spring 8/kkebi 10미러 13·factories 6 은 `object` 기계 치환 · 실질 5 는 좁힘 수리 · ② +변수 = 45/71(ninja Schema 필드 3 면제 결정 필요) · ③ +제네릭 안 = 120/133(Django `clean()` 미러 다수) → **① 채택 · ② 문면+ⓓ · ③ 기각** |
 | E 착지·표면 | MINOR | §4.2 신설보다 `s007-4` 새 블록 b7 · Work 2(R-3446 정책·R-3447 검사기 규칙) · `#644` 규칙 번호 후보 · 표면 7(검사기 docstring·registry 소개·rulepack·하우스룰 문면·픽스처 good/bad·codex 미러·Coordinator 133행) · 23.1 mypy 블록 무접촉 · Knowledge Level 예제 치환은 선택 |
 | F-1 | MINOR(문면 조건) | 1레인·기준 4 미충족이나 정적 검출 실증(불일치 1→0). #85 는 **최상단 `Assign` 도 red** → 문면은 «`build_*()` 본문 안에서 `partial`/클로저» 명시 필수. 검사기 승격 기각(사각 9종·mypy arg-type 부분 재구현·n=1) → R-0719 따름정리 **1문장** |
 | F-2 «BC 마다 1개» | **MAJOR(기각→축소형)** | discipline-tdd §5.5 quota 비자격·design-review-api «decision 없이 의무화 금지»·coder :37 과 3중 모순 · 착지 implementation-test 는 소유 오류(§5.5 소유) · 실배선 있는 BC 는 엄격 기준 3/16(+부분 1) · «26곳» 미재현(후보 11/16/21/22 모두 아님) → **discipline-tdd §5.5 «보호 대상» 1항**(composition root 실배선 1경로 = 보호 대상 후보 · 강제·소급 없음) · design-review 항목 추가 기각 |
@@ -151,3 +151,10 @@
 | 그 밖(픽스처·매트릭스·H 가드·카탈로그·P0′·S3·미러·봉인·verify·소급 수치) | 검증됨(3기) | — |
 
 **검수표 추기(B MINOR-2)**: §16 4원 근거 — R-3447 enforcedBy `c/check-public-surface-annotation.py`: ① 문면 «시그니처의 `Any` 는 #645 가 차단» ② docstring «#645 명시 `Any` 금지» ③ 커버 = 시그니처 bare(위반)·그 밖 ⓓ ④ registry #11 소개행(R-0345 rev2). R-3449 enforcedBy `c/check-context-isolation.py`: ① «#92/#93 은 import 경로만 본다» ② docstring «#93 driving 잎의 import 폭» ③ 커버 = 직접 import 만(재수출 경유는 리뷰어 · **부분 집행**) ④ registry #10. b7 문장→Work 대응 = 문장 1~4 R-3447 · 5~6 R-3448(§13 기록). R-3450 모델링 = 불릿 자체에 Work(신규 관행 — 목록 항목 Work 0 관례와 다름 · 사유: 보호 대상 «자격» 이 규범 문장이라). R-3427 rev4 실효 변화 = 독법 ⓑ 명세(잎→port 행 미기재)가 형식 대상이 됨(현재 판본 red 0 · 당시 판본 2). codex Coordinator 미러 행 = 125(step 5)·150(#11).
+
+## 6단계 결과 (2026-09-04 — ⑥ 독립 감사 · 산출 `workspace/eval/field-report-2/rv6-audit.md`)
+
+- 판정: **조건부 머지 가능**. 무손실 재검 검증됨(옛↔새 검사기 3종 × 양 저장소 A∖B 0/0 · B∖A = #645 78/121 + ⓓ 694/385 · #493 불변 · 카탈로그 {#219×2,#635×3}→0 · 픽스처 census 차이 = cross 2행 + public-surface 1레인). 결정 1·2 그대로 구현. 규범 모순 0 · 도구 전부 green · 미러 동일.
+- 조건 C1(브랜치 안 반영): «전부 `object` 치환 가능» 과대 문안 3곳 → «미러 13·factories 6 은 `object` 기계 치환 · 실질 5 는 좁힘 수리».
+- 조건 C2(사용자 고지 — 머지 브리프): 결정 밖 확장 = **R-3449 «재수출 경유도 같다» 조항**(정책 확장 · 발주측 4 BC·except 13 이 규범 빚 · 승인 명세 2건의 «선례» 와 충돌) · R-0284 rev3 ⓓ 동봉 채널(registry_gate 밖 — 루트 직접 실행 + 범위 필터 · 선례 #4 동형) · bare 의미 확장(증분 0) · 소급 8/10 → 10/14(factories 포함) · Phase 0 빚 스캔 변화(5/6 BC).
+- MINOR 이월(릴리즈 전 무관 · 다음 정합 배치): #645 docstring 검출 한계 2행(`Optional/Union/Annotated` 별칭 import 는 ⓓ 강등 · 프로젝트 재수출 `Any` 무발화) · R-3449 «도메인 어휘로 이름» 단서 · discipline-reviewer 병기 · spec #645 행 문구.
