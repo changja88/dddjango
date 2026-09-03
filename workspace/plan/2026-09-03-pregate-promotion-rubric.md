@@ -1,0 +1,110 @@
+# pre-gate 차단 승격 배치 (G-A · R-1) — 절차·⓪ 증거·적대 리뷰 루브릭 (2026-09-03)
+
+브랜치 `feat/pregate-enforce`. 절차는 수리 배치 2 판형(`2026-09-03-repair-batch-2-rubric.md`)을 그대로 쓴다:
+⓪ 증거 수집 → ① 문제 검증 적대 리뷰(3기) → ② 계획 → ③ 계획 적대 리뷰(3기) → ④ 구현 → ⑤ 구현 적대 리뷰(3기) → ⑥ 감사 + 재검.
+결정 게이트(사용자 명시 확정): ① 뒤 «범위 확정» · ③ 뒤 «문면 확정» · ⑥ 뒤 «머지». 릴리즈는 사용자 요청 시까지 보류.
+심각도 BLOCKER/MAJOR/MINOR/검증됨 · 3축(코퍼스 정합·일반화·무손실) · 공격 질문 ⓐ 재현성 ⓑ 무손실 판정식 ⓒ 효과 과대.
+
+## 승격 판정 근거 (기계 판정 — 설계 v4 §8)
+
+§8은 «실전 레인 ≥2·신규 BC ≥1에서 ⑴ 오탐 0 ⑵ 미탐 0 ⑶ 형식 반송 ≤1/레인 충족 시 승격»으로 사전 합의된 판정식이다. 재실측 표본(v2.17.16 로드 세션 완주)은 카탈로그 레인 하나이며 신규 BC다.
+
+| 레인 | 판 | 런 | 정위치 형식 red | corrected / ignored / filtered (고유 ID) | G2 귀속 | ③형 STOP | 총 소요 |
+|---|---|---|---|---|---|---|---|
+| 1 media-library | v2.17.14 | 4 | 2 | 17 ID · 실질 오탐 0 | 0 | 0 | ≈4h10m |
+| 2 notification | v2.17.14 | 4 | 0 | 25 ID · 실질 오탐 0(라벨 재분류 후) | 0 | 0 | ≈2h56m |
+| 3 email-template | v2.17.14 | 5 | 1(+중반 2 별도) | 7 ID | 0 | 0 | — |
+| R reading | v2.17.14 | 44 | 6(중반 포함 · ① A 정정: 판정 행 계수) | 24 ID · #188 filtered 오처분 → P4 registry 149건 실발화(발견 ⑧) | — | STOP 다수(구판·승격 표본 아님) | ≈49h |
+| **4 fortune-catalog** | **v2.17.16** | 4 | **0** | corrected 2(#392·#576 — 다음 실행 소멸 = 진탐) · ignored 0 · filtered 0 | **0** | **0** | ≈6h31m(pre-gate 43분) |
+
+- 기계 판정: 레인 4 = ⑴ 충족 · ⑵ 충족 · ⑶ 충족(0) · 라벨 성문(발견 ①) rev2 적법 기재 → **§8 전 기준 충족**. 가치 실증 4회(레인 1 corrected 6축 · 레인 2 #14 이관 빚 사전화 · 레인 3 #356/#390 · 레인 4 #392/#576).
+- ⑷ 계약 실존 채널: 레인 4 최종 run 행 6 · 실존 확인 2 · 저장소 밖 4 · 결손 0 · 도구 오류 0 · 진탐 0 → 별도 판정식(«도구 오류 0 ∧ 진탐 ≥1 over ≥2 레인») 미충족 → **exit 5 비차단 유지**(R-2).
+- 표본 외(kkebi-server 21런): 전부 pre-gate 형식 규범 이전 명세(pregate-report 0/21) — 승격 판정의 표본 외 대조는 구조적으로 불가. 대신 «차단 전환이 구형 명세 레인을 세우는가»의 대조로만 쓴다(구형 명세 skip 폐지의 영향 = kkebi형 발주에 블록 의무 발생).
+
+## 승격 패키지 (⓪ 초안 — ①에서 공격 대상)
+
+| # | 항목 | 정본 | 변경 초안 |
+|---|---|---|---|
+| P1 | 실행기 모드 상수 | `dddjango/scripts/design_pregate.py`(+codex byte 미러) | `MODE = "observe"` → `"enforce"`. 헤더·stdout·요약 문면 «모드 관찰(observe)» → «모드 차단(enforce)». **exit 규약 불변**(0/2/3/4/5/1 · exit 5 비차단 유지) |
+| P2 | 구형 명세 skip 폐지(실행기) | 같은 파일 | file-plan 블록 부재 → 현행 exit 4 «skip — 구형 명세 한정 조항» 대신 **exit 3 형식 red «machine 블록 부재 — 차단 모드: 블록 의무»**. 실체화 0·결손 0 skip(공허 차분 가드)은 exit 4 유지. 픽스처 `noblock-spec.md` 신설(exit 3) |
+| P3 | R-3433 rev3(redefinition) | `ontology/rules/command-dddjango.ttl` s006/b9 | «red 는 게이트 차단이 아니라 … 권고(관찰 모드)» → **«귀속 red(exit 2)·형식 red(exit 3)는 architect 반송 의무 — G1/G1′ 배너는 최종본 예보가 red 가 아닐 때(exit 0·4·5)만 제시한다. 반송 없이 배너를 내는 유일한 경로는 red 전건에 닫힌 처분 라벨을 근거와 함께 기재하고 배너 예보 1행에 `red N건 · 처분 전건 기재` 를 병기하는 것뿐이다»**. 라벨 집합 불변(corrected\|ignored\|filtered · 실존 채널 corrected\|deferred\|filtered) |
+| P4 | 이월 ⑧ — filtered 근거 유형 닫기 | R-3433 rev3 같은 문면 | «`filtered` 의 근거 유형은 둘뿐이다: ⓐ 리포트 사각 목록 항목 인용 ⓑ 같은 형태의 실코드 파일이 해당 검사기 exit 0 인 대조 경로. **판정 입력이 경로·폴더 존재뿐인 구조 규칙(예: #81 트리 밖 칸 · #325 마이그레이션 위치)은 스텁 내용과 무관하므로 filtered 대상이 아니다** — corrected 또는 ignored+빚 매칭이다» |
+| P5 | R-3436 개정(Exception → Prohibition · redefinition) | 같은 블록 | «구형 명세 skip 한정» 예외 폐지 → **«machine 블록 부재 skip 금지 — 블록 부재는 형식 red 이며 architect 반송이다(캐시 skip·실체화 0 skip 과 구별)»**. ID 유지(폐지 대신 재정의 — wiring·rulepack 참조 보존 · `djr:deprecated` 는 어휘만 있고 선례 0) |
+| P6 | 발견 ⑩ 집행선 — R-3432 rev3(amendment) | 같은 블록 | «Phase 2 중 design-spec 변경(G1′ 반송 개정·정합 개정·설계 진화 전부)은 슬라이스 dispatch 전 `--base` 재발화가 선행한다. **G2 배너 직전 최종 design-spec 의 `--block-hash` 가 pregate-report 마지막 헤더 «블록 해시» 와 같아야 하며 G2 배너에 `pre-gate 최신성: 블록 해시 <값> = 리포트 <값>` 1행을 둔다 — 다르면 재발화 후 G2 다**» (관측 근거: 카탈로그 Phase 2 개정 3회 · 해시 6cf8e2ffdfc3→cb95a1bddb32 · 재실행 0) |
+| P7 | 산문 정합 | s006/b9 제목 «(관찰 모드)» → «(차단 모드)» · s002/b8 R-3438 «skip 행의 종류(캐시 skip·실체화 0·구형 명세)» → 구형 명세 삭제 · codex Coordinator SKILL.md 손 미러(같은 취지·codex 병렬 문면 유지) | |
+| P8 | manifest | `workspace/tools/manifest_seal.py` GROUPS.pipeline | `dddjango/scripts/design_pregate.py` 등재(설계 §9-6 «승격 릴리즈에서 pipeline 그룹 등재») → 봉인 draft 재발행 |
+| P9 | 기록 | ledger «승격 집행» 절 · 로드맵 R-1 · 카탈로그 #392 처분 = 첫 rev2 corrected 표본 병기 · 조감도 | |
+
+건드리는 규범 ID: R-3432(rev3) · R-3433(rev3) · R-3436(rev2 redefinition) · R-3438(amendment · s002/b8) · (검토) R-3437 배너 1행 — «red N건 · 처분 전건 기재» 형식이 R-3437 문면에 필요한지 ①에서 판정.
+건드리지 않는 것: exit 규약 · 라벨 집합 · R-3434(대체 금지) · R-3435 · R-3439~3441(provenance) · 검사기 27종 · 계약 실존 채널(exit 5 비차단).
+
+## ① 공격 질문 (리뷰어 3기 · 항목마다 필답)
+
+- A(판정식·효과): §8 판정식이 «신판 레인 1»로 닫히는가(표본 크기·공허 충족·구판 레인 3의 증거 가중치) · 가치 실증 4회의 각 근거가 재현 가능한가 · 차단 전환 후 형식 반송 증가 위험의 근거 수치.
+- B(패키지 설계·무손실): P2 exit 3 전환이 구형 명세 레인(kkebi형)을 세우는가 → 이것이 의도된 손실인지 · P3 «반송 의무 + 처분 예외»가 관찰 모드와 실질 동일해지는 구멍(ignored 남용) · P4 «구조 규칙» 정의가 결정적인가(경로·폴더 존재 판정 = 어떤 검사기 집합?) · P6 해시 대조가 R-3432 캐시 skip 규칙과 모순 없는가.
+- C(코퍼스 정합·표본 외): R-343x family 전수 열거 후 충돌/중복/약화 없음 · design-architect 에이전트·codex 미러·픽스처 러너·manifest·rulepack 체인의 드리프트 지점 · «관찰 모드» 문자열이 남는 모든 정본/투영물 위치 열거.
+
+## ① 결과 (09-03 — 적대 리뷰 3기: A 판정식·효과 `rv1-A.md` · B 패키지 설계·무손실 `rv1-B.md` · C 코퍼스 정합·드리프트 `rv1-C.md` — `workspace/eval/pregate-promotion/`)
+
+### 승격 근거 판정
+
+| 축 | 판정 | 요지 |
+|---|---|---|
+| §8 표본(A Q1) | **MAJOR → 조건부 성립** | v2.17.16 실전 완주는 레인 4 하나(n=1). 구판 3레인 가중의 근거 = **검사기 27종 `check-*.py` v2.17.14→16 변경 0**(직접 확인) → ⑴ corrected 진탐(레인 1·2·3 ID 소멸 5+4+3 규칙)·⑵ G2 귀속 0은 이월 가능 · filtered 잡음·⑶ 파서 계열은 이월 불가(픽스처 `green3-spec.md:24`·소급 19→1만) |
+| ⑴ 오탐 0(A Q2) | 검증됨 + MINOR | 레인 4 corrected = 결함 1(ID 2 — #576은 #392 정정의 후속) · 정정 전 명세 판본 미보존(«명세 diff 귀속»은 경로 소멸 추론) · 레인 2 «실질 0»은 리포트 :174 사유 인용의 «관찰 판정»으로 표기 |
+| ⑵ 미탐 0(A Q3) | **MAJOR ×2** | §8 ⑵ «기계 대조 스크립트»는 존재하지 않음(수기) · 레인 4 런 폴더에 G2 증거 파일 없음(REPORT 문면뿐) · **#93은 사각 계열이 아니라 채널 전사 결손**(G1 산문 :117/:167이 설계한 port 예외 import가 블록 6행에 없음 — 실행기는 선언 import를 스텁에 방출 :793) = 현장 보고 G(발견 ⑪) |
+| ⑶ 형식 반송(A Q4·Q5-b) | 검증됨 | 레인 4 정위치 0 · 중반 계수 «미관측»(개정 3회·재실행 0) · 정위치 형식 red는 관찰 모드에서도 사실상 차단(레인 1·3 재제출 실측) → **승격의 형식 반송 증분 ≈0**, 새 차단 표면 = 미라벨 red(4레인 0)·구형 명세(kkebi 20/20)·P6 재실행 |
+| 효과(A Q5-a) | **MAJOR** | «STOP 0 ≠ ③형 손실 0»: 레인 4 Phase 2 검사기 정합 3회 = 15:05→15:26 21분 + 17:42→18:30 48분 = **≥69분**(직접 확인 · 표면 밖 #574·#93·#642·#85) — 베이스라인 ③ 레인 56분 초과 · 총 391분은 베이스라인 399/359와 동급 → 효과 근거에서 제외 |
+| 가치 실증(A Q6) | 재계수 | «4회» → ③형 예방 3(레인 3 #390은 reading STOP-149 동형 실증 · 레인 2 #14 G1 전 사전화 · 레인 1 개연) + G1 전 소형 정정 1(레인 4) |
+| 대안(A Q7) | 검증됨 | ⑧·⑩은 규범 준수 실패라 관찰 연장으로 안 줄고 P4·P6이 치료 → ⓑ의 이득은 n=1→2뿐 · 제3안 ⓒ(P4·P6만 선행·관찰 유지·+1 레인 후 승격) 병기 |
+
+### 패키지 판정 (B·C)
+
+| # | 판정 | 반영 |
+|---|---|---|
+| P1 MODE 상수 | 검증됨 + MAJOR | 상수 방식 우월(플래그 누락 사각 없음) · exit 3·블록 부재 경로에 `요약:` 행 부재 → 전 exit 경로 `요약:` 1행 · 헤더 형식 `· 모드: <라벨>(<MODE>) ·` 유지 · exit 5 «(권고·비차단)» 문면 불변(러너 고정 C-5) · 사각 목록 항목 번호 S1~S9 부여 + «산문 전용 계층 경계 계약(미선언 import)» 1행 |
+| P2 블록 부재 → exit 3 | 검증됨(비용) + MAJOR | 손실 아님(구형 skip 검출 0 → 단조 증가) · kkebi 20/20 구형 → 개정 시 architect 1회전 · 판정 문자열 `형식 red(블록 부재)` 분리 · 사유행에 소급 작성 안내(기준선 실존 = update · 부재 = add) · 픽스처 별도 리포트 |
+| **B-BLOCKER** update 재라벨 도피 | **BLOCKER** | 차단은 «add→update 재라벨 → 실체화 0(exit 4)» 유인을 키우는데 실행기는 사본 부재 update 대상을 판정 안 함(:1029) · reading run 36 red 8 → run 37 green 0(24경로 재라벨) 실측(직접 확인) → **P10 신설**: `update`/`remove`/`empty` 대상이 사본(기준선+오버레이)에 부재 → 형식 red «update 대상 부재 — 이 경로는 add 다»(exit 3) · 예외 = 승격 폴더 `<칸>/` 디렉터리 실존(architect 경로 표기 규범과 정합) · 배치 2 «부재 update 대상 ⑴ 유지» 판정은 실존 채널(소비 행 있을 때)이라 별개 |
+| P3 반송 의무 | MAJOR ×3 | ① 예외 경로에서 `corrected` 배제(증거 = 재실행 소멸이라 최종본 red에 자기모순) ② 배너 시점 `ignored`는 legacy-debt 행 인용 + STOP 경로 필수(G2 트레이스는 G1 시점 존재 불가) ③ 주어를 «승인·재승인(배너 유무 무관)·슬라이스 dispatch 근거»로 확장 · «전건» = 예보 항목만(실존 결손 제외 — R-2 일관) · 재발화 red(exit 2)도 dispatch 전 반송 의무 · corrected 행에 «소멸 run·해시 전/후» 병기 |
+| P4 구조 규칙 | 검증됨 + MINOR | 성질 정의는 자기 집행적(경로 규칙엔 ⓑ 실코드 exit 0 대조가 원리상 불가·ⓐ 사각 목록에 경로 계열 0) · «판정 입력»의 기준 = 검사기 소스 · 예 4~6개 병기(#81·#325·#188·#318·#336·#490) + 경계 #392(혼합 → ⓑ 의무) · 전수 열거 안 함 |
+| P5 R-3436 | 검증됨 + 판단 | ID 보존(rulepack에 rdf:type 없음·target-counts 유형 계수 없음·wiring 유형 무관) · 유형 변경 선례 미확인 → ④에서 dry-run, 실패 시 유형 유지·문면만 · 반송 의무는 R-3433이 소유(2출처 금지) |
+| P6 G2 최신성 | MAJOR | 해시 동일만 보면 형식 red 스텁 헤더도 «최신» → 조건 «∧ 그 헤더 판정 비red(또는 처분 전건 경로)» · «마지막 헤더» = 마지막 `## pre-gate 예보` 절의 `- 기준선 SHA:` 행(skip 행·처분 절 제외 — 카탈로그 :133 무값 «블록 해시 갱신» 실물) · 라이브 재현 `cb95a1bddb32` ≠ `6cf8e2ffdfc3` · **착지 블록 부재(C-3)**: R-3432는 s006/b9(Phase 1) 소유·규범↔블록 1:1 → G2 배너 1행은 신규 채번 + s007 신규 블록(선례 b58) · s006/b10 `statesNorm` 부재(C-4) → R-3432 부착 |
+| **`--check-report` 기계화**(B 제안) | 판단 | P3·P6의 Coordinator 자기 판정 2건을 실행기 1회 호출로 결정적 대조(마지막 헤더 해시 = spec 해시 ∧ 판정 비형식red ∧ red면 ID 전건에 ignored/filtered 행) · exit 0/3/1 재사용 · ≈80행 + 픽스처 4케이스 · 미채택 시 «차단»의 사전 실효 없음(사후 감사만) |
+| P7 산문 정합 | MAJOR | **R-3425(architect s005/b34) 태그 의미론 부재** → amendment(add = 기준선·작업트리 부재 · update = 기준선 실존 · 소급 블록의 기실현 경로는 전부 update) · **R-3437 필수 개정**(`skip(구형 명세)` 죽은 분기 + `red N건 · 처분 전건 기재` 형식 + 형식 red 케이스) · codex SKILL.md 62·81·114(+P6 착지) 손 미러(검사기 없음 — 3어절 병렬 문면 보존) |
+| P8 manifest | 검증됨 + MINOR | pipeline += `design_pregate.py` · `pregate_symbol_kinds.json`은 packs 그룹 · GROUPS 글롭 변경 → `--write --draft` 재발행 필수(C-6) |
+| 리비전 번호(C-1) | MAJOR(오기) | 전부 `@2026-09-03b`: R-3432 rev3 · **R-3433 rev4** · **R-3436 rev3** · R-3437 rev3 · R-3438 rev3 · R-3425 rev(+1) · 신규 채번 1(G2 최신성) |
+| 하네스(C-3·C-13) | 검증됨 | 현재 트리 `pregate_fixture_run.py` PASS · verify 6/6 · exit 4 기대 픽스처 0 · skip(exit 4) 경로 픽스처 부재(이월) |
+| 표본 외(C-11) | 검증됨 | kkebi 런 20(+violations) 전부 마커 0 → 차단 시 20/20 형식 red(설계 §5-6 성문 = 의도된 비용) |
+| 병행 충돌(C-10) | 없음 | main..HEAD = 이 배치뿐 · `fix/field-typecheck` 머지됨 |
+
+### 범위 확정 게이트 (사용자 결정)
+
+- 기본 처분: **ⓐ 승격 배치 진행**(§8 문리 n=1은 검사기 불변 논거로 대체 · 차단의 하방 위험 ≈0 · ⓑ 관찰 +1의 이득은 n=2뿐). 대안 ⓒ = P4·P6만 선행·관찰 유지.
+- D1 `--check-report` 기계화 — 권고 **채택**(사전 실효의 유일한 장치 · 실행기 판정 추가·exit 코드 불변).
+- D2 P10 «update/remove/empty 대상 부재 → 형식 red» — 권고 **채택**(BLOCKER 봉쇄 · 승격 폴더 예외).
+- 나머지(P3 문면 3건·P4 예시·P5 dry-run·P6 착지 신규 채번·P7 R-3425/R-3437·P8·리비전 번호·사각 S번호)는 리뷰 처방대로 집행(관례 범위).
+- 현장 보고 G(#93 채널 전사 결손)는 사용자 순서대로 제보 수정 단계에 두고, 이 배치는 사각 목록 1행만 추가.
+
+## ④ 구현 기록 (09-03 · 커밋 2fbc111 + 증거)
+
+- 실행기 `design_pregate.py`(+codex byte 미러): `MODE="enforce"` · docstring/헤더/요약 «차단» · 전 exit 3 경로 `요약:` · 블록 부재 → exit 3 «형식 red(블록 부재)» · file-plan 0행 → «형식 red(블록 공허)» · `baseline_form_errors`(add 충돌·update/remove 대상 기준선 부재 · 유효 승격 형태 예외 `_promoted_form` · HEAD 실존 사유 분리 · 일괄 반송 · `요약: 형식 red N건(<종류 계수>)`) · `materialize(promoted=)` 문면 · `--check-report`(`check_report`/`run_check_report` — 앵커 `^## pre-gate 예보 — ` · 첫 헤더 행 · 마지막 절~EOF · ID+라벨 판독 · exit 0/3/1 · 요약 행) · BLIND_SPOTS S1~S9(S3·S9 문면 교체).
+- 규범: rdflib+canon(왕복 byte 동일) → gate 90/90 → 렌더 2문서 → LEDGER +5 · ExpressionShape 3558·NormShape/WorkShape 3454·BlockShape 2901 · q4 3445 · rulepack · codex 손 미러 9행(`codex-mirror-diff.md` — 병렬 문면 외 어절 차이 0) · manifest pipeline/packs 등재·봉인 draft.
+- 하네스: 픽스처 5(noblock·empty-block·update-target ×3 상태·remove-target·remove-deferred) · 러너 묶음 enforce(헤더 7)·checkreport(14단계) · 유닛 `baseline_form_errors` 14케이스·`check_report` 15케이스 → PASS · `make verify` 6/6.
+- 소급 A/B(`workspace/eval/pregate-promotion/retro-ab.md`): L1~L4 동일 · R remove 부재 7 · R′ update 부재 24 · 카탈로그 check-report stale · kkebi exit 3 — 계획 Δ4 기대값과 전건 일치.
+
+## ⑤ 결과 (09-03 — rv5-A 실행기 · rv5-B 규범·미러 · rv5-C 하네스·봉인·기록)
+
+| 축 | 판정 | 요지 |
+|---|---|---|
+| A 실행기 | BLOCKER 0 · MAJOR 0 · MINOR 9 | 판정·exit·안정 ID 표면 무손실(A/B `.out` 재계수 동일 · exit 집합 불변 · `--block-hash` 구=신) · `--check-report` 실물 3종(카탈로그 stale · reading 구판 헤더 → 증명 불가 · 절 내부 삽입 내성) 검증 · MINOR = 요약 어휘·관측성·git 0회·edge |
+| B 규범·미러 | BLOCKER 0 · MAJOR 1 · MINOR 4 | 그래프 구조 전항 정합(IRI·rev·kind·Prohibition·b59·b10 단일·wiring·ISSUED·LEDGER SHA·계수·q4) · codex 미러 byte 동일 8 + 병렬 어절 2 · MAJOR = b59 배너 토큰 ↔ 요약 행 토큰(정정) |
+| C 하네스·봉인·기록 | BLOCKER 0 · MAJOR 0 · MINOR 7 | 러너 PASS 34행 · 봉인 check green · 계획 대비 전건 있음(부분 3 보강) · 발주측 첫 변화 3종 실물 · main fast-forward 가능·충돌 0 |
+
+반영: 계획 Δ7. 다음 = ⑥ 감사 + 재검 → 사용자 «머지» 게이트.
+
+## ⑥ 감사 + 재검 (09-04 — `rv6-audit.md` · 독립 감사 3차 시도에서 완료(1·2차 API 과부하 중단 · 산출물 없음))
+
+- **감사 판정: 조건부 머지 가능** — BLOCKER 0 · MAJOR 1 · MINOR 12. 검증됨: 사용자 결정 3건·Δ6 시점 ✓ · L1~L4 ID/e-ID/exit 재계수 동일 + HEAD 실행기로 L1·L3 재실행 동일 ✓ · 카탈로그 `--check-report` stale ✓ · 69분(창 합 — «≥» 근거 없음·mypy 커밋 포함 지적)·형식 red 6·kkebi 20/20 ✓ · 불리한 사실 명기 ✓.
+- **MAJOR-1 `empty` 재라벨 도피** → 브랜치 내 처방(ⓐ): `baseline_form_errors` 에 `empty ∧ 기준선 실존 → 형식 red «empty 충돌(실존)»` · `lift_realized_adds` 에 empty 포함(재발화의 기실현 empty 는 빈 파일 대체·실체화 계수) · `materialize` empty 실존 → FormError(add 동형) · 픽스처 `empty-conflict-spec.md`(enforce 묶음 헤더 8) · 유닛 «empty 충돌» · R-3425 1구(in-place · LEDGER +1 · codex 미러) · docstring «add/empty 충돌».
+- **조건 2** → 로드맵 §4 «설치본 승격 = `make release` 시 · 그 전 main push 금지» 기재 · 머지 커밋 본문에도 명기 예정. **조건 3** → ledger «문면 확정 후 실행기 정합 1건(관찰기 skip 스텁 ∧ 마커 0 → 불비 · 영향 레인 실측 0)» 기재.
+- **재검(자체 · 결정적)**: 러너 PASS(37 기대 일치 — 16종+enforce 8+checkreport 14+유닛) · 소급 재실행 L1~L4 exit·ID·e-ID·요약 행 불변(«empty 충돌» 오차단 0 — 감사의 125행/실존 0 사전 계산과 일치) · reading 좌표만 +empty 충돌 3(기실현 empty 재라벨 · 의도) · rulepack 정합 · 봉인 draft 재발행 · `make verify`(아래) · 검사기 27종 무변경 · 잔존 «관찰 모드» 0 · main 충돌 0.

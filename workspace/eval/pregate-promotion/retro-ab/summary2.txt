@@ -1,0 +1,7 @@
+L1 new2 exit=2
+L2 new2 exit=2
+L3 new2 exit=0
+L4 new2 exit=2
+R new2 exit=3
+Rp new2 exit=3
+DONE

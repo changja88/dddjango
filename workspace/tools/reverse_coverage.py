@@ -136,7 +136,8 @@ def main() -> int:
             elif rel.name == "design_pregate.py":
                 why = ("pre-gate 실행기(2026-09-01 — G1 승인 전 설계 명세 결정적 예보) — 기계가독 "
                        "블록 5종을 팬텀 스텁으로 격리 사본에 실체화해 registry_gate 앵커 차분을 "
-                       "예보용으로 돌린다(관찰 모드·G2 비대체 — R-3432~R-3438) · "
+                       "예보용으로 돌린다(차단 모드 2026-09-03 승격 · G2 비대체 — R-3432~R-3438·R-3444·R-3445 · "
+                       "`--check-report` 가 배너·G2 근거의 기계 출처) · "
                        "pregate_fixture_run 이 green/red 픽스처로 행동 고정")
             elif rel.name == "pregate_symbol_kinds.json":
                 why = ("pre-gate Base 병기 의무 종류 소성물(R-3426 — 검사기 소스 기계 추출 닫힌 목록) — "

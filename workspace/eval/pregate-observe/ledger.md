@@ -1,7 +1,7 @@
 # pre-gate 관찰 모드 실측 대장 (v2.17.14~)
 
 - 지위: 속도 리비전 ⑦ 관찰 모드의 실측 원장. 승격 판정(⑦′)의 근거 자료.
-- 판정 규칙(설계 v4 §8 — 09-02 증거 이원화 · 09-03 Part 1 재발화 별도 계수 · 09-03 Part 3 실존 채널 반영): 실전 레인 ≥2(신규 BC ≥1)에서 ⑴ 오탐 0 이원 판정(`ignored` red→실위반 확인 = G2 귀속 red 해소 트레이스 **또는** legacy-debt 매칭 기록(STOP 병기) / `corrected` red→재실행 green+명세 diff 귀속; 필터 건 별도 계수 — 예보 항목 라벨 닫힌 정의는 R-3433 rev3 «예보 항목 corrected|ignored|filtered») ⑵ 커버 표면 미탐 0(G2 귀속 red ∩ P/S/I 표면 기계 대조) ⑶ 형식 반송 ≤1회/레인(분모는 정위치 형식 red — 중반 재발화 `--base` 판형은 별도 계수) + pre-gate 총 소요 보고 ⑷ **계약 실존 채널 별도 계수**(판정식 입력 아님): 결손 건수 · 처분 분포(`corrected | deferred | filtered` — `ignored` 없음) · 도구 오류(대상 실존인데 결손 — filtered 와 분리) · 오탐 = 도구 오류 · 미탐 = 행이 있었는데 ImportError/0B STOP · 차단 승격 전제 «도구 오류 0 ∧ 진탐 ≥1 over ≥2 레인»이되 exit 5 는 승격 후에도 비차단(별도 게이트). 리포트 판별은 헤더 `실행기: design_pregate.py · dddjango vX.Y.Z` 스탬프(v2.17.16 이후 «계약 실존» 절 상시).
+- 판정 규칙(설계 v4 §8 — 09-02 증거 이원화 · 09-03 Part 1 재발화 별도 계수 · 09-03 Part 3 실존 채널 반영): 실전 레인 ≥2(신규 BC ≥1)에서 ⑴ 오탐 0 이원 판정(`ignored` red→실위반 확인 = G2 귀속 red 해소 트레이스 **또는** legacy-debt 매칭 기록(STOP 병기) / `corrected` red→재실행 green+명세 diff 귀속; 필터 건 별도 계수 — 예보 항목 라벨 닫힌 정의는 R-3433 rev4(차단 승격 09-03) «예보 항목 corrected|ignored|filtered») ⑵ 커버 표면 미탐 0(G2 귀속 red ∩ P/S/I 표면 기계 대조) ⑶ 형식 반송 ≤1회/레인(분모는 정위치 형식 red — 중반 재발화 `--base` 판형은 별도 계수) + pre-gate 총 소요 보고 ⑷ **계약 실존 채널 별도 계수**(판정식 입력 아님): 결손 건수 · 처분 분포(`corrected | deferred | filtered` — `ignored` 없음) · 도구 오류(대상 실존인데 결손 — filtered 와 분리) · 오탐 = 도구 오류 · 미탐 = 행이 있었는데 ImportError/0B STOP · 차단 승격 전제 «도구 오류 0 ∧ 진탐 ≥1 over ≥2 레인»이되 exit 5 는 승격 후에도 비차단(별도 게이트). 리포트 판별은 헤더 `실행기: design_pregate.py · dddjango vX.Y.Z` 스탬프(v2.17.16 이후 «계약 실존» 절 상시).
 - 1차 자료 경로: 각 소비 워크트리 `.dddjango/<런 폴더>/{pregate-report.md, g2-registry-evidence.md}` + `docs/superpowers/orders/lane/STOP-*·REPORT-*`.
 
 ## 총괄 표
@@ -206,3 +206,13 @@
 
 - 기계 판정: **재실측 §8 전 기준 충족** → 차단 승격 요건 성립. 가치 실증 4회(레인 1 corrected 6축·레인 2 #14 사전화·레인 3 #356/#390·레인 4 #392/#576) · ③형 STOP 0 4/4 레인.
 - 승격 시 동반 이월(ledger 발견): ⑧ «구조 규칙은 filtered 대상 아님» 조항(R-3433 개정 필수 항목) · ⑩ Phase 2 재실행 집행선 · 카탈로그 #392 처분 실측 = 첫 rev2 corrected 표본. 계약 실존 채널(exit 5)은 표본 1·진탐 0이라 **비승격 유지**(R-2 별도 게이트).
+
+## 승격 집행 (2026-09-03 — 브랜치 `feat/pregate-enforce` · 루브릭·계획 `workspace/plan/2026-09-03-pregate-promotion-{rubric,plan}.md` · 리뷰 `workspace/eval/pregate-promotion/`)
+
+- **판정 표 v5(① 리뷰 A 반영)**: 신판 레인 4 = ⑴ corrected 결함 1(ID 2 · 다음 run 소멸) ⑵ G2 귀속 0(수기 — «기계 대조 스크립트»는 존재하지 않았다 · 레인 4 런 폴더에 G2 증거 파일 없음) ⑶ 정위치 형식 red 0 · **중반 계수 미관측**(Phase 2 개정 3회 · 재실행 0) → 충족. 구판 3레인 이월 근거 = `check-*.py` v2.17.14→16 변경 0. 레인 2 ⑴은 «관찰 판정(리포트 :174 사유 인용 재분류)». 효과 문면: ③형 STOP 문서 0 · 단 슬라이스 내 검사기 정합 ≥69분(#574 21분 + #85/#642 48분 · 표면 밖) — 총 소요 6h31m 은 효과 근거 아님(베이스라인 399/359 동급). 가치 실증 = ③형 예방 3(레인 3 #390 reading STOP-149 동형 실증 · 레인 2 #14 · 레인 1 개연) + G1 전 소형 정정 1(레인 4).
+- **승격 내용**: 실행기 `MODE=enforce` · 블록 부재/공허 = 형식 red · update/remove 대상 기준선 부재 = 형식 red(유효 승격 형태 예외 · HEAD 실존 사유 분리 · 일괄 반송) · `--check-report`(배너 G1/G1′·G2 근거의 기계 출처) · 사각 S1~S9 · 규범 R-3433 rev4(반송 의무·처분 예외·filtered 근거 유형·구조 규칙 제외)·R-3436 rev3(Prohibition)·R-3432 rev3·R-3437/R-3438/R-0411 rev3·architect R-3425 rev2·R-3427 rev3 + 신규 R-3444(G2 최신성 1행)·R-3445(캐시 skip·재발화·Phase 2 최신성 — b10 소유) · manifest pipeline/packs 등재.
+- **소급 A/B(구 실행기 × 신 실행기 · 동일 입력 · `retro-ab.md`)**: L1~L4 exit·ID·e-ID 전부 동일(무손실) · reading 최종본 = remove 부재 7(기준선 이동 관행 · 고정 기준선이면 0) · 재라벨 판형(78e616a×61b56ef4) = update 부재 24(발견 «run 37 재라벨» 기계 재현 — 구 실행기는 exit 5 통과) · 카탈로그 `--check-report` stale(`cb95a1bddb32 ≠ 6cf8e2ffdfc3` — 발견 ⑩ 기계 재현) · kkebi 구형 1건 exit 3 «블록 부재».
+- **비용 공지(발주측)**: 구형 명세(kkebi 20/20 · spring 18/24 폴더)는 design-spec 개정 시 소급 블록 1회전(기준선 실존 = update · 부재 = add) · 변경 0 순수 구현 수정은 G2 최신성 한정으로 세우지 않는다(`미실행(구형 명세 · 변경 0)`).
+- **검증 실측**: `make verify` 6/6 @2fbc111 · `manifest_seal --check --draft` green(그룹 10 · 파일 258) · 러너 PASS(«기대 일치» 34행 — enforce 7 · checkreport 14) · 훅 2검사 green · ⑤ 리뷰 3기(rv5-A/B/C): BLOCKER 0 · MAJOR 1(b59 토큰 ↔ 요약 행 정합 — in-place 정정) · MINOR 20 반영.
+- **⑥ 감사(rv6-audit · 09-04)**: 조건부 머지 가능 → MAJOR-1 «`empty` 재라벨 도피»(update 재라벨과 동형 · 4레인 empty 125행 중 기준선 실존 0 = 오차단 0) 브랜치 내 처방: `empty ∧ 기준선 실존 → 형식 red «empty 충돌»` + `--base` 재발화의 기실현 empty 는 lift·빈 파일 대체(실체화 계수) + 픽스처 `empty-conflict-spec` + R-3425 1구(in-place). 문면 확정 «후» 실행기 정합 1건 = «관찰기 skip 스텁 ∧ 마커 0 → --check-report 불비»(영향 레인 실측 0). 설치본 승격 = `make release` 시(로드맵 §4).
+- **이월**: 승격 후 첫 실전 레인 = 레인 5 관찰(형식 반송 계수에 «구형 명세 블록 부재 반송»·«구형+관찰기 skip 스텁 잔존» 별도 계수 · 첫 `--check-report` 실전 · G1 배너 근거) · 발견 ⑪(현장 보고 G — 규범 조항)은 제보 수정 단계 · `--check-report` 불비 요약 «A≠B» 표기(3곳 동시 개정).

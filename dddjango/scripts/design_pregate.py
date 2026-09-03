@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""design-spec «pre-gate» 예보 실행기 — G1 승인 전 결정적 검증 게이트 (관찰 모드).
+"""design-spec «pre-gate» 예보 실행기 — G1 승인 전 결정적 검증 게이트 (차단 모드).
 
 왜 있나(설계 정본: workspace/design/2026-09-01-pregate-design.md v4 — §3 D1~D4·§4·§8 ⑷):
 승인된 설계 명세가 registry 결정 계약과 조인되지 않은 채 동결되어 G1 «이후»에
@@ -69,12 +69,22 @@
 
 사용: design_pregate.py <design-spec.md> <저장소 루트> [--base <git ref, 기본 HEAD>]
                         [--report <경로>] [--python <검사기 인터프리터>] [--keep] [--block-hash]
-exit 0 = 예보 green · 2 = 예보 red(계약 실존 결손은 병기) · 3 = 형식 red(파싱 오류·add 실존
-충돌·금지 경로·태그 이중 서술) · 4 = skip(machine 블록 부재 또는 실체화 0·결손 0 — 사유 명시) ·
-5 = 계약 실존 결손 ≥1 ∧ (귀속 0 ∨ 실체화 0)(권고·비차단 — 차단 승격은 별도 게이트) ·
-1 = 실행 불능(venv/인터프리터·git 실패). 어느 경우도 침묵 없음.
+                        [--check-report <pregate-report.md>]
+exit 0 = 예보 green · 2 = 예보 red(계약 실존 결손은 병기) · 3 = 형식 red(파싱 오류 · machine 블록
+부재·공허 · add/empty 충돌 · update/remove 대상 기준선 부재 · 금지 경로 · 태그 이중 서술) · 4 = skip(실체화 0·
+결손 0 — 공허 차분 가드 · 사유 명시) · 5 = 계약 실존 결손 ≥1 ∧ (귀속 0 ∨ 실체화 0)(권고·비차단 —
+실존 채널의 차단 여부는 별도 게이트) · 1 = 실행 불능(venv/인터프리터·git 실패). 어느 경우도 침묵 없음 —
+모든 exit 0/2/3/4/5 경로가 `요약:` 1행을 낸다(배너 1행의 기계 출처).
+차단 모드(2026-09-03 승격): 판정·exit 는 모드에 의존하지 않는다 — 차단의 실체는 Coordinator 규범(red 는
+architect 반송 의무)과 아래 `--check-report`(그 의무 이행의 결정적 대조)·회피 경로 봉쇄(블록 부재·공허 =
+형식 red · update 대상 기준선 부재 = 형식 red — «add 를 update 로 재라벨해 실체화 0 으로 도피» 봉쇄)다.
 `--block-hash` 는 기계가독 블록 해시(sha256[:12] — 파서와 같은 추출)만 출력하고 exit 0 —
 Coordinator 의 캐시 skip 대조 전용(판정 무접촉). 매 실행 리포트 헤더가 같은 값을 병기한다.
+`--check-report <리포트>` 는 리포트 최신성·처분 완결을 대조만 한다(출력 전용 · git 0회 · 판정 무접촉):
+마지막 `## pre-gate 예보 — ` 절의 헤더 블록 해시 = 이 명세의 해시 ∧ 그 판정이 형식 red 가 아님 ∧ 예보 red 면
+`### 예보 항목` 의 안정 ID 전건에 그 절 이후 `` `<ID>` `` + `**ignored**`|`**filtered**` 처분 행이 있음
+(`corrected` 는 불인정 — 재실행 결과가 곧 최종본). exit 0 = 정합(배너·G2 근거 가능) · 3 = 불비(stale ·
+형식 red 미해소 · 처분 미기재 · 해시 토큰 없는 구판 헤더) · 1 = 리포트 부재·절 부재·헤더 행 부재.
 `--base` 명시(재발화 판형 — Phase 2 진입 후 명세 개정 재실행): 기준선 트리에 없던 계획 add 가
 오버레이에 실존하면 «기실현 add»다 — 앵커 커밋 «전»에 사본에서 걷어내고(앵커 스냅숏 L 무오염)
 스텁으로 실체화해 already-built 에 «기실현 — 스텁 대체 예보»로 기록한다(커밋된 add 와 같은 예보 —
@@ -109,7 +119,7 @@ except ImportError:  # 데이터·술어 모듈 없이는 골격 실체화·실�
           file=sys.stderr)
     sys.exit(1)
 
-MODE: str = "observe"  # 관찰 모드 상수(설계 §10 M2) — red 는 기록·권고이며 레인을 막지 않는다
+MODE: str = "enforce"  # 차단 모드 상수(설계 §10 M2 · 2026-09-03 승격) — red 는 architect 반송 의무(Coordinator 규범)
 NO_SUBSTITUTE: str = ("예보는 Phase 2 step 6(G2 registry 게이트)의 실행·증거 요구를 "
                       "어떤 형태로도 대체·축약하지 않는다.")
 COVER_NOTE: str = ("커버: P/S/I급 결정 계약 표면(보수 추정 — 유일한 판정자는 백테스트·"
@@ -972,15 +982,17 @@ def lift_realized_adds(copy: Path, plan: Plan, explicit_base: bool,
     lifted: "set[str]" = set()
     for path, entry in plan.entries.items():
         target: Path = copy / path
-        if entry.tag == "add" and path not in in_baseline and (target.is_file() or target.is_symlink()):
+        if entry.tag in ("add", "empty") and path not in in_baseline and (target.is_file() or target.is_symlink()):
             target.unlink()
             lifted.add(path)
     return frozenset(lifted)
 
 
 def materialize(copy: Path, plan: Plan, *, realized: "frozenset[str]" = frozenset(),
-                base_short: str = "") -> "dict[str, list[str]]":
+                base_short: str = "", promoted: "frozenset[str]" = frozenset()) -> "dict[str, list[str]]":
     """태그 의미론(D2)대로 사본 위에 팬텀을 겹친다 — add 실존 충돌은 FormError.
+
+    `promoted` = `baseline_form_errors` 가 승격 형태 예외로 통과시킨 update 경로(미시뮬레이션 문면만 다르다).
 
     **재발화 판형(`--base` 명시 — Phase 2 진입 후 명세 개정 재실행)**: `realized` 는 `lift_realized_adds` 가
     앵커 커밋 전에 사본에서 걷어낸 «기실현 add» 경로다 — 여기서는 다른 add 와 똑같이 스텁으로 실체화하고
@@ -1012,12 +1024,17 @@ def materialize(copy: Path, plan: Plan, *, realized: "frozenset[str]" = frozense
             target.write_text(stub, encoding="utf-8")
             report["materialized"].append(entry.path)
         elif entry.tag == "empty":
-            target.parent.mkdir(parents=True, exist_ok=True)
+            # add 와 같은 «새 파일» 태그 — 기준선 실존은 baseline_form_errors 가 앞서 형식 red 로 세우고, `--base` 재발화의
+            # 오버레이 실존(기실현)은 lift_realized_adds 가 걷어내 여기서 빈 파일로 다시 쓴다(실체화 계수 · 도피 봉쇄).
             if target.exists():
-                report["already_built"].append(f"empty(기실현): {entry.path}")
-            else:
-                target.write_text("", encoding="utf-8")
-                report["materialized"].append(entry.path)
+                raise FormError(f"empty 충돌(실존): {entry.path} — 계획과 실물의 모순은 그 자체가 발견이다")
+            if entry.path in realized:
+                report["already_built"].append(
+                    f"empty(기실현 — 기준선 {base_short} 부재·오버레이 실존 → 앵커 스냅숏에서 제외·빈 파일 대체 · "
+                    f"실체화 목록에도 계수): {entry.path}")
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("", encoding="utf-8")
+            report["materialized"].append(entry.path)
         elif entry.tag == "remove":
             if entry.deferred_remove:
                 report["unsimulated"].append(f"후행 remove(@Ln — G1 승인 시점 상태 유지): {entry.path}")
@@ -1027,7 +1044,11 @@ def materialize(copy: Path, plan: Plan, *, realized: "frozenset[str]" = frozense
             else:
                 report["unsimulated"].append(f"remove(실존 없음): {entry.path}")
         elif entry.tag == "update":
-            report["unsimulated"].append(f"update(시뮬레이션 밖 — ② 화이트리스트 정형 append 한정): {entry.path}")
+            if entry.path in promoted:
+                report["unsimulated"].append(
+                    f"update(승격 형태 실존 — 예외 통과 · 파일 `<칸>.py` 는 기준선 부재 · 실존 채널은 ⑴ 판정): {entry.path}")
+            else:
+                report["unsimulated"].append(f"update(시뮬레이션 밖 — ② 화이트리스트 정형 append 한정): {entry.path}")
     # 신규 BC 골격 전량 — 앵커 커밋에 없던 BC 만(② 화이트리스트 · #488 오탐 형태 소멸).
     new_bcs: "set[str]" = set()
     for entry in plan.entries.values():
@@ -1501,28 +1522,30 @@ def _own_interpreter_note(repo: Path) -> "str | None":
 
 
 BLIND_SPOTS: "tuple[str, ...]" = (
-    "C급(함수 본문·행위 규칙): 스텁 본문이 `...` 뿐이라 예보 표면 밖이다.",
-    "④형(명세 내부 의미 모순·규범 과잉결정): 검출 대상이 아니다.",
-    "BC 내부 계층 의존 오설계(#92/#93류): 유도 삽입은 정의상 규약 준수형 — 원리적 예보 불가.",
-    "앵커·상태 축: 예보 기준선은 «스텁 제외 현재 상태»다 — G2 build_anchor 차분과 다르며, "
+    "S1 C급(함수 본문·행위 규칙): 스텁 본문이 `...` 뿐이라 예보 표면 밖이다.",
+    "S2 ④형(명세 내부 의미 모순·규범 과잉결정): 검출 대상이 아니다.",
+    "S3 BC 내부 계층 의존(#92/#93류): 유도 삽입은 규약 준수형이라 예보 불가 · 블록에 기재된 경계 import 는 스텁에 "
+    "방출되어 예보된다 — 산문에만 적힌 경계 import(블록 미기재)는 전사되지 않아 표면 밖이다.",
+    "S4 앵커·상태 축: 예보 기준선은 «스텁 제외 현재 상태»다 — G2 build_anchor 차분과 다르며, "
     "HEAD 판형 게이트 결과의 G2 증거 유용은 차분 세탁으로 금지된다.",
-    "미시뮬레이션: update 계획·후행 remove(@Ln)는 실체화하지 않는다 — 위 목록 병기.",
-    "정형 보충(apps.py name/label·모델 Meta.db_table·마이그레이션 칸): 결손 시 규약 유도값을 합성한다 — 기계 블록 "
+    "S5 미시뮬레이션: update 계획·후행 remove(@Ln)는 실체화하지 않는다 — 위 목록 병기.",
+    "S6 정형 보충(apps.py name/label·모델 Meta.db_table·마이그레이션 칸): 결손 시 규약 유도값을 합성한다 — 기계 블록 "
     "전사가 있으면 전사 우선이지만, «산문»으로만 규약 밖 값을 계획한 일탈은 예보 표면 밖이다.",
-    "기실현 add(`--base` 명시 시 — 명시 `--base HEAD` 포함): 사본 = 기준선 트리 + (worktree−HEAD) 오버레이 — 기준선 "
+    "S7 기실현 add(`--base` 명시 시 — 명시 `--base HEAD` 포함): 사본 = 기준선 트리 + (worktree−HEAD) 오버레이 — 기준선 "
     "이후 커밋분은 사본에 없다. 오버레이 실존 add 는 앵커 커밋 전에 걷어내고 스텁으로 실체화해 예보하므로(앵커 스냅숏 "
     "무오염·실물 판정 혼입 0 — 커밋된 add 와 같은 ID·exit) 실물이 스텁과 다른 위반은 예보 표면 밖이고, 유일 판정자는 "
     "G2 앵커 차분이다.",
-    "계약 실존(boundary-imports 3단): 판정 기준은 **이 브랜치**의 격리 사본(기준선 + dirty overlay + 이 명세의 add — "
+    "S8 계약 실존(boundary-imports 3단): 판정 기준은 **이 브랜치**의 격리 사본(기준선 + dirty overlay + 이 명세의 add — "
     "`--base` 명시 시 기준선 이후 커밋분은 사본에 없다: 재발화 판형)이다 — 다른 워크트리·미머지 브랜치의 실물은 보지 "
     "않는다(부재 = 결손 · 상류 소유 계약의 선행 대기는 `deferred` 처분으로 명세가 소유 레인·해소 조건을 명시한다). "
     "자기 add 대상의 이름 정의(⑶)는 symbols 채널 소관이라 생략하고, update 대상은 symbols 선언 이름을 자기 update 해소로 "
     "본다(표면은 이 명세 이후 상태). 결손은 권고·비차단(exit 5)이며 G0 선행 조건 확인·상류 머지 판단을 대체하지 않는다.",
-    "계약 실존 표면 밖·판정 경계(결과별): 판정 불능 U = `import *`(소비 행·재수출 표면)·`__getattr__` 표면·네임스페이스 "
+    "S9 계약 실존 표면 밖·판정 경계(결과별): 판정 불능 U = `import *`(소비 행·재수출 표면)·`__getattr__` 표면·네임스페이스 "
     "폴더의 비서브모듈 이름·AST 파싱 실패·문법 불량 행·소비자 remove·update 대상의 미선언·미실존 이름 / 관대 K(미탐 "
     "방향) = `TYPE_CHECKING` 가드 안 바인딩(런타임 부재여도 최상위 바인딩으로 센다)·update 대상의 현재 표면 이름(update "
     "가 지우는 경우) / 검사 밖 X = 저장소 밖 패키지(표준·서드파티) / 결손 ⑴ 방향 = gitignore 된 실물(사본 밖 — 이 브랜치 "
-    "추적 기준)·사본에 부재한 `update` 대상(update 는 파일을 만들지 않는다 — 선언·미선언 무관) / 행 자체가 없다 = 동적 import"
+    "추적 기준)·승격 형태 예외로 통과한 `update` 대상(update 는 파일을 만들지 않는다 — 그 외 기준선 부재 update 는 형식 "
+    "red 로 앞서 선다) / 행 자체가 없다 = 동적 import"
     "(`importlib` 리터럴).",
 )
 
@@ -1542,7 +1565,7 @@ def write_report(report_path: Path, spec: Path, base_ref: str, base_sha: str, ve
         f"## pre-gate 예보 — {now} · {spec.name}",
         "",
         f"- 기준선 SHA: `{base_sha}` (--base {base_ref}) — «스텁 제외 현재 상태» · "
-        f"프로필: auto · 모드: 관찰({MODE}) · {_executor_stamp(blk_hash)}",
+        f"프로필: auto · 모드: 차단({MODE}) · {_executor_stamp(blk_hash)}",
         f"- {NO_SUBSTITUTE}",
         f"- {COVER_NOTE}",
         f"- 판정: {verdict}",
@@ -1586,7 +1609,7 @@ def write_report_stub(report_path: "Path | None", spec: Path, base_ref: str, bas
         "",
         f"## pre-gate 예보 — {now} · {spec.name}",
         "",
-        f"- 기준선 SHA: `{base_sha}` (--base {base_ref}) · 프로필: auto · 모드: 관찰({MODE}) · "
+        f"- 기준선 SHA: `{base_sha}` (--base {base_ref}) · 프로필: auto · 모드: 차단({MODE}) · "
         f"{_executor_stamp(blk_hash)}",
         f"- {NO_SUBSTITUTE}",
         f"- 판정: {verdict}",
@@ -1599,6 +1622,182 @@ def write_report_stub(report_path: "Path | None", spec: Path, base_ref: str, bas
     report_path.parent.mkdir(parents=True, exist_ok=True)
     with report_path.open("a", encoding="utf-8") as fp:
         fp.write("\n".join(lines))
+
+
+# ── 차단 모드 — 계획↔기준선 모순(형식 red) · 리포트 최신성 대조(--check-report) ──────────────────
+
+def _promoted_form(copy: Path, path: str) -> bool:
+    """유효 승격 형태 — `<stem>/__init__.py` ∧ `<stem>/<name>.py`(check-layer-skeleton #638 동형). architect 경로 표기는
+    언제나 `<칸>.py` 이므로(동명 폴더 승격은 구현 캐스케이드 소유) update 대상의 «실존» 은 이 형태까지다 — 폴더만 있는
+    경우(비승격 하위 패키지·정크)는 실존이 아니다(폴더 예외가 새 도피 경로가 되지 않게 · 3단계 리뷰 A1)."""
+    if not path.endswith(".py"):
+        return False
+    stem: Path = copy / path[:-3]
+    return (stem / "__init__.py").is_file() and (stem / f"{stem.name}.py").is_file()
+
+
+def baseline_form_errors(plan: Plan, copy: Path, in_baseline: "frozenset[str]", base_short: str,
+                         in_head: "Callable[[str], bool]") -> "tuple[list[str], frozenset[str]]":
+    """계획↔기준선 모순의 전건 열거(차단 모드 · 오버레이 «전» 판정 · 1회 일괄 반송 재료).
+
+    태그의 뜻은 기준선 기준이다(architect R-3425): `add` = 기준선 부재(실존이면 «add 충돌») · `update` = 기준선 실존
+    (부재면 «update 대상 부재» — 그 경로는 add 다 · 유효 승격 형태 실존은 예외) · 비후행 `remove` = 기준선 실존(부재면
+    «remove 대상 부재» — 고정 기준선에서 기실현 remove 는 실존이다) · `empty`·후행 `remove@Ln` 은 판정 밖.
+    왜 — 차단은 «add 를 update 로 재라벨해 실체화 0(skip)으로 도피» 할 유인을 키우고(reading run 36 red 8 → run 37
+    green 0 · 24경로 재라벨 실측), update 는 파일을 만들지 않으므로 그 도피는 검출 집합을 줄인다. 오버레이 실존은
+    판정에 넣지 않는다(미커밋 기실현 add 의 재라벨도 기준선 부재라 red). 기준선 이후 HEAD 실존은 사유행을 나눈다
+    (자기 기실현 add 면 add 로 복원 · 타 레인 유입이면 STOP — 기준선 이동 금지) — `in_head` 는 부재 행에서만 부른다.
+
+    반환: (오류 목록 — 전건, 승격 형태 예외로 통과한 update 경로 집합).
+    """
+    errors: "list[str]" = []
+    promoted: "set[str]" = set()
+    for path, entry in plan.entries.items():
+        present: bool = path in in_baseline
+        if entry.tag == "add" and present:
+            errors.append(f"add 충돌(실존): {path} — 계획과 실물의 모순은 그 자체가 발견이다")
+        elif entry.tag == "update" and not present:
+            if _promoted_form(copy, path):
+                promoted.add(path)
+            elif in_head(path):
+                errors.append(f"update 대상 기준선 이후 실존: {path} — 기준선 {base_short} 에 없고 HEAD 에 있다: "
+                              f"자기 기실현 add 면 add 로 복원 · 타 레인 유입이면 STOP(기준선 이동 금지)")
+            else:
+                errors.append(f"update 대상 부재: {path} — 기준선 {base_short} 에 없는 경로는 add 다(재라벨 도피 금지)")
+        elif entry.tag == "remove" and not entry.deferred_remove and not present:
+            errors.append(f"remove 대상 부재: {path} — 기준선 {base_short} 에 없는 경로는 제거할 수 없다"
+                          f"(고정 기준선에서 기실현 remove 는 실존이다 — 이미 지워진 경로는 행을 거둔다)")
+        elif entry.tag == "empty" and present:
+            # `empty` 는 add 와 같은 «새 파일» 태그다 — 기준선 실존을 already-built 로 통과시키면 기실현 add 를 empty 로
+            # 재라벨해 실체화 0 으로 도피하는 경로가 update 재라벨과 동형으로 남는다(6단계 감사 MAJOR-1).
+            errors.append(f"empty 충돌(실존): {path} — 새 빈 파일 자리가 기준선 {base_short} 에 이미 있다: "
+                          f"기실현이면 update 다(재라벨 도피 금지)")
+    return errors, frozenset(promoted)
+
+
+def _error_kinds(errors: "list[str]") -> str:
+    """`요약:` 행의 사유 종류 계수 — 메시지 접두(«: » 앞)별 건수."""
+    counts: "dict[str, int]" = {}
+    for err in errors:
+        kind: str = err.split(":", 1)[0].split("(", 1)[0].strip()
+        counts[kind] = counts.get(kind, 0) + 1
+    return " · ".join(f"{k} {n}" for k, n in counts.items())
+
+
+# 절 앵커 = 실행기 자기 형식(`## pre-gate 예보 — <UTC> · <spec>`) — 코디네이터가 «## pre-gate 예보 …» 로 시작하는 제목을
+# 쓰더라도 타임스탬프 없이는 절이 아니다(문면 의존 0 · 5단계 리뷰 A3).
+_REPORT_SECTION_RE: "re.Pattern[str]" = re.compile(r"^## pre-gate 예보 — \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z · ", re.M)
+_REPORT_HASH_RE: "re.Pattern[str]" = re.compile(r"블록 해시 ([0-9a-f]{12})")
+_REPORT_BASE_RE: "re.Pattern[str]" = re.compile(r"`([0-9a-f]{40})`")
+_REPORT_ID_RE: "re.Pattern[str]" = re.compile(r"^- `([0-9a-f]{12})` ", re.M)
+_REPORT_COUNT_RE: "re.Pattern[str]" = re.compile(r"예보 (\d+)건")
+_REPORT_DEFECT_RE: "re.Pattern[str]" = re.compile(r"결손 (\d+)건")
+
+
+def _subsection(section: str, header: str) -> str:
+    """절 안의 `### <header>` 소절 본문(다음 `### ` 까지) — 없으면 빈 문자열."""
+    idx: int = section.find(f"### {header}")
+    if idx < 0:
+        return ""
+    rest: str = section[idx + len(header) + 4:]
+    nxt: int = rest.find("\n### ")
+    return rest if nxt < 0 else rest[:nxt]
+
+
+def _disposed(section: str, stable_id: str) -> bool:
+    """처분 행(R-3438 정형 — `` - `<ID>` … → **<라벨>**(<증거>) ``)이 이 절 이후에 있는가 — 라벨은 ignored|filtered 만
+    (corrected 는 재실행이 곧 최종본 · 증거 토큰은 사람 감사용이라 읽지 않는다)."""
+    token: str = f"`{stable_id}`"
+    for line in section.split("\n"):
+        if token in line and ("**ignored**" in line or "**filtered**" in line):
+            return True
+    return False
+
+
+def check_report(spec_text: str, report_text: str) -> "tuple[int, list[str], dict[str, str]]":
+    """리포트 최신성·처분 완결 대조(출력 전용 · 판정 무접촉).
+
+    ⑴ 마지막 `## pre-gate 예보 — ` 절(앵커 접두 일치 금지 — «## pre-gate 처분 라벨» 류 코디네이터 절·skip 행은 절이
+    아니다) ⑵ 그 절의 첫 `- 기준선 SHA:` 행의 블록 해시 = `block_hash(spec)` ⑶ 첫 `- 판정:` 이 형식 red 가 아님
+    ⑷ 예보 red 면 `### 예보 항목` 소절의 안정 ID 전건에 그 절 이후(EOF 까지) 처분 행 — 이전 절의 처분은 불인정
+    (red 절마다 재기재 — R-3433) ⑸ green·skip·결손 판정은 통과.
+    반환: (exit — 0 정합 · 3 불비 · 1 절/헤더 부재, 사유 목록, 요약 재료).
+    """
+    starts: "list[int]" = [m.start() for m in _REPORT_SECTION_RE.finditer(report_text)]
+    if not starts:
+        return 1, ["예보 절 부재 — `## pre-gate 예보 — ` 헤더가 없다(pre-gate 미실행 리포트)"], {}
+    section: str = report_text[starts[-1]:]
+    lines: "list[str]" = section.split("\n")
+    base_line: "str | None" = next((ln for ln in lines if ln.startswith("- 기준선 SHA:")), None)
+    verdict_line: "str | None" = next((ln for ln in lines if ln.startswith("- 판정:")), None)
+    if base_line is None or verdict_line is None:
+        return 1, ["헤더 행 부재 — 마지막 예보 절에 `- 기준선 SHA:` 또는 `- 판정:` 행이 없다"], {}
+    verdict: str = verdict_line[len("- 판정:"):].strip()
+    spec_hash: str = block_hash(spec_text)
+    hash_m: "re.Match[str] | None" = _REPORT_HASH_RE.search(base_line)
+    base_m: "re.Match[str] | None" = _REPORT_BASE_RE.search(base_line)
+    problems: "list[str]" = []
+    report_hash: str = hash_m.group(1) if hash_m else "-"
+    if hash_m is None:
+        problems.append("최신성 증명 불가 — 마지막 헤더에 블록 해시 토큰이 없다(구판 리포트) · 재발화")
+    elif report_hash != spec_hash:
+        problems.append(f"stale — 명세 블록 해시 {spec_hash} ≠ 마지막 예보 {report_hash} · 재발화")
+    count_m: "re.Match[str] | None" = _REPORT_COUNT_RE.search(verdict)
+    defect_m: "re.Match[str] | None" = _REPORT_DEFECT_RE.search(verdict)
+    attributed: int = int(count_m.group(1)) if count_m else 0
+    defects: int = int(defect_m.group(1)) if defect_m else 0
+    short: str
+    if verdict.startswith("형식 red"):
+        problems.append(f"형식 red 미해소 — 마지막 판정 «{verdict}» · architect 반송")
+        short = "형식 red"
+    elif verdict.startswith("예보 red"):
+        ids: "list[str]" = _REPORT_ID_RE.findall(_subsection(section, "예보 항목"))
+        missing: "list[str]" = [i for i in ids if not _disposed(section, i)]
+        if missing:
+            problems.append(f"처분 미기재 {len(missing)}건(ignored|filtered 행 없음 — corrected 는 재실행이 최종본): "
+                            + " ".join(f"`{i}`" for i in missing))
+        short = f"red {attributed}({'처분 전건' if not missing else f'미기재 {len(missing)}'}) · 실존 결손 {defects}"
+    elif verdict.startswith("예보 green"):
+        short = "green" + (f" · 실존 결손 {defects}" if defects else "")
+    elif verdict.startswith("skip"):
+        short = "skip" + (f" · 실존 결손 {defects}" if defects else "")
+        if "<!-- machine:" not in spec_text:
+            # 구형 명세 + 관찰기(≤2.17.16)의 «블록 부재 skip» 스텁이 마지막 절로 남은 레인 — 블록 해시가 불변이라 캐시 skip 으로
+            # 재실행 없이 G2 가 열리는 좁은 경로를 닫는다(5단계 리뷰 C · 결정 잔여 1): 차단 모드에서 블록 부재는 형식 red 다.
+            problems.append("블록 부재 — 마지막 판정이 관찰 모드 skip 이고 명세에 machine 마커가 없다: 소급 블록 작성 후 재발화")
+    else:
+        problems.append(f"판정 문면 불명 — «{verdict}»")
+        short = verdict[:24]
+    info: "dict[str, str]" = {
+        "spec_hash": spec_hash, "report_hash": report_hash, "short": short,
+        "attributed": str(attributed), "defects": str(defects),
+        "base": base_m.group(1)[:12] if base_m else "-",
+    }
+    return (3 if problems else 0), problems, info
+
+
+def run_check_report(spec_text: str, report_path: Path, blk_hash: str) -> int:
+    """`--check-report` 진입 — 배너(G1/G1′)·G2 근거 대조의 유일한 기계 출처(`요약:` 행)."""
+    print(f"# design_pregate --check-report · 모드 차단({MODE}) · {_executor_stamp(blk_hash)}")
+    if not report_path.is_file():
+        print(f"실행 불능: 리포트 부재 — {report_path} (pre-gate 가 이 레인에서 한 번도 실행되지 않았다 · 구형 명세·"
+              f"변경 0 레인이면 최신성 행은 «미실행(구형 명세 · 변경 0)» — 블록이 있는 명세는 실행이 의무다)",
+              file=sys.stderr)
+        return 1
+    result: "tuple[int, list[str], dict[str, str]]" = check_report(spec_text, report_path.read_text(encoding="utf-8"))
+    code: int = result[0]
+    problems: "list[str]" = result[1]
+    info: "dict[str, str]" = result[2]
+    if code == 1:
+        print(f"실행 불능: {problems[0]}", file=sys.stderr)
+        return 1
+    for p in problems:
+        print(f"  불비: {p}")
+    status: str = "정합" if code == 0 else f"불비 {len(problems)}건"
+    print(f"\n요약: check-report {status} · 블록 해시 {info['spec_hash']}={info['report_hash']} · "
+          f"마지막 판정 {info['short']} · 귀속 {info['attributed']}건 · 실존 결손 {info['defects']}건 · "
+          f"기준선 {info['base']}")
+    return code
 
 
 # ── main ────────────────────────────────────────────────────────────────────
@@ -1617,6 +1816,9 @@ def main(argv: "list[str]") -> int:
     ap.add_argument("--keep", action="store_true", help="격리 사본·스크래치 보존(디버그)")
     ap.add_argument("--block-hash", action="store_true",
                     help="기계가독 블록 해시만 출력하고 끝낸다(출력 전용·판정 무접촉 — 캐시 skip 대조용)")
+    ap.add_argument("--check-report", default=None,
+                    help="pregate-report.md 의 최신성·처분 완결만 대조하고 끝낸다(출력 전용·git 0회 — "
+                         "배너·G2 근거 대조용: exit 0 정합 · 3 불비 · 1 리포트/절 부재)")
     ns: argparse.Namespace = ap.parse_args(argv)
 
     spec_path: Path = Path(ns.spec).resolve()
@@ -1630,6 +1832,8 @@ def main(argv: "list[str]") -> int:
     if ns.block_hash:
         print(f"블록 해시 {blk_hash}")
         return 0
+    if ns.check_report is not None:
+        return run_check_report(text, Path(ns.check_report).resolve(), blk_hash)
     if not (repo / ".git").exists():
         print(f"실행 불능: git 저장소가 아니다 — {repo} (차분 예보는 git 앵커가 전제다)", file=sys.stderr)
         return 1
@@ -1657,12 +1861,26 @@ def main(argv: "list[str]") -> int:
         for err in errors:
             print(f"  {err}")
         write_report_stub(report_path, spec_path, base_ref, base_sha, "형식 red", errors, blk_hash)
+        print(f"\n요약: 형식 red {len(errors)}건(문법) · 기준선 {base_sha[:12]} · 모드 차단")
         return 3
     if plan is None:
-        reason: str = "skip — machine 블록 부재(<!-- machine: file-plan --> 없음): 구형 명세 한정 조항"
+        reason: str = ("형식 red — machine 블록 부재(<!-- machine: file-plan --> 없음): 차단 모드는 블록이 의무다 — "
+                       "구형 명세(형식 규범 이전 승인)는 개정 시점에 블록을 소급 작성한다"
+                       "(기준선 실존 경로는 update · 부재 경로만 add)")
         print(reason)
-        write_report_stub(report_path, spec_path, base_ref, base_sha, "skip", [reason], blk_hash)
-        return 4
+        write_report_stub(report_path, spec_path, base_ref, base_sha, "형식 red(블록 부재)", [reason], blk_hash)
+        print(f"\n요약: 형식 red 1건(블록 부재) · 기준선 {base_sha[:12]} · 모드 차단")
+        return 3
+    if not plan.entries:
+        reason = ("형식 red — file-plan 0행(블록 공허): 변경 파일이 없는 명세는 pre-gate 대상이 아니라 산문이다 — "
+                  "update 대상이라도 적는다(빈 펜스로 블록 의무를 채울 수 없다)")
+        print(reason)
+        for note in plan.notes:  # 고아 채널 행(symbols/imports 만 있는 명세)은 버려졌음을 남긴다(침묵 금지)
+            print(f"  채널 메모: {note}")
+        write_report_stub(report_path, spec_path, base_ref, base_sha, "형식 red(블록 공허)",
+                          [reason] + [f"채널 메모: {n}" for n in plan.notes], blk_hash)
+        print(f"\n요약: 형식 red 1건(블록 공허) · 기준선 {base_sha[:12]} · 모드 차단")
+        return 3
 
     scratch: Path = Path(tempfile.mkdtemp(prefix="design-pregate-"))
     copy: Path = scratch / "copy"
@@ -1671,7 +1889,26 @@ def main(argv: "list[str]") -> int:
         _extract_archive(repo, base_sha, copy)
         # archive == 기준선 트리 — 오버레이 «전»에 계획 경로의 실존을 재서 «기준선 실존 add»(형식 red 유지)와
         # «오버레이 실존 add»(재발화 판형의 기실현)를 가른다(git 추가 호출 0·결정적).
-        in_baseline: "frozenset[str]" = frozenset(p for p in plan.entries if (copy / p).exists())
+        in_baseline: "frozenset[str]" = frozenset(
+            p for p in plan.entries if (copy / p).exists() or (copy / p).is_symlink())
+        # 계획↔기준선 모순 전건(차단 모드): add 충돌 · update/remove 대상 기준선 부재 — 오버레이 «전»·1회 일괄 반송.
+        # «기준선 부재 ∧ HEAD 실존» 은 `--base` 명시 경로에서만 가능하다(기본 기준선 = HEAD 트리) — git 호출도 그때만.
+        form_result: "tuple[list[str], frozenset[str]]" = baseline_form_errors(
+            plan, copy, in_baseline, base_sha[:12],
+            (lambda p: _git(repo, "cat-file", "-e", f"HEAD:{p}", check=False).returncode == 0)
+            if explicit_base else (lambda p: False))
+        form_errors: "list[str]" = form_result[0]
+        promoted: "frozenset[str]" = form_result[1]
+        if form_errors:
+            print(f"형식 red — {len(form_errors)}건 (계획↔기준선 모순 · architect 반송 재료):")
+            for err in form_errors:
+                print(f"  {err}")
+            if promoted:
+                print(f"  승격 형태 예외 통과 {len(promoted)}건: " + " ".join(sorted(promoted)))
+            write_report_stub(report_path, spec_path, base_ref, base_sha, "형식 red", form_errors, blk_hash)
+            print(f"\n요약: 형식 red {len(form_errors)}건({_error_kinds(form_errors)}) · "
+                  f"기준선 {base_sha[:12]} · 모드 차단")
+            return 3
         overlaid: "list[str]" = _overlay_dirty(repo, copy)
         # 기실현 add 는 앵커 커밋 «전»에 걷어낸다 — 앵커 스냅숏(L)에 실물이 남으면 스텁 진단이 잔존으로 빠진다.
         realized: "frozenset[str]" = lift_realized_adds(copy, plan, explicit_base, in_baseline)
@@ -1680,10 +1917,12 @@ def main(argv: "list[str]") -> int:
         _git(copy, "commit", "-q", "-m", "pregate-anchor", "--allow-empty")
 
         try:
-            mat: "dict[str, list[str]]" = materialize(copy, plan, realized=realized, base_short=base_sha[:12])
+            mat: "dict[str, list[str]]" = materialize(copy, plan, realized=realized, base_short=base_sha[:12],
+                                                      promoted=promoted)
         except FormError as exc:
             print(f"형식 red — {exc}")
             write_report_stub(report_path, spec_path, base_ref, base_sha, "형식 red", [str(exc)], blk_hash)
+            print(f"\n요약: 형식 red 1건({_error_kinds([str(exc)])}) · 기준선 {base_sha[:12]} · 모드 차단")
             return 3
 
         # 계약 실존 — materialize(+골격·`__init__` 체인) 뒤 · 실체화-0 분기 앞(update 소비자만의 명세도 판정한다).
@@ -1701,14 +1940,14 @@ def main(argv: "list[str]") -> int:
             for item in mat["unsimulated"]:
                 print(f"  미시뮬레이션: {item}")
             _print_existence(existence)
-            print(f"\n요약: 실체화 0 · 실존 결손 {defects}건 · 기준선 {base_sha[:12]} · 모드 관찰")
+            print(f"\n요약: 실체화 0 · 실존 결손 {defects}건 · 기준선 {base_sha[:12]} · 모드 차단")
             write_report_stub(report_path, spec_path, base_ref, base_sha, verdict_stub,
                               [reason] + [f"미시뮬레이션: {x}" for x in mat["unsimulated"]], blk_hash,
                               existence=existence)
             return 5 if defects else 4
 
         print(f"# design_pregate — 예보 실행 · 기준선 {base_sha[:12]} (--base {base_ref}) · "
-              f"모드 관찰({MODE}) · {_executor_stamp(blk_hash)}")
+              f"모드 차단({MODE}) · {_executor_stamp(blk_hash)}")
         print(f"({NO_SUBSTITUTE})")
         print(f"실체화 {len(mat['materialized'])}건 · dirty overlay {len(overlaid)}건 · "
               f"미시뮬레이션 {len(mat['unsimulated'])}건 · already-built {len(mat['already_built'])}건")
@@ -1729,7 +1968,7 @@ def main(argv: "list[str]") -> int:
             print(f"  채널 메모: {note}")
         _print_existence(existence)
         print(f"\n판정: {verdict}")
-        print(f"요약: 귀속 {len(attributed)}건 · 실존 결손 {defects}건 · 기준선 {base_sha[:12]} · 모드 관찰")
+        print(f"요약: 귀속 {len(attributed)}건 · 실존 결손 {defects}건 · 기준선 {base_sha[:12]} · 모드 차단")
         if report_path is not None:
             write_report(report_path, spec_path, base_ref, base_sha, verdict,
                          attributed, mat, plan.notes, blk_hash, existence)

@@ -26,15 +26,15 @@
 
 <!-- MANIFEST-FACTS (기계 렌더 — 손으로 고치지 않는다) -->
 
-**봉인 실측**(기계 렌더 — 해시 정본은 `T2-0b-manifest.json`): 그룹 **10** · 파일 **256** · 배정 18런
+**봉인 실측**(기계 렌더 — 해시 정본은 `T2-0b-manifest.json`): 그룹 **10** · 파일 **258** · 배정 18런
 
 | 그룹 | 파일 |
 |---|---|
 | `graph` | 92 |
 | `harness` | 32 |
 | `orders` | 8 |
-| `packs` | 2 |
-| `pipeline` | 5 |
+| `packs` | 3 |
+| `pipeline` | 6 |
 | `plugin_payload` | 64 |
 | `preregistration` | 1 |
 | `protocol` | 6 |

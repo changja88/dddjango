@@ -14,7 +14,7 @@
 > | E(추기) | `Any` 정책 부재 — «사용자 결정: 플러그인이 `Any`를 못 쓰게 강제(문면+검사기)» | 신규 규범(하우스룰 §4 절) + 검사기 #493 확장(«명시 `Any`» 위반) = 별도 수리 배치(적대 리뷰 판형) | **R-19 등재** · 사용자 09-03: 조사 전 **보류** — 착수 시 범위(시그니처 무조건·변수 주석 프레임워크 미러 조건부) 재확인 |
 > | B 재확인 | 개정판 «수정 우선순위(발주자와 합의)»가 B를 플러그인 1순위로 기록 | 사용자 재확인(09-03 파트 1): **기각 확정** — 게이트(실행·차단)는 프로젝트 소유 · 플러그인은 «생성 코드가 mypy strict·ruff와 충돌하지 않게 설계» 원칙만 소유(R-20 등재) | 종결(8eab0f0) |
 > | F(추가 19:30) | composition root 주입 callable ≡ 포트 Protocol 확인·실배선 테스트 부재(리딩 BC 1건 프로덕션 결함) — 제안 F-1·F-2 문면 2줄 | 접수 · ⓪ 검증 전(재현·표본 외 대조·무손실 판정 미실시) | 제보 수정 단계(사용자 09-03: G-A 승격 뒤)에서 D·E·F·G·H 일괄 ⓪~⑥ |
-> | G(dddjango 추기) | 카탈로그 레인 발견 ⑪ — OHS의 port 예외 소비 import가 G1 boundary-imports 기계 블록에 없어(산문 §167만) #93이 Phase 2에서 발화 | architect 형식 규범(boundary-imports 완전성)에 «예외 소비 import 기재» 조항 후보 · 1레인 | 제보 수정 단계 · ⓪ 검증 전 |
+> | G(dddjango 추기) | 카탈로그 레인 발견 ⑪ — OHS의 port 예외 소비 import가 G1 boundary-imports 기계 블록에 없어(산문 §167만) #93이 Phase 2에서 발화 · ① 리뷰 A 판정: 사각 계열이 아니라 **채널 전사 결손**(블록에 적혔다면 예보됐다 — 실행기는 선언 import를 스텁에 방출) | architect 형식 규범(boundary-imports 완전성)에 «예외 소비 import 기재» 조항 후보 · 1레인 · 승격 배치가 사각 목록 S3 문면에 «산문에만 적힌 경계 import 는 표면 밖» 반영(보고 정직화) | 제보 수정 단계 · ⓪ 검증 전(규범 조항) |
 > | H(dddjango 추기) | 카탈로그 레인 발견 ⑫ — pre-content 골격의 «자리 실체화(빈 모듈)» ↔ #219/#635 «클래스 하나» 상충 → 제거 시 #218/#193/#576 캐스케이드(왕복 2회·≈14분) | Coordinator 골격 규범 또는 검사기 pre-content 면제 중 택일 후보 · 1레인 관측 | 제보 수정 단계 · ⓪ 검증 전 |
 >
 > 릴리즈: 머지·rev2 집행됨(09-03 main 88a65a0 · 미push). **릴리즈는 사용자 요청 시까지 보류**(09-03 지시). 순서: G-A pre-gate 승격 → 제보 수정(D·E·F·G·H) → 릴리즈 요청 시 `make release`.
@@ -242,8 +242,9 @@ evidence_retrieval_port=RagRuntimeEvidenceRetrievalAdapter(run_retrieval=service
 
 ### spring_dream 쪽 후속(참고)
 
-- 수정 방향(발주자 결정 대기 2건): ① 런타임 embedder = Release가 pin한 로컬 모델 스냅숏(`model_snapshot.verify_model_snapshot_ref` → `load_local_embedder`)을 그대로 로드 ② 모델 재사용(캐시) 자리는 BC가 아니라 framework 런타임(`service_runtime`) — BC 안 모듈 전역·lazy 싱글톤은 플러그인 규칙 위반이므로. BC 배선은 `partial(…, data_root=data_root)`만 넘긴다.
-- 리딩 BC에 실배선 테스트 1개 추가(F-2 선례).
+- **수리 완료(2026-09-03 `36258bb`, 발주자 직접)**: ① 런타임 embedder = Release manifest `build_plan_ref` → Build Plan의 유일한 `model-snapshot:` 참조 → `verify_model_snapshot_ref`·`load_local_embedder`(framework `service_runtime.retrieve_release_evidence_with_local_embedder`, `functools.cache`로 프로세스당 1회) ② BC 배선은 `partial(…, data_root=data_root)`만 주입(#85 인라인 유지, BC 안 싱글톤 없음). 검증: mypy 122→121·registry_gate 귀속 0·make test 614+2096.
+- 리딩 BC 실배선 테스트 1개 추가(`test/unit/test_composition_root_wiring.py` — F-2 선례): 진짜 팩토리→실 어댑터→실 런타임→실 Release, fake는 LLM 경계 포트와 가중치 소재뿐. 옛 배선으로 되돌리면 `TypeError: missing 'data_root' and 'embedder'`로 실패함을 실측.
+- 작성 중 플러그인 검사기가 잡은 것 2건(F-2 문면에 함께 적을 정합 조건): 타 BC OHS 계약 import(#13·#385 → **자기 BC의 fake 포트**로 대체) · `test/integration/`은 실DB 자리(#389 → **`test/unit/`**에 둔다).
 
 ## G·H. (dddjango 측 추기 · 2026-09-03 · 카탈로그 레인 발견 ⑪·⑫ — 사용자 지시로 이 파일에 병기)
 

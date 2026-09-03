@@ -186,3 +186,13 @@
 | 커버 | B3 오탐 필터 escape hatch | BLOCKER | §6 필터 상한(계통적=설계 반송) |
 | 커버 | M1 계약 필드 채널 / M2 자동 삽입 경계 / M3 상수 복제 / M4 84% 과대 / M5 API-error tree 레인 / M6 대장 미인용 | MAJOR | [신규 2] 필드 병기·D2 화이트리스트·§9-2 소성물·§1 비목표(#92/#93)+§2 재산정·§7-4 매트릭스·§7-6 대장 |
 | 커버 | m1~m5 | MINOR | [신규 2] 확약 명문화·전수 의무·#401 문면 정정·[신규 1] 승격 표기 금지·§6 산입 규칙 |
+
+## 12. v5 집행 추기 — 차단 승격 (2026-09-03 · 배치 `feat/pregate-enforce` · 루브릭 `2026-09-03-pregate-promotion-rubric.md` · 계획 `…-promotion-plan.md` v2)
+
+- **§8 판정**: v2.17.16 재실측 레인(fortune-catalog · 신규 BC) = ⑴ 오탐 0(corrected 결함 1/ID 2 · 다음 run 소멸) ⑵ G2 귀속 0 ⑶ 정위치 형식 red 0 → 충족. «실전 레인 ≥2»는 구판 3레인(media-library·notification·email-template)으로 충족 — 이월 근거 = 검사기 27종 `check-*.py` v2.17.14→16 변경 0(판정 표면 불변 · 스텁 잡음·파서 계열은 이월 불가). 효과 문면 정정: «③형 STOP 문서 0 · 단 슬라이스 내 검사기 정합 3회 ≥69분(표면 밖 #574·#93·#642·#85)» — 총 소요는 효과 근거에서 제외.
+- **§8 ⑵ «기계 대조 스크립트»** 는 존재하지 않았다(수기) → 정정: 미탐 판정은 «슬라이스·G2 registry 귀속 목록 ∩ 예보 ID·규칙 수기 대조 + 근거 파일 첨부»이며, 최신성·처분 완결의 기계 대조는 `--check-report` 가 맡는다.
+- **§5-6 skip 조항 폐지 집행**: machine 블록 부재 = 형식 red(exit 3 «블록 부재») · file-plan 0행 = 형식 red(«블록 공허») — R-3436 rev3(Exception→Prohibition). 구형 명세 레인(kkebi 20/20 · spring 18/24 폴더)은 design-spec 개정 시 소급 블록 1회전(의도된 비용) · 변경 0 순수 구현 수정은 G2 최신성 한정으로 세우지 않는다(R-3445 ③ 한정).
+- **§9-6 manifest**: pipeline 그룹에 `design_pregate.py` · packs 그룹에 `pregate_symbol_kinds.json` 등재(봉인 draft 재발행).
+- **§10 M2 모드 표시**: `MODE = "enforce"` · 헤더 «모드: 차단(enforce)» · 판정·exit 는 모드 비의존 — 차단의 실체 = R-3433 rev4 반송 의무 + `--check-report`(배너 G1/G1′·G2 근거의 기계 출처 — 자기 판정 0건) + 회피 경로 봉쇄(`baseline_form_errors`: add 충돌 · update/remove 대상 기준선 부재(유효 승격 형태 예외) — reading run 36→37 재라벨 도피 봉쇄).
+- **신규 규범**: R-3444(G2 배너 최신성 1행 · s007/b59) · R-3445(캐시 skip·재발화·Phase 2 최신성 · s006/b10 — 규범↔블록 1:1 복원). R-0411 rev3(G2 제시 금지 목록에 «최신성 불비»). architect R-3425 rev2(태그의 기준선 의미론)·R-3427 rev3.
+- **이월**: 승격 후 첫 실전 레인 = ledger 레인 5 관찰(형식 반송 계수에 «구형 명세 블록 부재 반송» 별도 계수) · exit 4(실체화 0·결손 0) 경로는 이번 배치의 `remove-deferred`·`update-target ⓑ` 픽스처가 고정.

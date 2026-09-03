@@ -1,0 +1,15 @@
+L1 old exit=2
+L1 new exit=2
+L2 old exit=2
+L2 new exit=2
+L3 old exit=0
+L3 new exit=0
+L4 old exit=2
+L4 new exit=2
+R old exit=4
+R new exit=3
+Rp old exit=5
+Rp new exit=3
+catalog-check exit=3
+kkebi-1 (/Users/hyun/Desktop/kkebi-server/.dddjango/20260823-0623-image-bc/) exit=3
+DONE

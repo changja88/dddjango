@@ -75,6 +75,8 @@ GROUPS: "dict[str, dict]" = {
             "dddjango/scripts/regen_core.py",
             "dddjango/scripts/rulepack.py",
             "dddjango/scripts/registry_gate.py",
+            # pre-gate 실행기 — 차단 승격(2026-09-03)으로 G1/G1′·G2 배너의 근거를 내는 실행 경로가 됐다(설계 §9-6).
+            "dddjango/scripts/design_pregate.py",
             "dddjango/commands/dddjango.md",
             "codex-dddjango/skills/dddjango/SKILL.md",
         ],
@@ -100,6 +102,8 @@ GROUPS: "dict[str, dict]" = {
         "why": "C암 규칙 팩과 B암 재료. 팩이 바뀌면 처치 자체가 바뀐다.",
         "globs": [
             "dddjango/scripts/rulepack.json",
+            # architect 가 symbols 채널에 쓰는 Base 종류 닫힌 목록(검사기 소스 기계 추출 소성물 — 팩과 같은 이유로 동결).
+            "dddjango/scripts/pregate_symbol_kinds.json",
             "workspace/eval/ab/T0-rule-owner-map-snapshot.md",
         ],
     },

@@ -1,0 +1,68 @@
+# design_pregate — 예보 실행 · 기준선 1eb8507424c7 (--base 1eb8507424c7) · 모드 관찰(observe) · 실행기: design_pregate.py · dddjango v(unknown) · 블록 해시 f2500315a3b6
+(예보는 Phase 2 step 6(G2 registry 게이트)의 실행·증거 요구를 어떤 형태로도 대체·축약하지 않는다.)
+실체화 99건 · dirty overlay 0건 · 미시뮬레이션 7건 · already-built 0건
+
+# registry_gate — 판정 차분 · copy · 앵커 1bb075dfdc70
+툴체인: dddjango v(unknown) · py3.14 · 실행 트리 digest 490fee5f5bf3aaa6(39파일) · 경로 /private/tmp/claude-501/-Users-hyun-Desktop-dddjango/d31bf8ef-f45e-4609-badc-3add1039bdb0/scratchpad/old/dddjango/scripts
+**귀속 0 ≠ 전체 clean** — 이 게이트는 «이번 런이 위반을 늘렸나»만 판정한다(legacy 격리).
+| 검사기 | anchor | current |
+|---|---|---|
+| `check-mechanism-ownership.py` | 0 | 0 |
+| `check-error-centralization.py` | 0 | 0 |
+| `check-response-schema-bypass.py` | 0 | 0 |
+| `check-layer-skeleton.py` | 2 | 2 |
+| `check-openapi-error-declaration.py` | 0 | 0 |
+| `check-context-isolation.py` | 0 | 2 |
+| `check-app-container.py` | 0 | 0 |
+| `check-ninja-boundary-middleware.py` | 0 | 0 |
+| `check-common-container.py` | 0 | 0 |
+| `check-idempotency-scope-creep.py` | 0 | 0 |
+| `check-public-surface-annotation.py` | 2 | 2 |
+| `check-test-config.py` | 2 | 2 |
+| `check-transient-overmapping.py` | 0 | 0 |
+| `check-synthetic-infra-exc.py` | 0 | 0 |
+| `check-api-error-controller-contract.py` | 0 | 0 |
+| `check-composition-root.py` | 0 | 0 |
+| `check-db-table.py` | 0 | 0 |
+| `check-choices-literal-consumption.py` | 0 | 0 |
+| `check-usecase-dto-placement.py` | 0 | 0 |
+| `check-transaction-boundary.py` | 0 | 0 |
+| `check-domain-model.py` | 2 | 2 |
+| `check-port-adapter-pairing.py` | 0 | 0 |
+| `check-event-publish.py` | 0 | 0 |
+| `check-broker-contract.py` | 0 | 0 |
+| `check-missable-entrance.py` | 0 | 0 |
+| `check-naming.py` | 0 | 0 |
+| `check-business-vocabulary.py` | 2 | 2 |
+
+== 귀속(N∖L) 1건 ==
+  check-context-isolation.py :: [#14] application/accounts/application_layer/verification_code/request_verification_code/request_verification_code_use_case.py: `with unit_of_work:` 블록 «안»에서 크로스-BC 포트(`_verification_email`)를 부르면 위반이다
+
+== legacy 잔존(L∩N) 2867건 · 해소(L∖N) 0건 ==
+  check-business-vocabulary.py: 2
+  check-domain-model.py: 5
+  check-layer-skeleton.py: 4
+  check-public-surface-annotation.py: 2854
+  check-test-config.py: 2
+
+귀속 레코드 sidecar → /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/design-pregate-vaf2aqrd/introduced.json (레코드 1 · 대응 없는 귀속 라인 0)
+
+판정: 귀속 1건 → red
+
+== 예보 항목 1건 ==
+  `3dc440496a29` check-context-isolation.py :: [#14] application/accounts/application_layer/verification_code/request_verification_code/request_verification_code_use_case.py: `with unit_of_work:` 블록 «안»에서 크로스-BC 포트(`_verification_email`)를 부르면 위반이다
+  채널 메모: boundary-imports 스텁 미반영(비-add `update` 칸 — 실존 판정에는 포함): application/accounts/composition_root/dependency_wiring.py
+  채널 메모: physical-signals 미반영(미등재 또는 비-add): tests/test_deployment_config.py
+  채널 메모: physical-signals 미반영(미등재 또는 비-add): tests/test_settings_profiles.py
+  채널 메모: physical-signals 미반영(미등재 또는 비-add): application/accounts/test/e2e/test_verification_code_request.py
+  채널 메모: physical-signals 미반영(미등재 또는 비-add): application/accounts/test/e2e/test_verification_code_rules.py
+  채널 메모: physical-signals 미반영(미등재 또는 비-add): application/accounts/test/fake/verification_email_port.py
+
+== 계약 실존 결손 0건 (boundary-imports 3단) ==
+  집계: 행 22 · 이름 판정 25 · 실존 확인 5 · 자기 add 해소 12 · 자기 update 해소 0 · 저장소 밖(검사 밖) 8 · 판정 불능 0 · 결손 0(항목 0)
+  (없음) — 명세가 선언한 경계 import 계약 전건 실존(저장소 밖 8건은 검사 밖·자기 add 12건은 symbols 채널 소관·자기 update 0건은 update 칸 symbols 선언)
+
+판정: 예보 red — P/S/I급 결정 계약 위반 예보 1건 · 계약 실존 결손 0건(권고·비차단)
+요약: 귀속 1건 · 실존 결손 0건 · 기준선 1eb8507424c7 · 모드 관찰
+
+예보 리포트 append → /private/tmp/claude-501/-Users-hyun-Desktop-dddjango/d31bf8ef-f45e-4609-badc-3add1039bdb0/scratchpad/retro/L2-old.md

@@ -1,0 +1,97 @@
+# design_pregate — 예보 실행 · 기준선 e1294f59c35c (--base e1294f59c35c) · 모드 차단(enforce) · 실행기: design_pregate.py · dddjango v2.17.16 · 블록 해시 cb95a1bddb32
+(예보는 Phase 2 step 6(G2 registry 게이트)의 실행·증거 요구를 어떤 형태로도 대체·축약하지 않는다.)
+실체화 97건 · dirty overlay 0건 · 미시뮬레이션 1건 · already-built 0건
+
+# registry_gate — 판정 차분 · copy · 앵커 949ea8d2b671
+툴체인: dddjango v2.17.16 · py3.14 · 실행 트리 digest 678275308e227fd8(39파일) · 경로 /Users/hyun/Desktop/dddjango/dddjango/scripts
+**귀속 0 ≠ 전체 clean** — 이 게이트는 «이번 런이 위반을 늘렸나»만 판정한다(legacy 격리).
+| 검사기 | anchor | current |
+|---|---|---|
+| `check-mechanism-ownership.py` | 0 | 0 |
+| `check-error-centralization.py` | 0 | 0 |
+| `check-response-schema-bypass.py` | 0 | 0 |
+| `check-layer-skeleton.py` | 2 | 2 |
+| `check-openapi-error-declaration.py` | 0 | 0 |
+| `check-context-isolation.py` | 2 | 2 |
+| `check-app-container.py` | 0 | 0 |
+| `check-ninja-boundary-middleware.py` | 0 | 0 |
+| `check-common-container.py` | 0 | 0 |
+| `check-idempotency-scope-creep.py` | 0 | 0 |
+| `check-public-surface-annotation.py` | 2 | 2 |
+| `check-test-config.py` | 2 | 2 |
+| `check-transient-overmapping.py` | 0 | 0 |
+| `check-synthetic-infra-exc.py` | 0 | 0 |
+| `check-api-error-controller-contract.py` | 0 | 0 |
+| `check-composition-root.py` | 0 | 0 |
+| `check-db-table.py` | 0 | 0 |
+| `check-choices-literal-consumption.py` | 0 | 0 |
+| `check-usecase-dto-placement.py` | 0 | 2 |
+| `check-transaction-boundary.py` | 0 | 0 |
+| `check-domain-model.py` | 2 | 2 |
+| `check-port-adapter-pairing.py` | 0 | 0 |
+| `check-event-publish.py` | 0 | 0 |
+| `check-broker-contract.py` | 0 | 0 |
+| `check-missable-entrance.py` | 0 | 0 |
+| `check-naming.py` | 0 | 0 |
+| `check-business-vocabulary.py` | 2 | 2 |
+
+== 귀속(N∖L) 3건 ==
+  check-usecase-dto-placement.py :: [#635] application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case.py: 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+  check-usecase-dto-placement.py :: [#635] application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case.py: 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+  check-usecase-dto-placement.py :: [#635] application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case.py: 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+
+== legacy 잔존(L∩N) 2607건 · 해소(L∖N) 0건 ==
+  check-business-vocabulary.py: 2
+  check-context-isolation.py: 1
+  check-domain-model.py: 5
+  check-layer-skeleton.py: 4
+  check-public-surface-annotation.py: 2593
+  check-test-config.py: 2
+
+귀속 레코드 sidecar → /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/design-pregate-hj2hr3la/introduced.json (레코드 3 · 대응 없는 귀속 라인 0)
+
+판정: 귀속 3건 → red
+
+== 예보 항목 3건 ==
+  `e64f1f193ef0` check-usecase-dto-placement.py :: [#635] application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case.py: 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+  `9a52e8b86cb0` check-usecase-dto-placement.py :: [#635] application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case.py: 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+  `f5f36cd3aee8` check-usecase-dto-placement.py :: [#635] application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case.py: 진입점은 클래스 «하나»다 — 공개 클래스가 0개다
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case/list_fortune_types_use_case.py::ListFortuneTypesUseCase
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case/list_fortune_types_use_case.py::ListFortuneTypesUseCase.__init__(active_service_bundle_port: ActiveServiceBundlePort, relation_table_port: RelationTablePort) -> None
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case/list_fortune_types_use_case.py::ListFortuneTypesUseCase.execute(query: ListFortuneTypesQuery) -> ListFortuneTypesResult
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case/list_fortune_types_source_unavailable.py::ListFortuneTypesSourceUnavailable(Exception) {phase: Literal["pre_pin", "post_pin"], reason: Literal["bundle_unavailable", "relation_table_unavailable"], bundle_id: str | None, cause: ActiveServiceBundleContractMismatch | RelationTableContractMismatch}
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case/list_fortune_types_source_unavailable.py::ListFortuneTypesSourceUnavailable.from_active_bundle_pin_failure(cause: ActiveServiceBundleContractMismatch) -> ListFortuneTypesSourceUnavailable
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_catalog/application_layer/catalog_inquiry/list_fortune_types/list_fortune_types_use_case/list_fortune_types_source_unavailable.py::ListFortuneTypesSourceUnavailable.from_relation_table_load_failure(cause: RelationTableContractMismatch, bundle_id: str) -> ListFortuneTypesSourceUnavailable
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case/select_visible_fortune_candidates_use_case.py::SelectVisibleFortuneCandidatesUseCase
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case/select_visible_fortune_candidates_use_case.py::SelectVisibleFortuneCandidatesUseCase.__init__(active_service_bundle_port: ActiveServiceBundlePort, relation_table_port: RelationTablePort) -> None
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case/select_visible_fortune_candidates_use_case.py::SelectVisibleFortuneCandidatesUseCase.execute(command: SelectVisibleFortuneCandidatesCommand) -> SelectVisibleFortuneCandidatesResult
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case/select_visible_fortune_candidates_source_unavailable.py::SelectVisibleFortuneCandidatesSourceUnavailable(Exception) {phase: Literal["pre_pin", "post_pin"], reason: Literal["bundle_unavailable", "relation_table_unavailable"], bundle_id: str | None, cause: ActiveServiceBundleContractMismatch | RelationTableContractMismatch}
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case/select_visible_fortune_candidates_source_unavailable.py::SelectVisibleFortuneCandidatesSourceUnavailable.from_active_bundle_pin_failure(cause: ActiveServiceBundleContractMismatch) -> SelectVisibleFortuneCandidatesSourceUnavailable
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_catalog/application_layer/catalog_inquiry/select_visible_fortune_candidates/select_visible_fortune_candidates_use_case/select_visible_fortune_candidates_source_unavailable.py::SelectVisibleFortuneCandidatesSourceUnavailable.from_relation_table_load_failure(cause: RelationTableContractMismatch, bundle_id: str) -> SelectVisibleFortuneCandidatesSourceUnavailable
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case/resolve_fortune_support_use_case.py::ResolveFortuneSupportUseCase
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case/resolve_fortune_support_use_case.py::ResolveFortuneSupportUseCase.__init__(active_service_bundle_port: ActiveServiceBundlePort, relation_table_port: RelationTablePort) -> None
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case/resolve_fortune_support_use_case.py::ResolveFortuneSupportUseCase.execute(command: ResolveFortuneSupportCommand) -> ResolveFortuneSupportResult
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case/resolve_fortune_support_source_unavailable.py::ResolveFortuneSupportSourceUnavailable(Exception) {phase: Literal["pre_pin", "post_pin"], reason: Literal["bundle_unavailable", "relation_table_unavailable"], bundle_id: str | None, cause: ActiveServiceBundleContractMismatch | RelationTableContractMismatch}
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case/resolve_fortune_support_source_unavailable.py::ResolveFortuneSupportSourceUnavailable.from_active_bundle_pin_failure(cause: ActiveServiceBundleContractMismatch) -> ResolveFortuneSupportSourceUnavailable
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_catalog/application_layer/catalog_inquiry/resolve_fortune_support/resolve_fortune_support_use_case/resolve_fortune_support_source_unavailable.py::ResolveFortuneSupportSourceUnavailable.from_relation_table_load_failure(cause: RelationTableContractMismatch, bundle_id: str) -> ResolveFortuneSupportSourceUnavailable
+  채널 메모: physical-signals 미반영(미등재 또는 비-add): test/unit/test_active_relation_table_adapter.py
+  채널 메모: physical-signals 미반영(미등재 또는 비-add): test/unit/test_fortune_visibility_service.py
+  채널 메모: physical-signals 미반영(미등재 또는 비-add): test/unit/test_relation_table_adapter_synthetic.py
+  채널 메모: physical-signals 미반영(미등재 또는 비-add): test/unit/test_pack_query_equivalence.py
+  채널 메모: physical-signals 미반영(미등재 또는 비-add): test/unit/test_catalog_inquiry_contract.py
+  채널 메모: physical-signals 미반영(미등재 또는 비-add): test/unit/test_catalog_inquiry_contract.py
+  채널 메모: physical-signals 미반영(미등재 또는 비-add): test/unit/test_catalog_inquiry_contract.py
+  채널 메모: physical-signals 미반영(미등재 또는 비-add): test/unit/typecheck_catalog_inquiry_open_host_service_consumer.py
+  채널 메모: physical-signals 미반영(미등재 또는 비-add): test/unit/test_active_service_bundle_adapter.py
+  채널 메모: physical-signals 미반영(미등재 또는 비-add): test/unit/test_catalog_inquiry_contract.py
+  채널 메모: physical-signals 미반영(미등재 또는 비-add): test/unit/test_fortune_type.py
+  채널 메모: physical-signals 미반영(미등재 또는 비-add): test/unit/test_catalog_inquiry_use_cases.py
+
+== 계약 실존 결손 0건 (boundary-imports 3단) ==
+  집계: 행 5 · 이름 판정 5 · 실존 확인 2 · 자기 add 해소 0 · 자기 update 해소 0 · 저장소 밖(검사 밖) 3 · 판정 불능 0 · 결손 0(항목 0)
+  (없음) — 명세가 선언한 경계 import 계약 전건 실존(저장소 밖 3건은 검사 밖·자기 add 0건은 symbols 채널 소관·자기 update 0건은 update 칸 symbols 선언)
+
+판정: 예보 red — P/S/I급 결정 계약 위반 예보 3건 · 계약 실존 결손 0건(권고·비차단)
+요약: 귀속 3건 · 실존 결손 0건 · 기준선 e1294f59c35c · 모드 차단
+
+예보 리포트 append → /private/tmp/claude-501/-Users-hyun-Desktop-dddjango/d31bf8ef-f45e-4609-badc-3add1039bdb0/scratchpad/retro/L4-new.md
