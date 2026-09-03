@@ -1575,3 +1575,5 @@ discipline-tdd-final	s025-5.5	bb72d32804eb1c941d6026429966a78d1a6e5782978e803d87
 agent-design-architect	s005	34c5c76e33df319046b246c1f132e3b7189bc6102d7bce8e2790f1e526811220	graph	-	-	-	-	rebaseline:2026-09-04 현장 보고 수리 2 — G R-3427 rev4(경계 3분류·잎→port 행)
 architecture-ddd-final	s023-3.6	9302725c48c9eb0e7a41592e3170ecb93bc4414dd4db8b40f5454b61b6a0f27b	graph	-	-	-	-	rebaseline:2026-09-04 현장 보고 수리 2 — G R-3449 b3 불릿(port 예외 번역 = use case)
 discipline-houserules-final	s003-0	c4e193bdfcdffcb19c011021dae37ab874076e171c248144f75cd6db91aaa4b3	graph	-	-	-	-	rebaseline:2026-09-04 현장 보고 수리 2 — H R-3181 rev3(빈 파일 내용 규칙 시점·검사기 건너뜀·삭제 금지)
+architecture-ddd-final	s023-3.6	7c24f09e589dfaafab1c4ff6f01062345d0e74484eadf061131b2409f53066e8	graph	-	-	-	-	rebaseline:2026-09-04 현장 보고 수리 2 — ⑤ B MAJOR-1 반영(in-place) — R-3449 번역 칸 = domain_layer/<aggregate>/exception/ (application_layer/<area>/exception.py 는 트리 칸 없음 #490)
+agent-design-architect	s005	42bed4d8cb74f9d78c8cfdabef122ebf7f711c5a94ec870e9faa2699f653d894	graph	-	-	-	-	rebaseline:2026-09-04 현장 보고 수리 2 — ⑤ B MINOR-1 반영(in-place) — R-3427 rev4 «실행기 사각 S3» → «pre-gate 보고 헤더의 사각 목록 S3»

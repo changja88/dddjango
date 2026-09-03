@@ -19,8 +19,10 @@
        몫 — 프로덕션 `assert` · isinstance 가드 뒤 TypeError/ValueError raise 를
        후보로만 출력한다(exit 불산입 · 마무리는 discipline-reviewer).
   #645 명시 `Any` 금지 — 시그니처(인자·`*args/**kwargs`·반환)의 bare `Any`(`Optional[Any]`·
-       `Any | None`·문자열·별칭·`typing.Any` 포함)는 위반 · 시그니처 안 nested(`dict[str, Any]`)와
-       변수·속성·클래스 필드의 `Any` 는 ⓓ 후보(exit 불산입). #493(주석 «존재»)과 독립.
+       `Any | None`·`Any` 가 섞인 합집합·`Annotated[Any, …]`·문자열·별칭·`typing.Any`·미해소 `Any`
+       이름(fail-closed) 포함)는 위반 · 시그니처 안 nested(`dict[str, Any]`)와 변수·속성·클래스
+       필드의 `Any` 는 ⓓ 후보(exit 불산입). #493(주석 «존재»)과 독립. 검출 한계: `TypeAlias`
+       재별칭·`cast(Any, …)`·함수 본문/`with`/클래스 본문 안 import 는 표면 밖.
 
 문법 외 면제(도구·프로토콜 소유 — 사람이 짓는 자리가 아니다):
   - `migrations/`(#593 이 모양을 소유) · `manage.py`/`wsgi.py`/`asgi.py`(생성 골격).
@@ -350,7 +352,7 @@ def _any_bindings(mod: ast.Module) -> "tuple[set[str], set[str]]":
 
     `_module_bindings` 는 출처 모듈을 버리고 원명만 남기므로 따로 센다(같은 걷기 규칙 —
     if/try 하위 문 포함 · 뒤따르는 모듈 수준 재정의는 그림자 · 함수·클래스 본문 안 import 는 안 본다)."""
-    names: set[str] = set()
+    names: set[str] = {"Any"}  # fail-closed — 모듈 수준 비-Any 바인딩이 그림자하기 전까지 `Any` 이름은 Any 다
     mods: set[str] = set()
 
     def shadow(name: str) -> None:
@@ -433,19 +435,30 @@ def _union_members(node: ast.AST) -> "list[ast.AST] | None":
 
 
 def _explicit_any(ann: "ast.AST | None", names: set[str], mods: set[str]) -> "str | None":
-    """애너테이션의 명시 `Any` — "bare"(루트가 Any · `| None`/Optional/Union 언랩 뒤 전 구성원이 Any) ·
-    "nested"(하위 어딘가에 Any — 제네릭 인자·Callable·type[]·Annotated) · None."""
+    """애너테이션의 명시 `Any` — "bare"(루트가 Any · `| None`/Optional/Union 을 평탄화한 구성원에 Any 가
+    하나라도 있음(Any 는 합집합을 삼킨다) · `Annotated[Any, …]` 의 루트) · "nested"(하위 어딘가에 Any —
+    제네릭 인자·Callable·type[]) · None. `Literal["Any"]` 의 문자열은 타입이 아니라 값이라 제외."""
     if ann is None:
         return None
     node = _unstring(ann)
     if _is_any(node, names, mods):
         return "bare"
+    if isinstance(node, ast.Subscript) and _name_of(node.value) == "Annotated":
+        first = node.slice.elts[0] if isinstance(node.slice, ast.Tuple) and node.slice.elts else node.slice
+        if _explicit_any(first, names, mods) == "bare":
+            return "bare"
     members = _union_members(node)
     if members is not None:
         rest = [m for m in members if not (isinstance(m, ast.Constant) and m.value is None)]
-        if rest and all(_is_any(m, names, mods) for m in rest):
+        if rest and any(_is_any(m, names, mods) for m in rest):
             return "bare"
+    literal_values: set[int] = set()
     for n in ast.walk(node):
+        if isinstance(n, ast.Subscript) and _name_of(n.value) == "Literal":
+            literal_values |= {id(v) for v in ast.walk(n.slice)}
+    for n in ast.walk(node):
+        if id(n) in literal_values:
+            continue
         if _is_any(n, names, mods):
             return "nested"
         if n is not node and isinstance(n, ast.Constant) and isinstance(n.value, str):
@@ -459,8 +472,6 @@ def _check_explicit_any(mod: ast.Module, rel: Path, out: Findings, cands: Candid
     """#645 — 시그니처 bare `Any` 는 위반 · 시그니처 nested 와 변수/속성/클래스 필드의 `Any` 는 ⓓ 후보.
     #493 과 독립이다(«존재»는 #493 · «내용»은 #645 — 같은 줄에서 둘 다 날 수 있다)."""
     names, mods = _any_bindings(mod)
-    if not names and not mods:
-        return
     parent: dict[ast.AST, ast.AST] = {}
     for node in ast.walk(mod):
         for child in ast.iter_child_nodes(node):
@@ -469,10 +480,11 @@ def _check_explicit_any(mod: ast.Module, rel: Path, out: Findings, cands: Candid
     for node in ast.walk(mod):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             in_class = isinstance(parent.get(node), ast.ClassDef)
+            is_static = any(_name_of(d) == "staticmethod" for d in node.decorator_list)
             args = node.args
             slots: list[tuple[str, "ast.AST | None"]] = []
             for i, a in enumerate(list(args.posonlyargs) + list(args.args)):
-                if in_class and i == 0 and a.arg in ("self", "cls"):
+                if in_class and not is_static and i == 0 and a.arg in ("self", "cls"):
                     continue
                 slots.append((a.arg, a.annotation))
             slots += [(a.arg, a.annotation) for a in args.kwonlyargs]

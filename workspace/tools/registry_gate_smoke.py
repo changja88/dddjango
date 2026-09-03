@@ -239,7 +239,7 @@ def _pre_repair_gate(td: Path) -> "Path | None":
     바뀌면(예: 2026-09-04 #219/#635 의 골격 파일 건너뜀) 옛 검사기의 발화가 diff 를 오염시키므로).
     옛 게이트의 import 계약(findings·anchor_diff)이 현행 모듈과 맞아야 한다 — 어긋나면 스모크가 그 사실로 red 다."""
     dest: Path = td / "pre-repair"
-    shutil.copytree(GATE.parent, dest / "dddjango" / "scripts")
+    shutil.copytree(GATE.parent, dest / "dddjango" / "scripts", ignore=shutil.ignore_patterns("__pycache__"))
     old_gate: "subprocess.CompletedProcess[bytes]" = subprocess.run(
         ["git", "-C", str(ROOT), "show", f"{_PRE_REPAIR_COMMIT}:dddjango/scripts/registry_gate.py"],
         capture_output=True)

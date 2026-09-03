@@ -11,7 +11,7 @@
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "97751d31d9bccdf72c51214ff9dd0220233ff431b349c5ca8d90d3beb70a572c"
+      "sha256": "8d0d6be8f7b56cdd487212bee8d7d09ef056d99fe4a7730d33fe877fa40cd0b2"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
@@ -47,7 +47,7 @@
     },
     {
       "path": "ontology/rules/architecture-ddd-final.ttl",
-      "sha256": "0d2cd89b85b1a070f5bd8ed8d61638507533901a18b128bcad630022ec5a29b9"
+      "sha256": "cf3f148e5a1a01fde4e351e23da30b071620bafba93ad082d95be1cb28b1c3ec"
     },
     {
       "path": "ontology/rules/architecture-ddd-skill.ttl",
@@ -60934,7 +60934,7 @@
       ],
       "document": "dddjango/skills/architecture-ddd/references/final.md",
       "expression": "https://numchida.com/ns/djr#R-3449@2026-09-04",
-      "label": "port 예외의 번역은 use case — 자기 영역 exception.py 로 번역 · driving 잎은 port 예외 타입 비의존(직접 import·재수출 경유 모두) · 잎은 번역된 실패만 분기",
+      "label": "port 예외의 번역은 use case — 도메인 예외 칸(domain_layer/<aggregate>/exception/)으로 번역 · driving 잎은 port 예외 타입 비의존(직접 import·재수출 경유 모두) · 잎은 번역된 실패만 분기",
       "order_rank": 1716,
       "section": "dddjango/skills/architecture-ddd/references/final.md/s023-3.6",
       "section_number": "3.6"
