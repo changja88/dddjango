@@ -11,7 +11,7 @@
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "3628ff6d89f43472006c0697b8f3093e3e6ef55afb27ec1278a9560cc8c9ba1f"
+      "sha256": "ff91630397742ad3a2780ba133f1fbe9585f375eedc6a7c8871d8e6b18c1d42a"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
@@ -55,7 +55,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "4c7b38e9720923bcaa792a8ff4c49da98a6ba6693f1bdf2496ef70afa0db9d87"
+      "sha256": "df758c6370c079059a769fc26014c5d89ed4f3949e3a6db5380af8cd2b801af2"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -60683,7 +60683,7 @@
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
       "expression": "https://numchida.com/ns/djr#R-3433@2026-09-03b",
-      "label": "차단 모드 red 처분 — 귀속·형식 red 는 architect 반송 의무 · 배너 근거 = --check-report exit 0 · 예외 = 예보 항목 전건 ignored(빚)|filtered(S<n>|실코드 exit 0) · 구조 규칙 filtered 불가",
+      "label": "차단 모드 red 처분 — red 반송 의무 · 배너 근거 --check-report exit 0 · 예외 = 귀속 red 전건 ignored(빚)|filtered · path 등급 filtered 불가",
       "order_rank": 1067,
       "section": "dddjango/commands/dddjango.md/s006",
       "section_number": null
@@ -60758,7 +60758,7 @@
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
       "expression": "https://numchida.com/ns/djr#R-3438@2026-09-03b",
-      "label": "pre-gate 예보 리포트 — pregate-report.md append·안정 ID·처분 행 정형(백틱 ID → **라벨**(증거))·계약 실존 절(e- ID)·헤더 병기",
+      "label": "pre-gate 예보 리포트 — pregate-report.md append·안정 ID·처분 행 정형(백틱 ID → 굵은 라벨(증거))·계약 실존 절(e- ID)·헤더 병기",
       "order_rank": 945,
       "section": "dddjango/commands/dddjango.md/s002",
       "section_number": null

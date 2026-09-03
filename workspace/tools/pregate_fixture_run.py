@@ -726,6 +726,8 @@ def _run_enforce_bundle(scratch: Path, failures: "list[str]") -> None:
     repo: Path = _make_repo(scratch, "repo-enforce")
     _expect_form("noblock-spec", _run_pregate(FIXTURES / "noblock-spec.md", repo, report),
                  "블록 부재", report, "형식 red(블록 부재)", failures)
+    if "모드: 차단(enforce)" not in report.read_text(encoding="utf-8"):
+        failures.append("[enforce] 리포트 헤더에 «모드: 차단(enforce)» 스탬프 부재")
     _expect_form("empty-block-spec", _run_pregate(FIXTURES / "empty-block-spec.md", repo, report),
                  "블록 공허", report, "형식 red(블록 공허)", failures)
     spec_u: Path = FIXTURES / "update-target-spec.md"
@@ -805,6 +807,8 @@ def _run_checkreport_bundle(scratch: Path, failures: "list[str]") -> None:
     _expect_check("표 형식 처분(불인정)", _run_check(red_spec, report), 3, failures, f"처분 미기재 {EXPECTED_RED_COUNT}건")
     if red2.returncode != 2:
         failures.append(f"[checkreport] red 재실행 exit {red2.returncode} ≠ 2")
+    else:
+        print("check-report red 재실행: exit 2 — 기대 일치")
     # 형식 red 리포트 · 블록 부재 리포트 · skip·결손 리포트 · 구판 헤더 · 리포트 부재.
     report_f: Path = scratch / "pregate-report-cr-form.md"
     _run_pregate(FIXTURES / "form-red-spec.md", repo, report_f)
@@ -831,6 +835,10 @@ def _enforce_unit_checks() -> "list[str]":
     """차단 모드 유닛 — `baseline_form_errors`(순수 판정 · 전건 열거 · 승격 형태 예외) · `check_report`(파서 경계)."""
     out: "list[str]" = []
     dp: "types.ModuleType" = _load_module(EXECUTOR, "_pregate_enforce")
+    if len(dp.BLIND_SPOTS) != 9 or any(not s.startswith(f"S{i + 1} ") for i, s in enumerate(dp.BLIND_SPOTS)):
+        out.append("BLIND_SPOTS 번호 S1~S9 불일치(filtered ⓐ 인용 결정성)")
+    if dp.MODE != "enforce":
+        out.append(f"MODE = {dp.MODE!r} ≠ 'enforce'")
     with tempfile.TemporaryDirectory(prefix="pregate-unit-") as tmp:
         copy: Path = Path(tmp)
         for rel in ("a/existing.py", "a/gone_dir/__init__.py", "a/promo/__init__.py", "a/promo/promo.py",
@@ -870,9 +878,13 @@ def _enforce_unit_checks() -> "list[str]":
                            f"{want_kinds} · {sorted(want_promoted)}")
     spec_text: str = (FIXTURES / "green-spec.md").read_text(encoding="utf-8")
     h: str = dp.block_hash(spec_text)
-    head = lambda hh, verdict: (f"\n## pre-gate 예보 — 2026-09-03T00:00:00Z · green-spec.md\n\n"
-                                f"- 기준선 SHA: `{'0' * 40}` (--base HEAD) · 프로필: auto · 모드: 차단(enforce) · "
-                                f"실행기: design_pregate.py · dddjango v0 · 블록 해시 {hh}\n- 판정: {verdict}\n\n")
+    def head(hh: str, verdict: str) -> str:
+        """실행기 자신의 stub writer 로 헤더를 만든다 — 손 합성이 아니라 형식 드리프트에 같이 움직인다(5단계 리뷰 A8)."""
+        with tempfile.TemporaryDirectory(prefix="pregate-cr-") as td:
+            rp: Path = Path(td) / "r.md"
+            dp.write_report_stub(rp, Path("green-spec.md"), "HEAD", "0" * 40, verdict, [], hh)
+            return rp.read_text(encoding="utf-8") + "\n"
+    noblock_text: str = (FIXTURES / "noblock-spec.md").read_text(encoding="utf-8")
     red_body: str = ("### 예보 항목 (2건 · 안정 ID = sha256(규칙#+경로)[:12])\n\n- `aaaaaaaaaaaa` [#81] x\n- `bbbbbbbbbbbb` [#267] y\n\n"
                      "### 계약 실존\n\n- `e-cccccccccccc` ⑴ z\n")
     green_v: str = "예보 green — P/S/I급 결정 계약 위반 예보 0(«설계 검증됨» 아님) · 계약 실존 결손 0건(권고·비차단)"
@@ -894,13 +906,25 @@ def _enforce_unit_checks() -> "list[str]":
         ("e-ID 판독 밖", head(h, red_v) + red_body + coord + disp("aaaaaaaaaaaa", "ignored") + disp("bbbbbbbbbbbb", "filtered"), 0, "실존 결손 1"),
         ("해시 토큰 없음", head(h, green_v).replace(f" · 블록 해시 {h}", ""), 3, "최신성 증명 불가"),
         ("절 부재", "# 리포트\n아무 절도 없다\n", 1, "예보 절 부재"),
-        ("헤더 행 부재", "\n## pre-gate 예보 — t · s\n\n- 판정만 있음\n", 1, "헤더 행 부재"),
+        ("타임스탬프 없는 제목은 절이 아님", "\n## pre-gate 예보 — t · s\n\n- 기준선 SHA: `x` 블록 해시 ffffffffffff\n- 판정: 형식 red\n", 1, "예보 절 부재"),
+        ("헤더 행 부재", head(h, green_v).replace("- 기준선 SHA:", "- 기준선:"), 1, "헤더 행 부재"),
+        # rv3-C ⓔ·ⓡ·ⓢ + 5단계 C 결정 잔여 1
+        ("형식 red ∧ stale(사유 2)", head("f" * 12, "형식 red(블록 부재)"), 3, "stale", 2),
+        ("같은 ID ignored+corrected → 통과", head(h, red_v) + red_body + coord + disp("aaaaaaaaaaaa", "corrected") + disp("aaaaaaaaaaaa", "ignored") + disp("bbbbbbbbbbbb", "filtered"), 0, "처분 전건"),
+        ("ID 행 ≠ 라벨 행(불인정)", head(h, red_v) + red_body + coord + "- `aaaaaaaaaaaa` [#x] p\n  → **ignored**(근거)\n" + disp("bbbbbbbbbbbb", "filtered"), 3, "미기재 1건"),
+        ("구형 skip + 마커 없는 명세", None, 3, "블록 부재"),
     ]
-    for label, text, want_code, needle in rcases:
-        code, problems, info = dp.check_report(spec_text, text)
+    for case in rcases:
+        label, text, want_code, needle = case[:4]
+        want_n: "int | None" = case[4] if len(case) > 4 else None
+        if text is None:  # 구형 명세(마커 0) + 관찰기 skip 스텁이 마지막 절 — 소급 블록 후 재발화 강제
+            code, problems, info = dp.check_report(noblock_text, head(dp.block_hash(noblock_text), "skip"))
+        else:
+            code, problems, info = dp.check_report(spec_text, text)
         blob: str = " ".join(problems) + " " + " ".join(info.values())
-        if code != want_code or needle not in blob:
-            out.append(f"check_report[{label}] = exit {code} · {problems} · {info.get('short')} ≠ 기대 exit {want_code}·«{needle}»")
+        if code != want_code or needle not in blob or (want_n is not None and len(problems) != want_n):
+            out.append(f"check_report[{label}] = exit {code} · {problems} · {info.get('short')} ≠ 기대 exit {want_code}·«{needle}»"
+                       + (f"·사유 {want_n}" if want_n is not None else ""))
     return out
 
 

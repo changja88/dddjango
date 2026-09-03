@@ -12,7 +12,7 @@
 | Rp reading 재라벨 판형(78e616a · run 37) | `61b56ef4b69e` | 5 · 0 · 2 | 3 · 0 · 0 | 상이(의도) | 요약: 형식 red 26건(remove 대상 부재 2 · update 대상 부재 24) · 기준선 61b56ef4b69e · 모드 차단 |
 
 - **무손실**: L1~L4(형식 규범 이후 4레인 · update/remove 전건 기준선 실존) 전부 exit·귀속 ID·e-ID 동일 → 판정 표면 불변.
-- **R(reading 최종본 × 마지막 기준선)**: 신 실행기 형식 red «remove 대상 부재 7» — 기준선을 15회 옮긴 관행 아래 이미 실현된 삭제 행(고정 기준선 프로토콜에서는 실존 → red 0). update 부재 0(승격 부품 `prepare_fortune_evidence_use_case.py` 는 유효 승격 형태 예외로 통과 — 계획 Δ4 기대와 일치).
+- **R(reading 최종본 × 마지막 기준선)**: 신 실행기 형식 red «remove 대상 부재 7» — 기준선을 15회 옮긴 관행 아래 이미 실현된 삭제 행(고정 기준선 프로토콜에서는 실존 → red 0). update 부재 0(승격 부품 `prepare_fortune_evidence_use_case.py` 는 유효 승격 형태 예외로 통과 — 계획 Δ4 기대와 일치 · `R-new.out` 에는 비관측: 형식 red 경로는 materialize 전 반환 · rv5-A 가 스크래치 직접 호출로 promoted 1(`__init__` ∧ 본체 실존) 실측 · ⑤ 반영 뒤 실행기는 형식 red 블록에 «승격 형태 예외 통과 N건» 행을 인쇄한다).
 - **R′(재라벨 판형 78e616a × run 37 기준선)**: 신 실행기 형식 red «update 대상 부재 24 · remove 대상 부재 2» — ledger:144 «기실현 add 24경로를 update 로 재라벨(구판 형식 red 회피)» 의 기계 재현. 구 실행기는 exit 5(실체화 0·결손 2)로 통과시켰다 = 차단 모드가 봉쇄하는 도피 경로의 실측.
 - **카탈로그 `--check-report`(현 리포트 × 워킹트리 명세)**: exit 3 stale — `cb95a1bddb32 ≠ 6cf8e2ffdfc3` — 발견 ⑩(Phase 2 개정 3회 · 재실행 0)의 기계 재현.
 

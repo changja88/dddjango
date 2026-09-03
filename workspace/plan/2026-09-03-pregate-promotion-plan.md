@@ -170,3 +170,11 @@ codex 의미 미러: `codex-dddjango/skills/dddjango-design-architect/SKILL.md` 
 ## Δ6. 문면 확정 게이트 — 사용자 확인 항목
 
 - 기본: 위 델타 전부(리뷰 처방 그대로). 차단 표면이 늘어나는 항목 3 — ⓐ **G1/G1′ 배너도 `--check-report` exit 0 근거**(D1 의 완성 · 비용 ≈0 · 자기 판정 0건) ⓑ **빈 file-plan 블록 = 형식 red**(블록 의무의 짝) ⓒ **구형 명세·변경 0 레인은 G2 최신성 한정**(kkebi 21·spring 18 폴더의 순수 구현 수정을 세우지 않음 — 관찰 모드와 동일 · 검출 손실 아님). 신규 채번 2(R-3444·R-3445) · R-0411 rev3.
+
+## Δ7. ⑤ 구현 적대 리뷰 반영 (rv5-A/B/C · 09-03)
+
+- **MAJOR(B-1)**: 계획 Δ1 E5′ 요약 토큰 `red N(처분 전건)` ↔ Δ2 R-3444 배너 토큰 `귀속 N(처분 전건)` 불일치 → 규범을 실행기에 맞춤(b59 in-place: `마지막 판정 <green|skip|red N(처분 전건)>[ · 실존 결손 M]`). G1 1행의 «귀속 N건» 필드와는 다른 행.
+- 실행기 MINOR(A): FormError 요약 종류 `_error_kinds` · 승격 예외 통과 N건 인쇄 · `--base` 미명시 시 `in_head` git 0회 · 공허 경로 `plan.notes` 병기 · 절 앵커에 타임스탬프 요구(코디네이터 제목 접두 오인 0 · 문면 의존 0) · `in_baseline` 심볼릭 링크 포함 · exit 1 시 불비 인쇄 생략 · (C 결정 잔여 1) 마지막 판정 skip ∧ 명세 마커 0 → 불비 «블록 부재 — 재발화».
+- 규범 MINOR(B): b9 «위 «처분 행 정형»» · b34 remove 문장(기준선에도 없는 경로만 행을 거둔다) · b59 «캐시 skip·재발화 판형 ③» 참조 · R-3433 prefLabel 113자 · R-3438 prefLabel «굵은 라벨». 전부 in-place(미배포 · R-3427 rev2 선례) · LEDGER +3.
+- 하네스(A8·C): 유닛 헤더를 실행기 `write_report_stub` 로 생성 · rcases +4(형식 red∧stale 사유 2 · 같은 ID ignored+corrected · ID 행≠라벨 행 · 구형 skip+마커 없는 명세) · `BLIND_SPOTS` S1~S9·`MODE` 단언 · enforce 리포트 «모드: 차단(enforce)» 단언 · red 재실행 출력.
+- 이월: `--check-report` 불비 요약 «A≠B» 표기 · 구형+관찰기 skip 스텁 잔존 레인 계수 · 오버레이 add 충돌(기본 HEAD 경로)의 일괄 반송은 실전 빈도 낮아 현행(첫 건 raise) 유지.

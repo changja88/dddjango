@@ -91,3 +91,13 @@
 - 규범: rdflib+canon(왕복 byte 동일) → gate 90/90 → 렌더 2문서 → LEDGER +5 · ExpressionShape 3558·NormShape/WorkShape 3454·BlockShape 2901 · q4 3445 · rulepack · codex 손 미러 9행(`codex-mirror-diff.md` — 병렬 문면 외 어절 차이 0) · manifest pipeline/packs 등재·봉인 draft.
 - 하네스: 픽스처 5(noblock·empty-block·update-target ×3 상태·remove-target·remove-deferred) · 러너 묶음 enforce(헤더 7)·checkreport(14단계) · 유닛 `baseline_form_errors` 14케이스·`check_report` 15케이스 → PASS · `make verify` 6/6.
 - 소급 A/B(`workspace/eval/pregate-promotion/retro-ab.md`): L1~L4 동일 · R remove 부재 7 · R′ update 부재 24 · 카탈로그 check-report stale · kkebi exit 3 — 계획 Δ4 기대값과 전건 일치.
+
+## ⑤ 결과 (09-03 — rv5-A 실행기 · rv5-B 규범·미러 · rv5-C 하네스·봉인·기록)
+
+| 축 | 판정 | 요지 |
+|---|---|---|
+| A 실행기 | BLOCKER 0 · MAJOR 0 · MINOR 9 | 판정·exit·안정 ID 표면 무손실(A/B `.out` 재계수 동일 · exit 집합 불변 · `--block-hash` 구=신) · `--check-report` 실물 3종(카탈로그 stale · reading 구판 헤더 → 증명 불가 · 절 내부 삽입 내성) 검증 · MINOR = 요약 어휘·관측성·git 0회·edge |
+| B 규범·미러 | BLOCKER 0 · MAJOR 1 · MINOR 4 | 그래프 구조 전항 정합(IRI·rev·kind·Prohibition·b59·b10 단일·wiring·ISSUED·LEDGER SHA·계수·q4) · codex 미러 byte 동일 8 + 병렬 어절 2 · MAJOR = b59 배너 토큰 ↔ 요약 행 토큰(정정) |
+| C 하네스·봉인·기록 | BLOCKER 0 · MAJOR 0 · MINOR 7 | 러너 PASS 34행 · 봉인 check green · 계획 대비 전건 있음(부분 3 보강) · 발주측 첫 변화 3종 실물 · main fast-forward 가능·충돌 0 |
+
+반영: 계획 Δ7. 다음 = ⑥ 감사 + 재검 → 사용자 «머지» 게이트.

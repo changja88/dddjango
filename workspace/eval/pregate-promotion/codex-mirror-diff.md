@@ -6,7 +6,7 @@ Claude 정본 렌더(변경 행) ↔ codex 손 미러(대응 행)의 어절 차�
 - 어절 차이 0: 0(byte 동일)
 
 ## dddjango/commands/dddjango.md → codex-dddjango/skills/dddjango/SKILL.md · 행 «배너를 출력한 뒤 AskUserQuestion으로 승인 여부를 묻는다(승…»
-- 대응 행 없음(codex 병렬 문면 상이 — 수동 확인)
+- 대응 행 없음 → 수동 확인 결과: codex 62 는 `- ` 불릿 행이고 Claude 58 의 꼬리(«**G1/G1′ 배너에는 pre-gate 예보 1행을 병기한다** …» 이후)와 byte 동일 — 이번 변경은 전부 그 꼬리 안 · 머리는 Claude 전용 AskUserQuestion 문장
 
 ## dddjango/commands/dddjango.md → codex-dddjango/skills/dddjango/SKILL.md · 행 «**pre-gate — 설계 명세 결정적 예보(차단 모드)**: `des…»
 - 어절 차이 27: - 리뷰 + 리뷰어 - 다발과 + spawn + 다발을 + **전부 + 띄운 + 뒤 + wait + 수집 + 전에** + shell + 로 + 1회 + — + 조기 + 신호·codex + 정의와 + 정합), - 1회 - — - 조기 - 신호), + 이 - step - 6(G2 + 6번(G2
@@ -29,3 +29,4 @@ Claude 정본 렌더(변경 행) ↔ codex 손 미러(대응 행)의 어절 차�
 ## dddjango/agents/design-architect.md → codex-dddjango/skills/dddjango-design-architect/SKILL.md · 행 «- **경계 import 표**: 검사기 판정에 관련되는 **경계 imp…»
 - 어절 차이 0: 0(byte 동일)
 
+## ⑤ 반영(in-place) 뒤 재확인 — b59 토큰·③ 참조 · b9 «위» · architect b34 remove 문장: Claude ↔ codex 같은 치환 3+1 적용(assert count==1) · 병렬 정의 어절 외 차이 0 유지.

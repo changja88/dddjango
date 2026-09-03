@@ -1674,7 +1674,9 @@ def _error_kinds(errors: "list[str]") -> str:
     return " · ".join(f"{k} {n}" for k, n in counts.items())
 
 
-_REPORT_SECTION_RE: "re.Pattern[str]" = re.compile(r"^## pre-gate 예보 — ", re.M)
+# 절 앵커 = 실행기 자기 형식(`## pre-gate 예보 — <UTC> · <spec>`) — 코디네이터가 «## pre-gate 예보 …» 로 시작하는 제목을
+# 쓰더라도 타임스탬프 없이는 절이 아니다(문면 의존 0 · 5단계 리뷰 A3).
+_REPORT_SECTION_RE: "re.Pattern[str]" = re.compile(r"^## pre-gate 예보 — \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z · ", re.M)
 _REPORT_HASH_RE: "re.Pattern[str]" = re.compile(r"블록 해시 ([0-9a-f]{12})")
 _REPORT_BASE_RE: "re.Pattern[str]" = re.compile(r"`([0-9a-f]{40})`")
 _REPORT_ID_RE: "re.Pattern[str]" = re.compile(r"^- `([0-9a-f]{12})` ", re.M)
@@ -1749,6 +1751,10 @@ def check_report(spec_text: str, report_text: str) -> "tuple[int, list[str], dic
         short = "green" + (f" · 실존 결손 {defects}" if defects else "")
     elif verdict.startswith("skip"):
         short = "skip" + (f" · 실존 결손 {defects}" if defects else "")
+        if "<!-- machine:" not in spec_text:
+            # 구형 명세 + 관찰기(≤2.17.16)의 «블록 부재 skip» 스텁이 마지막 절로 남은 레인 — 블록 해시가 불변이라 캐시 skip 으로
+            # 재실행 없이 G2 가 열리는 좁은 경로를 닫는다(5단계 리뷰 C · 결정 잔여 1): 차단 모드에서 블록 부재는 형식 red 다.
+            problems.append("블록 부재 — 마지막 판정이 관찰 모드 skip 이고 명세에 machine 마커가 없다: 소급 블록 작성 후 재발화")
     else:
         problems.append(f"판정 문면 불명 — «{verdict}»")
         short = verdict[:24]
@@ -1772,11 +1778,11 @@ def run_check_report(spec_text: str, report_path: Path, blk_hash: str) -> int:
     code: int = result[0]
     problems: "list[str]" = result[1]
     info: "dict[str, str]" = result[2]
-    for p in problems:
-        print(f"  불비: {p}")
     if code == 1:
         print(f"실행 불능: {problems[0]}", file=sys.stderr)
         return 1
+    for p in problems:
+        print(f"  불비: {p}")
     status: str = "정합" if code == 0 else f"불비 {len(problems)}건"
     print(f"\n요약: check-report {status} · 블록 해시 {info['spec_hash']}={info['report_hash']} · "
           f"마지막 판정 {info['short']} · 귀속 {info['attributed']}건 · 실존 결손 {info['defects']}건 · "
@@ -1859,7 +1865,10 @@ def main(argv: "list[str]") -> int:
         reason = ("형식 red — file-plan 0행(블록 공허): 변경 파일이 없는 명세는 pre-gate 대상이 아니라 산문이다 — "
                   "update 대상이라도 적는다(빈 펜스로 블록 의무를 채울 수 없다)")
         print(reason)
-        write_report_stub(report_path, spec_path, base_ref, base_sha, "형식 red(블록 공허)", [reason], blk_hash)
+        for note in plan.notes:  # 고아 채널 행(symbols/imports 만 있는 명세)은 버려졌음을 남긴다(침묵 금지)
+            print(f"  채널 메모: {note}")
+        write_report_stub(report_path, spec_path, base_ref, base_sha, "형식 red(블록 공허)",
+                          [reason] + [f"채널 메모: {n}" for n in plan.notes], blk_hash)
         print(f"\n요약: 형식 red 1건(블록 공허) · 기준선 {base_sha[:12]} · 모드 차단")
         return 3
 
@@ -1870,17 +1879,22 @@ def main(argv: "list[str]") -> int:
         _extract_archive(repo, base_sha, copy)
         # archive == 기준선 트리 — 오버레이 «전»에 계획 경로의 실존을 재서 «기준선 실존 add»(형식 red 유지)와
         # «오버레이 실존 add»(재발화 판형의 기실현)를 가른다(git 추가 호출 0·결정적).
-        in_baseline: "frozenset[str]" = frozenset(p for p in plan.entries if (copy / p).exists())
+        in_baseline: "frozenset[str]" = frozenset(
+            p for p in plan.entries if (copy / p).exists() or (copy / p).is_symlink())
         # 계획↔기준선 모순 전건(차단 모드): add 충돌 · update/remove 대상 기준선 부재 — 오버레이 «전»·1회 일괄 반송.
+        # «기준선 부재 ∧ HEAD 실존» 은 `--base` 명시 경로에서만 가능하다(기본 기준선 = HEAD 트리) — git 호출도 그때만.
         form_result: "tuple[list[str], frozenset[str]]" = baseline_form_errors(
             plan, copy, in_baseline, base_sha[:12],
-            lambda p: _git(repo, "cat-file", "-e", f"HEAD:{p}", check=False).returncode == 0)
+            (lambda p: _git(repo, "cat-file", "-e", f"HEAD:{p}", check=False).returncode == 0)
+            if explicit_base else (lambda p: False))
         form_errors: "list[str]" = form_result[0]
         promoted: "frozenset[str]" = form_result[1]
         if form_errors:
             print(f"형식 red — {len(form_errors)}건 (계획↔기준선 모순 · architect 반송 재료):")
             for err in form_errors:
                 print(f"  {err}")
+            if promoted:
+                print(f"  승격 형태 예외 통과 {len(promoted)}건: " + " ".join(sorted(promoted)))
             write_report_stub(report_path, spec_path, base_ref, base_sha, "형식 red", form_errors, blk_hash)
             print(f"\n요약: 형식 red {len(form_errors)}건({_error_kinds(form_errors)}) · "
                   f"기준선 {base_sha[:12]} · 모드 차단")
@@ -1898,7 +1912,7 @@ def main(argv: "list[str]") -> int:
         except FormError as exc:
             print(f"형식 red — {exc}")
             write_report_stub(report_path, spec_path, base_ref, base_sha, "형식 red", [str(exc)], blk_hash)
-            print(f"\n요약: 형식 red 1건(실체화) · 기준선 {base_sha[:12]} · 모드 차단")
+            print(f"\n요약: 형식 red 1건({_error_kinds([str(exc)])}) · 기준선 {base_sha[:12]} · 모드 차단")
             return 3
 
         # 계약 실존 — materialize(+골격·`__init__` 체인) 뒤 · 실체화-0 분기 앞(update 소비자만의 명세도 판정한다).
