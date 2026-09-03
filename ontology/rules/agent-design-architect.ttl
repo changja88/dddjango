@@ -1693,12 +1693,18 @@ djr:R-3424 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3425 a djr:Obligation ;
-    skos:prefLabel "file-plan 정규 블록 — 1행 1경로·조치 태그·금지 표기·삽화↔블록 차분"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3425@2026-09-01> .
+    skos:prefLabel "file-plan 정규 블록 — 1행 1경로·조치 태그·금지 표기·삽화↔블록 차분 · 태그의 뜻은 기준선 기준(add 부재·update 실존(승격 형태 예외)·비후행 remove 실존·재라벨 도피는 형식 red)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3425@2026-09-03> .
 
 <https://numchida.com/ns/djr#R-3425@2026-09-01> a djr:Expression ;
     prov:specializationOf djr:R-3425 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3425@2026-09-03> a djr:Expression ;
+    prov:specializationOf djr:R-3425 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3425@2026-09-01> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3426 a djr:Obligation ;
     skos:prefLabel "공개 심볼 전수 표기 — Base 닫힌 목록·베이스 유도표 공집합·값 축 유도 3행 등재(마이그레이션 칸 결손 보충)·`_`+대문자 사설 타입·필드 대입식 허용·수신자 관용 정규화·계약 필드·중첩 타입 소속 명시"@ko ;
@@ -1721,8 +1727,8 @@ djr:R-3426 a djr:Obligation ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-3427 a djr:Obligation ;
-    skos:prefLabel "경계 import 표 — 검사기 판정 관련 경계 import 전부(테스트 파일 포함) · 3단 실존 판정 입력(이 브랜치 기준 · 행 삭제 = 채널 은폐)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3427@2026-09-03> .
+    skos:prefLabel "경계 import 표 — 검사기 판정 관련 경계 import 전부(테스트 파일 포함) · 3단 실존 판정 입력(이 브랜치 기준 · 행 삭제 = 채널 은폐 · 부재 update 는 형식 red 선행·승격 예외분만 ⑴)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3427@2026-09-03b> .
 
 <https://numchida.com/ns/djr#R-3427@2026-09-01> a djr:Expression ;
     prov:specializationOf djr:R-3427 ;
@@ -1732,6 +1738,12 @@ djr:R-3427 a djr:Obligation ;
     prov:specializationOf djr:R-3427 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-3427@2026-09-01> ;
     djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-3427@2026-09-03b> a djr:Expression ;
+    prov:specializationOf djr:R-3427 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3427@2026-09-03> ;
+    djr:revision 3 ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-3428 a djr:Obligation ;
@@ -2093,7 +2105,7 @@ djr:R-3431 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 34 ;
     djr:statesNorm djr:R-3425 ;
-    djr:text "- **파일 계획 정규 블록**: `<!-- machine: file-plan -->` 마커 + ```paths 펜스. 1행 = `<태그> <경로>`(태그 선행·공백 구분·경로는 project-relative — 태그는 `add|update|remove[@Ln]|empty`)이고 `#` 주석만 허용한다. 브레이스 전개·`·` 병렬·`*`/`…` 축약·미해소 `<placeholder>`·승격 폴더 표기(경로는 언제나 `<칸>.py` — 동명 폴더 승격은 구현 캐스케이드 소유)·**동일 경로의 태그 이중 서술**은 전부 형식 위반이다(이중 서술은 파서 결정 불능을 낳는다). glyph 트리 삽화를 남기려면 블록에서 렌더해 생성하거나 파서의 삽화↔블록 차분 판정을 받는다 — 같은 계획의 이중 표현이 서로 어긋나는 드리프트 축을 봉쇄한다.\n"@ko .
+    djr:text "- **파일 계획 정규 블록**: `<!-- machine: file-plan -->` 마커 + ```paths 펜스. 1행 = `<태그> <경로>`(태그 선행·공백 구분·경로는 project-relative — 태그는 `add|update|remove[@Ln]|empty`)이고 `#` 주석만 허용한다. 브레이스 전개·`·` 병렬·`*`/`…` 축약·미해소 `<placeholder>`·승격 폴더 표기(경로는 언제나 `<칸>.py` — 동명 폴더 승격은 구현 캐스케이드 소유)·**동일 경로의 태그 이중 서술**은 전부 형식 위반이다(이중 서술은 파서 결정 불능을 낳는다). glyph 트리 삽화를 남기려면 블록에서 렌더해 생성하거나 파서의 삽화↔블록 차분 판정을 받는다 — 같은 계획의 이중 표현이 서로 어긋나는 드리프트 축을 봉쇄한다. **태그의 뜻은 기준선 기준이다**(G1 시점 HEAD — Phase 2 재발화 시 `--base` 기준선 · 2026-09-03 차단 승격): `add` = 기준선에 없는 경로(실존하면 형식 red «add 충돌») · `update` = 기준선에 실존하는 경로(부재면 형식 red «update 대상 부재» — 그 경로는 `add` 로 적는다 · 유효 승격 형태 `<칸>/__init__.py` ∧ `<칸>/<칸>.py` 의 기준선 실존은 실존이다) · `remove[@Ln]` = 기준선 실존 경로(비후행 remove 의 부재는 형식 red «remove 대상 부재» — 예외 없음 · 후행 `@Ln` 은 판정 밖 · `--base` 기준선은 이동하지 않으므로 기실현 remove 는 실존이다 — 이미 지워진 경로의 행은 거둔다) · `empty` = 새 빈 파일. 구형 명세에 블록을 소급 작성할 때 기실현 경로는 전부 `update` 다 — 실체화 0 이 나오면 그것이 정답이다(`add` 를 `update` 로 바꿔 red 를 피하는 것은 형식 red 로 잡힌다).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b35> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
@@ -2107,7 +2119,7 @@ djr:R-3431 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 36 ;
     djr:statesNorm djr:R-3427 ;
-    djr:text "- **경계 import 표**: 검사기 판정에 관련되는 **경계 import 전부**를 `<!-- machine: boundary-imports -->` 마커의 ```imports 펜스(1행 = `<소비 파일>` + 탭 또는 공백 2+ + `<import 문 그대로>`)로 성문한다 — 타 BC OHS/contract·framework 공통만이 아니라, domain/contract 칸의 서드파티 라이브러리와 **테스트 파일의 경계 import 전부**(factories/타 급·타 BC OHS/published 계약 소비)까지. 파일별 전체 import 를 강제하는 것은 아니다 — 경계만 성문한다(그 밖의 import 는 구현 재량). **각 행은 실행기가 격리 사본(기준선 + dirty overlay + 이 명세의 add)에서 3단 실존 판정**(⑴ 모듈 실존 · ⑵ 자리표시자 아님 · ⑶ 이름 최상위 정의)을 받는다(2026-09-03) — 저장소 밖(표준·서드파티)은 검사 밖, 이 명세가 add 하는 대상은 자기 해소(symbols 채널 소관 — 승격 폴더 부품 포함), ⑵ 는 이름 import(`from M import n`)의 대상 M 이 모듈일 때만이다. file-plan `update` 대상(사본에 실물이 있을 때만 — 부재면 update 로는 생기지 않으므로 ⑴ 모듈 부재)의 이름은 그 칸의 symbols 에 선언하면 «자기 update 해소»이고 미선언이면 현재 표면에 있을 때만 실존 확인·아니면 판정 불능이다(표면은 이 명세 이후 상태 — update 로 새 심볼을 낼 계획이면 symbols 에 적는다 · ⑵⑶ 비적용). 판정 기준은 **이 브랜치**다 — 다른 워크트리·미머지 브랜치의 실물은 보지 않는다(부재 = «계약 실존 결손»으로 예보 · 소비자가 `update` 여도 행은 판정된다). 상류 소유 계약을 소비할 계획이면 그 행을 **그대로 적는다** — 결손 예보가 선행 조건의 기계 표현이며, 행을 빼서 green 을 만드는 것은 채널 은폐(경계 import 전수 의무 위반)다.\n"@ko .
+    djr:text "- **경계 import 표**: 검사기 판정에 관련되는 **경계 import 전부**를 `<!-- machine: boundary-imports -->` 마커의 ```imports 펜스(1행 = `<소비 파일>` + 탭 또는 공백 2+ + `<import 문 그대로>`)로 성문한다 — 타 BC OHS/contract·framework 공통만이 아니라, domain/contract 칸의 서드파티 라이브러리와 **테스트 파일의 경계 import 전부**(factories/타 급·타 BC OHS/published 계약 소비)까지. 파일별 전체 import 를 강제하는 것은 아니다 — 경계만 성문한다(그 밖의 import 는 구현 재량). **각 행은 실행기가 격리 사본(기준선 + dirty overlay + 이 명세의 add)에서 3단 실존 판정**(⑴ 모듈 실존 · ⑵ 자리표시자 아님 · ⑶ 이름 최상위 정의)을 받는다(2026-09-03) — 저장소 밖(표준·서드파티)은 검사 밖, 이 명세가 add 하는 대상은 자기 해소(symbols 채널 소관 — 승격 폴더 부품 포함), ⑵ 는 이름 import(`from M import n`)의 대상 M 이 모듈일 때만이다. file-plan `update` 대상(사본에 실물이 있을 때만 — 기준선 부재 update 는 형식 red 로 먼저 서고, 유효 승격 형태 예외로 통과한 대상만 update 로는 생기지 않으므로 ⑴ 모듈 부재)의 이름은 그 칸의 symbols 에 선언하면 «자기 update 해소»이고 미선언이면 현재 표면에 있을 때만 실존 확인·아니면 판정 불능이다(표면은 이 명세 이후 상태 — update 로 새 심볼을 낼 계획이면 symbols 에 적는다 · ⑵⑶ 비적용). 판정 기준은 **이 브랜치**다 — 다른 워크트리·미머지 브랜치의 실물은 보지 않는다(부재 = «계약 실존 결손»으로 예보 · 소비자가 `update` 여도 행은 판정된다). 상류 소유 계약을 소비할 계획이면 그 행을 **그대로 적는다** — 결손 예보가 선행 조건의 기계 표현이며, 행을 빼서 green 을 만드는 것은 채널 은폐(경계 import 전수 의무 위반)다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b37> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
