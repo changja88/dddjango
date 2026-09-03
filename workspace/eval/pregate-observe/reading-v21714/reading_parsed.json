@@ -1,0 +1,746 @@
+{
+ "runs": [
+  {
+   "run": 1,
+   "ts": "2026-09-01T23:20:30Z",
+   "verdict": "skip",
+   "base": "d8928940",
+   "n_items": 0,
+   "rules": []
+  },
+  {
+   "run": 2,
+   "ts": "2026-09-01T23:43:59Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 11건",
+   "base": "d8928940",
+   "n_items": 11,
+   "rules": [
+    "107",
+    "121",
+    "188",
+    "219",
+    "28",
+    "576",
+    "635"
+   ]
+  },
+  {
+   "run": 3,
+   "ts": "2026-09-01T23:44:37Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 11건",
+   "base": "d8928940",
+   "n_items": 11,
+   "rules": [
+    "107",
+    "121",
+    "188",
+    "219",
+    "28",
+    "576",
+    "635"
+   ]
+  },
+  {
+   "run": 4,
+   "ts": "2026-09-01T23:53:50Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 2건",
+   "base": "d8928940",
+   "n_items": 2,
+   "rules": [
+    "107",
+    "188"
+   ]
+  },
+  {
+   "run": 5,
+   "ts": "2026-09-01T23:55:57Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 2건",
+   "base": "d8928940",
+   "n_items": 2,
+   "rules": [
+    "107",
+    "188"
+   ]
+  },
+  {
+   "run": 6,
+   "ts": "2026-09-02T00:19:47Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 2건",
+   "base": "d8928940",
+   "n_items": 2,
+   "rules": [
+    "107",
+    "188"
+   ]
+  },
+  {
+   "run": 7,
+   "ts": "2026-09-02T00:22:10Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 2건",
+   "base": "d8928940",
+   "n_items": 2,
+   "rules": [
+    "107",
+    "188"
+   ]
+  },
+  {
+   "run": 8,
+   "ts": "2026-09-02T00:24:24Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 2건",
+   "base": "d8928940",
+   "n_items": 2,
+   "rules": [
+    "107",
+    "188"
+   ]
+  },
+  {
+   "run": 9,
+   "ts": "2026-09-02T00:45:46Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 2건",
+   "base": "d8928940",
+   "n_items": 2,
+   "rules": [
+    "107",
+    "188"
+   ]
+  },
+  {
+   "run": 10,
+   "ts": "2026-09-02T00:46:33Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 2건",
+   "base": "d8928940",
+   "n_items": 2,
+   "rules": [
+    "107",
+    "188"
+   ]
+  },
+  {
+   "run": 11,
+   "ts": "2026-09-02T00:48:22Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 2건",
+   "base": "d8928940",
+   "n_items": 2,
+   "rules": [
+    "107",
+    "188"
+   ]
+  },
+  {
+   "run": 12,
+   "ts": "2026-09-02T01:24:28Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 2건",
+   "base": "d8928940",
+   "n_items": 2,
+   "rules": [
+    "107",
+    "188"
+   ]
+  },
+  {
+   "run": 13,
+   "ts": "2026-09-02T01:47:10Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 2건",
+   "base": "1a48d3bc",
+   "n_items": 2,
+   "rules": [
+    "107",
+    "188"
+   ]
+  },
+  {
+   "run": 14,
+   "ts": "2026-09-02T01:55:50Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 2건",
+   "base": "1a48d3bc",
+   "n_items": 2,
+   "rules": [
+    "107",
+    "188"
+   ]
+  },
+  {
+   "run": 15,
+   "ts": "2026-09-02T02:21:05Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 2건",
+   "base": "1e80644b",
+   "n_items": 2,
+   "rules": [
+    "107",
+    "188"
+   ]
+  },
+  {
+   "run": 16,
+   "ts": "2026-09-02T02:34:34Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 2건",
+   "base": "1e80644b",
+   "n_items": 2,
+   "rules": [
+    "107",
+    "188"
+   ]
+  },
+  {
+   "run": 17,
+   "ts": "2026-09-02T02:42:19Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 2건",
+   "base": "1e80644b",
+   "n_items": 2,
+   "rules": [
+    "107",
+    "188"
+   ]
+  },
+  {
+   "run": 18,
+   "ts": "2026-09-02T04:46:53Z",
+   "verdict": "형식 red",
+   "base": "82f842c0",
+   "n_items": 0,
+   "rules": []
+  },
+  {
+   "run": 19,
+   "ts": "2026-09-02T04:58:47Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 2건",
+   "base": "82f842c0",
+   "n_items": 2,
+   "rules": [
+    "107",
+    "188"
+   ]
+  },
+  {
+   "run": 20,
+   "ts": "2026-09-02T05:30:18Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 2건",
+   "base": "ce355310",
+   "n_items": 2,
+   "rules": [
+    "107",
+    "188"
+   ]
+  },
+  {
+   "run": 21,
+   "ts": "2026-09-02T06:22:51Z",
+   "verdict": "형식 red",
+   "base": "29929353",
+   "n_items": 0,
+   "rules": []
+  },
+  {
+   "run": 22,
+   "ts": "2026-09-02T06:25:13Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 2건",
+   "base": "29929353",
+   "n_items": 2,
+   "rules": [
+    "107",
+    "188"
+   ]
+  },
+  {
+   "run": 23,
+   "ts": "2026-09-02T08:02:23Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 2건",
+   "base": "d16ffb10",
+   "n_items": 2,
+   "rules": [
+    "107",
+    "188"
+   ]
+  },
+  {
+   "run": 24,
+   "ts": "2026-09-02T08:58:59Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 1건",
+   "base": "71cee9f8",
+   "n_items": 1,
+   "rules": [
+    "188"
+   ]
+  },
+  {
+   "run": 25,
+   "ts": "2026-09-02T09:25:59Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 1건",
+   "base": "f52dbc82",
+   "n_items": 1,
+   "rules": [
+    "188"
+   ]
+  },
+  {
+   "run": 26,
+   "ts": "2026-09-02T09:49:10Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 1건",
+   "base": "8e5f5e9d",
+   "n_items": 1,
+   "rules": [
+    "188"
+   ]
+  },
+  {
+   "run": 27,
+   "ts": "2026-09-02T10:42:34Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 2건",
+   "base": "434dbdda",
+   "n_items": 2,
+   "rules": [
+    "188",
+    "490"
+   ]
+  },
+  {
+   "run": 28,
+   "ts": "2026-09-02T10:58:22Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 1건",
+   "base": "434dbdda",
+   "n_items": 1,
+   "rules": [
+    "188"
+   ]
+  },
+  {
+   "run": 29,
+   "ts": "2026-09-02T11:30:08Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 1건",
+   "base": "3318d90f",
+   "n_items": 1,
+   "rules": [
+    "188"
+   ]
+  },
+  {
+   "run": 30,
+   "ts": "2026-09-02T13:36:36Z",
+   "verdict": "형식 red",
+   "base": "d24bff8e",
+   "n_items": 0,
+   "rules": []
+  },
+  {
+   "run": 31,
+   "ts": "2026-09-02T14:26:28Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 3건",
+   "base": "d64890fc",
+   "n_items": 3,
+   "rules": [
+    "389",
+    "490"
+   ]
+  },
+  {
+   "run": 32,
+   "ts": "2026-09-02T14:54:52Z",
+   "verdict": "예보 green — P/S/I급 결정 계약 위반 예보 0(«설계 검증됨» 아님)",
+   "base": "d64890fc",
+   "n_items": 0,
+   "rules": []
+  },
+  {
+   "run": 33,
+   "ts": "2026-09-02T15:03:37Z",
+   "verdict": "예보 green — P/S/I급 결정 계약 위반 예보 0(«설계 검증됨» 아님)",
+   "base": "d64890fc",
+   "n_items": 0,
+   "rules": []
+  },
+  {
+   "run": 34,
+   "ts": "2026-09-02T15:43:03Z",
+   "verdict": "형식 red",
+   "base": "61b56ef4",
+   "n_items": 0,
+   "rules": []
+  },
+  {
+   "run": 35,
+   "ts": "2026-09-02T15:58:04Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 8건",
+   "base": "61b56ef4",
+   "n_items": 8,
+   "rules": [
+    "193",
+    "488",
+    "569",
+    "570"
+   ]
+  },
+  {
+   "run": 36,
+   "ts": "2026-09-02T15:59:01Z",
+   "verdict": "예보 red — P/S/I급 결정 계약 위반 예보 8건",
+   "base": "61b56ef4",
+   "n_items": 8,
+   "rules": [
+    "193",
+    "488",
+    "569",
+    "570"
+   ]
+  },
+  {
+   "run": 37,
+   "ts": "2026-09-02T16:09:35Z",
+   "verdict": "예보 green — P/S/I급 결정 계약 위반 예보 0(«설계 검증됨» 아님)",
+   "base": "61b56ef4",
+   "n_items": 0,
+   "rules": []
+  },
+  {
+   "run": 38,
+   "ts": "2026-09-02T16:19:48Z",
+   "verdict": "예보 green — P/S/I급 결정 계약 위반 예보 0(«설계 검증됨» 아님)",
+   "base": "61b56ef4",
+   "n_items": 0,
+   "rules": []
+  },
+  {
+   "run": 39,
+   "ts": "2026-09-02T18:35:13Z",
+   "verdict": "형식 red",
+   "base": "c75bab65",
+   "n_items": 0,
+   "rules": []
+  },
+  {
+   "run": 40,
+   "ts": "2026-09-02T18:41:52Z",
+   "verdict": "형식 red",
+   "base": "c75bab65",
+   "n_items": 0,
+   "rules": []
+  },
+  {
+   "run": 41,
+   "ts": "2026-09-02T18:46:12Z",
+   "verdict": "skip",
+   "base": "c75bab65",
+   "n_items": 0,
+   "rules": []
+  },
+  {
+   "run": 42,
+   "ts": "2026-09-02T19:03:50Z",
+   "verdict": "skip",
+   "base": "78c9bb65",
+   "n_items": 0,
+   "rules": []
+  },
+  {
+   "run": 43,
+   "ts": "2026-09-02T20:04:59Z",
+   "verdict": "skip",
+   "base": "a88d829a",
+   "n_items": 0,
+   "rules": []
+  },
+  {
+   "run": 44,
+   "ts": "2026-09-02T20:39:00Z",
+   "verdict": "skip",
+   "base": "80431d94",
+   "n_items": 0,
+   "rules": []
+  }
+ ],
+ "ids": {
+  "91bb0193807b": {
+   "rule": "121",
+   "path": "application/fortune_reading/driving_layer/api/evidence/",
+   "runs": [
+    2,
+    3
+   ],
+   "msg": "`api/<area>/` 이름은 안쪽 `application_layer/<area>/` 와 글자까지 같아야 한다",
+   "checker": "check-api-error-controller-contract.py"
+  },
+  "92767435ca49": {
+   "rule": "107",
+   "path": "application/fortune_reading/driving_layer/api/api_router.py",
+   "runs": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    19,
+    20,
+    22,
+    23
+   ],
+   "msg": "`def register_fortune_reading_api(api)` 등록 함수 «하나»만 갖는다(지금 함수 0개)",
+   "checker": "check-composition-root.py"
+  },
+  "185552708307": {
+   "rule": "28",
+   "path": "application/fortune_reading/test/e2e/typecheck_citation_ohs_consumer.py",
+   "runs": [
+    2,
+    3
+   ],
+   "msg": "약어 ['ohs'] — 원전 패턴 이름은 풀어 쓴다",
+   "checker": "check-naming.py"
+  },
+  "c6c72f30f720": {
+   "rule": "219",
+   "path": "application/fortune_reading/application_layer/port/evidence_retrieval/evidence_retrieval_port.py",
+   "runs": [
+    2,
+    3
+   ],
+   "msg": "공개 클래스 0개 — 추상 인터페이스 «하나»가 온다",
+   "checker": "check-port-adapter-pairing.py"
+  },
+  "32a06e7f542f": {
+   "rule": "576",
+   "path": "application/fortune_reading/test/fake/fake_evidence_retrieval_port.py",
+   "runs": [
+    2,
+    3
+   ],
+   "msg": "`fake_evidence_retrieval_port` 의 짝이 될 «선언»이 없다 — 검사는 한 방향뿐이다(선언에 페이크를 강제하지는 않는다)",
+   "checker": "check-port-adapter-pairing.py"
+  },
+  "b8669ec9f16f": {
+   "rule": "576",
+   "path": "application/fortune_reading/test/fake/fake_query_translation_port.py",
+   "runs": [
+    2,
+    3
+   ],
+   "msg": "`fake_query_translation_port` 의 짝이 될 «선언»이 없다 — 검사는 한 방향뿐이다(선언에 페이크를 강제하지는 않는다)",
+   "checker": "check-port-adapter-pairing.py"
+  },
+  "fb814eed3666": {
+   "rule": "576",
+   "path": "application/fortune_reading/test/fake/fake_reading_bundle_port.py",
+   "runs": [
+    2,
+    3
+   ],
+   "msg": "`fake_reading_bundle_port` 의 짝이 될 «선언»이 없다 — 검사는 한 방향뿐이다(선언에 페이크를 강제하지는 않는다)",
+   "checker": "check-port-adapter-pairing.py"
+  },
+  "57a4705e1218": {
+   "rule": "188",
+   "path": "application/fortune_reading/application_layer/citation_validation",
+   "runs": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    19,
+    20,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29
+   ],
+   "msg": "`<area>` 는 `driving_layer/api/<area>` 와 1:N 이다 — api 쪽에 `citation_validation/` 이 없다",
+   "checker": "check-usecase-dto-placement.py"
+  },
+  "f0704c71702d": {
+   "rule": "188",
+   "path": "application/fortune_reading/application_layer/evidence_provisioning",
+   "runs": [
+    2,
+    3
+   ],
+   "msg": "`<area>` 는 `driving_layer/api/<area>` 와 1:N 이다 — api 쪽에 `evidence_provisioning/` 이 없다",
+   "checker": "check-usecase-dto-placement.py"
+  },
+  "8acb8ab5fad3": {
+   "rule": "188",
+   "path": "application/fortune_reading/driving_layer/api/evidence",
+   "runs": [
+    2,
+    3
+   ],
+   "msg": "`<area>` 는 `application_layer/<area>` 와 1:N 이다 — application_layer 쪽에 `evidence/` 이 없다",
+   "checker": "check-usecase-dto-placement.py"
+  },
+  "d674c5aa4782": {
+   "rule": "635",
+   "path": "application/fortune_reading/application_layer/citation_validation/validate_citations/validate_citations_use_case.py",
+   "runs": [
+    2,
+    3
+   ],
+   "msg": "진입점은 클래스 «하나»다 — 공개 클래스가 0개다",
+   "checker": "check-usecase-dto-placement.py"
+  },
+  "0be58fd44eae": {
+   "rule": "490",
+   "path": "application/fortune_reading/application_layer/evidence_provisioning/prepare_fortune_evidence/prepare_fortune_evidence_failure.py",
+   "runs": [
+    27,
+    31
+   ],
+   "msg": "트리가 이 층에 이름을 준 파일이 아니다",
+   "checker": "check-layer-skeleton.py"
+  },
+  "2d6594c49a31": {
+   "rule": "490",
+   "path": "application/fortune_reading/application_layer/evidence_provisioning/prepare_fortune_evidence/prepare_fortune_evidence_failure_category.py",
+   "runs": [
+    31
+   ],
+   "msg": "트리가 이 층에 이름을 준 파일이 아니다",
+   "checker": "check-layer-skeleton.py"
+  },
+  "34099b7affca": {
+   "rule": "389",
+   "path": "application/fortune_reading/test/integration/test_evidence_bundle.py",
+   "runs": [
+    31
+   ],
+   "msg": "`test/integration/` 은 진짜 DB 를 켠다 — DB 신호(django_db·TestCase·.objects)가 없다면 unit/ 자리다",
+   "checker": "check-test-config.py"
+  },
+  "20373cead1d4": {
+   "rule": "488",
+   "path": "application/fortune_reading/application_layer/citation_validation/validate_citations/validate_citations_command.py",
+   "runs": [
+    35,
+    36
+   ],
+   "msg": "고정 파일 부재 — 비면 빈 파일로 만든다 (트리 42행)",
+   "checker": "check-layer-skeleton.py"
+  },
+  "84f71514da49": {
+   "rule": "488",
+   "path": "application/fortune_reading/application_layer/citation_validation/validate_citations/validate_citations_query.py",
+   "runs": [
+    35,
+    36
+   ],
+   "msg": "고정 파일 부재 — 비면 빈 파일로 만든다 (트리 43행)",
+   "checker": "check-layer-skeleton.py"
+  },
+  "41b1ff3f968a": {
+   "rule": "488",
+   "path": "application/fortune_reading/application_layer/citation_validation/validate_citations/validate_citations_result.py",
+   "runs": [
+    35,
+    36
+   ],
+   "msg": "고정 파일 부재 — 비면 빈 파일로 만든다 (트리 44행)",
+   "checker": "check-layer-skeleton.py"
+  },
+  "f361a9638fee": {
+   "rule": "488",
+   "path": "application/fortune_reading/application_layer/citation_validation/validate_citations/validate_citations_use_case.py",
+   "runs": [
+    35,
+    36
+   ],
+   "msg": "고정 파일 부재 — 비면 빈 파일로 만든다 (트리 41행)",
+   "checker": "check-layer-skeleton.py"
+  },
+  "c6d56b993fa1": {
+   "rule": "193",
+   "path": "application/fortune_reading/application_layer/citation_validation/validate_citations/validate_citations_use_case.py",
+   "runs": [
+    35,
+    36
+   ],
+   "msg": "진입점 파일 이름은 `validate_citations_use_case.py` 다 — 부재",
+   "checker": "check-usecase-dto-placement.py"
+  },
+  "10f31e480fea": {
+   "rule": "569",
+   "path": "application/fortune_reading/application_layer/citation_validation/validate_citations/validate_citations_command.py",
+   "runs": [
+    35,
+    36
+   ],
+   "msg": "`<use_case>_command.py` 는 안 써도 «빈 파일»로 온다",
+   "checker": "check-usecase-dto-placement.py"
+  },
+  "a5cd71a07f89": {
+   "rule": "569",
+   "path": "application/fortune_reading/application_layer/citation_validation/validate_citations/validate_citations_query.py",
+   "runs": [
+    35,
+    36
+   ],
+   "msg": "`<use_case>_query.py` 는 안 써도 «빈 파일»로 온다",
+   "checker": "check-usecase-dto-placement.py"
+  },
+  "f80eb0a97ddd": {
+   "rule": "570",
+   "path": "application/fortune_reading/application_layer/citation_validation/validate_citations/validate_citations_result.py",
+   "runs": [
+    35,
+    36
+   ],
+   "msg": "`<use_case>_result.py` 는 커맨드 쪽도 갖는다 — 돌려줄 것이 없으면 «빈 파일»로 둔다",
+   "checker": "check-usecase-dto-placement.py"
+  }
+ },
+ "form_red": [
+  [
+   18,
+   "2026-09-02T04:46:53Z",
+   "- add 충돌(실존): framework/technology/rag/runtime/service_runtime.py — 계획과 실물의 모순은 그 자체가 발견이다"
+  ],
+  [
+   21,
+   "2026-09-02T06:22:51Z",
+   "- add 충돌(실존): application/fortune_reading/test/e2e/test_active_bundle_matrix.py — 계획과 실물의 모순은 그 자체가 발견이다"
+  ],
+  [
+   30,
+   "2026-09-02T13:36:36Z",
+   "- add 충돌(실존): application/fortune_reading/test/e2e/test_evidence_openapi.py — 계획과 실물의 모순은 그 자체가 발견이다"
+  ],
+  [
+   34,
+   "2026-09-02T15:43:03Z",
+   "- add 충돌(실존): application/fortune_reading/driving_layer/api/evidence_provisioning/__init__.py — 계획과 실물의 모순은 그 자체가 발견이다"
+  ],
+  [
+   39,
+   "2026-09-02T18:35:13Z",
+   "- add 충돌(실존): application/fortune_reading/application_layer/evidence_provisioning/validate_citations/__init__.py — 계획과 실물의 모순은 그 자체가 발견이다"
+  ],
+  [
+   40,
+   "2026-09-02T18:41:52Z",
+   "- add 충돌(실존): application/fortune_reading/application_layer/evidence_provisioning/validate_citations/validate_citations_use_case.py — 계획과 실물의 모순은 그 자체가 발견이다"
+  ]
+ ]
+}
