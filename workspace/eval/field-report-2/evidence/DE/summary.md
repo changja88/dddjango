@@ -1,0 +1,89 @@
+# ⓪ 증거 수집 — 항목 D·E 실측 (2026-09-04 · 조사자 보고 원문 저장)
+
+측정 대상(읽기 전용 · working tree 기준): spring_dream_server HEAD `d2eaafe`(working tree에 `application/fortune_character/.../admin/**` M 상태 존재 → working tree 측정), kkebi-server HEAD `6608fb0`(untracked `.claude/`·violations jsonl만). 인터프리터 각 `.venv` Python 3.14.7. `.py` 파일 spring 2,918 · kkebi 3,952(parse 실패 0). 제외: `.venv/site-packages/node_modules/.git/__pycache__/migrations` + 숨김 도구 디렉터리(안에 `.py` 0건이라 무영향).
+
+## 항목 D — 항상 raise/exit 하는 함수가 `-> None` 으로 선언된 사례
+
+**측정 방법** (`scan_de.py::scan_d`): 본문(중첩 def/class/lambda 제외)에 `Return`/`Yield` 없음 ∧ `terminates(body)` — 마지막 문장이 `Raise` 또는 `exit()/quit()/sys.exit()/os._exit()` 호출 · `If`는 body∧orelse · `Try`는 finalbody 종단 ∨ ((body∨orelse 종단) ∧ 전 handler 종단) · `With`는 body · `Match`는 catch-all case 존재 ∧ 전 case 종단(재귀). 한계: `while True`, 메서드형 exit(`self.exit()`), 다른 NoReturn 도우미 호출로 끝나는 함수는 미탐. 반환 주석을 None/NoReturn·Never/missing/other 로 분류, `-> None` 은 core(도우미형) vs stub(NotImplementedError 전용·@abstractmethod)으로 분리.
+
+**수치 표**
+
+| 저장소 | 항상-raise 총계 | `-> None` | └ core | └ 테스트 파일 | └ **프로덕션 core** | stub `-> None` | `-> NoReturn/Never` | 주석 없음 | other(값 타입 선언) |
+|---|---|---|---|---|---|---|---|---|---|
+| spring | 49 | 11 | 9 | 7 | **2** (둘 다 `__init__` 생성 차단 가드) | 2(테스트) | 5 | 0 | 33(abstract 5 · 테스트 fake/ACL stub 28) |
+| kkebi | 161 | 40 | 23 | 21 | **2** (`_raise_provider_error` 1 + `__init__` 가드 1) | 17(abstract 15 · 템플릿 1 · 테스트 1) | 2 | 1(테스트) | 118(abstract 67 · 테스트 fake 51) |
+
+디렉터리별 core `-> None` / `-> NoReturn`: spring — application/llm_access 2(`__init__` 가드)/3 · chat_relay 1(test)/0 · product 1(test)/0 · promotion 3(test)/0 · framework/technology 0/2 · tests 2/0. kkebi — application/billing 2(1 prod)/1 · saju 1(`__init__`)/0 · share 8(test)/0 · review 2·product_observability 1·tarot 2(전부 test)/0 · scripts/import_legacy_tarot 2·import_legacy_top3 1(test)/0 · scripts/import_product_observability 0/1 · tests 4/0.
+
+**프로덕션 `-> None` 항상-raise 전수 목록**
+- kkebi `application/billing/driven_layer/adapter/external_system/toss/payment_processing_adapter.py:437 _raise_provider_error(status_code, response, *, operation) -> None` — raise `PaymentOutcomeUnknown|PaymentContractViolation|PaymentRejected`. **유일한 진짜 도우미 사례.** 같은 파일 `:366 _raise_transport_failure(...) -> Never`(파일이 이미 `from typing import Never`) → 파일 내부 불일치.
+- kkebi `application/saju/domain_layer/saju_chart/saju_chart.py:76 __init__ -> None: raise InvalidSajuChart` · spring `application/llm_access/domain_layer/generation_audit/generation_audit.py:56 __init__` · `.../value_object/serialized_audit_payload.py:464 __init__`(raise TypeError) — named-factory 가드. `__init__`는 mypy가 `-> None`을 강제하므로 수리 대상 아님.
+- 테스트 파일 28건(spring 7 · kkebi 21)은 fake 포트 강제-실패 스텁(`fail_save_items`·`raise_published`·`fail_stage` …) — 전체 목록 `{spring,kkebi}_scan.md` «D core list».
+
+**`-> NoReturn/Never` 로 올바른 항상-raise 도우미(7)**: spring `application/llm_access/application_layer/generation/stream_generation/stream_generation_use_case.py:358 _terminate_provider_failure`·`:388 _terminate_internal_failure`·`application/llm_access/domain_layer/generation_audit/value_object/serialized_audit_payload.py:141 _raise_validation`(레인 커밋 `5431706 refactor(llm_access): … 슬라이스 0` 에서 도입) · `framework/technology/rag/runtime/service_runtime.py:642 _fail` · `framework/technology/rag/runtime/ontology_evidence_contract_c08.py:813 _fail_closed` / kkebi `payment_processing_adapter.py:366 -> Never` · `scripts/import_product_observability/cli.py:21 error -> Never` (+ `scripts/import_legacy_billing.py:19 _ArgumentParser.error -> NoReturn` 은 `self.exit()` 종단이라 휴리스틱 밖).
+
+**NoReturn 계수**: spring import 4 / 주석 5(application/llm_access 2/3 · framework/technology 2/2) · kkebi import 3 / 주석 3(application/billing 1/1 · scripts 2/2, `Never` 2 · `NoReturn` 1). → 레인 산출물 안에 정상 사용이 있고, 유일한 프로덕션 위반은 **같은 파일에 정답이 있다** = 지식 부재가 아니라 일관성 문제.
+
+**`_fail` (D.4)**: HEAD `service_runtime.py:642` = `def _fail(message: str, error: Exception | None = None) -> NoReturn:` — **이미 수리됨**(working tree 수정 없음). `git log -1 -- path` = `36258bb 2026-09-03 fix(fortune-reading): 근거 검색 배선 결함 …`. `git log -S'NoReturn'` = `96e8719 2026-09-03 fix(typing): mypy 빚 1단계 — 기계적 49건 상환(171→122, 새 오류 0)` — diff `-… -> None:` → `+… -> NoReturn:`(21 files · `_fail_closed` 동일 커밋). 레인이 아니라 사후 mypy 빚 상환 커밋.
+
+**레인 산출물 판정 (D.5)**: spring `.dddjango/*/lane-report.md` 8개 어느 것도 D 후보 파일명 미언급(후보가 `__init__` 가드·테스트뿐). llm_access 파일은 `feat(llm_access): … 슬라이스 N` 커밋 + 런 `20260829-1601-llm-gateway-caller-settings` 로 레인 산출물 확인. `framework/technology/rag/runtime/*` 은 `application/` 밖 — 런 `20260831-2331-fortune-reading` md 가 `service_runtime.py` 24회·`rag_builder` 7회 언급, 커밋 `43e9628 2026-09-02 feat(fortune-reading): implement P3 evidence retrieval runtime` 이 런 기간 안 → 레인 병행 작성 framework 코드로 추정(`dddjango(...)` 표식 없음). kkebi `payment_processing_adapter.py` — 단일 커밋 `a71cd69 2026-08-25 feat: migrate billing bounded context`(레인 스쿼시), 런 `.dddjango/20260823-1637-billing-migration/` 의 `design-spec.md`·`review-s2-discipline.md`·`review-r2-final-discipline.md` 가 파일명 언급 → **레인 산출물 확정**; 리뷰 md 에 `_raise_provider_error`/`_raise_transport_failure` 언급 0 → discipline-reviewer 미포착. kkebi 런 디렉터리에는 `lane-report.md` 없음(구형 레이아웃: `design-spec.md`·`review-*.md`·`contract.json`).
+
+## 항목 E — 명시 `Any` 사용 실태
+
+**측정 방법** (`scan_de.py::scan_any`): 모듈 내 `from typing[_extensions] import Any [as X]`·`import typing [as t]` 로 별칭 해소(`X`·`typing.Any`·`t.Any` 포함 · import 없는 bare `Any` 0건). 자리: sig-arg/sig-star/sig-ret/var-module/var-class/var-local/var-attr. (a) bare = 루트가 `Any`; (a′) bare_optional = `Any | None`/`Optional[Any]`; (b) nested = 제네릭 인자 안(문자열 주석 파싱). 테스트 파일(`test/`·`tests/`·`test_*.py`·`conftest.py`) 플래그 분리.
+
+**수치 표 — 저장소 × 최상위 × prod/test**
+
+| 저장소 | 최상위 | 파일 | prod bare(+opt) | prod nested | **prod 합** | test bare | test nested | test 합 |
+|---|---|---|---|---|---|---|---|---|
+| spring | application(레인) | 2,799 | 44(+1) | 75 | **120** | 69 | 69 | 138 |
+| spring | framework | 56 | 61 | 572 | **633** | 0 | 0 | 0 |
+| spring | root(fabfile.py) | 3 | 15 | 0 | 15 | 0 | 0 | 0 |
+| spring | tests | 39 | 0 | 0 | 0 | 5 | 40 | 45 |
+| spring | 합계 | 2,918 | 120(+1) | 647 | **768** | 74 | 109 | 183 |
+| kkebi | application(BC 레인) | 3,463 | 69(+2) | 62 | **133** | 315 | 227 | 542 |
+| kkebi | web(dddjango-web) | 239 | 116 | 102 | **218** | 0 | 0 | 0 |
+| kkebi | scripts | 195 | 36(+3) | 56 | 95 | 66 | 6 | 72 |
+| kkebi | root(fabfile.py) | 2 | 44 | 1 | 45 | 0 | 0 | 0 |
+| kkebi | tests | 14 | 0 | 0 | 0 | 54 | 29 | 83 |
+| kkebi | 합계 | 3,952 | 265(+5) | 221 | **491** | 435 | 262 | 697 |
+
+총계 spring 951(bare 194+1 · nested 756) · kkebi 1,188(bare 700+5 · nested 483). prod bare 자리별: spring sig-arg 60 · var-local 45 · sig-ret 8 · sig-star 8 / kkebi var-local 143 · sig-arg 88 · sig-ret 17 · sig-star 12 · var-class 9 · var-attr 1. prod `Any` 사용 파일 수 spring 64 · kkebi 67. BC별 표는 `{spring,kkebi}_scan.md` «E per group».
+
+**상위 파일 10(prod)** — spring: `framework/technology/rag/runtime/rag_builder/steps/__init__.py` 104 · `…/release_store.py` 68 · `…/ontology_control.py` 64 · `…/rag_builder/source_projection.py` 44 · `…/rag_builder/coordinates.py` 40 · `…/glossary.py` 25 · `…/registry_snapshot.py` 23 · `…/yeonhae_ontology.py` 22 · `…/ontology_evidence_contract_c08.py` 21 · `…/yeonhae_authorized.py` 21(10개 전부 RAG 런타임; application 최다는 `fortune_character/.../admin/character/feature/character_writer.py`·`promotion/.../admin/campaign/form/campaign_form.py` bare 8). kkebi: `scripts/import_legacy_daily/adapter/legacy_daily_database/daily_source_adapter.py` 78 · `application/saju/domain_layer/domain_service/v3_reading_assembler.py` 45 · `fabfile.py` 45 · `web/client/top3/response/post_response.py` 25 · `web/client/review/response/content_review_list_response.py` 20 · `web/client/billing/response/coupon_response.py` 18 · `…/point_ledger_response.py` 18 · `web/client/identity/response/profile_response.py` 16 · `web/client/saju/response/saju_catalog_list_response.py` 15 · `web/client/tarot/response/tarot_deck_response.py` 15.
+
+**(b) 상위 형상 5 (E.4)**
+1. `dict[str, Any]` spring 267 · kkebi 24(prod) — 둘레 함수 최다 `clean`(30 · 4) = **Django `Form.clean() -> dict[str, Any]` 스텁 미러**(spring `application/fortune_character/driven_layer/django_fortune_character/admin/character/form/character_form.py:38`, kkebi `application/image/driven_layer/django_image/admin/image/form/image_form.py:31`); 나머지는 JSON 페이로드(spring `application/fortune_calculation/driven_layer/adapter/lunisolar_calendar/packaged_table_adapter.py:50 payload: dict[str, Any] = json.loads(raw)`, RAG `create_release`·`_build_change_set`), ninja OpenAPI extra(kkebi `…/api/analytics/analytics_controller.py:200 _openapi(request_schema: dict[str, Any])`).
+2. `Mapping[str, Any]` spring 148 · kkebi 93 — spring RAG JSON(`framework/technology/rag/runtime/glossary.py:206 verify_glossary_ref(glossary_ref: Mapping[str, Any])`); kkebi **web/client 응답 파서 사다리**(`web/client/billing/response/coupon_claim_response.py:9 _as_mapping(value: Any) -> Mapping[str, Any]`·`:15 _require(...) -> Any`·`_require_str/_require_int`, 응답 파일마다 복제).
+3. `list[dict[str, Any]]` spring 81 · kkebi 18 — admin formset `cleaned_data` 행(`…/admin/character/feature/character_writer.py:121 _valid_rows(formset) -> list[dict[str, Any]]`), kkebi Out DTO(`application/saju/application_layer/port/domain_bypass_query/catalog_read/saju_catalog_detail_out.py:24 questions`).
+4. `tuple[Any, ...]`/`list[tuple[Any, ...]]` kkebi 21+17 — **DB 커서 행**(`scripts/import_legacy_daily/.../daily_source_adapter.py:632 column_rows: list[tuple[Any, ...]] = connection.execute(...)`), Out DTO(`…/reading_read/reading_detail_out.py:24 questions: tuple[Any, ...]`).
+5. `Sequence[Mapping[str, Any]]` spring 36 — 전부 RAG 빌더 행(`framework/technology/rag/runtime/rag_builder/crosswalk.py:54`). kkebi 5위 `Callable[..., Any]` 25 — 전부 pytest fixture 팩토리(`application/billing/test/e2e/conftest.py:13`).
+바깥 컨테이너: spring dict 393·Mapping 160·list 106·tuple 43·Sequence 39 / kkebi dict 241·Mapping 93·list 54·tuple 53·Callable 33.
+(a) bare prod 대표: spring `account_user: Any = request.user`(controller 4곳, «driven 층 모델이라 입구가 이름을 못 부른다» 주석), admin `cleaned.get()` 값(`time_rule_gate.py:24-30` 5건), fabfile fabric Connection 15 / kkebi `from_json(payload: Any)` 26 + `_as_mapping/_require*` 41(web/client), `v3_reading_assembler.py` JSON 순회 23, `completion: Any`(openai SDK), `decision: Any`·`use_case: Any`(product_observability controller — 조립 함수 반환을 Any 로 받음), fabfile 44.
+
+**설정 인용 (E.5)** — ruff(두 저장소 동일 `ruff.toml`): `[lint] select = [… "ANN", … "ANN401", …]` + `ignore = [… "ANN401", …]`(주석 «typing.Any 어노테이션 허용(위 select의 ANN401 무효화)») → **ANN401 순효과 비활성**; `[lint.flake8-annotations] suppress-none-returning = true · mypy-init-return = true · allow-star-arg-any = true`; per-file `**/{test,tests}/** = ["ANN", …]`. mypy(`pyproject.toml [tool.mypy]` 동일): `strict = true`, `warn_unreachable = true`, `enable_error_code = [ignore-without-code, truthy-bool, truthy-iterable, redundant-expr, possibly-undefined, unused-awaitable, redundant-self]`, overrides `*.migrations.*`·`tests.*`·`*.test.*` → `ignore_errors = true`. **`disallow_any_explicit`/`disallow_any_expr`/`disallow_any_decorated`/`disallow_any_unimported` 없음**(strict 포함분은 `disallow_any_generics`·`warn_return_any` 뿐 → 명시 `Any` 는 mypy 가 막지 않음). 실행 범위(`.pre-commit-config.yaml`, `pass_filenames: false`): spring `uv run mypy spring_dream_server framework` — **`application/` 미포함**; kkebi `uv run mypy kkebi_server application framework scripts/import_legacy_saju` — **`web/`·나머지 scripts 미포함**. Makefile 에 mypy 타깃 없음(kkebi `pre-commit-lint` 는 `SKIP=mypy`).
+
+**검사기 분석 (E.6)** — `/Users/hyun/Desktop/dddjango/dddjango/scripts/check-public-surface-annotation.py`(498줄): `main` 438-494 → 파일 열거 453-456(`_is_target_file` 122-136 + 숨김 디렉터리 제외) → `_scan_stmts` 478 → `_check_thin_read` 479-480 → `_check_contract_exceptions` 481-482 → `_collect_runtime_guards` 483. **애너테이션 내용을 읽는 곳은 `_annotation_names` 341-352 하나**(Name/Attribute 이름 집합 + 문자열 주석 재파싱), 소비자는 `_check_thin_read` 355-363(#358, `fn.returns` 만 · `BaseModel` 예외 361)뿐. #493 은 유무만 봄: `_check_signature` 211-226(인자 218/221/224 · 반환 226, `annotation is None`), `_scan_stmts` AnnAssign 265-268(바인딩 기록만), `_scan_class` 속성 320-322. 새 규칙 자리: ① 218/221/224/226 직후(bare = `_name_of(ann)=="Any"`, nested = `"Any" in _annotation_names(ann)`), ② 265-268, ③ 320-322. `_name_of` 139-144 가 Attribute→attr 이라 `typing.Any`/`t.Any` 는 공짜; `as X` 별칭은 `_module_bindings` 147-183/`_resolved_name` 186-191 재사용 가능. 기존 예외: SKIP_DIRS 70-73 · migrations · SCAFFOLD_FILES 76 · `test_*.py`/`conftest.py` 128 · TEST_DIR_NAMES 77 중 MATERIAL_DIRS 79 만 검사(TEST_FREE_DIRS 78 제외) · 숨김 디렉터리 455 · self/cls 215-216 · `_is_dunder` 205-206 · PROTOCOL_NAMES 97 · `_is_declarative_class` 194-202(DECLARATIVE_BASE_NAMES 85-94 Model/Enum/Form/ModelForm/Serializer/Schema/BaseModel/TypedDict/NamedTuple/AppConfig/ModelAdmin/Inline/Factory/AbstractUser 등 · DECLARATIVE_CLASS_NAMES 95 Meta/Config · DECLARATIVE_DECORATORS 96). 주의: 선언적 면제는 지금 plain `Assign`(274)과 `self.x` 속성 규칙(311-312)에만 걸려 있어 ninja `Schema` 본문 `field: Any`(AnnAssign, 예 kkebi `…/api/analytics/schema/schema_in.py:25 event_name: Any`) 면제 여부는 새 규칙이 따로 정해야 하고, Django 스텁 미러(`clean() -> dict[str, Any]`, `has_change_permission(obj: Any | None)`, `changeform_view(extra_context: dict[str, Any] | None)`)는 어떤 예외 표에도 없다. 실행: `[TARGET_DIR]`(기본 cwd, 인자 2개↑ exit 1) · `checker_target.bc_shaped_target_reason` 443-446 이 BC 모양 대상·`requires-python` 미달 인터프리터를 exit 1 거절 · exit 0 clean/미채택 · 1 오류 · 2 blocker · 0건 가드 #74 459-467 · 출력 `blocker N건 — …` + `  [#493] path:line: msg`, ⓓ 후보 `  [ⓓ#69] …`(exit 불산입), clean 시 `clean — 파일 N개 … (standard_tree <sha>)` · `DJR_FINDINGS_JSON=<파일>` 이면 `findings.py`(ENV_VAR 68행) 가 JSON lines(`findings/0`) append, 없으면 `DJR_VIOLATIONS_DIR` → `<TARGET>/.dddjango/violations/`(표식 있을 때만).
+
+**격리 실행 (E.7)** — `rsync -a --exclude .venv --exclude .git …` → `iso/{spring,kkebi}`(spring 은 `.py` 0건인 `framework/technology/rag/data` 147M 도 제외), 각 `.venv/bin/python` 3.14.7 실행:
+
+| 저장소 | exit | #493 | ⓓ#69 | #493 분포 | 종류 | 파일 |
+|---|---|---|---|---|---|---|
+| spring | 2 | **3,225** | 87 | framework/technology 3,078 · docs 83 · spring_dream_server 64 · **application 0** | 지역 변수 2,893 · 모듈 302 · 반환 11 · 매개변수 11 · 속성 5 · 클래스 3 | 45(최다 `rag_builder/steps/__init__.py` 582 · `ontology_c11.py` 463 · `ontology_control.py` 372) |
+| kkebi | 2 | **173** | 172 | kkebi_server 63 · web/client 54 · web/mypage 35 · web/home 9 · web/top3 8 · web/saju 4 · **application 0 · scripts 0** | 모듈 135 · 지역 38 | 36(최다 `kkebi_server/settings/base.py` 25 · `web/client/identity/session_client.py` 19) |
+
+#358·#456 발화 0. 원문 `spring_checker.out`(3,314줄)·`kkebi_checker.out`(347줄).
+
+**판단 재료** — 레인 산출물: spring `application/*` prod `Any` 120건(fortune_character 36 · promotion 22 · product 15 · service_policy 14 순)의 절반 이상이 Django admin/Form 경계와 ninja `request.user`; 633건은 레인 밖 RAG 런타임. kkebi BC 레인 133건은 saju reading assembler JSON 순회 45건 집중, web 218건은 `web/client/*/response/*.py` 사다리 복제. 플래그 의존성: 현재 명시 `Any` 를 막는 도구가 없다(ANN401 무효 · `disallow_any_explicit` 미설정 · mypy 범위가 spring `application/`·kkebi `web/` 제외 · 검사기는 #358 외 애너테이션 내용 미검사) → 위 수치는 «허용 상태의 자연 발생 기준선». #493 기준선은 두 저장소 모두 application/* 에서 0.
+
+## 코디 추기 (2026-09-04) — application 프로덕션 **시그니처** bare `Any` 전수 (`spring_any.jsonl`/`kkebi_any.jsonl` 재집계)
+
+- spring application prod 시그니처 bare `Any` = **8**: fortune_record 2(`fortune_record_model.py:15 update(**kwargs: Any)` · `:95 delete(using: Any)` — Django Model 오버라이드 미러) · promotion 2(`campaign_form.py:100 __init__(*args: Any, **kwargs: Any)` — Form 오버라이드) · service_policy 4(`limit_rule_form.py:54`·`suspension_form.py:43` 같은 Form `__init__` 형). → **8/8 전부 Django 스텁 오버라이드 미러**(ruff `allow-star-arg-any = true` 가 이미 면제하는 형 6 + Model 메서드 2). 실질 `Any` 세탁 0.
+- kkebi application prod 시그니처 bare `Any` = **10**: identity 2(`panel.py has_change_permission(obj: Any)` — ModelAdmin 미러) · share 2(Form `__init__ *args/**kwargs`) · tarot 1(`insert_only_model.py:9 update(**kwargs)` Model 미러) · **product_observability 2(`analytics_controller.py:130`·`bug_report_controller.py:141 _accepted_rate_limit_or_none(decision: Any)` — 자체 도우미가 `Any` 로 받음 = 실질 세탁)** · **saju 3(`v3_reading_assembler.py:265 _evaluate_condition(condition: Any)`·`:448 _graphic_schema(x_axis: Any)`·`:777 _apply_fortune_variables(unse: Any)` — 도메인 서비스 JSON 순회 = 실질 세탁)**. → 프레임워크 미러 5 · 실질 5.
+- 함의: «시그니처 `Any` 0 무조건» 규칙은 두 저장소 기존 레인 산출물에서 **18건 소급 red**(그중 13건은 Django 스텁이 `Any` 로 선언한 오버라이드라 `object` 대체 시 mypy `override` 호환 오류 가능성 — ③ 에서 실측 필요). 변수 주석 bare `Any`(spring application prod var 36 · kkebi 64)는 `request.user`·`cleaned.get()`·JSON 순회가 주류.
+
+## 코디 추기 2 (2026-09-04) — Django 스텁 오버라이드에서 `Any`→`object` 대체 가능성 프로브 (`mypy-obj/`)
+
+- spring `.venv` mypy 2.3.1 · `strict + warn_unreachable + warn_unused_ignores`(django-stubs 플러그인 미구성 → 모델 필드 `var-annotated` 1건은 무관 소음). 스텁 원문: `forms.pyi:38 __init__(*args: Any, **kwargs: Any)` · `:78 clean(self) -> dict[str, Any] | None` · `admin/options.pyi:165 has_change_permission(obj: _ModelT | None)` · `db/models/base.pyi:128 delete(using: Any | None = None, …)`.
+- `object` 판(`probe.py`): `delete(using: object = None)` · `__init__(*args: object, **kwargs: object)` · `has_change_permission(obj: object | None)` · `clean() -> dict[str, object]` — **override 호환 오류 0**. `super()` 호출에 붙인 `# type: ignore[arg-type]` 2곳이 `unused-ignore` 로 잡힘 = `object` 값을 `Any` 매개변수에 넘기는 호출도 통과. 유일한 오류는 `dict(super().clean())` 의 `| None` 미처리(`arg-type`) — `Any` 판(`probe_any.py`)도 같은 자리에서 `return-value` 오류 → **`Any` 와 무관한 None 처리 문제**(발주측 코드가 `-> dict[str, Any]` 로 스텁을 미러하는 것 자체가 이미 부정확).
+- 함의(E-1): «시그니처 `Any` 0» 은 Django/ninja 오버라이드 자리에서도 `object`(또는 정확 타입)로 지킬 수 있다 — 소급 18건은 기계적 치환 가능(③ 에서 kkebi `has_change_permission`·spring Form `__init__` 실파일로 재확인 권장). 단 `*args: object, **kwargs: object` 는 ruff `allow-star-arg-any` 관례와 달라 문면이 «`*args/**kwargs` 도 예외 없음» 을 명시해야 함.

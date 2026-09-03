@@ -7,7 +7,31 @@
 
 ## ⓪ 조사자(코디) 검증 결과 (2026-09-04 — 리뷰어는 이 전제를 공격한다)
 
-(조사자 4기 실측 결과 병합 예정 — 아래 «코퍼스 좌표»는 코디 직접 확인분)
+조사자 4기(D·E / F / G / H) 독립 실측 + 코디 직접 확인. 증거 원문 `workspace/eval/field-report-2/evidence/<항목>/summary.md`(스크립트·jsonl 동봉). 두 저장소 읽기 전용 · 검사기·mypy 는 rsync/`git archive` 격리 복제본에서 실행.
+
+### D — 항상 raise 도우미 `-> None` (실측 2026-09-04)
+
+- **재현 규모**: AST 전수(spring 2,918 · kkebi 3,952 파일). «항상 raise ∧ `-> None` ∧ 프로덕션 ∧ 도우미형» = **spring 0 · kkebi 1**(`application/billing/.../toss/payment_processing_adapter.py:437 _raise_provider_error`). 같은 파일 `:366 _raise_transport_failure -> Never` 가 이미 있음 → **지식 부재가 아니라 파일 내 일관성 문제**. 나머지 `-> None` 항상-raise 는 `__init__` 생성 차단 가드 3(mypy 가 `-> None` 강제 · 대상 아님)·테스트 fake 강제-실패 스텁 28.
+- **보고서의 `_fail`**: spring `framework/.../service_runtime.py:642` 는 **이미 `-> NoReturn`**(발주측 `96e8719` mypy 빚 상환 커밋 · 레인 아님). 발생 당시(43e9628, 리딩 P3 레인 병행 framework 코드)에는 `-> None` 이었음 → 원 사건 1 + kkebi 1 = **n=2 / 2저장소**, 둘 다 레인 산출물(kkebi 는 `20260823-1637-billing-migration` 런 리뷰 md 가 파일 언급 · discipline 리뷰 언급 0).
+- **정상 사용 실증**: `NoReturn/Never` 도우미 7(spring llm_access 슬라이스 0 커밋 `5431706` 3 · framework 2 · kkebi 2) → 레인이 쓸 줄 안다. 코퍼스 `NoReturn` 언급 0.
+- **판단 재료**: 플러그인이 만든 모양 아님(코퍼스에 `-> None` raise 예제 없음) · 검사기 없음 · 반복 2레인(저장소 각 1). 현장 보고 기준 4 «검사가 못 잡는데 레인 두 곳 이상 반복 → 문면 후보» 에 **정확히 1건 차이로 걸침**(2레인·2저장소). 효과 = 문면 1줄(확률적) — mypy 결정 실행은 B 기각으로 없음.
+
+### E — 명시 `Any` 정책 (실측 2026-09-04)
+
+- **기준선(허용 상태의 자연 발생)**: 프로덕션 `Any` 사용 spring application **120**(bare 45 · 제네릭 안 75) · framework 633(RAG 런타임, 레인 밖) / kkebi application **133**(bare 71 · 안 62) · web 218(dddjango-web 응답 파서 사다리) · scripts 95. 보고서 «시그니처 `Any` 47 · application 0» 은 ANN401(bare 시그니처만·`*args/**kwargs` 면제) 기준의 수치 — **재집계: application 프로덕션 시그니처 bare `Any` = spring 8 · kkebi 10**. spring 8/8 은 Django 스텁 오버라이드 미러(Form `__init__(*args: Any, **kwargs: Any)` 6 · Model `update/delete` 2). kkebi 10 = 미러 5 + **실질 세탁 5**(`product_observability` 컨트롤러 도우미 `decision: Any` 2 · `saju` 도메인 서비스 JSON 순회 3).
+- **막는 도구 부재 실증**: 두 저장소 `ruff.toml` 이 ANN401 을 select 후 ignore(순효과 비활성) · `allow-star-arg-any = true` · mypy 는 `disallow_any_explicit` 미설정 · pre-commit mypy 범위가 spring `application/` **미포함**·kkebi `web/` 미포함. → 현재 `Any` 를 막는 것은 아무것도 없다(레인 discipline reviewer 의 즉석 규칙만).
+- **검사기 #493 자리**: `check-public-surface-annotation.py` 는 주석 «유무»만 보고(211~226·265~268·320~322) 내용은 #358 만 읽음(`_annotation_names` 341~352). «명시 `Any`» 규칙은 그 세 자리에 `_name_of(ann)=="Any"`(bare)·`"Any" in _annotation_names(ann)`(제네릭 안) 로 붙일 수 있고 `typing.Any`/`t.Any`/별칭은 기존 `_module_bindings` 로 해소. 현재 선언적 면제(`_is_declarative_class`)는 plain Assign 과 `self.x` 에만 걸려 있어 ninja `Schema` 필드 `x: Any`·Django 오버라이드 미러의 취급은 새 규칙이 정해야 함. 격리 실행 #493 기준선: application/* **0**(양 저장소) · 레인 밖 spring framework 3,078·kkebi web 등 173.
+- **`object` 대체 가능성 프로브**(mypy 2.3.1 strict): Django 스텁 오버라이드 4형(`Form.__init__ *args/**kwargs` · `clean()` · `ModelAdmin.has_change_permission(obj)` · `Model.delete(using)`)을 `object` 로 바꿔도 **override 호환 오류 0**, `object` 값을 `Any` 매개변수에 넘기는 `super()` 호출도 통과. → «시그니처 `Any` 0» 은 프레임워크 미러 자리에서도 지킬 수 있다. 소급 비용 = 기존 레인 산출물 18건(미러 13 · 실질 5) 기계 치환.
+- **코퍼스 정합 재료**: 하우스룰 §4 «예외 0» + «표준 문서군 예시는 적용 대상 아님» · R-3443(`object`/`Any` 입력은 경계가 좁힘) · implementation-python 1.12 TypeIs · 23.1 mypy strict 설정 블록(`disallow_any_generics`·`warn_return_any` 만 열거). architecture-ddd Knowledge Level 예제 `dict[str, Any]`·`value: Any` 는 예시 면제 대상이나 R-20(생성 모양 strict 준수)과의 관계는 ① 판정.
+
+### F — composition root 주입 callable ≡ Protocol · 실배선 테스트 (실측 2026-09-04)
+
+- **정적 대조 재현**: AST 로 `composition_root/dependency_wiring.py` 전수 → 생성자 키워드 인자의 callable 주입 지점(spring 51 · kkebi 48)을 수신 Protocol `__call__`/`Callable` 시그니처와 대조. 원 결함 커밋 `585c9c6`·수리 직전 `36258bb^` 에서 **불일치 1**(`fortune_reading/.../dependency_wiring.py:42` — Protocol 9키워드 vs 필수 `data_root,embedder` 미공급), HEAD 0. mypy strict 도 수리 전 그 줄을 `[arg-type]` 로 검출 — 그러나 pre-commit mypy 대상이 `spring_dream_server framework` 라 `application/` 미포함(레인·훅 모두 못 봄).
+- **표본 외**: kkebi 12 BC · spring 나머지 15 BC 불일치 **0** → 시그니처 불일치는 **1레인 특이**. 보고서 grep(spring 159·kkebi 15 파일) 유사 사건 1(같은 어댑터의 테스트 fake 가 `content_roles` 미수용 — 방향 반대). «테스트 26곳» 은 미재현(실측 `build_*` patch 14 + llm_access 3).
+- **실배선 테스트 부재는 기본 상태**: 진짜 `build_*()` 를 실행하는 테스트가 있는 BC = spring 5/16(리딩은 36258bb 신설) · kkebi 2/12. 신설 `test_composition_root_wiring.py` 의 fake 경계 = LLM ACL 어댑터·가중치 소재 2곳뿐.
+- **문면 현황**: `implementation-django-ninja/references/final.md` §2.3(294~313 · graph-owned · R-0719/R-0722~0725)에 «주입 callable ≡ Protocol»·«partial» 문면 **없음**; «매요청 호출 … 테스트 오버라이드 회피»(312)는 있음. `implementation-test`·`discipline-tdd` 에 «composition root»·«실배선» 언급 **0**(보고서가 지목한 `discipline-test` 스킬은 **존재하지 않음** → F-2 착지는 implementation-test). design-review-api(49~58)·ddd(31~44) 관점 목록에 «주입 의존 공급처» 없음. 검사기 `check-composition-root.py` #85(1841~1875)는 «최상단은 import 와 build_* 뿐» 형태만 검사 — 주입 값·시그니처 무검사.
+- **판단 재료**: F-1 은 «검사가 못 잡는 1레인 사건» 이지만 프로덕션 결함이었고 정적 검출 가능(AST·mypy) · F-2 는 «부재가 기본 상태»(n=21/28 BC) 라 문면 1줄의 소급 강제 여부가 쟁점. 미측정: 옛 배선의 런타임 TypeError 재현(테스트 미실행)·레인 당시 mypy 실행 범위.
+
 
 ### 코퍼스 좌표 (코디 직접 확인 · 2026-09-04)
 
