@@ -1,0 +1,10 @@
+형식 red — 7건 (계획↔기준선 모순 · architect 반송 재료):
+  remove 대상 부재: application/fortune_reading/test/e2e/test_crosswalk_candidate_bundle.py — 기준선 80431d9480f7 에 없는 경로는 제거할 수 없다(고정 기준선에서 기실현 remove 는 실존이다 — 이미 지워진 경로는 행을 거둔다)
+  remove 대상 부재: application/fortune_reading/test/e2e/test_active_bundle_matrix.py — 기준선 80431d9480f7 에 없는 경로는 제거할 수 없다(고정 기준선에서 기실현 remove 는 실존이다 — 이미 지워진 경로는 행을 거둔다)
+  remove 대상 부재: application/fortune_reading/test/e2e/test_open_host_services.py — 기준선 80431d9480f7 에 없는 경로는 제거할 수 없다(고정 기준선에서 기실현 remove 는 실존이다 — 이미 지워진 경로는 행을 거둔다)
+  remove 대상 부재: application/fortune_reading/test/e2e/typecheck_citation_open_host_service_consumer.py — 기준선 80431d9480f7 에 없는 경로는 제거할 수 없다(고정 기준선에서 기실현 remove 는 실존이다 — 이미 지워진 경로는 행을 거둔다)
+  remove 대상 부재: application/fortune_reading/test/e2e/test_evidence_api.py — 기준선 80431d9480f7 에 없는 경로는 제거할 수 없다(고정 기준선에서 기실현 remove 는 실존이다 — 이미 지워진 경로는 행을 거둔다)
+  remove 대상 부재: application/fortune_reading/test/e2e/test_evidence_provider_boundaries.py — 기준선 80431d9480f7 에 없는 경로는 제거할 수 없다(고정 기준선에서 기실현 remove 는 실존이다 — 이미 지워진 경로는 행을 거둔다)
+  remove 대상 부재: application/fortune_reading/test/e2e/test_evidence_bundle.py — 기준선 80431d9480f7 에 없는 경로는 제거할 수 없다(고정 기준선에서 기실현 remove 는 실존이다 — 이미 지워진 경로는 행을 거둔다)
+
+요약: 형식 red 7건(remove 대상 부재 7) · 기준선 80431d9480f7 · 모드 차단

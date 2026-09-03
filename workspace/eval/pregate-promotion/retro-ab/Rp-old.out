@@ -1,0 +1,87 @@
+# design_pregate — 예보 실행 · 기준선 61b56ef4b69e (--base 61b56ef4b69e) · 모드 관찰(observe) · 실행기: design_pregate.py · dddjango v(unknown) · 블록 해시 7adc9cc6d40f
+(예보는 Phase 2 step 6(G2 registry 게이트)의 실행·증거 요구를 어떤 형태로도 대체·축약하지 않는다.)
+실체화 12건 · dirty overlay 0건 · 미시뮬레이션 80건 · already-built 3건
+
+# registry_gate — 판정 차분 · copy · 앵커 e9312b9564ad
+툴체인: dddjango v(unknown) · py3.14 · 실행 트리 digest 490fee5f5bf3aaa6(39파일) · 경로 /private/tmp/claude-501/-Users-hyun-Desktop-dddjango/d31bf8ef-f45e-4609-badc-3add1039bdb0/scratchpad/old/dddjango/scripts
+**귀속 0 ≠ 전체 clean** — 이 게이트는 «이번 런이 위반을 늘렸나»만 판정한다(legacy 격리).
+| 검사기 | anchor | current |
+|---|---|---|
+| `check-mechanism-ownership.py` | 0 | 0 |
+| `check-error-centralization.py` | 0 | 0 |
+| `check-response-schema-bypass.py` | 0 | 0 |
+| `check-layer-skeleton.py` | 2 | 2 |
+| `check-openapi-error-declaration.py` | 0 | 0 |
+| `check-context-isolation.py` | 2 | 0 |
+| `check-app-container.py` | 0 | 0 |
+| `check-ninja-boundary-middleware.py` | 0 | 0 |
+| `check-common-container.py` | 0 | 0 |
+| `check-idempotency-scope-creep.py` | 0 | 0 |
+| `check-public-surface-annotation.py` | 2 | 2 |
+| `check-test-config.py` | 2 | 2 |
+| `check-transient-overmapping.py` | 0 | 0 |
+| `check-synthetic-infra-exc.py` | 0 | 0 |
+| `check-api-error-controller-contract.py` | 0 | 0 |
+| `check-composition-root.py` | 0 | 0 |
+| `check-db-table.py` | 0 | 0 |
+| `check-choices-literal-consumption.py` | 0 | 0 |
+| `check-usecase-dto-placement.py` | 0 | 0 |
+| `check-transaction-boundary.py` | 0 | 0 |
+| `check-domain-model.py` | 2 | 2 |
+| `check-port-adapter-pairing.py` | 0 | 0 |
+| `check-event-publish.py` | 0 | 0 |
+| `check-broker-contract.py` | 0 | 0 |
+| `check-missable-entrance.py` | 0 | 0 |
+| `check-naming.py` | 0 | 0 |
+| `check-business-vocabulary.py` | 2 | 2 |
+
+== 귀속(N∖L) 0건 ==
+
+== legacy 잔존(L∩N) 2867건 · 해소(L∖N) 93건 ==
+  check-business-vocabulary.py: 2
+  check-domain-model.py: 5
+  check-layer-skeleton.py: 4
+  check-public-surface-annotation.py: 2854
+  check-test-config.py: 2
+
+귀속 레코드 sidecar → /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/design-pregate-i1hdxasf/introduced.json (레코드 0 · 대응 없는 귀속 라인 0)
+
+판정: 귀속 0건 → green(신규 위반 없음)
+
+== 예보 항목 0건 ==
+  채널 메모: symbols 미반영(비-add `update` 칸 — 스텁 전사 밖 · update 대상이면 계약 실존의 «자기 update 해소» 근거로만 쓴다): application/fortune_reading/driving_layer/api/api_router.py
+  채널 메모: symbols 미반영(비-add `update` 칸 — 스텁 전사 밖 · update 대상이면 계약 실존의 «자기 update 해소» 근거로만 쓴다): application/fortune_reading/application_layer/port/evidence_retrieval/evidence_retrieval_port.py
+  채널 메모: symbols 미반영(비-add `update` 칸 — 스텁 전사 밖 · update 대상이면 계약 실존의 «자기 update 해소» 근거로만 쓴다): application/fortune_reading/test/fake/evidence_retrieval_port.py
+  채널 메모: symbols 미반영(비-add `update` 칸 — 스텁 전사 밖 · update 대상이면 계약 실존의 «자기 update 해소» 근거로만 쓴다): application/fortune_reading/test/fake/query_translation_port.py
+  채널 메모: symbols 미반영(비-add `update` 칸 — 스텁 전사 밖 · update 대상이면 계약 실존의 «자기 update 해소» 근거로만 쓴다): application/fortune_reading/test/fake/reading_bundle_port.py
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_reading/application_layer/evidence_provisioning/prepare_fortune_evidence/prepare_fortune_evidence_use_case/prepare_fortune_evidence_use_case.py::PrepareFortuneEvidenceUseCase
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_reading/application_layer/evidence_provisioning/prepare_fortune_evidence/prepare_fortune_evidence_use_case/prepare_fortune_evidence_use_case.py::PrepareFortuneEvidenceUseCase.execute(command: PrepareFortuneEvidenceCommand) -> PrepareFortuneEvidenceResult
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_reading/application_layer/evidence_provisioning/prepare_fortune_evidence/prepare_fortune_evidence_use_case/prepare_fortune_evidence_failure.py::PrepareFortuneEvidenceFailureCategory(StrEnum) {INVALID_REQUEST="invalid_request", REGISTRY_CONTRACT_MISMATCH="registry_contract_mismatch", TEMPORARY_ERROR="temporary_error", RESOURCE_LIMIT="resource_limit"}
+  채널 메모: symbols 고아 행(file-plan 미등재 — 미반영): application/fortune_reading/application_layer/evidence_provisioning/prepare_fortune_evidence/prepare_fortune_evidence_use_case/prepare_fortune_evidence_failure.py::PrepareFortuneEvidenceFailure(Exception) {phase: Literal["pre_pin", "post_pin"], bundle_id: str | None, category: PrepareFortuneEvidenceFailureCategory, stage: Literal["input", "pin", "translation", "retrieval", "assembly"], cause: InvalidReadingRequest | BundleSelectionMismatch | CalculationOutputContractMismatch | InvalidTranslationRequest | ReadingBundleContractMismatch | TranslationContractMismatch | RetrievalContractMismatch | EvidenceDigestConflict | RetrievalTemporaryFailure | RetrievalResourceLimit}
+  채널 메모: symbols 미반영(비-add `update` 칸 — 스텁 전사 밖 · update 대상이면 계약 실존의 «자기 update 해소» 근거로만 쓴다): application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_in.py
+  채널 메모: symbols 미반영(비-add `update` 칸 — 스텁 전사 밖 · update 대상이면 계약 실존의 «자기 update 해소» 근거로만 쓴다): application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_out.py
+  채널 메모: symbols 미반영(비-add `update` 칸 — 스텁 전사 밖 · update 대상이면 계약 실존의 «자기 update 해소» 근거로만 쓴다): application/fortune_reading/driving_layer/open_host_service/evidence_provisioning/contract/request/prepare_fortune_evidence_request.py
+  채널 메모: boundary-imports 스텁 미반영(비-add `update` 칸 — 실존 판정에는 포함): application/fortune_reading/driving_layer/api/api_router.py
+  채널 메모: boundary-imports 스텁 미반영(비-add `update` 칸 — 실존 판정에는 포함): application/fortune_reading/application_layer/port/evidence_retrieval/evidence_retrieval_port.py
+  채널 메모: boundary-imports 스텁 미반영(비-add `update` 칸 — 실존 판정에는 포함): application/fortune_reading/test/fake/evidence_retrieval_port.py
+  채널 메모: boundary-imports 스텁 미반영(비-add `update` 칸 — 실존 판정에는 포함): application/fortune_reading/test/fake/query_translation_port.py
+  채널 메모: boundary-imports 스텁 미반영(비-add `update` 칸 — 실존 판정에는 포함): application/fortune_reading/test/fake/reading_bundle_port.py
+  채널 메모: boundary-imports 스텁 미반영(비-add `update` 칸 — 실존 판정에는 포함): application/fortune_reading/test/unit/test_crosswalk_candidate_bundle.py
+  채널 메모: boundary-imports 스텁 미반영(비-add `update` 칸 — 실존 판정에는 포함): application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py
+  채널 메모: boundary-imports 스텁 미반영(비-add `update` 칸 — 실존 판정에는 포함): application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py
+  채널 메모: boundary-imports 스텁 미반영(비-add `update` 칸 — 실존 판정에는 포함): application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py
+  채널 메모: boundary-imports 스텁 미반영(비-add `update` 칸 — 실존 판정에는 포함): application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py
+  채널 메모: boundary-imports 스텁 미반영(비-add `update` 칸 — 실존 판정에는 포함): application/fortune_reading/driving_layer/open_host_service/evidence_provisioning/evidence_provisioning_service.py
+  채널 메모: boundary-imports 스텁 미반영(비-add `update` 칸 — 실존 판정에는 포함): application/fortune_reading/driving_layer/open_host_service/evidence_provisioning/evidence_provisioning_service.py
+  채널 메모: boundary-imports 스텁 미반영(비-add `update` 칸 — 실존 판정에는 포함): application/fortune_reading/driving_layer/open_host_service/evidence_provisioning/evidence_provisioning_service.py
+  채널 메모: boundary-imports 스텁 미반영(비-add `update` 칸 — 실존 판정에는 포함): application/fortune_reading/driving_layer/open_host_service/evidence_provisioning/evidence_provisioning_service.py
+
+== 계약 실존 결손 2건 (boundary-imports 3단) ==
+  `e-38d28aa59787` ⑴ 모듈 부재 :: application.fortune_reading.application_layer.evidence_provisioning.prepare_fortune_evidence.prepare_fortune_evidence_use_case.prepare_fortune_evidence_failure import PrepareFortuneEvidenceFailure ← 소비 application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py, application/fortune_reading/driving_layer/open_host_service/evidence_provisioning/evidence_provisioning_service.py
+  `e-199294da6bfe` ⑴ 모듈 부재 :: application.fortune_reading.application_layer.evidence_provisioning.prepare_fortune_evidence.prepare_fortune_evidence_use_case.prepare_fortune_evidence_failure import PrepareFortuneEvidenceFailureCategory ← 소비 application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py, application/fortune_reading/driving_layer/open_host_service/evidence_provisioning/evidence_provisioning_service.py
+  집계: 행 16 · 이름 판정 16 · 실존 확인 8 · 자기 add 해소 2 · 자기 update 해소 1 · 저장소 밖(검사 밖) 1 · 판정 불능 0 · 결손 4(항목 2)
+
+판정: 예보 green — P/S/I급 결정 계약 위반 예보 0(«설계 검증됨» 아님) · 계약 실존 결손 2건(권고·비차단)
+요약: 귀속 0건 · 실존 결손 2건 · 기준선 61b56ef4b69e · 모드 관찰
+
+예보 리포트 append → /private/tmp/claude-501/-Users-hyun-Desktop-dddjango/d31bf8ef-f45e-4609-badc-3add1039bdb0/scratchpad/retro/Rp-old.md

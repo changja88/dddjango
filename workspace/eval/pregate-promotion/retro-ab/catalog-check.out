@@ -1,0 +1,4 @@
+# design_pregate --check-report · 모드 차단(enforce) · 실행기: design_pregate.py · dddjango v2.17.16 · 블록 해시 cb95a1bddb32
+  불비: stale — 명세 블록 해시 cb95a1bddb32 ≠ 마지막 예보 6cf8e2ffdfc3 · 재발화
+
+요약: check-report 불비 1건 · 블록 해시 cb95a1bddb32=6cf8e2ffdfc3 · 마지막 판정 green · 귀속 0건 · 실존 결손 0건 · 기준선 e1294f59c35c

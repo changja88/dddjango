@@ -84,3 +84,10 @@
 - D2 P10 «update/remove/empty 대상 부재 → 형식 red» — 권고 **채택**(BLOCKER 봉쇄 · 승격 폴더 예외).
 - 나머지(P3 문면 3건·P4 예시·P5 dry-run·P6 착지 신규 채번·P7 R-3425/R-3437·P8·리비전 번호·사각 S번호)는 리뷰 처방대로 집행(관례 범위).
 - 현장 보고 G(#93 채널 전사 결손)는 사용자 순서대로 제보 수정 단계에 두고, 이 배치는 사각 목록 1행만 추가.
+
+## ④ 구현 기록 (09-03 · 커밋 2fbc111 + 증거)
+
+- 실행기 `design_pregate.py`(+codex byte 미러): `MODE="enforce"` · docstring/헤더/요약 «차단» · 전 exit 3 경로 `요약:` · 블록 부재 → exit 3 «형식 red(블록 부재)» · file-plan 0행 → «형식 red(블록 공허)» · `baseline_form_errors`(add 충돌·update/remove 대상 기준선 부재 · 유효 승격 형태 예외 `_promoted_form` · HEAD 실존 사유 분리 · 일괄 반송 · `요약: 형식 red N건(<종류 계수>)`) · `materialize(promoted=)` 문면 · `--check-report`(`check_report`/`run_check_report` — 앵커 `^## pre-gate 예보 — ` · 첫 헤더 행 · 마지막 절~EOF · ID+라벨 판독 · exit 0/3/1 · 요약 행) · BLIND_SPOTS S1~S9(S3·S9 문면 교체).
+- 규범: rdflib+canon(왕복 byte 동일) → gate 90/90 → 렌더 2문서 → LEDGER +5 · ExpressionShape 3558·NormShape/WorkShape 3454·BlockShape 2901 · q4 3445 · rulepack · codex 손 미러 9행(`codex-mirror-diff.md` — 병렬 문면 외 어절 차이 0) · manifest pipeline/packs 등재·봉인 draft.
+- 하네스: 픽스처 5(noblock·empty-block·update-target ×3 상태·remove-target·remove-deferred) · 러너 묶음 enforce(헤더 7)·checkreport(14단계) · 유닛 `baseline_form_errors` 14케이스·`check_report` 15케이스 → PASS · `make verify` 6/6.
+- 소급 A/B(`workspace/eval/pregate-promotion/retro-ab.md`): L1~L4 동일 · R remove 부재 7 · R′ update 부재 24 · 카탈로그 check-report stale · kkebi exit 3 — 계획 Δ4 기대값과 전건 일치.
