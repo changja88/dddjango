@@ -1,8 +1,8 @@
-# dddjango
+# dddjango — Claude Code · Codex
 
-**Django 프로젝트에 DDD(도메인 주도 설계)를 제대로 입히는 Claude Code 플러그인.**
+**Django 프로젝트에 DDD(도메인 주도 설계)를 제대로 입히는 Claude Code·Codex 플러그인.**
 
-`/dddjango <기능>` 한 줄이면, 한 기능을 **요구 정리 → 설계 → 구현(TDD)** 까지 전문 에이전트들이 협업해 깔끔한 4계층 DDD 구조로 완성한다. 매 단계 당신의 승인을 받고 진행한다.
+Claude Code의 `/dddjango <기능>` 또는 Codex의 `dddjango를 사용해 <기능>` 요청으로 시작하면, 한 기능을 **요구 정리 → 설계 → 구현(TDD)** 까지 전문 에이전트들이 협업해 깔끔한 4계층 DDD 구조로 완성한다. 매 단계 당신의 승인을 받고 진행한다.
 
 ---
 
@@ -56,6 +56,19 @@ codex plugin add dddjango-web@changja88-dddjango         # Codex
 
 ---
 
+## 작업 요청 가이드
+
+설치한 각 플러그인 루트의 `REQUEST_GUIDE.md`가 해당 runtime의 권위 있는 가이드 사본이다. 아래 링크는 저장소에서 최신 가이드를 찾는 진입점이다.
+
+| 플러그인 | 요청에 담을 핵심 입력 | 이어서 넘기는 조건 | 가이드 |
+|---|---|---|---|
+| **dddjango** | 비즈니스 규칙·상태 전이·실패 원자성·보존할 현행 계약·조사 evidence·범위와 미확정 | backend 계약을 준비한 뒤 화면 구현이 필요하면 `dddjango-web`으로 넘긴다. | [dddjango 작업 요청 가이드](dddjango/REQUEST_GUIDE.md) |
+| **dddjango-web** | 정확한 시안·viewport·상태·interaction·실제 URL+JSON API 계약·사람이 비교할 완료 기준 | 필요한 endpoint가 없거나 인증·권한·업무 규칙·데이터 변경이 필요하면 먼저 `dddjango`로 넘긴다. | [dddjango-web 작업 요청 가이드](dddjango-web/REQUEST_GUIDE.md) |
+
+가이드에는 30초 최소 요청과 복잡한 작업용 권장 요청서가 있다. 모르는 내용은 추측하지 말고 `미확정`으로 남기며, 템플릿을 채워도 G0·G1·G2의 질문과 승인은 생략되지 않는다.
+
+---
+
 ## 업데이트
 
 **Claude Code** — 슬래시 커맨드로 (마켓 메타 갱신 → 플러그인 갱신 순서):
@@ -71,12 +84,10 @@ codex plugin add dddjango-web@changja88-dddjango         # Codex
 codex plugin marketplace upgrade changja88-dddjango
 ```
 
-설치된 버전 확인은 `codex plugin list` — 마켓플레이스별로 플러그인 상태·버전·경로가 표로 나온다:
+설치된 상태와 현재 버전 확인은 `codex plugin list`로 할 수 있다:
 
 ```
 $ codex plugin list
-PLUGIN                       STATUS              VERSION  PATH
-dddjango@changja88-dddjango  installed, enabled  1.0.5    ~/.codex/.tmp/marketplaces/changja88-dddjango/codex-dddjango
 ```
 
 > 업데이트 후 세션을 재시작하세요. `upgrade`에서 마켓 이름을 생략하면 설정된 모든 Git 마켓플레이스를 한 번에 갱신합니다.
@@ -85,13 +96,14 @@ dddjango@changja88-dddjango  installed, enabled  1.0.5    ~/.codex/.tmp/marketpl
 
 ## 빠른 시작
 
-기존 Django 프로젝트 루트에서 Claude Code를 실행하고:
+기존 Django 프로젝트 루트에서 사용하는 플랫폼에 맞게 시작한다.
 
-```
-/dddjango 재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능
-```
+| Claude Code | Codex |
+|---|---|
+| `/dddjango 재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능` | `dddjango를 사용해 재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능을 만들어 줘.` |
+| `/dddjango-web "주문 목록 화면을 시안과 실제 API 계약에 맞춰 만들어 줘" <OpenAPI 3.x JSON URL 또는 로컬 경로>` | `dddjango-web을 사용해 주문 목록 화면을 시안과 실제 URL+JSON API 계약에 맞춰 만들어 줘.` |
 
-그러면 요구 정리부터 테스트까지 단계별로 진행되며, 각 단계마다 당신이 승인한다.
+`dddjango`는 요구 정리부터 테스트까지, `dddjango-web`은 화면 요구 정리부터 시안·계약 검증까지 단계별로 진행하며 각 게이트에서 당신이 승인한다.
 
 ---
 
@@ -120,7 +132,7 @@ dddjango@changja88-dddjango  installed, enabled  1.0.5    ~/.codex/.tmp/marketpl
 - **G1 · 설계** — architect의 설계 명세 + 리뷰 반영 결과와 **영구 테스트 입장표**를 승인한다. 이 명세가 이후 테스트·코드의 **단일 근거**가 된다.
 - **G2 · 구현** — 구현 코드 + 승인된 테스트 결정별 결과 + 테스트 diff 감수 + **27종 결정적 백스톱** 통과를 승인한다.
 
-> G2 직전에는 **27종의 결정적 백스톱**(파이썬 검사 스크립트)이 자동으로 돌아 구조·계약 회귀를 차단한다 — 컨테이너 위치, 표준 트리 골격(140행), 컴포지션 루트, 컨텍스트 격리, 명명·업무 어휘, API 오류 Schema·controller 직접 반환·OpenAPI 선언 등을 고정밀로 검사해, 에이전트의 의미 감수가 놓칠 수 있는 위반을 마지막 안전망으로 잡는다.
+> G2 직전에는 **27종의 결정적 백스톱**(파이썬 검사 스크립트)이 자동으로 돌아 측정 대상인 구조·계약 회귀를 차단한다 — 컨테이너 위치, 표준 트리 골격(140행), 컴포지션 루트, 컨텍스트 격리, 명명·업무 어휘, API 오류 Schema·controller 직접 반환·OpenAPI 선언 등을 검사한다. 통과 결과는 이 검사 범위의 신규 위반이 없다는 뜻이며, 설계 의미의 정답이나 저장소 전체가 clean임을 증명하지 않는다.
 
 ### 테스트는 현행 계약만 보고, 입장 심사 후 만든다
 
@@ -201,9 +213,9 @@ your_project/
             └── unit/  integration/  e2e/  factories/  fake/
 ```
 
-핵심 규약이 일관되게 강제된다 — `application/` 컨테이너, 표준 트리 골격(모든 BC가 내용과 무관하게 같은 140행 트리 — 빈 칸도 빈 패키지로 실현), 4계층(driving·application·domain·driven) 물리 분리, 입구는 전송 1차·도메인은 개념 1차, ORM은 `<Name>Model`·도메인은 bare 이름, 추상/구현 명명 규칙(`OrderRepository` ↔ `DjangoOrderRepository`), DI 배선은 BC 루트 «폴더» `composition_root/`(결선은 `dependency_wiring.py`). 테스트가 실제 승인된 경우에만 다섯 자식(unit/integration/e2e/factories/fake)으로 배치한다. **이 규약들은 27종의 결정적 백스톱이 구현 게이트(G2) 직전에 자동 검증**한다.
+핵심 규약이 일관되게 강제된다 — `application/` 컨테이너, 표준 트리 골격(모든 BC가 내용과 무관하게 같은 140행 트리 — 빈 칸도 빈 패키지로 실현), 4계층(driving·application·domain·driven) 물리 분리, 입구는 전송 1차·도메인은 개념 1차, ORM은 `<Name>Model`·도메인은 bare 이름, 추상/구현 명명 규칙(`OrderRepository` ↔ `DjangoOrderRepository`), DI 배선은 BC 루트 «폴더» `composition_root/`(결선은 `dependency_wiring.py`). 테스트가 실제 승인된 경우에만 다섯 자식(unit/integration/e2e/factories/fake)으로 배치한다. **이 가운데 자동 검사 대상 규율은 27종의 결정적 백스톱이 구현 게이트(G2) 직전에 검증**한다.
 
-> 대상 프로젝트에 **이미 확립된 구조 규약이 있으면 그것을 우선**한다. 위 표준은 미조직 프로젝트의 기본값이다.
+> 승인 스코프가 새로 만드는 파일과 기존 파일에 추가·변경하는 코드에는 위 규율을 적용한다. 현행 계약과 artifact evidence는 보존하며, 스코프 밖 기존 배치의 이동·개명·재배선은 별도 G0 결정 없이 하지 않는다.
 
 Django Ninja의 신규 `dddjango-code-json` 오류 계약은 contract scope당 공통
 `FrameworkErrorSchema` 하나(`framework/ninja/framework_error_schema.py`)를
@@ -268,15 +280,15 @@ public/internal·version·core profile scope를 새로 나눈다면 G1에서 별
 dddjango는 작업 규모를 보고 알맞게 움직인다.
 
 - **신규 기능** — 풀 파이프라인(요구 → 설계 → 구현)을 모두 거친다.
-- **부분 수정** — 전체를 다시 돌지 않는다. 영향 범위만 확인하고, 바뀐 설계 부분과 영향받는 테스트만 재실행한다. 설계 변경이 없으면 설계 게이트를 건너뛴다.
+- **부분 수정** — 전체를 다시 돌지 않고 영향 범위를 확인해 바뀐 설계 부분과 영향받는 테스트를 재실행한다. G1 생략은 승인된 현행 설계·계약이 유효하고, 관련 테스트 입장에 `pending`이 없으며, expected result나 지원 계약의 삭제·약화·이름 변경 같은 lifecycle 변경도 없음을 Coordinator가 재검증한 경우에만 가능하다.
 
 ---
 
 ## 요구 사항
 
-- **Claude Code**
+- **Claude Code 또는 Codex**
 - **기존 Django 프로젝트** — 이 플러그인은 한 기능을 빌드하는 도구이지, 프로젝트를 새로 부트스트랩하지 않는다.
-- **스택**: 테스트는 항상 **pytest**(pytest-django)로 돌린다 — 설정이 없으면 파이프라인이 갖춰 준다. API는 **django-ninja**가 기본이며, 프로젝트에 DRF·plain Django 관례가 확립돼 있으면 설계자가 그것을 존중한다. mypy strict는 구성돼 있으면 함께 검증한다.
+- **스택**: 테스트는 **pytest**(pytest-django)를 기준으로 하며, 새 설정은 승인된 테스트 입장 `add/update`일 때만 추가·변경한다. `reuse`이면 기존 runner를 검증 anchor로 사용한다. API는 **django-ninja**가 기본이며, 프로젝트에 DRF·plain Django 관례가 확립돼 있으면 설계자가 그것을 존중한다. mypy strict는 구성돼 있으면 함께 검증한다.
 
 ---
 
@@ -291,13 +303,13 @@ dddjango는 작업 규모를 보고 알맞게 움직인다.
 
 ## 자매 플러그인: dddjango-web
 
-`/dddjango-web <화면 요구>` — dddjango가 만든 **실물 API 계약만 소비**해 화면(웹 표현계층)을 빌드하는 **독립 플러그인**이다.
+`/dddjango-web <화면 요구>` — **실제 URL+JSON API 계약을 외부 클라이언트처럼 소비**해 화면(웹 표현계층)을 빌드하는 **독립 플러그인**이다. API를 만든 도구가 반드시 dddjango일 필요는 없다.
 
 - **시나리오 3종**: 클로드 디자인 시안 반영 · 기존 웹페이지 카피(외형은 같게, HTML 구조는 표준으로 재구축) · 기존 화면 수정
 - **표준**: 순수 HTML + HTMX + CSS(커스텀 JS 없음) · 요청 구동 MVVM(view/view_model/state + 템플릿) · design_system 토큰
 - **경계**: `web/` 트리는 «내부의 외부 클라이언트» — 백엔드 코드를 import하지 않고(백스톱이 차단) in-process HTTP로 계약만 소비한다. 필요한 API가 없으면 `/dddjango`로 발주를 안내한다.
-- **구성**: 커맨드 1(`/dddjango-web`) · 에이전트 4(`design-architect-web`·`design-review-web`·`coder-web`·`discipline-reviewer-web`) · 스킬 4(`architecture-web`·`implementation-ui`·`discipline-web-houserules`·`discipline-cleancode`) · 백스톱 검사 24종(구조·격리·명명·순수성) + 시안 절단 도구
-- **검증**: 자동 테스트 대신 결정적 백스톱 + 규율 감사 + 게이트에서 **사용자 육안 확인**(`runserver`로 시안과 대조)
+- **구성**: 커맨드 1(`/dddjango-web`) · 에이전트 4(`design-architect-web`·`design-review-web`·`coder-web`·`discipline-reviewer-web`) · 스킬 4(`architecture-web`·`implementation-ui`·`discipline-web-houserules`·`discipline-cleancode`) · 결정적 백스톱(구조·격리·명명·순수성) + 시안 절단 도구
+- **검증**: 결정적 백스톱은 측정 대상인 구조 규율만 확인하며 전체 품질이나 픽셀 동일을 증명하지 않는다. 자동 측정 결과와 규율 감사를 함께 보고, 승인한 상태·viewport의 전체 스크롤과 동작은 게이트에서 **사용자가 육안 확인**한다.
 
 ---
 
