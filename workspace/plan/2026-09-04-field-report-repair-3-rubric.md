@@ -85,3 +85,5 @@ BLOCKER 0 · **MAJOR 1**(A N-1 — `_alias_defs` 가 `TYPE_CHECKING` 중간 Clas
 
 BLOCKER 0 · **MAJOR 1**(B — `predicates.md` #648/#649 등재 누락 · `spec_lint ⑥` 이 `ast+` 만 강제하는 도구 사각으로 조각 2 verify 가 안 잡음) · MINOR 14(A 5 · B 5 · C 4). 세 축 공통 실측: #648/#649 4사본 파일·줄까지 재현 · public-surface 6항목 전 셀 동일 · 무손실 12/12 행 단위 동일 · main 픽스처 9/9 · gate kkebi 로그·sidecar byte 동일 · smoke 33/33 · 정직 기록(cad221b) 사실 정확·은폐 없음. 정정 = 조각 2 정정 커밋(아래 추기 · 기록 `evidence/impl/piece2-summary.md` «⑤-2 정정»). 이월: `spec_lint ⑥` 의 `ast` 규칙 predicates 등재 강제(도구 개선 후보).
 
+
+**⑤-2 정정 커밋 = `30a2a24`**(2026-09-04 · 정정 36경로 · 봉인 재발행 마지막 → `make verify` green 6/6 = `evidence/impl/verify5.log` · 다른 세션 파일 무접촉). 브랜치 커밋 8(56b27e1 · 06fef51 · d701df8 · cad221b · b541870 · f863ce6 · 9578c59 · 30a2a24) — 다음 = ⑥ 독립 감사 + 재검(산출 `workspace/eval/field-report-3/rv6-audit.md`).
