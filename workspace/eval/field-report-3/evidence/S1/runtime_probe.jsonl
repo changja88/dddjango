@@ -1,0 +1,69 @@
+{"phase": "before", "name": "forms.ModelForm", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'ModelForm' is not subscriptable"}
+{"phase": "before", "name": "forms.BaseModelForm", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'BaseModelForm' is not subscriptable"}
+{"phase": "before", "name": "forms.BaseInlineFormSet", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'BaseInlineFormSet' is not subscriptable"}
+{"phase": "before", "name": "forms.BaseModelFormSet", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'BaseModelFormSet' is not subscriptable"}
+{"phase": "before", "name": "admin.ModelAdmin", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'ModelAdmin' is not subscriptable"}
+{"phase": "before", "name": "admin.options.BaseModelAdmin", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'BaseModelAdmin' is not subscriptable"}
+{"phase": "before", "name": "admin.options.InlineModelAdmin", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'InlineModelAdmin' is not subscriptable"}
+{"phase": "before", "name": "admin.TabularInline", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'TabularInline' is not subscriptable"}
+{"phase": "before", "name": "admin.StackedInline", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'StackedInline' is not subscriptable"}
+{"phase": "before", "name": "views.View", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'View' is not subscriptable"}
+{"phase": "before", "name": "generic.TemplateView", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'TemplateView' is not subscriptable"}
+{"phase": "before", "name": "generic.RedirectView", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'RedirectView' is not subscriptable"}
+{"phase": "before", "name": "generic.DetailView", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'DetailView' is not subscriptable"}
+{"phase": "before", "name": "generic.ListView", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'ListView' is not subscriptable"}
+{"phase": "before", "name": "generic.FormView", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'FormView' is not subscriptable"}
+{"phase": "before", "name": "generic.CreateView", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'CreateView' is not subscriptable"}
+{"phase": "before", "name": "generic.UpdateView", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'UpdateView' is not subscriptable"}
+{"phase": "before", "name": "generic.DeleteView", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'DeleteView' is not subscriptable"}
+{"phase": "before", "name": "generic.ArchiveIndexView", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'ArchiveIndexView' is not subscriptable"}
+{"phase": "before", "name": "generic.detail.SingleObjectMixin", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'SingleObjectMixin' is not subscriptable"}
+{"phase": "before", "name": "generic.list.MultipleObjectMixin", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'MultipleObjectMixin' is not subscriptable"}
+{"phase": "before", "name": "generic.edit.FormMixin", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'FormMixin' is not subscriptable"}
+{"phase": "before", "name": "generic.edit.ModelFormMixin", "subscript_ok": false, "own_cgi": false, "inherited_cgi": false, "note": "type 'ModelFormMixin' is not subscriptable"}
+{"phase": "after", "name": "forms.ModelForm", "subscript_ok": true, "own_cgi": false, "inherited_cgi": true, "note": "→ <class 'django.forms.models.ModelForm'>"}
+{"phase": "after", "name": "forms.BaseModelForm", "subscript_ok": true, "own_cgi": true, "inherited_cgi": false, "note": "→ <class 'django.forms.models.BaseModelForm'>"}
+{"phase": "after", "name": "forms.BaseInlineFormSet", "subscript_ok": true, "own_cgi": false, "inherited_cgi": true, "note": "→ <class 'django.forms.models.BaseInlineFormSet'>"}
+{"phase": "after", "name": "forms.BaseModelFormSet", "subscript_ok": true, "own_cgi": true, "inherited_cgi": true, "note": "→ <class 'django.forms.models.BaseModelFormSet'>"}
+{"phase": "after", "name": "admin.ModelAdmin", "subscript_ok": true, "own_cgi": true, "inherited_cgi": true, "note": "→ <class 'django.contrib.admin.options.ModelAdmin'>"}
+{"phase": "after", "name": "admin.options.BaseModelAdmin", "subscript_ok": true, "own_cgi": true, "inherited_cgi": false, "note": "→ <class 'django.contrib.admin.options.BaseModelAdmin'>"}
+{"phase": "after", "name": "admin.options.InlineModelAdmin", "subscript_ok": true, "own_cgi": false, "inherited_cgi": true, "note": "→ <class 'django.contrib.admin.options.InlineModelAdmin'>"}
+{"phase": "after", "name": "admin.TabularInline", "subscript_ok": true, "own_cgi": false, "inherited_cgi": true, "note": "→ <class 'django.contrib.admin.options.TabularInline'>"}
+{"phase": "after", "name": "admin.StackedInline", "subscript_ok": true, "own_cgi": false, "inherited_cgi": true, "note": "→ <class 'django.contrib.admin.options.StackedInline'>"}
+{"phase": "after", "name": "views.View", "subscript_ok": true, "own_cgi": true, "inherited_cgi": false, "note": "→ <class 'django.views.generic.base.View'>"}
+{"phase": "after", "name": "generic.TemplateView", "subscript_ok": true, "own_cgi": false, "inherited_cgi": true, "note": "→ <class 'django.views.generic.base.TemplateView'>"}
+{"phase": "after", "name": "generic.RedirectView", "subscript_ok": true, "own_cgi": false, "inherited_cgi": true, "note": "→ <class 'django.views.generic.base.RedirectView'>"}
+{"phase": "after", "name": "generic.DetailView", "subscript_ok": true, "own_cgi": false, "inherited_cgi": true, "note": "→ <class 'django.views.generic.detail.DetailView'>"}
+{"phase": "after", "name": "generic.ListView", "subscript_ok": true, "own_cgi": false, "inherited_cgi": true, "note": "→ <class 'django.views.generic.list.ListView'>"}
+{"phase": "after", "name": "generic.FormView", "subscript_ok": true, "own_cgi": false, "inherited_cgi": true, "note": "→ <class 'django.views.generic.edit.FormView'>"}
+{"phase": "after", "name": "generic.CreateView", "subscript_ok": true, "own_cgi": false, "inherited_cgi": true, "note": "→ <class 'django.views.generic.edit.CreateView'>"}
+{"phase": "after", "name": "generic.UpdateView", "subscript_ok": true, "own_cgi": false, "inherited_cgi": true, "note": "→ <class 'django.views.generic.edit.UpdateView'>"}
+{"phase": "after", "name": "generic.DeleteView", "subscript_ok": true, "own_cgi": false, "inherited_cgi": true, "note": "→ <class 'django.views.generic.edit.DeleteView'>"}
+{"phase": "after", "name": "generic.ArchiveIndexView", "subscript_ok": true, "own_cgi": false, "inherited_cgi": true, "note": "→ <class 'django.views.generic.dates.ArchiveIndexView'>"}
+{"phase": "after", "name": "generic.detail.SingleObjectMixin", "subscript_ok": true, "own_cgi": true, "inherited_cgi": false, "note": "→ <class 'django.views.generic.detail.SingleObjectMixin'>"}
+{"phase": "after", "name": "generic.list.MultipleObjectMixin", "subscript_ok": true, "own_cgi": true, "inherited_cgi": false, "note": "→ <class 'django.views.generic.list.MultipleObjectMixin'>"}
+{"phase": "after", "name": "generic.edit.FormMixin", "subscript_ok": true, "own_cgi": true, "inherited_cgi": false, "note": "→ <class 'django.views.generic.edit.FormMixin'>"}
+{"phase": "after", "name": "generic.edit.ModelFormMixin", "subscript_ok": true, "own_cgi": false, "inherited_cgi": true, "note": "→ <class 'django.views.generic.edit.ModelFormMixin'>"}
+{"phase": "after-classdef", "name": "forms.ModelForm", "class_def_ok": true, "mro0": "ModelForm"}
+{"phase": "after-classdef", "name": "forms.BaseModelForm", "class_def_ok": true, "mro0": "BaseModelForm"}
+{"phase": "after-classdef", "name": "forms.BaseInlineFormSet", "class_def_ok": true, "mro0": "BaseInlineFormSet"}
+{"phase": "after-classdef", "name": "forms.BaseModelFormSet", "class_def_ok": true, "mro0": "BaseModelFormSet"}
+{"phase": "after-classdef", "name": "admin.ModelAdmin", "class_def_ok": true, "mro0": "ModelAdmin"}
+{"phase": "after-classdef", "name": "admin.options.BaseModelAdmin", "class_def_ok": true, "mro0": "BaseModelAdmin"}
+{"phase": "after-classdef", "name": "admin.options.InlineModelAdmin", "class_def_ok": true, "mro0": "InlineModelAdmin"}
+{"phase": "after-classdef", "name": "admin.TabularInline", "class_def_ok": true, "mro0": "TabularInline"}
+{"phase": "after-classdef", "name": "admin.StackedInline", "class_def_ok": true, "mro0": "StackedInline"}
+{"phase": "after-classdef", "name": "views.View", "class_def_ok": true, "mro0": "View"}
+{"phase": "after-classdef", "name": "generic.TemplateView", "class_def_ok": true, "mro0": "TemplateView"}
+{"phase": "after-classdef", "name": "generic.RedirectView", "class_def_ok": true, "mro0": "RedirectView"}
+{"phase": "after-classdef", "name": "generic.DetailView", "class_def_ok": true, "mro0": "DetailView"}
+{"phase": "after-classdef", "name": "generic.ListView", "class_def_ok": true, "mro0": "ListView"}
+{"phase": "after-classdef", "name": "generic.FormView", "class_def_ok": true, "mro0": "FormView"}
+{"phase": "after-classdef", "name": "generic.CreateView", "class_def_ok": true, "mro0": "CreateView"}
+{"phase": "after-classdef", "name": "generic.UpdateView", "class_def_ok": true, "mro0": "UpdateView"}
+{"phase": "after-classdef", "name": "generic.DeleteView", "class_def_ok": true, "mro0": "DeleteView"}
+{"phase": "after-classdef", "name": "generic.ArchiveIndexView", "class_def_ok": true, "mro0": "ArchiveIndexView"}
+{"phase": "after-classdef", "name": "generic.detail.SingleObjectMixin", "class_def_ok": true, "mro0": "SingleObjectMixin"}
+{"phase": "after-classdef", "name": "generic.list.MultipleObjectMixin", "class_def_ok": true, "mro0": "MultipleObjectMixin"}
+{"phase": "after-classdef", "name": "generic.edit.FormMixin", "class_def_ok": true, "mro0": "FormMixin"}
+{"phase": "after-classdef", "name": "generic.edit.ModelFormMixin", "class_def_ok": true, "mro0": "ModelFormMixin"}

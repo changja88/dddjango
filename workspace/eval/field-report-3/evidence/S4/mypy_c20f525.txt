@@ -1,0 +1,180 @@
+framework/technology/rag/runtime/rag_builder/normalization.py:95: error: Returning Any from function declared to return "Callable[[str], str]"  [no-any-return]
+application/fortune_reading/driven_layer/adapter/evidence_digest/rfc8785_adapter.py:74: error: Argument 1 to "dumps" has incompatible type "dict[str, object]"; expected "_Value"  [arg-type]
+application/fortune_reading/driven_layer/adapter/evidence_digest/rfc8785_adapter.py:99: error: Argument 1 to "dumps" has incompatible type "list[dict[str, object]]"; expected "_Value"  [arg-type]
+application/fortune_reading/domain_layer/domain_service/validate_calculation_output.py:165: error: Argument "place_resolution_stage" to "CalculationTraceProjection" has incompatible type "str"; expected "Literal['CITY', 'COUNTRY_ONLY', 'UNKNOWN']"  [arg-type]
+framework/technology/rag/runtime/rag_builder/profile.py:133: error: Incompatible types in assignment (expression has type "Mapping[str, str]", variable has type "dict[str, str]")  [assignment]
+framework/technology/rag/runtime/rag_builder/index.py:200: error: List comprehension has incompatible type List[tuple[str, float]]; expected List[tuple[str, float, int]]  [misc]
+framework/technology/rag/runtime/rag_builder/index.py:203: error: Too many values to unpack (2 expected, 3 provided)  [misc]
+framework/technology/rag/runtime/rag_builder/intake/contract.py:64: error: Returning Any from function declared to return "Mapping[str, Any]"  [no-any-return]
+framework/technology/rag/runtime/release_store.py:906: error: Argument 1 to "dumps" has incompatible type "dict[str, Collection[Collection[str]]]"; expected "_Value"  [arg-type]
+framework/technology/rag/runtime/release_store.py:935: error: Argument 1 to "dumps" has incompatible type "dict[str, Collection[Collection[str]]]"; expected "_Value"  [arg-type]
+framework/technology/rag/runtime/release_store.py:941: error: Value of type "Collection[Collection[str]]" is not indexable  [index]
+framework/technology/rag/runtime/release_store.py:1528: error: Unsupported operand types for / ("Path" and "object")  [operator]
+framework/technology/rag/runtime/release_store.py:1585: error: Argument 1 to "dumps" has incompatible type "dict[str, object]"; expected "_Value"  [arg-type]
+framework/technology/rag/runtime/rag_builder/intake/authoring.py:104: error: Argument 1 to "dumps" has incompatible type "dict[str, object]"; expected "_Value"  [arg-type]
+framework/technology/rag/runtime/rag_builder/shidian_authorized.py:21: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+framework/technology/rag/runtime/rag_builder/coordinates.py:105: error: Returning Any from function declared to return "tuple[object, ...]"  [no-any-return]
+framework/technology/rag/runtime/rag_builder/coordinates.py:116: error: "object" has no attribute "__iter__"; maybe "__dir__" or "__str__"? (not iterable)  [attr-defined]
+framework/technology/rag/runtime/rag_builder/coordinates.py:144: error: No overload variant of "int" matches argument type "object"  [call-overload]
+framework/technology/rag/runtime/rag_builder/coordinates.py:144: note: Possible overload variants:
+framework/technology/rag/runtime/rag_builder/coordinates.py:144: note:     def int(str | Buffer | SupportsInt | SupportsIndex = ..., /) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:144: note:     def int(str | bytes | bytearray, /, base: SupportsIndex) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:146: error: No overload variant of "int" matches argument type "object"  [call-overload]
+framework/technology/rag/runtime/rag_builder/coordinates.py:146: note: Possible overload variants:
+framework/technology/rag/runtime/rag_builder/coordinates.py:146: note:     def int(str | Buffer | SupportsInt | SupportsIndex = ..., /) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:146: note:     def int(str | bytes | bytearray, /, base: SupportsIndex) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:152: error: No overload variant of "int" matches argument type "object"  [call-overload]
+framework/technology/rag/runtime/rag_builder/coordinates.py:152: note: Possible overload variants:
+framework/technology/rag/runtime/rag_builder/coordinates.py:152: note:     def int(str | Buffer | SupportsInt | SupportsIndex = ..., /) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:152: note:     def int(str | bytes | bytearray, /, base: SupportsIndex) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:153: error: No overload variant of "int" matches argument type "object"  [call-overload]
+framework/technology/rag/runtime/rag_builder/coordinates.py:153: note: Possible overload variants:
+framework/technology/rag/runtime/rag_builder/coordinates.py:153: note:     def int(str | Buffer | SupportsInt | SupportsIndex = ..., /) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:153: note:     def int(str | bytes | bytearray, /, base: SupportsIndex) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:155: error: No overload variant of "int" matches argument type "object"  [call-overload]
+framework/technology/rag/runtime/rag_builder/coordinates.py:155: note: Possible overload variants:
+framework/technology/rag/runtime/rag_builder/coordinates.py:155: note:     def int(str | Buffer | SupportsInt | SupportsIndex = ..., /) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:155: note:     def int(str | bytes | bytearray, /, base: SupportsIndex) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:156: error: No overload variant of "int" matches argument type "object"  [call-overload]
+framework/technology/rag/runtime/rag_builder/coordinates.py:156: note: Possible overload variants:
+framework/technology/rag/runtime/rag_builder/coordinates.py:156: note:     def int(str | Buffer | SupportsInt | SupportsIndex = ..., /) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:156: note:     def int(str | bytes | bytearray, /, base: SupportsIndex) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:168: error: No overload variant of "int" matches argument type "object"  [call-overload]
+framework/technology/rag/runtime/rag_builder/coordinates.py:168: note: Possible overload variants:
+framework/technology/rag/runtime/rag_builder/coordinates.py:168: note:     def int(str | Buffer | SupportsInt | SupportsIndex = ..., /) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:168: note:     def int(str | bytes | bytearray, /, base: SupportsIndex) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:172: error: No overload variant of "int" matches argument type "object"  [call-overload]
+framework/technology/rag/runtime/rag_builder/coordinates.py:172: note: Possible overload variants:
+framework/technology/rag/runtime/rag_builder/coordinates.py:172: note:     def int(str | Buffer | SupportsInt | SupportsIndex = ..., /) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:172: note:     def int(str | bytes | bytearray, /, base: SupportsIndex) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:186: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+framework/technology/rag/runtime/rag_builder/coordinates.py:306: error: Returning Any from function declared to return "str"  [no-any-return]
+framework/technology/rag/runtime/rag_builder/coordinates.py:356: error: No overload variant of "int" matches argument type "object"  [call-overload]
+framework/technology/rag/runtime/rag_builder/coordinates.py:356: note: Possible overload variants:
+framework/technology/rag/runtime/rag_builder/coordinates.py:356: note:     def int(str | Buffer | SupportsInt | SupportsIndex = ..., /) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:356: note:     def int(str | bytes | bytearray, /, base: SupportsIndex) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:357: error: No overload variant of "int" matches argument type "object"  [call-overload]
+framework/technology/rag/runtime/rag_builder/coordinates.py:357: note: Possible overload variants:
+framework/technology/rag/runtime/rag_builder/coordinates.py:357: note:     def int(str | Buffer | SupportsInt | SupportsIndex = ..., /) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:357: note:     def int(str | bytes | bytearray, /, base: SupportsIndex) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:372: error: No overload variant of "int" matches argument type "object"  [call-overload]
+framework/technology/rag/runtime/rag_builder/coordinates.py:372: note: Possible overload variants:
+framework/technology/rag/runtime/rag_builder/coordinates.py:372: note:     def int(str | Buffer | SupportsInt | SupportsIndex = ..., /) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:372: note:     def int(str | bytes | bytearray, /, base: SupportsIndex) -> int
+framework/technology/rag/runtime/rag_builder/coordinates.py:400: error: Returning Any from function declared to return "tuple[SourceBlock, ...]"  [no-any-return]
+framework/technology/rag/runtime/rag_builder/coordinates.py:475: error: Returning Any from function declared to return "bool"  [no-any-return]
+framework/technology/rag/runtime/registry_snapshot.py:725: error: Unsupported operand types for / ("Path" and "object")  [operator]
+framework/technology/rag/runtime/rag_builder/passage.py:285: error: Incompatible types in assignment (expression has type "list[str]", target has type "str | dict[str, Any] | dict[str, object]")  [assignment]
+framework/technology/rag/runtime/rag_builder/passage.py:288: error: Argument 1 to "dumps" has incompatible type "dict[str, str | dict[str, Any] | dict[str, object]]"; expected "_Value"  [arg-type]
+framework/technology/rag/runtime/rag_builder/crosswalk.py:111: error: No overload variant of "int" matches argument type "object"  [call-overload]
+framework/technology/rag/runtime/rag_builder/crosswalk.py:111: note: Possible overload variants:
+framework/technology/rag/runtime/rag_builder/crosswalk.py:111: note:     def int(str | Buffer | SupportsInt | SupportsIndex = ..., /) -> int
+framework/technology/rag/runtime/rag_builder/crosswalk.py:111: note:     def int(str | bytes | bytearray, /, base: SupportsIndex) -> int
+framework/technology/rag/runtime/rag_builder/crosswalk.py:112: error: No overload variant of "int" matches argument type "object"  [call-overload]
+framework/technology/rag/runtime/rag_builder/crosswalk.py:112: note: Possible overload variants:
+framework/technology/rag/runtime/rag_builder/crosswalk.py:112: note:     def int(str | Buffer | SupportsInt | SupportsIndex = ..., /) -> int
+framework/technology/rag/runtime/rag_builder/crosswalk.py:112: note:     def int(str | bytes | bytearray, /, base: SupportsIndex) -> int
+framework/pydantic/cited_answer_schema.py:23: error: Cannot override class variable (previously declared on base class "BaseModel") with instance variable  [misc]
+framework/pydantic/cited_answer_schema.py:34: error: Variable "pydantic_core.MISSING" is not valid as a type  [valid-type]
+framework/pydantic/cited_answer_schema.py:34: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+framework/pydantic/cited_answer_schema.py:35: error: Variable "pydantic_core.MISSING" is not valid as a type  [valid-type]
+framework/pydantic/cited_answer_schema.py:35: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+framework/pydantic/cited_answer_schema.py:39: error: Cannot override class variable (previously declared on base class "BaseModel") with instance variable  [misc]
+framework/pydantic/cited_answer_schema.py:52: error: Cannot override class variable (previously declared on base class "BaseModel") with instance variable  [misc]
+framework/pydantic/cited_answer_schema.py:67: error: Cannot override class variable (previously declared on base class "BaseModel") with instance variable  [misc]
+framework/pydantic/cited_answer_schema.py:71: error: Incompatible types (expression has type "Callable[[dict[str, object]], None]", TypedDict item "json_schema_extra" has type "JsonDict | Callable[[JsonDict], None] | Callable[[JsonDict, type[Any]], None] | None")  [typeddict-item]
+application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_out.py:16: error: Cannot override class variable (previously declared on base class "Schema") with instance variable  [misc]
+application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_out.py:25: error: Cannot override class variable (previously declared on base class "Schema") with instance variable  [misc]
+application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_out.py:34: error: Cannot override class variable (previously declared on base class "Schema") with instance variable  [misc]
+application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_out.py:45: error: Cannot override class variable (previously declared on base class "Schema") with instance variable  [misc]
+application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_out.py:56: error: Cannot override class variable (previously declared on base class "Schema") with instance variable  [misc]
+application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_out.py:66: error: Cannot override class variable (previously declared on base class "Schema") with instance variable  [misc]
+application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_out.py:73: error: Cannot override class variable (previously declared on base class "Schema") with instance variable  [misc]
+application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_out.py:94: error: Cannot override class variable (previously declared on base class "Schema") with instance variable  [misc]
+application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_out.py:106: error: Cannot override class variable (previously declared on base class "Schema") with instance variable  [misc]
+application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_out.py:116: error: Cannot override class variable (previously declared on base class "Schema") with instance variable  [misc]
+application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_out.py:122: error: Cannot override class variable (previously declared on base class "Schema") with instance variable  [misc]
+application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_out.py:136: error: Cannot override class variable (previously declared on base class "Schema") with instance variable  [misc]
+application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_out.py:151: error: Call to untyped function "__init_subclass__" in typed context  [no-untyped-call]
+application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_out.py:151: error: Metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases  [metaclass]
+application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_out.py:151: note: "ninja.schema.ResolverMetaclass" (metaclass of "ninja.schema.Schema") conflicts with "pydantic.root_model._RootModelMetaclass" (metaclass of "pydantic.root_model.RootModel")
+application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_in.py:11: error: Cannot override class variable (previously declared on base class "Schema") with instance variable  [misc]
+application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_in.py:18: error: Cannot override class variable (previously declared on base class "Schema") with instance variable  [misc]
+application/fortune_reading/driving_layer/api/evidence_provisioning/schema/schema_in.py:28: error: Cannot override class variable (previously declared on base class "Schema") with instance variable  [misc]
+framework/technology/rag/runtime/rag_builder/model_snapshot.py:154: error: Value of type "object" is not indexable  [index]
+framework/technology/rag/runtime/service_runtime.py:314: error: Value of type "object" is not indexable  [index]
+framework/technology/rag/runtime/service_runtime.py:315: error: Value of type "object" is not indexable  [index]
+framework/technology/rag/runtime/service_runtime.py:316: error: Value of type "object" is not indexable  [index]
+framework/technology/rag/runtime/service_runtime.py:352: error: Value of type "object" is not indexable  [index]
+framework/technology/rag/runtime/service_runtime.py:635: error: "object" has no attribute "get"  [attr-defined]
+framework/technology/rag/runtime/service_runtime.py:636: error: "object" has no attribute "get"  [attr-defined]
+framework/technology/rag/runtime/service_runtime.py:909: error: Argument 1 to "float" has incompatible type "object"; expected "str | Buffer | SupportsFloat | SupportsIndex"  [arg-type]
+framework/technology/rag/runtime/rag_builder/steps/__init__.py:251: error: Incompatible types in assignment (expression has type "PurePosixPath", variable has type "str")  [assignment]
+framework/technology/rag/runtime/rag_builder/steps/__init__.py:252: error: "str" has no attribute "parts"  [attr-defined]
+framework/technology/rag/runtime/rag_builder/steps/__init__.py:464: error: Argument 1 to "dict" has incompatible type "Mapping[str, object]"; expected "SupportsKeysAndGetItem[str, int | float | Sequence[_Value] | Mapping[str, _Value] | None]"  [arg-type]
+framework/technology/rag/runtime/rag_builder/steps/__init__.py:1862: error: Argument 1 to "dict" has incompatible type "Mapping[str, object]"; expected "SupportsKeysAndGetItem[str, int | float | Sequence[_Value] | Mapping[str, _Value] | None]"  [arg-type]
+framework/technology/rag/runtime/rag_builder/steps/__init__.py:3385: error: Incompatible types in assignment (expression has type "StepBinding", variable has type "GateBinding")  [assignment]
+framework/technology/rag/runtime/rag_builder/steps/__init__.py:3387: error: "GateBinding" has no attribute "input_refs"  [attr-defined]
+framework/technology/rag/runtime/rag_builder/steps/__init__.py:3404: error: "GateBinding" has no attribute "parameters"  [attr-defined]
+framework/technology/rag/runtime/rag_builder/steps/__init__.py:3420: error: "GateBinding" has no attribute "output_paths"  [attr-defined]
+framework/technology/rag/runtime/rag_builder/steps/__init__.py:3516: error: Argument 1 to "dumps" has incompatible type "dict[str, object]"; expected "_Value"  [arg-type]
+framework/technology/rag/runtime/rag_builder/cli.py:67: error: Returning Any from function declared to return "str"  [no-any-return]
+framework/technology/rag/runtime/rag_builder/cli.py:134: error: "object" has no attribute "rag_id"  [attr-defined]
+framework/technology/rag/runtime/rag_builder/cli.py:135: error: "object" has no attribute "rag_id"  [attr-defined]
+framework/technology/rag/runtime/rag_builder/cli.py:138: error: "object" has no attribute "rag_id"  [attr-defined]
+framework/technology/rag/runtime/rag_builder/cli.py:148: error: Argument "output_root" to "run_c01" has incompatible type "Any | None"; expected "Path"  [arg-type]
+framework/technology/rag/runtime/rag_builder/cli.py:149: error: "object" has no attribute "rag_id"  [attr-defined]
+framework/technology/rag/runtime/rag_builder/cli.py:151: error: Argument "output_root" to "run_c02" has incompatible type "Any | None"; expected "Path"  [arg-type]
+framework/technology/rag/runtime/rag_builder/cli.py:152: error: "object" has no attribute "rag_id"  [attr-defined]
+framework/technology/rag/runtime/rag_builder/cli.py:158: error: Argument "output_root" to "run_c03" has incompatible type "Any | None"; expected "Path"  [arg-type]
+framework/technology/rag/runtime/rag_builder/cli.py:163: error: "object" has no attribute "rag_id"  [attr-defined]
+framework/technology/rag/runtime/rag_builder/cli.py:170: error: Argument "profile" to "run_c04" has incompatible type "object"; expected "BuildProfile"  [arg-type]
+framework/technology/rag/runtime/rag_builder/cli.py:171: error: Argument "plan" to "run_c04" has incompatible type "object"; expected "BuildPlan"  [arg-type]
+framework/technology/rag/runtime/rag_builder/cli.py:172: error: Argument "evaluation_pack" to "run_c04" has incompatible type "object"; expected "EvaluationPack"  [arg-type]
+framework/technology/rag/runtime/rag_builder/cli.py:174: error: Argument "workspace_root" to "run_c04" has incompatible type "Any | None"; expected "Path"  [arg-type]
+framework/technology/rag/runtime/rag_builder/cli.py:190: error: "object" has no attribute "rag_id"  [attr-defined]
+framework/technology/rag/runtime/rag_builder/cli.py:202: error: Incompatible types in assignment (expression has type "C05Result", variable has type "C04Result")  [assignment]
+framework/technology/rag/runtime/rag_builder/cli.py:203: error: Argument "profile" to "run_c05" has incompatible type "object"; expected "BuildProfile"  [arg-type]
+framework/technology/rag/runtime/rag_builder/cli.py:204: error: Argument "plan" to "run_c05" has incompatible type "object"; expected "BuildPlan"  [arg-type]
+framework/technology/rag/runtime/rag_builder/cli.py:205: error: Argument "evaluation_pack" to "run_c05" has incompatible type "object"; expected "EvaluationPack"  [arg-type]
+framework/technology/rag/runtime/rag_builder/cli.py:209: error: Argument "output_root" to "run_c05" has incompatible type "Any | None"; expected "Path"  [arg-type]
+framework/technology/rag/runtime/rag_builder/cli.py:214: error: "object" has no attribute "rag_id"  [attr-defined]
+framework/technology/rag/runtime/rag_builder/cli.py:216: error: "C04Result" has no attribute "retrieval_status"  [attr-defined]
+framework/technology/rag/runtime/rag_builder/cli.py:223: error: "C04Result" has no attribute "gate_paths"  [attr-defined]
+framework/technology/rag/runtime/rag_builder/cli.py:230: error: "C04Result" has no attribute "record_paths"; maybe "build_record_path"?  [attr-defined]
+framework/technology/rag/runtime/rag_builder/cli.py:246: error: Argument "profile" to "run_c06" has incompatible type "object"; expected "BuildProfile"  [arg-type]
+framework/technology/rag/runtime/rag_builder/cli.py:247: error: Argument "plan" to "run_c06" has incompatible type "object"; expected "BuildPlan"  [arg-type]
+framework/technology/rag/runtime/rag_builder/cli.py:248: error: Argument "evaluation_pack" to "run_c06" has incompatible type "object"; expected "EvaluationPack"  [arg-type]
+framework/technology/rag/runtime/rag_builder/cli.py:259: error: "object" has no attribute "rag_id"  [attr-defined]
+framework/technology/rag/runtime/rag_builder/cli.py:282: error: "object" has no attribute "rag_id"  [attr-defined]
+framework/technology/rag/runtime/ontology_control.py:3477: error: Value of type "Collection[str]" is not indexable  [index]
+application/fortune_reading/driving_layer/open_host_service/evidence_provisioning/evidence_provisioning_service.py:507: error: Argument "reason" to "_EvidenceAbstained" has incompatible type "AbstentionReason"; expected "Literal['no_candidate', 'no_evidence', 'insufficient_evidence']"  [arg-type]
+application/fortune_reading/driving_layer/open_host_service/citation_validation/citation_validation_service.py:62: error: If condition is always true  [redundant-expr]
+application/fortune_reading/driving_layer/open_host_service/citation_validation/citation_validation_service.py:63: error: If condition is always true  [redundant-expr]
+application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py:71: error: Unexpected keyword argument "root" for "EvidenceProvisionResponseSchema"  [call-arg]
+application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py:122: error: Unexpected keyword argument "root" for "EvidenceProvisionResponseSchema"  [call-arg]
+application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py:125: error: Argument "reason" to "_AbstainedSchema" has incompatible type "AbstentionReason"; expected "Literal['no_candidate', 'no_evidence', 'insufficient_evidence']"  [arg-type]
+application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py:187: error: Incompatible return value type (got "Status[InvalidRequestErrorSchema]", expected "Status[EvidenceProvisionResponseSchema] | Status[FortuneReadingErrorSchema]")  [return-value]
+application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py:195: error: Incompatible return value type (got "Status[InvalidRequestErrorSchema]", expected "Status[EvidenceProvisionResponseSchema] | Status[FortuneReadingErrorSchema]")  [return-value]
+application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py:199: error: Incompatible return value type (got "Status[RegistryContractMismatchErrorSchema]", expected "Status[EvidenceProvisionResponseSchema] | Status[FortuneReadingErrorSchema]")  [return-value]
+application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py:203: error: Incompatible return value type (got "Status[TemporaryErrorSchema]", expected "Status[EvidenceProvisionResponseSchema] | Status[FortuneReadingErrorSchema]")  [return-value]
+application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py:207: error: Incompatible return value type (got "Status[ResourceLimitErrorSchema]", expected "Status[EvidenceProvisionResponseSchema] | Status[FortuneReadingErrorSchema]")  [return-value]
+framework/technology/rag/runtime/ontology_c11.py:1032: error: No overload variant of "int" matches argument type "object"  [call-overload]
+framework/technology/rag/runtime/ontology_c11.py:1032: note: Possible overload variants:
+framework/technology/rag/runtime/ontology_c11.py:1032: note:     def int(str | Buffer | SupportsInt | SupportsIndex = ..., /) -> int
+framework/technology/rag/runtime/ontology_c11.py:1032: note:     def int(str | bytes | bytearray, /, base: SupportsIndex) -> int
+framework/technology/rag/runtime/ontology_c11.py:1447: error: Incompatible return value type (got "dict[str, Collection[Collection[str]]]", expected "dict[str, object]")  [return-value]
+framework/technology/rag/runtime/ontology_c11.py:1447: note: "dict" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+framework/technology/rag/runtime/ontology_c11.py:1447: note: Consider using "Mapping" instead, which is covariant in the value type
+framework/technology/rag/runtime/ontology_c11.py:1447: note: Perhaps you need a type annotation for "report"? Suggestion: "dict[str, object]"
+framework/technology/rag/runtime/ontology_c11.py:1976: error: No overload variant of "int" matches argument type "object"  [call-overload]
+framework/technology/rag/runtime/ontology_c11.py:1976: note: Possible overload variants:
+framework/technology/rag/runtime/ontology_c11.py:1976: note:     def int(str | Buffer | SupportsInt | SupportsIndex = ..., /) -> int
+framework/technology/rag/runtime/ontology_c11.py:1976: note:     def int(str | bytes | bytearray, /, base: SupportsIndex) -> int
+framework/technology/rag/runtime/ontology_c11.py:2003: error: No overload variant of "int" matches argument type "object"  [call-overload]
+framework/technology/rag/runtime/ontology_c11.py:2003: note: Possible overload variants:
+framework/technology/rag/runtime/ontology_c11.py:2003: note:     def int(str | Buffer | SupportsInt | SupportsIndex = ..., /) -> int
+framework/technology/rag/runtime/ontology_c11.py:2003: note:     def int(str | bytes | bytearray, /, base: SupportsIndex) -> int
+framework/technology/rag/runtime/ontology_c11.py:3193: error: Argument "materialization_record_refs" to "create_service_bundle_candidate" has incompatible type "list[dict[str, str]]"; expected "list[dict[str, object]]"  [arg-type]
+Found 124 errors in 25 files (checked 2938 source files)
+exit=1

@@ -1,0 +1,34 @@
+== spring-HEAD-7bfe1aa: 파일 2555 · #647 exact 히트 1061 (union-값 변종 0) · 줄 848
+  자리: {'variable': 327, 'class-attr': 44, 'sig-param': 418, 'sig-return': 272}
+  위치: {'top': 693, 'nested': 368}
+  값: {'object': 395, 'Any': 666}  컨테이너: {'dict': 679, 'Mapping': 382}
+  키: {'str': 1054, 'object': 6, 'str | None': 1}
+  자리×위치: {('variable', 'top'): 194, ('class-attr', 'top'): 30, ('variable', 'nested'): 133, ('sig-param', 'top'): 292, ('sig-param', 'nested'): 126, ('sig-return', 'nested'): 95, ('sig-return', 'top'): 177, ('class-attr', 'nested'): 14}
+  future-annotations 파일 비율(히트 기준): {True: 1014, False: 47}
+  BC별(줄):
+      557  framework/technology/rag  {'sig-param': 342, 'sig-return': 208, 'variable': 185, 'class-attr': 26}
+       53  application/fortune_reading  {'variable': 31, 'sig-return': 6, 'sig-param': 11, 'class-attr': 5}
+       38  application/llm_access  {'variable': 21, 'sig-param': 18, 'sig-return': 3}
+       36  application/chat_relay  {'class-attr': 6, 'variable': 12, 'sig-param': 9, 'sig-return': 11}
+       28  application/fortune_character  {'class-attr': 3, 'sig-param': 8, 'sig-return': 9, 'variable': 8}
+       24  application/fortune_calculation  {'variable': 12, 'sig-param': 10, 'sig-return': 5}
+       18  application/fortune_record  {'class-attr': 4, 'sig-param': 1, 'variable': 10, 'sig-return': 3}
+       16  application/promotion  {'sig-return': 4, 'variable': 6, 'sig-param': 6}
+       13  application/fortune_catalog  {'sig-return': 4, 'sig-param': 2, 'variable': 7}
+       12  scripts  {'sig-return': 4, 'sig-param': 2, 'variable': 6}
+       10  application/product  {'sig-return': 2, 'sig-param': 5, 'variable': 3}
+        9  application/query_translation  {'variable': 5, 'sig-param': 3, 'sig-return': 1}
+        8  application/fortune_intent  {'variable': 6, 'sig-return': 2}
+        8  application/service_policy  {'sig-return': 4, 'variable': 4}
+        6  application/media_library  {'variable': 2, 'sig-return': 3, 'sig-param': 1}
+        5  spring_dream_server  {'sig-return': 2, 'variable': 3}
+        3  application/wallet  {'variable': 3}
+        2  application/notification  {'sig-return': 1, 'variable': 1}
+        1  application/accounts  {'variable': 1}
+        1  docs  {'variable': 1}
+  별표 인자 히트(dict[…] 주석을 단 *args/**kwargs): 0
+  Mapping[str, object] 매개변수(top) — R-3448 취지 자리 후보: 34
+== json.load(s) 호출 95 · ⓓ 후보 95
+  소비자: {'assign': 58, 'ListComp': 21, 'assign+next-named-call': 7, 'GeneratorExp': 4, 'subscript': 4, 'assign+next-isinstance': 1}
+  후보 BC별: {'application/chat_relay': 2, 'application/fortune_calculation': 8, 'docs': 2, 'framework/technology/rag': 83}
+== #645 겹침: #645 ⓓ 후보 줄 569 · #647 Any 줄 518 · 교집합(이중 보고) 518 · #647 Any 줄 중 #645 미보고 0 · #647 object 줄(#645 무관) 335 · #645 위반(bare)과 같은 줄 14

@@ -58,7 +58,7 @@
 | 58 | path | scripts/check-layer-skeleton.py | — | 재작성 |  |
 | 59 | ast | scripts/check-api-error-controller-contract.py | — | 신설 |  |
 | 62 | ast | scripts/check-api-error-controller-contract.py | — | 신설 |  |
-| 63 | ast | scripts/check-openapi-error-declaration.py | — | 신설 |  |
+| 63 | ast | scripts/check-openapi-error-declaration.py | — | 신설 | 08-25 개정(base 뭉뚱그림 금지 · R-0681 rev2) 반영 — 09-04 현장 보고 3 S-5 에서 검사기 docstring·조치 문면 정합 |
 | 64 | ast | scripts/check-port-adapter-pairing.py (신설) | — | 신설 |  |
 | 67 | ast | scripts/check-usecase-dto-placement.py | — | 재작성 |  |
 | 68 | ast+ | scripts/check-usecase-dto-placement.py | agents/discipline-reviewer.md | 재작성 |  |
@@ -556,3 +556,8 @@
 | 643 | path | scripts/check-layer-skeleton.py | — | 신설 | 09-01 동명 폴더 승격 — 부품 0개 퇴화 |
 | 644 | ast+ | scripts/check-layer-skeleton.py | agents/discipline-reviewer.md | 신설 | 09-01 동명 폴더 승격 — ⓓ 캐스케이드 후보 신호 |
 | 645 | ast+ | scripts/check-public-surface-annotation.py | agents/discipline-reviewer.md | 신설 | 09-04 현장 보고 E — 명시 `Any` 정책(시그니처 bare = 위반 · 제네릭 안·변수 = ⓓ 후보) |
+| 646 | ast+ | scripts/check-public-surface-annotation.py | agents/discipline-reviewer.md | 신설 | 09-04 현장 보고 3 S-1 — django-stubs 제네릭 기저(맨몸·`type: ignore[type-arg]` 위반 · code 없는 ignore·런타임 subscript ⓓ 후보) |
+| 647 | ast+ | scripts/check-public-surface-annotation.py | agents/discipline-reviewer.md | 신설 | 09-04 현장 보고 3 S-4 — 딕셔너리-레코드(`dict/Mapping` 값 `Any` 전 자리·`object` 반환/속성 위반 · 입구 `object`·반환 자리표시 ⓓ 후보) |
+| 648 | ast | scripts/check-api-error-controller-contract.py | — | 신설 | 09-04 현장 보고 3 S-5 — 반환 주석 `Status` 상자 하나(표준 트리 슬라이스 · 프로필 무관) |
+| 649 | ast | scripts/check-api-error-controller-contract.py | — | 신설 | 09-04 현장 보고 3 S-5 — `Schema`+`RootModel` 동시 상속 금지(표준 트리 슬라이스) |
+| 650 | ast+ | scripts/check-public-surface-annotation.py | agents/discipline-reviewer.md | 신설 | 09-04 현장 보고 3 S-4 — `json.load(s)` 무검증 흐름 ⓓ 전용(확정 위반은 #647) |

@@ -1,0 +1,8 @@
+[check-api-error-controller-contract] ⓓ 후보 — 기계가 후보를 좁혔다 · 마무리 물음은 discipline-reviewer 몫(exit 불산입):
+  [ⓓ#125] application/accounts/driving_layer/api/account/account_controller.py:272: 라우트 메서드 안 분기 — 물음: 입구가 변환·1회 호출을 넘어 로직을 갖는가(그러면 유스케이스로 내린다)?
+  [ⓓ#125] application/accounts/driving_layer/api/account/account_controller.py:401: 라우트 메서드 안 분기 — 물음: 입구가 변환·1회 호출을 넘어 로직을 갖는가(그러면 유스케이스로 내린다)?
+  [ⓓ#125] application/fortune_calculation/driving_layer/api/place_directory/place_directory_controller.py:50: 라우트 메서드 안 분기 — 물음: 입구가 변환·1회 호출을 넘어 로직을 갖는가(그러면 유스케이스로 내린다)?
+  [ⓓ#125] application/fortune_character/driving_layer/api/character_catalog/character_catalog_controller.py:81: 라우트 메서드 안 분기 — 물음: 입구가 변환·1회 호출을 넘어 로직을 갖는가(그러면 유스케이스로 내린다)?
+  [ⓓ#125] application/fortune_reading/driving_layer/api/evidence_provisioning/evidence_provisioning_controller.py:167: 라우트 메서드 안 분기 — 물음: 입구가 변환·1회 호출을 넘어 로직을 갖는가(그러면 유스케이스로 내린다)?
+  [ⓓ#125] application/fortune_record/driving_layer/api/record_archive/record_archive_controller.py:108: 라우트 메서드 안 분기 — 물음: 입구가 변환·1회 호출을 넘어 로직을 갖는가(그러면 유스케이스로 내린다)?
+  [ⓓ#125] application/media_library/driving_layer/api/media_catalog/media_catalog_controller.py:56: 라우트 메서드 안 분기 — 물음: 입구가 변환·1회 호출을 넘어 로직을 갖는가(그러면 유스케이스로 내린다)?

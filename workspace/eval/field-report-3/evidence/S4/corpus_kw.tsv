@@ -1,0 +1,6 @@
+PROSE	dddjango/skills/implementation-python/references/final.md:106	### 1.5 TypedDict: 이종 딕셔너리 타입 지정 [단단한 파이썬]
+PROSE	dddjango/skills/implementation-python/references/final.md:109	외부 API, JSON 등 이종 데이터를 담는 딕셔너리에는 TypedDict를 사용하라.
+FENCE	dddjango/skills/implementation-python/references/final.md:116	# 좋은 예: TypedDict로 구조 명시
+FENCE	dddjango/skills/implementation-python/references/final.md:117	class NutritionInfo(TypedDict):
+FENCE	dddjango/skills/implementation-python/references/final.md:121	class RecipeNutrition(TypedDict):
+FENCE	dddjango/skills/implementation-python/references/final.md:1509	    user = UserV2.model_validate({})  # parse_obj() -> model_validate()

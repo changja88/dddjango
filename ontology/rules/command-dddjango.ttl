@@ -1297,8 +1297,8 @@ djr:R-0283 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0284 a djr:Obligation ;
-    skos:prefLabel "필수 입력 5종(코드+테스트·승인 입장 표·역할별 최소 조정 보고·test diff·실행 결과·슬라이스 목록) + ⓓ 후보 동봉(registry #4 200행 신호 · #11 명시 Any)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0284@2026-09-04> .
+    skos:prefLabel "필수 입력 5종(코드+테스트·승인 입장 표·역할별 최소 조정 보고·test diff·실행 결과·슬라이스 목록) + ⓓ 후보 동봉(registry #4 200행 신호 · #11 #645/#647/#650) — 동봉 범위는 registry_gate 앵커 차분 ⓓ 신규분"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0284@2026-09-04b> .
 
 <https://numchida.com/ns/djr#R-0284@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0284 ;
@@ -1314,6 +1314,12 @@ djr:R-0284 a djr:Obligation ;
     prov:specializationOf djr:R-0284 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-0284@2026-09-01> ;
     djr:revision 3 ;
+    djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-0284@2026-09-04b> a djr:Expression ;
+    prov:specializationOf djr:R-0284 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0284@2026-09-04> ;
+    djr:revision 4 ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-0285 a djr:Obligation ;
@@ -1709,12 +1715,18 @@ djr:R-0330 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0331 a djr:Obligation ;
-    skos:prefLabel "Error response G2 는 승인된 code/preserve scope 마다 command 를 각각 렌더·실행"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0331@2026-08-22> .
+    skos:prefLabel "Error response G2 는 승인된 code/preserve scope 마다 command 를 각각 렌더·실행 · «무관» = 승인 12-slot 유무 — 12-slot 없이 BC 오류 status 를 선언한 산출물은 auto 금지·G1 반송"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0331@2026-09-04> .
 
 <https://numchida.com/ns/djr#R-0331@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0331 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0331@2026-09-04> a djr:Expression ;
+    prov:specializationOf djr:R-0331 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0331@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0332 a djr:Obligation ;
     skos:prefLabel "무관 G2 는 네 checker 와 registry #16 에 positional target·`--error-profile auto` 명시"@ko ;
@@ -1833,8 +1845,8 @@ djr:R-0344 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0345 a djr:Obligation ;
-    skos:prefLabel "registry #11 — 타입 전면(#493)·명시 Any(#645 — 시그니처 차단·변수/제네릭 안 ⓓ 후보)·Thin Read 반환(#358)·계약 검증 토큰(#456)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0345@2026-09-04> .
+    skos:prefLabel "registry #11 — 타입 전면(#493)·명시 Any(#645 — 시그니처 차단·변수/제네릭 안 ⓓ 후보)·django-stubs 제네릭 기저(#646)·딕셔너리-레코드(#647 · json.load ⓓ #650 · 신규 3규칙은 application/framework 루트만)·Thin Read 반환(#358)·계약 검증 토큰(#456)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0345@2026-09-04b> .
 
 <https://numchida.com/ns/djr#R-0345@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0345 ;
@@ -1844,6 +1856,12 @@ djr:R-0345 a djr:Obligation ;
     prov:specializationOf djr:R-0345 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-0345@2026-08-22> ;
     djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-0345@2026-09-04b> a djr:Expression ;
+    prov:specializationOf djr:R-0345 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0345@2026-09-04> ;
+    djr:revision 3 ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-0346 a djr:Obligation ;
@@ -1871,12 +1889,18 @@ djr:R-0348 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0349 a djr:Obligation ;
-    skos:prefLabel "registry #15 — narrow try·concrete same-BC catch·direct BC-base ErrorSchema·two-argument Status + 표준 트리 슬라이스"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0349@2026-08-22> .
+    skos:prefLabel "registry #15 — narrow try·concrete same-BC catch·direct BC-base ErrorSchema·two-argument Status + 표준 트리 슬라이스(#120~#132·#474·#62 · #648 Status 상자 하나·#649 Schema+RootModel 동시 상속 금지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0349@2026-09-04> .
 
 <https://numchida.com/ns/djr#R-0349@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0349 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0349@2026-09-04> a djr:Expression ;
+    prov:specializationOf djr:R-0349 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0349@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0350 a djr:Obligation ;
     skos:prefLabel "registry #16 — `composition_root/` 정본·api_router 결선·닫힌 목록 + BC DI V1·project URLconf/registrar slice"@ko ;
@@ -3397,7 +3421,7 @@ djr:R-3445 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 16 ;
     djr:statesNorm djr:R-0331, djr:R-0332, djr:R-0333 ;
-    djr:text "   - **scope별 실행**: Error response G2는 승인된 code/preserve scope마다 위 command를 각각 렌더해 실행한다. Error response와 무관한 G2는 네 API-error-aware checker와 registry #16에 positional target 및 `--error-profile auto`를 명시해 기존 positional 동작(auto 프로필)을 유지하고, `auto` 결과는 `Error response contract 12-slot` 증거가 아니라고 보고한다.\n\n"@ko .
+    djr:text "   - **scope별 실행**: Error response G2는 승인된 code/preserve scope마다 위 command를 각각 렌더해 실행한다. Error response와 무관한 G2는 네 API-error-aware checker와 registry #16에 positional target 및 `--error-profile auto`를 명시해 기존 positional 동작(auto 프로필)을 유지하고, `auto` 결과는 `Error response contract 12-slot` 증거가 아니라고 보고한다. **«무관»의 판정은 코드 모양이 아니라 승인 12-slot 유무다 — 단 승인 12-slot 없이 이번 산출물의 컨트롤러가 BC 오류 status 를 `response=` 에 선언했으면 `auto` 로 돌리지 않고 G1 반송(`STOP_FOR_USER_APPROVAL` — error profile 미결정 · design-architect «Error response contract 12-slot» 의 적용 조건)이다: `auto` 는 #63·#125 등 code-profile 규칙을 재우므로 오류 응답을 선언한 표면의 G2 증거가 될 수 없다.**\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b17> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
@@ -3489,7 +3513,7 @@ djr:R-3445 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 28 ;
     djr:statesNorm djr:R-0345 ;
-    djr:text "   11. `${CLAUDE_PLUGIN_ROOT}/scripts/check-public-surface-annotation.py` — 타입 전면(#493 — 시그니처·지역·속성·모듈/클래스 «모든 이름 첫 대입», 문법 없는 자리만 면제)·명시 `Any`(#645 — 시그니처는 차단·변수/제네릭 안은 ⓓ 후보)·Thin Read 반환(#358)·계약 검증 토큰(#456).\n"@ko .
+    djr:text "   11. `${CLAUDE_PLUGIN_ROOT}/scripts/check-public-surface-annotation.py` — 타입 전면(#493 — 시그니처·지역·속성·모듈/클래스 «모든 이름 첫 대입», 문법 없는 자리만 면제)·명시 `Any`(#645 — 시그니처는 차단·변수/제네릭 안은 ⓓ 후보 · dict/Mapping 값 자리는 #647 소유)·django-stubs 제네릭 기저(#646 — 맨몸·`type: ignore[type-arg]` 차단 · subscript/`TYPE_CHECKING` 별칭 통과)·딕셔너리-레코드(#647 — `dict/Mapping[…, Any]` 전 자리와 `[…, object]` 반환/속성 차단 · 입구 매개변수·즉시 검증 지역 변수의 `object` 와 반환 주석의 자리표시 `object` 는 ⓓ 후보 · `json.load(s)` 무검증 흐름은 ⓓ #650)·Thin Read 반환(#358)·계약 검증 토큰(#456) — 신규 3규칙(#646·#647·#650)은 `application/`·`framework/` 루트만.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b29> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
@@ -3524,7 +3548,7 @@ djr:R-3445 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 32 ;
     djr:statesNorm djr:R-0349 ;
-    djr:text "   15. `${CLAUDE_PLUGIN_ROOT}/scripts/check-api-error-controller-contract.py` — narrow one-call `try`, concrete same-BC catch, direct no-arg concrete/event-specific BC-base `ErrorSchema`, two-argument `Status`, managed helper/handler/factory/serializer/mapping 금지 + 표준 트리 슬라이스(#120~#132·#474·#62 — 프로필 무관 선행).\n"@ko .
+    djr:text "   15. `${CLAUDE_PLUGIN_ROOT}/scripts/check-api-error-controller-contract.py` — narrow one-call `try`, concrete same-BC catch, direct no-arg concrete/event-specific BC-base `ErrorSchema`, two-argument `Status`, managed helper/handler/factory/serializer/mapping 금지 + 표준 트리 슬라이스(#120~#132·#474·#62·#648 반환 주석 `Status` 상자 하나·#649 `Schema`+`RootModel` 동시 상속 금지 — 프로필 무관 선행).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b33> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
@@ -3735,7 +3759,7 @@ djr:R-3445 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
     djr:statesNorm djr:R-0283, djr:R-0284, djr:R-0285, djr:R-0286, djr:R-0287 ;
-    djr:text "5. **규율 감사**: `dddjango:discipline-reviewer`를 **Phase 2 implementation 모드**로 호출한다 — 필수 입력은 코드+테스트, 승인 입장 표, 역할별 최소 조정 보고, test diff·실행 결과와 슬라이스 목록이다. 감사 호출 입력에 `check-layer-skeleton`(registry #4)의 ⓓ 후보 채널 출력(해당 범위 실행분 — 행위 칸 200행 초과 신호·페이로드)과 `check-public-surface-annotation`(registry #11)의 ⓓ 후보(#645 — 변수·제네릭 안의 명시 `Any` · 해당 범위 실행분)를 동봉한다. 기본은 G2 직전 1회, 슬라이스 ≥3이면 슬라이스별 경량 감사(마지막은 조건부 홀리스틱 갈음 가능) + 마지막 홀리스틱 1회다. reviewer는 각 test diff hunk를 decision과 unique production failure에 대조하고, `reuse/reject` write 0, 일반 `retain` 무편집, `remove/weaken` 종료 근거·exact target, 의미 보존 재조직의 전후 보호, 첫-Green 비계 잔존을 감사한다. 기존 migration lifecycle과 관련 테스트 보존 규칙도 그대로 감사한다. 외부 assertion 지적은 acceptance-tester, 내부 assertion과 일반 구현 지적은 coder, 입장/설계 오류는 design-architect를 거쳐 G1/G1′으로 반송한다(반송으로 `design-spec.md` 가 개정되면 **재승인 전에 Phase 1 pre-gate 를 재실행**하고 예보 1행을 재승인 배너에 병기한다 — Phase 1 pre-gate 문단 · Phase 2 중이면 재발화 판형: `--base <G1 기준선 SHA>` 명시·WIP 커밋/stash).\n"@ko .
+    djr:text "5. **규율 감사**: `dddjango:discipline-reviewer`를 **Phase 2 implementation 모드**로 호출한다 — 필수 입력은 코드+테스트, 승인 입장 표, 역할별 최소 조정 보고, test diff·실행 결과와 슬라이스 목록이다. 감사 호출 입력에 `check-layer-skeleton`(registry #4)의 ⓓ 후보 채널 출력(행위 칸 200행 초과 신호·페이로드)과 `check-public-surface-annotation`(registry #11)의 ⓓ 후보(#645 — 변수·제네릭 안의 명시 `Any` · #647 — 입구 매개변수·즉시 검증 지역 변수의 `dict/Mapping[…, object]` 와 반환 주석의 자리표시 `object` · #650 — `json.load(s)` 결과의 무검증 흐름)를 동봉한다 — 두 채널 모두 동봉 범위는 registry_gate 가 앵커 차분으로 가른 **«ⓓ 신규(N′∖L′)»** 절·sidecar 레코드이고, 앵커에도 있던 «ⓓ legacy» 는 게이트 보고의 건수로만 적는다. 기본은 G2 직전 1회, 슬라이스 ≥3이면 슬라이스별 경량 감사(마지막은 조건부 홀리스틱 갈음 가능) + 마지막 홀리스틱 1회다. reviewer는 각 test diff hunk를 decision과 unique production failure에 대조하고, `reuse/reject` write 0, 일반 `retain` 무편집, `remove/weaken` 종료 근거·exact target, 의미 보존 재조직의 전후 보호, 첫-Green 비계 잔존을 감사한다. 기존 migration lifecycle과 관련 테스트 보존 규칙도 그대로 감사한다. 외부 assertion 지적은 acceptance-tester, 내부 assertion과 일반 구현 지적은 coder, 입장/설계 오류는 design-architect를 거쳐 G1/G1′으로 반송한다(반송으로 `design-spec.md` 가 개정되면 **재승인 전에 Phase 1 pre-gate 를 재실행**하고 예보 1행을 재승인 배너에 병기한다 — Phase 1 pre-gate 문단 · Phase 2 중이면 재발화 판형: `--base <G1 기준선 SHA>` 명시·WIP 커밋/stash).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b7> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;

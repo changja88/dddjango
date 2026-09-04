@@ -107,7 +107,9 @@ Django Ninja는 `NinjaAPI`와 `Router`를 통해 path operation을 등록한다.
 
 Django Ninja operation은 decorator의 HTTP method, path, response 선언,
 operation 함수의 typed parameters로 API contract를 만든다. 여러 status code가
-가능한 경우 `response={status: Schema}` 형태로 성공/오류 schema를 분리한다.
+가능한 경우 `response={status: Schema}` 형태로 성공/오류 schema를 분리한다. 한 status 의
+성공 본문이 둘 이상의 모양이면 `response={200: A | B}` 익명 union 을 적지 않는다 — 이름 붙은
+컴포넌트와 discriminator 를 잃어 계약이 바뀐다(`architecture-api` §5.2) · §3.1 의 `RootModel` 하나를 선언한다.
 
 > **형태 선택.** 신규 표준 presentation 표면은 §2.3의 ninja-extra 클래스 컨트롤러다.
 > 기존 함수형 Router는 확립된 표면을 유지할 때 보존한다. 오류 응답 때문에 클래스
@@ -136,7 +138,7 @@ Operation 구현 기준:
   `(status, schema)` tuple, raw `Response`/dict, 오류 helper/factory/serializer/mapper,
   등록 handler/decorator로 우회하지 않는다(§6.2).
 - **operation을 문서화한다** — `summary`·`description`·`tags`를 decorator 인자로 주어 Swagger UI의 그룹과 설명을 채운다. 외부 client가 읽는 계약 문서다.
-- **반환 타입을 명시한다** — `-> object`처럼 정보 없는 타입을 쓰지 않는다. 직렬화 자체는 `response=`가 결정하지만, 반환 타입 annotation은 사람·mypy를 위한 계약 표현이다. 직접 반환하는 성공 Schema와 BC `ErrorSchema`/`Status`를 실제 흐름에 맞게 표현한다.
+- **반환 타입을 명시한다** — `-> object`처럼 정보 없는 타입을 쓰지 않는다. 직렬화 자체는 `response=`가 결정하지만, 반환 타입 annotation은 사람·mypy를 위한 계약 표현이다. 직접 반환하는 성공 Schema와 BC `ErrorSchema`/`Status`를 실제 흐름에 맞게 표현한다. **반환 주석의 `Status` 상자는 하나다** — `-> Status[Out | ErrA | ErrB]`(성공·오류 union 을 한 `Status` 안에) 또는 `-> Out | Status[Err]`. `Status[A] | Status[B]`(상자 둘)는 쓰지 않는다: `Status[T]` 의 `T` 는 불변이라 concrete 값을 직접 넣는 순간 mypy strict 가 `[return-value]` 로 막히고, 값 변수를 base 로 주석해 통과시킨 형태도 같은 금지다 — 형태 자체를 금지한다(#648).
 - 선언된 JSON 성공은 Schema 또는 `Status`로 반환한다. `FileResponse`,
   `StreamingHttpResponse`, redirect, schema-less 204는 framework-native 성공
   carveout이며 오류 응답 우회를 허용하지 않는다.
@@ -361,6 +363,8 @@ Schema의 validator 위치, `ValidationError.loc`, Pydantic/Ninja 기본 validat
 영구 테스트 자격이 아니다. 별도 사용자 승인 또는 실제 deployed consumer evidence가 있는 공개
 Python 계약이면 중앙 입장 심사로 판정할 수 있고, 공개 HTTP·wire 계약이면 isolated Schema 직접 호출이
 아니라 실제 mount 경계에서 검증한다.
+
+- **성공 응답이 판별 키로 갈리는 union 이면 이름 붙은 `RootModel` 하나로 선언한다** — `class XResponseSchema(RootModel[Annotated[A | B, Field(discriminator="kind")]])`. ninja `Schema` 를 함께 상속하지 않는다(`ResolverMetaclass` 와 pydantic `RootModel` 메타클래스 충돌 — mypy `[metaclass]`·`[call-arg] root` · #649). 판별 키의 선언 규율은 위 발행 봉투 불릿과 같다(domain `StrEnum` 파생 `Literal`). OpenAPI 에는 `oneOf` + `discriminator` 를 가진 컴포넌트 하나로 렌더된다(실증: `TarotCardOut(RootModel[Annotated[TarotMajorCardOut | TarotMinorCardOut, Field(discriminator="type")]])` · e2e 가 `oneOf` 2 + `discriminator.propertyName` 을 단언).
 
 ### 3.2 ModelSchema 사용 기준
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->

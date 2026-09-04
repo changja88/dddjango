@@ -1,0 +1,429 @@
+[verify] 병렬 실행: verify-ontology verify-base-core verify-base-cross verify-base-backstop verify-base-regen verify-web
+(전체 로그: /tmp/djr-verify.sLNJeP · 상세 출력: make verify VERBOSE=1)
+  ✓ verify-web green (35초)
+  ✖ verify-base-core RED (63초)
+  ✓ verify-ontology green (85초)
+  ✓ verify-base-backstop green (113초)
+  ✓ verify-base-regen green (164초)
+  ✓ verify-base-cross green (225초)
+===== [verify-base-core] RED — 전체 로그 =====
+[verify-base-core] 검증 세트 (corpus·corpus-lint·spec·checker·tree·coverage·fixture·baseline·count-golden·findings-smoke·drift-golden·anchor-smoke·bounce-counter·bounce-mutation·paths·rulepack·manifest·ab-score·byte-copy)
+  ✓            architecture-api             inv1=in_sync inv2=in_sync
+  ✓            architecture-db              inv1=in_sync inv2=in_sync
+  ✓            architecture-ddd             inv1=in_sync inv2=in_sync
+  ✓            discipline-cleancode         inv1=in_sync inv2=in_sync
+  ✓            discipline-houserules        inv1=in_sync inv2=in_sync
+  ✓            discipline-tdd               inv1=in_sync inv2=in_sync
+  ✓            implementation-django        inv1=in_sync inv2=in_sync
+  ✓            implementation-django-ninja  inv1=in_sync inv2=in_sync
+  ✓            implementation-django-web    inv1=in_sync inv2=in_sync
+  ✓            implementation-python        inv1=in_sync inv2=in_sync
+  ✓            implementation-test          inv1=in_sync inv2=in_sync
+
+  11/11 in-sync
+self-test ✓ · md 30 · 스크립트 37
+위반 0건
+규칙 552 · path 172 · ast 293 · ast+ 60 · human 27 · ⑧ 포함
+위반 0건
+검사기 27개 검사
+위반 0건
+in-sync: 정본 ≡ 플러그인 ≡ 문서 (140행)
+플러그인 파일 70건 분류 · ⓒ 규칙 503 · ⓓ 규칙 81
+  .claude-plugin/plugin.json — 플러그인 매니페스트
+  agents/acceptance-tester.md — 파이프라인 절차(ⓓ 규칙 0 — flow 소유·무변)
+  agents/coder.md — 파이프라인 절차 + 골격 실현 의무(계획 ⑹ T56㉮ — 값은 final.md §0·§1 포인터)
+  agents/design-architect.md — ⓓ 규칙 4건 (물음·human)
+  agents/design-review-api.md — 파이프라인 절차(ⓓ 규칙 0 — flow 소유·무변)
+  agents/design-review-db.md — 파이프라인 절차(ⓓ 규칙 0 — flow 소유·무변)
+  agents/design-review-ddd.md — 파이프라인 절차(ⓓ 규칙 0 — flow 소유·무변)
+  agents/discipline-reviewer.md — ⓓ 규칙 77건 (물음·human)
+  commands/dddjango.md — flow 정본 — 게이트·registry 렌더·ⓒ⑥⑦(빚 스캔·유일 flow 예외)
+  scripts/anchor_diff.py — scope-render 직접 계열 판정 차분 공용 모듈(2026-08-15 r2″ — registry 2·5·6·15·16번 --anchor 소비·registry_gate 동형 N∖L·빚 채널) — anchor_diff_smoke 가 행동 고정
+  scripts/business_vocab.py — #628 실체 — 업무 어휘 재료(도메인 공개 심볼 토큰·불용어·기술 이름)
+  scripts/check-api-error-controller-contract.py — ⓒ 규칙 13건 (#59…#649)
+  scripts/check-app-container.py — 선행 규약(표준 트리 전신 — application/ 컨테이너 위치) 소유·비-git fail-closed
+  scripts/check-broker-contract.py — ⓒ 규칙 17건 (#442…#603)
+  scripts/check-business-vocabulary.py — ⓒ 규칙 61건 (#19…#624)
+  scripts/check-choices-literal-consumption.py — 선행 계약(2026-07-06 상수 승격) 소유 — Enum/choices 리터럴 소비
+  scripts/check-common-container.py — 선행 규약(D38 승격/강등 — 루트 framework/ 배치) 소유·트리 규칙 몫은 business-vocabulary 가 진다
+  scripts/check-composition-root.py — ⓒ 규칙 18건 (#84…#511)
+  scripts/check-context-isolation.py — ⓒ 규칙 69건 (#1…#634)
+  scripts/check-db-table.py — ⓒ 규칙 18건 (#318…#632)
+  scripts/check-domain-model.py — ⓒ 규칙 50건 (#8…#565)
+  scripts/check-error-centralization.py — ⓒ 규칙 4건 (#114…#636)
+  scripts/check-event-publish.py — ⓒ 규칙 16건 (#7…#627)
+  scripts/check-idempotency-scope-creep.py — 선행 계약(architecture-api §13 멱등 스코프) 소유 — 승인 범위 밖 멱등 산출물
+  scripts/check-layer-skeleton.py — ⓒ 규칙 31건 (#10…#644)
+  scripts/check-mechanism-ownership.py — ⓒ 규칙 4건 (#336…#593)
+  scripts/check-missable-entrance.py — ⓒ 규칙 14건 (#172…#629)
+  scripts/check-naming.py — ⓒ 규칙 32건 (#28…#611)
+  scripts/check-ninja-boundary-middleware.py — 선행 계약(08-04 API-error) 소유 — BC HTTP concern 의 global middleware 자기등록
+  scripts/check-openapi-error-declaration.py — ⓒ 규칙 1건 (#63…#63)
+  scripts/check-port-adapter-pairing.py — ⓒ 규칙 83건 (#64…#595)
+  scripts/check-public-surface-annotation.py — ⓒ 규칙 8건 (#69…#650)
+  scripts/check-response-schema-bypass.py — 선행 계약(08-04 API-error) 소유 — JSON 성공 raw-response bypass
+  scripts/check-synthetic-infra-exc.py — ⓒ 규칙 1건 (#129…#129)
+  scripts/check-test-config.py — ⓒ 규칙 14건 (#383…#637)
+  scripts/check-transaction-boundary.py — ⓒ 규칙 11건 (#4…#599)
+  scripts/check-transient-overmapping.py — 선행 계약(08-04 API-error) 소유 — preserve handler overmapping 가드
+  scripts/check-usecase-dto-placement.py — ⓒ 규칙 38건 (#67…#635)
+  scripts/checker_registry.py — registry 27종 로스터 단일 출처(라운드 1′ P3′) — registry_gate·bc_registry_run·fixture_matrix 소비 · glob 자기 검증
+  scripts/checker_target.py — 호출 계약 공용 모듈 — 전 검사기 import(BC 모양 TARGET 거절 · 라운드 1 P2 · fixture_matrix 호출 계약 레인 27케이스가 행동 고정)
+  scripts/design_pregate.py — pre-gate 실행기(2026-09-01 — G1 승인 전 설계 명세 결정적 예보) — 기계가독 블록 5종을 팬텀 스텁으로 격리 사본에 실체화해 registry_gate 앵커 차분을 예보용으로 돌린다(차단 모드 2026-09-03 승격 · G2 비대체 — R-3432~R-3438·R-3444·R-3445 · `--check-report` 가 배너·G2 근거의 기계 출처) · pregate_fixture_run 이 green/red 픽스처로 행동 고정
+  scripts/findings.py — 구조화 위반 레코드 공용 모듈(findings/0 · T0 B2) — 전 검사기 공용 · DJR_FINDINGS_JSON 추가 채널 · findings_smoke 가 행동 고정
+  scripts/pregate_symbol_kinds.json — pre-gate Base 병기 의무 종류 소성물(R-3426 — 검사기 소스 기계 추출 닫힌 목록) — 저자는 workspace/tools/gen_pregate_symbol_kinds.py 하나뿐이고 --check 가 재생성 byte 동일·소재 소실·미등재 검사기를 red 로 고정
+  scripts/regen_core.py — 재생성 주입 코어(T2-3 — 선별·프롬프트 조립 단일 출처·E8 닫힌 필드 rule/file/message) — 셸 A(비인과 harness)와 셸 B(파이프라인 처치)가 공유해 같은 byte 를 받는다 · regen_loop_prototype --self-test 가 골든·owner-map 유출 0·injection 경계를 고정
+  scripts/registry_gate.py — 판정 차분 게이트(라운드 1′ P3′ — 귀속=N∖L·앵커 비선택·이관 빚 채널) — commands 6번 게이트 판정 주체 · registry_gate_smoke 6케이스가 행동 고정
+  scripts/rulepack.json — 규칙 팩 투영물(T2-4 — 빌드타임 사전 렌더 산출·직접 편집 금지) — 저자는 workspace/tools/ontology_rulepack.py 하나뿐이고 «팩 == render(그래프)» 를 make verify 가 byte 로 대조한다 · 본문(text) 미동봉·인덱스와 명칭만(동결 개정 8)
+  scripts/rulepack.py — 규칙 팩 조회 모듈(T2-4 — C암 selector 재료·무의존 stdlib) — 정본은 ontology/ 그래프이고 여기는 투영물 rulepack.json 을 읽기만 한다 (E7 배포 경계: rdflib 는 설치본 침투 금지) · 팩 부재·손상은 fail-closed(폴백 금지) · ontology_rulepack.py --check 가 신선도 고정
+  scripts/standard_tree.py — 트리 140행 단일 출처 — 전 검사기 import·#79 ROWS 구동·tree_mirror 삼중 동기
+  skills/architecture-api/SKILL.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+  skills/architecture-api/references/final.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+  skills/architecture-db/SKILL.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+  skills/architecture-db/references/final.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+  skills/architecture-ddd/SKILL.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+  skills/architecture-ddd/references/final.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+  skills/discipline-cleancode/SKILL.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+  skills/discipline-cleancode/references/final.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+  skills/discipline-houserules/SKILL.md — ⓑ SKILL(값 0 — 체크리스트)
+  skills/discipline-houserules/references/final.md — ⓐ 정본(references/final.md — 전 규칙 값 소유)
+  skills/discipline-tdd/SKILL.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+  skills/discipline-tdd/references/final.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+  skills/implementation-django/SKILL.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+  skills/implementation-django/references/final.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+  skills/implementation-django-ninja/SKILL.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+  skills/implementation-django-ninja/references/final.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+  skills/implementation-django-web/SKILL.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+  skills/implementation-django-web/references/final.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+  skills/implementation-python/SKILL.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+  skills/implementation-python/references/final.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+  skills/implementation-test/SKILL.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+  skills/implementation-test/references/final.md — 책 코퍼스(corpus_mirror 11 — 치환 부류)
+
+미설명 파일 0 · 죽은 소유자 0
+| 검사기 | fixture | 기대 | 실측 | 판정 |
+|---|---|---|---|---|
+| `check-layer-skeleton.py` | skeleton/good_bc | 0 | 0 | ✓ |
+| `check-layer-skeleton.py` | skeleton/bad_legacy_flat | 2 | 2 | ✓ |
+| `check-layer-skeleton.py` | skeleton/bad_missing | 2 | 2 | ✓ |
+| `check-layer-skeleton.py` | skeleton/good_promoted | 0 | 0 | ✓ |
+| `check-layer-skeleton.py` | skeleton/bad_promoted | 2 | 2 | ✓ |
+| `check-context-isolation.py` | context_isolation/good | 0 | 0 | ✓ |
+| `check-context-isolation.py` | context_isolation/bad_rules | 2 | 2 | ✓ |
+| `check-usecase-dto-placement.py` | usecase_dto/good | 0 | 0 | ✓ |
+| `check-usecase-dto-placement.py` | usecase_dto/bad_rules | 2 | 2 | ✓ |
+| `check-mechanism-ownership.py` | mechanism_ownership/good | 0 | 0 | ✓ |
+| `check-mechanism-ownership.py` | mechanism_ownership/bad_rules | 2 | 2 | ✓ |
+| `check-synthetic-infra-exc.py` | synthetic_infra_exc/good | 0 | 0 | ✓ |
+| `check-synthetic-infra-exc.py` | synthetic_infra_exc/bad_rules | 2 | 2 | ✓ |
+| `check-ninja-boundary-middleware.py` | ninja_boundary_middleware/good | 0 | 0 | ✓ |
+| `check-ninja-boundary-middleware.py` | ninja_boundary_middleware/bad_rules | 2 | 2 | ✓ |
+| `check-transient-overmapping.py` | transient_overmapping/good | 0 | 0 | ✓ |
+| `check-transient-overmapping.py` | transient_overmapping/bad_rules | 2 | 2 | ✓ |
+| `check-idempotency-scope-creep.py` | idempotency_scope_creep/good | 0 | 0 | ✓ |
+| `check-idempotency-scope-creep.py` | idempotency_scope_creep/bad_rules | 2 | 2 | ✓ |
+| `check-common-container.py` | common_container/good | 0 | 0 | ✓ |
+| `check-common-container.py` | common_container/bad_rules | 2 | 2 | ✓ |
+| `check-app-container.py` | app_container/good | 0 | 0 | ✓ |
+| `check-app-container.py` | app_container/bad_rules | 2 | 2 | ✓ |
+| `check-public-surface-annotation.py` | public_surface/good | 0 | 0 | ✓ |
+| `check-public-surface-annotation.py` | public_surface/bad_rules | 2 | 2 | ✓ |
+| `check-choices-literal-consumption.py` | choices_literal/good | 0 | 0 | ✓ |
+| `check-choices-literal-consumption.py` | choices_literal/bad_rules | 2 | 2 | ✓ |
+| `check-test-config.py` | test_config/good | 0 | 0 | ✓ |
+| `check-test-config.py` | test_config/bad_rules | 2 | 2 | ✓ |
+| `check-response-schema-bypass.py` | response_schema_bypass/good | 0 | 0 | ✓ |
+| `check-response-schema-bypass.py` | response_schema_bypass/bad_rules | 2 | 2 | ✓ |
+| `check-composition-root.py` | composition_root/good | 0 | 0 | ✓ |
+| `check-composition-root.py` | composition_root/bad_rules | 2 | 2 | ✓ |
+| `check-db-table.py` | db_table/good | 0 | 0 | ✓ |
+| `check-db-table.py` | db_table/bad_rules | 2 | 2 | ✓ |
+| `check-transaction-boundary.py` | transaction_boundary/good | 0 | 0 | ✓ |
+| `check-transaction-boundary.py` | transaction_boundary/bad_rules | 2 | 2 | ✓ |
+| `check-event-publish.py` | event_publish/good | 0 | 0 | ✓ |
+| `check-event-publish.py` | event_publish/bad_rules | 2 | 2 | ✓ |
+| `check-broker-contract.py` | broker_contract/good | 0 | 0 | ✓ |
+| `check-broker-contract.py` | broker_contract/bad_rules | 2 | 2 | ✓ |
+| `check-missable-entrance.py` | missable_entrance/good | 0 | 0 | ✓ |
+| `check-missable-entrance.py` | missable_entrance/bad_rules | 2 | 2 | ✓ |
+| `check-naming.py` | naming/good | 0 | 0 | ✓ |
+| `check-naming.py` | naming/bad_rules | 2 | 2 | ✓ |
+| `check-domain-model.py` | domain_model/good | 0 | 0 | ✓ |
+| `check-domain-model.py` | domain_model/bad_rules | 2 | 2 | ✓ |
+| `check-business-vocabulary.py` | business_vocabulary/good | 0 | 0 | ✓ |
+| `check-business-vocabulary.py` | business_vocabulary/bad_rules | 2 | 2 | ✓ |
+| `check-port-adapter-pairing.py` | port_adapter_pairing/good | 0 | 0 | ✓ |
+| `check-port-adapter-pairing.py` | port_adapter_pairing/bad_rules | 2 | 2 | ✓ |
+| `check-broker-contract.py` | broker_contract/no_adoption | 0 | 0 | ✓ |
+| `check-composition-root.py` | composition_root/no_api | 0 | 0 | ✓ |
+| `check-usecase-dto-placement.py` | usecase_dto/no_api | 0 | 0 | ✓ |
+| `check-naming.py` | naming/domain_results | 0 | 0 | ✓ |
+| `check-port-adapter-pairing.py` | port_adapter_pairing/skeleton_placeholder | 0 | 0 | ✓ |
+| `check-usecase-dto-placement.py` | usecase_dto/skeleton_placeholder | 0 | 0 | ✓ |
+| `check-usecase-dto-placement.py` | usecase_dto/registrar_only | 2 | 2 | ✓ |
+| `check-error-centralization.py` | error_centralization/good (auto) | 0 | 0 | ✓ |
+| `check-error-centralization.py` | error_centralization/bad_rules (auto) | 2 | 2 | ✓ |
+| `check-api-error-controller-contract.py` | api_error_controller/good (auto) | 0 | 0 | ✓ |
+| `check-api-error-controller-contract.py` | api_error_controller/bad_rules (auto) | 2 | 2 | ✓ |
+| `check-openapi-error-declaration.py` | openapi_error_declaration/good (auto) | 0 | 0 | ✓ |
+| `check-openapi-error-declaration.py` | openapi_error_declaration/bad_rules (auto) | 2 | 2 | ✓ |
+| `check-test-config.py` | test_config_entrance/good | 0 | 0 | ✓ |
+| `check-test-config.py` | test_config_entrance/bad_rules | 2 | 2 | ✓ |
+| `check-event-publish.py` | event_publish_leaf/good | 0 | 0 | ✓ |
+| `check-event-publish.py` | event_publish_leaf/bad_rules | 2 | 2 | ✓ |
+| `check-db-table.py` | db_table_choices/good | 0 | 0 | ✓ |
+| `check-db-table.py` | db_table_choices/bad_rules | 2 | 2 | ✓ |
+| `check-usecase-dto-placement.py` | usecase_dto_domain_exception/good | 0 | 0 | ✓ |
+| `check-usecase-dto-placement.py` | usecase_dto_domain_exception/bad_rules | 2 | 2 | ✓ |
+| `checker_lint.py` | checker_lint/good | 0 | 0 | ✓ |
+| `checker_lint.py` | checker_lint/bad_rules | 2 | 2 | ✓ |
+| `check-composition-root.py` | composition_selector/good (selector) | 0 | 0 | ✓ |
+| `check-composition-root.py` | composition_selector/bad_rules (selector) | 2 | 2 | ✓ |
+| `check-composition-root.py` | composition_selector/bad_usage (selector) | 1 | 1 | ✓ |
+| `check-layer-skeleton.py` | invocation/check-layer-skeleton.py | 1 | 1 | ✓ |
+| `check-context-isolation.py` | invocation/check-context-isolation.py | 1 | 1 | ✓ |
+| `check-usecase-dto-placement.py` | invocation/check-usecase-dto-placement.py | 1 | 1 | ✓ |
+| `check-mechanism-ownership.py` | invocation/check-mechanism-ownership.py | 1 | 1 | ✓ |
+| `check-synthetic-infra-exc.py` | invocation/check-synthetic-infra-exc.py | 1 | 1 | ✓ |
+| `check-ninja-boundary-middleware.py` | invocation/check-ninja-boundary-middleware.py | 1 | 1 | ✓ |
+| `check-transient-overmapping.py` | invocation/check-transient-overmapping.py | 1 | 1 | ✓ |
+| `check-idempotency-scope-creep.py` | invocation/check-idempotency-scope-creep.py | 1 | 1 | ✓ |
+| `check-common-container.py` | invocation/check-common-container.py | 1 | 1 | ✓ |
+| `check-app-container.py` | invocation/check-app-container.py | 1 | 1 | ✓ |
+| `check-public-surface-annotation.py` | invocation/check-public-surface-annotation.py | 1 | 1 | ✓ |
+| `check-choices-literal-consumption.py` | invocation/check-choices-literal-consumption.py | 1 | 1 | ✓ |
+| `check-test-config.py` | invocation/check-test-config.py | 1 | 1 | ✓ |
+| `check-response-schema-bypass.py` | invocation/check-response-schema-bypass.py | 1 | 1 | ✓ |
+| `check-composition-root.py` | invocation/check-composition-root.py | 1 | 1 | ✓ |
+| `check-db-table.py` | invocation/check-db-table.py | 1 | 1 | ✓ |
+| `check-transaction-boundary.py` | invocation/check-transaction-boundary.py | 1 | 1 | ✓ |
+| `check-event-publish.py` | invocation/check-event-publish.py | 1 | 1 | ✓ |
+| `check-broker-contract.py` | invocation/check-broker-contract.py | 1 | 1 | ✓ |
+| `check-missable-entrance.py` | invocation/check-missable-entrance.py | 1 | 1 | ✓ |
+| `check-naming.py` | invocation/check-naming.py | 1 | 1 | ✓ |
+| `check-domain-model.py` | invocation/check-domain-model.py | 1 | 1 | ✓ |
+| `check-business-vocabulary.py` | invocation/check-business-vocabulary.py | 1 | 1 | ✓ |
+| `check-port-adapter-pairing.py` | invocation/check-port-adapter-pairing.py | 1 | 1 | ✓ |
+| `check-error-centralization.py` | invocation/check-error-centralization.py (auto) | 1 | 1 | ✓ |
+| `check-api-error-controller-contract.py` | invocation/check-api-error-controller-contract.py (auto) | 1 | 1 | ✓ |
+| `check-openapi-error-declaration.py` | invocation/check-openapi-error-declaration.py (auto) | 1 | 1 | ✓ |
+케이스 104 · 일치 104 · 불일치 0
+| 키(검사기[::레인]) | exit | parsed_raw | norm_unique | unparsed | synthetic | 판정 |
+|---|---|---|---|---|---|---|
+| `check-mechanism-ownership.py` | 2 | 6 | 6 | 1 | — | ✓ |
+| `check-error-centralization.py` | 2 | 5 | 5 | 1 | — | ✓ |
+| `check-response-schema-bypass.py` | 2 | 0 | 0 | 3 | 1건 | ✓ |
+| `check-layer-skeleton.py` | 2 | 10 | 10 | 1 | — | ✓ |
+| `check-openapi-error-declaration.py` | 2 | 6 | 4 | 1 | — | ✓ |
+| `check-context-isolation.py` | 2 | 60 | 59 | 6 | — | ✓ |
+| `check-app-container.py` | 2 | 0 | 0 | 4 | 1건 | ✓ |
+| `check-ninja-boundary-middleware.py` | 2 | 0 | 0 | 4 | 1건 | ✓ |
+| `check-common-container.py` | 2 | 0 | 0 | 4 | 1건 | ✓ |
+| `check-idempotency-scope-creep.py` | 2 | 0 | 0 | 3 | 1건 | ✓ |
+| `check-public-surface-annotation.py` | 2 | 33 | 33 | 6 | — | ✓ |
+| `check-test-config.py` | 2 | 14 | 14 | 2 | — | ✓ |
+| `check-transient-overmapping.py` | 2 | 0 | 0 | 3 | 1건 | ✓ |
+| `check-synthetic-infra-exc.py` | 2 | 1 | 1 | 2 | — | ✓ |
+| `check-api-error-controller-contract.py` | 2 | 11 | 11 | 3 | — | ✓ |
+| `check-composition-root.py` | 2 | 18 | 18 | 4 | — | ✓ |
+| `check-db-table.py` | 2 | 26 | 26 | 2 | — | ✓ |
+| `check-choices-literal-consumption.py` | 2 | 0 | 0 | 6 | 1건 | ✓ |
+| `check-usecase-dto-placement.py` | 2 | 35 | 35 | 7 | — | ✓ |
+| `check-transaction-boundary.py` | 2 | 15 | 15 | 3 | — | ✓ |
+| `check-domain-model.py` | 2 | 51 | 49 | 14 | — | ✓ |
+| `check-port-adapter-pairing.py` | 2 | 96 | 93 | 12 | — | ✓ |
+| `check-event-publish.py` | 2 | 20 | 20 | 5 | — | ✓ |
+| `check-broker-contract.py` | 2 | 22 | 22 | 6 | — | ✓ |
+| `check-missable-entrance.py` | 2 | 17 | 17 | 5 | — | ✓ |
+| `check-naming.py` | 2 | 33 | 33 | 6 | — | ✓ |
+| `check-business-vocabulary.py` | 2 | 49 | 49 | 8 | — | ✓ |
+| `check-response-schema-bypass.py::git-clean` | 0 | 0 | 0 | 0 | — | ✓ |
+| `check-response-schema-bypass.py::git-modified` | 2 | 0 | 0 | 3 | 1건 | ✓ |
+| `check-response-schema-bypass.py::git-untracked` | 2 | 0 | 0 | 3 | 1건 | ✓ |
+| `check-app-container.py::git-clean` | 0 | 0 | 0 | 0 | — | ✓ |
+| `check-app-container.py::git-modified` | 0 | 0 | 0 | 0 | — | ✓ |
+| `check-app-container.py::git-untracked` | 2 | 0 | 0 | 3 | 1건 | ✓ |
+| `check-idempotency-scope-creep.py::git-clean` | 0 | 0 | 0 | 0 | — | ✓ |
+| `check-idempotency-scope-creep.py::git-modified` | 2 | 0 | 0 | 3 | 1건 | ✓ |
+| `check-idempotency-scope-creep.py::git-untracked` | 2 | 0 | 0 | 3 | 1건 | ✓ |
+| `check-transient-overmapping.py::git-clean` | 0 | 0 | 0 | 0 | — | ✓ |
+| `check-transient-overmapping.py::git-modified` | 0 | 0 | 0 | 0 | — | ✓ |
+| `check-transient-overmapping.py::git-untracked` | 2 | 0 | 0 | 3 | 1건 | ✓ |
+| `check-choices-literal-consumption.py::git-clean` | 0 | 0 | 0 | 0 | — | ✓ |
+| `check-choices-literal-consumption.py::git-modified` | 0 | 0 | 0 | 0 | — | ✓ |
+| `check-choices-literal-consumption.py::git-untracked` | 0 | 0 | 0 | 0 | — | ✓ |
+| `check-synthetic-infra-exc.py::git-clean` | 2 | 1 | 1 | 1 | — | ✓ |
+| `check-synthetic-infra-exc.py::git-modified` | 2 | 1 | 1 | 1 | — | ✓ |
+| `check-synthetic-infra-exc.py::git-untracked` | 2 | 1 | 1 | 2 | — | ✓ |
+| `check-db-table.py::git-clean` | 2 | 24 | 24 | 1 | — | ✓ |
+| `check-db-table.py::git-modified` | 2 | 24 | 24 | 1 | — | ✓ |
+| `check-db-table.py::git-untracked` | 2 | 26 | 26 | 1 | — | ✓ |
+| `check-api-error-controller-contract.py::api_error_controller_code` | 2 | 3 | 3 | 2 | — | ✓ |
+| `check-composition-root.py::composition_root_single_file` | 2 | 1 | 1 | 2 | — | ✓ |
+| `check-openapi-error-declaration.py::openapi_decl_missing` | 2 | 1 | 1 | 2 | — | ✓ |
+| `check-error-centralization.py::error_centralization_code` | 2 | 1 | 1 | 11 | — | ✓ |
+| `check-error-centralization.py::error_centralization_literal_edge` | 2 | 0 | 0 | 5 | 1건 | ✓ |
+| `check-api-error-controller-contract.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-db-table.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-domain-model.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-error-centralization.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-event-publish.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-idempotency-scope-creep.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-layer-skeleton.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-mechanism-ownership.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-missable-entrance.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-naming.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-ninja-boundary-middleware.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-openapi-error-declaration.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-port-adapter-pairing.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-public-surface-annotation.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-response-schema-bypass.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-synthetic-infra-exc.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-test-config.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-transaction-boundary.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-transient-overmapping.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-usecase-dto-placement.py::guard-zero` | 2 | 0 | 0 | 1 | 1건 | ✓ |
+| `check-api-error-controller-contract.py::api_error_controller_code` (auto 기본 호출 관찰) | 0 | — | — | — | — | code 레인 미도달 사각 실증(비게이트) |
+| `check-openapi-error-declaration.py::openapi_decl_missing` (auto 기본 호출 관찰) | 0 | — | — | — | — | code 레인 미도달 사각 실증(비게이트) |
+| `check-error-centralization.py::error_centralization_code` (auto 기본 호출 관찰) | 0 | — | — | — | — | code 레인 미도달 사각 실증(비게이트) |
+| `check-error-centralization.py::error_centralization_literal_edge` (auto 기본 호출 관찰) | 0 | — | — | — | — | code 레인 미도달 사각 실증(비게이트) |
+레인 73 · 일치 73 · 불일치 0 · 대기 0
+| `check-api-error-controller-contract.py` | exit 2 | violation 11 | info 1 | 73b2a86b1a3e2b00 | d0e05389117bb91f | 574f3909e41f7eee | ✓ |
+| `check-app-container.py` | exit 2 | violation 1 | info 0 | 31240e8fe5840470 | 31240e8fe5840470 | 44e58e3b16845aff | ✓ |
+| `check-broker-contract.py` | exit 2 | violation 22 | info 5 | 11deccf9f90c6592 | 72766c4d29d6c5fe | e9cf0a9f6de4a278 | ✓ |
+| `check-business-vocabulary.py` | exit 2 | violation 49 | info 6 | 6943ecfac506d404 | 80a174c4bbe141aa | 28fc312173aafa88 | ✓ |
+| `check-choices-literal-consumption.py` | exit 2 | violation 3 | info 0 | 6253365c1e25da21 | 44e1429f9c74c1a3 | 2f961c306ed061c0 | ✓ |
+| `check-common-container.py` | exit 2 | violation 2 | info 0 | 7ddb14624648702f | 7ddb14624648702f | 5b02b9878d9d83e0 | ✓ |
+| `check-composition-root.py` | exit 2 | violation 18 | info 2 | fe484815e50a3068 | 47b0169bfcaeec08 | 5e131994cd2c5b94 | ✓ |
+| `check-context-isolation.py` | exit 2 | violation 60 | info 4 | ba1bd1d71355133c | ba1bd1d71355133c | fd2fadb672f092c3 | ✓ |
+| `check-db-table.py` | exit 2 | violation 26 | info 0 | 5b85011e45235434 | 5b85011e45235434 | 239a377ed7ebf3eb | ✓ |
+| `check-domain-model.py` | exit 2 | violation 51 | info 13 | 60afcadde6c3c9e4 | 292dcf5871d49780 | c325b92dc100f3d8 | ✓ |
+| `check-error-centralization.py` | exit 2 | violation 5 | info 0 | c3da2a9e89c47951 | c3da2a9e89c47951 | cacda249ec94d135 | ✓ |
+| `check-event-publish.py` | exit 2 | violation 20 | info 4 | 06594a2b1253f981 | f6db284cc0757e6b | 6027ffddfd7b2d9e | ✓ |
+| `check-idempotency-scope-creep.py` | exit 2 | violation 1 | info 0 | 46b04bd6bcc4b9e5 | 46b04bd6bcc4b9e5 | 0de6db90334e6f41 | ✓ |
+| `check-layer-skeleton.py` | exit 2 | violation 10 | info 0 | 650a62bfa578c75d | 650a62bfa578c75d | df23b4464c21dccb | ✓ |
+| `check-mechanism-ownership.py` | exit 2 | violation 6 | info 0 | 667832904ba25a08 | 667832904ba25a08 | 67400faf82fc3e1e | ✓ |
+| `check-missable-entrance.py` | exit 2 | violation 17 | info 4 | 2b604f3883227873 | b118cdce098e16f7 | 85500a6f29199b00 | ✓ |
+| `check-naming.py` | exit 2 | violation 33 | info 5 | 6bb819f74f0e36fe | 0504226186872304 | 315d6e4143281e64 | ✓ |
+| `check-ninja-boundary-middleware.py` | exit 2 | violation 2 | info 0 | bcca745399dc645e | bcca745399dc645e | fb84fc0e70f9f759 | ✓ |
+| `check-openapi-error-declaration.py` | exit 2 | violation 6 | info 0 | 231a9ad52fb544e6 | 04abef8b5eeb1490 | 8cbc41228262ac3c | ✓ |
+| `check-port-adapter-pairing.py` | exit 2 | violation 96 | info 11 | 6784c9eb4e93b028 | 76eca77e578a9733 | 69999c04265b0d55 | ✓ |
+| `check-public-surface-annotation.py` | exit 2 | violation 33 | info 4 | 30df63f33872efea | 5c43023260be31b9 | d382c0a507443976 | ✓ |
+| `check-response-schema-bypass.py` | exit 2 | violation 1 | info 0 | 7425fefd479b2edc | 31ac0f0c6afe76c5 | bfd73ca26e52466d | ✓ |
+| `check-synthetic-infra-exc.py` | exit 2 | violation 2 | info 0 | 2e7e2fb7cccbac27 | 639e715f10dcde56 | 518f4f7518bb9711 | ✓ |
+| `check-test-config.py` | exit 2 | violation 15 | info 0 | 454905a20eaacb3c | 454905a20eaacb3c | 29b46e78574ba579 | ✓ |
+| `check-transaction-boundary.py` | exit 2 | violation 15 | info 2 | 45e141e436af9b25 | 3af944a7f0fbcf6d | 14ed4a88580f4bcc | ✓ |
+| `check-transient-overmapping.py` | exit 2 | violation 1 | info 0 | e4f6a367f28dd0d1 | 195099bd5e6d93e3 | 849fa036f6fb55c8 | ✓ |
+| `check-usecase-dto-placement.py` | exit 2 | violation 35 | info 5 | 378ab736baa677df | 378ab736baa677df | ed61289ac2348cc9 | ✓ |
+| `check-response-schema-bypass.py::git-clean` | exit 0 | violation 0 | info 0 | 4f53cda18c2baa0c | 4f53cda18c2baa0c | 4f53cda18c2baa0c | ✓ |
+| `check-response-schema-bypass.py::git-modified` | exit 2 | violation 1 | info 0 | 7425fefd479b2edc | 31ac0f0c6afe76c5 | bfd73ca26e52466d | ✓ |
+| `check-response-schema-bypass.py::git-untracked` | exit 2 | violation 1 | info 0 | 7425fefd479b2edc | 31ac0f0c6afe76c5 | bfd73ca26e52466d | ✓ |
+| `check-app-container.py::git-clean` | exit 0 | violation 0 | info 0 | 4f53cda18c2baa0c | 4f53cda18c2baa0c | 4f53cda18c2baa0c | ✓ |
+| `check-app-container.py::git-modified` | exit 0 | violation 0 | info 0 | 4f53cda18c2baa0c | 4f53cda18c2baa0c | 4f53cda18c2baa0c | ✓ |
+| `check-app-container.py::git-untracked` | exit 2 | violation 1 | info 0 | 31240e8fe5840470 | 31240e8fe5840470 | 44e58e3b16845aff | ✓ |
+| `check-idempotency-scope-creep.py::git-clean` | exit 0 | violation 0 | info 0 | 4f53cda18c2baa0c | 4f53cda18c2baa0c | 4f53cda18c2baa0c | ✓ |
+| `check-idempotency-scope-creep.py::git-modified` | exit 2 | violation 1 | info 0 | 46b04bd6bcc4b9e5 | 46b04bd6bcc4b9e5 | 0de6db90334e6f41 | ✓ |
+| `check-idempotency-scope-creep.py::git-untracked` | exit 2 | violation 1 | info 0 | 46b04bd6bcc4b9e5 | 46b04bd6bcc4b9e5 | 0de6db90334e6f41 | ✓ |
+| `check-transient-overmapping.py::git-clean` | exit 0 | violation 0 | info 0 | 4f53cda18c2baa0c | 4f53cda18c2baa0c | 4f53cda18c2baa0c | ✓ |
+| `check-transient-overmapping.py::git-modified` | exit 0 | violation 0 | info 0 | 4f53cda18c2baa0c | 4f53cda18c2baa0c | 4f53cda18c2baa0c | ✓ |
+| `check-transient-overmapping.py::git-untracked` | exit 2 | violation 1 | info 0 | e4f6a367f28dd0d1 | 195099bd5e6d93e3 | 849fa036f6fb55c8 | ✓ |
+| `check-choices-literal-consumption.py::git-clean` | exit 0 | violation 0 | info 0 | 4f53cda18c2baa0c | 4f53cda18c2baa0c | 4f53cda18c2baa0c | ✓ |
+| `check-choices-literal-consumption.py::git-modified` | exit 0 | violation 0 | info 0 | 4f53cda18c2baa0c | 4f53cda18c2baa0c | 4f53cda18c2baa0c | ✓ |
+| `check-choices-literal-consumption.py::git-untracked` | exit 0 | violation 0 | info 0 | 4f53cda18c2baa0c | 4f53cda18c2baa0c | 4f53cda18c2baa0c | ✓ |
+| `check-synthetic-infra-exc.py::git-clean` | exit 2 | violation 1 | info 0 | cb5389627def38b8 | 591973bd97c8910e | 5310eb2801147b90 | ✓ |
+| `check-synthetic-infra-exc.py::git-modified` | exit 2 | violation 1 | info 0 | cb5389627def38b8 | 591973bd97c8910e | 5310eb2801147b90 | ✓ |
+| `check-synthetic-infra-exc.py::git-untracked` | exit 2 | violation 2 | info 0 | 2e7e2fb7cccbac27 | 639e715f10dcde56 | 518f4f7518bb9711 | ✓ |
+| `check-db-table.py::git-clean` | exit 2 | violation 24 | info 0 | c0a20513dc57285b | c0a20513dc57285b | 60d814661bce27be | ✓ |
+| `check-db-table.py::git-modified` | exit 2 | violation 24 | info 0 | c0a20513dc57285b | c0a20513dc57285b | 60d814661bce27be | ✓ |
+| `check-db-table.py::git-untracked` | exit 2 | violation 26 | info 0 | 5b85011e45235434 | 5b85011e45235434 | 239a377ed7ebf3eb | ✓ |
+| `check-api-error-controller-contract.py::api_error_controller_code` | exit 2 | violation 3 | info 0 | 97ef7c202f1d48d0 | 3f624e3b1268f976 | 54e3a219e3e20466 | ✓ |
+| `check-composition-root.py::composition_root_single_file` | exit 2 | violation 1 | info 0 | 2c43cc1deddc1a8c | 2c43cc1deddc1a8c | 2fc253839f16eb6c | ✓ |
+| `check-openapi-error-declaration.py::openapi_decl_missing` | exit 2 | violation 1 | info 0 | 238f374c04cdbc00 | e272d6cb45778b56 | 95363305293051ff | ✓ |
+| `check-error-centralization.py::error_centralization_code` | exit 2 | violation 10 | info 0 | 8cc388050bc98292 | 5a37989cbab5bfbf | a3e955c997e3d5a4 | ✓ |
+| `check-error-centralization.py::error_centralization_literal_edge` | exit 2 | violation 3 | info 0 | 7d2a7b65a9d63ac3 | 69deb8cfa13369c7 | 9eaa1a7b6f4a23d3 | ✓ |
+| `check-api-error-controller-contract.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | ff910566edd77355 | ✓ |
+| `check-db-table.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | f74cd9a3af326bd2 | ✓ |
+| `check-domain-model.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | e5abbd3c9f18d0a2 | ✓ |
+| `check-error-centralization.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | dd0e053b943ade19 | ✓ |
+| `check-event-publish.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | 70efaa8b3073675d | ✓ |
+| `check-idempotency-scope-creep.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | 1c333ae23667db21 | ✓ |
+| `check-layer-skeleton.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | c8f6734063cabd64 | ✓ |
+| `check-mechanism-ownership.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | ec77f36e5d019139 | ✓ |
+| `check-missable-entrance.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | 74ad02ff7de72a4e | ✓ |
+| `check-naming.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | 383fa0eac3be9402 | ✓ |
+| `check-ninja-boundary-middleware.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | cbe89ba066c8a5e4 | ✓ |
+| `check-openapi-error-declaration.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | f2d1a02f508ad602 | ✓ |
+| `check-port-adapter-pairing.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | 373fa76a51f104a1 | ✓ |
+| `check-public-surface-annotation.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | 598e021a96681874 | ✓ |
+| `check-response-schema-bypass.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | a48e09bb1d2d8734 | ✓ |
+| `check-synthetic-infra-exc.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | 62d865bb7162735f | ✓ |
+| `check-test-config.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | 99873aba7f6ef8aa | ✓ |
+| `check-transaction-boundary.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | 85fd98555b364d2b | ✓ |
+| `check-transient-overmapping.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | 72512da19ab8fe60 | ✓ |
+| `check-usecase-dto-placement.py::guard-zero` | exit 2 | violation 1 | info 0 | a660897a690a1683 | a660897a690a1683 | 68ef0b7cef2acf9a | ✓ |
+레인 73 · 일치 73 · 불일치 0 · 대기 0 (green 축 전수 0레코드·14필드 oracle·stdout↔record ordered 대조 포함)
+| 단언 | 판정 | 비고 |
+|---|---|---|
+| DM-red exit 2 (env 유/무) | ✓ | 2/2 |
+| DM-red stdout=개작 전 실측(㉠) | ✓ | 4398d7d774da |
+| DM-red stdout env 무영향(㉠) | ✓ | byte 동일 |
+| DM-red 레코드 계수 50+13(㉡) | ✓ | violation 51 · info 13 |
+| DM-red 표본 violation 레코드(㉡) | ✓ | #264 money.py:12 |
+| DM-red 표본 info 레코드(㉡) | ✓ | #268 money.py:7 |
+| DM-red 라인↔레코드 1:1 재구성(㉡) | ✓ | 64건 전수 |
+| DM-red run_id 단일·record_id 유일 | ✓ | record_id 64 |
+| DM-red schema 전수 findings/0 | ✓ |  |
+| CC-red exit 2 (env 유/무) | ✓ | 2/2 |
+| CC-red stdout=개작 전 실측(㉠) | ✓ | 5ce9427209a4 |
+| CC-red stdout env 무영향(㉠) | ✓ | byte 동일 |
+| CC-red rule=null+contract_ref 2건(㉡) | ✓ | application/common, application/framework |
+| dm-good green — exit 0·stdout 0·레코드 0(㉢) | ✓ | exit 0 |
+| cc-good green — exit 0·stdout 0·레코드 0(㉢) | ✓ | exit 0 |
+단언 15 · 일치 15 · 불일치 0
+| `check-domain-model.py` | exit 2 | 4398d7d774da5d4d | ✓ |
+| `check-common-container.py` | exit 2 | 5ce9427209a47503 | ✓ |
+| `check-api-error-controller-contract.py` | exit 2 | 7e3edccdbc247574 | ✓ |
+| `check-error-centralization.py` | exit 2 | 5d21b130e5a23bc5 | ✓ |
+| `check-composition-root.py` | exit 2 | 81938fb23b67216c | ✓ |
+| `check-openapi-error-declaration.py` | exit 2 | 53913d1cb2da1889 | ✓ |
+| `check-response-schema-bypass.py` | exit 2 | b1a77bebb4272f9e | ✓ |
+| `check-context-isolation.py` | exit 2 | a0b9dbb4376705a6 | ✓ |
+대표 8종 byte 골든 · 일치 8 · 불일치 0
+| 케이스 | 기대 exit | 실측 | 내용 | 판정 | 비고 |
+|---|---|---|---|---|---|
+| N 무-anchor 보존 | 2 | 2 | ✓ | ✓ | 차분 미관여 |
+| V 공허 차분 | 1 | 1 | ✓ | ✓ | 앵커=HEAD·clean 세탁 차단 |
+| M clean+bogus 앵커 | 1 | 1 | ✓ | ✓ | 무발견 clean 에서도 앵커 재료 선검증(F2) |
+| A 신규분 red | 2 | 2 | ✓ | ✓ | 신규 위반이 신규분 절에 |
+| B 기존분-only green | 0 | 0 | ✓ | ✓ | exit 0 + 기존분 전량 보고 |
+| E 빚 채널 | 0 | 0 | ✓ | ✓ | 빚 매칭 신규분은 exit 제외·기록 의무 |
+| E2 숫자 없는 tag 거절 | 1 | 1 | ✓ | ✓ | 발화 불능 빚 규칙은 조용히 수용하지 않는다(S2) |
+| S1 selector 드롭 기준선 | 0 | 0 | ✓ | ✓ | 부재 selector 는 걷고 기준선 성립·앵커 기존 위반 강등 |
+| S2 신규·기존 혼재 분리 | 2 | 2 | ✓ | ✓ | 신규 진단만 red·기존 진단은 보고 절 |
+| S3 `:N` 표기 빚 격리(F1) | 0 | 0 | ✓ | ✓ | 빚 코퍼스=정규화 라인(registry_gate 동일) |
+| T 정적 대조군 | 0 | 0 | ✓ | ✓ | 정적 Enum 은 무변 clean |
+| T 동적 Enum 토큰 | 1 | 1 | ✓ | ✓ | exit 1 진단 전건 토큰 → runtime proof 경로 |
+| C1 #2 기존분 강등·빈 골격 제외 | 0 | 0 | ✓ | ✓ | base-canon 기존분 강등 + placeholder 미계상 |
+| C2 #2 신규·기존 혼재 분리 | 2 | 2 | ✓ | ✓ | 신규 진단만 red·기존 진단은 보고 절 |
+케이스 14 · 일치 14 · 불일치 0
+[self-test] 픽스처 15/15 일치
+[mutation] 변이 5종 전건 red — 픽스처 검출력 확인
+[paths] architecture-ddd-final §3.2 → 트리 59 → application/*/domain_layer/**
+[paths] architecture-ddd-final §8 → 트리 1 → application/*/**
+[paths] implementation-django-ninja-final §6.1 → 트리 8 → application/*/driving_layer/api/**
+[paths] implementation-django-ninja-final §6.2 → 트리 8 → application/*/driving_layer/api/**
+[paths] 주의 글롭 공유: application/*/driving_layer/api/** ← 절 2개 이상(포함 관계 검사는 구조 검사 소유)
+[paths] 정합 — paths.ttl == derive(표준 트리 × 대응표)
+[rulepack] Work 3467 · 검사기 28 · alias 21 · 절 536
+[rulepack] 무앵커 절 Work 1732건 포함(T3 q4 개정 — 전량 반환이 진짜 전량)
+[rulepack] 검사기 도달 불가 규범 2664건 — selector 진입로 없음(침묵 탈락 금지)
+[rulepack] 재료 ttl 64개 · 본문(text) 미동봉 — 개정 8
+[rulepack] 경로 글롭 4건(Q1 — 처치 밖 카탈로그)
+[rulepack] 정합 — 팩 == render(그래프) · 양 런타임 미러 동일
+[manifest] **RED — 실런 금지** · 지적 2건
+  ✗ harness: 봉인 후 변경 — workspace/tools/construct_drift_report.py
+  ✗ harness: tree_sha256 드리프트
+make[1]: *** [verify-base-core] Error 2
+  ✖ verify RED — verify-base-core (225초 · 전체 로그: /tmp/djr-verify.sLNJeP)
+make: *** [verify] Error 1
+exit=2

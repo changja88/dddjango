@@ -215,8 +215,8 @@ OAuth 콜백이 그 모순을 드러냈다 — 「우리 URL 을 바깥에 등�
 | 값 | 뜻 | 개수 |
 |---|---|---|
 | **`path`** | 경로·파일명만으로 판정된다. 파일을 안 열어도 된다 | **172** |
-| **`ast`** | 파일 내용을 파싱하면 판정된다. **사람 판단 0** | **291** |
-| **`ast+`** | **기계가 «후보»를 좁히고 사람이 «마무리»한다** — 검사기가 경고를 내고 리뷰어가 판단하는 자리 | **57** |
+| **`ast`** | 파일 내용을 파싱하면 판정된다. **사람 판단 0** | **293** |
+| **`ast+`** | **기계가 «후보»를 좁히고 사람이 «마무리»한다** — 검사기가 경고를 내고 리뷰어가 판단하는 자리 | **60** |
 | **`human`** | 기계 술어가 아예 없다. 사람에게 «묻는» 수밖에 없다 | **27** |
 
 ### ★ `ast+` 가 왜 필요했나 — D45 를 값 하나로는 못 적는다
@@ -273,10 +273,10 @@ D45 축자가 *「기계가 후보를 좁히고 사람이 마무리한다」* �
 | 판정 | blocker | 검사기 | 이행 | 면제 | 계 |
 |---|---|---|---|---|---|
 | `path` | 154 | 9 | 4 | 5 | **172** |
-| `ast` | 279 | 7 | 4 | 1 | **291** |
-| `ast+` | 56 | 1 | 0 | 0 | **57** |
+| `ast` | 281 | 7 | 4 | 1 | **293** |
+| `ast+` | 59 | 1 | 0 | 0 | **60** |
 | `human` | 6 | 3 | 2 | 16 | **27** |
-| **계** | **495** | **20** | **10** | **22** | **547** |
+| **계** | **500** | **20** | **10** | **22** | **552** |
 
 <span>*(3단계에서 24건이 들어와 447 → 471, 3차 리뷰 반영으로 10건이 들어와 481, T26·T27(D39) 반영으로 4건이 들어와 **485**, 그리고 **D40~D59 회수로 110건이 들어와 595** 가 됐다. 3차에서 허가문 9건이 blocker → `면제`, 검사 범위 6건이 → `검사기` 로 바로잡혔고, «파일 내용을 세는» path 9건이 `ast` 로, 크로스-BC·어휘 판정 4건이 `human` 으로, «두 번째 BC» 3건이 `human` → `ast` 로 옮겨갔다. 복합 제안(ast+human)은 상위 수단 하나로 적는다 — 판정 컬럼은 «충분한 최소 수단»이다. **회수분 110건의 갈림은 `ast` 57 · `human` 30 · `path` 23** 이다 — 신설 칸이 대부분 «파일 안의 모양»을 규정해서다.)*</span>
 
@@ -284,8 +284,8 @@ D45 축자가 *「기계가 후보를 좁히고 사람이 마무리한다」* �
 
 | | 몇 | 무엇 |
 |---|---|---|
-| `path`+`ast` 의 blocker | **433** | **결정적 백스톱** — 기계가 혼자 판정하고 반송한다 |
-| `ast+` 의 blocker | **56** | **후보를 좁히는 검사** — 경고를 내고 리뷰어가 마무리한다. 술어 셋(확정·후보·물음)이 `2026-08-11-predicates.md` 에 있다 |
+| `path`+`ast` 의 blocker | **435** | **결정적 백스톱** — 기계가 혼자 판정하고 반송한다 |
+| `ast+` 의 blocker | **59** | **후보를 좁히는 검사** — 경고를 내고 리뷰어가 마무리한다. 술어 셋(확정·후보·물음)이 `2026-08-11-predicates.md` 에 있다 |
 | `human` 의 blocker | **6** | 기계 술어가 아예 없다 — `#254`·`#316`·`#526`·`#530`·`#563`·`#626` |
 
 <span>08-11 · C5 ㉰ — **옛 문면의 「`human` blocker 148」은 «소거법»으로 매겨진 수였다.** 「기계가 못 하면 human」이라 성질이 다른 것이 한 칸에 뭉쳐 있었고, 전수 재분류로 **131건이 `human` 을 벗고 `ast+` 가 신설됐다**. 남은 실질 `human` 은 **11건**이고 그중 blocker 는 **6건**이다.</span>
@@ -384,7 +384,7 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 58 | application/**/management/commands/ 를 만들지 않는다. | D22 «결정 — 칸을 만들지 않는다» | `path` | measured | `measured_ok` | **blocker** |
 | 59 | 전역 예외 핸들러나 catch-all mapper 로 오류를 가로채지 않는다. | D27 ③ HTTP 표면 + D25(api.py 위반) | `ast` | principle |  | **blocker** |
 | 62 | except Exception 을 쓰지 않고, 폴백을 둘 경우 도메인·응용 base 단위 catch 로 한정한다. | D27 ③ 화살표(2차 리뷰 S11 로 조건절이 회복됐다) | `ast` | principle |  | **blocker** |
-| 63 | 오류 응답은 operation 이 response={status: <Bc>ErrorSchema} 로 직접 선언하고 openapi_extra 보충·get_openapi_schema override·monkeypatch·postprocessor 로 사후 변형하지 않는다. <span>09-01 · 허용면 — 금지의 대상은 오류 응답(4xx·5xx) 항목이다: `response=` 로 직접 선언된 성공·리다이렉트 status(100–399)의 리터럴 메타데이터 보충(⊆ 선언 집합)은 허용, 오류 status 동거·변수/상수 키·`**` splat 은 fail-closed 위반(R-0089·R-0683·R-2932·R-0339 amendment). 알려진 커버리지 한계 — 변수 간접(`openapi_extra=EXTRA`)·`NinjaAPI(openapi_extra=…)` 생성자 레벨은 백스톱 미탐(규범 위반은 위반·리뷰어 소관).</span> | D27 «OpenAPI 도 같다» | `ast` | principle |  | **blocker** |
+| 63 | 오류 응답은 operation 이 response={status: <Bc>ErrorSchema} 로 직접 선언하고 openapi_extra 보충·get_openapi_schema override·monkeypatch·postprocessor 로 사후 변형하지 않는다. <span>2026-08-25 · **base 뭉뚱그림 금지** — `response=` 값은 그 status 에서 실제 반환하는 오류 타입 그대로(concrete 하나=그 concrete · 둘 이상=`Union` · 명시값 base=base)다(R-0681 rev2·R-0087 rev2 · 검사기 docstring·조치 문면은 09-04 S-5 에서 정합).</span> <span>09-01 · 허용면 — 금지의 대상은 오류 응답(4xx·5xx) 항목이다: `response=` 로 직접 선언된 성공·리다이렉트 status(100–399)의 리터럴 메타데이터 보충(⊆ 선언 집합)은 허용, 오류 status 동거·변수/상수 키·`**` splat 은 fail-closed 위반(R-0089·R-0683·R-2932·R-0339 amendment). 알려진 커버리지 한계 — 변수 간접(`openapi_extra=EXTRA`)·`NinjaAPI(openapi_extra=…)` 생성자 레벨은 백스톱 미탐(규범 위반은 위반·리뷰어 소관).</span> | D27 «OpenAPI 도 같다» | `ast` | principle |  | **blocker** |
 | 64 | 포트 예외(application_layer/port/<capability>/exception.py)는 도메인 예외를 상속하지 않는다. | D27 «08-06 보강(R4)» + 트리 48행 | `ast` | principle |  | **blocker** |
 | 67 | application_layer/**/<use_case>_{command,query,result}.py 는 raise 하지 않는다 — 응용 DTO 는 검사하지 않는다. | D30 백스톱 S1 | `ast` | both | `measured_ok` | **blocker** |
 | 68 | 검사 자리는 값이 온 곳이 정한다 — 바깥에서 온 값은 입구 schema_in 이, 저장소에서 온 값은 애그리거트가 막고, 우리가 방금 만든 값은 아무도 검사하지 않는다. | D30 «그래서 규칙» | `ast+` | both | `measured_ok` | **blocker** |
@@ -1172,6 +1172,11 @@ Phase 1 산출물 리뷰(렌즈③ «잃은 값»)의 회수다. **유실 확정
 | 643 | 부품이 0개(본체+`__init__.py` 뿐)가 된 승격 폴더는 위반이다 — 환원 신호다(파일 실현으로 되돌린다 · 기존 폴더면 G0 빚 경로). <span>09-01 · 동명 폴더 승격 규범화.</span> | 승격 허용 16행(§0 교체형) | `path` | principle |  | **blocker** |
 | 644 | 행위 칸 실현(파일 또는 승격 본체·부품)이 200행(물리 행·빈 줄 제외)을 넘으면 캐스케이드 판정 의무 후보다 — ⑴ 확정 위반: 형태 위반은 #638~#643 이 잡는다 ⑵ 후보: 200행 초과(ⓓ 채널·exit 불산입·무조건 방출 — diff 한정은 감사자 몫) ⑶ 물음: 역할 밖 응집 단위가 있는가(①이동/②동명 폴더 승격/③유지 — houserules §1). <span>09-01 · 동명 폴더 승격 규범화 — `check-layer-skeleton` ⓓ.</span> | 승격 허용 16행(§0 교체형) | `ast+` | principle |  | **blocker** |
 | 645 | 명시 `Any` 는 타입이 아니라 검사 포기다 — 함수 시그니처(인자·`*args/**kwargs`·반환)의 bare `Any`(`Optional[Any]`·`Any` 와 None 의 합집합·문자열·별칭·`typing.Any` 포함)는 확정 위반이고, 시그니처 안 제네릭 인자·변수·클래스 속성의 `Any` 는 ⓓ 후보다(감수자가 마무리 — `object`/정확 타입으로 받아 즉시 좁힌다). 프레임워크 오버라이드가 스텁에서 `Any` 를 쓰더라도 우리 선언은 `object` 다(#493 «주석 존재» 와 독립). <span>09-04 · 현장 보고 E — `Any` 정책(하우스룰 §4 R-3447/R-3448).</span> | D58+§4 | `ast+` | principle |  | **blocker** |
+| 646 | django-stubs 가 제네릭으로 선언했지만 런타임은 subscript 못 하는 Django 기저(타입 매개변수에 기본값이 없는 것 — admin·forms·CBV)는 모델 타입 인자를 적는다 — `if TYPE_CHECKING:` 별칭(또는 분기 안 중간 ClassDef)이 기본이고 monkeypatch 채택 시 직접 표기다. 맨몸 상속과 `# type: ignore[type-arg]`(헤더·속성 줄)는 확정 위반이고, code 없는 `# type: ignore` 헤더와 `TYPE_CHECKING` 밖 subscript(런타임 `TypeError` 후보)는 ⓓ 후보다. <span>09-04 · 현장 보고 3 S-1(하우스룰 §4 R-3458/R-3459).</span> | D58+§4 | `ast+` | principle |  | **blocker** |
+| 647 | 키가 정해진 값 묶음(레코드)은 딕셔너리로 들고 다니지 않는다 — `dict`/`Mapping`/`MutableMapping` 값 자리의 `Any` 는 전 자리(매개변수·반환·변수·속성) 확정 위반, `object` 는 반환·클래스 속성에 남으면 확정 위반(좁히지 않은 누수)이고 입구 매개변수·즉시 검증 지역 변수는 ⓓ 후보다(면제: `TypeIs/TypeGuard` 반환 · 스텁이 강제하는 `Form.clean`·`Field.deconstruct` 오버라이드). 반환 주석의 자리표시 `object`(루트·시퀀스 원소)도 ⓓ 후보다. <span>09-04 · 현장 보고 3 S-4(하우스룰 §4 R-3447 rev2/R-3448 rev2 · 결정표 R-3451~R-3457).</span> | D58+§4 | `ast+` | principle |  | **blocker** |
+| 648 | 컨트롤러 반환 주석의 `Status` 상자는 하나다 — 성공·오류 union 을 한 `Status[…]` 안에 넣거나(`Status[…]` 하나 안에 `Out` 과 `Err` 의 union) `Out` 과 `Status[Err]` 의 union 으로 쓴다. 상자 둘(`Status[A]` 와 `Status[B]` 의 union)은 `Status[T]` 가 불변이라 concrete 직접 반환이 mypy strict 에서 막히고 값 변수를 base 로 주석해 통과시킨 형태도 같은 금지다(형태 금지). <span>09-04 · 현장 보고 3 S-5(ninja §2.2 R-3463 · `check-api-error-controller-contract` 표준 트리 슬라이스 · 프로필 무관).</span> | D58+§4 | `ast` | principle |  | **blocker** |
+| 649 | 성공 응답이 판별 키로 갈리는 union 이면 이름 붙은 `RootModel` 하나로 선언한다 — ninja `Schema` 를 함께 상속하지 않는다(메타클래스 충돌 · `[metaclass]`·`[call-arg] root`). <span>09-04 · 현장 보고 3 S-5(ninja §3.1 R-3464 · 표준 트리 슬라이스).</span> | D58+§4 | `ast` | principle |  | **blocker** |
+| 650 | `json.load(s)` 결과는 `TypeAdapter(그TypedDict)` 로 검증하며 받거나 `x: object` 로 받아 즉시 좁힌다 — 결과가 `object` 아닌 선언 자리(주석 변수·반환·컴프리헨션·직접 접근·리터럴 컨테이너 원소)로 그냥 흐른 자리는 ⓓ 후보다(확정 위반은 #647 소유). <span>09-04 · 현장 보고 3 S-4(R-3448 rev2 · 결정표 R-3453).</span> | D58+§4 | `ast+` | principle |  | **blocker** |
 
 ## 5차 적대적 리뷰 회수 — 20개 (596~619)
 

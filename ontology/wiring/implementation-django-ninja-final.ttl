@@ -593,3 +593,11 @@ djr:R-3401 djr:enforcedBy <https://numchida.com/ns/djr#c/check-error-centralizat
 djr:R-3402 djr:enforcedBy <https://numchida.com/ns/djr#c/check-composition-root.py> .
 
 djr:R-3403 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-3463 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py> .
+
+djr:R-3464 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py> .
+
+djr:R-3465 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .

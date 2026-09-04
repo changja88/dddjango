@@ -137,3 +137,5 @@ djr:R-2955 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ap
 djr:R-2956 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
 
 djr:R-2957 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-3466 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-api>, <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .

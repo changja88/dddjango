@@ -416,7 +416,7 @@ djr:R-2893 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;
     djr:kind djr:kind-table-row ;
     djr:order 17 ;
-    djr:text "| Django 5.x 새 기능 | §17 |\n\n" .
+    djr:text "| Django 5.x 새 기능 | §17 |\n| Django admin·폼 타이핑(django-stubs 제네릭 기저) | §18 |\n\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005/b18> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/SKILL.md/s005> ;

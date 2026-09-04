@@ -1582,8 +1582,8 @@ class CalculateDiscountService:
 
 ```python
 from dataclasses import dataclass, field
+from datetime import date
 from enum import Enum
-from typing import Any
 
 
 # === 지식 수준 (Knowledge Level) 패턴 ===
@@ -1593,6 +1593,9 @@ class FieldType(Enum):
     NUMBER = "number"
     DATE = "date"
     CHOICE = "choice"
+
+
+type FieldValue = str | int | float | date  # FieldType 에서 파생한 닫힌 union — 필드 집합은 동적, 값 종류는 닫혀 있다
 
 
 @dataclass(frozen=True)
@@ -1615,9 +1618,9 @@ class FormTemplate:
 class FormInstance:
     """운영 수준(Operational Level): 실제 사용자가 작성하는 양식 인스턴스"""
     template: FormTemplate
-    values: dict[str, Any] = field(default_factory=dict)
+    values: dict[str, FieldValue] = field(default_factory=dict)
 
-    def set_field(self, field_name: str, value: Any) -> None:
+    def set_field(self, field_name: str, value: FieldValue) -> None:
         """지식 수준의 정의에 따라 운영 수준의 동작이 제어된다"""
         definition = self._find_definition(field_name)
         if definition is None:

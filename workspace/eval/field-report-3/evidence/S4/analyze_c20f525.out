@@ -1,0 +1,58 @@
+##### spring-c20f525
+grep 줄 1110 · proto 줄(framework+application) 1228 · grep에만 113 · proto에만 231
+  grep에만 — cast("…") 문자열: 103
+       framework/technology/rag/runtime/ontology_c11.py:156: schema_ref = cast("dict[str, object]", ontology_descriptor["schema_ref"])
+       framework/technology/rag/runtime/ontology_c11.py:157: shape_ref = cast("dict[str, object]", ontology_descriptor["shape_ref"])
+       framework/technology/rag/runtime/ontology_c11.py:158: query_ref = cast("dict[str, object]", ontology_descriptor["query_pack_ref"])
+       framework/technology/rag/runtime/ontology_c11.py:159: registry_ref = cast("dict[str, object]", bundle_descriptor["registry_snapshot_ref"])
+  grep에만 — 기타: 10
+       framework/technology/rag/runtime/ontology_c11.py:2375: "dict[str, Any]",
+       framework/technology/rag/runtime/ontology_c11.py:2595: "dict[str, object]",
+       framework/technology/rag/runtime/ontology_c11.py:2644: "dict[str, object]",
+       framework/technology/rag/runtime/service_runtime.py:806: Mapping[str, object],
+  proto에만(예: 다중 행 시그니처·테스트 밖 factories 등) 표본:
+       application/chat_relay/domain_layer/conversation_item/conversation_item.py:140
+       application/chat_relay/domain_layer/conversation_item/conversation_item.py:174
+       application/chat_relay/driving_layer/api/turn/schema/schema_out.py:113
+       application/chat_relay/test/fake/generate_response_port.py:99
+       application/chat_relay/test/fake/generate_response_port.py:103
+       application/chat_relay/test/fake/generate_response_port.py:104
+json.load(s) 호출 95 · 후보 95
+  소비자 분포: {'assign': 45, 'ListComp': 21, 'assign [dict[str, Any]]': 6, 'assign+next-named-call': 6, 'GeneratorExp': 4, 'subscript': 4, 'assign [Mapping[str, str]]': 3, 'assign [object]': 2, 'assign [Any]': 1, 'assign+next-named-call [dict[str, list[dict[str, str]]]]': 1, 'assign [dict[str, object]]': 1, 'assign+next-isinstance': 1}
+    application/chat_relay/driving_layer/api/turn/turn_controller/turn_controller.py:123 [assign [object]] body: object = json.loads(request.body)
+    application/chat_relay/driving_layer/api/turn/turn_controller/turn_controller.py:346 [assign [object]] body: object = json.loads(request.body)
+    application/fortune_calculation/driven_layer/adapter/lunisolar_calendar/packaged_table_adapter.py:48 [assign [Mapping[str, str]]] manifest: Mapping[str, str] = json.loads((self._data_dir / _MANIFEST_FILE).read_text(encoding='utf-8'))
+    application/fortune_calculation/driven_layer/adapter/lunisolar_calendar/packaged_table_adapter.py:50 [assign [dict[str, Any]]] payload: dict[str, Any] = json.loads(raw)
+    application/fortune_calculation/driven_layer/adapter/place_directory/packaged_table_adapter.py:88 [assign [Mapping[str, str]]] manifest: Mapping[str, str] = json.loads((self._data_dir / manifest_file).read_text(encoding='utf-8'))
+    application/fortune_calculation/driven_layer/adapter/place_directory/packaged_table_adapter.py:90 [assign [dict[str, Any]]] payload: dict[str, Any] = json.loads(raw)
+    application/fortune_calculation/driven_layer/adapter/place_directory/regenerate_place_tables.py:103 [assign [Any]] document: Any = json.loads(_download(_CLDR_KO_TERRITORIES_URL).decode('utf-8'))
+    application/fortune_calculation/driven_layer/adapter/place_directory/regenerate_place_tables.py:254 [assign [dict[str, Any]]] payload: dict[str, Any] = json.loads((_DATA_DIR / table_file).read_text(encoding='utf-8'))
+    application/fortune_calculation/driven_layer/adapter/solar_term_calendar/packaged_table_adapter.py:53 [assign [Mapping[str, str]]] manifest: Mapping[str, str] = json.loads((self._data_dir / _MANIFEST_FILE).read_text(encoding='utf-8'))
+    application/fortune_calculation/driven_layer/adapter/solar_term_calendar/packaged_table_adapter.py:55 [assign+next-named-call [dict[str, list[dict[str, str]]]]] payload: dict[str, list[dict[str, str]]] = json.loads(raw)
+Mapping[str, object] top 매개변수 34 — 함수명 분포: {'_freeze_object': 2, 'evaluate_service_registry_boundary': 2, '_load_ranking_contract': 2, '_wire_item_type': 1, 'for_turn_widget': 1, 'is_widget_item': 1, 'create': 1, '_exact_keys': 1, '_flat_pillar_fields': 1, '_validate_core_four': 1, 'project': 1, '_normalize': 1, 'rehydrate': 1, '_require_exact_keys': 1, '_require_schema_version': 1, '_validate_request_value': 1, '_validate_response_value': 1, '_validate_failure_value': 1, '_create': 1, 'for_terminal_response': 1}
+    application/chat_relay/domain_layer/conversation_item/conversation_item.py:29 _wire_item_type(item: Mapping[str, object])
+    application/chat_relay/domain_layer/conversation_item/conversation_item.py:146 for_turn_widget(widget: Mapping[str, object])
+    application/chat_relay/domain_layer/turn/value_object/turn_widget.py:53 is_widget_item(item: Mapping[str, object])
+    application/fortune_character/domain_layer/prompt_set/value_object/citation_structure.py:20 create(structure: Mapping[str, object])
+    application/fortune_reading/domain_layer/domain_service/validate_calculation_output.py:51 _exact_keys(value: _Mapping[str, object])
+    application/fortune_reading/domain_layer/domain_service/validate_calculation_output.py:106 _flat_pillar_fields(mapping: _Mapping[str, object])
+    application/fortune_reading/domain_layer/domain_service/validate_calculation_output.py:189 _validate_core_four(payload: _Mapping[str, object])
+    application/fortune_reading/domain_layer/domain_service/validate_calculation_output.py:376 project(payload: _Mapping[str, object])
+    application/fortune_reading/driven_layer/adapter/evidence_retrieval/rag_runtime_adapter.py:109 _normalize(raw: Mapping[str, object])
+    application/llm_access/domain_layer/generation_audit/generation_audit.py:100 rehydrate(request_payload: Mapping[str, object])
+    application/llm_access/domain_layer/generation_audit/value_object/serialized_audit_payload.py:128 _freeze_object(value: Mapping[str, object])
+    application/llm_access/domain_layer/generation_audit/value_object/serialized_audit_payload.py:173 _require_exact_keys(value: Mapping[str, object])
+프레임워크 오버라이드로 보이는 시그니처 히트 20: {('clean', 'sig-return', 'Any'): 15, ('__call__', 'sig-return', 'object'): 5}
+    application/fortune_catalog/driven_layer/adapter/active_service_bundle/rag_runtime_adapter.py:19 __call__ ->: dict[str, object]
+    application/fortune_catalog/driven_layer/adapter/active_service_bundle/rag_runtime_adapter.py:23 __call__ ->: dict[str, object]
+    application/fortune_character/driven_layer/django_fortune_character/admin/character/form/character_form.py:38 clean ->: dict[str, Any]
+    application/fortune_character/driven_layer/django_fortune_character/admin/character/form/discount_rule_inline_form.py:44 clean ->: dict[str, Any]
+    application/fortune_character/driven_layer/django_fortune_character/admin/character/form/operating_hours_rule_inline_form.py:41 clean ->: dict[str, Any]
+    application/fortune_character/driven_layer/django_fortune_character/admin/prompt_set/form/prompt_set_form.py:47 clean ->: dict[str, Any]
+    application/fortune_intent/driven_layer/django_fortune_intent/admin/intent_generation_configuration/form/intent_generation_configuration_form.py:32 clean ->: dict[str, Any]
+    application/fortune_intent/driven_layer/django_fortune_intent/admin/non_fortune_definition/form/non_fortune_definition_form.py:25 clean ->: dict[str, Any]
+top 히트 706 중 라벨이 조회표 형(by_/index/map/registry/table/…) 23 (3%) — 예: ['registry_ref: dict[str, object]', 'registry: dict[str, object]', 'registry_snapshot_ref: dict[str, object]', 'registry_snapshot: dict[str, Any]', 'registry_snapshot: dict[str, Any]', 'registry_ref: dict[str, object]']
+**kwargs 주석 분포(상위): {'"]': 3901, 't]': 1185, 'r]': 1092, '.]': 1037, ']': 659, '[]': 645}
+직렬화 계열 함수(dumps/serial/to_json/canonical/digest/payload/encode) 시그니처 히트 31 — 예: ['_serialize_widget_snapshot:dict[str, object]', '_canonical_json:dict[str, Any]', 'resources_from_mediawiki_payload:dict[str, Any]', 'resources_from_mediawiki_payload:dict[str, Any]', 'translated_query_digest:Mapping[str, Any]', 'sorted_file_manifest_digest:dict[str, Any]']
+sig-return nested 히트 95 — 반환 주석 원문 상위:
+   TypeIs/TypeGuard[Mapping|dict[str, object|Any]] 반환: 0 []

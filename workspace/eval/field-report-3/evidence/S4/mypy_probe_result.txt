@@ -1,0 +1,6 @@
+probe.py:18: error: Return type "Cleaned" of "clean" incompatible with return type "dict[str, Any] | None" in supertype "django.forms.forms.BaseForm"  [override]
+probe.py:28: error: Return type "Mapping[str, object]" of "clean" incompatible with return type "dict[str, Any] | None" in supertype "django.forms.forms.BaseForm"  [override]
+probe.py:44: error: Argument 1 to "takes_dict_obj" has incompatible type "Cleaned"; expected "dict[str, object]"  [arg-type]
+probe.py:45: error: Argument 1 to "takes_json" has incompatible type "Cleaned"; expected "JsonValue"  [arg-type]
+probe.py:52: error: Returning Any from function declared to return "Cleaned"  [no-any-return]
+Found 5 errors in 1 file (checked 1 source file)

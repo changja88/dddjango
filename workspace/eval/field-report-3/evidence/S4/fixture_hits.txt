@@ -1,0 +1,4 @@
+workspace/eval/fixtures/public_surface/bad_rules/application/orders/application_layer/order/place_order/any_signature.py:41:    y: dict[str, Any] = {}
+workspace/eval/fixtures/public_surface/good/application/orders/driven_layer/django_orders/admin/order/form/order_form.py:9:def _is_mapping(value: object) -> TypeIs[Mapping[str, object]]:
+workspace/eval/fixtures/public_surface/good/application/orders/driven_layer/django_orders/admin/order/form/order_form.py:20:    def clean(self) -> dict[str, object]:
+workspace/eval/fixtures/public_surface/good/application/orders/driven_layer/django_orders/admin/order/form/order_form.py:21:        cleaned: dict[str, object] = dict(super().clean() or {})

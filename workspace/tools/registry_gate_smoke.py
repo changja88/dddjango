@@ -281,6 +281,42 @@ def main() -> int:
         code, out = _gate(repo, anchor)
         rows.append(("B legacy-only green", 0, code, "잔존" in out and "귀속 0건" in out.replace("(N∖L) 0건", "귀속 0건"), "잔존 보고·귀속 0"))
 
+        # Q — ⓓ 앵커 차분(현장 보고 3 ⓔ2): 앵커에 있던 ⓓ 는 legacy(계수만) · working 의 새 ⓓ 는 «ⓓ 신규» 절에
+        # 인쇄 · exit 무변(ⓓ 는 exit 불산입). 재료 = `#69` 프로덕션 assert(그 자리는 27종 위반 0 · ⓓ#69 만).
+        repo, _pre = _make_repo(td, "cand_anchor")
+        _write(repo, "application/orders/domain_layer/order/value_object/legacy_probe.py",
+               "_N: int = 1\nassert _N == 1\n")
+        _git(repo, "add", "-A"); _git(repo, "commit", "-q", "-m", "legacy ⓓ 포함 앵커")
+        anchor = _git(repo, "rev-parse", "HEAD").stdout.strip()
+        _write(repo, "application/orders/domain_layer/order/value_object/fresh_probe.py",
+               "_M: int = 2\nassert _M == 2\n")
+        side_q: Path = td / "introduced_q.json"
+        code, out = _gate(repo, anchor, ["--introduced-json", str(side_q)])
+        payload_q: dict = json.loads(side_q.read_text(encoding="utf-8")) if side_q.is_file() else {}
+        cand_section: str = out.split("== ⓓ 신규", 1)[1] if "== ⓓ 신규" in out else ""
+        q_ok: bool = (
+            "== ⓓ 신규(N′∖L′) 1건 · legacy 1건" in out
+            and "fresh_probe" in cand_section and "legacy_probe" not in cand_section
+            and payload_q.get("candidate_lines") and all("fresh_probe" in l for l in payload_q["candidate_lines"])
+            and payload_q.get("candidate_records")
+            and all(r.get("severity") == "info" and r.get("rule") == "#69" and "fresh_probe.py" in str(r.get("file", ""))
+                    for r in payload_q["candidate_records"])  # file 은 `<경로>:<줄>` 형(레코드 계약)
+            and payload_q.get("records") == []  # ⓓ 는 records(위반)와 분리
+        )
+        rows.append(("Q ⓓ 앵커 차분", 0, code, q_ok, "ⓓ 신규 1·legacy 1 · sidecar 분리 키(info #69 · records []) · exit 무변"))
+        # Q′ — 같은 재료에 위반을 함께 심으면 exit 2(ⓓ 절은 그대로 · records 는 위반만 · candidate_lines 는 ⓓ 만).
+        _plant_violation(repo)
+        side_q2: Path = td / "introduced_q2.json"
+        code, out = _gate(repo, anchor, ["--introduced-json", str(side_q2)])
+        payload_q2: dict = json.loads(side_q2.read_text(encoding="utf-8")) if side_q2.is_file() else {}
+        q2_ok: bool = (
+            "== ⓓ 신규(N′∖L′) 1건" in out and "schema_smoke" in out
+            and payload_q2.get("records") and all("schema_smoke" in str(r.get("file", "")) for r in payload_q2["records"])
+            and payload_q2.get("candidate_lines") and all("fresh_probe" in l for l in payload_q2["candidate_lines"])
+            and payload_q2.get("candidate_records") and all(r.get("rule") == "#69" for r in payload_q2["candidate_records"])
+        )
+        rows.append(("Q′ ⓓ + 위반 동반", 2, code, q2_ok, "ⓓ 절 유지 · records 는 위반만 · candidate_lines 는 ⓓ 만"))
+
         # S — sidecar(T2-3): 귀속 레코드만 담고 legacy 는 구조적으로 배제되는가.
         # 왜 필요한가: 소비자(재생성 루프)가 raw sink 를 직접 읽으면 앵커 실행 레코드까지
         # 섞여 «legacy 잔존은 이 빌드에서 즉석 수리하지 않는다» 규율을 깨뜨린다(적대 리뷰

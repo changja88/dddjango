@@ -1,0 +1,91 @@
+=== spring-c20f525 roots=[framework application spring_dream_server]
+-- broadened (non-test):
+    1123
+-- broadened by root:
+ 288 application
+ 830 framework
+   5 spring_dream_server
+-- broadened application BC:
+  59 fortune_reading;  48 llm_access;  35 chat_relay;  27 fortune_character;  24 fortune_calculation;  17 fortune_record;  16 promotion;  14 fortune_catalog;  11 query_translation;   9 product;   8 service_policy;   8 fortune_intent;   6 media_library;   3 wallet;   2 notification;   1 accounts;
+-- key not str (broadened minus str-key):
+       9
+-- key-not-str samples:
+  12 dict[object, object]
+   1 dict[str | None, object]
+-- nested list[dict[str, Any|object]]:
+     175
+-- other containers nested:
+     129
+-- object vs Any split (occurrences):
+ 701 Any]
+ 495 object]
+-- dict/Dict/Mapping/MutableMapping split (occurrences):
+ 821 :dict[
+ 375 :Mapping[
+-- test-dir lines (for reference):
+     430
+-- occurrences (not lines):
+    1196
+-- reporter cmd but all roots:
+    1114
+=== spring roots=[framework application spring_dream_server]
+-- broadened (non-test):
+    1111
+-- broadened by root:
+ 283 application
+ 823 framework
+   5 spring_dream_server
+-- broadened application BC:
+  54 fortune_reading;  48 llm_access;  35 chat_relay;  27 fortune_character;  24 fortune_calculation;  17 fortune_record;  16 promotion;  14 fortune_catalog;  11 query_translation;   9 product;   8 service_policy;   8 fortune_intent;   6 media_library;   3 wallet;   2 notification;   1 accounts;
+-- key not str (broadened minus str-key):
+       9
+-- key-not-str samples:
+  12 dict[object, object]
+   1 dict[str | None, object]
+-- nested list[dict[str, Any|object]]:
+     172
+-- other containers nested:
+     131
+-- object vs Any split (occurrences):
+ 694 Any]
+ 487 object]
+-- dict/Dict/Mapping/MutableMapping split (occurrences):
+ 805 :dict[
+ 376 :Mapping[
+-- test-dir lines (for reference):
+     436
+-- occurrences (not lines):
+    1181
+-- reporter cmd but all roots:
+    1102
+=== kkebi roots=[framework application kkebi_server web]
+-- broadened (non-test):
+     550
+-- broadened by root:
+ 437 application
+   1 framework
+   1 kkebi_server
+ 111 web
+-- broadened application BC:
+ 169 billing;  78 saju;  53 product_observability;  51 tarot;  33 identity;  18 notification;  17 share;  12 daily;   3 top3;   2 image;   1 review;
+-- key not str (broadened minus str-key):
+       7
+-- key-not-str samples:
+   8 dict[object, object]
+   1 Mapping[object, object]
+-- nested list[dict[str, Any|object]]:
+      36
+-- other containers nested:
+      56
+-- object vs Any split (occurrences):
+ 157 Any]
+ 417 object]
+-- dict/Dict/Mapping/MutableMapping split (occurrences):
+ 475 :dict[
+  99 :Mapping[
+-- test-dir lines (for reference):
+     416
+-- occurrences (not lines):
+     574
+-- reporter cmd but all roots:
+     543
