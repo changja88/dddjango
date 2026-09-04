@@ -33,38 +33,64 @@ class HTMLLinkTargets(HTMLParser):
 
 
 def without_markdown_code(text: str) -> str:
-    """코드 fence·들여쓴 코드와 같은 길이 backtick의 code span을 제외한다."""
-    lines: list[str] = []
+    """먼저 열린 코드·주석·HTML 태그 문맥을 끝까지 읽고 코드·주석만 제외한다."""
+    tokens = re.compile(
+        r"(?P<comment><!--.*?(?:-->|$))|(?P<tag>" + HTML_TAG + r")"
+        r"|(?<!`)(?P<ticks>`+)(?!`)(.*?)(?<!`)(?P=ticks)(?!`)",
+        re.DOTALL,
+    )
+    parts: list[str] = []
+    position = 0
     fence: str | None = None
     paragraph_open = False
-    for line in text.splitlines(keepends=True):
-        if fence is not None:
-            if re.fullmatch(r" {0,3}" + re.escape(fence[0]) + "{" + str(len(fence)) + r",}[ \t]*", line.rstrip("\r\n")):
-                fence = None
-            lines.append("\n")
-            continue
-        opener = re.match(r" {0,3}(`{3,}|~{3,})(.*)", line)
-        if opener and not (opener[1].startswith("`") and "`" in opener[2]):
-            fence = opener[1]
-            paragraph_open = False
-            lines.append("\n")
-        elif line.startswith(("    ", "\t")) and not paragraph_open:
-            lines.append("\n")
+    visible_line = ""
+    while position < len(text):
+        line_start = text.rfind("\n", 0, position) + 1
+        line_end = text.find("\n", position)
+        line_end = len(text) if line_end == -1 else line_end + 1
+        if position == line_start:
+            line = text[position:line_end]
+            if fence is not None:
+                if re.fullmatch(r" {0,3}" + re.escape(fence[0]) + "{" + str(len(fence)) + r",}[ \t]*", line.rstrip("\r\n")):
+                    fence = None
+                parts.append("\n")
+                position = line_end
+                continue
+            opener = re.match(r" {0,3}(`{3,}|~{3,})(.*)", line)
+            if opener and not (opener[1].startswith("`") and "`" in opener[2]):
+                fence = opener[1]
+                paragraph_open = False
+                parts.append("\n")
+                position = line_end
+                continue
+            if line.startswith(("    ", "\t")) and not paragraph_open:
+                parts.append("\n")
+                position = line_end
+                continue
+        match = tokens.search(text, position)
+        if match is None or match.start() >= line_end:
+            parts.append(text[position:line_end])
+            visible_line += text[position:line_end]
+            # 주석을 제외한 문단만 다음 들여쓴 줄을 문단의 연속으로 만든다.
+            paragraph_open = bool(visible_line.strip()) and not re.match(r" {0,3}#{1,6}(?:[ \t]|$)", visible_line)
+            visible_line = ""
+            position = line_end
         else:
-            lines.append(line)
-            # 들여쓴 코드 블록은 문단을 중단하지 않는다. 여러 줄 HTML 속성도 보존한다.
-            paragraph_open = bool(line.strip()) and not re.match(r" {0,3}#{1,6}(?:[ \t]|$)", line)
-    # 먼저 시작한 HTML 태그는 속성 전체를 보존하고, code span 안의 태그는 함께 제외한다.
-    return re.sub(
-        HTML_TAG + r"|(?<!`)(?P<ticks>`+)(?!`)(.*?)(?<!`)(?P=ticks)(?!`)",
-        lambda match: " " if match["ticks"] is not None else match[0],
-        "".join(lines), flags=re.DOTALL,
-    )
+            parts.append(text[position:match.start()])
+            parts.append(match[0] if match["tag"] is not None else " " + "\n" * match[0].count("\n"))
+            visible_line += text[position:match.start()]
+            if "\n" in match[0]:
+                visible_line = ""
+            if match["tag"] is not None:
+                visible_line += match[0].rsplit("\n", 1)[-1]
+            elif match["ticks"] is not None:
+                visible_line += "`"
+            position = match.end()
+    return "".join(parts)
 
 
 def link_targets(text: str, *, clickable_only: bool = False) -> list[str]:
     """코드 예시를 제외한 Markdown 링크와 HTML href/src의 목적지를 읽는다."""
-    text = re.sub(r"<!--.*?(?:-->|$)", " ", text, flags=re.DOTALL)
     text = without_markdown_code(text)
     html = HTMLLinkTargets(clickable_only)
     html.feed(text)
@@ -247,6 +273,7 @@ def self_test() -> int:
             ("code span", f"`[guide]({canonical})`\n"),
             ("HTML comment", f"<!-- [guide]({canonical}) -->\n"),
             ("indented code", f"\n    [guide]({canonical})\n"),
+            ("indented code after consecutive comments", f"\n<!-- a --> <!-- b -->\n    [guide]({canonical})\n"),
             ("unused reference definition", f"[guide]: {canonical}\n"),
             ("reference use in code span", f"`[guide][g]`\n\n[g]: {canonical}\n"),
             ("Markdown image", f"![guide]({canonical})\n"),
@@ -271,6 +298,21 @@ def self_test() -> int:
             cases.append((f"{plugin}: README discoverable through {label}", {
                 "README.md": readme_without_link + link + "\n",
             }, ""))
+        for label, prefix in (
+            ("inline-code comment opener", "`<!--`\n\n"),
+            ("fenced-code comment opener", "```html\n<!--\n```\n\n"),
+            ("indented-code comment opener", "\n    <!--\n\n"),
+            ("HTML attribute comment opener", '<span title="<!--">example</span>\n\n'),
+            ("real comment containing backtick", "<!-- ` -->\n\n"),
+            ("real comment containing fence", "<!--\n```html\n-->\n\n"),
+        ):
+            cases.append((f"{plugin}: README canonical link after {label} accepted", {
+                "README.md": readme_without_link + prefix + f"[guide]({canonical})\n\n`\n",
+            }, ""))
+            suffix = prefix + "[root](../README.md)\n\n`\n"
+            cases.append((f"{plugin}: guide relative link after {label} rejected", {
+                canonical: fixtures[canonical] + suffix, mirror: fixtures[mirror] + suffix,
+            }, "guide-link"))
         for label, suffix in (
             ("inline relative link", "[root](../README.md)\n"),
             ("reference relative link", "[root][r]\n[r]: ../README.md\n"),
@@ -292,6 +334,7 @@ def self_test() -> int:
             ("double-backtick HTML code example", '``<a title="`" href="../README.md" data-note="`">root</a>``\n'),
             ("backtick fenced code example", '```html\n<a href="../README.md">root</a>\n```\n'),
             ("tilde fenced code example", '~~~html\n<a href="../README.md">root</a>\n~~~\n'),
+            ("indented code after consecutive comments", "\n<!-- a --> <!-- b -->\n    [root](../README.md)\n"),
             ("absolute reference link", "[public][p]\n\n[p]: https://example.com/guide\n"),
             ("HTML absolute URL", '<a href="https://example.com/guide">public</a>\n'),
             ("HTML fragment", '<a href="#start">start</a>\n'),
