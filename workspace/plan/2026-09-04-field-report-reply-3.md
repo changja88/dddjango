@@ -1,6 +1,6 @@
 # 현장 보고 회신 3 — django-stubs 제네릭 기저(S-1)·딕셔너리-레코드(S-4)·ninja `Status`(S-5) 처분 + spring_dream_server 안내 (2026-09-04)
 
-대상 보고: `2026-09-04-field-report-spring-dream-django-stubs-generic-base.md`(발주자 세션 · v2.17.16 기준 · 원문은 증거로 보존). 절차: 추적표·결정 `2026-09-04-field-report-repair-3-issues.md` · 루브릭 `2026-09-04-field-report-repair-3-rubric.md` · 계획 `2026-09-04-field-report-repair-3-plan.md`(v2) · 증거 `workspace/eval/field-report-3/`. 구현 = 브랜치 `fix/field-report-3`(조각 1 56b27e1 · 조각 2 d701df8 + 정정 cad221b · ⑤-2 정정 30a2a24 · ⑥ 감사 «머지 가능» 192b886) · 릴리즈는 머지 뒤 별도(`make release` · 사용자 요청 시).
+대상 보고: `2026-09-04-field-report-spring-dream-django-stubs-generic-base.md`(발주자 세션 · v2.17.16 기준 · 원문은 증거로 보존). 절차: 추적표·결정 `2026-09-04-field-report-repair-3-issues.md` · 루브릭 `2026-09-04-field-report-repair-3-rubric.md` · 계획 `2026-09-04-field-report-repair-3-plan.md`(v2) · 증거 `workspace/eval/field-report-3/`. 구현 = 브랜치 `fix/field-report-3`(조각 1 56b27e1 · 조각 2 d701df8 + 정정 cad221b · ⑤-2 정정 30a2a24 · ⑥ 감사 «머지 가능» 192b886 · main 머지 30a0201 · **릴리즈 v2.17.18** d77c0d0) · 릴리즈는 머지 뒤 별도(`make release` · 사용자 요청 시).
 
 수치는 새 검사기(HEAD)를 격리 사본에 돌린 값이다(spring `7bfe1aa` · kkebi `6608fb0` · `application/`·`framework/` 루트만 · registry_gate 앵커 차분 전 전량).
 
@@ -56,4 +56,4 @@
 
 ## 5. 설치·관찰
 
-머지·릴리즈 뒤 `/plugin` 에서 설치본을 갱신해야 반영된다(sha 캐시). 첫 레인에서 볼 것: #646/#647/#650 첫 발화 · registry_gate 보고의 «ⓓ 신규(N′∖L′)» 절(legacy 는 건수만) · Coordinator 가 오류 응답 선언 컨트롤러를 `auto` 로 돌리지 않는지.
+**v2.17.18 릴리즈됨(09-04)** — `/plugin` 에서 설치본을 갱신해야 반영된다(sha 캐시). 첫 레인에서 볼 것: #646/#647/#650 첫 발화 · registry_gate 보고의 «ⓓ 신규(N′∖L′)» 절(legacy 는 건수만) · Coordinator 가 오류 응답 선언 컨트롤러를 `auto` 로 돌리지 않는지.

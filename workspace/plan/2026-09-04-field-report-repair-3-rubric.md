@@ -91,3 +91,7 @@ BLOCKER 0 · **MAJOR 1**(B — `predicates.md` #648/#649 등재 누락 · `spec_
 ## 6단계 결과 — 독립 감사 + 재검 (2026-09-04 · 감사자 1기 · 산출 `workspace/eval/field-report-3/rv6-audit.md`)
 
 감사(HEAD 179017f 대상): **조건부 머지 가능** — 결정 정합 전 문장 좌표 확인 · 무손실 판형 재실행 verdict 첫 37행이 증거와 byte 동일(저장소 12/12 · 슬롯 1:1 655/642/661/55 · 픽스처 RED 4 = 의도) · 회신 3 legacy 수치 전 셀 재현 · kkebi gate 귀속 0·ⓓ 신규 0·exit 0 · 프로브 18파일·기대 69 → 불일치 0(MINOR 사각 4 문서화) · 규범·미러·등재 집계 일치 · `make verify` 6/6 · d701df8 정직 기록 잔존 확인 · 더럽힌 경로 없음. **C1 2**(산문 — issues.md §2-A 수정 1 ⑤ 철회 표기 · 로드맵 18행·§8 stale) → 반영 커밋 `192b886`. **C2 고지 5**(ⓔ1 R-0331 rev2 · ⓔ2 registry_gate ⓓ 앵커 차분 · #646 ⓑ 전 클래스 헤더 · 기술 조정 2(⑤ 철회 · ddd 예시 `FieldValue` 닫힌 union) · #647 면제 셋) → «머지 진행» 브리프. 권고(머지 뒤 소배치)는 회신 3 §4 이월에 합류. **재검(192b886)**: 5항목 전부 ✓ · 남은 C1 0 → **머지 가능**(rv6-audit.md §6). 다음 = 사용자 브리프 «머지 진행».
+
+## 머지·릴리즈 (2026-09-04 · 사용자 «오케이 그럼 머지하고 배포까지 진행해»)
+
+main 로컬 머지 **30a0201**(`git merge --no-ff fix/field-report-3` · 다른 세션 파일 양쪽 동일이라 checkout 정상 · 브랜치와 트리 동일) → `make release`(patch) **v2.17.18** = d77c0d0(1/7 validate · 2/7 verify 6/6 · manifest 2곳 · 태그 `dddjango--v2.17.18` · push origin main + 태그 · GitHub Release · 로그 `scratchpad/fr3/impl/release.log`). 설치본 갱신은 사용자 UI(`/plugin`) → 그 뒤 봉인 재발행(`manifest_seal --write` · cache_parity)·docs(seal) 커밋·조감도 설치 도달 추기. 이월 = 회신 3 §4.
