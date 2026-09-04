@@ -7,17 +7,52 @@ exit 0 = 계약 충족 / exit 1 = self-test 실패 / exit 2 = 배포 계약 위�
 from __future__ import annotations
 
 import argparse
+from html.parser import HTMLParser
 import json
 from pathlib import Path
 import re
 import tempfile
 
 
+class HTMLLinkTargets(HTMLParser):
+    """따옴표 유무와 무관하게 HTML 링크·이미지 목적지를 수집한다."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.targets: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self.targets.extend(value for name, value in attrs if name in {"href", "src"} and value is not None)
+
+
+def without_markdown_code(text: str) -> str:
+    """코드 fence와 같은 길이의 backtick으로 감싼 code span은 링크가 아니다."""
+    lines: list[str] = []
+    fence: str | None = None
+    for line in text.splitlines(keepends=True):
+        if fence is not None:
+            if re.fullmatch(r" {0,3}" + re.escape(fence[0]) + "{" + str(len(fence)) + r",}[ \t]*", line.rstrip("\r\n")):
+                fence = None
+            lines.append("\n")
+            continue
+        opener = re.match(r" {0,3}(`{3,}|~{3,})(.*)", line)
+        if opener and not (opener[1].startswith("`") and "`" in opener[2]):
+            fence = opener[1]
+            lines.append("\n")
+        else:
+            lines.append(line)
+    return re.sub(r"(?<!`)(`+)(?!`)(.*?)(?<!`)\1(?!`)", " ", "".join(lines), flags=re.DOTALL)
+
+
 def link_targets(text: str) -> list[str]:
-    """Markdown inline/reference 링크와 HTML href/src의 목적지를 읽는다."""
+    """코드 예시를 제외한 Markdown 링크와 HTML href/src의 목적지를 읽는다."""
+    text = without_markdown_code(text)
     targets = re.findall(r"\]\(\s*<?([^\s)>]+)", text)
     targets += re.findall(r"(?m)^\s{0,3}\[[^\]]+\]:\s*<?([^\s>]+)", text)
-    targets += re.findall(r"(?:href|src)\s*=\s*[\"']([^\"']+)[\"']", text, re.IGNORECASE)
+    html = HTMLLinkTargets()
+    html.feed(text)
+    html.close()
+    targets += html.targets
     return targets
 
 
@@ -161,10 +196,23 @@ def self_test() -> int:
         cases.append((f"{plugin}: README link typo", {
             "README.md": fixtures["README.md"].replace(canonical, canonical + "x"),
         }, "readme-link"))
+        for label, example in (
+            ("fenced backticks", f"```markdown\n[guide]({canonical})\n```\n"),
+            ("fenced tildes", f"~~~markdown\n[guide]({canonical})\n~~~\n"),
+            ("code span", f"`[guide]({canonical})`\n"),
+        ):
+            cases.append((f"{plugin}: README link only in {label}", {
+                "README.md": "".join(
+                    line for line in fixtures["README.md"].splitlines(keepends=True)
+                    if canonical not in line
+                ) + example,
+            }, "readme-link"))
         for label, suffix in (
             ("inline relative link", "[root](../README.md)\n"),
             ("reference relative link", "[root][r]\n[r]: ../README.md\n"),
             ("HTML relative link", '<a href="../README.md">root</a>\n'),
+            ("HTML unquoted href", "<a href=../README.md>root</a>\n"),
+            ("HTML unquoted src", "<img src=../image.png>\n"),
         ):
             cases.append((f"{plugin}: {label}", {
                 canonical: fixtures[canonical] + suffix, mirror: fixtures[mirror] + suffix,
