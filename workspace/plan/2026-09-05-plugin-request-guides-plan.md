@@ -296,6 +296,7 @@ git commit -m "docs: 작업 요청 가이드 진입점 정리"
 
 - Modify: `docs/DEVELOPMENT.md`
 - Modify: `Makefile`
+- Modify: `workspace/tools/reverse_coverage.py`
 - Create: `workspace/tools/request_guide_contract.py`
 - Later regenerate: `workspace/eval/ab/T2-0b-manifest.json`
 
@@ -306,6 +307,8 @@ git commit -m "docs: 작업 요청 가이드 진입점 정리"
 - 수정 순서: Claude 정본 편집 → Codex byte 복사/동일 patch → targeted compare → `make verify`
 - 설치본 내부 문서이므로 루트 전용 상대 링크에 의존하지 않는 규칙을 추가한다.
 - 실제 Codex marketplace 경로가 `.agents/plugins/marketplace.json`임을 기록한다.
+- `reverse_coverage.py`의 dddjango 설치본 닫힌 분류표에 루트 `REQUEST_GUIDE.md`를 사람용 사용자
+  가이드로 등록한다. runtime rule owner인 것처럼 속이지 않는다.
 
 **Step 2: 기존 verify target에 최소 비교를 추가한다**
 
@@ -332,10 +335,11 @@ set -euo pipefail
 cmp -s dddjango/REQUEST_GUIDE.md codex-dddjango/REQUEST_GUIDE.md
 cmp -s dddjango-web/REQUEST_GUIDE.md codex-dddjango-web/REQUEST_GUIDE.md
 python3 workspace/tools/request_guide_contract.py --self-test
+python3 workspace/tools/reverse_coverage.py
 ```
 
-Expected: 두 pair green, 모든 self-test mutation이 검출됨. 실제 저장소 전체 계약은 homepage가 바뀌는
-Task 6에서 처음 실행한다.
+Expected: 두 pair green, 모든 self-test mutation이 검출됨, reverse coverage의 미설명 파일 0.
+실제 저장소 전체 request-guide 계약은 homepage가 바뀌는 Task 6에서 처음 실행한다.
 
 주의: `verify-base-core`는 stale draft manifest를 검사하므로 Makefile 변경 뒤 Task 8 재발행 전에는
 실행하지 않는다. `verify-web`과 전체 verify도 Task 8에서 함께 실행한다.
@@ -343,7 +347,7 @@ Task 6에서 처음 실행한다.
 Commit:
 
 ```bash
-git add docs/DEVELOPMENT.md Makefile workspace/tools/request_guide_contract.py
+git add docs/DEVELOPMENT.md Makefile workspace/tools/request_guide_contract.py workspace/tools/reverse_coverage.py
 git commit -m "test: 작업 요청 가이드 배포 계약 검증"
 ```
 

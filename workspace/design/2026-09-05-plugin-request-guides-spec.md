@@ -464,6 +464,10 @@ README link 오타, marketplace path/ref 오염, subdir manifest 누락, homepag
 Codex websiteURL 오염, guide 권위 문구 삭제, `defaultPrompt`의 잘못된 타입·빈 문자열·plugin 이름 누락이
 각각 RED가 되는지 검사한다.
 
+기존 `workspace/tools/reverse_coverage.py`의 dddjango 설치본 닫힌 분류표에도 루트
+`REQUEST_GUIDE.md`를 “사람용 사용자 가이드”로 명시 등록한다. 그렇지 않으면 새 파일이 설명되지 않은
+plugin artifact로 판정되어 `verify-base-core`가 RED다.
+
 새 framework나 네트워크 검사는 만들지 않는다. 위 validator는 이 작업의 배포·링크 계약만 결정적으로
 검사한다. `verify-base-core`는 dddjango pair `cmp`, validator self-test, 실제 저장소 검사를 실행하고
 `verify-web`은 web pair `cmp`와 실제 저장소 검사를 실행한다. validator는 중복 실행돼도 외부 상태를
@@ -539,6 +543,7 @@ Codex websiteURL 오염, guide 권위 문구 삭제, `defaultPrompt`의 잘못�
 - `README.md`
 - `docs/DEVELOPMENT.md`
 - `Makefile`
+- `workspace/tools/reverse_coverage.py`
 - `dddjango/.claude-plugin/plugin.json`
 - `dddjango-web/.claude-plugin/plugin.json`
 - `codex-dddjango/.codex-plugin/plugin.json`
