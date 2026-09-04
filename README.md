@@ -101,7 +101,9 @@ $ codex plugin list
 | Claude Code | Codex |
 |---|---|
 | `/dddjango 재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능` | `dddjango를 사용해 재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능을 만들어 줘.` |
-| `/dddjango-web "주문 목록 화면을 시안과 실제 API 계약에 맞춰 만들어 줘" <OpenAPI 3.x JSON URL 또는 로컬 경로>` | `dddjango-web을 사용해 주문 목록 화면을 시안과 실제 URL+JSON API 계약에 맞춰 만들어 줘.` |
+| `/dddjango-web "주문 목록 화면을 시안과 실제 API 계약에 맞춰 만들어 줘" <OpenAPI 3.x JSON URL>` | `dddjango-web을 사용해 주문 목록 화면을 시안과 실제 URL+JSON API 계약에 맞춰 만들어 줘.` |
+
+로컬 OpenAPI JSON 파일을 사용할 때는 경로를 요청 본문에 적는다.
 
 `dddjango`는 요구 정리부터 테스트까지, `dddjango-web`은 화면 요구 정리부터 시안·계약 검증까지 단계별로 진행하며 각 게이트에서 당신이 승인한다.
 
