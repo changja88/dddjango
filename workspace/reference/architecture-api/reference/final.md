@@ -214,7 +214,7 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 - `204 No Content`는 응답 본문이 없다는 점을 계약으로 둔다
 - 오류 응답은 선택한 에러 프로필의 media type·필드·상태 코드별 schema를 문서화한다
 - 캐시, rate limit, retry, deprecation, idempotency replay처럼 클라이언트 동작을 바꾸는 헤더는 응답 계약에 포함한다
-- 한 상태 코드의 성공 본문이 둘 이상의 모양이면 판별 필드(discriminator)를 가진 **이름 붙은 schema 하나**(`oneOf` + `discriminator`)로 계약한다 — 익명 `anyOf` 는 클라이언트가 분기할 이름과 판별 키를 잃는다. 오류 본문의 union 은 각 오류 schema 가 고정 `code` 로 자기 판별되므로 이 요구의 대상이 아니다(§6 에러 프로필)
+- 한 상태 코드의 성공 본문이 둘 이상의 모양이면 판별 필드(discriminator)를 가진 **이름 붙은 schema 하나**(`oneOf` + `discriminator`)로 계약한다 — 익명 `anyOf` 는 클라이언트가 분기할 이름과 판별 키를 잃는다. 오류 본문의 union 은 각 오류 schema 가 고정 공개 식별자(code 프로필의 `<Bc>ErrorCode` 값 · RFC 9457 의 `type`)로 자기 판별되므로 이 요구의 대상이 아니다(§5.4 에러 프로필)
 
 ### 5.3 계약 체크리스트
 

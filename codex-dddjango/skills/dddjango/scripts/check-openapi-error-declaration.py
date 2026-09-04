@@ -3356,7 +3356,7 @@ def _code_findings_records(findings: list[Finding]) -> Findings:
 def _print_code_findings(records: Findings) -> None:
     print(
         "[check-openapi-error-declaration] BLOCKER — 직접 반환 BC 오류와 response= "
-        "<Bc>ErrorSchema 계약 불일치 또는 수동 OpenAPI 후처리:"
+        "선언 계약 불일치(그 status 의 실제 오류 타입 그대로 — base 뭉뚱그림 금지) 또는 수동 OpenAPI 후처리:"
     )
     emit_all(records, printer=print)
     print(
@@ -3369,7 +3369,7 @@ def _print_code_findings(records: Findings) -> None:
 
 # ── 표준 트리 슬라이스 — #63 (D27 «OpenAPI 도 같다») ────────────────────────
 #
-# 오류 응답은 operation 이 `response={status: <Bc>ErrorSchema}` 로 «직접 선언»한다 —
+# 오류 응답은 operation 이 `response={status: 그 status 의 실제 오류 타입}` 로 «직접 선언»한다 —
 # openapi_extra 의 responses 보충 · `get_openapi_schema` override · `openapi_schema`
 # monkeypatch/postprocessor 는 사후 변형이라 위반이다. 모든 프로필에서 돈다.
 
@@ -3475,7 +3475,7 @@ def _tree_slice63(root: Path) -> tuple[Findings, list[tuple[str, str, int]]]:
                             if _success_only_supplement(kw.value, node):
                                 continue  # 성공 메타데이터 보충 — 허용(방출·overlap key 함께 생략)
                             where = f"{rel}:{node.lineno}"
-                            msg = "`openapi_extra` 의 responses 보충 — 오류 응답은 `response={status: <Bc>ErrorSchema}` 로 직접 선언한다(허용은 `response=` 에 선언된 성공 status 의 리터럴 메타데이터 보충뿐)"
+                            msg = "`openapi_extra` 의 responses 보충 — 오류 응답은 `response=` 에 그 status 의 실제 오류 타입 그대로 직접 선언한다(허용은 `response=` 에 선언된 성공 status 의 리터럴 메타데이터 보충뿐)"
                             findings.add("#63", where=where, msg=msg)
                             keys.append(("openapi-extra", rel.as_posix(), node.lineno))
             elif isinstance(node, ast.Assign):

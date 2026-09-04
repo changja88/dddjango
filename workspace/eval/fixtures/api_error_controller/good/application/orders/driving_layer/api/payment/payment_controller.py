@@ -2,6 +2,7 @@ from ninja import Status
 from ninja_extra import api_controller, http_get
 
 from application.orders.application_layer.payment.get_payment.get_payment_query import GetPaymentQuery
+from application.orders.application_layer.payment.get_payment.get_payment_use_case import GetPaymentUseCase
 from application.orders.domain_layer.payment.exception.payment_not_found import PaymentNotFound
 from application.orders.driving_layer.api.bc_error_schema import OrdersErrorCode, OrdersErrorSchema
 from application.orders.driving_layer.api.payment.schema.schema_out import PaymentOut
@@ -9,6 +10,9 @@ from application.orders.driving_layer.api.payment.schema.schema_out import Payme
 
 @api_controller("/payments")
 class PaymentController:
+    def __init__(self, use_case: GetPaymentUseCase) -> None:
+        self._use_case: GetPaymentUseCase = use_case
+
     @http_get("/{payment_id}", response={200: PaymentOut, 404: OrdersErrorSchema})
     def get_payment(self, payment_id: str) -> PaymentOut | Status[OrdersErrorSchema]:
         try:

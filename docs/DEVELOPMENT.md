@@ -79,6 +79,7 @@ md에서 `<!-- graph-owned: … -->` 마커가 붙은 절은 **직접 수정 금
 
 - 검사기 27종은 `dddjango/scripts/check-*.py`가 원본이고 `codex-dddjango/…/scripts/`는 **byte 동일 미러**다 — 한쪽만 고치면 verify-base 마지막 단(`diff -rq`)이 red다. 둘 다 갱신한다.
 - 측정 도구 일부는 manifest 봉인 대상이다(`workspace/tools/manifest_seal.py`의 글롭 목록 참조). 봉인 파일을 고치면 봉인 재발행이 필요하다.
+- **봉인은 커밋 직전 마지막 단계다** — `make verify` 가 RED 여서 봉인 대상(측정 도구·byte 골든 EXPECTED·매트릭스)을 다시 고쳤으면 `manifest_seal.py --write` 를 다시 발행하고 `make verify` 를 처음부터 다시 돈다. 커밋 메시지·기록의 verify 수치는 **마지막 실행 로그**(evidence 경로 병기)의 것만 적는다 — 중간 실행의 green 을 옮겨 적지 않는다(2026-09-04 `d701df8` «verify 6/6» 거짓 표기 · 정정 `cad221b`).
 
 ## 5. 검증 명령
 

@@ -312,7 +312,8 @@ def main() -> int:
         q2_ok: bool = (
             "== ⓓ 신규(N′∖L′) 1건" in out and "schema_smoke" in out
             and payload_q2.get("records") and all("schema_smoke" in str(r.get("file", "")) for r in payload_q2["records"])
-            and all("fresh_probe" in l for l in payload_q2.get("candidate_lines", []))
+            and payload_q2.get("candidate_lines") and all("fresh_probe" in l for l in payload_q2["candidate_lines"])
+            and payload_q2.get("candidate_records") and all(r.get("rule") == "#69" for r in payload_q2["candidate_records"])
         )
         rows.append(("Q′ ⓓ + 위반 동반", 2, code, q2_ok, "ⓓ 절 유지 · records 는 위반만 · candidate_lines 는 ⓓ 만"))
 

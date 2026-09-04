@@ -348,16 +348,6 @@ def _alias_defs(mod: ast.Module) -> "dict[str, list[tuple[ast.AST, bool]]]":
     return out
 
 
-def _resolved_base(node: ast.AST, bindings: dict[str, str],
-                   aliases: "dict[str, list[tuple[ast.AST, bool]]] | None", depth: int = 0) -> str:
-    """기저 원명 — Subscript 는 `.value` 를 벗기고, 모듈 수준 별칭(뒤 정의 우선)은 depth≤4 로 따라간다."""
-    if isinstance(node, ast.Subscript):
-        return _resolved_base(node.value, bindings, aliases, depth)
-    if isinstance(node, ast.Name) and aliases and node.id not in bindings and node.id in aliases and depth < 4:
-        return _resolved_base(aliases[node.id][-1][0], bindings, aliases, depth + 1)
-    return _resolved_name(node, bindings)
-
-
 def _resolved_bases(node: ast.AST, bindings: dict[str, str],
                     aliases: "dict[str, list[tuple[ast.AST, bool]]] | None", depth: int = 0) -> set[str]:
     """기저 원명 집합 — 별칭 정의가 여럿(TYPE_CHECKING 분기 · mixin-first 중간 ClassDef)이면 전부 따라간다(depth≤4)."""
@@ -716,9 +706,9 @@ def _exempt_override(fn: "ast.FunctionDef | ast.AsyncFunctionDef", cls: "ast.Cla
         return False
     want = FRAMEWORK_OVERRIDE_EXEMPT[fn.name]
     for b in cls.bases:
-        base = _resolved_base(b, bindings, aliases)
-        if base in want or (fn.name == "deconstruct" and base.endswith("Field")):
-            return True
+        for base in _resolved_bases(b, bindings, aliases):  # 별칭 정의 전부(mixin-first 중간 ClassDef 포함) — `_is_declarative_class` 와 같은 해소
+            if base in want or (fn.name == "deconstruct" and base.endswith("Field")):
+                return True
     return False
 
 

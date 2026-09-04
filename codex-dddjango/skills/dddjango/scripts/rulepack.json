@@ -31,7 +31,7 @@
     },
     {
       "path": "ontology/rules/architecture-api-final.ttl",
-      "sha256": "ba39cbfb39230ac5beac7a170cf47fa7fa339a8b197693223520c070f322d94d"
+      "sha256": "295e5d4b6b4528265d4a20cf458c229a82101dc7c7b9e5f8c015bb81cce083be"
     },
     {
       "path": "ontology/rules/architecture-api-skill.ttl",
@@ -61261,7 +61261,7 @@
       "checkers": [],
       "document": "dddjango/skills/architecture-api/references/final.md",
       "expression": "https://numchida.com/ns/djr#R-3467@2026-09-04",
-      "label": "한 상태 코드의 성공 본문이 둘 이상의 모양이면 판별 필드(discriminator)를 가진 이름 붙은 schema 하나(oneOf+discriminator)로 계약 — 익명 anyOf 금지 · 오류 union 은 고정 code 로 자기 판별되므로 대상 아님",
+      "label": "한 상태 코드의 성공 본문이 둘 이상의 모양이면 판별 필드(discriminator)를 가진 이름 붙은 schema 하나(oneOf+discriminator)로 계약 — 익명 anyOf 금지 · 오류 union 은 고정 공개 식별자(ErrorCode 값·RFC 9457 type)로 자기 판별되므로 대상 아님",
       "order_rank": 1346,
       "section": "dddjango/skills/architecture-api/references/final.md/s022-5.2",
       "section_number": "5.2"
