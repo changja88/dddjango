@@ -41,3 +41,26 @@
 ## 3·5단계 3축 · 심각도
 
 수리 2 루브릭 준용. 코퍼스 정합 = 건드리는 IRI·검사기·문법 성문 전수 열거(§4 블록 추가 시 R-3148~3150·R-3447/R-3448과의 관계 · 검사기 추가 시 docstring·registry(R-0345)·rulepack·등재 3문서·픽스처 삼중 등재). 일반화 = Claude/Codex 동일·프로젝트 플래그 비의존·kkebi 대조. 무손실 = 검사기 검출 집합 변화는 «추가만»(#646·#647·ninja 3 — 기존 규칙의 발화 라인 byte 동일 증명 · 두 저장소 retro) · 게이트 강도 불변 · 픽스처 정리는 «새 규칙 때문에만».
+
+## 1단계 결과 (2026-09-04 — 적대 리뷰 3기 A 기술·B 규범·C 증거 · 산출 `workspace/eval/field-report-3/rv1/`)
+
+BLOCKER 0 · MAJOR A 4·B 7·C 3 · 나머지 검증됨/MINOR. 수치는 세 축 모두 조사자와 일치(S-1 39/13/17/9 · S-4 1,110/281·mypy 124 · S-5 상자 둘 8/7/6 · #63 2건).
+
+| 축 | MAJOR | ② 처분 |
+|---|---|---|
+| A-17 / B-3·B-4 | 지도 좌표 오류 — implementation-django §17(Django 5.x) 실존 · LEDGER 마지막 s093 | 새 절 = **s094-18 «## 18. Django admin·폼 타이핑 — django-stubs 제네릭 기저»**(말미 · 9ef6c4f 동형) · doc_key +1(`implementation-django-skill` 상세 레퍼런스 표 b18) · s038-7 append 기각(`---` 규약) |
+| A-2 | #646 ⓑ가 기저 해소에 종속 → 타 모듈 별칭이면 mypy·#646 동시 침묵 | ⓑ 헤더 판정은 **모든 ClassDef**에 기저 해소와 독립 |
+| A-11 | `json.load` ⓓ 오라클 «반환» 조건이 `-> object` 정당형을 잡고 구체 주석 무검증을 놓침 | refined 오라클(주석≠object · 반환주석≠object · 컴프리헨션 · 직접 접근 · 리터럴 컨테이너 · 호출 인자 제외) — spring 41·kkebi 8 · 정당형 0 · **ⓓ 전용 번호 #650**(B MINOR-5 · 1행 1술어) |
+| A-13 / B-10 | #63 auto 사각 미봉합 — Coordinator R-0331 «Error response와 무관한 G2는 auto»의 «무관» 판정식 부재 | **확장 1**: R-0331 rev2(«무관 = 승인 12-slot 유무 · 12-slot 없이 BC 오류 status를 `response=`에 선언했으면 auto 금지·G1 반송») + 회신 3 안내 |
+| B-1 | «monkeypatch는 §6.2 소관이라 발주측» 근거 오류 — §6.2·ninja §2.1은 레인이 의존성을 넣는 선례 | 근거 = «전역 런타임 패치 = 관찰 축 ④(§6.1 R-3134~3137 닫힌 목록)» → 조건문은 **§6.1 b1 R-3163 rev2** · §4 새 블록은 참조 · R-12 문구 |
+| B-2 | §2-A 수정 1 ⑤ «`Any` 조건부 구절» 불필요·모순 — `Any` 0 정본 예시가 strict 통과(탐침 A·B·E) | ⑤ **철회** · 대신 **R-3154 rev2**(admin 선언 속성·폼 필드 = 프레임워크 선언 면제 성문 — 검사기 `DECLARATIVE_BASE_NAMES`와 문면 일치) |
+| B-5 | R-0349(registry #15 소개행) 개정 누락 | R-0349 rev2에 #648·#649 |
+| B-7(MINOR-1) | 결정표 6행 «자리표시 object 금지»가 «입구 object 허용»과 충돌 | «입구 밖» 한정 · 반환 주석의 `object`(루트·컨테이너 원소)는 #647 **ⓓ 후보**(C-1의 `tuple[object,…]` 19건 뿌리 — 실측 spring 8·kkebi 34 형상 · 차단은 안 건다) |
+| C-5·C-6 | «P1 뿌리 = 속성·반환 누수 → #647 차단» 22/61 · «mypy 빚 70» 중 67은 발주측 RAG | 회신 3 효과 서술 정직화 · 결정표 6행은 문면+ⓓ |
+| C-8 | ⓓ 채널에 앵커 격리 없음(`registry_gate._FINDING_RE`가 `[ⓓ#…]` 미파싱) — kkebi billing ⓓ 127 매 레인 재동봉 | **확장 2**: registry_gate가 ⓓ 라인도 N∖L로 갈라 «ⓓ 신규/legacy»를 보고·sidecar → R-0284 «해당 범위 실행분» = «앵커 차분 신규분» |
+
+기타 반영: A-4 «naming 픽스처 교차 등재» 주장 철회(cross는 good만) · A-19 조각 = **{S-1+S-4} / {S-5+Coordinator+openapi}**(검사기 파일 기준 · 매트릭스 regen 최소) · B-15 규칙 범위 «타입 매개변수에 기본값 없는 django-stubs 제네릭 기저»(`View`·`TemplateView`·`RedirectView` 제외) · B-9 ninja 문장 2를 2a(§3.1 새 b9 `RootModel` 단독)·2b(§2.2 b1 익명 union 금지)로 분리 · B-11 openapi 검사기 stale 문면 + 등재 행 2곳 · C-4 좁히기 도우미 형태(`TypeIs` 면제 + 호출부 ⓓ / `TypeAdapter`) 문면.
+
+### ① 결론
+
+세 항목 모두 **진행**(확정 방향 유지 · 기술 수정만). 결정 밖 «확장» 2건(R-0331 rev2 · registry_gate ⓓ 앵커 격리)은 ⑥ 감사 고지 항목이며 사용자에게 예고한다. 철회 1(§2-A 수정 1 ⑤). ② 계획 = `2026-09-04-field-report-repair-3-plan.md`.
