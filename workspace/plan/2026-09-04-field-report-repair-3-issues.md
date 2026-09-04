@@ -126,6 +126,16 @@
 4. S-2는 ⓑ에 흡수. S-1g(`Any` 면제)는 ⓪ 실측 뒤 별도.
 근거: 플러그인은 mypy를 돌리지 않으므로(S-3 «공허한 Success») 문면만으로는 안 울린다 — 플러그인 원칙 «문면 + 결정적 백스톱». 보고자 «검사기 불요»는 채택하지 않음. 별칭이 아니라 monkeypatch를 기본으로 한 이유: 파일마다 8줄 별칭 블록이 없어지고(속도), django-stubs README의 1번 처방이다.
 
+#### §2-A 수정 1 (⓪ 실측 뒤 · 2026-09-04 · 사용자 «결정할 것 없음» 확인 — 본질 불변 · 기본 모양만 교체)
+
+근거 `evidence/S1/summary.md` ⑦: `django-stubs-ext`는 양 저장소 dev 전이 의존성(운영 `dependencies` 없음 → settings `monkeypatch()`는 `uv sync --no-dev` 부팅 실패) · 현장 68클래스 전부 별칭(직접 표기 0) · kkebi saju 제3의 모양(TYPE_CHECKING 분기 안 중간 ClassDef 15) · 보고자 `inlines` 예시 mypy red(정본은 `list[type[InlineModelAdmin[Any, Any]]]`) · #493 `_is_declarative_class`가 Subscript/별칭 기저를 못 풀어 선언적 면제 상실 · 코퍼스 맨몸 예시 4줄(django-web :208·:66·:72 · implementation-django :1328 산문) · naming/bad_rules admin 3클래스 → 교차 매트릭스 등재.
+1. 처방 순서 교체: **`TYPE_CHECKING` 별칭이 기본** · 프로젝트가 `django-stubs-ext`를 운영 의존성(§6.2)으로 넣고 settings에서 `monkeypatch()`를 부르면 `X[Model]` 직접 표기(발주측 결정 · R-12 반영 문구). `# type: ignore[type-arg]` 금지 불변.
+2. #646: 세 모양 통과(subscript · TYPE_CHECKING `TypeAlias` 별칭 · TYPE_CHECKING 분기 안 중간 ClassDef) · 위반은 ⓐ 맨몸 ⓑ `type: ignore[type-arg]`(클래스 헤더·속성 줄) · ⓐ+ⓑ 동시면 클래스당 1건(ⓑ가 ⓐ 흡수) · 기저 집합 = django-stubs 제네릭(admin·form·CBV) · 타 모듈 import 별칭은 표면 밖(docstring 검출 한계).
+3. 규칙 범위 문면 = «django-stubs가 제네릭으로 선언한 Django 기저(admin·form·CBV)» · 코퍼스 예시 4줄을 별칭 형으로 정정(django-web s007-6/b9 · s003-2/b10 · implementation-django §13.4 산문).
+4. #493 개정(같은 배치 · 버그 수리): `_is_declarative_class` 기저 해소에서 Subscript 벗기기 + TYPE_CHECKING 별칭/중간 ClassDef 추적 → admin 선언적 면제 회복.
+5. §4 새 블록에 «프레임워크가 스텁에서 `Any`로 고정한 자리(`InlineModelAdmin[Any, Any]` 등)는 ⓓ 후보로 남고 감수자가 통과시킨다» 한 구절(차단 면제 아님 · #645 무변경).
+6. 수치 정정: 클래스 39(보고 40) · 맨몸 13.
+
 ### §2-B · S-3 확정(09-04) — 플러그인 수정 없음 · R-12 추기
 
 R-12 발주 가이드는 문서 미착수(로드맵 51행 등재만)라, 그 행에 «mypy 증거는 자기 BC 경로 포함 필수 · `spring_dream_server framework`만 돌린 결과는 증거가 아니다» 1줄을 반영 문구로 추기(B 기각 때 «툴체인 게이트는 훅·발주서 소유» 1줄 선례). R-12 착수 시 반영.
@@ -141,6 +151,18 @@ R-12 발주 가이드는 문서 미착수(로드맵 51행 등재만)라, 그 행
 5. legacy 1,110줄은 registry_gate 앵커 차분으로 격리(새 레인 산출물만).
 보고자 원안 대비 차이 3: (b) 후보화 · R-3447 개정 추가 · architecture-ddd 예시 정정 명시.
 
+#### §2-C 수정 1 (⓪ 실측 뒤 · 2026-09-04 · 사용자 «확정») — «흘리지 않는다»의 선
+
+근거 `evidence/S4/summary.md` ⑧: `Form.clean()` 오버라이드는 `TypedDict`/`Mapping` 반환 시 `[override]`(통과 주석은 `dict[str, object]`뿐 · spring 15·kkebi 7·good 픽스처 1) · `Mapping[str, object]` 입구 매개변수 spring 34·kkebi 69 전부 좁히기·검증 도우미 · kkebi 지배 패턴 `x: object = json.loads` + 즉시 검증(R-3448 형상) · `json.load` ⓓ 오라클이 정당 형상 100% 포착 · #645 이중 보고 100% · 문제 문장 소유는 **R-3448**(R-3447과 한 블록 b7).
+1. **`Any`**: dict/Mapping 값 자리 어디서든(매개변수·반환·변수·속성) #647 **차단**. `Form.clean -> dict[str, Any]`는 `dict[str, object]`로 바꾸면 mypy 통과 → 면제 불필요.
+2. **`object`**: 입구에서만 — 검증·좁히기 도우미의 **매개변수**와 즉시 검증되는 **지역 변수**는 ⓓ 후보(감수자 확인) · **반환값·클래스 속성**에 `dict/Mapping[…, object]`가 남으면 #647 **차단**(P1 뿌리 = 속성·반환 누수).
+3. 면제 2: 스텁이 강제하는 `Form.clean -> dict[str, object]`(기저 해소는 #646 기계 재사용) · `TypeIs/TypeGuard[...]` 반환.
+4. `json.load(s)` ⓓ 후보 오라클: «결과가 `dict[str, Any]`류·`Any` 주석 변수 / 반환 / 컴프리헨션으로 감» — `x: object` 뒤 즉시 검증·파서 직접 인자는 후보 아님.
+5. #645와 배타: dict/Mapping 값 `Any`는 #647이 소유(#645 ⓓ 후보 억제) · R-0284/R-0345 문면 갱신.
+6. 문면 개정 대상 = **R-3448 rev2**(«JSON 문서는 `Mapping[str, object]`» → «JSON 문서는 `TypeAdapter(그TypedDict)`로 파싱 · `object`는 좁히기 전까지만») + R-3447 rev2(«변수·제네릭 안의 `Any`는 ⓓ 후보» → dict/Mapping 값 자리는 #647 차단) — 같은 블록 b7 한 렌더. 파싱한 JSON은 내부 것도 `TypeAdapter`(strict `no-any-return` 때문 · «검증 없이 TypedDict»는 코드 안 리터럴 생성뿐).
+7. 이월(범위 밖 · MINOR): 검사기 루트 필터 부재(kkebi `web/`·`scripts/`) — #493과 같은 기존 동작.
+대안 «문자 그대로 무조건»은 기각(사용자 «확정» 09-04): `Form.clean` 22곳·도우미 103곳에 대체 주석이 없어 mypy 또는 검사기 중 하나가 반드시 red.
+
 ### §2-D · S-5 확정(09-04) — 보고자 원안 그대로
 
 근거 확인: 오류 응답 «상위 base로 뭉뚱그리지 않는다» 규칙은 ninja `references/final.md:124~125`에 실존 — 검사기 ⓑ는 기존 규범의 집행이다.
@@ -148,6 +170,14 @@ R-12 발주 가이드는 문서 미착수(로드맵 51행 등재만)라, 그 행
 2. 검사기 `check-api-error-controller-contract.py` 규칙 3개 신설(번호는 ②에서 채번): ⓐ 반환 주석에 `ninja.Status` Subscript 2개 이상 ⓑ `response=` 값이 `bc_error_schema.py`에서 하위 클래스를 가진 base ⓒ `schema_out.py` 클래스가 `ninja.Schema`와 `pydantic.RootModel` 동시 상속. AST 바인딩만.
 3. 픽스처 good/bad · 삼중 등재 · 규칙 등재 3문서.
 4. 범위 밖: 리딩 BC OpenAPI 변경(e2e 단언 2개)은 발주측 승인 사안.
+
+#### §2-D 수정 1 (⓪ 실측 뒤 · 2026-09-04 · 결정 불요 — 기술 수정)
+
+근거 `evidence/S5/summary.md` ⑧: ⓑ(오류 응답 base 뭉뚱그림)는 기존 **#63 `wrong-response-schema`**(`check-openapi-error-declaration.py` code-json)가 이미 f5ee428·HEAD에서 낸다 — 리딩 G2 0건은 레인이 `--error-profile auto`로만 돌린 탓 · api-error 검사기 code 레인은 auto에서 무동작 → ⓐ·ⓒ는 프로필 무관 트리 슬라이스(`_slice_check_controller_ast`) · 상자 둘이어도 값 변수를 base로 주석하면 mypy 통과(13 운영 함수) · openapi 검사기 docstring/조치 문면이 «base로 선언»으로 stale · kkebi tarot에 `RootModel` 단독 선례.
+1. ⓑ 신설 **철회**(한 사건 두 소유자 방지) — 대신 (a) openapi 검사기 stale 문면 2곳 수리(R-0681 rev2 정합) (b) 회신 3에 «오류 응답을 선언한 컨트롤러 G2는 code-json 프로필로 돌려야 #63이 산다» 발주측 안내.
+2. ⓐ·ⓒ는 `_slice_check_controller_ast`(프로필 무관)에 신설 — 번호 #648·#649.
+3. ⓐ 문면 근거 정정: «상자 둘 + concrete 정적 타입 값이면 mypy strict가 막힌다 · 형태 자체를 금지한다(상자 하나로 통일)». legacy 13함수는 앵커 격리.
+4. 정본 예시에 kkebi tarot `TarotCardOut(RootModel[Annotated[…, Field(discriminator="type")]])` 형을 인용(플러그인 밖 사례 · 일반화).
 
 ### 남은 결정 표시
 
