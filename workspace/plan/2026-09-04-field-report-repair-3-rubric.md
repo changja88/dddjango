@@ -68,3 +68,8 @@ BLOCKER 0 · MAJOR A 4·B 7·C 3 · 나머지 검증됨/MINOR. 수치는 세 축
 ## 2·3단계 결과 (2026-09-04 — 계획 `2026-09-04-field-report-repair-3-plan.md` · ③ 리뷰 3기 A 기술·B 규범·C 증거 · 산출 `workspace/eval/field-report-3/rv3/`)
 
 BLOCKER 0 · MAJOR A 5(#650 오라클 정당형 · ⓔ2 smoke/sidecar 조건 · 등재 집계 셀 · 정본 예시 red 1 · good 픽스처 배치 cross 신규 쌍) · B 6(django-skill b18 실존 → b17 확장 · 정본 예시 · 절차 sha 산식 · #650 문면 · prefLabel 9 · sectionNumber) · C 3(무손실 판형 미명세 · 기대 계수 루트 필터 전 값 · ⓔ2 smoke) — 전부 계획 v2 델타 Δ1~Δ15 로 반영. 세 축 공통 실측: 정본 예시 셋째 인자 생략 → strict green(코디 탐침 포함 3회 독립 확인) · #493 수리 검출 집합 불변(6 대상 0/0) · «HEAD=앵커 → ⓓ 신규 0» 두 저장소 · 구현 전 무손실 판형 `VERDICT: LOSSLESS`. ④ 착수(조각 1 = S-1+S-4).
+
+## 4단계 구현 기록 — 조각 1(S-1 + S-4) (2026-09-04 · 브랜치 `fix/field-report-3` · 커밋 56b27e1 · 계획 v2 Δ1~Δ15 집행)
+
+상세 = `workspace/eval/field-report-3/evidence/impl/piece1-summary.md`(실측표·픽스처·등재·온톨로지·검증 · 스크립트 사본 동봉). 요약: 검사기 #646/#647/#650 + #493 수리 + registry_gate ⓔ2 · 실측 = 기대(rv3-C 루트 필터 뒤 값)와 전 항목 일치(spring #646 18 · #647 594/255+8 · #650 40 · kkebi 21 · 161/253+42 · 1 · #645 위반 byte 동일 · ⓓ#645→#647 1:1) · 온톨로지 신설 12·개정 7·새 절 §18 · target-counts(2917/546/3471/3587) · verify 6/6 · 무손실 12/12(+main 픽스처 9/9) · gate 앵커 «ⓓ 신규 0·귀속 0» 양 저장소. 계획 대비 조정 2: Δ9 good `invoice/panel.py`(ⓓ ②)는 하네스 green 축 «레코드 0» 요건으로 bad 로 이동 · good `order_form.py`·`place_order_use_case.py` 를 ⓓ-free 로 정정. ⑤-1 리뷰 3기 대상.
+
