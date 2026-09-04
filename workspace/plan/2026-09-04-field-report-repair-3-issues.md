@@ -14,7 +14,7 @@
 | S-2 | Django 기저에 `# type: ignore[type-arg]`를 붙여 8 BC가 빚을 숨겼다 — 문면만으론 재발 가능 | 검사기(선택) | `check-public-surface-annotation.py`(#493) 확장 또는 신규 규칙: `ClassDef` 헤더·`inlines` 첫 대입 줄의 `type: ignore[type-arg]` = 위반 | **S-1 ⓑ에 흡수**(09-04) — 별도 결정 없음 | 흡수 |
 | S-3 | fortune_character 빌드 lane-report가 자기 BC를 빼고 mypy를 돌려 «Success» — 공허한 통과 | 발주측 | 플러그인 수정 없음. R-12 발주 가이드 1줄에 «자기 BC 경로 필수» 있는지만 확인 | **결정 09-04 «확정»** — §2-B(플러그인 수정 없음 · R-12 행에 반영 문구 추기) | 결정 |
 | S-4 | 딕셔너리를 레코드로 쓰는 모양(`dict/Mapping[str, object\|Any]` 1,110줄 · mypy 70건)을 플러그인 예시·권고가 만든다 | 문면 + 검사기 | 한 줄 규칙 «모든 JSON은 입구에서 `TypedDict`» + 붙임 2·예외 1 + 결정표 6행 · houserules §4·implementation-python·architecture-ddd 문면 · 검사기 (a) 주석 스캔 (b) `json.load` 무파싱 | **결정 09-04 «확정»(이 세션 재확인)** — §2-C(문면 + R-3447 개정 + 검사기 #647 위반 · `json.load` 무검증은 ⓓ 후보) | 결정 |
-| S-5 | ninja 컨트롤러 반환 주석 `Status[A] \| Status[B]`·오류 응답 base 뭉뚱그림·200 union의 `Schema`+`RootModel` 다중 상속을 문면·검사기가 안 막는다(mypy 9건) | 문면 + 검사기 | `implementation-django-ninja` 두 문장 + 정본 예시 2개 · `check-api-error-controller-contract.py` 규칙 (a)(b)(c) | — | 접수 |
+| S-5 | ninja 컨트롤러 반환 주석 `Status[A] \| Status[B]`·오류 응답 base 뭉뚱그림·200 union의 `Schema`+`RootModel` 다중 상속을 문면·검사기가 안 막는다(mypy 9건) | 문면 + 검사기 | `implementation-django-ninja` 두 문장 + 정본 예시 2개 · `check-api-error-controller-contract.py` 규칙 (a)(b)(c) | **결정 09-04 «확정»** — §2-D(보고자 원안 그대로) | 결정 |
 | N-1 | notification admin 2건(`obj is None` 재검사 → `[redundant-expr]`/`[unreachable]`) — 보고자: A/R-3443의 admin 변종, 새 항목 아님 | 관측 | 없음(기존 규범 적용 확인만) | — | 범위 밖 |
 | N-2 | parler `TranslatableAdmin`·`TranslatableModelForm`의 `# type: ignore[misc]` 6곳 — 보고자: 서드파티 미타입이라 정당 | 관측 | 없음 | — | 범위 밖 |
 | N-3 | 발주측 처리 계획(fortune_character 28건 직접 상환 · ignore 18줄 보류 · G2 grep 조건 · P1/P5 상환) | 발주측 | S-1/S-2/S-4/S-5 처분 뒤 발주측이 진행 | — | 발주측 |
@@ -141,10 +141,18 @@ R-12 발주 가이드는 문서 미착수(로드맵 51행 등재만)라, 그 행
 5. legacy 1,110줄은 registry_gate 앵커 차분으로 격리(새 레인 산출물만).
 보고자 원안 대비 차이 3: (b) 후보화 · R-3447 개정 추가 · architecture-ddd 예시 정정 명시.
 
+### §2-D · S-5 확정(09-04) — 보고자 원안 그대로
+
+근거 확인: 오류 응답 «상위 base로 뭉뚱그리지 않는다» 규칙은 ninja `references/final.md:124~125`에 실존 — 검사기 ⓑ는 기존 규범의 집행이다.
+1. 문면(implementation-django-ninja · 신설 R 2): «반환 주석은 `Status` 하나에 union(`-> Status[Out | ErrA | ErrB]`) · `Status[A] | Status[B]` 금지(불변)» · «성공 union 응답은 `RootModel[Annotated[A | B, Field(discriminator="kind")]]` 단독 상속 · `Schema` 병행 상속 금지(메타클래스 충돌) · `response={200: A | B}` 익명 union 금지(discriminator 상실)». 정본 예시 각 1개.
+2. 검사기 `check-api-error-controller-contract.py` 규칙 3개 신설(번호는 ②에서 채번): ⓐ 반환 주석에 `ninja.Status` Subscript 2개 이상 ⓑ `response=` 값이 `bc_error_schema.py`에서 하위 클래스를 가진 base ⓒ `schema_out.py` 클래스가 `ninja.Schema`와 `pydantic.RootModel` 동시 상속. AST 바인딩만.
+3. 픽스처 good/bad · 삼중 등재 · 규칙 등재 3문서.
+4. 범위 밖: 리딩 BC OpenAPI 변경(e2e 단언 2개)은 발주측 승인 사안.
+
 ### 남은 결정 표시
 
 - ~~S-4~~ → §2-C 확정.
-- S-5e(오류 응답 base 뭉뚱그림 검사)는 발주측 OpenAPI 변경 승인과 맞물린다 — 플러그인 검사기 채택은 우리 결정, 발주측 상환은 그쪽 결정.
+- ~~S-5~~ → §2-D 확정. 발주측 OpenAPI 변경은 그쪽 결정(우리 범위 밖).
 
 ## §3 우리 쪽 메모 — v2.17.17과의 겹침·충돌(⓪ 실측 대상)
 
