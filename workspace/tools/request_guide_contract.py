@@ -27,16 +27,17 @@ def source_link_targets(text: str) -> list[str]:
 
     Inline/image는 `](` 뒤, reference definition은 `[label]:` 뒤를 읽는다.
     href/src는 tag 여부나 주변 문맥을 판정하지 않는다. 코드·주석·escape도 예외가 없다.
+    겹치는 시작 위치도 검사하고, 동일 목적지는 최초 수집 순서로 한 번만 반환한다.
     """
     patterns = (
         r"\]\(\s*(?:<([^>\r\n]*)>|([^\s)]*))",
         r"\[[^\]\r\n]+\]:\s*(?:<([^>\r\n]*)>|([^\s]*))",
-        r'''(?i)(?<![\w:-])(?:href|src)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*))''',
+        r'''(?i:(?<![\w:-])(?:href|src)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*)))''',
     )
-    return [
+    return list(dict.fromkeys(
         next(value for value in match.groups() if value is not None)
-        for pattern in patterns for match in re.finditer(pattern, text)
-    ]
+        for pattern in patterns for match in re.finditer(rf"(?={pattern})", text)
+    ))
 
 
 def validate(root: Path) -> list[str]:
@@ -206,6 +207,13 @@ def self_test() -> int:
             cases.append((f"{path}: relative source checked independently", {
                 path: fixtures[path] + "[root](../README.md)\n",
             }, "guide-link"))
+            for label, suffix in (
+                ("Markdown candidate inside allowed Markdown target", "[a](https://example.com/[b](../README.md))\n"),
+                ("src candidate inside allowed href target", '<a href="https://example.com/?src=\'../README.md\'">\n'),
+            ):
+                cases.append((f"{path}: relative {label} rejected", {
+                    path: fixtures[path] + suffix,
+                }, "guide-link"))
         cases.append((f"{plugin}: README link typo", {
             "README.md": fixtures["README.md"].replace(canonical, canonical + "x"),
         }, "readme-link"))
@@ -254,6 +262,8 @@ def self_test() -> int:
             ("quoted HTML schemes and fragments", '<a href="https://example.com/guide">public</a> <img src=\'#icon\'>\n'),
             ("unquoted HTML schemes and fragments", "<a href=mailto:user@example.com>mail</a> <img src=#icon>\n"),
             ("schemes and fragments in code and comments", "```markdown\n[app](app://guide)\n[ref]: #start\n```\n`<img src=\"data:image/png;base64,AA==\">`\n<!-- [start](#start) -->\n"),
+            ("nested Markdown schemes and fragments", "[a](https://example.com/[b](https://example.org/guide)) [a](#outer[b](#inner))\n"),
+            ("nested HTML schemes and fragments", '<a href="https://example.com/?src=\'#icon\'"> <a href="#outer?src=\'app://guide\'">\n'),
         ):
             cases.append((f"{plugin}: {label} accepted", {
                 canonical: fixtures[canonical] + suffix, mirror: fixtures[mirror] + suffix,
