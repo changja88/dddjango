@@ -6,7 +6,7 @@
     "name": "changja88",
     "email": "dev@numchida.com"
   },
-  "homepage": "https://github.com/changja88/dddjango",
+  "homepage": "https://github.com/changja88/dddjango/blob/main/dddjango-web/REQUEST_GUIDE.md",
   "repository": "https://github.com/changja88/dddjango",
   "license": "MIT",
   "keywords": [
@@ -31,11 +31,11 @@
       "Read",
       "Write"
     ],
-    "websiteURL": "https://github.com/changja88/dddjango",
+    "websiteURL": "https://github.com/changja88/dddjango/blob/main/dddjango-web/REQUEST_GUIDE.md",
     "defaultPrompt": [
-      "주문 목록 화면을 이 시안대로 dddjango-web으로 빌드해줘.",
-      "이 Django 프로젝트에 상품 상세 화면을 MVVM+HTMX로 추가해줘.",
-      "기존 장바구니 화면에 쿠폰 입력 섹션을 추가해줘."
+      "dddjango-web으로 designs/orders.dc.html의 ‘주문 목록/기본’ 화면을 1440px·390px의 로딩·빈 목록·오류 상태까지 구현해줘.",
+      "dddjango-web으로 /api/orders의 실제 JSON 계약과 fixtures/orders.json 대표 데이터에 맞춰 주문 목록 화면을 구현해줘.",
+      "dddjango-web으로 회원가입 화면을 구현해줘. 원본 시안은 현재 접근 불가이고, 비밀번호 안내문은 의도적으로 추가하며 1440px·390px 전체 스크롤을 검수해줘."
     ],
     "brandColor": "#0C4A6E"
   }

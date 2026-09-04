@@ -6,7 +6,7 @@
     "name": "changja88",
     "email": "dev@numchida.com"
   },
-  "homepage": "https://github.com/changja88/dddjango",
+  "homepage": "https://github.com/changja88/dddjango/blob/main/dddjango/REQUEST_GUIDE.md",
   "repository": "https://github.com/changja88/dddjango",
   "license": "MIT",
   "keywords": [
@@ -30,11 +30,11 @@
       "Read",
       "Write"
     ],
-    "websiteURL": "https://github.com/changja88/dddjango",
+    "websiteURL": "https://github.com/changja88/dddjango/blob/main/dddjango/REQUEST_GUIDE.md",
     "defaultPrompt": [
-      "재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능을 DDD로 빌드해줘.",
-      "이 Django 프로젝트에 한 기능을 DDD 4계층으로 추가해줘.",
-      "주문 도메인을 DDD/TDD로 설계하고 구현해줘."
+      "dddjango로 주문의 결제대기 → 결제완료 전이를 구현해줘. 결제 실패 시 주문·재고·이벤트는 바뀌지 않아야 해.",
+      "dddjango로 기존 주문 API 응답과 이벤트 계약을 보존해 기능을 수정해줘. 근거는 api/openapi.yaml과 tests/orders/야.",
+      "dddjango로 재고 예약 기능을 설계·구현해줘. 동시 요청의 우선순위와 재시도 결과는 미확정이야."
     ],
     "brandColor": "#0C4A6E"
   }
