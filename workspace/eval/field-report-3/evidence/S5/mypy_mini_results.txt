@@ -1,0 +1,27 @@
+=== m1_two_boxes_concrete
+m1_two_boxes_concrete.py:7: error: Incompatible return value type (got "Status[C1]", expected "Status[Resp] | Status[Base]")  [return-value]
+exit 1
+=== m1b_two_boxes_basevar
+exit 0
+=== m1c_two_boxes_allconcrete
+exit 0
+=== m2_one_box_base
+exit 0
+=== m3_one_box_concretes
+exit 0
+=== m4_schema_rootmodel
+m4_schema_rootmodel.py:7: error: Call to untyped function "__init_subclass__" in typed context  [no-untyped-call]
+m4_schema_rootmodel.py:7: error: Metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases  [metaclass]
+m4_schema_rootmodel.py:7: note: "ninja.schema.ResolverMetaclass" (metaclass of "ninja.schema.Schema") conflicts with "pydantic.root_model._RootModelMetaclass" (metaclass of "pydantic.root_model.RootModel")
+m4_schema_rootmodel.py:12: error: Unexpected keyword argument "root" for "X"  [call-arg]
+m4_schema_rootmodel.py:12: note: "X" defined in "ninja.schema"
+exit 1
+=== m5_rootmodel_only
+exit 0
+=== m6_bare_union_base
+exit 0
+=== m7_bare_union_concrete
+exit 0
+=== m8_two_boxes_concrete_var
+m8_two_boxes_concrete_var.py:8: error: Incompatible return value type (got "Status[C1]", expected "Status[Resp] | Status[Base]")  [return-value]
+exit 1

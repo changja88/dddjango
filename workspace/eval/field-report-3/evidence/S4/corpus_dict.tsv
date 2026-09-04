@@ -1,0 +1,2 @@
+FENCE	dddjango/skills/architecture-ddd/references/final.md:1618	    values: dict[str, Any] = field(default_factory=dict)
+PROSE	dddjango/skills/discipline-houserules/SKILL.md:76	**`Any` 는 타입이 아니라 검사 포기다 — 어디에도 쓰지 않는다.** 함수 시그니처(인자·`*args/**kwargs`·반환)·변수·클래스 속성·제네릭 인자(`dict[str, Any]`) 전부다 — 별표 인자 면제(ruff `allow-star-arg-any`) 관례와 다른 선택

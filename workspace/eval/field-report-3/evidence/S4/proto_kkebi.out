@@ -1,0 +1,30 @@
+== kkebi-HEAD-6608fb0: 파일 3525 · #647 exact 히트 759 (union-값 변종 0) · 줄 723
+  자리: {'sig-param': 245, 'variable': 327, 'class-attr': 67, 'sig-return': 120}
+  위치: {'top': 569, 'nested': 190}
+  값: {'object': 599, 'Any': 160}  컨테이너: {'dict': 571, 'Mapping': 188}
+  키: {'str': 749, 'object': 8, 'tuple[str, UUID]': 2}
+  자리×위치: {('sig-param', 'top'): 195, ('variable', 'top'): 247, ('class-attr', 'nested'): 35, ('sig-return', 'nested'): 25, ('sig-param', 'nested'): 50, ('sig-return', 'top'): 95, ('class-attr', 'top'): 32, ('variable', 'nested'): 80}
+  future-annotations 파일 비율(히트 기준): {False: 529, True: 230}
+  BC별(줄):
+      206  scripts  {'sig-param': 101, 'sig-return': 29, 'variable': 76, 'class-attr': 7}
+      147  application/billing  {'sig-param': 44, 'variable': 84, 'class-attr': 15, 'sig-return': 23}
+      111  web  {'sig-return': 18, 'sig-param': 61, 'variable': 32}
+       74  application/saju  {'class-attr': 8, 'sig-return': 21, 'sig-param': 14, 'variable': 35}
+       49  application/product_observability  {'class-attr': 13, 'sig-param': 8, 'sig-return': 10, 'variable': 24}
+       47  application/tarot  {'sig-return': 6, 'sig-param': 6, 'variable': 22, 'class-attr': 13}
+       33  application/identity  {'class-attr': 1, 'sig-param': 5, 'variable': 21, 'sig-return': 6}
+       18  application/notification  {'variable': 11, 'class-attr': 2, 'sig-param': 2, 'sig-return': 3}
+       17  application/share  {'class-attr': 8, 'sig-param': 3, 'sig-return': 2, 'variable': 4}
+       12  application/daily  {'variable': 12}
+        3  application/top3  {'variable': 2, 'sig-return': 1}
+        2  application/image  {'sig-return': 1, 'sig-param': 1}
+        1  application/review  {'variable': 1}
+        1  fabfile.py  {'variable': 1}
+        1  framework/pure/jcs.py  {'variable': 1}
+        1  kkebi_server  {'variable': 1}
+  별표 인자 히트(dict[…] 주석을 단 *args/**kwargs): 0
+  Mapping[str, object] 매개변수(top) — R-3448 취지 자리 후보: 69
+== json.load(s) 호출 60 · ⓓ 후보 59
+  소비자: {'assign': 35, 'assign+next-isinstance': 6, 'named-call:cast': 5, 'Dict': 4, 'assign+next-named-call': 4, 'Tuple': 2, 'return': 2, 'keyword': 1, 'named-call:_require_object': 1}
+  후보 BC별: {'application/billing': 13, 'application/daily': 2, 'application/identity': 3, 'application/product_observability': 2, 'application/saju': 11, 'application/tarot': 4, 'scripts': 24}
+== #645 겹침: #645 ⓓ 후보 줄 379 · #647 Any 줄 157 · 교집합(이중 보고) 157 · #647 Any 줄 중 #645 미보고 0 · #647 object 줄(#645 무관) 568 · #645 위반(bare)과 같은 줄 24

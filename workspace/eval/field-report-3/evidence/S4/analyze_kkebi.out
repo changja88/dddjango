@@ -1,0 +1,58 @@
+##### kkebi
+grep 줄 431 · proto 줄(framework+application) 466 · grep에만 16 · proto에만 51
+  grep에만 — cast("…") 문자열: 12
+       application/saju/domain_layer/saju_reconciliation/saju_reconciliation.py:63: return cast("dict[str, dict[str, object]]", json.loads(self._diff_json))
+       application/saju/driven_layer/adapter/persistence/repository/saju_reconciliation_repository.py:146: diff=cast("dict[str, dict[str, object]]", diff_value),
+       application/tarot/domain_layer/tarot_reading/tarot_reading.py:135: prompt_snapshot=cast("dict[str, object]", catalog_snapshot.prompt_payload),
+       application/tarot/application_layer/catalog/generate_tarot_reading/generate_tarot_reading_use_case.py:162: for section in cast("list[dict[str, object]]", reading.prompt_snapshot["sections"])
+  grep에만 — 기타: 4
+       application/billing/driven_layer/adapter/persistence/repository/payment_refund_process_repository.py:98: "dict[str, object] | None",
+       application/billing/driven_layer/adapter/persistence/repository/payment_refund_process_repository.py:134: "dict[str, object] | None",
+       application/billing/driven_layer/adapter/persistence/repository/payment_settlement_process_repository.py:90: "dict[str, object] | None",
+       application/billing/driven_layer/adapter/persistence/repository/payment_settlement_process_repository.py:126: "dict[str, object] | None",
+  proto에만(예: 다중 행 시그니처·테스트 밖 factories 등) 표본:
+       application/billing/driven_layer/adapter/external_system/toss/payment_processing_adapter.py:54
+       application/billing/driven_layer/adapter/external_system/toss/payment_processing_adapter.py:69
+       application/billing/driven_layer/adapter/legacy_billing_import/django_adapter.py:357
+       application/billing/driven_layer/adapter/legacy_billing_import/django_adapter.py:503
+       application/billing/driven_layer/adapter/legacy_billing_import/django_adapter.py:626
+       application/billing/driven_layer/adapter/legacy_billing_import/django_adapter.py:647
+json.load(s) 호출 60 · 후보 59
+  소비자 분포: {'assign [object]': 34, 'named-call:cast': 5, 'assign+next-isinstance [object]': 5, 'Dict': 4, 'assign+next-named-call [object]': 3, 'Tuple': 2, 'return': 2, 'keyword': 1, 'assign+next-named-call [dict[str, object]]': 1, 'named-call:_require_object': 1, 'assign [dict[str, object]]': 1, 'assign+next-isinstance': 1}
+    application/billing/application_layer/migration/import_legacy_billing/import_legacy_billing_use_case.py:420 [Dict] {'bundle_checksum': bundle.bundle_checksum, 'schema_fingerprint': bundle.schema_fingerprint, 'source_record_count': sour
+    application/billing/application_layer/migration/import_legacy_billing/import_legacy_billing_use_case.py:421 [Dict] {'bundle_checksum': bundle.bundle_checksum, 'schema_fingerprint': bundle.schema_fingerprint, 'source_record_count': sour
+    application/billing/application_layer/migration/import_legacy_billing/import_legacy_billing_use_case.py:422 [Dict] {'bundle_checksum': bundle.bundle_checksum, 'schema_fingerprint': bundle.schema_fingerprint, 'source_record_count': sour
+    application/billing/application_layer/migration/import_legacy_billing/import_legacy_billing_use_case.py:115 [named-call:cast] cast('list[object]', json.loads(bundle.issue_inventory_json_bytes))
+    application/billing/application_layer/payment/confirm_payment/confirm_payment_use_case.py:954 [assign+next-named-call [object]] snapshot_value: object = json.loads(evidence.restricted_response_json_bytes.decode('utf-8'))
+    application/billing/driven_layer/adapter/external_system/toss/payment_processing_adapter.py:93 [assign [object]] parsed_body: object = json.loads(raw_body)
+    application/billing/driven_layer/adapter/legacy_billing_import/django_adapter.py:1525 [assign+next-isinstance [object]] value: object = json.loads(raw)
+    application/billing/driven_layer/adapter/legacy_billing_import/django_adapter.py:1381 [Dict] {'classifier_version': classification.classifier_version, 'dataset': dataset, 'matched_rule': classification.matched_rul
+    application/billing/driven_layer/adapter/payment_confirmed_event_canonicalization/jcs_adapter.py:387 [assign+next-named-call [object]] decoded: object = json.loads(value.decode('utf-8'))
+    application/billing/driven_layer/adapter/persistence/repository/_legacy_billing_batch.py:412 [assign+next-isinstance [object]] decoded: object = json.loads(value)
+Mapping[str, object] top 매개변수 69 — 함수명 분포: {'_require': 2, 'declared_response': 1, '__init__': 1, '_ordered_summary_wire': 1, '_required_snapshot_id': 1, '_positions': 1, '_card': 1, 'classify_notification_event': 1, 'classify_marketing_consent': 1, '_reject_unknown': 1, 'map_notification_event': 1, 'map_push_token': 1, 'map_marketing_consent': 1, 'map_marketing_consent_event': 1, '_resolve_skip_reason': 1, '_is_mixed_ownership': 1, 'classify_review': 1, 'map_review': 1, '_require_uuid': 1, '_optional_uuid': 1}
+    application/product_observability/driving_layer/api/bug_report/bug_report_controller.py:185 declared_response(schema: Mapping[str, object])
+    application/saju/domain_layer/shared_value_object/stable_saju_summary.py:119 __init__(wire: Mapping[str, object])
+    application/saju/driven_layer/adapter/persistence/repository/saju_reconciliation_repository.py:192 _ordered_summary_wire(value: Mapping[object, object])
+    application/share/domain_layer/domain_service/shared_content_policy.py:78 _required_snapshot_id(snapshot: Mapping[str, object])
+    application/share/domain_layer/domain_service/shared_content_policy.py:85 _positions(spread_snapshot: Mapping[str, object])
+    application/share/domain_layer/domain_service/shared_content_policy.py:97 _card(raw: Mapping[str, object])
+    scripts/import_legacy_notification/audit_tags.py:63 classify_notification_event(record: Mapping[str, object])
+    scripts/import_legacy_notification/audit_tags.py:95 classify_marketing_consent(record: Mapping[str, object])
+    scripts/import_legacy_notification/audit_tags.py:123 _reject_unknown(record: Mapping[str, object])
+    scripts/import_legacy_notification/mapping.py:37 map_notification_event(record: Mapping[str, object])
+    scripts/import_legacy_notification/mapping.py:83 map_push_token(record: Mapping[str, object])
+    scripts/import_legacy_notification/mapping.py:99 map_marketing_consent(record: Mapping[str, object])
+프레임워크 오버라이드로 보이는 시그니처 히트 9: {('clean', 'sig-return', 'Any'): 6, ('clean', 'sig-return', 'object'): 1, ('deconstruct', 'sig-return', 'Any'): 1, ('__init__', 'sig-param', 'object'): 1}
+    application/billing/driven_layer/django_billing/admin/payment_order/form/payment_refund_form.py:14 clean ->: dict[str, object]
+    application/billing/driven_layer/django_billing/models/payment_order_model.py:19 deconstruct ->: dict[str, Any]
+    application/image/driven_layer/django_image/admin/image/form/image_form.py:31 clean ->: dict[str, Any]
+    application/saju/domain_layer/shared_value_object/stable_saju_summary.py:119 __init__ wire: Mapping[str, object]
+    application/share/driven_layer/django_share/admin/content_share/form/content_share_form.py:23 clean ->: dict[str, Any]
+    application/top3/driven_layer/django_top3/admin/post/form/post_form.py:28 clean ->: dict[str, Any]
+    web/mypage/profile_edit/form/profile_edit_form.py:161 clean ->: dict[str, Any]
+    web/mypage/restore_purchase/form/restore_purchase_form.py:37 clean ->: dict[str, Any]
+top 히트 569 중 라벨이 조회표 형(by_/index/map/registry/table/…) 11 (1%) — 예: ['lookup: dict[str, object]', 'payload_map: dict[str, object]', 'payload_map: dict[str, object]', 'owner_lookup: dict[str, object]', 'lookup: dict[str, object]', 'lookup: dict[str, object]']
+**kwargs 주석 분포(상위): {'"]': 2479, 't]': 979, '.]': 968, 'r]': 635, '[]': 578, 'e]': 482}
+직렬화 계열 함수(dumps/serial/to_json/canonical/digest/payload/encode) 시그니처 히트 13 — 예: ['_payload_from_source:dict[str, object]', '_validate_payload_anchors:dict[str, object]', '_decode_payload:dict[str, object]', '_load_payload:dict[str, object]', 'to_payload:dict[str, object]', 'to_payload:dict[str, object]']
+sig-return nested 히트 25 — 반환 주석 원문 상위:
+   TypeIs/TypeGuard[Mapping|dict[str, object|Any]] 반환: 0 []

@@ -1,0 +1,3 @@
+Success: no issues found in 338 source files
+~/Desktop/kkebi-server/.venv/bin/python -m mypy --follow-imports=silent       2.42s user 0.54s system 98% cpu 3.016 total
+exit 0

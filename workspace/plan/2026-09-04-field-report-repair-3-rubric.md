@@ -10,7 +10,14 @@
 
 조사자 3기(S-1 / S-4 / S-5) 독립 실측 + 코디 직접 확인(지도 `evidence/map/summary.md`). 증거 원문 `evidence/<항목>/summary.md`(스크립트·jsonl 동봉). 두 저장소 읽기 전용 · 검사기·mypy는 `git clone`+`checkout --detach`(+ 사본 안 worktree) 격리 사본에서 · mypy는 spring venv 인터프리터를 사본 cwd로.
 
-(조사자 요약은 아래 «⓪ 요약» 절에 추기)
+### ⓪ 요약 (2026-09-04 · 조사자 3기 완료 — 상세는 evidence/<항목>/summary.md)
+
+- **보고자 수치는 전부 재현**: S-1 39클래스(보고 40 · parler 1 혼입) · 맨몸 13/ignore 17+1/별칭 9 · mypy 26 ✓ · S-4 1,110/828/281 · mypy 70(P1 61+P2 9) ✓ · S-5 mypy 9 ✓ · OpenAPI 200 컴포넌트 f5ee428↔HEAD 바이트 동일 ✓. spring HEAD(7bfe1aa)는 발주측이 빚을 다 갚은 상태(mypy 0).
+- **kkebi 표본 외**: S-1 67클래스(ignore 21 · 별칭 31 · TC 분기 안 중간 ClassDef 15 — 제3의 모양 · monkeypatch 0) · S-4 431줄(값 `object` 417 : `Any` 157 — R-3448 형상이 지배) · S-5 상자 둘 6함수 + base 뭉뚱그림 31자리 + `RootModel` 단독 선례(tarot).
+- **확정 방향과 어긋나는 사실**(진행 정지 · 브리프 사유): S-1 ⑦ 11건(핵심: `django-stubs-ext`는 dev 전이 의존성 → monkeypatch는 운영 의존성 추가 없이는 부팅 실패 · 현장 68클래스가 전부 별칭 · 제3의 모양 · 보고자 `inlines` 예시 mypy red · #493 선언적 면제 상실 · CBV 코퍼스 예시 3줄 · naming 픽스처 교차 매트릭스) · S-4 ⑧ 13건(핵심: `Form.clean()` 오버라이드 대체 주석 없음 · `Mapping[str, object]` 입구 매개변수 103곳 전부 정당 · `json.load` ⓓ 오라클 정당 형상 100% 포착 · #645 이중 보고 100% · good 픽스처 red · R-3448이 대상) · S-5 ⑧ 7건(핵심: ⓑ ≡ 기존 #63 · ⓐⓒ는 프로필 무관 트리 슬라이스 자리 · ⓐ 근거 문장 과대 · openapi 검사기 문면 stale).
+- **어긋나지 않는 것**: S-1 monkeypatch가 23/23 기저를 덮음(상속) · CBV 현장 0 · S-4 코퍼스 모순 2줄뿐(SKILL.md:76 · ddd:1618) · S-5 코퍼스 모순 0 · architecture-api 계약 문면 0(중복 없음) · 픽스처 ⓐⓑⓒ 0.
+- 지도(`evidence/map/summary.md`): 8 doc 좌표 · 채번 빈 자리(R-3451~ · #646~) · 섹션 말미 추가 선례 9ef6c4f · 같은 날 2차 개정 IRI `@2026-09-04b` 선례.
+
 
 ## ① 공격 질문 (항목마다 필답 · 판정 병기)
 
