@@ -106,7 +106,7 @@ get_user(42)           # 타입 체커 에러
 ### 1.5 TypedDict: 이종 딕셔너리 타입 지정 [단단한 파이썬]
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
-외부 API, JSON 등 이종 데이터를 담는 딕셔너리에는 TypedDict를 사용하라.
+외부 API, JSON 등 이종 데이터를 담는 딕셔너리에는 TypedDict를 사용하라. **키가 정해진 값 묶음(레코드)은 `dict[str, object|Any]` 가 아니라 `TypedDict` 다** — 종류가 여럿이면 `kind: Literal["…"]` 판별 키로 union 을 만든다. 파싱한 JSON(파일·타 시스템·`json.loads` — HTTP body 는 ninja `Schema` 가 이미 검증)은 `pydantic.TypeAdapter(그TypedDict)` 의 `validate_python`/`validate_json` 으로 **검증하며** 받는다(`TypedDict` 는 선언일 뿐 실행 시 검사가 없고, `json.loads` 반환은 `Any` 라 `-> TypedDict` 로 그냥 돌려주면 strict `no-any-return` 이다 · coercion 이 입력을 숨기면 `strict=True` — §12.0). 키가 데이터인 조회표는 `dict[K, 구체 V]`(V 가 레코드면 `TypedDict`). 구조를 정하지 않고 통과·직렬화만 하는 값은 재귀 별칭 `type JsonValue = bool | int | float | str | None | Sequence[JsonValue] | Mapping[str, JsonValue]` 다(arm 은 공변 — `dict[str, str]` 조각을 재확정 없이 담는다). `TypedDict` 는 `JsonValue`·`dict[str, object]` 자리에 못 들어가므로 직렬화 인자로 넘길 때는 `object` 를 받아 `JsonValue` 로 재구성하는 브리지 하나를 둔다(그 `object` 는 입구 매개변수 — houserules §4). 도메인 개념은 값 객체다(architecture-ddd §3.1).
 
 ```python
 # 나쁜 예: 구조 알 수 없음
@@ -121,6 +121,48 @@ class NutritionInfo(TypedDict):
 class RecipeNutrition(TypedDict):
     calories: NutritionInfo
     fat: NutritionInfo
+```
+
+```python
+from collections.abc import Mapping, Sequence
+from typing import Literal, TypedDict
+
+from pydantic import TypeAdapter
+
+
+class PageCoordinate(TypedDict):
+    coordinate_kind: Literal["page"]
+    page_id: str
+    page_numbers: list[int]
+
+
+class SpanCoordinate(TypedDict):
+    coordinate_kind: Literal["span"]
+    start_offset: int
+    end_offset: int
+
+
+type Coordinate = PageCoordinate | SpanCoordinate          # 판별 키 union — 내부에서 리터럴로 만들 땐 검증 불요
+
+_COORDINATE: TypeAdapter[Coordinate] = TypeAdapter(Coordinate)   # 파싱한 JSON 은 여기서 검증(모듈 상수)
+
+
+def load_coordinate(raw: str) -> Coordinate:
+    return _COORDINATE.validate_json(raw, strict=True)      # `json.loads` → `Any` 를 직접 돌려주지 않는다
+
+
+type JsonScalar = bool | int | float | str | None
+type JsonValue = JsonScalar | Sequence[JsonValue] | Mapping[str, JsonValue]   # 구조 없는 통과·직렬화용
+
+
+def to_json_value(value: object) -> JsonValue:               # TypedDict → 직렬화 인자 브리지(입구 object)
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if isinstance(value, Mapping):
+        return {str(k): to_json_value(v) for k, v in value.items()}
+    if isinstance(value, Sequence):
+        return [to_json_value(v) for v in value]
+    raise TypeError(f"not JSON-serializable: {value!r}")
 ```
 
 ### 1.6 제네릭과 TypeVar [단단한 파이썬] [PEP 695]

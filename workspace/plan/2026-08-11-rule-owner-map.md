@@ -556,3 +556,6 @@
 | 643 | path | scripts/check-layer-skeleton.py | — | 신설 | 09-01 동명 폴더 승격 — 부품 0개 퇴화 |
 | 644 | ast+ | scripts/check-layer-skeleton.py | agents/discipline-reviewer.md | 신설 | 09-01 동명 폴더 승격 — ⓓ 캐스케이드 후보 신호 |
 | 645 | ast+ | scripts/check-public-surface-annotation.py | agents/discipline-reviewer.md | 신설 | 09-04 현장 보고 E — 명시 `Any` 정책(시그니처 bare = 위반 · 제네릭 안·변수 = ⓓ 후보) |
+| 646 | ast+ | scripts/check-public-surface-annotation.py | agents/discipline-reviewer.md | 신설 | 09-04 현장 보고 3 S-1 — django-stubs 제네릭 기저(맨몸·`type: ignore[type-arg]` 위반 · code 없는 ignore·런타임 subscript ⓓ 후보) |
+| 647 | ast+ | scripts/check-public-surface-annotation.py | agents/discipline-reviewer.md | 신설 | 09-04 현장 보고 3 S-4 — 딕셔너리-레코드(`dict/Mapping` 값 `Any` 전 자리·`object` 반환/속성 위반 · 입구 `object`·반환 자리표시 ⓓ 후보) |
+| 650 | ast+ | scripts/check-public-surface-annotation.py | agents/discipline-reviewer.md | 신설 | 09-04 현장 보고 3 S-4 — `json.load(s)` 무검증 흐름 ⓓ 전용(확정 위반은 #647) |

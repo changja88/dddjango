@@ -17,9 +17,7 @@ class OrderForm(forms.Form):
     def __init__(self, *args: object, **kwargs: object) -> None:
         super().__init__(*args, **kwargs)
 
-    def clean(self) -> dict[str, object]:
-        cleaned: dict[str, object] = dict(super().clean() or {})
-        raw: object = cleaned.get("note")
-        if _is_mapping(raw):
-            cleaned["note"] = str(raw.get("text", ""))
-        return cleaned
+    def clean(self) -> dict[str, object]:  # 스텁이 강제하는 오버라이드 — `dict[str, object]` 반환은 #647 면제
+        raw: object = (super().clean() or {}).get("note")
+        note: str = str(raw.get("text", "")) if _is_mapping(raw) else ""
+        return {"note": note}

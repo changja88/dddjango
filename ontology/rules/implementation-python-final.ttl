@@ -43,12 +43,18 @@ djr:R-2714 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2715 a djr:Obligation ;
-    skos:prefLabel "이종 데이터 딕셔너리의 TypedDict 사용"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2715@2026-08-22> .
+    skos:prefLabel "레코드는 TypedDict(판별 키 union) · 파싱한 JSON 은 TypeAdapter 검증 파싱(no-any-return) · 조회표는 dict[K, 구체 V] · 통과 값은 공변 JsonValue · TypedDict→직렬화는 object 입구 브리지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2715@2026-09-04> .
 
 <https://numchida.com/ns/djr#R-2715@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2715 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2715@2026-09-04> a djr:Expression ;
+    prov:specializationOf djr:R-2715 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2715@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-2716 a djr:Obligation ;
     skos:prefLabel "Concatenate 용처 — 데코레이터의 매개변수 추가·제거"@ko ;
@@ -739,13 +745,19 @@ djr:R-3446 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
     djr:statesNorm djr:R-2715 ;
-    djr:text "\n외부 API, JSON 등 이종 데이터를 담는 딕셔너리에는 TypedDict를 사용하라.\n\n"@ko .
+    djr:text "\n외부 API, JSON 등 이종 데이터를 담는 딕셔너리에는 TypedDict를 사용하라. **키가 정해진 값 묶음(레코드)은 `dict[str, object|Any]` 가 아니라 `TypedDict` 다** — 종류가 여럿이면 `kind: Literal[\"…\"]` 판별 키로 union 을 만든다. 파싱한 JSON(파일·타 시스템·`json.loads` — HTTP body 는 ninja `Schema` 가 이미 검증)은 `pydantic.TypeAdapter(그TypedDict)` 의 `validate_python`/`validate_json` 으로 **검증하며** 받는다(`TypedDict` 는 선언일 뿐 실행 시 검사가 없고, `json.loads` 반환은 `Any` 라 `-> TypedDict` 로 그냥 돌려주면 strict `no-any-return` 이다 · coercion 이 입력을 숨기면 `strict=True` — §12.0). 키가 데이터인 조회표는 `dict[K, 구체 V]`(V 가 레코드면 `TypedDict`). 구조를 정하지 않고 통과·직렬화만 하는 값은 재귀 별칭 `type JsonValue = bool | int | float | str | None | Sequence[JsonValue] | Mapping[str, JsonValue]` 다(arm 은 공변 — `dict[str, str]` 조각을 재확정 없이 담는다). `TypedDict` 는 `JsonValue`·`dict[str, object]` 자리에 못 들어가므로 직렬화 인자로 넘길 때는 `object` 를 받아 `JsonValue` 로 재구성하는 브리지 하나를 둔다(그 `object` 는 입구 매개변수 — houserules §4). 도메인 개념은 값 객체다(architecture-ddd §3.1).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s007-1.5/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s007-1.5> ;
     djr:kind djr:kind-code ;
     djr:order 2 ;
     djr:text "```python\n# 나쁜 예: 구조 알 수 없음\ndata = get_nutrition_from_api(name)\nprint(data['fat']['value'])  # 키가 뭐가 있는지 모름\n\n# 좋은 예: TypedDict로 구조 명시\nclass NutritionInfo(TypedDict):\n    value: int\n    unit: str\n\nclass RecipeNutrition(TypedDict):\n    calories: NutritionInfo\n    fat: NutritionInfo\n```\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s007-1.5/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s007-1.5> ;
+    djr:kind djr:kind-code ;
+    djr:order 3 ;
+    djr:text "```python\nfrom collections.abc import Mapping, Sequence\nfrom typing import Literal, TypedDict\n\nfrom pydantic import TypeAdapter\n\n\nclass PageCoordinate(TypedDict):\n    coordinate_kind: Literal[\"page\"]\n    page_id: str\n    page_numbers: list[int]\n\n\nclass SpanCoordinate(TypedDict):\n    coordinate_kind: Literal[\"span\"]\n    start_offset: int\n    end_offset: int\n\n\ntype Coordinate = PageCoordinate | SpanCoordinate          # 판별 키 union — 내부에서 리터럴로 만들 땐 검증 불요\n\n_COORDINATE: TypeAdapter[Coordinate] = TypeAdapter(Coordinate)   # 파싱한 JSON 은 여기서 검증(모듈 상수)\n\n\ndef load_coordinate(raw: str) -> Coordinate:\n    return _COORDINATE.validate_json(raw, strict=True)      # `json.loads` → `Any` 를 직접 돌려주지 않는다\n\n\ntype JsonScalar = bool | int | float | str | None\ntype JsonValue = JsonScalar | Sequence[JsonValue] | Mapping[str, JsonValue]   # 구조 없는 통과·직렬화용\n\n\ndef to_json_value(value: object) -> JsonValue:               # TypedDict → 직렬화 인자 브리지(입구 object)\n    if value is None or isinstance(value, (bool, int, float, str)):\n        return value\n    if isinstance(value, Mapping):\n        return {str(k): to_json_value(v) for k, v in value.items()}\n    if isinstance(value, Sequence):\n        return [to_json_value(v) for v in value]\n    raise TypeError(f\"not JSON-serializable: {value!r}\")\n```\n\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-python/references/final.md/s013-1.11> a djr:Section ;
     djr:headingSnapshot "### 1.11 Concatenate: 매개변수 추가/제거 [PEP 612]"@ko ;

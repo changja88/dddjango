@@ -1,0 +1,50 @@
+# registry_gate — 판정 차분 · kkebi · 앵커 6608fb0d955c
+툴체인: dddjango v2.17.17 · py3.14 · 실행 트리 digest 5e1eb5935e8172ab(39파일) · 경로 /Users/hyun/Desktop/dddjango/dddjango/scripts
+**귀속 0 ≠ 전체 clean** — 이 게이트는 «이번 런이 위반을 늘렸나»만 판정한다(legacy 격리).
+| 검사기 | anchor | current |
+|---|---|---|
+| `check-mechanism-ownership.py` | 0 | 0 |
+| `check-error-centralization.py` | 0 | 0 |
+| `check-response-schema-bypass.py` | 0 | 0 |
+| `check-layer-skeleton.py` | 0 | 0 |
+| `check-openapi-error-declaration.py` | 0 | 0 |
+| `check-context-isolation.py` | 2 | 2 |
+| `check-app-container.py` | 2 | 0 |
+| `check-ninja-boundary-middleware.py` | 0 | 0 |
+| `check-common-container.py` | 0 | 0 |
+| `check-idempotency-scope-creep.py` | 2 | 0 |
+| `check-public-surface-annotation.py` | 2 | 2 |
+| `check-test-config.py` | 2 | 2 |
+| `check-transient-overmapping.py` | 0 | 0 |
+| `check-synthetic-infra-exc.py` | 0 | 0 |
+| `check-api-error-controller-contract.py` | 0 | 0 |
+| `check-composition-root.py` | 0 | 0 |
+| `check-db-table.py` | 0 | 0 |
+| `check-choices-literal-consumption.py` | 0 | 0 |
+| `check-usecase-dto-placement.py` | 2 | 2 |
+| `check-transaction-boundary.py` | 0 | 0 |
+| `check-domain-model.py` | 2 | 2 |
+| `check-port-adapter-pairing.py` | 0 | 0 |
+| `check-event-publish.py` | 0 | 0 |
+| `check-broker-contract.py` | 2 | 2 |
+| `check-missable-entrance.py` | 0 | 0 |
+| `check-naming.py` | 0 | 0 |
+| `check-business-vocabulary.py` | 2 | 2 |
+
+== 귀속(N∖L) 0건 ==
+
+== legacy 잔존(L∩N) 512건 · 해소(L∖N) 2건 ==
+  check-broker-contract.py: 3
+  check-business-vocabulary.py: 2
+  check-context-isolation.py: 17
+  check-domain-model.py: 2
+  check-public-surface-annotation.py: 455
+  check-test-config.py: 6
+  check-usecase-dto-placement.py: 27
+
+== ⓓ 신규(N′∖L′) 0건 · legacy 1269건 · 해소 0건 — exit 불산입 · 감수자 입력은 신규분만(R-0284) ==
+
+귀속 레코드 sidecar → /private/tmp/claude-501/-Users-hyun-Desktop-dddjango/d31bf8ef-f45e-4609-badc-3add1039bdb0/scratchpad/fr3/impl/gate-kkebi-introduced.json (레코드 0 · 대응 없는 귀속 라인 0)
+
+판정: 귀속 0건 → green(신규 위반 없음)
+exit=0

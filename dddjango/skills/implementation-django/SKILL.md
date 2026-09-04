@@ -53,5 +53,6 @@ Django 코어(모델·ORM·서비스 레이어·트랜잭션·설정·마이그�
 | 미들웨어 | §15 |
 | 서비스 레이어·트랜잭션·outbox | §16 |
 | Django 5.x 새 기능 | §17 |
+| Django admin·폼 타이핑(django-stubs 제네릭 기저) | §18 |
 
 각 절은 [`references/final.md`](references/final.md)에서 필요한 항목만 읽는다(전체 로드 불필요).

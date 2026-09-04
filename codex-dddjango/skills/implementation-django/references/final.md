@@ -1325,7 +1325,8 @@ def edit_article(request, pk):
 # 뷰 레벨 인증 (CBV)
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
-class EditArticleView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+# _EditArticleBase: TYPE_CHECKING 별칭 = UpdateView[Article, ArticleForm] — django-stubs 제네릭 기저 표기(houserules §4 · §18)
+class EditArticleView(LoginRequiredMixin, PermissionRequiredMixin, _EditArticleBase):
     permission_required = "articles.change_article"
     ...
 ```
@@ -1850,3 +1851,63 @@ python manage.py shell
 - [HackSoft Django Styleguide](https://github.com/HackSoftware/Django-Styleguide)
 - [Django Anti-Patterns](https://www.django-antipatterns.com/)
 - [Django Best Practices (Lincoln Loop)](https://lincolnloop.com/blog/django-anti-patterns-signals/)
+## 18. Django admin·폼 타이핑 — django-stubs 제네릭 기저
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
+
+admin 저작 화면(`driven_layer/django_<bc>/admin/` — 배치·import 방향은 `discipline-houserules` §1 트리 82행·§5)의 `ModelForm`·`BaseInlineFormSet`·`ModelAdmin`·`TabularInline`/`StackedInline` 은 django-stubs 가 제네릭으로 선언하지만 런타임 클래스는 subscript 를 못 한다 — 규칙(타입 인자 필수 · `# type: ignore[type-arg]` 금지 · 별칭 기본 / monkeypatch 채택 시 직접)은 houserules §4·§6.1 이 소유하고, 이 절은 그 «어떻게»를 한 벌로 보인다. 웹 폼의 `ModelForm` 도 같은 표기다(`implementation-django-web` §6).
+
+```python
+from __future__ import annotations
+
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, TypeAlias
+
+from django import forms
+from django.contrib import admin
+from django.db.models import Model
+from django.forms import BaseInlineFormSet, ModelForm
+from django.http import HttpRequest
+
+if TYPE_CHECKING:  # django-stubs 전용 — 런타임 클래스는 subscript 불가
+    _ChildFormBase: TypeAlias = forms.ModelForm[ChildModel]  # noqa: UP040 -- 기저로 쓰는 별칭이라 `type` 문이 될 수 없다
+    _ChildFormSetBase: TypeAlias = BaseInlineFormSet[ChildModel, ParentModel]  # noqa: UP040 -- 셋째 인자(폼)는 적지 않는다: 기본값 ModelForm[ChildModel] 만 admin `formset` 자리(불변)와 맞는다
+    _ChildInlineBase: TypeAlias = admin.TabularInline[ChildModel, ParentModel]  # noqa: UP040
+    _ParentAdminBase: TypeAlias = admin.ModelAdmin[ParentModel]  # noqa: UP040
+else:
+    _ChildFormBase: type[forms.ModelForm] = forms.ModelForm
+    _ChildFormSetBase: type[BaseInlineFormSet] = BaseInlineFormSet
+    _ChildInlineBase: type[admin.TabularInline] = admin.TabularInline
+    _ParentAdminBase: type[admin.ModelAdmin] = admin.ModelAdmin
+
+# 주석 전용 별칭은 `type` 문(지연 평가) — 자식 모델이 여럿이면 bound 로 적는다(`Any` 아님)
+type ParentInlineFormSet = BaseInlineFormSet[Model, ParentModel, ModelForm[Model]]
+
+
+class ChildInlineForm(_ChildFormBase):
+    class Meta:
+        model = ChildModel
+        fields = ("field_a", "field_b")
+
+
+class ChildInlineFormSet(_ChildFormSetBase):
+    def clean(self) -> None: ...
+
+
+class ChildInline(_ChildInlineBase):
+    model = ChildModel            # admin 선언 속성 — 스텁 ClassVar 가 타입을 소유(houserules §4 면제)
+    form = ChildInlineForm
+    formset = ChildInlineFormSet
+    extra = 0
+
+
+@admin.register(ParentModel)
+class ParentAdmin(_ParentAdminBase):
+    readonly_fields = ("version",)  # 무주석 — 스텁 `ClassVar[_ListOrTuple[str]]` 가 타입을 소유
+    inlines = [ChildInline]         # 재선언하면 `list[type[InlineModelAdmin[Any, Any]]]` 와 불변성 충돌 — 적지 않는다
+
+    def save_model(self, request: HttpRequest, obj: ParentModel, form: ModelForm[ParentModel], change: bool) -> None: ...
+
+    def save_related(self, request: HttpRequest, form: ModelForm[ParentModel], formsets: Sequence[ParentInlineFormSet], change: bool) -> None: ...
+```
+
+프로젝트가 `django_stubs_ext.monkeypatch()` 를 채택했으면(houserules §6.1 관찰) `if TYPE_CHECKING:` 블록 없이 `class ParentAdmin(admin.ModelAdmin[ParentModel])` 로 직접 적는다 — 그 밖은 위 별칭이다. `BaseInlineFormSet` 의 세 번째 인자(폼 타입)는 적지 않는다 — 기본값 `ModelForm[_M]` 이 스텁 `InlineModelAdmin.formset`(`type[BaseInlineFormSet[_C, _P, ModelForm[_C]]]` · 불변)과 맞는 유일한 값이라 구체 폼 클래스를 적으면 `formset = …` 대입이 `[assignment]` 로 막힌다. `# type: ignore[type-arg]` 로 맨몸을 덮지 않는다(#646).

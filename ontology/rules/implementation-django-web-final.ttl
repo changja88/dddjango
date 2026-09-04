@@ -1026,6 +1026,14 @@ djr:R-2377 a djr:Obligation ;
     prov:specializationOf djr:R-2377 ;
     djr:revision 1 .
 
+djr:R-3462 a djr:Obligation ;
+    skos:prefLabel "웹 폼 ModelForm 기저는 django-stubs 제네릭 — 모델 타입 인자를 적는다(TYPE_CHECKING 별칭 · 규칙은 houserules §4 · admin 한 벌은 implementation-django §18)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3462@2026-09-04> .
+
+<https://numchida.com/ns/djr#R-3462@2026-09-04> a djr:Expression ;
+    prov:specializationOf djr:R-3462 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-web/references/final.md> a djr:Document ;
     skos:prefLabel "implementation-django-web-final"@ko .
 
@@ -1145,7 +1153,7 @@ djr:R-2377 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s003-2> ;
     djr:kind djr:kind-code ;
     djr:order 10 ;
-    djr:text "```python\nfrom django.views.generic import ListView, CreateView\nfrom django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin\nfrom django.contrib.auth.decorators import login_required\nfrom django.views.decorators.http import require_http_methods\nfrom django.shortcuts import render, redirect\nfrom django.urls import reverse_lazy\n\n\n# Generic CBV: 보일러플레이트 최소화. queryset은 selector/Manager로 준비\nclass ArticleListView(ListView):\n    queryset = Article.objects.published().select_related(\"author\")\n    paginate_by = 20\n    context_object_name = \"articles\"\n\n\nclass ArticleCreateView(LoginRequiredMixin, CreateView):\n    model = Article\n    form_class = ArticleForm\n    success_url = reverse_lazy(\"article-list\")\n\n    def form_valid(self, form):\n        form.instance.author = self.request.user\n        return super().form_valid(form)  # durable invariant는 여기 몰지 않는다\n\n\n# Mixin: 한 관심사만 담당, MRO는 왼쪽 -> 오른쪽\nclass StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):\n    def test_func(self):\n        return self.request.user.is_staff\n\n\n# FBV: GET/POST 흐름이 명시적이어야 할 때\n@login_required\n@require_http_methods([\"GET\", \"POST\"])\ndef article_create(request):\n    if request.method == \"POST\":\n        form = ArticleForm(request.POST)\n        if form.is_valid():\n            article = create_article(author=request.user, **form.cleaned_data)  # service 호출\n            return redirect(\"article-detail\", pk=article.pk)\n    else:\n        form = ArticleForm()\n    return render(request, \"articles/create.html\", {\"form\": form})\n```\n\n" .
+    djr:text "```python\nfrom django.views.generic import ListView, CreateView\nfrom django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin\nfrom django.contrib.auth.decorators import login_required\nfrom django.views.decorators.http import require_http_methods\nfrom django.shortcuts import render, redirect\nfrom django.urls import reverse_lazy\nfrom typing import TYPE_CHECKING, TypeAlias\n\nif TYPE_CHECKING:  # Generic CBV 기저는 django-stubs 제네릭 — 표기는 houserules §4(별칭 기본 · monkeypatch 채택 시 ListView[Article] 직접)\n    _ArticleListBase: TypeAlias = ListView[Article]  # noqa: UP040\n    _ArticleCreateBase: TypeAlias = CreateView[Article, ArticleForm]  # noqa: UP040\nelse:\n    _ArticleListBase: type[ListView] = ListView\n    _ArticleCreateBase: type[CreateView] = CreateView\n\n\n# Generic CBV: 보일러플레이트 최소화. queryset은 selector/Manager로 준비\nclass ArticleListView(_ArticleListBase):\n    queryset = Article.objects.published().select_related(\"author\")\n    paginate_by = 20\n    context_object_name = \"articles\"\n\n\nclass ArticleCreateView(LoginRequiredMixin, _ArticleCreateBase):\n    model = Article\n    form_class = ArticleForm\n    success_url = reverse_lazy(\"article-list\")\n\n    def form_valid(self, form):\n        form.instance.author = self.request.user\n        return super().form_valid(form)  # durable invariant는 여기 몰지 않는다\n\n\n# Mixin: 한 관심사만 담당, MRO는 왼쪽 -> 오른쪽\nclass StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):\n    def test_func(self):\n        return self.request.user.is_staff\n\n\n# FBV: GET/POST 흐름이 명시적이어야 할 때\n@login_required\n@require_http_methods([\"GET\", \"POST\"])\ndef article_create(request):\n    if request.method == \"POST\":\n        form = ArticleForm(request.POST)\n        if form.is_valid():\n            article = create_article(author=request.user, **form.cleaned_data)  # service 호출\n            return redirect(\"article-detail\", pk=article.pk)\n    else:\n        form = ArticleForm()\n    return render(request, \"articles/create.html\", {\"form\": form})\n```\n\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s003-2/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s003-2> ;
@@ -1451,6 +1459,13 @@ djr:R-2377 a djr:Obligation ;
     djr:statesNorm djr:R-2309, djr:R-2310 ;
     djr:text "\nForm은 input shape, presentation error, user-facing validation message를 담당한다. durable domain invariant는 model/service/DB boundary에서도 보장되어야 한다. **[DDoc] [TSD] [dddjango-django]**\n\n"@ko .
 
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s007-6/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s007-6> ;
+    djr:kind djr:kind-norm ;
+    djr:order 10 ;
+    djr:statesNorm djr:R-3462 ;
+    djr:text "- `ModelForm` 기저는 django-stubs 제네릭이라 모델 타입 인자를 적는다 — 위 `ArticleForm` 의 `_ArticleFormBase`(`if TYPE_CHECKING:` 별칭 = `forms.ModelForm[Article]` · 런타임은 `forms.ModelForm`)가 그 표기이고, monkeypatch 채택 시 직접 표기와 `# type: ignore[type-arg]` 금지는 `discipline-houserules` §4 소유 · admin 쪽 한 벌은 `implementation-django` §18.\n\n"@ko .
+
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s007-6/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s007-6> ;
     djr:kind djr:kind-prose ;
@@ -1502,7 +1517,7 @@ djr:R-2377 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s007-6> ;
     djr:kind djr:kind-code ;
     djr:order 9 ;
-    djr:text "```python\nfrom django import forms\nfrom django.core.exceptions import ValidationError\n\n\n# 검증 순서: Field.clean() -> clean_<field>() -> 교차 필드 clean()\nclass RegistrationForm(forms.Form):\n    email = forms.EmailField()\n    password = forms.CharField(widget=forms.PasswordInput)\n    password_confirm = forms.CharField(widget=forms.PasswordInput)\n\n    def clean_email(self):\n        email = self.cleaned_data[\"email\"].lower()\n        if User.objects.filter(email=email).exists():\n            raise ValidationError(\"이미 등록된 이메일입니다.\")\n        return email\n\n    def clean(self):\n        cleaned = super().clean()\n        if cleaned.get(\"password\") != cleaned.get(\"password_confirm\"):\n            raise ValidationError(\"비밀번호가 일치하지 않습니다.\")\n        return cleaned\n\n\n# ModelForm: fields를 명시적으로 나열한다 (\"__all__\"/exclude는 의도치 않은 노출 위험)\nclass ArticleForm(forms.ModelForm):\n    class Meta:\n        model = Article\n        fields = [\"title\", \"body\", \"category\"]\n```\n\n" .
+    djr:text "```python\nfrom django import forms\nfrom django.core.exceptions import ValidationError\nfrom typing import TYPE_CHECKING, TypeAlias\n\n\n# 검증 순서: Field.clean() -> clean_<field>() -> 교차 필드 clean()\nclass RegistrationForm(forms.Form):\n    email = forms.EmailField()\n    password = forms.CharField(widget=forms.PasswordInput)\n    password_confirm = forms.CharField(widget=forms.PasswordInput)\n\n    def clean_email(self):\n        email = self.cleaned_data[\"email\"].lower()\n        if User.objects.filter(email=email).exists():\n            raise ValidationError(\"이미 등록된 이메일입니다.\")\n        return email\n\n    def clean(self):\n        cleaned = super().clean()\n        if cleaned.get(\"password\") != cleaned.get(\"password_confirm\"):\n            raise ValidationError(\"비밀번호가 일치하지 않습니다.\")\n        return cleaned\n\n\nif TYPE_CHECKING:  # ModelForm 기저는 django-stubs 제네릭 — 런타임은 subscript 불가(houserules §4)\n    _ArticleFormBase: TypeAlias = forms.ModelForm[Article]  # noqa: UP040\nelse:\n    _ArticleFormBase: type[forms.ModelForm] = forms.ModelForm\n\n\n# ModelForm: fields를 명시적으로 나열한다 (\"__all__\"/exclude는 의도치 않은 노출 위험)\nclass ArticleForm(_ArticleFormBase):\n    class Meta:\n        model = Article\n        fields = [\"title\", \"body\", \"category\"]\n```\n\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-web/references/final.md/s008-7> a djr:Section ;
     djr:headingSnapshot "## 7. HTMX fragment와 AJAX"@ko ;

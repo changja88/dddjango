@@ -67,16 +67,24 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
+from typing import TYPE_CHECKING, TypeAlias
+
+if TYPE_CHECKING:  # Generic CBV 기저는 django-stubs 제네릭 — 표기는 houserules §4(별칭 기본 · monkeypatch 채택 시 ListView[Article] 직접)
+    _ArticleListBase: TypeAlias = ListView[Article]  # noqa: UP040
+    _ArticleCreateBase: TypeAlias = CreateView[Article, ArticleForm]  # noqa: UP040
+else:
+    _ArticleListBase: type[ListView] = ListView
+    _ArticleCreateBase: type[CreateView] = CreateView
 
 
 # Generic CBV: 보일러플레이트 최소화. queryset은 selector/Manager로 준비
-class ArticleListView(ListView):
+class ArticleListView(_ArticleListBase):
     queryset = Article.objects.published().select_related("author")
     paginate_by = 20
     context_object_name = "articles"
 
 
-class ArticleCreateView(LoginRequiredMixin, CreateView):
+class ArticleCreateView(LoginRequiredMixin, _ArticleCreateBase):
     model = Article
     form_class = ArticleForm
     success_url = reverse_lazy("article-list")
@@ -186,6 +194,7 @@ Form은 input shape, presentation error, user-facing validation message를 담�
 ```python
 from django import forms
 from django.core.exceptions import ValidationError
+from typing import TYPE_CHECKING, TypeAlias
 
 
 # 검증 순서: Field.clean() -> clean_<field>() -> 교차 필드 clean()
@@ -207,12 +216,20 @@ class RegistrationForm(forms.Form):
         return cleaned
 
 
+if TYPE_CHECKING:  # ModelForm 기저는 django-stubs 제네릭 — 런타임은 subscript 불가(houserules §4)
+    _ArticleFormBase: TypeAlias = forms.ModelForm[Article]  # noqa: UP040
+else:
+    _ArticleFormBase: type[forms.ModelForm] = forms.ModelForm
+
+
 # ModelForm: fields를 명시적으로 나열한다 ("__all__"/exclude는 의도치 않은 노출 위험)
-class ArticleForm(forms.ModelForm):
+class ArticleForm(_ArticleFormBase):
     class Meta:
         model = Article
         fields = ["title", "body", "category"]
 ```
+
+- `ModelForm` 기저는 django-stubs 제네릭이라 모델 타입 인자를 적는다 — 위 `ArticleForm` 의 `_ArticleFormBase`(`if TYPE_CHECKING:` 별칭 = `forms.ModelForm[Article]` · 런타임은 `forms.ModelForm`)가 그 표기이고, monkeypatch 채택 시 직접 표기와 `# type: ignore[type-arg]` 금지는 `discipline-houserules` §4 소유 · admin 쪽 한 벌은 `implementation-django` §18.
 
 ## 7. HTMX fragment와 AJAX
 

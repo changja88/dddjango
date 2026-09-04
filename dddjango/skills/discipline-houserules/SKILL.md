@@ -69,11 +69,24 @@ user-invocable: false
 
 - `for x in xs:` · `with f() as x:` · `except E as e:` · 언패킹(`a, b = pair`) · 다중 대입(`a = b = 0`) · 증강 대입(`x += 1`)
 - 재대입(첫 바인딩에서 1회만 단다) · 인스턴스 속성 `self.x = ...`(타입은 클래스 본문에 `x: T`)
-- 프레임워크 선언: Django 모델 필드(`name = models.CharField(...)`) · `class Meta` 옵션 · enum 멤버(`RED = 1`) — 달면 프레임워크 의미가 오작동한다
+- 프레임워크 선언: Django 모델 필드(`name = models.CharField(...)`)·폼 필드 · `class Meta` 옵션 · enum 멤버(`RED = 1`) — 달면 프레임워크 의미가 오작동한다 · admin 패널 클래스 본문의 Django 선언 속성(`model`·`inlines`·`list_display`·`readonly_fields` …) — 타입은 스텁의 `ClassVar` 가 소유하고 `inlines` 처럼 재선언이 불변성 red 가 되는 자리가 있어 적지 않는다(적으면 스텁 선언과 같아야 한다 · 선언적 클래스 본문의 메서드는 면제가 아니다)
 
 pydantic·ninja `Schema`·`dataclass` 필드는 `x: T` 가 있어야 동작한다 — bare 대입이면 규칙 위반이기 전에 버그다. 표준 문서군의 코드 예시는 개념 전달용 발췌라 적용 대상이 아니다 — 규칙은 생성하는 프로덕션·테스트 코드에 건다.
 
-**`Any` 는 타입이 아니라 검사 포기다 — 어디에도 쓰지 않는다.** 함수 시그니처(인자·`*args/**kwargs`·반환)·변수·클래스 속성·제네릭 인자(`dict[str, Any]`) 전부다 — 별표 인자 면제(ruff `allow-star-arg-any`) 관례와 다른 선택이다. 프레임워크 오버라이드가 스텁에서 `Any` 를 쓰더라도 우리 쪽 선언은 `object`(또는 정확 타입)로 쓴다 — mypy 는 이를 호환으로 본다. 시그니처의 `Any` 는 #645 가 차단하고, 변수·제네릭 안의 `Any` 는 ⓓ 후보(#645)로 표시된다 — 후보는 감수자가 집행한다(§4.1 «시그니처만 강제하므로 나머지는 백스톱과 감수자» 와 같은 분담). 경계 입력(JSON·폼 `cleaned_data`·`request.user`·무스텁 서드파티)은 `object` 또는 프레임워크가 주는 정확한 타입으로 받아 **받는 즉시** 좁힌다(`TypeIs`·`isinstance`·`type() is` — implementation-python §1.12 · 좁히는 자리는 architecture-ddd §3.1 의 경계 규범대로 값 객체를 부르기 전). JSON 문서는 `Mapping[str, object]`.
+**`Any` 는 타입이 아니라 검사 포기다 — 어디에도 쓰지 않는다.** 함수 시그니처(인자·`*args/**kwargs`·반환)·변수·클래스 속성·제네릭 인자(`dict[str, Any]`) 전부다 — 별표 인자 면제(ruff `allow-star-arg-any`) 관례와 다른 선택이다. 프레임워크 오버라이드가 스텁에서 `Any` 를 쓰더라도 우리 쪽 선언은 `object`(또는 정확 타입)로 쓴다 — mypy 는 이를 호환으로 본다. 시그니처의 `Any` 는 #645 가 차단하고, 변수·제네릭 안의 `Any` 는 ⓓ 후보(#645)로 표시된다 — 단 `dict`/`Mapping`/`MutableMapping` 의 **값 자리** `Any`(`dict[str, Any]` — 매개변수·반환·변수·속성 어디든)는 #647 이 차단하며 그 자리는 #645 후보로 남지 않는다. 후보는 감수자가 집행한다(§4.1 «시그니처만 강제하므로 나머지는 백스톱과 감수자» 와 같은 분담). 경계 입력(폼 `cleaned_data`·`request.user`·무스텁 서드파티·`json.loads` 결과)은 `object` 또는 프레임워크가 주는 정확한 타입으로 받아 **받는 즉시** 좁힌다(`TypeIs`·`isinstance`·`type() is` — implementation-python §1.12 · 좁히는 자리는 architecture-ddd §3.1 의 경계 규범대로 값 객체를 부르기 전). **JSON 문서는 `pydantic.TypeAdapter(그TypedDict).validate_python`/`validate_json` 으로 검증하며 받는다** — 대상은 파일·타 시스템·`json.loads` 결과이고 우리가 만든 JSON 도 파싱했으면 같다(strict `no-any-return`); HTTP body 는 ninja `Schema` 가 그 검증이다(implementation-python §12.0). 어떻게는 implementation-python §1.5, 무엇을 고르는지는 아래 결정표다. `object` 가 사는 자리는 좁히기·검증 도우미의 **매개변수**와 즉시 검증되는 **지역 변수**뿐이다(그 자리의 `dict/Mapping[…, object]` 는 #647 ⓓ 후보 — 감수자가 즉시 좁힘을 확인한다). **반환값·클래스 속성**에 `dict/Mapping[…, object]` 가 남으면 좁히지 않은 누수라 #647 이 차단한다. 면제는 둘 — 스텁이 강제하는 `forms.Form` 하위 `clean() -> dict[str, object]`(`ModelForm.clean` 은 `None` 이라 대상 아님)와 `TypeIs`/`TypeGuard[...]` 반환. `dict/Mapping` 값 자리가 아닌 반환 주석의 `object`(`-> object` 루트 · `tuple`/`list`/`Sequence` 원소)도 입구 밖 자리표시라 #647 ⓓ 후보다 — 예외는 스텁이 `object` 로 강제하는 프레임워크 콜백·오버라이드의 미러와 이벤트 컬렉션(`list[<Bc>Event]` 로 적을 수 있으면 그것이 답이다). `json.load(s)` 결과를 `TypeAdapter` 검증 없이 `object` 아닌 주석의 변수·`object` 아닌 반환·컴프리헨션·직접 첨자/속성 접근·리터럴 컨테이너 요소로 흘린 자리는 ⓓ #650 이다 — `x: object = json.loads(…)` 뒤 즉시 검증과 파서 직접 인자는 후보가 아니다.
+
+**키가 정해진 값 묶음(레코드)은 딕셔너리로 들고 다니지 않는다** — 우리 코드가 리터럴로 만든 값은 `TypedDict`, 파싱한 JSON 은 `TypeAdapter(그TypedDict)` 검증 파싱, 도메인 개념은 값 객체(architecture-ddd §3.1). `dict/Mapping[str, object|Any]` 주석은 그 자체가 «구조를 안 정했다»는 신호다(#647). 레인이 바로 고르는 결정표:
+
+| 값의 모양 | 어디서 왔나 | 쓰는 도구 | 금지 |
+|---|---|---|---|
+| 키가 정해진 값 묶음(레코드) | 우리 코드가 리터럴로 만든 내부 데이터 | `TypedDict`(종류가 여럿이면 `kind: Literal[…]` 판별 키로 union) | `dict/Mapping[str, object\|Any]` |
+| 키가 정해진 값 묶음 | 파싱한 JSON(파일 `json.load`·타 시스템·`json.loads` — 우리가 쓴 파일도 같다) | `TypeAdapter(그TypedDict).validate_python/validate_json` 로 검증 파싱(HTTP body 는 ninja `Schema` 가 이미 검증) · 파싱 전 값 사용 금지 | 검증 없는 `-> TypedDict` 반환(strict `no-any-return`) · `Any`/`object` 로 흘리기(ⓓ #650) |
+| 도메인 개념 | 도메인 계층 | dataclass·값 객체(architecture-ddd §3.1) | 딕셔너리 |
+| 키가 데이터인 모음(조회표) | 어디든 | `dict[K, V]` 에 K·V 구체 타입(V 가 레코드면 `TypedDict`) | 값 타입 `object`·`Any` |
+| 구조를 모르는 임의 JSON 통과 | 직렬화·저장 경계 | 재귀 별칭 `JsonValue`(implementation-python §1.5 — arm 은 공변 `Sequence`/`Mapping`) | `dict[str, object]`·`Any` |
+| 타입이 이미 있는 값 | 함수 반환·매개변수·속성 | 실제 클래스(`BuildPlan` 등) | **입구 밖**의 자리표시 `object`(입구 매개변수·즉시 검증 지역 변수는 위 R-3448 · 반환 주석의 `object` 는 ⓓ #647) |
+
+**django-stubs 가 제네릭으로 선언했지만 런타임은 subscript 못 하는 Django 기저는 모델 타입 인자를 적는다** — 타입 매개변수에 기본값이 없는 것들이다: `ModelForm`·`BaseInlineFormSet`·`ModelAdmin`·`InlineModelAdmin`(`TabularInline`/`StackedInline`)과 `ListView`·`DetailView`·`CreateView`·`UpdateView`·`DeleteView`·`FormView` 및 그 mixin(`View`·`TemplateView`·`RedirectView` 는 기본값이 있어 대상 밖). 맨몸 상속은 mypy strict `[type-arg]` 빚이고, `# type: ignore[type-arg]` 는 통과가 아니라 은폐라 붙이지 않는다 — 둘 다 #646 이 차단한다. 표기는 **`if TYPE_CHECKING:` 별칭이 기본**이다: `_ModelAdminBase: TypeAlias = admin.ModelAdmin[Parent]  # noqa: UP040` / `else: _ModelAdminBase: type[admin.ModelAdmin] = admin.ModelAdmin` — 기저에 직접 `X[Model]` 을 쓰면 import 시 `TypeError` 다(주석에만 쓰는 별칭은 `type` 문 — 지연 평가). 프로젝트가 `django_stubs_ext.monkeypatch()` 를 채택했으면(§6.1 의 관찰) 별칭 없이 `X[Model]` 직접 표기 — 채택은 레인이 도입하지 않는다. 스텁이 `ClassVar` 로 타입을 소유한 admin 선언 속성(`inlines` 등)은 재선언하지 않고(위 프레임워크 선언 면제), 프레임워크가 열어 둔 타입 매개변수는 bound(`Model`·`ModelForm[Model]`)로 적는다 — 예시는 implementation-django §18.
 
 ### §4.1 왜 전부인가
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
@@ -90,7 +103,7 @@ pydantic·ninja `Schema`·`dataclass` 필드는 `x: T` 가 있어야 동작한�
 ### §6.1 부트스트랩·표준 도구셋
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
-표준 도구셋(패키지 매니저 uv·ruff·mypy strict·django-stubs·pydantic·pytest)은 기능 추가 흐름이 **직접 다룬다** — 기존 프로젝트의 도구·패키지 매니저를 감지해 존중하고(§1.1), 기능에 필요한 표준 도구가 없으면 `implementation-django-ninja` §2.1 버전-핀 규율로 셋업한다(임의 글로벌 설치 금지).
+표준 도구셋(패키지 매니저 uv·ruff·mypy strict·django-stubs·pydantic·pytest)은 기능 추가 흐름이 **직접 다룬다** — 기존 프로젝트의 도구·패키지 매니저를 감지해 존중하고(§1.1), 기능에 필요한 표준 도구가 없으면 `implementation-django-ninja` §2.1 버전-핀 규율로 셋업한다(임의 글로벌 설치 금지). `django-stubs-ext` 의 `monkeypatch()`(운영 의존성 + settings 최상단 1줄)는 프로젝트 전역 런타임 패치라 기능 흐름이 도입하지 않는다 — 채택 여부는 관찰(§1 ④)해 §4 의 기저 타입 인자 표기(별칭 / 직접)를 고른다.
 
 ### §6.2 새 런타임 의존성의 버전 선택
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->

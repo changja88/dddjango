@@ -179,4 +179,30 @@ djr:R-3421 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-coder>, <https:/
 djr:R-3447 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
     djr:enforcedBy <https://numchida.com/ns/djr#c/check-public-surface-annotation.py> .
 
-djr:R-3448 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+djr:R-3448 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-public-surface-annotation.py> .
+
+djr:R-3451 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-public-surface-annotation.py> .
+
+djr:R-3452 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-public-surface-annotation.py> .
+
+djr:R-3453 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-public-surface-annotation.py> .
+
+djr:R-3454 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-3455 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-public-surface-annotation.py> .
+
+djr:R-3456 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-3457 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-public-surface-annotation.py> .
+
+djr:R-3458 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-public-surface-annotation.py> .
+
+djr:R-3459 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-public-surface-annotation.py> .

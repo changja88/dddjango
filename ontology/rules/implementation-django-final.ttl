@@ -1762,6 +1762,22 @@ djr:R-1367 a djr:Prohibition ;
     prov:specializationOf djr:R-1367 ;
     djr:revision 1 .
 
+djr:R-3460 a djr:Obligation ;
+    skos:prefLabel "admin 저작 화면의 ModelForm·BaseInlineFormSet·ModelAdmin·TabularInline/StackedInline 은 django-stubs 제네릭(런타임 subscript 불가) — 규칙은 houserules §4·§6.1 소유 · 이 절은 한 벌 예시 · 웹 폼 ModelForm 도 같은 표기"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3460@2026-09-04> .
+
+<https://numchida.com/ns/djr#R-3460@2026-09-04> a djr:Expression ;
+    prov:specializationOf djr:R-3460 ;
+    djr:revision 1 .
+
+djr:R-3461 a djr:Obligation ;
+    skos:prefLabel "monkeypatch 채택 시 admin.ModelAdmin[Parent] 직접 표기 · 그 밖은 별칭 · BaseInlineFormSet 셋째 인자(폼)는 적지 않는다(기본값만 admin.formset 불변 자리와 맞음) · # type: ignore[type-arg] 로 맨몸을 덮지 않는다(#646)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3461@2026-09-04> .
+
+<https://numchida.com/ns/djr#R-3461@2026-09-04> a djr:Expression ;
+    prov:specializationOf djr:R-3461 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django/references/final.md> a djr:Document ;
     skos:prefLabel "implementation-django-final"@ko .
 
@@ -3788,3 +3804,31 @@ djr:R-1367 a djr:Prohibition ;
     djr:kind djr:kind-prose ;
     djr:order 4 ;
     djr:text "- **제약사항**: 기존 모델에서 복합 PK로 마이그레이션 불가, ForeignKey가 복합 PK 모델을 가리킬 수 없음, admin 미지원.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s094-18> a djr:Section ;
+    djr:headingSnapshot "## 18. Django admin·폼 타이핑 — django-stubs 제네릭 기저"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django/references/final.md> ;
+    djr:sectionNumber "18" ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s094-18/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s094-18> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4/b16> ;
+    djr:statesNorm djr:R-3460 ;
+    djr:text "\nadmin 저작 화면(`driven_layer/django_<bc>/admin/` — 배치·import 방향은 `discipline-houserules` §1 트리 82행·§5)의 `ModelForm`·`BaseInlineFormSet`·`ModelAdmin`·`TabularInline`/`StackedInline` 은 django-stubs 가 제네릭으로 선언하지만 런타임 클래스는 subscript 를 못 한다 — 규칙(타입 인자 필수 · `# type: ignore[type-arg]` 금지 · 별칭 기본 / monkeypatch 채택 시 직접)은 houserules §4·§6.1 이 소유하고, 이 절은 그 «어떻게»를 한 벌로 보인다. 웹 폼의 `ModelForm` 도 같은 표기다(`implementation-django-web` §6).\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s094-18/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s094-18> ;
+    djr:kind djr:kind-code ;
+    djr:order 2 ;
+    djr:text "```python\nfrom __future__ import annotations\n\nfrom collections.abc import Sequence\nfrom typing import TYPE_CHECKING, TypeAlias\n\nfrom django import forms\nfrom django.contrib import admin\nfrom django.db.models import Model\nfrom django.forms import BaseInlineFormSet, ModelForm\nfrom django.http import HttpRequest\n\nif TYPE_CHECKING:  # django-stubs 전용 — 런타임 클래스는 subscript 불가\n    _ChildFormBase: TypeAlias = forms.ModelForm[ChildModel]  # noqa: UP040 -- 기저로 쓰는 별칭이라 `type` 문이 될 수 없다\n    _ChildFormSetBase: TypeAlias = BaseInlineFormSet[ChildModel, ParentModel]  # noqa: UP040 -- 셋째 인자(폼)는 적지 않는다: 기본값 ModelForm[ChildModel] 만 admin `formset` 자리(불변)와 맞는다\n    _ChildInlineBase: TypeAlias = admin.TabularInline[ChildModel, ParentModel]  # noqa: UP040\n    _ParentAdminBase: TypeAlias = admin.ModelAdmin[ParentModel]  # noqa: UP040\nelse:\n    _ChildFormBase: type[forms.ModelForm] = forms.ModelForm\n    _ChildFormSetBase: type[BaseInlineFormSet] = BaseInlineFormSet\n    _ChildInlineBase: type[admin.TabularInline] = admin.TabularInline\n    _ParentAdminBase: type[admin.ModelAdmin] = admin.ModelAdmin\n\n# 주석 전용 별칭은 `type` 문(지연 평가) — 자식 모델이 여럿이면 bound 로 적는다(`Any` 아님)\ntype ParentInlineFormSet = BaseInlineFormSet[Model, ParentModel, ModelForm[Model]]\n\n\nclass ChildInlineForm(_ChildFormBase):\n    class Meta:\n        model = ChildModel\n        fields = (\"field_a\", \"field_b\")\n\n\nclass ChildInlineFormSet(_ChildFormSetBase):\n    def clean(self) -> None: ...\n\n\nclass ChildInline(_ChildInlineBase):\n    model = ChildModel            # admin 선언 속성 — 스텁 ClassVar 가 타입을 소유(houserules §4 면제)\n    form = ChildInlineForm\n    formset = ChildInlineFormSet\n    extra = 0\n\n\n@admin.register(ParentModel)\nclass ParentAdmin(_ParentAdminBase):\n    readonly_fields = (\"version\",)  # 무주석 — 스텁 `ClassVar[_ListOrTuple[str]]` 가 타입을 소유\n    inlines = [ChildInline]         # 재선언하면 `list[type[InlineModelAdmin[Any, Any]]]` 와 불변성 충돌 — 적지 않는다\n\n    def save_model(self, request: HttpRequest, obj: ParentModel, form: ModelForm[ParentModel], change: bool) -> None: ...\n\n    def save_related(self, request: HttpRequest, form: ModelForm[ParentModel], formsets: Sequence[ParentInlineFormSet], change: bool) -> None: ...\n```\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s094-18/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django/references/final.md/s094-18> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4/b16> ;
+    djr:statesNorm djr:R-3461 ;
+    djr:text "프로젝트가 `django_stubs_ext.monkeypatch()` 를 채택했으면(houserules §6.1 관찰) `if TYPE_CHECKING:` 블록 없이 `class ParentAdmin(admin.ModelAdmin[ParentModel])` 로 직접 적는다 — 그 밖은 위 별칭이다. `BaseInlineFormSet` 의 세 번째 인자(폼 타입)는 적지 않는다 — 기본값 `ModelForm[_M]` 이 스텁 `InlineModelAdmin.formset`(`type[BaseInlineFormSet[_C, _P, ModelForm[_C]]]` · 불변)과 맞는 유일한 값이라 구체 폼 클래스를 적으면 `formset = …` 대입이 `[assignment]` 로 막힌다. `# type: ignore[type-arg]` 로 맨몸을 덮지 않는다(#646).\n"@ko .

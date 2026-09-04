@@ -92,6 +92,7 @@ import findings  # noqa: E402  — sink 환경변수 이름·라인 재구성 �
 from checker_registry import REGISTRY, checker_argv  # noqa: E402
 
 _FINDING_RE: "re.Pattern[str]" = re.compile(r"^\s*(\[#\d+\].*)$")
+_CANDIDATE_RE: "re.Pattern[str]" = re.compile(r"^\s*(\[ⓓ#\d+\].*)$")  # ⓓ 후보 — 앵커 차분만(exit 불산입)
 _LINENO_RE: "re.Pattern[str]" = re.compile(r":\d+")
 _IGNORE_COPY: "tuple[str, ...]" = (
     ".git", ".venv", "venv", "__pycache__", "*.pyc", "node_modules",
@@ -187,7 +188,7 @@ def _run_registry(target: Path,
                   sink: "Path | None" = None,
                   git_root: "Path | None" = None,
                   only: "frozenset[str] | None" = None,
-                  ) -> "tuple[dict[str, int], set[str], list[dict]]":
+                  ) -> "tuple[dict[str, int], set[str], list[dict], set[str]]":
     """로스터 전체(또는 `only` 의 검사기만)를 돌려 (검사기별 exit, 정규화 위반 라인 집합, 구조화 레코드)를 낸다.
 
     `only` 는 provenance 차분의 스냅숏 재실행 전용이다(후보 라인의 검사기 집합만 — 비용 한정).
@@ -206,6 +207,7 @@ def _run_registry(target: Path,
     """
     exits: "dict[str, int]" = {}
     lines: "set[str]" = set()
+    cands: "set[str]" = set()  # ⓓ 후보 라인(정규화) — N′/L′
     prefixes: "tuple[str, ...]" = (str(target) + "/", str(target))
     env: "dict[str, str]" = dict(os.environ)
     env.pop(findings.ENV_VAR, None)
@@ -227,6 +229,9 @@ def _run_registry(target: Path,
         for raw in (proc.stdout + "\n" + proc.stderr).splitlines():
             m: "re.Match[str] | None" = _FINDING_RE.match(raw)
             if m is None:
+                mc: "re.Match[str] | None" = _CANDIDATE_RE.match(raw)
+                if mc is not None:
+                    cands.add(f"{script} :: {_normalize(mc.group(1), prefixes)}")
                 continue
             lines.add(f"{script} :: {_normalize(m.group(1), prefixes)}")
             parsed += 1
@@ -242,12 +247,13 @@ def _run_registry(target: Path,
                 records.append(json.loads(raw))
             except json.JSONDecodeError:
                 continue  # 레코드는 «추가» 채널 — 깨진 줄이 판정을 죽이지 않는다
-    return exits, lines, records
+    return exits, lines, records, cands
 
 
 def _write_introduced(dest: Path, anchor_sha: str, attributed: "list[str]",
                       records: "list[dict]", prefixes: "tuple[str, ...]",
-                      provenance: "_ProvenanceResult | None" = None) -> None:
+                      provenance: "_ProvenanceResult | None" = None,
+                      candidates: "list[str] | None" = None) -> None:
     """귀속(N∖L) 라인에 대응하는 **현재 실행 레코드만** sidecar 로 쓴다(T2-3).
 
     왜 게이트가 쓰는가: 귀속은 «앵커 대비 차분»이라 게이트만 알 수 있다. 소비자가 raw
@@ -282,6 +288,13 @@ def _write_introduced(dest: Path, anchor_sha: str, attributed: "list[str]",
         "records": picked,
         "unmatched_lines": sorted(want - matched),
     }
+    if candidates:
+        want_c: "set[str]" = set(candidates)
+        payload["candidate_lines"] = candidates
+        payload["candidate_records"] = [
+            dict(rec, file=_strip_snapshot(str(rec.get("file", "")), prefixes)) for rec in records
+            if rec.get("severity") == "info"
+            and f"{rec.get('checker')} :: {_normalize(findings.line_of_record(rec), prefixes)}" in want_c]
     if provenance is not None:
         # flag 시에만 키 추가 — 스키마 문자열은 유지(호환 확장 · flag 없으면 payload byte 동일).
         # `attributed_lines`·`records` 는 잔여(승인 유입 제외)만이다 — 재생성 루프 입력에 유입이 섞이지 않는다.
@@ -574,7 +587,7 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
             if snap is None:
                 run_cache[key] = (False, set())
             else:
-                exits, lines, _recs = _run_registry(snap, only=frozenset({checker}))
+                exits, lines, _recs, _cands = _run_registry(snap, only=frozenset({checker}))
                 res.checker_runs += 1
                 valid: bool = exits.get(checker) in (0, 2) and not any(_SYNTHETIC_MARK in l for l in lines)
                 run_cache[key] = (valid, lines)
@@ -690,9 +703,10 @@ def main(argv: "list[str]") -> int:
 
         if not is_git:
             print("주의: 비-git TARGET — 차분 불능이라 fail-closed(현재 위반 전량 귀속)")
-            exits_n, n_set, n_records = _run_registry(cur, sink_n)  # 원본도 비-git — 넘길 루트 없음
+            exits_n, n_set, n_records, n_cands = _run_registry(cur, sink_n)  # 원본도 비-git — 넘길 루트 없음
             n_set |= _parse_fail_findings(cur)
             l_set: "set[str]" = set()
+            l_cands: "set[str]" = set()
             exits_l: "dict[str, int]" = {}
             anchor_sha: str = "(비-git)"
         else:
@@ -730,16 +744,19 @@ def main(argv: "list[str]") -> int:
             except anchor_diff.AnchorDiffUsage as exc:
                 print(f"재료 결손: {exc}", file=sys.stderr)
                 return 1
-            exits_l, l_set, _l_records = _run_registry(anc, sink_l)
+            exits_l, l_set, _l_records, l_cands = _run_registry(anc, sink_l)
             l_records = _l_records
             anc_prefixes = (str(anc) + "/", str(anc))
             l_set |= _parse_fail_findings(anc)
-            exits_n, n_set, n_records = _run_registry(cur, sink_n, git_root=root)
+            exits_n, n_set, n_records, n_cands = _run_registry(cur, sink_n, git_root=root)
             n_set |= _parse_fail_findings(cur)
 
         attributed: "list[str]" = sorted(n_set - l_set)
         resolved: "list[str]" = sorted(l_set - n_set)
         residual: "list[str]" = sorted(l_set & n_set)
+        cand_new: "list[str]" = sorted(n_cands - l_cands)      # ⓓ 신규(N′∖L′) — 감수자 입력
+        cand_legacy: int = len(n_cands & l_cands)               # ⓓ legacy — 보고만
+        cand_resolved: int = len(l_cands - n_cands)
 
         debt: "list[str]" = []
         if debt_rules:
@@ -780,11 +797,15 @@ def main(argv: "list[str]") -> int:
     print(f"\n== legacy 잔존(L∩N) {len(residual)}건 · 해소(L∖N) {len(resolved)}건 ==")
     for script in sorted(by_checker):
         print(f"  {script}: {by_checker[script]}")
+    if n_cands or l_cands:
+        print(f"\n== ⓓ 신규(N′∖L′) {len(cand_new)}건 · legacy {cand_legacy}건 · 해소 {cand_resolved}건 — exit 불산입 · 감수자 입력은 신규분만(R-0284) ==")
+        for line in cand_new:
+            print(f"  {line}")
     if provenance is not None:
         _print_provenance_diag(provenance, anchor_sha)
     if ns.introduced_json is not None:
         _write_introduced(Path(ns.introduced_json), anchor_sha, attributed,
-                          n_records, cur_prefixes, provenance)
+                          n_records, cur_prefixes, provenance, cand_new)
     if ns.contract_json is not None:
         _write_contract(Path(ns.contract_json), anchor_sha, n_records,
                         l_records, cur_prefixes, anc_prefixes)
