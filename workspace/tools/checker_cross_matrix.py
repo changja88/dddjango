@@ -213,16 +213,16 @@ def main(argv: "list[str]") -> int:
 
 # ── EXPECTED census — --emit-expected 산출물을 삼분 처분해 스플라이스한다(무단 갱신 금지·diff 는 릴리즈 보고에 표면화) ──
 EXPECTED: "dict[tuple[str, str], tuple[int, tuple[tuple[int, int], ...], tuple[tuple[int, int], ...], str]]" = {
-    ('api_error_controller', 'check-context-isolation.py'): (2, ((110, 1),), (), '최소성'),
+    ('api_error_controller', 'check-context-isolation.py'): (2, ((110, 2),), (), '최소성'),
     ('api_error_controller', 'check-db-table.py'): (2, (), (), '가드-red'),
-    ('api_error_controller', 'check-domain-model.py'): (2, ((256, 1), (299, 1)), (), '최소성'),
-    ('api_error_controller', 'check-layer-skeleton.py'): (2, ((488, 26),), (), '골격-부재'),
+    ('api_error_controller', 'check-domain-model.py'): (2, ((256, 2), (299, 2)), (), '최소성'),
+    ('api_error_controller', 'check-layer-skeleton.py'): (2, ((488, 37),), (), '골격-부재'),
     ('api_error_controller', 'check-mechanism-ownership.py'): (2, (), (), '가드-red'),
     ('api_error_controller', 'check-ninja-boundary-middleware.py'): (2, (), (), '가드-red'),
-    ('api_error_controller', 'check-public-surface-annotation.py'): (2, ((493, 2),), (), '최소성'),
+    ('api_error_controller', 'check-public-surface-annotation.py'): (2, ((493, 4),), (), '최소성'),
     ('api_error_controller', 'check-synthetic-infra-exc.py'): (2, (), (), '가드-red'),
     ('api_error_controller', 'check-test-config.py'): (2, (), (), '가드-red'),
-    ('api_error_controller', 'check-usecase-dto-placement.py'): (2, ((193, 1), (569, 1), (570, 1)), (), '최소성'),
+    ('api_error_controller', 'check-usecase-dto-placement.py'): (2, ((193, 2), (569, 2), (570, 2)), (), '최소성'),
     ('app_container', 'check-api-error-controller-contract.py'): (2, (), (), '가드-red'),
     ('app_container', 'check-domain-model.py'): (2, (), (), '가드-red'),
     ('app_container', 'check-error-centralization.py'): (2, (), (), '가드-red'),

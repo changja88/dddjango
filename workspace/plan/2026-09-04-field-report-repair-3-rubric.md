@@ -73,3 +73,11 @@ BLOCKER 0 · MAJOR A 5(#650 오라클 정당형 · ⓔ2 smoke/sidecar 조건 · 
 
 상세 = `workspace/eval/field-report-3/evidence/impl/piece1-summary.md`(실측표·픽스처·등재·온톨로지·검증 · 스크립트 사본 동봉). 요약: 검사기 #646/#647/#650 + #493 수리 + registry_gate ⓔ2 · 실측 = 기대(rv3-C 루트 필터 뒤 값)와 전 항목 일치(spring #646 18 · #647 594/255+8 · #650 40 · kkebi 21 · 161/253+42 · 1 · #645 위반 byte 동일 · ⓓ#645→#647 1:1) · 온톨로지 신설 12·개정 7·새 절 §18 · target-counts(2917/546/3471/3587) · verify 6/6 · 무손실 12/12(+main 픽스처 9/9) · gate 앵커 «ⓓ 신규 0·귀속 0» 양 저장소. 계획 대비 조정 2: Δ9 good `invoice/panel.py`(ⓓ ②)는 하네스 green 축 «레코드 0» 요건으로 bad 로 이동 · good `order_form.py`·`place_order_use_case.py` 를 ⓓ-free 로 정정. ⑤-1 리뷰 3기 대상.
 
+## 5단계 결과 — 조각 1 (2026-09-04 · ⑤-1 리뷰 3기 A 기술·B 규범·C 증거 · 산출 `workspace/eval/field-report-3/rv5/rv5-{A,B,C}.md`)
+
+BLOCKER 0 · **MAJOR 1**(A N-1 — `_alias_defs` 가 `TYPE_CHECKING` 중간 ClassDef 의 첫 기저만 기록해 mixin-first 형에서 #646 오탐 · 현장 0건 잠복) · MINOR 18(A 8 · B 5 · C 5). 세 축 공통 실측: 4사본 계수 전 셀 재현 · `[#645]` byte 동일 · ⓓ#645→#647 슬롯 키 1:1 · #493 lost/gained 0 · smoke 33/33 · gate «ⓓ 신규 0·귀속 0» · 정본 예시 mypy strict green · ③ 완성 문안과 글자 대조 동일. 정정 = 조각 2 커밋에 합침(A N-1~N-9 코드 · B MINOR-1~5 문안 in-place + codex 이름 · C M1·M4 · 무손실 판형 슬롯 키).
+
+## 4단계 구현 기록 — 조각 2(S-5 + ⓔ1) + ⑤-1 정정 (2026-09-04 · 브랜치 `fix/field-report-3`)
+
+상세 = `workspace/eval/field-report-3/evidence/impl/piece2-summary.md`. 요약: 검사기 #648/#649(트리 슬라이스 · 프로필 무관) + openapi stale 문면 2 · 픽스처 payment 세트(good 상자 하나 두 허용형 · RootModel 단독 / bad 상자 둘 · Schema+RootModel) · 온톨로지 신설 R-3463~R-3467 · 개정 R-0349/R-0331 rev2(auto «무관» 판정식) · 렌더 5 doc · 등재 #648/#649 + #63 stale 정정 · target-counts(2919/546/3476/3594) · ⑤-1 정정 전부 반영(#493 이 별칭 정의 전부를 따라가도록 `_resolved_bases` 신설 포함) · 무손실 12/12(슬롯 키) · gate kkebi ⓓ 신규 0 · smoke 33/33 · 대표 byte 골든 재생성. 커밋 = 아래 추기. ⑤-2 리뷰 3기 대상.
+

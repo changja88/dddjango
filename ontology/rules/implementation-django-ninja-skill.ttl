@@ -550,6 +550,14 @@ djr:R-2957 a djr:Obligation ;
     prov:specializationOf djr:R-2957 ;
     djr:revision 1 .
 
+djr:R-3466 a djr:Obligation ;
+    skos:prefLabel "SKILL 요약 — 반환 주석의 Status 는 하나(-> Status[Out | Err]) · 성공 union 은 이름 붙은 RootModel 하나(Schema 병행·response={200: A | B} 금지)(§2.2·§3.1 재진술)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3466@2026-09-04> .
+
+<https://numchida.com/ns/djr#R-3466@2026-09-04> a djr:Expression ;
+    prov:specializationOf djr:R-3466 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/SKILL.md> a djr:Document ;
     skos:prefLabel "implementation-django-ninja-skill"@ko .
 
@@ -661,9 +669,9 @@ djr:R-2957 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/SKILL.md/s004> ;
     djr:kind djr:kind-norm ;
     djr:order 12 ;
-    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b12>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b13> ;
-    djr:statesNorm djr:R-2944, djr:R-2945 ;
-    djr:text "- operation은 `summary`·`description`·`tags`로 문서화하고 반환 타입을 명시한다(`object` 금지) (§2.2)\n"@ko .
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b12>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b13>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s009-2.2/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s012-3.1/b9> ;
+    djr:statesNorm djr:R-2944, djr:R-2945, djr:R-3466 ;
+    djr:text "- operation은 `summary`·`description`·`tags`로 문서화하고 반환 타입을 명시한다(`object` 금지) — 반환 주석의 `Status` 는 하나(`-> Status[Out | Err]`) · 성공 union 은 이름 붙은 `RootModel` 하나(`Schema` 병행·`response={200: A | B}` 금지) (§2.2·§3.1)\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/SKILL.md/s004/b13> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/SKILL.md/s004> ;

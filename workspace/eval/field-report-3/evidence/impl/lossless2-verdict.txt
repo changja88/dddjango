@@ -1,0 +1,28 @@
+OK  spring check-public-surface-annotation.py: old=4097 new=4537 exit 2->2 | A∖B=655 {('info', '#645'): 655} (ⓓ#645→#647 1:1 matched=655 unmatched=0) | B∖A=1095 {('violation', '#646'): 18, ('violation', '#647'): 733, ('info', '#647'): 304, ('info', '#650'): 40} | 비허용 A∖B=0 B∖A=0 | #493 3216/3216 | 발화라인 old=4097 new=4537 잔여차 A∖B=0 B∖A=0
+OK  spring check-api-error-controller-contract.py: old=7 new=14 exit 0->2 | A∖B=0 {} (ⓓ#645→#647 1:1 matched=0 unmatched=0) | B∖A=7 {('violation', '#648'): 7} | 비허용 A∖B=0 B∖A=0 | #493 0/0 | 발화라인 old=7 new=14 잔여차 A∖B=0 B∖A=0
+OK  spring check-openapi-error-declaration.py: old=0 new=0 exit 0->0 | A∖B=0 {} (ⓓ#645→#647 1:1 matched=0 unmatched=0) | B∖A=0 {} | 비허용 A∖B=0 B∖A=0 | #493 0/0 | 발화라인 old=0 new=0 잔여차 A∖B=0 B∖A=0
+OK  spring-d2eaafe check-public-surface-annotation.py: old=4083 new=4543 exit 2->2 | A∖B=642 {('info', '#645'): 642} (ⓓ#645→#647 1:1 matched=642 unmatched=0) | B∖A=1102 {('violation', '#646'): 31, ('violation', '#647'): 722, ('info', '#647'): 311, ('info', '#650'): 38} | 비허용 A∖B=0 B∖A=0 | #493 3225/3225 | 발화라인 old=4083 new=4543 잔여차 A∖B=0 B∖A=0
+OK  spring-d2eaafe check-api-error-controller-contract.py: old=6 new=15 exit 0->2 | A∖B=0 {} (ⓓ#645→#647 1:1 matched=0 unmatched=0) | B∖A=9 {('violation', '#648'): 8, ('violation', '#649'): 1} | 비허용 A∖B=0 B∖A=0 | #493 0/0 | 발화라인 old=6 new=15 잔여차 A∖B=0 B∖A=0
+OK  spring-d2eaafe check-openapi-error-declaration.py: old=0 new=0 exit 0->0 | A∖B=0 {} (ⓓ#645→#647 1:1 matched=0 unmatched=0) | B∖A=0 {} | 비허용 A∖B=0 B∖A=0 | #493 0/0 | 발화라인 old=0 new=0 잔여차 A∖B=0 B∖A=0
+OK  spring-f5ee428 check-public-surface-annotation.py: old=4112 new=4562 exit 2->2 | A∖B=661 {('info', '#645'): 661} (ⓓ#645→#647 1:1 matched=661 unmatched=0) | B∖A=1111 {('violation', '#646'): 18, ('violation', '#647'): 742, ('info', '#647'): 311, ('info', '#650'): 40} | 비허용 A∖B=0 B∖A=0 | #493 3225/3225 | 발화라인 old=4112 new=4562 잔여차 A∖B=0 B∖A=0
+OK  spring-f5ee428 check-api-error-controller-contract.py: old=7 new=16 exit 0->2 | A∖B=0 {} (ⓓ#645→#647 1:1 matched=0 unmatched=0) | B∖A=9 {('violation', '#648'): 8, ('violation', '#649'): 1} | 비허용 A∖B=0 B∖A=0 | #493 0/0 | 발화라인 old=7 new=16 잔여차 A∖B=0 B∖A=0
+OK  spring-f5ee428 check-openapi-error-declaration.py: old=0 new=0 exit 0->0 | A∖B=0 {} (ⓓ#645→#647 1:1 matched=0 unmatched=0) | B∖A=0 {} | 비허용 A∖B=0 B∖A=0 | #493 0/0 | 발화라인 old=0 new=0 잔여차 A∖B=0 B∖A=0
+OK  kkebi check-public-surface-annotation.py: old=851 new=1291 exit 2->2 | A∖B=55 {('info', '#645'): 55} (ⓓ#645→#647 1:1 matched=55 unmatched=0) | B∖A=495 {('violation', '#647'): 166, ('violation', '#646'): 21, ('info', '#647'): 307, ('info', '#650'): 1} | 비허용 A∖B=0 B∖A=0 | #493 173/173 | 발화라인 old=851 new=1291 잔여차 A∖B=0 B∖A=0
+OK  kkebi check-api-error-controller-contract.py: old=27 new=33 exit 0->2 | A∖B=0 {} (ⓓ#645→#647 1:1 matched=0 unmatched=0) | B∖A=6 {('violation', '#648'): 6} | 비허용 A∖B=0 B∖A=0 | #493 0/0 | 발화라인 old=27 new=33 잔여차 A∖B=0 B∖A=0
+OK  kkebi check-openapi-error-declaration.py: old=0 new=0 exit 0->0 | A∖B=0 {} (ⓓ#645→#647 1:1 matched=0 unmatched=0) | B∖A=0 {} | 비허용 A∖B=0 B∖A=0 | #493 0/0 | 발화라인 old=0 new=0 잔여차 A∖B=0 B∖A=0
+fixtures: OK 99 · RED 3
+RED fx.cross.public_surface check-public-surface-annotation.py: old=7 new=0 exit 2->0 | A∖B=7 {('violation', '#493'): 7} (ⓓ#645→#647 1:1 matched=0 unmatched=0) | B∖A=0 {} | 비허용 A∖B=7 B∖A=0 | #493 7/0 | 발화라인 old=7 new=0 잔여차 A∖B=7 B∖A=0
+   비허용 A∖B: ('violation', '#493', 'application/orders/driven_layer/django_orders/admin/order/panel.py:19', '클래스 변수 `model` 의 첫 대입에 타입이 없다 — `name: T = …`')
+   비허용 A∖B: ('violation', '#493', 'application/orders/driven_layer/django_orders/admin/order/panel.py:20', '클래스 변수 `form` 의 첫 대입에 타입이 없다 — `name: T = …`')
+   비허용 A∖B: ('violation', '#493', 'application/orders/driven_layer/django_orders/admin/order/panel.py:21', '클래스 변수 `extra` 의 첫 대입에 타입이 없다 — `name: T = …`')
+   비허용 A∖B: ('violation', '#493', 'application/orders/driven_layer/django_orders/admin/order/panel.py:25', '클래스 변수 `list_display` 의 첫 대입에 타입이 없다 — `name: T = …`')
+   비허용 A∖B: ('violation', '#493', 'application/orders/driven_layer/django_orders/admin/order/panel.py:26', '클래스 변수 `readonly_fields` 의 첫 대입에 타입이 없다 — `name: T = …`')
+RED fx.public_surface_bad_rules check-public-surface-annotation.py: old=28 new=37 exit 2->2 | A∖B=5 {('violation', '#493'): 1, ('info', '#645'): 4} (ⓓ#645→#647 1:1 matched=4 unmatched=0) | B∖A=14 {('violation', '#647'): 6, ('violation', '#646'): 6, ('info', '#650'): 1, ('info', '#646'): 1} | 비허용 A∖B=1 B∖A=0 | #493 10/9 | 발화라인 old=28 new=37 잔여차 A∖B=1 B∖A=0
+   비허용 A∖B: ('violation', '#493', 'application/orders/driven_layer/django_orders/admin/order/stub_generic_bad.py:26', '클래스 변수 `inlines` 의 첫 대입에 타입이 없다 — `name: T = …`')
+RED fx.public_surface_good check-public-surface-annotation.py: old=7 new=0 exit 2->0 | A∖B=7 {('violation', '#493'): 7} (ⓓ#645→#647 1:1 matched=0 unmatched=0) | B∖A=0 {} | 비허용 A∖B=7 B∖A=0 | #493 7/0 | 발화라인 old=7 new=0 잔여차 A∖B=7 B∖A=0
+   비허용 A∖B: ('violation', '#493', 'application/orders/driven_layer/django_orders/admin/order/panel.py:19', '클래스 변수 `model` 의 첫 대입에 타입이 없다 — `name: T = …`')
+   비허용 A∖B: ('violation', '#493', 'application/orders/driven_layer/django_orders/admin/order/panel.py:20', '클래스 변수 `form` 의 첫 대입에 타입이 없다 — `name: T = …`')
+   비허용 A∖B: ('violation', '#493', 'application/orders/driven_layer/django_orders/admin/order/panel.py:21', '클래스 변수 `extra` 의 첫 대입에 타입이 없다 — `name: T = …`')
+   비허용 A∖B: ('violation', '#493', 'application/orders/driven_layer/django_orders/admin/order/panel.py:25', '클래스 변수 `list_display` 의 첫 대입에 타입이 없다 — `name: T = …`')
+   비허용 A∖B: ('violation', '#493', 'application/orders/driven_layer/django_orders/admin/order/panel.py:26', '클래스 변수 `readonly_fields` 의 첫 대입에 타입이 없다 — `name: T = …`')
+VERDICT: RED

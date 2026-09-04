@@ -66,7 +66,7 @@ SEALED: "dict[str, str]" = {
 EXPECTED_SHA: "dict[str, str]" = {
     "check-domain-model.py": "4398d7d774da5d4d7bc6542bf5c5f19d0d99dbf6f3682a41a7c742803d3c415a",
     "check-common-container.py": "5ce9427209a475032bf19b5cf8f16d356e6e976f2119afe1639159cc8afd23fc",
-    "check-api-error-controller-contract.py": "b883cb584e61d5b18ab527aebf9d4536a15b5519d49ece049e0f273298dcf1df",
+    "check-api-error-controller-contract.py": "7e3edccdbc2475744d8e842abc8e2a46c9a54d14feaea31ac0bb84bc26f9fad9",
     "check-error-centralization.py": "5d21b130e5a23bc5c5610ad3ebe29e880e526cd2338ff2377f00cb36294ff191",
     "check-composition-root.py": "81938fb23b67216c6fc24f8c39fc90564292d6526d09e828d452bc953f0c08ff",
     "check-openapi-error-declaration.py": "53913d1cb2da18896e15907695cd97157cadf51cfc4fa82bd24b8f3c0113f67b",

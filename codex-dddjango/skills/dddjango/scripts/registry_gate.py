@@ -17,6 +17,9 @@ legacy 위반이 상존해 「루트 registry 전체 green」이 문자 그대�
   호출자가 그대로 넘긴다. 앵커=HEAD 이고 working tree 가 clean 이면 차분이 공허하므로
   사용 오류(exit 1)다 — 「커밋 뒤 게이트」로 판정을 비우는 우회를 막는다.
 - **귀속 0 ≠ 전체 clean** — legacy 잔존(L∩N)은 exit 에 안 들어가되 항상 보고한다
+- **ⓓ 앵커 차분 채널**(2026-09-04 현장 보고 3 ⓔ2): `[ⓓ#N]` 후보 라인도 같은 정규화로 앵커 L′·현재 N′ 를 갈라
+  «ⓓ 신규(N′∖L′)» 절(+검사기별 legacy 계수)에 인쇄하고 sidecar 에 `candidate_lines`·`candidate_records` 로
+  싣는다 — exit 불산입 · `records`(위반)와 분리 · ⓓ 가 하나도 없는 저장소는 출력·sidecar byte 무변.
   (침묵 금지). BC 하나가 clean 한지는 `bc_registry_run.py`(그림자 전수)가 답한다 —
   두 도구는 같은 로스터(`checker_registry.py`)를 쓰되 묻는 것이 다르다.
 - **이관 빚 채널**: `--legacy-debt-file` 의 사용자 승인 목록(줄 형식: `#<규칙> <부분문자열>`)
@@ -261,7 +264,8 @@ def _write_introduced(dest: Path, anchor_sha: str, attributed: "list[str]",
     (`commands/dddjango.md` — legacy 잔존 red 는 보고 채널로만)을 깨뜨린다.
 
     매칭은 `findings.line_of_record` 로 레코드를 라인으로 되돌린 뒤 게이트와 **같은
-    정규화**를 적용해 키를 맞춘다. 대응 레코드가 없는 귀속 라인(합성 fail-closed 귀속·
+    정규화**를 적용해 키를 맞춘다. `candidates`(ⓓ 신규 라인 · N′∪L′≠∅ 일 때만 list)가 오면
+    `candidate_lines`·`candidate_records`(severity info · 신규분만) 를 `records` 와 분리해 싣는다. 대응 레코드가 없는 귀속 라인(합성 fail-closed 귀속·
     레코드 채널 밖 진단)은 버리지 않고 `unmatched` 로 남긴다 — fail-closed.
     """
     want: "set[str]" = set(attributed)
@@ -288,7 +292,7 @@ def _write_introduced(dest: Path, anchor_sha: str, attributed: "list[str]",
         "records": picked,
         "unmatched_lines": sorted(want - matched),
     }
-    if candidates:
+    if candidates is not None:  # ⓓ 채널이 있을 때(N′∪L′≠∅)만 키를 둔다 — ⓓ 0 인 저장소는 payload byte 무변(P0′)
         want_c: "set[str]" = set(candidates)
         payload["candidate_lines"] = candidates
         payload["candidate_records"] = [
@@ -801,11 +805,17 @@ def main(argv: "list[str]") -> int:
         print(f"\n== ⓓ 신규(N′∖L′) {len(cand_new)}건 · legacy {cand_legacy}건 · 해소 {cand_resolved}건 — exit 불산입 · 감수자 입력은 신규분만(R-0284) ==")
         for line in cand_new:
             print(f"  {line}")
+        legacy_by: "dict[str, int]" = {}
+        for line in (n_cands & l_cands):
+            legacy_by[line.split(" :: ", 1)[0]] = legacy_by.get(line.split(" :: ", 1)[0], 0) + 1
+        for script in sorted(legacy_by):
+            print(f"  legacy {script}: {legacy_by[script]}")
     if provenance is not None:
         _print_provenance_diag(provenance, anchor_sha)
     if ns.introduced_json is not None:
         _write_introduced(Path(ns.introduced_json), anchor_sha, attributed,
-                          n_records, cur_prefixes, provenance, cand_new)
+                          n_records, cur_prefixes, provenance,
+                          cand_new if (n_cands or l_cands) else None)
     if ns.contract_json is not None:
         _write_contract(Path(ns.contract_json), anchor_sha, n_records,
                         l_records, cur_prefixes, anc_prefixes)

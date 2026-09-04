@@ -31,7 +31,7 @@ Django Ninja Router/Schema/Operation·controller-owned <Bc>ErrorSchema·API regi
 - 프로젝트 `api.py`가 `NinjaExtraAPI` 하나를 소유하고, 명시 registrar가 소유하는 controller는 `@api_controller(..., auto_import=False)`로 auto-import/global registry side effect를 끈다. BC는 side-effect-free `register_<bc>_api(api: NinjaExtraAPI)`를 노출하고(인자 타입 축자 — 본뜬 Protocol·별칭 금지) 프로젝트 `urls.py`가 registrar를 명시 호출·mount하며, BC `composition_root/`(`dependency_wiring.py`)는 use-case DI만 소유한다 (§2.3)
 - auth 실패는 `None` 또는 framework `AuthenticationError`이며 `request.auth`에 `ErrorSchema`를 넣지 않는다. raw infra 실패는 기본 500이고, 승인된 안정 의미만 infra/ACL이 자기 BC exception으로 정규화한다 (§4·§6.2)
 - 선언된 JSON 성공은 Schema/`Status`로 반환한다. `FileResponse`·`StreamingHttpResponse`·redirect·schema-less 204는 성공 native carveout이며 오류 응답 우회를 허용하지 않는다 (§2.2·§6.2)
-- operation은 `summary`·`description`·`tags`로 문서화하고 반환 타입을 명시한다(`object` 금지) (§2.2)
+- operation은 `summary`·`description`·`tags`로 문서화하고 반환 타입을 명시한다(`object` 금지) — 반환 주석의 `Status` 는 하나(`-> Status[Out | Err]`) · 성공 union 은 이름 붙은 `RootModel` 하나(`Schema` 병행·`response={200: A | B}` 금지) (§2.2·§3.1)
 - Idempotency-Key는 계약에 정의된 endpoint에만; 키 정책(scope·replay·conflict)은 `architecture-api`, 저장소·retention(테이블·unique constraint·fingerprint)은 `architecture-db`가 결정 (§7)
 - 공개 OpenAPI 변경 후보가 `add/update`이면 mounted API의 생성 문서를 확인한다 (§8)
 - 신규 API는 Django Ninja 목표, DRF는 legacy·migration 맥락에서만 보조 (§10)

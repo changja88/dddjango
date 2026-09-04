@@ -133,6 +133,12 @@ ROSTER: tuple[Material, ...] = (
     Material("check-public-surface-annotation.py", "assign_set", "STUB_GENERIC_CBV_NAMES",
              expect=("ListView", "CreateView", "UpdateView"),
              note="#646 django-stubs 제네릭 기저(CBV) — 코드 형상 규칙 · Base 병기 채널 방출 제외(09-04 현장 보고 3)"),
+    Material("check-api-error-controller-contract.py", "assign_set", "_SCHEMA_ORIGINS",
+             expect=("ninja.Schema",),
+             note="#649 Schema+RootModel 동시 상속 판정 origin — 코드 형상 규칙 · Base 병기 채널 방출 제외(09-04 현장 보고 3)"),
+    Material("check-api-error-controller-contract.py", "assign_set", "_ROOTMODEL_ORIGINS",
+             expect=("pydantic.RootModel",),
+             note="#649 Schema+RootModel 동시 상속 판정 origin — 코드 형상 규칙 · Base 병기 채널 방출 제외(09-04 현장 보고 3)"),
     # 테스트 물리 신호 — DB 켜는 베이스(#387/#389)·factory_boy 베이스(#392).
     Material("check-test-config.py", "assign_set", "DB_TEST_BASES",
              expect=("TestCase", "TransactionTestCase", "LiveServerTestCase"),

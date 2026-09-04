@@ -298,13 +298,23 @@ def main() -> int:
             "== ⓓ 신규(N′∖L′) 1건 · legacy 1건" in out
             and "fresh_probe" in cand_section and "legacy_probe" not in cand_section
             and payload_q.get("candidate_lines") and all("fresh_probe" in l for l in payload_q["candidate_lines"])
-            and not any("fresh_probe" in str(r.get("file", "")) for r in payload_q.get("records", []))  # records 와 분리
+            and payload_q.get("candidate_records")
+            and all(r.get("severity") == "info" and r.get("rule") == "#69" and "fresh_probe.py" in str(r.get("file", ""))
+                    for r in payload_q["candidate_records"])  # file 은 `<경로>:<줄>` 형(레코드 계약)
+            and payload_q.get("records") == []  # ⓓ 는 records(위반)와 분리
         )
-        rows.append(("Q ⓓ 앵커 차분", 0, code, q_ok, "ⓓ 신규 1·legacy 1 · sidecar 분리 키 · exit 무변"))
-        # Q′ — 같은 재료에 위반을 함께 심으면 exit 2(ⓓ 절은 그대로).
+        rows.append(("Q ⓓ 앵커 차분", 0, code, q_ok, "ⓓ 신규 1·legacy 1 · sidecar 분리 키(info #69 · records []) · exit 무변"))
+        # Q′ — 같은 재료에 위반을 함께 심으면 exit 2(ⓓ 절은 그대로 · records 는 위반만 · candidate_lines 는 ⓓ 만).
         _plant_violation(repo)
-        code, out = _gate(repo, anchor)
-        rows.append(("Q′ ⓓ + 위반 동반", 2, code, "== ⓓ 신규(N′∖L′) 1건" in out and "schema_smoke" in out, "ⓓ 절 유지 · 위반은 귀속"))
+        side_q2: Path = td / "introduced_q2.json"
+        code, out = _gate(repo, anchor, ["--introduced-json", str(side_q2)])
+        payload_q2: dict = json.loads(side_q2.read_text(encoding="utf-8")) if side_q2.is_file() else {}
+        q2_ok: bool = (
+            "== ⓓ 신규(N′∖L′) 1건" in out and "schema_smoke" in out
+            and payload_q2.get("records") and all("schema_smoke" in str(r.get("file", "")) for r in payload_q2["records"])
+            and all("fresh_probe" in l for l in payload_q2.get("candidate_lines", []))
+        )
+        rows.append(("Q′ ⓓ + 위반 동반", 2, code, q2_ok, "ⓓ 절 유지 · records 는 위반만 · candidate_lines 는 ⓓ 만"))
 
         # S — sidecar(T2-3): 귀속 레코드만 담고 legacy 는 구조적으로 배제되는가.
         # 왜 필요한가: 소비자(재생성 루프)가 raw sink 를 직접 읽으면 앵커 실행 레코드까지

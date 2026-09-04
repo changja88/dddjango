@@ -3,7 +3,8 @@
 
 positional/auto/preserve 실행은 기존 ``openapi_extra.responses`` 저장소 전수
 검사를 보존한다. ``dddjango-code-json`` profile은 선택된 operation이 직접 반환하는
-BC 오류와 ``response={status: <Bc>ErrorSchema}`` 선언의 일치를 검증하고, 선택 API
+BC 오류와 그 status 에서 실제 반환하는 오류 타입 그대로(concrete·``Union``·명시값 base —
+base 뭉뚱그림 금지 · 2026-08-25)의 ``response=`` 선언의 일치를 검증하고, 선택 API
 module의 수동 OpenAPI 후처리를 차단한다.
 
 종료코드: 0=clean, 1=사용/분석 오류, 2=blocker.
@@ -3359,7 +3360,7 @@ def _print_code_findings(records: Findings) -> None:
     )
     emit_all(records, printer=print)
     print(
-        "  조치: 각 직접 반환 status를 같은 BC의 <Bc>ErrorSchema base로 선언하고, "
+        "  조치: 각 직접 반환 status를 그 status에서 실제 반환하는 오류 타입 그대로(concrete·Union·명시값 base — base 뭉뚱그림 금지) 선언하고, "
         "직접 반환하지 않는 BC 오류 광고와 "
         "openapi_extra/get_openapi_schema 후처리를 "
         "제거한다."

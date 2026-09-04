@@ -1715,12 +1715,18 @@ djr:R-0330 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0331 a djr:Obligation ;
-    skos:prefLabel "Error response G2 는 승인된 code/preserve scope 마다 command 를 각각 렌더·실행"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0331@2026-08-22> .
+    skos:prefLabel "Error response G2 는 승인된 code/preserve scope 마다 command 를 각각 렌더·실행 · «무관» = 승인 12-slot 유무 — 12-slot 없이 BC 오류 status 를 선언한 산출물은 auto 금지·G1 반송"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0331@2026-09-04> .
 
 <https://numchida.com/ns/djr#R-0331@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0331 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0331@2026-09-04> a djr:Expression ;
+    prov:specializationOf djr:R-0331 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0331@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0332 a djr:Obligation ;
     skos:prefLabel "무관 G2 는 네 checker 와 registry #16 에 positional target·`--error-profile auto` 명시"@ko ;
@@ -1883,12 +1889,18 @@ djr:R-0348 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0349 a djr:Obligation ;
-    skos:prefLabel "registry #15 — narrow try·concrete same-BC catch·direct BC-base ErrorSchema·two-argument Status + 표준 트리 슬라이스"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0349@2026-08-22> .
+    skos:prefLabel "registry #15 — narrow try·concrete same-BC catch·direct BC-base ErrorSchema·two-argument Status + 표준 트리 슬라이스(#120~#132·#474·#62 · #648 Status 상자 하나·#649 Schema+RootModel 동시 상속 금지)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0349@2026-09-04> .
 
 <https://numchida.com/ns/djr#R-0349@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0349 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0349@2026-09-04> a djr:Expression ;
+    prov:specializationOf djr:R-0349 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0349@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0350 a djr:Obligation ;
     skos:prefLabel "registry #16 — `composition_root/` 정본·api_router 결선·닫힌 목록 + BC DI V1·project URLconf/registrar slice"@ko ;
@@ -3409,7 +3421,7 @@ djr:R-3445 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 16 ;
     djr:statesNorm djr:R-0331, djr:R-0332, djr:R-0333 ;
-    djr:text "   - **scope별 실행**: Error response G2는 승인된 code/preserve scope마다 위 command를 각각 렌더해 실행한다. Error response와 무관한 G2는 네 API-error-aware checker와 registry #16에 positional target 및 `--error-profile auto`를 명시해 기존 positional 동작(auto 프로필)을 유지하고, `auto` 결과는 `Error response contract 12-slot` 증거가 아니라고 보고한다.\n\n"@ko .
+    djr:text "   - **scope별 실행**: Error response G2는 승인된 code/preserve scope마다 위 command를 각각 렌더해 실행한다. Error response와 무관한 G2는 네 API-error-aware checker와 registry #16에 positional target 및 `--error-profile auto`를 명시해 기존 positional 동작(auto 프로필)을 유지하고, `auto` 결과는 `Error response contract 12-slot` 증거가 아니라고 보고한다. **«무관»의 판정은 코드 모양이 아니라 승인 12-slot 유무다 — 단 승인 12-slot 없이 이번 산출물의 컨트롤러가 BC 오류 status 를 `response=` 에 선언했으면 `auto` 로 돌리지 않고 G1 반송(`STOP_FOR_USER_APPROVAL` — error profile 미결정 · design-architect «Error response contract 12-slot» 의 적용 조건)이다: `auto` 는 #63·#125 등 code-profile 규칙을 재우므로 오류 응답을 선언한 표면의 G2 증거가 될 수 없다.**\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b17> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
@@ -3501,7 +3513,7 @@ djr:R-3445 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 28 ;
     djr:statesNorm djr:R-0345 ;
-    djr:text "   11. `${CLAUDE_PLUGIN_ROOT}/scripts/check-public-surface-annotation.py` — 타입 전면(#493 — 시그니처·지역·속성·모듈/클래스 «모든 이름 첫 대입», 문법 없는 자리만 면제)·명시 `Any`(#645 — 시그니처는 차단·변수/제네릭 안은 ⓓ 후보 · dict/Mapping 값 자리는 #647 소유)·django-stubs 제네릭 기저(#646 — 맨몸·`type: ignore[type-arg]` 차단 · subscript/`TYPE_CHECKING` 별칭 통과)·딕셔너리-레코드(#647 — `dict/Mapping[…, Any]` 전 자리와 `[…, object]` 반환/속성 차단 · 입구 매개변수·즉시 검증 지역 변수의 `object` 와 반환 주석의 자리표시 `object` 는 ⓓ 후보 · `json.load(s)` 무검증 흐름은 ⓓ #650 · 세 규칙은 `application/`·`framework/` 루트만)·Thin Read 반환(#358)·계약 검증 토큰(#456).\n"@ko .
+    djr:text "   11. `${CLAUDE_PLUGIN_ROOT}/scripts/check-public-surface-annotation.py` — 타입 전면(#493 — 시그니처·지역·속성·모듈/클래스 «모든 이름 첫 대입», 문법 없는 자리만 면제)·명시 `Any`(#645 — 시그니처는 차단·변수/제네릭 안은 ⓓ 후보 · dict/Mapping 값 자리는 #647 소유)·django-stubs 제네릭 기저(#646 — 맨몸·`type: ignore[type-arg]` 차단 · subscript/`TYPE_CHECKING` 별칭 통과)·딕셔너리-레코드(#647 — `dict/Mapping[…, Any]` 전 자리와 `[…, object]` 반환/속성 차단 · 입구 매개변수·즉시 검증 지역 변수의 `object` 와 반환 주석의 자리표시 `object` 는 ⓓ 후보 · `json.load(s)` 무검증 흐름은 ⓓ #650)·Thin Read 반환(#358)·계약 검증 토큰(#456) — 신규 3규칙(#646·#647·#650)은 `application/`·`framework/` 루트만.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b29> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
@@ -3536,7 +3548,7 @@ djr:R-3445 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 32 ;
     djr:statesNorm djr:R-0349 ;
-    djr:text "   15. `${CLAUDE_PLUGIN_ROOT}/scripts/check-api-error-controller-contract.py` — narrow one-call `try`, concrete same-BC catch, direct no-arg concrete/event-specific BC-base `ErrorSchema`, two-argument `Status`, managed helper/handler/factory/serializer/mapping 금지 + 표준 트리 슬라이스(#120~#132·#474·#62 — 프로필 무관 선행).\n"@ko .
+    djr:text "   15. `${CLAUDE_PLUGIN_ROOT}/scripts/check-api-error-controller-contract.py` — narrow one-call `try`, concrete same-BC catch, direct no-arg concrete/event-specific BC-base `ErrorSchema`, two-argument `Status`, managed helper/handler/factory/serializer/mapping 금지 + 표준 트리 슬라이스(#120~#132·#474·#62·#648 반환 주석 `Status` 상자 하나·#649 `Schema`+`RootModel` 동시 상속 금지 — 프로필 무관 선행).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b33> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;

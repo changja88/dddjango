@@ -51,8 +51,8 @@
        AnnAssign/Return 값이면 원소 슬롯 · 호출 인자면 비후보) · 컴프리헨션 요소 · 직접 첨자/속성 접근)로
        흐르면 후보 · union 은 전 구성원이 `object` 슬롯일 때만 비후보 · `x: object = …` 와 파서 직접
        인자·무주석 Assign(#493 몫)은 후보 아님. 좌표 = AnnAssign/Return 문장 줄 · 그 밖 호출 줄.
-  #646·#647·#650 은 `application/`·`framework/` 루트 안 파일만 본다(kkebi `web/`·`scripts/` 등 자매
-       플러그인·운영 스크립트 영역 제외 — 기존 5규칙의 대상은 무변).
+  #646·#647·#650 은 상대 경로 성분에 `application`/`framework` 가 있는 파일만 본다(어느 깊이든 — `src/application/**`
+       도 채택 신호와 같은 판 · kkebi `web/`·`scripts/` 등 자매 플러그인·운영 스크립트 영역 제외 — 기존 5규칙의 대상은 무변).
 
 문법 외 면제(도구·프로토콜 소유 — 사람이 짓는 자리가 아니다):
   - `migrations/`(#593 이 모양을 소유) · `manage.py`/`wsgi.py`/`asgi.py`(생성 골격).
@@ -90,6 +90,7 @@
 from __future__ import annotations
 
 import ast
+import re
 import sys
 
 import checker_target
@@ -153,7 +154,7 @@ STUB_GENERIC_MODULES = (
     "django.views.generic.edit", "django.views.generic.dates",
 )
 RULE_ROOTS = {"application", "framework"}  # #646·#647·#650 루트 필터(신규 3규칙만 — 기존 규칙 무변)
-TYPE_IGNORE_RE = __import__("re").compile(r"#\s*type:\s*ignore(?:\[([^\]]*)\])?")
+TYPE_IGNORE_RE = re.compile(r"#\s*type:\s*ignore(?:\[([^\]]*)\])?")
 
 # #647 — 값 자리 판정 재료.
 RECORD_CONTAINERS = {"dict", "Dict", "Mapping", "MutableMapping"}
@@ -316,7 +317,8 @@ def _is_type_checking(test: ast.AST) -> bool:
 def _alias_defs(mod: ast.Module) -> "dict[str, list[tuple[ast.AST, bool]]]":
     """모듈 수준 별칭 정의 — 이름 → [(값, TYPE_CHECKING 분기 안인가)] 소스 순서.
 
-    값 = Assign/AnnAssign 의 Name/Attribute/Subscript · `TYPE_CHECKING` 분기 안 ClassDef 의 첫 기저.
+    값 = Assign/AnnAssign 의 Name/Attribute/Subscript · `TYPE_CHECKING` 분기 안 ClassDef 의 첫 기저 + 나머지
+    Subscript 기저(mixin-first 형 `class _B(Mixin, admin.ModelAdmin[M])` — 첫 기저를 마지막에 두어 «뒤 정의 우선» 을 보존).
     if/try 하위를 걷고 함수·클래스 본문 안은 보지 않는다. 같은 이름이 import 바인딩과 별칭 양쪽에 있으면
     소스 순서상 뒤 정의가 이긴다(`_resolved_base` 가 `bindings` 를 먼저 본다)."""
     out: dict[str, list[tuple[ast.AST, bool]]] = {}
@@ -329,7 +331,9 @@ def _alias_defs(mod: ast.Module) -> "dict[str, list[tuple[ast.AST, bool]]]":
                     if isinstance(tg, ast.Name):
                         out.setdefault(tg.id, []).append((st.value, in_tc))
             elif isinstance(st, ast.ClassDef) and in_tc and st.bases:
-                out.setdefault(st.name, []).append((st.bases[0], True))
+                lst = out.setdefault(st.name, [])
+                lst.extend((b, True) for b in st.bases[1:] if isinstance(b, ast.Subscript))  # mixin-first 중간 ClassDef
+                lst.append((st.bases[0], True))
             elif isinstance(st, ast.If):
                 walk(st.body, in_tc or _is_type_checking(st.test))
                 walk(st.orelse, in_tc)
@@ -354,11 +358,24 @@ def _resolved_base(node: ast.AST, bindings: dict[str, str],
     return _resolved_name(node, bindings)
 
 
+def _resolved_bases(node: ast.AST, bindings: dict[str, str],
+                    aliases: "dict[str, list[tuple[ast.AST, bool]]] | None", depth: int = 0) -> set[str]:
+    """기저 원명 집합 — 별칭 정의가 여럿(TYPE_CHECKING 분기 · mixin-first 중간 ClassDef)이면 전부 따라간다(depth≤4)."""
+    if isinstance(node, ast.Subscript):
+        return _resolved_bases(node.value, bindings, aliases, depth)
+    if isinstance(node, ast.Name) and aliases and node.id not in bindings and node.id in aliases and depth < 4:
+        out: set[str] = set()
+        for value, _tc in aliases[node.id]:
+            out |= _resolved_bases(value, bindings, aliases, depth + 1)
+        return out
+    return {_resolved_name(node, bindings)}
+
+
 def _is_declarative_class(cls: ast.ClassDef, bindings: dict[str, str],
                           aliases: "dict[str, list[tuple[ast.AST, bool]]] | None" = None) -> bool:
     if cls.name in DECLARATIVE_CLASS_NAMES:
         return True
-    if {_resolved_base(b, bindings, aliases) for b in cls.bases} & DECLARATIVE_BASE_NAMES:
+    if set().union(*(_resolved_bases(b, bindings, aliases) for b in cls.bases)) & DECLARATIVE_BASE_NAMES:
         return True
     deco = set()
     for d in cls.decorator_list:
@@ -732,16 +749,16 @@ def _check_explicit_any(mod: ast.Module, rel: Path, out: Findings, cands: Candid
             root = _unstring(ann)
             guard_root = isinstance(root, ast.Subscript) and _resolved_name(root.value, bindings) in TYPE_GUARDS
             if value == "Any":
-                hits.append((lineno, "v", "#647", where, f"{label} 의 " + RECORD_MSG.format(v="Any"), ""))
+                hits.append((lineno, "v", "#647", where, f"{label}의 " + RECORD_MSG.format(v="Any"), ""))
                 blocked647 = True
             elif value == "object" and not (site == "sig-return" and (guard_root or exempt_object)):
                 if site in ("sig-return", "class-attr"):
-                    hits.append((lineno, "v", "#647", where, f"{label} 의 " + RECORD_MSG.format(v="object") + " — 반환·속성에 남은 `object` 는 좁히지 않은 누수다", ""))
+                    hits.append((lineno, "v", "#647", where, f"{label}의 " + RECORD_MSG.format(v="object") + " — 반환·속성에 남은 `object` 는 좁히지 않은 누수다", ""))
                     blocked647 = True
                 else:
-                    hits.append((lineno, "c", "#647", where, f"{label} 의 `dict/Mapping[…, object]`", RECORD_Q))
+                    hits.append((lineno, "c", "#647", where, f"{label}의 `dict/Mapping[…, object]`", RECORD_Q))
             if site == "sig-return" and not blocked647 and not exempt_object and _return_object_placeholder(ann, bindings):
-                hits.append((lineno, "c", "#647", where, f"{label} 의 자리표시 `object`", RETURN_OBJECT_Q))
+                hits.append((lineno, "c", "#647", where, f"{label}의 자리표시 `object`", RETURN_OBJECT_Q))
         if v645 == "bare" and site in ("sig-param", "sig-star", "sig-return"):
             hits.append((lineno, "v", "#645", where, bare_msg, ""))
         elif v645 == "bare":
@@ -870,12 +887,15 @@ def _check_stub_generic_bases(mod: ast.Module, src: str, rel: Path, out: Finding
         return
     lines = src.splitlines()
     tc_classes: set[ast.ClassDef] = set()
+    rt_only: set[ast.ClassDef] = set()  # `if TYPE_CHECKING:` 의 else 직계 ClassDef — 런타임 짝(맨몸이 정당 · ⓐ 대상 밖)
 
     def mark_tc(stmts: list[ast.stmt], in_tc: bool) -> None:
         for st in stmts:
             if isinstance(st, ast.ClassDef) and in_tc:
                 tc_classes.add(st)
             elif isinstance(st, ast.If):
+                if _is_type_checking(st.test):
+                    rt_only.update(s for s in st.orelse if isinstance(s, ast.ClassDef))
                 mark_tc(st.body, in_tc or _is_type_checking(st.test))
                 mark_tc(st.orelse, in_tc)
             elif isinstance(st, ast.Try):
@@ -900,7 +920,7 @@ def _check_stub_generic_bases(mod: ast.Module, src: str, rel: Path, out: Finding
         origin_label = _leaf(bare[0]) if bare else (_leaf(stub_bases[0][1]) if stub_bases else "")
         if header_ignore is not None and "type-arg" in header_ignore:
             out.add("#646", where, f"`{cls.name}`{f'(기저 `{origin_label}`)' if origin_label else ''} 헤더의 `# type: ignore[type-arg]` — django-stubs 제네릭 맨몸을 덮었다 · 별칭(`TYPE_CHECKING`) 또는 subscript 로 적는다")
-        elif bare:
+        elif bare and cls not in rt_only:
             out.add("#646", where, f"`{cls.name}` 이 django-stubs 제네릭 기저 `{_leaf(bare[0])}` 를 맨몸으로 상속했다 — mypy strict `[type-arg]` 빚 · `if TYPE_CHECKING:` 별칭으로 모델 타입 인자를 적는다")
         elif header_ignore is not None and not header_ignore:
             cands.add("#646", where, f"`{cls.name}` 헤더의 code 없는 `# type: ignore`", STUB_Q_NOCODE)
@@ -910,6 +930,8 @@ def _check_stub_generic_bases(mod: ast.Module, src: str, rel: Path, out: Finding
             for st in cls.body:
                 if isinstance(st, (ast.Assign, ast.AnnAssign)):
                     for ln in range(st.lineno, (st.end_lineno or st.lineno) + 1):
+                        if ln <= end:
+                            continue  # 한 줄 클래스(`class X(B): x = 1  # type: ignore[type-arg]`)는 헤더 ⓑ(i) 가 이미 셌다
                         codes = _ignore_codes(lines[ln - 1]) if ln - 1 < len(lines) else None
                         if codes and "type-arg" in codes:
                             out.add("#646", f"{rel}:{ln}", f"`{cls.name}` 속성 줄의 `# type: ignore[type-arg]` — 스텁 선언(`ClassVar`)이 타입을 소유하는 자리는 재선언하지 않는다 · 인라인 목록은 bound 로 적는다")
@@ -920,21 +942,32 @@ def _check_stub_generic_bases(mod: ast.Module, src: str, rel: Path, out: Finding
 JSON_Q = "`TypeAdapter(<TypedDict>).validate_python/validate_json` 으로 검증하며 받았거나 `x: object` 로 받아 즉시 좁혔는가 — 결과가 `object` 아닌 자리로 그냥 흐른다"
 
 
-def _slot_is_object(ann: "ast.AST | None", depth: int, bindings: dict[str, str]) -> bool:
-    """결과가 놓이는 자리의 «선언 값 타입»이 object 인가 — depth 0 = 결과 자체 · 1 = 컨테이너 원소.
-    union 은 전 구성원(None 제외)이 object 슬롯일 때만 True. 주석 부재는 False(후보 — 반환 주석 없는 함수)."""
+def _slot_is_object(ann: "ast.AST | None", depth: int, bindings: dict[str, str], idx: "int | None" = None) -> bool:
+    """결과가 놓이는 자리의 «선언 값 타입»이 object 인가 — depth 0 = 결과 자체 · 1 = 컨테이너 원소(`idx` = 이종 튜플의
+    원소 위치 · -1 = dict 리터럴의 키 자리 · None = 값/원소 자리). `...` 는 원소가 아니다. union 은 전 구성원(None 제외)이
+    object 슬롯일 때만 True. 주석 부재는 False(후보 — 반환 주석 없는 함수)."""
     if ann is None:
         return False
     ann = _unstring(ann)
     members = _union_members(ann)
     if members is not None:
         rest = [m for m in members if not (isinstance(m, ast.Constant) and m.value is None)]
-        return bool(rest) and all(_slot_is_object(m, depth, bindings) for m in rest)
+        return bool(rest) and all(_slot_is_object(m, depth, bindings, idx) for m in rest)
     if depth == 0:
         return isinstance(ann, ast.Name) and ann.id == "object"
     if isinstance(ann, ast.Subscript) and _leaf(_resolved_name(ann.value, bindings)) in (RECORD_CONTAINERS | SEQUENCE_CONTAINERS):
         elts = list(ann.slice.elts) if isinstance(ann.slice, ast.Tuple) else [ann.slice]
-        val = _unstring(elts[-1]) if elts else None
+        variadic = any(isinstance(e, ast.Constant) and e.value is Ellipsis for e in elts)
+        elts = [e for e in elts if not (isinstance(e, ast.Constant) and e.value is Ellipsis)]
+        if not elts:
+            return False
+        if idx is not None and idx >= 0 and _leaf(_resolved_name(ann.value, bindings)) in ("tuple", "Tuple") and not variadic:
+            pick = elts[idx] if idx < len(elts) else elts[-1]  # 이종 튜플 — 그 원소의 자리
+        elif idx == -1 and len(elts) > 1:
+            pick = elts[0]  # dict 키 자리
+        else:
+            pick = elts[-1]  # 값/원소 자리
+        val = _unstring(pick)
         return isinstance(val, ast.Name) and val.id == "object"
     return False
 
@@ -962,22 +995,27 @@ def _check_json_load(mod: ast.Module, rel: Path, cands: Candidates, origins: dic
                 return q
         return None
 
-    def judge(node: ast.AST, depth: int) -> "tuple[bool, str, int]":
+    def judge(node: ast.AST, depth: int, idx: "int | None" = None) -> "tuple[bool, str, int]":
         p = parent.get(node)
         if isinstance(p, ast.AnnAssign):
-            return (not _slot_is_object(p.annotation, depth, bindings), "주석 변수", p.lineno)
+            return (not _slot_is_object(p.annotation, depth, bindings, idx), "주석 변수", p.lineno)
         if isinstance(p, ast.Assign):
             return (False, "", p.lineno)  # 무주석 — #493 몫
         if isinstance(p, ast.Return):
             fn = enclosing_fn(node)
             ann = fn.returns if fn is not None else None
-            return (not _slot_is_object(ann, depth, bindings), "반환", p.lineno)
+            return (not _slot_is_object(ann, depth, bindings, idx), "반환", p.lineno)
         if isinstance(p, (ast.ListComp, ast.GeneratorExp, ast.SetComp, ast.DictComp)):
             return (True, "컴프리헨션 요소", node.lineno)
         if isinstance(p, (ast.Subscript, ast.Attribute)):
             return (True, "직접 첨자/속성 접근", node.lineno)
         if isinstance(p, (ast.Dict, ast.List, ast.Tuple, ast.Set)) and depth == 0:
-            cand, why, ln = judge(p, 1)
+            pos: "int | None" = None
+            if isinstance(p, ast.Tuple):
+                pos = next((i for i, e in enumerate(p.elts) if e is node), None)
+            elif isinstance(p, ast.Dict) and any(k is node for k in p.keys):
+                pos = -1  # dict 리터럴의 키 자리
+            cand, why, ln = judge(p, 1, pos)
             return (cand, "리터럴 컨테이너 요소 → " + why if why else "", ln)
         return (False, "", node.lineno)
 
@@ -985,7 +1023,8 @@ def _check_json_load(mod: ast.Module, rel: Path, cands: Candidates, origins: dic
         if isinstance(node, ast.Call) and is_json_load(node):
             cand, why, ln = judge(node, 0)
             if cand:
-                cands.add("#650", f"{rel}:{ln}", f"`json.{_name_of(node.func) or 'load'}(…)` 결과가 {why}로 흐른다", JSON_Q)
+                fn_name = _dotted(node.func, origins).rsplit(".", 1)[-1] if isinstance(node.func, ast.Name) else _name_of(node.func)
+                cands.add("#650", f"{rel}:{ln}", f"`json.{fn_name}(…)` 결과가 {why}로 흐른다", JSON_Q)
 
 
 # ── #358 · #456 · #69 ───────────────────────────────────────────────────────

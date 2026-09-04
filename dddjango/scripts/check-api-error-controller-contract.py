@@ -16,6 +16,15 @@ category 의 #N 귀속/계약 잔류 판정은 귀속 매핑표 v2 가 정본이
 (정본 문서명: 2026-08-19-ontology-t2-1-attribution-map).
 tree↔code 동일 사건 이중 방출은 tree 사이트 선점 억제로 막는다(귀속 매핑표 v2
 overlap 절 — #62·#474 는 handler 행, ⓓ#125 는 route 함수 def 행 좌표).
+표준 트리 슬라이스(모든 프로필 · `_slice_check_controller_ast`)의 코드 형상 규칙 2(09-04 현장 보고 3 S-5):
+  #648 반환 주석의 `ninja.Status` 상자는 하나 — union(`|`·`Optional`·`Union`·문자열 주석)을 평탄화한 구성원 중
+       `Status[…]`(origin = `ninja.Status`/`ninja.responses.Status` · 모듈 수준 import 바인딩으로 해소)가 2개
+       이상이면 위반(`-> Status[Out | Err]` 또는 `-> Out | Status[Err]` 로). `Status[T]` 는 불변이라 상자 둘은
+       concrete 직접 반환에서 mypy strict red 이고, 값 변수를 base 로 주석해 통과시킨 형태도 같은 금지(형태 금지).
+  #649 클래스가 ninja `Schema`(origin `ninja.Schema`/`ninja.schema.Schema`)와 pydantic `RootModel`
+       (`pydantic.RootModel`/`pydantic.root_model.RootModel`)을 함께 상속하면 위반(메타클래스 충돌 —
+       성공 union 응답은 `RootModel[Annotated[A | B, Field(discriminator=…)]]` 단독 상속). 파일 한정 없음.
+  둘 다 api/** 전 파일 + OHS `*_service.py`(트리 슬라이스 대상)에서 돌고 overlap 억제 비대상(keys None).
 
 그래프 좌표(T2-2): 규범 정본 = 온톨로지 그래프(`ontology/rules/`) · 이 검사기의 #N ↔ Work 조인은
   alias 대장(`ontology/wiring/aliases.ttl`)이 소유한다. 조인 확정: 없음(대장 미등재 — #74 소유자
@@ -7103,6 +7112,89 @@ def _tree_adopted2(bcs: list[Path]) -> bool:
     return False
 
 
+_STATUS_ORIGINS = {"ninja.Status", "ninja.responses.Status"}
+_SCHEMA_ORIGINS = {"ninja.Schema", "ninja.schema.Schema"}
+_ROOTMODEL_ORIGINS = {"pydantic.RootModel", "pydantic.root_model.RootModel"}
+
+
+def _tree_origins(mod: _ast.Module) -> dict[str, str]:
+    """모듈 수준 import 바인딩 — 로컬 이름 → dotted origin(if/try 하위 포함 · 뒤 정의 우선 · 함수·클래스 본문 안 import 는 무시)."""
+    origins: dict[str, str] = {}
+
+    def walk(stmts: "list[_ast.stmt]") -> None:
+        for st in stmts:
+            if isinstance(st, _ast.ImportFrom) and st.level == 0 and st.module:
+                for a in st.names:
+                    origins[a.asname or a.name] = f"{st.module}.{a.name}"
+            elif isinstance(st, _ast.Import):
+                for a in st.names:
+                    origins[a.asname or a.name.split(".")[0]] = a.name if a.asname else a.name.split(".")[0]
+            elif isinstance(st, (_ast.ClassDef, _ast.FunctionDef, _ast.AsyncFunctionDef)):
+                origins.pop(st.name, None)
+            elif isinstance(st, _ast.If):
+                walk(st.body)
+                walk(st.orelse)
+            elif isinstance(st, _ast.Try):
+                walk(st.body)
+                for h in st.handlers:
+                    walk(h.body)
+                walk(st.orelse)
+                walk(st.finalbody)
+
+    walk(mod.body)
+    return origins
+
+
+def _tree_dotted(node: _ast.AST, origins: dict[str, str]) -> str:
+    if isinstance(node, _ast.Name):
+        return origins.get(node.id, node.id)
+    if isinstance(node, _ast.Attribute):
+        head = _tree_dotted(node.value, origins)
+        return f"{head}.{node.attr}" if head else node.attr
+    return ""
+
+
+def _tree_unstring(node: _ast.AST) -> _ast.AST:
+    if isinstance(node, _ast.Constant) and isinstance(node.value, str):
+        try:
+            return _ast.parse(node.value, mode="eval").body
+        except SyntaxError:
+            return node
+    return node
+
+
+def _tree_union_members(node: _ast.AST) -> "list[_ast.AST]":
+    """`X | Y` · `Optional[X]` · `Union[X, Y]` 평탄화(문자열 주석 재파싱) — 합집합이 아니면 [node]."""
+    node = _tree_unstring(node)
+    if isinstance(node, _ast.BinOp) and isinstance(node.op, _ast.BitOr):
+        return _tree_union_members(node.left) + _tree_union_members(node.right)
+    if isinstance(node, _ast.Subscript):
+        head = node.value.attr if isinstance(node.value, _ast.Attribute) else getattr(node.value, "id", "")
+        if head in ("Optional", "Union"):
+            elts = list(node.slice.elts) if isinstance(node.slice, _ast.Tuple) else [node.slice]
+            out: "list[_ast.AST]" = []
+            for e in elts:
+                out.extend(_tree_union_members(e))
+            return out
+    return [node]
+
+
+def _status_box_count(returns: "_ast.AST | None", origins: dict[str, str]) -> int:
+    """#648 — 반환 주석 union 구성원 중 `Status[…]` 상자 수."""
+    if returns is None:
+        return 0
+    return sum(
+        1 for m in _tree_union_members(returns)
+        if isinstance(m, _ast.Subscript) and _tree_dotted(m.value, origins) in _STATUS_ORIGINS
+    )
+
+
+def _schema_rootmodel_mix(cls: _ast.ClassDef, origins: dict[str, str]) -> bool:
+    """#649 — ninja `Schema` 와 pydantic `RootModel` 동시 상속."""
+    bases = {_tree_dotted(b.value if isinstance(b, _ast.Subscript) else b, origins) for b in cls.bases}
+    return bool(bases & _SCHEMA_ORIGINS) and bool(bases & _ROOTMODEL_ORIGINS)
+
+
 def _deco_route_name(deco: _ast.expr) -> str | None:
     """라우트 데코레이터인가 — `@router.get(...)`·`@api.post(...)`·`@http_get(...)`."""
     target = deco.func if isinstance(deco, _ast.Call) else deco
@@ -7135,8 +7227,19 @@ def _slice_check_controller_ast(
         if isinstance(node, _ast.ImportFrom) and node.level == 0 and node.module:
             if "domain_layer" in node.module.split("."):
                 domain_names.update(a.asname or a.name for a in node.names)
+    origins: dict[str, str] = _tree_origins(mod)
+    for node in _ast.walk(mod):
+        if isinstance(node, _ast.ClassDef) and _schema_rootmodel_mix(node, origins):
+            msg = f"`{node.name}` 이 ninja `Schema` 와 pydantic `RootModel` 을 함께 상속했다 — 메타클래스 충돌 · 성공 union 응답은 `RootModel[Annotated[A | B, Field(discriminator=…)]]` 단독 상속이다"
+            findings.add("#649", f"{rel}:{node.lineno}", msg)
+            finding_keys.append(None)
     for node in _ast.walk(mod):
         if isinstance(node, (_ast.FunctionDef, _ast.AsyncFunctionDef)):
+            boxes = _status_box_count(node.returns, origins)
+            if boxes >= 2:
+                msg = f"`{node.name}()` 반환 주석에 `Status[…]` 상자가 {boxes}개 — 상자는 하나다(`-> Status[Out | Err]` 또는 `-> Out | Status[Err]`) · `Status[T]` 는 불변이라 concrete 직접 반환이 mypy strict 에서 막힌다"
+                findings.add("#648", f"{rel}:{node.lineno}", msg)
+                finding_keys.append(None)
             routes = [d for d in node.decorator_list if _deco_route_name(d)]
             deco_names = set()
             for d in node.decorator_list:
