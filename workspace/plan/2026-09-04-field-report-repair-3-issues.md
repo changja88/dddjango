@@ -13,7 +13,7 @@
 | S-1 | django-stubs 제네릭 기저(`ModelForm`·`ModelAdmin`·`TabularInline`/`StackedInline`·`BaseInlineFormSet`)는 런타임 subscript 불가인데 플러그인 문면이 없어 레인 10개가 세 모양(맨몸/ignore/별칭)으로 갈렸다 | 문면 | `implementation-django`에 admin·ModelForm 타이핑 절 신설 + 문장 3개 + 정본 예시 1벌 · houserules §4 참조 한 문장 · 검사기 불요 | **결정 09-04 «확정»** — 방향은 §2-A(문면 + 검사기 #646 · 보고자 원안과 다름) | 결정 |
 | S-2 | Django 기저에 `# type: ignore[type-arg]`를 붙여 8 BC가 빚을 숨겼다 — 문면만으론 재발 가능 | 검사기(선택) | `check-public-surface-annotation.py`(#493) 확장 또는 신규 규칙: `ClassDef` 헤더·`inlines` 첫 대입 줄의 `type: ignore[type-arg]` = 위반 | **S-1 ⓑ에 흡수**(09-04) — 별도 결정 없음 | 흡수 |
 | S-3 | fortune_character 빌드 lane-report가 자기 BC를 빼고 mypy를 돌려 «Success» — 공허한 통과 | 발주측 | 플러그인 수정 없음. R-12 발주 가이드 1줄에 «자기 BC 경로 필수» 있는지만 확인 | **결정 09-04 «확정»** — §2-B(플러그인 수정 없음 · R-12 행에 반영 문구 추기) | 결정 |
-| S-4 | 딕셔너리를 레코드로 쓰는 모양(`dict/Mapping[str, object\|Any]` 1,110줄 · mypy 70건)을 플러그인 예시·권고가 만든다 | 문면 + 검사기 | 한 줄 규칙 «모든 JSON은 입구에서 `TypedDict`» + 붙임 2·예외 1 + 결정표 6행 · houserules §4·implementation-python·architecture-ddd 문면 · 검사기 (a) 주석 스캔 (b) `json.load` 무파싱 | **보고자 기재: 사용자 결정 «무조건 · 최대 타입 강제»(09-04 · spring 세션)** — 이 세션 재확인 필요 · R-3447 충돌(§3) | 접수 |
+| S-4 | 딕셔너리를 레코드로 쓰는 모양(`dict/Mapping[str, object\|Any]` 1,110줄 · mypy 70건)을 플러그인 예시·권고가 만든다 | 문면 + 검사기 | 한 줄 규칙 «모든 JSON은 입구에서 `TypedDict`» + 붙임 2·예외 1 + 결정표 6행 · houserules §4·implementation-python·architecture-ddd 문면 · 검사기 (a) 주석 스캔 (b) `json.load` 무파싱 | **결정 09-04 «확정»(이 세션 재확인)** — §2-C(문면 + R-3447 개정 + 검사기 #647 위반 · `json.load` 무검증은 ⓓ 후보) | 결정 |
 | S-5 | ninja 컨트롤러 반환 주석 `Status[A] \| Status[B]`·오류 응답 base 뭉뚱그림·200 union의 `Schema`+`RootModel` 다중 상속을 문면·검사기가 안 막는다(mypy 9건) | 문면 + 검사기 | `implementation-django-ninja` 두 문장 + 정본 예시 2개 · `check-api-error-controller-contract.py` 규칙 (a)(b)(c) | — | 접수 |
 | N-1 | notification admin 2건(`obj is None` 재검사 → `[redundant-expr]`/`[unreachable]`) — 보고자: A/R-3443의 admin 변종, 새 항목 아님 | 관측 | 없음(기존 규범 적용 확인만) | — | 범위 밖 |
 | N-2 | parler `TranslatableAdmin`·`TranslatableModelForm`의 `# type: ignore[misc]` 6곳 — 보고자: 서드파티 미타입이라 정당 | 관측 | 없음 | — | 범위 밖 |
@@ -130,9 +130,20 @@
 
 R-12 발주 가이드는 문서 미착수(로드맵 51행 등재만)라, 그 행에 «mypy 증거는 자기 BC 경로 포함 필수 · `spring_dream_server framework`만 돌린 결과는 증거가 아니다» 1줄을 반영 문구로 추기(B 기각 때 «툴체인 게이트는 훅·발주서 소유» 1줄 선례). R-12 착수 시 반영.
 
+### §2-C · S-4 확정(09-04) — 문면 + R-3447 개정 + 검사기
+
+사용자 이해 확인: «받는 순간 dict인 건 어쩔 수 없고, dict인 채로 흘리거나 dict로 만든 게 문제» · «애초에 받을 때부터 TypedDict로 받으면 된다»(외부는 `TypeAdapter` 검증 포함 · 내부는 처음부터 그 모양으로 생성). spring 세션의 «무조건 · 최대 타입 강제»를 이 세션에서 «확정»으로 재확인.
+
+1. 규칙(houserules §4 · R-3447 rev2 + 신설 R): «키가 정해진 값 묶음은 딕셔너리로 쓰지 않는다. 내부 데이터는 `TypedDict`, 외부에서 온 JSON은 `pydantic.TypeAdapter(그TypedDict).validate_python/validate_json`으로 검증하며 받는다, 도메인 개념은 값 객체. `dict[str, object]`·`dict[str, Any]` 주석 금지. 조회표는 `dict[K, 구체 V]`(V 레코드면 `TypedDict`) · 구조를 정하지 않는 임의 JSON만 `type JsonValue = …` 재귀 별칭.» 보고자 결정표 6행(L218~L225)을 §4에 그대로. R-3447의 «JSON 문서는 `Mapping[str, object]`» 문장은 삭제·대체.
+2. 예시 정정: architecture-ddd `values: dict[str, Any]`(:1618) → `TypedDict`. implementation-python §1.5(TypedDict 5줄 권고)를 «어떻게» 절로 확장(TypedDict·`TypeAdapter`·`JsonValue`·`Literal` 판별 union).
+3. 검사기 #647(`check-public-surface-annotation.py`): 주석(시그니처·변수·클래스 속성)의 `(dict|Mapping|MutableMapping)[…, object|Any]` = 위반. AST `Subscript`만. 결정 1(수리 2)에서 ⓓ 후보였던 `dict[str, Any]`는 이 자리에 한해 위반으로 승격 — 사용자 «확정».
+4. `json.load(s)` 결과를 `TypeAdapter`/`model_validate`/명시 파서 없이 대입·반환 = ⓓ 후보(exit 불산입 · 감수자). 보고자 (b)의 «위반»은 채택하지 않음(오탐률 미확인 · 차단이면 레인 정지).
+5. legacy 1,110줄은 registry_gate 앵커 차분으로 격리(새 레인 산출물만).
+보고자 원안 대비 차이 3: (b) 후보화 · R-3447 개정 추가 · architecture-ddd 예시 정정 명시.
+
 ### 남은 결정 표시
 
-- S-4 «무조건 · 최대 타입 강제» — 보고자가 사용자 결정으로 기재(spring 세션). 이 세션에서 재확인 + R-3447 충돌 해소 방향(§3)까지 한 결정.
+- ~~S-4~~ → §2-C 확정.
 - S-5e(오류 응답 base 뭉뚱그림 검사)는 발주측 OpenAPI 변경 승인과 맞물린다 — 플러그인 검사기 채택은 우리 결정, 발주측 상환은 그쪽 결정.
 
 ## §3 우리 쪽 메모 — v2.17.17과의 겹침·충돌(⓪ 실측 대상)
