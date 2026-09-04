@@ -64,3 +64,7 @@ BLOCKER 0 · MAJOR A 4·B 7·C 3 · 나머지 검증됨/MINOR. 수치는 세 축
 ### ① 결론
 
 세 항목 모두 **진행**(확정 방향 유지 · 기술 수정만). 결정 밖 «확장» 2건(R-0331 rev2 · registry_gate ⓓ 앵커 격리)은 ⑥ 감사 고지 항목이며 사용자에게 예고한다. 철회 1(§2-A 수정 1 ⑤). ② 계획 = `2026-09-04-field-report-repair-3-plan.md`.
+
+## 2·3단계 결과 (2026-09-04 — 계획 `2026-09-04-field-report-repair-3-plan.md` · ③ 리뷰 3기 A 기술·B 규범·C 증거 · 산출 `workspace/eval/field-report-3/rv3/`)
+
+BLOCKER 0 · MAJOR A 5(#650 오라클 정당형 · ⓔ2 smoke/sidecar 조건 · 등재 집계 셀 · 정본 예시 red 1 · good 픽스처 배치 cross 신규 쌍) · B 6(django-skill b18 실존 → b17 확장 · 정본 예시 · 절차 sha 산식 · #650 문면 · prefLabel 9 · sectionNumber) · C 3(무손실 판형 미명세 · 기대 계수 루트 필터 전 값 · ⓔ2 smoke) — 전부 계획 v2 델타 Δ1~Δ15 로 반영. 세 축 공통 실측: 정본 예시 셋째 인자 생략 → strict green(코디 탐침 포함 3회 독립 확인) · #493 수리 검출 집합 불변(6 대상 0/0) · «HEAD=앵커 → ⓓ 신규 0» 두 저장소 · 구현 전 무손실 판형 `VERDICT: LOSSLESS`. ④ 착수(조각 1 = S-1+S-4).
