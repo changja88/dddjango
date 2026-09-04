@@ -16,17 +16,24 @@ ontology/                 ← 규범 «정본» (그래프)
 └── LEDGER.tsv             산문(prose) 절 기준선 원장 (append-only)
 
 dddjango/                 ← Claude Code 설치본 (플러그인)
+├── REQUEST_GUIDE.md       사람용 작업 요청 가이드 정본
 ├── commands/ agents/ skills/   md의 graph-owned 절 = 그래프의 «렌더 투영물»
 └── scripts/               결정적 백스톱 27종 + rulepack.json(빌드타임 SPARQL «소성물»)
 
 codex-dddjango/           ← Codex 설치본 미러 (scripts는 byte 동일을 verify가 강제)
+└── REQUEST_GUIDE.md       dddjango/REQUEST_GUIDE.md의 byte 동일 미러
 
 dddjango-web/             ← 자매 플러그인 (웹 표현계층 빌더 — /dddjango-web)
                            전 파일 «산문 정본» — 온톨로지 코퍼스 밖. graph-owned 절이 없고
                            md·py를 직접 수정한다. 픽스처는 make verify(verify-web)가 실행.
                            빌드 스펙 정본: workspace/design/2026-08-23-web-presentation-layer-spec.md
+└── REQUEST_GUIDE.md       사람용 화면 작업 요청 가이드 정본
 
 codex-dddjango-web/       ← dddjango-web의 Codex 설치본 미러
+└── REQUEST_GUIDE.md       dddjango-web/REQUEST_GUIDE.md의 byte 동일 미러
+
+.claude-plugin/marketplace.json   ← Claude marketplace: dddjango · dddjango-web subdir
+.agents/plugins/marketplace.json ← Codex marketplace: ./codex-dddjango · ./codex-dddjango-web subdir
 
 workspace/                ← 메인테이너 전용 (배포되지 않음)
 ├── tools/                 검증 도구 사슬 · ontology-authoring.md(저작 규약 정본)
@@ -47,6 +54,30 @@ docs/                     ← 공식 문서 (이 문서 · master.html — 통�
 | **소성물** | `dddjango/scripts/rulepack.json` | `make rulepack`으로 재소성만 |
 
 설치본은 **표준 라이브러리만** 쓴다. rdflib·pySHACL·rdfcanon은 메인테이너 `.venv` 전용이며 플러그인 배포물에 침투하지 않는다(동결 E7).
+
+### 사람용 작업 요청 가이드의 소유권
+
+위 두 `REQUEST_GUIDE.md` 정본은 runtime prompt나 ontology corpus가 아닌 사람용 문서다.
+graph-owned marker·`ISSUED`·`LEDGER.tsv`의 대상이 아니며 `corpus_mirror_sync.py`도 갱신하지 않는다.
+Claude 정본에 Claude와 Codex 시작 문법을 함께 적고, Codex 사본은 의미 미러가 아닌 byte 동일 미러로 유지한다.
+루트 README는 두 정본 링크와 짧은 비교를 소유하고 상세 템플릿은 복제하지 않는다.
+
+편집 순서는 Claude 정본 편집 → Codex 파일에 byte 복사 또는 동일 patch → 아래 targeted 비교 → `make verify`다.
+
+```bash
+cmp -s dddjango/REQUEST_GUIDE.md codex-dddjango/REQUEST_GUIDE.md
+cmp -s dddjango-web/REQUEST_GUIDE.md codex-dddjango-web/REQUEST_GUIDE.md
+python3 workspace/tools/request_guide_contract.py --self-test
+python3 workspace/tools/request_guide_contract.py
+python3 workspace/tools/reverse_coverage.py
+```
+
+각 가이드는 설치본 안에서 독립적으로 읽을 수 있어야 한다. 루트 README·docs·workspace나 형제 설치
+디렉터리에 의존하는 상대 링크를 넣지 않는다. 설치된 플러그인 루트의 사본이 해당 runtime의 권위 있는
+가이드임을 상단에 밝힌다. README와 manifest homepage는 발견 경로이며, `main`의 공개 homepage는 최신
+온라인 가이드이므로 설치 버전 정본을 대신하지 않는다. 네 manifest homepage와 두 Codex
+`interface.websiteURL`은 각 Claude 정본의 공개 URL을, `repository`는 저장소 루트를 가리킨다.
+두 marketplace의 정확한 경로는 위 지도와 같고 네 source는 각각의 설치 subdir와 `ref: main`을 유지한다.
 
 ## 2. 환경 구축 (1회)
 
@@ -78,6 +109,8 @@ md에서 `<!-- graph-owned: … -->` 마커가 붙은 절은 **직접 수정 금
 ## 4. 검사기(백스톱)·도구 수정
 
 - 검사기 27종은 `dddjango/scripts/check-*.py`가 원본이고 `codex-dddjango/…/scripts/`는 **byte 동일 미러**다 — 한쪽만 고치면 verify-base 마지막 단(`diff -rq`)이 red다. 둘 다 갱신한다.
+- `workspace/tools/request_guide_contract.py`는 가이드 존재·byte 미러·README exact 링크·외부 상대 링크 부재·marketplace name/path/ref와 subdir 내용·manifest homepage/repository·Codex websiteURL/defaultPrompt·설치본 권위 문구를 검사한다. `--self-test`는 tempfile 정상 fixture와 독립 변이의 거부를 검증하며 네트워크나 공개 URL 생존성은 검사하지 않는다. 계약을 바꾸면 해당 검출력 fixture도 함께 유지한다. `verify-base-core`는 dddjango pair 비교 → self-test → 실제 계약을, `verify-web`은 web pair 비교 → 실제 계약을 실행한다.
+- `workspace/tools/reverse_coverage.py`의 닫힌 분류표는 dddjango 루트 `REQUEST_GUIDE.md`를 사람용 사용자 가이드로 명시한다. 새 설치 파일의 존재 근거를 유지하되 이 가이드에 런타임 규칙 소유권을 부여하지 않는다.
 - 측정 도구 일부는 manifest 봉인 대상이다(`workspace/tools/manifest_seal.py`의 글롭 목록 참조). 봉인 파일을 고치면 봉인 재발행이 필요하다.
 - **봉인은 커밋 직전 마지막 단계다** — `make verify` 가 RED 여서 봉인 대상(측정 도구·byte 골든 EXPECTED·매트릭스)을 다시 고쳤으면 `manifest_seal.py --write` 를 다시 발행하고 `make verify` 를 처음부터 다시 돈다. 커밋 메시지·기록의 verify 수치는 **마지막 실행 로그**(evidence 경로 병기)의 것만 적는다 — 중간 실행의 green 을 옮겨 적지 않는다(2026-09-04 `d701df8` «verify 6/6» 거짓 표기 · 정정 `cad221b`).
 

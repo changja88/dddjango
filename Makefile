@@ -94,7 +94,11 @@ verify-web:
 	bash dddjango-web/scripts/test/run_fixtures.sh; \
 	echo "[verify-web] codex 미러 byte 대조(scripts·assets)"; \
 	diff -rq --exclude=__pycache__ dddjango-web/scripts codex-dddjango-web/skills/dddjango-web/scripts; \
-	diff -rq dddjango-web/assets codex-dddjango-web/skills/dddjango-web/assets
+	diff -rq dddjango-web/assets codex-dddjango-web/skills/dddjango-web/assets; \
+	echo "[verify-web] REQUEST_GUIDE byte 미러 대조"; \
+	cmp -s dddjango-web/REQUEST_GUIDE.md codex-dddjango-web/REQUEST_GUIDE.md || { echo "ERROR: dddjango-web REQUEST_GUIDE 누락 또는 Codex byte 미러 불일치"; exit 1; }; \
+	echo "[verify-web] 요청 가이드 배포·발견 계약"; \
+	PYTHONUTF8=1 python3 workspace/tools/request_guide_contract.py
 
 # 온톨로지 단 — .venv 파이썬 고정 (T0 A8)
 verify-ontology:
@@ -155,7 +159,13 @@ verify-base-core:
 	PYTHONUTF8=1 python3 workspace/tools/manifest_seal.py --check --draft; \
 	PYTHONUTF8=1 python3 workspace/tools/manifest_seal.py --self-test; \
 	PYTHONUTF8=1 python3 workspace/tools/ab_score.py --self-test; \
-	diff -rq dddjango/scripts codex-dddjango/skills/dddjango/scripts --exclude=__pycache__
+	diff -rq dddjango/scripts codex-dddjango/skills/dddjango/scripts --exclude=__pycache__; \
+	echo "[verify-base-core] REQUEST_GUIDE byte 미러 대조"; \
+	cmp -s dddjango/REQUEST_GUIDE.md codex-dddjango/REQUEST_GUIDE.md || { echo "ERROR: dddjango REQUEST_GUIDE 누락 또는 Codex byte 미러 불일치"; exit 1; }; \
+	echo "[verify-base-core] 요청 가이드 검증기 self-test"; \
+	PYTHONUTF8=1 python3 workspace/tools/request_guide_contract.py --self-test; \
+	echo "[verify-base-core] 요청 가이드 배포·발견 계약"; \
+	PYTHONUTF8=1 python3 workspace/tools/request_guide_contract.py
 
 verify-base-cross:
 	@set -euo pipefail; \

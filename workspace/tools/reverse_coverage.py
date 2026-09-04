@@ -16,6 +16,7 @@
       · agents/*.md                  — 매핑표 ⓓ 소유 규칙(0이면 파이프라인 절차)
       · commands/dddjango.md         — flow 정본 + registry 렌더(ⓒ⑥⑦)
       · .claude-plugin/plugin.json   — 플러그인 매니페스트
+      · REQUEST_GUIDE.md             — 사람용 사용자 가이드(런타임 규범 밖)
   ⑵ 매핑표 ⓒ·ⓓ 컬럼이 가리키는 경로가 전부 실재해야 한다(죽은 소유자 0).
 
 exit 0 = 미설명 0 · 죽은 소유자 0 / exit 2 = 위반 / exit 1 = 재료 결손(fail-closed).
@@ -175,6 +176,8 @@ def main() -> int:
                 problems.append(f"미설명: `{key}` — 알 수 없는 스킬 `{skill}`")
         elif parts[0] == ".claude-plugin":
             why = "플러그인 매니페스트"
+        elif key == "REQUEST_GUIDE.md":
+            why = "사람용 사용자 가이드 — runtime prompt·ontology corpus 밖, Codex byte 미러 계약"
         else:
             problems.append(f"미설명: `{key}` — 어느 범주에도 없다")
         if why is not None:
