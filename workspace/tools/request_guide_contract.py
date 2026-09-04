@@ -33,10 +33,11 @@ class HTMLLinkTargets(HTMLParser):
 
 
 def without_markdown_code(text: str) -> str:
-    """먼저 열린 코드·주석·HTML 태그 문맥을 끝까지 읽고 코드·주석만 제외한다."""
-    tokens = re.compile(
-        r"(?P<comment><!--.*?(?:-->|$))|(?P<tag>" + HTML_TAG + r")"
-        r"|(?<!`)(?P<ticks>`+)(?!`)(.*?)(?<!`)(?P=ticks)(?!`)",
+    """Fence 경계를 우선하고, 먼저 열린 span·주석·태그 중 코드·주석만 제외한다."""
+    fence_openers = re.compile(r"^ {0,3}(`{3,}(?=[^`\n]*$)|~{3,})[^\n]*", re.MULTILINE)
+    contexts = re.compile(r"(?P<comment><!--.*?(?:-->|$))|(?P<tag>" + HTML_TAG + r")", re.DOTALL)
+    code_spans = re.compile(
+        r"(?<!`)(?P<ticks>`+)(?!`)(.*?)(?<!`)(?P=ticks)(?!`)",
         re.DOTALL,
     )
     parts: list[str] = []
@@ -56,8 +57,8 @@ def without_markdown_code(text: str) -> str:
                 parts.append("\n")
                 position = line_end
                 continue
-            opener = re.match(r" {0,3}(`{3,}|~{3,})(.*)", line)
-            if opener and not (opener[1].startswith("`") and "`" in opener[2]):
+            opener = fence_openers.match(text, position)
+            if opener:
                 fence = opener[1]
                 paragraph_open = False
                 parts.append("\n")
@@ -67,7 +68,12 @@ def without_markdown_code(text: str) -> str:
                 parts.append("\n")
                 position = line_end
                 continue
-        match = tokens.search(text, position)
+        # Code span은 다음 fence를 넘을 수 없고, 열린 주석·태그는 문맥을 유지한다.
+        boundary = fence_openers.search(text, position)
+        code_span = code_spans.search(text, position, boundary.start() if boundary else len(text))
+        match = contexts.search(text, position)
+        if code_span is not None and (match is None or code_span.start() < match.start()):
+            match = code_span
         if match is None or match.start() >= line_end:
             parts.append(text[position:line_end])
             visible_line += text[position:line_end]
@@ -77,13 +83,13 @@ def without_markdown_code(text: str) -> str:
             position = line_end
         else:
             parts.append(text[position:match.start()])
-            parts.append(match[0] if match["tag"] is not None else " " + "\n" * match[0].count("\n"))
+            parts.append(match[0] if match.lastgroup == "tag" else " " + "\n" * match[0].count("\n"))
             visible_line += text[position:match.start()]
             if "\n" in match[0]:
                 visible_line = ""
-            if match["tag"] is not None:
+            if match.lastgroup == "tag":
                 visible_line += match[0].rsplit("\n", 1)[-1]
-            elif match["ticks"] is not None:
+            elif match.lastgroup == "ticks":
                 visible_line += "`"
             position = match.end()
     return "".join(parts)
@@ -269,6 +275,7 @@ def self_test() -> int:
         }, "readme-link"))
         for label, example in (
             ("fenced backticks", f"```markdown\n[guide]({canonical})\n```\n"),
+            ("fence after unmatched backtick", f"`\n```\n` [guide]({canonical})\n```\n"),
             ("fenced tildes", f"~~~markdown\n[guide]({canonical})\n~~~\n"),
             ("code span", f"`[guide]({canonical})`\n"),
             ("HTML comment", f"<!-- [guide]({canonical}) -->\n"),
@@ -315,6 +322,8 @@ def self_test() -> int:
             }, "guide-link"))
         for label, suffix in (
             ("inline relative link", "[root](../README.md)\n"),
+            ("relative link after fence preceded by unmatched backtick", "`\n```\n`\n```\n[root](../README.md)\n"),
+            ("relative link after multiline code span", "`code\n[root](../README.md)\n`\n[root](../README.md)\n"),
             ("reference relative link", "[root][r]\n[r]: ../README.md\n"),
             ("HTML relative link", '<a href="../README.md">root</a>\n'),
             ("HTML unquoted href", "<a href=../README.md>root</a>\n"),
@@ -330,6 +339,7 @@ def self_test() -> int:
             }, "guide-link"))
         for label, suffix in (
             ("inline Markdown code example", "`[root](../README.md)`\n"),
+            ("multiline Markdown code example", "`code\n[root](../README.md)\n`\n"),
             ("inline HTML code example", '`<a href="../README.md">root</a>`\n'),
             ("double-backtick HTML code example", '``<a title="`" href="../README.md" data-note="`">root</a>``\n'),
             ("backtick fenced code example", '```html\n<a href="../README.md">root</a>\n```\n'),
