@@ -12,7 +12,7 @@
 |---|---|---|---|---|---|
 | S-1 | django-stubs 제네릭 기저(`ModelForm`·`ModelAdmin`·`TabularInline`/`StackedInline`·`BaseInlineFormSet`)는 런타임 subscript 불가인데 플러그인 문면이 없어 레인 10개가 세 모양(맨몸/ignore/별칭)으로 갈렸다 | 문면 | `implementation-django`에 admin·ModelForm 타이핑 절 신설 + 문장 3개 + 정본 예시 1벌 · houserules §4 참조 한 문장 · 검사기 불요 | **결정 09-04 «확정»** — 방향은 §2-A(문면 + 검사기 #646 · 보고자 원안과 다름) | 결정 |
 | S-2 | Django 기저에 `# type: ignore[type-arg]`를 붙여 8 BC가 빚을 숨겼다 — 문면만으론 재발 가능 | 검사기(선택) | `check-public-surface-annotation.py`(#493) 확장 또는 신규 규칙: `ClassDef` 헤더·`inlines` 첫 대입 줄의 `type: ignore[type-arg]` = 위반 | **S-1 ⓑ에 흡수**(09-04) — 별도 결정 없음 | 흡수 |
-| S-3 | fortune_character 빌드 lane-report가 자기 BC를 빼고 mypy를 돌려 «Success» — 공허한 통과 | 발주측 | 플러그인 수정 없음. R-12 발주 가이드 1줄에 «자기 BC 경로 필수» 있는지만 확인 | — | 발주측 |
+| S-3 | fortune_character 빌드 lane-report가 자기 BC를 빼고 mypy를 돌려 «Success» — 공허한 통과 | 발주측 | 플러그인 수정 없음. R-12 발주 가이드 1줄에 «자기 BC 경로 필수» 있는지만 확인 | **결정 09-04 «확정»** — §2-B(플러그인 수정 없음 · R-12 행에 반영 문구 추기) | 결정 |
 | S-4 | 딕셔너리를 레코드로 쓰는 모양(`dict/Mapping[str, object\|Any]` 1,110줄 · mypy 70건)을 플러그인 예시·권고가 만든다 | 문면 + 검사기 | 한 줄 규칙 «모든 JSON은 입구에서 `TypedDict`» + 붙임 2·예외 1 + 결정표 6행 · houserules §4·implementation-python·architecture-ddd 문면 · 검사기 (a) 주석 스캔 (b) `json.load` 무파싱 | **보고자 기재: 사용자 결정 «무조건 · 최대 타입 강제»(09-04 · spring 세션)** — 이 세션 재확인 필요 · R-3447 충돌(§3) | 접수 |
 | S-5 | ninja 컨트롤러 반환 주석 `Status[A] \| Status[B]`·오류 응답 base 뭉뚱그림·200 union의 `Schema`+`RootModel` 다중 상속을 문면·검사기가 안 막는다(mypy 9건) | 문면 + 검사기 | `implementation-django-ninja` 두 문장 + 정본 예시 2개 · `check-api-error-controller-contract.py` 규칙 (a)(b)(c) | — | 접수 |
 | N-1 | notification admin 2건(`obj is None` 재검사 → `[redundant-expr]`/`[unreachable]`) — 보고자: A/R-3443의 admin 변종, 새 항목 아님 | 관측 | 없음(기존 규범 적용 확인만) | — | 범위 밖 |
@@ -125,6 +125,10 @@
 3. 픽스처 good(직접 표기·별칭) / bad(맨몸·ignore) · 삼중 등재 · 규칙 등재 3문서.
 4. S-2는 ⓑ에 흡수. S-1g(`Any` 면제)는 ⓪ 실측 뒤 별도.
 근거: 플러그인은 mypy를 돌리지 않으므로(S-3 «공허한 Success») 문면만으로는 안 울린다 — 플러그인 원칙 «문면 + 결정적 백스톱». 보고자 «검사기 불요»는 채택하지 않음. 별칭이 아니라 monkeypatch를 기본으로 한 이유: 파일마다 8줄 별칭 블록이 없어지고(속도), django-stubs README의 1번 처방이다.
+
+### §2-B · S-3 확정(09-04) — 플러그인 수정 없음 · R-12 추기
+
+R-12 발주 가이드는 문서 미착수(로드맵 51행 등재만)라, 그 행에 «mypy 증거는 자기 BC 경로 포함 필수 · `spring_dream_server framework`만 돌린 결과는 증거가 아니다» 1줄을 반영 문구로 추기(B 기각 때 «툴체인 게이트는 훅·발주서 소유» 1줄 선례). R-12 착수 시 반영.
 
 ### 남은 결정 표시
 
