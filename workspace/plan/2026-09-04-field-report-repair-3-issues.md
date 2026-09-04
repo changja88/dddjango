@@ -133,7 +133,7 @@
 2. #646: 세 모양 통과(subscript · TYPE_CHECKING `TypeAlias` 별칭 · TYPE_CHECKING 분기 안 중간 ClassDef) · 위반은 ⓐ 맨몸 ⓑ `type: ignore[type-arg]`(클래스 헤더·속성 줄) · ⓐ+ⓑ 동시면 클래스당 1건(ⓑ가 ⓐ 흡수) · 기저 집합 = django-stubs 제네릭(admin·form·CBV) · 타 모듈 import 별칭은 표면 밖(docstring 검출 한계).
 3. 규칙 범위 문면 = «django-stubs가 제네릭으로 선언한 Django 기저(admin·form·CBV)» · 코퍼스 예시 4줄을 별칭 형으로 정정(django-web s007-6/b9 · s003-2/b10 · implementation-django §13.4 산문).
 4. #493 개정(같은 배치 · 버그 수리): `_is_declarative_class` 기저 해소에서 Subscript 벗기기 + TYPE_CHECKING 별칭/중간 ClassDef 추적 → admin 선언적 면제 회복.
-5. §4 새 블록에 «프레임워크가 스텁에서 `Any`로 고정한 자리(`InlineModelAdmin[Any, Any]` 등)는 ⓓ 후보로 남고 감수자가 통과시킨다» 한 구절(차단 면제 아님 · #645 무변경).
+5. §4 새 블록에 «프레임워크가 스텁에서 `Any`로 고정한 자리(`InlineModelAdmin[Any, Any]` 등)는 ⓓ 후보로 남고 감수자가 통과시킨다» 한 구절(차단 면제 아님 · #645 무변경). — **철회(① 리뷰 B-2 · rv1-B)**: 정본 예시가 `Any` 0 으로 strict 통과해 구절이 불필요·모순 → 대신 **R-3154 rev2**(admin 선언 속성·폼 필드 = 프레임워크 선언 면제 성문)로 대체. 구현에 이 구절은 없다(⑥ 감사 C1-1 반영).
 6. 수치 정정: 클래스 39(보고 40) · 맨몸 13.
 
 ### §2-B · S-3 확정(09-04) — 플러그인 수정 없음 · R-12 추기
