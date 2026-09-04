@@ -72,8 +72,10 @@ python3 workspace/tools/request_guide_contract.py
 python3 workspace/tools/reverse_coverage.py
 ```
 
-각 가이드는 설치본 안에서 독립적으로 읽을 수 있어야 한다. 루트 README·docs·workspace나 형제 설치
-디렉터리에 의존하는 상대 링크를 넣지 않는다. 설치된 플러그인 루트의 사본이 해당 runtime의 권위 있는
+각 가이드는 설치본 안에서 독립적으로 읽을 수 있어야 한다. 네 installed guide source 어디에도
+상대 목적지처럼 보이는 Markdown inline/image·reference definition·HTML `href`/`src` 구문을 넣지 않는다.
+Scheme URI와 `#fragment`만 허용하며 code span·fence·HTML comment·escape·예시도 예외가 아니다.
+설치된 플러그인 루트의 사본이 해당 runtime의 권위 있는
 가이드임을 상단에 밝힌다. README와 manifest homepage는 발견 경로이며, `main`의 공개 homepage는 최신
 온라인 가이드이므로 설치 버전 정본을 대신하지 않는다. 네 manifest homepage와 두 Codex
 `interface.websiteURL`은 각 Claude 정본의 공개 URL을, `repository`는 저장소 루트를 가리킨다.
@@ -109,7 +111,7 @@ md에서 `<!-- graph-owned: … -->` 마커가 붙은 절은 **직접 수정 금
 ## 4. 검사기(백스톱)·도구 수정
 
 - 검사기 27종은 `dddjango/scripts/check-*.py`가 원본이고 `codex-dddjango/…/scripts/`는 **byte 동일 미러**다 — 한쪽만 고치면 verify-base 마지막 단(`diff -rq`)이 red다. 둘 다 갱신한다.
-- `workspace/tools/request_guide_contract.py`는 가이드 존재·byte 미러·README exact 링크·외부 상대 링크 부재·marketplace name/path/ref와 subdir 내용·manifest homepage/repository·Codex websiteURL/defaultPrompt·설치본 권위 문구를 검사한다. `--self-test`는 tempfile 정상 fixture와 독립 변이의 거부를 검증하며 네트워크나 공개 URL 생존성은 검사하지 않는다. 계약을 바꾸면 해당 검출력 fixture도 함께 유지한다. `verify-base-core`는 dddjango pair 비교 → self-test → 실제 계약을, `verify-web`은 web pair 비교 → 실제 계약을 실행한다.
+- `workspace/tools/request_guide_contract.py`는 가이드 존재·byte 미러·marketplace name/path/ref와 subdir 내용·manifest homepage/repository·Codex websiteURL/defaultPrompt·설치본 권위 문구를 검사한다. 링크 검사는 canonical source surface의 drift backstop이다. README의 `## 작업 요청 가이드`부터 다음 `## ` heading 직전과 전체 README source에 `[dddjango 작업 요청 가이드](dddjango/REQUEST_GUIDE.md)` 및 `[dddjango-web 작업 요청 가이드](dddjango-web/REQUEST_GUIDE.md)`가 각각 정확히 한 번 있어야 한다. 네 guide에는 위 상대 목적지 구문 금지 규칙을 적용한다. CommonMark 문맥이나 실제 rendered/clickable 동작·렌더러 등가성은 판정하지 않으며 README의 코드·주석 안 token도 센다. `--self-test`는 실제 두 heading 구조의 tempfile 정상 fixture와 독립 변이의 `validate` 결과를 literal 기대값으로 검사한다. 계약을 바꾸면 해당 검출력 fixture도 함께 유지한다. 표준 라이브러리만 쓰고 네트워크나 공개 URL 생존성은 검사하지 않는다. `verify-base-core`는 dddjango pair 비교 → self-test → 실제 계약을, `verify-web`은 web pair 비교 → 실제 계약을 실행한다.
 - `workspace/tools/reverse_coverage.py`의 닫힌 분류표는 dddjango 루트 `REQUEST_GUIDE.md`를 사람용 사용자 가이드로 명시한다. 새 설치 파일의 존재 근거를 유지하되 이 가이드에 런타임 규칙 소유권을 부여하지 않는다.
 - 측정 도구 일부는 manifest 봉인 대상이다(`workspace/tools/manifest_seal.py`의 글롭 목록 참조). 봉인 파일을 고치면 봉인 재발행이 필요하다.
 - **봉인은 커밋 직전 마지막 단계다** — `make verify` 가 RED 여서 봉인 대상(측정 도구·byte 골든 EXPECTED·매트릭스)을 다시 고쳤으면 `manifest_seal.py --write` 를 다시 발행하고 `make verify` 를 처음부터 다시 돈다. 커밋 메시지·기록의 verify 수치는 **마지막 실행 로그**(evidence 경로 병기)의 것만 적는다 — 중간 실행의 green 을 옮겨 적지 않는다(2026-09-04 `d701df8` «verify 6/6» 거짓 표기 · 정정 `cad221b`).

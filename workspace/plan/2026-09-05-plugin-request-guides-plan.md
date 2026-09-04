@@ -305,7 +305,8 @@ git commit -m "docs: 작업 요청 가이드 진입점 정리"
 - 저장소 지도에 각 `REQUEST_GUIDE.md` 정본·mirror 관계를 추가한다.
 - runtime graph corpus와 별개인 사람용 문서임을 밝힌다.
 - 수정 순서: Claude 정본 편집 → Codex byte 복사/동일 patch → targeted compare → `make verify`
-- 설치본 내부 문서이므로 루트 전용 상대 링크에 의존하지 않는 규칙을 추가한다.
+- 설치본 내부 문서의 source에는 상대 목적지처럼 보이는 구문을 코드·주석·예시에도 넣지 않는
+  보수적 규칙을 추가한다. Scheme URI와 `#fragment`는 허용한다.
 - 실제 Codex marketplace 경로가 `.agents/plugins/marketplace.json`임을 기록한다.
 - `reverse_coverage.py`의 dddjango 설치본 닫힌 분류표에 루트 `REQUEST_GUIDE.md`를 사람용 사용자
   가이드로 등록한다. runtime rule owner인 것처럼 속이지 않는다.
@@ -314,13 +315,26 @@ git commit -m "docs: 작업 요청 가이드 진입점 정리"
 
 - `verify-base-core` 끝에 dddjango guide `cmp -s`와 명확한 failure message
 - `verify-web` 끝에 web guide `cmp -s`와 명확한 failure message
-- 표준 라이브러리 validator는 두 pair, README exact links, guide의 외부 상대 링크 부재, 두 marketplace의
-  name/path/ref와 subdir 내용, 네 manifest homepage/repository, 두 Codex websiteURL, guide 상단 권위 문구,
+- 표준 라이브러리 validator는 두 pair, 두 marketplace의 name/path/ref와 subdir 내용,
+  네 manifest homepage/repository, 두 Codex websiteURL, guide 상단 권위 문구,
   Codex defaultPrompt 문자열 배열과 plugin 이름을 검사한다.
-- `--self-test`는 임시 fixture에서 정상 case와 mirror drift, guide 누락, README link 오타,
-  marketplace path/ref 오염, subdir manifest 누락, homepage/repository 혼동, websiteURL 오염,
-  guide 권위 문구 삭제, defaultPrompt 잘못된 타입·빈 문자열·plugin 이름 누락을 각각 변이해 RED 검출력을
-  증명한다.
+- README의 `## 작업 요청 가이드` source heading부터 다음 `## ` heading 직전까지
+  `[dddjango 작업 요청 가이드](dddjango/REQUEST_GUIDE.md)`와
+  `[dddjango-web 작업 요청 가이드](dddjango-web/REQUEST_GUIDE.md)`라는 exact source token을 각각
+  한 번 요구한다. 전체 README source에서도 각각 한 번이어야 한다.
+- 네 installed guide source에서 Markdown inline/image destination·reference definition destination·
+  HTML `href`/`src`처럼 보이는 구문을 검사해 scheme URI·`#fragment` 외 목적지를 거부한다.
+  Code span·fence·HTML comment·escape·예시를 예외로 두지 않는다.
+- 링크 검사는 canonical source surface의 drift backstop이다. CommonMark 문맥이나 실제
+  rendered/clickable 동작, 렌더러 등가성을 증명하지 않는다. README의 코드·주석 안 exact token도
+  source count에 포함하며 실제 표시와 가독성은 문서 검토로 확인한다.
+- `--self-test`의 정상 README fixture를 실제 `## 작업 요청 가이드` → `## 업데이트` 구조로 맞춘다.
+  Production 변경 전에 같은 path의 잘못된 label, 섹션 밖 token 이동, 코드·주석·중첩 상대 목적지 변이가
+  기대 오류 없이 통과하는 RED를 관찰한다. 구현 뒤에는 `validate` 결과를 literal 기대값과 대조하여
+  이 거부 동작과 inline/image/reference/HTML의 scheme URI·fragment 허용을 확인한다.
+- Mirror drift, guide 누락, marketplace path/ref 오염, subdir manifest 누락, homepage/repository 혼동,
+  websiteURL 오염, guide 권위 문구 삭제, defaultPrompt 잘못된 타입·빈 문자열·plugin 이름 누락의
+  독립 변이 검출력은 유지한다.
 - 네트워크 접근이나 공개 URL 생존성 검사는 하지 않는다.
 - `verify-base-core`에서 validator `--self-test`와 실제 저장소 검사를, `verify-web`에서 실제 저장소
   검사를 실행한다. 평상시 `make verify`가 validator의 비공허성과 README·marketplace·homepage·

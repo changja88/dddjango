@@ -448,21 +448,32 @@ release target으로 이 합본 branch를 그대로 push해 다른 plugin의 변
 
 ## 8. 영구 검증
 
-작은 표준 라이브러리 validator `workspace/tools/request_guide_contract.py`가 다음 배포 계약을 한곳에서
-검증하고 기존 `Makefile` 흐름에서 실행된다.
+작은 표준 라이브러리 validator `workspace/tools/request_guide_contract.py`가 다음 배포 계약과
+canonical source surface의 drift를 한곳에서 검사하고 기존 `Makefile` 흐름에서 실행된다.
 
 - 두 guide pair의 존재와 byte 동일
-- README의 두 canonical 상대 링크와 guide 내부 외부 상대 링크 부재
+- README의 `## 작업 요청 가이드` source heading부터 다음 `## ` heading 직전까지
+  `[dddjango 작업 요청 가이드](dddjango/REQUEST_GUIDE.md)`와
+  `[dddjango-web 작업 요청 가이드](dddjango-web/REQUEST_GUIDE.md)`라는 exact source token이 각각
+  정확히 한 번 존재하며, 전체 README source에서도 각각 정확히 한 번 존재
+- 네 installed guide source 어디에도 상대 목적지처럼 보이는 Markdown inline/image destination,
+  reference definition destination, HTML `href`/`src` 구문이 없음. Scheme URI와 `#fragment`만 허용하며,
+  code span·fence·HTML comment·escape·예시 안에도 같은 보수적 금지 규칙을 적용
 - `.claude-plugin/marketplace.json`, `.agents/plugins/marketplace.json`의 네 name/path/ref 매핑
 - 각 marketplace subdir 안의 guide와 manifest 존재
 - 네 manifest의 canonical guide homepage와 repository 분리, 두 Codex `interface.websiteURL`의 exact URL
 - Codex `defaultPrompt`가 비어 있지 않은 문자열 배열이며 해당 plugin 이름을 포함
 - 두 guide 상단의 “설치된 사본이 해당 runtime의 권위 있는 가이드” 문구
 
-validator는 `--self-test`에서 임시 fixture를 만들고 정상 case와 mirror 1바이트 drift, guide 누락,
-README link 오타, marketplace path/ref 오염, subdir manifest 누락, homepage/repository 혼동,
-Codex websiteURL 오염, guide 권위 문구 삭제, `defaultPrompt`의 잘못된 타입·빈 문자열·plugin 이름 누락이
-각각 RED가 되는지 검사한다.
+링크 검사는 명시적인 source-level drift backstop이다. CommonMark 문맥, 렌더러 등가성 또는 실제
+rendered/clickable 동작은 판정하지 않는다. README token이 코드나 주석 안에 있어도 source count에
+포함하며, guide의 목적지 구문도 문맥을 가리지 않고 검사한다. 실제 표시와 가독성은 문서 검토로 확인한다.
+
+validator는 `--self-test`에서 실제 두 section heading 구조의 임시 정상 fixture를 만들고 `validate`
+결과를 literal 기대값과 대조한다. README label/path 오타·섹션 밖 이동·중복, guide의 코드·주석·중첩
+상대 목적지 구문을 거부하고 scheme URI·fragment를 허용하는지 검사한다. Mirror 1바이트 drift,
+guide 누락, marketplace path/ref 오염, subdir manifest 누락, homepage/repository 혼동, Codex websiteURL
+오염, guide 권위 문구 삭제, `defaultPrompt`의 잘못된 타입·빈 문자열·plugin 이름 누락 변이도 유지한다.
 
 기존 `workspace/tools/reverse_coverage.py`의 dddjango 설치본 닫힌 분류표에도 루트
 `REQUEST_GUIDE.md`를 “사람용 사용자 가이드”로 명시 등록한다. 그렇지 않으면 새 파일이 설명되지 않은
