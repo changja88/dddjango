@@ -14,21 +14,29 @@ import re
 import tempfile
 
 
+HTML_TAG = r"""</?[A-Za-z][A-Za-z0-9-]*(?:\s+(?:[^<>"']|"[^"]*"|'[^']*')*)?\s*/?>"""
+
+
 class HTMLLinkTargets(HTMLParser):
     """따옴표 유무와 무관하게 HTML 링크·이미지 목적지를 수집한다."""
 
-    def __init__(self) -> None:
+    def __init__(self, clickable_only: bool) -> None:
         super().__init__()
+        self.clickable_only = clickable_only
         self.targets: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        self.targets.extend(value for name, value in attrs if name in {"href", "src"} and value is not None)
+        self.targets.extend(
+            value for name, value in attrs if name in {"href", "src"} and value is not None
+            and (not self.clickable_only or (tag == "a" and name == "href"))
+        )
 
 
 def without_markdown_code(text: str) -> str:
-    """코드 fence와 같은 길이의 backtick으로 감싼 code span은 링크가 아니다."""
+    """코드 fence·들여쓴 코드와 같은 길이 backtick의 code span을 제외한다."""
     lines: list[str] = []
     fence: str | None = None
+    paragraph_open = False
     for line in text.splitlines(keepends=True):
         if fence is not None:
             if re.fullmatch(r" {0,3}" + re.escape(fence[0]) + "{" + str(len(fence)) + r",}[ \t]*", line.rstrip("\r\n")):
@@ -38,20 +46,53 @@ def without_markdown_code(text: str) -> str:
         opener = re.match(r" {0,3}(`{3,}|~{3,})(.*)", line)
         if opener and not (opener[1].startswith("`") and "`" in opener[2]):
             fence = opener[1]
+            paragraph_open = False
+            lines.append("\n")
+        elif line.startswith(("    ", "\t")) and not paragraph_open:
             lines.append("\n")
         else:
             lines.append(line)
-    return re.sub(r"(?<!`)(`+)(?!`)(.*?)(?<!`)\1(?!`)", " ", "".join(lines), flags=re.DOTALL)
+            # 들여쓴 코드 블록은 문단을 중단하지 않는다. 여러 줄 HTML 속성도 보존한다.
+            paragraph_open = bool(line.strip()) and not re.match(r" {0,3}#{1,6}(?:[ \t]|$)", line)
+    # 먼저 시작한 HTML 태그는 속성 전체를 보존하고, code span 안의 태그는 함께 제외한다.
+    return re.sub(
+        HTML_TAG + r"|(?<!`)(?P<ticks>`+)(?!`)(.*?)(?<!`)(?P=ticks)(?!`)",
+        lambda match: " " if match["ticks"] is not None else match[0],
+        "".join(lines), flags=re.DOTALL,
+    )
 
 
-def link_targets(text: str) -> list[str]:
+def link_targets(text: str, *, clickable_only: bool = False) -> list[str]:
     """코드 예시를 제외한 Markdown 링크와 HTML href/src의 목적지를 읽는다."""
+    text = re.sub(r"<!--.*?(?:-->|$)", " ", text, flags=re.DOTALL)
     text = without_markdown_code(text)
-    targets = re.findall(r"\]\(\s*<?([^\s)>]+)", text)
-    targets += re.findall(r"(?m)^\s{0,3}\[[^\]]+\]:\s*<?([^\s>]+)", text)
-    html = HTMLLinkTargets()
+    html = HTMLLinkTargets(clickable_only)
     html.feed(text)
     html.close()
+    text = re.sub(HTML_TAG, " ", text)
+    definitions: dict[str, str] = {}
+
+    def reference_label(label: str) -> str:
+        return " ".join(label.split()).casefold()
+
+    def collect_definition(match: re.Match[str]) -> str:
+        definitions.setdefault(reference_label(match[1]), match[2])
+        return "\n"
+
+    text = re.sub(r"(?m)^ {0,3}\[([^\]\n]+)\]:[ \t]*<?([^\s>]+)[^\n]*", collect_definition, text)
+    targets: list[str] = []
+    for match in re.finditer(
+        r"(?P<image>!?)\[(?P<label>[^\]\n]*)\]"
+        r"(?:\(\s*<?(?P<inline>[^\s)>]+)[^\n)]*\)|\[(?P<reference>[^\]\n]*)\])?", text,
+    ):
+        if clickable_only and match["image"]:
+            continue
+        if match["inline"] is not None:
+            targets.append(match["inline"])
+        else:
+            target = definitions.get(reference_label(match["reference"] or match["label"]))
+            if target is not None:
+                targets.append(target)
     targets += html.targets
     return targets
 
@@ -87,7 +128,7 @@ def validate(root: Path) -> list[str]:
     for plugin in plugins:
         canonical = f"{plugin}/REQUEST_GUIDE.md"
         mirror = f"codex-{plugin}/REQUEST_GUIDE.md"
-        if readme is not None and canonical not in link_targets(readme):
+        if readme is not None and canonical not in link_targets(readme, clickable_only=True):
             errors.append(f"[readme-link] README.md: missing exact canonical link {canonical}")
         texts = [read_text(path, "guide-missing") for path in (canonical, mirror)]
         if all(text is not None for text in texts):
@@ -191,6 +232,10 @@ def self_test() -> int:
         canonical = f"{plugin}/REQUEST_GUIDE.md"
         mirror = f"codex-{plugin}/REQUEST_GUIDE.md"
         cases.append((f"{plugin}: mirror 1-byte drift", {mirror: fixtures[mirror] + "x"}, "mirror"))
+        readme_without_link = "".join(
+            line for line in fixtures["README.md"].splitlines(keepends=True)
+            if canonical not in line
+        )
         for path in (canonical, mirror):
             cases.append((f"{path}: missing guide", {path: None}, "guide-missing"))
         cases.append((f"{plugin}: README link typo", {
@@ -200,23 +245,60 @@ def self_test() -> int:
             ("fenced backticks", f"```markdown\n[guide]({canonical})\n```\n"),
             ("fenced tildes", f"~~~markdown\n[guide]({canonical})\n~~~\n"),
             ("code span", f"`[guide]({canonical})`\n"),
+            ("HTML comment", f"<!-- [guide]({canonical}) -->\n"),
+            ("indented code", f"\n    [guide]({canonical})\n"),
+            ("unused reference definition", f"[guide]: {canonical}\n"),
+            ("reference use in code span", f"`[guide][g]`\n\n[g]: {canonical}\n"),
+            ("Markdown image", f"![guide]({canonical})\n"),
+            ("reference image", f"![guide][g]\n\n[g]: {canonical}\n"),
+            ("HTML image", f'<img src="{canonical}">\n'),
+            ("non-anchor HTML href", f'<div href="{canonical}">guide</div>\n'),
+            ("Markdown text in HTML attribute", f'<span title="[guide]({canonical})">guide</span>\n'),
         ):
             cases.append((f"{plugin}: README link only in {label}", {
-                "README.md": "".join(
-                    line for line in fixtures["README.md"].splitlines(keepends=True)
-                    if canonical not in line
-                ) + example,
+                "README.md": readme_without_link + example,
             }, "readme-link"))
+        for label, link in (
+            ("inline link", f"[guide]({canonical})"),
+            ("full reference link", f"[guide][g]\n\n[g]: {canonical}"),
+            ("collapsed reference link", f"[guide][]\n\n[guide]: {canonical}"),
+            ("shortcut reference link", f"[guide]\n\n[guide]: {canonical}"),
+            ("HTML anchor", f'<a href="{canonical}">guide</a>'),
+            ("HTML anchor with attribute backticks", f'<a title="`" href="{canonical}" data-note="`">guide</a>'),
+            ("indented paragraph continuation", f"guide\n    [guide]({canonical})"),
+            ("multiline HTML anchor", f'<a\n    href="{canonical}">guide</a>'),
+        ):
+            cases.append((f"{plugin}: README discoverable through {label}", {
+                "README.md": readme_without_link + link + "\n",
+            }, ""))
         for label, suffix in (
             ("inline relative link", "[root](../README.md)\n"),
             ("reference relative link", "[root][r]\n[r]: ../README.md\n"),
             ("HTML relative link", '<a href="../README.md">root</a>\n'),
             ("HTML unquoted href", "<a href=../README.md>root</a>\n"),
             ("HTML unquoted src", "<img src=../image.png>\n"),
+            ("Markdown relative image", "![root](../image.png)\n"),
+            ("reference relative image", "![root][r]\n[r]: ../image.png\n"),
+            ("HTML attribute backticks", '<a title="`" href="../README.md" data-note="`">root</a>\n'),
+            ("HTML image attribute backticks", '<img title="`" src="../image.png" data-note="`">\n'),
+            ("multiline HTML href", '<a\n    href="../README.md">root</a>\n'),
         ):
             cases.append((f"{plugin}: {label}", {
                 canonical: fixtures[canonical] + suffix, mirror: fixtures[mirror] + suffix,
             }, "guide-link"))
+        for label, suffix in (
+            ("inline Markdown code example", "`[root](../README.md)`\n"),
+            ("inline HTML code example", '`<a href="../README.md">root</a>`\n'),
+            ("double-backtick HTML code example", '``<a title="`" href="../README.md" data-note="`">root</a>``\n'),
+            ("backtick fenced code example", '```html\n<a href="../README.md">root</a>\n```\n'),
+            ("tilde fenced code example", '~~~html\n<a href="../README.md">root</a>\n~~~\n'),
+            ("absolute reference link", "[public][p]\n\n[p]: https://example.com/guide\n"),
+            ("HTML absolute URL", '<a href="https://example.com/guide">public</a>\n'),
+            ("HTML fragment", '<a href="#start">start</a>\n'),
+        ):
+            cases.append((f"{plugin}: {label} accepted", {
+                canonical: fixtures[canonical] + suffix, mirror: fixtures[mirror] + suffix,
+            }, ""))
         cases.append((f"{plugin}: authority line deleted", {
             path: fixtures[path].replace(authority, "") for path in (canonical, mirror)
         }, "guide-authority"))
