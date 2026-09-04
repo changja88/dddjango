@@ -128,3 +128,15 @@ registry_gate ⓔ2(kkebi 사본 · `--anchor HEAD` + 무해 파일 1 · `rv6/gat
 없음 — `make verify` 뒤 `git status --short` 공백(아래). 실행 부산물은 전부 scratchpad(`fr3/rv6/{scripts-old,scripts-new,out,probes,verify.log,lossless_rv6.log,gate-kkebi.log,gate-kkebi-introduced.json,mypy_cache}` · 사본 4곳의 untracked `.dddjango/violations/*.jsonl` 누적 · spring 사본 `mp_probe_rv5b/` 는 rv5-B 잔재 · 내 `mp_probe_18/`·`rv6_probe.md` 는 삭제). live 두 저장소 무접촉.
 
 `git status --short` (HEAD 179017f · 감사 종료 시점): (공백)
+
+## 6. 재검(192b886)
+
+대상: HEAD **192b886**(179017f + 1 커밋 · working tree clean) · `git diff 179017f..192b886 --stat` = `rv6-audit.md` +130 · 로드맵 +2/−2 · issues.md +1/−1 — **3파일뿐**(규범·검사기·미러·픽스처·회신 3 무접촉). 이 절 추기 외 무수정 · git 쓰기 0.
+
+1. **C1-1 ✓** — issues.md:136 ⑤ 말미 «철회(① 리뷰 B-2 · rv1-B): 정본 예시가 `Any` 0 으로 strict 통과해 구절이 불필요·모순 → R-3154 rev2(admin 선언 속성·폼 필드 = 프레임워크 선언 면제 성문) 대체 · 구현에 이 구절은 없다» = rv1-B:17 B-2(MAJOR-2 · 탐침 strict 통과 · R-3447 «어디에도» 모순 · R-3154 rev2 성문)·루브릭:56·:66 과 일치. 실물: houserules SKILL.md «고정한 자리» 0건(django final:1906 의 `InlineModelAdmin[Any, Any]` 는 §18 예시 주석의 스텁 타입 언급이지 ⓓ 면제 구절이 아님).
+2. **C1-2 ✓** — 로드맵:28 커밋 셀 «56b27e1 · d701df8 · cad221b · 30a2a24» · «⑤ 리뷰 6(⑤-1 MAJOR 1 · ⑤-2 MAJOR 1 predicates 등재 → 정정 30a2a24)» · «⑥ 감사 «조건부 머지 가능»(C1 2 산문 반영 · C2 고지 5)» · §8:111 «⑤-2 3기(MAJOR 1 … + MINOR 14 → 정정 30a2a24 · verify 6/6) → ⑥ 감사 «조건부 머지 가능»(무손실 byte 동일 재실측 · 회신 수치 전 셀 재현 · 프로브 18파일/기대 69 불일치 0 · C1 2 산문 반영 · C2 고지 5)» — MINOR 14 = rv5-2 A5+B5+C4(루브릭:86) · 나머지는 §1 표·§2.2·§2.3 과 일치(192b886 자신은 셀에 없음 — 자기 참조라 정상).
+3. **✓** stat 산문 2 + 감사 보고서 1.
+4. **✓** 커밋 메시지 수치·판정(12/12 · 슬롯 655/642/661/55 · RED 4 의도 · 전 셀 재현 · kkebi gate 귀속 0·ⓓ 신규 0·exit 0 · 18파일/기대 69/불일치 0/MINOR 4 · verify 6/6 · 더럽힌 경로 없음 · C2 고지 5) = 보고서 §1·§2.2·§2.3 · «권고 = 회신 3 §4 이월에 합류» 는 의도 서술(회신 3 은 이 커밋 무접촉 — 브리프 뒤 반영 대상).
+5. **남은 C1 = 0 → 머지 가능** — C2(§3 고지 5)를 «머지 진행» 브리프에 실어 사용자 확정 뒤 main 로컬 머지.
+
+`git status --short`(재검 종료): ` M workspace/eval/field-report-3/rv6-audit.md`(이 절 추기 · 미커밋 — 지시대로) 만.

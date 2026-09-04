@@ -1,6 +1,6 @@
 # 현장 보고 회신 3 — django-stubs 제네릭 기저(S-1)·딕셔너리-레코드(S-4)·ninja `Status`(S-5) 처분 + spring_dream_server 안내 (2026-09-04)
 
-대상 보고: `2026-09-04-field-report-spring-dream-django-stubs-generic-base.md`(발주자 세션 · v2.17.16 기준 · 원문은 증거로 보존). 절차: 추적표·결정 `2026-09-04-field-report-repair-3-issues.md` · 루브릭 `2026-09-04-field-report-repair-3-rubric.md` · 계획 `2026-09-04-field-report-repair-3-plan.md`(v2) · 증거 `workspace/eval/field-report-3/`. 구현 = 브랜치 `fix/field-report-3`(조각 1 56b27e1 · 조각 2 d701df8 + 정정 cad221b) · 릴리즈는 머지 뒤 별도(`make release` · 사용자 요청 시).
+대상 보고: `2026-09-04-field-report-spring-dream-django-stubs-generic-base.md`(발주자 세션 · v2.17.16 기준 · 원문은 증거로 보존). 절차: 추적표·결정 `2026-09-04-field-report-repair-3-issues.md` · 루브릭 `2026-09-04-field-report-repair-3-rubric.md` · 계획 `2026-09-04-field-report-repair-3-plan.md`(v2) · 증거 `workspace/eval/field-report-3/`. 구현 = 브랜치 `fix/field-report-3`(조각 1 56b27e1 · 조각 2 d701df8 + 정정 cad221b · ⑤-2 정정 30a2a24 · ⑥ 감사 «머지 가능» 192b886) · 릴리즈는 머지 뒤 별도(`make release` · 사용자 요청 시).
 
 수치는 새 검사기(HEAD)를 격리 사본에 돌린 값이다(spring `7bfe1aa` · kkebi `6608fb0` · `application/`·`framework/` 루트만 · registry_gate 앵커 차분 전 전량).
 
@@ -12,7 +12,7 @@
 | S-2 | ignore 부착 검사기(선택) | S-1 에 흡수 | #646 ⓑ(헤더·속성 줄 `type: ignore[type-arg]`) | — |
 | S-3 | 자기 BC 빼고 돌린 mypy «Success» | 발주측 | 로드맵 R-12 행에 반영 문구 추기(«mypy 증거는 자기 BC 경로 포함 필수») | §2 ① |
 | S-4 | 딕셔너리-레코드(`dict/Mapping[str, object\|Any]` 1,110줄 · mypy 70) | 성립 — 예시 `dict[str, Any]`(architecture-ddd) · R-3448 «JSON 은 `Mapping[str, object]`» 가 반대 처방 · 강제 도구 0 | 하우스룰 §4 R-3447/R-3448 rev2(«값 자리 `Any` 는 어디든 차단 · `object` 는 입구(검증 도우미 매개변수·즉시 검증 지역 변수)만 · 반환/속성 누수 차단 · JSON 은 `TypeAdapter(그TypedDict)` 검증 파싱») + §4 레코드 규범 R-3451 + 결정표 6행 R-3452~R-3457 · implementation-python §1.5 R-2715 rev2 + 예시 · architecture-ddd 예시 `FieldValue` 정정 · 검사기 **#647**(차단·ⓓ) · **#650**(ⓓ · `json.load(s)` 무검증 흐름) · Coordinator R-0284 rev4/R-0345 rev3(ⓓ 동봉 범위 = 앵커 차분 신규분) · registry_gate ⓓ 앵커 차분(확장 ⓔ2) | §2 ④⑤ |
-| S-5 | ninja `Status[A] \| Status[B]` · 오류 base 뭉뚱그림 · `Schema`+`RootModel` | ⓐⓒ 성립(상자 둘은 08-24 이후 레인 7개(첫 도입 커밋 기준)에서 반복 · spring 7·kkebi 6 함수 · mypy red 는 그중 리딩 1레인) · ⓑ 는 기존 #63 이 이미 잡음(레인이 `auto` 프로필로 돌려 침묵) | ninja §2.2 R-3463(상자 하나 · #648)·R-3465(익명 union 금지) · §3.1 R-3464(`RootModel` 단독 · #649) · ninja SKILL R-3466 · architecture-api §5.2 R-3467(성공 union 은 discriminator 컴포넌트 하나) · 검사기 **#648/#649**(프로필 무관 트리 슬라이스) · openapi 검사기 stale 문면 2곳 정정 · Coordinator R-0331 rev2(확장 ⓔ1 — «무관» = 승인 12-slot 유무 · 12-slot 없이 오류 status 를 선언한 컨트롤러는 auto 금지·G1 반송) | §2 ⑥⑦⑧ |
+| S-5 | ninja `Status[A] \| Status[B]` · 오류 base 뭉뚱그림 · `Schema`+`RootModel` | ⓐⓒ 성립(상자 둘은 08-24 이후 레인 7개(첫 도입 커밋 기준 — 산식에 따라 6~9: 파일별 첫 도입 커밋 6 · 패턴 접촉 커밋 9 · ⑥ 감사 재현)에서 반복 · spring 7·kkebi 6 함수 · mypy red 는 그중 리딩 1레인) · ⓑ 는 기존 #63 이 이미 잡음(레인이 `auto` 프로필로 돌려 침묵) | ninja §2.2 R-3463(상자 하나 · #648)·R-3465(익명 union 금지) · §3.1 R-3464(`RootModel` 단독 · #649) · ninja SKILL R-3466 · architecture-api §5.2 R-3467(성공 union 은 discriminator 컴포넌트 하나) · 검사기 **#648/#649**(프로필 무관 트리 슬라이스) · openapi 검사기 stale 문면 2곳 정정 · Coordinator R-0331 rev2(확장 ⓔ1 — «무관» = 승인 12-slot 유무 · 12-slot 없이 오류 status 를 선언한 컨트롤러는 auto 금지·G1 반송) | §2 ⑥⑦⑧ |
 | N-1 | notification `obj is None` 재검사 | R-3443(값 객체 안 선언 타입 재검사 금지) 취지의 admin 변종 — 규범 확장 없음 · 새 항목 아님 | 없음 | 발주측 처방대로 |
 | N-2 | parler `# type: ignore[misc]` 6곳 | 정당(서드파티 미타입) | 없음 | 없음 |
 | N-3 | 발주측 처리 계획 | — | — | 아래 §2 순서대로 |
@@ -52,6 +52,7 @@
 - #647 반환 자리표시 ⓓ 물음의 오탐 후보(프레임워크 콜백 미러 · 이벤트 컬렉션 `list[<Bc>Event]`)는 문면에 예외로 적었으나 검사기는 구분하지 않는다(ⓓ 라 exit 무관).
 - 타 모듈 import 별칭의 맨몸 여부는 #646 이 못 본다(같은 모듈 안만 · ⓑ 헤더 판정은 독립) — mypy 몫.
 - `# type: ignore` 전반(코드 없는 것)은 ⓓ 후보로만.
+- ⑥ 감사 권고(머지 뒤 소배치 · MINOR): 하우스룰 §4 R-3448 rev2 «면제는 둘» → 셋(`Field.deconstruct` 포함 · 검사기·등재와 일치시킴) · #646 ⓑ 메시지를 «제네릭 기저 ignore» 로 중립화 + R-3459/predicates 범위 문면 일치(ⓑ 는 모든 클래스 헤더를 본다 — 4사본 실측 비-django 0) · 검사기 docstring 한계 추기(`M = Mapping`·`Resp = Status[A] | Status[B]`·`_S = Schema` 같은 Assign 별칭 미추적 · `dict[str, object | None]` 값 union 침묵) · #650 물음에 «`JsonValue` 로 받았으면 통과» 갈래 · `evidence/impl/probe18-summary.md` origin 42→46.
 
 ## 5. 설치·관찰
 
