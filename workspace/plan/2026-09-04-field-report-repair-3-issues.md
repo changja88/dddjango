@@ -10,11 +10,11 @@
 
 | ID | 문제(한 줄) | 종류 | 보고자 추천 방향(요약) | 결정 표시 | 상태 |
 |---|---|---|---|---|---|
-| S-1 | django-stubs 제네릭 기저(`ModelForm`·`ModelAdmin`·`TabularInline`/`StackedInline`·`BaseInlineFormSet`)는 런타임 subscript 불가인데 플러그인 문면이 없어 레인 10개가 세 모양(맨몸/ignore/별칭)으로 갈렸다 | 문면 | `implementation-django`에 admin·ModelForm 타이핑 절 신설 + 문장 3개 + 정본 예시 1벌 · houserules §4 참조 한 문장 · 검사기 불요 | **결정 09-04 «확정»** — 방향은 §2-A(문면 + 검사기 #646 · 보고자 원안과 다름) | 결정 |
-| S-2 | Django 기저에 `# type: ignore[type-arg]`를 붙여 8 BC가 빚을 숨겼다 — 문면만으론 재발 가능 | 검사기(선택) | `check-public-surface-annotation.py`(#493) 확장 또는 신규 규칙: `ClassDef` 헤더·`inlines` 첫 대입 줄의 `type: ignore[type-arg]` = 위반 | **S-1 ⓑ에 흡수**(09-04) — 별도 결정 없음 | 흡수 |
-| S-3 | fortune_character 빌드 lane-report가 자기 BC를 빼고 mypy를 돌려 «Success» — 공허한 통과 | 발주측 | 플러그인 수정 없음. R-12 발주 가이드 1줄에 «자기 BC 경로 필수» 있는지만 확인 | **결정 09-04 «확정»** — §2-B(플러그인 수정 없음 · R-12 행에 반영 문구 추기) | 결정 |
-| S-4 | 딕셔너리를 레코드로 쓰는 모양(`dict/Mapping[str, object\|Any]` 1,110줄 · mypy 70건)을 플러그인 예시·권고가 만든다 | 문면 + 검사기 | 한 줄 규칙 «모든 JSON은 입구에서 `TypedDict`» + 붙임 2·예외 1 + 결정표 6행 · houserules §4·implementation-python·architecture-ddd 문면 · 검사기 (a) 주석 스캔 (b) `json.load` 무파싱 | **결정 09-04 «확정»(이 세션 재확인)** — §2-C(문면 + R-3447 개정 + 검사기 #647 위반 · `json.load` 무검증은 ⓓ 후보) | 결정 |
-| S-5 | ninja 컨트롤러 반환 주석 `Status[A] \| Status[B]`·오류 응답 base 뭉뚱그림·200 union의 `Schema`+`RootModel` 다중 상속을 문면·검사기가 안 막는다(mypy 9건) | 문면 + 검사기 | `implementation-django-ninja` 두 문장 + 정본 예시 2개 · `check-api-error-controller-contract.py` 규칙 (a)(b)(c) | **결정 09-04 «확정»** — §2-D(보고자 원안 그대로) | 결정 |
+| S-1 | django-stubs 제네릭 기저(`ModelForm`·`ModelAdmin`·`TabularInline`/`StackedInline`·`BaseInlineFormSet`)는 런타임 subscript 불가인데 플러그인 문면이 없어 레인 10개가 세 모양(맨몸/ignore/별칭)으로 갈렸다 | 문면 | `implementation-django`에 admin·ModelForm 타이핑 절 신설 + 문장 3개 + 정본 예시 1벌 · houserules §4 참조 한 문장 · 검사기 불요 | **결정 09-04 «확정»** — 방향은 §2-A(문면 + 검사기 #646 · 보고자 원안과 다름) + 수정 1(별칭 기본) | 구현(56b27e1 · ⑤-2 리뷰 중) |
+| S-2 | Django 기저에 `# type: ignore[type-arg]`를 붙여 8 BC가 빚을 숨겼다 — 문면만으론 재발 가능 | 검사기(선택) | `check-public-surface-annotation.py`(#493) 확장 또는 신규 규칙: `ClassDef` 헤더·`inlines` 첫 대입 줄의 `type: ignore[type-arg]` = 위반 | **S-1 ⓑ에 흡수**(09-04) — 별도 결정 없음 | 구현(#646 ⓑ) |
+| S-3 | fortune_character 빌드 lane-report가 자기 BC를 빼고 mypy를 돌려 «Success» — 공허한 통과 | 발주측 | 플러그인 수정 없음. R-12 발주 가이드 1줄에 «자기 BC 경로 필수» 있는지만 확인 | **결정 09-04 «확정»** — §2-B(플러그인 수정 없음 · R-12 행에 반영 문구 추기) | 완료(9a258bf) |
+| S-4 | 딕셔너리를 레코드로 쓰는 모양(`dict/Mapping[str, object\|Any]` 1,110줄 · mypy 70건)을 플러그인 예시·권고가 만든다 | 문면 + 검사기 | 한 줄 규칙 «모든 JSON은 입구에서 `TypedDict`» + 붙임 2·예외 1 + 결정표 6행 · houserules §4·implementation-python·architecture-ddd 문면 · 검사기 (a) 주석 스캔 (b) `json.load` 무파싱 | **결정 09-04 «확정»(이 세션 재확인)** — §2-C + 수정 1(«흘리지 않는다»의 선) | 구현(56b27e1 · ⑤-2 리뷰 중) |
+| S-5 | ninja 컨트롤러 반환 주석 `Status[A] \| Status[B]`·오류 응답 base 뭉뚱그림·200 union의 `Schema`+`RootModel` 다중 상속을 문면·검사기가 안 막는다(mypy 9건) | 문면 + 검사기 | `implementation-django-ninja` 두 문장 + 정본 예시 2개 · `check-api-error-controller-contract.py` 규칙 (a)(b)(c) | **결정 09-04 «확정»** — §2-D + 수정 1(ⓑ 철회 · 트리 슬라이스) | 구현(d701df8 · ⑤-2 리뷰 중) |
 | N-1 | notification admin 2건(`obj is None` 재검사 → `[redundant-expr]`/`[unreachable]`) — 보고자: A/R-3443의 admin 변종, 새 항목 아님 | 관측 | 없음(기존 규범 적용 확인만) | — | 범위 밖 |
 | N-2 | parler `TranslatableAdmin`·`TranslatableModelForm`의 `# type: ignore[misc]` 6곳 — 보고자: 서드파티 미타입이라 정당 | 관측 | 없음 | — | 범위 밖 |
 | N-3 | 발주측 처리 계획(fortune_character 28건 직접 상환 · ignore 18줄 보류 · G2 grep 조건 · P1/P5 상환) | 발주측 | S-1/S-2/S-4/S-5 처분 뒤 발주측이 진행 | — | 발주측 |
@@ -192,3 +192,7 @@ R-12 발주 가이드는 문서 미착수(로드맵 51행 등재만)라, 그 행
 - **S-1e 배치 후보 2개**(원문 안에서도 갈림: `implementation-django` admin 절 신설 vs `implementation-django-web` §6) — ②에서 하나로.
 - **S-5e 근거 «2026-08-25 개정 규칙(base 뭉뚱그림 금지)»** — ninja reference 안 실제 문면·R 번호 ⓪에서 확인.
 - 보고서 수치(40클래스·1,110줄·70건·9건)는 spring `c20f525`/`f5ee428`/`d2eaafe` 기준 — ⓪에서 격리 사본으로 재실측(읽기 전용 · rsync/`git clone`+`checkout --detach`).
+
+## §4 구현 좌표 (2026-09-04)
+
+브랜치 `fix/field-report-3`: 조각 1 56b27e1(S-1+S-4) · 조각 2 d701df8(S-5+ⓔ1+⑤-1 정정) · 정정 cad221b(봉인 재발행 · verify 6/6 실기록) · 회신 3 초안 b541870. 기록 `workspace/eval/field-report-3/evidence/impl/piece{1,2}-summary.md` · 리뷰 `rv5/`. 확장 2(결정 밖 · ⑥ 고지): ⓔ1 R-0331 rev2(Coordinator auto «무관» 판정식) · ⓔ2 registry_gate ⓓ 앵커 차분. 이월: 회신 3 §4.
