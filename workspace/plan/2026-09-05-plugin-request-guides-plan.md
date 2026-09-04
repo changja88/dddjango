@@ -52,7 +52,7 @@ Run:
 set -euo pipefail
 test "$(git branch --show-current)" = "docs/request-guides"
 git diff --check
-! rg -n "TO""DO|TB""D|추후 결정" workspace/design/2026-09-05-plugin-request-guides-spec.md workspace/plan/2026-09-05-plugin-request-guides-plan.md
+if rg -n 'TO[D]O|TB[D]|추후[ ]결정' workspace/design/2026-09-05-plugin-request-guides-spec.md workspace/plan/2026-09-05-plugin-request-guides-plan.md; then exit 1; fi
 ```
 
 Expected: whitespace 오류 없음. 미결정 placeholder 없음.
