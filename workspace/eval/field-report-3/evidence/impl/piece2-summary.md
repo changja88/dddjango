@@ -22,4 +22,5 @@
 - **smoke 33/33**(Q·Q′ 강화 단언 — 첫 실행의 Q 불일치 1은 단언의 `file` 형식(`<경로>:<줄>`) 오해 · `in` 판정으로 정정).
 - **대표 byte 골든**(`construct_drift_report.py` EXPECTED_SHA) api-error 행 재생성(#648/#649 라인 추가로 stdout 변경 · `--emit-expected` → 8/8).
 - `make verify`: 1차 RED 2(base-core = 위 골든 · base-cross = 위 smoke Q) → 정정 뒤 재실행(아래 추기).
-- **`make verify` 재실행 6/6 green**(`impl/verify3.log`).
+- `make verify` 2차(`impl/verify3.log`): base-cross·ontology·backstop·regen·web green · **base-core RED 1** = manifest 봉인 후 `construct_drift_report.py`(byte 골든 재생성) 변경 — 봉인을 골든 갱신 «뒤»에 다시 발행해야 했다(코디 순서 착오 · 커밋 d701df8 의 «verify 6/6» 문구는 이 시점 기준으로 거짓 — 정정 커밋에서 바로잡음). 3차 = 봉인 재발행 뒤 재실행(`impl/verify4.log` · 아래 추기).
+- **`make verify` 3차 6/6 green**(`impl/verify4.log` — 봉인 재발행(`manifest_seal --write` → `--check --draft` green) 뒤 base-core 69초 · base-cross 234초 · ontology · backstop · regen · web).
