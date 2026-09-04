@@ -11,10 +11,11 @@ from html.parser import HTMLParser
 import json
 from pathlib import Path
 import re
+import string
 import tempfile
 
 
-HTML_TAG = r"""</?[A-Za-z][A-Za-z0-9-]*(?:\s+(?:[^<>"']|"[^"]*"|'[^']*')*)?\s*/?>"""
+ATX_HEADING = re.compile(r" {0,3}#{1,6}(?:[ \t]|$)")
 
 
 class HTMLLinkTargets(HTMLParser):
@@ -32,76 +33,177 @@ class HTMLLinkTargets(HTMLParser):
         )
 
 
-def without_markdown_code(text: str) -> str:
-    """Fence 경계를 우선하고, 먼저 열린 span·주석·태그 중 코드·주석만 제외한다."""
-    fence_openers = re.compile(r"^ {0,3}(`{3,}(?=[^`\n]*$)|~{3,})[^\n]*", re.MULTILINE)
-    contexts = re.compile(r"(?P<comment><!--.*?(?:-->|$))|(?P<tag>" + HTML_TAG + r")", re.DOTALL)
-    code_spans = re.compile(
-        r"(?<!`)(?P<ticks>`+)(?!`)(.*?)(?<!`)(?P=ticks)(?!`)",
-        re.DOTALL,
-    )
-    parts: list[str] = []
-    position = 0
+def fence_marker(line: str) -> str | None:
+    """한 줄에서 fence 시작자만 읽는다(backtick info string의 backtick은 금지)."""
+    match = re.match(r" {0,3}(`{3,}|~{3,})([^\r\n]*)", line)
+    if match is None or (match[1][0] == "`" and "`" in match[2]):
+        return None
+    return match[1]
+
+
+def inline_limit(lines: list[str], offsets: list[int], line_index: int) -> int:
+    """Inline 후보는 soft newline만 넘고 다음 block 시작 전에서 끝난다."""
+    for index in range(line_index + 1, len(lines)):
+        line = lines[index]
+        if (not line.strip() or fence_marker(line) or ATX_HEADING.match(line)
+                or re.match(r" {0,3}<!--", line)):
+            return offsets[index]
+    return offsets[-1]
+
+
+def backtick_end(text: str, start: int) -> int:
+    end = start + 1
+    while end < len(text) and text[end] == "`":
+        end += 1
+    return end
+
+
+def code_span_end(text: str, start: int, limit: int) -> int | None:
+    """같은 문단 안에서 길이가 같은 backtick run만 닫는 delimiter다."""
+    opening_end = backtick_end(text, start)
+    width = opening_end - start
+    position = text.find("`", opening_end, limit)
+    while position != -1:
+        end = backtick_end(text, position)
+        if end - position == width:
+            return end
+        position = text.find("`", end, limit)
+    return None
+
+
+def html_tag_end(text: str, start: int) -> int | None:
+    """HTML tag의 quote 상태를 따라 속성 안 Markdown 표식을 문자로 보존한다."""
+    name = re.match(r"</?[A-Za-z][A-Za-z0-9-]*", text[start:])
+    if name is None:
+        return None
+    attributes_start = start + name.end()
+    if text.startswith(">", attributes_start):
+        return attributes_start + 1
+    if text.startswith("/>", attributes_start):
+        return attributes_start + 2
+    if attributes_start == len(text) or not text[attributes_start].isspace():
+        return None
+    quote: str | None = None
+    for position in range(attributes_start, len(text)):
+        character = text[position]
+        if quote is not None:
+            if character == quote:
+                quote = None
+        elif character in "\"'":
+            quote = character
+        elif character == ">":
+            return position + 1
+        elif character == "<":
+            return None
+    return None
+
+
+def blank_source(text: str) -> str:
+    """범위를 가리되 줄 경계와 source offset은 유지한다."""
+    return "".join(character if character in "\r\n" else " " for character in text)
+
+
+def source_visibility(text: str) -> tuple[str, list[tuple[int, int]]]:
+    """Block·inline 상태로 코드/주석 mask와 확인된 HTML tag 범위를 한 번 만든다."""
+    lines = text.splitlines(keepends=True)
+    offsets = [0]
+    for line in lines:
+        offsets.append(offsets[-1] + len(line))
+    visible = list(text)
+    tags: list[tuple[int, int]] = []
     fence: str | None = None
     paragraph_open = False
-    visible_line = ""
-    while position < len(text):
-        line_start = text.rfind("\n", 0, position) + 1
-        line_end = text.find("\n", position)
-        line_end = len(text) if line_end == -1 else line_end + 1
-        if position == line_start:
-            line = text[position:line_end]
+    context: str | None = None
+    context_end = 0
+    for line_index, line in enumerate(lines):
+        position, line_end = offsets[line_index:line_index + 2]
+        # 확인된 HTML tag와 줄 시작 comment만 내부의 fence 모양을 소유한다.
+        if context not in {"tag", "block-comment"}:
             if fence is not None:
                 if re.fullmatch(r" {0,3}" + re.escape(fence[0]) + "{" + str(len(fence)) + r",}[ \t]*", line.rstrip("\r\n")):
                     fence = None
-                parts.append("\n")
-                position = line_end
+                visible[position:line_end] = blank_source(line)
                 continue
-            opener = fence_openers.match(text, position)
-            if opener:
-                fence = opener[1]
+            marker = fence_marker(line)
+            if marker is not None:
+                fence = marker
                 paragraph_open = False
-                parts.append("\n")
-                position = line_end
+                visible[position:line_end] = blank_source(line)
                 continue
             if line.startswith(("    ", "\t")) and not paragraph_open:
-                parts.append("\n")
-                position = line_end
+                visible[position:line_end] = blank_source(line)
                 continue
-        # Code span은 다음 fence를 넘을 수 없고, 열린 주석·태그는 문맥을 유지한다.
-        boundary = fence_openers.search(text, position)
-        code_span = code_spans.search(text, position, boundary.start() if boundary else len(text))
-        match = contexts.search(text, position)
-        if code_span is not None and (match is None or code_span.start() < match.start()):
-            match = code_span
-        if match is None or match.start() >= line_end:
-            parts.append(text[position:line_end])
-            visible_line += text[position:line_end]
-            # 주석을 제외한 문단만 다음 들여쓴 줄을 문단의 연속으로 만든다.
-            paragraph_open = bool(visible_line.strip()) and not re.match(r" {0,3}#{1,6}(?:[ \t]|$)", visible_line)
-            visible_line = ""
-            position = line_end
-        else:
-            parts.append(text[position:match.start()])
-            parts.append(match[0] if match.lastgroup == "tag" else " " + "\n" * match[0].count("\n"))
-            visible_line += text[position:match.start()]
-            if "\n" in match[0]:
-                visible_line = ""
-            if match.lastgroup == "tag":
-                visible_line += match[0].rsplit("\n", 1)[-1]
-            elif match.lastgroup == "ticks":
-                visible_line += "`"
-            position = match.end()
-    return "".join(parts)
+        heading = context is None and ATX_HEADING.match(line) is not None
+        line_content = False
+        while position < line_end:
+            if context is not None:
+                end = min(context_end, line_end)
+                if context != "tag":
+                    visible[position:end] = blank_source(text[position:end])
+                if context in {"code", "tag"}:
+                    line_content = True
+                position = end
+                if position == context_end:
+                    context = None
+                continue
+            character = text[position]
+            if character == "\\" and position + 1 < line_end and text[position + 1] in string.punctuation:
+                line_content = True
+                position += 2
+                continue
+            if text.startswith("<!--", position):
+                block_comment = re.fullmatch(r" {0,3}", text[offsets[line_index]:position]) is not None
+                limit = len(text) if block_comment else inline_limit(lines, offsets, line_index)
+                closing = text.find("-->", position + 4, limit)
+                if closing != -1 or block_comment:
+                    context = "block-comment" if block_comment else "inline-comment"
+                    context_end = closing + 3 if closing != -1 else len(text)
+                    continue
+            if character == "<":
+                end = html_tag_end(text, position)
+                if end is not None:
+                    tags.append((position, end))
+                    context, context_end = "tag", end
+                    continue
+            if character == "`":
+                end = code_span_end(text, position, inline_limit(lines, offsets, line_index))
+                if end is not None:
+                    context, context_end = "code", end
+                else:
+                    line_content = True
+                    position = backtick_end(text, position)
+                continue
+            line_content = line_content or not character.isspace()
+            position += 1
+        # 가린 code span도 문단 content다. 주석만 있는 줄은 문단을 열지 않는다.
+        paragraph_open = line_content and not heading
+    return "".join(visible), tags
+
+
+def without_markdown_code(text: str) -> str:
+    """코드와 주석을 가리고 HTML 속성 및 원문의 줄 경계는 보존한다."""
+    return source_visibility(text)[0]
+
+
+def is_escaped(text: str, position: int) -> bool:
+    backslashes = 0
+    position -= 1
+    while position >= 0 and text[position] == "\\":
+        backslashes += 1
+        position -= 1
+    return backslashes % 2 == 1
 
 
 def link_targets(text: str, *, clickable_only: bool = False) -> list[str]:
     """코드 예시를 제외한 Markdown 링크와 HTML href/src의 목적지를 읽는다."""
-    text = without_markdown_code(text)
+    text, tags = source_visibility(text)
     html = HTMLLinkTargets(clickable_only)
-    html.feed(text)
+    markdown = list(text)
+    for start, end in tags:
+        html.feed(text[start:end])
+        markdown[start:end] = blank_source(text[start:end])
     html.close()
-    text = re.sub(HTML_TAG, " ", text)
+    text = "".join(markdown)
     definitions: dict[str, str] = {}
 
     def reference_label(label: str) -> str:
@@ -113,18 +215,22 @@ def link_targets(text: str, *, clickable_only: bool = False) -> list[str]:
 
     text = re.sub(r"(?m)^ {0,3}\[([^\]\n]+)\]:[ \t]*<?([^\s>]+)[^\n]*", collect_definition, text)
     targets: list[str] = []
-    for match in re.finditer(
+    markdown_link = re.compile(
         r"(?P<image>!?)\[(?P<label>[^\]\n]*)\]"
-        r"(?:\(\s*<?(?P<inline>[^\s)>]+)[^\n)]*\)|\[(?P<reference>[^\]\n]*)\])?", text,
-    ):
-        if clickable_only and match["image"]:
-            continue
-        if match["inline"] is not None:
-            targets.append(match["inline"])
-        else:
-            target = definitions.get(reference_label(match["reference"] or match["label"]))
-            if target is not None:
-                targets.append(target)
+        r"(?:\(\s*<?(?P<inline>[^\s)>]+)[^\n)]*\)|\[(?P<reference>[^\]\n]*)\])?",
+    )
+    for paragraph in re.split(r"\n[ \t\r]*\n", text):
+        for match in markdown_link.finditer(paragraph):
+            if is_escaped(paragraph, match.start("label") - 1):
+                continue
+            if clickable_only and match["image"] and not is_escaped(paragraph, match.start()):
+                continue
+            if match["inline"] is not None:
+                targets.append(match["inline"])
+            else:
+                target = definitions.get(reference_label(match["reference"] or match["label"]))
+                if target is not None:
+                    targets.append(target)
     targets += html.targets
     return targets
 
@@ -288,6 +394,9 @@ def self_test() -> int:
             ("HTML image", f'<img src="{canonical}">\n'),
             ("non-anchor HTML href", f'<div href="{canonical}">guide</div>\n'),
             ("Markdown text in HTML attribute", f'<span title="[guide]({canonical})">guide</span>\n'),
+            ("escaped Markdown opener (one backslash)", f"\\[guide]({canonical})\n"),
+            ("link destination across blank paragraph", f"[guide](\n\n{canonical})\n"),
+            ("link destination across fence", f"[guide](\n```\n```\n{canonical})\n"),
         ):
             cases.append((f"{plugin}: README link only in {label}", {
                 "README.md": readme_without_link + example,
@@ -301,6 +410,13 @@ def self_test() -> int:
             ("HTML anchor with attribute backticks", f'<a title="`" href="{canonical}" data-note="`">guide</a>'),
             ("indented paragraph continuation", f"guide\n    [guide]({canonical})"),
             ("multiline HTML anchor", f'<a\n    href="{canonical}">guide</a>'),
+            ("indented continuation after code span", f"`code`\n    [guide]({canonical})"),
+            ("fence ending inline comment candidate", f"text <!--\n```\n```\n[guide]({canonical})\n-->"),
+            ("blank paragraph separating backticks", f"`\n\n[guide]({canonical})\n\n`"),
+            ("escaped backslash before link (two backslashes)", f"\\\\[guide]({canonical})"),
+            ("angle-wrapped inline destination", f"[guide](<{canonical}>)"),
+            ("angle-wrapped reference destination", f"[guide][g]\n\n[g]: <{canonical}>"),
+            ("inline destination after soft newline", f"[guide](\n{canonical})"),
         ):
             cases.append((f"{plugin}: README discoverable through {label}", {
                 "README.md": readme_without_link + link + "\n",
@@ -333,6 +449,13 @@ def self_test() -> int:
             ("HTML attribute backticks", '<a title="`" href="../README.md" data-note="`">root</a>\n'),
             ("HTML image attribute backticks", '<img title="`" src="../image.png" data-note="`">\n'),
             ("multiline HTML href", '<a\n    href="../README.md">root</a>\n'),
+            ("indented continuation after code span", "`code`\n    [root](../README.md)\n"),
+            ("fence ending inline comment candidate", "text <!--\n```\n```\n[root](../README.md)\n-->\n"),
+            ("blank paragraph separating backticks", "`\n\n[root](../README.md)\n\n`\n"),
+            ("escaped backslash before link (two backslashes)", "\\\\[root](../README.md)\n"),
+            ("angle-wrapped inline destination", "[root](<docs/README.md>)\n"),
+            ("angle-wrapped reference destination", "[root][r]\n\n[r]: <docs/README.md>\n"),
+            ("inline destination after soft newline", "[root](\n../README.md)\n"),
         ):
             cases.append((f"{plugin}: {label}", {
                 canonical: fixtures[canonical] + suffix, mirror: fixtures[mirror] + suffix,
@@ -348,6 +471,9 @@ def self_test() -> int:
             ("absolute reference link", "[public][p]\n\n[p]: https://example.com/guide\n"),
             ("HTML absolute URL", '<a href="https://example.com/guide">public</a>\n'),
             ("HTML fragment", '<a href="#start">start</a>\n'),
+            ("escaped Markdown opener (one backslash)", "\\[root](../README.md)\n"),
+            ("link destination across blank paragraph", "[root](\n\n../README.md)\n"),
+            ("link destination across fence", "[root](\n```\n```\n../README.md)\n"),
         ):
             cases.append((f"{plugin}: {label} accepted", {
                 canonical: fixtures[canonical] + suffix, mirror: fixtures[mirror] + suffix,
