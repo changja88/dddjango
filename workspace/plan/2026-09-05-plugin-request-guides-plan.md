@@ -475,6 +475,7 @@ git diff --check
 **Files:**
 
 - Regenerate: `workspace/eval/ab/T2-0b-manifest.json`
+- Regenerate: `workspace/design/2026-08-20-ontology-t2-0b-design.md`의 `MANIFEST-FACTS` block
 
 **Step 1: draft manifest를 마지막으로 재발행한다**
 
@@ -484,8 +485,10 @@ Run:
 python3 workspace/tools/manifest_seal.py --write
 ```
 
-Expected: Makefile과 기존에 drift한 manifest digest를 포함해 필요한 값이 갱신된다. 이 파일의 status는
-draft이고 run-ready seal이 아니며 `sealed_commit`은 재발행 시점의 HEAD를 가리킨다. 생성 diff를 검토한다.
+Expected: Makefile과 기존에 drift한 manifest digest를 포함해 필요한 값이 갱신된다. 기존
+`manifest_seal.py --write`는 manifest와 설계 문서의 자동 생성 `MANIFEST-FACTS` block을 함께
+동기화하므로 두 diff를 모두 검토한다. Manifest status는 draft이고 run-ready seal이 아니며
+`sealed_commit`은 재발행 시점의 HEAD를 가리킨다.
 
 **Step 2: 문서 계약 검사를 한 번에 실행한다**
 
@@ -546,7 +549,7 @@ git diff --check fcd4d0d
 
 ```bash
 set -euo pipefail
-git add workspace/eval/ab/T2-0b-manifest.json
+git add workspace/eval/ab/T2-0b-manifest.json workspace/design/2026-08-20-ontology-t2-0b-design.md
 git commit -m "chore: 작업 요청 가이드 검증 봉인 갱신"
 test "$(git branch --show-current)" = "docs/request-guides"
 git cat-file -e HEAD:dddjango/REQUEST_GUIDE.md
