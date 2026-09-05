@@ -723,7 +723,7 @@
       "files": {
         ".agents/plugins/marketplace.json": "bc134ae724e1e23019506c756bc3d2a0e6dfdc25f7dbaf55881e7edf173457f9",
         ".claude-plugin/marketplace.json": "2ab8baa47e88eb8fd0b51644b7e1e422c6e3f194520476db4ee1b1a8a693c4c4",
-        "codex-dddjango/.codex-plugin/plugin.json": "388e0f257de4f5f5d01f887ffb0190802a49dfe8c5b1482bb9c6509ab205fa88",
+        "codex-dddjango/.codex-plugin/plugin.json": "88047f1040cdb5ab4de6f119d7332a0776e6a6453adfabc4d8da2ca9a82c7ae9",
         "codex-dddjango/skills/architecture-api/SKILL.md": "1f6c9659d8b9d230c2556c130c31d52031356c07eaafe00a10973ed7fcd8c5ab",
         "codex-dddjango/skills/architecture-api/references/final.md": "9eed2432508c7f40ad0b6de4e55769f3abb895e3b5573d58b63f5e7029dd318b",
         "codex-dddjango/skills/architecture-db/SKILL.md": "b1560b89855acd55e0722ddd0ad7e808b4679adb899d1b75364bb4ffe8521e1d",
@@ -797,7 +797,7 @@
         ".agents/plugins/marketplace.json"
       ],
       "n_files": 64,
-      "tree_sha256": "220a90ffa2e651a75eccbe721237d8774d6042bf7659e1c19be6ff9e4ed3067c",
+      "tree_sha256": "97659a9df39c768f78a43cb2f3de30c4c70a7cb3606d3b72f5d3ba52be86d3a0",
       "why": "절차서가 **부르는 것들**. 서브에이전트 정의와 규범 산문(`references/final.md`)이 여기 있다 — 그중 ninja §6.1·§6.2 와 ddd §3.2 는 파일럿 이관 대상 클러스터 그 자체다. 절차서만 동결하고 이것들을 두면 봉투만 봉인하고 내용물을 열어 둔 것이다. 산문이 런 사이에 바뀌면 세 암이 같은 규범을 상대한 것이 아니게 되고, `coder.md` 한 줄이 바뀌면 처치와 무관하게 산출물이 달라진다."
     },
     "preregistration": {
@@ -959,8 +959,8 @@
     "source-claude": "e9cc80fdaea6f358621a76d1df6d4f3eee05d628caeddda0bdcbb7d34f817cd2",
     "source-codex": "e9cc80fdaea6f358621a76d1df6d4f3eee05d628caeddda0bdcbb7d34f817cd2"
   },
-  "sealed_commit": "19793b16251fcf385712c15b97039f6191124f64",
-  "self_sha256": "b539374f9e5aba1e96572af7e08b2e0d483d89b9f86b6a2816b036c96e57a965",
+  "sealed_commit": "b9ece959a16f534025aba192866aeb68dae0cc55",
+  "self_sha256": "01ee5bc5858377949a276bb7f64ab73189632d4cbc2ac3ee813adf3fa2d2b51c",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [
