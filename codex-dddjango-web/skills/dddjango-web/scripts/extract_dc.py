@@ -1,45 +1,35 @@
 #!/usr/bin/env python3
-"""extract_dc — Claude Design PROJECT(`.dc.html`)에서 게이트텍스트·이미지 결정론 절단 (dddjango-web).
+"""Extract one explicit Claude Design screen and its static image dependencies.
 
-dddart `extract_dc.dart`의 이식·간소화다. Flutter 아이콘 축(icon_map·icons[] RMW 주입)은
-web에 존재하지 않아 **전체 미이식**이다 — `--tokens`는 실행 순서 계약(MF-3: extract_design
---from-ds-manifest 선행) 확인용으로 **존재 검사만** 한다(내용 수정 없음).
+Supports legacy `.screen` and `data-screen-label` on arbitrary HTML elements.
+Multiple candidates require --screen-label <exact label> or --screen-index <0-based>;
+a single candidate is automatic. Nested device decoration is never a screen.
 
-**대상은 앱 콘텐츠(`.screen` 서브트리)만**이다 — `.stage`/`.phone`/`.decor`/`.statusbar`는
-폰 목업 device-chrome이라 그 안의 `<img>`·텍스트는 출력에 절대 나오지 않는다.
-`.screen`이 `<div>` 짝맞춤으로 추출되므로 그 밖의 크롬은 자동 제외된다.
+Usage: extract_dc.py <screen.dc.html> --tokens <design-tokens.json>
+       --asset-manifest <asset-manifest.json> --assets-root <project root>
+       --asset-base <design-ref> --meta <screen-meta.json>
+       [--screen-label <label> | --screen-index <index>] [--source-manifest <path>]
 
-산출:
-  - `--meta <screen-meta.json>`: {title, subtitle, cards[]} — `.title`/`.subtitle`/카드
-    `.rtitle`의 직속 텍스트. 확인 게이트(MF-1)가 *이 파일만* 인용한다(손추출 금지의 단일 출처).
-  - `--asset-manifest <asset-manifest.json>`: `.screen` 안 `<img>` 전수의
-    {images:[{src, alt, local_path, token, status}]}. 원격 src는 다운로드(타임아웃)·
-    로컬 상대경로는 `--asset-base`(design-ref) 기준 해소 복사 →
-    `--assets-root` 기준 `web/static/images/`에 착지.
-
-사용:
-  python extract_dc.py <screen.dc.html> --tokens <design-tokens.json> \\
-    --asset-manifest <asset-manifest.json> --assets-root <프로젝트 루트> \\
-    --asset-base <design-ref 디렉터리> --meta <screen-meta.json>
-
-종료: 0=성공(이미지 부분 실패는 status·[warn] stderr로 표면화) /
-      1=사용법·`.dc.html` 부재·`.screen` 부재·tokens 부재(실행 순서 위반).
+--tokens verifies the upstream extraction exists; it does not mutate tokens.
+Meta contains source text fields, selected screen_label, source_sha256, and
+explicit_frames (only root/direct-child fixed px sizes; no inferred viewport or
+chrome classification). Source rendering is still required to confirm boundaries.
+Image output adds source_ready, unresolved dependencies and per-image digest/size/
+reason. Status ok/inline means validated bytes landed in web/static/images, not
+that a browser rendered them. Existing source-manifest URL mappings are reused.
+Exit 1: input/selection failure; exit 0: extraction ran, even with failed images.
+The caller must inspect source_ready and resolve failures before a design gate.
 """
 from __future__ import annotations
 
 import hashlib
 import json
 import os
-import posixpath
 import re
 import sys
-import urllib.parse
-import urllib.request
 from typing import Dict, List, Optional
 
-FETCH_TIMEOUT_SEC = 20
 IMAGES_SUBDIR = os.path.join("web", "static", "images")
-IMAGES_PREFIX = "web/static/images"  # local_path 표기(assets-root 기준·posix)
 
 WORD_RE = re.compile(r"[A-Za-z0-9]")
 WS_RE = re.compile(r"\s")
@@ -91,69 +81,67 @@ def has_class(cls: str, token: str) -> bool:
     return token in cls.split()
 
 
-# ---- 앱 콘텐츠: `.screen` 서브트리 절단 ----
+# ---- Explicitly identify a screen; source frames are evidence, never inferred chrome. ----
+from html.parser import HTMLParser
 
 
-def find_screen_start(html: str) -> int:
-    """class 토큰에 `screen`을 가진 첫 `<div>`의 `<` 위치. 없으면 -1."""
-    lower = html.lower()
-    i = 0
-    while True:
-        lt = lower.find("<div", i)
-        if lt < 0:
-            return -1
-        if word_char_at(html, lt + 4):  # `<divider` 등 — 태그명 경계 아님
-            i = lt + 4
-            continue
-        gt = tag_end(html, lt)
-        if gt < 0:
-            return -1
-        raw = html[lt + 1:gt]  # div class="screen" ...
-        sp = WS_RE.search(raw)
-        if sp is not None:
-            attrs = parse_attrs(raw[sp.start() + 1:])
-            if has_class(attrs.get("class", ""), "screen"):
-                return lt
-        i = gt + 1
+class ScreenParser(HTMLParser):
+    def __init__(self, source: str):
+        super().__init__(convert_charrefs=True)
+        self.source = source
+        self.lines = [0]
+        for match in re.finditer("\n", source):
+            self.lines.append(match.end())
+        self.stack = []
+        self.screens = []
+        self.frames = []
 
+    def source_position(self):
+        line, column = self.getpos()
+        return self.lines[line - 1] + column
 
-def div_subtree(html: str, start_lt: int) -> Optional[str]:
-    """start_lt의 `<div ...>`부터 짝 맞는 `</div>`까지 — `<div>`/`</div>` 깊이추적.
-    비-div 태그는 깊이에 무관하고 tag_end로 건너뛴다. 균형 실패면 None."""
-    lower = html.lower()
-    depth = 0
-    i = start_lt
-    while i < len(html):
-        lt = lower.find("<", i)
-        if lt < 0:
-            break
-        if lower.startswith("</div", lt) and not word_char_at(html, lt + 5):
-            gt = tag_end(html, lt)
-            if gt < 0:
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        style = attributes.get("style") or ""
+        width = re.search(r"(?:^|;)\s*width\s*:\s*(\d+(?:\.\d+)?)px\s*(?:;|$)", style)
+        height = re.search(r"(?:^|;)\s*height\s*:\s*(\d+(?:\.\d+)?)px\s*(?:;|$)", style)
+        if width and height and len(self.stack) <= 1:
+            self.frames.append({"width_px": float(width[1]), "height_px": float(height[1])})
+        candidate = "data-screen-label" in attributes or has_class(attributes.get("class") or "", "screen")
+        record = {"tag": tag, "start": self.source_position(), "label": attributes.get("data-screen-label"), "end": None} if candidate else None
+        if record:
+            self.screens.append(record)
+        if tag not in {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}:
+            self.stack.append((tag, record))
+
+    def handle_startendtag(self, tag, attrs):
+        self.handle_starttag(tag, attrs)
+        self.handle_endtag(tag)
+
+    def handle_endtag(self, tag):
+        for index in range(len(self.stack) - 1, -1, -1):
+            if self.stack[index][0] == tag:
+                for _, record in self.stack[index:]:
+                    if record and record["tag"] == tag:
+                        record["end"] = self.source.find(">", self.source_position()) + 1
+                del self.stack[index:]
                 break
-            depth -= 1
-            if depth == 0:
-                return html[start_lt:gt + 1]
-            i = gt + 1
-        elif lower.startswith("<div", lt) and not word_char_at(html, lt + 4):
-            gt = tag_end(html, lt)
-            if gt < 0:
-                break
-            depth += 1
-            i = gt + 1
-        else:
-            gt = tag_end(html, lt)
-            if gt < 0:
-                break
-            i = gt + 1
-    return None
 
 
-def app_content(html: str) -> Optional[str]:
-    start = find_screen_start(html)
-    if start < 0:
-        return None
-    return div_subtree(html, start)
+def select_screen(html: str, label: Optional[str] = None, index: Optional[int] = None):
+    parser = ScreenParser(html)
+    parser.feed(html)
+    candidates = [row for row in parser.screens if row["label"] is not None] or parser.screens
+    if label is not None:
+        candidates = [row for row in candidates if row["label"] == label]
+    if index is not None:
+        candidates = candidates[index:index + 1] if index >= 0 else []
+    if len(candidates) != 1:
+        raise ValueError(f".screen/data-screen-label candidate count {len(candidates)}; use --screen-label or --screen-index for explicit selection")
+    selected = candidates[0]
+    if not selected["end"]:
+        raise ValueError("selected screen subtree is incomplete")
+    return html[selected["start"]:selected["end"]], selected["label"] or ""
 
 
 # ---- 게이트 텍스트: .title·.subtitle·카드 .rtitle ----
@@ -199,163 +187,63 @@ def gate_text(app: str) -> Dict[str, object]:
 # ---- 이미지: `<img>` 전수 → web/static/images/ + manifest ----
 
 
-def slug_of_source(src: str) -> Optional[str]:
-    """src의 파일명 stem을 소문자 케밥으로 — 파일명 토큰의 결정론 기반(소스명 기반)."""
-    if src.startswith("data:"):
-        return None
-    path = urllib.parse.urlparse(src).path if "://" in src else src
-    name = posixpath.basename(path.replace("\\", "/"))
-    stem = name.rsplit(".", 1)[0] if "." in name else name
-    s = re.sub(r"[^a-z0-9]+", "_", stem.lower()).strip("_")
-    return s or None
+from fetch_images import assign_token, fetch_one
 
 
-def assign_token(src: str, doc_slug: str, n: int, used: set) -> str:
-    """소스명 slug 토큰. 소스명 없음(data: 등)은 `<문서slug>_<n>`. 충돌 시 src 해시 접미(결정론)."""
-    base = slug_of_source(src) or f"{doc_slug}_{n}"
-    token = base
-    if token in used:
-        token = f"{base}_{hashlib.sha1(src.encode('utf-8')).hexdigest()[:8]}"
-    while token in used:  # 해시 접미까지 충돌(동일 src 재등장은 호출 전에 dedupe됨) — 길이 연장
-        token += "x"
-    used.add(token)
-    return token
+def collect_images(app: str, doc_slug: str, asset_base: str, images_dir: str, document: str, source_manifest_arg: Optional[str]):
+    """Collect selected screen images, CSS URLs, and statically imported components."""
+    from pathlib import Path
+    from asset_io import frozen_resource, load_source_manifest, read_resource, source_identity_root, source_index
+    from design_sources import dependencies
+    from freeze_design import resolve_source
 
-
-def ext_from_mime(mime: Optional[str]) -> Optional[str]:
-    if not mime:
-        return None
-    m = mime.lower()
-    if "png" in m:
-        return "png"
-    if "jpeg" in m or "jpg" in m:
-        return "jpg"
-    if "gif" in m:
-        return "gif"
-    if "webp" in m:
-        return "webp"
-    if "svg" in m:
-        return "svg"
-    return None
-
-
-def ext_from_magic(b: bytes) -> Optional[str]:
-    if len(b) >= 4 and b[:4] == b"\x89PNG":
-        return "png"
-    if len(b) >= 3 and b[:3] == b"\xff\xd8\xff":
-        return "jpg"
-    if len(b) >= 3 and b[:3] == b"GIF":
-        return "gif"
-    if len(b) >= 12 and b[8:12] == b"WEBP":
-        return "webp"
-    return None
-
-
-def fetch_one(src: str, alt: str, token: str, images_dir: str,
-              resolve_base: Optional[str]) -> Dict[str, str]:
-    """한 `<img>`의 src를 스킴별로 처리하고 manifest 엔트리를 만든다(dart `_fetchOne` 이식).
-    http(s)=다운로드(타임아웃) / data:=인라인 디코드 / resolve_base 있음=로컬 상대경로 복사
-    / 그 외=skipped. 실패·스킵은 status + [warn] stderr로 표면화(조용한 폴백 금지)."""
-    status = "failed"
-    ext = "png"
-    data: Optional[bytes] = None
-
-    if src.startswith("data:"):
-        comma = src.find(",")
-        if comma > 0:
-            meta = src[5:comma]  # 예: image/png;base64
-            data_part = src[comma + 1:]
+    root = Path(asset_base).resolve()
+    frozen_manifest = load_source_manifest(root, source_manifest_arg)
+    files = frozen_manifest.get("files", [])
+    by_source = source_index(frozen_manifest)
+    identity_root = source_identity_root(frozen_manifest, root)
+    by_local = {row["local_path"]: row for row in files if row.get("local_path")}
+    document_path = Path(document).resolve()
+    relative = document_path.relative_to(root).as_posix() if document_path.is_relative_to(root) else ""
+    origin = by_local.get(relative, {}).get("source", str(document_path))
+    pending = [(app, "html", origin)]
+    images = []
+    unresolved = []
+    seen_sources = set()
+    used_tokens = set()
+    while pending:
+        content, kind, parent = pending.pop(0)
+        alts = {}
+        for match in re.finditer(r"<img\b[^>]*>", content, flags=re.I):
+            attrs = parse_attrs(match[0])
+            alts[attrs.get("src", "")] = attrs.get("alt", "")
+        for src, dep_kind, base_kind in dependencies(content, kind):
+            if dep_kind not in ("image", "component", "css", "script"):
+                continue
             try:
-                if "base64" in meta:
-                    import base64 as _b64
-                    data = _b64.b64decode(re.sub(r"\s", "", data_part), validate=False)
+                base_source = origin if kind in ("component", "script") and base_kind == "document" else parent
+                resolved = resolve_source(src, base_source, identity_root)
+                if resolved in seen_sources:
+                    continue
+                seen_sources.add(resolved)
+                if frozen_manifest:
+                    acquired, expected_hash = frozen_resource(resolved, by_source, root)
                 else:
-                    data = urllib.parse.unquote(data_part).encode("utf-8")
-                ext = ext_from_mime(meta) or ext_from_magic(data) or "png"
-                status = "inline"
-            except (ValueError, UnicodeError):
-                status = "failed"
-        else:
-            status = "failed"
-    elif src.startswith(("http://", "https://")):
-        try:
-            req = urllib.request.Request(src, headers={"User-Agent": "dddjango-web-fetch/1"})
-            with urllib.request.urlopen(req, timeout=FETCH_TIMEOUT_SEC) as res:
-                if res.status == 200:
-                    data = res.read()
-                    ext = ext_from_mime(res.headers.get_content_type()) or ext_from_magic(data) or "png"
-                    status = "ok"
+                    acquired, expected_hash = resolved, None
+                if dep_kind == "image":
+                    token = assign_token(resolved, doc_slug, len(images) + 1, used_tokens)
+                    item = fetch_one(src, alts.get(src, ""), token, images_dir, str(root), acquired, expected_hash)
+                    item.update(source_document=parent, resolved_source=resolved)
+                    images.append(item)
                 else:
-                    status = "failed"
-        except Exception:  # 타임아웃·네트워크·HTTP 오류 — 전부 status로 표면화
-            status = "failed"
-            data = None
-    elif resolve_base is not None:
-        if src.startswith("{"):
-            status = "skipped"  # 동적 표현식 src={expr}: 정적 해소 불가 → fail-loud(skipped)
-        else:
-            try:
-                rel = urllib.parse.unquote(src.split("?", 1)[0].split("#", 1)[0])
-                resolved = os.path.normpath(os.path.join(resolve_base, rel))
-                if os.path.isfile(resolved):
-                    with open(resolved, "rb") as f:
-                        data = f.read()
-                    suffix = os.path.splitext(resolved)[1].lstrip(".").lower()
-                    ext = ext_from_magic(data) or (suffix if suffix else "png")
-                    status = "ok"
-                else:
-                    status = "failed"  # 파일 없음 → fail-loud
-            except OSError:
-                status = "failed"
-                data = None
-    else:
-        status = "skipped"  # 상대경로·file: 등(해소 기준 없음) — 표면화(조용한 폴백 금지)
-
-    local_path = ""
-    if data is not None and status in ("ok", "inline"):
-        fname = f"{token}.{ext}"
-        os.makedirs(images_dir, exist_ok=True)
-        with open(os.path.join(images_dir, fname), "wb") as f:
-            f.write(data)
-        local_path = f"{IMAGES_PREFIX}/{fname}"
-
-    if status in ("failed", "skipped"):
-        warn(f"이미지 {status}: {src}")
-
-    return {"src": src, "alt": alt, "local_path": local_path, "token": token, "status": status}
-
-
-def collect_images(app: str, doc_slug: str, asset_base: str, images_dir: str) -> List[Dict[str, str]]:
-    """앱 콘텐츠(`.screen`)의 모든 `<img src>` 전수 처리 — 같은 src는 1회만(엔트리·다운로드 dedupe)."""
-    images: List[Dict[str, str]] = []
-    seen_srcs: set = set()
-    used_tokens: set = set()
-    resolve_base = os.path.abspath(asset_base)
-    lower = app.lower()
-    n = 0
-    i = 0
-    while True:
-        lt = lower.find("<img", i)
-        if lt < 0:
-            break
-        if word_char_at(app, lt + 4):  # `<image` 등 — 태그명 경계 아님
-            i = lt + 4
-            continue
-        gt = tag_end(app, lt)
-        if gt < 0:
-            break
-        raw = app[lt + 1:gt]  # img src="…" alt="…"
-        sp = WS_RE.search(raw)
-        attrs = parse_attrs(raw[sp.start() + 1:]) if sp is not None else {}
-        i = gt + 1
-        src = attrs.get("src", "")
-        if not src or src in seen_srcs:
-            continue
-        seen_srcs.add(src)
-        n += 1
-        token = assign_token(src, doc_slug, n, used_tokens)
-        images.append(fetch_one(src, attrs.get("alt", ""), token, images_dir, resolve_base))
-    return images
+                    data, _mime = read_resource(acquired, str(root))
+                    if expected_hash and hashlib.sha256(data).hexdigest() != expected_hash:
+                        raise ValueError("frozen dependency changed since source manifest")
+                    pending.append((data.decode("utf-8-sig"), dep_kind, resolved))
+            except Exception as error:
+                unresolved.append({"source": src, "source_document": parent, "reason": f"{type(error).__name__}: {error}"})
+                warn(f"dependency unresolved: {src}: {error}")
+    return images, unresolved
 
 
 # ---- 진입점 ----
@@ -368,6 +256,9 @@ def main(argv: List[str]) -> None:
     assets_root: Optional[str] = None
     asset_base: Optional[str] = None
     meta_path: Optional[str] = None
+    screen_label: Optional[str] = None
+    source_manifest_arg: Optional[str] = None
+    screen_index: Optional[int] = None
     i = 0
     while i < len(argv):
         arg = argv[i]
@@ -386,6 +277,18 @@ def main(argv: List[str]) -> None:
         elif arg == "--meta":
             i += 1
             meta_path = argv[i] if i < len(argv) else None
+        elif arg == "--source-manifest":
+            i += 1
+            source_manifest_arg = argv[i] if i < len(argv) else None
+        elif arg == "--screen-label":
+            i += 1
+            screen_label = argv[i] if i < len(argv) else None
+        elif arg == "--screen-index":
+            i += 1
+            try:
+                screen_index = int(argv[i])
+            except (IndexError, ValueError):
+                die("--screen-index requires a non-negative integer")
         else:
             dc_html = arg
         i += 1
@@ -406,13 +309,17 @@ def main(argv: List[str]) -> None:
         die(f"design-tokens.json 부재: {tokens_path} — extract_design --from-ds-manifest 선행이 "
             "누락됐다(실행 순서 위반·MF-3). extract_dc는 통째 생성하지 않는다.")
 
-    with open(dc_html, encoding="utf-8", errors="replace") as f:
-        html = f.read()
+    with open(dc_html, "rb") as f:
+        source_bytes = f.read()
+    try:
+        html = source_bytes.decode("utf-8-sig")
+    except UnicodeError as error:
+        die(f"source is not complete UTF-8: {error}")
 
-    app = app_content(html)
-    if app is None:
-        die(f"`.screen` 서브트리 없음: {dc_html} — 앱 콘텐츠 미검출(동결 누락 또는 "
-            "device-chrome만). 동결본을 확인하라.")
+    try:
+        app, selected_label = select_screen(html, screen_label, screen_index)
+    except ValueError as error:
+        die(str(error))
 
     screen_name = os.path.basename(dc_html)
     doc_slug = re.sub(r"[^a-z0-9]+", "_",
@@ -420,11 +327,18 @@ def main(argv: List[str]) -> None:
                       ).strip("_") or "screen"
 
     images_dir = os.path.join(assets_root, IMAGES_SUBDIR)
-    images = collect_images(app, doc_slug, asset_base, images_dir)
+    try:
+        images, unresolved = collect_images(app, doc_slug, asset_base, images_dir, dc_html, source_manifest_arg)
+    except (OSError, ValueError) as error:
+        die(f"invalid source manifest: {error}")
     meta = gate_text(app)
+    selected_parser = ScreenParser(app)
+    selected_parser.feed(app)
+    meta.update(screen_label=selected_label, explicit_frames=selected_parser.frames,
+                source_sha256=hashlib.sha256(source_bytes).hexdigest())
 
     with open(manifest_path, "w", encoding="utf-8") as f:
-        f.write(json.dumps({"images": images}, indent=2, ensure_ascii=False) + "\n")
+        f.write(json.dumps({"images": images, "source_ready": not unresolved and all(e["status"] in ("ok", "inline") for e in images), "unresolved": unresolved}, indent=2, ensure_ascii=False) + "\n")
     with open(meta_path, "w", encoding="utf-8") as f:
         f.write(json.dumps(meta, indent=2, ensure_ascii=False) + "\n")
 

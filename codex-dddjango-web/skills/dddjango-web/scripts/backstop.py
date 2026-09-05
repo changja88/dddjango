@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# dddjango-web 결정적 백스톱 러너 — 단일 엔트리, 검사 24종 인프로세스 실행.
+# dddjango-web 결정적 백스톱 러너 — 단일 엔트리, 검사 26종 인프로세스 실행.
 # (판형: dddart scripts/backstop.dart · 값 정본: discipline-web-houserules §1~§5·§7)
 #
 # 사용:
@@ -25,7 +25,7 @@ from src.check_imports import run_imports  # noqa: E402
 from src.check_naming import run_naming  # noqa: E402
 from src.check_purity import run_purity  # noqa: E402
 
-TOTAL_CHECKS: int = 24  # WS8 + WI4 + WN8 + WP4
+TOTAL_CHECKS: int = 26  # WS8 + WI4 + WN8 + WP6
 
 _USAGE: str = ('사용: python backstop.py <대상 프로젝트 루트> '
                '[--diff-base <commit>] [--all] [--only ws,wi,wn,wp]')

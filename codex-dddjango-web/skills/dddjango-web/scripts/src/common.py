@@ -56,7 +56,7 @@ HTML_KIND_DIRS: Set[str] = {'section', 'widget'}  # §3 마커=.gitkeep
 # houserules §1 — 영역·화면 이름 deny(컨테이너명·종류명)
 RESERVED_NAMES: Set[str] = CONTAINER_DIRS | KIND_DIRS | {'web', 'widget'}
 # houserules §1·§3 — static/ 직속 3종
-STATIC_DIRS: Set[str] = {'css', 'js', 'images'}
+STATIC_DIRS: Set[str] = {'css', 'js', 'images', 'fonts', 'files'}
 # houserules §4 — component 정크드로어 군 금지
 JUNK_GROUPS: Set[str] = {'widget', 'etc'}
 # houserules §5⑤·§4 — vendored JS 허용(web-상대) — 닫힌 2그룹(D12v2): htmx 변형 중 1 + motion.js
@@ -202,8 +202,24 @@ def _mask_block_comments(src: str, open_tok: str, close_tok: str) -> MaskedSourc
     return _views(src, is_comment, is_str)
 
 
+VERBATIM_RE = re.compile(
+    r'\{%\s*verbatim(?P<name>\s+[^%\s]+)?\s*%\}.*?'
+    r'\{%\s*endverbatim(?(name)(?P=name))\s*%\}', re.DOTALL)
+
+
 def mask_html(src: str) -> MaskedSource:
-    return _mask_block_comments(src, '<!--', '-->')
+    # Django의 짧은 주석은 한 줄만이다. 다중줄 {# #}는 출력되는 텍스트이므로
+    # 마스킹하지 않는다. verbatim 안은 WP6에서 별도로 제외한다(HTML은 실행된다).
+    pattern = re.compile(r'<!--.*?(?:-->|$)|\{%\s*comment\b.*?%\}.*?'
+                         r'\{%\s*endcomment\s*%\}|\{#[^\r\n]*?#\}', re.DOTALL)
+    flags: List[bool] = [False] * len(src)
+    verbatim = list(VERBATIM_RE.finditer(src))
+    for match in pattern.finditer(src):
+        if not match.group().startswith('<!--') and any(
+                block.start() <= match.start() < block.end() for block in verbatim):
+            continue
+        flags[match.start():match.end()] = [True] * (match.end() - match.start())
+    return _views(src, flags, [False] * len(src))
 
 
 def mask_css(src: str) -> MaskedSource:

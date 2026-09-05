@@ -19,7 +19,7 @@ user-invocable: false
 
 - web은 «내부의 외부 클라이언트»다 — 백엔드 BC는 실물 API 계약(URL+JSON)으로만 소비, `application/**` import 0. 없는 API는 가정하지 않고 «/dddjango로 발주»를 안내한다 (§1·§6)
 - 요청 구동 MVVM — VM은 무상태 조립기로 매 요청 재조립된다. watch·구독·상주 상태 없음 (§1)
-- 형상의 유일 근거는 동결 시안 — 명세에 산문 레이아웃 서술 금지·재현하되 직수입 금지. 기술은 순수 HTML+HTMX+CSS뿐(JS는 vendored 2파일 — htmx·motion 러너[조건 설치], 화면 코드는 `data-motion` 선언만) (§1)
+- 형상의 근거는 확인된 동결 시안과 항목별 결정된 이탈이다 — 독립적인 산문 레이아웃 재설계 금지·재현하되 직수입 금지. 기술은 순수 HTML+HTMX+CSS뿐(JS는 vendored 2파일 — htmx·motion 러너[조건 설치], 화면 코드는 `data-motion` 선언만) (§1)
 - 3단은 크기가 아니라 상태 조립(view)/화면 전속(section)/재사용(widget)으로 가른다 — 판별은 위에서부터, 처음 해당하는 것이 답 (§2)
 - view는 얇은 진입점(URL 바인딩·VM 호출·render·fragment 소유)뿐 — 판단 금지, 표시 판정은 VM이 유일한 자리다 (§3)
 - state는 불변 dataclass·템플릿이 아는 유일한 모양 — 패키지 타입 직노출 금지(예외: 검증 실패 재렌더용 Django Form 1종 허용). 입력 검증=form(`form/` 조건 생성)·표시 상태=VM 분담 (§3)
@@ -28,7 +28,7 @@ user-invocable: false
 - 호출 코드는 client/ 전속 — in-process HTTP·driving_layer api 표면만·web 소유 응답 모델 파싱(schema import 금지)·오류는 client exception. 계약은 동결 스냅샷이 사실의 출처 — coder-web은 기계 절단 경량본만 보고, 에이전트는 스냅샷을 갱신하지 않는다 (§6)
 - 라우트 리터럴 단일 출처 — 자기 화면 path·name은 urls.py, BC API URL은 client 모듈. 참조는 `{% url %}`/`reverse` 이름만 (§7)
 - 시각 값은 tokens.css 토큰만·component 재사용 우선·BC 어휘는 입장 불가 — BC 어휘 표시 매핑은 VM이 그 자리 (§8)
-- 렌더 실측(`render-audit.json`)이 있으면 texts·pinned **전수 처분·실측값 인용 의무**(눈대중 근사 금지 — 절단 토큰은 값 «풀»만·요소 결합은 실측만) + 고정 요소·스크롤 스킴의 배치 거동 결정은 설계자 소유(표기 판형은 implementation-ui §7) (§8)
+- 렌더 실측(`render-audit.json`)이 있으면 texts·pinned **전수 처분·실측값 인용 의무**(눈대중 근사 금지 — 절단 토큰은 값 «풀»만·실측과 대응 소스로 요소/상태 결합 대조) + 고정 요소·스크롤 스킴의 배치 거동 결정은 설계자 소유(표기 판형은 implementation-ui §7) (§8)
 
 ## 상세 레퍼런스
 

@@ -36,18 +36,17 @@
 
 절차:
 
-1. **외형 관찰** — 렌더 결과 기준으로 배치·그룹핑·정렬·간격·반복을 읽는다. 시안 HTML도 소스가 아니라 렌더된 생김새가 관찰 대상이다.
-2. **시각 값 추출** — 색·타이포·간격·radius·그림자를 `design_system/foundation/tokens.css`에 토큰으로 등록하고, 이후 그 토큰만 쓴다(§7).
-3. **구조 재구축** — 마크업 구조는 시안에서 베끼지 않고 3단 분해(architecture-web §2)로 새로 세운다.
-4. **이미지** — asset-manifest 경유로만 가져온다(§7).
-5. **재사용 조각 대조** — 시안의 반복 요소는 기존 `design_system/component/`와 대조해, 있으면 그것을 쓰고 새로 만들지 않는다.
+1. **비교 기준 확인** — `visual-check.md`의 선택 화면·상태·viewport·동결 렌더를 읽는다. HTML 파일만 있고 실제 렌더나 대응 스크린샷이 없으면 시각 구현 입력이 아직 준비되지 않은 것이다. 소스를 렌더 결과로 간주하지 않고 Coordinator에 부족한 입력을 돌려준다.
+2. **요소 대응** — 보이는 요소와 조건부 요소의 현재 상태를 확인한다. 화면 경계·컨테이너 폭/높이·여백·flex spacer·정렬·형제 순서·타이포·장식·구분선·아이콘·component variant가 대조 대상이다. 외부 캔버스/목업과 앱 화면 경계는 선택된 렌더와 소스 근거로 구별한다. 고정 치수를 목업으로 단정하거나 다른 content-max·뷰포트 정렬로 재해석하지 않는다. 다른 viewport의 반응형 거동은 확인된 요구를 따른다.
+3. **정확한 시각 값 등록** — 원본 값과 같은 기존 토큰은 재사용한다. 필요한 값이 없으면 출처(파일·요소·상태/실측)를 붙여 `tokens.css`에 새 토큰을 등록한다. 가까운 크기·행간·색·padding으로 반올림하지 않는다. 이미지뿐인 시안의 측정값은 추정임을 표시하고 대조한다. 토큰 개수의 일치는 요소별 매핑의 증거가 아니다.
+4. **구조 재구축·자산 배선** — 마크업은 3단 분해로 다시 작성하고, 같은 외형·variant를 지원하는 기존 component를 재사용한다. 자산은 manifest의 검증된 로컬 파일로 배선한다(§7). 원본 JS·JSX는 렌더 근거로 보관할 수 있으나 앱 코드로 직수입하지 않는다.
+5. **실제 출력 확인** — 변경 페이지/fragment를 실제 Django 설정과 대표 state로 렌더해 출력 내용을 확인한다. 함수 호출 성공·문자열 길이만 확인하고 HTML을 버리지 않는다. 브라우저에서 이미지·폰트 로드, 문구/주석 누출, viewport별 화면 전체, 관련 상태·상호작용을 확인한다. 실행 명령/URL·상태·viewport·스크린샷·발견과 수정 후 재확인을 보고하고 Coordinator가 `visual-check.md`에 통합한다.
 
-- 형상 근거는 산출물 폴더의 **동결 시안**이다 — 재현도 충실도 대조도 동결본 기준이며, 원본 웹페이지를 매번 다시 여는 것이 아니다.
-- **보이는 요소는 빠짐없이 재현한다** — 시안에 보이는 요소를 임의로 생략하지 않는다. `<img>`의 위치·형제 순서도 시안 그대로다.
-- 명세에 배치 서술이 없는 것은 정상이다 — 반송 사유가 아니다. 형상 근거는 산문이 아니라 시안이다.
-- 시안이 없으면 coder-web 재량 + 기존 design_system 관례로 짓는다 — placeholder나 임의 발명으로 빈 곳을 조용히 채우지 않는다.
-- 시안이 있는데 재현 불가한 요소(입수 불가 폰트·동적 효과 등)는 근사로 처리하되, **무엇이 근사인지 보고에 표면화한다** — 조용한 저하 금지.
-- 정적 화면 한정 진행에서는 시안의 데이터성 텍스트(목록 행·수치)를 견본 값으로 그대로 렌더한다 — 실데이터 연결은 계약 확보 후 후속 작업이다.
+- 시안의 형상과 승인 명세가 충돌하면 반송한다. **외형을 변경할 근거는 명세의 해당 이탈 행과 그 구체적 결정 근거**다(architecture-web §1). 보고했다는 사실이나 포괄적 명세 승인은 누락된 변경의 승인이 아니다.
+- 사용자 요구로 조건부 요소를 표시/숨기기로 정했다면 그 결정 상태를 재현한다. 소스에 선언돼 있다는 이유만으로 숨김 요소를 표시하지 않는다.
+- 재현 불가한 자산·효과는 실패 원인과 가능한 복구/대체를 보고하고, 해당 이탈 결정 후 구현한다. 기술 제약이 자동으로 삭제·placeholder 사용을 승인하지 않는다.
+- 시안이 애초에 없으면 기존 design_system과 사용자 요구로 자체 설계한다. 수집 실패와 이 정상 경로를 구별한다. 정적 화면 한정에서는 시안의 데이터성 텍스트를 견본 값으로 유지한다.
+- 영구 테스트 파일을 만들지 않는 정책은 임시 렌더·브라우저 검증을 금지하지 않는다. 임시 실행 코드는 폐기해도 결과·스크린샷·미실행 사유는 산출물 폴더에 남긴다. 브라우저 실행이 불가하면 검증 상태는 `미검증`이며 완료 근거를 대신 만들지 않는다.
 
 ## §3. 삼총사 표기 — view·view_model·state
 
@@ -85,6 +84,7 @@ Python 최소 관용구: 타입 힌트는 전면이다 — 모든 함수 매개�
 ## §4. 템플릿 표기
 
 - `{% extends %}`는 첫 번째 비주석 줄에 둔다.
+- Django 짧은 주석 `{# … #}`는 한 줄만 쓴다. 여러 줄은 `{% comment %}…{% endcomment %}`로 감싼다. 여러 줄 `{# … #}`는 그대로 응답에 새어 나온다(WP6).
 - block은 역할이 드러나는 이름을 붙이고 `{% endblock content %}`처럼 이름으로 닫는다.
 - `{% load %}`는 여러 라이브러리를 알파벳순으로 유지한다.
 - `{{ variable }}`·`{% tag %}` 안에는 한 칸 공백을 둔다.
@@ -138,7 +138,7 @@ widget(영역 재사용 조각)과 design_system component(전역 순수 부품)
 
 ## §7. 토큰·CSS·에셋 표기
 
-**토큰.** `design_system/foundation/tokens.css`가 `:root` custom properties로 색·타이포·간격·radius·그림자·모션 값(`--duration-*`·`--ease-*` 류)을 정의한다. CSS와 템플릿의 스타일 값은 `var(--…)`만 쓴다 — 리터럴(`#2563eb`·`14px` 직접 기입) 금지. *왜*: 시안 값이 토큰 한 곳에 모여야 충실도 대조와 일괄 변경이 성립한다. 시안 절단 산출물(design-tokens.json)이 있으면 그 토큰 이름을 그대로 쓴다 — 발명 금지. tokens.css가 `{% static %}` 경유로 서빙되는 것은 STATICFILES_DIRS 프리픽스 튜플 배선이 전제다 — 배선은 커맨드 Phase 0 소관(§1 handoff).
+**토큰.** `design_system/foundation/tokens.css`가 `:root` custom properties로 색·타이포·간격·radius·그림자·모션 값(`--duration-*`·`--ease-*` 류)을 정의한다. CSS와 템플릿의 스타일 값은 `var(--…)`만 쓴다 — 리터럴(`#2563eb`·`14px` 직접 기입) 금지. *왜*: 시안 값이 토큰 한 곳에 모여야 충실도 대조와 일괄 변경이 성립한다. 시안 절단 산출물(design-tokens.json)의 기존 토큰은 이름·값을 보존해 쓴다. 풀에 없는 정확한 시안 값은 §2에 따라 출처를 붙여 신규 토큰으로 등록한다. 임의 시각 값 발명과 근접 토큰 대체는 금지다. tokens.css가 `{% static %}` 경유로 서빙되는 것은 STATICFILES_DIRS 프리픽스 튜플 배선이 전제다 — 배선은 커맨드 Phase 0 소관(§1 handoff).
 
 ```css
 :root {
@@ -171,7 +171,11 @@ widget(영역 재사용 조각)과 design_system component(전역 순수 부품)
 - 문서 흐름 밖 전역 오버레이(모달 류)만 `fixed`로 한다. **fixed 요소의 조상 사슬에 transform·filter·backdrop-filter·`will-change: transform`이 있으면 containing block을 빼앗겨 무력화된다** — 진입 모션의 transform이 조상에 남지 않게 한다(모션 판형과의 인터롭).
 - sticky/fixed 바는 불투명 배경 토큰 필수 — 아래로 지나가는 콘텐츠가 비치지 않게 한다.
 
-**이미지.** 시안의 정적 이미지는 동결 단계(fetch_images)가 `static/images/`에 내려받아 `asset-manifest.json`(src→`local_path`→`token` 매핑·단일 SSOT)으로 절단한다. 명세가 가리킨 이미지는 manifest의 **같은 `src` 행**으로 조인해 `local_path`를 정확 값 그대로 가져온다 — 추정·눈대중·발명 금지(server-contract를 경량본에서 인용하듯). `token` 열은 web에서 소비하지 않는다 — 추출 도구 산출 호환용이다. 착지 파일명은 절단 도구가 snake_case로 정규화하며, 정규화 후 `local_path`가 SSOT다. 템플릿 배선은 `local_path`를 `{% static %}` 경유로 참조하는 것만이고 raw 경로 문자열은 금지다. manifest가 없으면 이 항목은 적용되지 않는다 — 없는 이미지를 placeholder로 조용히 채우지 않는다.
+**이미지·파일.** 시안 파일은 Coordinator가 실제 바이트를 수집해 `design-ref/`에 보관한다. 수집 manifest는 출처·로컬 경로·크기·SHA-256·성공/실패 사유를 담는다. 렌더용 CSS·JS·JSX·폰트 등 원본 의존성과 앱에 배선할 자산을 구별한다. 이미지 인벤토리는 `asset-manifest.json`이며 성공 여부와 무관하게 전달받는다. `failed/skipped`는 이미지 없음이 아니다.
+
+이미지는 manifest의 해당 문서·해소된 출처 행으로 조인해 검증된 `local_path`를 그대로 쓴다. 착지는 `web/static/images/`, `{% static %}` 인자는 프로젝트 경로의 `web/static/`를 static 프리픽스 `web/`로 바꾼 값이다(예: `web/static/images/logo.png` → `{% static 'web/images/logo.png' %}`). source CSS의 이미지 `url()`도 이 매핑을 따라 배선한다. 폰트·다운로드 파일이 필요하면 `web/static/fonts/`·`web/static/files/`에 검증된 파일을 복사하고 출처→배선 경로를 같은 검증 기록에 남긴다. 골격으로 미리 만들지는 않는다.
+
+파일 존재·HTTP 200·CSS 선언만으로 로드를 판정하지 않는다. 브라우저에서 이미지 decode/naturalWidth, 네트워크 오류, 실제 폰트 face·weight 로드와 적용을 확인한다. 폰트 URL을 기억으로 조립하지 말고 원본 선언/실제 응답을 따른다. 선언만 된 폰트 이름이나 시스템 fallback을 원본 폰트 성공으로 보고하지 않는다. 수집기가 다루지 못한 동적 src·inline SVG·component 장식도 렌더와 대조해 처리한다. manifest의 행 수가 전체 시각 요소 수는 아니다.
 
 ## §8. client 표기 — in-process HTTP
 
@@ -204,7 +208,7 @@ def fetch_payment(order_number: str, session_key: str | None) -> PaymentResponse
     client: Client = Client(raise_request_exception=False)
     if session_key is not None:
         client.cookies[settings.SESSION_COOKIE_NAME] = session_key
-    response = client.get(f"/api/payments/{quote(order_number)}")  # URL 근거: server-contract.json
+    response: HttpResponse = client.get(f"/api/payments/{quote(order_number)}")  # URL 근거: server-contract.json
     if response.status_code == 404:
         raise PaymentNotFoundError(order_number)
     if response.status_code != 200:

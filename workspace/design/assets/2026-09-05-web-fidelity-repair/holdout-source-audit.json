@@ -1,0 +1,149 @@
+{
+  "audit_version": 2,
+  "url": "http://127.0.0.1:52952/visit_brief.html",
+  "viewport": {
+    "w": 720,
+    "h": 520
+  },
+  "column": {
+    "width": 720,
+    "x": 0
+  },
+  "scroll": {
+    "mode": "none",
+    "height": 520
+  },
+  "texts": [
+    {
+      "key": "Check-in begins at #:#. Meet at the nort",
+      "text": "Check-in begins at 10:30. Meet at the north lobby at 10:20.",
+      "fontSize": "13px",
+      "weight": 400,
+      "lineHeight": "19.5px",
+      "textAlign": "start",
+      "color": "rgb(36, 59, 56)",
+      "fontFamily": "Visit Sans",
+      "rect": {
+        "x": 55,
+        "y": 461,
+        "w": 610,
+        "h": 28
+      }
+    },
+    {
+      "key": "Download notes",
+      "text": "Download notes",
+      "fontSize": "12px",
+      "weight": 400,
+      "lineHeight": "15.6px",
+      "textAlign": "start",
+      "color": "rgb(49, 92, 86)",
+      "fontFamily": "Visit Sans",
+      "rect": {
+        "x": 55,
+        "y": 387,
+        "w": 102,
+        "h": 28
+      }
+    },
+    {
+      "key": "FIELD VISIT",
+      "text": "FIELD VISIT",
+      "fontSize": "13px",
+      "weight": 400,
+      "lineHeight": "normal",
+      "textAlign": "start",
+      "color": "rgb(49, 92, 86)",
+      "fontFamily": "Visit Sans",
+      "rect": {
+        "x": 90,
+        "y": 47,
+        "w": 95,
+        "h": 15
+      }
+    },
+    {
+      "key": "View timing",
+      "text": "View timing",
+      "fontSize": "12px",
+      "weight": 400,
+      "lineHeight": "15.6px",
+      "textAlign": "start",
+      "color": "rgb(49, 92, 86)",
+      "fontFamily": "Visit Sans",
+      "rect": {
+        "x": 170,
+        "y": 387,
+        "w": 77,
+        "h": 28
+      }
+    },
+    {
+      "key": "Visit brief",
+      "text": "Visit brief",
+      "fontSize": "24px",
+      "weight": 400,
+      "lineHeight": "30px",
+      "textAlign": "start",
+      "color": "rgb(36, 59, 56)",
+      "fontFamily": "Visit Sans",
+      "rect": {
+        "x": 55,
+        "y": 307,
+        "w": 610,
+        "h": 30
+      }
+    },
+    {
+      "key": "Visit timing",
+      "text": "Visit timing",
+      "fontSize": "13px",
+      "weight": 400,
+      "lineHeight": "19.5px",
+      "textAlign": "start",
+      "color": "rgb(36, 59, 56)",
+      "fontFamily": "Visit Sans",
+      "rect": {
+        "x": 55,
+        "y": 442,
+        "w": 610,
+        "h": 20
+      }
+    },
+    {
+      "key": "Your visit is confirmed. Bring this note",
+      "text": "Your visit is confirmed. Bring this note to the north lobby.",
+      "fontSize": "16px",
+      "weight": 400,
+      "lineHeight": "25.92px",
+      "textAlign": "start",
+      "color": "rgb(36, 59, 56)",
+      "fontFamily": "Visit Sans",
+      "rect": {
+        "x": 55,
+        "y": 347,
+        "w": 610,
+        "h": 26
+      }
+    }
+  ],
+  "textsTruncated": false,
+  "pinned": [],
+  "pinnedTruncated": false,
+  "partial": false,
+  "motion": {
+    "transitions": [],
+    "transitionRules": [],
+    "keyframes": [],
+    "animationRules": [],
+    "hoverSelectors": [],
+    "focusSelectors": [],
+    "sheets": {
+      "total": 2,
+      "readable": 2,
+      "blocked": []
+    },
+    "blind_spots": [],
+    "caps_hit": []
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "card": {
+    "x": 32,
+    "y": 281.59375,
+    "w": 656,
+    "h": 206.40625,
+    "padding": "24px 22px 26px",
+    "lineHeight": "normal",
+    "fontSize": "16px",
+    "fontFamily": "\"Visit Sans\", sans-serif",
+    "color": "rgb(36, 59, 56)"
+  },
+  "lead": {
+    "x": 55,
+    "y": 346.59375,
+    "w": 610,
+    "h": 25.90625,
+    "padding": "0px",
+    "lineHeight": "25.92px",
+    "fontSize": "16px",
+    "fontFamily": "\"Visit Sans\", sans-serif",
+    "color": "rgb(36, 59, 56)"
+  },
+  "action": {
+    "x": 55,
+    "y": 386.5,
+    "w": 102.0625,
+    "h": 28,
+    "padding": "4px 8px",
+    "lineHeight": "15.6px",
+    "fontSize": "12px",
+    "fontFamily": "\"Visit Sans\", sans-serif",
+    "color": "rgb(49, 92, 86)"
+  },
+  "separator": {
+    "x": 163.0625,
+    "y": 394,
+    "w": 1,
+    "h": 13,
+    "padding": "0px",
+    "lineHeight": "normal",
+    "fontSize": "16px",
+    "fontFamily": "\"Visit Sans\", sans-serif",
+    "color": "rgb(36, 59, 56)"
+  },
+  "bodyText": "FIELD VISIT\n\nVisit brief\n\nYour visit is confirmed. Bring this note to the north lobby.\n\nDownload notes\nView timing\nVisit timing"
+}

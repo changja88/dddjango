@@ -1,4 +1,4 @@
-# WP — 순수성 5종 (값 정본: discipline-web-houserules §5⑤ — D12v2 «순수 HTML+HTMX+CSS»).
+# WP — 순수성·템플릿 출력 6종 (값 정본: discipline-web-houserules §5⑤·§7).
 # 게이트: WP1=added 파일, WP2~WP4=touched 파일의 added 줄, WP5=touched·added된 motion.js 전체.
 #
 # *왜 결정적 백스톱인가*: D12의 위반은 «.js 파일의 존재»·«<script>·on* 속성·js: 채널·색
@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from .common import (BackstopContext, Finding, HTMX_ALLOWED, MOTION_JS,
-                     VENDORED_JS_ALLOWED, ext_of)
+                     VENDORED_JS_ALLOWED, VERBATIM_RE, ext_of)
 
 # 인라인 이벤트 핸들러 속성 — 표준 on* 명시 목록 + htmx의 인라인 JS 채널(hx-on)
 _ON_ATTR_RE = re.compile(
@@ -105,6 +105,19 @@ def run_purity(ctx: BackstopContext) -> List[Finding]:
         # ---- WP2: 템플릿 inline <script> 금지 (§5⑤ — vendored 정확 경로 src 태그만 예외)
         if ext == '.html':
             ms = ctx.mask_of(f)
+            # WP6: Django는 다중줄 {# #}를 주석으로 해석하지 않는다.
+            # 유효한 comment 블록은 mask_html이 지운다. verbatim은 의도한 원문 출력이다.
+            template_text: str = VERBATIM_RE.sub(
+                lambda m: ''.join('\n' if c == '\n' else ' ' for c in m.group()),
+                ms.no_comments)
+            for m in re.finditer(r'\{#.*?(?:#\}|$)', template_text, re.DOTALL):
+                start_line: int = ms.line_of(m.start())
+                end_line: int = ms.line_of(max(m.start(), m.end() - 1))
+                if any(ctx.line_is_added(f, n) for n in range(start_line, end_line + 1)):
+                    out.append(Finding('WP6', f, start_line,
+                        'Django 짧은 주석이 닫히지 않았거나 여러 줄이다 — 주석 내용이 응답에 노출된다',
+                        '한 줄은 {# … #}, 여러 줄은 {% comment %}…{% endcomment %}를 쓴다. '
+                        '실제 렌더 응답도 확인한다.', '§7'))
             for m in re.finditer(r'<script\b', ms.no_comments, re.IGNORECASE):
                 line: int = ms.line_of(m.start())
                 if not ctx.line_is_added(f, line):

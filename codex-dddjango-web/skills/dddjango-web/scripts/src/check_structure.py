@@ -97,19 +97,19 @@ def run_structure(ctx: BackstopContext) -> List[Finding]:
                 '부품군 `%s/` 내부 디렉터리 `%s/` — 부품군은 평면이다' % (s[2], s[3]),
                 '변형은 파일명 수식으로(`primary_button.html` 류) — 하위 폴더를 파지 않는다.', '§1'))
 
-    # ---- WS6: static/ 직속은 css/·js/·images/만 (§1·§3)
+    # ---- WS6: static/ 직속은 css/·js/·images/와 조건부 fonts/·files/ (§1·§3)
     for f in added_files:
         s = segs_of(f)
         if len(s) == 2 and s[0] == 'static' and s[1] not in MARKER_FILES:
             out.append(Finding('WS6', f, None,
-                'static/ 직속 파일 금지 — css/·js/·images/ 3칸만(무네임스페이스 경로 금지)',
-                '정체에 맞는 칸(css/·js/·images/)으로 옮긴다.', '§1'))
+                'static/ 직속 파일 금지 — css/·js/·images/·fonts/·files/만(무네임스페이스 경로 금지)',
+                '정체에 맞는 칸(css/·js/·images/·fonts/·files/)으로 옮긴다.', '§1'))
     for d in added_dirs:
         s = segs_of(d)
         if len(s) == 2 and s[0] == 'static' and s[1] not in STATIC_DIRS:
             out.append(Finding('WS6', d + '/', None,
-                'static/ 직속 허용 외 디렉터리 `%s/` — css/·js/·images/ 3칸만' % s[1],
-                '3칸 중 정체에 맞는 곳으로 — 폰트·기타 자산의 칸 신설은 규약 개정이 먼저다.', '§1'))
+                'static/ 직속 허용 외 디렉터리 `%s/` — css/·js/·images/·fonts/·files/만' % s[1],
+                '폰트는 fonts/, 다운로드 파일은 files/에 필요할 때만 둔다 — 임의 칸을 신설하지 않는다.', '§1'))
 
     # ---- WS7: 영역·화면 이름 deny — 컨테이너명·종류명 금지 (§1)
     for d in added_dirs:

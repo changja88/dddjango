@@ -17,7 +17,7 @@ dddjango-web이 만드는 `web/` 코드에 한정된 집안 규칙이다. **표�
    - 화면 개념 = **종류 4폴더(view·view_model·state·section) 항상 생성** — `form/`은 조건 생성(입력 form이 있는 화면만 — final.md §3). 빈 폴더 마커는 Python 패키지 `__init__.py`·HTML 전용 `.gitkeep`(final.md §3). 그 외 선택 폴더 없음.
    - `widget/`은 영역 수준 — 화면 개념 폴더 안에 만들지 않는다.
    - `design_system/`은 foundation·component **2칸 시작** — theme·util 칸은 만들지 않는다(final.md §3).
-   - **test/ 없음** — web 트랙은 자동 테스트를 두지 않는다. 테스트 폴더·파일을 만들지 않는다(final.md §3).
+   - **영구 test/ 없음** — 생성 앱의 테스트 폴더·파일을 만들지 않는다. 임시 Django 렌더·브라우저 검증을 수행하고 증적은 보존한다(final.md §3).
 3. **배치 판별**: **0순위 — API 호출 코드는 판별 없이 언제나 `client/`다(final.md §5②)**. UI 조각은 판별 순서를 architecture-web §2가 단독 소유하고(상태 조립을 먼저 묻는다) 위치 답은 final.md §6이다 — 상태 조립이 필요하면 view 삼총사, 화면 전속이면 그 화면 `section/`, 영역 재사용·BC 어휘 보유면 `widget/`, BC 어휘가 없으면 `design_system/component/`. 이름은 명명 총괄표(final.md §4)에서 찾는다 — 위치·접두·접미사가 전부 정해져 있다.
 4. **의미 판별 6종**(view/section, 화면 전속, BC 어휘, 영역 귀속, 두 번째 개념, base «거의 빈»)은 `references/undecidable-web.md`의 절차·배정을 따른다 — 1차 결정자와 검증자가 같은 파일을 본다.
 5. **새로 만드는 단위들 사이에서 레이아웃을 혼용하지 않는다** — 레거시 단위 내부 추가는 §2의 경계 규칙.

@@ -32,7 +32,13 @@ assert_file() { # assert_file <이름> <파일> <있어야 할 고정문자열|-
   fi
 }
 
-png_stub() { printf '\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00' > "$1"; } # PNG 매직 스텁
+png_fixture() { python3 - "$SCRIPTS/test" "$1" <<'PYPNG'
+import pathlib, sys
+sys.path.insert(0, sys.argv[1])
+from test_assets import png
+pathlib.Path(sys.argv[2]).write_bytes(png())
+PYPNG
+} # 실제 complete PNG: 매직 헤더만으로 성공시키지 않는다.
 
 T="$(mktemp -d)"
 trap 'rm -rf "$T"' EXIT
@@ -146,7 +152,7 @@ EOF
 # ---------- C1(positive control): .screen만 절단·chrome 제외·meta·로컬 img 복사
 P="$T/c1"; mkdir -p "$P/design-ref/assets" "$P/root"
 mk_dc "$P/design-ref/order-list.dc.html"
-png_stub "$P/design-ref/assets/logo.png"
+png_fixture "$P/design-ref/assets/logo.png"
 cp "$T/d1/design-tokens.json" "$P/design-tokens.json" # 순서 계약: extract_design 산출 선행
 OUT=$(run_py extract_dc.py "$P/design-ref/order-list.dc.html" --tokens "$P/design-tokens.json" \
   --asset-manifest "$P/asset-manifest.json" --assets-root "$P/root" \
@@ -154,8 +160,8 @@ OUT=$(run_py extract_dc.py "$P/design-ref/order-list.dc.html" --tokens "$P/desig
 assert "C1 extract_dc 정상(exit 0)" 0 "[extract-dc] order-list.dc.html" - "$E" "$OUT"
 assert_file "C1 게이트 텍스트 title" "$P/screen-meta.json" '"title": "주문 목록"' -
 assert_file "C1 게이트 텍스트 cards" "$P/screen-meta.json" '"배송 완료"' -
-assert_file "C1 이미지 ok·device-chrome 제외" "$P/asset-manifest.json" '"local_path": "web/static/images/logo.png"' 'chrome-battery'
-assert_file "C1 이미지 바이트 착지" "$P/root/web/static/images/logo.png" - -
+assert_file "C1 이미지 ok·device-chrome 제외" "$P/asset-manifest.json" '"local_path": "web/static/images/logo_b1ff9c8ea3a7.png"' 'chrome-battery'
+assert_file "C1 이미지 바이트 착지" "$P/root/web/static/images/logo_b1ff9c8ea3a7.png" - -
 
 # ---------- C2: design-tokens.json 부재 → 순서 계약 위반 exit 1
 P="$T/c2"; mkdir -p "$P/design-ref" "$P/root"
@@ -188,10 +194,10 @@ assert "C4 .dc.html 부재 fail-loud" 1 ".dc.html 부재" - "$E" "$OUT"
 
 # ---------- F1(positive control): 혼합 status(ok/inline/failed/skipped) — 부분 실패에도 exit 0
 P="$T/f1"; mkdir -p "$P/design-ref/images" "$P/root"
-png_stub "$P/design-ref/images/hero.png"
+png_fixture "$P/design-ref/images/hero.png"
 cat > "$P/design-ref/ref.html" <<'EOF'
 <img src="images/hero.png" alt="hero">
-<img src="data:image/png;base64,iVBORw0KGgo=">
+<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC">
 <img src="images/missing.png">
 <img src=http://127.0.0.1:9/x.png>
 <img src={dynamicExpr}>
@@ -201,7 +207,7 @@ OUT=$(run_py fetch_images.py "$P/design-ref" --assets-root "$P/root" \
 assert "F1 혼합 status·부분 실패 exit 0" 0 "ok 1·failed 2·inline 1·skipped 1" - "$E" "$OUT"
 assert "F1 실패 [warn] stderr 표면화" 0 "[warn] 이미지 failed: images/missing.png" - "$E" "$OUT"
 assert_file "F1 로컬 상대경로 해소(ok)" "$P/asset-manifest.json" '"token": "hero"' -
-assert_file "F1 인라인 착지" "$P/root/web/static/images/ref_2.png" - -
+assert_file "F1 인라인 착지" "$P/root/web/static/images/ref_2_b1ff9c8ea3a7.png" - -
 
 # ---------- F2: design-ref 부재 → exit 1
 OUT=$(run_py fetch_images.py "$T/no-such-dir" --assets-root "$T" --out "$T/out.json"); E=$?
@@ -209,8 +215,8 @@ assert "F2 design-ref 부재" 1 "design-ref 디렉터리 없음" - "$E" "$OUT"
 
 # ---------- F3: 소스명 토큰 충돌 → 해시 접미 + 2회 실행 결정론
 P="$T/f3"; mkdir -p "$P/design-ref/a" "$P/design-ref/b" "$P/root"
-png_stub "$P/design-ref/a/logo.png"
-png_stub "$P/design-ref/b/logo.png"
+png_fixture "$P/design-ref/a/logo.png"
+png_fixture "$P/design-ref/b/logo.png"
 cat > "$P/design-ref/ref.html" <<'EOF'
 <img src="a/logo.png"><img src="b/logo.png">
 EOF

@@ -183,17 +183,29 @@ printf '<p>x</p>\n' > "$P/web/orders/order_detail/view/order_detail.html"
 OUT=$(run_backstop "$P" --diff-base "$BASE" --only ws); E=$?
 assert "F5d WS control — 개념 골격 완비(정적 화면) clean" 0 - "WS" "$E" "$OUT"
 
-# ---------- F6: WS6 static/ 3칸
+# ---------- F6: WS6 static/ 허용 칸·직속 파일 금지
 P="$T/f6"; BASE=$(mkproj "$P")
-mkdir -p "$P/web/static/fonts"
-echo "x" > "$P/web/static/fonts/a.woff"
+mkdir -p "$P/web/static/archive"
+echo "x" > "$P/web/static/archive/a.bin"
 echo "memo" > "$P/web/static/readme.txt"
 OUT=$(run_backstop "$P" --diff-base "$BASE" --only ws6); E=$?
-assert_count "F6a WS6 fonts 칸+직속 파일 2건" 2 "WS6" 2 "$E" "$OUT"
-rm -rf "$P/web/static/fonts" "$P/web/static/readme.txt"
+assert_count "F6a WS6 허용 외 archive 칸+직속 파일 2건" 2 "WS6" 2 "$E" "$OUT"
+rm -rf "$P/web/static/archive" "$P/web/static/readme.txt"
 echo "png" > "$P/web/static/images/logo.png"
 OUT=$(run_backstop "$P" --diff-base "$BASE" --only ws6); E=$?
 assert "F6b WS6 control — images/ 착지는 clean" 0 - "WS6" "$E" "$OUT"
+
+# 검증된 폰트/다운로드 파일은 필요할 때만 해당 static 칸에 배선한다.
+P="$T/f6_assets"; BASE=$(mkproj "$P")
+mkdir -p "$P/web/static/fonts" "$P/web/static/files"
+printf 'font fixture' > "$P/web/static/fonts/brand.woff2"
+printf 'download fixture' > "$P/web/static/files/guide.txt"
+OUT=$(run_backstop "$P" --diff-base "$BASE" --only ws6); E=$?
+assert "F6c WS6 fonts/files conditional directories are valid" 0 - "WS6" "$E" "$OUT"
+mkdir -p "$P/web/static/arbitrary"
+printf 'unknown' > "$P/web/static/arbitrary/blob.txt"
+OUT=$(run_backstop "$P" --diff-base "$BASE" --only ws6); E=$?
+assert "F6d WS6 unknown static directory still blocked" 2 "WS6" - "$E" "$OUT"
 
 # ---------- F7: WS7 영역·화면 이름 deny(종류명·컨테이너명)
 P="$T/f7"; BASE=$(mkproj "$P")
