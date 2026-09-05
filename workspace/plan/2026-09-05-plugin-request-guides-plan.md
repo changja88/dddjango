@@ -1,5 +1,9 @@
 # dddjango · dddjango-web 작업 요청 가이드 구현 계획
 
+> **대체 고지 — 역사 문서:** 이 계획은 `workspace/plan/2026-09-05-plugin-request-guides-revision-plan.md`로
+> 대체되었다. 아래 과거 실행 기록의 gate·evidence·검수 행렬 요구는 현재 수용 기준으로 사용하지 않는다.
+> 현행 기준은 교정된 설계 명세와 재설계 구현 계획을 따른다. 과거 본문은 기록을 위해 그대로 보존한다.
+
 > 설계 기준선: `workspace/design/2026-09-05-plugin-request-guides-spec.md`
 >
 > 실행 방식: 한 번에 한 구현자만 순차적으로 정본을 편집하고, 별도 검토자가 각 작업의 명세 준수와
