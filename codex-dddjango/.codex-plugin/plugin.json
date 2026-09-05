@@ -33,7 +33,7 @@
     "websiteURL": "https://github.com/changja88/dddjango/blob/main/dddjango/REQUEST_GUIDE.md",
     "defaultPrompt": [
       "dddjango로 주문의 결제대기 → 결제완료 전이를 구현해줘. 결제 실패 시 주문·재고·이벤트는 바뀌지 않아야 해.",
-      "dddjango로 기존 주문 API 응답과 이벤트 계약을 보존해 기능을 수정해줘. 근거는 api/openapi.yaml과 tests/orders/야.",
+      "dddjango로 회원이 배송 시작 전 주문을 취소할 수 있게 해줘. 기존 주문 API 응답과 이벤트 계약은 유지해줘.",
       "dddjango로 재고 예약 기능을 설계·구현해줘. 동시 요청의 우선순위와 재시도 결과는 미확정이야."
     ],
     "brandColor": "#0C4A6E"
