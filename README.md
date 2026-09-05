@@ -64,7 +64,7 @@ codex plugin add dddjango-web@changja88-dddjango         # Codex
 
 | 플러그인 | 알려 주면 좋은 제품 정보 | 작업 경계 | 가이드 |
 |---|---|---|---|
-| **dddjango** | 원하는 업무 변화·대표 성공 결과·이미 정한 핵심 규칙과 실패 뒤 상태·보존/변경/제외 범위 | 화면 구현이 필요하면 `dddjango-web` 작업으로 이어간다. | [dddjango 작업 요청 가이드](dddjango/REQUEST_GUIDE.md) |
+| **dddjango** | 원하는 업무 변화·대표 성공 결과·이미 정한 핵심 규칙과 실패 뒤 상태·보존/변경/제외 범위 | 시안 재현 중심의 화면 작업은 `dddjango-web`으로 이어간다. Django admin 등 기존 업무 기능에 포함된 화면은 `dddjango`가 담당하는 경우도 있으며, 플러그인이 코드를 조사해 안내한다. | [dddjango 작업 요청 가이드](dddjango/REQUEST_GUIDE.md) |
 | **dddjango-web** | 대상 화면·기준 시안과 정확한 화면/프레임/페이지(있을 때)·이미 정한 필수 상태/폭/동작·의도적인 차이·데이터 연동 의도 | 새 API나 인증·권한·업무 규칙·데이터 처리가 필요하면 플러그인이 별도 `dddjango` 작업 범위를 안내한다. | [dddjango-web 작업 요청 가이드](dddjango-web/REQUEST_GUIDE.md) |
 
 알고 있는 코드·문서·테스트 경로, 시안·이미지·폰트, API 자료 위치는 조사를 빠르게 하는 선택 정보다. 시안이 없거나 접근할 수 없어도, API 위치를 몰라도 시작할 수 있다.
