@@ -2,7 +2,7 @@
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 name: design-architect
 description: dddjango 파이프라인 Phase 1(설계)에서 Coordinator가 호출한다. 승인된 스코프를 받아 architecture-ddd/api/db와 영구 테스트 입장 표를 한 명세로 통합 작성하고, 독립 리뷰어 노트를 반영·중재해 최종 설계 명세를 만든다. 코드는 쓰지 않는다.
-tools: Read, Grep, Glob, Edit, Write
+tools: Read, Grep, Glob, Edit, Write, ToolSearch, mcp__serena__initial_instructions, mcp__serena__list_memories, mcp__serena__read_memory, mcp__serena__get_symbols_overview, mcp__serena__find_symbol, mcp__serena__find_referencing_symbols, mcp__serena__find_declaration, mcp__serena__find_implementations, mcp__serena__get_diagnostics_for_file
 skills:
   - dddjango:architecture-ddd
   - dddjango:architecture-api

@@ -1594,3 +1594,10 @@ architecture-api-final	s022-5.2	5036fe3d23b1ca779998b1d1b4c451fda495f2a6946a358c
 command-dddjango	s007	e3fa23c6246646044e6cc6b335303ec395206f56fe8ee4917a6cc1c4b68010d4	graph	-	-	-	-	rebaseline:2026-09-04 현장 보고 3 — S-5/ⓔ1 — b32 R-0349 rev2(#648·#649) · b16 R-0331 rev2(auto «무관» 판정식 · 12-slot 없는 오류 선언 컨트롤러는 G1 반송) · b28 ⑤-1 B MINOR-4(루트 필터 구절 위치)
 discipline-houserules-skill	s007-4	dc3de1f59c81a969a8b7a3244f4a3973dd7d2e7d8cfc5f6be4a22d070e32bc53	graph	-	-	-	-	rebaseline:2026-09-04 현장 보고 3 — ⑤-1 B MINOR-2/3/5 반영(in-place) — b16 대상 목록(폼셋·폼 필드 기저 · RedirectView 비제네릭) · b5 Any 재선언 불가 문면
 architecture-api-final	s022-5.2	d9e5be2d7a1dc9a5d1d2cc12286fe70ae3448e14a8dcfad0d8fe2f14e42f843e	graph	-	-	-	-	rebaseline:2026-09-04 현장 보고 3 — ⑤-2 B MINOR-1 반영(in-place) — b7 «§6 에러 프로필»→«§5.4» · «고정 code»→«고정 공개 식별자(ErrorCode 값·RFC 9457 type)»
+agent-acceptance-tester	s001	f9e7a87262b1472def2bfc309e38b5d48bb221cc4eb0ac978cfa727d5adedda5	graph	-	-	-	-	rebaseline:2026-09-05 Claude Serena 도구 허용 — 역할별 조회·편집 및 ToolSearch 추가, 역할 본문·규범 불변
+agent-coder	s001	cebabecb9d44cc1b48c39cafa959e5be60f1df2af1e812f3ad434e044e4ac85e	graph	-	-	-	-	rebaseline:2026-09-05 Claude Serena 도구 허용 — 역할별 조회·편집 및 ToolSearch 추가, 역할 본문·규범 불변
+agent-design-architect	s001	d38bf7553823dadff9aa11fd6972f1c5ec500645f474981a96d96c1ad8d827a7	graph	-	-	-	-	rebaseline:2026-09-05 Claude Serena 도구 허용 — 역할별 조회·편집 및 ToolSearch 추가, 역할 본문·규범 불변
+agent-design-review-api	s001	e927a483e2b92fc0eff0f9abc481f5381b4b0246f621a7a7f85915ede52adf5e	graph	-	-	-	-	rebaseline:2026-09-05 Claude Serena 도구 허용 — 역할별 조회·편집 및 ToolSearch 추가, 역할 본문·규범 불변
+agent-design-review-db	s001	64b7f18de3ea64c10b56cab6903b43650db5ecaf6fd271a4e6d00b27055bce82	graph	-	-	-	-	rebaseline:2026-09-05 Claude Serena 도구 허용 — 역할별 조회·편집 및 ToolSearch 추가, 역할 본문·규범 불변
+agent-design-review-ddd	s001	c672bab790a0d0dc5821a233172a7173f5884c14f05d314941bfabf046df5366	graph	-	-	-	-	rebaseline:2026-09-05 Claude Serena 도구 허용 — 역할별 조회·편집 및 ToolSearch 추가, 역할 본문·규범 불변
+agent-discipline-reviewer	s001	475071f545436ad35fbe31a30d1d6d4deca11af6d5a4ec06c7cd82c0f45e4865	graph	-	-	-	-	rebaseline:2026-09-05 Claude Serena 도구 허용 — 역할별 조회·편집 및 ToolSearch 추가, 역할 본문·규범 불변

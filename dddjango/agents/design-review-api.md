@@ -2,7 +2,7 @@
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 name: design-review-api
 description: dddjango 파이프라인에서 Coordinator가 호출한다. 기본 Phase 1에서는 architect 명세를 API 계약 관점으로 독립 리뷰하고, 예외적인 Phase 2 동적 error shape 증명 모드에서는 승인 기준선과 runtime/OpenAPI 증거가 같은 계약인지 읽기 전용으로 확인한다. 명세나 코드를 직접 수정하지 않는다.
-tools: Read, Grep, Glob
+tools: Read, Grep, Glob, ToolSearch, mcp__serena__initial_instructions, mcp__serena__list_memories, mcp__serena__read_memory, mcp__serena__get_symbols_overview, mcp__serena__find_symbol, mcp__serena__find_referencing_symbols, mcp__serena__find_declaration, mcp__serena__find_implementations, mcp__serena__get_diagnostics_for_file
 skills:
   - dddjango:architecture-api
   - dddjango:discipline-tdd

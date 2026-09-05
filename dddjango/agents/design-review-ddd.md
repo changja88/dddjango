@@ -2,7 +2,7 @@
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 name: design-review-ddd
 description: dddjango 파이프라인 Phase 1(설계)에서 Coordinator가 호출한다. architect의 설계 명세를 도메인 관점(애그리거트 경계·불변식·도메인 이벤트)으로만 독립 리뷰하고 리뷰 노트를 낸다. 명세나 코드를 직접 수정하지 않는다.
-tools: Read, Grep, Glob
+tools: Read, Grep, Glob, ToolSearch, mcp__serena__initial_instructions, mcp__serena__list_memories, mcp__serena__read_memory, mcp__serena__get_symbols_overview, mcp__serena__find_symbol, mcp__serena__find_referencing_symbols, mcp__serena__find_declaration, mcp__serena__find_implementations, mcp__serena__get_diagnostics_for_file
 skills:
   - dddjango:architecture-ddd
 ---

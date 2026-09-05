@@ -2,7 +2,7 @@
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 name: coder
 description: dddjango 파이프라인 Phase 2(구현)에서 Coordinator가 호출한다. 승인된 현행 계약과 영구 테스트 입장 표의 domain/application/DB/adapter 소유 행만 집행하며 구현한다.
-tools: Read, Grep, Glob, Edit, Write, Bash
+tools: Read, Grep, Glob, Edit, Write, Bash, ToolSearch, mcp__serena__initial_instructions, mcp__serena__list_memories, mcp__serena__read_memory, mcp__serena__get_symbols_overview, mcp__serena__find_symbol, mcp__serena__find_referencing_symbols, mcp__serena__find_declaration, mcp__serena__find_implementations, mcp__serena__get_diagnostics_for_file, mcp__serena__replace_symbol_body, mcp__serena__insert_before_symbol, mcp__serena__insert_after_symbol, mcp__serena__rename_symbol
 skills:
   - dddjango:implementation-django
   - dddjango:implementation-django-ninja

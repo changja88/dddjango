@@ -3,31 +3,31 @@
   "built_from": [
     {
       "path": "ontology/rules/agent-acceptance-tester.ttl",
-      "sha256": "8d5e7c04491f2420c9dbb5f6ec255e384327f06bc46752dc913141e812babef6"
+      "sha256": "0034ab9151be5e6b847b6688a633bbc7679f5212b72e284fcf3f0d724b66062f"
     },
     {
       "path": "ontology/rules/agent-coder.ttl",
-      "sha256": "b8152f769f3f425ef8d2cca4481c1b54a907a6fe6bcbd583079492946ca82084"
+      "sha256": "acb990f6db61af2e11664e1af083a323cfbd00f604f2e8be11da2ffaaf57bb6f"
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "8d0d6be8f7b56cdd487212bee8d7d09ef056d99fe4a7730d33fe877fa40cd0b2"
+      "sha256": "f4c22afd36cee58f0ea825b35f2ac12ba9cc0f0f6c50311b4601fbbf95cb29e0"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
-      "sha256": "57ef55df0bdca5d574246ece24f072a3c5ea96191d2a1ca44fc38ffa326e1701"
+      "sha256": "dd2966c2a3a50b25062627dae742e33022baab513346dbff0c70df6ced24d457"
     },
     {
       "path": "ontology/rules/agent-design-review-db.ttl",
-      "sha256": "ce06e0268ed2b54793778d510224199e0c7373be8b4d19247947092e271f57ea"
+      "sha256": "b38e18d4209aa68f4930cb93415929aff9d6a7f97882ee17f62a731afb8cb49c"
     },
     {
       "path": "ontology/rules/agent-design-review-ddd.ttl",
-      "sha256": "8ad4f95d7020171107a5a3ef2fa387da2f84e3b7f768269ac5e8ac55c304fc52"
+      "sha256": "bd15359a3882085fd6e11acfcf8d190f2b491626255a8bfd1d58fcf7fdb62595"
     },
     {
       "path": "ontology/rules/agent-discipline-reviewer.ttl",
-      "sha256": "b6e589a912d52f5044d73333a29e4d752493b1890218e568ed1dcb05f247a034"
+      "sha256": "1026a96d56cbfe2e03f4cfbc3bd7c0b77a1b73740fff2c30076d8a55af11dc3c"
     },
     {
       "path": "ontology/rules/architecture-api-final.ttl",

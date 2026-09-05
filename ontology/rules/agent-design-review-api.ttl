@@ -877,7 +877,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s001> ;
     djr:kind djr:kind-prose ;
     djr:order 3 ;
-    djr:text "tools: Read, Grep, Glob\n"@ko .
+    djr:text "tools: Read, Grep, Glob, ToolSearch, mcp__serena__initial_instructions, mcp__serena__list_memories, mcp__serena__read_memory, mcp__serena__get_symbols_overview, mcp__serena__find_symbol, mcp__serena__find_referencing_symbols, mcp__serena__find_declaration, mcp__serena__find_implementations, mcp__serena__get_diagnostics_for_file\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s001/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s001> ;
