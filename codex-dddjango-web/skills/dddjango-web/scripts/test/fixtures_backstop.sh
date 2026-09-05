@@ -38,7 +38,7 @@ mkproj() { # mkproj <dir> — Django풍 루트 + 표준 web/ 골격(green) + git
   local p="$1"
   mkdir -p "$p/config" "$p/web/base" \
     "$p/web/design_system/foundation" "$p/web/design_system/component/button" \
-    "$p/web/static/css" "$p/web/static/js" "$p/web/static/images" \
+    "$p/web/static/css" "$p/web/static/js" "$p/web/static/htmx" "$p/web/static/images" \
     "$p/web/orders/widget" \
     "$p/web/orders/order_list/view" "$p/web/orders/order_list/view_model" \
     "$p/web/orders/order_list/state" "$p/web/orders/order_list/section" \
@@ -54,7 +54,7 @@ mkproj() { # mkproj <dir> — Django풍 루트 + 표준 web/ 골격(green) + git
   <head><title>app</title></head>
   <body>
     <a href="{% url 'order_list' %}">orders</a>
-    <script src="{% static 'js/htmx.min.js' %}"></script>
+    <script src="{% static 'web/htmx/htmx.min.js' %}" defer></script>
   </body>
 </html>
 EOF
@@ -62,7 +62,7 @@ EOF
   printf '/* 공용 keyframes·모션 유틸(motion-*) — 값 정의는 tokens.css */\n' > "$p/web/design_system/foundation/motion.css"
   printf '<button class="btn">ok</button>\n' > "$p/web/design_system/component/button/primary_button.html"
   printf 'body { color: var(--color-text); }\n' > "$p/web/static/css/site.css"
-  printf '(function(){})();\n' > "$p/web/static/js/htmx.min.js"
+  printf '(function(){})();\n' > "$p/web/static/htmx/htmx.min.js"
   : > "$p/web/static/images/.gitkeep"
   echo "urlpatterns = []" > "$p/web/orders/urls.py"
   printf '<span class="badge">ok</span>\n' > "$p/web/orders/widget/order_status_badge.html"
@@ -379,18 +379,17 @@ printf 'b{}\n' > "$P/web/static/css/order_detail.css"
 OUT=$(run_backstop "$P" --diff-base "$BASE" --only wn8); E=$?
 assert_count "F21 WN8 snake_case 위반 1건(snake 짝 clean)" 2 "WN8" 1 "$E" "$OUT"
 
-# ---------- F22: WP1 커스텀 .js 금지 — vendored htmx 단일
+# ---------- F22: WP1 기능 JS 허용·신규 legacy core 차단·motion 판형
 P="$T/f22"; BASE=$(mkproj "$P")
 printf 'console.log(1);\n' > "$P/web/static/js/app.js"
 OUT=$(run_backstop "$P" --diff-base "$BASE" --only wp1); E=$?
-assert "F22a WP1 커스텀 .js 발화" 2 "WP1" - "$E" "$OUT"
-rm "$P/web/static/js/app.js"
+assert "F22a WP1 control — 평면 snake_case 기능 JS는 clean" 0 - "WP1" "$E" "$OUT"
 printf '(function(){})();\n' > "$P/web/static/js/htmx.js"
 OUT=$(run_backstop "$P" --diff-base "$BASE" --only wp1); E=$?
-assert "F22b WP1 vendored htmx 중복(1파일 위반) 발화" 2 "중복" - "$E" "$OUT"
+assert "F22b WP1 신규 legacy htmx core·core 중복 발화" 2 "WP1" - "$E" "$OUT"
 rm "$P/web/static/js/htmx.js"
 OUT=$(run_backstop "$P" --diff-base "$BASE" --only wp1); E=$?
-assert "F22c WP1 control — htmx 단일이면 clean" 0 - "WP1" "$E" "$OUT"
+assert "F22c WP1 control — canonical htmx core+기능 JS는 clean" 0 - "WP1" "$E" "$OUT"
 cp "$SCRIPTS/../assets/motion.js" "$P/web/static/js/motion.js"
 OUT=$(run_backstop "$P" --diff-base "$BASE" --only wp1,wp5); E=$?
 assert "F22d WP1·WP5 control — 판형 그대로의 motion.js 공존은 clean" 0 - "WP" "$E" "$OUT"
@@ -399,25 +398,35 @@ OUT=$(run_backstop "$P" --diff-base "$BASE" --only wp5); E=$?
 assert "F22e WP5 motion.js 판형 이탈(수정) 발화" 2 "WP5" - "$E" "$OUT"
 rm "$P/web/static/js/motion.js"
 
-# ---------- F23: WP2 inline <script> 금지(htmx src 로드만 예외)
+# ---------- F23: WP2 inline·CDN·fragment script 금지, page defer load 허용
 P="$T/f23"; BASE=$(mkproj "$P")
+printf 'document.documentElement.dataset.ready = "1";\n' > "$P/web/static/js/order_list.js"
 cat > "$P/web/orders/order_list/section/order_list_head.html" <<'EOF'
 <script>alert(1)</script>
 <script src="https://cdn.example.com/lib.js"></script>
-<script src="{% static 'js/htmx.min.js' %}"></script>
+<script src="{% static 'web/js/order_list.js' %}" defer></script>
+EOF
+cat >> "$P/web/orders/order_list/view/order_list.html" <<'EOF'
+{% block scripts %}
+<script src="{% static 'web/js/order_list.js' %}" defer></script>
+{% endblock %}
 EOF
 OUT=$(run_backstop "$P" --diff-base "$BASE" --only wp2); E=$?
-assert_count "F23 WP2 inline+CDN 2건(htmx src 짝 clean)" 2 "WP2" 2 "$E" "$OUT"
+assert_count "F23 WP2 inline+CDN+fragment 3건(page defer 짝 clean)" 2 "WP2" 3 "$E" "$OUT"
 
-# ---------- F23b: WP2 CDN 위장(id에 motion) 차단·vendored 정확 경로 clean
+# ---------- F23b: WP2 CDN 위장·ghost src 차단, base motion 정확 경로 clean
 P="$T/f23b"; BASE=$(mkproj "$P")
+cp "$SCRIPTS/../assets/motion.js" "$P/web/static/js/motion.js"
 cat > "$P/web/orders/order_list/section/order_list_tail.html" <<'EOF'
 <script src="https://cdn.example.com/x.js" id="motion-loader"></script>
 <script src="https://unpkg.com/htmx.org/dist/htmx.min.js"></script>
+<script src="{% static 'web/js/ghost.js' %}" defer></script>
+EOF
+cat >> "$P/web/base/base.html" <<'EOF'
 <script src="{% static 'web/js/motion.js' %}" defer></script>
 EOF
 OUT=$(run_backstop "$P" --diff-base "$BASE" --only wp2); E=$?
-assert_count "F23b WP2 CDN 위장 2건(motion 정확 경로 짝 clean)" 2 "WP2" 2 "$E" "$OUT"
+assert_count "F23b WP2 CDN 위장+ghost 3건(base motion 짝 clean)" 2 "WP2" 3 "$E" "$OUT"
 
 # ---------- F24: WP3 인라인 이벤트 핸들러 속성 금지
 P="$T/f24"; BASE=$(mkproj "$P")
@@ -447,7 +456,7 @@ h1 { color: #ff0000; }
 p { background: rgb(0, 0, 0); }
 a { color: var(--color-primary); }
 EOF
-printf '--color-accent: #00ff00;\n' >> "$P/web/design_system/foundation/tokens.css"
+printf '%s\n' '--color-accent: #00ff00;' >> "$P/web/design_system/foundation/tokens.css"
 printf '<a href="#anchor">ok</a>\n' > "$P/web/orders/order_list/section/order_list_jump.html"
 OUT=$(run_backstop "$P" --diff-base "$BASE" --only wp4); E=$?
 assert_count "F25 WP4 색 리터럴 2건(tokens.css·var()·#anchor 짝 clean)" 2 "WP4" 2 "$E" "$OUT"

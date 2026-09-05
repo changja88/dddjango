@@ -1,6 +1,6 @@
 # dddjango-web 표준 파일트리
 
-> **출처:** dddjango-web 통합 스펙(2026-08-23) §1.3㉠ web 표준 트리 v3.2 · 확정 결정 대장 D1~D12(D12는 v2 — 2026-08-24 모션 축) · dddart discipline-houserules(검증 판형).
+> **출처:** dddjango-web 통합 스펙(2026-08-23) §1.3㉠ web 표준 트리 v3.2 · 확정 결정 대장 D1~D12와 2026-09-05 UI JavaScript 통합 결정 · dddart discipline-houserules(검증 판형).
 > 본문 속 `(D숫자)`는 **출처 표기**(결정 대장 번호)이며 로드 대상이 아니다 — 규칙 자체는 본문에 자족적으로 서술된다. 로드 가능한 위임은 두 가지뿐: 타 스킬은 "스킬명 + 주제", 동봉 파일은 `undecidable-web.md`.
 
 ---
@@ -20,7 +20,7 @@
 
 ## §1. 표준 트리 (전문)
 
-4원칙: ① **기준은 dddart 검증 판형의 현지화다** — 운영 검증된 dddart 표준 트리를 Django 서버렌더 표현계층으로 옮긴 것이며, 사용자가 명시적으로 확정한 결정 대장(D1~D12)이 우선한다 ② **web은 «내부의 외부 클라이언트»다 — Model이 없다.** 같은 저장소의 `web/`에 살지만 백엔드 BC의 실물 API 계약(URL+JSON)만 소비한다 — domain·use_case·infra 계층을 소유하지도 import하지도 않는다 ③ **요청 구동 MVVM + HTMX** — 지식은 view → VM → client 한 방향, 상주 상태·구독(watch) 없음, 갱신 표준은 HTMX 부분 재렌더 ④ **파일트리가 곧 규약이다** — 어떤 파일을 어디에 어떤 이름으로 만드는지가 핵심 강제다.
+4원칙: ① **기준은 dddart 검증 판형의 현지화다** — 운영 검증된 dddart 표준 트리를 Django 서버렌더 표현계층으로 옮긴 것이며, 현재 본문의 사용자 확정 규범이 적용되며 JS·HTMX 경계는 §5⑤의 통합 규칙을 따른다 ② **web은 «내부의 외부 클라이언트»다 — Model이 없다.** 같은 저장소의 `web/`에 살지만 백엔드 BC의 실물 API 계약(URL+JSON)만 소비한다 — domain·use_case·infra 계층을 소유하지도 import하지도 않는다 ③ **요청 구동 MVVM + HTMX** — 지식은 view → VM → client 한 방향, 서버 VM의 상주 상태·구독(watch) 없음, 갱신 표준은 HTMX 부분 재렌더 ④ **파일트리가 곧 규약이다** — 어떤 파일을 어디에 어떤 이름으로 만드는지가 핵심 강제다.
 
 ```text
 web/
@@ -58,7 +58,9 @@ web/
       <부품군>/
         <component>.html               # BC 어휘 없는 순수 부품 — 부품군 1차·직속 금지
   static/
-    css/  js/                          # htmx 포함 (js는 vendored 2종 — htmx·motion[조건 설치] — D12v2)
+    css/                               # 시각 규칙
+    js/                                # 기능당 <기능>.js·motion.js(조건 설치)
+    htmx/                              # 기능당 <기능>.html·htmx.min.js core
     images/                            # 시안 이미지 착지 (fetch 도구·asset-manifest 배선)
     fonts/                             # 폰트 파일이 필요한 경우만 생성
     files/                             # 다운로드 파일이 필요한 경우만 생성
@@ -94,12 +96,12 @@ web/
 
 | 단위 | 항상 생성 (전부) |
 |---|---|
-| `web/` 컨테이너 최초 | `urls.py`·`apps.py`·`base/base.html`·`design_system/foundation/tokens.css`·`design_system/foundation/motion.css`·`design_system/component/`·`static/css/`·`static/js/`(vendored htmx 파일)·`static/images/` |
+| `web/` 컨테이너 최초 | `urls.py`·`apps.py`·`base/base.html`·`design_system/foundation/tokens.css`·`design_system/foundation/motion.css`·`design_system/component/`·`static/css/`·`static/js/`·`static/htmx/`(vendored htmx core)·`static/images/` |
 | 신규 `<screen_area>/` | `urls.py` + `widget/` |
 | 신규 `<view>/` (화면 개념) | `view/`·`view_model/`·`state/`·`section/` 종류 4폴더 전부 — `form/`은 입력 form이 있는 화면에서 첫 Form 때 생성(골격 대상 아님, exception.py 판형) |
 | 신규 `client/<bc>/` | `<capability>_client.py` + `response/` — `exception.py`는 첫 계약 오류 표현 때 생성(골격 대상 아님) |
 
-- `static/js/`의 vendored JS: htmx 파일 실물의 입수·설치는 Coordinator의 web 배선 전제조건(ⓕ) 소관 — 골격 검사는 **htmx 존재만** 본다. `motion.js`는 조건 설치(명세의 러너 채택 항목 ≥1일 때 Coordinator가 플러그인 판형을 복사 — 커맨드 소관)라 골격·존재 검사 대상이 아니다 — 존재하면 순수성 검사(§5⑤)가 판형 일치를 검증한다.
+- HTMX core의 입수·설치는 Coordinator의 web 배선 전제조건(ⓕ) 소관이다. 신규 core는 `static/htmx/htmx.min.js`, 기존 `static/js/htmx.min.js`·`htmx.js`는 기존 설치로만 소비한다. `motion.js`는 러너 채택 ≥1일 때 조건 설치하고 존재하면 byte 판형을 검증한다(§5⑤). 골격은 css/·js/·htmx/·images/ 네 폴더이며 기능 JS·선언 파일은 실제 요구가 있을 때만 생성한다.
 - **마커 파일**: Python 패키지 폴더(`.py`가 사는 곳 — `view/`·`view_model/`·`state/`·`form/`·`client/` 계열)는 비어 있어도 `__init__.py`를 둔다. HTML 전용 폴더(`section/`·`widget/`·`design_system/component/`)는 git이 빈 디렉터리를 추적하지 않으므로 비면 `.gitkeep`을 둔다. 두 마커 파일은 «직속 파일 금지»의 명시 예외다.
 - design_system은 foundation·component **2칸 시작** — `theme/`·`util/`은 *만들지 않는 칸*이다. 실수요가 생기면 그때 증설하고, 미리 파지 않는다.
 - **영구 test/ 없음** — 생성 앱의 `web/`에 `test/`·`test_*.py`·빈 테스트 파일을 만들지 않는다. 임시 Django 렌더·브라우저 smoke는 implementation-ui §2에 따라 실제 수행하고, 실행 결과와 스크린샷은 산출물 폴더에 보존한다. 기존 프로젝트의 적용 가능한 검사는 함께 실행한다. 플러그인 자체의 회귀 픽스처는 이 생성 앱 규칙의 대상이 아니다.
@@ -136,7 +138,8 @@ web/
 | `design_system/foundation/` | 고정 | `tokens.css` | CSS 커스텀 프로퍼티(`--color-*`·`--space-*`·`--duration-*`·`--ease-*` 류) — 시각 값(모션 값 포함)의 단일 출처 |
 | `design_system/foundation/` | 고정 | `motion.css` | 공용 `@keyframes`·모션 유틸 클래스 — 이름은 `motion-*` 고정(화면 어휘 금지)·custom property 정의 금지(값은 tokens.css, keyframes 중간값 리터럴만 허용) |
 | `design_system/component/<부품군>/` | 수식·변형 | `<component>.html` | `button/primary_button.html` |
-| `static/js/` | **vendored 닫힌 2종** — 원명 그대로 | (vendored 파일) | `htmx.min.js`·`motion.js`(조건 설치 — 플러그인 판형 그대로) — 커스텀 `.js`·타 라이브러리 신설 금지(§5⑤) |
+| `static/js/` | UI 기능 | `<기능>.js` | `password_visibility.js` — 기능당 한 파일·snake_case·평면; `motion.js`는 고정 러너 예약 이름 |
+| `static/htmx/` | HTMX 기능·고정 core | `<기능>.html`·`htmx.min.js` | `order_refresh.html` — 기능당 한 선언 조각·snake_case·평면; core는 중복 설치 금지 |
 | `static/css/` | 기능·범위 | `<이름>.css` | 파일명 snake_case — 시각 값은 tokens.css의 `var()` 참조·화면 전속 `@keyframes`는 `<view>_` 접두 |
 | `static/images/` | 시안 자산 | `<이름>_<내용hash>.<확장자>` — snake_case | 절단 도구가 정한 manifest 경로를 그대로 사용(에셋 규율은 implementation-ui 소유) |
 | `static/fonts/`·`static/files/` | 폰트·다운로드 파일 | `<이름>.<확장자>` — snake_case | 필요 시 검증된 파일만 복사·출처/배선 매핑 기록(implementation-ui §7) |
@@ -157,7 +160,13 @@ web/
 
 ④ **라우트 리터럴의 유일 거처 2곳** — web 자신의 path·name 리터럴은 `urls.py`뿐이다(영역 리터럴은 `<screen_area>/urls.py`, `web/urls.py`는 영역 include 합산만). 그 외 어디서든 — 템플릿 href·hx-get·redirect — `{% url %}`/`reverse`의 **이름만** 참조한다. BC API URL 리터럴은 그 계약의 client 모듈이 유일 거처다 — VM·view·템플릿에 API URL 문자열이 보이면 위반이다.
 
-⑤ **D12 v2 순수성 — 커스텀 JavaScript 금지, JS는 vendored 닫힌 2파일**: `web/**`에 `.js` 파일 신설 금지 — 허용은 `static/js/`의 vendored `htmx.min.js`와 `motion.js`(동적 표현 발동 러너·조건 설치)뿐이고, **다른 JS 라이브러리의 vendored 추가도 금지**(닫힌 열거 — «vendored 형태면 된다»가 아니다). `motion.js`는 플러그인 판형 그대로만 둔다 — 수정·확장은 위반이며 백스톱이 판형 해시로 대조한다. 템플릿 inline `<script>` 금지 — 로드 태그는 base.html의 `{% static %}` 정확 경로 2종만이다(`undecidable-web.md` §6). **htmx 속성의 JS 채널도 금지다**: `hx-on*`, `hx-vals`/`hx-headers`의 `js:` 접두, `hx-trigger`의 `[조건식]`. 동작은 HTMX 속성·CSS 모션·`data-motion` 선언으로 표현하고, 그걸로 표현 불가한 동작 요구(패럴랙스·제스처 추종 류)는 우회 스크립트를 짜지 말고 설계로 반송한다.
+⑤ **UI JavaScript와 HTMX 경계**: 승인된 UI 동작만 `static/js/<기능>.js`에 기능당 한 파일로 둔다. 기능 이름은 snake_case·평면이며 초기화/이벤트/정리를 함수별 파일로 나누지 않는다. native HTML/CSS로 충분하면 JS 파일은 없다. 업무 권한·금액·저장 판정·별도 업무 API 호출·SPA 상태 계층·새 JS 프레임워크/라이브러리는 금지다.
+
+- HTMX 선언은 `static/htmx/<기능>.html`에 기능당 한 파일로 두고 Django `{% include %}`로 렌더한다. 공개 static 원문에는 비밀·사용자별 렌더 결과를 저장하지 않는다. 데이터·권한·CSRF·fragment 응답은 view/section 소유이며 static URL은 업무 fragment endpoint가 아니다. 기존 TEMPLATES DIRS의 web 루트로 include하고 새 finder·middleware·템플릿 엔진은 만들지 않는다.
+- 신규 HTMX core는 `static/htmx/htmx.min.js` 한 파일이다. 기존 `static/js/htmx.min.js` 또는 `static/js/htmx.js`는 브라운필드 설치로만 소비한다. 새 이중 설치·조용한 이동/업그레이드 금지. 누락 시 Coordinator가 공식 2.0.10 고정 배포 파일을 설치하고 버전·출처를 기록한다.
+- `static/js/motion.js`는 러너 채택 시 조건 설치하는 byte 고정 판형이다. 수정·확장·기능명으로 덮어쓰기 금지. 다른 기능 JS와 core 이름이 충돌하면 기능 이름을 다시 결정한다.
+- 기능 실행 태그는 base 공통 로드 또는 페이지의 범용 scripts block에서 외부 `{% static %}` 참조로 페이지당 한 번만 둔다. fragment/선언 조각에는 실행 script가 없다. classic은 `defer`, 기존 module 방식은 허용하고 `async`로 DOM·의존 순서를 깨지 않는다. CDN 실행 태그·inline 실행 JS·on* handler·hx-on·js:·hx-trigger 조건식은 금지다.
+- 데이터 전달은 Django `json_script`의 비실행 JSON 또는 escape된 quoted data 속성이다. 템플릿 값을 수동으로 실행 소스에 보간하지 않는다. 업무 로직 부재·기능과 파일의 의미상 일대일·JS 모션 전수성은 검사기 통과만으로 증명되지 않으며 감수와 실제 동작 증거로 확인한다.
 
 ⑥ **지식은 view → VM → client 한 방향** — 역방향 참조(client가 VM을, VM이 view·템플릿을 아는 것) 금지. **템플릿은 state만 읽는다** — 템플릿에서 VM 메서드 호출·client 접근 금지, widget에는 명시 context만 넘긴다.
 
@@ -189,7 +198,7 @@ python "${CLAUDE_PLUGIN_ROOT}"/scripts/backstop.py <대상 프로젝트 루트> 
 
 (파이프라인에서는 Coordinator가 플러그인 루트를 해소해 호출한다 — 에이전트가 경로를 추측하지 않는다.)
 
-- 검사 패밀리 4종: **WS(구조·골격) · WI(격리 — §5) · WN(명명 — §4) · WP(순수성 — D12)**. 발견은 전부 blocker — 일괄 반송.
+- 검사 패밀리 4종: **WS(구조·골격) · WI(격리 — §5) · WN(명명 — §4) · WP(UI 실행 경계 — §5⑤)**. 발견은 전부 blocker — 일괄 반송.
 - **exit 계약**: 0 = 통과 / 1 = 미실행(전제 실패 — 통과가 아니다) / 2 = blocker 발견·일괄 반송.
 - **게이트 의미론**: 구조·명명은 **added**(새로 만든 파일·디렉터리)만, 격리·순수성은 touched 파일의 **added 줄**만, 골격 완비는 **신규 단위**(영역·화면 개념·client BC 폴더)만. → **레거시(기존 drift)에는 불발화한다** — "새 코드부터 표준" 원칙의 기계 집행.
 - `--all`은 게이트 무시 전역 감사용 — 레거시 프로젝트에서 발견 폭주가 정상이며 파이프라인 게이트 용도가 아니다.
@@ -211,7 +220,7 @@ python "${CLAUDE_PLUGIN_ROOT}"/scripts/backstop.py <대상 프로젝트 루트> 
 | 전역 `templates/<app>/` 트리 | 병치 트리 — 페이지 템플릿은 `view/`, 조각은 `section/`·`widget/`(§1) |
 | CBV 관성(TemplateView·ListView 상속) | 함수 뷰 + VM — 표시 판정은 VM으로(§4 view·view_model 행) |
 | view에서 context dict 직접 조립 | state dataclass(`<view>_state.py`) — 템플릿은 state만 읽는다(§5⑥) |
-| inline `<script>`·커스텀 `.js` | HTMX 속성·CSS 모션·`data-motion` 선언으로 표현(§5⑤ — D12v2) |
+| inline 실행 JS·HTMX JS 채널 | 승인된 동작을 native HTML/CSS·HTMX 선언 include 또는 기능별 외부 UI JS로 표현(§5⑤) |
 | 템플릿·CSS의 색·크기 리터럴 | tokens.css 토큰 — `var()` 참조(§4 tokens 행) |
 | 무네임스페이스 static 경로(`static/style.css` 류) | 프리픽스 경로 — STATICFILES_DIRS 프리픽스 튜플 배선 전제(§7 handoff) |
 

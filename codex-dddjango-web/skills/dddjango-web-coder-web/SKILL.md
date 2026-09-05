@@ -9,13 +9,14 @@ description: dddjango-web 코디네이터가 Phase 2(구현)에서 spawn_agent�
 
 ## 로드할 지식 스킬
 
-이 역할을 시작하면 다음 스킬을 로드해 근거로 삼는다: `implementation-ui`, `discipline-cleancode`, `discipline-web-houserules`. 각 스킬은 SKILL.md의 라우팅 표로 필요한 절만 부분 적재한다 — references 전량을 읽지 않는다.
+이 역할을 시작하면 다음 스킬을 로드해 근거로 삼는다: `implementation-ui`, `implementation-javascript`, `discipline-cleancode`, `discipline-web-houserules`. 각 스킬은 SKILL.md의 라우팅 표로 필요한 절만 부분 적재한다 — references 전량을 읽지 않는다.
 
 ## 입력
 
 코디네이터가 spawn 시 다음을 준다:
 
 - 승인된 화면 명세(G1 통과) — 구조·동작·계약의 근거(파일 목록·구조 결정 절·행위 목록 포함).
+- **UI 동작 계약과 host 상태** — 명세의 기능별 행, core 실제 경로·버전·출처, 공통 scripts block·classic/module 방식·로드 위치를 받는다. static_only는 서버 업무 계약 소비 없음이며 로컬 UI JS 금지가 아니다.
 - 이번에 구현할 **슬라이스**(명세 파일 목록의 부분집합).
 - `server-contract.json` 경량본(G1 직후 기계 절단된 서버 계약) — **URL·필드·타입·페이징의 단일 근거다. 계약을 훈련 기억이나 추측으로 쓰지 않는다**(implementation-ui §8). 정적 화면 한정 승인이면 '없음' 명시 입력 — 이때 API 소비 코드는 만들지 않는다.
 - (있으면) `design-ref/` — **화면 외형의 원본 근거.** 구체적으로 결정된 이탈은 명세의 해당 행 범위만 적용한다. 배치·축·그룹핑·정렬·간격은 명세가 아니라 동결 시안(이미지 또는 시안 HTML)이 정하고 너는 재현한다. **재현이지 직수입이 아니다** — 시안 HTML의 마크업·클래스·인라인 스타일을 복붙하지 않는다(implementation-ui §2).
@@ -32,11 +33,12 @@ description: dddjango-web 코디네이터가 Phase 2(구현)에서 spawn_agent�
 ## 작업 방식
 
 - **구현 전에 명세의 파일 목록·구조 결정 절을 읽고, 새 파일을 그 레이아웃에 맞춰 배치한다.** 구조를 새로 결정하지 않고 명세를 집행한다. 명세에 구조 결정이 없으면 임의로 정하지 말고 보고한다(설계로 반송). **'구조 결정'은 *분해*(view/section/widget·파일 배치)이지 *레이아웃 형상*이 아니다** — 명세가 배치·축을 안 적은 것은 정상이며 반송 사유가 아니다. 형상은 design-ref에서 가져와 재현한다. **명세의 구조 결정이 discipline-web-houserules의 골격·명명·위치 규약을 빠뜨렸거나 접었으면, 임의 보정도 그대로 집행도 하지 말고 보고한다**(명세-표준 괴리 = 설계 반송).
-- **bottom-up 순서**: client(response·exception 포함) → state·form → view_model → view → 페이지 템플릿 → section·widget → urls 배선. 명세 파일 목록이 닿는 조각만 만든다. *왜* — 참조가 항상 실재하는 쪽(아래)부터 쌓아야 오류가 국소화된다.
+- **bottom-up 순서**: client(response·exception 포함) → state·form → view_model → view → 페이지 템플릿 → section·widget → HTMX 선언 include·기능 JS·외부 로드 → urls 배선. 명세 파일 목록이 닿는 조각만 만든다. *왜* — 참조가 항상 실재하는 쪽(아래)부터 쌓아야 오류가 국소화된다.
 - **층별 green 래칫**: 각 층을 끝낼 때마다 네이티브 셸로 실제 실행한다(자동 통과 간주 금지) — ① `python -m py_compile <touched .py 전부>` exit 0 **그리고** ② `python manage.py check`가 입력받은 베이스라인 대비 신규 이슈 0. 브라운필드의 기존 이슈에는 불발화한다 — 판정 기준은 신규분이다.
 - **시안 재현**: implementation-ui §2의 비교 기준→요소 대응→정확한 토큰→구조/자산→실제 출력 확인을 수행한다. 선언된 조건부 요소의 현재 가시성, component variant, spacer/경계, 폰트/행간을 확인한다. 원본의 정확한 값이 풀에 없으면 출처와 함께 토큰을 등록한다. 변경·근사는 명세 이탈 표의 구체적인 결정 범위와 대조하고 미결정이면 반송한다.
+- **UI 동작 검증**: UI 동작 계약을 기능 파일·root·서버 요청/swap 경계와 연결한다. 초기 진입·실제 조작, 해당하는 반복 인스턴스·실제 HTMX 교체·키보드·비동기 실패/늦은 완료·자원 정리를 확인하고 실행 조건·결과·미검증을 보고한다. 단순 위임에 cleanup 틀을 강제하지 않는다.
 - **화면 슬라이스 완료 보고**: 변경 페이지/fragment의 대표 state별 실제 렌더 내용, 브라우저 URL·viewport·스크린샷, 이미지/폰트 로드, 상태 전환·전 구간 대조, 발견/해소·미실행 사유를 낸다. 기존 프로젝트에 적용 가능한 타입/린트 검사가 있으면 신규 위반을 확인한다. 규율상 첫 대입 타입도 직접 대조한다. Coordinator가 증적을 `visual-check.md`에 통합한다.
-- 작업에 맞는 스킬을 골라 쓴다: 코드 표기 전반(삼총사·템플릿·HTMX·client·urls)=implementation-ui, 파일의 자리·이름=discipline-web-houserules(명명 §4·트리 §1), 보편 규율=discipline-cleancode.
+- 작업에 맞는 스킬을 골라 쓴다: 코드 표기 전반(삼총사·템플릿·HTMX·client·urls)=implementation-ui, UI JS 이벤트·DOM·수명=implementation-javascript, 파일의 자리·이름=discipline-web-houserules(명명 §4·트리 §1), 보편 규율=discipline-cleancode.
 - 구현 중 명세 파일 목록에 없는 "두 번째 개념"을 발견하면(같은 화면 폴더에 다른 진입 URL·다른 상태 묶음이 쌓이는 신호) 임의 분할하지 말고 디렉터리를 대조하고 보고한다(undecidable-web.md §5 — 1차 결정은 architect, 너는 2차 발견자다).
 
 ## 반송 규율 — 멈추고 보고한다
@@ -52,7 +54,7 @@ description: dddjango-web 코디네이터가 Phase 2(구현)에서 spawn_agent�
 ## 경계
 
 - 화면 명세를 바꾸지 않는다(architect가 소유) — 필요하면 보고한다.
-- 명세가 정한 **기술 메커니즘**(HTMX 부분 재렌더·in-process client·forms↔VM 분담)은 설계 결정이다 — 구현 중 자기 판단으로 다른 메커니즘으로 대체하지 않는다. 이 '대체'는 **출처-불문**이다: 다른 패키지 도입·전역 상태·모듈 캐시·**커스텀 JS 우회**(D12v2 — JS는 vendored 닫힌 2파일[htmx·motion.js(조건 설치)], `.js` 신설·inline `<script>`·motion.js 수정·확장·htmx `js:` 채널[`hx-vals`/`hx-headers` `js:` 접두·`hx-trigger` 조건식] 금지) 등 *어떤 형태로든* 명세의 메커니즘을 바꾸면 같은 위반이다. 환경상 부족해 보이면 우회책을 만들지 말고 멈춰 설계로 반송한다.
+- 명세가 정한 **기술 메커니즘**(HTMX 부분 재렌더·in-process client·forms↔VM 분담)은 설계 결정이다 — 구현 중 자기 판단으로 다른 메커니즘으로 대체하지 않는다. 이 '대체'는 **출처-불문**이다: 다른 패키지 도입·전역 상태·모듈 캐시·**승인 범위 밖 JS 우회**(업무 판정·별도 업무 API 호출·SPA 상태 계층·inline 실행 JS·motion.js 수정/확장·htmx JS 채널 금지; 승인된 기능 JS는 UI 동작 계약대로 구현) 등 *어떤 형태로든* 명세의 메커니즘을 바꾸면 같은 위반이다. 환경상 부족해 보이면 우회책을 만들지 말고 멈춰 설계로 반송한다.
 - **`application/`·`framework/`·`<project>/` 등 web/ 밖 코드를 절대 수정하지 않는다** — web의 접점은 실물 API 계약(URL+JSON)뿐이고, 백스톱 격리(WI)가 위반을 기계 차단한다.
 - 새 의존성의 **버전 값은 훈련 기억으로 적지 않는다** — 설치가 필요하면 resolve된 실제 설치 버전을 쓰고, resolve가 불가하면 기억값으로 채우지 말고 보고한다.
 - 검증(py_compile·check)을 실행하지 않았으면 실행한 것처럼 보고하지 않는다 — 미실행 사유를 명시한다.

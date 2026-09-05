@@ -35,6 +35,7 @@ cat > "$T/notes.md" <<'EOF'
 | m1 | 주문 카드 | hover | 그림자 상승 0.3s ease-out | CSS | 실측 |
 | m2 | 히어로 | load | 페이드인 0.6s | CSS | 문답 |
 | m3 | 목록 항목 | scroll | 진입 페이드 0.6s | 러너 | 문답 |
+| m4 | 비밀번호 표시 | click | 아이콘 회전 0.3s | UI JS | 실측 |
 EOF
 
 cat > "$T/spec.md" <<'EOF'
@@ -45,10 +46,11 @@ cat > "$T/spec.md" <<'EOF'
 | m1 | 채택 | css-hover | web/order_list/order_list.css :: .order_card:hover | var(--duration-fast) var(--ease-out) | 원본 hover 재현 |
 | m2 | 채택 | css-keyframes | web/design_system/foundation/motion.css :: motion-fade | var(--duration-reveal) | 원본 로드 페이드 |
 | m3 | 채택 | 러너 | reveal | var(--duration-reveal) | 스크롤 진입 발동 |
+| m4 | 채택 | ui-js | static/js/password_visibility.js :: [data-password-visibility] | var(--duration-fast) | 승인된 UI 동작 계약과 실제 클릭 검증에 연결 |
 EOF
 
 W="$T/proj/web"
-mkdir -p "$W/design_system/foundation" "$W/order_list"
+mkdir -p "$W/design_system/foundation" "$W/order_list" "$W/static/js"
 cat > "$W/design_system/foundation/tokens.css" <<'EOF'
 :root { --duration-fast: 0.3s; --duration-reveal: 0.6s; --ease-out: ease-out; }
 EOF
@@ -68,6 +70,10 @@ cat > "$W/base.html" <<'EOF'
 EOF
 cat > "$W/order_list/order_list.html" <<'EOF'
 <li data-motion="reveal">항목</li>
+<div data-password-visibility><input type="password"><button type="button">표시</button></div>
+EOF
+cat > "$W/static/js/password_visibility.js" <<'EOF'
+document.querySelectorAll('[data-password-visibility]');
 EOF
 
 # 감사 처분 회귀 표본(2026-08-25 감사 — major 2·minor 3)
@@ -95,9 +101,30 @@ grep -v '^| m1 ' "$T/spec.md" > "$T/spec-missing.md"
 # R2 좌표 파일 부재 · R3 값 토큰 미정의
 sed 's#web/order_list/order_list.css#web/ghost.css#' "$T/spec.md" > "$T/spec-ghostfile.md"
 sed 's#var(--duration-fast)#var(--duration-slow)#' "$T/spec.md" > "$T/spec-badtoken.md"
+sed 's#static/js/password_visibility.js#static/js/ghost.js#' "$T/spec.md" > "$T/spec-ui-ghostfile.md"
 # R4 역스윕 발명(처분 표 밖 @keyframes)
 cp -R "$T/proj" "$T/proj-rogue"
 echo '@keyframes rogue-spin { to { transform: rotate(360deg); } }' >> "$T/proj-rogue/web/order_list/order_list.css"
+cp -R "$T/proj" "$T/proj-ui-js-comment"
+cat > "$T/proj-ui-js-comment/web/static/js/password_visibility.js" <<'EOF'
+// document.querySelectorAll('[data-password-visibility]');
+document.querySelectorAll('button');
+EOF
+cp -R "$T/proj" "$T/proj-ui-js-interpolation-comment"
+cat > "$T/proj-ui-js-interpolation-comment/web/static/js/password_visibility.js" <<'EOF'
+const label = `${ /* [data-password-visibility] */ "button" }`;
+EOF
+cp -R "$T/proj" "$T/proj-ui-js-backtick"
+cat > "$T/proj-ui-js-backtick/web/static/js/password_visibility.js" <<'EOF'
+document.querySelectorAll(`[data-password-visibility]`);
+EOF
+cp -R "$T/proj" "$T/proj-ui-html-comment"
+cat > "$T/proj-ui-html-comment/web/order_list/order_list.html" <<'EOF'
+<li data-motion="reveal">항목</li>
+<!-- <div data-password-visibility></div> -->
+{% comment %}<div data-password-visibility></div>{% endcomment %}
+<div data-other=" data-password-visibility "></div>
+EOF
 # W1 레거시 산문 notes · W2 (미관찰) 상태 행만
 cat > "$T/notes-legacy.md" <<'EOF'
 - 카드 / hover / 그림자 상승 / CSS
@@ -140,6 +167,16 @@ assert "R3 값 토큰 미정의" 2 "정의가 web/ CSS 어디에도 없음" - "$
 OUT=$(run_py check_motion_spec.py "$T/spec.md" "$T/notes.md" "$T/proj-rogue/web"); E=$?
 assert "R4 역스윕 발명" 2 "rogue-spin" - "$E" "$OUT"
 
+# ---------- R4b: ui-js 좌표 파일·JS literal root·실제 HTML attribute 근거
+OUT=$(run_py check_motion_spec.py "$T/spec-ui-ghostfile.md" "$T/notes.md" "$W"); E=$?
+assert "R4b ui-js 유령 파일" 2 "ui-js 좌표 파일 없음" - "$E" "$OUT"
+OUT=$(run_py check_motion_spec.py "$T/spec.md" "$T/notes.md" "$T/proj-ui-js-comment/web"); E=$?
+assert "R4c ui-js 주석 속 JS root는 근거 아님" 2 "JS에 literal root 없음" - "$E" "$OUT"
+OUT=$(run_py check_motion_spec.py "$T/spec.md" "$T/notes.md" "$T/proj-ui-js-interpolation-comment/web"); E=$?
+assert "R4c2 ui-js template interpolation 주석 root는 근거 아님" 2 "JS에 literal root 없음" - "$E" "$OUT"
+OUT=$(run_py check_motion_spec.py "$T/spec.md" "$T/notes.md" "$T/proj-ui-html-comment/web"); E=$?
+assert "R4d ui-js HTML 주석 속 root는 근거 아님" 2 "HTML에 실제 root 속성 없음" - "$E" "$OUT"
+
 # ---------- R5: 표 판형 위반(칼럼 수)
 OUT=$(run_py check_motion_spec.py --spec-only "$T/spec-malformed.md" "$T/notes.md"); E=$?
 assert "R5 판형 위반" 2 "판형 위반" - "$E" "$OUT"
@@ -163,6 +200,15 @@ assert "G3 주석 keyframes 역스윕 침묵" 0 "발견 0건" "old-spin" "$E" "$
 # ---------- G4(positive control): 코드 펜스 안 판형 예시 표 — 실표로 오파스 금지
 OUT=$(run_py check_motion_spec.py --spec-only "$T/spec-fenced.md" "$T/notes.md"); E=$?
 assert "G4 펜스 예시 표 무시" 0 "발견 0건" "m9" "$E" "$OUT"
+
+# ---------- G5(positive control): ui-js web/ 선행 경로도 같은 파일로 해소
+sed 's#static/js/password_visibility.js#web/static/js/password_visibility.js#' "$T/spec.md" > "$T/spec-ui-web-prefix.md"
+OUT=$(run_py check_motion_spec.py "$T/spec-ui-web-prefix.md" "$T/notes.md" "$W"); E=$?
+assert "G5 ui-js optional web prefix" 0 "발견 0건" "FINDING" "$E" "$OUT"
+
+# ---------- G6(positive control): backtick 안 literal root는 구조 근거로 인정
+OUT=$(run_py check_motion_spec.py "$T/spec.md" "$T/notes.md" "$T/proj-ui-js-backtick/web"); E=$?
+assert "G6 ui-js backtick literal root" 0 "발견 0건" "FINDING" "$E" "$OUT"
 
 # ---------- W1: 레거시 산문 notes → warn + exit 0 (합법 재빌드 비차단)
 OUT=$(run_py check_motion_spec.py --spec-only "$T/spec.md" "$T/notes-legacy.md"); E=$?

@@ -8,7 +8,7 @@
 from typing import List, Optional, Set
 
 from .common import (
-    HTMX_ALLOWED, JUNK_GROUPS, KIND_DIRS, MARKER_FILES, PY_KIND_DIRS,
+    HTMX_CANONICAL, JUNK_GROUPS, KIND_DIRS, MARKER_FILES, PY_KIND_DIRS,
     RESERVED_NAMES, STATIC_DIRS, WEB_TOP_FILES, BackstopContext, Finding,
     base_name_of, segs_of,
 )
@@ -97,19 +97,37 @@ def run_structure(ctx: BackstopContext) -> List[Finding]:
                 '부품군 `%s/` 내부 디렉터리 `%s/` — 부품군은 평면이다' % (s[2], s[3]),
                 '변형은 파일명 수식으로(`primary_button.html` 류) — 하위 폴더를 파지 않는다.', '§1'))
 
-    # ---- WS6: static/ 직속은 css/·js/·images/와 조건부 fonts/·files/ (§1·§3)
+    # ---- WS6: static/ 4칸(+조건부 2칸), js/·htmx/는 평면·파일 종류 고정 (§1·§3)
     for f in added_files:
         s = segs_of(f)
         if len(s) == 2 and s[0] == 'static' and s[1] not in MARKER_FILES:
             out.append(Finding('WS6', f, None,
-                'static/ 직속 파일 금지 — css/·js/·images/·fonts/·files/만(무네임스페이스 경로 금지)',
-                '정체에 맞는 칸(css/·js/·images/·fonts/·files/)으로 옮긴다.', '§1'))
+                'static/ 직속 파일 금지 — css/·js/·htmx/·images/·fonts/·files/만'
+                '(무네임스페이스 경로 금지)',
+                '정체에 맞는 칸(css/·js/·htmx/·images/·fonts/·files/)으로 옮긴다.', '§1'))
+        if len(s) == 3 and s[0] == 'static' and s[1] == 'htmx':
+            if s[2] not in MARKER_FILES and not (
+                    s[2].endswith('.html') or f == HTMX_CANONICAL):
+                out.append(Finding('WS6', f, None,
+                    'static/htmx/ 파일 종류 위반 — 기능 선언 .html 또는 canonical htmx.min.js만 허용',
+                    '기능 선언은 `<기능>.html`, core는 `htmx.min.js`로 두고 실행 JS는 '
+                    'static/js/<기능>.js로 옮긴다.', '§1'))
+        if len(s) == 3 and s[0] == 'static' and s[1] == 'js':
+            if s[2] not in MARKER_FILES and not s[2].endswith('.js'):
+                out.append(Finding('WS6', f, None,
+                    'static/js/ 파일 종류 위반 — 기능 JavaScript는 .js 확장자만 허용',
+                    '`.mjs`·`.cjs` 우회 없이 `<기능>.js`로 두고 module 여부는 로드 태그로 표현한다.',
+                    '§1'))
     for d in added_dirs:
         s = segs_of(d)
         if len(s) == 2 and s[0] == 'static' and s[1] not in STATIC_DIRS:
             out.append(Finding('WS6', d + '/', None,
-                'static/ 직속 허용 외 디렉터리 `%s/` — css/·js/·images/·fonts/·files/만' % s[1],
+                'static/ 직속 허용 외 디렉터리 `%s/` — css/·js/·htmx/·images/·fonts/·files/만' % s[1],
                 '폰트는 fonts/, 다운로드 파일은 files/에 필요할 때만 둔다 — 임의 칸을 신설하지 않는다.', '§1'))
+        if len(s) == 3 and s[0] == 'static' and s[1] in ('js', 'htmx'):
+            out.append(Finding('WS6', d + '/', None,
+                'static/%s/ 내부 디렉터리 `%s/` — 기능 파일 칸은 평면이다' % (s[1], s[2]),
+                '기능당 파일 하나를 static/%s/ 직속에 둔다.' % s[1], '§1'))
 
     # ---- WS7: 영역·화면 이름 deny — 컨테이너명·종류명 금지 (§1)
     for d in added_dirs:
@@ -190,8 +208,10 @@ def _skeleton(ctx: BackstopContext) -> List[Finding]:
             need_dir(sd, missing, sd)
         if 'static/js' not in ctx.dirs:
             missing.append('static/js/')
-        elif not any(f in ctx.files_set for f in HTMX_ALLOWED):
-            missing.append('static/js/htmx.min.js (vendored htmx)')
+        if 'static/htmx' not in ctx.dirs:
+            missing.append('static/htmx/')
+        elif HTMX_CANONICAL not in ctx.files_set:
+            missing.append('static/htmx/htmx.min.js (vendored htmx core)')
         report('', '신규 web/ 컨테이너', missing, '§3')
 
     # 신규 영역 (§3 표 2행 — urls.py + widget/)

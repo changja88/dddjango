@@ -50,7 +50,7 @@
 
 ## §3. 삼총사 표기 — view·view_model·state
 
-역할 규율(view 진입점뿐·VM 표시 판정 유일 자리·state 불변·forms↔VM 분담)은 architecture-web §3 소유 — 여기는 각 파일의 표기다.
+역할 규율(view 진입점뿐·VM 서버 표시 판정 유일 자리·state 불변·forms↔VM 분담)은 architecture-web §3 소유 — 여기는 각 파일의 표기다.
 
 **`<view>_view.py` — 진입점 판형.** 함수 뷰로 고정한다 — *왜*: 진입점에 상속 계층이 필요할 만큼의 로직이 있으면 이미 규율 위반이다. 하는 일은 URL 바인딩·form 수신·세션 쿠키 추출(`request.COOKIES.get(settings.SESSION_COOKIE_NAME)` — VM에 전달, §8 신원 이월)·VM 호출·render, 그리고 fragment 분기까지가 전부다 — 판단하지 않는다. fragment 분기는 `request.headers.get("HX-Request")` 검사 또는 fragment 전용 라우트(§9) 중 하나로 하고, 한 화면 안에서 방식을 섞지 않는다.
 
@@ -109,20 +109,55 @@ Python 최소 관용구: 타입 힌트는 전면이다 — 모든 함수 매개�
 
 section은 화면 전속 조각이자 HTMX 부분 재렌더 단위다(역할 규율은 architecture-web §4). 파일명은 `<view>_<section>.html` — 화면 접두 필수.
 
-- 동작은 htmx 허용 속성 목록으로만 표기한다 — `hx-get`·`hx-post`(URL은 `{% url %}`), `hx-target`(교체될 요소 선택자), `hx-swap`(교체 방식 — 조각 내부 교체는 기본 `innerHTML`, 요소 자체 교체는 `outerHTML` · 전환이 명세된 교체는 `swap:`/`settle:` 타이밍 수식어를 함께 — §7 모션 · `transition:true`는 금지), `hx-headers`(state-changing의 CSRF 토큰 — `js:` 접두 금지), `hx-trigger`(발동 이벤트 — 기본 트리거로 충분하면 생략 · 이벤트 이름만, `[조건식]` 대괄호 JS 금지).
+- 서버 요청·교체는 htmx 허용 속성 목록으로 표기한다 — `hx-get`·`hx-post`(URL은 `{% url %}`), `hx-target`(교체될 요소 선택자), `hx-swap`(교체 방식 — 조각 내부 교체는 기본 `innerHTML`, 요소 자체 교체는 `outerHTML` · 전환이 명세된 교체는 `swap:`/`settle:` 타이밍 수식어를 함께 — §7 모션 · `transition:true`는 금지), `hx-headers`(state-changing의 CSRF 토큰 — `js:` 접두 금지), `hx-trigger`(발동 이벤트 — 기본 트리거로 충분하면 생략 · 이벤트 이름만, `[조건식]` 대괄호 JS 금지).
 - method 의미론을 지킨다 — 조회 재렌더는 `hx-get`, state-changing은 `hx-post`.
 - state-changing(`hx-post`) 요청의 CSRF는 `hx-headers`의 토큰으로 보낸다 — 조회(`hx-get`)에는 붙이지 않는다.
 - state-changing 요청도 페이지 요청과 같은 auth·permission·CSRF를 통과해야 한다 — HTMX라고 보호 수준을 낮추지 않는다.
 - 페이지 템플릿이 section을 include할 때는 state를 명시 전달한다 — `{% include "..." with state=state %}` 판형. `only` 의무는 widget·component include 한정이다(§6).
 - fragment 응답은 소속 view가 해당 section 템플릿을 render한 HTML이다 — JSON 응답을 만들지 않는다.
-- **커스텀 JS 금지.** 동작은 htmx 속성·CSS 모션·`data-motion` 선언(§7)으로만 표현하고, 템플릿 inline `<script>` 금지, `web/**`에 `.js` 파일 신설 금지 — *왜*: 이 플러그인의 기술 표면은 순수 HTML+HTMX+CSS이며, 백스톱이 위반을 기계 차단한다.
-- JS는 `static/js/`의 vendored 닫힌 2파일(`htmx.min.js`·`motion.js` — 조건 설치)뿐이다 — CDN `<script src>` 금지·motion.js 수정·확장 금지(백스톱이 플러그인 판형과 해시 대조).
+- **UI JS는 승인된 UI 동작 계약만 구현한다.** `static/js/<기능>.js`에 기능당 한 파일을 두고 native HTML/CSS로 충분하면 만들지 않는다. DOM·이벤트·자원 수명·키보드·실패 표기는 implementation-javascript를 따른다. 업무 권한·금액·저장 판정·별도 업무 API 호출·SPA 상태 계층은 금지다.
+- 신규 HTMX core는 `static/htmx/htmx.min.js`이며 기존 `static/js/htmx.min.js`·`htmx.js`는 브라운필드 설치로만 소비한다. 중복 설치·조용한 이동/업그레이드·CDN 실행 태그 금지. motion.js는 기존 조건 설치와 byte 고정 판형을 유지한다(houserules §5⑤).
 
 ```html
 {# order_list_rows.html을 소유한 화면 어디서든 — 조회 재렌더 트리거 판형(hx-get — CSRF 토큰 불요) #}
 <button hx-get="{% url 'orders:order_list_rows' %}"
         hx-target="#order-rows" hx-swap="outerHTML">새로고침</button>
 ```
+
+
+**선언 조각과 로드.** HTMX 선언을 `static/htmx/<기능>.html`에 기능당 하나로 모으고 페이지/section에서 Django include로 렌더한다. web 루트가 기존 TEMPLATES DIRS에 있으므로 include 인자는 `static/htmx/...`다. public static 원문에는 비밀·사용자별 렌더 결과를 저장하지 않는다. 서버 값은 include 렌더 시 전달하며 데이터·권한·CSRF·fragment 응답은 소속 view/section이 유지한다. `{% static 'web/htmx/...' %}` URL을 업무 fragment endpoint로 쓰지 않는다. 새 finder·middleware·템플릿 엔진은 만들지 않는다.
+
+```html
+{# static/htmx/order_refresh.html — 재사용하는 요청 선언; 실제 응답은 section #}
+<button type="button" hx-get="{% url 'orders:order_list_rows' %}"
+        hx-target="#order-rows" hx-swap="outerHTML">새로고침</button>
+```
+
+```html
+{# order_list의 section 또는 페이지 #}
+{% include "static/htmx/order_refresh.html" with state=state %}
+{# order_list_rows.html 자체가 id="order-rows" root를 포함한다 #}
+{% include "orders/order_list/section/order_list_rows.html" with state=state %}
+```
+
+실제 outerHTML 응답의 section은 같은 `id="order-rows"` root를 포함하도록 작성한다. include 파일은 응답 소유자나 새 템플릿 계층이 아니다. state-changing 선언에서는 렌더 시 CSRF를 명시 전달하고 escape된 `hx-headers` 값으로 소비한다.
+
+기능 실행 태그는 base의 공통 로드 또는 페이지의 범용 scripts block에 외부 static 참조로 페이지당 한 번만 둔다. 해당 파일의 실재·응답을 확인한다. fragment와 선언 조각에는 실행 script가 없다. classic은 `defer`, 기존 module 방식은 허용하고 `async`로 순서를 깨지 않는다. inline 실행 JS·on* handler·hx-on·js:·hx-trigger 조건식은 계속 금지한다.
+
+```html
+{# base/base.html — core는 설치된 경로를 한 번 로드; 신규 표준 #}
+<script src="{% static 'web/htmx/htmx.min.js' %}" defer></script>
+{% block scripts %}{% endblock scripts %}
+```
+
+```html
+{# 페이지의 범용 scripts block — fragment에 복제하지 않는다 #}
+{% block scripts %}
+  <script src="{% static 'web/js/password_visibility.js' %}" defer></script>
+{% endblock scripts %}
+```
+
+서버 구조화 데이터는 `{{ state.ui_data|json_script:"ui-data" }}`의 비실행 JSON을 외부 JS에서 textContent→JSON.parse로 소비한다. 단일 값은 정상 escape된 quoted `data-*` 속성으로 충분할 수 있다. 반복 UI라면 JSON id도 유일하게 정한다. 수동 JSON 조립·템플릿 값의 실행 소스 보간은 금지다.
 
 ## §6. widget·design_system component 표기
 
@@ -155,11 +190,12 @@ widget(영역 재사용 조각)과 design_system component(전역 순수 부품)
 
 **베이스 리셋.** 화면 CSS의 리셋 절은 box-sizing·html/body 여백 0과 함께 **UA 기본 스타일 정규화**를 포함한다 — 최소 `p { margin: 0; }` 등 문단·제목류 기본 마진 0. *왜*: 시안(컴포넌트 렌더·디자인 산출물)은 문단 기본 마진이 없는 세계라, `<p>`를 쓰는 순간 브라우저 UA 마진이 시안에 없는 간격을 만든다 — 필요한 간격은 리셋 위에 토큰으로 명시한다.
 
-**모션.** 근거는 설계 명세의 동적 표현 처분(architecture-web §8)뿐이다 — 명세에 없는 모션 발명 금지·«한계» 항목 구현 금지. **처분 표가 지정한 셀렉터·`@keyframes` 명·`data-motion` 토큰을 그대로 쓴다 — 개명·발명 금지**(`check_motion_spec`의 역스윕이 처분 표 밖 모션을 발견으로 잡는다 — 이 이름들이 조인 키다).
+**모션.** 근거는 설계 명세의 동적 표현 처분(architecture-web §8)뿐이다 — 명세에 없는 모션 발명 금지·«한계» 항목 구현 금지. **처분 표가 지정한 셀렉터·`@keyframes` 명·`data-motion` 토큰을 그대로 쓴다 — 개명·발명 금지**(`check_motion_spec`은 CSS/keyframes·data-motion의 정적 대조를 보조한다 — 이 이름들이 조인 키다. UI JS의 실제 모션·누락/발명 전수성은 정적 검사로 증명하지 않는다).
 
 - **상태 규칙**(`:hover`·`:focus-visible`·`transition`)은 해당 요소의 화면 CSS·component CSS에 직접 쓴다 — duration·easing 값은 tokens.css의 `var()` 참조.
 - **`@keyframes`**: 공용(스피너·페이드 류 재사용 모션)은 `design_system/foundation/motion.css`에 `motion-*` 이름으로, 화면 전속은 그 화면 CSS에 `<view>_` 접두로 둔다. motion.css에는 custom property 정의 금지 — keyframes·유틸 클래스 선언만(중간값 리터럴은 허용).
 - **htmx 교체 전환**: `htmx-swapping`(퇴장)·`htmx-settling`(진입)·`htmx-request`(요청 중 — 로딩 표시) 클래스에 CSS transition을 건다. 전환이 명세된 교체는 **`hx-swap`에 `swap:`/`settle:` 타이밍 수식어가 필수**다 — 예 `hx-swap="innerHTML swap:200ms settle:100ms"`. *왜*: htmx 기본은 swap 0ms·settle 20ms라 수식어 없이는 클래스가 transition보다 먼저 사라져 전환이 보이지 않는다. `hx-swap`의 `transition:true`(View Transitions)는 금지 — 전환 채널은 CSS 클래스 하나로 단일화한다.
+- **UI JS 모션**: `ui-js` 채택 행의 `static/js/<기능>.js :: [data-<root>]`를 UI 동작 계약과 일치시킨다. 필요한 시각 값은 CSS 토큰으로 읽고 초기 발동·적용되는 실제 swap·자원 정리·감속 선호 경로를 브라우저로 검증한다. 러너 파일을 확장해 넣지 않는다.
 - **러너 소비**(motion.js가 설치된 빌드만): 명세가 «러너»로 채택한 항목만 요소에 `data-motion="<모션명>"`을 선언한다 — 러너가 뷰포트 진입 시 `motion-in` 클래스를 부여한다(one-shot). **초기 은닉은 `html.motion-ready` 하위 셀렉터 + `@media (prefers-reduced-motion: no-preference)` 안에서만** 쓴다 — 판형: `@media (prefers-reduced-motion: no-preference){ html.motion-ready [data-motion]{ opacity:0; } html.motion-ready [data-motion].motion-in{ opacity:1; transition: opacity var(--duration-reveal) var(--ease-out); } }`. *왜*: 러너 실패·차단·감속 선호 사용자에게 콘텐츠가 영구 숨김되지 않는다(motion-ready 없는 문서에서 은닉 규칙은 발화하지 않는다).
 - **base.html 로드 태그 판형**(base 입장은 `undecidable-web.md` §6): `<link rel="stylesheet" href="{% static 'design_system/foundation/motion.css' %}">` — tokens.css 다음 줄. motion.js가 설치된 빌드만 `<script src="{% static 'web/js/motion.js' %}" defer></script>` — htmx 태그 다음 줄·`defer` 필수.
 

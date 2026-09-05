@@ -15,6 +15,7 @@ dddjango-web이 만드는 `web/` 코드에 한정된 집안 규칙이다. **표�
 1. **표준은 새로 만드는 코드부터 적용한다 — 기존 코드의 수정·개명·이동을 요구하지 않는다.** 적용 경계는 둘로 갈린다: 표기(파일명·접두·접미사·클래스)는 **모든 새 파일**에, 폴더 구조는 **신규 단위부터** — §2 경계 규칙.
 2. **신규 단위(영역·화면 개념·client BC 폴더)는 표준 트리를 적용한다** — `references/final.md` §1을 반드시 읽는다. 생략·축소 불가 골격(final.md §3 정신 — YAGNI로 접을 수 없다):
    - 화면 개념 = **종류 4폴더(view·view_model·state·section) 항상 생성** — `form/`은 조건 생성(입력 form이 있는 화면만 — final.md §3). 빈 폴더 마커는 Python 패키지 `__init__.py`·HTML 전용 `.gitkeep`(final.md §3). 그 외 선택 폴더 없음.
+   - 신규 static 골격은 `css/`·`js/`·`htmx/`·`images/` 네 폴더다. `fonts/`·`files/`는 검증된 파일이 필요할 때만 생성한다. 기능 JS/HTMX 선언은 각각 기능당 한 파일이며 평면 snake_case다(final.md §3~§5).
    - `widget/`은 영역 수준 — 화면 개념 폴더 안에 만들지 않는다.
    - `design_system/`은 foundation·component **2칸 시작** — theme·util 칸은 만들지 않는다(final.md §3).
    - **영구 test/ 없음** — 생성 앱의 테스트 폴더·파일을 만들지 않는다. 임시 Django 렌더·브라우저 검증을 수행하고 증적은 보존한다(final.md §3).
@@ -36,7 +37,7 @@ dddjango-web이 만드는 `web/` 코드에 한정된 집안 규칙이다. **표�
 - G0 판정 없는 영역 신설, 영역 직속 파일(urls.py·widget/·화면 개념 폴더·마커 파일 외), 빈 영역, 영역 중첩, 영역 이름에 컨테이너명·종류명(final.md §1).
 - `web/**`에 `application.`·`framework.` import — driving_layer schema import 포함(final.md §5①).
 - view·VM·템플릿의 API URL 리터럴·직접 HTTP 호출 — client/ 밖(final.md §5②~④).
-- 커스텀 `.js` 파일 신설·템플릿 inline `<script>`·htmx 속성 JS 채널(`hx-on*`·`js:` 접두·`hx-trigger` 조건식) — vendored 닫힌 2종(htmx·motion) 외 JS·motion.js 판형 이탈(final.md §5⑤).
+- 승인된 UI 동작 계약 밖 JS·기능 파일 분할/합침·업무 판정·별도 업무 API 호출·inline 실행 JS·on* handler·htmx JS 채널(`hx-on*`·`js:`·`hx-trigger` 조건식)·motion.js 판형 이탈(final.md §5⑤).
 - 삼총사 접두 불일치, section에 소속 view 접두 없음, widget·component 이름에 view 이름 등장.
 - web path·name 리터럴이 urls.py 밖에(템플릿 하드코딩 href·redirect), 또는 `web/urls.py`에 영역 리터럴 직접 정의(영역 include 합산만 — final.md §5④), 커스텀 templatetags 신설(`{% include %}` 전용).
 - design_system/component 직속 파일, component에 BC 어휘, 템플릿·CSS의 생 색·간격 리터럴(tokens.css 밖).
@@ -55,7 +56,7 @@ dddjango-web이 만드는 `web/` 코드에 한정된 집안 규칙이다. **표�
 | 성장 규칙(영역·개념 1차·종류 2차) | final.md §2 |
 | 골격 완비(종류 4폴더·form 조건 생성·마커 파일·design_system 2칸·test 없음) | final.md §3 |
 | 명명 규약 총괄표·공통 원칙 | final.md §4 |
-| 참조·import 방향(격리·수평 격리·D12 순수성) | final.md §5 |
+| 참조·import 방향(격리·수평 격리·UI 실행 경계) | final.md §5 |
 | widget·section·component·view 입장 위치 답(판별 순서는 architecture-web §2) | final.md §6 |
 | 백스톱 러너·게이트 의미론·배선 handoff | final.md §7 |
 | 표기 표준화 — 브라운필드 관행 교정 사전 | final.md §8 |

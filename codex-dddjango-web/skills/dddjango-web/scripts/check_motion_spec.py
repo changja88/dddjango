@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """check_motion_spec — 모션 처분 표의 결정론 검사 (dddjango-web).
 
-구현측 모션은 폐쇄계다(D12 — CSS 모션 + `data-motion` 선언뿐·전부 커밋 텍스트).
-따라서 브라우저 없이 «관찰 표(motion-notes) ↔ 처분 표(설계 명세) ↔ web/ 트리»의
-정적 대조로 모션 검증이 성립한다. 이 검사기가 그 대조의 소유자다 — 계획
+구현측 모션 좌표의 CSS·러너 판형과 UI JS의 파일/root literal은 커밋 텍스트로
+좁게 대조할 수 있다. UI JS의 실제 효과·전수성·수명은 이 검사로 증명하지 않으며
+감수와 브라우저 증거가 소유한다. 이 검사기는 정적 구조 근거의 대조를 맡는다 — 계획
 workspace/plan/2026-08-25-web-motion-determinism-plan.md W4.
 
 사용:
@@ -29,6 +29,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+from html.parser import HTMLParser
 from pathlib import Path
 
 NOTES_HEADER = "| id | 요소 | 트리거 | 효과 | 재현 분류(예상) | 출처 |"
@@ -36,13 +37,18 @@ SPEC_HEADER = "| note id | 처분 | 분류 | 구현 좌표 | 값 | 근거 |"
 ID_RE = re.compile(r"^m\d+$")
 STATUS_IDS = {"—", "-"}  # 빈칸은 상태 행이 아니라 id 판형 위반이다(조용한 증발 금지)
 DISPOSITIONS = {"채택", "기각", "한계"}
-KINDS = {"css-hover", "css-focus", "css-transition", "css-keyframes", "러너", "—", "-"}
+KINDS = {"css-hover", "css-focus", "css-transition", "css-keyframes", "러너", "ui-js", "—", "-"}
 COORD_RE = re.compile(r"^(?P<path>[^:]+?)\s*::\s*(?P<sel>.+)$")
 TOKEN_RE = re.compile(r"var\((--[\w-]+)\)")
 KEYFRAMES_RE = re.compile(r"@keyframes\s+([\w-]+)")
 DATA_MOTION_RE = re.compile(r"data-motion=(\"|')([^\"']+)\1")
 CSS_COMMENT_RE = re.compile(r"/\*.*?\*/", re.S)
 HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.S)
+DJANGO_COMMENT_RE = re.compile(
+    r"\{%\s*comment\b.*?%\}.*?\{%\s*endcomment\s*%\}|\{#[^\r\n]*?#\}", re.S
+)
+UI_JS_PATH_RE = re.compile(r"^static/js/[a-z0-9_]+\.js$")
+UI_JS_SELECTOR_RE = re.compile(r"^\[data-([a-z][a-z0-9-]*)\]$")
 ESC_PIPE = "\x00"  # 셀 안 이스케이프 파이프(\|) 보존용 placeholder
 
 
@@ -118,12 +124,96 @@ def audit_motion_counts(path: str) -> int:
                ("transitions", "transitionRules", "keyframes", "animationRules", "hoverSelectors", "focusSelectors"))
 
 
+def strip_js_comments(text: str) -> str:
+    """문자열은 보존하고 code와 template `${…}` 안 주석만 공백화한다."""
+    out = list(text)
+
+    def blank(start: int, end: int) -> None:
+        for pos in range(start, end):
+            if out[pos] != "\n":
+                out[pos] = " "
+
+    def scan_quoted(i: int, quote: str) -> int:
+        i += 1
+        while i < len(text):
+            if text[i] == "\\" and i + 1 < len(text):
+                i += 2
+            elif text[i] == quote:
+                return i + 1
+            else:
+                i += 1
+        return i
+
+    def scan_template(i: int) -> int:
+        i += 1
+        while i < len(text):
+            if text[i] == "\\" and i + 1 < len(text):
+                i += 2
+            elif text[i] == "`":
+                return i + 1
+            elif text.startswith("${", i):
+                i = scan_code(i + 2, 1)
+            else:
+                i += 1
+        return i
+
+    def scan_code(i: int, brace_depth: int = 0) -> int:
+        while i < len(text):
+            if text.startswith("//", i):
+                end = text.find("\n", i + 2)
+                end = len(text) if end < 0 else end
+                blank(i, end)
+                i = end
+            elif text.startswith("/*", i):
+                end = text.find("*/", i + 2)
+                end = len(text) if end < 0 else end + 2
+                blank(i, end)
+                i = end
+            elif text[i] in ("'", '"'):
+                i = scan_quoted(i, text[i])
+            elif text[i] == "`":
+                i = scan_template(i)
+            elif brace_depth and text[i] == "{":
+                brace_depth += 1
+                i += 1
+            elif brace_depth and text[i] == "}":
+                brace_depth -= 1
+                i += 1
+                if brace_depth == 0:
+                    return i
+            else:
+                i += 1
+        return i
+
+    scan_code(0)
+    return "".join(out)
+
+
+class DataRootParser(HTMLParser):
+    def __init__(self, root_name: str) -> None:
+        super().__init__(convert_charrefs=True)
+        self.attribute = f"data-{root_name}".lower()
+        self.found = False
+
+    def handle_starttag(
+            self, _tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if any(name.lower() == self.attribute for name, _value in attrs):
+            self.found = True
+
+
+def html_has_data_root(html: str, root_name: str) -> bool:
+    parser = DataRootParser(root_name)
+    parser.feed(html)
+    return parser.found
+
+
 def check_impl(root: Path, spec_rows: list[list[str]], findings: list[str], warns: list[str]) -> None:
     css_files = sorted(root.rglob("*.css"))
     html_files = sorted(root.rglob("*.html"))
     # 주석은 걷어내고 본다 — 주석 속 잔재가 역스윕 오탐·존재 검사 오통과를 만들지 않게
     css_all = CSS_COMMENT_RE.sub("", "\n".join(f.read_text(encoding="utf-8", errors="replace") for f in css_files))
-    html_all = HTML_COMMENT_RE.sub("", "\n".join(f.read_text(encoding="utf-8", errors="replace") for f in html_files))
+    html_all = "\n".join(f.read_text(encoding="utf-8", errors="replace") for f in html_files)
+    html_all = DJANGO_COMMENT_RE.sub("", HTML_COMMENT_RE.sub("", html_all))
 
     def token_used(token: str, body: str) -> bool:
         # var( 토큰 [,)]) 정확 매치 — 접두 부분 문자열(--duration-fast ⊂ --duration-faster) 오통과 차단
@@ -147,6 +237,31 @@ def check_impl(root: Path, spec_rows: list[list[str]], findings: list[str], warn
                 findings.append(f"{note_id}: 러너 채택인데 base.html에 motion.js 로드 태그 없음")
             if "[data-motion]" not in css_all or "motion-in" not in css_all:
                 findings.append(f"{note_id}: 러너 초기 은닉 판형([data-motion]·motion-in) CSS 없음")
+        elif kind == "ui-js":
+            m = COORD_RE.match(coord)
+            if not m:
+                findings.append(f"{note_id}: ui-js 구현 좌표 판형 위반(«static/js/<기능>.js :: [data-<root>]» 필요)")
+                continue
+            rel, selector = m.group("path").strip(), m.group("sel").strip()
+            normalized = rel[len("web/"):] if rel.startswith("web/") else rel
+            selector_match = UI_JS_SELECTOR_RE.fullmatch(selector)
+            if not UI_JS_PATH_RE.fullmatch(normalized) or normalized in {
+                    "static/js/motion.js", "static/js/htmx.js", "static/js/htmx.min.js"}:
+                findings.append(f"{note_id}: ui-js 좌표 경로 위반 — {rel}")
+                continue
+            if selector_match is None:
+                findings.append(f"{note_id}: ui-js root 판형 위반 — {selector}")
+                continue
+            target = root / normalized
+            if not target.is_file():
+                findings.append(f"{note_id}: ui-js 좌표 파일 없음 — {rel}")
+                continue
+            js_body = strip_js_comments(target.read_text(encoding="utf-8", errors="replace"))
+            if selector not in js_body:
+                findings.append(f"{note_id}: ui-js JS에 literal root 없음 — {selector}")
+            root_name = selector_match.group(1)
+            if not html_has_data_root(html_all, root_name):
+                findings.append(f"{note_id}: ui-js HTML에 실제 root 속성 없음 — data-{root_name}")
         else:
             m = COORD_RE.match(coord)
             if not m:
@@ -183,6 +298,8 @@ def check_impl(root: Path, spec_rows: list[list[str]], findings: list[str], warn
             findings.append(f"역스윕: 처분 표 채택에 없는 data-motion «{token}» — 모션 발명(명세 밖)")
     if not css_files and not html_files:
         warns.append(f"web-root에 css/html 파일 0건 — 경로 확인: {root}")
+    if any(row[1] == "채택" and row[2] == "ui-js" for row in spec_rows):
+        print("[motion-spec] info: ui-js 검사는 파일·literal root의 구조 근거만 확인하며 실제 JS 효과·전수성은 별도 검증 대상")
 
 
 def main(argv: list[str]) -> int:

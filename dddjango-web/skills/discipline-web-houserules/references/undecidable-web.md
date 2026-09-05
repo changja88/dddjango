@@ -16,9 +16,11 @@
 
 ## §1. view/section — "상태 조립이 필요한가"
 
-**절차**: 그 UI 조각에 **자기 표시 상태의 조립**(client 호출·표시 판정·상태 dataclass)이 필요한가? 필요하면 — 전체 페이지든 HTMX로 갈아 끼우는 조각이든 — **view**다: 삼총사(`_view.py`·`_view_model.py`·`_state.py`) + 페이지 템플릿으로 생성하고, fragment 진입점도 그 view가 소유한다. 필요 없으면 — 받은 state 렌더만으로 성립하면 — **section**이다.
+**절차**: 그 UI 조각에 **자기 서버 표시 상태의 조립**(client 호출·표시 판정·상태 dataclass)이 필요한가? 필요하면 — 전체 페이지든 HTMX로 갈아 끼우는 조각이든 — **view**다: 삼총사(`_view.py`·`_view_model.py`·`_state.py`) + 페이지 템플릿으로 생성하고, fragment 진입점도 그 view가 소유한다. 필요 없으면 — 받은 state 렌더만으로 성립하면 — **section**이다.
 
 **신호**: section으로 두려는데 ⓐ 템플릿 조건 분기가 표시 *판정*으로 자라고 ⓑ 부모 state에 그 조각 전용 필드가 늘고 ⓒ 자기 데이터 조회가 필요해진다 → view 승격 신호이지 예외가 아니다. 반대로 state 렌더만으로 성립하면 view로 승격하지 않는다(불필요한 삼총사 양산 금지). 승격·이동 절차는 architecture-web §5.
+
+**브라우저 임시 상태**: 펼침·비밀번호 표시·복사 안내·로컬 미리보기만으로 VM/state를 생성하거나 view로 승격하지 않는다. 서버 조립 필요성과 UI JS 필요성은 독립이며 `static_only`도 승인된 로컬 UI 동작을 허용한다.
 
 **판례 — 정적 화면**: 상태 조립이 필요 없는 독립 페이지(약관·안내)는 view+페이지 템플릿만으로 허용한다 — 빈 VM·빈 state 파일을 채우지 않는다(종류 4폴더 골격은 완비하되 파일은 만들지 않는다 — final.md §3·§4).
 
@@ -52,8 +54,10 @@
 
 ## §6. base "거의 빈" — base.html 입장
 
-**절차**: base.html에 오는 것은 **공통 문서 골격**(head·tokens.css·motion.css `<link>`·vendored htmx 로드·**motion.js `<script defer>`는 설치된 빌드만** — 로드 태그는 전부 `{% static %}` 정확 경로)·**내비 셸**·**전역 게이트**(전 화면 공통 차단·안내 요소 — 점검 배너 류)뿐이다. **화면 어휘 금지** — 특정 화면·특정 BC의 이름·문자열·분기가 base에 보이면 그 조각은 base 소속이 아니다: 화면 전속이면 그 화면 section, 영역 재사용이면 widget, 순수 시각이면 design_system/component.
+**절차**: base.html에 오는 것은 **공통 문서 골격**(head·tokens.css·motion.css `<link>`·vendored htmx 로드·**motion.js `<script defer>`는 설치된 빌드만**·공통 기능 JS 외부 로드·페이지가 채우는 범용 `scripts` block — 로드 태그는 전부 `{% static %}` 정확 경로)·**내비 셸**·**전역 게이트**(전 화면 공통 차단·안내 요소 — 점검 배너 류)뿐이다. **화면 어휘 금지** — 특정 화면·특정 BC의 이름·문자열·분기가 base에 보이면 그 조각은 base 소속이 아니다: 화면 전속이면 그 화면 section, 영역 재사용이면 widget, 순수 시각이면 design_system/component.
 
 **신호**: base.html에 특정 화면에서만 참여하는 블록·조건 분기가 는다 / base가 특정 화면의 state를 전제한다 / 내비에 도메인 데이터 표시(뱃지·카운트 류)가 필요해진다 — base가 조회하지 말고 그 데이터를 소유할 view를 정해 HTMX 조각으로 끼운다.
 
 **판례 — 전역 게이트**: 전 화면 공통 차단·안내(점검 배너 류)만 base의 전역 게이트다. 특정 영역·특정 화면에서만 요구되는 차단은 그 화면의 view가 소유한다 — base에 화면별 분기를 얹지 않는다.
+
+범용 scripts block 자체와 공통 기능의 외부 파일명은 화면 어휘 금지 위반이 아니다. 특정 화면의 조건 분기·DOM 동작·inline 코드를 base에 넣지 않는다. 페이지 전용 기능 로드는 해당 페이지의 scripts block에 한 번 두며 fragment에는 실행 태그를 넣지 않는다. 신규 core 참조는 `web/htmx/htmx.min.js`, 기존 js 경로는 설치된 파일을 그대로 소비한다.

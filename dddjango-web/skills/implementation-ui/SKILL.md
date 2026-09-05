@@ -1,6 +1,6 @@
 ---
 name: implementation-ui
-description: web 구현 표기법 — 시안 재현 절차(직수입 금지·토큰화·asset-manifest), 삼총사 view/view_model/state·form 표기, Django 템플릿·HTMX section 표기(커스텀 JS 금지·vendored htmx), design_system 토큰·CSS, in-process client(django.test.Client)·urls. web/ 트리의 코드를 구현할 때 먼저 로드한다. 무엇을 어느 조각에 담는가·판별·승격·계약 소비 절차는 architecture-web, 트리·명명 사실은 discipline-web-houserules, 보편 클린코드는 discipline-cleancode로 위임.
+description: web 구현 표기법 — 시안 재현 절차(직수입 금지·토큰화·asset-manifest), 삼총사 view/view_model/state·form 표기, Django 템플릿·HTMX 선언 include·section 응답·외부 UI JS 로드, design_system 토큰·CSS, in-process client(django.test.Client)·urls. web/ 트리의 코드를 구현할 때 먼저 로드한다. 무엇을 어느 조각에 담는가·판별·승격·계약 소비 절차는 architecture-web, 트리·명명 사실은 discipline-web-houserules, 보편 클린코드는 discipline-cleancode로 위임.
 user-invocable: false
 ---
 
@@ -12,6 +12,7 @@ user-invocable: false
 
 - 무엇을 view/section/widget 어느 조각에 담나 — 판별·승격·계약 소비 절차 → `architecture-web`
 - 파일을 어느 폴더에 어떤 이름으로 만드나 — 트리·명명 사실 → `discipline-web-houserules`
+- UI JS 이벤트·DOM·브라우저 자원·수명·키보드 표기 → `implementation-javascript`
 - 명명·함수 형태·캡슐화·중복 같은 보편 규율 → `discipline-cleancode`
 - 호스트 배선(INSTALLED_APPS·TEMPLATES DIRS·STATICFILES_DIRS 프리픽스 튜플·ROOT_URLCONF include·ALLOWED_HOSTS·htmx vendored 설치) → Coordinator — 커맨드 Phase 0 전제조건 검사
 - BC 안 서버렌더(driven_layer templates·Django admin)는 비관할 — dddjango 플러그인 소관
@@ -25,7 +26,7 @@ user-invocable: false
 - 템플릿: extends 첫 비주석 줄·load 알파벳순·태그 안 한 칸 공백·block 이름으로 닫기·state만 참조(표시 분기만 — 계산·필터링 금지) (§4)
 - `{% url %}`·`{% static %}` 의무 — 경로 하드코딩 금지. base.html은 «거의 빈» 골격 (§4)
 - section=`<view>_<section>.html` — 허용 htmx 속성은 hx-get·hx-post·hx-target·hx-swap·hx-headers·hx-trigger. CSRF는 state-changing(hx-post)만 hx-headers 토큰, state-changing도 페이지와 같은 auth·permission·CSRF (§5)
-- **커스텀 JS 금지** — 동작은 htmx 속성·CSS 모션·`data-motion` 선언으로만. inline `<script>` 금지·web/** .js 신설 금지, JS는 static/js/ vendored 닫힌 2파일(htmx·motion[조건 설치·판형 수정 금지])·CDN 금지·htmx `js:` 채널 금지 (§5)
+- **UI JS와 서버 책임 분리** — 승인된 UI 동작 계약의 기능 JS만 허용하며 native로 충분하면 파일 없음. HTMX 선언은 static/htmx/의 기능 파일을 include, 응답은 view/section 소유. 기능 script는 base 공통 로드 또는 페이지 scripts block의 외부 static 한 번, inline 실행·HTMX JS 채널 금지 (§5)
 - 모션 — 근거는 명세의 동적 표현 처분뿐(발명·한계 항목 구현 금지). 공용 keyframes=motion.css(`motion-*`)·화면 전속=화면 CSS `<view>_` 접두·htmx 전환은 `swap:`/`settle:` 수식어 필수·초기 은닉은 `html.motion-ready`+PRM 가드 안에서만 (§7)
 - 배치 거동 — 고정 바·헤더는 sticky 기본(+top/bottom 명시), **sticky와 의도된 스크롤포트 사이 중간 조상에 overflow hidden·auto·scroll 금지**(셸 클립은 `overflow-x: clip`), fixed는 전역 오버레이만·조상 transform/filter가 있으면 무력화. 근거는 명세의 배치 거동 결정뿐 (§7)
 - widget·component include는 `with … only` 의무 — 암묵 context 상속 금지. 페이지→section include는 state 명시 전달(`with state=state`). widget에 화면 이름 금지·component에 BC 어휘 금지 (§5·§6)
@@ -41,7 +42,7 @@ user-invocable: false
 | 시안(이미지·HTML)의 화면 재현 절차 | final.md §2 |
 | view·view_model·form·state 파일 표기 | final.md §3 |
 | 페이지 템플릿·base.html 표기 | final.md §4 |
-| section 파일·HTMX 속성·CSRF·JS 금지 표기 | final.md §5 |
+| section·HTMX 선언 include·CSRF·외부 JS 로드·데이터 전달 | final.md §5 |
 | widget·component include 표기 | final.md §6 |
 | tokens.css·이미지 에셋 표기 | final.md §7 |
 | client 호출·신원 이월·응답 모델·예외 변환 표기 | final.md §8 |

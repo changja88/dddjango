@@ -55,14 +55,16 @@ PY_KIND_DIRS: Set[str] = {'view', 'view_model', 'state', 'form'}  # §3 마커=_
 HTML_KIND_DIRS: Set[str] = {'section', 'widget'}  # §3 마커=.gitkeep
 # houserules §1 — 영역·화면 이름 deny(컨테이너명·종류명)
 RESERVED_NAMES: Set[str] = CONTAINER_DIRS | KIND_DIRS | {'web', 'widget'}
-# houserules §1·§3 — static/ 직속 3종
-STATIC_DIRS: Set[str] = {'css', 'js', 'images', 'fonts', 'files'}
+# houserules §1·§3 — static/ 직속 4종 + 조건부 2종
+STATIC_DIRS: Set[str] = {'css', 'js', 'htmx', 'images', 'fonts', 'files'}
 # houserules §4 — component 정크드로어 군 금지
 JUNK_GROUPS: Set[str] = {'widget', 'etc'}
-# houserules §5⑤·§4 — vendored JS 허용(web-상대) — 닫힌 2그룹(D12v2): htmx 변형 중 1 + motion.js
-HTMX_ALLOWED: Set[str] = {'static/js/htmx.min.js', 'static/js/htmx.js'}
+# houserules §5⑤·§4 — HTMX core는 신규 canonical 1경로. legacy 2경로는
+# diff-base에 실재하던 브라운필드 설치만 소비한다.
+HTMX_CANONICAL: str = 'static/htmx/htmx.min.js'
+HTMX_LEGACY: Set[str] = {'static/js/htmx.min.js', 'static/js/htmx.js'}
+HTMX_ALLOWED: Set[str] = {HTMX_CANONICAL} | HTMX_LEGACY
 MOTION_JS: str = 'static/js/motion.js'
-VENDORED_JS_ALLOWED: Set[str] = HTMX_ALLOWED | {MOTION_JS}
 # houserules §4 총괄표 — 종류 폴더 ↔ py 접미사
 KIND_PY_SUFFIX: Dict[str, str] = {
     'view': '_view.py',
