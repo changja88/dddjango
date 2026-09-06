@@ -280,6 +280,33 @@ class AssetTests(unittest.TestCase):
         files = json.loads((self.out / 'source-manifest.json').read_text())['files']
         self.assertEqual({i['local_path'] for i in files if i['kind'] == 'image'}, {'images/logo.png', 'components/badge.png'})
 
+    def test_es_scanner_ignores_fake_imports_and_collects_real_forms_and_inline_modules(self):
+        self.put('screen.html', '''<script type="module">
+          const fake = "import './fake-inline.js'";
+          import './inline.js';
+        </script>''')
+        self.put('inline.js', 'export { value } from "./value.js";')
+        self.put('value.js', 'export const value = 1;')
+        result = self.freeze()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        paths = {row['local_path'] for row in json.loads((self.out / 'source-manifest.json').read_text())['files']}
+        self.assertEqual(paths, {'screen.html', 'inline.js', 'value.js'})
+
+    def test_nonliteral_and_bare_imports_and_jsx_src_expressions_block_freeze(self):
+        self.put('screen.html', '<x-import from="Panel.jsx"></x-import>')
+        self.put('Panel.jsx', '''
+          import React from "react";
+          import("./" + name);
+          export default () => <img src={assetPath}/>;
+        ''')
+        result = self.freeze()
+        self.assertNotEqual(result.returncode, 0)
+        manifest = json.loads((self.out / 'source-manifest.json').read_text())
+        reasons = '\n'.join(row['reason'] for row in manifest['files'] if row['status'] == 'failed')
+        self.assertIn('bare module', reasons)
+        self.assertIn('non-literal import', reasons)
+        self.assertIn('JSX resource expression', reasons)
+
     def test_http_html_error_mime_is_not_accepted_as_stylesheet(self):
         self.put('screen.html', '<link rel="stylesheet" href="error.css">')
         self.put('error.css', '<h1>Temporarily unavailable</h1>')

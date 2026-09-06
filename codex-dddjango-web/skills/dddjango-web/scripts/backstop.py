@@ -5,6 +5,7 @@
 # 사용:
 #   python backstop.py <대상 프로젝트 루트> [--diff-base <commit>] [--all]
 #                      [--only ws,wi,wn,wp|<검사ID>…]
+#                      [--design-build <증거 build 디렉터리>]
 #
 # 종료코드: 0=clean / 1=사용·내부 오류(미실행 — 통과가 아니다) / 2=blocker(발견 일괄
 # 출력 — fail-fast 금지). (houserules §7 exit 계약)
@@ -24,11 +25,13 @@ from src.check_structure import run_structure  # noqa: E402
 from src.check_imports import run_imports  # noqa: E402
 from src.check_naming import run_naming  # noqa: E402
 from src.check_purity import run_purity  # noqa: E402
+from check_design_evidence import Defects, implementation_digest, validate_inputs, validate_visual  # noqa: E402
 
 TOTAL_CHECKS: int = 26  # WS8 + WI4 + WN8 + WP6
 
 _USAGE: str = ('사용: python backstop.py <대상 프로젝트 루트> '
-               '[--diff-base <commit>] [--all] [--only ws,wi,wn,wp]')
+               '[--diff-base <commit>] [--all] [--only ws,wi,wn,wp] '
+               '[--design-build <dir>]')
 
 
 def main(argv: List[str]) -> int:
@@ -36,6 +39,7 @@ def main(argv: List[str]) -> int:
     diff_base: Optional[str] = None
     all_mode: bool = False
     only: Set[str] = set()
+    design_build: Optional[str] = None
 
     i: int = 0
     while i < len(argv):
@@ -54,6 +58,12 @@ def main(argv: List[str]) -> int:
                 print('[backstop] 사용 오류: --only 값 없음', file=sys.stderr)
                 return 1
             only.update(s.strip().lower() for s in argv[i].split(',') if s.strip())
+        elif a == '--design-build':
+            i += 1
+            if i >= len(argv):
+                print('[backstop] 사용 오류: --design-build 값 없음', file=sys.stderr)
+                return 1
+            design_build = argv[i]
         elif a.startswith('--'):
             print('[backstop] 사용 오류: 알 수 없는 옵션 %s' % a, file=sys.stderr)
             return 1
@@ -108,12 +118,31 @@ def main(argv: List[str]) -> int:
         (f for f in findings if id_on(f.check_id)),
         key=lambda f: (f.check_id, f.path, f.line or 0))
 
+    design_defects: List[str] = []
+    if design_build is not None:
+        try:
+            build: Path = Path(design_build).resolve()
+            if not build.is_dir():
+                design_defects.append('--design-build 디렉터리/증거가 없음: %s' % design_build)
+            else:
+                design_spec, input_value, _items = validate_inputs(build, root.resolve())
+                implementation_value: str = implementation_digest(root.resolve(), design_spec)
+                validate_visual(build, root.resolve(), design_spec, input_value, implementation_value)
+        except Defects as error:
+            design_defects.extend(error.messages)
+        except Exception:
+            print('[backstop] design evidence 내부 오류:\n%s' % traceback.format_exc(), file=sys.stderr)
+            return 1
+
     for n in ctx.notices:
         print(n)
     if ctx.notices:
         print()
     for f in shown:
         print(f)
+        print()
+    for message in design_defects:
+        print('[DESIGN] BLOCKER — %s' % message)
         print()
     if ctx.gated and diff_base is not None:
         mode: str = 'gated(diff-base %s)' % diff_base[:8]
@@ -122,7 +151,7 @@ def main(argv: List[str]) -> int:
     else:
         mode = '전역 퇴화'
     print('[backstop] 검사 %d종(%s) — blocker %d건' % (TOTAL_CHECKS, mode, len(shown)))
-    return 0 if not shown else 2
+    return 0 if not shown and not design_defects else 2
 
 
 if __name__ == '__main__':

@@ -33,6 +33,7 @@ class Dependencies(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.rows = []
         self.in_style = False
+        self.in_script = False
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
@@ -40,6 +41,8 @@ class Dependencies(HTMLParser):
             self.rows.extend((ref, kind, 'document') for ref, kind, _base in css_dependencies(attrs['style']))
         if tag == 'style':
             self.in_style = True
+        if tag == 'script' and not attrs.get('src'):
+            self.in_script = True
         attribute = None
         kind = 'file'
         if tag in ('img', 'script', 'source', 'video', 'audio', 'iframe'):
@@ -67,10 +70,82 @@ class Dependencies(HTMLParser):
     def handle_endtag(self, tag):
         if tag == 'style':
             self.in_style = False
+        if tag == 'script':
+            self.in_script = False
 
     def handle_data(self, data):
         if self.in_style:
             self.rows.extend((ref, kind, 'document') for ref, kind, _base in css_dependencies(data))
+        elif self.in_script:
+            self.rows.extend(es_dependencies(data))
+
+
+_JS_TOKEN = re.compile(
+    r'''(?P<space>\s+)|(?P<comment>//[^\n]*|/\*.*?\*/)|'''
+    r'''(?P<string>"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|'''
+    r'''(?P<identifier>[A-Za-z_$][\w$]*)|(?P<punct>.)''', re.S)
+
+
+def es_dependencies(source: str) -> list[tuple[str, str, str]]:
+    """Find supported ES literal edges and explicit unsupported source forms.
+
+    This deliberately is not a JavaScript evaluator. Token context prevents
+    comments and string contents from manufacturing fake import statements.
+    """
+    tokens = [(match.lastgroup, match.group()) for match in _JS_TOKEN.finditer(source)
+              if match.lastgroup not in ('space', 'comment')]
+    rows: list[tuple[str, str, str]] = []
+
+    def literal(index: int) -> str | None:
+        if index < len(tokens) and tokens[index][0] == 'string':
+            quoted = tokens[index][1]
+            return re.sub(r'\\([\\\'"/])', r'\1', quoted[1:-1])
+        return None
+
+    def add(value: str) -> None:
+        if value.startswith(('.', '/', 'http:', 'https:')):
+            rows.append((value, resource_kind(value, 'script'), 'file'))
+        else:
+            rows.append(('{bare module:' + value + '}', 'script', 'file'))
+
+    i = 0
+    while i < len(tokens):
+        kind, value = tokens[i]
+        if kind == 'identifier' and value == 'import' and (i == 0 or tokens[i - 1][1] != '.'):
+            if i + 1 < len(tokens) and tokens[i + 1][1] == '(':
+                dep = literal(i + 2)
+                if dep is None or i + 3 >= len(tokens) or tokens[i + 3][1] != ')':
+                    rows.append(('{non-literal import}', 'script', 'file'))
+                else:
+                    add(dep)
+            else:
+                dep = literal(i + 1)
+                if dep is not None:
+                    add(dep)
+                else:
+                    j = i + 1
+                    while j < len(tokens) and tokens[j][1] not in (';',):
+                        if tokens[j] == ('identifier', 'from'):
+                            dep = literal(j + 1)
+                            break
+                        j += 1
+                    if dep is not None:
+                        add(dep)
+        elif kind == 'identifier' and value == 'export':
+            j = i + 1
+            while j < len(tokens) and tokens[j][1] != ';':
+                if tokens[j] == ('identifier', 'from'):
+                    dep = literal(j + 1)
+                    if dep is not None:
+                        add(dep)
+                    break
+                j += 1
+        i += 1
+    # JSX resource expressions are outside the literal acquisition boundary.
+    code_context = ' '.join(value if kind != 'string' else ' ' * len(value) for kind, value in tokens)
+    if re.search(r'\b(?:src|href|poster)\s*=\s*\{', code_context):
+        rows.append(('{JSX resource expression}', 'file', 'file'))
+    return rows
 
 
 def dependencies(source: str, kind: str) -> list[tuple[str, str, str]]:
@@ -82,11 +157,7 @@ def dependencies(source: str, kind: str) -> list[tuple[str, str, str]]:
             parser.feed(source)
         rows = parser.rows
         if kind in ('script', 'component'):
-            # Literal ES imports only; dynamic expressions cannot be resolved by static freezing.
-            code = re.sub(r'/\*.*?\*/|^\s*//[^\n]*', '', source, flags=re.S | re.M)
-            for match in re.finditer(r'\b(?:from\s*|import\s*(?:\(\s*)?)[\'"]([^\'"]+)[\'"]', code):
-                value = match[1]
-                rows.append((value if value.startswith(('.', '/', 'http:', 'https:')) else '{module:' + value + '}', resource_kind(value, 'script'), 'file'))
+            rows.extend(es_dependencies(source))
     else:
         return []
     return list(dict.fromkeys(rows))

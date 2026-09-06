@@ -27,6 +27,12 @@ MAX_FILES = 256
 
 
 def resolve_source(reference: str, parent: str, local_root: Path | None) -> str:
+    if reference.startswith('{bare module:'):
+        raise ValueError('bare module import is unsupported')
+    if reference == '{non-literal import}':
+        raise ValueError('non-literal import is unsupported')
+    if reference == '{JSX resource expression}':
+        raise ValueError('JSX resource expression is unsupported')
     if '{' in reference or '}' in reference:
         raise ValueError('dynamic reference requires source rendering or explicit acquisition')
     if reference.startswith('data:'):
