@@ -323,6 +323,26 @@ class AssetTests(unittest.TestCase):
         paths = {row['local_path'] for row in json.loads((self.out / 'source-manifest.json').read_text())['files']}
         self.assertEqual(paths, {'screen.html', 'app.js', 'actual.js'})
 
+    def test_increment_and_decrement_keep_division_before_a_real_import(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from design_sources import dependencies
+        for expression in ('count++ / divisor', 'count-- / divisor',
+                           '++count / divisor', '--count / divisor'):
+            rows = dependencies(f'const ratio = {expression}; import "./actual.js";', 'script')
+            self.assertEqual(rows, [('./actual.js', 'script', 'file')], expression)
+        self.put('screen.html', '<script src="app.js"></script>')
+        self.put('app.js', "const ratio = count++ / divisor; import './actual.js';")
+        missing = self.freeze()
+        self.assertNotEqual(missing.returncode, 0, 'increment/division swallowed the required import')
+        failed_sources = {row['source'] for row in json.loads((self.out / 'source-manifest.json').read_text())['files']
+                          if row['status'] == 'failed'}
+        self.assertTrue(any(source.endswith('/actual.js') for source in failed_sources), failed_sources)
+        self.put('actual.js', 'export const actual = true;')
+        complete = self.freeze()
+        self.assertEqual(complete.returncode, 0, complete.stderr)
+        paths = {row['local_path'] for row in json.loads((self.out / 'source-manifest.json').read_text())['files']}
+        self.assertEqual(paths, {'screen.html', 'app.js', 'actual.js'})
+
     def test_nonliteral_and_bare_imports_and_jsx_src_expressions_block_freeze(self):
         self.put('screen.html', '<x-import from="Panel.jsx"></x-import>')
         self.put('Panel.jsx', '''

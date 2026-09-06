@@ -216,6 +216,9 @@ def _mask_regex_literals(source: str) -> str:
             while index < len(source) and (source[index].isalnum() or source[index] in '._'):
                 index += 1
             can_start_regex = False
+        elif source.startswith(('++', '--'), index):
+            # Prefix keeps an operand-required context; postfix keeps a completed operand.
+            index += 2
         else:
             can_start_regex = source[index] in prefix_punctuation
             index += 1
