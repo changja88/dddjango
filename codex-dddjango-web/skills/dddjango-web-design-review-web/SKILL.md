@@ -13,6 +13,8 @@ description: dddjango-web 코디네이터가 Phase 1(설계)에서 spawn_agent�
 
 ## 입력
 
+- **사용자 실행 경계**: `scope.md`의 사용자 실행 제약 위치와 이번 역할에 적용되는 실제 작업/임시 증거 경로·URL/서버·Python/브라우저/MCP 조건을 직접 전달받아 읽는다. 임시 진단·렌더·브라우저 검증도 이 경계를 따른다. 지정 환경에서 실행할 수 없으면 필요한 조건과 미실행 범위를 Coordinator에 반환하며 임의 포트·대체 브라우저/cache·범위 밖 임시 경로로 성공 증거를 만들지 않는다. 지정되지 않은 제약이나 재승인을 추가하지 않는다.
+
 시안 대상 필수 직접 입력: `design-input.json` · case별 원본 entrypoint 실제 경로 · `manifests` 전부(`source-manifest.json` 또는 화면별 manifest) · 원본 captures · `scope.md`의 사용자 요구/구체 승인 출처 · `visual-check.md` · 명세 이탈 표(작성 후). 최초 증거 준비/검증 시 implementation-ui의 `references/design-evidence.md`를 읽고 JSON의 경로·case·media 계약을 확인한다. 원본 소스/렌더와 구체 승인은 외형 정본이며 명세는 분해·상태·동작·API 계약을 소유한다. 시안 없음은 원본 증거 비적용이다.
 
 코디네이터가 spawn 시 architect의 설계 명세(초안)와 인용 스냅샷 경로를 준다: `openapi-full.json`(동결 계약 — 크면 전체를 읽지 말고 명세가 인용한 paths만 네이티브 검색 도구로 찾아 대조한다), 있으면 `design-ref/`(동결 시안 — 이미지 또는 시안 HTML)·`design-tokens.json`(시안에서 기계 절단된 토큰)과 디자인 플래그, (시안이 있으면 실패/0건도 포함해) `asset-manifest.json` 경로 — 충실도 ⓒ의 대조 근거, (has_motion_notes면) `motion-notes.md` 경로 — 충실도 ⓓ의 대조 근거(동적 표현 관찰 기록 — 기계가독 표 `| id | 요소 | 트리거 | 효과 | 재현 분류(예상) | 출처 |`·상태 행 `(없음-확인)`/`(미관찰)` 포함. 동결 시안엔 동적 상태가 안 담긴다), (has_render_audit면) `render-audit.json` 경로 — 충실도 ⓔ의 대조 근거(목표 페이지 렌더 실측 — 요소별 실값·pinned). 그리고 G0 판정·계약 분기 요약 1줄(정적 한정 승인 여부 포함) — 계약 침묵 오발화 방지. 너는 그것만 본다 — 타 리뷰 노트나 구현 코드를 보지 않는다(편향 방지).

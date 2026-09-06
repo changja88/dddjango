@@ -55,7 +55,7 @@ Steps:
 1. 원본 소스/렌더·구체 승인과 구조/동작 명세의 역할을 분명히 하고 architect가 외형을 다시 근사 명세로 결정하는 전달 경로를 제거한다. 새로운 source 값은 출처 등록, 슬라이스 밖 변경은 소유자 슬라이스 재개로 처리한다.
 2. design-input/visual-evidence를 산출물 위치/직접 쓰기 허용/실제 dispatch 목록에 넣는다. design-evidence.md를 최초 준비/검증 시 읽고 실제 CLI를 사용하도록 연결한다. 각 역할에 entrypoint·manifest·원본 captures·구체 승인 출처를 직접 전달하며 최종 감수는 raw media/browser 증거도 받는다.
 3. G0 ready 직전 독립 design-review-web의 입력범위 모드로 사용자 scope/원본 상태/viewport와 cases 전수성 확인 후 inputs 게이트를 실행한다. G1 동작 계약이 추가 case를 발견하면 보완/재검토한다. 목록 축소는 구체 범위변경 근거/재검토를 요구한다.
-4. 시각 슬라이스·재개·수정 진입의 inputs freshness, G2/마무리 final backstop --design-build, 독립 시각 감사 후 변경 시 영향 범위 재검증·재감사를 명시한다. 코드/dataset-only slice에 premature visual을 요구하지 않는다. 시안 대상 trivial은 증거재사용+영향확인 또는 자료 부재 시 modify로 전환한다. 시안 없음은 비적용이다.
+4. 실제 Claude r1 P1b 회귀를 반영해 시안 빌드의 모든 coder 호출에 caller 현재 inputs와 callee 첫 변경 전 직접 inputs를 적용한다. 코더의 명령/대상/exit/출력 원문·순서 준수/위반을 Coordinator의 현재 호출 기록과 대조·보존하고 누락/실패/불일치/위반은 green/commit 차단한다. 실제 child 순서의 독립 대조는 확보된 trace로 평가자가 수행하며 런타임 trace 접근을 전제하지 않는다. 사용자 실행 경계는 scope와 실제 역할 dispatch에 연결한다. G2/마무리 final backstop --design-build, 독립 시각 감사 후 변경 시 영향 범위 재검증·재감사를 명시한다. 코드/dataset-only slice에 premature visual을 요구하지 않는다. 시안 대상 trivial은 증거재사용+영향확인 또는 자료 부재 시 modify로 전환한다. 시안 없음은 비적용이다.
 5. unverified 사용자 수락 문구가 verified/시안 충실 완료를 허용하는 모순을 제거한다. 일반 G0/G1 승인과 기존 권한은 보존하되 이미 사용자가 승인한 범위의 재질문을 강제하지 않는다.
 6. API 자산은 사용자가 요구한 실제 환경 응답과 브라우저 요청·재생으로 확인한다. 임시 DB seed·샘플은 격리 기능 test에만 사용하고 실제 사용자 프리뷰로 전환하지 않는다. 실패하면 해당 범위를 blocked/unverified로 남기고 필요한 외부 조건을 구체 보고한다.
 7. 코드 grep checker나 tokens count·스크린샷 파일 존재는 fidelity 통과 근거가 아님을 완료 보고에 반영한다. 독립 reviewer가 모든 요구 case와 복합/자식 효과, 실제 media 증거를 직접 본다. JSON hash 생성만으로 검증을 새로 한 척 하지 않는다.

@@ -20,6 +20,7 @@ user-invocable: false
 ## 핵심 운영 원칙
 
 - **재현이지 직수입이 아니다** — 시안 HTML의 마크업·클래스·인라인 스타일 복붙 금지. 외형 관찰→시각 값 tokens.css 등록→3단 분해 재구축. 보이는 요소는 빠짐없이 재현 (§2)
+- 시안 빌드의 모든 coder 호출은 첫 변경 전 직접 inputs 입장을 거친다(코더 역할 계약). 데이터만 구현할 때도 inputs는 적용하며 visual 완료와 구별한다. 임시 검증은 scope의 사용자 실행 경계를 따른다 (§2)
 - 시안이 애초에 없으면 기존 design_system 관례로 자체 설계한다. 수집 실패는 시안 없음이 아니다. 변경/근사는 구체적인 이탈 결정 후 적용하고 실제 렌더 증적을 남긴다 (§2)
 - view는 함수 뷰 고정 — URL 바인딩·form 수신·세션 쿠키 추출·VM 호출·render·fragment 분기(HX-Request 헤더 또는 전용 라우트)만, 판단 금지. auth는 `@login_required` — 페이지·fragment 라우트 동일 적용 (§3)
 - 입력 검증=form(`form/` 조건 생성·`<View>Form`)·표시 상태=VM 분담. VM이 client 호출→응답 모델→state 조립·계약 예외를 표시 상태로 번역·session_key 운반. state는 `@dataclass(frozen=True)` 프리미티브·중첩 dataclass — 예외로 Django Form 1종(검증 실패 재렌더 시 운반), 타입 힌트 전면 (§3)

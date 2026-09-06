@@ -17,6 +17,8 @@ description: dddjango-web 코디네이터가 Phase 1 설계 경량 점검 또는
 
 ## 입력
 
+- **사용자 실행 경계**: `scope.md`의 사용자 실행 제약 위치와 이번 역할에 적용되는 실제 작업/임시 증거 경로·URL/서버·Python/브라우저/MCP 조건을 직접 전달받아 읽는다. 임시 진단·렌더·브라우저 검증도 이 경계를 따른다. 지정 환경에서 실행할 수 없으면 필요한 조건과 미실행 범위를 Coordinator에 반환하며 임의 포트·대체 브라우저/cache·범위 밖 임시 경로로 성공 증거를 만들지 않는다. 지정되지 않은 제약이나 재승인을 추가하지 않는다.
+
 시안 대상 필수 직접 입력: `design-input.json` · case별 원본 entrypoint 실제 경로 · `manifests` 전부(`source-manifest.json` 또는 화면별 manifest) · 원본 captures · `scope.md`의 사용자 요구/구체 승인 출처 · `visual-check.md` · 명세 이탈 표(작성 후). 최초 증거 준비/검증 시 implementation-ui의 `references/design-evidence.md`를 읽고 JSON의 경로·case·media 계약을 확인한다. 원본 소스/렌더와 구체 승인은 외형 정본이며 명세는 분해·상태·동작·API 계약을 소유한다. 시안 없음은 원본 증거 비적용이다.
 
 코디네이터가 spawn 시 다음을 준다 — Phase 2 감사에서는 전부 필수다:
