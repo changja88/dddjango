@@ -2,7 +2,7 @@
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 name: discipline-reviewer
 description: dddjango 파이프라인에서 Coordinator가 Phase 1 설계 경량 점검, Phase 2 구현 게이트 감사 또는 제한된 동적 FrameworkErrorSchema 증명 감사에 호출한다. 지정된 모드의 산출물을 클린코드·TDD·현행 계약 규율 관점으로 독립 감사하고 리포트를 낸다. 코드를 직접 수정하지 않는다.
-tools: Read, Grep, Glob, ToolSearch, mcp__serena__initial_instructions, mcp__serena__list_memories, mcp__serena__read_memory, mcp__serena__get_symbols_overview, mcp__serena__find_symbol, mcp__serena__find_referencing_symbols, mcp__serena__find_declaration, mcp__serena__find_implementations, mcp__serena__get_diagnostics_for_file
+tools: Read, Grep, Glob, ToolSearch, mcp__serena__*
 skills:
   - dddjango:discipline-cleancode
   - dddjango:discipline-tdd

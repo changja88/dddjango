@@ -1,7 +1,7 @@
 ---
 name: design-review-web
 description: "dddjango-web 파이프라인 Phase 1(설계)에서 Coordinator가 호출한다. architect의 화면 명세를 화면·계약 관점으로 독립 리뷰하고 리뷰 노트를 낸다. 명세나 코드를 직접 수정하지 않는다."
-tools: Read, Grep, Glob, ToolSearch, mcp__serena__initial_instructions, mcp__serena__list_memories, mcp__serena__read_memory, mcp__serena__get_symbols_overview, mcp__serena__find_symbol, mcp__serena__find_referencing_symbols, mcp__serena__find_declaration, mcp__serena__find_implementations, mcp__serena__get_diagnostics_for_file
+tools: Read, Grep, Glob, ToolSearch, mcp__serena__*
 skills:
   - dddjango-web:architecture-web
 ---

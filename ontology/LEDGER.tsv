@@ -1601,3 +1601,11 @@ agent-design-review-api	s001	e927a483e2b92fc0eff0f9abc481f5381b4b0246f621a7a7f85
 agent-design-review-db	s001	64b7f18de3ea64c10b56cab6903b43650db5ecaf6fd271a4e6d00b27055bce82	graph	-	-	-	-	rebaseline:2026-09-05 Claude Serena 도구 허용 — 역할별 조회·편집 및 ToolSearch 추가, 역할 본문·규범 불변
 agent-design-review-ddd	s001	c672bab790a0d0dc5821a233172a7173f5884c14f05d314941bfabf046df5366	graph	-	-	-	-	rebaseline:2026-09-05 Claude Serena 도구 허용 — 역할별 조회·편집 및 ToolSearch 추가, 역할 본문·규범 불변
 agent-discipline-reviewer	s001	475071f545436ad35fbe31a30d1d6d4deca11af6d5a4ec06c7cd82c0f45e4865	graph	-	-	-	-	rebaseline:2026-09-05 Claude Serena 도구 허용 — 역할별 조회·편집 및 ToolSearch 추가, 역할 본문·규범 불변
+command-dddjango	s001	391c1d5fc490ce554db088f370ed15f7469b9343b56459c88b7bda79464be051	graph	-	-	-	-	rebaseline:2026-09-06 사용자 요청 — Coordinator·전체 에이전트의 Serena 허용을 ToolSearch 및 mcp__serena__*로 통일; 역할 본문 불변
+agent-acceptance-tester	s001	7ffa74f1f4676eed1ba955156f0725e1d20191478c9b2ac6ea886c1983e4dc44	graph	-	-	-	-	rebaseline:2026-09-06 사용자 요청 — Coordinator·전체 에이전트의 Serena 허용을 ToolSearch 및 mcp__serena__*로 통일; 역할 본문 불변
+agent-coder	s001	da74dd92e7c6050e4d3d343af28a65170a10d23a403ea3234867a20fd98a5500	graph	-	-	-	-	rebaseline:2026-09-06 사용자 요청 — Coordinator·전체 에이전트의 Serena 허용을 ToolSearch 및 mcp__serena__*로 통일; 역할 본문 불변
+agent-design-architect	s001	0df2aa1341002d691305eaf0d1ae945661179be879911bcc5825f4e6bd1abfe6	graph	-	-	-	-	rebaseline:2026-09-06 사용자 요청 — Coordinator·전체 에이전트의 Serena 허용을 ToolSearch 및 mcp__serena__*로 통일; 역할 본문 불변
+agent-design-review-api	s001	9fef1cba47bfa18cca884099894e41051c89aff07b0df0cb94f8ecb1294cf361	graph	-	-	-	-	rebaseline:2026-09-06 사용자 요청 — Coordinator·전체 에이전트의 Serena 허용을 ToolSearch 및 mcp__serena__*로 통일; 역할 본문 불변
+agent-design-review-db	s001	eff0c499d440eaed14fc96b22fae644efe41d6d9eb940a978bd1c298cd694b00	graph	-	-	-	-	rebaseline:2026-09-06 사용자 요청 — Coordinator·전체 에이전트의 Serena 허용을 ToolSearch 및 mcp__serena__*로 통일; 역할 본문 불변
+agent-design-review-ddd	s001	be923d7871e4ed145b244d686ed206b70da1dd04b6a7cc4592dbb73c7ed53312	graph	-	-	-	-	rebaseline:2026-09-06 사용자 요청 — Coordinator·전체 에이전트의 Serena 허용을 ToolSearch 및 mcp__serena__*로 통일; 역할 본문 불변
+agent-discipline-reviewer	s001	820fca6fbb8ed5a504473befa75c8804b1222f099aa986a44f60b1a2692fbe29	graph	-	-	-	-	rebaseline:2026-09-06 사용자 요청 — Coordinator·전체 에이전트의 Serena 허용을 ToolSearch 및 mcp__serena__*로 통일; 역할 본문 불변

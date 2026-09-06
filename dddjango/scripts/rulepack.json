@@ -3,31 +3,31 @@
   "built_from": [
     {
       "path": "ontology/rules/agent-acceptance-tester.ttl",
-      "sha256": "0034ab9151be5e6b847b6688a633bbc7679f5212b72e284fcf3f0d724b66062f"
+      "sha256": "a286502c3b54796dd2f7c4e4e9bade93754604dcc84be912b3d4d59a7298421d"
     },
     {
       "path": "ontology/rules/agent-coder.ttl",
-      "sha256": "acb990f6db61af2e11664e1af083a323cfbd00f604f2e8be11da2ffaaf57bb6f"
+      "sha256": "e31a4e3302bd81baf6e691f67c3fe61cfc7b58f68c8df9d8c63ac8a2dce351a3"
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "f4c22afd36cee58f0ea825b35f2ac12ba9cc0f0f6c50311b4601fbbf95cb29e0"
+      "sha256": "a9be26917cdc643503b2454dc1e1c7fe91ed1b8223da022be1f05f8d28e833e1"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
-      "sha256": "dd2966c2a3a50b25062627dae742e33022baab513346dbff0c70df6ced24d457"
+      "sha256": "e83632a251018273422a9ed07d2471b824d1715e57b7c947e400020988aba101"
     },
     {
       "path": "ontology/rules/agent-design-review-db.ttl",
-      "sha256": "b38e18d4209aa68f4930cb93415929aff9d6a7f97882ee17f62a731afb8cb49c"
+      "sha256": "bddf495d1b4a38e95b8c9889fc94c2d7ff1b0187d03f98059af5549e307a6a2a"
     },
     {
       "path": "ontology/rules/agent-design-review-ddd.ttl",
-      "sha256": "bd15359a3882085fd6e11acfcf8d190f2b491626255a8bfd1d58fcf7fdb62595"
+      "sha256": "b7ebef6bf026863ae56694bd7177b1db9d55a55706c1dc218b2c88e17fb8d2e4"
     },
     {
       "path": "ontology/rules/agent-discipline-reviewer.ttl",
-      "sha256": "1026a96d56cbfe2e03f4cfbc3bd7c0b77a1b73740fff2c30076d8a55af11dc3c"
+      "sha256": "1ca7cf7c1d90b644072d6a60ecf5acfc6f3c7dbb8c79af7a106d130a71988042"
     },
     {
       "path": "ontology/rules/architecture-api-final.ttl",
@@ -55,7 +55,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "8d925ae76721d6d12d9ae342862f3083a60df9bb0498302bdfebf211f9a6547d"
+      "sha256": "ee114ca6282ca0fcbca0270b3fb1948a7e87a066b173c10ae4214f84e434bb65"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",

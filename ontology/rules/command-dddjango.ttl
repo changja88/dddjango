@@ -3031,7 +3031,7 @@ djr:R-3445 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
     djr:statesNorm djr:R-0126, djr:R-0127 ;
-    djr:text "description: 기존 Django 프로젝트에서 한 기능을 DDD로 끝까지 빌드하는 오케스트레이터 (요구→설계→구현, 단계 게이트). Django 기능을 DDD/TDD로 설계·구현하고 싶을 때 사용.\nargument-hint: \"[빌드할 기능 설명]\"\nallowed-tools: Agent, AskUserQuestion, TodoWrite, Read, Grep, Glob, Write, Bash\n---\n\n"@ko .
+    djr:text "description: 기존 Django 프로젝트에서 한 기능을 DDD로 끝까지 빌드하는 오케스트레이터 (요구→설계→구현, 단계 게이트). Django 기능을 DDD/TDD로 설계·구현하고 싶을 때 사용.\nargument-hint: \"[빌드할 기능 설명]\"\nallowed-tools: Agent, AskUserQuestion, TodoWrite, Read, Grep, Glob, Write, Bash, ToolSearch, mcp__serena__*\n---\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s001/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s001> ;

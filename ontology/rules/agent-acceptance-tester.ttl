@@ -729,7 +729,7 @@ djr:R-3318 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s001> ;
     djr:kind djr:kind-prose ;
     djr:order 3 ;
-    djr:text "tools: Read, Grep, Glob, Edit, Write, Bash, ToolSearch, mcp__serena__initial_instructions, mcp__serena__list_memories, mcp__serena__read_memory, mcp__serena__get_symbols_overview, mcp__serena__find_symbol, mcp__serena__find_referencing_symbols, mcp__serena__find_declaration, mcp__serena__find_implementations, mcp__serena__get_diagnostics_for_file, mcp__serena__replace_symbol_body, mcp__serena__insert_before_symbol, mcp__serena__insert_after_symbol, mcp__serena__rename_symbol\n"@ko .
+    djr:text "tools: Read, Grep, Glob, Edit, Write, Bash, ToolSearch, mcp__serena__*\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s001/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s001> ;

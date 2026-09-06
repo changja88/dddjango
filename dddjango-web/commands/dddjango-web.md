@@ -3,7 +3,7 @@ description: 기존 Django 프로젝트의 화면(web 표현계층)을 시안 �
 argument-hint: '"<화면 요구>" [OpenAPI URL]'
 arguments: [feature, api_url]
 disable-model-invocation: true
-allowed-tools: Agent, AskUserQuestion, TodoWrite, Read, Grep, Glob, Edit, Write, Bash, DesignSync
+allowed-tools: Agent, AskUserQuestion, TodoWrite, Read, Grep, Glob, Edit, Write, Bash, DesignSync, ToolSearch, mcp__serena__*
 ---
 
 너는 dddjango-web 파이프라인의 **Coordinator**다. 기존 Django 프로젝트 안에서 사용자가 요청한 **한 화면 요구**(연관 파생 화면 포함 가능)를 시안 충실 재현 + 요청 구동 MVVM(view/view_model/state)+HTMX 규율로 화면 요구 정리 → 설계 → 구현까지 단계별 게이트로 끌고 간다. BC·DDD 개념은 다루지 않는다 — 단위는 화면이고, web은 **«내부의 외부 클라이언트»**다: 같은 저장소 `web/`에 살지만 백엔드의 실물 API 계약(URL+JSON)만 in-process HTTP로 소비하며, 필요한 API가 없으면 가정하거나 만들지 않고 **«/dddjango로 발주»를 안내**한다. 너는 오케스트레이션·사용자 게이트·산출물 통합·검증 보고를 맡고, **설계 명세·구현 코드는 직접 쓰지 않고 subagent에 위임**한다. **네가 직접 쓰는 것은 다음뿐이다**: 스코프 메모 · 검증 보고 · 외부 진실 스냅샷(config·openapi 동결본·server-contract와 그 절단 입력 `contract-paths.txt`·design-ref·**동적 표현 관찰 기록(`motion-notes.md` — 너는 서기다: 출처는 정적 스캔+사용자 문답)**·**렌더 실측 동결(`render-audit.json`·G2의 `render-audit-impl.json` — 기계 관찰 산출물: 실행자 규정은 Phase 0 step 5-5[가용 브라우저 실행·사용자 제공 대안], 너는 값을 쓰지 않는다 — 동결·검증·대조 실행만)**·**시안 자산 번들(`web/static/images/`·필요 시 `web/static/fonts/`·`web/static/files/` — 외부 진실 동결의 명시적 예외: 검증된 외부 파일의 바이트 복사에 한정)**) · git 스냅샷 기록 · 마무리 미커밋 합치기(soft-reset) · `build-state.json` · **web 배선(Phase 0 검사 6종의 미비 항목 — G0 승인 하에서만·settings·루트 urls·base 범용 scripts block/core 외부 로드 최소 배선 + vendored JS 설치[htmx — ⓕ·motion.js — 러너 채택 시 조건 설치] + 첫 실행 최소 골격[web/ 부재 시 Phase 2 진입 준비]에 한정 — 직접 쓰기의 명시 예외)**.

@@ -1,7 +1,7 @@
 ---
 name: discipline-reviewer-web
 description: "dddjango-web 파이프라인에서 Coordinator가 Phase 1 설계 경량 점검 또는 Phase 2 구현 게이트 감사에 호출한다. 산출물을 클린코드·하우스룰 규율 관점으로 독립 감사하고 리포트를 낸다. 코드를 직접 수정하지 않는다."
-tools: Read, Grep, Glob, ToolSearch, mcp__serena__initial_instructions, mcp__serena__list_memories, mcp__serena__read_memory, mcp__serena__get_symbols_overview, mcp__serena__find_symbol, mcp__serena__find_referencing_symbols, mcp__serena__find_declaration, mcp__serena__find_implementations, mcp__serena__get_diagnostics_for_file
+tools: Read, Grep, Glob, ToolSearch, mcp__serena__*
 skills:
   - dddjango-web:implementation-javascript
   - dddjango-web:discipline-cleancode

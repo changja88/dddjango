@@ -337,7 +337,6 @@
     "claude": {
       "checked": 70,
       "mismatch": [
-        "dddjango/.claude-plugin/plugin.json",
         "dddjango/agents/acceptance-tester.md",
         "dddjango/agents/coder.md",
         "dddjango/agents/design-architect.md",
@@ -345,28 +344,27 @@
         "dddjango/agents/design-review-db.md",
         "dddjango/agents/design-review-ddd.md",
         "dddjango/agents/discipline-reviewer.md",
+        "dddjango/commands/dddjango.md",
         "dddjango/scripts/rulepack.json"
       ],
       "missing": [],
-      "root": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.19",
+      "root": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.20",
       "status": "drift"
     },
     "codex": {
       "checked": 33,
-      "mismatch": [
-        "codex-dddjango/.codex-plugin/plugin.json"
-      ],
+      "mismatch": [],
       "missing": [],
-      "root": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.17.19",
-      "status": "drift"
+      "root": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.17.20",
+      "status": "ok"
     }
   },
   "claude_install": {
-    "git_commit_sha": "423199796471644f866b2dc212e9a651942875e8",
-    "install_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.19",
+    "git_commit_sha": "fde21830ade93a4c195cd196e19fea86be48df2f",
+    "install_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.20",
     "key": "dddjango@changja88-dddjango",
     "source": "installed_plugins.json",
-    "version": "2.17.19"
+    "version": "2.17.20"
   },
   "external_annex": {
     "initial_memory": {
@@ -517,22 +515,22 @@
     "graph": {
       "files": {
         "ontology/ISSUED": "538e53a07f1d0459e874c4e1e68b5e53f96b80ab23f1b080cf8ce24c9f49a3c3",
-        "ontology/LEDGER.tsv": "2e2f1872b9c8060195abb11cf25ce21d4247d2e3cb96a421e657f1b3e39d01fd",
+        "ontology/LEDGER.tsv": "077a4d4fd8d9874ac13917bd2d47988741b907aebdfd1b06fd6b0ac7071e5d73",
         "ontology/prefixes.ttl": "6268500a1c7c4da706e05e9a7e5e0e4b6e291c81a5341f694e07ca8948913157",
-        "ontology/rules/agent-acceptance-tester.ttl": "e96da1ec1ea80d99041e7b912460fadd0e63f1e5246bd4f16c5df2ed65460c9f",
-        "ontology/rules/agent-coder.ttl": "351d4ce5ea29d985eec2d7b75f77a1e3dcc394975aa764217ab0d00c6a7b094d",
-        "ontology/rules/agent-design-architect.ttl": "cde648dd77c12dc464ec0913d555da957ed7341ccff1767c7dc54aa62e15d5ca",
-        "ontology/rules/agent-design-review-api.ttl": "a9c1c424acedbb19659f00147704375712c7698a9aaa22747d6a78d58da2dab4",
-        "ontology/rules/agent-design-review-db.ttl": "df5d50b23ba564ccaaf96737f863af22c9c0f33ace3081ffc079b4698f8c31d0",
-        "ontology/rules/agent-design-review-ddd.ttl": "bf85e5230dd13e6893a34e8a5fb8d248ee2f7e13a13a3f7799527b11573895e3",
-        "ontology/rules/agent-discipline-reviewer.ttl": "16b04e1f83021aeb6da22264dcdcd9a1d5c86aa32d3379ed1273a85a0c6c0bb9",
+        "ontology/rules/agent-acceptance-tester.ttl": "a0700c93c15e1ba75055c275f254981c5d09c60c7ad5ce16dca556afadaeba26",
+        "ontology/rules/agent-coder.ttl": "b9f8917f09c4d47d198397fdabec84ef3d5df23506350bbe86cd3581fa706db1",
+        "ontology/rules/agent-design-architect.ttl": "0d206fc16272c3a3eb5bebc3cab41c3b5f207e93cd4b759a84f2cd336d2daadc",
+        "ontology/rules/agent-design-review-api.ttl": "382588ae6d47607a00a10e43f5832944d4081d964d442149dcc7ef50847ff747",
+        "ontology/rules/agent-design-review-db.ttl": "0a8c599fc8af89a8a209869fc9fa4021af5308a2e55bb9d55a27993de56d8507",
+        "ontology/rules/agent-design-review-ddd.ttl": "ff55c6ec37822d757a08e34bea0040a8ff5445b41e2d368f3db89f8aaff6d556",
+        "ontology/rules/agent-discipline-reviewer.ttl": "b27ee2347ef6d1a19037c55e22b638276271c15f824e72b411cfc340713e1faf",
         "ontology/rules/architecture-api-final.ttl": "61377415804cacdf31515cdaad7bf71ce3ccf72bf4c4ec66904bef546f457086",
         "ontology/rules/architecture-api-skill.ttl": "f95b77fed864ba2cb6169e65b2fe0ac790106d5feeb6e9c5f2e1e2080bc7235c",
         "ontology/rules/architecture-db-final.ttl": "3cb6ccf1a13b3f3d545f3b8f8e5f178cb95b49797fac92461611623b9e8e2352",
         "ontology/rules/architecture-db-skill.ttl": "270321b7f787e0cea4860d6ec5293f9c6fbdc202fe71eddb4b849c4f688c1244",
         "ontology/rules/architecture-ddd-final.ttl": "6035c84dd9009c74cf0d334003acd02e6015f039e7dc9672f7e81fcd5295c637",
         "ontology/rules/architecture-ddd-skill.ttl": "484c12d31c0333893ab5b07aceeb67857c79603f39dacf8d6e313bc4607fdf12",
-        "ontology/rules/command-dddjango.ttl": "34b3c9d26e95f4a7d679a06e1c18d4e28cefbfab1380ddce65c0ddd2f9fc9b53",
+        "ontology/rules/command-dddjango.ttl": "4b23b276f3f8a13502be00f6ba5e2f331c79b7ca70cb89b09e3eb6417591e33a",
         "ontology/rules/discipline-cleancode-final.ttl": "a8ecc66d45eb9762b77f79392101a760582d2e199da25c0b22fee9ea610cde00",
         "ontology/rules/discipline-cleancode-skill.ttl": "34fe769d838f4f068963ab8db3c5471b19dc81faa5c6b8b20207f74556e50b13",
         "ontology/rules/discipline-houserules-final.ttl": "8a8954891eb0d221e6c9dfac0600025ef5df0a371ccd77efa182793895782897",
@@ -613,7 +611,7 @@
         "ontology/**/*"
       ],
       "n_files": 92,
-      "tree_sha256": "f85fc4519f57886b638de8de69fdda859c9718d04e353d3a1671fe216290a317",
+      "tree_sha256": "f3818ce515eeca630ec195939ddc742915345ccd706d405c10ca4ca1a877a0af",
       "why": "C암 선별의 원천. 그래프가 바뀌면 팩 재생성이 필요하고, 재생성 없이 바뀌면 팩과 그래프가 어긋난 채 실런이 돈다."
     },
     "harness": {
@@ -694,7 +692,7 @@
     "packs": {
       "files": {
         "dddjango/scripts/pregate_symbol_kinds.json": "7eb6eaebcf839fcc4da6203cd3447c245428a2d90feb4bbe55f7c91e9ee652c2",
-        "dddjango/scripts/rulepack.json": "cfd75ad77ab738d86449a1712d4e19a66437b1e848afe35c70237ddc07633462",
+        "dddjango/scripts/rulepack.json": "6982811e4a1a690655ed15c2f312fbe2161dfcd641f29eb43b1a0bed23ea9ae4",
         "workspace/eval/ab/T0-rule-owner-map-snapshot.md": "d3e75311118630d4c30bea1d69e7a1b31dc40dc3416f920a0f77ccfc37ad13ae"
       },
       "globs": [
@@ -703,13 +701,13 @@
         "workspace/eval/ab/T0-rule-owner-map-snapshot.md"
       ],
       "n_files": 3,
-      "tree_sha256": "c1f23e1758abc9cdecacc0d40aea97640590ab84a2447512c5986c4f6b52fcfa",
+      "tree_sha256": "30360dfae7ca465e0fe96bcdb808161dd5bc08de58db761b2167406d2b2fadc6",
       "why": "C암 규칙 팩과 B암 재료. 팩이 바뀌면 처치 자체가 바뀐다."
     },
     "pipeline": {
       "files": {
         "codex-dddjango/skills/dddjango/SKILL.md": "561b34315b1020783a16113cf44026be053af4f5a579e3f54cd38b72a7c1de25",
-        "dddjango/commands/dddjango.md": "d840a68efe5dd0fa2781afb2dd7226af06df3e1431bf70434c93bd356652e8a1",
+        "dddjango/commands/dddjango.md": "13b84cc4cd6f208216010775972cd8b7614add8cfe7ce14ad46c734aa8661537",
         "dddjango/scripts/design_pregate.py": "266661981ffc1ac6fc807669a35b45b1bfb9cc0d226548f2e7367f8cf4f68b7b",
         "dddjango/scripts/regen_core.py": "48181a610743fce534ea4d327d34878863da22b207a08ecc2a88ebbdcb05b763",
         "dddjango/scripts/registry_gate.py": "620bc81db927660635a1e830a0b5b8489215041d168c165e175d061d7f9a7fa6",
@@ -724,7 +722,7 @@
         "codex-dddjango/skills/dddjango/SKILL.md"
       ],
       "n_files": 6,
-      "tree_sha256": "e8a90aa3b372102ff62d6659f79736e31ebfcc7f8fc6fab6b188722c7e1b41f0",
+      "tree_sha256": "c7adb877bd76339c2ac59ef6d7262917cd1e080dc13d1006a9b61ab724a4954f",
       "why": "3암이 공유하는 실행 경로. 암 사이 차이는 스위치 둘뿐이어야 하고, 그 «둘뿐»을 성립시키는 것이 이 파일들의 동일성이다."
     },
     "plugin_payload": {
@@ -764,13 +762,13 @@
         "codex-dddjango/skills/implementation-python/SKILL.md": "b9f224cb502fbb1b067f22a001a4726679fd697cb88c09fb8cb47bef034f7db8",
         "codex-dddjango/skills/implementation-python/references/final.md": "61e58305498ad0038a26b7c0538dfbed1ce17f79036576781969c62be67a82d2",
         "dddjango/.claude-plugin/plugin.json": "867b72c1e977a5ddcd2cf5c41945767d435958393b6ec46a50f928e10180e91d",
-        "dddjango/agents/acceptance-tester.md": "533c1a4c3ac030b69cf9d9997dca3426e303b995c672615119150611618c5109",
-        "dddjango/agents/coder.md": "9c77a328b2fe304e12f20b4f9e27a4db695b1940c7dd99c8b4538c9f3c430b8c",
-        "dddjango/agents/design-architect.md": "1d5228b5e0e8612c748ff4f18b041e4eb3b04054dc0ae25dd03c04408e165316",
-        "dddjango/agents/design-review-api.md": "626b465ece3b7481d40faa8421c63dfb202ceaa51f1b616e2ac760b63e57d922",
-        "dddjango/agents/design-review-db.md": "1d8d3acae4f474ba71513b2247fe87bffc313f048ea24495df9544c2afbc90ca",
-        "dddjango/agents/design-review-ddd.md": "15d249fc69965430bdfea3c56e296754f73502cb313edede4b68ca2970270d29",
-        "dddjango/agents/discipline-reviewer.md": "ef4ce3608f7fd875242ce7491d22e99c902736f35ef6f08103f736ea6ba82078",
+        "dddjango/agents/acceptance-tester.md": "c1b240b0d1e7400e9858269cf65fc0582ccb833e01527880274869995cb700bc",
+        "dddjango/agents/coder.md": "b62b7905b1a5f414a829ba29be75a3e7a21e011ca60b4bccef48c664c33d528c",
+        "dddjango/agents/design-architect.md": "c03f52ad60bb3980f009a98dd2585a694f082019a8ba59539420eeccde034fc4",
+        "dddjango/agents/design-review-api.md": "c781c91af34a64872d2fb4edac2e623da59108646d5a2376e05a82955abf79b5",
+        "dddjango/agents/design-review-db.md": "ea8827840e88246826562742f37b2d4e301a0aac502566a7c9ab19c7ceb285bd",
+        "dddjango/agents/design-review-ddd.md": "4cb9c8cf4e329adf51749bf7724963bc009a05cb6141d8f354e93e8e980830c6",
+        "dddjango/agents/discipline-reviewer.md": "f33b0db21c9d93e784240cd7d887ad239d4737cfb3be2283f7dcffbefb48a818",
         "dddjango/skills/architecture-api/SKILL.md": "1b36d6d65129f9fdc0e96230ebd81647eec7f59ef4e6a80140092711118c89e7",
         "dddjango/skills/architecture-api/references/final.md": "9eed2432508c7f40ad0b6de4e55769f3abb895e3b5573d58b63f5e7029dd318b",
         "dddjango/skills/architecture-db/SKILL.md": "22e7362e253548a67082f16bcf5124103d7610b2bfc1a97ff01eda6ebc357506",
@@ -805,7 +803,7 @@
         ".agents/plugins/marketplace.json"
       ],
       "n_files": 64,
-      "tree_sha256": "ac2a681dc60403b59107a0ef8182ec7df1ff38be12bea51be1d23c790590c675",
+      "tree_sha256": "3d18bfd50a796a0ba4f25aa8c3ab5e745c7393ea6ae78638b6fd6d2d7491742c",
       "why": "절차서가 **부르는 것들**. 서브에이전트 정의와 규범 산문(`references/final.md`)이 여기 있다 — 그중 ninja §6.1·§6.2 와 ddd §3.2 는 파일럿 이관 대상 클러스터 그 자체다. 절차서만 동결하고 이것들을 두면 봉투만 봉인하고 내용물을 열어 둔 것이다. 산문이 런 사이에 바뀌면 세 암이 같은 규범을 상대한 것이 아니게 되고, `coder.md` 한 줄이 바뀌면 처치와 무관하게 산출물이 달라진다."
     },
     "preregistration": {
@@ -822,7 +820,7 @@
     "protocol": {
       "files": {
         "Makefile": "f55ac9f019892c17959db8af9a86ce2174897e5a8fb17db63aa31b4b8fb778e6",
-        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "cff9ebb0f862102e62ddc93b8f6f5818507faa5aa9b60d4d96520f889815318c",
+        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "03175a75bf8e7d67dfeb7142a377a6a899ab5cdc757ce99d9c435cbc612c17d1",
         "workspace/plan/2026-08-12-bc-rebuild-protocol.md": "a39ba66e58cb8bde5ad8f84d630b6fd9b04300f7130d4bbc2d149751c2f6c492",
         "workspace/plan/templates/request-template.md": "531bb5c0e9b147d51665981bc3218aa027ddc4170101ea920ecc8a87f7018fe4",
         "workspace/tools/openapi_shape.py": "ea564e3b0ce0550352935b7a572f93dfae404f1a1d24f0fd9d4acf6dc4bc4932",
@@ -837,7 +835,7 @@
         "workspace/design/2026-08-20-ontology-t2-0b-design.md"
       ],
       "n_files": 6,
-      "tree_sha256": "1a1b573e3ada1e06abe324bc91bdb99e39be5c0d89b6ec23339fbe130aa73da8",
+      "tree_sha256": "de6fa069ae399299c30f1e6c3c6523f9958aace27c9d1bf2a629bfb50d2297e2",
       "why": "**전이 의존** — 발주문이 «그대로 따르라»고 가리키는 판형과, 인수 판정이 부르는 도구와, 게이트를 배선하는 Makefile. 이 중 하나만 바뀌어도 모델이 받는 요청문·허용 범위·STOP 규약·shape 합격 여부·실런 진입 조건이 바뀐다. 그런데 대조는 글롭에 든 것만 재전개하므로, 봉인 밖이면 그 변경은 드리프트가 아니었다(레인 AU 발견 4)."
     },
     "queries": {
@@ -922,8 +920,8 @@
   },
   "initial_state": {
     "issued_sha256": "538e53a07f1d0459e874c4e1e68b5e53f96b80ab23f1b080cf8ce24c9f49a3c3",
-    "knowledge_graph_tree_sha256": "f85fc4519f57886b638de8de69fdda859c9718d04e353d3a1671fe216290a317",
-    "ledger_sha256": "2e2f1872b9c8060195abb11cf25ce21d4247d2e3cb96a421e657f1b3e39d01fd",
+    "knowledge_graph_tree_sha256": "f3818ce515eeca630ec195939ddc742915345ccd706d405c10ca4ca1a877a0af",
+    "ledger_sha256": "077a4d4fd8d9874ac13917bd2d47988741b907aebdfd1b06fd6b0ac7071e5d73",
     "violation_history": {
       "dir": "workspace/eval/violations",
       "exists": false,
@@ -960,15 +958,15 @@
     ]
   },
   "script_trees": {
-    "cache-claude": "e9cc80fdaea6f358621a76d1df6d4f3eee05d628caeddda0bdcbb7d34f817cd2",
-    "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.19/scripts",
-    "cache-codex": "e9cc80fdaea6f358621a76d1df6d4f3eee05d628caeddda0bdcbb7d34f817cd2",
-    "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.17.19/skills/dddjango/scripts",
-    "source-claude": "117afa29a08b6cc8261600241eff36f10ca07a07252026b9ebce744d36c8f3ea",
-    "source-codex": "117afa29a08b6cc8261600241eff36f10ca07a07252026b9ebce744d36c8f3ea"
+    "cache-claude": "117afa29a08b6cc8261600241eff36f10ca07a07252026b9ebce744d36c8f3ea",
+    "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.17.20/scripts",
+    "cache-codex": "117afa29a08b6cc8261600241eff36f10ca07a07252026b9ebce744d36c8f3ea",
+    "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.17.20/skills/dddjango/scripts",
+    "source-claude": "5996d6b2c2ddc120cce4e58c8de58ef6362643679242243fa6701271c12d3591",
+    "source-codex": "5996d6b2c2ddc120cce4e58c8de58ef6362643679242243fa6701271c12d3591"
   },
-  "sealed_commit": "0ff0d8586940bbbc8a6b12aca9697d9d4cb27654",
-  "self_sha256": "e1e9063080cfdcf8c348e6910ff195786edbb389b1f197618602a362bd6b9293",
+  "sealed_commit": "fde21830ade93a4c195cd196e19fea86be48df2f",
+  "self_sha256": "865daa7a3cf0c4035c01ab1882df7116d6adf1e837979dbbf8491f6af296f15a",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [

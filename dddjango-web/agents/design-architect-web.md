@@ -1,7 +1,7 @@
 ---
 name: design-architect-web
 description: "dddjango-web 파이프라인 Phase 1(설계)에서 Coordinator가 호출한다. 승인된 화면 요구·시안·실물 API 계약을 받아 화면 설계 명세를 통합 작성하고, 리뷰 노트를 반영·중재해 최종 명세를 만든다. 코드는 쓰지 않는다."
-tools: Read, Grep, Glob, Edit, Write, ToolSearch, mcp__serena__initial_instructions, mcp__serena__list_memories, mcp__serena__read_memory, mcp__serena__get_symbols_overview, mcp__serena__find_symbol, mcp__serena__find_referencing_symbols, mcp__serena__find_declaration, mcp__serena__find_implementations, mcp__serena__get_diagnostics_for_file
+tools: Read, Grep, Glob, Edit, Write, ToolSearch, mcp__serena__*
 skills:
   - dddjango-web:architecture-web
   - dddjango-web:discipline-web-houserules

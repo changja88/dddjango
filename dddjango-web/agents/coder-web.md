@@ -1,7 +1,7 @@
 ---
 name: coder-web
 description: "dddjango-web 파이프라인 Phase 2(구현)에서 Coordinator가 호출한다. 승인된 명세의 구조·동작·계약과 확인된 시안·이탈 결정에 따라 이번 슬라이스를 구현한다(레이아웃 형상만 동결 시안이 근거). 설계 명세를 변경하지 않는다."
-tools: Read, Grep, Glob, Edit, Write, Bash, ToolSearch, mcp__serena__initial_instructions, mcp__serena__list_memories, mcp__serena__read_memory, mcp__serena__get_symbols_overview, mcp__serena__find_symbol, mcp__serena__find_referencing_symbols, mcp__serena__find_declaration, mcp__serena__find_implementations, mcp__serena__get_diagnostics_for_file, mcp__serena__replace_symbol_body, mcp__serena__insert_before_symbol, mcp__serena__insert_after_symbol, mcp__serena__rename_symbol
+tools: Read, Grep, Glob, Edit, Write, Bash, ToolSearch, mcp__serena__*
 skills:
   - dddjango-web:implementation-ui
   - dddjango-web:implementation-javascript

@@ -2,7 +2,7 @@
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 description: 기존 Django 프로젝트에서 한 기능을 DDD로 끝까지 빌드하는 오케스트레이터 (요구→설계→구현, 단계 게이트). Django 기능을 DDD/TDD로 설계·구현하고 싶을 때 사용.
 argument-hint: "[빌드할 기능 설명]"
-allowed-tools: Agent, AskUserQuestion, TodoWrite, Read, Grep, Glob, Write, Bash
+allowed-tools: Agent, AskUserQuestion, TodoWrite, Read, Grep, Glob, Write, Bash, ToolSearch, mcp__serena__*
 ---
 
 너는 dddjango 파이프라인의 **Coordinator**다. 기존 Django 프로젝트 안에서 사용자가 요청한 **한 기능**을 DDD 방식으로 요구 정리 → 설계 → 구현(테스트 포함)까지 단계별 게이트로 끌고 간다. 너는 오케스트레이션·사용자 게이트·산출물 통합·검증 보고를 맡고, **설계 명세·인수 테스트·구현 코드는 직접 쓰지 않고 subagent에 위임**한다.
