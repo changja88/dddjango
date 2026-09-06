@@ -86,15 +86,117 @@ _JS_TOKEN = re.compile(
     r'''(?P<identifier>[A-Za-z_$][\w$]*)|(?P<punct>.)''', re.S)
 
 
+def _skip_quoted(source: str, start: int, quote: str) -> int:
+    index = start + 1
+    while index < len(source):
+        if source[index] == '\\':
+            index += 2
+        elif source[index] == quote:
+            return index + 1
+        else:
+            index += 1
+    return len(source)
+
+
+def _interpolation_end(source: str, start: int) -> int | None:
+    depth = 1
+    index = start
+    while index < len(source):
+        if source.startswith('//', index):
+            newline = source.find('\n', index + 2)
+            index = len(source) if newline < 0 else newline + 1
+        elif source.startswith('/*', index):
+            end = source.find('*/', index + 2)
+            index = len(source) if end < 0 else end + 2
+        elif source[index] in ('\'', '"', '`'):
+            index = _skip_quoted(source, index, source[index])
+        elif source[index] == '{':
+            depth += 1
+            index += 1
+        elif source[index] == '}':
+            depth -= 1
+            if depth == 0:
+                return index
+            index += 1
+        else:
+            index += 1
+    return None
+
+
+def _template_code(source: str) -> tuple[str, bool]:
+    """Blank inert template chunks and append executable interpolation code."""
+    output = list(source)
+    interpolations: list[str] = []
+    invalid = False
+    index = 0
+    while index < len(source):
+        if source.startswith('//', index):
+            newline = source.find('\n', index + 2)
+            index = len(source) if newline < 0 else newline + 1
+        elif source.startswith('/*', index):
+            end = source.find('*/', index + 2)
+            index = len(source) if end < 0 else end + 2
+        elif source[index] in ('\'', '"'):
+            index = _skip_quoted(source, index, source[index])
+        elif source[index] == '`':
+            cursor = index + 1
+            closed = False
+            while cursor < len(source):
+                if source[cursor] == '\\':
+                    cursor += 2
+                elif source.startswith('${', cursor):
+                    end = _interpolation_end(source, cursor + 2)
+                    if end is None:
+                        invalid = True
+                        cursor = len(source)
+                        break
+                    interpolations.append(source[cursor + 2:end])
+                    cursor = end + 1
+                elif source[cursor] == '`':
+                    cursor += 1
+                    closed = True
+                    break
+                else:
+                    cursor += 1
+            if not closed:
+                invalid = True
+            output[index:cursor] = ' ' * (cursor - index)
+            index = cursor
+        else:
+            index += 1
+    prepared = ''.join(output)
+    for interpolation in interpolations:
+        nested, nested_invalid = _template_code(interpolation)
+        prepared += '\n' + nested
+        invalid = invalid or nested_invalid
+    return prepared, invalid
+
+
+_REGEX_LITERAL = re.compile(
+    r'''(?P<prefix>\b(?:return|throw|case|yield)\s+|(?:^|[=(:,!&|?;{}\[])[ \t]*)'''
+    r'''/(?P<body>(?:\\.|\[(?:\\.|[^\]\\])*\]|[^/\n\\])*)/[A-Za-z]*''', re.M)
+
+
+def _mask_regex_literals(source: str) -> str:
+    def replace(match: re.Match) -> str:
+        literal_length = len(match.group()) - len(match.group('prefix'))
+        return match.group('prefix') + ' ' * literal_length
+    return _REGEX_LITERAL.sub(replace, source)
+
+
 def es_dependencies(source: str) -> list[tuple[str, str, str]]:
     """Find supported ES literal edges and explicit unsupported source forms.
 
     This deliberately is not a JavaScript evaluator. Token context prevents
     comments and string contents from manufacturing fake import statements.
     """
-    tokens = [(match.lastgroup, match.group()) for match in _JS_TOKEN.finditer(source)
+    prepared, invalid_template = _template_code(source)
+    prepared = _mask_regex_literals(prepared)
+    tokens = [(match.lastgroup, match.group()) for match in _JS_TOKEN.finditer(prepared)
               if match.lastgroup not in ('space', 'comment')]
     rows: list[tuple[str, str, str]] = []
+    if invalid_template:
+        rows.append(('{unsupported template interpolation}', 'script', 'file'))
 
     def literal(index: int) -> str | None:
         if index < len(tokens) and tokens[index][0] == 'string':

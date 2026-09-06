@@ -82,9 +82,11 @@ be both entrypoint and reference capture.
 
 Static collection supports HTML/CSS literal resources, `x-import`, literal ES
 imports, literal dynamic imports, `export ... from`, and literal imports in
-inline script/module bodies. Comments and JavaScript strings do not create
-imports. Detected nonliteral imports, JSX `src`/`href`/`poster` expressions, and
-bare module specifiers are blocked. There is no JavaScript executor, bundler,
+inline script/module bodies. Comments, quoted strings, inert template chunks,
+and regular-expression bodies do not create imports. Imports inside template
+interpolations are scanned; malformed/ambiguous template interpolation is
+explicitly unsupported. Detected nonliteral imports, JSX `src`/`href`/`poster`
+expressions, and bare module specifiers are blocked. There is no JavaScript executor, bundler,
 import-map resolver, or claim of complete runtime dependency discovery.
 Runtime-only resources require original-browser observation and independent
 audit.
@@ -136,7 +138,8 @@ confirmed from the browser trace by the final auditor.
 The implementation digest covers every path and byte under `PROJECT/web`, plus
 the declared `host_files`. It includes additions and reflects deletions. The
 only exclusions are directories `__pycache__`, `.pytest_cache`, `.mypy_cache`,
-`.ruff_cache`; files `*.pyc`, `*.pyo`, and `.DS_Store`. There is no caller
+`.ruff_cache`; files `*.pyc`, `*.pyo`, and `.DS_Store`. Directory symlinks under
+`web/` are rejected; the checker does not traverse them. There is no caller
 exclude option.
 
 ## Media observations
@@ -144,8 +147,9 @@ exclude option.
 A media requirement has exactly `id`, `kind` (`image` or `video`),
 `environment`, `endpoint`, `identity_pointer`, and `source_pointer`. Pointers
 use RFC 6901 path form beginning with `/`, including `~0` for `~` and `~1` for
-`/`. They must resolve in the response `body` to a nonempty identity and source
-URL.
+`/`. Array selectors are canonical nonnegative decimal tokens: `0` or a
+nonzero digit followed by digits. Object keys retain literal token semantics.
+Pointers must resolve in the response `body` to a nonempty identity and source URL.
 
 Response evidence has exactly:
 

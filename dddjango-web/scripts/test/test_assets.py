@@ -292,6 +292,19 @@ class AssetTests(unittest.TestCase):
         paths = {row['local_path'] for row in json.loads((self.out / 'source-manifest.json').read_text())['files']}
         self.assertEqual(paths, {'screen.html', 'inline.js', 'value.js'})
 
+    def test_es_scanner_ignores_template_and_regex_text_but_keeps_template_interpolation_import(self):
+        self.put('screen.html', '<script src="app.js"></script>')
+        self.put('app.js', '''
+          const label = `import './missing-template.js'`;
+          const pattern = /import('missing-regex')/;
+          const loaded = `value: ${import('./actual.js')}`;
+        ''')
+        self.put('actual.js', 'export const actual = true;')
+        result = self.freeze()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        paths = {row['local_path'] for row in json.loads((self.out / 'source-manifest.json').read_text())['files']}
+        self.assertEqual(paths, {'screen.html', 'app.js', 'actual.js'})
+
     def test_nonliteral_and_bare_imports_and_jsx_src_expressions_block_freeze(self):
         self.put('screen.html', '<x-import from="Panel.jsx"></x-import>')
         self.put('Panel.jsx', '''

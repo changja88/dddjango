@@ -101,7 +101,12 @@ def json_pointer(document: Any, value: Any, label: str, issues: list[str]) -> An
             if re.search(r'~(?:[^01]|$)', raw):
                 raise ValueError
             token = raw.replace('~1', '/').replace('~0', '~')
-            current = current[int(token)] if isinstance(current, list) else current[token]
+            if isinstance(current, list):
+                if not re.fullmatch(r'(?:0|[1-9][0-9]*)', token):
+                    raise ValueError
+                current = current[int(token)]
+            else:
+                current = current[token]
     except (KeyError, IndexError, TypeError, ValueError):
         issues.append(f'{label}: pointer does not resolve')
         return None
@@ -304,6 +309,8 @@ def implementation_digest(project: Path, spec: dict) -> str:
         relative = path.relative_to(project)
         if any(part in EXCLUDED_DIRS for part in relative.parts):
             continue
+        if path.is_symlink() and path.is_dir():
+            raise Defects([f'directory symlink is unsupported in implementation tree: {relative.as_posix()}'])
         if path.is_file() and path.name not in EXCLUDED_FILES and path.suffix not in EXCLUDED_SUFFIXES:
             resolved = path.resolve()
             if not resolved.is_relative_to(web.resolve()):

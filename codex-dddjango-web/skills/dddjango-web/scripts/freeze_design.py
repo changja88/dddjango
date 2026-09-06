@@ -33,6 +33,8 @@ def resolve_source(reference: str, parent: str, local_root: Path | None) -> str:
         raise ValueError('non-literal import is unsupported')
     if reference == '{JSX resource expression}':
         raise ValueError('JSX resource expression is unsupported')
+    if reference == '{unsupported template interpolation}':
+        raise ValueError('unterminated or ambiguous template interpolation is unsupported')
     if '{' in reference or '}' in reference:
         raise ValueError('dynamic reference requires source rendering or explicit acquisition')
     if reference.startswith('data:'):

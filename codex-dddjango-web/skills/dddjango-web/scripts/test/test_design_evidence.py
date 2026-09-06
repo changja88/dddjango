@@ -226,6 +226,29 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual((self.build / 'visual-evidence.json').read_bytes(), before)
 
+    def test_directory_symlink_is_rejected_from_implementation_digest(self):
+        shared = self.project / 'shared'
+        shared.mkdir()
+        (shared / 'asset.js').write_text('before')
+        (self.project / 'web/assets').symlink_to(shared, target_is_directory=True)
+        result = self.run_gate('visual', True)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn('directory symlink', result.stderr)
+
+    def test_json_pointer_array_indexes_are_canonical_but_object_keys_remain_literal(self):
+        sys.path.insert(0, str(SCRIPTS))
+        from check_design_evidence import json_pointer
+        document = {'a': ['zero', 'one'], 'object': {'01': 'literal', '-1': 'also-literal'}}
+        for invalid in ('-1', '+1', '01'):
+            issues = []
+            self.assertIsNone(json_pointer(document, f'/a/{invalid}', 'pointer', issues))
+            self.assertTrue(issues, invalid)
+        issues = []
+        self.assertEqual(json_pointer(document, '/a/1', 'pointer', issues), 'one')
+        self.assertEqual(json_pointer(document, '/object/01', 'pointer', issues), 'literal')
+        self.assertEqual(json_pointer(document, '/object/-1', 'pointer', issues), 'also-literal')
+        self.assertEqual(issues, [])
+
     def test_backstop_only_cannot_disable_design_gate(self):
         result = subprocess.run([sys.executable, str(SCRIPTS / 'backstop.py'), self.project,
                                  '--all', '--only', 'zz', '--design-build', self.root / 'missing-build'],
