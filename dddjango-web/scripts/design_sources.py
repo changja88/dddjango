@@ -160,7 +160,7 @@ def _template_code(source: str) -> tuple[str, bool]:
                     cursor += 1
             if not closed:
                 invalid = True
-            output[index:cursor] = ' ' * (cursor - index)
+            output[index:cursor] = 'T' + ' ' * (cursor - index - 1)
             index = cursor
         else:
             index += 1
@@ -173,15 +173,53 @@ def _template_code(source: str) -> tuple[str, bool]:
 
 
 _REGEX_LITERAL = re.compile(
-    r'''(?P<prefix>\b(?:return|throw|case|yield)\s+|(?:^|[=(:,!&|?;{}\[])[ \t]*)'''
-    r'''/(?P<body>(?:\\.|\[(?:\\.|[^\]\\])*\]|[^/\n\\])*)/[A-Za-z]*''', re.M)
+    r'''/(?P<body>(?:\\.|\[(?:\\.|[^\]\\])*\]|[^/\n\\])*)/[A-Za-z]*''')
 
 
 def _mask_regex_literals(source: str) -> str:
-    def replace(match: re.Match) -> str:
-        literal_length = len(match.group()) - len(match.group('prefix'))
-        return match.group('prefix') + ' ' * literal_length
-    return _REGEX_LITERAL.sub(replace, source)
+    """Blank regex literals while preserving strings/comments and later code."""
+    output = list(source)
+    can_start_regex = True
+    index = 0
+    prefix_words = {'return', 'throw', 'case', 'yield', 'delete', 'void', 'typeof',
+                    'instanceof', 'in', 'of', 'else', 'do'}
+    prefix_punctuation = set('([{=,:;!?&|+-*%^~<>')
+    while index < len(source):
+        if source[index].isspace():
+            index += 1
+        elif source.startswith('//', index):
+            newline = source.find('\n', index + 2)
+            index = len(source) if newline < 0 else newline + 1
+        elif source.startswith('/*', index):
+            end = source.find('*/', index + 2)
+            index = len(source) if end < 0 else end + 2
+        elif source[index] in ('\'', '"'):
+            index = _skip_quoted(source, index, source[index])
+            can_start_regex = False
+        elif source[index] == '/' and can_start_regex:
+            match = _REGEX_LITERAL.match(source, index)
+            if match:
+                output[index:match.end()] = ' ' * (match.end() - index)
+                index = match.end()
+                can_start_regex = False
+            else:
+                index += 1
+                can_start_regex = True
+        elif source[index].isalpha() or source[index] in ('_', '$'):
+            end = index + 1
+            while end < len(source) and (source[end].isalnum() or source[end] in ('_', '$')):
+                end += 1
+            can_start_regex = source[index:end] in prefix_words
+            index = end
+        elif source[index].isdigit():
+            index += 1
+            while index < len(source) and (source[index].isalnum() or source[index] in '._'):
+                index += 1
+            can_start_regex = False
+        else:
+            can_start_regex = source[index] in prefix_punctuation
+            index += 1
+    return ''.join(output)
 
 
 def es_dependencies(source: str) -> list[tuple[str, str, str]]:

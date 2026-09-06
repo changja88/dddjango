@@ -305,6 +305,24 @@ class AssetTests(unittest.TestCase):
         paths = {row['local_path'] for row in json.loads((self.out / 'source-manifest.json').read_text())['files']}
         self.assertEqual(paths, {'screen.html', 'app.js', 'actual.js'})
 
+    def test_regex_masking_preserves_imports_after_quoted_strings_and_line_comments(self):
+        self.put('screen.html', '<script src="app.js"></script>')
+        self.put('app.js', '''
+          const label = "=/"; import "./actual.js";
+          // import './fake.js'
+        ''')
+        missing = self.freeze()
+        self.assertNotEqual(missing.returncode, 0, 'required import was swallowed by lexical masking')
+        failed_sources = {row['source'] for row in json.loads((self.out / 'source-manifest.json').read_text())['files']
+                          if row['status'] == 'failed'}
+        self.assertTrue(any(source.endswith('/actual.js') for source in failed_sources), failed_sources)
+        self.assertFalse(any(source.endswith('/fake.js') for source in failed_sources), failed_sources)
+        self.put('actual.js', 'export const actual = true;')
+        complete = self.freeze()
+        self.assertEqual(complete.returncode, 0, complete.stderr)
+        paths = {row['local_path'] for row in json.loads((self.out / 'source-manifest.json').read_text())['files']}
+        self.assertEqual(paths, {'screen.html', 'app.js', 'actual.js'})
+
     def test_nonliteral_and_bare_imports_and_jsx_src_expressions_block_freeze(self):
         self.put('screen.html', '<x-import from="Panel.jsx"></x-import>')
         self.put('Panel.jsx', '''
