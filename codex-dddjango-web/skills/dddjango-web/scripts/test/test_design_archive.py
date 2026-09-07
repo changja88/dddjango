@@ -104,6 +104,188 @@ class ArchiveTests(unittest.TestCase):
         for row in manifest['files']:
             self.assertEqual((self.source / row['local_path']).read_bytes(), (self.ref / row['local_path']).read_bytes())
 
+    def test_archive_reports_missing_component_before_observation(self):
+        (self.source / 'Logo.jsx').unlink()
+        result = self.archive()
+        self.assertEqual(result.returncode, 1, result.stdout)
+        self.assertIn('Logo.jsx', result.stderr)
+        manifest = json.loads(self.manifest.read_text())
+        self.assertIs(manifest['archive_ready'], True)  # Collected bytes remain available for repair.
+        self.assertIs(manifest['source_ready'], False)
+        missing = [row for row in manifest['dependencies'] if row['status'] == 'missing']
+        self.assertEqual([(row['source_document'], row['source']) for row in missing],
+                         [('screen.dc.html', 'Logo.jsx')])
+
+    def test_archive_checks_nested_runtime_css_and_font_dependencies(self):
+        (self.source / 'support.js').write_text('import "./runtime.js";')
+        (self.source / 'runtime.js').write_text('window.originalRuntime = true;')
+        (self.source / 'screen.dc.html').write_text(
+            '<script src="support.js"></script><link rel="stylesheet" href="theme.css">')
+        (self.source / 'theme.css').write_text('@import "nested/fields.css";')
+        (self.source / 'nested').mkdir()
+        (self.source / 'nested/fields.css').write_text('@font-face{src:url("../fonts/body.woff2")}')
+        result = self.archive()
+        self.assertEqual(result.returncode, 1, result.stdout)
+        manifest = json.loads(self.manifest.read_text())
+        edges = manifest['dependencies']
+        self.assertIn(('support.js', './runtime.js', 'ok'),
+                      [(r['source_document'], r['source'], r['status']) for r in edges])
+        self.assertIn(('nested/fields.css', '../fonts/body.woff2', 'missing'),
+                      [(r['source_document'], r['source'], r['status']) for r in edges])
+
+    def test_archive_records_dynamic_and_remote_edges_without_claiming_them_acquired(self):
+        (self.source / 'support.js').write_text('import "react"; import(runtimePath);')
+        (self.source / 'screen.dc.html').write_text(
+            '<script src="support.js"></script><script src="https://example.invalid/runtime.js"></script>')
+        result = self.archive()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        manifest = json.loads(self.manifest.read_text())
+        self.assertIs(manifest['source_ready'], False)
+        edges = {(r['source'], r['status']) for r in manifest['dependencies']}
+        self.assertIn(('{bare module:react}', 'runtime'), edges)
+        self.assertIn(('{non-literal import}', 'runtime'), edges)
+        self.assertIn(('https://example.invalid/runtime.js', 'external'), edges)
+
+    def test_archive_resolves_component_resources_from_the_html_document(self):
+        (self.source / 'pages').mkdir()
+        (self.source / 'components').mkdir()
+        (self.source / 'pages/logo x.png').write_bytes(png())
+        (self.source / 'pages/login.html').write_text(
+            '<x-import from="../components/Mark.jsx" component="Mark"></x-import>')
+        (self.source / 'components/Mark.jsx').write_text(
+            'export function Mark() { return <img src="logo%20x.png?v=2#image" />; }')
+        (self.source / 'screen.dc.html').write_text('<iframe src="pages/login.html"></iframe>')
+        result = self.archive()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        edges = json.loads(self.manifest.read_text())['dependencies']
+        image = next(r for r in edges if r['source'] == 'logo%20x.png?v=2#image')
+        self.assertEqual(image['local_path'], 'pages/logo x.png')
+        self.assertEqual(image['status'], 'ok')
+
+    def test_archive_does_not_resolve_local_references_outside_the_export(self):
+        (self.root / 'outside.css').write_text('body{color:red}')
+        (self.source / 'screen.dc.html').write_text('<link rel="stylesheet" href="../outside.css">')
+        result = self.archive()
+        self.assertEqual(result.returncode, 1, result.stdout)
+        self.assertIn('escapes', result.stderr)
+        self.assertFalse((self.ref / 'outside.css').exists())
+
+    def test_archive_uses_the_first_html_base_href(self):
+        (self.source / 'assets').mkdir()
+        (self.source / 'assets/logo.png').write_bytes(png())
+        (self.source / 'screen.dc.html').write_text(
+            '<template><base href="inert/"></template>'
+            '<base target="_blank"><base href="assets/"><base href="wrong/">'
+            '<img src="logo.png">')
+        self.prepare()
+        edges = json.loads(self.manifest.read_text())['dependencies']
+        self.assertEqual([(r['source'], r['local_path'], r['status']) for r in edges],
+                         [('logo.png', 'assets/logo.png', 'ok')])
+
+    def test_archive_base_does_not_accept_a_file_at_the_unbased_path(self):
+        (self.source / 'screen.dc.html').write_text('<base href="assets/"><img src="logo.png">')
+        result = self.archive()
+        self.assertEqual(result.returncode, 1, result.stdout)
+        edges = json.loads(self.manifest.read_text())['dependencies']
+        self.assertEqual([(r['local_path'], r['status']) for r in edges],
+                         [('assets/logo.png', 'missing')])
+
+    def test_archive_propagates_html_base_to_component_resources(self):
+        (self.source / 'pages').mkdir()
+        (self.source / 'assets').mkdir()
+        (self.source / 'components').mkdir()
+        (self.source / 'assets/logo.png').write_bytes(png())
+        (self.source / 'pages/login.html').write_text(
+            '<base href="/assets/"><x-import from="../components/Mark.jsx" component="Mark"></x-import>')
+        (self.source / 'components/Mark.jsx').write_text(
+            'import "./mark.css"; export function Mark() { return <img src="logo.png" />; }')
+        (self.source / 'components/mark.css').write_text('body { color: red; }')
+        (self.source / 'screen.dc.html').write_text('<iframe src="pages/login.html"></iframe>')
+        result = self.archive()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        edges = json.loads(self.manifest.read_text())['dependencies']
+        self.assertIn(('logo.png', 'assets/logo.png', 'ok'),
+                      [(r['source'], r['local_path'], r['status']) for r in edges])
+        self.assertIn(('./mark.css', 'components/mark.css', 'ok'),
+                      [(r['source'], r['local_path'], r['status']) for r in edges])
+
+    def test_archive_leaves_remote_html_base_resources_for_observation(self):
+        (self.source / 'screen.dc.html').write_text(
+            '<base href="https://example.invalid/assets/"><img src="remote.png">'
+            '<iframe src="local.html"></iframe>')
+        (self.source / 'local.html').write_text('<img src="also-missing.png">')
+        result = self.archive()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        edges = json.loads(self.manifest.read_text())['dependencies']
+        self.assertEqual([(r['source'], r['status']) for r in edges],
+                         [('remote.png', 'external'), ('local.html', 'external')])
+
+    def test_archive_ignores_inert_markup_in_component_strings_and_comments(self):
+        (self.source / 'Logo.jsx').write_text('''
+const debug = '<img src="missing-string.png">';
+const template = `<img src="missing-template.png">`;
+const nested = `${`<img src="missing-nested-template.png">`}`;
+// <img src="missing-line-comment.png">
+/* <img src="missing-block-comment.png"> */
+export function Logo({src}) {
+  return <div>{/* <img src="missing-jsx-comment.png"> */}
+    <img src="logo.png" /><img src={src} />
+  </div>;
+}
+''')
+        self.prepare()
+        edges = json.loads(self.manifest.read_text())['dependencies']
+        self.assertEqual({r['source'] for r in edges if r['status'] == 'ok'},
+                         {'support.js', 'Logo.jsx', 'logo.png'})
+        self.assertTrue(any(r['status'] == 'runtime' for r in edges))
+        self.assertEqual((self.ref / 'Logo.jsx').read_bytes(), (self.source / 'Logo.jsx').read_bytes())
+
+    def test_archive_keeps_real_jsx_images_between_text_apostrophes(self):
+        (self.source / 'Logo.jsx').write_text('''
+export function Logo() { return <div>It's <img src="missing.png" /> don't forget.</div>; }
+''')
+        result = self.archive()
+        self.assertEqual(result.returncode, 1, result.stdout)
+        self.assertIn('missing.png', result.stderr)
+
+    def test_archive_keeps_interpolated_markup_templates_explicitly_runtime(self):
+        (self.source / 'Logo.jsx').write_text('''
+const markup = `<img src="${imagePath}">`;
+export function Logo() { return <div dangerouslySetInnerHTML={{__html: markup}} />; }
+''')
+        result = self.archive()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        edges = json.loads(self.manifest.read_text())['dependencies']
+        self.assertTrue(any(r['status'] == 'runtime' for r in edges))
+
+    def test_gate_rechecks_dependencies_even_if_inventory_and_observation_agree(self):
+        self.prepare()
+        (self.ref / 'Logo.jsx').unlink()
+        manifest = json.loads(self.manifest.read_text())
+        manifest['files'] = [r for r in manifest['files'] if r['local_path'] != 'Logo.jsx']
+        manifest.pop('dependencies', None)  # Old archives had no dependency report.
+        self.manifest.write_text(json.dumps(manifest))
+        self.observation['archive_sha256'] = sha(self.manifest)
+        self.write_observation()
+        self.spec['cases'][0]['source_observation'] = self.pointer(self.build / 'observation.json')
+        self.write_spec()
+        result = self.gate('prepare')
+        self.assertEqual(result.returncode, 2, result.stdout)
+        self.assertIn('Logo.jsx', result.stderr)
+
+    def test_gate_checks_the_case_entrypoint_not_just_the_archive_entrypoint(self):
+        (self.source / 'other.html').write_text('<x-import from="Missing.jsx" component="Other"></x-import>')
+        self.prepare()
+        entry = self.pointer(self.ref / 'other.html', self.ref)
+        self.spec['cases'][0]['entrypoint'] = entry
+        self.observation['entrypoint'] = entry
+        self.write_observation()
+        self.spec['cases'][0]['source_observation'] = self.pointer(self.build / 'observation.json')
+        self.write_spec()
+        result = self.gate('prepare')
+        self.assertEqual(result.returncode, 2, result.stdout)
+        self.assertIn('Missing.jsx', result.stderr)
+
     def test_archive_rejects_symlinks_and_output_inside_source(self):
         (self.source / 'escape').symlink_to(self.root)
         result = self.archive()

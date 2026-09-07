@@ -22,8 +22,29 @@ those printed values only for a new observation round. Exit 0 means the
 declared phase is consistent, 1 means a usage/internal error prevented the
 check, and 2 means a defect or insufficient evidence. `--phase visual` always
 rechecks inputs. `backstop.py --design-build` joins the visual phase to the
-existing 26 checks; `--only` cannot disable it. Omitting `--design-build`
-preserves the non-design invocation.
+existing 26 checks; `--only` cannot disable it. Without `--design-build`, the runner
+discovers source-bearing builds under `PROJECT/.dddjango-web/` and validates all
+of them. Git index/HEAD paths retain deleted source records as design signals;
+deleted config/build-state records are read from the index and then HEAD.
+An explicit build selects one discovered project build; an unrelated external
+passing folder cannot replace it. External build locations remain supported when
+there is no project-local source-bearing build. A `design_source` object of type
+`PROJECT` (or a legacy Claude Design pointer without a type) without a discoverable
+build requires an explicit build path. `DESIGN_SYSTEM` token pointers alone do not
+signal a screen design.
+
+A non-design run may omit `--design-build` without rechecking completed history
+only when its valid `--diff-base` resolves to exactly one current state's
+`git_snapshot`, that state says `has_design_screen=false`, and its build has no
+source markers. Every historical design build must explicitly be `finalize`,
+`g2_approved=true`, `implementation_visual=verified`, `design_status=ready`, with
+all recorded slices done. Config and other build records must be unchanged since
+the base, including deletions and untracked files. The runner prints a skip notice;
+missing or ambiguous conditions retain the full design check. Explicit build
+selection still identifies the requested build; it does not infer or authenticate
+the user's current scope from a folder name. The final blocker total
+includes structural and design defects. Completion/CI uses the runner exit code,
+never a filtered structural-only output line.
 
 ## `design-input.json` version 1
 
@@ -108,6 +129,16 @@ For a dynamic design engine/export, follow `design-acquisition.md`. The archive
 collector preserves the entire supplied tree without static dependency claims.
 An archive manifest has `version: 1`, `collection: "archive"`,
 `archive_ready: true`, `source_ready: false`, and the usual entrypoint/source_root/files.
+The collector also records `dependencies` for its entrypoint: each row contains
+`source_document`, `source`, `kind`, `local_path`, `status`, and `reason`. Status is
+`ok` (local file present), `missing` (absent/escaping local path), `inline`,
+`external`, or `runtime`. Missing literal local dependencies make collection exit 1;
+the copied bytes and report remain available. `archive_ready` only describes byte
+preservation. Remote/dynamic references still require original browser observations.
+For every case, this checker recomputes local dependencies from frozen bytes, even
+for old archives without this report. A matching partial inventory cannot hide a
+missing component, stylesheet, script, or asset. Non-case archived screens are not
+treated as required rendering entrypoints.
 Use exactly one archive manifest for the entire reference_root; cases may point to
 different original HTML/JSX rows in it. Do not mix or duplicate per-screen manifests
 in the archive path. Its manifest lives outside reference_root. Its full file inventory (except

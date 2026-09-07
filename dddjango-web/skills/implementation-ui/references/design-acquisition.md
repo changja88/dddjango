@@ -30,7 +30,14 @@ python PLUGIN/scripts/archive_design.py EXPORT/screen.dc.html --source-root EXPO
 `EXPORT`와 `BUILD/design-ref`는 겹치지 않는 폴더다. manifest는 `design-ref` 밖의 형제
 파일이다. 충돌이 있으면 새 staging을 사용한다. 이 명령은 `.DS_Store`를 제외한 전체
 파일을 바이트 그대로 보관하며 `collection=archive`, `archive_ready=true`,
-`source_ready=false`를 기록한다. **정적 의존성 완전 수집이나 렌더 성공을 주장하지 않는다.**
+`source_ready=false`를 기록한다. manifest의 `dependencies`는 선택한 원본부터 따라간
+참조 목록이다(`source_document`·`source`·`kind`·`local_path`·`status`·`reason`).
+`ok`는 로컬 파일 존재, `missing`은 로컬 참조 누락/경계 이탈, `inline`은 내장 자원,
+`external`은 외부 URL, `runtime`은 동적 해석이 필요한 참조다. 컴포넌트 안 자원의
+상대경로는 참조 종류에 따라 컴포넌트 파일 또는 원본 HTML을 기준으로 해소한다.
+`missing`이 있으면 바이트와 진단 목록을 보존하고 **exit 1**로 끝난다. 누락된 원본을
+같은 버전에서 확보한 뒤 새 보관 경로로 다시 실행한다. `archive_ready`는 복사 완료이며 진행 승인이 아니다.
+외부/동적 참조는 다음 원본 관찰에서 확인한다. **정적 의존성 완전 수집이나 렌더 성공을 주장하지 않는다.**
 기존 실패 manifest의 필드를 손으로 바꿔 archive로 승격하지 않는다. 수집 진단 실패
 내역은 보존해 관찰 검토에 전달한다. 실제 파일을 못 읽거나 보관하지 못한 실패는 해결한다.
 
@@ -83,6 +90,8 @@ python PLUGIN/scripts/check_design_evidence.py --build BUILD --project-root PROJ
 Coordinator가 원문을 coverage-review.md로 보존하고 포인터를 연결한 뒤 현재 `inputs`를
 실행한다. 실패는 해당 수집·관찰·검토 단계에서 해결한다. 사용자 승인으로 검사 결과를
 대체하지 않는다. 소스·case·관찰 변경 시 prepare와 독립 리뷰를 다시 수행한다.
+prepare/inputs는 각 case의 원본에서 로컬 의존성을 다시 탐색한다. 보관 목록에서 누락
+파일의 행까지 함께 지웠거나 구형 manifest에 `dependencies`가 없어도 누락은 실패한다.
 
 ## 5. 외형과 내부 구조
 

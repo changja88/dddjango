@@ -482,6 +482,187 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn('[DESIGN] BLOCKER', result.stdout)
 
+    def backstop(self, *args):
+        return subprocess.run([sys.executable, str(SCRIPTS / 'backstop.py'), self.project,
+                               '--all', '--only', 'zz', *args], capture_output=True, text=True)
+
+    def project_build(self):
+        target = self.project / '.dddjango-web/auth'
+        target.parent.mkdir(exist_ok=True)
+        shutil.copytree(self.build, target)
+        return target
+
+    def test_backstop_discovers_design_without_optional_flag(self):
+        target = self.project_build()
+        (target / 'design-input.json').unlink()
+        result = self.backstop()
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn('design-input.json', result.stdout)
+        self.assertNotIn('blocker 0건', result.stdout)
+
+    def test_backstop_discovered_complete_design_can_pass(self):
+        self.write_visual()
+        self.project_build()
+        result = self.backstop()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('시안 0', result.stdout)
+
+    def test_backstop_cannot_select_an_unrelated_pass_to_skip_project_design(self):
+        self.write_visual()
+        target = self.project_build()
+        (target / 'design-input.json').unlink()
+        result = self.backstop('--design-build', self.build)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn('project design', result.stdout)
+
+    def test_backstop_configured_design_without_build_is_not_nondesign(self):
+        folder = self.project / '.dddjango-web'
+        folder.mkdir()
+        (folder / 'config.json').write_text(json.dumps({'design_source': {'engine': 'claude-design'}}))
+        result = self.backstop()
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn('design_source', result.stdout)
+
+    def test_backstop_design_system_tokens_do_not_require_screen_evidence(self):
+        folder = self.project / '.dddjango-web'
+        current = folder / 'self-designed-screen'
+        current.mkdir(parents=True)
+        (folder / 'config.json').write_text(json.dumps({'design_source': {
+            'engine': 'claude-design', 'type': 'DESIGN_SYSTEM', 'project': 'token-kit'}}))
+        (current / 'build-state.json').write_text(json.dumps({
+            'has_design_screen': False, 'has_design_tokens': True}))
+        result = self.backstop()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('시안 0', result.stdout)
+
+    def commit_project_record(self, relative, value):
+        record = self.project / relative
+        record.parent.mkdir(parents=True, exist_ok=True)
+        record.write_text(json.dumps(value))
+        subprocess.run(['git', 'init', '-q', str(self.project)], check=True)
+        subprocess.run(['git', '-C', str(self.project), 'add', '.'], check=True)
+        subprocess.run(['git', '-C', str(self.project), '-c', 'user.name=Evidence Test',
+                        '-c', 'user.email=evidence@example.invalid', '-c', 'core.hooksPath=/dev/null',
+                        'commit', '-qm', 'record design requirement'], check=True)
+
+    def test_backstop_deleted_tracked_required_state_is_recovered(self):
+        self.commit_project_record('.dddjango-web/auth/build-state.json', {
+            'has_design_screen': True, 'design_status': 'blocked'})
+        shutil.rmtree(self.project / '.dddjango-web')
+        for staged in (False, True):
+            with self.subTest(staged=staged):
+                if staged:
+                    subprocess.run(['git', '-C', str(self.project), 'add', '-u'], check=True)
+                result = self.backstop()
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn('auth', result.stdout)
+
+    def test_backstop_deleted_tracked_project_pointer_is_recovered(self):
+        self.commit_project_record('.dddjango-web/config.json', {'design_source': {
+            'engine': 'claude-design', 'type': 'PROJECT', 'project': 'original-screen'}})
+        shutil.rmtree(self.project / '.dddjango-web')
+        for staged in (False, True):
+            with self.subTest(staged=staged):
+                if staged:
+                    subprocess.run(['git', '-C', str(self.project), 'add', '-u'], check=True)
+                result = self.backstop()
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn('design_source', result.stdout)
+
+    def test_backstop_deleted_tracked_design_does_not_silence_gate(self):
+        target = self.project_build()
+        subprocess.run(['git', 'init', '-q', str(self.project)], check=True)
+        subprocess.run(['git', '-C', str(self.project), 'add', '.dddjango-web'], check=True)
+        shutil.rmtree(target)
+        result = self.backstop()
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn('design', result.stdout)
+
+    def test_backstop_all_discovered_builds_are_checked_when_flag_is_omitted(self):
+        self.write_visual()
+        target = self.project_build()
+        second = target.with_name('signup')
+        shutil.copytree(target, second)
+        (second / 'design-input.json').unlink()
+        result = self.backstop()
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn('signup', result.stdout)
+
+    def nondesign_after_completed_build(self, previous_state=None):
+        self.write_visual()
+        previous = self.project_build()
+        complete = {'phase': 'finalize', 'g2_approved': True, 'implementation_visual': 'verified',
+                    'design_status': 'ready', 'has_design_screen': True}
+        for key, value in (previous_state or {}).items():
+            if value is None:
+                complete.pop(key)
+            else:
+                complete[key] = value
+        self.commit_project_record('.dddjango-web/auth/build-state.json', complete)
+        complete['git_snapshot'] = subprocess.check_output(
+            ['git', '-C', str(self.project), 'rev-parse', 'HEAD'], text=True).strip()
+        self.commit_project_record('.dddjango-web/auth/build-state.json', complete)
+        snapshot = subprocess.check_output(
+            ['git', '-C', str(self.project), 'rev-parse', 'HEAD'], text=True).strip()
+        current = previous.with_name('current-nondesign')
+        current.mkdir()
+        (current / 'build-state.json').write_text(json.dumps({
+            'phase': 'implement', 'git_snapshot': snapshot, 'has_design_screen': False}))
+        (self.project / 'web/app.js').write_text('const currentWork = true;')
+        return previous, current, snapshot
+
+    def test_backstop_current_nondesign_skips_completed_unchanged_history(self):
+        _previous, _current, snapshot = self.nondesign_after_completed_build()
+        result = self.backstop('--diff-base', snapshot[:12])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('과거 시안', result.stdout)
+
+    def test_backstop_nondesign_exception_requires_unique_current_scope_without_sources(self):
+        _previous, current, snapshot = self.nondesign_after_completed_build()
+        record = current / 'build-state.json'
+        original = record.read_text()
+        for mutation in ('design-flag', 'source-marker', 'wrong-snapshot', 'ambiguous-snapshot'):
+            with self.subTest(mutation=mutation):
+                state = json.loads(original)
+                if mutation == 'design-flag':
+                    state['has_design_screen'] = True
+                elif mutation == 'source-marker':
+                    (current / 'design-ref').mkdir()
+                elif mutation == 'wrong-snapshot':
+                    state['git_snapshot'] = 'missing-commit'
+                else:
+                    other = current.with_name('ambiguous')
+                    other.mkdir()
+                    (other / 'build-state.json').write_text(original)
+                record.write_text(json.dumps(state))
+                result = self.backstop('--diff-base', snapshot)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                record.write_text(original)
+                if mutation == 'source-marker':
+                    (current / 'design-ref').rmdir()
+                if mutation == 'ambiguous-snapshot':
+                    shutil.rmtree(other)
+
+    def test_backstop_nondesign_exception_keeps_changed_or_unfinished_history(self):
+        projects = self.project
+        scenarios = {'unfinished': {'g2_approved': False}, 'blocked': {'design_status': 'blocked'},
+                     'legacy': {'implementation_visual': None}, 'implementing': {'phase': 'implement'},
+                     'pending-slice': {'slices': [{'status': 'pending'}]},
+                     'deleted-state': {}, 'new-evidence': {}}
+        for mutation, state_changes in scenarios.items():
+            with self.subTest(mutation=mutation):
+                self.project = projects / mutation
+                (self.project / 'web').mkdir(parents=True)
+                (self.project / 'web/app.js').write_text('const ready = true;')
+                previous, _current, snapshot = self.nondesign_after_completed_build(state_changes)
+                if mutation == 'deleted-state':
+                    (previous / 'build-state.json').unlink()
+                elif mutation == 'new-evidence':
+                    (previous / 'new-capture.png').write_bytes(png())
+                result = self.backstop('--diff-base', snapshot)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.project = projects
+
 
 if __name__ == '__main__':
     unittest.main()

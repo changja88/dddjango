@@ -34,9 +34,15 @@ class Dependencies(HTMLParser):
         self.rows = []
         self.in_style = False
         self.in_script = False
+        self.base_href = None
+        self.template_depth = 0
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
+        if tag == 'template':
+            self.template_depth += 1
+        if tag == 'base' and not self.template_depth and self.base_href is None and 'href' in attrs:
+            self.base_href = attrs['href'] or ''
         if attrs.get('style'):
             self.rows.extend((ref, kind, 'document') for ref, kind, _base in css_dependencies(attrs['style']))
         if tag == 'style':
@@ -68,6 +74,8 @@ class Dependencies(HTMLParser):
                 self.rows.extend((item.strip().split()[0], 'image', 'document') for item in attrs['srcset'].split(',') if item.strip())
 
     def handle_endtag(self, tag):
+        if tag == 'template' and self.template_depth:
+            self.template_depth -= 1
         if tag == 'style':
             self.in_style = False
         if tag == 'script':
@@ -91,11 +99,73 @@ def _skip_quoted(source: str, start: int, quote: str) -> int:
     while index < len(source):
         if source[index] == '\\':
             index += 2
+        elif quote == '`' and source.startswith('${', index):
+            end = _interpolation_end(source, index + 2)
+            index = len(source) if end is None else end + 1
         elif source[index] == quote:
             return index + 1
         else:
             index += 1
     return len(source)
+
+
+def _component_markup(source: str) -> tuple[str, bool]:
+    """Mask inert JS strings/comments, preserving JSX attributes and child text.
+
+    This only separates lexical contexts; expressions and interpolated templates
+    still require runtime observation and are never evaluated here.
+    """
+    output = list(source)
+    frames = [('code', -1)]
+    uncertain = False
+    index = 0
+    while index < len(source):
+        mode, depth = frames[-1]
+        if mode == 'code':
+            end = index
+            if source.startswith('//', index):
+                end = source.find('\n', index + 2)
+                end = len(source) if end < 0 else end
+            elif source.startswith('/*', index):
+                end = source.find('*/', index + 2)
+                end = len(source) if end < 0 else end + 2
+            elif source[index] in ('\'', '"', '`'):
+                end = _skip_quoted(source, index, source[index])
+                uncertain = uncertain or (source[index] == '`' and '${' in source[index:end])
+            if end > index:
+                output[index:end] = ['\n' if char == '\n' else ' ' for char in source[index:end]]
+                index = end
+                continue
+            if source[index] == '<' and re.match(r'<(?:[A-Za-z][\w:.-]*(?=[\s/>])|>)', source[index:]):
+                frames.extend([('text', 0), ('tag', 1)])
+            elif depth > 0 and source[index] == '{':
+                frames[-1] = ('code', depth + 1)
+            elif depth > 0 and source[index] == '}':
+                if depth == 1:
+                    frames.pop()
+                else:
+                    frames[-1] = ('code', depth - 1)
+        elif mode == 'tag':
+            if source[index] in ('\'', '"'):
+                index = _skip_quoted(source, index, source[index])
+                continue
+            if source[index] == '{':
+                frames.append(('code', 1))
+            elif source[index] == '>':
+                frames.pop()
+                count = frames[-1][1] + (0 if depth == 1 and source[index - 1] == '/' else depth)
+                frames[-1] = ('text', count)
+                if count == 0:
+                    frames.pop()
+        elif source[index] == '{':
+            frames.append(('code', 1))
+        elif source[index] == '<' and re.match(r'</?(?:[A-Za-z][\w:.-]*(?=[\s/>])|>)', source[index:]):
+            frames.append(('tag', -1 if source.startswith('</', index) else 1))
+        index += 1
+    if len(frames) != 1:
+        # Ambiguous/unsupported JSX cannot manufacture definite missing files.
+        return '', True
+    return ''.join(output), uncertain
 
 
 def _interpolation_end(source: str, start: int) -> int | None:
@@ -296,7 +366,12 @@ def dependencies(source: str, kind: str) -> list[tuple[str, str, str]]:
         rows = css_dependencies(source)
     elif kind in ('html', 'component', 'script'):
         parser = Dependencies()
-        if kind != 'script':
+        if kind == 'component':
+            markup, uncertain = _component_markup(source)
+            parser.feed(markup)
+            if uncertain:
+                parser.rows.append(('{JSX runtime markup}', 'file', 'file'))
+        elif kind == 'html':
             parser.feed(source)
         rows = parser.rows
         if kind in ('script', 'component'):

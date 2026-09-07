@@ -17,7 +17,7 @@ import sys
 from typing import Any
 
 from asset_io import image_extension
-from archive_design import archive_files
+from archive_design import archive_dependencies, archive_files
 from design_sources import dependencies, resource_kind
 from freeze_design import resolve_source
 
@@ -379,6 +379,14 @@ def validate_inputs(build: Path, project: Path, *, require_review: bool = True) 
             digest_items.append((f'reference-capture/{case["reference_capture"]["path"]}', capture[1]))
         archive_path = archive_entries.get((entry.get('path'), entry.get('sha256'))) if isinstance(entry, dict) else None
         if archive_path:
+            # Recompute from frozen bytes: a self-consistent partial inventory or
+            # an old manifest without a dependency report cannot hide missing files.
+            try:
+                for row in archive_dependencies(reference_root, reference_root / entry['path']):
+                    if row['status'] == 'missing':
+                        issues.append(f'{here}: {row["reason"]}: {row["source"]!r} in {row["source_document"]}')
+            except (OSError, ValueError) as error:
+                issues.append(f'{here}: cannot inspect archive dependencies ({error})')
             _source_observation(build, case, archive_path, here, issues, digest_items)
         elif 'source_observation' in case:
             issues.append(f'{here}.source_observation: requires an archive HTML/component entrypoint')
