@@ -1,0 +1,105 @@
+{
+  "runtime_head": "2e4acdb0e664084a9742efd0fd520d2f78beb1a9",
+  "thread": "01a07851-f96e-76f0-9d9d-83fbeba61433",
+  "request_sha256": "48abb4b8ababd5c00507a35a0e211b5e6edec785e5f3f01f39abb55f749c7f16",
+  "exact_applicable_request_lines": [
+    "- 프로젝트/cwd/PWD는 /private/tmp/dddjango-web-source-integrity-d0ueqq2z/native-evaluation/r5/codex/N1/app입니다. 앱 코드·설계·상태 변경은 해당 앱 안에서만 가능합니다. 설치된 local .agents/skills는 읽기 전용입니다.",
+    "- 설계/검증 증거는 앱 .dddjango-web 및 /private/tmp/dddjango-web-source-integrity-d0ueqq2z/native-evaluation/r5/codex/N1/browser-output, 임시 진단 스크립트·로그·캡처·임시 파일은 /private/tmp/dddjango-web-source-integrity-d0ueqq2z/native-evaluation/r5/codex/N1/tmp에 둡니다. 다른 lane이나 임의 /tmp 경로에 쓰지 마세요.",
+    "- 이 native 실행에는 지정 Playwright MCP 도구가 per-run으로 등록되어 있습니다. 해당 MCP 서버의 cwd는 위 앱 경로이고 출력 위치는 위 browser-output 경로입니다."
+  ],
+  "observed_failure": "FAIL: direct Coordinator explicit MCP evidence output destination outside designated evidence/temp directories; still inside app/lane",
+  "events": [
+    {
+      "utc": "2026-09-06T20:07:05.299Z",
+      "actor": "Coordinator",
+      "tool": "browser_evaluate",
+      "explicit_filename": "source-render-audit.json"
+    },
+    {
+      "utc": "2026-09-06T20:07:24.945Z",
+      "actor": "Coordinator",
+      "tool": "browser_evaluate",
+      "explicit_filename": "source-render-audit-mobile.json"
+    },
+    {
+      "utc": "2026-09-06T20:07:43.717Z",
+      "actor": "Coordinator",
+      "tool": "shell Python glob/stat/read",
+      "roots": [
+        "app",
+        "browser-output"
+      ],
+      "observed": "Two JSON files at app root, read first100characters; bytes4157/4147"
+    },
+    {
+      "utc": "2026-09-06T20:08:08.492Z",
+      "actor": "Coordinator",
+      "tool": "shell Python rename",
+      "observed": "Moved own two app-root audit files into selected build; evaluator didnotrepair"
+    }
+  ],
+  "artifacts": [
+    {
+      "requested_relative_filename": "source-render-audit.json",
+      "actual_initial_path": "/private/tmp/dddjango-web-source-integrity-d0ueqq2z/native-evaluation/r5/codex/N1/app/source-render-audit.json",
+      "initial_path_currently_exists": false,
+      "prewrite_stat": "NOT DIRECTLY OBSERVED; not present in original 17-file host/preparation inventory",
+      "native_move_destination": "/private/tmp/dddjango-web-source-integrity-d0ueqq2z/native-evaluation/r5/codex/N1/app/.dddjango-web/20260907-0504-record-preparation/render-audit.json",
+      "destination_exists": true,
+      "sha256": "d8baa91831d0ce9cf676c379cf3fdb67a430f748a1a52a5762a937b5532aba24",
+      "bytes": 4157
+    },
+    {
+      "requested_relative_filename": "source-render-audit-mobile.json",
+      "actual_initial_path": "/private/tmp/dddjango-web-source-integrity-d0ueqq2z/native-evaluation/r5/codex/N1/app/source-render-audit-mobile.json",
+      "initial_path_currently_exists": false,
+      "prewrite_stat": "NOT DIRECTLY OBSERVED; not present in original 17-file host/preparation inventory",
+      "native_move_destination": "/private/tmp/dddjango-web-source-integrity-d0ueqq2z/native-evaluation/r5/codex/N1/app/.dddjango-web/20260907-0504-record-preparation/render-audit-mobile.json",
+      "destination_exists": true,
+      "sha256": "a845a45327ef83312fef07b5a7fdad8011eadfa00e4cd66cc06eb4fea1c79848",
+      "bytes": 4147
+    }
+  ],
+  "scope_limit": "Not an outside-lane /tmp write. No accusation of intent. Natural final report and independent coverage incomplete due scoped termination. Moving the files does not undo prior writes/reads. Evaluator did not move or repair native artifacts.",
+  "installed_tool_path_semantics": {
+    "source": "@playwright/mcp0.0.80 installed playwright-core/lib/coreBundle.js65033,65485,66333",
+    "explicit_filename": "workspaceFile resolves against per-call workspace or options.cwd",
+    "default_output_dir": "applies to auto-generated output; not explicit relative filename",
+    "evaluate_without_filename": "returns text"
+  },
+  "completion": {
+    "status": "stopped-confirmed-output-boundary-failure",
+    "runtime_head": "2e4acdb0e664084a9742efd0fd520d2f78beb1a9",
+    "N1": {
+      "thread": "01a07851-f96e-76f0-9d9d-83fbeba61433",
+      "native_exit": -15,
+      "own_BUILD_handoff": "narrow observed PASS",
+      "direct_diagnostic_output_boundary": "FAIL",
+      "source_collection": "exit1/source_readyfalse; actualmissing effects.css",
+      "inputs": "NOT RUN",
+      "independent_coverage": "NOT RUN",
+      "natural_final_report": "INCOMPLETE",
+      "evidence": "N1/direct-diagnostic-output-observation.json",
+      "verification": "N1/independent-verification.json"
+    },
+    "positive_supplied": false,
+    "positive_sample_label": "r5 Codex explicit-rebase full normal flow",
+    "positive_full_flow": "NOT STARTED / HOLD",
+    "N2": "current v1 valid0/v2 stale2 prepared; native NOT STARTED/HOLD",
+    "N5": "historical49 bytes verified; native NOT STARTED/HOLD",
+    "coder_B": "NOT EXERCISED",
+    "owned_processes_terminated": true,
+    "ports_after_stop": {
+      "18772": "no_listener",
+      "18782": "no_listener",
+      "18792": "no_listener"
+    },
+    "failure_classification": [
+      "plugin-regression",
+      "incomplete"
+    ],
+    "updated_at": "2026-09-06T20:14:09.593274+00:00",
+    "root_adjudication": "pending final cap decision; no next native"
+  },
+  "root_cap_adjudication": "PENDING independent observation review; no subsequent native/patch authorized"
+}

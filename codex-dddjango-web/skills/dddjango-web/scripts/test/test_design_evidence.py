@@ -76,7 +76,7 @@ class EvidenceTests(unittest.TestCase):
                 '--project-root', self.project, '--phase', phase]
         if fingerprint:
             args.append('--fingerprint')
-        return subprocess.run(args, capture_output=True, text=True)
+        return subprocess.run(args, capture_output=True, text=True, timeout=10)
 
     def fingerprint(self):
         result = self.run_gate('visual', True)
@@ -138,6 +138,187 @@ class EvidenceTests(unittest.TestCase):
                 (self.build / 'original.png').write_bytes(png())
             self.write_input()
 
+    def freeze_nested_components(self, absolute_image=False):
+        (self.source / 'components/styles').mkdir(parents=True)
+        (self.source / 'images').mkdir()
+        (self.source / 'index.html').write_text('<x-import from="components/Outer.jsx"></x-import>')
+        (self.source / 'components/Outer.jsx').write_text('import Inner from "./Inner.jsx"; import "./styles/base.css";')
+        image_source = str(self.source / 'images/logo.png') if absolute_image else 'images/logo.png'
+        (self.source / 'components/Inner.jsx').write_text(
+            f'import badge from "./badge.png"; export default () => <img src="{image_source}"/>;')
+        (self.source / 'components/styles/base.css').write_text('@import "theme.css"; .a {background:url(background.png)}')
+        (self.source / 'components/styles/theme.css').write_text('.a {color: navy}')
+        for name in ('images/logo.png', 'components/badge.png', 'components/styles/background.png'):
+            (self.source / name).write_bytes(png())
+        result = subprocess.run([sys.executable, str(SCRIPTS / 'freeze_design.py'), self.source / 'index.html',
+                                 '--out', self.reference], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        manifest = json.loads((self.reference / 'source-manifest.json').read_text())
+        self.assertIs(manifest['source_ready'], True)
+        self.assertEqual({row['local_path'] for row in manifest['files']}, {
+            'index.html', 'components/Outer.jsx', 'components/Inner.jsx', 'images/logo.png',
+            'components/badge.png', 'components/styles/base.css', 'components/styles/theme.css',
+            'components/styles/background.png',
+        })
+        case = json.loads((self.build / 'design-input.json').read_text())['cases'][0]
+        case['entrypoint'] = {'path': 'index.html', 'sha256': digest(self.reference / 'index.html')}
+        self.write_input([case])
+        return manifest
+
+    def test_nested_component_document_assets_and_file_relative_imports_pass(self):
+        self.freeze_nested_components()
+        shutil.rmtree(self.source)
+        result = self.run_gate()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_nested_component_deleted_dependencies_and_manifest_entries_fail(self):
+        original = self.freeze_nested_components()
+        manifest_path = self.reference / 'source-manifest.json'
+        dependencies = {
+            'images/logo.png': 'images/logo.png',
+            'components/Inner.jsx': './Inner.jsx',
+            'components/badge.png': './badge.png',
+            'components/styles/base.css': './styles/base.css',
+            'components/styles/theme.css': 'theme.css',
+            'components/styles/background.png': 'background.png',
+        }
+        for name, reference in dependencies.items():
+            frozen = self.reference / name
+            data = frozen.read_bytes()
+            for mutation in ('file', 'entry', 'both'):
+                with self.subTest(dependency=name, mutation=mutation):
+                    manifest = json.loads(json.dumps(original))
+                    if mutation in ('file', 'both'):
+                        frozen.unlink()
+                    if mutation in ('entry', 'both'):
+                        manifest['files'] = [row for row in manifest['files'] if row['local_path'] != name]
+                    manifest_path.write_text(json.dumps(manifest))
+                    result = self.run_gate()
+                    self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                    if mutation == 'file':
+                        self.assertIn('missing path', result.stderr)
+                    else:
+                        self.assertIn(f'dependency absent from manifest: {reference!r}', result.stderr)
+                    frozen.write_bytes(data)
+                    manifest_path.write_text(json.dumps(original))
+
+    def test_nested_component_malformed_or_cyclic_document_provenance_fails(self):
+        original = self.freeze_nested_components(absolute_image=True)
+        manifest_path = self.reference / 'source-manifest.json'
+        for mutation in ('missing', 'empty', 'unknown', 'type', 'self-cycle', 'ancestor-cycle'):
+            with self.subTest(provenance=mutation):
+                manifest = json.loads(json.dumps(original))
+                inner = next(row for row in manifest['files'] if row['local_path'] == 'components/Inner.jsx')
+                outer = next(row for row in manifest['files'] if row['local_path'] == 'components/Outer.jsx')
+                if mutation == 'missing':
+                    del outer['source_document']
+                elif mutation == 'empty':
+                    outer['source_document'] = ''
+                elif mutation == 'unknown':
+                    outer['source_document'] = str(self.source / 'missing.jsx')
+                elif mutation == 'type':
+                    outer['source_document'] = []
+                elif mutation == 'self-cycle':
+                    inner['source_document'] = inner['source']
+                else:
+                    outer['source_document'] = inner['source']
+                manifest_path.write_text(json.dumps(manifest))
+                result = self.run_gate()
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn('document provenance', result.stderr)
+
+    def freeze_nested_html_components(self):
+        files = {
+            'index.html': '<iframe src="pages/frame.html"></iframe>',
+            'pages/frame.html': '<iframe src="nested/preview.html"></iframe>',
+            'pages/nested/preview.html': (
+                '<x-import from="../../components/Outer.jsx"></x-import>'
+                '<iframe src="../../index.html"></iframe>'),
+            'components/Outer.jsx': 'import Inner from "./Inner.jsx";',
+            'components/Inner.jsx': 'import badge from "./badge.png"; export default () => <img src="images/logo.png"/>;',
+            'components/badge.png': png(),
+            'pages/nested/images/logo.png': png(),
+        }
+        for name, data in files.items():
+            path = self.source / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data.encode() if isinstance(data, str) else data)
+        result = subprocess.run([sys.executable, str(SCRIPTS / 'freeze_design.py'), self.source / 'index.html',
+                                 '--out', self.reference], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        manifest = json.loads((self.reference / 'source-manifest.json').read_text())
+        self.assertIs(manifest['source_ready'], True)
+        self.assertEqual({row['local_path'] for row in manifest['files']}, set(files))
+        case = json.loads((self.build / 'design-input.json').read_text())['cases'][0]
+        case['entrypoint'] = {'path': 'index.html', 'sha256': digest(self.reference / 'index.html')}
+        self.write_input([case])
+        return manifest
+
+    def test_nested_html_document_origin_and_dependency_cycles_pass(self):
+        manifest = self.freeze_nested_html_components()
+        rows = {row['local_path']: row for row in manifest['files']}
+        chain = ['components/Inner.jsx', 'components/Outer.jsx', 'pages/nested/preview.html',
+                 'pages/frame.html', 'index.html']
+        for child, parent in zip(chain, chain[1:]):
+            self.assertEqual(rows[child]['source_document'], rows[parent]['source'])
+        self.assertEqual(rows['index.html']['source_document'], '')
+        self.assertFalse((self.reference / 'images/logo.png').exists())
+        shutil.rmtree(self.source)
+        result = self.run_gate()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_nested_html_invalid_importer_ancestry_fails(self):
+        original = self.freeze_nested_html_components()
+        manifest_path = self.reference / 'source-manifest.json'
+        for name in ('pages/nested/preview.html', 'pages/frame.html', 'index.html'):
+            for mutation in ('missing', 'empty', 'unknown', 'type', 'self-cycle', 'component-cycle'):
+                if name == 'index.html' and mutation == 'empty':
+                    continue  # The manifest entrypoint is the only valid empty importer.
+                with self.subTest(ancestor=name, provenance=mutation):
+                    manifest = json.loads(json.dumps(original))
+                    row = next(row for row in manifest['files'] if row['local_path'] == name)
+                    if mutation == 'missing':
+                        del row['source_document']
+                    elif mutation == 'empty':
+                        row['source_document'] = ''
+                    elif mutation == 'unknown':
+                        row['source_document'] = str(self.source / 'missing.html')
+                    elif mutation == 'type':
+                        row['source_document'] = []
+                    elif mutation == 'self-cycle':
+                        row['source_document'] = row['source']
+                    else:
+                        row['source_document'] = str(self.source / 'components/Inner.jsx')
+                    manifest_path.write_text(json.dumps(manifest))
+                    result = self.run_gate()
+                    self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                    self.assertIn('document provenance', result.stderr)
+        with self.subTest(provenance='deleted-importer-row'):
+            manifest = json.loads(json.dumps(original))
+            manifest['files'] = [row for row in manifest['files'] if row['local_path'] != 'pages/frame.html']
+            manifest_path.write_text(json.dumps(manifest))
+            result = self.run_gate()
+            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+            self.assertIn('document provenance importer absent from manifest', result.stderr)
+
+    def test_standalone_component_document_origin_passes(self):
+        self.freeze_nested_components()
+        (self.source / 'components/images').mkdir()
+        (self.source / 'components/images/logo.png').write_bytes(png())
+        result = subprocess.run([sys.executable, str(SCRIPTS / 'freeze_design.py'), self.source / 'components/Outer.jsx',
+                                 '--source-root', self.source, '--out', self.reference], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        manifest = json.loads((self.reference / 'source-manifest.json').read_text())
+        self.assertIs(manifest['source_ready'], True)
+        self.assertFalse(any(row['kind'] == 'html' for row in manifest['files']))
+        self.assertIn('components/images/logo.png', {row['local_path'] for row in manifest['files']})
+        case = json.loads((self.build / 'design-input.json').read_text())['cases'][0]
+        case['entrypoint'] = {'path': 'components/Outer.jsx', 'sha256': digest(self.reference / 'components/Outer.jsx')}
+        self.write_input([case])
+        shutil.rmtree(self.source)
+        result = self.run_gate()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_case_set_viewport_and_code_freshness_are_enforced(self):
         self.write_visual()
         visual = json.loads((self.build / 'visual-evidence.json').read_text())
@@ -186,6 +367,51 @@ class EvidenceTests(unittest.TestCase):
         shutil.copyfile(self.build / 'original.png', hardlink)
         self.write_visual()
         self.assertEqual(self.run_gate('visual').returncode, 0, self.run_gate('visual').stderr)
+
+    def write_two_case_visual(self, capture_kind):
+        originals = [self.build / 'original.png', self.build / 'second-original.png']
+        originals[1].write_bytes(png())
+        self.assertFalse(originals[0].samefile(originals[1]))
+        cases = json.loads((self.build / 'design-input.json').read_text())['cases']
+        second = dict(cases[0], id='login/error', state='error', reference_capture=self.ptr(originals[1]))
+        cases.append(second)
+        self.write_input(cases)
+        (self.build / 'visual-check.md').write_text('Compared both cases directly with their originals.\n')
+        rows = []
+        for index, case in enumerate(cases):
+            original = originals[1 - index]
+            capture = self.build / f'implementation-{index}.png'
+            if capture_kind == 'direct':
+                capture = original
+            elif capture_kind == 'hardlink':
+                capture.hardlink_to(original)
+                self.assertTrue(capture.samefile(original))
+            else:
+                shutil.copyfile(original, capture)
+                self.assertEqual(capture.read_bytes(), original.read_bytes())
+                self.assertTrue(all(not capture.samefile(path) for path in originals))
+            rows.append({'id': case['id'], 'url': 'http://127.0.0.1/login', 'viewport': case['viewport'],
+                         'capture': self.ptr(capture), 'result': 'pass'})
+        evidence = {'version': 1, **self.fingerprint(), 'visual_check': self.ptr(self.build / 'visual-check.md'),
+                    'cases': rows}
+        (self.build / 'visual-evidence.json').write_text(json.dumps(evidence, indent=2) + '\n')
+
+    def test_cross_case_original_capture_direct_reuse_fails(self):
+        self.write_two_case_visual('direct')
+        result = self.run_gate('visual')
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(result.stderr.count('original file/hardlink reuse forbidden'), 2)
+
+    def test_cross_case_original_capture_hardlink_reuse_fails(self):
+        self.write_two_case_visual('hardlink')
+        result = self.run_gate('visual')
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(result.stderr.count('original file/hardlink reuse forbidden'), 2)
+
+    def test_two_case_independent_equal_bytes_captures_pass(self):
+        self.write_two_case_visual('copy')
+        result = self.run_gate('visual')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_media_response_browser_chain_passes_and_mutations_fail(self):
         requirement = {'id': 'hero', 'kind': 'video', 'environment': 'staging', 'endpoint': '/api/media/hero',

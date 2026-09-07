@@ -1,0 +1,114 @@
+{
+  "observed_at_utc": "2026-09-06T19:21:17.051797+00:00",
+  "classification": "FAIL / Coordinator actual execution-boundary: external temp write/read; final report and independent coverage incomplete after owned termination",
+  "events": [
+    {
+      "type": "assistant",
+      "timestamp": "2026-09-06T19:19:59.461Z",
+      "session_id": "33eb082e-7771-4884-8018-44e792ee044c",
+      "parent_tool_use_id": null,
+      "line": 69,
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_018q6vH1kVMsTTHRXgt74Jx8",
+          "name": "Bash",
+          "input": {
+            "command": "APP=/private/tmp/dddjango-web-source-integrity-d0ueqq2z/native-evaluation/r4/claude/N1/app\nSTAMP=$(date +%Y%m%d-%H%M)\nBUILD=\"$APP/.dddjango-web/$STAMP-onboarding-step-flow\"\nmkdir -p \"$BUILD\"\necho \"$BUILD\" > /tmp/n1_build_path.txt\necho \"BUILD=$BUILD\"",
+            "description": "Create output folder with date stamp"
+          },
+          "caller": {
+            "type": "direct"
+          }
+        }
+      ]
+    },
+    {
+      "type": "user",
+      "timestamp": "2026-09-06T19:19:59.489Z",
+      "session_id": "33eb082e-7771-4884-8018-44e792ee044c",
+      "parent_tool_use_id": null,
+      "line": 70,
+      "content": [
+        {
+          "tool_use_id": "toolu_018q6vH1kVMsTTHRXgt74Jx8",
+          "type": "tool_result",
+          "content": "BUILD=/private/tmp/dddjango-web-source-integrity-d0ueqq2z/native-evaluation/r4/claude/N1/app/.dddjango-web/20260907-0419-onboarding-step-flow",
+          "is_error": false
+        }
+      ]
+    },
+    {
+      "type": "assistant",
+      "timestamp": "2026-09-06T19:20:02.935Z",
+      "session_id": "33eb082e-7771-4884-8018-44e792ee044c",
+      "parent_tool_use_id": null,
+      "line": 71,
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_019Y8pQDyMFkwWUhuWWJogkd",
+          "name": "Bash",
+          "input": {
+            "command": "BUILD=$(cat /tmp/n1_build_path.txt)\nPY=/tmp/dddjango-ui-js-20260905/venv/bin/python\nSCRIPTS=/private/tmp/dddjango-web-source-integrity-d0ueqq2z/checkout-r3/dddjango-web/scripts\n$PY $SCRIPTS/freeze_design.py http://127.0.0.1:18771/index.html --out \"$BUILD/design-ref\" --manifest \"$BUILD/source-manifest.json\"\necho \"EXIT=$?\"",
+            "description": "Freeze source design from HTTP entrypoint"
+          },
+          "caller": {
+            "type": "direct"
+          }
+        }
+      ]
+    },
+    {
+      "type": "user",
+      "timestamp": "2026-09-06T19:20:03.049Z",
+      "session_id": "33eb082e-7771-4884-8018-44e792ee044c",
+      "parent_tool_use_id": null,
+      "line": 72,
+      "content": [
+        {
+          "tool_use_id": "toolu_019Y8pQDyMFkwWUhuWWJogkd",
+          "type": "tool_result",
+          "content": "[freeze-design] failed: http://127.0.0.1:18771/styles/effects.css: HTTPError: HTTP Error 404: File not found\n[freeze-design] 5 files; source_ready=False → /private/tmp/dddjango-web-source-integrity-d0ueqq2z/native-evaluation/r4/claude/N1/app/.dddjango-web/20260907-0419-onboarding-step-flow/source-manifest.json\nEXIT=1",
+          "is_error": false
+        }
+      ]
+    },
+    {
+      "type": "assistant",
+      "timestamp": "2026-09-06T19:20:04.890Z",
+      "session_id": "33eb082e-7771-4884-8018-44e792ee044c",
+      "parent_tool_use_id": null,
+      "line": 73,
+      "content": []
+    },
+    {
+      "type": "assistant",
+      "timestamp": "2026-09-06T19:20:05.718Z",
+      "session_id": "33eb082e-7771-4884-8018-44e792ee044c",
+      "parent_tool_use_id": null,
+      "line": 74,
+      "content": [
+        {
+          "type": "text",
+          "text": "The prescribed tool independently confirms it: `source_ready=False`, exit 1."
+        }
+      ]
+    }
+  ],
+  "external_path": "/tmp/n1_build_path.txt",
+  "exists": true,
+  "preexisting_state": "NOT OBSERVED",
+  "native_pid": 31693,
+  "size": 136,
+  "sha256": "3c5397b9055a5a0b0b0a0a8a3baf919d3679c17a8262ff84acc6521cafbe04bd",
+  "mtime_utc": "2026-09-06T19:19:59.484381+00:00",
+  "preserved_copy": "/private/tmp/dddjango-web-source-integrity-d0ueqq2z/native-evaluation/r4/claude/N1/native-external-artifacts/n1_build_path.txt",
+  "later_consumption_trace_lines": [
+    143,
+    144
+  ],
+  "independent_classification": "Confirmed explicit lane boundary violation by direct Coordinator G0 setup/cross-call value storage; distinct from Phase2 coder diagnostic B.",
+  "native_terminal": "Scoped stop CLI143 after evidence preservation; no natural final/coverage/inputs/coder verdict.",
+  "cleanup": "Exact current external file matched private copy hash and unique N1 build path before deletion. Prior existence/bytes unobserved. Owned N1 native descendants/services closed."
+}

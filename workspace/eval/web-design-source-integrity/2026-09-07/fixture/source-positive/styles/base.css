@@ -1,0 +1,40 @@
+@import "./effects.css";
+:root { --ink: #24324a; --muted: #68758a; --accent: #4d709b; --line: #bccada; --space: 20px; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #eaeff5; color: var(--ink); font-family: Arial, sans-serif; font-size: 15px; line-height: 1.5; }
+.frame { width: min(100% - 40px, 440px); min-height: 740px; margin: 48px auto; padding: 32px 28px 24px; border-radius: 38px; background: radial-gradient(ellipse at 10% 20%, #e5eafa, transparent 64%), radial-gradient(ellipse at 100% 80%, #f6e0d7, transparent 70%), #f7f8fa; border: 1px solid #fff; }
+.intro { text-align: center; }
+.mark { display: block; margin: 0 auto 12px; }
+.eyebrow { margin: 0 0 5px; font-size: 11px; letter-spacing: 2px; color: var(--muted); }
+h1 { margin: 0; font-size: 25px; line-height: 1.4; font-weight: 700; }
+.subtitle { margin: 10px 0 0; color: var(--muted); font-size: 14px; }
+.progress { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 28px 0; }
+.progress span { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); color: var(--muted); background: #fff9; font-size: 12px; }
+.progress span[aria-current="step"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+.progress i { width: 35px; height: 1px; background: var(--line); }
+.panel { position: relative; padding: 24px; border-radius: 25px; min-height: 296px; }
+[hidden] { display: none !important; }
+.step-label { margin: 0 0 7px; letter-spacing: 1.6px; font-size: 11px; color: var(--accent); font-weight: 700; }
+h2 { margin: 0 0 22px; font-size: 19px; line-height: 1.5; }
+label, legend { font-size: 13px; }
+input[type="text"] { display: block; width: 100%; height: 48px; margin-top: 7px; padding: 0 14px; border: 1px solid #c1ccda; border-radius: 17px; background: rgba(255,255,255,.62); color: var(--ink); font: inherit; outline: none; }
+input::placeholder { color: #7a8799; font-size: 13px; }
+.hint { margin: 9px 0 23px; color: var(--muted); font-size: 12px; }
+button { font: inherit; cursor: pointer; }
+.primary { display: block; width: 100%; min-height: 46px; border: 1px solid #668ab4; border-radius: 17px; padding: 10px 16px; color: #fff; background: linear-gradient(135deg, #6488b3, #416487); font-size: 14px; font-weight: 700; }
+.description { color: var(--muted); font-size: 13px; margin: -10px 0 22px; }
+fieldset { display: flex; gap: 12px; margin: 0 0 28px; padding: 0; border: 0; }
+legend { margin-bottom: 9px; }
+.choice { flex: 1; display: flex; align-items: center; gap: 8px; padding: 12px 10px; border: 1px solid var(--line); background: #ffffffa6; border-radius: 13px; }
+.choice:has(input:checked) { border-color: var(--accent); background: #e2ecf8; }
+input[type="radio"] { accent-color: var(--accent); }
+.actions { display: flex; align-items: center; gap: 12px; }
+.secondary { min-height: 46px; padding: 10px 18px; color: var(--accent); background: #fff8; border: 1px solid var(--line); border-radius: 17px; }
+dl { margin: 0 0 28px; font-size: 14px; }
+dl div { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid #d7dfe8; }
+dt { color: var(--muted); } dd { margin: 0; font-weight: 700; }
+.complete { text-align: center; padding-top: 44px; }
+.complete .description { margin: 0 0 28px; }
+footer { display: flex; justify-content: center; gap: 13px; margin-top: 24px; font-size: 12px; color: #8190a4; }
+footer a { color: #566982; text-decoration: none; }
+@media (max-width: 500px) { .frame { width: calc(100% - 24px); margin: 18px auto; padding: 28px 20px 22px; min-height: 720px; } .panel { padding: 21px; } }

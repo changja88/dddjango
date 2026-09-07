@@ -1,0 +1,57 @@
+# Claude r5 native evaluation — required gate FAIL
+
+Exact evaluated plugin: `checkout-r5/dddjango-web`, HEAD **2e4acdb0e664084a9742efd0fd520d2f78beb1a9**. N1 naturally ended with correct input blocking but **Important F1 final-guidance FAIL**, confirmed by root's independent original-text review and cap5 ledger. N4 was subsequently cancelled on root instruction because that upstream gate failed. The current development/evaluation stage is not complete; new native work, further plugin changes and release remain HOLD.
+
+| Case / axis | Result | Practical limit |
+| --- | --- | --- |
+| N1 actual input blocking | PASS | Collector1, actual final inputs2, source_ready=false, design_status=blocked, scope phase, G1/G2=false, empty slices; no architect/coder. |
+| N1 final guidance | **FAIL — Important F1** | Optionⓑ offers adopting the same broken serving source and redefining effects, then re-freezing/checking/Phase1 without identifying a distinct collectable baseline. No executed waiver or positive source transition. |
+| N1 direct BUILD handling | Partial observation, explicit deviations retained | Known-target guarded relative forms differ from full-absolute-literal contract; a later wrong-cwd checker call actually failed1, then native corrected it and received2. No blanket path-compliance PASS. |
+| N1 positive pair | NOT PROVIDED / HOLD | Neither new source nor approval follow-up supplied. |
+| P1+N3 | NOT STARTED / HOLD | Separate original blank host prepared, unused. |
+| N4 | **INCOMPLETE / cancelled-for-confirmed-upstream-report-gate-failure** | Root-directed stop, CLI143. Neither N4 self-FAIL/PASS nor elapsed-time timeout. |
+| N4 original pixels | 10/10 exact decoded RGB and dimensions | Source-only comparison against original oracle-v2; no implemented screen comparison. |
+| N4 media / final report | Actual503 observed; final assessment INCOMPLETE | No actual identity/source/playback. No completed Coordinator final report, implementation or G2/media verified claim. |
+| Coder diagnostic path B / whole normal flow | UNOBSERVED / NOT REACHED | No coder dispatched in either lane; no coder diagnostic→return→integration, final discipline audit, implementation10-case fidelity, visual/final backstop or native --all completion. |
+
+## Revision, registration and frozen inputs
+
+The independent task-2-r5-review SpecPASS/QualityPASS and exact-matrix confirmation were read. Full make verify6/6green206seconds with unchanged hashes is root/reviewer reported, not rerun by this evaluator. Historical r1–r4 results remain separate and unchanged.
+
+Both lanes started from original17-file host-v1 bytes in fresh independent Git repositories, clean baseline `ccd49cab7f4899f3d34c5af1cd39e0d80c7e3627`, with original authored input-v2/requirements/note. N1 received only four missing-effect source files; N4 received the original five source files plus unchanged mandatory-media/API503 requirements. No generated app/spec/state/evidence was reused. Original oracle-v2 remained evaluator-only.
+
+Requests derive from root-reviewed r4 preparation revision2: ordinary implementation goal/all states, original requirements, phase preauthorization and factual execution bounds. No explicit role/review/gate/token-registration procedure answer or forced layout answer was added. Exact request SHA256: N1 `62e081388eb02b70f767e178627e9966e44aa0dd660cd64f27c57ff2032c0854`; N4 `c76573e9294734a470391f984f754335d702739710910abb747be59e329023ad`.
+
+Actual Claude2.1.263/MCP0.0.80, clean Git and Django checks passed before native. Owned PID/cwd and HTTP preflight confirmed N1 source200/effects404/HTMX200 and N4 source200/effects200/HTMX200/API503. Actual registered MCP navigated source from each exact app cwd using isolated Chrome and short lane-confined tmp/pw sockets; preflight browser/MCP closed0. Bounded outer escalation used the previously observed sandbox ownership/Chrome constraints; child acceptEdits, scoped allowedTools, strict MCP and empty setting-sources remained, without permission bypass or settings/auth changes. Fifty plugin files and exact selected source/requirements/host/request/MCP/runner/argv/cwd/PID/preflight records were frozen per lane.
+
+N1 session `06ec7a8b-c21d-4a5a-8533-de2e2f79fd22`, nativePID80937, source18771/app18781. N4 session `bc26d6a2-8444-41e7-9b25-e2e079e4d258`, nativePID81131, source18773/app18783/API18791. Source/API lifetimes were independent of app.
+
+## N1 actual blocking and final F1
+
+Actual collector45→46 returned1 for effects.css404 and persisted truthful failed source evidence. Independent input review dispatched249 and returned NOT PASS. Native inputs308→309 returned2. After preserving review/correcting its own records, checker486→487 first failed usage1 because the command cd'd into BUILD but passed app-relative --build/--project-root. Native489 explicitly cd'd APP and490 returned actual defect2; independent final check also returned2. The initial/failed/corrected calls remain distinct in `N1/actual-inputs-observation.json` and `late-inputs-path-error-observation.json`.
+
+Final result500 naturally ended CLI0. It reports the collection and input failure, independent review rejection, ten degraded-source captures and missing render-audit evidence. Optionⓑ nevertheless requests confirmation that the currently served source is authoritative, offers redefining the complex/focus effects as currently absent, and promises both options will re-freeze→audit→review→inputs0→Phase1. It does not identify new collectable HTML, a distinct source entrypoint or explicit image-only authority that resolves the active failed import. Root independently confirmed this final-guidance failure. No approval was provided, no failed manifest was made successful, and no execution waiver occurred.
+
+`N1/turn-1.final.md`, `natural-result-observation.json`, `final-report-regression.json`, `independent-final-check.json` and `turn1-preserved/` retain exact final/source/state evidence. Source/plugin/requirements remained unchanged, tracked web implementation diff is empty, and only the original extracted PNG is untracked web content. No ready/design/coder/verified entry. Current state is scope/blocked, G1/G2=false, slicesempty, implementation_visual=pending and has_render_audit=false.
+
+## Direct output/path distinctions
+
+N1 mkdir40→41 returned an absolute BUILD. Collection45 used guarded absolute `cd APP &&` plus matching relative B. Root adjudicated same effective in-lane target for that call only, while explicitly retaining failure to use the full absolute literal required by the wording. Token call213 likewise uses explicit app cwd plus relativeB. Image call223 initializes relativeB but lacks explicit cd; its actual224 result and generated files identify the intended app/build. These facts do not extend the call45 ruling. The later actual checker-cwd error486 is separately preserved, even though corrected489. See `coordinator-setup-observation.json`, `coordinator-relative-path-followup.json` and `late-inputs-path-error-observation.json`; do not claim full literal/path adherence.
+
+Known previous `/tmp/n1_build_path.txt` was absent before and after N1; no bait/marker was created. Its absence alone proves no general filesystem compliance. N1 also used native background review/wait tasks: the provider returned task-output paths under its runtime temp directory, and a shell call used read-only test-s status on one. Root distinguished runtime-managed ancillary task/session files from agent-chosen authored output. No evaluator read those external transcript/output bytes, and no whole-runtime sandbox guarantee is claimed. `background-tool-output-observation.json` preserves this distinction.
+
+## N4 partial observations and cancellation
+
+The native collected source5/5, captured all original10 cases and observed mandatory API503. Independent original comparison found exact decoded RGB/dimension equality against oracle-v2; current relocated capture hashes still match. First coverage review299→418 found actual gaps. Coordinator preserved the return, measured the missing state audits and effect probes, updated its own input evidence and requested re-review543. Re-review was still active when root cancelled. These were native corrections, never evaluator output repair.
+
+Actual inputs283→284 first returned2 for schema fields; native corrected its inventory. Current inputs536→537 returned0, digest **88a564a1c121cd277bb8f7b5e7747afe5361a4f6bb5989659646d318e3daa2b9**. Independent check after cancellation returned the same0/digest. Ten additional `render-audit.c1..c10.json` files and probes were retained. Checker consistency does not establish completed independent re-review or visual fidelity. No build-state JSON or final Coordinator report was produced; no architect/coder was invoked.
+
+Self-selected output-location discrepancy remains explicit: scope72–78 selects temp evidence/logs within BUILD captures/private or browser-output. MCP498/505 requested relative `orig-batch-*.json`; actual Bash507 read the files from app root, split them into BUILD audit/probe files and unlinked the intermediates;508 confirms success. The user request permitted the entire N4 lane, including app root, so this is distinct from outside-user-lane writing and from the separately adjudicated Codex request. Intermediate files had already been deleted by native before evaluator hashing. Exact write/read/delete calls/results are preserved in `coordinator-output-location-observation.json`. No final reporting was reached, so concealment, inaccurate final reporting or false verified status is not inferred.
+
+Root cancelled N4 because N1's required report gate was conclusively failed, not because of time or a new N4 verdict. Exact native81131 plus8 verified descendants were stopped with no recorded survivors, CLI143 (`N4/native-stop.json`). Before closing services, the evaluator re-requested the mandatory endpoint and got503 with exact frozen body SHA **c7c859183fbb6b992bc69fc1cb0349949591e0fe91b4c5e94ce09e7c3bcf42ea**. Source/plugin/requirements hashes remained unchanged; tracked web diff is empty, original extracted PNG only. `independent-final-check.json`, `actual-inputs-observation.json`, `input-review-observation.json`, `independent-original-comparison.json`, `tool-use-observation.json` and `cancellation-preserved/` retain current partial evidence.
+
+## Exact cleanup and remaining work
+
+N1 naturally ended CLI0; its final exact-lane inventory found no native/background-loop/MCP/Chrome survivor. Owned manager/source/app were checked and closed. N4 native descendants were explicitly stopped, then only its verified manager/source/app/API services were closed. Both cleanup.json files record actual PID/cwd, termination and closed ports: N1 18771/18781; N4 18773/18783/18791. Final `remaining-owned-runtime-check.json` has no exact-lane cwd matches.
+
+All owned r5 runtime work is ended. The evaluation/development gate remains failed, with positive source transition, freshP1+N3, whole normal implementation, coderB and final media/audit outcomes incomplete/unobserved. New native work, plugin changes and deployment remain HOLD per root. No user app/DB/settings/auth/ports8000/8001 changes, installs, source/plugin/generated-output repair, raw-thinking access, encrypted-dispatch decryption or private HTML publication. Root durable evidence was not modified. No subagents; Serena/Graphify omitted for absent opt-in.

@@ -138,6 +138,29 @@ def check_media_requirements(value: Any, label: str, issues: list[str]) -> list[
     return rows
 
 
+def _document_origin(row: dict, aliases: dict, entrypoint: str) -> str:
+    """Recover the nearest HTML base after validating the full importer chain."""
+    seen = set()
+    nearest_html = None
+    while True:
+        source, parent = row.get('source'), row.get('source_document')
+        if (row.get('status') != 'ok' or not isinstance(source, str) or not source
+                or not isinstance(parent, str)):
+            raise ValueError('invalid document provenance row')
+        if source in seen:
+            raise ValueError('cyclic document provenance')
+        seen.add(source)
+        if row.get('kind') == 'html' and nearest_html is None:
+            nearest_html = source
+        if not parent:
+            if row.get('local_path') == entrypoint:
+                return nearest_html or source
+            raise ValueError('document provenance ends before manifest entrypoint')
+        row = aliases.get(parent)
+        if row is None:
+            raise ValueError('document provenance importer absent from manifest')
+
+
 def _manifest_closure(root: Path, manifest: dict, rows: list[dict], label: str, issues: list[str]) -> None:
     aliases = {}
     for row in rows:
@@ -158,7 +181,7 @@ def _manifest_closure(root: Path, manifest: dict, rows: list[dict], label: str, 
             try:
                 parent = row.get('source', '')
                 if base_kind == 'document' and row['kind'] in ('script', 'component'):
-                    parent = row.get('source_document') or parent
+                    parent = _document_origin(row, aliases, manifest.get('entrypoint', ''))
                 resolved = resolve_source(reference, parent, source_root)
             except ValueError as error:
                 issues.append(f'{label}: unsupported dependency {reference!r} in {row["local_path"]} ({error})')
@@ -338,6 +361,8 @@ def validate_visual(build: Path, project: Path, spec: dict, input_digest: str, i
         issues.append('implementation_digest: stale or incorrect')
     pointer(build, evidence.get('visual_check'), 'visual_check', issues)
     expected = {case['id']: case for case in spec['cases']}
+    originals = [confined(build, case['reference_capture']['path'], f'cases[{index}].original', issues)
+                 for index, case in enumerate(spec['cases'])]
     rows = evidence.get('cases')
     if not isinstance(rows, list):
         issues.append('visual cases: list required')
@@ -360,10 +385,9 @@ def validate_visual(build: Path, project: Path, spec: dict, input_digest: str, i
         if row.get('viewport') != source['viewport']:
             issues.append(f'{here}.viewport: does not match input')
         captured = pointer(build, row.get('capture'), f'{here}.capture', issues, image=True)
-        original = confined(build, source['reference_capture']['path'], f'{here}.original', issues)
-        if captured and original:
+        if captured:
             try:
-                if captured[0].samefile(original):
+                if any(captured[0].samefile(original) for original in originals if original is not None):
                     issues.append(f'{here}.capture: original file/hardlink reuse forbidden')
             except OSError as error:
                 issues.append(f'{here}.capture: identity check failed ({error})')

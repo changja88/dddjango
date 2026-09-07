@@ -1,0 +1,28 @@
+{
+  "command": [
+    "make",
+    "verify"
+  ],
+  "base_head": "2e4acdb0e664084a9742efd0fd520d2f78beb1a9",
+  "uncommitted_diff_sha256": "49d0ce84d3d10db27ea6c0d7386a01bb7843aa94beef7d7f00f84997efc2ea14",
+  "exit": 0,
+  "elapsed_seconds": 214.92772825004067,
+  "finished_utc": "2026-09-07T02:33:39.590572+00:00",
+  "source_unchanged": true,
+  "changed_file_hashes": {
+    "codex-dddjango-web/skills/dddjango-web/scripts/check_design_evidence.py": "2b5926b989d9ec1edc6b31329540ddc16bacc08d95c8d7184e6b8fd2a813561e",
+    "codex-dddjango-web/skills/dddjango-web/scripts/test/test_design_evidence.py": "fae7e1177c3abd19a9d71f3c8eb8bf379070fc3e81668f628c9aa48964bc4705",
+    "dddjango-web/scripts/check_design_evidence.py": "2b5926b989d9ec1edc6b31329540ddc16bacc08d95c8d7184e6b8fd2a813561e",
+    "dddjango-web/scripts/test/test_design_evidence.py": "fae7e1177c3abd19a9d71f3c8eb8bf379070fc3e81668f628c9aa48964bc4705"
+  },
+  "targets": {
+    "verify-web": "PASS",
+    "verify-base-core": "PASS",
+    "verify-ontology": "PASS",
+    "verify-base-backstop": "PASS",
+    "verify-base-regen": "PASS",
+    "verify-base-cross": "PASS"
+  },
+  "log_sha256": "a74a29b691f0588d2a38413c60d7db5f8364e40322a052ee621159dd2aa7bc60",
+  "limit": "Final checker correction validation before mechanical commit. No new native execution or visual-fidelity claim; existing r5 FAIL/incomplete remain."
+}

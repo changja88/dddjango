@@ -1,0 +1,6 @@
+.panel { background: rgba(255,255,255,.36); backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,.88); box-shadow: 0 16px 34px rgba(68,85,111,.16), inset 0 1px 0 rgba(255,255,255,.94), inset 0 -9px 20px rgba(204,220,243,.22); }
+.panel::before { content: ""; position: absolute; pointer-events: none; inset: 6px; border-radius: 20px; border-top: 1px solid rgba(255,255,255,.7); }
+.mark { filter: drop-shadow(0 5px 6px rgba(53,79,120,.25)) drop-shadow(0 0 9px rgba(110,156,205,.32)); }
+.primary { box-shadow: 0 7px 14px rgba(59,90,132,.19), inset 0 1px 0 rgba(255,255,255,.45); }
+.button-label { text-shadow: 0 1px 2px rgba(19,40,72,.42); }
+input[type="text"]:focus { border-color: #6488b3; background: rgba(255,255,255,.78); box-shadow: 0 0 0 3px rgba(70,113,173,.37), inset 0 2px 4px rgba(72,91,122,.09); }

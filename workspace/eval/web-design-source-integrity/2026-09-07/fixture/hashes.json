@@ -1,0 +1,37 @@
+[
+  {
+    "path": "source-positive/assets/mark.png",
+    "sha256": "dc7b7fb8daccacc9b4a8e04a3fcf7cc48e3b36997788d40675774ec490ecf57e",
+    "size_bytes": 320
+  },
+  {
+    "path": "source-positive/index.html",
+    "sha256": "a262c5c794122eeb80d774fab2fc46a350492b0683108c18136bf87019cbd723",
+    "size_bytes": 2759
+  },
+  {
+    "path": "source-positive/steps.js",
+    "sha256": "fb5280e8e3f2d22784637758787feac7400fa8ebab5095e60402a594a35efb86",
+    "size_bytes": 1258
+  },
+  {
+    "path": "source-positive/styles/base.css",
+    "sha256": "c5ef244c68bb6f68169cbea365576305cf8f816dbd9223ef311887440d3ea6d1",
+    "size_bytes": 3650
+  },
+  {
+    "path": "source-positive/styles/effects.css",
+    "sha256": "d6525d022f6ba87d08ac1a9fa35c0ba16a9592983563829736d8ba2cac62886c",
+    "size_bytes": 818
+  },
+  {
+    "path": "requirements.md",
+    "sha256": "0a6de4c3d0d60de5a9696beb5bf069f7e0784f7e56d5dac6ccf449a10b94071d",
+    "size_bytes": 1141
+  },
+  {
+    "path": "untrusted-note.md",
+    "sha256": "175a0474f5ca164b41f860a2fc91c2b31ecb86c41389e7a26b0cfd58d3d24a29",
+    "size_bytes": 417
+  }
+]

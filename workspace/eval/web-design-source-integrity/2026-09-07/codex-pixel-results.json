@@ -1,0 +1,122 @@
+[
+  {
+    "case": "desktop/default",
+    "viewport": [
+      1440,
+      900
+    ],
+    "changed_pixels": 0,
+    "mean_channel_difference": 0,
+    "max_channel_difference": 0,
+    "implementation_png_sha256": "2faf308bfa4bec1594922273f4cb59222237f541168fefff6e6acfc4d797fdc6",
+    "oracle_png_sha256": "2faf308bfa4bec1594922273f4cb59222237f541168fefff6e6acfc4d797fdc6"
+  },
+  {
+    "case": "desktop/name-focus",
+    "viewport": [
+      1440,
+      900
+    ],
+    "changed_pixels": 0,
+    "mean_channel_difference": 0,
+    "max_channel_difference": 0,
+    "implementation_png_sha256": "e6ae3c200b7dbbf98431cd433f3e314deeab4fea0789834289440b0982612501",
+    "oracle_png_sha256": "e6ae3c200b7dbbf98431cd433f3e314deeab4fea0789834289440b0982612501"
+  },
+  {
+    "case": "desktop/mood-bright",
+    "viewport": [
+      1440,
+      900
+    ],
+    "changed_pixels": 0,
+    "mean_channel_difference": 0,
+    "max_channel_difference": 0,
+    "implementation_png_sha256": "178b767deccc76375aa910160fb2e85b7a06fa06e4e023c637cf47bb20b29f4c",
+    "oracle_png_sha256": "178b767deccc76375aa910160fb2e85b7a06fa06e4e023c637cf47bb20b29f4c"
+  },
+  {
+    "case": "desktop/review",
+    "viewport": [
+      1440,
+      900
+    ],
+    "changed_pixels": 0,
+    "mean_channel_difference": 0,
+    "max_channel_difference": 0,
+    "implementation_png_sha256": "6430fc638c952a1c0cf5a43fed14d41179a8e1790a454e1a03624f4b83923102",
+    "oracle_png_sha256": "6430fc638c952a1c0cf5a43fed14d41179a8e1790a454e1a03624f4b83923102"
+  },
+  {
+    "case": "desktop/complete",
+    "viewport": [
+      1440,
+      900
+    ],
+    "changed_pixels": 0,
+    "mean_channel_difference": 0,
+    "max_channel_difference": 0,
+    "implementation_png_sha256": "ddee4b46d8d3a76d39510291026f38d6d5814a8e956b89db11a7ca3fd35117aa",
+    "oracle_png_sha256": "ddee4b46d8d3a76d39510291026f38d6d5814a8e956b89db11a7ca3fd35117aa"
+  },
+  {
+    "case": "mobile/default",
+    "viewport": [
+      390,
+      844
+    ],
+    "changed_pixels": 0,
+    "mean_channel_difference": 0,
+    "max_channel_difference": 0,
+    "implementation_png_sha256": "0927acca8fed9a981c00b25ab97a2acf8bcd49c693dbbcffc4bf08fd9b1d067f",
+    "oracle_png_sha256": "0927acca8fed9a981c00b25ab97a2acf8bcd49c693dbbcffc4bf08fd9b1d067f"
+  },
+  {
+    "case": "mobile/name-focus",
+    "viewport": [
+      390,
+      844
+    ],
+    "changed_pixels": 0,
+    "mean_channel_difference": 0,
+    "max_channel_difference": 0,
+    "implementation_png_sha256": "93663e7d1736a6f70e691da59632fcecb687ad9c67ef1ef18089dec4b40f01a7",
+    "oracle_png_sha256": "93663e7d1736a6f70e691da59632fcecb687ad9c67ef1ef18089dec4b40f01a7"
+  },
+  {
+    "case": "mobile/mood-bright",
+    "viewport": [
+      390,
+      844
+    ],
+    "changed_pixels": 0,
+    "mean_channel_difference": 0,
+    "max_channel_difference": 0,
+    "implementation_png_sha256": "4c4cd68ea75d64ff8a0eca0f16a51ac3b40120eda6cb8af840a3ed4493f87619",
+    "oracle_png_sha256": "4c4cd68ea75d64ff8a0eca0f16a51ac3b40120eda6cb8af840a3ed4493f87619"
+  },
+  {
+    "case": "mobile/review",
+    "viewport": [
+      390,
+      844
+    ],
+    "changed_pixels": 0,
+    "mean_channel_difference": 0,
+    "max_channel_difference": 0,
+    "implementation_png_sha256": "e1a908130a7a1fd82dbc8d58b293f55930ba743711aa12c7d2b6b8496425a705",
+    "oracle_png_sha256": "e1a908130a7a1fd82dbc8d58b293f55930ba743711aa12c7d2b6b8496425a705"
+  },
+  {
+    "case": "mobile/complete",
+    "viewport": [
+      390,
+      844
+    ],
+    "changed_pixels": 0,
+    "mean_channel_difference": 0,
+    "max_channel_difference": 0,
+    "implementation_png_sha256": "2e59a090651f06c2fd23c82fcc81b8e6396a23ff378c61120ae0a5bd6a6d8989",
+    "oracle_png_sha256": "2e59a090651f06c2fd23c82fcc81b8e6396a23ff378c61120ae0a5bd6a6d8989"
+  }
+]

@@ -1,0 +1,35 @@
+{
+  "recorded_at_utc": "2026-09-06T16:13:27.548007+00:00",
+  "classification": "plugin-regression",
+  "claim": "Per-visual-slice native inputs freshness gate not rerun; past G0 result supplied as current to slice2 coder; callee writes template visual structure without independent current record check.",
+  "last_native_inputs": {
+    "line": 482,
+    "time": "2026-09-06T15:22:32.015Z"
+  },
+  "slice2_dispatch": {
+    "line": 1104,
+    "time": "2026-09-06T16:08:17.580Z",
+    "role": "a1af007ed45ad923e",
+    "tool_id": "toolu_014GPfgyz1VjoHYBr2iA54qG"
+  },
+  "first_mutation": {
+    "line": 1147,
+    "time": "2026-09-06T16:09:24.452Z",
+    "path": "app/web/record/record_setup/section/record_setup_intro.html"
+  },
+  "snapshot_caveat": "slice2-first-write-* files were read-only copied after observing first writes, not atomically at first-write time; exact observation timestamp is this record.",
+  "rules": {
+    "commands/dddjango-web.md": {
+      "sha256": "747b431411f070d2873b9f9728efe48956f63cfb101f9fb8140132acf2b01e5c",
+      "lines": {
+        "164": "3. **슬라이스마다 `dddjango-web:coder-web`을 순차 호출한다(병렬 금지)** — 입력: (시안 대상) `design-input.json` · case별 원본 entrypoint 실제 경로 · `manifests` 전부(`source-manifest.json` 또는 화면별 manifest) · 원본 captures · `scope.md`의 사용자 요구/구체 승인 출처 · `visual-check.md` · 명세 이탈 표(작성 후) · 명세(UI 동작 계약 포함) · host 상태(core 실제 경로/버전·공통 scripts block·로드 방식) · 이번 슬라이스 · (시안의 시각 구현이면 필수) **`visual-check.md`의 이번 호출 직전 inputs 실행 기록 위치(절/행)** · `server-contract.json`(정적 화면 한정이면 없음을 명시) · (있으면) design-ref · (`has_design_screen`이면(실패/0건 포함)) `asset-manifest.json`(src→token·local_path 정확 매핑 — coder-web이 문서·해소된 출처로 조인해 템플릿 이미지 배선) · **기존 web/ 트리 요약**(기존 영역 수정 시) · **골격 생성 포함 여부 플래그**(무기억 coder는 자신이 첫 호출인지 모른다) · **check 베이스라인**(green 판정 기준) · (반영 재호출이면) **반영할 감사 발견 목록**. *왜 순차* — green 판정의 기준 시점이 한 줄로 서고, 슬라이스 간 의존(데이터→화면)이 자연 직렬화되며 컨텍스트 비대가 없다. 호출 절차: 시안의 시각 구현 슬라이스는 매 진입·재개·수정 전에 `python ${CLAUDE_PLUGIN_ROOT}/scripts/check_design_evidence.py --build <산출물 폴더> --project-root <타깃 프로젝트 루트> --phase inputs`로 freshness를 확인한다. 실제 명령·build/project 대상 경로·exit/출력 결과를 해당 슬라이스와 현재 호출 회차로 `visual-check.md` ②에 보존한 뒤 그 기록 위치를 coder 입력에 전달한다. 과거 G0 성공·design_status=ready·design-input 목록은 이 현재 실행 기록을 대신하지 않는다. 실패하면 기록을 남기고 해당 진입을 멈춘다. 아직 화면이 없는 코드/데이터 전용 슬라이스에는 visual을 요구하지 않는다."
+      }
+    },
+    "agents/coder-web.md": {
+      "sha256": "e358517887b25a4a32dc96e3c4855f1fa631add359815fc8188d633c3161bd3e",
+      "lines": {
+        "37": "- 시안의 시각 구현·재개·수정 진입은 Coordinator의 현재 inputs 성공 기록을 확인한다. 실제 실행 기록이나 필수 원본이 없으면 반송한다. 데이터만 구현하는 슬라이스에는 아직 없는 화면의 visual 완료를 요구하지 않는다. 증거 JSON은 Coordinator가 실제 관찰로 쓰며 코더는 실행 원문과 case별 결과를 반환한다."
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "command": [
+    "make",
+    "verify"
+  ],
+  "head": "2e4acdb0e664084a9742efd0fd520d2f78beb1a9",
+  "exit": 0,
+  "elapsed_seconds": 209.81728166597895,
+  "finished_utc": "2026-09-07T02:17:01.946672+00:00",
+  "source_unchanged": true,
+  "targets": {
+    "verify-web": "PASS",
+    "verify-base-core": "PASS",
+    "verify-ontology": "PASS",
+    "verify-base-backstop": "PASS",
+    "verify-base-regen": "PASS",
+    "verify-base-cross": "PASS"
+  },
+  "log_sha256": "7ee87bfa5e762c7ecf12041e2ec205aeae7801b332346318472644c1a5745a84",
+  "limit": "Required repository checks only. Does not establish native behavior, complete latest full-flow validation or visual fidelity."
+}
