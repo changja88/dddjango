@@ -18,7 +18,7 @@ skills:
 
 - **사용자 실행 경계**: `scope.md`의 사용자 실행 제약 위치와 이번 역할에 적용되는 실제 작업/임시 증거 경로·URL/서버·Python/브라우저/MCP 조건을 직접 전달받아 읽는다. 임시 진단·렌더·브라우저 검증도 이 경계를 따른다. 지정 환경에서 실행할 수 없으면 필요한 조건과 미실행 범위를 Coordinator에 반환하며 임의 포트·대체 브라우저/cache·범위 밖 임시 경로로 성공 증거를 만들지 않는다. 지정되지 않은 제약이나 재승인을 추가하지 않는다.
 
-시안 대상 필수 직접 입력: `design-input.json` · case별 원본 entrypoint 실제 경로 · `manifests` 전부(`source-manifest.json` 또는 화면별 manifest) · 원본 captures · `scope.md`의 사용자 요구/구체 승인 출처 · `visual-check.md` · 명세 이탈 표(작성 후). 최초 증거 준비/검증 시 implementation-ui의 `references/design-evidence.md`를 읽고 JSON의 경로·case·media 계약을 확인한다. 원본 소스/렌더와 구체 승인은 외형 정본이며 명세는 분해·상태·동작·API 계약을 소유한다. 시안 없음은 원본 증거 비적용이다.
+시안 대상 필수 직접 입력: `design-input.json` · case별 원본 entrypoint 실제 경로 · `manifests` 전부(`source-manifest.json` 또는 화면별 manifest) · 원본 captures · `scope.md`의 사용자 요구/구체 승인 출처 · `visual-check.md` · 명세 이탈 표(작성 후). 최초 증거 준비/검증 시 implementation-ui의 `references/design-evidence.md`를 읽고 JSON의 경로·case·media 계약을 확인한다. `collection=archive`이면 case별 source_observation·실제 브라우저 trace·현재 review_digest도 직접 확인한다. archive_ready는 바이트 보관 상태이며 source_ready=false가 정상이다. 정적 closure 통과로 해석하거나 source_ready=false만으로 이 경로를 반송하지 않는다. 원본/관찰 부족은 입력 부족으로 반환한다. 원본 소스/렌더와 구체 승인은 외형 정본이며 명세는 분해·상태·동작·API 계약을 소유한다. 시안 없음은 원본 증거 비적용이다.
 
 Coordinator가 다음을 준다 — Phase 2 감사에서는 전부 필수다:
 
@@ -57,7 +57,7 @@ Coordinator가 감사 범위와 시점을 정해 호출한다 — 너는 받은 
 5. **구조·명명의 의미 변종** (백스톱 사각 전담):
    - **골격 위장**: 폴더는 완비됐는데 코드가 틀린 자리에 산다 — 판정이 view/에, 응답 파싱이 client/response 밖 VM에, 표시 상태 조립이 템플릿에.
    - **격리 우회 형태**: client 밖 API 호출의 위장 — urllib·requests 직접 사용, HTTP 호출을 숨긴 헬퍼. **UI 실행 경계 우회** — inline 이벤트 핸들러 속성(`onclick=` 등)·`<script>` 위장·data-URI js·`hx-vals`/`hx-headers`의 `js:` 접두·`hx-trigger` 대괄호 조건식·motion.js 판형 이탈(내용 수정·확장 — 판형 해시는 백스톱이 대조하지만 의미 변종 위장은 네 소관).
-   - **직수입 흔적**: 시안의 클래스명·인라인 스타일 잔재 — 토큰을 경유하지 않은 색·치수 리터럴.
+   - **구조 통합**: 원본 엔진 전체 직수입·토큰/3단 분해/Django 책임 우회 여부. 같은 클래스명이나 정확한 CSS 선언을 보존했다는 사실만으로 위반 처리하지 않는다. 원본 값은 토큰·CSS 소유 위치에 연결하고 실제 외형을 대조한다.
    - **고정 배치 무력화**: 감사 범위 CSS에 `position: sticky|fixed`가 grep으로 **히트하면 조상 사슬 대조가 의무다**(발견 여부 재량 아님) — sticky와 그 의도된 스크롤포트 사이의 중간 조상에 스크롤 컨테이너를 만드는 overflow(`hidden`·`auto`·`scroll` — 어느 축이든)가 있으면, fixed의 조상 사슬에 transform·filter·backdrop-filter·`will-change: transform`이 있으면 **blocker**다(선언은 정확해 보여도 다른 절의 규칙 한 줄이 조용히 죽인다 — implementation-ui §7 배치 거동 판형).
 6. **같은 개념 두 철자 · 두 번째 개념 평면 누적**: 같은 개념이 두 철자(어순 포함)로 존재하거나, 두 번째 화면 개념이 기존 화면 폴더에 평면 누적됐는가 — 1차 결정은 design-architect-web, 구현 중 2차 발견자는 coder-web이었고, 너는 최종 검증자다(undecidable-web §5).
 7. **시안·변경·구현 대조**: 시각 구현 감사에서는 implementation-ui §2를 읽고, 원본의 선택 상태/경계·요소/variant·치수·토큰·자산과 구현 증적을 대조한다. 코더의 스타일 적용 근거를 원본과 코드로 역대조해 잘못 선택한 토큰·복합 효과 일부 누락·상태별 덮어쓰기를 확인한다. 자동 실측의 검사 축 밖인 배경·그림자·필터도 해당 원본에 있으면 이 대조에 포함한다. 누락/추가/근사 각각이 이탈 표의 구체적 결정 범위와 일치하는지 확인한다. coder가 보고했거나 Coordinator가 “이미 수용”이라고 적어도 이 대조를 생략하지 않는다. 승인 이탈은 그대로 인정하고, 미결정 변경·승인 범위 초과·실제 렌더 실패는 blocker로 올린다. 실제 media 요구는 사용자 지정 환경/endpoint의 원문 응답 identity/src와 브라우저 current_src·로드·영상 재생을 직접 비교한다. seed·샘플 또는 실패 응답은 pass 근거가 아니다. 감사 뒤 코드/digest가 바뀌면 영향 case를 재관찰·재감사하며 영향 없는 기존 case도 현재 회차 재사용 판단을 반환한다. 정적 분석만으로 시각 일치를 주장하지 않는다.

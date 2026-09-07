@@ -73,7 +73,7 @@ the referenced bytes.
 
 `cases` and `manifests` are nonempty. Case IDs are unique; viewport values are
 positive integer `[width, height]`; `scope_refs` is a nonempty list. The
-entrypoint path/hash must match a successful row in one listed manifest. Each
+entrypoint path/hash must match a successful row in one listed manifest. Each static
 manifest must be version 1, `source_ready: true`, have a nonempty successful
 file list and a valid entrypoint. The checker compares every recorded path,
 size and hash with local bytes and rescans supported static dependencies. A
@@ -101,6 +101,71 @@ python scripts/freeze_design.py SOURCE/profile.html --out BUILD/design-ref --man
 
 This is compatible with the existing sibling-manifest convention; no manifest
 migration or rewritten `local_path` is required.
+
+## Original engine source archives
+
+For a dynamic design engine/export, follow `design-acquisition.md`. The archive
+collector preserves the entire supplied tree without static dependency claims.
+An archive manifest has `version: 1`, `collection: "archive"`,
+`archive_ready: true`, `source_ready: false`, and the usual entrypoint/source_root/files.
+Use exactly one archive manifest for the entire reference_root; cases may point to
+different original HTML/JSX rows in it. Do not mix or duplicate per-screen manifests
+in the archive path. Its manifest lives outside reference_root. Its full file inventory (except
+`.DS_Store`) must exactly match reference_root; symlinks and changed/missing/extra
+files fail. Empty non-entry files are preserved. This is an original source archive,
+not a successful static source manifest with failures excused. Static manifests
+retain every previous byte, type and dependency-closure requirement.
+
+An archive case entrypoint must identify an original HTML/JSX row. Every such case
+requires a `source_observation` path/sha256 pointer relative to BUILD. It points to:
+
+```json
+{
+  "version": 1,
+  "archive_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "entrypoint": {"path": "screen.dc.html", "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+  "case_id": "login/default",
+  "screen": "login",
+  "state": "default",
+  "viewport": [390, 844],
+  "url": "http://127.0.0.1:9000/screen.dc.html",
+  "observed_at": "2026-09-07T03:30:00Z",
+  "capture": {"path": "captures/login-original.png", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"},
+  "trace": {"path": "captures/login-original-observation.json", "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}
+}
+```
+
+The archive hash is the hash of the manifest bytes. Entrypoint, case ID, screen,
+state, viewport and capture must match the case exactly. The trace is nonempty
+actual browser output, not a Coordinator assertion that rendering passed. It
+includes the observed URL, browser viewport, selected content boundary/crop,
+state transition actions, DOM/style/resource observations and failed requests.
+The case viewport describes the implementation comparison viewport; when an
+engine canvas contains several screens, record its actual browser viewport and
+content crop separately in the trace. Never silently equate them. The independent
+reviewer checks the original URL/version, crop/state correspondence, resource
+completeness, font fallback and visual content; JSON consistency cannot prove them.
+All archive bytes and observation/trace/capture bytes enter the input digest.
+
+Before the independent coverage review, use `--phase prepare`. This validates
+source/observation connections and returns a `review_digest` that excludes the
+coverage review pointer/content to avoid a circular hash. `coverage_review` may
+be null during preparation. **Prepare success never authorizes implementation.**
+Give the digest and all actual inputs to the independent reviewer. Preserve their
+returned report verbatim with these two standalone lines:
+
+```text
+reviewed-input: <review_digest from the preparation command>
+review-result: pass
+```
+
+A failed independent review returns `review-result: fail`; do not rewrite it.
+After preserving the review and updating its pointer, run the actual `inputs`
+phase. Archive inputs require a matching reviewed-input and pass result, as well
+as the original browser evidence. Changed source/cases/observations require fresh
+preparation and independent review. A fingerprint is not a new observation.
+The prepare command is usable before web/ implementation exists. The existing
+`--fingerprint` behavior still requires valid inputs and web/ implementation.
 
 ## `visual-evidence.json` version 1
 

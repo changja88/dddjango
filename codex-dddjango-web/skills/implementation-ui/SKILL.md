@@ -18,7 +18,7 @@ description: web 구현 표기법 — 시안 재현 절차(직수입 금지·토
 
 ## 핵심 운영 원칙
 
-- **재현이지 직수입이 아니다** — 시안 HTML의 마크업·클래스·인라인 스타일 복붙 금지. 외형 관찰→시각 값 tokens.css 등록→3단 분해 재구축. 보이는 요소는 빠짐없이 재현 (§2)
+- **외형 보존·내부 구조 통합** — 원본 DOM 관계·CSS 선언/값/효과를 템플릿·토큰·CSS 소유 위치에 보존한다. 엔진 런타임 전체 직수입·Django 책임 우회 금지 (§2)
 - 시안 빌드의 모든 coder 호출은 첫 변경 전 직접 inputs 입장을 거친다(코더 역할 계약). 데이터만 구현할 때도 inputs는 적용하며 visual 완료와 구별한다. 임시 검증은 scope의 사용자 실행 경계를 따른다 (§2)
 - 시안이 애초에 없으면 기존 design_system 관례로 자체 설계한다. 수집 실패는 시안 없음이 아니다. 변경/근사는 구체적인 이탈 결정 후 적용하고 실제 렌더 증적을 남긴다 (§2)
 - view는 함수 뷰 고정 — URL 바인딩·form 수신·세션 쿠키 추출·VM 호출·render·fragment 분기(HX-Request 헤더 또는 전용 라우트)만, 판단 금지. auth는 `@login_required` — 페이지·fragment 라우트 동일 적용 (§3)
@@ -40,6 +40,7 @@ description: web 구현 표기법 — 시안 재현 절차(직수입 금지·토
 |---|---|
 | 이 스킬의 소관·비관할 handoff | [`references/final.md`](references/final.md) §1 |
 | 시안(이미지·HTML)의 화면 재현 절차 | final.md §2 |
+| Claude Design URL·엔진 export 원본 수집·브라우저 관찰 | [`references/design-acquisition.md`](references/design-acquisition.md) |
 | 시안 증거 최초 준비/검증·inputs/visual·fingerprint·media JSON 계약 | [`references/design-evidence.md`](references/design-evidence.md) |
 | view·view_model·form·state 파일 표기 | final.md §3 |
 | 페이지 템플릿·base.html 표기 | final.md §4 |

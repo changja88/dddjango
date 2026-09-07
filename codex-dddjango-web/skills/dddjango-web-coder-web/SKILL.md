@@ -15,7 +15,7 @@ description: dddjango-web 코디네이터가 Phase 2(구현)에서 spawn_agent�
 
 - **사용자 실행 경계**: `scope.md`의 사용자 실행 제약 위치와 이번 역할에 적용되는 실제 작업/임시 증거 경로·URL/서버·Python/브라우저/MCP 조건을 직접 전달받아 읽는다. 임시 진단·렌더·브라우저 검증도 이 경계를 따른다. 지정 환경에서 실행할 수 없으면 필요한 조건과 미실행 범위를 Coordinator에 반환하며 임의 포트·대체 브라우저/cache·범위 밖 임시 경로로 성공 증거를 만들지 않는다. 지정되지 않은 제약이나 재승인을 추가하지 않는다.
 
-시안 대상 필수 직접 입력: `design-input.json` · case별 원본 entrypoint 실제 경로 · `manifests` 전부(`source-manifest.json` 또는 화면별 manifest) · 원본 captures · `scope.md`의 사용자 요구/구체 승인 출처 · `visual-check.md` · 명세 이탈 표(작성 후). 최초 증거 준비/검증 시 implementation-ui의 `references/design-evidence.md`를 읽고 JSON의 경로·case·media 계약을 확인한다. 원본 소스/렌더와 구체 승인은 외형 정본이며 명세는 분해·상태·동작·API 계약을 소유한다. 시안 없음은 원본 증거 비적용이다.
+시안 대상 필수 직접 입력: `design-input.json` · case별 원본 entrypoint 실제 경로 · `manifests` 전부(`source-manifest.json` 또는 화면별 manifest) · 원본 captures · `scope.md`의 사용자 요구/구체 승인 출처 · `visual-check.md` · 명세 이탈 표(작성 후). 최초 증거 준비/검증 시 implementation-ui의 `references/design-evidence.md`를 읽고 JSON의 경로·case·media 계약을 확인한다. `collection=archive`이면 case별 source_observation·실제 브라우저 trace·현재 review_digest도 직접 확인한다. archive_ready는 바이트 보관 상태이며 source_ready=false가 정상이다. 정적 closure 통과로 해석하거나 source_ready=false만으로 이 경로를 반송하지 않는다. 원본/관찰 부족은 입력 부족으로 반환한다. 원본 소스/렌더와 구체 승인은 외형 정본이며 명세는 분해·상태·동작·API 계약을 소유한다. 시안 없음은 원본 증거 비적용이다.
 
 코디네이터가 spawn 시 다음을 준다:
 
@@ -25,7 +25,7 @@ description: dddjango-web 코디네이터가 Phase 2(구현)에서 spawn_agent�
 - **임시 진단 출력 방식** — 도구 출력/메모리에서 확인해 반환하거나, 기존 사용자 범위와 이번 역할 위임이 허용한 구체 증거 경로·목적을 받는다. 코드 파일 목록과 임시 증거 쓰기 범위는 구별한다. build 폴더가 입력에 있다는 이유로 쓰기 권한을 추정하지 않는다. 출력 방식이 빠졌으면 기존 경계 안에서 파일 없이 확인·반환할 수 있는 작업은 진행하고, 파일 저장이 필수인 확인은 필요한 조건과 미실행 범위를 Coordinator에 반환한다. 이미 허용된 범위를 재승인받지 않는다.
 - **시안 빌드 여부(`has_design_screen` 실제 bool)**. true이면 실제 project/build 절대 경로, 사용할 Python 실행 경로·설치본 `check_design_evidence.py` 절대 경로, 현재 Coordinator inputs 실행 기록의 `visual-check.md` 절/행을 받는다. 빌드 여부 입력이 없으면 반송하며 호출자 로컬 플래그를 추측하지 않는다.
 - `server-contract.json` 경량본(G1 직후 기계 절단된 서버 계약) — **URL·필드·타입·페이징의 단일 근거다. 계약을 훈련 기억이나 추측으로 쓰지 않는다**(implementation-ui §8). 정적 화면 한정 승인이면 '없음' 명시 입력 — 이때 API 소비 코드는 만들지 않는다.
-- (있으면) `design-ref/` — **화면 외형의 원본 근거.** 구체적으로 결정된 이탈은 명세의 해당 행 범위만 적용한다. 배치·축·그룹핑·정렬·간격은 명세가 아니라 동결 시안(이미지 또는 시안 HTML)이 정하고 너는 재현한다. **재현이지 직수입이 아니다** — 시안 HTML의 마크업·클래스·인라인 스타일을 복붙하지 않는다(implementation-ui §2).
+- (있으면) `design-ref/` — **화면 외형의 원본 근거.** 구체적으로 결정된 이탈은 명세의 해당 행 범위만 적용한다. 배치·축·그룹핑·정렬·간격은 명세가 아니라 동결 시안(이미지 또는 시안 HTML)이 정하고 너는 재현한다. **외형을 보존하며 내부 구조를 통합한다** — 원본 DOM 관계·CSS 선언/값/효과를 템플릿·토큰·CSS 소유 위치에 옮길 수 있다. 원본 엔진 런타임 전체 직수입과 Django 책임 우회는 하지 않는다(implementation-ui §2).
 - (시안이 있으면) `source-manifest.json`·`asset-manifest.json`·`visual-check.md`와 명세의 이탈 표 — 수집 실패/0건도 전달받는다. 이미지 단독의 asset-manifest 없음(개별 자산 추출 비대상)은 정상 입력이다. 준비되지 않은 자산을 placeholder로 바꾸거나 실패 행을 건너뛰지 않는다. 성공한 파일은 implementation-ui §7의 static 프리픽스로 배선한다.
 - (기존 web/ 수정 시) **기존 web/ 트리 요약** — 기존 파일을 중복 생성하지 않기 위한 현황.
 - **골격 생성 포함 여부 플래그** — 너는 무기억이라 자신이 첫 호출인지 모른다. 플래그가 켜져 있으면 이번 작업이 신설하는 모든 골격 단위(web/ 컨테이너·영역·화면 개념·client BC 폴더)의 골격 완비를 첫 변경 전 입장 통과 후 기능 코드 작성 전에 만든다(완비 범위는 discipline-web-houserules §3 — 종류 폴더 + `__init__.py`/`.gitkeep` 마커).

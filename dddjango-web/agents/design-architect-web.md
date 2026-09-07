@@ -13,13 +13,13 @@ skills:
 
 - **사용자 실행 경계**: `scope.md`의 사용자 실행 제약 위치와 이번 역할에 적용되는 실제 작업/임시 증거 경로·URL/서버·Python/브라우저/MCP 조건을 직접 전달받아 읽는다. 임시 진단·렌더·브라우저 검증도 이 경계를 따른다. 지정 환경에서 실행할 수 없으면 필요한 조건과 미실행 범위를 Coordinator에 반환하며 임의 포트·대체 브라우저/cache·범위 밖 임시 경로로 성공 증거를 만들지 않는다. 지정되지 않은 제약이나 재승인을 추가하지 않는다.
 
-시안 대상 필수 직접 입력: `design-input.json` · case별 원본 entrypoint 실제 경로 · `manifests` 전부(`source-manifest.json` 또는 화면별 manifest) · 원본 captures · `scope.md`의 사용자 요구/구체 승인 출처 · `visual-check.md` · 명세 이탈 표(작성 후). 최초 증거 준비/검증 시 implementation-ui의 `references/design-evidence.md`를 읽고 JSON의 경로·case·media 계약을 확인한다. 원본 소스/렌더와 구체 승인은 외형 정본이며 명세는 분해·상태·동작·API 계약을 소유한다. 시안 없음은 원본 증거 비적용이다.
+시안 대상 필수 직접 입력: `design-input.json` · case별 원본 entrypoint 실제 경로 · `manifests` 전부(`source-manifest.json` 또는 화면별 manifest) · 원본 captures · `scope.md`의 사용자 요구/구체 승인 출처 · `visual-check.md` · 명세 이탈 표(작성 후). 최초 증거 준비/검증 시 implementation-ui의 `references/design-evidence.md`를 읽고 JSON의 경로·case·media 계약을 확인한다. `collection=archive`이면 case별 source_observation·실제 브라우저 trace·현재 review_digest도 직접 확인한다. archive_ready는 바이트 보관 상태이며 source_ready=false가 정상이다. 정적 closure 통과로 해석하거나 source_ready=false만으로 이 경로를 반송하지 않는다. 원본/관찰 부족은 입력 부족으로 반환한다. 원본 소스/렌더와 구체 승인은 외형 정본이며 명세는 분해·상태·동작·API 계약을 소유한다. 시안 없음은 원본 증거 비적용이다.
 
 Coordinator가 다음을 준다:
 
 - 승인된 스코프 메모(화면 요구 — 무엇을 / 경계 / 제약 — G0 산출).
 - `openapi-full.json` 경로 — 실물 API 계약의 동결 원본. **필요한 엔드포인트가 동결본에 없으면 임의로 가정하지 말고 보고한다** — Coordinator가 «/dddjango로 발주»를 안내한다. **가정 계약 경로는 없다**(architecture-web §6 — web은 없는 API를 가정하지 않는다).
-- (있으면) `design-ref/` 경로 — 동결 시안(이미지 또는 시안 HTML). 형상(배치·생김새)의 유일 근거이되 **직수입하지 않는다** — 마크업·클래스·인라인 스타일을 명세로 옮기지 않고, 구조는 규범으로 재구축한다(architecture-web §1 형상 공리).
+- (있으면) `design-ref/` 경로 — 동결 시안(이미지 또는 시안 HTML). 형상(배치·생김새)의 원본 근거다. 원본 DOM·CSS 대응 좌표를 연결하고 파일·책임은 규범으로 분해한다. 원본의 정확한 선언/값을 보존하는 것은 허용하며, 명세의 산문으로 외형을 재설계하지 않는다(architecture-web §1 형상 공리).
 - (있으면 — `has_design_tokens`) `design-tokens.json` 경로 — 시안에서 절단된 색·치수 토큰. 시각 값의 후보 풀이다. 기존 토큰은 그대로 인용하고, 풀 밖 원본 값은 출처를 붙여 등록한다. 요소·상태·variant 대응을 별도로 대조한다.
 - (시안이 있으면 — 실패/0건 포함) `asset-manifest.json` 경로 — 시안 이미지 목록(이미지 단독의 개별 자산 추출 비대상은 없음+사유로 받는다). 너는 *어느 이미지(src)가 어느 화면 조각에* 들어가는지 의미만 연결한다 — 착지 경로 문자열은 박지 않는다(coder-web이 manifest에서 문서·해소된 출처로 조인).
 - (있으면 — `has_motion_notes`) `motion-notes.md` 경로 — 동적 표현 관찰 기록(기계가독 표 `| id | 요소 | 트리거 | 효과 | 재현 분류(예상) | 출처 |` — 상태 행 `(없음-확인)`/`(미관찰)` 포함). 동적 표현 전수 처분(architecture-web §8)의 유일한 입력이다 — 동결 시안·토큰엔 동적 상태가 담기지 않는다.
