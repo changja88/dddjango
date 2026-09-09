@@ -56,6 +56,7 @@ TABCSS = """\
   .tabrail .tr:hover{background:var(--sunk)}
   .tabrail .tr.pick{background:var(--hex-bg)}
   .tabrail .tr.pick .nm{color:var(--ink)}
+  .tabrail .tr[data-sw="1"] .nm::after{content:" ⇄";color:var(--hex)}
   .tabrail .tr .pin{cursor:pointer}
   /* 왼쪽 트리에 «이름 규칙»을 같이 그린다 — 파일 이름 오른쪽에 붙는 옅은 칸.
      오른쪽 패널의 «이름» 줄이 긴 설명을 지고, 여기는 그 «결론»만 한 조각 진다. */
@@ -282,21 +283,21 @@ def row(cls, guides, name, lin, note, chip, chipcls="", pins="", bold=False):
 
 
 ROWS = [
- row("own", [], "application/&lt;bounded_context&gt;/", "고유", "BC 루트 — 4계층 어디에도 속하지 않는다 · <b>제1원칙 — 어느 BC 를 열어도 이 골격이 «그대로» 있다</b> <em>내용이 있든 없든 상관없다. <b>고정 이름은 «부모가 있으면» 반드시</b>(폴더는 비면 <code>__init__.py</code>, <b>파일도 비면 빈 파일로</b>), <b><code>&lt;…&gt;</code> 가 붙은 자리표시자만</b> 그 개념이 생길 때 생긴다. <b>그리고 여기 없는 모양은 «만들 수 없다»</b> — <em><span class='no'>utils/</span>·<span class='no'>common/</span> 처럼 트리에 없는 경로가 하나라도 있으면 위반이다</em>. <b>「이 BC 엔 없으니 뺀다」는 축소가 아니라 위반</b>이고, 이 검사가 <b>다른 모든 검사보다 «먼저»</b> 돈다 — 걸리면 반환이다</em> · <b>빈 칸은 «미완성»이 아니라 «사실»이다</b> <em>각 칸의 「비어 있으면」 줄이 그 사실을 적는다 — 「아직 안 만들었다」와 「이 BC 엔 없다」를 <b>폴더만 보고</b> 가른다. 사실이 서지 않는 칸(<code>test/</code> 아래 넷)에는 그 줄이 없다</em>", "유지", "hold", pin(54), bold=True),
- row("fixed", ["t"], "composition_root/", "Main", "<b>와이어링 폴더</b> — <em>세 층을 다 부르고 <code>driving_layer</code> 는 한 번도 안 부른다</em>. <b>그래서 어느 층에도 못 들어간다</b> · <b>결선 하나 = 파일 하나</b> <em>«단일 지점»은 폴더가 진다</em>", "개명", "fix", pin(6)+pin(40)),
+ row("own", [], "application/&lt;bounded_context&gt;/", "고유", 'BC 루트 — 4계층 밖의 고유 칸이다. <b>어느 BC 를 열어도 같은 골격을 갖는다.</b> 고정 이름·조상에서 정해진 자리표시자는 부모가 있으면 반드시 두고, 처음 등장한 <code>&lt;…&gt;</code> 만 실제 개념이 생길 때 만든다. 빈 폴더는 <code>__init__.py</code>, 빈 파일 칸은 빈 파일로 둔다. <b>유효한 승격 폴더가 있으면 그 칸은 이미 충족된다</b> — 동명 빈 파일을 병설하지 않는다. 폐쇄는 트리가 정한 칸에 걸리고, 리프로 닫은 폴더 안의 추가 모듈에는 해당 폴더의 내용 규칙이 적용된다. 골격 위반을 먼저 해소한다(#486~#492).', "유지", "hold", pin(54), bold=True),
+ row("fixed", ["t"], "composition_root/", "Main", '<b>BC 루트의 와이어링 폴더</b> — <code>dependency_wiring.py</code>·<code>event_wiring.py</code> 둘뿐이다(#84·#497). DI 는 만들기·꽂기만 하고, 이벤트 결선은 구독표를 등록만 한다. 업무 코드를 호출하는 입구가 아니다.', "개명", "fix", pin(6)+pin(40)),
  row("fixed", ["v","t"], "dependency_wiring.py", "Main", "구현을 포트에 꽂는다 — <b>업무 판단 0</b>", "신설", "fix", pin(6)),
  row("fixed", ["v","l"], "event_wiring.py", "Main", "<code>event_router</code> 를 브로커에 꽂는다 · 검사 셋 — <b>같은 짝을 두 번 받아도 구독자가 둘이 되지 않는다</b> <em>원전이 「한 번」을 보장하지 않는다: “in tests … <code>ready</code> <b>might be called more than once</b> … write <b>idempotent</b> methods”</em> · <b>구독으로 넘기는 것은 «모듈 최상단에 정의된 이름 있는 함수»뿐</b> <em>람다·<code>functools.partial</code>·지역 정의 함수를 넘기면 위반이다 — <b>매번 «다른 객체»라 멱등이 성립하지 않는다</b>. 감싸는 순간 조용히 깨지는 종류의 결함이라 검사가 «넘기는 자리»에 선다</em> · <b>여기서 DB 를 만지면 위반</b> <em>모든 관리 명령에서 도는 자리다</em>", "신설", "fix", pin(40)+pin(59)),
  row("fixed", ["t"], "published_event/", "DDD", "<b>내가 «공표»하는 사실</b> — 남의 BC 가 import 해도 되는 <b>사실 표면은 여기뿐</b>. <em>스키마 주인이 «보내는 쪽»이라 <code>open_host_service/</code> 의 계약과 같은 폴더에 못 들어간다 — 주인 방향이 반대다</em> · <b>비어 있으면 「이 BC 는 밖에 알리는 사실이 없다」</b>", "신설", "fix", pin(40)+pin(34)),
  row("fixed", ["v","l"], "&lt;event&gt;.py", "DDD", "규칙: <b>필드만 · 도메인 타입 0</b> — <em>도메인 타입이 실리면 남이 내 <code>domain_layer</code> 를 알게 된다</em>. <b>과거형 사실 하나 = 파일 하나</b> · <b>받는 쪽이 이 자료를 «자기 장부»로 삼으면 위반</b> <em>받아서 자기 쪽에 적립·집계하면 그건 사본(Event-Carried State Transfer)이라 <b>관할 밖</b>이다 — 상세가 필요하면 주인의 <code>open_host_service/</code> 에 되묻는다<span class='dim'> 08-10 · C4</span></em>", "신설", "fix", pin(40)+pin(34)),
 
- row("fixed", ["t"], "domain_layer/", "DDD", "<b>애그리거트가 지배적 단위</b> — 나가는 화살표 <b>0</b>. 아무것도 import 하지 않는다 · <b>남의 BC 에 «물어봐야» 지킬 수 있는 규칙은 여기 없다</b> <em>있으면 애그리거트가 아니라 «경계»를 고친다</em>", "픽스", "fix", pin(12)+pin(13)+pin(27)+pin(42), bold=True),
+ row("fixed", ["t"], "domain_layer/", "DDD", '<b>애그리거트가 지배적 단위</b>. 표준 라이브러리와 자기 도메인 내부의 허용된 참조만 사용한다 — Django·서드파티·다른 층·다른 BC 를 import 하지 않는다. 남의 BC 에 물어야 지켜지는 불변식이면 경계를 다시 본다.', "픽스", "fix", pin(12)+pin(13)+pin(27)+pin(42), bold=True),
  row("fixed", ["v","t"], "&lt;aggregate&gt;/", "DDD", "<b>불변식의 경계</b> — 트랜잭션·저장·락·외부참조가 모두 이 단위다 · <b>«단계»를 드는 것은 업무가 그 단계 이름을 «입으로 부를 때»만</b> <em>아니면 워크플로를 도메인 어휘로 위장한 것 — 자리는 유스케이스</em> · <b>다른 애그리거트는 «식별자 값 객체»로만 문다</b> <em>타입 힌트에 남의 애그리거트 클래스가 나오면 위반 — 객체로 물면 <code>order.customer.rename()</code> 이 리포지토리 «하나»만 건드려 아래 검사를 그대로 빠져나간다. 매퍼가 남의 루트를 통째로 물려줄 때 생긴다 · <b>면제 하나</b> — <em>조회가 실제로 느려 직접 참조가 필요할 때(원전 Reason Four)</em></em> · <b>한 트랜잭션은 애그리거트 «하나»를 바꾼다</b> <em>원전 면제 <b>셋</b> 중 배치 하나만 기본으로 남는다 — 「메시징 수단이 없다」는 <code>broker/</code> 를 연 저장소에선 못 쓰고, 「글로벌 트랜잭션」은 그 조건이 실제로 있을 때만 선다. 그 배치도 <b>«생성»에만</b> 걸린다 — 이미 있는 것을 여럿 «고치는» 것은 면제가 아니다 · 「같은 사용자가 그 묶음에만 집중한다」가 참이면 더 안전해진다(원전 조건)</em> · <b>「이 사람이 이걸 해도 되나」도 여기서 판정한다</b> <em>단건 인가는 불변식이다 — 목록 인가는 «조회 조건»이라 여기가 아니다</em> · <b>서로 «다른 일»을 하는 두 사용자가 이 경계 때문에 충돌하면 위반</b> <em>그건 업무 규칙이 아니라 개발자가 만든 제약이다 — 트랜잭션을 늘리지 말고 <b>경계를 쪼갠다</b></em>", "확정", "fix", pin(12)+pin(42)+pin(43)+pin(50)),
- row("fixed", ["v","v","t"], "&lt;aggregate&gt;.py", "DDD", "애그리거트 <b>루트</b> — 밖에서는 <em>이것만</em> 참조한다 · <b>사실은 «여기»가 만든다</b> — <em>상태를 바꾼 그 메서드 안에서 기록한다. 유스케이스가 지어내면 <b>「불변식에 걸려 안 바뀌었는데 사실은 나가는」</b> 경우가 생기고, 같은 메서드를 부르는 유스케이스가 둘이 되면 <b>한쪽이 빠뜨려도 아무도 모른다</b></em> · <b>꺼내는 창구는 <code>pull_events()</code> 하나 — 꺼내면 «비운다»</b> <em>두 번 꺼내면 두 번 발행된다. <b>내보내기 전용이라 «읽기»가 없다</b> — <code>events</code> 프로퍼티를 함께 두면 안 비우고 읽는 길이 생긴다</em> · <b>여기서 «보내지» 않는다</b> <em>발행 장치가 도메인에 들어오면 <b>D40</b> 이 반려한 그 모양이 된다 — 모으기만 하고 배달은 밖이 진다</em>", "확정", "fix", pin(12)+pin(59)),
+ row("fixed", ["v","v","t"], "&lt;aggregate&gt;.py", "DDD", '애그리거트 <b>루트</b> — 밖에서는 <em>이것만</em> 참조한다 · <b>사실은 «여기»가 만든다</b> — <em>상태를 바꾼 그 메서드 안에서 기록한다. 유스케이스가 지어내면 <b>「불변식에 걸려 안 바뀌었는데 사실은 나가는」</b> 경우가 생기고, 같은 메서드를 부르는 유스케이스가 둘이 되면 <b>한쪽이 빠뜨려도 아무도 모른다</b></em> · <b>꺼내는 창구는 <code>pull_events()</code> 하나 — 꺼내면 «비운다»</b> <em>비우지 않고 같은 사실을 되읽으면 중복 발행될 수 있다. 비운 뒤 두 번째 수거는 빈 목록이다. <b>내보내기 전용이라 «읽기»가 없다</b> — <code>events</code> 프로퍼티를 함께 두면 안 비우고 읽는 길이 생긴다</em> · <b>여기서 «보내지» 않는다</b> <em>발행 장치가 도메인에 들어오면 <b>D40</b> 이 반려한 그 모양이 된다 — 모으기만 하고 배달은 밖이 진다</em>', "확정", "fix", pin(12)+pin(59)),
  row("fixed", ["v","v","t"], "entity/", "DDD", "루트 아닌 엔티티 — 규칙: <b>식별자를 가진다</b>", "확정", "fix", pin(12)),
  row("fixed", ["v","v","v","l"], "&lt;entity&gt;.py", "DDD", "", "확정", "fix", pin(12)),
  row("fixed", ["v","v","t"], "value_object/", "DDD", "규칙: <b>불변 · 이 애그리거트만 쓴다</b>", "확정", "fix", pin(12)),
  row("fixed", ["v","v","v","l"], "&lt;value_object&gt;.py", "DDD", "같은 규칙 — <em>실측 166파일, 트리에서 가장 많이 쓰이는 리프</em>", "확정", "fix", pin(12)),
- row("fixed", ["v","v","t"], "event/", "DDD", "<b>명령이 아니라 사실</b> — 애그리거트는 기록만 하고 아무도 부르지 않는다. <b>판정: 이걸 «돌려주지» 않으면 유스케이스가 판단하게 되나</b> — 예면 여기다 <em>소비자가 있나로 묻지 않는다 — 있든 없든 사실은 사실이다</em>", "확정", "fix", pin(13)+pin(40)),
+ row("fixed", ["v","v","t"], "event/", "DDD", 'BC 안에서 읽히는 도메인 사실. 애그리거트가 기록하고 유스케이스가 수거한다. 참조가 없거나 driven 어댑터만 읽는 자료를 내부 이벤트로 두지 않는다 — 어댑터와 주고받는 알림 자료는 포트가 소유한다(#269·#270).', "확정", "fix", pin(13)+pin(40)),
  row("fixed", ["v","v","v","l"], "&lt;event&gt;.py", "DDD", "과거형 사실 하나 = 파일 하나 — <b>«내부용»이다. BC 밖에서 import 하면 위반</b> <em>밖으로 알릴 것은 유스케이스가 <code>published_event/</code> 로 옮겨 담는다</em> · <b>발행 장치(레지스트리·dispatch)는 여기 안 산다</b> — <em>배달은 <code>framework/broker/</code> 몫이다</em>", "확정", "fix", pin(13)+pin(40)),
  row("fixed", ["v","v","t"], "&lt;aggregate&gt;_repository.py", "DDD", "선언(드리븐 포트) — <b>애그리거트당 하나라 폴더가 아니라 파일</b>. 판정: <b>«주어가 이 애그리거트인가»</b> — 꺼내고 넣는 것에 더해 <b>그 컬렉션을 세고 합친 요약값</b>(<code>exists</code>·<code>count</code>)까지 여기다. 화면 자료를 빚는 조회만 <code>port/domain_bypass_query/</code> 로 나간다 <em>실측 181 남고 0 나감 — 규칙의 근거가 아니라 «이관 규모»다</em> · <b>배치가 쓸 «청크로 끊어 뽑기»도 여기다</b> <em>끊는 크기와 커서는 저장 기술 지식이라 이 계약이 진다 — <b>유스케이스에 <code>while True</code> 가 있으면 그 지식이 샌 것이다</b></em> · <b>«쓰기»의 판정 둘 — ① 인자가 «애그리거트(또는 그 목록)»인가 ② 이름이 <code>save</code>·<code>remove</code> 로 시작하나</b> <em>①이 «조건·필드»면 위반이다(<code>bulk_update(filter, fields)</code>·<code>update(id, status=…)</code>) — 판정이 SQL 로 가면 같은 판정의 도메인 메서드가 프로덕션에서 안 불려 <b>죽은 코드가 되고 그게 빈혈이다</b> · ②가 검사가 서는 조건이다 — BC 마다 <code>add</code>/<code>store</code>/<code>persist</code> 로 갈리면 「한 트랜잭션 = 애그리거트 하나」가 <b>아예 못 선다</b></em> <em>08-09 · T37 — 옛 문장은 «<code>save()</code>·<code>remove()</code> 둘뿐»이었다. <b>「이름을 고정한다」와 「개수를 둘로 닫는다」가 한 문장에 뭉쳐 있었고</b>, 검사가 서는 데 필요한 것은 앞엣것뿐이다</em> · <b><code>save_all()</code> 은 열려 있고 조건이 셋이다</b> <em>㉠ <b>트랜잭션을 열지 않는다</b> — <code>with unit_of_work:</code> 안에서만 불린다 · ㉡ <b>경합 가드를 유지한다</b> — 맨 <code>bulk_update</code> 로 구현하면 위반이다(<code>WHERE</code> 가 <code>pk IN</code> 뿐이라 «내가 읽은 뒤 남이 바꿨다»를 못 잡는다) · ㉢ <b>크기는 «부르는 쪽»이 정한다</b> — 받은 만큼만 한다</em> · <b><code>add_all</code> 은 안 연다</b> <em>「이미 있는 것을 다시 넣을 때 거짓말이 된다」가 <code>add()</code> 를 기각한 이유였고 <b>복수형에도 그대로 걸린다</b> — 신규와 수정을 가르는 것은 «이름»이 아니라 «구현»이다</em> · <b><code>ABC</code> · 메서드는 전부 <code>@abstractmethod</code></b> <em><code>port/</code> 밖에 있는 유일한 계약이라 여기 따로 적는다</em>", "확정", "fix", pin(12)+pin(29)+pin(43)+pin(44)+pin(50)),
  row("fixed", ["v","v","l"], "exception/", "DDD", "<b>이 애그리거트를 저장하지 못하게 만든 «업무적 사실»의 이름</b> — 주인이 애그리거트라 여기다 <em>불변식 위반이 대부분이고, 「이 값은 유일하다」·「내가 읽은 뒤 남이 바꿨다」처럼 <b>DB 가 대신 지켜 주는 것</b>도 여기다 — 어댑터가 번역해서 던진다</em> · <b>파일 수가 상한을 넘으면 애그리거트가 크다는 신호</b> <em>줄 수가 아니라 «파일 수»라 기계가 센다</em> <em>실측 애그리거트 밑 48파일 · 288클래스 · 한 파일 최대 16</em>", "신설", "fix", pin(27)+pin(12)+pin(40)),
@@ -304,15 +305,15 @@ ROWS = [
  row("fixed", ["v","t"], "shared_value_object/", "DDD", "여러 애그리거트가 쓰는 값 객체 — 규칙: <b>같은 폴더 안과 <code>exception</code> 말고는 import 하지 않는다</b> <em>← 08-06 에 «아무것도»에서 풀었다 · 실측 156 중 81 이 위반이었다</em> · <b>비어 있으면 「애그리거트 여럿이 함께 쓰는 값이 없다」</b>", "확정", "fix", pin(12)),
  row("fixed", ["v","v","l"], "&lt;value_object&gt;.py", "DDD", "위와 같은 파일 규칙 — <b>다른 건 폴더뿐</b>이다(애그리거트 밖)", "확정", "fix", pin(12)),
  row("fixed", ["v","l"], "domain_service/", "DDD", "<b>애그리거트 밖의 도메인 규칙 — «주인이 없다»</b> · 판정: <b>루트 메서드가 될 수 있으면 애그리거트로, 아니면 여기</b> <em>실측 52 중 루트 메서드 후보 0 · 43 을 응용이 부른다</em> · 규칙: <b>무상태 · 애그리거트 루트 + <code>value_object</code> + <code>exception</code> + 같은 폴더의 다른 도메인 서비스만 import</b>(리포지토리·내부 엔티티·포트는 금지). <b>재료는 유스케이스가 모아 «값으로» 넘긴다</b> <em>← 08-07 에 애그리거트 밑 칸을 없애고 여기 하나로 합쳤다</em> · <b>비어 있으면 「애그리거트 밖의 도메인 규칙이 없다」</b>", "확정", "fix", pin(28)+pin(13)+pin(32)),
- row("fixed", ["v","sp","l"], "&lt;domain_service&gt;.py", "DDD", "무상태 규칙 하나 = 파일 하나 — 애그리거트를 <b>인자로 받아</b> 판단만 하고 돌려준다. <b>불러오거나 저장하면 그건 유스케이스다</b>", "확정", "fix", pin(13)+pin(28)),
+ row("fixed", ["v","sp","l"], "&lt;domain_service&gt;.py", "DDD", '무상태 도메인 규칙 하나 = 한 칸. 재료는 값 객체·애그리거트 루트 등의 값으로 받는다. 조회·저장·포트 호출은 하지 않는다. 위반은 도메인 예외로 알리며, 루트 하나의 메서드로 표현할 수 있으면 그 루트에 둔다.', "확정", "fix", pin(13)+pin(28)),
 
  row("fixed", ["t"], "application_layer/", "Clean", "Clean 구역 — <b>아키텍처가 «무엇을 하는지» 외치는 자리</b>. django 를 모른다. 규칙: <b>자식 폴더는 <code>&lt;area&gt;/</code>·<code>port/</code> 둘뿐</b> — <em>업무 흐름과, 바깥에 기대는 것 전부</em> <em>← application_contract/ · 08-08 · F6 에 넷에서 둘로 줄었다</em>", "픽스", "fix", pin(14)+pin(2)+pin(4)+pin(30)+pin(37), bold=True),
  row("fixed", ["v","t"], "&lt;area&gt;/", "Clean", "", "확정", "fix", pin(14)),
- row("fixed", ["v","v","l"], "&lt;use_case&gt;/", "Clean", "<b>유스케이스 하나 = 폴더 하나 = 진입점 하나</b> — <em>쪼갠 모듈도 이 안에 둔다. 둘 이상의 유스케이스가 쓰면 위로 올린다</em>", "확정", "fix", pin(14)+pin(28)),
- row("fixed", ["v","v","sp","t"], "&lt;use_case&gt;_use_case.py", "Clean", "인터랙터 — 엔티티를 지휘한다. 업무 규칙은 없다 · <b>BC 를 가로지르는 순서는 여기가 진다</b> — 판정: <b>「이 단계가 실패하면 «내가» 할 일이 있나」</b> <em>있으면 여기서 «지시»로 직접 부른다(순서·실패·되돌리기를 전부 이 파일이 진다) · 없으면 «사실»로 공표하고 잊는다 → <code>framework/broker/</code></em> · <b>BC 를 가로지르는 «목록»은 «남에게 묻고 → 내 표에서 좁힌다»</b> <em>양쪽을 다 가져와 파이썬에서 합치면 위반이다 — 자르려면 전부 가져와야 해서 코드가 안 돈다. <b>정렬·페이지네이션은 «그 값을 가진 쪽»이 한다</b></em> · <b>진행 상태를 따로 적지 않는다</b> <em>앞이면 이 파일 «안»에 있고 뒤면 알 필요가 없다 — 다만 <code>cron_job/</code> 워커에서 돌면서 단계가 둘 이상이면 그때는 진행을 저장한다</em> · <b>대량 처리는 «하나씩 꺼내 시키고 건당 커밋»이다</b> <em>원전이 야간 배치를 그렇게 그렸다 — “the batch simply <b>iterated through the Assets</b>, sending a few self-explanatory messages to each and then <b>committing the database transactions</b>”. 청크로 끊는 일은 리포지토리가 지고 여기는 <code>for</code> 만 돈다 · 여러 건을 <b>한</b> 트랜잭션에 묶어야 하면 <code>save_all()</code> 을 쓰고, <b>크기는 여기가 정한다</b></em> · <b>한 <code>with unit_of_work:</code> 안에서 «서로 다른» <u>애그리거트 리포지토리</u>에 쓰기가 둘이면 위반</b> <em>같은 리포지토리 여럿은 배치라 통과 · 같은 타입 두 인스턴스는 기계가 못 갈라 사람이 본다 · <b>세는 것은 타입이 <code>domain_layer/&lt;aggregate&gt;/&lt;aggregate&gt;_repository.py</code> 에서 온 것뿐이다</b> <em>「애그리거트 = 트랜잭션 경계」라 <b>애그리거트를 안 가진 것은 애초에 대상이 아니다</b> — 감사 로그도, <code>domain_bypass_query/</code> 도, 도메인 객체의 메서드도 셈에 안 들어온다<span class='dim'> 08-11 · C7 — 옛 문면은 주어가 그냥 「리포지토리」라 4차 리뷰가 <b>오탐 셋</b>으로 blocker 를 냈다(CHK-1+2)</span></em> — 그리고 그 타입을 «읽을 수 있게» 하는 전제가 <b>「모든 이름은 첫 대입에 타입을 단다」</b>이다(<em>전역 제약 옆의 «전제» · 시그니처는 <code>mypy strict</code>, 변수는 전용 백스톱이 잡는다<span class='dim'> 08-10 · T49 — 옛 문면은 <code>check-public-surface-annotation</code> 을 시그니처 강제자로 인용했는데 <b>그 검사기는 함수 본문을 통째로 스킵해 시그니처를 안 본다</b></span></em>). 없으면 <b>같은 리포지토리의 «별칭»</b>(<code>repo = self._order_repository</code>)을 둘로 세어 배치 면제가 깨진다 · <b>근사다</b> — 루프·사설 메서드 경유·<code>with</code> 없이 연 트랜잭션은 못 잡는다</em> · <b>걸리면 「그 사용자 «자신»의 일인가」로 고칠 쪽을 고른다</b> <em>그 사람 일이면 애그리거트를 다시 긋고, 다른 사람·시스템 일이면 나눈다</em> · <b>사실 발행은 «세 걸음»이고 순서가 규칙이다 — ① 애그리거트에서 <code>pull_events()</code> ② 저장 ③ 옮겨 담아 <code>uow.after_commit(…)</code> 으로 브로커에</b> <em>①이 ②보다 «앞»인 것이 요점 — 그래야 저장이 「안 꺼낸 사실이 남았나」를 검사할 수 있다</em> · <b>도메인 사실을 «그대로» 브로커에 넘기면 위반</b> <em>타입이 다르다 — 안쪽 <code>event/&lt;event&gt;.py</code> 는 세밀하고 자주 바뀌고, 나가는 <code>published_event/&lt;event&gt;.py</code> 는 성글고 오래 간다. <b>둘이 1:1 이 아니다</b>(전부가 공표되지는 않는다) — 그래서 이 «고르고 옮겨 담기»가 자동이 될 수 없고 여기가 진다</em> · <b>커밋 «전»에 발행하면 위반</b> <em>참조 구현 둘이 그렇게 하는데(EF 의 <code>SaveChanges</code> 직전) 그건 «부작용을 같은 트랜잭션에 넣으려고»다 — 그 순간 <b>한 트랜잭션이 애그리거트 여럿을 바꾸게 되어 <b>D43</b> 과 정면으로 부딪힌다</b></em>", "확정", "fix", pin(14)+pin(42)+pin(48)+pin(43)+pin(50)+pin(58)+pin(59)),
- row("fixed", ["v","v","sp","t"], "&lt;use_case&gt;_command.py", "Clean", "<b>상태를 바꾸는</b> 유스케이스가 받는 값 — 클린의 <b>Input Data</b> 자리 · <b>형제 <code>_query.py</code> 와 «둘 다» 온다</b> <em>부모 <code>&lt;use_case&gt;/</code> 가 왔으니 둘 다 강제다 — <b>안 쓰는 쪽은 빈 파일로 존속</b>한다. <b>갈리는 것은 «파일»이 아니라 «클래스»다</b> — <b>둘 중 클래스가 정의된 것이 정확히 하나가 아니면 위반</b> <em>AST 한 줄</em>. 어느 쪽이냐는 사람이 정하지만 「안 밝혔다」는 기계가 잡는다 <span class='dim'>08-09 · T52 — 옛 문면은 「둘 중 정확히 하나」라 <b>«존재»로 쟀는데</b>, 그러면 부모가 왔는데 자식 하나가 안 오는 <b>유일한 예외</b>가 된다. 「둘 중 하나」는 «존재» 규칙이 아니라 <b>«내용» 규칙</b>이었다.</span></em> · <b>애그리거트가 오면 위반</b> <em>이미 불러온 것을 받으면 유스케이스가 리포지토리를 안 거치게 되어 «불러오고·시키고·긋는다»가 무너진다</em> · <b>손잡이는 「연 쪽이 닫나」로 가른다</b> — <b>받는 쪽이 닫아야 하면 위반</b> <em>08-09 · T43 — 프레임워크가 열고 닫는 업로드는 들어온다(<code>Iterator[bytes]</code>). <b>검사하지 않는다</b> — 막을 게 사용자면 입구·애그리거트가, 개발자면 테스트·타입 체커가 한다</em>", "개명", "fix", pin(14)+pin(30)+pin(55)),
- row("fixed", ["v","v","sp","t"], "&lt;use_case&gt;_query.py", "Clean", "<b>상태를 안 바꾸는</b> 유스케이스가 받는 값 — <b>규칙은 형제와 같다</b> <em>담기는 것도 검사도 전부 같고, 갈리는 것은 «이 유스케이스가 무엇을 하나» 하나뿐이다. <b>이 파일도 무조건 온다</b> — 커맨드 유스케이스에서는 <b>빈 파일</b>이고, 그 빔이 곧 「이쪽이 아니다」다</em> · <b><code>port/domain_bypass_query/</code> 와 다르다</b> <em>저쪽은 «도메인을 우회하는 조회»이고 여기는 «도메인을 거치는 조회»다 — 이 파일이 있다고 저 칸이 필요해지지 않는다</em>", "신설", "fix", pin(14)+pin(55)),
- row("fixed", ["v","v","sp","l"], "&lt;use_case&gt;_result.py", "Clean", "유스케이스가 돌려주는 자료 — 클린의 <b>Output Data</b> 자리 · <b>실패를 여기 담으면 위반</b> <em>실패는 도메인 예외로 나간다. 플러그인 문서의 <code>failed Result</code> 는 <b>다른 낱말</b>이다 — 그건 「실패를 «값»으로 돌려주는 방식」이고 우리는 예외 노선이다</em> · <b>«나가는 자료의 모양»이지 «몇 개를 돌려주느냐»가 아니다</b> — 흐름이면 <code>Iterator[&lt;UseCase&gt;Result]</code> <em>← SSE</em>. <b>연 것은 유스케이스 안에서 닫는다</b> <em>구독 손잡이 자체는 못 나간다 — 나가는 것은 흐르는 알맹이뿐</em>", "개명", "fix", pin(14)+pin(55)),
+ row("fixed", ["v","v","l"], "&lt;use_case&gt;/", "Clean", '<b>유스케이스 하나 = 폴더 하나 = 진입점 하나</b>. 다른 유스케이스의 모듈을 돌려 쓰거나 공통 모듈을 <code>&lt;area&gt;/</code> 로 올리지 않는다(#189·#192). 진입점 칸의 승격은 감사자가 소관·응집을 판정한 경우에만 집행한다.', "확정", "fix", pin(14)+pin(28)),
+ row("fixed", ["v","v","sp","t"], "&lt;use_case&gt;_use_case.py", "Clean", '<b>업무 순서를 조율하고 판정은 도메인에 맡긴다.</b> 외부 BC 호출은 UoW 밖에서 끝낸다. 하나의 UoW 에서 서로 다른 애그리거트 리포지토리에 쓰기 둘을 두지 않는다. 배치 생성의 면제와 기존 여러 애그리거트 수정은 구분한다(#546·#550). <b>사실은 저장 전에 수거하고, 실제 발행은 커밋 뒤다</b>(#539~#545). 입력 계약·성공 result·진입점은 한 유스케이스가 소유하며 다른 유스케이스와 모듈을 공유하지 않는다.', "확정", "fix", pin(14)+pin(42)+pin(48)+pin(43)+pin(50)+pin(58)+pin(59)),
+ row("fixed", ["v","v","sp","t"], "&lt;use_case&gt;_command.py", "Clean", '상태를 바꾸는 유스케이스의 입력 자료. <code>_command.py</code>·<code>_query.py</code> 는 모두 두되, <b>내용 있는 유스케이스의 입력 클래스는 한쪽에만 정의한다</b>(#569). 빈 골격에는 아직 내용 규칙을 적용하지 않는다(#488). 애그리거트·엔티티·ORM·framework 요청 객체는 받지 않고 값 객체는 허용한다. 개발자 입력 실수는 타입 체커·테스트, 사용자 입력과 업무 규칙은 입구·도메인이 검증한다.', "개명", "fix", pin(14)+pin(30)+pin(55)),
+ row("fixed", ["v","v","sp","t"], "&lt;use_case&gt;_query.py", "Clean", '조회 유스케이스의 입력 칸. 커맨드 유스케이스에서는 빈 파일로 유지한다. <code>_query.py</code> 는 입력 자료이고 <code>port/domain_bypass_query/</code> 는 외부 조회 능력의 계약이다 — 둘을 같은 것으로 읽지 않는다.', "신설", "fix", pin(14)+pin(55)),
+ row("fixed", ["v","v","sp","l"], "&lt;use_case&gt;_result.py", "Clean", '<b>성공 결과 한 벌</b>만 둔다(#570·#571). 응답 자료가 없으면 빈 result 파일과 <code>-&gt; None</code> 으로 대응한다. 실패 variant·outcome 을 넣지 않는다 — known failure 는 승인된 구체 domain/application 예외 경로를 따른다. 스트림이면 <code>Iterator[&lt;UseCase&gt;Result]</code>; 열고 닫는 수명은 유스케이스 안에 남긴다.', "개명", "fix", pin(14)+pin(55)),
  row("fixed", ["v","l"], "port/", "Hex", "<b>이 층이 일을 마치려면 «바깥»에 있어야 하는 것 전부</b> — 선언은 여기 아래에만 산다. 규칙: <b>자식은 셋뿐</b> — <em>바깥에 시키는 것 · 도메인을 우회하는 조회 · 내 저장을 묶는 것</em> <em>← 옛 문면은 «바깥 행위자와의 대화»였는데, Cockburn 의 2차 행위자 표준 예가 바로 DB·시계라 <b>그 자로는 아무것도 안 갈렸다</b>(08-08 · F6)</em> · <b>이 아래 모든 계약 클래스는 <code>ABC</code> 이고 메서드는 전부 <code>@abstractmethod</code></b> <em>안 붙이면 상속해도 미구현이 안 걸린다</em> · <b>셋이 다 비어 있으면 「이 BC 는 자기 안에서 끝난다」</b>", "개명", "fix", pin(2)+pin(4)+pin(37)+pin(44)),
  row("fixed", ["v","sp","t"], "&lt;capability&gt;/", "Hex", "<b>능력 하나 = 폴더 하나</b> — 포트는 인터페이스가 아니라 <b>«대화»</b>다. 대화 하나의 어휘 <b>셋</b>(무엇을 말하나 · 무엇을 듣나 · 무엇이 잘못되나)이 한 자리에 산다", "신설", "fix", pin(17)+pin(4)+pin(33)+pin(46)),
  row("fixed", ["v","sp","v","t"], "&lt;capability&gt;_port.py", "Hex", "", "개명", "fix", pin(17)+pin(4)+pin(33)+pin(41)),
@@ -331,16 +332,16 @@ ROWS = [
  row("fixed", ["t"], "driving_layer/", "Hex", "<b>모든 요청이 여기서 시작한다</b> — <b>리프는 <code>application_layer/&lt;area&gt;/</code> 아래만</b> 의존한다 <em><code>port/</code> 는 금지 — 잡는 순간 «무엇을 어떤 순서로»를 입구가 정하기 시작한다</em> · <b>여는 것은 «허용 목록»이라 거기 없는 것은 위반이다</b> <em>전문은 D11 검사 — 금지 목록이면 새 칸이 생길 때마다 조용히 샌다</em> <em>← presentation_layer</em>", "픽스", "fix", pin(3)+pin(11)+pin(26), bold=True),
  row("fixed", ["v","t"], "api/", "Hex", "<b>바로 아래 파일은 둘뿐</b> <em>나머지는 폴더로 내린다</em> · <b>폴더는 <code>webhook/</code> 아니면 area 다</b> <em>경로 문자열만 보면 갈린다 — <code>webhook</code> 이 아닌 폴더에 area 아닌 이름이 오면 위반</em> · <b>여기도 <code>application_layer/&lt;area&gt;/</code> 아래만 의존한다</b> <em>형제 셋과 같은 규칙 — <code>port/</code> 를 잡으면 위반이다</em>", "확정", "fix", pin(7)+pin(11)),
  row("fixed", ["v","v","t"], "api_router.py", "Main", "<b>와이어링</b> — <b>프로젝트를 import 하지 않는다</b> <em>← 그래서 D11 예외가 없어진다</em>", "개명", "fix", pin(6)+pin(11)+pin(27)),
- row("fixed", ["v","v","t"], "bc_error_schema.py", "Hex", "<b>이 BC 의 «오류 언어» 전부</b> — BC 당 <b>정확히 한 파일 · 항상</b> <em>HTTP 를 아직 안 여는 BC 에도 «빈 파일»로 있다 — 부모 <code>api/</code> 가 항상이기 때문이다. <span class='dim'>08-09 · T52 — 옛 문면은 「HTTP 오류를 공개하는 BC 만」이었는데 그건 <b>사람이 판단하는 조건</b>이라 표류한다. 「공개하나」는 «내용»이지 «골격»이 아니다.</span></em> <em>← <code>error_out.py</code></em> <em>실측 401 이 <b>컨트롤러 보유 area 23개 전부</b>에 걸린다(BC 로는 13)</em> · <b>그래서 <code>Accept-Language</code> 를 안 본다</b> <em>메시지가 아니라 «코드»를 내보내니 <b>번역은 부르는 쪽 몫</b>이다 — 우리가 로케일을 알아야 하는 것은 <b>«우리가 사람에게 직접 닿을 때»</b>뿐이다(메일·알림)</em> · <b>접두 <code>bc_</code></b> <em>공통 봉투 <code>framework/ninja/framework_error_schema.py</code> 와 <b>같은 컨트롤러가 «함께 import»</b> 하므로 이름이 갈려야 한다 — 봉투는 저기, 이 BC 의 코드 목록은 여기다</em> · <b>접미 <code>_schema</code> 는 «폴더 밖»이라 붙는다</b> <em><code>schema/</code> 안이면 폴더가 종류를 말하니 접두가 스코프를 지고(<code>schema_in</code>), 밖이면 파일이 종류를 스스로 진다. <b><span class='no'>_out</span> 은 쌍의 한쪽을 뜻하는데 여기만 짝이 없어 아무것도 안 말했다</b></em> · <b>비어 있으면 「이 BC 는 HTTP 로 내보내는 오류가 없다」</b>", "신설", "fix", pin(27)+pin(14)+pin(55)),
+ row("fixed", ["v","v","t"], "bc_error_schema.py", "Hex", '<b>BC 당 한 파일</b> — HTTP 오류를 공개하지 않아도 빈 골격은 둔다. 공통 봉투는 <code>framework/ninja/framework_error_schema.py</code>, BC 오류의 base·코드·concrete 타입은 이 파일이다. controller 는 BC 오류를 직접 반환하고 framework 오류를 BC 코드로 다시 매핑하지 않는다. 실제 오류 profile 은 G1 계약을 따른다 — 기존 계약 보존·명시적으로 선택한 다른 profile 의 shape 를 code-json 과 섞지 않는다.', "신설", "fix", pin(27)+pin(14)+pin(55)),
  row("fixed", ["v","v","t"], "&lt;area&gt;/", "Hex", "<b>area 1차</b> — 트리 전체가 도메인 축 1차다 <em>§0-4</em> · <b><code>webhook/</code> 은 여기 아래가 아니라 형제다</b> <em>1차가 둘이 된 게 아니라 «계약 주인»이 갈린 것 — <code>application_layer/</code> 가 <code>&lt;area&gt;/</code> 옆에 <code>port/</code> 를 두는 것과 같은 꼴이다</em>", "확정", "fix", pin(7)),
  row("fixed", ["v","v","v","t"], "&lt;area&gt;_controller.py", "Hex", "<b>인가는 «단순 관문»까지만</b> — <em>로그인·역할은 <code>framework/ninja/</code> 의 인증 틀로 붙인다. 「이 자료를 이 사람이 봐도 되나」는 <b>안쪽</b>이 정한다 — 단건이면 애그리거트, 목록이면 조회 조건이다</em> · <b>도메인 예외는 «타입»으로만 쓴다</b> — <code>except … as e</code> 로 묶은 이름을 이 파일 안에서 참조하면 위반 <em>AST 한 줄</em> · <b>응답 캐시는 여기 데코레이터로 붙인다</b> <em>세 줄에 안 들어가고 새 칸도 필요 없다 — 장고가 <code>GET</code>·<code>HEAD</code> 만 캐시하니 쓰기 경로에 애초에 안 닿는다</em>", "확정", "fix", pin(7)+pin(11)+pin(27)+pin(39)),
- row("fixed", ["v","v","v","l"], "schema/", "Hex", "HTTP 입출력 형식 — <b>방향으로만 가른다</b>", "확정", "fix", pin(8)+pin(10)),
- row("fixed", ["v","v","v","sp","t"], "schema_in.py", "Hex", "요청 — 클린의 <b>Input Data</b> 자리 · <b>허용 <code>sort</code>·<code>filter</code> key 를 여기서 닫는다</b> <em>ORM 필드 이름을 그대로 받으면 위반 — 표 구조가 공개 계약으로 샌다. 페이지 크기 상한도 여기다</em>", "확정", "fix"),
+ row("fixed", ["v","v","v","l"], "schema/", "Hex", 'HTTP 입출력의 <b>두 칸</b> — <code>schema_in.py</code>·<code>schema_out.py</code>. 각각 파일 또는 허용된 동명 폴더로 실현할 수 있다. 내용 없는 칸은 빈 파일을 유지한다.', "확정", "fix", pin(8)+pin(10)),
+ row("fixed", ["v","v","v","sp","t"], "schema_in.py", "Hex", '제약 선언은 <code>schema_in.py</code> 에 둔다(#139). <b>요청 Schema 에서 도메인 객체를 생성하지 않는다</b>(#142). 도메인 값 객체 import 면제(#141)가 생성 허용을 뜻하지는 않는다.', "확정", "fix"),
  row("fixed", ["v","v","v","sp","l"], "schema_out.py", "Hex", "응답 — 클린의 <b>Output Data</b> 자리", "확정", "fix"),
  row("fixed", ["v","v","l"], "webhook/", "Hex", "<b>외부 시스템이 부른다</b> — <em>계약이 저장소 밖에 있다</em> · <b>서명 검증은 <code>framework/&lt;technology&gt;/</code> 인증 틀로 붙인다</b> <em>라우트 데코레이터에 선언하니 컨트롤러 세 줄을 안 건드린다</em> · <b>응답 형식도 재시도 정책도 «발신자 스펙»이 정한다</b> <em>우리가 ack 를 고르는 것이 아니라 <b>저쪽이 무엇을 기대하는지</b>를 <code>schema_out.py</code> 와 컨트롤러가 받아 적는다. 업무 규칙 위반은 다시 받아도 영원히 같으니 «영구 실패»로 답해야 하지만, <b>그 응답이 2xx 인지 4xx 인지는 저쪽 문서가 정한다</b><span class='dim'> 08-11 · C8 — 옛 문면은 「ack 로 답한다」·「4xx 면 며칠 재시도」로 <b>수단까지 우리가 닫았다</b>. 이 칸의 정의(계약이 저장소 밖)와 부딪힌다. 「<code>cron_job/</code> 과 같은 갈래」도 틀렸다 — <b>celery 는 우리 것이라 재시도를 우리가 설정하지만 여기는 부르는 쪽이 바깥이라 우리가 다시 부를 수 없다</b></span></em> · <b>멱등은 유스케이스가 진다</b> <em>발신자가 재시도하면 필요하고 안 하면 아니다 — 어느 쪽인지도 저쪽 스펙이 정한다</em> · <b>★ 이건 «놓칠 수 있는» 입구다</b> <em>네트워크가 끊기거나 우리가 배포 중이면 그 웹훅은 <b>영영 안 온다</b> — 그리고 <b>우리는 다시 부를 수 없다</b>. 그래서 <b>이 입구가 «와야만» 일이 되는 설계는 위반</b>이고, 빠진 것은 <code>cron_job/</code> 이 시각에 깨어나 발신자에게 «물어» 메운다. 웹훅은 «빨리 알려 주는 길»이지 «유일한 길»이 아니다</em> · <b>HTTP 로 오는 것만이다</b> <em>외부가 큐나 gRPC 로 보내면 그건 다른 전송이라 <b>여기 넣으면 위반</b>이다 — 받을 칸은 <b>정본 트리 개정</b>으로만 생긴다<span class='dim'> 08-11 · C6 — 옛 문면의 「<code>api/</code> 의 형제가 는다」는 주어가 지워져 「BC 가 늘린다」로 읽혔다</span></em> · <b>비어 있으면 「이 BC 를 부르는 외부 시스템이 없다」</b>", "신설", "fix", pin(53)+pin(7)+pin(11)+pin(24)),
- row("fixed", ["v","v","sp","l"], "&lt;provider&gt;/", "Hex", "<b>사실 종류로 또 나누면 위반</b> — <em><code>toss/payment/</code>·<code>toss/refund/</code> ✗. 깊이는 여기서 끝난다</em>", "신설", "fix", pin(53)),
+ row("fixed", ["v","v","sp","l"], "&lt;provider&gt;/", "Hex", '웹훅의 업무 분류는 provider 에서 끝난다 — <code>toss/payment/</code>·<code>toss/refund/</code> 처럼 이벤트 종류 폴더를 더하지 않는다. controller·schema 칸의 허용된 동명 폴더 승격은 업무 분류 추가와 다르다.', "신설", "fix", pin(53)),
  row("fixed", ["v","v","sp","sp","t"], "&lt;provider&gt;_controller.py", "Hex", "<b>여기도 세 줄이다</b> — <em>바꾸고 · 유스케이스를 한 번 부르고 · <b>발신자 스펙이 정한 대로 답한다</b></em> · <b>도메인 예외를 «타입»으로만 쓴다</b> <em><code>&lt;area&gt;_controller.py</code> 와 같은 검사가 걸린다</em>", "신설", "fix", pin(11)+pin(27)),
- row("fixed", ["v","v","sp","sp","l"], "schema/", "Hex", "<b>형제 <code>&lt;area&gt;/schema/</code> 와 «같은» 겹</b> — <em>종류가 같으니 골격도 같다. 이 겹이 없으면 같은 자리 둘이 다른 모양이 되어 <b>골격 검사가 먼저 걸린다</b></em> · <b>파일은 언제나 둘</b> <em>ack 본문이 없는 상대라도 <code>schema_out.py</code> 를 «빈 파일»로 둔다 — 부모가 왔으면 자식은 반드시 온다</em>", "신설", "fix", pin(55)+pin(54)+pin(53)),
+ row("fixed", ["v","v","sp","sp","l"], "schema/", "Hex", '형제 <code>&lt;area&gt;/schema/</code> 와 같은 두 칸이다. ack 본문이 없어도 <code>schema_out.py</code> 를 빈 파일로 둔다. 내용 있는 칸의 유효한 동명 폴더 승격은 그 칸을 충족한다.', "신설", "fix", pin(55)+pin(54)+pin(53)),
  row("fixed", ["v","v","sp","sp","sp","t"], "schema_in.py", "Hex", "<b>남이 정한 페이로드</b> — <b>우리가 못 고친다</b> <em>그래서 <code>&lt;area&gt;/</code> 쪽 <code>schema_in.py</code> 의 규칙 둘이 여기엔 «안» 걸린다 — 허용 key 를 닫는 것도, 이름을 우리 식으로 바꾸는 것도 우리 권한이 아니다</em>", "신설", "fix"),
  row("fixed", ["v","v","sp","sp","sp","l"], "schema_out.py", "Hex", "<b>ack 의 모양</b> — <em>바로 위 <code>&lt;provider&gt;_controller.py</code> 가 「저쪽 스펙대로 답한다」고 적은 그 응답이 여기 산다</em> · <b>형식도 저쪽이 정한다</b> <em>되돌려 줄 값이 정해져 있으면 그대로 적는다 — 우리 식으로 못 바꾼다</em> · <b>업무 실패를 여기 담지 않는다</b> <em>「왜 실패했나」를 실어 보내면 발신자가 그걸 보고 분기하기 시작해 우리 내부가 남의 계약이 된다</em>", "신설", "fix", pin(55)+pin(53)),
  row("fixed", ["v","t"], "open_host_service/", "DDD", "<b>다른 BC 가 부른다</b> — Evans 패턴명 그대로 · <b>되돌릴 수 없는 단계는 순서의 맨 끝에, 실패할 수 있는 검사는 맨 앞에</b> <em>그러면 되돌릴 것이 아예 안 남는다</em> · <b>판정: 「이 단계를 되돌리는 창구가 여기 있나」</b> <em>없으면 그 단계는 맨 끝이다</em> · <b>남이 «놓친» 사실을 되물어 오는 창구이기도 하다</b> <em>사실 통로는 유실될 수 있어서, 그 자료가 꼭 필요한 쪽은 여기로 물어 온다 — <b>내 장부가 원본이다</b><span class='dim'> 08-10 · C4</span></em> · <b>비어 있으면 「이 BC 를 부르는 다른 BC 가 없다」</b>", "개명", "fix", pin(1)+pin(9)+pin(11)+pin(42)+pin(48)),
@@ -348,12 +349,12 @@ ROWS = [
  row("fixed", ["v","v","sp","t"], "&lt;service&gt;_service.py", "DDD", "공개 함수 — <code>api/</code>의 controller 자리 · <b>함수 이름은 <code>_command</code>/<code>_query</code> 로 끝난다</b> — 상태를 바꾸면 커맨드, 안 바꾸면 질의 <em>AST 한 줄 — 「의도를 안 밝힌 함수」가 걸린다</em> · <b>남이 내 자료로 «정렬·페이지네이션» 해야 하면 «내가» 해서 준다</b> <em>목록을 통째로 넘기면 부르는 쪽이 전부 가져와야 한다 — 이 창구가 잘라서 «식별자»만 돌려준다</em> · <b>«대사»는 다른 이야기다</b> <em>하루치를 맞춰 보려는 조회는 화면용 목록이 아니라 <b>기간이 곧 조건</b>이라, 식별자만이 아니라 대조에 필요한 값까지 실어 준다 — 자르는 크기는 여기가 정한다<span class='dim'> 08-10 · C4</span></em> · <b>도메인 예외는 «타입»으로만 쓴다</b> — <code>except … as e</code> 로 묶은 이름을 이 파일 안에서 참조하면 위반 <em>컨트롤러와 같은 규칙</em>", "확정", "fix", pin(9)+pin(11)+pin(39)),
  row("fixed", ["v","v","sp","l"], "contract/", "DDD", "<b>계약은 «표준 라이브러리»와 «같은 BC 의 다른 계약» 말고는 import 하지 않는다</b> <em>AST 한 줄</em>", "확정", "fix", pin(35)+pin(9)+pin(10)),
  row("fixed", ["v","v","sp","sp","t"], "request/", "DDD", "", "개명", "fix", pin(9)),
- row("fixed", ["v","v","sp","sp","v","l"], "&lt;request&gt;_request.py", "DDD", "<b>타입 하나 = 파일 하나</b>인 것은 <b>경계를 넘는 표면이라 타입마다 경로가 안정해야</b> 하기 때문이다(Published Language) <em>실측 73파일 — 이관 규모</em>", "개명", "fix", pin(10)+pin(39)+pin(41)),
+ row("fixed", ["v","v","sp","sp","v","l"], "&lt;request&gt;_request.py", "DDD", '<b>주 request 계약 하나 = 파일 하나</b>. 주 계약의 필드 어노테이션이 직접·간접 참조하는 구성용 공개 <code>dataclass</code> 는 같은 파일에 함께 둘 수 있다. 별개 연산의 Request·Response·Result 를 보조 타입으로 위장하지 않는다(#156·#157·#484).', "개명", "fix", pin(10)+pin(39)+pin(41)),
  row("fixed", ["v","v","sp","sp","t"], "response/", "DDD", "<b>«성공의 모양»이 아니라 «이 창구가 낼 수 있는 답 전부»다 — 거절도 답이다</b>", "개명", "fix", pin(36)+pin(9)),
- row("fixed", ["v","v","sp","sp","v","l"], "&lt;response&gt;_response.py", "DDD", "같은 규칙 — <b>경계를 넘는 표면이라 타입마다 경로가 안정해야 한다</b>(Published Language) · <b>못 해 준 사유는 «코드»로 담는다</b> <em>자유 문자열이면 위반</em>", "개명", "fix", pin(36)+pin(10)+pin(39)+pin(41)),
+ row("fixed", ["v","v","sp","sp","v","l"], "&lt;response&gt;_response.py", "DDD", '<b>주 response 계약 하나 = 파일 하나</b>. 주 계약의 필드 어노테이션이 직접·간접 참조하는 구성용 공개 <code>dataclass</code> 만 동거를 허용한다. 업무 실패를 예외로 공개할 때는 <code>contract/exception/</code> 의 published exception 으로 번역한다.', "개명", "fix", pin(36)+pin(10)+pin(39)+pin(41)),
  row("fixed", ["v","v","sp","sp","l"], "exception/", "DDD", "판정: <b>이 창구가 «혼자서 답을 만들 수 있나»</b> — 만들 수 있으면 <code>response/</code>, <b>못 만들면 여기</b> <em>부르는 쪽 사정은 묻지 않는다</em>", "개명", "fix", pin(36)+pin(27)+pin(9)),
  row("fixed", ["v","v","sp","sp","sp","t"], "&lt;service&gt;_published_error.py", "DDD", "<b>창구당 하나 · 이 창구의 공개 예외 중 이걸 상속하지 않는 것이 있으면 위반</b> <em>AST 한 줄</em>", "신설", "fix", pin(36)+pin(27)),
- row("fixed", ["v","v","sp","sp","sp","l"], "&lt;exception&gt;_exception.py", "DDD", "<b>예외 클래스당 1모듈</b> — <em>실측 72파일, 현행은 <code>_v1</code> 55개·<code>_error</code> 를 섞어 쓴다</em>", "개명", "fix", pin(10)+pin(27)+pin(41)),
+ row("fixed", ["v","v","sp","sp","sp","l"], "&lt;exception&gt;_exception.py", "DDD", '공개 예외 클래스 하나 = 파일 하나. 서비스의 <code>&lt;Service&gt;PublishedError</code> 를 상속하고, 도메인 예외를 그대로 노출하지 않는다.', "개명", "fix", pin(10)+pin(27)+pin(41)),
  row("fixed", ["v","t"], "cron_job/", "Hex", "<b>정기 실행 입구</b> — <em>밖에서 나를 부른다는 점에서 <code>api/</code> 와 같다</em>. <b>celery task 가 여기 산다</b> · <b><code>__init__.py</code> 가 <code>&lt;job&gt;</code> 들을 재수출한다</b> — <em>celery 는 이 «패키지»를 import 할 뿐이라 재수출이 없으면 task 가 등록되지 않는다(08-07 · R10)</em> · <b>응답을 «먼저» 내보내야 하면 그 유스케이스를 여기가 부른다</b> <em>«무엇을 하나»는 안 바뀌고 «언제 부르나»만 바뀐다 — 커맨드/사실 판정과 <b>별개 축</b>이다</em> · <b>여기가 부르는 유스케이스는 «멱등»해야 한다</b> <em>재시도가 전제다 — 같은 일을 두 번 해도 결과가 같아야 한다</em> · <b>도메인 예외는 여기서도 잡는다 — 다만 «답을 내려고»가 아니라 «재시도를 멈추려고»</b> <em>업무 규칙 위반은 <b>다시 돌려도 영원히 같다</b> — 안 잡으면 재시도가 무한히 돈다. 「멱등하니 재시도한다」가 이 갈래에는 안 걸린다</em> · <b>대량은 «청크»로 돈다 — 조건이 곧 커서다</b> <em>「어디까지 했나」를 따로 적지 않는다. <b>다시 돌려서 «남은 것»만 안 뽑히면 그건 배치 문제가 아니라 «애그리거트가 그 사실을 안 들고 있는 것»이다</b> — 진행표를 만들지 말고 애그리거트에 넣는다</em> · <b>남의 사실을 «놓쳐도» 되게 만드는 자리이기도 하다</b> <em>브로커는 배달을 보장하지 않는다 — 그 자료 없이는 일을 못 하는 쪽은 알림을 기다리지 말고 여기서 시각에 깨어나 <b>주인에게 되물어 채운다</b>. 사실 하나에 한 번 도는 것이 아니라 «기간»이 조건이다<span class='dim'> 08-10 · C4</span></em> · <b>비어 있으면 「정기 실행이 없다」</b>", "신설", "fix", pin(26)+pin(11)+pin(48)),
  row("fixed", ["v","v","l"], "&lt;job&gt;_cron_job.py", "Hex", "유스케이스 <b>하나만</b> 부른다. <em>실측 3개 · 22~44줄 · 로직 0</em>", "개명", "fix", pin(26)+pin(11)+pin(41)),
  row("fixed", ["v","l"], "event_subscription/", "Hex", "<b>넷째 입구</b> — <em>공표된 사실이 나를 깨운다</em>. 규칙: <b>남의 <code>published_event/</code> 말고는 아무 BC 도 import 하지 않는다</b>", "신설", "fix", pin(40)+pin(11)),
@@ -365,7 +366,7 @@ ROWS = [
  row("fixed", ["v","v","t"], "apps.py", "Hex", "<b><code>app_label</code> 을 «명시» 선언하는 자리</b> — <b>BC 이름이 곧 <code>label</code></b> 이고 폴더는 거기 <code>django_</code> 를 붙인 것. 유일성은 <b>BC 가 형제 폴더라서</b> 공짜다 <em>실측 16/16</em> · 단서: <b>BC 이름은 설치된 다른 앱의 label 과도 겹치면 안 된다</b>(<code>admin</code>·<code>auth</code>…) · <b><code>ready()</code> 검사 넷</b> — <b>본문은 «한 줄»: 자기 BC 의 <code>composition_root/event_wiring.py</code> 를 부른다</b> <em>여기서 «무엇을 듣나»를 적으면 위반 — 그건 입구(<code>event_router.py</code>)의 지식이다</em> · <b>그 import 가 <code>ready()</code> «밖»에 있으면 위반</b> <em>부팅 1단계에서는 모델을 못 읽는다</em> · <b>여기서 DB 를 만지면 위반</b> <em>모든 관리 명령에서 도는 자리다 — 원전 경고: “<code>manage.py test</code> would still execute some queries against your <b>production</b> database”</em> · <b>모듈 최상단 import 는 django 것뿐</b> <em>리스너를 여기서 «정의»하면 위반이다 — 그 순간 이 파일이 업무 코드를 갖는다</em> <span class='dim'>부모의 리프 규칙(django 말고 import 0)의 <b>유일한 면제</b>가 이 한 줄이다 — 폭이 «자기 BC 의 <code>composition_root</code> 하나»로 닫혀 있다. 08-10 · T50.</span>", "확정", "fix", pin(15)+pin(59)),
  row("fixed", ["v","v","t"], "models/", "Hex", "<b>파일이 아니라 패키지</b> — 애그리거트 하나가 여러 표를 쓴다 <em>실측 16/16</em> · <b><code>__init__.py</code> 가 모델을 «재수출»하지 않으면 위반</b> <em>장고는 <code>models</code> «모듈»을 import 할 뿐이라(<code>django.setup()</code> 2단계) 재수출이 없으면 <b>그 모델이 앱 레지스트리에 안 들어간다</b> — 마이그레이션도 안 잡힌다. <code>cron_job/</code> 이 <code>&lt;job&gt;</code> 을 재수출하는 것과 <b>같은 갈래</b>다</em> · <b>비어 있으면 「이 BC 는 저장할 표가 없다」</b> <em>상태를 안 가진다는 뜻이다</em>", "확정", "fix", pin(15)),
  row("fixed", ["v","v","v","l"], "&lt;entity&gt;_model.py", "Hex", "", "확정", "fix", pin(15)+pin(12)),
- row("fixed", ["v","v","t"], "migrations/", "Hex", "<b>스키마는 BC 안에 산다</b> — django 가 이름을 강제한다 · <b><code>makemigrations</code> 가 «생성한 것»만 둔다</b> <em>사람이 손으로 데이터를 채우는 파일(<code>RunPython</code>)을 넣지 않는다 — 마이그레이션은 <b>「돌았다 / 안 돌았다」 두 상태뿐</b>이라 배치 크기·부분 재실행·진행률이 <b>구조적으로 안 된다</b>. 대량 채우기는 파일이 아니라 <b>배포 절차의 한 «단계»</b>다(Expand → <b>Backfill</b> → Contract) · 덤 — <code>elidable</code> 을 안 달면 그 자리에서 squash 최적화가 끊긴다</em> · <b>비어 있으면 짝 <code>models/</code> 가 비었다는 뜻</b> <em>여기서 새로 읽을 사실은 없다</em>", "확정", "fix", pin(15)),
+ row("fixed", ["v","v","t"], "migrations/", "Hex", '<code>makemigrations</code> 생성물만 둔다. 손으로 작성한 데이터 채우기 <code>RunPython</code>·<code>RunSQL</code> 을 넣지 않는다(#593). 대량 채우기는 Expand → Backfill → Contract 배포 단계의 코드이며 트리 밖 <code>scripts/</code> 에 둔다. 도구가 생성·정리하는 파일 변경과 손편집을 구분한다.', "확정", "fix", pin(15)),
  row("fixed", ["v","v","v","l"], "&lt;migration&gt;.py", "Hex", "<b>안에 도메인 모듈을 import 하지 않는다</b> — <em>마이그레이션은 «과거의 스키마»다</em> · <b>고정 이름이 아니라 자리표시자다</b> <em>모델이 생겨야 생기고, <code>0002_…</code>·<code>0003_…</code> 로 «는다». <span class='dim'>08-09 · T52 — <code>0001_initial.py</code> 라 적혀 있었다. 고정 이름으로 읽히면 「비면 빈 파일로라도 둔다」가 걸리는데 <b>이 칸은 사람이 파일을 만들 수 없다</b>(<code>makemigrations</code> 전용).</span></em>", "확정", "fix", pin(15)),
  row("fixed", ["v","v","t"], "admin/", "Hex", "운영 화면 — <b>«리프 규칙»만 면제한다</b>. 자리와 이름은 정하고, <b>리프 import 금지와 유스케이스 금지 둘만 안 건다</b> — <em>장고가 등록과 쓰기 경로를 소유하는 축이라 규칙이 걸릴 자리가 없다</em>. <b>타 BC 금지·벤더 SDK 금지는 그대로 걸린다</b> · <b><code>__init__.py</code> 가 등록 모듈을 «재수출»하지 않으면 위반</b> <em><code>models/</code> 와 같은 갈래 — 장고 <code>autodiscover</code> 가 <code>admin</code> «모듈»만 import 하므로 재수출이 없으면 <b>어드민 화면이 조용히 안 뜬다</b></em> · <b>비어 있으면 「운영 화면이 없다」</b>", "확정", "fix", pin(21)+pin(15)),
  row("fixed", ["v","v","v","l"], "&lt;entity&gt;/", "Hex", "<b>모델 하나 = 폴더 하나</b> — <code>ModelAdmin</code> 은 정의상 모델 하나에 등록된다. <em>폴더가 «누구»를 말하니 파일은 «무엇»만 말한다</em>", "확정", "fix", pin(21)+pin(15)),
@@ -374,8 +375,8 @@ ROWS = [
  row("fixed", ["v","v","v","sp","l"], "feature/&lt;feature&gt;.py", "Hex", "운영 기능 하나 = 파일 하나 — <b>여기는 «한다»</b>. <em>안은 자유 — 유스케이스 형태를 안 지켜도 된다</em>", "확정", "fix", pin(21)),
  row("fixed", ["v","v","t"], "templates/admin/&lt;bounded_context&gt;/&lt;page&gt;.html", "Hex", "", "확정", "fix", pin(21)),
  row("fixed", ["v","v","l"], "templates/&lt;bounded_context&gt;/&lt;capability&gt;/&lt;template&gt;.html", "Clean", "<b>사람이 읽을 문구가 사는 자리</b> — <em>메일 본문 · 문자 문안 · 푸시 제목</em> · <b>이 파일을 여는 것은 어댑터뿐</b> <em>유스케이스나 도메인이 <code>render_to_string</code>·<code>gettext</code> 를 부르면 위반 — <b>AST 한 줄</b>. 전역 제약 ② 가 «자료의 모양»으로 새는 자리다</em> · <b>업무 판정이 여기 들어오면 위반</b> <em>「환불이 되나」를 <code>{% if %}</code> 로 다시 쓰면 <b>같은 규칙이 두 채널</b>이 된다(D30) — 여기 오는 것은 «이미 정해진 값»뿐이고, 갈래는 <b>보여 줄지 말지</b>까지다</em>", "신설", "fix", pin(14)+pin(30)+pin(18)+pin(21)),
- row("fixed", ["v","l"], "adapter/", "Hex", "<code>port/</code> 의 짝 — 규칙: <b>이 아래 모든 <code>.py</code> 는 «어떤 선언의 구현»이고 그 선언을 «경로»가 가리킨다</b> <em><b>파일 이름이 선언과 «같은» 것은 <code>repository/</code> 쪽뿐</b>이고, <code>&lt;capability&gt;/</code> 아래서는 <b>폴더가 선언을, 파일이 «어느 기술인가»를 말한다</b>(<code>&lt;technology&gt;_adapter.py</code>) <span class='dim'>08-10 — 옛 문장은 「파일 이름이 그 선언과 같다」였는데 <b>같은 문장 뒤 절이 「한 포트에 어댑터가 여럿」이라 스스로 모순</b>이었다(4차 리뷰 CHK-3). T48 이 뒤 절만 넣고 앞 절을 안 고쳤다.</span></em> <em>검사는 <b>«한 방향»</b>이다 — 「파일 하나 = 선언 하나」이지 <b>「선언 하나 = 파일 하나」가 아니다</b>. <b>한 포트에 어댑터가 «동시에» 여럿일 수 있다</b> — 원전이 그렇게 그린다(<em>“Given a port, there may be an adapter for <b>each desired technology</b> that we want to use.”</em>): 벤더 둘(<code>external_system/toss/</code>↔<code>stripe/</code>) · 기술 이행 중(<code>bcrypt_adapter</code>↔<code>argon2_adapter</code>) · 진짜와 가짜(<code>adapter/</code>↔<code>test/fake/</code>)가 전부 <b>지금 트리에서 이미 선다</b>. <b>양쪽을 «다» 거는 칸은 셋뿐</b>이고(<code>repository/</code>·<code>unit_of_work/</code>·<code>domain_bypass_query/</code>) 그건 <b>그 셋이 «하나여야 하는» 것들이라서</b>다 — 애그리거트당 하나, 경계당 하나, 조회당 하나 <span class='dim'>08-09 · T48 — 옛 문면은 「1:1 이 폴더 하나로 걸린다」라 <b>«양방향»으로 읽혔다</b>.</span></em> · <b>그리고 그 선언 클래스를 «상속»한다</b> <em>이름만 맞고 내용이 다른 것을 여기서 잡는다 — 경로로 선언을 유도한다</em> · <b>메서드는 «바꾸고 · 부르고 · 바꾼다» — 그 사이에 «판정»이 없다</b> <em>입구 <code>&lt;area&gt;_controller.py</code> 의 출구 대칭 · <b>근사다</b> — 이름 없는 판정(<code>if payload.amount &gt; 100_000</code>)은 못 잡아 사람이 본다</em> · <b>도메인 객체는 «만들고 읽기»만 — 도메인에게 «시키면» 위반</b> <em>유스케이스 금지(D3)를 한 칸 아래로 · <b>면제 — 자기가 «방금 만든» 것에 부르는 것은 재구성이라 통과</b>(저장된 행을 애그리거트로 되살리는 일) · 가르는 것은 「인자로 받았나, 내가 만들었나」</em> · <b>기술 실패는 «자기가 구현한 계약이 «선언한» 실패»로 바꿔 내보낸다</b> <em>날것으로 올리면 위반 — 리포지토리 계약은 도메인에 사니 도메인 예외로, 능력 포트 계약은 <code>port/</code> 에 사니 포트 예외로. <b>계약이 어디 사느냐가 답을 정한다</b></em> · <b>형제 <code>django_&lt;bounded_context&gt;/</code> 는 여기 안 들어온다</b> — <em>표·스키마·운영화면은 어댑터가 아니다</em>", "신설", "fix", pin(17)+pin(37)+pin(44)+pin(45)),
- row("fixed", ["v","sp","t"], "persistence/", "Hex", "규칙: <b>ORM 모델(<code>django_&lt;bounded_context&gt;/models/</code>)을 import 하는 것은 이 폴더 안에서만</b> <em>AST 한 줄 — 형제 셋에서 새면 위반</em>", "신설", "fix", pin(15)+pin(37)),
+ row("fixed", ["v","l"], "adapter/", "Hex", "<code>port/</code> 의 짝 — 규칙: <b>이 아래 <b>구현 역할 파일</b>은 «어떤 선언의 구현»이고 그 선언을 «경로»가 가리킨다</b> <em><b>파일 이름이 선언과 «같은» 것은 <code>repository/</code> 쪽뿐</b>이고, <code>&lt;capability&gt;/</code> 아래서는 <b>폴더가 선언을, 바깥 패키지가 «어느 기술인가»를 말한다</b>(<code>&lt;technology&gt;_adapter/</code>) <span class='dim'>08-10 — 옛 문장은 「파일 이름이 그 선언과 같다」였는데 <b>같은 문장 뒤 절이 「한 포트에 어댑터가 여럿」이라 스스로 모순</b>이었다(4차 리뷰 CHK-3). T48 이 뒤 절만 넣고 앞 절을 안 고쳤다.</span></em> <em>검사는 <b>«한 방향»</b>이다 — 「파일 하나 = 선언 하나」이지 <b>「선언 하나 = 파일 하나」가 아니다</b>. <b>한 포트에 어댑터가 «동시에» 여럿일 수 있다</b> — 원전이 그렇게 그린다(<em>“Given a port, there may be an adapter for <b>each desired technology</b> that we want to use.”</em>): 벤더 둘(<code>external_system/toss/</code>↔<code>stripe/</code>) · 기술 이행 중(<code>bcrypt_adapter</code>↔<code>argon2_adapter</code>) · 진짜와 가짜(<code>adapter/</code>↔<code>test/fake/</code>)가 전부 <b>지금 트리에서 이미 선다</b>. <b>양쪽을 «다» 거는 칸은 셋뿐</b>이고(<code>repository/</code>·<code>unit_of_work/</code>·<code>domain_bypass_query/</code>) 그건 <b>그 셋이 «하나여야 하는» 것들이라서</b>다 — 애그리거트당 하나, 경계당 하나, 조회당 하나 <span class='dim'>08-09 · T48 — 옛 문면은 「1:1 이 폴더 하나로 걸린다」라 <b>«양방향»으로 읽혔다</b>.</span></em> · <b>그리고 그 선언 클래스를 «상속»한다</b> <em>이름만 맞고 내용이 다른 것을 여기서 잡는다 — 경로로 선언을 유도한다</em> · <b>메서드는 «바꾸고 · 부르고 · 바꾼다» — 그 사이에 «판정»이 없다</b> <em>입구 <code>&lt;area&gt;_controller.py</code> 의 출구 대칭 · <b>근사다</b> — 이름 없는 판정(<code>if payload.amount &gt; 100_000</code>)은 못 잡아 사람이 본다</em> · <b>도메인 객체는 «만들고 읽기»만 — 도메인에게 «시키면» 위반</b> <em>유스케이스 금지(D3)를 한 칸 아래로 · <b>면제 — 자기가 «방금 만든» 것에 부르는 것은 재구성이라 통과</b>(저장된 행을 애그리거트로 되살리는 일) · 가르는 것은 「인자로 받았나, 내가 만들었나」</em> · <b>기술 실패는 «자기가 구현한 계약이 «선언한» 실패»로 바꿔 내보낸다</b> <em>날것으로 올리면 위반 — 리포지토리 계약은 도메인에 사니 도메인 예외로, 능력 포트 계약은 <code>port/</code> 에 사니 포트 예외로. <b>계약이 어디 사느냐가 답을 정한다</b></em> · <b>형제 <code>django_&lt;bounded_context&gt;/</code> 는 여기 안 들어온다</b> — <em>표·스키마·운영화면은 어댑터가 아니다</em>", "신설", "fix", pin(17)+pin(37)+pin(44)+pin(45)),
+ row("fixed", ["v","sp","t"], "persistence/", "Hex", 'driven 출구에서 ORM 을 아는 허용면은 <code>persistence/</code>, 자기 앱 <code>admin/</code>, 비애그리거트 쓰기 능력의 <code>adapter/&lt;capability&gt;/django_adapter/adapter/&lt;implementation&gt;_adapter.py</code> 다(#328·#462). 마지막 면제는 구현 역할 파일에만 적용된다. ACL·external_system 어댑터에는 적용하지 않는다.', "신설", "fix", pin(15)+pin(37)),
  row("fixed", ["v","sp","v","t"], "repository/", "Hex", "<b>도메인을 «거친다» — <code>domain_layer</code> 를 import 하지 않으면 위반</b> <em>AST 한 줄</em> · <b>비어 있으면 짝 <code>domain_layer/</code> 의 선언이 비었다는 뜻</b> <em>사실은 선언 쪽이 말한다</em>", "확정", "fix", pin(15)+pin(29)+pin(37)),
  row("fixed", ["v","sp","v","v","l"], "&lt;aggregate&gt;_repository.py", "Hex", "<b>선언과 파일 이름이 같다</b> — 1:1 이 이름으로 검사된다. 기술은 클래스에 <em>DjangoOrderRepository</em>. <b>선언과 접미사가 같다</b> — <em><code>Repository</code> 는 구현에도 참인 낱말이라 접두사가 가른다</em> · <b>수정하려고 꺼내는 조회는 캐시를 우회한다</b> <em>캐시된 값은 이 트랜잭션이 열리기 «전»에 만들어진 것이라 <b>D50 의 경계 밖</b>이다 — 그것으로 저장하면 남이 바꾼 것을 덮고 <code>select_for_update()</code> 의 락이 무의미해진다. <b>조회 캐시는 막지 않는다</b></em> · <b>저장하는데 애그리거트에 «안 꺼낸 사실»이 남아 있으면 위반</b> <em>「꺼내기를 잊으면 아무 일도 안 일어난다」를 <b>터지게</b> 바꾼다 — 테스트가 없는 경로에서도 잡힌다. 새 결합이 아니다: 매퍼는 애그리거트 «안»을 아는 것이 원래 일이다 <span class='dim'>08-10 · T50 — 자동 수거(저장 경계가 알아서 걷기)를 안 고른 대신 이 한 줄을 둔다.</span></em>", "확정", "fix", pin(50)+pin(15)+pin(33)+pin(59)),
  row("fixed", ["v","sp","v","t"], "domain_bypass_query/", "Hex", "<b>도메인을 «우회한다» — <code>domain_layer</code> 를 import 하면 위반</b> <em>AST 한 줄 · 옆 칸과 정확히 반대다</em> · <b>비어 있으면 짝 <code>port/domain_bypass_query/</code> 가 비었다는 뜻</b> <em>사실은 선언 쪽이 말한다</em>", "개명", "fix", pin(29)+pin(15)+pin(41)),
@@ -384,19 +385,49 @@ ROWS = [
  row("fixed", ["v","sp","v","sp","l"], "&lt;boundary&gt;_unit_of_work.py", "Hex", "<b><code>connection</code>·<code>transaction</code> 을 아는 건 여기까지</b> <em>실측 응용 2 · <code>open_host_service/</code> 1 이 넘어와 있다</em> · <b><code>after_commit</code> 구현이 <code>on_commit(..., robust=True)</code> 가 아니면 위반</b> <em>기본값이면 앞에 예약된 것 하나가 던질 때 «뒤엣것이 전부 안 돈다» — 아무도 설계한 적 없는 결합이다</em>", "확정", "fix", pin(14)+pin(4)+pin(31)+pin(49)),
  row("fixed", ["v","sp","t"], "anticorruption_layer/", "DDD", "<b>내가 남을 부를 때</b> — <code>open_host_service/</code> 의 짝 · 규칙: <b>타 BC 를 import 하는 건 여기뿐</b> · <b>비어 있으면 「내가 부르는 다른 BC 가 없다」</b>", "확정", "fix", pin(17)),
  row("fixed", ["v","sp","v","l"], "&lt;other_bounded_context&gt;/", "DDD", "<b>두 BC 가 서로의 이 자리에 들어 있으면 위반</b> — <em>폴더 목록 두 번</em> · <b>낱말이 <code>&lt;bounded_context&gt;</code> 가 아니라 <code>&lt;other_…&gt;</code> 인 것이 규칙이다</b> <em>같은 낱말이면 <b>조상(BC 루트)에서 이미 정해진 값</b>으로 읽혀 «나 자신»을 가리킨다 — <code>payment/anticorruption_layer/payment/</code>. 여기 오는 것은 «남»이라 <b>새 낱말이어야 한다</b> <span class='dim'>08-09 · T52</span></em>", "확정", "fix", pin(17)+pin(35)),
- row("fixed", ["v","sp","v","sp","l"], "&lt;capability&gt;_adapter.py", "DDD", "<b>상대 창구의 «기저 예외»를 반드시 잡는다</b> — 구체 타입을 앞에 몇 개 잡든 자유, <b>마지막에 부모가 있어야 한다</b> <em>AST 한 줄</em>", "개명", "fix", pin(36)+pin(17)+pin(41)),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'l'], '&lt;capability&gt;_adapter/', 'DDD', '<b>상대 창구의 «기저 예외»를 반드시 잡는다</b> — 구체 타입을 앞에 몇 개 잡든 자유, <b>마지막에 부모가 있어야 한다</b> <em>AST 한 줄</em> <b>고정 역할 폴더 다섯을 모두 둔다. 내용이 없어도 각 폴더와 __init__.py 는 필수다.</b> 동명 파일 승격 규칙은 적용하지 않는다.', '개명', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 't'], 'adapter/', 'DDD', '고정 역할 폴더다. 내용이 없어도 <code>__init__.py</code> 를 포함해 항상 만든다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 'v', 'l'], '&lt;implementation&gt;_adapter.py', 'DDD', '구현 클래스 하나당 파일 하나다. reader 는 구현 본문 또는 private 메서드에 둔다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 't'], 'command/', 'DDD', '고정 역할 폴더다. 내용이 없어도 <code>__init__.py</code> 를 포함해 항상 만든다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 'v', 'l'], '&lt;command&gt;.py', 'DDD', '호출 계약 클래스 하나당 파일 하나다. 여러 Protocol 도 각각 파일로 둔다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 't'], 'constant/', 'DDD', '고정 역할 폴더다. 내용이 없어도 <code>__init__.py</code> 를 포함해 항상 만든다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 'v', 'l'], '&lt;constant&gt;.py', 'DDD', '클래스를 두지 않는다. 관련 값은 한 파일에 묶고 서로 다른 묶음은 파일을 나눈다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 't'], 'contract/', 'DDD', '고정 역할 폴더다. 내용이 없어도 <code>__init__.py</code> 를 포함해 항상 만든다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 'v', 'l'], '&lt;contract&gt;.py', 'DDD', '계약 클래스 하나당 파일 하나다. 이 계약을 반환하는 builder 는 같은 파일에 둔다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 'l'], 'schema/', 'DDD', '고정 역할 폴더다. 내용이 없어도 <code>__init__.py</code> 를 포함해 항상 만든다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 'sp', 'l'], '&lt;schema&gt;.py', 'DDD', '검증 클래스 하나당 파일 하나다. 관련 타입 별칭은 해당 스키마 파일에 둔다.', '확정', 'fix'),
  row("fixed", ["v","sp","t"], "external_system/", "Hex", "<b>우리가 못 고치는 상대</b> — 계약이 저장소 밖에 있다. <b>타임아웃·재시도·서킷 브레이커의 «값»은 여기가 정한다</b> <em>몇 초·몇 번·언제 열림 — 그 상대를 아는 것이 여기뿐이라서다. 다만 <b>«기계»(재시도 루프·백오프·차단기)는 <code>framework/</code> 가 주고 «다시 부르기»는 입구가 한다</b> — 여기서 루프를 새로 짜면 위반<span class='dim'> 08-11 · C5 — 옛 문장 「여기만」이 D52 의 「기계만 framework/」와 부딪혀 재시도 기계가 살 자리가 0이었다</span></em> · <b>비어 있으면 「우리가 못 고치는 바깥 상대가 없다」</b>", "확정", "fix", pin(18)),
  row("fixed", ["v","sp","v","l"], "&lt;system&gt;/", "Hex", "벤더 하나 = 폴더 하나 — <b>«어떤 바깥에 돈과 데이터를 맡기나»가 <code>ls</code> 한 번</b>", "확정", "fix", pin(18)),
- row("fixed", ["v","sp","v","sp","l"], "&lt;capability&gt;_adapter.py", "Hex", "<b>사람이 읽을 문구를 빚는 것은 여기다</b> — <em>포트가 넘긴 자료를 문장으로 «만드는» 일이고, <b>로케일은 «값»으로 받아 <code>translation.override(...)</code> 로 감싼다</b>. 장고의 활성 언어는 «스레드»에 살아서, 커밋 뒤 콜백이나 워커에서는 <b>요청자의 언어이거나 아예 없다</b></em>", "개명", "fix", pin(18)+pin(17)+pin(14)+pin(41)),
- row("fixed", ["v","sp","l"], "&lt;capability&gt;/", "Hex", "판정 <b>3단</b> — <b>① 밖에 «상대»가 있나</b>(있으면 <code>persistence/</code>·<code>anticorruption_layer/</code>·<code>external_system/</code>) <b>② 없으면 «기술»이 필요한가</b>(아니면 도메인) <b>③ 계약에 업무 어휘가 있나</b> — <b>0이면 <code>framework/&lt;capability&gt;/</code> 다</b> — <em>업무 어휘가 0 이라는 말은 «뜻을 우리 업무가 안 정한다»는 뜻이라 <b>이 BC 것이 아니다</b>. 몇 개 BC 가 쓰는지는 안 센다 <span class='dim'>08-10 · C2 — 옛 문면은 여기에 「두 번째 BC 가 필요로 할 때」를 달고 있었다.</span></em> <em>← 옛 문면은 ③ 만 있었다(08-08 · F6)</em>", "신설", "fix", pin(17)+pin(24)+pin(37)),
- row("fixed", ["v","sp","sp","l"], "&lt;technology&gt;_adapter.py", "Hex", "<b>한 능력에 «여럿» 설 수 있다</b> — <em>bcrypt → argon2 이행처럼 둘이 함께 사는 동안에도 자리가 있다</em> · <b>검사는 부모 <code>adapter/</code> 것을 그대로 받는다</b> <em>선언 상속 · 판정 금지 · 계약이 선언한 실패로만 내보내기</em> <span class='dim'>08-09 · T48 — 개명. 까닭은 오른쪽 «이름» 줄에.</span>", "개명", "fix", pin(57)+pin(33)+pin(41)),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'l'], '&lt;capability&gt;_adapter/', 'Hex', '<b>사람이 읽을 문구를 빚는 것은 여기다</b> — <em>포트가 넘긴 자료를 문장으로 «만드는» 일이고, <b>로케일은 «값»으로 받아 <code>translation.override(...)</code> 로 감싼다</b>. 장고의 활성 언어는 «스레드»에 살아서, 커밋 뒤 콜백이나 워커에서는 <b>요청자의 언어이거나 아예 없다</b></em> <b>고정 역할 폴더 다섯을 모두 둔다. 내용이 없어도 각 폴더와 __init__.py 는 필수다.</b> 동명 파일 승격 규칙은 적용하지 않는다.', '개명', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 't'], 'adapter/', 'Hex', '고정 역할 폴더다. 내용이 없어도 <code>__init__.py</code> 를 포함해 항상 만든다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 'v', 'l'], '&lt;implementation&gt;_adapter.py', 'Hex', '구현 클래스 하나당 파일 하나다. reader 는 구현 본문 또는 private 메서드에 둔다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 't'], 'command/', 'Hex', '고정 역할 폴더다. 내용이 없어도 <code>__init__.py</code> 를 포함해 항상 만든다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 'v', 'l'], '&lt;command&gt;.py', 'Hex', '호출 계약 클래스 하나당 파일 하나다. 여러 Protocol 도 각각 파일로 둔다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 't'], 'constant/', 'Hex', '고정 역할 폴더다. 내용이 없어도 <code>__init__.py</code> 를 포함해 항상 만든다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 'v', 'l'], '&lt;constant&gt;.py', 'Hex', '클래스를 두지 않는다. 관련 값은 한 파일에 묶고 서로 다른 묶음은 파일을 나눈다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 't'], 'contract/', 'Hex', '고정 역할 폴더다. 내용이 없어도 <code>__init__.py</code> 를 포함해 항상 만든다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 'v', 'l'], '&lt;contract&gt;.py', 'Hex', '계약 클래스 하나당 파일 하나다. 이 계약을 반환하는 builder 는 같은 파일에 둔다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 'l'], 'schema/', 'Hex', '고정 역할 폴더다. 내용이 없어도 <code>__init__.py</code> 를 포함해 항상 만든다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'v', 'sp', 'sp', 'sp', 'l'], '&lt;schema&gt;.py', 'Hex', '검증 클래스 하나당 파일 하나다. 관련 타입 별칭은 해당 스키마 파일에 둔다.', '확정', 'fix'),
+ row("fixed", ["v","sp","l"], "&lt;capability&gt;/", "Hex", '상대가 BC 면 ACL, 외부 시스템이면 external_system, 애그리거트 저장·도메인 우회 조회·저장 경계면 persistence 로 간다. 나머지 업무 기술 능력은 이 칸이다. <b>비애그리거트 ORM 쓰기 능력은 <code>django_adapter/adapter/&lt;implementation&gt;_adapter.py</code> 로 여기서 구현한다</b>(#462). 업무 어휘가 없는 기술의 소유자는 framework 다.', "신설", "fix", pin(17)+pin(24)+pin(37)),
+ row('fixed', ['v', 'sp', 'sp', 'l'], '&lt;technology&gt;_adapter/', 'Hex', "<b>한 능력에 «여럿» 설 수 있다</b> — <em>bcrypt → argon2 이행처럼 둘이 함께 사는 동안에도 자리가 있다</em> · <b>검사는 부모 <code>adapter/</code> 것을 그대로 받는다</b> <em>선언 상속 · 판정 금지 · 계약이 선언한 실패로만 내보내기</em> <span class='dim'>08-09 · T48 — 개명. 까닭은 오른쪽 «이름» 줄에.</span> <b>고정 역할 폴더 다섯을 모두 둔다. 내용이 없어도 각 폴더와 __init__.py 는 필수다.</b> 동명 파일 승격 규칙은 적용하지 않는다.", '개명', 'fix'),
+ row('fixed', ['v', 'sp', 'sp', 'sp', 't'], 'adapter/', 'Hex', '고정 역할 폴더다. 내용이 없어도 <code>__init__.py</code> 를 포함해 항상 만든다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'sp', 'sp', 'v', 'l'], '&lt;implementation&gt;_adapter.py', 'Hex', '구현 클래스 하나당 파일 하나다. reader 는 구현 본문 또는 private 메서드에 둔다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'sp', 'sp', 't'], 'command/', 'Hex', '고정 역할 폴더다. 내용이 없어도 <code>__init__.py</code> 를 포함해 항상 만든다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'sp', 'sp', 'v', 'l'], '&lt;command&gt;.py', 'Hex', '호출 계약 클래스 하나당 파일 하나다. 여러 Protocol 도 각각 파일로 둔다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'sp', 'sp', 't'], 'constant/', 'Hex', '고정 역할 폴더다. 내용이 없어도 <code>__init__.py</code> 를 포함해 항상 만든다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'sp', 'sp', 'v', 'l'], '&lt;constant&gt;.py', 'Hex', '클래스를 두지 않는다. 관련 값은 한 파일에 묶고 서로 다른 묶음은 파일을 나눈다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'sp', 'sp', 't'], 'contract/', 'Hex', '고정 역할 폴더다. 내용이 없어도 <code>__init__.py</code> 를 포함해 항상 만든다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'sp', 'sp', 'v', 'l'], '&lt;contract&gt;.py', 'Hex', '계약 클래스 하나당 파일 하나다. 이 계약을 반환하는 builder 는 같은 파일에 둔다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'sp', 'sp', 'l'], 'schema/', 'Hex', '고정 역할 폴더다. 내용이 없어도 <code>__init__.py</code> 를 포함해 항상 만든다.', '확정', 'fix'),
+ row('fixed', ['v', 'sp', 'sp', 'sp', 'sp', 'l'], '&lt;schema&gt;.py', 'Hex', '검증 클래스 하나당 파일 하나다. 관련 타입 별칭은 해당 스키마 파일에 둔다.', '확정', 'fix'),
 
  row("fixed", ["l"], "test/", "고유", "<b>의미군으로 나눈다</b> — 계층이 아니라 «무엇을 켜고 도는가» · <b>자식 다섯이 «둘»로 갈린다</b> <em>앞 셋은 <b>«테스트»</b>라 안이 자유고, 뒤 둘(<code>factories/</code>·<code>fake/</code>)은 <b>«테스트가 쓰는 재료»</b>라 이름과 상속 규칙이 걸린다 <span class='dim'>08-09 · T47</span></em>", "확정", "fix", pin(56)),
  row("fixed", ["sp","t"], "unit/", "고유", "도메인·응용 — <b>DB 를 켜지 않는다</b> · <b>안은 자유 — 리프 규칙이 없다</b> <em>pytest 가 파일 이름으로 «수집»하니 이 자리는 프레임워크가 이름을 소유한다(<code>migrations/</code>·<code>apps.py</code> 와 같은 갈래) · <b>폐쇄(제1원칙 ④)가 여기 안 걸린다</b> — <code>admin/</code> 이 「리프 규칙만 면제」한 것과 같다 <span class='dim'>08-09 · T47</span></em> <em>실측: 폴더는 16/16 이 갖고 있으나 <b>안에서 <code>django_db</code> 를 쓰는 것이 24파일·11 BC</b> — 현행이 이 규칙을 어긴다(<b>4번 ⓑ</b>)</em>", "확정", "fix"),
  row("fixed", ["sp","t"], "integration/", "고유", "리포지토리·HTTP — <b>진짜 DB 를 켠다</b> · <b>폐쇄(제1원칙 ④)가 여기 안 걸린다</b> <em>파일 이름을 pytest 가 소유한다 — 형제 <code>unit/</code>·<code>e2e/</code> 와 같다</em> · <b>여기서 <code>fake/</code> 를 import 하면 위반</b> <em>가짜를 쓰면 「진짜 DB 를 켠다」가 조용히 깨진다 — <code>factories/</code> 가 <code>unit/</code> 을 지키는 것과 <b>정확히 반대 방향</b>의 같은 검사다</em> <em>실측: 폴더 16/16</em>", "확정", "fix", pin(56)),
  row("fixed", ["sp","t"], "e2e/", "고유", "엔드투엔드 흐름 · <b>폐쇄(제1원칙 ④)가 여기 안 걸린다</b> · <b>여기서도 <code>fake/</code> 를 import 하면 위반</b> <em>«여러 조각 × 진짜 기술»이 이 칸의 정의다</em> <em>실측 10/16</em>", "확정", "fix", pin(56)),
- row("fixed", ["sp","t"], "factories/", "고유", "<code>factory_boy</code> 픽스처 — <b>ORM 을 만지므로 unit 이 쓰면 안 된다</b> · <b>여기는 «재료»라 폐쇄가 걸린다 — 그런데 리프 행이 없다</b> <em><span class='dim'>08-10 · 5차 — 형제 <code>fake/</code> 는 <code>&lt;declaration&gt;.py</code> 를 받았는데 이 칸만 못 받아, 팩토리 파일을 만들면 「트리에 없는 모양」이 된다. 리프 행 신설은 사용자 결정으로 넘긴다.</span></em> <em>실측 10/16</em>", "확정", "fix"),
- row("fixed", ["sp","l"], "fake/", "고유", "<b>포트의 «가짜 구현»이 사는 자리</b> — <code>unit/</code> 이 「DB 를 켜지 않는다」를 지키려면 포트 자리에 꽂을 것이 있어야 하는데 <b>그 칸이 없었다</b> · <b><code>factories/</code> 의 형제인 까닭도 같다</b> <em>「안에 숨겨 두면 다른 의미군이 무심코 가져다 쓰고 «무엇을 켜고 도는가»가 조용히 깨진다」 — 그 문장을 <b>반대 방향으로</b> 다시 쓴 것이다</em> · <b>규칙은 <code>adapter/</code> 것을 그대로 받는다</b> — <em>어떤 «선언»의 구현이고 · 파일 이름이 그 선언과 같고(<b>여기는 «선언당 하나»라 이름이 같다 — 기술이 여럿일 수 있는 <code>adapter/</code> 쪽과 갈리는 지점이다</b>) · 그 선언 클래스를 «상속»한다. <b>상속만 하면 미구현은 런타임이 잡는다</b>(<code>ABC</code> 는 인스턴스화에서 <code>TypeError</code>) — 그래서 강제할 것은 「상속했나」 하나고, <b>경로가 그걸 유도한다</b></em> · <b>1:1 짝맞춤은 «안» 건다</b> <em>걸면 모든 포트에 페이크가 강제된다 — 검사는 <b>한 방향뿐</b>이다: 여기 있는 파일은 반드시 «선언»이 있어야 한다</em> · <b>프로덕션에서도 쓰면 페이크가 아니다</b> <em>가르는 자는 「테스트에서만 쓰나」 — 로컬 개발·기능 플래그로 켠다면 그건 <b>진짜 어댑터</b>라 <code>adapter/&lt;capability&gt;/</code> 에 산다</em> · <b>비어 있으면 짝 <code>port/</code> 가 비었다는 뜻</b> <em>사실은 선언 쪽이 말한다</em>", "신설", "fix", pin(56)+pin(44)),
+ row("fixed", ["sp","t"], "factories/", "고유", '<code>factory_boy</code> ORM 픽스처를 둔다. <b>트리가 리프로 닫은 폴더</b>라 내부 모듈은 작성자 재량이다(#490·#15). unit 테스트는 import 하지 않고 integration·e2e 가 사용한다(#388·#392).', "확정", "fix"),
+ row("fixed", ["sp","l"], "fake/", "고유", '테스트에서만 쓰는 포트 구현. 선언과 같은 파일명으로 두고 그 선언을 상속한다. <b>여기 있는 페이크에는 짝 선언이 있어야 하지만 모든 선언에 페이크를 강제하지 않는다</b>(#576·#577). 기술 IO 를 만지거나 프로덕션에서 주입하면 위반이다. 빈 폴더는 현재 필요한 페이크가 없다는 뜻이다.', "신설", "fix", pin(56)+pin(44)),
  row("fixed", ["sp","sp","l"], "&lt;declaration&gt;.py", "고유", "검사 넷 — <b>여기 있는데 짝이 될 «선언»이 없으면 위반</b> <em>한 방향뿐이다. 반대(선언이 있는데 여기 없다)는 «안» 건다</em> · <b>기술을 만지면 위반</b> <em>DB·네트워크·파일·시계가 나오면 그건 페이크가 아니라 어댑터다</em> · <b>파일 하나에 구현 하나</b> · <b><code>application/</code>·<code>framework/</code> 의 «프로덕션» 코드가 이걸 import 하면 위반</b> <em>배포에 실리는 순간 가짜가 진짜 자리에 선다</em> · <b>겹을 더 만들지 않는다</b> <em>평평하다 — 선언 쪽 겹을 따라 하면 경로만 길어진다</em>", "신설", "fix", pin(56)+pin(44)),
 
  row("own", [], "framework/", "고유", "저장소 루트 · <b>BC 밖</b> — 규칙: <b>여기서 <code>application/</code> 쪽으로 나가는 import 가 0</b> · <b>루트 패키지 이름이 파이썬 표준 라이브러리 모듈명과 겹치면 위반</b> <em>(<code>sys.stdlib_module_names</code> 한 줄)</em> · <b>여기 오는 자는 하나 — 「이 낱말의 뜻을 «누가» 정하나」</b> <em>저장소 «밖»(표준·프레임워크·OS·프로토콜)이 정하면 여기, <b>우리 업무가 정하면 BC</b> 다 — 두 BC 가 같은 규칙을 갖고 있어도 <b>각자 갖는다</b>(지금 우연히 같을 뿐 한쪽만 바뀔 수 있다)</em> · <b>「몇 개 BC 가 쓰나」는 안 묻는다</b> <em>BC 가 하나여도 그 BC 것이 아니면 «처음부터» 여기 만든다</em> <em><span class='dim'>08-10 · C2 — 옛 자는 «자격 + 계기» 둘이었고 계기가 「두 번째 BC」였다. <b>수가 소유를 검증하지 못한다</b> — 두 BC 가 같은 업무 규칙을 가져도 그건 여전히 각 BC 것이고, 시계는 BC 가 하나여도 BC 것이 아니다. 남겨 두면 「둘이 됐으니 올려도 되겠지」가 소유 판정을 건너뛴다.</span></em> · 갈래 판정 <b>4단</b> — <b>고정 이름 셋(<code>broker/</code>·<code>test/</code>·<code>pure/</code>)이면 거기서 끝 → 폴더에 <code>*_port.py</code> 가 있으면 «능력» → 라이브러리 타입 없이 문장이 안 서면 «기술» → 나머지는 <code>pure/</code></b> <em><span class='dim'>08-10 · 5차 — 1단계가 <code>test/</code> 하나뿐이라 <b><code>broker/</code> 가 어느 갈래로도 못 갔다</b>. 직속에 <code>*_port.py</code> 가 없어(한 겹 아래) «기술»로 떨어지면 「하위 폴더 금지」가 <code>internal/</code>·<code>external/</code> 를 잡고, <code>internal/</code> 을 «능력»으로 읽으면 「계약 이름 = 폴더 이름」이 <code>internal.py</code> 를 요구한다 — 어느 쪽으로도 위반이었다.</span></em> <em>← common · platform(stdlib 충돌) · foundation</em>", "신설", "fix", pin(24)+pin(38), bold=True),
@@ -423,9 +454,9 @@ ROWS = [
  row("fixed", ["sp","sp","l"], "&lt;declaration&gt;.py", "Hex", "<b>선언을 상속하지 않으면 위반</b> <em>이름만 같고 계약을 안 따르면 «가짜»가 아니라 다른 물건이다</em> · <b>짝이 1:1</b> <em>선언 폴더에 없는 이름이 여기 있으면 위반</em> · <b>기술이 없다</b> <em>DB·HTTP·파일을 만지면 위반 — 그러면 <code>&lt;capability&gt;/</code> 의 어댑터다</em>", "신설", "fix", pin(24)+pin(56)),
  row("fixed", ["sp","l"], "unit/", "고유", "<code>framework</code> <b>자신의</b> 테스트 — 뼈대와 섞지 않는다", "확정", "fix", pin(24)),
 
- row("own", [], "&lt;project&gt;/", "고유", "저장소 루트 · <b>BC 밖</b> — <em>조립만 한다</em>. 규칙: <b><code>application</code> 을 «등록» 만 하고 «타입» 으로 알지 않는다</b> <em>실측 위반 41건</em> <em>← broccoli_server</em>", "신설", "fix", pin(25), bold=True),
+ row("own", [], "&lt;project&gt;/", "고유", 'BC 밖의 프로젝트 조립 자리. BC 내부 타입은 모르고 공개 API registrar 로 등록한다. <code>health.py</code>·<code>home.py</code>·<code>asgi.py</code>·<code>wsgi.py</code> 는 표준 트리의 관할 밖이다(#436).', "신설", "fix", pin(25), bold=True),
  row("fixed", ["t"], "api.py", "고유", "<b>전역 API 객체 하나와 전역 예외 핸들러</b> — 프레임워크가 하나를 요구해서 여기다. <em>도메인 예외 목록은 여기 없다</em>", "확정", "fix", pin(25)),
- row("fixed", ["t"], "urls.py", "고유", "라우터를 <b>«등록» 만 한다</b> — <em>심볼을 쓰면 그 BC 를 아는 것이다</em>", "확정", "fix", pin(25)),
+ row("fixed", ["t"], "urls.py", "고유", '<code>api.py</code> 의 전역 API 객체에 각 BC 의 공개 <code>register_&lt;bc&gt;_api(api)</code> 를 명시적으로 한 번 등록한다. registrar import 는 허용된 조립이고 BC 내부 업무 타입 import 는 하지 않는다.', "확정", "fix", pin(25)),
  row("fixed", ["t"], "celery.py", "고유", "<code>Celery</code> 인스턴스와 <code>autodiscover_tasks(packages=…, related_name=None)</code> — <b>조립</b>. <em>경로 문자열만 쓰고 타입을 모른다</em> · <b>기본값으로는 못 닿는다</b> — <em>Django 가 넘기는 package 는 <code>AppConfig.name</code>(=<code>…driven_layer/django_&lt;bc&gt;</code>) 이라 위로 못 올라간다. <code>packages</code> 를 «콜러블»로 주되 <b>목록이 아니라 규칙</b>으로 짓는다 — <code>label</code> 로 도는 한 줄(08-07 · R10)</em>", "신설", "fix", pin(26)+pin(25)),
  row("fixed", ["l"], "settings/", "고유", "<b>Django 가 정한 자리</b> — <em>여기서 갈리는 건 환경뿐이다</em>", "확정", "fix", pin(25)),
  row("fixed", ["sp","l"], "&lt;environment&gt;.py", "고유", "", "확정", "fix", pin(25)),
@@ -466,11 +497,7 @@ PARTS = [
   <p>BC 안은 <b>네 층</b>으로만 나뉜다 — <code>driving_layer/</code>(바깥이 들어오는 입구) · <code>application_layer/</code>(흐름 조율) ·
   <code>domain_layer/</code>(업무 규칙) · <code>driven_layer/</code>(바깥으로 나가는 출구).
   여기에 <code>test/</code> 를 더하면 다섯이고, <b>네 층 어디에도 속하지 않는 것은 <code>composition_root/</code> 와 <code>published_event/</code> 둘</b>이다 — <em>앞은 조립, 뒤는 «내가 밖에 알린다고 약속한 사실»이다</em>.</p>""",
-  inn="""<p><b>네 층 폴더</b>와 <b><code>test/</code></b>, 그리고 <b><code>composition_root/</code></b>·<b><code>published_event/</code></b> — 이 일곱이 전부다.</p>
-  <p><code>composition_root/</code> 는 클린 아키텍처가 <b class="v c">Main</b>, 헥사고날이 <b class="v h">Configurator</b> 라고 부르는 자리다.
-  <em>두 이름이 같은 것을 가리킨다 — 프로그램이 뜰 때 딱 한 번 돌면서 구체 클래스를 실제로 만들어 서로 꽂아 주는 조각.</em>
-  하는 일은 그 하나뿐이다. <b class="v c">Use Case</b> 객체를 만들면서 그 안에 <b class="v d">Repository</b> 구현체와 <b class="v h">Adapter</b> 를 넣어 준다. 업무 판단은 한 줄도 없다.</p>
-  <p>그래서 <b>이 일곱 말고 다른 것이 루트에 놓였다면 층 하나가 빠졌다는 신호</b>다 — 그 파일이 들어갈 층이 없어서 밖으로 밀려난 것이다.</p>""",
+  inn='<p>직계 자식은 일곱이다 — <code>driving_layer/</code>·<code>application_layer/</code>·<code>domain_layer/</code>·<code>driven_layer/</code>, 그리고 <code>test/</code>·<code>composition_root/</code>·<code>published_event/</code>.</p><p><code>composition_root/dependency_wiring.py</code> 는 요청마다 쓰는 유스케이스의 구현을 조립한다. <code>event_wiring.py</code> 는 부팅 시 구독표를 등록한다. <code>published_event/</code> 는 다른 BC 가 읽는 공표 사실 표면이다.</p>',
   out="""<p><b>루트에 바로 놓인 설정·상수·유틸 모듈</b>(<code>constants.py</code>·<code>utils.py</code> 같은 것).
   층 밖에 있으면 네 층 어디서나 부를 수 있고, 그러면 <b class="v c">Dependency Rule</b>(의존은 항상 안쪽으로만)이 <b>검사할 수 없는 규칙</b>이 된다 —
   안쪽도 바깥쪽도 아닌 파일은 애초에 방향을 어길 수가 없기 때문이다.</p>
@@ -478,21 +505,18 @@ PARTS = [
   <p><b>기술이면</b> — 즉 장고·닌자 같은 <b>라이브러리 타입 없이는 문장 자체가 성립하지 않는 코드</b>면 — <code>application/</code> 밖의 <code>framework/&lt;technology&gt;/</code> 다.</p>
   <p><b>업무면</b> — 즉 <b>그 BC 의 도메인 어휘가 나오는 코드</b>면 — 그 값을 실제로 쓰는 <b>층 안</b>이 자리다.
   옳고 그름을 판단하는 것이면 <code>domain_layer/</code>, 순서를 엮는 것이면 <code>application_layer/</code> 로 내려간다.</p>""",
-  why="""<p><b class="v c">Main</b> 을 네 층 중 하나에 넣어 보려 했지만 <b>구조가 막는다</b> — <code>composition_root/</code> 는
-  <b>domain·application·driven 세 층을 모두 부르는데 <code>driving_layer</code> 는 한 번도 부르지 않는다</b>.
-  어느 층에 넣어도 그 층이 나머지 층을 «타입으로» 알게 되어 <b class="v c">Dependency Rule</b> 이 깨진다.</p>
-  <p>이 배치는 클린 아키텍처와 정확히 같다. Martin 은 <b class="v c">Main</b> 을 <b>가장 바깥 원의 가장 바깥</b>에 두고
-  «시스템에서 가장 더러운, 그러나 모든 것을 알아도 되는 유일한 조각»이라고 부른다.
-  층에 못 들어가는 것이 결함이 아니라 <b>정의</b>다.</p>"""),
+  why='<p>조립은 domain·application·driven 의 선언과 구현을 동시에 알아야 하므로 네 층의 업무 코드와 분리한다. DI 와 이벤트 등록은 각각 고정 결선 파일이 맡는다. 구독표 자체는 입구의 <code>event_router.py</code> 가 소유하고 wiring 은 연결만 한다.</p><p>다른 BC 의 내부로 역참조하지 않는다. 다른 BC 를 호출하는 어댑터는 ACL 에서 그 BC 의 OHS 함수·계약만 소비한다. 같은 BC 의 업무 입구를 안쪽에서 다시 부르는 역방향 호출과 구분한다.</p>'),
 
  dict(key="driving", tab="driving_layer/", sub="입구 · 헥사고날", zone="hex", rows=None,
-  goal="""<p>헥사고날의 <b class="v h">Driving Side</b>, 즉 <b>구동하는 쪽</b>이다.
+  goal="""\
+<p>헥사고날의 <b class="v h">Driving Side</b>, 즉 <b>구동하는 쪽</b>이다.
   <em>바깥 행위자 — 사람, 다른 BC, 스케줄러 — 가 우리 애플리케이션을 «불러서 움직이게 하는» 방향을 말한다.</em>
   그 행위자와 우리 사이를 번역하는 조각이 Cockburn 이 말한 <b class="v h">Primary Adapter</b> 이고, 이 폴더는 그것들만 모은 자리다.</p>
-  <p>안쪽으로는 <code>application_layer/</code> «만» 의존한다. 도메인도 인프라도 직접 만지지 않는다.</p>
+  <p>기본 의존은 <code>application_layer/&lt;area&gt;/</code> 다. 도메인 예외·값 객체, <code>build_</code> 팩토리, 남의 공표 사실, framework 의 허용된 계약·스키마는 좁은 예외다. 애그리거트·리포지토리·driven 구현·application 포트는 직접 의존하지 않는다.</p>
   <p>그래서 <b>이 폴더의 자식 목록이 곧 «나를 부르는 전송이 몇 종류인가»</b> 라는 질문의 답이 된다. 지금은 넷이다.
   <em>«행위자가 몇 종류인가»는 이 층이 아니라 그 아래에서 답한다.</em></p>""",
-  inn="""<p>자식은 넷 — <b><code>api/</code></b> HTTP 로 들어오는 것 전부 · <b><code>open_host_service/</code></b> 다른 BC 가 부르는 공개 창구 ·
+  inn="""\
+<p>자식은 넷 — <b><code>api/</code></b> HTTP 로 들어오는 것 전부 · <b><code>open_host_service/</code></b> 다른 BC 가 부르는 공개 창구 ·
   <b><code>cron_job/</code></b> 스케줄러가 부르는 정기 실행 · <b><code>event_subscription/</code></b> 남이 공표한 사실이 깨우는 자리.</p>
   <p><b>넷을 가르는 축은 «어떤 전송으로 오나» 하나다</b> — HTTP · 같은 프로세스 함수 호출 · celery · 브로커.
   <em>그래서 «주기»가 아닌 비동기 작업(응답에서 떼어내는 발송 같은)이 생겨도 <b>칸은 안 는다</b> — 부르는 것이 같은 워커라 <code>cron_job/</code> 이 그대로 받는다.</em>
@@ -500,7 +524,7 @@ PARTS = [
   갈림선은 <b>«계약을 누가 소유하나»</b> 다. <em>여기서 갈리는 것은 폴더만이 아니다 — 멱등이 필수가 되고, 실패해도 ack 로 답하고, 스키마를 우리 식으로 못 고친다.</em></p>
   <p><em><code>open_host_service</code> 는 Evans 의 <b class="v d">Open Host Service</b> 를 그대로 쓴 이름이다 —
   「우리 BC 를 쓰려는 쪽에 공개한 하나의 프로토콜」이라는 뜻이고, 다른 BC 는 이 문 말고 다른 곳으로 들어올 수 없다.</em></p>
-  <p>리프에 오는 것은 <b class="v c">Controller</b>(요청 하나를 받아 Use Case 하나로 넘기는 파일), HTTP 로 오가는 스키마(<code>schema_in/</code>·<code>schema_out/</code>),
+  <p>리프에 오는 것은 <b class="v c">Controller</b>(요청 하나를 받아 Use Case 하나로 넘기는 파일), HTTP 로 오가는 스키마(<code>schema_in.py</code>·<code>schema_out.py</code>),
   다른 BC 에게 내보이는 계약 — Evans 가 <b class="v d">Published Language</b> 라 부른 것 —,
   오류를 HTTP 언어로 옮기는 <code>bc_error_schema.py</code>, 그리고 라우터에 자기를 꽂는 <code>api_router.py</code> 다.</p>""",
   out="""<p><b>업무 규칙.</b> 컨트롤러는 클린의 <b class="v c">Humble Object</b> 짝에서 <b>«테스트 가능한 쪽»</b>이다 —
@@ -519,18 +543,7 @@ PARTS = [
   쓰는 것은 <b>타입뿐</b>이다 — <code>except</code> 로 갈래를 가르고 <code>bc_error_schema.py</code> 의 코드로 바꿔 내보낸다.
   <em>예외 객체에서 값을 꺼내 응답에 실으면 바깥 JSON 이 도메인 예외의 구조에 묶여, 그 예외가 바뀔 때마다 API 가 흔들린다 —
   애그리거트를 <code>schema_out</code> 에 못 싣게 한 것과 같은 이유다.</em></p>""",
-  why="""<p>이름을 <code>presentation_layer</code> 에서 바꾼 데는 두 가지 이유가 있다.
-  형제 셋이 모두 <code>*_layer</code> 라는 방향 이름인데 혼자 «화면»이라는 종류 이름이었고,
-  더 중요하게는 <b class="v d">Presentation Layer</b> 가 Evans 의 <b class="v d">Layered Architecture</b> 어휘라
-  <b>이 칸에 배정된 계보(헥사고날)와 어긋나 있었다</b>.</p>
-  <p><b>1차 축이 <code>&lt;area&gt;/</code></b> 인 것은 안쪽의 <code>application_layer/&lt;area&gt;/</code> 와 <b>1:1 로 맞추기 위해서</b>다.
-  같은 축으로 갈라야 바깥 파일과 안쪽 파일의 짝이 눈으로 보인다.
-  기술 이름(<code>ninja/</code>)은 <b>축이 되지 못했다</b> — <b>값이 하나뿐이라 고를 것이 없다</b>.
-  <span class="dim">08-09 · T51 — 옛 문장은 여기에 <em>「빈 한 겹만 생긴다」</em> 를 근거로 붙였는데, <b>제1원칙이 「비어도 둔다」로 정해져 그 근거는 이제 못 쓴다</b>. 결론은 앞 절이 지탱한다 — <b>고를 값이 없는 것은 축이 아니다</b>.</span>
-  그래서 기술은 폴더가 아니라 클래스 이름의 접두사로 내려갔다.</p>
-  <p><code>bc_error_schema.py</code> 가 area 밑이 아니라 <b>BC 당 한 파일</b>인 것은 <b>같은 규칙이 여러 번 복제되기 때문</b>이고, 그 크기를 실측이 말한다 —
-  <b>401 하나가 컨트롤러 보유 area 23개 전부</b>에 걸려 있어 area 밑에 두면 같은 규칙이 <b>스물세 번</b> 복제된다.
-  반대로 컨트롤러가 쓰는 스키마 <b>70클래스</b>는 area 사이 <b>공유가 0건</b>이라 area 밑이 맞았다.</p>"""),
+  why='<p>업무 영역 <code>&lt;area&gt;/</code> 는 안쪽 application 영역과 대응한다. 기술은 controller 클래스의 접두로, 상대가 계약을 소유하는 웹훅은 <code>webhook/&lt;provider&gt;/</code> 로 구분한다.</p><p>요청·성공 응답 Schema 는 area 또는 provider 아래에 두고, BC 의 오류 언어는 <code>api/bc_error_schema.py</code> 하나로 모은다. framework 오류는 공통 경로가 소유한다. 오류 shape·status·등록은 승인된 API profile 을 따른다.</p>'),
 
  dict(key="application", tab="application_layer/", sub="조율 · 클린", zone="clean", rows=None,
   goal="""<p>클린 아키텍처의 <b class="v c">Use Cases</b> 링이자 Evans 의 <b class="v d">Application Layer</b> 다.
@@ -540,14 +553,15 @@ PARTS = [
   <p>폴더 이름만 훑어도 이 시스템이 해 주는 일이 읽혀야 한다 — Martin 이 <b class="v c">Screaming Architecture</b> 라고 부른 성질이다.</p>
   <p>헥사고날로 보면 여기부터가 <b class="v h">inside</b>, 즉 육각형 안쪽이라 <b>django 를 모른다</b>.
   트랜잭션도, 지금이 몇 시인지도, DB 예외도 직접 만지지 않고 전부 <b class="v h">Port</b> 를 거친다.</p>""",
-  inn="""<p>자식 폴더는 <b>둘</b>뿐이다 — <b>업무 흐름</b>(<code>&lt;area&gt;/</code>)과 <b>바깥에 기대는 것 전부</b>(<code>port/</code>).
+  inn="""\
+<p>자식 폴더는 <b>둘</b>뿐이다 — <b>업무 흐름</b>(<code>&lt;area&gt;/</code>)과 <b>바깥에 기대는 것 전부</b>(<code>port/</code>).
   <em><code>port/</code> 아래가 다시 셋으로 갈린다 — 바깥에 시키는 것 · 도메인을 우회하는 조회 · 내 저장을 묶는 것. 셋은 축이 겹치지 않는다.</em></p>
   <p><b><code>&lt;area&gt;/&lt;use_case&gt;/</code></b> — 폴더 하나가 «시스템이 해 주는 일» 하나다.
   안에는 절차를 담은 <b class="v c">Interactor</b> 하나와 그 입출력인 <b class="v c">Input Data</b>·<b class="v c">Output Data</b>(<code>command</code>·<code>result</code>)가 산다.
-  <em>절차가 길어 쪼갠 모듈도 이 폴더 안에 두고, 두 유스케이스가 같이 쓰기 시작하면 그때 <code>&lt;area&gt;/</code> 로 올린다.</em></p>
+  <em>사설 조각은 진입점 안의 <code>_</code> 함수로 둔다. 다른 유스케이스의 모듈을 공유하거나 <code>&lt;area&gt;/</code> 에 공통 모듈을 올리지 않는다. 진입점의 동명 폴더 승격은 감사자가 소관·응집을 판정한 경우에만 집행한다.</em></p>
   <p><b>BC 를 가로지르는 단계는 물음 «둘»로 자리가 정해진다</b> — 앞은 <b>누가 순서를 지나</b>, 뒤는 <b>언제 도나</b>이고 <b>둘은 별개 축</b>이다.</p>
   <div class="pre-wrap"><pre><code>① 이 단계가 실패하면 «내가» 할 일이 있나?
-     있다  →  유스케이스가 «지시»로 직접 부른다      application_layer/&lt;use_case&gt;/
+     있다  →  유스케이스가 «지시»로 직접 부른다      application_layer/&lt;area&gt;/&lt;use_case&gt;/
      없다  →  브로커로 «사실»을 공표하고 잊는다      framework/broker/
 
 ② 응답을 기다리게 해도 되나?
@@ -590,7 +604,7 @@ PARTS = [
   이름은 「조회냐」로 물어서 <b>애그리거트 리포지토리와 안 갈렸다</b>(그쪽도 <code>find_by_id</code>·<code>count</code> 를 한다).</span></p>
   <p><b><code>port/unit_of_work/</code></b> — <b>커밋 지점을 유스케이스 «안»에 표시</b>하는 자리다.
   <em>형제와 갈리는 질문은 하나다 — 바깥에 «업무를 시키나», 아니면 내 저장들을 «묶나».</em>
-  <code>commit()</code> 에는 업무 낱말이 하나도 없어서 이건 <b>대화가 아니라 대화들을 묶는 괄호</b>다 — 그래서 대화 계약(<code>&lt;capability&gt;/</code>)과 형제로 갈리고, «바깥에 있어야 하는 것의 선언»이라는 성질은 같아 <code>port/</code> 아래 산다.
+  <code>__enter__</code>·<code>__exit__</code>·<code>after_commit</code> 에는 업무 낱말이 하나도 없어서 이건 <b>대화가 아니라 대화들을 묶는 괄호</b>다 — 그래서 대화 계약(<code>&lt;capability&gt;/</code>)과 형제로 갈리고, «바깥에 있어야 하는 것의 선언»이라는 성질은 같아 <code>port/</code> 아래 산다.
   저장 경계 하나가 파일 하나이고 <b>개수를 못 박지 않는다</b> — 원자성이 갈린 저장소가 둘이면 경계도 둘인데, 그건 드러나는 편이 낫다.</p>""",
   out="""<p><b>자식 폴더가 둘로 못 박혀 있어</b> 종류 이름을 단 폴더(<code>application_contract/</code>·<code>validation/</code> 같은 것)는 자리가 없다.
   형제가 전부 업무 이름인데 하나만 종류 이름이면 <b>한 폴더 안에 축이 둘</b>이 되고, 그러면 「이건 어디 넣지」가 매번 갈린다.</p>
@@ -676,20 +690,21 @@ PARTS = [
   <p>헷갈리기 쉬운 지점이 하나 있다 — <b>실행은 바깥에서 일어나지만 «아는» 방향은 안쪽</b>이다.
   어댑터가 응용 층의 포트를 구현하는 것이지 응용 층이 어댑터를 아는 것이 아니다(<b class="v c">Dependency Inversion</b>).
   그래서 「application 이 infra 를 의존한다」는 문장 자체가 이 트리에서는 성립하지 않는다.</p>""",
-  inn="""<p><b><code>django_&lt;bounded_context&gt;/</code></b> — 클린의 <b class="v c">Frameworks &amp; Drivers</b>, 즉 프레임워크 그 자체가 사는 가장 바깥이다.
+  inn="""\
+<p><b><code>django_&lt;bounded_context&gt;/</code></b> — 클린의 <b class="v c">Frameworks &amp; Drivers</b>, 즉 프레임워크 그 자체가 사는 가장 바깥이다.
   ORM 모델·마이그레이션·어드민이 여기 있고, <b>django 말고는 아무것도 import 하지 않는 의존 그래프의 리프</b>다.</p>
   <p><em>리프 규칙에서 <b><code>admin/</code> 만 빠진다</b> — 다만 «전부 규정하지 않는다»가 아니라 <b>리프 import 금지와 유스케이스 금지 둘만</b> 안 건다.
   장고가 등록과 쓰기 경로를 소유해서 그 축에는 우리 규칙이 걸릴 자리가 없기 때문이다(<code>AdminSite.register</code> 가 «Model 클래스»를 받고 <code>save_model→obj.save()</code> 를 프레임워크가 수행한다).
   <b>타 BC 금지와 벤더 SDK 금지는 어드민에도 그대로 걸린다.</b></em></p>
   <p><b><code>adapter/</code></b> — 클린의 <b class="v c">Interface Adapters</b> 이자 <code>port/</code> 의 짝.
-  <b>여기 사는 모든 파일은 «어떤 선언의 구현»</b>이고, 그 선언을 <b>경로가 가리킨다</b> — 그래서 1:1 검사가 폴더 하나로 걸린다.
+  <b>여기 사는 모든 파일은 «어떤 선언의 구현»</b>이고, 그 선언을 <b>경로가 가리킨다</b> — 각 구현에는 짝 선언이 있어야 한다. 양방향 1:1 은 repository·domain_bypass_query·unit_of_work 에만 적용한다.
   <em>이름이 선언과 «같은» 것은 <code>repository/</code> 쪽이고, <code>&lt;capability&gt;/</code> 아래는 <b>폴더가 선언을 · 파일이 기술을</b> 말한다(<code>&lt;technology&gt;_adapter.py</code>) — 한 포트에 어댑터가 «동시에» 여럿일 수 있기 때문이다.</em>
   <em>형제 <code>django_&lt;bounded_context&gt;/</code> 가 이 폴더 «밖»인 것은 그것이 어댑터가 아니기 때문이다 — 표 정의·마이그레이션·운영 화면이고, 지키는 약속이 없다.</em></p>
-  <p><b><code>adapter/persistence/</code></b> — <b>우리 DB 를 만지는 것 전부</b>(<code>repository/</code> · <code>domain_bypass_query/</code> · <code>unit_of_work/</code>).
-  이 겹이 정당한 까닭은 셋에 <b>공통 규칙이 하나</b> 있어서다 — <b>ORM 모델을 import 할 수 있는 것은 이 폴더 안뿐</b>이다.
+  <p><b><code>adapter/persistence/</code></b> — <b>우리 DB 의 저장·조회·경계 어댑터</b>(<code>repository/</code> · <code>domain_bypass_query/</code> · <code>unit_of_work/</code>).
+  이 겹이 정당한 까닭은 셋에 <b>공통 규칙이 하나</b> 있어서다 — <b>애그리거트 저장·도메인 우회 조회·저장 경계의 ORM 접근</b>을 모은다. 별도로 자기 앱의 admin 과 비애그리거트 쓰기 능력의 <code>adapter/&lt;capability&gt;/django_adapter/adapter/&lt;implementation&gt;_adapter.py</code> 에 ORM 접근을 허용한다.
   <em>이름은 Vernon 의 것이다(IDDD 의 실제 경로가 <code>port/adapter/persistence/</code>).</em>
   <br>안의 둘은 <b>앎이 정확히 반대</b>다 — <code>repository/</code> 는 도메인을 <b>반드시 import 하고</b>, <code>domain_bypass_query/</code> 는 <b>절대 못 한다</b>. 검사 한 줄씩이다.</p>
-  <p><b><code>adapter/anticorruption_layer/&lt;bounded_context&gt;/</code></b> — Evans 의 <b class="v d">Anticorruption Layer</b>(부패 방지 층).
+  <p><b><code>adapter/anticorruption_layer/&lt;other_bounded_context&gt;/</code></b> — Evans 의 <b class="v d">Anticorruption Layer</b>(부패 방지 층).
   <em>다른 BC 의 말을 우리 말로 옮겨, 남의 모델이 우리 모델을 물들이지 못하게 막는 자리다.</em></p>
   <p><b><code>adapter/external_system/&lt;system&gt;/</code></b> — 네트워크 너머 남의 시스템(결제사·LLM·푸시).</p>
   <p><b><code>adapter/&lt;capability&gt;/</code></b> — <b>밖에 «상대»는 없는데 «기술»이 필요한 일</b>(주문서 PDF·QR·정산 엑셀·썸네일).
@@ -731,25 +746,11 @@ PARTS = [
   「이걸 돌리면 몇 초 걸리나」를 하나도 알려 주지 못한다 — 한 폴더 안에 0.001초짜리와 3초짜리가 섞인다.</em></p>
   <p>그래서 기준을 하나로 바꿨다. <b>폴더 이름만 보고 이 테스트가 DB 를 켜는지 알 수 있어야 한다.</b>
   실무에서 속도와 신뢰를 가르는 것은 그 한 가지이고, 이 기준은 파일을 열지 않고도 검사된다.</p>""",
-  inn="""<p><b><code>unit/</code></b> — 도메인과 응용을 검사한다. <b>DB 를 켜지 않는다.</b>
-  포트 자리에는 페이크 구현을 꽂고 애그리거트의 불변식과 유스케이스의 절차만 본다.</p>
-  <p><b><code>integration/</code></b> — 리포지토리와 HTTP 를 검사한다. <b>진짜 DB 를 켠다.</b>
-  「번역기가 ORM 로우를 애그리거트로 제대로 되돌리는가」, 「컨트롤러를 붙였을 때 실제로 그 응답이 나오는가」처럼
-  <b>조각 하나가 진짜 기술과 만나는 지점</b>을 본다.</p>
-  <p><b><code>e2e/</code></b> — 입구에서 출구까지 한 흐름을 통째로 지나간다.
-  <code>integration/</code> 이 «조각 하나 × 진짜 기술»이라면 여기는 «여러 조각 × 진짜 기술»이라, 느린 대신 수가 적어야 한다.</p>
-  <p><b><code>factories/</code></b> — <code>factory_boy</code> 로 만든 테스트 데이터 픽스처. 위 셋이 갖다 쓰는 재료다.</p>""",
+  inn='<p><b>unit/</b> — 도메인·응용을 DB 없이 검증한다. 필요한 가짜 구현은 <code>fake/</code> 에 둔다.</p><p><b>integration/</b> — 리포지토리·HTTP 등 실제 기술과의 경계를 진짜 DB 로 검증한다. <b>e2e/</b> — 입구를 거쳐 전체 흐름을 검증한다. 두 칸은 fake 를 import 하지 않는다.</p><p><b>factories/</b> — integration·e2e 가 쓰는 ORM 픽스처다. unit 은 사용하지 않는다. <b>fake/</b> — 자기 BC 의 선언을 상속한 테스트 전용 구현이다. 모든 선언에 가짜를 만들 필요는 없다.</p>',
   out="""<p><b>BC 것이 아닌 테스트 재료.</b> 여기는 <b>이 BC 의 테스트만</b> 사는 곳이다.
   가르는 물음은 하나다 — <b>이 재료의 뜻을 정하는 것이 «밖»(HTTP·pytest·시간)인가, «우리 업무»인가.</b>
   <em>밖이면 <code>framework/test/</code> 이고, BC 가 하나뿐일 때도 그렇다. 우리 업무가 정하면 — 「로그인이 되는가」 같은 것 — 여기다.</em></p>""",
-  why="""<p>실측이 그대로 확인해 주었다 — <code>unit/</code> 과 <code>integration/</code> 은 <b>16개 BC 중 16</b>,
-  <code>e2e/</code> 와 <code>factories/</code> 는 16개 중 10 에 이미 있었다.
-  <b>새로 정한 것이 아니라 이미 이렇게 나뉘어 있던 것을 이름으로 확정했다.</b></p>
-  <p><b>지금 이 규칙은 지켜지지 않고 있다</b> — <code>test/unit/</code> 아래에서 <code>django_db</code> 를 쓰는 것이 <b>24파일 · 11개 BC</b> 다(<b>4번 ⓑ</b> 의 고칠 목록).
-  <span class="dim">08-07 · 3차 리뷰 정정 — 트리에 붙어 있던 「실측 16/16」은 <b>«16개 BC 가 이 폴더를 갖고 있다»는 폴더 census</b> 였는데 「전부 지킨다」로 읽혔다.</span></p>
-  <p><code>factories/</code> 가 <code>integration/</code> 안이 아니라 형제로 올라온 것은 <b>ORM 을 만지기 때문</b>이다.
-  안에 숨겨 두면 <code>unit/</code> 이 무심코 가져다 쓰고, 그 순간 «unit 은 DB 를 켜지 않는다»가 조용히 깨진다.
-  형제로 올려 두면 누가 쓰는지가 import 줄에 그대로 드러난다.</p>"""),
+  why='<p>테스트 세 칸은 무엇을 켜고 검증하는지로 나누고, 재료 두 칸은 import 규칙으로 용도를 지킨다. factories 를 integration 안에 숨기지 않고 형제로 두어 unit 의 ORM 의존이 드러나게 한다.</p><p>factories 는 트리가 리프로 닫은 폴더라 내부 모듈은 자유롭게 배치하되 factory_boy 자료라는 내용 규칙을 지킨다. fake 는 트리에 있는 <code>&lt;declaration&gt;.py</code> 의 이름·상속·기술 금지 규칙을 따른다.</p>'),
 
  dict(key="framework", tab="framework/", sub="BC 밖 · 프레임워크", zone="own", rows=None,
   goal="""<p><b>프레임워크에 붙어 있는 우리 코드</b>가 사는 자리다. 저장소 안이지만 어느 BC 에도 속하지 않는다.
@@ -768,7 +769,8 @@ PARTS = [
   여기서 업무를 알기 시작하면 그건 더 이상 이 칸의 것이 아니다.
   <span class="dim">08-07 · 3차 리뷰 — 옛 문장은 「규칙은 <b>실측 숫자 하나로 굳는다</b> … 실측 0건이고 <b>그 0 을 그대로 규칙으로 삼는다</b>」였다.
   <button type="button" class="pin d" data-k="d34" data-go="d34">D34</button> 근거②를 강등시킨 논법과 <b>문장 형태가 같아</b> 근거를 정의 쪽으로 옮겼다 — <b>답은 같다</b>(실측도 0건으로 재현된다).</span></p>""",
-  inn="""<p><b><code>&lt;capability&gt;/</code></b> — <b>어느 BC 의 것도 아닌 기술 능력</b>. 시계 · 난수 같은 것이고, 안에 <b>계약(<code>&lt;capability&gt;_port.py</code>)과 구현(<code>&lt;technology&gt;_adapter.py</code>)이 함께</b> 산다.
+  inn="""\
+<p><b><code>&lt;capability&gt;/</code></b> — <b>어느 BC 의 것도 아닌 기술 능력</b>. 시계 · 난수 같은 것이고, 안에 <b>계약(<code>&lt;capability&gt;_port.py</code>)과 구현(<code>&lt;technology&gt;_adapter.py</code>)이 함께</b> 산다.
   <em>계약이 여기 있어야 구현도 여기 올 수 있다 — 계약을 BC 에 두고 구현만 올리면 «<code>framework/</code> → <code>application</code> 0건»이 첫 줄에서 깨진다.</em>
   그리고 <b>실패 선언(<code>exception.py</code>)이 계약 옆에 함께</b> 온다 — <em>어댑터가 번역해서 던질 대상이 없으면 django·SDK 예외가 유스케이스로 새어 전역 제약 ②가 여기서 깨진다.</em>
   <code>application_layer/port/&lt;capability&gt;/</code> 와 <b>같은 이유 · 같은 모양</b>이다.
@@ -776,14 +778,13 @@ PARTS = [
   <code>OtpCodeGenerator</code> 는 속이 <code>secrets</code> 뿐인데도 «OTP» 때문에 못 들어온다. <em>실측 후보 16 중 2 — 문이 좁다는 확인이다.</em></p>
   <p><b>둘을 가르는 자는 접미사 하나다 — <code>_port</code> 면 계약, <code>_adapter</code> 면 구현.</b>
   <code>clock/clock_port.py</code> 가 계약이고 <code>clock/django_adapter.py</code> 가 구현이다.
-  <em>같은 자가 «폴더 갈래»의 첫 단도 정한다 — 폴더 안에 <code>*_port.py</code> 가 있으면 <code>&lt;capability&gt;/</code> 다.
+  <em>고정 갈래 <code>broker/</code>·<code>test/</code>·<code>pure/</code> 를 먼저 제외한 뒤 능력을 판정한다 — 폴더 안에 <code>*_port.py</code> 가 있으면 <code>&lt;capability&gt;/</code> 다.
   그래서 <code>&lt;technology&gt;/</code> 안에는 <code>*_port.py</code> 를 두지 않는다.</em>
   <b>사람이 「이건 계약인가 구현인가」를 잴 필요가 없다.</b></p>
   <p><b><code>&lt;technology&gt;/&lt;module&gt;.py</code></b> — <b>그 라이브러리의 타입 없이는 문장 자체가 성립하지 않는 코드</b>.
   닌자가 이해하는 인증 클래스, 닌자가 이해하는 오류 응답 형식, 장고가 던진 예외가 재시도해도 되는 것인지 가려내는 판별 같은 것들이다.
   <b>어느 BC 에 놓아도 똑같이 동작하고, BC 를 다 지워도 그대로 남는다</b>는 점이 공통이다.
-  지금 여기 있는 것은 <code>ninja/{authentication, framework_error_schema, framework_validation_error_schema}</code> 과
-  <code>django/retryable_database_error</code> 다. <em>부르는 쪽 56건.</em></p>
+  예를 들면 Ninja 인증·framework 오류 봉투, Django 기술 오류 판별이 온다. 공통 오류 모듈과 shape 는 승인된 API profile 이 정한다.</p>
   <p><b><code>pure/&lt;module&gt;.py</code></b> — <b>계약도 기술도 없이 «그냥 계산»인 것</b>. 금액 반올림 · 슬러그화 같은 것이다.
   <b>포트를 달지 않는다</b> — 갈아끼울 상대도, 테스트에서 고정할 것도 없기 때문이다.
   <em>시계·난수는 여기가 아니다. 같은 인자로 두 번 불러 답이 달라지므로 «2차 행위자»이고, 그래서 <code>&lt;capability&gt;/</code> 로 간다.</em></p>
@@ -796,7 +797,8 @@ PARTS = [
   뼈대 자신을 검사하는 테스트는 <code>framework/test/unit/</code> 에 따로 둔다.</p>""",
   out="""<p><b>업무 어휘.</b> 판정은 파일을 열어 보면 끝난다 — <b>안에 BC 이름이 나오면 그건 규칙이 아니라 목록</b>이다.</p>
   <p>한 문장으로 세우면 이렇다 — <em>「BC 하나를 지웠을 때 이 파일이 바뀌나?」 바뀐다면 여기 있을 것이 아니다.</em></p>""",
-  why="""<p>이름을 <code>common</code> 에서 바꾼 이유는 <code>common</code> 이 <b>«공통이면 무엇이든»</b> 을 뜻해서
+  why="""\
+<p>이름을 <code>common</code> 에서 바꾼 이유는 <code>common</code> 이 <b>«공통이면 무엇이든»</b> 을 뜻해서
   무엇을 넣고 무엇을 빼는지 <b>판정이 서지 않기</b> 때문이다. 말이 아니라 실측이다 —
   그 이름이 실제로 업무 파일 둘을 빨아들였다(<code>enum/child_report_topic.py</code> · <code>broccoli/notification_navigation.py</code>).
   <code>support</code>·<code>util</code>·<code>shared</code> 도 같은 병이라 후보에서 뺐다.</p>
@@ -809,16 +811,12 @@ PARTS = [
   <p>다만 <b>형제들의 축이 서로 다르다</b> — <code>&lt;technology&gt;/</code> 는 «기술»이 1차이고 <code>&lt;capability&gt;/</code> 는 «능력»이 1차이며 <code>pure/</code>·<code>test/</code> 는 고정 이름이다.
   <em>이건 <code>driven_layer/</code> 가 이미 하고 있는 것과 같은 모양이다</em> — 거기도 형제 넷의 이름 축이 하나가 아니고,
   <button type="button" class="pin d" data-k="d17" data-go="d17">D17</button> 이 그 사실을 «판단이지 도출이 아니다」로 기록해 뒀다.
-  갈리는 것은 <b>계약이 있느냐</b>다 — 있으면 능력, 없으면 기술이나 순수 계산이다.</p>
+  고정 갈래 <code>broker/</code>·<code>test/</code>·<code>pure/</code> 를 먼저 가르고, 나머지를 계약 유무와 라이브러리 타입 의존 여부로 판정한다.</p>
   <p><code>pure/</code> 라는 이름을 고른 자도 같다 — <b>이름이 곧 판정 물음이 된다</b>(「이 파일이 순수한가?」).
   <code>util</code>·<code>support</code>·<code>shared</code> 는 여기서도 탈락이다 — <b>「공통이냐」는 정도로 재는 말이라 아무도 «아니오»라고 답할 수 없다</b>.</p>"""),
 
  dict(key="project", tab="&lt;project&gt;/", sub="조립", zone="own", rows=None,
-  goal="""<p><b>프레임워크가 «전역에 딱 하나»를 요구하는 것만</b> 조립한다.
-  BC 안의 <b class="v c">Main</b>(<code>composition_root/dependency_wiring.py</code>)이 자기 BC 를 조립한다면, 여기는 그 BC 들을 하나의 장고 프로젝트로 얹는 자리다.</p>
-  <p>지켜야 할 선은 하나다 — <code>application/</code> 의 BC 들을 <b>«등록»만 하고 «타입»으로 알지 않는다</b>.
-  문자열로 앱 경로를 적는 것은 등록이고, BC 안의 클래스나 함수를 import 해서 쓰는 순간 프로젝트가 그 BC 를 아는 것이 된다.
-  <em>실측 위반 41건.</em></p>""",
+  goal='<p>프레임워크가 전역에 요구하는 API 객체·URLconf·Celery 앱·환경 설정을 조립한다. 각 BC 내부의 구현 조립은 그 BC 의 <code>composition_root/</code> 가 맡는다.</p><p>프로젝트는 공개 API registrar 를 통해 BC 를 등록한다. BC 내부 업무 타입·도메인 예외 목록을 import 해 처리하지 않는다. 앱 경로 문자열과 공개 registrar 는 등록 표면이다.</p>',
   inn="""<p><code>api.py</code> 전역 API 객체와 전역 예외 핸들러 · <code>urls.py</code> 라우터 등록 ·
   <code>celery.py</code> 인스턴스와 <code>autodiscover_tasks</code> ·
   <code>settings/&lt;environment&gt;.py</code>(<code>base</code> · <code>local</code> · <code>production</code> · <code>test</code>).</p>
@@ -826,11 +824,7 @@ PARTS = [
   out="""<p><b>도메인 예외 목록.</b> 전역 예외 핸들러에 각 BC 의 예외를 나열하기 시작하면
   <b>BC 가 하나 늘 때마다 이 파일이 바뀐다</b> — 위의 «타입으로 알지 않는다»가 바로 여기서 깨진다.</p>
   <p>오류를 HTTP 언어로 옮기는 일은 각 BC 의 <code>driving_layer/api/bc_error_schema.py</code> 가 갖는다.</p>""",
-  why="""<p>«전역에 하나»라는 기준 하나로 목록이 닫힌다 — API 객체 · URLconf · Celery 앱 · 설정.
-  그 밖의 조립은 전부 BC 안 <b class="v c">Main</b> 의 몫이고, 그래서 이 폴더는 BC 가 늘어도 커지지 않는다.</p>
-  <p><code>api_router.py</code> 가 「BC 가 전역 API 를 가져다 쓴다」가 아니라
-  <b>「전달받은 API 객체에 자기를 꽂는다」</b>(<code>def register_&lt;bc&gt;_api(api)</code>) 모양인 것도 같은 방향을 지키려는 것이다.
-  BC 가 프로젝트를 import 하지 않게 되면 <b>«BC 는 프로젝트를 모른다»에 붙어 있던 예외 조항이 아예 필요 없어진다</b>.</p>"""),
+  why='<p>전역 객체는 프로젝트, BC 구현 조립은 BC 루트, 업무 처리는 네 층이 나눠 소유한다. BC 는 전달받은 API 객체에 자신을 꽂으므로 프로젝트를 import 하지 않는다.</p><p>등록할 BC 가 늘거나 줄면 명시적 registrar 호출은 함께 바뀐다. 등록의 변화가 업무 규칙·오류 목록을 프로젝트에 옮길 근거는 아니다. 트리에 그리지 않은 <code>asgi.py</code>·<code>wsgi.py</code> 등의 프레임워크 진입점은 관할 밖이다.</p>'),
 ]
 
 _PROWS = {"root": _root, "driving": _blk["driving_layer/"], "application": _blk["application_layer/"],
@@ -853,18 +847,13 @@ D40 이 결선을 둘로 만들며 폴더가 됐고 <code>published_event/</code
 아래 패널이 <em>「네 층 어디에도 속하지 않는 것은 <code>composition_root/</code> 와 <code>published_event/</code> 둘」</em> 이라 적고 있어 <b>같은 화면 안에서 어긋나 있었다</b>.</span>""",
 
 
-2: """<b>이 BC 를 조립하는 자리.</b> 유스케이스 객체를 만들면서 그 안에 리포지토리 구현체 · 어댑터 · <code>UnitOfWork</code> 를 넣어 주고,
-구독표를 브로커에 꽂는다.
-<br>오는 것은 <b>«만들기»와 «꽂기» 둘뿐</b>이다 — 조건문이 업무를 가르거나 값을 계산하기 시작하면 그 코드는 유스케이스로 내려가야 한다.
-<br><b>결선 하나가 파일 하나</b>다. 폴더로 두는 것은 «여럿 가능»이라는 뜻이 아니라, <b>결선의 종류가 이미 둘이기 때문</b>이다 —
-«단일 지점»이라는 성질은 파일이 아니라 <b>이 폴더</b>가 진다.""",
+2: '<p>BC 의 조립 자리다. <code>dependency_wiring.py</code> 는 포트에 구현을 꽂고, <code>event_wiring.py</code> 는 <code>event_router.py</code> 의 구독표를 브로커에 연결한다. 업무 절차·판정은 이 폴더에 두지 않는다.</p><p>결선 파일은 이 둘로 닫혀 있다. 파일이 커졌다는 이유로 셋째 wiring 파일이나 하위 폴더를 만들지 않는다.</p>',
 
 # ── driving_layer ───────────────────────────────────────────────────
 
 
 # ── driving_layer ───────────────────────────────────────────────────
-3: """<b>구체 클래스를 만들어 서로 꽂아 주는 코드.</b> 유스케이스를 만들면서 그 생성자에 리포지토리 구현과 어댑터를 넣는다.
-<b>업무 판단은 한 줄도 없다</b> — 조건문이 «무엇이 옳은가»를 가르기 시작하면 그 조건은 유스케이스 것이다.""",
+3: '<p><code>build_&lt;use_case&gt;()</code> 팩토리가 구체 리포지토리·어댑터·UoW 를 만들어 유스케이스 생성자에 꽂는다. 입구는 이 팩토리를 요청마다 호출한다.</p><p>업무 판정은 도메인, 업무 순서는 유스케이스의 일이다. 결선 파일에 어느 쪽도 두지 않는다.</p>',
 4: """<b>구독표를 브로커에 꽂는 코드.</b> «무엇을 듣나»는 입구가 적어 두고(<code>driving_layer/event_subscription/</code>), 여기는 그것을 부팅 때 한 번 등록한다.
 <br><b>등록만 사는 까닭</b> — 「무엇을 듣나」는 바깥이 들어오는 이야기라 입구의 지식이고, 「언제 꽂나」만 결선이다.
 <br><b>남의 BC 것을 등록하지 않는다</b> — 내 BC 가 내 구독만 등록하므로 방향이 하나로 남는다.
@@ -904,49 +893,26 @@ HTTP 면 <code>api/</code>, 같은 프로세스 함수 호출이면 <code>open_h
 <b>전송은 같아서 라우터는 하나를 같이 쓴다</b> — 그래서 이 갈림이 <code>driving_layer/</code> 가 아니라 여기서 일어난다.""",
 
 
-9: """<b>등록 함수 하나</b> — <code>def register_&lt;bc&gt;_api(api)</code>.
-컨트롤러 클래스를 import 해서 <code>api.register_controllers(...)</code> 를 부르는 것이 전부이고, 경로 접두사와 태그도 여기서 정한다.
-핵심은 <b>전역 API 객체를 «가져오지» 않고 «인자로 받는다»</b>는 것이다 — 그래야 BC 가 프로젝트를 모른다.""",
+9: '<p>프로젝트가 전달한 API 객체에 자기 BC 를 등록하는 <code>register_&lt;bc&gt;_api(api)</code> 함수다. 전역 API 객체를 여기서 새로 만들거나 프로젝트 모듈에서 가져오지 않는다.</p><p>Ninja Extra 스택이면 <code>NinjaExtraAPI</code> 에 컨트롤러를 등록하고, 승인된 plain Ninja 스택이면 <code>NinjaAPI</code> 에 라우터를 붙인다. 실제 프로젝트 API 객체·BC registrar·URLconf 의 등록 경로가 하나로 이어져야 한다.</p>',
 
 
-10: """<b>이 BC 가 HTTP 로 내보내는 오류의 형태와 코드 전부.</b>
-응답 본문 클래스 <code>&lt;Bc&gt;ErrorSchema</code> 하나와, 이 BC 가 쓰는 오류 코드 <code>&lt;Bc&gt;ErrorCode</code> 가 온다.
-<b>enum 이 섞여도 한 파일이 맞다</b> — 그 코드는 <b>응답 스키마의 <code>code</code> 필드 «타입»</b>이라 스키마에 종속돼 있고, 떼면 둘이 따로 늘어난다.
-<br><span class="dim">08-09 · T53 — <code>error_out.py</code> 에서 개명했다. 트리에서 <code>_out</code> 은 «쌍의 한쪽»인데 <b>이 파일만 짝이 없어 그 접미사가 아무것도 안 말했다</b>. 클래스도 함께 옮긴다.</span>
-<b>BC 당 정확히 한 파일</b>이고, <b>HTTP 를 아직 안 여는 BC 에도 빈 파일로 있다</b> — 부모 <code>api/</code> 가 항상이기 때문이다.
-<br>컨트롤러가 도메인 예외의 <b>«타입»을 여기 «코드»로</b> 바꾼다 — 그래서 <b>이 목록이 곧 «이 BC 가 HTTP 로 말할 수 있는 실패의 전부»</b> 다.
-<em>바깥이 분기해야 하는 것은 코드지 메시지가 아니다 — 그래서 새 실패를 알리려면 문장을 늘리는 게 아니라 코드를 하나 더 만든다.</em>""",
+10: '<p>이 BC 가 HTTP 로 공개하는 오류 언어를 한 파일에 모은다. <b><code>dddjango-code-json</code> 프로필</b>에서는 <code>&lt;Bc&gt;ErrorCode(StrEnum)</code> 하나, 공통 <code>FrameworkErrorSchema</code> 의 식별자 필드만 좁히는 <code>&lt;Bc&gt;ErrorSchema</code> 하나, 반복되는 사건별 concrete 오류 클래스를 함께 둔다.</p><p>오류의 필드·고정값·HTTP status 는 승인된 외부 계약을 따른다. concrete 오류는 승인된 기본값으로 인자 없이 생성하며, 별도 concrete 가 필요 없는 사건으로 승인된 경우에는 controller 가 BC base 의 필드를 직접 채운다. 새로운 오류마다 파일이나 공통 코드 목록을 늘리지 않는다.</p>',
 
 
 11: """<b>업무 묶음 하나</b>(<code>turn/</code> · <code>pairing/</code>) — 컨트롤러 여럿이 한 업무로 묶여 사는 자리다.
 이 묶음이 <b>안팎을 잇는 유일한 고리</b>다.""",
 
 
-12: """<b>요청 하나당 메서드 하나.</b> 각 메서드는 세 줄이다 —
-<code>schema_in</code> 을 <code>command</code> 으로 바꾸고, 유스케이스를 한 번 부르고, <code>result</code> 을 <code>schema_out</code> 으로 바꾼다.
-그리고 <b>그 메서드 안에 <code>except</code> 절</b>이 붙는다 — 도메인 예외를 잡아 <code>ErrorOut</code> 과 상태 코드로 바꾸는 매핑을
-<em>남에게 넘기지 않고 여기서 눈에 보이게</em> 쓴다. 그래서 이 파일은 <code>domain_layer</code> 의 <b><code>exception</code> 모듈을 import 해도 된다</b>
-<em>(애그리거트·리포지토리는 여전히 금지 — 잡는 것과 부리는 것은 다르다)</em>.
-<br><b>쓰는 것은 예외의 «타입»뿐이다.</b> <code>except &lt;DomainError&gt;:</code> 로 갈래를 가르고 <code>bc_error_schema.py</code> 의 코드와 상태로 바꿔 바로 돌려준다 —
-<b>예외 객체의 속성을 읽지 않는다</b>. 읽는 순간 바깥 JSON 이 <b>도메인이 정한 «구조»에 묶여</b>, 그 예외에 필드가 하나 붙을 때마다 응답이 흔들린다.
-<em>이 한 줄이 「잡는 것과 부리는 것은 다르다」를 사람 판정에서 <b>기계 판정</b>으로 내린다 — 그전까지는 import 만 보고 «자료로 쓰는지»를 잴 수가 없었다.</em>
-<b>바깥에 더 말할 것이 있으면 예외에 실어 보내는 게 아니라 «코드»를 하나 더 만든다</b> — 그 목록이 <code>bc_error_schema.py</code> 다.
-라우트 데코레이터 · 인증 선언 · 상태 코드가 함께 온다.""",
+12: '<p>입력 Schema 를 command/query 로 바꾸고, 요청마다 <code>build_&lt;use_case&gt;()</code> 로 조립한 유스케이스를 한 번 부른 뒤 result 를 응답 Schema 로 바꾼다. 구체 어댑터를 여기서 생성하지 않는다.</p><p><code>dddjango-code-json</code> 의 known failure 는 controller 가 직접 HTTP 로 매핑한다. 입력과 유스케이스를 먼저 준비하고, <code>try</code> 안에는 application 호출 한 문장만 둔다. 구체 domain/application 예외를 잡아 BC 오류를 만든 뒤 <code>Status(status, error)</code> 를 직접 반환한다. 성공 변환은 <code>try</code> 뒤에 둔다. 단순 조회의 승인된 <code>None</code> 실패는 호출 바로 뒤의 <code>if result is None:</code> 에서 처리한다.</p><p>오류 mapping helper·catch-all 로 옮기지 않고, 도메인 예외의 속성을 읽지 않는다. 반환 주석의 <code>Status[...]</code> 상자는 하나로 합친다 — 예: <code>Out | Status[ErrorA | ErrorB]</code>.</p>',
 
 
-13: """<b>HTTP 가 이해하는 형식만.</b> 파일은 둘뿐이고 <b>방향으로만 갈린다</b> —
-필드가 몇 개든 화면이 몇 개든 이 폴더의 파일 수는 늘어나지 않는다.
-「이 요청·응답 JSON 이 어떻게 생겼나」를 찾는 사람이 <b>두 파일만 열면 되게</b> 하는 것이 목적이다.""",
+13: '<p>HTTP 요청·응답 Schema 가 사는 자리다. 두 방향의 칸은 고정이고 각 칸 안에는 해당 방향의 Schema 들이 온다. 유효한 동명 폴더 승격은 같은 칸의 대체 실현이며, 새로운 업무·방향 폴더를 추가하는 근거가 아니다.</p>',
 
 
-14: """<b>요청의 형태.</b> 본문 · 쿼리 파라미터 · 경로 파라미터의 필드와 타입, 필수 여부, 길이·범위 제약.
-닌자가 이 선언을 보고 검증하므로 <b>사용자 입력을 막는 첫 관문이 여기</b>다.
-<code>?status=missed</code> 같은 문자열을 도메인 <b>값 객체</b>로 바꾸는 일도 여기 온다 — 값 객체는 자료라 import 가 허용된다.""",
+14: '<p>사용자 입력의 형식과 제약을 선언한다. <code>Field</code>·validator, 허용 sort/filter key, 페이지 크기 상한은 이 칸이 소유한다. ORM 필드 이름을 공개 입력으로 그대로 받지 않는다.</p><p>값 객체 타입을 import 하는 것과 <b>도메인 객체를 생성하는 것</b>은 다르다. 요청 스키마가 값 객체·애그리거트를 생성하지 않는다(#141·#142). 업무 의미 검증은 도메인이 소유하고, 스키마는 입력 형식을 검증한다.</p>',
 
 
-15: """<b>응답의 형태.</b> <code>result</code> 을 받아 만든다.
-<b>애그리거트를 그대로 실어 보내지 않는다</b> — 애그리거트가 여기로 새면 바깥 JSON 모양이 도메인 구조에 묶여 필드 하나 못 바꾸게 된다.
-<em>값 객체를 다시 문자열로 굽는 것</em>은 다르다 — 그건 자료를 옮기는 일이라 허용된다.""",
+15: '<p>유스케이스의 result 를 HTTP 응답으로 바꾼다. 도메인 객체·ORM 행을 직접 받아 응답으로 펴지 않는다. result 에 응답에 필요한 값이 빠졌다면 안쪽의 출력 계약을 고친다.</p><p>판별 키를 가진 성공 union 은 이름 붙은 <code>RootModel[Annotated[A | B, Field(discriminator=...)]]</code> 하나로 선언한다. 이 클래스에 Ninja <code>Schema</code> 를 함께 상속하지 않는다(#649). 일반 응답은 기존 Schema 형태를 따른다.</p>',
 
 
 16: """<b>남이 정한 계약으로 들어오는 것.</b> 결제사·배송사처럼 <b>우리가 스키마를 못 고치는 상대</b>가 «일어난 일»을 알려 온다.
@@ -995,39 +961,21 @@ HTTP 면 <code>api/</code>, 같은 프로세스 함수 호출이면 <code>open_h
 <br><b>갈리는 자는 «누가 부르나»가 아니라 «무엇을 해 주나»다</b> — 부르는 BC 가 셋이어도 해 주는 일이 하나면 창구도 하나다.""",
 
 
-24: """<b>다른 BC 가 실제로 부르는 함수들.</b> <code>api/</code> 의 컨트롤러와 같은 자리이고 하는 일도 같다 —
-계약 타입을 <code>command</code> 로 바꾸고, 유스케이스를 부르고, 결과를 계약 타입으로 되돌린다.""",
+24: '<p>다른 BC 가 부르는 창구다. 공개 표면은 모듈 수준 함수이며 함수 이름은 <code>_command</code> 또는 <code>_query</code> 로 끝난다. 입력은 해당 연산의 request 계약 객체 하나이고, 입력 없는 query 만 인자 0개를 허용한다(#633·#634). 공개 service 클래스를 만들지 않는다.</p><p>계약을 application DTO 로 바꾸고 유스케이스를 호출한 뒤 response 로 되돌린다. domain/application 실패는 이 창구의 published exception 으로 번역한다. 도메인 예외는 타입만 보고 속성을 읽거나 그대로 재노출하지 않는다.</p>',
 
 
-25: """<b>이 창구가 주고받는 타입 전부.</b>
-<b>남의 BC 가 읽는 표면이라 리프까지 규정한다</b> — 여기 있는 것을 바꾸면 상대가 깨지므로, 자리와 이름이 곧 «바꿀 때 누구와 상의해야 하나»가 된다.
-<br><b>그래서 이 폴더는 «의존 그래프의 끝»이어야 한다.</b> 계약 파일을 열면 첫 줄이 <code>from dataclasses import dataclass</code> 이고 <b>거기서 더 갈 데가 없다</b>.
-끝이 아니면 셋이 한꺼번에 무너진다 —
-⑴ 계약이 <b>우리 도메인 타입</b>을 담으면 부르는 쪽이 그걸 만들려고 우리 <code>domain_layer</code> 를 import 해야 해서 <b>애초에 부를 수 없는 계약</b>이 된다
-⑵ 계약이 <b>또 다른 BC 의 계약</b>을 담으면 부르는 쪽이 <code>anticorruption_layer/</code> 에 폴더 하나 없이 제3의 BC 에 묶여, 그 폴더 목록이 더는 «누구에게 기대나»의 답이 아니게 된다
-⑶ 계약이 <b>django·SDK</b> 를 담으면 전역 제약 ② 가 경계에서 깨진다.
-<em>끝이라서 계약 import 는 «고리에 낄 수 없는» 유일한 크로스-BC import 다.</em>""",
+25: '<p>창구의 request·response·published exception 계약을 모은다. 표준 라이브러리와 <b>같은 BC 의 다른 OHS 계약</b>만 import 할 수 있다(#472). 같은 BC 계약 사이의 보조 타입 재사용은 허용되지만 도메인·application DTO·Django·SDK·다른 BC 계약에는 의존하지 않는다.</p><p>이 표면을 바꾸면 소비 BC 의 계약도 영향을 받는다. 서비스 구현과 내부 도메인의 변경이 자동으로 공개 계약에 새지 않도록 별도 자료로 변환한다.</p>',
 
 
 26: """<b>이 창구가 «받는» 타입만.</b> 폴더가 방향을 말하므로 안의 파일 이름은 «무엇인가»만 말하면 된다.
 <code>schema_in.py</code> 와 같은 논리인데 여기만 파일이 아니라 폴더인 이유는 <b>연산 하나마다 계약이 따로</b>이기 때문이다.
 """,
 
-27: """<b>요청 타입 하나 = 파일 하나.</b> 부르는 쪽이 채워 넣는 필드만 들어 있다.""",
+27: '<p>연산 하나가 받는 주 request 계약이다. 표준 라이브러리와 같은 BC 의 다른 계약만 import 한다. 주 계약을 구성하는 보조 공개 dataclass 는 필드 어노테이션으로 연결된 경우에만 함께 둔다.</p><p>두 연산이 같은 보조 타입을 쓰면 정의는 한 계약 파일에 두고 다른 계약에서 import 한다. 같은 자료를 파일마다 재정의하지 않는다. 계약 안의 런타임 검증으로 개발자 실수를 막지 않는다 — 타입 체커·테스트가 그 역할을 진다.</p>',
 
-28: """<b>이 창구가 «돌려주는» 타입만.</b> 요청 쪽과 대칭이고 이름 규칙도 같다.
-여기 있는 필드가 곧 <b>상대 BC 가 우리에게서 알 수 있는 것의 전부</b>이고, 그 밖은 전부 우리 내부다.
-<br>계약이 계약인 이유는
-<b>부르는 쪽이 약속을 지키면 이쪽은 «반드시» 답을 낸다</b>는 데 있다 — 물건이 없으면 빈 목록이고, 접수를 못 하면 «못 했다 + 사유»다.
-<b>둘 다 답이지 실패가 아니다.</b>
-<br><b>그것이 심각한 일인지는 부르는 쪽만 안다.</b> 목록이 비었을 때 그냥 넘어갈지 화면에 경고를 띄울지는 저쪽 사정이고, 이 창구는 저쪽 사정을 모른다 —
-<b>여기서 예외를 던지면 그 판단을 가로채는 것</b>이다. 그래서 답으로 낼 수 있는 것은 전부 답으로 낸다.""",
+28: '<p>창구가 돌려주는 주 response 와 그 구성 자료가 온다. 상대 BC 에 필요한 공개 값만 담고 우리 내부 객체를 노출하지 않는다.</p><p>빈 조회 결과처럼 정상적으로 답할 수 있는 결과와 published exception 으로 선언한 실패를 구분한다. 어느 경우를 어느 경로로 표현할지는 해당 창구의 승인된 계약을 따른다.</p>',
 
-29: """<b>응답 타입 하나 = 파일 하나.</b> 도메인 객체를 그대로 담지 않는다 —
-담는 순간 상대 BC 가 우리 애그리거트 모양에 묶여, 우리가 내부를 고칠 때마다 그쪽이 깨진다.
-<br><b>못 해 준 사유는 «코드»로 담는다 — 문장이 아니다.</b> 자유 문자열을 넣으면 부르는 쪽이 그걸 파싱해 분기하게 되고,
-<b>문구를 다듬는 순간 남의 BC 가 깨진다</b>. 코드 목록이 곧 «이 창구가 낼 수 있는 답의 갈래»이고, 그 목록이 는다는 것은 계약이 바뀐다는 뜻이라 눈에 보여야 한다.
-<em>도메인 예외를 <code>bc_error_schema.py</code> 의 «코드»로 바꿔 내보내는 것과 같은 자다.</em>""",
+29: '<p>창구가 돌려주는 공개 response 계약이다. 유스케이스 result·애그리거트·ORM 행을 그대로 노출하지 않는다. 주 response 를 구성하는 보조 공개 dataclass 는 request 와 같은 동거 규칙을 따른다.</p><p>클래스 이름은 <code>&lt;Operation&gt;Response</code> 다. <code>Result</code> 는 유스케이스 쪽 어휘이므로 이 계약의 이름으로 쓰지 않는다.</p>',
 
 
 30: """<b>이 창구가 던질 수 있는 예외 전부.</b> 형제 둘과 같은 축이라 이름도 같은 자를 쓴다 — <code>exception/</code> 다.
@@ -1084,38 +1032,13 @@ D53 이 1차 축을 «전송»으로 바꾸면서 그 근거를 <em>「행위자
 <span class="dim"><b>08-08 · F6</b> — 넷이었다. <code>query_repository/</code> 와 <code>transaction/</code> 이 <code>port/</code> 아래로 들어가면서 둘로 줄었다.</span>""",
 
 
-39: """<b>유스케이스 폴더들이 여기 들어온다.</b>
-<b>둘 이상이 함께 쓰는 것</b>은 이 폴더 바로 아래로 올라온다 — 올라오는 순간 그건 «한 유스케이스의 것»이 아니게 된다.""",
+39: '<p>유스케이스를 업무 영역으로 묶는다. <code>driving_layer/api/&lt;area&gt;/</code> 와 이름이 대응한다. 영역 직계에 공통 helper·validation·DTO 모듈을 올리지 않는다.</p><p>유스케이스 사이의 공유 모듈 칸은 없다(#189). 업무 판정은 도메인, 외부 능력은 포트, BC 소유가 아닌 기술은 framework 가 맡는다. 어디에도 해당하지 않는 짧은 사설 조각은 각 진입점 안의 <code>_</code> 함수로 둔다(#192).</p>',
 
 
-40: """<b>시스템이 해 주는 일 하나.</b> 파일이 아니라 폴더인 것은 절차가 길어지면 조각이 생기기 때문이고,
-<b>그 조각의 수명이 이 폴더를 넘지 않는다</b>는 뜻이기도 하다.""",
+40: '<p>한 유스케이스의 진입점과 command·query·result 세 자료 칸이 함께 산다. 일반적인 사설 조각은 진입점 파일 안에 두고, 별도 helper 파일을 임의로 만들지 않는다.</p><p><code>&lt;use_case&gt;_use_case.py</code> 는 동명 폴더 승격 허용 칸이다. 승인된 승격의 본체·부품은 이 유스케이스 소유이며, 그 부품도 다른 유스케이스의 공용 모듈이 되지 않는다.</p>',
 
 
-41: """<b>절차 하나.</b> 리포지토리로 애그리거트를 불러오고, 애그리거트에게 시키고, <code>UnitOfWork</code> 로 트랜잭션을 긋는다.
-<b>판단은 애그리거트가 하고 여기는 순서만 정한다</b> — 조건문이 «무엇이 옳은가»를 가르기 시작하면 그 조건은 도메인으로 내려가야 한다.
-<br><b>사실을 밖으로 내보내는 일도 여기가 진다.</b> 읽으면 <b>세 줄이 이어져 보인다</b> —
-무슨 일이 일어났고(<code>order.cancel(…)</code>), <b>그 일이 사실을 남겼고</b>(<code>order.pull_events()</code>), 커밋 뒤에 나간다(<code>uow.after_commit(…)</code>).
-<div class="pre-wrap"><pre><code>order.cancel(req.reason)                        <span class="c"># 무슨 일이 일어났나</span>
-facts: list[OrderEvent] = order.pull_events()   <span class="c"># ★ 애그리거트가 «사실을 남겼다»</span>
-self._orders.save(order)                        <span class="c"># 저장 — 사실은 이미 비었다</span>
-
-for fact in facts:
-    if isinstance(fact, OrderCanceled):         <span class="c"># 밖에 알릴 것만 «옮겨 담는다»</span>
-        self._uow.after_commit(
-            lambda f=fact: self._broker.publish(PublishedOrderCanceled(...)))</code></pre></div>
-<b>가운데 줄이 이 배치의 값이다</b> — 「애그리거트가 만들었다」가 <b>주어</b>(<code>order</code>)·<b>행위</b>(<code>pull</code> = 꺼내면 비운다)·<b>타입</b>(<code>list[OrderEvent]</code>) 셋으로 한 줄에 선다.
-<br><b>«저장 경계가 알아서 걷는» 안을 안 골랐다.</b> 참조 구현들이 그렇게 한다 —
-Spring Data 는 <b>리포지토리</b>가(<em>“The methods are called every time … <code>save(…)</code>, <code>saveAll(…)</code>, <code>delete(…)</code>”</em>),
-cosmicpython 은 <b>UoW</b> 가(<em>“it knows about all the aggregates currently in play <b>because it provides access to the repository</b>”</em>),
-eShop·Grzybek 은 <b><code>SaveChanges</code></b> 가 걷는다.
-<br><b>안 고른 까닭 셋</b> — ⑴ <b>이 줄이 사라진다</b>: cosmicpython 이 그 대가를 직접 적는다
-(<em>“It's <b>not obvious</b> when we call <code>commit</code> that we're also going to go and send email to people”</em> · <em>“that <b>hidden</b> event-handling code executes synchronously”</em>) ·
-⑵ cosmicpython 의 근거가 <b>우리가 금지한 것에 의존한다</b> — 「UoW 가 리포지토리를 노출한다」는 오른쪽 44 칸이 막는 바로 그것이다 ·
-⑶ <b>장고에는 그걸 해줄 기계가 없다</b> — EF Core 의 ChangeTracker 도, SQLAlchemy 의 Identity Map·dirty tracking 도 없어서 <b>「알아서」의 «알아서»를 우리가 지어야 한다</b>.
-<br><b>대신 잊기는 못 하게 한다</b> — 저장이 「안 꺼낸 사실이 남았나」를 본다(오른쪽 <code>&lt;aggregate&gt;_repository.py</code> 구현 칸).
-<br><b>범위도 원전과 같다</b> — <em>“Employ them for <b>inter-application communication only</b> … For inner-application communication, <b>get your program flow straight and explicit</b>”</em>.
-같은 BC 안의 순서는 이 파일이 «직접 부르는» 것으로 이미 정해져 있다.""",
+41: '<p>클래스 하나의 <code>execute(command_or_query)</code> 가 해당 유스케이스의 성공 result 를 돌려준다. 결과 자료가 없는 경우에는 빈 result 파일과 <code>-&gt; None</code> 을 대응시킨다(#635). 판정은 도메인에, 조회·호출·저장 순서는 여기에 둔다.</p><p>다른 BC 에 필요한 자료를 묻는 호출은 UoW 밖에서 끝낸다. 내부에서는 애그리거트의 상태를 바꾸고 <b><code>pull_events()</code> → 저장 → 공표 자료로 변환 → <code>after_commit</code> 예약</b> 순서로 이어진다. callback 을 예약하는 시점과 실제 발행 시점은 다르다.</p><div class="pre-wrap"><pre><code>order.cancel(reason=reason, shipped=shipped)\nfacts: list[OrderEvent] = order.pull_events()\nself._orders.save(order)\nfor fact in facts:\n    if isinstance(fact, OrderCanceled):\n        event: PublishedOrderCanceled = PublishedOrderCanceled(\n            order_id=fact.order_id)\n        uow.after_commit(lambda event=event: self._broker.publish(event))</code></pre></div><p>사실을 만드는 주어는 애그리거트다. 리포지토리는 대신 수거하지 않고, 저장 때 아직 꺼내지 않은 사실이 남았는지 검사한다. 커밋이 성공한 뒤에만 예약한 callback 이 실행된다.</p>',
 
 
 42: """<b>유스케이스가 받는 값.</b> <code>id</code> 와 원시값이 기본형이고, 값 객체는 도메인 것이라 그대로 온다.
@@ -1125,19 +1048,10 @@ eShop·Grzybek 은 <b><code>SaveChanges</code></b> 가 걷는다.
 <br><span class="dim">08-09 · T53 — <code>&lt;use_case&gt;/dto/</code> 겹이 없어지고 <code>dto_in.py</code> 가 이 이름으로 여기 왔다. <code>dto</code> 는 <b>Fowler 의 «프로세스 사이» 패턴 이름</b>인데 우리 것은 같은 프로세스라 <b>낱말이 틀렸었다</b>.</span>""",
 
 
-43: """<b>형제와 «같은 것»이 온다.</b> 담기는 값도, 안 담기는 둘도, 흐름을 다루는 법도 같다.
-<b>갈리는 것은 파일 이름 하나뿐</b>이고, 그 이름이 지는 정보는 <b>「이 유스케이스가 상태를 바꾸나」</b>다.
-<br><b>왜 그것을 이름이 져야 하나</b> — 폴더 이름은 동사라 «무엇을 하나»는 말하지만 «바꾸나»는 안 말한다.
-<code>list_children/</code> 을 열지 않고도 그것이 읽기뿐임이 보이는 것, 그리고 <b>바꾸는 것을 실수로 조회처럼 부르지 못하게 되는 것</b>이 이 갈래가 사는 값이다.
-<br><b>CQRS 를 채택한 것이 아니다</b> — 읽기 모델도, 별도 저장소도, 이벤트 소싱도 따라오지 않는다. <b>낱말만 빌렸고 목적은 «종류를 이름으로 드러내는 것» 하나</b>다.""",
+43: '<p>상태를 바꾸지 않는 유스케이스의 입력 자료다. <code>_command.py</code> 와 파일은 모두 두되, 내용 있는 유스케이스의 입력 클래스는 둘 중 한쪽에만 정의한다.</p><p>이 입력 계약의 존재와 <code>port/domain_bypass_query/</code> 채택은 별개다. 조회 유스케이스가 애그리거트 리포지토리를 쓸지 도메인 우회 조회 포트를 쓸지는 필요한 결과의 성격으로 정한다.</p>',
 
 
-44: """<b>유스케이스가 «내보내는» 자료의 모양.</b> 컨트롤러가 이것만 보고 응답을 만들 수 있어야 한다 — 여기 빠진 값이 있으면 컨트롤러가 도메인을 들여다보게 된다.
-하나로 내든 흘려보내든 안에 실리는 알맹이는 같은 자를 받는다.
-<br><b>커맨드 쪽도 이 파일을 갖는다</b> — 만든 것의 <code>id</code> 하나만 돌려주더라도 그 값이 여기 산다. 돌려줄 것이 정말 없으면 <b>빈 파일</b>이다.
-<br>여기 오지 «않는» 것은 실패다. 그래서 이 파일에는 <b>성공했을 때의 모양 한 벌</b>만 있고, 갈래가 여럿이면 그것은 유스케이스가 둘이라는 신호다.
-<br>실패 갈래는 <b>예외</b>로 나간다 — 같은 BC 의 <b>도메인 예외</b>는 컨트롤러가 직접 받아 오류 응답을 만든다(driving 잎이 domain 에서 가져올 수 있는 둘: exception·값 객체). 이것은 «도메인 들여다보기»가 아니라 실패 계약의 소비다.
-<br><span class="dim">08-09 · T53 — <code>dto_out.py</code> 에서 개명. <b>Uncle Bob 실물</b>도 <code>…ResponseModel</code> 을 유스케이스 폴더에 <b>평평하게</b> 두고 겹을 안 만든다.</span>""",
+44: '<p>유스케이스가 내보내는 <b>성공 자료 한 벌</b>이다. controller 가 이것만 보고 응답을 만들 수 있어야 한다. 응답에 필요한 값이 빠졌다면 결과 계약을 보완한다.</p><p>command 쪽에도 result 칸을 둔다. 돌려줄 자료가 없으면 빈 파일과 <code>-&gt; None</code> 으로 표현한다. 실패 variant·outcome 을 이 파일에 섞지 않는다. 스트림 결과도 각 항목은 같은 result 계약을 따른다.</p>',
 
 
 45: """<b>선언만 온다. 구현은 한 줄도 없다.</b>
@@ -1207,14 +1121,7 @@ eShop·Grzybek 은 <b><code>SaveChanges</code></b> 가 걷는다.
 <br>도메인의 실패 이름을 빌리지 못하는 까닭은 <b>이 칸에만 있다</b>: 애그리거트를 거치지 않아서 «업무 규칙을 어겼다»가 성립할 수 없다.""",
 
 
-57: """<b>커밋 지점을 유스케이스 «안»에 표시하는 자리.</b>
-<b>애그리거트와 헷갈리기 쉬운데 묻는 것이 다르다</b> — <em>애그리거트는 «무엇이 함께 참이어야 하나», 여기는 «언제 커밋되나»</em>. 그래서 개수도 다르다 — 애그리거트가 열이어도 여기 파일은 보통 하나이고, <b>저장소의 원자성이 갈릴 때만</b> 둘이 된다. <b>그리고 이 블록은 BC 를 못 넘는다</b>(아래 검사 · 전역 제약 ③).
-형제와 갈리는 질문은 하나다 —
-<em>바깥에 «업무를 시키나», 아니면 내 저장들을 «묶나»</em>. 시키면 <code>&lt;capability&gt;/</code>, 묶으면 여기다.
-<code>commit()</code> 에는 업무 낱말이 하나도 없다 — <b>대화가 아니라 대화들을 묶는 괄호</b>다.
-<b><code>exception.py</code> 는 여기 없다</b> — 저장이 실패하는 방식은 셋으로 갈리고 셋 다 이미 자리가 있다(아래 D14).
-<span class="dim"><b>08-08 · F6</b> — 이름이 <code>transaction</code> 이었다. <b>파일도 클래스도 이미 <code>unit_of_work</code></b> 인데 폴더만 다른 말을 했고,
-무엇보다 트리가 <b>「<code>transaction</code> 을 아는 것은 드리븐까지」</b>라고 못박아 두고 응용층 폴더에 그 낱말을 쓰고 있었다.</span>""",
+57: '<b>커밋 지점을 유스케이스 «안»에 표시하는 자리.</b>\n<b>애그리거트와 헷갈리기 쉬운데 묻는 것이 다르다</b> — <em>애그리거트는 «무엇이 함께 참이어야 하나», 여기는 «언제 커밋되나»</em>. 그래서 개수도 다르다 — 애그리거트가 열이어도 여기 파일은 보통 하나이고, <b>저장소의 원자성이 갈릴 때만</b> 둘이 된다. <b>그리고 이 블록은 BC 를 못 넘는다</b>(아래 검사 · 전역 제약 ③).\n형제와 갈리는 질문은 하나다 —\n<em>바깥에 «업무를 시키나», 아니면 내 저장들을 «묶나»</em>. 시키면 <code>&lt;capability&gt;/</code>, 묶으면 여기다.\n<code>__enter__</code>·<code>__exit__</code>·<code>after_commit</code> 이 저장 경계의 계약이다 — <b>대화가 아니라 대화들을 묶는 괄호</b>다.\n<b><code>exception.py</code> 는 여기 없다</b> — 저장이 실패하는 방식은 셋으로 갈리고 셋 다 이미 자리가 있다(아래 D14).\n<span class="dim"><b>08-08 · F6</b> — 이름이 <code>transaction</code> 이었다. <b>파일도 클래스도 이미 <code>unit_of_work</code></b> 인데 폴더만 다른 말을 했고,\n무엇보다 트리가 <b>「<code>transaction</code> 을 아는 것은 드리븐까지」</b>라고 못박아 두고 응용층 폴더에 그 낱말을 쓰고 있었다.</span>',
 
 58: """<b>저장 경계 하나 = 파일 하나.</b> 계약은 셋 — 열기 · 닫기 · <code>after_commit(callback)</code>.
 <code>uow.payments</code> 같은 속성을 두면 유스케이스가 그 뒤로 협력자를 숨겨
@@ -1255,8 +1162,7 @@ cosmicpython 의 <code>events.pop(0)</code> · eShop 의 <code>RemoveDomainEvent
 63: """<b>엔티티 하나 = 파일 하나.</b> 식별자를 갖고 <b>안의 값이 바뀌어도 «같은 것»으로 남는</b> 것만 여기 온다.""",
 
 
-64: """<b>이 애그리거트만 쓰는 값 객체.</b> 규칙 둘 — <b>불변이고, 이 애그리거트 밖에서는 쓰이지 않는다.</b>
-다른 애그리거트가 쓰기 시작하는 순간 <code>shared_value_object/</code> 로 올라간다.""",
+64: '<p>이 애그리거트가 소유하는 불변 값 객체다. 유스케이스·입구의 허용된 값 변환에서 쓰는 것은 정상이다. <b>다른 애그리거트가 같은 값을 쓰기 시작하면</b> <code>shared_value_object/</code> 로 옮긴다(#265·#266).</p>',
 
 
 65: """<b>값 객체 하나 = 파일 하나.</b> 불변이고, <b>만들어지는 시점에 스스로 검증한다</b> —
@@ -1267,8 +1173,7 @@ cosmicpython 의 <code>events.pop(0)</code> · eShop 의 <code>RemoveDomainEvent
 그래서 <b>이 폴더가 비어 있는 것은 결함이 아니다</b> — 자기 안에서 소비할 사실이 없는 애그리거트가 대부분이다.""",
 
 
-67: """<b>필드만 있는 자료구조 — 메서드가 없다.</b>
-무엇이 언제 일어났는지만 담고, <b>그래서 무엇을 할지는 담지 않는다</b>. 그건 읽는 쪽이 정한다.""",
+67: '<b>필드만 있는 자료구조 — 메서드가 없다.</b>\n무엇이 언제 일어났는지만 담고, <b>그래서 무엇을 할지는 담지 않는다</b>. 그건 읽는 쪽이 정한다.<p>발행 이벤트 봉투의 타입 판별자를 도메인에서 소유하는 경우에는 <code>event/event_type.py</code> 의 <code>StrEnum</code> 을 1종째부터 선언하고 값은 추가만 한다. 일반 사실 자료와 판별자 선언의 역할을 구분한다. API 봉투와 OHS 계약의 파생·wire 표기는 <code>architecture-ddd</code> §3.7 의 각 경계 규칙을 따른다.</p>',
 
 
 
@@ -1409,11 +1314,7 @@ cosmicpython 의 <code>events.pop(0)</code> · eShop 의 <code>RemoveDomainEvent
 <br>형제 <code>django_&lt;bounded_context&gt;/</code> 는 <b>표 정의 · 마이그레이션 · 운영 화면</b>이라 지키는 약속이 없고, 그래서 이 폴더 «밖»이다.
 <span class="dim"><b>08-08 · F6</b> — D17 이 <code>adapter/</code> 를 접은 근거는 「이 칸에 있는 것이 <b>전부</b> Adapter 라 아무 선도 긋지 못한다」였는데 <b>전부가 아니었다</b>. 그 하나가 선을 긋는다.</span>""",
 
-90: """<b>우리 DB 를 만지는 것 전부</b> — 애그리거트를 빚는 것 · 도메인을 우회해 읽는 것 · 저장 경계를 여는 것 셋.
-<br>이 겹이 정당한 이유는 <b>셋에 공통 규칙이 하나 있어서</b>다 — <b>ORM 모델을 import 할 수 있는 것은 이 폴더 안뿐</b>이다.
-형제 셋(다른 BC · 저장소 밖 · 상대 없음)에서 모델을 만지면 위반이다.
-<br>이름은 Vernon 의 것이다 — IDDD 의 실제 경로가 <code>port/adapter/persistence/</code> 다.
-<span class="dim"><b>08-08 · F6</b> — <code>repository/</code> 아래에 둘을 묶자는 안이 먼저 있었는데, <b>그 겹에는 공통 규칙이 0</b>이었다(도메인 import 필수 ↔ 금지). 셋으로 넓히니 규칙이 하나 생겼다.</span>""",
+90: '<p>우리 DB 의 애그리거트 저장·도메인 우회 조회·저장 경계를 맡는 어댑터다. 셋의 선언 위치는 다르지만 ORM 과 저장 기술을 여기서 구현한다.</p><p>ORM 접근에는 명시된 별도 경로가 있다. 운영용 <code>django_&lt;bc&gt;/admin/</code> 과 <b>비애그리거트 ORM 쓰기 능력</b>의 <code>adapter/&lt;capability&gt;/django_adapter/adapter/&lt;implementation&gt;_adapter.py</code> 다. 후자는 repository·bypass·UoW 셋에 들어가지 않는 능력 포트를 구현한다.</p>',
 
 91: """<b>도메인을 «거치는» 어댑터.</b> ORM 로우를 애그리거트로 되돌리고 애그리거트를 로우로 편다.
 <code>django_&lt;bounded_context&gt;/</code> 안이 아닌 이유는 번역기가 <b>애그리거트와 ORM 모델을 동시에</b> import 해야 하기 때문이다.""",
@@ -1430,9 +1331,7 @@ cosmicpython 의 <code>events.pop(0)</code> · eShop 의 <code>RemoveDomainEvent
 <br>옛 트리에서는 둘이 <b>한 폴더에 살았고</b> 파일 이름(<code>&lt;aggregate&gt;</code>가 주어냐 <code>&lt;capability&gt;</code>가 주어냐)이 갈랐다.
 나누니 <b>검사가 폴더 단위로 선다</b> — 한 줄씩 정반대로.""",
 
-94: """<b>Thin Read 구현.</b> DB 를 직접 읽어 <b>선언 옆의 <code>&lt;data&gt;</code> 를 만들어 돌려준다</b> — 애그리거트를 거치지 않는다.
-<em>«DTO» 가 아니다 — 그 말은 <code>&lt;use_case&gt;/</code> 의 이름이고, 그 폴더는 이 칸이 import 하면 위반이다.</em>
-<br><em>이 저장소의 조회는 아직 전부 애그리거트로 답이 나온다 — 읽기 모델이 쓰기 모델과 갈라지는 것이 이 칸이 열리는 조건이다.</em>""",
+94: '<p>도메인 우회 조회의 구현이다. 자기 BC 의 ORM 으로 읽고 계약 옆 <code>&lt;data&gt;_in.py</code> 의 이름 붙은 정적 자료로 돌려준다. 도메인·ORM 행·QuerySet·맨 dict 를 결과 계약으로 노출하지 않는다.</p><p>이 칸을 열지는 프로젝트의 실제 조회 요구로 정한다. 다른 BC 의 표는 읽지 않고 그 BC 의 OHS 를 ACL 로 소비한다.</p>',
 
 95: """<b>경계마다 구현이 하나씩</b> 온다 — 원자성이 갈린 저장소가 둘이면 여기 파일도 둘이다. <em>개수를 못 박지 않는 것은 그 갈림이 드러나는 편이 낫기 때문이다.</em>""",
 
@@ -1453,55 +1352,45 @@ cosmicpython 의 <code>events.pop(0)</code> · eShop 의 <code>RemoveDomainEvent
 <b>합칠 수 없으면 개념 하나가 빠진 것</b>이라 그 흐름을 맡는 BC 를 새로 꺼낸다.""",
 
 
-99: """<b>포트 하나의 구현.</b> 상대의 계약 타입을 <b>우리 도메인 어휘로 옮기는 번역</b>이 여기서 일어난다.
-<br><b>예외도 번역 대상이다.</b> 이 칸이 한 약속은 「상대 BC 의 것은 나를 지나가지 못한다」인데 <b>예외도 상대 BC 의 것</b>이라서다.
-그래서 구체 타입을 앞에 몇 개 잡든 <b>마지막에는 상대 창구의 기저 예외를 잡아</b> 우리 실패로 바꿔 던진다 —
-그러지 않으면 <b>이쪽 코드를 건드리지 않고도</b> 상대가 예외를 하나 늘리는 것만으로 이 약속이 깨진다.""",
+99: '<b>한 능력의 ACL 어댑터 패키지.</b> 구현과 호출 계약·상수·내부 계약·검증 스키마를 다섯 역할 폴더로 나눈다. 폴더는 내용 없이도 모두 둔다.<br>상대 계약을 우리 포트의 값으로 바꾸는 일은 <code>adapter/</code> 의 구현이 맡는다. 구체 예외를 앞에서 잡더라도 마지막에는 상대 창구의 기저 예외를 잡아 우리 계약의 실패로 바꾼다. 계약·스키마의 타입 import 만으로 예외 catch 를 요구하지 않는다.',
 
 
-100: """계약이 저장소 밖에 있어서 <b>어겨도 CI 가 아니라 런타임에 터진다</b>.
+110: """계약이 저장소 밖에 있어서 <b>어겨도 CI 가 아니라 런타임에 터진다</b>.
 서킷 브레이커까지 이 폴더 안에서만 거는 것은 그래서다 — 벤더 SDK 를 import 해도 되는 자리도 여기뿐이다.""",
 
 
-101: """<b>그 벤더와 주고받는 것 전부</b> — SDK 를 쓰는 것은 이 폴더 안에서만 허용된다.
+111: """<b>그 벤더와 주고받는 것 전부</b> — SDK 를 쓰는 것은 이 폴더 안에서만 허용된다.
 <em>벤더를 갈아 끼우는 일이 <b>폴더 하나를 통째로 갈아 끼우는 일</b>이 되도록 한 배치다.</em>""",
 
 
-102: """<b>포트 하나의 구현.</b> 벤더 SDK 를 쓰는 것은 이 파일 안에서만 허용된다.
-<code>anticorruption_layer/</code> 와 규칙이 같고 다른 것은 <b>폴더가 «상대 BC»냐 «상대 시스템»이냐</b>뿐이다.""",
+112: '<b>한 능력의 외부 시스템 어댑터 패키지.</b> 구현과 호출 계약·상수·내부 계약·검증 스키마를 다섯 역할 폴더로 나눈다. 벤더 SDK 는 이 패키지의 역할 파일 안에서 사용할 수 있다. 기술 실패를 포트가 선언한 실패로 바꾸는 책임은 <code>adapter/</code> 의 구현에 있다.',
 
 
-103: """<b>밖에 «상대»는 없는데 «기술»이 필요한 일.</b> 주문서를 PDF 로 빚기 · QR 만들기 · 정산 엑셀 뽑기 · 썸네일.
-물어볼 상대가 없어 <code>external_system/</code> 이 아니고, 라이브러리 없이는 못 해 도메인도 아니며, <b>계약에 업무 어휘가 있어</b> <code>framework/</code> 도 아니다.
-<br><b>폴더인데 이름이 «능력»인 이유</b> — 형제 셋은 «상대» 이름으로 서는데 <b>이 갈래는 설 상대가 없다</b>. 그래서 안쪽과 같은 이름으로 선다.
-<br><span class="dim">계보 표기는 Hex(어댑터 칸)지만 <b>이 칸이 «서야만 하는» 근거는 클린 전역 제약 ②</b>다 — 계약에 업무 어휘가 있어도 구현은 라이브러리를 알아 안쪽 두 칸에 못 산다.</span>
-<span class="dim"><b>08-08 · F6</b> — 옛 문면이 든 예시 다섯(시계·난수·락·스레드·파일시스템)은 <b>전부 업무 어휘가 0이라 자기 판정에 걸려 <code>framework/</code> 로 간다</b>. 한 건도 안 맞았다.</span>""",
+123: '<p>상대 BC 나 외부 벤더가 없는 기술 능력의 구현이다. 주문서 PDF·QR·정산 엑셀처럼 업무 어휘를 가진 계약을 라이브러리로 구현한다. BC 소유가 아닌 순수 기술이면 <code>framework/</code> 로 간다.</p><p>명시된 ORM 예외도 이 칸에 온다. <b>애그리거트 저장이 아닌 ORM 쓰기 능력</b>은 해당 포트의 <code>django_adapter/adapter/&lt;implementation&gt;_adapter.py</code> 로 구현한다. 애그리거트 저장·조회·트랜잭션 경계를 이 예외로 우회하지 않는다.</p>',
 
-104: """<b>포트 하나의 구현.</b> 라이브러리를 쓰는 것은 이 파일 안에서만 허용된다.
-<code>external_system/</code> 과 규칙이 같고, 다른 것은 <b>바깥에 상대가 있느냐</b>뿐이다.""",
+124: '<p>한 능력 포트를 구현하는 기술 패키지다. 부모 폴더는 능력을, 이 패키지 이름은 기술을 말한다. 기술 이행 중 여러 기술 패키지가 함께 있을 수 있고 각 패키지의 <code>adapter/</code> 에도 구현 파일을 여러 개 둘 수 있다.</p><p>비애그리거트 ORM 쓰기 능력은 <code>django_adapter/adapter/&lt;implementation&gt;_adapter.py</code> 에서 자기 BC ORM 을 사용할 수 있다. 이 면제는 구현 역할 파일에만 적용된다. 계약 상속·업무 판정 금지·기술 실패 번역 규칙은 그대로 적용된다.</p>',
 
 
 # ── test ────────────────────────────────────────────────────────────
-105: """<b>이 BC 의 테스트만.</b> 폴더 이름만 보고 <b>이 테스트가 DB 를 켜는지</b> 알 수 있어야 한다 —
-그것이 자식 넷을 가르는 유일한 물음이다.""",
+135: '<p>이 BC 의 테스트와 테스트 재료다. 자식은 다섯 — <code>unit/</code>·<code>integration/</code>·<code>e2e/</code> 는 테스트, <code>factories/</code>·<code>fake/</code> 는 재료다. 테스트 폴더의 내부 파일명은 pytest 가 정하고, 재료에는 각 칸의 내용 규칙이 적용된다.</p>',
 
 
-106: """<b>도메인과 응용의 테스트.</b> <b>DB 를 켜지 않는다.</b>
+136: """<b>도메인과 응용의 테스트.</b> <b>DB 를 켜지 않는다.</b>
 포트 자리에는 페이크 구현을 꽂고(형제 <code>fake/</code> 에 산다), 애그리거트의 불변식과 유스케이스의 절차만 본다.""",
 
 
-107: """「번역기가 ORM 로우를 애그리거트로 제대로 되돌리는가」, 「컨트롤러를 붙이면 실제로 그 응답이 나오는가」를 본다.""",
+137: """「번역기가 ORM 로우를 애그리거트로 제대로 되돌리는가」, 「컨트롤러를 붙이면 실제로 그 응답이 나오는가」를 본다.""",
 
 
-108: """<b>입구에서 출구까지 한 흐름을 통째로.</b>
+138: """<b>입구에서 출구까지 한 흐름을 통째로.</b>
 <code>integration/</code> 이 «조각 하나 × 진짜 기술»이라면 여기는 «여러 조각 × 진짜 기술»이다.
 느린 대신 수가 적어야 하고, <b>깨져도 어디가 원인인지 알려 주지 않는다</b>는 점을 감수하고 쓴다.""",
 
 
-109: """<code>integration/</code> 안이 아니라 <b>형제로 올라와 있다</b> —
+139: """<code>integration/</code> 안이 아니라 <b>형제로 올라와 있다</b> —
 안에 숨겨 두면 <code>unit/</code> 이 무심코 가져다 쓰고 «unit 은 DB 를 안 켠다»가 조용히 깨진다.""",
 
-110: """<b>포트의 가짜 구현.</b> 인메모리 리포지토리, 아무것도 안 보내는 알림, 고정된 시계 —
+140: """<b>포트의 가짜 구현.</b> 인메모리 리포지토리, 아무것도 안 보내는 알림, 고정된 시계 —
 <b>계약은 지키되 기술이 없는 것</b>들이 온다.
 <br><b>이 칸이 없어서 «트리가 자기 규칙으로 자기를 막고» 있었다</b> — 바로 위 <code>unit/</code> 이
 <em>「포트 자리에는 페이크 구현을 꽂고」</em> 라 적어 놓았는데 그 페이크가 갈 자리가 트리에 없었고,
@@ -1511,7 +1400,7 @@ cosmicpython 의 <code>events.pop(0)</code> · eShop 의 <code>RemoveDomainEvent
 <br><span class="dim">08-09 · T47 — 4차 리뷰 SC-I 가 <em>「가짜가 살 칸도 없다」</em> 로 지적했다.
 같은 지적의 <em>「강제 수단이 mypy 뿐」</em> 은 <b>틀렸다</b> — <code>ABC</code> 는 인스턴스화에서 <code>TypeError</code> 를 낸다(실행으로 확인).</span>""",
 
-111: """<b>선언 하나 = 가짜 하나.</b> 안에는 그 선언 클래스를 상속한 구현 하나가 온다 —
+141: """<b>선언 하나 = 가짜 하나.</b> 안에는 그 선언 클래스를 상속한 구현 하나가 온다 —
 <code>InMemoryOrderRepository</code>·<code>FixedClock</code> 처럼 <b>«어떻게 구현했나»가 클래스 접두</b>로 붙는다
 (<code>adapter/</code> 가 <code>Django…</code> 를 붙이는 자와 같다).
 <br><b>모든 포트에 이 파일이 있어야 하는 것은 아니다</b> — <code>&lt;…&gt;</code> 가 처음 나오는 낱말이라
@@ -1521,7 +1410,7 @@ cosmicpython 의 <code>events.pop(0)</code> · eShop 의 <code>RemoveDomainEvent
 
 
 # ── framework ───────────────────────────────────────────────────────
-112: """<b>프레임워크에 붙어 있는 우리 코드.</b> 저장소 루트에 있고 어느 BC 에도 속하지 않는다.
+142: """<b>프레임워크에 붙어 있는 우리 코드.</b> 저장소 루트에 있고 어느 BC 에도 속하지 않는다.
 <br><b>여기 있는 것은 «공유해서» 여기 있는 게 아니라 «BC 것이 아니어서» 여기 있다.</b>
 시계 · 메일 발송 · JSON Patch · HTTP 오류 표현 — <b>뜻을 정하는 자가 저장소 밖에 있다.</b>
 <em>반대로 두 BC 가 똑같이 「7일」을 쓰더라도 그 7일은 <b>각자의 것</b>이다.
@@ -1538,7 +1427,7 @@ Sandi Metz 가 「잘못된 추상은 중복보다 비싸다」로 적은 실패
 <em>(저장소 루트가 <code>sys.path</code> 에 들어가서, 겹치면 그 표준 모듈이 통째로 가려진다 — <code>platform</code> 이 그래서 탈락했다)</em>.""",
 
 
-113: """<b>발행한 쪽과 듣는 쪽을 잇는 배달 장치.</b> 등록 · 조회 · 전달, 그 셋만 온다.
+143: """<b>발행한 쪽과 듣는 쪽을 잇는 배달 장치.</b> 등록 · 조회 · 전달, 그 셋만 온다.
 <br><b>여기가 BC 밖인 까닭</b> — 어느 업무의 것도 아니다. 저장소에서 BC 를 전부 걷어내도 이 코드는 말이 된다.
 <br><b>여기가 «작아야» 하는 까닭</b> — 키우는 순간 「A 다음 B, 실패하면 되돌려라」를 알게 되고, 그 순서는 어느 업무의 지식이라 BC 안에 살아야 한다.
 그 선을 넘은 것을 <b>중재자</b>라 부르고, 중재자가 내보내는 것은 사실이 아니라 <b>지시</b>다.
@@ -1547,14 +1436,14 @@ Sandi Metz 가 「잘못된 추상은 중복보다 비싸다」로 적은 실패
 
 
 
-114: """<b>프로세스 경계를 «안» 넘는 배달.</b> 계약과 구현이 나란히 산다 — 형제 <code>external/</code> 과 같은 꼴이다.
+144: """<b>프로세스 경계를 «안» 넘는 배달.</b> 계약과 구현이 나란히 산다 — 형제 <code>external/</code> 과 같은 꼴이다.
 <br><b>둘을 가르는 물음은 하나</b>: <b>「듣는 쪽이 «다른 배포 단위»에 있나」</b>. 없으면 여기, 있으면 저기.
 <br><b>「프로세스」가 아니라 「배포 단위」인 까닭</b> — 한 배포 단위 안이면 발행도 구독도 <b>같은 프로세스</b>에서 일어나므로
 프로세스가 여럿이어도 문제가 안 된다. 갈리는 순간은 <b>모듈이 따로 배포될 때</b>다.
 <br><span class="dim">08-10 · T50 — 신설. 전에는 이 겹이 없어 <b>계약 하나에 구현 하나</b>가 <code>broker/</code> 바로 아래 있었고,
 <em>「Redis·Celery 로 갈아탈 때 이 칸에 형제가 는다」</em> 가 <b>행 note 의 «산문»으로만</b> 있었다.</span>""",
 
-115: """<b>프로세스 «안» 배달의 약속.</b> 등록 · 조회 · 전달, 그 셋만 온다.
+145: """<b>프로세스 «안» 배달의 약속.</b> 등록 · 조회 · 전달, 그 셋만 온다.
 <br><b>계약과 구현을 한 덩어리로 두지 않는 까닭</b> — 그러면 「구현은 <code>composition_root</code> 밖에서 아무도 import 하지 않는다」가
 <b>겨냥할 대상이 사라져</b>, 유스케이스가 배달 코드를 직접 잡아도 아무 데도 안 걸린다.
 <br><b>리스너마다 따로 넘긴다</b> — 셋이 듣는다면 셋으로 갈라 넘긴다. 한 덩어리로 넘기면 하나가 실패할 때 나머지도 같이 잃는다.
@@ -1562,7 +1451,7 @@ Sandi Metz 가 「잘못된 추상은 중복보다 비싸다」로 적은 실패
 <span class="dim">Open edX 가 같은 모양을 <em>On-Commit Mode</em> 라 부르며 <em>“events <b>may be lost</b>”</em> 라 적는다.
 Celery 의 기본값(early-ack)도 같은 쪽이다 — <em>“preventing duplicates is the <b>safer default</b> despite potentially losing work”</em>.</span>""",
 
-116: """<b>내부 배달 기계.</b> 딕셔너리에 구독자를 담고, 커밋 뒤에 하나씩 순회하며 부른다. <b>바깥 프로세스도, 저장도 없다.</b>
+146: """<b>내부 배달 기계.</b> 딕셔너리에 구독자를 담고, 커밋 뒤에 하나씩 순회하며 부른다. <b>바깥 프로세스도, 저장도 없다.</b>
 <br><b>여기 것은 «어댑터»가 아니다</b> — 어댑터는 바깥 기술을 계약으로 번역하는데 <b>이 겹에는 번역할 바깥이 없다</b>.
 <br><b>「한 벌」이 이 칸의 전제다.</b> 발행은 유스케이스가, 등록은 <code>event_wiring.py</code> 가 하는데
 <b>둘이 «같은 객체»를 받지 못하면 조용히 아무 일도 안 일어난다</b> — 구독표는 이 인스턴스 «안»에 있기 때문이다.
@@ -1576,35 +1465,9 @@ Celery 의 기본값(early-ack)도 같은 쪽이다 — <em>“preventing duplic
 그러면 <button type="button" class="pin d" data-k="d40" data-go="d40">D40</button> 이 현행 코드를 반려한 근거 셋 중
 <em>「<code>_handlers</code> 가 모듈 레벨 가변 전역」</em> 이 <b>수정안에서 안 고쳐진 채로 남는다</b>.</span>""",
 
-117: """<b>바깥 미들웨어를 거치는 배달.</b> Redis·Kafka·SQS 처럼 <b>따로 돌아가는 중개자</b>를 두는 것들이다.
-<br><b>여는 조건은 «독립 배포 단위»가 갈릴 때 하나다</b> — 원전 셋이 같은 선을 긋는다.
-<span class="dim">Newman 이 마이크로서비스를 <em>“<b>Independently deployable</b> services modelled around a business domain”</em> 으로 정의하고
-<em>“the monolith is <b>not the enemy</b>”</em>·<em>“microservices should <b>not be the default choice</b>”</em> 라 못 박는다 ·
-Grzybek 의 ADR 15 가 in-memory 를 채택하며 계기를 <em>“if we ever want to <b>separate a module to another process</b>
-(microservices architecture), we will need to switch to middleware”</em> 하나로 적는다 ·
-Richardson 은 서비스가 갈리면 <em>“Synchronous communication results in <b>tight runtime coupling</b>”</em> 이라
-비동기 메시징 + <b>Transaction Outbox</b> 가 함께 필요해진다고 적는다.</span>
-<br><b>★ 이 넷으로 여기를 열면 «오답»이다</b> — <b>내구성</b>·<b>백프레셔</b>·<b>재시도</b>는 «워커»의 일이라
-<code>cron_job/</code> 이 이미 받고(D48 의 둘째 물음 「응답을 기다리게 해도 되나」), <b>보존·재생</b>은 이 트리의 관할 밖이다(Event Sourcing).
-<b>한 배포 단위 안에서 이 넷을 브로커로 풀면 미들웨어만 늘고 문제는 그대로 남는다.</b>
-<br><b>「언제 배포 단위가 갈리나」는 이 트리가 답할 것이 아니다</b> — 조직·확장 판단이다.
-<span class="dim">신호는 넷이 알려져 있다 — <b>배포 병목</b>(한 팀이 다른 팀을 기다린다) · <b>장애 격리 실패</b> ·
-<b>확장 제약</b>(한 도메인만 트래픽이 몰린다) · <b>팀 자율성</b>. 그리고 공통 경고 둘 —
-<em>“do not migrate without <b>concrete evidence of friction</b>”</em> · <em>10명 미만 팀은 «측정된» 확장 문제가 없으면 모놀리스로 남는다</em>.</span>
-<br><b>지금은 두 파일 다 «빈 파일»이다</b> — 이 저장소는 <b>한 배포 단위</b>다.
-그래도 칸이 서 있는 까닭은 <b>그 상황이 왔을 때 «트리를 고치지 않고» 내용만 채우게</b> 하려는 것이다.
-<br><b>그리고 이 칸은 «혼자 오지 않는다».</b> 아래 일곱이 한꺼번에 달라진다.
-<div class="pre-wrap"><pre><code>전달 보장     at-most-once  →  at-least-once
-소비자 멱등    불필요        →  <b>필수</b>   같은 사실이 두 번 온다
-이벤트 봉투    없음          →  <b>필요</b>   두 번 온 것을 «알아볼» 식별자
-재시도·데드레터  없음          →  <b>중개자가 진다</b>
-순서          자연 FIFO     →  <b>보장 안 됨</b>
-발신 원자성    on_commit     →  <b>outbox</b>  커밋과 발행이 갈라진다
-직렬화        없음(파이썬 객체) →  <b>필요</b>   스키마와 그 진화 규칙까지</code></pre></div>
-<span class="dim">08-10 · T50 — 신설. 이 목록이 <b>어디에도 없었다</b>. <code>outbox</code> 하나만
-<em>「여는 계기(브로커가 네트워크 너머로 나감)」</em> 에 매달려 있었고 나머지 여섯은 이름조차 없었다.</span>""",
+147: '<b>바깥 미들웨어를 거치는 배달.</b> Redis·Kafka·SQS 처럼 <b>따로 돌아가는 중개자</b>를 두는 것들이다.\n<br><b>여는 조건은 «독립 배포 단위»가 갈릴 때 하나다</b> — 원전 셋이 같은 선을 긋는다.\n<span class="dim">Newman 이 마이크로서비스를 <em>“<b>Independently deployable</b> services modelled around a business domain”</em> 으로 정의하고\n<em>“the monolith is <b>not the enemy</b>”</em>·<em>“microservices should <b>not be the default choice</b>”</em> 라 못 박는다 ·\nGrzybek 의 ADR 15 가 in-memory 를 채택하며 계기를 <em>“if we ever want to <b>separate a module to another process</b>\n(microservices architecture), we will need to switch to middleware”</em> 하나로 적는다 ·\nRichardson 은 서비스가 갈리면 <em>“Synchronous communication results in <b>tight runtime coupling</b>”</em> 이라\n비동기 메시징 + <b>Transaction Outbox</b> 가 함께 필요해진다고 적는다.</span>\n<br><b>★ 이 넷으로 여기를 열면 «오답»이다</b> — <b>내구성</b>·<b>백프레셔</b>·<b>재시도</b>는 «워커»의 일이라\n<code>cron_job/</code> 이 이미 받고(D48 의 둘째 물음 「응답을 기다리게 해도 되나」), <b>보존·재생</b>은 이 트리의 관할 밖이다(Event Sourcing).\n<b>한 배포 단위 안에서 이 넷을 브로커로 풀면 미들웨어만 늘고 문제는 그대로 남는다.</b>\n<br><b>「언제 배포 단위가 갈리나」는 이 트리가 답할 것이 아니다</b> — 조직·확장 판단이다.\n<span class="dim">신호는 넷이 알려져 있다 — <b>배포 병목</b>(한 팀이 다른 팀을 기다린다) · <b>장애 격리 실패</b> ·\n<b>확장 제약</b>(한 도메인만 트래픽이 몰린다) · <b>팀 자율성</b>. 그리고 공통 경고 둘 —\n<em>“do not migrate without <b>concrete evidence of friction</b>”</em> · <em>10명 미만 팀은 «측정된» 확장 문제가 없으면 모놀리스로 남는다</em>.</span>\n<br><b>다른 배포 단위의 소비자가 없으면 두 파일은 빈 골격으로 둔다.</b>\n그래도 칸이 서 있는 까닭은 <b>그 상황이 왔을 때 «트리를 고치지 않고» 내용만 채우게</b> 하려는 것이다.\n<br><b>그리고 이 칸은 «혼자 오지 않는다».</b> 아래 일곱이 한꺼번에 달라진다.\n<div class="pre-wrap"><pre><code>전달 보장     at-most-once  →  at-least-once\n소비자 멱등    불필요        →  <b>필수</b>   같은 사실이 두 번 온다\n이벤트 봉투    없음          →  <b>필요</b>   두 번 온 것을 «알아볼» 식별자\n재시도·데드레터  없음          →  <b>중개자가 진다</b>\n순서          자연 FIFO     →  <b>보장 안 됨</b>\n발신 원자성    on_commit     →  <b>outbox</b>  커밋과 발행이 갈라진다\n직렬화        없음(파이썬 객체) →  <b>필요</b>   스키마와 그 진화 규칙까지</code></pre></div>\n<span class="dim">08-10 · T50 — 신설. 이 목록이 <b>어디에도 없었다</b>. <code>outbox</code> 하나만\n<em>「여는 계기(브로커가 네트워크 너머로 나감)」</em> 에 매달려 있었고 나머지 여섯은 이름조차 없었다.</span>',
 
-118: """<b>프로세스 «밖» 배달의 약속 — 형제와 «다른» 계약이다.</b>
+148: """<b>프로세스 «밖» 배달의 약속 — 형제와 «다른» 계약이다.</b>
 <br><b>계약이 갈리는 까닭은 «보장»이 다르기 때문</b>이다. 하나로 묶으면 가장 약한 쪽(at-most-once)에 맞춰야 하고,
 그러면 <b>바깥 중개자를 두고도 그 강한 보장을 못 쓴다</b>. 반대로 강한 쪽에 맞추면 <code>internal</code> 이 <b>지킬 수 없는 약속</b>을 하게 된다.
 <br><b>여기 계약이 «더» 말하는 것 셋</b> — ① 「반드시 도달」을 기대해도 된다 ② <b>대신 두 번 올 수 있다</b>(멱등이 받는 쪽 의무가 된다)
@@ -1615,7 +1478,7 @@ Richardson 은 서비스가 갈리면 <em>“Synchronous communication results i
 Open edX 도 같은 자리에서 <em>“consumers can tolerate duplication, either by ensuring that events are idempotent
 or by keeping track of which <b>event IDs</b> have already been processed”</em> 라 적는다.</span>""",
 
-119: """<b>바깥 중개자를 계약으로 번역하는 자리.</b> Redis·Kafka·SQS 가 여기 온다.
+149: """<b>바깥 중개자를 계약으로 번역하는 자리.</b> Redis·Kafka·SQS 가 여기 온다.
 <br><b>계약 하나 = 파일 하나</b>다. Redis 에서 Kafka 로 옮기는 것은 «형제를 늘리는» 일이 아니라 <b>이 파일을 바꾸는</b> 일이고,
 그래서 <code>repository/</code>·<code>unit_of_work/</code>·<code>domain_bypass_query/</code> 와 같은 <b>«양방향 1:1»</b> 칸이다 —
 <b>저장소에 브로커는 하나여야 한다</b>는 성질이 그 셋과 같기 때문이다.
@@ -1623,7 +1486,7 @@ or by keeping track of which <b>event IDs</b> have already been processed”</em
 <b>계약이 둘로 갈리면서 접혔다</b> — 계약이 이 폴더 안에 있으면 「같은 폴더의 <code>*_port.py</code> 를 상속」이 서고,
 그러면 <button type="button" class="pin d" data-k="d57" data-go="d57">D57</button> 의 「폴더 이름 되풀이」 문제가 <b>애초에 안 생긴다</b>.</span>""",
 
-120: """<b>어느 BC 의 것도 아닌 기술 능력 하나.</b> 시계 · 난수 같은 것이다.
+150: """<b>어느 BC 의 것도 아닌 기술 능력 하나.</b> 시계 · 난수 같은 것이다.
 <br><b>여기는 «기다리지» 않는다.</b> 시계가 시계인 것은 BC 가 몇 개든 상관없어서,
 BC 하나짜리 저장소에서도 <b>처음부터</b> 여기 만든다.
 <em>Grzybek 의 모듈러 모놀리스는 아예 공유 폴더를 안 만들고 인프라 구현을 각 모듈에 남긴다 —
@@ -1633,18 +1496,18 @@ BC 하나짜리 저장소에서도 <b>처음부터</b> 여기 만든다.
 <code>OtpCodeGenerator</code> 는 속이 <code>secrets</code> 뿐인데도 «OTP» 때문에 탈락하고, <code>CurriculumCodebookSourcePort</code> 는 <code>json</code>+<code>pathlib</code> 뿐인데 «Curriculum» 때문에 탈락한다.""",
 
 
-121: """<b>계약.</b> <code>application_layer/port/&lt;capability&gt;/&lt;capability&gt;_port.py</code> 와 똑같이 생겼고 <b>다른 것은 주인이 없다는 것뿐</b>이다.
+151: """<b>계약.</b> <code>application_layer/port/&lt;capability&gt;/&lt;capability&gt;_port.py</code> 와 똑같이 생겼고 <b>다른 것은 주인이 없다는 것뿐</b>이다.
 <br><b>여기가 «되돌아 나가는» 자리이기도 하다.</b>
 <em>Metz 의 신호를 그대로 옮긴 것이다 — 「공유 코드에 매개변수와 조건 분기를 넣고 있으면 그 추상은 틀렸다」.
 그가 말한 실패의 핵심은 <b>「올라간 것이 못 내려온다」</b>이고, 승격만 있고 강등이 없으면 틀린 추상이 영원히 남는다.</em>
 """,
 
 
-122: """<b>이 능력이 실패하는 방식.</b> 「시계를 못 읽었다」 · 「엔트로피원이 죽었다」 · 「배달을 못 했다」.
+152: """<b>이 능력이 실패하는 방식.</b> 「시계를 못 읽었다」 · 「엔트로피원이 죽었다」 · 「배달을 못 했다」.
 업무 의미가 있는 것은 여기 오지 않는다 — 그건 그 BC 의 도메인이 안다.""",
 
 
-123: """<b>BC 의 <code>port/&lt;capability&gt;/&lt;data&gt;_out.py</code> 와 «같은 것»이다.</b> 담기는 것도, 안 담기는 것도 같다.
+153: """<b>BC 의 <code>port/&lt;capability&gt;/&lt;data&gt;_out.py</code> 와 «같은 것»이다.</b> 담기는 것도, 안 담기는 것도 같다.
 <br><b>단 «값 객체»가 가리키는 범위는 다르다</b> — BC 쪽은 표준 타입과 «이 포트 어휘로 된 타입»을, 여기는 <b>표준 타입만</b> 말한다.
 <code>framework/</code> 는 <code>domain_layer/</code> 를 못 보므로 <b>「도메인 값 객체 금지」가 여기서는 «자동으로» 성립한다</b>.
 <br><b>하나가 더 걸린다 — 업무 어휘가 한 글자라도 나오면 위반.</b> 능력이 여기 올라온 «자격»이
@@ -1654,15 +1517,13 @@ BC 하나짜리 저장소에서도 <b>처음부터</b> 여기 만든다.
 <code>pure/</code> 로 보내면 <em>「대화 하나의 어휘 셋이 한 자리에 산다」</em> 가 깨지고,
 <code>&lt;capability&gt;_port.py</code> 안에 우겨넣으면 <b>BC 쪽과 모양이 달라져 승격이 «파일 이동»이 아니게 된다</b>.</span>""",
 
-124: """<b>바깥이 답한 것.</b> <b>이 타입을 만드는 것은 어댑터뿐</b>이고, 여기서도 <b>업무 어휘가 0</b>이어야 한다.
+154: """<b>바깥이 답한 것.</b> <b>이 타입을 만드는 것은 어댑터뿐</b>이고, 여기서도 <b>업무 어휘가 0</b>이어야 한다.
 <br>형제와 마찬가지로 <b>원시값으로 안 될 때만</b> 생긴다 — <code>&lt;…&gt;</code> 가 처음 나오는 낱말이라 필요할 때 온다.""",
 
-125: """<b>구현.</b> BC 안에서는 <code>port/</code> 와 <code>driven_layer/</code> 라는 <b>«층»이 그 일을 하는데 여기는 층이 없어서</b>, 파일 이름과 검사 한 줄이 대신한다.
-<br>아래 검사가 <b>경로만으로 서는</b> 것이 이 칸의 값이다 — 계약이 폴더 이름과 같으니(105행) <b>나머지가 구현</b>이고, 사람이 「이건 계약인가 구현인가」를 재지 않는다.
-<span class="dim"><b>08-07 · 2차 리뷰</b> — 여기가 「판정 불가」로 남아 있던 자리다. 검사 문장은 있는데 <b>대상을 고르는 자가 없어서</b>, 계약과 구현이 같은 폴더에 나란히 사는 이 칸에서는 검사를 돌릴 수가 없었다. 94·105행에 이미 있던 모양(<em>계약 파일 = 폴더 이름</em>)을 <b>판정으로 적어</b> 닫았다 — 새 규칙이 아니라 쓰고 있던 규칙을 명문화한 것이다.</span>""",
+155: '<b>구현.</b> BC 안에서는 <code>port/</code> 와 <code>driven_layer/</code> 라는 <b>«층»이 그 일을 하는데 여기는 층이 없어서</b>, 파일 이름과 검사 한 줄이 대신한다.\n<br>아래 검사가 <b>경로만으로 서는</b> 것이 이 칸의 값이다 — 계약이 폴더 이름과 같으니(121행) <b>나머지가 구현</b>이고, 사람이 「이건 계약인가 구현인가」를 재지 않는다.\n<span class="dim"><b>08-07 · 2차 리뷰</b> — 여기가 「판정 불가」로 남아 있던 자리다. 검사 문장은 있는데 <b>대상을 고르는 자가 없어서</b>, 계약과 구현이 같은 폴더에 나란히 사는 이 칸에서는 검사를 돌릴 수가 없었다. 94·105행에 이미 있던 모양(<em>계약 파일 = 폴더 이름</em>)을 <b>판정으로 적어</b> 닫았다 — 새 규칙이 아니라 쓰고 있던 규칙을 명문화한 것이다.</span>',
 
 
-126: """<b>라이브러리 하나 = 폴더 하나.</b> <code>django/</code> · <code>ninja/</code>.
+156: """<b>라이브러리 하나 = 폴더 하나.</b> <code>django/</code> · <code>ninja/</code>.
 트리 전체에서 <b>기술 이름을 1차 축으로 쓰는 유일한 자리</b>다 — 여기서 실제로 갈리는 축이 그것뿐이기 때문이다.
 <em>실무 관례는 기술 이름을 «클래스 접두사»로 쓰고 폴더로는 잘 안 쓴다(Vernon 의 IDDD 도 <code>port/adapter/persistence/</code> 아래에 <code>LevelDB…Repository</code> 로 둔다).
 우리 트리도 그 관례를 따르는데(<code>Django&lt;Capability&gt;Adapter</code>), <b>이 칸만 예외</b>인 것은 여기 사는 코드가 «어느 계약의 구현»도 아니라 <b>붙일 능력 폴더가 없기 때문</b>이다.</em>
@@ -1670,78 +1531,105 @@ BC 하나짜리 저장소에서도 <b>처음부터</b> 여기 만든다.
 <br><em>안에 오는 모듈은 <b>«하는 일» 또는 «무엇인가»</b>로 이름 붙는다 — <code>authentication</code> · <code>retryable_database_error</code>. <b>기술 이름은 안 붙인다</b> — 폴더가 이미 말했다. <span class='dim'>08-09 · T54 — 옛 문장은 「«무엇을 하나»로」였는데 <b>여기 사는 넷 중 하나만 그렇다</b>(나머지 셋은 자료·타입이다).</span></em>""",
 
 
-127: """<b>그 라이브러리의 타입 없이는 문장 자체가 성립하지 않는 코드.</b>
-지금 있는 것은 <code>ninja/{authentication, framework_error_schema, framework_validation_error_schema}</code> 과
-<code>django/retryable_database_error</code> 다<em>(부르는 쪽 56건)</em>. <b>어느 BC 에 놓아도 똑같이 동작한다</b>는 것이 이 칸의 판정 기준이다.""",
+157: '<p>라이브러리 타입이 있어야 성립하는 공용 기술 코드다. 예를 들면 Ninja 인증, <code>FrameworkErrorSchema</code> 와 framework 오류 응답 처리, Django 기술 오류 판별이 온다. 어느 BC 의 업무도 알지 않는다.</p><p><code>dddjango-code-json</code> 에서는 승인된 공통 오류 봉투를 <code>framework/ninja/framework_error_schema.py</code> 에 둔다. BC base 가 이를 상속하며 framework failure 의 표현은 공통 경로가 소유한다. controller 에서 framework 오류를 직접 만들거나 BC 오류로 다시 매핑하지 않는다.</p>',
 
 
-128: """<b>«그냥 계산»인 것.</b> 금액 반올림 · 슬러그화 · 문자열 정규화 같은 것이 온다.
+158: """<b>«그냥 계산»인 것.</b> 금액 반올림 · 슬러그화 · 문자열 정규화 같은 것이 온다.
 <br><b>시계·난수는 여기가 아니다</b> — 같은 인자로 두 번 불러 답이 달라지므로 «2차 행위자»이고, 그건 <code>&lt;capability&gt;/</code> 다.
 <br><b>포트를 달지 않는 까닭</b> — 갈아끼울 상대가 없고, 테스트에서 고정할 것도 없다. 부르는 쪽이 그냥 함수를 부른다.""",
 
 
-129: """<b>순수 함수 하나 = 파일 하나</b>가 아니라 <b>«한 갈래» = 파일 하나</b>다 — <code>money.py</code> · <code>text.py</code>.
+159: """<b>순수 함수 하나 = 파일 하나</b>가 아니라 <b>«한 갈래» = 파일 하나</b>다 — <code>money.py</code> · <code>text.py</code>.
 <br><b>표준 라이브러리와 외부 패키지는 써도 된다</b>. 막는 것은 <b>저장소 안의 다른 파일</b>과 <b>부작용</b>이다.
 <em><code>datetime</code>·<code>time</code>·<code>random</code>·<code>secrets</code>·<code>os</code>·<code>io</code> 가 import 목록에 있으면 위반 — 근사다.</em>""",
 
 
-130: """<b>BC 것이 아닌 테스트 재료.</b> HTTP 로만 구동하게 묶어 두는 이유는 하나다 —
+160: """<b>BC 것이 아닌 테스트 재료.</b> HTTP 로만 구동하게 묶어 두는 이유는 하나다 —
 <b>그래야 뼈대가 특정 BC 의 내부를 알지 않는다.</b>
 <br>자식 셋 — 뼈대(<code>&lt;module&gt;.py</code>) · 가짜(<code>fake/</code>) · framework 자신의 테스트(<code>unit/</code>).""",
 
 
-131: """<b>공유 뼈대 하나 = 파일 하나.</b> 인증된 클라이언트를 만들어 주는 것, 응답 형식을 검사해 주는 것처럼
+161: """<b>공유 뼈대 하나 = 파일 하나.</b> 인증된 클라이언트를 만들어 주는 것, 응답 형식을 검사해 주는 것처럼
 <b>테스트를 «짜는 데» 쓰는 재료</b>가 온다.
 <br><b>「로그인이 되는가」를 검증하는 파일은 여기가 아니다</b> — 그건 그 BC 의 <code>test/</code> 다.
 <em>가르는 자는 형제들과 같다 — 이 재료의 뜻을 정하는 것이 <b>HTTP</b> 인가 <b>우리 업무</b> 인가.</em>""",
-132: """<b>framework 포트의 가짜 구현이 온다.</b> <code>FixedClock</code>, 아무것도 안 보내는 메일러,
+162: """<b>framework 포트의 가짜 구현이 온다.</b> <code>FixedClock</code>, 아무것도 안 보내는 메일러,
 메모리에만 쓰는 저장소 — <b>계약은 지키되 기술이 없는 것</b>들이다.
 <br><b>BC 쪽 <code>test/fake/</code> 와 다른 점은 «누구의 선언을 상속하나» 하나다</b> — 저기는 그 BC 의 포트,
 여기는 <code>framework/&lt;capability&gt;/</code> 의 포트다.""",
-133: """<b>파일 하나에 가짜 하나.</b> <code>clock_port.py</code> 안에 <code>FixedClock</code> 이 산다 —
+163: """<b>파일 하나에 가짜 하나.</b> <code>clock_port.py</code> 안에 <code>FixedClock</code> 이 산다 —
 <b>«어떻게 구현했나»가 클래스 접두</b>로 붙는다.
 <br>BC 쪽 <code>fake/</code> 와 <b>모양이 같아서</b> 층을 옮겨 다녀도 읽는 법이 안 바뀐다.""",
 
 
-134: """<code>framework/</code> 은 BC 가 아니지만 <b>코드인 이상 검사가 필요하다</b>.
+164: """<code>framework/</code> 은 BC 가 아니지만 <b>코드인 이상 검사가 필요하다</b>.
 같은 폴더에 섞으면 «이게 도구인지 테스트인지»가 흐려져서 자리를 따로 줬다.""",
 
 # ── <project> ───────────────────────────────────────────────────────
 
 
 # ── <project> ───────────────────────────────────────────────────────
-135: """<b>프레임워크가 «전역에 딱 하나»를 요구하는 것만.</b>
-BC 들을 하나의 장고 프로젝트로 얹는 자리이고, <b>BC 가 늘어도 이 폴더는 커지지 않는다.</b>
-<em>문자열 경로는 등록이고 import 는 앎이다 — 그 선이 이 폴더의 전부다.</em>""",
+165: '<p>전역 API·URLconf·Celery 앱·환경 설정을 조립하는 Django 프로젝트 패키지다. BC 의 내부 업무 타입을 가져와 분기하거나 나열하지 않는다.</p><p>BC API 의 공개 <code>register_&lt;bc&gt;_api(api)</code> 를 import 해서 등록하는 것은 허용된 조립 표면이다. 등록이 필요한 BC 가 추가되면 해당 등록 줄은 바뀐다. 업무 실패 목록이나 BC 내부 구현까지 아는 것과 구분한다.</p>',
 
 
-136: """프레임워크가 <b>«전역에 딱 하나»</b>를 요구해서 이 자리가 생겼다.
+166: """프레임워크가 <b>«전역에 딱 하나»</b>를 요구해서 이 자리가 생겼다.
 업무 실패를 나열하기 시작하면 <b>BC 가 하나 늘 때마다 이 파일이 바뀐다</b>.""",
 
 
-137: """각 BC 의 <code>register_&lt;bc&gt;_api(api)</code> 를 <b>명시적으로</b> 부른다.
+167: """각 BC 의 <code>register_&lt;bc&gt;_api(api)</code> 를 <b>명시적으로</b> 부른다.
 자동 탐색을 쓰지 않는 것은 <b>«무엇이 얹혔나»가 이 파일 하나로 보여야</b> 하기 때문이다.""",
 
 
-138: """<b>Celery 인스턴스와 <code>autodiscover_tasks</code>.</b>
+168: """<b>Celery 인스턴스와 <code>autodiscover_tasks</code>.</b>
 <code>api.py</code> 와 같은 자리이고 같은 자를 받는다 — <b>얹기만 하고 안을 모른다</b>.""",
 
 
-139: """<b>장고가 자리를 정한 설정.</b>
+169: """<b>장고가 자리를 정한 설정.</b>
 기능별로 파일을 쪼개기 시작하면 «이 값이 어느 환경에서 무엇인가»를 여러 파일을 열어 봐야 알게 된다.""",
 
 
-140: """<b>환경 하나 = 파일 하나</b> — <code>base</code> · <code>local</code> · <code>production</code> · <code>test</code>.
+170: """<b>환경 하나 = 파일 하나</b> — <code>base</code> · <code>local</code> · <code>production</code> · <code>test</code>.
 공통은 <code>base</code> 에 두고 나머지는 그것을 가져와 덮어쓴다.""",
+
+100: '포트를 실제로 구현하는 클래스들을 둔다.',
+101: '한 구현의 의존성 주입·외부 호출·실패와 응답 변환을 담는다.',
+102: '주입받는 호출의 계약들을 둔다.',
+103: '함수나 명령 객체가 지켜야 할 호출 시그니처를 Protocol 등으로 선언한다.',
+104: '프롬프트 등 고정된 값을 관련된 묶음으로 둔다.',
+105: '같은 이유로 바뀌는 프롬프트나 관련 상수를 함께 담는다.',
+106: '어댑터가 내부에서 주고받는 계약들을 둔다.',
+107: '호출 준비 결과 등의 구조를 내부 계약 클래스로 묶는다.',
+108: '외부 입출력의 검증 스키마들을 둔다.',
+109: 'Pydantic 등으로 외부 데이터가 갖춰야 할 모양을 선언한다.',
+113: '포트를 실제로 구현하는 클래스들을 둔다.',
+114: '한 구현의 의존성 주입·외부 호출·실패와 응답 변환을 담는다.',
+115: '주입받는 호출의 계약들을 둔다.',
+116: '함수나 명령 객체가 지켜야 할 호출 시그니처를 Protocol 등으로 선언한다.',
+117: '프롬프트 등 고정된 값을 관련된 묶음으로 둔다.',
+118: '같은 이유로 바뀌는 프롬프트나 관련 상수를 함께 담는다.',
+119: '어댑터가 내부에서 주고받는 계약들을 둔다.',
+120: '호출 준비 결과 등의 구조를 내부 계약 클래스로 묶는다.',
+121: '외부 입출력의 검증 스키마들을 둔다.',
+122: 'Pydantic 등으로 외부 데이터가 갖춰야 할 모양을 선언한다.',
+125: '포트를 실제로 구현하는 클래스들을 둔다.',
+126: '한 구현의 의존성 주입·외부 호출·실패와 응답 변환을 담는다.',
+127: '주입받는 호출의 계약들을 둔다.',
+128: '함수나 명령 객체가 지켜야 할 호출 시그니처를 Protocol 등으로 선언한다.',
+129: '프롬프트 등 고정된 값을 관련된 묶음으로 둔다.',
+130: '같은 이유로 바뀌는 프롬프트나 관련 상수를 함께 담는다.',
+131: '어댑터가 내부에서 주고받는 계약들을 둔다.',
+132: '호출 준비 결과 등의 구조를 내부 계약 클래스로 묶는다.',
+133: '외부 입출력의 검증 스키마들을 둔다.',
+134: 'Pydantic 등으로 외부 데이터가 갖춰야 할 모양을 선언한다.',
 }
 
-assert len(WHAT) == 140, len(WHAT)
+assert len(WHAT) == 170, len(WHAT)
 
 # ── 칸마다 «이름 규칙» ────────────────────────────────────────────────
 #    번호는 WHAT 과 같은 축(파트 순서)이다. 규칙이 없는 칸은 아예 넣지 않는다.
 NAMES = {
 1: "폴더 이름은 <b>업무 경계의 이름</b>이다 — 장고 앱 이름이 아니다(<code>accounts</code>·<code>billing</code>·<code>ai_chat</code>). 이 이름이 <code>driven_layer/django_&lt;bounded_context&gt;/</code> 와 <code>apps.py</code> 의 <code>label</code> 까지 그대로 간다.",
-2: "고정 이름 폴더 — BC 당 하나. 이름을 바꾸면 «와이어링이 어디냐»를 기계가 못 찾는다. <b>안의 파일은 <code>&lt;무엇&gt;_wiring.py</code> 한 꼴로</b> — <em>셋째가 생겨도 이름이 그대로 는다.</em>",
+2: '고정 이름 폴더. 결선 파일 이름도 <code>dependency_wiring.py</code>·<code>event_wiring.py</code> 로 고정한다.',
 # ── driving_layer ───────────────────────────────────────────────────
 3: "<b>«무엇을» 결선하나로 짓는다</b> — <code>&lt;무엇&gt;_wiring.py</code>. <span class='no'>dip.py</span> ✗ — 원칙 이름이라 «종류»가 아니고, 약어다.",
 4: "형제와 같은 꼴 — <code>&lt;무엇&gt;_wiring.py</code>. <b>셋째가 생기면 그대로 는다.</b> <span class='no'>subscription.py</span> ✗ — 입구의 <code>event_subscription/</code> 과 겹쳐 한 트리에서 «구독»이 두 뜻이 된다.",
@@ -1750,7 +1638,7 @@ NAMES = {
 7: "<span class='no'>presentation_layer/</span> 를 쓰지 않는다 — 축이 <b>「누가 나를 구동하나」</b> 라 Cockburn 의 <code>driving</code> 이 정확하다. <code>presentation</code> 은 DDD 어휘라 이 구역(헥사고날)과 어긋난다.",
 8: "<b>일반어가 된 약어</b>라 풀어 쓰지 않는다 — <span class='no'>application_programming_interface/</span>.",
 9: "고정 이름. <span class='no'>&lt;bounded_context&gt;_api_router.py</span> 로 짓지 않는다 — <b>BC 이름은 경로가 이미 말한다</b>.",
-10: "<b>고정 이름</b> · <b>접미 <code>_schema</code></b> — 이 파일은 <code>schema/</code> 폴더 «밖»에 살아서 <b>종류를 스스로 진다</b>. 트리의 자는 <b>폴더 «안»이면 접두</b>(<code>schema_in</code>), <b>«밖»이면 접미</b>(<code>bc_error_schema</code>)다.<br><b><span class='no'>schema_error.py</span> 로 짓지 않는다</b> — 접두는 자기가 «사는» 곳을 가리키는데 <code>schema/</code> 는 <b>옆</b>이지 부모가 아니다.<br><b><span class='no'>error_out.py</span> 를 버렸다</b> <span class='dim'>08-09 · T53</span> — 트리에서 <code>_out</code> 은 <b>«쌍의 한쪽»</b>을 뜻하는데 이 파일만 짝이 없어 <b>그 접미사가 아무것도 안 말했다</b>. 클래스도 같이 옮긴다 — <code>&lt;Bc&gt;ErrorSchema</code> · <code>&lt;Bc&gt;ErrorCode</code>.",
+10: '고정 이름 <code>bc_error_schema.py</code>. <code>bc_</code> 는 BC 소유 오류 언어, <code>_schema</code> 는 HTTP 표현 타입임을 말한다. 공통 봉투는 BC base 가 상속하며 controller 의 직접 반환 타입은 BC 오류다.',
 11: "업무 이름. 안쪽 <code>application_layer/&lt;area&gt;/</code> 와 <b>글자까지 같아야 한다</b> — 그 1:1 이 이름으로 검사된다.",
 12: "폴더가 «업무 이름»이라 파일이 <b>종류</b>를 말한다. <b>기술은 파일이 아니라 클래스에 붙는다</b> — <code>&lt;기술&gt;&lt;Area&gt;Controller</code>(<code>NinjaTurnController</code>) <em>§4</em>.",
 13: "종류 이름 폴더 — 그래서 아래 파일은 종류를 반복하지 않는다.",
@@ -1769,9 +1657,9 @@ NAMES = {
 24: "폴더가 «창구 이름»이라 파일이 종류를 말한다. <b>공개 함수는 <code>_command</code> 또는 <code>_query</code> 로 끝난다</b> — <b>상태를 바꾸면 커맨드, 안 바꾸면 질의</b>다. 부르는 쪽이 <b>「다시 불러도 되나」</b>를 이름에서 읽을 수 있어야 한다. <b>파일 이름에는 «종류»가 오고 함수 이름에는 «의도»가 온다</b> — 그래서 <code>&lt;use_case&gt;_use_case.py</code> 가 금지한 같은 낱말과 <b>자리가 다르다</b>.",
 25: "종류 이름 폴더.",
 26: "폴더가 <b>방향</b>을 말한다. <b><span class='no'>request_contract/</span> 로 짓지 않는다</b> — 부모가 이미 <code>contract/</code> 라 «계약/요청_계약»으로 겹친다. <span class='dim'>옛 문장은 «낱말은 한 경로에서 한 번만»이었고 그 자가 아래 파일에도 걸렸는데, <b>D41 이 파일 쪽 자를 갈았다</b> — 파일은 이제 «이름만으로 무엇인지 보이나»로 판정한다. 폴더 쪽은 그대로다.</span>",
-27: "<b>«연산 + 종류»</b> — 창구 함수 이름에서 <code>_command</code>/<code>_query</code> 를 떼고 <code>_request</code> 를 단다(<code>evict_child_command()</code> ↔ <code>evict_child_request.py</code>) <em>요청·응답·함수가 1:1 — «어간»이 같은지로 검사한다</em>. <b>연산 이름만으로는 요청인지 응답인지 안 보인다</b> — 50행과 같은 자다. <b>클래스는 <code>&lt;Operation&gt;Request</code></b> — 남이 <code>import</code> 하는 표면이라 <b>타입만 봐도 방향이 읽혀야</b> 하고, 그 사람 화면에 폴더는 안 보인다.",
+27: '<b>«연산 + 종류»</b> — 창구 함수 이름에서 <code>_command</code>/<code>_query</code> 를 떼고 <code>_request</code> 를 단다(<code>evict_child_command()</code> ↔ <code>evict_child_request.py</code>) <em>요청·응답·함수가 1:1 — «어간»이 같은지로 검사한다</em>. <b>연산 이름만으로는 요청인지 응답인지 안 보인다</b> — 58행과 같은 자다. <b>클래스는 <code>&lt;Operation&gt;Request</code></b> — 남이 <code>import</code> 하는 표면이라 <b>타입만 봐도 방향이 읽혀야</b> 하고, 그 사람 화면에 폴더는 안 보인다.',
 28: "폴더가 방향을 말한다. <span class='no'>response_contract/</span> ✗ — 위와 같은 규칙.",
-29: "<code>&lt;response&gt;_response.py</code> — 위와 같은 자. <b>클래스는 <code>&lt;Operation&gt;Response</code></b> · <b><span class='no'>&lt;Operation&gt;Result</span> 로 짓지 않는다</b> — <code>request</code> 의 짝은 <code>response</code> 이고 <b><code>result</code> 는 짝이 없는 «인과» 어휘</b>라 방향 축이 깨진다. 이 폴더는 <b>「물음에 대한 답」이 아니라 「이 창구가 돌려주는 것 전부」</b>이고 <b>거절도 답</b>이라, <code>Result</code> 는 «성공의 산물»로 기울어 정의를 좁힌다.",
+29: '파일은 <code>&lt;operation&gt;_response.py</code>, 주 클래스는 <code>&lt;Operation&gt;Response</code> 다. <code>Request</code> 와 짝이며 유스케이스의 <code>Result</code> 이름을 섞지 않는다. 구성 보조 dataclass 에는 주 계약 접미사를 강제하지 않는다.',
 30: "종류 이름 폴더. <span class='no'>exception_contract/</span> ✗ — 위와 같은 규칙. <b>여기만 폴더인 이유</b>는 <code>port/</code>·<code>domain_layer</code> 와 달리 <b>예외 하나가 곧 공개 계약 하나</b>라 타입마다 경로가 안정해야 하기 때문이다.",
 31: "형제와 <b>접미사가 다르다</b> — 형제는 <code>_exception</code>, 이것만 <code>_error</code> 다. 이것이 <b>기저</b>라는 «역할»을 이름이 말해야 하기 때문이다.",
 32: "<b>「무엇이 안 됐는가」 + 종류</b> 로 짓는다 — 부르는 쪽이 <b>이름만 보고 분기</b>할 수 있어야 하고, 그 이름이 <b>남의 저장소에서 홀로 읽힌다</b>. <b><span class='no'>_v1</span> 을 붙이지 않는다</b> — 버전은 파일 이름에 달지 않는다.",
@@ -1796,7 +1684,7 @@ NAMES = {
 50: "<b>명사 + <code>_in</code></b>(<code>verified_identity_in.py</code>). 위와 같은 자 — <b>우리에게 들어오면 <code>_in</code></b>. <b>«DTO» 라고 부르지 않는다</b> — 그 말은 <code>&lt;use_case&gt;/</code> 것이다.",
 51: "<b>고정 이름 폴더 — «무엇을 우회하나»를 이름이 말한다.</b> <span class='no'>query_repository/</span> 는 「조회냐」로 물어서 <b>애그리거트 리포지토리와 안 갈린다</b>(그쪽도 <code>find_by_id</code>·<code>count</code> 를 한다). <span class='no'>bypass_repository/</span> 는 <b>무엇을 우회하는지</b>가 빠진다. <span class='no'>domain_bypass_repository/</span> 는 판정은 서는데 <b>«Repository» 라는 계보를 빌린다</b> — 원전 셋이 이 물건을 그렇게 부르지 않는다(D41).",
 52: "<b>「무엇을 알고 싶은가」</b> 로 짓고 누가 그걸 주는지는 넣지 않는다.",
-53: "<b>능력 이름만으로는 «무엇인지»가 안 보여 파일이 종류를 단다</b> — 50행 <code>&lt;boundary&gt;_unit_of_work.py</code> 와 <b>같은 자</b>다. <span class='no'>child_lesson_digest.py</span> 는 열기 전에는 조회인지 알 수 없다. 클래스는 <code>&lt;Capability&gt;DomainBypassQuery</code> — <b><code>DomainBypassQuery</code> 는 구현에도 참인 낱말</b>이라 구현과 접미사를 공유하고 <b>접두사가 가른다</b>(<code>Django…</code>).",
+53: "<b>능력 이름만으로는 «무엇인지»가 안 보여 파일이 종류를 단다</b> — 58행 <code>&lt;boundary&gt;_unit_of_work.py</code> 와 <b>같은 자</b>다. <span class='no'>child_lesson_digest.py</span> 는 열기 전에는 조회인지 알 수 없다. 클래스는 <code>&lt;Capability&gt;DomainBypassQuery</code> — <b><code>DomainBypassQuery</code> 는 구현에도 참인 낱말</b>이라 구현과 접미사를 공유하고 <b>접두사가 가른다</b>(<code>Django…</code>).",
 54: "<b>명사 + <code>_out</code></b>. 종류 이름(<span class='no'>filter</span>·<span class='no'>spec</span>·<span class='no'>criteria</span>)이 아니라 <b>«무엇을 찾는지»</b>로 짓는다 — <code>overdue_order_search_out.py</code>.",
 
 55: "<b>명사 + <code>_in</code></b> — 같은 자. <b>«DTO» 라고 부르지 않는다</b> — 그 말은 <code>&lt;use_case&gt;/</code> 것이다.",
@@ -1812,7 +1700,7 @@ NAMES = {
 65: "접미사 없음 — 실측도 값 객체 <b>166파일 전부</b>가 그렇다.",
 66: "종류 이름 폴더.",
 67: "<b>과거의 «사실»</b> 로 짓는다 — <span class='yes'>order_placed.py</span> ✔ · <span class='no'>reduce_inventory.py</span> ✗(그건 명령이다). <span class='no'>_event</span> 접미사도 붙이지 않는다.",
-68: "<b>이름만으로 «무엇인지»가 안 보이면 파일이 종류를 단다</b>(50행과 같은 자). 여기는 <b>같은 폴더에 <code>&lt;aggregate&gt;.py</code> 가 이미 있어</b> 더 세다. 클래스는 <code>&lt;Aggregate&gt;Repository</code> · 구현은 <code>Django&lt;Aggregate&gt;Repository</code> — <code>Repository</code> 는 구현에도 참이라 <b>접두사가 가른다</b>.",
+68: '<b>이름만으로 «무엇인지»가 안 보이면 파일이 종류를 단다</b>(58행과 같은 자). 여기는 <b>같은 폴더에 <code>&lt;aggregate&gt;.py</code> 가 이미 있어</b> 더 세다. 클래스는 <code>&lt;Aggregate&gt;Repository</code> · 구현은 <code>Django&lt;Aggregate&gt;Repository</code> — <code>Repository</code> 는 구현에도 참이라 <b>접두사가 가른다</b>.',
 69: "<b>종류 이름 폴더</b> — 고정 이름이다. 복수형(<code>exceptions/</code>)이나 <code>error/</code> 로 흔들지 않는다. <code>port/&lt;capability&gt;/exception.py</code> · <code>contract/exception/</code> 도 같은 낱말을 쓰므로 <b>예외 어휘는 트리 전체에서 한 벌</b>이다.",
 70: "<b>«무엇이 참이어야 했는가»</b> 로 짓는다 — <span class='yes'>order_already_placed.py</span> ✔. <b><span class='no'>_error</span>·<span class='no'>_exception</span> 접미사를 붙이지 않는다</b> — <b>이름이 곧 서술문</b>이라 그 자체로 「불변식이 깨졌다」가 읽힌다. <span class='dim'>같은 낱말의 계약 쪽 폴더(<code>contract/exception/</code>)는 접미사를 단다 — 거긴 <b>남의 저장소에서 홀로 읽히는 표면</b>이다.</span>",
 71: "<b>주인이 하나가 아니라 종류 이름으로 짓는다</b>(§0-4 의 예외 둘 중 하나). <code>shared_</code> 접두가 «이쪽이 예외»임을 이름으로 말한다 — 안쪽 <code>value_object/</code> 가 기본값이다.",
@@ -1820,7 +1708,7 @@ NAMES = {
 74: "<b>주어가 되는 도메인 어휘</b>를 담는다(<code>lesson_slot_policy.py</code>) — 폴더가 애그리거트를 안 말하니 이름이 말한다. 같은 BC 의 값 객체와 <b>겹치면 «행위»로</b> 짓는다(<code>settle_turn.py</code>). 접미사는 안 붙인다.",
 # ── driven_layer ────────────────────────────────────────────────────
 75: "<span class='no'>infra_layer/</span> · <span class='no'>infrastructure_layer/</span> · <span class='no'>driven_adapter/</span> · <span class='no'>secondary_adapter/</span> 를 쓰지 않는다. <code>infra</code> 는 <b>약어인 데다 어느 계보의 어휘도 아니고</b>, 계층을 역할이 아니라 «기술 지층»으로 부른다.",
-76: "<b>트리 전체에서 프레임워크가 이름을 정하는 유일한 자리.</b> 폴더 이름 = <code>django_</code> + <code>apps.py</code> 의 <code>label</code> 이고 <code>label</code> = <b>BC 이름</b>이다. <code>label</code> 은 프로젝트 전체에서 유일해야 하고 장고 기본 앱(<code>admin</code>·<code>auth</code>·<code>sessions</code>…)과도 겹치면 안 된다. <b>BC 이름이 바뀌면 <code>label</code> 도 같이 바꾼다.</b>",
+76: '폴더는 <code>django_&lt;bounded_context&gt;</code>, <code>AppConfig.label</code> 은 BC 이름이다. label 은 프로젝트 안에서 유일하고 설치된 다른 앱의 label 과 겹치지 않는다. 이미 적용된 마이그레이션이 참조하는 label 은 폴더 이름을 고치듯 가볍게 바꾸지 않는다.',
 77: "장고가 정하는 고정 이름.",
 78: "종류 이름 폴더 — <b>장고가 정하는 이름</b>이라 <span class='no'>orm/</span>·<span class='no'>table/</span> 로 바꾸지 않는다.",
 79: "<b>폴더가 종류를 말하는데도 접미사를 다는 트리 유일의 자리.</b> 도메인 <code>&lt;entity&gt;.py</code> 와 <b>같은 BC 안</b>에 있고 어드민이 둘을 <b>한 파일에서 같이</b> 쓴다. 이름이 «<b>모델은 애그리거트가 아니다</b>»를 집행한다. 클래스는 <code>&lt;Entity&gt;Model</code>.",
@@ -1829,7 +1717,7 @@ NAMES = {
 82: "장고가 정하는 고정 이름.",
 83: "<b>엔티티 이름 그대로</b> — <code>&lt;entity&gt;_model.py</code> 에서 접미사를 뗀 것과 같다. 접미사는 안 붙인다 — <b>자리가 <code>admin/</code> 아래인 것이 이미 «어드민»을 말한다</b>.",
 84: "고정 이름. <b><span class='no'>_admin</span> 접미사를 붙이지 않는다</b> — 폴더가 이미 «누구»를 말했으니 파일은 «무엇»만 말한다.",
-85: "<b>폼 이름만으로는 «무엇인지»가 안 보여 파일이 종류를 단다</b> — 50행 <code>&lt;boundary&gt;_unit_of_work.py</code> 와 <b>같은 자</b>다.",
+85: '<b>폼 이름만으로는 «무엇인지»가 안 보여 파일이 종류를 단다</b> — 58행 <code>&lt;boundary&gt;_unit_of_work.py</code> 와 <b>같은 자</b>다.',
 86: "<b>여기 <code>&lt;feature&gt;</code> 는 «운영 기능 하나»</b>(무료 결제·토큰 지급)이지 <code>api/&lt;area&gt;/</code> 의 업무 묶음이 아니다 — 어드민이 <b>규정 밖 구역</b>이라 이 자리만 어휘가 따로 논다.",
 87: "<b>셋째 마디는 폴더 이름(<code>django_…</code>)이 아니라 <code>apps.py</code> 의 <code>label</code></b> 이다 — 장고는 템플릿을 «경로»가 아니라 <b>전역 이름</b>으로 찾는다. 덮어쓰기 경로의 모델 마디는 <b>클래스명을 전부 소문자로 붙인 것</b>이다(밑줄 없음).",
 88: "<b>둘째 마디가 BC 이름인 것은 형제와 같은 이유</b> — 장고는 템플릿을 «경로»가 아니라 <b>전역 이름</b>으로 찾아, 안 싸면 BC 끼리 조용히 덮어쓴다. <b>셋째 마디는 그 문구를 쓰는 <code>&lt;capability&gt;</code></b> — 포트 이름 그대로다(<code>notification/</code>). <b>로케일을 파일 이름에 넣지 않는다</b> — <span class='no'>cancellation.ko.html</span> ✗ · <span class='no'>cancellation_ko.html</span> ✗. 장고의 <code>LOCALE_PATHS</code> 가 <code>.po</code> 로 가르는 축이라, 파일로 가르면 <b>같은 일을 두 채널로</b> 하게 된다.",
@@ -1843,47 +1731,78 @@ NAMES = {
 96: "<code>port/unit_of_work/</code> 의 선언과 <b>이름이 같다</b>. 클래스는 <code>Django&lt;Boundary&gt;UnitOfWork</code>.",
 97: "<b><span class='no'>acl/</span> 를 쓰지 않는다</b> — 약어인 데다 <b>다른 뜻으로 먼저 읽힌다</b>(access control list). 트리에서 오독 위험까지 있는 유일한 약어였다.",
 98: "<b>«남»의 BC 이름</b> — <span class='no'>&lt;bounded_context&gt;/</span> 로 두면 <b>조상과 같은 낱말이라 «나 자신»이 된다</b><span class='dim'> 08-09 · T52</span>.<br>폴더가 <b>«누구»</b>(상대 BC)를 말한다 — 그래서 <code>ls</code> 한 번이 «내가 어느 BC 에 기대나»를 답한다.",
-99: "<b>어댑터는 «누구»(폴더)로, 포트는 «필요»(파일)로</b> 이름 붙는다. 선언과 <b>어간이 같고 접미사가 갈린다</b> — <code>&lt;capability&gt;_port.py</code> ↔ <code>&lt;capability&gt;_adapter.py</code>. 클래스는 <code>&lt;Bc&gt;&lt;Capability&gt;Adapter</code> — <b><code>Port</code> 는 구현에 거짓</b>이라 접미사가 갈라야 한다.",
-101: "그 시스템의 <b>고유명</b> — <code>toss/</code> · <code>s3/</code> · <code>openai/</code>.",
-102: "포트 파일과 <b>어간이 같고 접미사가 갈린다</b>. 클래스는 <code>&lt;System&gt;&lt;Capability&gt;Adapter</code> — <b><span class='no'>…Gateway</span> 를 흡수한다</b>(계약이면 <code>Port</code>, 구현이면 <code>Adapter</code>).",
-103: "<b>능력 이름</b> — 선언 <code>port/&lt;capability&gt;/</code> 와 같다. 형제 셋이 «상대» 이름인데 여기만 «능력»인 것은 <b>설 상대가 없어서</b>다.",
-104: "<b>기술 + <code>_adapter</code></b>(<code>password_hashing/argon2_adapter.py</code>) — <b>능력은 폴더가 이미 말했다</b>. 클래스는 <code>&lt;기술&gt;&lt;Capability&gt;Adapter</code>(<code>Argon2PasswordHashingAdapter</code>) — <b>능력을 폴더 이름에서 가져온다</b>.<br><b><span class='no'>&lt;capability&gt;_adapter.py</span> 를 버렸다</b> <span class='dim'>08-09 · T48</span> — 폴더 이름을 되풀이해 <b>같은 능력에 둘째 어댑터가 못 왔다</b>. 형제 셋은 폴더가 «상대»를 말해서 파일이 «능력»을 지는데, <b>여기만 폴더가 능력이라 파일이 «기술»을 져야 한다</b>. 형제 <code>framework/&lt;capability&gt;/&lt;technology&gt;_adapter.py</code> 가 이미 이 모양이었다.",
-105: "<b>항상 무언가의 «자식»으로만 둔다</b> — 저장소 루트에 <code>test/</code> 를 두면 파이썬 표준 라이브러리 모듈 <code>test</code> 와 겹친다. 같은 함정이 <code>types</code>·<code>json</code>·<code>enum</code>·<code>code</code> 에도 있다.",
-106: "<b>폴더 이름만 보고 «무엇을 켜고 도는지» 알 수 있어야 한다</b> — 계층 이름을 쓰지 않는 이유가 이것이다.",
+99: '<code>&lt;capability&gt;_adapter/</code> — 포트와 능력 이름을 공유하는 고정 패키지다. 구현 클래스는 <code>&lt;Bc&gt;&lt;Capability&gt;Adapter</code> 이며 <code>adapter/&lt;implementation&gt;_adapter.py</code> 에 각각 둔다.',
+111: "그 시스템의 <b>고유명</b> — <code>toss/</code> · <code>s3/</code> · <code>openai/</code>.",
+112: '<code>&lt;capability&gt;_adapter/</code> — 포트와 능력 이름을 공유하는 고정 패키지다. 구현 클래스는 <code>&lt;System&gt;&lt;Capability&gt;Adapter</code> 이며 <code>adapter/&lt;implementation&gt;_adapter.py</code> 에 각각 둔다.',
+123: "<b>능력 이름</b> — 선언 <code>port/&lt;capability&gt;/</code> 와 같다. 형제 셋이 «상대» 이름인데 여기만 «능력»인 것은 <b>설 상대가 없어서</b>다.",
+124: '<b>기술 + <code>_adapter/</code></b> — 예: <code>password_hashing/argon2_adapter/</code>. 구현은 안쪽 <code>adapter/&lt;implementation&gt;_adapter.py</code> 에 둔다. 클래스는 <code>&lt;기술&gt;&lt;Capability&gt;Adapter</code>(<code>Argon2PasswordHashingAdapter</code>)다. 기술은 바깥 패키지, 능력은 그 부모 폴더에서 읽는다.',
+135: "<b>항상 무언가의 «자식»으로만 둔다</b> — 저장소 루트에 <code>test/</code> 를 두면 파이썬 표준 라이브러리 모듈 <code>test</code> 와 겹친다. 같은 함정이 <code>types</code>·<code>json</code>·<code>enum</code>·<code>code</code> 에도 있다.",
+136: "<b>폴더 이름만 보고 «무엇을 켜고 도는지» 알 수 있어야 한다</b> — 계층 이름을 쓰지 않는 이유가 이것이다.",
 
-110: "<b>고정 이름</b> — <span class='no'>double/</span> 은 <b>상위어라 서랍이 된다</b>(Meszaros 의 <em>Test Double</em> 아래로 Dummy·Fake·Stub·Spy·Mock 이 다 들어온다). 여기 오는 것은 <b>Fowler 의 <em>Fake</em></b> 하나다 — <em>“Fake objects actually have <b>working implementations</b>”</em>.<br><span class='no'>in_memory/</span> 는 <b>구현 수단</b>이라 고정 시계·빈 발송기를 안 덮는다 — 그건 <b>클래스 이름</b>이 진다.",
-111: "<b>선언 파일과 «같은 이름»</b> — <code>&lt;aggregate&gt;_repository.py</code>·<code>&lt;capability&gt;_port.py</code>·<code>&lt;capability&gt;_query.py</code>. <b>여기서만 「폴더가 종류를 말하면 파일은 접미사를 뗀다」가 «안» 걸린다</b> — 떼면 <code>adapter/</code> 와 같은 1:1 이름 검사가 <b>설 수 없다</b>.<br>클래스는 <b>«어떻게 구현했나» + 선언 이름</b> — <code>InMemoryOrderRepository</code>·<code>FixedClock</code>·<code>NullNotificationPort</code>. <span class='no'>FakeOrderRepository</span> 는 <b>폴더가 이미 한 말</b>이다.",
+140: "<b>고정 이름</b> — <span class='no'>double/</span> 은 <b>상위어라 서랍이 된다</b>(Meszaros 의 <em>Test Double</em> 아래로 Dummy·Fake·Stub·Spy·Mock 이 다 들어온다). 여기 오는 것은 <b>Fowler 의 <em>Fake</em></b> 하나다 — <em>“Fake objects actually have <b>working implementations</b>”</em>.<br><span class='no'>in_memory/</span> 는 <b>구현 수단</b>이라 고정 시계·빈 발송기를 안 덮는다 — 그건 <b>클래스 이름</b>이 진다.",
+141: "<b>선언 파일과 «같은 이름»</b> — <code>&lt;aggregate&gt;_repository.py</code>·<code>&lt;capability&gt;_port.py</code>·<code>&lt;capability&gt;_query.py</code>. <b>여기서만 「폴더가 종류를 말하면 파일은 접미사를 뗀다」가 «안» 걸린다</b> — 떼면 <code>adapter/</code> 와 같은 1:1 이름 검사가 <b>설 수 없다</b>.<br>클래스는 <b>«어떻게 구현했나» + 선언 이름</b> — <code>InMemoryOrderRepository</code>·<code>FixedClock</code>·<code>NullNotificationPort</code>. <span class='no'>FakeOrderRepository</span> 는 <b>폴더가 이미 한 말</b>이다.",
 # ── framework ───────────────────────────────────────────────────────
-112: "저장소 루트의 패키지라 <b>파이썬 표준 라이브러리 모듈명과 겹치면 안 된다</b>(<code>sys.stdlib_module_names</code> 한 줄 검사). <span class='no'>common/</span> · <span class='no'>utils/</span> 는 <b>판정이 되는 물음이 없는 이름</b>이라 쓰지 않는다 — 「공통이냐」는 정도로 재는 말이라 서랍이 된다.",
-113: "<b>고정 이름 폴더.</b> <code>test/</code> 에 이은 둘째 고정 이름이다 — <b>기술 이름으로 짓지 않는다</b>(<span class='no'>redis/</span> ✗ · <span class='no'>celery/</span> ✗). 무엇을 하는가가 이름이다.",
+142: "저장소 루트의 패키지라 <b>파이썬 표준 라이브러리 모듈명과 겹치면 안 된다</b>(<code>sys.stdlib_module_names</code> 한 줄 검사). <span class='no'>common/</span> · <span class='no'>utils/</span> 는 <b>판정이 되는 물음이 없는 이름</b>이라 쓰지 않는다 — 「공통이냐」는 정도로 재는 말이라 서랍이 된다.",
+143: "<b>고정 이름 폴더.</b> <code>test/</code> 에 이은 둘째 고정 이름이다 — <b>기술 이름으로 짓지 않는다</b>(<span class='no'>redis/</span> ✗ · <span class='no'>celery/</span> ✗). 무엇을 하는가가 이름이다.",
 
 
 
 
-123: "<b>명사 + <code>_out</code></b> — <code>file_storage/stored_file_out.py</code>. 클래스는 <code>&lt;Data&gt;Out</code>(<code>StoredFileOut</code>).",
-124: "<b>명사 + <code>_in</code></b> — <code>notification/delivery_receipt_in.py</code>. 클래스는 <code>&lt;Data&gt;In</code>.",
+153: "<b>명사 + <code>_out</code></b> — <code>file_storage/stored_file_out.py</code>. 클래스는 <code>&lt;Data&gt;Out</code>(<code>StoredFileOut</code>).",
+154: "<b>명사 + <code>_in</code></b> — <code>notification/delivery_receipt_in.py</code>. 클래스는 <code>&lt;Data&gt;In</code>.",
 
-114: "<b>고정 이름 폴더</b> — 형제 <code>external/</code> 과 «짝»이라 둘 중 하나만 있을 수 없다.<br><span class='no'>in_process/</span> ✗ — 그건 <b>기술</b>이지 «범위»가 아니다. 이 겹이 지는 것은 <b>「프로세스를 넘나」</b> 하나다.",
-115: "<b>폴더 이름 + <code>_port</code></b> — 폴더가 이미 «어느 쪽»인지 말했는데도 <b>이름에 다시 넣는다</b>. 형제 <code>external_broker_port.py</code> 와 <b>한 컨트롤러가 둘 다 import 하지 않지만 <code>composition_root</code> 는 둘 다 본다</b> — 거기서 <code>broker_port</code> 둘이 되면 별칭이 필요해진다.<br>클래스는 <code>InternalBrokerPort</code>.",
-116: "<b>폴더 이름 + <code>_broker</code></b> — 계약과 «어간이 같고 접미사만 갈린다». 클래스는 <code>InternalBroker</code>.<br><b><span class='no'>_adapter</span> 를 쓰지 않는다</b> — <code>*_adapter.py</code> 를 대상으로 도는 검사 넷이 여기 걸리면 안 되고, 이 겹에는 <b>번역할 바깥이 없다</b>.",
-117: "<b>고정 이름 폴더</b> — 낱말은 새로 만든 것이 아니다. <code>driven_layer/adapter/<b>external</b>_system/</code> 이 이미 「바깥」을 이 낱말로 부른다.<br><span class='no'>remote/</span>·<span class='no'>distributed/</span> ✗ — 「멀다」·「분산」은 <b>정도</b>라 판정이 안 서는데, 「프로세스를 넘나」는 <b>예/아니오</b>다.",
-118: "<b>폴더 이름 + <code>_port</code></b> — 형제와 같은 규칙. 클래스는 <code>ExternalBrokerPort</code>.<br><b>형제와 이름이 갈리는 것이 요점이다</b> — 같은 계약의 두 구현이 아니라 <b>다른 계약 둘</b>이라, 이름이 같으면 그 사실이 지워진다.",
-119: "<b>폴더 이름 + <code>_broker</code></b>. 클래스는 <code>ExternalBroker</code>.<br><b>기술 이름을 안 붙인다</b> <span class='no'>redis_broker.py</span> — 계약이 이 폴더 안에 있어 <b>「같은 폴더의 <code>*_port.py</code> 를 상속」이 1:1 로 서고</b>, 그러면 파일이 여럿일 자리가 없다. <b>기술은 파일 «안»에 산다</b> — <code>driven_layer/adapter/persistence/repository/</code> 와 같은 꼴이다.",
+144: '고정 이름 <code>internal/</code>. 형제 <code>external/</code> 과 가르는 기준은 듣는 쪽이 다른 배포 단위인지다. 내부 구현의 실제 전달 범위는 같은 프로세스다.',
+145: "<b>폴더 이름 + <code>_port</code></b> — 폴더가 이미 «어느 쪽»인지 말했는데도 <b>이름에 다시 넣는다</b>. 형제 <code>external_broker_port.py</code> 와 <b>한 컨트롤러가 둘 다 import 하지 않지만 <code>composition_root</code> 는 둘 다 본다</b> — 거기서 <code>broker_port</code> 둘이 되면 별칭이 필요해진다.<br>클래스는 <code>InternalBrokerPort</code>.",
+146: "<b>폴더 이름 + <code>_broker</code></b> — 계약과 «어간이 같고 접미사만 갈린다». 클래스는 <code>InternalBroker</code>.<br><b><span class='no'>_adapter</span> 를 쓰지 않는다</b> — <code>*_adapter.py</code> 를 대상으로 도는 검사 넷이 여기 걸리면 안 되고, 이 겹에는 <b>번역할 바깥이 없다</b>.",
+147: '고정 이름 <code>external/</code>. 독립 배포 단위 사이의 배달이라는 범위를 말한다. 거리나 단순히 워커 프로세스가 여럿인지로 정하지 않는다.',
+148: "<b>폴더 이름 + <code>_port</code></b> — 형제와 같은 규칙. 클래스는 <code>ExternalBrokerPort</code>.<br><b>형제와 이름이 갈리는 것이 요점이다</b> — 같은 계약의 두 구현이 아니라 <b>다른 계약 둘</b>이라, 이름이 같으면 그 사실이 지워진다.",
+149: "<b>폴더 이름 + <code>_broker</code></b>. 클래스는 <code>ExternalBroker</code>.<br><b>기술 이름을 안 붙인다</b> <span class='no'>redis_broker.py</span> — 계약이 이 폴더 안에 있어 <b>「같은 폴더의 <code>*_port.py</code> 를 상속」이 1:1 로 서고</b>, 그러면 파일이 여럿일 자리가 없다. <b>기술은 파일 «안»에 산다</b> — <code>driven_layer/adapter/persistence/repository/</code> 와 같은 꼴이다.",
 
-120: "<b>폴더 안에 <code>*_port.py</code> 가 있으면</b> 이 갈래다 — 사람이 판정할 것이 없다(<b>갈래</b>).<br><b>이름은 <code>port/&lt;capability&gt;/</code> 것을 그대로 받는다</b> — 「<b>무엇이 필요한가</b>」로 짓고 <b>«바뀔 수 있는 것»은 넣지 않는다</b>: <b>누가</b>(공급자) · <b>언제</b>(계기) · <b>어떻게</b>(전달 수단). 판정도 같다 — <b>「그것이 바뀌어도 이 이름이 그대로인가」</b>.<br><span class='no'>smtp_client/</span> ✗ <span class='no'>redis_cache/</span> ✗ — 둘 다 «어떻게»다. <code>email_sender/</code> · <code>clock/</code> 처럼 짓는다.<br><span class='dim'>08-10 · A-8 — 이 칸에 이름 규칙이 <b>아예 없어서</b> <code>smtp_client/</code> 가 통과하고 있었다. <b>여기서 값이 더 크다</b> — BC 의 유스케이스가 이 이름을 «직접» import 한다.</span>",
-121: "<b>접미사 <code>_port</code> 가 계약을 말한다</b>(<code>clock/clock_port.py</code>) — <b>같은 폴더에 구현이 나란히 살아서</b> 둘을 가르는 것이 접미사뿐이다. 클래스는 <code>&lt;Capability&gt;Port</code>(<code>ClockPort</code>).<br><b>메서드 이름의 자도 <code>port/&lt;capability&gt;_port.py</code> 것을 그대로 받는다</b> — <b>시키면 명령형 동사구</b>(<code>send()</code>) · <b>물으면 묻는 꼴</b>(<code>now()</code>). <span class='no'>handle()</span>·<span class='no'>execute()</span> 처럼 무엇을 하는지 안 말하는 이름은 위반이다.<br><span class='dim'>08-10 · A-9 — 이 칸이 <em>「<code>port/&lt;capability&gt;_port.py</code> 와 <b>똑같이 생겼다</b>」</em> 를 논거로 쓰면서 <b>메서드 자만 안 받았다</b>. 형제 계약 칸들은 각자 «더 센 자»가 이미 있어(<code>save</code>/<code>remove</code> · <code>_command</code>/<code>_query</code> · 「계약은 셋」) <b>진짜 빈 곳은 여기 하나였다</b>.</span> <span class='dim'>접미사가 D14(«괄호는 포트가 아니다»)와 안 부딪히는 까닭 — 여기는 자료·실패를 주고받는 <b>대화가 있는</b> 계약이고, D14 가 떨어뜨린 것은 어휘가 아니라 «대화 없음»(괄호)이었다.</span>",
-122: "<b>고정 이름 파일.</b> 형제 <code>application_layer/port/&lt;capability&gt;/exception.py</code> 와 같은 이름을 쓴다 — <b>같은 물건이면 같은 이름</b>이라야 사람이 두 번 배우지 않는다. 클래스는 <b>「무엇이 안 됐는가」의 서술문</b>(<code>ClockUnavailable</code>) — <span class='no'>ClockError</span> ✗ 는 무엇이 안 됐는지를 말하지 않는다.",
-125: "<b>기술 + <code>_adapter</code></b>(<code>clock/django_adapter.py</code>) — 능력은 폴더가 이미 말했다. 클래스는 <code>&lt;기술&gt;&lt;Capability&gt;Adapter</code> — 여기서는 <b>능력을 폴더 이름에서 가져온다</b>(<code>DjangoClockAdapter</code>).",
-126: "<b><code>*_port.py</code> 가 «없으면»</b> 이 갈래다. <b>트리에서 기술이 1차 축인 유일한 자리</b>이고, 안에 <span class='no'>*_port.py</span> 를 두지 않는다(두면 «능력»으로 읽힌다).",
-127: "<b>«하는 일» 또는 «무엇인가»</b>로 짓는다 — <code>authentication.py</code>(하는 일) · <code>retryable_database_error.py</code>·<code>framework_error_schema.py</code>(무엇인가). <b>기술 이름은 접두로 안 붙인다</b> — <span class='no'>ninja_authentication.py</span>. 폴더가 이미 말했다.<br><b><span class='no'>error_out.py</span> 를 버렸다</b> <span class='dim'>08-09 · T54</span> — 현행은 <code>ninja/<b>response</b>/error_out.py</code> 라 폴더가 짝을 이뤘는데, 이 칸이 평평해지며 <b><code>_out</code> 의 짝이 사라졌다</b>. <b>BC 것과 정확히 같은 사건</b>이라 같은 접미(<code>_schema</code>)로 간다. <b>접두 <code>framework_</code></b> — 같은 컨트롤러가 <code>bc_error_schema.py</code> 와 «함께 import» 하므로 이름이 갈려야 한다. <span class='no'>common_</span> 은 안 쓴다 — <b>이 폴더가 <code>common/</code> 에서 개명한 그 낱말</b>이고, 「공통이냐」는 성질이 아니라 정도라 서랍이 된다(D24).<br><b>«규칙»은 파일이 되지 않는다</b> — 이 칸은 <b>그 라이브러리의 타입으로 쓴 «코드»</b>가 사는 자리다.",
+150: "<b>폴더 안에 <code>*_port.py</code> 가 있으면</b> 이 갈래다 — 사람이 판정할 것이 없다(<b>갈래</b>).<br><b>이름은 <code>port/&lt;capability&gt;/</code> 것을 그대로 받는다</b> — 「<b>무엇이 필요한가</b>」로 짓고 <b>«바뀔 수 있는 것»은 넣지 않는다</b>: <b>누가</b>(공급자) · <b>언제</b>(계기) · <b>어떻게</b>(전달 수단). 판정도 같다 — <b>「그것이 바뀌어도 이 이름이 그대로인가」</b>.<br><span class='no'>smtp_client/</span> ✗ <span class='no'>redis_cache/</span> ✗ — 둘 다 «어떻게»다. <code>email_sender/</code> · <code>clock/</code> 처럼 짓는다.<br><span class='dim'>08-10 · A-8 — 이 칸에 이름 규칙이 <b>아예 없어서</b> <code>smtp_client/</code> 가 통과하고 있었다. <b>여기서 값이 더 크다</b> — BC 의 유스케이스가 이 이름을 «직접» import 한다.</span>",
+151: "<b>접미사 <code>_port</code> 가 계약을 말한다</b>(<code>clock/clock_port.py</code>) — <b>같은 폴더에 구현이 나란히 살아서</b> 둘을 가르는 것이 접미사뿐이다. 클래스는 <code>&lt;Capability&gt;Port</code>(<code>ClockPort</code>).<br><b>메서드 이름의 자도 <code>port/&lt;capability&gt;_port.py</code> 것을 그대로 받는다</b> — <b>시키면 명령형 동사구</b>(<code>send()</code>) · <b>물으면 묻는 꼴</b>(<code>now()</code>). <span class='no'>handle()</span>·<span class='no'>execute()</span> 처럼 무엇을 하는지 안 말하는 이름은 위반이다.<br><span class='dim'>08-10 · A-9 — 이 칸이 <em>「<code>port/&lt;capability&gt;_port.py</code> 와 <b>똑같이 생겼다</b>」</em> 를 논거로 쓰면서 <b>메서드 자만 안 받았다</b>. 형제 계약 칸들은 각자 «더 센 자»가 이미 있어(<code>save</code>/<code>remove</code> · <code>_command</code>/<code>_query</code> · 「계약은 셋」) <b>진짜 빈 곳은 여기 하나였다</b>.</span> <span class='dim'>접미사가 D14(«괄호는 포트가 아니다»)와 안 부딪히는 까닭 — 여기는 자료·실패를 주고받는 <b>대화가 있는</b> 계약이고, D14 가 떨어뜨린 것은 어휘가 아니라 «대화 없음»(괄호)이었다.</span>",
+152: "<b>고정 이름 파일.</b> 형제 <code>application_layer/port/&lt;capability&gt;/exception.py</code> 와 같은 이름을 쓴다 — <b>같은 물건이면 같은 이름</b>이라야 사람이 두 번 배우지 않는다. 클래스는 <b>「무엇이 안 됐는가」의 서술문</b>(<code>ClockUnavailable</code>) — <span class='no'>ClockError</span> ✗ 는 무엇이 안 됐는지를 말하지 않는다.",
+155: "<b>기술 + <code>_adapter</code></b>(<code>clock/django_adapter.py</code>) — 능력은 폴더가 이미 말했다. 클래스는 <code>&lt;기술&gt;&lt;Capability&gt;Adapter</code> — 여기서는 <b>능력을 폴더 이름에서 가져온다</b>(<code>DjangoClockAdapter</code>).",
+156: '고정 갈래 <code>broker/</code>·<code>test/</code>·<code>pure/</code> 를 먼저 가른다. 나머지에서 <code>*_port.py</code> 가 있으면 능력, 없고 라이브러리 타입 없이는 성립하지 않으면 기술 갈래다. 나머지는 <code>pure/</code> 다.',
+157: '<code>authentication.py</code>·<code>framework_error_schema.py</code> 처럼 하는 일이나 타입의 역할로 짓는다. 기술 이름은 부모 폴더가 말한다. 공통 오류 모듈의 실제 경로·shape 는 승인된 profile 계약을 따른다.',
 # ── <project> ───────────────────────────────────────────────────────
-128: "<b>고정 이름 폴더.</b> <b>이름이 곧 판정 물음이다</b> — 「이 파일이 순수한가?」. <span class='no'>util/</span> · <span class='no'>support/</span> · <span class='no'>shared/</span> ✗ — <b>「공통이냐」는 정도로 재는 말이라 아무도 «아니오»라고 답할 수 없다</b>(101행과 같은 자).",
-129: "<b>갈래로 짓는다</b> — <code>money.py</code> · <code>text.py</code>. <b>접미사를 달지 않는다</b>(계약도 구현도 아니라 가를 것이 없다). <span class='no'>helpers.py</span> · <span class='no'>misc.py</span> ✗ — 서랍 이름이다.",
-133: '<b>선언 파일과 «같은 이름»</b> — <code>&lt;capability&gt;_port.py</code>. 클래스는 <code>&lt;구현방식&gt;&lt;Capability&gt;</code>.',
-135: "장고 프로젝트 패키지 — 이름은 프로젝트가 정한다.",
-136: "장고·닌자가 정하는 고정 이름.",
-139: "종류 이름 폴더.",
-140: "환경 이름 — <code>local.py</code> · <code>production.py</code>.",
+158: "<b>고정 이름 폴더.</b> <b>이름이 곧 판정 물음이다</b> — 「이 파일이 순수한가?」. <span class='no'>util/</span> · <span class='no'>support/</span> · <span class='no'>shared/</span> ✗ — <b>「공통이냐」는 정도로 재는 말이라 아무도 «아니오»라고 답할 수 없다</b>(112행과 같은 자).",
+159: "<b>갈래로 짓는다</b> — <code>money.py</code> · <code>text.py</code>. <b>접미사를 달지 않는다</b>(계약도 구현도 아니라 가를 것이 없다). <span class='no'>helpers.py</span> · <span class='no'>misc.py</span> ✗ — 서랍 이름이다.",
+163: '<b>선언 파일과 «같은 이름»</b> — <code>&lt;capability&gt;_port.py</code>. 클래스는 <code>&lt;구현방식&gt;&lt;Capability&gt;</code>.',
+165: "장고 프로젝트 패키지 — 이름은 프로젝트가 정한다.",
+166: "장고·닌자가 정하는 고정 이름.",
+169: "종류 이름 폴더.",
+170: "환경 이름 — <code>local.py</code> · <code>production.py</code>.",
+
+100: '고정 이름 <code>adapter/</code> — 내용이 없어도 유지한다.',
+101: '구현 이름 + <code>_adapter.py</code> — 예: <code>intent_generation_adapter.py</code>.',
+102: '고정 이름 <code>command/</code> — 내용이 없어도 유지한다.',
+103: '클래스의 snake_case 이름 — 예: <code>structured_generation_command.py</code>.',
+104: '고정 이름 <code>constant/</code> — 내용이 없어도 유지한다.',
+105: '상수 묶음의 이름 — 예: <code>prompt.py</code>.',
+106: '고정 이름 <code>contract/</code> — 내용이 없어도 유지한다.',
+107: '클래스의 snake_case 이름 — 예: <code>counter_message_generation_contract.py</code>.',
+108: '고정 이름 <code>schema/</code> — 내용이 없어도 유지한다.',
+109: '클래스의 snake_case 이름 — 예: <code>counter_message_output.py</code>.',
+113: '고정 이름 <code>adapter/</code> — 내용이 없어도 유지한다.',
+114: '구현 이름 + <code>_adapter.py</code> — 예: <code>intent_generation_adapter.py</code>.',
+115: '고정 이름 <code>command/</code> — 내용이 없어도 유지한다.',
+116: '클래스의 snake_case 이름 — 예: <code>structured_generation_command.py</code>.',
+117: '고정 이름 <code>constant/</code> — 내용이 없어도 유지한다.',
+118: '상수 묶음의 이름 — 예: <code>prompt.py</code>.',
+119: '고정 이름 <code>contract/</code> — 내용이 없어도 유지한다.',
+120: '클래스의 snake_case 이름 — 예: <code>counter_message_generation_contract.py</code>.',
+121: '고정 이름 <code>schema/</code> — 내용이 없어도 유지한다.',
+122: '클래스의 snake_case 이름 — 예: <code>counter_message_output.py</code>.',
+125: '고정 이름 <code>adapter/</code> — 내용이 없어도 유지한다.',
+126: '구현 이름 + <code>_adapter.py</code> — 예: <code>intent_generation_adapter.py</code>.',
+127: '고정 이름 <code>command/</code> — 내용이 없어도 유지한다.',
+128: '클래스의 snake_case 이름 — 예: <code>structured_generation_command.py</code>.',
+129: '고정 이름 <code>constant/</code> — 내용이 없어도 유지한다.',
+130: '상수 묶음의 이름 — 예: <code>prompt.py</code>.',
+131: '고정 이름 <code>contract/</code> — 내용이 없어도 유지한다.',
+132: '클래스의 snake_case 이름 — 예: <code>counter_message_generation_contract.py</code>.',
+133: '고정 이름 <code>schema/</code> — 내용이 없어도 유지한다.',
+134: '클래스의 snake_case 이름 — 예: <code>counter_message_output.py</code>.',
 }
 
 _ZLBL = {"ddd": "DDD", "hex": "Hex", "clean": "Clean", "own": "고유"}
@@ -1942,15 +1861,15 @@ _NMR = {
     70: "서술문 · _error ✗",
     74: "무상태 규칙 이름",
     86: "동사구",
-    111: "선언과 같은 이름",
-    104: "기술 + _adapter",
-    115: "폴더 + _port", 116: "폴더 + _broker",
-    118: "폴더 + _port", 119: "폴더 + _broker",
-    122: "「무엇이 안 됐는가」", 123: "명사 + _out", 124: "명사 + _in", 127: "하는 일 · 무엇인가",
-    128: "판정이 곧 이름", 129: "갈래로 · 접미사 ✗",
-    131: "하는 일로",
-    132: "고정 이름", 133: "선언과 같은 이름",
-    140: "환경 이름",
+    141: "선언과 같은 이름",
+    124: '기술 + _adapter/',
+    145: "폴더 + _port", 146: "폴더 + _broker",
+    148: "폴더 + _port", 149: "폴더 + _broker",
+    152: "「무엇이 안 됐는가」", 153: "명사 + _out", 154: "명사 + _in", 157: "하는 일 · 무엇인가",
+    158: "판정이 곧 이름", 159: "갈래로 · 접미사 ✗",
+    161: "하는 일로",
+    162: "고정 이름", 163: "선언과 같은 이름",
+    170: "환경 이름",
 }
 _NMR_CLS = re.compile(r'클래스는 <code>(.*?)</code>')
 
@@ -1964,7 +1883,7 @@ def _nmr(g):
 
 # 동명 폴더 승격 허용 칸(규칙 #490 교체형 실현 — 배제 목록의 여집합 · 사유·값의 정본은
 # discipline-houserules final.md §0/§1. 파일 칸에만 붙는다 — 트리 행 번호(data-r)가 좌표다).
-SWAPPABLE_ROWS = {12, 14, 15, 18, 20, 21, 24, 41, 61, 74, 92, 94, 96, 99, 102, 104}
+SWAPPABLE_ROWS = {12, 14, 15, 18, 20, 21, 24, 41, 61, 74, 92, 94, 96}
 
 
 def _tab_rail():
@@ -2008,6 +1927,8 @@ def _rowdocs(p, start):
         what = WHAT.get(g)
         assert what, "WHAT %d 없음 (%s)" % (g, b["nm"])
         nm = NAMES.get(g)
+        if g in SWAPPABLE_ROWS:
+            what = '<p><a href="#promotion" class="tb-z z-own">⇄ 동명 폴더 승격 허용 칸</a></p>' + what
         o.append(
             '          <li class="rd" id="rd-%d">\n'
             '            <div class="rd-p" style="--d:%d"><b class="rd-n">%s</b>'
@@ -2066,7 +1987,7 @@ def _lift_fixnotes(html):
 
 
 TABPANES = _lift_fixnotes(TABPANES)
-assert len(_FIXLOG) == 44, "정정 이력 %d개 — 44개가 아니다" % len(_FIXLOG)
+assert len(_FIXLOG) == 38, "정정 이력 %d개 — 38개가 아니다" % len(_FIXLOG)
 # 문장 안에 박힌 짧은 인용 꼬리도 같은 이유로 뗀다
 TABPANES = re.sub(r"\s*\(0\d-\d\d · R\d+\)", "", TABPANES)
 
@@ -2081,6 +2002,7 @@ def fgo(n, inner, label):
     """흐름 도해의 상자를 «1장 트리 n행»으로 가는 링크로 만든다."""
     if not n:
         return inner
+    n += 10 * sum(n > start for start in (99, 102, 104))
     return ('<g class="fgo" data-r="%d" tabindex="0" role="link" aria-label="%s — 1장 트리 %d행으로">%s</g>'
             % (n, label, n, inner))
 
@@ -2153,7 +2075,7 @@ FLOW = "".join([
   fbox("app", 180, "order/cancel_order/", "cancel_order_use_case.py", h=50, r=41), fnum("app", 180, "3"),
 
   # ⓐ 커밋 앞 — 옆 BC 에 판정 재료를 묻는다
-  fbox("app", 266, "port/shipment_status/", ".has_shipped(order_id)", h=46, r=45),
+  fbox("app", 266, "port/shipment_status/", ".has_shipped(order_id)", h=46, r=47),
   '<circle cx="249" cy="266" r="11" fill="var(--card)" stroke="var(--flag)" stroke-width="1.5"/><text x="249" y="270" font-size="11" font-weight="700" text-anchor="middle" fill="var(--flag)">a</text>',
   txt(249, 330, "└ 이름은 «필요»다", 9.5),
   txt(249, 344, "└ 공급자(delivery)는 이름에 없다", 9.5),
@@ -2180,26 +2102,31 @@ FLOW = "".join([
   txt(253, 448, "unit_of_work/order_unit_of_work.py — 안은 전부 롤백된다", 10.5, "var(--ink-3)"),
 
   # ④ 불러오기
-  fbox("app", 462, "order_repository.py", ".get(order_id)", h=46, r=64), fnum("app", 462, "4"),
+  fbox("app", 462, "order_repository.py", ".get(order_id)", h=46, r=68), fnum("app", 462, "4"),
   arr(444, 485, 480, 485),
   fbox("driven", 462, "repository/", "order_repository.py", h=46, r=92),
   txt(482, 524, "└ django_order/models/ 로 내려간다", 9.5),
   txt(482, 538, "└ OrderModel 로우 ↔ Order 번역", 9.5),
 
   # ⑤ 판정
-  fbox("domain", 554, "order/order.py", ".cancel(reason, shipped)", h=48, r=57), fnum("domain", 554, "5"),
+  fbox("domain", 554, "order/order.py", ".cancel(reason, shipped)", h=48, r=61), fnum("domain", 554, "5"),
   arr(249, 578, 222, 578),
   txt(26, 610, "└ 판정 재료는 «값»으로 받는다", 9.5),
-  txt(26, 626, "└ 어기면 exception.py 의", 9.5),
+  txt(26, 626, "└ 어기면 exception/ 의", 9.5),
   txt(26, 640, "&#160;&#160;&#160;OrderAlreadyShipped 를 던진다", 9.5),
   txt(26, 656, "└ 되면 event/order_canceled.py 에", 9.5),
   txt(26, 670, "&#160;&#160;&#160;OrderCanceled 를 «기록»만 한다", 9.5),
 
+  # 저장 전에 수거한다 — 실제 발행(⑧)과 분리한다.
+  fbox("app", 618, "order.pull_events()", "꺼내고 비운다 · 저장 전", h=38, sans2=True, r=61),
+
   # ⑥ 저장
-  fbox("app", 676, "order_repository.py", ".save(order)", h=46, r=64), fnum("app", 676, "6"),
+  fbox("app", 676, "order_repository.py", ".save(order)", h=46, r=68), fnum("app", 676, "6"),
   arr(444, 699, 480, 699),
   fbox("driven", 676, "repository/", "order_repository.py", h=46, r=92),
   txt(482, 738, "└ 애그리거트 통째로 — 필드 갱신 메서드가 없다", 9.5),
+
+  txt(249, 763, "발행·메일 callback 을 커밋 전에 예약", 10, "var(--ink-3)", mono=False),
 
   # ⑦ 커밋
   '<line x1="243" y1="790" x2="693" y2="790" stroke="var(--ok)" stroke-width="2.5"/>',
@@ -2208,22 +2135,22 @@ FLOW = "".join([
   txt(330, 812, "— 이 선 위는 되돌릴 수 있다", 10.5, "var(--ink-3)", mono=False),
 
   # ⑧ 이벤트
-  fbox("app", 860, "order.pull_events() 로 꺼내", "published_event/ 로 옮긴다", h=46, sans2=True, r=67), fnum("app", 860, "8"),
-  txt(249, 926, "└ 꺼내면 «비운다» · 저장 «앞»이다", 9.5, "var(--flag)", mono=False),
+  fbox("app", 860, "published_event/", "order_canceled.py", h=46, r=6), fnum("app", 860, "8"),
+  txt(249, 926, "└ 예약한 callback 이 커밋 뒤에 발행한다", 9.5, "var(--flag)", mono=False),
   arr(444, 883, 480, 883, col="var(--flag)", dash=True),
   fbox("driven", 860, "framework/broker/internal/", "internal_broker_port.py", h=46, col="var(--flag)", dash=True, r=115),
   txt(482, 926, "└ 커밋 뒤 · «누가 듣는지»는 여기서 안 보인다", 9.5, "var(--flag)", mono=False),
 
   # ⓑ 커밋 뒤 — 취소 확인 메일. 되돌릴 수 없어서 «뒤»다
-  fbox("app", 960, "port/email_sender/", ".send(notice)", h=46, r=45),
+  fbox("app", 960, "port/email_sender/", ".send(notice)", h=46, r=47),
   '<circle cx="249" cy="960" r="11" fill="var(--card)" stroke="var(--flag)" stroke-width="1.5"/><text x="249" y="964" font-size="11" font-weight="700" text-anchor="middle" fill="var(--flag)">b</text>',
   txt(249, 1024, "└ 대화 자료는 cancellation_notice_out.py", 9.5),
   arr(444, 983, 480, 983, col="var(--flag)", dash=True),
-  fbox("driven", 960, "external_system/ses/", "email_sender_adapter.py", h=46, col="var(--flag)", dash=True, r=97),
+  fbox("driven", 960, "external_system/ses/", "email_sender_adapter/", h=46, col="var(--flag)", dash=True, r=102),
   txt(482, 1024, "└ 메일은 못 거둔다 — 그래서 커밋 «뒤»다", 9.5, "var(--flag)", mono=False),
 
   # ⑨ result
-  fbox("app", 1054, "cancel_order/", "&lt;use_case&gt;_result.py", h=46, r=44), fnum("app", 1054, "9"),
+  fbox("app", 1054, "cancel_order/", "cancel_order_result.py", h=46, r=44), fnum("app", 1054, "9"),
 
   # ── application → 아래 driving 띠 ──
   '<polyline points="%d,1100 %d,1150 459,1150 459,1188" fill="none" stroke="currentColor" stroke-width="1.8" marker-end="url(#fa)"/>' % (_ax, _ax),
@@ -2248,6 +2175,7 @@ FLOW = "".join([
 #    도해와 같은 번호(①~⑩·ⓐⓑ)를 쓴다. 경로 버튼은 도해 상자와 같은 data-r 로
 #    1장 트리의 그 행으로 간다(JS 는 .fgo 를 통째로 집으므로 새 코드가 없다).
 def _st(mark, r, path, layer, zcls, sig="", note="", sub=False):
+    r += 10 * sum(r > start for start in (99, 102, 104))
     label = re.sub(r"<[^>]+>", "", path)
     btn = ('<button type="button" class="fgo stpath" data-r="%d" aria-label="%s — 1장 트리 %d행으로">%s</button>'
            % (r, label, r, path))
@@ -2263,188 +2191,164 @@ def _st(mark, r, path, layer, zcls, sig="", note="", sub=False):
 
 
 FLOWSTEPS = "\n".join([
-  '      <div class="fs-g">부팅 때 한 번 — 요청이 오기 전에 이미 꽂혀 있다</div>',
+  '      <div class="fs-g">부팅 시 등록 · 요청별 조립</div>',
   '      <ol class="steps">',
-  _st("·", 135, "&lt;project&gt;/urls.py", "프로젝트", "z-own",
-      sig='register_order_api(api)   <span class="c"># «등록»만 한다 — BC 안의 타입은 모른다</span>'),
+  _st("·", 137, "&lt;project&gt;/urls.py", "프로젝트", "z-own",
+      sig='register_order_api(api)',
+      note='프로젝트의 전역 API 객체에 BC registrar 를 한 번 등록한다.'),
   _st("·", 9, "driving_layer/api/api_router.py", "driving", "z-hex",
-      sig='def register_order_api(api: NinjaAPI) -&gt; None\n'
-          '<span class="c"># 전역 API 를 «받아서» 컨트롤러를 꽂는다 — 프로젝트를 import 하지 않는다</span>'),
-  _st("·", 2, "composition_root/dependency_wiring.py", "BC 루트", "z-own",
-      sig='def build_cancel_order_use_case() -&gt; CancelOrderUseCase',
-      note='구현을 골라 꽂는 유일한 자리 — <code>DjangoOrderRepository</code> · <code>DeliveryShipmentStatusAdapter</code> · '
-           '<code>SesEmailSenderAdapter</code> · <code>DjangoOrderUnitOfWork</code> 가 여기서 들어간다.'),
+      sig='def register_order_api(api: NinjaExtraAPI) -&gt; None',
+      note='이 예시는 Ninja Extra 스택이다. 전달받은 API 에 controller 를 등록하며 프로젝트를 import 하지 않는다.'),
+  _st("·", 3, "composition_root/dependency_wiring.py", "BC 루트", "z-own",
+      sig='def build_cancel_order() -&gt; CancelOrderUseCase',
+      note='factory 의 정의는 여기 있다. controller 가 요청마다 호출해 repository·ACL·메일 adapter·UoW·broker 계약을 조립받는다.'),
   '      </ol>',
-
-  '      <div class="fs-g">요청 — 커밋 선까지 · 여기까지는 전부 되돌릴 수 있다</div>',
+  '      <div class="fs-g">요청 · 저장 전에 수거하고 커밋 전에 예약한다</div>',
   '      <ol class="steps">',
   _st("①", 12, "driving_layer/api/order/order_controller.py", "driving", "z-hex",
-      sig='@route.post("/{order_id}/cancel")\n'
-          'def cancel_order(self, request, order_id: str, payload)',
-      note='하는 일은 번역뿐이다 — schema 를 command 로 바꾸고, 유스케이스를 <b>한 번</b> 부르고, result 를 schema 로 되바꾼다. '
-           '도메인 예외를 HTTP 로 바꾸는 <code>except</code> 매핑도 여기 산다(아래 코드) — '
-           '<b>보는 것은 예외의 «타입»뿐이고 속성은 읽지 않는다</b>.'),
+      sig='@route.post("/{order_id}/cancel", response={...})',
+      note='입력 선언에 맞춘 검증은 operation 실행 전에 끝난다. controller 는 command 를 준비하고 유스케이스를 한 번 호출한 뒤 성공·실패를 HTTP 로 바꾼다.'),
   _st("②", 14, "driving_layer/api/order/schema/schema_in.py", "driving", "z-hex",
-      sig='class CancelOrderBody(Schema):\n'
-          '    reason: str = Field(min_length=1)',
-      note='사용자 입력의 첫 관문 — 어기면 ninja 가 여기서 <b>422</b> 로 끝낸다(아래 실패 ✗).'),
-  _st("→", 43, "application_layer/order/cancel_order/&lt;use_case&gt;_command.py", "application", "z-clean",
+      sig='class CancelOrderBody(Schema):\n    reason: str = Field(min_length=1)',
+      note='reason 의 입력 제약을 선언한다. 검증 실패는 승인된 framework 응답 경로에서 끝나고 controller 를 실행하지 않는다. 스키마에서 도메인 객체를 만들지 않는다.'),
+  _st("→", 42, "application_layer/order/cancel_order/cancel_order_command.py", "application", "z-clean",
       sig='CancelOrderCommand(order_id=order_id, reason=payload.reason)',
-      note='<b>경계 ① 을 넘는 것은 이 단순 자료구조 하나다</b> — HTTP 도, 애그리거트도 넘지 않는다.'),
+      note='경계를 넘는 유스케이스 입력 자료다. HTTP 요청 객체·애그리거트·ORM 행은 넘기지 않는다.'),
   _st("③", 41, "application_layer/order/cancel_order/cancel_order_use_case.py", "application", "z-clean",
       sig='def execute(self, command: CancelOrderCommand) -&gt; CancelOrderResult',
-      note='절차 하나 — 재료를 모으고(ⓐ) · 애그리거트에게 시키고(⑤) · 트랜잭션을 긋는다(⑦). <b>판단은 여기 없다.</b>'),
+      note='자료 수집·도메인 호출·저장 경계를 조율한다. 업무 판정은 도메인이 한다.'),
   _st("·", 65, "domain_layer/order/value_object/cancel_reason.py", "domain", "z-ddd",
-      sig='reason = CancelReason(command.reason)   <span class="c"># 만들어질 때 스스로 검증한다</span>',
-      note='command 는 원시값으로 오고, 값 객체로 바꾸는 것은 유스케이스 안의 일이다.', sub=True),
+      sig='reason: CancelReason = CancelReason(command.reason)',
+      note='이 예시는 원시 입력을 유스케이스에서 값 객체로 만든다. 값의 업무 의미는 값 객체가 검증한다.'),
   _st("ⓐ", 47, "application_layer/port/shipment_status/shipment_status_port.py", "application", "z-clean",
-      sig='class ShipmentStatusPort(ABC):\n'
-          '    @abstractmethod\n'
-          '    def has_shipped(self, order_id: str) -&gt; bool: ...',
-      note='「배송이 시작됐나」라는 <b>«필요»의 선언</b> — 누가 답하는지는 여기 없다. '
-           '커밋 <b>앞</b>이어야 한다 — 트랜잭션을 연 채 남을 기다리면 DB 락을 쥐고 기다리는 것이다.'),
-  _st("·", 99, "driven_layer/adapter/anticorruption_layer/delivery/shipment_status_adapter.py", "driven", "z-hex",
+      sig='class ShipmentStatusPort(ABC):\n    @abstractmethod\n    def has_shipped(self, order_id: str) -&gt; bool: ...',
+      note='외부 BC 에 필요한 판정 재료를 묻는 계약이다. 이 호출은 UoW 를 열기 전에 끝낸다.'),
+  _st("·", 99, "driven_layer/adapter/anticorruption_layer/delivery/shipment_status_adapter/adapter/shipment_status_adapter.py", "driven", "z-hex",
       sig='class DeliveryShipmentStatusAdapter(ShipmentStatusPort):',
-      note='문은 하나 — 상대의 <code>driving_layer/open_host_service/</code> 만 부른다. '
-           '계약 타입으로 묻고 내 말(<code>bool</code>)로 번역해 돌아온다.', sub=True),
-  _st("·", 24, "open_host_service/shipment_tracking/shipment_tracking_service.py", "옆 BC", "z-own",
+      note='delivery 의 OHS 함수·계약만 소비한다. 응답을 bool 로 바꾸고 published 기저 예외까지 잡아 자기 포트 실패로 번역한다.'),
+  _st("·", 24, "driving_layer/open_host_service/shipment_tracking/shipment_tracking_service.py", "옆 BC", "z-own",
       sig='def current_status_query(request: CurrentStatusRequest) -&gt; CurrentStatusResponse',
-      note='남의 집 창구 — 주고받는 타입은 저쪽 <code>contract/</code> 의 것이고, 이 너머는 남의 내부다. '
-           '<b>이름의 <code>_query</code> 가 «묻는 것»임을 말한다</b> — 상태를 안 바꾸니 다시 불러도 된다.', sub=True),
+      note='공개 함수가 연산의 request 객체 하나를 받고 response 를 돌려준다. 이 너머는 delivery 의 내부다.'),
   _st("·", 58, "application_layer/port/unit_of_work/order_unit_of_work.py", "application", "z-clean",
-      sig='with self._unit_of_work as uow:   <span class="c"># 계약은 셋 — 열기 · 닫기 · after_commit</span>',
-      note='커밋 지점을 유스케이스 «안»에 표시한다 — 여기부터 ⑦ 까지가 도해의 점선 상자다.'),
+      sig='with self._unit_of_work as uow:',
+      note='계약은 __enter__·__exit__·after_commit 셋이다. 이 블록 안에서 다른 BC 를 기다리지 않는다.'),
   _st("④", 68, "domain_layer/order/order_repository.py", "domain", "z-ddd",
-      sig='class OrderRepository(ABC):\n'
-          '    @abstractmethod\n'
-          '    def get(self, order_id: str) -&gt; Order: ...\n'
-          '    @abstractmethod\n'
-          '    def save(self, order: Order) -&gt; None: ...',
-      note='선언은 도메인에 — 컬렉션인 척한다. 같은 계약을 ④(<code>get</code>)·⑥(<code>save</code>) 두 번 지난다.'),
+      sig='class OrderRepository(ABC):\n    @abstractmethod\n    def get(self, order_id: str) -&gt; Order: ...\n    @abstractmethod\n    def save(self, order: Order) -&gt; None: ...',
+      note='같은 애그리거트 계약을 조회와 저장에 사용한다.'),
   _st("·", 92, "driven_layer/adapter/persistence/repository/order_repository.py", "driven", "z-hex",
-      sig='class DjangoOrderRepository(OrderRepository):   <span class="c"># 선언과 파일 이름이 같다</span>',
-      note='<code>django_order/models/order_model.py</code> 의 <code>OrderModel</code> 로우를 <code>Order</code> 로 되돌리고, '
-           '저장할 때 도로 편다.', sub=True),
+      sig='class DjangoOrderRepository(OrderRepository):',
+      note='자기 BC 의 OrderModel 로우와 Order 를 변환한다. 수정용 조회는 캐시를 우회하고 저장은 경합 가드를 유지한다.'),
   _st("⑤", 61, "domain_layer/order/order.py", "domain", "z-ddd",
       sig='def cancel(self, reason: CancelReason, shipped: bool) -&gt; None',
-      note='<b>이 요청의 유일한 판정 자리</b> — «배송 전에만 취소된다». 어기면 <code>exception.py</code> 의 '
-           '<code>OrderAlreadyShipped</code> 를 던지고, 지키면 <code>event/order_canceled.py</code> 의 '
-           '<code>OrderCanceled</code> 를 «기록»만 한다.'),
+      note='배송 전인지 판정한다. 거절하면 exception/order_already_shipped.py 의 OrderAlreadyShipped 를 던지고, 성공하면 내부 OrderCanceled 사실을 기록한다.'),
+  _st("·", 61, "domain_layer/order/order.py", "domain", "z-ddd",
+      sig='facts: list[OrderEvent] = order.pull_events()',
+      note='<b>저장 전에</b> 꺼내고 비운다. 유스케이스가 사실을 새로 만들거나 repository 가 대신 수거하지 않는다.'),
   _st("⑥", 68, "domain_layer/order/order_repository.py", "domain", "z-ddd",
       sig='self._order_repository.save(order)',
-      note='필드 갱신 메서드가 없다 — 애그리거트 <b>통째로</b> 저장한다.'),
+      note='애그리거트를 통째로 저장한다. 구현은 아직 꺼내지 않은 사실이 남으면 거절한다.'),
+  _st("·", 58, "application_layer/port/unit_of_work/order_unit_of_work.py", "application", "z-clean",
+      sig='uow.after_commit(callback)',
+      note='공표할 사실로 옮겨 담고 발행·메일 callback 을 <b>커밋 전에 예약</b>한다. 이때 callback 을 실행하는 것은 아니다.'),
   _st("⑦", 96, "driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py", "driven", "z-hex",
-      sig='class DjangoOrderUnitOfWork(OrderUnitOfWork):   <span class="c"># __exit__ 가 COMMIT — django 를 아는 건 여기까지</span>',
-      note='<b>초록 선</b> — 이 위는 전부 되돌릴 수 있었고, 아래는 아니다.'),
+      sig='class DjangoOrderUnitOfWork(OrderUnitOfWork):',
+      note='정상적인 __exit__ 에서 커밋한다. after_commit 구현은 transaction.on_commit(..., robust=True) 다. 롤백하면 예약한 callback 은 실행되지 않는다.'),
   '      </ol>',
-
-  '      <div class="fs-g hot">커밋 뒤 — 되돌릴 수 없다</div>',
+  '      <div class="fs-g">커밋 뒤 · 예약된 callback 실행</div>',
   '      <ol class="steps">',
-  _st("⑧", 67, "domain_layer/order/event/order_canceled.py", "domain", "z-ddd",
-      sig='OrderCanceled(order_id=..., reason=...)   <span class="c"># 필드만 있는 과거형 «사실»</span>',
-      note='⑤ 가 «기록»해 둔 것을 <code>pull_events()</code> 로 <b>꺼내고</b>, 밖에 알릴 것만 <code>published_event/</code> 로 <b>옮겨 담아</b> '
-           '<code>uow.after_commit(...)</code> 으로 브로커에 넘긴다 — <b>세 걸음이고 순서가 규칙이다</b>. '
-           '<b>도메인 사실을 «그대로» 넘기면 위반</b>: 안쪽 것은 세밀하고 자주 바뀌고, 나가는 것은 성글고 오래 간다. '
-           '명령이 아니라 사실이라 <b>발행자는 구독자를 모른다</b> — 대신 «누가 듣나»는 '
-           '<code>driving_layer/event_subscription/event_router.py</code> <b>한 자리</b>에 모여 있다.'),
+  _st("⑧", 6, "published_event/order_canceled.py", "BC 루트", "z-ddd",
+      sig='PublishedOrderCanceled(order_id=fact.order_id)',
+      note='유스케이스가 커밋 전에 준비한 공표 자료다. 내부 사실을 그대로 보내지 않고 도메인 타입을 노출하지 않는다. 예약된 callback 이 이 값을 broker 로 발행한다.'),
+  _st("·", 115, "framework/broker/internal/internal_broker_port.py", "framework", "z-own",
+      sig='self._broker.publish(event)',
+      note='같은 배포 단위의 구독자에게 전달한다. 내부 배달은 커밋 뒤 유실 가능성이 있으며 필수 장부의 전달 경로로 쓰지 않는다.'),
   _st("ⓑ", 47, "application_layer/port/email_sender/email_sender_port.py", "application", "z-clean",
-      sig='class EmailSenderPort(ABC):\n'
-          '    @abstractmethod\n'
-          '    def send(self, notice: CancellationNotice) -&gt; None: ...',
-      note='취소 확인 메일 — <code>uow.after_commit(...)</code> 으로 «맡겨» 커밋 뒤에 돈다. '
-           '<code>notice</code> 는 옆 <code>cancellation_notice_out.py</code> 의 대화 자료다 — <b>우리에게서 «나가는» 쪽이라 <code>_out</code></b>.'),
-  _st("·", 102, "driven_layer/adapter/external_system/ses/email_sender_adapter.py", "driven", "z-hex",
-      sig='class SesEmailSenderAdapter(EmailSenderPort):   <span class="c"># 벤더 SDK 는 이 파일 안에서만</span>',
-      note='메일은 못 거둔다 — 실패해도(포트의 <code>exception.py</code> · <code>EmailRejected</code>) 요청은 이미 성공한 뒤다.', sub=True),
+      sig='class EmailSenderPort(ABC):\n    @abstractmethod\n    def send(self, notice: CancellationNotice) -&gt; None: ...',
+      note='예약된 메일 callback 이 포트를 부른다. notice 는 같은 능력의 cancellation_notice_out.py 에 정의한 출력 자료다.'),
+  _st("·", 102, "driven_layer/adapter/external_system/ses/email_sender_adapter/adapter/email_sender_adapter.py", "driven", "z-hex",
+      sig='class SesEmailSenderAdapter(EmailSenderPort):',
+      note='메일 문구와 벤더 통신은 여기서 구현한다. callback 실패는 기록하되 이미 커밋한 주문을 되돌리지 않는다.'),
   '      </ol>',
-
   '      <div class="fs-g">돌아가는 길</div>',
   '      <ol class="steps">',
-  _st("⑨", 44, "application_layer/order/cancel_order/&lt;use_case&gt;_result.py", "application", "z-clean",
+  _st("⑨", 44, "application_layer/order/cancel_order/cancel_order_result.py", "application", "z-clean",
       sig='return CancelOrderResult(order_id=command.order_id)',
-      note='<b>경계 ②</b> — 컨트롤러는 이것만 보고 응답을 만든다. 빠진 값이 있으면 컨트롤러가 도메인을 들여다보게 된다.'),
+      note='성공 결과만 돌려준다. controller 는 이 자료만 보고 응답을 만든다.'),
   _st("⑩", 15, "driving_layer/api/order/schema/schema_out.py", "driving", "z-hex",
-      sig='return 200, CancelOrderOut.from_result(out)',
-      note='값 객체를 다시 문자열로 굽고 JSON 으로 — 같은 컨트롤러가 되받아 끝난다.'),
+      sig='return CancelOrderOut.from_result(out)',
+      note='result 를 성공 Schema 로 바꾼다. route 에 선언한 200 응답으로 직렬화된다.'),
   '      </ol>',
-
-  '      <div class="fs-g hot">같은 길의 실패 — 어디서 터지고 누가 HTTP 로 바꾸나</div>',
+  '      <div class="fs-g">같은 길의 실패 · dddjango-code-json 예시</div>',
   '      <ol class="steps">',
-  _st("✗", 127, "framework/ninja/framework_validation_error_schema.py", "framework", "z-own",
-      note='<b>422</b> «reason 이 비었다» — ② 에서 ninja 가 끝낸다. 컨트롤러까지 오지도 않는다.'),
-  _st("✗", 69, "domain_layer/order/exception/order_already_canceled.py", "domain", "z-ddd",
-      note='<b>409</b> «이미 배송됐다» — ⑤ 의 <code>OrderAlreadyShipped</code> 를 ① 의 <code>except</code> 가 '
-           '<code>OrderErrorSchema</code> 로 바꾼다. <b>타입만 보고 코드로 바꾼다</b> — <code>as e</code> 로 받아 속성을 읽으면 위반이다.'),
+  _st("✗", 127, "framework/ninja/framework_error_schema.py", "framework", "z-own",
+      note='<b>422</b> 입력 검증 실패는 framework 경로가 공통 봉투로 처리한다. 실제 status·shape 는 승인된 profile 계약을 따른다.'),
+  _st("✗", 70, "domain_layer/order/exception/order_already_shipped.py", "domain", "z-ddd",
+      note='<b>409</b> controller 가 OrderAlreadyShipped 를 타입으로 잡아 OrderAlreadyShippedError 로 매핑한다. 예외 속성은 읽지 않는다.'),
   _st("✗", 48, "application_layer/port/shipment_status/exception.py", "application", "z-clean",
-      note='<b>503</b> «옆 BC 가 안 답한다» — 어댑터가 <code>ShipmentStatusUnavailable</code> 로 번역해 던지고, ① 이 503 으로 바꾼다. '
-           '내 잘못이 아닌데 요청이 못 끝나는 유일한 경우다.'),
+      note='ACL 은 상대 실패를 ShipmentStatusUnavailable 로 번역한다. controller 가 이 포트 모듈을 직접 import 하지는 않는다. 승인된 공개 domain/application 실패로 정규화하지 않은 기술 실패는 framework 의 미식별 <b>500</b> 경로다. 일시성 구분 없이 통째로 503 으로 매핑하지 않는다.'),
   _st("✗", 10, "driving_layer/api/bc_error_schema.py", "driving", "z-hex",
-      note='이 BC 의 «오류 언어» 전부 — <code>OrderErrorSchema</code> 하나와 오류 코드 <code>OrderErrorCode</code>. '
-           '<b>500</b>(DB 죽음 같은 미식별)만 framework 몫이다.'),
+      note='OrderErrorCode·OrderErrorSchema·사건별 concrete 오류를 한 파일에 둔다. 이 예시의 OrderAlreadyShippedError 는 승인된 고정값으로 무인자 생성하고 409 response 에 선언한다.'),
   '      </ol>',
 ])
 
-# ── 2장 아래 — 이 흐름을 코드로 접으면 두 조각이다 ──────────────────
-FLOWCODE = "\n".join([
-  '    <div class="fc">',
-  '      <div class="fc-h"><b>컨트롤러 — 번역과 예외 매핑, 그게 전부다</b>'
-  '<button type="button" class="fgo stpath" data-r="12" aria-label="order_controller.py — 1장 트리 12행으로">'
-  'driving_layer/api/order/order_controller.py</button></div>',
-  '      <pre><code>'
-  '@api_controller("/order")\n'
-  'class NinjaOrderController:                       <span class="c"># 기술은 파일이 아니라 클래스 이름에</span>\n'
-  '\n'
-  '    @route.post("/{order_id}/cancel",\n'
-  '                response={200: CancelOrderOut, <span class="c"># ← schema_out.py</span>\n'
-  '                          409: OrderErrorSchema,     <span class="c"># ← bc_error_schema.py — BC 의 «오류 언어»</span>\n'
-  '                          503: OrderErrorSchema})\n'
-  '    def cancel_order(self, request, order_id: str,\n'
-  '                     payload: CancelOrderBody):   <span class="c"># <b class="m">②</b> ninja 가 이 선언으로 422 를 이미 끝냈다</span>\n'
-  '        try:\n'
-  '            out = self._cancel_order.execute(     <span class="c"># <b class="m">③</b> 경계 ① — 넘어가는 건 command 뿐</span>\n'
-  '                CancelOrderCommand(order_id=order_id,\n'
-  '                              reason=payload.reason))\n'
-  '        except OrderAlreadyShipped:               <span class="c"># <b class="m">⑤</b> 의 도메인 예외를 «눈에 보이게» HTTP 로</span>\n'
-  '            return 409, OrderErrorSchema(code="already_shipped")\n'
-  '        except ShipmentStatusUnavailable:         <span class="c"># <b class="m">ⓐ</b> 포트 너머의 실패 — 내 잘못이 아닌 503</span>\n'
-  '            return 503, OrderErrorSchema(code="shipment_status_unavailable")\n'
-  '        return 200, CancelOrderOut.from_result(out)  <span class="c"># <b class="m">⑩</b> result → schema_out → JSON</span>'
-  '</code></pre>',
-  '    </div>',
-  '    <div class="fc">',
-  '      <div class="fc-h"><b>유스케이스 — 흐름 전체가 이 메서드 하나다</b>'
-  '<button type="button" class="fgo stpath" data-r="41" aria-label="cancel_order_use_case.py — 1장 트리 35행으로">'
-  'application_layer/order/cancel_order/cancel_order_use_case.py</button></div>',
-  '      <pre><code>'
-  'class CancelOrderUseCase:\n'
-  '    def __init__(self,\n'
-  '                 order_repository: OrderRepository,   <span class="c"># 선언만 안다 — 구현은</span>\n'
-  '                 shipment_status: ShipmentStatusPort, <span class="c"># composition_root 가 꽂았다</span>\n'
-  '                 email_sender: EmailSenderPort,\n'
-  '                 broker: InternalBrokerPort,      <span class="c"># framework/ 의 배달 계약</span>\n'
-  '                 unit_of_work: OrderUnitOfWork): ...\n'
-  '\n'
-  '    def execute(self, command: CancelOrderCommand) -&gt; CancelOrderResult:\n'
-  '        reason = CancelReason(command.reason)         <span class="c"># 값 객체 — 스스로 검증한다</span>\n'
-  '        shipped = self._shipment_status.has_shipped(  <span class="c"># <b class="m">ⓐ</b> 판정 재료 수집 — 커밋 «앞»</span>\n'
-  '            command.order_id)\n'
-  '        with self._unit_of_work as uow:           <span class="c"># ── 여기부터 <b class="m">⑦</b> 까지 전부 롤백된다</span>\n'
-  '            order = self._order_repository.get(command.order_id)  <span class="c"># <b class="m">④</b></span>\n'
-  '            order.cancel(reason=reason, shipped=shipped)      <span class="c"># <b class="m">⑤</b> 판단은 애그리거트가 — 사실도 여기서 «기록»된다</span>\n'
-  '            facts: list[OrderEvent] = order.pull_events()     <span class="c"># <b class="m">⑧</b> 꺼내면 «비운다» · 저장 «앞»이다</span>\n'
-  '            self._order_repository.save(order)                <span class="c"># <b class="m">⑥</b> 통째로 · 안 꺼낸 사실이 남았으면 여기서 터진다</span>\n'
-  '            uow.after_commit(lambda: self._email_sender.send( <span class="c"># <b class="m">ⓑ</b> 커밋 «뒤»로 맡긴다</span>\n'
-  '                CancellationNotice(order_id=command.order_id)))\n'
-  '            for fact in facts:                                <span class="c"># 밖에 알릴 것만 «옮겨 담는다» — 타입이 다르다</span>\n'
-  '                if isinstance(fact, OrderCanceled):\n'
-  '                    uow.after_commit(lambda f=fact: self._broker.publish(\n'
-  '                        PublishedOrderCanceled(order_id=f.order_id, reason=f.reason)))\n'
-  '        return CancelOrderResult(order_id=command.order_id)  <span class="c"># <b class="m">⑨</b> 경계 ② 를 넘는 단순 자료</span>'
-  '</code></pre>',
-  '    </div>',
-])
 
-# 이 요청이 실제로 지나가는 1장 트리의 칸 수 — 손으로 안 세고 링크에서 «센다»
+FLOWCODE = """\
+<div class="fc-block"><div class="fc-h"><b>컨트롤러 — 입력 준비 · 한 번 호출 · 직접 오류 매핑</b><button type="button" class="fgo stpath" data-r="12" aria-label="driving_layer/api/order/order_controller.py — 1장 트리 12행으로">driving_layer/api/order/order_controller.py</button></div><pre><code>@api_controller("/order")
+class NinjaOrderController:
+    @route.post("/{order_id}/cancel",
+                response={200: CancelOrderOut,
+                          409: OrderAlreadyShippedError})
+    def cancel_order(
+        self,
+        request: HttpRequest,
+        order_id: str,
+        payload: CancelOrderBody,
+    ) -&gt; CancelOrderOut | Status[OrderAlreadyShippedError]:
+        command: CancelOrderCommand = CancelOrderCommand(
+            order_id=order_id, reason=payload.reason)
+        use_case: CancelOrderUseCase = build_cancel_order()
+        try:
+            out: CancelOrderResult = use_case.execute(command)
+        except OrderAlreadyShipped:
+            error: OrderAlreadyShippedError = OrderAlreadyShippedError()
+            return Status(status.HTTP_409_CONFLICT, error)
+        return CancelOrderOut.from_result(out)</code></pre></div>
+<div class="fc-block"><div class="fc-h"><b>유스케이스 — 수거 → 저장 → 예약 → 커밋</b><button type="button" class="fgo stpath" data-r="41" aria-label="application_layer/order/cancel_order/cancel_order_use_case.py — 1장 트리 41행으로">application_layer/order/cancel_order/cancel_order_use_case.py</button></div><pre><code>class CancelOrderUseCase:
+    def __init__(
+        self,
+        order_repository: OrderRepository,
+        shipment_status: ShipmentStatusPort,
+        email_sender: EmailSenderPort,
+        broker: InternalBrokerPort,
+        unit_of_work: OrderUnitOfWork,
+    ) -&gt; None:
+        self._order_repository: OrderRepository = order_repository
+        self._shipment_status: ShipmentStatusPort = shipment_status
+        self._email_sender: EmailSenderPort = email_sender
+        self._broker: InternalBrokerPort = broker
+        self._unit_of_work: OrderUnitOfWork = unit_of_work
+
+    def execute(self, command: CancelOrderCommand) -&gt; CancelOrderResult:
+        reason: CancelReason = CancelReason(command.reason)
+        shipped: bool = self._shipment_status.has_shipped(command.order_id)
+        with self._unit_of_work as uow:
+            order: Order = self._order_repository.get(command.order_id)
+            order.cancel(reason=reason, shipped=shipped)
+            facts: list[OrderEvent] = order.pull_events()  # 저장 전에 수거
+            self._order_repository.save(order)
+            for fact in facts:
+                if isinstance(fact, OrderCanceled):
+                    event: PublishedOrderCanceled = PublishedOrderCanceled(
+                        order_id=fact.order_id)
+                    uow.after_commit(
+                        lambda event=event: self._broker.publish(event))
+            notice: CancellationNotice = CancellationNotice(
+                order_id=command.order_id)
+            uow.after_commit(lambda: self._email_sender.send(notice))
+        # 정상 커밋 뒤에 예약한 callback 이 실행된다
+        return CancelOrderResult(order_id=command.order_id)</code></pre></div>"""
+
+
 _FROWS = sorted(set(int(m) for m in re.findall(r'data-r="(\d+)"', FLOW + FLOWSTEPS + FLOWCODE)))
 
 
@@ -3040,7 +2944,7 @@ class EmailSenderPort(ABC):
     @abstractmethod
     def send(self, notice: CancellationNotice) -&gt; None: ...
 
-# 구현 — driven_layer/adapter/external_system/ses/email_sender_adapter.py
+# 구현 — driven_layer/adapter/external_system/ses/email_sender_adapter/adapter/email_sender_adapter.py
 class SesEmailSenderAdapter(EmailSenderPort):
     def send(self, notice: CancellationNotice) -&gt; None: ...</code></pre></div>
         <b><code>@abstractmethod</code> 가 없으면 상속해도 소용이 없다</b> — 실측으로 확인했다:
@@ -6534,7 +6438,7 @@ TIPS = """  var TIPS = {
     d7: { id: "D7", vd: "확정 · 08-04", t: "api/ 는 area 1차 · ninja/ 폴더는 없다",
       d: "트리 전체가 <b>도메인 축 1차 · 종류 2차</b>이고 정본 §0-4 가 그렇게 못 박았다. 게다가 기술 축의 값이 <b>하나뿐</b>(ninja 63 · 나머지 0)이라 폴더를 만들면 16개 BC 에 빈 한 겹이 생긴다. 기술은 §4 대로 <b>이름</b>에 붙인다." },
     d8: { id: "D8", vd: "확정 · 08-04", t: "schema/ 는 api/<area>/ 밑으로",
-      d: "실측이 이미 반쯤 그렇다 — area 로 나눈 BC(하위 폴더 11개)와 <b>평면으로 둔 BC(파일 16개)</b>가 섞여 있고 그 평면이 §0-4 위반이다. 34파일 전부 ninja 종속이라 <code>api/</code> 것이 맞다.<br><b>08-06 재검 — 실측이 전제를 확인했다.</b> <em>「이 스키마를 여러 area 가 나눠 쓰나?」</em> — <b>컨트롤러가 쓰는 70클래스 전부가 area 하나에만 갇혀 있고 공유는 0건</b>(HEAD 재측정 — 총 101 · 쓰임 70 · 안 쓰임 31. 옛 값 「63/43/20」은 BC 층만 센 것). 같은 자로 <code>bc_error_schema</code> 을 재면 정반대다: <b>401 이 컨트롤러 보유 area 23개 전부</b>(422 는 20 · 503 은 19 · BC 로는 13·10·12). 그래서 하나는 <code>&lt;area&gt;/</code> 밑이고 하나는 <code>api/</code> 바로 밑이다. 현행이 BC 층인 건 증상이다 — <code>accounts/…/schema_in.py</code> 한 파일에 <b>세 area 것 6클래스</b>가 뭉쳐 있다.<br><b>이름 <code>schema_in</code> 은 반복이 아니다</b> — 규칙의 선은 <b>「자리표시자면 접미사를 뗀다」</b>(무접미 <b>18</b>)이고, 접미사를 다는 자리 <b>33</b> 는 <b>이름만으로 «무엇인지»가 안 보이는 곳</b>이며, 고정 이름 <b>21</b> 개는 그냥 이름을 쓴다(<code>command</code>·<code>panel</code>·<code>composition_root</code>…). 자리표시자는 파일이 늘 때마다 접미사가 같이 늘어서다. 대안 <code>input/output</code> 은 <code>command/out</code> 과 어휘가 어긋나고, <code>request/response</code> 는 <code>contract/request/</code> 와 같은 말이 되며, <code>in.py</code> 는 <b>예약어라 import 가 안 된다</b>." },
+      d: "실측이 이미 반쯤 그렇다 — area 로 나눈 BC(하위 폴더 11개)와 <b>평면으로 둔 BC(파일 16개)</b>가 섞여 있고 그 평면이 §0-4 위반이다. 34파일 전부 ninja 종속이라 <code>api/</code> 것이 맞다.<br><b>08-06 재검 — 실측이 전제를 확인했다.</b> <em>「이 스키마를 여러 area 가 나눠 쓰나?」</em> — <b>컨트롤러가 쓰는 70클래스 전부가 area 하나에만 갇혀 있고 공유는 0건</b>(HEAD 재측정 — 총 101 · 쓰임 70 · 안 쓰임 31. 옛 값 「63/43/20」은 BC 층만 센 것). 같은 자로 <code>bc_error_schema</code> 을 재면 정반대다: <b>401 이 컨트롤러 보유 area 23개 전부</b>(422 는 20 · 503 은 19 · BC 로는 13·10·12). 그래서 하나는 <code>&lt;area&gt;/</code> 밑이고 하나는 <code>api/</code> 바로 밑이다. 현행이 BC 층인 건 증상이다 — <code>accounts/…/schema_in.py</code> 한 파일에 <b>세 area 것 6클래스</b>가 뭉쳐 있다.<br><b>이름 <code>schema_in</code> 은 반복이 아니다</b> — 규칙의 선은 <b>「자리표시자면 접미사를 뗀다」</b>(무접미 <b>30</b>)이고, 접미사를 다는 자리 <b>33</b> 는 <b>이름만으로 «무엇인지»가 안 보이는 곳</b>이며, 고정 이름 <b>21</b> 개는 그냥 이름을 쓴다(<code>command</code>·<code>panel</code>·<code>composition_root</code>…). 자리표시자는 파일이 늘 때마다 접미사가 같이 늘어서다. 대안 <code>input/output</code> 은 <code>command/out</code> 과 어휘가 어긋나고, <code>request/response</code> 는 <code>contract/request/</code> 와 같은 말이 되며, <code>in.py</code> 는 <b>예약어라 import 가 안 된다</b>." },
     d10: { id: "D10", vd: "확정 · 08-04", t: "규정은 «검사할 수 있는 데까지»",
       d: "깊이가 기준이 아니라 <b>판정 가능성</b>이 기준이다. <code>contract/{request,response,exception}</code>은 경계를 넘는 표면이라, <code>schema/{in,out}</code>은 <b>방향이 검사 대상</b>이라 규정한다. 반면 그 안의 클래스 구성은 검사할 골격이 없어 규정하지 않는다." },
     d11: { id: "D11", vd: "확정 · 08-06", t: "칸 아래는 application_layer/&lt;area&gt;/ 와 도메인 exception·value_object 만 의존한다",
@@ -6662,7 +6566,7 @@ body = """<!doctype html>
 <div class="wrap">
 
 <header class="top">
-  <p class="kicker">dddjango 플러그인 · 표준 파일트리 · 확정 — v2.0.0(08-12)부터 현행</p>
+  <p class="kicker">dddjango 표준 파일트리 · v2.17.21 규범 대조 · 2026-09-09</p>
   <h1>겉에서 안으로 — 한 겹씩 닫는다</h1>
 </header>
 
@@ -6671,7 +6575,7 @@ body = """<!doctype html>
 <div class="pagerbar"><div class="wrap"><nav class="pager" aria-label="장">
   <a href="#ch1" data-ch="ch1"><span class="n">1장</span>표준 파일트리</a>
   <a href="#ch2" data-ch="ch2"><span class="n">2장</span>흐름</a>
-  <a href="#ch3" data-ch="ch3"><span class="n">3장</span>적용 계획</a>
+  <a href="#ch3" data-ch="ch3"><span class="n">3장</span>초기 적용 기록</a>
 </nav></div></div>
 <script>document.documentElement.classList.add("paged");</script>
 
@@ -6685,6 +6589,9 @@ body = """<!doctype html>
       </div>
       <p class="tguide"><b>왼쪽이 파일 트리, 오른쪽이 설명이다.</b> 파트를 누르면 그 아래로 트리가 펼쳐지고, 줄을 누르면 오른쪽의 그 칸으로 간다. 파트 순서는 요청이 <b>들어와 나가는 순서</b>다 — 루트 → 입구 → 조율 → 규칙 → 출구, 그다음이 테스트와 저장소 바깥이다.
       <span class="tg-v">설명에 나오는 <b>원전 어휘</b>는 계보를 색으로 말한다 — <b class="v d">DDD</b> Evans · <b class="v c">Clean</b> Martin · <b class="v h">Hexagonal</b> Cockburn</span></p>
+      <p class="tguide"><b>현행 표준: 2026-09-09 어댑터 고정 골격 반영.</b> 170행의 경로·행 번호·승격 표시는 플러그인 트리와 함께 검증한다.
+      내용 규칙은 <a href="../dddjango/skills/discipline-houserules/references/final.md">하우스룰 정본</a>·<a href="../dddjango/skills/discipline-houserules/SKILL.md">배치·승격 규율</a>·<a href="../dddjango/skills/implementation-django-ninja/references/final.md">API 구현 계약</a>을 따른다.
+      <b>⇄</b> 는 <a href="#promotion">동명 폴더 승격 허용</a> 표시다. D 표식과 «실측» 수치는 2026-08 초기 설계·이관 기록이며 현재 프로젝트 상태를 뜻하지 않는다.</p>
       <div class="tabwrap">
         <div class="tabrail" role="tablist">
 @@TABRAIL@@
@@ -6764,6 +6671,26 @@ body = """<!doctype html>
     </div>
   </div>
 
+  <aside class="note settled" id="adapter-layout" style="max-width:none">
+    <span class="lbl">어댑터 고정 골격 — 다섯 역할 폴더</span>
+    <p>ACL의 <code>&lt;other_bounded_context&gt;/&lt;capability&gt;_adapter/</code>, 외부 시스템의 <code>&lt;system&gt;/&lt;capability&gt;_adapter/</code>, 그 밖 능력의 <code>&lt;capability&gt;/&lt;technology&gt;_adapter/</code> 에 같은 골격을 강제한다.</p>
+    <p><b><code>adapter/</code> · <code>command/</code> · <code>constant/</code> · <code>contract/</code> · <code>schema/</code> 는 내용이 없어도 모두 만든다.</b> 바깥 패키지와 다섯 폴더에 <code>__init__.py</code> 를 둔다. 초기화 파일은 재수출 전용이고 실제 내용 파일은 필요할 때 만든다.</p>
+    <p>구현·호출 계약·내부 계약·검증 스키마는 <b>클래스마다 파일 하나</b>다. 여러 구현이나 Protocol 도 해당 역할 폴더에 각각 둔다. 프롬프트 상수는 <code>constant/prompt.py</code> 처럼 관련 값끼리 묶는다. 계약을 만드는 builder 는 그 계약 클래스 파일에, 스키마 별칭은 관련 스키마 파일에 둔다. 외부 응답을 포트 반환값으로 바꾸는 reader 는 어댑터 구현에 둔다.</p>
+    <p>이 세 칸은 처음부터 고정 패키지다. 50행 최소치·200행 감사 신호·본체 파일을 요구하는 아래 승격 규칙의 대상이 아니다.</p>
+  </aside>
+
+  <aside class="note settled" id="promotion" style="max-width:none">
+    <span class="lbl">⇄ 파일 칸의 동명 폴더 승격 — 13개 허용 칸</span>
+    <p><b>기본은 <code>&lt;이름&gt;.py</code>, 승격은 <code>&lt;이름&gt;/</code> 다.</b> 허용 행은 12·14·15·18·20·21·24·41·61·74·92·94·96다.
+    승격 폴더 안에 본체 <code>&lt;이름&gt;.py</code>, 재수출 전용 <code>__init__.py</code>, 감사에서 열거한 부품을 둔다. 형제 파일·폴더 공존, 본체 없는 폴더, 내부 하위 폴더는 허용하지 않는다.</p>
+    <p><b>① 기존 칸으로 이동 → ② 동명 폴더 승격 → ③ 유지</b> 순서로 소관과 응집을 판정한다. 다른 기존 칸이 받을 수 있으면 먼저 이동하고, 어느 칸의 소관도 아닌 역할 밖 응집 단위가 생긴 경우에만 승격한다.
+    <b>200행 초과는 감사 신호이고 자동 분할 기준이 아니다.</b> 새 승격 부품은 각 50행 이상(물리 행·빈 줄 제외)이어야 한다. 본체·<code>__init__.py</code> 만 남은 승격 폴더는 환원 신호다.</p>
+    <p><b>감사자가 판정하고 coder 가 집행한다.</b> coder 의 기본 작성형은 파일이다. 크기만으로 분할하거나 예비 패키지를 미리 만들지 않는다. 부품도 다른 유스케이스의 공용 helper 로 쓸 수 없고 저장(save)류 호출은 본체에 둔다.</p>
+    <p>바깥 import 경로·공개 이름을 유지하고 <code>git mv</code> 로 이력을 보존한다. 재수출은 redundant alias 또는 <code>__all__</code>, 내부 참조는 모듈 직접 상대 import 로 쓴다.
+    실행 전 모듈 객체·monkeypatch·<code>patch("pkg.mod.attr")</code>·설정 문자열·동적 import 참조를 전수 확인한다. 필요한 수정이 승인 범위 밖이면 먼저 보고한다.
+    상세 판정과 기존 폴더의 처리 경로는 <a href="../dddjango/skills/discipline-houserules/SKILL.md">동명 폴더 승격 캐스케이드</a>를 따른다.</p>
+  </aside>
+
   <div class="duo" style="margin-top:20px">
     <aside class="note settled" style="max-width:none">
       <span class="lbl">구역 배정 — 어느 칸이 어느 계보의 말을 쓰나</span>
@@ -6774,9 +6701,8 @@ body = """<!doctype html>
       <span class="lbl">전역 제약 셋 + 전제 하나 — 구역과 무관하게 트리 전체에 걸린다</span>
       <p><b>① 의존은 안쪽으로만 향한다</b>(클린) · <b>② 안쪽은 구체 기술을 모른다</b>(헥사고날) · <b>③ BC 경계는 «관문 또는 공표된 사실»로만 넘는다</b>(DDD) — <em>부르면 답하는 쪽은 <code>open_host_service/…/contract/</code>, 알리는 쪽은 <code>published_event/</code>. 그 둘뿐이다</em>.</p>
       <p>구역은 «누가 이 방의 말을 정하나»이고, 이 셋은 «집 전체에 걸린 규칙»이다.</p>
-      <p><b>전제 — 모든 이름은 «첫 대입»에 타입을 단다.</b> <em>시그니처(인자·반환) · 모듈 변수 · 클래스 변수, 그리고 <b>함수 지역 변수까지 예외가 없다</b>. 빠지는 것은 «면제»가 아니라 <b>파이썬에 어노테이션 «문법»이 없는 자리</b>뿐이다 — <code>for x in xs:</code> · <code>with … as f:</code> · <code>except … as e:</code> · 언패킹(<code>a, b = pair</code>) · 다중 대입 · 증강 대입 · walrus · 컴프리헨션, 그리고 첫 바인딩이 아닌 재대입.</em></p>
-      <p><b>번호를 안 붙인 까닭</b> — <em>①②③ 은 어기면 <b>«설계»가 틀린 것</b>이고, 이건 어기면 <b>검사가 아예 안 돈다</b>. 급이 달라서 나란히 두되 번호를 안 준다. <b>트리의 검사 아홉이 여기 얹혀 있다</b> — 「무엇이 리포지토리인가」·「애그리거트가 왔나」·「도메인 타입이 실렸나」·「상대의 기저 예외를 잡았나」를 <b>이름으로 짐작하면 별칭 한 줄에 무너진다</b>.</em></p>
-      <p><b>추론 가능해도 적는다</b> — <em>「추론된다」는 <b>기계</b>의 사정이고, 이 규칙이 아끼려는 것은 <b>읽는 사람의 노동</b>이다. <code>order = repo.get(id)</code> 는 <code>get</code> 의 시그니처까지 가 봐야 <code>order</code> 가 무엇인지 알 수 있다. 이 트리는 주류(PEP 8 · mypy · Google 이 「추론 가능한 지역 변수엔 비권장」)와 <b>여기서 갈리고, 갈린다는 것을 숨기지 않는다</b>.<br><b>집행은 둘로 나뉜다</b> — 시그니처는 <code>mypy strict --disallow-untyped-defs</code> 가 잡고, <b>변수는 전용 백스톱</b>이 잡는다. <b>지역 변수를 잡는 도구는 지금 아무 데도 없다</b>(mypy 에 그 옵션이 없고 <code>--disallow-any-expr</code> 로도 안 걸린다 · ruff 의 <code>ANN</code> 은 시그니처 전용) — 기존 검사기의 «함수 본문 스킵»과 «리터럴 RHS 필터»를 걷으면 면제 판정이 그대로 재사용된다. <span class="dim">08-10 · T49</span></em></p>
+      <p><b>전제 — 첫 대입에 타입을 명시한다.</b> 시그니처·속성·지역 변수에 적용한다. 어노테이션 문법이 없는 바인딩, 재대입, 도구가 소유하는 선언적 클래스 본문·생성 골격·테스트 파일에는 정본의 면제가 있다. 선언적 클래스의 메서드까지 면제되는 것은 아니다.</p>
+      <p><b>현행 집행:</b> <code>check-public-surface-annotation.py</code> 가 첫 대입과 시그니처를 검사하고 <code>mypy strict</code> 가 타입 관계를 검사한다. bare <code>Any</code> 로 시그니처를 채우지 않고, 이름 있는 정적 자료 계약을 쓴다. 상세 면제·dict 레코드·Django 제네릭 표기는 <a href="../dddjango/skills/discipline-houserules/SKILL.md">하우스룰</a>과 타입 검사기 규약을 따른다.</p>
     </aside>
   </div>
 
@@ -6803,11 +6729,11 @@ body = """<!doctype html>
   <h2>「주문 취소」 하나를 끝까지 따라간다 — 트리의 @@FLOWN@@칸을 지난다</h2>
   <p class="lede"><code>POST /api/order/{order_id}/cancel</code> 요청 하나가 <b>위에서 아래로</b> 흐른다.
   세로가 <b>시간</b>, 세로줄이 <b>층</b>이다. 상자와 경로에 적힌 것은 설명이 아니라 <b>1 장 트리의 폴더·파일 이름 그대로</b>이고,
-  오른쪽 단계마다 <b>그 파일에서 불리는 함수의 시그니처</b>를 적었다.</p>
+  오른쪽 단계마다 <b>역할을 보여 주는 대표 선언·호출</b>을 적었다.</p>
   <p class="lede">읽는 요령 하나 — <b>가운데 <code>application_layer</code> 줄이 척추</b>다. 선이 왼쪽(판정)이나 오른쪽(기술)으로 나갔다가 <b>매번 가운데로 돌아온다</b>. <code>domain</code> 이 <code>driven</code> 을 부르거나 그 반대인 일은 <b>한 번도 없다</b>.</p>
   <p class="flowhint"><b>상자와 경로를 누르면 1장 트리의 그 행으로 간다</b> — 파트 탭이 켜지고 오른쪽에 그 칸의 «목적 · 오는 것 · 규칙»이 뜬다.
   <code>order</code>·<code>delivery</code>·<code>ses</code> 같은 구체 이름은 <b>예시</b>다 — 자리와 이름의 «규칙»은 1장이 정하고,
-  트리가 정하지 않는 것(스키마 안의 클래스 이름 등)은 재량이다.</p>
+  클래스와 필드 이름은 각 칸의 명명·계약 규칙을 따른다. 아래 HTTP 예시는 <code>dddjango-code-json</code> 과 Ninja Extra 스택을 전제로 한다. import 문은 생략했으며 오류의 실제 필드·고정값은 승인된 API 계약이 정한다.</p>
 
   <div class="flowsplit">
     <div class="figwrap tall">
@@ -6829,34 +6755,35 @@ body = """<!doctype html>
   </div>
 </section>
 </div><!-- /flowwide -->
-<div class="wrap"><div class="chfoot"><a class="pv" href="#ch1"><span class="k">← 앞 장</span>1 장 표준 파일트리</a><a class="nx" href="#ch3"><span class="k">다음 장 →</span>3 장 적용 계획</a></div></div>
+<div class="wrap"><div class="chfoot"><a class="pv" href="#ch1"><span class="k">← 앞 장</span>1 장 표준 파일트리</a><a class="nx" href="#ch3"><span class="k">다음 장 →</span>3 장 초기 적용 기록</a></div></div>
 </div><!-- /ch2 -->
 
 
 <div class="ch" id="ch3">
 <div class="wrap chapwrap">
-  <div class="chap"><span class="no">3 장</span><h2 class="ct">적용 계획</h2><p class="cs">플러그인 완성 루프 — 완성도는 broccoli-server 적용이 판단한다</p></div>
+  <div class="chap"><span class="no">3 장</span><h2 class="ct">초기 적용 기록</h2><p class="cs">2026-08-22 시점의 계획·실험 기록</p></div>
 </div>
 
 <div class="wrap tail">
 <section id="plan">
-  <p class="eyebrow">계획</p>
-  <h2>1 → 7 · 플러그인 완성 루프</h2>
+  <p class="eyebrow">이력 · 2026-08-22</p>
+  <h2>1 → 7 · 당시의 플러그인 적용 계획</h2>
+  <aside class="note settled"><p><b>이 장은 2026-08-22 에 기록한 초기 적용 이력이다.</b> 아래 완료·진행·보류 표시는 당시 상태이며 현재 프로젝트의 진행 현황을 뜻하지 않는다. 현행 표준은 1·2장, 규범 수정·검증·릴리즈 절차는 <a href="DEVELOPMENT.md">개발 가이드</a>를 따른다.</p></aside>
   <p><b>최종 목표는 플러그인 완성도의 최대화다 — 그리고 완성도는 문서가 아니라
   <code>broccoli-server</code> 적용이 판단한다</b><span class="dim">(08-12 확정)</span>.
   이전 계획(0~8 · 트리 재저작 → 플러그인 재작성)은 전부 끝났다 — 규칙은 명세와 검사기 27종이 되었고,
   이중 수용을 걷어 <b>플러그인은 이제 새 트리만 안다</b>. 남은 것은 <b>적용 루프</b>다:
   리뷰로 굳히고 → 배포하고 → BC 하나씩 적용하며 <b>발견되는 문제로 플러그인을 고치고</b> →
   수렴하면 속도를 올리고 → 마지막에 전부를 일괄 적용한다.</p>
-  <p><b>현재 위치(08-22)</b> — <b>1~3번은 끝났고 4번 루프가 열려 있다</b>.
+  <p><b>당시 위치(2026-08-22)</b> — <b>1~3번은 끝났고 4번 루프가 열려 있다</b>.
   라운드 1·1′(<code>child_settings</code>)이 돌아 «발견 결함 → fixture 고정 → 플러그인 수정»
   회로를 실증했지만 둘 다 <b>불통과(미랜딩)</b>, 후속 발주(billing S4-r1)는 발주문·앵커까지
   준비된 채 <b>기동 보류</b><span class="dim">(08-15 사용자 결정)</span>다. 그 자리에 계획 밖의
-  트랙 하나가 끼어들어 끝났다 — <b>온톨로지 이관</b><span class="dim">(08-18~08-22 · 현행
+  트랙 하나가 끼어들어 끝났다 — <b>온톨로지 이관</b><span class="dim">(08-18~08-22 · 당시
   릴리즈 v2.17.0)</span>. 규범 정본이 md 문서에서 <b>RDF 그래프</b>(<code>ontology/rules/*.ttl</code>
   — 30 문서 키 · 참조성 539절 · 규범 Work 3,400)로 옮겨졌고, 이제 규범 수정은 «그래프 수정 →
   게이트 → md 재투영 → rulepack 재소성» 루프를 탄다(절차 정본: <code>docs/DEVELOPMENT.md</code>).
-  이 문서의 1·2장, 즉 <b>트리 규칙 자체는 그 이관에서 바뀌지 않았다</b> — 옮겨진 것은 규범의
+  <b>2026-08-22 당시 트리 규칙은 온톨로지 이관만으로 바뀌지 않았다</b> — 옮겨진 것은 규범의
   «저장 형식과 수정 경로»다. 그 트랙의 A/B 실험(T2)은 <b>이 루프의 클린룸 판형을 실험 차량으로
   빌려</b> 두 블록 여섯 런을 완주시켰고 — BK1(O-7 합성 스모크 ×3런) · BK2(O-5
   <code>delivery</code> ×3런 · 인수 전수 green) — 처치 발화 0 으로 측정 자체는 실패해 조기
@@ -6889,7 +6816,7 @@ body = """<!doctype html>
 @@PLAN@@
   </ol>
   <aside class="note">
-    <p><b>이 계획 밖에 있는 것 하나 — 지금 프로덕션에서 돌고 있는 버그</b><span class="dim">(08-19 O-5 발주 등록 시 존치 재확인)</span></p>
+    <p><b>당시 별도 과제로 기록한 프로덕션 버그</b><span class="dim">(08-19 O-5 발주 등록 시 존치 재확인)</span></p>
     <p><code>delivery</code> 가 스위치도 없이 <code>FakeAlimtalkGateway</code> 를 꽂아
     <b>거짓 성공</b>을 만든다(<code>composition_root:54</code>). 클린룸 리빌드에서 이 버그는
     «스팩으로 나를지, 고칠지»의 판정 문제가 된다(프로토콜 ⑦-⑶ 옛 코드 버그 갈래 — 사용자 판정).
@@ -6955,14 +6882,14 @@ body = """<!doctype html>
     var data = TIPS[el.dataset.k];
     if (!data) { return; }
     tId.textContent = data.id;
-    tVd.textContent = data.vd || "";
-    tVd.style.display = data.vd ? "" : "none";
+    tVd.textContent = "초기 설계 기록 · " + (data.vd || "2026-08");
+    tVd.style.display = "";
     var done = (data.vd || "").indexOf("확정") === 0;
     tVd.style.background = done ? "var(--ok)" : "var(--hex-bg)";
     tVd.style.color = done ? "#fff" : "var(--hex)";
     tT.innerHTML = data.t;
     tD.innerHTML = data.d;
-    tF.textContent = coarse ? "다시 누르면 닫힌다" : "";
+    tF.textContent = "2026-08 설계 기록 · 현행 상세 규칙은 1장 본문" + (coarse ? " · 다시 누르면 닫힌다" : "");
     tF.style.display = tF.textContent ? "" : "none";
     tip.classList.add("on");
     tip.setAttribute("aria-hidden", "false");

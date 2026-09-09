@@ -1,0 +1,62 @@
+{
+  "registered_before_retrieval_and_model_trials": true,
+  "worktree": "/Users/hyun/.herdr/worktrees/spring_dream_server/feat-fortune-house",
+  "spec_path": ".dddjango/20260904-2109-fortune-house/design-spec.md",
+  "task_ref": "9fe56c87b01bb3681f3ca6d5c648d06002a96082",
+  "task_blob": "2d5e6bb9e659233b20f3609f5fb2576475c3c795",
+  "snapshot_refs": ["06fa6f8633144f5995fba9eb126acbcdc0089a31", "9fe56c87b01bb3681f3ca6d5c648d06002a96082", "6200984c"],
+  "raw_byte_budget": 80000,
+  "chunk_bytes": 16000,
+  "relation_seed_count": 3,
+  "retrieval_repeats": 3,
+  "model_repeats": 3,
+  "model": "claude-fable-5-1",
+  "effort": "xhigh",
+  "cases": [
+    {
+      "id": "guard",
+      "queries": ["NoticeSpeechComposer subject", "PROFILE_INPUT_REQUEST 입력이 없는 상황과 테스트", "안내 발화 템플릿 입력 검증 담당과 예외"],
+      "curated_lines": [213, 568, 1366, 1367, 1368, 1369, 1693, 1746],
+      "curation": "독립 조사자가 승인 문면에서 수동 연결한 원문 위치. 자동 관계 구축 성능으로 해석 금지.",
+      "obligations": [
+        {"id": "missing_subject_raises", "supports": [[213], [568], [1369], [1693], [1746]]},
+        {"id": "template_membership_not_situation_set", "supports": [[213], [1693], [1746]]},
+        {"id": "no_placeholder_none_normal", "supports": [[213], [568], [1746]]},
+        {"id": "outside_table_same_exception", "supports": [[213], [568], [1369]]},
+        {"id": "nullable_signature_preserved", "supports": [[213], [1367], [1369]]},
+        {"id": "two_semantic_test_obligations", "supports": [[568], [1746]]}
+      ],
+      "source_spans": [
+        {"path": "application/fortune_house/domain_layer/domain_service/compose_notice_speech.py", "start": 1, "end": 100},
+        {"path": "application/fortune_house/test/unit/test_notice_speech_composer.py", "start": 1, "end": 149}
+      ],
+      "task": "승인 명세와 당시 구현을 대조하여 NoticeSpeechComposer의 상황 문장 선택·subject 처리 계약을 집행하라. 전체 클래스 대신 그 부분만 분리한 순수 함수 render_situation(templates, situation, subject)를 작성한다. templates는 상황 이름→문장 문자열 dict이고 InvalidSpeechSituation은 환경에서 제공한다. 함수는 명세대로 상황 문장을 반환하거나 예외를 던져야 한다. 표의 허용 상황은 입력 templates를 정본으로 삼는다. JSON 객체만 답하라: {\"code\": \"Python 함수 정의 문자열\", \"evidence_lines\": [사용한 명세 행 번호], \"explanation\": \"짧은 근거\"}. 구현은 def render_situation(templates, situation, subject) 한 개만, if/대입/return/raise와 순수 문자열·dict 연산만 사용한다. import, 루프, 중첩 함수, decorator, 파일·네트워크·다른 도구 호출은 쓰지 않는다. 새로운 업무 계약을 만들지 않는다. 입력 정보가 불충분하면 code를 빈 문자열로 두고 그 이유를 설명한다."
+    },
+    {
+      "id": "constructor",
+      "queries": ["Visit.__init__ request", "Visit 생성자 변경 순서 로더 테스트", "S2-4 마지막 기본값 호출처 의미 보존"],
+      "curated_lines": [111, 550, 561, 563, 576, 579, 582, 587, 968, 969, 1690, 1744],
+      "curation": "독립 조사자가 승인 문면에서 수동 연결한 원문 위치. 자동 관계 구축 성능으로 해석 금지.",
+      "obligations": [
+        {"id": "required_argument", "supports": [[111], [968], [1690], [1744]]},
+        {"id": "nullable_preserved", "supports": [[969], [1744]]},
+        {"id": "caller_preparation_before_removal", "supports": [[1744]]},
+        {"id": "loader_explicit_request", "supports": [[1744]]},
+        {"id": "no_new_test_or_assertion", "supports": [[587], [1690], [550, 561, 563, 576, 579, 582]]},
+        {"id": "six_files_seven_calls", "supports": [[587], [1744]]}
+      ],
+      "source_spans": [
+        {"path": "application/fortune_house/domain_layer/visit/visit.py", "start": 53, "end": 84},
+        {"path": "application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py", "start": 498, "end": 533},
+        {"path": "application/fortune_house/test/unit/test_visit_turn_use_cases.py", "start": 313, "end": 322},
+        {"path": "application/fortune_house/test/unit/test_visit.py", "start": 342, "end": 351},
+        {"path": "application/fortune_house/test/integration/test_visit_turn_admission_concurrency.py", "start": 196, "end": 214},
+        {"path": "application/fortune_house/test/integration/test_visit_turn_no_op_and_slot.py", "start": 87, "end": 96},
+        {"path": "application/fortune_house/test/integration/test_visit_turn_reception_exits.py", "start": 152, "end": 163},
+        {"path": "application/fortune_house/test/integration/test_visit_repository_round_trip.py", "start": 431, "end": 440},
+        {"path": "application/fortune_house/test/integration/test_visit_repository_round_trip.py", "start": 464, "end": 473}
+      ],
+      "task": "승인 명세와 제공한 당시 코드 조각을 대조해 S2-4 마지막 Visit.__init__ request 변경을 판단하라. JSON 객체만 답하라. 필드: request_required(boolean), request_nullable(boolean), loader_argument(로더가 전달할 인자의 Python 표현 문자열), callers_first(호출처 준비가 생성자 변경보다 먼저여야 하는지 boolean), new_test_cases_required(이 기본값 변경 자체를 위해 새 영구 테스트 케이스가 필요한지 boolean), new_assertions_required(boolean), prepared_file_count(제공된 기존 테스트에서 request 인자 조립이 준비된 파일 수 integer), prepared_constructor_calls(그 직접 조립식 수 integer), remaining_production_change(\"remove_default_only\"/\"remove_nullable\"/\"keep_default\"/\"other\" 중 하나), evidence_lines(사용한 명세 행 번호 배열), explanation(짧은 근거). 없는 정보를 추정하지 말고 알 수 없는 필드는 null로 둔다. 파일 수와 호출식 수를 구별하고 기존에 완료된 작업을 새 작업으로 세지 않는다."
+    }
+  ]
+}

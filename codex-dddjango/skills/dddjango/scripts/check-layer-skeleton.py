@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱.
 
-트리 데이터는 `standard_tree.py`(정본 140행의 기계 사본) 하나에서 온다 — 이 파일에
+트리 데이터는 `standard_tree.py`(정본 170행의 기계 사본) 하나에서 온다 — 이 파일에
 경로 문자열을 다시 적지 않는다. 정본이 개정되면 데이터만 갈리고 이 검사기는 그대로다.
 
 무엇을 잡나 (규칙 번호는 트리 개정 명세):
   #486  어느 BC 를 열어도 골격이 그대로 있다 — 내용 유무 무관. 채택 저장소에서는
         `application/` 직계 전부가 BC 다(신호 없는 평면 BC 도 검사 대상).
   #488  고정(·재등장) 칸은 부모가 있으면 반드시 있다 — 폴더는 비어도 `__init__.py` 로,
-        파일도 비면 빈 파일로. `<project>/`(트리 136~139행)·`framework/` 고정 서브트리에도 적용.
+        파일도 비면 빈 파일로. `<project>/`(트리 166~169행)·`framework/` 고정 서브트리에도 적용.
   #489  `<…>` 자리표시자 칸만 그 개념이 생길 때 생긴다.
   #490  BC 안에 트리에 없는 경로가 있으면 위반. 재량은 «리프로 닫은 폴더 안»의 추가
         모듈뿐이다(#15 작성자 재량) — 자리표시자 «파일» 칸이 있는 층만 파일 이름이 자유다.
@@ -59,7 +59,7 @@ IGNORE_FILES = {"__init__.py", ".DS_Store"}
 DJANGO_APP_MARKERS = ("models.py", "apps.py", "views.py", "admin.py")
 PROJECT_ALLOWED = {"api.py", "urls.py", "celery.py", "settings"}
 PROJECT_EXEMPT = {"health.py", "home.py", "asgi.py", "wsgi.py", "__init__.py"}
-PROJECT_REQUIRED_FILES = ("api.py", "urls.py", "celery.py")  # 트리 136~138행 fixed (#488)
+PROJECT_REQUIRED_FILES = ("api.py", "urls.py", "celery.py")  # 트리 166~168행 fixed (#488)
 
 NEW_LAYERS = {"driving_layer", "application_layer", "domain_layer", "driven_layer"}
 TOKEN = re.compile(r"<([a-z_]+)>")
@@ -90,7 +90,7 @@ def _has_adoption_signal(bc_dir: Path) -> bool:
 
 # ⓓ#644 행위 칸 로스터 — 승격 허용 표기(swappable) 중 schema 4행(14·15·20·21) 제외
 # (houserules SKILL §1 감사 주도 배정 — 신호는 무조건 방출, 판정 의무의 diff 한정은 감사자 몫)
-PROMO_ACTION_ROWS = frozenset({12, 18, 24, 41, 61, 74, 92, 94, 96, 99, 102, 104})
+PROMO_ACTION_ROWS = frozenset({12, 18, 24, 41, 61, 74, 92, 94, 96})
 PROMO_SIGNAL_LINES = 200   # ⓓ#644 후보 문턱(물리 행·빈 줄 제외)
 PROMO_PART_MIN_LINES = 50  # #642 부품 출생 하한
 JUNK_DRAWER_NAMES = frozenset({"utils.py", "helpers.py", "util.py", "helper.py", "common.py", "misc.py"})
@@ -193,6 +193,10 @@ def _check_level(dir_path: Path, row: "tree.Row", bindings: dict[str, str], out:
                  cand: Candidates, skip: frozenset[str] = frozenset()) -> None:
     """row(폴더 칸)의 실제 디렉터리 dir_path 를 트리 기대와 대조하고 재귀한다."""
     kids = tree.children(row)
+    if checker_target.adapter_bundle(dir_path) or checker_target.adapter_bundle(dir_path.parent):
+        init = dir_path / "__init__.py"
+        if init.is_file() and not _init_reexport_only(init):
+            out.add("#640", init, "어댑터 패키지의 `__init__.py` 는 재수출 전용이다")
     if not kids:  # 트리가 리프로 닫은 폴더 — 안은 작성자 재량(#490·#15)
         return
 
@@ -232,7 +236,8 @@ def _check_level(dir_path: Path, row: "tree.Row", bindings: dict[str, str], out:
             out.add("#488", sub, f"고정 칸 `{name}/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 {crow.r}행)")
             continue
         if not (sub / "__init__.py").is_file():
-            out.add("#488", sub, "고정 칸 폴더에 `__init__.py` 가 없다")
+            missing = sub / "__init__.py" if checker_target.adapter_bundle(dir_path) else sub
+            out.add("#488", missing, "고정 칸 폴더에 `__init__.py` 가 없다")
         _check_level(sub, crow, bindings, out, cand)
     for name, crow in fixed_files.items():
         target = dir_path / name
@@ -271,8 +276,15 @@ def _check_level(dir_path: Path, row: "tree.Row", bindings: dict[str, str], out:
             continue
         if dir_placeholder is not None:
             inst_bind = dict(bindings)
+            pattern = dir_placeholder.name.rstrip("/")
+            if pattern.endswith("_adapter"):
+                if not _file_pattern_ok(p.name, pattern):
+                    out.add("#490", p, "어댑터 패키지 이름은 `<이름>_adapter/` 다")
+                    continue
+                if not (p / "__init__.py").is_file():
+                    out.add("#488", p / "__init__.py", "어댑터 패키지에 `__init__.py` 가 없다")
             for tok in set(TOKEN.findall(dir_placeholder.name)):
-                inst_bind[tok] = p.name
+                inst_bind[tok] = p.name.removesuffix("_adapter") if pattern.endswith("_adapter") else p.name
             _check_level(p, dir_placeholder, inst_bind, out, cand)
         elif p.name == "commands" and dir_path.name == "management":
             out.add("#58", p, "`management/commands/` 를 만들지 않는다")
@@ -294,6 +306,10 @@ def _check_level(dir_path: Path, row: "tree.Row", bindings: dict[str, str], out:
 
     # 파일 폐쇄 — 자리표시자 «파일» 칸이 있는 층만 이름이 자유다. 고정 파일 칸만 있는 층의
     # 추가 파일은 트리에 없는 경로다(#490 — 재량 조항은 «리프로 닫은 폴더»에만 걸린다).
+    if checker_target.adapter_bundle(dir_path.parent):
+        for f in files:
+            if not any(_file_pattern_ok(f.name, fp.name) for fp in file_placeholders):
+                out.add("#490", f, "어댑터 역할 파일 이름이 표준 트리의 모양과 다르다")
     if not has_file_placeholder:
         for f in files:
             if f.name not in fixed_files:
@@ -397,11 +413,11 @@ def _check_project(pkg: Path, out: Findings) -> None:
             continue
         hint = " — `settings/` 로 이관한다" if p.name == "settings.py" else ""
         out.add("#429", p, f"`<project>/` 에는 전역에 하나만 요구되는 것만 온다 (api.py·urls.py·celery.py·settings/){hint}")
-    for name in PROJECT_REQUIRED_FILES:  # #488 — 트리 136~138행 fixed
+    for name in PROJECT_REQUIRED_FILES:  # #488 — 트리 166~168행 fixed
         if not (pkg / name).is_file():
-            out.add("#488", pkg / name, "고정 파일 부재 — 비면 빈 파일로 만든다 (`<project>/` · 트리 136~138행)")
+            out.add("#488", pkg / name, "고정 파일 부재 — 비면 빈 파일로 만든다 (`<project>/` · 트리 166~168행)")
     if not (pkg / "settings").is_dir() and not (pkg / "settings.py").is_file():
-        out.add("#488", pkg / "settings", "고정 칸 `settings/` 부재 (트리 139행)")
+        out.add("#488", pkg / "settings", "고정 칸 `settings/` 부재 (트리 169행)")
 
 
 def main(argv: list[str]) -> int:
@@ -457,7 +473,7 @@ def main(argv: list[str]) -> int:
         print(f"blocker {len(findings)}건 — 골격이 어긋나면 나머지 검사를 돌리지 않는다(#487)")
         emit_all(findings, printer=print, indent="  ")
         return 2
-    print(f"clean — BC {len(bcs)}개 골격 일치 (트리 140행 · standard_tree {tree.SOURCE_SHA})")
+    print(f"clean — BC {len(bcs)}개 골격 일치 (트리 {len(tree.ROWS)}행 · standard_tree {tree.SOURCE_SHA})")
     return 0
 
 

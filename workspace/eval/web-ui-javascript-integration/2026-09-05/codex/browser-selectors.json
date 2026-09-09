@@ -1,0 +1,17 @@
+{
+  "path": "/lab/ui-lab/",
+  "password": "#ui-lab-password-input-{k}",
+  "toggle": "#ui-lab-password-toggle-{k}",
+  "file": "#ui-lab-file-{k}",
+  "image": "#ui-lab-image-{k}",
+  "filename": "#ui-lab-filename-{k}",
+  "status": "#ui-lab-image-status-{k}",
+  "clear": "#ui-lab-clear-{k}",
+  "owner": "#ui-lab-preview-{k}",
+  "panel": "#ui-lab-panel-{k}",
+  "body": "#ui-lab-preview-body-{k}",
+  "note": "#ui-lab-note-{k}",
+  "refresh_panel": "#ui-lab-refresh-panel-{k}",
+  "refresh_body": "#ui-lab-refresh-preview-body-{k}",
+  "refresh_note": "#ui-lab-refresh-note-{k}"
+}

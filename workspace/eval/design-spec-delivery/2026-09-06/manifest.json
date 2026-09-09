@@ -1,0 +1,153 @@
+{
+  "created_utc": "2026-09-05T18:57:34.279398+00:00",
+  "cases_sha256": "198c0160be9763b1373de455cd3aa7016af1ce5512bc16460731292ec93af712",
+  "snapshots": [
+    {
+      "ref": "06fa6f8633144f5995fba9eb126acbcdc0089a31",
+      "blob": "54154c5705987269ca7afc394d06a7475dddbd43",
+      "sha256": "92e344015ff3de423ed1f4ea66b1e9453569b2cf7684f537635e2fa3827b0ee1",
+      "bytes": 572361,
+      "lines": 1760,
+      "file": "frozen/spec-06fa6f86.md"
+    },
+    {
+      "ref": "9fe56c87b01bb3681f3ca6d5c648d06002a96082",
+      "blob": "2d5e6bb9e659233b20f3609f5fb2576475c3c795",
+      "sha256": "2d7f201669267c21c83043b23a4e7dd8385c4ab21481457db22092070e7eb08b",
+      "bytes": 603455,
+      "lines": 1779,
+      "file": "frozen/spec-9fe56c87.md"
+    },
+    {
+      "ref": "6200984c",
+      "blob": "60b5b8a4bc7f1cbba442c50b4953c1bb3495de2f",
+      "sha256": "0c406474767fb13d35b1d66be16cf357d25b320cfafc49f1960a5a655656f667",
+      "bytes": 929704,
+      "lines": 2304,
+      "file": "frozen/spec-6200984c.md"
+    }
+  ],
+  "units": 1676,
+  "explicit_edges": 16143,
+  "packets": {
+    "guard": {
+      "full": {
+        "file": "frozen/prompt-guard-full.txt",
+        "sha256": "f30d0fbbc9b882c0ddab258e63b77def0247015196d055b15c57854c1f8c8cdb",
+        "bytes": 616454,
+        "reference_bytes": 603455,
+        "reference_units": 1676,
+        "coverage": {
+          "passed": [
+            "missing_subject_raises",
+            "template_membership_not_situation_set",
+            "no_placeholder_none_normal",
+            "outside_table_same_exception",
+            "nullable_signature_preserved",
+            "two_semantic_test_obligations"
+          ],
+          "missing": [],
+          "all_pass": true
+        }
+      },
+      "search": {
+        "file": "frozen/prompt-guard-search.txt",
+        "sha256": "e7febed91cec685aa6a25aa7086bec73fb8151cff5fcd4b6df2de52729e2397f",
+        "bytes": 101521,
+        "reference_bytes": 88522,
+        "reference_units": 159,
+        "coverage": {
+          "passed": [
+            "missing_subject_raises",
+            "template_membership_not_situation_set",
+            "no_placeholder_none_normal",
+            "outside_table_same_exception",
+            "nullable_signature_preserved",
+            "two_semantic_test_obligations"
+          ],
+          "missing": [],
+          "all_pass": true
+        }
+      },
+      "linked": {
+        "file": "frozen/prompt-guard-linked.txt",
+        "sha256": "1c68a3d49f7a4be68c0fd820e61d42174c87826f02f6faf16b1c618301ff1503",
+        "bytes": 21684,
+        "reference_bytes": 8685,
+        "reference_units": 8,
+        "coverage": {
+          "passed": [
+            "missing_subject_raises",
+            "template_membership_not_situation_set",
+            "no_placeholder_none_normal",
+            "outside_table_same_exception",
+            "nullable_signature_preserved",
+            "two_semantic_test_obligations"
+          ],
+          "missing": [],
+          "all_pass": true
+        }
+      }
+    },
+    "constructor": {
+      "full": {
+        "file": "frozen/prompt-constructor-full.txt",
+        "sha256": "ec4d733a7ac02cd40632f17a27ff4d26210bd832a9e642014e98c15df19d83ae",
+        "bytes": 611750,
+        "reference_bytes": 603455,
+        "reference_units": 1676,
+        "coverage": {
+          "passed": [
+            "required_argument",
+            "nullable_preserved",
+            "caller_preparation_before_removal",
+            "loader_explicit_request",
+            "no_new_test_or_assertion",
+            "six_files_seven_calls"
+          ],
+          "missing": [],
+          "all_pass": true
+        }
+      },
+      "search": {
+        "file": "frozen/prompt-constructor-search.txt",
+        "sha256": "7a71fb62c937aa26bb5d5cf56e7cc7592ff410bb297477b41aecf3965b5a252d",
+        "bytes": 97187,
+        "reference_bytes": 88892,
+        "reference_units": 210,
+        "coverage": {
+          "passed": [
+            "required_argument",
+            "nullable_preserved",
+            "caller_preparation_before_removal",
+            "loader_explicit_request",
+            "no_new_test_or_assertion",
+            "six_files_seven_calls"
+          ],
+          "missing": [],
+          "all_pass": true
+        }
+      },
+      "linked": {
+        "file": "frozen/prompt-constructor-linked.txt",
+        "sha256": "507063ac3ec55c69ed6ec07d0888ab41155a45d7d059a73a1096f5f2cfba4232",
+        "bytes": 28719,
+        "reference_bytes": 20424,
+        "reference_units": 12,
+        "coverage": {
+          "passed": [
+            "required_argument",
+            "nullable_preserved",
+            "caller_preparation_before_removal",
+            "loader_explicit_request",
+            "no_new_test_or_assertion",
+            "six_files_seven_calls"
+          ],
+          "missing": [],
+          "all_pass": true
+        }
+      }
+    }
+  },
+  "manual_curation_cost": "not measured; curated packet is an upper-bound candidate, not automatic retrieval"
+}

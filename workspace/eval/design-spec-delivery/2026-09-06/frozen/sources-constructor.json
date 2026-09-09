@@ -1,0 +1,65 @@
+[
+  {
+    "path": "application/fortune_house/domain_layer/visit/visit.py",
+    "start": 53,
+    "end": 84,
+    "full_source_sha256": "887912bca3c9c33fab0ed6df22d416d208c215848484a88da9b0547ae1bbf9a4",
+    "text": "    def __init__(\n        self,\n        *,\n        id: UUID,\n        key: VisitKey,\n        stage: VisitStage,\n        display_language: DisplayLanguage | None,\n        selection: FortuneSelection,\n        saju: SajuSnapshot | None,\n        pending_card: PendingCard | None,\n        request: FortuneRequest | None = None,\n        carried_request: CarriedRequest | None,\n        undelivered_record_id: UUID | None,\n        record_id: UUID | None,\n        lease: TurnLease | None,\n        last_turn_outcome: TurnOutcome | None,\n        version: int,\n        persisted_version: int,\n    ) -> None:\n        self._id: UUID = id\n        self._key: VisitKey = key\n        self._stage: VisitStage = stage\n        self._display_language: DisplayLanguage | None = display_language\n        self._selection: FortuneSelection = selection\n        self._saju: SajuSnapshot | None = saju\n        self._pending_card: PendingCard | None = pending_card\n        self._request: FortuneRequest | None = request\n        self._carried_request: CarriedRequest | None = carried_request\n        self._undelivered_record_id: UUID | None = undelivered_record_id\n        self._record_id: UUID | None = record_id\n        self._lease: TurnLease | None = lease\n        self._last_turn_outcome: TurnOutcome | None = last_turn_outcome\n"
+  },
+  {
+    "path": "application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py",
+    "start": 498,
+    "end": 533,
+    "full_source_sha256": "0e049384c1a572c47b2600f10b054b3ad933eacb782cde2a191b4e247b544e89",
+    "text": "    def _to_domain(model: VisitModel) -> Visit:\n        stage: VisitStage = VisitStage(model.stage)\n        pending_card: PendingCard | None = _read_pending_card(model)\n        request: FortuneRequest | None = _read_fortune_request(model.id, model.fortune_request)\n        # 손상 처분 확장(§5.1 S2) — 열은 있는데 읽지 못했으면 요청 결합 슬롯도 함께 비운다(§3.2 불변식 «요청 결합 슬롯 ⇒ request»)\n        fortune_request_corrupt: bool = model.fortune_request is not None and request is None\n        if fortune_request_corrupt and pending_card is not None and pending_card.binds_request():\n            pending_card = None\n            if stage is VisitStage.SELECTING:\n                stage = VisitStage.IDLE\n        return Visit(\n            id=model.id,\n            key=VisitKey(account_id=model.account_id, character_id=model.character_id),\n            stage=stage,\n            display_language=None if model.display_language is None else DisplayLanguage(code=model.display_language),\n            selection=FortuneSelection(\n                fortune_id=model.fortune_id,\n                selected_character_id=model.selected_character_id,\n                prompt_set=_read_prompt_set(model.id, model.prompt_set),\n                reservation_id=model.reservation_id,\n                displayed_price=model.displayed_price,\n                annual_fortune_from_year=model.annual_fortune_from_year,\n                annual_fortune_to_year=model.annual_fortune_to_year,\n                bundle_id=model.bundle_id,\n            ),\n            saju=_read_saju_snapshot(model.id, model.saju_snapshot),\n            pending_card=pending_card,\n            request=request,\n            carried_request=_read_carried_request(model.id, model.carried_request),\n            undelivered_record_id=model.undelivered_record_id,\n            record_id=model.record_id,\n            lease=_read_lease(model),\n            last_turn_outcome=None if model.last_turn_outcome is None else TurnOutcome(model.last_turn_outcome),\n            version=model.version,\n            persisted_version=model.version,\n        )\n"
+  },
+  {
+    "path": "application/fortune_house/test/unit/test_visit_turn_use_cases.py",
+    "start": 313,
+    "end": 322,
+    "full_source_sha256": "815dd7ac232c5e69842cf1de8e6f85b56b808cdd82a2508a04001db73b716b5a",
+    "text": "    visit: Visit = Visit(\n        id=uuid4(),\n        key=_room_key(),\n        stage=VisitStage.SELECTING if pending_card is not None else VisitStage.IDLE,\n        display_language=None,\n        selection=FortuneSelection.empty(),\n        saju=None,\n        pending_card=pending_card,\n        request=None,\n        carried_request=None,\n"
+  },
+  {
+    "path": "application/fortune_house/test/unit/test_visit.py",
+    "start": 342,
+    "end": 351,
+    "full_source_sha256": "eadd9d26eccca782994d45841490451d13742af087adf8e533349951f5f597ed",
+    "text": "        Visit(\n            id=uuid4(),\n            key=_room_key(),\n            stage=VisitStage.IDLE,\n            display_language=None,\n            selection=FortuneSelection.empty(),\n            saju=None,\n            pending_card=None,\n            request=None,\n            carried_request=None,\n"
+  },
+  {
+    "path": "application/fortune_house/test/integration/test_visit_turn_admission_concurrency.py",
+    "start": 196,
+    "end": 214,
+    "full_source_sha256": "fb9f3c36a0947dfe5cadeeac76cd1acf5f58d2511390fd48f7e9a00631ef87a0",
+    "text": "    stale_visit: Visit = Visit(\n        id=uuid4(),\n        key=ROOM_KEY,\n        stage=VisitStage.ANSWERING,\n        display_language=None,\n        selection=FortuneSelection(\n            fortune_id=\"annual_fortune\",\n            selected_character_id=CHARACTER_ID,\n            prompt_set=None,\n            reservation_id=released_reservation_id,\n            displayed_price=1200,\n            annual_fortune_from_year=None,\n            annual_fortune_to_year=None,\n            bundle_id=\"bundle-1\",\n        ),\n        saju=None,\n        pending_card=None,\n        request=None,\n        carried_request=None,\n"
+  },
+  {
+    "path": "application/fortune_house/test/integration/test_visit_turn_no_op_and_slot.py",
+    "start": 87,
+    "end": 96,
+    "full_source_sha256": "98abe9236e4c8feb130f35bb3c5d4beff66067255e6aacde7a533456ab8845eb",
+    "text": "    visit: Visit = Visit(\n        id=uuid4(),\n        key=ROOM_KEY,\n        stage=VisitStage.SELECTING,\n        display_language=None,\n        selection=FortuneSelection.empty(),\n        saju=None,\n        pending_card=PendingCard(call_id=PENDING_CALL_ID, name=\"select_fortune\", issued_at=HARNESS_NOW, issued_turn_id=uuid4()),\n        request=None,\n        carried_request=None,\n"
+  },
+  {
+    "path": "application/fortune_house/test/integration/test_visit_turn_reception_exits.py",
+    "start": 152,
+    "end": 163,
+    "full_source_sha256": "3a4c07cee85614d0d47665265a0fde4c3f795d5c9a3adcb5d33410d7ddb77d70",
+    "text": "    visit: Visit = Visit(\n        id=uuid4(),\n        key=ROOM_KEY,\n        stage=VisitStage.SELECTING,\n        display_language=None,\n        selection=FortuneSelection.empty(),\n        saju=None,\n        pending_card=PendingCard(\n            call_id=GO_COUNTER_CALL_ID, name=CardName.GO_COUNTER.value, issued_at=HARNESS_NOW, issued_turn_id=uuid4()\n        ),\n        request=None,\n        carried_request=None,\n"
+  },
+  {
+    "path": "application/fortune_house/test/integration/test_visit_repository_round_trip.py",
+    "start": 431,
+    "end": 440,
+    "full_source_sha256": "94e8f04aaf4db4ce7027e09faa687914e7d9d3f3af33ab9173135710d0d1c2c8",
+    "text": "    duplicate_id: Visit = Visit(\n        id=existing.id,  # pk 충돌 — 방문 키 제약이 아니라 경합이 아니다\n        key=COUNTER_KEY,\n        stage=VisitStage.IDLE,\n        display_language=None,\n        selection=FortuneSelection.empty(),\n        saju=None,\n        pending_card=None,\n        request=None,\n        carried_request=None,\n"
+  },
+  {
+    "path": "application/fortune_house/test/integration/test_visit_repository_round_trip.py",
+    "start": 464,
+    "end": 473,
+    "full_source_sha256": "94e8f04aaf4db4ce7027e09faa687914e7d9d3f3af33ab9173135710d0d1c2c8",
+    "text": "    collided: Visit = Visit(\n        id=counter.id,\n        key=ROOM_KEY,  # 카운터 행을 방 키로 갱신 — 키 unique 가 거부한다(UPDATE 경로 · savepoint 없이 전파)\n        stage=VisitStage.IDLE,\n        display_language=None,\n        selection=FortuneSelection.empty(),\n        saju=None,\n        pending_card=None,\n        request=None,\n        carried_request=None,\n"
+  }
+]

@@ -1,0 +1,80 @@
+{
+  "browser": "152.0.7977.82",
+  "clipboard": "Controlled Promise stub: no real OS clipboard writes or permission claim",
+  "results": [
+    {
+      "id": "C1.pending",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "C1.success.keyboard",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "C2.failure",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "C3.latest",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "C4.isolation",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "C5.root",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "C6.input",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "C7.output",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "C8.retained",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "C9.unsupported",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "runtime.errors",
+      "pass": true,
+      "detail": []
+    }
+  ],
+  "requests": [
+    {
+      "url": "http://127.0.0.1:8771/fragment/copy-root",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8771/fragment/copy-input",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8771/fragment/copy-output",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8771/fragment/note",
+      "status": 200
+    }
+  ],
+  "errors": []
+}

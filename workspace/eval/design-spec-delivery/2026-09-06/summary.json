@@ -1,0 +1,3454 @@
+{
+  "registered_trials": 18,
+  "recorded_trials": 18,
+  "all_registered_trials_present": true,
+  "recorded_original_trials": 18,
+  "recorded_attempts": 24,
+  "recorded_retries": 6,
+  "original_attempt_errors": 6,
+  "default_all_pass_count": 17,
+  "reviewed_all_pass_count": 18,
+  "adjudications": [
+    {
+      "trial": "1-guard-full",
+      "attempt_file": "trials/1-guard-full.json",
+      "attempt_sha256": "6ef0faa0b3ea19237053cd83234b4914a459a4ffe63bd32a4376e0b57647fc22",
+      "code_sha256": "d1e9ffea80435355d5502b96bdb50f1c5615da815d73d04cafdf9c95d1cbad3d",
+      "default_grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "reviewed_grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "changed": false,
+      "method": "post-run allow_replace=True; same ten behavior checks, applied to every valid guard response"
+    },
+    {
+      "trial": "1-guard-linked",
+      "attempt_file": "trials/1-guard-linked.json",
+      "attempt_sha256": "f11d0ab48fd11a5a4afa0972e8542453d7b1078a78f0550f6decf609d16cb493",
+      "code_sha256": "d6d3acd07002e27d06dc9a82cb354a544dc7f2ac5238e3e94ac6433cdcb260c7",
+      "default_grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "reviewed_grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "changed": false,
+      "method": "post-run allow_replace=True; same ten behavior checks, applied to every valid guard response"
+    },
+    {
+      "trial": "1-guard-search",
+      "attempt_file": "trials/1-guard-search.json",
+      "attempt_sha256": "647dc65f6a16d7fb360d8139881b84da7a254161f05d75f5d2c13f528d28eff6",
+      "code_sha256": "b86fe474e4bd0e8bae9922f814852d5b7b39bccdabbd1db96544bb0d7d88b841",
+      "default_grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "reviewed_grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "changed": false,
+      "method": "post-run allow_replace=True; same ten behavior checks, applied to every valid guard response"
+    },
+    {
+      "trial": "2-guard-full",
+      "attempt_file": "trials/2-guard-full.json",
+      "attempt_sha256": "86ddbda4b23662c4a7e3ef14ac4f46fb03555c6fc84eaa04040475b91aef5a93",
+      "code_sha256": "89af9f5af7693d719ca90500a9f5462e822d1abf5468bce9d0a813fd60e6760a",
+      "default_grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "reviewed_grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "changed": false,
+      "method": "post-run allow_replace=True; same ten behavior checks, applied to every valid guard response"
+    },
+    {
+      "trial": "2-guard-linked",
+      "attempt_file": "trials/2-guard-linked.json",
+      "attempt_sha256": "0b607cf0587e2772d876b92fac2aa7875217e748d0588c3f717172a9fe2e92bb",
+      "code_sha256": "b86fe474e4bd0e8bae9922f814852d5b7b39bccdabbd1db96544bb0d7d88b841",
+      "default_grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "reviewed_grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "changed": false,
+      "method": "post-run allow_replace=True; same ten behavior checks, applied to every valid guard response"
+    },
+    {
+      "trial": "2-guard-search",
+      "attempt_file": "trials/2-guard-search.json",
+      "attempt_sha256": "c89e491465a828915880f9e64998ed8a3163353d12ac23a3b8eeb55e4248e87e",
+      "code_sha256": "d6d3acd07002e27d06dc9a82cb354a544dc7f2ac5238e3e94ac6433cdcb260c7",
+      "default_grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "reviewed_grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "changed": false,
+      "method": "post-run allow_replace=True; same ten behavior checks, applied to every valid guard response"
+    },
+    {
+      "trial": "3-guard-full",
+      "attempt_file": "retries/round-1/3-guard-full.json",
+      "attempt_sha256": "eaf8da8ad6da2ae43593847e80023eb9c8fe7e47c911a15754b9ae13b79bac59",
+      "code_sha256": "bfb479ffc7213eeb13b8f10ff58e306b28568106fcc147a3944036f6ffe4cb72",
+      "default_grade": {
+        "passed": [],
+        "missing": [
+          "safe_executable_function"
+        ],
+        "all_pass": false,
+        "error": "unexpected attribute"
+      },
+      "reviewed_grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "changed": true,
+      "method": "post-run allow_replace=True; same ten behavior checks, applied to every valid guard response"
+    },
+    {
+      "trial": "3-guard-linked",
+      "attempt_file": "retries/round-1/3-guard-linked.json",
+      "attempt_sha256": "303c3840c05f7a0f9331d8ffc540e13300c90ec341213c7ade52220dfe66394e",
+      "code_sha256": "b86fe474e4bd0e8bae9922f814852d5b7b39bccdabbd1db96544bb0d7d88b841",
+      "default_grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "reviewed_grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "changed": false,
+      "method": "post-run allow_replace=True; same ten behavior checks, applied to every valid guard response"
+    },
+    {
+      "trial": "3-guard-search",
+      "attempt_file": "retries/round-1/3-guard-search.json",
+      "attempt_sha256": "efbe36154a1d44711ff8ad1422eb51603bb00a3da95450cdfce1eb8e835242d0",
+      "code_sha256": "c5a82271cee3d344c5be728c99b91a161399d66ce85cba2e03d1a16170f69cbb",
+      "default_grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "reviewed_grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "changed": false,
+      "method": "post-run allow_replace=True; same ten behavior checks, applied to every valid guard response"
+    }
+  ],
+  "reviewed_groups": {
+    "constructor/full": {
+      "attempts": 3,
+      "errors": 0,
+      "all_trials_valid": true,
+      "valid_model_trials": 3,
+      "all_pass": 3,
+      "wall_ms_all_attempts": {
+        "median": 57701.61254203413,
+        "min": 45363.34241705481,
+        "max": 63934.61220804602
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 57701.61254203413,
+        "min": 45363.34241705481,
+        "max": 63934.61220804602
+      },
+      "api_ms_valid_model_trials": {
+        "median": 56245,
+        "min": 44018,
+        "max": 62461
+      },
+      "input_tokens_including_cache": {
+        "median": 286208,
+        "min": 286208,
+        "max": 286494
+      },
+      "cache_read_tokens": {
+        "median": 0,
+        "min": 0,
+        "max": 286206
+      },
+      "cache_creation_tokens": {
+        "median": 286206,
+        "min": 0,
+        "max": 286492
+      },
+      "output_tokens_including_thinking": {
+        "median": 4505,
+        "min": 3354,
+        "max": 4606
+      },
+      "thinking_tokens": {
+        "median": 3842,
+        "min": 2612,
+        "max": 3950
+      }
+    },
+    "constructor/linked": {
+      "attempts": 3,
+      "errors": 0,
+      "all_trials_valid": true,
+      "valid_model_trials": 3,
+      "all_pass": 3,
+      "wall_ms_all_attempts": {
+        "median": 25936.882083071396,
+        "min": 25827.663625008427,
+        "max": 32102.029250003397
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 25936.882083071396,
+        "min": 25827.663625008427,
+        "max": 32102.029250003397
+      },
+      "api_ms_valid_model_trials": {
+        "median": 26251,
+        "min": 26085,
+        "max": 32339
+      },
+      "input_tokens_including_cache": {
+        "median": 13673,
+        "min": 13673,
+        "max": 13959
+      },
+      "cache_read_tokens": {
+        "median": 0,
+        "min": 0,
+        "max": 13671
+      },
+      "cache_creation_tokens": {
+        "median": 13671,
+        "min": 0,
+        "max": 13957
+      },
+      "output_tokens_including_thinking": {
+        "median": 2160,
+        "min": 2014,
+        "max": 2545
+      },
+      "thinking_tokens": {
+        "median": 1600,
+        "min": 1502,
+        "max": 2031
+      }
+    },
+    "constructor/search": {
+      "attempts": 3,
+      "errors": 0,
+      "all_trials_valid": true,
+      "valid_model_trials": 3,
+      "all_pass": 3,
+      "wall_ms_all_attempts": {
+        "median": 35627.759792027064,
+        "min": 34457.650500000454,
+        "max": 38689.79141698219
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 35627.759792027064,
+        "min": 34457.650500000454,
+        "max": 38689.79141698219
+      },
+      "api_ms_valid_model_trials": {
+        "median": 36248,
+        "min": 35279,
+        "max": 39378
+      },
+      "input_tokens_including_cache": {
+        "median": 44887,
+        "min": 44887,
+        "max": 45173
+      },
+      "cache_read_tokens": {
+        "median": 0,
+        "min": 0,
+        "max": 44885
+      },
+      "cache_creation_tokens": {
+        "median": 44885,
+        "min": 0,
+        "max": 45171
+      },
+      "output_tokens_including_thinking": {
+        "median": 2381,
+        "min": 2237,
+        "max": 3003
+      },
+      "thinking_tokens": {
+        "median": 1782,
+        "min": 1751,
+        "max": 2349
+      }
+    },
+    "guard/full": {
+      "attempts": 3,
+      "errors": 0,
+      "all_trials_valid": true,
+      "valid_model_trials": 3,
+      "all_pass": 3,
+      "wall_ms_all_attempts": {
+        "median": 455262.4715419952,
+        "min": 104761.46004104521,
+        "max": 535044.394333032
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 455262.4715419952,
+        "min": 104761.46004104521,
+        "max": 535044.394333032
+      },
+      "api_ms_valid_model_trials": {
+        "median": 454007,
+        "min": 103499,
+        "max": 533615
+      },
+      "input_tokens_including_cache": {
+        "median": 288566,
+        "min": 288566,
+        "max": 288852
+      },
+      "cache_read_tokens": {
+        "median": 0,
+        "min": 0,
+        "max": 288564
+      },
+      "cache_creation_tokens": {
+        "median": 288564,
+        "min": 0,
+        "max": 288850
+      },
+      "output_tokens_including_thinking": {
+        "median": 46870,
+        "min": 8933,
+        "max": 54302
+      },
+      "thinking_tokens": {
+        "median": 46339,
+        "min": 8396,
+        "max": 53375
+      }
+    },
+    "guard/linked": {
+      "attempts": 3,
+      "errors": 0,
+      "all_trials_valid": true,
+      "valid_model_trials": 3,
+      "all_pass": 3,
+      "wall_ms_all_attempts": {
+        "median": 29371.6010840144,
+        "min": 23128.706959076226,
+        "max": 52827.255374984816
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 29371.6010840144,
+        "min": 23128.706959076226,
+        "max": 52827.255374984816
+      },
+      "api_ms_valid_model_trials": {
+        "median": 29878,
+        "min": 23330,
+        "max": 52870
+      },
+      "input_tokens_including_cache": {
+        "median": 10114,
+        "min": 10114,
+        "max": 10400
+      },
+      "cache_read_tokens": {
+        "median": 0,
+        "min": 0,
+        "max": 10112
+      },
+      "cache_creation_tokens": {
+        "median": 10112,
+        "min": 0,
+        "max": 10398
+      },
+      "output_tokens_including_thinking": {
+        "median": 2166,
+        "min": 1680,
+        "max": 3669
+      },
+      "thinking_tokens": {
+        "median": 1615,
+        "min": 1160,
+        "max": 3101
+      }
+    },
+    "guard/search": {
+      "attempts": 3,
+      "errors": 0,
+      "all_trials_valid": true,
+      "valid_model_trials": 3,
+      "all_pass": 3,
+      "wall_ms_all_attempts": {
+        "median": 49509.29312501103,
+        "min": 31888.874625088647,
+        "max": 51929.18095795903
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 49509.29312501103,
+        "min": 31888.874625088647,
+        "max": 51929.18095795903
+      },
+      "api_ms_valid_model_trials": {
+        "median": 50362,
+        "min": 33458,
+        "max": 52690
+      },
+      "input_tokens_including_cache": {
+        "median": 48961,
+        "min": 48961,
+        "max": 49247
+      },
+      "cache_read_tokens": {
+        "median": 0,
+        "min": 0,
+        "max": 48959
+      },
+      "cache_creation_tokens": {
+        "median": 48959,
+        "min": 0,
+        "max": 49245
+      },
+      "output_tokens_including_thinking": {
+        "median": 3729,
+        "min": 2108,
+        "max": 3911
+      },
+      "thinking_tokens": {
+        "median": 2984,
+        "min": 1582,
+        "max": 3418
+      }
+    }
+  },
+  "valid_model_trials": 18,
+  "all_registered_trials_valid": true,
+  "invalid_or_missing_trials": [],
+  "pending_read_probes": [],
+  "frozen_digests_valid": true,
+  "fresh_grades_match": true,
+  "groups": {
+    "constructor/full": {
+      "attempts": 3,
+      "errors": 0,
+      "all_trials_valid": true,
+      "valid_model_trials": 3,
+      "all_pass": 3,
+      "wall_ms_all_attempts": {
+        "median": 57701.61254203413,
+        "min": 45363.34241705481,
+        "max": 63934.61220804602
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 57701.61254203413,
+        "min": 45363.34241705481,
+        "max": 63934.61220804602
+      },
+      "api_ms_valid_model_trials": {
+        "median": 56245,
+        "min": 44018,
+        "max": 62461
+      },
+      "input_tokens_including_cache": {
+        "median": 286208,
+        "min": 286208,
+        "max": 286494
+      },
+      "cache_read_tokens": {
+        "median": 0,
+        "min": 0,
+        "max": 286206
+      },
+      "cache_creation_tokens": {
+        "median": 286206,
+        "min": 0,
+        "max": 286492
+      },
+      "output_tokens_including_thinking": {
+        "median": 4505,
+        "min": 3354,
+        "max": 4606
+      },
+      "thinking_tokens": {
+        "median": 3842,
+        "min": 2612,
+        "max": 3950
+      }
+    },
+    "constructor/linked": {
+      "attempts": 3,
+      "errors": 0,
+      "all_trials_valid": true,
+      "valid_model_trials": 3,
+      "all_pass": 3,
+      "wall_ms_all_attempts": {
+        "median": 25936.882083071396,
+        "min": 25827.663625008427,
+        "max": 32102.029250003397
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 25936.882083071396,
+        "min": 25827.663625008427,
+        "max": 32102.029250003397
+      },
+      "api_ms_valid_model_trials": {
+        "median": 26251,
+        "min": 26085,
+        "max": 32339
+      },
+      "input_tokens_including_cache": {
+        "median": 13673,
+        "min": 13673,
+        "max": 13959
+      },
+      "cache_read_tokens": {
+        "median": 0,
+        "min": 0,
+        "max": 13671
+      },
+      "cache_creation_tokens": {
+        "median": 13671,
+        "min": 0,
+        "max": 13957
+      },
+      "output_tokens_including_thinking": {
+        "median": 2160,
+        "min": 2014,
+        "max": 2545
+      },
+      "thinking_tokens": {
+        "median": 1600,
+        "min": 1502,
+        "max": 2031
+      }
+    },
+    "constructor/search": {
+      "attempts": 3,
+      "errors": 0,
+      "all_trials_valid": true,
+      "valid_model_trials": 3,
+      "all_pass": 3,
+      "wall_ms_all_attempts": {
+        "median": 35627.759792027064,
+        "min": 34457.650500000454,
+        "max": 38689.79141698219
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 35627.759792027064,
+        "min": 34457.650500000454,
+        "max": 38689.79141698219
+      },
+      "api_ms_valid_model_trials": {
+        "median": 36248,
+        "min": 35279,
+        "max": 39378
+      },
+      "input_tokens_including_cache": {
+        "median": 44887,
+        "min": 44887,
+        "max": 45173
+      },
+      "cache_read_tokens": {
+        "median": 0,
+        "min": 0,
+        "max": 44885
+      },
+      "cache_creation_tokens": {
+        "median": 44885,
+        "min": 0,
+        "max": 45171
+      },
+      "output_tokens_including_thinking": {
+        "median": 2381,
+        "min": 2237,
+        "max": 3003
+      },
+      "thinking_tokens": {
+        "median": 1782,
+        "min": 1751,
+        "max": 2349
+      }
+    },
+    "guard/full": {
+      "attempts": 3,
+      "errors": 0,
+      "all_trials_valid": true,
+      "valid_model_trials": 3,
+      "all_pass": 2,
+      "wall_ms_all_attempts": {
+        "median": 455262.4715419952,
+        "min": 104761.46004104521,
+        "max": 535044.394333032
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 455262.4715419952,
+        "min": 104761.46004104521,
+        "max": 535044.394333032
+      },
+      "api_ms_valid_model_trials": {
+        "median": 454007,
+        "min": 103499,
+        "max": 533615
+      },
+      "input_tokens_including_cache": {
+        "median": 288566,
+        "min": 288566,
+        "max": 288852
+      },
+      "cache_read_tokens": {
+        "median": 0,
+        "min": 0,
+        "max": 288564
+      },
+      "cache_creation_tokens": {
+        "median": 288564,
+        "min": 0,
+        "max": 288850
+      },
+      "output_tokens_including_thinking": {
+        "median": 46870,
+        "min": 8933,
+        "max": 54302
+      },
+      "thinking_tokens": {
+        "median": 46339,
+        "min": 8396,
+        "max": 53375
+      }
+    },
+    "guard/linked": {
+      "attempts": 3,
+      "errors": 0,
+      "all_trials_valid": true,
+      "valid_model_trials": 3,
+      "all_pass": 3,
+      "wall_ms_all_attempts": {
+        "median": 29371.6010840144,
+        "min": 23128.706959076226,
+        "max": 52827.255374984816
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 29371.6010840144,
+        "min": 23128.706959076226,
+        "max": 52827.255374984816
+      },
+      "api_ms_valid_model_trials": {
+        "median": 29878,
+        "min": 23330,
+        "max": 52870
+      },
+      "input_tokens_including_cache": {
+        "median": 10114,
+        "min": 10114,
+        "max": 10400
+      },
+      "cache_read_tokens": {
+        "median": 0,
+        "min": 0,
+        "max": 10112
+      },
+      "cache_creation_tokens": {
+        "median": 10112,
+        "min": 0,
+        "max": 10398
+      },
+      "output_tokens_including_thinking": {
+        "median": 2166,
+        "min": 1680,
+        "max": 3669
+      },
+      "thinking_tokens": {
+        "median": 1615,
+        "min": 1160,
+        "max": 3101
+      }
+    },
+    "guard/search": {
+      "attempts": 3,
+      "errors": 0,
+      "all_trials_valid": true,
+      "valid_model_trials": 3,
+      "all_pass": 3,
+      "wall_ms_all_attempts": {
+        "median": 49509.29312501103,
+        "min": 31888.874625088647,
+        "max": 51929.18095795903
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 49509.29312501103,
+        "min": 31888.874625088647,
+        "max": 51929.18095795903
+      },
+      "api_ms_valid_model_trials": {
+        "median": 50362,
+        "min": 33458,
+        "max": 52690
+      },
+      "input_tokens_including_cache": {
+        "median": 48961,
+        "min": 48961,
+        "max": 49247
+      },
+      "cache_read_tokens": {
+        "median": 0,
+        "min": 0,
+        "max": 48959
+      },
+      "cache_creation_tokens": {
+        "median": 48959,
+        "min": 0,
+        "max": 49245
+      },
+      "output_tokens_including_thinking": {
+        "median": 3729,
+        "min": 2108,
+        "max": 3911
+      },
+      "thinking_tokens": {
+        "median": 2984,
+        "min": 1582,
+        "max": 3418
+      }
+    }
+  },
+  "original_groups": {
+    "constructor/full": {
+      "attempts": 3,
+      "errors": 1,
+      "all_trials_valid": false,
+      "valid_model_trials": 2,
+      "all_pass": 2,
+      "wall_ms_all_attempts": {
+        "median": 57701.61254203413,
+        "min": 3978.761082980782,
+        "max": 63934.61220804602
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 60818.11237504007,
+        "min": 57701.61254203413,
+        "max": 63934.61220804602
+      },
+      "api_ms_valid_model_trials": {
+        "median": 59353.0,
+        "min": 56245,
+        "max": 62461
+      },
+      "input_tokens_including_cache": {
+        "median": 286208.0,
+        "min": 286208,
+        "max": 286208
+      },
+      "cache_read_tokens": {
+        "median": 143103.0,
+        "min": 0,
+        "max": 286206
+      },
+      "cache_creation_tokens": {
+        "median": 143103.0,
+        "min": 0,
+        "max": 286206
+      },
+      "output_tokens_including_thinking": {
+        "median": 4555.5,
+        "min": 4505,
+        "max": 4606
+      },
+      "thinking_tokens": {
+        "median": 3896.0,
+        "min": 3842,
+        "max": 3950
+      }
+    },
+    "constructor/linked": {
+      "attempts": 3,
+      "errors": 1,
+      "all_trials_valid": false,
+      "valid_model_trials": 2,
+      "all_pass": 2,
+      "wall_ms_all_attempts": {
+        "median": 25827.663625008427,
+        "min": 3704.77258390747,
+        "max": 25936.882083071396
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 25882.27285403991,
+        "min": 25827.663625008427,
+        "max": 25936.882083071396
+      },
+      "api_ms_valid_model_trials": {
+        "median": 26168.0,
+        "min": 26085,
+        "max": 26251
+      },
+      "input_tokens_including_cache": {
+        "median": 13673.0,
+        "min": 13673,
+        "max": 13673
+      },
+      "cache_read_tokens": {
+        "median": 6835.5,
+        "min": 0,
+        "max": 13671
+      },
+      "cache_creation_tokens": {
+        "median": 6835.5,
+        "min": 0,
+        "max": 13671
+      },
+      "output_tokens_including_thinking": {
+        "median": 2087.0,
+        "min": 2014,
+        "max": 2160
+      },
+      "thinking_tokens": {
+        "median": 1551.0,
+        "min": 1502,
+        "max": 1600
+      }
+    },
+    "constructor/search": {
+      "attempts": 3,
+      "errors": 1,
+      "all_trials_valid": false,
+      "valid_model_trials": 2,
+      "all_pass": 2,
+      "wall_ms_all_attempts": {
+        "median": 34457.650500000454,
+        "min": 3713.5641670320183,
+        "max": 38689.79141698219
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 36573.72095849132,
+        "min": 34457.650500000454,
+        "max": 38689.79141698219
+      },
+      "api_ms_valid_model_trials": {
+        "median": 37328.5,
+        "min": 35279,
+        "max": 39378
+      },
+      "input_tokens_including_cache": {
+        "median": 44887.0,
+        "min": 44887,
+        "max": 44887
+      },
+      "cache_read_tokens": {
+        "median": 22442.5,
+        "min": 0,
+        "max": 44885
+      },
+      "cache_creation_tokens": {
+        "median": 22442.5,
+        "min": 0,
+        "max": 44885
+      },
+      "output_tokens_including_thinking": {
+        "median": 2620.0,
+        "min": 2237,
+        "max": 3003
+      },
+      "thinking_tokens": {
+        "median": 2050.0,
+        "min": 1751,
+        "max": 2349
+      }
+    },
+    "guard/full": {
+      "attempts": 3,
+      "errors": 1,
+      "all_trials_valid": false,
+      "valid_model_trials": 2,
+      "all_pass": 2,
+      "wall_ms_all_attempts": {
+        "median": 104761.46004104521,
+        "min": 3674.7395420679823,
+        "max": 455262.4715419952
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 280011.9657915202,
+        "min": 104761.46004104521,
+        "max": 455262.4715419952
+      },
+      "api_ms_valid_model_trials": {
+        "median": 278753.0,
+        "min": 103499,
+        "max": 454007
+      },
+      "input_tokens_including_cache": {
+        "median": 288566.0,
+        "min": 288566,
+        "max": 288566
+      },
+      "cache_read_tokens": {
+        "median": 144282.0,
+        "min": 0,
+        "max": 288564
+      },
+      "cache_creation_tokens": {
+        "median": 144282.0,
+        "min": 0,
+        "max": 288564
+      },
+      "output_tokens_including_thinking": {
+        "median": 27901.5,
+        "min": 8933,
+        "max": 46870
+      },
+      "thinking_tokens": {
+        "median": 27367.5,
+        "min": 8396,
+        "max": 46339
+      }
+    },
+    "guard/linked": {
+      "attempts": 3,
+      "errors": 1,
+      "all_trials_valid": false,
+      "valid_model_trials": 2,
+      "all_pass": 2,
+      "wall_ms_all_attempts": {
+        "median": 29371.6010840144,
+        "min": 3792.3047500662506,
+        "max": 52827.255374984816
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 41099.42822949961,
+        "min": 29371.6010840144,
+        "max": 52827.255374984816
+      },
+      "api_ms_valid_model_trials": {
+        "median": 41374.0,
+        "min": 29878,
+        "max": 52870
+      },
+      "input_tokens_including_cache": {
+        "median": 10114.0,
+        "min": 10114,
+        "max": 10114
+      },
+      "cache_read_tokens": {
+        "median": 5056.0,
+        "min": 0,
+        "max": 10112
+      },
+      "cache_creation_tokens": {
+        "median": 5056.0,
+        "min": 0,
+        "max": 10112
+      },
+      "output_tokens_including_thinking": {
+        "median": 2917.5,
+        "min": 2166,
+        "max": 3669
+      },
+      "thinking_tokens": {
+        "median": 2358.0,
+        "min": 1615,
+        "max": 3101
+      }
+    },
+    "guard/search": {
+      "attempts": 3,
+      "errors": 1,
+      "all_trials_valid": false,
+      "valid_model_trials": 2,
+      "all_pass": 2,
+      "wall_ms_all_attempts": {
+        "median": 31888.874625088647,
+        "min": 3775.514999986626,
+        "max": 49509.29312501103
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 40699.08387504984,
+        "min": 31888.874625088647,
+        "max": 49509.29312501103
+      },
+      "api_ms_valid_model_trials": {
+        "median": 41910.0,
+        "min": 33458,
+        "max": 50362
+      },
+      "input_tokens_including_cache": {
+        "median": 48961.0,
+        "min": 48961,
+        "max": 48961
+      },
+      "cache_read_tokens": {
+        "median": 24479.5,
+        "min": 0,
+        "max": 48959
+      },
+      "cache_creation_tokens": {
+        "median": 24479.5,
+        "min": 0,
+        "max": 48959
+      },
+      "output_tokens_including_thinking": {
+        "median": 3009.5,
+        "min": 2108,
+        "max": 3911
+      },
+      "thinking_tokens": {
+        "median": 2500.0,
+        "min": 1582,
+        "max": 3418
+      }
+    }
+  },
+  "resumed_groups": {
+    "constructor/full": {
+      "attempts": 1,
+      "errors": 0,
+      "all_trials_valid": true,
+      "valid_model_trials": 1,
+      "all_pass": 1,
+      "wall_ms_all_attempts": {
+        "median": 45363.34241705481,
+        "min": 45363.34241705481,
+        "max": 45363.34241705481
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 45363.34241705481,
+        "min": 45363.34241705481,
+        "max": 45363.34241705481
+      },
+      "api_ms_valid_model_trials": {
+        "median": 44018,
+        "min": 44018,
+        "max": 44018
+      },
+      "input_tokens_including_cache": {
+        "median": 286494,
+        "min": 286494,
+        "max": 286494
+      },
+      "cache_read_tokens": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "cache_creation_tokens": {
+        "median": 286492,
+        "min": 286492,
+        "max": 286492
+      },
+      "output_tokens_including_thinking": {
+        "median": 3354,
+        "min": 3354,
+        "max": 3354
+      },
+      "thinking_tokens": {
+        "median": 2612,
+        "min": 2612,
+        "max": 2612
+      }
+    },
+    "constructor/linked": {
+      "attempts": 1,
+      "errors": 0,
+      "all_trials_valid": true,
+      "valid_model_trials": 1,
+      "all_pass": 1,
+      "wall_ms_all_attempts": {
+        "median": 32102.029250003397,
+        "min": 32102.029250003397,
+        "max": 32102.029250003397
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 32102.029250003397,
+        "min": 32102.029250003397,
+        "max": 32102.029250003397
+      },
+      "api_ms_valid_model_trials": {
+        "median": 32339,
+        "min": 32339,
+        "max": 32339
+      },
+      "input_tokens_including_cache": {
+        "median": 13959,
+        "min": 13959,
+        "max": 13959
+      },
+      "cache_read_tokens": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "cache_creation_tokens": {
+        "median": 13957,
+        "min": 13957,
+        "max": 13957
+      },
+      "output_tokens_including_thinking": {
+        "median": 2545,
+        "min": 2545,
+        "max": 2545
+      },
+      "thinking_tokens": {
+        "median": 2031,
+        "min": 2031,
+        "max": 2031
+      }
+    },
+    "constructor/search": {
+      "attempts": 1,
+      "errors": 0,
+      "all_trials_valid": true,
+      "valid_model_trials": 1,
+      "all_pass": 1,
+      "wall_ms_all_attempts": {
+        "median": 35627.759792027064,
+        "min": 35627.759792027064,
+        "max": 35627.759792027064
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 35627.759792027064,
+        "min": 35627.759792027064,
+        "max": 35627.759792027064
+      },
+      "api_ms_valid_model_trials": {
+        "median": 36248,
+        "min": 36248,
+        "max": 36248
+      },
+      "input_tokens_including_cache": {
+        "median": 45173,
+        "min": 45173,
+        "max": 45173
+      },
+      "cache_read_tokens": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "cache_creation_tokens": {
+        "median": 45171,
+        "min": 45171,
+        "max": 45171
+      },
+      "output_tokens_including_thinking": {
+        "median": 2381,
+        "min": 2381,
+        "max": 2381
+      },
+      "thinking_tokens": {
+        "median": 1782,
+        "min": 1782,
+        "max": 1782
+      }
+    },
+    "guard/full": {
+      "attempts": 1,
+      "errors": 0,
+      "all_trials_valid": true,
+      "valid_model_trials": 1,
+      "all_pass": 0,
+      "wall_ms_all_attempts": {
+        "median": 535044.394333032,
+        "min": 535044.394333032,
+        "max": 535044.394333032
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 535044.394333032,
+        "min": 535044.394333032,
+        "max": 535044.394333032
+      },
+      "api_ms_valid_model_trials": {
+        "median": 533615,
+        "min": 533615,
+        "max": 533615
+      },
+      "input_tokens_including_cache": {
+        "median": 288852,
+        "min": 288852,
+        "max": 288852
+      },
+      "cache_read_tokens": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "cache_creation_tokens": {
+        "median": 288850,
+        "min": 288850,
+        "max": 288850
+      },
+      "output_tokens_including_thinking": {
+        "median": 54302,
+        "min": 54302,
+        "max": 54302
+      },
+      "thinking_tokens": {
+        "median": 53375,
+        "min": 53375,
+        "max": 53375
+      }
+    },
+    "guard/linked": {
+      "attempts": 1,
+      "errors": 0,
+      "all_trials_valid": true,
+      "valid_model_trials": 1,
+      "all_pass": 1,
+      "wall_ms_all_attempts": {
+        "median": 23128.706959076226,
+        "min": 23128.706959076226,
+        "max": 23128.706959076226
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 23128.706959076226,
+        "min": 23128.706959076226,
+        "max": 23128.706959076226
+      },
+      "api_ms_valid_model_trials": {
+        "median": 23330,
+        "min": 23330,
+        "max": 23330
+      },
+      "input_tokens_including_cache": {
+        "median": 10400,
+        "min": 10400,
+        "max": 10400
+      },
+      "cache_read_tokens": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "cache_creation_tokens": {
+        "median": 10398,
+        "min": 10398,
+        "max": 10398
+      },
+      "output_tokens_including_thinking": {
+        "median": 1680,
+        "min": 1680,
+        "max": 1680
+      },
+      "thinking_tokens": {
+        "median": 1160,
+        "min": 1160,
+        "max": 1160
+      }
+    },
+    "guard/search": {
+      "attempts": 1,
+      "errors": 0,
+      "all_trials_valid": true,
+      "valid_model_trials": 1,
+      "all_pass": 1,
+      "wall_ms_all_attempts": {
+        "median": 51929.18095795903,
+        "min": 51929.18095795903,
+        "max": 51929.18095795903
+      },
+      "wall_ms_valid_model_trials": {
+        "median": 51929.18095795903,
+        "min": 51929.18095795903,
+        "max": 51929.18095795903
+      },
+      "api_ms_valid_model_trials": {
+        "median": 52690,
+        "min": 52690,
+        "max": 52690
+      },
+      "input_tokens_including_cache": {
+        "median": 49247,
+        "min": 49247,
+        "max": 49247
+      },
+      "cache_read_tokens": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+      },
+      "cache_creation_tokens": {
+        "median": 49245,
+        "min": 49245,
+        "max": 49245
+      },
+      "output_tokens_including_thinking": {
+        "median": 3729,
+        "min": 3729,
+        "max": 3729
+      },
+      "thinking_tokens": {
+        "median": 2984,
+        "min": 2984,
+        "max": 2984
+      }
+    }
+  },
+  "read_probes": [
+    {
+      "probe": "chunk-first",
+      "exact_request": true,
+      "read_succeeded": true,
+      "read_failed": false,
+      "read_content_byte_exact_after_line_numbers_removed": true,
+      "source_sha_matches": true,
+      "wall_ms": 6614.591083023697
+    },
+    {
+      "probe": "chunk-large-revision",
+      "exact_request": true,
+      "read_succeeded": true,
+      "read_failed": false,
+      "read_content_byte_exact_after_line_numbers_removed": true,
+      "source_sha_matches": true,
+      "wall_ms": 6715.514624956995
+    },
+    {
+      "probe": "chunk-longest-line-followup",
+      "exact_request": true,
+      "read_succeeded": true,
+      "read_failed": false,
+      "read_content_byte_exact_after_line_numbers_removed": true,
+      "source_sha_matches": true,
+      "wall_ms": 6627.094957977533
+    },
+    {
+      "probe": "original-250-lines",
+      "exact_request": true,
+      "read_succeeded": false,
+      "read_failed": true,
+      "read_content_byte_exact_after_line_numbers_removed": false,
+      "source_sha_matches": true,
+      "wall_ms": 6738.839500001632
+    }
+  ],
+  "retrieval": {
+    "body": {
+      "queries": 6,
+      "all_obligations_found": 5,
+      "obligations_found": 33,
+      "obligations_total": 36,
+      "raw_bytes": {
+        "median": 79973.5,
+        "min": 79861,
+        "max": 79999
+      },
+      "query_median_ms": {
+        "median": 64.90902055520564,
+        "min": 64.06883301679045,
+        "max": 66.63445802405477
+      }
+    },
+    "context": {
+      "queries": 6,
+      "all_obligations_found": 5,
+      "obligations_found": 33,
+      "obligations_total": 36,
+      "raw_bytes": {
+        "median": 79997.0,
+        "min": 79855,
+        "max": 79999
+      },
+      "query_median_ms": {
+        "median": 73.44233349431306,
+        "min": 72.9527500225231,
+        "max": 73.8052079686895
+      }
+    },
+    "explicit_relations": {
+      "queries": 6,
+      "all_obligations_found": 0,
+      "obligations_found": 3,
+      "obligations_total": 36,
+      "raw_bytes": {
+        "median": 79997.0,
+        "min": 79997,
+        "max": 79998
+      },
+      "query_median_ms": {
+        "median": 86.67091699317098,
+        "min": 86.08312497381121,
+        "max": 88.96162500604987
+      }
+    },
+    "curated": {
+      "queries": 6,
+      "all_obligations_found": 6,
+      "obligations_found": 36,
+      "obligations_total": 36,
+      "raw_bytes": {
+        "median": 13939.0,
+        "min": 8233,
+        "max": 19645
+      },
+      "query_median_ms": {
+        "median": 0.21991704124957323,
+        "min": 0.18129206728190184,
+        "max": 0.25679206009954214
+      }
+    }
+  },
+  "engine_equivalence": true,
+  "engine_warm_ms": {
+    "json": {
+      "median_ms": 1.3716875109821558,
+      "min_ms": 1.282291952520609,
+      "max_ms": 1.4592920197173953
+    },
+    "sparql": {
+      "median_ms": 203.89125001383945,
+      "min_ms": 200.18637494649738,
+      "max_ms": 218.72583299409598
+    }
+  },
+  "trial_details": [
+    {
+      "trial": "1-constructor-full",
+      "case": "constructor",
+      "arm": "full",
+      "wall_ms": 63934.61220804602,
+      "execution_batch": "original-session",
+      "retry_of": null,
+      "grade": {
+        "passed": [
+          "request_required",
+          "request_nullable",
+          "loader_argument",
+          "callers_first",
+          "new_test_cases_required",
+          "new_assertions_required",
+          "prepared_file_count",
+          "prepared_constructor_calls",
+          "remaining_production_change"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "error": null,
+      "exit_code": 0,
+      "api_error_status": null,
+      "error_message": null,
+      "primary_model": true,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 286206,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 4606,
+        "output_tokens_details": {
+          "thinking_tokens": 3950
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 286206,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 4606,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 286206,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 286206
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "model_usage": {
+        "claude-fable-5-1": {
+          "inputTokens": 2,
+          "outputTokens": 4606,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 286206,
+          "webSearchRequests": 0,
+          "costUSD": 5.95444,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 3950,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    },
+    {
+      "trial": "1-constructor-linked",
+      "case": "constructor",
+      "arm": "linked",
+      "wall_ms": 25936.882083071396,
+      "execution_batch": "original-session",
+      "retry_of": null,
+      "grade": {
+        "passed": [
+          "request_required",
+          "request_nullable",
+          "loader_argument",
+          "callers_first",
+          "new_test_cases_required",
+          "new_assertions_required",
+          "prepared_file_count",
+          "prepared_constructor_calls",
+          "remaining_production_change"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "error": null,
+      "exit_code": 0,
+      "api_error_status": null,
+      "error_message": null,
+      "primary_model": true,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 13671,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 2014,
+        "output_tokens_details": {
+          "thinking_tokens": 1502
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 13671,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 2014,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 13671,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 13671
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "model_usage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 12670,
+          "outputTokens": 25,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.012795,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "thinkingTokens": 0,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-fable-5-1": {
+          "inputTokens": 2,
+          "outputTokens": 2014,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 13671,
+          "webSearchRequests": 0,
+          "costUSD": 0.37414000000000003,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 1502,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    },
+    {
+      "trial": "1-constructor-search",
+      "case": "constructor",
+      "arm": "search",
+      "wall_ms": 38689.79141698219,
+      "execution_batch": "original-session",
+      "retry_of": null,
+      "grade": {
+        "passed": [
+          "request_required",
+          "request_nullable",
+          "loader_argument",
+          "callers_first",
+          "new_test_cases_required",
+          "new_assertions_required",
+          "prepared_file_count",
+          "prepared_constructor_calls",
+          "remaining_production_change"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "error": null,
+      "exit_code": 0,
+      "api_error_status": null,
+      "error_message": null,
+      "primary_model": true,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 44885,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 3003,
+        "output_tokens_details": {
+          "thinking_tokens": 2349
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 44885,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 3003,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 44885,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 44885
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "model_usage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 38181,
+          "outputTokens": 20,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.038281,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "thinkingTokens": 0,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-fable-5-1": {
+          "inputTokens": 2,
+          "outputTokens": 3003,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 44885,
+          "webSearchRequests": 0,
+          "costUSD": 1.04787,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 2349,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    },
+    {
+      "trial": "1-guard-full",
+      "case": "guard",
+      "arm": "full",
+      "wall_ms": 104761.46004104521,
+      "execution_batch": "original-session",
+      "retry_of": null,
+      "grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "error": null,
+      "exit_code": 0,
+      "api_error_status": null,
+      "error_message": null,
+      "primary_model": true,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 288564,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 8933,
+        "output_tokens_details": {
+          "thinking_tokens": 8396
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 288564,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 8933,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 288564,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 288564
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "model_usage": {
+        "claude-fable-5-1": {
+          "inputTokens": 2,
+          "outputTokens": 8933,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 288564,
+          "webSearchRequests": 0,
+          "costUSD": 6.21795,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 8396,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    },
+    {
+      "trial": "1-guard-linked",
+      "case": "guard",
+      "arm": "linked",
+      "wall_ms": 52827.255374984816,
+      "execution_batch": "original-session",
+      "retry_of": null,
+      "grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "error": null,
+      "exit_code": 0,
+      "api_error_status": null,
+      "error_message": null,
+      "primary_model": true,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 10112,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 3669,
+        "output_tokens_details": {
+          "thinking_tokens": 3101
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 10112,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 3669,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 10112,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 10112
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "model_usage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 8991,
+          "outputTokens": 25,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.009116,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "thinkingTokens": 0,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-fable-5-1": {
+          "inputTokens": 2,
+          "outputTokens": 3669,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 10112,
+          "webSearchRequests": 0,
+          "costUSD": 0.38571,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 3101,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    },
+    {
+      "trial": "1-guard-search",
+      "case": "guard",
+      "arm": "search",
+      "wall_ms": 31888.874625088647,
+      "execution_batch": "original-session",
+      "retry_of": null,
+      "grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "error": null,
+      "exit_code": 0,
+      "api_error_status": null,
+      "error_message": null,
+      "primary_model": true,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 48959,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 2108,
+        "output_tokens_details": {
+          "thinking_tokens": 1582
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 48959,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 2108,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 48959,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 48959
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "model_usage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 40936,
+          "outputTokens": 27,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.041071,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "thinkingTokens": 0,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-fable-5-1": {
+          "inputTokens": 2,
+          "outputTokens": 2108,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 48959,
+          "webSearchRequests": 0,
+          "costUSD": 1.0846,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 1582,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    },
+    {
+      "trial": "2-constructor-full",
+      "case": "constructor",
+      "arm": "full",
+      "wall_ms": 57701.61254203413,
+      "execution_batch": "original-session",
+      "retry_of": null,
+      "grade": {
+        "passed": [
+          "request_required",
+          "request_nullable",
+          "loader_argument",
+          "callers_first",
+          "new_test_cases_required",
+          "new_assertions_required",
+          "prepared_file_count",
+          "prepared_constructor_calls",
+          "remaining_production_change"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "error": null,
+      "exit_code": 0,
+      "api_error_status": null,
+      "error_message": null,
+      "primary_model": true,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 286206,
+        "output_tokens": 4505,
+        "output_tokens_details": {
+          "thinking_tokens": 3842
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 4505,
+            "cache_read_input_tokens": 286206,
+            "cache_creation_input_tokens": 0,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 0
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "model_usage": {
+        "claude-fable-5-1": {
+          "inputTokens": 2,
+          "outputTokens": 4505,
+          "cacheReadInputTokens": 286206,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.2968215,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 3842,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    },
+    {
+      "trial": "2-constructor-linked",
+      "case": "constructor",
+      "arm": "linked",
+      "wall_ms": 25827.663625008427,
+      "execution_batch": "original-session",
+      "retry_of": null,
+      "grade": {
+        "passed": [
+          "request_required",
+          "request_nullable",
+          "loader_argument",
+          "callers_first",
+          "new_test_cases_required",
+          "new_assertions_required",
+          "prepared_file_count",
+          "prepared_constructor_calls",
+          "remaining_production_change"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "error": null,
+      "exit_code": 0,
+      "api_error_status": null,
+      "error_message": null,
+      "primary_model": true,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 13671,
+        "output_tokens": 2160,
+        "output_tokens_details": {
+          "thinking_tokens": 1600
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 2160,
+            "cache_read_input_tokens": 13671,
+            "cache_creation_input_tokens": 0,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 0
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "model_usage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 12670,
+          "outputTokens": 20,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.01277,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "thinkingTokens": 0,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-fable-5-1": {
+          "inputTokens": 2,
+          "outputTokens": 2160,
+          "cacheReadInputTokens": 13671,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.11143775,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 1600,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    },
+    {
+      "trial": "2-constructor-search",
+      "case": "constructor",
+      "arm": "search",
+      "wall_ms": 34457.650500000454,
+      "execution_batch": "original-session",
+      "retry_of": null,
+      "grade": {
+        "passed": [
+          "request_required",
+          "request_nullable",
+          "loader_argument",
+          "callers_first",
+          "new_test_cases_required",
+          "new_assertions_required",
+          "prepared_file_count",
+          "prepared_constructor_calls",
+          "remaining_production_change"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "error": null,
+      "exit_code": 0,
+      "api_error_status": null,
+      "error_message": null,
+      "primary_model": true,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 44885,
+        "output_tokens": 2237,
+        "output_tokens_details": {
+          "thinking_tokens": 1751
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 2237,
+            "cache_read_input_tokens": 44885,
+            "cache_creation_input_tokens": 0,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 0
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "model_usage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 38181,
+          "outputTokens": 20,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.038281,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "thinkingTokens": 0,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-fable-5-1": {
+          "inputTokens": 2,
+          "outputTokens": 2237,
+          "cacheReadInputTokens": 44885,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.12309125,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 1751,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    },
+    {
+      "trial": "2-guard-full",
+      "case": "guard",
+      "arm": "full",
+      "wall_ms": 455262.4715419952,
+      "execution_batch": "original-session",
+      "retry_of": null,
+      "grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "error": null,
+      "exit_code": 0,
+      "api_error_status": null,
+      "error_message": null,
+      "primary_model": true,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 288564,
+        "output_tokens": 46870,
+        "output_tokens_details": {
+          "thinking_tokens": 46339
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 46870,
+            "cache_read_input_tokens": 288564,
+            "cache_creation_input_tokens": 0,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 0
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "model_usage": {
+        "claude-fable-5-1": {
+          "inputTokens": 2,
+          "outputTokens": 46870,
+          "cacheReadInputTokens": 288564,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 2.415661,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 46339,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    },
+    {
+      "trial": "2-guard-linked",
+      "case": "guard",
+      "arm": "linked",
+      "wall_ms": 29371.6010840144,
+      "execution_batch": "original-session",
+      "retry_of": null,
+      "grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "error": null,
+      "exit_code": 0,
+      "api_error_status": null,
+      "error_message": null,
+      "primary_model": true,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 10112,
+        "output_tokens": 2166,
+        "output_tokens_details": {
+          "thinking_tokens": 1615
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 2166,
+            "cache_read_input_tokens": 10112,
+            "cache_creation_input_tokens": 0,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 0
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "model_usage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 8991,
+          "outputTokens": 29,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.009136,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "thinkingTokens": 0,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-fable-5-1": {
+          "inputTokens": 2,
+          "outputTokens": 2166,
+          "cacheReadInputTokens": 10112,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.110848,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 1615,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    },
+    {
+      "trial": "2-guard-search",
+      "case": "guard",
+      "arm": "search",
+      "wall_ms": 49509.29312501103,
+      "execution_batch": "original-session",
+      "retry_of": null,
+      "grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "error": null,
+      "exit_code": 0,
+      "api_error_status": null,
+      "error_message": null,
+      "primary_model": true,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 48959,
+        "output_tokens": 3911,
+        "output_tokens_details": {
+          "thinking_tokens": 3418
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 3911,
+            "cache_read_input_tokens": 48959,
+            "cache_creation_input_tokens": 0,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 0
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "model_usage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 40936,
+          "outputTokens": 27,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.041071,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "thinkingTokens": 0,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-fable-5-1": {
+          "inputTokens": 2,
+          "outputTokens": 3911,
+          "cacheReadInputTokens": 48959,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.20780975000000002,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 3418,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    },
+    {
+      "trial": "3-constructor-full",
+      "case": "constructor",
+      "arm": "full",
+      "wall_ms": 3978.761082980782,
+      "execution_batch": "original-session",
+      "retry_of": null,
+      "grade": null,
+      "error": "model/harness error",
+      "exit_code": 1,
+      "api_error_status": 429,
+      "error_message": "You've hit your monthly spend limit · raise it at claude.ai/settings/usage?from=cc_cli_limit_message · your session limit resets 7:50am (Asia/Seoul)",
+      "primary_model": false,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 0,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "",
+        "iterations": [],
+        "speed": "standard"
+      },
+      "model_usage": {}
+    },
+    {
+      "trial": "3-constructor-linked",
+      "case": "constructor",
+      "arm": "linked",
+      "wall_ms": 3704.77258390747,
+      "execution_batch": "original-session",
+      "retry_of": null,
+      "grade": null,
+      "error": "model/harness error",
+      "exit_code": 1,
+      "api_error_status": 429,
+      "error_message": "You've hit your monthly spend limit · raise it at claude.ai/settings/usage?from=cc_cli_limit_message · your session limit resets 7:50am (Asia/Seoul)",
+      "primary_model": false,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 0,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "",
+        "iterations": [],
+        "speed": "standard"
+      },
+      "model_usage": {}
+    },
+    {
+      "trial": "3-constructor-search",
+      "case": "constructor",
+      "arm": "search",
+      "wall_ms": 3713.5641670320183,
+      "execution_batch": "original-session",
+      "retry_of": null,
+      "grade": null,
+      "error": "model/harness error",
+      "exit_code": 1,
+      "api_error_status": 429,
+      "error_message": "You've hit your monthly spend limit · raise it at claude.ai/settings/usage?from=cc_cli_limit_message · your session limit resets 7:50am (Asia/Seoul)",
+      "primary_model": false,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 0,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "",
+        "iterations": [],
+        "speed": "standard"
+      },
+      "model_usage": {}
+    },
+    {
+      "trial": "3-guard-full",
+      "case": "guard",
+      "arm": "full",
+      "wall_ms": 3674.7395420679823,
+      "execution_batch": "original-session",
+      "retry_of": null,
+      "grade": null,
+      "error": "model/harness error",
+      "exit_code": 1,
+      "api_error_status": 429,
+      "error_message": "You've hit your monthly spend limit · raise it at claude.ai/settings/usage?from=cc_cli_limit_message · your session limit resets 7:50am (Asia/Seoul)",
+      "primary_model": false,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 0,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "",
+        "iterations": [],
+        "speed": "standard"
+      },
+      "model_usage": {}
+    },
+    {
+      "trial": "3-guard-linked",
+      "case": "guard",
+      "arm": "linked",
+      "wall_ms": 3792.3047500662506,
+      "execution_batch": "original-session",
+      "retry_of": null,
+      "grade": null,
+      "error": "model/harness error",
+      "exit_code": 1,
+      "api_error_status": 429,
+      "error_message": "You've hit your monthly spend limit · raise it at claude.ai/settings/usage?from=cc_cli_limit_message · your session limit resets 7:50am (Asia/Seoul)",
+      "primary_model": false,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 0,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "",
+        "iterations": [],
+        "speed": "standard"
+      },
+      "model_usage": {}
+    },
+    {
+      "trial": "3-guard-search",
+      "case": "guard",
+      "arm": "search",
+      "wall_ms": 3775.514999986626,
+      "execution_batch": "original-session",
+      "retry_of": null,
+      "grade": null,
+      "error": "model/harness error",
+      "exit_code": 1,
+      "api_error_status": 429,
+      "error_message": "You've hit your monthly spend limit · raise it at claude.ai/settings/usage?from=cc_cli_limit_message · your session limit resets 7:50am (Asia/Seoul)",
+      "primary_model": false,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 0,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "",
+        "iterations": [],
+        "speed": "standard"
+      },
+      "model_usage": {}
+    },
+    {
+      "trial": "3-constructor-full",
+      "case": "constructor",
+      "arm": "full",
+      "wall_ms": 45363.34241705481,
+      "execution_batch": "user-switched-account",
+      "retry_of": "3-constructor-full",
+      "grade": {
+        "passed": [
+          "request_required",
+          "request_nullable",
+          "loader_argument",
+          "callers_first",
+          "new_test_cases_required",
+          "new_assertions_required",
+          "prepared_file_count",
+          "prepared_constructor_calls",
+          "remaining_production_change"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "error": null,
+      "exit_code": 0,
+      "api_error_status": null,
+      "error_message": null,
+      "primary_model": true,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 286492,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 3354,
+        "output_tokens_details": {
+          "thinking_tokens": 2612
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 286492,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 3354,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 286492,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 286492
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "model_usage": {
+        "claude-fable-5-1": {
+          "inputTokens": 2,
+          "outputTokens": 3354,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 286492,
+          "webSearchRequests": 0,
+          "costUSD": 5.89756,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 2612,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    },
+    {
+      "trial": "3-constructor-linked",
+      "case": "constructor",
+      "arm": "linked",
+      "wall_ms": 32102.029250003397,
+      "execution_batch": "user-switched-account",
+      "retry_of": "3-constructor-linked",
+      "grade": {
+        "passed": [
+          "request_required",
+          "request_nullable",
+          "loader_argument",
+          "callers_first",
+          "new_test_cases_required",
+          "new_assertions_required",
+          "prepared_file_count",
+          "prepared_constructor_calls",
+          "remaining_production_change"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "error": null,
+      "exit_code": 0,
+      "api_error_status": null,
+      "error_message": null,
+      "primary_model": true,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 13957,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 2545,
+        "output_tokens_details": {
+          "thinking_tokens": 2031
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 13957,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 2545,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 13957,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 13957
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "model_usage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 12670,
+          "outputTokens": 20,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.01277,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "thinkingTokens": 0,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-fable-5-1": {
+          "inputTokens": 2,
+          "outputTokens": 2545,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 13957,
+          "webSearchRequests": 0,
+          "costUSD": 0.40641,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 2031,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    },
+    {
+      "trial": "3-constructor-search",
+      "case": "constructor",
+      "arm": "search",
+      "wall_ms": 35627.759792027064,
+      "execution_batch": "user-switched-account",
+      "retry_of": "3-constructor-search",
+      "grade": {
+        "passed": [
+          "request_required",
+          "request_nullable",
+          "loader_argument",
+          "callers_first",
+          "new_test_cases_required",
+          "new_assertions_required",
+          "prepared_file_count",
+          "prepared_constructor_calls",
+          "remaining_production_change"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "error": null,
+      "exit_code": 0,
+      "api_error_status": null,
+      "error_message": null,
+      "primary_model": true,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 45171,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 2381,
+        "output_tokens_details": {
+          "thinking_tokens": 1782
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 45171,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 2381,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 45171,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 45171
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "model_usage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 38181,
+          "outputTokens": 19,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.038276,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "thinkingTokens": 0,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-fable-5-1": {
+          "inputTokens": 2,
+          "outputTokens": 2381,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 45171,
+          "webSearchRequests": 0,
+          "costUSD": 1.0224900000000001,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 1782,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    },
+    {
+      "trial": "3-guard-full",
+      "case": "guard",
+      "arm": "full",
+      "wall_ms": 535044.394333032,
+      "execution_batch": "user-switched-account",
+      "retry_of": "3-guard-full",
+      "grade": {
+        "passed": [],
+        "missing": [
+          "safe_executable_function"
+        ],
+        "all_pass": false,
+        "error": "unexpected attribute"
+      },
+      "error": null,
+      "exit_code": 0,
+      "api_error_status": null,
+      "error_message": null,
+      "primary_model": true,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 288850,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 54302,
+        "output_tokens_details": {
+          "thinking_tokens": 53375
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 288850,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 54302,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 288850,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 288850
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "model_usage": {
+        "claude-fable-5-1": {
+          "inputTokens": 2,
+          "outputTokens": 54302,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 288850,
+          "webSearchRequests": 0,
+          "costUSD": 8.49212,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 53375,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    },
+    {
+      "trial": "3-guard-linked",
+      "case": "guard",
+      "arm": "linked",
+      "wall_ms": 23128.706959076226,
+      "execution_batch": "user-switched-account",
+      "retry_of": "3-guard-linked",
+      "grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "error": null,
+      "exit_code": 0,
+      "api_error_status": null,
+      "error_message": null,
+      "primary_model": true,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 10398,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 1680,
+        "output_tokens_details": {
+          "thinking_tokens": 1160
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 10398,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 1680,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 10398,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 10398
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "model_usage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 8991,
+          "outputTokens": 25,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.009116,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "thinkingTokens": 0,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-fable-5-1": {
+          "inputTokens": 2,
+          "outputTokens": 1680,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 10398,
+          "webSearchRequests": 0,
+          "costUSD": 0.29198,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 1160,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    },
+    {
+      "trial": "3-guard-search",
+      "case": "guard",
+      "arm": "search",
+      "wall_ms": 51929.18095795903,
+      "execution_batch": "user-switched-account",
+      "retry_of": "3-guard-search",
+      "grade": {
+        "passed": [
+          "none",
+          "empty",
+          "spaces",
+          "valid",
+          "preserve_whitespace",
+          "no_placeholder_none",
+          "no_placeholder_blank",
+          "outside_table",
+          "new_placeholder",
+          "new_placeholder_valid"
+        ],
+        "missing": [],
+        "all_pass": true
+      },
+      "error": null,
+      "exit_code": 0,
+      "api_error_status": null,
+      "error_message": null,
+      "primary_model": true,
+      "permission_denials": [],
+      "num_turns": 1,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 49245,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 3729,
+        "output_tokens_details": {
+          "thinking_tokens": 2984
+        },
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 49245,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 2,
+            "output_tokens": 3729,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 49245,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 49245
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "model_usage": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 40936,
+          "outputTokens": 28,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.041076,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000,
+          "thinkingTokens": 0,
+          "canonicalModel": "claude-haiku-4-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        },
+        "claude-fable-5-1": {
+          "inputTokens": 2,
+          "outputTokens": 3729,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 49245,
+          "webSearchRequests": 0,
+          "costUSD": 1.1713699999999998,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "thinkingTokens": 2984,
+          "canonicalModel": "claude-fable-5-1",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      }
+    }
+  ],
+  "measurement_limits": [
+    "Two known frozen tasks, not independent holdouts or end-to-end dddjango.",
+    "Full input bypasses historical Read failure; curated input is manual and its preparation cost is unmeasured.",
+    "Cache, reasoning length, provider load and CLI auxiliary requests can affect wall time; no pure prefill causal claim.",
+    "Retries after a user-reported account replacement are a separate batch. Combined groups mix accounts/time/cache conditions; consult original_groups and resumed_groups separately.",
+    "Default grades remain unchanged. A post-run allow_replace adjudication is separately recorded for all valid guard responses because the task allowed literal string replacement.",
+    "All-attempt time includes errors and must not be used for speed comparisons. Valid-model time is separate, including valid but quality-failing trials if present; incomplete repetitions remain incomplete.",
+    "All-pass covers only registered limited behavior/decision probes, not overall design and code quality."
+  ]
+}

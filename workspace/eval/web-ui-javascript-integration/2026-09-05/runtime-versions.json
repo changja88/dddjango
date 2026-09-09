@@ -1,0 +1,15 @@
+{
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "python": "3.14.7",
+  "django": "5.2.17",
+  "playwright": "1.62.0",
+  "pyyaml": "6.0.3",
+  "claude": {
+    "exit_code": 0,
+    "stdout": "2.1.261 (Claude Code)"
+  },
+  "codex": {
+    "exit_code": 0,
+    "stdout": "codex-cli 0.153.4"
+  }
+}

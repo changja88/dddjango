@@ -1,0 +1,36 @@
+{
+  "started_utc": "2026-09-06T07:53:05.429004+00:00",
+  "runtime": "2.1.261 (Claude Code)",
+  "account_change": "user reports account replacement; no account identity or credentials collected",
+  "preflight": "same model returned READY, exit 0, standard speed, no permission denials",
+  "candidate_trials": [
+    "3-guard-linked",
+    "3-guard-full",
+    "3-guard-search",
+    "3-constructor-linked",
+    "3-constructor-full",
+    "3-constructor-search"
+  ],
+  "original_record_sha256": {
+    "1-constructor-full": "8e49e954ab60734c5a7d9ecbbe1177cacc40a49636b418abc27a0f5c48ce12c9",
+    "1-constructor-linked": "f928499799f397ddb7c584dff8d3c9d431968ab606502cb65fe6708b4b95c4f0",
+    "1-constructor-search": "856d9eb24ac9950649331989811b7805c4184dccf6e5e7fa456bd1c345869c0e",
+    "1-guard-full": "6ef0faa0b3ea19237053cd83234b4914a459a4ffe63bd32a4376e0b57647fc22",
+    "1-guard-linked": "f11d0ab48fd11a5a4afa0972e8542453d7b1078a78f0550f6decf609d16cb493",
+    "1-guard-search": "647dc65f6a16d7fb360d8139881b84da7a254161f05d75f5d2c13f528d28eff6",
+    "2-constructor-full": "055689e1b59e01f5fe8f92c4d66900ec1e95b11a096d24c91e542d586153cff3",
+    "2-constructor-linked": "de0e4f8c32d19efad9e0c656870e1fe311d67e69763ba62e52391f7870c7493d",
+    "2-constructor-search": "088bfa7a3b7ad3781546be15f82f4c37479866aff91a9a7a342f75ce91859d47",
+    "2-guard-full": "86ddbda4b23662c4a7e3ef14ac4f46fb03555c6fc84eaa04040475b91aef5a93",
+    "2-guard-linked": "0b607cf0587e2772d876b92fac2aa7875217e748d0588c3f717172a9fe2e92bb",
+    "2-guard-search": "c89e491465a828915880f9e64998ed8a3163353d12ac23a3b8eeb55e4248e87e",
+    "3-constructor-full": "982eb4e404b12148b78352dfba804a4f81bf1af4455a42b9d3323ad1bfd2ee63",
+    "3-constructor-linked": "50baeb637d7db15e96fe22e7c3c1e571467dbf1eeced9d97cc2ba4de5bd530bc",
+    "3-constructor-search": "16c28fb5da1ec4a4155996d77f980428336fff04bfc20ae2016391c0c457b616",
+    "3-guard-full": "095993fa0cc85302c357428b07ccfaa69c31e37a27d73bb99e166c5044fd6f8b",
+    "3-guard-linked": "df5072d6f7888a86e3041fc920b10112a1fec4ad9ad71e4b94e625f8a2e549e0",
+    "3-guard-search": "dae7249ad8cebeadbdedc3ca5bb69a454a8ed89af659b56c65177d4d378c7c61"
+  },
+  "frozen_manifest_sha256": "597ef688d7356593f49522910a2de0960b374d2476f7c43819519dbe3636bbdf",
+  "reporting": "account/cache/provider changes remain a separate execution batch"
+}

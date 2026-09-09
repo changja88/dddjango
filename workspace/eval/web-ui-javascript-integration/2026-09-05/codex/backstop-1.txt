@@ -1,0 +1,4 @@
+[info] git 저장소 아님 — 게이트 불가, 전역 검사로 퇴화(레거시 발견 폭주 가능). 파이프라인 경로는 git 프로젝트에서 Phase 2 진입 스냅샷을 주입한다(houserules §7).
+[info] WS5(골격 완비) 생략 — git 기준점 없음(신규 단위 판별 불가, houserules §7)
+
+[backstop] 검사 26종(all) — blocker 0건

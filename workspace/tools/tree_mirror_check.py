@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """표준 트리 삼중 동기 검사·재생성 도구 (메인테이너/빌드타임 — 런타임 게이트 아님).
 
-배경: 트리 140행이 «생성기 안»(docs/mkrev2.py:ROWS)에 살아 검사기가 못 읽었다(#609).
+배경: 트리 170행이 «생성기 안»(docs/mkrev2.py:ROWS)에 살아 검사기가 못 읽었다(#609).
 플러그인에 기계 가독 사본(`dddjango/scripts/standard_tree.py`)을 두고, 이 도구가
 정본과의 동기를 지킨다. `corpus_mirror_sync.py` 와 같은 부류다.
 
 세 자리:
-  A 정본     docs/file_tree.html 의 `data-r` 행 140개 — 명세 «자리»의 「트리 N행」이 이 번호다.
+  A 정본     docs/file_tree.html 의 `data-r` 행 170개 — 명세 «자리»의 「트리 N행」이 이 번호다.
              (mkrev2.py:ROWS 가 아니라 «생성된 HTML»을 읽는 까닭: data-r 는 파트 순서라
               ROWS 리스트 인덱스와 다르고, 사용자 정본은 HTML 이다.)
   B 플러그인  dddjango/scripts/standard_tree.py — 검사기들이 import 하는 유일한 트리 데이터.
@@ -15,7 +15,7 @@
 불변식:  A ≡ B (r·depth·name·kind) · A ≡ C (r·depth·name)
 --write: A 로부터 B 전체와 C 블록을 다시 쓴다(정본→배포 한 방향).
 
-fail-CLOSED: 파일 부재·행 수 ≠ 140·마커 부재는 exit 3.
+fail-CLOSED: 파일 부재·행 수 ≠ 170·마커 부재는 exit 3.
 
 exit:  0 = in-sync   2 = drift (--write 로 해소)   3 = 구조 전제 깨짐   1 = usage
 """
@@ -36,7 +36,7 @@ EXIT_STRUCTURE = 3
 CANON_REL = "docs/file_tree.html"
 PLUGIN_REL = "dddjango/scripts/standard_tree.py"
 FINAL_REL = "dddjango/skills/discipline-houserules/references/final.md"
-TREE_ROW_COUNT = 140
+TREE_ROW_COUNT = 170
 TREE_BEGIN = "<!-- TREE:BEGIN — tree_mirror_check 가 쓴다 · 손으로 고치지 않는다 -->"
 TREE_END = "<!-- TREE:END -->"
 
@@ -125,7 +125,7 @@ def emit_plugin(rows: list[RowT], root: Path) -> None:
     )
     module = f'''"""dddjango 표준 파일트리 — 정본의 기계 가독 사본 (데이터 모듈 · 게이트 아님).
 
-정본은 저장소의 `docs/file_tree.html`(트리 140행)이고, 이 파일은 검사기 19종이
+정본은 저장소의 `docs/file_tree.html`(트리 170행)이고, 이 파일은 검사기 19종이
 import 하는 유일한 트리 데이터다. **손으로 고치지 않는다** — 정본이 개정되면
 `workspace/tools/tree_mirror_check.py --write` 가 이 파일을 다시 쓰고,
 `--check` 가 «정본 ≡ 이 파일 ≡ houserules final.md 트리 블록» 삼중 동기를 지킨다.

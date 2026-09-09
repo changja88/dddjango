@@ -8,7 +8,7 @@
 판정:
   ⑴ dddjango/ 아래 모든 파일이 아래 범주 중 하나에 들어야 한다.
       · scripts/check-*.py           — 매핑표 ⓒ 소유 규칙 ≥ 1
-      · scripts/standard_tree.py     — 트리 140행 단일 출처(전 검사기 import)
+      · scripts/standard_tree.py     — 트리 170행 단일 출처(전 검사기 import)
       · scripts/business_vocab.py    — #628 실체(업무 어휘 재료)
       · scripts/checker_target.py    — 호출 계약 공용 모듈(전 검사기 import · 라운드 1 P2)
       · skills/discipline-houserules — ⓐ 정본(final.md)·ⓑ SKILL(값 0)
@@ -108,7 +108,7 @@ def main() -> int:
         why: "str | None" = None
         if parts[0] == "scripts":
             if rel.name == "standard_tree.py":
-                why = "트리 140행 단일 출처 — 전 검사기 import·#79 ROWS 구동·tree_mirror 삼중 동기"
+                why = "트리 170행 단일 출처 — 전 검사기 import·#79 ROWS 구동·tree_mirror 삼중 동기"
             elif rel.name == "business_vocab.py":
                 why = "#628 실체 — 업무 어휘 재료(도메인 공개 심볼 토큰·불용어·기술 이름)"
             elif rel.name == "checker_target.py":

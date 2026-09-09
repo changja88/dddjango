@@ -1,0 +1,47 @@
+{
+  "diagram_type": "architecture",
+  "purpose": "dddjango-web 에이전트 협력 흐름",
+  "output": "/Users/hyun/Desktop/dddjango/docs/work_flow_web.html",
+  "document": "/Users/hyun/Desktop/dddjango/docs/work_flow_web_guide.html",
+  "specification": {
+    "path": "/Users/hyun/Desktop/dddjango/docs/work_flow_web.spec.json",
+    "sha256": "f97f06155fe18ad486c81675565695ce83e141416ee1bd0a3eacd827fe5bc45b",
+    "bytes": 4928
+  },
+  "artifact": {
+    "path": "/Users/hyun/Desktop/dddjango/docs/work_flow_web.html",
+    "sha256": "abb9c90fe0df5421a12ad2d943860d0196e3c47ab3b1fce245e9c64b8edca122",
+    "bytes": 670067
+  },
+  "validation": {
+    "checks": "9/9",
+    "profile": "showcase",
+    "errors": 0,
+    "warnings": 0
+  },
+  "visual_review": "passed",
+  "correction_rounds": 0,
+  "visual_evidence": "work_flow_web.visual-check.json",
+  "inspected_themes": [
+    "light",
+    "dark"
+  ],
+  "inspected_capture_sizes": [
+    "1440x900",
+    "2048x1320"
+  ],
+  "measured_sizes": [
+    "1440x900",
+    "1600x1000",
+    "1920x1080",
+    "2048x1320"
+  ],
+  "integration": {
+    "master_navigation": "passed",
+    "skill_rows": 5,
+    "agent_columns": 4,
+    "existing_injections": 10,
+    "local_links": "passed",
+    "applied_js_injections": 2
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "checks": {
+    "claude_frontmatter": true,
+    "platform_only_difference": true,
+    "reference_byte_mirror": true,
+    "workspace_byte_mirror": true,
+    "reference_routing": true,
+    "only_expected_skill_files": true,
+    "with-skill-result.json": true,
+    "with-skill-explore.json": true,
+    "holdout-result.json": true,
+    "example-after.json": true
+  },
+  "sha256": {
+    "dddjango-web/skills/implementation-javascript/SKILL.md": "7138014c81287f167d694abcfa1826944ffae190b19d51726dc9e109e01890a9",
+    "dddjango-web/skills/implementation-javascript/references/final.md": "e73671356272c388fc9a6d6c3fa4e581c67e6f3f0f319f404d7f98c152eaf4f9",
+    "codex-dddjango-web/skills/implementation-javascript/SKILL.md": "a577c03f6cbc8fe1a06fe1c8273e87416e8ec326c94b83f2abcf4419e590f5cb",
+    "codex-dddjango-web/skills/implementation-javascript/references/final.md": "e73671356272c388fc9a6d6c3fa4e581c67e6f3f0f319f404d7f98c152eaf4f9",
+    "workspace/reference/implementation-javascript/reference/final.md": "e73671356272c388fc9a6d6c3fa4e581c67e6f3f0f319f404d7f98c152eaf4f9",
+    "workspace/eval/implementation-javascript/2026-09-05/check_example.py": "a1e9f51bcebc1bb8626f2b852f5943f2fb1ec527a713ed4bf05fdf82214e1756",
+    "workspace/eval/implementation-javascript/2026-09-05/password_visibility.js": "96eb3c18d36ea2e67987754ee3c705b8e35f3b44d55d6128ec61bb34d6868a8f",
+    "workspace/eval/implementation-javascript/2026-09-05/check_holdout.py": "6a294431ea63cc89429ed92056158685c0c07d40b7ae5ce021ddc3714e81ae96",
+    "workspace/eval/implementation-javascript/2026-09-05/server.py": "74a0ed497ce355bbad5113e40ad1df7b429fe27002b3fe6f87707cebd5a83d6b",
+    "workspace/eval/implementation-javascript/2026-09-05/check.py": "3bc6e3863f76e003bc1a27a320ee8e9d1329ebb32f07aa9f227cf8274e2af383",
+    "workspace/eval/implementation-javascript/2026-09-05/instrument.js": "b93dbb1b5f2989af663592cfd3b065d2a217d69b2ec85b3994f8bdd6a6488526",
+    "workspace/eval/implementation-javascript/2026-09-05/explore.py": "542ca003e378ee5c2894a5a006ae81267d7ee4a5be2adc6baa1cda42f9728e3a",
+    "workspace/eval/implementation-javascript/2026-09-05/holdout/copy_feedback.js": "79dbc58dab123e76c683f83235e96d00503231ef5e4e9798862343f88180088d",
+    "workspace/eval/implementation-javascript/2026-09-05/baseline/file_preview.js": "183ce1a9819fb0fc0ecc3c26b8bfa8f5a881decb81815d53129df1af76281879",
+    "workspace/eval/implementation-javascript/2026-09-05/with-skill/file_preview.js": "cba0279c5132825009dcb4573ca049c36a82dc522de012ff5b44cbf5e82b01d5"
+  }
+}

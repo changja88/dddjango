@@ -1609,3 +1609,11 @@ agent-design-review-api	s001	9fef1cba47bfa18cca884099894e41051c89aff07b0df0cb94f
 agent-design-review-db	s001	eff0c499d440eaed14fc96b22fae644efe41d6d9eb940a978bd1c298cd694b00	graph	-	-	-	-	rebaseline:2026-09-06 사용자 요청 — Coordinator·전체 에이전트의 Serena 허용을 ToolSearch 및 mcp__serena__*로 통일; 역할 본문 불변
 agent-design-review-ddd	s001	be923d7871e4ed145b244d686ed206b70da1dd04b6a7cc4592dbb73c7ed53312	graph	-	-	-	-	rebaseline:2026-09-06 사용자 요청 — Coordinator·전체 에이전트의 Serena 허용을 ToolSearch 및 mcp__serena__*로 통일; 역할 본문 불변
 agent-discipline-reviewer	s001	820fca6fbb8ed5a504473befa75c8804b1222f099aa986a44f60b1a2692fbe29	graph	-	-	-	-	rebaseline:2026-09-06 사용자 요청 — Coordinator·전체 에이전트의 Serena 허용을 ToolSearch 및 mcp__serena__*로 통일; 역할 본문 불변
+agent-discipline-reviewer	s007	1dea5391af6c76115ba372ddfd3d35359e399dcb4ce2db2c798f70945eb4ec04	graph	-	-	-	-	rebaseline:2026-09-09 사용자 승인 어댑터 고정 역할 골격·클래스별 파일·170행 트리 및 배치/감수 포인터 반영(R-3468·R-3469)
+discipline-houserules-final	s003-0	1b4fddca027005fc52618807bbbea8b088d5b77b141c29d404a09dd9747ae5f1	graph	-	-	-	-	rebaseline:2026-09-09 사용자 승인 어댑터 고정 역할 골격·클래스별 파일·170행 트리 및 배치/감수 포인터 반영(R-3468·R-3469)
+discipline-houserules-final	s004-1	502d6a73497f1a8fd4ebb2c8e2b171fd2e665961c236ca10a17a92f415ad0e6a	graph	-	-	-	-	rebaseline:2026-09-09 사용자 승인 어댑터 고정 역할 골격·클래스별 파일·170행 트리 및 배치/감수 포인터 반영(R-3468·R-3469)
+discipline-houserules-final	s008	d441bfed4d7f0961b06d66f480d2cc411944a8317cfb96e3a5bc3f16987d4679	graph	-	-	-	-	rebaseline:2026-09-09 사용자 승인 어댑터 고정 역할 골격·클래스별 파일·170행 트리 및 배치/감수 포인터 반영(R-3468·R-3469)
+discipline-houserules-final	s011-3	e16a01d3665ba1478585708b2a3109b7da72193d737a7353be8b3a5ebaeaba49	graph	-	-	-	-	rebaseline:2026-09-09 사용자 승인 어댑터 고정 역할 골격·클래스별 파일·170행 트리 및 배치/감수 포인터 반영(R-3468·R-3469)
+discipline-houserules-final	s018-5	2bfb014acd8678e8ee297d28f586481e632f66b7ae34ee5feb1acc6fc3e271a3	graph	-	-	-	-	rebaseline:2026-09-09 사용자 승인 어댑터 고정 역할 골격·클래스별 파일·170행 트리 및 배치/감수 포인터 반영(R-3468·R-3469)
+discipline-houserules-skill	s001	b9abaf0f652433c1b2802530ad52e5acc821ef50365916ce3b3bd27c7e084311	graph	-	-	-	-	rebaseline:2026-09-09 사용자 승인 어댑터 고정 역할 골격·클래스별 파일·170행 트리 및 배치/감수 포인터 반영(R-3468·R-3469)
+discipline-houserules-skill	s004-1	df111cd3187a211e3bce3ea8111c2d88534697e30b2520badfcd5f7d2fab17b4	graph	-	-	-	-	rebaseline:2026-09-09 사용자 승인 어댑터 고정 역할 골격·클래스별 파일·170행 트리 및 배치/감수 포인터 반영(R-3468·R-3469)

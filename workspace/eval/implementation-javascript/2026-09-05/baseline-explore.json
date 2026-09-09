@@ -1,0 +1,11 @@
+{
+  "id": "E1",
+  "mode": "baseline",
+  "pass": false,
+  "observed": {
+    "files": 1,
+    "hidden": true,
+    "src": null,
+    "name": ""
+  }
+}

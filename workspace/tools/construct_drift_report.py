@@ -71,7 +71,7 @@ EXPECTED_SHA: "dict[str, str]" = {
     "check-composition-root.py": "81938fb23b67216c6fc24f8c39fc90564292d6526d09e828d452bc953f0c08ff",
     "check-openapi-error-declaration.py": "92eb113f8e75c74ea617737804420f4df82b841996cc910ce3bc3944ded097a0",
     "check-response-schema-bypass.py": "b1a77bebb4272f9eb817feb63f31b6715d52da9d0ad312a2f02d744717428793",
-    "check-context-isolation.py": "a0b9dbb4376705a6f97918f5f77c6303ec2195f5452ea33bb015856dd5368afd",
+    "check-context-isolation.py": "f519601d1dceaab05e7452329158d2eea8b05a86f3698af629911c94febcc8b1",
 }
 
 CHECKER_TIMEOUT_S: int = 300

@@ -107,6 +107,39 @@ def bc_shaped_target_reason(target: "Path | str") -> "str | None":
 
 # ── 동명 폴더 승격(#490 교체형) 경로 해소 — 2026-09-01 ──────────────────────
 
+ADAPTER_ROLES: tuple[str, ...] = ("adapter", "command", "constant", "contract", "schema")
+
+
+def adapter_bundle(path: Path) -> bool:
+    """BC의 세 어댑터 패키지 자리인가 — 내용이나 본체 파일 유무와 무관하다."""
+    if not path.name.endswith("_adapter"):
+        return False
+    parent = path.parent
+    if parent.parent.name in ("anticorruption_layer", "external_system"):
+        parent = parent.parent
+    return (parent.parent.name == "adapter"
+            and parent.parent.parent.name == "driven_layer"
+            and parent.name not in ("persistence", "anticorruption_layer", "external_system")) \
+        or (parent.name in ("anticorruption_layer", "external_system")
+            and parent.parent.name == "adapter"
+            and parent.parent.parent.name == "driven_layer")
+
+
+def adapter_component(path: Path) -> Path | None:
+    """고정 역할 폴더의 직계 파일이면 바깥 어댑터 패키지를 반환한다."""
+    bundle = path.parent.parent
+    return bundle if path.parent.name in ADAPTER_ROLES and adapter_bundle(bundle) else None
+
+
+def adapter_implementations(directory: Path) -> list[Path]:
+    """한 상대·기술 폴더 아래 구현 파일을 찾는다. 구형 파일도 내용 진단은 유지한다."""
+    out = slot_glob(directory, "*.py")
+    if directory.is_dir():
+        for bundle in sorted(directory.iterdir()):
+            if bundle.is_dir() and adapter_bundle(bundle):
+                out.extend(sorted((bundle / "adapter").glob("*.py")))
+    return out
+
 def slot_file(expected: "Path") -> "Path | None":
     """칸 경로 `<…>/<이름>.py` 의 실현 — 파일이면 그 파일, 유효 승격이면 본체, 없으면 None."""
     if expected.is_file():

@@ -1,0 +1,10 @@
+{
+  "source": "/Users/hyun/.codex/config.toml",
+  "selected_nonsecret_keys": {
+    "model": "gpt-6-astra",
+    "model_reasoning_effort": "xhigh",
+    "model_provider": null,
+    "profile": null
+  },
+  "qualification": "Codex JSONL does not expose a server response model field. These are observed CLI configuration values; subsequent per-call reasoning override is recorded in command.json. No user config changed."
+}

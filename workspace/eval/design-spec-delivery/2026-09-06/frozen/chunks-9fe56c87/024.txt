@@ -1,0 +1,148 @@
+lication_layer/port/text_generation/exception.py
+empty application/fortune_house/application_layer/port/domain_bypass_query/speech_generation_configuration/__init__.py
+add application/fortune_house/application_layer/port/domain_bypass_query/speech_generation_configuration/speech_generation_configuration_query.py
+add application/fortune_house/application_layer/port/domain_bypass_query/speech_generation_configuration/speech_generation_settings_out.py
+empty application/fortune_house/application_layer/port/domain_bypass_query/speech_generation_configuration/exception.py
+# S1 domain_layer
+add application/fortune_house/domain_layer/shared_value_object/card_name.py
+add application/fortune_house/domain_layer/shared_value_object/widget_kind.py
+add application/fortune_house/domain_layer/shared_value_object/character_absence_reason.py
+add application/fortune_house/domain_layer/shared_value_object/speech_message.py
+add application/fortune_house/domain_layer/shared_value_object/invalid_speech_message.py
+add application/fortune_house/domain_layer/shared_value_object/turn_budget.py
+add application/fortune_house/domain_layer/shared_value_object/invalid_turn_budget.py
+add application/fortune_house/domain_layer/shared_value_object/operating_status.py
+add application/fortune_house/domain_layer/shared_value_object/character_absence.py
+add application/fortune_house/domain_layer/shared_value_object/invalid_character_absence.py
+add application/fortune_house/domain_layer/shared_value_object/denial_code.py
+add application/fortune_house/domain_layer/shared_value_object/usage_denial.py
+add application/fortune_house/domain_layer/shared_value_object/invalid_usage_denial.py
+add application/fortune_house/domain_layer/shared_value_object/remaining_uses.py
+add application/fortune_house/domain_layer/shared_value_object/invalid_remaining_uses.py
+add application/fortune_house/domain_layer/domain_service/judge_character_absence.py
+add application/fortune_house/domain_layer/domain_service/interpret_denial.py
+add application/fortune_house/domain_layer/domain_service/compose_small_talk_prompt.py
+add application/fortune_house/domain_layer/domain_service/compose_card.py
+add application/fortune_house/domain_layer/domain_service/resolve_character_name.py
+# S1 driven_layer — ACL 6 + bypass 조회
+empty application/fortune_house/driven_layer/adapter/anticorruption_layer/accounts/__init__.py
+add application/fortune_house/driven_layer/adapter/anticorruption_layer/accounts/account_profile_adapter.py
+empty application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/__init__.py
+add application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/usage_policy_adapter.py
+empty application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/__init__.py
+add application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/record_archive_adapter.py
+empty application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_intent/__init__.py
+add application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_intent/message_classification_adapter.py
+empty application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_character/__init__.py
+add application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_character/character_catalog_adapter.py
+empty application/fortune_house/driven_layer/adapter/anticorruption_layer/llm_access/__init__.py
+add application/fortune_house/driven_layer/adapter/anticorruption_layer/llm_access/text_generation_adapter.py
+add application/fortune_house/driven_layer/adapter/persistence/domain_bypass_query/speech_generation_configuration_query.py
+# S1 test — 페이크 7 · 단위 7 · 통합 4
+add application/fortune_house/test/fake/account_profile_port.py
+add application/fortune_house/test/fake/usage_policy_port.py
+add application/fortune_house/test/fake/record_archive_port.py
+add application/fortune_house/test/fake/message_classification_port.py
+add application/fortune_house/test/fake/character_catalog_port.py
+add application/fortune_house/test/fake/text_generation_port.py
+add application/fortune_house/test/fake/speech_generation_configuration_query.py
+add application/fortune_house/test/unit/test_turn_budget.py
+add application/fortune_house/test/unit/test_character_absence_policy.py
+add application/fortune_house/test/unit/test_denial_interpreter.py
+add application/fortune_house/test/unit/test_small_talk_prompt_composer.py
+add application/fortune_house/test/unit/test_card_composer.py
+add application/fortune_house/test/unit/test_character_name_resolver.py
+add application/fortune_house/test/unit/test_run_visit_turn_reception.py
+add application/fortune_house/test/integration/test_visit_turn_reception_exits.py
+add application/fortune_house/test/integration/test_visit_turn_small_talk.py
+add application/fortune_house/test/integration/test_visit_turn_counter_reception.py
+add application/fortune_house/test/integration/test_anticorruption_adapters_with_components.py
+# ── S2 ──────────────────────────────────────────────────────────────
+# S2 application_layer/port — 신설 2 + account_profile 자료 1
+empty application/fortune_house/application_layer/port/fortune_catalog/__init__.py
+add application/fortune_house/application_layer/port/fortune_catalog/fortune_catalog_port.py
+add application/fortune_house/application_layer/port/fortune_catalog/catalog_out.py
+add application/fortune_house/application_layer/port/fortune_catalog/exception.py
+empty application/fortune_house/application_layer/port/intent_structuring/__init__.py
+add application/fortune_house/application_layer/port/intent_structuring/intent_structuring_port.py
+add application/fortune_house/application_layer/port/intent_structuring/structured_intent_out.py
+add application/fortune_house/application_layer/port/intent_structuring/exception.py
+add application/fortune_house/application_layer/port/account_profile/saju_profile_out.py
+# S2 domain_layer — visit VO 2(요청 · 이월 종류) · shared VO 10 · 도메인 서비스 4
+add application/fortune_house/domain_layer/visit/value_object/fortune_request.py
+add application/fortune_house/domain_layer/shared_value_object/required_input.py
+add application/fortune_house/domain_layer/shared_value_object/saju_input_check.py
+add application/fortune_house/domain_layer/shared_value_object/invalid_saju_input_check.py
+add application/fortune_house/domain_layer/shared_value_object/character_offer.py
+add application/fortune_house/domain_layer/shared_value_object/invalid_character_offer.py
+add application/fortune_house/domain_layer/shared_value_object/fortune_option.py
+add application/fortune_house/domain_layer/shared_value_object/character_availability.py
+add application/fortune_house/domain_layer/shared_value_object/account_timezone.py
+add application/fortune_house/domain_layer/shared_value_object/invalid_character_availability.py
+add application/fortune_house/domain_layer/shared_value_object/invalid_speech_situation.py
+add application/fortune_house/domain_layer/visit/value_object/carry_kind.py
+add application/fortune_house/domain_layer/domain_service/check_saju_inputs.py
+add application/fortune_house/domain_layer/domain_service/judge_character_offers.py
+add application/fortune_house/domain_layer/domain_service/resolve_fortune_label.py
+add application/fortune_house/domain_layer/domain_service/compose_notice_speech.py
+# S2 driven_layer — ACL 신설 2 · 마이그레이션 0002
+empty application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_catalog/__init__.py
+add application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_catalog/fortune_catalog_adapter.py
+add application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_intent/intent_structuring_adapter.py
+add application/fortune_house/driven_layer/django_fortune_house/migrations/0002_visitmodel_fortune_request.py
+# S2 test — 페이크 2 · 단위 6 · 통합 2
+add application/fortune_house/test/fake/fortune_catalog_port.py
+add application/fortune_house/test/fake/intent_structuring_port.py
+add application/fortune_house/test/unit/test_saju_input_policy.py
+add application/fortune_house/test/unit/test_character_offer_policy.py
+add application/fortune_house/test/unit/test_fortune_label_resolver.py
+add application/fortune_house/test/unit/test_notice_speech_composer.py
+add application/fortune_house/test/unit/test_account_timezone.py
+add application/fortune_house/test/unit/test_run_visit_turn_fortune.py
+add application/fortune_house/test/integration/test_visit_turn_fortune_counter.py
+add application/fortune_house/test/integration/test_visit_turn_fortune_room.py
+# S2 부품 접촉 3(#473 STOP 회신 1+1′ · 발주자 승인 · 기커밋 dff956cc · 빈 파일에 기저 클래스 1 신설만 — 부품 코드·테스트·wire 무변 · 그 밖 부품 파일 0)
+update application/fortune_catalog/driving_layer/open_host_service/catalog_inquiry/contract/exception/catalog_inquiry_published_error.py
+update application/fortune_reading/driving_layer/open_host_service/evidence_provisioning/contract/exception/evidence_provisioning_published_error.py
+update application/fortune_reading/driving_layer/open_host_service/citation_validation/contract/exception/citation_validation_published_error.py
+# scripts · settings
+add scripts/seed_fortune_house.py
+update spring_dream_server/settings/base.py
+```
+
+### 공개 심볼
+
+union 별칭은 필드에 인라인 전개한다(별칭 파일 없음 — dangling 방지). 대본 3종 union = `TranscriptMessage | TranscriptFunctionCall | TranscriptFunctionCallOutput`, 응답 항목 3종 union = `ReplyTextDelta | ReplyCard | ReplyCompleted`. dataclass도 기저 자리엔 `(object)`로 적는다 — 실행기 `_class_stub`가 괄호 안을 base로 그대로 렌더하므로 데코레이터를 여기 적지 않는다(`@dataclass(frozen=True, slots=True, kw_only=True)` 사실은 산문 §3.4·§6 소유 — `Visit`만 가변). 도메인 서비스·use case·어댑터 등 기저 없는 클래스도 `(object)`. 리포지토리 TypedDict 3종(`_…Document`)과 `function_call_card.py`의 `_FunctionCallEnvelope`는 사설 보조 타입으로 그 파일 소속. admin 클래스 기저 `ModelAdmin`/`ModelForm`은 §18 별칭으로 실현한다. `test/integration/conftest.py`의 하네스 dataclass·fixture 함수도 심볼로 적는다(add 파일 = 심볼 전수).
+
+<!-- machine: symbols -->
+```symbols
+# domain — visit value objects
+application/fortune_house/domain_layer/visit/value_object/visit_key.py::VisitKey(object) {account_id: int, character_id: UUID | None}
+application/fortune_house/domain_layer/visit/value_object/visit_key.py::VisitKey.is_counter() -> bool
+application/fortune_house/domain_layer/visit/value_object/visit_stage.py::VisitStage(StrEnum) {IDLE = "idle", SELECTING = "selecting", ANSWERING = "answering", ANSWERED = "answered"}
+application/fortune_house/domain_layer/visit/value_object/turn_lease.py::TurnLease(object) {turn_id: UUID, leased_at: datetime, deadline: datetime}
+application/fortune_house/domain_layer/visit/value_object/turn_lease.py::TurnLease.is_stale(now: datetime) -> bool
+application/fortune_house/domain_layer/visit/value_object/turn_admission_kind.py::TurnAdmissionKind(StrEnum) {ADMITTED = "admitted", ADMITTED_AFTER_REWIND = "admitted_after_rewind", REJECTED_IN_PROGRESS = "rejected_in_progress"}
+application/fortune_house/domain_layer/visit/value_object/rewind_record.py::RewindRecord(object) {previous_turn_id: UUID, previous_stage: VisitStage, released_reservation_id: UUID | None}
+application/fortune_house/domain_layer/visit/value_object/turn_admission.py::TurnAdmission(object) {kind: TurnAdmissionKind, rewind: RewindRecord | None}
+application/fortune_house/domain_layer/visit/value_object/turn_outcome.py::TurnOutcome(StrEnum) {COMPLETED = "completed", INTERNAL_ERROR = "internal_error", DEADLINE_EXCEEDED = "deadline_exceeded"}
+application/fortune_house/domain_layer/visit/value_object/pending_card.py::PendingCard(object) {call_id: str, name: str, issued_at: datetime, issued_turn_id: UUID}
+application/fortune_house/domain_layer/visit/value_object/carried_request.py::CarriedRequest(object) {TTL_SECONDS: ClassVar[int] = 600, original_message: str, carry_kind: CarryKind, issued_at: datetime, record_id: UUID | None, fortune_id: str | None, topic: str | None, period_text: str | None, period_kind: str | None, period_start: date | None, period_end: date | None, displayed_price: int | None, bundle_id: str | None, consumed: bool}
+application/fortune_house/domain_layer/visit/value_object/carried_request.py::CarriedRequest.is_expired(now: datetime) -> bool
+application/fortune_house/domain_layer/visit/value_object/carried_request.py::CarriedRequest.matches(tail_message: str) -> bool
+application/fortune_house/domain_layer/visit/value_object/fortune_request.py::FortuneRequest(object) {original_message: str, carry_kind: CarryKind, record_id: UUID | None, topic: str | None, period_text: str | None, period_kind: str | None, period_start: date | None, period_end: date | None, fortune_candidates: tuple[str, ...], character_offers: tuple[CharacterOffer, ...]}
+application/fortune_house/domain_layer/visit/value_object/fortune_request.py::FortuneRequest.offers_fortune(fortune_id: str) -> bool
+application/fortune_house/domain_layer/visit/value_object/fortune_request.py::FortuneRequest.sole_candidate() -> str | None
+application/fortune_house/domain_layer/visit/value_object/fortune_request.py::FortuneRequest.offer_for(character_id: UUID) -> CharacterOffer | None
+application/fortune_house/domain_layer/visit/value_object/fortune_request.py::FortuneRequest.with_fortune_candidates(candidate_fortune_ids: tuple[str, ...]) -> FortuneRequest
+application/fortune_house/domain_layer/visit/value_object/fortune_request.py::FortuneRequest.with_character_offers(offers: tuple[CharacterOffer, ...]) -> FortuneRequest
+application/fortune_house/domain_layer/visit/value_object/fortune_request.py::FortuneRequest.to_carried(issued_at: datetime, fortune_id: str | None, bundle_id: str | None, offer: CharacterOffer) -> CarriedRequest
+application/fortune_house/domain_layer/visit/value_object/saju_snapshot.py::SajuSnapshot(object) {birth_date: date | None, birth_time: time | None, birth_time_unknown: bool, birth_calendar: str | None, is_leap_month: bool | None, birth_place_kind: str | None, birth_place_city_code: str | None, birth_place_country_code: str | None, gender: str | None, default_timezone: str}
+application/fortune_house/domain_layer/visit/value_object/prompt_set_snapshot.py::PromptSetSnapshot(object) {set_id: str, version: int, instruction: str, response_json_structure: str, display_html_format: str, language: str}
+application/fortune_house/domain_layer/visit/value_object/fortune_selection.py::FortuneSelection(object) {fortune_id: str | None, selected_character_id: UUID | None, prompt_set: PromptSetSnapshot | None, reservation_id: UUID | None, displayed_price: int | None, annual_fortune_from_year: int | None, annual_fortune_to_year: int | None, bundle_id: str | None}
+application/fortune_house/domain_layer/visit/value_object/fortune_selection.py::FortuneSelection.empty() -> FortuneSelection
+application/fortune_house/domain_layer/visit/value_object/fortune_selection.py::FortuneSelection.with_rewind() -> FortuneSelection
+application/fortune_house/domain_layer/visit/value_object/fortune_selection.py::FortuneSelection.with_bundle(bundle_id: str | None) -> FortuneSelection
+application/fortune_house/domain_layer/visit/value_object/fortune_selection.py::FortuneSelection.with_fortune(fortune_id: str | None) -> FortuneSelection
+application/fortune_house/domain_layer/visit/value_object/fortune_selection.py::FortuneSelection.with_character(character_id: UUID | None, displayed_price: int | None) -> FortuneSelection
+app

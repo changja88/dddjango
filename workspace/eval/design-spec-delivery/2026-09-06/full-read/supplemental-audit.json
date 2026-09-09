@@ -1,0 +1,471 @@
+{
+  "created_utc": "2026-09-06T10:49:03.645792+00:00",
+  "protocol_sha256": "2cad9fb85d40e2444ef08b89e9c86d0cc02d59b3c95a6ffa56ae9aa3b1e4f6c5",
+  "scope": "Post-hoc supplemental content check and descriptive timing only; not preregistered successful-completion effect.",
+  "extraction_rule": "Apply to every response: parse entire response as JSON; otherwise require exactly one json-fenced block and parse its unchanged body. Never edit code or contract fields. Reuse frozen 19 checks.",
+  "primary_records_unchanged": true,
+  "primary_success_reduction_percent": null,
+  "groups": {
+    "original": {
+      "trials": 3,
+      "primary_pass": 0,
+      "supplemental_content_pass": 3,
+      "median_all_attempt_total_ms": 144015.60524990782,
+      "median_cli_start_to_last_read_ms": 72335.30820801388,
+      "sum_read_errors": 33,
+      "sum_cost_usd": 20.704182250000002
+    },
+    "chunked": {
+      "trials": 3,
+      "primary_pass": 1,
+      "supplemental_content_pass": 3,
+      "median_all_attempt_total_ms": 178423.86649991386,
+      "median_cli_start_to_last_read_ms": 56636.34370896034,
+      "sum_read_errors": 0,
+      "sum_cost_usd": 21.3975965
+    }
+  },
+  "read_stage_reduction_percent": 21.703045010754906,
+  "all_attempt_total_increase_percent": 23.892036693036122,
+  "rows": [
+    {
+      "trial": "1-original",
+      "arm": "original",
+      "record_sha256": "d890e46b53e23e061eef4ad22c1038757bbdf642aa15deecf560be461b210f49",
+      "response_sha256": "cdb06da080d0d598a28df29835696c7af524939f9767c284436b875bf2bdaa95",
+      "primary_grade_pass": false,
+      "primary_parse_error": "Expecting value: line 1 column 1 (char 0)",
+      "supplemental_extraction": "single_json_fence_body_only",
+      "supplemental_answer_sha256": "05ea58172efee15243d2c003ae5e5459b28abac88766698a56a76ecedc36598f",
+      "supplemental_grade": {
+        "all_pass": true,
+        "passed_checks": 19,
+        "guard": {
+          "passed": [
+            "none",
+            "empty",
+            "spaces",
+            "valid",
+            "preserve_whitespace",
+            "no_placeholder_none",
+            "no_placeholder_blank",
+            "outside_table",
+            "new_placeholder",
+            "new_placeholder_valid"
+          ],
+          "missing": [],
+          "all_pass": true
+        },
+        "constructor": {
+          "passed": [
+            "request_required",
+            "request_nullable",
+            "loader_argument",
+            "callers_first",
+            "new_test_cases_required",
+            "new_assertions_required",
+            "prepared_file_count",
+            "prepared_constructor_calls",
+            "remaining_production_change"
+          ],
+          "missing": [],
+          "all_pass": true
+        }
+      },
+      "total_ms": 144015.60524990782,
+      "cli_ms": 143985.25212495588,
+      "last_read_ms": 72335.30820801388,
+      "preparation_ms": 6.200958974659443,
+      "verification_ms": 23.85941706597805,
+      "read_attempts": 30,
+      "read_errors": 11,
+      "source_complete": true,
+      "trace_pass": true,
+      "boundary_newlines_restored": 19,
+      "max_inflight": 1,
+      "runtime_valid": true,
+      "cost_usd": 7.041975,
+      "model_usage": {
+        "inputTokens": 290,
+        "outputTokens": 11651,
+        "cacheReadInputTokens": 1313400,
+        "cacheCreationInputTokens": 305967,
+        "webSearchRequests": 0,
+        "costUSD": 7.0331399999999995,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "thinkingTokens": 5842,
+        "canonicalModel": "claude-fable-5-1",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    {
+      "trial": "1-chunked",
+      "arm": "chunked",
+      "record_sha256": "097b7b6e205e3539cc113cca8ac954b131731e35ac0104efa8be9d21b7b7cb81",
+      "response_sha256": "8d0037f8dd4d7c22e7e69e297ae347c67ed3f36facbe8fb1b8167e0ab65a9e34",
+      "primary_grade_pass": true,
+      "primary_parse_error": null,
+      "supplemental_extraction": "whole_response_json",
+      "supplemental_answer_sha256": "81d324bbb580f6288b10f82f3dc388e7073507b7fac82fd86109d251af86c8cc",
+      "supplemental_grade": {
+        "all_pass": true,
+        "passed_checks": 19,
+        "guard": {
+          "passed": [
+            "none",
+            "empty",
+            "spaces",
+            "valid",
+            "preserve_whitespace",
+            "no_placeholder_none",
+            "no_placeholder_blank",
+            "outside_table",
+            "new_placeholder",
+            "new_placeholder_valid"
+          ],
+          "missing": [],
+          "all_pass": true
+        },
+        "constructor": {
+          "passed": [
+            "request_required",
+            "request_nullable",
+            "loader_argument",
+            "callers_first",
+            "new_test_cases_required",
+            "new_assertions_required",
+            "prepared_file_count",
+            "prepared_constructor_calls",
+            "remaining_production_change"
+          ],
+          "missing": [],
+          "all_pass": true
+        }
+      },
+      "total_ms": 154055.07624999154,
+      "cli_ms": 153971.0820419714,
+      "last_read_ms": 56636.34370896034,
+      "preparation_ms": 66.3327919319272,
+      "verification_ms": 17.252207966521382,
+      "read_attempts": 38,
+      "read_errors": 0,
+      "source_complete": true,
+      "trace_pass": true,
+      "boundary_newlines_restored": 0,
+      "max_inflight": 2,
+      "runtime_valid": true,
+      "cost_usd": 7.2286275,
+      "model_usage": {
+        "inputTokens": 322,
+        "outputTokens": 12358,
+        "cacheReadInputTokens": 1624010,
+        "cacheCreationInputTokens": 309394,
+        "webSearchRequests": 0,
+        "costUSD": 7.215002499999999,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "thinkingTokens": 7352,
+        "canonicalModel": "claude-fable-5-1",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    {
+      "trial": "2-chunked",
+      "arm": "chunked",
+      "record_sha256": "0bb399474abdd9cb6556e9459d2136c963a2e5dc83c233d64939fca6eaba211d",
+      "response_sha256": "28c519302d1e744e46b8d05eeb9ed013850303236f80ceb1558c656098a1b637",
+      "primary_grade_pass": false,
+      "primary_parse_error": "Expecting value: line 1 column 1 (char 0)",
+      "supplemental_extraction": "single_json_fence_body_only",
+      "supplemental_answer_sha256": "11e86036d020ebc95d3c29fe134d13d4ae399feeeb630d1856ba65559f4cb406",
+      "supplemental_grade": {
+        "all_pass": true,
+        "passed_checks": 19,
+        "guard": {
+          "passed": [
+            "none",
+            "empty",
+            "spaces",
+            "valid",
+            "preserve_whitespace",
+            "no_placeholder_none",
+            "no_placeholder_blank",
+            "outside_table",
+            "new_placeholder",
+            "new_placeholder_valid"
+          ],
+          "missing": [],
+          "all_pass": true
+        },
+        "constructor": {
+          "passed": [
+            "request_required",
+            "request_nullable",
+            "loader_argument",
+            "callers_first",
+            "new_test_cases_required",
+            "new_assertions_required",
+            "prepared_file_count",
+            "prepared_constructor_calls",
+            "remaining_production_change"
+          ],
+          "missing": [],
+          "all_pass": true
+        }
+      },
+      "total_ms": 208139.26441699732,
+      "cli_ms": 208058.98029205855,
+      "last_read_ms": 59182.08741710987,
+      "preparation_ms": 63.172707916237414,
+      "verification_ms": 16.69720804784447,
+      "read_attempts": 38,
+      "read_errors": 0,
+      "source_complete": true,
+      "trace_pass": true,
+      "boundary_newlines_restored": 0,
+      "max_inflight": 1,
+      "runtime_valid": true,
+      "cost_usd": 7.1543205,
+      "model_usage": {
+        "inputTokens": 322,
+        "outputTokens": 17645,
+        "cacheReadInputTokens": 1642282,
+        "cacheCreationInputTokens": 292234,
+        "webSearchRequests": 0,
+        "costUSD": 7.1407205,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "thinkingTokens": 12324,
+        "canonicalModel": "claude-fable-5-1",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    {
+      "trial": "2-original",
+      "arm": "original",
+      "record_sha256": "9d7c65e808444cb92ef05e6656fcc96599029e61c09c3095b42b1d282cefb55e",
+      "response_sha256": "080c4cd79bcf48c3664e0c29c977fdb5291903e051ad842b4ccab031140bf33f",
+      "primary_grade_pass": false,
+      "primary_parse_error": "Expecting value: line 1 column 1 (char 0)",
+      "supplemental_extraction": "single_json_fence_body_only",
+      "supplemental_answer_sha256": "006c7b443beb2f84b3c5e3b41fefb4b3f96afcab8bc716176c15ee597efd1de0",
+      "supplemental_grade": {
+        "all_pass": true,
+        "passed_checks": 19,
+        "guard": {
+          "passed": [
+            "none",
+            "empty",
+            "spaces",
+            "valid",
+            "preserve_whitespace",
+            "no_placeholder_none",
+            "no_placeholder_blank",
+            "outside_table",
+            "new_placeholder",
+            "new_placeholder_valid"
+          ],
+          "missing": [],
+          "all_pass": true
+        },
+        "constructor": {
+          "passed": [
+            "request_required",
+            "request_nullable",
+            "loader_argument",
+            "callers_first",
+            "new_test_cases_required",
+            "new_assertions_required",
+            "prepared_file_count",
+            "prepared_constructor_calls",
+            "remaining_production_change"
+          ],
+          "missing": [],
+          "all_pass": true
+        }
+      },
+      "total_ms": 142483.08320890646,
+      "cli_ms": 142453.8522498915,
+      "last_read_ms": 72226.95099993143,
+      "preparation_ms": 5.651374929584563,
+      "verification_ms": 23.331457981839776,
+      "read_attempts": 30,
+      "read_errors": 11,
+      "source_complete": true,
+      "trace_pass": true,
+      "boundary_newlines_restored": 19,
+      "max_inflight": 1,
+      "runtime_valid": true,
+      "cost_usd": 6.80935175,
+      "model_usage": {
+        "inputTokens": 290,
+        "outputTokens": 11546,
+        "cacheReadInputTokens": 1322867,
+        "cacheCreationInputTokens": 294481,
+        "webSearchRequests": 0,
+        "costUSD": 6.80053675,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "thinkingTokens": 5864,
+        "canonicalModel": "claude-fable-5-1",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    {
+      "trial": "3-original",
+      "arm": "original",
+      "record_sha256": "a8e3e5b88e784300ded856942ab066b4e576fc9f5555c90f6bbf1cdee6749281",
+      "response_sha256": "7222b7b5fa05d3b1c3898f9f8b269f14ad05417b7b1211c642e805c5ca749e41",
+      "primary_grade_pass": false,
+      "primary_parse_error": "Expecting value: line 1 column 1 (char 0)",
+      "supplemental_extraction": "single_json_fence_body_only",
+      "supplemental_answer_sha256": "6e431c4599452581434a6b8291fd5fb6b4bcb29e2ef93933e4175e052be56ee6",
+      "supplemental_grade": {
+        "all_pass": true,
+        "passed_checks": 19,
+        "guard": {
+          "passed": [
+            "none",
+            "empty",
+            "spaces",
+            "valid",
+            "preserve_whitespace",
+            "no_placeholder_none",
+            "no_placeholder_blank",
+            "outside_table",
+            "new_placeholder",
+            "new_placeholder_valid"
+          ],
+          "missing": [],
+          "all_pass": true
+        },
+        "constructor": {
+          "passed": [
+            "request_required",
+            "request_nullable",
+            "loader_argument",
+            "callers_first",
+            "new_test_cases_required",
+            "new_assertions_required",
+            "prepared_file_count",
+            "prepared_constructor_calls",
+            "remaining_production_change"
+          ],
+          "missing": [],
+          "all_pass": true
+        }
+      },
+      "total_ms": 157979.02508301195,
+      "cli_ms": 157945.25512505788,
+      "last_read_ms": 75544.017874985,
+      "preparation_ms": 5.718415952287614,
+      "verification_ms": 27.766334009356797,
+      "read_attempts": 30,
+      "read_errors": 11,
+      "source_complete": true,
+      "trace_pass": true,
+      "boundary_newlines_restored": 19,
+      "max_inflight": 1,
+      "runtime_valid": true,
+      "cost_usd": 6.8528555,
+      "model_usage": {
+        "inputTokens": 290,
+        "outputTokens": 12434,
+        "cacheReadInputTokens": 1322942,
+        "cacheCreationInputTokens": 294435,
+        "webSearchRequests": 0,
+        "costUSD": 6.8440355,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "thinkingTokens": 6756,
+        "canonicalModel": "claude-fable-5-1",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    },
+    {
+      "trial": "3-chunked",
+      "arm": "chunked",
+      "record_sha256": "99fdae7af238575ca1fe0eea7944d9d2d88b8f827e3f825bbb97a3d8205df089",
+      "response_sha256": "c0ee39c124527fb9c27cd0d1986088374ba79385ee9979bb9e8776a6d6712461",
+      "primary_grade_pass": false,
+      "primary_parse_error": "Expecting value: line 1 column 1 (char 0)",
+      "supplemental_extraction": "single_json_fence_body_only",
+      "supplemental_answer_sha256": "89d43b298eb0ff7fda99d7a56c94b18b12fd0aa3d434c01ec2029d4c2423f6c5",
+      "supplemental_grade": {
+        "all_pass": true,
+        "passed_checks": 19,
+        "guard": {
+          "passed": [
+            "none",
+            "empty",
+            "spaces",
+            "valid",
+            "preserve_whitespace",
+            "no_placeholder_none",
+            "no_placeholder_blank",
+            "outside_table",
+            "new_placeholder",
+            "new_placeholder_valid"
+          ],
+          "missing": [],
+          "all_pass": true
+        },
+        "constructor": {
+          "passed": [
+            "request_required",
+            "request_nullable",
+            "loader_argument",
+            "callers_first",
+            "new_test_cases_required",
+            "new_assertions_required",
+            "prepared_file_count",
+            "prepared_constructor_calls",
+            "remaining_production_change"
+          ],
+          "missing": [],
+          "all_pass": true
+        }
+      },
+      "total_ms": 178423.86649991386,
+      "cli_ms": 178344.34866695665,
+      "last_read_ms": 56220.00941704027,
+      "preparation_ms": 63.138333964161575,
+      "verification_ms": 15.869416063651443,
+      "read_attempts": 38,
+      "read_errors": 0,
+      "source_complete": true,
+      "trace_pass": true,
+      "boundary_newlines_restored": 0,
+      "max_inflight": 2,
+      "runtime_valid": true,
+      "cost_usd": 7.0146485,
+      "model_usage": {
+        "inputTokens": 322,
+        "outputTokens": 14907,
+        "cacheReadInputTokens": 1641934,
+        "cacheCreationInputTokens": 292099,
+        "webSearchRequests": 0,
+        "costUSD": 7.0010335,
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "thinkingTokens": 9728,
+        "canonicalModel": "claude-fable-5-1",
+        "provider": "firstParty",
+        "costBasis": "list"
+      }
+    }
+  ],
+  "limitations": [
+    "Post-hoc extraction does not convert format failures to preregistered successes.",
+    "Read-stage time starts with CLI launch, not first Read; it includes model call decisions and retries.",
+    "All-attempt total includes format failures without repair time; not successful-completion time.",
+    "Two known probes and 19 checks do not establish overall plugin design/code quality or full pipeline speed.",
+    "Actual parallel execution, cache, output/reasoning usage and provider timing were not held identical."
+  ]
+}

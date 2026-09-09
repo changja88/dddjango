@@ -1,0 +1,626 @@
+{
+  "registered_utc": "2026-09-06T10:25:15.265682+00:00",
+  "scope": "throwaway full-read experiment only",
+  "source": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/frozen/spec-9fe56c87.md",
+  "source_sha256": "2d7f201669267c21c83043b23a4e7dd8385c4ab21481457db22092070e7eb08b",
+  "source_bytes": 603455,
+  "model": "claude-fable-5-1",
+  "effort": "xhigh",
+  "cli_version": "2.1.261 (Claude Code)",
+  "command": [
+    "claude",
+    "--safe-mode",
+    "--restricted",
+    "--tools",
+    "Read",
+    "--allowedTools",
+    "Read",
+    "--permission-mode",
+    "dontAsk",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "{\"mcpServers\":{}}",
+    "--no-session-persistence",
+    "--disable-slash-commands",
+    "--effort",
+    "xhigh",
+    "--model",
+    "claude-fable-5-1",
+    "--autocompact",
+    "1M",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--max-budget-usd",
+    "15",
+    "-p"
+  ],
+  "order": [
+    [
+      1,
+      "original"
+    ],
+    [
+      1,
+      "chunked"
+    ],
+    [
+      2,
+      "chunked"
+    ],
+    [
+      2,
+      "original"
+    ],
+    [
+      3,
+      "original"
+    ],
+    [
+      3,
+      "chunked"
+    ]
+  ],
+  "timeout_seconds": 1200,
+  "max_budget_usd_per_trial": 15,
+  "arms": {
+    "original": {
+      "prompt_file": "prompt-original.txt",
+      "prompt_sha256": "a6c80b955910e5d62c6adfc87c2fd8bd984f5e0a013a8f3aa4fe124c234337cd",
+      "requests": [
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/original/original.md",
+          "offset": 1,
+          "limit": 250
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/original/original.md",
+          "offset": 251,
+          "limit": 250
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/original/original.md",
+          "offset": 501,
+          "limit": 250
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/original/original.md",
+          "offset": 751,
+          "limit": 250
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/original/original.md",
+          "offset": 1001,
+          "limit": 250
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/original/original.md",
+          "offset": 1251,
+          "limit": 250
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/original/original.md",
+          "offset": 1501,
+          "limit": 250
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/original/original.md",
+          "offset": 1751,
+          "limit": 29
+        }
+      ],
+      "mapping": [
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/original/original.md",
+          "original_start_line": 1,
+          "starts_mid_line": false,
+          "original_start_byte": 0,
+          "bytes": 603455,
+          "ends_with_newline": true
+        }
+      ],
+      "files": {
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/original/original.md": "2d7f201669267c21c83043b23a4e7dd8385c4ab21481457db22092070e7eb08b"
+      },
+      "directory": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/original"
+    },
+    "chunked": {
+      "prompt_file": "prompt-chunked.txt",
+      "prompt_sha256": "cff0d496023f05f5b4a7c061a8a638971e19a7864e883029983e6a88c31f3991",
+      "requests": [
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/000.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/001.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/002.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/003.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/004.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/005.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/006.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/007.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/008.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/009.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/010.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/011.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/012.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/013.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/014.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/015.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/016.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/017.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/018.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/019.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/020.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/021.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/022.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/023.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/024.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/025.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/026.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/027.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/028.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/029.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/030.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/031.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/032.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/033.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/034.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/035.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/036.txt"
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/037.txt"
+        }
+      ],
+      "mapping": [
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/000.txt",
+          "original_start_line": 1,
+          "starts_mid_line": false,
+          "original_start_byte": 0,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/001.txt",
+          "original_start_line": 61,
+          "starts_mid_line": true,
+          "original_start_byte": 16000,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/002.txt",
+          "original_start_line": 81,
+          "starts_mid_line": true,
+          "original_start_byte": 32000,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/003.txt",
+          "original_start_line": 109,
+          "starts_mid_line": true,
+          "original_start_byte": 48000,
+          "bytes": 15998,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/004.txt",
+          "original_start_line": 136,
+          "starts_mid_line": true,
+          "original_start_byte": 63998,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/005.txt",
+          "original_start_line": 154,
+          "starts_mid_line": true,
+          "original_start_byte": 79998,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/006.txt",
+          "original_start_line": 196,
+          "starts_mid_line": true,
+          "original_start_byte": 95998,
+          "bytes": 15998,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/007.txt",
+          "original_start_line": 210,
+          "starts_mid_line": true,
+          "original_start_byte": 111996,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/008.txt",
+          "original_start_line": 217,
+          "starts_mid_line": true,
+          "original_start_byte": 127996,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/009.txt",
+          "original_start_line": 248,
+          "starts_mid_line": true,
+          "original_start_byte": 143996,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/010.txt",
+          "original_start_line": 264,
+          "starts_mid_line": true,
+          "original_start_byte": 159996,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/011.txt",
+          "original_start_line": 274,
+          "starts_mid_line": true,
+          "original_start_byte": 175996,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/012.txt",
+          "original_start_line": 290,
+          "starts_mid_line": true,
+          "original_start_byte": 191996,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/013.txt",
+          "original_start_line": 310,
+          "starts_mid_line": true,
+          "original_start_byte": 207996,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/014.txt",
+          "original_start_line": 342,
+          "starts_mid_line": true,
+          "original_start_byte": 223996,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/015.txt",
+          "original_start_line": 361,
+          "starts_mid_line": true,
+          "original_start_byte": 239996,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/016.txt",
+          "original_start_line": 374,
+          "starts_mid_line": true,
+          "original_start_byte": 255996,
+          "bytes": 15999,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/017.txt",
+          "original_start_line": 427,
+          "starts_mid_line": true,
+          "original_start_byte": 271995,
+          "bytes": 15998,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/018.txt",
+          "original_start_line": 483,
+          "starts_mid_line": true,
+          "original_start_byte": 287993,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/019.txt",
+          "original_start_line": 533,
+          "starts_mid_line": true,
+          "original_start_byte": 303993,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/020.txt",
+          "original_start_line": 554,
+          "starts_mid_line": true,
+          "original_start_byte": 319993,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/021.txt",
+          "original_start_line": 570,
+          "starts_mid_line": true,
+          "original_start_byte": 335993,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/022.txt",
+          "original_start_line": 580,
+          "starts_mid_line": true,
+          "original_start_byte": 351993,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/023.txt",
+          "original_start_line": 622,
+          "starts_mid_line": true,
+          "original_start_byte": 367993,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/024.txt",
+          "original_start_line": 817,
+          "starts_mid_line": true,
+          "original_start_byte": 383993,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/025.txt",
+          "original_start_line": 964,
+          "starts_mid_line": true,
+          "original_start_byte": 399993,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/026.txt",
+          "original_start_line": 1061,
+          "starts_mid_line": true,
+          "original_start_byte": 415993,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/027.txt",
+          "original_start_line": 1131,
+          "starts_mid_line": true,
+          "original_start_byte": 431993,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/028.txt",
+          "original_start_line": 1237,
+          "starts_mid_line": true,
+          "original_start_byte": 447993,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/029.txt",
+          "original_start_line": 1319,
+          "starts_mid_line": true,
+          "original_start_byte": 463993,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/030.txt",
+          "original_start_line": 1410,
+          "starts_mid_line": true,
+          "original_start_byte": 479993,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/031.txt",
+          "original_start_line": 1496,
+          "starts_mid_line": true,
+          "original_start_byte": 495993,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/032.txt",
+          "original_start_line": 1557,
+          "starts_mid_line": true,
+          "original_start_byte": 511993,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/033.txt",
+          "original_start_line": 1619,
+          "starts_mid_line": true,
+          "original_start_byte": 527993,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/034.txt",
+          "original_start_line": 1656,
+          "starts_mid_line": true,
+          "original_start_byte": 543993,
+          "bytes": 16000,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/035.txt",
+          "original_start_line": 1697,
+          "starts_mid_line": true,
+          "original_start_byte": 559993,
+          "bytes": 15999,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/036.txt",
+          "original_start_line": 1729,
+          "starts_mid_line": true,
+          "original_start_byte": 575992,
+          "bytes": 15999,
+          "ends_with_newline": false
+        },
+        {
+          "file_path": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/037.txt",
+          "original_start_line": 1757,
+          "starts_mid_line": true,
+          "original_start_byte": 591991,
+          "bytes": 11464,
+          "ends_with_newline": true
+        }
+      ],
+      "files": {
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/000.txt": "ce1ff65037a9aa3b9183e2f61671e374956bb916d08fc77cdf0fd65439fc392c",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/001.txt": "8238630caf68813e75f01bd1ac84007791009ce4be1e5dc18380f7dcf7098558",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/002.txt": "76fba102163e4cdd6f9a6d0a2e9e4577019dbd6c5f8afd5daa981ebc233cc502",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/003.txt": "e649a6608d34521cd3a8e391203abf9d6fbded22e6f192b0d368d963a9ed6867",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/004.txt": "d6fe67d3bb10a03e8d8b105444f2e680f4984764140e623257bb671b8159586e",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/005.txt": "d6f032351363aaf7af213080a4fafa52b6372e85c84aa99e0aa8605cd73cf45b",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/006.txt": "cbba7f2c592aefffdc454a19a660e8fddd8b0cad3c46413b02f9156b177a7235",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/007.txt": "5e0ba474c42939b6292c23014c6f5a24950be647fb192f779e8701d186eca268",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/008.txt": "4ed168ce6338fc36e2f4c591119b5648a101c7d4384e4a722e75b669b283d024",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/009.txt": "284e989b318c58f56b28c273243e382f6421e8907c5e3a4542ed0eb979420d27",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/010.txt": "e628fc8a6f087485273418e0024c7d0cf5f78c8c1a5d87d1e25d6f2106e6cf21",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/011.txt": "0b8c74bed878ababc4b52f4139a2c3e6cfdd3c71c3a973b19a66a921e280392f",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/012.txt": "cb1a2e05518ac459b1864c624027f4bf159191ec420badefd221f062ebaae4d8",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/013.txt": "7183f690939b8d9bf9c8673b6992c8082084fb8a1e4e4bfe1bef5b2f63bb16b2",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/014.txt": "3aa79b9225365177c795c83b7fdf0f57f878e4f6a90120a0f4550248bc0ee4f7",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/015.txt": "94934d727c225a10e60bf054e1a134c6e0f9ddb5a85422df29a51a4c256ae208",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/016.txt": "d34d7d3a36e96dd61a85779a8e42be62be6882e07bf8b280679d277c11df2729",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/017.txt": "4068da6ef8178737f6c26f484e11f7c5e854e5ba71d2b068c4ac0982fe082b51",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/018.txt": "42fa75fabb5edb5fb54882f9515cf3eadf50691b76ce6343e90ec09331f8d3e4",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/019.txt": "9c01574813f4e85887c52a615de29b8a3ce5be875500e3c4c6a4842f115602b6",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/020.txt": "d960c385b6141e6c215bdb116dc98312d3e0d4eae1a9dce91eebd73daed39fb5",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/021.txt": "efeb4c776c031f27f0cee2a69519e85a2358484f3a3c52adf6660445f4a043ae",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/022.txt": "d67f2516c9146e650aa94ffa086c420363794a588fd3ec9f86993cb5c22b0d0e",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/023.txt": "b61c96ff4e9c143d815abf89cbdbd4cfd429bfffd698302b32515af0ff29fe0e",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/024.txt": "b3324e5d1089af42891b89b27e444d44a2cb5cd59cf62400cc99d1cb9e6c2bf4",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/025.txt": "8dbe3dee28396602add1bb14bc5281376c70b426e9f0a483ef769cb7786a7b50",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/026.txt": "fd2545e69f4c41c11c8175abf98b19bd313fe59454ccd01e36464a6e58a2129d",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/027.txt": "696d12406dec34804cf591eb6a42b3f215674e169720bca87ca49f9dcda7c4db",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/028.txt": "867329be781e53a6fc6376db4f0ca11679cda69b14051c1865f8ea0505d10614",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/029.txt": "0786534867125fc5bb4ccc081b12e9638840afe59118b784875ac7eb2b22a096",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/030.txt": "4b206f3361357c2adfbb45582952c053f96efee9b77bc2ea5dfe90265b3127f8",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/031.txt": "983915fd7c39da9f01b41129fbfe95151e348bd77207524d512998db630d076b",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/032.txt": "9309200f6a6ec565bff7da8824b6a931a50ae88cc7eeb67b728b53cdf2a505cf",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/033.txt": "109360ebd8a1d7fb335c8acc484d32bc4c3b9fa59996adb349ec07f2e1eb7b2c",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/034.txt": "7d90e06fab00f8870327c3dc6dca4648506d67238db51c19eced8ca684bd6f47",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/035.txt": "06443295c42d4ac1c625185278b2c73b96e433c44f259aef2d0c0adfc144a2af",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/036.txt": "aa7bd32a586c2877cf8037d073d9dbf5de0e99e8842752afc3ba1bd231b1a5a5",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked/037.txt": "f05f76a2b3536250949c9cac9a6d3bb5387cec054d8ab67e507ff5b1265a78bd"
+      },
+      "directory": "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/inputs/chunked"
+    }
+  },
+  "protected_sha256": {
+    "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/cases.json": "198c0160be9763b1373de455cd3aa7016af1ce5512bc16460731292ec93af712",
+    "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/manifest.json": "597ef688d7356593f49522910a2de0960b374d2476f7c43819519dbe3636bbdf",
+    "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/experiment.py": "a0db054f76ee9e5905a92080325ee4a1c56fcf189a626858fc661cc7d838687a",
+    "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/frozen/spec-9fe56c87.md": "2d7f201669267c21c83043b23a4e7dd8385c4ab21481457db22092070e7eb08b",
+    "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/frozen/sources-guard.json": "61a3ed5af2e65f23a4329640ed790a47e4278f7b0380201ccff75955094f5817",
+    "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/frozen/sources-constructor.json": "e93b8f57bfcebf84e15870cc97d06971cd005a0de5832e96618b9387d769c981",
+    "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/full_read.py": "d576cc2e70d342a3d09152460376d2dc49b428270e1d2fe07f2904a52ab3a23c",
+    "/Users/hyun/Desktop/dddjango/workspace/eval/design-spec-delivery/2026-09-06/full-read/run_full_read.py": "737cd5c17be07e8c3866380ed0e02fb4e789c755f713dd30142ddaa86ddb2a49"
+  },
+  "task_bundle_sha256": "d0b417142a8fa0c3f069f6be9cc00faa92a19b3c06683037366ddb8bd3d46a38",
+  "quality": "same existing guard10 with allow_replace=True and constructor9; no oracle change after results",
+  "transmission": "every source byte reconstructed after line-number removal and exactly one numbered-range boundary LF restoration; record normalization counts; reject other content differences",
+  "eligibility": "successful requested runtime, full source, prescribed reads, no compact, all19 checks; all3/arm required before reduction percentage",
+  "preparation": "each trial reloads source and regenerates/writes its identical inputs; preparation and verification are included in total_ms",
+  "limits": [
+    "Two known tasks combined; not old single-task timings or full dddjango pipeline.",
+    "Citation accuracy and full design/code noninferiority are untested.",
+    "No-summary is checked via visible compact events, not proof of provider-internal context behavior.",
+    "No cache flush/settings/auth changes. AB/BA/AB order does not eliminate cache/provider/time confounds.",
+    "Read and API failures are preserved, not counted as fast successes. No model retries for quality failures.",
+    "If primary model runtime is unavailable or an explicit API failure occurs, stop further paid calls; do not change account/settings."
+  ],
+  "pre_execution_amendments": [
+    {
+      "utc": "2026-09-06T10:31:20.306196+00:00",
+      "reason": "Final independent review: stop on every explicit API failure or missing primary-model usage, including failures after partial successful reads. No benchmark trial has started; tasks, prompts, inputs, order and budgets unchanged.",
+      "previous_protocol_file": "protocol-before-runtime-stop-fix.json",
+      "previous_protocol_sha256": "f1b47d5c32193d2737d3ea23d4175a2c1f5adf6ce6353c632ce596f5afad1c41"
+    }
+  ]
+}

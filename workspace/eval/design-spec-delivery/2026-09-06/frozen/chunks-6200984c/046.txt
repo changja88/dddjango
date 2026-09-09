@@ -1,0 +1,87 @@
+ed_generation_adapter.py::_SlimCitedAnswerModel(BaseModel) {answer: Annotated[str, StringConstraints(min_length=1)], citations: list[_SlimCitationModel]}
+application/fortune_house/driven_layer/adapter/anticorruption_layer/llm_access/structured_generation_adapter.py::LlmAccessStructuredGenerationAdapter(StructuredGenerationPort)
+application/fortune_house/driven_layer/adapter/anticorruption_layer/llm_access/structured_generation_adapter.py::LlmAccessStructuredGenerationAdapter.generate_slim_answer(messages: tuple[SpeechMessage, ...], settings: SpeechGenerationSettings, caller_label: str) -> SlimAnswerOut
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/record_archive_adapter.py::_BirthPlaceDocument(TypedDict) {kind: str, city_code: str | None, country_code: str | None}
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/record_archive_adapter.py::_CustomerInputsDocument(TypedDict) {birth_date: str | None, birth_time: str | None, birth_time_unknown: bool, birth_calendar: str | None, is_leap_month: bool | None, birth_place: _BirthPlaceDocument | None, gender: str | None, default_timezone: str}
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/record_archive_adapter.py::_AnswerJsonDocument(TypedDict) {answer: str, citations: list[CitationDocument], bundle_id: str, evidence_set_digest: str}
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/record_archive_adapter.py::FortuneRecordRecordArchiveAdapter.save_record(draft: AnswerRecordDraft) -> SavedRecordOut
+# S3 test/fake — 포트 페이크 5 · RecordArchiveFake 확장 1
+application/fortune_house/test/fake/chart_calculation_port.py::ChartCalculationFake(ChartCalculationPort) {chart: ChartOut, failures: list[Exception], calls: list[ChartRequestInput]}
+application/fortune_house/test/fake/chart_calculation_port.py::ChartCalculationFake.__init__(chart: ChartOut, failures: tuple[Exception, ...] = ()) -> None
+application/fortune_house/test/fake/chart_calculation_port.py::ChartCalculationFake.calculate(request: ChartRequestInput) -> ChartOut
+application/fortune_house/test/fake/currency_reservation_port.py::CurrencyReservationFake(CurrencyReservationPort) {reserve_result: ReservedOut | InsufficientBalanceOut, confirm_result: ReservationConfirmedOut | ReservationAlreadyReleasedOut | ReservationNotFoundOut, release_result: ReservationReleasedOut | ReservationAlreadyConfirmedOut | ReservationNotFoundOut, reserve_failure: Exception | None, confirm_failure: Exception | None, release_failures: list[Exception], reserve_calls: list[tuple[int, int, str, str, str]], confirm_calls: list[tuple[int, UUID]], release_calls: list[tuple[int, UUID]]}
+application/fortune_house/test/fake/currency_reservation_port.py::CurrencyReservationFake.__init__(reserve: ReservedOut | InsufficientBalanceOut, confirm: ReservationConfirmedOut | ReservationAlreadyReleasedOut | ReservationNotFoundOut, release: ReservationReleasedOut | ReservationAlreadyConfirmedOut | ReservationNotFoundOut) -> None
+application/fortune_house/test/fake/currency_reservation_port.py::CurrencyReservationFake.reserve(account_id: int, amount: int, purpose_code: str, reference: str, idempotency_key: str) -> ReservedOut | InsufficientBalanceOut
+application/fortune_house/test/fake/currency_reservation_port.py::CurrencyReservationFake.confirm(account_id: int, reservation_id: UUID) -> ReservationConfirmedOut | ReservationAlreadyReleasedOut | ReservationNotFoundOut
+application/fortune_house/test/fake/currency_reservation_port.py::CurrencyReservationFake.release(account_id: int, reservation_id: UUID) -> ReservationReleasedOut | ReservationAlreadyConfirmedOut | ReservationNotFoundOut
+application/fortune_house/test/fake/evidence_provisioning_port.py::EvidenceProvisioningFake(EvidenceProvisioningPort) {prepared: EvidencePreparedOut | EvidenceAbstainedOut | EvidenceBlockedOut, sequence: list[EvidencePreparedOut | EvidenceAbstainedOut | EvidenceBlockedOut], failure: Exception | None, calls: list[tuple[str, str, str, str, tuple[tuple[str, str], ...], UUID, str, tuple[str, ...], str, tuple[EvidenceCard, ...]]]}
+application/fortune_house/test/fake/evidence_provisioning_port.py::EvidenceProvisioningFake.__init__(prepared: EvidencePreparedOut | EvidenceAbstainedOut | EvidenceBlockedOut, failure: Exception | None = None) -> None
+application/fortune_house/test/fake/evidence_provisioning_port.py::EvidenceProvisioningFake.prepare(question: str, query_language: str, fortune_ref: str, requested_bundle_ref: str, work_rag_refs: tuple[tuple[str, str], ...], character_id: UUID, book_usage: Literal["single", "source_and_commentary", "compare"], work_ids: tuple[str, ...], calculation_json: str, previous_allowed_evidence: tuple[EvidenceCard, ...]) -> EvidencePreparedOut | EvidenceAbstainedOut | EvidenceBlockedOut
+application/fortune_house/test/fake/citation_validation_port.py::CitationValidationFake(CitationValidationPort) {verdict: CitationsValidOut | CitationBlockedOut, failure: Exception | None, calls: list[tuple[str, EvidenceSetDigest, tuple[EvidenceCard, ...], CitedAnswer]]}
+application/fortune_house/test/fake/citation_validation_port.py::CitationValidationFake.__init__(verdict: CitationsValidOut | CitationBlockedOut, failure: Exception | None = None) -> None
+application/fortune_house/test/fake/citation_validation_port.py::CitationValidationFake.validate(bundle_id: str, evidence_set_digest: EvidenceSetDigest, allowed_evidence: tuple[EvidenceCard, ...], cited_answer: CitedAnswer) -> CitationsValidOut | CitationBlockedOut
+application/fortune_house/test/fake/structured_generation_port.py::StructuredGenerationFake(StructuredGenerationPort) {answer: SlimAnswerOut, failure: Exception | None, requests: list[tuple[tuple[SpeechMessage, ...], SpeechGenerationSettings, str]]}
+application/fortune_house/test/fake/structured_generation_port.py::StructuredGenerationFake.__init__(answer: SlimAnswerOut, failure: Exception | None = None) -> None
+application/fortune_house/test/fake/structured_generation_port.py::StructuredGenerationFake.generate_slim_answer(messages: tuple[SpeechMessage, ...], settings: SpeechGenerationSettings, caller_label: str) -> SlimAnswerOut
+application/fortune_house/test/fake/record_archive_port.py::RecordArchiveFake.save_record(draft: AnswerRecordDraft) -> SavedRecordOut
+# S3 test/integration/conftest.py — helper 1(척추 완주 wire 기대값) + S2 방 helper 4 공개 승격(N-9 · `test_visit_turn_fortune_room.py` 사설 → 공개 이름 · 의미 보존)
+application/fortune_house/test/integration/conftest.py::answer_turn_items(progress: str, record_id: UUID) -> tuple[PullVisitTurnTextDeltaResponse | PullVisitTurnOutputItemResponse | PullVisitTurnCompletedResponse, ...]
+application/fortune_house/test/integration/conftest.py::seed_room_with_carried(key: VisitKey, carried: CarriedRequest) -> Visit
+application/fortune_house/test/integration/conftest.py::open_room_price_confirm_turn(turn_harness: TurnHarness) -> PullVisitTurnOutputItemResponse
+application/fortune_house/test/integration/conftest.py::answer_transcript(card: PullVisitTurnOutputItemResponse, output: str, spoken: str | None = None) -> tuple[TranscriptMessageItem | TranscriptFunctionCallItem | TranscriptFunctionCallOutputItem, ...]
+application/fortune_house/test/integration/conftest.py::text_then_card_turn(stream_id: UUID) -> tuple[str, PullVisitTurnOutputItemResponse]
+```
+
+### 경계 import
+
+BC 밖 경계(django·pydantic·`scripts.`)와 테스트의 경계 재료를 성문한다. **타 BC OHS/contract·framework 공통 import 0**(S0 — cross-BC 호출 없음 · `framework/technology/rag/runtime/json_value.py`도 S0에선 쓰지 않는다: 도메인은 임의 JSON을 들지 않고 저장 문서는 TypedDict). intra-BC import(use case→port, OHS→use case/command/result·도메인 VO, 어댑터→port·도메인)는 경계가 아니라 적지 않는다 — 단 `visit_repository.py`의 도메인·모델 import 행은 #477(리포지토리 구현은 domain import 필수) 예보를 위해 성문한다(자기 add 해소 — symbols 채널). `admin/__init__.py`는 자기 panel 2종 import뿐(경계 아님). stdlib(`threading`·`queue`·`zoneinfo`·`html`·`json`·`uuid`)은 검사 밖.
+
+<!-- machine: boundary-imports -->
+```imports
+application/fortune_house/composition_root/dependency_wiring.py    from django.conf import settings
+application/fortune_house/driven_layer/django_fortune_house/apps.py    from django.apps import AppConfig
+application/fortune_house/driven_layer/django_fortune_house/models/visit_model.py    from django.db import models
+application/fortune_house/driven_layer/django_fortune_house/models/speech_generation_configuration_model.py    from django.db import models
+application/fortune_house/driven_layer/django_fortune_house/models/__init__.py    from application.fortune_house.driven_layer.django_fortune_house.models.speech_generation_configuration_model import SpeechGenerationConfigurationModel
+application/fortune_house/driven_layer/django_fortune_house/models/__init__.py    from application.fortune_house.driven_layer.django_fortune_house.models.visit_model import VisitModel
+application/fortune_house/driven_layer/django_fortune_house/admin/visit/panel.py    from django.contrib import admin
+application/fortune_house/driven_layer/django_fortune_house/admin/visit/panel.py    from django.http import HttpRequest
+application/fortune_house/driven_layer/django_fortune_house/admin/speech_generation_configuration/panel.py    from django.contrib import admin
+application/fortune_house/driven_layer/django_fortune_house/admin/speech_generation_configuration/panel.py    from django.http import HttpRequest
+application/fortune_house/driven_layer/django_fortune_house/admin/speech_generation_configuration/form/speech_generation_configuration_form.py    from django import forms
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from django.db import IntegrityError, transaction
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from django.utils import timezone
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from pydantic import TypeAdapter
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.exception.visit_integrity_violation import VisitIntegrityViolation
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.visit import Visit
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.visit_repository import VisitRepository
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.value_object.visit_key import VisitKey
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.value_object.visit_stage import VisitStage
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.value_object.turn_lease import TurnLease
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.value_object.turn_outcome import TurnOutcome
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.value_object.pending_card import PendingCard
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.value_object.carried_request import CarriedRequest
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.value_object.saju_snapshot import SajuSnapshot
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.value_object.prompt_set_snapshot import PromptSetSnapshot
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.value_object.fortune_selection import FortuneSelection
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.shared_value_object.display_language import DisplayLanguage
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.driven_layer.django_fortune_house.models.visit_model import VisitModel
+application/fortune_house/driven_layer/adapter/persistence/unit_of_work/visit_unit_of_work.py    from django.db import transaction
+application/fortune_house/driven_layer/adapter/detached_task/thread_adapter.py    from django.db import connections
+application/fortune_house/test/unit/test_notice_phrase_resolver.py    from django.conf import settings
+application/fortune_house/test/integration/test_fortune_house_admin.py    from django.test import Client
+application/fortune_house/test/integration/test_fortune_house_admin.py    from django.contrib.auth.base_user import AbstractBaseUser
+application/fortune_house/driving_layer/open_host_service/visit_turn/contract/response/pull_visit_turn_response.py    from application.fortune_house.driving_layer.open_host_service.visit_turn.contract.response.pull_visit_turn_output_item import PullVisitTurnOutputItemResponse
+application/fortune_house/driving_layer/open_host_service/visit_turn/contract/response/pull_visit_turn_response.py    from application.fortune_house.driving_layer.open_host_service.visit_turn.contract.response.pull_visit_turn_completed import PullVisitTurnCompletedResponse
+application/fortune_house/driving_layer/open_host_service/visit_turn/contract/response/pull_visit_turn_response.py    from application.fortune_house.driving_layer.open_host_service.visit_turn.contract.response.pull_visit_turn_pending import PullVisitTurnPendingResponse
+application/fortune_house/driving_layer/open_host_service/visit_turn/contract/response/pull_visit_turn_response.py    from application.fortune_house.driving_layer.open_host_service.visit_turn.contract.response.pull_visit_turn_missing import PullVisitTurnMissingResponse
+application/fortune_house/test/integration/test_seed_fortune_house.py    from scripts.seed_fortune_house import seed_fortune_house
+application/fortune_house/test/integration/conftest.py    import pytest
+application/fortune_house/test/integration/test_visit_turn_liveness.py    from django.db import connections
+application/fortune_house/test/integration/test_visit_turn_admission_concurrency.py    from django.db import connections
+scripts/seed_fortune_house.py    from application.fortune_house.driven_layer.django_fortune_house.models.speech_generation_configuration_model import SpeechGenerationConfigurationModel
+scripts/seed_fortune_house.py    from application.fortune_house.domain_layer.shared_value_object.reasoning_effort import ReasoningEffort
+scripts/seed_fortune_house.py    from application.fortune_house.domain_layer.shared_value_object.speech_operation import SpeechOperation
+# ── S1 — ACL 어댑터 6: 상대 BC OHS 모듈·contract만(#13 · 발주서 §3 표 실물 경로) ──
+application/fortune_house/driven_layer/adapter/anticorruption_layer/accounts/account_profile_adapter.py    from application.accounts.driving_layer.open_host_service.account.account_service import get_account_language_and_timezone_query
+application/fortune_house/driven_layer/adapter/anticorruption_layer/accounts/account_profile_adapter.py    from appl

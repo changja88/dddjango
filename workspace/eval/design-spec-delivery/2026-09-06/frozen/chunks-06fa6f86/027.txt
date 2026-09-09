@@ -1,0 +1,82 @@
+eption)
+application/fortune_house/application_layer/port/usage_policy/exception.py::UsagePolicyUnavailable(Exception)
+application/fortune_house/application_layer/port/usage_policy/exception.py::UsagePolicyContractMismatch(Exception)
+application/fortune_house/application_layer/port/record_archive/record_archive_port.py::RecordArchivePort(ABC)
+application/fortune_house/application_layer/port/record_archive/record_archive_port.py::RecordArchivePort.list_record_indexes(account_id: int) -> tuple[RecordIndexOut, ...]
+application/fortune_house/application_layer/port/record_archive/record_archive_port.py::RecordArchivePort.get_current_record(account_id: int, character_id: UUID) -> CurrentRecordOut | None
+application/fortune_house/application_layer/port/record_archive/record_out.py::RecordIndexOut(object) {record_id: UUID, character_id: UUID, fortune_type: str, topic: str | None, period: str | None, created_at: datetime}
+application/fortune_house/application_layer/port/record_archive/record_out.py::CurrentRecordOut(object) {record_id: UUID, fortune_type: str, topic: str | None, period: str | None, question_text: str, answer_text: str, created_at: datetime}
+application/fortune_house/application_layer/port/record_archive/exception.py::RecordArchiveUnavailable(Exception)
+application/fortune_house/application_layer/port/record_archive/exception.py::RecordAnswerMissing(Exception)
+application/fortune_house/application_layer/port/message_classification/message_classification_port.py::MessageClassificationPort(ABC)
+application/fortune_house/application_layer/port/message_classification/message_classification_port.py::MessageClassificationPort.classify_counter_message(customer_message: str, latest_records: tuple[CounterRecordOut, ...]) -> CounterClassificationOut
+application/fortune_house/application_layer/port/message_classification/message_classification_port.py::MessageClassificationPort.classify_room_message(customer_message: str, latest_record: RoomRecordOut | None) -> RoomClassificationOut
+application/fortune_house/application_layer/port/message_classification/classification_out.py::CounterRecordOut(object) {record_id: UUID, character_id: UUID, character_name: str, fortune_type: str, topic: str | None, period: str | None, created_at: datetime}
+application/fortune_house/application_layer/port/message_classification/classification_out.py::RoomRecordOut(object) {record_id: UUID, fortune_type: str, topic: str | None, period: str | None, question_text: str, answer_text: str, created_at: datetime}
+application/fortune_house/application_layer/port/message_classification/classification_out.py::CounterClassificationOut(object) {outcome: Literal["fortune", "non_fortune", "continue_record", "undecidable"], record_id: UUID | None, character_id: UUID | None, undecidable_code: str | None}
+application/fortune_house/application_layer/port/message_classification/classification_out.py::RoomClassificationOut(object) {outcome: Literal["follow_up", "new_fortune", "small_talk", "unrelated", "undecidable"], undecidable_code: str | None}
+application/fortune_house/application_layer/port/message_classification/exception.py::MessageClassificationUnavailable(Exception)
+application/fortune_house/application_layer/port/character_catalog/character_catalog_port.py::CharacterCatalogPort(ABC)
+application/fortune_house/application_layer/port/character_catalog/character_catalog_port.py::CharacterCatalogPort.get_operating_status(character_id: UUID, now: datetime) -> OperatingStatusOut | None
+application/fortune_house/application_layer/port/character_catalog/character_catalog_port.py::CharacterCatalogPort.get_profile(character_id: UUID) -> CharacterProfileOut | None
+application/fortune_house/application_layer/port/character_catalog/character_out.py::OperatingStatusOut(object) {is_open: bool, next_open_at: datetime | None}
+application/fortune_house/application_layer/port/character_catalog/character_out.py::CharacterProfileOut(object) {name_by_language: Mapping[str, str], persona: str, default_language: str}
+application/fortune_house/application_layer/port/character_catalog/exception.py::CharacterCatalogUnavailable(Exception)
+application/fortune_house/application_layer/port/character_catalog/exception.py::CharacterCatalogContractMismatch(Exception)
+application/fortune_house/application_layer/port/text_generation/text_generation_port.py::TextGenerationPort(ABC)
+application/fortune_house/application_layer/port/text_generation/text_generation_port.py::TextGenerationPort.stream(messages: tuple[SpeechMessage, ...], settings: SpeechGenerationSettings, caller_label: str) -> Iterator[SpeechTextDeltaOut | SpeechCompletedOut | SpeechFailedOut]
+application/fortune_house/application_layer/port/text_generation/speech_stream_out.py::SpeechTextDeltaOut(object) {text: str}
+application/fortune_house/application_layer/port/text_generation/speech_stream_out.py::SpeechCompletedOut(object) {text: str}
+application/fortune_house/application_layer/port/text_generation/speech_stream_out.py::SpeechFailedOut(object) {code: str, message: str}
+application/fortune_house/application_layer/port/text_generation/exception.py::TextGenerationConfigurationInvalid(Exception)
+application/fortune_house/application_layer/port/text_generation/exception.py::TextGenerationUnavailable(Exception)
+application/fortune_house/application_layer/port/domain_bypass_query/speech_generation_configuration/speech_generation_configuration_query.py::SpeechGenerationConfigurationDomainBypassQuery(ABC)
+application/fortune_house/application_layer/port/domain_bypass_query/speech_generation_configuration/speech_generation_configuration_query.py::SpeechGenerationConfigurationDomainBypassQuery.get_settings(operation: str) -> SpeechGenerationSettingsOut | None
+application/fortune_house/application_layer/port/domain_bypass_query/speech_generation_configuration/speech_generation_settings_out.py::SpeechGenerationSettingsOut(object) {model: str, max_output_tokens: int, reasoning_effort: str, timeout_seconds: float, max_retries: int}
+# S1 driven — ACL 어댑터 6 · bypass 조회
+application/fortune_house/driven_layer/adapter/anticorruption_layer/accounts/account_profile_adapter.py::AccountsAccountProfileAdapter(AccountProfilePort)
+application/fortune_house/driven_layer/adapter/anticorruption_layer/accounts/account_profile_adapter.py::AccountsAccountProfileAdapter.get_profile(account_id: int) -> AccountProfileOut | None
+application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/usage_policy_adapter.py::ServicePolicyUsagePolicyAdapter(UsagePolicyPort)
+application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/usage_policy_adapter.py::ServicePolicyUsagePolicyAdapter.check_account_gate(account_id: int, now: datetime) -> GateDecisionOut
+application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/usage_policy_adapter.py::ServicePolicyUsagePolicyAdapter.consume_action(account_id: int, action_kind_code: str, guest_timezone: str | None, now: datetime) -> ConsumeDecisionOut
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/record_archive_adapter.py::_RecordAnswerDocument(TypedDict) {answer: str}
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/record_archive_adapter.py::FortuneRecordRecordArchiveAdapter(RecordArchivePort)
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/record_archive_adapter.py::FortuneRecordRecordArchiveAdapter.list_record_indexes(account_id: int) -> tuple[RecordIndexOut, ...]
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/record_archive_adapter.py::FortuneRecordRecordArchiveAdapter.get_current_record(account_id: int, character_id: UUID) -> CurrentRecordOut | None
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_intent/message_classification_adapter.py::FortuneIntentMessageClassificationAdapter(MessageClassificationPort)
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_intent/message_classification_adapter.py::FortuneIntentMessageClassificationAdapter.classify_counter_message(customer_message: str, latest_records: tuple[CounterRecordOut, ...]) -> CounterClassificationOut
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_intent/message_classification_adapter.py::FortuneIntentMessageClassificationAdapter.classify_room_message(customer_message: str, latest_record: RoomRecordOut | None) -> RoomClassificationOut
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_character/character_catalog_adapter.py::FortuneCharacterCharacterCatalogAdapter(CharacterCatalogPort)
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_character/character_catalog_adapter.py::FortuneCharacterCharacterCatalogAdapter.get_operating_status(character_id: UUID, now: datetime) -> OperatingStatusOut | None
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_character/character_catalog_adapter.py::FortuneCharacterCharacterCatalogAdapter.get_profile(character_id: UUID) -> CharacterProfileOut | None
+application/fortune_house/driven_layer/adapter/anticorruption_layer/llm_access/text_generation_adapter.py::LlmAccessTextGenerationAdapter(TextGenerationPort)
+application/fortune_house/driven_layer/adapter/anticorruption_layer/llm_access/text_generation_adapter.py::LlmAccessTextGenerationAdapter.stream(messages: tuple[SpeechMessage, ...], settings: SpeechGenerationSettings, caller_label: str) -> Iterator[SpeechTextDeltaOut | SpeechCompletedOut | SpeechFailedOut]
+application/fortune_house/driven_layer/adapter/persistence/domain_bypass_query/speech_generation_configuration_query.py::DjangoSpeechGenerationConfigurationDomainBypassQuery(SpeechGenerationConfigurationDomainBypassQuery)
+application/fortune_house/driven_layer/adapter/persistence/domain_bypass_query/speech_generation_configuration_query.py::DjangoSpeechGenerationConfigurationDomainBypassQuery.get_settings(operation: str) -> SpeechGenerationSettingsOut | None
+# S1 test/fake — 포트 페이크 7(대본은 공개 가변 속성 · 호출 기록)
+application/fortune_house/test/fake/account_profile_port.py::AccountProfileFake(AccountProfilePort) {profile: AccountProfileOut | None, saju: SajuProfileOut | None, calls: list[int], saju_calls: list[int]}
+application/fortune_house/test/fake/account_profile_port.py::AccountProfileFake.__init__(profile: AccountProfileOut | None, saju: SajuProfileOut | None = None) -> None
+application/fortune_house/test/fake/account_profile_port.py::AccountProfileFake.get_profile(account_id: int) -> AccountProfileOut | None
+application/fortune_house/test/fake/account_profile_port.py::AccountProfileFake.get_saju_profile(account_id: int) -> SajuProfileOut | None
+application/fortune_house/test/fake/usage_policy_port.py::UsagePolicyFake(UsagePolicyPort) {gate: GateDecisionOut, consume: ConsumeDecisionOut, admission: AdmissionDecisionOut, consume_failures: list[Exception], gate_calls: list[tuple[int, datetime]], consume_calls: list[tuple[int, str, str | None, datetime]], admission_calls: list[tuple[int, str, str | None, datetime]]}
+application/fortune_house/test/fake/usage_policy_port.py::UsagePolicyFake.__init__(gate: GateDecisionOut, consume: ConsumeDecisionOut, consume_failures: tuple[Exception, ...] = (), admission: AdmissionDecisionOut | None = None) -> None
+application/fortune_house/test/fake/usage_policy_port.py::UsagePolicyFake.check_account_gate(account_id: int, now: datetime) -> GateDecisionOut
+application/fortune_house/test/fake/usage_policy_port.py::UsagePolicyFake.consume_action(account_id: int, action_kind_code: str, guest_timezone: str | None, now: datetime) -> ConsumeDecisionOut
+application/fortune_house/test/fake/usage_policy_port.py::UsagePolicyFake.is_action_allowed(account_id: int, action_kind_code: str, guest_timezone: str | None, now: datetime) -> AdmissionDecisionOut
+application/fortune_house/test/fake/record_archive_port.py::RecordArchiveFake(RecordArchivePort) {indexes: tuple[RecordIndexOut, ...], current: CurrentRecordOut | None, index_calls: list[int], current_calls: list[tuple[int, UUID]]}
+application/fortune_house/test/fake/record_archive_port.py::RecordArchiveFake.__init__(indexes: tuple[RecordIndexOut, ...], current: CurrentRecordOut | None) -> None
+application/fortune_house/test/fake/record_archive_port.py::RecordArchiveFake.list_record_indexes(account_id: int) -> tuple[RecordIndexOut, ...]
+application/fortune_house/test/fake/record_archive_port.py::RecordArchiveFake.get_current_record(account_id: int, character_id: UUID) -> CurrentRecordOut | None
+application/fortune_house/test/fake/message_classification_port.py::MessageClassificationFake(MessageClassificationPort) {counter: CounterClassificationOut | None, room: RoomClassificationOut | None, failure: Exception | None, counter_requests: list[tuple[str, tuple[CounterRecordOut, ...]]], room_requests: list[tuple[str, RoomRecordOut | None]]}
+application/fortune_house/test/fake/message_classification_port.py::MessageClassificationFake.__init__(counter: CounterClassificationOut | None = None, room: RoomClassificationOut | None = None, failure: Exception | None = None) -> None
+application/fortune_house/test/fake/message_classification_port.py::MessageClassificationFake.classify_counter_message(customer_message: str, latest_records: tuple[CounterRecordOut, ...]) -> CounterClassificationOut
+application/fortune_house/test/fake/message_classification_port.py::MessageClassificationFake.classify_room_message(customer_message: str, latest_record: RoomRecordOut | None) -> RoomClassificationOut
+application/fortune_house/test/fake/character_catalog_port.py::CharacterCatalogFake(CharacterCatalogPort) {status: OperatingStatusOut | None, profile: CharacterProfileOut | None, profiles_by_id: dict[UUID, CharacterProfileOut | None], price: PriceQuoteOut | None, prices_by_id: dict[UUID, PriceQuoteOut | None], matching_character_ids: tuple[UUID, ...], prompt_set: PromptSetOut | None, prompt_set_failure: Exception | None, status_calls: list[tuple[UUID, datetime]], profile_calls: list[UUID], matching_calls: list[tuple[str, ...]], price_calls: list[UUID], prompt_set_calls: list[tuple[UUID, str, str]]}
+application/fortune_house/test/fake/character_catalog_port.py::CharacterCatalogFake.__init__(status: OperatingStatusOut | None, profile: CharacterProfileOut | None, profiles_by_id: Mapping[UUID, CharacterProfileOut | None] | None = None, price: PriceQuoteOut | None = None, prices_by_id: Mapping[UUID, PriceQuoteOut | None] | None = None, matching_character_ids: tuple[UUID, ...] = (), prompt_set: PromptSetOut | None = None, prompt_set_failure: Exception | None = None) -> None
+application/fortune_house/test/fake/character_catalog_port.py::CharacterCatalogFake.get_operating_status(character_id: UUID, now: datetime) -> OperatingStatusOut | None
+application/fortune_house/test/fake/character_catalog_port.py::CharacterCatalogFake.get_profile(character_id: UUID) -> CharacterProfileOut | None
+application/fortune_house/test/fake/character_catalog_port.py::CharacterCatalogFake.find_matching_characters(supported_work_ids: tuple[str, ...]) -> tuple[UUID, ...]
+application/fortune_house/test/fake/character_catalog_port.py::CharacterCatalogFake.get_price_quote(character_id: UUID) -> PriceQuoteOut | None
+application/fortune_house/test/fake/character_catalog_port.py::CharacterCatalogFake.draw_prompt_set(character_id: UUID, fortune_type_id: str, language: str) -> PromptSetOut | None
+application/fortune_house/test/fake/text_generation_port.py::TextGenerationFake(TextGenerationPort) {events: tuple[SpeechTextDeltaOut | SpeechCompletedOut | SpeechFailedOut, ...], failure: Exception | None, requests: list[tuple[tuple[SpeechMessage, ...], SpeechGenerationSettings, str]], closed_early: bool}
+application/fortune_house/test/fake/text_generation_port.py::TextGenerationFake.__init__(events: tuple[S

@@ -1,0 +1,53 @@
+ CAS)이 이중 예약(13 B)의 1차 방어 — 지갑은 논리적 이중 예약을 막지 못한다(13 관찰 8). |
+| Rule ownership | 답 구간 진입·접기·완료·미전달 = `Visit`(§3.2 S3 4) · 전표 포인터 ⇒ `ANSWERING` = `Visit._assert_invariants`(§3.2 불변식) · 고아 답 구간 회복 = `Visit.begin_turn` ⓐ · 예약 금액 = `selection.displayed_price`(카드가 보인 값 §5.29 ① — 재조회 0) · 적용가 0 = `FortuneSelection.is_free()`(루트 VO 술어 · ddd nit 7) · 잔액 부족 관계 = `BalanceShortfall`(VO) · 기본 창 = `AnnualFortuneWindow.around`/`is_around`(VO) · 계산기 3종 완비 = `ChartRequestPolicy.REQUIRED_INPUT_IDS` · 해제 대상 = 응용 `_TurnMemory.open_reservation` · 실패 처분 = §5.10·§5.12 표(응용 순서) · 저장 재료 = `AnswerRecordDraft`(도메인 VO) · 인용 dict = `CitedAnswer.to_document()`(도메인 코덱 · 문서 TypedDict 4 파일). |
+| Idempotency storage | 부품 소유(§7.3 Idempotency 행 S3 문면) — 점집은 키만 낸다(`str(turn_id)` 둘 · 같은 턴 = 같은 키). 점집 재시도 = 해제 1회(`_RESERVATION_RELEASE_ATTEMPTS`) · 재계산 1회(`_CHART_ATTEMPTS` — 부작용 0) · 근거 재호출 1회(pin 재시작 — 리딩은 부작용 0·LLM 감사 행만) · 소비 재시도는 contention 1회(S1) · 생성 재시도 0(D49) · 저장 재시도 0 · 확정 재시도 0(실패 = 전표 open admin). **복구 상관 키 = `str(turn_id)`**(wallet `reference`(`reservation_ticket_model.py:21-22` `reference == idempotency_key`) = 기록소 `meta.idempotency_key`(unique `(account_id, idempotency_key)` `fortune_record/.../0001_initial.py:36`) = `RewindRecord.previous_turn_id`(stale 되감기) — admin이 open 전표의 `reference`로 기록소를 조회해 결과지가 있으면 confirm·없으면 release를 가른다 — 이 조회 1건이 (b)/(c)/(d)를 가르는 **유일한 재료**이고 점집 로그의 방문 `record_id`류 편의값은 재료가 아니다(db imp1 라운드 B) · §4.2-4-4 ⓝ 부분 상태 ⓕ (a)~(d) · db imp3) · wallet `reserve` replay는 전표 상태를 보지 않는다(`wallet.py:150-159` · RELEASED/CONFIRMED 전표도 fingerprint만 맞으면 같은 `reservation_id`를 `REPLAYED`로) — 점집은 턴당 예약 1회라 무해 · §12.3 ㉚ 대가에 기록(db nit 6). |
+| API handoff | 없음(HTTP 0). wire 결과 = 카드 I·E·F + 문구(§6.4 S3). |
+| Side-effect timing | 예약 → **즉시** `start_answer` 커밋(전표 포인터 저장 — 크래시 뒤 되감기 로그 재료) → 진행 문구 델타 → 카드 I 방출(api nit 2 · 커밋 뒤 방출) · 저장 성공 → 확정 시도 → `complete_answer` 커밋 → 카드 E(카드는 항상 커밋 뒤 · §5.22 ⑦ 정신) · 실패 = 해제(UoW 밖) → `abort_answer` 커밋 → 문구 · `close()` 중단 = 다음 `is_open` 검사 자리에서 같은 «해제 → 접기» · 종결부 안전판이 어느 예외 경로에서도 같은 순서를 1회 보장(§4.4). |
+| Isolation/retry | Read Committed(§7.2). 방문 쓰기 CAS 미스는 §7.3 Isolation/retry 그대로(`_commit_visit_change` 3값) — **단 `start_answer` `MISSED`(2회 미스)는 방금 만든 전표를 해제하고 `temporary_error`로 접는다**(전표 포인터 없는 열린 전표를 남기지 않는다 · 손님 새 말로 복구) · `start_answer` `UNCHANGED`(비점유자)도 해제(«부품 호출 0»보다 «전표를 남기지 않는다»가 앞선다 D17) · 해제 실패 → 1회 재시도 뒤 `logger.error` + admin 위임(D39 ①) · 확정 실패(DB 예외·`not_found`) → 결과지·송출 유지 + 전표 open 로그(되돌리지 않는다) · `already_released` → 무과금 진행 + 경고 · 매달린 예약(프로세스 죽음) → 점집 자동 처리 0(13 D-1 · D39 ① 기각 «다음 방문 정산 로직») — 다음 턴 stale 되감기가 `released_reservation_id`를 로그로만 · **`complete_answer`/`abort_answer` `MISSED`(2회 미스)** → 방문은 `ANSWERING`(+포인터)으로 남고 `_end_turn`이 점유를 푼다 = **고아 답 구간** → 다음 턴 `begin_turn` ⓐ가 `_rewind` 동형으로 접고(`last_turn_outcome` 무변 — 옛 턴의 `end_turn` 값 유지 §3.2 ⓐ) `ADMITTED_AFTER_REWIND`(`previous_turn_id None`)로 진입(§3.2 · 자동 해제·확정 0 · `abort_answer` 안전판 재시도의 단위 = 커밋 왕복 2 · `save_with_version_guard` 미스 최대 4 §4.2-4-4 ⓝ `_abandon_answer` — `abort_answer` 미스 전표는 이미 해제됐고 `complete_answer` 미스 전표는 이미 확정 시도됐다) · `complete_answer` `MISSED`면 카드 E는 내되 `mark_undelivered` 0(ⓝ⑳ · ddd imp1 = db imp2). |
+| Test criteria (candidate) | ⓐ 부족 = 전표 insert 0·잔액 불변(해제 호출 0 · 확정 0 · 저장 0 · 카드 F · 방문 접힘 · 09 T3 · wallet 행 1 생성은 허용 — db nit 5) ⓑ abstained = 해제 정확히 1 · 저장 0 · 확정 0 · 안내 · 방문 `idle`(10) ⓒ 생성 실패·검문 blocked·재투영 실패 = 해제 1 · 저장 0(11 ①②③) ⓓ 저장 실패 = 해제 1 · 확정 0 · 결과지 0(11 ⓐ) ⓔ 저장 성공·확정 실패(DB 예외·`already_released`·`not_found`) = 해제 0 · 결과지 유지 · 카드 E 방출 · 방문 `answered`·전표 포인터 `None`(11 ⓑ) ⓕ 적용가 0 = 지갑 호출 3동작 0 · 카드 I·E는 낸다 ⓖ `close()` 전 = 해제 1 · 저장 0 · 방출 0 / 저장 뒤 = no-op + 미전달 표식(11 ⓓⓔ) ⓗ 자체 마감(예약 직전 → 예약 0 · 근거 직전 → 해제 1 · 생성 직전 잔여 0 → 해제 1) ⓘ 매달린 예약 = stale `answering` 방문의 다음 턴이 `released_reservation_id`를 로그하고 wallet 호출 0(13 D-1) ⓙ 해제 DB 예외 1회 재시도 → 2회 실패 → 로그 후 문구 진행 ⓚ 세대 pin 재시작 = 예약 유지 · `prepare` 2회 · 두 번째 pin → 해제 + `catalog_unavailable` ⓛ 실물 전표 상태(Tier B — 부족 = 전표 insert 0·잔액 불변 · `not_found` 미러) ⓜ 고아 답 구간(`abort_answer`/`complete_answer` 2회 미스 → 다음 턴 `ADMITTED_AFTER_REWIND` · `previous_turn_id None` · wallet 호출 0 · 새 말 평소 분류 · 단위 권위 `test_visit.py` · 통합 1건 `_failures.py`) ⓝ 불변식 «포인터 ⇒ `ANSWERING`»(위반 조립 `InvalidVisitState` — 단위 `test_visit.py` · round_trip fixture 둘). 입장 판정은 §10. |
+
+---
+
+## §8 외부 관찰 가능 행위 목록 · BC 가로지르는 채널
+
+### 8.1 외부 관찰 가능 행위(S0 계약 candidate — 입장 표 §10 통과분만 테스트가 된다)
+1. `open_visit_turn_command`는 어떤 입력에도 예외 없이 `stream_id`를 돌려준다(폴백 문구 종단 포함).
+2. 같은 (계정, 점쟁이|카운터)에 살아 있는 점유가 있으면 둘째 턴은 **부품 호출 0·worker 0**으로 `turn_in_progress` 문구 델타 + 종단(§5.27 ②).
+3. 서로 다른 방(카운터·점쟁이)의 동시 턴은 서로 간섭하지 않는다(시나리오 13 A).
+4. 옛 턴 `deadline`이 지난 점유는 새 턴에서 되감기(단계 `idle`·`reservation_id` 비움·재청구 0)되고 새 턴이 진행된다(13 D-2).
+5. fresh 입력 0 턴(중복 답·미지 `call_id`만·종단 뒤 답)은 `PullVisitTurnCompletedResponse("")` 하나로 끝난다(부품 0·LLM 0·상태 0 — 12 C).
+6. 대본에 슬롯 `call_id`의 `function_call`이 없으면 슬롯이 폐기되고 단계가 `idle`로 내려간다(12 D-2).
+7. worker 안 어떤 예외도 점유를 풀고 `internal_error` 문구 델타 + `…Completed(방출 델타 전부의 접합)` **1회**로 정상 종단한다 — `GenerationFailed` 상당 0(11 걸음 0·관찰 2).
+8. `pull(timeout)`은 worker가 막혀 있어도 timeout 안에 `…Pending`을 돌려준다(sc-11-3 — chat_relay 측 «INTERRUPTED 비발생» 관찰은 S4 몫).
+9. `close`는 즉시·멱등이고 이후 `pull`은 `…Missing`.
+10. 씨앗 2회 실행 = 1행 · 동일.
+11. 고정 문구 표는 §4.5 전수 × `settings.LANGUAGES` 완비 · 미지 `suspended.<code>` → `suspended.default`.
+12. 렌더 VO는 슬롯 5종만 치환·태그 거부·escape.
+13. 카드 봉투 2종·`output` 4철자 결정적 직렬화·합성 철자 구분.
+**S1 candidate(발주서 §6 S1 완료 계약·e2e 배분)**:
+14. 계정 `None`/`active=False` 턴 → `account_unavailable` 문구 델타 1 + 종단 · 부품 추가 호출 0·LLM 0·소비 0 · 언어 = 탈퇴면 응답 언어, 없음이면 방문 캐시→운영 언어(07 턴 C·D).
+15. 문 앞 전체 정지 → `suspended.<code>` 문구(`retry_at`은 계정 tz 현지 `YYYY-MM-DD HH:MM` · 무기한은 «미정») · LLM 0·예약 0·소비 0 · 방/카운터 모두 고정 문구(07 턴 A·B) · 미지 정지 코드 → `suspended.default`.
+16. 카운터 턴은 근무 확인을 부르지 않는다(06 턴 3).
+17. 쉬는 방 → 문구 델타(`character_resting` — `next_open_at` 계정 tz) → G `go_counter` 카드(`reason="resting"`·`next_open_at_local` ISO+offset) → `Completed(문구)` · 슬롯 영속(`stage=selecting`·`pending_card_name="go_counter"`) · LLM 0·소비 0·이월 소비 0(06 턴 1) · 시즌 종료 → `reason="season_ended"`·`next_open_at_local=null` · 근무 `None`(임의 UUID 방) → `character_unavailable`·`reason="unavailable"`.
+18. 방이 다시 열렸을 때 남은 G 슬롯은 소거되고 손님 말은 평소대로 분류된다(`card_pending` 아님).
+19. 판정 불가(5원인 공통) → `undecidable` 문구 · 방 유지 · 돈 0(11 걸음 13 부속).
+20. 분류기 설정 예외(`FortuneIntentConfigurationException`) → `component_misconfigured` 문구 · 해제 없음(11 걸음 13).
+21. 카운터 `non_fortune` → `non_fortune_rejected` 고정 문구(LLM 0) · 카운터 `fortune`/`continue_record` → S2 ⓙ~ⓚ/ⓚ″(§8.1 30·44) · 방 `follow_up` → S4 비계 `internal_error` 정상 종단(소비 0).
+22. 방 `small_talk`·`unrelated` → 설정 행 → 프로필 → 예산·클램프 → `consume_action(small_talk)` **정확히 1회** → persona 스트림 델타 → (`remaining ≤ 3`이면 J 위젯) → `Completed(접합)`(04 전부 · 14 갈래 A) · 공급자가 델타 0(기준 = `emitted_text == ""`)으로 종단하면 `temporary_error` 문구 델타 1 + `Completed(문구)`(J 0 — R1 ⓒ) · 프롬프트 = system 지시문(`ko` 코드 상수·계정 언어 코드 포함) + persona 경계 표식 + 최근 ≤8 message + user 손님 말 · 결과지 본문·citations·display_html 0 · `caller_label="fortune_house_small_talk"`.
+23. 한도 초과(`limit_exceeded`) → 문구(`retry_at`은 `effective_timezone` 현지) · LLM 0 · 카드 0(잠금 없음) · 행위별 정지는 소비 응답에서 `suspended.<code>`.
+24. 스트림 부분 델타 뒤 `Failed` → `…TextDelta("\n" + temporary_error 문구)` → `Completed(부분 + "\n" + 문구)` 정상 종단 · `GenerationFailed` 상당 0(11 걸음 12) · 델타 0이면 문구만.
+25. 소비 `contention` → 같은 `now`로 1회 재시도 · 재실패 → `temporary_error` 문구 · 소비 호출 정확히 2회.
+26. 잔여 예산 < 단계 최악값 → `deadline_exceeded` 문구 · 그 단계 진입 0(분류기·잡담) · LLM `timeout_seconds`는 `min(설정값, 잔여−8)`로 클램프.
+27. 설정 행 부재 → `component_misconfigured` 문구 + 운영 경보 · LLM 0.
+28. 계정 언어는 턴 종결에 방문에 캐시되어 다음 턴의 `turn_in_progress` 거절 문구가 그 언어로 나간다.
+29. 포트 `…ContractMismatch`(`UsagePolicyContractMismatch` — `DenialDetail.reason` `Literal` 밖 · `CharacterCatalogContractMismatch` — 프로필 `default_language` 키 부재 · ACL 입구 좁힘 D58) → `contract_mismatch` 문구 델타 1 + 종단 · outcome `INTERNAL_ERROR` — 부품 불변식이 보장해 도달 0인 방어 분기(§4.4 표 · 단위 `test_run_visit_turn_reception.py` outcome 표에만 포함).
+**S2 candidate(발주서 §6 S2 완료 계약·§9.4 배분)**:
+30. 카운터 `fortune` 턴(01 1-F~1-L): 조기 판정 허용 → 카탈로그 ① → #4(`allowed_fortune_types` = 전체 목록 + 라벨 폴백 · `reference_date` = 계정 tz 오늘) → ② visible 1 → 자동 → ③ → #32 → 제안 조립(이름·가격) → **카드 B**(`select_character` · options 전부 `view_price`·`chat_price` · `fortune_id`·`label`·`price_unit`) · 카드 전용 턴 `Completed("")` · 방문 = `request`(원래 말·주제·기간·`character_offers`)+`selection.fortune_id`·`bundle_id`+슬롯 B(`stage=selecting`) · 소비 0·예약 0.
+31. visible ≥2 → **카드 A**(`select_fortune_type` · `options[{fortune_id,label}]`·`lead_message`) · 카드 전용 턴 · 슬롯 A · 다음 턴 답 `{"choice":<id>}` → 같은 턴에 ③→#32→카드 B(#4·② 재호출 0 · 카드 B `label`은 ① 1회로 얻은 라벨 — 카드 A가 보인 라벨과 같은 §4.3 ① 규칙 · ① `unavailable` → `catalog_unavailable` 문구·카드 0) · 허용 밖 id → `card_answer_invalid`(슬롯 A 유지) · visible 0 → `no_available_character` 고정 문구(카운터) · 요청 접힘.
+32. 카드 B 답(01 턴 2 · 09 T2 · 05 턴 2): 조기 판정 1회 → **목표 방문 (계정, X)에 이월**(`original_message`·`carry_kind=CarryKind.NEW_FORTUNE`·`fortune_id`·`bundle_id`(원 방문 세대 표식)·주제·기간·`displayed_price=선택한 제안의 view_price`·`issued_at=now`·`consumed=False` — 방이 없어도 행 선행 생성) → 원 방문 `close_request`(슬롯·요청 비움·`idle`) → **카드 C** `open_room{character_id: X, resend_message: 원래 말}` → `Completed("")` · 부품 호출 = 조기 판정 1(카탈로그·LLM·wallet 0).
+33. 세대 재시작(§5.13 ①): ②(또는 ③) 응답 `bundle_id` ≠ 직전 세대 → ①→②→③ 무언 재실행 뒤 진행(`bundle_id` 갱신 저장) · 재시작 뒤 선택 운세가 visible 아님 → `no_available_character` · 두 번째 시도도 어긋남 → `catalog_unavailable` · 어느 창구든 `unavailable` → `catalog_unavailable` 고정 문구 · 되감기 0 · 해제 불요.
+34. 방 새 운세(05 턴 1 · 09 경로 B): 분류 `new_fortune` → 조기 판정 → ①→#4→②→③→#32 → **D19 판정**(방 점쟁이 ∈ matching) — 지원 → 카드 B 1 option(방 점쟁이 · 가격 확인 §5.29 ②) 카드 전용 턴 · 미지원 → persona LLM 안내 델타(`caller_label="fortune_house_notice"` · 소비 0) → 카드 B(방 점쟁이 제외 목록) → `Completed(접합)` · LLM 실패 → 델타 0 카드만 · 후보 0 → persona LLM `no_available_character` 안내(실패 시 고정 문구) · 카드 0.
+35. 방 카드 B 답 = 방 점쟁이(가격 확인) → `choose_character`(`displayed_price`) → 같은 턴 #11로 · 다른 점쟁이(D19) → 이월 + `open_room{Y}`(32와 동형 · 05 턴 2).
+36. 방 첫 턴 이월 소비(01 턴 3 · 05 턴 3 · 08 T1): 근무 열림 → `consume_carried_request` 일치+미만료 → #25 건너뜀 → 조기 판정 → 재검증(③ 세대 · #32 지원 · 게시) → #11 · #32 미지원 → 안내 델타 → D19 카드 B(방 점쟁이 제외 · `label` = ① 1회로 얻은 라벨) · 불일치·만료·미존재 → 평소 분류 · 쉬는 방 → G 카드 + 이월 유지(§5.16 ⑥) · TTL 경계 `==` 만료.
+37. #11(08 T1): 사주 3종 대응표 — `birth-datetime`(생시 모름 확정 `birth_time_unknown=True` 통과 · 음력+윤달 `None` 부족 · 역법 `None` 부족) · `birth-place`(`UNKNOWN` 통과) · `sex`(`None` 부족) → 부족 → persona LLM 안내(부족 항목 이름) → **카드 D** `request_profile_inputs{missing:[…정의 순], form:"account_profile"}` · 슬롯 D · 미지 id → `no_available_character` + 운영 로그 · 충족 → `saju` 고정 → 세트 추첨 1회 → `prompt_set` 고정 → S3 비계 `internal_error` 정상 종단(방문에 사주·세트·선택 잔존 · `idle`).
+38. 카드 D 답(08 T3~T3⁗): `{"status"

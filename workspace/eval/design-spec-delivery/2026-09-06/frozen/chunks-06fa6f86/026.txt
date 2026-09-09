@@ -1,0 +1,106 @@
+urnUseCase
+application/fortune_house/composition_root/dependency_wiring.py::build_pull_visit_turn_use_case() -> PullVisitTurnUseCase
+application/fortune_house/composition_root/dependency_wiring.py::build_close_visit_turn_use_case() -> CloseVisitTurnUseCase
+application/fortune_house/composition_root/dependency_wiring.py::build_run_visit_turn_use_case() -> RunVisitTurnUseCase
+application/fortune_house/composition_root/dependency_wiring.py::build_turn_stream() -> ThreadQueueTurnStreamAdapter
+# test/fake (포트 페이크 · 선언 상속 · 같은 파일 이름)
+application/fortune_house/test/fake/clock_port.py::ClockFake(ClockPort)
+application/fortune_house/test/fake/clock_port.py::ClockFake.__init__(now: datetime) -> None
+application/fortune_house/test/fake/clock_port.py::ClockFake.now() -> datetime
+application/fortune_house/test/fake/clock_port.py::ClockFake.advance(seconds: float) -> None
+application/fortune_house/test/fake/detached_task_port.py::DetachedTaskFake(DetachedTaskPort)
+application/fortune_house/test/fake/detached_task_port.py::DetachedTaskFake.__init__(mode: Literal["inline", "manual", "gated"], after_task: Callable[[], None] | None = None) -> None
+application/fortune_house/test/fake/detached_task_port.py::DetachedTaskFake.schedule(task: Callable[[], None]) -> None
+application/fortune_house/test/fake/detached_task_port.py::DetachedTaskFake.run_next() -> bool
+application/fortune_house/test/fake/detached_task_port.py::DetachedTaskFake.release() -> None
+application/fortune_house/test/fake/detached_task_port.py::DetachedTaskFake.join(timeout_seconds: float) -> None
+application/fortune_house/test/fake/turn_stream_port.py::TurnStreamFake(TurnStreamPort)
+application/fortune_house/test/fake/turn_stream_port.py::TurnStreamFake.open(stream_id: UUID) -> None
+application/fortune_house/test/fake/turn_stream_port.py::TurnStreamFake.publish_item(stream_id: UUID, item: ReplyTextDelta | ReplyCard | ReplyCompleted) -> None
+application/fortune_house/test/fake/turn_stream_port.py::TurnStreamFake.pull(stream_id: UUID, timeout_seconds: float) -> ReplyTextDelta | ReplyCard | ReplyCompleted | None
+application/fortune_house/test/fake/turn_stream_port.py::TurnStreamFake.is_open(stream_id: UUID) -> bool
+application/fortune_house/test/fake/turn_stream_port.py::TurnStreamFake.close(stream_id: UUID) -> None
+application/fortune_house/test/fake/turn_stream_port.py::TurnStreamFake.published(stream_id: UUID) -> tuple[ReplyTextDelta | ReplyCard | ReplyCompleted, ...]
+application/fortune_house/test/fake/visit_repository.py::VisitRepositoryFake(VisitRepository)
+application/fortune_house/test/fake/visit_repository.py::VisitRepositoryFake.__init__() -> None
+application/fortune_house/test/fake/visit_repository.py::VisitRepositoryFake.find_by_key(key: VisitKey) -> Visit | None
+application/fortune_house/test/fake/visit_repository.py::VisitRepositoryFake.find_by_id(visit_id: UUID) -> Visit | None
+application/fortune_house/test/fake/visit_repository.py::VisitRepositoryFake.save_with_version_guard(visit: Visit) -> bool
+application/fortune_house/test/fake/visit_repository.py::VisitRepositoryFake.fail_next_save() -> None
+application/fortune_house/test/fake/visit_unit_of_work.py::FortuneHouseVisitUnitOfWorkFake(FortuneHouseVisitUnitOfWork)
+application/fortune_house/test/fake/visit_unit_of_work.py::FortuneHouseVisitUnitOfWorkFake.__enter__() -> Self
+application/fortune_house/test/fake/visit_unit_of_work.py::FortuneHouseVisitUnitOfWorkFake.__exit__(exception_type: type[BaseException] | None, exception: BaseException | None, traceback: TracebackType | None) -> bool | None
+application/fortune_house/test/fake/visit_unit_of_work.py::FortuneHouseVisitUnitOfWorkFake.after_commit(callback: Callable[[], None]) -> None
+# test/integration/conftest.py (하네스 — 실물 리포지토리·UoW + 새 스트림 인스턴스 + 페이크 · OHS 서비스 모듈 이름 patch)
+application/fortune_house/test/integration/conftest.py::TurnHarness(object) {clock: ClockFake, detached_task: DetachedTaskFake, turn_stream: ThreadQueueTurnStreamAdapter, account_profile: AccountProfileFake, usage_policy: UsagePolicyFake, record_archive: RecordArchiveFake, message_classification: MessageClassificationFake, character_catalog: CharacterCatalogFake, text_generation: TextGenerationFake, speech_configuration: SpeechGenerationConfigurationQueryFake, intent_structuring: IntentStructuringFake, fortune_catalog: FortuneCatalogFake}
+application/fortune_house/test/integration/conftest.py::turn_harness(monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest) -> TurnHarness
+application/fortune_house/test/integration/conftest.py::open_turn(turn_harness: TurnHarness, character_id: UUID | None, transcript: tuple[TranscriptMessageItem | TranscriptFunctionCallItem | TranscriptFunctionCallOutputItem, ...], turn_id: UUID | None = None, account_id: int = 7, room_id: UUID = UUID("00000000-0000-4000-8000-000000000001"), deadline_seconds: int = DEFAULT_DEADLINE_SECONDS) -> UUID
+application/fortune_house/test/integration/conftest.py::pull_turn(stream_id: UUID, timeout_seconds: float) -> PullVisitTurnTextDeltaResponse | PullVisitTurnOutputItemResponse | PullVisitTurnCompletedResponse | PullVisitTurnPendingResponse | PullVisitTurnMissingResponse
+application/fortune_house/test/integration/conftest.py::drain_turn(stream_id: UUID) -> tuple[list[str], PullVisitTurnCompletedResponse]
+application/fortune_house/test/integration/conftest.py::drain_items(stream_id: UUID) -> tuple[list[PullVisitTurnTextDeltaResponse | PullVisitTurnOutputItemResponse], PullVisitTurnCompletedResponse]
+application/fortune_house/test/integration/conftest.py::close_turn(stream_id: UUID) -> None
+application/fortune_house/test/integration/conftest.py::card_answer_transcript(prior: tuple[TranscriptMessageItem | TranscriptFunctionCallItem | TranscriptFunctionCallOutputItem, ...], card: PullVisitTurnOutputItemResponse, output: str) -> tuple[TranscriptMessageItem | TranscriptFunctionCallItem | TranscriptFunctionCallOutputItem, ...]
+application/fortune_house/test/integration/conftest.py::carried_request_of(account_id: int, character_id: UUID) -> CarriedRequest | None
+# ── S1 ──────────────────────────────────────────────────────────────
+# S1 domain — shared value objects
+application/fortune_house/domain_layer/shared_value_object/card_name.py::CardName(StrEnum) {GO_COUNTER = "go_counter", SELECT_FORTUNE_TYPE = "select_fortune_type", SELECT_CHARACTER = "select_character", REQUEST_PROFILE_INPUTS = "request_profile_inputs", CONFIRM_FOLLOW_UP = "confirm_follow_up"}
+application/fortune_house/domain_layer/shared_value_object/widget_kind.py::WidgetKind(StrEnum) {SMALL_TALK_REMAINING = "small_talk_remaining", OPEN_ROOM = "open_room", OPEN_RECORD = "open_record", INSUFFICIENT_BALANCE = "insufficient_balance", LOCK_CANCEL = "lock_cancel"}
+application/fortune_house/domain_layer/shared_value_object/character_absence_reason.py::CharacterAbsenceReason(StrEnum) {RESTING = "resting", SEASON_ENDED = "season_ended", UNAVAILABLE = "unavailable"}
+application/fortune_house/domain_layer/shared_value_object/speech_message.py::SpeechMessage(object) {role: Literal["system", "user", "assistant"], content: str}
+application/fortune_house/domain_layer/shared_value_object/invalid_speech_message.py::InvalidSpeechMessage(Exception)
+application/fortune_house/domain_layer/shared_value_object/turn_budget.py::TurnBudget(object) {deadline: datetime, reserve_seconds: float = 8.0}
+application/fortune_house/domain_layer/shared_value_object/turn_budget.py::TurnBudget.remaining_seconds(now: datetime) -> float
+application/fortune_house/domain_layer/shared_value_object/turn_budget.py::TurnBudget.can_start(worst_case_seconds: float, now: datetime) -> bool
+application/fortune_house/domain_layer/shared_value_object/invalid_turn_budget.py::InvalidTurnBudget(Exception)
+application/fortune_house/domain_layer/shared_value_object/operating_status.py::OperatingStatus(object) {is_open: bool, next_open_at: datetime | None}
+application/fortune_house/domain_layer/shared_value_object/character_absence.py::CharacterAbsence(object) {reason: CharacterAbsenceReason, next_open_at: datetime | None}
+application/fortune_house/domain_layer/shared_value_object/character_absence.py::CharacterAbsence.notice_reason() -> NoticeReasonCode
+application/fortune_house/domain_layer/shared_value_object/character_absence.py::CharacterAbsence.notice(timezone: str) -> Notice
+application/fortune_house/domain_layer/shared_value_object/invalid_character_absence.py::InvalidCharacterAbsence(Exception)
+application/fortune_house/domain_layer/shared_value_object/denial_code.py::DenialCode(StrEnum) {SUSPENDED = "suspended", LIMIT_EXCEEDED = "limit_exceeded", ACTION_KIND_UNAVAILABLE = "action_kind_unavailable"}
+application/fortune_house/domain_layer/shared_value_object/usage_denial.py::UsageDenial(object) {code: DenialCode, suspension_reason_code: str | None, retry_at: datetime | None, timezone: str}
+application/fortune_house/domain_layer/shared_value_object/invalid_usage_denial.py::InvalidUsageDenial(Exception)
+application/fortune_house/domain_layer/shared_value_object/remaining_uses.py::RemainingUses(object) {LOW_THRESHOLD: ClassVar[int] = 3, remaining: int}
+application/fortune_house/domain_layer/shared_value_object/remaining_uses.py::RemainingUses.is_low() -> bool
+application/fortune_house/domain_layer/shared_value_object/invalid_remaining_uses.py::InvalidRemainingUses(Exception)
+application/fortune_house/domain_layer/shared_value_object/speech_generation_settings.py::SpeechGenerationSettings.with_timeout_ceiling(seconds: float) -> SpeechGenerationSettings
+# S1 domain — visit root methods
+application/fortune_house/domain_layer/visit/visit.py::Visit.remember_language(language: DisplayLanguage) -> bool
+application/fortune_house/domain_layer/visit/visit.py::Visit.hold_card(card: PendingCard, turn_id: UUID) -> bool
+application/fortune_house/domain_layer/visit/visit.py::Visit.release_card(name: CardName, turn_id: UUID) -> bool
+# S1 domain — services
+application/fortune_house/domain_layer/domain_service/judge_character_absence.py::CharacterAbsencePolicy(object)
+application/fortune_house/domain_layer/domain_service/judge_character_absence.py::CharacterAbsencePolicy.judge(status: OperatingStatus | None) -> CharacterAbsence | None
+application/fortune_house/domain_layer/domain_service/interpret_denial.py::DenialInterpreter(object)
+application/fortune_house/domain_layer/domain_service/interpret_denial.py::DenialInterpreter.interpret(denial: UsageDenial) -> Notice
+application/fortune_house/domain_layer/domain_service/compose_small_talk_prompt.py::SmallTalkPromptComposer(object) {RECENT_MESSAGE_LIMIT: ClassVar[int] = 8, RECENT_CONTEXT_MAX_CHARACTERS: ClassVar[int] = 4000, PERSONA_OPEN: ClassVar[str] = "<<캐릭터 설정 텍스트>>", PERSONA_CLOSE: ClassVar[str] = "<</캐릭터 설정 텍스트>>"}
+application/fortune_house/domain_layer/domain_service/compose_small_talk_prompt.py::SmallTalkPromptComposer.compose(persona: str, language: DisplayLanguage, transcript: tuple[TranscriptMessage | TranscriptFunctionCall | TranscriptFunctionCallOutput, ...], customer_message: str, has_record: bool) -> tuple[SpeechMessage, ...]
+application/fortune_house/domain_layer/domain_service/compose_card.py::_GoCounterArguments(TypedDict) {reason: str, next_open_at_local: str | None}
+application/fortune_house/domain_layer/domain_service/compose_card.py::_SmallTalkRemainingWidget(TypedDict) {kind: str, remaining: int}
+application/fortune_house/domain_layer/domain_service/compose_card.py::CardComposer(object) {PRICE_UNIT: ClassVar[str] = "service_currency", FORM_ACCOUNT_PROFILE: ClassVar[str] = "account_profile", GO_COUNTER_CHOICE: ClassVar[str] = "counter"}
+application/fortune_house/domain_layer/domain_service/compose_card.py::CardComposer.go_counter(absence: CharacterAbsence, timezone: str) -> FunctionCallCard
+application/fortune_house/domain_layer/domain_service/compose_card.py::CardComposer.small_talk_remaining(remaining: RemainingUses) -> WidgetCard
+application/fortune_house/domain_layer/domain_service/compose_card.py::_FortuneOptionItem(TypedDict) {fortune_id: str, label: str, supported_here: NotRequired[bool]}
+application/fortune_house/domain_layer/domain_service/compose_card.py::_SelectFortuneTypeArguments(TypedDict) {options: list[_FortuneOptionItem], lead_message: str | None}
+application/fortune_house/domain_layer/domain_service/compose_card.py::_CharacterOptionItem(TypedDict) {character_id: str, name: str, view_price: int, chat_price: int}
+application/fortune_house/domain_layer/domain_service/compose_card.py::_SelectCharacterArguments(TypedDict) {options: list[_CharacterOptionItem], fortune_id: str, label: str, price_unit: str}
+application/fortune_house/domain_layer/domain_service/compose_card.py::_OpenRoomWidget(TypedDict) {kind: str, character_id: str | None, resend_message: NotRequired[str]}
+application/fortune_house/domain_layer/domain_service/compose_card.py::_RequestProfileInputsArguments(TypedDict) {missing: list[str], form: str}
+application/fortune_house/domain_layer/domain_service/compose_card.py::CardComposer.select_fortune_type(options: tuple[FortuneOption, ...], lead_message: str | None) -> FunctionCallCard
+application/fortune_house/domain_layer/domain_service/compose_card.py::CardComposer.select_character(offers: tuple[CharacterOffer, ...], fortune_id: str, label: str) -> FunctionCallCard
+application/fortune_house/domain_layer/domain_service/compose_card.py::CardComposer.open_room(character_id: UUID | None, resend_message: str | None) -> WidgetCard
+application/fortune_house/domain_layer/domain_service/compose_card.py::CardComposer.request_profile_inputs(check: SajuInputCheck) -> FunctionCallCard
+application/fortune_house/domain_layer/domain_service/resolve_character_name.py::CharacterNameResolver(object)
+application/fortune_house/domain_layer/domain_service/resolve_character_name.py::CharacterNameResolver.resolve(name_by_language: Mapping[str, str], language: DisplayLanguage, default_language: str) -> str
+# S1 application — ACL ports · out · exceptions
+application/fortune_house/application_layer/port/account_profile/account_profile_port.py::AccountProfilePort(ABC)
+application/fortune_house/application_layer/port/account_profile/account_profile_port.py::AccountProfilePort.get_profile(account_id: int) -> AccountProfileOut | None
+application/fortune_house/application_layer/port/account_profile/account_profile_out.py::AccountProfileOut(object) {language: str, timezone: str, active: bool, name: str}
+application/fortune_house/application_layer/port/account_profile/exception.py::AccountProfileUnavailable(Exception)
+application/fortune_house/application_layer/port/usage_policy/usage_policy_port.py::UsagePolicyPort(ABC)
+application/fortune_house/application_layer/port/usage_policy/usage_policy_port.py::UsagePolicyPort.check_account_gate(account_id: int, now: datetime) -> GateDecisionOut
+application/fortune_house/application_layer/port/usage_policy/usage_policy_port.py::UsagePolicyPort.consume_action(account_id: int, action_kind_code: str, guest_timezone: str | None, now: datetime) -> ConsumeDecisionOut
+application/fortune_house/application_layer/port/usage_policy/usage_decision_out.py::DenialOut(object) {reason: Literal["suspended", "limit_exceeded", "action_kind_unavailable"], suspension_reason_code: str | None, retry_at: datetime | None}
+application/fortune_house/application_layer/port/usage_policy/usage_decision_out.py::GateDecisionOut(object) {allowed: bool, denial: DenialOut | None}
+application/fortune_house/application_layer/port/usage_policy/usage_decision_out.py::ConsumeDecisionOut(object) {allowed: bool, denial: DenialOut | None, remaining: int | None, effective_timezone: str}
+application/fortune_house/application_layer/port/usage_policy/exception.py::UsagePolicyContention(Exc

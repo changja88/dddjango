@@ -157,7 +157,7 @@ def _check_path_words(root: Path, bc: Path, bc_vocab_set: set, tech: set,
         if "application_programming_interface" in name:
             f.add("#148", rel, "일반어가 된 약어는 풀어 쓰지 않는다 — `api` 그대로 쓴다")
         # 동명 폴더 승격(#490 교체형)의 정본 형 — 폴더명+`.py` 본체가 폴더 안에 실존.
-        promoted = (d / f"{name}.py").is_file()
+        promoted = (d / f"{name}.py").is_file() or checker_target.adapter_bundle(d)
         if name == "gateway" or (name.endswith(("_port", "_adapter", "_gateway")) and not promoted):
             # 승격 폴더(본체 실존)는 칸 실현이라 #41 면제 — `*_port` 는 승격 배제 칸이라
             # 면제 개념 밖이지만, 승격 시도 자체는 registry #4(#490)가 red 로 잡는다.

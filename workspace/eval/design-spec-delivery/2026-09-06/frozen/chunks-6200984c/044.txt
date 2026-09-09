@@ -1,0 +1,88 @@
+catalog_port.py::FortuneCatalogPort.resolve_support(fortune_id: str) -> FortuneSupportOut | SupportUnavailableOut | CatalogUnavailableOut
+application/fortune_house/application_layer/port/fortune_catalog/catalog_out.py::FortuneTypeOut(object) {fortune_id: str, labels: tuple[tuple[str, str], ...]}
+application/fortune_house/application_layer/port/fortune_catalog/catalog_out.py::FortuneTypeListOut(object) {bundle_id: str, fortune_types: tuple[FortuneTypeOut, ...]}
+application/fortune_house/application_layer/port/fortune_catalog/catalog_out.py::CandidateOutcomeOut(object) {fortune_id: str, status: Literal["visible", "unsupported", "absent"], reason: Literal["unsupported", "stale_vocabulary"] | None}
+application/fortune_house/application_layer/port/fortune_catalog/catalog_out.py::CandidateClassificationOut(object) {bundle_id: str, candidates: tuple[CandidateOutcomeOut, ...]}
+application/fortune_house/application_layer/port/fortune_catalog/catalog_out.py::FortuneSupportOut(object) {bundle_id: str, fortune_id: str, work_rag_refs: tuple[tuple[str, str], ...], required_input_ids: tuple[str, ...]}
+application/fortune_house/application_layer/port/fortune_catalog/catalog_out.py::SupportUnavailableOut(object) {bundle_id: str, fortune_id: str, status: Literal["unsupported", "absent"], reason: Literal["unsupported", "stale_vocabulary"]}
+application/fortune_house/application_layer/port/fortune_catalog/catalog_out.py::CatalogUnavailableOut(object) {bundle_id: str | None, reason: Literal["bundle_unavailable", "relation_table_unavailable"]}
+application/fortune_house/application_layer/port/fortune_catalog/exception.py::FortuneCatalogUnavailable(Exception)
+# S2 application — use case 모듈 함수(카드 답 파싱 · D58)
+application/fortune_house/application_layer/visit_turn/run_visit_turn/run_visit_turn_use_case.py::_parse_card_answer(output: str) -> CardAnswer
+# S2 driven — ACL 신설 2 · 확장 3
+application/fortune_house/driven_layer/adapter/anticorruption_layer/accounts/account_profile_adapter.py::AccountsAccountProfileAdapter.get_saju_profile(account_id: int) -> SajuProfileOut | None
+application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/usage_policy_adapter.py::ServicePolicyUsagePolicyAdapter.is_action_allowed(account_id: int, action_kind_code: str, guest_timezone: str | None, now: datetime) -> AdmissionDecisionOut
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_character/character_catalog_adapter.py::FortuneCharacterCharacterCatalogAdapter.find_matching_characters(supported_work_ids: tuple[str, ...]) -> tuple[UUID, ...]
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_character/character_catalog_adapter.py::FortuneCharacterCharacterCatalogAdapter.get_price_quote(character_id: UUID) -> PriceQuoteOut | None
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_character/character_catalog_adapter.py::FortuneCharacterCharacterCatalogAdapter.draw_prompt_set(character_id: UUID, fortune_type_id: str, language: str) -> PromptSetOut | None
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_intent/intent_structuring_adapter.py::FortuneIntentIntentStructuringAdapter(IntentStructuringPort)
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_intent/intent_structuring_adapter.py::FortuneIntentIntentStructuringAdapter.structure_fortune_intent(customer_message: str, allowed_fortune_types: tuple[AllowedFortuneTypeOut, ...], reference_date: date) -> FortuneIntentOut
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_catalog/fortune_catalog_adapter.py::FortuneCatalogFortuneCatalogAdapter(FortuneCatalogPort)
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_catalog/fortune_catalog_adapter.py::FortuneCatalogFortuneCatalogAdapter.list_fortune_types() -> FortuneTypeListOut | CatalogUnavailableOut
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_catalog/fortune_catalog_adapter.py::FortuneCatalogFortuneCatalogAdapter.classify_candidates(candidate_fortune_ids: tuple[str, ...]) -> CandidateClassificationOut | CatalogUnavailableOut
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_catalog/fortune_catalog_adapter.py::FortuneCatalogFortuneCatalogAdapter.resolve_support(fortune_id: str) -> FortuneSupportOut | SupportUnavailableOut | CatalogUnavailableOut
+# S2 test/fake — 포트 페이크 2
+application/fortune_house/test/fake/fortune_catalog_port.py::FortuneCatalogFake(FortuneCatalogPort) {listing: FortuneTypeListOut | CatalogUnavailableOut, listing_sequence: list[FortuneTypeListOut | CatalogUnavailableOut], classification: CandidateClassificationOut | CatalogUnavailableOut | None, support: FortuneSupportOut | SupportUnavailableOut | CatalogUnavailableOut | None, supports_by_id: dict[str, FortuneSupportOut | SupportUnavailableOut | CatalogUnavailableOut], classification_sequence: list[CandidateClassificationOut | CatalogUnavailableOut], list_calls: int, classify_calls: list[tuple[str, ...]], support_calls: list[str]}
+application/fortune_house/test/fake/fortune_catalog_port.py::FortuneCatalogFake.__init__(listing: FortuneTypeListOut | CatalogUnavailableOut, classification: CandidateClassificationOut | CatalogUnavailableOut | None = None, support: FortuneSupportOut | SupportUnavailableOut | CatalogUnavailableOut | None = None) -> None
+application/fortune_house/test/fake/fortune_catalog_port.py::FortuneCatalogFake.list_fortune_types() -> FortuneTypeListOut | CatalogUnavailableOut
+application/fortune_house/test/fake/fortune_catalog_port.py::FortuneCatalogFake.classify_candidates(candidate_fortune_ids: tuple[str, ...]) -> CandidateClassificationOut | CatalogUnavailableOut
+application/fortune_house/test/fake/fortune_catalog_port.py::FortuneCatalogFake.resolve_support(fortune_id: str) -> FortuneSupportOut | SupportUnavailableOut | CatalogUnavailableOut
+application/fortune_house/test/fake/intent_structuring_port.py::IntentStructuringFake(IntentStructuringPort) {intent: FortuneIntentOut, failure: Exception | None, requests: list[tuple[str, tuple[AllowedFortuneTypeOut, ...], date]]}
+application/fortune_house/test/fake/intent_structuring_port.py::IntentStructuringFake.__init__(intent: FortuneIntentOut, failure: Exception | None = None) -> None
+application/fortune_house/test/fake/intent_structuring_port.py::IntentStructuringFake.structure_fortune_intent(customer_message: str, allowed_fortune_types: tuple[AllowedFortuneTypeOut, ...], reference_date: date) -> FortuneIntentOut
+# scripts
+scripts/seed_fortune_house.py::seed_fortune_house() -> int
+scripts/seed_fortune_house.py::main() -> None
+# ── S3 ──────────────────────────────────────────────────────────────
+# S3 domain — shared value objects(11) · 종류 enum(4) · 예외(9) · dict 코덱 TypedDict(4 · 공개 · 파일 각각 #267 — 두 ACL이 소비)
+application/fortune_house/domain_layer/shared_value_object/annual_fortune_window.py::AnnualFortuneWindow(object) {from_year: int, to_year: int}
+application/fortune_house/domain_layer/shared_value_object/annual_fortune_window.py::AnnualFortuneWindow.around(reference_year: int) -> AnnualFortuneWindow
+application/fortune_house/domain_layer/shared_value_object/annual_fortune_window.py::AnnualFortuneWindow.is_around(reference_year: int) -> bool
+application/fortune_house/domain_layer/shared_value_object/invalid_annual_fortune_window.py::InvalidAnnualFortuneWindow(Exception)
+application/fortune_house/domain_layer/shared_value_object/fortune_period_kind.py::FortunePeriodKind(StrEnum) {YEAR = "year", MONTH = "month", DAY = "day", RANGE = "range", LIFE = "life", UNSPECIFIED = "unspecified"}
+application/fortune_house/domain_layer/shared_value_object/chart_calendar_kind.py::ChartCalendarKind(StrEnum) {SOLAR = "SOLAR", LUNAR = "LUNAR"}
+application/fortune_house/domain_layer/shared_value_object/chart_gender.py::ChartGender(StrEnum) {MALE = "남", FEMALE = "여"}
+application/fortune_house/domain_layer/shared_value_object/chart_place_kind.py::ChartPlaceKind(StrEnum) {CITY = "CITY", COUNTRY = "COUNTRY", UNKNOWN = "UNKNOWN"}
+application/fortune_house/domain_layer/shared_value_object/chart_request_input.py::ChartRequestInput(object) {calendar_kind: ChartCalendarKind, year: int, month: int, day: int, is_leap_month: bool, birth_hour: int | None, birth_minute: int | None, gender: ChartGender, place_kind: ChartPlaceKind, city_code: str | None, country_code: str | None, default_timezone: str, window: AnnualFortuneWindow}
+application/fortune_house/domain_layer/shared_value_object/invalid_chart_request_input.py::InvalidChartRequestInput(Exception)
+application/fortune_house/domain_layer/shared_value_object/balance_shortfall.py::BalanceShortfall(object) {required: int, available: int, shortfall: int}
+application/fortune_house/domain_layer/shared_value_object/invalid_balance_shortfall.py::InvalidBalanceShortfall(Exception)
+application/fortune_house/domain_layer/shared_value_object/chart_fix_code.py::ChartFixCode(StrEnum) {UNSUPPORTED_BIRTH_DATE = "unsupported_birth_date", NONEXISTENT_LOCAL_TIME = "nonexistent_local_time", NONEXISTENT_LEAP_MONTH = "nonexistent_leap_month", UNKNOWN_PLACE_CODE = "unknown_place_code"}
+application/fortune_house/domain_layer/shared_value_object/chart_fix.py::ChartFix(object) {code: ChartFixCode, inputs: tuple[RequiredInput, ...], hint: str | None}
+application/fortune_house/domain_layer/shared_value_object/invalid_chart_fix.py::InvalidChartFix(Exception)
+application/fortune_house/domain_layer/shared_value_object/evidence_quote.py::EvidenceQuote(object) {evidence_id: str, exact_quote: str}
+application/fortune_house/domain_layer/shared_value_object/invalid_evidence_quote.py::InvalidEvidenceQuote(Exception)
+application/fortune_house/domain_layer/shared_value_object/source_location_document.py::SourceLocationDocument(TypedDict) {location_id: str, provider: str, provider_book_id: str, provider_chapter_id: str, provider_paragraph_id: str, page_nums: NotRequired[list[int]], source_url: NotRequired[str]}
+application/fortune_house/domain_layer/shared_value_object/source_location.py::SourceLocation(object) {location_id: str, provider: str, provider_book_id: str, provider_chapter_id: str, provider_paragraph_id: str, page_nums: tuple[int, ...] | None, source_url: str | None}
+application/fortune_house/domain_layer/shared_value_object/source_location.py::SourceLocation.to_document() -> SourceLocationDocument
+application/fortune_house/domain_layer/shared_value_object/invalid_source_location.py::InvalidSourceLocation(Exception)
+application/fortune_house/domain_layer/shared_value_object/evidence_source_document.py::EvidenceSourceDocument(TypedDict) {source_locations: list[SourceLocationDocument]}
+application/fortune_house/domain_layer/shared_value_object/citation_document.py::CitationDocument(TypedDict) {evidence_id: str, exact_quote: str, release_id: str, source: EvidenceSourceDocument}
+application/fortune_house/domain_layer/shared_value_object/evidence_card.py::EvidenceCard(object) {evidence_id: str, exact_quote: str, release_id: str, source_locations: tuple[SourceLocation, ...]}
+application/fortune_house/domain_layer/shared_value_object/evidence_card.py::EvidenceCard.quote() -> EvidenceQuote
+application/fortune_house/domain_layer/shared_value_object/evidence_card.py::EvidenceCard.to_document() -> CitationDocument
+application/fortune_house/domain_layer/shared_value_object/invalid_evidence_card.py::InvalidEvidenceCard(Exception)
+application/fortune_house/domain_layer/shared_value_object/evidence_set_digest.py::EvidenceSetDigest(object) {PATTERN: ClassVar[str] = "^[0-9a-f]{64}$", value: str}
+application/fortune_house/domain_layer/shared_value_object/invalid_evidence_set_digest.py::InvalidEvidenceSetDigest(Exception)
+application/fortune_house/domain_layer/shared_value_object/cited_answer_document.py::CitedAnswerDocument(TypedDict) {answer: str, citations: list[CitationDocument]}
+application/fortune_house/domain_layer/shared_value_object/cited_answer.py::CitedAnswer(object) {answer: str, citations: tuple[EvidenceCard, ...]}
+application/fortune_house/domain_layer/shared_value_object/cited_answer.py::CitedAnswer.to_document() -> CitedAnswerDocument
+application/fortune_house/domain_layer/shared_value_object/invalid_cited_answer.py::InvalidCitedAnswer(Exception)
+application/fortune_house/domain_layer/shared_value_object/answer_record_draft.py::AnswerRecordDraft(object) {account_id: int, language: str, parent_record_id: UUID | None, idempotency_key: str, character_id: UUID, persona_text: str, prompt_set: PromptSetSnapshot, fortune_type: str, topic: str | None, period: str | None, question_text: str, saju: SajuSnapshot, answer: CitedAnswer, bundle_id: str, evidence_set_digest: EvidenceSetDigest, display_html: str}
+# S3 domain — visit root methods 4 · FortuneSelection 3
+application/fortune_house/domain_layer/visit/visit.py::Visit.start_answer(reservation_id: UUID | None, window: AnnualFortuneWindow, turn_id: UUID) -> bool
+application/fortune_house/domain_layer/visit/visit.py::Visit.abort_answer(turn_id: UUID) -> bool
+application/fortune_house/domain_layer/visit/visit.py::Visit.complete_answer(record_id: UUID, turn_id: UUID) -> bool
+application/fortune_house/domain_layer/visit/visit.py::Visit.mark_undelivered(record_id: UUID, turn_id: UUID) -> bool
+application/fortune_house/domain_layer/visit/value_object/fortune_selection.py::FortuneSelection.with_reservation(reservation_id: UUID | None) -> FortuneSelection
+application/fortune_house/domain_layer/visit/value_object/fortune_selection.py::FortuneSelection.with_annual_fortune_years(from_year: int, to_year: int) -> FortuneSelection
+application/fortune_house/domain_layer/visit/value_object/fortune_selection.py::FortuneSelection.is_free() -> bool
+# S3 domain — services 6
+application/fortune_house/domain_layer/domain_service/decide_annual_fortune_window.py::AnnualFortuneWindowPolicy(object) {RANGED_KINDS: ClassVar[frozenset[FortunePeriodKind]] = frozenset({FortunePeriodKind.YEAR, FortunePeriodKind.MONTH, FortunePeriodKind.DAY, FortunePeriodKind.RANGE})}
+application/fortune_house/domain_layer/domain_service/decide_annual_fortune_window.py::AnnualFortuneWindowPolicy.decide(request: FortuneRequest, reference_year: int) -> AnnualFortuneWindow
+application/fortune_house/domain_layer/domain_service/build_chart_request.py::ChartRequestPolicy(object) {CALENDAR_KINDS: ClassVar[Mapping[str, ChartCalendarKind]] = {"solar": ChartCalendarKind.SOLAR, "lunar": ChartCalendarKind.LUNAR}, GENDERS: ClassVar[Mapping[str, ChartGender]] = {"male": ChartGender.MALE, "female": ChartGender.FEMALE}, PLACE_KINDS: ClassVar[Mapping[str, ChartPlaceKind]] = {"CITY": ChartPlaceKind.CITY, "COUNTRY": ChartPlaceKind.COUNTRY, "UNKNOWN": ChartPlaceKind.UNKNOWN}, REQUIRED_INPUT_IDS: ClassVar[tuple[str, ...]] = (RequiredInput.BIRTH_DATETIME.value, RequiredInput.BIRTH_PLACE.value, RequiredInput.SEX.value)}
+application/fortune_house/domain_layer/domain_service/build_chart_request.py::ChartRequestPolicy.build(saju: SajuSnapshot, window: AnnualFortuneWindow) -> ChartRequestInput
+application/fortune_house/domain_layer/domain_service/interpret_chart_rejection.py::ChartRejectionInterpreter(object) {HINTS: ClassVar[Mapping[ChartFixCode, str]] = {ChartFixCode.NONEXISTENT_LOCAL_TIME: "생시를 모름으로 두면 정오 가정으로 계산됩니다."}}
+application/fortune_house/domain_layer/domain_service/interpret_chart_rejection.py::ChartRejectionInterpreter.interpret(code: ChartFixCode) -> ChartFix
+application/fortune_house/domain_layer/domain_service/reproject_citations.py::CitationReprojector(object)
+application/fortune_house/domain_layer/domain_service/reproject_citations.py::CitationReprojector.reproject(answer: str, quotes: tuple[EvidenceQuote, ...], allowed: tuple[EvidenceCard,

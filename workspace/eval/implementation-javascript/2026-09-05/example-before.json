@@ -1,0 +1,34 @@
+{
+  "label": "before",
+  "results": [
+    {
+      "id": "P1.initial",
+      "pass": true
+    },
+    {
+      "id": "P2.keyboard",
+      "pass": true
+    },
+    {
+      "id": "P3.isolation",
+      "pass": true
+    },
+    {
+      "id": "P4.root",
+      "pass": true
+    },
+    {
+      "id": "P5.child-button",
+      "pass": false
+    },
+    {
+      "id": "P6.child-input",
+      "pass": false
+    },
+    {
+      "id": "runtime.errors",
+      "pass": true
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,27 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}{{ state.page_title }}{% endblock title %}
+
+{% block styles %}
+  <link rel="stylesheet" href="{% static 'web/css/ui_lab.css' %}">
+{% endblock styles %}
+
+{% block scripts %}
+  <script src="{% static 'web/js/password_visibility.js' %}" defer></script>
+  <script src="{% static 'web/js/image_preview.js' %}" defer></script>
+{% endblock scripts %}
+
+{% block content %}
+  <main class="ui-lab">
+    <h1 class="ui-lab__title">{{ state.page_title }}</h1>
+    <details class="ui-lab__disclosure">
+      <summary class="ui-lab__disclosure-summary">{{ state.disclosure_summary }}</summary>
+      <p class="ui-lab__disclosure-body">{{ state.disclosure_body }}</p>
+    </details>
+    <div class="ui-lab__panels">
+      {% include "lab/ui_lab/section/ui_lab_panel.html" with panel=state.panel_a only %}
+      {% include "lab/ui_lab/section/ui_lab_panel.html" with panel=state.panel_b only %}
+    </div>
+  </main>
+{% endblock content %}

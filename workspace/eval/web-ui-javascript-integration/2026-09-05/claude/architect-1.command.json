@@ -1,0 +1,22 @@
+[
+  "claude",
+  "-p",
+  "--plugin-dir",
+  "/Users/hyun/Desktop/dddjango/dddjango-web",
+  "--agent",
+  "dddjango-web:design-architect-web",
+  "--output-format",
+  "stream-json",
+  "--verbose",
+  "--no-session-persistence",
+  "--strict-mcp-config",
+  "--no-chrome",
+  "--permission-mode",
+  "acceptEdits",
+  "--permission-prompts",
+  "none",
+  "--allowedTools",
+  "Read,Grep,Glob,Edit,Write",
+  "--add-dir",
+  "/Users/hyun/Desktop/dddjango/dddjango-web"
+]

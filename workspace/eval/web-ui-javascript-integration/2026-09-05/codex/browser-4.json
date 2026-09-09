@@ -1,0 +1,447 @@
+{
+  "lane": "codex",
+  "label": "browser-4",
+  "checks": {
+    "I1": {
+      "status": "PASS",
+      "detail": "Own input visibility and accessible state changed once; neighbor remained masked with original value."
+    },
+    "I2": {
+      "status": "PASS",
+      "detail": "Native Enter and Space each toggled exactly once."
+    },
+    "I3": {
+      "status": "PASS",
+      "detail": "Two decoded local 2x2 images, independent URLs, literal filename markup with no child elements."
+    },
+    "I4": {
+      "status": "PASS",
+      "detail": "Reselect and clear revoked each prior URL exactly once; neighbor retained."
+    },
+    "I5": {
+      "status": "PASS",
+      "detail": "Invalid PNG bytes caused an actual image decode failure, released failed/previous URLs, and removed stale success."
+    },
+    "I8": {
+      "status": "PASS",
+      "detail": "Real independent-child HTTP swap retained owner/body identities, displayed image and live URL."
+    },
+    "I9": {
+      "status": "PASS",
+      "detail": "Dependent-child removal released only its resource under retained owner; full-root HTTP replacement removed owner and released only its URL; neighbor remained usable."
+    },
+    "I7": {
+      "status": "PASS",
+      "detail": "Three additional real dependent-child/full-root cycles; new controls usable and each activation/allocation produced exactly one effect."
+    },
+    "I6": {
+      "status": "PASS",
+      "detail": "Captured 9 actual outgoing HTMX requests with HTTP200 HTML and changed server revision markers."
+    },
+    "I11": {
+      "status": "PASS",
+      "detail": "Core plus two external feature scripts each fetched once per page; all actual fragment response HTML contains no executable script."
+    },
+    "I10": {
+      "status": "PASS",
+      "detail": "Both custom feature responses replaced with empty scripts by labelled harness injection; native disclosure opened/closed using keyboard."
+    },
+    "I12": {
+      "status": "PASS",
+      "detail": "Actual Django system check exit0; primary browser console errors and pageerrors empty, including handled invalid decode."
+    }
+  },
+  "requests": [
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/",
+      "method": "GET",
+      "type": "document",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18752/static/design_system/foundation/tokens.css",
+      "method": "GET",
+      "type": "stylesheet",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18752/static/web/css/ui_lab.css",
+      "method": "GET",
+      "type": "stylesheet",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18752/static/web/htmx/htmx.min.js",
+      "method": "GET",
+      "type": "script",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18752/static/web/js/password_visibility.js",
+      "method": "GET",
+      "type": "script",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18752/static/web/js/image_preview.js",
+      "method": "GET",
+      "type": "script",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/2f01448d-dd6e-4f05-9e2c-ac19bf1b0a80",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/56e7687b-0ce4-4630-ae74-44a4e4402208",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/fa867df3-5d13-415d-8f01-be7d0034f43c",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/ff5dc8e3-bbfb-4696-a515-c66de83b9059",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/bdd9fdca-5edf-4bf9-9a06-c64ff6fc4390",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/9b2e1809-9d5c-40b9-a8dd-b7e9b5a35bec",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/ebc965b6-ee50-4ad4-87a7-2a5011abd497",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/177d9bec-8dcc-4cb8-8441-66a2d3e77f66",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/note/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/preview-body/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/b9da7576-0c80-4229-9158-d84eb7f57c74",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/panel/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/1e5bd99b-6a2c-4643-902c-cde87f299ee3",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/preview-body/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/6fe80790-8e6e-46d6-aa42-375b7d6c1bc6",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/panel/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/d3c7bc9e-5b8d-492b-8792-101ac2a0fcc7",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/preview-body/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/5c2a2811-fc41-45b3-b3c8-14bc107bac6b",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/panel/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/9672e3e0-009d-4279-9a20-792ac4dcb0be",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/preview-body/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/98fe08e9-9250-450e-beb4-b07a5f0f57c7",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/panel/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/086bd2e2-8288-4227-9951-2519b6a665f1",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    }
+  ],
+  "htmx_responses": [
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/note/",
+      "status": 200,
+      "revision": "cb48dd41623b445881cc8946476d0f86",
+      "html": "<div id=\"ui-lab-note-a\" data-ui-lab-note data-revision=\"cb48dd41623b445881cc8946476d0f86\">\n  <p>This note updates independently of the selected image.</p>\n  <p>Note revision: cb48dd41623b445881cc8946476d0f86</p>\n</div>\n"
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/preview-body/",
+      "status": 200,
+      "revision": "694f25ca41ec4946bcd8f8c7f637b81c",
+      "html": "<div id=\"ui-lab-preview-body-a\" data-image-preview-body data-revision=\"694f25ca41ec4946bcd8f8c7f637b81c\">\n  <p>Preview controls revision: 694f25ca41ec4946bcd8f8c7f637b81c</p>\n  <label for=\"ui-lab-file-a\">Local image for Panel A</label>\n  <input id=\"ui-lab-file-a\" data-image-input type=\"file\" accept=\"image/*\" aria-describedby=\"ui-lab-image-status-a\">\n  <img id=\"ui-lab-image-a\" data-image-output alt=\"Selected local image for Panel A\" hidden>\n  <p id=\"ui-lab-filename-a\" data-image-filename></p>\n  <p id=\"ui-lab-image-status-a\" data-image-status data-status=\"empty\" role=\"status\" aria-live=\"polite\">No image selected.</p>\n  <button id=\"ui-lab-clear-a\" data-image-clear type=\"button\" aria-describedby=\"ui-lab-image-status-a\" hidden>Clear image for Panel A</button>\n</div>\n"
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/panel/",
+      "status": 200,
+      "revision": "43527544f5f240a6934b981a689b0d4c",
+      "html": "<section id=\"ui-lab-panel-a\" data-ui-lab-panel=\"a\" data-revision=\"43527544f5f240a6934b981a689b0d4c\" aria-labelledby=\"ui-lab-heading-a\">\n  <h2 id=\"ui-lab-heading-a\">Panel A</h2>\n  <p>Panel revision: 43527544f5f240a6934b981a689b0d4c</p>\n  <div id=\"ui-lab-password-a\" data-password-visibility>\n    <label for=\"ui-lab-password-input-a\">Password for Panel A</label>\n    <input id=\"ui-lab-password-input-a\" data-password-input type=\"password\" autocomplete=\"off\">\n    <button id=\"ui-lab-password-toggle-a\" data-password-toggle type=\"button\" aria-controls=\"ui-lab-password-input-a\" aria-pressed=\"false\" aria-describedby=\"ui-lab-password-status-a\" hidden>Show password for Panel A</button>\n    <p id=\"ui-lab-password-status-a\" data-password-status role=\"status\" aria-live=\"polite\">Password hidden. Activate to show.</p>\n  </div>\n  <div id=\"ui-lab-preview-a\" data-image-preview>\n  <div id=\"ui-lab-preview-body-a\" data-image-preview-body data-revision=\"43527544f5f240a6934b981a689b0d4c\">\n  <p>Preview controls revision: 43527544f5f240a6934b981a689b0d4c</p>\n  <label for=\"ui-lab-file-a\">Local image for Panel A</label>\n  <input id=\"ui-lab-file-a\" data-image-input type=\"file\" accept=\"image/*\" aria-describedby=\"ui-lab-image-status-a\">\n  <img id=\"ui-lab-image-a\" data-image-output alt=\"Selected local image for Panel A\" hidden>\n  <p id=\"ui-lab-filename-a\" data-image-filename></p>\n  <p id=\"ui-lab-image-status-a\" data-image-status data-status=\"empty\" role=\"status\" aria-live=\"polite\">No image selected.</p>\n  <button id=\"ui-lab-clear-a\" data-image-clear type=\"button\" aria-describedby=\"ui-lab-image-status-a\" hidden>Clear image for Panel A</button>\n</div>\n\n  <div id=\"ui-lab-note-a\" data-ui-lab-note data-revision=\"43527544f5f240a6934b981a689b0d4c\">\n  <p>This note updates independently of the selected image.</p>\n  <p>Note revision: 43527544f5f240a6934b981a689b0d4c</p>\n</div>\n\n</div>\n\n</section>\n"
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/preview-body/",
+      "status": 200,
+      "revision": "16ab6617a08d4a4f9bffa645244fe43c",
+      "html": "<div id=\"ui-lab-preview-body-a\" data-image-preview-body data-revision=\"16ab6617a08d4a4f9bffa645244fe43c\">\n  <p>Preview controls revision: 16ab6617a08d4a4f9bffa645244fe43c</p>\n  <label for=\"ui-lab-file-a\">Local image for Panel A</label>\n  <input id=\"ui-lab-file-a\" data-image-input type=\"file\" accept=\"image/*\" aria-describedby=\"ui-lab-image-status-a\">\n  <img id=\"ui-lab-image-a\" data-image-output alt=\"Selected local image for Panel A\" hidden>\n  <p id=\"ui-lab-filename-a\" data-image-filename></p>\n  <p id=\"ui-lab-image-status-a\" data-image-status data-status=\"empty\" role=\"status\" aria-live=\"polite\">No image selected.</p>\n  <button id=\"ui-lab-clear-a\" data-image-clear type=\"button\" aria-describedby=\"ui-lab-image-status-a\" hidden>Clear image for Panel A</button>\n</div>\n"
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/panel/",
+      "status": 200,
+      "revision": "da22e47c6a734e7a96c8232e7bf26375",
+      "html": "<section id=\"ui-lab-panel-a\" data-ui-lab-panel=\"a\" data-revision=\"da22e47c6a734e7a96c8232e7bf26375\" aria-labelledby=\"ui-lab-heading-a\">\n  <h2 id=\"ui-lab-heading-a\">Panel A</h2>\n  <p>Panel revision: da22e47c6a734e7a96c8232e7bf26375</p>\n  <div id=\"ui-lab-password-a\" data-password-visibility>\n    <label for=\"ui-lab-password-input-a\">Password for Panel A</label>\n    <input id=\"ui-lab-password-input-a\" data-password-input type=\"password\" autocomplete=\"off\">\n    <button id=\"ui-lab-password-toggle-a\" data-password-toggle type=\"button\" aria-controls=\"ui-lab-password-input-a\" aria-pressed=\"false\" aria-describedby=\"ui-lab-password-status-a\" hidden>Show password for Panel A</button>\n    <p id=\"ui-lab-password-status-a\" data-password-status role=\"status\" aria-live=\"polite\">Password hidden. Activate to show.</p>\n  </div>\n  <div id=\"ui-lab-preview-a\" data-image-preview>\n  <div id=\"ui-lab-preview-body-a\" data-image-preview-body data-revision=\"da22e47c6a734e7a96c8232e7bf26375\">\n  <p>Preview controls revision: da22e47c6a734e7a96c8232e7bf26375</p>\n  <label for=\"ui-lab-file-a\">Local image for Panel A</label>\n  <input id=\"ui-lab-file-a\" data-image-input type=\"file\" accept=\"image/*\" aria-describedby=\"ui-lab-image-status-a\">\n  <img id=\"ui-lab-image-a\" data-image-output alt=\"Selected local image for Panel A\" hidden>\n  <p id=\"ui-lab-filename-a\" data-image-filename></p>\n  <p id=\"ui-lab-image-status-a\" data-image-status data-status=\"empty\" role=\"status\" aria-live=\"polite\">No image selected.</p>\n  <button id=\"ui-lab-clear-a\" data-image-clear type=\"button\" aria-describedby=\"ui-lab-image-status-a\" hidden>Clear image for Panel A</button>\n</div>\n\n  <div id=\"ui-lab-note-a\" data-ui-lab-note data-revision=\"da22e47c6a734e7a96c8232e7bf26375\">\n  <p>This note updates independently of the selected image.</p>\n  <p>Note revision: da22e47c6a734e7a96c8232e7bf26375</p>\n</div>\n\n</div>\n\n</section>\n"
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/preview-body/",
+      "status": 200,
+      "revision": "1a73139343764e4da7f66f1bbd2272c5",
+      "html": "<div id=\"ui-lab-preview-body-a\" data-image-preview-body data-revision=\"1a73139343764e4da7f66f1bbd2272c5\">\n  <p>Preview controls revision: 1a73139343764e4da7f66f1bbd2272c5</p>\n  <label for=\"ui-lab-file-a\">Local image for Panel A</label>\n  <input id=\"ui-lab-file-a\" data-image-input type=\"file\" accept=\"image/*\" aria-describedby=\"ui-lab-image-status-a\">\n  <img id=\"ui-lab-image-a\" data-image-output alt=\"Selected local image for Panel A\" hidden>\n  <p id=\"ui-lab-filename-a\" data-image-filename></p>\n  <p id=\"ui-lab-image-status-a\" data-image-status data-status=\"empty\" role=\"status\" aria-live=\"polite\">No image selected.</p>\n  <button id=\"ui-lab-clear-a\" data-image-clear type=\"button\" aria-describedby=\"ui-lab-image-status-a\" hidden>Clear image for Panel A</button>\n</div>\n"
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/panel/",
+      "status": 200,
+      "revision": "cb23d442187540e0a4f464bfb200225e",
+      "html": "<section id=\"ui-lab-panel-a\" data-ui-lab-panel=\"a\" data-revision=\"cb23d442187540e0a4f464bfb200225e\" aria-labelledby=\"ui-lab-heading-a\">\n  <h2 id=\"ui-lab-heading-a\">Panel A</h2>\n  <p>Panel revision: cb23d442187540e0a4f464bfb200225e</p>\n  <div id=\"ui-lab-password-a\" data-password-visibility>\n    <label for=\"ui-lab-password-input-a\">Password for Panel A</label>\n    <input id=\"ui-lab-password-input-a\" data-password-input type=\"password\" autocomplete=\"off\">\n    <button id=\"ui-lab-password-toggle-a\" data-password-toggle type=\"button\" aria-controls=\"ui-lab-password-input-a\" aria-pressed=\"false\" aria-describedby=\"ui-lab-password-status-a\" hidden>Show password for Panel A</button>\n    <p id=\"ui-lab-password-status-a\" data-password-status role=\"status\" aria-live=\"polite\">Password hidden. Activate to show.</p>\n  </div>\n  <div id=\"ui-lab-preview-a\" data-image-preview>\n  <div id=\"ui-lab-preview-body-a\" data-image-preview-body data-revision=\"cb23d442187540e0a4f464bfb200225e\">\n  <p>Preview controls revision: cb23d442187540e0a4f464bfb200225e</p>\n  <label for=\"ui-lab-file-a\">Local image for Panel A</label>\n  <input id=\"ui-lab-file-a\" data-image-input type=\"file\" accept=\"image/*\" aria-describedby=\"ui-lab-image-status-a\">\n  <img id=\"ui-lab-image-a\" data-image-output alt=\"Selected local image for Panel A\" hidden>\n  <p id=\"ui-lab-filename-a\" data-image-filename></p>\n  <p id=\"ui-lab-image-status-a\" data-image-status data-status=\"empty\" role=\"status\" aria-live=\"polite\">No image selected.</p>\n  <button id=\"ui-lab-clear-a\" data-image-clear type=\"button\" aria-describedby=\"ui-lab-image-status-a\" hidden>Clear image for Panel A</button>\n</div>\n\n  <div id=\"ui-lab-note-a\" data-ui-lab-note data-revision=\"cb23d442187540e0a4f464bfb200225e\">\n  <p>This note updates independently of the selected image.</p>\n  <p>Note revision: cb23d442187540e0a4f464bfb200225e</p>\n</div>\n\n</div>\n\n</section>\n"
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/preview-body/",
+      "status": 200,
+      "revision": "f237613314ee4321a210c4961644e19e",
+      "html": "<div id=\"ui-lab-preview-body-a\" data-image-preview-body data-revision=\"f237613314ee4321a210c4961644e19e\">\n  <p>Preview controls revision: f237613314ee4321a210c4961644e19e</p>\n  <label for=\"ui-lab-file-a\">Local image for Panel A</label>\n  <input id=\"ui-lab-file-a\" data-image-input type=\"file\" accept=\"image/*\" aria-describedby=\"ui-lab-image-status-a\">\n  <img id=\"ui-lab-image-a\" data-image-output alt=\"Selected local image for Panel A\" hidden>\n  <p id=\"ui-lab-filename-a\" data-image-filename></p>\n  <p id=\"ui-lab-image-status-a\" data-image-status data-status=\"empty\" role=\"status\" aria-live=\"polite\">No image selected.</p>\n  <button id=\"ui-lab-clear-a\" data-image-clear type=\"button\" aria-describedby=\"ui-lab-image-status-a\" hidden>Clear image for Panel A</button>\n</div>\n"
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/panel/",
+      "status": 200,
+      "revision": "f3f27f4e68294a10a5c0cabf5cb042f6",
+      "html": "<section id=\"ui-lab-panel-a\" data-ui-lab-panel=\"a\" data-revision=\"f3f27f4e68294a10a5c0cabf5cb042f6\" aria-labelledby=\"ui-lab-heading-a\">\n  <h2 id=\"ui-lab-heading-a\">Panel A</h2>\n  <p>Panel revision: f3f27f4e68294a10a5c0cabf5cb042f6</p>\n  <div id=\"ui-lab-password-a\" data-password-visibility>\n    <label for=\"ui-lab-password-input-a\">Password for Panel A</label>\n    <input id=\"ui-lab-password-input-a\" data-password-input type=\"password\" autocomplete=\"off\">\n    <button id=\"ui-lab-password-toggle-a\" data-password-toggle type=\"button\" aria-controls=\"ui-lab-password-input-a\" aria-pressed=\"false\" aria-describedby=\"ui-lab-password-status-a\" hidden>Show password for Panel A</button>\n    <p id=\"ui-lab-password-status-a\" data-password-status role=\"status\" aria-live=\"polite\">Password hidden. Activate to show.</p>\n  </div>\n  <div id=\"ui-lab-preview-a\" data-image-preview>\n  <div id=\"ui-lab-preview-body-a\" data-image-preview-body data-revision=\"f3f27f4e68294a10a5c0cabf5cb042f6\">\n  <p>Preview controls revision: f3f27f4e68294a10a5c0cabf5cb042f6</p>\n  <label for=\"ui-lab-file-a\">Local image for Panel A</label>\n  <input id=\"ui-lab-file-a\" data-image-input type=\"file\" accept=\"image/*\" aria-describedby=\"ui-lab-image-status-a\">\n  <img id=\"ui-lab-image-a\" data-image-output alt=\"Selected local image for Panel A\" hidden>\n  <p id=\"ui-lab-filename-a\" data-image-filename></p>\n  <p id=\"ui-lab-image-status-a\" data-image-status data-status=\"empty\" role=\"status\" aria-live=\"polite\">No image selected.</p>\n  <button id=\"ui-lab-clear-a\" data-image-clear type=\"button\" aria-describedby=\"ui-lab-image-status-a\" hidden>Clear image for Panel A</button>\n</div>\n\n  <div id=\"ui-lab-note-a\" data-ui-lab-note data-revision=\"f3f27f4e68294a10a5c0cabf5cb042f6\">\n  <p>This note updates independently of the selected image.</p>\n  <p>Note revision: f3f27f4e68294a10a5c0cabf5cb042f6</p>\n</div>\n\n</div>\n\n</section>\n"
+    }
+  ],
+  "console_errors": [],
+  "page_errors": [],
+  "django_check": {
+    "exit_code": 0,
+    "output": "System check identified no issues (0 silenced).\n"
+  },
+  "browser_version": "152.0.7977.82",
+  "invalid_decode_state": "This file could not be displayed as an image. Choose another image.",
+  "late_decode_probe": "PASS: labelled delay after real native decode, then clear/reselect; stale completion did not replace latest success or revoke its resource.",
+  "script_network_counts": {
+    "http://127.0.0.1:18752/static/web/htmx/htmx.min.js": 1,
+    "http://127.0.0.1:18752/static/web/js/password_visibility.js": 1,
+    "http://127.0.0.1:18752/static/web/js/image_preview.js": 1
+  },
+  "disabled_feature_requests": [
+    "http://127.0.0.1:18752/static/web/js/password_visibility.js",
+    "http://127.0.0.1:18752/static/web/js/image_preview.js"
+  ],
+  "resources": {
+    "created": [
+      {
+        "url": "blob:http://127.0.0.1:18752/2f01448d-dd6e-4f05-9e2c-ac19bf1b0a80",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/56e7687b-0ce4-4630-ae74-44a4e4402208",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/fa867df3-5d13-415d-8f01-be7d0034f43c",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/ff5dc8e3-bbfb-4696-a515-c66de83b9059",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/bdd9fdca-5edf-4bf9-9a06-c64ff6fc4390",
+        "size": 33,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/9b2e1809-9d5c-40b9-a8dd-b7e9b5a35bec",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/ebc965b6-ee50-4ad4-87a7-2a5011abd497",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/177d9bec-8dcc-4cb8-8441-66a2d3e77f66",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/b9da7576-0c80-4229-9158-d84eb7f57c74",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/1e5bd99b-6a2c-4643-902c-cde87f299ee3",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/6fe80790-8e6e-46d6-aa42-375b7d6c1bc6",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/d3c7bc9e-5b8d-492b-8792-101ac2a0fcc7",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/5c2a2811-fc41-45b3-b3c8-14bc107bac6b",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/9672e3e0-009d-4279-9a20-792ac4dcb0be",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/98fe08e9-9250-450e-beb4-b07a5f0f57c7",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/086bd2e2-8288-4227-9951-2519b6a665f1",
+        "size": 73,
+        "type": "image/png"
+      }
+    ],
+    "revoked": [
+      "blob:http://127.0.0.1:18752/2f01448d-dd6e-4f05-9e2c-ac19bf1b0a80",
+      "blob:http://127.0.0.1:18752/fa867df3-5d13-415d-8f01-be7d0034f43c",
+      "blob:http://127.0.0.1:18752/ff5dc8e3-bbfb-4696-a515-c66de83b9059",
+      "blob:http://127.0.0.1:18752/bdd9fdca-5edf-4bf9-9a06-c64ff6fc4390",
+      "blob:http://127.0.0.1:18752/9b2e1809-9d5c-40b9-a8dd-b7e9b5a35bec",
+      "blob:http://127.0.0.1:18752/ebc965b6-ee50-4ad4-87a7-2a5011abd497",
+      "blob:http://127.0.0.1:18752/177d9bec-8dcc-4cb8-8441-66a2d3e77f66",
+      "blob:http://127.0.0.1:18752/b9da7576-0c80-4229-9158-d84eb7f57c74",
+      "blob:http://127.0.0.1:18752/1e5bd99b-6a2c-4643-902c-cde87f299ee3",
+      "blob:http://127.0.0.1:18752/6fe80790-8e6e-46d6-aa42-375b7d6c1bc6",
+      "blob:http://127.0.0.1:18752/d3c7bc9e-5b8d-492b-8792-101ac2a0fcc7",
+      "blob:http://127.0.0.1:18752/5c2a2811-fc41-45b3-b3c8-14bc107bac6b",
+      "blob:http://127.0.0.1:18752/9672e3e0-009d-4279-9a20-792ac4dcb0be",
+      "blob:http://127.0.0.1:18752/98fe08e9-9250-450e-beb4-b07a5f0f57c7"
+    ],
+    "typeAssignments": [
+      {
+        "id": "ui-lab-password-input-a",
+        "value": "text"
+      },
+      {
+        "id": "ui-lab-password-input-a",
+        "value": "password"
+      },
+      {
+        "id": "ui-lab-password-input-a",
+        "value": "text"
+      },
+      {
+        "id": "ui-lab-password-input-a",
+        "value": "text"
+      },
+      {
+        "id": "ui-lab-password-input-a",
+        "value": "text"
+      },
+      {
+        "id": "ui-lab-password-input-a",
+        "value": "text"
+      },
+      {
+        "id": "ui-lab-password-input-a",
+        "value": "text"
+      }
+    ]
+  },
+  "status": "PASS"
+}

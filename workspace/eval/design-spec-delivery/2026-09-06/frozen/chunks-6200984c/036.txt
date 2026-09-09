@@ -1,0 +1,96 @@
+변식 위반 문서 — §5.1 ⓒ) · 별도 `fortune_request` 손상 케이스 1 추가(파라미터 2 · `:321-323`은 무변). **`Visit(...)` 직접 조립 arrange `request=None` 인자 추가 6곳**(S2 G1′ — §3.2 «`Visit.__init__` 전 필드 필수» 규약의 귀결 · 의미 보존 · 새 case·assertion·Red 0): `test_visit_turn_use_cases.py:299`(update ④ · S2-3) · `test_visit_turn_admission_concurrency.py:196`·`test_visit_turn_no_op_and_slot.py:87`(retain 행 문면 병기 — S1 `TurnHarness` 개명 선례 · S2-4) · `test_visit_turn_reception_exits.py:152`(S1 add 행 병기 · S2-4) · `test_visit.py:342`(update · S2-4) · `test_visit_repository_round_trip.py:345·377`(update ⑥ ⑤ · S2-4) — retain 2행은 문면만이라 집계 무변. **decision별 개수**: `add` 36(S0 17 + S1 11 + S2 8) · `update` 18(S1 7 기집행 + S2 11) · `retain` 5(S0 2 + rename 승인 3) · `reject` 6(S0·S1 4 + S2 2) · `pending` 0 → G1 요청 가능. (개수는 영구 test artifact 행만 센다 — `test/fake/` 페이크 14종과 `test/integration/conftest.py` 하네스는 재료라 행이 아니다 · S2 conftest 편집은 «재료 확장»이고 행이 아니다.) **G1‴(S2-3 감사 반영) — 집계 무변**: `test_run_visit_turn_fortune.py` add 행(:570)의 **기대값 변경 3자리**(A 답 재진입 `:1086`·`:1093-1095` · 이월 D19 `:1417` · 이어보기 `:1585`·`:1589-1591` — bare id → 카탈로그 ① 라벨 · 감사가 «미승인 값 pin»으로 본 두 단언의 승인값 확정) + 행 안 항목 추가(비점유자 3자리 · 재진입 라벨 ① `unavailable` 2 · `describe_missing` mechanics · 페이크 대본 규율) · `test_notice_speech_composer.py` add 행(:568) 항목 1(`describe_missing`) · `test_visit_turn_fortune_counter.py` add 행(:571) 02 T1 라벨 문면(S2-4 1단계 coder 전달) · S0·S1 케이스 무관 · weaken 0. **S3 계약 근거**: `add` 행의 현재 계약은 발주서 §6 S3 완료 계약 13항 + S3 e2e 배분(01 턴4 · 07 A′5/B′5 ③ · 08 T3-d 이후 · 09 T3·T4 · 10 S1~S11 · 11 걸음 2~11 + 부분 상태 ⓐ~ⓖ + 자체 마감 · 13 D-1 · 14 갈래 B) + §4.7·§5.1·§5.2·§5.3·§5.4·§5.5·§5.7·§5.9 ②③⑥·§5.10·§5.11·§5.12·§5.13 ②③·§5.15 ⑤·§5.21·§5.22 ⑨ E·F·I·D·§5.23 ①·§5.28 ①③④⑤·§5.29 ①③④⑤ 규칙 + §13 확정 5(#5 `exact_quote` 대조 · #7 재계산 1회 · #11 `default_timezone` 8번째 키 · #19 `question_text` = 리딩 `question` · #21) + G-S3 산출 게이트 넷(실패 전수표 §8.3 · 부분 상태 매트릭스 ⓐ~ⓖ §4.2-4-4 ⓝ · 저장→확정 순서 · 자체 마감·단계별 예산 표)이다. **S3 명시 변경은 열둘**(S0·S1·S2 케이스·단언은 이 밖에서 무변 · weaken 0 — 비계 케이스 재표적 7건(단위 3 + 통합 4)은 «보호 대상(S2 «답 직전» 비계)이 소멸했고 같은 계약이 답 완주 케이스로 이어지는» 의미 보존 재표적이며 그 안의 단언 교체는 **기대값 변경**으로 분류한다 — 비계 문구·`INTERNAL_ERROR`·`IDLE`이 완주 wire·`COMPLETED`·`ANSWERED`가 되는 것은 S3가 그 케이스의 끝을 실제 답으로 바꾼 결과다): ① `test_speaker_policy.py:65` 25→27 pin + `_SITUATION_ROWS` 2행 + `_ROOM_ROWS` 1행 ② `test_notice_phrase_resolver.py:49` 25→27 + ko 2문면 ③ `test_notice_speech_composer.py` `_ALLOWED` +3 · `:155` four→seven rename · 가드 파라미터 +1 ④ `test_run_visit_turn_fortune.py:379-428` 생성자 호출(`:413-428`) +5 · `:286-291` 프로필 +3 · `_PORT_METHODS :617-638` spy 항목 +7 · 비계 케이스 3(`:1149-1176`·`:1437-1453`·`:1581-1589` — 뒤 둘은 trace 단언 없음) 재표적(기대값 변경 각 3~4자리 · rename 승인 · **완주의 귀결 3자리 포함**: `:1159-1167` 라벨 목록에 `character_catalog.get_profile`(I-A)·`fortune_catalog.list_fortune_types`(I-1) · `:1445` `list_calls` 0→1 · `:1450` `request` not None→None — discipline I-1·I-A) ⑤ `test_run_visit_turn_reception.py:240-255` 생성자 +5 · `:182`·`:532-533` 프로필 +3 ⑥ `test_visit_turn_use_cases.py:237-272` 생성자 +5 · `:255` 프로필 +3 ⑦ `test_visit_turn_fortune_room.py:353-361` helper 재표적(기대값 변경 3자리 · rename 승인) · 비계 케이스 4(`:367-390`·`:457-495`·`:501-519`·`:583-601`) wire 기대값 변경 · **완주의 귀결 3자리**(`:379` `list_calls` 0→1 · `:386`·`:600` `request` not None→None — I-1) · S2 방 helper 4 → conftest 공개 승격(import·호출명 교체 · N-9) · docstring `:6` ⑧ `test_visit_turn_counter_reception.py:109·:112` 프로필 +3 ⑨ `test_visit.py` S3 케이스 추가(루트 4 · 불변식 · 고아 `begin_turn`(outcome 무변) · `RewindRecord` 조합 불변식 · `is_free`) + **`:232-254` arrange `reservation_id=uuid4()`(`:238`) → `None`**(의미 보존 · S3 불변식 귀결 · 그 밖 기존 무변) ⑩ `test_card_composer.py` S3 케이스 추가(E·F·I·D 정정 봉투 · F 관계 위반은 `test_balance_shortfall.py` 소유 · 기존 무변) ⑪ `test_anticorruption_adapters_with_components.py` Tier B S3 케이스 추가(기존 무변) ⑫ `test_visit_repository_round_trip.py` **fixture 분리**(`_full_visit :74-146` → `SELECTING` 판 / `ANSWERING` 판 · 의미 보존 · 단언 무변 · retain → update). **`CharacterProfileOut(...)` 조립 arrange 3인자 추가 7곳**(§4.1 «기본값 없음» 규약의 귀결 · 의미 보존 · S2 `request=None` 선례): `conftest.py:246·:291`(재료 — 행 아님) · `test_run_visit_turn_fortune.py:286·:289` · `test_run_visit_turn_reception.py:182·:532·:533` · `test_visit_turn_use_cases.py:255` · `test_visit_turn_counter_reception.py:109·:112`. 종료·부재 의무 없음. **인수(acceptance) 행 0의 근거(discipline N-10)**: S3는 OHS variant 집합·`kind`·published 계층이 무변이라 `test_visit_turn_open_host_service.py` update가 없다(S1·S2는 «새 variant/봉투 도달»로 있었다) — S3가 더한 것은 «항목 순서»뿐이고 그 byte는 통합 `test_visit_turn_answer.py`(:731)·`test_visit_turn_answer_failures.py`(:732)가 보호한다. **decision별 개수**: `add` 46(S0 17 + S1 11 + S2 8 + S3 10 — `test_balance_shortfall.py` 포함) · `update` 30(S1 7 + S2 11 + S3 12 — round_trip retain → update 전환 포함) · `retain` 5(S0 2 + S1 rename 3) · `reject` 8(S0·S1 4 + S2 2 + S3 2) · `pending` 0 → G1 요청 가능. (개수는 영구 test artifact 행만 센다 — `test/fake/` 페이크 19종과 `test/integration/conftest.py` 하네스는 재료라 행이 아니다 · S3 conftest 편집(페이크 5 필드·기본 대본·`answer_turn_items` helper·프로필 3인자)은 «재료 확장»이고 행이 아니다.)
+
+---
+
+## §11 기계가독 채널 (pre-gate 전사 정본)
+
+산문과 별개의 정본. 부재 = fail-closed 부재 전사. 아래 concrete 계획 블록에만 `machine` 마커를 단다. **file-plan의 `add`는 S0·S1·S2(기실현 — 기준선 `313f998` 재발화로 스텁 대체 예보) + S3 산출물**이다(§9의 S4 파일은 계획이 아니다 · 이 레인의 pre-gate 기준선은 S0 G1 앵커 `313f998`이라 기실현 경로도 `add` — 같은 경로의 태그 이중 서술 0). **S2에서 내용이 늘어나는 S0·S1 파일**(`visit.py`·`carried_request.py`·`fortune_selection.py`·`transcript_message.py`·`card_name.py`·`widget_kind.py`·`notice_reason_code.py`·`speech_situation.py`·`speech_message.py`·`resolve_notice_phrase.py`·`decide_speaker.py`·`read_turn_input.py`·`compose_small_talk_prompt.py`·`compose_card.py`·`run_visit_turn_use_case.py`·`dependency_wiring.py`·`visit_model.py`·`visit_repository.py`(구현)·`admin/visit/panel.py`·포트 3(`account_profile_port.py`·`usage_policy_port.py`·`usage_decision_out.py`·`character_catalog_port.py`·`character_out.py`·`character_catalog/exception.py`)·ACL 3·페이크 3·`conftest.py`·§10 update 행의 테스트 11)과 **S3에서 내용이 늘어나는 S0·S1·S2 파일**(`visit.py`(루트 4 · `begin_turn` ⓐ 고아 되감기 · 불변식 +1)·`fortune_selection.py`(메서드 3)·`rewind_record.py`(`previous_turn_id` 타입 확장)·`notice_reason_code.py`(+2)·`speech_situation.py`(+1)·`resolve_notice_phrase.py`(표 +2)·`decide_speaker.py`(행 +2)·`compose_card.py`(메서드 3 · D 인자 · TypedDict 3)·`compose_notice_speech.py`(문장 +3)·`run_visit_turn_use_case.py`(ⓝ · 상수 5 · 메모리 3)·`dependency_wiring.py`(어댑터 5)·포트 2(`record_archive_port.py`·`record_out.py`·`record_archive/exception.py`·`character_out.py`)·ACL 2(`fortune_record/record_archive_adapter.py`·`fortune_character/character_catalog_adapter.py`)·페이크 1(`record_archive_port.py`)·`conftest.py`·§10 update 행의 테스트 12 — round_trip 포함)은 같은 계획이라 `add` 그대로이고 **바뀌는 심볼 행은 제자리에서 고쳐 쓰고 새 심볼만 더한다**(symbols는 파일별 전수 — 옛 행과 새 행의 이중 서술 0).
+
+### 파일 계획
+
+<!-- machine: file-plan -->
+```paths
+# BC 루트
+empty application/fortune_house/__init__.py
+# composition_root
+empty application/fortune_house/composition_root/__init__.py
+add application/fortune_house/composition_root/dependency_wiring.py
+empty application/fortune_house/composition_root/event_wiring.py
+# published_event (이벤트 0)
+empty application/fortune_house/published_event/__init__.py
+# driving_layer/api (HTTP 0 — 빈 파일)
+empty application/fortune_house/driving_layer/__init__.py
+empty application/fortune_house/driving_layer/api/__init__.py
+empty application/fortune_house/driving_layer/api/api_router.py
+empty application/fortune_house/driving_layer/api/bc_error_schema.py
+empty application/fortune_house/driving_layer/api/webhook/__init__.py
+# driving_layer/open_host_service/visit_turn
+empty application/fortune_house/driving_layer/open_host_service/__init__.py
+empty application/fortune_house/driving_layer/open_host_service/visit_turn/__init__.py
+add application/fortune_house/driving_layer/open_host_service/visit_turn/visit_turn_service.py
+empty application/fortune_house/driving_layer/open_host_service/visit_turn/contract/__init__.py
+empty application/fortune_house/driving_layer/open_host_service/visit_turn/contract/request/__init__.py
+add application/fortune_house/driving_layer/open_host_service/visit_turn/contract/request/open_visit_turn_request.py
+add application/fortune_house/driving_layer/open_host_service/visit_turn/contract/request/pull_visit_turn_request.py
+add application/fortune_house/driving_layer/open_host_service/visit_turn/contract/request/close_visit_turn_request.py
+empty application/fortune_house/driving_layer/open_host_service/visit_turn/contract/response/__init__.py
+add application/fortune_house/driving_layer/open_host_service/visit_turn/contract/response/open_visit_turn_response.py
+add application/fortune_house/driving_layer/open_host_service/visit_turn/contract/response/pull_visit_turn_response.py
+add application/fortune_house/driving_layer/open_host_service/visit_turn/contract/response/pull_visit_turn_output_item.py
+add application/fortune_house/driving_layer/open_host_service/visit_turn/contract/response/pull_visit_turn_completed.py
+add application/fortune_house/driving_layer/open_host_service/visit_turn/contract/response/pull_visit_turn_pending.py
+add application/fortune_house/driving_layer/open_host_service/visit_turn/contract/response/pull_visit_turn_missing.py
+empty application/fortune_house/driving_layer/open_host_service/visit_turn/contract/exception/__init__.py
+add application/fortune_house/driving_layer/open_host_service/visit_turn/contract/exception/visit_turn_published_error.py
+# driving_layer/cron_job·event_subscription (빈)
+empty application/fortune_house/driving_layer/cron_job/__init__.py
+empty application/fortune_house/driving_layer/event_subscription/__init__.py
+empty application/fortune_house/driving_layer/event_subscription/event_router.py
+# application_layer/visit_turn — use cases 4
+empty application/fortune_house/application_layer/__init__.py
+empty application/fortune_house/application_layer/visit_turn/__init__.py
+empty application/fortune_house/application_layer/visit_turn/open_visit_turn/__init__.py
+add application/fortune_house/application_layer/visit_turn/open_visit_turn/open_visit_turn_use_case.py
+add application/fortune_house/application_layer/visit_turn/open_visit_turn/open_visit_turn_command.py
+empty application/fortune_house/application_layer/visit_turn/open_visit_turn/open_visit_turn_query.py
+add application/fortune_house/application_layer/visit_turn/open_visit_turn/open_visit_turn_result.py
+empty application/fortune_house/application_layer/visit_turn/pull_visit_turn/__init__.py
+add application/fortune_house/application_layer/visit_turn/pull_visit_turn/pull_visit_turn_use_case.py
+add application/fortune_house/application_layer/visit_turn/pull_visit_turn/pull_visit_turn_command.py
+empty application/fortune_house/application_layer/visit_turn/pull_visit_turn/pull_visit_turn_query.py
+add application/fortune_house/application_layer/visit_turn/pull_visit_turn/pull_visit_turn_result.py
+empty application/fortune_house/application_layer/visit_turn/close_visit_turn/__init__.py
+add application/fortune_house/application_layer/visit_turn/close_visit_turn/close_visit_turn_use_case.py
+add application/fortune_house/application_layer/visit_turn/close_visit_turn/close_visit_turn_command.py
+empty application/fortune_house/application_layer/visit_turn/close_visit_turn/close_visit_turn_query.py
+empty application/fortune_house/application_layer/visit_turn/close_visit_turn/close_visit_turn_result.py
+empty application/fortune_house/application_layer/visit_turn/run_visit_turn/__init__.py
+add application/fortune_house/application_layer/visit_turn/run_visit_turn/run_visit_turn_use_case.py
+add application/fortune_house/application_layer/visit_turn/run_visit_turn/run_visit_turn_command.py
+empty application/fortune_house/application_layer/visit_turn/run_visit_turn/run_visit_turn_query.py
+empty application/fortune_house/application_layer/visit_turn/run_visit_turn/run_visit_turn_result.py
+# application_layer/port
+empty application/fortune_house/application_layer/port/__init__.py
+empty application/fortune_house/application_layer/port/clock/__init__.py
+add application/fortune_house/application_layer/port/clock/clock_port.py
+empty application/fortune_house/application_layer/port/clock/exception.py
+empty application/fortune_house/application_layer/port/detached_task/__init__.py
+add application/fortune_house/application_layer/port/detached_task/detached_task_port.py
+add application/fortune_house/application_layer/port/detached_task/exception.py
+empty application/fortune_house/application_layer/port/turn_stream/__init__.py
+add application/fortune_house/application_layer/port/turn_stream/turn_stream_port.py
+empty application/fortune_house/application_layer/port/turn_stream/exception.py
+empty application/fortune_house/application_layer/port/domain_bypass_query/__init__.py
+empty application/fortune_house/application_layer/port/unit_of_work/__init__.py
+add application/fortune_house/application_layer/port/unit_of_work/visit_unit_of_work.py
+# domain_layer/visit
+empty application/fortune_house/domain_layer/__init__.py
+empty application/fortune_house/domain_layer/visit/__init__.py
+add application/fortune_house/domain_layer/visit/visit.py
+add application/fortune_house/domain_layer/visit/visit_repository.py
+empty application/fortune_house/domain_layer/visit/entity/__init__.py
+empty application/fortune_house/domain_layer/visit/value_object/__init__.py
+add application/fortune_house/domain_layer/visit/value_object/visit_key.py
+add application/fortune_house/domain_layer/visit/value_object/visit_stage.py
+add application/fortune_house/domain_layer/visit/value_object/turn_lease.py
+add application/fortune_house/domain_layer/visit/value_object/turn_admissi

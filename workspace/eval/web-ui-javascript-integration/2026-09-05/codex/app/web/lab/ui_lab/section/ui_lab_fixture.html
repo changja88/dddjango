@@ -1,0 +1,5 @@
+<section id="ui-lab-fixture-{{ state.key }}" data-ui-lab-fixture="{{ state.key }}" aria-label="{{ state.label }} fixture">
+  <p>A changed revision indicates a completed refresh.</p>
+  {% include "static/htmx/ui_lab_refresh.html" with state=state only %}
+  {% include "lab/ui_lab/section/ui_lab_panel.html" with state=state only %}
+</section>

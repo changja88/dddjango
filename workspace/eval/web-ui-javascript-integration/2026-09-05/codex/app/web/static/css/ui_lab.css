@@ -1,0 +1,30 @@
+[data-ui-lab] {
+  padding: var(--space-md);
+  color: var(--text-color);
+  background-color: var(--surface-color);
+  font-family: var(--font-body);
+  line-height: var(--line-body);
+  overflow-wrap: anywhere;
+}
+[data-ui-lab] p { margin-block: var(--space-sm); }
+[data-ui-lab] button,
+[data-ui-lab] input {
+  font-family: inherit;
+  line-height: inherit;
+  color: var(--text-color);
+  max-inline-size: stretch;
+}
+[data-ui-lab-fixture] { margin-block-start: var(--space-lg); }
+[data-password-visibility],
+[data-image-preview],
+[data-ui-lab-note] { margin-block-start: var(--space-md); }
+[data-ui-lab] label { display: block; margin-block-end: var(--space-sm); }
+.ui_lab_refresh { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+[data-image-output] {
+  max-inline-size: var(--preview-size);
+  max-block-size: var(--preview-size);
+  object-fit: contain;
+  margin-block-start: var(--space-sm);
+}
+[data-image-output]:not([hidden]) { display: block; }
+[data-image-status][data-status="error"] { color: var(--error-color); }

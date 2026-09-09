@@ -1,0 +1,7 @@
+{
+  "actual_native_write": "/Users/hyun/Desktop/dddjango/workspace/eval/web-ui-javascript-integration/2026-09-05/design.md",
+  "requested_output": "/tmp/dddjango-web-js-integration-20260905/claude/app/design.md",
+  "handoff": "Coordinator byte-exact copy; no content change",
+  "sha256": "5649f2f039465c740c9af74864c6c97acdd2af6c2713fee21ab330d7e29ebc27",
+  "review_start_note": "Reviewer launched immediately before path verification; input copy supplied while invocation active."
+}

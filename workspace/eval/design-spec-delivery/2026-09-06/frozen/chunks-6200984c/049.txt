@@ -1,0 +1,74 @@
+ortune_record/record_archive_adapter.py    from application.fortune_record.driving_layer.open_host_service.record_archive.contract.request.save_fortune_record_request import SaveAnswerSnapshot, SaveCharacterSnapshot, SaveFortuneRecordRequest, SavePromptSetSnapshot, SaveRecordMeta, SaveRequestSnapshot
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/record_archive_adapter.py    from application.fortune_record.driving_layer.open_host_service.record_archive.contract.response.save_fortune_record_response import SaveFortuneRecordResponse
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/record_archive_adapter.py    from application.fortune_record.driving_layer.open_host_service.record_archive.contract.exception.invalid_fortune_record_snapshot_exception import InvalidFortuneRecordSnapshotException
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/record_archive_adapter.py    from framework.technology.rag.runtime.json_value import JsonValue
+# S3 — 도메인 dict 코덱(도메인 TypedDict 3을 두 ACL이 소비 · 같은 BC 내부 import라 경계 아님 — 성문 불요) · 테스트 경계 재료 추가 0(S3 Tier B는 S1 파일의 기존 경계 import 재사용 — `django_user_model`·`AbstractBaseUser`·`seed_fortune_house`)
+```
+
+### 예외 번역표
+
+**점집 published 예외 = 기저 1 · 구체 0 · 던지는 창구 0(S0·S1·S2 동일)** — 이 BC의 OHS는 구체 published 예외가 없다: 모든 실패는 손님 고정 문구(스트림 항목)·응답 union variant(`PullVisitTurnPendingResponse`/`PullVisitTurnMissingResponse`)·`None`으로 표현하고 예외를 소비자에게 흘리지 않는다(§4.4·§6.3). `contract/exception/visit_turn_published_error.py`는 기저 `VisitTurnPublishedError` 1개만 두고(#167 짝 · S4 chat_relay ACL의 마지막 handler용) 어느 창구도 던지지 않는다. **S1 예외 번역표 = «부품 published 예외 → 점집 포트 예외»**(raise 창구 = ACL 어댑터 파일 · §5.7 번역표의 기계 사본 · 응용은 §4.4 표로 포트 예외를 사유 코드로 잇는다). 행 = `<포트 예외> <raise하는 ACL 파일>` — 잡는 부품 예외는 §5.7이 소유한다: `AccountProfileUnavailable ← AccountPublishedError` · `UsagePolicyContention ← UsageRecordContentionException` · `UsagePolicyUnavailable ← UsageRecordIntegrityViolationException | NaiveNowNotAllowedException | UsagePolicyPublishedError` · `UsagePolicyContractMismatch ← DenialDetail.reason 미지 값` · `RecordArchiveUnavailable ← RecordArchivePublishedError` · `RecordAnswerMissing ← pydantic.ValidationError(answer_json의 answer 부재·비문자열·비객체)` · `MessageClassificationUnavailable ← FortuneIntentConfigurationException | RequestUnderstandingPublishedError` · `CharacterCatalogUnavailable ← CharacterCatalogPublishedError` · `CharacterCatalogContractMismatch ← 프로필 default_language 키 부재(입구 검증)` · `TextGenerationConfigurationInvalid ← GenerationConfigurationException` · `TextGenerationUnavailable ← GenerationPublishedError` · **S2**: `PromptSetGroupEmpty ← PromptSetGroupEmptyException`(character_catalog_adapter · 구체 handler가 기저보다 먼저) · `IntentStructuringUnavailable ← FortuneIntentConfigurationException | RequestUnderstandingPublishedError | Literal 밖 outcome/match/kind`(intent_structuring_adapter) · `FortuneCatalogUnavailable ← CatalogInquiryPublishedError`(fortune_catalog_adapter · 기저 1 · 던지는 창구 0 — #473 마지막 handler 짝 · 정적 도달 0) · S2 확장 창구(accounts 사주·service_policy 조기 판정·character 3)의 번역은 S1 행의 기저 handler가 그대로 덮는다(`NaiveNowNotAllowedException → UsagePolicyUnavailable` 포함 · 새 행 0).
+
+<!-- machine: exception-map -->
+```exceptions
+# 점집 published 예외 없음 — 실패는 고정 문구 스트림 항목·응답 union variant로 표현(§4.4·§6)
+# S1 — 포트 예외(계약이 선언한 실패 #554) ← 부품 published 예외 · raise 창구 = ACL 어댑터(§5.7)
+AccountProfileUnavailable    application/fortune_house/driven_layer/adapter/anticorruption_layer/accounts/account_profile_adapter.py
+UsagePolicyContention    application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/usage_policy_adapter.py
+UsagePolicyUnavailable    application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/usage_policy_adapter.py
+UsagePolicyContractMismatch    application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/usage_policy_adapter.py
+RecordArchiveUnavailable    application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/record_archive_adapter.py
+RecordAnswerMissing    application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/record_archive_adapter.py
+MessageClassificationUnavailable    application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_intent/message_classification_adapter.py
+CharacterCatalogUnavailable    application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_character/character_catalog_adapter.py
+CharacterCatalogContractMismatch    application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_character/character_catalog_adapter.py
+TextGenerationConfigurationInvalid    application/fortune_house/driven_layer/adapter/anticorruption_layer/llm_access/text_generation_adapter.py
+TextGenerationUnavailable    application/fortune_house/driven_layer/adapter/anticorruption_layer/llm_access/text_generation_adapter.py
+# S2 — 포트 예외 3 ← 부품 published(fortune_catalog는 기저 1 · 던지는 창구 0 — #473 짝)
+PromptSetGroupEmpty    application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_character/character_catalog_adapter.py
+IntentStructuringUnavailable    application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_intent/intent_structuring_adapter.py
+FortuneCatalogUnavailable    application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_catalog/fortune_catalog_adapter.py
+# S3 — 포트 예외 11 ← 부품 published·값 outcome(§5.7 번역표 · fortune_reading 둘은 기저 1 · 던지는 창구 0 — #473 짝 · 정적 도달 0)
+ChartInputRejected    application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_calculation/chart_calculation_adapter.py
+AnnualFortuneWindowOutOfRange    application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_calculation/chart_calculation_adapter.py
+ChartCalculationUnavailable    application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_calculation/chart_calculation_adapter.py
+CurrencyReservationConflict    application/fortune_house/driven_layer/adapter/anticorruption_layer/wallet/currency_reservation_adapter.py
+CurrencyReservationRejected    application/fortune_house/driven_layer/adapter/anticorruption_layer/wallet/currency_reservation_adapter.py
+EvidenceProvisioningUnavailable    application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_reading/evidence_provisioning_adapter.py
+CitationValidationUnavailable    application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_reading/citation_validation_adapter.py
+StructuredGenerationConfigurationInvalid    application/fortune_house/driven_layer/adapter/anticorruption_layer/llm_access/structured_generation_adapter.py
+StructuredGenerationTimedOut    application/fortune_house/driven_layer/adapter/anticorruption_layer/llm_access/structured_generation_adapter.py
+StructuredGenerationFailed    application/fortune_house/driven_layer/adapter/anticorruption_layer/llm_access/structured_generation_adapter.py
+RecordSaveRejected    application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/record_archive_adapter.py
+```
+
+---
+
+## §12 자기모순 스캔 · 결과 제약 · 미해결 옵션(G1 배너 항목)
+
+### 12.1 절 간 일관 · 리뷰 반영 기록 (스캔 완료)
+- **판정 소유**: 점유·stale·되감기·슬롯 폐기·언어 폴백 = `Visit`(§3.2·§3.3·§7.3 Rule ownership 일치) · 문구 = `NoticePhraseResolver`(키 폴백 `suspended.default` 포함) · 화자 = `SpeakerPolicy` · 입력 식별 = `TurnInputReader` · 봉투/철자 = 카드 VO(파싱은 S2 응용) · 렌더 = `DisplayHtmlFormat` · 설정 검증 = `SpeechGenerationSettings`. 응용(§4)은 조율만, 리포지토리(§5.1)는 `WHERE version`만 — 모순 없음.
+- **version·CAS 규약(ddd 1 = db 1 = discipline I-4 — 한 규약으로 중재 · 2차 ddd ③-1 «산술 의존» → ⓐ `persisted_version` 채택)**: `Visit.open` = version 0·persisted_version 0 미영속 · 루트 변경 메서드마다 +1(한 attempt에 여럿 허용) · 리포지토리가 로드 시 `persisted_version` 채움·저장 성공 시 `mark_persisted()` · INSERT iff `persisted_version == 0`(savepoint·23505 제약명 대조) · 그 밖 `WHERE version = persisted_version` UPDATE(`updated_at` 명시) · 루트가 올리지 않은 호출은 저장 0(불필요 왕복 — 정확성 무관) — §3.2·§4.2·§5.1·§5.6 fake·§7.3·symbols 전부 이 한 규약. 첫 턴이 거절되던 모순·S1+ 다중 변경 attempt 문제 모두 해소.
+- **`TurnOutcome`(ddd 2 = discipline I-5)**: `visit/value_object/turn_outcome.py` StrEnum 하나 — 도메인·응용·ORM choices 전부 심볼 소비(리터럴 0) — §3.2·§3.3·§4.2·§5.4·symbols 일치.
+- **되감기 채널(ddd 3)**: `begin_turn -> TurnAdmission{kind, rewind: RewindRecord | None}` — 응용은 값으로만 로그(판정 복제 0) — §3.2·§3.3·§3.4·§4.2·§7.3 일치.
+- **`SELECTING ⇔ pending_card`(ddd 4)**: 루트 불변식 + `reconcile → idle` 전이 + CHECK 백스톱 — §3.2·§3.3·§5.4·§10 일치(S0 범위 축소 대신 불변식 채택 — 12 D-2 테스트가 이 경로를 밟는다).
+- **방출↔해제 순서·wire 모양(api 1·2 · 2차 api important «누산 범위»)**: 해제 → failure_delta(누산) → `Completed(emitted_text)` 1회 · **`emitted_text` = `failure_delta`를 포함해 방출한 모든 `ReplyTextDelta.text`의 누적 · 불변식 `Completed.text == 방출 델타 전부의 접합`** — §4.2-1-6·§4.2-4-5·§4.4·§6.4·§8.1-7·§10(예외 접기·OHS 계약·use case 행) 한 문장으로 일치(문구 2회 노출 0).
+- **응답 variant 공개 이름·파일명(api 3 · 2차 pre-gate #483 ×5 = discipline I-7)**: 주 variant 파일 `pull_visit_turn_response.py::PullVisitTurnTextDeltaResponse`(+`__all__` 5종 재수출) · 나머지 `pull_visit_turn_{output_item,completed,pending,missing}.py`(**`_response` 꼬리 없음** — wallet `reserve_currency_insufficient.py` 형태) · `kind` 판별 · 별칭 0 · 창구 반환 인라인 union — §4.1·§6·§8.1·§10·§11(file-plan·symbols·imports) 일치.
+- **worker 스케줄 시점(2차 db nit 2)**: `uow.after_commit(lambda: detached_task.schedule(...))`로 전제(호출 스레드 atomic 밖) 제거 — §4.2-1-5·§7.3 Side-effect timing 일치.
+- **2차 nit 반영**: ddd ③-2(§3.3 `idle`·`answered` 되감기 범위) · ddd ③-3(`DisplayLanguage.code` 비어 있지 않음 · `PendingCard.call_id` 1~128) · discipline N-9(`turn_harness` 모드 = `request.param` indirect parametrize · 기본 `inline`) · db important = discipline N-10(concurrency 테스트 `connections` import 행 + 테스트 소유 스레드 `finally: close_all`) · api nit 2(S4 레시피 `TypeAdapter(dict[str, object]).validate_json` 예고) · api nit 3(OHS 행 승인 셀 `§13-23(:906)`·scope.md 실측 3 병기).
+- **typecheck 행(api 4 ↔ discipline N-1 중재 → reject)**: 실물 확인 `pyproject.toml:91-93` `*.test.*` ignore_errors + `python_files` 패턴 밖 → 어떤 게이트도 잡지 못하는 죽은 artifact. 선례 2파일도 같은 사각(기록만 · 타 BC라 범위 밖). 컴파일 시점 증명은 S4 production ACL.
+- **하네스 patch 표면(discipline I-1)**: OHS가 `dependency_wiring`에서 이름을 들여오고(§6.1) 하네스는 `visit_turn_service.build_*`를 patch(§2.4-3 · 리허설 :417-421 관용구) · `test/integration/conftest.py` file-plan add · 스트림 격리는 새 인스턴스(§5.2).
+- **`SystemClockClockAdapter`(discipline I-2 · pregate #373)**: §2.3·§4.6·§5.3·symbols 4곳 통일.
+- **D58 파싱 경로(discipline I-3)**: (a) `output` 4철자 → S2 응용에서 `TypeAdapter` TypedDict 4종(도메인 pydantic 0 — #8) (b) `widget_json` → 객체 여부만 `json.loads`+즉시 좁힘, 봉투는 문자열 접합(임의 JSON 통과 0 · `json_value.py` 미사용) (c) `arguments` 문자열 그대로 — §3.7·§9·§11 일치.
+- **스트림 레지스트리(discipline I-6)**: `_CLOSED` 삭제 · 인스턴스 상태 + composition `@cache build_turn_stream()`(chat_relay `dependency_wiring.py:168` 정확 인용) — §4.6·§5.2·symbols 일치.
+- **수용한 important·nit**: db 2(`PositiveBigIntegerField`+CHECK ≥1) · db 3(`updated_at` 명시) · db 4(스레드 `connections.close_all()` · 페이크 `after_task`) · db 5=discipline N-2(주입 수렴은 단위·PG 메커니즘은 통합 · CHECK 제약 행 reject 명시) · db 6(reconcile 미스 1회 재시도 후 진행) · db 7(savepoint·제약명) · db 8(§7.4 예고) · db 9(손상 열 `None`+로그) · api 5(evidence 셀) · api 6(`timeout ≥ 0`·clamp) · api 7(§6 S4 e2e 후보) · api 8(생존 신호 범위) · api 9(예외 접기 행에서 비계 언급 제거) · api 10(값 규칙) · api 11(`name ≤ 64`) · api 12(폴백 범위 전제 명시) · ddd 6(값 불변식 → VO `__post_init__`) · ddd 7(`DisplayLanguage` VO·`notice_language`) · ddd 8(`pending_call_id()`) · ddd 9(`now` 인자·`admission` 제거 · `TurnBudget` S3 이동) · ddd 10(lease 낱말 통일) · ddd 11(`phrase_key` 소유) · discipline N-4(`summary` 제거) · N-5(`now` 제거) · N-6(§6.2 집행 조건) · N-7(`role` S1 잠금 기록) · N-8(기록).
+- **기각**: discipline N-1(typecheck 입장 인정) — api 4 근거가 실물로 확인돼 reject.
+- **`now` 1회 고정**: §4.1(포트)·§4.2-1-2(open에서 1회)·§4.2-4(worker는 명령의 `now` 사용)·§3.2 `begin_turn(now)` 일치. 예산 측정 재호출은 S3 개정 사항으로 §4.3에 한정.
+- **대본 자료 3종**: 도메인 VO(§3.5) ↔ OHS request 보조 3종(§6.2) ↔ symbols 필드 일치 · `Mapping[str, object]` 0(#647) · `summary` 0.
+- **UoW 경계**: §4.1·§4.2·§7.2·§7.3 Side-effect timing 전부 «UoW 안 cross-BC/LLM/방출 0» 일치.
+- **명명**: 서비스·area `visit_turn` · 포트 `clock`/`detached_task`/`turn_stream`(메서드 `open`/`publish_item`/`pull`/`is_open`/`close`) · 어댑터 `system_clock_adapter`/`thread_adapter`/`thread_queue_adapter`(클래스 #373) · UoW `FortuneHouseVisitUnitOfWork`/`DjangoFortuneHouseVisitUnitOfWork` · 페이크 `FortuneHouseVisitUnitOfWorkFake`(§5.6 정본 · 선언 상속 · 같은 파일 이름) — §2.3·§4·§5·§11 일치.
+- **`VisitPlace` 자리**: `SpeakerPolicy`(도메인 서비스)와 `Visit`이 함께 쓰므로 `shared_value_object/`(#266) — §3.5·§11 일치.
+- **S0 비계(`NotImplementedError`)**: §4.2-4-4·§4.4 일치 — S1이 교체(입장 표 행은 주입 예외만 보호).
+- **입장 표 owner/path**: 전 행 프로젝트 상대 전체 경로 = file-plan 경로(물리 신호 전사) · `pending` 0.
+- **G1′ 반송(Phase 2 · 검사기 실측 TREE_CONTRACT_MISMATCH 2건 + S0-1 감사 흡수) — 사유·처분**:
+  - **#205(유스케이스 간 `_command` import 금지)**: `OpenVisitTurnUseCase.__init__(run_visit_turn=Callable[[RunVisitTurnCommand], None])`이 위반 — 처분: 원시·VO **7인자 콜러블**(인자 순서 = `RunVisitTurnCommand` 필드)로 개정하고 명령 조립을 composition의 지역 함수로 옮김(chat_relay `run

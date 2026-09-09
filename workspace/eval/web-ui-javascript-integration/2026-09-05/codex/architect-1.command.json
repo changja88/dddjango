@@ -1,0 +1,14 @@
+[
+  "codex",
+  "exec",
+  "--ephemeral",
+  "--skip-git-repo-check",
+  "-C",
+  "/tmp/dddjango-web-js-integration-20260905/codex/app",
+  "--sandbox",
+  "workspace-write",
+  "--json",
+  "--output-last-message",
+  "/tmp/dddjango-web-js-integration-20260905/codex/architect-1.final.md",
+  "-"
+]

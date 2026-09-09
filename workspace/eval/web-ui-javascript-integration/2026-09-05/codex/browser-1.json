@@ -1,0 +1,15 @@
+{
+  "lane": "codex",
+  "label": "browser-1",
+  "checks": {},
+  "requests": [],
+  "htmx_responses": [],
+  "console_errors": [],
+  "page_errors": [],
+  "django_check": {
+    "exit_code": 0,
+    "output": "System check identified no issues (0 silenced).\n"
+  },
+  "status": "ENVIRONMENT_FAILURE",
+  "launch_error": "Observed tool session 32594 exit1: Playwright TargetClosedError, Chrome exited SIGABRT under inherited sandbox, cleanup kill EPERM. No browser assertion ran. This annotation preserves observed outcome; raw stack was returned by exec tool."
+}

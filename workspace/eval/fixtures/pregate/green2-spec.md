@@ -9,7 +9,13 @@
 <!-- machine: file-plan -->
 ```paths
 add	application/billing/application_layer/port/invoice_render/invoice_render_port.py	# ABC 포트
-add	application/billing/driven_layer/adapter/invoice_render/pdf_adapter.py	# 구현 짝
+empty	application/billing/driven_layer/adapter/invoice_render/pdf_adapter/__init__.py
+empty	application/billing/driven_layer/adapter/invoice_render/pdf_adapter/adapter/__init__.py
+empty	application/billing/driven_layer/adapter/invoice_render/pdf_adapter/command/__init__.py
+empty	application/billing/driven_layer/adapter/invoice_render/pdf_adapter/constant/__init__.py
+empty	application/billing/driven_layer/adapter/invoice_render/pdf_adapter/contract/__init__.py
+empty	application/billing/driven_layer/adapter/invoice_render/pdf_adapter/schema/__init__.py
+add	application/billing/driven_layer/adapter/invoice_render/pdf_adapter/adapter/pdf_invoice_render_adapter.py	# 구현 짝
 add	application/billing/driven_layer/django_billing/apps.py	# 정형 보충 대상(필드 결손)
 add	application/billing/driven_layer/django_billing/models/http_log_model.py	# 연속 대문자 모델
 ```
@@ -20,8 +26,8 @@ add	application/billing/driven_layer/django_billing/models/http_log_model.py	# �
 ```symbols
 application/billing/application_layer/port/invoice_render/invoice_render_port.py::InvoiceRenderPort(ABC) {}
 application/billing/application_layer/port/invoice_render/invoice_render_port.py::InvoiceRenderPort.render(self, *, number: str) -> bytes
-application/billing/driven_layer/adapter/invoice_render/pdf_adapter.py::PdfInvoiceRenderAdapter(InvoiceRenderPort) {}
-application/billing/driven_layer/adapter/invoice_render/pdf_adapter.py::PdfInvoiceRenderAdapter.render(*, number: str) -> bytes
+application/billing/driven_layer/adapter/invoice_render/pdf_adapter/adapter/pdf_invoice_render_adapter.py::PdfInvoiceRenderAdapter(InvoiceRenderPort) {}
+application/billing/driven_layer/adapter/invoice_render/pdf_adapter/adapter/pdf_invoice_render_adapter.py::PdfInvoiceRenderAdapter.render(*, number: str) -> bytes
 application/billing/driven_layer/django_billing/apps.py::BillingConfig(AppConfig) {}
 application/billing/driven_layer/django_billing/models/http_log_model.py::HTTPLogModel(Model) {}
 ```
@@ -30,7 +36,7 @@ application/billing/driven_layer/django_billing/models/http_log_model.py::HTTPLo
 
 <!-- machine: boundary-imports -->
 ```imports
-application/billing/driven_layer/adapter/invoice_render/pdf_adapter.py	from application.billing.application_layer.port.invoice_render.invoice_render_port import InvoiceRenderPort
+application/billing/driven_layer/adapter/invoice_render/pdf_adapter/adapter/pdf_invoice_render_adapter.py	from application.billing.application_layer.port.invoice_render.invoice_render_port import InvoiceRenderPort
 ```
 
 ## 영구 테스트 입장 표

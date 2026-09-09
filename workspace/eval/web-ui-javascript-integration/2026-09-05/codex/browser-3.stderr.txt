@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/hyun/Desktop/dddjango/workspace/eval/web-ui-javascript-integration/2026-09-05/browser_harness.py", line 235, in <module>
+    run(args.lane,args.label)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hyun/Desktop/dddjango/workspace/eval/web-ui-javascript-integration/2026-09-05/browser_harness.py", line 214, in run
+    assert not evidence.data['console_errors'],evidence.data['console_errors']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ['Failed to load resource: the server responded with a status of 404 (Not Found)']

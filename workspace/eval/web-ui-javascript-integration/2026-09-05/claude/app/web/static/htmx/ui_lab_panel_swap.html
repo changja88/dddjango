@@ -1,0 +1,4 @@
+{# 패널 B root 교체 선언 — include 호스트는 section/ui_lab_panel.html #}
+<button class="ui-lab-panel__swap" type="button"
+        hx-get="{% url 'lab:ui_lab_panel' %}"
+        hx-target="#ui-lab-panel-b" hx-swap="outerHTML">{{ panel.root_swap_label }}</button>

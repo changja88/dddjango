@@ -1,0 +1,61 @@
+# 통합 설계 명세 — `fortune_house` 신규 BC (점집 마스터) · 현재 = **S2 운세·점쟁이·필수 입력**(S0 골격·방문 애그리거트 · S1 문·손님 맞이·말 가르기·잡담은 구현·G2 완료 — 절은 그대로 유효 · S2 개정은 제자리)
+
+작성자: design-architect · 산출물 폴더 `.dddjango/20260904-2109-fortune-house/` · 이 문서는 슬라이스 S0→S4를 **제자리 개정**하며 자란다(현재 상태만 담는다 — 이력 없음).
+활성 lens: **ddd · api · db 전부**(scope.md «활성 lens»). 근거 스킬: `architecture-ddd`(§2 전략·§3.1 값 객체·§3.3 애그리거트 규칙 1~4·§3.5 도메인 서비스·§3.6 응용 서비스) · `architecture-api`(§5 계약·§14 OpenAPI 불변) · `architecture-db`(§8 제약·§9.5 락·§9.6 Risky Write) · `discipline-houserules`(final.md §0 제1원칙·§1 트리 140행·§2 골격·§3 명명·§5 driven 출구 면제 · SKILL §4 타입) · `discipline-tdd`(§5.5 입장 심사) · `implementation-django`(§18 admin 타이핑).
+발주 정본: `docs/superpowers/orders/2026-09-04-fortune-house.md`(이하 «발주서 §n») · 스코프 메모 `scope.md`(G0 실측 1~5) · 리팩터링 스코프 `refactor-scope.md`(슬라이스 0 없음).
+
+---
+
+## §0 컨텍스트 · BC 배치 (명세에 박는 결정)
+
+- **BC 배치 = 새 독립 BC `application/fortune_house/`** — 스코프 메모·발주서 D12·§1.1이 고정한 제약이다(코디네이터 판정 아님). 그대로 존중하고 재결정하지 않는다. *왜* — 점집의 유비쿼터스 언어(손님·방문·턴·카드·안내·점쟁이·카운터)는 부품 BC 12개 어느 것의 언어도 아니다(D11 «부품은 서로를 모른다»). 방문 상태의 트랜잭션 경계(방문 한 건 = 방 하나)는 chat_relay의 Turn/Room 경계와도 다르다(D31 «방문 상태는 점집이 가진다»).
+- **S4 예외**: chat_relay 3파일(ACL 신설 `anticorruption_layer/fortune_house/generate_response_adapter.py` · 스텁 삭제 · `dependency_wiring.py` 1줄)과 `application/chat_relay/test/**` 최소분은 D67에 따라 **S4에서만** 연다. 이번 초안(S0)은 그 파일을 계획에 싣지 않는다.
+- **통합 패턴(전 슬라이스 공통 결정)**: 부품 12 BC와의 통신은 전부 **동기 OHS 호출을 ACL이 감싼 «요청»**이다(`driven_layer/adapter/anticorruption_layer/<bc>/<capability>_adapter.py` + `application_layer/port/<capability>/`). 도메인 이벤트·브로커 채택 **0**(§8.2 물음 넷). *왜* — 손님 턴은 응답을 기다리는 대화이고(#563 «응답을 기다리게 해도 되나 → 예»), 실패마다 점집이 할 일(해제·문구)이 있다(«실패하면 내가 할 일이 있나 → 예») → 요청이지 사실이 아니다. chat_relay→점집 방향은 **점집이 OHS를 공개하고 chat_relay가 S4에서 ACL로 소비**한다(scope.md 실측 3 — 점집은 chat_relay 포트를 상속·구현할 수 없다 #13/#7). 점집→chat_relay 방향의 ACL은 두지 않는다(#450 상호 ACL 금지) — 그래서 방문 stale 판정은 chat_relay를 묻지 않고 자기 정보로만 한다(§3.3).
+- **레거시·호환층 0**(D37 · §9.1) · **부품 OHS 우회 import 0**(D11 · #13) · **정본 사본은 미러링**(rfc8785 · notification 렌더 패턴 — import 0).
+- **관찰 스택 정체**(형태 결정의 입력 아님 — houserules §1.1 관찰 비입력 닫힌 목록 ②④): Django admin · pytest(`postgresql` 마커, `make test` 양 단계) · 개발·테스트·운영 DB 전부 **PostgreSQL**(`settings/test.py`·`base.py postgresql_database()` — sqlite 부재) · Django Ninja는 이 BC에서 **미사용**(HTTP API 0 · §13-20).
+- **점집이 매 턴 받는 것 전부**(발주서 §3): `turn_id·account_id·room_id·character_id|None·summary·transcript·deadline`. 그 밖은 부품 OHS 응답 또는 자기 방문 상태(DB)다. `character_id is None` = 카운터. `summary`는 R1 ⓕ대로 쓰지 않으므로 **점집 계약(§6.2)은 받지 않는다** — S4 어댑터가 전달하지 않는다(죽은 필드 0).
+
+---
+
+## §1 lens · API 스택 · 12-slot
+
+### 1.1 API 스택 결정 (신규 HTTP/JSON 표면 → 없음)
+1. **신규 HTTP/JSON API 표면이 있나?** 없다 — 발주서 §13-20 «점집 HTTP API 없음 · `urls.py` 불변». 점집의 유일한 입구는 `driving_layer/open_host_service/`(같은 프로세스 함수 호출 전송 — #90)뿐이다.
+2. **확립 스택 관찰**: 저장소는 Django Ninja(`ninja_extra`)를 HTTP 스택으로 쓴다. 그러나 이 BC는 HTTP 표면을 노출하지 않으므로 **스택 결정 자체가 N/A**다(결정의 대상은 새 HTTP/JSON surface뿐).
+3. **결과 제약**: registrar(`register_fortune_house_api`)·`api.py`/`urls.py` mount 변경 **N/A**. `driving_layer/api/api_router.py`·`bc_error_schema.py`는 고정 칸이므로 **빈 파일**(final.md §0 #488). `<area>/`(controller·schema)는 등장하지 않는다(#489). **OpenAPI**: 기존 경로 서브트리 sha256 전/후 동일·전체 정규화 sha256 동일(발주서 §1.2-5 — 점집 경로 추가 0).
+4. **composition·INSTALLED_APPS는 표준**(profile 무관): `composition_root/dependency_wiring.py`의 `build_*` 팩토리가 DI를 소유하고, `spring_dream_server/settings/base.py` INSTALLED_APPS에 `application.fortune_house.driven_layer.django_fortune_house.apps.FortuneHouseConfig` **1줄**을 등록한다(허용 경로 §1.1). `FORTUNE_HOUSE_*` 설정값은 **S0에서 도입하지 않는다**(§4.6·§5.3 — 상수는 코드 상수, worker 수는 구조로 충족).
+
+### 1.2 오류 wire 계약 / 12-slot
+**12-slot error contract는 이 명세의 적법한 부재 레인이다** — 이 BC는 Ninja endpoint/error contract/response Schema를 만들거나 바꾸지 않는다(HTTP 0). 12-slot·framework error profile은 **not applicable**이고, 실패는 HTTP status/ErrorSchema가 아니라 **OHS 반환형의 닫힌 union**(§6)과 **손님 고정 문구**(§3.6)로 표현한다. 12-slot 부재 레인에서도 machine block·입장 표 규율은 상시 적용한다(§10·§11).
+
+### 1.3 api lens가 심사하는 «외부에서 관찰되는 계약» 셋 (scope.md «활성 lens»)
+① **카드 봉투·`output` JSON 규약**(발주서 §5.22 1~8 — 앱이 읽는 wire payload, chat_relay `OutputItemIn` 안에 실린다) → §3.7. 카드 카탈로그 A~J(§5.22 ⑨)의 `name`·`arguments`/`widget` 스키마는 **G·J = S1 · A·B·C·D = S2(§3.7 · `CardComposer` 메서드 4 · §5.22 ⑨ 행 byte 일치) · E·F·I = S3 · H = S4**(봉투·철자 규약은 S0). 카탈로그 «축»(`CardName`·`WidgetKind` enum)은 S2가 A~J 전건을 등재한다(G-S2 산출 게이트 «카드 카탈로그 정본» — 생산 메서드는 슬라이스마다). `output` 4철자의 파싱(D58 `TypeAdapter`)은 S2가 응용에 실현한다.
+② **점집 OHS 스트림 계약**(S4에서 chat_relay ACL이 소비) → §6.
+③ **S4 chat_relay 응답 어댑터 교체**(SSE wire 의미 변화 — `is_available()` True) → S4 개정에서 다룬다(이번 범위 밖).
+
+---
+
+## §2 패키지 · 테스트 구조 결정 (final.md §0·§1 · houserules SKILL §1)
+
+**소스 파일트리는 언제나 dddjango 표준(final.md §1 트리 140행)이다** — 기존 BC 실물(chat_relay·fortune_intent·service_policy 등)은 트리·배선 결정의 입력이 아니라 «형태 규약 참조»일 뿐이다. BC 루트 `application/fortune_house/`의 골격을 §11 file-plan대로 실현한다: 고정·재등장 칸은 비어도 `__init__.py`/빈 파일(#488), 자리표시자 `<…>` 칸은 개념이 실제 있을 때만(#489), BC 직계는 일곱뿐(#81), 트리 밖 칸 0(#490). 산출물 경로는 언제나 `<칸>.py`로 적는다 — 동명 폴더 승격 여부는 구현 캐스케이드 소유(houserules §1).
+
+### 2.1 실현하는 «칸» — BC 전체 배치(전 슬라이스가 들어갈 자리) · **S0·S1 산출은 §11 file-plan의 add만**
+- **`composition_root/`** — `dependency_wiring.py`(concrete: `build_*` 4팩토리 · #85 «만들기와 꽂기 둘뿐») · `event_wiring.py`(**빈 파일** — 이벤트·system check 0. `FORTUNE_HOUSE_*` 설정값이 생기면 chat_relay 선례대로 여기가 `checks.register` 자리 — S0은 0).
+- **`published_event/`** — 빈 골격(이벤트 0 · §8.2).
+- **`driving_layer/`**
+  - `api/` — `api_router.py`·`bc_error_schema.py` **빈 파일**(HTTP 0) · `webhook/` 빈 골격. `<area>/` 없음.
+  - `open_host_service/visit_turn/` — 점집 공개 표면(§6): `visit_turn_service.py`(공개 함수 3) · `contract/request/`(3) · `contract/response/`(2) · `contract/exception/visit_turn_published_error.py`(**기저 `VisitTurnPublishedError(Exception)` 1 · 던지는 창구 0** — 모든 실패는 union variant·고정 문구 · #167 짝 규칙(published_error 파일이 있으면 기저 클래스가 있다) · S4 chat_relay ACL이 마지막 handler에서 잡을 기저 · #473 STOP 회신 1+1′ §12.1).
+  - `cron_job/`·`event_subscription/` — 빈 골격(`event_router.py` 빈 파일).
+  - **표현 판정**: 이 BC의 표현은 OHS(같은 프로세스 함수 호출)뿐이다 — HTTP·cron·이벤트 진입은 없다(빈 골격은 부재 표시).
+- **`application_layer/`**
+  - `visit_turn/`(area) — S0 유스케이스 4: `open_visit_turn/`·`pull_visit_turn/`·`close_visit_turn/`·`run_visit_turn/`(§4). 각 폴더는 `_use_case`·`_command`·`_query`·`_result` 네 칸을 갖고 미사용 입력·출력 파일은 **빈 파일**(#569·#570).
+  - **후속 area 자리(S1~S4 — 서술만)**: 손님 맞이·분류·잡담(S1)·운세/점쟁이/입력(S2)·계산/예약/답/저장(S3)·추가 질문(S4)은 **모두 `run_visit_turn` 유스케이스가 조율하는 단계**이지 별개 area가 아니다 — area는 `visit_turn` 하나로 유지하고 단계 재료는 `domain_layer/`(판정)와 `port/`(부품 ACL)에 놓는다. *왜* — 한 턴은 한 응용 흐름이고, 응용 서비스는 흐름 제어만 한다(§3.6). 단계별 «판정»(화자·문구·입력 충족·세운 범위·카드 답 해석)은 도메인 서비스/VO로, 부품 «호출»은 ACL 포트로 가르므로 use case는 커져도 조율만 남는다(승격 판정은 구현 캐스케이드 소유).
+  - `port/` — S0 능력 포트 3: `clock/`(§4.1 시계) · `detached_task/`(worker 스레드 — chat_relay 동형 능력 이름) · `turn_stream/`(결과 큐·프로세스 로컬 레지스트리) + `unit_of_work/visit_unit_of_work.py`. **S1**: `domain_bypass_query/speech_generation_configuration/`(잡담·안내 LLM 설정 행 읽기 · fortune_intent 동형) + **ACL 포트 6**(`port/<capability>/` — #187 · §4.1): `account_profile/`(accounts) · `usage_policy/`(service_policy) · `record_archive/`(fortune_record) · `message_classification/`(fortune_intent — 점집 UL «말 가르기» · #33) · `character_catalog/`(fortune_character) · `text_generation/`(llm_access stream). **S2 ACL 포트 2 신설 + 3 확장**(§4.1): `fortune_catalog/`(fortune_catalog 3창구 — 목록·후보 가시성·지원 자료) · `intent_structuring/`(fortune_intent #4 의도 구조화 — 점집 UL «의도 구조화» · `message_classification/`와 능력이 다르다(말 가르기 ≠ 구조화) · 첫 토큰 `intent`는 트리 폴더명이 아니다 #33) + 기존 `account_profile/`(`get_saju_profile` #11 재료) · `usage_policy/`(`is_action_allowed` §5.15 ⑤ 조기 판정) · `character_catalog/`(`find_matching_characters`·`get_price_quote`·`draw_prompt_set`)에 메서드 추가. **S3 자리**: `chart_calculation/`(fortune_calculation) · `currency_reservation/`(wallet — `wallet` 토큰은 BC명이라 #364 위반 · 능력 낱말로) · `evidence_provisioning/`·`citation_validation/`(fortune_reading) · `structured_generation/`(llm_access structured). 포트 이름은 «능력»이지 공급자 BC 이름이 아니다(#364 — 판정은 파일 stem을 `_`로 토큰 분할한 집합 ∩ BC명 집합 = ∅ · `check-context-isolation.py:693-695`): `fortune_catalog/`는 토큰 `{fortune, catalog}`가 어느 BC명과도 같지 않아 통과하고(능력 낱말 «운세 목록» = 카탈로그라 BC명과 우연히 같은 낱말 — 토큰 판정 통과 · 대안 `fortune_menu`는 UL에 없다), `intent_structuring/`은 `{intent, structuring}` 통과, `wallet/`은 토큰 `{wallet}` = BC명이라 확정 위반이다(그래서 S3 자리는 `currency_reservation/`).
+- **`domain_layer/`** — 애그리거트 **`visit/`**(방문 — §3.2) 하나 · `shared_value_object/`(안내·카드·렌더·설정·대본·응답 VO군 §3.5~§3.9 + S1: 카드 이름·위젯 종류·부재 사유·발화 메시지·턴 예산 + **S2**: 필수 입력·입력 판정·점쟁이 제안·운세 선택지·점쟁이 가용성·계정 시간대) · `visit/value_object/`(**S2** 진행 중 요청 `FortuneRequest` · 이월 `CarriedRequest` TTL·stale-guard) · `domain_service/`(S0: 문구 해석·화자 판정·대본 읽기 · S1: 부재 판정·거부 해석·잡담 프롬프트 조립·카드 봉투 생산·이름 폴백 · **S2**: 필수 입력 판정·점쟁이 제안 판정·라벨 폴백·안내 발화 프롬프트 조립 §3.6). 잡담·안내 LLM 설정 행은 애그리거트가 아니라 **admin 편집 행 + 도메인 VO 검증 + bypass query 읽기**(fortune_intent D40 패턴 · 발주서 §5.8)로 둔다.
+- **`driven_layer/`**
+  - `django_fortune_house/` — `apps.py`(`FortuneHouseConfig`) · `models/visit_model.py`(**S2** `fortune_request` JSON 열 1 추가 §5.4)·`models/speech_generation_configuration_model.py` · `migrations/0001_initial.py`(makemigrations 산출물 — RunPython 0) · **S2 `migrations/0002_visitmodel_fortune_request.py`**(`AddField` 1 — makemigrations 산출물 그대로 · §7.6) · `admin/visit/panel.py`(읽기 전용) · `admin/speech_generation_configuration/{panel.py, form/speech_generation_configuration_form.py}`(change-only) · `admin/__init__.py`(등록 진입점).
+  - `adapter/persistence/{repository/visit_repository.py, unit_of_work/visit_unit_of_work.py}` · `adapter/persistence/domain_bypass_query/speech_generation_configuration_query.py`(S1 §5.8).
+  - `adapter/clock/system_clock_adapter.py` · `adapter/detached_task/thread_adapter.py` · `adapter/turn_stream/thread_queue_adapter.py`.
+  - `adapter/anticorruption_layer/<bc>/<capability>_adapter.py` — **S1 6**(§5.7): `accounts/account_profile_adapter.py` · `service_policy/usage_policy_adapter.py` · `fortune_record/record_archive_adapter.py` · `fortune_intent/message_classification_adapter.py` · `fortune_character/character_catalog_adapter.py` · `llm_access/text_generation_adapter.py`(상대 BC 하나 = 폴더 하나 #361 · 파일 stem은 능력 이름). **S2 신설 2 + 확장 3**(§5.7): `fortune_catalog/fortune_catalog_adapter.py`(신설 폴더) · `fortune_intent/intent_structuring_adapter.py`(같은 BC 폴더에 능력 파일 하나 더 — #361은 «상대 BC 하나 = 폴더 하나»이고 능력별 파일은 폴더 안에 여럿) · `accounts/account_profile_adapter.py`·`service_policy/usage_policy_adapter.py`·`fortune_character/character_catalog_adapter.py`에 메서드 추가. **S3 자리**: `fortune_calculation/` · `wallet/` · `fortune_reading/` · `llm_access/`(S3 structured 메서드). 각 ACL은 **그 BC의 OHS 모듈·contract만 import**하고(#13·D11) 부품 published 예외를 **전수 명시 매핑 + 기저 catch**(#473)로 점집 포트 예외에 번역한다 — `except Exception` 폴백은 ACL에 두지 않고(#129·#473) 응용 `RunVisitTurnUseCase`의 catch-all이 `internal_error`로 접는다(§4.4 두 층 분담 · 발주서 §4.8의 결과는 같다: presentation·application은 타 BC 예외 타입을 모른다).
+  - `adapter/external_system/` — 빈 골격(소켓 여는 어댑터 0 — LLM은 llm_access OHS 경유).
+- **`test/`** — `unit/`(

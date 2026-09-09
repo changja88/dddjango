@@ -1,0 +1,4 @@
+Found 'web/htmx/htmx.min.js' here:
+  /private/tmp/dddjango-web-js-integration-20260905/codex/app/web/static/htmx/htmx.min.js
+Found 'design_system/foundation/tokens.css' here:
+  /private/tmp/dddjango-web-js-integration-20260905/codex/app/web/design_system/foundation/tokens.css

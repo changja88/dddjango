@@ -2,7 +2,7 @@
 
 > **이 문서는 «무엇이 참이어야 하나»만 적는다.** 지금 있는 플러그인도 `broccoli-server` 도 보지 않는다.
 > 현행과의 대조는 **계획 5번**이 한다 — 규율 ①(원리로 짓고 기존 구현은 다 만든 뒤 대조)이 그 순서다.
-> 근거는 전부 정본(`docs/file_tree.html` · 트리 **140행** · 결정 카드 **57장** · sha `a19a023a52b893bc`)에 있고, 이 문서는 그것을 **한 줄짜리 규칙**으로 편 것이다.
+> 근거는 전부 정본(`docs/file_tree.html` · 트리 **170행** · 결정 카드 **57장**)에 있고, 이 문서는 그것을 **한 줄짜리 규칙**으로 편 것이다.
 
 ## 컬럼
 
@@ -273,10 +273,10 @@ D45 축자가 *「기계가 후보를 좁히고 사람이 마무리한다」* �
 | 판정 | blocker | 검사기 | 이행 | 면제 | 계 |
 |---|---|---|---|---|---|
 | `path` | 154 | 9 | 4 | 5 | **172** |
-| `ast` | 281 | 7 | 4 | 1 | **293** |
+| `ast` | 282 | 7 | 4 | 1 | **294** |
 | `ast+` | 59 | 1 | 0 | 0 | **60** |
 | `human` | 6 | 3 | 2 | 16 | **27** |
-| **계** | **500** | **20** | **10** | **22** | **552** |
+| **계** | **501** | **20** | **10** | **22** | **553** |
 
 <span>*(3단계에서 24건이 들어와 447 → 471, 3차 리뷰 반영으로 10건이 들어와 481, T26·T27(D39) 반영으로 4건이 들어와 **485**, 그리고 **D40~D59 회수로 110건이 들어와 595** 가 됐다. 3차에서 허가문 9건이 blocker → `면제`, 검사 범위 6건이 → `검사기` 로 바로잡혔고, «파일 내용을 세는» path 9건이 `ast` 로, 크로스-BC·어휘 판정 4건이 `human` 으로, «두 번째 BC» 3건이 `human` → `ast` 로 옮겨갔다. 복합 제안(ast+human)은 상위 수단 하나로 적는다 — 판정 컬럼은 «충분한 최소 수단»이다. **회수분 110건의 갈림은 `ast` 57 · `human` 30 · `path` 23** 이다 — 신설 칸이 대부분 «파일 안의 모양»을 규정해서다.)*</span>
 
@@ -284,7 +284,7 @@ D45 축자가 *「기계가 후보를 좁히고 사람이 마무리한다」* �
 
 | | 몇 | 무엇 |
 |---|---|---|
-| `path`+`ast` 의 blocker | **435** | **결정적 백스톱** — 기계가 혼자 판정하고 반송한다 |
+| `path`+`ast` 의 blocker | **436** | **결정적 백스톱** — 기계가 혼자 판정하고 반송한다 |
 | `ast+` 의 blocker | **59** | **후보를 좁히는 검사** — 경고를 내고 리뷰어가 마무리한다. 술어 셋(확정·후보·물음)이 `2026-08-11-predicates.md` 에 있다 |
 | `human` 의 blocker | **6** | 기계 술어가 아예 없다 — `#254`·`#316`·`#526`·`#530`·`#563`·`#626` |
 
@@ -352,9 +352,9 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 16 | 그 구분이 없으면 규칙을 못 쓰거나 검사를 못 할 때만 폴더로 못 박는다. | D10 | `human` | principle |  | **면제** |
 | 17 | 폴더의 1차 축은 도메인 이름이고 종류는 2차이며 평면 나열은 금지된다(§0-4) — 무는 곳은 «도메인 것»을 나누는 칸(`<aggregate>/`·`<area>/`)이고, 입구 칸의 1차는 «어떤 전송으로 오나»(`api/`·`open_host_service/`·`cron_job/`·`event_subscription/` — D53)이고 어댑터 칸의 1차는 «누구를 구동하나»(`persistence/`·`anticorruption_layer/`·`external_system/`·`<capability>/` — D37)라 **검사 대상 밖이다**(트리 60·89행 — 이 뒷 절은 «검사기» 등급이다). | D7 근거① · D8 · D24 · D27 · D30 + 트리 60·89행+D53+D37 | `ast+` | principle |  | **blocker** |
 | 18 | 종류 이름 폴더가 개념 이름 폴더와 형제로 나란히 오면 §0-4 위반이다 — 단 트리가 명문으로 세운 형제(domain_layer 의 `shared_value_object/`·`domain_service/`, application_layer 의 `port/`)는 위반이 아니다. | D30 판정표 + D27 + 트리 59행 | `ast+` | principle |  | **blocker** |
-| 19 | 트리 전체에서 기술 이름을 1차 축으로 쓰는 자리는 framework/<technology>/ 하나뿐이다. | D7 근거① + D24 + 트리 126행 | `path` | principle |  | **blocker** |
-| 20 | 값이 하나뿐인 축으로는 폴더를 만들지 않는다. | D7 근거② + D13(specification/) | `path` | principle |  | **blocker** |
-| 21 | 어떤 종류가 하나뿐이면 폴더가 아니라 파일로 둔다. <span>2026-09-01 · **동명 폴더 승격 부칙** — 주어는 트리 설계의 축·종류 결정이다 — 동명 폴더 승격은 종류 축 폴더가 아니라 이 규칙의 주어가 아니다.</span> | D27 + D12 · D17 선례(unit_of_work.py · <aggregate>_repository.py · exception.py) | `path` | principle |  | **blocker** |
+| 19 | 트리 전체에서 기술 이름을 1차 축으로 쓰는 자리는 framework/<technology>/ 하나뿐이다. | D7 근거① + D24 + 트리 156행 | `path` | principle |  | **blocker** |
+| 20 | 값이 하나뿐인 축으로는 폴더를 만들지 않는다. 트리가 명시한 어댑터의 고정 역할 폴더는 내용 파일 수와 무관하게 모두 둔다(#488). | D7 근거② + D13(specification/) | `path` | principle |  | **blocker** |
+| 21 | 어떤 종류가 하나뿐이면 폴더가 아니라 파일로 둔다. <span>2026-09-01 · **동명 폴더 승격 부칙** — 주어는 트리 설계의 축·종류 결정이다 — 동명 폴더 승격은 종류 축 폴더가 아니라 이 규칙의 주어가 아니다.</span> 트리가 명시한 어댑터의 고정 역할 폴더는 내용 파일 수와 무관하게 모두 둔다(#488). | D27 + D12 · D17 선례(unit_of_work.py · <aggregate>_repository.py · exception.py) | `path` | principle |  | **blocker** |
 | 23 | 설계 근거는 DDD · 클린 · 헥사고날 셋에서만 끌어오고 broccoli-server 의 현재 모습을 설계 입력으로 쓰지 않는다(규율 ①). | 1장 warn-box «규율 — 원리로 짓고, 기존 구현은 다 만든 뒤에 대조한다» | `human` | principle |  | **면제** |
 | 24 | 실측 숫자는 다 만든 뒤 대조에만 쓰고 그 전까지는 근거가 아니라 참고다(규율 ①). | 1장 warn-box | `human` | principle |  | **면제** |
 | 25 | 한 겹은 칸·이름·화살표·앎의 범위 넷이 다 정해져야 닫히고, 하나라도 비면 다음 칸으로 넘어가지 않는다(규율 ②). | 1장 «한 겹이 «닫혔다»는 것은 넷이 다 정해진 것» + 2차 리뷰 「규율 ②(한 칸씩 닫고 넘어간다)」 | `human` | principle |  | **면제** |
@@ -364,21 +364,21 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 30 | 자리표시자 이름의 파일도 «종류»를 접미사로 단다 — 가르는 자는 **「이름이 곧 서술문이거나 동사구인가」**다(D41). 그런 것만 접미사를 안 단다: `<aggregate>.py`·`<entity>.py`·`<value_object>.py`·`<event>.py`·`<exception>.py`·`<domain_service>.py`·`<migration>.py`·`<feature>.py`·`<declaration>.py`·`<module>.py`·`<environment>.py`. | D41 + D8 «이름» + 1장 «리프 이름 규칙» | `path` | both | `measured_ok` | **blocker** |
 | 33 | 파일 이름의 접두는 자기가 속한 곳(부모·조상 폴더)을 가리키고, 자기가 살지 않는 옆 폴더 이름을 접두로 쓰지 않는다. <span>2026-08-25 · **#335 자리 면제** — #335가 소유하는 `django_<bc>/models/<entity>_model.py` 자리의 첫 토큰은 이 규칙의 대상이 아니다: entity 이름의 첫 토큰이 트리 폴더명과 겹치는 것은 #335 준수의 합법 귀결이다(규칙 간 충돌 해소 — kkebi `EventStreamModel` 실증).</span> | D27 «이름은 bc_error_schema.py» | `path` | principle |  | **blocker** |
 | 34 | 같은 접두는 같은 스코프를 뜻한다 — `<use_case>_*`(`_command`·`_query`·`_result`)는 **유스케이스당**이고 `schema_*`(`schema_in`·`schema_out`)는 **`<area>/` 당**이다. <span>08-11 — 옛 문면의 `dto_*` 와 「feature 당」은 **개명 둘을 못 받은 죽은 문면**이었다(변환 기록 ②의 `dto_in`/`dto_out` → `<use_case>_command`/`_result` 와 `<feature>/` → `<area>/`). `feature` 는 지금 `admin/<entity>/feature/<feature>.py` 라는 **다른 뜻으로 살아 있어** 더 위험했다.</span> | D27 «이름은 bc_error_schema.py» | `path` | principle |  | **blocker** |
-| 35 | 저장소 루트의 패키지 이름은 파이썬 표준 라이브러리 모듈명(`sys.stdlib_module_names`)과 겹치지 않는다. | D24 ③ 재결정 + 트리 112행 | `path` | both | `measured_ok` | **blocker** |
+| 35 | 저장소 루트의 패키지 이름은 파이썬 표준 라이브러리 모듈명(`sys.stdlib_module_names`)과 겹치지 않는다. | D24 ③ 재결정 + 트리 142행 | `path` | both | `measured_ok` | **blocker** |
 | 36 | 칸 이름은 「판정이 되는 물음」을 가져야 하고, 「공통이냐」처럼 정도로 재는 이름은 쓰지 않는다. | D24 ② + D30(«서랍» 방지) | `ast+` | principle |  | **blocker** |
-| 39 | port/<capability>/<capability>_port.py 를 구현하는 클래스는 전부 …Adapter 로 끝난다. | D33 검사② + 트리 125행 | `ast` | principle | `principle` | **blocker** |
-| 40 | 클래스 이름에서 자리 접미사를 뗀 나머지는 «능력을 말하는 쪽»(보통 파일 이름, 파일이 기술만 말하는 자리에서는 폴더 이름)의 CamelCase 를 **접미사로 포함**한다 — **«포함»이라 접두사가 열려 있다**(`DjangoClockAdapter` ✔ · 무접두 `ClockPort` ✔ — #403·#220 이 요구하는 모양이다). | D33 검사③ (08-07 2차 리뷰 S6 로 앵커가 둘이 됐다) + 트리 125행 | `ast` | principle |  | **blocker** |
-| 41 | `Port`·`Adapter`·`Gateway` 는 **폴더** 이름에 나오지 않는다 — 파일은 접미사로 종류를 진다(`<capability>_port.py`·`<technology>_adapter.py`). <span>2026-09-01 · **동명 폴더 승격 부칙** — 동명 폴더 승격의 승격 폴더명(`*_adapter/` 등 — 폴더명=칸 파일명·본체 실존)은 예외다.</span> | D33+D41 | `path` | principle |  | **blocker** |
+| 39 | port/<capability>/<capability>_port.py 를 구현하는 클래스는 전부 …Adapter 로 끝난다. | D33 검사② + 트리 155행 | `ast` | principle | `principle` | **blocker** |
+| 40 | 클래스 이름에서 자리 접미사를 뗀 나머지는 «능력을 말하는 쪽»(보통 파일 이름, 파일이 기술만 말하는 자리에서는 폴더 이름)의 CamelCase 를 **접미사로 포함**한다 — **«포함»이라 접두사가 열려 있다**(`DjangoClockAdapter` ✔ · 무접두 `ClockPort` ✔ — #403·#220 이 요구하는 모양이다). | D33 검사③ (08-07 2차 리뷰 S6 로 앵커가 둘이 됐다) + 트리 155행 | `ast` | principle |  | **blocker** |
+| 41 | `Port`·`Adapter`·`Gateway` 는 **폴더** 이름에 나오지 않는다 — 파일은 접미사로 종류를 진다(`<capability>_port.py`·`<technology>_adapter.py`). <span>2026-09-01 · **동명 폴더 승격 부칙** — 동명 폴더 승격의 승격 폴더명(`*_adapter/` 등 — 폴더명=칸 파일명·본체 실존)은 예외다.</span> §1의 세 어댑터 고정 패키지 이름은 본체 파일 유무와 무관하게 예외다. | D33+D41 | `path` | principle |  | **blocker** |
 | 42 | 접미사 검사의 대상은 «자리»가 정한다 — <capability>/<capability>_port.py 안의 클래스만 대상이고 같은 폴더의 exception.py·<data>_out.py·<data>_in.py 는 대상이 아니다. | D33 «검사 대상은 «자리»가 정한다» | `path` | principle |  | **검사기** |
 | 43 | 패턴 이름(Gateway·Adapter·Port)은 자리가 대신 말하므로 능력 이름에 쓰지 않고, 동사에서 온 이름(Issuer·Generator·Sender)만 남긴다. | D33 «딸려 닫힌 것 ①» + D18 | `ast` | principle | `principle` | **blocker** |
 | 44 | 도메인 서비스 이름이 같은 BC 의 값 객체와 겹치면 행위 이름으로 짓는다. | D33 «딸려 닫힌 것 ②» + D32 | `path` | principle |  | **blocker** |
-| 46 | framework/ 에서 application/ 쪽으로 나가는 import 는 0 건이다. | D24 ④ + 트리 112행 + [framework] 파트 | `ast` | measured | `measured_ok` | **blocker** |
-| 47 | framework/<capability>/ 에 들어오려면 계약의 이름에도 시그니처에도 어느 BC 의 업무 어휘가 한 글자도 없어야 한다. | D24 «판정이 이분법이어야 한다» + 트리 120행 | `ast` | both | `measured_ok` | **blocker** |
-| 48 | 같은 4단 판정을 전역에서도 쓴다 — 「폴더 이름과 같은 파일이 있나」는 D41 이 **`*_port.py` 가 있나로 갈아끼웠다**. | D24+D41+트리 112행 | `path` | principle |  | **blocker** |
+| 46 | framework/ 에서 application/ 쪽으로 나가는 import 는 0 건이다. | D24 ④ + 트리 142행 + [framework] 파트 | `ast` | measured | `measured_ok` | **blocker** |
+| 47 | framework/<capability>/ 에 들어오려면 계약의 이름에도 시그니처에도 어느 BC 의 업무 어휘가 한 글자도 없어야 한다. | D24 «판정이 이분법이어야 한다» + 트리 150행 | `ast` | both | `measured_ok` | **blocker** |
+| 48 | 같은 4단 판정을 전역에서도 쓴다 — 「폴더 이름과 같은 파일이 있나」는 D41 이 **`*_port.py` 가 있나로 갈아끼웠다**. | D24+D41+트리 142행 | `path` | principle |  | **blocker** |
 | 49 | BC 사이의 공유는 언제나 관문 + 번역으로 풀고 Shared Kernel 은 만들지 않는다. | D24 «shared_kernel/ 은 만들려다 접었다» | `ast` | principle |  | **blocker** |
 | 51 | BC 테스트가 다른 BC 의 test 를 import 하면 위반이다. | D24 «⚠ 구현할 때 챙길 것» | `ast` | measured | `measured_ok` | **blocker** |
-| 52 | BC 하나를 지웠을 때 바뀌는 파일은 공용 칸(framework/)으로 올리지 않는다. | D24 «새 축»(R11) + D25 ① + 트리 131행 | `ast` | measured | `measured_ok` | **blocker** |
-| 53 | framework/test/ 는 HTTP 로만 시스템을 구동한다(모델 import 금지) — **팩토리도 그래서 여기 못 온다**(#392·#620). | D24 «규칙 둘» ① + 트리 130행 + [framework] 파트 | `ast` | principle |  | **blocker** |
+| 52 | BC 하나를 지웠을 때 바뀌는 파일은 공용 칸(framework/)으로 올리지 않는다. | D24 «새 축»(R11) + D25 ① + 트리 161행 | `ast` | measured | `measured_ok` | **blocker** |
+| 53 | framework/test/ 는 HTTP 로만 시스템을 구동한다(모델 import 금지) — **팩토리도 그래서 여기 못 온다**(#392·#620). | D24 «규칙 둘» ① + 트리 160행 + [framework] 파트 | `ast` | principle |  | **blocker** |
 | 54 | 규칙을 주소 목록으로 쓰지 않는다 — 목록은 빠뜨리고 규칙은 안 빠뜨린다. | D25 «왜 이 구역이 열려 있었나» + D26(imports= 기각) | `ast+` | measured | `measured_ok` | **검사기** |
 | 56 | 트리 밖 구역(scripts/)은 이름도 화살표도 앎의 범위도 규정하지 않는다 — 예외가 아니라 관할 밖이다. | D22 «왜 scripts/ 는 규정 없이 안전한가» + D21 | `human` | principle |  | **면제** |
 | 58 | application/**/management/commands/ 를 만들지 않는다. | D22 «결정 — 칸을 만들지 않는다» | `path` | measured | `measured_ok` | **blocker** |
@@ -639,7 +639,7 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 325 | ORM 모델·마이그레이션·어드민이 사는 폴더는 `driven_layer/django_<bounded_context>/` 이고 그 자체가 장고 앱이다 — 폴더 이름은 `django_` + BC 이름이다. | 트리 76행+D15 | `path` | principle | `principle` | **blocker** |
 | 326 | `django_<bounded_context>/` 는 django 와 같은 폴더 안 말고 아무것도 import 하지 않는다 — `domain_layer` 도 금지다(잎). **예외(2026-08-12 D1′)**: 자기 BC domain VO(`value_object/`·`shared_value_object/`)의 **값 파생 전용** from-import 는 허용한다 — 나열·순회·멤버 참조까지이고, 호출(판정·행위)은 위반이다(`implementation-django` 「값 집합은 domain StrEnum 에서 파생」 요구와 정렬). | 트리 76행+D15 검사①+D20 검사② | `ast` | principle |  | **blocker** |
 | 327 | `django_<bounded_context>/admin/**` 는 driven_layer 화살표 검사와 잎 import 검사의 대상에서 뺀다. | D15 검사①+D20 검사①②+D21 | `path` | measured | `measured_ok` | **검사기** |
-| 328 | `django_<bounded_context>/` 를 import 하는 것은 `driven_layer/adapter/persistence/` 아래뿐이다. <span>09-01 · 면제 — `adapter/<capability>/` 의 `django_adapter.py`(동명 폴더 승격 꼴 포함·`anticorruption_layer/`·`external_system/` 제외)는 비애그리거트 ORM 쓰기 능력의 기술 구현으로 허용(houserules §5·R-3423 — 2호 실증·사용자 A안 성문화·#462 정합).</span> | D15 검사③+D20 검사③+D37 | `ast` | principle |  | **blocker** |
+| 328 | `django_<bounded_context>/` 를 import 하는 것은 `driven_layer/adapter/persistence/` 아래뿐이다. <span>09-01 · 면제 — `adapter/<capability>/django_adapter/adapter/<implementation>_adapter.py`(`anticorruption_layer/`·`external_system/` 제외)는 비애그리거트 ORM 쓰기 능력의 기술 구현으로 허용(houserules §5·R-3423 — 2호 실증·사용자 A안 성문화·#462 정합).</span> | D15 검사③+D20 검사③+D37 | `ast` | principle |  | **blocker** |
 | 329 | `apps.py` 의 AppConfig 는 `label` 을 명시 선언한다 — 기본값에 기대지 않는다. | 트리 77행+D15 검사④ | `ast` | principle |  | **blocker** |
 | 330 | `label` 값은 BC 이름과 같고, 폴더 이름은 그 값에 `django_` 를 붙인 것이다. | 트리 77행+D15 검사④ | `ast` | both | `measured_ok` | **blocker** |
 | 331 | BC 이름은 설치된 다른 앱의 `label` 과 겹치지 않는다 — 목록은 고정 나열이 아니라 «그 저장소에 설치된 앱 전부»다(`admin`·`auth`·`sessions` …). | 트리 77행+D15 | `ast` | principle |  | **blocker** |
@@ -663,7 +663,7 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 350 | 드리븐에 `read_model/` 같은 폴더를 따로 만들지 않는다 — Thin Read 구현은 `adapter/persistence/domain_bypass_query/` 에 산다. | 트리 93·94행+D29 | `path` | measured | `measured_ok` | **blocker** |
 | 351 | `domain_layer/<A>/<A>_repository.py` 선언마다 `driven_layer/adapter/persistence/repository/<A>_repository.py` 구현이 정확히 하나 있다. | 트리 92행+D15 검사② | `path` | principle |  | **blocker** |
 | 352 | 리포지토리 구현은 폴더가 아니라 파일이다 — 애그리거트당 하나다. <span>2026-09-01 · **동명 폴더 승격 부칙** — 동명 폴더 승격(#490 교체형·본체 실존)은 예외다 — 「애그리거트당 하나」 규율은 본체가 진다.</span> | 트리 92행+D15 | `path` | principle |  | **blocker** |
-| 353 | `adapter/` 아래 모든 `.py` 는 «어떤 선언의 구현»이고 그 선언을 **경로**가 가리킨다 — 이름이 선언과 «같은» 것은 `persistence/` 쪽뿐이고(`repository/<aggregate>_repository.py` · `domain_bypass_query/<capability>_query.py` · `unit_of_work/<boundary>_unit_of_work.py`), `<capability>/` 아래는 «폴더가 선언을, 파일이 어느 기술인가»를 말한다(`<technology>_adapter.py`). | 트리 89행+D37+D57 | `path` | principle |  | **blocker** |
+| 353 | `adapter/` 아래 구현 역할 파일 는 «어떤 선언의 구현»이고 그 선언을 **경로**가 가리킨다 — 이름이 선언과 «같은» 것은 `persistence/` 쪽뿐이고(`repository/<aggregate>_repository.py` · `domain_bypass_query/<capability>_query.py` · `unit_of_work/<boundary>_unit_of_work.py`), `<capability>/` 아래는 «능력 폴더가 선언을, 바깥 어댑터 패키지가 어느 기술인가»를 말한다(`<technology>_adapter/`). | 트리 89행+D37+D57 | `path` | principle |  | **blocker** |
 | 354 | 리포지토리 구현 클래스 이름은 `Django<Aggregate>Repository` 다 — `Repository`·`UnitOfWork`·`DomainBypassQuery` 는 구현에도 참인 역할 이름이라 선언과 공유하고 기술 접두사가 가른다. | 트리 92행+D33 | `ast` | principle |  | **blocker** |
 | 355 | 조회가 `<aggregate>_repository.py` 에 남나 `port/domain_bypass_query/`+`persistence/domain_bypass_query/<capability>_query.py` 로 나가나는 «그 메서드의 주어가 그 애그리거트인가, 화면인가»로 가른다 — 그 애그리거트 얘기면 반환형이 `bool`·`int` 라도(개수·요약 포함) 남고, 화면 때문에 여러 애그리거트를 가로질러 표를 만드는 것만 나간다. | 트리 68·94행+D29 | `ast+` | principle |  | **blocker** |
 | 356 | `driven_layer/adapter/persistence/domain_bypass_query/<capability>_query.py`(Thin Read Layer)는 `domain_layer` 를 import 하지 않는다. | 트리 94행+D29 결정③ | `ast` | principle |  | **blocker** |
@@ -671,25 +671,25 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 358 | Thin Read 구현이 바깥으로 내보내는 것은 «이름 붙인 정적 타입»뿐이다 — ORM 로우도 `QuerySet` 도 응용에 넘기지 않는다. | D29 결정④ | `ast` | principle |  | **blocker** |
 | 359 | Thin Read 구현 클래스 이름은 `Django<Capability>DomainBypassQuery` 다. | 트리 94행+D33 | `ast` | principle |  | **blocker** |
 | 361 | `anticorruption_layer/` 아래는 상대 BC 하나 = 폴더 하나(`<bounded_context>/`)다. | 트리 97·98행+D17 | `path` | principle |  | **blocker** |
-| 362 | `anticorruption_layer/<bounded_context>/` 아래의 구조는 규정하지 않는다. | 트리 98행+D17 | `path` | principle |  | **면제** |
-| 363 | ACL 어댑터 클래스 이름은 `<Bc><Capability>Adapter` 다. | 트리 99행+D33 | `ast` | both | `measured_ok` | **blocker** |
+| 362 | ACL 어댑터의 고정 역할 골격 안에서 실제 내용 파일의 목록·개수는 규정하지 않는다 — 필요한 클래스마다 파일을 추가한다(#651). | 트리 98행+D17 | `path` | principle |  | **면제** |
+| 363 | ACL 어댑터 클래스 이름은 `<Bc><Capability>Adapter` 다. | 트리 101행+D33 | `ast` | both | `measured_ok` | **blocker** |
 | 364 | 어댑터는 «누구»(폴더 = 상대 BC·상대 시스템)로, 포트는 «필요»(파일 = capability)로 이름 붙는다 — 포트 파일 이름에 공급자 BC 이름을 넣지 않는다. | 트리 99행+D17 | `path` | principle |  | **blocker** |
-| 365 | 우리가 못 고치고 계약이 저장소 밖에 있는 상대는 `external_system/` 아래 두고 `anticorruption_layer/` 에 넣지 않는다. <span>2026-08-25 · **병렬 워크트리 기준** — «우리 BC»는 병렬 워크트리에서 개발 중이라 이 스냅숏에 없는 자사 BC 를 포함한다. 스냅숏에 대상 BC 가 없을 때 그 `acl/` 모듈의 import 가 자기 BC·framework·비통신 stdlib 뿐(구조 순수성)이면 후보로 강등하고, 통신 축 import(벤더 SDK·`urllib`/`socket`/`subprocess`/`importlib` 류·`__import__`)가 하나라도 있으면 위반을 유지한다 — 외부 시스템의 ACL 위장 차단.</span> | 트리 100행+D18 | `path` | principle |  | **blocker** |
+| 365 | 우리가 못 고치고 계약이 저장소 밖에 있는 상대는 `external_system/` 아래 두고 `anticorruption_layer/` 에 넣지 않는다. <span>2026-08-25 · **병렬 워크트리 기준** — «우리 BC»는 병렬 워크트리에서 개발 중이라 이 스냅숏에 없는 자사 BC 를 포함한다. 스냅숏에 대상 BC 가 없을 때 그 `acl/` 모듈의 import 가 자기 BC·framework·비통신 stdlib 뿐(구조 순수성)이면 후보로 강등하고, 통신 축 import(벤더 SDK·`urllib`/`socket`/`subprocess`/`importlib` 류·`__import__`)가 하나라도 있으면 위반을 유지한다 — 외부 시스템의 ACL 위장 차단.</span> | 트리 110행+D18 | `path` | principle |  | **blocker** |
 | 366 | `external_system/` 판정선은 «남의 회사냐»가 아니라 «계약이 저장소 밖이고 네트워크 너머라 런타임에 터지나»다 — 우리가 운영하는 Redis 같은 인프라도 여기다. | D18 | `ast` | principle |  | **blocker** |
-| 367 | `driven_layer/**` 안에서 **프로세스 밖으로 소켓을 여는 라이브러리**를 import 하는 것은 `external_system/<system>/<capability>_adapter.py` 안에서만 허용된다. **가르는 자는 「이 라이브러리가 소켓을 여나」 하나이고, 목록은 «예시»가 아니라 «저장소가 실제로 쓰는 의존성에 맞춰 유지하는 데이터»다** — `httpx`·`requests`·`boto3`·`openai`·`redis`·`kafka-python`·`pika`·`grpcio`·`smtplib` 처럼 **HTTP 만이 아니라 브로커·캐시·메일도 들어온다**. **이름을 나열해 «닫으면» 새 의존성이 들어올 때 검사가 조용히 통과한다** — 옛 문면이 목록을 셋(`httpx`·`boto3`·`openai`)으로 닫아 두어, **#319·#366 이 축자로 지목한 Redis·Kafka 를 이 검사가 못 잡고 있었다.** **`framework/` 는 이 규칙의 대상이 아니다**(주어가 `driven_layer/**` 다) — 그쪽 SDK 의 자리는 `framework/<technology>/`(#411·#415)와 `framework/<capability>/<technology>_adapter.py`(#405·#406·#408)다. <span>08-11 · ㉯ — 옛 문면이 「#400·#534 가 따로 연다」라 적었는데 **#400 은 배치 규칙이고 #534 는 파일 개수 규칙이라 둘 다 SDK 를 열지 않는다** — 인용이 처음부터 틀렸다.</span> | 트리 101·102행+D18+D20 | `ast` | principle |  | **blocker** |
-| 368 | 타임아웃·재시도·회로차단·레이트리밋의 **«값»**(몇 초 · 몇 번 · 언제 열림)은 그 상대를 소유한 `external_system/<system>/` 어댑터가 정한다 — 그 **«기계»**(재시도 루프·백오프·차단기)는 `framework/` 가 주고(#556), 여기서 새로 구현하면 위반이다. **«다시 부르기»는 입구(`cron_job/`)의 몫이다.** | 트리 100행+D18+**D52** | `ast+` | principle |  | **blocker** |
-| 369 | `external_system/` 아래는 벤더 하나 = 폴더 하나(`<system>/`)다. | 트리 101행+D18 | `path` | principle |  | **blocker** |
-| 370 | 바깥 시스템 어댑터 클래스 이름은 `<System><Capability>Adapter` 다. | 트리 102행+D33 | `ast` | principle |  | **blocker** |
-| 371 | 포트 구현 중 벤더도 타 BC 도 ORM 도 아니고 **네트워크 너머도 아닌** «나머지»(시계·난수·프로세스 내 락·스레드·파일시스템)는 `driven_layer/adapter/<capability>/<technology>_adapter.py` 에 둔다 — 네트워크 너머 락은 `external_system/` 이다(#366). | 트리 103·104행+D17+D18+D37 | `path` | principle |  | **blocker** |
-| 372 | 그 «나머지»가 BC 안(`driven_layer/adapter/<capability>/<technology>_adapter.py`)이냐 `framework/<capability>/` 냐는 «계약의 이름에도 시그니처에도 어느 BC 의 업무 어휘가 한 글자라도 나오나»로 가른다 — 나오면 BC 안, 한 글자도 없으면 framework. | 트리 104행+D17+D24 | `ast` | both | `measured_ok` | **blocker** |
-| 373 | 그 «나머지» 어댑터 클래스 이름은 `<기술><Capability>Adapter` 다. | 트리 104행+D33 | `ast` | principle |  | **blocker** |
+| 367 | `driven_layer/**` 안에서 **프로세스 밖으로 소켓을 여는 라이브러리**를 import 하는 것은 `external_system/<system>/<capability>_adapter/` 의 역할 파일 안에서만 허용된다. **가르는 자는 「이 라이브러리가 소켓을 여나」 하나이고, 목록은 «예시»가 아니라 «저장소가 실제로 쓰는 의존성에 맞춰 유지하는 데이터»다** — `httpx`·`requests`·`boto3`·`openai`·`redis`·`kafka-python`·`pika`·`grpcio`·`smtplib` 처럼 **HTTP 만이 아니라 브로커·캐시·메일도 들어온다**. **이름을 나열해 «닫으면» 새 의존성이 들어올 때 검사가 조용히 통과한다** — 옛 문면이 목록을 셋(`httpx`·`boto3`·`openai`)으로 닫아 두어, **#319·#366 이 축자로 지목한 Redis·Kafka 를 이 검사가 못 잡고 있었다.** **`framework/` 는 이 규칙의 대상이 아니다**(주어가 `driven_layer/**` 다) — 그쪽 SDK 의 자리는 `framework/<technology>/`(#411·#415)와 `framework/<capability>/<technology>_adapter.py`(#405·#406·#408)다. <span>08-11 · ㉯ — 옛 문면이 「#400·#534 가 따로 연다」라 적었는데 **#400 은 배치 규칙이고 #534 는 파일 개수 규칙이라 둘 다 SDK 를 열지 않는다** — 인용이 처음부터 틀렸다.</span> | 트리 111·112행+D18+D20 | `ast` | principle |  | **blocker** |
+| 368 | 타임아웃·재시도·회로차단·레이트리밋의 **«값»**(몇 초 · 몇 번 · 언제 열림)은 그 상대를 소유한 `external_system/<system>/` 어댑터가 정한다 — 그 **«기계»**(재시도 루프·백오프·차단기)는 `framework/` 가 주고(#556), 여기서 새로 구현하면 위반이다. **«다시 부르기»는 입구(`cron_job/`)의 몫이다.** | 트리 110행+D18+**D52** | `ast+` | principle |  | **blocker** |
+| 369 | `external_system/` 아래는 벤더 하나 = 폴더 하나(`<system>/`)다. | 트리 111행+D18 | `path` | principle |  | **blocker** |
+| 370 | 바깥 시스템 어댑터 클래스 이름은 `<System><Capability>Adapter` 다. | 트리 114행+D33 | `ast` | principle |  | **blocker** |
+| 371 | 포트 구현 중 벤더도 타 BC 도 ORM 도 아니고 **네트워크 너머도 아닌** «나머지»(시계·난수·프로세스 내 락·스레드·파일시스템)는 `driven_layer/adapter/<capability>/<technology>_adapter/adapter/<implementation>_adapter.py` 에 둔다 — 네트워크 너머 락은 `external_system/` 이다(#366). | 트리 123·124행+D17+D18+D37 | `path` | principle |  | **blocker** |
+| 372 | 그 «나머지»가 BC 안(`driven_layer/adapter/<capability>/<technology>_adapter.py`)이냐 `framework/<capability>/` 냐는 «계약의 이름에도 시그니처에도 어느 BC 의 업무 어휘가 한 글자라도 나오나»로 가른다 — 나오면 BC 안, 한 글자도 없으면 framework. | 트리 124행+D17+D24 | `ast` | both | `measured_ok` | **blocker** |
+| 373 | 그 «나머지» 어댑터 클래스 이름은 `<기술><Capability>Adapter` 다 — 기술 이름은 바깥 `<technology>_adapter/` 에서 읽는다. | 트리 126행+D33 | `ast` | principle |  | **blocker** |
 | 374 | UnitOfWork 구현은 `driven_layer/adapter/persistence/unit_of_work/<boundary>_unit_of_work.py` 파일이고 경계 하나에 하나다. | 트리 96행+D14+D18 | `path` | principle |  | **blocker** |
 | 375 | django 의 `connection`·`transaction` 을 아는 것은 `driven_layer`(UoW 구현·리포지토리 구현)까지다 — `application_layer` 는 `django.db` 를 import 하지 않는다. | 트리 96행+D31+D4 | `ast` | principle |  | **blocker** |
 | 376 | 커밋 뒤 부작용은 UoW 의 `after_commit(callback)` 을 거치고, 그 구현은 `transaction.on_commit` 으로 채운다. | 트리 96행+D31 | `ast` | both | `measured_ok` | **blocker** |
 | 382 | 클래스에 `Gateway` 접미사를 쓰지 않는다 — 계약이면 `Port`, 구현이면 `Adapter` 로 흡수한다. | D33 | `ast` | principle |  | **blocker** |
 | 460 | 구현은 전부 `driven_layer/adapter/` 아래에 산다 — `django_<bounded_context>/` 만 그 밖이고, 그것은 «지키는 약속»이 없어서다. | D37+트리 89행 | `path` | principle |  | **blocker** |
-| 462 | ORM 모델을 import 하는 것은 `adapter/persistence/` 아래 셋(`repository/`·`domain_bypass_query/`·`unit_of_work/`)뿐이다 — 이 공통 규칙 하나가 그 겹 폴더를 정당화한다. <span>09-01 · 허용면 성문 — 셋에 더해 `django_<bc>/admin/`·`adapter/<capability>/` 의 `django_adapter.py`(승격 꼴 포함·ACL/external_system 제외)(houserules §5·R-3423).</span> | D37+트리 90행 | `ast` | principle |  | **blocker** |
-| 463 | `adapter/<capability>/` 인지의 판정은 3단이다 — ① 밖에 «상대»가 있나 → ② 없으면 «기술»이 필요한가 → ③ 계약에 업무 어휘가 있나. | D37+트리 103행 | `ast` | principle |  | **blocker** |
+| 462 | ORM 모델을 import 하는 것은 `adapter/persistence/` 아래 셋(`repository/`·`domain_bypass_query/`·`unit_of_work/`)뿐이다 — 이 공통 규칙 하나가 그 겹 폴더를 정당화한다. <span>09-01 · 허용면 성문 — 셋에 더해 `django_<bc>/admin/`·`adapter/<capability>/django_adapter/adapter/<implementation>_adapter.py`(ACL/external_system 제외)(houserules §5·R-3423).</span> | D37+트리 90행 | `ast` | principle |  | **blocker** |
+| 463 | `adapter/<capability>/` 인지의 판정은 3단이다 — ① 밖에 «상대»가 있나 → ② 없으면 «기술»이 필요한가 → ③ 계약에 업무 어휘가 있나. | D37+트리 123행 | `ast` | principle |  | **blocker** |
 | 464 | `repository/` 를 `command`·`query` 로 가르지 않는다 — 가르는 축은 「도메인을 거쳤나」이고, 애그리거트 리포지토리도 `find_by_id`·`exists`·`count` 로 읽는다. | D37 기각+트리 91행 | `path` | principle |  | **blocker** |
 | 465 | `domain_bypass_query/<capability>_query.py` 에 `_repository` 접미사를 붙이지 않는다 — 한 경로에 repository 가 두 번 나오고, 이 칸은 애그리거트를 안 거치므로 리포지토리가 아니다. 접미사는 `_query` 이고 선언·구현 양쪽이 함께 단다. | D37+D33+D41+트리 53·94행 | `path` | principle |  | **blocker** |
 | 467 | `adapter_layer/` 를 층 이름으로 쓰지 않는다 — Cockburn 의 육각형에는 «층» 축 자체가 없고(어댑터는 층이 아니라 역할), Martin 의 Interface Adapters 는 입구까지 함께 담아 한쪽만 그렇게 부르면 거짓이 된다. | D37 기각+트리 75행 | `path` | principle |  | **blocker** |
@@ -698,68 +698,68 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 
 | # | 규칙 | 자리 | 판정 | 근거 | 3차 | 어겼을 때 |
 |---|---|---|---|---|---|---|
-| 383 | `test/` 는 계층이 아니라 «무엇을 켜고 도는가»로 나눈다 — 폴더 이름만 보고 이 테스트가 DB 를 켜는지 알 수 있어야 한다. | 트리 105행+파트 test | `path` | principle |  | **blocker** |
-| 384 | `test/` 의 자식은 **다섯**이다 — `unit/`·`integration/`·`e2e/`(«테스트» — 안이 자유) · `factories/`·`fake/`(«테스트가 쓰는 재료» — 규칙이 그대로 산다). | 트리 105~111행+D56 | `path` | both | `measured_ok` | **blocker** |
-| 385 | `application/<bounded_context>/test/` 에는 그 BC 의 테스트만 온다. | 트리 105행 | `path` | principle |  | **blocker** |
-| 387 | `test/unit/` 은 DB 를 켜지 않는다 — 포트 자리에는 가짜 구현을 꽂는다. | 트리 106행+파트 test | `ast` | both | `measured_ok` | **blocker** |
-| 388 | `test/unit/` 은 `factories/` 를 import 하지 않는다. | 트리 109행 | `ast` | principle | `principle` | **blocker** |
-| 389 | `test/integration/` 은 진짜 DB 를 켜고 리포지토리와 HTTP 를 검사한다. | 트리 107행+파트 test | `ast` | both | `measured_ok` | **blocker** |
-| 390 | `test/e2e/` 는 입구에서 출구까지 한 흐름을 통째로 본다 — **입구(TestClient·API·`<job>_cron_job`)를 안 거치면 위반**이다. <span>08-11 · ㉰ — 옛 문면의 「느린 대신 «수가 적어야» 한다」를 걷었다. 임계값이 없어 «정도»로 재는 문장이라 D10(「검사할 수 있는 데까지만 규정한다」)에 걸린다. 08-11 · Phase 0 린트 — 걷고 나니 술어가 «확정»만으로 서서 `ast+`→`ast`.</span> | 트리 108행 | `ast` | principle | `principle` | **blocker** |
-| 391 | `factories/` 는 `integration/` 안이 아니라 그 형제로 둔다. | 트리 109행 | `path` | principle | `principle` | **blocker** |
-| 392 | `factories/` 에는 `factory_boy` 픽스처만 온다. | 트리 109행+파트 test | `ast` | principle | `principle` | **blocker** |
+| 383 | `test/` 는 계층이 아니라 «무엇을 켜고 도는가»로 나눈다 — 폴더 이름만 보고 이 테스트가 DB 를 켜는지 알 수 있어야 한다. | 트리 135행+파트 test | `path` | principle |  | **blocker** |
+| 384 | `test/` 의 자식은 **다섯**이다 — `unit/`·`integration/`·`e2e/`(«테스트» — 안이 자유) · `factories/`·`fake/`(«테스트가 쓰는 재료» — 규칙이 그대로 산다). | 트리 135~141행+D56 | `path` | both | `measured_ok` | **blocker** |
+| 385 | `application/<bounded_context>/test/` 에는 그 BC 의 테스트만 온다. | 트리 135행 | `path` | principle |  | **blocker** |
+| 387 | `test/unit/` 은 DB 를 켜지 않는다 — 포트 자리에는 가짜 구현을 꽂는다. | 트리 136행+파트 test | `ast` | both | `measured_ok` | **blocker** |
+| 388 | `test/unit/` 은 `factories/` 를 import 하지 않는다. | 트리 139행 | `ast` | principle | `principle` | **blocker** |
+| 389 | `test/integration/` 은 진짜 DB 를 켜고 리포지토리와 HTTP 를 검사한다. | 트리 137행+파트 test | `ast` | both | `measured_ok` | **blocker** |
+| 390 | `test/e2e/` 는 입구에서 출구까지 한 흐름을 통째로 본다 — **입구(TestClient·API·`<job>_cron_job`)를 안 거치면 위반**이다. <span>08-11 · ㉰ — 옛 문면의 「느린 대신 «수가 적어야» 한다」를 걷었다. 임계값이 없어 «정도»로 재는 문장이라 D10(「검사할 수 있는 데까지만 규정한다」)에 걸린다. 08-11 · Phase 0 린트 — 걷고 나니 술어가 «확정»만으로 서서 `ast+`→`ast`.</span> | 트리 138행 | `ast` | principle | `principle` | **blocker** |
+| 391 | `factories/` 는 `integration/` 안이 아니라 그 형제로 둔다. | 트리 139행 | `path` | principle | `principle` | **blocker** |
+| 392 | `factories/` 에는 `factory_boy` 픽스처만 온다. | 트리 139행+파트 test | `ast` | principle | `principle` | **blocker** |
 
 ## framework — 26개
 
 | # | 규칙 | 자리 | 판정 | 근거 | 3차 | 어겼을 때 |
 |---|---|---|---|---|---|---|
-| 393 | `framework/` 는 저장소 루트에 두고 어느 BC 에도 속하지 않는다 — `application/<bc>/**` 아래에 `framework/` 가 있으면 위반이다. **«들어올지 말지»의 판정은 #448 이 진다**(「이 낱말의 뜻을 저장소 밖이 정하나」). <span>08-11 · ㉰ — 옛 문면의 「BC 가 하나도 없어도 이 파일이 존재하나」는 **C2 가 #448 로 갈아치운 옛 승격 자**다. 두 행이 같은 판정을 두 채널로 적고 있었다(D30).</span> | 트리 112행+D24+파트 framework | `path` | principle |  | **blocker** |
-| 395 | `framework/` 의 자식은 **다섯**이다 — 고정 이름 셋(`broker/`·`test/`·`pure/`)과 `<capability>/`(계약 있음) · `<technology>/`(계약 없음). | 트리 112~132행+D24+D47+D59 | `path` | principle |  | **blocker** |
-| 396 | 갈래 판정은 **4단**이고 사람이 필요 없다 — ① 고정 이름 셋이면 거기서 끝 ② 폴더 안에 `*_port.py` 가 있으면 `<capability>/` ③ 라이브러리 타입 없이 문장이 안 서면 `<technology>/` ④ 나머지는 `pure/`. | 트리 112행+D24+D41+D47 | `path` | principle |  | **blocker** |
-| 398 | `framework/<capability>/` 는 «능력 하나 = 폴더 하나»다. | 트리 120행 | `path` | principle |  | **blocker** |
-| 401 | `framework/<capability>/` 안에는 계약과 구현이 함께 산다 — 계약을 BC 에 두고 구현만 올리지 않는다. | 트리 120행+D24+파트 framework | `path` | principle |  | **blocker** |
-| 402 | `framework/<capability>/` 의 계약 파일 이름은 폴더 이름과 같다(`clock/clock_port.py`). | 트리 121행+D24 | `path` | principle |  | **blocker** |
-| 403 | `framework/<capability>/<capability>_port.py` 의 계약 클래스는 `<Capability>Port` 로 끝난다. | 트리 121행+D33 | `ast` | both | `measured_ok` | **blocker** |
-| 404 | BC 의 유스케이스는 `framework/<capability>/` 에서 **계약 파일 · `exception.py` · `<data>_out.py` · `<data>_in.py`** 를 import 한다 — `<technology>_adapter.py` 만 `composition_root` 전용이다. | 트리 120~125행+D24+D47 | `ast` | principle |  | **blocker** |
-| 405 | `framework/<capability>/` 안에서 폴더 이름과 «다른» `.py` 전부가 구현이다. | 트리 125행+D24 | `path` | principle |  | **blocker** |
-| 406 | `framework/<capability>/<technology>_adapter.py` 는 `composition_root` 밖에서는 아무도 import 하지 않는다. | 트리 125행+D24 | `ast` | principle |  | **blocker** |
-| 407 | 구현 파일 이름은 기술만 말한다(`clock/django_adapter.py`) — 폴더가 이미 능력을 말한다. | 트리 125행 | `path` | principle |  | **blocker** |
-| 408 | `framework/<capability>/<technology>_adapter.py` 의 클래스는 `<기술><Capability>Adapter` 다(`DjangoClockAdapter`). | 트리 125행+D33 | `ast` | principle | `principle` | **blocker** |
-| 411 | `framework/<technology>/` 는 «라이브러리 하나 = 폴더 하나»다(`django/` · `ninja/`). | 트리 126행 | `path` | principle |  | **blocker** |
-| 412 | `framework/<technology>/` 안에는 폴더 이름과 같은 모듈을 두지 않는다(`django/django.py` 같은 것). | 트리 126행+D24 | `path` | principle |  | **blocker** |
-| 413 | `framework/<technology>/` 는 그 기술을 아는 층만 부른다 — `domain_layer` 가 부르면 위반이다. | 트리 126행+D24 | `ast` | both | `measured_ok` | **blocker** |
-| 414 | `framework/<technology>/` 아래는 `<module>.py` 파일이고, `response/` 같은 방향 축 하위 폴더를 두지 않는다. | 트리 127행+D24 | `path` | both | `measured_ok` | **blocker** |
-| 415 | `framework/<technology>/<module>.py` 에는 «그 라이브러리의 타입 없이는 문장 자체가 성립하지 않는 코드»만 온다. | 트리 127행+D24 | `ast` | principle |  | **blocker** |
-| 416 | 그 모듈은 어느 BC 에 놓아도 똑같이 동작해야 한다 — BC 를 다 지워도 그대로 남는다. <span>09-01 · 탐지 매체 — BC 이름 스캔(#426·#52 공유 스캔 동일)은 주석·산문 문자열을 제외한 스크럽 사본에 건다: 유지 = 코드 식별자·import 경로·dotted-path 문자열·BC 이름 정확 일치 단독 낱말·f-string(통째·버전 무관). 잔여 한계(리뷰어 소관) — 문자열 연결 조립·docstring 안 dotted-path·`reverse("bc:name")` 콜론 꼴·템플릿 경로.</span> | 트리 127행+파트 framework | `ast` | principle |  | **blocker** |
-| 417 | 프레임워크가 내는 오류의 공통 응답 스키마는 `framework/ninja/framework_error_schema.py`·`framework_validation_error_schema.py` 에 둔다 — **`bc_` 접두를 쓰지 않는다**(#33·#426: framework 는 BC 를 모른다). BC 의 오류 언어는 `driving_layer/api/bc_error_schema.py` 로 따로 산다. <span>2026-08-25 · **승인 대체 경로** — 프로젝트가 명시 승인으로 채택한 `framework/django_ninja/error_schema.py` 도 이 계약의 정본 경로다(그래프 R-0029 리비전 2 동반). 정본은 저장소당 하나 — 두 경로의 동시 실재는 위반이다(검사기 사용 오류).</span> <span>2026-08-25 · **승인 대체 경로 철회(되돌림)** — 대체 경로의 유일 사용처(tarot)가 재작업에서 정본 경로(`framework/ninja/framework_error_schema.py`)로 전환하기로 확정돼(판정 ⑫) 가산의 원인이 소멸했다. 변형 집합·선택 장치를 걷어내고 단일 정본으로 복원한다(그래프 R-0029·R-2918 리비전 3 동반). 되돌림 직후 tarot 정적 런의 신규 red 는 의도된 회복이다.</span> | 트리 127행+D24+D27+D33 | `path` | principle |  | **blocker** |
+| 393 | `framework/` 는 저장소 루트에 두고 어느 BC 에도 속하지 않는다 — `application/<bc>/**` 아래에 `framework/` 가 있으면 위반이다. **«들어올지 말지»의 판정은 #448 이 진다**(「이 낱말의 뜻을 저장소 밖이 정하나」). <span>08-11 · ㉰ — 옛 문면의 「BC 가 하나도 없어도 이 파일이 존재하나」는 **C2 가 #448 로 갈아치운 옛 승격 자**다. 두 행이 같은 판정을 두 채널로 적고 있었다(D30).</span> | 트리 142행+D24+파트 framework | `path` | principle |  | **blocker** |
+| 395 | `framework/` 의 자식은 **다섯**이다 — 고정 이름 셋(`broker/`·`test/`·`pure/`)과 `<capability>/`(계약 있음) · `<technology>/`(계약 없음). | 트리 142~162행+D24+D47+D59 | `path` | principle |  | **blocker** |
+| 396 | 갈래 판정은 **4단**이고 사람이 필요 없다 — ① 고정 이름 셋이면 거기서 끝 ② 폴더 안에 `*_port.py` 가 있으면 `<capability>/` ③ 라이브러리 타입 없이 문장이 안 서면 `<technology>/` ④ 나머지는 `pure/`. | 트리 142행+D24+D41+D47 | `path` | principle |  | **blocker** |
+| 398 | `framework/<capability>/` 는 «능력 하나 = 폴더 하나»다. | 트리 150행 | `path` | principle |  | **blocker** |
+| 401 | `framework/<capability>/` 안에는 계약과 구현이 함께 산다 — 계약을 BC 에 두고 구현만 올리지 않는다. | 트리 150행+D24+파트 framework | `path` | principle |  | **blocker** |
+| 402 | `framework/<capability>/` 의 계약 파일 이름은 폴더 이름과 같다(`clock/clock_port.py`). | 트리 151행+D24 | `path` | principle |  | **blocker** |
+| 403 | `framework/<capability>/<capability>_port.py` 의 계약 클래스는 `<Capability>Port` 로 끝난다. | 트리 151행+D33 | `ast` | both | `measured_ok` | **blocker** |
+| 404 | BC 의 유스케이스는 `framework/<capability>/` 에서 **계약 파일 · `exception.py` · `<data>_out.py` · `<data>_in.py`** 를 import 한다 — `<technology>_adapter.py` 만 `composition_root` 전용이다. | 트리 150~155행+D24+D47 | `ast` | principle |  | **blocker** |
+| 405 | `framework/<capability>/` 안에서 폴더 이름과 «다른» `.py` 전부가 구현이다. | 트리 155행+D24 | `path` | principle |  | **blocker** |
+| 406 | `framework/<capability>/<technology>_adapter.py` 는 `composition_root` 밖에서는 아무도 import 하지 않는다. | 트리 155행+D24 | `ast` | principle |  | **blocker** |
+| 407 | 구현 파일 이름은 기술만 말한다(`clock/django_adapter.py`) — 폴더가 이미 능력을 말한다. | 트리 155행 | `path` | principle |  | **blocker** |
+| 408 | `framework/<capability>/<technology>_adapter.py` 의 클래스는 `<기술><Capability>Adapter` 다(`DjangoClockAdapter`). | 트리 155행+D33 | `ast` | principle | `principle` | **blocker** |
+| 411 | `framework/<technology>/` 는 «라이브러리 하나 = 폴더 하나»다(`django/` · `ninja/`). | 트리 156행 | `path` | principle |  | **blocker** |
+| 412 | `framework/<technology>/` 안에는 폴더 이름과 같은 모듈을 두지 않는다(`django/django.py` 같은 것). | 트리 156행+D24 | `path` | principle |  | **blocker** |
+| 413 | `framework/<technology>/` 는 그 기술을 아는 층만 부른다 — `domain_layer` 가 부르면 위반이다. | 트리 156행+D24 | `ast` | both | `measured_ok` | **blocker** |
+| 414 | `framework/<technology>/` 아래는 `<module>.py` 파일이고, `response/` 같은 방향 축 하위 폴더를 두지 않는다. | 트리 157행+D24 | `path` | both | `measured_ok` | **blocker** |
+| 415 | `framework/<technology>/<module>.py` 에는 «그 라이브러리의 타입 없이는 문장 자체가 성립하지 않는 코드»만 온다. | 트리 157행+D24 | `ast` | principle |  | **blocker** |
+| 416 | 그 모듈은 어느 BC 에 놓아도 똑같이 동작해야 한다 — BC 를 다 지워도 그대로 남는다. <span>09-01 · 탐지 매체 — BC 이름 스캔(#426·#52 공유 스캔 동일)은 주석·산문 문자열을 제외한 스크럽 사본에 건다: 유지 = 코드 식별자·import 경로·dotted-path 문자열·BC 이름 정확 일치 단독 낱말·f-string(통째·버전 무관). 잔여 한계(리뷰어 소관) — 문자열 연결 조립·docstring 안 dotted-path·`reverse("bc:name")` 콜론 꼴·템플릿 경로.</span> | 트리 157행+파트 framework | `ast` | principle |  | **blocker** |
+| 417 | 프레임워크가 내는 오류의 공통 응답 스키마는 `framework/ninja/framework_error_schema.py`·`framework_validation_error_schema.py` 에 둔다 — **`bc_` 접두를 쓰지 않는다**(#33·#426: framework 는 BC 를 모른다). BC 의 오류 언어는 `driving_layer/api/bc_error_schema.py` 로 따로 산다. <span>2026-08-25 · **승인 대체 경로** — 프로젝트가 명시 승인으로 채택한 `framework/django_ninja/error_schema.py` 도 이 계약의 정본 경로다(그래프 R-0029 리비전 2 동반). 정본은 저장소당 하나 — 두 경로의 동시 실재는 위반이다(검사기 사용 오류).</span> <span>2026-08-25 · **승인 대체 경로 철회(되돌림)** — 대체 경로의 유일 사용처(tarot)가 재작업에서 정본 경로(`framework/ninja/framework_error_schema.py`)로 전환하기로 확정돼(판정 ⑫) 가산의 원인이 소멸했다. 변형 집합·선택 장치를 걷어내고 단일 정본으로 복원한다(그래프 R-0029·R-2918 리비전 3 동반). 되돌림 직후 tarot 정적 런의 신규 red 는 의도된 회복이다.</span> | 트리 157행+D24+D27+D33 | `path` | principle |  | **blocker** |
 | 420 | 인증은 «틀»(`BearerAuthentication(resolve)`)을 `framework/ninja/` 에 두고 토큰 «해석»은 각 BC 가 `open_host_service/` 로 공개한다 — BC 안에 인증 파일이 남지 않는다. 원리는 «틀/해석 분할»이고, Bearer 라는 방식·클래스명은 플러그인이 표준화한 채택 전제다(3차 T21). | D24 | `path` | measured | `measured_ok` | **blocker** |
-| 423 | `framework/test/` 는 «공유 뼈대 하나 = 파일 하나»다. | 트리 131행 | `path` | principle |  | **blocker** |
-| 425 | `framework/test/` 도 형제들과 «같은 자»를 받는다 — 이 재료의 뜻을 밖(HTTP·pytest·시간)이 정하면 여기, 우리 업무가 정하면(「로그인이 되는가」) 그 BC 의 `test/` 다. | 트리 130행+D24(08-10 · C2 개정) | `ast+` | principle |  | **blocker** |
-| 426 | `framework/test/` 로 올라온 파일 안에는 특정 BC 이름이 나오지 않는다. | 트리 130행+D24 | `ast` | principle | `principle` | **blocker** |
-| 428 | 뼈대 자신을 검사하는 테스트는 `framework/test/unit/` 에 두고 뼈대와 같은 폴더에 두지 않는다. | 트리 134행+D24 | `path` | principle |  | **blocker** |
+| 423 | `framework/test/` 는 «공유 뼈대 하나 = 파일 하나»다. | 트리 161행 | `path` | principle |  | **blocker** |
+| 425 | `framework/test/` 도 형제들과 «같은 자»를 받는다 — 이 재료의 뜻을 밖(HTTP·pytest·시간)이 정하면 여기, 우리 업무가 정하면(「로그인이 되는가」) 그 BC 의 `test/` 다. | 트리 160행+D24(08-10 · C2 개정) | `ast+` | principle |  | **blocker** |
+| 426 | `framework/test/` 로 올라온 파일 안에는 특정 BC 이름이 나오지 않는다. | 트리 160행+D24 | `ast` | principle | `principle` | **blocker** |
+| 428 | 뼈대 자신을 검사하는 테스트는 `framework/test/unit/` 에 두고 뼈대와 같은 폴더에 두지 않는다. | 트리 164행+D24 | `path` | principle |  | **blocker** |
 | 470 | 강등은 매개변수를 더 받는 것이 아니라 **인라인해서 각 BC 로 돌려보내고 다시 뽑는** 것이다. | D38 결정② | `ast` | principle |  | **blocker** |
-| 471 | `framework/<capability>/<technology>_adapter.py` 냐 `framework/<technology>/<module>.py` 냐는 「이 파일이 «어떤 계약의 구현»인가」로 가른다 — 예면 계약 폴더, 아니면 기술 폴더. | 트리 125·127행+D38 | `ast` | principle |  | **blocker** |
+| 471 | `framework/<capability>/<technology>_adapter.py` 냐 `framework/<technology>/<module>.py` 냐는 「이 파일이 «어떤 계약의 구현»인가」로 가른다 — 예면 계약 폴더, 아니면 기술 폴더. | 트리 155·157행+D38 | `ast` | principle |  | **blocker** |
 
 ## project — 17개
 
 | # | 규칙 | 자리 | 판정 | 근거 | 3차 | 어겼을 때 |
 |---|---|---|---|---|---|---|
-| 429 | `<project>/` 에는 프레임워크가 «전역에 딱 하나»를 요구하는 것만 온다 — `api.py` · `urls.py` · `celery.py` · `settings/`. `celery.py` 항목은 D26 의 «celery 채택» 전제에 묶인 조건부다 — 전제가 무산되면 이 목록도 다시 선다(3차 T21). | 트리 135행+파트 project | `path` | principle |  | **blocker** |
-| 430 | `<project>/` 는 `application/` 을 «등록»만 하고 «타입»으로 알지 않는다 — 문자열 경로는 등록이고 import 는 앎이다. | 트리 135행+D25 | `ast` | both | `measured_ok` | **blocker** |
+| 429 | `<project>/` 에는 프레임워크가 «전역에 딱 하나»를 요구하는 것만 온다 — `api.py` · `urls.py` · `celery.py` · `settings/`. `celery.py` 항목은 D26 의 «celery 채택» 전제에 묶인 조건부다 — 전제가 무산되면 이 목록도 다시 선다(3차 T21). | 트리 165행+파트 project | `path` | principle |  | **blocker** |
+| 430 | `<project>/` 는 `application/` 을 «등록»만 하고 «타입»으로 알지 않는다 — 문자열 경로는 등록이고 import 는 앎이다. | 트리 165행+D25 | `ast` | both | `measured_ok` | **blocker** |
 | 431 | 부작용 등록(`# noqa: F401` import 등록)도 금지다 — 허용되는 것은 `urls.py` 의 `register_<bc>_api(api)` 명시 호출 하나뿐이다. | D25+D6 | `ast` | principle |  | **blocker** |
-| 432 | `<project>/` 는 BC 가 늘어도 커지지 않는다 — 판정 물음은 「BC 하나를 통째로 지웠을 때 이 파일이 바뀌나」다. | 트리 135행+D25 | `ast` | both | `measured_ok` | **blocker** |
+| 432 | `<project>/` 는 BC 가 늘어도 커지지 않는다 — 판정 물음은 「BC 하나를 통째로 지웠을 때 이 파일이 바뀌나」다. | 트리 165행+D25 | `ast` | both | `measured_ok` | **blocker** |
 | 433 | `<project>/` 의 파일은 규칙을 «주소·예외 목록»으로 적지 않는다 — 목록으로 적으면 BC 가 하나 늘 때마다 이 파일이 바뀐다. | D25 | `ast` | measured | `measured_ok` | **blocker** |
 | 434 | `<project>/` 에 `openapi_schema.py` 와 `response_policies.py` 를 두지 않는다 — 접힌 규칙 클래스는 `framework/ninja/` 로 간다. | D25 | `path` | measured | `measured_ok` | **blocker** |
 | 435 | `<project>/` 에 `test/` 칸을 두지 않는다 — 전역 규칙의 테스트는 규칙을 따라 `framework/test/unit/` 으로 간다. | D25 | `path` | principle |  | **blocker** |
 | 436 | `<project>/` 의 `health.py`·`home.py`·`asgi.py`·`wsgi.py` 는 표준 트리의 관할 밖이라 칸을 만들지 않는다. | D25 | `path` | principle |  | **면제** |
-| 437 | `<project>/api.py` 에는 전역 API 객체 하나와 프레임워크 오류 핸들러만 온다 — **BC controller/registrar import · 도메인 예외 목록 · exception 매핑 · `ErrorSchema` 정의·생성은 전부 위반이다**(닫힌 허용 목록이라 열거 밖의 새 유형도 잡는다). | 트리 136행+D25+D27 | `ast` | principle |  | **blocker** |
-| 440 | `<project>/urls.py` 는 라우터 «등록»만 한다 — 각 BC 의 `register_<bc>_api(api)` 를 명시적으로 부른다. | 트리 137행+D6+D25 | `ast` | both | `measured_ok` | **blocker** |
-| 441 | `<project>/urls.py` 는 BC 안의 심볼을 import 해서 쓰지 않는다 — 예외는 #440 의 `register_<bc>_api` 명시 호출을 위한 그 함수 import 하나뿐이다(D25 «명시 호출 허용»). | 트리 137행+D25 | `ast` | both | `measured_ok` | **blocker** |
-| 442 | `<project>/celery.py` 에는 Celery 인스턴스와 `autodiscover_tasks` 만 온다 — 경로 문자열만 쓰고 BC 안의 타입은 모른다. | 트리 138행+D25+D26 | `ast` | principle |  | **blocker** |
-| 443 | `autodiscover_tasks` 는 `packages` 를 «콜러블»로 주고 `related_name=None` 으로 부른다 — 기본값으로는 `driving_layer/cron_job` 에 닿지 못한다. | 트리 138행+D26 | `ast` | principle |  | **blocker** |
-| 444 | `packages` 는 «목록»이 아니라 «규칙»으로 짓는다 — 그 식에 BC 이름이 한 개도 나오지 않아야 한다. | 트리 138행+D26+D25 | `ast` | principle |  | **blocker** |
-| 445 | `<project>/settings/` 에서 갈리는 축은 환경 하나뿐이다 — 기능별로 설정 파일을 쪼개지 않는다. | 트리 139행 | `path` | principle |  | **blocker** |
-| 446 | `settings/` 는 «환경 하나 = 파일 하나»다 — `base` · `local` · `production` · `test`(규율 ④ 약어 금지 — `prod` 가 아니다). 넷은 예시다 — 트리 140행 `<environment>.py` 가 자리표시자라 목록은 닫지 않으며, 온전한 환경 이름(`staging` 등)은 허용하고 «약어»만 위반이다. <span>08-11 · T64 — 사용자 확정(열린 목록 유지).</span> | 트리 140행 | `path` | principle |  | **blocker** |
-| 447 | 공통 설정은 `base` 에 두고 나머지 환경 파일은 그것을 가져와 덮어쓴다. | 트리 140행 | `ast` | principle |  | **blocker** |
+| 437 | `<project>/api.py` 에는 전역 API 객체 하나와 프레임워크 오류 핸들러만 온다 — **BC controller/registrar import · 도메인 예외 목록 · exception 매핑 · `ErrorSchema` 정의·생성은 전부 위반이다**(닫힌 허용 목록이라 열거 밖의 새 유형도 잡는다). | 트리 166행+D25+D27 | `ast` | principle |  | **blocker** |
+| 440 | `<project>/urls.py` 는 라우터 «등록»만 한다 — 각 BC 의 `register_<bc>_api(api)` 를 명시적으로 부른다. | 트리 167행+D6+D25 | `ast` | both | `measured_ok` | **blocker** |
+| 441 | `<project>/urls.py` 는 BC 안의 심볼을 import 해서 쓰지 않는다 — 예외는 #440 의 `register_<bc>_api` 명시 호출을 위한 그 함수 import 하나뿐이다(D25 «명시 호출 허용»). | 트리 167행+D25 | `ast` | both | `measured_ok` | **blocker** |
+| 442 | `<project>/celery.py` 에는 Celery 인스턴스와 `autodiscover_tasks` 만 온다 — 경로 문자열만 쓰고 BC 안의 타입은 모른다. | 트리 168행+D25+D26 | `ast` | principle |  | **blocker** |
+| 443 | `autodiscover_tasks` 는 `packages` 를 «콜러블»로 주고 `related_name=None` 으로 부른다 — 기본값으로는 `driving_layer/cron_job` 에 닿지 못한다. | 트리 168행+D26 | `ast` | principle |  | **blocker** |
+| 444 | `packages` 는 «목록»이 아니라 «규칙»으로 짓는다 — 그 식에 BC 이름이 한 개도 나오지 않아야 한다. | 트리 168행+D26+D25 | `ast` | principle |  | **blocker** |
+| 445 | `<project>/settings/` 에서 갈리는 축은 환경 하나뿐이다 — 기능별로 설정 파일을 쪼개지 않는다. | 트리 169행 | `path` | principle |  | **blocker** |
+| 446 | `settings/` 는 «환경 하나 = 파일 하나»다 — `base` · `local` · `production` · `test`(규율 ④ 약어 금지 — `prod` 가 아니다). 넷은 예시다 — 트리 170행 `<environment>.py` 가 자리표시자라 목록은 닫지 않으며, 온전한 환경 이름(`staging` 등)은 허용하고 «약어»만 위반이다. <span>08-11 · T64 — 사용자 확정(열린 목록 유지).</span> | 트리 170행 | `path` | principle |  | **blocker** |
+| 447 | 공통 설정은 `base` 에 두고 나머지 환경 파일은 그것을 가져와 덮어쓴다. | 트리 170행 | `ast` | principle |  | **blocker** |
 ## 3차 리뷰 반영 — 8개 (472~481)
 
 카드·트리에 명문이 있는데 스펙이 빠뜨린 것(T10 셋 · T12 여섯)과 D9 의 이름 규칙(T6 하나)이다. 새 규칙이 아니라 **이미 정본에 있던 문장을 한 줄로 편 것**이다.
@@ -767,7 +767,7 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | # | 규칙 | 자리 | 판정 | 근거 | 3차 | 어겼을 때 |
 |---|---|---|---|---|---|---|
 | 472 | `open_host_service/**/contract/` 의 계약 파일은 «표준 라이브러리»와 «같은 BC 의 다른 계약» 말고는 import 하지 않는다 — 이게 있어야 «계약 import 는 안전하다»가 참이 된다. | 트리 25행+D35 ㉮ | `ast` | principle |  | **blocker** |
-| 473 | `anticorruption_layer/<other_bounded_context>/<capability>_adapter.py` 는 상대 창구의 «기저 예외»를 반드시 잡는다 — 구체 타입을 앞에 몇 개 잡든 자유, 마지막에 부모가 있어야 한다. 생산자 쪽 짝(#167)과 둘이 닫혀야 약속이 선다. | 트리 99행+D36 ㉰ | `ast` | principle |  | **blocker** |
+| 473 | `anticorruption_layer/<other_bounded_context>/<capability>_adapter/adapter/<implementation>_adapter.py` 는 상대 창구의 «기저 예외»를 반드시 잡는다 — 구체 타입을 앞에 몇 개 잡든 자유, 마지막에 부모가 있어야 한다. 생산자 쪽 짝(#167)과 둘이 닫혀야 약속이 선다. 계약·호출 계약·스키마의 타입 import 만으로 예외 catch 를 요구하지 않는다. | 트리 101행+D36 ㉰ | `ast` | principle |  | **blocker** |
 | 474 | **바깥에 계약을 공개하는 입구 파일**(`<area>_controller.py` · `api/webhook/<provider>/<provider>_controller.py` · `open_host_service/**/<service>_service.py`)은 도메인 예외를 «타입»으로만 쓴다 — `except … as e` 로 묶은 이름을 그 파일 안에서 참조하면 위반이다. | 트리 12·18·24행+D39+D53 | `ast` | principle |  | **blocker** |
 | 475 | `domain_bypass_query` 로 받은 자료는 도메인 규칙을 안 태운 «날것»이다 — 유스케이스가 그 값으로 업무 판정을 내리면 위반이다. | 트리 51행+D29+D37 | `ast+` | principle |  | **blocker** |
 | 476 | `port/unit_of_work/` 의 선언 파일과 `adapter/persistence/unit_of_work/` 의 구현 파일은 1:1 이다 — 짝 없는 것이 한쪽에라도 있으면 위반, 검사는 폴더 목록 두 번이다. | 트리 95행+D37 | `path` | principle |  | **blocker** |
@@ -811,9 +811,9 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 |---|---|---|---|---|---|---|
 | 486 | 어느 BC 를 열어도 이 트리의 골격이 «그대로» 있다 — 내용이 있든 없든 상관없다. 파일트리를 지키지 않는 구현·설계는 «반환»이다. | 트리 1행+D54 | `path` | principle |  | **blocker** |
 | 487 | 이 검사는 다른 모든 검사보다 «먼저» 돈다 — 걸리면 나머지 검사를 돌리지 않고 반환한다. | 트리 1행+D54 | `path` | principle |  | **검사기** |
-| 488 | 고정 이름의 칸은 «부모가 있으면» 반드시 있다 — 폴더는 비어도 `__init__.py` 로, 파일도 비면 «빈 파일»로 만든다. <span>2026-09-01 · **동명 폴더 승격 부칙** — 칸의 승격 실현(#490 교체형)이 이미 있으면 그 실현이 이 충족이다 — 동명 빈 파일을 병설하지 않는다.</span> | 트리 1행+D54 | `path` | principle |  | **blocker** |
+| 488 | 고정 이름의 칸은 «부모가 있으면» 반드시 있다 — 폴더는 비어도 `__init__.py` 로, 파일도 비면 «빈 파일»로 만든다. <span>2026-09-01 · **동명 폴더 승격 부칙** — 칸의 승격 실현(#490 교체형)이 이미 있으면 그 실현이 이 충족이다 — 동명 빈 파일을 병설하지 않는다.</span> 세 어댑터 패키지도 `adapter/`·`command/`·`constant/`·`contract/`·`schema/` 를 내용 없이 모두 만들고, 바깥 패키지와 각 역할 폴더의 `__init__.py` 를 둔다. | 트리 1행+D54 | `path` | principle |  | **blocker** |
 | 489 | `<…>` 가 붙은 자리표시자 칸만 그 개념이 실제로 생길 때 생긴다 — 그 외에 「이 BC 엔 없으니 뺀다」는 축소가 아니라 위반이다. | 트리 1행+D54 | `path` | principle |  | **blocker** |
-| 490 | `application/<bounded_context>/**` 안에 트리에 없는 경로가 하나라도 있으면 위반이다(`utils/`·`common/`·`helpers/`). 폐쇄는 **칸**(폴더 + 트리가 이름을 준 파일)에만 걸리고, 트리가 리프로 닫은 폴더 «안»의 추가 모듈은 #15 의 재량이다. `framework/`·`<project>/` 는 이 원칙의 주어가 아니다(D54 축자: 「이 원칙의 주어는 «BC»다」). <span>2026-09-01 · **동명 폴더 승격 부칙** — §1 트리의 승격 허용 표기가 붙은 파일 칸은 두 실현(`<이름>.py` ⇄ 동명 폴더)을 갖고, 유효한 승격 폴더는 «트리에 없는 경로»가 아니다(형태 요건 #638~#643).</span> | 트리 1행+D54 | `path` | principle |  | **blocker** |
+| 490 | `application/<bounded_context>/**` 안에 트리에 없는 경로가 하나라도 있으면 위반이다(`utils/`·`common/`·`helpers/`). 폐쇄는 **칸**(폴더 + 트리가 이름을 준 파일)에만 걸리고, 트리가 리프로 닫은 폴더 «안»의 추가 모듈은 #15 의 재량이다. `framework/`·`<project>/` 는 이 원칙의 주어가 아니다(D54 축자: 「이 원칙의 주어는 «BC»다」). <span>2026-09-01 · **동명 폴더 승격 부칙** — §1 트리의 승격 허용 표기가 붙은 파일 칸은 두 실현(`<이름>.py` ⇄ 동명 폴더)을 갖고, 유효한 승격 폴더는 «트리에 없는 경로»가 아니다(형태 요건 #638~#643).</span> 세 어댑터 칸은 고정 패키지이므로 단일 파일·바깥 본체 파일·역할 아래 추가 폴더로 실현할 수 없다. | 트리 1행+D54 | `path` | principle |  | **blocker** |
 | 491 | 칸의 유형은 셋뿐이고 «조건부»는 없다 — ① 고정 이름 ② `<>` 첫 등장 ③ `<>` 재등장(조상이 이미 연 낱말이라 값이 이미 채워져 있어 ①과 같다). 「있을 수도 없을 수도」라고 적힌 칸은 셋 중 하나로 다시 분류한다. <span>2026-09-01 · **동명 폴더 승격 부칙** — «조건부 없음»의 주어는 칸의 존재다 — 승격 허용 표기는 실현 형태(#490)의 값이다.</span> | 트리 1행+D54(T52) | `path` | principle |  | **blocker** |
 | 492 | 「그 파일이 있어야 하나」는 트리가 정하고 「그것을 어떻게 쓰나」는 스킬이 정한다 — 트리에 조건을 적어 두 채널로 만들지 않는다. | D54+D10+D30 | `ast+` | principle |  | **blocker** |
 | 493 | 모든 이름은 «첫 대입»에 타입을 적는다 — 시그니처·속성·지역 변수에 예외가 없다. 빠지는 것은 **문법이 없는 여덟 자리뿐**이다: `for x in xs:` · `with … as f:` · `except … as e:` · `a, b = pair` · `a = b = 0` · `x += 1` · walrus · 컴프리헨션. 그리고 **재대입**(첫 바인딩이 아니다)과 **선언적 클래스 본문**(ORM 모델 필드·ninja Schema 필드)은 면제다. | D58+§4 | `ast` | principle |  | **blocker** |
@@ -839,22 +839,22 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 516 | `webhook/` 에 오는 것은 HTTP 로 오는 것뿐이다 — 외부가 큐나 gRPC 로 보내면 그건 «다른 전송»이라 **`webhook/` 에 넣으면 위반**이다. **받을 칸은 정본 트리를 «개정»해야 생긴다**(#91) — BC 가 스스로 `driving_layer/` 의 형제를 늘리지 않는다(#90·#486). <span>08-11 · C6 — 옛 문면이 「`api/` 의 형제가 «는다»」로 끝나 **주어가 지워져 있었다**. 「정본 트리가 개정된다」는 뜻인데 「BC 가 늘린다」로 읽혀 **#90(「자식은 넷뿐」)과 정면으로 부딪혔다** — `driving_layer/websocket/` 하나를 #90·#486 은 blocker 로, 이 행은 «통과»로 판정하고 있었다.</span> | 트리 16행+D53 | `ast` | principle |  | **blocker** |
 | 629 | **바깥이 부르는 입구는 «놓칠 수 있는» 입구다** — `webhook/<provider>/` 와 `event_subscription/` 둘 다, **그 입구가 «와야만» 일이 되는 설계는 위반이다**. 네트워크가 끊기거나 우리가 배포 중이면 그것은 영영 안 오고, **부르는 쪽이 바깥이라 우리가 다시 부를 수단이 없다**. 빠진 것은 `cron_job/` 이 시각에 깨어나 발신자·주인에게 «물어» 메운다(#626). 「빨리 알려 주는 길」이지 «유일한 길»이 아니다. <span>08-11 · C8 — `event_subscription/` 은 이 문장을 패널에 갖고 있었고 **`webhook/` 만 없었다**. 셋을 갈라 보면 `webhook/` 이 «우리가 손쓸 수단이 0»인 유일한 통로인데 규칙이 가장 없었다.</span> | 트리 16·33·35행+D53+D49 | `ast+` | principle |  | **blocker** |
 | 517 | 서명 검증은 `framework/<technology>/` 의 인증 틀로 라우트 데코레이터에 선언한다 — 컨트롤러 본문에 검증 절차를 쓰지 않는다. | 트리 16·18행+D53+D24 | `ast` | principle |  | **blocker** |
-| 518 | `framework/broker/` 아래에는 어느 BC 의 업무 어휘도 나오지 않는다. | 트리 113행+D59+D38 | `ast` | principle |  | **blocker** |
-| 520 | 사실을 보내 놓고 그 결과를 «걱정하고» 있으면 위반이다 — Fowler 가 «passive-aggressive command» 라 부른 함정이고, 그건 사실이 아니라 «지시»였어야 한다. | 트리 113행+D59+D48 | `ast+` | principle |  | **blocker** |
-| 521 | `broker/internal/` 은 바깥 미들웨어 «없이» 배달한다 — 네트워크도 저장도 별도 프로세스도 두지 않는다. | 트리 114행+D59 | `ast` | principle |  | **blocker** |
-| 522 | `internal/` 의 한계는 계약이 말한다 — 같은 «프로세스» 안에서만 들린다. 워커가 여섯이면 브로커도 여섯이고 다른 프로세스에서 일어난 일은 영원히 안 들린다. | 트리 114행+D59+D49 | `human` | principle |  | **면제** |
-| 523 | `internal_broker_port.py` 의 구독 등록은 «메모리에만» 한다 — 구독표가 「사실 이름 → 파이썬 함수」라 DB 에 담을 수 없다. 경로 문자열로 넣고 import 로 되살리면 D40 이 반려한 signals 보다 나쁘다. | 트리 115행+D59+D40 | `ast` | principle |  | **blocker** |
-| 524 | 구독표는 «사실 → 리스너 집합»이라 같은 짝이 두 번 와도 하나다 — 리스트로 두면 `ready()` 가 두 번 돌 때 두 번 발화한다. 멱등은 부르는 쪽 예의가 아니라 «계약»이 진다. | 트리 115행+D59 | `ast` | principle |  | **blocker** |
-| 525 | 발행은 리스너마다 하나씩 넘기고, 하나가 실패해도 나머지는 간다 — 대신 실패한 리스너를 «삼키면» 위반이다. | 트리 115행+D59+D49 | `ast` | principle |  | **blocker** |
-| 526 | `internal` 통로에 「반드시 도달」을 기대는 코드가 붙으면 위반이다 — 보장은 «롤백되면 발행 안 됨» 한쪽뿐이고, 커밋됐다고 반드시 나가지는 않는다(at-most-once). **처방은 «누가» 못 견디나로 갈린다** — 보내는 쪽이면 애초에 «지시»였고(#520), 받는 쪽이면 #626 이 받는다. **[Q3]** | 트리 115행+D59+D49 | `human` | principle |  | **blocker** |
-| 527 | `InternalBroker()` 를 `internal_broker.py` «밖»에서 만들면 위반이다 — 인스턴스는 이 파일 안에 하나로 두고 「한 번」은 파이썬 모듈 캐시가 보장한다. `composition_root/` 는 BC 마다 있어 거기서 만들면 BC 수만큼 생기고 «남의 사실»이 영원히 안 들린다. | 트리 116행+D59 | `ast` | principle |  | **blocker** |
-| 528 | 구독표가 «인스턴스 속성»이 아니면 위반이다 — 모듈 레벨 «가변 전역»에 두면 걸린다. 인스턴스가 모듈에 «사는» 것과는 다르다. | 트리 116·119행+D59 | `ast` | principle |  | **blocker** |
-| 529 | `broker/external/` 인지를 가르는 물음은 하나다 — 「듣는 쪽이 «다른 배포 단위»에 있나」. 「멀다」·「느슨하다」 같은 «정도»가 아니라 예/아니오다. | 트리 117행+D59 | `ast+` | principle |  | **blocker** |
-| 530 | 내구성·백프레셔·재시도를 이유로 `external/` 을 열면 위반이다 — 셋 다 «워커»의 일이라 `cron_job/` 이 이미 받는다(D48 ②). 보존·재생은 관할 밖(Event Sourcing)이다. **[Q3]** | 트리 117행+D59+D48 | `human` | principle |  | **blocker** |
-| 531 | `external_broker_port.py` 는 `internal_broker_port.py` 와 «다른 계약»이다 — 같은 계약의 다른 구현이 아니다. 보장이 달라서 약속이 갈린다. | 트리 118행+D59 | `ast` | principle |  | **blocker** |
-| 532 | `external` 계약은 「반드시 도달」을 **요구로** 적고 «두 번 올 수 있다»를 함께 말한다(at-least-once) — 받는 쪽 멱등이 필수가 된다. **다만 그 도달 보장은 «미들웨어 설정»에 살아 트리가 확인할 수 없다** — Redis Pub/Sub 도 Celery 기본값도 at-most-once 다. 그러니 **받는 쪽은 「안 왔을 때」를 여전히 메워야 하고**(#629), 보장 자체는 `#603` 의 딸림 ⑷ 가 진다. <span>08-11 · C8 — 옛 문면의 「전제한다」가 «보장된다»로 읽혀 `external` 을 「놓칠 수 있는 입구」에서 빼는 근거로 쓰일 뻔했다. **설정에만 있는 것을 트리가 보장으로 읽으면 안 된다**(T45 가 ORM 캐시에서 만난 같은 모양).</span> | 트리 118행+D59+D49 | `ast+` | principle |  | **blocker** |
-| 533 | `external` 계약은 «봉투»를 요구한다 — 두 번 온 것을 알아볼 식별자(CloudEvents 의 `source`+`id`) 없이는 멱등을 지킬 수단이 없다. | 트리 118행+D59 | `ast` | principle |  | **blocker** |
-| 534 | `broker/internal/`·`broker/external/` 각 폴더의 `.py` 는 «계약 하나 · 구현 하나» 둘뿐이다 — 양방향으로 건다. | 트리 114·117·119행+D59+D37 | `path` | principle |  | **blocker** |
+| 518 | `framework/broker/` 아래에는 어느 BC 의 업무 어휘도 나오지 않는다. | 트리 143행+D59+D38 | `ast` | principle |  | **blocker** |
+| 520 | 사실을 보내 놓고 그 결과를 «걱정하고» 있으면 위반이다 — Fowler 가 «passive-aggressive command» 라 부른 함정이고, 그건 사실이 아니라 «지시»였어야 한다. | 트리 143행+D59+D48 | `ast+` | principle |  | **blocker** |
+| 521 | `broker/internal/` 은 바깥 미들웨어 «없이» 배달한다 — 네트워크도 저장도 별도 프로세스도 두지 않는다. | 트리 144행+D59 | `ast` | principle |  | **blocker** |
+| 522 | `internal/` 의 한계는 계약이 말한다 — 같은 «프로세스» 안에서만 들린다. 워커가 여섯이면 브로커도 여섯이고 다른 프로세스에서 일어난 일은 영원히 안 들린다. | 트리 144행+D59+D49 | `human` | principle |  | **면제** |
+| 523 | `internal_broker_port.py` 의 구독 등록은 «메모리에만» 한다 — 구독표가 「사실 이름 → 파이썬 함수」라 DB 에 담을 수 없다. 경로 문자열로 넣고 import 로 되살리면 D40 이 반려한 signals 보다 나쁘다. | 트리 145행+D59+D40 | `ast` | principle |  | **blocker** |
+| 524 | 구독표는 «사실 → 리스너 집합»이라 같은 짝이 두 번 와도 하나다 — 리스트로 두면 `ready()` 가 두 번 돌 때 두 번 발화한다. 멱등은 부르는 쪽 예의가 아니라 «계약»이 진다. | 트리 145행+D59 | `ast` | principle |  | **blocker** |
+| 525 | 발행은 리스너마다 하나씩 넘기고, 하나가 실패해도 나머지는 간다 — 대신 실패한 리스너를 «삼키면» 위반이다. | 트리 145행+D59+D49 | `ast` | principle |  | **blocker** |
+| 526 | `internal` 통로에 「반드시 도달」을 기대는 코드가 붙으면 위반이다 — 보장은 «롤백되면 발행 안 됨» 한쪽뿐이고, 커밋됐다고 반드시 나가지는 않는다(at-most-once). **처방은 «누가» 못 견디나로 갈린다** — 보내는 쪽이면 애초에 «지시»였고(#520), 받는 쪽이면 #626 이 받는다. **[Q3]** | 트리 145행+D59+D49 | `human` | principle |  | **blocker** |
+| 527 | `InternalBroker()` 를 `internal_broker.py` «밖»에서 만들면 위반이다 — 인스턴스는 이 파일 안에 하나로 두고 「한 번」은 파이썬 모듈 캐시가 보장한다. `composition_root/` 는 BC 마다 있어 거기서 만들면 BC 수만큼 생기고 «남의 사실»이 영원히 안 들린다. | 트리 146행+D59 | `ast` | principle |  | **blocker** |
+| 528 | 구독표가 «인스턴스 속성»이 아니면 위반이다 — 모듈 레벨 «가변 전역»에 두면 걸린다. 인스턴스가 모듈에 «사는» 것과는 다르다. | 트리 146·149행+D59 | `ast` | principle |  | **blocker** |
+| 529 | `broker/external/` 인지를 가르는 물음은 하나다 — 「듣는 쪽이 «다른 배포 단위»에 있나」. 「멀다」·「느슨하다」 같은 «정도»가 아니라 예/아니오다. | 트리 147행+D59 | `ast+` | principle |  | **blocker** |
+| 530 | 내구성·백프레셔·재시도를 이유로 `external/` 을 열면 위반이다 — 셋 다 «워커»의 일이라 `cron_job/` 이 이미 받는다(D48 ②). 보존·재생은 관할 밖(Event Sourcing)이다. **[Q3]** | 트리 147행+D59+D48 | `human` | principle |  | **blocker** |
+| 531 | `external_broker_port.py` 는 `internal_broker_port.py` 와 «다른 계약»이다 — 같은 계약의 다른 구현이 아니다. 보장이 달라서 약속이 갈린다. | 트리 148행+D59 | `ast` | principle |  | **blocker** |
+| 532 | `external` 계약은 「반드시 도달」을 **요구로** 적고 «두 번 올 수 있다»를 함께 말한다(at-least-once) — 받는 쪽 멱등이 필수가 된다. **다만 그 도달 보장은 «미들웨어 설정»에 살아 트리가 확인할 수 없다** — Redis Pub/Sub 도 Celery 기본값도 at-most-once 다. 그러니 **받는 쪽은 「안 왔을 때」를 여전히 메워야 하고**(#629), 보장 자체는 `#603` 의 딸림 ⑷ 가 진다. <span>08-11 · C8 — 옛 문면의 「전제한다」가 «보장된다»로 읽혀 `external` 을 「놓칠 수 있는 입구」에서 빼는 근거로 쓰일 뻔했다. **설정에만 있는 것을 트리가 보장으로 읽으면 안 된다**(T45 가 ORM 캐시에서 만난 같은 모양).</span> | 트리 148행+D59+D49 | `ast+` | principle |  | **blocker** |
+| 533 | `external` 계약은 «봉투»를 요구한다 — 두 번 온 것을 알아볼 식별자(CloudEvents 의 `source`+`id`) 없이는 멱등을 지킬 수단이 없다. | 트리 148행+D59 | `ast` | principle |  | **blocker** |
+| 534 | `broker/internal/`·`broker/external/` 각 폴더의 `.py` 는 «계약 하나 · 구현 하나» 둘뿐이다 — 양방향으로 건다. | 트리 144·147·149행+D59+D37 | `path` | principle |  | **blocker** |
 | 535 | `apps.py` 의 `ready()` 본문은 «한 줄»이다 — 자기 BC 의 `composition_root/event_wiring.py` 를 부른다. | 트리 77행+D59+D15 | `ast` | principle |  | **blocker** |
 | 536 | 그 import 가 `ready()` «밖»에 있으면 위반이다 — 부팅 1단계에서는 모델을 못 읽는다. | 트리 77행+D59 | `ast` | principle |  | **blocker** |
 | 537 | `ready()` 에서 DB 를 만지면 위반이다 — 원전 축자: *“`manage.py test` would still execute some queries against your **production** database”*. | 트리 77행+D59 | `ast` | principle |  | **blocker** |
@@ -870,18 +870,18 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 548 | 다른 애그리거트는 «식별자 값 객체»로만 문다 — 타입 힌트에 남의 애그리거트 클래스가 나오면 위반이다. 면제는 하나, 조회가 실제로 느려 직접 참조가 필요할 때(원전 Reason Four)다. | 트리 60행+D50+D12 | `ast` | principle |  | **blocker** |
 | 549 | 수정하려고 꺼내는 조회는 캐시를 «우회한다» — 선은 애그리거트가 아니라 «트랜잭션»이고, `select_for_update` 를 캐시하면 DB 락이 무용지물이 된다. | 트리 60·92행+D50 | `ast` | principle |  | **blocker** |
 | 550 | 배치 면제는 «생성»에만 걸린다 — 이미 있는 것을 여럿 «고치는» 것은 면제가 아니다. | 트리 60행+D43 | `ast` | principle |  | **blocker** |
-| 551 | 계약은 `ABC` 를 상속하고 메서드는 전부 `@abstractmethod` 다 — 미구현은 인스턴스화에서 `TypeError` 로 잡힌다. | 트리 47·68·115·121행+D44 | `ast` | principle |  | **blocker** |
-| 552 | 구현은 그 계약을 «상속»한다 — 상속만 하면 미구현을 런타임이 잡으므로 강제할 것은 「상속했나」 하나다. | 트리 92·99·102·104·125행+D44 | `ast` | principle |  | **blocker** |
+| 551 | 계약은 `ABC` 를 상속하고 메서드는 전부 `@abstractmethod` 다 — 미구현은 인스턴스화에서 `TypeError` 로 잡힌다. | 트리 47·68·145·151행+D44 | `ast` | principle |  | **blocker** |
+| 552 | 구현은 그 계약을 «상속»한다 — 상속만 하면 미구현을 런타임이 잡으므로 강제할 것은 「상속했나」 하나다. | 트리 92·101·114·126·155행+D44 | `ast` | principle |  | **blocker** |
 | 553 | 어댑터가 하는 일은 «바꾸고 · 부르고 · 바꾼다» 셋뿐이다 — 도메인에 «시키면» 위반이고, 업무 판정을 여기서 하면 위반이다. | 트리 89행+D45 | `ast+` | principle |  | **blocker** |
 | 554 | 어댑터는 «계약이 선언한 실패»로 바꿔 내보낸다 — 계약이 어디 사느냐가 답을 정한다: 리포지토리(도메인)면 도메인 예외, 능력 포트면 포트 예외다. 어댑터는 결정하지 않고 «이름만» 바꾼다. | 트리 89·92행+D51 | `ast` | principle |  | **blocker** |
 | 555 | 어댑터가 벤더·django 예외를 «그대로» 위로 흘리면 위반이다 — 그러면 전역 제약 ②가 자료의 모양이 아니라 «실패의 모양»으로 깨진다. | 트리 89행+D51 | `ast` | principle |  | **blocker** |
-| 556 | 재시도의 «판정»은 driven 이 지고, «기계»만 `framework/` 가 지며, «다시 부르기»는 입구가 한다 — 셋을 한 낱말로 뭉쳐 한 칸에 두면 위반이다. | 트리 89·112행+D52 | `ast` | principle |  | **blocker** |
+| 556 | 재시도의 «판정»은 driven 이 지고, «기계»만 `framework/` 가 지며, «다시 부르기»는 입구가 한다 — 셋을 한 낱말로 뭉쳐 한 칸에 두면 위반이다. | 트리 89·142행+D52 | `ast` | principle |  | **blocker** |
 | 557 | 일시 실패(transient)의 정규화는 그 인프라를 «소유한» 어댑터가 한다 — 위층이 벤더 오류 코드를 보고 판정하면 위반이다. | 트리 89행+D52+D51 | `ast` | principle |  | **blocker** |
-| 558 | `framework/` 는 «링»이 아니다 — 링은 폴더가 아니라 «파일»이 진다. `framework/` 아래 파일도 각자 자기 링의 규칙을 따른다. | 트리 112행+D47 | `ast` | principle |  | **blocker** |
-| 559 | `framework/pure/` 에는 순수 계산과 그 계산이 주고받는 «순수 자료»가 온다 — 판정이 곧 이름이다: 「이 파일이 순수한가」. | 트리 128행+D47 | `ast` | principle |  | **blocker** |
-| 560 | `framework/pure/` 는 그 **밖의** 저장소 파일을 import 하지 않는다 — 같은 `pure/` 안의 순수 자료 모듈(`Page`·`SortSpec`)은 예외다. 표준 라이브러리는 #561 이 따로 건다. | 트리 128·129행+D47 | `ast` | principle |  | **blocker** |
-| 561 | `pure/` 에 부작용이 있으면 위반이다 — `datetime`·`time`·`random`·`secrets`·`uuid`·`os`·`io` 가 나오면 그건 «2차 행위자»라 `<capability>/` 다. 목록은 예시이고 **판정은 「같은 인자로 두 번 불러 같은 답이 나오나」**다(ast 근사). | 트리 128·129행+D47 | `ast` | principle |  | **blocker** |
-| 562 | `pure/` 아래에 `*_port.py`·`*_adapter.py` 가 있으면 위반이고, **업무 어휘가 한 글자라도 나오면 위반**이다 — 뒤엣것이 이 트리에서 Shared Kernel 을 막는 기계다. | 트리 128·129행+D47+D24 | `path` | principle |  | **blocker** |
+| 558 | `framework/` 는 «링»이 아니다 — 링은 폴더가 아니라 «파일»이 진다. `framework/` 아래 파일도 각자 자기 링의 규칙을 따른다. | 트리 142행+D47 | `ast` | principle |  | **blocker** |
+| 559 | `framework/pure/` 에는 순수 계산과 그 계산이 주고받는 «순수 자료»가 온다 — 판정이 곧 이름이다: 「이 파일이 순수한가」. | 트리 158행+D47 | `ast` | principle |  | **blocker** |
+| 560 | `framework/pure/` 는 그 **밖의** 저장소 파일을 import 하지 않는다 — 같은 `pure/` 안의 순수 자료 모듈(`Page`·`SortSpec`)은 예외다. 표준 라이브러리는 #561 이 따로 건다. | 트리 158·159행+D47 | `ast` | principle |  | **blocker** |
+| 561 | `pure/` 에 부작용이 있으면 위반이다 — `datetime`·`time`·`random`·`secrets`·`uuid`·`os`·`io` 가 나오면 그건 «2차 행위자»라 `<capability>/` 다. 목록은 예시이고 **판정은 「같은 인자로 두 번 불러 같은 답이 나오나」**다(ast 근사). | 트리 158·159행+D47 | `ast` | principle |  | **blocker** |
+| 562 | `pure/` 아래에 `*_port.py`·`*_adapter.py` 가 있으면 위반이고, **업무 어휘가 한 글자라도 나오면 위반**이다 — 뒤엣것이 이 트리에서 Shared Kernel 을 막는 기계다. | 트리 158·159행+D47+D24 | `path` | principle |  | **blocker** |
 | 563 | BC 를 가로지르는 단계는 물음 «둘»로 갈린다 — ① 「실패하면 내가 할 일이 있나」(예: 지시 / 아니오: 사실) ② 「응답을 기다리게 해도 되나」(예: 요청 / 아니오: 워커). **[Q3]** | D48+D42 | `human` | principle |  | **blocker** |
 | 564 | 진행 상태를 기억하는 «진행표»를 만들지 않는다 — 순서는 유스케이스가 지고, 중재자는 «칸»이 아니라 «패턴»이다. | D48+D42 | `ast+` | principle |  | **blocker** |
 | 565 | BC 가 «단계»를 도메인에 들려면 업무가 그 단계 이름을 «입으로 부를 때»만이다 — 아니면 워크플로를 도메인 어휘로 위장한 것이라 자리는 유스케이스다. | 트리 60행+D42 | `ast+` | principle |  | **blocker** |
@@ -893,27 +893,27 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 571 | `<use_case>_result.py` 에는 «성공했을 때의 모양 한 벌»만 온다 — 실패는 여기 오지 않고, 갈래가 여럿이면 그것은 유스케이스가 둘이라는 신호다. | 트리 44행+D55 | `ast` | principle |  | **blocker** |
 | 572 | `bc_error_schema.py` 에는 응답 본문 클래스 `<Bc>ErrorSchema` 와 오류 코드 `<Bc>ErrorCode` 가 함께 온다 — 코드는 스키마의 `code` 필드 «타입»이라 떼면 둘이 따로 늘어난다. <span>08-15 · 승인 예외 — BC base 가 공통 스키마의 «식별자 field» 하나를 자기 `<Bc>ErrorCode` 로 정확히 좁히면서 공통의 default 를 잃어 required 가 되는 모양은 canon 이다(식별자 field 한정·ErrorCode 좁힘 동반일 때만 면제 — 그 밖의 required/default 의미 변경은 계속 위반 · 레인 2 BC × 양 레인 수렴 실물의 사용자 승인).</span> | 트리 10행+D55+D27 | `ast` | principle |  | **blocker** |
 | 573 | `port/<capability>/<data>_out.py`·`<data>_in.py` 의 방향 기준점은 «우리 안쪽»이다 — 우리에게 들어오면 `_in`, 나가면 `_out` 이다. | 트리 49·50행+D55+D33 | `path` | principle |  | **blocker** |
-| 574 | `<data>_in.py` 타입을 «만드는» 것은 어댑터뿐이다 — 유스케이스가 생성하면 위반이다. 여기 오는 것은 «바깥이 답한 것»이라 우리가 지어낼 수 없다. **`port/` 쪽과 `framework/` 쪽 둘 다에 걸린다.** | 트리 50·124행+D55+D33 | `ast` | principle |  | **blocker** |
-| 575 | 포트의 «가짜 구현»은 `test/fake/` 에 산다 — `factories/` 의 형제이고, 안에 숨겨 두면 다른 의미군이 무심코 가져다 써 「무엇을 켜고 도는가」가 조용히 깨진다. | 트리 110행+D56 | `path` | principle |  | **blocker** |
-| 576 | `test/fake/<declaration>.py` 는 짝이 될 «선언»이 없으면 위반이다 — 검사는 «한 방향»뿐이고, 반대(선언이 있는데 페이크가 없다)는 걸지 않는다. 걸면 모든 포트에 페이크가 강제된다. | 트리 110·111행+D56+D37 | `path` | principle |  | **blocker** |
-| 577 | 페이크는 그 선언 클래스를 «상속»하고 파일 이름이 선언과 «같다» — 여기는 «선언당 하나»라 이름이 같고, 기술이 여럿일 수 있는 `adapter/` 쪽과 갈리는 지점이다. | 트리 111행+D56+D44 | `ast` | principle |  | **blocker** |
-| 578 | 페이크가 기술을 만지면 위반이다 — DB·네트워크·파일·시계가 나오면 그건 페이크가 아니라 어댑터다. | 트리 111행+D56 | `ast` | principle |  | **blocker** |
-| 579 | `application/`·`framework/` 의 «프로덕션» 코드가 페이크를 import 하면 위반이다 — 배포에 실리는 순간 가짜가 진짜 자리에 선다. | 트리 111행+D56 | `ast` | principle |  | **blocker** |
-| 580 | 프로덕션에서도 쓰면 그건 페이크가 아니다 — 가르는 자는 「테스트에서만 쓰나」이고, 로컬 개발·기능 플래그로 켠다면 진짜 어댑터라 `adapter/<capability>/` 에 산다. | 트리 110행+D56 | `ast` | principle |  | **blocker** |
-| 581 | `test/fake/` 아래에 겹을 더 만들지 않는다 — 평평하다. 선언 쪽 겹을 따라 하면 경로만 길어진다. | 트리 111행+D56 | `path` | principle |  | **blocker** |
-| 582 | 한 포트에 어댑터가 «동시에 여럿»일 수 있다 — 그래서 `adapter/<capability>/` 아래 파일 이름은 폴더를 되풀이하지 않고 «어느 기술인가»를 말한다(`<technology>_adapter.py`). | 트리 103·104행+D57+D37 | `path` | principle |  | **blocker** |
+| 574 | `<data>_in.py` 타입을 «만드는» 것은 어댑터뿐이다 — 유스케이스가 생성하면 위반이다. 여기 오는 것은 «바깥이 답한 것»이라 우리가 지어낼 수 없다. **`port/` 쪽과 `framework/` 쪽 둘 다에 걸린다.** | 트리 50·154행+D55+D33 | `ast` | principle |  | **blocker** |
+| 575 | 포트의 «가짜 구현»은 `test/fake/` 에 산다 — `factories/` 의 형제이고, 안에 숨겨 두면 다른 의미군이 무심코 가져다 써 「무엇을 켜고 도는가」가 조용히 깨진다. | 트리 140행+D56 | `path` | principle |  | **blocker** |
+| 576 | `test/fake/<declaration>.py` 는 짝이 될 «선언»이 없으면 위반이다 — 검사는 «한 방향»뿐이고, 반대(선언이 있는데 페이크가 없다)는 걸지 않는다. 걸면 모든 포트에 페이크가 강제된다. | 트리 140·141행+D56+D37 | `path` | principle |  | **blocker** |
+| 577 | 페이크는 그 선언 클래스를 «상속»하고 파일 이름이 선언과 «같다» — 여기는 «선언당 하나»라 이름이 같고, 기술이 여럿일 수 있는 `adapter/` 쪽과 갈리는 지점이다. | 트리 141행+D56+D44 | `ast` | principle |  | **blocker** |
+| 578 | 페이크가 기술을 만지면 위반이다 — DB·네트워크·파일·시계가 나오면 그건 페이크가 아니라 어댑터다. | 트리 141행+D56 | `ast` | principle |  | **blocker** |
+| 579 | `application/`·`framework/` 의 «프로덕션» 코드가 페이크를 import 하면 위반이다 — 배포에 실리는 순간 가짜가 진짜 자리에 선다. | 트리 141행+D56 | `ast` | principle |  | **blocker** |
+| 580 | 프로덕션에서도 쓰면 그건 페이크가 아니다 — 가르는 자는 「테스트에서만 쓰나」이고, 로컬 개발·기능 플래그로 켠다면 진짜 어댑터라 `adapter/<capability>/` 에 산다. | 트리 140행+D56 | `ast` | principle |  | **blocker** |
+| 581 | `test/fake/` 아래에 겹을 더 만들지 않는다 — 평평하다. 선언 쪽 겹을 따라 하면 경로만 길어진다. | 트리 141행+D56 | `path` | principle |  | **blocker** |
+| 582 | 한 포트에 어댑터가 «동시에 여럿»일 수 있다 — 그래서 `adapter/<capability>/` 아래 패키지 이름은 능력을 되풀이하지 않고 «어느 기술인가»를 말한다(`<technology>_adapter/`). 그 안의 `adapter/` 에 구현별 파일을 둔다. | 트리 123·124행+D57+D37 | `path` | principle |  | **blocker** |
 | 583 | 기본은 «파일 하나 = 선언 하나» 한 방향이고, 1:1 을 «양방향»으로 거는 자리는 셋뿐이다 — `repository/` · `unit_of_work/` · `domain_bypass_query/`(각 폴더). `broker/` 의 「계약 하나 · 구현 하나」는 #534 가 따로 진다. | 트리 91·93·95행+D57+D37 | `path` | principle |  | **blocker** |
-| 584 | `framework/<capability>/` 의 폴더 이름은 `port/<capability>/` 것을 그대로 받는다 — 「무엇이 필요한가」로 짓고 «누가·언제·어떻게»는 넣지 않는다. `smtp_client/`·`redis_cache/` 는 위반이다. | 트리 120행+D57+D46+D24 | `ast+` | principle |  | **blocker** |
-| 585 | `framework/<capability>/exception.py` 는 필수이고 도메인 예외를 상속하지 않는다 — 이 칸은 도메인을 아예 모른다. 번역할 대상이 없으면 django·SDK 예외가 유스케이스로 «샌다». | 트리 122행+D24+D27 | `ast` | principle |  | **blocker** |
-| 587 | `framework/<capability>/<data>_in.py` 검사 **둘** — 애그리거트가 오면 위반 · 업무 어휘 0. **생성 주체(어댑터뿐)는 #574 가 진다.** | 트리 124행+D24+D33 | `ast` | principle |  | **blocker** |
+| 584 | `framework/<capability>/` 의 폴더 이름은 `port/<capability>/` 것을 그대로 받는다 — 「무엇이 필요한가」로 짓고 «누가·언제·어떻게»는 넣지 않는다. `smtp_client/`·`redis_cache/` 는 위반이다. | 트리 150행+D57+D46+D24 | `ast+` | principle |  | **blocker** |
+| 585 | `framework/<capability>/exception.py` 는 필수이고 도메인 예외를 상속하지 않는다 — 이 칸은 도메인을 아예 모른다. 번역할 대상이 없으면 django·SDK 예외가 유스케이스로 «샌다». | 트리 152행+D24+D27 | `ast` | principle |  | **blocker** |
+| 587 | `framework/<capability>/<data>_in.py` 검사 **둘** — 애그리거트가 오면 위반 · 업무 어휘 0. **생성 주체(어댑터뿐)는 #574 가 진다.** | 트리 154행+D24+D33 | `ast` | principle |  | **blocker** |
 | 588 | 사람이 읽을 문구(메일 본문·문자 문안·푸시 제목)는 `django_<bounded_context>/templates/<bounded_context>/<capability>/<template>.html` 에 살고, 이 파일을 여는 것은 «어댑터»뿐이다 — 유스케이스나 도메인이 `render_to_string`·`gettext` 를 부르면 위반이다. | 트리 88행+D21+D14 | `ast` | principle |  | **blocker** |
 | 589 | 템플릿에 «업무 판정»이 들어오면 위반이다 — 「환불이 되나」를 `{% if %}` 로 다시 쓰면 같은 규칙이 두 채널이 된다(D30). 여기 오는 것은 «이미 정해진 값»뿐이다. | 트리 88행+D21+D30 | `ast+` | principle |  | **blocker** |
-| 590 | `Presenter` 는 «칸»이 아니라 «경계 모양»이다 — 문구를 빚는 자리를 따로 만들지 않고, 안쪽은 코드·번호·수량·`locale` 까지만 실어 경계 밖으로 넘긴다. | 트리 88·123행+D14 | `ast+` | principle |  | **blocker** |
+| 590 | `Presenter` 는 «칸»이 아니라 «경계 모양»이다 — 문구를 빚는 자리를 따로 만들지 않고, 안쪽은 코드·번호·수량·`locale` 까지만 실어 경계 밖으로 넘긴다. | 트리 88·153행+D14 | `ast+` | principle |  | **blocker** |
 | 591 | brownfield 은 «면제»가 아니라 «아직 안 갚은 빚»이다 — 규칙이 바뀌어 위반이 된 코드에 예외를 주지 않는다. 리팩터링 대상은 기존 검사기가 내는 «위반 그 자체»이고 새 백스톱을 따로 만들지 않는다. | D30+§1.1 | `ast` | principle |  | **이행** |
 | 592 | 이관을 미루려면 `AskUserQuestion` 으로 사용자 판단을 받는다 — 「가만 있어도 해로운가」로 catch-all 은 못 미룬다. **[Q0]** | §1.1 | `human` | principle |  | **이행** |
 | 593 | `migrations/` 안은 사람이 «직접 손대지» 않는다 — 하나라도 손수 편집하면 위반이고, 필요한 변경은 모델을 고쳐 다시 생성한다. **주어는 «사람»이다** — `makemigrations`·`squashmigrations` 처럼 **도구가 만들고 도구가 지우는 변경은 「손수 편집」이 아니다**(압축은 커밋된 파일을 지우고 새로 쓴다). | 트리 80·81행+D15 | `ast` | principle |  | **blocker** |
 | 594 | `port/<capability>/` 의 폴더 이름은 「무엇이 필요한가」로 짓고 «바뀔 수 있는 것» 셋을 넣지 않는다 — **누가**(공급자) · **언제**(계기) · **어떻게**(전달 수단). **`smtp_client/` 가 아니라 `email_sender/` 다** — 파일 이름은 #218 이 폴더에 묶는다. | 트리 46행+D46 | `ast+` | principle |  | **blocker** |
-| 595 | 이름 판정은 하나다 — 「그것이 바뀌어도 이 이름이 그대로인가」. `smtp_client/`·`redis_cache/`·`nightly_sync/` 는 전부 위반이다. | 트리 46·120행+D46 | `ast+` | principle |  | **blocker** |
+| 595 | 이름 판정은 하나다 — 「그것이 바뀌어도 이 이름이 그대로인가」. `smtp_client/`·`redis_cache/`·`nightly_sync/` 는 전부 위반이다. | 트리 46·150행+D46 | `ast+` | principle |  | **blocker** |
 
 ## 5차 리뷰가 걷어낸 것 — 14건
 
@@ -939,11 +939,11 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 
 | # | 규칙 | 나온 자리 | 판정 | 근거 | 실측 | 어겼을 때 |
 |---|---|---|---|---|---|---|
-| 620 | `framework/test/` 의 자식은 셋이다 — `<module>.py`(뼈대) · `fake/` · `unit/`. | 트리 130행+D24+D56 | `path` | principle |  | **blocker** |
-| 621 | `framework/<capability>/` 포트의 페이크는 `framework/test/fake/` 에 산다 — BC 의 `test/fake/` 에 두면 짝이 층을 가로지른다. | 트리 132행+D56 | `path` | principle |  | **blocker** |
-| 622 | `framework/test/fake/<declaration>.py` 는 선언 파일과 «같은 이름»이고, 안의 클래스는 `framework/<capability>/<capability>_port.py` 의 선언을 상속한다. | 트리 133행+D56 | `ast` | principle |  | **blocker** |
-| 623 | `framework/test/fake/` 와 `framework/<capability>/` 의 선언은 1:1 이다 — 선언에 없는 이름이 여기 있으면 위반이다. | 트리 133행+D37 | `path` | principle |  | **blocker** |
-| 624 | `framework/test/fake/` 안에서 DB·HTTP·파일을 만지면 위반이다 — 그러면 페이크가 아니라 `framework/<capability>/` 의 어댑터다. | 트리 133행+D56 | `ast` | principle |  | **blocker** |
+| 620 | `framework/test/` 의 자식은 셋이다 — `<module>.py`(뼈대) · `fake/` · `unit/`. | 트리 160행+D24+D56 | `path` | principle |  | **blocker** |
+| 621 | `framework/<capability>/` 포트의 페이크는 `framework/test/fake/` 에 산다 — BC 의 `test/fake/` 에 두면 짝이 층을 가로지른다. | 트리 162행+D56 | `path` | principle |  | **blocker** |
+| 622 | `framework/test/fake/<declaration>.py` 는 선언 파일과 «같은 이름»이고, 안의 클래스는 `framework/<capability>/<capability>_port.py` 의 선언을 상속한다. | 트리 163행+D56 | `ast` | principle |  | **blocker** |
+| 623 | `framework/test/fake/` 와 `framework/<capability>/` 의 선언은 1:1 이다 — 선언에 없는 이름이 여기 있으면 위반이다. | 트리 163행+D37 | `path` | principle |  | **blocker** |
+| 624 | `framework/test/fake/` 안에서 DB·HTTP·파일을 만지면 위반이다 — 그러면 페이크가 아니라 `framework/<capability>/` 의 어댑터다. | 트리 163행+D56 | `ast` | principle |  | **blocker** |
 
 ## C3 반영 — 1개 (625)
 
@@ -959,7 +959,7 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 
 | # | 규칙 | 나온 자리 | 판정 | 근거 | 실측 | 어겼을 때 |
 |---|---|---|---|---|---|---|
-| 626 | 사실이 유실됐을 때 «못 견디는 쪽»이 **받는 쪽**이면, 그 자료를 브로커 통로에 기대는 설계 자체가 위반이다 — 받는 쪽이 `cron_job/` 으로 **시각에** 깨어나 주인의 `open_host_service/` 에 «묻는다». 「그럼 지시였어야 한다」(#526)는 **보내는 쪽**이 못 견딜 때만 성립한다. **[Q3]** | 트리 22·33·115행+D49+D48 | `human` | principle |  | **blocker** |
+| 626 | 사실이 유실됐을 때 «못 견디는 쪽»이 **받는 쪽**이면, 그 자료를 브로커 통로에 기대는 설계 자체가 위반이다 — 받는 쪽이 `cron_job/` 으로 **시각에** 깨어나 주인의 `open_host_service/` 에 «묻는다». 「그럼 지시였어야 한다」(#526)는 **보내는 쪽**이 못 견딜 때만 성립한다. **[Q3]** | 트리 22·33·145행+D49+D48 | `human` | principle |  | **blocker** |
 | 627 | 구독으로 받은 사실의 payload 를 자기 쪽 저장소에 «장부»로 적립·집계하면 위반이다 — 그건 사본(Event-Carried State Transfer)이라 이 트리의 **관할 밖**이다. 상세가 필요하면 주인의 `open_host_service/` 에 되묻는다. | 트리 6·35행+D49 | `ast` | principle |  | **blocker** |
 
 **답은 트리가 이미 그은 선 «안쪽»에 있었다.** D49 가 *「이 트리가 다루는 사실은 **Event Notification** 하나」* 라고 못 박았고, 그 패턴의 정의가 *상세를 안 싣고 「필요하면 소스에 되묻는다」* 이다. **사실은 «깨우는» 것이지 «나르는» 것이 아니다** — 알림이 사라져도 장부는 남는다. 둘을 함께 써도 된다(구독으로 깨어나되 자료는 물어서 얻는다).
@@ -1163,20 +1163,21 @@ Phase 1 산출물 리뷰(렌즈③ «잃은 값»)의 회수다. **유실 확정
 | 634 | `<service>_service.py` 의 공개 표면은 모듈 수준 «함수»뿐이다 — 공개 클래스를 두지 않는다(계약 클래스는 `contract/` 에 산다 · `_` 사설은 자유). <span>08-11 · T60-3 복원(사용자 승인).</span> | 트리 24행 | `ast` | principle |  | **blocker** |
 | 635 | `<use_case>_use_case.py` 의 진입점은 클래스 하나이고 실행 메서드는 `execute` 하나다 — 자기 `<use_case>_command.py`/`_query.py` 의 계약 객체 하나를 받아 `<use_case>_result.py` 의 result(스트림이면 `Iterator[<UseCase>Result]` — D40)를 돌려준다. <span>08-11 · T60-4 복원(사용자 승인).</span> | 트리 41행 | `ast` | principle |  | **blocker** |
 | 636 | `bc_error_schema.py` 의 `<Bc>ErrorCode` 는 `StrEnum` 이다 — `Literal`·맨 문자열 상수 모음으로 대신하지 않는다(#572 가 정한 동거의 «타입» 축). <span>08-11 · T60-5 복원(사용자 승인).</span> | 트리 10행 | `ast` | principle |  | **blocker** |
-| 637 | `test/` 아래 어디에도 migration 산출물(파일·operation·적용 순서·과거 state·DDL)을 오라클로 삼는 테스트를 두지 않는다 — `migrations/` 는 `makemigrations` 가 생성한 것이라 테스트 대상이 아니며 기존 것도 삭제한다(신호: `django.db.migrations`·`MigrationExecutor`/`MigrationLoader`/`ProjectState`/`MigrationRecorder`·migration 모듈 import). <span>08-25 · tarot 잔존 판정 5(사용자 «절대 규칙» 확정) — `check-test-config`.</span> | 트리 130~134행 | `ast` | principle |  | **blocker** |
-| 638 | 동명 폴더 승격(#490 교체형)의 승격 폴더는 안에 본체 `<이름>.py` 를 반드시 가진다 — 본체 없는 폴더는 위장이라 위반이다(`__init__.py` 도 함께 있어야 한다). <span>09-01 · 동명 폴더 승격 규범화 — `check-layer-skeleton`.</span> | 승격 허용 16행(§0 교체형) | `path` | principle |  | **blocker** |
-| 639 | 형제 `<이름>.py` 와 승격 폴더 `<이름>/` 의 공존은 위반이다 — 파일시스템은 공존을 허용하고 import 는 패키지가 이겨 조용한 위장 중복이 된다. <span>09-01 · 동명 폴더 승격 규범화.</span> | 승격 허용 16행(§0 교체형) | `path` | principle |  | **blocker** |
-| 640 | 승격 폴더의 `__init__.py` 는 재수출 전용(`from .<모듈> import <이름> as <이름>` 또는 `__all__`)이다 — 본체 코드 동거는 위반이고, 폴더 안 정크드로어 이름(`utils.py`·`helpers.py` 류)도 위반이다. <span>09-01 · 동명 폴더 승격 규범화.</span> | 승격 허용 16행(§0 교체형) | `ast` | principle |  | **blocker** |
-| 641 | 승격 폴더 내부는 1단 평평이다 — 하위 폴더는 위반이다(부품 군집이 폴더를 요구하면 그것은 트리 개정 신호이지 중첩 근거가 아니다). <span>09-01 · 동명 폴더 승격 규범화.</span> | 승격 허용 16행(§0 교체형) | `path` | principle |  | **blocker** |
-| 642 | 승격 폴더의 각 부품(본체·`__init__.py` 제외)은 50행(물리 행·빈 줄 제외) 이상이다 — 미만이면 위반이고, 신규 여부는 게이트 앵커 차분이 가른다(기존분은 잔존 보고 — 부품 통합 신호이지 승격 환원 의무가 아니다). <span>09-01 · 동명 폴더 승격 규범화.</span> | 승격 허용 16행(§0 교체형) | `ast` | principle |  | **blocker** |
-| 643 | 부품이 0개(본체+`__init__.py` 뿐)가 된 승격 폴더는 위반이다 — 환원 신호다(파일 실현으로 되돌린다 · 기존 폴더면 G0 빚 경로). <span>09-01 · 동명 폴더 승격 규범화.</span> | 승격 허용 16행(§0 교체형) | `path` | principle |  | **blocker** |
-| 644 | 행위 칸 실현(파일 또는 승격 본체·부품)이 200행(물리 행·빈 줄 제외)을 넘으면 캐스케이드 판정 의무 후보다 — ⑴ 확정 위반: 형태 위반은 #638~#643 이 잡는다 ⑵ 후보: 200행 초과(ⓓ 채널·exit 불산입·무조건 방출 — diff 한정은 감사자 몫) ⑶ 물음: 역할 밖 응집 단위가 있는가(①이동/②동명 폴더 승격/③유지 — houserules §1). <span>09-01 · 동명 폴더 승격 규범화 — `check-layer-skeleton` ⓓ.</span> | 승격 허용 16행(§0 교체형) | `ast+` | principle |  | **blocker** |
+| 637 | `test/` 아래 어디에도 migration 산출물(파일·operation·적용 순서·과거 state·DDL)을 오라클로 삼는 테스트를 두지 않는다 — `migrations/` 는 `makemigrations` 가 생성한 것이라 테스트 대상이 아니며 기존 것도 삭제한다(신호: `django.db.migrations`·`MigrationExecutor`/`MigrationLoader`/`ProjectState`/`MigrationRecorder`·migration 모듈 import). <span>08-25 · tarot 잔존 판정 5(사용자 «절대 규칙» 확정) — `check-test-config`.</span> | 트리 160~164행 | `ast` | principle |  | **blocker** |
+| 638 | 동명 폴더 승격(#490 교체형)의 승격 폴더는 안에 본체 `<이름>.py` 를 반드시 가진다 — 본체 없는 폴더는 위장이라 위반이다(`__init__.py` 도 함께 있어야 한다). <span>09-01 · 동명 폴더 승격 규범화 — `check-layer-skeleton`.</span> | 승격 허용 13행(§0 교체형) | `path` | principle |  | **blocker** |
+| 639 | 형제 `<이름>.py` 와 승격 폴더 `<이름>/` 의 공존은 위반이다 — 파일시스템은 공존을 허용하고 import 는 패키지가 이겨 조용한 위장 중복이 된다. <span>09-01 · 동명 폴더 승격 규범화.</span> | 승격 허용 13행(§0 교체형) | `path` | principle |  | **blocker** |
+| 640 | 세 어댑터의 바깥 패키지와 고정 역할 폴더의 `__init__.py` 는 재수출 전용이다. 승격 폴더의 `__init__.py` 는 재수출 전용(`from .<모듈> import <이름> as <이름>` 또는 `__all__`)이다 — 본체 코드 동거는 위반이고, 폴더 안 정크드로어 이름(`utils.py`·`helpers.py` 류)도 위반이다. <span>09-01 · 동명 폴더 승격 규범화.</span> | 승격 허용 13행 및 어댑터 고정 패키지 | `ast` | principle |  | **blocker** |
+| 641 | 승격 폴더 내부는 1단 평평이다 — 하위 폴더는 위반이다(부품 군집이 폴더를 요구하면 그것은 트리 개정 신호이지 중첩 근거가 아니다). <span>09-01 · 동명 폴더 승격 규범화.</span> | 승격 허용 13행(§0 교체형) | `path` | principle |  | **blocker** |
+| 642 | 승격 폴더의 각 부품(본체·`__init__.py` 제외)은 50행(물리 행·빈 줄 제외) 이상이다 — 미만이면 위반이고, 신규 여부는 게이트 앵커 차분이 가른다(기존분은 잔존 보고 — 부품 통합 신호이지 승격 환원 의무가 아니다). <span>09-01 · 동명 폴더 승격 규범화.</span> | 승격 허용 13행(§0 교체형) | `ast` | principle |  | **blocker** |
+| 643 | 부품이 0개(본체+`__init__.py` 뿐)가 된 승격 폴더는 위반이다 — 환원 신호다(파일 실현으로 되돌린다 · 기존 폴더면 G0 빚 경로). <span>09-01 · 동명 폴더 승격 규범화.</span> | 승격 허용 13행(§0 교체형) | `path` | principle |  | **blocker** |
+| 644 | 행위 칸 실현(파일 또는 승격 본체·부품)이 200행(물리 행·빈 줄 제외)을 넘으면 캐스케이드 판정 의무 후보다 — ⑴ 확정 위반: 형태 위반은 #638~#643 이 잡는다 ⑵ 후보: 200행 초과(ⓓ 채널·exit 불산입·무조건 방출 — diff 한정은 감사자 몫) ⑶ 물음: 역할 밖 응집 단위가 있는가(①이동/②동명 폴더 승격/③유지 — houserules §1). <span>09-01 · 동명 폴더 승격 규범화 — `check-layer-skeleton` ⓓ.</span> | 승격 허용 13행(§0 교체형) | `ast+` | principle |  | **blocker** |
 | 645 | 명시 `Any` 는 타입이 아니라 검사 포기다 — 함수 시그니처(인자·`*args/**kwargs`·반환)의 bare `Any`(`Optional[Any]`·`Any` 와 None 의 합집합·문자열·별칭·`typing.Any` 포함)는 확정 위반이고, 시그니처 안 제네릭 인자·변수·클래스 속성의 `Any` 는 ⓓ 후보다(감수자가 마무리 — `object`/정확 타입으로 받아 즉시 좁힌다). 프레임워크 오버라이드가 스텁에서 `Any` 를 쓰더라도 우리 선언은 `object` 다(#493 «주석 존재» 와 독립). <span>09-04 · 현장 보고 E — `Any` 정책(하우스룰 §4 R-3447/R-3448).</span> | D58+§4 | `ast+` | principle |  | **blocker** |
 | 646 | django-stubs 가 제네릭으로 선언했지만 런타임은 subscript 못 하는 Django 기저(타입 매개변수에 기본값이 없는 것 — admin·forms·CBV)는 모델 타입 인자를 적는다 — `if TYPE_CHECKING:` 별칭(또는 분기 안 중간 ClassDef)이 기본이고 monkeypatch 채택 시 직접 표기다. 맨몸 상속과 `# type: ignore[type-arg]`(헤더·속성 줄)는 확정 위반이고, code 없는 `# type: ignore` 헤더와 `TYPE_CHECKING` 밖 subscript(런타임 `TypeError` 후보)는 ⓓ 후보다. <span>09-04 · 현장 보고 3 S-1(하우스룰 §4 R-3458/R-3459).</span> | D58+§4 | `ast+` | principle |  | **blocker** |
 | 647 | 키가 정해진 값 묶음(레코드)은 딕셔너리로 들고 다니지 않는다 — `dict`/`Mapping`/`MutableMapping` 값 자리의 `Any` 는 전 자리(매개변수·반환·변수·속성) 확정 위반, `object` 는 반환·클래스 속성에 남으면 확정 위반(좁히지 않은 누수)이고 입구 매개변수·즉시 검증 지역 변수는 ⓓ 후보다(면제: `TypeIs/TypeGuard` 반환 · 스텁이 강제하는 `Form.clean`·`Field.deconstruct` 오버라이드). 반환 주석의 자리표시 `object`(루트·시퀀스 원소)도 ⓓ 후보다. <span>09-04 · 현장 보고 3 S-4(하우스룰 §4 R-3447 rev2/R-3448 rev2 · 결정표 R-3451~R-3457).</span> | D58+§4 | `ast+` | principle |  | **blocker** |
 | 648 | 컨트롤러 반환 주석의 `Status` 상자는 하나다 — 성공·오류 union 을 한 `Status[…]` 안에 넣거나(`Status[…]` 하나 안에 `Out` 과 `Err` 의 union) `Out` 과 `Status[Err]` 의 union 으로 쓴다. 상자 둘(`Status[A]` 와 `Status[B]` 의 union)은 `Status[T]` 가 불변이라 concrete 직접 반환이 mypy strict 에서 막히고 값 변수를 base 로 주석해 통과시킨 형태도 같은 금지다(형태 금지). <span>09-04 · 현장 보고 3 S-5(ninja §2.2 R-3463 · `check-api-error-controller-contract` 표준 트리 슬라이스 · 프로필 무관).</span> | D58+§4 | `ast` | principle |  | **blocker** |
 | 649 | 성공 응답이 판별 키로 갈리는 union 이면 이름 붙은 `RootModel` 하나로 선언한다 — ninja `Schema` 를 함께 상속하지 않는다(메타클래스 충돌 · `[metaclass]`·`[call-arg] root`). <span>09-04 · 현장 보고 3 S-5(ninja §3.1 R-3464 · 표준 트리 슬라이스).</span> | D58+§4 | `ast` | principle |  | **blocker** |
 | 650 | `json.load(s)` 결과는 `TypeAdapter(그TypedDict)` 로 검증하며 받거나 `x: object` 로 받아 즉시 좁힌다 — 결과가 `object` 아닌 선언 자리(주석 변수·반환·컴프리헨션·직접 접근·리터럴 컨테이너 원소)로 그냥 흐른 자리는 ⓓ 후보다(확정 위반은 #647 소유). <span>09-04 · 현장 보고 3 S-4(R-3448 rev2 · 결정표 R-3453).</span> | D58+§4 | `ast+` | principle |  | **blocker** |
+| 651 | 세 어댑터의 `adapter/`·`command/`·`contract/`·`schema/` 내용 파일은 비공개 클래스를 포함해 클래스 하나당 파일 하나다. `constant/` 는 클래스 없이 관련 상수를 묶는다. 내용 없는 골격 파일·재수출 초기화 파일은 클래스 수 검사에서 제외한다. | 트리 100~109·113~122·125~134행+#488+#490 | `ast` | principle |  | **blocker** |
 
 ## 5차 적대적 리뷰 회수 — 20개 (596~619)
 
@@ -1186,23 +1187,23 @@ Phase 1 산출물 리뷰(렌즈③ «잃은 값»)의 회수다. **유실 확정
 
 | # | 규칙 | 자리 | 판정 | 근거 | 3차 | 어겼을 때 |
 |---|---|---|---|---|---|---|
-| 596 | `test/unit/`·`test/integration/`·`test/e2e/` 아래는 폐쇄(#490)의 대상이 아니다 — 파일 이름을 pytest 가 소유한다. `conftest.py` 도 여기 산다. `factories/`·`fake/` 는 «재료»라 폐쇄가 그대로 걸린다. | 트리 105~111행+D56 | `path` | principle |  | **면제** |
+| 596 | `test/unit/`·`test/integration/`·`test/e2e/` 아래는 폐쇄(#490)의 대상이 아니다 — 파일 이름을 pytest 가 소유한다. `conftest.py` 도 여기 산다. `factories/`·`fake/` 는 «재료»라 폐쇄가 그대로 걸린다. | 트리 135~141행+D56 | `path` | principle |  | **면제** |
 | 597 | **애그리거트 리포지토리**의 «쓰기» 메서드 이름은 `save`·`remove` 로 시작한다 — BC 마다 `add`/`store`/`persist` 로 갈리면 「한 트랜잭션 = 애그리거트 하나」(#546)의 검사가 **아예 못 선다**. **거꾸로 리포지토리가 «아닌» 것이 `save` 라는 이름을 써도 #546 은 안 문다** — 세는 대상이 «이름»이 아니라 «타입»으로 갈리기 때문이다. <span>08-11 · C7 — 이름 규칙을 양방향으로 만드는 안(「리포지토리가 아니면 `save` 를 쓰지 마라」)은 **기각**했다. #546 의 주어를 좁히면 그 이름이 어디서 나오든 셈에 안 들어와서, 새 금지가 **아무 일도 안 한다**.</span> | 트리 68행+D43+T37 | `ast` | principle |  | **blocker** |
 | 599 | `save_all()` 은 열려 있고 조건이 셋이다 — ㉠ 트랜잭션을 열지 않는다(`with unit_of_work:` 안에서만 불린다) ㉡ 경합 가드를 유지한다(맨 `bulk_update` 로 구현하면 위반 — `WHERE` 가 `pk IN` 뿐이라 「내가 읽은 뒤 남이 바꿨다」를 못 잡는다) ㉢ 크기는 «부르는 쪽»이 정한다. `add_all` 은 열지 않는다. | 트리 68행+T37 | `ast` | principle |  | **blocker** |
 | 600 | 공표 사실의 «순환»을 만들지 않는다 — A 가 발행 → B 가 듣고 발행 → A 가 듣는 고리가 있으면 위반이다. 검사는 `published_event/<event>.py` 와 `event_subscription/<event>_subscription.py` 로 **BC 간 방향 그래프**를 그려 사이클을 본다(ACL 폴더 목록만 보는 #450 은 이 경로에 안 닿는다). | 트리 5·35~37행+D35+D40+D59 | `ast` | principle |  | **blocker** |
-| 601 | 구독 껍데기가 부른 유스케이스는 발행자의 `on_commit` 콜백 «안에서 같은 스레드로» 돈다 — 그 안에서 다시 사실을 발행하면 재귀가 열린다. 발행은 «한 겹»까지만 허용하고, 두 겹이 필요하면 그것은 사실이 아니라 워커의 일이다(D48 ②). | 트리 37·113행+D48+D59 | `ast` | principle |  | **blocker** |
-| 602 | 실패한 리스너의 기록이 «가는 곳»을 지정한다 — `robust=True` 가 잡은 예외는 장고 기본 설정에서 `django.db.backends.base` 로거로 가고 `DEFAULT_LOGGING` 의 두 핸들러가 **둘 다 안 받는다**(`require_debug_true` · `ADMINS=[]`). 그러므로 `framework/` 가 그 로거에 핸들러를 붙이거나 브로커가 직접 관측 포트로 내보내야 하고, 둘 다 없으면 「삼키면 위반」(#525)이 실효가 0이다. | 트리 96·115행+D49+D59 | `ast` | principle |  | **검사기** |
-| 603 | `broker/external/` 에 «내용»이 들어오는 순간 딸림 일곱이 함께 선다 — **하나라도 빠지면 위반**이다: ⑴ outbox(커밋과 발행을 한 트랜잭션에) ⑵ 소비자 멱등 ⑶ 봉투(`source`+`id`) ⑷ 재시도·데드레터 ⑸ 순서 보장 여부의 명시 ⑹ 직렬화 형식 ⑺ 스키마 진화 규칙. 「그건 나중에」가 이 칸에는 없다. <span>08-11 · Phase 0 린트 — 사람 몫 ⑵(소비자 멱등)는 #181 소유라 이 행에는 기계 여섯만 남는다 — `ast+`→`ast`.</span> | 트리 117행+D59 | `ast` | principle |  | **blocker** |
-| 604 | `framework/` 의 계약은 «더하기»만 한다 — 기존 메서드의 시그니처·반환형을 바꾸거나 지우면 위반이다. 새 모양이 필요하면 **새 메서드를 더하고 옛 것을 남긴 뒤** 강등 절차로 걷는다. Evans 의 *“shouldn't be changed without consultation”* 을 사람의 협의가 아니라 «가산만 허용»이라는 기계 규칙으로 옮긴 것이다. | 트리 112·121행+D24+D38 | `ast` | principle |  | **blocker** |
-| 606 | 강등 신호는 인자 «이름»에 의존하지 않는다 — ⑴ `framework/` 계약 메서드의 반환형이 `bool` 이면 «판정»이라 반송 ⑵ 인자 수 증가·기본값 있는 인자 등장을 센다 ⑶ 대상은 `<capability>_port.py` 하나가 아니라 **BC 가 둘 이상 import 하는 framework 파일 전부**다. | 트리 112~132행+D38 | `ast` | principle |  | **blocker** |
-| 607 | `framework/` 에서 업무 판정을 하면 위반이다 — 어댑터에 건 #553 의 쌍둥이다. 중립 이름(`viewer_id`·`resource_id`)으로 갈아입어도 판정은 판정이다. **#628 의 어휘 집합으로는 «잡히지 않는다»** — 이 행이 묻는 것은 「업무 낱말이 나오나」가 아니라 「**판정을 하나**」이고, 규칙 자신이 그 사실을 축자로 적고 있다(중립 이름으로 갈아입어도). `#553` 과 같은 술어를 쓴다. | 트리 120~125행+D38+D45 | `ast+` | principle |  | **blocker** |
-| 609 | 트리 140행의 «기계 판독 정의»는 `dddjango/` 아래 데이터 파일 하나가 소유하고, 문서 생성기(`docs/mkrev2.py`)가 **그것을 읽는다** — 지금은 반대로 생성기 안에 산다. 화이트리스트(#490)와 필수 목록(#488)이 같은 데이터에서 나온다. | #486~#492+D54 | `path` | principle |  | **이행** |
-| 610 | 합성 경로 넷(`form/<form>_form.py` · `feature/<feature>.py` · `templates/admin/…` · `templates/<bounded_context>/…`)은 화이트리스트로 쓰기 전에 마디를 편다 — 한 행에 여러 마디가 눌려 있어 깊이가 안 맞는다(실제 노드 145개). | 트리 85~88행+D54 | `path` | principle |  | **이행** |
+| 601 | 구독 껍데기가 부른 유스케이스는 발행자의 `on_commit` 콜백 «안에서 같은 스레드로» 돈다 — 그 안에서 다시 사실을 발행하면 재귀가 열린다. 발행은 «한 겹»까지만 허용하고, 두 겹이 필요하면 그것은 사실이 아니라 워커의 일이다(D48 ②). | 트리 37·143행+D48+D59 | `ast` | principle |  | **blocker** |
+| 602 | 실패한 리스너의 기록이 «가는 곳»을 지정한다 — `robust=True` 가 잡은 예외는 장고 기본 설정에서 `django.db.backends.base` 로거로 가고 `DEFAULT_LOGGING` 의 두 핸들러가 **둘 다 안 받는다**(`require_debug_true` · `ADMINS=[]`). 그러므로 `framework/` 가 그 로거에 핸들러를 붙이거나 브로커가 직접 관측 포트로 내보내야 하고, 둘 다 없으면 「삼키면 위반」(#525)이 실효가 0이다. | 트리 96·145행+D49+D59 | `ast` | principle |  | **검사기** |
+| 603 | `broker/external/` 에 «내용»이 들어오는 순간 딸림 일곱이 함께 선다 — **하나라도 빠지면 위반**이다: ⑴ outbox(커밋과 발행을 한 트랜잭션에) ⑵ 소비자 멱등 ⑶ 봉투(`source`+`id`) ⑷ 재시도·데드레터 ⑸ 순서 보장 여부의 명시 ⑹ 직렬화 형식 ⑺ 스키마 진화 규칙. 「그건 나중에」가 이 칸에는 없다. <span>08-11 · Phase 0 린트 — 사람 몫 ⑵(소비자 멱등)는 #181 소유라 이 행에는 기계 여섯만 남는다 — `ast+`→`ast`.</span> | 트리 147행+D59 | `ast` | principle |  | **blocker** |
+| 604 | `framework/` 의 계약은 «더하기»만 한다 — 기존 메서드의 시그니처·반환형을 바꾸거나 지우면 위반이다. 새 모양이 필요하면 **새 메서드를 더하고 옛 것을 남긴 뒤** 강등 절차로 걷는다. Evans 의 *“shouldn't be changed without consultation”* 을 사람의 협의가 아니라 «가산만 허용»이라는 기계 규칙으로 옮긴 것이다. | 트리 142·151행+D24+D38 | `ast` | principle |  | **blocker** |
+| 606 | 강등 신호는 인자 «이름»에 의존하지 않는다 — ⑴ `framework/` 계약 메서드의 반환형이 `bool` 이면 «판정»이라 반송 ⑵ 인자 수 증가·기본값 있는 인자 등장을 센다 ⑶ 대상은 `<capability>_port.py` 하나가 아니라 **BC 가 둘 이상 import 하는 framework 파일 전부**다. | 트리 142~162행+D38 | `ast` | principle |  | **blocker** |
+| 607 | `framework/` 에서 업무 판정을 하면 위반이다 — 어댑터에 건 #553 의 쌍둥이다. 중립 이름(`viewer_id`·`resource_id`)으로 갈아입어도 판정은 판정이다. **#628 의 어휘 집합으로는 «잡히지 않는다»** — 이 행이 묻는 것은 「업무 낱말이 나오나」가 아니라 「**판정을 하나**」이고, 규칙 자신이 그 사실을 축자로 적고 있다(중립 이름으로 갈아입어도). `#553` 과 같은 술어를 쓴다. | 트리 150~155행+D38+D45 | `ast+` | principle |  | **blocker** |
+| 609 | 트리 170행의 «기계 판독 정의»는 `dddjango/` 아래 데이터 파일 하나가 소유하고, 문서 생성기(`docs/mkrev2.py`)가 **그것을 읽는다** — 지금은 반대로 생성기 안에 산다. 화이트리스트(#490)와 필수 목록(#488)이 같은 데이터에서 나온다. | #486~#492+D54 | `path` | principle |  | **이행** |
+| 610 | 합성 경로 넷(`form/<form>_form.py` · `feature/<feature>.py` · `templates/admin/…` · `templates/<bounded_context>/…`)은 화이트리스트로 쓰기 전에 마디를 편다 — 한 행에 여러 마디가 눌려 있어 깊이가 안 맞는다(실제 노드 175개). | 트리 85~88행+D54 | `path` | principle |  | **이행** |
 | 611 | 칸 유형 ③(`<>` 재등장)은 **이름만으로 못 가른다** — 같은 `<event>.py` 가 세 곳에 있다. 데이터에 «조상 스코프»를 함께 실어야 #488(고정은 항상)과 #489(`<>` 는 늦게)가 갈린다. | #491+D54 | `path` | principle |  | **이행** |
 | 613 | 검사기는 `.git` 이 없다는 이유로 검사를 건너뛰지 않는다 — 지금 네 곳은 전면 면제, 세 곳은 전면 검사로 정반대이고, brownfield 면제를 폐기한 #591 과 어긋난다. | #591 | `ast` | principle |  | **검사기** |
-| 614 | `framework/` 아래 각 파일은 «어느 링인가»(안쪽/바깥쪽)를 데이터로 표시한다 — 정본의 계보 컬럼(DDD/Clean/Hex/고유)은 «누가 이름 붙였나»이지 «방향»이 아니고, `framework/` 열여덟 줄에서 둘이 겹치지 않는다. D47 이 링을 파일 단위로 내린 뒤로는 이 표시가 있어야 #558 을 기계로 옮길 수 있다. | 트리 112~132행+D47 | `path` | principle |  | **이행** |
-| 615 | `framework/<capability>/` 의 계약·`exception.py`·`<data>_out.py`·`<data>_in.py` 는 프레임워크 타입을 쓰지 않는다 — `from ninja import Schema` 한 줄이면 유스케이스가 그 타입을 «반환값으로» 받게 되고, `#4`(직접 import 목록)는 그것을 한 글자도 안 잡는다. Martin 축자: *“the name of something declared in an outer circle must not be mentioned by the code in an inner circle.”* | 트리 121~124행+D47+D5 | `ast` | principle |  | **blocker** |
-| 616 | `framework/<capability>/<data>_out.py` 에 애그리거트가 오면 위반이다. | 트리 123행+D24 | `ast` | principle |  | **blocker** |
-| 617 | `framework/<capability>/<data>_out.py` 에 업무 어휘가 한 글자라도 나오면 위반이다. | 트리 123행+D24 | `ast` | principle |  | **blocker** |
-| 618 | `<data>_out.py`·`<data>_in.py` 에 `locale` 이 바꾸는 값과 채널 설정은 안 담는다. | 트리 123·124행+D24 | `ast+` | principle |  | **blocker** |
-| 619 | `<data>_out.py`·`<data>_in.py` 는 원시값·값 객체로 되면 만들지 않는다. **`framework/` 는 `domain_layer/` 를 import 하지 않으므로 #228 이 여기서는 «자동으로» 성립한다 — 이 자리의 «값 객체»는 표준 타입뿐이다.** | 트리 123·124행+D24 | `ast+` | principle |  | **blocker** |
+| 614 | `framework/` 아래 각 파일은 «어느 링인가»(안쪽/바깥쪽)를 데이터로 표시한다 — 정본의 계보 컬럼(DDD/Clean/Hex/고유)은 «누가 이름 붙였나»이지 «방향»이 아니고, `framework/` 열여덟 줄에서 둘이 겹치지 않는다. D47 이 링을 파일 단위로 내린 뒤로는 이 표시가 있어야 #558 을 기계로 옮길 수 있다. | 트리 142~162행+D47 | `path` | principle |  | **이행** |
+| 615 | `framework/<capability>/` 의 계약·`exception.py`·`<data>_out.py`·`<data>_in.py` 는 프레임워크 타입을 쓰지 않는다 — `from ninja import Schema` 한 줄이면 유스케이스가 그 타입을 «반환값으로» 받게 되고, `#4`(직접 import 목록)는 그것을 한 글자도 안 잡는다. Martin 축자: *“the name of something declared in an outer circle must not be mentioned by the code in an inner circle.”* | 트리 151~154행+D47+D5 | `ast` | principle |  | **blocker** |
+| 616 | `framework/<capability>/<data>_out.py` 에 애그리거트가 오면 위반이다. | 트리 153행+D24 | `ast` | principle |  | **blocker** |
+| 617 | `framework/<capability>/<data>_out.py` 에 업무 어휘가 한 글자라도 나오면 위반이다. | 트리 153행+D24 | `ast` | principle |  | **blocker** |
+| 618 | `<data>_out.py`·`<data>_in.py` 에 `locale` 이 바꾸는 값과 채널 설정은 안 담는다. | 트리 153·154행+D24 | `ast+` | principle |  | **blocker** |
+| 619 | `<data>_out.py`·`<data>_in.py` 는 원시값·값 객체로 되면 만들지 않는다. **`framework/` 는 `domain_layer/` 를 import 하지 않으므로 #228 이 여기서는 «자동으로» 성립한다 — 이 자리의 «값 객체»는 표준 타입뿐이다.** | 트리 153·154행+D24 | `ast+` | principle |  | **blocker** |

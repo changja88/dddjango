@@ -1,0 +1,2 @@
+[05/Sep/2026 03:21:07] "GET /static/web/htmx/htmx.min.js HTTP/1.1" 200 51238
+[05/Sep/2026 03:21:07] "GET /static/design_system/foundation/tokens.css HTTP/1.1" 200 216

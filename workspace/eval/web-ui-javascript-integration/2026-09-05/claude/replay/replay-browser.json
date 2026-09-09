@@ -1,0 +1,729 @@
+{
+  "lane": "claude",
+  "label": "replay-browser",
+  "checks": {
+    "I1": {
+      "status": "PASS",
+      "detail": "Own password and accessible state change once; neighbor remains masked and unchanged."
+    },
+    "I2": {
+      "status": "PASS",
+      "detail": "Native Enter/Space and both password instances each change exactly once."
+    },
+    "I3": {
+      "status": "PASS",
+      "detail": "Independent decoded images and literal markup filename, with no interpreted filename descendants."
+    },
+    "I4": {
+      "status": "PASS",
+      "detail": "Reselect/clear revoke prior resources exactly once, retaining neighbor."
+    },
+    "I5": {
+      "status": "PASS",
+      "detail": "Actual invalid PNG native error clears stale success and revokes failed/previous resources."
+    },
+    "I8": {
+      "status": "PASS",
+      "detail": "Real note-child HTTP swap within retained preview owner preserves owner/image identities and live URL."
+    },
+    "I9": {
+      "status": "PASS",
+      "detail": "Preview-owner A replaced as dependent child of retained panel A; panel-B full-root replacement removes owner B. Opposite preview/password preserved. Does not claim a dependent-control replacement under the same preview owner."
+    },
+    "I7": {
+      "status": "PASS",
+      "detail": "Three additional real note/preview-owner/full-panel cycles; new controls work with one effect and retained neighbor state preserved."
+    },
+    "I6": {
+      "status": "PASS",
+      "detail": "Recorded 16 actual HTTP200 fragment responses with changed server revision markers."
+    },
+    "I11": {
+      "status": "PASS",
+      "detail": "Core and both features each loaded once; all returned actual fragment HTML has no scripts."
+    },
+    "I10": {
+      "status": "PASS",
+      "detail": "Both feature scripts replaced by empty responses; native disclosure works via Enter/Space."
+    },
+    "I12": {
+      "status": "PASS",
+      "detail": "Django check exit0 and actual browser console/pageerrors empty."
+    }
+  },
+  "requests": [
+    {
+      "url": "http://127.0.0.1:18751/lab/ui-lab/",
+      "method": "GET",
+      "type": "document",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18751/static/design_system/foundation/tokens.css",
+      "method": "GET",
+      "type": "stylesheet",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18751/static/web/css/ui_lab.css",
+      "method": "GET",
+      "type": "stylesheet",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18751/static/web/htmx/htmx.min.js",
+      "method": "GET",
+      "type": "script",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18751/static/web/js/password_visibility.js",
+      "method": "GET",
+      "type": "script",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18751/static/web/js/image_preview.js",
+      "method": "GET",
+      "type": "script",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/841dd04f-e4a1-46fd-90ab-f8fdf8964a57",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/601cfadc-fde7-48d4-94cf-3439e8e099d8",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/04954c47-7802-4bce-b80d-8252de0da175",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/40335aa1-2eb6-40a4-8fe9-d73997c64da4",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/730c9bc5-bf71-474e-9f73-8283abba7838",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/ab7f565a-2862-4cb6-806b-6956459f8241",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/c32d6050-cbdc-4cbc-9e7f-5e385adb898b",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/note/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/preview/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/d35746df-a913-45db-85cb-dc2b46a993e3",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/panel/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/852f3b86-e395-43a4-ba57-012e5488b539",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/7412aed6-382c-4548-bfa0-1773eab341b7",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/note/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/preview/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/38e34eda-d17c-445a-aa3c-b0d07bb806a1",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/panel/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/674c9157-6d01-4815-a7a3-4056d75772d4",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/add00cd4-3e5a-4e25-9cba-a5f332753739",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/5c91d143-2897-4e4e-8532-c38aeb35964e",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/note/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/preview/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/300ae065-c975-4743-99ba-340708f60643",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/panel/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/7bd3b05c-e993-4298-b211-3b9ae8075cff",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/0f79be6d-f6fb-4168-8514-5e23a2011a24",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/40303f35-cc2f-4824-976f-1b442582d137",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/note/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/preview/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/223adddd-5250-4518-b5bf-9c369c78edef",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/panel/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/321bbd05-d99f-4e02-928c-3449ab57975c",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/bd651f24-8b94-46eb-9d46-437c8a38e7ab",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/note/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/581368bb-f80a-4586-97ef-113379e0629c",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/preview/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/7da52fbc-268e-4911-9b33-ac49c8e1e4d5",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/6a29d247-ceef-4f5d-b2d3-2bc6e4b87f8d",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/panel/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "blob:http://127.0.0.1:18751/d4c61cc8-232e-42b3-96b2-fc75402beb0f",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/panel/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/panel/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    }
+  ],
+  "htmx_responses": [
+    {
+      "kind": "note",
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/note/",
+      "status": 200,
+      "revision": "rev-b0d1b26cd488",
+      "html": "\n<div class=\"ui-lab-note\" id=\"ui-lab-note-a\" data-ui-lab-note>\n  <p class=\"ui-lab-note__text\">고른 이미지는 브라우저를 떠나지 않습니다.</p>\n  <p class=\"ui-lab-note__marker\">rev-b0d1b26cd488</p>\n  \n<button class=\"ui-lab-note__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/note/\"\n        hx-target=\"#ui-lab-note-a\" hx-swap=\"outerHTML\">노트 교체</button>\n\n</div>\n"
+    },
+    {
+      "kind": "preview",
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/preview/",
+      "status": 200,
+      "revision": "rev-10eb296faa17",
+      "html": "\n<div class=\"ui-lab-preview\" id=\"ui-lab-preview-a\" data-image-preview>\n  <p class=\"ui-lab-preview__marker\">rev-10eb296faa17</p>\n  <label class=\"ui-lab-preview__label\" for=\"ui-lab-preview-a-input\">이미지 고르기</label>\n  <input class=\"ui-lab-preview__input\"\n         type=\"file\"\n         accept=\"image/*\"\n         id=\"ui-lab-preview-a-input\"\n         name=\"ui_lab_preview_a\"\n         data-image-preview-input>\n  <button class=\"ui-lab-preview__clear\" type=\"button\" data-image-preview-clear hidden>선택 비우기</button>\n  <img class=\"ui-lab-preview__output\" alt=\"\" data-image-preview-output hidden>\n  <p class=\"ui-lab-preview__name\" data-image-preview-name></p>\n  <p class=\"ui-lab-preview__empty\" data-image-preview-empty>아직 고른 이미지가 없습니다.</p>\n  <p class=\"ui-lab-preview__error\" data-image-preview-error hidden>이 파일은 이미지로 표시할 수 없습니다.</p>\n  \n<button class=\"ui-lab-preview__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/preview/\"\n        hx-target=\"#ui-lab-preview-a\" hx-swap=\"outerHTML\">미리보기 교체</button>\n\n  \n<div class=\"ui-lab-note\" id=\"ui-lab-note-a\" data-ui-lab-note>\n  <p class=\"ui-lab-note__text\">고른 이미지는 브라우저를 떠나지 않습니다.</p>\n  <p class=\"ui-lab-note__marker\">rev-dffe57d5a7cc</p>\n  \n<button class=\"ui-lab-note__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/note/\"\n        hx-target=\"#ui-lab-note-a\" hx-swap=\"outerHTML\">노트 교체</button>\n\n</div>\n\n</div>\n"
+    },
+    {
+      "kind": "panel",
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/panel/",
+      "status": 200,
+      "revision": "rev-b2ae83c574ad",
+      "html": "\n<section class=\"ui-lab-panel\" id=\"ui-lab-panel-b\" data-ui-lab-panel>\n  <h2 class=\"ui-lab-panel__heading\">패널 B</h2>\n  <p class=\"ui-lab-panel__marker\">rev-b2ae83c574ad</p>\n  \n<button class=\"ui-lab-panel__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/panel/\"\n        hx-target=\"#ui-lab-panel-b\" hx-swap=\"outerHTML\">패널 교체</button>\n\n  \n<div class=\"ui-lab-password\" id=\"ui-lab-password-b\" data-password-visibility>\n  <label class=\"ui-lab-password__label\" for=\"ui-lab-password-b-input\">비밀번호</label>\n  <input class=\"ui-lab-password__input\"\n         type=\"password\"\n         id=\"ui-lab-password-b-input\"\n         name=\"ui_lab_password_b\"\n         autocomplete=\"new-password\"\n         data-password-input>\n  <button class=\"ui-lab-password__toggle\"\n          type=\"button\"\n          aria-pressed=\"false\"\n          aria-controls=\"ui-lab-password-b-input\"\n          data-password-toggle\n          data-password-show-label=\"비밀번호 표시\"\n          data-password-hide-label=\"비밀번호 숨김\"\n          hidden>비밀번호 표시</button>\n</div>\n\n  \n<div class=\"ui-lab-preview\" id=\"ui-lab-preview-b\" data-image-preview>\n  <p class=\"ui-lab-preview__marker\">rev-ee6a13b03dea</p>\n  <label class=\"ui-lab-preview__label\" for=\"ui-lab-preview-b-input\">이미지 고르기</label>\n  <input class=\"ui-lab-preview__input\"\n         type=\"file\"\n         accept=\"image/*\"\n         id=\"ui-lab-preview-b-input\"\n         name=\"ui_lab_preview_b\"\n         data-image-preview-input>\n  <button class=\"ui-lab-preview__clear\" type=\"button\" data-image-preview-clear hidden>선택 비우기</button>\n  <img class=\"ui-lab-preview__output\" alt=\"\" data-image-preview-output hidden>\n  <p class=\"ui-lab-preview__name\" data-image-preview-name></p>\n  <p class=\"ui-lab-preview__empty\" data-image-preview-empty>아직 고른 이미지가 없습니다.</p>\n  <p class=\"ui-lab-preview__error\" data-image-preview-error hidden>이 파일은 이미지로 표시할 수 없습니다.</p>\n  \n  \n<div class=\"ui-lab-note\" id=\"ui-lab-note-b\" data-ui-lab-note>\n  <p class=\"ui-lab-note__text\">고른 이미지는 브라우저를 떠나지 않습니다.</p>\n  <p class=\"ui-lab-note__marker\">rev-e56400e8ab26</p>\n  \n</div>\n\n</div>\n\n</section>\n"
+    },
+    {
+      "kind": "note",
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/note/",
+      "status": 200,
+      "revision": "rev-be5ef2c41b3d",
+      "html": "\n<div class=\"ui-lab-note\" id=\"ui-lab-note-a\" data-ui-lab-note>\n  <p class=\"ui-lab-note__text\">고른 이미지는 브라우저를 떠나지 않습니다.</p>\n  <p class=\"ui-lab-note__marker\">rev-be5ef2c41b3d</p>\n  \n<button class=\"ui-lab-note__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/note/\"\n        hx-target=\"#ui-lab-note-a\" hx-swap=\"outerHTML\">노트 교체</button>\n\n</div>\n"
+    },
+    {
+      "kind": "preview",
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/preview/",
+      "status": 200,
+      "revision": "rev-8ce86a090161",
+      "html": "\n<div class=\"ui-lab-preview\" id=\"ui-lab-preview-a\" data-image-preview>\n  <p class=\"ui-lab-preview__marker\">rev-8ce86a090161</p>\n  <label class=\"ui-lab-preview__label\" for=\"ui-lab-preview-a-input\">이미지 고르기</label>\n  <input class=\"ui-lab-preview__input\"\n         type=\"file\"\n         accept=\"image/*\"\n         id=\"ui-lab-preview-a-input\"\n         name=\"ui_lab_preview_a\"\n         data-image-preview-input>\n  <button class=\"ui-lab-preview__clear\" type=\"button\" data-image-preview-clear hidden>선택 비우기</button>\n  <img class=\"ui-lab-preview__output\" alt=\"\" data-image-preview-output hidden>\n  <p class=\"ui-lab-preview__name\" data-image-preview-name></p>\n  <p class=\"ui-lab-preview__empty\" data-image-preview-empty>아직 고른 이미지가 없습니다.</p>\n  <p class=\"ui-lab-preview__error\" data-image-preview-error hidden>이 파일은 이미지로 표시할 수 없습니다.</p>\n  \n<button class=\"ui-lab-preview__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/preview/\"\n        hx-target=\"#ui-lab-preview-a\" hx-swap=\"outerHTML\">미리보기 교체</button>\n\n  \n<div class=\"ui-lab-note\" id=\"ui-lab-note-a\" data-ui-lab-note>\n  <p class=\"ui-lab-note__text\">고른 이미지는 브라우저를 떠나지 않습니다.</p>\n  <p class=\"ui-lab-note__marker\">rev-961f8bc67daa</p>\n  \n<button class=\"ui-lab-note__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/note/\"\n        hx-target=\"#ui-lab-note-a\" hx-swap=\"outerHTML\">노트 교체</button>\n\n</div>\n\n</div>\n"
+    },
+    {
+      "kind": "panel",
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/panel/",
+      "status": 200,
+      "revision": "rev-bea73a1aaf78",
+      "html": "\n<section class=\"ui-lab-panel\" id=\"ui-lab-panel-b\" data-ui-lab-panel>\n  <h2 class=\"ui-lab-panel__heading\">패널 B</h2>\n  <p class=\"ui-lab-panel__marker\">rev-bea73a1aaf78</p>\n  \n<button class=\"ui-lab-panel__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/panel/\"\n        hx-target=\"#ui-lab-panel-b\" hx-swap=\"outerHTML\">패널 교체</button>\n\n  \n<div class=\"ui-lab-password\" id=\"ui-lab-password-b\" data-password-visibility>\n  <label class=\"ui-lab-password__label\" for=\"ui-lab-password-b-input\">비밀번호</label>\n  <input class=\"ui-lab-password__input\"\n         type=\"password\"\n         id=\"ui-lab-password-b-input\"\n         name=\"ui_lab_password_b\"\n         autocomplete=\"new-password\"\n         data-password-input>\n  <button class=\"ui-lab-password__toggle\"\n          type=\"button\"\n          aria-pressed=\"false\"\n          aria-controls=\"ui-lab-password-b-input\"\n          data-password-toggle\n          data-password-show-label=\"비밀번호 표시\"\n          data-password-hide-label=\"비밀번호 숨김\"\n          hidden>비밀번호 표시</button>\n</div>\n\n  \n<div class=\"ui-lab-preview\" id=\"ui-lab-preview-b\" data-image-preview>\n  <p class=\"ui-lab-preview__marker\">rev-a3e45d2f21ae</p>\n  <label class=\"ui-lab-preview__label\" for=\"ui-lab-preview-b-input\">이미지 고르기</label>\n  <input class=\"ui-lab-preview__input\"\n         type=\"file\"\n         accept=\"image/*\"\n         id=\"ui-lab-preview-b-input\"\n         name=\"ui_lab_preview_b\"\n         data-image-preview-input>\n  <button class=\"ui-lab-preview__clear\" type=\"button\" data-image-preview-clear hidden>선택 비우기</button>\n  <img class=\"ui-lab-preview__output\" alt=\"\" data-image-preview-output hidden>\n  <p class=\"ui-lab-preview__name\" data-image-preview-name></p>\n  <p class=\"ui-lab-preview__empty\" data-image-preview-empty>아직 고른 이미지가 없습니다.</p>\n  <p class=\"ui-lab-preview__error\" data-image-preview-error hidden>이 파일은 이미지로 표시할 수 없습니다.</p>\n  \n  \n<div class=\"ui-lab-note\" id=\"ui-lab-note-b\" data-ui-lab-note>\n  <p class=\"ui-lab-note__text\">고른 이미지는 브라우저를 떠나지 않습니다.</p>\n  <p class=\"ui-lab-note__marker\">rev-069b5f770aa7</p>\n  \n</div>\n\n</div>\n\n</section>\n"
+    },
+    {
+      "kind": "note",
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/note/",
+      "status": 200,
+      "revision": "rev-1cfeafb4056f",
+      "html": "\n<div class=\"ui-lab-note\" id=\"ui-lab-note-a\" data-ui-lab-note>\n  <p class=\"ui-lab-note__text\">고른 이미지는 브라우저를 떠나지 않습니다.</p>\n  <p class=\"ui-lab-note__marker\">rev-1cfeafb4056f</p>\n  \n<button class=\"ui-lab-note__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/note/\"\n        hx-target=\"#ui-lab-note-a\" hx-swap=\"outerHTML\">노트 교체</button>\n\n</div>\n"
+    },
+    {
+      "kind": "preview",
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/preview/",
+      "status": 200,
+      "revision": "rev-2a592e741827",
+      "html": "\n<div class=\"ui-lab-preview\" id=\"ui-lab-preview-a\" data-image-preview>\n  <p class=\"ui-lab-preview__marker\">rev-2a592e741827</p>\n  <label class=\"ui-lab-preview__label\" for=\"ui-lab-preview-a-input\">이미지 고르기</label>\n  <input class=\"ui-lab-preview__input\"\n         type=\"file\"\n         accept=\"image/*\"\n         id=\"ui-lab-preview-a-input\"\n         name=\"ui_lab_preview_a\"\n         data-image-preview-input>\n  <button class=\"ui-lab-preview__clear\" type=\"button\" data-image-preview-clear hidden>선택 비우기</button>\n  <img class=\"ui-lab-preview__output\" alt=\"\" data-image-preview-output hidden>\n  <p class=\"ui-lab-preview__name\" data-image-preview-name></p>\n  <p class=\"ui-lab-preview__empty\" data-image-preview-empty>아직 고른 이미지가 없습니다.</p>\n  <p class=\"ui-lab-preview__error\" data-image-preview-error hidden>이 파일은 이미지로 표시할 수 없습니다.</p>\n  \n<button class=\"ui-lab-preview__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/preview/\"\n        hx-target=\"#ui-lab-preview-a\" hx-swap=\"outerHTML\">미리보기 교체</button>\n\n  \n<div class=\"ui-lab-note\" id=\"ui-lab-note-a\" data-ui-lab-note>\n  <p class=\"ui-lab-note__text\">고른 이미지는 브라우저를 떠나지 않습니다.</p>\n  <p class=\"ui-lab-note__marker\">rev-dd6344c2154e</p>\n  \n<button class=\"ui-lab-note__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/note/\"\n        hx-target=\"#ui-lab-note-a\" hx-swap=\"outerHTML\">노트 교체</button>\n\n</div>\n\n</div>\n"
+    },
+    {
+      "kind": "panel",
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/panel/",
+      "status": 200,
+      "revision": "rev-74f84d6f460f",
+      "html": "\n<section class=\"ui-lab-panel\" id=\"ui-lab-panel-b\" data-ui-lab-panel>\n  <h2 class=\"ui-lab-panel__heading\">패널 B</h2>\n  <p class=\"ui-lab-panel__marker\">rev-74f84d6f460f</p>\n  \n<button class=\"ui-lab-panel__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/panel/\"\n        hx-target=\"#ui-lab-panel-b\" hx-swap=\"outerHTML\">패널 교체</button>\n\n  \n<div class=\"ui-lab-password\" id=\"ui-lab-password-b\" data-password-visibility>\n  <label class=\"ui-lab-password__label\" for=\"ui-lab-password-b-input\">비밀번호</label>\n  <input class=\"ui-lab-password__input\"\n         type=\"password\"\n         id=\"ui-lab-password-b-input\"\n         name=\"ui_lab_password_b\"\n         autocomplete=\"new-password\"\n         data-password-input>\n  <button class=\"ui-lab-password__toggle\"\n          type=\"button\"\n          aria-pressed=\"false\"\n          aria-controls=\"ui-lab-password-b-input\"\n          data-password-toggle\n          data-password-show-label=\"비밀번호 표시\"\n          data-password-hide-label=\"비밀번호 숨김\"\n          hidden>비밀번호 표시</button>\n</div>\n\n  \n<div class=\"ui-lab-preview\" id=\"ui-lab-preview-b\" data-image-preview>\n  <p class=\"ui-lab-preview__marker\">rev-27a5c0d68a6f</p>\n  <label class=\"ui-lab-preview__label\" for=\"ui-lab-preview-b-input\">이미지 고르기</label>\n  <input class=\"ui-lab-preview__input\"\n         type=\"file\"\n         accept=\"image/*\"\n         id=\"ui-lab-preview-b-input\"\n         name=\"ui_lab_preview_b\"\n         data-image-preview-input>\n  <button class=\"ui-lab-preview__clear\" type=\"button\" data-image-preview-clear hidden>선택 비우기</button>\n  <img class=\"ui-lab-preview__output\" alt=\"\" data-image-preview-output hidden>\n  <p class=\"ui-lab-preview__name\" data-image-preview-name></p>\n  <p class=\"ui-lab-preview__empty\" data-image-preview-empty>아직 고른 이미지가 없습니다.</p>\n  <p class=\"ui-lab-preview__error\" data-image-preview-error hidden>이 파일은 이미지로 표시할 수 없습니다.</p>\n  \n  \n<div class=\"ui-lab-note\" id=\"ui-lab-note-b\" data-ui-lab-note>\n  <p class=\"ui-lab-note__text\">고른 이미지는 브라우저를 떠나지 않습니다.</p>\n  <p class=\"ui-lab-note__marker\">rev-712b8f226d76</p>\n  \n</div>\n\n</div>\n\n</section>\n"
+    },
+    {
+      "kind": "note",
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/note/",
+      "status": 200,
+      "revision": "rev-6d8cf4f7e248",
+      "html": "\n<div class=\"ui-lab-note\" id=\"ui-lab-note-a\" data-ui-lab-note>\n  <p class=\"ui-lab-note__text\">고른 이미지는 브라우저를 떠나지 않습니다.</p>\n  <p class=\"ui-lab-note__marker\">rev-6d8cf4f7e248</p>\n  \n<button class=\"ui-lab-note__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/note/\"\n        hx-target=\"#ui-lab-note-a\" hx-swap=\"outerHTML\">노트 교체</button>\n\n</div>\n"
+    },
+    {
+      "kind": "preview",
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/preview/",
+      "status": 200,
+      "revision": "rev-ca2e42f2882f",
+      "html": "\n<div class=\"ui-lab-preview\" id=\"ui-lab-preview-a\" data-image-preview>\n  <p class=\"ui-lab-preview__marker\">rev-ca2e42f2882f</p>\n  <label class=\"ui-lab-preview__label\" for=\"ui-lab-preview-a-input\">이미지 고르기</label>\n  <input class=\"ui-lab-preview__input\"\n         type=\"file\"\n         accept=\"image/*\"\n         id=\"ui-lab-preview-a-input\"\n         name=\"ui_lab_preview_a\"\n         data-image-preview-input>\n  <button class=\"ui-lab-preview__clear\" type=\"button\" data-image-preview-clear hidden>선택 비우기</button>\n  <img class=\"ui-lab-preview__output\" alt=\"\" data-image-preview-output hidden>\n  <p class=\"ui-lab-preview__name\" data-image-preview-name></p>\n  <p class=\"ui-lab-preview__empty\" data-image-preview-empty>아직 고른 이미지가 없습니다.</p>\n  <p class=\"ui-lab-preview__error\" data-image-preview-error hidden>이 파일은 이미지로 표시할 수 없습니다.</p>\n  \n<button class=\"ui-lab-preview__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/preview/\"\n        hx-target=\"#ui-lab-preview-a\" hx-swap=\"outerHTML\">미리보기 교체</button>\n\n  \n<div class=\"ui-lab-note\" id=\"ui-lab-note-a\" data-ui-lab-note>\n  <p class=\"ui-lab-note__text\">고른 이미지는 브라우저를 떠나지 않습니다.</p>\n  <p class=\"ui-lab-note__marker\">rev-4dbd20b97aa8</p>\n  \n<button class=\"ui-lab-note__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/note/\"\n        hx-target=\"#ui-lab-note-a\" hx-swap=\"outerHTML\">노트 교체</button>\n\n</div>\n\n</div>\n"
+    },
+    {
+      "kind": "panel",
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/panel/",
+      "status": 200,
+      "revision": "rev-e4397322dc38",
+      "html": "\n<section class=\"ui-lab-panel\" id=\"ui-lab-panel-b\" data-ui-lab-panel>\n  <h2 class=\"ui-lab-panel__heading\">패널 B</h2>\n  <p class=\"ui-lab-panel__marker\">rev-e4397322dc38</p>\n  \n<button class=\"ui-lab-panel__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/panel/\"\n        hx-target=\"#ui-lab-panel-b\" hx-swap=\"outerHTML\">패널 교체</button>\n\n  \n<div class=\"ui-lab-password\" id=\"ui-lab-password-b\" data-password-visibility>\n  <label class=\"ui-lab-password__label\" for=\"ui-lab-password-b-input\">비밀번호</label>\n  <input class=\"ui-lab-password__input\"\n         type=\"password\"\n         id=\"ui-lab-password-b-input\"\n         name=\"ui_lab_password_b\"\n         autocomplete=\"new-password\"\n         data-password-input>\n  <button class=\"ui-lab-password__toggle\"\n          type=\"button\"\n          aria-pressed=\"false\"\n          aria-controls=\"ui-lab-password-b-input\"\n          data-password-toggle\n          data-password-show-label=\"비밀번호 표시\"\n          data-password-hide-label=\"비밀번호 숨김\"\n          hidden>비밀번호 표시</button>\n</div>\n\n  \n<div class=\"ui-lab-preview\" id=\"ui-lab-preview-b\" data-image-preview>\n  <p class=\"ui-lab-preview__marker\">rev-c8d1a4b91ee7</p>\n  <label class=\"ui-lab-preview__label\" for=\"ui-lab-preview-b-input\">이미지 고르기</label>\n  <input class=\"ui-lab-preview__input\"\n         type=\"file\"\n         accept=\"image/*\"\n         id=\"ui-lab-preview-b-input\"\n         name=\"ui_lab_preview_b\"\n         data-image-preview-input>\n  <button class=\"ui-lab-preview__clear\" type=\"button\" data-image-preview-clear hidden>선택 비우기</button>\n  <img class=\"ui-lab-preview__output\" alt=\"\" data-image-preview-output hidden>\n  <p class=\"ui-lab-preview__name\" data-image-preview-name></p>\n  <p class=\"ui-lab-preview__empty\" data-image-preview-empty>아직 고른 이미지가 없습니다.</p>\n  <p class=\"ui-lab-preview__error\" data-image-preview-error hidden>이 파일은 이미지로 표시할 수 없습니다.</p>\n  \n  \n<div class=\"ui-lab-note\" id=\"ui-lab-note-b\" data-ui-lab-note>\n  <p class=\"ui-lab-note__text\">고른 이미지는 브라우저를 떠나지 않습니다.</p>\n  <p class=\"ui-lab-note__marker\">rev-60d17233f77f</p>\n  \n</div>\n\n</div>\n\n</section>\n"
+    },
+    {
+      "kind": "note",
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/note/",
+      "status": 200,
+      "revision": "rev-bb0ad0d3754c",
+      "html": "\n<div class=\"ui-lab-note\" id=\"ui-lab-note-a\" data-ui-lab-note>\n  <p class=\"ui-lab-note__text\">고른 이미지는 브라우저를 떠나지 않습니다.</p>\n  <p class=\"ui-lab-note__marker\">rev-bb0ad0d3754c</p>\n  \n<button class=\"ui-lab-note__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/note/\"\n        hx-target=\"#ui-lab-note-a\" hx-swap=\"outerHTML\">노트 교체</button>\n\n</div>\n"
+    },
+    {
+      "kind": "preview",
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/preview/",
+      "status": 200,
+      "revision": "rev-973fc71e6d19",
+      "html": "\n<div class=\"ui-lab-preview\" id=\"ui-lab-preview-a\" data-image-preview>\n  <p class=\"ui-lab-preview__marker\">rev-973fc71e6d19</p>\n  <label class=\"ui-lab-preview__label\" for=\"ui-lab-preview-a-input\">이미지 고르기</label>\n  <input class=\"ui-lab-preview__input\"\n         type=\"file\"\n         accept=\"image/*\"\n         id=\"ui-lab-preview-a-input\"\n         name=\"ui_lab_preview_a\"\n         data-image-preview-input>\n  <button class=\"ui-lab-preview__clear\" type=\"button\" data-image-preview-clear hidden>선택 비우기</button>\n  <img class=\"ui-lab-preview__output\" alt=\"\" data-image-preview-output hidden>\n  <p class=\"ui-lab-preview__name\" data-image-preview-name></p>\n  <p class=\"ui-lab-preview__empty\" data-image-preview-empty>아직 고른 이미지가 없습니다.</p>\n  <p class=\"ui-lab-preview__error\" data-image-preview-error hidden>이 파일은 이미지로 표시할 수 없습니다.</p>\n  \n<button class=\"ui-lab-preview__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/preview/\"\n        hx-target=\"#ui-lab-preview-a\" hx-swap=\"outerHTML\">미리보기 교체</button>\n\n  \n<div class=\"ui-lab-note\" id=\"ui-lab-note-a\" data-ui-lab-note>\n  <p class=\"ui-lab-note__text\">고른 이미지는 브라우저를 떠나지 않습니다.</p>\n  <p class=\"ui-lab-note__marker\">rev-3c8ffa4df05a</p>\n  \n<button class=\"ui-lab-note__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/note/\"\n        hx-target=\"#ui-lab-note-a\" hx-swap=\"outerHTML\">노트 교체</button>\n\n</div>\n\n</div>\n"
+    },
+    {
+      "kind": "panel",
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/panel/",
+      "status": 200,
+      "revision": "rev-de041c2fcf05",
+      "html": "\n<section class=\"ui-lab-panel\" id=\"ui-lab-panel-b\" data-ui-lab-panel>\n  <h2 class=\"ui-lab-panel__heading\">패널 B</h2>\n  <p class=\"ui-lab-panel__marker\">rev-de041c2fcf05</p>\n  \n<button class=\"ui-lab-panel__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/panel/\"\n        hx-target=\"#ui-lab-panel-b\" hx-swap=\"outerHTML\">패널 교체</button>\n\n  \n<div class=\"ui-lab-password\" id=\"ui-lab-password-b\" data-password-visibility>\n  <label class=\"ui-lab-password__label\" for=\"ui-lab-password-b-input\">비밀번호</label>\n  <input class=\"ui-lab-password__input\"\n         type=\"password\"\n         id=\"ui-lab-password-b-input\"\n         name=\"ui_lab_password_b\"\n         autocomplete=\"new-password\"\n         data-password-input>\n  <button class=\"ui-lab-password__toggle\"\n          type=\"button\"\n          aria-pressed=\"false\"\n          aria-controls=\"ui-lab-password-b-input\"\n          data-password-toggle\n          data-password-show-label=\"비밀번호 표시\"\n          data-password-hide-label=\"비밀번호 숨김\"\n          hidden>비밀번호 표시</button>\n</div>\n\n  \n<div class=\"ui-lab-preview\" id=\"ui-lab-preview-b\" data-image-preview>\n  <p class=\"ui-lab-preview__marker\">rev-5a2cb0121027</p>\n  <label class=\"ui-lab-preview__label\" for=\"ui-lab-preview-b-input\">이미지 고르기</label>\n  <input class=\"ui-lab-preview__input\"\n         type=\"file\"\n         accept=\"image/*\"\n         id=\"ui-lab-preview-b-input\"\n         name=\"ui_lab_preview_b\"\n         data-image-preview-input>\n  <button class=\"ui-lab-preview__clear\" type=\"button\" data-image-preview-clear hidden>선택 비우기</button>\n  <img class=\"ui-lab-preview__output\" alt=\"\" data-image-preview-output hidden>\n  <p class=\"ui-lab-preview__name\" data-image-preview-name></p>\n  <p class=\"ui-lab-preview__empty\" data-image-preview-empty>아직 고른 이미지가 없습니다.</p>\n  <p class=\"ui-lab-preview__error\" data-image-preview-error hidden>이 파일은 이미지로 표시할 수 없습니다.</p>\n  \n  \n<div class=\"ui-lab-note\" id=\"ui-lab-note-b\" data-ui-lab-note>\n  <p class=\"ui-lab-note__text\">고른 이미지는 브라우저를 떠나지 않습니다.</p>\n  <p class=\"ui-lab-note__marker\">rev-c90ebec3c870</p>\n  \n</div>\n\n</div>\n\n</section>\n"
+    },
+    {
+      "kind": "panel",
+      "url": "http://127.0.0.1:18751/lab/ui-lab/fragment/panel/",
+      "status": 200,
+      "revision": "rev-8eba0717f6ed",
+      "html": "\n<section class=\"ui-lab-panel\" id=\"ui-lab-panel-b\" data-ui-lab-panel>\n  <h2 class=\"ui-lab-panel__heading\">패널 B</h2>\n  <p class=\"ui-lab-panel__marker\">rev-8eba0717f6ed</p>\n  \n<button class=\"ui-lab-panel__swap\" type=\"button\"\n        hx-get=\"/lab/ui-lab/fragment/panel/\"\n        hx-target=\"#ui-lab-panel-b\" hx-swap=\"outerHTML\">패널 교체</button>\n\n  \n<div class=\"ui-lab-password\" id=\"ui-lab-password-b\" data-password-visibility>\n  <label class=\"ui-lab-password__label\" for=\"ui-lab-password-b-input\">비밀번호</label>\n  <input class=\"ui-lab-password__input\"\n         type=\"password\"\n         id=\"ui-lab-password-b-input\"\n         name=\"ui_lab_password_b\"\n         autocomplete=\"new-password\"\n         data-password-input>\n  <button class=\"ui-lab-password__toggle\"\n          type=\"button\"\n          aria-pressed=\"false\"\n          aria-controls=\"ui-lab-password-b-input\"\n          data-password-toggle\n          data-password-show-label=\"비밀번호 표시\"\n          data-password-hide-label=\"비밀번호 숨김\"\n          hidden>비밀번호 표시</button>\n</div>\n\n  \n<div class=\"ui-lab-preview\" id=\"ui-lab-preview-b\" data-image-preview>\n  <p class=\"ui-lab-preview__marker\">rev-c36244f8d4ae</p>\n  <label class=\"ui-lab-preview__label\" for=\"ui-lab-preview-b-input\">이미지 고르기</label>\n  <input class=\"ui-lab-preview__input\"\n         type=\"file\"\n         accept=\"image/*\"\n         id=\"ui-lab-preview-b-input\"\n         name=\"ui_lab_preview_b\"\n         data-image-preview-input>\n  <button class=\"ui-lab-preview__clear\" type=\"button\" data-image-preview-clear hidden>선택 비우기</button>\n  <img class=\"ui-lab-preview__output\" alt=\"\" data-image-preview-output hidden>\n  <p class=\"ui-lab-preview__name\" data-image-preview-name></p>\n  <p class=\"ui-lab-preview__empty\" data-image-preview-empty>아직 고른 이미지가 없습니다.</p>\n  <p class=\"ui-lab-preview__error\" data-image-preview-error hidden>이 파일은 이미지로 표시할 수 없습니다.</p>\n  \n  \n<div class=\"ui-lab-note\" id=\"ui-lab-note-b\" data-ui-lab-note>\n  <p class=\"ui-lab-note__text\">고른 이미지는 브라우저를 떠나지 않습니다.</p>\n  <p class=\"ui-lab-note__marker\">rev-cbe3f9bc4bf4</p>\n  \n</div>\n\n</div>\n\n</section>\n"
+    }
+  ],
+  "console_errors": [],
+  "page_errors": [],
+  "django_check": {
+    "exit_code": 0,
+    "output": "System check identified no issues (0 silenced).\n"
+  },
+  "browser_version": "152.0.7977.82",
+  "non_image_mime_probe": {
+    "status": "PASS",
+    "mime": "text/plain",
+    "new_url_allocations": 0,
+    "prior_url": "blob:http://127.0.0.1:18751/ab7f565a-2862-4cb6-806b-6956459f8241",
+    "prior_url_revocations": 1,
+    "stale_success_cleared": true
+  },
+  "delayed_load_handler_probe": {
+    "injection": "Native image load occurs first; harness defers only app handler delivery while actual HTTP swap executes. No fabricated event or claim about browser task ordering.",
+    "results": [
+      {
+        "kind": "note",
+        "key": "a",
+        "revision": "rev-bb0ad0d3754c",
+        "url": "blob:http://127.0.0.1:18751/bd651f24-8b94-46eb-9d46-437c8a38e7ab",
+        "status": "PASS"
+      },
+      {
+        "kind": "preview",
+        "key": "a",
+        "revision": "rev-973fc71e6d19",
+        "url": "blob:http://127.0.0.1:18751/581368bb-f80a-4586-97ef-113379e0629c",
+        "status": "PASS"
+      },
+      {
+        "kind": "panel",
+        "key": "b",
+        "revision": "rev-de041c2fcf05",
+        "url": "blob:http://127.0.0.1:18751/6a29d247-ceef-4f5d-b2d3-2bc6e4b87f8d",
+        "status": "PASS"
+      }
+    ]
+  },
+  "injected_http_failure": {
+    "status": 503,
+    "retained_revision": "rev-de041c2fcf05",
+    "retained_url": "blob:http://127.0.0.1:18751/d4c61cc8-232e-42b3-96b2-fc75402beb0f",
+    "retry_revision": "rev-8eba0717f6ed",
+    "retry_status": 200,
+    "expected_console_errors": [
+      "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+      "Response Status Error Code 503 from /lab/ui-lab/fragment/panel/, [object HTMLElement]"
+    ]
+  },
+  "script_network_counts": {
+    "http://127.0.0.1:18751/static/web/htmx/htmx.min.js": 1,
+    "http://127.0.0.1:18751/static/web/js/password_visibility.js": 1,
+    "http://127.0.0.1:18751/static/web/js/image_preview.js": 1
+  },
+  "disabled_feature_requests": [
+    "http://127.0.0.1:18751/static/web/js/password_visibility.js",
+    "http://127.0.0.1:18751/static/web/js/image_preview.js"
+  ],
+  "resources": {
+    "created": [
+      {
+        "url": "blob:http://127.0.0.1:18751/841dd04f-e4a1-46fd-90ab-f8fdf8964a57",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/601cfadc-fde7-48d4-94cf-3439e8e099d8",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/04954c47-7802-4bce-b80d-8252de0da175",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/40335aa1-2eb6-40a4-8fe9-d73997c64da4",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/730c9bc5-bf71-474e-9f73-8283abba7838",
+        "size": 16,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/ab7f565a-2862-4cb6-806b-6956459f8241",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/c32d6050-cbdc-4cbc-9e7f-5e385adb898b",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/d35746df-a913-45db-85cb-dc2b46a993e3",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/852f3b86-e395-43a4-ba57-012e5488b539",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/7412aed6-382c-4548-bfa0-1773eab341b7",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/38e34eda-d17c-445a-aa3c-b0d07bb806a1",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/674c9157-6d01-4815-a7a3-4056d75772d4",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/add00cd4-3e5a-4e25-9cba-a5f332753739",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/5c91d143-2897-4e4e-8532-c38aeb35964e",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/300ae065-c975-4743-99ba-340708f60643",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/7bd3b05c-e993-4298-b211-3b9ae8075cff",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/0f79be6d-f6fb-4168-8514-5e23a2011a24",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/40303f35-cc2f-4824-976f-1b442582d137",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/223adddd-5250-4518-b5bf-9c369c78edef",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/321bbd05-d99f-4e02-928c-3449ab57975c",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/bd651f24-8b94-46eb-9d46-437c8a38e7ab",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/581368bb-f80a-4586-97ef-113379e0629c",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/7da52fbc-268e-4911-9b33-ac49c8e1e4d5",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/6a29d247-ceef-4f5d-b2d3-2bc6e4b87f8d",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18751/d4c61cc8-232e-42b3-96b2-fc75402beb0f",
+        "size": 73,
+        "type": "image/png"
+      }
+    ],
+    "revoked": [
+      "blob:http://127.0.0.1:18751/841dd04f-e4a1-46fd-90ab-f8fdf8964a57",
+      "blob:http://127.0.0.1:18751/04954c47-7802-4bce-b80d-8252de0da175",
+      "blob:http://127.0.0.1:18751/40335aa1-2eb6-40a4-8fe9-d73997c64da4",
+      "blob:http://127.0.0.1:18751/730c9bc5-bf71-474e-9f73-8283abba7838",
+      "blob:http://127.0.0.1:18751/ab7f565a-2862-4cb6-806b-6956459f8241",
+      "blob:http://127.0.0.1:18751/c32d6050-cbdc-4cbc-9e7f-5e385adb898b",
+      "blob:http://127.0.0.1:18751/601cfadc-fde7-48d4-94cf-3439e8e099d8",
+      "blob:http://127.0.0.1:18751/d35746df-a913-45db-85cb-dc2b46a993e3",
+      "blob:http://127.0.0.1:18751/852f3b86-e395-43a4-ba57-012e5488b539",
+      "blob:http://127.0.0.1:18751/7412aed6-382c-4548-bfa0-1773eab341b7",
+      "blob:http://127.0.0.1:18751/38e34eda-d17c-445a-aa3c-b0d07bb806a1",
+      "blob:http://127.0.0.1:18751/674c9157-6d01-4815-a7a3-4056d75772d4",
+      "blob:http://127.0.0.1:18751/add00cd4-3e5a-4e25-9cba-a5f332753739",
+      "blob:http://127.0.0.1:18751/5c91d143-2897-4e4e-8532-c38aeb35964e",
+      "blob:http://127.0.0.1:18751/300ae065-c975-4743-99ba-340708f60643",
+      "blob:http://127.0.0.1:18751/7bd3b05c-e993-4298-b211-3b9ae8075cff",
+      "blob:http://127.0.0.1:18751/0f79be6d-f6fb-4168-8514-5e23a2011a24",
+      "blob:http://127.0.0.1:18751/40303f35-cc2f-4824-976f-1b442582d137",
+      "blob:http://127.0.0.1:18751/223adddd-5250-4518-b5bf-9c369c78edef",
+      "blob:http://127.0.0.1:18751/bd651f24-8b94-46eb-9d46-437c8a38e7ab",
+      "blob:http://127.0.0.1:18751/581368bb-f80a-4586-97ef-113379e0629c",
+      "blob:http://127.0.0.1:18751/321bbd05-d99f-4e02-928c-3449ab57975c",
+      "blob:http://127.0.0.1:18751/6a29d247-ceef-4f5d-b2d3-2bc6e4b87f8d",
+      "blob:http://127.0.0.1:18751/d4c61cc8-232e-42b3-96b2-fc75402beb0f"
+    ],
+    "typeAssignments": [
+      {
+        "id": "ui-lab-password-a-input",
+        "value": "text"
+      },
+      {
+        "id": "ui-lab-password-a-input",
+        "value": "password"
+      },
+      {
+        "id": "ui-lab-password-a-input",
+        "value": "text"
+      },
+      {
+        "id": "ui-lab-password-b-input",
+        "value": "text"
+      },
+      {
+        "id": "ui-lab-password-b-input",
+        "value": "password"
+      },
+      {
+        "id": "ui-lab-password-b-input",
+        "value": "text"
+      },
+      {
+        "id": "ui-lab-password-b-input",
+        "value": "text"
+      },
+      {
+        "id": "ui-lab-password-b-input",
+        "value": "text"
+      }
+    ]
+  },
+  "runtime": {
+    "os": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.7",
+    "viewport": {
+      "width": 1280,
+      "height": 1000
+    }
+  },
+  "rendered_style": {
+    "font": "system-ui, sans-serif",
+    "lineHeight": "24px"
+  },
+  "narrow_viewport": {
+    "viewport": {
+      "width": 375,
+      "height": 812
+    },
+    "scroll_width": 375,
+    "inner_width": 375
+  },
+  "status": "PASS"
+}

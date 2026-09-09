@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>dddjango-web 동작 흐름 · UI JS 통합</title>
+<style>
+  :root { --paper:#f2f4f3; --card:#fafbfa; --ink:#172529; --muted:#52676c; --line:#ccd7d6; --accent:#176c67; --wash:#e0efeb; --new:#a65a0c; --new-bg:#fff1da; --sans:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',system-ui,sans-serif; }
+  @media (prefers-color-scheme:dark) { :root { --paper:#10191c; --card:#19262a; --ink:#e3eeee; --muted:#a5babc; --line:#34484c; --accent:#78d5c6; --wash:#183e37; --new:#ffd398; --new-bg:#423019; } }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; background:var(--paper); color:var(--ink); font:14px/1.7 var(--sans); }
+  main { max-width:1500px; margin:auto; padding:32px clamp(18px,3vw,44px) 64px; }
+  a { color:var(--accent); text-underline-offset:3px; }
+  h1,h2,h3,p { margin-top:0; }
+  h1 { font-size:clamp(25px,3vw,36px); line-height:1.25; letter-spacing:-.035em; margin-bottom:14px; }
+  h2 { font-size:22px; line-height:1.4; margin-bottom:8px; }
+  h3 { font-size:16px; margin-bottom:6px; }
+  p { margin-bottom:12px; }
+  code { font: .91em ui-monospace,'SF Mono',Consolas,monospace; overflow-wrap:anywhere; }
+  .eyebrow { color:var(--accent); font-weight:700; font-size:12px; letter-spacing:.08em; margin-bottom:12px; }
+  .lead { font-size:16px; max-width:940px; color:var(--muted); }
+  .status { display:inline-block; border:1px solid var(--new); border-radius:6px; background:var(--new-bg); color:var(--new); padding:2px 9px; font-size:12px; font-weight:700; margin-right:6px; }
+  .notice { padding:15px 18px; background:var(--card); border:1px solid var(--line); border-left:4px solid var(--new); border-radius:8px; margin:20px 0; }
+  nav { display:flex; flex-wrap:wrap; gap:8px; margin:20px 0 32px; }
+  nav a { padding:6px 12px; border:1px solid var(--line); border-radius:6px; text-decoration:none; font-size:13px; background:var(--card); }
+  nav a:hover,nav a:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  section { scroll-margin-top:20px; margin-top:40px; }
+  .caption { color:var(--muted); font-size:13px; }
+  .diagram { width:100%; height:920px; display:block; border:1px solid var(--line); border-radius:12px; margin:16px 0 8px; background:var(--card); }
+  .table-wrap { overflow-x:auto; border:1px solid var(--line); border-radius:10px; margin:16px 0; background:var(--card); }
+  table { border-collapse:collapse; width:100%; font-size:13px; text-align:left; }
+  caption { text-align:left; padding:14px 16px; font-weight:700; background:var(--wash); }
+  th,td { padding:13px 14px; border-bottom:1px solid var(--line); border-right:1px solid var(--line); vertical-align:top; }
+  th:last-child,td:last-child { border-right:0; }
+  tr:last-child td,tr:last-child th { border-bottom:0; }
+  thead th { background:var(--wash); font-weight:700; }
+  tbody th { width:22%; }
+  .matrix { min-width:780px; table-layout:fixed; }
+  .matrix th:first-child { width:24%; }
+  .matrix th:not(:first-child) { width:19%; }
+  .matrix small { display:block; color:var(--muted); font-size:11px; margin-top:4px; }
+  .active { font-weight:700; color:var(--accent); }
+  .proposed { background:var(--new-bg); color:var(--new); font-weight:700; }
+  .unused { color:var(--muted); }
+  .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:16px 0; }
+  .card { padding:20px; background:var(--card); border:1px solid var(--line); border-radius:10px; }
+  .card p:last-child { margin-bottom:0; }
+  .number { color:var(--accent); font:700 12px ui-monospace,monospace; margin-bottom:8px; }
+  .pipeline { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:16px 0; }
+  .pipeline .card { padding:16px; }
+  .pipeline h3 { font-size:15px; }
+  .pipeline p { font-size:13px; }
+  .sources { border-top:1px solid var(--line); padding-top:18px; margin-top:36px; font-size:12px; color:var(--muted); }
+  @media (max-width:900px) { .pipeline { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media (max-width:600px) { main { padding-top:22px; } .grid,.pipeline { grid-template-columns:1fr; } .diagram { height:980px; } }
+  @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">01 · DDDJANGO-WEB / 동작 흐름</p>
+    <h1>JS 스킬을 포함한 웹 빌더의 협력 구조</h1>
+    <p class="lead">Coordinator가 진행을 맡고, 기존 에이전트 4개가 명세·코드·검토를 나눠 소유합니다. <code>implementation-javascript</code>를 포함한 스킬 5개의 현재 사용 관계와 작업 전달 과정을 함께 보여줍니다.</p>
+    <div class="notice"><span class="status">통합 소스 적용 완료</span>Claude·Codex 실행 지침, 기존 에이전트 4개의 역할, JS 스킬 주입과 백스톱에 반영했습니다. 각 런타임의 통제된 생성 샘플에서 실제 Django·HTMX·UI JS 동작을 확인했습니다. 커밋·배포 상태를 뜻하지 않습니다.</div>
+    <nav aria-label="문서 목차">
+      <a href="#flow">협력 흐름</a><a href="#skills">모든 스킬의 사용 관계</a><a href="#owners">역할과 산출물</a><a href="#runtime">기술별 책임</a><a href="#example">JS 기능 한 건의 진행</a>
+    </nav>
+  </header>
+
+  <section id="flow" aria-labelledby="flow-title">
+    <h2 id="flow-title">작업은 이렇게 전달됩니다</h2>
+    <p class="caption">선은 산출물의 전달 순서입니다. 호출·입력 전달·반송은 모두 Coordinator가 중계하며, G0·G1·G2는 사용자가 승인합니다.</p>
+    <iframe class="diagram" src="work_flow_web.html" title="archify로 작성한 dddjango-web 에이전트 협력 흐름"></iframe>
+    <p class="caption">archify 대화형 흐름도 · <a href="work_flow_web.html" target="_blank" rel="noopener">독립 화면으로 열기</a> · <a href="work_flow_web.spec.json">재생성용 명세</a></p>
+  </section>
+
+  <section id="skills" aria-labelledby="skills-title">
+    <h2 id="skills-title">스킬 5개 × 에이전트 4개 — 전체 협력표</h2>
+    <p>스킬은 판단·작성 기준이며 실행 담당자가 아닙니다. 아래의 <strong class="active">● 기본 주입</strong>은 Claude 에이전트의 <code>skills:</code> 목록과 대응 Codex 역할의 스킬 로딩 지침을 뜻합니다. JS 스킬의 직접 주입 대상은 구현자와 규율 감수자 두 역할입니다.</p>
+    <div class="table-wrap">
+      <table class="matrix">
+        <caption>현재 스킬 5개의 직접 주입 관계</caption>
+        <thead><tr><th scope="col">스킬 · 소유하는 지식</th><th scope="col">화면 설계자<small><code>design-architect-web</code></small></th><th scope="col">설계 리뷰어<small><code>design-review-web</code></small></th><th scope="col">화면 구현자<small><code>coder-web</code></small></th><th scope="col">규율 감수자<small><code>discipline-reviewer-web</code></small></th></tr></thead>
+        <tbody>
+          <tr><th scope="row"><code>architecture-web</code><small>구조·기술 경계·상태의 소유</small></th><td><span class="active">● 기본 주입</span><br>화면 분해·계약·기술별 책임을 명세</td><td><span class="active">● 기본 주입</span><br>명세의 구조·계약·시안 충실도 검토</td><td class="unused">기본 주입 없음<br>승인된 명세로 설계 결정을 소비</td><td class="unused">기본 주입 없음<br>역할 지침·명세의 책임 경계를 대조</td></tr>
+          <tr><th scope="row"><code>discipline-web-houserules</code><small>표준 트리·명명·참조 격리</small></th><td><span class="active">● 기본 주입</span><br>전체 파일 목록·배치·이름 확정</td><td class="unused">기본 주입 없음</td><td><span class="active">● 기본 주입</span><br>명세대로 파일 배치·참조</td><td><span class="active">● 기본 주입</span><br>배치·명명·격리의 의미 위반 감수</td></tr>
+          <tr><th scope="row"><code>discipline-cleancode</code><small>공통 코드 품질·단순성</small></th><td class="unused">기본 주입 없음</td><td class="unused">기본 주입 없음</td><td><span class="active">● 기본 주입</span><br>명확성·중복·책임·오류 처리</td><td><span class="active">● 기본 주입</span><br>구현 품질 감수<br><small>설계 경량 모드에서는 과분해·과추상 점검</small></td></tr>
+          <tr><th scope="row"><code>implementation-ui</code><small>Django·HTML·HTMX·CSS·client 표기</small></th><td class="unused">기본 주입 없음</td><td class="unused">기본 주입 없음</td><td><span class="active">● 기본 주입</span><br>화면 구현·시안 재현·실제 렌더 확인</td><td class="unused">기본 주입 없음<br>역할 지침이 지정한 구현 표기 절은 필요 시 참조</td></tr>
+          <tr><th scope="row"><code>implementation-javascript</code><small>UI JS 작성·수명·검증</small></th><td class="unused">주입 추가 없음<br><code>architecture-web</code>에서 JS 허용 범위를 설계</td><td class="unused">주입 추가 없음<br>기술·상태 경계를 설계 관점에서 검토</td><td class="active">● 기본 주입<br>UI JS가 필요한 기능을 작성·브라우저 검증</td><td class="active">● 기본 주입<br>같은 스킬로 UI JS의 구현·수명·검증 증거 감수</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption">‘기본 주입 없음’은 관련 규범을 무시한다는 뜻이 아닙니다. 명세·역할 지침·스킬의 교차 참조로 소비하는 경우를 기본 주입과 구분했습니다. 필요한 reference 절만 읽는 현행 방식을 유지합니다.</p>
+  </section>
+
+  <section id="owners" aria-labelledby="owners-title">
+    <h2 id="owners-title">역할마다 입력과 산출물의 주인이 있습니다</h2>
+    <div class="notice"><strong>Coordinator — 진행의 주인</strong><br>요구·시안·이미지와 파일·API 계약을 확보하고 출처와 수집 실패도 기록합니다. G0/G1/G2, 에이전트 호출, 계약 동결, 슬라이스, 감수·백스톱 실행, 반송·증거 통합·최종 보고를 관리합니다. 명세는 설계자에게, 코드는 구현자에게 맡깁니다.</div>
+    <div class="grid">
+      <article class="card"><p class="number">AGENT 01 · PHASE 1</p><h3>화면 설계자</h3><p><code>design-architect-web</code></p><p><strong>입력:</strong> G0 범위, 동결 시안·에셋·API 계약.</p><p><strong>산출:</strong> <code>design-spec.md</code>. <code>UI 동작 계약</code>에 요구 근거, 담당 기술, JS/HTMX 파일, root·대상, 서버 요청·swap 경계, 임시 상태·자원, 키보드·실패·정리, 검증 행위를 확정합니다. JS가 필요 없으면 이유를 남깁니다. 리뷰 노트와 설계 반송을 반영하는 유일한 명세 작성자입니다.</p></article>
+      <article class="card"><p class="number">AGENT 02 · PHASE 1</p><h3>설계 리뷰어</h3><p><code>design-review-web</code></p><p><strong>입력:</strong> 명세 초안과 시안·실물 계약 근거.</p><p><strong>산출:</strong> 독립 리뷰 노트. JS가 HTMX·서버 상태를 침범하는지 설계 관점에서 검토합니다. 명세·코드는 직접 수정하지 않으며, Coordinator가 설계자에게 노트를 전달합니다.</p></article>
+      <article class="card"><p class="number">AGENT 03 · PHASE 2</p><h3>화면 구현자</h3><p><code>coder-web</code></p><p><strong>입력:</strong> G1 명세, 동결 계약·시안·에셋, 이번 슬라이스.</p><p><strong>산출:</strong> <code>web/</code> 코드와 실제 렌더·브라우저 증거. Python·HTML·HTMX·CSS와 필요한 JS를 함께 구현합니다. 설계 결정을 바꿔야 하면 Coordinator에 반송합니다.</p></article>
+      <article class="card"><p class="number">AGENT 04 · PHASE 2</p><h3>규율 감수자</h3><p><code>discipline-reviewer-web</code></p><p><strong>입력:</strong> 코드, 승인 명세, 감사 범위, 브라우저·시안 대조 증거.</p><p><strong>산출:</strong> 감수 리포트. 새 JS 스킬로 초기화·정리·UI 상태·키보드 동작의 구현 의미와 증거를 대조합니다. 직접 수정하지 않으며, 코드 수정은 구현자에게 돌아갑니다.</p></article>
+    </div>
+    <p class="caption">규율 감수자는 필요하면 Phase 1에서 명세 단순성만 경량 점검합니다. 이때는 아직 없는 코드나 브라우저 증거를 요구하지 않습니다.</p>
+  </section>
+
+  <section id="runtime" aria-labelledby="runtime-title">
+    <h2 id="runtime-title">한 구현자가 다루되, 기술의 책임은 분리합니다</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th scope="col">기술</th><th scope="col">맡는 일</th><th scope="col">기준과 경계</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Python · Django</th><td>API 계약 소비, form·표시 상태 준비, 서버 HTML 렌더링</td><td><code>architecture-web</code> + <code>implementation-ui</code>. 비즈니스 판정은 백엔드 서버가 소유합니다.</td></tr>
+        <tr><th scope="row">HTML</th><td>의미 있는 문서·폼·접근성 구조와 서버가 준비한 상태 표시</td><td><code>implementation-ui</code>. 표시 판정이나 별도의 비즈니스 계산을 복제하지 않습니다.</td></tr>
+        <tr><th scope="row">HTMX</th><td>서버 요청, 서버가 렌더한 HTML의 부분 교체</td><td><code>architecture-web</code> + <code>implementation-ui</code>. 폴링·SSE·WebSocket 등 실시간 통신 채택은 별도 결정입니다.</td></tr>
+        <tr><th scope="row">CSS</th><td>시안의 색·간격·서체·레이아웃·반응형·시각 전환</td><td><code>implementation-ui</code>. 동결 시안·토큰·에셋과 실제 렌더를 대조합니다.</td></tr>
+        <tr><th scope="row">JavaScript</th><td>포커스, 토글, 파일 미리보기, 브라우저 API, 임시 UI 상태</td><td><code>implementation-javascript</code>. 승인된 UI 동작만 구현하며 권한·금액·저장 판정, 별도 업무 API 호출, SPA 상태 계층을 만들지 않습니다. native HTML/CSS로 충분하면 JS 파일이 없습니다.</td></tr>
+      </tbody>
+    </table></div>
+    <p><strong>파일 기준:</strong> <code>web/static/js/&lt;기능&gt;.js</code> — UI 기능 하나당 파일 하나입니다. 한 기능의 초기화·이벤트·정리 함수는 같은 파일에 둡니다. <a href="file_tree_web.html">웹 표준 트리</a>의 <code>css/</code>·<code>js/</code>·<code>htmx/</code>·<code>images/</code> 네 폴더 골격을 따릅니다. 검증된 폰트·다운로드 파일이 필요할 때만 <code>fonts/</code>·<code>files/</code>를 생성합니다.</p>
+    <p><strong>HTMX 포함 경계:</strong> <code>static/htmx/&lt;기능&gt;.html</code>은 snake_case·평면으로 기능당 한 선언 조각을 두고, 페이지/section에서 <code>{% include "static/htmx/&lt;기능&gt;.html" %}</code>로 렌더합니다. 기존 TEMPLATES DIRS의 web 루트를 사용하며 새 finder·middleware·템플릿 엔진을 만들지 않습니다. 공개 static 원문에 비밀·사용자별 렌더 결과를 저장하지 않습니다. 데이터·권한·CSRF·fragment 응답은 view/section이 소유하며 static URL은 업무 fragment endpoint가 아닙니다.</p>
+    <p><strong>실행 위치:</strong> 기능 JS는 snake_case·평면 파일을 base 공통 로드 또는 페이지의 범용 script block에서 외부 static 참조로 한 번만 로드합니다. classic은 <code>defer</code>, 기존 module 방식도 허용하며 <code>async</code>로 순서를 깨지 않습니다. fragment 실행 script와 inline JS·<code>on*</code>·<code>hx-on</code>·<code>js:</code>·<code>hx-trigger</code> 조건식은 금지합니다. 데이터는 <code>json_script</code> 또는 escape된 data 속성으로 전달하고 실행 소스에 보간하지 않습니다.</p>
+    <p><strong>고정 라이브러리:</strong> 신규 core는 <code>static/htmx/htmx.min.js</code> 한 파일입니다. 기존 <code>static/js/htmx.min.js</code>·<code>htmx.js</code>는 브라운필드 설치로만 소비하며 이중 설치·조용한 이동/업그레이드는 금지합니다. core 누락 시 공식 2.0.10 고정 파일을 설치하고 버전·출처를 기록합니다. <code>static/js/motion.js</code>는 러너 채택 시 조건 설치하는 byte 고정 예약 이름으로, 기능 JS로 덮어쓰지 않습니다.</p>
+    <p class="caption">모션 명세의 <code>ui-js</code>는 <code>static/js/&lt;기능&gt;.js :: [data-&lt;root&gt;]</code> 좌표와 근거·실제 동작 증거를 연결합니다. 백스톱은 경로·실행 채널·판형과 파일/root 존재를 확인합니다. 기능 일대일의 의미, 업무 로직 부재, JS 내부 모션 전수성은 독립 감수와 실제 동작 검증의 몫입니다. <code>static_only</code>도 필요한 로컬 UI JS를 허용합니다.</p>
+  </section>
+
+  <section id="example" aria-labelledby="example-title">
+    <h2 id="example-title">예: 파일 미리보기 한 기능이 들어오면</h2>
+    <p class="caption">역할 전달을 설명하는 예시입니다. 통제된 평가 앱에서 비밀번호 표시·로컬 파일 미리보기·실제 HTTP 교체·native disclosure를 확인한 범위와 한계는 <a href="../workspace/eval/web-ui-javascript-integration/2026-09-05/summary.md">실행 평가 기록</a>에서 확인할 수 있습니다.</p>
+    <div class="pipeline">
+      <article class="card"><p class="number">01 · 설계</p><h3>서버와 UI를 구분</h3><p>설계자는 업로드 처리·검증은 서버, 선택 파일의 로컬 미리보기는 JS로 명세합니다. 설계 리뷰어가 경계를 검토하고 사용자가 G1을 승인합니다.</p></article>
+      <article class="card"><p class="number">02 · 구현</p><h3>기존 구현자가 JS 작성</h3><p>구현자는 HTML·CSS를 구현하고, JS 스킬을 읽어 <code>file_preview.js</code>를 작성합니다. 임시 URL·이벤트·정리도 같은 UI 기능 안에서 관리합니다.</p></article>
+      <article class="card"><p class="number">03 · 브라우저 확인</p><h3>재사용·교체 상황 확인</h3><p>재선택, 초기화 중복, 여러 미리보기의 상태 격리, HTMX 교체 후 새 UI 연결과 이전 자원 정리, 키보드·포커스를 확인합니다.</p></article>
+      <article class="card"><p class="number">04 · 감수·인수</p><h3>같은 JS 기준으로 감수</h3><p>규율 감수자가 코드와 증거를 독립 대조합니다. Coordinator는 개정된 백스톱을 실행하고, G2에 실제 결과와 미검증 항목을 제시합니다.</p></article>
+    </div>
+    <div class="grid">
+      <article class="card"><h3>코드가 명세를 어긴 경우</h3><p>감수·브라우저 확인·백스톱 발견 → Coordinator → <strong>coder-web 수정</strong> → 영향을 받은 확인·감수·검사 재실행.</p></article>
+      <article class="card"><h3>명세의 기술 결정이 바뀌어야 하는 경우</h3><p>구현자가 사유 보고 → Coordinator → <strong>design-architect-web 수정</strong> → 관련 설계 재검토·G1 재확인 → 계약·슬라이스를 맞춘 뒤 구현 재개.</p></article>
+    </div>
+  </section>
+
+  <footer class="sources">
+    <p><strong>읽어 확인한 기준:</strong> <code>dddjango-web/commands/dddjango-web.md</code>, <code>dddjango-web/agents/*.md</code>의 역할·입출력·<code>skills:</code> 목록, <a href="file_tree_web.html">웹 표준 트리</a>. JS 스킬 직접 주입과 실행 경계는 현재 소스에 반영된 계약입니다.</p>
+    <p>2026-09-05 · UI JS 통합 소스 반영 · 커밋·배포 없음 · 평가는 런타임별 통제 샘플과 Chrome 환경으로 한정</p>
+  </footer>
+</main>
+</body>
+</html>

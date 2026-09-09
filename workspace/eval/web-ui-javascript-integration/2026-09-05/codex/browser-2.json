@@ -1,0 +1,226 @@
+{
+  "lane": "codex",
+  "label": "browser-2",
+  "checks": {
+    "I1": {
+      "status": "PASS",
+      "detail": "Own input visibility and accessible state changed once; neighbor remained masked with original value."
+    },
+    "I2": {
+      "status": "PASS",
+      "detail": "Native Enter and Space each toggled exactly once."
+    },
+    "I3": {
+      "status": "PASS",
+      "detail": "Two decoded local 2x2 images, independent URLs, literal filename markup with no child elements."
+    },
+    "I4": {
+      "status": "PASS",
+      "detail": "Reselect and clear revoked each prior URL exactly once; neighbor retained."
+    },
+    "I5": {
+      "status": "PASS",
+      "detail": "Invalid PNG bytes caused an actual image decode failure, released failed/previous URLs, and removed stale success."
+    },
+    "I8": {
+      "status": "PASS",
+      "detail": "Real independent-child HTTP swap retained owner/body identities, displayed image and live URL."
+    },
+    "I9": {
+      "status": "FAIL",
+      "detail": "Locator expected to have text 'before-root.png'\nActual value:  \nCall log:\n  - Expect \"to_have_text\" with timeout 5000ms\n  - waiting for locator(\"#ui-lab-filename-a\")\n    14 × locator resolved to <p id=\"ui-lab-filename-a\" data-image-filename=\"\"></p>\n       - unexpected value \"\"\n\nAria snapshot:\n- main:\n  - heading \"UI lab\" [level=1]\n  - group: Local-only help\n  - region \"Panel A fixture\":\n    - paragraph: A changed revision indicates a completed refresh.\n    - button \"Replace Panel A\"\n    - button \"Replace preview controls for Panel A\"\n    - button \"Update independent note for Panel A\"\n    - region \"Panel A\":\n      - heading \"Panel A\" [level=2]\n      - paragraph: \"Panel revision: 16cc3c8682ea457e9dbfd88516130867\"\n      - text: Password for Panel A\n      - textbox \"Password for Panel A\": alpha-private\n      - button \"Show password for Panel A\" [pressed]\n      - status: Password visible. Activate to conceal.\n      - paragraph: \"Preview controls revision: 7c41177080f245f88496239d1321ed7a\"\n      - text: Local image for Panel A\n      - button \"Local image for Panel A\"\n      - paragraph\n      - status: No image selected.\n      - button \"Clear image for Panel A\"\n      - paragraph: This note updates independently of the selected image.\n      - paragraph: \"Note revision: 24c526d0108441d0876c918f54cbf731\"\n  - region \"Panel B fixture\":\n    - paragraph: A changed revision indicates a completed refresh.\n    - button \"Replace Panel B\"\n    - button \"Replace preview controls for Panel B\"\n    - button \"Update independent note for Panel B\"\n    - region \"Panel B\":\n      - heading \"Panel B\" [level=2]\n      - paragraph: \"Panel revision: f5096e29ab054578967fb0adf4d3d952\"\n      - text: Password for Panel B\n      - textbox \"Password for Panel B\": beta-private\n      - button \"Show password for Panel B\"\n      - status: Password hidden. Activate to show.\n      - paragraph: \"Preview controls revision: f5096e29ab054578967fb0adf4d3d952\"\n      - text: Local image for Panel B\n      - button \"Local image for Panel B\"\n      - img \"Selected local image for Panel B\"\n      - paragraph: neighbor.png\n      - status: Image ready.\n      - button \"Clear image for Panel B\"\n      - paragraph: This note updates independently of the selected image.\n      - paragraph: \"Note revision: f5096e29ab054578967fb0adf4d3d952\""
+    }
+  },
+  "requests": [
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/",
+      "method": "GET",
+      "type": "document",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18752/static/design_system/foundation/tokens.css",
+      "method": "GET",
+      "type": "stylesheet",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18752/static/web/css/ui_lab.css",
+      "method": "GET",
+      "type": "stylesheet",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18752/static/web/htmx/htmx.min.js",
+      "method": "GET",
+      "type": "script",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18752/static/web/js/password_visibility.js",
+      "method": "GET",
+      "type": "script",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18752/static/web/js/image_preview.js",
+      "method": "GET",
+      "type": "script",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/2e3121ad-6320-4547-9a59-1c23cb36b74f",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/33c70b6e-d1cb-4f45-8181-153589ae18ec",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/7b79f6f3-97d9-4320-b676-9ff76a68a48d",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/8407d10d-e920-452f-ad61-658959041a79",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/b4dc41e8-d1e7-4d40-b027-c82392947725",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/c1a5beca-85d0-43db-a5c9-a66413af2214",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/fd1c5170-a6d8-4961-940d-dd33c0c405a0",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "blob:http://127.0.0.1:18752/55f50390-5e86-41ad-8e5a-c797ba70dcf3",
+      "method": "GET",
+      "type": "image",
+      "htmx": null
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/note/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/preview-body/",
+      "method": "GET",
+      "type": "xhr",
+      "htmx": "true"
+    }
+  ],
+  "htmx_responses": [
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/note/",
+      "status": 200,
+      "revision": "24c526d0108441d0876c918f54cbf731",
+      "html": "<div id=\"ui-lab-note-a\" data-ui-lab-note data-revision=\"24c526d0108441d0876c918f54cbf731\">\n  <p>This note updates independently of the selected image.</p>\n  <p>Note revision: 24c526d0108441d0876c918f54cbf731</p>\n</div>\n"
+    },
+    {
+      "url": "http://127.0.0.1:18752/lab/ui-lab/a/preview-body/",
+      "status": 200,
+      "revision": "7c41177080f245f88496239d1321ed7a",
+      "html": "<div id=\"ui-lab-preview-body-a\" data-image-preview-body data-revision=\"7c41177080f245f88496239d1321ed7a\">\n  <p>Preview controls revision: 7c41177080f245f88496239d1321ed7a</p>\n  <label for=\"ui-lab-file-a\">Local image for Panel A</label>\n  <input id=\"ui-lab-file-a\" data-image-input type=\"file\" accept=\"image/*\" aria-describedby=\"ui-lab-image-status-a\">\n  <img id=\"ui-lab-image-a\" data-image-output alt=\"Selected local image for Panel A\" hidden>\n  <p id=\"ui-lab-filename-a\" data-image-filename></p>\n  <p id=\"ui-lab-image-status-a\" data-image-status data-status=\"empty\" role=\"status\" aria-live=\"polite\">No image selected.</p>\n  <button id=\"ui-lab-clear-a\" data-image-clear type=\"button\" aria-describedby=\"ui-lab-image-status-a\" hidden>Clear image for Panel A</button>\n</div>\n"
+    }
+  ],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "page_errors": [],
+  "django_check": {
+    "exit_code": 0,
+    "output": "System check identified no issues (0 silenced).\n"
+  },
+  "browser_version": "152.0.7977.82",
+  "invalid_decode_state": "This file could not be displayed as an image. Choose another image.",
+  "late_decode_probe": "PASS: labelled delay after real native decode, then clear/reselect; stale completion did not replace latest success or revoke its resource.",
+  "status": "FAIL",
+  "traceback": "Traceback (most recent call last):\n  File \"/Users/hyun/Desktop/dddjango/workspace/eval/web-ui-javascript-integration/2026-09-05/browser_harness.py\", line 160, in run\n    root_url=select('a','before-root.png')\n  File \"/Users/hyun/Desktop/dddjango/workspace/eval/web-ui-javascript-integration/2026-09-05/browser_harness.py\", line 41, in select\n    expect(locator('filename',key)).to_have_text(name)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/tmp/dddjango-ui-js-20260905/venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py\", line 22839, in to_have_text\n    self._sync(\n    ~~~~~~~~~~^\n        self._impl_obj.to_have_text(\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<4 lines>...\n        )\n        ^\n    )\n    ^\n  File \"/tmp/dddjango-ui-js-20260905/venv/lib/python3.14/site-packages/playwright/_impl/_sync_base.py\", line 115, in _sync\n    return task.result()\n           ~~~~~~~~~~~^^\n  File \"/tmp/dddjango-ui-js-20260905/venv/lib/python3.14/site-packages/playwright/_impl/_assertions.py\", line 648, in to_have_text\n    await self._expect_impl(\n    ...<9 lines>...\n    )\n  File \"/tmp/dddjango-ui-js-20260905/venv/lib/python3.14/site-packages/playwright/_impl/_assertions.py\", line 128, in _expect_impl\n    _record_soft_or_raise(\n    ~~~~~~~~~~~~~~~~~~~~~^\n        AssertionError(\n        ^^^^^^^^^^^^^^^\n    ...<2 lines>...\n        self._is_soft,\n        ^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/tmp/dddjango-ui-js-20260905/venv/lib/python3.14/site-packages/playwright/_impl/_assertions.py\", line 60, in _record_soft_or_raise\n    raise error\nAssertionError: Locator expected to have text 'before-root.png'\nActual value:  \nCall log:\n  - Expect \"to_have_text\" with timeout 5000ms\n  - waiting for locator(\"#ui-lab-filename-a\")\n    14 × locator resolved to <p id=\"ui-lab-filename-a\" data-image-filename=\"\"></p>\n       - unexpected value \"\"\n\nAria snapshot:\n- main:\n  - heading \"UI lab\" [level=1]\n  - group: Local-only help\n  - region \"Panel A fixture\":\n    - paragraph: A changed revision indicates a completed refresh.\n    - button \"Replace Panel A\"\n    - button \"Replace preview controls for Panel A\"\n    - button \"Update independent note for Panel A\"\n    - region \"Panel A\":\n      - heading \"Panel A\" [level=2]\n      - paragraph: \"Panel revision: 16cc3c8682ea457e9dbfd88516130867\"\n      - text: Password for Panel A\n      - textbox \"Password for Panel A\": alpha-private\n      - button \"Show password for Panel A\" [pressed]\n      - status: Password visible. Activate to conceal.\n      - paragraph: \"Preview controls revision: 7c41177080f245f88496239d1321ed7a\"\n      - text: Local image for Panel A\n      - button \"Local image for Panel A\"\n      - paragraph\n      - status: No image selected.\n      - button \"Clear image for Panel A\"\n      - paragraph: This note updates independently of the selected image.\n      - paragraph: \"Note revision: 24c526d0108441d0876c918f54cbf731\"\n  - region \"Panel B fixture\":\n    - paragraph: A changed revision indicates a completed refresh.\n    - button \"Replace Panel B\"\n    - button \"Replace preview controls for Panel B\"\n    - button \"Update independent note for Panel B\"\n    - region \"Panel B\":\n      - heading \"Panel B\" [level=2]\n      - paragraph: \"Panel revision: f5096e29ab054578967fb0adf4d3d952\"\n      - text: Password for Panel B\n      - textbox \"Password for Panel B\": beta-private\n      - button \"Show password for Panel B\"\n      - status: Password hidden. Activate to show.\n      - paragraph: \"Preview controls revision: f5096e29ab054578967fb0adf4d3d952\"\n      - text: Local image for Panel B\n      - button \"Local image for Panel B\"\n      - img \"Selected local image for Panel B\"\n      - paragraph: neighbor.png\n      - status: Image ready.\n      - button \"Clear image for Panel B\"\n      - paragraph: This note updates independently of the selected image.\n      - paragraph: \"Note revision: f5096e29ab054578967fb0adf4d3d952\"\n",
+  "resources": {
+    "created": [
+      {
+        "url": "blob:http://127.0.0.1:18752/2e3121ad-6320-4547-9a59-1c23cb36b74f",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/33c70b6e-d1cb-4f45-8181-153589ae18ec",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/7b79f6f3-97d9-4320-b676-9ff76a68a48d",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/8407d10d-e920-452f-ad61-658959041a79",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/b4dc41e8-d1e7-4d40-b027-c82392947725",
+        "size": 33,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/c1a5beca-85d0-43db-a5c9-a66413af2214",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/fd1c5170-a6d8-4961-940d-dd33c0c405a0",
+        "size": 73,
+        "type": "image/png"
+      },
+      {
+        "url": "blob:http://127.0.0.1:18752/55f50390-5e86-41ad-8e5a-c797ba70dcf3",
+        "size": 73,
+        "type": "image/png"
+      }
+    ],
+    "revoked": [
+      "blob:http://127.0.0.1:18752/2e3121ad-6320-4547-9a59-1c23cb36b74f",
+      "blob:http://127.0.0.1:18752/7b79f6f3-97d9-4320-b676-9ff76a68a48d",
+      "blob:http://127.0.0.1:18752/8407d10d-e920-452f-ad61-658959041a79",
+      "blob:http://127.0.0.1:18752/b4dc41e8-d1e7-4d40-b027-c82392947725",
+      "blob:http://127.0.0.1:18752/c1a5beca-85d0-43db-a5c9-a66413af2214",
+      "blob:http://127.0.0.1:18752/fd1c5170-a6d8-4961-940d-dd33c0c405a0",
+      "blob:http://127.0.0.1:18752/55f50390-5e86-41ad-8e5a-c797ba70dcf3"
+    ],
+    "typeAssignments": [
+      {
+        "id": "ui-lab-password-input-a",
+        "value": "text"
+      },
+      {
+        "id": "ui-lab-password-input-a",
+        "value": "password"
+      },
+      {
+        "id": "ui-lab-password-input-a",
+        "value": "text"
+      }
+    ]
+  }
+}

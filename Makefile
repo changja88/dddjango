@@ -145,6 +145,7 @@ verify-base-core:
 	PYTHONUTF8=1 python3 workspace/tools/spec_lint.py; \
 	PYTHONUTF8=1 python3 workspace/tools/checker_lint.py; \
 	PYTHONUTF8=1 python3 workspace/tools/tree_mirror_check.py; \
+	PYTHONUTF8=1 python3 workspace/tools/adapter_layout_smoke.py; \
 	PYTHONUTF8=1 python3 workspace/tools/reverse_coverage.py; \
 	PYTHONUTF8=1 python3 workspace/tools/fixture_matrix.py; \
 	PYTHONUTF8=1 python3 workspace/tools/checker_baseline_matrix.py; \

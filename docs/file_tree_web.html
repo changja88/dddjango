@@ -475,7 +475,7 @@
 <div class="wrap">
 
 <header class="top">
-  <p class="kicker">dddjango-web 플러그인 · 표준 파일트리 · 확정 — v0.1.0(08-23)부터 현행</p>
+  <p class="kicker">dddjango-web · 웹 표준 트리 정본 · 2026-09-05 static/ 배치 개정</p>
   <h1>Model이 없다 — 화면이 한 폴더, 지식은 한 방향</h1>
 </header>
 
@@ -495,7 +495,7 @@
     <div class="side rev">
       <div class="side-hd">
         <span class="t">web/</span>
-        <span class="s">표준 트리 v3.1 — 값의 정본: discipline-web-houserules references/final.md §1</span>
+        <span class="s">master.html의 웹 표준 트리 정본 — 이번 배치 개정은 플러그인 반영 전</span>
       </div>
       <div class="tabwrap">
         <div class="tabrail" role="tablist">
@@ -686,7 +686,7 @@
           </div>
         </div>
         <div class="pgroup">
-        <button type="button" class="tabbtn" data-p="static" role="tab" aria-selected="false"><span class="tb-n">static/</span><span class="tb-s">정적 자산 — css·htmx·images</span><span class="tb-z z-clean">시각</span><span class="tb-c">4</span></button>
+        <button type="button" class="tabbtn" data-p="static" role="tab" aria-selected="false"><span class="tb-n">static/</span><span class="tb-s">정적 자산 — css·js·htmx·images</span><span class="tb-z z-clean">시각</span><span class="tb-c">8</span></button>
           <div class="ptree" id="pt-static">
             <div class="tree-scroll">
               <div class="tree-head"><span>경로 <em>· 이름 규칙</em></span><span>규율</span></div>
@@ -699,9 +699,25 @@
           <span class="path"><i class="g sp"></i><i class="g t"></i><b class="nm">css/</b><em class="nmr">화면 CSS — 값은 var() 참조</em></span>
           <span class="flagcell keep"><button type="button" class="pin w" data-k="wn">WN</button></span>
         </div>
+        <div data-r="38" class="tr clean" style="--d:2">
+          <span class="path"><i class="g sp"></i><i class="g t"></i><b class="nm">js/</b><em class="nmr">화면 기능별 JavaScript</em></span>
+          <span class="flagcell keep"><button type="button" class="pin d" data-k="d12">D12</button></span>
+        </div>
+        <div data-r="39" class="tr clean" style="--d:3">
+          <span class="path"><i class="g sp"></i><i class="g v"></i><i class="g l"></i><b class="nm">&lt;기능&gt;.js</b><em class="nmr">한 기능 = 한 파일</em></span>
+          <span class="flagcell keep"><button type="button" class="pin d" data-k="d12">D12</button></span>
+        </div>
         <div data-r="36" class="tr clean" style="--d:2">
-          <span class="path"><i class="g sp"></i><i class="g t"></i><b class="nm">js/</b> · htmx.min.js<em class="nmr">vendored 원명 그대로</em></span>
-          <span class="flagcell keep"><button type="button" class="pin wp" data-k="wp">WP</button><button type="button" class="pin d" data-k="d12">D12</button></span>
+          <span class="path"><i class="g sp"></i><i class="g t"></i><b class="nm">htmx/</b><em class="nmr">기능별 HTML 조각·HTMX 라이브러리</em></span>
+          <span class="flagcell keep"><button type="button" class="pin d" data-k="d12">D12</button></span>
+        </div>
+        <div data-r="41" class="tr clean" style="--d:3">
+          <span class="path"><i class="g sp"></i><i class="g v"></i><i class="g t"></i><b class="nm">&lt;기능&gt;.html</b><em class="nmr">HTMX 한 기능 = 한 파일</em></span>
+          <span class="flagcell keep"><button type="button" class="pin d" data-k="d12">D12</button></span>
+        </div>
+        <div data-r="40" class="tr clean" style="--d:3">
+          <span class="path"><i class="g sp"></i><i class="g v"></i><i class="g l"></i><b class="nm">htmx.min.js</b><em class="nmr">vendored 원명 그대로</em></span>
+          <span class="flagcell keep"><button type="button" class="pin d" data-k="d12">D12</button></span>
         </div>
         <div data-r="37" class="tr clean" style="--d:2">
           <span class="path"><i class="g sp"></i><i class="g l"></i><b class="nm">images/</b><em class="nmr">시안 착지 — snake_case</em></span>
@@ -729,7 +745,7 @@
           <li class="rd" id="rd-1">
             <div class="rd-p" style="--d:0"><b class="rd-n"><b>web/</b></b><span class="tb-z z-own">셸</span><button type="button" class="pin w" data-k="ws">WS</button><button type="button" class="pin d" data-k="d9">D9</button></div>
             <div class="rd-w"><b>일곱 가지만 온다</b> — <code>urls.py</code>·<code>apps.py</code>·<code>base/</code>·<code>&lt;screen_area&gt;/</code>·<code>client/</code>·<code>design_system/</code>·<code>static/</code>. <b>여덟째는 없다.</b></div>
-            <div class="rd-r"><span class="rd-k">규칙</span>컨테이너 최초 생성 시 골격 완비 — <em>urls·apps·base·tokens·component/·static 3칸을 비어 있어도 전부 만든다. 마커: Python 패키지는 <code>__init__.py</code>, HTML 전용 폴더는 <code>.gitkeep</code></em></div>
+            <div class="rd-r"><span class="rd-k">규칙</span>컨테이너 최초 생성 시 골격 완비 — <em>urls·apps·base·tokens·component/·static 4폴더을 비어 있어도 전부 만든다. 마커: Python 패키지는 <code>__init__.py</code>, HTML 전용 폴더는 <code>.gitkeep</code></em></div>
             <div class="rd-nm"><span class="rd-k">이름</span>고정 이름 <code>web/</code> — 백엔드 트리와 최상위에서 형제다. 호스트 배선(INSTALLED_APPS·TEMPLATES·STATICFILES·ROOT_URLCONF include·testserver)은 커맨드 Phase 0 소관.</div>
           </li>
           <li class="rd" id="rd-2">
@@ -861,7 +877,7 @@
           </li>
           <li class="rd" id="rd-20">
             <div class="rd-p" style="--d:1"><b class="rd-n">section/</b><span class="tb-z z-ddd">MVVM</span><button type="button" class="pin w" data-k="ws">WS</button></div>
-            <div class="rd-w"><b>화면 전속 조각의 거처 — HTMX 재렌더 단위.</b> 받은 state 렌더만으로 성립하는 조각이 온다. 비면 <code>.gitkeep</code>.</div>
+            <div class="rd-w"><b>화면 전속 조각의 거처 — HTMX 재렌더 단위.</b> 받은 state 렌더만으로 성립하는 조각이 온다. 기능별 요청 선언은 <code>static/htmx/&lt;기능&gt;.html</code>을 include하고, 서버 데이터와 fragment 응답 구조는 소속 view/section이 유지한다. 실행 script는 두지 않는다. 비면 <code>.gitkeep</code>.</div>
             <div class="rd-r"><span class="rd-k">규칙</span>입장 판별 — 자기 상태 조립이 필요하면 section 이 아니라 <b>새 view 삼총사</b>다(architecture-web §2)</div>
             <div class="rd-nm"><span class="rd-k">이름</span>고정 이름 종류 폴더.</div>
           </li>
@@ -962,18 +978,20 @@
         </ol>
       </section>
       <section class="tabpane" id="tp-static" role="tabpanel">
-        <div class="pane-hd"><b class="ph-n">static/</b><span class="ph-s">정적 자산 — css·htmx·images</span><span class="tb-z z-clean">시각</span></div>
+        <div class="pane-hd"><b class="ph-n">static/</b><span class="ph-s">정적 자산 — css·js·htmx·images</span><span class="tb-z z-clean">시각</span></div>
         <dl class="pane-kv">
           <dt>목적</dt><dd><p>브라우저로 직접 서빙되는 자산의 거처다. <b>무네임스페이스 경로 금지</b> — STATICFILES_DIRS 프리픽스 튜플 배선이 전제이고(§8 교정 사전), 그 배선은 커맨드 Phase 0 소관이다.</p></dd>
-          <dt>들어오는 것</dt><dd><p><code>css/</code>(화면 CSS) · <code>js/</code>(<b>vendored htmx 단일</b>) · <code>images/</code>(시안 이미지 착지). 컨테이너 최초 생성 때 셋 다 만든다 — htmx 파일 실물의 입수·설치는 커맨드 배선 전제조건이고 골격 검사는 존재만 본다.</p></dd>
-          <dt class="no">안 들어오는 것</dt><dd><p><b>커스텀 <code>.js</code></b> — vendored htmx 파일 하나가 예외의 전부다. <b>다른 JS 라이브러리의 vendored 추가도 금지</b>다. 폰트·아이콘 등 새 자산 종류가 필요하면 폴더 신설이 아니라 설계 확인부터다.</p></dd>
-          <dt class="wy">이 모양이 된 까닭</dt><dd><p>사용자 확정(D12) — <em>«순수 html 과 htmx, css 정도만 사용해야 해.»</em> JS 를 한 파일(vendored htmx)로 잠그면 «동작은 HTMX 속성과 CSS 로 표현한다»가 검사 가능한 규칙이 된다 — 표현 불가한 동작 요구는 우회 스크립트가 아니라 <b>설계 반송</b>이다.</p></dd>
+          <dt>들어오는 것</dt><dd><p><code>css/</code>(화면 CSS) · <code>js/</code>(화면 기능별 JavaScript) · <code>htmx/</code>(기능별 HTMX HTML 조각·라이브러리) · <code>images/</code>(시안 이미지 착지). 컨테이너 최초 생성 때 네 폴더를 각각 만든다. JS는 <code>js/&lt;기능&gt;.js</code>, HTMX는 <code>htmx/&lt;기능&gt;.html</code>로 <b>각각 기능당 정확히 한 파일</b>을 둔다. 신규 HTMX 실행 라이브러리는 <code>htmx/htmx.min.js</code>다. 검증된 폰트·다운로드 파일이 필요한 경우만 <code>fonts/</code>·<code>files/</code>를 조건 생성한다. 기능 파일도 실제 요구가 있을 때만 생성한다.</p></dd>
+          <dt class="no">안 들어오는 것</dt><dd><p>서로 다른 기능을 한 JS 또는 HTMX 파일에 섞거나, 같은 기능을 같은 종류의 여러 파일로 나누는 배치. 새 HTMX core를 <code>js/</code>에 설치하거나 직접 작성한 JS 기능을 <code>htmx/</code>에 두는 배치. 기존 <code>static/js/htmx.min.js</code>·<code>htmx.js</code>는 브라운필드 설치로만 소비한다. 이중 설치·조용한 이동/업그레이드는 금지한다.</p></dd>
+          <dt class="wy">이 모양이 된 까닭</dt><dd><p>자산 종류별로 폴더를 분리하고, JS와 HTMX 각각에서 기능과 파일이 일대일로 대응하게 한다. 기능은 비밀번호 표시 전환·목록 필터 같은 <b>화면 동작 단위</b>다. 같은 기능을 구현하는 내부 함수나 HTML 요소는 같은 파일에 둔다.</p></dd>
+          <dt>반영 범위</dt><dd><p>Claude·Codex 플러그인 지침·역할 주입·백스톱에 반영된 현재 통합 소스다. <a href="work_flow_web_guide.html">스킬 5개·에이전트 4개의 협력 흐름</a>과 연결된다. 커밋·배포 완료를 뜻하지 않는다.</p></dd>
         </dl>
-        <div class="rd-hd"><b>한 칸씩 — 무엇이 오나</b><span class="rd-c">4칸</span></div>
+        <p class="rd-w"><b>조건 자산:</b> <code>static/fonts/&lt;이름&gt;.&lt;확장자&gt;</code>·<code>static/files/&lt;이름&gt;.&lt;확장자&gt;</code>는 필요 시 검증된 파일만 두고 출처→배선 경로를 기록한다(snake_case). 네 폴더 골격으로 미리 만들지 않는다. <code>static/js/motion.js</code>는 러너 채택 시에만 설치한다.</p>
+        <div class="rd-hd"><b>한 칸씩 — 무엇이 오나</b><span class="rd-c">8칸</span></div>
         <ol class="rowdocs">
           <li class="rd" id="rd-34">
             <div class="rd-p" style="--d:0"><b class="rd-n"><b>static/</b></b><span class="tb-z z-clean">시각</span><button type="button" class="pin w" data-k="ws">WS</button></div>
-            <div class="rd-w">정적 자산 컨테이너 — css·js·images 세 칸으로 시작하고 끝난다.</div>
+            <div class="rd-w">정적 자산 컨테이너 — <code>css/</code>·<code>js/</code>·<code>htmx/</code>·<code>images/</code> 네 폴더를 각각 둔다.</div>
             <div class="rd-nm"><span class="rd-k">이름</span>고정 이름 · 프리픽스 서빙 전제.</div>
           </li>
           <li class="rd" id="rd-35">
@@ -981,10 +999,32 @@
             <div class="rd-w">화면 CSS — 기능·범위로 이름 짓는 snake_case 파일. <b>시각 값은 tokens.css 의 <code>var()</code> 참조</b> — 색·크기 리터럴이 보이면 교정 대상이다.</div>
             <div class="rd-nm"><span class="rd-k">이름</span><code>&lt;이름&gt;.css</code> — snake_case.</div>
           </li>
+          <li class="rd" id="rd-38">
+            <div class="rd-p" style="--d:1"><b class="rd-n">js/</b><span class="tb-z z-clean">시각</span><button type="button" class="pin d" data-k="d12">D12</button></div>
+            <div class="rd-w"><b>화면 기능별 JavaScript 폴더.</b> 승인된 UI 기능에 JS가 필요할 때 그 기능의 파일 하나를 만든다. native HTML/CSS로 충분하면 JS 파일은 없다. 업무 권한·금액·저장 판정·별도 업무 API 호출·SPA 상태 계층은 금지한다.</div>
+            <div class="rd-nm"><span class="rd-k">이름</span>고정 폴더 <code>js/</code>.</div>
+          </li>
+          <li class="rd" id="rd-39">
+            <div class="rd-p" style="--d:2"><b class="rd-n">&lt;기능&gt;.js</b><span class="tb-z z-clean">시각</span><button type="button" class="pin d" data-k="d12">D12</button></div>
+            <div class="rd-w"><b>한 기능 = 한 파일.</b> 비밀번호 표시 전환은 <code>password_visibility.js</code>, 파일 미리보기는 <code>file_preview.js</code>처럼 기능을 이름으로 드러낸다.</div>
+            <div class="rd-r"><span class="rd-k">규칙</span>서로 다른 기능의 합치기와 같은 기능의 파일 분할을 모두 금지한다. 같은 기능에 필요한 초기화·이벤트 처리·정리 함수는 이 파일 안에 함께 둔다. base 공통 로드 또는 페이지의 범용 script block에서 외부 static 참조로 한 번만 로드한다. classic은 <code>defer</code>, 기존 module 방식도 허용하되 <code>async</code>로 순서를 깨지 않는다. fragment 실행 script·inline JS·<code>on*</code>·<code>hx-on</code>·<code>js:</code>·<code>hx-trigger</code> 조건식은 금지하며 데이터는 <code>json_script</code> 또는 escape된 data 속성으로 전달한다. 실행 소스 보간은 금지한다.</div>
+            <div class="rd-nm"><span class="rd-k">이름</span><code>&lt;기능&gt;.js</code> — snake_case·평면. 함수마다 파일을 만드는 규칙이 아니다. <code>motion.js</code>는 러너 채택 시 조건 설치하는 byte 고정 예약 이름이다. 수정·확장·기능 파일로 덮어쓰지 않는다.</div>
+          </li>
           <li class="rd" id="rd-36">
-            <div class="rd-p" style="--d:1"><b class="rd-n">js/ · htmx.min.js</b><span class="tb-z z-clean">시각</span><button type="button" class="pin wp" data-k="wp">WP</button><button type="button" class="pin d" data-k="d12">D12</button></div>
-            <div class="rd-w"><b>JS 는 vendored htmx 단일이다.</b> 커스텀 <code>.js</code> 신설 금지 · 타 라이브러리 vendored 추가 금지 · 템플릿 inline <code>&lt;script&gt;</code> 금지 — WP 패밀리가 게이트에서 잡는다.</div>
-            <div class="rd-r"><span class="rd-k">규칙</span>HTMX 속성·CSS 로 표현 불가한 동작 요구는 <b>설계로 반송</b> — <em>우회 스크립트를 짜지 않는다</em></div>
+            <div class="rd-p" style="--d:1"><b class="rd-n">htmx/</b><span class="tb-z z-clean">시각</span><button type="button" class="pin d" data-k="d12">D12</button></div>
+            <div class="rd-w"><b>기능별 HTMX HTML 조각의 폴더.</b> <code>hx-get</code>·<code>hx-post</code>·<code>hx-target</code> 같은 속성으로 표현한 화면 동작을 기능별 파일로 둔다. 실행에 필요한 HTMX 라이브러리도 이 폴더에 둔다.</div>
+            <div class="rd-nm"><span class="rd-k">이름</span>고정 폴더 <code>htmx/</code>.</div>
+          </li>
+          <li class="rd" id="rd-41">
+            <div class="rd-p" style="--d:2"><b class="rd-n">&lt;기능&gt;.html</b><span class="tb-z z-clean">시각</span><button type="button" class="pin d" data-k="d12">D12</button></div>
+            <div class="rd-w"><b>HTMX 한 기능 = 한 파일.</b> 목록 필터는 <code>list_filter.html</code>, 더 보기는 <code>load_more.html</code>처럼 기능을 이름으로 드러낸다. 같은 기능의 HTML 요소와 HTMX 속성은 같은 파일에 둔다.</div>
+            <div class="rd-r"><span class="rd-k">규칙</span>서로 다른 기능의 합치기와 같은 HTMX 기능의 파일 분할을 모두 금지한다.</div>
+            <div class="rd-r"><span class="rd-k">렌더링</span>페이지/section에서 <code>{% include "static/htmx/&lt;기능&gt;.html" %}</code>로 렌더한다. 기존 TEMPLATES DIRS의 web 루트를 쓰며 새 finder·middleware·템플릿 엔진은 만들지 않는다. 공개 static 원문에는 비밀·사용자별 렌더 결과를 저장하지 않는다. 데이터·권한·CSRF·fragment 응답은 view/section이 소유하며, static URL은 업무 fragment endpoint가 아니다.</div>
+            <div class="rd-nm"><span class="rd-k">이름</span><code>&lt;기능&gt;.html</code> — snake_case·평면.</div>
+          </li>
+          <li class="rd" id="rd-40">
+            <div class="rd-p" style="--d:2"><b class="rd-n">htmx.min.js</b><span class="tb-z z-clean">시각</span><button type="button" class="pin d" data-k="d12">D12</button></div>
+            <div class="rd-w">신규 HTMX core의 위치는 <code>web/static/htmx/htmx.min.js</code>다. core 누락 시 Coordinator가 공식 2.0.10 고정 파일을 설치하고 버전·출처를 기록한다. 기존 <code>static/js/htmx.min.js</code>·<code>htmx.js</code>는 기존 설치로만 소비한다.</div>
             <div class="rd-nm"><span class="rd-k">이름</span>vendored 원명 그대로 — <span class="yes">htmx.min.js</span> ✔ 개명 금지.</div>
           </li>
           <li class="rd" id="rd-37">
@@ -1147,7 +1187,7 @@
 <text x="28" y="606" font-size="10" fill="var(--ink-3)">브라우저</text>
 <g class="fgo" data-r="5" tabindex="0" role="link" aria-label="base.html — 1장 트리 5행으로"><rect x="150" y="572" width="150" height="48" rx="5" fill="var(--card)" stroke="currentColor" stroke-width="1.3"/><text x="160" y="591" font-size="10" font-family="ui-monospace, monospace" fill="var(--ink-3)">base/ — extends</text><text x="160" y="607" font-size="11" font-family="ui-monospace, monospace" fill="currentColor" font-weight="700">base.html</text></g>
 <g class="fgo" data-r="30" tabindex="0" role="link" aria-label="tokens.css — 1장 트리 30행으로"><rect x="320" y="572" width="176" height="48" rx="5" fill="var(--card)" stroke="currentColor" stroke-width="1.3"/><text x="330" y="591" font-size="10" font-family="ui-monospace, monospace" fill="var(--ink-3)">design_system/foundation/</text><text x="330" y="607" font-size="11" font-family="ui-monospace, monospace" fill="currentColor" font-weight="700">tokens.css</text></g>
-<g class="fgo" data-r="36" tabindex="0" role="link" aria-label="htmx.min.js — 1장 트리 36행으로"><rect x="516" y="572" width="150" height="48" rx="5" fill="var(--card)" stroke="currentColor" stroke-width="1.3"/><text x="526" y="591" font-size="10" font-family="ui-monospace, monospace" fill="var(--ink-3)">static/js/</text><text x="526" y="607" font-size="11" font-family="ui-monospace, monospace" fill="currentColor" font-weight="700">htmx.min.js</text></g>
+<g class="fgo" data-r="40" tabindex="0" role="link" aria-label="htmx.min.js — 1장 트리 40행으로"><rect x="516" y="572" width="150" height="48" rx="5" fill="var(--card)" stroke="currentColor" stroke-width="1.3"/><text x="526" y="591" font-size="10" font-family="ui-monospace, monospace" fill="var(--ink-3)">static/htmx/</text><text x="526" y="607" font-size="11" font-family="ui-monospace, monospace" fill="currentColor" font-weight="700">htmx.min.js</text></g>
 <text x="684" y="591" font-size="10" fill="var(--ink-2)">다음 상호작용은 HTMX</text>
 <text x="684" y="607" font-size="10" fill="var(--ink-2)">속성이 건다 — B 흐름.</text>
 </g></svg>
@@ -1316,8 +1356,8 @@ if not form.is_valid(): <span class="c"># 오류를 state 에 담아 같은 조�
       <div class="v">client 가 부르는 URL 은 백엔드 driving_layer <b>api 표면</b>뿐 — 서버렌더 페이지·admin·내부 경로 호출 금지. <b>왜</b> — 화면이 화면을 부르면 계약이 아니라 스크래핑이다.</div></div>
     <div class="rz" id="iso4"><div class="k">④ 라우트 리터럴 거처 2곳</div>
       <div class="v">web 자신의 path·name 은 <code>urls.py</code> 뿐(영역 리터럴은 <code>&lt;screen_area&gt;/urls.py</code>, <code>web/urls.py</code> 는 합산만). BC API URL 은 그 계약의 <b>client 모듈</b>이 유일 거처. 그 외 어디서든 <code>{% url %}</code>/<code>reverse</code> 이름 참조만. <b>왜</b> — 흩어진 URL 문자열은 깨진 링크의 온상이다.</div></div>
-    <div class="rz" id="iso5"><div class="k">⑤ D12 순수성 — JS 는 htmx 하나</div>
-      <div class="v"><span class="no">커스텀 .js 신설 금지</span> · <span class="no">타 라이브러리 vendored 추가 금지</span> · <span class="no">inline &lt;script&gt; 금지</span>. 동작은 HTMX 속성과 CSS 로 표현하고, 표현 불가한 동작 요구는 우회 스크립트가 아니라 <b>설계로 반송</b>한다.</div></div>
+    <div class="rz" id="iso5"><div class="k">⑤ JS·HTMX 배치 — 각각 기능당 한 파일</div>
+      <div class="v"><code>static/js/&lt;기능&gt;.js</code> · <code>static/htmx/&lt;기능&gt;.html</code> — <b>각각 한 기능은 정확히 한 파일</b>에 둔다. 서로 다른 기능을 한 파일에 섞거나 같은 기능을 같은 종류의 여러 파일로 나누지 않는다. 신규 HTMX core는 <code>static/htmx/htmx.min.js</code> 한 파일이다. 기능 선언은 Django include로 렌더하고 응답은 view/section이 소유한다. 실행 지침과 백스톱에 반영됐으며 기능 일대일의 의미는 감수자가 판단한다.</div></div>
     <div class="rz" id="iso6"><div class="k">⑥ 지식은 한 방향</div>
       <div class="v"><b>view → VM → client</b> — 역방향 참조(client 가 VM 을, VM 이 view·템플릿을 아는 것) 금지. <b>템플릿은 state 만 읽는다</b> — VM 메서드 호출·client 접근 금지, widget 에는 명시 context 만. <b>왜</b> — 역방향이 생기면 요청 구동 MVVM 의 교체 가능성이 죽는다.</div></div>
     <div class="rz" id="iso7"><div class="k">⑦ 수평 격리</div>
@@ -1326,7 +1366,7 @@ if not form.is_valid(): <span class="c"># 오류를 state 에 담아 같은 조�
 
   <p class="eyebrow" style="margin-top:34px">백스톱</p>
   <h2>검사 패밀리 4 — 러너가 단일 출처다</h2>
-  <p class="lede">개별 검사를 문서가 열거·모사하지 않는다 — 검사 의미가 바뀌면 <b>러너가 단일 출처</b>다. 러너가 잡는 것은 흉내내지 말고 트리대로 만들면 통과한다. 러너가 못 보는 <b>의미 판별 6종</b>(view/section · 화면 전속 · BC 어휘 · 영역 귀속 · 두 번째 개념 · base «거의 빈»)은 <code>undecidable-web.md</code> 가 판별 절차·배정의 단일 출처다.</p>
+  <p class="lede">아래는 UI JS 통합이 반영된 현재 검사 체계다. <b>러너는 경로·실행 채널·판형을 검사한다.</b> 기능 일대일의 의미, 업무 로직 부재, JS 내부 모션의 전수 검출을 보장하지 않는다. UI 수명·교체·실패·키보드 동작은 실제 브라우저 증거와 독립 감수로 확인한다. 러너가 못 보는 <b>의미 판별 6종</b>(view/section · 화면 전속 · BC 어휘 · 영역 귀속 · 두 번째 개념 · base «거의 빈»)의 현행 절차·배정은 <code>undecidable-web.md</code> 에 있다.</p>
 
   <div class="tw"><table>
     <thead><tr><th>패밀리</th><th>지키는 것</th><th>발화 범위 — 게이트 의미론</th><th>반송 → 교정 절</th></tr></thead>
@@ -1334,7 +1374,7 @@ if not form.is_valid(): <span class="c"># 오류를 state 에 담아 같은 조�
       <tr><th>WS</th><td>구조·골격 — 트리 형태·직속 금지·골격 완비</td><td><b>added</b>(새 파일·디렉터리)만 · 골격 완비는 <b>신규 단위</b>만</td><td class="mono">§1 트리 · §2 성장 · §3 골격</td></tr>
       <tr><th>WI</th><td>격리 — 위 7규칙의 기계 판별부</td><td>touched 파일의 <b>added 줄</b>만</td><td class="mono">§5</td></tr>
       <tr><th>WN</th><td>명명 — 접두 대응·접미 전체 표기·snake_case</td><td><b>added</b>만</td><td class="mono">§4 총괄표</td></tr>
-      <tr><th>WP</th><td>순수성 — D12 (커스텀 JS·inline script)</td><td>touched 파일의 <b>added 줄</b>만</td><td class="mono">§5⑤</td></tr>
+      <tr><th>WP</th><td>JS 허용 경로·외부 로드·inline 차단·motion byte 판형</td><td>항목별 diff 게이트 — 실행 태그는 변경된 속성 줄까지 대조</td><td class="mono">§5⑤</td></tr>
     </tbody>
   </table></div>
 
@@ -1349,7 +1389,7 @@ if not form.is_valid(): <span class="c"># 오류를 state 에 담아 같은 조�
 
   <aside class="note settled">
     <span class="lbl">green 판정 보조 — 자동 테스트 없이 판정한다</span>
-    <p>web 트랙은 자동 테스트가 없다. 러너와 별개로 <b><code>python -m py_compile</code></b>(신규 .py 문법) + <b><code>manage.py check</code></b>(Django 시스템 검사)를 green 판정 보조로 쓰고, 나머지는 <b>사용자 육안 확인 + discipline-reviewer-web 규율 감사</b>가 진다.</p>
+    <p>web 트랙은 자동 테스트가 없다. 러너와 별개로 <b><code>python -m py_compile</code></b>(신규 .py 문법) + <b><code>manage.py check</code></b>(Django 시스템 검사)를 green 판정 보조로 쓰고, UI 동작은 <b>실제 렌더·브라우저 확인 + discipline-reviewer-web 독립 감사 + 사용자 G2 인수</b>로 확인한다. 파일 존재·백스톱 통과만으로 동작을 증명하지 않는다.</p>
   </aside>
 
   <aside class="note">
@@ -1357,7 +1397,7 @@ if not form.is_valid(): <span class="c"># 오류를 state 에 담아 같은 조�
     <p>게이트 의미론이 added·신규 단위로 좁혀져 있어 <b>기존 drift 에는 울리지 않는다</b>. 기존 파일의 개명·이동을 요구하지 않는다 — 표기는 파일(모든 새 파일), 구조는 단위(신규 단위부터). <code>--all</code> 은 게이트 무시 전역 감사용이다 — 레거시에서 발견 폭주가 정상이며 파이프라인 게이트 용도가 아니다.</p>
   </aside>
 
-  <div class="colophon">정본 — 트리·명명 «값»: dddjango-web/skills/discipline-web-houserules/references/final.md (§1 은 스펙 1.3㉠ 과 byte 동기) · 판별 절차: 같은 스킬 references/undecidable-web.md · 동작 규율: architecture-web · 구현 표기: implementation-ui · 빌드 기록: workspace/design/2026-08-23-web-presentation-layer-spec.md<br>자매 문서 — docs/file_tree.html (dddjango 백엔드 트리) · docs/work_flow.html (파이프라인 실동작) · docs/master.html (통합 진입점)</div>
+  <div class="colophon">웹 표준 트리 정본 — docs/master.html에서 연결하는 이 문서(docs/file_tree_web.html). 2026-09-05 개정: css/·js/·htmx/·images/ 폴더 분리, JS·HTMX 각각 기능당 한 파일. Claude·Codex 실행 지침·역할·백스톱에 통합 소스 반영 완료. 커밋·배포 없음.<br>현행 플러그인 참조 — discipline-web-houserules · architecture-web · implementation-ui<br>자매 문서 — docs/file_tree.html (dddjango 백엔드 트리) · docs/work_flow.html (파이프라인 실동작) · docs/master.html (통합 진입점)</div>
 </section>
 </div>
 <div class="wrap"><div class="chfoot"><a class="pv" href="#ch2"><span class="k">← 앞 장</span>2 장 흐름</a></div></div>
@@ -1384,16 +1424,16 @@ if not form.is_valid(): <span class="c"># 오류를 state 에 담아 같은 조�
       d: "<b>사용자 원문</b> — <em>«이건 dddjango 명령어로는 동작하게 하면 안 될 것 같아 … dddjango-web 플러그인을 별개로 만들어서 동작하는 게 맞을 것 같다.»</em><br><b>확정</b> — web 표현계층은 <b>별개 플러그인 dddjango-web</b> 이다. dddjango 그래프·커맨드·에이전트를 한 줄도 수정하지 않았고, 마켓에 두 플러그인이 나란히 등재된다.<br><b>왜</b> — «web 이 필요 없을 때는 로드조차 되지 않아야 한다»는 요구가 플러그인 경계로 자동 충족된다. 서로 의존성도 없다 — dddjango-web 단독 설치도 동작하고, API 가 부족하면 «/dddjango 로 발주» 안내만 남는다.<br><b>수정 규율</b> — 전 파일이 <b>산문 정본</b>(온톨로지 코퍼스 밖·graph-owned 절 0) — md·py 를 직접 수정한다." },
     d11: { id: "D11", vd: "확정 · 08-23", t: "dddart 전수 현지화 — 그대로 가져오는 걸 전제로 가려낸다",
       d: "<b>사용자 원문</b> — <em>«사실상 dddart 의 web 버전을 만드는 건데, 그대로 가져오는 걸 전제로 현지화시키는 게 가장 빠르고 효과적이고 퀄리티도 검증된 방식 아닐까 … dddart 를 기준으로 덜어낼 부분과 현지화할 부분을 가려내면 만들어질 것 같다.»</em><br><b>방법론</b> — 4단계: ①목표 확정 ②dddart 전수 분석 ③3처분(버림/현지화/그대로) ④적용. 분석은 파일 전수를 읽고 <b>차이 5축 필터</b>로 가려냈다 — [FLUTTER] 기술 치환 · [BC] 도메인 경계 없음 · [MODEL] Model 없음 · [STATE] 상주 상태 없음 · [TEST] 자동 테스트 없음.<br><b>그대로 온 것</b> — 게이트 판형(G0/G1/G2)·판별표·승격 규칙·수동성·백스톱 러너 exit 계약·픽스처 positive-control 짝.<br><b>버린 것</b> — safeApiCall·Either·hive·riverpod·BC 루트 라우팅 짝·테스트 규율 전부." },
-    d12: { id: "D12", vd: "확정 · 08-23", t: "순수성 — 순수 HTML + HTMX + CSS · JS 는 vendored htmx 단일",
-      d: "<b>사용자 원문</b> — <em>«js 프레임워크, 앱, 백엔드 api 생성, 테스트, 배포 모두 안 해. 그리고 순수 html 과 htmx, css 정도만 사용해야 해.»</em><br><b>규칙</b> — <code>web/**</code> 에 커스텀 <code>.js</code> 신설 금지(vendored htmx 파일 제외) · <b>다른 JS 라이브러리의 vendored 추가도 금지</b>(예외는 htmx 하나뿐) · 템플릿 inline <code>&lt;script&gt;</code> 금지.<br><b>왜 잠그나</b> — JS 를 한 파일로 잠그면 «동작은 HTMX 속성과 CSS 로 표현한다»가 <b>검사 가능한 규칙</b>이 된다. 예외를 두 개 허용하는 순간 «어디까지가 예외냐»는 판별 문제가 생기고, 그 판별은 기계가 못 한다.<br><b>반송 규칙</b> — HTMX·CSS 로 표현 불가한 동작 요구는 우회 스크립트를 짜지 말고 <b>설계로 반송</b>한다. WP 패밀리가 게이트에서 잡는다." },
+    d12: { id: "D12", vd: "통합 소스 반영 · 09-05", t: "JS·HTMX 배치 — 각각 기능당 한 파일",
+      d: "<b>정적 자산 폴더</b> — <code>static/</code> 아래 <code>css/</code>·<code>js/</code>·<code>htmx/</code>·<code>images/</code>를 각각 둔다.<br><b>JS 파일 단위</b> — <code>js/&lt;기능&gt;.js</code>, 한 기능당 정확히 한 파일. 서로 다른 기능의 합치기와 같은 기능의 파일 분할을 모두 금지한다. 같은 기능을 구현하는 내부 함수는 같은 파일에 둔다.<br><b>HTMX 파일 단위</b> — <code>htmx/&lt;기능&gt;.html</code>, 한 기능당 정확히 한 파일. 서로 다른 기능의 합치기와 같은 HTMX 기능의 파일 분할을 모두 금지한다. 신규 core는 <code>htmx/htmx.min.js</code>에 둔다. 기존 js/ core는 브라운필드 설치로만 소비한다. 선언은 Django include로 렌더하고 서버 fragment는 view/section이 소유한다.<br><b>조건 자산</b> — fonts/·files/는 검증된 파일이 필요할 때만, motion.js는 러너 채택 시 byte 고정 판형으로 설치한다.<br><b>반영 범위</b> — Claude·Codex 지침·역할 주입·백스톱 반영 완료. 배포 상태는 별개다." },
     ws: { id: "WS", vd: "패밀리 · 구조·골격", t: "WS — 트리 형태 자체가 규약이다",
       d: "<b>지키는 것</b> — §1 트리의 형태(직속 허용 목록·중첩 금지) · §2 성장 규칙(영역 1차·개념 1차·종류 2차) · §3 골격 완비(신규 단위의 표준 폴더 전부 생성 · 마커 <code>__init__.py</code>/<code>.gitkeep</code>).<br><b>발화 범위</b> — <b>added</b>(새로 만든 파일·디렉터리)만 · 골격 완비는 <b>신규 단위</b>(영역·화면 개념·client BC 폴더)만 — 레거시 drift 에 불발화.<br><b>반송</b> — §1·§2·§3 으로 돌아가 고친다. 트리에 없는 모양은 «만들 수 없다» — 여기 못 들어가는 파일이 생기면 트리가 아니라 판별이 틀린 것이다." },
     wi: { id: "WI", vd: "패밀리 · 격리", t: "WI — 격리 §5 의 기계 판별부",
       d: "<b>지키는 것</b> — ① 백엔드 import 0 · ② API 호출 client 전속 · ③ api 표면 패턴만 · ④ 라우트 리터럴 거처 2곳 · ⑦ 타 영역 widget include 금지 — 의 <b>기계가 셀 수 있는 부분</b>.<br><b>발화 범위</b> — touched 파일의 <b>added 줄</b>만.<br><b>기계가 못 보는 것</b> — ⑥ 의미부(템플릿은 state 만 읽는다 · widget 명시 context)는 discipline-reviewer-web 감사 소관이다.<br><b>반송</b> — §5 로." },
     wn: { id: "WN", vd: "패밀리 · 명명", t: "WN — 종류는 폴더가 결정하고 접미사가 재확인한다",
       d: "<b>지키는 것</b> — §4 총괄표: 파일명 snake_case · 주 클래스 = 파일명의 PascalCase 대응 · 삼총사+페이지 템플릿 같은 접두 1:1:1:1(검사 방향은 VM 기준) · section 은 view 접두 필수 · widget·component 에 view 이름 금지 · 접미 전체 표기(<span style='color:var(--flag)'>_vm ✗</span>).<br><b>발화 범위</b> — <b>added</b>만.<br><b>반송</b> — §4 총괄표로. 브라운필드 관행(views.py 누적·forms.py 모음·전역 templates/ 트리·CBV 관성)은 §8 교정 사전이 표준 어휘로 옮긴다." },
-    wp: { id: "WP", vd: "패밀리 · 순수성", t: "WP — D12 의 기계 집행",
-      d: "<b>지키는 것</b> — 커스텀 <code>.js</code> 신설 금지 · 타 JS 라이브러리 vendored 추가 금지 · 템플릿 inline <code>&lt;script&gt;</code> 금지 — JS 는 vendored htmx 파일 하나가 예외의 전부다.<br><b>발화 범위</b> — touched 파일의 <b>added 줄</b>만.<br><b>반송</b> — §5⑤ 로. 표현 불가한 동작 요구는 우회 스크립트가 아니라 설계 반송이다." }
+    wp: { id: "WP", vd: "플러그인 현행 검사", t: "WP — JS 경로·실행 채널·고정 판형",
+      d: "<b>현재 플러그인</b> — 승인된 UI 기능 JS는 <code>static/js/&lt;기능&gt;.js</code>에서 허용한다. 외부 static 참조의 로드 위치·파일 존재와 inline 실행 채널 차단, motion.js byte 판형 등을 검사한다.<br><b>실행 계약</b> — base 공통 로드 또는 페이지 범용 script block에서 한 번만 로드한다. classic은 defer, 기존 module도 허용하며 fragment 실행 script는 금지한다.<br><b>검사 한계</b> — 기능 일대일의 의미·업무 로직 부재·JS 내부 모션 전수 검출은 보장하지 않는다. 실제 브라우저 증거와 독립 감수가 필요하다." }
   };
   var tip = document.getElementById("tip");
   var tId = tip.querySelector(".tid"), tVd = tip.querySelector(".tvd");

@@ -1,0 +1,11 @@
+<section id="ui-lab-panel-{{ state.key }}" data-ui-lab-panel="{{ state.key }}" data-revision="{{ state.revision }}" aria-labelledby="ui-lab-heading-{{ state.key }}">
+  <h2 id="ui-lab-heading-{{ state.key }}">{{ state.label }}</h2>
+  <p>Panel revision: {{ state.revision }}</p>
+  <div id="ui-lab-password-{{ state.key }}" data-password-visibility>
+    <label for="ui-lab-password-input-{{ state.key }}">Password for {{ state.label }}</label>
+    <input id="ui-lab-password-input-{{ state.key }}" data-password-input type="password" autocomplete="off">
+    <button id="ui-lab-password-toggle-{{ state.key }}" data-password-toggle type="button" aria-controls="ui-lab-password-input-{{ state.key }}" aria-pressed="false" aria-describedby="ui-lab-password-status-{{ state.key }}" hidden>Show password for {{ state.label }}</button>
+    <p id="ui-lab-password-status-{{ state.key }}" data-password-status role="status" aria-live="polite">Password hidden. Activate to show.</p>
+  </div>
+  {% include "lab/ui_lab/section/ui_lab_preview.html" with state=state only %}
+</section>

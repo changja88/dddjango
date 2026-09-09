@@ -1,0 +1,97 @@
+tune_house/domain_layer/visit/value_object/fortune_request.py::FortuneRequest.with_character_offers(offers: tuple[CharacterOffer, ...]) -> FortuneRequest
+application/fortune_house/domain_layer/visit/value_object/fortune_request.py::FortuneRequest.to_carried(issued_at: datetime, fortune_id: str | None, bundle_id: str | None, offer: CharacterOffer) -> CarriedRequest
+application/fortune_house/domain_layer/visit/value_object/saju_snapshot.py::SajuSnapshot(object) {birth_date: date | None, birth_time: time | None, birth_time_unknown: bool, birth_calendar: str | None, is_leap_month: bool | None, birth_place_kind: str | None, birth_place_city_code: str | None, birth_place_country_code: str | None, gender: str | None, default_timezone: str}
+application/fortune_house/domain_layer/visit/value_object/prompt_set_snapshot.py::PromptSetSnapshot(object) {set_id: str, version: int, instruction: str, response_json_structure: str, display_html_format: str, language: str}
+application/fortune_house/domain_layer/visit/value_object/fortune_selection.py::FortuneSelection(object) {fortune_id: str | None, selected_character_id: UUID | None, prompt_set: PromptSetSnapshot | None, reservation_id: UUID | None, displayed_price: int | None, annual_fortune_from_year: int | None, annual_fortune_to_year: int | None, bundle_id: str | None}
+application/fortune_house/domain_layer/visit/value_object/fortune_selection.py::FortuneSelection.empty() -> FortuneSelection
+application/fortune_house/domain_layer/visit/value_object/fortune_selection.py::FortuneSelection.with_rewind() -> FortuneSelection
+application/fortune_house/domain_layer/visit/value_object/fortune_selection.py::FortuneSelection.with_bundle(bundle_id: str | None) -> FortuneSelection
+application/fortune_house/domain_layer/visit/value_object/fortune_selection.py::FortuneSelection.with_fortune(fortune_id: str | None) -> FortuneSelection
+application/fortune_house/domain_layer/visit/value_object/fortune_selection.py::FortuneSelection.with_character(character_id: UUID | None, displayed_price: int | None) -> FortuneSelection
+application/fortune_house/domain_layer/visit/value_object/fortune_selection.py::FortuneSelection.with_prompt_set(prompt_set: PromptSetSnapshot | None) -> FortuneSelection
+application/fortune_house/domain_layer/visit/exception/invalid_visit_state.py::InvalidVisitState(Exception)
+application/fortune_house/domain_layer/visit/exception/visit_integrity_violation.py::VisitIntegrityViolation(Exception)
+# domain — visit aggregate root · repository declaration
+# Visit.__init__ = 아래 필드 목록과 1:1 · kw-only · 전 필드 필수(기본값 0 — `request` 포함 · §3.2 조립 제약 · S2-1 과도기 기본값은 S2-4 마지막에 제거 §12.2)
+application/fortune_house/domain_layer/visit/visit.py::Visit(object) {id: UUID, key: VisitKey, stage: VisitStage, display_language: DisplayLanguage | None, selection: FortuneSelection, saju: SajuSnapshot | None, pending_card: PendingCard | None, request: FortuneRequest | None, carried_request: CarriedRequest | None, undelivered_record_id: UUID | None, record_id: UUID | None, lease: TurnLease | None, last_turn_outcome: TurnOutcome | None, version: int, persisted_version: int}
+application/fortune_house/domain_layer/visit/visit.py::Visit.open(key: VisitKey) -> Visit
+application/fortune_house/domain_layer/visit/visit.py::Visit.mark_persisted() -> None
+application/fortune_house/domain_layer/visit/visit.py::Visit.begin_turn(turn_id: UUID, now: datetime, deadline: datetime) -> TurnAdmission
+application/fortune_house/domain_layer/visit/visit.py::Visit.end_turn(turn_id: UUID, outcome: TurnOutcome) -> bool
+application/fortune_house/domain_layer/visit/visit.py::Visit.reconcile_pending_card(present_call_ids: frozenset[str]) -> bool
+application/fortune_house/domain_layer/visit/visit.py::Visit.pending_call_id() -> str | None
+application/fortune_house/domain_layer/visit/visit.py::Visit.notice_language(operating_language: str) -> DisplayLanguage
+application/fortune_house/domain_layer/visit/visit.py::Visit.place() -> VisitPlace
+application/fortune_house/domain_layer/visit/visit_repository.py::VisitRepository(ABC)
+application/fortune_house/domain_layer/visit/visit_repository.py::VisitRepository.find_by_key(key: VisitKey) -> Visit | None
+application/fortune_house/domain_layer/visit/visit_repository.py::VisitRepository.find_by_id(visit_id: UUID) -> Visit | None
+application/fortune_house/domain_layer/visit/visit_repository.py::VisitRepository.save_with_version_guard(visit: Visit) -> bool
+# domain — shared value objects
+application/fortune_house/domain_layer/shared_value_object/visit_place.py::VisitPlace(StrEnum) {ROOM = "room", COUNTER = "counter"}
+application/fortune_house/domain_layer/shared_value_object/notice_reason_code.py::NoticeReasonCode(StrEnum) {SUSPENDED = "suspended", LIMIT_EXCEEDED = "limit_exceeded", ACTION_KIND_UNAVAILABLE = "action_kind_unavailable", COMPONENT_MISCONFIGURED = "component_misconfigured", CONTRACT_MISMATCH = "contract_mismatch", INTERNAL_ERROR = "internal_error", TEMPORARY_ERROR = "temporary_error", DEADLINE_EXCEEDED = "deadline_exceeded", UNDECIDABLE = "undecidable", NO_EVIDENCE = "no_evidence", INSUFFICIENT_BALANCE = "insufficient_balance", CATALOG_UNAVAILABLE = "catalog_unavailable", PROMPT_SET_MISSING = "prompt_set_missing", CARD_PENDING = "card_pending", CARD_ANSWER_INVALID = "card_answer_invalid", CHARACTER_RESTING = "character_resting", CHARACTER_SEASON_ENDED = "character_season_ended", CHARACTER_UNAVAILABLE = "character_unavailable", ACCOUNT_UNAVAILABLE = "account_unavailable", FOLLOW_UP_UNAVAILABLE = "follow_up_unavailable", TURN_IN_PROGRESS = "turn_in_progress", NON_FORTUNE_REJECTED = "non_fortune_rejected", NO_AVAILABLE_CHARACTER = "no_available_character", PROFILE_INPUT_REQUIRED = "profile_input_required", REQUEST_CANCELLED = "request_cancelled", ANSWER_IN_PROGRESS = "answer_in_progress", PROFILE_INPUT_FIX_REQUIRED = "profile_input_fix_required"}
+application/fortune_house/domain_layer/shared_value_object/notice.py::Notice(object) {reason: NoticeReasonCode, suspension_code: str | None = None, retry_at: datetime | None = None, timezone: str = "UTC"}
+application/fortune_house/domain_layer/shared_value_object/notice.py::Notice.phrase_key() -> str
+application/fortune_house/domain_layer/shared_value_object/notice_phrase.py::NoticePhrase(object) {key: str, language: str, text: str}
+application/fortune_house/domain_layer/shared_value_object/display_language.py::DisplayLanguage(object) {code: str}
+application/fortune_house/domain_layer/shared_value_object/display_language.py::DisplayLanguage.fallback_chain(operating_language: str) -> tuple[str, ...]
+application/fortune_house/domain_layer/shared_value_object/invalid_display_language.py::InvalidDisplayLanguage(Exception)
+application/fortune_house/domain_layer/shared_value_object/speech_situation.py::SpeechSituation(StrEnum) {UNRELATED_REJECTION = "unrelated_rejection", OTHER_CHARACTER_GUIDANCE = "other_character_guidance", NO_CHARACTER = "no_character", PROFILE_INPUT_REQUEST = "profile_input_request", NO_EVIDENCE = "no_evidence", INSUFFICIENT_BALANCE = "insufficient_balance", LIMIT_EXCEEDED = "limit_exceeded", SUSPENDED = "suspended", CHARACTER_UNAVAILABLE = "character_unavailable", LLM_FAILURE = "llm_failure", SYSTEM_ERROR = "system_error", REQUEST_CANCELLED = "request_cancelled", PROFILE_INPUT_FIX = "profile_input_fix"}
+application/fortune_house/domain_layer/shared_value_object/speaker.py::Speaker(StrEnum) {PERSONA_LLM = "persona_llm", FIXED_PHRASE = "fixed_phrase"}
+application/fortune_house/domain_layer/shared_value_object/function_call_card.py::_FunctionCallEnvelope(TypedDict) {type: str, call_id: str, name: str, arguments: str, status: str}
+application/fortune_house/domain_layer/shared_value_object/function_call_card.py::FunctionCallCard(object) {CALL_ID_MAX_LENGTH: ClassVar[int] = 128, NAME_MAX_LENGTH: ClassVar[int] = 64, call_id: str, name: str, arguments_json: str}
+application/fortune_house/domain_layer/shared_value_object/function_call_card.py::FunctionCallCard.to_item_json() -> str
+application/fortune_house/domain_layer/shared_value_object/widget_card.py::WidgetCard(object) {widget_json: str}
+application/fortune_house/domain_layer/shared_value_object/widget_card.py::WidgetCard.to_item_json() -> str
+application/fortune_house/domain_layer/shared_value_object/card_answer_kind.py::CardAnswerKind(StrEnum) {CHOICE = "choice", CANCELLED = "cancelled", FORM_SAVED = "form_saved", FORM_CANCELLED = "form_cancelled"}
+application/fortune_house/domain_layer/shared_value_object/card_answer.py::CardAnswer(object) {kind: CardAnswerKind, choice: str | None}
+application/fortune_house/domain_layer/shared_value_object/card_answer.py::CardAnswer.serialize() -> str
+application/fortune_house/domain_layer/shared_value_object/card_answer.py::is_unanswered_output(output: str) -> bool
+application/fortune_house/domain_layer/shared_value_object/invalid_card_answer.py::InvalidCardAnswer(Exception)
+application/fortune_house/domain_layer/shared_value_object/invalid_card_envelope.py::InvalidCardEnvelope(Exception)
+application/fortune_house/domain_layer/shared_value_object/transcript_message.py::TranscriptMessage(object) {USER_ROLE: ClassVar[str] = "user", role: str, text: str}
+application/fortune_house/domain_layer/shared_value_object/transcript_message.py::TranscriptMessage.is_from_user() -> bool
+application/fortune_house/domain_layer/shared_value_object/transcript_function_call.py::TranscriptFunctionCall(object) {call_id: str, name: str, arguments: str}
+application/fortune_house/domain_layer/shared_value_object/transcript_function_call_output.py::TranscriptFunctionCallOutput(object) {call_id: str, output: str}
+application/fortune_house/domain_layer/shared_value_object/turn_input_kind.py::TurnInputKind(StrEnum) {CARD_ANSWER = "card_answer", MESSAGE = "message", NONE = "none"}
+application/fortune_house/domain_layer/shared_value_object/turn_input.py::TurnInput(object) {kind: TurnInputKind, message: str | None, call_id: str | None, card_answer_output: str | None}
+application/fortune_house/domain_layer/shared_value_object/reply_text_delta.py::ReplyTextDelta(object) {text: str}
+application/fortune_house/domain_layer/shared_value_object/reply_card.py::ReplyCard(object) {card: FunctionCallCard | WidgetCard}
+application/fortune_house/domain_layer/shared_value_object/reply_completed.py::ReplyCompleted(object) {text: str}
+application/fortune_house/domain_layer/shared_value_object/display_html_format.py::DisplayHtmlFormat(object) {template: str}
+application/fortune_house/domain_layer/shared_value_object/display_html_format.py::DisplayHtmlFormat.create(template: str) -> DisplayHtmlFormat
+application/fortune_house/domain_layer/shared_value_object/display_html_format.py::DisplayHtmlFormat.render(answer: str, character_name: str, fortune_type_label: str, question: str, citations_html: str) -> str
+application/fortune_house/domain_layer/shared_value_object/invalid_display_html_format.py::InvalidDisplayHtmlFormat(Exception)
+application/fortune_house/domain_layer/shared_value_object/speech_operation.py::SpeechOperation(StrEnum) {PERSONA_SPEECH = "persona_speech"}
+application/fortune_house/domain_layer/shared_value_object/reasoning_effort.py::ReasoningEffort(StrEnum) {NONE = "none", MINIMAL = "minimal", LOW = "low", MEDIUM = "medium", HIGH = "high", XHIGH = "xhigh", MAX = "max"}
+application/fortune_house/domain_layer/shared_value_object/speech_generation_settings.py::SpeechGenerationSettings(object) {model: str, max_output_tokens: int, reasoning_effort: ReasoningEffort, timeout_seconds: float, max_retries: int}
+application/fortune_house/domain_layer/shared_value_object/speech_generation_settings.py::SpeechGenerationSettings.create(model: str, max_output_tokens: int, reasoning_effort: str, timeout_seconds: float, max_retries: int) -> SpeechGenerationSettings
+application/fortune_house/domain_layer/shared_value_object/invalid_speech_generation_settings.py::InvalidSpeechGenerationSettings(Exception)
+# domain — services (stateless)
+application/fortune_house/domain_layer/domain_service/resolve_notice_phrase.py::NoticePhraseResolver(object)
+application/fortune_house/domain_layer/domain_service/resolve_notice_phrase.py::NoticePhraseResolver.resolve(notice: Notice, language: DisplayLanguage, operating_language: str) -> NoticePhrase
+application/fortune_house/domain_layer/domain_service/resolve_notice_phrase.py::NoticePhraseResolver.supported_languages() -> tuple[str, ...]
+application/fortune_house/domain_layer/domain_service/decide_speaker.py::SpeakerPolicy(object)
+application/fortune_house/domain_layer/domain_service/decide_speaker.py::SpeakerPolicy.decide(situation: SpeechSituation, place: VisitPlace) -> Speaker
+application/fortune_house/domain_layer/domain_service/decide_speaker.py::SpeakerPolicy.situation_of(reason: NoticeReasonCode) -> SpeechSituation
+application/fortune_house/domain_layer/domain_service/read_turn_input.py::TurnInputReader(object)
+application/fortune_house/domain_layer/domain_service/read_turn_input.py::TurnInputReader.read(transcript: tuple[TranscriptMessage | TranscriptFunctionCall | TranscriptFunctionCallOutput, ...], pending_call_id: str | None) -> TurnInput
+application/fortune_house/domain_layer/domain_service/read_turn_input.py::TurnInputReader.present_call_ids(transcript: tuple[TranscriptMessage | TranscriptFunctionCall | TranscriptFunctionCallOutput, ...]) -> frozenset[str]
+application/fortune_house/domain_layer/domain_service/read_turn_input.py::TurnInputReader.message_before_call(transcript: tuple[TranscriptMessage | TranscriptFunctionCall | TranscriptFunctionCallOutput, ...], call_id: str) -> str | None
+# application — ports
+application/fortune_house/application_layer/port/clock/clock_port.py::ClockPort(ABC)
+application/fortune_house/application_layer/port/clock/clock_port.py::ClockPort.now() -> datetime
+application/fortune_house/application_layer/port/detached_task/detached_task_port.py::DetachedTaskPort(ABC)
+application/fortune_house/application_layer/port/detached_task/detached_task_port.py::DetachedTaskPort.schedule(task: Callable[[], None]) -> None
+application/fortune_house/application_layer/port/detached_task/exception.py::DetachedTaskUnavailable(Exception)
+application/fortune_house/application_layer/port/turn_stream/turn_stream_port.py::TurnStreamPort(ABC)
+application/fortune_house/application_layer/port/turn_stream/turn_stream_port.py::TurnStreamPort.open(stream_id: UUID) -> None
+application/fortune_house/application_layer/port/turn_stream/turn_stream_port.py::TurnStreamPort.publish_item(stream_id: UUID, item: ReplyTextDelta | ReplyCard | ReplyCompleted) -> None
+application/fortune_house/application_layer/port/turn_stream/turn_stream_port.py::TurnStreamPort.pull(stream_id: UUID, timeout_seconds: float) -> ReplyTextDelta | ReplyCard | ReplyCompleted | None
+application/fortune_house/application_layer/port/turn_stream/turn_stream_port.py::TurnStreamPort.is_open(stream_id: UUID) -> bool
+application/fortune_house/application_layer/port/turn_stream/turn_stream_port.py::TurnStreamPort.close(stream_id: UUID) -> None
+application/fortune_house/application_layer/port/unit_of_work/visit_unit_of_work.py::FortuneHouseVisitUnitOfWork(ABC)
+application/fortune_house/application_layer/port/unit_of_work/visit_unit_of_work.py::FortuneHouseVisitUnitOfWork.__enter__() -> Self
+application/fortune_house/application_layer/port/unit_of_work/visit_unit_of_work.py::FortuneHouseVisitUnitOfWork.__exit__(exception_type: type[BaseException] | None, exception: BaseException | None, traceback: TracebackType | None) -> bool | None
+application/fortune_house/application_layer/port/unit_of_work/visit_unit_of_work.py::FortuneHouseVisitUnitOfWork.after_commit(callback: Callable[[], None]) -> None
+# application — use cases
+application/fortune_house/application_layer/visit_turn/open_visit_turn/open_visit_turn_command.py::OpenVisitTurnCommand(object) {turn_id: UUID, account_id: int, room_id: UUID

@@ -1,0 +1,8 @@
+{# 패널 root — hx-swap="outerHTML" 교체 단위 #}
+<section class="ui-lab-panel" id="{{ panel.dom_id }}" data-ui-lab-panel>
+  <h2 class="ui-lab-panel__heading">{{ panel.heading }}</h2>
+  <p class="ui-lab-panel__marker">{{ panel.revision_marker }}</p>
+  {% if panel.root_swap_enabled %}{% include "static/htmx/ui_lab_panel_swap.html" %}{% endif %}
+  {% include "lab/ui_lab/section/ui_lab_password_field.html" with password=panel.password only %}
+  {% include "lab/ui_lab/section/ui_lab_preview.html" with preview=panel.preview only %}
+</section>

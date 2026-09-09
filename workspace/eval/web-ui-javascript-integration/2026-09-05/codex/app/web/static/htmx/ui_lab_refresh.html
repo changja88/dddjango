@@ -1,0 +1,5 @@
+<div class="ui_lab_refresh">
+  <button id="ui-lab-refresh-panel-{{ state.key }}" data-refresh="panel" type="button" hx-get="{% url 'lab:ui_lab_panel' state.key %}" hx-target="#ui-lab-panel-{{ state.key }}" hx-swap="outerHTML">Replace {{ state.label }}</button>
+  <button id="ui-lab-refresh-preview-body-{{ state.key }}" data-refresh="preview-body" type="button" hx-get="{% url 'lab:ui_lab_preview_body' state.key %}" hx-target="#ui-lab-preview-body-{{ state.key }}" hx-swap="outerHTML">Replace preview controls for {{ state.label }}</button>
+  <button id="ui-lab-refresh-note-{{ state.key }}" data-refresh="note" type="button" hx-get="{% url 'lab:ui_lab_note' state.key %}" hx-target="#ui-lab-note-{{ state.key }}" hx-swap="outerHTML">Update independent note for {{ state.label }}</button>
+</div>

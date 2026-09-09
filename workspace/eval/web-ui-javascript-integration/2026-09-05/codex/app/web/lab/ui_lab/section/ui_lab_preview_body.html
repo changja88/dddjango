@@ -1,0 +1,9 @@
+<div id="ui-lab-preview-body-{{ state.key }}" data-image-preview-body data-revision="{{ state.revision }}">
+  <p>Preview controls revision: {{ state.revision }}</p>
+  <label for="ui-lab-file-{{ state.key }}">Local image for {{ state.label }}</label>
+  <input id="ui-lab-file-{{ state.key }}" data-image-input type="file" accept="image/*" aria-describedby="ui-lab-image-status-{{ state.key }}">
+  <img id="ui-lab-image-{{ state.key }}" data-image-output alt="Selected local image for {{ state.label }}" hidden>
+  <p id="ui-lab-filename-{{ state.key }}" data-image-filename></p>
+  <p id="ui-lab-image-status-{{ state.key }}" data-image-status data-status="empty" role="status" aria-live="polite">No image selected.</p>
+  <button id="ui-lab-clear-{{ state.key }}" data-image-clear type="button" aria-describedby="ui-lab-image-status-{{ state.key }}" hidden>Clear image for {{ state.label }}</button>
+</div>

@@ -1,0 +1,92 @@
+_house/test/fake/text_generation_port.py::TextGenerationFake(TextGenerationPort) {events: tuple[SpeechTextDeltaOut | SpeechCompletedOut | SpeechFailedOut, ...], failure: Exception | None, requests: list[tuple[tuple[SpeechMessage, ...], SpeechGenerationSettings, str]], closed_early: bool}
+application/fortune_house/test/fake/text_generation_port.py::TextGenerationFake.__init__(events: tuple[SpeechTextDeltaOut | SpeechCompletedOut | SpeechFailedOut, ...], failure: Exception | None = None) -> None
+application/fortune_house/test/fake/text_generation_port.py::TextGenerationFake.stream(messages: tuple[SpeechMessage, ...], settings: SpeechGenerationSettings, caller_label: str) -> Iterator[SpeechTextDeltaOut | SpeechCompletedOut | SpeechFailedOut]
+application/fortune_house/test/fake/speech_generation_configuration_query.py::SpeechGenerationConfigurationQueryFake(SpeechGenerationConfigurationDomainBypassQuery) {settings: SpeechGenerationSettingsOut | None, calls: list[str]}
+application/fortune_house/test/fake/speech_generation_configuration_query.py::SpeechGenerationConfigurationQueryFake.__init__(settings: SpeechGenerationSettingsOut | None) -> None
+application/fortune_house/test/fake/speech_generation_configuration_query.py::SpeechGenerationConfigurationQueryFake.get_settings(operation: str) -> SpeechGenerationSettingsOut | None
+# ── S2 ──────────────────────────────────────────────────────────────
+# S2 domain — shared value objects
+application/fortune_house/domain_layer/shared_value_object/required_input.py::RequiredInput(StrEnum) {BIRTH_DATETIME = "birth-datetime", BIRTH_PLACE = "birth-place", SEX = "sex"}
+application/fortune_house/domain_layer/shared_value_object/saju_input_check.py::SajuInputCheck(object) {missing: tuple[RequiredInput, ...], unknown_ids: tuple[str, ...]}
+application/fortune_house/domain_layer/shared_value_object/saju_input_check.py::SajuInputCheck.is_satisfied() -> bool
+application/fortune_house/domain_layer/shared_value_object/invalid_saju_input_check.py::InvalidSajuInputCheck(Exception)
+application/fortune_house/domain_layer/shared_value_object/character_offer.py::CharacterOffer(object) {character_id: UUID, name: str, view_price: int, chat_price: int}
+application/fortune_house/domain_layer/shared_value_object/invalid_character_offer.py::InvalidCharacterOffer(Exception)
+application/fortune_house/domain_layer/shared_value_object/fortune_option.py::FortuneOption(object) {fortune_id: str, label: str, supported_here: bool | None}
+application/fortune_house/domain_layer/shared_value_object/character_availability.py::CharacterAvailability(object) {room_character_id: UUID | None, room_character_supports: bool, offerable_character_ids: tuple[UUID, ...]}
+application/fortune_house/domain_layer/shared_value_object/account_timezone.py::AccountTimezone(object) {name: str}
+application/fortune_house/domain_layer/shared_value_object/account_timezone.py::AccountTimezone.zone() -> tzinfo
+application/fortune_house/domain_layer/shared_value_object/account_timezone.py::AccountTimezone.local_date(now: datetime) -> date
+application/fortune_house/domain_layer/shared_value_object/account_timezone.py::AccountTimezone.localize(moment: datetime) -> datetime
+application/fortune_house/domain_layer/shared_value_object/invalid_character_availability.py::InvalidCharacterAvailability(Exception)
+application/fortune_house/domain_layer/shared_value_object/invalid_speech_situation.py::InvalidSpeechSituation(Exception)
+application/fortune_house/domain_layer/shared_value_object/character_availability.py::CharacterAvailability.offer_character_ids() -> tuple[UUID, ...]
+application/fortune_house/domain_layer/shared_value_object/character_availability.py::CharacterAvailability.is_empty() -> bool
+application/fortune_house/domain_layer/shared_value_object/card_name.py::CardName.binds_request() -> bool
+application/fortune_house/domain_layer/shared_value_object/card_name.py::CardName.accepts(kind: CardAnswerKind) -> bool
+application/fortune_house/domain_layer/visit/value_object/pending_card.py::PendingCard.binds_request() -> bool
+application/fortune_house/domain_layer/visit/value_object/carry_kind.py::CarryKind(StrEnum) {NEW_FORTUNE = "new_fortune", CONTINUE_RECORD = "continue_record"}
+# S2 domain — visit root methods
+application/fortune_house/domain_layer/visit/visit.py::Visit.start_request(request: FortuneRequest, bundle_id: str | None, turn_id: UUID) -> bool
+application/fortune_house/domain_layer/visit/visit.py::Visit.offer_fortunes(candidate_fortune_ids: tuple[str, ...], bundle_id: str, turn_id: UUID) -> bool
+application/fortune_house/domain_layer/visit/visit.py::Visit.choose_fortune(fortune_id: str, bundle_id: str, turn_id: UUID) -> bool
+application/fortune_house/domain_layer/visit/visit.py::Visit.offer_characters(offers: tuple[CharacterOffer, ...], turn_id: UUID) -> bool
+application/fortune_house/domain_layer/visit/visit.py::Visit.choose_character(offer: CharacterOffer, turn_id: UUID) -> bool
+application/fortune_house/domain_layer/visit/visit.py::Visit.fix_saju(saju: SajuSnapshot, turn_id: UUID) -> bool
+application/fortune_house/domain_layer/visit/visit.py::Visit.fix_prompt_set(prompt_set: PromptSetSnapshot, turn_id: UUID) -> bool
+application/fortune_house/domain_layer/visit/visit.py::Visit.carry_request(carried: CarriedRequest) -> bool
+application/fortune_house/domain_layer/visit/visit.py::Visit.consume_carried_request(tail_message: str, now: datetime, turn_id: UUID) -> CarriedRequest | None
+application/fortune_house/domain_layer/visit/visit.py::Visit.close_request(turn_id: UUID) -> bool
+application/fortune_house/domain_layer/visit/visit.py::Visit.holds_card(name: CardName) -> bool
+# S2 domain — services
+application/fortune_house/domain_layer/domain_service/check_saju_inputs.py::SajuInputPolicy(object) {LUNAR_CALENDAR: ClassVar[str] = "lunar"}
+application/fortune_house/domain_layer/domain_service/check_saju_inputs.py::SajuInputPolicy.judge(required_input_ids: tuple[str, ...], saju: SajuSnapshot) -> SajuInputCheck
+application/fortune_house/domain_layer/domain_service/judge_character_offers.py::CharacterOfferPolicy(object)
+application/fortune_house/domain_layer/domain_service/judge_character_offers.py::CharacterOfferPolicy.judge(key: VisitKey, matching_character_ids: tuple[UUID, ...]) -> CharacterAvailability
+application/fortune_house/domain_layer/domain_service/resolve_fortune_label.py::FortuneLabelResolver(object)
+application/fortune_house/domain_layer/domain_service/resolve_fortune_label.py::FortuneLabelResolver.resolve(fortune_id: str, labels: tuple[tuple[str, str], ...], language: DisplayLanguage, operating_language: str) -> str
+application/fortune_house/domain_layer/domain_service/compose_notice_speech.py::NoticeSpeechComposer(object) {SITUATION_LINES: ClassVar[Mapping[SpeechSituation, str]] = {SpeechSituation.OTHER_CHARACTER_GUIDANCE: "손님이 원하는 운세 종류는 네가 볼 수 없고 다른 점쟁이가 볼 수 있다고 안내한다", SpeechSituation.NO_CHARACTER: "지금은 그 운세를 볼 수 있는 점쟁이가 없다고 안내한다", SpeechSituation.PROFILE_INPUT_REQUEST: "운세를 보려면 손님의 내 정보 중 {subject}가 필요하다고 안내한다", SpeechSituation.REQUEST_CANCELLED: "손님이 이번 요청을 접었음을 확인하고 다시 말하면 이어서 돕겠다고 한다"}, INPUT_LABELS: ClassVar[Mapping[RequiredInput, str]] = {RequiredInput.BIRTH_DATETIME: "생년월일시", RequiredInput.BIRTH_PLACE: "출생지", RequiredInput.SEX: "성별"}, INPUT_LABEL_SEPARATOR: ClassVar[str] = "·"}
+application/fortune_house/domain_layer/domain_service/compose_notice_speech.py::NoticeSpeechComposer.compose(persona: str, language: DisplayLanguage, situation: SpeechSituation, subject: str | None, customer_message: str | None) -> tuple[SpeechMessage, ...]
+application/fortune_house/domain_layer/domain_service/compose_notice_speech.py::NoticeSpeechComposer.describe_missing(missing: tuple[RequiredInput, ...]) -> str
+# compose: 표 밖 상황 · `{subject}` 자리 있는 상황의 subject None/공백 → InvalidSpeechSituation(§3.6 생산자 가드 · 시그니처 무변 — `subject: str | None`은 자리 없는 상황의 None을 위해 유지)
+# S2 application — ports · out · exceptions
+application/fortune_house/application_layer/port/account_profile/account_profile_port.py::AccountProfilePort.get_saju_profile(account_id: int) -> SajuProfileOut | None
+application/fortune_house/application_layer/port/account_profile/saju_profile_out.py::SajuProfileOut(object) {birth_date: date | None, birth_time: time | None, birth_time_unknown: bool, birth_calendar: str | None, is_leap_month: bool | None, birth_place_kind: str | None, birth_place_city_code: str | None, birth_place_country_code: str | None, gender: str | None, active: bool}
+application/fortune_house/application_layer/port/usage_policy/usage_policy_port.py::UsagePolicyPort.is_action_allowed(account_id: int, action_kind_code: str, guest_timezone: str | None, now: datetime) -> AdmissionDecisionOut
+application/fortune_house/application_layer/port/usage_policy/usage_decision_out.py::AdmissionDecisionOut(object) {allowed: bool, denial: DenialOut | None, effective_timezone: str}
+application/fortune_house/application_layer/port/character_catalog/character_catalog_port.py::CharacterCatalogPort.find_matching_characters(supported_work_ids: tuple[str, ...]) -> tuple[UUID, ...]
+application/fortune_house/application_layer/port/character_catalog/character_catalog_port.py::CharacterCatalogPort.get_price_quote(character_id: UUID) -> PriceQuoteOut | None
+application/fortune_house/application_layer/port/character_catalog/character_catalog_port.py::CharacterCatalogPort.draw_prompt_set(character_id: UUID, fortune_type_id: str, language: str) -> PromptSetOut | None
+application/fortune_house/application_layer/port/character_catalog/character_out.py::PriceQuoteOut(object) {view_price: int, chat_price: int}
+application/fortune_house/application_layer/port/character_catalog/character_out.py::PromptSetOut(object) {set_id: str, version: int, instruction: str, response_json_structure: str, display_html_format: str, language: str}
+application/fortune_house/application_layer/port/character_catalog/exception.py::PromptSetGroupEmpty(Exception)
+application/fortune_house/application_layer/port/intent_structuring/intent_structuring_port.py::IntentStructuringPort(ABC)
+application/fortune_house/application_layer/port/intent_structuring/intent_structuring_port.py::IntentStructuringPort.structure_fortune_intent(customer_message: str, allowed_fortune_types: tuple[AllowedFortuneTypeOut, ...], reference_date: date) -> FortuneIntentOut
+application/fortune_house/application_layer/port/intent_structuring/structured_intent_out.py::AllowedFortuneTypeOut(object) {fortune_type: str, label: str}
+application/fortune_house/application_layer/port/intent_structuring/structured_intent_out.py::FortuneCandidateOut(object) {fortune_type: str, match: Literal["explicit", "suggested"]}
+application/fortune_house/application_layer/port/intent_structuring/structured_intent_out.py::FortunePeriodOut(object) {text: str | None, kind: Literal["year", "month", "day", "range", "life", "unspecified"], start_date: date | None, end_date: date | None}
+application/fortune_house/application_layer/port/intent_structuring/structured_intent_out.py::FortuneIntentOut(object) {outcome: Literal["structured", "undecidable"], candidates: tuple[FortuneCandidateOut, ...], topic: str | None, period: FortunePeriodOut | None, lead_message: str | None, undecidable_code: str | None}
+application/fortune_house/application_layer/port/intent_structuring/exception.py::IntentStructuringUnavailable(Exception)
+application/fortune_house/application_layer/port/fortune_catalog/fortune_catalog_port.py::FortuneCatalogPort(ABC)
+application/fortune_house/application_layer/port/fortune_catalog/fortune_catalog_port.py::FortuneCatalogPort.list_fortune_types() -> FortuneTypeListOut | CatalogUnavailableOut
+application/fortune_house/application_layer/port/fortune_catalog/fortune_catalog_port.py::FortuneCatalogPort.classify_candidates(candidate_fortune_ids: tuple[str, ...]) -> CandidateClassificationOut | CatalogUnavailableOut
+application/fortune_house/application_layer/port/fortune_catalog/fortune_catalog_port.py::FortuneCatalogPort.resolve_support(fortune_id: str) -> FortuneSupportOut | SupportUnavailableOut | CatalogUnavailableOut
+application/fortune_house/application_layer/port/fortune_catalog/catalog_out.py::FortuneTypeOut(object) {fortune_id: str, labels: tuple[tuple[str, str], ...]}
+application/fortune_house/application_layer/port/fortune_catalog/catalog_out.py::FortuneTypeListOut(object) {bundle_id: str, fortune_types: tuple[FortuneTypeOut, ...]}
+application/fortune_house/application_layer/port/fortune_catalog/catalog_out.py::CandidateOutcomeOut(object) {fortune_id: str, status: Literal["visible", "unsupported", "absent"], reason: Literal["unsupported", "stale_vocabulary"] | None}
+application/fortune_house/application_layer/port/fortune_catalog/catalog_out.py::CandidateClassificationOut(object) {bundle_id: str, candidates: tuple[CandidateOutcomeOut, ...]}
+application/fortune_house/application_layer/port/fortune_catalog/catalog_out.py::FortuneSupportOut(object) {bundle_id: str, fortune_id: str, work_rag_refs: tuple[tuple[str, str], ...], required_input_ids: tuple[str, ...]}
+application/fortune_house/application_layer/port/fortune_catalog/catalog_out.py::SupportUnavailableOut(object) {bundle_id: str, fortune_id: str, status: Literal["unsupported", "absent"], reason: Literal["unsupported", "stale_vocabulary"]}
+application/fortune_house/application_layer/port/fortune_catalog/catalog_out.py::CatalogUnavailableOut(object) {bundle_id: str | None, reason: Literal["bundle_unavailable", "relation_table_unavailable"]}
+application/fortune_house/application_layer/port/fortune_catalog/exception.py::FortuneCatalogUnavailable(Exception)
+# S2 application — use case 모듈 함수(카드 답 파싱 · D58)
+application/fortune_house/application_layer/visit_turn/run_visit_turn/run_visit_turn_use_case.py::_parse_card_answer(output: str) -> CardAnswer
+# S2 driven — ACL 신설 2 · 확장 3
+application/fortune_house/driven_layer/adapter/anticorruption_layer/accounts/account_profile_adapter.py::AccountsAccountProfileAdapter.get_saju_profile(account_id: int) -> SajuProfileOut | None
+application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/usage_policy_adapter.py::ServicePolicyUsagePolicyAdapter.is_action_allowed(account_id: int, action_kind_code: str, guest_timezone: str | None, now: datetime) -> AdmissionDecisionOut
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_character/character_catalog_adapter.py::FortuneCharacterCharacterCatalogAdapter.find_matching_characters(supported_work_ids: tuple[str, ...]) -> tuple[UUID, ...]
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_character/character_catalog_adapter.py::FortuneCharacterCharacterCatalogAdapter.get_price_quote(character_id: UUID) -> PriceQuoteOut | None
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_character/character_catalog_adapter.py::FortuneCharacterCharacterCatalogAdapter.draw_prompt_set(character_id: UUID, fortune_type_id: str, language: str) -> PromptSetOut | None
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_intent/intent_structuring_adapter.py::FortuneIntentIntentStructuringAdapter(IntentStructuringPort)
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_intent/intent_structuring_adapter.py::FortuneIntentIntentStructuringAdapter.structure_fortune_intent(customer_message: str, allowed_fortune_types: tuple[AllowedFortuneTypeOut, ...], reference_date: date) -> FortuneIntentOut
+application/fortune_house/drive

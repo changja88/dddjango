@@ -1,0 +1,82 @@
+{
+  "mode": "with-skill",
+  "browser": "152.0.7977.82",
+  "htmx": "2.0.8",
+  "results": [
+    {
+      "id": "B1",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "B2",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "B3",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "B8",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "B7",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "B6.outer",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "B5",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "B6.parent",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "B4",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "B6.delete",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "B9",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "runtime.errors",
+      "pass": true,
+      "detail": []
+    }
+  ],
+  "requests": [
+    {
+      "url": "http://127.0.0.1:8771/fragment/root",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8771/fragment/parent",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8771/fragment/delete",
+      "status": 200
+    }
+  ],
+  "errors": []
+}

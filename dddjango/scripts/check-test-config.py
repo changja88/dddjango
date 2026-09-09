@@ -11,7 +11,7 @@
   `env`·conftest 의 Django 셋업. touched 한정을 걷고 전 설정을 본다 — 깨진 바인딩은
   언제 커밋됐든 지금 깨져 있다(기존 코드도 면제가 아니라 빚).
 
-⑵ 트리 개정 명세 몫 — `test/` 구조 (트리 105~111행 · D56):
+⑵ 트리 개정 명세 몫 — `test/` 구조 (트리 135~141행 · D56):
   #383/#384 `test/` 의 직계 자식은 다섯뿐 — `unit/`·`integration/`·`e2e/`(«테스트» —
        안이 자유)·`factories/`·`fake/`(«재료» — 규칙이 산다). 직계 파일은
        `conftest.py`·`__init__.py` 만(#596 — 파일 이름은 pytest 소유라 폐쇄(#490)
@@ -24,7 +24,7 @@
   #391 `factories/` 는 `integration/` «안»이 아니라 그 형제다.
   #392 `factories/` 에는 factory_boy 픽스처만 온다.
 
-⑶ 트리 개정 명세 몫 — `<project>/settings/` 환경축 (트리 139·140행):
+⑶ 트리 개정 명세 몫 — `<project>/settings/` 환경축 (트리 169·170행):
   #445 갈리는 축은 환경 하나뿐 — 기능별 분할 파일(celery.py·logging.py 등) 금지.
   #446 «환경 하나 = 파일 하나» — base·local·production·test 는 예시(목록 열림 — T64).
        온전한 환경 이름(staging 등)은 허용하고 «약어»(prod·stg·dev …)만 위반이다.
@@ -493,7 +493,7 @@ def main(argv: list[str]) -> int:
         return 1
 
     if findings:
-        print(f"blocker {len(findings)}건 — 테스트·settings 규율 위반 (트리 105~111·139·140행)")
+        print(f"blocker {len(findings)}건 — 테스트·settings 규율 위반 (트리 135~141·169·170행)")
         emit_all(findings, printer=print, indent="  ")
         return 2
     print(f"clean — test/ {len(test_dirs)}곳 · pytest 설정 {len(configs)}개 · settings {len(settings_dirs)}곳 규율 일치 (standard_tree {tree.SOURCE_SHA})")

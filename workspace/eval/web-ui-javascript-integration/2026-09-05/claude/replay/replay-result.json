@@ -1,0 +1,33 @@
+{
+  "lane": "claude",
+  "status": "PASS",
+  "source_copy_matches_durable_hashes": true,
+  "file_count": 40,
+  "replay_root": "/tmp/dddjango-web-js-integration-20260905/isolated-replay",
+  "environment": {
+    "DDDJANGO_WEB_EVAL_ROOT": "/tmp/dddjango-web-js-integration-20260905/isolated-replay",
+    "DDDJANGO_WEB_EVAL_PYTHON": "/tmp/dddjango-ui-js-20260905/venv/bin/python",
+    "DDDJANGO_WEB_EVAL_REPO": "/Users/hyun/Desktop/dddjango"
+  },
+  "commands": [
+    {
+      "name": "browser",
+      "command": [
+        "/tmp/dddjango-ui-js-20260905/venv/bin/python",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/web-ui-javascript-integration/2026-09-05/browser_harness_claude.py",
+        "replay-browser"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "backstop",
+      "command": [
+        "/tmp/dddjango-ui-js-20260905/venv/bin/python",
+        "/Users/hyun/Desktop/dddjango/workspace/eval/web-ui-javascript-integration/2026-09-05/backstop_harness.py",
+        "claude",
+        "replay-backstop"
+      ],
+      "exit_code": 0
+    }
+  ]
+}

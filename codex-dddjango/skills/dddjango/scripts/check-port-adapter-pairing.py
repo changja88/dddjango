@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """dddjango 포트·어댑터 짝맞춤 검사기 — 선언(port/)과 구현(adapter/)·페이크(test/fake/)의 계약(D37·D44·D51·D57).
 
-담당 규칙 (rule-owner-map · 총 83 — 기계 진단이 있는 것만 요약):
+담당 규칙 (rule-owner-map · 총 84 — 기계 진단이 있는 것만 요약):
   port/  #457 선언은 application_layer/port/ 아래뿐 · #212 선언만(구현 0줄) · #215 능력
          하나=폴더 하나(직계 파일 금지) · #216 안은 계약·자료·실패 셋 · #218 파일명=폴더명 ·
          #219 추상 인터페이스 하나 · #220 <Capability>Port · #225 exception.py 필수 ·
@@ -30,7 +30,8 @@
          #367 소켓 여는 import 는 external_system 어댑터 안뿐(목록은 데이터 — 닫지 않는다) ·
          #368[ast+] 값의 자리에 기계(후보) · #369 벤더=폴더 · #370 <System><Capability>
          Adapter · #371~#373 나머지 어댑터 자리·이름 · #464 command/query 분할 금지 ·
-         #477 리포지토리 구현은 domain import 필수 · #582 파일은 기술을 말한다 ·
+         #477 리포지토리 구현은 domain import 필수 · #582 패키지는 기술을 말한다 ·
+         #651 고정 역할의 클래스별 파일·상수 묶음 ·
          #583 양방향 1:1 은 셋뿐 · #545 save() 는 «안 꺼낸 사실» 가드 · #551 계약은
          ABC+@abstractmethod · #552 구현은 계약 상속 · #553[ast+] 어댑터의 업무 판정(후보) ·
          #554 계약이 선언한 실패로 · #555 벤더 예외 그대로 흘림 금지 · #556 재시도 기계는
@@ -877,6 +878,20 @@ def _handler_declared_error(root: Path, bc_name: str, mod: ast.Module, handler: 
 
 def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
                             bc_vocab_set: set, f: Findings, cand: Candidates) -> None:
+    for bundle in sorted(adapter.rglob("*_adapter")):
+        if not bundle.is_dir() or not checker_target.adapter_bundle(bundle):
+            continue
+        for role in checker_target.ADAPTER_ROLES:
+            for py in sorted((bundle / role).glob("*.py")):
+                if py.name == "__init__.py" or checker_target.skeleton_placeholder(py):
+                    continue
+                mod = _parse(py)
+                if mod is None:
+                    continue
+                classes = [n for n in ast.walk(mod) if isinstance(n, ast.ClassDef)]
+                if (role == "constant" and classes) or (role != "constant" and len(classes) != 1):
+                    f.add("#651", _rel(root, py),
+                          "어댑터 역할 파일은 클래스 하나당 파일 하나다(비공개 포함); constant 파일에는 상수를 둔다")
     acl = adapter / "anticorruption_layer"
     if acl.is_dir():
         bcs = vocab.bc_names(root)
@@ -900,7 +915,7 @@ def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
             if p.is_file() and p.suffix == ".py" and p.name != "__init__.py":
                 f.add("#369", _rel(root, p), "external_system/ 직계 파일 — 벤더 하나 = 폴더 하나다")
         for system in sorted(p for p in ext.iterdir() if p.is_dir() and p.name != "__pycache__"):
-            for py in checker_target.slot_glob(system, "*.py"):
+            for py in checker_target.adapter_implementations(system):
                 if py.name == "__init__.py":
                     continue
                 mod = _parse(py)
@@ -924,10 +939,11 @@ def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
         if mod is None:
             continue
         # 동명 폴더 승격 — <capability>_adapter/ 승격 폴더 안 부품도 어댑터 몸통이다(#367 면제).
-        in_ext_adapter = "external_system" in parts and (
+        bundle = checker_target.adapter_component(py)
+        in_ext_adapter = (bundle is not None and bundle.parent.parent.name == "external_system") or ("external_system" in parts and (
             py.stem.endswith("_adapter")
             or (py.parent.name.endswith("_adapter")
-                and (py.parent / f"{py.parent.name}.py").is_file()))
+                and (py.parent / f"{py.parent.name}.py").is_file())))
         for node in ast.walk(mod):
             if isinstance(node, (ast.Import, ast.ImportFrom)):
                 mods = [a.name for a in node.names] if isinstance(node, ast.Import) \
@@ -937,25 +953,26 @@ def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
                     if top in SOCKET_LIBS and not in_ext_adapter:
                         f.add("#367", _rel(root, py, node.lineno),
                               f"소켓 여는 `{top}` import — external_system/<system>/<capability>"
-                              "_adapter.py 안에서만 허용된다(브로커·캐시·메일도 들어온다 — "
+                              "_adapter/ 의 역할 파일 안에서만 허용된다(브로커·캐시·메일도 들어온다 — "
                               "목록은 저장소 의존성에 맞춰 유지하는 데이터다)")
                     if top in RETRY_LIBS:
                         f.add("#556", _rel(root, py, node.lineno),
                               f"재시도 «기계» `{top}` — 판정은 driven, 기계는 framework, 다시 "
                               "부르기는 입구다(셋을 한 칸에 뭉치면 위반)")
         if "adapter" in parts and py.stem.endswith("_adapter"):
-            cap_dir = py.parent
+            cap_dir = bundle.parent if bundle is not None and py.parent.name == "adapter" else py.parent
             # 동명 폴더 승격 — 본체(<technology>_adapter/<technology>_adapter.py)면
             # 능력 폴더는 승격 폴더의 한 단 위다.
             if cap_dir.name == py.stem:
                 cap_dir = cap_dir.parent
             if cap_dir.parent == adapter and cap_dir.name not in (
                     "persistence", "anticorruption_layer", "acl", "external_system"):
-                if py.stem == f"{cap_dir.name}_adapter":
+                technology_name = bundle.name if bundle is not None else py.stem
+                if technology_name == f"{cap_dir.name}_adapter":
                     f.add("#582", _rel(root, py),
-                          "파일이 폴더를 되풀이한다 — 한 포트에 어댑터가 여럿일 수 있어 파일은 "
-                          "«어느 기술인가»를 말한다(<technology>_adapter.py)")
-                tech_stem = py.stem[: -len("_adapter")]
+                          "기술 어댑터 이름이 능력 폴더를 되풀이한다 — "
+                          "바깥 패키지는 «어느 기술인가»를 말한다(<technology>_adapter/)")
+                tech_stem = technology_name[: -len("_adapter")]
                 want = f"{_camel(tech_stem)}{_camel(cap_dir.name)}Adapter"
                 for cls in [n for n in mod.body if isinstance(n, ast.ClassDef) and not n.name.startswith("_")]:
                     if cls.name.endswith("Adapter") and cls.name != want:
@@ -1006,6 +1023,11 @@ def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
             continue
         if len(parts) >= 2 and parts[0].startswith("django_") and parts[1] == "admin":
             continue
+        if (len(parts) == 5 and parts[0] == "adapter"
+                and parts[1] not in ("persistence", "anticorruption_layer", "external_system")
+                and parts[2:4] == ("django_adapter", "adapter")
+                and parts[4].endswith("_adapter.py")):
+            continue
         if (len(parts) == 3 and parts[0] == "adapter"
                 and parts[1] not in ("anticorruption_layer", "external_system")
                 and parts[2] == "django_adapter.py"):
@@ -1021,7 +1043,7 @@ def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
                 f.add("#462", _rel(root, py, node.lineno),
                       "ORM 모델 import — 허용은 adapter/persistence/ 아래 셋(repository·"
                       "domain_bypass_query·unit_of_work)·django_<bc>/admin/·"
-                      "adapter/<capability>/ 의 django_adapter.py 뿐이다")
+                      "adapter/<capability>/django_adapter/adapter/ 의 구현 파일뿐이다")
 
 
 # ── fake — #575~#581 ───────────────────────────────────────────────────────

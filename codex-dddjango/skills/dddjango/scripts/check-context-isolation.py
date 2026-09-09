@@ -203,12 +203,17 @@ def _imports(mod: ast.Module):
 # ── 방향 매트릭스 ───────────────────────────────────────────────────────────
 
 def _orm_writer_exempt(file_parts: tuple) -> bool:
-    """adapter/<capability>/ 의 django_adapter.py — #328 면제 (houserules §5 · R-3423).
+    """adapter/<capability>/django_adapter/adapter/ 구현 — #328 면제 (houserules §5 · R-3423).
 
     비애그리거트 ORM 쓰기 능력의 기술 구현(2호 실증·사용자 A안). 값은
     check-port-adapter-pairing 의 #462 면제와 동일하고 경로 기준만 BC 상대로 환산.
     """
     p = file_parts
+    if (len(p) == 6 and p[:2] == ("driven_layer", "adapter")
+            and p[2] not in ("persistence", "anticorruption_layer", "external_system")
+            and p[3:5] == ("django_adapter", "adapter")
+            and p[5].endswith("_adapter.py")):
+        return True
     if (len(p) == 4 and p[0] == "driven_layer" and p[1] == "adapter"
             and p[2] not in ("anticorruption_layer", "external_system")
             and p[3] == "django_adapter.py"):
@@ -256,7 +261,7 @@ def _apply_same_bc(loc: str, tgt: str, rel, mod_path: str, out: Findings,
             pass  # driven 내부 협력(persistence↔acl 등)은 이 검사기의 축이 아니다
         elif tgt == "django":
             if loc != "persistence" and not orm_writer:
-                out.add("#328", rel, f"`django_<bc>` 를 import 하는 것은 `adapter/persistence/` 아래와 `adapter/<capability>/` 의 django_adapter.py 뿐이다 — `{mod_path}`")
+                out.add("#328", rel, f"`django_<bc>` 를 import 하는 것은 `adapter/persistence/` 아래와 `adapter/<capability>/django_adapter/adapter/` 의 구현 파일뿐이다 — `{mod_path}`")
         elif tgt not in DOMAIN_SPOTS and tgt != "app_port":
             out.add("#9", rel, f"`driven_layer` 는 `domain_layer` 와 `application_layer/port/` 만 import 한다 — `{mod_path}`")
     elif loc == "published_event":
@@ -640,7 +645,7 @@ def _check_acl(acl: Path, bc: Path, bc_rel: Path, out: Findings) -> set[str]:
         partners.add(d.name)
         # 어댑터 칸은 동명 폴더 승격 가능 — 본체는 파일 칸과 동격이고, 승격 폴더의
         # 부품도 import 검사(#473) 대상이다(격리 규칙은 폴더 전체가 주어다).
-        scan: "list[tuple[Path, bool]]" = [(f, True) for f in checker_target.slot_glob(d, "*.py")]
+        scan: "list[tuple[Path, bool]]" = [(f, True) for f in checker_target.adapter_implementations(d)]
         for sub in sorted(p for p in d.iterdir() if p.is_dir()):
             body = sub / f"{sub.name}.py"
             if body.is_file():

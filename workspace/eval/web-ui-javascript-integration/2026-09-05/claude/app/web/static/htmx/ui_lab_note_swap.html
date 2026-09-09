@@ -1,0 +1,4 @@
+{# 노트 A(독립 자식) 교체 선언 — include 호스트는 section/ui_lab_note.html #}
+<button class="ui-lab-note__swap" type="button"
+        hx-get="{% url 'lab:ui_lab_note' %}"
+        hx-target="#ui-lab-note-a" hx-swap="outerHTML">{{ note.swap_label }}</button>

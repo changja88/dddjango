@@ -1,0 +1,18 @@
+{# 미리보기 그룹 — blob URL 소유 root이자 종속 자식 교체 단위 #}
+<div class="ui-lab-preview" id="{{ preview.dom_id }}" data-image-preview>
+  <p class="ui-lab-preview__marker">{{ preview.revision_marker }}</p>
+  <label class="ui-lab-preview__label" for="{{ preview.input_dom_id }}">{{ preview.label }}</label>
+  <input class="ui-lab-preview__input"
+         type="file"
+         accept="image/*"
+         id="{{ preview.input_dom_id }}"
+         name="{{ preview.input_name }}"
+         data-image-preview-input>
+  <button class="ui-lab-preview__clear" type="button" data-image-preview-clear hidden>{{ preview.clear_label }}</button>
+  <img class="ui-lab-preview__output" alt="" data-image-preview-output hidden>
+  <p class="ui-lab-preview__name" data-image-preview-name></p>
+  <p class="ui-lab-preview__empty" data-image-preview-empty>{{ preview.empty_message }}</p>
+  <p class="ui-lab-preview__error" data-image-preview-error hidden>{{ preview.error_message }}</p>
+  {% if preview.child_swap_enabled %}{% include "static/htmx/ui_lab_preview_swap.html" %}{% endif %}
+  {% include "lab/ui_lab/section/ui_lab_note.html" with note=preview.note only %}
+</div>

@@ -1,0 +1,32 @@
+{
+  "kind": "static loading preflight; not runtime execution proof",
+  "roles": {
+    "coder-web": [
+      "dddjango-web:implementation-ui",
+      "dddjango-web:implementation-javascript",
+      "dddjango-web:discipline-cleancode",
+      "dddjango-web:discipline-web-houserules"
+    ],
+    "design-architect-web": [
+      "dddjango-web:architecture-web",
+      "dddjango-web:discipline-web-houserules"
+    ],
+    "design-review-web": [
+      "dddjango-web:architecture-web"
+    ],
+    "discipline-reviewer-web": [
+      "dddjango-web:implementation-javascript",
+      "dddjango-web:discipline-cleancode",
+      "dddjango-web:discipline-web-houserules"
+    ]
+  },
+  "reference_hashes": {
+    "architecture-web": "2536f3f0d5a770a26c917b8d271ab80ae8fba217f1506ae8309437a1176bfabd",
+    "discipline-web-houserules": "72aa53f36fe0c042dcf08fa79b96f709e182918a1dcd52e87a640d52c145a657",
+    "discipline-cleancode": "87abe6918b36f530f5d5749ef13cd0425df2e2e7461b2069999509bc9c0e1bbf",
+    "implementation-javascript": "632fbc32d2b67017e61b1a63688c1c42f36cad89d6cd089b0dc97d733e435252",
+    "implementation-ui": "d9837a970f46569b574a4e5117109803b66ccc866ffebd949e0b91ee16f4ed17"
+  },
+  "skill_yaml_files": 15,
+  "claude_manifest_strict": "pass"
+}

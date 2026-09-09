@@ -1,0 +1,6 @@
+{# 노트 노드 — 미리보기 root 안에 있으나 blob URL 비종속인 독립 자식 교체 단위 #}
+<div class="ui-lab-note" id="{{ note.dom_id }}" data-ui-lab-note>
+  <p class="ui-lab-note__text">{{ note.text }}</p>
+  <p class="ui-lab-note__marker">{{ note.revision_marker }}</p>
+  {% if note.swap_enabled %}{% include "static/htmx/ui_lab_note_swap.html" %}{% endif %}
+</div>

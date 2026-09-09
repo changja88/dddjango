@@ -1,0 +1,11 @@
+{
+  "id": "E1",
+  "mode": "with-skill",
+  "pass": true,
+  "observed": {
+    "files": 1,
+    "hidden": false,
+    "src": "blob:http://127.0.0.1:8771/f2e1dca0-f7ee-4d3e-90f3-35c56f198646",
+    "name": "photo.png"
+  }
+}

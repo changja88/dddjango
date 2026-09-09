@@ -1,0 +1,9 @@
+{
+  "command": [
+    "/tmp/dddjango-ui-js-20260905/venv/bin/python",
+    "/Users/hyun/Desktop/dddjango/dddjango-web/scripts/backstop.py",
+    "/tmp/dddjango-web-js-integration-20260905/codex/app",
+    "--all"
+  ],
+  "exit_code": 0
+}

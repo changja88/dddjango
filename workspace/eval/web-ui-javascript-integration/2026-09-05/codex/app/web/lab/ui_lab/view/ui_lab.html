@@ -1,0 +1,22 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}UI lab{% endblock title %}
+{% block styles %}
+<link rel="stylesheet" href="{% static 'web/css/ui_lab.css' %}">
+{% endblock styles %}
+{% block scripts %}
+<script defer src="{% static 'web/js/password_visibility.js' %}"></script>
+<script defer src="{% static 'web/js/image_preview.js' %}"></script>
+{% endblock scripts %}
+{% block content %}
+<main data-ui-lab>
+  <h1>UI lab</h1>
+  <details>
+    <summary>Local-only help</summary>
+    <p>Passwords and selected images stay in this browser. Use the password visibility and image controls to try each panel independently.</p>
+  </details>
+  {% for panel in state.panels %}
+    {% include "lab/ui_lab/section/ui_lab_fixture.html" with state=panel only %}
+  {% endfor %}
+</main>
+{% endblock content %}

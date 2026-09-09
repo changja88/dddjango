@@ -1,0 +1,87 @@
+n_layer/adapter/anticorruption_layer/fortune_catalog/fortune_catalog_adapter.py::FortuneCatalogFortuneCatalogAdapter(FortuneCatalogPort)
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_catalog/fortune_catalog_adapter.py::FortuneCatalogFortuneCatalogAdapter.list_fortune_types() -> FortuneTypeListOut | CatalogUnavailableOut
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_catalog/fortune_catalog_adapter.py::FortuneCatalogFortuneCatalogAdapter.classify_candidates(candidate_fortune_ids: tuple[str, ...]) -> CandidateClassificationOut | CatalogUnavailableOut
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_catalog/fortune_catalog_adapter.py::FortuneCatalogFortuneCatalogAdapter.resolve_support(fortune_id: str) -> FortuneSupportOut | SupportUnavailableOut | CatalogUnavailableOut
+# S2 test/fake — 포트 페이크 2
+application/fortune_house/test/fake/fortune_catalog_port.py::FortuneCatalogFake(FortuneCatalogPort) {listing: FortuneTypeListOut | CatalogUnavailableOut, listing_sequence: list[FortuneTypeListOut | CatalogUnavailableOut], classification: CandidateClassificationOut | CatalogUnavailableOut | None, support: FortuneSupportOut | SupportUnavailableOut | CatalogUnavailableOut | None, supports_by_id: dict[str, FortuneSupportOut | SupportUnavailableOut | CatalogUnavailableOut], classification_sequence: list[CandidateClassificationOut | CatalogUnavailableOut], list_calls: int, classify_calls: list[tuple[str, ...]], support_calls: list[str]}
+application/fortune_house/test/fake/fortune_catalog_port.py::FortuneCatalogFake.__init__(listing: FortuneTypeListOut | CatalogUnavailableOut, classification: CandidateClassificationOut | CatalogUnavailableOut | None = None, support: FortuneSupportOut | SupportUnavailableOut | CatalogUnavailableOut | None = None) -> None
+application/fortune_house/test/fake/fortune_catalog_port.py::FortuneCatalogFake.list_fortune_types() -> FortuneTypeListOut | CatalogUnavailableOut
+application/fortune_house/test/fake/fortune_catalog_port.py::FortuneCatalogFake.classify_candidates(candidate_fortune_ids: tuple[str, ...]) -> CandidateClassificationOut | CatalogUnavailableOut
+application/fortune_house/test/fake/fortune_catalog_port.py::FortuneCatalogFake.resolve_support(fortune_id: str) -> FortuneSupportOut | SupportUnavailableOut | CatalogUnavailableOut
+application/fortune_house/test/fake/intent_structuring_port.py::IntentStructuringFake(IntentStructuringPort) {intent: FortuneIntentOut, failure: Exception | None, requests: list[tuple[str, tuple[AllowedFortuneTypeOut, ...], date]]}
+application/fortune_house/test/fake/intent_structuring_port.py::IntentStructuringFake.__init__(intent: FortuneIntentOut, failure: Exception | None = None) -> None
+application/fortune_house/test/fake/intent_structuring_port.py::IntentStructuringFake.structure_fortune_intent(customer_message: str, allowed_fortune_types: tuple[AllowedFortuneTypeOut, ...], reference_date: date) -> FortuneIntentOut
+# scripts
+scripts/seed_fortune_house.py::seed_fortune_house() -> int
+scripts/seed_fortune_house.py::main() -> None
+```
+
+### 경계 import
+
+BC 밖 경계(django·pydantic·`scripts.`)와 테스트의 경계 재료를 성문한다. **타 BC OHS/contract·framework 공통 import 0**(S0 — cross-BC 호출 없음 · `framework/technology/rag/runtime/json_value.py`도 S0에선 쓰지 않는다: 도메인은 임의 JSON을 들지 않고 저장 문서는 TypedDict). intra-BC import(use case→port, OHS→use case/command/result·도메인 VO, 어댑터→port·도메인)는 경계가 아니라 적지 않는다 — 단 `visit_repository.py`의 도메인·모델 import 행은 #477(리포지토리 구현은 domain import 필수) 예보를 위해 성문한다(자기 add 해소 — symbols 채널). `admin/__init__.py`는 자기 panel 2종 import뿐(경계 아님). stdlib(`threading`·`queue`·`zoneinfo`·`html`·`json`·`uuid`)은 검사 밖.
+
+<!-- machine: boundary-imports -->
+```imports
+application/fortune_house/composition_root/dependency_wiring.py    from django.conf import settings
+application/fortune_house/driven_layer/django_fortune_house/apps.py    from django.apps import AppConfig
+application/fortune_house/driven_layer/django_fortune_house/models/visit_model.py    from django.db import models
+application/fortune_house/driven_layer/django_fortune_house/models/speech_generation_configuration_model.py    from django.db import models
+application/fortune_house/driven_layer/django_fortune_house/models/__init__.py    from application.fortune_house.driven_layer.django_fortune_house.models.speech_generation_configuration_model import SpeechGenerationConfigurationModel
+application/fortune_house/driven_layer/django_fortune_house/models/__init__.py    from application.fortune_house.driven_layer.django_fortune_house.models.visit_model import VisitModel
+application/fortune_house/driven_layer/django_fortune_house/admin/visit/panel.py    from django.contrib import admin
+application/fortune_house/driven_layer/django_fortune_house/admin/visit/panel.py    from django.http import HttpRequest
+application/fortune_house/driven_layer/django_fortune_house/admin/speech_generation_configuration/panel.py    from django.contrib import admin
+application/fortune_house/driven_layer/django_fortune_house/admin/speech_generation_configuration/panel.py    from django.http import HttpRequest
+application/fortune_house/driven_layer/django_fortune_house/admin/speech_generation_configuration/form/speech_generation_configuration_form.py    from django import forms
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from django.db import IntegrityError, transaction
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from django.utils import timezone
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from pydantic import TypeAdapter
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.exception.visit_integrity_violation import VisitIntegrityViolation
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.visit import Visit
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.visit_repository import VisitRepository
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.value_object.visit_key import VisitKey
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.value_object.visit_stage import VisitStage
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.value_object.turn_lease import TurnLease
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.value_object.turn_outcome import TurnOutcome
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.value_object.pending_card import PendingCard
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.value_object.carried_request import CarriedRequest
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.value_object.saju_snapshot import SajuSnapshot
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.value_object.prompt_set_snapshot import PromptSetSnapshot
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.visit.value_object.fortune_selection import FortuneSelection
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.domain_layer.shared_value_object.display_language import DisplayLanguage
+application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py    from application.fortune_house.driven_layer.django_fortune_house.models.visit_model import VisitModel
+application/fortune_house/driven_layer/adapter/persistence/unit_of_work/visit_unit_of_work.py    from django.db import transaction
+application/fortune_house/driven_layer/adapter/detached_task/thread_adapter.py    from django.db import connections
+application/fortune_house/test/unit/test_notice_phrase_resolver.py    from django.conf import settings
+application/fortune_house/test/integration/test_fortune_house_admin.py    from django.test import Client
+application/fortune_house/test/integration/test_fortune_house_admin.py    from django.contrib.auth.base_user import AbstractBaseUser
+application/fortune_house/driving_layer/open_host_service/visit_turn/contract/response/pull_visit_turn_response.py    from application.fortune_house.driving_layer.open_host_service.visit_turn.contract.response.pull_visit_turn_output_item import PullVisitTurnOutputItemResponse
+application/fortune_house/driving_layer/open_host_service/visit_turn/contract/response/pull_visit_turn_response.py    from application.fortune_house.driving_layer.open_host_service.visit_turn.contract.response.pull_visit_turn_completed import PullVisitTurnCompletedResponse
+application/fortune_house/driving_layer/open_host_service/visit_turn/contract/response/pull_visit_turn_response.py    from application.fortune_house.driving_layer.open_host_service.visit_turn.contract.response.pull_visit_turn_pending import PullVisitTurnPendingResponse
+application/fortune_house/driving_layer/open_host_service/visit_turn/contract/response/pull_visit_turn_response.py    from application.fortune_house.driving_layer.open_host_service.visit_turn.contract.response.pull_visit_turn_missing import PullVisitTurnMissingResponse
+application/fortune_house/test/integration/test_seed_fortune_house.py    from scripts.seed_fortune_house import seed_fortune_house
+application/fortune_house/test/integration/conftest.py    import pytest
+application/fortune_house/test/integration/test_visit_turn_liveness.py    from django.db import connections
+application/fortune_house/test/integration/test_visit_turn_admission_concurrency.py    from django.db import connections
+scripts/seed_fortune_house.py    from application.fortune_house.driven_layer.django_fortune_house.models.speech_generation_configuration_model import SpeechGenerationConfigurationModel
+scripts/seed_fortune_house.py    from application.fortune_house.domain_layer.shared_value_object.reasoning_effort import ReasoningEffort
+scripts/seed_fortune_house.py    from application.fortune_house.domain_layer.shared_value_object.speech_operation import SpeechOperation
+# ── S1 — ACL 어댑터 6: 상대 BC OHS 모듈·contract만(#13 · 발주서 §3 표 실물 경로) ──
+application/fortune_house/driven_layer/adapter/anticorruption_layer/accounts/account_profile_adapter.py    from application.accounts.driving_layer.open_host_service.account.account_service import get_account_language_and_timezone_query
+application/fortune_house/driven_layer/adapter/anticorruption_layer/accounts/account_profile_adapter.py    from application.accounts.driving_layer.open_host_service.account.contract.exception.account_published_error import AccountPublishedError
+application/fortune_house/driven_layer/adapter/anticorruption_layer/accounts/account_profile_adapter.py    from application.accounts.driving_layer.open_host_service.account.contract.request.get_account_language_and_timezone_request import GetAccountLanguageAndTimezoneRequest
+application/fortune_house/driven_layer/adapter/anticorruption_layer/accounts/account_profile_adapter.py    from application.accounts.driving_layer.open_host_service.account.contract.response.get_account_language_and_timezone_response import GetAccountLanguageAndTimezoneResponse
+application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/usage_policy_adapter.py    from application.service_policy.driving_layer.open_host_service.usage_policy.usage_policy_service import check_account_gate_query, consume_action_command
+application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/usage_policy_adapter.py    from application.service_policy.driving_layer.open_host_service.usage_policy.contract.exception.naive_now_not_allowed_exception import NaiveNowNotAllowedException
+application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/usage_policy_adapter.py    from application.service_policy.driving_layer.open_host_service.usage_policy.contract.exception.usage_policy_published_error import UsagePolicyPublishedError
+application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/usage_policy_adapter.py    from application.service_policy.driving_layer.open_host_service.usage_policy.contract.exception.usage_record_contention_exception import UsageRecordContentionException
+application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/usage_policy_adapter.py    from application.service_policy.driving_layer.open_host_service.usage_policy.contract.exception.usage_record_integrity_violation_exception import UsageRecordIntegrityViolationException
+application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/usage_policy_adapter.py    from application.service_policy.driving_layer.open_host_service.usage_policy.contract.request.check_account_gate_request import CheckAccountGateRequest
+application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/usage_policy_adapter.py    from application.service_policy.driving_layer.open_host_service.usage_policy.contract.request.consume_action_request import ConsumeActionRequest
+application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/usage_policy_adapter.py    from application.service_policy.driving_layer.open_host_service.usage_policy.contract.response.check_account_gate_response import CheckAccountGateResponse
+application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/usage_policy_adapter.py    from application.service_policy.driving_layer.open_host_service.usage_policy.contract.response.consume_action_response import ConsumeActionResponse
+application/fortune_house/driven_layer/adapter/anticorruption_layer/service_policy/usage_policy_adapter.py    from application.service_policy.driving_layer.open_host_service.usage_policy.contract.response.is_action_allowed_response import DenialDetail
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/record_archive_adapter.py    from application.fortune_record.driving_layer.open_host_service.record_archive.record_archive_service import get_current_fortune_record_query, list_fortune_record_indexes_query
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/record_archive_adapter.py    from application.fortune_record.driving_layer.open_host_service.record_archive.contract.exception.record_archive_published_error import RecordArchivePublishedError
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/record_archive_adapter.py    from application.fortune_record.driving_layer.open_host_service.record_archive.contract.request.get_current_fortune_record_request import GetCurrentFortuneRecordRequest
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_record/record_archive_adapter.py    from application.

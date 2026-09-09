@@ -1,0 +1,80 @@
+ ...]) -> CitedAnswer | None
+application/fortune_house/domain_layer/domain_service/compose_answer_prompt.py::AnswerPromptComposer(object) {SET_INSTRUCTION_OPEN: ClassVar[str] = "<<세트 지시문>>", SET_INSTRUCTION_CLOSE: ClassVar[str] = "<</세트 지시문>>", EVIDENCE_LINE_TEMPLATE: ClassVar[str] = "[{evidence_id}] {exact_quote}", NO_PROJECTION_LINE: ClassVar[str] = "(명식 없음)"}
+application/fortune_house/domain_layer/domain_service/compose_answer_prompt.py::AnswerPromptComposer.compose(persona: str, language: DisplayLanguage, instruction: str, response_json_structure: str, question: str, topic: str | None, period_text: str | None, calculation_projection_json: str | None, quotes: tuple[EvidenceQuote, ...]) -> tuple[SpeechMessage, ...]
+application/fortune_house/domain_layer/domain_service/render_citation_list.py::CitationListRenderer(object) {CLASS_NAME: ClassVar[str] = "citations"}
+application/fortune_house/domain_layer/domain_service/render_citation_list.py::CitationListRenderer.render(citations: tuple[EvidenceCard, ...]) -> str
+# S3 domain — CardComposer 메서드 3 + widget TypedDict 3(compose_card.py 소속)
+application/fortune_house/domain_layer/domain_service/compose_card.py::_OpenRecordWidget(TypedDict) {kind: str, record_id: str}
+application/fortune_house/domain_layer/domain_service/compose_card.py::_InsufficientBalanceWidget(TypedDict) {kind: str, required: int, available: int, shortfall: int}
+application/fortune_house/domain_layer/domain_service/compose_card.py::_LockCancelWidget(TypedDict) {kind: str}
+application/fortune_house/domain_layer/domain_service/compose_card.py::CardComposer.open_record(record_id: UUID) -> WidgetCard
+application/fortune_house/domain_layer/domain_service/compose_card.py::CardComposer.insufficient_balance(shortfall: BalanceShortfall) -> WidgetCard
+application/fortune_house/domain_layer/domain_service/compose_card.py::CardComposer.lock_cancel() -> WidgetCard
+# S3 application — ports · out · exceptions(신설 5)
+application/fortune_house/application_layer/port/chart_calculation/chart_calculation_port.py::ChartCalculationPort(ABC)
+application/fortune_house/application_layer/port/chart_calculation/chart_calculation_port.py::ChartCalculationPort.calculate(request: ChartRequestInput) -> ChartOut
+application/fortune_house/application_layer/port/chart_calculation/chart_out.py::ChartOut(object) {calculation_json: str}
+application/fortune_house/application_layer/port/chart_calculation/exception.py::ChartInputRejected(Exception) {code: Literal["unsupported_birth_date", "nonexistent_local_time", "nonexistent_leap_month", "unknown_place_code"]}
+application/fortune_house/application_layer/port/chart_calculation/exception.py::AnnualFortuneWindowOutOfRange(Exception)
+application/fortune_house/application_layer/port/chart_calculation/exception.py::ChartCalculationUnavailable(Exception)
+application/fortune_house/application_layer/port/currency_reservation/currency_reservation_port.py::CurrencyReservationPort(ABC)
+application/fortune_house/application_layer/port/currency_reservation/currency_reservation_port.py::CurrencyReservationPort.reserve(account_id: int, amount: int, purpose_code: str, reference: str, idempotency_key: str) -> ReservedOut | InsufficientBalanceOut
+application/fortune_house/application_layer/port/currency_reservation/currency_reservation_port.py::CurrencyReservationPort.confirm(account_id: int, reservation_id: UUID) -> ReservationConfirmedOut | ReservationAlreadyReleasedOut | ReservationNotFoundOut
+application/fortune_house/application_layer/port/currency_reservation/currency_reservation_port.py::CurrencyReservationPort.release(account_id: int, reservation_id: UUID) -> ReservationReleasedOut | ReservationAlreadyConfirmedOut | ReservationNotFoundOut
+application/fortune_house/application_layer/port/currency_reservation/reservation_out.py::ReservedOut(object) {reservation_id: UUID, balance: int, reserved_amount: int, available_balance: int}
+application/fortune_house/application_layer/port/currency_reservation/reservation_out.py::InsufficientBalanceOut(object) {balance: int, available_balance: int, shortfall: int}
+application/fortune_house/application_layer/port/currency_reservation/reservation_out.py::ReservationConfirmedOut(object) {balance: int}
+application/fortune_house/application_layer/port/currency_reservation/reservation_out.py::ReservationAlreadyReleasedOut(object)
+application/fortune_house/application_layer/port/currency_reservation/reservation_out.py::ReservationNotFoundOut(object)
+application/fortune_house/application_layer/port/currency_reservation/reservation_out.py::ReservationReleasedOut(object) {available_balance: int}
+application/fortune_house/application_layer/port/currency_reservation/reservation_out.py::ReservationAlreadyConfirmedOut(object)
+application/fortune_house/application_layer/port/currency_reservation/exception.py::CurrencyReservationConflict(Exception)
+application/fortune_house/application_layer/port/currency_reservation/exception.py::CurrencyReservationRejected(Exception)
+application/fortune_house/application_layer/port/evidence_provisioning/evidence_provisioning_port.py::EvidenceProvisioningPort(ABC)
+application/fortune_house/application_layer/port/evidence_provisioning/evidence_provisioning_port.py::EvidenceProvisioningPort.prepare(question: str, query_language: str, fortune_ref: str, requested_bundle_ref: str, work_rag_refs: tuple[tuple[str, str], ...], character_id: UUID, book_usage: Literal["single", "source_and_commentary", "compare"], work_ids: tuple[str, ...], calculation_json: str, previous_allowed_evidence: tuple[EvidenceCard, ...]) -> EvidencePreparedOut | EvidenceAbstainedOut | EvidenceBlockedOut
+application/fortune_house/application_layer/port/evidence_provisioning/evidence_out.py::SourceLocationOut(object) {location_id: str, provider: str, provider_book_id: str, provider_chapter_id: str, provider_paragraph_id: str, page_nums: tuple[int, ...] | None, source_url: str | None}
+application/fortune_house/application_layer/port/evidence_provisioning/evidence_out.py::AllowedEvidenceOut(object) {evidence_id: str, exact_quote: str, release_id: str, source_locations: tuple[SourceLocationOut, ...]}
+application/fortune_house/application_layer/port/evidence_provisioning/evidence_out.py::TranslationTraceOut(object) {target_language: str, llm_status: Literal["ok", "failed", "timeout"], unregistered_language: bool, dictionary_match_count: int}
+application/fortune_house/application_layer/port/evidence_provisioning/evidence_out.py::ProvisionTraceOut(object) {stage: Literal["input", "pin", "planning", "translation", "retrieval", "assembly", "citation"], target_count: int, completed_target_count: int, failed_target_count: int, failure_refs: tuple[str, ...]}
+application/fortune_house/application_layer/port/evidence_provisioning/evidence_out.py::EvidencePreparedOut(object) {bundle_id: str, fortune_ref: str, question: str, query_language: str, calculation_projection_json: str | None, translation_traces: tuple[TranslationTraceOut, ...], allowed_evidence: tuple[AllowedEvidenceOut, ...], evidence_set_digest: str}
+application/fortune_house/application_layer/port/evidence_provisioning/evidence_out.py::EvidenceAbstainedOut(object) {reason: Literal["no_candidate", "no_evidence", "insufficient_evidence"], bundle_id: str, trace: ProvisionTraceOut}
+application/fortune_house/application_layer/port/evidence_provisioning/evidence_out.py::EvidenceBlockedOut(object) {reason: Literal["invalid_request", "registry_contract_mismatch", "temporary_error", "resource_limit"], bundle_id: str | None, trace: ProvisionTraceOut}
+application/fortune_house/application_layer/port/evidence_provisioning/exception.py::EvidenceProvisioningUnavailable(Exception)
+application/fortune_house/application_layer/port/citation_validation/citation_validation_port.py::CitationValidationPort(ABC)
+application/fortune_house/application_layer/port/citation_validation/citation_validation_port.py::CitationValidationPort.validate(bundle_id: str, evidence_set_digest: EvidenceSetDigest, allowed_evidence: tuple[EvidenceCard, ...], cited_answer: CitedAnswer) -> CitationsValidOut | CitationBlockedOut
+application/fortune_house/application_layer/port/citation_validation/citation_out.py::CitationTraceOut(object) {target_count: int, completed_target_count: int, failed_target_count: int, failure_refs: tuple[str, ...]}
+application/fortune_house/application_layer/port/citation_validation/citation_out.py::CitationsValidOut(object) {bundle_id: str, evidence_set_digest: str, validated_citation_count: int}
+application/fortune_house/application_layer/port/citation_validation/citation_out.py::CitationBlockedOut(object) {bundle_id: str, evidence_set_digest: str, trace: CitationTraceOut}
+application/fortune_house/application_layer/port/citation_validation/exception.py::CitationValidationUnavailable(Exception)
+application/fortune_house/application_layer/port/structured_generation/structured_generation_port.py::StructuredGenerationPort(ABC)
+application/fortune_house/application_layer/port/structured_generation/structured_generation_port.py::StructuredGenerationPort.generate_slim_answer(messages: tuple[SpeechMessage, ...], settings: SpeechGenerationSettings, caller_label: str) -> SlimAnswerOut
+application/fortune_house/application_layer/port/structured_generation/slim_answer_out.py::SlimCitationOut(object) {evidence_id: str, exact_quote: str}
+application/fortune_house/application_layer/port/structured_generation/slim_answer_out.py::SlimAnswerOut(object) {answer: str, citations: tuple[SlimCitationOut, ...]}
+application/fortune_house/application_layer/port/structured_generation/exception.py::StructuredGenerationConfigurationInvalid(Exception)
+application/fortune_house/application_layer/port/structured_generation/exception.py::StructuredGenerationTimedOut(Exception)
+application/fortune_house/application_layer/port/structured_generation/exception.py::StructuredGenerationFailed(Exception)
+# S3 application — S1 포트 확장 2(record_archive save · character_catalog llm_settings)
+application/fortune_house/application_layer/port/record_archive/record_archive_port.py::RecordArchivePort.save_record(draft: AnswerRecordDraft) -> SavedRecordOut
+application/fortune_house/application_layer/port/record_archive/record_out.py::SavedRecordOut(object) {record_id: UUID}
+application/fortune_house/application_layer/port/record_archive/exception.py::RecordSaveRejected(Exception) {reason: Literal["idempotency_conflict", "parent_not_found", "invalid_snapshot"]}
+application/fortune_house/application_layer/port/character_catalog/character_out.py::LlmSettingsOut(object) {model: str, max_output_tokens: int, reasoning_effort: str, timeout_seconds: float, max_retries: int}
+# S3 driven — ACL 신설 5 · 확장 1(record_archive save · 사설 TypedDict는 파일 소속)
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_calculation/chart_calculation_adapter.py::FortuneCalculationChartCalculationAdapter(ChartCalculationPort)
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_calculation/chart_calculation_adapter.py::FortuneCalculationChartCalculationAdapter.calculate(request: ChartRequestInput) -> ChartOut
+application/fortune_house/driven_layer/adapter/anticorruption_layer/wallet/currency_reservation_adapter.py::WalletCurrencyReservationAdapter(CurrencyReservationPort)
+application/fortune_house/driven_layer/adapter/anticorruption_layer/wallet/currency_reservation_adapter.py::WalletCurrencyReservationAdapter.reserve(account_id: int, amount: int, purpose_code: str, reference: str, idempotency_key: str) -> ReservedOut | InsufficientBalanceOut
+application/fortune_house/driven_layer/adapter/anticorruption_layer/wallet/currency_reservation_adapter.py::WalletCurrencyReservationAdapter.confirm(account_id: int, reservation_id: UUID) -> ReservationConfirmedOut | ReservationAlreadyReleasedOut | ReservationNotFoundOut
+application/fortune_house/driven_layer/adapter/anticorruption_layer/wallet/currency_reservation_adapter.py::WalletCurrencyReservationAdapter.release(account_id: int, reservation_id: UUID) -> ReservationReleasedOut | ReservationAlreadyConfirmedOut | ReservationNotFoundOut
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_reading/evidence_provisioning_adapter.py::_TableRefDocument(TypedDict) {version: str, digest: str}
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_reading/evidence_provisioning_adapter.py::_PillarDocument(TypedDict) {stem_hangul: str, stem_hanja: str, branch_hangul: str, branch_hanja: str}
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_reading/evidence_provisioning_adapter.py::_FourPillarsDocument(TypedDict) {year: _PillarDocument, month: _PillarDocument, day: _PillarDocument, hour: _PillarDocument | None}
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_reading/evidence_provisioning_adapter.py::_MajorFortuneDocument(TypedDict) {stem_hangul: str, stem_hanja: str, branch_hangul: str, branch_hanja: str, start_age: int, end_age: int}
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_reading/evidence_provisioning_adapter.py::_AnnualFortuneDocument(TypedDict) {year_label: int, stem_hangul: str, stem_hanja: str, branch_hangul: str, branch_hanja: str}
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_reading/evidence_provisioning_adapter.py::_CalculationTraceDocument(TypedDict) {solar_term_table: _TableRefDocument, lunisolar_table: _TableRefDocument, city_table: _TableRefDocument, country_table: _TableRefDocument, tzdata_version: str, adopted_timezone: str, adopted_longitude_degrees: float | None, lmt_correction_minutes: int, place_resolution_stage: str, time_was_ambiguous: bool, fold_taken: int, noon_assumed: bool, max_offset_span_minutes: int | None, overseas_lunar_warning: bool, solar_term_day_sensitive: bool, birth_time_unknown: bool}
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_reading/evidence_provisioning_adapter.py::_CalculationProjectionDocument(TypedDict) {schema_id: str, schema_version: str, four_pillars: _FourPillarsDocument, major_fortunes: list[_MajorFortuneDocument], pre_major_fortune: _MajorFortuneDocument, annual_fortunes: list[_AnnualFortuneDocument], trace: _CalculationTraceDocument}
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_reading/evidence_provisioning_adapter.py::FortuneReadingEvidenceProvisioningAdapter(EvidenceProvisioningPort)
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_reading/evidence_provisioning_adapter.py::FortuneReadingEvidenceProvisioningAdapter.prepare(question: str, query_language: str, fortune_ref: str, requested_bundle_ref: str, work_rag_refs: tuple[tuple[str, str], ...], character_id: UUID, book_usage: Literal["single", "source_and_commentary", "compare"], work_ids: tuple[str, ...], calculation_json: str, previous_allowed_evidence: tuple[EvidenceCard, ...]) -> EvidencePreparedOut | EvidenceAbstainedOut | EvidenceBlockedOut
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_reading/citation_validation_adapter.py::FortuneReadingCitationValidationAdapter(CitationValidationPort)
+application/fortune_house/driven_layer/adapter/anticorruption_layer/fortune_reading/citation_validation_adapter.py::FortuneReadingCitationValidationAdapter.validate(bundle_id: str, evidence_set_digest: EvidenceSetDigest, allowed_evidence: tuple[EvidenceCard, ...], cited_answer: CitedAnswer) -> CitationsValidOut | CitationBlockedOut
+application/fortune_house/driven_layer/adapter/anticorruption_layer/llm_access/structured_generation_adapter.py::_SlimCitationModel(BaseModel) {evidence_id: Annotated[str, StringConstraints(min_length=1)], exact_quote: Annotated[str, StringConstraints(min_length=1)]}
+application/fortune_house/driven_layer/adapter/anticorruption_layer/llm_access/structur

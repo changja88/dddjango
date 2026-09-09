@@ -1,0 +1,16 @@
+[
+  "codex",
+  "exec",
+  "--ephemeral",
+  "--skip-git-repo-check",
+  "-C",
+  "/tmp/dddjango-web-js-integration-20260905/codex/app",
+  "--sandbox",
+  "workspace-write",
+  "-c",
+  "model_reasoning_effort=\"medium\"",
+  "--json",
+  "--output-last-message",
+  "/tmp/dddjango-web-js-integration-20260905/codex/invalid-role.final.md",
+  "-"
+]

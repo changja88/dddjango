@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "dddjango-web · 에이전트 협력 흐름",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Coordinator"
+        },
+        "backend": {
+          "label": "설계·독립 리뷰"
+        },
+        "frontend": {
+          "label": "구현"
+        },
+        "security": {
+          "label": "백스톱·사용자 인수"
+        },
+        "messagebus": {
+          "label": "UI JS 스킬"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "coordinator",
+      "type": "external",
+      "label": "Coordinator",
+      "sublabel": "요구·시안·에셋·API 확보",
+      "tag": "모든 에이전트 호출·반송 관리",
+      "pos": [
+        40,
+        100
+      ],
+      "size": [
+        140,
+        84
+      ]
+    },
+    {
+      "id": "architect",
+      "type": "backend",
+      "label": "화면 설계자",
+      "sublabel": "design-architect-web",
+      "tag": "명세의 단일 작성자",
+      "pos": [
+        260,
+        100
+      ],
+      "size": [
+        140,
+        84
+      ]
+    },
+    {
+      "id": "design-reviewer",
+      "type": "backend",
+      "label": "설계 리뷰어",
+      "sublabel": "design-review-web",
+      "tag": "명세·시안·계약 독립 검토",
+      "pos": [
+        480,
+        100
+      ],
+      "size": [
+        140,
+        84
+      ]
+    },
+    {
+      "id": "coder",
+      "type": "frontend",
+      "label": "화면 구현자",
+      "sublabel": "coder-web",
+      "tag": "코드·실제 브라우저 증거",
+      "pos": [
+        700,
+        100
+      ],
+      "size": [
+        140,
+        84
+      ]
+    },
+    {
+      "id": "discipline-reviewer",
+      "type": "backend",
+      "label": "규율 감수자",
+      "sublabel": "discipline-reviewer-web",
+      "tag": "코드·증거의 의미 감사",
+      "pos": [
+        920,
+        100
+      ],
+      "size": [
+        180,
+        84
+      ]
+    },
+    {
+      "id": "gate",
+      "type": "security",
+      "label": "백스톱 → G2",
+      "sublabel": "Coordinator → 사용자",
+      "tag": "인수 후 결과·한계 보고",
+      "pos": [
+        1180,
+        100
+      ],
+      "size": [
+        140,
+        84
+      ]
+    },
+    {
+      "id": "javascript",
+      "type": "messagebus",
+      "label": "UI JavaScript 구현 스킬",
+      "sublabel": "implementation-javascript",
+      "tag": "적용 완료 · 승인된 UI 동작에만",
+      "pos": [
+        800,
+        510
+      ],
+      "size": [
+        270,
+        84
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "g0-dispatch",
+      "from": "coordinator",
+      "to": "architect",
+      "label": "G0 승인",
+      "variant": "emphasis"
+    },
+    {
+      "id": "draft-review",
+      "from": "architect",
+      "to": "design-reviewer",
+      "label": "명세 초안",
+      "variant": "emphasis"
+    },
+    {
+      "id": "g1-dispatch",
+      "from": "design-reviewer",
+      "to": "coder",
+      "label": "G1 승인",
+      "variant": "emphasis"
+    },
+    {
+      "id": "code-evidence",
+      "from": "coder",
+      "to": "discipline-reviewer",
+      "label": "코드·증거",
+      "variant": "emphasis"
+    },
+    {
+      "id": "audit-report",
+      "from": "discipline-reviewer",
+      "to": "gate",
+      "label": "감수 결과",
+      "variant": "emphasis"
+    },
+    {
+      "id": "javascript-code",
+      "from": "javascript",
+      "to": "coder",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "javascript-review",
+      "from": "javascript",
+      "to": "discipline-reviewer",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "산출물의 전달 순서",
+      "items": [
+        "화살표는 Coordinator가 중계하는 작업 순서다. 에이전트가 서로 호출하지 않는다.",
+        "설계 리뷰 노트는 설계자에게 반영시킨 뒤 G1을 받는다. 승인 후 서버 계약을 동결한다."
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "스킬 5개 · 에이전트 4개",
+      "items": [
+        "JS 스킬은 구현자와 규율 감수자 2개 역할에 직접 주입한다. 설계자는 UI 동작 계약을 소유한다.",
+        "스킬 5개의 전체 주입 관계와 실행 경계는 웹 동작 흐름 문서의 협력표에 표시한다."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "검증과 반송",
+      "items": [
+        "실제 브라우저 확인 → 독립 감수 → 백스톱 → G2 인수. 백스톱만으로 업무 의미·UI 수명을 증명하지 않는다.",
+        "코드 결함은 구현자, 설계 변경은 설계자와 G1으로 반송한다. 통합 소스 적용 완료·배포 없음."
+      ]
+    }
+  ]
+}

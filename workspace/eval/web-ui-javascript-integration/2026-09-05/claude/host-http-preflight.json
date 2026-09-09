@@ -1,0 +1,12 @@
+[
+  {
+    "url": "http://127.0.0.1:18741/static/web/htmx/htmx.min.js",
+    "status": 200,
+    "sha256": "71ea67185bfa8c98c39d31717c6fce5d852370fcdfd129db4543774d3145c0de"
+  },
+  {
+    "url": "http://127.0.0.1:18741/static/design_system/foundation/tokens.css",
+    "status": 200,
+    "bytes": 216
+  }
+]

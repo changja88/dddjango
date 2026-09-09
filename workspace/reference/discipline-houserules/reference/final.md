@@ -11,7 +11,7 @@ dddjango 는 **DDD · 클린 아키텍처 · 헥사고날** 셋을 조합해 Dja
 **모든 검사보다 먼저 서는 원칙이다**(#487 — 골격이 어긋나면 나머지 검사를 돌릴 이유가 없다).
 
 - **#486** — 어느 BC 를 열어도 이 트리의 골격이 «그대로» 있다 — 내용이 있든 없든 상관없다. 파일트리를 지키지 않는 구현·설계는 «반환»이다.
-- **#488** — 고정 이름의 칸은 «부모가 있으면» 반드시 있다 — 폴더는 비어도 `__init__.py` 로, 파일도 비면 «빈 파일»로 만든다. 칸의 승격 실현(#490 교체형)이 이미 있으면 그 실현이 이 충족이다 — 동명 빈 파일을 병설하지 않는다. 빈 칸 실현의 정본 형태는 여전히 «빈 파일»이다 — 승격형은 내용이 생긴 뒤의 대체 실현이며, 예비 폴더형을 미리 파지 않는다. 빈 파일로 실현된 칸의 **내용 규칙**(진입점·포트 «하나» 등)은 내용이 생긴 뒤부터 선다 — Coordinator 가 빈 모듈을 error inventory 에서 제외하는 것(R-0319)과 같은 시점이며, 검사기는 내용 없는 골격 파일(0바이트·docstring/주석뿐)을 내용 규칙에서 건너뛴다. 빈 파일을 지워 red 를 푸는 것은 #488 위반이다.
+- **#488** — 고정 이름의 칸은 «부모가 있으면» 반드시 있다 — 폴더는 비어도 `__init__.py` 로, 파일도 비면 «빈 파일»로 만든다. 칸의 승격 실현(#490 교체형)이 이미 있으면 그 실현이 이 충족이다 — 동명 빈 파일을 병설하지 않는다. 승격 허용 파일 칸의 빈 실현은 «빈 파일»이다 — 승격형은 내용이 생긴 뒤의 대체 실현이며, 예비 폴더형을 미리 파지 않는다. 빈 파일로 실현된 칸의 **내용 규칙**(진입점·포트 «하나» 등)은 내용이 생긴 뒤부터 선다 — Coordinator 가 빈 모듈을 error inventory 에서 제외하는 것(R-0319)과 같은 시점이며, 검사기는 내용 없는 골격 파일(0바이트·docstring/주석뿐)을 내용 규칙에서 건너뛴다. 빈 파일을 지워 red 를 푸는 것은 #488 위반이다.
 - **#489** — `<…>` 가 붙은 자리표시자 칸만 그 개념이 실제로 생길 때 생긴다 — 그 외에 「이 BC 엔 없으니 뺀다」는 축소가 아니라 위반이다.
 - **#490** — `application/<bounded_context>/**` 안에 트리에 없는 경로가 하나라도 있으면 위반이다(`utils/`·`common/`·`helpers/`). 폐쇄는 **칸**(폴더 + 트리가 이름을 준 파일)에만 걸리고, 트리가 리프로 닫은 폴더 «안»의 추가 모듈은 작성자 재량이다(#15). `framework/`·`<project>/` 는 이 원칙의 주어가 아니다. 단, §1 트리의 **승격 허용 표기**가 붙은 파일 칸은 두 실현을 갖는다 — `<이름>.py`(기본) ⇄ 동명 폴더 `<이름>/`(**동명 폴더 승격**). 유효한 승격 폴더는 트리에 있는 실현이지 «트리에 없는 경로»가 아니다(형태 요건은 아래).
 - **#491** — 칸의 유형은 셋뿐이고 «조건부»는 없다 — ① 고정 이름 ② `<>` 첫 등장 ③ `<>` 재등장(조상이 이미 연 낱말이라 값이 이미 채워져 있어 ①과 같다). «조건부 없음»의 주어는 칸의 **존재**(생성 조건)다 — 승격 허용 표기는 존재가 아니라 실현 형태(#490)의 값이다.
@@ -21,9 +21,14 @@ dddjango 는 **DDD · 클린 아키텍처 · 헥사고날** 셋을 조합해 Dja
 
 동명 폴더 승격의 형태: 승격 폴더는 안에 **본체 `<이름>.py`** 와 **재수출 전용 `__init__.py`** 를 반드시 가진다 — 본체 없는 폴더는 위장이고, 형제 `<이름>.py` 와 `<이름>/` 의 공존도 위반이다(파일시스템은 공존을 허용하고 import 는 패키지가 이겨 조용한 위장 중복이 된다). 내부는 **1단 평평**이다 — 하위 폴더는 위반이며, 부품 군집이 폴더를 요구하면 그것은 트리 개정 신호이지 중첩 근거가 아니다. `__init__.py` 재수출은 `from .<모듈> import <이름> as <이름>`(redundant alias) 또는 `__all__` 선언으로 한다(mypy strict `--no-implicit-reexport` 가 인정하는 두 형태) — 본체 코드를 `__init__.py` 에 두지 않고, 폴더 내부 상호 참조는 `__init__` 경유 없이 모듈 직접 상대 import 로 한다. 바깥 import 표면(`...<칸>` 모듈 경로로 공개되는 이름 집합)은 승격·환원 어느 방향이든 불변이어야 하고, 승격은 `git mv` 로 이력을 보존한다.
 승격 폴더는 «트리가 리프로 닫은 폴더»가 아니다 — 내부 재량은 **배열·명명 재량**이지 **파일 신설 재량이 아니다**. 부품 파일의 신설 근거는 감사 판정(동명 폴더 승격 발견)의 클러스터 열거 또는 후속 감사 신호뿐이고, #192(사설 조각은 제 파일 안 `_` 함수)·#189(유스케이스 간 돌려쓰기 금지)가 부품 파일 각각에 그대로 적용되며, 정크드로어 이름(`utils.py`·`helpers.py` 류)은 위반이다. 이번 작업에서 새로 나타난 승격 폴더의 각 부품(본체·`__init__.py` 제외)은 50행(물리 행·빈 줄 제외) 이상이어야 하고(출생 하한 — 기존 폴더의 사후 축소는 무관·환원 의무를 만들지 않는다), 부품이 0개(본체+`__init__.py` 뿐)가 된 승격 폴더는 위반이다(환원 신호 — 이번 작업 산출이면 발견 반영으로, 기존이면 G0 빚 경로로 환원한다). 저장(save)류 쓰기 호출은 본체에만 둔다.
-칸을 «파일»로 명명하는 규범·검사기 문면(#256·#123·#193 …)은 그 칸의 실현 — 파일 또는 승격 본체 — 을 가리킨다. 승격 허용 표기의 값은 §1 트리가 소유한다(정본 `docs/file_tree.html` 의 data-sw · `standard_tree.Row.swappable` — 허용 칸: 트리 12·14·15·18·20·21·24·41·61·74·92·94·96·99·102·104행). 배제는 사유로만 선다 — ⓐ 범위 밖 서브트리(`framework/**`·`<project>/**`)·비-py(templates) ⓑ 도구 생성물(migrations) ⓒ 형태 명문 고정(composition_root #497 · api_router #107 · cron_job #174/#178 · event_subscription #509 · event_router #508 · apps #535/#538 · bc_error_schema #114/#572 · admin panel #342/#343) ⓓ 개념 원자 — 성장 출구가 새 인스턴스 파일(entity·값 객체·event·exception·계약·port 선언·domain repository 선언·`<entity>_model` #335 …). 배제 칸의 비대는 그 칸의 기존 규범이 관할한다 — 승격은 출구가 아니다. 배제·허용 표기를 바꾸는 주어는 정본 트리(트리 개정)다 — 프로젝트 관찰·판정 반복은 개정 제안 신호이지 현장 변경 근거가 아니다.
+칸을 «파일»로 명명하는 규범·검사기 문면(#256·#123·#193 …)은 그 칸의 실현 — 파일 또는 승격 본체 — 을 가리킨다. 승격 허용 표기의 값은 §1 트리가 소유한다(정본 `docs/file_tree.html` 의 data-sw · `standard_tree.Row.swappable` — 허용 칸: 트리 12·14·15·18·20·21·24·41·61·74·92·94·96행). 배제는 사유로만 선다 — ⓐ 범위 밖 서브트리(`framework/**`·`<project>/**`)·비-py(templates) ⓑ 도구 생성물(migrations) ⓒ 형태 명문 고정(composition_root #497 · api_router #107 · cron_job #174/#178 · event_subscription #509 · event_router #508 · apps #535/#538 · bc_error_schema #114/#572 · admin panel #342/#343) ⓓ 개념 원자 — 성장 출구가 새 인스턴스 파일(entity·값 객체·event·exception·계약·port 선언·domain repository 선언·`<entity>_model` #335 …). 배제 칸의 비대는 그 칸의 기존 규범이 관할한다 — 승격은 출구가 아니다. 배제·허용 표기를 바꾸는 주어는 정본 트리(트리 개정)다 — 프로젝트 관찰·판정 반복은 개정 제안 신호이지 현장 변경 근거가 아니다.
 
-## §1 표준 트리 — 140행
+**어댑터 고정 골격** — `driven_layer/adapter/` 아래 ACL의 `anticorruption_layer/<other_bounded_context>/<capability>_adapter/`, 외부 시스템의 `external_system/<system>/<capability>_adapter/`, 그 밖 능력의 `<capability>/<technology>_adapter/` 는 처음부터 패키지다. 바깥 패키지와 `adapter/`·`command/`·`constant/`·`contract/`·`schema/` 다섯 역할 폴더에 `__init__.py` 를 반드시 둔다(#488). 역할 폴더는 내용이 없어도 생략하지 않는다. 초기화 파일은 재수출 전용이다(#640). 바깥에 구현 본체를 두거나 단일 `.py` 파일로 대체하지 않으며, 역할 폴더 안에 추가 폴더를 만들지 않는다(#490). 실제 내용 파일은 필요할 때만 만들며 50행 하한·200행 승격 신호의 대상이 아니다.
+
+**#651 클래스별 파일** — `adapter/`·`command/`·`contract/`·`schema/` 의 내용 파일은 비공개 클래스를 포함해 클래스 하나당 파일 하나다. 같은 역할의 클래스가 여러 개면 각각 파일을 만든다. `constant/` 는 클래스 없이 관련 상수끼리 한 파일에 묶는다. 내용 없는 골격 파일과 재수출 초기화 파일은 클래스 수 검사의 대상이 아니다.
+
+**역할 배치** — `adapter/` 는 포트를 구현하는 클래스를 소유한다. 외부 응답을 포트 반환값으로 바꾸는 reader 는 그 구현의 private 메서드 또는 본문에 둔다. `command/` 는 주입되는 호출 계약(Protocol 등)을 클래스별로 둔다. `contract/` 는 내부 계약 클래스를 소유하며 그 계약을 반환하는 builder 도 같은 파일에 둔다. `schema/` 는 외부 입출력 검증 클래스를 소유하며 관련 타입 별칭은 해당 스키마 파일에 둔다. `constant/` 는 프롬프트 등 관련 값을 `prompt.py` 같은 응집된 묶음으로 둔다. 반환 클래스가 포트 소유라는 이유로 외부 스키마를 아는 변환 함수를 포트 파일로 옮기지 않는다. 내부 참조는 모듈 직접 상대 import 로 연결한다. 기존 상속·명명·예외 번역 검사는 구현 역할 파일에, 의존 방향과 격리는 전체 역할 파일에 적용한다.
+## §1 표준 트리 — 170행
 
 행 번호는 정본의 행 번호이고, 규칙·검사기·명세가 「트리 N행」으로 이 번호를 가리킨다. `<…>` 는 자리표시자(§0 유형 ②③)다.
 
@@ -127,48 +132,78 @@ dddjango 는 **DDD · 클린 아키텍처 · 헥사고날** 셋을 조합해 Dja
  96           <boundary>_unit_of_work.py
  97       anticorruption_layer/
  98         <other_bounded_context>/
- 99           <capability>_adapter.py
-100       external_system/
-101         <system>/
-102           <capability>_adapter.py
-103       <capability>/
-104         <technology>_adapter.py
-105   test/
-106     unit/
-107     integration/
-108     e2e/
-109     factories/
-110     fake/
-111       <declaration>.py
-112 framework/
-113   broker/
-114     internal/
-115       internal_broker_port.py
-116       internal_broker.py
-117     external/
-118       external_broker_port.py
-119       external_broker.py
-120   <capability>/
-121     <capability>_port.py
-122     exception.py
-123     <data>_out.py
-124     <data>_in.py
-125     <technology>_adapter.py
-126   <technology>/
-127     <module>.py
-128   pure/
-129     <module>.py
-130   test/
-131     <module>.py
-132     fake/
-133       <declaration>.py
-134     unit/
-135 <project>/
-136   api.py
-137   urls.py
-138   celery.py
-139   settings/
-140     <environment>.py
+ 99           <capability>_adapter/
+100             adapter/
+101               <implementation>_adapter.py
+102             command/
+103               <command>.py
+104             constant/
+105               <constant>.py
+106             contract/
+107               <contract>.py
+108             schema/
+109               <schema>.py
+110       external_system/
+111         <system>/
+112           <capability>_adapter/
+113             adapter/
+114               <implementation>_adapter.py
+115             command/
+116               <command>.py
+117             constant/
+118               <constant>.py
+119             contract/
+120               <contract>.py
+121             schema/
+122               <schema>.py
+123       <capability>/
+124         <technology>_adapter/
+125           adapter/
+126             <implementation>_adapter.py
+127           command/
+128             <command>.py
+129           constant/
+130             <constant>.py
+131           contract/
+132             <contract>.py
+133           schema/
+134             <schema>.py
+135   test/
+136     unit/
+137     integration/
+138     e2e/
+139     factories/
+140     fake/
+141       <declaration>.py
+142 framework/
+143   broker/
+144     internal/
+145       internal_broker_port.py
+146       internal_broker.py
+147     external/
+148       external_broker_port.py
+149       external_broker.py
+150   <capability>/
+151     <capability>_port.py
+152     exception.py
+153     <data>_out.py
+154     <data>_in.py
+155     <technology>_adapter.py
+156   <technology>/
+157     <module>.py
+158   pure/
+159     <module>.py
+160   test/
+161     <module>.py
+162     fake/
+163       <declaration>.py
+164     unit/
+165 <project>/
+166   api.py
+167   urls.py
+168   celery.py
+169   settings/
+170     <environment>.py
 ```
 <!-- TREE:END -->
 
@@ -198,7 +233,7 @@ dddjango 는 **DDD · 클린 아키텍처 · 헥사고날** 셋을 조합해 Dja
 
 ### 만들지 않는 칸
 
-- **#20** — 값이 하나뿐인 축으로는 폴더를 만들지 않는다. **#21** — 어떤 종류가 하나뿐이면 폴더가 아니라 파일로 둔다. (트리의 파일 칸들이 이 원리의 산물이다 — 예: `<aggregate>_repository.py`.) #21 의 주어는 트리 설계의 축·종류 결정이다 — 파일 칸의 동명 폴더 승격(#490 교체형 실현)은 종류 축 폴더가 아니라 #21 의 주어가 아니다.
+- **#20** — 값이 하나뿐인 축으로는 폴더를 만들지 않는다. **#21** — 어떤 종류가 하나뿐이면 폴더가 아니라 파일로 둔다. (트리의 파일 칸들이 이 원리의 산물이다 — 예: `<aggregate>_repository.py`.) #21 의 주어는 트리 설계의 축·종류 결정이다 — 파일 칸의 동명 폴더 승격(#490 교체형 실현)은 종류 축 폴더가 아니라 #21 의 주어가 아니다. §1이 정한 세 어댑터의 역할 폴더는 현재 내용 파일 수와 관계없이 모두 실현한다(#488).
 - **#58** — `application/**/management/commands/` 를 만들지 않는다.
 - **#187** — 포트 선언에 BC 최상위 칸을 만들지 않는다 — 애그리거트에 안 붙는 포트는 `application_layer/port/` 에만 산다.
 - **#314** — `domain_layer/` 에 `specification/` 폴더를 두지 않는다.
@@ -216,7 +251,7 @@ dddjango 는 **DDD · 클린 아키텍처 · 헥사고날** 셋을 조합해 Dja
 
 ## §3 명명
 
-- BC 이름은 업무 경계의 이름(#82 — §2). 파일·클래스 명명 규약 전수(창구 `_command`/`_query` · 계약 `…Request`/`…Response` · 어댑터 `<technology>_adapter.py` · ORM `<entity>_model.py` 등)는 정본의 각 칸 «이름» 줄이 소유하며, 매핑표 순서로 이 절에 편입된다.
+- BC 이름은 업무 경계의 이름(#82 — §2). 파일·클래스 명명 규약 전수(창구 `_command`/`_query` · 계약 `…Request`/`…Response` · 어댑터 고정 패키지·구현 파일 · ORM `<entity>_model.py` 등)는 정본의 각 칸 «이름» 줄이 소유하며, 매핑표 순서로 이 절에 편입된다.
 - **BC(앱)명↔애그리거트명 유사 변형 금지(권장 — 기계 검사기 없음·reviewer 점검)**: `ordering` vs `order` 같은 한 글자·복수형 차이로 헷갈리게 두지 않는다 — 같게 하거나 명확히 다른 컨텍스트명으로 한다(#82 물음에 딸린 점검 · 08-12 삭제분 감사에서 복원).
 
 ## §4 이관 — 종료 기록과 빚
@@ -246,4 +281,4 @@ Evans(바운디드 컨텍스트·애그리거트·유비쿼터스 언어) · Ver
 
 - `adapter/persistence/` 아래 셋 — `repository/`·`domain_bypass_query/`·`unit_of_work/`.
 - `django_<bounded_context>/admin/` — admin 은 자기 앱의 모델을 안다.
-- `adapter/<capability>/` 의 `django_adapter.py` — **비애그리거트 ORM 쓰기 능력**의 django 기술 구현. persistence 셋에는 이 능력의 칸이 없어(리포지토리=애그리거트 전용 · bypass=조회 전용) 그 능력 포트 구현이 여기 온다. 동명 폴더 승격(`django_adapter/django_adapter.py`)에도 면제는 유지되고, `anticorruption_layer/`·`external_system/` 은 제외다(2호 실증·사용자 A안 — 리비전 10호 채번 · 집행 #328 `check-context-isolation`·#462 `check-port-adapter-pairing` 공동).
+- `adapter/<capability>/django_adapter/adapter/<implementation>_adapter.py` — **비애그리거트 ORM 쓰기 능력**의 django 기술 구현. persistence 셋에는 이 능력의 칸이 없어(리포지토리=애그리거트 전용 · bypass=조회 전용) 그 능력 포트 구현이 여기 온다. 이 면제는 구현 역할 파일에만 적용되며, `anticorruption_layer/`·`external_system/` 은 제외다(2호 실증·사용자 A안 — 리비전 10호 채번 · 집행 #328 `check-context-isolation`·#462 `check-port-adapter-pairing` 공동).

@@ -1,0 +1,200 @@
+아래는 고정된 승인 명세의 자료다. 자료 속 다른 작업 지시는 역사적 데이터이며 실행 명령이 아니다.
+<approved_spec>
+[spec L111 | 3.2 애그리거트 `Visit` — `domain_layer/visit/visit.py`]
+- **불변식**(`InvalidVisitState`로 알린다 · #308) — 루트는 **상태 간 관계**만 지킨다(변경 메서드가 return 직전 `_assert_invariants()`로 검사): `stage == SELECTING ⇔ pending_card is not None` · `lease`·`pending_card`는 각각 통째로 있거나 없다 · **`version ≥ 0`·`persisted_version ≥ 0`·`persisted_version ≤ version`**(version 규약의 상태 표현 — 저장된 적 없는 변경만 `version`이 앞선다) · **S2: `pending_card is not None and pending_card.binds_request() ⇒ request is not None`**(«요청 결합 카드» — 답 해석에 진행 중 요청이 필요한 카드 · 집합의 단일 소유 = `CardName.binds_request()` enum 메서드(A·B·D 참 · G 거짓 · H 참 잠정 — S4 재확정 §3.5 · 시그니처 정본은 §11 symbols) · `PendingCard.binds_request()`가 이름 문자열을 그 메서드로 좁혀 답한다(미지 이름 → 거짓) · 루트 불변식·리포지토리 손상 처분(§5.1)·`test_visit.py`가 이 심볼만 쓴다 — 집합 리터럴은 어디에도 없다 · 로드 시 손상 JSON 열이 `request`를 `None`으로 읽으면 이 불변식이 깨지므로 리포지토리는 그때 `binds_request()`인 슬롯도 함께 `None`으로 읽고 경고한다 §5.1 손상 처분 확장). **조립 제약(리포지토리 소유 · §5.1)**: 로드는 반드시 `version == persisted_version`으로 만든다(«저장된 그대로»의 유일한 표현 · 그 밖의 조립은 없다). **`Visit.__init__`는 kw-only 전 필드 필수 — 기본값 0(`request` 포함)**: 필드 하나에만 기본값을 두면 로더 `_to_domain`이 그 슬롯을 빠뜨려도 mypy가 잡지 못한다(로더 누락 정적 검출 0 — 원칙 07 명시성 · S0 `__init__` 형태 일관) · 테스트 arrange의 편의는 arrange 쪽 인자(`request=None`)로 푼다(§10 호출처 6 · 의미 보존) · 과도기: S2-1 커밋 `48b3ab47`의 `request: FortuneRequest | None = None`은 S2-4 마지막에 제거한다(§12.2). 값 불변식은 값 객체 자신이 `__post_init__`에서 지킨다(§3.4 — `VisitKey.account_id ≥ 1` · `FortuneSelection.displayed_price ≥ 0`·`annual_fortune_from_year ≤ annual_fortune_to_year` · `PendingCard.call_id` 1~128자·`name` 1~64자 · `TurnAdmission.kind == ADMITTED_AFTER_REWIND ⇔ rewind is not None` · 예외는 같은 `InvalidVisitState` 재사용).
+[spec L550 | §10 영구 테스트 입장 표 (`discipline-tdd` §5.5)]
+| **S1** 손님 맞이 출구(하네스+페이크 · 공개 표면): 07 턴 A·B(카운터·방 전체 정지 → `suspended.<code>` 문구 델타 1 + 종단 · `retry_at` 계정 tz · 부품 후속 호출 0·LLM 0·소비 0·방문 업무 상태 무변(stage·slot·selection) · 방문 언어 캐시는 종결 저장) · 턴 C·D(탈퇴·없음 → `account_unavailable` · 문 앞 호출 0) · 06 턴 1(쉬는 방 → 문구 → G `output_item` 봉투 `next_open_at_local` 계정 tz → `Completed(문구)` · 영속 `stage=selecting`·`pending_card_name`·LLM 0·소비 0) · 06 턴 3(카운터 근무 호출 0) · 시즌 종료·임의 UUID 방 · 11 걸음 13(`MessageClassificationUnavailable` → `component_misconfigured` · 해제 없음) · `undecidable` 문구 · 재개 방 G 슬롯 소거 · **S2 병기(의미 보존 · 집행 S2-4)**: `Visit(...)` 직접 조립 `:152`에 `request=None` 인자 추가(§3.2 조립 제약 · 새 case·assertion 0) | 발주서 §6 S1 완료 계약(정지·계정·쉬는 방·판정 불가) · §10 배분(07 A~D·06 턴1·3·11 걸음 13) · §8.1 14~20 · §3.2 조립 제약 | 정지 손님에게 LLM 비용·카드 잠금 / 부재 방에 소비 / 슬롯 미영속로 버튼 사망 | 없음 | add | coder · `application/fortune_house/test/integration/test_visit_turn_reception_exits.py` [markers: postgresql,django_db] [base: none] [client: no] |
+[spec L561 | §10 영구 테스트 입장 표 (`discipline-tdd` §5.5)]
+| **S1** `TurnHarness` 개명(의미 보존 rename · **명시 승인**) — 심볼 `_TurnHarness` → `TurnHarness` **전 참조** 편집(import `:47` + 시그니처 어노테이션 `:97,:123,:153,:190,:248` — houserules §4 필수 어노테이션) · 새 case·assertion·Red 0 · 전후 보호 동일(13 A·B 동시성·실스레드 race·첫 방문 삽입 경합) · **S2 병기(의미 보존 · 명시 승인 · 집행 S2-4)**: `Visit(...)` 직접 조립 `:196`에 `request=None` 인자 추가 — `Visit.__init__` 전 필드 필수 규약(§3.2 조립 제약) · 새 case·assertion·Red 0 | S0 «턴 진입 점유·동시성» 행 그대로 · §2.4-3 공개 이름 · §3.2 조립 제약 | 개명 누락 → import 실패로 S0 보호 상실 · 인자 누락 → 기본값 제거 뒤 수집 실패 | 자기 파일 | retain | (기존) `application/fortune_house/test/integration/test_visit_turn_admission_concurrency.py` [markers: postgresql,django_db] [base: none] [client: no] |
+[spec L563 | §10 영구 테스트 입장 표 (`discipline-tdd` §5.5)]
+| **S1** `TurnHarness` 개명(의미 보존 rename · **명시 승인**) — 심볼 `_TurnHarness` → `TurnHarness` 전 참조 편집(import `:39` + 어노테이션 `:122,:137,:153`) · 케이스·단언 무변(12 C·D no-op·슬롯 정합 · `version` 단언 `:133,148,166`은 대본 4종이 전부 `NONE`(ⓐ 미도달)이라 `learned_language=None` 규약으로 그대로 성립) · **S2 병기(의미 보존 · 명시 승인 · 집행 S2-4)**: `Visit(...)` 직접 조립 `:87`에 `request=None` 인자 추가(§3.2 조립 제약 · 새 case·assertion·Red 0) | S0 «no-op 턴·슬롯↔장부 정합» 행 그대로 · §2.4-3 · §4.2-4-5 · §3.2 조립 제약 | 같음 · 인자 누락 → 기본값 제거 뒤 수집 실패 | 자기 파일 | retain | (기존) `application/fortune_house/test/integration/test_visit_turn_no_op_and_slot.py` [markers: postgresql,django_db] [base: none] [client: no] |
+[spec L576 | §10 영구 테스트 입장 표 (`discipline-tdd` §5.5)]
+| **S2** `Visit` 루트 11 + visit VO(`start_request` 선택 초기화·세대·`saju` 유지 · `offer_fortunes(visible, bundle_id)` 후보+세대 저장 / 요청 없음 → `InvalidVisitState` · `choose_fortune` `(fortune_id, bundle_id)` 둘 다 같으면 무변 `False`·어느 하나 다르면 저장 `True` · `offer_characters` · `choose_character(offer)` 표시 금액 = `view_price` / 다른 점쟁이 → `InvalidVisitState` · `fix_saju`/`fix_prompt_set` · `carry_request` 비점유·덮어쓰기·`version+1` · `consume_carried_request` 3분기 + TTL 경계 `<`/`==`/`>` + 카운터 → `InvalidVisitState` + 이송 값(`fortune_id`·`displayed_price`·`bundle_id`·`request`) · `close_request` 전부 비움/이미 빈 → `False` · `holds_card` · 불변식 «`binds_request()` 슬롯 ⇒ request»(A/B/D 참 · G 거짓 · S0 임의 이름 거짓 — `PendingCard.binds_request()` 케이스) · `FortuneRequest` 불변식·`sole_candidate()`(0/1/≥2)·`to_carried` 금액 선택(`NEW_FORTUNE`→`view_price`·`fortune_id`·`bundle_id` 이송 · `CONTINUE_RECORD`→`None` 셋) · `CarriedRequest` 조합 불변식 양방향(`CONTINUE_RECORD ⇒ record_id` · `NEW_FORTUNE ⇒ fortune_id·bundle_id·displayed_price` — 각 `None` 조합 → `InvalidVisitState`) · `FortuneSelection.with_*`) · **arrange 병기(의미 보존 · 집행 S2-4)**: `:342` `Visit(...)` 직접 조립에 `request=None` 인자 추가(§3.2 조립 제약 «전 필드 필수» — 새 case·assertion 0) | §3.2 S2·조립 제약 · §3.4 · §3.5 `CardName.binds_request()` · §7.3 Rule ownership·Test criteria ⓖⓗⓙ · 발주서 §5.13 ①·§5.18 ③④·§5.29 ② | 판정 오류 → 낡은 이월 소비·요청 없는 카드·표시 금액 유실·취소 잔재 | `test_visit.py` S0·S1 케이스(begin/end/reconcile/remember/hold/release — 무변) | update | coder · `application/fortune_house/test/unit/test_visit.py` [markers: none] [base: none] [client: no] |
+[spec L579 | §10 영구 테스트 입장 표 (`discipline-tdd` §5.5)]
+| **S2** S0 use case 테스트 — **명시 변경** ①(S1 흡수 ⑦ · 의미 보존 rename 승인): `test_visit_turn_use_cases.py:523` `test_run_folds_scaffold_failure_into_internal_error_after_release` → `test_run_folds_exception_before_account_lookup_into_internal_error_after_release`(arrange는 S1이 이미 ⓐ 앞 주입 · 이름만 실물에 맞춘다 · 단언 무변) ② `:229-259` `RunVisitTurnUseCase(...)` 조립에 페이크 2 인자 추가(생성자 확장 수용 — 단언 무변) ③ `:299` `Visit(...)` 직접 조립 arrange에 `request=None` 인자 추가(§3.2 조립 제약 «전 필드 필수» · 의미 보존 · 새 case·assertion 0 · 집행 S2-3) | §4.2-4 주입 · S1 흡수 ⑦ · §3.2 조립 제약 | 생성자 불일치로 S0 케이스 수집 실패 · 이름이 실물과 어긋남 | 자기 파일 | update | coder · `application/fortune_house/test/unit/test_visit_turn_use_cases.py` [markers: none] [base: none] [client: no] |
+[spec L582 | §10 영구 테스트 입장 표 (`discipline-tdd` §5.5)]
+| **S2** 방문 왕복 보강 — `fortune_request` 열(요청 전수 · `carry_kind` enum 왕복 · `character_offers` · 빈 튜플) · `carried_request.displayed_price`·`bundle_id` · 손상 `fortune_request` + 요청 결합 슬롯 → `request None` + 슬롯 `None` + `idle` + 경고 1 · **명시 변경 다섯(강화 4 + 의미 보존 arrange 1 · 기존 케이스 수 무변)**: ① `:104` 전수 fixture 슬롯 `PendingCard(name="select_fortune")` → `name=CardName.SELECT_FORTUNE_TYPE.value`(S0 임의 이름 → 요청 결합 카드 — 그래야 불변식 «`binds_request()` 슬롯 ⇒ request»가 fixture에서 참이고 손상 분기가 실행된다) ② `:105-124` fixture에 `request=FortuneRequest(…)` 인자·`CarriedRequest(displayed_price=…, bundle_id=…)` 키 2 추가·`:107` `carry_kind="new_fortune"` → `CarryKind.NEW_FORTUNE`(필드 타입이 enum — 의미 보존) + `_snapshot`(`:127-143`)에 `visit.request` 1행 추가(`:137` `visit.carried_request` 뒤 — 읽기 표면 전수 규칙 `:128` docstring 그대로 · 단언 확장) ③ `_CORRUPT_CARRIED_REQUEST`(`:280-292`)에 키 2 추가(`"displayed_price": None`·`"bundle_id": None` — §5.1 «키 필수» 규칙에서 손상 원인이 여전히 `carry_kind`(`:282` `"bogus_kind"`) 하나여야 케이스 의미가 유지된다) + **기존 손상 파라미터(`:300-302`)에 `carried_request` 불변식 위반 문서 1행 추가**(`_INVARIANT_BROKEN_CARRIED_REQUEST` — `carry_kind: "new_fortune"` ∧ `displayed_price: None`(`fortune_id`·`bundle_id`는 값) · 스키마·enum은 유효하나 `CarriedRequest.__post_init__`이 거부 → §5.1 «검증 실패» ⓒ → `carried_request None` + 경고 1 · 기존 공통 단언 `:321-323`(`SELECTING`·슬롯 유지) 그대로 · 강화 — 이 파라미터가 없으면 «불변식 위반 문서가 방문을 영구 로드 불가로 만드는» 독자 failure가 미보호) ④ **별도 케이스 1 추가**(«손상 `fortune_request` + A 슬롯 → 로드 `stage is IDLE`·`pending_card is None`·`request is None`·경고 로그 1» — **파라미터 2**: 스키마 손상 문서(`{"original_message": 1}`류) · 불변식 위반 문서(`period_start > period_end` — §5.1 ⓒ) · 기존 `:300-302` 손상 파라미터·`:321-323` 공통 단언은 슬롯 유지가 정답이라 이 케이스에 섞지 않는다) ⑤ `:345`·`:377` `Visit(...)` 직접 조립 arrange에 `request=None` 인자 추가(§3.2 조립 제약 · 의미 보존 · 새 case·assertion 0 · 집행 S2-4) | §5.1 S2 · §3.2 불변식 · §7.3 Test criteria ⓘ | 코덱 누락 → 요청·표시 금액·세대 유실 · 손상 열이 불변식을 깨 로드 실패(영구 `internal_error`) | 자기 파일 S0 케이스 | update | coder · `application/fortune_house/test/integration/test_visit_repository_round_trip.py` [markers: postgresql,django_db] [base: none] [client: no] |
+[spec L587 | §10 영구 테스트 입장 표 (`discipline-tdd` §5.5)]
+**계약 근거 추적**: `add` 행의 현재 계약은 발주서 §6 S0 완료 계약 7항 + S0 e2e 6묶음(13 A·B·D-2 / 12 C·D / 11 걸음 0·관찰 2 / 11 sc-11-3) + **S1 완료 계약 8항 + S1 e2e 배분(04 · 07 A~D · 06 턴1·3 · 11 걸음 12·13 · 14 A · 01 1-A~E)** + §4.3·§4.4·§4.5·§5.15·§5.16·§5.22·§5.23·§5.24·§5.25·§5.26·§5.27·§5.30 규칙이다. `update` 행은 S0 파일에 S1 케이스를 더하는 것이고 **S0 케이스·단언은 명시 update/retain 행 밖에서 무변**이다 — 명시 변경은 **넷**(전부 강화 또는 의미 보존 · weaken 0): ① `test_speaker_policy.py:58-59` 21→22 pin ② `test_notice_phrase_resolver.py:49` 21→22 pin ③ 심볼 `_TurnHarness` → `TurnHarness` **전 참조**(import + 시그니처 어노테이션 — update 2행·retain 3행에 행 번호 인용 · 의미 보존 rename) ④ S0 «손님 말 → 비계» 케이스 2개(`test_visit_turn_failure_folding.py:82-92` · `test_visit_turn_use_cases.py:463-480`)의 arrange를 S0 비계 의존에서 **ⓐ 앞 예외 주입**으로 재표적(단언·기대 무변 — S1이 비계를 손님 맞이로 교체해 기본 대본에선 잡담 성공 턴이 되므로). 종료·부재 의무 없음(신규 BC — 종료 대상 계약 0). **S2 계약 근거**: `add` 행의 현재 계약은 발주서 §6 S2 완료 계약 10항 + S2 e2e 배분(01 턴1 1-F~1-L·턴2·턴3 · 02 T1·T2 · 05 전부 · 06 턴2 · 07 A′4/B′5 ① · 08 T1·T2·T3~T3⁗ · 09 T1·T2 · 12 A·B) + §4.3 ①·§5.6·§5.13·§5.14·§5.15 ⑤·§5.16 ④⑥·§5.17·§5.18·§5.19 ①·§5.22 ⑤⑥⑧⑨·§5.29 ①②·§5.30 ⑦ 규칙 + G-S2 산출 게이트 넷(카드 카탈로그 정본 · `output` 규약 · #11 대응표 · 이월 슬롯·세대 규칙)이다. **S2 명시 변경은 여섯**(S0·S1 케이스·단언은 이 밖에서 무변 · weaken 0 — 비계 케이스 삭제 2건은 «보호 대상이 소멸했고 같은 계약이 S2 파일에서 실현 케이스로 대체된» 의미 보존 이동이다 · **기대값 변경은 둘** — ① `test_speaker_policy.py:44` · ③ `test_run_visit_turn_reception.py:1009` — 둘 다 S2가 §4.4 표를 정정·등재한 결과라 «강화»가 아니라 의미 변경으로 분류한다): ① `test_speaker_policy.py:59-60` 22→25 pin + `:44` 데이터 행 `PROMPT_SET_MISSING` 기대값 `OTHER_CHARACTER_GUIDANCE`→`SYSTEM_ERROR`(발주서 §5.14 ② 문면 정합 · §12.3 ⑮) ② `test_notice_phrase_resolver.py:49` 22→25 pin ③ `test_run_visit_turn_reception.py:370-391` 삭제 · `:660-673` 파라미터 `room-follow_up`(`:669`·ids `:672`)만 남겨 `:674` 함수를 S4 비계로 재표적(`s2_scaffold`→`s4_scaffold` rename 승인) · `:1009` 기존 `TextGenerationUnavailable` 행 기대값 `_INTERNAL_ERROR_PHRASE`→`_COMPONENT_MISCONFIGURED_PHRASE`(S2 포트 예외 3행은 `test_run_visit_turn_fortune.py` outcome 표 — 도달 가능 자리) · 픽스처 `_ReceptionFixture`(`:189`)·`_build_use_case`(`:221-236`) 페이크 2 주입 · `:541` `mocker` 우회 → `profiles_by_id` ④ `test_visit_turn_use_cases.py:523` 의미 보존 rename(승인) · `:229-259` 생성자 인자 2 ⑤ `test_visit_turn_counter_reception.py:201-227` 삭제 + 모듈 docstring `:6`·`:10-11` + `:148` `mocker` 우회 → `profiles_by_id` ⑥ `test_visit_repository_round_trip.py:104` 슬롯 이름 → `CardName.SELECT_FORTUNE_TYPE.value` · `:105-124` fixture 인자(`request`·`displayed_price`·`bundle_id` · `:107` `CarryKind.NEW_FORTUNE`) · `_snapshot`(`:127-143`) `:137` 뒤 `visit.request` 1행 · `_CORRUPT_CARRIED_REQUEST`(`:280-292`) 키 2(`displayed_price`·`bundle_id` `None`) · 손상 파라미터(`:300-302`) +1(불변식 위반 문서 — §5.1 ⓒ) · 별도 `fortune_request` 손상 케이스 1 추가(파라미터 2 · `:321-323`은 무변). **`Visit(...)` 직접 조립 arrange `request=None` 인자 추가 6곳**(S2 G1′ — §3.2 «`Visit.__init__` 전 필드 필수» 규약의 귀결 · 의미 보존 · 새 case·assertion·Red 0): `test_visit_turn_use_cases.py:299`(update ④ · S2-3) · `test_visit_turn_admission_concurrency.py:196`·`test_visit_turn_no_op_and_slot.py:87`(retain 행 문면 병기 — S1 `TurnHarness` 개명 선례 · S2-4) · `test_visit_turn_reception_exits.py:152`(S1 add 행 병기 · S2-4) · `test_visit.py:342`(update · S2-4) · `test_visit_repository_round_trip.py:345·377`(update ⑥ ⑤ · S2-4) — retain 2행은 문면만이라 집계 무변. **decision별 개수**: `add` 36(S0 17 + S1 11 + S2 8) · `update` 18(S1 7 기집행 + S2 11) · `retain` 5(S0 2 + rename 승인 3) · `reject` 6(S0·S1 4 + S2 2) · `pending` 0 → G1 요청 가능. (개수는 영구 test artifact 행만 센다 — `test/fake/` 페이크 14종과 `test/integration/conftest.py` 하네스는 재료라 행이 아니다 · S2 conftest 편집은 «재료 확장»이고 행이 아니다.) **G1‴(S2-3 감사 반영) — 집계 무변**: `test_run_visit_turn_fortune.py` add 행(:570)의 **기대값 변경 3자리**(A 답 재진입 `:1086`·`:1093-1095` · 이월 D19 `:1417` · 이어보기 `:1585`·`:1589-1591` — bare id → 카탈로그 ① 라벨 · 감사가 «미승인 값 pin»으로 본 두 단언의 승인값 확정) + 행 안 항목 추가(비점유자 3자리 · 재진입 라벨 ① `unavailable` 2 · `describe_missing` mechanics · 페이크 대본 규율) · `test_notice_speech_composer.py` add 행(:568) 항목 1(`describe_missing`) · `test_visit_turn_fortune_counter.py` add 행(:571) 02 T1 라벨 문면(S2-4 1단계 coder 전달) · S0·S1 케이스 무관 · weaken 0.
+[spec L968 | 공개 심볼]
+# Visit.__init__ = 아래 필드 목록과 1:1 · kw-only · 전 필드 필수(기본값 0 — `request` 포함 · §3.2 조립 제약 · S2-1 과도기 기본값은 S2-4 마지막에 제거 §12.2)
+[spec L969 | 공개 심볼]
+application/fortune_house/domain_layer/visit/visit.py::Visit(object) {id: UUID, key: VisitKey, stage: VisitStage, display_language: DisplayLanguage | None, selection: FortuneSelection, saju: SajuSnapshot | None, pending_card: PendingCard | None, request: FortuneRequest | None, carried_request: CarriedRequest | None, undelivered_record_id: UUID | None, record_id: UUID | None, lease: TurnLease | None, last_turn_outcome: TurnOutcome | None, version: int, persisted_version: int}
+[spec L1690 | 12.1 절 간 일관 · 리뷰 반영 기록 (스캔 완료)]
+    - **important 1(`Visit.__init__` `request` 기본값)** → **(b) 필수로 되돌린다**: 명세 침묵 자리에서 테스트 편의가 프로덕션 API 모양을 정한 결정을 되돌리고 §3.2 조립 제약에 «kw-only 전 필드 필수·기본값 0» 성문(근거: 로더 `_to_domain` 누락 정적 검출 0 — 원칙 07 · S0 형태 일관) · §11 symbols 주석 1행(필드 목록 = `__init__` 1:1 · 기본값 0) · §10 호출처 6에 «`Visit(...)` arrange `request=None` 인자 · 의미 보존 · 새 case·assertion·Red 0» 병기(update 3행 문면 + S1 add 1행 문면 + retain 2행 문면 — S1 `TurnHarness` 개명 선례 · 집계 무변) · §12.2 과도기 «S2-1 기본값 유지 → S2-4 마지막 제거 · S2-4 종료 시 기본값 0» · 집행 S2-3(`use_cases`)·S2-4(나머지 5 + 제거). (a) 기각 사유: 기본값을 명문화하면 로더 슬롯 누락이 영구 사각이 된다 — round_trip 왕복이 잡더라도 «컴파일이 잡을 것을 테스트로 미는» 선택이다.
+[spec L1744 | 12.2 결과 제약 (coder·acceptance-tester 집행)]
+  - **`Visit.__init__` 기본값(S2 G1′ · 감사 important 1 → (b) 필수)**: 규약 = kw-only 전 필드 필수·기본값 0(§3.2 조립 제약 · §11 symbols 필드 목록 = `__init__` 1:1). **과도기**: S2-1 커밋 `48b3ab47`의 `request: FortuneRequest | None = None`은 실물에 유지하다가 **S2-4 마지막 커밋에서 제거**한다 — 제거 시점엔 호출처 6의 `request=None` 인자가 전부 들어가 있어야 한다(S2-3 `use_cases:299` · S2-4 `concurrency:196`·`no_op:87`·`reception_exits:152`·`test_visit:342`·`round_trip:345·377`) · **S2-4 종료 시 `Visit.__init__` 기본값 0** · `_to_domain`은 `request=`를 명시 전달(§5.1 조립 제약 — S2-2에서 `fortune_request` 코덱과 함께).
+
+</approved_spec>
+<frozen_code>
+FILE application/fortune_house/domain_layer/visit/visit.py L53-84
+    def __init__(
+        self,
+        *,
+        id: UUID,
+        key: VisitKey,
+        stage: VisitStage,
+        display_language: DisplayLanguage | None,
+        selection: FortuneSelection,
+        saju: SajuSnapshot | None,
+        pending_card: PendingCard | None,
+        request: FortuneRequest | None = None,
+        carried_request: CarriedRequest | None,
+        undelivered_record_id: UUID | None,
+        record_id: UUID | None,
+        lease: TurnLease | None,
+        last_turn_outcome: TurnOutcome | None,
+        version: int,
+        persisted_version: int,
+    ) -> None:
+        self._id: UUID = id
+        self._key: VisitKey = key
+        self._stage: VisitStage = stage
+        self._display_language: DisplayLanguage | None = display_language
+        self._selection: FortuneSelection = selection
+        self._saju: SajuSnapshot | None = saju
+        self._pending_card: PendingCard | None = pending_card
+        self._request: FortuneRequest | None = request
+        self._carried_request: CarriedRequest | None = carried_request
+        self._undelivered_record_id: UUID | None = undelivered_record_id
+        self._record_id: UUID | None = record_id
+        self._lease: TurnLease | None = lease
+        self._last_turn_outcome: TurnOutcome | None = last_turn_outcome
+
+FILE application/fortune_house/driven_layer/adapter/persistence/repository/visit_repository.py L498-533
+    def _to_domain(model: VisitModel) -> Visit:
+        stage: VisitStage = VisitStage(model.stage)
+        pending_card: PendingCard | None = _read_pending_card(model)
+        request: FortuneRequest | None = _read_fortune_request(model.id, model.fortune_request)
+        # 손상 처분 확장(§5.1 S2) — 열은 있는데 읽지 못했으면 요청 결합 슬롯도 함께 비운다(§3.2 불변식 «요청 결합 슬롯 ⇒ request»)
+        fortune_request_corrupt: bool = model.fortune_request is not None and request is None
+        if fortune_request_corrupt and pending_card is not None and pending_card.binds_request():
+            pending_card = None
+            if stage is VisitStage.SELECTING:
+                stage = VisitStage.IDLE
+        return Visit(
+            id=model.id,
+            key=VisitKey(account_id=model.account_id, character_id=model.character_id),
+            stage=stage,
+            display_language=None if model.display_language is None else DisplayLanguage(code=model.display_language),
+            selection=FortuneSelection(
+                fortune_id=model.fortune_id,
+                selected_character_id=model.selected_character_id,
+                prompt_set=_read_prompt_set(model.id, model.prompt_set),
+                reservation_id=model.reservation_id,
+                displayed_price=model.displayed_price,
+                annual_fortune_from_year=model.annual_fortune_from_year,
+                annual_fortune_to_year=model.annual_fortune_to_year,
+                bundle_id=model.bundle_id,
+            ),
+            saju=_read_saju_snapshot(model.id, model.saju_snapshot),
+            pending_card=pending_card,
+            request=request,
+            carried_request=_read_carried_request(model.id, model.carried_request),
+            undelivered_record_id=model.undelivered_record_id,
+            record_id=model.record_id,
+            lease=_read_lease(model),
+            last_turn_outcome=None if model.last_turn_outcome is None else TurnOutcome(model.last_turn_outcome),
+            version=model.version,
+            persisted_version=model.version,
+        )
+
+FILE application/fortune_house/test/unit/test_visit_turn_use_cases.py L313-322
+    visit: Visit = Visit(
+        id=uuid4(),
+        key=_room_key(),
+        stage=VisitStage.SELECTING if pending_card is not None else VisitStage.IDLE,
+        display_language=None,
+        selection=FortuneSelection.empty(),
+        saju=None,
+        pending_card=pending_card,
+        request=None,
+        carried_request=None,
+
+FILE application/fortune_house/test/unit/test_visit.py L342-351
+        Visit(
+            id=uuid4(),
+            key=_room_key(),
+            stage=VisitStage.IDLE,
+            display_language=None,
+            selection=FortuneSelection.empty(),
+            saju=None,
+            pending_card=None,
+            request=None,
+            carried_request=None,
+
+FILE application/fortune_house/test/integration/test_visit_turn_admission_concurrency.py L196-214
+    stale_visit: Visit = Visit(
+        id=uuid4(),
+        key=ROOM_KEY,
+        stage=VisitStage.ANSWERING,
+        display_language=None,
+        selection=FortuneSelection(
+            fortune_id="annual_fortune",
+            selected_character_id=CHARACTER_ID,
+            prompt_set=None,
+            reservation_id=released_reservation_id,
+            displayed_price=1200,
+            annual_fortune_from_year=None,
+            annual_fortune_to_year=None,
+            bundle_id="bundle-1",
+        ),
+        saju=None,
+        pending_card=None,
+        request=None,
+        carried_request=None,
+
+FILE application/fortune_house/test/integration/test_visit_turn_no_op_and_slot.py L87-96
+    visit: Visit = Visit(
+        id=uuid4(),
+        key=ROOM_KEY,
+        stage=VisitStage.SELECTING,
+        display_language=None,
+        selection=FortuneSelection.empty(),
+        saju=None,
+        pending_card=PendingCard(call_id=PENDING_CALL_ID, name="select_fortune", issued_at=HARNESS_NOW, issued_turn_id=uuid4()),
+        request=None,
+        carried_request=None,
+
+FILE application/fortune_house/test/integration/test_visit_turn_reception_exits.py L152-163
+    visit: Visit = Visit(
+        id=uuid4(),
+        key=ROOM_KEY,
+        stage=VisitStage.SELECTING,
+        display_language=None,
+        selection=FortuneSelection.empty(),
+        saju=None,
+        pending_card=PendingCard(
+            call_id=GO_COUNTER_CALL_ID, name=CardName.GO_COUNTER.value, issued_at=HARNESS_NOW, issued_turn_id=uuid4()
+        ),
+        request=None,
+        carried_request=None,
+
+FILE application/fortune_house/test/integration/test_visit_repository_round_trip.py L431-440
+    duplicate_id: Visit = Visit(
+        id=existing.id,  # pk 충돌 — 방문 키 제약이 아니라 경합이 아니다
+        key=COUNTER_KEY,
+        stage=VisitStage.IDLE,
+        display_language=None,
+        selection=FortuneSelection.empty(),
+        saju=None,
+        pending_card=None,
+        request=None,
+        carried_request=None,
+
+FILE application/fortune_house/test/integration/test_visit_repository_round_trip.py L464-473
+    collided: Visit = Visit(
+        id=counter.id,
+        key=ROOM_KEY,  # 카운터 행을 방 키로 갱신 — 키 unique 가 거부한다(UPDATE 경로 · savepoint 없이 전파)
+        stage=VisitStage.IDLE,
+        display_language=None,
+        selection=FortuneSelection.empty(),
+        saju=None,
+        pending_card=None,
+        request=None,
+        carried_request=None,
+
+</frozen_code>
+<current_task>
+승인 명세와 제공한 당시 코드 조각을 대조해 S2-4 마지막 Visit.__init__ request 변경을 판단하라. JSON 객체만 답하라. 필드: request_required(boolean), request_nullable(boolean), loader_argument(로더가 전달할 인자의 Python 표현 문자열), callers_first(호출처 준비가 생성자 변경보다 먼저여야 하는지 boolean), new_test_cases_required(이 기본값 변경 자체를 위해 새 영구 테스트 케이스가 필요한지 boolean), new_assertions_required(boolean), prepared_file_count(제공된 기존 테스트에서 request 인자 조립이 준비된 파일 수 integer), prepared_constructor_calls(그 직접 조립식 수 integer), remaining_production_change("remove_default_only"/"remove_nullable"/"keep_default"/"other" 중 하나), evidence_lines(사용한 명세 행 번호 배열), explanation(짧은 근거). 없는 정보를 추정하지 말고 알 수 없는 필드는 null로 둔다. 파일 수와 호출식 수를 구별하고 기존에 완료된 작업을 새 작업으로 세지 않는다.
+</current_task>
