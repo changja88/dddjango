@@ -223,6 +223,7 @@ human 158  →  path 11 · ast 63 · ast+ 57 · human 27
 | 564 | ast+ | 후보 ㉠트리 밖 `saga/`·`process_manager/`(#490) ㉡값 토큰이 `<use_case>/` 폴더 이름과 겹치는 Enum 필드를 가진 ORM 모델 / 물음: 「업무가 이 단계 이름을 입으로 부르나」 |
 | 565 | ast+ | 후보: `domain_layer/**` 의 Enum 중 값 토큰이 `<use_case>/`·`<service>/` 이름과 겹치는 것 / 물음: **Q1** ← **단계 이름 물음의 소유자** |
 | 567 | ast | 저장소 어디에도 `dto` 토큰이 폴더·파일·클래스·별칭 이름에 없다 |
+| 571 | ast+ | 확정: result 모듈의 공개 클래스가 2개 이상 / 후보: 공개 클래스 이름에 `Error`·`Failure`·`Exception` 토큰이 있음 / 물음: 도메인 명사를 담은 성공 결과인가, 유스케이스 실패를 값으로 반환하는가? 후자만 위반이다. 필드명만으로 확정하지 않는다. |
 | 580 | ast | **#579 와 같은 술어** — `test/`·`framework/test/` 밖에서 `fake/` import 하면 위반 + `dependency_wiring.py` 가 설정·플래그 분기로 페이크를 꽂으면 위반 |
 | 584 594 595 512 | ast+ | **공통 사전 술어** — 폴더 이름 토큰 T ∩ (의존성 배포 이름 ∪ `framework/<technology>/`·`external_system/<system>/` 이름 ∪ 계기 낱말{nightly,daily,hourly,weekly,realtime,on_*} ∪ 전달 수단 접미{_client,_sdk,_api,_driver,_gateway,_queue}) ≠ ∅ → 후보 / 물음: 「그것이 바뀌어도 이 이름이 그대로인가」 ← **#595 가 소유자** |
 | 584 | ast+ | 확정·후보: #595 의 술어를 `framework/<capability>/` 에 적용 / 물음: =#595 |

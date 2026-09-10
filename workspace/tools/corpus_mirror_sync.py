@@ -147,7 +147,8 @@ def _excise_graph_sections(root: Path, skill: str, dep_body: str, src_body: str,
     """(절제된 dep 본문, 절제된 src 본문, [(dep 스팬, src 스팬)] — --write 병합용).
 
     동결 §9: 그래프 소유 절은 inv1 비교 스코프에서 제외. dep 쪽 절은 절 키로,
-    src 쪽 절은 baseline 해시로 찾는다(소스 미러는 preamble 때문에 서수가 밀리므로).
+    src 쪽 절은 현재 baseline 또는 이관 시점 migrated 해시로 찾는다
+    (소스 미러는 preamble 때문에 서수가 밀리며, 그래프 소유 원문은 동결한다).
     스팬을 찾지 못하거나 유일하지 않으면 StructureError(exit 3).
     """
     import hashlib as _hashlib
@@ -167,8 +168,12 @@ def _excise_graph_sections(root: Path, skill: str, dep_body: str, src_body: str,
             # (전문)·h1 title 절이 그래프 소유가 된 경우 — 스팬이 본문 앞 preamble 구간에 있어
             # inv1 비교 스코프(첫 '## ' 이후) 밖이다. 소스 미러 preamble은 애초에 비동기 대상.
             continue
+        source_hashes = {row["baseline_sha256"]}
+        migrated_hash = row.get("migrated_sha256", "")
+        if len(migrated_hash) == 64 and all(c in "0123456789abcdef" for c in migrated_hash):
+            source_hashes.add(migrated_hash)
         src_matches = [s for s in src_secs
-                       if _hashlib.sha256(s["span"]).hexdigest() == row["baseline_sha256"]]
+                       if _hashlib.sha256(s["span"]).hexdigest() in source_hashes]
         if len(src_matches) != 1:
             raise StructureError(
                 f"{skill}: 소스 미러에서 {skey} 기준선 스팬 매칭 {len(src_matches)}건(기대 1)")

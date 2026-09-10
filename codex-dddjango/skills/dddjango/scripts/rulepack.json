@@ -11,7 +11,7 @@
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "6f37cb143a2168ce57e1da0bb8ad3308e52bd0354d9e04fd7f3c455b734edcf3"
+      "sha256": "a0a57735092853071940be471e086fff1777772651f8e7f706355f45b2e57a3e"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
@@ -47,7 +47,7 @@
     },
     {
       "path": "ontology/rules/architecture-ddd-final.ttl",
-      "sha256": "1cec4a486e5928094db56b3d7e63d902c2f96a71b568dc0e537c80cff745045b"
+      "sha256": "3e7f49940592d370e0ee88147b21f8cf5a50d0520f71a5506ea50a8ebf9ea2df"
     },
     {
       "path": "ontology/rules/architecture-ddd-skill.ttl",
@@ -55,7 +55,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "ee114ca6282ca0fcbca0270b3fb1948a7e87a066b173c10ae4214f84e434bb65"
+      "sha256": "9a7b9cd2220f255a2168d5ef3a69db43c0fedc103407a8b23e1d19ad9ce65e62"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -9275,7 +9275,7 @@
         "check-transaction-boundary.py"
       ],
       "document": "dddjango/skills/architecture-ddd/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-0108@2026-08-19",
+      "expression": "https://numchida.com/ns/djr#R-0108@2026-09-10",
       "label": "판정·불변식의 도메인 소유와 프로덕션 실호출",
       "order_rank": 1668,
       "section": "dddjango/skills/architecture-ddd/references/final.md/s017-3.2",
@@ -10017,7 +10017,7 @@
       "block_order": 10,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-0157@2026-08-22",
+      "expression": "https://numchida.com/ns/djr#R-0157@2026-09-10",
       "label": "사용자 승인 전 다음 단계 진행 금지",
       "order_rank": 963,
       "section": "dddjango/commands/dddjango.md/s003",
@@ -14576,7 +14576,7 @@
       "block_order": 6,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-0456@2026-08-22",
+      "expression": "https://numchida.com/ns/djr#R-0456@2026-09-10",
       "label": "권고는 결정이 아니다 — 자기 승인 근거·기본값 선반영 금지·«권고 불가 — 사유»로 족하다",
       "order_rank": 1272,
       "section": "dddjango/commands/dddjango.md/s011",
@@ -14606,7 +14606,7 @@
       "block_order": 6,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-0458@2026-08-22",
+      "expression": "https://numchida.com/ns/djr#R-0458@2026-09-10",
       "label": "닫힌 선택지는 AskUserQuestion 으로 제시(label=선택지·description=대가·권고는 첫 옵션 «(Recommended)»)",
       "order_rank": 1274,
       "section": "dddjango/commands/dddjango.md/s011",
@@ -60611,7 +60611,7 @@
         "design_pregate.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-3426@2026-09-10",
+      "expression": "https://numchida.com/ns/djr#R-3426@2026-09-10b",
       "label": "공개 심볼 전수 표기 — Base 닫힌 목록·베이스 유도표 공집합·값 축 유도 3행 등재(마이그레이션 칸 결손 보충)·`_`+대문자 사설 타입·필드 대입식 허용·수신자 관용 정규화·계약 필드·중첩 타입 소속 명시",
       "order_rank": 409,
       "section": "dddjango/agents/design-architect.md/s005",
@@ -60628,7 +60628,7 @@
         "design_pregate.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-3427@2026-09-04",
+      "expression": "https://numchida.com/ns/djr#R-3427@2026-09-10",
       "label": "경계 import 표 — 검사기 판정 관련 경계 import 전부(테스트 파일 포함) · 경계 3분류(BC 밖 · BC 내부 층 경계 중 검사기 판정 항목 — 잎→port 예외 import 도 행으로 · 그 밖 재량) · 3단 실존 판정 입력(이 브랜치 기준 · 행 삭제 = 채널 은폐 · 부재 update 는 형식 red 선행·승격 예외분만 ⑴)",
       "order_rank": 410,
       "section": "dddjango/agents/design-architect.md/s005",
@@ -60645,7 +60645,7 @@
         "design_pregate.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-3428@2026-09-01",
+      "expression": "https://numchida.com/ns/djr#R-3428@2026-09-10",
       "label": "물리 신호 어노테이션 — markers/base/client 정형·무기재=물리 신호 없음",
       "order_rank": 411,
       "section": "dddjango/agents/design-architect.md/s005",
@@ -60679,7 +60679,7 @@
         "design_pregate.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-3430@2026-09-01",
+      "expression": "https://numchida.com/ns/djr#R-3430@2026-09-10",
       "label": "예외 번역표 기계 블록 — published 예외↔raise 창구 표",
       "order_rank": 413,
       "section": "dddjango/agents/design-architect.md/s005",

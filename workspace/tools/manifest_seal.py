@@ -175,6 +175,8 @@ GROUPS: "dict[str, dict]" = {
             "workspace/tools/regen_loop_prototype.py",
             "workspace/tools/regen_loop_smoke.py",
             "workspace/tools/pregate_transcription_smoke.py",
+            "workspace/tools/pregate_field_report_smoke.py",
+            "workspace/tools/field_report_checker_smoke.py",
             # 반송 계수기 픽스처 — 계수 규약의 정답지(T2-3 fragment 요구 항목).
             "workspace/eval/fixtures/bounce_counter/**/*",
             # 도구 lockfile — t2-plan §2 T2-0b 명시 항목. 그래프 도구 사슬과 runtime 계약 pin.

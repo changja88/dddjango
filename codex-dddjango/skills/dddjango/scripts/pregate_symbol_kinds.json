@@ -1,13 +1,13 @@
 {
   "schema": "pregate-symbol-kinds/0",
   "source_sha": {
-    "check-api-error-controller-contract.py": "a22170a8367c3acf",
+    "check-api-error-controller-contract.py": "2b013b5ec7291e14",
     "check-app-container.py": "89825155e2def314",
     "check-broker-contract.py": "e6ffad609bc11c91",
     "check-business-vocabulary.py": "09b39ca59eeb29ef",
     "check-choices-literal-consumption.py": "c1f6a998f550c67c",
     "check-common-container.py": "aa14a1f9ae49d157",
-    "check-composition-root.py": "4211f462ae69ee94",
+    "check-composition-root.py": "3acaa1d1bf6660b8",
     "check-context-isolation.py": "6ee97a89c6cc5a81",
     "check-db-table.py": "3858f5b128891feb",
     "check-domain-model.py": "810f941cffe36aa0",
@@ -27,7 +27,7 @@
     "check-test-config.py": "a82133a31bf9db76",
     "check-transaction-boundary.py": "5660df577ba001e2",
     "check-transient-overmapping.py": "c3dff5700493ecb6",
-    "check-usecase-dto-placement.py": "7dc0217490f404fc"
+    "check-usecase-dto-placement.py": "e2fec2b3edb3f740"
   },
   "kinds": [
     {

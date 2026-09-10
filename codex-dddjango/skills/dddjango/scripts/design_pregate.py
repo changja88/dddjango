@@ -19,7 +19,9 @@
   3) 실체화 — 조치 태그 의미론(D2)대로 팬텀 스텁을 겹친다. 자동 삽입은 닫힌
               화이트리스트(②상수-배선형)뿐: 신규 BC 표준 골격 전량(`standard_tree`
               재사용)·apps.py 정형(#329/#535~#538)·e2e client 입구 상수(#390)·
-              베이스 토큰 import 합성. 본문은 전부 `...`/`raise NotImplementedError`
+              베이스 토큰 import 합성. update는 실존 OHS 서비스에 없는 명시 모듈 함수와
+              충돌 없는 import·파일 수준 exception-map helper만 추가한다(기존 본문·바인딩 보존).
+              새 함수 본문은 전부 `...`/`raise NotImplementedError`
               — C급은 판정 대상이 아님을 형태로 보증.
   3′) 실존  — boundary-imports 행 **전부**를 실체화 뒤의 사본 위에서 3단 판정한다(읽기
               전용 — 스텁·게이트 무접촉): ⑴ 모듈 부재 · ⑵ 자리표시자 · ⑶ 심볼 미정의.
@@ -57,19 +59,22 @@
   boundary-imports `<!-- machine: boundary-imports -->` + ```imports 펜스.
                    1행 = `<소비 파일 경로><탭|2+공백><import 문 그대로>`.
                    행 전부가 «계약 실존» 3단 판정을 받는다 — 소비 파일의 태그·등재 여부와
-                   무관(update 소비자 포함 · 스텁 전사는 add 소비자만). 판정 기준은 **이 브랜치**의
-                   격리 사본(기준선 + dirty overlay + 이 명세의 add)이다: 저장소 밖(표준·서드파티)은
+                   무관(update 소비자 포함 · update 전사는 실존 OHS 서비스의 새 함수 추가 때만 충돌 검사 후).
+                   판정 기준은 **이 브랜치**의 격리 사본(기준선 + dirty overlay + 명시 전사)이다: 저장소 밖(표준·서드파티)은
                    검사 밖 · 이 명세가 add 하는 대상은 자기 해소(⑶ 생략 — symbols 채널 소관 · 승격
                    폴더 부품 포함) · file-plan `update` 대상의 이름은 그 칸의 symbols 선언이면 자기
                    update 해소(S′)·현재 표면에 있으면 실존 확인·둘 다 아니면 판정 불능(표면은 이
                    명세 이후 상태 — ⑵⑶ 비적용) · ⑵ 는 이름 import(`from M import n`)의 대상 M 이 모듈
                    실현일 때만(모듈 import·패키지 `__init__` 은 ImportError 가 아니다). 세미콜론 복합행은
                    문 전부 판정. 결손은 권고·비차단.
-  physical-signals 영구 테스트 입장 표(6열 정본 header)의 owner/path 셀 안 정형
+  physical-signals 영구 테스트 입장 표(6열 정본 header)의 owner/path 셀 첫 Python artifact에 정형
                    어노테이션 `[markers: a,b] [base: X] [client: yes]` — 무기재 = 부재.
+                   code span/bare token의 `.py::case`는 파일 부분만 결합한다. 뒤 support/coverage
+                   주소는 대상이 아니며 첫 주소가 미등재여도 뒤 등재 파일로 건너뛰지 않는다.
   exception-map    `<!-- machine: exception-map -->` + ```exceptions 펜스.
                    1행 = `<예외 이름><탭|2+공백><raise 창구 파일 경로>` — 창구 스텁에
-                   `raise <예외>()` 1줄 합성(#456 — 번역표에 없는 예외 = 죽은 계약 = 진탐 보존).
+                   `raise <예외>()` 파일 수준 helper 합성(#456 — 번역표에 없는 예외 = 죽은 계약 = 진탐 보존).
+                   update는 새 함수가 실제 전사되는 OHS 서비스만 해당하며 함수별 raise 위치는 추론하지 않는다.
 
 무엇이 아닌가: 예보는 Phase 2 step 6(G2 registry 게이트)의 실행·증거 요구를 어떤
 형태로도 대체·축약하지 않는다(D4 대체 금지). green 은 «설계 검증됨»이 아니라
@@ -248,7 +253,7 @@ class PlanEntry:
     raises: "list[str]" = field(default_factory=list)
     signals: "Signals | None" = None
     # symbols 채널이 이 경로에 선언한 최상위 이름(클래스·함수·메서드 행의 owner) — 태그 무관 기록. `update` 칸은
-    # 스텁 전사 밖이지만 계약 실존의 «자기 update 해소»(S′) 근거가 된다(5단계 리뷰 MAJOR B).
+    # 새 OHS 모듈 함수의 제한 전사와 별개로 계약 실존의 «자기 update 해소»(S′) 근거가 된다.
     declared: "list[str]" = field(default_factory=list)
     aliases: "list[ModuleAlias]" = field(default_factory=list)
 
@@ -517,7 +522,7 @@ def _alias_name(statement: str) -> "str | None":
 
 
 def _parse_symbols(rows: "list[str]", plan: Plan, errors: "list[str]") -> None:
-    """symbols 전사. 비-add도 새 문법을 검증하되 스텁에 싣지 않고 선언 이름만 S′에 쓴다."""
+    """symbols 전사. update는 모듈 함수 후보만 보존하고 모든 선언 이름은 종전대로 S′에 쓴다."""
     classes: "dict[tuple[str, str], Symbol]" = {}
     seen_symbols: "set[str]" = set()
     alias_names: "dict[str, set[str]]" = {}
@@ -597,20 +602,20 @@ def _parse_symbols(rows: "list[str]", plan: Plan, errors: "list[str]") -> None:
                                                 params=parsed.params, ret=parsed.ret))
                 else:
                     entry.symbols.append(parsed)
+            elif entry is not None and entry.tag == "update" and isinstance(parsed, Symbol) and parsed.kind == "function":
+                entry.symbols.append(parsed)
         if entry is None:
             plan.notes.append(f"symbols 고아 행(file-plan 미등재 — 미반영): {path}::{rest}")
             continue
         if entry.tag != "add":
-            plan.notes.append(f"symbols 미반영(비-add `{entry.tag}` 칸 — 스텁 전사 밖 · update 대상이면 계약 실존의 "
-                              f"«자기 update 해소» 근거로만 쓴다): {path}")
+            plan.notes.append(f"symbols 비-add `{entry.tag}` 칸 — update의 새 OHS 모듈 함수만 실물 대조 후 제한 전사; "
+                              f"그 밖은 S5 · 선언 이름의 계약 실존 «자기 update 해소»는 별도: {path}")
     if pending:
         errors.append(f"symbols alias TYPE_CHECKING의 인접 else 부재: {pending[0]}::{pending[1].name}")
 
 
 def _parse_imports(rows: "list[str]", plan: Plan, errors: "list[str]") -> None:
-    """```imports 펜스 → Plan.import_rows 전 행 보존(계약 실존 판정 입력) + PlanEntry.imports 결합(add 소비자만 —
-    스텁 전사 원문 그대로). 비-add·미등재 소비자의 행은 스텁에 실리지 않을 뿐 실존 판정에는 포함된다(kkebi S2 —
-    update 소비자가 상류 계약을 소비하는 판형)."""
+    """```imports 펜스 → 실존 판정 전 행 + add/update 전사 재료. update는 실물 충돌 검사를 거친다."""
     for raw in rows:
         line: str = raw.strip()
         if not line or line.startswith("#"):
@@ -627,7 +632,7 @@ def _parse_imports(rows: "list[str]", plan: Plan, errors: "list[str]") -> None:
         if entry is None:
             plan.notes.append(f"boundary-imports 스텁 미반영(file-plan 미등재 — 실존 판정에는 포함): {path}")
             continue
-        if entry.tag != "add":
+        if entry.tag not in ("add", "update"):
             plan.notes.append(f"boundary-imports 스텁 미반영(비-add `{entry.tag}` 칸 — 실존 판정에는 포함): {path}")
             continue
         if stmt not in entry.imports:
@@ -651,7 +656,7 @@ def _parse_exception_map(rows: "list[str]", plan: Plan, errors: "list[str]") -> 
         if entry is None:
             plan.notes.append(f"exception-map 고아 행(file-plan 미등재 — 미반영): {exc} → {path}")
             continue
-        if entry.tag != "add":
+        if entry.tag not in ("add", "update"):
             plan.notes.append(f"exception-map 미반영(비-add `{entry.tag}` 창구): {exc} → {path}")
             continue
         if exc not in entry.raises:
@@ -688,6 +693,8 @@ def _signals_rows(text: str) -> "list[str]":
 def _parse_signals(text: str, plan: Plan) -> None:
     """영구 테스트 입장 표(정본 6열 header)의 owner/path 셀에서 [신규 4] 어노테이션 전사.
 
+    code span/bare token에 나온 첫 Python 파일 주소가 owner artifact다. nodeid의 `.py::case`는
+    파일 부분만 결합하며 뒤 support/coverage 주소로 신호를 전파하지 않는다(첫 주소 미등재도 동일).
     어노테이션이 하나도 없는 행은 «물리 신호 없음»과 같으므로 결합하지 않는다(fail-closed).
     """
     for raw in _signals_rows(text):
@@ -701,9 +708,9 @@ def _parse_signals(text: str, plan: Plan) -> None:
         client_m: "re.Match[str] | None" = _ANN_CLIENT_RE.search(cell)
         if markers_m is None and base_m is None and client_m is None:
             continue  # 무기재 = 물리 신호 없음
-        tick: "re.Match[str] | None" = re.search(r"`([^`]+)`", cell)
-        path: "str | None" = tick.group(1) if tick else next(
-            (t for t in cell.split() if "/" in t and not t.startswith("[")), None)
+        artifact: "re.Match[str] | None" = re.search(
+            r"(?<![\w./-])([\w./-]+\.py)(?=::|[\s`\],;)]|$)", cell)
+        path: "str | None" = artifact.group(1) if artifact else None
         if path is None:
             plan.notes.append(f"physical-signals 경로 해소 불가(owner/path 셀): {cell!r}")
             continue
@@ -1137,6 +1144,152 @@ def _prune_removed_parents(copy: Path, plan: Plan) -> "list[str]":
     return removed
 
 
+def _ohs_service_slot(path: str) -> "Path | None":
+    """file-plan의 표준 OHS 서비스 칸만 받는다(승격 물리주소·부품·contract는 S5)."""
+    parts: "tuple[str, ...]" = PurePosixPath(path).parts
+    if (len(parts) != 6 or parts[0] != "application"
+            or parts[2:4] != ("driving_layer", "open_host_service")):
+        return None
+    stem: str = f"{parts[4]}_service"
+    if parts[5] != f"{stem}.py":
+        return None
+    return Path(*parts[:5]) / f"{stem}.py"
+
+
+def _update_bindings(module: ast.Module) -> "tuple[dict[str, set[str]], bool]":
+    """update 보존용 바인딩 출처. 모듈 제어문은 내려가되 함수·클래스의 내부 scope는 제외한다.
+
+    import 출처가 같은 중복만 재사용한다. 빈 출처는 다른 바인딩이며 star/동적/class global 표면은 닫지 않는다.
+    계약 실존의 S′ 표면 판정과 별개다.
+    """
+    bindings: "dict[str, set[str]]" = {}
+    open_surface: bool = False
+
+    def bind(name: str, origin: str = "") -> None:
+        bindings.setdefault(name, set()).add(origin)
+
+    def visit(node: ast.AST) -> None:
+        nonlocal open_surface
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            bind(node.name)
+            if node.name == "__getattr__":
+                open_surface = True
+            if isinstance(node, ast.ClassDef) and any(isinstance(part, ast.Global) for part in ast.walk(node)):
+                open_surface = True  # class 본문의 모듈 바인딩 효과는 분석하지 않고 update 전체를 S5로 남긴다.
+            for decorator in node.decorator_list:
+                visit(decorator)
+            # defaults/bases는 바깥 scope에서 평가된다(대입식 바인딩 보존).
+            expressions: "list[ast.AST]" = (list(node.bases) + list(node.keywords)
+                if isinstance(node, ast.ClassDef) else
+                list(node.args.defaults) + [d for d in node.args.kw_defaults if d is not None])
+            for expression in expressions:
+                visit(expression)
+            return
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            for alias in node.names:
+                if alias.name == "*":
+                    open_surface = True
+                    continue
+                name: str = (alias.asname or alias.name.split(".")[0]
+                             if isinstance(node, ast.Import) else alias.asname or alias.name)
+                origin: str = (f"import {alias.name}" if isinstance(node, ast.Import) else
+                               f"from {'.' * node.level}{node.module or ''} import {alias.name}")
+                bind(name, origin)
+            return
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            bind(node.id)
+        elif isinstance(node, (ast.ExceptHandler, ast.MatchAs, ast.MatchStar)) and node.name:
+            bind(node.name)
+        elif isinstance(node, ast.MatchMapping) and node.rest:
+            bind(node.rest)
+        for child in ast.iter_child_nodes(node):
+            visit(child)
+
+    visit(module)
+    return bindings, open_surface
+
+
+def _render_service_update(copy: Path, entry: PlanEntry) -> "tuple[bytes | None, str]":
+    """실물 OHS 서비스에 없는 명시 함수만 append. 불안전한 전사는 entry 전체를 S5로 남긴다."""
+    slot: "Path | None" = _ohs_service_slot(entry.path)
+    target: Path = copy / entry.path
+    if slot is None:
+        return None, "OHS 서비스 본체 밖"
+    actual: "Path | None" = ct.slot_file(copy / slot)
+    if actual != target or not target.is_file():
+        return None, "서비스 파일 부재 또는 승격된 다른 물리 경로"
+    if any(p.is_symlink() for p in (target, *target.parents) if p != copy and copy in p.parents):
+        return None, "symlink 경유 서비스 파일"
+    try:
+        original: bytes = target.read_bytes()
+        source: str = original.decode("utf-8")
+        module: ast.Module = ast.parse(source)
+    except (OSError, UnicodeError, SyntaxError, ValueError) as exc:
+        return None, f"기존 서비스 읽기/파싱 불가: {exc}"
+    bindings: "dict[str, set[str]]"
+    open_surface: bool
+    bindings, open_surface = _update_bindings(module)
+    if open_surface:
+        return None, "star import/동적 모듈/class global 표면 — 새 이름 충돌 여부 불명"
+    functions: "list[Symbol]" = [s for s in entry.symbols if s.kind == "function" and s.name not in bindings]
+    if not functions:
+        return None, "명시된 새 모듈 함수 없음(기존 이름·본문·signature는 보존)"
+    names: "set[str]" = {s.name for s in functions}
+    if len(names) != len(functions):
+        return None, "새 함수 이름 중복"
+    for exc in entry.raises:
+        helper: str = f"_pregate_raise_{exc.lower()}"
+        if helper in bindings or helper in names:
+            return None, f"exception-map helper 이름 충돌: {helper}"
+        names.add(helper)
+    # 새 함수/helper와 import가 같은 이름을 차지해도 entry 전체를 보류한다.
+    for name in names:
+        bindings[name] = {""}
+    imports: "list[str]" = []
+    for statement in entry.imports:
+        try:
+            import_module: ast.Module = ast.parse(statement)
+        except (SyntaxError, ValueError) as exc:
+            return None, f"boundary-imports 파싱 불가: {exc}"
+        for node in import_module.body:
+            if not isinstance(node, (ast.Import, ast.ImportFrom)):
+                return None, "boundary-imports에 import 밖 문장"
+            future: bool = isinstance(node, ast.ImportFrom) and node.module == "__future__" and node.level == 0
+            for alias in node.names:
+                one: ast.stmt = (ast.Import(names=[alias]) if isinstance(node, ast.Import) else
+                                 ast.ImportFrom(module=node.module, names=[alias], level=node.level))
+                incoming: "dict[str, set[str]]"
+                star: bool
+                incoming, star = _update_bindings(ast.Module(body=[one], type_ignores=[]))
+                if star:
+                    return None, "boundary-imports star import의 바인딩 불명"
+                for name, origins in incoming.items():
+                    if name in bindings:
+                        if bindings[name] != origins:
+                            return None, f"boundary-imports 이름 충돌: {name}"
+                        continue  # 같은 출처의 기존 import — 기존 위치·바인딩 보존
+                    if future:
+                        return None, "boundary-imports 새 future import는 기존 모듈 의미/위치를 바꾼다"
+                    bindings[name] = origins
+                    imports.append(ast.unparse(one))
+    stub: str = render_stub(replace(entry, tag="add", symbols=functions, imports=imports, aliases=[], signals=None))
+    try:
+        # render_stub의 파일 머리(docstring/future)는 기존 파일에 append하지 않는다.
+        stub_module: ast.Module = ast.parse(stub)
+        for node in stub_module.body:
+            if not isinstance(node, ast.FunctionDef):
+                continue
+            signature: "list[ast.AST]" = [node.args] + ([node.returns] if node.returns is not None else [])
+            if any(isinstance(part, ast.NamedExpr) for expr in signature for part in ast.walk(expr)):
+                return None, "새 함수 signature의 NamedExpr는 모듈 바인딩을 바꿀 수 있어 전사하지 않는다"
+        addition: str = "\n\n".join(ast.get_source_segment(stub, node) or "" for node in stub_module.body[2:])
+        combined: bytes = original + ("\n\n" + addition + "\n").encode("utf-8")
+        compile(combined, entry.path, "exec")  # 합성 전체의 symtable까지 검증(중복 인자 포함)
+    except (SyntaxError, ValueError) as exc:
+        return None, f"합성 compile 실패: {getattr(exc, 'msg', None) or str(exc)}"
+    return combined, "새 모듈 함수만 전사; 기존 signature/body·decorator/alias/class update는 미시뮬레이션"
+
+
 def materialize(copy: Path, plan: Plan, *, realized: "frozenset[str]" = frozenset(),
                 base_short: str = "", promoted: "frozenset[str]" = frozenset()) -> "dict[str, list[str]]":
     """태그 의미론(D2)대로 사본 위에 팬텀을 겹친다 — add 실존 충돌은 FormError.
@@ -1194,11 +1347,17 @@ def materialize(copy: Path, plan: Plan, *, realized: "frozenset[str]" = frozense
             else:
                 report["unsimulated"].append(f"remove(실존 없음): {entry.path}")
         elif entry.tag == "update":
+            updated: "bytes | None"
+            detail: str
+            updated, detail = _render_service_update(copy, entry)
+            if updated is not None:
+                target.write_bytes(updated)
+                report["materialized"].append(entry.path)
             if entry.path in promoted:
                 report["unsimulated"].append(
-                    f"update(승격 형태 실존 — 예외 통과 · 파일 `<칸>.py` 는 기준선 부재 · 실존 채널은 ⑴ 판정): {entry.path}")
+                    f"S5 update(승격 형태 실존 — 예외 통과 · 파일 `<칸>.py` 는 기준선 부재 · 실존 채널은 ⑴ 판정; {detail}): {entry.path}")
             else:
-                report["unsimulated"].append(f"update(시뮬레이션 밖 — ② 화이트리스트 정형 append 한정): {entry.path}")
+                report["unsimulated"].append(f"S5 update({detail}): {entry.path}")
     report["pruned_dirs"] = _prune_removed_parents(copy, plan)
     # 신규 BC 골격 전량 — add/empty가 있으며 앵커에 없던 BC만. remove로 전멸한 BC는 재생하지 않는다.
     new_bcs: "set[str]" = set()
@@ -1676,11 +1835,12 @@ BLIND_SPOTS: "tuple[str, ...]" = (
     "S1 C급(함수 본문·행위 규칙): 스텁 본문이 `...` 뿐이라 예보 표면 밖이다.",
     "S2 ④형(명세 내부 의미 모순·규범 과잉결정): 검출 대상이 아니다.",
     "S3 BC 내부 계층 의존(#92/#93류): 유도 삽입은 규약 준수형이라 예보 불가 · 블록에 기재된 경계 import 는 스텁에 "
-    "방출되어 예보된다 — 산문에만 적힌 경계 import(블록 미기재)는 전사되지 않아 표면 밖이다 · 전사는 add 소비자 "
-    "스텁만이다(브라운필드 `update` 잎의 import 는 실존 판정만 받고 전사 밖).",
+    "방출되어 예보된다 — 산문에만 적힌 경계 import(블록 미기재)는 전사되지 않아 표면 밖이다 · 전사는 add 소비자와 "
+    "새 함수가 전사되는 실존 OHS 서비스 update의 안전한 import만이다(나머지 update는 실존 판정만 받는다).",
     "S4 앵커·상태 축: 예보 기준선은 «스텁 제외 현재 상태»다 — G2 build_anchor 차분과 다르며, "
     "HEAD 판형 게이트 결과의 G2 증거 유용은 차분 세탁으로 금지된다.",
-    "S5 미시뮬레이션: update 계획·후행 remove(@Ln)는 실체화하지 않는다 — 위 목록 병기.",
+    "S5 미시뮬레이션: update는 실존 OHS 서비스의 명시 새 모듈 함수·안전한 import·파일 수준 raise helper만 "
+    "전사한다. 기존 signature/body·decorator/alias/class 변경과 나머지 update·후행 remove(@Ln)는 위 목록 병기.",
     "S6 정형 보충(apps.py name/label·모델 Meta.db_table·마이그레이션 칸): 결손 시 규약 유도값을 합성한다 — 기계 블록 "
     "전사가 있으면 전사 우선이지만, «산문»으로만 규약 밖 값을 계획한 일탈은 예보 표면 밖이다.",
     "S7 기실현 add(`--base` 명시 시 — 명시 `--base HEAD` 포함): 사본 = 기준선 트리 + (worktree−HEAD) 오버레이 — 기준선 "
@@ -2090,7 +2250,7 @@ def main(argv: "list[str]") -> int:
             print(note)
 
         if not mat["materialized"]:
-            reason = ("skip — 실체화 0건(add/empty/remove 실효 조치 없음): "
+            reason = ("skip — 실체화 0건(add/empty/remove 및 제한 update 실효 조치 없음): "
                       "게이트를 부르지 않는다(공허 차분 가드 · 사유 명시)")
             verdict_stub: str = "skip" + (f" · 계약 실존 결손 {defects}건(권고·비차단)" if defects else "")
             print(reason)

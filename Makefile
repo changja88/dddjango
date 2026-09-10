@@ -189,7 +189,9 @@ verify-base-regen:
 	PYTHONUTF8=1 python3 workspace/tools/rulepack_smoke.py; \
 	PYTHONUTF8=1 python3 workspace/tools/gen_pregate_symbol_kinds.py --check; \
 	PYTHONUTF8=1 python3 workspace/tools/pregate_fixture_run.py; \
-	PYTHONUTF8=1 python3 workspace/tools/pregate_transcription_smoke.py
+	PYTHONUTF8=1 python3 workspace/tools/pregate_transcription_smoke.py; \
+	PYTHONUTF8=1 python3 workspace/tools/pregate_field_report_smoke.py; \
+	PYTHONUTF8=1 python3 workspace/tools/field_report_checker_smoke.py
 
 # 변이 자가검사 — 상시 verify 와 분리(T2-4 적대 리뷰 AQ-10: 검출력 증명은 무겁고 상시 아님).
 # 팩·selector 를 건드린 커밋은 이 타깃도 green 이어야 한다.

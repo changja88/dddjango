@@ -145,6 +145,7 @@ class Config:
     error_bcs: tuple[str, ...]
     anchor: str | None
     anchor_debt_file: str | None
+    anchor_baseline: bool = False
 
 
 @dataclass(frozen=True)
@@ -400,6 +401,7 @@ def _parse_config(argv: list[str]) -> Config:
         error_bcs=error_bcs,
         anchor=namespace.anchor,
         anchor_debt_file=namespace.anchor_debt_file,
+        anchor_baseline=namespace.anchor_baseline,
     )
 
 
@@ -7451,12 +7453,12 @@ def main(argv: list[str]) -> int:
         )
         emit_all(guard, printer=print, indent="")
         return 2
-    # --anchor 미지정이면 현행 그대로 각 슬라이스에서 즉시 exit 2 — 지정 시에만
-    # 슬라이스 진단을 모아 마지막에 판정 차분(anchor_diff)으로 exit 를 정한다.
+    # 일반 실행은 슬라이스 선점 계약을 유지한다. 앵커 및 그 기준선 재실행은
+    # 같은 전 슬라이스 진단을 수집해야 기존 code 진단이 신규로 오분류되지 않는다.
     collected: list[str] = []
     pending_analysis: list[str] = []
     tree_findings, tree_candidates, tree_keys, candidate_keys = _tree_slice2(config.root, bcs)
-    if tree_findings and config.anchor is None:
+    if tree_findings and config.anchor is None and not config.anchor_baseline:
         # tree 위반이 code 레인 전에 exit 2 를 선점한다(현행) — code 미실행이라
         # 선점 억제 없음(tree 단독 그대로).
         _print_tree_blocks(tree_findings, tree_candidates)
@@ -7534,7 +7536,7 @@ def main(argv: list[str]) -> int:
                     "path and direct two-argument Status(<approved HTTP status>, error); helper/handler/raw "
                     "detours are not part of this contract."
                 )
-                if config.anchor is None:
+                if config.anchor is None and not config.anchor_baseline:
                     return 2
                 for surface in surfaces:
                     collected.extend(lines(surface))
@@ -7553,6 +7555,15 @@ def main(argv: list[str]) -> int:
         _print_tree_blocks(tree_findings, tree_candidates)
         if tree_findings:
             collected.extend(lines(tree_findings))
+
+    if config.anchor_baseline:
+        # 기준선은 차분 재귀 없이 전체 수집 결과로 끝낸다. 분석 미완료는
+        # 발견 유무와 무관하게 사용/분석 오류이며 정상 수집(exit 2)이 아니다.
+        if pending_analysis:
+            print("[check-api-error-controller-contract] 사용 오류: "
+                  + "; ".join(pending_analysis), file=sys.stderr)
+            return 1
+        return 2 if collected else 0
 
     if collected:
         try:

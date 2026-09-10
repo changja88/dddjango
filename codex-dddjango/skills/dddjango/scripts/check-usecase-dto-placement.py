@@ -31,7 +31,7 @@
 
 ast+ 후보 채널 (㉰ — 기계가 후보를 좁히고 사람이 물음으로 마무리):
   #68(검증 raise 의 자리) · #103(입구의 값 객체 사용 폭) · #140(제약 0 스키마)
-  #191(use_case 이름은 동사) · #194(유스케이스 안 업무 규칙) — «ⓓ 후보» 로 출력하되
+  #191(use_case 이름은 동사) · #194(유스케이스 안 업무 규칙) · #571(실패 이름의 의미) — «ⓓ 후보» 로 출력하되
   exit 에 산입하지 않는다(판정 마무리는 agents/discipline-reviewer.md 몫).
   #68·#103 후보 스캔은 application_layer·driving_layer 로 한정한다(주 발생지).
 
@@ -371,7 +371,9 @@ def _check_use_case(uc: Path, uc_rel: Path, agg_names: set[str], out: Findings, 
                 out.add("#571", uc_rel / res_f.name, f"result 에는 «성공했을 때의 모양 한 벌»만 온다 — 공개 클래스가 {len(pubs)}개면 유스케이스가 둘이라는 신호다")
             for c in pubs:
                 if any(tok in c.name for tok in ("Error", "Failure", "Exception")):
-                    out.add("#571", uc_rel / res_f.name, f"실패(`{c.name}`)는 result 에 오지 않는다")
+                    cand.add("#571", uc_rel / res_f.name,
+                             f"result 클래스 `{c.name}` 에 실패 이름 토큰이 있다",
+                             "도메인 명사를 담은 성공 결과인가, 유스케이스 실패를 값으로 반환하는가? 후자만 위반이다")
 
     if entry is not None and not checker_target.skeleton_placeholder(entry):
         # 내용 없는 골격 진입점은 내용 규칙(#635·#211·#194)의 대상이 아니다 — 존재 규칙 #193 은 위에서 선다(결정 2 · 2026-09-04)

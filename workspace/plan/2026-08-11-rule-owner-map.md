@@ -486,7 +486,7 @@
 | 568 | path | scripts/check-error-centralization.py | — | 신설 |  |
 | 569 | ast | scripts/check-usecase-dto-placement.py | — | 재작성 |  |
 | 570 | path | scripts/check-usecase-dto-placement.py | — | 재작성 |  |
-| 571 | ast | scripts/check-usecase-dto-placement.py | — | 재작성 |  |
+| 571 | ast+ | scripts/check-usecase-dto-placement.py | agents/discipline-reviewer.md | 재작성 |  |
 | 572 | ast | scripts/check-error-centralization.py | — | 신설 |  |
 | 573 | path | scripts/check-port-adapter-pairing.py (신설) | — | 신설 |  |
 | 574 | ast | scripts/check-port-adapter-pairing.py (신설) | — | 신설 |  |

@@ -2017,19 +2017,23 @@ def _project_uses_registrar(root: Path, registrar_name: str) -> bool:
 
 def _has_concrete_api_surface(root: Path, api: Path, bc_name: str) -> bool:
     router = api / "api_router.py"
-    if router.is_file() and router.stat().st_size > 0:
+    if router.is_file() and not checker_target.skeleton_placeholder(router):
         return True
     if any(
         p.name.endswith("_controller.py") and not set(p.parts) & CODE_SKIP_DIRS
+        and not checker_target.skeleton_placeholder(p)
         for p in api.rglob("*.py")
     ):
         return True
     webhook = api / "webhook"
     if webhook.is_dir():
-        for entry in webhook.iterdir():
-            if entry.name.startswith(".") or entry.name in {"__init__.py", "__pycache__"}:
+        for entry in webhook.rglob("*.py"):
+            if set(entry.relative_to(webhook).parts) & CODE_SKIP_DIRS or any(
+                part.startswith(".") for part in entry.relative_to(webhook).parts
+            ):
                 continue
-            return True
+            if not checker_target.skeleton_placeholder(entry):
+                return True
     return _project_uses_registrar(root, f"register_{bc_name}_api")
 
 
