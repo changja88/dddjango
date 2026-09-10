@@ -11,7 +11,7 @@
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "a9be26917cdc643503b2454dc1e1c7fe91ed1b8223da022be1f05f8d28e833e1"
+      "sha256": "6f37cb143a2168ce57e1da0bb8ad3308e52bd0354d9e04fd7f3c455b734edcf3"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
@@ -60594,7 +60594,7 @@
         "design_pregate.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-3425@2026-09-03",
+      "expression": "https://numchida.com/ns/djr#R-3425@2026-09-10",
       "label": "file-plan 정규 블록 — 1행 1경로·조치 태그·금지 표기·삽화↔블록 차분 · 태그의 뜻은 기준선 기준(add 부재·update 실존(승격 형태 예외)·비후행 remove 실존·재라벨 도피는 형식 red)",
       "order_rank": 408,
       "section": "dddjango/agents/design-architect.md/s005",
@@ -60611,7 +60611,7 @@
         "design_pregate.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-3426@2026-09-03",
+      "expression": "https://numchida.com/ns/djr#R-3426@2026-09-10",
       "label": "공개 심볼 전수 표기 — Base 닫힌 목록·베이스 유도표 공집합·값 축 유도 3행 등재(마이그레이션 칸 결손 보충)·`_`+대문자 사설 타입·필드 대입식 허용·수신자 관용 정규화·계약 필드·중첩 타입 소속 명시",
       "order_rank": 409,
       "section": "dddjango/agents/design-architect.md/s005",

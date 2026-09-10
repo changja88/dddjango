@@ -1617,3 +1617,4 @@ discipline-houserules-final	s011-3	e16a01d3665ba1478585708b2a3109b7da72193d737a7
 discipline-houserules-final	s018-5	2bfb014acd8678e8ee297d28f586481e632f66b7ae34ee5feb1acc6fc3e271a3	graph	-	-	-	-	rebaseline:2026-09-09 사용자 승인 어댑터 고정 역할 골격·클래스별 파일·170행 트리 및 배치/감수 포인터 반영(R-3468·R-3469)
 discipline-houserules-skill	s001	b9abaf0f652433c1b2802530ad52e5acc821ef50365916ce3b3bd27c7e084311	graph	-	-	-	-	rebaseline:2026-09-09 사용자 승인 어댑터 고정 역할 골격·클래스별 파일·170행 트리 및 배치/감수 포인터 반영(R-3468·R-3469)
 discipline-houserules-skill	s004-1	df111cd3187a211e3bce3ea8111c2d88534697e30b2520badfcd5f7d2fab17b4	graph	-	-	-	-	rebaseline:2026-09-09 사용자 승인 어댑터 고정 역할 골격·클래스별 파일·170행 트리 및 배치/감수 포인터 반영(R-3468·R-3469)
+agent-design-architect	s005	6377a97df67c27bbb393c4daca89392da0844eafc795e804beb04d309a402ce9	graph	-	-	-	-	rebaseline:2026-09-10 pre-gate 전사 수리 — R-3425 rev3 빈 부모 정리 · R-3426 rev4 decorator/TYPE_CHECKING alias 명시 전사

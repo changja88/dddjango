@@ -35,11 +35,20 @@
   file-plan        `<!-- machine: file-plan -->` 직후 ```paths 펜스.
                    1행 = `<add|update|remove[@Ln]|empty><공백|탭><경로>` + 선택 `#` 주석.
                    브레이스·와일드카드·`<placeholder>`·동일 경로 이중 서술 = 형식 red.
+                   비후행 remove 조상 중 최종 사본에서 빈 부모만 정리(symlink 경유 금지).
+                   폴더 정리는 별도 병기하며 파일 실체화 건수에는 넣지 않는다.
   symbols          `<!-- machine: symbols -->` + ```symbols 펜스.
                    1행 = `경로::Symbol[(Base)][ {필드, …}]`     (Symbol = 대문자 또는 `_`+대문자
                                                               선두 — 사설 보조 타입 `_Symbol` 도 클래스)
                        | `경로::Symbol.method(파라미터)[ -> 반환]`   (선행 클래스 행 필수)
                        | `경로::snake_함수[(파라미터)][ -> 반환]`   (소문자 선두 — `_helper` 포함)
+                       | `경로::Symbol @decorator[(인자)]`       (선행 클래스 필수 · 복수 행 순서 보존)
+                       | `경로::alias 이름[: 타입] = 별칭식`      (클래스/함수보다 먼저)
+                       | `경로::alias[TYPE_CHECKING] 이름[: 타입] = 별칭식`
+                         `경로::alias[else] 이름[: 타입] = 별칭식` (같은 파일·이름의 인접한 두 행)
+                   별칭식 = 이름·속성·타입 첨자(내부 타입 표현식 허용), 호출·복합문 금지.
+                   decorator/별칭은 명시 전사만 한다. 필요한 import는 boundary-imports에 적는다.
+                   비-add도 문법을 검증하고 완결된 별칭 이름만 update 자기 해소(S′)에 쓴다.
                    필드 = `name: Type[ = default]` | `NAME = "literal"`(enum 멤버)
                         | `name = <식>`(Django 필드 대입식 등) — bare 이름은 형식 red.
                    미등재 파일 = 심볼 부재(fail-closed).
@@ -95,6 +104,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import errno
 import hashlib
 import io
 import json
@@ -105,7 +115,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
@@ -168,6 +178,9 @@ _FUNC_RE: "re.Pattern[str]" = re.compile(
     r"^([a-z_]\w*)\s*(?:\((.*)\))?\s*(?:->\s*(\S.*?))?\s*$")
 _CLASS_HEAD_RE: "re.Pattern[str]" = re.compile(r"^(_?[A-Z]\w*)\s*(?:\((.*)\))?\s*$")
 _FIELD_RE: "re.Pattern[str]" = re.compile(r"^[A-Za-z_]\w*\s*[:=]\s*\S.*$")
+_DECORATOR_RE: "re.Pattern[str]" = re.compile(r"^([A-Za-z_]\w*)\s+@(.+)$")
+_ALIAS_RE: "re.Pattern[str]" = re.compile(
+    r"^alias(?:\[(TYPE_CHECKING|else)\]\s+|\s+(?=[A-Za-z_]\w*\s*[:=]))(.+)$")
 _IMPORT_ROW_RE: "re.Pattern[str]" = re.compile(
     r"^(\S+)(?:\t+| {2,})((?:from\s+\S+\s+import\s+.+|import\s+\S.*))$")
 _EXC_ROW_RE: "re.Pattern[str]" = re.compile(r"^([A-Za-z_]\w*)(?:\t+| {2,})(\S+)\s*$")
@@ -204,6 +217,16 @@ class Symbol:
     kind: str = "class"  # class | function
     params: str = ""     # function 전용
     ret: str = ""        # function 전용
+    decorators: "list[str]" = field(default_factory=list)
+
+
+@dataclass
+class ModuleAlias:
+    """명시 모듈 별칭 — TYPE_CHECKING 쌍은 두 대입문을 같은 분기로 보존한다."""
+    name: str
+    statement: str
+    type_checking: bool = False
+    runtime: str = ""
 
 
 @dataclass
@@ -227,6 +250,7 @@ class PlanEntry:
     # symbols 채널이 이 경로에 선언한 최상위 이름(클래스·함수·메서드 행의 owner) — 태그 무관 기록. `update` 칸은
     # 스텁 전사 밖이지만 계약 실존의 «자기 update 해소»(S′) 근거가 된다(5단계 리뷰 MAJOR B).
     declared: "list[str]" = field(default_factory=list)
+    aliases: "list[ModuleAlias]" = field(default_factory=list)
 
 
 @dataclass
@@ -454,8 +478,50 @@ def _parse_symbol_rest(rest: str, errors: "list[str]", where: str) -> "Symbol | 
     return sym
 
 
+def _decorator_expr(text: str) -> bool:
+    """데코레이터 이름/호출의 문법만 확인한다 — import 추론이나 실행은 하지 않는다."""
+    try:
+        expr: ast.expr = ast.parse(text, mode="eval").body
+        compile(f"@{text}\nclass _Decorated:\n    ...\n", "<symbols decorator>", "exec")
+    except (SyntaxError, ValueError):
+        return False
+    name: ast.expr = expr.func if isinstance(expr, ast.Call) else expr
+    while isinstance(name, ast.Attribute):
+        name = name.value
+    return isinstance(name, ast.Name)
+
+
+def _alias_name(statement: str) -> "str | None":
+    """한 이름에 대한 타입 별칭 대입만 허용한다. 여러 문장·호출·실행 본문은 범위 밖이다."""
+    try:
+        body: "list[ast.stmt]" = ast.parse(statement).body
+        compile("from __future__ import annotations\n" + statement, "<symbols alias>", "exec")
+    except (SyntaxError, ValueError):
+        return None
+    if len(body) != 1:
+        return None
+    stmt: ast.stmt = body[0]
+    target: "ast.expr | None" = None
+    value: "ast.expr | None" = None
+    if isinstance(stmt, ast.Assign) and len(stmt.targets) == 1:
+        target, value = stmt.targets[0], stmt.value
+    elif isinstance(stmt, ast.AnnAssign):
+        target, value = stmt.target, stmt.value
+    if not isinstance(target, ast.Name) or not isinstance(value, (ast.Name, ast.Attribute, ast.Subscript)):
+        return None
+    allowed: tuple = (ast.Name, ast.Attribute, ast.Subscript, ast.Load, ast.Tuple, ast.List,
+                      ast.Constant, ast.BinOp, ast.BitOr)
+    if any(not isinstance(node, allowed) for node in ast.walk(value)):
+        return None
+    return target.id
+
+
 def _parse_symbols(rows: "list[str]", plan: Plan, errors: "list[str]") -> None:
-    """```symbols 펜스 → PlanEntry.symbols 결합. 메서드 행은 선행 클래스 행이 필수다."""
+    """symbols 전사. 비-add도 새 문법을 검증하되 스텁에 싣지 않고 선언 이름만 S′에 쓴다."""
+    classes: "dict[tuple[str, str], Symbol]" = {}
+    seen_symbols: "set[str]" = set()
+    alias_names: "dict[str, set[str]]" = {}
+    pending: "tuple[str, ModuleAlias] | None" = None
     for raw in rows:
         line: str = raw.strip()
         if not line or line.startswith("#"):
@@ -465,31 +531,80 @@ def _parse_symbols(rows: "list[str]", plan: Plan, errors: "list[str]") -> None:
             errors.append(f"symbols 행 파싱 불가: `{line}`")
             continue
         path: str = m.group(1)
-        parsed: "Symbol | Method | None" = _parse_symbol_rest(m.group(2), errors, path)
-        if parsed is None:
-            continue
+        rest: str = m.group(2).strip()
+        alias_row: "re.Match[str] | None" = _ALIAS_RE.match(rest)
+        if pending and not (alias_row and alias_row.group(1) == "else" and path == pending[0]):
+            errors.append(f"symbols alias TYPE_CHECKING의 인접 else 부재: {pending[0]}::{pending[1].name}")
+            pending = None
         entry: "PlanEntry | None" = plan.entries.get(path)
+        decorator: "re.Match[str] | None" = _DECORATOR_RE.match(rest)
+        if alias_row:
+            branch: str = alias_row.group(1) or ""
+            statement: str = alias_row.group(2)
+            name: "str | None" = _alias_name(statement)
+            if name is None:
+                errors.append(f"symbols alias 대입문 파싱 불가: {path}::{rest}")
+                continue
+            if path in seen_symbols or name in alias_names.get(path, set()):
+                errors.append(f"symbols alias는 클래스/함수보다 앞에 한 번만 선언한다: {path}::{name}")
+                continue
+            alias: ModuleAlias
+            if branch == "else":
+                if pending is None or pending[0] != path or pending[1].name != name:
+                    errors.append(f"symbols alias else의 같은 이름 TYPE_CHECKING 부재: {path}::{name}")
+                    continue
+                alias = pending[1]
+                alias.runtime = statement
+                pending = None
+            else:
+                alias = ModuleAlias(name, statement, type_checking=branch == "TYPE_CHECKING")
+                if alias.type_checking:
+                    pending = (path, alias)
+                    continue
+            alias_names.setdefault(path, set()).add(name)
+            if entry is not None:
+                if name not in entry.declared:
+                    entry.declared.append(name)
+                if entry.tag == "add":
+                    entry.aliases.append(alias)
+        elif decorator:
+            owner: "Symbol | None" = classes.get((path, decorator.group(1)))
+            expression: str = decorator.group(2)
+            if owner is None or not _decorator_expr(expression):
+                errors.append(f"symbols decorator는 선행 클래스와 이름/호출 식이 필요하다: {path}::{rest}")
+                continue
+            owner.decorators.append(expression)
+        else:
+            parsed: "Symbol | Method | None" = _parse_symbol_rest(rest, errors, path)
+            if parsed is None:
+                continue
+            declared_name: str = parsed.name.split(".", 1)[0]
+            if declared_name in alias_names.get(path, set()):
+                errors.append(f"symbols alias와 심볼 이름 중복: {path}::{declared_name}")
+                continue
+            seen_symbols.add(path)
+            if entry is not None and declared_name not in entry.declared:
+                entry.declared.append(declared_name)
+            if isinstance(parsed, Symbol) and parsed.kind == "class":
+                classes[(path, parsed.name)] = parsed
+            if entry is not None and entry.tag == "add":
+                if isinstance(parsed, Method):
+                    owner = classes.get((path, declared_name))
+                    if owner is None:
+                        errors.append(f"symbols 메서드 행의 선행 클래스 부재: {path}::{parsed.name}")
+                        continue
+                    owner.methods.append(Method(name=parsed.name.split(".", 1)[1],
+                                                params=parsed.params, ret=parsed.ret))
+                else:
+                    entry.symbols.append(parsed)
         if entry is None:
-            plan.notes.append(f"symbols 고아 행(file-plan 미등재 — 미반영): {path}::{m.group(2).strip()}")
+            plan.notes.append(f"symbols 고아 행(file-plan 미등재 — 미반영): {path}::{rest}")
             continue
-        declared_name: str = parsed.name.split(".", 1)[0]  # 메서드 행은 owner 클래스 이름
-        if declared_name not in entry.declared:
-            entry.declared.append(declared_name)
         if entry.tag != "add":
             plan.notes.append(f"symbols 미반영(비-add `{entry.tag}` 칸 — 스텁 전사 밖 · update 대상이면 계약 실존의 "
                               f"«자기 update 해소» 근거로만 쓴다): {path}")
-            continue
-        if isinstance(parsed, Method):
-            cls_name: str = parsed.name.split(".", 1)[0]
-            owner: "Symbol | None" = next(
-                (s for s in entry.symbols if s.kind == "class" and s.name == cls_name), None)
-            if owner is None:
-                errors.append(f"symbols 메서드 행의 선행 클래스 부재: {path}::{parsed.name}")
-                continue
-            owner.methods.append(Method(name=parsed.name.split(".", 1)[1],
-                                        params=parsed.params, ret=parsed.ret))
-        else:
-            entry.symbols.append(parsed)
+    if pending:
+        errors.append(f"symbols alias TYPE_CHECKING의 인접 else 부재: {pending[0]}::{pending[1].name}")
 
 
 def _parse_imports(rows: "list[str]", plan: Plan, errors: "list[str]") -> None:
@@ -686,6 +801,8 @@ def parse_spec(text: str) -> "tuple[Plan | None, list[str]]":
         dropped: "list[str]" = []
         if is_init and entry.symbols:
             dropped.append(f"symbols {len(entry.symbols)}")
+        if (is_init or not entry.symbols) and entry.aliases:
+            dropped.append(f"aliases {len(entry.aliases)}")
         if (is_init or not entry.symbols) and entry.imports:
             dropped.append(f"imports {len(entry.imports)}")
         if (is_init or not entry.symbols) and entry.raises:
@@ -696,6 +813,7 @@ def parse_spec(text: str) -> "tuple[Plan | None, list[str]]":
         plan.notes.append(f"마이그레이션 {what} — 채널 전사 무시(도구 산출물 #593 · {', '.join(dropped)}): {entry.path}")
         if is_init:
             entry.symbols = []
+        entry.aliases = []
         entry.imports = []
         entry.raises = []
     return plan, errors
@@ -737,7 +855,7 @@ def _class_stub(sym: Symbol, meta_db_table: "str | None" = None) -> "list[str]":
     `meta_db_table` 이 주어지고 필드에 `db_table` 전사가 없으면 `class Meta` 를 합성한다(#630
     유도 규칙과 byte 동치 — 결손 시만·전사 우선)."""
     head: str = f"class {sym.name}({sym.base}):" if sym.base else f"class {sym.name}:"
-    lines: "list[str]" = [head, '    """계획 스텁."""']
+    lines: "list[str]" = [f"@{expr}" for expr in sym.decorators] + [head, '    """계획 스텁."""']
     body: "list[str]" = [f"    {chunk}" for chunk in sym.fields]
     field_heads: "set[str]" = {f.split("=")[0].split(":")[0].strip() for f in sym.fields}
     if meta_db_table is not None and "db_table" not in field_heads:
@@ -793,7 +911,7 @@ def render_stub(entry: PlanEntry) -> str:
     # [신규 4] base 채널 — 무기재 클래스에만 결합(전사 우선·fail-closed). import 합성 «전»에
     # 치환해야 신호 베이스도 화이트리스트 import 를 받는다.
     symbols: "list[Symbol]" = [
-        Symbol(name=s.name, base=sig.base, fields=s.fields, methods=s.methods)
+        replace(s, base=sig.base)
         if (s.kind == "class" and not s.base and sig.base) else s
         for s in entry.symbols
     ]
@@ -815,6 +933,12 @@ def render_stub(entry: PlanEntry) -> str:
     if sig.markers:
         marks: str = ", ".join(f"pytest.mark.{m}" for m in sig.markers)
         lines.append(f"pytestmark: list = [{marks}]")
+        lines.append("")
+    for alias in entry.aliases:
+        if alias.type_checking:
+            lines.extend(["if TYPE_CHECKING:", f"    {alias.statement}", "else:", f"    {alias.runtime}"])
+        else:
+            lines.append(alias.statement)
         lines.append("")
     for sym in symbols:
         if sym.kind == "function":
@@ -988,6 +1112,31 @@ def lift_realized_adds(copy: Path, plan: Plan, explicit_base: bool,
     return frozenset(lifted)
 
 
+def _prune_removed_parents(copy: Path, plan: Plan) -> "list[str]":
+    """비후행 remove의 조상 중 최종 사본에서 빈 폴더만 정리한다(overlay 선삭제 포함)."""
+    candidates: "set[Path]" = set()
+    for entry in plan.entries.values():
+        if entry.tag != "remove" or entry.deferred_remove:
+            continue
+        parent: Path = Path(entry.path).parent
+        while parent.parts and str(parent) != ".":
+            candidates.add(parent)
+            parent = parent.parent
+    removed: "list[str]" = []
+    for relative in sorted(candidates, key=lambda p: (-len(p.parts), p.as_posix())):
+        # rmdir 자체는 symlink를 따르지 않지만 symlink 조상 아래의 실디렉터리는 따라간다.
+        if any((copy / p).is_symlink() for p in (relative, *relative.parents)):
+            continue
+        try:
+            (copy / relative).rmdir()
+        except OSError as exc:
+            if exc.errno not in (errno.ENOENT, errno.ENOTEMPTY):
+                raise RunError(f"remove 빈 부모 정리 실패: {relative} — {exc}") from exc
+        else:
+            removed.append(relative.as_posix() + "/")
+    return removed
+
+
 def materialize(copy: Path, plan: Plan, *, realized: "frozenset[str]" = frozenset(),
                 base_short: str = "", promoted: "frozenset[str]" = frozenset()) -> "dict[str, list[str]]":
     """태그 의미론(D2)대로 사본 위에 팬텀을 겹친다 — add 실존 충돌은 FormError.
@@ -1001,7 +1150,8 @@ def materialize(copy: Path, plan: Plan, *, realized: "frozenset[str]" = frozense
     모순)뿐이므로 여전히 형식 red 다. `--base` 미지정 경로는 판정(exit·귀속·ID) 동일이다 — 리포트의 집계 행 문면
     (계약 실존 «자기 update 해소» 열 등)은 판과 함께 변한다.
 
-    반환: materialized / already_built / unsimulated 목록(리포트 재료 — 침묵 금지).
+    반환: materialized / already_built / unsimulated / pruned_dirs 목록(리포트 재료).
+    빈 부모 정리는 Git 파일 차분이 아니므로 materialized 건수에 넣지 않는다.
     """
     report: "dict[str, list[str]]" = {"materialized": [], "already_built": [], "unsimulated": []}
     for entry in plan.entries.values():
@@ -1049,11 +1199,12 @@ def materialize(copy: Path, plan: Plan, *, realized: "frozenset[str]" = frozense
                     f"update(승격 형태 실존 — 예외 통과 · 파일 `<칸>.py` 는 기준선 부재 · 실존 채널은 ⑴ 판정): {entry.path}")
             else:
                 report["unsimulated"].append(f"update(시뮬레이션 밖 — ② 화이트리스트 정형 append 한정): {entry.path}")
-    # 신규 BC 골격 전량 — 앵커 커밋에 없던 BC 만(② 화이트리스트 · #488 오탐 형태 소멸).
+    report["pruned_dirs"] = _prune_removed_parents(copy, plan)
+    # 신규 BC 골격 전량 — add/empty가 있으며 앵커에 없던 BC만. remove로 전멸한 BC는 재생하지 않는다.
     new_bcs: "set[str]" = set()
     for entry in plan.entries.values():
         parts: "tuple[str, ...]" = PurePosixPath(entry.path).parts
-        if len(parts) >= 2 and parts[0] == "application":
+        if entry.tag in ("add", "empty") and len(parts) >= 2 and parts[0] == "application":
             new_bcs.add(parts[1])
     for bc in sorted(new_bcs):
         listed: "subprocess.CompletedProcess[bytes]" = _git(
@@ -1585,9 +1736,11 @@ def write_report(report_path: Path, spec: Path, base_ref: str, base_sha: str, ve
         lines.append(f"- already-built: {item}")
     for item in mat.get("unsimulated", []):
         lines.append(f"- 미시뮬레이션: {item}")
+    for item in mat.get("pruned_dirs", []):
+        lines.append(f"- remove 빈 부모 정리: {item}")
     for note in notes:
         lines.append(f"- 채널 메모: {note}")
-    if not (mat.get("already_built") or mat.get("unsimulated") or notes):
+    if not (mat.get("already_built") or mat.get("unsimulated") or mat.get("pruned_dirs") or notes):
         lines.append("- (없음)")
     lines += ["", "### 사각 목록(상시 병기)", ""]
     lines.extend(f"- {spot}" for spot in BLIND_SPOTS)
@@ -1932,6 +2085,9 @@ def main(argv: "list[str]") -> int:
         if own_note is not None:
             existence.undecidable_notes.append(own_note)
         defects: int = len(existence.defects)
+        cleanup_notes: "list[str]" = [f"remove 빈 부모 정리: {p}" for p in mat["pruned_dirs"]]
+        for note in cleanup_notes:
+            print(note)
 
         if not mat["materialized"]:
             reason = ("skip — 실체화 0건(add/empty/remove 실효 조치 없음): "
@@ -1943,7 +2099,7 @@ def main(argv: "list[str]") -> int:
             _print_existence(existence)
             print(f"\n요약: 실체화 0 · 실존 결손 {defects}건 · 기준선 {base_sha[:12]} · 모드 차단")
             write_report_stub(report_path, spec_path, base_ref, base_sha, verdict_stub,
-                              [reason] + [f"미시뮬레이션: {x}" for x in mat["unsimulated"]], blk_hash,
+                              [reason] + [f"미시뮬레이션: {x}" for x in mat["unsimulated"]] + cleanup_notes, blk_hash,
                               existence=existence)
             return 5 if defects else 4
 
