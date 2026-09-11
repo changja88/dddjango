@@ -1,0 +1,101 @@
+[
+  {
+    "doc_key": "agent-design-architect",
+    "section_key": "s005",
+    "baseline_sha256": "273e582ab5bf506a12a5d02a373b7ae5f09a769d2fda6de7275a004b5f1f868e",
+    "owner": "graph",
+    "migrated_sha256": "-",
+    "block_total": "-",
+    "block_norm": "-",
+    "commit": "-",
+    "note": "rebaseline:2026-09-11 Task6 approved field-report-4 followup — existing Work amendments; rendered graph baseline aligned, migrated provenance/owner/counts preserved"
+  },
+  {
+    "doc_key": "agent-design-review-api",
+    "section_key": "s006",
+    "baseline_sha256": "c05d22c6bf514bb82cc894518be0e291f1362332f3518c52379f5f04baeb52c9",
+    "owner": "graph",
+    "migrated_sha256": "-",
+    "block_total": "-",
+    "block_norm": "-",
+    "commit": "-",
+    "note": "rebaseline:2026-09-11 Task6 approved field-report-4 followup — existing Work amendments; rendered graph baseline aligned, migrated provenance/owner/counts preserved"
+  },
+  {
+    "doc_key": "agent-discipline-reviewer",
+    "section_key": "s007",
+    "baseline_sha256": "afd8ca21c14cb27e2089e14a00cf7bf5c6fe0af4dbf8966c872c580847d1cb0d",
+    "owner": "graph",
+    "migrated_sha256": "-",
+    "block_total": "-",
+    "block_norm": "-",
+    "commit": "-",
+    "note": "rebaseline:2026-09-11 Task6 approved field-report-4 followup — existing Work amendments; rendered graph baseline aligned, migrated provenance/owner/counts preserved"
+  },
+  {
+    "doc_key": "command-dddjango",
+    "section_key": "s006",
+    "baseline_sha256": "288b3693a492dee2b39c07dfa3c330eb7832060c11175494ed37d3c61e012205",
+    "owner": "graph",
+    "migrated_sha256": "-",
+    "block_total": "-",
+    "block_norm": "-",
+    "commit": "-",
+    "note": "rebaseline:2026-09-11 Task6 approved field-report-4 followup — existing Work amendments; rendered graph baseline aligned, migrated provenance/owner/counts preserved"
+  },
+  {
+    "doc_key": "discipline-houserules-final",
+    "section_key": "s003-0",
+    "baseline_sha256": "337f2f48e8157c93be09c8431e909b638192d8eb9b4068a7f2ae6258f251722d",
+    "owner": "graph",
+    "migrated_sha256": "-",
+    "block_total": "-",
+    "block_norm": "-",
+    "commit": "-",
+    "note": "rebaseline:2026-09-11 Task6 approved field-report-4 followup — existing Work amendments; rendered graph baseline aligned, migrated provenance/owner/counts preserved"
+  },
+  {
+    "doc_key": "discipline-houserules-skill",
+    "section_key": "s004-1",
+    "baseline_sha256": "a1df8096b8c764514d96383c87200e93f8771f97f6bbccc6398a293d8b162331",
+    "owner": "graph",
+    "migrated_sha256": "-",
+    "block_total": "-",
+    "block_norm": "-",
+    "commit": "-",
+    "note": "rebaseline:2026-09-11 Task6 approved field-report-4 followup — existing Work amendments; rendered graph baseline aligned, migrated provenance/owner/counts preserved"
+  },
+  {
+    "doc_key": "discipline-houserules-skill",
+    "section_key": "s007-4",
+    "baseline_sha256": "40c1c8416963eaf8c72560627b272c8ccf2bd63dcf4d2fb7cbb215fc1f04e5df",
+    "owner": "graph",
+    "migrated_sha256": "-",
+    "block_total": "-",
+    "block_norm": "-",
+    "commit": "-",
+    "note": "rebaseline:2026-09-11 Task6 approved field-report-4 followup — existing Work amendments; rendered graph baseline aligned, migrated provenance/owner/counts preserved"
+  },
+  {
+    "doc_key": "implementation-django-ninja-final",
+    "section_key": "s023-6.2",
+    "baseline_sha256": "68ea52bea42066fd7d5d2f22e08f089fe392fba9d1af66d321935b70a8b0e70d",
+    "owner": "graph",
+    "migrated_sha256": "-",
+    "block_total": "-",
+    "block_norm": "-",
+    "commit": "-",
+    "note": "rebaseline:2026-09-11 Task6 approved field-report-4 followup — existing Work amendments; rendered graph baseline aligned, migrated provenance/owner/counts preserved"
+  },
+  {
+    "doc_key": "implementation-django-ninja-skill",
+    "section_key": "s004",
+    "baseline_sha256": "ffe4dcd624079791fb136eb456a4edc39ffb8994d879dba9ab895cca16555a2d",
+    "owner": "graph",
+    "migrated_sha256": "-",
+    "block_total": "-",
+    "block_norm": "-",
+    "commit": "-",
+    "note": "rebaseline:2026-09-11 Task6 approved field-report-4 followup — existing Work amendments; rendered graph baseline aligned, migrated provenance/owner/counts preserved"
+  }
+]

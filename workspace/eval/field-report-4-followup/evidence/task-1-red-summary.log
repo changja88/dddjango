@@ -1,0 +1,15 @@
+test_declaration_only_cli_and_report_dispositions (__main__.FieldReportTest.test_declaration_only_cli_and_report_dispositions) ... FAIL
+
+======================================================================
+FAIL: test_declaration_only_cli_and_report_dispositions (__main__.FieldReportTest.test_declaration_only_cli_and_report_dispositions)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 421, in test_declaration_only_cli_and_report_dispositions
+    self.assertEqual(pg.check_report(text, disposed)[2].get("declarations"), "1")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != '1'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.397s
+
+FAILED (failures=1)

@@ -1,0 +1,258 @@
+mode baseline=False tag=add explicit=False: exit 3 (expected 3)
+mode baseline=False tag=add explicit=True: exit 0 (expected 0)
+mode baseline=False tag=empty explicit=False: exit 3 (expected 3)
+mode baseline=False tag=empty explicit=True: exit 0 (expected 0)
+mode baseline=False tag=update explicit=False: exit 3 (expected 3)
+mode baseline=False tag=update explicit=True: exit 3 (expected 3)
+mode baseline=True tag=add explicit=False: exit 3 (expected 3)
+mode baseline=True tag=add explicit=True: exit 3 (expected 3)
+mode baseline=True tag=empty explicit=False: exit 3 (expected 3)
+mode baseline=True tag=empty explicit=True: exit 3 (expected 3)
+mode baseline=True tag=update explicit=False: exit 4 (expected 4)
+mode baseline=True tag=update explicit=True: exit 4 (expected 4)
+mode baseline=False tag=add explicit=False: exit 3 != 3 or missing execution mode
+형식 red — add 충돌(실존): application/orders/domain_layer/shared_value_object/lane_marker.py — 계획과 실물의 모순은 그 자체가 발견이다
+
+요약: 형식 red 1건(add 충돌 1) · 기준선 faf858a9423e · 모드 차단
+
+mode baseline=False tag=add explicit=False: missing specific cause 기준선 부재·오버레이 실존
+mode baseline=False tag=add explicit=False: file-plan scope guidance absent
+mode baseline=False tag=add explicit=True: exit 0 != 0 or missing execution mode
+
+### 선언 확정 (0건)
+
+- (없음)
+
+### 선언 후보 (0건)
+
+- (없음)
+# design_pregate — 예보 실행 · 기준선 faf858a9423e (--base HEAD) · 모드 차단(enforce) · 실행기: design_pregate.py · dddjango v2.18.2 · 블록 해시 5efa02bf1fe7
+(예보는 Phase 2 step 6(G2 registry 게이트)의 실행·증거 요구를 어떤 형태로도 대체·축약하지 않는다.)
+실체화 1건 · dirty overlay 1건 · 미시뮬레이션 0건 · already-built 1건
+
+# registry_gate — 판정 차분 · copy · 앵커 36552e4742e3
+툴체인: dddjango v2.18.2 · py3.14 · 실행 트리 digest 515cdaae8cfbccab(39파일) · 경로 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts
+**귀속 0 ≠ 전체 clean** — 이 게이트는 «이번 런이 위반을 늘렸나»만 판정한다(legacy 격리).
+| 검사기 | anchor | current |
+|---|---|---|
+| `check-mechanism-ownership.py` | 0 | 0 |
+| `check-error-centralization.py` | 0 | 0 |
+| `check-response-schema-bypass.py` | 0 | 0 |
+| `check-layer-skeleton.py` | 2 | 2 |
+| `check-openapi-error-declaration.py` | 0 | 0 |
+| `check-context-isolation.py` | 0 | 0 |
+| `check-app-container.py` | 0 | 0 |
+| `check-ninja-boundary-middleware.py` | 0 | 0 |
+| `check-common-container.py` | 0 | 0 |
+| `check-idempotency-scope-creep.py` | 0 | 0 |
+| `check-public-surface-annotation.py` | 0 | 0 |
+| `check-test-config.py` | 0 | 0 |
+| `check-transient-overmapping.py` | 0 | 0 |
+| `check-synthetic-infra-exc.py` | 2 | 2 |
+| `check-api-error-controller-contract.py` | 0 | 0 |
+| `check-composition-root.py` | 0 | 0 |
+| `check-db-table.py` | 2 | 2 |
+| `check-choices-literal-consumption.py` | 0 | 0 |
+| `check-usecase-dto-placement.py` | 2 | 2 |
+| `check-transaction-boundary.py` | 0 | 0 |
+| `check-domain-model.py` | 0 | 0 |
+| `check-port-adapter-pairing.py` | 2 | 2 |
+| `check-event-publish.py` | 0 | 0 |
+| `check-broker-contract.py` | 0 | 0 |
+| `check-missable-entrance.py` | 0 | 0 |
+| `check-naming.py` | 0 | 0 |
+| `check-business-vocabulary.py` | 0 | 0 |
+
+== 귀속(N∖L) 0건 ==
+
+== legacy 잔존(L∩N) 12건 · 해소(L∖N) 0건 ==
+  check-db-table.py: 1
+  check-layer-skeleton.py: 8
+  check-port-adapter-pairing.py: 1
+  check-synthetic-infra-exc.py: 1
+  check-usecase-dto-placement.py: 1
+
+== ⓓ 신규(N′∖L′) 1건 · legacy 0건 · 해소 0건 — exit 불산입 · 감수자 입력은 신규분만(R-0284) ==
+  check-domain-model.py :: [ⓓ#268] application/orders/domain_layer/shared_value_object/lane_marker.py:N: `LaneMarker` 의 __init__/__post_init__ 에 raise 가 없다 — 값 객체는 만들어지는 시점에 스스로 검증한다 — 물음: Q2 — 이 타입 조합만으로 잘못된 값이 «불가능»한가
+
+귀속 레코드 sidecar → /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/design-pregate-zni1m5m8/introduced.json (레코드 0 · 대응 없는 귀속 라인 0)
+
+판정: 귀속 0건 → green(신규 위반 없음)
+
+== 예보 항목 0건 ==
+  채널 메모: S5 use-case-effects 무기재 — 읽기/쓰기 효과 미검증
+
+== 계약 실존 결손 0건 (boundary-imports 3단) ==
+  집계: 행 0 · 이름 판정 0 · 실존 확인 0 · 자기 add 해소 0 · 자기 update 해소 0 · 저장소 밖(검사 밖) 0 · 판정 불능 0 · 결손 0(항목 0)
+  (없음) — 명세가 선언한 경계 import 계약 전건 실존(저장소 밖 0건은 검사 밖·자기 add 0건은 symbols 채널 소관·자기 update 0건은 update 칸 symbols 선언)
+
+판정: 예보 green — P/S/I급 결정 계약 위반 예보 0(«설계 검증됨» 아님) · 선언 확정 0건 · 계약 실존 결손 0건(권고·비차단)
+요약: 귀속 0건 · 실존 결손 0건 · 기준선 faf858a9423e · 모드 차단
+
+예보 리포트 append → /private/var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/tmpgrm5_ey4/mode-False-add-True.md
+
+mode baseline=False tag=add explicit=True: file-plan scope guidance absent
+mode baseline=False tag=empty explicit=False: exit 3 != 3 or missing execution mode
+형식 red — empty 충돌(실존): application/orders/domain_layer/shared_value_object/lane_marker.py — 계획과 실물의 모순은 그 자체가 발견이다
+
+요약: 형식 red 1건(empty 충돌 1) · 기준선 faf858a9423e · 모드 차단
+
+mode baseline=False tag=empty explicit=False: file-plan scope guidance absent
+mode baseline=False tag=empty explicit=True: exit 0 != 0 or missing execution mode
+
+### 선언 확정 (0건)
+
+- (없음)
+
+### 선언 후보 (0건)
+
+- (없음)
+# design_pregate — 예보 실행 · 기준선 faf858a9423e (--base HEAD) · 모드 차단(enforce) · 실행기: design_pregate.py · dddjango v2.18.2 · 블록 해시 06cc093777f9
+(예보는 Phase 2 step 6(G2 registry 게이트)의 실행·증거 요구를 어떤 형태로도 대체·축약하지 않는다.)
+실체화 1건 · dirty overlay 1건 · 미시뮬레이션 0건 · already-built 1건
+
+# registry_gate — 판정 차분 · copy · 앵커 e017d8c3dcdf
+툴체인: dddjango v2.18.2 · py3.14 · 실행 트리 digest 515cdaae8cfbccab(39파일) · 경로 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts
+**귀속 0 ≠ 전체 clean** — 이 게이트는 «이번 런이 위반을 늘렸나»만 판정한다(legacy 격리).
+| 검사기 | anchor | current |
+|---|---|---|
+| `check-mechanism-ownership.py` | 0 | 0 |
+| `check-error-centralization.py` | 0 | 0 |
+| `check-response-schema-bypass.py` | 0 | 0 |
+| `check-layer-skeleton.py` | 2 | 2 |
+| `check-openapi-error-declaration.py` | 0 | 0 |
+| `check-context-isolation.py` | 0 | 0 |
+| `check-app-container.py` | 0 | 0 |
+| `check-ninja-boundary-middleware.py` | 0 | 0 |
+| `check-common-container.py` | 0 | 0 |
+| `check-idempotency-scope-creep.py` | 0 | 0 |
+| `check-public-surface-annotation.py` | 0 | 0 |
+| `check-test-config.py` | 0 | 0 |
+| `check-transient-overmapping.py` | 0 | 0 |
+| `check-synthetic-infra-exc.py` | 2 | 2 |
+| `check-api-error-controller-contract.py` | 0 | 0 |
+| `check-composition-root.py` | 0 | 0 |
+| `check-db-table.py` | 2 | 2 |
+| `check-choices-literal-consumption.py` | 0 | 0 |
+| `check-usecase-dto-placement.py` | 2 | 2 |
+| `check-transaction-boundary.py` | 0 | 0 |
+| `check-domain-model.py` | 0 | 0 |
+| `check-port-adapter-pairing.py` | 2 | 2 |
+| `check-event-publish.py` | 0 | 0 |
+| `check-broker-contract.py` | 0 | 0 |
+| `check-missable-entrance.py` | 0 | 0 |
+| `check-naming.py` | 0 | 0 |
+| `check-business-vocabulary.py` | 0 | 0 |
+
+== 귀속(N∖L) 0건 ==
+
+== legacy 잔존(L∩N) 12건 · 해소(L∖N) 0건 ==
+  check-db-table.py: 1
+  check-layer-skeleton.py: 8
+  check-port-adapter-pairing.py: 1
+  check-synthetic-infra-exc.py: 1
+  check-usecase-dto-placement.py: 1
+
+귀속 레코드 sidecar → /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/design-pregate-tbwx19zi/introduced.json (레코드 0 · 대응 없는 귀속 라인 0)
+
+판정: 귀속 0건 → green(신규 위반 없음)
+
+== 예보 항목 0건 ==
+  채널 메모: S5 use-case-effects 무기재 — 읽기/쓰기 효과 미검증
+
+== 계약 실존 결손 0건 (boundary-imports 3단) ==
+  집계: 행 0 · 이름 판정 0 · 실존 확인 0 · 자기 add 해소 0 · 자기 update 해소 0 · 저장소 밖(검사 밖) 0 · 판정 불능 0 · 결손 0(항목 0)
+  (없음) — 명세가 선언한 경계 import 계약 전건 실존(저장소 밖 0건은 검사 밖·자기 add 0건은 symbols 채널 소관·자기 update 0건은 update 칸 symbols 선언)
+
+판정: 예보 green — P/S/I급 결정 계약 위반 예보 0(«설계 검증됨» 아님) · 선언 확정 0건 · 계약 실존 결손 0건(권고·비차단)
+요약: 귀속 0건 · 실존 결손 0건 · 기준선 faf858a9423e · 모드 차단
+
+예보 리포트 append → /private/var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/tmpgrm5_ey4/mode-False-empty-True.md
+
+mode baseline=False tag=empty explicit=True: file-plan scope guidance absent
+mode baseline=False tag=update explicit=False: exit 3 != 3 or missing execution mode
+형식 red — 1건 (계획↔기준선 모순 · architect 반송 재료):
+  update 대상 부재: application/orders/domain_layer/shared_value_object/lane_marker.py — 기준선 faf858a9423e 에 없는 경로는 add 다(재라벨 도피 금지)
+
+요약: 형식 red 1건(update 대상 부재 1) · 기준선 faf858a9423e · 모드 차단
+
+mode baseline=False tag=update explicit=False: absent update needs both execution purposes
+mode baseline=False tag=update explicit=False: file-plan scope guidance absent
+mode baseline=False tag=update explicit=True: exit 3 != 3 or missing execution mode
+형식 red — 1건 (계획↔기준선 모순 · architect 반송 재료):
+  update 대상 부재: application/orders/domain_layer/shared_value_object/lane_marker.py — 기준선 faf858a9423e 에 없는 경로는 add 다(재라벨 도피 금지)
+
+요약: 형식 red 1건(update 대상 부재 1) · 기준선 faf858a9423e · 모드 차단
+
+mode baseline=False tag=update explicit=True: absent update needs both execution purposes
+mode baseline=False tag=update explicit=True: file-plan scope guidance absent
+mode baseline=True tag=add explicit=False: exit 3 != 3 or missing execution mode
+형식 red — 1건 (계획↔기준선 모순 · architect 반송 재료):
+  add 충돌(실존): application/orders/domain_layer/shared_value_object/lane_marker.py — 계획과 실물의 모순은 그 자체가 발견이다
+
+요약: 형식 red 1건(add 충돌 1) · 기준선 400451d9d077 · 모드 차단
+
+mode baseline=True tag=add explicit=False: missing specific cause 기준선 실존
+mode baseline=True tag=add explicit=False: file-plan scope guidance absent
+mode baseline=True tag=add explicit=True: exit 3 != 3 or missing execution mode
+형식 red — 1건 (계획↔기준선 모순 · architect 반송 재료):
+  add 충돌(실존): application/orders/domain_layer/shared_value_object/lane_marker.py — 계획과 실물의 모순은 그 자체가 발견이다
+
+요약: 형식 red 1건(add 충돌 1) · 기준선 400451d9d077 · 모드 차단
+
+mode baseline=True tag=add explicit=True: missing specific cause 기준선 실존
+mode baseline=True tag=add explicit=True: file-plan scope guidance absent
+mode baseline=True tag=empty explicit=False: exit 3 != 3 or missing execution mode
+형식 red — 1건 (계획↔기준선 모순 · architect 반송 재료):
+  empty 충돌(실존): application/orders/domain_layer/shared_value_object/lane_marker.py — 새 빈 파일 자리가 기준선 400451d9d077 에 이미 있다: 기실현이면 update 다(재라벨 도피 금지)
+
+요약: 형식 red 1건(empty 충돌 1) · 기준선 400451d9d077 · 모드 차단
+
+mode baseline=True tag=empty explicit=False: file-plan scope guidance absent
+mode baseline=True tag=empty explicit=True: exit 3 != 3 or missing execution mode
+형식 red — 1건 (계획↔기준선 모순 · architect 반송 재료):
+  empty 충돌(실존): application/orders/domain_layer/shared_value_object/lane_marker.py — 새 빈 파일 자리가 기준선 400451d9d077 에 이미 있다: 기실현이면 update 다(재라벨 도피 금지)
+
+요약: 형식 red 1건(empty 충돌 1) · 기준선 400451d9d077 · 모드 차단
+
+mode baseline=True tag=empty explicit=True: file-plan scope guidance absent
+mode baseline=True tag=update explicit=False: exit 4 != 4 or missing execution mode
+
+### 선언 확정 (0건)
+
+- (없음)
+
+### 선언 후보 (0건)
+
+- (없음)
+skip — 실체화 0건(add/empty/remove 및 제한 update 실효 조치 없음): 게이트를 부르지 않는다(공허 차분 가드 · 사유 명시)
+  채널 메모: S5 use-case-effects 무기재 — 읽기/쓰기 효과 미검증
+  미시뮬레이션: S5 update(OHS 서비스 본체 밖; marker 후상태 무기재 — 유지): application/orders/domain_layer/shared_value_object/lane_marker.py
+
+== 계약 실존 결손 0건 (boundary-imports 3단) ==
+  집계: 행 0 · 이름 판정 0 · 실존 확인 0 · 자기 add 해소 0 · 자기 update 해소 0 · 저장소 밖(검사 밖) 0 · 판정 불능 0 · 결손 0(항목 0)
+  (없음) — 명세가 선언한 경계 import 계약 전건 실존(저장소 밖 0건은 검사 밖·자기 add 0건은 symbols 채널 소관·자기 update 0건은 update 칸 symbols 선언)
+
+요약: 실체화 0 · 실존 결손 0건 · 선언 확정 0건 · 기준선 400451d9d077 · 모드 차단
+
+mode baseline=True tag=update explicit=False: file-plan scope guidance absent
+mode baseline=True tag=update explicit=True: exit 4 != 4 or missing execution mode
+
+### 선언 확정 (0건)
+
+- (없음)
+
+### 선언 후보 (0건)
+
+- (없음)
+skip — 실체화 0건(add/empty/remove 및 제한 update 실효 조치 없음): 게이트를 부르지 않는다(공허 차분 가드 · 사유 명시)
+  채널 메모: S5 use-case-effects 무기재 — 읽기/쓰기 효과 미검증
+  미시뮬레이션: S5 update(OHS 서비스 본체 밖; marker 후상태 무기재 — 유지): application/orders/domain_layer/shared_value_object/lane_marker.py
+
+== 계약 실존 결손 0건 (boundary-imports 3단) ==
+  집계: 행 0 · 이름 판정 0 · 실존 확인 0 · 자기 add 해소 0 · 자기 update 해소 0 · 저장소 밖(검사 밖) 0 · 판정 불능 0 · 결손 0(항목 0)
+  (없음) — 명세가 선언한 경계 import 계약 전건 실존(저장소 밖 0건은 검사 밖·자기 add 0건은 symbols 채널 소관·자기 update 0건은 update 칸 symbols 선언)
+
+요약: 실체화 0 · 실존 결손 0건 · 선언 확정 0건 · 기준선 400451d9d077 · 모드 차단
+
+mode baseline=True tag=update explicit=True: file-plan scope guidance absent

@@ -1,0 +1,7 @@
+test_validation_scan_respects_owning_cache_only_area_and_usecase (__main__.CacheInstanceRegression.test_validation_scan_respects_owning_cache_only_area_and_usecase) ... ok
+test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates (__main__.CacheInstanceRegression.test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 5.315s
+
+OK

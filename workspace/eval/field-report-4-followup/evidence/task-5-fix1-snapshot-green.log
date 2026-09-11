@@ -1,0 +1,8 @@
+test_nested_application_container_uses_same_optional_slots_as_direct_checker (registry_gate_smoke.CacheSnapshotRegression.test_nested_application_container_uses_same_optional_slots_as_direct_checker) ... ok
+test_snapshot_gate_skips_only_optional_cache_and_preserves_original_bytes (registry_gate_smoke.CacheSnapshotRegression.test_snapshot_gate_skips_only_optional_cache_and_preserves_original_bytes) ... ok
+test_snapshot_keeps_fixed_parents_hidden_files_empty_instances_and_other_parents (registry_gate_smoke.CacheSnapshotRegression.test_snapshot_keeps_fixed_parents_hidden_files_empty_instances_and_other_parents) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 9.647s
+
+OK

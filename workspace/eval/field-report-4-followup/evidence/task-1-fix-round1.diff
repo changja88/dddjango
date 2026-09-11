@@ -1,0 +1,130 @@
+--- before-fix-round1/dddjango/scripts/design_pregate.py
++++ after-fix-round1/dddjango/scripts/design_pregate.py
+@@ -1395,6 +1395,7 @@
+     if "pytest" in bindings and "pytest" not in pytest_aliases:
+         return None, "pytest 이름 재바인딩/충돌"
+     stores: list[ast.AST] = []
++    mutations: list[ast.Subscript] = []
+     def visit(node: ast.AST) -> None:
+         if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+             if node.name == "pytestmark":
+@@ -1402,9 +1403,17 @@
+             return
+         if isinstance(node, ast.Name) and isinstance(node.ctx, (ast.Store, ast.Del)) and node.id == "pytestmark":
+             stores.append(node)
++        if isinstance(node, ast.Subscript) and isinstance(node.ctx, (ast.Store, ast.Del)):
++            root: ast.expr = node.value
++            while isinstance(root, (ast.Subscript, ast.Attribute)):
++                root = root.value
++            if isinstance(root, ast.Name) and root.id == "pytestmark":
++                mutations.append(node)
+         for child in ast.iter_child_nodes(node):
+             visit(child)
+     visit(module)
++    if mutations:
++        return None, "module pytestmark subscript mutation — 최종 목록 미해소"
+     assignments = [node for node in module.body if
+         isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name)
+         and node.targets[0].id == "pytestmark" or isinstance(node, ast.AnnAssign)
+@@ -1424,7 +1433,8 @@
+     if assignments and not simple(assignments[0].value):
+         return None, "module pytestmark 호출/동적 표현 — 전사 미지원"
+     statement = "pytestmark = [" + ", ".join("pytest.mark." + name for name in entry.signals.markers) + "]"
+-    import_needed = bool(entry.signals.markers) and "pytest" not in pytest_aliases
++    # 새 목록은 기존 일반 import 앞에 삽입되므로 그 위치에서 쓸 pytest binding을 함께 만든다.
++    import_needed = bool(entry.signals.markers) and ("pytest" not in pytest_aliases or not assignments)
+     lines = original.splitlines(keepends=True)
+     def offset(line: int, column: int = 0) -> int:
+         return sum(len(part) for part in lines[:line - 1]) + column
+--- before-fix-round1/codex-dddjango/skills/dddjango/scripts/design_pregate.py
++++ after-fix-round1/codex-dddjango/skills/dddjango/scripts/design_pregate.py
+@@ -1395,6 +1395,7 @@
+     if "pytest" in bindings and "pytest" not in pytest_aliases:
+         return None, "pytest 이름 재바인딩/충돌"
+     stores: list[ast.AST] = []
++    mutations: list[ast.Subscript] = []
+     def visit(node: ast.AST) -> None:
+         if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+             if node.name == "pytestmark":
+@@ -1402,9 +1403,17 @@
+             return
+         if isinstance(node, ast.Name) and isinstance(node.ctx, (ast.Store, ast.Del)) and node.id == "pytestmark":
+             stores.append(node)
++        if isinstance(node, ast.Subscript) and isinstance(node.ctx, (ast.Store, ast.Del)):
++            root: ast.expr = node.value
++            while isinstance(root, (ast.Subscript, ast.Attribute)):
++                root = root.value
++            if isinstance(root, ast.Name) and root.id == "pytestmark":
++                mutations.append(node)
+         for child in ast.iter_child_nodes(node):
+             visit(child)
+     visit(module)
++    if mutations:
++        return None, "module pytestmark subscript mutation — 최종 목록 미해소"
+     assignments = [node for node in module.body if
+         isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name)
+         and node.targets[0].id == "pytestmark" or isinstance(node, ast.AnnAssign)
+@@ -1424,7 +1433,8 @@
+     if assignments and not simple(assignments[0].value):
+         return None, "module pytestmark 호출/동적 표현 — 전사 미지원"
+     statement = "pytestmark = [" + ", ".join("pytest.mark." + name for name in entry.signals.markers) + "]"
+-    import_needed = bool(entry.signals.markers) and "pytest" not in pytest_aliases
++    # 새 목록은 기존 일반 import 앞에 삽입되므로 그 위치에서 쓸 pytest binding을 함께 만든다.
++    import_needed = bool(entry.signals.markers) and ("pytest" not in pytest_aliases or not assignments)
+     lines = original.splitlines(keepends=True)
+     def offset(line: int, column: int = 0) -> int:
+         return sum(len(part) for part in lines[:line - 1]) + column
+--- before-fix-round1/workspace/tools/pregate_field_report_smoke.py
++++ after-fix-round1/workspace/tools/pregate_field_report_smoke.py
+@@ -530,6 +530,51 @@
+                 self.assertEqual(errors, [])
+                 self.assertEqual([(f.rule, f.confirmed) for f in pg.check_declarations(plan, self.source)], expected)
+ 
++    def test_marker_new_list_evaluates_after_pytest_binding(self):
++        from types import ModuleType, SimpleNamespace
++        from unittest.mock import patch
++        fake_pytest = ModuleType('pytest')
++        fake_pytest.mark = SimpleNamespace(slow='slow', django_db='django_db')
++        for prefix in ['', '"""기존 문서."""\nfrom __future__ import annotations\n']:
++            with self.subTest(prefix=prefix):
++                original = prefix + 'import pytest\ndef test_case():\n    return "original body"\n'
++                self.write(self.source, TEST, original)
++                _, report = self.materialize(spec_text([f'update {TEST}'], owner=f'{TEST} [markers: slow]'))
++                updated = (self.copy / TEST).read_text()
++                namespace = {}
++                with patch.dict(sys.modules, {'pytest': fake_pytest}):
++                    exec(compile(updated, TEST, 'exec'), namespace)
++                self.assertEqual(namespace['pytestmark'], ['slow'])
++                self.assertEqual(namespace['test_case'](), 'original body')
++                self.assertIn('import pytest\ndef test_case():\n    return "original body"\n', updated)
++                self.assertTrue(updated.startswith(prefix))
++                self.assertEqual((self.source / TEST).read_bytes(), original.encode())
++                self.assertEqual(report['materialized'], [TEST])
++
++    def test_marker_subscript_mutations_remain_s5_without_writes(self):
++        from types import ModuleType, SimpleNamespace
++        from unittest.mock import patch
++        fake_pytest = ModuleType('pytest')
++        fake_pytest.mark = SimpleNamespace(slow='slow', django_db='django_db')
++        for mutation in ['pytestmark[0] = pytest.mark.django_db', 'del pytestmark[0]',
++                         'pytestmark[:] = [pytest.mark.django_db]',
++                         'pytestmark[0] += pytest.mark.django_db',
++                         'if True:\n    pytestmark[0] = pytest.mark.django_db']:
++            for markers in ['', 'slow']:
++                with self.subTest(mutation=mutation, markers=markers):
++                    original = 'import pytest\npytestmark = [pytest.mark.slow]\n' + mutation + '\n'
++                    self.write(self.source, TEST, original)
++                    namespace = {}
++                    with patch.dict(sys.modules, {'pytest': fake_pytest}):
++                        exec(compile(original, TEST, 'exec'), namespace)
++                    if mutation == 'pytestmark[0] = pytest.mark.django_db':
++                        self.assertEqual(namespace['pytestmark'], ['django_db'])
++                    _, report = self.materialize(spec_text([f'update {TEST}'], owner=f'{TEST} [markers: {markers}]'))
++                    self.assertEqual((self.copy / TEST).read_bytes(), original.encode())
++                    self.assertEqual((self.source / TEST).read_bytes(), original.encode())
++                    self.assertEqual(report['materialized'], [])
++                    self.assertTrue(any('S5' in note and 'subscript' in note for note in report['unsimulated']), report)
++
+ 
+ if __name__ == "__main__":
+     unittest.main(verbosity=2)

@@ -1,0 +1,26 @@
+test_later_with_item_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_with_item_rebinding_invalidates_function_constructor) ... 
+  test_later_with_item_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_with_item_rebinding_invalidates_function_constructor) (imported='from requests import Response as Source') ... FAIL
+  test_later_with_item_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_with_item_rebinding_invalidates_function_constructor) (imported='from application.lesson.domain_layer.book.kind import Kind as Source') ... FAIL
+
+======================================================================
+FAIL: test_later_with_item_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_with_item_rebinding_invalidates_function_constructor) (imported='from requests import Response as Source')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 392, in test_later_with_item_rebinding_invalidates_function_constructor
+    self.assertNotIn("#557", f)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: '#557' unexpectedly found in ['#557']
+
+======================================================================
+FAIL: test_later_with_item_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_with_item_rebinding_invalidates_function_constructor) (imported='from application.lesson.domain_layer.book.kind import Kind as Source')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 393, in test_later_with_item_rebinding_invalidates_function_constructor
+    self.assertIn("#557", c)
+    ~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: '#557' not found in []
+
+----------------------------------------------------------------------
+Ran 1 test in 0.007s
+
+FAILED (failures=2)

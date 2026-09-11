@@ -1,0 +1,6 @@
+test_rebound_annotated_factory_is_not_revived (__main__.CheckerRegression.test_rebound_annotated_factory_is_not_revived) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.005s
+
+OK

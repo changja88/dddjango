@@ -1,0 +1,22 @@
+{
+  "source_sha256": "a6aa8aded150230e46fd4e240632892acd3b91b918eecd9d8245dd1768c2cec4",
+  "removed_ids": [
+    "F4-1",
+    "F4-9",
+    "F4-10",
+    "F4-11",
+    "F4-12",
+    "F4-13",
+    "F4-14",
+    "F4-15",
+    "F4-16",
+    "F4-17",
+    "F4-18",
+    "F4-19"
+  ],
+  "preserved_ids": [
+    "F4-20"
+  ],
+  "preserved_F4_20_sha256": "575be37288396c0fd8e09d5f1b77c959621f2633398caa5663b669c5ab052b4c",
+  "result_sha256": "d966b2d8c4c308dddec8f74fc5e20570f212ae8b54b615111cfc0bdf76ca54b7"
+}

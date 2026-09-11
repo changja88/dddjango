@@ -829,9 +829,7 @@ class BearerAuth(HttpBearer):
 
 **인프라 오류 경계.** raw `OperationalError`, `IntegrityError`, SDK/network 오류를
 controller나 전역 recognizer가 문자열·SQLSTATE로 분류하지 않는다. 기본은 framework의
-미식별 500 경로다. 특정 실패가 안정된 공개 의미를 가진다고 G1에서 승인된 경우에만 infra/ACL이
-그 실패를 자기 BC의 구체 domain/application exception으로 정규화하고, controller가 그
-구체 exception을 위의 직접 흐름으로 처리한다. 인프라 예외를 합성하거나 다른 BC exception을
+미식별 500 경로다. 이미 잡은 IntegrityError의 승인된 알려진 제약 실패는 구체 계약 예외로, 나머지는 승인된 일반 저장소 실패 계약으로 번역한다. repository 실패 계약은 domain 소유, capability port 실패 계약은 해당 port 소유다. 이 내부 정규화는 공개 HTTP 오류 승인이 아니므로 일반 저장소 실패의 외부 응답은 기존 safe 500을 유지한다. 새 ErrorCode/ErrorSchema/4xx/503을 만들지 않는다. 잡지 않은 unknown 인프라 오류를 새로 catch-all하지 않는다. 안정된 public meaning이 별도로 승인된 경우에만 그 외부 계약에 맞는 controller mapping을 한다. 이미 선언된 계약 예외의 관찰 후 재던짐은 허용한다. 인프라 예외를 합성하거나 다른 BC exception을
 그대로 통과시키지 않는다.
 
 **응답 선언과 OpenAPI.** controller가 직접 반환할 수 있는 각 BC 오류 status는 operation의

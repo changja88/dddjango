@@ -1,0 +1,57 @@
+test_class_global_surface_rejects_the_entire_service_update (__main__.FieldReportTest.test_class_global_surface_rejects_the_entire_service_update) ... ok
+test_class_local_names_do_not_block_new_module_functions (__main__.FieldReportTest.test_class_local_names_do_not_block_new_module_functions) ... ok
+test_compile_failure_is_reported_without_partial_update (__main__.FieldReportTest.test_compile_failure_is_reported_without_partial_update) ... ok
+test_declaration_only_cli_and_report_dispositions (__main__.FieldReportTest.test_declaration_only_cli_and_report_dispositions) ... ok
+test_dto_type_provenance_nested_alias_forward_and_candidates (__main__.FieldReportTest.test_dto_type_provenance_nested_alias_forward_and_candidates) ... ok
+test_effect_declaration_contract_and_hash (__main__.FieldReportTest.test_effect_declaration_contract_and_hash) ... ok
+test_existing_class_decorator_and_alias_remain_s5_alongside_new_function (__main__.FieldReportTest.test_existing_class_decorator_and_alias_remain_s5_alongside_new_function) ... ok
+test_existing_names_and_unmodeled_updates_are_never_replaced (__main__.FieldReportTest.test_existing_names_and_unmodeled_updates_are_never_replaced) ... ok
+test_explicit_service_raise_only_clears_exception_finding (__main__.FieldReportTest.test_explicit_service_raise_only_clears_exception_finding) ... ok
+test_marker_update_cli_real_test_config_rule (__main__.FieldReportTest.test_marker_update_cli_real_test_config_rule) ... ok
+test_marker_update_noop_and_import_binding_are_preserved (__main__.FieldReportTest.test_marker_update_noop_and_import_binding_are_preserved) ... FAIL
+test_module_bindings_and_raise_helper_collisions_are_preserved (__main__.FieldReportTest.test_module_bindings_and_raise_helper_collisions_are_preserved) ... ok
+test_new_operation_clears_pair_finding_and_preserves_source_body (__main__.FieldReportTest.test_new_operation_clears_pair_finding_and_preserves_source_body) ... ok
+test_only_exact_real_ohs_service_paths_are_updated (__main__.FieldReportTest.test_only_exact_real_ohs_service_paths_are_updated) ... ok
+test_plain_signature_defaults_remain_transcribable (__main__.FieldReportTest.test_plain_signature_defaults_remain_transcribable) ... ok
+test_safe_imports_transcribe_but_conflicts_reject_the_whole_entry (__main__.FieldReportTest.test_safe_imports_transcribe_but_conflicts_reject_the_whole_entry) ... ok
+test_signals_use_first_python_artifact_and_strip_nodeid (__main__.FieldReportTest.test_signals_use_first_python_artifact_and_strip_nodeid) ... ok
+test_signature_named_expressions_reject_the_entire_service_update (__main__.FieldReportTest.test_signature_named_expressions_reject_the_entire_service_update) ... ok
+test_typegraph_real_tree_cross_module_alias_cycles_and_ohs_imports (__main__.FieldReportTest.test_typegraph_real_tree_cross_module_alias_cycles_and_ohs_imports) ... FAIL
+test_unlisted_first_artifact_nonadd_and_missing_markers_do_not_signal (__main__.FieldReportTest.test_unlisted_first_artifact_nonadd_and_missing_markers_do_not_signal) ... ok
+test_unresolved_uow_never_confirms_and_declaration_owners_group (__main__.FieldReportTest.test_unresolved_uow_never_confirms_and_declaration_owners_group) ... ok
+test_update_marker_final_state_and_preservation (__main__.FieldReportTest.test_update_marker_final_state_and_preservation) ... ok
+test_wrong_operation_name_and_signature_remain_real_findings (__main__.FieldReportTest.test_wrong_operation_name_and_signature_remain_real_findings) ... ok
+
+======================================================================
+FAIL: test_marker_update_noop_and_import_binding_are_preserved (__main__.FieldReportTest.test_marker_update_noop_and_import_binding_are_preserved)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 514, in test_marker_update_noop_and_import_binding_are_preserved
+    self.assertEqual((self.copy / TEST).read_text(), original)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'pytestmark = []\nfrom somewhere import pytestmark\ndef test_case(): pass\n' != 'from somewhere import pytestmark\ndef test_case(): pass\n'
+- pytestmark = []
+  from somewhere import pytestmark
+  def test_case(): pass
+
+
+======================================================================
+FAIL: test_typegraph_real_tree_cross_module_alias_cycles_and_ohs_imports (__main__.FieldReportTest.test_typegraph_real_tree_cross_module_alias_cycles_and_ohs_imports)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 472, in test_typegraph_real_tree_cross_module_alias_cycles_and_ohs_imports
+    self.assertEqual([(f.rule, f.confirmed) for f in findings], [('#202', True)], annotation)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != [('#202', True)]
+
+Second list contains 1 additional elements.
+First extra element 0:
+('#202', True)
+
+- []
++ [('#202', True)] : _Item
+
+----------------------------------------------------------------------
+Ran 23 tests in 20.065s
+
+FAILED (failures=2)

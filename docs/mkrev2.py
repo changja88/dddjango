@@ -6676,7 +6676,7 @@ body = """<!doctype html>
     <p>ACL의 <code>&lt;other_bounded_context&gt;/&lt;capability&gt;_adapter/</code>, 외부 시스템의 <code>&lt;system&gt;/&lt;capability&gt;_adapter/</code>, 그 밖 능력의 <code>&lt;capability&gt;/&lt;technology&gt;_adapter/</code> 에 같은 골격을 강제한다.</p>
     <p><b><code>adapter/</code> · <code>command/</code> · <code>constant/</code> · <code>contract/</code> · <code>schema/</code> 는 내용이 없어도 모두 만든다.</b> 바깥 패키지와 다섯 폴더에 <code>__init__.py</code> 를 둔다. 초기화 파일은 재수출 전용이고 실제 내용 파일은 필요할 때 만든다.</p>
     <p>구현·호출 계약·내부 계약·검증 스키마는 <b>클래스마다 파일 하나</b>다. 여러 구현이나 Protocol 도 해당 역할 폴더에 각각 둔다. 프롬프트 상수는 <code>constant/prompt.py</code> 처럼 관련 값끼리 묶는다. 계약을 만드는 builder 는 그 계약 클래스 파일에, 스키마 별칭은 관련 스키마 파일에 둔다. 외부 응답을 포트 반환값으로 바꾸는 reader 는 어댑터 구현에 둔다.</p>
-    <p>이 세 칸은 처음부터 고정 패키지다. 50행 최소치·200행 감사 신호·본체 파일을 요구하는 아래 승격 규칙의 대상이 아니다.</p>
+    <p>이 세 칸은 처음부터 고정 패키지다. 200행 감사 신호·본체 파일을 요구하는 아래 승격 규칙의 대상이 아니다.</p>
   </aside>
 
   <aside class="note settled" id="promotion" style="max-width:none">
@@ -6684,7 +6684,7 @@ body = """<!doctype html>
     <p><b>기본은 <code>&lt;이름&gt;.py</code>, 승격은 <code>&lt;이름&gt;/</code> 다.</b> 허용 행은 12·14·15·18·20·21·24·41·61·74·92·94·96다.
     승격 폴더 안에 본체 <code>&lt;이름&gt;.py</code>, 재수출 전용 <code>__init__.py</code>, 감사에서 열거한 부품을 둔다. 형제 파일·폴더 공존, 본체 없는 폴더, 내부 하위 폴더는 허용하지 않는다.</p>
     <p><b>① 기존 칸으로 이동 → ② 동명 폴더 승격 → ③ 유지</b> 순서로 소관과 응집을 판정한다. 다른 기존 칸이 받을 수 있으면 먼저 이동하고, 어느 칸의 소관도 아닌 역할 밖 응집 단위가 생긴 경우에만 승격한다.
-    <b>200행 초과는 감사 신호이고 자동 분할 기준이 아니다.</b> 새 승격 부품은 각 50행 이상(물리 행·빈 줄 제외)이어야 한다. 본체·<code>__init__.py</code> 만 남은 승격 폴더는 환원 신호다.</p>
+    <b>200행 초과는 감사 신호이고 자동 분할 기준이 아니다.</b> 승격은 소관·응집으로 판정하며 부품 행수 하한은 없다. 본체·<code>__init__.py</code> 만 남은 승격 폴더는 환원 신호다.</p>
     <p><b>감사자가 판정하고 coder 가 집행한다.</b> coder 의 기본 작성형은 파일이다. 크기만으로 분할하거나 예비 패키지를 미리 만들지 않는다. 부품도 다른 유스케이스의 공용 helper 로 쓸 수 없고 저장(save)류 호출은 본체에 둔다.</p>
     <p>바깥 import 경로·공개 이름을 유지하고 <code>git mv</code> 로 이력을 보존한다. 재수출은 redundant alias 또는 <code>__all__</code>, 내부 참조는 모듈 직접 상대 import 로 쓴다.
     실행 전 모듈 객체·monkeypatch·<code>patch("pkg.mod.attr")</code>·설정 문자열·동적 import 참조를 전수 확인한다. 필요한 수정이 승인 범위 밖이면 먼저 보고한다.

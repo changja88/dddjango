@@ -1,0 +1,116 @@
+test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) ... 
+  test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='with uow:\n        books.save(a)\n    with uow:\n        loans.save(b)') ... FAIL
+  test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='alias = uow\n    with alias:\n        books.save(a)\n    with alias:\n        loans.save(b)') ... FAIL
+  test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='with lock:\n        books.save(a)\n    with lock:\n        loans.save(b)') ... FAIL
+  test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='books.save(a)\n    loans.save(b)') ... FAIL
+  test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='with mystery():\n        with uow:\n            books.save(a)\n        with uow:\n            loans.save(b)') ... FAIL
+  test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='transaction.begin()\n    with uow:\n        books.save(a)\n    with uow:\n        loans.save(b)') ... FAIL
+  test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='uow = dynamic()\n    with uow:\n        books.save(a)\n        loans.save(b)') ... FAIL
+  test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='if flag:\n        uow = dynamic()\n    else:\n        uow = Work()\n    with uow:\n        books.save(a)\n        loans.save(b)') ... FAIL
+  test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='with uow:\n        books.save(a)\n        def unused():\n            loans.save(b)') ... FAIL
+  test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='with make() as active:\n        books.save(a)\n    with make() as active:\n        loans.save(b)') ... FAIL
+  test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='with make() as active:\n        books.save(a)\n    with active:\n        loans.save(b)') ... FAIL
+
+======================================================================
+FAIL: test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='with uow:\n        books.save(a)\n    with uow:\n        loans.save(b)')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 212, in test_uow_lexical_regions_and_unknown_boundaries
+    self.assertEqual("#546" in f, expected == "violation")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True != False
+
+======================================================================
+FAIL: test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='alias = uow\n    with alias:\n        books.save(a)\n    with alias:\n        loans.save(b)')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 212, in test_uow_lexical_regions_and_unknown_boundaries
+    self.assertEqual("#546" in f, expected == "violation")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True != False
+
+======================================================================
+FAIL: test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='with lock:\n        books.save(a)\n    with lock:\n        loans.save(b)')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 212, in test_uow_lexical_regions_and_unknown_boundaries
+    self.assertEqual("#546" in f, expected == "violation")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True != False
+
+======================================================================
+FAIL: test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='books.save(a)\n    loans.save(b)')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 212, in test_uow_lexical_regions_and_unknown_boundaries
+    self.assertEqual("#546" in f, expected == "violation")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True != False
+
+======================================================================
+FAIL: test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='with mystery():\n        with uow:\n            books.save(a)\n        with uow:\n            loans.save(b)')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 212, in test_uow_lexical_regions_and_unknown_boundaries
+    self.assertEqual("#546" in f, expected == "violation")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True != False
+
+======================================================================
+FAIL: test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='transaction.begin()\n    with uow:\n        books.save(a)\n    with uow:\n        loans.save(b)')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 212, in test_uow_lexical_regions_and_unknown_boundaries
+    self.assertEqual("#546" in f, expected == "violation")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True != False
+
+======================================================================
+FAIL: test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='uow = dynamic()\n    with uow:\n        books.save(a)\n        loans.save(b)')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 212, in test_uow_lexical_regions_and_unknown_boundaries
+    self.assertEqual("#546" in f, expected == "violation")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True != False
+
+======================================================================
+FAIL: test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='if flag:\n        uow = dynamic()\n    else:\n        uow = Work()\n    with uow:\n        books.save(a)\n        loans.save(b)')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 212, in test_uow_lexical_regions_and_unknown_boundaries
+    self.assertEqual("#546" in f, expected == "violation")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True != False
+
+======================================================================
+FAIL: test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='with uow:\n        books.save(a)\n        def unused():\n            loans.save(b)')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 212, in test_uow_lexical_regions_and_unknown_boundaries
+    self.assertEqual("#546" in f, expected == "violation")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True != False
+
+======================================================================
+FAIL: test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='with make() as active:\n        books.save(a)\n    with make() as active:\n        loans.save(b)')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 212, in test_uow_lexical_regions_and_unknown_boundaries
+    self.assertEqual("#546" in f, expected == "violation")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True != False
+
+======================================================================
+FAIL: test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) (body='with make() as active:\n        books.save(a)\n    with active:\n        loans.save(b)')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 212, in test_uow_lexical_regions_and_unknown_boundaries
+    self.assertEqual("#546" in f, expected == "violation")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True != False
+
+----------------------------------------------------------------------
+Ran 1 test in 0.024s
+
+FAILED (failures=11)

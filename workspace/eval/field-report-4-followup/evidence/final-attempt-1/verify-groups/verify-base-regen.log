@@ -1,0 +1,33 @@
+[verify-base-regen] 검증 세트 (regen-golden·regen-loop·runtime-parity·rulepack-smoke·pregate-kinds·pregate-fixture)
+[self-test] 주입 골든 일치 · owner-map 유출 0 · injection 경계 유지(제어문자 2건 보고)
+| 케이스 | 기대 | 실측 | 일치 | 비고 |
+|---|---|---|---|---|
+| T1 no_progress 비종료 | budget/3회전 | budget/3회전 | ✓ | no_progress 2회 발생하되 종료 안 함 |
+| T2 2→3 전이 후 수렴 | zero/3회전 | zero/3회전 | ✓ | 2회전 no_progress 뒤에도 3회전을 돌아 수렴 |
+| T3 범위 밖 편집 | scope_violation/exit 3 | scope_violation/exit 3 | ✓ | 위반 delta 가 아니라 편집 자체로 잡는다 |
+| T4 귀속 0 | zero/1회전 | zero/1회전 | ✓ | 고칠 것이 없으면 즉시 수렴 |
+| T5 C암 배선 발화 | 프롬프트 상이·rules>0 | b≠c True · rules 191 | ✓ | 루프가 실제로 팩을 탄다(단위 시험 아님) |
+케이스 5 · 일치 5 · 불일치 0
+[parity] step 6′ 재생성 루프: 정합 (3108자)
+[parity] 대조 절 1종 전건 정합 — 두 런타임 의미 미러 유지
+| 단언 | 판정 | 실측 |
+|---|---|---|
+| G1 팩 검사기 키 ⊆ 로스터 | ✓ | 이탈 0 |
+| G2 B암 byte 불변(T2-3 판형 독립 재구성) | ✓ | 595자 |
+| G3a C 중복 제거 + 집합 보존 | ✓ | ['r:2', 'r:1', 'r:4'] |
+| G3b C 발화(순서 상이 + <rules> 실재) | ✓ | rules 2 |
+| G3c 폴백은 뒤에 원래 순서로 | ✓ | tier [1, 1, 1, 3] |
+| G3d alias 정밀 조인 생존 | ✓ | alias·R-0124·rules 1 |
+| G4 본문 미동봉(팩·프롬프트 공히) | ✓ | text 필드 0 |
+| G5 주입 경계(적대 명칭·적대 문면) | ✓ | 리터럴 꺾쇠 0 |
+| G6 fail-closed(부재·손상·스키마) | ✓ | 3/3 |
+| G7 Q1 matcher conformance(글롭 단위 10케이스) | ✓ | 케이스 10 · 실패 0 |
+| G8 CLI stdout ↔ T2-3 독립 오라클 | ✓ | CLI 867B ↔ 오라클 867B |
+| G9 순열 불변(같은 multiset = 같은 프롬프트) | ✓ | tier1·2 3건 순열 1종 프롬프트 |
+| G10 손상 팩 fail-closed(5종) | ✓ | 손상 5종 · 미검출 0 |
+| G11 글롭 문법 폐쇄(음성 8·양성 3) | ✓ | 음성 8·양성 3 · 이탈 0 |
+단언 14 · 통과 14 · 실패 0
+red: 소성물 드리프트: dddjango/scripts/pregate_symbol_kinds.json — 재생성 결과와 byte 불일치
+red: 소성물 드리프트: codex-dddjango/skills/dddjango/scripts/pregate_symbol_kinds.json — 재생성 결과와 byte 불일치
+→ workspace/tools/gen_pregate_symbol_kinds.py 재실행으로 재소성하라
+make[1]: *** [verify-base-regen] Error 1

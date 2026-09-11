@@ -91,6 +91,7 @@ _SCRIPTS_DIR: Path = Path(__file__).resolve().parent
 sys.path.insert(0, str(_SCRIPTS_DIR))
 import anchor_diff  # noqa: E402  — git·앵커 스냅숏·빚 로더·빚 매칭 공용(복제 통합)
 import checker_target  # noqa: E402
+import standard_tree as tree  # noqa: E402
 import findings  # noqa: E402  — sink 환경변수 이름·라인 재구성 문법의 단일 출처
 from checker_registry import REGISTRY, checker_argv  # noqa: E402
 
@@ -115,9 +116,63 @@ class _UsageParser(argparse.ArgumentParser):
         raise SystemExit(1)
 
 
+def _snapshot_cache_instances(root: Path) -> set[Path]:
+    """골격의 BC 내부 선택 폴더 칸만 원 작업 트리에서 수집한다."""
+    omitted: set[Path] = set()
+    token = re.compile(r"<([a-z_]+)>")
+
+    def walk(directory: Path, row: tree.Row, bindings: dict[str, str]) -> None:
+        if directory.is_symlink() or not directory.is_dir():
+            return
+        children = tree.children(row)
+        fixed = {tree.concrete_name(c, bindings).rstrip("/"): c for c in children
+                 if tree.is_dir(c) and c.kind in ("fixed", "reappear")}
+        optional = next((c for c in children if tree.is_dir(c) and c.kind == "placeholder"
+                         and "/" not in c.name.rstrip("/")), None)
+        files = [tree.concrete_name(c, bindings) for c in children if not tree.is_dir(c)]
+        for child in sorted(directory.iterdir()):
+            if not child.is_dir() or child.is_symlink() or child.name.startswith(".") or child.name == "__pycache__":
+                continue
+            if child.name in fixed:
+                walk(child, fixed[child.name], bindings)
+                continue
+            # 파일의 승격 실현은 선택 폴더 인스턴스가 아니다.
+            if any(re.fullmatch(token.sub(".+", name), child.name + ".py") for name in files):
+                continue
+            if optional is None:
+                continue
+            pattern = optional.name.rstrip("/")
+            if not re.fullmatch(token.sub(".+", pattern), child.name):
+                continue
+            if checker_target.cache_only_instance(child):
+                omitted.add(child.relative_to(root))
+                continue
+            values = dict(bindings)
+            for name in token.findall(pattern):
+                values[name] = child.name.removesuffix("_adapter") if pattern.endswith("_adapter") else child.name
+            walk(child, optional, values)
+
+    ignore = shutil.ignore_patterns(*_IGNORE_COPY)
+    for application in sorted(root.rglob("application")):
+        if not application.is_dir() or application.is_symlink() \
+                or ignore(str(root), list(application.relative_to(root).parts)):
+            continue
+        for bc in sorted(application.iterdir()):
+            if not bc.name.startswith("."):
+                walk(bc, tree.ROWS[0], {"bounded_context": bc.name})
+    return omitted
+
+
 def _snapshot_current(root: Path, dest: Path) -> None:
     """working tree 를 비-git 사본으로 복사한다(무거운 비-소스 디렉터리 제외)."""
-    shutil.copytree(root, dest, ignore=shutil.ignore_patterns(*_IGNORE_COPY))
+    omitted = _snapshot_cache_instances(root)
+    ignore = shutil.ignore_patterns(*_IGNORE_COPY)
+
+    def ignore_current(directory: str, names: list[str]) -> set[str]:
+        parent = Path(directory).relative_to(root)
+        return ignore(directory, names) | {name for name in names if parent / name in omitted}
+
+    shutil.copytree(root, dest, ignore=ignore_current)
 
 
 def _parse_fail_findings(target: Path) -> "set[str]":

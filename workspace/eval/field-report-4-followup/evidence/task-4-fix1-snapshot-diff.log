@@ -1,0 +1,305 @@
+--- fix1-before/codex-dddjango/skills/dddjango/scripts/check-context-isolation.py
+
++++ codex-dddjango/skills/dddjango/scripts/check-context-isolation.py
+
+@@ -497,9 +497,12 @@
+
+                     block(st.body, branch)
+                     branches = [branch, env]
+                 else:
++                    condition_before = count
+                     for field in ("test", "iter"):
+                         value = getattr(st, field, None)
+                         if value is not None: inspect(value, env)
++                    if isinstance(st, ast.While) and count != condition_before:
++                        unknown = True
+                     branch = dict(env)
+                     if isinstance(st, (ast.For, ast.AsyncFor)):
+                         for n in ast.walk(st.target):
+--- fix1-before/codex-dddjango/skills/dddjango/scripts/check-domain-model.py
+
++++ codex-dddjango/skills/dddjango/scripts/check-domain-model.py
+
+@@ -453,10 +453,14 @@
+
+     for st in mod.body:
+         if st is cls:
+             break
+-        if isinstance(st, ast.ImportFrom) and st.module == "enum" and not st.level:
+-            origins.update({a.asname or a.name: "enum." + a.name for a in st.names})
++        if isinstance(st, ast.ImportFrom):
++            for a in st.names:
++                origins.pop(a.asname or a.name, None)
++            if st.module == "enum" and not st.level:
++                origins.update({a.asname or a.name: "enum." + a.name for a in st.names})
+         elif isinstance(st, ast.Import):
+             for a in st.names:
++                origins.pop(a.asname or a.name.split(".")[0], None)
+                 if a.name == "enum": origins[a.asname or a.name] = "enum"
+         else:
+             for n in ast.walk(st):
+@@ -821,15 +825,15 @@
+
+         return (".application_layer.port.unit_of_work." in name and len(parts) > 1
+                 and parts[-2].endswith("_unit_of_work") and parts[-1].endswith("UnitOfWork"))
+ 
+-    module_env = imports(mod.body)
+-    factories = {}
++    module_env = {}
+     for st in mod.body:
+-        if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)) and is_uow(address(st.returns, module_env)):
+-            factories[st.name] = "@uow"
++        if isinstance(st, (ast.Import, ast.ImportFrom)):
++            module_env.update(imports([st]))
++        elif isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)):
++            module_env[st.name] = "@uow" if is_uow(address(st.returns, module_env)) else ""
+         elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+             for target in st.targets if isinstance(st, ast.Assign) else [st.target]:
+                 module_env[key(target)] = ""
+-    module_env.update(factories)
+ 
+     def origin(expr, env):
+         if isinstance(expr, ast.Call):
+@@ -861,6 +865,10 @@
+
+                     value = origin(st.value, init_env)
+                     for target in st.targets if isinstance(st, ast.Assign) else [st.target]:
+                         init_env[key(target)] = value
++                elif not isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
++                    for target in _function_nodes(st):
++                        if isinstance(target, (ast.Name, ast.Attribute)) and isinstance(target.ctx, (ast.Store, ast.Del)):
++                            init_env[key(target)] = ""
+             env.update({k: v for k, v in init_env.items() if k.startswith("self.")})
+     params(fn, env)
+     regions = {0: set()}
+--- fix1-before/codex-dddjango/skills/dddjango/scripts/check-port-adapter-pairing.py
+
++++ codex-dddjango/skills/dddjango/scripts/check-port-adapter-pairing.py
+
+@@ -1213,12 +1213,21 @@
+
+         for arg in (fn.args.vararg, fn.args.kwarg):
+             if arg: env[arg.arg] = ""
+ 
+-    # 모듈의 사후 재바인딩도 함수 실행 시 출처를 바꾼다. 순서 의존 호출은 확정하지 않는다.
++    # 최초 정적 별칭은 보존한다. 이미 바인딩된 모듈 이름의 재대입은 함수에서 불명이다.
+     rebound = set()
++    bound = set()
+     for st in mod.body:
+-        if isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign, ast.Delete)):
++        if isinstance(st, (ast.Import, ast.ImportFrom)):
++            names = set(imported(st, py))
++        elif isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
++            names = {st.name}
++        elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign, ast.Delete)):
+             targets = st.targets if isinstance(st, (ast.Assign, ast.Delete)) else [st.target]
+-            rebound.update(key(t) for t in targets)
++            names = {key(t) for t in targets}
++        else:
++            continue
++        rebound.update(names & bound)
++        bound.update(names)
+ 
+     def block(body, env):
+         for st in body:
+@@ -1241,6 +1250,15 @@
+
+                             value = value_origin(n.value, local)
+                             for target in n.targets if isinstance(n, ast.Assign) else [n.target]:
+                                 local[key(target)] = value
++                        else:
++                            pending = [n]
++                            while pending:
++                                target = pending.pop()
++                                if isinstance(target, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
++                                    continue
++                                if isinstance(target, (ast.Name, ast.Attribute)) and isinstance(target.ctx, (ast.Store, ast.Del)):
++                                    local[key(target)] = ""
++                                pending.extend(ast.iter_child_nodes(target))
+                     fields = {k: v for k, v in local.items() if k.startswith("self.")}
+                 block(st.body, dict(env, **fields))
+                 env[st.name] = ".".join((*py.relative_to(root).with_suffix("").parts, st.name))
+--- fix1-before/dddjango/scripts/check-context-isolation.py
+
++++ dddjango/scripts/check-context-isolation.py
+
+@@ -497,9 +497,12 @@
+
+                     block(st.body, branch)
+                     branches = [branch, env]
+                 else:
++                    condition_before = count
+                     for field in ("test", "iter"):
+                         value = getattr(st, field, None)
+                         if value is not None: inspect(value, env)
++                    if isinstance(st, ast.While) and count != condition_before:
++                        unknown = True
+                     branch = dict(env)
+                     if isinstance(st, (ast.For, ast.AsyncFor)):
+                         for n in ast.walk(st.target):
+--- fix1-before/dddjango/scripts/check-domain-model.py
+
++++ dddjango/scripts/check-domain-model.py
+
+@@ -453,10 +453,14 @@
+
+     for st in mod.body:
+         if st is cls:
+             break
+-        if isinstance(st, ast.ImportFrom) and st.module == "enum" and not st.level:
+-            origins.update({a.asname or a.name: "enum." + a.name for a in st.names})
++        if isinstance(st, ast.ImportFrom):
++            for a in st.names:
++                origins.pop(a.asname or a.name, None)
++            if st.module == "enum" and not st.level:
++                origins.update({a.asname or a.name: "enum." + a.name for a in st.names})
+         elif isinstance(st, ast.Import):
+             for a in st.names:
++                origins.pop(a.asname or a.name.split(".")[0], None)
+                 if a.name == "enum": origins[a.asname or a.name] = "enum"
+         else:
+             for n in ast.walk(st):
+@@ -821,15 +825,15 @@
+
+         return (".application_layer.port.unit_of_work." in name and len(parts) > 1
+                 and parts[-2].endswith("_unit_of_work") and parts[-1].endswith("UnitOfWork"))
+ 
+-    module_env = imports(mod.body)
+-    factories = {}
++    module_env = {}
+     for st in mod.body:
+-        if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)) and is_uow(address(st.returns, module_env)):
+-            factories[st.name] = "@uow"
++        if isinstance(st, (ast.Import, ast.ImportFrom)):
++            module_env.update(imports([st]))
++        elif isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)):
++            module_env[st.name] = "@uow" if is_uow(address(st.returns, module_env)) else ""
+         elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+             for target in st.targets if isinstance(st, ast.Assign) else [st.target]:
+                 module_env[key(target)] = ""
+-    module_env.update(factories)
+ 
+     def origin(expr, env):
+         if isinstance(expr, ast.Call):
+@@ -861,6 +865,10 @@
+
+                     value = origin(st.value, init_env)
+                     for target in st.targets if isinstance(st, ast.Assign) else [st.target]:
+                         init_env[key(target)] = value
++                elif not isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
++                    for target in _function_nodes(st):
++                        if isinstance(target, (ast.Name, ast.Attribute)) and isinstance(target.ctx, (ast.Store, ast.Del)):
++                            init_env[key(target)] = ""
+             env.update({k: v for k, v in init_env.items() if k.startswith("self.")})
+     params(fn, env)
+     regions = {0: set()}
+--- fix1-before/dddjango/scripts/check-port-adapter-pairing.py
+
++++ dddjango/scripts/check-port-adapter-pairing.py
+
+@@ -1213,12 +1213,21 @@
+
+         for arg in (fn.args.vararg, fn.args.kwarg):
+             if arg: env[arg.arg] = ""
+ 
+-    # 모듈의 사후 재바인딩도 함수 실행 시 출처를 바꾼다. 순서 의존 호출은 확정하지 않는다.
++    # 최초 정적 별칭은 보존한다. 이미 바인딩된 모듈 이름의 재대입은 함수에서 불명이다.
+     rebound = set()
++    bound = set()
+     for st in mod.body:
+-        if isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign, ast.Delete)):
++        if isinstance(st, (ast.Import, ast.ImportFrom)):
++            names = set(imported(st, py))
++        elif isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
++            names = {st.name}
++        elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign, ast.Delete)):
+             targets = st.targets if isinstance(st, (ast.Assign, ast.Delete)) else [st.target]
+-            rebound.update(key(t) for t in targets)
++            names = {key(t) for t in targets}
++        else:
++            continue
++        rebound.update(names & bound)
++        bound.update(names)
+ 
+     def block(body, env):
+         for st in body:
+@@ -1241,6 +1250,15 @@
+
+                             value = value_origin(n.value, local)
+                             for target in n.targets if isinstance(n, ast.Assign) else [n.target]:
+                                 local[key(target)] = value
++                        else:
++                            pending = [n]
++                            while pending:
++                                target = pending.pop()
++                                if isinstance(target, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
++                                    continue
++                                if isinstance(target, (ast.Name, ast.Attribute)) and isinstance(target.ctx, (ast.Store, ast.Del)):
++                                    local[key(target)] = ""
++                                pending.extend(ast.iter_child_nodes(target))
+                     fields = {k: v for k, v in local.items() if k.startswith("self.")}
+                 block(st.body, dict(env, **fields))
+                 env[st.name] = ".".join((*py.relative_to(root).with_suffix("").parts, st.name))
+--- fix1-before/workspace/tools/field_report_checker_smoke.py
+
++++ workspace/tools/field_report_checker_smoke.py
+
+@@ -304,6 +304,56 @@
+
+     def test_nested_repository_parameters_do_not_retype_outer_bindings(self):
+         f, c = self.application_rules("with uow:\n        books.save(a)\n        loans.save(b)\n    def unused(books: LoanRepository): pass")
+         self.assertIn("#546", f)
++
++    def test_while_guard_execute_repeats_but_for_iterable_executes_once(self):
++        header = "from application.lesson.composition_root.books import build_read_use_case as prepare\n"
++        for statement, candidate in [("while unit.execute(): pass", True),
++                                     ("for item in unit.execute(): pass", False)]:
++            with self.subTest(statement=statement):
++                _, c = self.ohs_rules(header + "def read_query(request):\n    unit = prepare()\n    " + statement + "\n")
++                self.assertEqual("#153" in c, candidate)
++
++    def test_later_import_shadow_invalidates_standard_enum_origin(self):
++        for header, base in [
++            ("from enum import Enum\nfrom custom import Enum", "Enum"),
++            ("import enum as standard\nimport custom as standard", "standard.Enum"),
++        ]:
++            with self.subTest(header=header):
++                self.assertIn("#268", self.enum_rules(header + f"\nclass Kind({base}):\n    ONE = 1\n")[1])
++
++    def test_rebound_annotated_factory_is_not_revived(self):
++        body = "with make():\n        books.save(a)\n    with make():\n        loans.save(b)"
++        f, c = self.application_rules(body, "def make() -> Work: return Work()\nmake = dynamic")
++        self.assertNotIn("#546", f)
++        self.assertIn("#546", c)
++
++    def test_constructor_branch_invalidates_uow_field_origin(self):
++        self.application_rules("pass")
++        source = "from application.lesson.application_layer.port.unit_of_work.lesson_unit_of_work import LessonUnitOfWork as Work\nclass Run:\n    def __init__(self, context: Work, books: BookRepository, loans: LoanRepository):\n        self.context = context\n        self.books = books\n        self.loans = loans\n        if flag: self.context = dynamic()\n    def execute(self):\n        with self.context:\n            self.books.save(a)\n        with self.context:\n            self.loans.save(b)\n"
++        self.write("application/lesson/application_layer/books/run/run_use_case.py", source)
++        f, c = domain.Findings(defer=True), domain.Candidates(defer=True)
++        domain._check_application_side(self.root, self.root / "application/lesson", f, c)
++        self.assertNotIn("#546", [e.rule for e in f.entries])
++        self.assertIn("#546", [e.rule for e in c.entries])
++
++    def test_constructor_branch_invalidates_contract_field_origin(self):
++        source = "from application.lesson.domain_layer.book.kind import Kind\nclass Run:\n    def __init__(self, value: Kind):\n        self.value = value\n        if flag: self.value = dynamic()\n    def execute(self): return self.value.code == 1\n"
++        f, c = self.property_rules(source)
++        self.assertNotIn("#557", f)
++        self.assertIn("#557", c)
++
++    def test_initial_static_module_alias_preserves_origin_but_rebinding_does_not(self):
++        for imported, comparison, expected in [
++            ("from requests import Response as Source", "value.status_code == 200", "violation"),
++            ("from application.lesson.domain_layer.book.kind import Kind as Source", "value.code == 1", None),
++        ]:
++            for suffix, wanted in [("", expected), ("Alias = dynamic\n", "candidate"),
++                                   ("if flag: Alias = dynamic\n", "candidate")]:
++                with self.subTest(imported=imported, suffix=suffix):
++                    source = imported + "\nAlias = Source\n" + suffix + "def run(value: Alias): return " + comparison + "\n"
++                    f, c = self.property_rules(source)
++                    self.assertEqual("#557" in f, wanted == "violation")
++                    self.assertEqual("#557" in c, wanted == "candidate")
+ 
+     def admin_records(self, source):
+         self.write("framework/admin/book.py", source)
+PRIOR TEST BODIES PRESERVED 27; CURRENT 33

@@ -1,0 +1,38 @@
+green-spec: exit 0 (예보 0) — 기대 일치
+green2-spec: exit 0 (예보 0) — 기대 일치
+form-red-spec: exit 3 (중복 인자 → compile 형식 red) — 기대 일치
+red-spec: exit 2 · 귀속 ['#267', '#472', '#81'] — 기대 일치
+green3-spec: exit 0 (사설 타입·대입식 필드·마이그레이션 정형 예보 0) — 기대 일치
+red2-spec: exit 2 · 귀속 ['#325', '#81'] (마이그레이션 오배치 경로 진탐) — 기대 일치
+E1: exit 0 · 사본 스텁 · 기실현 0 (커밋된 add 는 사본 밖) — 기대 일치
+E2: exit 0 · 기실현 1 · 스텁 대체(실물 #267 미혼입) · 해소 0·anchor 열 0 — 기대 일치
+E3: exit 3 (미지정 `--base` — add 충돌 유지) — 기대 일치
+E4: exit 3 (기준선 트리 실존 add — 계획↔실물 모순 유지) — 기대 일치
+E1′/E2′: exit 2·2 · 같은 ID(#267) · E2′ 기실현 1·해소 0·anchor 열 0 (기실현 add 앵커 무오염) — 기대 일치
+imports-green-spec: exit 0 · 결손 0 · 집계 K2/S1/S′1/X1 (실존 확인·서브모듈·자기 add·update 대상 새 심볼·서드파티) — 기대 일치
+imports-red-spec: exit 5 · ⑴⑵⑶ 각 1 · 귀속 0 (권고·비차단) — 기대 일치
+imports-update-only-spec: exit 5 · 실체화 0 · ⑵ 1 (kkebi S2 판형 — update 소비자 포함) — 기대 일치
+noblock-spec: exit 3 · 요약: 형식 red 1건(블록 부재) · 판정 «형식 red(블록 부재)» — 기대 일치
+empty-block-spec: exit 3 · 요약: 형식 red 1건(블록 공허) · 판정 «형식 red(블록 공허)» — 기대 일치
+update-target ⓐ(기준선 부재): exit 3 · 요약: 형식 red 1건(update 대상 부재 1) · 판정 «형식 red» — 기대 일치
+remove-target-spec: exit 3 · 요약: 형식 red 1건(remove 대상 부재 1) · 판정 «형식 red» — 기대 일치
+empty-conflict-spec: exit 3 · 요약: 형식 red 1건(empty 충돌 1) · 판정 «형식 red» — 기대 일치
+remove-deferred-spec: exit 4 (remove@L1 은 판정 밖 · 실체화 0) — 기대 일치
+update-target ⓒ(승격 폴더 미커밋): exit 3 · 요약: 형식 red 1건(update 대상 부재 1) · 판정 «형식 red» — 기대 일치
+update-target ⓑ(승격 형태 커밋): exit 4 · 예외 통과 문면 — 기대 일치
+check-report red 미라벨: exit 3 · 불비 1건 — 기대 일치
+check-report ignored 2 append: exit 3 · 불비 1건 — 기대 일치
+check-report 3번째 corrected(불인정): exit 3 · 불비 1건 — 기대 일치
+check-report 3번째 filtered(전건): exit 0 · 정합 — 기대 일치
+check-report 오염 행 무영향: exit 0 · 정합 — 기대 일치
+check-report 다른 명세(stale): exit 3 · 불비 1건 — 기대 일치
+check-report 표 형식 처분(불인정): exit 3 · 불비 1건 — 기대 일치
+check-report red 재실행: exit 2 — 기대 일치
+check-report 형식 red 마지막: exit 3 · 불비 1건 — 기대 일치
+check-report 블록 부재 마지막: exit 3 · 불비 1건 — 기대 일치
+check-report skip·결손 통과: exit 0 · 정합 — 기대 일치
+check-report 구판 헤더(해시 토큰 없음): exit 3 · 불비 1건 — 기대 일치
+check-report 리포트 부재: exit 1 — 기대 일치
+check-report 절 부재: exit 1 — 기대 일치
+
+PASS — pre-gate 픽스처 15종+E 계열 6단계+유닛 기대 일치 (green×3 예보 0 · 형식 red exit 3 · red 귀속 3건·red2 귀속 2건 정합 · 재발화 판형 E1~E4+E1′/E2′ · 계약 실존 imports 3종 exit 0/5/5 · 차단 모드 enforce 7(블록 부재·공허·update/remove 부재·승격 예외) · --check-report 14단계 + 유닛 매트릭스)

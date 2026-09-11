@@ -1,0 +1,225 @@
+[verify-web] dddjango-web 픽스처(백스톱·절단 도구)
+== fixtures_assets.sh
+..........................
+----------------------------------------------------------------------
+Ran 26 tests in 7.427s
+
+OK
+
+== fixtures_audit.sh
+PASS V1 validate 정상
+PASS A1 동일 실측 diff 0
+PASS A2 font-size diff
+PASS A3 고정 요소 소실
+PASS A3b 고정 요소 부분 소실
+PASS A4 상대 위치 diff
+PASS A5 그룹 분포 불일치
+PASS A6 line-height normal 특례
+PASS A7 미조인만 diff 0
+PASS S1 audit_version fail-loud
+PASS U1 사용법
+PASS V2 v2 validate 정상
+PASS S2 v2 motion 부재 fail-loud
+PASS RV require-version 2에 v1 거부
+PASS W1v v1 수용 warn
+PASS MIX 버전 불일치 warn
+PASS Wb 차단 시트 부분성 warn
+PASS Ws 측정 밖 엔진 warn
+PASS Wz 시트 0장 비개연 warn
+PASS A1v2 v2 동일 실측 diff 0
+PASS DET 결정론(2회 동일)
+PASS DETv2 결정론(2회 동일)
+----------------------------------------
+fixtures_audit: PASS 22 · FAIL 0
+
+== fixtures_backstop.sh
+PASS F0a gated 무변경 green
+PASS F0b 전역(--all) green(positive control 전수)
+PASS F1a WS1 web 직속 잡파일 발화
+PASS F1b WS1 control — 고정 파일·마커만이면 clean
+PASS F2a WS2 영역 직속 파일 발화
+PASS F2b WS control — 완비 신규 영역은 clean(WS5 포함)
+PASS F3a WS3 종류 밖 디렉터리+개념 직속 파일 2건
+PASS F3b WS3 control — form/ 조건 생성은 합법
+PASS F4a WS4 component 직속 파일+theme 칸 2건
+PASS F4b WS4 control — 부품군 안 부품은 clean
+PASS F5a WS5 신규 영역 widget/ 누락 발화
+PASS F5b WS5 control — 영역 골격 완비 후 clean
+PASS F5c WS5 신규 화면 개념 종류 폴더 누락 발화
+PASS F5d WS control — 개념 골격 완비(정적 화면) clean
+PASS F6a WS6 허용 외 archive 칸+직속 파일 2건
+PASS F6b WS6 control — images/ 착지는 clean
+PASS F6c WS6 fonts/files conditional directories are valid
+PASS F6d WS6 unknown static directory still blocked
+PASS F7a WS7 영역 이름 state/ 발화
+PASS F7b WS7 control — 기능 어휘 영역(orders)은 clean
+PASS F8a WS8 client 직속 파일+BC 하위 잡폴더 2건
+PASS F8b WS8 control — capability 파일 증가는 clean
+PASS F9a WI1 절대2+프로젝트 패키지+상대 클램핑 4건(주석·문자열 불발화 짝 내장)
+PASS F9b WI1 control — web 내부 import는 clean
+PASS F10a WI2 requests·urllib.request·django.test 3건
+PASS F10b WI2 control — client/ 안 호출 표면은 clean
+PASS F11a WI3 VM의 API URL 리터럴 1건(주석 불발화 짝 내장)
+PASS F11b WI3 control — client 안 리터럴은 clean
+PASS F12 WI4 루트상대 2건(외부·{% url %} 불발화 짝 내장)
+PASS F13a 레거시 위반 import 불발화(added 줄 밖)
+PASS F13b 신규 위반 줄만 발화(WI2 1건)
+PASS F14a WN1 축약 접미사 _vm.py 발화
+PASS F14b WN1 control — 규약 접미사는 clean
+PASS F15 WN2 무접두 1건(접두 짝은 clean — positive control 내장)
+PASS F16 WN3 view 이름 포함 1건(무관 어휘 짝 clean)
+PASS F17 WN4 화면명 불일치 1건(order_list.html 짝은 base에서 green)
+PASS F18 WN5 부품군 접미사 위반 1건(접미사 짝 clean)
+PASS F19a WN6 VM 대응 미완 발화
+PASS F19b WN6 control — 1:1:1:1 완성 후 clean
+PASS F19c WN6 접두-화면 개념 불일치 발화
+PASS F20a WN7 order_list_view_view_model.py 발화
+PASS F20b WN7 control — 규약 접두는 clean
+PASS F21 WN8 snake_case 위반 1건(snake 짝 clean)
+PASS F22a WP1 control — 평면 snake_case 기능 JS는 clean
+PASS F22b WP1 신규 legacy htmx core·core 중복 발화
+PASS F22c WP1 control — canonical htmx core+기능 JS는 clean
+PASS F22d WP1·WP5 control — 판형 그대로의 motion.js 공존은 clean
+PASS F22e WP5 motion.js 판형 이탈(수정) 발화
+PASS F23 WP2 inline+CDN+fragment 3건(page defer 짝 clean)
+PASS F23b WP2 CDN 위장+ghost 3건(base motion 짝 clean)
+PASS F24 WP3 onclick+hx-on 2건(hx 선언 속성 짝 clean)
+PASS F24b WP3 js:·조건식 3건(정적 JSON·이벤트명 짝 clean)
+PASS F25 WP4 색 리터럴 2건(tokens.css·var()·#anchor 짝 clean)
+PASS F26 비git 퇴화 notice + green 프로젝트 0
+PASS F27 --diff-base 없음 퇴화 notice
+PASS F28a --only wn — WI 위반 비표시
+PASS F28b --only wi — WI 위반 표시
+PASS F29a 인자 없음 → 1
+PASS F29b 디렉터리 아님 → 1
+PASS F29c diff-base 해석 불가 → 1
+PASS F29d 알 수 없는 옵션 → 1
+PASS F29e web/ 없음(전제 실패) → 1
+
+fixtures_backstop: PASS=62 FAIL=0
+
+== fixtures_contract.sh
+PASS F1 정확 선별·보존·요약 stdout
+PASS F2 $ref 전이 폐쇄
+PASS F3 메서드 생략=전 메서드
+PASS F4a 인용 path 부재 exit 1
+PASS F4b 근사 후보 병기(파라미터명 차이)
+PASS F5a Swagger 2.0 거부 exit 1
+PASS F5b 같은 문서 3.x는 수용(positive control)
+PASS F6 비JSON(YAML) 파싱 실패 exit 1
+PASS F7a dangling ref [warn] stderr·exit 0 유지
+PASS F7b [warn]은 stdout 오염 없음(요약만)
+PASS F8 webhooks 비복사 [warn]
+PASS F9 결정론(2회 바이트 동일)
+PASS F10 빈 paths-file exit 1
+---
+PASS=13 FAIL=0
+
+== fixtures_design_evidence.sh
+.................................
+----------------------------------------------------------------------
+Ran 33 tests in 26.565s
+
+OK
+................................
+----------------------------------------------------------------------
+Ran 32 tests in 7.509s
+
+OK
+
+== fixtures_extract.sh
+PASS D1 dsManifest 정상(exit 0)
+PASS D1 var() 자기참조 해소
+PASS D1 shadow 버킷·other drop
+PASS D2 tokens[] 부재 fail-loud
+PASS D3 토큰 0 fail-loud
+PASS U1 extract_design 사용법
+PASS H1 참조 HTML 정상(exit 0)
+PASS H1 tailwind 명명 색(중첩 평탄화)
+PASS H1 빈도 1위 색 후보
+PASS H1 타이포(config fontSize)
+PASS H1 임의값 클래스(변형 접두 제거)
+PASS H1b 단일 파일 위치 인자
+PASS H2 동결 HTML 없음 fail-loud
+PASS H3 토큰 0 fail-loud
+PASS C1 extract_dc 정상(exit 0)
+PASS C1 게이트 텍스트 title
+PASS C1 게이트 텍스트 cards
+PASS C1 이미지 ok·device-chrome 제외
+PASS C1 이미지 바이트 착지
+PASS C2 tokens 부재(순서 계약 MF-3)
+PASS C3 .screen 부재 fail-loud
+PASS C4 .dc.html 부재 fail-loud
+PASS F1 혼합 status·부분 실패 exit 0
+PASS F1 실패 [warn] stderr 표면화
+PASS F1 로컬 상대경로 해소(ok)
+PASS F1 인라인 착지
+PASS F2 design-ref 부재
+PASS F3 충돌 해시 접미(exit 0·ok 2)
+PASS F3 첫 토큰은 slug 그대로
+PASS F3 충돌분은 해시 접미
+PASS F3 2회 실행 결정론(byte 동일)
+----------------------------------------
+fixtures_extract: PASS 31 · FAIL 0
+
+== fixtures_motion_spec.sh
+PASS G1 spec-only 정상
+PASS G2 full 정상 3형
+PASS R1 전수성 위반
+PASS R2 좌표 파일 부재
+PASS R3 값 토큰 미정의
+PASS R4 역스윕 발명
+PASS R4b ui-js 유령 파일
+PASS R4c ui-js 주석 속 JS root는 근거 아님
+PASS R4c2 ui-js template interpolation 주석 root는 근거 아님
+PASS R4d ui-js HTML 주석 속 root는 근거 아님
+PASS R5 판형 위반
+PASS R3b 토큰 접두 false-pass 차단
+PASS R6 빈 id 행 조용한 증발 금지
+PASS R7 처분 표 중복 id
+PASS G3 주석 keyframes 역스윕 침묵
+PASS G4 펜스 예시 표 무시
+PASS G5 ui-js optional web prefix
+PASS G6 ui-js backtick literal root
+PASS W1 레거시 산문 warn
+PASS W2 미관찰 미검증 warn
+PASS W3 전사 이음매 warn
+PASS W3p 전사 게이트 침묵
+PASS U1 사용법
+PASS U2 파일 부재 fail-loud
+PASS DET 결정론(2회 동일)
+----------------------------------------
+fixtures_motion_spec: PASS 25 · FAIL 0
+
+== fixtures_templates.sh
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 1.948s
+
+OK
+
+== fixtures_ui_javascript.sh
+PASS J1 기능 JS·page defer·HTMX include·json_script positive
+PASS J2 WP1 wrong/nested/min/mjs/cjs 5건
+PASS J3 WS6 htmx nested·wrong js·mjs 3건
+PASS J4 WP2 actual src/defer·CDN·data·javascript·ghost·case·suffix 9건
+PASS J4b quoted greater-than opener positive
+PASS J5 WP2 no-defer·async·fragment·duplicate 발화
+PASS J5 WP2 fragment 위치 발화
+PASS J5 WP2 page/base 중복 로드 발화
+PASS J5b isolated module positive
+PASS J5c duplicate against unchanged baseline load
+PASS J5d prepended duplicate before unchanged baseline load
+PASS J6 WP2 multiline 기존 opener 내부 async 변경 검출
+PASS J7a genuine legacy baseline core remains consumable
+PASS J7b canonical+legacy core duplicate blocked
+PASS J8a 신규 legacy htmx 이름 reserved
+PASS J8b motion 이름은 byte 판형으로만 허용
+PASS J9 WP3 inline/hx-on/js:/조건식 회귀 4건
+fixtures_ui_javascript: PASS=17 FAIL=0
+
+run_fixtures: 픽스처 파일 9개 실행, 실패 0개
+[verify-web] codex 미러 byte 대조(scripts·assets)
+[verify-web] REQUEST_GUIDE byte 미러 대조
+[verify-web] 요청 가이드 배포·발견 계약
+[request-guide] PASS: installation, discovery and mirror contracts

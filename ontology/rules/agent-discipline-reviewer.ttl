@@ -1693,12 +1693,18 @@ djr:R-1036 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-1037 a djr:Exception ;
-    skos:prefLabel "G1 명시 승인 시에만 owning infra/ACL의 정규화 후 controller 직접 흐름 mapping"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1037@2026-08-22> .
+    skos:prefLabel "내부 실패 계약 정규화와 safe 500 공개 경계"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1037@2026-09-11> .
 
 <https://numchida.com/ns/djr#R-1037@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1037 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1037@2026-09-11> a djr:Expression ;
+    prov:specializationOf djr:R-1037 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1037@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-1038 a djr:Prohibition ;
     skos:prefLabel "raw infrastructure exception 합성·controller 직접 catch 우회 금지"@ko ;
@@ -1977,12 +1983,18 @@ djr:R-1070 a djr:Exception ;
     djr:revision 1 .
 
 djr:R-1071 a djr:Exception ;
-    skos:prefLabel "raw DB/SDK/network unknown failure의 전수 집합 제외(safe framework 500 기본)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1071@2026-08-22> .
+    skos:prefLabel "ACL known failure 전수 번역과 일반 내부 계약·공개 500 분리"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1071@2026-09-11> .
 
 <https://numchida.com/ns/djr#R-1071@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1071 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1071@2026-09-11> a djr:Expression ;
+    prov:specializationOf djr:R-1071 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1071@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-1072 a djr:Obligation ;
     skos:prefLabel "ⓓ 후보 줄의 출력 계약(경로: 사실 — 물음 · exit 불산입)"@ko ;
@@ -2241,12 +2253,18 @@ djr:R-1103 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-1104 a djr:Obligation ;
-    skos:prefLabel "ⓓ#268 타입 조합만으로 잘못된 값이 불가능한가(Q2)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1104@2026-08-22> .
+    skos:prefLabel "닫힌 Enum 검증 제외·open Enum Q2와 트랜잭션 영역 후보 검수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1104@2026-09-11> .
 
 <https://numchida.com/ns/djr#R-1104@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1104 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1104@2026-09-11> a djr:Expression ;
+    prov:specializationOf djr:R-1104 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1104@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-1105 a djr:Obligation ;
     skos:prefLabel "ⓓ#301 «없을 때» 판정의 루트 메서드 표현 가능성"@ko ;
@@ -2345,28 +2363,46 @@ djr:R-1116 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-1117 a djr:Obligation ;
-    skos:prefLabel "ⓓ#343 운영 기능인가 장고 배선인가"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1117@2026-08-22> .
+    skos:prefLabel "운영 기능/장고 배선·admin UI context 조립과 실제 소비 검수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1117@2026-09-11> .
 
 <https://numchida.com/ns/djr#R-1117@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1117 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-1117@2026-09-11> a djr:Expression ;
+    prov:specializationOf djr:R-1117 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1117@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-1118 a djr:Obligation ;
-    skos:prefLabel "ⓓ#589 조건이 업무 판정인가(Q2)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1118@2026-08-22> .
+    skos:prefLabel "표현 조건 업무 판정 Q2·admin context 출처/소비 미해소 후보"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1118@2026-09-11> .
 
 <https://numchida.com/ns/djr#R-1118@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1118 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-1118@2026-09-11> a djr:Expression ;
+    prov:specializationOf djr:R-1118 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1118@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-1119 a djr:Obligation ;
-    skos:prefLabel "ⓓ#227 자료를 원시값 인자로 펴서 넘길 수 있나"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1119@2026-08-22> .
+    skos:prefLabel "포트/어댑터 판정과 vendor 오류 속성 출처 후보 검수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1119@2026-09-11> .
 
 <https://numchida.com/ns/djr#R-1119@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1119 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1119@2026-09-11> a djr:Expression ;
+    prov:specializationOf djr:R-1119 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1119@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-1120 a djr:Obligation ;
     skos:prefLabel "ⓓ#233 무엇을 알고 싶은가가 이름에 있나(Q1)"@ko ;
@@ -2967,7 +3003,7 @@ djr:R-3422 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 23 ;
     djr:statesNorm djr:R-1035, djr:R-1036, djr:R-1037, djr:R-1038 ;
-    djr:text "- **raw infrastructure 기본 경계**: raw DB/SDK/network exception은 safe framework 500으로 둔다. global recognizer·retryable handler·문자열/SQLSTATE 분류를 요구하거나 새 code-profile에 추가하지 않는다. 특정 실패가 안정된 public meaning을 가진다고 G1에서 명시 승인된 경우에만 owning infra/ACL이 그 실패를 consuming BC의 own concrete domain/application exception으로 정규화하고, 그 BC controller가 위 직접 흐름으로 mapping한다. raw infrastructure exception을 합성하거나 controller에서 직접 catch하는 우회도 금지한다.\n"@ko .
+    djr:text "- **raw infrastructure 기본 경계**: raw DB/SDK/network exception은 safe framework 500으로 둔다. global recognizer·retryable handler·문자열/SQLSTATE 분류를 요구하거나 새 code-profile에 추가하지 않는다. 이미 잡은 IntegrityError의 승인된 알려진 제약 실패는 구체 계약 예외로, 나머지는 승인된 일반 저장소 실패 계약으로 번역한다. repository 실패 계약은 domain 소유, capability port 실패 계약은 해당 port 소유다. 이 내부 정규화는 공개 HTTP 오류 승인이 아니므로 일반 저장소 실패의 외부 응답은 기존 safe 500을 유지한다. 새 ErrorCode/ErrorSchema/4xx/503을 만들지 않는다. 잡지 않은 unknown 인프라 오류를 새로 catch-all하지 않는다. 안정된 public meaning이 별도로 승인된 경우에만 그 외부 계약에 맞는 controller mapping을 한다. 이미 선언된 계약 예외의 관찰 후 재던짐은 허용한다. raw infrastructure exception을 합성하거나 controller에서 직접 catch하는 우회도 금지한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007/b24> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;
@@ -3010,7 +3046,7 @@ djr:R-3422 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 29 ;
     djr:statesNorm djr:R-1067, djr:R-1068, djr:R-1069, djr:R-1070, djr:R-1071 ;
-    djr:text "- **ACL 실패 번역 전수성(포트 계약 누수 — 기계 밖)**: ACL 이 호출하는 upstream 동작에서 consuming port/승인 명세가 known failure 로 선언한 의미는 consuming BC 의 own concrete 예외로 빠짐없이 번역되어야 한다 — 그 집합의 upstream 예외가 ACL 을 raw 통과하면 **blocker**. import 없는 propagation·helper·재수출 우회는 기계 밖이라 네가 직접 읽는다. 광범위 `except Exception` 을 요구하지 않으며, ACL·upstream repository 안에서 이미 승인 concrete 로 번역·소진된 실패는 누수가 아니다. raw DB/SDK/network unknown failure 는 이 전수 집합이 아니고 safe framework 500 이 기본이다(승인된 안정적 public meaning 이 있을 때만 owning infra/ACL 이 정규화).\n"@ko .
+    djr:text "- **ACL 실패 번역 전수성(포트 계약 누수 — 기계 밖)**: ACL 이 호출하는 upstream 동작에서 consuming port/승인 명세가 known failure 로 선언한 의미는 consuming BC 의 own concrete 예외로 빠짐없이 번역되어야 한다 — 그 집합의 upstream 예외가 ACL 을 raw 통과하면 **blocker**. import 없는 propagation·helper·재수출 우회는 기계 밖이라 네가 직접 읽는다. 광범위 `except Exception` 을 요구하지 않으며, ACL·upstream repository 안에서 이미 승인 concrete 로 번역·소진된 실패는 누수가 아니다. 잡지 않은 raw DB/SDK/network unknown failure는 이 전수 집합이 아니고 safe framework 500이 기본이다. 이미 잡은 IntegrityError의 승인된 알려진 제약 실패는 구체 계약 예외로, 나머지는 승인된 일반 저장소 실패 계약으로 번역한다. repository 실패 계약은 domain 소유, capability port 실패 계약은 해당 port 소유다. 이 내부 정규화는 공개 HTTP 오류 승인이 아니므로 일반 저장소 실패의 외부 응답은 기존 safe 500을 유지한다. 새 ErrorCode/ErrorSchema/4xx/503을 만들지 않는다. 잡지 않은 unknown 인프라 오류를 새로 catch-all하지 않는다. 안정된 public meaning이 별도로 승인된 경우에만 그 외부 계약에 맞는 controller mapping을 한다. 이미 선언된 계약 예외의 관찰 후 재던짐은 허용한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007/b3> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;
@@ -3142,7 +3178,7 @@ djr:R-3422 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 46 ;
     djr:statesNorm djr:R-1102, djr:R-1103, djr:R-1104, djr:R-1105, djr:R-1106, djr:R-1107 ;
-    djr:text "  - 도메인 모델 — #257 이 메서드 뒤에도 불변식이 참인가(Q4) · #259 이것이 값인가 엔티티인가(Q4) · #268 이 타입 조합만으로 잘못된 값이 «불가능»한가(Q2) · #301 이 규칙이 «없을 때»를 판정하나(루트 메서드로 표현될 수 있나) · #311 이 이름이 규칙 «행위»를 말하나 · #547 이 둘이 «동시에» 일어나면 업무가 정말 막아야 하나 / 서로 다른 일을 하는 두 사용자가 이 경계로 충돌하나(Q4) · #565 단계 이름(위 표).\n"@ko .
+    djr:text "  - 도메인 모델 — #257 이 메서드 뒤에도 불변식이 참인가(Q4) · #259 이것이 값인가 엔티티인가(Q4) · #268 닫힌 표준 Enum/StrEnum/IntEnum은 생성 검증 후보에서 제외하고, custom/open Enum은 raise 유무와 별개로 타입 조합만으로 잘못된 값이 «불가능»한지 묻는다(Q2) · #301 이 규칙이 «없을 때»를 판정하나(루트 메서드로 표현될 수 있나) · #311 이 이름이 규칙 «행위»를 말하나 · #546 해소된 동일 트랜잭션 영역의 서로 다른 repository/aggregate 타입 쓰기는 확정이고, 영역·출처 미해소는 후보로 같은 트랜잭션인지 확인한다(순차 독립 UoW는 합치지 않으며 nested/외부 atomic은 결합한다) · #547 이 둘이 «동시에» 일어나면 업무가 정말 막아야 하나 / 서로 다른 일을 하는 두 사용자가 이 경계로 충돌하나(Q4) · #565 단계 이름(위 표).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007/b47> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;
@@ -3184,14 +3220,14 @@ djr:R-3422 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 51 ;
     djr:statesNorm djr:R-1117, djr:R-1118 ;
-    djr:text "  - admin·표현 — #343 이 문장이 운영 «기능»인가 장고 «배선»인가 · #589 이 조건이 업무 판정인가(Q2) · #590 문구(위 표) · #347(위 격리 줄).\n"@ko .
+    djr:text "  - admin·표현 — #343 이 문장이 운영 «기능»인가 장고 «배선»인가 · #589 이 조건이 업무 판정인가(Q2) · #590 문구(위 표) · #347(위 격리 줄).\n\n  **admin context 판정**: #493 주석 존재 유지 · #645 framework 소유 슬롯 Any 제한 허용 · #646 제네릭 런타임 안전 유지 · #647 열린 UI context 조립/병합/전달 허용 · #650 실제 JSON 소비 검증 유지다. 출처가 확인된 Django admin 및 Parler admin 계열의 고정 framework 슬롯에만 적용한다. `extra_context`/`context`의 받기·each_context·UI dict·copy/update·고정 UI 키 쓰기·framework render 전달과 연결된 private 전달 helper의 매개변수·반환·지역 context 주석을 허용한다. form/inline/media의 별도 조립은 context의 허용을 취소하지 않는다. 컨테이너 부재 처리와 request UI metadata의 담기·전달도 허용한다. 업무 읽기·비교·계산·상태 변경 또는 ORM/use case/업무 함수로의 값 전달은 실제 소비이므로 그 자리부터 기존 규칙을 적용한다. 출처나 소비가 미해소 또는 동적/재귀 호출로 escape한 연결 context는 후보로 남겨 확인한다. 이름만 context인 값·같은 함수의 별도 업무 dict·framework 고정 kwargs 밖 bare Any·admin 클래스/경로 전체는 면제하지 않는다. 생성 private helper는 본문이 없으므로 정확히 결합된 열린 dict 슬롯의 #645/#647만 S1 미검증으로 보고하고 G2에서 실제 소비 흐름으로 다시 판단한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007/b52> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;
     djr:kind djr:kind-norm ;
     djr:order 52 ;
     djr:statesNorm djr:R-1119, djr:R-1120, djr:R-1121, djr:R-1122, djr:R-1123 ;
-    djr:text "  - 포트·어댑터 — #227 이 자료를 원시값 인자로 «펴서» 넘길 수 있나 · #233 무엇을 알고 싶은가가 이름에 있나(Q1) · #368 이게 «기계»인가 «값»인가 · #475 이 판정이 업무 규칙인가(Q2) · #485 이 이름이 무엇을 시키는지 말하나 · #553 Q2(위 표) · #594·#595 이름 안정(위 표).\n"@ko .
+    djr:text "  - 포트·어댑터 — #227 이 자료를 원시값 인자로 «펴서» 넘길 수 있나 · #233 무엇을 알고 싶은가가 이름에 있나(Q1) · #368 이게 «기계»인가 «값»인가 · #475 이 판정이 업무 규칙인가(Q2) · #485 이 이름이 무엇을 시키는지 말하나 · #553 Q2(위 표) · #594·#595 이름 안정(위 표). · #557 비교하는 code/errno/status_code 수신자의 출처가 확인된 vendor이면 확정, 확인된 우리 계약이면 허용, 미해소/혼합이면 후보로 그 코드의 주인을 묻는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007/b53> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;

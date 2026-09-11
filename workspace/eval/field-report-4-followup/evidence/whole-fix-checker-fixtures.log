@@ -1,0 +1,283 @@
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-layer-skeleton.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-2sem3jvp/fixture
+clean — BC 1개 골격 일치 (트리 170행 · standard_tree 7d08c08915426747)
+skeleton/good_bc: expected=0 actual=0
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-layer-skeleton.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-ts6dc6ju/fixture
+blocker 10건 — 골격이 어긋나면 나머지 검사를 돌리지 않는다(#487)
+  [#81] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-ts6dc6ju/fixture/application/shop/infra_layer: BC 직계는 일곱뿐이다 — 여덟째는 없다
+  [#488] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-ts6dc6ju/fixture/application/shop/composition_root: 고정 칸 `composition_root/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 2행)
+  [#488] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-ts6dc6ju/fixture/application/shop/published_event: 고정 칸 `published_event/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 5행)
+  [#488] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-ts6dc6ju/fixture/application/shop/driving_layer: 고정 칸 `driving_layer/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 7행)
+  [#488] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-ts6dc6ju/fixture/application/shop/application_layer: 고정 칸 `application_layer/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 38행)
+  [#488] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-ts6dc6ju/fixture/application/shop/domain_layer: 고정 칸 `domain_layer/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 59행)
+  [#488] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-ts6dc6ju/fixture/application/shop/driven_layer: 고정 칸 `driven_layer/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 75행)
+  [#488] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-ts6dc6ju/fixture/application/shop/test: 고정 칸 `test/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 135행)
+  [#490] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-ts6dc6ju/fixture/application/shop/models.py: 트리가 이 층에 이름을 준 파일이 아니다
+  [#490] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-ts6dc6ju/fixture/application/shop/views.py: 트리가 이 층에 이름을 준 파일이 아니다
+skeleton/bad_legacy_flat: expected=2 actual=2
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-layer-skeleton.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-4dib4w_6/fixture
+blocker 3건 — 골격이 어긋나면 나머지 검사를 돌리지 않는다(#487)
+  [#488] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-4dib4w_6/fixture/application/orders/driving_layer/api/api_router.py: 고정 파일 부재 — 비면 빈 파일로 만든다 (트리 9행)
+  [#488] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-4dib4w_6/fixture/application/orders/domain_layer: 고정 칸 `domain_layer/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 59행)
+  [#488] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-4dib4w_6/fixture/application/orders/test/fake: 고정 칸 `fake/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 140행)
+skeleton/bad_missing: expected=2 actual=2
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-layer-skeleton.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-nr1s270s/fixture
+[ⓓ#644] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-nr1s270s/fixture/application/orders/driving_layer/api/order/order_controller/order_controller.py: 행위 칸 실현 240행(>200) — 캐스케이드 판정 의무 (트리 12행) — 물음: 역할 밖 응집 단위가 있는가 — ①이동/②동명 폴더 승격/③유지 (houserules §1 캐스케이드)
+clean — BC 1개 골격 일치 (트리 170행 · standard_tree 7d08c08915426747)
+skeleton/good_promoted: expected=0 actual=0
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-layer-skeleton.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-vph9u22h/fixture
+blocker 10건 — 골격이 어긋나면 나머지 검사를 돌리지 않는다(#487)
+  [#490] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-vph9u22h/fixture/application/orders/driving_layer/api/api_router: 승격 배제 칸의 동명 폴더 — 이 칸은 파일 실현만 갖는다 (트리 9행)
+  [#639] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-vph9u22h/fixture/application/orders/driving_layer/api/order/order_controller: 형제 `order_controller.py` 와 승격 폴더의 공존 — import 는 패키지가 이겨 조용한 위장 중복이다
+  [#638] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-vph9u22h/fixture/application/orders/driving_layer/api/order/order_controller: 승격 폴더에 본체 `order_controller.py` 가 없다 — 위장 (트리 12행)
+  [#640] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-vph9u22h/fixture/application/orders/driving_layer/api/order/order_controller/__init__.py: `__init__.py` 는 재수출 전용이다 — from-as 재수출·`__all__`·docstring 밖 코드 동거 금지
+  [#641] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-vph9u22h/fixture/application/orders/driving_layer/api/order/order_controller/nested: 승격 폴더 내부는 1단 평평이다 — 부품 군집의 폴더 요구는 트리 개정 신호이지 중첩 근거가 아니다
+  [#640] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-vph9u22h/fixture/application/orders/driving_layer/api/order/order_controller/utils.py: 승격 폴더 안 정크드로어 이름 — 부품은 응집 단위의 이름을 가진다
+  [#490] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-vph9u22h/fixture/application/orders/application_layer/port/unit_of_work/main_unit_of_work: 승격 배제 칸의 동명 폴더 — 이 칸은 파일 실현만 갖는다 (트리 58행)
+  [#643] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-vph9u22h/fixture/application/orders/application_layer/order/place_order/place_order_use_case: 부품 0개(본체+`__init__.py` 뿐)인 승격 폴더 — 환원 신호(파일 실현으로 되돌린다)
+  [#490] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-vph9u22h/fixture/application/orders/domain_layer/order/order_repository: 승격 배제 칸의 동명 폴더 — 이 칸은 파일 실현만 갖는다 (트리 68행)
+  [#490] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-vph9u22h/fixture/application/orders/driven_layer/django_orders/admin/order/panel: 승격 배제 칸의 동명 폴더 — 이 칸은 파일 실현만 갖는다 (트리 84행)
+skeleton/bad_promoted: expected=2 actual=2
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-context-isolation.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-aw0lzahb/fixture
+clean — BC 2개 격리 규율 일치 (standard_tree 7d08c08915426747)
+context_isolation/good: expected=0 actual=0
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-context-isolation.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-jfcz7jyw/fixture
+ⓓ 후보 4건 — 기계가 좁힌 후보다(exit 불산입). 마무리는 discipline-reviewer 의 물음이 한다:
+  [ⓓ#153] application/billing/driving_layer/open_host_service/invoice_lookup/invoice_lookup_service.py:1: `get_invoice_query` 의 확인된 유스케이스 실행 0회 — 실행 횟수/출처 확인 필요 — 물음: 「이 문장이 «계약↔응용 DTO 변환»인가」
+  [ⓓ#153] application/orders/driving_layer/open_host_service/django_order_sync/django_order_sync_service.py:1: `sync_query` 의 확인된 유스케이스 실행 0회 — 실행 횟수/출처 확인 필요 — 물음: 「이 문장이 «계약↔응용 DTO 변환»인가」
+  [ⓓ#153] application/orders/driving_layer/open_host_service/order_lookup/order_lookup_service.py:7: `fetch_order` 의 확인된 유스케이스 실행 0회 — 실행 횟수/출처 확인 필요 — 물음: 「이 문장이 «계약↔응용 DTO 변환»인가」
+  [ⓓ#347] application/orders/driven_layer/django_orders/admin/order/feature/bulk_close.py: admin feature 가 애그리거트를 부르고 리포지토리 쓰기를 한다 — 공유 유스케이스는 `application_layer` 에 남긴다 — 물음: 「이 조작을 사용자 API 도 하나」
+blocker 60건 — 컨텍스트 격리·경계 규율 위반
+  [#473] application/billing/driven_layer/adapter/anticorruption_layer/orders/order_lookup_adapter.py: ACL 어댑터는 상대 창구의 «기저 예외»를 반드시 잡는다 — 기저(`*_published_error`) import 가 없다
+  [#185] application/orders/application_layer/order/place_order/place_order_use_case.py: `application_layer` 는 `driven_layer` 를 import 하지 않는다(#322 — driven 으로 들어오는 화살표는 composition_root 뿐) — `application.orders.driven_layer.adapter.persistence.repository.order_repository`
+  [#186] application/orders/application_layer/order/place_order/place_order_use_case.py: `application_layer` 는 타 BC 를 직접 부르지 않고 자기 `port/` 를 거친다 — `application.billing.domain_layer.invoice.invoice`
+  [#2] application/orders/application_layer/port/payment_gateway/payment_gateway_port.py: 안쪽 두 칸(domain·application)은 구체 기술을 모른다(#5 — 예외 조문은 없다, 전부 port 뒤로) — `django.db.models`
+  [#312] application/orders/domain_layer/domain_service/discount_policy.py: domain 은 밖을 모른다(의존은 안쪽으로만) — `application.orders.driven_layer.adapter.persistence.repository.order_repository`
+  [#2] application/orders/domain_layer/order/order.py: 안쪽 두 칸(domain·application)은 구체 기술을 모른다(#5 — 예외 조문은 없다, 전부 port 뒤로) — `django.db`
+  [#288] application/orders/domain_layer/order/order.py: `<aggregate>_repository` 는 domain 안에서 아무도 import 하지 않는다 — `application.orders.domain_layer.order.order_repository`
+  [#328] application/orders/driven_layer/adapter/anticorruption_layer/billing/invoice_lookup_adapter.py: `django_<bc>` 를 import 하는 것은 `adapter/persistence/` 아래와 `adapter/<capability>/django_adapter/adapter/` 의 구현 파일뿐이다 — `application.orders.driven_layer.django_orders.models.order_model`
+  [#9] application/orders/driven_layer/adapter/persistence/repository/order_repository.py: `driven_layer` 는 `domain_layer` 와 `application_layer/port/` 만 import 한다 — `application.orders.application_layer.order.place_order.place_order_use_case`
+  [#93] application/orders/driving_layer/api/order/order_controller.py: driving 의 잎은 `application_layer/port/` 를 import 하지 않는다 — `application.orders.application_layer.port.payment_gateway.payment_gateway_port`
+  [#94] application/orders/driving_layer/api/order/order_controller.py: driving 의 잎은 `driven_layer/` 를 import 하지 않는다 — `application.orders.driven_layer.adapter.persistence.repository.order_repository`
+  [#95] application/orders/driving_layer/api/order/order_controller.py: driving 잎이 domain 에서 가져올 수 있는 것은 exception·값 객체뿐이다 — `application.orders.domain_layer.order.order`
+  [#102] application/orders/driving_layer/api/order/order_controller.py: 타 BC 는 driving 중 `open_host_service/` 아래만 import 한다 — `application.billing.driving_layer.api.invoice.invoice_controller`
+  [#98] application/orders/driving_layer/api/order/order_controller.py: 타 BC 의 `composition_root` 는 관문(OHS) 우회다 — `application.billing.composition_root.dependency_wiring`
+  [#13] application/orders/driving_layer/cron_job/sync_invoices_cron_job.py: 타 BC 의 `open_host_service/` 를 import 하는 것은 `anticorruption_layer/` 뿐이다 — `application.billing.driving_layer.open_host_service.invoice_lookup.invoice_lookup_service`
+  [#472] application/orders/driving_layer/open_host_service/order_lookup/contract/request/get_order_request.py: `contract/` 는 표준 라이브러리와 같은 BC 의 다른 계약 말고는 import 하지 않는다 — `application.orders.domain_layer.order.order`
+  [#251] application/orders/published_event/order_placed.py: `published_event` 는 domain 을 import 하지 않는다(domain 으로 들어오는 화살표 셋에 없다) — `application.orders.domain_layer.order.order`
+  [#51] application/orders/test/unit/test_order.py: BC 테스트가 다른 BC 의 test 를 import 하면 위반이다 — `application.billing.test.factories.invoice_factory`
+  [#150] application/orders/driving_layer/open_host_service/flat_helper.py: `open_host_service/` 의 1차 축은 `<service>/` 폴더다 — 평면 `.py` 를 두지 않는다
+  [#151] application/orders/driving_layer/open_host_service/django_order_sync: 창구 이름은 「무엇을 해 주는가」로 짓는다 — 기술·타 BC 이름 토큰이 들어 있다
+  [#154] application/orders/driving_layer/open_host_service/order_lookup/extra.py: `<service>/` 안은 `<service>_service.py` 와 `contract/` 둘로 구성한다
+  [#634] application/orders/driving_layer/open_host_service/order_lookup/order_lookup_service.py: `<service>_service.py` 의 공개 표면은 모듈 수준 «함수»뿐이다 — `LookupHelper` (계약 클래스는 `contract/` 에 산다)
+  [#482] application/orders/driving_layer/open_host_service/order_lookup/order_lookup_service.py: 창구 공개 함수 이름은 `_command`/`_query` 로 끝난다 — `fetch_order`
+  [#633] application/orders/driving_layer/open_host_service/order_lookup/order_lookup_service.py: 창구 공개 함수는 그 연산의 request 계약 «하나»만 받는다 — `fetch_order`
+  [#164] application/orders/driving_layer/open_host_service/order_lookup/order_lookup_service.py: 도메인 예외를 raw 로 전파하지 않는다 — `OutOfStock` 은 `contract/exception/` 타입으로 번역해 던진다(#295)
+  [#153] application/orders/driving_layer/open_host_service/order_lookup/order_lookup_service.py: 도메인 예외는 «타입»으로만 쓴다 — `e.code` 속성 접근은 계약이 도메인 모양에 얹힌 것이다
+  [#164] application/orders/driving_layer/open_host_service/order_lookup/order_lookup_service.py: 도메인 예외를 raw 로 전파하지 않는다 — `OutOfStock` 은 `contract/exception/` 타입으로 번역해 던진다(#295)
+  [#295] application/orders/driving_layer/open_host_service/order_lookup/order_lookup_service.py: 도메인 예외를 `__all__` 로 재노출하지 않는다 — `OutOfStock`
+  [#155] application/orders/driving_layer/open_host_service/order_lookup/contract/helpers: `contract/` 는 `request/`·`response/`·`exception/` 셋으로 갈린다(#163 — exception 은 연산 축이 아니라 서비스 스코프다)
+  [#157] application/orders/driving_layer/open_host_service/order_lookup/contract/request/fetch_order_request.py: 계약 타입 하나 = 파일 하나다 — 공개 클래스가 2개다(주 계약이 어노테이션으로 참조하는 보조 dataclass 만 예외)
+  [#484] application/orders/driving_layer/open_host_service/order_lookup/contract/request/fetch_order_request.py: 계약 클래스는 `<Operation>Request` 다(`Result` 금지 — #156: 이 폴더에는 이 창구가 받는 타입과 그 구성 보조 dataclass 만 온다) — `StrayNote`
+  [#483] application/orders/driving_layer/open_host_service/order_lookup/contract/request/get_order_request.py: 계약 파일은 창구 함수와 짝이다 — `get_order` 연산 함수가 `<service>_service.py` 에 없다
+  [#157] application/orders/driving_layer/open_host_service/order_lookup/contract/request/get_order_request.py: 계약 타입 하나 = 파일 하나다 — 공개 클래스가 2개다(주 계약이 어노테이션으로 참조하는 보조 dataclass 만 예외)
+  [#484] application/orders/driving_layer/open_host_service/order_lookup/contract/request/get_order_request.py: 계약 클래스는 `<Operation>Request` 다(`Result` 금지 — #156: 이 폴더에는 이 창구가 받는 타입과 그 구성 보조 dataclass 만 온다) — `GetOrderResult`
+  [#483] application/orders/driving_layer/open_host_service/order_lookup/contract/response/get_order_response.py: 계약 파일은 창구 함수와 짝이다 — `get_order` 연산 함수가 `<service>_service.py` 에 없다
+  [#455] application/orders/driving_layer/open_host_service/order_lookup/contract/response/get_order_response.py: 못 해 준 사유는 «코드»로 담는다 — 자유 문자열(message)만 있고 `code` 가 없다
+  [#166] application/orders/driving_layer/open_host_service/order_lookup/contract/exception/order_lookup_published_error.py: 서비스당 기저 예외 하나를 `order_lookup_published_error.py` 에 둔다 — 부재
+  [#170] application/orders/driving_layer/open_host_service/order_lookup/contract/exception/order_not_found_v1.py: 예외 계약 파일에 `_v1` 접미를 붙이지 않는다
+  [#168] application/orders/driving_layer/open_host_service/order_lookup/contract/exception/order_not_found_v1.py: published 예외는 클래스 하나당 1모듈이다 — 2개
+  [#453] application/orders/driving_layer/open_host_service/order_lookup/contract/exception/order_not_found_v1.py: 「물건이 없다·이미 있다·규칙이 거절한다」는 예외가 아니라 답이다(#454 — 공개 예외는 «돌려줄 것이 아예 없는» 갈래뿐) — `OrderNotFound`
+  [#167] application/orders/driving_layer/open_host_service/order_lookup/contract/exception/order_not_found_v1.py: published 예외는 기저 예외를 상속한다(중간층 경유 허용) — `OrderNotFound` 이 `Exception` 직접 상속이다
+  [#167] application/orders/driving_layer/open_host_service/order_lookup/contract/exception/order_not_found_v1.py: published 예외는 기저 예외를 상속한다(중간층 경유 허용) — `OrderLookupTimeoutError` 이 `Exception` 직접 상속이다
+  [#361] application/orders/driven_layer/adapter/anticorruption_layer/loose.py: `anticorruption_layer/` 아래는 상대 BC 하나 = 폴더 하나다 — 평면 파일을 두지 않는다
+  [#363] application/orders/driven_layer/adapter/anticorruption_layer/billing/invoice_lookup_adapter.py: ACL 어댑터 클래스 이름은 `<Bc><Capability>Adapter` 다 — `InvoiceFetcher`
+  [#473] application/orders/driven_layer/adapter/anticorruption_layer/billing/invoice_lookup_adapter.py: ACL 어댑터는 상대 창구의 «기저 예외»를 반드시 잡는다 — 기저(`*_published_error`) import 가 없다
+  [#14] application/orders/application_layer/order/place_order/place_order_use_case.py: `with unit_of_work:` 블록 «안»에서 크로스-BC 포트(`_payment`)를 부르면 위반이다
+  [#364] application/orders/application_layer/port/billing_lookup: 포트는 «필요»(capability)로 이름 붙는다 — 포트 이름에 공급자 BC 이름을 넣지 않는다
+  [#364] application/orders/application_layer/port/billing_lookup/billing_lookup_port.py: 포트는 «필요»(capability)로 이름 붙는다 — 포트 이름에 공급자 BC 이름을 넣지 않는다
+  [#110] application/orders/driving_layer/api/order/order_controller.py: `@api_controller(..., auto_import=False)` 로 자동 등록을 끈다 — `OrderController`
+  [#291] application/orders/domain_layer/exception.py: BC 바로 밑 `domain_layer/exception.py` 를 두지 않는다 — 도메인 예외의 표준 자리는 애그리거트 밑 하나뿐이다
+  [#292] application/orders/application_layer/order/exception: application 쪽 예외 자리는 `port/<capability>/exception.py`(바깥 행위자의 죽음)뿐이다
+  [#146] application/orders/driving_layer/published_service: 타 BC 입구는 `driving_layer/open_host_service/` 다 — `published_service/` 칸을 만들지 않는다
+  [#117] application/orders/driving_layer/api/order/error_codes.py: BC 안에 두 번째 ErrorCode 컨테이너를 두지 않는다 — 첫째는 `application_layer/order/codes.py`
+  [#11] application/orders/application_layer/port/payment_gateway/payment_gateway_port.py: 경계를 넘는 데이터에 엔티티도 DB 행도 실리지 않는다 — 애너테이션 `QuerySet` (연 쪽이 닫기까지 못 한다)
+  [#450] application/billing: 두 BC(`billing`·`orders`)가 서로의 `anticorruption_layer/` 에 들어 있다 — 순환 결합이다
+  [#450] application/orders: 두 BC(`orders`·`billing`)가 서로의 `anticorruption_layer/` 에 들어 있다 — 순환 결합이다
+  [#433] config/settings/base.py: 규칙을 «주소 목록»으로 적지 않는다 — BC 경로 리터럴 `application.orders.driving_layer.api` (BC 가 늘 때마다 이 파일이 바뀐다 · #432)
+  [#433] config/settings/base.py: 규칙을 «주소 목록»으로 적지 않는다 — BC 경로 리터럴 `application.billing.driving_layer.api` (BC 가 늘 때마다 이 파일이 바뀐다 · #432)
+  [#431] config/urls.py: 부작용 등록(`# noqa: F401` import 등록)은 금지다 — 허용은 `urls.py` 의 `register_<bc>_api(api)` 명시 호출뿐이다
+  [#431] config/urls.py: 쓰이지 않는 BC import — 부작용 등록이다(`application.orders.driving_layer.api.api_router`)
+context_isolation/bad_rules: expected=2 actual=2
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-public-surface-annotation.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-wh2zd7bp/fixture
+clean — 파일 21개 타입 규율 일치 (standard_tree 7d08c08915426747)
+public_surface/good: expected=0 actual=0
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-public-surface-annotation.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-a45mop18/fixture
+blocker 33건 — 타입 전면 규율 위반 (#493 «첫 대입에 타입» · #645/#647 `Any`·레코드 · #646 django-stubs 제네릭 기저 외)
+  [#645] application/orders/application_layer/order/place_order/any_signature.py:8: `take_bare()` 매개변수 `x` 가 `Any` 다 — 검사 포기다 — `object`/정확 타입으로 받아 즉시 좁힌다(TypeIs·isinstance)
+  [#645] application/orders/application_layer/order/place_order/any_signature.py:12: `give_bare()` 반환 타입이 `Any` 다 — 검사 포기다 — `object`/정확 타입으로 받아 즉시 좁힌다(TypeIs·isinstance)
+  [#645] application/orders/application_layer/order/place_order/any_signature.py:16: `take_optional()` 매개변수 `x` 가 `Any` 다 — 검사 포기다 — `object`/정확 타입으로 받아 즉시 좁힌다(TypeIs·isinstance)
+  [#645] application/orders/application_layer/order/place_order/any_signature.py:20: `take_alias()` 매개변수 `x` 가 `Any` 다 — 검사 포기다 — `object`/정확 타입으로 받아 즉시 좁힌다(TypeIs·isinstance)
+  [#645] application/orders/application_layer/order/place_order/any_signature.py:24: `take_attribute()` 매개변수 `x` 가 `Any` 다 — 검사 포기다 — `object`/정확 타입으로 받아 즉시 좁힌다(TypeIs·isinstance)
+  [#645] application/orders/application_layer/order/place_order/any_signature.py:28: `take_star()` 매개변수 `*kwargs` 가 `Any` 다 — 검사 포기다 — `object`/정확 타입으로 받아 즉시 좁힌다(TypeIs·isinstance)
+  [#645] application/orders/application_layer/order/place_order/any_signature.py:32: `take_pipe_none()` 매개변수 `x` 가 `Any` 다 — 검사 포기다 — `object`/정확 타입으로 받아 즉시 좁힌다(TypeIs·isinstance)
+  [#645] application/orders/application_layer/order/place_order/any_signature.py:36: `take_string()` 매개변수 `x` 가 `Any` 다 — 검사 포기다 — `object`/정확 타입으로 받아 즉시 좁힌다(TypeIs·isinstance)
+  [#647] application/orders/application_layer/order/place_order/any_signature.py:41: `y` 주석의 값 자리가 `Any` 다 — 키가 정해진 값 묶음은 `TypedDict`(파싱한 JSON 은 `TypeAdapter` 검증 파싱) · 조회표는 `dict[K, 구체 V]` · 통과 값은 `JsonValue`
+  [#493] application/orders/application_layer/order/place_order/place_order_use_case.py:1: 모듈 변수 `retries` 의 첫 대입에 타입이 없다 — `name: T = …`
+  [#493] application/orders/application_layer/order/place_order/place_order_use_case.py:5: `__init__()` 매개변수 `repository` 에 타입이 없다
+  [#493] application/orders/application_layer/order/place_order/place_order_use_case.py:5: `__init__()` 반환 타입이 없다
+  [#493] application/orders/application_layer/order/place_order/place_order_use_case.py:8: `execute()` 매개변수 `command` 에 타입이 없다
+  [#493] application/orders/application_layer/order/place_order/place_order_use_case.py:8: `execute()` 반환 타입이 없다
+  [#493] application/orders/application_layer/order/place_order/place_order_use_case.py:9: 지역 변수 `total` 의 첫 대입에 타입이 없다 — `name: T = …`
+  [#493] application/orders/application_layer/order/place_order/place_order_use_case.py:6: 속성 `self._repository` 의 첫 대입에 타입이 없다 — `self._repository: T = …` 또는 클래스 본문 `_repository: T`
+  [#647] application/orders/application_layer/order/place_order/record_leak.py:9: `payload` 주석의 값 자리가 `object` 다 — 키가 정해진 값 묶음은 `TypedDict`(파싱한 JSON 은 `TypeAdapter` 검증 파싱) · 조회표는 `dict[K, 구체 V]` · 통과 값은 `JsonValue` — 반환·속성에 남은 `object` 는 좁히지 않은 누수다
+  [#647] application/orders/application_layer/order/place_order/record_leak.py:12: `leak_return()` 반환 타입의 값 자리가 `object` 다 — 키가 정해진 값 묶음은 `TypedDict`(파싱한 JSON 은 `TypeAdapter` 검증 파싱) · 조회표는 `dict[K, 구체 V]` · 통과 값은 `JsonValue` — 반환·속성에 남은 `object` 는 좁히지 않은 누수다
+  [#647] application/orders/application_layer/order/place_order/record_leak.py:16: `leak_param()` 매개변수 `rows`의 값 자리가 `Any` 다 — 키가 정해진 값 묶음은 `TypedDict`(파싱한 JSON 은 `TypeAdapter` 검증 파싱) · 조회표는 `dict[K, 구체 V]` · 통과 값은 `JsonValue`
+  [#647] application/orders/application_layer/order/place_order/record_leak.py:20: `is_record()` 반환 타입의 값 자리가 `Any` 다 — 키가 정해진 값 묶음은 `TypedDict`(파싱한 JSON 은 `TypeAdapter` 검증 파싱) · 조회표는 `dict[K, 구체 V]` · 통과 값은 `JsonValue`
+  [#647] application/orders/application_layer/order/place_order/record_leak.py:25: `payload` 주석의 값 자리가 `Any` 다 — 키가 정해진 값 묶음은 `TypedDict`(파싱한 JSON 은 `TypeAdapter` 검증 파싱) · 조회표는 `dict[K, 구체 V]` · 통과 값은 `JsonValue`
+  [#493] application/orders/domain_layer/shared_value_object/aliased_shadow.py:7: 클래스 변수 `FIRST` 의 첫 대입에 타입이 없다 — `name: T = …`
+  [#358] application/orders/driven_layer/adapter/persistence/domain_bypass_query/order_summary_query.py:7: `fetch_all()` 반환 타입에 `OrderModel, QuerySet` — Thin Read 는 이름 붙인 정적 타입만 내보낸다(ORM 로우·QuerySet 금지)
+  [#358] application/orders/driven_layer/adapter/persistence/domain_bypass_query/order_summary_query.py:10: `fetch_one()` 반환 타입에 `OrderModel` — Thin Read 는 이름 붙인 정적 타입만 내보낸다(ORM 로우·QuerySet 금지)
+  [#493] application/orders/driven_layer/django_orders/admin/order/stub_generic_bad.py:30: 클래스 변수 `list_display` 의 첫 대입에 타입이 없다 — `name: T = …`
+  [#646] application/orders/driven_layer/django_orders/admin/order/stub_generic_bad.py:11: `BareNamePanel` 이 django-stubs 제네릭 기저 `ModelAdmin` 를 맨몸으로 상속했다 — mypy strict `[type-arg]` 빚 · `if TYPE_CHECKING:` 별칭으로 모델 타입 인자를 적는다
+  [#646] application/orders/driven_layer/django_orders/admin/order/stub_generic_bad.py:15: `BareAttributeInline` 이 django-stubs 제네릭 기저 `TabularInline` 를 맨몸으로 상속했다 — mypy strict `[type-arg]` 빚 · `if TYPE_CHECKING:` 별칭으로 모델 타입 인자를 적는다
+  [#646] application/orders/driven_layer/django_orders/admin/order/stub_generic_bad.py:19: `MultiLineIgnorePanel`(기저 `ModelAdmin`) 헤더의 `# type: ignore[type-arg]` — django-stubs 제네릭 맨몸을 덮었다 · 별칭(`TYPE_CHECKING`) 또는 subscript 로 적는다
+  [#646] application/orders/driven_layer/django_orders/admin/order/stub_generic_bad.py:26: `AttributeLineIgnorePanel` 속성 줄의 `# type: ignore[type-arg]` — 스텁 선언(`ClassVar`)이 타입을 소유하는 자리는 재선언하지 않는다 · 인라인 목록은 bound 로 적는다
+  [#646] application/orders/driven_layer/django_orders/admin/order/stub_generic_bad.py:29: `SharedAliasPanel` 헤더의 `# type: ignore[type-arg]` — django-stubs 제네릭 맨몸을 덮었다 · 별칭(`TYPE_CHECKING`) 또는 subscript 로 적는다
+  [#646] application/orders/driven_layer/django_orders/admin/order/stub_generic_bad.py:33: `BareForm` 이 django-stubs 제네릭 기저 `ModelForm` 를 맨몸으로 상속했다 — mypy strict `[type-arg]` 빚 · `if TYPE_CHECKING:` 별칭으로 모델 타입 인자를 적는다
+  [#456] application/orders/driving_layer/open_host_service/order_lookup/contract/exception/invalid_lookup_request_exception.py: `InvalidLookupRequestException` — 모양이 틀린 요청은 계약 위반이라 테스트·타입 체커가 받는다(`contract/exception/` 의 자리가 아니다 — 어디서도 raise 되지 않는다(죽은 대외 계약))
+  [#456] application/orders/driving_layer/open_host_service/order_lookup/contract/exception/malformed_lookup_payload_error.py: `MalformedLookupPayloadError` — 모양이 틀린 요청은 계약 위반이라 테스트·타입 체커가 받는다(`contract/exception/` 의 자리가 아니다 — contract 안에서 raise 된다)
+ⓓ 후보 4건 — 기계가 후보를 좁혔다 · 마무리 물음은 discipline-reviewer 몫(exit 불산입)
+  [ⓓ#69] application/orders/application_layer/order/place_order/place_order_use_case.py:10: 프로덕션 `assert` — 물음: 이 검사는 런타임이 아니라 테스트·타입 체커의 몫인가?
+  [ⓓ#69] application/orders/application_layer/order/place_order/place_order_use_case.py:11: isinstance 가드 뒤 `raise TypeError` — 물음: 이 검사는 런타임이 아니라 테스트·타입 체커의 몫인가?
+  [ⓓ#650] application/orders/application_layer/order/place_order/record_leak.py:25: `json.loads(…)` 결과가 주석 변수로 흐른다 — 물음: `TypeAdapter(<TypedDict>).validate_python/validate_json` 으로 검증하며 받았거나 `x: object` 로 받아 즉시 좁혔는가 — 결과가 `object` 아닌 자리로 그냥 흐른다
+  [ⓓ#646] application/orders/driven_layer/django_orders/admin/order/stub_generic_bad.py:25: `AttributeLineIgnorePanel` 의 기저 `ModelAdmin[…]` 가 `TYPE_CHECKING` 밖 subscript 다 — 물음: `django_stubs_ext.monkeypatch()` 를 채택했는가(houserules §6.1 관찰 — 아니면 런타임 `TypeError` · `TYPE_CHECKING` 별칭으로)
+public_surface/bad_rules: expected=2 actual=2
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-test-config.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-hwxn7hq_/fixture
+clean — test/ 1곳 · pytest 설정 1개 · settings 1곳 규율 일치 (standard_tree 7d08c08915426747)
+test_config/good: expected=0 actual=0
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-test-config.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-k0wrzzkw/fixture
+blocker 15건 — 테스트·settings 규율 위반 (트리 135~141·169·170행)
+  [바인딩] pytest.ini: pytest 설정에 Django settings 바인딩이 없다 — `DJANGO_SETTINGS_MODULE`(또는 `--ds=`/`django_find_project`/conftest 셋업)이 없으면 수집이 조용히 실패한다(0 collected)
+  [#384] application/orders/test/helpers.py: `test/` 직계 파일은 `conftest.py` 뿐이다 — 테스트는 unit/·integration/·e2e/ 안으로
+  [#384] application/orders/test/perf: `test/` 의 자식은 다섯뿐이다 — unit/·integration/·e2e/·factories/·fake/ (#383: 폴더 이름이 «무엇을 켜고 도는가»를 말한다)
+  [#391] application/orders/test/integration/factories: `factories/` 는 `integration/` 안이 아니라 그 형제로 둔다
+  [#390] application/orders/test/e2e/test_place_order_direct.py: `test/e2e/` 는 입구에서 출구까지 본다 — 입구(TestClient·API·cron_job·client fixture 사용)를 안 거치면 위반이다
+  [#390] application/orders/test/e2e/test_place_order_direct.py: `application.orders.application_layer.order.place_order.place_order_use_case` import — `test/e2e/` 는 blackbox 다(입구에서 출구까지 한 흐름 통째로): 자기 BC 구현 칸 import 는 입구 우회 신호다
+  [#392] application/orders/test/factories/random_helpers.py: `factories/` 에는 factory_boy 픽스처만 온다 — 다른 재료는 `fake/` 또는 테스트 안으로
+  [#389] application/orders/test/integration/test_order_math.py: `test/integration/` 은 진짜 DB 를 켠다 — DB 신호(django_db·TestCase·.objects)가 없다면 unit/ 자리다
+  [#385] application/orders/test/unit/test_cross_bc.py: `application.billing.domain_layer.invoice.invoice` import — BC `test/` 에는 그 BC 의 테스트만 온다(타 BC 는 입구로 검사한다)
+  [#637] application/orders/test/unit/test_initial_migration.py: migration 산출물을 오라클로 삼는 테스트는 만들지 않는다 — `migrations/` 는 Django 가 생성한 것이라 파일·operation·적용 순서·과거 state·DDL 자체를 검증하지 않는다(신호: from django.db import migrations)
+  [#387] application/orders/test/unit/test_order_unit.py: `test/unit/` 은 DB 를 켜지 않는다 — 포트 자리에는 `fake/` 의 가짜 구현을 꽂는다
+  [#388] application/orders/test/unit/test_order_unit.py: `test/unit/` 은 `factories/` 를 import 하지 않는다
+  [#445] config/settings/celery.py: `settings/` 에서 갈리는 축은 환경 하나뿐이다 — 기능별 파일(`celery.py`)로 쪼개지 않는다(공통 설정은 `base.py` 로)
+  [#447] config/settings/local.py: 환경 파일은 `base` 를 가져와 덮어쓴다 — `from .base import *` 가 없다
+  [#446] config/settings/prod.py: 환경 파일 이름에 약어를 쓰지 않는다 — `prod` 이 아니라 `production`
+test_config/bad_rules: expected=2 actual=2
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-domain-model.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-2ro074gn/fixture
+domain_model/good: expected=0 actual=0
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-domain-model.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-blo45n04/fixture
+[ⓓ#17] application/orders/domain_layer/data: 종류 인접 낱말 `data/` — 물음: Q1 — 이 이름이 업무의 낱말인가
+[ⓓ#257] application/orders/domain_layer/order/order.py:18: 상태 변경 메서드 `attach` 끝에 불변식 확인이 없다 — 물음: Q4 — 이 메서드 뒤에도 불변식이 참인가
+[ⓓ#259] application/orders/domain_layer/order/value_object/money.py:8: 값 객체 `Money` 이 식별자 `money_id` 를 가진다 — 식별자를 갖고 값이 바뀌어도 같은 것이면 그것은 엔티티다 — 물음: Q4 — 이것이 값인가 엔티티인가
+[ⓓ#268] application/orders/domain_layer/order/value_object/money.py:7: `Money` 의 __init__/__post_init__ 에 raise 가 없다 — 값 객체는 만들어지는 시점에 스스로 검증한다 — 물음: Q2 — 이 타입 조합만으로 잘못된 값이 «불가능»한가
+[ⓓ#268] application/orders/domain_layer/order/value_object/money.py:16: `Rate` 의 __init__/__post_init__ 에 raise 가 없다 — 값 객체는 만들어지는 시점에 스스로 검증한다 — 물음: Q2 — 이 타입 조합만으로 잘못된 값이 «불가능»한가
+[ⓓ#311] application/orders/domain_layer/domain_service/order_pricing_service.py: 접미사를 단 도메인 서비스 파일명 — 접미사 없이 «행위»로 짓는다(`lesson_slot_policy`·`settle_turn`) — 물음: 이 이름이 규칙 «행위»를 말하나
+[ⓓ#301] application/orders/domain_layer/domain_service/order_pricing_service.py:9: 루트 인자가 정확히 하나(`order`) — 루트 메서드가 될 수 있으면 애그리거트로 간다(못 하는 이유는 «안 받거나·없음 판정·둘 이상»뿐) — 물음: 이 규칙이 루트 메서드로 표현될 수 있나
+[ⓓ#301] application/orders/domain_layer/domain_service/order_pricing_service.py:17: 루트 인자가 정확히 하나(`order`) — 루트 메서드가 될 수 있으면 애그리거트로 간다(못 하는 이유는 «안 받거나·없음 판정·둘 이상»뿐) — 물음: 이 규칙이 루트 메서드로 표현될 수 있나
+[ⓓ#301] application/orders/domain_layer/domain_service/order_pricing_service.py:21: 루트 인자가 정확히 하나(`order`) — 루트 메서드가 될 수 있으면 애그리거트로 간다(못 하는 이유는 «안 받거나·없음 판정·둘 이상»뿐) — 물음: 이 규칙이 루트 메서드로 표현될 수 있나
+[ⓓ#301] application/orders/domain_layer/domain_service/order_pricing_service.py:25: 루트 인자가 정확히 하나(`order`) — 루트 메서드가 될 수 있으면 애그리거트로 간다(못 하는 이유는 «안 받거나·없음 판정·둘 이상»뿐) — 물음: 이 규칙이 루트 메서드로 표현될 수 있나
+[ⓓ#546] application/orders/application_layer/order/place_order/place_order_use_case.py:13: 서로 다른 애그리거트 쓰기 ['ledger', 'order'] 의 transaction 경계 불명 — 같은 트랜잭션인지 확인 필요 — 물음: 현재 함수의 lexical 구간 밖·불명 경계가 이 쓰기들을 묶는가
+[ⓓ#547] application/orders: `order_repository` 를 여러 <area>/ ['billing_area', 'order'] 가 쓴다 — 경계가 너무 묶였을 신호다(트랜잭션을 늘리지 말고 «경계를 쪼갠다») — 물음: 서로 다른 일을 하는 두 사용자가 이 경계로 충돌하나
+[ⓓ#547] application/orders/domain_layer/order/order.py: 엔티티 3개 + 무제한 컬렉션 필드 — 루트가 비대하다 — 물음: 이 둘이 «동시에» 일어나면 업무가 정말 막아야 하나
+[ⓓ#565] application/orders/domain_layer/order/stage.py:7: 도메인 Enum 값 `place_order` 이 유스케이스 이름과 겹친다 — 워크플로를 도메인 어휘로 위장한 것이면 자리는 유스케이스다 — 물음: 업무가 이 단계 이름을 «입으로 부르나»
+blocker — 도메인 모델 위반 (루트를 지나고·값은 불변이고·한 트랜잭션 = 애그리거트 하나 — D12·D13·D50)
+  [#299] application/billing/domain_layer/invoice: `invoice_repository.py` 가 없다 — 애그리거트 폴더는 루트와 리포지토리 선언 파일을 갖는다(#282)
+  [#249] application/orders/domain_layer/factory.py: domain_layer 직계 파일 — 자식은 애그리거트 폴더와 shared_value_object/·domain_service/ 뿐이다
+  [#543] application/orders/domain_layer/audit_trail/audit_trail.py:10: 이벤트 기록은 있는데 pull_events() 가 없다 — 꺼내는 창구는 그 하나다
+  [#543] application/orders/domain_layer/audit_trail/audit_trail.py:24: 이벤트 기록은 있는데 pull_events() 가 없다 — 꺼내는 창구는 그 하나다
+  [#252] application/orders/domain_layer/entity: 1차 폴더 `entity/` — 클래스 종류가 아니라 `<aggregate>/` 가 1차이고 entity/·value_object/ 는 그 «안»으로 내린다
+  [#17] application/orders/domain_layer/helpers: 종류 낱말 1차 폴더 `helpers/` — 1차 축은 «도메인 이름»이고 종류는 2차다(§0-4 · 트리 명문 형제(shared_value_object·domain_service)만 예외 — #18)
+  [#256] application/orders/domain_layer/ledger: `ledger.py` 가 없다 — 애그리거트 루트 클래스 하나가 폴더와 같은 이름의 파일로 온다
+  [#290] application/orders/domain_layer/ledger/exception/errors.py: 한 파일에 예외 2개 — 깨진 불변식 하나 = 파일 하나다
+  [#272] application/orders/domain_layer/order/order.py:20: 루트가 `publish` 를 부른다 — 이벤트는 «기록만»(리스트 append) 하고 아무도 부르지 않는다(메시지 버스를 모르고 I/O 를 하지 않는다)
+  [#543] application/orders/domain_layer/order/order.py:22: pull_events 가 비우지 않는다 — 꺼내면 비운다(«안 꺼낸 사실»을 save 가 잡는다)
+  [#543] application/orders/domain_layer/order/order.py:26: `events` 프로퍼티 — «안 비우고 읽는» 길을 두면 위반이다(창구는 pull_events 하나)
+  [#289] application/orders/domain_layer/order/exception.py: exception 이 파일이다 — 깨진 불변식 하나 = 파일 하나로 exception/ «폴더» 아래 둔다
+  [#262] application/orders/domain_layer/order/entity/order_line_entity.py: `_entity` 접미사 — 폴더가 이미 말한다
+  [#261] application/orders/domain_layer/order/entity/order_line_entity.py: 공개 클래스 2개 — 엔티티 하나 = 파일 하나다
+  [#260] application/orders/domain_layer/order/entity/order_line_entity.py:4: `OrderLine` 에 식별자(id·*_id) 필드가 없다 — entity/ 판정은 «식별자를 갖고 값이 바뀌어도 같은 것인가»다(#259)
+  [#260] application/orders/domain_layer/order/entity/order_line_entity.py:9: `LineNote` 에 식별자(id·*_id) 필드가 없다 — entity/ 판정은 «식별자를 갖고 값이 바뀌어도 같은 것인가»다(#259)
+  [#267] application/orders/domain_layer/order/value_object/money.py: 공개 클래스 2개 — 값 객체 하나 = 파일 하나다
+  [#264] application/orders/domain_layer/order/value_object/money.py:12: `set_amount` 에서 self.amount 대입 — 값 객체는 불변이다(__init__ 밖 자기 속성 대입 금지)
+  [#269] application/orders/domain_layer/order/event/order_archived.py:7: `OrderArchived` 을 이 BC 안에서 아무도 읽지 않는다 — 읽는 사람이 없으면 이벤트가 아니라 «알림»이고 자리는 application_layer/port/ 다(#270)
+  [#275] application/orders/domain_layer/order/event/order_placed.py: 공개 클래스 2개 — 과거형 사실 하나 = 파일 하나다
+  [#276] application/orders/domain_layer/order/event/order_placed.py:10: 이벤트에 메서드 `as_dict` — 필드만 있는 자료구조다
+  [#269] application/orders/domain_layer/order/event/order_placed.py:15: `OrderPlacedTwice` 을 이 BC 안에서 아무도 읽지 않는다 — 읽는 사람이 없으면 이벤트가 아니라 «알림»이고 자리는 application_layer/port/ 다(#270)
+  [#270] application/orders/domain_layer/order/event/order_synced.py:7: `OrderSynced` 을 driven 어댑터만 읽는다 — 그것은 «알림»이라 자리는 application_layer/port/ 다
+  [#263] application/orders/driven_layer/persistence/models/money.py: 도메인 `money` 과 같은 이름의 ORM 모듈 — 겹치면 ORM 쪽만 `_model` 을 단다
+  [#299] application/orders/domain_layer/payment: `payment_repository.py` 가 없다 — 애그리거트 폴더는 루트와 리포지토리 선언 파일을 갖는다(#282)
+  [#543] application/orders/domain_layer/payment/payment.py:4: 이벤트 기록은 있는데 pull_events() 가 없다 — 꺼내는 창구는 그 하나다
+  [#300] application/orders/domain_layer/payment/domain_service: <aggregate>/domain_service/ — 도메인 서비스는 BC 레벨 domain_layer/domain_service/ 한 칸에만 산다
+  [#256] application/orders/domain_layer/stub_pass/stub_pass.py: 루트 클래스 `StubPass` 이 없다
+  [#459] application/orders/domain_layer/shared_value_object/legacy: shared_value_object/ 하위 폴더 — 파일 규칙은 애그리거트 안 값 객체와 똑같고 다른 것은 «사는 폴더»뿐이다
+  [#298] application/orders/domain_layer/shared_value_object/percent.py:3: shared_value_object 가 `application.orders.domain_layer.order.order` 를 import 한다 — 같은 폴더 안과 exception 모듈 말고는 아무것도 import 하지 않는다
+  [#310] application/orders/domain_layer/domain_service/order_pricing_service.py: 공개 정의 6개 — 무상태 규칙 하나 = 파일 하나다
+  [#303] application/orders/domain_layer/domain_service/order_pricing_service.py:3: `application.orders.domain_layer.order.entity.receipt` import — domain_service 는 루트·value_object·exception·형제 서비스만 import 한다
+  [#307] application/orders/domain_layer/domain_service/order_pricing_service.py:13: `compute` 의 인자가 전부 원시 타입 — 그건 도메인 서비스가 아니라 계산 함수다(amount: Money 처럼 값 객체가 온다)
+  [#308] application/orders/domain_layer/domain_service/order_pricing_service.py:17: `can_refund` 이 bool 을 돌려준다 — 규칙 위반의 알림은 «도메인 예외»다
+  [#304] application/orders/domain_layer/domain_service/order_pricing_service.py:21: `repository` 가 리포지토리다 — 불러오거나 저장하면 그건 유스케이스다(Vernon 의 실례도 이 트리에선 유스케이스로 간다 — 3차 T24)
+  [#305] application/orders/domain_layer/domain_service/order_pricing_service.py:25: `port` 가 포트다 — 재료는 유스케이스가 모아 «값으로» 넘긴다
+  [#302] application/orders/domain_layer/domain_service/order_pricing_service.py:6: 모듈 레벨 가변 전역 — 도메인 서비스는 무상태다
+  [#315] application/orders/domain_layer/factory.py:4: `LedgerFactory` 이 애그리거트 폴더 밖에 있다 — 복잡한 조립(Factory)은 그 애그리거트 폴더 «안»에 둔다
+  [#506] application/orders/domain_layer/factory.py:8: 발행 장치 `EventDispatcher` — 배달은 framework/broker/ 몫이라 domain_layer 에 살지 않는다
+  [#8] application/orders/domain_layer/order/order.py:3: `django.utils` — domain_layer 의 밖으로 나가는 import 는 0 이다
+  [#258] application/orders/domain_layer/order/order.py:5: 타 애그리거트 `payment` 의 entity 직접 참조 — 붙잡을 수 있는 것은 루트뿐이고 언제나 루트를 거쳐 닿는다
+  [#266] application/orders/domain_layer/order/order.py:6: 타 애그리거트 `payment` 의 값 객체 사용 — <A>/value_object/ 는 그 애그리거트 밖에서 안 쓰인다(#265)라, 쓰기 시작하는 순간 shared_value_object/ 로 올린다
+  [#253] application/orders/domain_layer/order/order.py:7: `payment` 의 `refund_rule` 모듈 import — 타 애그리거트는 «루트 모듈»만 import 한다
+  [#548] application/orders/domain_layer/order/order.py:19: 타 애그리거트 루트 `Payment` 타입 힌트 — 다른 애그리거트는 «식별자 값 객체»로만 문다(면제는 조회 성능 하나 — 원전 Reason Four)
+  [#548] application/orders/domain_layer/order/order.py:18: 타 애그리거트 루트 `Payment` 타입 힌트 — 다른 애그리거트는 «식별자 값 객체»로만 문다(면제는 조회 성능 하나 — 원전 Reason Four)
+  [#505] application/billing/application_layer/invoice/sync/sync_use_case.py:3: 타 BC 가 `orders` 의 도메인 이벤트를 import 한다 — <A>/event/ 는 «내부용»이고 밖으로 알릴 것은 published_event/ 로 «옮겨 담는다»
+  [#542] application/orders/application_layer/order/place_order/place_order_use_case.py:16: 유스케이스가 도메인 이벤트 `OrderPlaced` 를 지어낸다 — 사실은 «애그리거트»가 상태를 바꾼 그 메서드 안에서 기록한다
+  [#257] application/orders/application_layer/order/place_order/place_order_use_case.py:15: `order.lines.append(...)` — 애그리거트 상태 변경은 전부 «루트를 지나야» 한다(내부에 손을 넣지 않는다)
+  [#550] application/orders/application_layer/order/place_order/place_order_use_case.py:20: 조회로 꺼낸 것들을 save_all — 배치 면제는 «생성»에만 걸린다(이미 있는 것 여럿 고치기는 면제가 아니다)
+  [#549] application/orders/driven_layer/persistence/repository/django_order_repository.py:7: select_for_update 와 캐시가 한 함수에 있다 — 수정하려고 꺼내는 조회는 캐시를 «우회»한다(선은 애그리거트가 아니라 트랜잭션이다 · select_for_update 를 캐시하면 DB 락이 무용지물)
+domain_model/bad_rules: expected=2 actual=2
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-test-config.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-w012273o/fixture
+clean — test/ 1곳 · pytest 설정 1개 · settings 1곳 규율 일치 (standard_tree 7d08c08915426747)
+test_config_entrance/good: expected=0 actual=0
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-test-config.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-a5wx1v5z/fixture
+blocker 17건 — 테스트·settings 규율 위반 (트리 135~141·169·170행)
+  [바인딩] pytest.ini: pytest 설정에 Django settings 바인딩이 없다 — `DJANGO_SETTINGS_MODULE`(또는 `--ds=`/`django_find_project`/conftest 셋업)이 없으면 수집이 조용히 실패한다(0 collected)
+  [#384] application/orders/test/helpers.py: `test/` 직계 파일은 `conftest.py` 뿐이다 — 테스트는 unit/·integration/·e2e/ 안으로
+  [#384] application/orders/test/perf: `test/` 의 자식은 다섯뿐이다 — unit/·integration/·e2e/·factories/·fake/ (#383: 폴더 이름이 «무엇을 켜고 도는가»를 말한다)
+  [#391] application/orders/test/integration/factories: `factories/` 는 `integration/` 안이 아니라 그 형제로 둔다
+  [#390] application/orders/test/e2e/test_assert_only.py: `test/e2e/` 는 입구에서 출구까지 본다 — 입구(TestClient·API·cron_job·client fixture 사용)를 안 거치면 위반이다
+  [#390] application/orders/test/e2e/test_helper_def_only.py: `test/e2e/` 는 입구에서 출구까지 본다 — 입구(TestClient·API·cron_job·client fixture 사용)를 안 거치면 위반이다
+  [#390] application/orders/test/e2e/test_impl_import.py: `application.orders.application_layer.order.place_order.place_order_use_case` import — `test/e2e/` 는 blackbox 다(입구에서 출구까지 한 흐름 통째로): 자기 BC 구현 칸 import 는 입구 우회 신호다
+  [#390] application/orders/test/e2e/test_mixed.py: `test/e2e/` 는 입구에서 출구까지 본다 — 입구(TestClient·API·cron_job·client fixture 사용)를 안 거치면 위반이다
+  [#390] application/orders/test/e2e/test_unused_param.py: `test/e2e/` 는 입구에서 출구까지 본다 — 입구(TestClient·API·cron_job·client fixture 사용)를 안 거치면 위반이다
+  [#392] application/orders/test/factories/random_helpers.py: `factories/` 에는 factory_boy 픽스처만 온다 — 다른 재료는 `fake/` 또는 테스트 안으로
+  [#389] application/orders/test/integration/test_order_math.py: `test/integration/` 은 진짜 DB 를 켠다 — DB 신호(django_db·TestCase·.objects)가 없다면 unit/ 자리다
+  [#385] application/orders/test/unit/test_cross_bc.py: `application.billing.domain_layer.invoice.invoice` import — BC `test/` 에는 그 BC 의 테스트만 온다(타 BC 는 입구로 검사한다)
+  [#387] application/orders/test/unit/test_order_unit.py: `test/unit/` 은 DB 를 켜지 않는다 — 포트 자리에는 `fake/` 의 가짜 구현을 꽂는다
+  [#388] application/orders/test/unit/test_order_unit.py: `test/unit/` 은 `factories/` 를 import 하지 않는다
+  [#445] config/settings/celery.py: `settings/` 에서 갈리는 축은 환경 하나뿐이다 — 기능별 파일(`celery.py`)로 쪼개지 않는다(공통 설정은 `base.py` 로)
+  [#447] config/settings/local.py: 환경 파일은 `base` 를 가져와 덮어쓴다 — `from .base import *` 가 없다
+  [#446] config/settings/prod.py: 환경 파일 이름에 약어를 쓰지 않는다 — `prod` 이 아니라 `production`
+test_config_entrance/bad_rules: expected=2 actual=2
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-layer-skeleton.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-ijr_gmch/fixture
+사용 오류: TARGET 이 BC 폴더로 보인다(층 폴더 직계: domain_layer, application_layer, driving_layer, driven_layer) — 검사기의 대상은 저장소 루트다(application/ 의 부모)
+invocation/check-layer-skeleton.py: expected=1 actual=1
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-context-isolation.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-5gxq5gi7/fixture
+사용 오류: TARGET 이 BC 폴더로 보인다(층 폴더 직계: domain_layer, application_layer, driving_layer, driven_layer) — 검사기의 대상은 저장소 루트다(application/ 의 부모)
+invocation/check-context-isolation.py: expected=1 actual=1
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-public-surface-annotation.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-zvh76j4n/fixture
+사용 오류: TARGET 이 BC 폴더로 보인다(층 폴더 직계: domain_layer, application_layer, driving_layer, driven_layer) — 검사기의 대상은 저장소 루트다(application/ 의 부모)
+invocation/check-public-surface-annotation.py: expected=1 actual=1
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-test-config.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-ccs1nx5x/fixture
+사용 오류: TARGET 이 BC 폴더로 보인다(층 폴더 직계: domain_layer, application_layer, driving_layer, driven_layer) — 검사기의 대상은 저장소 루트다(application/ 의 부모)
+invocation/check-test-config.py: expected=1 actual=1
+$ /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts/check-domain-model.py /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/whole-fix-lane-essqj_o2/fixture
+사용 오류: TARGET 이 BC 폴더로 보인다(층 폴더 직계: domain_layer, application_layer, driving_layer, driven_layer) — 검사기의 대상은 저장소 루트다(application/ 의 부모)
+invocation/check-domain-model.py: expected=1 actual=1
+PASS 20/20 scoped existing lanes

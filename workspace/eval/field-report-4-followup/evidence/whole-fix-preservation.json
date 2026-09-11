@@ -1,0 +1,17 @@
+{
+  "snapshot_paths": 54,
+  "changed_allowed": 12,
+  "unchanged": 42,
+  "byte_pairs": 5,
+  "method_preservation": {
+    "workspace/tools/pregate_field_report_smoke.py": {
+      "prior_methods_preserved": 44,
+      "new_methods": 2
+    },
+    "workspace/tools/field_report_checker_smoke.py": {
+      "prior_methods_preserved": 63,
+      "new_methods": 3
+    }
+  },
+  "snapshot_copy_hashes_match": true
+}

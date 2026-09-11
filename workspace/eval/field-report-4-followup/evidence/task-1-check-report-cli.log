@@ -1,0 +1,57 @@
+declaration CLI exit: 2
+
+### 선언 확정 (1건)
+
+- `98c14d7f291b` [#197] application/garden/driving_layer/open_host_service/catalog/catalog_service.py — ReadBooks: read-only + uow=BookUnitOfWork 명시 모순
+
+### 선언 후보 (0건)
+
+- (없음)
+skip — 실체화 0건(add/empty/remove 및 제한 update 실효 조치 없음): 게이트를 부르지 않는다(공허 차분 가드 · 사유 명시)
+  채널 메모: symbols 비-add `update` 칸 — update의 새 OHS 모듈 함수만 실물 대조 후 제한 전사; 그 밖은 S5 · 선언 이름의 계약 실존 «자기 update 해소»는 별도: application/garden/driving_layer/open_host_service/catalog/catalog_service.py
+  미시뮬레이션: S5 update(명시된 새 모듈 함수 없음(기존 이름·본문·signature는 보존); marker 후상태 무기재 — 유지): application/garden/driving_layer/open_host_service/catalog/catalog_service.py
+
+== 계약 실존 결손 0건 (boundary-imports 3단) ==
+  집계: 행 0 · 이름 판정 0 · 실존 확인 0 · 자기 add 해소 0 · 자기 update 해소 0 · 저장소 밖(검사 밖) 0 · 판정 불능 0 · 결손 0(항목 0)
+  (없음) — 명세가 선언한 경계 import 계약 전건 실존(저장소 밖 0건은 검사 밖·자기 add 0건은 symbols 채널 소관·자기 update 0건은 update 칸 symbols 선언)
+
+요약: 실체화 0 · 실존 결손 0건 · 선언 확정 1건 · 기준선 4e6ad458590a · 모드 차단
+
+check-report before disposition exit: 3
+# design_pregate --check-report · 모드 차단(enforce) · 실행기: design_pregate.py · dddjango v2.18.2 · 블록 해시 a01ee2960dee
+  불비: 처분 미기재 1건(ignored|filtered 행 없음 — corrected 는 재실행이 최종본): `98c14d7f291b`
+
+요약: check-report 불비 1건 · 블록 해시 a01ee2960dee=a01ee2960dee · 마지막 판정 red 0(미기재 1) · 실존 결손 0 · 귀속 0건 · 선언 확정 1건 · 선언 후보 0건 · 실존 결손 0건 · 기준선 4e6ad458590a
+
+check-report after disposition exit: 0
+# design_pregate --check-report · 모드 차단(enforce) · 실행기: design_pregate.py · dddjango v2.18.2 · 블록 해시 a01ee2960dee
+
+요약: check-report 정합 · 블록 해시 a01ee2960dee=a01ee2960dee · 마지막 판정 red 0(처분 전건) · 실존 결손 0 · 귀속 0건 · 선언 확정 1건 · 선언 후보 0건 · 실존 결손 0건 · 기준선 4e6ad458590a
+
+report
+
+## pre-gate 예보 — 2026-09-11T09:57:25Z · design.md
+
+- 기준선 SHA: `4e6ad458590ae18d19f5f9c481ff8322e164c86a` (--base HEAD) · 프로필: auto · 모드: 차단(enforce) · 실행기: design_pregate.py · dddjango v2.18.2 · 블록 해시 a01ee2960dee
+- 예보는 Phase 2 step 6(G2 registry 게이트)의 실행·증거 요구를 어떤 형태로도 대체·축약하지 않는다.
+- 판정: 예보 red — 선언 확정 1건
+
+- skip — 실체화 0건(add/empty/remove 및 제한 update 실효 조치 없음): 게이트를 부르지 않는다(공허 차분 가드 · 사유 명시)
+- 미시뮬레이션: S5 update(명시된 새 모듈 함수 없음(기존 이름·본문·signature는 보존); marker 후상태 무기재 — 유지): application/garden/driving_layer/open_host_service/catalog/catalog_service.py
+- 채널 메모: symbols 비-add `update` 칸 — update의 새 OHS 모듈 함수만 실물 대조 후 제한 전사; 그 밖은 S5 · 선언 이름의 계약 실존 «자기 update 해소»는 별도: application/garden/driving_layer/open_host_service/catalog/catalog_service.py
+
+### 선언 확정 (1건)
+
+- `98c14d7f291b` [#197] application/garden/driving_layer/open_host_service/catalog/catalog_service.py — ReadBooks: read-only + uow=BookUnitOfWork 명시 모순
+
+### 선언 후보 (0건)
+
+- (없음)
+
+### 계약 실존 (boundary-imports 3단 · 결손 0건 · 안정 ID = e-sha256(모듈+이름)[:12])
+
+- 집계: 행 0 · 이름 판정 0 · 실존 확인 0 · 자기 add 해소 0 · 자기 update 해소 0 · 저장소 밖(검사 밖) 0 · 판정 불능 0 · 결손 0(항목 0)
+- (없음) — 명세가 선언한 경계 import 계약 전건 실존(저장소 밖 0건은 검사 밖·자기 add 0건은 symbols 채널 소관·자기 update 0건은 update 칸 symbols 선언)
+
+- `98c14d7f291b` **ignored** reviewed
+

@@ -1,0 +1,6 @@
+test_uow_module_class_shadow_keeps_unknown_region_candidate (__main__.CheckerRegression.test_uow_module_class_shadow_keeps_unknown_region_candidate) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.007s
+
+OK

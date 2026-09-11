@@ -1,0 +1,12 @@
+[mutation] M1 정렬 키 제거: red ✓ G3a
+[mutation] M2 tier 우선순위 무시: red ✓ G3c,G3d
+[mutation] M3 alias 축 무시: red ✓ G3a,G3d
+[mutation] M4 중복 제거 제거: red ✓ G3a,G9
+[mutation] M5 폴백 침묵 처리: red ✓ G3a,G3c
+[mutation] M6 <rules> 블록 누락: red ✓ G3b
+[mutation] M7 selector 무시(항상 snapshot): red ✓ G3a,G3b,G3c,G3d,G9
+[mutation] M8 escape 제거: red ✓ G5
+[mutation] M9 중복 대표를 first-seen 으로: red ✓ G3c,G9
+[mutation] M10 팩 참조 무결성 검사 제거: red ✓ G10
+[mutation] M11 글롭 문법 검사 제거: red ✓ G10,G11
+[mutation] 변이 11종 전건 red — 검출력 확인

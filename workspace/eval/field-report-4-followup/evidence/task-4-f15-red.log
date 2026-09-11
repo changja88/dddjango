@@ -1,0 +1,186 @@
+test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) ... 
+  test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source="from application.lesson.domain_layer.book.kind import Kind as Value\ndef run(value: Value): return value.code == 'x'") ... FAIL
+  test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from application.lesson.application_layer.port.books.export import BookResponse\ndef run(value: BookResponse): return 200 == value.status_code') ... FAIL
+  test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from application.lesson.application_layer.port.books.missing import Response\ndef run(value: Response): return value.code == 1') ... FAIL
+  test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from application.lesson.application_layer.port.books.cycle import BookResponse\ndef run(value: BookResponse): return value.code == 1') ... FAIL
+  test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from django.db import IntegrityError as Failure\ndef run(error: Failure): return 1 == error.errno') ... FAIL
+  test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='import httpx as http\ndef run(response: http.Response): return 200 == response.status_code == 200') ... FAIL
+  test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from requests import Response\ndef run():\n    response = Response()\n    return 200 == response.status_code') ... FAIL
+  test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source="def run(value): return value.code == 'x'") ... FAIL
+  test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source="def run():\n    value = fetch()\n    return 'x' == value.code") ... FAIL
+  test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from application.lesson.domain_layer.book.kind import Kind\ndef run(value: Kind):\n    value = fetch()\n    return value.code == 1') ... FAIL
+  test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from application.lesson.domain_layer.book.kind import Kind\ndef run(value: Kind):\n    if flag: value = fetch()\n    else: value = Kind()\n    return value.code == 1') ... FAIL
+  test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from vendor import WhateverError\ndef run():\n    try: fetch()\n    except WhateverError as error: return error.code == 1') ... FAIL
+  test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from application.lesson.domain_layer.book.kind import Rejected\ndef run():\n    try: fetch()\n    except Rejected as error: return error.code == 1') ... FAIL
+  test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from django.db.utils import IntegrityError\ndef run():\n    try: fetch()\n    except IntegrityError as error: return 1 == error.errno') ... FAIL
+  test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from django.db import IntegrityError\nfrom application.lesson.domain_layer.book.kind import Rejected\ndef run():\n    try: fetch()\n    except (Rejected, IntegrityError) as error: return error.code == 1') ... FAIL
+  test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from requests import Response\nResponse = custom\ndef run(value: Response): return value.status_code == 1') ... FAIL
+  test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from unrelated import Response\ndef run(value: Response): return value.status_code == 1') ... FAIL
+test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) ... FAIL
+
+======================================================================
+FAIL: test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source="from application.lesson.domain_layer.book.kind import Kind as Value\ndef run(value: Value): return value.code == 'x'")
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 256, in test_property_comparisons_use_actual_origin_on_both_sides
+    self.assertEqual(f.count("#557"), int(expected == "violation"))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0
+
+======================================================================
+FAIL: test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from application.lesson.application_layer.port.books.export import BookResponse\ndef run(value: BookResponse): return 200 == value.status_code')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 256, in test_property_comparisons_use_actual_origin_on_both_sides
+    self.assertEqual(f.count("#557"), int(expected == "violation"))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from application.lesson.application_layer.port.books.missing import Response\ndef run(value: Response): return value.code == 1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 256, in test_property_comparisons_use_actual_origin_on_both_sides
+    self.assertEqual(f.count("#557"), int(expected == "violation"))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0
+
+======================================================================
+FAIL: test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from application.lesson.application_layer.port.books.cycle import BookResponse\ndef run(value: BookResponse): return value.code == 1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 256, in test_property_comparisons_use_actual_origin_on_both_sides
+    self.assertEqual(f.count("#557"), int(expected == "violation"))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0
+
+======================================================================
+FAIL: test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from django.db import IntegrityError as Failure\ndef run(error: Failure): return 1 == error.errno')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 256, in test_property_comparisons_use_actual_origin_on_both_sides
+    self.assertEqual(f.count("#557"), int(expected == "violation"))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='import httpx as http\ndef run(response: http.Response): return 200 == response.status_code == 200')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 256, in test_property_comparisons_use_actual_origin_on_both_sides
+    self.assertEqual(f.count("#557"), int(expected == "violation"))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from requests import Response\ndef run():\n    response = Response()\n    return 200 == response.status_code')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 256, in test_property_comparisons_use_actual_origin_on_both_sides
+    self.assertEqual(f.count("#557"), int(expected == "violation"))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source="def run(value): return value.code == 'x'")
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 256, in test_property_comparisons_use_actual_origin_on_both_sides
+    self.assertEqual(f.count("#557"), int(expected == "violation"))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0
+
+======================================================================
+FAIL: test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source="def run():\n    value = fetch()\n    return 'x' == value.code")
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 257, in test_property_comparisons_use_actual_origin_on_both_sides
+    self.assertEqual(c.count("#557"), int(expected == "candidate"))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from application.lesson.domain_layer.book.kind import Kind\ndef run(value: Kind):\n    value = fetch()\n    return value.code == 1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 256, in test_property_comparisons_use_actual_origin_on_both_sides
+    self.assertEqual(f.count("#557"), int(expected == "violation"))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0
+
+======================================================================
+FAIL: test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from application.lesson.domain_layer.book.kind import Kind\ndef run(value: Kind):\n    if flag: value = fetch()\n    else: value = Kind()\n    return value.code == 1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 256, in test_property_comparisons_use_actual_origin_on_both_sides
+    self.assertEqual(f.count("#557"), int(expected == "violation"))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0
+
+======================================================================
+FAIL: test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from vendor import WhateverError\ndef run():\n    try: fetch()\n    except WhateverError as error: return error.code == 1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 256, in test_property_comparisons_use_actual_origin_on_both_sides
+    self.assertEqual(f.count("#557"), int(expected == "violation"))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0
+
+======================================================================
+FAIL: test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from application.lesson.domain_layer.book.kind import Rejected\ndef run():\n    try: fetch()\n    except Rejected as error: return error.code == 1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 256, in test_property_comparisons_use_actual_origin_on_both_sides
+    self.assertEqual(f.count("#557"), int(expected == "violation"))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0
+
+======================================================================
+FAIL: test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from django.db.utils import IntegrityError\ndef run():\n    try: fetch()\n    except IntegrityError as error: return 1 == error.errno')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 256, in test_property_comparisons_use_actual_origin_on_both_sides
+    self.assertEqual(f.count("#557"), int(expected == "violation"))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from django.db import IntegrityError\nfrom application.lesson.domain_layer.book.kind import Rejected\ndef run():\n    try: fetch()\n    except (Rejected, IntegrityError) as error: return error.code == 1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 256, in test_property_comparisons_use_actual_origin_on_both_sides
+    self.assertEqual(f.count("#557"), int(expected == "violation"))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0
+
+======================================================================
+FAIL: test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from requests import Response\nResponse = custom\ndef run(value: Response): return value.status_code == 1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 256, in test_property_comparisons_use_actual_origin_on_both_sides
+    self.assertEqual(f.count("#557"), int(expected == "violation"))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0
+
+======================================================================
+FAIL: test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) (source='from unrelated import Response\ndef run(value: Response): return value.status_code == 1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 256, in test_property_comparisons_use_actual_origin_on_both_sides
+    self.assertEqual(f.count("#557"), int(expected == "violation"))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0
+
+======================================================================
+FAIL: test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 259, in test_property_comparisons_use_actual_origin_on_both_sides
+    self.assertEqual(f.count("#557"), 1)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 1
+
+----------------------------------------------------------------------
+Ran 1 test in 0.032s
+
+FAILED (failures=18)

@@ -1,0 +1,14 @@
+.F
+======================================================================
+FAIL: test_admin_context_origin_alias_fixed_slots_and_local_business (field_report_checker_smoke.CheckerRegression.test_admin_context_origin_alias_fixed_slots_and_local_business)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 174, in test_admin_context_origin_alias_fixed_slots_and_local_business
+    self.assertTrue(any(r['rule'] == '#646' for r in rows), rows)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : [{'schema': 'findings/0', 'run_id': 'check-public-surface-annotation.py-20260911T104058Z-93835', 'ts': '2026-09-11T10:40:58Z', 'record_id': 'check-public-surface-annotation.py-20260911T104058Z-93835:0001', 'rule': '#493', 'sentinel': None, 'contract_ref': None, 'checker': 'check-public-surface-annotation.py', 'file': 'framework/admin/book.py:4', 'symbol': None, 'severity': 'violation', 'message': '모듈 변수 `Base` 의 첫 대입에 타입이 없다 — `name: T = …`', 'expression': None, 'experiment_run_id': None}]
+
+----------------------------------------------------------------------
+Ran 2 tests in 2.563s
+
+FAILED (failures=1)

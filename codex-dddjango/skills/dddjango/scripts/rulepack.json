@@ -11,11 +11,11 @@
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "a0a57735092853071940be471e086fff1777772651f8e7f706355f45b2e57a3e"
+      "sha256": "9865c8f5787809d3e0cd6e5cdcb119b859d20615a524d7fde1322330a4213f0a"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
-      "sha256": "e83632a251018273422a9ed07d2471b824d1715e57b7c947e400020988aba101"
+      "sha256": "59106ddea0462475988cbcfdd1839f06c5d1a6ef8f72e6a4730ee5f275a32ba7"
     },
     {
       "path": "ontology/rules/agent-design-review-db.ttl",
@@ -27,7 +27,7 @@
     },
     {
       "path": "ontology/rules/agent-discipline-reviewer.ttl",
-      "sha256": "467e1e64963162052b340ea6e0e56e07eeb7d0d524fa1fc700282b32a7ec06fa"
+      "sha256": "f95d45237c92e1ea22f799327de15b88b08677c6a20f371769b42e0b0ad4479b"
     },
     {
       "path": "ontology/rules/architecture-api-final.ttl",
@@ -55,7 +55,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "9a7b9cd2220f255a2168d5ef3a69db43c0fedc103407a8b23e1d19ad9ce65e62"
+      "sha256": "454d396ab85aa5fa52b7c6172f197abc9605afd99e96691f3d93661ec6ee1f27"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -67,11 +67,11 @@
     },
     {
       "path": "ontology/rules/discipline-houserules-final.ttl",
-      "sha256": "d9541bba84466676267f3c0f2c6d05f54a7ed97e04501f9863da6820ea183d40"
+      "sha256": "bb03b9469a1fcef876db4f1c31287c0c34cea9585aeeda45cea886268835306a"
     },
     {
       "path": "ontology/rules/discipline-houserules-skill.ttl",
-      "sha256": "6e3374ffec14a4cce4869a9072b10da58da4419ef89f2c35e6506e650816449e"
+      "sha256": "9f05cfd377fd819ac9e7abed29aee1283e9c5d9afa9144a7e6a58ca5c43f8a6a"
     },
     {
       "path": "ontology/rules/discipline-tdd-final.ttl",
@@ -87,11 +87,11 @@
     },
     {
       "path": "ontology/rules/implementation-django-ninja-final.ttl",
-      "sha256": "e24b78dd3aab0a147d3458a3872d96c853f621395057a422860ac3ec5b0ddfce"
+      "sha256": "b184ade4fccfa20554614d3460e2841ea800eb731ce54553d1f4adbf9d1339a9"
     },
     {
       "path": "ontology/rules/implementation-django-ninja-skill.ttl",
-      "sha256": "369af739aae344af378c4c53a14ea5858464a0a6f5c4d7c284097e29f3fee947"
+      "sha256": "85fcd3471eeb56cecb0d99509941f44ed651c52bb2dda76ac549c7a057d6130a"
     },
     {
       "path": "ontology/rules/implementation-django-skill.ttl",
@@ -8905,8 +8905,8 @@
       "block_order": 33,
       "checkers": [],
       "document": "dddjango/skills/implementation-django-ninja/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-0084@2026-08-19",
-      "label": "G1 승인 시에만 infra/ACL 정규화 후 구체 exception 직접 흐름",
+      "expression": "https://numchida.com/ns/djr#R-0084@2026-09-11",
+      "label": "인프라 내부 계약 정규화와 공개 오류 승인 분리",
       "order_rank": 2682,
       "section": "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2",
       "section_number": "6.2"
@@ -23601,8 +23601,8 @@
       "block_order": 23,
       "checkers": [],
       "document": "dddjango/agents/discipline-reviewer.md",
-      "expression": "https://numchida.com/ns/djr#R-1037@2026-08-22",
-      "label": "G1 명시 승인 시에만 owning infra/ACL의 정규화 후 controller 직접 흐름 mapping",
+      "expression": "https://numchida.com/ns/djr#R-1037@2026-09-11",
+      "label": "내부 실패 계약 정규화와 safe 500 공개 경계",
       "order_rank": 819,
       "section": "dddjango/agents/discipline-reviewer.md/s007",
       "section_number": null
@@ -24140,8 +24140,8 @@
         "check-api-error-controller-contract.py"
       ],
       "document": "dddjango/agents/discipline-reviewer.md",
-      "expression": "https://numchida.com/ns/djr#R-1071@2026-08-22",
-      "label": "raw DB/SDK/network unknown failure의 전수 집합 제외(safe framework 500 기본)",
+      "expression": "https://numchida.com/ns/djr#R-1071@2026-09-11",
+      "label": "ACL known failure 전수 번역과 일반 내부 계약·공개 500 분리",
       "order_rank": 853,
       "section": "dddjango/agents/discipline-reviewer.md/s007",
       "section_number": null
@@ -24694,8 +24694,8 @@
         "check-domain-model.py"
       ],
       "document": "dddjango/agents/discipline-reviewer.md",
-      "expression": "https://numchida.com/ns/djr#R-1104@2026-08-22",
-      "label": "ⓓ#268 타입 조합만으로 잘못된 값이 불가능한가(Q2)",
+      "expression": "https://numchida.com/ns/djr#R-1104@2026-09-11",
+      "label": "닫힌 Enum 검증 제외·open Enum Q2와 트랜잭션 영역 후보 검수",
       "order_rank": 886,
       "section": "dddjango/agents/discipline-reviewer.md/s007",
       "section_number": null
@@ -24915,8 +24915,8 @@
         "check-naming.py"
       ],
       "document": "dddjango/agents/discipline-reviewer.md",
-      "expression": "https://numchida.com/ns/djr#R-1117@2026-08-22",
-      "label": "ⓓ#343 운영 기능인가 장고 배선인가",
+      "expression": "https://numchida.com/ns/djr#R-1117@2026-09-11",
+      "label": "운영 기능/장고 배선·admin UI context 조립과 실제 소비 검수",
       "order_rank": 899,
       "section": "dddjango/agents/discipline-reviewer.md/s007",
       "section_number": null
@@ -24932,8 +24932,8 @@
         "check-naming.py"
       ],
       "document": "dddjango/agents/discipline-reviewer.md",
-      "expression": "https://numchida.com/ns/djr#R-1118@2026-08-22",
-      "label": "ⓓ#589 조건이 업무 판정인가(Q2)",
+      "expression": "https://numchida.com/ns/djr#R-1118@2026-09-11",
+      "label": "표현 조건 업무 판정 Q2·admin context 출처/소비 미해소 후보",
       "order_rank": 900,
       "section": "dddjango/agents/discipline-reviewer.md/s007",
       "section_number": null
@@ -24949,8 +24949,8 @@
         "check-port-adapter-pairing.py"
       ],
       "document": "dddjango/agents/discipline-reviewer.md",
-      "expression": "https://numchida.com/ns/djr#R-1119@2026-08-22",
-      "label": "ⓓ#227 자료를 원시값 인자로 펴서 넘길 수 있나",
+      "expression": "https://numchida.com/ns/djr#R-1119@2026-09-11",
+      "label": "포트/어댑터 판정과 vendor 오류 속성 출처 후보 검수",
       "order_rank": 901,
       "section": "dddjango/agents/discipline-reviewer.md/s007",
       "section_number": null
@@ -32551,8 +32551,8 @@
         "check-transient-overmapping.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-1617@2026-08-22",
-      "label": "slot 10 — raw infra failure 의 기본 500 과 승인된 public meaning 한정 정규화",
+      "expression": "https://numchida.com/ns/djr#R-1617@2026-09-11",
+      "label": "내부 실패 정규화와 공개 HTTP 계약 승인 분리",
       "order_rank": 273,
       "section": "dddjango/agents/design-architect.md/s005",
       "section_number": null
@@ -48976,8 +48976,8 @@
         "check-synthetic-infra-exc.py"
       ],
       "document": "dddjango/agents/design-review-api.md",
-      "expression": "https://numchida.com/ns/djr#R-2677@2026-08-22",
-      "label": "slot 10 — raw infra 기본 500·승인된 안정 public meaning만 consuming BC internal exception 정규화 후 ErrorSchema 생성 확인",
+      "expression": "https://numchida.com/ns/djr#R-2677@2026-09-11",
+      "label": "내부 실패 정규화와 공개 HTTP 계약 승인 분리 검수",
       "order_rank": 496,
       "section": "dddjango/agents/design-review-api.md/s006",
       "section_number": null
@@ -53066,8 +53066,8 @@
         "check-synthetic-infra-exc.py"
       ],
       "document": "dddjango/skills/implementation-django-ninja/SKILL.md",
-      "expression": "https://numchida.com/ns/djr#R-2941@2026-08-22",
-      "label": "승인된 안정 의미 한정 infra/ACL 의 자기 BC exception 정규화",
+      "expression": "https://numchida.com/ns/djr#R-2941@2026-09-11",
+      "label": "인프라 내부 계약 번역과 공개 safe 500 유지",
       "order_rank": 2442,
       "section": "dddjango/skills/implementation-django-ninja/SKILL.md/s004",
       "section_number": null
@@ -60353,8 +60353,8 @@
         "check-layer-skeleton.py"
       ],
       "document": "dddjango/skills/discipline-houserules/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-3410@2026-09-01",
-      "label": "부품 출생 50행 하한과 부품 0개 퇴화의 환원 신호",
+      "expression": "https://numchida.com/ns/djr#R-3410@2026-09-11",
+      "label": "부품 0 승격 폴더 환원 신호·신규 산출/기존 빚 처분",
       "order_rank": 2168,
       "section": "dddjango/skills/discipline-houserules/references/final.md/s003-0",
       "section_number": "0"
@@ -60463,8 +60463,8 @@
       "block_order": 7,
       "checkers": [],
       "document": "dddjango/skills/discipline-houserules/SKILL.md",
-      "expression": "https://numchida.com/ns/djr#R-3417@2026-09-01b",
-      "label": "캐스케이드 ② 동명 폴더 승격 — 역할 밖 응집 술어(상태 클래스/참조 폐쇄 클러스터)·개별 50행 하한·관례 동거 예외·부품은 형제 분할·집행 전 모듈 객체 참조처 조사(패치 표면)",
+      "expression": "https://numchida.com/ns/djr#R-3417@2026-09-11",
+      "label": "소관·응집으로 동명 폴더 승격·행수 하한 없이 참조 전수 조사",
       "order_rank": 2096,
       "section": "dddjango/skills/discipline-houserules/SKILL.md/s004-1",
       "section_number": "1"
@@ -60577,8 +60577,8 @@
         "design_pregate.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-3424@2026-09-01",
-      "label": "설계 명세 기계가독 채널 상시 작성 — 산문 추론 0·부재 fail-closed 전사",
+      "expression": "https://numchida.com/ns/djr#R-3424@2026-09-11",
+      "label": "기계가독 다섯 채널과 선택 효과 — 무기재 의미·선언 검증·본문 미검증 분리",
       "order_rank": 406,
       "section": "dddjango/agents/design-architect.md/s005",
       "section_number": null
@@ -60594,8 +60594,8 @@
         "design_pregate.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-3425@2026-09-10",
-      "label": "file-plan 정규 블록 — 1행 1경로·조치 태그·금지 표기·삽화↔블록 차분 · 태그의 뜻은 기준선 기준(add 부재·update 실존(승격 형태 예외)·비후행 remove 실존·재라벨 도피는 형식 red)",
+      "expression": "https://numchida.com/ns/djr#R-3425@2026-09-11",
+      "label": "file-plan 기준선 태그·제거와 실체화 0 선언 검증",
       "order_rank": 408,
       "section": "dddjango/agents/design-architect.md/s005",
       "section_number": null
@@ -60611,8 +60611,8 @@
         "design_pregate.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-3426@2026-09-10b",
-      "label": "공개 심볼 전수 표기 — Base 닫힌 목록·베이스 유도표 공집합·값 축 유도 3행 등재(마이그레이션 칸 결손 보충)·`_`+대문자 사설 타입·필드 대입식 허용·수신자 관용 정규화·계약 필드·중첩 타입 소속 명시",
+      "expression": "https://numchida.com/ns/djr#R-3426@2026-09-11",
+      "label": "공개 심볼과 add/update 선언 후상태·본문 미검증 분리",
       "order_rank": 409,
       "section": "dddjango/agents/design-architect.md/s005",
       "section_number": null
@@ -60628,8 +60628,8 @@
         "design_pregate.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-3427@2026-09-10",
-      "label": "경계 import 표 — 검사기 판정 관련 경계 import 전부(테스트 파일 포함) · 경계 3분류(BC 밖 · BC 내부 층 경계 중 검사기 판정 항목 — 잎→port 예외 import 도 행으로 · 그 밖 재량) · 3단 실존 판정 입력(이 브랜치 기준 · 행 삭제 = 채널 은폐 · 부재 update 는 형식 red 선행·승격 예외분만 ⑴)",
+      "expression": "https://numchida.com/ns/djr#R-3427@2026-09-11",
+      "label": "경계 import 실존·전사와 선언 출처 검증 분리",
       "order_rank": 410,
       "section": "dddjango/agents/design-architect.md/s005",
       "section_number": null
@@ -60645,8 +60645,8 @@
         "design_pregate.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-3428@2026-09-10",
-      "label": "물리 신호 어노테이션 — markers/base/client 정형·무기재=물리 신호 없음",
+      "expression": "https://numchida.com/ns/djr#R-3428@2026-09-11",
+      "label": "물리 신호 — add 부재·update marker 현행 유지/최종 목록·미지원 S5",
       "order_rank": 411,
       "section": "dddjango/agents/design-architect.md/s005",
       "section_number": null
@@ -60662,8 +60662,8 @@
         "design_pregate.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-3429@2026-09-01",
-      "label": "입장 표 header 영문 정본 6열 고정·셀 내 raw 파이프 금지",
+      "expression": "https://numchida.com/ns/djr#R-3429@2026-09-11",
+      "label": "입장 표 6열·첫 artifact add/update 결합·후속 주소 비전파",
       "order_rank": 412,
       "section": "dddjango/agents/design-architect.md/s005",
       "section_number": null
@@ -60696,8 +60696,8 @@
         "design_pregate.py"
       ],
       "document": "dddjango/agents/design-architect.md",
-      "expression": "https://numchida.com/ns/djr#R-3431@2026-09-01",
-      "label": "machine 마커 concrete 블록 한정 — 템플릿·예시 인용 부착 금지",
+      "expression": "https://numchida.com/ns/djr#R-3431@2026-09-11",
+      "label": "machine 마커 concrete 계획 한정·명시 효과와 admin 소비 범위",
       "order_rank": 407,
       "section": "dddjango/agents/design-architect.md/s005",
       "section_number": null
@@ -60711,8 +60711,8 @@
       "block_order": 9,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3432@2026-09-03b",
-      "label": "pre-gate 실행 의무 — design-spec 내용 변경마다·배너 직전 최종본·override 후 dispatch 전 무조건(캐시 skip·재발화·Phase 2 최신성 판형은 R-3445)",
+      "expression": "https://numchida.com/ns/djr#R-3432@2026-09-11",
+      "label": "pre-gate 실행 의무 — 명세 변경/배너 직전/dispatch 전 최종 예보·선언 포함",
       "order_rank": 1066,
       "section": "dddjango/commands/dddjango.md/s006",
       "section_number": null
@@ -60726,8 +60726,8 @@
       "block_order": 9,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3433@2026-09-03b",
-      "label": "차단 모드 red 처분 — red 반송 의무 · 배너 근거 --check-report exit 0 · 예외 = 귀속 red 전건 ignored(빚)|filtered · path 등급 filtered 불가",
+      "expression": "https://numchida.com/ns/djr#R-3433@2026-09-11",
+      "label": "pre-gate 귀속 및 선언 확정 red 전건 처분·후보/S1 비차단 분리",
       "order_rank": 1067,
       "section": "dddjango/commands/dddjango.md/s006",
       "section_number": null
@@ -60741,8 +60741,8 @@
       "block_order": 9,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3434@2026-09-03",
-      "label": "예보의 대체·축약 금지 — Phase 0 빚 스캔·G2 게이트 비대체·build_anchor 불간섭·HEAD 판형 유용 금지·계약 실존 채널의 G0 선행 조건·상류 머지 판단 비대체",
+      "expression": "https://numchida.com/ns/djr#R-3434@2026-09-11",
+      "label": "예보·선언·생성 S1의 Phase 0/G2/G0 실증 비대체·앵커 불간섭",
       "order_rank": 1068,
       "section": "dddjango/commands/dddjango.md/s006",
       "section_number": null
@@ -60756,8 +60756,8 @@
       "block_order": 9,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3435@2026-09-01",
-      "label": "팬텀 스텁 = 스크립트의 결정적 투영물(격리 사본 한정) — 구현 코드 직접 작성 금지 경계 비저촉",
+      "expression": "https://numchida.com/ns/djr#R-3435@2026-09-11",
+      "label": "격리 사본 결정적 투영물·명시 후상태와 기존 본문 미검증",
       "order_rank": 1069,
       "section": "dddjango/commands/dddjango.md/s006",
       "section_number": null
@@ -60771,8 +60771,8 @@
       "block_order": 9,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3436@2026-09-03b",
-      "label": "pre-gate machine 블록 부재·공허 skip 금지 — 부재·0행 = 형식 red(exit 3) · 구형 명세 포함(«캐시 skip»·«실체화 0 skip» 과 구별)",
+      "expression": "https://numchida.com/ns/djr#R-3436@2026-09-11",
+      "label": "machine 부재/공허 형식 red·실체화 0에서도 선언 검증",
       "order_rank": 1070,
       "section": "dddjango/commands/dddjango.md/s006",
       "section_number": null
@@ -60906,8 +60906,8 @@
       "block_order": 10,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3445@2026-09-03",
-      "label": "pre-gate 캐시 skip·--base 재발화·Phase 2 최신성 — dispatch 전 재발화 · G2 전 --check-report exit 0 · 구형 명세·변경 0 레인 한정",
+      "expression": "https://numchida.com/ns/djr#R-3445@2026-09-11",
+      "label": "선택 effects 포함 캐시 해시·기존 무기재 해시 보존·재발화 최신성",
       "order_rank": 1071,
       "section": "dddjango/commands/dddjango.md/s006",
       "section_number": null
@@ -60938,8 +60938,8 @@
         "check-public-surface-annotation.py"
       ],
       "document": "dddjango/skills/discipline-houserules/SKILL.md",
-      "expression": "https://numchida.com/ns/djr#R-3447@2026-09-04b",
-      "label": "Any 금지 — 시그니처(별표 인자 포함)·변수·클래스 속성·제네릭 인자 전부 · 프레임워크 오버라이드도 object/정확 타입 · 시그니처는 #645 차단·그 밖은 ⓓ 후보(#645) · dict/Mapping 값 자리 Any 는 #647 차단",
+      "expression": "https://numchida.com/ns/djr#R-3447@2026-09-11",
+      "label": "Any 기존 금지/후보와 확인된 framework admin 슬롯 제한 허용",
       "order_rank": 2120,
       "section": "dddjango/skills/discipline-houserules/SKILL.md/s007-4",
       "section_number": "4"
@@ -60955,8 +60955,8 @@
         "check-public-surface-annotation.py"
       ],
       "document": "dddjango/skills/discipline-houserules/SKILL.md",
-      "expression": "https://numchida.com/ns/djr#R-3448@2026-09-04b",
-      "label": "경계 입력은 object/정확 타입으로 받아 받는 즉시 좁힘(TypeIs·isinstance·type() is · 자리는 architecture-ddd §3.1) · JSON 은 TypeAdapter(TypedDict) 검증 파싱 · object 는 입구 매개변수·즉시 검증 지역 변수만(반환/속성 누수 #647 차단 · 반환 자리표시 object·json.load 무검증 흐름은 ⓓ #647/#650 · 예외 프레임워크 콜백 미러·이벤트 컬렉션) · 면제 Form.clean·TypeIs",
+      "expression": "https://numchida.com/ns/djr#R-3448@2026-09-11",
+      "label": "경계 object 즉시 좁힘·JSON 검증 유지·admin UI context 실제 소비 경계",
       "order_rank": 2121,
       "section": "dddjango/skills/discipline-houserules/SKILL.md/s007-4",
       "section_number": "4"
@@ -61004,8 +61004,8 @@
         "check-public-surface-annotation.py"
       ],
       "document": "dddjango/skills/discipline-houserules/SKILL.md",
-      "expression": "https://numchida.com/ns/djr#R-3451@2026-09-04",
-      "label": "레코드(키 고정 값 묶음)를 딕셔너리로 들고 다니지 않는다 — 내부 리터럴은 TypedDict · 파싱 JSON 은 TypeAdapter 검증 · 도메인 개념은 값 객체 · dict/Mapping[str, object|Any] 주석은 구조 미정 신호(#647)",
+      "expression": "https://numchida.com/ns/djr#R-3451@2026-09-11",
+      "label": "업무 레코드 구조 선언과 framework admin UI context 구분",
       "order_rank": 2122,
       "section": "dddjango/skills/discipline-houserules/SKILL.md/s007-4",
       "section_number": "4"
@@ -61021,8 +61021,8 @@
         "check-public-surface-annotation.py"
       ],
       "document": "dddjango/skills/discipline-houserules/SKILL.md",
-      "expression": "https://numchida.com/ns/djr#R-3452@2026-09-04",
-      "label": "레코드(내부 리터럴) → TypedDict(종류 여럿이면 kind: Literal 판별 키 union) · dict/Mapping[str, object|Any] 금지",
+      "expression": "https://numchida.com/ns/djr#R-3452@2026-09-11",
+      "label": "업무 레코드 TypedDict와 admin context 조립 경계",
       "order_rank": 2123,
       "section": "dddjango/skills/discipline-houserules/SKILL.md/s007-4",
       "section_number": "4"
@@ -61102,8 +61102,8 @@
         "check-public-surface-annotation.py"
       ],
       "document": "dddjango/skills/discipline-houserules/SKILL.md",
-      "expression": "https://numchida.com/ns/djr#R-3457@2026-09-04",
-      "label": "타입이 이미 있는 값(반환·매개변수·속성) → 실제 클래스 · 입구 밖 자리표시 object 금지(입구 매개변수·즉시 검증 지역 변수는 R-3448 · 반환 주석 object 는 ⓓ #647)",
+      "expression": "https://numchida.com/ns/djr#R-3457@2026-09-11",
+      "label": "실제 타입 사용과 admin framework 슬롯 구분",
       "order_rank": 2128,
       "section": "dddjango/skills/discipline-houserules/SKILL.md/s007-4",
       "section_number": "4"
@@ -61279,8 +61279,8 @@
         "check-port-adapter-pairing.py"
       ],
       "document": "dddjango/skills/discipline-houserules/references/final.md",
-      "expression": "https://numchida.com/ns/djr#R-3468@2026-09-09",
-      "label": "#651 — 어댑터 고정 역할의 클래스별 파일과 상수 묶음",
+      "expression": "https://numchida.com/ns/djr#R-3468@2026-09-11",
+      "label": "어댑터 고정 역할 골격과 승격 신호 비적용",
       "order_rank": 2173,
       "section": "dddjango/skills/discipline-houserules/references/final.md/s003-0",
       "section_number": "0"

@@ -1,0 +1,14 @@
+[
+  "dddjango/scripts/design_pregate.py",
+  "codex-dddjango/skills/dddjango/scripts/design_pregate.py",
+  "dddjango/scripts/check-public-surface-annotation.py",
+  "codex-dddjango/skills/dddjango/scripts/check-public-surface-annotation.py",
+  "dddjango/scripts/check-context-isolation.py",
+  "codex-dddjango/skills/dddjango/scripts/check-context-isolation.py",
+  "dddjango/scripts/check-domain-model.py",
+  "codex-dddjango/skills/dddjango/scripts/check-domain-model.py",
+  "dddjango/scripts/check-layer-skeleton.py",
+  "codex-dddjango/skills/dddjango/scripts/check-layer-skeleton.py",
+  "workspace/tools/pregate_field_report_smoke.py",
+  "workspace/tools/field_report_checker_smoke.py"
+]

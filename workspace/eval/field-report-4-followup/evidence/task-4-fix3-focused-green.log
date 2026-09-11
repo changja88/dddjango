@@ -1,0 +1,9 @@
+test_later_with_item_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_with_item_rebinding_invalidates_function_constructor) ... ok
+test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) ... ok
+test_nested_definition_bindings_do_not_rebind_module_constructor_alias (__main__.CheckerRegression.test_nested_definition_bindings_do_not_rebind_module_constructor_alias) ... ok
+test_initial_static_module_alias_preserves_origin_but_rebinding_does_not (__main__.CheckerRegression.test_initial_static_module_alias_preserves_origin_but_rebinding_does_not) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.041s
+
+OK

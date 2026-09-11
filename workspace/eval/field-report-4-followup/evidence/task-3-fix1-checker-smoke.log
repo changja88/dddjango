@@ -1,0 +1,23 @@
+test_admin_augmented_write_and_module_super_shadow_preserve_diagnostics (__main__.CheckerRegression.test_admin_augmented_write_and_module_super_shadow_preserve_diagnostics) ... ok
+test_admin_context_origin_alias_fixed_slots_and_local_business (__main__.CheckerRegression.test_admin_context_origin_alias_fixed_slots_and_local_business) ... ok
+test_admin_context_real_parler_helper_and_business_opposite (__main__.CheckerRegression.test_admin_context_real_parler_helper_and_business_opposite) ... ok
+test_admin_context_shadowed_transport_names_are_not_framework_proof (__main__.CheckerRegression.test_admin_context_shadowed_transport_names_are_not_framework_proof) ... ok
+test_admin_context_sources_consumption_rebind_and_bare_slots (__main__.CheckerRegression.test_admin_context_sources_consumption_rebind_and_bare_slots) ... ok
+test_admin_helper_return_cycles_and_mixed_bare_annotation (__main__.CheckerRegression.test_admin_helper_return_cycles_and_mixed_bare_annotation) ... ok
+test_anchor_collects_existing_tree_and_code_findings (__main__.CheckerRegression.test_anchor_collects_existing_tree_and_code_findings) ... ok
+test_baseline_local_exits_and_argument_guards (__main__.CheckerRegression.test_baseline_local_exits_and_argument_guards) ... ok
+test_domain_failure_name_is_a_question_not_a_blocker (__main__.CheckerRegression.test_domain_failure_name_is_a_question_not_a_blocker) ... ok
+test_empty_api_content_is_not_an_active_registrar (__main__.CheckerRegression.test_empty_api_content_is_not_an_active_registrar) ... ok
+test_incomplete_baseline_analysis_is_not_successful_collection (__main__.CheckerRegression.test_incomplete_baseline_analysis_is_not_successful_collection) ... ok
+test_multiple_shapes_stay_blocked_and_field_words_stay_neutral (__main__.CheckerRegression.test_multiple_shapes_stay_blocked_and_field_words_stay_neutral) ... ok
+test_new_code_stays_new_with_old_tree (__main__.CheckerRegression.test_new_code_stays_new_with_old_tree) ... ok
+test_new_tree_stays_new_with_old_code (__main__.CheckerRegression.test_new_tree_stays_new_with_old_code) ... ok
+test_plain_tree_preemption_and_code_only_baseline_are_preserved (__main__.CheckerRegression.test_plain_tree_preemption_and_code_only_baseline_are_preserved) ... ok
+test_real_controller_webhook_and_explicit_registrar_keep_107 (__main__.CheckerRegression.test_real_controller_webhook_and_explicit_registrar_keep_107) ... ok
+test_rebaseline_keeps_frozen_source_and_supports_existing_current_mirrors (__main__.SourceMirrorRegression.test_rebaseline_keeps_frozen_source_and_supports_existing_current_mirrors) ... ok
+test_unapproved_source_changes_and_ambiguous_spans_remain_structure_errors (__main__.SourceMirrorRegression.test_unapproved_source_changes_and_ambiguous_spans_remain_structure_errors) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 23.405s
+
+OK

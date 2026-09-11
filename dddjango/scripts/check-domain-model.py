@@ -24,7 +24,8 @@
               #266 의 진단이 함께 진다(중복 진단 금지 · 유스케이스의 값 변환은 정상이라 제외).
   #266 [ast]  다른 애그리거트가 쓰면 shared_value_object/ 로 올린다(도메인 쪽 사용 검출).
   #267 [ast]  값 객체 하나 = 파일 하나(shared 포함 — #459 와 같은 규칙).
-  #268 [ast+] 후보: __init__/__post_init__ 에 raise 0 인 값 객체(Q2 — 잘못된 값이 불가능한가).
+  #268 [ast+] 후보: 일반 VO 생성자 raise 부재 또는 custom/open Enum의 생성 검증 미확정.
+              출처가 확인된 닫힌 표준 Enum/StrEnum/IntEnum만 제외(Q2 — 잘못된 값이 불가능한가).
   #269 [ast]  <A>/event/ 는 BC 안에서 읽혀야 한다 — 0 참조면 위반(#270: 그건 알림이라
               자리는 application_layer/port/ 다).
   #270 [ast]  driven 어댑터만 읽는 사실은 이벤트가 아니라 «알림» — 자리는 port/.
@@ -50,8 +51,8 @@
   #506 [ast]  발행 장치(레지스트리·dispatch·signal)는 domain_layer 에 살지 않는다.
   #542 [ast]  사실은 «애그리거트»가 만든다 — 유스케이스의 도메인 이벤트 생성이면 위반.
   #543 [ast]  꺼내는 창구는 pull_events() 하나 — «안 비우는» events 프로퍼티 병존 금지.
-  #546 [ast]  한 트랜잭션 = 애그리거트 하나 — «서로 다른 애그리거트 리포지토리 타입»에
-              쓰기 둘이면 위반(세는 대상은 «타입이 <A>_repository.py 에서 온 것»뿐 — C7).
+  #546 [ast+] 해소된 동일 트랜잭션 영역에 서로 다른 repository/aggregate 타입 쓰기는 확정.
+              순차 UoW 분리·nested/외부 atomic 결합; 영역·출처 미해소는 후보.
   #547 [ast+] 후보: 한 리포지토리를 여러 <area>/ 가 쓰거나 루트가 비대(엔티티 3+·컬렉션
               필드)한 것 — 「이 둘이 동시에 일어나면 업무가 정말 막아야 하나」(경계를 쪼갠다).
   #548 [ast]  다른 애그리거트는 «식별자 값 객체»로만 — 타입 힌트의 남의 루트 클래스 위반.
@@ -62,6 +63,8 @@
 
 단순화(정직 기록): #269/#270 의 «읽힘»은 BC 파일 텍스트의 이름 등장으로 잰다. #546 의
 타입 해소는 파라미터·__init__ 애너테이션의 `*Repository` 이름과 import 경로 대조다.
+트랜잭션 영역은 표준 UoW 주입·factory·별칭과 Django atomic의 AST 범위로 한정한다.
+같은 repository 타입의 여러 인스턴스는 구별하지 않으며 미해소 영역은 통과 증명이 아니다.
 
 이관 계약(명세 조각 ⓐ): 채택 신호 2원(#78) · 대상 0건 가드(#74) · ImportError
 fail-closed · ⓓ 후보 exit 불산입.
@@ -171,7 +174,8 @@ def _ann_names(node: ast.AST | None) -> set[str]:
 
 def _aggregate_dirs(domain: Path) -> list[Path]:
     return [p for p in sorted(domain.iterdir())
-            if p.is_dir() and p.name not in DOMAIN_FIXED and p.name != "__pycache__"]
+            if p.is_dir() and p.name not in DOMAIN_FIXED and p.name != "__pycache__"
+            and not checker_target.cache_only_instance(p)]
 
 
 def _check_layout(root: Path, bc: Path, f: Findings, cand: Candidates) -> None:
@@ -217,7 +221,7 @@ def _check_layout(root: Path, bc: Path, f: Findings, cand: Candidates) -> None:
             _check_domain_services(root, bc, ds, f, cand)
     if app.is_dir():
         for d in sorted(p for p in app.iterdir() if p.is_dir() and p.name != "__pycache__"):
-            if d.name == "port":
+            if d.name == "port" or checker_target.cache_only_instance(d):
                 continue
             if d.name in KIND_DENY:
                 f.add("#17", _rel(root, d),
@@ -447,6 +451,67 @@ def _check_root_class(root: Path, py: Path, cls: ast.ClassDef, f: Findings, cand
               "이벤트 기록은 있는데 pull_events() 가 없다 — 꺼내는 창구는 그 하나다")
 
 
+def _closed_standard_enum(mod: ast.Module, cls: ast.ClassDef) -> tuple[bool, bool]:
+    """정확한 표준 enum 기저 + 정적 멤버만 면제한다. 동적 확장은 후보다."""
+    origins = {}
+    for st in mod.body:
+        if st is cls:
+            break
+        if isinstance(st, ast.ImportFrom):
+            for a in st.names:
+                origins.pop(a.asname or a.name, None)
+            if st.module == "enum" and not st.level:
+                origins.update({a.asname or a.name: "enum." + a.name for a in st.names})
+        elif isinstance(st, ast.Import):
+            for a in st.names:
+                origins.pop(a.asname or a.name.split(".")[0], None)
+                if a.name == "enum": origins[a.asname or a.name] = "enum"
+        else:
+            for n in ast.walk(st):
+                if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Store): origins.pop(n.id, None)
+                if isinstance(n, ast.Attribute) and isinstance(n.ctx, (ast.Store, ast.Del)):
+                    base = n.value
+                    while isinstance(base, ast.Attribute): base = base.value
+                    if isinstance(base, ast.Name): origins.pop(base.id, None)
+            if isinstance(st, (ast.FunctionDef, ast.ClassDef)): origins.pop(st.name, None)
+    def name(expr):
+        if isinstance(expr, ast.Name): return origins.get(expr.id, "")
+        if isinstance(expr, ast.Attribute): return name(expr.value) + "." + expr.attr
+        return ""
+    enum_based = any(name(b) in {"enum.Enum", "enum.StrEnum", "enum.IntEnum", "enum.Flag", "enum.IntFlag"} for b in cls.bases)
+    if len(cls.bases) != 1 or cls.keywords or cls.decorator_list or name(cls.bases[0]) not in {
+        "enum.Enum", "enum.StrEnum", "enum.IntEnum"
+    }:
+        return False, enum_based
+    members = 0
+    for st in cls.body:
+        if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if st.name in {"_missing_", "__new__", "__init__", "__call__"}: return False, enum_based
+        elif isinstance(st, (ast.Assign, ast.AnnAssign)):
+            targets = st.targets if isinstance(st, ast.Assign) else [st.target]
+            if any(isinstance(t, ast.Name) and t.id in {"_missing_", "__new__", "__init__", "__call__"} for t in targets): return False, enum_based
+            value = st.value
+            if value is None: continue
+            try:
+                ast.literal_eval(value)
+            except (ValueError, TypeError):
+                if not (isinstance(value, ast.Call) and name(value.func) == "enum.auto" and not value.args and not value.keywords):
+                    return False, enum_based
+            members += 1
+        elif not (isinstance(st, ast.Pass) or isinstance(st, ast.Expr) and isinstance(st.value, ast.Constant)):
+            return False, enum_based
+    aliases = {cls.name}
+    for st in mod.body[mod.body.index(cls) + 1:]:
+        if isinstance(st, ast.Assign) and isinstance(st.value, ast.Name) and st.value.id in aliases:
+            aliases.update(t.id for t in st.targets if isinstance(t, ast.Name))
+        for n in ast.walk(st):
+            if isinstance(n, ast.Attribute) and isinstance(n.ctx, (ast.Store, ast.Del)) and isinstance(n.value, ast.Name) and n.value.id in aliases:
+                return False, enum_based
+            if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in {"setattr", "delattr"} and n.args and isinstance(n.args[0], ast.Name) and n.args[0].id in aliases:
+                return False, enum_based
+    return members > 0, enum_based
+
+
 def _check_value_object_file(root: Path, py: Path, f: Findings, cand: Candidates) -> None:
     mod = _parse(py)
     if mod is None:
@@ -479,10 +544,13 @@ def _check_value_object_file(root: Path, py: Path, f: Findings, cand: Candidates
                          "식별자를 갖고 값이 바뀌어도 같은 것이면 그것은 엔티티다",
                          "Q4 — 이것이 값인가 엔티티인가")
                 break
-        if not has_validation:
+        closed_enum, enum_based = _closed_standard_enum(mod, cls)
+        if not closed_enum and (not has_validation or enum_based):
             cand.add("#268", _rel(root, py, cls.lineno),
-                     f"`{cls.name}` 의 __init__/__post_init__ 에 raise 가 없다 — 값 객체는 "
-                     "만들어지는 시점에 스스로 검증한다",
+                     (f"`{cls.name}` 의 닫힌 표준 Enum 생성 검증을 확정할 수 없다 — "
+                      "custom/open 생성 경로를 검토한다" if enum_based else
+                      f"`{cls.name}` 의 __init__/__post_init__ 에 raise 가 없다 — 값 객체는 "
+                      "만들어지는 시점에 스스로 검증한다"),
                      "Q2 — 이 타입 조합만으로 잘못된 값이 «불가능»한가")
 
 
@@ -711,13 +779,181 @@ def _check_domain_wide(root: Path, bc: Path, all_bcs: list[Path], f: Findings) -
 def _repo_bindings(cls_or_fn: ast.AST) -> dict[str, str]:
     """이름 → 애그리거트(snake) — `*Repository` 애너테이션 파라미터·self 속성."""
     out: dict[str, str] = {}
-    for node in ast.walk(cls_or_fn):
+    for node in _function_nodes(cls_or_fn):
         if isinstance(node, ast.arg) and node.annotation is not None:
             for n in _ann_names(node.annotation):
                 if n.endswith("Repository"):
                     stem = n[: -len("Repository")]
                     out[node.arg] = re.sub(r"(?<!^)(?=[A-Z])", "_", stem).lower()
     return out
+
+
+def _function_nodes(node: ast.AST):
+    """내부 정의는 그 함수의 별도 검사에 맡긴다."""
+    yield node
+    for child in ast.iter_child_nodes(node):
+        if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+            continue
+        yield from _function_nodes(child)
+
+
+def _transaction_write_regions(root: Path, py: Path, mod: ast.Module, fn: ast.AST,
+                               cls: ast.ClassDef | None, repos: dict[str, str]):
+    """lexical region만 관찰한다. 호출자/ATOMIC_REQUESTS/간접 helper의 commit 증명은 하지 않는다."""
+    def key(expr):
+        return ast.unparse(expr) if isinstance(expr, (ast.Name, ast.Attribute)) else ""
+
+    def imports(body):
+        result = {}
+        for st in body:
+            if isinstance(st, ast.ImportFrom):
+                module = st.module or ""
+                if st.level:
+                    parts = py.relative_to(root).with_suffix("").parts[:-1]
+                    module = ".".join((*parts[:len(parts) - st.level + 1], *module.split(".")))
+                result.update({a.asname or a.name: module + "." + a.name for a in st.names})
+            elif isinstance(st, ast.Import):
+                result.update({a.asname or a.name.split(".")[0]: a.name if a.asname else a.name.split(".")[0] for a in st.names})
+        return result
+
+    def address(expr, env):
+        if isinstance(expr, ast.Constant) and isinstance(expr.value, str):
+            try: return address(ast.parse(expr.value, mode="eval").body, env)
+            except SyntaxError: return ""
+        if key(expr) in env: return env[key(expr)]
+        if isinstance(expr, ast.Attribute):
+            base = address(expr.value, env)
+            return base + "." + expr.attr if base else ""
+        return ""
+
+    def is_uow(name):
+        parts = name.split(".")
+        return (".application_layer.port.unit_of_work." in name and len(parts) > 1
+                and parts[-2].endswith("_unit_of_work") and parts[-1].endswith("UnitOfWork"))
+
+    module_env = {}
+    for st in mod.body:
+        if isinstance(st, (ast.Import, ast.ImportFrom)):
+            module_env.update(imports([st]))
+        elif isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            module_env[st.name] = "@uow" if is_uow(address(st.returns, module_env)) else ""
+        elif isinstance(st, ast.ClassDef):
+            module_env[st.name] = ""
+        elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+            for target in st.targets if isinstance(st, ast.Assign) else [st.target]:
+                module_env[key(target)] = ""
+
+    def origin(expr, env):
+        if isinstance(expr, ast.Call):
+            name = address(expr.func, env)
+            if is_uow(name) or name == "@uow": return "@uow"
+            parts = name.split(".")
+            source = root.joinpath(*parts[:-1]).with_suffix(".py")
+            declaration = _parse(source) if source.is_file() else None
+            if declaration:
+                target = next((st for st in declaration.body if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)) and st.name == parts[-1]), None)
+                if target and is_uow(address(target.returns, imports(declaration.body))): return "@uow"
+            return ""
+        name = address(expr, env)
+        return "@uow" if is_uow(name) else name
+
+    def params(function, env):
+        for arg in (*function.args.posonlyargs, *function.args.args, *function.args.kwonlyargs):
+            env[arg.arg] = "@uow" if is_uow(address(arg.annotation, module_env)) else ""
+
+    env = dict(module_env)
+    if cls:
+        init = next((st for st in cls.body if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)) and st.name == "__init__"), None)
+        if init:
+            init_env = dict(module_env)
+            params(init, init_env)
+            # 생성자 직접 주입/별칭만 지원한다. 분기·helper는 확정하지 않는다.
+            for st in init.body:
+                if isinstance(st, (ast.Assign, ast.AnnAssign)):
+                    value = origin(st.value, init_env)
+                    for target in st.targets if isinstance(st, ast.Assign) else [st.target]:
+                        init_env[key(target)] = value
+                elif not isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                    for target in _function_nodes(st):
+                        if isinstance(target, (ast.Name, ast.Attribute)) and isinstance(target.ctx, (ast.Store, ast.Del)):
+                            init_env[key(target)] = ""
+            env.update({k: v for k, v in init_env.items() if k.startswith("self.")})
+    params(fn, env)
+    regions = {0: set()}
+    unknown = False
+
+    def atomic(expr, local):
+        target = expr.func if isinstance(expr, ast.Call) else expr
+        return address(target, local) == "django.db.transaction.atomic"
+
+    def scan(expr, local, region):
+        nonlocal unknown
+        for node in _function_nodes(expr):
+            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute): continue
+            recv = node.func.value
+            repo_key = recv.id if isinstance(recv, ast.Name) else recv.attr if isinstance(recv, ast.Attribute) and isinstance(recv.value, ast.Name) and recv.value.id == "self" else ""
+            agg = repos.get(repo_key)
+            if agg and node.func.attr.split("_", 1)[0] in {"save", "remove"}:
+                regions.setdefault(region, set()).add(agg)
+            name = address(node.func, local)
+            if name.startswith("django.db.transaction.") and name != "django.db.transaction.atomic": unknown = True
+
+    def block(body, local, region):
+        nonlocal unknown
+        for st in body:
+            if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                local[st.name] = ""
+                continue
+            if isinstance(st, (ast.With, ast.AsyncWith)):
+                child = dict(local)
+                kinds = [atomic(item.context_expr, local) or origin(item.context_expr, local) == "@uow" for item in st.items]
+                next_region = region
+                if not all(kinds):
+                    unknown = True
+                    if region == 0: next_region = -1
+                elif region == 0:
+                    next_region = st.lineno
+                for item in st.items:
+                    scan(item.context_expr, local, region)
+                    if item.optional_vars: child[key(item.optional_vars)] = origin(item.context_expr, local)
+                block(st.body, child, next_region)
+                aliases = {key(i.optional_vars) for i in st.items if i.optional_vars}
+                for k, v in child.items():
+                    if k not in aliases:
+                        local[k] = "" if v == "@uow" and local.get(k) != v else v
+                continue
+            if isinstance(st, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try)):
+                for field in ("test", "iter"):
+                    value = getattr(st, field, None)
+                    if value: scan(value, local, region)
+                branches = []
+                for branch_body in (st.body, st.orelse):
+                    branch = dict(local)
+                    if isinstance(st, (ast.For, ast.AsyncFor)): branch[key(st.target)] = ""
+                    block(branch_body, branch, region)
+                    branches.append(branch)
+                if isinstance(st, ast.Try):
+                    for handler in st.handlers:
+                        branch = dict(local)
+                        if handler.name: branch[handler.name] = ""
+                        block(handler.body, branch, region)
+                        branches.append(branch)
+                for k in set().union(*(b.keys() for b in branches)):
+                    values = {b.get(k, "") for b in branches}
+                    local[k] = values.pop() if len(values) == 1 else ""
+                if isinstance(st, ast.Try): block(st.finalbody, local, region)
+                continue
+            scan(st, local, region)
+            if isinstance(st, (ast.Import, ast.ImportFrom)): local.update(imports([st]))
+            if isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+                value = origin(st.value, local) if not isinstance(st, ast.AugAssign) else ""
+                for target in st.targets if isinstance(st, ast.Assign) else [st.target]:
+                    local[key(target)] = value
+    decorators = fn.decorator_list
+    region = fn.lineno if any(atomic(d, env) for d in decorators) else 0
+    if any(not atomic(d, env) for d in decorators): unknown = True
+    block(fn.body, env, region)
+    return regions, unknown
 
 
 def _check_application_side(root: Path, bc: Path, f: Findings, cand: Candidates) -> None:
@@ -776,9 +1012,8 @@ def _check_application_side(root: Path, bc: Path, f: Findings, cand: Candidates)
                         if isinstance(target, ast.Attribute) and isinstance(value, ast.Name) \
                                 and value.id in param_map:
                             bindings[target.attr] = param_map[value.id]
-            written: set[str] = set()
             loaded_from_read: set[str] = set()
-            for n in ast.walk(fn):
+            for n in _function_nodes(fn):
                 if isinstance(n, ast.Assign) and isinstance(n.value, ast.Call) \
                         and isinstance(n.value.func, ast.Attribute):
                     head = n.value.func.attr.split("_", 1)[0]
@@ -797,7 +1032,6 @@ def _check_application_side(root: Path, bc: Path, f: Findings, cand: Candidates)
                 agg = next((bindings[x] for x in names if x in bindings), None)
                 head = meth.split("_", 1)[0]
                 if agg and head in ("save", "remove"):
-                    written.add(agg)
                     if meth == "save_all" and n.args and isinstance(n.args[0], ast.Name) \
                             and n.args[0].id in loaded_from_read:
                         f.add("#550", _rel(root, py, n.lineno),
@@ -809,10 +1043,16 @@ def _check_application_side(root: Path, bc: Path, f: Findings, cand: Candidates)
                     f.add("#257", _rel(root, py, n.lineno),
                           f"`{recv.value.id}.{recv.attr}.{meth}(...)` — 애그리거트 상태 변경은 "
                           "전부 «루트를 지나야» 한다(내부에 손을 넣지 않는다)")
-            if len(written) >= 2:
-                f.add("#546", _rel(root, py, fn.lineno),
-                      f"서로 다른 애그리거트 리포지토리 {sorted(written)} 에 쓰기 둘 — 한 트랜잭션은 "
-                      "애그리거트 «하나»를 바꾼다(D50 · 세는 대상은 타입이 <A>_repository.py 에서 온 것뿐)")
+            regions, unknown_boundary = _transaction_write_regions(root, py, mod, fn, cls_parent, bindings)
+            for region, written in regions.items():
+                if region > 0 and len(written) >= 2:
+                    f.add("#546", _rel(root, py, region),
+                          f"명시 transaction 구간에서 서로 다른 애그리거트 리포지토리 {sorted(written)} 에 쓰기 둘 — 한 트랜잭션은 애그리거트 «하나»를 바꾼다(현행 타입 계수)")
+            all_written = set().union(*regions.values())
+            if len(all_written) >= 2 and (unknown_boundary or regions.get(0) or regions.get(-1)):
+                cand.add("#546", _rel(root, py, fn.lineno),
+                         f"서로 다른 애그리거트 쓰기 {sorted(all_written)} 의 transaction 경계 불명 — 같은 트랜잭션인지 확인 필요",
+                         "현재 함수의 lexical 구간 밖·불명 경계가 이 쓰기들을 묶는가")
     for agg, areas in sorted(repo_area_use.items()):
         if len(areas) >= 2:
             cand.add("#547", _rel(root, bc),
@@ -837,8 +1077,10 @@ def _check_application_side(root: Path, bc: Path, f: Findings, cand: Candidates)
     # #565 후보 — 도메인 Enum 값 ∩ 유스케이스·서비스 이름.
     uc_names: set[str] = set()
     for area in app.iterdir() if app.is_dir() else []:
-        if area.is_dir() and area.name not in ("port", "__pycache__"):
-            uc_names |= {d.name for d in area.iterdir() if d.is_dir()}
+        if area.is_dir() and area.name not in ("port", "__pycache__") \
+                and not checker_target.cache_only_instance(area):
+            uc_names |= {d.name for d in area.iterdir() if d.is_dir() and d.name != "__pycache__"
+                         and not checker_target.cache_only_instance(d)}
     if domain.is_dir() and uc_names:
         for py in _py_files(domain):
             mod = _parse(py)

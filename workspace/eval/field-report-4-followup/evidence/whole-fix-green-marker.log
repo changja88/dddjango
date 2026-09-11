@@ -1,0 +1,6 @@
+test_marker_method_mutations_preserve_bytes_and_report_s5 (__main__.FieldReportTest.test_marker_method_mutations_preserve_bytes_and_report_s5) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.517s
+
+OK

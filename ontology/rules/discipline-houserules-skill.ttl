@@ -673,8 +673,8 @@ djr:R-3416 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3417 a djr:Obligation ;
-    skos:prefLabel "캐스케이드 ② 동명 폴더 승격 — 역할 밖 응집 술어(상태 클래스/참조 폐쇄 클러스터)·개별 50행 하한·관례 동거 예외·부품은 형제 분할·집행 전 모듈 객체 참조처 조사(패치 표면)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3417@2026-09-01b> .
+    skos:prefLabel "소관·응집으로 동명 폴더 승격·행수 하한 없이 참조 전수 조사"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3417@2026-09-11> .
 
 <https://numchida.com/ns/djr#R-3417@2026-09-01> a djr:Expression ;
     prov:specializationOf djr:R-3417 ;
@@ -684,6 +684,12 @@ djr:R-3417 a djr:Obligation ;
     prov:specializationOf djr:R-3417 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-3417@2026-09-01> ;
     djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-3417@2026-09-11> a djr:Expression ;
+    prov:specializationOf djr:R-3417 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3417@2026-09-01b> ;
+    djr:revision 3 ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-3418 a djr:Obligation ;
@@ -737,8 +743,8 @@ djr:R-3421 a djr:Obligation ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-3447 a djr:Prohibition ;
-    skos:prefLabel "Any 금지 — 시그니처(별표 인자 포함)·변수·클래스 속성·제네릭 인자 전부 · 프레임워크 오버라이드도 object/정확 타입 · 시그니처는 #645 차단·그 밖은 ⓓ 후보(#645) · dict/Mapping 값 자리 Any 는 #647 차단"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3447@2026-09-04b> .
+    skos:prefLabel "Any 기존 금지/후보와 확인된 framework admin 슬롯 제한 허용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3447@2026-09-11> .
 
 <https://numchida.com/ns/djr#R-3447@2026-09-04> a djr:Expression ;
     prov:specializationOf djr:R-3447 ;
@@ -750,9 +756,15 @@ djr:R-3447 a djr:Prohibition ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-amendment .
 
+<https://numchida.com/ns/djr#R-3447@2026-09-11> a djr:Expression ;
+    prov:specializationOf djr:R-3447 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3447@2026-09-04b> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3448 a djr:Obligation ;
-    skos:prefLabel "경계 입력은 object/정확 타입으로 받아 받는 즉시 좁힘(TypeIs·isinstance·type() is · 자리는 architecture-ddd §3.1) · JSON 은 TypeAdapter(TypedDict) 검증 파싱 · object 는 입구 매개변수·즉시 검증 지역 변수만(반환/속성 누수 #647 차단 · 반환 자리표시 object·json.load 무검증 흐름은 ⓓ #647/#650 · 예외 프레임워크 콜백 미러·이벤트 컬렉션) · 면제 Form.clean·TypeIs"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3448@2026-09-04b> .
+    skos:prefLabel "경계 object 즉시 좁힘·JSON 검증 유지·admin UI context 실제 소비 경계"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3448@2026-09-11> .
 
 <https://numchida.com/ns/djr#R-3448@2026-09-04> a djr:Expression ;
     prov:specializationOf djr:R-3448 ;
@@ -764,21 +776,39 @@ djr:R-3448 a djr:Obligation ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-redefinition .
 
+<https://numchida.com/ns/djr#R-3448@2026-09-11> a djr:Expression ;
+    prov:specializationOf djr:R-3448 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3448@2026-09-04b> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3451 a djr:Prohibition ;
-    skos:prefLabel "레코드(키 고정 값 묶음)를 딕셔너리로 들고 다니지 않는다 — 내부 리터럴은 TypedDict · 파싱 JSON 은 TypeAdapter 검증 · 도메인 개념은 값 객체 · dict/Mapping[str, object|Any] 주석은 구조 미정 신호(#647)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3451@2026-09-04> .
+    skos:prefLabel "업무 레코드 구조 선언과 framework admin UI context 구분"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3451@2026-09-11> .
 
 <https://numchida.com/ns/djr#R-3451@2026-09-04> a djr:Expression ;
     prov:specializationOf djr:R-3451 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-3451@2026-09-11> a djr:Expression ;
+    prov:specializationOf djr:R-3451 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3451@2026-09-04> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3452 a djr:Obligation ;
-    skos:prefLabel "레코드(내부 리터럴) → TypedDict(종류 여럿이면 kind: Literal 판별 키 union) · dict/Mapping[str, object|Any] 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3452@2026-09-04> .
+    skos:prefLabel "업무 레코드 TypedDict와 admin context 조립 경계"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3452@2026-09-11> .
 
 <https://numchida.com/ns/djr#R-3452@2026-09-04> a djr:Expression ;
     prov:specializationOf djr:R-3452 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3452@2026-09-11> a djr:Expression ;
+    prov:specializationOf djr:R-3452 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3452@2026-09-04> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3453 a djr:Obligation ;
     skos:prefLabel "레코드(파싱한 JSON — 파일·타 시스템·json.loads · 우리가 쓴 파일도) → TypeAdapter(TypedDict).validate_python/json 검증 파싱(HTTP body 는 ninja Schema) · 파싱 전 값 사용 금지 · 검증 없는 -> TypedDict 반환·Any/object 흘리기 금지(ⓓ #650)"@ko ;
@@ -813,12 +843,18 @@ djr:R-3456 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3457 a djr:Obligation ;
-    skos:prefLabel "타입이 이미 있는 값(반환·매개변수·속성) → 실제 클래스 · 입구 밖 자리표시 object 금지(입구 매개변수·즉시 검증 지역 변수는 R-3448 · 반환 주석 object 는 ⓓ #647)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3457@2026-09-04> .
+    skos:prefLabel "실제 타입 사용과 admin framework 슬롯 구분"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3457@2026-09-11> .
 
 <https://numchida.com/ns/djr#R-3457@2026-09-04> a djr:Expression ;
     prov:specializationOf djr:R-3457 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3457@2026-09-11> a djr:Expression ;
+    prov:specializationOf djr:R-3457 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3457@2026-09-04> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3458 a djr:Obligation ;
     skos:prefLabel "django-stubs 제네릭 Django 기저(기본값 없는 타입 매개변수 — ModelForm·BaseInlineFormSet·ModelAdmin·InlineModelAdmin·CBV·mixin)는 모델 타입 인자를 적는다 — TYPE_CHECKING 별칭 기본 · monkeypatch 채택(§6.1 관찰) 시 직접 표기 · admin 선언 속성은 재선언 안 함 · 열린 매개변수는 bound"@ko ;
@@ -977,7 +1013,7 @@ djr:R-3459 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 7 ;
     djr:statesNorm djr:R-3415, djr:R-3416, djr:R-3417, djr:R-3418 ;
-    djr:text "**어댑터 고정 골격** — 세 종류의 BC 어댑터는 `references/final.md` §0·§1의 고정 역할 패키지로 작성한다. 내용이 없어도 골격을 먼저 실현하고 실제 내용 파일 경로를 명세에 적는다. 이 칸에는 아래 승격 캐스케이드를 적용하지 않는다.\n\n**동명 폴더 승격 캐스케이드** — 승격 허용 칸 파일이 커질 때의 분할 판정이다(값·형태는 `references/final.md` §0 이 소유한다 — #490 교체형). 분할은 **크기가 아니라 소관·응집으로** 가른다 — 행 수는 트리거가 아니라 감사 신호다(`discipline-cleancode` §15.1 의 수치 스멜도 신호다). (명세·G0·감사자는 파이프라인 용어다 — 파이프라인 밖에서는 사용자의 명시적 작업 지시가 명세·G0 ⓐ에 준하고, 검수를 맡은 주체가 감사자에 준한다.)\n\n1. **이동(①)** — 커진 부분이 다른 기존 칸의 소관이면 그 칸으로 옮긴다. 단 이동 후보 칸이 실제로 받을 수 있는지(의존 방향 역류 없음·역할 계약 부합)를 확인한 뒤에만, 그리고 목적지가 승인 산출물 목록 안일 때만 — 목록 밖이면 보고(설계 반송)다. ①은 승격 폴더의 부품에도 그대로 적용된다.\n2. **동명 폴더 승격(②)** — 어느 칸 소관도 아닌 «역할 밖 응집 단위»가 생겼으면 승격한다. 술어(둘 다 충족): (a) 칸의 역할 계약 밖 top-level 정의로서, 자기 상태·수명을 가진 클래스이거나 — 본업 정의가 직접 참조하지 않거나 단일 진입 이름으로만 참조하는 사적 정의들이 **서로만 참조하는 닫힌 성분**을 이루는 무상태 클러스터(예: 모델군+상수+함수 쌍 — 상수 모음만·타입 별칭 모음만·함수 하나는 클러스터가 아니다) (b) 클러스터 **개별 50행 이상**(물리 행·빈 줄 제외). 관례 동거는 예외다(Django Model+Manager+QuerySet(+그 불변 예외)·admin panel+inline). 주어가 승격 폴더 내부 부품이면 ②의 실현은 하위 폴더가 아니라 **형제 부품 파일 분할**이다. 승격을 **집행하기 전에**(발견을 집행하는 coder 는 집행 전 · 기존 파일 승격(G0 ⓐ→슬라이스 0)의 제안·실행자는 제안 전), 대상 모듈을 **모듈 객체·모듈 경로 문자열로 참조하는 곳** — 테스트 fixture 의 monkeypatch, `unittest.mock.patch(\"pkg.mod.attr\")` 문자열형, settings 등 dotted-path 문자열 참조, 동적 import — 을 저장소 전수에서 조사해 발견 전건을 승격 슬라이스 스코프에 편입한다. 재수출 `__init__` 의 import 표면 불변은 **읽기 표면**만 보증하고 **패치 표면**은 보증하지 않는다(패치는 패키지 객체에 걸리고 본체 모듈 전역은 그대로 남는다). 스코프 밖 발견이면 집행 전 보고(설계 반송)다 — 감사자의 판정 재료는 현행 유지다.\n3. **유지(③)** — 둘 다 아니면 한 파일(부품이면 한 부품 파일)을 유지한다. 전부 역할 내인 초대형 파일도 ③이다 — 크기는 트리거가 아니다.\n"@ko .
+    djr:text "**어댑터 고정 골격** — 세 종류의 BC 어댑터는 `references/final.md` §0·§1의 고정 역할 패키지로 작성한다. 내용이 없어도 골격을 먼저 실현하고 실제 내용 파일 경로를 명세에 적는다. 이 칸에는 아래 승격 캐스케이드를 적용하지 않는다.\n\n**동명 폴더 승격 캐스케이드** — 승격 허용 칸 파일이 커질 때의 분할 판정이다(값·형태는 `references/final.md` §0 이 소유한다 — #490 교체형). 분할은 **크기가 아니라 소관·응집으로** 가른다 — 행 수는 트리거가 아니라 감사 신호다(`discipline-cleancode` §15.1 의 수치 스멜도 신호다). (명세·G0·감사자는 파이프라인 용어다 — 파이프라인 밖에서는 사용자의 명시적 작업 지시가 명세·G0 ⓐ에 준하고, 검수를 맡은 주체가 감사자에 준한다.)\n\n1. **이동(①)** — 커진 부분이 다른 기존 칸의 소관이면 그 칸으로 옮긴다. 단 이동 후보 칸이 실제로 받을 수 있는지(의존 방향 역류 없음·역할 계약 부합)를 확인한 뒤에만, 그리고 목적지가 승인 산출물 목록 안일 때만 — 목록 밖이면 보고(설계 반송)다. ①은 승격 폴더의 부품에도 그대로 적용된다.\n2. **동명 폴더 승격(②)** — 어느 칸 소관도 아닌 «역할 밖 응집 단위»가 생겼으면 승격한다. 술어: 칸의 역할 계약 밖 top-level 정의로서, 자기 상태·수명을 가진 클래스이거나 — 본업 정의가 직접 참조하지 않거나 단일 진입 이름으로만 참조하는 사적 정의들이 **서로만 참조하는 닫힌 성분**을 이루는 무상태 클러스터(예: 모델군+상수+함수 쌍 — 상수 모음만·타입 별칭 모음만·함수 하나는 클러스터가 아니다). 관례 동거는 예외다(Django Model+Manager+QuerySet(+그 불변 예외)·admin panel+inline). 주어가 승격 폴더 내부 부품이면 ②의 실현은 하위 폴더가 아니라 **형제 부품 파일 분할**이다. 승격을 **집행하기 전에**(발견을 집행하는 coder 는 집행 전 · 기존 파일 승격(G0 ⓐ→슬라이스 0)의 제안·실행자는 제안 전), 대상 모듈을 **모듈 객체·모듈 경로 문자열로 참조하는 곳** — 테스트 fixture 의 monkeypatch, `unittest.mock.patch(\"pkg.mod.attr\")` 문자열형, settings 등 dotted-path 문자열 참조, 동적 import — 을 저장소 전수에서 조사해 발견 전건을 승격 슬라이스 스코프에 편입한다. 재수출 `__init__` 의 import 표면 불변은 **읽기 표면**만 보증하고 **패치 표면**은 보증하지 않는다(패치는 패키지 객체에 걸리고 본체 모듈 전역은 그대로 남는다). 스코프 밖 발견이면 집행 전 보고(설계 반송)다 — 감사자의 판정 재료는 현행 유지다.\n3. **유지(③)** — 둘 다 아니면 한 파일(부품이면 한 부품 파일)을 유지한다. 전부 역할 내인 초대형 파일도 ③이다 — 크기는 트리거가 아니다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b8> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1> ;
@@ -1092,7 +1128,7 @@ djr:R-3459 a djr:Prohibition ;
     djr:kind djr:kind-table-row ;
     djr:order 10 ;
     djr:statesNorm djr:R-3452 ;
-    djr:text "| 키가 정해진 값 묶음(레코드) | 우리 코드가 리터럴로 만든 내부 데이터 | `TypedDict`(종류가 여럿이면 `kind: Literal[…]` 판별 키로 union) | `dict/Mapping[str, object\\|Any]` |\n" .
+    djr:text "| 키가 정해진 값 묶음(레코드) | 우리 업무 코드가 리터럴로 만든 내부 데이터(admin UI 조립/전달은 앞 절 판정) | `TypedDict`(종류가 여럿이면 `kind: Literal[…]` 판별 키로 union) | `dict/Mapping[str, object\\|Any]` |\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4/b11> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4> ;
@@ -1127,7 +1163,7 @@ djr:R-3459 a djr:Prohibition ;
     djr:kind djr:kind-table-row ;
     djr:order 15 ;
     djr:statesNorm djr:R-3457 ;
-    djr:text "| 타입이 이미 있는 값 | 함수 반환·매개변수·속성 | 실제 클래스(`BuildPlan` 등) | **입구 밖**의 자리표시 `object`(입구 매개변수·즉시 검증 지역 변수는 위 R-3448 · 반환 주석의 `object` 는 ⓓ #647) |\n\n" .
+    djr:text "| 타입이 이미 있는 값 | 함수 반환·매개변수·속성(admin framework 슬롯은 앞 절 판정) | 실제 클래스(`BuildPlan` 등) | **입구 밖**의 자리표시 `object`(입구 매개변수·즉시 검증 지역 변수는 위 R-3448 · 반환 주석의 `object` 는 ⓓ #647) |\n\n" .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4/b16> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4> ;
@@ -1176,14 +1212,14 @@ djr:R-3459 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 7 ;
     djr:statesNorm djr:R-3447, djr:R-3448 ;
-    djr:text "**`Any` 는 타입이 아니라 검사 포기다 — 어디에도 쓰지 않는다.** 함수 시그니처(인자·`*args/**kwargs`·반환)·변수·클래스 속성·제네릭 인자(`dict[str, Any]`) 전부다 — 별표 인자 면제(ruff `allow-star-arg-any`) 관례와 다른 선택이다. 프레임워크 오버라이드가 스텁에서 `Any` 를 쓰더라도 우리 쪽 선언은 `object`(또는 정확 타입)로 쓴다 — mypy 는 이를 호환으로 본다. 시그니처의 `Any` 는 #645 가 차단하고, 변수·제네릭 안의 `Any` 는 ⓓ 후보(#645)로 표시된다 — 단 `dict`/`Mapping`/`MutableMapping` 의 **값 자리** `Any`(`dict[str, Any]` — 매개변수·반환·변수·속성 어디든)는 #647 이 차단하며 그 자리는 #645 후보로 남지 않는다. 후보는 감수자가 집행한다(§4.1 «시그니처만 강제하므로 나머지는 백스톱과 감수자» 와 같은 분담). 경계 입력(폼 `cleaned_data`·`request.user`·무스텁 서드파티·`json.loads` 결과)은 `object` 또는 프레임워크가 주는 정확한 타입으로 받아 **받는 즉시** 좁힌다(`TypeIs`·`isinstance`·`type() is` — implementation-python §1.12 · 좁히는 자리는 architecture-ddd §3.1 의 경계 규범대로 값 객체를 부르기 전). **JSON 문서는 `pydantic.TypeAdapter(그TypedDict).validate_python`/`validate_json` 으로 검증하며 받는다** — 대상은 파일·타 시스템·`json.loads` 결과이고 우리가 만든 JSON 도 파싱했으면 같다(strict `no-any-return`); HTTP body 는 ninja `Schema` 가 그 검증이다(implementation-python §12.0). 어떻게는 implementation-python §1.5, 무엇을 고르는지는 아래 결정표다. `object` 가 사는 자리는 좁히기·검증 도우미의 **매개변수**와 즉시 검증되는 **지역 변수**뿐이다(그 자리의 `dict/Mapping[…, object]` 는 #647 ⓓ 후보 — 감수자가 즉시 좁힘을 확인한다). **반환값·클래스 속성**에 `dict/Mapping[…, object]` 가 남으면 좁히지 않은 누수라 #647 이 차단한다. 면제는 둘 — 스텁이 강제하는 `forms.Form` 하위 `clean() -> dict[str, object]`(`ModelForm.clean` 은 `None` 이라 대상 아님)와 `TypeIs`/`TypeGuard[...]` 반환. `dict/Mapping` 값 자리가 아닌 반환 주석의 `object`(`-> object` 루트 · `tuple`/`list`/`Sequence` 원소)도 입구 밖 자리표시라 #647 ⓓ 후보다 — 예외는 스텁이 `object` 로 강제하는 프레임워크 콜백·오버라이드의 미러와 이벤트 컬렉션(`list[<Bc>Event]` 로 적을 수 있으면 그것이 답이다). `json.load(s)` 결과를 `TypeAdapter` 검증 없이 `object` 아닌 주석의 변수·`object` 아닌 반환·컴프리헨션·직접 첨자/속성 접근·리터럴 컨테이너 요소로 흘린 자리는 ⓓ #650 이다 — `x: object = json.loads(…)` 뒤 즉시 검증과 파서 직접 인자는 후보가 아니다.\n\n"@ko .
+    djr:text "**`Any` 는 타입이 아니라 검사 포기다 — 아래 확인된 framework 소유 admin 슬롯을 제외한 우리 선언에는 쓰지 않는다.** 함수 시그니처(인자·`*args/**kwargs`·반환)·변수·클래스 속성·제네릭 인자(`dict[str, Any]`) 전부다 — 별표 인자 면제(ruff `allow-star-arg-any`) 관례와 다른 선택이다. 확인된 admin 슬롯 밖에서 프레임워크 오버라이드가 스텁에서 `Any` 를 쓰더라도 우리 쪽 선언은 `object`(또는 정확 타입)로 쓴다 — mypy 는 이를 호환으로 본다. 시그니처의 `Any` 는 #645 가 차단하고, 변수·제네릭 안의 `Any` 는 ⓓ 후보(#645)로 표시된다 — 단 `dict`/`Mapping`/`MutableMapping` 의 **값 자리** `Any`(`dict[str, Any]` — 매개변수·반환·변수·속성 어디든)는 #647 이 차단하며 그 자리는 #645 후보로 남지 않는다. 후보는 감수자가 집행한다(§4.1 «시그니처만 강제하므로 나머지는 백스톱과 감수자» 와 같은 분담). 경계 입력(폼 `cleaned_data`·`request.user`·무스텁 서드파티·`json.loads` 결과)은 `object` 또는 프레임워크가 주는 정확한 타입으로 받아 **받는 즉시** 좁힌다(`TypeIs`·`isinstance`·`type() is` — implementation-python §1.12 · 좁히는 자리는 architecture-ddd §3.1 의 경계 규범대로 값 객체를 부르기 전). **JSON 문서는 `pydantic.TypeAdapter(그TypedDict).validate_python`/`validate_json` 으로 검증하며 받는다** — 대상은 파일·타 시스템·`json.loads` 결과이고 우리가 만든 JSON 도 파싱했으면 같다(strict `no-any-return`); HTTP body 는 ninja `Schema` 가 그 검증이다(implementation-python §12.0). 어떻게는 implementation-python §1.5, 무엇을 고르는지는 아래 결정표다. 아래 admin UI context 밖에서 `object` 가 사는 자리는 좁히기·검증 도우미의 **매개변수**와 즉시 검증되는 **지역 변수**뿐이다(그 자리의 `dict/Mapping[…, object]` 는 #647 ⓓ 후보 — 감수자가 즉시 좁힘을 확인한다). **반환값·클래스 속성**에 `dict/Mapping[…, object]` 가 남으면 좁히지 않은 누수라 #647 이 차단한다. 기존 면제는 둘 — 스텁이 강제하는 `forms.Form` 하위 `clean() -> dict[str, object]`(`ModelForm.clean` 은 `None` 이라 대상 아님)와 `TypeIs`/`TypeGuard[...]` 반환. `dict/Mapping` 값 자리가 아닌 반환 주석의 `object`(`-> object` 루트 · `tuple`/`list`/`Sequence` 원소)도 입구 밖 자리표시라 #647 ⓓ 후보다 — 예외는 스텁이 `object` 로 강제하는 프레임워크 콜백·오버라이드의 미러와 이벤트 컬렉션(`list[<Bc>Event]` 로 적을 수 있으면 그것이 답이다). `json.load(s)` 결과를 `TypeAdapter` 검증 없이 `object` 아닌 주석의 변수·`object` 아닌 반환·컴프리헨션·직접 첨자/속성 접근·리터럴 컨테이너 요소로 흘린 자리는 ⓓ #650 이다 — `x: object = json.loads(…)` 뒤 즉시 검증과 파서 직접 인자는 후보가 아니다.\n\n\n**admin context 판정**: #493 주석 존재 유지 · #645 framework 소유 슬롯 Any 제한 허용 · #646 제네릭 런타임 안전 유지 · #647 열린 UI context 조립/병합/전달 허용 · #650 실제 JSON 소비 검증 유지다. 출처가 확인된 Django admin 및 Parler admin 계열의 고정 framework 슬롯에만 적용한다. `extra_context`/`context`의 받기·each_context·UI dict·copy/update·고정 UI 키 쓰기·framework render 전달과 연결된 private 전달 helper의 매개변수·반환·지역 context 주석을 허용한다. form/inline/media의 별도 조립은 context의 허용을 취소하지 않는다. 컨테이너 부재 처리와 request UI metadata의 담기·전달도 허용한다. 업무 읽기·비교·계산·상태 변경 또는 ORM/use case/업무 함수로의 값 전달은 실제 소비이므로 그 자리부터 기존 규칙을 적용한다. 출처나 소비가 미해소 또는 동적/재귀 호출로 escape한 연결 context는 후보로 남겨 확인한다. 이름만 context인 값·같은 함수의 별도 업무 dict·framework 고정 kwargs 밖 bare Any·admin 클래스/경로 전체는 면제하지 않는다. 생성 private helper는 본문이 없으므로 정확히 결합된 열린 dict 슬롯의 #645/#647만 S1 미검증으로 보고하고 G2에서 실제 소비 흐름으로 다시 판단한다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4/b8> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4> ;
     djr:kind djr:kind-norm ;
     djr:order 8 ;
     djr:statesNorm djr:R-3451 ;
-    djr:text "**키가 정해진 값 묶음(레코드)은 딕셔너리로 들고 다니지 않는다** — 우리 코드가 리터럴로 만든 값은 `TypedDict`, 파싱한 JSON 은 `TypeAdapter(그TypedDict)` 검증 파싱, 도메인 개념은 값 객체(architecture-ddd §3.1). `dict/Mapping[str, object|Any]` 주석은 그 자체가 «구조를 안 정했다»는 신호다(#647). 레인이 바로 고르는 결정표:\n\n"@ko .
+    djr:text "**키가 정해진 값 묶음(레코드)은 딕셔너리로 들고 다니지 않는다** — framework 소유 admin UI context의 조립/전달은 앞 절 판정을 따르고, 우리 업무 코드가 리터럴로 만든 값은 `TypedDict`, 파싱한 JSON 은 `TypeAdapter(그TypedDict)` 검증 파싱, 도메인 개념은 값 객체(architecture-ddd §3.1). `dict/Mapping[str, object|Any]` 주석은 그 자체가 «구조를 안 정했다»는 신호다(#647). 레인이 바로 고르는 결정표:\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4/b9> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s007-4> ;

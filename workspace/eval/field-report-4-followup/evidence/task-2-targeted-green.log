@@ -1,0 +1,8 @@
+test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) ... ok
+test_generated_uow_cli_defers_only_generated_body_and_preserves_original (__main__.FieldReportTest.test_generated_uow_cli_defers_only_generated_body_and_preserves_original) ... ok
+test_real_uow_cli_retains_bad_body_and_missing_robust_even_stub_text (__main__.FieldReportTest.test_real_uow_cli_retains_bad_body_and_missing_robust_even_stub_text) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 25.257s
+
+OK

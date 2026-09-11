@@ -1,0 +1,20 @@
+F
+======================================================================
+FAIL: test_admin_helper_return_cycles_and_mixed_bare_annotation (field_report_checker_smoke.CheckerRegression.test_admin_helper_return_cycles_and_mixed_bare_annotation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 217, in test_admin_helper_return_cycles_and_mixed_bare_annotation
+    self.assertEqual([r for r in rows if r['rule'] in ('#645', '#647')], [], rows)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [{'schema': 'findings/0', 'run_id': 'check[1133 chars]one}] != []
+
+First list contains 2 additional elements.
+First extra element 0:
+{'schema': 'findings/0', 'run_id': 'check-public-surface-annotation.py-20260911T104640Z-97128', 'ts': '2026-09-11T10:46:40Z', 'record_id': 'check-public-surface-annotation.py-20260911T104640Z-97128:0001', 'rule': '#647', 'sentinel': None, 'contract_ref': None, 'checker': 'check-public-surface-annotation.py', 'file': 'framework/admin/book.py:7', 'symbol': None, 'severity': 'violation', 'message': '`_first()` 반환 타입의 값 자리가 `Any` 다 — 키가 정해진 값 묶음은 `TypedDict`(파싱한 JSON 은 `TypeAdapter` 검증 파싱) · 조회표는 `dict[K, 구체 V]` · 통과 값은 `JsonValue`', 'expression': None, 'experiment_run_id': None}
+
+Diff is 1367 characters long. Set self.maxDiff to None to see it. : [{'schema': 'findings/0', 'run_id': 'check-public-surface-annotation.py-20260911T104640Z-97128', 'ts': '2026-09-11T10:46:40Z', 'record_id': 'check-public-surface-annotation.py-20260911T104640Z-97128:0001', 'rule': '#647', 'sentinel': None, 'contract_ref': None, 'checker': 'check-public-surface-annotation.py', 'file': 'framework/admin/book.py:7', 'symbol': None, 'severity': 'violation', 'message': '`_first()` 반환 타입의 값 자리가 `Any` 다 — 키가 정해진 값 묶음은 `TypedDict`(파싱한 JSON 은 `TypeAdapter` 검증 파싱) · 조회표는 `dict[K, 구체 V]` · 통과 값은 `JsonValue`', 'expression': None, 'experiment_run_id': None}, {'schema': 'findings/0', 'run_id': 'check-public-surface-annotation.py-20260911T104640Z-97128', 'ts': '2026-09-11T10:46:40Z', 'record_id': 'check-public-surface-annotation.py-20260911T104640Z-97128:0002', 'rule': '#647', 'sentinel': None, 'contract_ref': None, 'checker': 'check-public-surface-annotation.py', 'file': 'framework/admin/book.py:5', 'symbol': None, 'severity': 'info', 'message': '`bag` 주석의 열린 admin context — admin context 흐름/호출 출처 불명 — 물음: 이 `object` 는 입구(검증·좁히기 도우미의 매개변수 · 즉시 검증되는 지역 변수)인가 — 받는 즉시 `TypeAdapter`/`TypeIs` 로 좁히는가', 'expression': None, 'experiment_run_id': None}]
+
+----------------------------------------------------------------------
+Ran 1 test in 0.066s
+
+FAILED (failures=1)

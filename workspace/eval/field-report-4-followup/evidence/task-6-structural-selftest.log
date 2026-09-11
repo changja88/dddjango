@@ -1,0 +1,15 @@
+| self-test 단언(임시 정본 트리 end-to-end) | 판정 | 실측 |
+|---|---|---|
+| 정상 대조군(rule#3→R-9001) | ✓ | green |
+| ⑥ 함수성 — 같은 텍스트 두 Work | ✓ | red: ⑥ alias 함수성 위반 1건: rule#5→2Work; ⑥′ 미해소 alias 1건: ['st-d2→R-9002(ISSUE |
+| ⑥ 우회 시도 — IRI 에 golden 포함 | ✓ | red: ⑥ alias 함수성 위반 1건: rule#5→2Work; ⑥′ 미해소 alias 1건: ['st-plain→R-9002(IS |
+| ⑥′ 미발행 Work(ISSUED 밖) | ✓ | red: ⑥′ 미해소 alias 1건: ['st-bare→R-9002(ISSUED 미발행)'] |
+| ⑥′ 판본 없는 Work(currentExpression 0) | ✓ | red: ⑥′ 미해소 alias 1건: ['st-noexpr→R-9003(currentExpression 0개)'] |
+| ⑥′ 채번 형식 아님 | ✓ | red: ⑥′ 미해소 alias 1건: ['st-notwork→not-a-work(채번 형식 아님)'] |
+| ⑥″ 비한정 문법(#10) | ✓ | red: ⑥″ alias 문법 위반 1건: ["st-bare-hash:'#10'(문법)"] |
+| ⑥″ 전치 0(rule#010) | ✓ | red: ⑥″ alias 문법 위반 1건: ["st-zero:'rule#010'(문법)"] |
+| ⑥″ 원장 미실재 번호(rule#99999) | ✓ | red: ⑥″ alias 문법 위반 1건: ["st-ghost:'rule#99999'(원장 미실재)"] |
+| ⑥″ contract 문법 통과(간선 실재) | ✓ | green |
+| ⑥″ contract 레인 밖 검사기 | ✓ | red: ⑥″ alias 문법 위반 1건: ["st-c-out:'contract#check-naming.py'(선행 계약 레인 밖 검사 |
+| ⑥″ contract enforcedBy 간선 부재 | ✓ | red: ⑥″ alias 문법 위반 1건: ["st-c-noedge:'contract#check-common-container.py'( |
+[structural] self-test 통과: ⑥·⑥′·⑥″ 검출력 12/12 실증 (golden 이름 우회·미발행·판본 부재·문법 전건)

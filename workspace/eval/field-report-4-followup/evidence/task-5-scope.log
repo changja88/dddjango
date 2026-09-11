@@ -1,0 +1,26 @@
+dddjango/scripts/checker_target.py: baseline valid; syntax valid; changed=True
+codex-dddjango/skills/dddjango/scripts/checker_target.py: baseline valid; syntax valid; changed=True
+dddjango/scripts/check-layer-skeleton.py: baseline valid; syntax valid; changed=True
+codex-dddjango/skills/dddjango/scripts/check-layer-skeleton.py: baseline valid; syntax valid; changed=True
+dddjango/scripts/check-port-adapter-pairing.py: baseline valid; syntax valid; changed=True
+codex-dddjango/skills/dddjango/scripts/check-port-adapter-pairing.py: baseline valid; syntax valid; changed=True
+dddjango/scripts/check-domain-model.py: baseline valid; syntax valid; changed=True
+codex-dddjango/skills/dddjango/scripts/check-domain-model.py: baseline valid; syntax valid; changed=True
+dddjango/scripts/check-usecase-dto-placement.py: baseline valid; syntax valid; changed=True
+codex-dddjango/skills/dddjango/scripts/check-usecase-dto-placement.py: baseline valid; syntax valid; changed=True
+dddjango/scripts/check-context-isolation.py: baseline valid; syntax valid; changed=True
+codex-dddjango/skills/dddjango/scripts/check-context-isolation.py: baseline valid; syntax valid; changed=True
+dddjango/scripts/registry_gate.py: baseline valid; syntax valid; changed=True
+codex-dddjango/skills/dddjango/scripts/registry_gate.py: baseline valid; syntax valid; changed=True
+workspace/tools/field_report_checker_smoke.py: baseline valid; syntax valid; changed=True
+workspace/tools/registry_gate_smoke.py: baseline valid; syntax valid; changed=True
+workspace/tools/field_report_checker_smoke.py: prior 36 test AST bodies preserved; 3 added
+workspace/tools/registry_gate_smoke.py: prior 0 test AST bodies preserved; 3 added
+byte mirror verified: dddjango/scripts/checker_target.py
+byte mirror verified: dddjango/scripts/check-layer-skeleton.py
+byte mirror verified: dddjango/scripts/check-port-adapter-pairing.py
+byte mirror verified: dddjango/scripts/check-domain-model.py
+byte mirror verified: dddjango/scripts/check-usecase-dto-placement.py
+byte mirror verified: dddjango/scripts/check-context-isolation.py
+byte mirror verified: dddjango/scripts/registry_gate.py
+16/16 owned paths syntax and baseline verified; 7/7 byte mirrors exact

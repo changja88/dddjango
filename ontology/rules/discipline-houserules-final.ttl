@@ -553,12 +553,18 @@ djr:R-3409 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-3410 a djr:Obligation ;
-    skos:prefLabel "부품 출생 50행 하한과 부품 0개 퇴화의 환원 신호"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3410@2026-09-01> .
+    skos:prefLabel "부품 0 승격 폴더 환원 신호·신규 산출/기존 빚 처분"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3410@2026-09-11> .
 
 <https://numchida.com/ns/djr#R-3410@2026-09-01> a djr:Expression ;
     prov:specializationOf djr:R-3410 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3410@2026-09-11> a djr:Expression ;
+    prov:specializationOf djr:R-3410 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3410@2026-09-01> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3411 a djr:Obligation ;
     skos:prefLabel "저장(save)류 쓰기 호출의 본체 한정"@ko ;
@@ -613,12 +619,18 @@ djr:R-3423 a djr:Permission ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-3468 a djr:Obligation ;
-    skos:prefLabel "#651 — 어댑터 고정 역할의 클래스별 파일과 상수 묶음"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3468@2026-09-09> .
+    skos:prefLabel "어댑터 고정 역할 골격과 승격 신호 비적용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3468@2026-09-11> .
 
 <https://numchida.com/ns/djr#R-3468@2026-09-09> a djr:Expression ;
     prov:specializationOf djr:R-3468 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3468@2026-09-11> a djr:Expression ;
+    prov:specializationOf djr:R-3468 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3468@2026-09-09> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3469 a djr:Obligation ;
     skos:prefLabel "어댑터 고정 골격과 역할 소유·builder·reader·상수·별칭 배치"@ko ;
@@ -687,7 +699,7 @@ djr:R-3469 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 10 ;
     djr:statesNorm djr:R-3409, djr:R-3410, djr:R-3411 ;
-    djr:text "승격 폴더는 «트리가 리프로 닫은 폴더»가 아니다 — 내부 재량은 **배열·명명 재량**이지 **파일 신설 재량이 아니다**. 부품 파일의 신설 근거는 감사 판정(동명 폴더 승격 발견)의 클러스터 열거 또는 후속 감사 신호뿐이고, #192(사설 조각은 제 파일 안 `_` 함수)·#189(유스케이스 간 돌려쓰기 금지)가 부품 파일 각각에 그대로 적용되며, 정크드로어 이름(`utils.py`·`helpers.py` 류)은 위반이다. 이번 작업에서 새로 나타난 승격 폴더의 각 부품(본체·`__init__.py` 제외)은 50행(물리 행·빈 줄 제외) 이상이어야 하고(출생 하한 — 기존 폴더의 사후 축소는 무관·환원 의무를 만들지 않는다), 부품이 0개(본체+`__init__.py` 뿐)가 된 승격 폴더는 위반이다(환원 신호 — 이번 작업 산출이면 발견 반영으로, 기존이면 G0 빚 경로로 환원한다). 저장(save)류 쓰기 호출은 본체에만 둔다.\n"@ko .
+    djr:text "승격 폴더는 «트리가 리프로 닫은 폴더»가 아니다 — 내부 재량은 **배열·명명 재량**이지 **파일 신설 재량이 아니다**. 부품 파일의 신설 근거는 감사 판정(동명 폴더 승격 발견)의 클러스터 열거 또는 후속 감사 신호뿐이고, #192(사설 조각은 제 파일 안 `_` 함수)·#189(유스케이스 간 돌려쓰기 금지)가 부품 파일 각각에 그대로 적용되며, 정크드로어 이름(`utils.py`·`helpers.py` 류)은 위반이다. 부품이 0개(본체+`__init__.py` 뿐)가 된 승격 폴더는 위반이다(환원 신호 — 이번 작업 산출이면 발견 반영으로, 기존이면 G0 빚 경로로 환원한다). 저장(save)류 쓰기 호출은 본체에만 둔다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s003-0/b11> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s003-0> ;
@@ -701,7 +713,7 @@ djr:R-3469 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 12 ;
     djr:statesNorm djr:R-3468, djr:R-3469 ;
-    djr:text "**어댑터 고정 골격** — `driven_layer/adapter/` 아래 ACL의 `anticorruption_layer/<other_bounded_context>/<capability>_adapter/`, 외부 시스템의 `external_system/<system>/<capability>_adapter/`, 그 밖 능력의 `<capability>/<technology>_adapter/` 는 처음부터 패키지다. 바깥 패키지와 `adapter/`·`command/`·`constant/`·`contract/`·`schema/` 다섯 역할 폴더에 `__init__.py` 를 반드시 둔다(#488). 역할 폴더는 내용이 없어도 생략하지 않는다. 초기화 파일은 재수출 전용이다(#640). 바깥에 구현 본체를 두거나 단일 `.py` 파일로 대체하지 않으며, 역할 폴더 안에 추가 폴더를 만들지 않는다(#490). 실제 내용 파일은 필요할 때만 만들며 50행 하한·200행 승격 신호의 대상이 아니다.\n\n**#651 클래스별 파일** — `adapter/`·`command/`·`contract/`·`schema/` 의 내용 파일은 비공개 클래스를 포함해 클래스 하나당 파일 하나다. 같은 역할의 클래스가 여러 개면 각각 파일을 만든다. `constant/` 는 클래스 없이 관련 상수끼리 한 파일에 묶는다. 내용 없는 골격 파일과 재수출 초기화 파일은 클래스 수 검사의 대상이 아니다.\n\n**역할 배치** — `adapter/` 는 포트를 구현하는 클래스를 소유한다. 외부 응답을 포트 반환값으로 바꾸는 reader 는 그 구현의 private 메서드 또는 본문에 둔다. `command/` 는 주입되는 호출 계약(Protocol 등)을 클래스별로 둔다. `contract/` 는 내부 계약 클래스를 소유하며 그 계약을 반환하는 builder 도 같은 파일에 둔다. `schema/` 는 외부 입출력 검증 클래스를 소유하며 관련 타입 별칭은 해당 스키마 파일에 둔다. `constant/` 는 프롬프트 등 관련 값을 `prompt.py` 같은 응집된 묶음으로 둔다. 반환 클래스가 포트 소유라는 이유로 외부 스키마를 아는 변환 함수를 포트 파일로 옮기지 않는다. 내부 참조는 모듈 직접 상대 import 로 연결한다. 기존 상속·명명·예외 번역 검사는 구현 역할 파일에, 의존 방향과 격리는 전체 역할 파일에 적용한다.\n"@ko .
+    djr:text "**어댑터 고정 골격** — `driven_layer/adapter/` 아래 ACL의 `anticorruption_layer/<other_bounded_context>/<capability>_adapter/`, 외부 시스템의 `external_system/<system>/<capability>_adapter/`, 그 밖 능력의 `<capability>/<technology>_adapter/` 는 처음부터 패키지다. 바깥 패키지와 `adapter/`·`command/`·`constant/`·`contract/`·`schema/` 다섯 역할 폴더에 `__init__.py` 를 반드시 둔다(#488). 역할 폴더는 내용이 없어도 생략하지 않는다. 초기화 파일은 재수출 전용이다(#640). 바깥에 구현 본체를 두거나 단일 `.py` 파일로 대체하지 않으며, 역할 폴더 안에 추가 폴더를 만들지 않는다(#490). 실제 내용 파일은 필요할 때만 만들며 200행 승격 신호의 대상이 아니다.\n\n**#651 클래스별 파일** — `adapter/`·`command/`·`contract/`·`schema/` 의 내용 파일은 비공개 클래스를 포함해 클래스 하나당 파일 하나다. 같은 역할의 클래스가 여러 개면 각각 파일을 만든다. `constant/` 는 클래스 없이 관련 상수끼리 한 파일에 묶는다. 내용 없는 골격 파일과 재수출 초기화 파일은 클래스 수 검사의 대상이 아니다.\n\n**역할 배치** — `adapter/` 는 포트를 구현하는 클래스를 소유한다. 외부 응답을 포트 반환값으로 바꾸는 reader 는 그 구현의 private 메서드 또는 본문에 둔다. `command/` 는 주입되는 호출 계약(Protocol 등)을 클래스별로 둔다. `contract/` 는 내부 계약 클래스를 소유하며 그 계약을 반환하는 builder 도 같은 파일에 둔다. `schema/` 는 외부 입출력 검증 클래스를 소유하며 관련 타입 별칭은 해당 스키마 파일에 둔다. `constant/` 는 프롬프트 등 관련 값을 `prompt.py` 같은 응집된 묶음으로 둔다. 반환 클래스가 포트 소유라는 이유로 외부 스키마를 아는 변환 함수를 포트 파일로 옮기지 않는다. 내부 참조는 모듈 직접 상대 import 로 연결한다. 기존 상속·명명·예외 번역 검사는 구현 역할 파일에, 의존 방향과 격리는 전체 역할 파일에 적용한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s003-0/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s003-0> ;

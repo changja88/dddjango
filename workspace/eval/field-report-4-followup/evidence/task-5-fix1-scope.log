@@ -1,0 +1,218 @@
+CHANGED dddjango/scripts/check-domain-model.py
+--- before/dddjango/scripts/check-domain-model.py
++++ dddjango/scripts/check-domain-model.py
+@@ -1070,8 +1070,10 @@
+     # #565 후보 — 도메인 Enum 값 ∩ 유스케이스·서비스 이름.
+     uc_names: set[str] = set()
+     for area in app.iterdir() if app.is_dir() else []:
+-        if area.is_dir() and area.name not in ("port", "__pycache__"):
+-            uc_names |= {d.name for d in area.iterdir() if d.is_dir()}
++        if area.is_dir() and area.name not in ("port", "__pycache__") \
++                and not checker_target.cache_only_instance(area):
++            uc_names |= {d.name for d in area.iterdir() if d.is_dir() and d.name != "__pycache__"
++                         and not checker_target.cache_only_instance(d)}
+     if domain.is_dir() and uc_names:
+         for py in _py_files(domain):
+             mod = _parse(py)
+
+CHANGED codex-dddjango/skills/dddjango/scripts/check-domain-model.py
+--- before/codex-dddjango/skills/dddjango/scripts/check-domain-model.py
++++ codex-dddjango/skills/dddjango/scripts/check-domain-model.py
+@@ -1070,8 +1070,10 @@
+     # #565 후보 — 도메인 Enum 값 ∩ 유스케이스·서비스 이름.
+     uc_names: set[str] = set()
+     for area in app.iterdir() if app.is_dir() else []:
+-        if area.is_dir() and area.name not in ("port", "__pycache__"):
+-            uc_names |= {d.name for d in area.iterdir() if d.is_dir()}
++        if area.is_dir() and area.name not in ("port", "__pycache__") \
++                and not checker_target.cache_only_instance(area):
++            uc_names |= {d.name for d in area.iterdir() if d.is_dir() and d.name != "__pycache__"
++                         and not checker_target.cache_only_instance(d)}
+     if domain.is_dir() and uc_names:
+         for py in _py_files(domain):
+             mod = _parse(py)
+
+CHANGED dddjango/scripts/check-usecase-dto-placement.py
+--- before/dddjango/scripts/check-usecase-dto-placement.py
++++ dddjango/scripts/check-usecase-dto-placement.py
+@@ -282,15 +282,23 @@
+     rel = bc_rel / app.name
+     dirs, _ = _entries(app)
+     areas: list[Path] = []
++    cache_instances: set[Path] = set()
+     for p in dirs:
+-        if p.name == "port" or checker_target.cache_only_instance(p):
+-            continue
++        if p.name == "port":
++            continue
++        if checker_target.cache_only_instance(p):
++            cache_instances.add(p)
++            continue
++        instance_dirs, _ = _entries(p)
++        cache_instances.update(child for child in instance_dirs if checker_target.cache_only_instance(child))
+         if p.name in KIND_FOLDER_NAMES:
+             out.add("#182", rel / p.name, "`application_layer/` 직계는 `<area>/`·`port/` 둘뿐이다 — 종류 폴더는 자리가 없다(`domain_bypass_query/`·`unit_of_work/` 는 `port/` 안이다)")
+         else:
+             areas.append(p)
+ 
+     for p in app.rglob("*"):
++        if p in cache_instances or any(parent in cache_instances for parent in p.parents):
++            continue
+         if set(p.relative_to(app).parts) & SKIP_DIRS:
+             continue
+         if p.is_dir() and p.name in ("validation", "validators"):
+@@ -671,7 +679,8 @@
+         dl = bc / "domain_layer"
+         if dl.is_dir():
+             agg_dirs, _ = _entries(dl)
+-            agg_names = {p.name for p in agg_dirs if p.name not in ("shared_value_object", "domain_service")}
++            agg_names = {p.name for p in agg_dirs if p.name not in ("shared_value_object", "domain_service")
++                         and not checker_target.cache_only_instance(p)}
+ 
+         if app is not None:
+             scanned_layers += 1
+
+CHANGED codex-dddjango/skills/dddjango/scripts/check-usecase-dto-placement.py
+--- before/codex-dddjango/skills/dddjango/scripts/check-usecase-dto-placement.py
++++ codex-dddjango/skills/dddjango/scripts/check-usecase-dto-placement.py
+@@ -282,15 +282,23 @@
+     rel = bc_rel / app.name
+     dirs, _ = _entries(app)
+     areas: list[Path] = []
++    cache_instances: set[Path] = set()
+     for p in dirs:
+-        if p.name == "port" or checker_target.cache_only_instance(p):
+-            continue
++        if p.name == "port":
++            continue
++        if checker_target.cache_only_instance(p):
++            cache_instances.add(p)
++            continue
++        instance_dirs, _ = _entries(p)
++        cache_instances.update(child for child in instance_dirs if checker_target.cache_only_instance(child))
+         if p.name in KIND_FOLDER_NAMES:
+             out.add("#182", rel / p.name, "`application_layer/` 직계는 `<area>/`·`port/` 둘뿐이다 — 종류 폴더는 자리가 없다(`domain_bypass_query/`·`unit_of_work/` 는 `port/` 안이다)")
+         else:
+             areas.append(p)
+ 
+     for p in app.rglob("*"):
++        if p in cache_instances or any(parent in cache_instances for parent in p.parents):
++            continue
+         if set(p.relative_to(app).parts) & SKIP_DIRS:
+             continue
+         if p.is_dir() and p.name in ("validation", "validators"):
+@@ -671,7 +679,8 @@
+         dl = bc / "domain_layer"
+         if dl.is_dir():
+             agg_dirs, _ = _entries(dl)
+-            agg_names = {p.name for p in agg_dirs if p.name not in ("shared_value_object", "domain_service")}
++            agg_names = {p.name for p in agg_dirs if p.name not in ("shared_value_object", "domain_service")
++                         and not checker_target.cache_only_instance(p)}
+ 
+         if app is not None:
+             scanned_layers += 1
+
+CHANGED dddjango/scripts/check-context-isolation.py
+--- before/dddjango/scripts/check-context-isolation.py
++++ dddjango/scripts/check-context-isolation.py
+@@ -1283,7 +1283,8 @@
+         agg_names: set[str] = set()
+         if dl.is_dir():
+             agg_dirs, _ = _entries(dl)
+-            agg_names = {p.name for p in agg_dirs if p.name not in ("shared_value_object", "domain_service")}
++            agg_names = {p.name for p in agg_dirs if p.name not in ("shared_value_object", "domain_service")
++                         and not checker_target.cache_only_instance(p)}
+ 
+         for f in sorted(bc.rglob("*.py")):
+             if set(f.relative_to(bc).parts) & SKIP_DIRS:
+
+CHANGED codex-dddjango/skills/dddjango/scripts/check-context-isolation.py
+--- before/codex-dddjango/skills/dddjango/scripts/check-context-isolation.py
++++ codex-dddjango/skills/dddjango/scripts/check-context-isolation.py
+@@ -1283,7 +1283,8 @@
+         agg_names: set[str] = set()
+         if dl.is_dir():
+             agg_dirs, _ = _entries(dl)
+-            agg_names = {p.name for p in agg_dirs if p.name not in ("shared_value_object", "domain_service")}
++            agg_names = {p.name for p in agg_dirs if p.name not in ("shared_value_object", "domain_service")
++                         and not checker_target.cache_only_instance(p)}
+ 
+         for f in sorted(bc.rglob("*.py")):
+             if set(f.relative_to(bc).parts) & SKIP_DIRS:
+
+CHANGED workspace/tools/field_report_checker_smoke.py
+--- before/workspace/tools/field_report_checker_smoke.py
++++ workspace/tools/field_report_checker_smoke.py
+@@ -725,6 +725,69 @@
+                 self.assertTrue(any(rule in line and "vanished" in line for line in output.splitlines()), output)
+             shutil.rmtree(path)
+ 
++    def direct_and_snapshot_results(self, script):
++        gate = _load_module(SCRIPTS / "registry_gate.py", "field_cache_snapshot")
++        with tempfile.TemporaryDirectory(prefix="field-cache-copy-") as temp:
++            snapshot = Path(temp) / "snapshot"
++            gate._snapshot_current(self.root, snapshot)
++            results = []
++            for target in (self.root, snapshot):
++                result = subprocess.run([sys.executable, "-B", str(SCRIPTS / script), str(target)],
++                                        capture_output=True, text=True, env=self.env)
++                results.append((result.returncode, result.stdout + result.stderr))
++            return results
++
++    def test_validation_scan_respects_owning_cache_only_area_and_usecase(self):
++        for relative in ("order/vanished", "vanished_area/vanished"):
++            for banned in ("validation", "validators"):
++                path = self.plant("application/orders/application_layer/" + relative)
++                (path / banned).mkdir()
++                for source in (None, "__init__.py", "real.py"):
++                    with self.subTest(instance=relative, banned=banned, source=source):
++                        if source:
++                            (path / source).write_text("pass\n" if source == "real.py" else "")
++                        results = self.direct_and_snapshot_results("check-usecase-dto-placement.py")
++                        for channel, (code, output) in zip(("direct", "snapshot"), results):
++                            with self.subTest(channel=channel):
++                                self.assertEqual(code, 2 if source else 0, output)
++                                self.assertEqual(any("#183" in line and banned in line for line in output.splitlines()),
++                                                 source is not None, output)
++                        if source:
++                            (path / source).unlink()
++                shutil.rmtree(path)
++                if relative.startswith("vanished_area"):
++                    shutil.rmtree(path.parent)
++
++    def test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates(self):
++        cases = (
++            ("domain_layer/place_order", "check-usecase-dto-placement.py", "#191"),
++            ("domain_layer/order_lookup", "check-context-isolation.py", "#151"),
++            ("application_layer/order/vanished", "check-domain-model.py", "#565"),
++            ("application_layer/vanished_area/vanished", "check-domain-model.py", "#565"),
++        )
++        enum = self.root / "application/orders/domain_layer/order/value_object/workflow.py"
++        enum.write_text("from enum import Enum\nclass Workflow(Enum):\n    VANISHED = 'vanished'\n")
++        for relative, script, rule in cases:
++            path = self.plant("application/orders/" + relative)
++            for source in (None, "__init__.py", "real.py", "empty_instance"):
++                with self.subTest(instance=relative, source=source, rule=rule):
++                    if source == "empty_instance":
++                        shutil.rmtree(path)
++                        path.mkdir()
++                    elif source:
++                        (path / source).write_text("pass\n" if source == "real.py" else "")
++                    results = self.direct_and_snapshot_results(script)
++                    for channel, (code, output) in zip(("direct", "snapshot"), results):
++                        with self.subTest(channel=channel):
++                            self.assertIn(code, (0, 2), output)
++                            hits = [line for line in output.splitlines() if "[ⓓ" + rule + "]" in line]
++                            self.assertEqual(len(hits), 1 if source else 0, output)
++                    if source and source != "empty_instance":
++                        (path / source).unlink()
++            shutil.rmtree(path)
++            if relative.startswith("application_layer/vanished_area"):
++                shutil.rmtree(path.parent)
++
+     def test_cache_cannot_hide_fixed_skeleton_and_promoted_parts_have_no_floor(self):
+         fixed = self.root / "application/orders/application_layer/port/unit_of_work"
+         shutil.rmtree(fixed)
+
+Prior 39 test AST bodies unchanged; 2 new tests
+7 changed owned files; registry source/smoke unchanged; all 7 byte mirrors exact; 16 syntax checks passed

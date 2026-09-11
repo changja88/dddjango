@@ -1,0 +1,11 @@
+test_while_guard_execute_repeats_but_for_iterable_executes_once (__main__.CheckerRegression.test_while_guard_execute_repeats_but_for_iterable_executes_once) ... ok
+test_later_import_shadow_invalidates_standard_enum_origin (__main__.CheckerRegression.test_later_import_shadow_invalidates_standard_enum_origin) ... ok
+test_rebound_annotated_factory_is_not_revived (__main__.CheckerRegression.test_rebound_annotated_factory_is_not_revived) ... ok
+test_constructor_branch_invalidates_uow_field_origin (__main__.CheckerRegression.test_constructor_branch_invalidates_uow_field_origin) ... ok
+test_constructor_branch_invalidates_contract_field_origin (__main__.CheckerRegression.test_constructor_branch_invalidates_contract_field_origin) ... ok
+test_initial_static_module_alias_preserves_origin_but_rebinding_does_not (__main__.CheckerRegression.test_initial_static_module_alias_preserves_origin_but_rebinding_does_not) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.025s
+
+OK

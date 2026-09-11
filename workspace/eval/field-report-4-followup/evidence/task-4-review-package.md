@@ -1,0 +1,1916 @@
+# task-4 review package
+
+No commit was authorized. This package compares owned-file snapshots before this task with current bytes.
+
+## dddjango/scripts/check-context-isolation.py
+
+Before SHA256: 6ee97a89c6cc5a812f3bc20915d9bac42d69d1864648017764bc8546acc25c2d
+After SHA256: f15ae6fc8fc35a434419c6f7617bf7db916de26ab934b53f9a8c17b9b5b86131
+
+```diff
+--- before/dddjango/scripts/check-context-isolation.py
++++ after/dddjango/scripts/check-context-isolation.py
+@@ -383,20 +383,170 @@
+                 if p.name not in ("request", "response", "exception"):
+                     out.add("#155", srel / "contract" / p.name, "`contract/` 는 `request/`·`response/`·`exception/` 셋으로 갈린다(#163 — exception 은 연산 축이 아니라 서비스 스코프다)")
+             for p in cfiles:
+                 if p.name != "__init__.py":
+                     out.add("#155", srel / "contract" / p.name, "`contract/` 직계에 평면 파일을 두지 않는다")
+             _check_contract_kind(contract / "request", "Request", "#157", "#156", ops, srel, out)
+             _check_contract_kind(contract / "response", "Response", "#160", "#159", ops, srel, out)
+             _check_published_exceptions(contract / "exception", svc.name, srel, out, cand)
+ 
+ 
++def _ohs_execution_count(entry: Path, mod: ast.Module, fn: ast.AST) -> tuple[int, bool]:
++    """현재 함수의 정적 execute 수. builder 준비와 미호출 내부 정의는 세지 않는다."""
++    root = next((p.parent for p in entry.parents if p.name == "application"), entry.parent)
++
++    def imports(body, source):
++        result = {}
++        for st in body:
++            if isinstance(st, ast.Import):
++                for a in st.names:
++                    result[a.asname or a.name.split(".")[0]] = a.name if a.asname else a.name.split(".")[0]
++            elif isinstance(st, ast.ImportFrom):
++                module = st.module or ""
++                if st.level:
++                    parts = source.relative_to(root).with_suffix("").parts[:-1]
++                    module = ".".join((*parts[:len(parts) - st.level + 1], *module.split(".")))
++                for a in st.names:
++                    result[a.asname or a.name] = module + "." + a.name
++            elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
++                for t in st.targets if isinstance(st, ast.Assign) else [st.target]:
++                    for n in ast.walk(t):
++                        if isinstance(n, ast.Name):
++                            result.pop(n.id, None)
++        return result
++
++    def address(expr, env):
++        if isinstance(expr, ast.Constant) and isinstance(expr.value, str):
++            try:
++                return address(ast.parse(expr.value, mode="eval").body, env)
++            except SyntaxError:
++                return ""
++        if isinstance(expr, ast.Name):
++            return env.get(expr.id, "")
++        if isinstance(expr, ast.Attribute):
++            base = address(expr.value, env)
++            return base + "." + expr.attr if base else ""
++        return ""
++
++    def usecase(name):
++        parts = name.split(".")
++        if not ("application_layer" in parts and len(parts) > 1 and parts[-2].endswith("_use_case")):
++            return False
++        source = root.joinpath(*parts[:-1]).with_suffix(".py")
++        declaration = _parse(source) if source.is_file() else None
++        return declaration is not None and any(isinstance(st, ast.ClassDef) and st.name == parts[-1] for st in declaration.body)
++
++    def builder(name):
++        parts = name.split(".")
++        if "composition_root" not in parts or not re.fullmatch(r"build_.+_use_case", parts[-1]):
++            return False
++        source = root.joinpath(*parts[:-1]).with_suffix(".py")
++        if not source.is_file():
++            source = root.joinpath(*parts[:-1], "__init__.py")
++        declaration = _parse(source)
++        if declaration is None:
++            return False
++        env = imports(declaration.body, source)
++        target = next((st for st in declaration.body if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)) and st.name == parts[-1]), None)
++        if target is None:
++            return False
++        if usecase(address(target.returns, env)):
++            return True
++        return any(isinstance(st, ast.Return) and isinstance(st.value, ast.Call)
++                   and usecase(address(st.value.func, env)) for st in target.body)
++
++    def origin(expr, env):
++        if isinstance(expr, ast.Call):
++            name = address(expr.func, env)
++            return "@usecase" if usecase(name) or builder(name) else ""
++        return address(expr, env)
++
++    count, unknown = 0, False
++
++    def inspect(expr, env):
++        nonlocal count, unknown
++        if isinstance(expr, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
++            return
++        if isinstance(expr, ast.Call) and isinstance(expr.func, ast.Attribute) and expr.func.attr == "execute":
++            receiver = origin(expr.func.value, env)
++            if receiver == "@usecase" or usecase(receiver):
++                count += 1
++            else:
++                unknown = True
++        before = count
++        for child in ast.iter_child_nodes(expr):
++            inspect(child, env)
++        if isinstance(expr, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)) and count != before:
++            unknown = True
++
++    def block(body, env):
++        nonlocal unknown
++        for st in body:
++            if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
++                env[st.name] = ""
++                continue
++            if isinstance(st, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try, ast.With, ast.AsyncWith)):
++                branches = []
++                if isinstance(st, (ast.With, ast.AsyncWith)):
++                    for item in st.items:
++                        inspect(item.context_expr, env)
++                    branch = dict(env)
++                    for item in st.items:
++                        if item.optional_vars:
++                            for n in ast.walk(item.optional_vars):
++                                if isinstance(n, ast.Name): branch[n.id] = ""
++                    block(st.body, branch)
++                    branches = [branch, env]
++                else:
++                    for field in ("test", "iter"):
++                        value = getattr(st, field, None)
++                        if value is not None: inspect(value, env)
++                    branch = dict(env)
++                    if isinstance(st, (ast.For, ast.AsyncFor)):
++                        for n in ast.walk(st.target):
++                            if isinstance(n, ast.Name): branch[n.id] = ""
++                    before = count
++                    block(st.body, branch)
++                    if isinstance(st, (ast.For, ast.AsyncFor, ast.While)) and count != before:
++                        unknown = True
++                    other = dict(env)
++                    block(st.orelse, other)
++                    branches = [branch, other]
++                    if isinstance(st, ast.Try):
++                        for handler in st.handlers:
++                            branch = dict(env)
++                            if handler.name: branch[handler.name] = ""
++                            block(handler.body, branch)
++                            branches.append(branch)
++                for key in set().union(*(b.keys() for b in branches)):
++                    values = {b.get(key, "") for b in branches}
++                    env[key] = values.pop() if len(values) == 1 else ""
++                if isinstance(st, ast.Try): block(st.finalbody, env)
++                continue
++            inspect(st, env)
++            if isinstance(st, (ast.Import, ast.ImportFrom)):
++                env.update(imports([st], entry))
++            elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
++                value = origin(st.value, env) if not isinstance(st, ast.AugAssign) else ""
++                for t in st.targets if isinstance(st, ast.Assign) else [st.target]:
++                    for n in ast.walk(t):
++                        if isinstance(n, ast.Name): env[n.id] = value if isinstance(t, ast.Name) else ""
++        return env
++
++    env = imports(mod.body, entry)
++    for arg in (*fn.args.posonlyargs, *fn.args.args, *fn.args.kwonlyargs):
++        name = address(arg.annotation, env)
++        env[arg.arg] = "@usecase" if usecase(name) else ""
++    block(fn.body, env)
++    return count, unknown
++
++
+ def _check_ohs_service(entry: Path, rel, out: Findings, cand: Candidates) -> set[str]:
+     mod = _parse(entry)
+     if mod is None:
+         return set()
+     domain_names = _domain_imported_names(mod)
+     ops: set[str] = set()
+     for node in mod.body:
+         if isinstance(node, ast.ClassDef) and not node.name.startswith("_"):
+             out.add("#634", rel, f"`<service>_service.py` 의 공개 표면은 모듈 수준 «함수»뿐이다 — `{node.name}` (계약 클래스는 `contract/` 에 산다)")
+         if isinstance(node, ast.Assign):
+@@ -433,30 +583,23 @@
+                     exc_name = target.id
+                 if exc_name in domain_names:
+                     out.add("#164", rel, f"도메인 예외를 raw 로 전파하지 않는다 — `{exc_name}` 은 `contract/exception/` 타입으로 번역해 던진다(#295)")
+             if isinstance(sub, ast.ExceptHandler) and sub.name:
+                 handler_types = _ann_idents(sub.type)
+                 if handler_types & domain_names:
+                     for inner in ast.walk(sub):
+                         if isinstance(inner, ast.Attribute) and isinstance(inner.value, ast.Name) and inner.value.id == sub.name:
+                             out.add("#153", rel, f"도메인 예외는 «타입»으로만 쓴다 — `{sub.name}.{inner.attr}` 속성 접근은 계약이 도메인 모양에 얹힌 것이다")
+                             break
+-        calls = sum(
+-            1 for sub in ast.walk(fn)
+-            if isinstance(sub, ast.Call) and "use_case" in ast.dump(sub.func).lower()
+-        )
+-        exec_calls = sum(
+-            1 for sub in ast.walk(fn)
+-            if isinstance(sub, ast.Call) and isinstance(sub.func, ast.Attribute) and sub.func.attr == "execute"
+-        )
+-        if max(calls, exec_calls) != 1:
+-            cand.add("#153", f"{rel}:{fn.lineno}", f"`{fn.name}` 의 유스케이스 호출이 {max(calls, exec_calls)}회다 — 창구는 「바꾸고·부르고·되돌리는 일만」 한다", "「이 문장이 «계약↔응용 DTO 변환»인가」")
++        exec_calls, unknown_execution = _ohs_execution_count(entry, mod, fn)
++        if exec_calls != 1 or unknown_execution:
++            cand.add("#153", f"{rel}:{fn.lineno}", f"`{fn.name}` 의 확인된 유스케이스 실행 {exec_calls}회 — 실행 횟수/출처 확인 필요", "「이 문장이 «계약↔응용 DTO 변환»인가」")
+         for d in fn.decorator_list:
+             ids = _ann_idents(d)
+             # 라우팅·등록 데코레이터만 문다 — 호출형 데코레이터 일반(@lru_cache(...) 류)은 #149 의 대상이 아니다.
+             if ids & {"route", "router", "api_controller", "register"} or (
+                 ids & {"get", "post", "put", "patch", "delete", "head", "options"} and ids & {"api", "router", "app"}
+             ):
+                 out.add("#149", rel, f"OHS 는 같은 프로세스 함수 호출이다 — 라우팅·등록을 두지 않는다(#113) — `{fn.name}`")
+                 break
+     return ops
+ 
+
+```
+
+## codex-dddjango/skills/dddjango/scripts/check-context-isolation.py
+
+Before SHA256: 6ee97a89c6cc5a812f3bc20915d9bac42d69d1864648017764bc8546acc25c2d
+After SHA256: f15ae6fc8fc35a434419c6f7617bf7db916de26ab934b53f9a8c17b9b5b86131
+
+```diff
+--- before/codex-dddjango/skills/dddjango/scripts/check-context-isolation.py
++++ after/codex-dddjango/skills/dddjango/scripts/check-context-isolation.py
+@@ -383,20 +383,170 @@
+                 if p.name not in ("request", "response", "exception"):
+                     out.add("#155", srel / "contract" / p.name, "`contract/` 는 `request/`·`response/`·`exception/` 셋으로 갈린다(#163 — exception 은 연산 축이 아니라 서비스 스코프다)")
+             for p in cfiles:
+                 if p.name != "__init__.py":
+                     out.add("#155", srel / "contract" / p.name, "`contract/` 직계에 평면 파일을 두지 않는다")
+             _check_contract_kind(contract / "request", "Request", "#157", "#156", ops, srel, out)
+             _check_contract_kind(contract / "response", "Response", "#160", "#159", ops, srel, out)
+             _check_published_exceptions(contract / "exception", svc.name, srel, out, cand)
+ 
+ 
++def _ohs_execution_count(entry: Path, mod: ast.Module, fn: ast.AST) -> tuple[int, bool]:
++    """현재 함수의 정적 execute 수. builder 준비와 미호출 내부 정의는 세지 않는다."""
++    root = next((p.parent for p in entry.parents if p.name == "application"), entry.parent)
++
++    def imports(body, source):
++        result = {}
++        for st in body:
++            if isinstance(st, ast.Import):
++                for a in st.names:
++                    result[a.asname or a.name.split(".")[0]] = a.name if a.asname else a.name.split(".")[0]
++            elif isinstance(st, ast.ImportFrom):
++                module = st.module or ""
++                if st.level:
++                    parts = source.relative_to(root).with_suffix("").parts[:-1]
++                    module = ".".join((*parts[:len(parts) - st.level + 1], *module.split(".")))
++                for a in st.names:
++                    result[a.asname or a.name] = module + "." + a.name
++            elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
++                for t in st.targets if isinstance(st, ast.Assign) else [st.target]:
++                    for n in ast.walk(t):
++                        if isinstance(n, ast.Name):
++                            result.pop(n.id, None)
++        return result
++
++    def address(expr, env):
++        if isinstance(expr, ast.Constant) and isinstance(expr.value, str):
++            try:
++                return address(ast.parse(expr.value, mode="eval").body, env)
++            except SyntaxError:
++                return ""
++        if isinstance(expr, ast.Name):
++            return env.get(expr.id, "")
++        if isinstance(expr, ast.Attribute):
++            base = address(expr.value, env)
++            return base + "." + expr.attr if base else ""
++        return ""
++
++    def usecase(name):
++        parts = name.split(".")
++        if not ("application_layer" in parts and len(parts) > 1 and parts[-2].endswith("_use_case")):
++            return False
++        source = root.joinpath(*parts[:-1]).with_suffix(".py")
++        declaration = _parse(source) if source.is_file() else None
++        return declaration is not None and any(isinstance(st, ast.ClassDef) and st.name == parts[-1] for st in declaration.body)
++
++    def builder(name):
++        parts = name.split(".")
++        if "composition_root" not in parts or not re.fullmatch(r"build_.+_use_case", parts[-1]):
++            return False
++        source = root.joinpath(*parts[:-1]).with_suffix(".py")
++        if not source.is_file():
++            source = root.joinpath(*parts[:-1], "__init__.py")
++        declaration = _parse(source)
++        if declaration is None:
++            return False
++        env = imports(declaration.body, source)
++        target = next((st for st in declaration.body if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)) and st.name == parts[-1]), None)
++        if target is None:
++            return False
++        if usecase(address(target.returns, env)):
++            return True
++        return any(isinstance(st, ast.Return) and isinstance(st.value, ast.Call)
++                   and usecase(address(st.value.func, env)) for st in target.body)
++
++    def origin(expr, env):
++        if isinstance(expr, ast.Call):
++            name = address(expr.func, env)
++            return "@usecase" if usecase(name) or builder(name) else ""
++        return address(expr, env)
++
++    count, unknown = 0, False
++
++    def inspect(expr, env):
++        nonlocal count, unknown
++        if isinstance(expr, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
++            return
++        if isinstance(expr, ast.Call) and isinstance(expr.func, ast.Attribute) and expr.func.attr == "execute":
++            receiver = origin(expr.func.value, env)
++            if receiver == "@usecase" or usecase(receiver):
++                count += 1
++            else:
++                unknown = True
++        before = count
++        for child in ast.iter_child_nodes(expr):
++            inspect(child, env)
++        if isinstance(expr, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)) and count != before:
++            unknown = True
++
++    def block(body, env):
++        nonlocal unknown
++        for st in body:
++            if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
++                env[st.name] = ""
++                continue
++            if isinstance(st, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try, ast.With, ast.AsyncWith)):
++                branches = []
++                if isinstance(st, (ast.With, ast.AsyncWith)):
++                    for item in st.items:
++                        inspect(item.context_expr, env)
++                    branch = dict(env)
++                    for item in st.items:
++                        if item.optional_vars:
++                            for n in ast.walk(item.optional_vars):
++                                if isinstance(n, ast.Name): branch[n.id] = ""
++                    block(st.body, branch)
++                    branches = [branch, env]
++                else:
++                    for field in ("test", "iter"):
++                        value = getattr(st, field, None)
++                        if value is not None: inspect(value, env)
++                    branch = dict(env)
++                    if isinstance(st, (ast.For, ast.AsyncFor)):
++                        for n in ast.walk(st.target):
++                            if isinstance(n, ast.Name): branch[n.id] = ""
++                    before = count
++                    block(st.body, branch)
++                    if isinstance(st, (ast.For, ast.AsyncFor, ast.While)) and count != before:
++                        unknown = True
++                    other = dict(env)
++                    block(st.orelse, other)
++                    branches = [branch, other]
++                    if isinstance(st, ast.Try):
++                        for handler in st.handlers:
++                            branch = dict(env)
++                            if handler.name: branch[handler.name] = ""
++                            block(handler.body, branch)
++                            branches.append(branch)
++                for key in set().union(*(b.keys() for b in branches)):
++                    values = {b.get(key, "") for b in branches}
++                    env[key] = values.pop() if len(values) == 1 else ""
++                if isinstance(st, ast.Try): block(st.finalbody, env)
++                continue
++            inspect(st, env)
++            if isinstance(st, (ast.Import, ast.ImportFrom)):
++                env.update(imports([st], entry))
++            elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
++                value = origin(st.value, env) if not isinstance(st, ast.AugAssign) else ""
++                for t in st.targets if isinstance(st, ast.Assign) else [st.target]:
++                    for n in ast.walk(t):
++                        if isinstance(n, ast.Name): env[n.id] = value if isinstance(t, ast.Name) else ""
++        return env
++
++    env = imports(mod.body, entry)
++    for arg in (*fn.args.posonlyargs, *fn.args.args, *fn.args.kwonlyargs):
++        name = address(arg.annotation, env)
++        env[arg.arg] = "@usecase" if usecase(name) else ""
++    block(fn.body, env)
++    return count, unknown
++
++
+ def _check_ohs_service(entry: Path, rel, out: Findings, cand: Candidates) -> set[str]:
+     mod = _parse(entry)
+     if mod is None:
+         return set()
+     domain_names = _domain_imported_names(mod)
+     ops: set[str] = set()
+     for node in mod.body:
+         if isinstance(node, ast.ClassDef) and not node.name.startswith("_"):
+             out.add("#634", rel, f"`<service>_service.py` 의 공개 표면은 모듈 수준 «함수»뿐이다 — `{node.name}` (계약 클래스는 `contract/` 에 산다)")
+         if isinstance(node, ast.Assign):
+@@ -433,30 +583,23 @@
+                     exc_name = target.id
+                 if exc_name in domain_names:
+                     out.add("#164", rel, f"도메인 예외를 raw 로 전파하지 않는다 — `{exc_name}` 은 `contract/exception/` 타입으로 번역해 던진다(#295)")
+             if isinstance(sub, ast.ExceptHandler) and sub.name:
+                 handler_types = _ann_idents(sub.type)
+                 if handler_types & domain_names:
+                     for inner in ast.walk(sub):
+                         if isinstance(inner, ast.Attribute) and isinstance(inner.value, ast.Name) and inner.value.id == sub.name:
+                             out.add("#153", rel, f"도메인 예외는 «타입»으로만 쓴다 — `{sub.name}.{inner.attr}` 속성 접근은 계약이 도메인 모양에 얹힌 것이다")
+                             break
+-        calls = sum(
+-            1 for sub in ast.walk(fn)
+-            if isinstance(sub, ast.Call) and "use_case" in ast.dump(sub.func).lower()
+-        )
+-        exec_calls = sum(
+-            1 for sub in ast.walk(fn)
+-            if isinstance(sub, ast.Call) and isinstance(sub.func, ast.Attribute) and sub.func.attr == "execute"
+-        )
+-        if max(calls, exec_calls) != 1:
+-            cand.add("#153", f"{rel}:{fn.lineno}", f"`{fn.name}` 의 유스케이스 호출이 {max(calls, exec_calls)}회다 — 창구는 「바꾸고·부르고·되돌리는 일만」 한다", "「이 문장이 «계약↔응용 DTO 변환»인가」")
++        exec_calls, unknown_execution = _ohs_execution_count(entry, mod, fn)
++        if exec_calls != 1 or unknown_execution:
++            cand.add("#153", f"{rel}:{fn.lineno}", f"`{fn.name}` 의 확인된 유스케이스 실행 {exec_calls}회 — 실행 횟수/출처 확인 필요", "「이 문장이 «계약↔응용 DTO 변환»인가」")
+         for d in fn.decorator_list:
+             ids = _ann_idents(d)
+             # 라우팅·등록 데코레이터만 문다 — 호출형 데코레이터 일반(@lru_cache(...) 류)은 #149 의 대상이 아니다.
+             if ids & {"route", "router", "api_controller", "register"} or (
+                 ids & {"get", "post", "put", "patch", "delete", "head", "options"} and ids & {"api", "router", "app"}
+             ):
+                 out.add("#149", rel, f"OHS 는 같은 프로세스 함수 호출이다 — 라우팅·등록을 두지 않는다(#113) — `{fn.name}`")
+                 break
+     return ops
+ 
+
+```
+
+## dddjango/scripts/check-domain-model.py
+
+Before SHA256: 810f941cffe36aa023aec47c235edfcbd4c16aa00362c8b4808e0fe9210ca96c
+After SHA256: 117a2c52e8a22a2c7661ceaac3263d2fde072f37ff19188519dbf11bf2a2e208
+
+```diff
+--- before/dddjango/scripts/check-domain-model.py
++++ after/dddjango/scripts/check-domain-model.py
+@@ -440,20 +440,77 @@
+                          or "ensure" in last.value.func.attr or "assert" in last.value.func.attr))
+                 if not ends_with_check:
+                     cand.add("#257", _rel(root, py, m.lineno),
+                              f"상태 변경 메서드 `{m.name}` 끝에 불변식 확인이 없다",
+                              "Q4 — 이 메서드 뒤에도 불변식이 참인가")
+     if has_events_attr and not has_pull and not _journal_pending_stores(cls):
+         f.add("#543", _rel(root, py, cls.lineno),
+               "이벤트 기록은 있는데 pull_events() 가 없다 — 꺼내는 창구는 그 하나다")
+ 
+ 
++def _closed_standard_enum(mod: ast.Module, cls: ast.ClassDef) -> tuple[bool, bool]:
++    """정확한 표준 enum 기저 + 정적 멤버만 면제한다. 동적 확장은 후보다."""
++    origins = {}
++    for st in mod.body:
++        if st is cls:
++            break
++        if isinstance(st, ast.ImportFrom) and st.module == "enum" and not st.level:
++            origins.update({a.asname or a.name: "enum." + a.name for a in st.names})
++        elif isinstance(st, ast.Import):
++            for a in st.names:
++                if a.name == "enum": origins[a.asname or a.name] = "enum"
++        else:
++            for n in ast.walk(st):
++                if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Store): origins.pop(n.id, None)
++                if isinstance(n, ast.Attribute) and isinstance(n.ctx, (ast.Store, ast.Del)):
++                    base = n.value
++                    while isinstance(base, ast.Attribute): base = base.value
++                    if isinstance(base, ast.Name): origins.pop(base.id, None)
++            if isinstance(st, (ast.FunctionDef, ast.ClassDef)): origins.pop(st.name, None)
++    def name(expr):
++        if isinstance(expr, ast.Name): return origins.get(expr.id, "")
++        if isinstance(expr, ast.Attribute): return name(expr.value) + "." + expr.attr
++        return ""
++    enum_based = any(name(b) in {"enum.Enum", "enum.StrEnum", "enum.IntEnum", "enum.Flag", "enum.IntFlag"} for b in cls.bases)
++    if len(cls.bases) != 1 or cls.keywords or cls.decorator_list or name(cls.bases[0]) not in {
++        "enum.Enum", "enum.StrEnum", "enum.IntEnum"
++    }:
++        return False, enum_based
++    members = 0
++    for st in cls.body:
++        if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)):
++            if st.name in {"_missing_", "__new__", "__init__", "__call__"}: return False, enum_based
++        elif isinstance(st, (ast.Assign, ast.AnnAssign)):
++            targets = st.targets if isinstance(st, ast.Assign) else [st.target]
++            if any(isinstance(t, ast.Name) and t.id in {"_missing_", "__new__", "__init__", "__call__"} for t in targets): return False, enum_based
++            value = st.value
++            if value is None: continue
++            try:
++                ast.literal_eval(value)
++            except (ValueError, TypeError):
++                if not (isinstance(value, ast.Call) and name(value.func) == "enum.auto" and not value.args and not value.keywords):
++                    return False, enum_based
++            members += 1
++        elif not (isinstance(st, ast.Pass) or isinstance(st, ast.Expr) and isinstance(st.value, ast.Constant)):
++            return False, enum_based
++    aliases = {cls.name}
++    for st in mod.body[mod.body.index(cls) + 1:]:
++        if isinstance(st, ast.Assign) and isinstance(st.value, ast.Name) and st.value.id in aliases:
++            aliases.update(t.id for t in st.targets if isinstance(t, ast.Name))
++        for n in ast.walk(st):
++            if isinstance(n, ast.Attribute) and isinstance(n.ctx, (ast.Store, ast.Del)) and isinstance(n.value, ast.Name) and n.value.id in aliases:
++                return False, enum_based
++            if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in {"setattr", "delattr"} and n.args and isinstance(n.args[0], ast.Name) and n.args[0].id in aliases:
++                return False, enum_based
++    return members > 0, enum_based
++
++
+ def _check_value_object_file(root: Path, py: Path, f: Findings, cand: Candidates) -> None:
+     mod = _parse(py)
+     if mod is None:
+         return
+     classes = _public_classes(mod)
+     if len(classes) > 1:
+         f.add("#267", _rel(root, py), f"공개 클래스 {len(classes)}개 — 값 객체 하나 = 파일 하나다")
+     for cls in classes:
+         has_validation = False
+         for m in [n for n in cls.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]:
+@@ -472,21 +529,22 @@
+                                   "(__init__ 밖 자기 속성 대입 금지)")
+         # #259 후보 — id 를 가진 값 객체.
+         for node in ast.walk(cls):
+             if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) \
+                     and (node.target.id == "id" or node.target.id.endswith("_id")):
+                 cand.add("#259", _rel(root, py, node.lineno),
+                          f"값 객체 `{cls.name}` 이 식별자 `{node.target.id}` 를 가진다 — "
+                          "식별자를 갖고 값이 바뀌어도 같은 것이면 그것은 엔티티다",
+                          "Q4 — 이것이 값인가 엔티티인가")
+                 break
+-        if not has_validation:
++        closed_enum, enum_based = _closed_standard_enum(mod, cls)
++        if not closed_enum and (not has_validation or enum_based):
+             cand.add("#268", _rel(root, py, cls.lineno),
+                      f"`{cls.name}` 의 __init__/__post_init__ 에 raise 가 없다 — 값 객체는 "
+                      "만들어지는 시점에 스스로 검증한다",
+                      "Q2 — 이 타입 조합만으로 잘못된 값이 «불가능»한가")
+ 
+ 
+ def _check_domain_events(root: Path, bc: Path, agg: Path, ev_dir: Path, f: Findings) -> None:
+     bc_texts: dict[Path, str] = {}
+     for py in _py_files(bc):
+         try:
+@@ -704,27 +762,189 @@
+                         f.add("#505", _rel(root, py, node.lineno),
+                               f"타 BC 가 `{own}` 의 도메인 이벤트를 import 한다 — <A>/event/ 는 "
+                               "«내부용»이고 밖으로 알릴 것은 published_event/ 로 «옮겨 담는다»")
+ 
+ 
+ # ── 응용 쪽 — #257 확정 · #542 · #546 · #547 · #549 · #550 · #565 ───────────
+ 
+ def _repo_bindings(cls_or_fn: ast.AST) -> dict[str, str]:
+     """이름 → 애그리거트(snake) — `*Repository` 애너테이션 파라미터·self 속성."""
+     out: dict[str, str] = {}
+-    for node in ast.walk(cls_or_fn):
++    for node in _function_nodes(cls_or_fn):
+         if isinstance(node, ast.arg) and node.annotation is not None:
+             for n in _ann_names(node.annotation):
+                 if n.endswith("Repository"):
+                     stem = n[: -len("Repository")]
+                     out[node.arg] = re.sub(r"(?<!^)(?=[A-Z])", "_", stem).lower()
+     return out
++
++
++def _function_nodes(node: ast.AST):
++    """내부 정의는 그 함수의 별도 검사에 맡긴다."""
++    yield node
++    for child in ast.iter_child_nodes(node):
++        if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
++            continue
++        yield from _function_nodes(child)
++
++
++def _transaction_write_regions(root: Path, py: Path, mod: ast.Module, fn: ast.AST,
++                               cls: ast.ClassDef | None, repos: dict[str, str]):
++    """lexical region만 관찰한다. 호출자/ATOMIC_REQUESTS/간접 helper의 commit 증명은 하지 않는다."""
++    def key(expr):
++        return ast.unparse(expr) if isinstance(expr, (ast.Name, ast.Attribute)) else ""
++
++    def imports(body):
++        result = {}
++        for st in body:
++            if isinstance(st, ast.ImportFrom):
++                module = st.module or ""
++                if st.level:
++                    parts = py.relative_to(root).with_suffix("").parts[:-1]
++                    module = ".".join((*parts[:len(parts) - st.level + 1], *module.split(".")))
++                result.update({a.asname or a.name: module + "." + a.name for a in st.names})
++            elif isinstance(st, ast.Import):
++                result.update({a.asname or a.name.split(".")[0]: a.name if a.asname else a.name.split(".")[0] for a in st.names})
++        return result
++
++    def address(expr, env):
++        if isinstance(expr, ast.Constant) and isinstance(expr.value, str):
++            try: return address(ast.parse(expr.value, mode="eval").body, env)
++            except SyntaxError: return ""
++        if key(expr) in env: return env[key(expr)]
++        if isinstance(expr, ast.Attribute):
++            base = address(expr.value, env)
++            return base + "." + expr.attr if base else ""
++        return ""
++
++    def is_uow(name):
++        parts = name.split(".")
++        return (".application_layer.port.unit_of_work." in name and len(parts) > 1
++                and parts[-2].endswith("_unit_of_work") and parts[-1].endswith("UnitOfWork"))
++
++    module_env = imports(mod.body)
++    factories = {}
++    for st in mod.body:
++        if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)) and is_uow(address(st.returns, module_env)):
++            factories[st.name] = "@uow"
++        elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
++            for target in st.targets if isinstance(st, ast.Assign) else [st.target]:
++                module_env[key(target)] = ""
++    module_env.update(factories)
++
++    def origin(expr, env):
++        if isinstance(expr, ast.Call):
++            name = address(expr.func, env)
++            if is_uow(name) or name == "@uow": return "@uow"
++            parts = name.split(".")
++            source = root.joinpath(*parts[:-1]).with_suffix(".py")
++            declaration = _parse(source) if source.is_file() else None
++            if declaration:
++                target = next((st for st in declaration.body if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)) and st.name == parts[-1]), None)
++                if target and is_uow(address(target.returns, imports(declaration.body))): return "@uow"
++            return ""
++        name = address(expr, env)
++        return "@uow" if is_uow(name) else name
++
++    def params(function, env):
++        for arg in (*function.args.posonlyargs, *function.args.args, *function.args.kwonlyargs):
++            env[arg.arg] = "@uow" if is_uow(address(arg.annotation, module_env)) else ""
++
++    env = dict(module_env)
++    if cls:
++        init = next((st for st in cls.body if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)) and st.name == "__init__"), None)
++        if init:
++            init_env = dict(module_env)
++            params(init, init_env)
++            # 생성자 직접 주입/별칭만 지원한다. 분기·helper는 확정하지 않는다.
++            for st in init.body:
++                if isinstance(st, (ast.Assign, ast.AnnAssign)):
++                    value = origin(st.value, init_env)
++                    for target in st.targets if isinstance(st, ast.Assign) else [st.target]:
++                        init_env[key(target)] = value
++            env.update({k: v for k, v in init_env.items() if k.startswith("self.")})
++    params(fn, env)
++    regions = {0: set()}
++    unknown = False
++
++    def atomic(expr, local):
++        target = expr.func if isinstance(expr, ast.Call) else expr
++        return address(target, local) == "django.db.transaction.atomic"
++
++    def scan(expr, local, region):
++        nonlocal unknown
++        for node in _function_nodes(expr):
++            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute): continue
++            recv = node.func.value
++            repo_key = recv.id if isinstance(recv, ast.Name) else recv.attr if isinstance(recv, ast.Attribute) and isinstance(recv.value, ast.Name) and recv.value.id == "self" else ""
++            agg = repos.get(repo_key)
++            if agg and node.func.attr.split("_", 1)[0] in {"save", "remove"}:
++                regions.setdefault(region, set()).add(agg)
++            name = address(node.func, local)
++            if name.startswith("django.db.transaction.") and name != "django.db.transaction.atomic": unknown = True
++
++    def block(body, local, region):
++        nonlocal unknown
++        for st in body:
++            if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
++                local[st.name] = ""
++                continue
++            if isinstance(st, (ast.With, ast.AsyncWith)):
++                child = dict(local)
++                kinds = [atomic(item.context_expr, local) or origin(item.context_expr, local) == "@uow" for item in st.items]
++                next_region = region
++                if not all(kinds):
++                    unknown = True
++                    if region == 0: next_region = -1
++                elif region == 0:
++                    next_region = st.lineno
++                for item in st.items:
++                    scan(item.context_expr, local, region)
++                    if item.optional_vars: child[key(item.optional_vars)] = origin(item.context_expr, local)
++                block(st.body, child, next_region)
++                aliases = {key(i.optional_vars) for i in st.items if i.optional_vars}
++                for k, v in child.items():
++                    if k not in aliases:
++                        local[k] = "" if v == "@uow" and local.get(k) != v else v
++                continue
++            if isinstance(st, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try)):
++                for field in ("test", "iter"):
++                    value = getattr(st, field, None)
++                    if value: scan(value, local, region)
++                branches = []
++                for branch_body in (st.body, st.orelse):
++                    branch = dict(local)
++                    if isinstance(st, (ast.For, ast.AsyncFor)): branch[key(st.target)] = ""
++                    block(branch_body, branch, region)
++                    branches.append(branch)
++                if isinstance(st, ast.Try):
++                    for handler in st.handlers:
++                        branch = dict(local)
++                        if handler.name: branch[handler.name] = ""
++                        block(handler.body, branch, region)
++                        branches.append(branch)
++                for k in set().union(*(b.keys() for b in branches)):
++                    values = {b.get(k, "") for b in branches}
++                    local[k] = values.pop() if len(values) == 1 else ""
++                if isinstance(st, ast.Try): block(st.finalbody, local, region)
++                continue
++            scan(st, local, region)
++            if isinstance(st, (ast.Import, ast.ImportFrom)): local.update(imports([st]))
++            if isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
++                value = origin(st.value, local) if not isinstance(st, ast.AugAssign) else ""
++                for target in st.targets if isinstance(st, ast.Assign) else [st.target]:
++                    local[key(target)] = value
++    decorators = fn.decorator_list
++    region = fn.lineno if any(atomic(d, env) for d in decorators) else 0
++    if any(not atomic(d, env) for d in decorators): unknown = True
++    block(fn.body, env, region)
++    return regions, unknown
+ 
+ 
+ def _check_application_side(root: Path, bc: Path, f: Findings, cand: Candidates) -> None:
+     app = bc / "application_layer"
+     domain = bc / "domain_layer"
+     if not app.is_dir():
+         return
+     event_classes: set[str] = set()
+     if domain.is_dir():
+         for py in domain.glob("*/event/*.py"):
+@@ -769,57 +989,61 @@
+                         target = None
+                         if isinstance(st, ast.Assign) and len(st.targets) == 1:
+                             target, value = st.targets[0], st.value
+                         elif isinstance(st, ast.AnnAssign) and st.value is not None:
+                             target, value = st.target, st.value
+                         else:
+                             continue
+                         if isinstance(target, ast.Attribute) and isinstance(value, ast.Name) \
+                                 and value.id in param_map:
+                             bindings[target.attr] = param_map[value.id]
+-            written: set[str] = set()
+             loaded_from_read: set[str] = set()
+-            for n in ast.walk(fn):
++            for n in _function_nodes(fn):
+                 if isinstance(n, ast.Assign) and isinstance(n.value, ast.Call) \
+                         and isinstance(n.value.func, ast.Attribute):
+                     head = n.value.func.attr.split("_", 1)[0]
+                     if head in ("get", "find", "list", "search") and len(n.targets) == 1 \
+                             and isinstance(n.targets[0], ast.Name):
+                         loaded_from_read.add(n.targets[0].id)
+                 if not isinstance(n, ast.Call) or not isinstance(n.func, ast.Attribute):
+                     continue
+                 recv, meth = n.func.value, n.func.attr
+                 names = set()
+                 if isinstance(recv, ast.Name):
+                     names.add(recv.id)
+                 elif isinstance(recv, ast.Attribute) and isinstance(recv.value, ast.Name) \
+                         and recv.value.id == "self":
+                     names.add(recv.attr)
+                 agg = next((bindings[x] for x in names if x in bindings), None)
+                 head = meth.split("_", 1)[0]
+                 if agg and head in ("save", "remove"):
+-                    written.add(agg)
+                     if meth == "save_all" and n.args and isinstance(n.args[0], ast.Name) \
+                             and n.args[0].id in loaded_from_read:
+                         f.add("#550", _rel(root, py, n.lineno),
+                               "조회로 꺼낸 것들을 save_all — 배치 면제는 «생성»에만 걸린다"
+                               "(이미 있는 것 여럿 고치기는 면제가 아니다)")
+                 # #257 확정 — 리포지토리에서 나온 객체의 «속성 접근 후 메서드 호출».
+                 if isinstance(recv, ast.Attribute) and isinstance(recv.value, ast.Name) \
+                         and recv.value.id in loaded_from_read:
+                     f.add("#257", _rel(root, py, n.lineno),
+                           f"`{recv.value.id}.{recv.attr}.{meth}(...)` — 애그리거트 상태 변경은 "
+                           "전부 «루트를 지나야» 한다(내부에 손을 넣지 않는다)")
+-            if len(written) >= 2:
+-                f.add("#546", _rel(root, py, fn.lineno),
+-                      f"서로 다른 애그리거트 리포지토리 {sorted(written)} 에 쓰기 둘 — 한 트랜잭션은 "
+-                      "애그리거트 «하나»를 바꾼다(D50 · 세는 대상은 타입이 <A>_repository.py 에서 온 것뿐)")
++            regions, unknown_boundary = _transaction_write_regions(root, py, mod, fn, cls_parent, bindings)
++            for region, written in regions.items():
++                if region > 0 and len(written) >= 2:
++                    f.add("#546", _rel(root, py, region),
++                          f"명시 transaction 구간에서 서로 다른 애그리거트 리포지토리 {sorted(written)} 에 쓰기 둘 — 한 트랜잭션은 애그리거트 «하나»를 바꾼다(현행 타입 계수)")
++            all_written = set().union(*regions.values())
++            if len(all_written) >= 2 and (unknown_boundary or regions.get(0) or regions.get(-1)):
++                cand.add("#546", _rel(root, py, fn.lineno),
++                         f"서로 다른 애그리거트 쓰기 {sorted(all_written)} 의 transaction 경계 불명 — 같은 트랜잭션인지 확인 필요",
++                         "현재 함수의 lexical 구간 밖·불명 경계가 이 쓰기들을 묶는가")
+     for agg, areas in sorted(repo_area_use.items()):
+         if len(areas) >= 2:
+             cand.add("#547", _rel(root, bc),
+                      f"`{agg}_repository` 를 여러 <area>/ {sorted(areas)} 가 쓴다 — 경계가 "
+                      "너무 묶였을 신호다(트랜잭션을 늘리지 말고 «경계를 쪼갠다»)",
+                      "서로 다른 일을 하는 두 사용자가 이 경계로 충돌하나")
+     # #547 후보 ⑶ — 비대한 루트.
+     if domain.is_dir():
+         for agg in _aggregate_dirs(domain):
+             ents = [p for p in (agg / "entity").glob("*.py") if p.stem != "__init__"] \
+
+```
+
+## codex-dddjango/skills/dddjango/scripts/check-domain-model.py
+
+Before SHA256: 810f941cffe36aa023aec47c235edfcbd4c16aa00362c8b4808e0fe9210ca96c
+After SHA256: 117a2c52e8a22a2c7661ceaac3263d2fde072f37ff19188519dbf11bf2a2e208
+
+```diff
+--- before/codex-dddjango/skills/dddjango/scripts/check-domain-model.py
++++ after/codex-dddjango/skills/dddjango/scripts/check-domain-model.py
+@@ -440,20 +440,77 @@
+                          or "ensure" in last.value.func.attr or "assert" in last.value.func.attr))
+                 if not ends_with_check:
+                     cand.add("#257", _rel(root, py, m.lineno),
+                              f"상태 변경 메서드 `{m.name}` 끝에 불변식 확인이 없다",
+                              "Q4 — 이 메서드 뒤에도 불변식이 참인가")
+     if has_events_attr and not has_pull and not _journal_pending_stores(cls):
+         f.add("#543", _rel(root, py, cls.lineno),
+               "이벤트 기록은 있는데 pull_events() 가 없다 — 꺼내는 창구는 그 하나다")
+ 
+ 
++def _closed_standard_enum(mod: ast.Module, cls: ast.ClassDef) -> tuple[bool, bool]:
++    """정확한 표준 enum 기저 + 정적 멤버만 면제한다. 동적 확장은 후보다."""
++    origins = {}
++    for st in mod.body:
++        if st is cls:
++            break
++        if isinstance(st, ast.ImportFrom) and st.module == "enum" and not st.level:
++            origins.update({a.asname or a.name: "enum." + a.name for a in st.names})
++        elif isinstance(st, ast.Import):
++            for a in st.names:
++                if a.name == "enum": origins[a.asname or a.name] = "enum"
++        else:
++            for n in ast.walk(st):
++                if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Store): origins.pop(n.id, None)
++                if isinstance(n, ast.Attribute) and isinstance(n.ctx, (ast.Store, ast.Del)):
++                    base = n.value
++                    while isinstance(base, ast.Attribute): base = base.value
++                    if isinstance(base, ast.Name): origins.pop(base.id, None)
++            if isinstance(st, (ast.FunctionDef, ast.ClassDef)): origins.pop(st.name, None)
++    def name(expr):
++        if isinstance(expr, ast.Name): return origins.get(expr.id, "")
++        if isinstance(expr, ast.Attribute): return name(expr.value) + "." + expr.attr
++        return ""
++    enum_based = any(name(b) in {"enum.Enum", "enum.StrEnum", "enum.IntEnum", "enum.Flag", "enum.IntFlag"} for b in cls.bases)
++    if len(cls.bases) != 1 or cls.keywords or cls.decorator_list or name(cls.bases[0]) not in {
++        "enum.Enum", "enum.StrEnum", "enum.IntEnum"
++    }:
++        return False, enum_based
++    members = 0
++    for st in cls.body:
++        if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)):
++            if st.name in {"_missing_", "__new__", "__init__", "__call__"}: return False, enum_based
++        elif isinstance(st, (ast.Assign, ast.AnnAssign)):
++            targets = st.targets if isinstance(st, ast.Assign) else [st.target]
++            if any(isinstance(t, ast.Name) and t.id in {"_missing_", "__new__", "__init__", "__call__"} for t in targets): return False, enum_based
++            value = st.value
++            if value is None: continue
++            try:
++                ast.literal_eval(value)
++            except (ValueError, TypeError):
++                if not (isinstance(value, ast.Call) and name(value.func) == "enum.auto" and not value.args and not value.keywords):
++                    return False, enum_based
++            members += 1
++        elif not (isinstance(st, ast.Pass) or isinstance(st, ast.Expr) and isinstance(st.value, ast.Constant)):
++            return False, enum_based
++    aliases = {cls.name}
++    for st in mod.body[mod.body.index(cls) + 1:]:
++        if isinstance(st, ast.Assign) and isinstance(st.value, ast.Name) and st.value.id in aliases:
++            aliases.update(t.id for t in st.targets if isinstance(t, ast.Name))
++        for n in ast.walk(st):
++            if isinstance(n, ast.Attribute) and isinstance(n.ctx, (ast.Store, ast.Del)) and isinstance(n.value, ast.Name) and n.value.id in aliases:
++                return False, enum_based
++            if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in {"setattr", "delattr"} and n.args and isinstance(n.args[0], ast.Name) and n.args[0].id in aliases:
++                return False, enum_based
++    return members > 0, enum_based
++
++
+ def _check_value_object_file(root: Path, py: Path, f: Findings, cand: Candidates) -> None:
+     mod = _parse(py)
+     if mod is None:
+         return
+     classes = _public_classes(mod)
+     if len(classes) > 1:
+         f.add("#267", _rel(root, py), f"공개 클래스 {len(classes)}개 — 값 객체 하나 = 파일 하나다")
+     for cls in classes:
+         has_validation = False
+         for m in [n for n in cls.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]:
+@@ -472,21 +529,22 @@
+                                   "(__init__ 밖 자기 속성 대입 금지)")
+         # #259 후보 — id 를 가진 값 객체.
+         for node in ast.walk(cls):
+             if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) \
+                     and (node.target.id == "id" or node.target.id.endswith("_id")):
+                 cand.add("#259", _rel(root, py, node.lineno),
+                          f"값 객체 `{cls.name}` 이 식별자 `{node.target.id}` 를 가진다 — "
+                          "식별자를 갖고 값이 바뀌어도 같은 것이면 그것은 엔티티다",
+                          "Q4 — 이것이 값인가 엔티티인가")
+                 break
+-        if not has_validation:
++        closed_enum, enum_based = _closed_standard_enum(mod, cls)
++        if not closed_enum and (not has_validation or enum_based):
+             cand.add("#268", _rel(root, py, cls.lineno),
+                      f"`{cls.name}` 의 __init__/__post_init__ 에 raise 가 없다 — 값 객체는 "
+                      "만들어지는 시점에 스스로 검증한다",
+                      "Q2 — 이 타입 조합만으로 잘못된 값이 «불가능»한가")
+ 
+ 
+ def _check_domain_events(root: Path, bc: Path, agg: Path, ev_dir: Path, f: Findings) -> None:
+     bc_texts: dict[Path, str] = {}
+     for py in _py_files(bc):
+         try:
+@@ -704,27 +762,189 @@
+                         f.add("#505", _rel(root, py, node.lineno),
+                               f"타 BC 가 `{own}` 의 도메인 이벤트를 import 한다 — <A>/event/ 는 "
+                               "«내부용»이고 밖으로 알릴 것은 published_event/ 로 «옮겨 담는다»")
+ 
+ 
+ # ── 응용 쪽 — #257 확정 · #542 · #546 · #547 · #549 · #550 · #565 ───────────
+ 
+ def _repo_bindings(cls_or_fn: ast.AST) -> dict[str, str]:
+     """이름 → 애그리거트(snake) — `*Repository` 애너테이션 파라미터·self 속성."""
+     out: dict[str, str] = {}
+-    for node in ast.walk(cls_or_fn):
++    for node in _function_nodes(cls_or_fn):
+         if isinstance(node, ast.arg) and node.annotation is not None:
+             for n in _ann_names(node.annotation):
+                 if n.endswith("Repository"):
+                     stem = n[: -len("Repository")]
+                     out[node.arg] = re.sub(r"(?<!^)(?=[A-Z])", "_", stem).lower()
+     return out
++
++
++def _function_nodes(node: ast.AST):
++    """내부 정의는 그 함수의 별도 검사에 맡긴다."""
++    yield node
++    for child in ast.iter_child_nodes(node):
++        if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
++            continue
++        yield from _function_nodes(child)
++
++
++def _transaction_write_regions(root: Path, py: Path, mod: ast.Module, fn: ast.AST,
++                               cls: ast.ClassDef | None, repos: dict[str, str]):
++    """lexical region만 관찰한다. 호출자/ATOMIC_REQUESTS/간접 helper의 commit 증명은 하지 않는다."""
++    def key(expr):
++        return ast.unparse(expr) if isinstance(expr, (ast.Name, ast.Attribute)) else ""
++
++    def imports(body):
++        result = {}
++        for st in body:
++            if isinstance(st, ast.ImportFrom):
++                module = st.module or ""
++                if st.level:
++                    parts = py.relative_to(root).with_suffix("").parts[:-1]
++                    module = ".".join((*parts[:len(parts) - st.level + 1], *module.split(".")))
++                result.update({a.asname or a.name: module + "." + a.name for a in st.names})
++            elif isinstance(st, ast.Import):
++                result.update({a.asname or a.name.split(".")[0]: a.name if a.asname else a.name.split(".")[0] for a in st.names})
++        return result
++
++    def address(expr, env):
++        if isinstance(expr, ast.Constant) and isinstance(expr.value, str):
++            try: return address(ast.parse(expr.value, mode="eval").body, env)
++            except SyntaxError: return ""
++        if key(expr) in env: return env[key(expr)]
++        if isinstance(expr, ast.Attribute):
++            base = address(expr.value, env)
++            return base + "." + expr.attr if base else ""
++        return ""
++
++    def is_uow(name):
++        parts = name.split(".")
++        return (".application_layer.port.unit_of_work." in name and len(parts) > 1
++                and parts[-2].endswith("_unit_of_work") and parts[-1].endswith("UnitOfWork"))
++
++    module_env = imports(mod.body)
++    factories = {}
++    for st in mod.body:
++        if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)) and is_uow(address(st.returns, module_env)):
++            factories[st.name] = "@uow"
++        elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
++            for target in st.targets if isinstance(st, ast.Assign) else [st.target]:
++                module_env[key(target)] = ""
++    module_env.update(factories)
++
++    def origin(expr, env):
++        if isinstance(expr, ast.Call):
++            name = address(expr.func, env)
++            if is_uow(name) or name == "@uow": return "@uow"
++            parts = name.split(".")
++            source = root.joinpath(*parts[:-1]).with_suffix(".py")
++            declaration = _parse(source) if source.is_file() else None
++            if declaration:
++                target = next((st for st in declaration.body if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)) and st.name == parts[-1]), None)
++                if target and is_uow(address(target.returns, imports(declaration.body))): return "@uow"
++            return ""
++        name = address(expr, env)
++        return "@uow" if is_uow(name) else name
++
++    def params(function, env):
++        for arg in (*function.args.posonlyargs, *function.args.args, *function.args.kwonlyargs):
++            env[arg.arg] = "@uow" if is_uow(address(arg.annotation, module_env)) else ""
++
++    env = dict(module_env)
++    if cls:
++        init = next((st for st in cls.body if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)) and st.name == "__init__"), None)
++        if init:
++            init_env = dict(module_env)
++            params(init, init_env)
++            # 생성자 직접 주입/별칭만 지원한다. 분기·helper는 확정하지 않는다.
++            for st in init.body:
++                if isinstance(st, (ast.Assign, ast.AnnAssign)):
++                    value = origin(st.value, init_env)
++                    for target in st.targets if isinstance(st, ast.Assign) else [st.target]:
++                        init_env[key(target)] = value
++            env.update({k: v for k, v in init_env.items() if k.startswith("self.")})
++    params(fn, env)
++    regions = {0: set()}
++    unknown = False
++
++    def atomic(expr, local):
++        target = expr.func if isinstance(expr, ast.Call) else expr
++        return address(target, local) == "django.db.transaction.atomic"
++
++    def scan(expr, local, region):
++        nonlocal unknown
++        for node in _function_nodes(expr):
++            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute): continue
++            recv = node.func.value
++            repo_key = recv.id if isinstance(recv, ast.Name) else recv.attr if isinstance(recv, ast.Attribute) and isinstance(recv.value, ast.Name) and recv.value.id == "self" else ""
++            agg = repos.get(repo_key)
++            if agg and node.func.attr.split("_", 1)[0] in {"save", "remove"}:
++                regions.setdefault(region, set()).add(agg)
++            name = address(node.func, local)
++            if name.startswith("django.db.transaction.") and name != "django.db.transaction.atomic": unknown = True
++
++    def block(body, local, region):
++        nonlocal unknown
++        for st in body:
++            if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
++                local[st.name] = ""
++                continue
++            if isinstance(st, (ast.With, ast.AsyncWith)):
++                child = dict(local)
++                kinds = [atomic(item.context_expr, local) or origin(item.context_expr, local) == "@uow" for item in st.items]
++                next_region = region
++                if not all(kinds):
++                    unknown = True
++                    if region == 0: next_region = -1
++                elif region == 0:
++                    next_region = st.lineno
++                for item in st.items:
++                    scan(item.context_expr, local, region)
++                    if item.optional_vars: child[key(item.optional_vars)] = origin(item.context_expr, local)
++                block(st.body, child, next_region)
++                aliases = {key(i.optional_vars) for i in st.items if i.optional_vars}
++                for k, v in child.items():
++                    if k not in aliases:
++                        local[k] = "" if v == "@uow" and local.get(k) != v else v
++                continue
++            if isinstance(st, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try)):
++                for field in ("test", "iter"):
++                    value = getattr(st, field, None)
++                    if value: scan(value, local, region)
++                branches = []
++                for branch_body in (st.body, st.orelse):
++                    branch = dict(local)
++                    if isinstance(st, (ast.For, ast.AsyncFor)): branch[key(st.target)] = ""
++                    block(branch_body, branch, region)
++                    branches.append(branch)
++                if isinstance(st, ast.Try):
++                    for handler in st.handlers:
++                        branch = dict(local)
++                        if handler.name: branch[handler.name] = ""
++                        block(handler.body, branch, region)
++                        branches.append(branch)
++                for k in set().union(*(b.keys() for b in branches)):
++                    values = {b.get(k, "") for b in branches}
++                    local[k] = values.pop() if len(values) == 1 else ""
++                if isinstance(st, ast.Try): block(st.finalbody, local, region)
++                continue
++            scan(st, local, region)
++            if isinstance(st, (ast.Import, ast.ImportFrom)): local.update(imports([st]))
++            if isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
++                value = origin(st.value, local) if not isinstance(st, ast.AugAssign) else ""
++                for target in st.targets if isinstance(st, ast.Assign) else [st.target]:
++                    local[key(target)] = value
++    decorators = fn.decorator_list
++    region = fn.lineno if any(atomic(d, env) for d in decorators) else 0
++    if any(not atomic(d, env) for d in decorators): unknown = True
++    block(fn.body, env, region)
++    return regions, unknown
+ 
+ 
+ def _check_application_side(root: Path, bc: Path, f: Findings, cand: Candidates) -> None:
+     app = bc / "application_layer"
+     domain = bc / "domain_layer"
+     if not app.is_dir():
+         return
+     event_classes: set[str] = set()
+     if domain.is_dir():
+         for py in domain.glob("*/event/*.py"):
+@@ -769,57 +989,61 @@
+                         target = None
+                         if isinstance(st, ast.Assign) and len(st.targets) == 1:
+                             target, value = st.targets[0], st.value
+                         elif isinstance(st, ast.AnnAssign) and st.value is not None:
+                             target, value = st.target, st.value
+                         else:
+                             continue
+                         if isinstance(target, ast.Attribute) and isinstance(value, ast.Name) \
+                                 and value.id in param_map:
+                             bindings[target.attr] = param_map[value.id]
+-            written: set[str] = set()
+             loaded_from_read: set[str] = set()
+-            for n in ast.walk(fn):
++            for n in _function_nodes(fn):
+                 if isinstance(n, ast.Assign) and isinstance(n.value, ast.Call) \
+                         and isinstance(n.value.func, ast.Attribute):
+                     head = n.value.func.attr.split("_", 1)[0]
+                     if head in ("get", "find", "list", "search") and len(n.targets) == 1 \
+                             and isinstance(n.targets[0], ast.Name):
+                         loaded_from_read.add(n.targets[0].id)
+                 if not isinstance(n, ast.Call) or not isinstance(n.func, ast.Attribute):
+                     continue
+                 recv, meth = n.func.value, n.func.attr
+                 names = set()
+                 if isinstance(recv, ast.Name):
+                     names.add(recv.id)
+                 elif isinstance(recv, ast.Attribute) and isinstance(recv.value, ast.Name) \
+                         and recv.value.id == "self":
+                     names.add(recv.attr)
+                 agg = next((bindings[x] for x in names if x in bindings), None)
+                 head = meth.split("_", 1)[0]
+                 if agg and head in ("save", "remove"):
+-                    written.add(agg)
+                     if meth == "save_all" and n.args and isinstance(n.args[0], ast.Name) \
+                             and n.args[0].id in loaded_from_read:
+                         f.add("#550", _rel(root, py, n.lineno),
+                               "조회로 꺼낸 것들을 save_all — 배치 면제는 «생성»에만 걸린다"
+                               "(이미 있는 것 여럿 고치기는 면제가 아니다)")
+                 # #257 확정 — 리포지토리에서 나온 객체의 «속성 접근 후 메서드 호출».
+                 if isinstance(recv, ast.Attribute) and isinstance(recv.value, ast.Name) \
+                         and recv.value.id in loaded_from_read:
+                     f.add("#257", _rel(root, py, n.lineno),
+                           f"`{recv.value.id}.{recv.attr}.{meth}(...)` — 애그리거트 상태 변경은 "
+                           "전부 «루트를 지나야» 한다(내부에 손을 넣지 않는다)")
+-            if len(written) >= 2:
+-                f.add("#546", _rel(root, py, fn.lineno),
+-                      f"서로 다른 애그리거트 리포지토리 {sorted(written)} 에 쓰기 둘 — 한 트랜잭션은 "
+-                      "애그리거트 «하나»를 바꾼다(D50 · 세는 대상은 타입이 <A>_repository.py 에서 온 것뿐)")
++            regions, unknown_boundary = _transaction_write_regions(root, py, mod, fn, cls_parent, bindings)
++            for region, written in regions.items():
++                if region > 0 and len(written) >= 2:
++                    f.add("#546", _rel(root, py, region),
++                          f"명시 transaction 구간에서 서로 다른 애그리거트 리포지토리 {sorted(written)} 에 쓰기 둘 — 한 트랜잭션은 애그리거트 «하나»를 바꾼다(현행 타입 계수)")
++            all_written = set().union(*regions.values())
++            if len(all_written) >= 2 and (unknown_boundary or regions.get(0) or regions.get(-1)):
++                cand.add("#546", _rel(root, py, fn.lineno),
++                         f"서로 다른 애그리거트 쓰기 {sorted(all_written)} 의 transaction 경계 불명 — 같은 트랜잭션인지 확인 필요",
++                         "현재 함수의 lexical 구간 밖·불명 경계가 이 쓰기들을 묶는가")
+     for agg, areas in sorted(repo_area_use.items()):
+         if len(areas) >= 2:
+             cand.add("#547", _rel(root, bc),
+                      f"`{agg}_repository` 를 여러 <area>/ {sorted(areas)} 가 쓴다 — 경계가 "
+                      "너무 묶였을 신호다(트랜잭션을 늘리지 말고 «경계를 쪼갠다»)",
+                      "서로 다른 일을 하는 두 사용자가 이 경계로 충돌하나")
+     # #547 후보 ⑶ — 비대한 루트.
+     if domain.is_dir():
+         for agg in _aggregate_dirs(domain):
+             ents = [p for p in (agg / "entity").glob("*.py") if p.stem != "__init__"] \
+
+```
+
+## dddjango/scripts/check-port-adapter-pairing.py
+
+Before SHA256: 1900f109da8eea73cbbaa7d5977f208a828e7a5bcfa02e5fb3e089e3f0518e2f
+After SHA256: 5e00306b107ac4876a3e0fb94048b85e9a9ace793dd96fc763c5b5a72bbb21cf
+
+```diff
+--- before/dddjango/scripts/check-port-adapter-pairing.py
++++ after/dddjango/scripts/check-port-adapter-pairing.py
+@@ -1108,20 +1108,200 @@
+                 msg = ("dependency_wiring 이 페이크를 꽂는다 — 설정·플래그로 켠다면 그건 진짜 "
+                        "어댑터라 adapter/<capability>/ 에 산다"
+                        if rule == "#580" else
+                        "프로덕션 코드가 페이크를 import 한다 — 배포에 실리는 순간 가짜가 진짜 "
+                        "자리에 선다")
+                 f.add(rule, _rel(root, py, node.lineno), msg)
+ 
+ 
+ # ── 응용·입구 쪽 — #134 · #574 · #475 · #553 · #557 · #460 ─────────────────
+ 
++def _check_property_origins(root: Path, py: Path, mod: ast.Module,
++                            f: Findings, cand: Candidates) -> None:
++    """#557: 로컬 계약 선언/명시 re-export와 닫힌 vendor 타입 목록만 확정한다."""
++    db_errors = {"DatabaseError", "IntegrityError", "OperationalError"}
++    pg_errors = db_errors | {"Error", "InterfaceError", "DataError", "InternalError", "ProgrammingError", "NotSupportedError"}
++    vendors = {
++        "django.db": db_errors, "django.db.utils": db_errors, "sqlite3": db_errors,
++        "psycopg": pg_errors, "psycopg2": pg_errors,
++        "requests": {"HTTPError", "RequestException", "Response"},
++        "requests.exceptions": {"HTTPError", "RequestException"}, "requests.models": {"Response"},
++        "httpx": {"HTTPError", "RequestException", "Response"},
++    }
++
++    def key(expr):
++        return ast.unparse(expr) if isinstance(expr, (ast.Name, ast.Attribute)) else ""
++
++    def address(expr, env):
++        if isinstance(expr, ast.Constant) and isinstance(expr.value, str):
++            try: return address(ast.parse(expr.value, mode="eval").body, env)
++            except SyntaxError: return ""
++        if key(expr) in env: return env[key(expr)]
++        if isinstance(expr, ast.Attribute):
++            base = address(expr.value, env)
++            return base + "." + expr.attr if base else ""
++        return ""
++
++    def imported(st, source):
++        if isinstance(st, ast.Import):
++            return {a.asname or a.name.split(".")[0]: a.name if a.asname else a.name.split(".")[0] for a in st.names}
++        module = st.module or ""
++        if st.level:
++            parts = source.relative_to(root).with_suffix("").parts
++            if source.name != "__init__.py": parts = parts[:-1]
++            else: parts = parts[:-1]
++            module = ".".join((*parts[:len(parts) - st.level + 1], *module.split(".")))
++        return {a.asname or a.name: module + "." + a.name for a in st.names}
++
++    def origin(name, seen=frozenset()):
++        if name in {"@domain", "@vendor"}: return name
++        if not name or name in seen: return ""
++        module, _, symbol = name.rpartition(".")
++        if symbol in vendors.get(module, set()): return "@vendor"
++        source = root.joinpath(*module.split(".")).with_suffix(".py")
++        if not source.is_file(): source = root.joinpath(*module.split("."), "__init__.py")
++        declaration = _parse(source) if source.is_file() else None
++        if declaration is None: return ""
++        env = {}
++        target = None
++        for st in declaration.body:
++            if isinstance(st, (ast.Import, ast.ImportFrom)):
++                additions = imported(st, source)
++                env.update(additions)
++                if symbol in additions: target = additions[symbol]
++            elif isinstance(st, ast.ClassDef):
++                env[st.name] = module + "." + st.name
++                if st.name == symbol: target = st
++            elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
++                value = address(st.value, env) if not isinstance(st, ast.AugAssign) else ""
++                for t in st.targets if isinstance(st, ast.Assign) else [st.target]:
++                    env[key(t)] = value
++                    if key(t) == symbol: target = value
++        if isinstance(target, str): return origin(target, seen | {name})
++        if not isinstance(target, ast.ClassDef): return ""
++        bases = {origin(address(b, env), seen | {name}) for b in target.bases}
++        if "@vendor" in bases: return "@vendor"
++        parts = module.split(".")
++        contract = "domain_layer" in parts or (
++            "application_layer" in parts and ("port" in parts or parts[-1].endswith(("_command", "_query", "_result"))))
++        return "@domain" if contract else ""
++
++    def value_origin(expr, env):
++        if isinstance(expr, ast.Call): return origin(address(expr.func, env))
++        return address(expr, env)
++
++    def inspect(expr, env):
++        if isinstance(expr, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)): return
++        if isinstance(expr, ast.Compare):
++            seen = set()
++            for operand in (expr.left, *expr.comparators):
++                for attr in ast.walk(operand):
++                    if not isinstance(attr, ast.Attribute) or attr.attr not in {"code", "errno", "status_code"}: continue
++                    identity = (ast.dump(attr.value), attr.attr)
++                    if identity in seen: continue
++                    seen.add(identity)
++                    provenance = origin(value_origin(attr.value, env))
++                    where = _rel(root, py, attr.lineno)
++                    if provenance == "@vendor":
++                        f.add("#557", where, "확인된 벤더 오류/응답 코드를 위층이 판정한다 — 정규화는 그 인프라를 «소유한» 어댑터가 한다")
++                    elif provenance != "@domain":
++                        cand.add("#557", where, "code/errno/status_code 수신자 출처 불명 — 벤더 코드인지 계약 값인지 확인 필요", "이 값의 실제 선언과 정규화 소유자는 어디인가")
++        for child in ast.iter_child_nodes(expr): inspect(child, env)
++
++    def parameters(fn, env):
++        for arg in (*fn.args.posonlyargs, *fn.args.args, *fn.args.kwonlyargs):
++            env[arg.arg] = origin(address(arg.annotation, env))
++        for arg in (fn.args.vararg, fn.args.kwarg):
++            if arg: env[arg.arg] = ""
++
++    # 모듈의 사후 재바인딩도 함수 실행 시 출처를 바꾼다. 순서 의존 호출은 확정하지 않는다.
++    rebound = set()
++    for st in mod.body:
++        if isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign, ast.Delete)):
++            targets = st.targets if isinstance(st, (ast.Assign, ast.Delete)) else [st.target]
++            rebound.update(key(t) for t in targets)
++
++    def block(body, env):
++        for st in body:
++            if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)):
++                local = dict(env)
++                for name in rebound: local[name] = ""
++                parameters(st, local)
++                block(st.body, local)
++                env[st.name] = ""
++                continue
++            if isinstance(st, ast.ClassDef):
++                # 각 메서드는 분리한다. 생성자의 직접 주입 속성만 공유한다.
++                fields = {}
++                init = next((n for n in st.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == "__init__"), None)
++                if init:
++                    local = dict(env)
++                    parameters(init, local)
++                    for n in init.body:
++                        if isinstance(n, (ast.Assign, ast.AnnAssign)):
++                            value = value_origin(n.value, local)
++                            for target in n.targets if isinstance(n, ast.Assign) else [n.target]:
++                                local[key(target)] = value
++                    fields = {k: v for k, v in local.items() if k.startswith("self.")}
++                block(st.body, dict(env, **fields))
++                env[st.name] = ".".join((*py.relative_to(root).with_suffix("").parts, st.name))
++                continue
++            if isinstance(st, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try, ast.With, ast.AsyncWith)):
++                branches = []
++                if isinstance(st, (ast.With, ast.AsyncWith)):
++                    local = dict(env)
++                    for item in st.items:
++                        inspect(item.context_expr, env)
++                        if item.optional_vars: local[key(item.optional_vars)] = ""
++                    block(st.body, local)
++                    branches = [local, env]
++                else:
++                    for field in ("test", "iter"):
++                        expr = getattr(st, field, None)
++                        if expr is not None: inspect(expr, env)
++                    local = dict(env)
++                    if isinstance(st, (ast.For, ast.AsyncFor)): local[key(st.target)] = ""
++                    block(st.body, local)
++                    other = dict(env)
++                    block(st.orelse, other)
++                    branches = [local, other]
++                    if isinstance(st, ast.Try):
++                        for handler in st.handlers:
++                            local = dict(env)
++                            types = handler.type.elts if isinstance(handler.type, ast.Tuple) else [handler.type]
++                            origins = {origin(address(t, env)) for t in types}
++                            if handler.name: local[handler.name] = origins.pop() if len(origins) == 1 else ""
++                            block(handler.body, local)
++                            if handler.name: local[handler.name] = ""
++                            branches.append(local)
++                for k in set().union(*(b.keys() for b in branches)):
++                    values = {b.get(k, "") for b in branches}
++                    env[k] = values.pop() if len(values) == 1 else ""
++                if isinstance(st, ast.Try): block(st.finalbody, env)
++                continue
++            inspect(st, env)
++            if isinstance(st, (ast.Import, ast.ImportFrom)): env.update(imported(st, py))
++            elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
++                value = value_origin(st.value, env) if not isinstance(st, ast.AugAssign) else ""
++                if isinstance(st, ast.AnnAssign) and st.value is None: value = origin(address(st.annotation, env))
++                for target in st.targets if isinstance(st, ast.Assign) else [st.target]:
++                    if isinstance(target, (ast.Name, ast.Attribute)): env[key(target)] = value
++                    else:
++                        for n in ast.walk(target):
++                            if isinstance(n, ast.Name): env[n.id] = ""
++            elif isinstance(st, ast.Delete):
++                for target in st.targets: env[key(target)] = ""
++        return env
++
++    block(mod.body, {})
++
++
+ def _check_use_side(root: Path, bc: Path, bc_vocab_set: set, f: Findings, cand: Candidates) -> None:
+     app = bc / "application_layer"
+     if app.is_dir():
+         for py in _py_files(app):
+             parts = py.relative_to(app).parts
+             if py.stem.endswith("_adapter") and "port" not in parts:
+                 f.add("#460", _rel(root, py),
+                       "구현(*_adapter.py)이 driven_layer/adapter/ 밖에 있다 — 구현은 전부 거기 산다")
+             mod = _parse(py)
+             if mod is None:
+@@ -1155,27 +1335,21 @@
+                         and isinstance(node.targets[0], ast.Name):
+                     bound.add(node.targets[0].id)
+             if bound:
+                 for node in ast.walk(mod):
+                     if isinstance(node, ast.If):
+                         used = {x.id for x in ast.walk(node.test) if isinstance(x, ast.Name)}
+                         if used & bound:
+                             cand.add("#475", _rel(root, py, node.lineno),
+                                      "domain_bypass_query 결과가 조건식에 흐른다 — 이 자료는 도메인 "
+                                      "규칙을 안 태운 «날것»이다", "Q2 — 이 판정이 업무 규칙인가")
+-            # #557 — 벤더 오류 코드 판정이 위층에.
+-            for node in ast.walk(mod):
+-                if isinstance(node, ast.Compare) and isinstance(node.left, ast.Attribute) \
+-                        and node.left.attr in ("code", "errno", "status_code"):
+-                    f.add("#557", _rel(root, py, node.lineno),
+-                          "벤더 오류 코드를 위층이 판정한다 — 일시 실패의 정규화는 그 인프라를 "
+-                          "«소유한» 어댑터가 한다")
++            _check_property_origins(root, py, mod, f, cand)
+     for layer in DRIVING_DIRS:
+         base = bc / layer
+         if not base.is_dir():
+             continue
+         for py in _py_files(base):
+             if not py.name.endswith("_controller.py"):
+                 continue
+             mod = _parse(py)
+             for node in ast.walk(mod) if mod else []:
+                 if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and (
+
+```
+
+## codex-dddjango/skills/dddjango/scripts/check-port-adapter-pairing.py
+
+Before SHA256: 1900f109da8eea73cbbaa7d5977f208a828e7a5bcfa02e5fb3e089e3f0518e2f
+After SHA256: 5e00306b107ac4876a3e0fb94048b85e9a9ace793dd96fc763c5b5a72bbb21cf
+
+```diff
+--- before/codex-dddjango/skills/dddjango/scripts/check-port-adapter-pairing.py
++++ after/codex-dddjango/skills/dddjango/scripts/check-port-adapter-pairing.py
+@@ -1108,20 +1108,200 @@
+                 msg = ("dependency_wiring 이 페이크를 꽂는다 — 설정·플래그로 켠다면 그건 진짜 "
+                        "어댑터라 adapter/<capability>/ 에 산다"
+                        if rule == "#580" else
+                        "프로덕션 코드가 페이크를 import 한다 — 배포에 실리는 순간 가짜가 진짜 "
+                        "자리에 선다")
+                 f.add(rule, _rel(root, py, node.lineno), msg)
+ 
+ 
+ # ── 응용·입구 쪽 — #134 · #574 · #475 · #553 · #557 · #460 ─────────────────
+ 
++def _check_property_origins(root: Path, py: Path, mod: ast.Module,
++                            f: Findings, cand: Candidates) -> None:
++    """#557: 로컬 계약 선언/명시 re-export와 닫힌 vendor 타입 목록만 확정한다."""
++    db_errors = {"DatabaseError", "IntegrityError", "OperationalError"}
++    pg_errors = db_errors | {"Error", "InterfaceError", "DataError", "InternalError", "ProgrammingError", "NotSupportedError"}
++    vendors = {
++        "django.db": db_errors, "django.db.utils": db_errors, "sqlite3": db_errors,
++        "psycopg": pg_errors, "psycopg2": pg_errors,
++        "requests": {"HTTPError", "RequestException", "Response"},
++        "requests.exceptions": {"HTTPError", "RequestException"}, "requests.models": {"Response"},
++        "httpx": {"HTTPError", "RequestException", "Response"},
++    }
++
++    def key(expr):
++        return ast.unparse(expr) if isinstance(expr, (ast.Name, ast.Attribute)) else ""
++
++    def address(expr, env):
++        if isinstance(expr, ast.Constant) and isinstance(expr.value, str):
++            try: return address(ast.parse(expr.value, mode="eval").body, env)
++            except SyntaxError: return ""
++        if key(expr) in env: return env[key(expr)]
++        if isinstance(expr, ast.Attribute):
++            base = address(expr.value, env)
++            return base + "." + expr.attr if base else ""
++        return ""
++
++    def imported(st, source):
++        if isinstance(st, ast.Import):
++            return {a.asname or a.name.split(".")[0]: a.name if a.asname else a.name.split(".")[0] for a in st.names}
++        module = st.module or ""
++        if st.level:
++            parts = source.relative_to(root).with_suffix("").parts
++            if source.name != "__init__.py": parts = parts[:-1]
++            else: parts = parts[:-1]
++            module = ".".join((*parts[:len(parts) - st.level + 1], *module.split(".")))
++        return {a.asname or a.name: module + "." + a.name for a in st.names}
++
++    def origin(name, seen=frozenset()):
++        if name in {"@domain", "@vendor"}: return name
++        if not name or name in seen: return ""
++        module, _, symbol = name.rpartition(".")
++        if symbol in vendors.get(module, set()): return "@vendor"
++        source = root.joinpath(*module.split(".")).with_suffix(".py")
++        if not source.is_file(): source = root.joinpath(*module.split("."), "__init__.py")
++        declaration = _parse(source) if source.is_file() else None
++        if declaration is None: return ""
++        env = {}
++        target = None
++        for st in declaration.body:
++            if isinstance(st, (ast.Import, ast.ImportFrom)):
++                additions = imported(st, source)
++                env.update(additions)
++                if symbol in additions: target = additions[symbol]
++            elif isinstance(st, ast.ClassDef):
++                env[st.name] = module + "." + st.name
++                if st.name == symbol: target = st
++            elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
++                value = address(st.value, env) if not isinstance(st, ast.AugAssign) else ""
++                for t in st.targets if isinstance(st, ast.Assign) else [st.target]:
++                    env[key(t)] = value
++                    if key(t) == symbol: target = value
++        if isinstance(target, str): return origin(target, seen | {name})
++        if not isinstance(target, ast.ClassDef): return ""
++        bases = {origin(address(b, env), seen | {name}) for b in target.bases}
++        if "@vendor" in bases: return "@vendor"
++        parts = module.split(".")
++        contract = "domain_layer" in parts or (
++            "application_layer" in parts and ("port" in parts or parts[-1].endswith(("_command", "_query", "_result"))))
++        return "@domain" if contract else ""
++
++    def value_origin(expr, env):
++        if isinstance(expr, ast.Call): return origin(address(expr.func, env))
++        return address(expr, env)
++
++    def inspect(expr, env):
++        if isinstance(expr, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)): return
++        if isinstance(expr, ast.Compare):
++            seen = set()
++            for operand in (expr.left, *expr.comparators):
++                for attr in ast.walk(operand):
++                    if not isinstance(attr, ast.Attribute) or attr.attr not in {"code", "errno", "status_code"}: continue
++                    identity = (ast.dump(attr.value), attr.attr)
++                    if identity in seen: continue
++                    seen.add(identity)
++                    provenance = origin(value_origin(attr.value, env))
++                    where = _rel(root, py, attr.lineno)
++                    if provenance == "@vendor":
++                        f.add("#557", where, "확인된 벤더 오류/응답 코드를 위층이 판정한다 — 정규화는 그 인프라를 «소유한» 어댑터가 한다")
++                    elif provenance != "@domain":
++                        cand.add("#557", where, "code/errno/status_code 수신자 출처 불명 — 벤더 코드인지 계약 값인지 확인 필요", "이 값의 실제 선언과 정규화 소유자는 어디인가")
++        for child in ast.iter_child_nodes(expr): inspect(child, env)
++
++    def parameters(fn, env):
++        for arg in (*fn.args.posonlyargs, *fn.args.args, *fn.args.kwonlyargs):
++            env[arg.arg] = origin(address(arg.annotation, env))
++        for arg in (fn.args.vararg, fn.args.kwarg):
++            if arg: env[arg.arg] = ""
++
++    # 모듈의 사후 재바인딩도 함수 실행 시 출처를 바꾼다. 순서 의존 호출은 확정하지 않는다.
++    rebound = set()
++    for st in mod.body:
++        if isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign, ast.Delete)):
++            targets = st.targets if isinstance(st, (ast.Assign, ast.Delete)) else [st.target]
++            rebound.update(key(t) for t in targets)
++
++    def block(body, env):
++        for st in body:
++            if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)):
++                local = dict(env)
++                for name in rebound: local[name] = ""
++                parameters(st, local)
++                block(st.body, local)
++                env[st.name] = ""
++                continue
++            if isinstance(st, ast.ClassDef):
++                # 각 메서드는 분리한다. 생성자의 직접 주입 속성만 공유한다.
++                fields = {}
++                init = next((n for n in st.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == "__init__"), None)
++                if init:
++                    local = dict(env)
++                    parameters(init, local)
++                    for n in init.body:
++                        if isinstance(n, (ast.Assign, ast.AnnAssign)):
++                            value = value_origin(n.value, local)
++                            for target in n.targets if isinstance(n, ast.Assign) else [n.target]:
++                                local[key(target)] = value
++                    fields = {k: v for k, v in local.items() if k.startswith("self.")}
++                block(st.body, dict(env, **fields))
++                env[st.name] = ".".join((*py.relative_to(root).with_suffix("").parts, st.name))
++                continue
++            if isinstance(st, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try, ast.With, ast.AsyncWith)):
++                branches = []
++                if isinstance(st, (ast.With, ast.AsyncWith)):
++                    local = dict(env)
++                    for item in st.items:
++                        inspect(item.context_expr, env)
++                        if item.optional_vars: local[key(item.optional_vars)] = ""
++                    block(st.body, local)
++                    branches = [local, env]
++                else:
++                    for field in ("test", "iter"):
++                        expr = getattr(st, field, None)
++                        if expr is not None: inspect(expr, env)
++                    local = dict(env)
++                    if isinstance(st, (ast.For, ast.AsyncFor)): local[key(st.target)] = ""
++                    block(st.body, local)
++                    other = dict(env)
++                    block(st.orelse, other)
++                    branches = [local, other]
++                    if isinstance(st, ast.Try):
++                        for handler in st.handlers:
++                            local = dict(env)
++                            types = handler.type.elts if isinstance(handler.type, ast.Tuple) else [handler.type]
++                            origins = {origin(address(t, env)) for t in types}
++                            if handler.name: local[handler.name] = origins.pop() if len(origins) == 1 else ""
++                            block(handler.body, local)
++                            if handler.name: local[handler.name] = ""
++                            branches.append(local)
++                for k in set().union(*(b.keys() for b in branches)):
++                    values = {b.get(k, "") for b in branches}
++                    env[k] = values.pop() if len(values) == 1 else ""
++                if isinstance(st, ast.Try): block(st.finalbody, env)
++                continue
++            inspect(st, env)
++            if isinstance(st, (ast.Import, ast.ImportFrom)): env.update(imported(st, py))
++            elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
++                value = value_origin(st.value, env) if not isinstance(st, ast.AugAssign) else ""
++                if isinstance(st, ast.AnnAssign) and st.value is None: value = origin(address(st.annotation, env))
++                for target in st.targets if isinstance(st, ast.Assign) else [st.target]:
++                    if isinstance(target, (ast.Name, ast.Attribute)): env[key(target)] = value
++                    else:
++                        for n in ast.walk(target):
++                            if isinstance(n, ast.Name): env[n.id] = ""
++            elif isinstance(st, ast.Delete):
++                for target in st.targets: env[key(target)] = ""
++        return env
++
++    block(mod.body, {})
++
++
+ def _check_use_side(root: Path, bc: Path, bc_vocab_set: set, f: Findings, cand: Candidates) -> None:
+     app = bc / "application_layer"
+     if app.is_dir():
+         for py in _py_files(app):
+             parts = py.relative_to(app).parts
+             if py.stem.endswith("_adapter") and "port" not in parts:
+                 f.add("#460", _rel(root, py),
+                       "구현(*_adapter.py)이 driven_layer/adapter/ 밖에 있다 — 구현은 전부 거기 산다")
+             mod = _parse(py)
+             if mod is None:
+@@ -1155,27 +1335,21 @@
+                         and isinstance(node.targets[0], ast.Name):
+                     bound.add(node.targets[0].id)
+             if bound:
+                 for node in ast.walk(mod):
+                     if isinstance(node, ast.If):
+                         used = {x.id for x in ast.walk(node.test) if isinstance(x, ast.Name)}
+                         if used & bound:
+                             cand.add("#475", _rel(root, py, node.lineno),
+                                      "domain_bypass_query 결과가 조건식에 흐른다 — 이 자료는 도메인 "
+                                      "규칙을 안 태운 «날것»이다", "Q2 — 이 판정이 업무 규칙인가")
+-            # #557 — 벤더 오류 코드 판정이 위층에.
+-            for node in ast.walk(mod):
+-                if isinstance(node, ast.Compare) and isinstance(node.left, ast.Attribute) \
+-                        and node.left.attr in ("code", "errno", "status_code"):
+-                    f.add("#557", _rel(root, py, node.lineno),
+-                          "벤더 오류 코드를 위층이 판정한다 — 일시 실패의 정규화는 그 인프라를 "
+-                          "«소유한» 어댑터가 한다")
++            _check_property_origins(root, py, mod, f, cand)
+     for layer in DRIVING_DIRS:
+         base = bc / layer
+         if not base.is_dir():
+             continue
+         for py in _py_files(base):
+             if not py.name.endswith("_controller.py"):
+                 continue
+             mod = _parse(py)
+             for node in ast.walk(mod) if mod else []:
+                 if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and (
+
+```
+
+## workspace/tools/field_report_checker_smoke.py
+
+Before SHA256: aa45b0134d4c3b2c57ace15b529ab893c5b006d8b41d2520107c347a9f6e5890
+After SHA256: 4b7f1bd5d068d7c0e23680b19e035a4c6cf13ca47d6a0998f93b7c1ff66dd9b7
+
+```diff
+--- before/workspace/tools/field_report_checker_smoke.py
++++ after/workspace/tools/field_report_checker_smoke.py
+@@ -20,20 +20,23 @@
+ import corpus_mirror_sync as corpus
+ from ontology_census import parse_sections
+ 
+ ROOT = Path(__file__).resolve().parents[2]
+ SCRIPTS = ROOT / "dddjango/scripts"
+ FIXTURES = ROOT / "workspace/eval/fixtures"
+ sys.path.insert(0, str(SCRIPTS))
+ comp = _load_module(SCRIPTS / "check-composition-root.py", "field_composition")
+ dto = _load_module(SCRIPTS / "check-usecase-dto-placement.py", "field_dto")
+ controller = _load_module(SCRIPTS / "check-api-error-controller-contract.py", "field_controller")
++isolation = _load_module(SCRIPTS / "check-context-isolation.py", "field_isolation")
++domain = _load_module(SCRIPTS / "check-domain-model.py", "field_domain")
++pairing = _load_module(SCRIPTS / "check-port-adapter-pairing.py", "field_pairing")
+ CODE = "application/lesson/driving_layer/controller.py"
+ TREE = "application/orders/driving_layer/api/payment/payment_controller.py"
+ SELECTORS = ["--error-profile", "dddjango-code-json", "--scope", "lesson",
+              "--api-module", "config/api.py", "--controller-module", CODE,
+              "--scope-bc", "lesson", "--error-bc", "lesson"]
+ 
+ 
+ class CheckerRegression(unittest.TestCase):
+     def setUp(self) -> None:
+         self.tmp = tempfile.TemporaryDirectory(prefix="field-checker-")
+@@ -97,20 +100,217 @@
+                 found, candidates = self.result_rules(f"class {name}:\n    {field}\n")
+                 self.assertEqual(found, [])
+                 self.assertEqual(candidates, ["#571"])
+ 
+     def test_multiple_shapes_stay_blocked_and_field_words_stay_neutral(self) -> None:
+         found, _ = self.result_rules("class Completed: pass\nclass Rejected: pass\n")
+         self.assertEqual(found, ["#571"])
+         for field in ("code: str", "error: float", "outcome: str"):
+             with self.subTest(field=field):
+                 self.assertEqual(self.result_rules(f"class RecordedResult:\n    {field}\n"), ([], []))
++
++    def ohs_rules(self, source):
++        self.write("application/lesson/application_layer/books/read/read_use_case.py", "class ReadUseCase: pass\n")
++        self.write("application/lesson/composition_root/books.py", "from application.lesson.application_layer.books.read.read_use_case import ReadUseCase\ndef build_read_use_case() -> ReadUseCase: return ReadUseCase()\n")
++        py = self.write("application/lesson/driving_layer/ohs/library/library_service.py", source)
++        f, c = isolation.Findings(defer=True), isolation.Candidates(defer=True)
++        isolation._check_ohs_service(py, str(py.relative_to(self.root)), f, c)
++        return [e.rule for e in f.entries], [e.rule for e in c.entries]
++
++    def test_ohs_execution_provenance_and_count(self):
++        header = "from application.lesson.composition_root.books import build_read_use_case as prepare\n"
++        cases = [
++            ("unit = prepare()\n    unit.execute()", False),
++            ("prepare().execute()", False),
++            ("unit = prepare()\n    alias = unit\n    alias.execute()", False),
++            ("unit = prepare()", True),
++            ("unit = prepare()\n    unit.execute()\n    unit.execute()", True),
++            ("cursor.execute()", True),
++            ("unit = prepare()\n    for item in items:\n        unit.execute()", True),
++            ("unit = prepare()\n    values = [unit.execute() for item in items]", True),
++            ("unit = prepare()\n    unit = cursor\n    unit.execute()", True),
++            ("unit = prepare()\n    if condition:\n        unit = cursor\n    unit.execute()", True),
++            ("unit = prepare()\n    if condition:\n        unit = cursor\n    else:\n        unit = prepare()\n    unit.execute()", True),
++            ("unit = prepare()\n    def unused():\n        unit.execute()", True),
++            ("unit = prepare()\n    def unused():\n        unit.execute()\n    unit.execute()", False),
++            ("unit = prepare()\n    class Unused:\n        def run(self): unit.execute()\n    unit.execute()", False),
++        ]
++        for body, expected in cases:
++            with self.subTest(body=body):
++                self.assertEqual("#153" in self.ohs_rules(header + "def read_query(request):\n    " + body + "\n")[1], expected)
++        for header, expression in [
++            ("import application.lesson.composition_root.books as wiring", "wiring.build_read_use_case().execute()"),
++            ("from application.lesson.application_layer.books.read.read_use_case import ReadUseCase as Unit", "Unit().execute()"),
++        ]:
++            self.assertNotIn("#153", self.ohs_rules(header + "\ndef read_query(request):\n    " + expression + "\n")[1])
++        self.assertNotIn("#153", self.ohs_rules("from application.lesson.application_layer.books.read.read_use_case import ReadUseCase as Unit\ndef read_query(request: Unit):\n    request.execute()\n")[1])
++        for symbol in ("build_missing_use_case", "unrelated"):
++            self.assertIn("#153", self.ohs_rules(f"from application.lesson.composition_root.books import {symbol}\ndef read_query(request):\n    {symbol}().execute()\n")[1])
++        found, _ = self.ohs_rules("from application.lesson.domain_layer.book.error import BookError\ndef read_query(request):\n    try: work()\n    except BookError as exc: return exc.code\n")
++        self.assertIn("#153", found)
++
++    def enum_rules(self, source):
++        py = self.write("application/lesson/domain_layer/book/value_object/kind.py", source)
++        f, c = domain.Findings(defer=True), domain.Candidates(defer=True)
++        domain._check_value_object_file(self.root, py, f, c)
++        return [e.rule for e in f.entries], [e.rule for e in c.entries]
++
++    def test_closed_enum_validation_and_dynamic_opposites(self):
++        for header, base in [("from enum import Enum", "Enum"), ("from enum import StrEnum as Closed", "Closed"), ("import enum as standard", "standard.IntEnum")]:
++            with self.subTest(base=base):
++                self.assertNotIn("#268", self.enum_rules(header + f"\nclass Kind({base}):\n    ONE = 1\n")[1])
++        variants = [
++            "from enum import Flag\nclass Kind(Flag):\n    ONE = 1",
++            "from enum import IntFlag\nclass Kind(IntFlag):\n    ONE = 1",
++            "from custom import Enum\nclass Kind(Enum):\n    ONE = 1",
++            "from enum import Enum\nEnum = other\nclass Kind(Enum):\n    ONE = 1",
++            "from enum import Enum\nclass Kind(Enum, metaclass=Meta):\n    ONE = 1",
++            "from enum import Enum\nclass Kind(Mixin, Enum):\n    ONE = 1",
++            "from enum import Enum\nclass Kind(Enum):\n    ONE = dynamic()",
++            "from enum import Enum\nclass Kind(Enum):\n    ONE = 1\nKind._missing_ = classmethod(missing)",
++            "from enum import Enum\nclass Kind(Enum):\n    ONE = 1\nAlias = Kind\nAlias._missing_ = classmethod(missing)",
++        ]
++        for method in ("_missing_", "__new__", "__init__", "__call__"):
++            variants.append(f"from enum import Enum\nclass Kind(Enum):\n    ONE = 1\n    def {method}(self, value): return value")
++        for source in variants:
++            with self.subTest(source=source):
++                self.assertIn("#268", self.enum_rules(source)[1])
++        f, c = self.enum_rules("from enum import Enum\nclass Kind(Enum):\n    ONE = 1\n    id: int\n    def mutate(self): self.code = 2\n")
++        self.assertIn("#264", f)
++        self.assertIn("#259", c)
++
++    def application_rules(self, body, header="", parameters="uow: Work"):
++        source = ("from application.lesson.application_layer.port.unit_of_work.lesson_unit_of_work import LessonUnitOfWork as Work\n"
++                  "from django.db import transaction\n" + header + "\ndef run(" + parameters + ", books: BookRepository, loans: LoanRepository):\n    " + body + "\n")
++        self.write("application/lesson/application_layer/books/run/run_use_case.py", source)
++        self.write("application/lesson/application_layer/port/unit_of_work/lesson_unit_of_work.py", "class LessonUnitOfWork: pass\n")
++        f, c = domain.Findings(defer=True), domain.Candidates(defer=True)
++        domain._check_application_side(self.root, self.root / "application/lesson", f, c)
++        return [e.rule for e in f.entries], [e.rule for e in c.entries]
++
++    def test_uow_lexical_regions_and_unknown_boundaries(self):
++        cases = [
++            ("with uow:\n        books.save(a)\n    with uow:\n        loans.save(b)", None),
++            ("alias = uow\n    with alias:\n        books.save(a)\n    with alias:\n        loans.save(b)", None),
++            ("with uow:\n        books.save(a)\n        loans.save(b)", "violation"),
++            ("with uow:\n        books.save(a)\n        with uow:\n            loans.save(b)", "violation"),
++            ("with uow, uow:\n        books.save(a)\n        loans.save(b)", "violation"),
++            ("with transaction.atomic():\n        with uow:\n            books.save(a)\n        with uow:\n            loans.save(b)", "violation"),
++            ("with lock:\n        books.save(a)\n    with lock:\n        loans.save(b)", "candidate"),
++            ("books.save(a)\n    loans.save(b)", "candidate"),
++            ("with mystery():\n        with uow:\n            books.save(a)\n        with uow:\n            loans.save(b)", "candidate"),
++            ("transaction.begin()\n    with uow:\n        books.save(a)\n    with uow:\n        loans.save(b)", "candidate"),
++            ("uow = dynamic()\n    with uow:\n        books.save(a)\n        loans.save(b)", "candidate"),
++            ("if flag:\n        uow = dynamic()\n    else:\n        uow = Work()\n    with uow:\n        books.save(a)\n        loans.save(b)", "candidate"),
++            ("with uow:\n        books.save(a)\n        def unused():\n            loans.save(b)", None),
++            ("with uow:\n        books.save(a)\n        books.remove(b)", None),
++            ("with make() as active:\n        books.save(a)\n    with make() as active:\n        loans.save(b)", None),
++            ("with make() as active:\n        books.save(a)\n    with active:\n        loans.save(b)", "candidate"),
++        ]
++        for body, expected in cases:
++            with self.subTest(body=body):
++                f, c = self.application_rules(body, "def make() -> Work: return Work()\n")
++                self.assertEqual("#546" in f, expected == "violation")
++                self.assertEqual("#546" in c, expected == "candidate")
++        f, c = self.application_rules("with uow:\n        books.save(a)\n    with uow:\n        loans.save(b)", "@transaction.atomic")
++        self.assertIn("#546", f)
++        f, c = self.application_rules("with uow:\n        items = books.list_all()\n        books.save_all(items)\n        root = books.get_one()\n        root.child.change()")
++        self.assertIn("#550", f)
++        self.assertIn("#257", f)
++
++    def property_rules(self, source):
++        self.write("application/lesson/domain_layer/book/kind.py", "class Kind: code: str\nclass Rejected(Exception): code: str\n")
++        self.write("application/lesson/application_layer/port/books/response.py", "class BookResponse: status_code: str\n")
++        self.write("application/lesson/application_layer/port/books/export.py", "from requests import Response as BookResponse\n")
++        self.write("application/lesson/application_layer/port/books/reexport.py", "from .response import BookResponse\n")
++        self.write("application/lesson/application_layer/port/books/cycle.py", "from .cycle import BookResponse\n")
++        self.write("application/lesson/application_layer/books/read/read_use_case.py", source)
++        f, c = pairing.Findings(defer=True), pairing.Candidates(defer=True)
++        pairing._check_use_side(self.root, self.root / "application/lesson", set(), f, c)
++        return [e.rule for e in f.entries], [e.rule for e in c.entries]
++
++    def test_property_comparisons_use_actual_origin_on_both_sides(self):
++        cases = [
++            ("from application.lesson.domain_layer.book.kind import Kind as Value\ndef run(value: Value): return value.code == 'x'", None),
++            ("from application.lesson.domain_layer.book.kind import Kind\ndef run():\n    value = Kind()\n    alias = value\n    return 'x' == alias.code", None),
++            ("from application.lesson.application_layer.port.books.reexport import BookResponse\ndef run(value: BookResponse): return 200 == value.status_code", None),
++            ("from application.lesson.application_layer.port.books.export import BookResponse\ndef run(value: BookResponse): return 200 == value.status_code", "violation"),
++            ("from application.lesson.application_layer.port.books.missing import Response\ndef run(value: Response): return value.code == 1", "candidate"),
++            ("from application.lesson.application_layer.port.books.cycle import BookResponse\ndef run(value: BookResponse): return value.code == 1", "candidate"),
++            ("from django.db import IntegrityError as Failure\ndef run(error: Failure): return 1 == error.errno", "violation"),
++            ("import httpx as http\ndef run(response: http.Response): return 200 == response.status_code == 200", "violation"),
++            ("from requests import Response\ndef run():\n    response = Response()\n    return 200 == response.status_code", "violation"),
++            ("def run(value): return value.code == 'x'", "candidate"),
++            ("def run():\n    value = fetch()\n    return 'x' == value.code", "candidate"),
++            ("from application.lesson.domain_layer.book.kind import Kind\ndef run(value: Kind):\n    value = fetch()\n    return value.code == 1", "candidate"),
++            ("from application.lesson.domain_layer.book.kind import Kind\ndef run(value: Kind):\n    if flag: value = fetch()\n    else: value = Kind()\n    return value.code == 1", "candidate"),
++            ("from vendor import WhateverError\ndef run():\n    try: fetch()\n    except WhateverError as error: return error.code == 1", "candidate"),
++            ("from application.lesson.domain_layer.book.kind import Rejected\ndef run():\n    try: fetch()\n    except Rejected as error: return error.code == 1", None),
++            ("from django.db.utils import IntegrityError\ndef run():\n    try: fetch()\n    except IntegrityError as error: return 1 == error.errno", "violation"),
++            ("from django.db import IntegrityError\nfrom application.lesson.domain_layer.book.kind import Rejected\ndef run():\n    try: fetch()\n    except (Rejected, IntegrityError) as error: return error.code == 1", "candidate"),
++            ("from requests import Response\nResponse = custom\ndef run(value: Response): return value.status_code == 1", "candidate"),
++            ("from unrelated import Response\ndef run(value: Response): return value.status_code == 1", "candidate"),
++        ]
++        for source, expected in cases:
++            with self.subTest(source=source):
++                f, c = self.property_rules(source)
++                self.assertEqual(f.count("#557"), int(expected == "violation"))
++                self.assertEqual(c.count("#557"), int(expected == "candidate"))
++        f, c = self.property_rules("from requests import Response\ndef first():\n    value = Response()\n    return value.status_code == value.status_code\ndef second(value): return value.status_code == 1")
++        self.assertEqual(f.count("#557"), 1)
++        self.assertEqual(c.count("#557"), 1)
++
++    def test_origin_scope_rebindings_remain_unknown(self):
++        sources = [
++            "from requests import Response\ndef run(value: Response): return value.status_code == 1\nResponse = custom",
++            "from requests import Response\ndef run():\n    value = Response()\n    value, other = pair()\n    return value.status_code == 1",
++        ]
++        for source in sources:
++            with self.subTest(source=source):
++                f, c = self.property_rules(source)
++                self.assertNotIn("#557", f)
++                self.assertIn("#557", c)
++        for source in [
++            "import enum\nenum.Enum = custom\nclass Kind(enum.Enum):\n    ONE = 1",
++            "from enum import Enum\nclass Kind(Enum):\n    ONE = 1\n    _missing_ = None",
++        ]:
++            with self.subTest(source=source): self.assertIn("#268", self.enum_rules(source)[1])
++        f, c = self.application_rules("with uow:\n        books.save(a)\n    with uow:\n        loans.save(b)", parameters="uow: Missing")
++        self.assertNotIn("#546", f)
++        self.assertIn("#546", c)
++
++    def test_uow_injected_fields_and_factory_alias_scope(self):
++        source = "from application.lesson.application_layer.port.unit_of_work.lesson_unit_of_work import LessonUnitOfWork as Work\nclass Run:\n    def __init__(self, context: Work, books: BookRepository, loans: LoanRepository):\n        self.context = context\n        self.books = books\n        self.loans = loans\n    def execute(self):\n        with self.context:\n            self.books.save(a)\n        with self.context:\n            self.loans.save(b)\n"
++        self.application_rules("pass")
++        self.write("application/lesson/application_layer/books/run/run_use_case.py", source)
++        f, c = domain.Findings(defer=True), domain.Candidates(defer=True)
++        domain._check_application_side(self.root, self.root / "application/lesson", f, c)
++        self.assertNotIn("#546", [e.rule for e in f.entries + c.entries])
++        f, c = self.application_rules("with make() as active:\n        copy = active\n        books.save(a)\n    with copy:\n        loans.save(b)", "def make() -> Work: return Work()")
++        self.assertNotIn("#546", f)
++        self.assertIn("#546", c)
++
++    def test_declared_usecase_and_enum_constructor_opposites(self):
++        self.ohs_rules("def read_query(request): pass")
++        self.write("application/lesson/composition_root/books.py", "def build_read_use_case(): return cursor()\n")
++        py = self.write("application/lesson/driving_layer/ohs/library/library_service.py", "from application.lesson.composition_root.books import build_read_use_case\ndef read_query(request): build_read_use_case().execute()\n")
++        f, c = isolation.Findings(defer=True), isolation.Candidates(defer=True)
++        isolation._check_ohs_service(py, str(py), f, c)
++        self.assertIn("#153", [e.rule for e in c.entries])
++        self.assertIn("#153", self.ohs_rules("from application.lesson.application_layer.books.read.absent_use_case import Missing\ndef read_query(request: Missing): request.execute()\n")[1])
++
++    def test_custom_enum_validation_does_not_prove_closed_members(self):
++        self.assertIn("#268", self.enum_rules("from enum import Enum\nclass Kind(Enum):\n    ONE = 1\n    def __init__(self, value):\n        if value < 0: raise ValueError()\n")[1])
++
++    def test_nested_repository_parameters_do_not_retype_outer_bindings(self):
++        f, c = self.application_rules("with uow:\n        books.save(a)\n        loans.save(b)\n    def unused(books: LoanRepository): pass")
++        self.assertIn("#546", f)
+ 
+     def admin_records(self, source):
+         self.write("framework/admin/book.py", source)
+         records = self.root / "findings.jsonl"
+         records.unlink(missing_ok=True)
+         run = subprocess.run([sys.executable, '-B', str(SCRIPTS / 'check-public-surface-annotation.py'),
+                               str(self.root)], env=self.env, text=True, capture_output=True)
+         self.assertIn(run.returncode, (0, 2), run.stdout + run.stderr)
+         return [json.loads(line) for line in records.read_text().splitlines()] if records.exists() else []
+ 
+
+```

@@ -1,0 +1,69 @@
+test_typegraph_container_identity_and_literal_alias (__main__.FieldReportTest.test_typegraph_container_identity_and_literal_alias) ... 
+  test_typegraph_container_identity_and_literal_alias (__main__.FieldReportTest.test_typegraph_container_identity_and_literal_alias) (annotation='Mapping[Book]', imports=[]) ... FAIL
+  test_typegraph_container_identity_and_literal_alias (__main__.FieldReportTest.test_typegraph_container_identity_and_literal_alias) (annotation='list[Book]', imports=[]) ... FAIL
+  test_typegraph_container_identity_and_literal_alias (__main__.FieldReportTest.test_typegraph_container_identity_and_literal_alias) (annotation='Mapping[str, Book]', imports=[]) ... FAIL
+
+======================================================================
+FAIL: test_typegraph_container_identity_and_literal_alias (__main__.FieldReportTest.test_typegraph_container_identity_and_literal_alias) (annotation='Mapping[Book]', imports=[])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 530, in test_typegraph_container_identity_and_literal_alias
+    self.assertEqual([(f.rule, f.confirmed) for f in pg.check_declarations(plan, self.source)], expected)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [('#202', True)] != [('#202', False)]
+
+First differing element 0:
+('#202', True)
+('#202', False)
+
+- [('#202', True)]
+?           ^^^
+
++ [('#202', False)]
+?           ^^^^
+
+
+======================================================================
+FAIL: test_typegraph_container_identity_and_literal_alias (__main__.FieldReportTest.test_typegraph_container_identity_and_literal_alias) (annotation='list[Book]', imports=[])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 530, in test_typegraph_container_identity_and_literal_alias
+    self.assertEqual([(f.rule, f.confirmed) for f in pg.check_declarations(plan, self.source)], expected)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [('#202', True)] != [('#202', False)]
+
+First differing element 0:
+('#202', True)
+('#202', False)
+
+- [('#202', True)]
+?           ^^^
+
++ [('#202', False)]
+?           ^^^^
+
+
+======================================================================
+FAIL: test_typegraph_container_identity_and_literal_alias (__main__.FieldReportTest.test_typegraph_container_identity_and_literal_alias) (annotation='Mapping[str, Book]', imports=[])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 530, in test_typegraph_container_identity_and_literal_alias
+    self.assertEqual([(f.rule, f.confirmed) for f in pg.check_declarations(plan, self.source)], expected)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [('#202', True)] != [('#202', False)]
+
+First differing element 0:
+('#202', True)
+('#202', False)
+
+- [('#202', True)]
+?           ^^^
+
++ [('#202', False)]
+?           ^^^^
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.092s
+
+FAILED (failures=3)

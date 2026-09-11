@@ -22,11 +22,40 @@ from __future__ import annotations
 
 import ast
 import re
+import stat
 import sys
 import fnmatch
 from pathlib import Path
 
 _BC_LAYER_DIRS: "tuple[str, ...]" = ("domain_layer", "application_layer", "driving_layer", "driven_layer")
+
+
+def cache_only_instance(path: Path) -> bool:
+    """실파일 없이 __pycache__ 아래 캐시만 남은 선택 인스턴스인가.
+
+    빈 디렉터리는 허용하지만 캐시 파일 하나는 필요하다. 링크·읽기 불능은
+    제외 근거가 아니므로 False로 남긴다. Git 추적 상태는 사용하지 않는다.
+    """
+    found = False
+    pending = [(path, False)]
+    try:
+        while pending:
+            current, in_cache = pending.pop()
+            mode = current.lstat().st_mode
+            if stat.S_ISLNK(mode):
+                return False
+            if stat.S_ISDIR(mode):
+                cached = in_cache or current.name == "__pycache__"
+                pending.extend((child, cached) for child in current.iterdir())
+            elif stat.S_ISREG(mode) and in_cache and current.suffix in (".pyc", ".pyo"):
+                with current.open("rb") as stream:
+                    stream.read(1)
+                found = True
+            else:
+                return False
+    except OSError:
+        return False
+    return found
 
 
 def skeleton_placeholder(path: Path) -> bool:

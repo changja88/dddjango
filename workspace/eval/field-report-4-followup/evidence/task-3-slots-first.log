@@ -1,0 +1,35 @@
+.F
+======================================================================
+FAIL: test_admin_source_business_body_is_legacy_not_generated_s1 (pregate_field_report_smoke.FieldReportTest.test_admin_source_business_body_is_legacy_not_generated_s1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 506, in test_admin_source_business_body_is_legacy_not_generated_s1
+    self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 4 != 0 : 실행 모드: 초기 예보(기준선 기본 HEAD)
+file-plan은 승인 제품 변경의 경로다. coordinator 작업 기록·gate report·임시 로그는 계획 재료 밖이다. 작업기록 오편입 사례는 경로의 역할을 검토할 근거이며 파일명만으로 삭제하지 않는다. docs/**와 비-Python 제품 파일도 승인 범위이면 포함할 수 있다.
+
+### 선언 확정 (0건)
+
+- (없음)
+
+### 선언 후보 (0건)
+
+- (없음)
+skip — 실체화 0건(add/empty/remove 및 제한 update 실효 조치 없음): 게이트를 부르지 않는다(공허 차분 가드 · 사유 명시)
+  채널 메모: symbols 비-add `update` 칸 — update의 새 OHS 모듈 함수만 실물 대조 후 제한 전사; 그 밖은 S5 · 선언 이름의 계약 실존 «자기 update 해소»는 별도: framework/admin/book.py
+  채널 메모: symbols 비-add `update` 칸 — update의 새 OHS 모듈 함수만 실물 대조 후 제한 전사; 그 밖은 S5 · 선언 이름의 계약 실존 «자기 update 해소»는 별도: framework/admin/book.py
+  채널 메모: S5 use-case-effects 무기재 — 읽기/쓰기 효과 미검증
+  미시뮬레이션: S5 update(OHS 서비스 본체 밖; marker 후상태 무기재 — 유지): framework/admin/book.py
+
+== 계약 실존 결손 0건 (boundary-imports 3단) ==
+  집계: 행 0 · 이름 판정 0 · 실존 확인 0 · 자기 add 해소 0 · 자기 update 해소 0 · 저장소 밖(검사 밖) 0 · 판정 불능 0 · 결손 0(항목 0)
+  (없음) — 명세가 선언한 경계 import 계약 전건 실존(저장소 밖 0건은 검사 밖·자기 add 0건은 symbols 채널 소관·자기 update 0건은 update 칸 symbols 선언)
+
+요약: 실체화 0 · 실존 결손 0건 · 선언 확정 0건 · 기준선 4e3a071cbf0e · 모드 차단
+
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.892s
+
+FAILED (failures=1)

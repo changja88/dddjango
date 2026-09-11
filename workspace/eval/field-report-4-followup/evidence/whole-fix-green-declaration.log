@@ -1,0 +1,6 @@
+test_unresolved_named_uow_alias_keeps_declaration_candidate (__main__.FieldReportTest.test_unresolved_named_uow_alias_keeps_declaration_candidate) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.092s
+
+OK

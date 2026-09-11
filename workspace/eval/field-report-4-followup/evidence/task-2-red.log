@@ -1,0 +1,327 @@
+test_class_global_surface_rejects_the_entire_service_update (__main__.FieldReportTest.test_class_global_surface_rejects_the_entire_service_update) ... ok
+test_class_local_names_do_not_block_new_module_functions (__main__.FieldReportTest.test_class_local_names_do_not_block_new_module_functions) ... ok
+test_compile_failure_is_reported_without_partial_update (__main__.FieldReportTest.test_compile_failure_is_reported_without_partial_update) ... ok
+test_declaration_only_cli_and_report_dispositions (__main__.FieldReportTest.test_declaration_only_cli_and_report_dispositions) ... ok
+test_dto_type_provenance_nested_alias_forward_and_candidates (__main__.FieldReportTest.test_dto_type_provenance_nested_alias_forward_and_candidates) ... ok
+test_effect_declaration_contract_and_hash (__main__.FieldReportTest.test_effect_declaration_contract_and_hash) ... ok
+test_existing_class_decorator_and_alias_remain_s5_alongside_new_function (__main__.FieldReportTest.test_existing_class_decorator_and_alias_remain_s5_alongside_new_function) ... ok
+test_existing_names_and_unmodeled_updates_are_never_replaced (__main__.FieldReportTest.test_existing_names_and_unmodeled_updates_are_never_replaced) ... ok
+test_explicit_service_raise_only_clears_exception_finding (__main__.FieldReportTest.test_explicit_service_raise_only_clears_exception_finding) ... ok
+test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) ... 
+  test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) (rows=[{'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:5', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}, {'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:15', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}], provenance={'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py': [{'owner': 'First', 'method': 'after_commit', 'lineno': 5, 'end_lineno': 6}, {'owner': 'Second', 'method': 'after_commit', 'lineno': 15, 'end_lineno': 16}]}, unmatched=[]) ... ERROR
+  test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) (rows=[{'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:5', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}, {'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:15', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}], provenance={'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py': [{'owner': 'First', 'method': 'after_commit', 'lineno': 5, 'end_lineno': 6}]}, unmatched=[]) ... ERROR
+  test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) (rows=[{'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:5', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}, {'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}], provenance={'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py': [{'owner': 'First', 'method': 'after_commit', 'lineno': 5, 'end_lineno': 6}, {'owner': 'Second', 'method': 'after_commit', 'lineno': 15, 'end_lineno': 16}]}, unmatched=[]) ... ERROR
+  test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) (rows=[], provenance={'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py': [{'owner': 'First', 'method': 'after_commit', 'lineno': 5, 'end_lineno': 6}, {'owner': 'Second', 'method': 'after_commit', 'lineno': 15, 'end_lineno': 16}]}, unmatched=[]) ... ERROR
+  test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) (rows=[{'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:5', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}, {'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:15', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}], provenance={'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py': [{'owner': 'First', 'method': 'after_commit', 'lineno': 5, 'end_lineno': 6}, {'owner': 'Second', 'method': 'after_commit', 'lineno': 15, 'end_lineno': 16}]}, unmatched=['check-port-adapter-pairing.py :: [#376] application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:N: after_commit 구현이 transaction.on_commit 으로 채워지지 않았다']) ... ERROR
+  test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) (rows=[{'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:5', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}, {'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:15', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}], provenance={}, unmatched=[]) ... ERROR
+  test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) (rows=[{'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:5', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}, {'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:15', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}], provenance={'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py': [{'owner': 'First', 'method': 'other', 'lineno': 5, 'end_lineno': 6}]}, unmatched=[]) ... ERROR
+test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) ... ERROR
+test_generated_uow_cli_defers_only_generated_body_and_preserves_original (__main__.FieldReportTest.test_generated_uow_cli_defers_only_generated_body_and_preserves_original) ... FAIL
+test_marker_new_list_evaluates_after_pytest_binding (__main__.FieldReportTest.test_marker_new_list_evaluates_after_pytest_binding) ... ok
+test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) ... ok
+test_marker_update_cli_real_test_config_rule (__main__.FieldReportTest.test_marker_update_cli_real_test_config_rule) ... ok
+test_marker_update_noop_and_import_binding_are_preserved (__main__.FieldReportTest.test_marker_update_noop_and_import_binding_are_preserved) ... ok
+test_module_bindings_and_raise_helper_collisions_are_preserved (__main__.FieldReportTest.test_module_bindings_and_raise_helper_collisions_are_preserved) ... ok
+test_new_operation_clears_pair_finding_and_preserves_source_body (__main__.FieldReportTest.test_new_operation_clears_pair_finding_and_preserves_source_body) ... ok
+test_only_exact_real_ohs_service_paths_are_updated (__main__.FieldReportTest.test_only_exact_real_ohs_service_paths_are_updated) ... ok
+test_plain_signature_defaults_remain_transcribable (__main__.FieldReportTest.test_plain_signature_defaults_remain_transcribable) ... ok
+test_real_uow_cli_retains_bad_body_and_missing_robust_even_stub_text (__main__.FieldReportTest.test_real_uow_cli_retains_bad_body_and_missing_robust_even_stub_text) ... FAIL
+test_run_gate_rejects_missing_material_and_unexplained_raw_red (__main__.FieldReportTest.test_run_gate_rejects_missing_material_and_unexplained_raw_red) ... 
+  test_run_gate_rejects_missing_material_and_unexplained_raw_red (__main__.FieldReportTest.test_run_gate_rejects_missing_material_and_unexplained_raw_red) (code=2, payload={'attributed_lines': [], 'records': [], 'unmatched_lines': []}) ... FAIL
+  test_run_gate_rejects_missing_material_and_unexplained_raw_red (__main__.FieldReportTest.test_run_gate_rejects_missing_material_and_unexplained_raw_red) (code=0, payload={}) ... FAIL
+  test_run_gate_rejects_missing_material_and_unexplained_raw_red (__main__.FieldReportTest.test_run_gate_rejects_missing_material_and_unexplained_raw_red) (code=0, payload={'attributed_lines': [], 'records': None, 'unmatched_lines': []}) ... FAIL
+  test_run_gate_rejects_missing_material_and_unexplained_raw_red (__main__.FieldReportTest.test_run_gate_rejects_missing_material_and_unexplained_raw_red) (code=0, payload={'attributed_lines': [], 'records': [], 'unmatched_lines': [], 'candidate_lines': []}) ... FAIL
+test_safe_imports_transcribe_but_conflicts_reject_the_whole_entry (__main__.FieldReportTest.test_safe_imports_transcribe_but_conflicts_reject_the_whole_entry) ... ok
+test_signals_use_first_python_artifact_and_strip_nodeid (__main__.FieldReportTest.test_signals_use_first_python_artifact_and_strip_nodeid) ... ok
+test_signature_named_expressions_reject_the_entire_service_update (__main__.FieldReportTest.test_signature_named_expressions_reject_the_entire_service_update) ... ok
+test_typegraph_container_identity_and_literal_alias (__main__.FieldReportTest.test_typegraph_container_identity_and_literal_alias) ... ok
+test_typegraph_real_tree_cross_module_alias_cycles_and_ohs_imports (__main__.FieldReportTest.test_typegraph_real_tree_cross_module_alias_cycles_and_ohs_imports) ... ok
+test_unlisted_first_artifact_nonadd_and_missing_markers_do_not_signal (__main__.FieldReportTest.test_unlisted_first_artifact_nonadd_and_missing_markers_do_not_signal) ... ok
+test_unresolved_uow_never_confirms_and_declaration_owners_group (__main__.FieldReportTest.test_unresolved_uow_never_confirms_and_declaration_owners_group) ... ok
+test_update_marker_final_state_and_preservation (__main__.FieldReportTest.test_update_marker_final_state_and_preservation) ... ok
+test_wrong_operation_name_and_signature_remain_real_findings (__main__.FieldReportTest.test_wrong_operation_name_and_signature_remain_real_findings) ... ok
+
+======================================================================
+ERROR: test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) (rows=[{'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:5', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}, {'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:15', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}], provenance={'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py': [{'owner': 'First', 'method': 'after_commit', 'lineno': 5, 'end_lineno': 6}, {'owner': 'Second', 'method': 'after_commit', 'lineno': 15, 'end_lineno': 16}]}, unmatched=[])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 497, in test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations
+    retained, deferred = pg.partition_generated_findings(gate(rows, unmatched), provenance)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'field_report_pregate' has no attribute 'partition_generated_findings'
+
+======================================================================
+ERROR: test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) (rows=[{'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:5', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}, {'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:15', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}], provenance={'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py': [{'owner': 'First', 'method': 'after_commit', 'lineno': 5, 'end_lineno': 6}]}, unmatched=[])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 497, in test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations
+    retained, deferred = pg.partition_generated_findings(gate(rows, unmatched), provenance)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'field_report_pregate' has no attribute 'partition_generated_findings'
+
+======================================================================
+ERROR: test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) (rows=[{'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:5', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}, {'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}], provenance={'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py': [{'owner': 'First', 'method': 'after_commit', 'lineno': 5, 'end_lineno': 6}, {'owner': 'Second', 'method': 'after_commit', 'lineno': 15, 'end_lineno': 16}]}, unmatched=[])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 497, in test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations
+    retained, deferred = pg.partition_generated_findings(gate(rows, unmatched), provenance)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'field_report_pregate' has no attribute 'partition_generated_findings'
+
+======================================================================
+ERROR: test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) (rows=[], provenance={'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py': [{'owner': 'First', 'method': 'after_commit', 'lineno': 5, 'end_lineno': 6}, {'owner': 'Second', 'method': 'after_commit', 'lineno': 15, 'end_lineno': 16}]}, unmatched=[])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 497, in test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations
+    retained, deferred = pg.partition_generated_findings(gate(rows, unmatched), provenance)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'field_report_pregate' has no attribute 'partition_generated_findings'
+
+======================================================================
+ERROR: test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) (rows=[{'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:5', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}, {'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:15', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}], provenance={'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py': [{'owner': 'First', 'method': 'after_commit', 'lineno': 5, 'end_lineno': 6}, {'owner': 'Second', 'method': 'after_commit', 'lineno': 15, 'end_lineno': 16}]}, unmatched=['check-port-adapter-pairing.py :: [#376] application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:N: after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 497, in test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations
+    retained, deferred = pg.partition_generated_findings(gate(rows, unmatched), provenance)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'field_report_pregate' has no attribute 'partition_generated_findings'
+
+======================================================================
+ERROR: test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) (rows=[{'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:5', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}, {'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:15', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}], provenance={}, unmatched=[])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 497, in test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations
+    retained, deferred = pg.partition_generated_findings(gate(rows, unmatched), provenance)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'field_report_pregate' has no attribute 'partition_generated_findings'
+
+======================================================================
+ERROR: test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) (rows=[{'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:5', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}, {'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:15', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}], provenance={'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py': [{'owner': 'First', 'method': 'other', 'lineno': 5, 'end_lineno': 6}]}, unmatched=[])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 497, in test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations
+    retained, deferred = pg.partition_generated_findings(gate(rows, unmatched), provenance)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'field_report_pregate' has no attribute 'partition_generated_findings'
+
+======================================================================
+ERROR: test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 502, in test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations
+    retained, deferred = pg.partition_generated_findings(gate(records + [other], lines=[line, other_line]), generated)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'field_report_pregate' has no attribute 'partition_generated_findings'
+
+======================================================================
+FAIL: test_generated_uow_cli_defers_only_generated_body_and_preserves_original (__main__.FieldReportTest.test_generated_uow_cli_defers_only_generated_body_and_preserves_original)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 438, in test_generated_uow_cli_defers_only_generated_body_and_preserves_original
+    self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : 
+### 선언 확정 (0건)
+
+- (없음)
+
+### 선언 후보 (0건)
+
+- (없음)
+# design_pregate — 예보 실행 · 기준선 d97607fb9fd5 (--base HEAD) · 모드 차단(enforce) · 실행기: design_pregate.py · dddjango v2.18.2 · 블록 해시 145f8ba5a765
+(예보는 Phase 2 step 6(G2 registry 게이트)의 실행·증거 요구를 어떤 형태로도 대체·축약하지 않는다.)
+실체화 1건 · dirty overlay 0건 · 미시뮬레이션 0건 · already-built 0건
+
+# registry_gate — 판정 차분 · copy · 앵커 95c4ee82ee1c
+툴체인: dddjango v2.18.2 · py3.14 · 실행 트리 digest 515cdaae8cfbccab(39파일) · 경로 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts
+**귀속 0 ≠ 전체 clean** — 이 게이트는 «이번 런이 위반을 늘렸나»만 판정한다(legacy 격리).
+| 검사기 | anchor | current |
+|---|---|---|
+| `check-mechanism-ownership.py` | 0 | 0 |
+| `check-error-centralization.py` | 0 | 0 |
+| `check-response-schema-bypass.py` | 0 | 0 |
+| `check-layer-skeleton.py` | 2 | 2 |
+| `check-openapi-error-declaration.py` | 0 | 0 |
+| `check-context-isolation.py` | 0 | 0 |
+| `check-app-container.py` | 0 | 0 |
+| `check-ninja-boundary-middleware.py` | 0 | 0 |
+| `check-common-container.py` | 0 | 0 |
+| `check-idempotency-scope-creep.py` | 0 | 0 |
+| `check-public-surface-annotation.py` | 2 | 2 |
+| `check-test-config.py` | 0 | 0 |
+| `check-transient-overmapping.py` | 0 | 0 |
+| `check-synthetic-infra-exc.py` | 2 | 0 |
+| `check-api-error-controller-contract.py` | 0 | 0 |
+| `check-composition-root.py` | 0 | 0 |
+| `check-db-table.py` | 2 | 2 |
+| `check-choices-literal-consumption.py` | 0 | 0 |
+| `check-usecase-dto-placement.py` | 0 | 0 |
+| `check-transaction-boundary.py` | 0 | 0 |
+| `check-domain-model.py` | 0 | 0 |
+| `check-port-adapter-pairing.py` | 0 | 2 |
+| `check-event-publish.py` | 0 | 0 |
+| `check-broker-contract.py` | 0 | 0 |
+| `check-missable-entrance.py` | 0 | 0 |
+| `check-naming.py` | 2 | 2 |
+| `check-business-vocabulary.py` | 0 | 0 |
+
+== 귀속(N∖L) 7건 ==
+  check-layer-skeleton.py :: [#488] application/orders/driven_layer/adapter/anticorruption_layer: 고정 칸 `anticorruption_layer/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 97행)
+  check-layer-skeleton.py :: [#488] application/orders/driven_layer/adapter/external_system: 고정 칸 `external_system/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 110행)
+  check-layer-skeleton.py :: [#488] application/orders/driven_layer/adapter/persistence/domain_bypass_query: 고정 칸 `domain_bypass_query/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 93행)
+  check-layer-skeleton.py :: [#488] application/orders/driven_layer/adapter/persistence/repository: 고정 칸 `repository/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 91행)
+  check-layer-skeleton.py :: [#488] application/orders/driven_layer/django_orders: 고정 칸 `django_orders/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 76행)
+  check-naming.py :: [#247] application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:N: 구현 이름 `DjangoOrderUnitOfWork` — 같은 이름에 «접두»로 갈린다(`DjangoOrdersUnitOfWork` 꼴 — 역할 수식어는 계약과 공유·축약 불허)
+  check-port-adapter-pairing.py :: [#376] application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:N: after_commit 구현이 transaction.on_commit 으로 채워지지 않았다
+
+== legacy 잔존(L∩N) 17건 · 해소(L∖N) 2건 ==
+  check-db-table.py: 1
+  check-layer-skeleton.py: 10
+  check-naming.py: 1
+  check-public-surface-annotation.py: 5
+
+귀속 레코드 sidecar → /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/design-pregate-2vc3995p/introduced.json (레코드 7 · 대응 없는 귀속 라인 0)
+
+판정: 귀속 7건 → red
+
+== 예보 항목 7건 ==
+  `72275aa5c1b6` check-layer-skeleton.py :: [#488] application/orders/driven_layer/adapter/anticorruption_layer: 고정 칸 `anticorruption_layer/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 97행)
+  `2ad6133ba693` check-layer-skeleton.py :: [#488] application/orders/driven_layer/adapter/external_system: 고정 칸 `external_system/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 110행)
+  `e92b764ef967` check-layer-skeleton.py :: [#488] application/orders/driven_layer/adapter/persistence/domain_bypass_query: 고정 칸 `domain_bypass_query/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 93행)
+  `95fb2c586aad` check-layer-skeleton.py :: [#488] application/orders/driven_layer/adapter/persistence/repository: 고정 칸 `repository/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 91행)
+  `5915e92dcaae` check-layer-skeleton.py :: [#488] application/orders/driven_layer/django_orders: 고정 칸 `django_orders/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 76행)
+  `c1c76ff4ef98` check-naming.py :: [#247] application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:N: 구현 이름 `DjangoOrderUnitOfWork` — 같은 이름에 «접두»로 갈린다(`DjangoOrdersUnitOfWork` 꼴 — 역할 수식어는 계약과 공유·축약 불허)
+  `73129cb4cdd6` check-port-adapter-pairing.py :: [#376] application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:N: after_commit 구현이 transaction.on_commit 으로 채워지지 않았다
+  채널 메모: S5 use-case-effects 무기재 — 읽기/쓰기 효과 미검증
+
+== 계약 실존 결손 0건 (boundary-imports 3단) ==
+  집계: 행 0 · 이름 판정 0 · 실존 확인 0 · 자기 add 해소 0 · 자기 update 해소 0 · 저장소 밖(검사 밖) 0 · 판정 불능 0 · 결손 0(항목 0)
+  (없음) — 명세가 선언한 경계 import 계약 전건 실존(저장소 밖 0건은 검사 밖·자기 add 0건은 symbols 채널 소관·자기 update 0건은 update 칸 symbols 선언)
+
+판정: 예보 red — P/S/I급 결정 계약 위반 예보 7건 · 선언 확정 0건 · 계약 실존 결손 0건(권고·비차단)
+요약: 귀속 7건 · 실존 결손 0건 · 기준선 d97607fb9fd5 · 모드 차단
+
+예보 리포트 append → /private/var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/pregate-field-report-vkftymzi/report.md
+
+
+======================================================================
+FAIL: test_real_uow_cli_retains_bad_body_and_missing_robust_even_stub_text (__main__.FieldReportTest.test_real_uow_cli_retains_bad_body_and_missing_robust_even_stub_text)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 471, in test_real_uow_cli_retains_bad_body_and_missing_robust_even_stub_text
+    self.assertEqual(run.returncode, 2, run.stdout + run.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 2 : 
+### 선언 확정 (0건)
+
+- (없음)
+
+### 선언 후보 (0건)
+
+- (없음)
+# design_pregate — 예보 실행 · 기준선 1d12028534e5 (--base HEAD) · 모드 차단(enforce) · 실행기: design_pregate.py · dddjango v2.18.2 · 블록 해시 67c73fa1b1d3
+(예보는 Phase 2 step 6(G2 registry 게이트)의 실행·증거 요구를 어떤 형태로도 대체·축약하지 않는다.)
+실체화 1건 · dirty overlay 1건 · 미시뮬레이션 1건 · already-built 0건
+
+# registry_gate — 판정 차분 · copy · 앵커 1ba26af4bd36
+툴체인: dddjango v2.18.2 · py3.14 · 실행 트리 digest 515cdaae8cfbccab(39파일) · 경로 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts
+**귀속 0 ≠ 전체 clean** — 이 게이트는 «이번 런이 위반을 늘렸나»만 판정한다(legacy 격리).
+| 검사기 | anchor | current |
+|---|---|---|
+| `check-mechanism-ownership.py` | 0 | 0 |
+| `check-error-centralization.py` | 0 | 0 |
+| `check-response-schema-bypass.py` | 0 | 0 |
+| `check-layer-skeleton.py` | 2 | 2 |
+| `check-openapi-error-declaration.py` | 0 | 0 |
+| `check-context-isolation.py` | 0 | 0 |
+| `check-app-container.py` | 0 | 0 |
+| `check-ninja-boundary-middleware.py` | 0 | 0 |
+| `check-common-container.py` | 0 | 0 |
+| `check-idempotency-scope-creep.py` | 0 | 0 |
+| `check-public-surface-annotation.py` | 2 | 2 |
+| `check-test-config.py` | 0 | 0 |
+| `check-transient-overmapping.py` | 0 | 0 |
+| `check-synthetic-infra-exc.py` | 0 | 0 |
+| `check-api-error-controller-contract.py` | 0 | 0 |
+| `check-composition-root.py` | 0 | 0 |
+| `check-db-table.py` | 2 | 2 |
+| `check-choices-literal-consumption.py` | 0 | 0 |
+| `check-usecase-dto-placement.py` | 0 | 0 |
+| `check-transaction-boundary.py` | 0 | 0 |
+| `check-domain-model.py` | 0 | 0 |
+| `check-port-adapter-pairing.py` | 2 | 2 |
+| `check-event-publish.py` | 0 | 0 |
+| `check-broker-contract.py` | 0 | 0 |
+| `check-missable-entrance.py` | 0 | 0 |
+| `check-naming.py` | 2 | 2 |
+| `check-business-vocabulary.py` | 0 | 0 |
+
+== 귀속(N∖L) 0건 ==
+
+== legacy 잔존(L∩N) 30건 · 해소(L∖N) 0건 ==
+  check-db-table.py: 1
+  check-layer-skeleton.py: 19
+  check-naming.py: 2
+  check-port-adapter-pairing.py: 1
+  check-public-surface-annotation.py: 7
+
+== ⓓ 신규(N′∖L′) 1건 · legacy 0건 · 해소 0건 — exit 불산입 · 감수자 입력은 신규분만(R-0284) ==
+  check-domain-model.py :: [ⓓ#268] application/orders/domain_layer/shared_value_object/lane_marker.py:N: `LaneMarker` 의 __init__/__post_init__ 에 raise 가 없다 — 값 객체는 만들어지는 시점에 스스로 검증한다 — 물음: Q2 — 이 타입 조합만으로 잘못된 값이 «불가능»한가
+
+귀속 레코드 sidecar → /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/design-pregate-vf50h_dm/introduced.json (레코드 0 · 대응 없는 귀속 라인 0)
+
+판정: 귀속 0건 → green(신규 위반 없음)
+
+== 예보 항목 0건 ==
+  채널 메모: S5 use-case-effects 무기재 — 읽기/쓰기 효과 미검증
+
+== 계약 실존 결손 0건 (boundary-imports 3단) ==
+  집계: 행 0 · 이름 판정 0 · 실존 확인 0 · 자기 add 해소 0 · 자기 update 해소 0 · 저장소 밖(검사 밖) 0 · 판정 불능 0 · 결손 0(항목 0)
+  (없음) — 명세가 선언한 경계 import 계약 전건 실존(저장소 밖 0건은 검사 밖·자기 add 0건은 symbols 채널 소관·자기 update 0건은 update 칸 symbols 선언)
+
+판정: 예보 green — P/S/I급 결정 계약 위반 예보 0(«설계 검증됨» 아님) · 선언 확정 0건 · 계약 실존 결손 0건(권고·비차단)
+요약: 귀속 0건 · 실존 결손 0건 · 기준선 1d12028534e5 · 모드 차단
+
+예보 리포트 append → /private/var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/pregate-field-report-iualorvk/report.md
+
+
+======================================================================
+FAIL: test_run_gate_rejects_missing_material_and_unexplained_raw_red (__main__.FieldReportTest.test_run_gate_rejects_missing_material_and_unexplained_raw_red) (code=2, payload={'attributed_lines': [], 'records': [], 'unmatched_lines': []})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 517, in test_run_gate_rejects_missing_material_and_unexplained_raw_red
+    with self.assertRaises(pg.RunError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+AssertionError: RunError not raised
+
+======================================================================
+FAIL: test_run_gate_rejects_missing_material_and_unexplained_raw_red (__main__.FieldReportTest.test_run_gate_rejects_missing_material_and_unexplained_raw_red) (code=0, payload={})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 517, in test_run_gate_rejects_missing_material_and_unexplained_raw_red
+    with self.assertRaises(pg.RunError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+AssertionError: RunError not raised
+
+======================================================================
+FAIL: test_run_gate_rejects_missing_material_and_unexplained_raw_red (__main__.FieldReportTest.test_run_gate_rejects_missing_material_and_unexplained_raw_red) (code=0, payload={'attributed_lines': [], 'records': None, 'unmatched_lines': []})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 517, in test_run_gate_rejects_missing_material_and_unexplained_raw_red
+    with self.assertRaises(pg.RunError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+AssertionError: RunError not raised
+
+======================================================================
+FAIL: test_run_gate_rejects_missing_material_and_unexplained_raw_red (__main__.FieldReportTest.test_run_gate_rejects_missing_material_and_unexplained_raw_red) (code=0, payload={'attributed_lines': [], 'records': [], 'unmatched_lines': [], 'candidate_lines': []})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 517, in test_run_gate_rejects_missing_material_and_unexplained_raw_red
+    with self.assertRaises(pg.RunError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+AssertionError: RunError not raised
+
+----------------------------------------------------------------------
+Ran 30 tests in 28.381s
+
+FAILED (failures=6, errors=8)

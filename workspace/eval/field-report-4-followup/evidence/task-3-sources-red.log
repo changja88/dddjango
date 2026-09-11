@@ -1,0 +1,20 @@
+F
+======================================================================
+FAIL: test_admin_context_sources_consumption_rebind_and_bare_slots (field_report_checker_smoke.CheckerRegression.test_admin_context_sources_consumption_rebind_and_bare_slots)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 192, in test_admin_context_sources_consumption_rebind_and_bare_slots
+    self.assertEqual([r for r in rows if r['rule'] in ('#645', '#647')], [], rows)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [{'schema': 'findings/0', 'run_id': 'check[529 chars]one}] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+{'schema': 'findings/0', 'run_id': 'check-public-surface-annotation.py-20260911T104328Z-95319', 'ts': '2026-09-11T10:43:28Z', 'record_id': 'check-public-surface-annotation.py-20260911T104328Z-95319:0001', 'rule': '#647', 'sentinel': None, 'contract_ref': None, 'checker': 'check-public-surface-annotation.py', 'file': 'framework/admin/book.py:6', 'symbol': None, 'severity': 'violation', 'message': '`bag` 주석의 값 자리가 `Any` 다 — 키가 정해진 값 묶음은 `TypedDict`(파싱한 JSON 은 `TypeAdapter` 검증 파싱) · 조회표는 `dict[K, 구체 V]` · 통과 값은 `JsonValue`', 'expression': None, 'experiment_run_id': None}
+
+Diff is 654 characters long. Set self.maxDiff to None to see it. : [{'schema': 'findings/0', 'run_id': 'check-public-surface-annotation.py-20260911T104328Z-95319', 'ts': '2026-09-11T10:43:28Z', 'record_id': 'check-public-surface-annotation.py-20260911T104328Z-95319:0001', 'rule': '#647', 'sentinel': None, 'contract_ref': None, 'checker': 'check-public-surface-annotation.py', 'file': 'framework/admin/book.py:6', 'symbol': None, 'severity': 'violation', 'message': '`bag` 주석의 값 자리가 `Any` 다 — 키가 정해진 값 묶음은 `TypedDict`(파싱한 JSON 은 `TypeAdapter` 검증 파싱) · 조회표는 `dict[K, 구체 V]` · 통과 값은 `JsonValue`', 'expression': None, 'experiment_run_id': None}, {'schema': 'findings/0', 'run_id': 'check-public-surface-annotation.py-20260911T104328Z-95319', 'ts': '2026-09-11T10:43:28Z', 'record_id': 'check-public-surface-annotation.py-20260911T104328Z-95319:0002', 'rule': '#646', 'sentinel': None, 'contract_ref': None, 'checker': 'check-public-surface-annotation.py', 'file': 'framework/admin/book.py:4', 'symbol': None, 'severity': 'violation', 'message': '`BookAdmin` 이 django-stubs 제네릭 기저 `ModelAdmin` 를 맨몸으로 상속했다 — mypy strict `[type-arg]` 빚 · `if TYPE_CHECKING:` 별칭으로 모델 타입 인자를 적는다', 'expression': None, 'experiment_run_id': None}]
+
+----------------------------------------------------------------------
+Ran 1 test in 0.070s
+
+FAILED (failures=1)

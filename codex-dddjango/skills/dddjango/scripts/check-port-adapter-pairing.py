@@ -35,7 +35,8 @@
          #583 양방향 1:1 은 셋뿐 · #545 save() 는 «안 꺼낸 사실» 가드 · #551 계약은
          ABC+@abstractmethod · #552 구현은 계약 상속 · #553[ast+] 어댑터의 업무 판정(후보) ·
          #554 계약이 선언한 실패로 · #555 벤더 예외 그대로 흘림 금지 · #556 재시도 기계는
-         framework 몫 · #557 벤더 오류 코드 판정은 어댑터 안뿐
+         framework 몫 · #557[ast+] code/errno/status_code 비교 수신자의 확인된 vendor 출처는 확정,
+         확인된 domain 또는 application의 command/query/result/port 계약은 허용, 미해소·혼합 출처는 후보
   fake   #575 test/fake/ 에만 · #576 짝 선언 없는 페이크(한 방향) · #577 선언 상속·같은
          이름 · #578 기술 만지면 어댑터 · #579 프로덕션의 페이크 import · #580
          dependency_wiring 의 페이크 주입 · #581 평평하게
@@ -185,7 +186,7 @@ def _check_port_tree(root: Path, bc: Path, bc_vocab_set: set, tech: set,
             f.add("#215", _rel(root, p),
                   "port/ 직계 파일 — 능력 하나 = 폴더 하나다(포트를 파일 하나로 두지 않는다)")
     for cap in sorted(p for p in port.iterdir() if p.is_dir() and p.name != "__pycache__"):
-        if cap.name in ("domain_bypass_query", "unit_of_work"):
+        if cap.name in ("domain_bypass_query", "unit_of_work") or checker_target.cache_only_instance(cap):
             continue
         _check_capability_folder(root, bc, cap, bc_vocab_set, tech, f, cand)
     bypass = port / "domain_bypass_query"
@@ -315,6 +316,8 @@ def _check_bypass(root: Path, bypass: Path, tech: set, f: Findings, cand: Candid
         if p.is_file() and p.suffix == ".py" and p.name != "__init__.py":
             f.add("#232", _rel(root, p), "domain_bypass_query/ 직계 파일 — 능력 하나 = 폴더 하나다")
     for cap in sorted(p for p in bypass.iterdir() if p.is_dir() and p.name != "__pycache__"):
+        if checker_target.cache_only_instance(cap):
+            continue
         toks = set(cap.name.split("_"))
         if toks & (TECH_EXACT | vocab.bc_names(root)):
             f.add("#233", _rel(root, cap),
@@ -704,7 +707,8 @@ def _check_driven(root: Path, bc: Path, agg_names: set, bc_vocab_set: set,
     thin = persistence / "domain_bypass_query"
     port_bypass = bc / "application_layer" / "port" / "domain_bypass_query"
     if thin.is_dir():
-        contract_caps = {p.name for p in port_bypass.iterdir() if p.is_dir()} \
+        contract_caps = {p.name for p in port_bypass.iterdir() if p.is_dir()
+                         and p.name != "__pycache__" and not checker_target.cache_only_instance(p)} \
             if port_bypass.is_dir() else set()
         for py in checker_target.slot_glob(thin, "*_query.py"):
             capname = py.stem[: -len("_query")]
@@ -879,7 +883,8 @@ def _handler_declared_error(root: Path, bc_name: str, mod: ast.Module, handler: 
 def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
                             bc_vocab_set: set, f: Findings, cand: Candidates) -> None:
     for bundle in sorted(adapter.rglob("*_adapter")):
-        if not bundle.is_dir() or not checker_target.adapter_bundle(bundle):
+        if not bundle.is_dir() or not checker_target.adapter_bundle(bundle) \
+                or checker_target.cache_only_instance(bundle):
             continue
         for role in checker_target.ADAPTER_ROLES:
             for py in sorted((bundle / role).glob("*.py")):
@@ -896,6 +901,8 @@ def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
     if acl.is_dir():
         bcs = vocab.bc_names(root)
         for d in sorted(p for p in acl.iterdir() if p.is_dir() and p.name != "__pycache__"):
+            if checker_target.cache_only_instance(d):
+                continue
             if d.name not in bcs:
                 # 스펙 대장 #365 부칙(2026-08-25) — «우리 BC»는 병렬 워크트리 개발로 이
                 # 스냅숏에 없는 자사 BC 를 포함한다. 대상 부재 시 구조 순수성(통신 축
@@ -915,6 +922,8 @@ def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
             if p.is_file() and p.suffix == ".py" and p.name != "__init__.py":
                 f.add("#369", _rel(root, p), "external_system/ 직계 파일 — 벤더 하나 = 폴더 하나다")
         for system in sorted(p for p in ext.iterdir() if p.is_dir() and p.name != "__pycache__"):
+            if checker_target.cache_only_instance(system):
+                continue
             for py in checker_target.adapter_implementations(system):
                 if py.name == "__init__.py":
                     continue
@@ -1115,6 +1124,212 @@ def _check_fake(root: Path, bc: Path, f: Findings) -> None:
 
 # ── 응용·입구 쪽 — #134 · #574 · #475 · #553 · #557 · #460 ─────────────────
 
+def _check_property_origins(root: Path, py: Path, mod: ast.Module,
+                            f: Findings, cand: Candidates) -> None:
+    """#557: 로컬 계약 선언/명시 re-export와 닫힌 vendor 타입 목록만 확정한다."""
+    db_errors = {"DatabaseError", "IntegrityError", "OperationalError"}
+    pg_errors = db_errors | {"Error", "InterfaceError", "DataError", "InternalError", "ProgrammingError", "NotSupportedError"}
+    vendors = {
+        "django.db": db_errors, "django.db.utils": db_errors, "sqlite3": db_errors,
+        "psycopg": pg_errors, "psycopg2": pg_errors,
+        "requests": {"HTTPError", "RequestException", "Response"},
+        "requests.exceptions": {"HTTPError", "RequestException"}, "requests.models": {"Response"},
+        "httpx": {"HTTPError", "RequestException", "Response"},
+    }
+
+    def key(expr):
+        return ast.unparse(expr) if isinstance(expr, (ast.Name, ast.Attribute)) else ""
+
+    def address(expr, env):
+        if isinstance(expr, ast.Constant) and isinstance(expr.value, str):
+            try: return address(ast.parse(expr.value, mode="eval").body, env)
+            except SyntaxError: return ""
+        if key(expr) in env: return env[key(expr)]
+        if isinstance(expr, ast.Attribute):
+            base = address(expr.value, env)
+            return base + "." + expr.attr if base else ""
+        return ""
+
+    def imported(st, source):
+        if isinstance(st, ast.Import):
+            return {a.asname or a.name.split(".")[0]: a.name if a.asname else a.name.split(".")[0] for a in st.names}
+        module = st.module or ""
+        if st.level:
+            parts = source.relative_to(root).with_suffix("").parts
+            if source.name != "__init__.py": parts = parts[:-1]
+            else: parts = parts[:-1]
+            module = ".".join((*parts[:len(parts) - st.level + 1], *module.split(".")))
+        return {a.asname or a.name: module + "." + a.name for a in st.names}
+
+    def origin(name, seen=frozenset()):
+        if name in {"@domain", "@vendor"}: return name
+        if not name or name in seen: return ""
+        module, _, symbol = name.rpartition(".")
+        if symbol in vendors.get(module, set()): return "@vendor"
+        source = root.joinpath(*module.split(".")).with_suffix(".py")
+        if not source.is_file(): source = root.joinpath(*module.split("."), "__init__.py")
+        declaration = _parse(source) if source.is_file() else None
+        if declaration is None: return ""
+        env = {}
+        target = None
+        for st in declaration.body:
+            if isinstance(st, (ast.Import, ast.ImportFrom)):
+                additions = imported(st, source)
+                env.update(additions)
+                if symbol in additions: target = additions[symbol]
+            elif isinstance(st, ast.ClassDef):
+                env[st.name] = module + "." + st.name
+                if st.name == symbol: target = st
+            elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+                value = address(st.value, env) if not isinstance(st, ast.AugAssign) else ""
+                for t in st.targets if isinstance(st, ast.Assign) else [st.target]:
+                    env[key(t)] = value
+                    if key(t) == symbol: target = value
+        if isinstance(target, str): return origin(target, seen | {name})
+        if not isinstance(target, ast.ClassDef): return ""
+        bases = {origin(address(b, env), seen | {name}) for b in target.bases}
+        if "@vendor" in bases: return "@vendor"
+        parts = module.split(".")
+        contract = "domain_layer" in parts or (
+            "application_layer" in parts and ("port" in parts or parts[-1].endswith(("_command", "_query", "_result"))))
+        return "@domain" if contract else ""
+
+    def value_origin(expr, env):
+        if isinstance(expr, ast.Call): return origin(address(expr.func, env))
+        return address(expr, env)
+
+    def inspect(expr, env):
+        if isinstance(expr, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)): return
+        if isinstance(expr, ast.Compare):
+            seen = set()
+            for operand in (expr.left, *expr.comparators):
+                for attr in ast.walk(operand):
+                    if not isinstance(attr, ast.Attribute) or attr.attr not in {"code", "errno", "status_code"}: continue
+                    identity = (ast.dump(attr.value), attr.attr)
+                    if identity in seen: continue
+                    seen.add(identity)
+                    provenance = origin(value_origin(attr.value, env))
+                    where = _rel(root, py, attr.lineno)
+                    if provenance == "@vendor":
+                        f.add("#557", where, "확인된 벤더 오류/응답 코드를 위층이 판정한다 — 정규화는 그 인프라를 «소유한» 어댑터가 한다")
+                    elif provenance != "@domain":
+                        cand.add("#557", where, "code/errno/status_code 수신자 출처 불명 — 벤더 코드인지 계약 값인지 확인 필요", "이 값의 실제 선언과 정규화 소유자는 어디인가")
+        for child in ast.iter_child_nodes(expr): inspect(child, env)
+
+    def parameters(fn, env):
+        for arg in (*fn.args.posonlyargs, *fn.args.args, *fn.args.kwonlyargs):
+            env[arg.arg] = origin(address(arg.annotation, env))
+        for arg in (fn.args.vararg, fn.args.kwarg):
+            if arg: env[arg.arg] = ""
+
+    # 최초 정적 별칭은 보존한다. 이미 바인딩된 모듈 이름의 재대입은 함수에서 불명이다.
+    rebound = set()
+    bound = set()
+    pending = list(reversed(mod.body))
+    while pending:
+        st = pending.pop()
+        if isinstance(st, (ast.Import, ast.ImportFrom)):
+            names = set(imported(st, py))
+        elif isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            names = {st.name}
+        elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign, ast.Delete)):
+            targets = st.targets if isinstance(st, (ast.Assign, ast.Delete)) else [st.target]
+            names = {key(t) for t in targets}
+        elif isinstance(st, (ast.Name, ast.Attribute)) and isinstance(st.ctx, (ast.Store, ast.Del)):
+            names = {key(st)}
+        elif isinstance(st, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try, ast.With, ast.AsyncWith, ast.withitem, ast.ExceptHandler)):
+            # 모듈 실행 구간만 펼친다. 위의 함수/클래스 정의는 이름만 바인딩한다.
+            pending.extend(reversed(list(ast.iter_child_nodes(st))))
+            names = {st.name} if isinstance(st, ast.ExceptHandler) and st.name else set()
+        else:
+            continue
+        rebound.update(names & bound)
+        bound.update(names)
+
+    def block(body, env):
+        for st in body:
+            if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                local = dict(env)
+                for name in rebound: local[name] = ""
+                parameters(st, local)
+                block(st.body, local)
+                env[st.name] = ""
+                continue
+            if isinstance(st, ast.ClassDef):
+                # 각 메서드는 분리한다. 생성자의 직접 주입 속성만 공유한다.
+                fields = {}
+                init = next((n for n in st.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == "__init__"), None)
+                if init:
+                    local = dict(env)
+                    parameters(init, local)
+                    for n in init.body:
+                        if isinstance(n, (ast.Assign, ast.AnnAssign)):
+                            value = value_origin(n.value, local)
+                            for target in n.targets if isinstance(n, ast.Assign) else [n.target]:
+                                local[key(target)] = value
+                        else:
+                            pending = [n]
+                            while pending:
+                                target = pending.pop()
+                                if isinstance(target, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+                                    continue
+                                if isinstance(target, (ast.Name, ast.Attribute)) and isinstance(target.ctx, (ast.Store, ast.Del)):
+                                    local[key(target)] = ""
+                                pending.extend(ast.iter_child_nodes(target))
+                    fields = {k: v for k, v in local.items() if k.startswith("self.")}
+                block(st.body, dict(env, **fields))
+                env[st.name] = ".".join((*py.relative_to(root).with_suffix("").parts, st.name))
+                continue
+            if isinstance(st, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try, ast.With, ast.AsyncWith)):
+                branches = []
+                if isinstance(st, (ast.With, ast.AsyncWith)):
+                    local = dict(env)
+                    for item in st.items:
+                        inspect(item.context_expr, env)
+                        if item.optional_vars: local[key(item.optional_vars)] = ""
+                    block(st.body, local)
+                    branches = [local, env]
+                else:
+                    for field in ("test", "iter"):
+                        expr = getattr(st, field, None)
+                        if expr is not None: inspect(expr, env)
+                    local = dict(env)
+                    if isinstance(st, (ast.For, ast.AsyncFor)): local[key(st.target)] = ""
+                    block(st.body, local)
+                    other = dict(env)
+                    block(st.orelse, other)
+                    branches = [local, other]
+                    if isinstance(st, ast.Try):
+                        for handler in st.handlers:
+                            local = dict(env)
+                            types = handler.type.elts if isinstance(handler.type, ast.Tuple) else [handler.type]
+                            origins = {origin(address(t, env)) for t in types}
+                            if handler.name: local[handler.name] = origins.pop() if len(origins) == 1 else ""
+                            block(handler.body, local)
+                            if handler.name: local[handler.name] = ""
+                            branches.append(local)
+                for k in set().union(*(b.keys() for b in branches)):
+                    values = {b.get(k, "") for b in branches}
+                    env[k] = values.pop() if len(values) == 1 else ""
+                if isinstance(st, ast.Try): block(st.finalbody, env)
+                continue
+            inspect(st, env)
+            if isinstance(st, (ast.Import, ast.ImportFrom)): env.update(imported(st, py))
+            elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+                value = value_origin(st.value, env) if not isinstance(st, ast.AugAssign) else ""
+                if isinstance(st, ast.AnnAssign) and st.value is None: value = origin(address(st.annotation, env))
+                for target in st.targets if isinstance(st, ast.Assign) else [st.target]:
+                    if isinstance(target, (ast.Name, ast.Attribute)): env[key(target)] = value
+                    else:
+                        for n in ast.walk(target):
+                            if isinstance(n, ast.Name): env[n.id] = ""
+            elif isinstance(st, ast.Delete):
+                for target in st.targets: env[key(target)] = ""
+        return env
+
+    block(mod.body, {})
+
+
 def _check_use_side(root: Path, bc: Path, bc_vocab_set: set, f: Findings, cand: Candidates) -> None:
     app = bc / "application_layer"
     if app.is_dir():
@@ -1162,13 +1377,7 @@ def _check_use_side(root: Path, bc: Path, bc_vocab_set: set, f: Findings, cand: 
                             cand.add("#475", _rel(root, py, node.lineno),
                                      "domain_bypass_query 결과가 조건식에 흐른다 — 이 자료는 도메인 "
                                      "규칙을 안 태운 «날것»이다", "Q2 — 이 판정이 업무 규칙인가")
-            # #557 — 벤더 오류 코드 판정이 위층에.
-            for node in ast.walk(mod):
-                if isinstance(node, ast.Compare) and isinstance(node.left, ast.Attribute) \
-                        and node.left.attr in ("code", "errno", "status_code"):
-                    f.add("#557", _rel(root, py, node.lineno),
-                          "벤더 오류 코드를 위층이 판정한다 — 일시 실패의 정규화는 그 인프라를 "
-                          "«소유한» 어댑터가 한다")
+            _check_property_origins(root, py, mod, f, cand)
     for layer in DRIVING_DIRS:
         base = bc / layer
         if not base.is_dir():

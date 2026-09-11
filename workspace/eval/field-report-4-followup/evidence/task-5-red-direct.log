@@ -1,0 +1,100 @@
+test_cache_cannot_hide_fixed_skeleton_and_promoted_parts_have_no_floor (__main__.CacheInstanceRegression.test_cache_cannot_hide_fixed_skeleton_and_promoted_parts_have_no_floor) ... FAIL
+test_cache_predicate_requires_cache_and_rejects_actual_files_links_and_read_errors (__main__.CacheInstanceRegression.test_cache_predicate_requires_cache_and_rejects_actual_files_links_and_read_errors) ... FAIL
+test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics (__main__.CacheInstanceRegression.test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics) ... 
+  test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics (__main__.CacheInstanceRegression.test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics) (slot='domain_layer/vanished', extra=None) ... FAIL
+  test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics (__main__.CacheInstanceRegression.test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics) (slot='application_layer/order/vanished', extra=None) ... FAIL
+  test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics (__main__.CacheInstanceRegression.test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics) (slot='driving_layer/open_host_service/vanished', extra=None) ... FAIL
+  test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics (__main__.CacheInstanceRegression.test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics) (slot='application_layer/port/vanished', extra=None) ... FAIL
+  test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics (__main__.CacheInstanceRegression.test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics) (slot='driven_layer/adapter/email_sender/vanished_adapter', extra=None) ... FAIL
+
+======================================================================
+FAIL: test_cache_cannot_hide_fixed_skeleton_and_promoted_parts_have_no_floor (__main__.CacheInstanceRegression.test_cache_cannot_hide_fixed_skeleton_and_promoted_parts_have_no_floor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 731, in test_cache_cannot_hide_fixed_skeleton_and_promoted_parts_have_no_floor
+    self.assertNotIn("#642", output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+AssertionError: '#642' unexpectedly found in '[ⓓ#644] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/field-cache-u631jti8/project/application/orders/driving_layer/api/order/order_controller/order_controller.py: 행위 칸 실현 240행(>200) — 캐스케이드 판정 의무 (트리 12행) — 물음: 역할 밖 응집 단위가 있는가 — ①이동/②동명 폴더 승격/③유지 (houserules §1 캐스케이드)\nblocker 1건 — 골격이 어긋나면 나머지 검사를 돌리지 않는다(#487)\n  [#642] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/field-cache-u631jti8/project/application/orders/driving_layer/api/order/order_controller/order_sse_renderer.py: 부품 1행 — 출생 하한 50행 미만(신규 여부는 게이트 앵커 차분이 가른다 · 기존분은 잔존 보고)\n'
+
+======================================================================
+FAIL: test_cache_predicate_requires_cache_and_rejects_actual_files_links_and_read_errors (__main__.CacheInstanceRegression.test_cache_predicate_requires_cache_and_rejects_actual_files_links_and_read_errors)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 670, in test_cache_predicate_requires_cache_and_rejects_actual_files_links_and_read_errors
+    self.assertTrue(predicate(path))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics (__main__.CacheInstanceRegression.test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics) (slot='domain_layer/vanished', extra=None)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 708, in test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics
+    self.assertEqual(any(rule in line for line in hits), extra is not None, output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True != False : blocker — 도메인 모델 위반 (루트를 지나고·값은 불변이고·한 트랜잭션 = 애그리거트 하나 — D12·D13·D50)
+  [#299] application/orders/domain_layer/vanished: `vanished_repository.py` 가 없다 — 애그리거트 폴더는 루트와 리포지토리 선언 파일을 갖는다(#282)
+  [#256] application/orders/domain_layer/vanished: `vanished.py` 가 없다 — 애그리거트 루트 클래스 하나가 폴더와 같은 이름의 파일로 온다
+
+
+======================================================================
+FAIL: test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics (__main__.CacheInstanceRegression.test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics) (slot='application_layer/order/vanished', extra=None)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 708, in test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics
+    self.assertEqual(any(rule in line for line in hits), extra is not None, output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True != False : blocker 4건 — 유스케이스·경계 자료 규율 위반
+  [#193] application/orders/application_layer/order/vanished/vanished_use_case.py: 진입점 파일 이름은 `vanished_use_case.py` 다 — 부재
+  [#570] application/orders/application_layer/order/vanished/vanished_result.py: `<use_case>_result.py` 는 커맨드 쪽도 갖는다 — 돌려줄 것이 없으면 «빈 파일»로 둔다
+  [#569] application/orders/application_layer/order/vanished/vanished_command.py: `<use_case>_command.py` 는 안 써도 «빈 파일»로 온다
+  [#569] application/orders/application_layer/order/vanished/vanished_query.py: `<use_case>_query.py` 는 안 써도 «빈 파일»로 온다
+
+
+======================================================================
+FAIL: test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics (__main__.CacheInstanceRegression.test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics) (slot='driving_layer/open_host_service/vanished', extra=None)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 708, in test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics
+    self.assertEqual(any(rule in line for line in hits), extra is not None, output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True != False : blocker 3건 — 컨텍스트 격리·경계 규율 위반
+  [#152] application/orders/driving_layer/open_host_service/vanished/vanished_service.py: 창구의 진입점은 `vanished_service.py` 하나다 — 부재
+  [#154] application/orders/driving_layer/open_host_service/vanished/empty: `<service>/` 안은 `<service>_service.py` 와 `contract/` 둘로 구성한다
+  [#154] application/orders/driving_layer/open_host_service/vanished/nested: `<service>/` 안은 `<service>_service.py` 와 `contract/` 둘로 구성한다
+
+
+======================================================================
+FAIL: test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics (__main__.CacheInstanceRegression.test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics) (slot='application_layer/port/vanished', extra=None)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 708, in test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics
+    self.assertEqual(any(rule in line for line in hits), extra is not None, output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True != False : blocker — 포트·어댑터 짝맞춤 위반 (선언은 port/·구현은 adapter/·페이크는 test/fake/ — D37·D44·D51·D57)
+  [#218] application/orders/application_layer/port/vanished: 계약 파일 이름이 폴더와 다르다 — `vanished_port.py` 여야 한다([])
+  [#225] application/orders/application_layer/port/vanished: exception.py 가 없다 — 포트 폴더마다 필수다
+
+
+======================================================================
+FAIL: test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics (__main__.CacheInstanceRegression.test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics) (slot='driven_layer/adapter/email_sender/vanished_adapter', extra=None)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 708, in test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics
+    self.assertEqual(any(rule in line for line in hits), extra is not None, output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True != False : blocker 8건 — 골격이 어긋나면 나머지 검사를 돌리지 않는다(#487)
+  [#488] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/field-cache-rap9c8fh/project/application/orders/driven_layer/adapter/email_sender/vanished_adapter/__init__.py: 어댑터 패키지에 `__init__.py` 가 없다
+  [#488] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/field-cache-rap9c8fh/project/application/orders/driven_layer/adapter/email_sender/vanished_adapter/adapter: 고정 칸 `adapter/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 125행)
+  [#488] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/field-cache-rap9c8fh/project/application/orders/driven_layer/adapter/email_sender/vanished_adapter/command: 고정 칸 `command/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 127행)
+  [#488] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/field-cache-rap9c8fh/project/application/orders/driven_layer/adapter/email_sender/vanished_adapter/constant: 고정 칸 `constant/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 129행)
+  [#488] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/field-cache-rap9c8fh/project/application/orders/driven_layer/adapter/email_sender/vanished_adapter/contract: 고정 칸 `contract/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 131행)
+  [#488] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/field-cache-rap9c8fh/project/application/orders/driven_layer/adapter/email_sender/vanished_adapter/schema: 고정 칸 `schema/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 133행)
+  [#490] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/field-cache-rap9c8fh/project/application/orders/driven_layer/adapter/email_sender/vanished_adapter/empty: 트리에 없는 칸이다 — 반환
+  [#490] /var/folders/50/f629pvj96jl1n3rrw444hz9h0000gn/T/field-cache-rap9c8fh/project/application/orders/driven_layer/adapter/email_sender/vanished_adapter/nested: 트리에 없는 칸이다 — 반환
+
+
+----------------------------------------------------------------------
+Ran 3 tests in 2.263s
+
+FAILED (failures=7)

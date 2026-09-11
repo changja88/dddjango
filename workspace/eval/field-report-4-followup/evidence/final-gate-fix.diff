@@ -1,0 +1,117 @@
+--- before/workspace/eval/fixtures/ontology_gate/target-counts.json
++++ workspace/eval/fixtures/ontology_gate/target-counts.json
+@@ -1,7 +1,7 @@
+ {
+   "AliasEntryShape": 30,
+   "BlockShape": 2920,
+-  "ExpressionShape": 3617,
++  "ExpressionShape": 3648,
+   "MetaNodeShapeIriShape": 22,
+   "NormShape": 3478,
+   "SectionShape": 546,
+--- before/workspace/tools/checker_baseline_matrix.py
++++ workspace/tools/checker_baseline_matrix.py
+@@ -259,8 +259,8 @@
+     "check-choices-literal-consumption.py": (2, 0, 0, 6, True),
+     "check-usecase-dto-placement.py": (2, 34, 34, 8, False),
+     "check-transaction-boundary.py": (2, 15, 15, 3, False),
+-    "check-domain-model.py": (2, 51, 49, 14, False),
+-    "check-port-adapter-pairing.py": (2, 96, 93, 12, False),
++    "check-domain-model.py": (2, 50, 48, 15, False),
++    "check-port-adapter-pairing.py": (2, 95, 92, 13, False),
+     "check-event-publish.py": (2, 20, 20, 5, False),
+     "check-broker-contract.py": (2, 22, 22, 6, False),
+     "check-missable-entrance.py": (2, 17, 17, 5, False),
+--- before/workspace/tools/findings_count_matrix.py
++++ workspace/tools/findings_count_matrix.py
+@@ -114,9 +114,9 @@
+     "check-choices-literal-consumption.py": (2, 3, 0, "contract:선행 계약(2026-07-06 상수 승격) 소유×3", "6253365c1e25da21", "44e1429f9c74c1a3", "2f961c306ed061c0"),
+     "check-common-container.py": (2, 2, 0, "contract:선행 규약(D38 승격/강등 — 루트 framework/ 배치) 소유×2", "7ddb14624648702f", "7ddb14624648702f", "5b02b9878d9d83e0"),
+     "check-composition-root.py": (2, 18, 2, "#101×1,#105×1,#107×1,#108×1,#109×1,#111×1,#112×1,#437×3,#440×1,#441×1,#497×1,#498×1,#500×1,#501×1,#511×1,#84×1,#85×1,#86×1", "fe484815e50a3068", "47b0169bfcaeec08", "5e131994cd2c5b94"),
+-    "check-context-isolation.py": (2, 60, 4, "#102×1,#11×1,#110×1,#117×1,#13×1,#14×1,#146×1,#150×1,#151×1,#153×4,#154×1,#155×1,#157×2,#164×2,#166×1,#167×2,#168×1,#170×1,#185×1,#186×1,#2×2,#251×1,#288×1,#291×1,#292×1,#295×1,#312×1,#328×1,#347×1,#361×1,#363×1,#364×2,#431×2,#433×2,#450×2,#453×1,#455×1,#472×1,#473×2,#482×1,#483×2,#484×2,#51×1,#633×1,#634×1,#9×1,#93×1,#94×1,#95×1,#98×1", "ba1bd1d71355133c", "ba1bd1d71355133c", "c3fa0ebb9719c8bd"),
++    "check-context-isolation.py": (2, 60, 4, "#102×1,#11×1,#110×1,#117×1,#13×1,#14×1,#146×1,#150×1,#151×1,#153×4,#154×1,#155×1,#157×2,#164×2,#166×1,#167×2,#168×1,#170×1,#185×1,#186×1,#2×2,#251×1,#288×1,#291×1,#292×1,#295×1,#312×1,#328×1,#347×1,#361×1,#363×1,#364×2,#431×2,#433×2,#450×2,#453×1,#455×1,#472×1,#473×2,#482×1,#483×2,#484×2,#51×1,#633×1,#634×1,#9×1,#93×1,#94×1,#95×1,#98×1", "ba1bd1d71355133c", "ba1bd1d71355133c", "cb419c5339b1d44e"),
+     "check-db-table.py": (2, 26, 0, "#318×1,#324×2,#325×1,#326×2,#329×1,#330×2,#331×2,#332×1,#334×1,#335×2,#467×1,#535×1,#536×1,#537×1,#538×2,#630×2,#631×2,#632×1", "5b85011e45235434", "5b85011e45235434", "239a377ed7ebf3eb"),
+-    "check-domain-model.py": (2, 51, 13, "#17×2,#249×1,#252×1,#253×1,#256×2,#257×2,#258×1,#259×1,#260×2,#261×1,#262×1,#263×1,#264×1,#266×1,#267×1,#268×2,#269×2,#270×1,#272×1,#275×1,#276×1,#289×1,#290×1,#298×1,#299×2,#300×1,#301×4,#302×1,#303×1,#304×1,#305×1,#307×1,#308×1,#310×1,#311×1,#315×1,#459×1,#505×1,#506×1,#542×1,#543×5,#546×1,#547×2,#548×2,#549×1,#550×1,#565×1,#8×1", "60afcadde6c3c9e4", "292dcf5871d49780", "c325b92dc100f3d8"),
++    "check-domain-model.py": (2, 50, 14, "#17×2,#249×1,#252×1,#253×1,#256×2,#257×2,#258×1,#259×1,#260×2,#261×1,#262×1,#263×1,#264×1,#266×1,#267×1,#268×2,#269×2,#270×1,#272×1,#275×1,#276×1,#289×1,#290×1,#298×1,#299×2,#300×1,#301×4,#302×1,#303×1,#304×1,#305×1,#307×1,#308×1,#310×1,#311×1,#315×1,#459×1,#505×1,#506×1,#542×1,#543×5,#546×1,#547×2,#548×2,#549×1,#550×1,#565×1,#8×1", "6a9e05ed0be4cdd6", "b7ad21a7368057a4", "2b23fe41ceddc5ec"),
+     "check-error-centralization.py": (2, 5, 0, "#114×1,#568×2,#572×1,#636×1", "c3da2a9e89c47951", "c3da2a9e89c47951", "cacda249ec94d135"),
+     "check-event-publish.py": (2, 20, 4, "#271×3,#279×1,#280×2,#502×1,#503×2,#504×1,#507×1,#508×1,#509×1,#564×2,#600×1,#601×1,#627×2,#7×2,#96×3", "06594a2b1253f981", "f6db284cc0757e6b", "6027ffddfd7b2d9e"),
+     "check-idempotency-scope-creep.py": (2, 1, 0, "contract:선행 계약(architecture-api §13 멱등 스코프) 소유×1", "46b04bd6bcc4b9e5", "46b04bd6bcc4b9e5", "0de6db90334e6f41"),
+@@ -126,7 +126,7 @@
+     "check-naming.py": (2, 33, 5, "#118×1,#148×1,#169×1,#247×5,#28×2,#30×1,#309×1,#33×2,#34×1,#340×1,#341×1,#342×1,#343×1,#344×2,#345×1,#348×2,#36×3,#382×1,#41×1,#43×1,#44×1,#481×1,#588×1,#589×1,#590×2,#87×1,#97×1", "6bb819f74f0e36fe", "0504226186872304", "315d6e4143281e64"),
+     "check-ninja-boundary-middleware.py": (2, 2, 0, "contract:선행 계약(08-04 API-error) 소유×2", "bcca745399dc645e", "bcca745399dc645e", "fb84fc0e70f9f759"),
+     "check-openapi-error-declaration.py": (2, 6, 0, "#63×6", "231a9ad52fb544e6", "04abef8b5eeb1490", "25d58d4465267572"),
+-    "check-port-adapter-pairing.py": (2, 96, 11, "#134×1,#212×2,#214×1,#215×1,#216×2,#218×2,#219×1,#220×2,#225×1,#227×1,#228×2,#231×1,#232×1,#233×2,#234×1,#235×1,#236×1,#238×1,#239×1,#240×1,#241×1,#242×1,#244×1,#245×4,#246×1,#313×1,#351×3,#352×1,#354×1,#356×1,#359×1,#365×3,#367×1,#368×1,#369×1,#370×2,#373×1,#374×1,#376×1,#457×1,#460×1,#462×2,#464×1,#465×1,#476×3,#477×2,#480×1,#485×5,#545×8,#551×1,#552×4,#553×1,#554×1,#555×5,#556×1,#557×1,#566×1,#573×1,#574×1,#575×1,#576×1,#577×1,#578×1,#579×1,#580×1,#581×1,#582×1,#583×1,#594×2,#64×1", "6784c9eb4e93b028", "76eca77e578a9733", "cb56223019435481"),
++    "check-port-adapter-pairing.py": (2, 95, 12, "#134×1,#212×2,#214×1,#215×1,#216×2,#218×2,#219×1,#220×2,#225×1,#227×1,#228×2,#231×1,#232×1,#233×2,#234×1,#235×1,#236×1,#238×1,#239×1,#240×1,#241×1,#242×1,#244×1,#245×4,#246×1,#313×1,#351×3,#352×1,#354×1,#356×1,#359×1,#365×3,#367×1,#368×1,#369×1,#370×2,#373×1,#374×1,#376×1,#457×1,#460×1,#462×2,#464×1,#465×1,#476×3,#477×2,#480×1,#485×5,#545×8,#551×1,#552×4,#553×1,#554×1,#555×5,#556×1,#557×1,#566×1,#573×1,#574×1,#575×1,#576×1,#577×1,#578×1,#579×1,#580×1,#581×1,#582×1,#583×1,#594×2,#64×1", "54b6248f97c99146", "adc3ae97d6ea4dc5", "d51ed3353f990bb4"),
+     "check-public-surface-annotation.py": (2, 33, 4, "#358×2,#456×2,#493×9,#645×8,#646×7,#647×6,#650×1,#69×2", "30df63f33872efea", "5c43023260be31b9", "d382c0a507443976"),
+     "check-response-schema-bypass.py": (2, 1, 0, "contract:선행 계약(08-04 API-error) 소유×1", "7425fefd479b2edc", "31ac0f0c6afe76c5", "bfd73ca26e52466d"),
+     "check-synthetic-infra-exc.py": (2, 2, 0, "#129×1,sentinel:합성×1", "2e7e2fb7cccbac27", "639e715f10dcde56", "518f4f7518bb9711"),
+--- before/dddjango/scripts/pregate_symbol_kinds.json
++++ dddjango/scripts/pregate_symbol_kinds.json
+@@ -8,26 +8,26 @@
+     "check-choices-literal-consumption.py": "c1f6a998f550c67c",
+     "check-common-container.py": "aa14a1f9ae49d157",
+     "check-composition-root.py": "3acaa1d1bf6660b8",
+-    "check-context-isolation.py": "6ee97a89c6cc5a81",
++    "check-context-isolation.py": "bb68853338db1326",
+     "check-db-table.py": "3858f5b128891feb",
+-    "check-domain-model.py": "810f941cffe36aa0",
++    "check-domain-model.py": "ded715d2026c7556",
+     "check-error-centralization.py": "9f43e4ee63adf095",
+     "check-event-publish.py": "7d751a39960a42a0",
+     "check-idempotency-scope-creep.py": "434b125081b5523d",
+-    "check-layer-skeleton.py": "f2bdf8e26f9e4846",
++    "check-layer-skeleton.py": "32810abb897f3dfc",
+     "check-mechanism-ownership.py": "9ab3aaaf7218216f",
+     "check-missable-entrance.py": "a5b91c4088799c66",
+     "check-naming.py": "b8b093aa3bb2ed40",
+     "check-ninja-boundary-middleware.py": "e2f4aed8fef47305",
+     "check-openapi-error-declaration.py": "5a57e8958cc6d992",
+-    "check-port-adapter-pairing.py": "1900f109da8eea73",
+-    "check-public-surface-annotation.py": "788c9b1513ebab27",
++    "check-port-adapter-pairing.py": "9fe24b4df8df90a6",
++    "check-public-surface-annotation.py": "b94b4101403d5992",
+     "check-response-schema-bypass.py": "0fd510470a0ac985",
+     "check-synthetic-infra-exc.py": "f30d0f3e8320ee6b",
+     "check-test-config.py": "a82133a31bf9db76",
+     "check-transaction-boundary.py": "5660df577ba001e2",
+     "check-transient-overmapping.py": "c3dff5700493ecb6",
+-    "check-usecase-dto-placement.py": "e2fec2b3edb3f740"
++    "check-usecase-dto-placement.py": "4a51b80b722d516c"
+   },
+   "kinds": [
+     {
+--- before/codex-dddjango/skills/dddjango/scripts/pregate_symbol_kinds.json
++++ codex-dddjango/skills/dddjango/scripts/pregate_symbol_kinds.json
+@@ -8,26 +8,26 @@
+     "check-choices-literal-consumption.py": "c1f6a998f550c67c",
+     "check-common-container.py": "aa14a1f9ae49d157",
+     "check-composition-root.py": "3acaa1d1bf6660b8",
+-    "check-context-isolation.py": "6ee97a89c6cc5a81",
++    "check-context-isolation.py": "bb68853338db1326",
+     "check-db-table.py": "3858f5b128891feb",
+-    "check-domain-model.py": "810f941cffe36aa0",
++    "check-domain-model.py": "ded715d2026c7556",
+     "check-error-centralization.py": "9f43e4ee63adf095",
+     "check-event-publish.py": "7d751a39960a42a0",
+     "check-idempotency-scope-creep.py": "434b125081b5523d",
+-    "check-layer-skeleton.py": "f2bdf8e26f9e4846",
++    "check-layer-skeleton.py": "32810abb897f3dfc",
+     "check-mechanism-ownership.py": "9ab3aaaf7218216f",
+     "check-missable-entrance.py": "a5b91c4088799c66",
+     "check-naming.py": "b8b093aa3bb2ed40",
+     "check-ninja-boundary-middleware.py": "e2f4aed8fef47305",
+     "check-openapi-error-declaration.py": "5a57e8958cc6d992",
+-    "check-port-adapter-pairing.py": "1900f109da8eea73",
+-    "check-public-surface-annotation.py": "788c9b1513ebab27",
++    "check-port-adapter-pairing.py": "9fe24b4df8df90a6",
++    "check-public-surface-annotation.py": "b94b4101403d5992",
+     "check-response-schema-bypass.py": "0fd510470a0ac985",
+     "check-synthetic-infra-exc.py": "f30d0f3e8320ee6b",
+     "check-test-config.py": "a82133a31bf9db76",
+     "check-transaction-boundary.py": "5660df577ba001e2",
+     "check-transient-overmapping.py": "c3dff5700493ecb6",
+-    "check-usecase-dto-placement.py": "e2fec2b3edb3f740"
++    "check-usecase-dto-placement.py": "4a51b80b722d516c"
+   },
+   "kinds": [
+     {

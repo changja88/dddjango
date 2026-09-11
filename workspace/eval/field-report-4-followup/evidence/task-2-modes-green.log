@@ -1,0 +1,13 @@
+mode baseline=False tag=add explicit=False: exit 3 (expected 3)
+mode baseline=False tag=add explicit=True: exit 0 (expected 0)
+mode baseline=False tag=empty explicit=False: exit 3 (expected 3)
+mode baseline=False tag=empty explicit=True: exit 0 (expected 0)
+mode baseline=False tag=update explicit=False: exit 3 (expected 3)
+mode baseline=False tag=update explicit=True: exit 3 (expected 3)
+mode baseline=True tag=add explicit=False: exit 3 (expected 3)
+mode baseline=True tag=add explicit=True: exit 3 (expected 3)
+mode baseline=True tag=empty explicit=False: exit 3 (expected 3)
+mode baseline=True tag=empty explicit=True: exit 3 (expected 3)
+mode baseline=True tag=update explicit=False: exit 4 (expected 4)
+mode baseline=True tag=update explicit=True: exit 4 (expected 4)
+

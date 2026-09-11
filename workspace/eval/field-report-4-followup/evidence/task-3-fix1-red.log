@@ -1,0 +1,37 @@
+FF
+======================================================================
+FAIL: test_admin_augmented_write_and_module_super_shadow_preserve_diagnostics (field_report_checker_smoke.CheckerRegression.test_admin_augmented_write_and_module_super_shadow_preserve_diagnostics) (case='augmented write')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 261, in test_admin_augmented_write_and_module_super_shadow_preserve_diagnostics
+    self.assertEqual([r['severity'] for r in context_rows], expected, context_rows)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != ['violation']
+
+Second list contains 1 additional elements.
+First extra element 0:
+'violation'
+
+- []
++ ['violation'] : []
+
+======================================================================
+FAIL: test_admin_augmented_write_and_module_super_shadow_preserve_diagnostics (field_report_checker_smoke.CheckerRegression.test_admin_augmented_write_and_module_super_shadow_preserve_diagnostics) (case='module super shadow')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 261, in test_admin_augmented_write_and_module_super_shadow_preserve_diagnostics
+    self.assertEqual([r['severity'] for r in context_rows], expected, context_rows)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != ['info']
+
+Second list contains 1 additional elements.
+First extra element 0:
+'info'
+
+- []
++ ['info'] : []
+
+----------------------------------------------------------------------
+Ran 1 test in 0.722s
+
+FAILED (failures=2)

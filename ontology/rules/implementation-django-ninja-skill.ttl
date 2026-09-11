@@ -415,12 +415,18 @@ djr:R-2940 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2941 a djr:Exception ;
-    skos:prefLabel "승인된 안정 의미 한정 infra/ACL 의 자기 BC exception 정규화"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2941@2026-08-22> .
+    skos:prefLabel "인프라 내부 계약 번역과 공개 safe 500 유지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2941@2026-09-11> .
 
 <https://numchida.com/ns/djr#R-2941@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2941 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2941@2026-09-11> a djr:Expression ;
+    prov:specializationOf djr:R-2941 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2941@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-2942 a djr:Obligation ;
     skos:prefLabel "선언된 JSON 성공의 Schema/Status 반환"@ko ;
@@ -655,7 +661,7 @@ djr:R-3466 a djr:Obligation ;
     djr:order 10 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1/b6>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s016-4.1/b7>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b31>, <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b33> ;
     djr:statesNorm djr:R-2938, djr:R-2939, djr:R-2940, djr:R-2941 ;
-    djr:text "- auth 실패는 `None` 또는 framework `AuthenticationError`이며 `request.auth`에 `ErrorSchema`를 넣지 않는다. raw infra 실패는 기본 500이고, 승인된 안정 의미만 infra/ACL이 자기 BC exception으로 정규화한다 (§4·§6.2)\n"@ko .
+    djr:text "- auth 실패는 `None` 또는 framework `AuthenticationError`이며 `request.auth`에 `ErrorSchema`를 넣지 않는다. 이미 잡은 IntegrityError의 승인된 알려진 제약 실패는 구체 계약 예외로, 나머지는 승인된 일반 저장소 실패 계약으로 번역한다. repository 실패 계약은 domain 소유, capability port 실패 계약은 해당 port 소유다. 이 내부 정규화는 공개 HTTP 오류 승인이 아니므로 일반 저장소 실패의 외부 응답은 기존 safe 500을 유지한다. 새 ErrorCode/ErrorSchema/4xx/503을 만들지 않는다. 잡지 않은 unknown 인프라 오류를 새로 catch-all하지 않는다. 안정된 public meaning이 별도로 승인된 경우에만 그 외부 계약에 맞는 controller mapping을 한다. 이미 선언된 계약 예외의 관찰 후 재던짐은 허용한다. (§4·§6.2)\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/SKILL.md/s004/b11> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/SKILL.md/s004> ;

@@ -1,0 +1,8 @@
+test_cache_cannot_hide_fixed_skeleton_and_promoted_parts_have_no_floor (__main__.CacheInstanceRegression.test_cache_cannot_hide_fixed_skeleton_and_promoted_parts_have_no_floor) ... ok
+test_cache_predicate_requires_cache_and_rejects_actual_files_links_and_read_errors (__main__.CacheInstanceRegression.test_cache_predicate_requires_cache_and_rejects_actual_files_links_and_read_errors) ... ok
+test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics (__main__.CacheInstanceRegression.test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 2.556s
+
+OK

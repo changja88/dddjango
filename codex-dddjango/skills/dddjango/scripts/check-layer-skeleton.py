@@ -24,7 +24,7 @@
 
 등록 순서: 이 검사는 다른 모든 검사보다 «먼저» 돌고, 걸리면 나머지를 돌리지 않는다(#487).
 내용 판정(#10·#628 등 ast 규칙)은 Phase 3 편입분이다 — 여기는 «존재·폐쇄»와 동명 폴더
-승격 실현의 형태 검증(#638~#643 · ⓓ#644 후보 신호 — 2026-09-01)만 본다.
+승격 실현의 형태 검증(#638~#641·#643 · ⓓ#644 후보 신호 — 2026-09-01)만 본다.
 
 사용법: check-layer-skeleton.py [TARGET_DIR]   (기본: 현재 디렉터리)
 종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
@@ -86,13 +86,12 @@ def _has_adoption_signal(bc_dir: Path) -> bool:
     return has_layer or has_marker
 
 
-# ── 동명 폴더 승격(#490 교체형) — #638~#643 + ⓓ#644 ─────────────────────────
+# ── 동명 폴더 승격(#490 교체형) — #638~#641·#643 + ⓓ#644 ─────────────────────────
 
 # ⓓ#644 행위 칸 로스터 — 승격 허용 표기(swappable) 중 schema 4행(14·15·20·21) 제외
 # (houserules SKILL §1 감사 주도 배정 — 신호는 무조건 방출, 판정 의무의 diff 한정은 감사자 몫)
 PROMO_ACTION_ROWS = frozenset({12, 18, 24, 41, 61, 74, 92, 94, 96})
 PROMO_SIGNAL_LINES = 200   # ⓓ#644 후보 문턱(물리 행·빈 줄 제외)
-PROMO_PART_MIN_LINES = 50  # #642 부품 출생 하한
 JUNK_DRAWER_NAMES = frozenset({"utils.py", "helpers.py", "util.py", "helper.py", "common.py", "misc.py"})
 _CASCADE_Q = "역할 밖 응집 단위가 있는가 — ①이동/②동명 폴더 승격/③유지 (houserules §1 캐스케이드)"
 
@@ -128,7 +127,7 @@ def _init_reexport_only(path: Path) -> bool:
 
 
 def _check_promoted(dir_path: Path, crow: "tree.Row", out: Findings, cand: Candidates) -> None:
-    """유효한 동명 폴더 승격의 형태 검증(#638~#643) + 행위 칸 ⓓ#644 신호."""
+    """유효한 동명 폴더 승격의 형태 검증(#638~#641·#643) + 행위 칸 ⓓ#644 신호."""
     body = dir_path / (dir_path.name + ".py")
     init = dir_path / "__init__.py"
     if not body.is_file():
@@ -145,8 +144,6 @@ def _check_promoted(dir_path: Path, crow: "tree.Row", out: Findings, cand: Candi
         if f.name in JUNK_DRAWER_NAMES:
             out.add("#640", f, "승격 폴더 안 정크드로어 이름 — 부품은 응집 단위의 이름을 가진다")
         n = _phys_lines(f)
-        if n < PROMO_PART_MIN_LINES:
-            out.add("#642", f, f"부품 {n}행 — 출생 하한 50행 미만(신규 여부는 게이트 앵커 차분이 가른다 · 기존분은 잔존 보고)")
         if crow.r in PROMO_ACTION_ROWS and n > PROMO_SIGNAL_LINES:
             cand.add("#644", f, f"행위 칸 승격 부품 {n}행(>{PROMO_SIGNAL_LINES}) — 캐스케이드 판정 의무 (트리 {crow.r}행)", _CASCADE_Q)
     if body.is_file():
@@ -246,7 +243,7 @@ def _check_level(dir_path: Path, row: "tree.Row", bindings: dict[str, str], out:
             continue
         if getattr(crow, "swappable", False) and promo is not None and promo.is_dir() \
                 and (promo / name).is_file():
-            continue  # 유효한 승격 실현이 #488 충족이다(형태 검증은 dir 루프의 #638~#643)
+            continue  # 유효한 승격 실현이 #488 충족이다(형태 검증은 dir 루프의 #638~#641·#643)
         out.add("#488", target, f"고정 파일 부재 — 비면 빈 파일로 만든다 (트리 {crow.r}행)")
 
     # #490 — 폴더 폐쇄: 칸이 아닌 폴더는 위반. 자리표시자 폴더가 있으면 나머지는 인스턴스다.
@@ -277,6 +274,9 @@ def _check_level(dir_path: Path, row: "tree.Row", bindings: dict[str, str], out:
         if dir_placeholder is not None:
             inst_bind = dict(bindings)
             pattern = dir_placeholder.name.rstrip("/")
+            if (not pattern.endswith("_adapter") or _file_pattern_ok(p.name, pattern)) \
+                    and checker_target.cache_only_instance(p):
+                continue
             if pattern.endswith("_adapter"):
                 if not _file_pattern_ok(p.name, pattern):
                     out.add("#490", p, "어댑터 패키지 이름은 `<이름>_adapter/` 다")

@@ -1,0 +1,55 @@
+test_class_global_surface_rejects_the_entire_service_update (__main__.FieldReportTest.test_class_global_surface_rejects_the_entire_service_update) ... ok
+test_class_local_names_do_not_block_new_module_functions (__main__.FieldReportTest.test_class_local_names_do_not_block_new_module_functions) ... ok
+test_compile_failure_is_reported_without_partial_update (__main__.FieldReportTest.test_compile_failure_is_reported_without_partial_update) ... ok
+test_declaration_only_cli_and_report_dispositions (__main__.FieldReportTest.test_declaration_only_cli_and_report_dispositions) ... FAIL
+test_dto_type_provenance_nested_alias_forward_and_candidates (__main__.FieldReportTest.test_dto_type_provenance_nested_alias_forward_and_candidates) ... ok
+test_effect_declaration_contract_and_hash (__main__.FieldReportTest.test_effect_declaration_contract_and_hash) ... ok
+test_existing_class_decorator_and_alias_remain_s5_alongside_new_function (__main__.FieldReportTest.test_existing_class_decorator_and_alias_remain_s5_alongside_new_function) ... ok
+test_existing_names_and_unmodeled_updates_are_never_replaced (__main__.FieldReportTest.test_existing_names_and_unmodeled_updates_are_never_replaced) ... ok
+test_explicit_service_raise_only_clears_exception_finding (__main__.FieldReportTest.test_explicit_service_raise_only_clears_exception_finding) ... ok
+test_marker_update_cli_real_test_config_rule (__main__.FieldReportTest.test_marker_update_cli_real_test_config_rule) ... FAIL
+test_module_bindings_and_raise_helper_collisions_are_preserved (__main__.FieldReportTest.test_module_bindings_and_raise_helper_collisions_are_preserved) ... ok
+test_new_operation_clears_pair_finding_and_preserves_source_body (__main__.FieldReportTest.test_new_operation_clears_pair_finding_and_preserves_source_body) ... ok
+test_only_exact_real_ohs_service_paths_are_updated (__main__.FieldReportTest.test_only_exact_real_ohs_service_paths_are_updated) ... ok
+test_plain_signature_defaults_remain_transcribable (__main__.FieldReportTest.test_plain_signature_defaults_remain_transcribable) ... ok
+test_safe_imports_transcribe_but_conflicts_reject_the_whole_entry (__main__.FieldReportTest.test_safe_imports_transcribe_but_conflicts_reject_the_whole_entry) ... ok
+test_signals_use_first_python_artifact_and_strip_nodeid (__main__.FieldReportTest.test_signals_use_first_python_artifact_and_strip_nodeid) ... ok
+test_signature_named_expressions_reject_the_entire_service_update (__main__.FieldReportTest.test_signature_named_expressions_reject_the_entire_service_update) ... ok
+test_unlisted_first_artifact_nonadd_and_missing_markers_do_not_signal (__main__.FieldReportTest.test_unlisted_first_artifact_nonadd_and_missing_markers_do_not_signal) ... ok
+test_update_marker_final_state_and_preservation (__main__.FieldReportTest.test_update_marker_final_state_and_preservation) ... ok
+test_wrong_operation_name_and_signature_remain_real_findings (__main__.FieldReportTest.test_wrong_operation_name_and_signature_remain_real_findings) ... ok
+
+======================================================================
+FAIL: test_declaration_only_cli_and_report_dispositions (__main__.FieldReportTest.test_declaration_only_cli_and_report_dispositions)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 415, in test_declaration_only_cli_and_report_dispositions
+    self.assertEqual(run.returncode, 2, run.stdout + run.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 4 != 2 : skip — 실체화 0건(add/empty/remove 및 제한 update 실효 조치 없음): 게이트를 부르지 않는다(공허 차분 가드 · 사유 명시)
+  미시뮬레이션: S5 update(명시된 새 모듈 함수 없음(기존 이름·본문·signature는 보존); marker 후상태 무기재 — 유지): application/garden/driving_layer/open_host_service/catalog/catalog_service.py
+
+== 계약 실존 결손 0건 (boundary-imports 3단) ==
+  집계: 행 0 · 이름 판정 0 · 실존 확인 0 · 자기 add 해소 0 · 자기 update 해소 0 · 저장소 밖(검사 밖) 0 · 판정 불능 0 · 결손 0(항목 0)
+  (없음) — 명세가 선언한 경계 import 계약 전건 실존(저장소 밖 0건은 검사 밖·자기 add 0건은 symbols 채널 소관·자기 update 0건은 update 칸 symbols 선언)
+
+요약: 실체화 0 · 실존 결손 0건 · 기준선 f1167504a324 · 모드 차단
+
+
+======================================================================
+FAIL: test_marker_update_cli_real_test_config_rule (__main__.FieldReportTest.test_marker_update_cli_real_test_config_rule)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 447, in test_marker_update_cli_real_test_config_rule
+    self.assertIn(run.returncode, (0, 2), run.stdout + run.stderr)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 not found in (0, 2) : # design_pregate — 예보 실행 · 기준선 6b9fa1f40b31 (--base HEAD) · 모드 차단(enforce) · 실행기: design_pregate.py · dddjango v2.18.2 · 블록 해시 84f3793a2ffd
+(예보는 Phase 2 step 6(G2 registry 게이트)의 실행·증거 요구를 어떤 형태로도 대체·축약하지 않는다.)
+실체화 1건 · dirty overlay 0건 · 미시뮬레이션 1건 · already-built 0건
+실행 불능: registry_gate 실행 불능(exit 1): 사용 오류: 앵커=HEAD 이고 working tree 가 clean — 차분이 공허하다. 게이트는 구현 커밋 «전»에 돌리거나, 런 시작점 앵커를 지정하라(공허 green 차단).
+
+
+----------------------------------------------------------------------
+Ran 20 tests in 15.129s
+
+FAILED (failures=2)

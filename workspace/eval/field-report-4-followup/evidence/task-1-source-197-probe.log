@@ -1,0 +1,78 @@
+INPUT
+<!-- machine: file-plan -->
+```paths
+add application/garden/application_layer/books/save_book/save_book_use_case.py
+```
+<!-- machine: symbols -->
+```symbols
+application/garden/application_layer/books/save_book/save_book_use_case.py::SaveBookUseCase
+application/garden/application_layer/books/save_book/save_book_use_case.py::SaveBookUseCase.__init__(self, uow: BookUnitOfWork)
+```
+<!-- machine: boundary-imports -->
+```imports
+application/garden/application_layer/books/save_book/save_book_use_case.py  from application.garden.application_layer.port.unit_of_work.book_unit_of_work import BookUnitOfWork
+```
+<!-- machine: exception-map -->
+```exceptions
+
+```
+<!-- machine: use-case-effects -->
+```effects
+application/garden/application_layer/books/save_book/save_book_use_case.py::SaveBookUseCase  write  uow=BookUnitOfWork
+```
+
+STUB
+"""pre-gate 팬텀 스텁."""
+from __future__ import annotations
+
+from application.garden.application_layer.port.unit_of_work.book_unit_of_work import BookUnitOfWork
+
+class SaveBookUseCase:
+    """계획 스텁."""
+    def __init__(self, uow: BookUnitOfWork) -> object:
+        raise NotImplementedError
+
+
+DECLARATIONS []
+CHECKER
+
+INPUT
+<!-- machine: file-plan -->
+```paths
+add application/garden/application_layer/books/save_book/save_book_use_case.py
+```
+<!-- machine: symbols -->
+```symbols
+application/garden/application_layer/books/save_book/save_book_use_case.py::SaveBookUseCase
+application/garden/application_layer/books/save_book/save_book_use_case.py::SaveBookUseCase.execute(self, uow: BookUnitOfWork) -> None
+```
+<!-- machine: boundary-imports -->
+```imports
+application/garden/application_layer/books/save_book/save_book_use_case.py  from application.garden.application_layer.port.unit_of_work.book_unit_of_work import BookUnitOfWork
+```
+<!-- machine: exception-map -->
+```exceptions
+
+```
+<!-- machine: use-case-effects -->
+```effects
+application/garden/application_layer/books/save_book/save_book_use_case.py::SaveBookUseCase  write  uow=BookUnitOfWork
+```
+
+STUB
+"""pre-gate 팬텀 스텁."""
+from __future__ import annotations
+
+from application.garden.application_layer.port.unit_of_work.book_unit_of_work import BookUnitOfWork
+
+class SaveBookUseCase:
+    """계획 스텁."""
+    def execute(self, uow: BookUnitOfWork) -> None:
+        raise NotImplementedError
+
+
+DECLARATIONS []
+CHECKER
+blocker — 트랜잭션 경계 위반 (한 트랜잭션 = 애그리거트 하나 · D50)
+  [#197] application/garden/application_layer/books/save_book/save_book_use_case.py:8: `execute` 이 UnitOfWork 를 받는데 도달 범위에 save/remove/after_commit 이 없다(with 진입만으로는 쓰기가 아니다) — 읽기 전용 유스케이스는 UnitOfWork 를 받지 않는다
+

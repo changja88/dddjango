@@ -5,6 +5,7 @@
 - **ⓐ 정본**(`skills/discipline-houserules/references/final.md`)은 **전 규칙**의 값 소유자라 컬럼에 없다. ⓑ SKILL.md 는 포인터만(값 0).
 - 모양: `path`·`ast`→ⓒ 하나 · `ast+`→ⓒ+ⓓ · `human`→ⓓ 하나. `어겼을 때=검사기`인 행의 ⓒ 는 검사기의 검사기(`workspace/tools/checker_lint.py`)다.
 - **작업**: `신설`=그 자리에 새로 쓴다(백스톱 실측 0 이라 대부분) · `재작성`=있는 로직을 다시 · `치환`=이름 갈이 · `무변`.
+- 폐지 #642: 행수 하한 제거. 현행 승격 형태는 #638~#641·#643, 감사 신호는 #644가 소유한다.
 - `#486~#492`(제1원칙)는 다른 모든 검사보다 먼저 도는 **별도 게이트**다(명세 «읽는 법»).
 
 | # | 판정 | ⓒ 검사기 | ⓓ 에이전트 | 작업 | 비고 |
@@ -168,15 +169,15 @@
 | 189 | ast | scripts/check-usecase-dto-placement.py | — | 재작성 |  |
 | 190 | path | scripts/check-usecase-dto-placement.py | — | 재작성 |  |
 | 191 | ast+ | scripts/check-usecase-dto-placement.py | agents/discipline-reviewer.md | 재작성 |  |
-| 192 | path | scripts/check-usecase-dto-placement.py | — | 재작성 |  |
+| 192 | path | scripts/check-usecase-dto-placement.py | — | 재작성 | 행수 하한 없는 역할 밖 응집 승격 예외; 부품 각각 기존 규칙 적용 |
 | 193 | path | scripts/check-usecase-dto-placement.py | — | 재작성 |  |
 | 194 | ast+ | scripts/check-usecase-dto-placement.py | agents/discipline-reviewer.md | 재작성 |  |
 | 195 | ast | scripts/check-transaction-boundary.py (신설) | — | 신설 |  |
 | 196 | ast | scripts/check-usecase-dto-placement.py | — | 재작성 |  |
-| 197 | ast | scripts/check-transaction-boundary.py (신설) | — | 신설 |  |
+| 197 | ast | scripts/check-transaction-boundary.py (신설) | — | 신설 | 설계 pre-gate는 명시 read-only/UoW 모순과 출처가 확인된 UoW 주입을 선언 확정, 미해소 출처를 선언 후보로 분리한다. 선언 처분은 architect·해당 설계 리뷰/감수자 소유이며 기존 실코드 검사 범위와 다르다. 효과 무기재는 미검증이다. |
 | 200 | ast | scripts/check-transaction-boundary.py (신설) | — | 신설 |  |
 | 201 | path | scripts/check-usecase-dto-placement.py | — | 재작성 |  |
-| 202 | ast | scripts/check-usecase-dto-placement.py | — | 재작성 |  |
+| 202 | ast | scripts/check-usecase-dto-placement.py | — | 재작성 | 설계 pre-gate는 add/update 공개 Result/Out/Response에서 명시 import·별칭·중첩/사설 DTO·표준 컨테이너로 출처가 결합된 aggregate/entity 누수를 선언 확정으로, 미해소 출처를 후보로 보고한다. VO/shared VO는 허용하고 이름만으로 확정하거나 OHS import를 합성하지 않는다. 선언 처분은 architect·해당 설계 리뷰/감수자 소유이며 실코드 검사를 대체하지 않는다. |
 | 204 | path | workspace/tools/checker_lint.py (신설) | — | 신설 |  |
 | 205 | ast | scripts/check-usecase-dto-placement.py | — | 재작성 |  |
 | 206 | path | scripts/check-usecase-dto-placement.py | — | 재작성 |  |
@@ -461,7 +462,7 @@
 | 542 | ast | scripts/check-domain-model.py (신설) | — | 신설 |  |
 | 543 | ast | scripts/check-domain-model.py (신설) | — | 신설 |  |
 | 545 | ast | scripts/check-port-adapter-pairing.py (신설) | — | 신설 |  |
-| 546 | ast | scripts/check-domain-model.py (신설) | — | 신설 |  |
+| 546 | ast+ | scripts/check-domain-model.py (신설) | agents/discipline-reviewer.md | 신설 | 확정은 해소된 동일 트랜잭션 영역에서 서로 다른 repository/aggregate 타입 쓰기다. 순차 독립 UoW는 분리하고 nested UoW·외부 Django atomic은 결합한다. 영역·출처 미해소는 후보이며 같은 트랜잭션인지 감수자가 확인한다. |
 | 547 | ast+ | scripts/check-domain-model.py (신설) | agents/discipline-reviewer.md | 신설 |  |
 | 548 | ast | scripts/check-domain-model.py (신설) | — | 신설 |  |
 | 549 | ast | scripts/check-domain-model.py (신설) | — | 신설 |  |
@@ -472,7 +473,7 @@
 | 554 | ast | scripts/check-port-adapter-pairing.py (신설) | — | 신설 |  |
 | 555 | ast | scripts/check-port-adapter-pairing.py (신설) | — | 신설 |  |
 | 556 | ast | scripts/check-port-adapter-pairing.py (신설) | — | 신설 |  |
-| 557 | ast | scripts/check-port-adapter-pairing.py (신설) | — | 신설 |  |
+| 557 | ast+ | scripts/check-port-adapter-pairing.py (신설) | agents/discipline-reviewer.md | 신설 | code/errno/status_code 비교의 수신자가 확인된 vendor 출처이면 확정, 확인된 domain 또는 application의 command/query/result/port 계약이면 허용한다. 미해소·혼합·재바인딩 출처는 후보로 그 코드의 주인을 감수자가 묻는다. except 구문이나 속성 이름만으로 vendor를 확정하지 않는다. |
 | 558 | ast | scripts/check-business-vocabulary.py (신설) | — | 신설 |  |
 | 559 | ast | scripts/check-business-vocabulary.py (신설) | — | 신설 |  |
 | 560 | ast | scripts/check-business-vocabulary.py (신설) | — | 신설 |  |
@@ -552,12 +553,11 @@
 | 639 | path | scripts/check-layer-skeleton.py | — | 신설 | 09-01 동명 폴더 승격 — 형제 공존 |
 | 640 | ast | scripts/check-layer-skeleton.py | — | 신설 | 09-01 동명 폴더 승격 — __init__ 재수출 전용·정크드로어 |
 | 641 | path | scripts/check-layer-skeleton.py | — | 신설 | 09-01 동명 폴더 승격 — 1단 평평 |
-| 642 | ast | scripts/check-layer-skeleton.py | — | 신설 | 09-01 동명 폴더 승격 — 부품 출생 50행 하한 |
 | 643 | path | scripts/check-layer-skeleton.py | — | 신설 | 09-01 동명 폴더 승격 — 부품 0개 퇴화 |
 | 644 | ast+ | scripts/check-layer-skeleton.py | agents/discipline-reviewer.md | 신설 | 09-01 동명 폴더 승격 — ⓓ 캐스케이드 후보 신호 |
-| 645 | ast+ | scripts/check-public-surface-annotation.py | agents/discipline-reviewer.md | 신설 | 09-04 현장 보고 E — 명시 `Any` 정책(시그니처 bare = 위반 · 제네릭 안·변수 = ⓓ 후보) |
+| 645 | ast+ | scripts/check-public-surface-annotation.py | agents/discipline-reviewer.md | 신설 | 09-04 현장 보고 E — 명시 `Any` 정책(시그니처 bare = 위반 · 제네릭 안·변수 = ⓓ 후보)admin 허용은 확인된 Django/Parler framework 슬롯과 연결된 private 전달 helper의 열린 UI context 조립·병합·전달에 한한다. 업무 읽기·비교·계산·상태 변경 또는 업무 함수로 값 전달부터 기존 규칙을 적용한다. 출처나 소비가 미해소이면 후보로 흐름을 묻는다. framework 고정 kwargs 밖 bare Any·별도 업무 dict·admin 경로 전체는 면제하지 않는다. #493·#646·#650은 유지한다. |
 | 646 | ast+ | scripts/check-public-surface-annotation.py | agents/discipline-reviewer.md | 신설 | 09-04 현장 보고 3 S-1 — django-stubs 제네릭 기저(맨몸·`type: ignore[type-arg]` 위반 · code 없는 ignore·런타임 subscript ⓓ 후보) |
-| 647 | ast+ | scripts/check-public-surface-annotation.py | agents/discipline-reviewer.md | 신설 | 09-04 현장 보고 3 S-4 — 딕셔너리-레코드(`dict/Mapping` 값 `Any` 전 자리·`object` 반환/속성 위반 · 입구 `object`·반환 자리표시 ⓓ 후보) |
+| 647 | ast+ | scripts/check-public-surface-annotation.py | agents/discipline-reviewer.md | 신설 | 09-04 현장 보고 3 S-4 — 딕셔너리-레코드(`dict/Mapping` 값 `Any` 전 자리·`object` 반환/속성 위반 · 입구 `object`·반환 자리표시 ⓓ 후보)admin 허용은 확인된 Django/Parler framework 슬롯과 연결된 private 전달 helper의 열린 UI context 조립·병합·전달에 한한다. 업무 읽기·비교·계산·상태 변경 또는 업무 함수로 값 전달부터 기존 규칙을 적용한다. 출처나 소비가 미해소이면 후보로 흐름을 묻는다. framework 고정 kwargs 밖 bare Any·별도 업무 dict·admin 경로 전체는 면제하지 않는다. #493·#646·#650은 유지한다. |
 | 648 | ast | scripts/check-api-error-controller-contract.py | — | 신설 | 09-04 현장 보고 3 S-5 — 반환 주석 `Status` 상자 하나(표준 트리 슬라이스 · 프로필 무관) |
 | 649 | ast | scripts/check-api-error-controller-contract.py | — | 신설 | 09-04 현장 보고 3 S-5 — `Schema`+`RootModel` 동시 상속 금지(표준 트리 슬라이스) |
 | 650 | ast+ | scripts/check-public-surface-annotation.py | agents/discipline-reviewer.md | 신설 | 09-04 현장 보고 3 S-4 — `json.load(s)` 무검증 흐름 ⓓ 전용(확정 위반은 #647) |

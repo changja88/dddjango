@@ -1,0 +1,19 @@
+--- before/workspace/tools/construct_drift_report.py
++++ workspace/tools/construct_drift_report.py
+@@ -64,14 +64,14 @@
+ # 신판 기본 red 레인 stdout sha256 (--emit-expected 재생성). domain-model·
+ # common-container 는 findings_smoke.BASELINE_SHA 와 동일값(교차 골든 — 2026-08-20 실측).
+ EXPECTED_SHA: "dict[str, str]" = {
+-    "check-domain-model.py": "4398d7d774da5d4d7bc6542bf5c5f19d0d99dbf6f3682a41a7c742803d3c415a",
++    "check-domain-model.py": "b571ad8ca4677a586c856199281b6fd4d76a848426e453e147803b1f505f06b7",
+     "check-common-container.py": "5ce9427209a475032bf19b5cf8f16d356e6e976f2119afe1639159cc8afd23fc",
+     "check-api-error-controller-contract.py": "7e3edccdbc2475744d8e842abc8e2a46c9a54d14feaea31ac0bb84bc26f9fad9",
+     "check-error-centralization.py": "5d21b130e5a23bc5c5610ad3ebe29e880e526cd2338ff2377f00cb36294ff191",
+     "check-composition-root.py": "81938fb23b67216c6fc24f8c39fc90564292d6526d09e828d452bc953f0c08ff",
+     "check-openapi-error-declaration.py": "92eb113f8e75c74ea617737804420f4df82b841996cc910ce3bc3944ded097a0",
+     "check-response-schema-bypass.py": "b1a77bebb4272f9eb817feb63f31b6715d52da9d0ad312a2f02d744717428793",
+-    "check-context-isolation.py": "f519601d1dceaab05e7452329158d2eea8b05a86f3698af629911c94febcc8b1",
++    "check-context-isolation.py": "f87209775b8432b9fbdbe621dd9f2224611596aa006aecf4b24d31c8e1e230b5",
+ }
+ 
+ CHECKER_TIMEOUT_S: int = 300

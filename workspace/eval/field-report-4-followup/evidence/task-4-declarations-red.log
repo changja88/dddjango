@@ -1,0 +1,25 @@
+test_declared_usecase_and_enum_constructor_opposites (__main__.CheckerRegression.test_declared_usecase_and_enum_constructor_opposites) ... FAIL
+test_nested_repository_parameters_do_not_retype_outer_bindings (__main__.CheckerRegression.test_nested_repository_parameters_do_not_retype_outer_bindings) ... FAIL
+
+======================================================================
+FAIL: test_declared_usecase_and_enum_constructor_opposites (__main__.CheckerRegression.test_declared_usecase_and_enum_constructor_opposites)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 299, in test_declared_usecase_and_enum_constructor_opposites
+    self.assertIn("#153", self.ohs_rules("from application.lesson.application_layer.books.read.absent_use_case import Missing\ndef read_query(request: Missing): request.execute()\n")[1])
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: '#153' not found in []
+
+======================================================================
+FAIL: test_nested_repository_parameters_do_not_retype_outer_bindings (__main__.CheckerRegression.test_nested_repository_parameters_do_not_retype_outer_bindings)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 304, in test_nested_repository_parameters_do_not_retype_outer_bindings
+    self.assertIn("#546", f)
+    ~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: '#546' not found in []
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.008s
+
+FAILED (failures=2)

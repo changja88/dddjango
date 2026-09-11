@@ -1,0 +1,6 @@
+test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.028s
+
+OK

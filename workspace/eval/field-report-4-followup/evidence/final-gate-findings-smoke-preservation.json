@@ -1,0 +1,24 @@
+{
+  "changed_ast_literals": [
+    [
+      51,
+      50
+    ],
+    [
+      13,
+      14
+    ],
+    [
+      "4398d7d774da5d4d7bc6542bf5c5f19d0d99dbf6f3682a41a7c742803d3c415a",
+      "b571ad8ca4677a586c856199281b6fd4d76a848426e453e147803b1f505f06b7"
+    ],
+    [
+      "DM-red 레코드 계수 50+13(㉡)",
+      "DM-red 레코드 계수 50+14(㉡)"
+    ]
+  ],
+  "remaining_ast_equal": true,
+  "original_54_hashes_preserved": true,
+  "prior_6_gate_hashes_preserved": true,
+  "final_sha256": "44ef202585587e4d8ef51d13e19b45056a86501ee1ea6fc3d557b267ffdc4c05"
+}

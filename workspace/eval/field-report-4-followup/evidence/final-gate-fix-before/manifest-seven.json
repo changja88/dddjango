@@ -1,0 +1,9 @@
+{
+  "workspace/eval/fixtures/ontology_gate/target-counts.json": "cc9558eade3f037b33f0e7726229b7a8b4b235ee43912910010eb40e2b94d39a",
+  "workspace/tools/checker_baseline_matrix.py": "06571b1e384508cc7820558c3aa3d4b869c7408e9340b933f234c24c65f78cf8",
+  "workspace/tools/findings_count_matrix.py": "01b7f3cfbd996f5ebbd68af32e5dc0f7f814d7ac10bdeda823926e5646e59581",
+  "dddjango/scripts/pregate_symbol_kinds.json": "6634edd82c5b797193e6b7826000f65c906cb7862d86a224fd6361dbe65ea4f1",
+  "codex-dddjango/skills/dddjango/scripts/pregate_symbol_kinds.json": "6634edd82c5b797193e6b7826000f65c906cb7862d86a224fd6361dbe65ea4f1",
+  "workspace/tools/construct_drift_report.py": "6949eaf21444f7ad3b61f32fa7de7fc132f4af9892ccf0b4e8c63e709cad1a05",
+  "workspace/tools/findings_smoke.py": "586f99c5e525f550192d48b76fe63b37c639f5fd764f00b695f1e3902d2826dd"
+}

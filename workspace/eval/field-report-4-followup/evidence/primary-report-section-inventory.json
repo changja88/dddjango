@@ -1,0 +1,57 @@
+{
+  "source_sha256": "a6aa8aded150230e46fd4e240632892acd3b91b918eecd9d8245dd1768c2cec4",
+  "sections": {
+    "F4-1": {
+      "title": "기존 use case 시그니처·기존 테스트 마커 update의 pre-gate 미전사(S5 잔여 범위)",
+      "sha256": "b8abdebd2b914514c74d79f66734c9810109f35f75f1af68c5698831fa3c621a"
+    },
+    "F4-9": {
+      "title": "framework 소유 «열린 context dict」의 #647 처분 문면 부재(B0 STOP-10 · 22:02 KST · 낮음 · 규범 빈칸)",
+      "sha256": "63514051fdece2ab7557ca8dc678811d2acf4640dd2af16a844c817a3c06be28"
+    },
+    "F4-10": {
+      "title": "`check-context-isolation.py` ⓓ#153 이 표준 OHS 창구(builder 1 + execute 1)를 «유스케이스 호출 2회」로 계수(A12 · B0 창구 3 · 2026-09-11 00:3x · 낮음 · ⓓ 소음)",
+      "sha256": "0e9f1aedd7cb867a356aac6e83f2bfee0e050875b9401e30aa1e304ab7d3a642"
+    },
+    "F4-11": {
+      "title": "`check-domain-model.py` ⓓ#268 이 닫힌 `StrEnum` 값 객체에 «__init__ raise 없음」 후보를 낸다(A12 `FortuneFailureTicketOutcome` · B0 `BookKind` · 낮음 · 제안)",
+      "sha256": "a4f8fd64bdf21e56b5e5ebda3c733b61e8e2331a9242f7c65fb419d808068e39"
+    },
+    "F4-12": {
+      "title": "pre-gate 스텁(`raise NotImplementedError`) × `check-port-adapter-pairing.py` #376 «after_commit 본문에 on_commit 없음」 교차 오탐 — 새 UoW 를 계획하는 모든 설계에서 재발(B0 2.18.0 · A3 2.18.2 · 2026-09-11 01:14 KST · 중)",
+      "sha256": "6e6021f74dcdf7e7f0a42cb27982956686f1bf00311aa19043a76624a86e8f47"
+    },
+    "F4-13": {
+      "title": "규범 문면 빈칸: discipline-reviewer «raw infrastructure 기본 경계」 vs `check-port-adapter-pairing.py` #555 «어댑터 bare raise 금지」의 관계(A3 STOP-02 · 2026-09-11 01:44 KST · 낮음 · 문면)",
+      "sha256": "e93c97c4b38ed564bc079d31e0ef436dd2c3cde4eea2536db0cb80009eb0bb06"
+    },
+    "F4-14": {
+      "title": "`check-domain-model.py` #546 «한 트랜잭션 = 애그리거트 하나」가 **함수 단위**로 쓰기 타입을 합산 — root 별 UoW 가 분리된 두 반복문도 위반(A3 STOP-05 · 2026-09-11 04:22 KST · 중 · 대리 지표)",
+      "sha256": "b6b14c0bd3b1ecb6612f2d74b7f304691db6f7c8bca7728439bb9df7c6752960"
+    },
+    "F4-15": {
+      "title": "`check-port-adapter-pairing.py` #557 «벤더 오류 코드 위층 판정」이 Compare 왼쪽 속성 **이름**(code · errno · status_code)만 보고 판정 — 도메인 자연 코드 `relation.code` 비교를 확정 위반으로 분류(A3 STOP-05 · 2026-09-11 04:22 KST · 중 · 오탐)",
+      "sha256": "a358287d7c1bfe98bb3577c7028d20c0ba94a62368ac0d2b1419d0778a79745f"
+    },
+    "F4-16": {
+      "title": "`registry_gate.py` 앵커 차분이 `check-layer-skeleton.py` #642 «출생 하한 50행」 레코드를 행 수 문면까지 포함해 대조 → 앵커에 있던 소형 파일을 **편집(축소)** 하면 «신규 출생」으로 재귀속(A2① STOP 5 · 2026-09-11 09:48 KST · 중 · 앵커 대조 한계)",
+      "sha256": "30cd4c8bb2f252d4733be627c9be49995f7b15168e9f08234cf568cf5da1350b"
+    },
+    "F4-17": {
+      "title": "`check-layer-skeleton.py` #488 / `check-port-adapter-pairing.py` #218·#225 가 git 에서 삭제된 포트·어댑터 폴더의 **`__pycache__` 잔재**를 «폴더 존재」로 읽어 고정 파일 부재 10건을 귀속(A2① STOP 5 · 2026-09-11 09:48 KST · 중 · 재발 3회째)",
+      "sha256": "c0b009ef29a6423aec4021c97414d57f4695c6d72e1ee9baff5d49ca68ea3725"
+    },
+    "F4-18": {
+      "title": "`design_pregate.py` 가 machine symbols 의 **애그리거트/엔티티 필드를 가진 application result DTO**(#202)와 그것을 투영하는 OHS 의 domain import(#95/#96)를 예보하지 못함 → G1 exit 0 뒤 S3 실물 registry 에서 귀속 6(A4 STOP · 2026-09-11 10:22 KST · 중 · pre-gate 사각)",
+      "sha256": "28d98851e13d6dafdfad2f637756af22af6ccadfd4d4d1efe0c7ae3ae19e83d6"
+    },
+    "F4-19": {
+      "title": "`design_pregate.py` Phase 1 기본 판형에서 **미추적(오버레이) 실존 add 의 탈출구 0** — `baseline_form_errors` 문면 «오버레이 실존은 판정에 넣지 않는다」와 `materialize` 의 «add 충돌(실존)」 판정이 어긋남 · `update` 로 적으면 «update 대상 부재」(A5 STOP · 2026-09-11 16:52 KST · 중 · 판형 불일치)",
+      "sha256": "c164867d79459a10aa243997bea0e437fe293942bf417593d35b95187d25bb00"
+    },
+    "F4-20": {
+      "title": "`check-transaction-boundary.py` #195 가 «팩토리 호출로 태어난 이름」을 `for` 원소·컴프리헨션 원소로 전파하지 않음 → 명세가 요구한 «전량 생성 → 전량 검증 → 없는 행만 저장」 순서의 정당한 코드가 귀속(A5 STOP-03 · 2026-09-11 18:40 KST · 중 · AST 추적 한계)",
+      "sha256": "575be37288396c0fd8e09d5f1b77c959621f2633398caa5663b669c5ab052b4c"
+    }
+  }
+}

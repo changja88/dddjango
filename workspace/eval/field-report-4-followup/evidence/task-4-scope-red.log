@@ -1,0 +1,46 @@
+test_origin_scope_rebindings_remain_unknown (__main__.CheckerRegression.test_origin_scope_rebindings_remain_unknown) ... 
+  test_origin_scope_rebindings_remain_unknown (__main__.CheckerRegression.test_origin_scope_rebindings_remain_unknown) (source='from requests import Response\ndef run(value: Response): return value.status_code == 1\nResponse = custom') ... FAIL
+  test_origin_scope_rebindings_remain_unknown (__main__.CheckerRegression.test_origin_scope_rebindings_remain_unknown) (source='import enum\nenum.Enum = custom\nclass Kind(enum.Enum):\n    ONE = 1') ... FAIL
+  test_origin_scope_rebindings_remain_unknown (__main__.CheckerRegression.test_origin_scope_rebindings_remain_unknown) (source='from enum import Enum\nclass Kind(Enum):\n    ONE = 1\n    _missing_ = None') ... FAIL
+test_uow_injected_fields_and_factory_alias_scope (__main__.CheckerRegression.test_uow_injected_fields_and_factory_alias_scope) ... FAIL
+
+======================================================================
+FAIL: test_origin_scope_rebindings_remain_unknown (__main__.CheckerRegression.test_origin_scope_rebindings_remain_unknown) (source='from requests import Response\ndef run(value: Response): return value.status_code == 1\nResponse = custom')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 270, in test_origin_scope_rebindings_remain_unknown
+    self.assertNotIn("#557", f)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: '#557' unexpectedly found in ['#557']
+
+======================================================================
+FAIL: test_origin_scope_rebindings_remain_unknown (__main__.CheckerRegression.test_origin_scope_rebindings_remain_unknown) (source='import enum\nenum.Enum = custom\nclass Kind(enum.Enum):\n    ONE = 1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 276, in test_origin_scope_rebindings_remain_unknown
+    with self.subTest(source=source): self.assertIn("#268", self.enum_rules(source)[1])
+                                      ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: '#268' not found in []
+
+======================================================================
+FAIL: test_origin_scope_rebindings_remain_unknown (__main__.CheckerRegression.test_origin_scope_rebindings_remain_unknown) (source='from enum import Enum\nclass Kind(Enum):\n    ONE = 1\n    _missing_ = None')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 276, in test_origin_scope_rebindings_remain_unknown
+    with self.subTest(source=source): self.assertIn("#268", self.enum_rules(source)[1])
+                                      ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: '#268' not found in []
+
+======================================================================
+FAIL: test_uow_injected_fields_and_factory_alias_scope (__main__.CheckerRegression.test_uow_injected_fields_and_factory_alias_scope)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 290, in test_uow_injected_fields_and_factory_alias_scope
+    self.assertIn("#546", c)
+    ~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: '#546' not found in []
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.014s
+
+FAILED (failures=4)

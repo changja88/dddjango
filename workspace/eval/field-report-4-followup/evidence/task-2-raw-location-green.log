@@ -1,0 +1,6 @@
+test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.087s
+
+OK

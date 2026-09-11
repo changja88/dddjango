@@ -1,0 +1,44 @@
+test_generated_ranges_follow_final_marker_composition (__main__.FieldReportTest.test_generated_ranges_follow_final_marker_composition) ... 
+  test_generated_ranges_follow_final_marker_composition (__main__.FieldReportTest.test_generated_ranges_follow_final_marker_composition) (original='"""Existing service. 원문 보존."""\nfrom __future__ import annotations\nfrom decimal import Decimal\n\ndef old_query() -> str:\n    return "unchanged"\n') ... FAIL
+  test_generated_ranges_follow_final_marker_composition (__main__.FieldReportTest.test_generated_ranges_follow_final_marker_composition) (original='"""Existing service. 원문 보존."""\nfrom __future__ import annotations\nfrom decimal import Decimal\nimport pytest\npytestmark = [\n    pytest.mark.fast,\n]\n\ndef old_query() -> str:\n    return "unchanged"\n') ... FAIL
+
+======================================================================
+FAIL: test_generated_ranges_follow_final_marker_composition (__main__.FieldReportTest.test_generated_ranges_follow_final_marker_composition) (original='"""Existing service. 원문 보존."""\nfrom __future__ import annotations\nfrom decimal import Decimal\n\ndef old_query() -> str:\n    return "unchanged"\n')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 522, in test_generated_ranges_follow_final_marker_composition
+    self.assertEqual((generated[0]['lineno'], generated[0]['end_lineno']),
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                     (new_query.lineno, new_query.end_lineno))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Tuples differ: (9, 11) != (11, 13)
+
+First differing element 0:
+9
+11
+
+- (9, 11)
++ (11, 13)
+
+======================================================================
+FAIL: test_generated_ranges_follow_final_marker_composition (__main__.FieldReportTest.test_generated_ranges_follow_final_marker_composition) (original='"""Existing service. 원문 보존."""\nfrom __future__ import annotations\nfrom decimal import Decimal\nimport pytest\npytestmark = [\n    pytest.mark.fast,\n]\n\ndef old_query() -> str:\n    return "unchanged"\n')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 522, in test_generated_ranges_follow_final_marker_composition
+    self.assertEqual((generated[0]['lineno'], generated[0]['end_lineno']),
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                     (new_query.lineno, new_query.end_lineno))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Tuples differ: (13, 15) != (11, 13)
+
+First differing element 0:
+13
+11
+
+- (13, 15)
++ (11, 13)
+
+----------------------------------------------------------------------
+Ran 1 test in 0.168s
+
+FAILED (failures=2)

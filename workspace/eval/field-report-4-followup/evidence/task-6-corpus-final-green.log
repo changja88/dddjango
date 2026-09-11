@@ -1,0 +1,13 @@
+  ✓            architecture-api             inv1=in_sync inv2=in_sync
+  ✓            architecture-db              inv1=in_sync inv2=in_sync
+  ✓            architecture-ddd             inv1=in_sync inv2=in_sync
+  ✓            discipline-cleancode         inv1=in_sync inv2=in_sync
+  ✓            discipline-houserules        inv1=in_sync inv2=in_sync
+  ✓            discipline-tdd               inv1=in_sync inv2=in_sync
+  ✓            implementation-django        inv1=in_sync inv2=in_sync
+  ✓            implementation-django-ninja  inv1=in_sync inv2=in_sync
+  ✓            implementation-django-web    inv1=in_sync inv2=in_sync
+  ✓            implementation-python        inv1=in_sync inv2=in_sync
+  ✓            implementation-test          inv1=in_sync inv2=in_sync
+
+  11/11 in-sync

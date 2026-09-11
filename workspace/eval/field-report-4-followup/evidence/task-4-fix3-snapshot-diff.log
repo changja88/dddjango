@@ -1,0 +1,57 @@
+
+
+--- fix3-before/codex-dddjango/skills/dddjango/scripts/check-port-adapter-pairing.py
+
++++ codex-dddjango/skills/dddjango/scripts/check-port-adapter-pairing.py
+
+@@ -1228,7 +1228,7 @@
+
+             names = {key(t) for t in targets}
+         elif isinstance(st, (ast.Name, ast.Attribute)) and isinstance(st.ctx, (ast.Store, ast.Del)):
+             names = {key(st)}
+-        elif isinstance(st, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try, ast.With, ast.AsyncWith, ast.ExceptHandler)):
++        elif isinstance(st, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try, ast.With, ast.AsyncWith, ast.withitem, ast.ExceptHandler)):
+             # 모듈 실행 구간만 펼친다. 위의 함수/클래스 정의는 이름만 바인딩한다.
+             pending.extend(reversed(list(ast.iter_child_nodes(st))))
+             names = {st.name} if isinstance(st, ast.ExceptHandler) and st.name else set()
+
+
+--- fix3-before/dddjango/scripts/check-port-adapter-pairing.py
+
++++ dddjango/scripts/check-port-adapter-pairing.py
+
+@@ -1228,7 +1228,7 @@
+
+             names = {key(t) for t in targets}
+         elif isinstance(st, (ast.Name, ast.Attribute)) and isinstance(st.ctx, (ast.Store, ast.Del)):
+             names = {key(st)}
+-        elif isinstance(st, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try, ast.With, ast.AsyncWith, ast.ExceptHandler)):
++        elif isinstance(st, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try, ast.With, ast.AsyncWith, ast.withitem, ast.ExceptHandler)):
+             # 모듈 실행 구간만 펼친다. 위의 함수/클래스 정의는 이름만 바인딩한다.
+             pending.extend(reversed(list(ast.iter_child_nodes(st))))
+             names = {st.name} if isinstance(st, ast.ExceptHandler) and st.name else set()
+--- fix3-before/workspace/tools/field_report_checker_smoke.py
+
++++ workspace/tools/field_report_checker_smoke.py
+
+@@ -380,6 +380,17 @@
+
+                     f, c = self.property_rules(source)
+                     self.assertEqual("#557" in f, vendor)
+                     self.assertNotIn("#557", c)
++
++    def test_later_with_item_rebinding_invalidates_function_constructor(self):
++        for imported, comparison in [
++            ("from requests import Response as Source", "value.status_code == 200"),
++            ("from application.lesson.domain_layer.book.kind import Kind as Source", "value.code == 1"),
++        ]:
++            with self.subTest(imported=imported):
++                source = imported + "\nAlias = Source\ndef run():\n    value = Alias()\n    return " + comparison + "\nwith context as Alias:\n    pass\n"
++                f, c = self.property_rules(source)
++                self.assertNotIn("#557", f)
++                self.assertIn("#557", c)
+ 
+     def admin_records(self, source):
+         self.write("framework/admin/book.py", source)
+PRIOR TEST BODIES PRESERVED 35; CURRENT 36
+CHANGED ONLY codex-dddjango/skills/dddjango/scripts/check-port-adapter-pairing.py, dddjango/scripts/check-port-adapter-pairing.py, workspace/tools/field_report_checker_smoke.py

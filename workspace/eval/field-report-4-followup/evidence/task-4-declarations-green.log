@@ -1,0 +1,8 @@
+test_declared_usecase_and_enum_constructor_opposites (__main__.CheckerRegression.test_declared_usecase_and_enum_constructor_opposites) ... ok
+test_nested_repository_parameters_do_not_retype_outer_bindings (__main__.CheckerRegression.test_nested_repository_parameters_do_not_retype_outer_bindings) ... ok
+test_custom_enum_validation_does_not_prove_closed_members (__main__.CheckerRegression.test_custom_enum_validation_does_not_prove_closed_members) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.010s
+
+OK

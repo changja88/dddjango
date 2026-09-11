@@ -1,0 +1,39 @@
+{
+  "tracked_verified_files": 63,
+  "payload_files": 387,
+  "changed_or_added_files": 380,
+  "matched_payload_files": 387,
+  "primary_target_conflicts": 0,
+  "head_unchanged": "3355710dcbaf023a16856cb2f307aa2a03fc0996",
+  "master_sha256": "3515dcfab136b7e0bebdff32f7ac7decada1f124ab51cebd05c95028def5e360",
+  "F4_20_body_unchanged": true,
+  "pending_ids": [
+    "F4-20"
+  ],
+  "primary_diff_check": 0,
+  "primary_manifest_check": 0,
+  "status": "complete",
+  "last_full_verify_attempt": 3,
+  "last_full_verify_result": "6/6 green",
+  "last_full_verify_seconds": 247,
+  "last_full_verify_log": "final-verify.log",
+  "source_sha_manifest": "final-sealed-source-hashes.json",
+  "commit_created": false,
+  "release_performed": false,
+  "approved_resolved_ids": [
+    "F4-1",
+    "F4-9",
+    "F4-10",
+    "F4-11",
+    "F4-12",
+    "F4-13",
+    "F4-14",
+    "F4-15",
+    "F4-16",
+    "F4-17",
+    "F4-18",
+    "F4-19"
+  ],
+  "final_payload_files": 390,
+  "final_payload_byte_matches": 390
+}

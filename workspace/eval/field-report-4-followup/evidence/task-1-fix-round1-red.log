@@ -1,0 +1,129 @@
+test_marker_new_list_evaluates_after_pytest_binding (__main__.FieldReportTest.test_marker_new_list_evaluates_after_pytest_binding) ... 
+  test_marker_new_list_evaluates_after_pytest_binding (__main__.FieldReportTest.test_marker_new_list_evaluates_after_pytest_binding) (prefix='') ... ERROR
+  test_marker_new_list_evaluates_after_pytest_binding (__main__.FieldReportTest.test_marker_new_list_evaluates_after_pytest_binding) (prefix='"""기존 문서."""\nfrom __future__ import annotations\n') ... ERROR
+test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) ... 
+  test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='pytestmark[0] = pytest.mark.django_db', markers='') ... FAIL
+  test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='pytestmark[0] = pytest.mark.django_db', markers='slow') ... FAIL
+  test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='del pytestmark[0]', markers='') ... FAIL
+  test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='del pytestmark[0]', markers='slow') ... FAIL
+  test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='pytestmark[:] = [pytest.mark.django_db]', markers='') ... FAIL
+  test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='pytestmark[:] = [pytest.mark.django_db]', markers='slow') ... FAIL
+  test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='pytestmark[0] += pytest.mark.django_db', markers='') ... FAIL
+  test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='pytestmark[0] += pytest.mark.django_db', markers='slow') ... FAIL
+  test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='if True:\n    pytestmark[0] = pytest.mark.django_db', markers='') ... FAIL
+  test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='if True:\n    pytestmark[0] = pytest.mark.django_db', markers='slow') ... FAIL
+
+======================================================================
+ERROR: test_marker_new_list_evaluates_after_pytest_binding (__main__.FieldReportTest.test_marker_new_list_evaluates_after_pytest_binding) (prefix='')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 546, in test_marker_new_list_evaluates_after_pytest_binding
+    exec(compile(updated, TEST, 'exec'), namespace)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "application/garden/test/integration/test_catalog.py", line 1, in <module>
+NameError: name 'pytest' is not defined. Did you mean: 'bytes'?
+
+======================================================================
+ERROR: test_marker_new_list_evaluates_after_pytest_binding (__main__.FieldReportTest.test_marker_new_list_evaluates_after_pytest_binding) (prefix='"""기존 문서."""\nfrom __future__ import annotations\n')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 546, in test_marker_new_list_evaluates_after_pytest_binding
+    exec(compile(updated, TEST, 'exec'), namespace)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "application/garden/test/integration/test_catalog.py", line 3, in <module>
+NameError: name 'pytest' is not defined. Did you mean: 'bytes'?
+
+======================================================================
+FAIL: test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='pytestmark[0] = pytest.mark.django_db', markers='')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 573, in test_marker_subscript_mutations_remain_s5_without_writes
+    self.assertEqual((self.copy / TEST).read_bytes(), original.encode())
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: b'imp[21 chars]k = []\npytestmark[0] = pytest.mark.django_db\n' != b'imp[21 chars]k = [pytest.mark.slow]\npytestmark[0] = pytest[13 chars]db\n'
+
+======================================================================
+FAIL: test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='pytestmark[0] = pytest.mark.django_db', markers='slow')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 576, in test_marker_subscript_mutations_remain_s5_without_writes
+    self.assertTrue(any('S5' in note and 'subscript' in note for note in report['unsimulated']), report)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : {'materialized': [], 'already_built': [], 'unsimulated': ['S5 update(OHS 서비스 본체 밖; module marker 후상태가 현재와 동일 — 실효 조치 없음): application/garden/test/integration/test_catalog.py'], 'pruned_dirs': []}
+
+======================================================================
+FAIL: test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='del pytestmark[0]', markers='')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 573, in test_marker_subscript_mutations_remain_s5_without_writes
+    self.assertEqual((self.copy / TEST).read_bytes(), original.encode())
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: b'import pytest\npytestmark = []\ndel pytestmark[0]\n' != b'import pytest\npytestmark = [pytest.mark.slow]\ndel pytestmark[0]\n'
+
+======================================================================
+FAIL: test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='del pytestmark[0]', markers='slow')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 576, in test_marker_subscript_mutations_remain_s5_without_writes
+    self.assertTrue(any('S5' in note and 'subscript' in note for note in report['unsimulated']), report)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : {'materialized': [], 'already_built': [], 'unsimulated': ['S5 update(OHS 서비스 본체 밖; module marker 후상태가 현재와 동일 — 실효 조치 없음): application/garden/test/integration/test_catalog.py'], 'pruned_dirs': []}
+
+======================================================================
+FAIL: test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='pytestmark[:] = [pytest.mark.django_db]', markers='')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 573, in test_marker_subscript_mutations_remain_s5_without_writes
+    self.assertEqual((self.copy / TEST).read_bytes(), original.encode())
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: b'imp[21 chars]k = []\npytestmark[:] = [pytest.mark.django_db]\n' != b'imp[21 chars]k = [pytest.mark.slow]\npytestmark[:] = [pytes[15 chars]b]\n'
+
+======================================================================
+FAIL: test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='pytestmark[:] = [pytest.mark.django_db]', markers='slow')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 576, in test_marker_subscript_mutations_remain_s5_without_writes
+    self.assertTrue(any('S5' in note and 'subscript' in note for note in report['unsimulated']), report)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : {'materialized': [], 'already_built': [], 'unsimulated': ['S5 update(OHS 서비스 본체 밖; module marker 후상태가 현재와 동일 — 실효 조치 없음): application/garden/test/integration/test_catalog.py'], 'pruned_dirs': []}
+
+======================================================================
+FAIL: test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='pytestmark[0] += pytest.mark.django_db', markers='')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 573, in test_marker_subscript_mutations_remain_s5_without_writes
+    self.assertEqual((self.copy / TEST).read_bytes(), original.encode())
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: b'imp[21 chars]k = []\npytestmark[0] += pytest.mark.django_db\n' != b'imp[21 chars]k = [pytest.mark.slow]\npytestmark[0] += pytes[14 chars]db\n'
+
+======================================================================
+FAIL: test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='pytestmark[0] += pytest.mark.django_db', markers='slow')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 576, in test_marker_subscript_mutations_remain_s5_without_writes
+    self.assertTrue(any('S5' in note and 'subscript' in note for note in report['unsimulated']), report)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : {'materialized': [], 'already_built': [], 'unsimulated': ['S5 update(OHS 서비스 본체 밖; module marker 후상태가 현재와 동일 — 실효 조치 없음): application/garden/test/integration/test_catalog.py'], 'pruned_dirs': []}
+
+======================================================================
+FAIL: test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='if True:\n    pytestmark[0] = pytest.mark.django_db', markers='')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 573, in test_marker_subscript_mutations_remain_s5_without_writes
+    self.assertEqual((self.copy / TEST).read_bytes(), original.encode())
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: b'imp[21 chars]k = []\nif True:\n    pytestmark[0] = pytest.mark.django_db\n' != b'imp[21 chars]k = [pytest.mark.slow]\nif True:\n    pytestma[27 chars]db\n'
+
+======================================================================
+FAIL: test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) (mutation='if True:\n    pytestmark[0] = pytest.mark.django_db', markers='slow')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 576, in test_marker_subscript_mutations_remain_s5_without_writes
+    self.assertTrue(any('S5' in note and 'subscript' in note for note in report['unsimulated']), report)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : {'materialized': [], 'already_built': [], 'unsimulated': ['S5 update(OHS 서비스 본체 밖; module marker 후상태가 현재와 동일 — 실효 조치 없음): application/garden/test/integration/test_catalog.py'], 'pruned_dirs': []}
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.422s
+
+FAILED (failures=10, errors=2)

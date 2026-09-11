@@ -1,0 +1,329 @@
+--- before/dddjango/scripts/check-context-isolation.py
++++ dddjango/scripts/check-context-isolation.py
+@@ -410,6 +410,8 @@
+                     module = ".".join((*parts[:len(parts) - st.level + 1], *module.split(".")))
+                 for a in st.names:
+                     result[a.asname or a.name] = module + "." + a.name
++            elif isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
++                result.pop(st.name, None)
+             elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+                 for t in st.targets if isinstance(st, ast.Assign) else [st.target]:
+                     for n in ast.walk(t):
+--- before/dddjango/scripts/check-domain-model.py
++++ dddjango/scripts/check-domain-model.py
+@@ -837,6 +837,8 @@
+             module_env.update(imports([st]))
+         elif isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)):
+             module_env[st.name] = "@uow" if is_uow(address(st.returns, module_env)) else ""
++        elif isinstance(st, ast.ClassDef):
++            module_env[st.name] = ""
+         elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+             for target in st.targets if isinstance(st, ast.Assign) else [st.target]:
+                 module_env[key(target)] = ""
+--- before/dddjango/scripts/check-layer-skeleton.py
++++ dddjango/scripts/check-layer-skeleton.py
+@@ -24,7 +24,7 @@
+ 
+ 등록 순서: 이 검사는 다른 모든 검사보다 «먼저» 돌고, 걸리면 나머지를 돌리지 않는다(#487).
+ 내용 판정(#10·#628 등 ast 규칙)은 Phase 3 편입분이다 — 여기는 «존재·폐쇄»와 동명 폴더
+-승격 실현의 형태 검증(#638~#643 · ⓓ#644 후보 신호 — 2026-09-01)만 본다.
++승격 실현의 형태 검증(#638~#641·#643 · ⓓ#644 후보 신호 — 2026-09-01)만 본다.
+ 
+ 사용법: check-layer-skeleton.py [TARGET_DIR]   (기본: 현재 디렉터리)
+ 종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
+@@ -86,7 +86,7 @@
+     return has_layer or has_marker
+ 
+ 
+-# ── 동명 폴더 승격(#490 교체형) — #638~#643 + ⓓ#644 ─────────────────────────
++# ── 동명 폴더 승격(#490 교체형) — #638~#641·#643 + ⓓ#644 ─────────────────────────
+ 
+ # ⓓ#644 행위 칸 로스터 — 승격 허용 표기(swappable) 중 schema 4행(14·15·20·21) 제외
+ # (houserules SKILL §1 감사 주도 배정 — 신호는 무조건 방출, 판정 의무의 diff 한정은 감사자 몫)
+@@ -127,7 +127,7 @@
+ 
+ 
+ def _check_promoted(dir_path: Path, crow: "tree.Row", out: Findings, cand: Candidates) -> None:
+-    """유효한 동명 폴더 승격의 형태 검증(#638~#643) + 행위 칸 ⓓ#644 신호."""
++    """유효한 동명 폴더 승격의 형태 검증(#638~#641·#643) + 행위 칸 ⓓ#644 신호."""
+     body = dir_path / (dir_path.name + ".py")
+     init = dir_path / "__init__.py"
+     if not body.is_file():
+@@ -243,7 +243,7 @@
+             continue
+         if getattr(crow, "swappable", False) and promo is not None and promo.is_dir() \
+                 and (promo / name).is_file():
+-            continue  # 유효한 승격 실현이 #488 충족이다(형태 검증은 dir 루프의 #638~#643)
++            continue  # 유효한 승격 실현이 #488 충족이다(형태 검증은 dir 루프의 #638~#641·#643)
+         out.add("#488", target, f"고정 파일 부재 — 비면 빈 파일로 만든다 (트리 {crow.r}행)")
+ 
+     # #490 — 폴더 폐쇄: 칸이 아닌 폴더는 위반. 자리표시자 폴더가 있으면 나머지는 인스턴스다.
+--- before/dddjango/scripts/check-public-surface-annotation.py
++++ dddjango/scripts/check-public-surface-annotation.py
+@@ -862,7 +862,12 @@
+                     put(fn, arg.arg)
+                     active.add(fn)
+             if fn.name in _ADMIN_KWARGS and fn.args.kwarg:
+-                fixed(fn.args.kwarg.annotation, kwargs=True)
++                kwarg = fn.args.kwarg
++                fixed(kwarg.annotation, kwargs=True)
++                if kwarg.annotation is not None:
++                    annotations.setdefault((fn, kwarg.arg), []).append(kwarg.annotation)
++                put(fn, kwarg.arg)
++                active.add(fn)
+             if fn.name == "get_inline_instances":
+                 fixed(fn.returns)
+             for node in nodes:
+@@ -1068,6 +1073,8 @@
+         for key, status in states.items():
+             reason = {"allow": "admin UI context 조립·framework 전달", "candidate": "admin context 흐름/호출 출처 불명", "ordinary": "context 값의 실제 소비"}[status]
+             for ann in annotations.get(key, []):
++                if status == "allow" and id(ann) in policy:
++                    continue  # 소비가 없을 때만 확인된 framework 고정 슬롯을 유지한다.
+                 policy[id(ann)] = (status, reason)
+     return policy
+ 
+@@ -1104,8 +1111,8 @@
+             if in_roots and value is not None and v645 != "bare":
+                 hits.append((lineno, "c", "#647", where, f"{label}의 열린 admin context — {reason}", RECORD_Q))
+                 return
+-            if v645 == "nested":
+-                hits.append((lineno, "c", "#645", where, nested_msg, ANY_Q))
++            if v645 == "nested" or (v645 == "bare" and site == "sig-star"):
++                hits.append((lineno, "c", "#645", where, bare_msg if v645 == "bare" else nested_msg, ANY_Q))
+                 return
+         blocked647 = False
+         if in_roots and ann is not None:
+--- before/dddjango/scripts/design_pregate.py
++++ dddjango/scripts/design_pregate.py
+@@ -1428,6 +1428,7 @@
+         return None, "pytest 이름 재바인딩/충돌"
+     stores: list[ast.AST] = []
+     mutations: list[ast.Subscript] = []
++    method_calls: list[ast.Call] = []
+     def visit(node: ast.AST) -> None:
+         if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+             if node.name == "pytestmark":
+@@ -1441,9 +1442,14 @@
+                 root = root.value
+             if isinstance(root, ast.Name) and root.id == "pytestmark":
+                 mutations.append(node)
++        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
++                and isinstance(node.func.value, ast.Name) and node.func.value.id == "pytestmark":
++            method_calls.append(node)
+         for child in ast.iter_child_nodes(node):
+             visit(child)
+     visit(module)
++    if method_calls:
++        return None, "module pytestmark method 호출 — 최종 목록 미해소"
+     if mutations:
+         return None, "module pytestmark subscript mutation — 최종 목록 미해소"
+     assignments = [node for node in module.body if
+@@ -1594,13 +1600,14 @@
+             table.update(declared)
+         return table
+ 
+-    def resolve(self, module: str, expression: ast.expr, seen: frozenset[tuple[str, str]] = frozenset()
++    def resolve(self, module: str, expression: ast.expr, seen: frozenset[tuple[str, str]] = frozenset(),
++                referenced_names: set[str] | None = None
+                 ) -> tuple[list[tuple[str, str, ast.ClassDef | None]], list[str]]:
+         """컨테이너·alias·forward 타입을 identity로 해소한다. 미해소는 후보 근거다."""
+         if isinstance(expression, ast.Constant):
+             if isinstance(expression.value, str):
+                 try:
+-                    return self.resolve(module, ast.parse(expression.value, mode="eval").body, seen)
++                    return self.resolve(module, ast.parse(expression.value, mode="eval").body, seen, referenced_names)
+                 except SyntaxError:
+                     return [], [f"forward annotation 파싱 불가: {expression.value}"]
+             return [], []
+@@ -1610,14 +1617,14 @@
+             nodes = [expression.left, expression.right]
+         elif isinstance(expression, ast.Subscript):
+             head = ast.unparse(expression.value)
+-            identity, issues = self.resolve(module, expression.value, seen)
++            identity, issues = self.resolve(module, expression.value, seen, referenced_names)
+             names = {(m, n) for m, n, _ in identity}
+             if ("typing", "Literal") in names:
+                 return [], []
+             supported = {"list", "tuple", "set", "frozenset", "dict", "Mapping", "Sequence", "Optional", "Union"}
+             builtin_container = head in {"list", "tuple", "set", "frozenset", "dict"} and head not in self.load(module)
+             if builtin_container or any(m in ("typing", "collections.abc", "builtins") and n in supported for m, n in names):
+-                return self.resolve(module, expression.slice, seen)
++                return self.resolve(module, expression.slice, seen, referenced_names)
+             # Unknown generic semantics cannot prove contained field identity.
+             return [], issues or [f"타입 컨테이너 출처/필드 의미 미해소: {head}"]
+         else:
+@@ -1625,13 +1632,15 @@
+         if nodes:
+             identities, issues = [], []
+             for node in nodes:
+-                found, uncertain = self.resolve(module, node, seen)
++                found, uncertain = self.resolve(module, node, seen, referenced_names)
+                 identities.extend(found)
+                 issues.extend(uncertain)
+             return identities, issues
+         if not isinstance(expression, (ast.Name, ast.Attribute)):
+             return [], [f"타입식 미지원: {ast.unparse(expression)}"]
+         name = ast.unparse(expression)
++        if referenced_names is not None:
++            referenced_names.add(name)
+         primitive = {"str", "int", "float", "bool", "bytes", "bytearray", "object", "None", "complex"}
+         if name in primitive:
+             return [], []
+@@ -1647,19 +1656,22 @@
+                 origin, symbol = root[0]
+                 qualified = [origin] + ([symbol] if symbol else []) + pieces[1:]
+                 target = ".".join(qualified[:-1])
+-                return self.identity(target, pieces[-1], seen)
++                return self.identity(target, pieces[-1], seen, referenced_names=referenced_names)
+             if root:
+                 return [], [f"qualified 타입 출처 중복/미해소: {name}"]
+             if self._known_root(pieces[0]):
+-                return self.identity(".".join(pieces[:-1]), pieces[-1], seen)
++                return self.identity(".".join(pieces[:-1]), pieces[-1], seen, referenced_names=referenced_names)
+             return [], [f"qualified 타입 출처 미해소: {name}"]
+-        return self.identity(module, name, seen, local=True)
++        return self.identity(module, name, seen, local=True, referenced_names=referenced_names)
+ 
+     def _known_root(self, name: str) -> bool:
+         return name in ("typing", "builtins", "collections") or _is_repo_target(self.copy, name, self.plan)
+ 
+-    def identity(self, module: str, name: str, seen: frozenset[tuple[str, str]], local: bool = False
++    def identity(self, module: str, name: str, seen: frozenset[tuple[str, str]], local: bool = False,
++                 referenced_names: set[str] | None = None
+                  ) -> tuple[list[tuple[str, str, ast.ClassDef | None]], list[str]]:
++        if referenced_names is not None:
++            referenced_names.add(name)
+         values = self.load(module).get(name, [])
+         if len(values) > 1 or values == [None]:
+             return [], [f"타입 선언 중복/분기 불일치: {module}.{name}"]
+@@ -1674,9 +1686,9 @@
+                 key = (origin, imported)
+                 if key in seen:
+                     return [], [f"alias cycle: {origin}.{imported}"]
+-                return self.identity(origin, imported, seen | {key})
++                return self.identity(origin, imported, seen | {key}, referenced_names=referenced_names)
+             if isinstance(value, ast.expr):
+-                return self.resolve(module, value, seen)
++                return self.resolve(module, value, seen, referenced_names)
+             return [], [f"타입 출처 미해소: {module}.{name}"]
+         if local:
+             return [], [f"bare 타입 `{name}` 출처 미해소 — 명시 import/별칭 출처를 보완해 주세요"]
+@@ -1713,9 +1725,10 @@
+         injected, unknown = [], []
+         if len(values) == 1 and isinstance(values[0], ast.ClassDef):
+             for annotation in annotations(values[0], True):
+-                identities, issues = types.resolve(module, annotation)
++                referenced_names: set[str] = set()
++                identities, issues = types.resolve(module, annotation, referenced_names=referenced_names)
+                 injected += [f"{m}.{n}" for m, n, _ in identities if ".application_layer.port.unit_of_work." in m + "."]
+-                if "UnitOfWork" in ast.unparse(annotation):
++                if "UnitOfWork" in ast.unparse(annotation) or any("UnitOfWork" in name for name in referenced_names):
+                     unknown += issues
+         else:
+             unknown.append("클래스 선언 중복/파싱 불가")
+--- before/workspace/tools/field_report_checker_smoke.py
++++ workspace/tools/field_report_checker_smoke.py
+@@ -415,6 +415,49 @@
+                               str(self.root)], env=self.env, text=True, capture_output=True)
+         self.assertIn(run.returncode, (0, 2), run.stdout + run.stderr)
+         return [json.loads(line) for line in records.read_text().splitlines()] if records.exists() else []
++
++
++    def test_admin_kwargs_actual_consumption_and_unknown_escape(self):
++        prefix = ("from typing import Any\nfrom django.contrib.admin import ModelAdmin\n"
++                  "from django.http import HttpResponse\nclass BookAdmin(ModelAdmin):\n"
++                  "    def get_form(self, request: object, **kwargs: Any) -> HttpResponse:\n")
++        for body, expected in [
++            ("return super().get_form(request, **kwargs)", []),
++            ("...", []),
++            ("if kwargs['amount'] > 10:\n            charge(kwargs['amount'])\n        return super().get_form(request, **kwargs)", ['violation']),
++            ("options = kwargs\n        charge(options['amount'])\n        return super().get_form(request, **kwargs)", ['violation']),
++            ("unknown(kwargs)\n        return super().get_form(request, **kwargs)", ['info']),
++        ]:
++            with self.subTest(body=body):
++                rows = self.admin_records(prefix + '        ' + body + '\n')
++                self.assertEqual([r['severity'] for r in rows if r['rule'] == '#645'], expected, rows)
++                self.assertTrue(any(r['rule'] == '#646' for r in rows), rows)
++                self.assertFalse(any(r['rule'] == '#647' for r in rows), rows)
++        rows = self.admin_records(prefix + "        import json\n        decoded: dict[str, object] = json.loads(request.body)\n        return super().get_form(request, **kwargs)\n")
++        self.assertTrue(any(r['rule'] == '#650' for r in rows), rows)
++
++    def test_ohs_module_definitions_invalidate_imported_builder(self):
++        header = "from application.lesson.composition_root.books import build_read_use_case as _prepare\n"
++        for definition, expected in [
++            ('', False), ('def _prepare(): return cursor\n', True),
++            ('async def _prepare(): return cursor\n', True), ('class _prepare: pass\n', True),
++            ('def _unused():\n    def _prepare(): return cursor\n', False),
++            ('class _Unused:\n    class _prepare: pass\n', False),
++        ]:
++            with self.subTest(definition=definition):
++                f, c = self.ohs_rules(header + definition + 'def read_query(request):\n    _prepare().execute()\n')
++                self.assertNotIn('#153', f)
++                self.assertEqual('#153' in c, expected)
++
++    def test_uow_module_class_shadow_keeps_unknown_region_candidate(self):
++        body = "with uow:\n        books.save(a)\n    with uow:\n        loans.save(b)"
++        for header, expected in [('', False), ('class Work: pass\n', True),
++                                 ('class Other: pass\n', False),
++                                 ('def unused():\n    class Work: pass\n', False)]:
++            with self.subTest(header=header):
++                f, c = self.application_rules(body, header)
++                self.assertNotIn('#546', f)
++                self.assertEqual('#546' in c, expected)
+ 
+     def test_admin_context_real_parler_helper_and_business_opposite(self):
+         source = """from typing import Any
+--- before/workspace/tools/pregate_field_report_smoke.py
++++ workspace/tools/pregate_field_report_smoke.py
+@@ -861,6 +861,50 @@
+                     self.assertEqual(report['materialized'], [])
+                     self.assertTrue(any('S5' in note and 'subscript' in note for note in report['unsimulated']), report)
+ 
++    def test_marker_method_mutations_preserve_bytes_and_report_s5(self):
++        for mutation in ['pytestmark.append(pytest.mark.django_db)', 'pytestmark.pop()',
++                         'if True:\n    pytestmark.extend([pytest.mark.django_db])']:
++            for markers in ['', 'slow']:
++                with self.subTest(mutation=mutation, markers=markers):
++                    original = 'import pytest\npytestmark = [pytest.mark.slow]\n' + mutation + '\n'
++                    self.write(self.source, TEST, original)
++                    text = spec_text([f'update {TEST}'], owner=f'{TEST} [markers: {markers}]')
++                    _, report = self.materialize(text)
++                    self.assertEqual((self.copy / TEST).read_bytes(), original.encode())
++                    self.assertEqual((self.source / TEST).read_bytes(), original.encode())
++                    self.assertEqual(report['materialized'], [])
++                    self.assertTrue(any('S5' in note and 'method' in note for note in report['unsimulated']), report)
++        _git(self.source, 'add', '-A')
++        _git(self.source, 'commit', '-qm', 'synthetic marker mutation fixture')
++        run, report = self.cli(text)
++        self.assertEqual(run.returncode, 4, run.stdout + run.stderr)
++        self.assertIn('S5', report)
++        self.assertIn('method', report)
++        self.assertEqual(pg.check_report(text, report)[0], 0)
++        self.assertEqual((self.source / TEST).read_bytes(), original.encode())
++
++    def test_unresolved_named_uow_alias_keeps_declaration_candidate(self):
++        path = 'application/garden/application_layer/books/list_books/list_books_use_case.py'
++        for effect in ['read-only', 'write']:
++            for annotation, aliases, expected in [
++                ('StrangeUnitOfWork', [], [('#197', False)]),
++                ('U', ['alias U = StrangeUnitOfWork'], [('#197', False)]),
++                ('U', ['alias U = V', 'alias V = StrangeUnitOfWork'], [('#197', False)]),
++                ('U', ['alias U = list[StrangeUnitOfWork]'], [('#197', False)]),
++                ('U', ['alias U = P'], []),
++                ('U', ['alias U = int'], []),
++                ('U', ['alias U = StrangeUnitOfWork', 'StrangeUnitOfWork {value: int}'], []),
++            ]:
++                with self.subTest(effect=effect, aliases=aliases):
++                    text = self.effects(spec_text([f'update {path}'], [
++                        *[f'{path}::{alias}' for alias in aliases], f'{path}::ListBooks',
++                        f'{path}::ListBooks.__init__(self, uow: {annotation})']),
++                        f'{path}::ListBooks {effect} uow=none')
++                    plan, errors = pg.parse_spec(text)
++                    self.assertEqual(errors, [])
++                    found = pg.check_declarations(plan, self.source)
++                    self.assertEqual([(f.rule, f.confirmed) for f in found], expected if effect == 'read-only' else [])
++
+ 
+ if __name__ == "__main__":
+     unittest.main(verbosity=2)

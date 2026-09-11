@@ -1,0 +1,104 @@
+
+
+--- fix2-before/codex-dddjango/skills/dddjango/scripts/check-port-adapter-pairing.py
+
++++ codex-dddjango/skills/dddjango/scripts/check-port-adapter-pairing.py
+
+@@ -1216,7 +1216,9 @@
+
+     # 최초 정적 별칭은 보존한다. 이미 바인딩된 모듈 이름의 재대입은 함수에서 불명이다.
+     rebound = set()
+     bound = set()
+-    for st in mod.body:
++    pending = list(reversed(mod.body))
++    while pending:
++        st = pending.pop()
+         if isinstance(st, (ast.Import, ast.ImportFrom)):
+             names = set(imported(st, py))
+         elif isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+@@ -1224,6 +1226,12 @@
+
+         elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign, ast.Delete)):
+             targets = st.targets if isinstance(st, (ast.Assign, ast.Delete)) else [st.target]
+             names = {key(t) for t in targets}
++        elif isinstance(st, (ast.Name, ast.Attribute)) and isinstance(st.ctx, (ast.Store, ast.Del)):
++            names = {key(st)}
++        elif isinstance(st, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try, ast.With, ast.AsyncWith, ast.ExceptHandler)):
++            # 모듈 실행 구간만 펼친다. 위의 함수/클래스 정의는 이름만 바인딩한다.
++            pending.extend(reversed(list(ast.iter_child_nodes(st))))
++            names = {st.name} if isinstance(st, ast.ExceptHandler) and st.name else set()
+         else:
+             continue
+         rebound.update(names & bound)
+
+
+--- fix2-before/dddjango/scripts/check-port-adapter-pairing.py
+
++++ dddjango/scripts/check-port-adapter-pairing.py
+
+@@ -1216,7 +1216,9 @@
+
+     # 최초 정적 별칭은 보존한다. 이미 바인딩된 모듈 이름의 재대입은 함수에서 불명이다.
+     rebound = set()
+     bound = set()
+-    for st in mod.body:
++    pending = list(reversed(mod.body))
++    while pending:
++        st = pending.pop()
+         if isinstance(st, (ast.Import, ast.ImportFrom)):
+             names = set(imported(st, py))
+         elif isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+@@ -1224,6 +1226,12 @@
+
+         elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign, ast.Delete)):
+             targets = st.targets if isinstance(st, (ast.Assign, ast.Delete)) else [st.target]
+             names = {key(t) for t in targets}
++        elif isinstance(st, (ast.Name, ast.Attribute)) and isinstance(st.ctx, (ast.Store, ast.Del)):
++            names = {key(st)}
++        elif isinstance(st, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try, ast.With, ast.AsyncWith, ast.ExceptHandler)):
++            # 모듈 실행 구간만 펼친다. 위의 함수/클래스 정의는 이름만 바인딩한다.
++            pending.extend(reversed(list(ast.iter_child_nodes(st))))
++            names = {st.name} if isinstance(st, ast.ExceptHandler) and st.name else set()
+         else:
+             continue
+         rebound.update(names & bound)
+--- fix2-before/workspace/tools/field_report_checker_smoke.py
+
++++ workspace/tools/field_report_checker_smoke.py
+
+@@ -354,6 +354,32 @@
+
+                     f, c = self.property_rules(source)
+                     self.assertEqual("#557" in f, wanted == "violation")
+                     self.assertEqual("#557" in c, wanted == "candidate")
++
++    def test_later_module_compound_rebinding_invalidates_function_constructor(self):
++        for imported, comparison in [
++            ("from requests import Response as Source", "value.status_code == 200"),
++            ("from application.lesson.domain_layer.book.kind import Kind as Source", "value.code == 1"),
++        ]:
++            for later in ["if flag: Alias = dynamic", "while flag: Alias = dynamic",
++                          "for item in items: Alias = dynamic", "with context: Alias = dynamic",
++                          "try: Alias = dynamic\nexcept Exception: pass"]:
++                with self.subTest(imported=imported, later=later):
++                    source = imported + "\nAlias = Source\ndef run():\n    value = Alias()\n    return " + comparison + "\n" + later + "\n"
++                    f, c = self.property_rules(source)
++                    self.assertNotIn("#557", f)
++                    self.assertIn("#557", c)
++
++    def test_nested_definition_bindings_do_not_rebind_module_constructor_alias(self):
++        for imported, comparison, vendor in [
++            ("from requests import Response as Source", "value.status_code == 200", True),
++            ("from application.lesson.domain_layer.book.kind import Kind as Source", "value.code == 1", False),
++        ]:
++            for definition in ["def unused():", "class Unused:"]:
++                with self.subTest(imported=imported, definition=definition):
++                    source = imported + "\nAlias = Source\ndef run():\n    value = Alias()\n    return " + comparison + "\nif flag:\n    " + definition + "\n        Alias = dynamic\n"
++                    f, c = self.property_rules(source)
++                    self.assertEqual("#557" in f, vendor)
++                    self.assertNotIn("#557", c)
+ 
+     def admin_records(self, source):
+         self.write("framework/admin/book.py", source)
+PRIOR TEST BODIES PRESERVED 33; CURRENT 35
+CHANGED ONLY codex-dddjango/skills/dddjango/scripts/check-port-adapter-pairing.py, dddjango/scripts/check-port-adapter-pairing.py, workspace/tools/field_report_checker_smoke.py

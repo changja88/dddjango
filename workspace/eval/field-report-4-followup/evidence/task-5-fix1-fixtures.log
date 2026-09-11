@@ -1,0 +1,12 @@
+context_isolation/good: expected=0 actual=0
+context_isolation/bad_rules: expected=2 actual=2
+usecase_dto/good: expected=0 actual=0
+usecase_dto/bad_rules: expected=2 actual=2
+domain_model/good: expected=0 actual=0
+domain_model/bad_rules: expected=2 actual=2
+usecase_dto/no_api: expected=0 actual=0
+usecase_dto/skeleton_placeholder: expected=0 actual=0
+usecase_dto/registrar_only: expected=2 actual=2
+usecase_dto_domain_exception/good: expected=0 actual=0
+usecase_dto_domain_exception/bad_rules: expected=2 actual=2
+11/11 covering fixture exits matched; expectations unchanged

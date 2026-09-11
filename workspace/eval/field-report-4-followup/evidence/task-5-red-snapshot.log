@@ -1,0 +1,94 @@
+test_snapshot_gate_skips_only_optional_cache_and_preserves_original_bytes (registry_gate_smoke.CacheSnapshotRegression.test_snapshot_gate_skips_only_optional_cache_and_preserves_original_bytes) ... FAIL
+test_snapshot_keeps_fixed_parents_hidden_files_empty_instances_and_other_parents (registry_gate_smoke.CacheSnapshotRegression.test_snapshot_keeps_fixed_parents_hidden_files_empty_instances_and_other_parents) ... ok
+
+======================================================================
+FAIL: test_snapshot_gate_skips_only_optional_cache_and_preserves_original_bytes (registry_gate_smoke.CacheSnapshotRegression.test_snapshot_gate_skips_only_optional_cache_and_preserves_original_bytes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/registry_gate_smoke.py", line 278, in test_snapshot_gate_skips_only_optional_cache_and_preserves_original_bytes
+    self.assertEqual(code, 0, out)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : # registry_gate — 판정 차분 · repo · 앵커 e266cdad8d0d
+툴체인: dddjango v2.18.2 · py3.14 · 실행 트리 digest 18d752b0658bc271(39파일) · 경로 /Users/hyun/.cache/dddjango-field4-followup-20260911/dddjango/scripts
+**귀속 0 ≠ 전체 clean** — 이 게이트는 «이번 런이 위반을 늘렸나»만 판정한다(legacy 격리).
+| 검사기 | anchor | current |
+|---|---|---|
+| `check-mechanism-ownership.py` | 0 | 0 |
+| `check-error-centralization.py` | 0 | 0 |
+| `check-response-schema-bypass.py` | 0 | 0 |
+| `check-layer-skeleton.py` | 0 | 2 |
+| `check-openapi-error-declaration.py` | 0 | 0 |
+| `check-context-isolation.py` | 0 | 2 |
+| `check-app-container.py` | 0 | 0 |
+| `check-ninja-boundary-middleware.py` | 0 | 0 |
+| `check-common-container.py` | 0 | 0 |
+| `check-idempotency-scope-creep.py` | 0 | 0 |
+| `check-public-surface-annotation.py` | 0 | 0 |
+| `check-test-config.py` | 0 | 0 |
+| `check-transient-overmapping.py` | 0 | 0 |
+| `check-synthetic-infra-exc.py` | 0 | 0 |
+| `check-api-error-controller-contract.py` | 0 | 0 |
+| `check-composition-root.py` | 0 | 0 |
+| `check-db-table.py` | 2 | 2 |
+| `check-choices-literal-consumption.py` | 0 | 0 |
+| `check-usecase-dto-placement.py` | 0 | 2 |
+| `check-transaction-boundary.py` | 0 | 0 |
+| `check-domain-model.py` | 0 | 2 |
+| `check-port-adapter-pairing.py` | 0 | 2 |
+| `check-event-publish.py` | 0 | 0 |
+| `check-broker-contract.py` | 0 | 0 |
+| `check-missable-entrance.py` | 0 | 0 |
+| `check-naming.py` | 0 | 0 |
+| `check-business-vocabulary.py` | 0 | 0 |
+
+== 귀속(N∖L) 35건 ==
+  check-context-isolation.py :: [#152] application/orders/driving_layer/open_host_service/vanished/vanished_service.py: 창구의 진입점은 `vanished_service.py` 하나다 — 부재
+  check-context-isolation.py :: [#154] application/orders/driving_layer/open_host_service/vanished/deep: `<service>/` 안은 `<service>_service.py` 와 `contract/` 둘로 구성한다
+  check-domain-model.py :: [#256] application/orders/domain_layer/vanished: `vanished.py` 가 없다 — 애그리거트 루트 클래스 하나가 폴더와 같은 이름의 파일로 온다
+  check-domain-model.py :: [#299] application/orders/domain_layer/vanished: `vanished_repository.py` 가 없다 — 애그리거트 폴더는 루트와 리포지토리 선언 파일을 갖는다(#282)
+  check-layer-skeleton.py :: [#488] application/orders/application_layer/order/vanished/vanished_command.py: 고정 파일 부재 — 비면 빈 파일로 만든다 (트리 42행)
+  check-layer-skeleton.py :: [#488] application/orders/application_layer/order/vanished/vanished_query.py: 고정 파일 부재 — 비면 빈 파일로 만든다 (트리 43행)
+  check-layer-skeleton.py :: [#488] application/orders/application_layer/order/vanished/vanished_result.py: 고정 파일 부재 — 비면 빈 파일로 만든다 (트리 44행)
+  check-layer-skeleton.py :: [#488] application/orders/application_layer/order/vanished/vanished_use_case.py: 고정 파일 부재 — 비면 빈 파일로 만든다 (트리 41행)
+  check-layer-skeleton.py :: [#488] application/orders/application_layer/port/vanished/exception.py: 고정 파일 부재 — 비면 빈 파일로 만든다 (트리 48행)
+  check-layer-skeleton.py :: [#488] application/orders/application_layer/port/vanished/vanished_port.py: 고정 파일 부재 — 비면 빈 파일로 만든다 (트리 47행)
+  check-layer-skeleton.py :: [#488] application/orders/domain_layer/vanished/entity: 고정 칸 `entity/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 62행)
+  check-layer-skeleton.py :: [#488] application/orders/domain_layer/vanished/event: 고정 칸 `event/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 66행)
+  check-layer-skeleton.py :: [#488] application/orders/domain_layer/vanished/exception: 고정 칸 `exception/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 69행)
+  check-layer-skeleton.py :: [#488] application/orders/domain_layer/vanished/value_object: 고정 칸 `value_object/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 64행)
+  check-layer-skeleton.py :: [#488] application/orders/domain_layer/vanished/vanished.py: 고정 파일 부재 — 비면 빈 파일로 만든다 (트리 61행)
+  check-layer-skeleton.py :: [#488] application/orders/domain_layer/vanished/vanished_repository.py: 고정 파일 부재 — 비면 빈 파일로 만든다 (트리 68행)
+  check-layer-skeleton.py :: [#488] application/orders/driven_layer/adapter/email_sender/vanished_adapter/__init__.py: 어댑터 패키지에 `__init__.py` 가 없다
+  check-layer-skeleton.py :: [#488] application/orders/driven_layer/adapter/email_sender/vanished_adapter/adapter: 고정 칸 `adapter/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 125행)
+  check-layer-skeleton.py :: [#488] application/orders/driven_layer/adapter/email_sender/vanished_adapter/command: 고정 칸 `command/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 127행)
+  check-layer-skeleton.py :: [#488] application/orders/driven_layer/adapter/email_sender/vanished_adapter/constant: 고정 칸 `constant/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 129행)
+  check-layer-skeleton.py :: [#488] application/orders/driven_layer/adapter/email_sender/vanished_adapter/contract: 고정 칸 `contract/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 131행)
+  check-layer-skeleton.py :: [#488] application/orders/driven_layer/adapter/email_sender/vanished_adapter/schema: 고정 칸 `schema/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 133행)
+  check-layer-skeleton.py :: [#488] application/orders/driving_layer/open_host_service/vanished/contract: 고정 칸 `contract/` 부재 — 비어도 `__init__.py` 로 만든다 (트리 25행)
+  check-layer-skeleton.py :: [#488] application/orders/driving_layer/open_host_service/vanished/vanished_service.py: 고정 파일 부재 — 비면 빈 파일로 만든다 (트리 24행)
+  check-layer-skeleton.py :: [#490] application/orders/application_layer/order/vanished/deep: 트리에 없는 칸이다 — 반환
+  check-layer-skeleton.py :: [#490] application/orders/application_layer/port/vanished/deep: 트리에 없는 칸이다 — 반환
+  check-layer-skeleton.py :: [#490] application/orders/domain_layer/vanished/deep: 트리에 없는 칸이다 — 반환
+  check-layer-skeleton.py :: [#490] application/orders/driven_layer/adapter/email_sender/vanished_adapter/deep: 트리에 없는 칸이다 — 반환
+  check-layer-skeleton.py :: [#490] application/orders/driving_layer/open_host_service/vanished/deep: 트리에 없는 칸이다 — 반환
+  check-port-adapter-pairing.py :: [#218] application/orders/application_layer/port/vanished: 계약 파일 이름이 폴더와 다르다 — `vanished_port.py` 여야 한다([])
+  check-port-adapter-pairing.py :: [#225] application/orders/application_layer/port/vanished: exception.py 가 없다 — 포트 폴더마다 필수다
+  check-usecase-dto-placement.py :: [#193] application/orders/application_layer/order/vanished/vanished_use_case.py: 진입점 파일 이름은 `vanished_use_case.py` 다 — 부재
+  check-usecase-dto-placement.py :: [#569] application/orders/application_layer/order/vanished/vanished_command.py: `<use_case>_command.py` 는 안 써도 «빈 파일»로 온다
+  check-usecase-dto-placement.py :: [#569] application/orders/application_layer/order/vanished/vanished_query.py: `<use_case>_query.py` 는 안 써도 «빈 파일»로 온다
+  check-usecase-dto-placement.py :: [#570] application/orders/application_layer/order/vanished/vanished_result.py: `<use_case>_result.py` 는 커맨드 쪽도 갖는다 — 돌려줄 것이 없으면 «빈 파일»로 둔다
+
+== legacy 잔존(L∩N) 1건 · 해소(L∖N) 0건 ==
+  check-db-table.py: 1
+
+== ⓓ 신규(N′∖L′) 2건 · legacy 0건 · 해소 0건 — exit 불산입 · 감수자 입력은 신규분만(R-0284) ==
+  check-context-isolation.py :: [ⓓ#151] application/orders/driving_layer/open_host_service/vanished: 창구 이름 `vanished` 이 애그리거트 이름과 같다 — 물음: Q1(이 이름이 «무엇을 해 주는가»를 말하나)
+  check-usecase-dto-placement.py :: [ⓓ#191] application/orders/application_layer/order/vanished: 폴더 이름 `vanished` 이 애그리거트 이름이다 — 동사로 짓는다 — 물음: Q1(이 이름이 «판정이 되는 물음»인가)
+
+판정: 귀속 35건 → red
+
+
+----------------------------------------------------------------------
+Ran 2 tests in 4.828s
+
+FAILED (failures=1)

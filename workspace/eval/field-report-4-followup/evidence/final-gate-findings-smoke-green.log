@@ -1,0 +1,18 @@
+| 단언 | 판정 | 비고 |
+|---|---|---|
+| DM-red exit 2 (env 유/무) | ✓ | 2/2 |
+| DM-red stdout=개작 전 실측(㉠) | ✓ | b571ad8ca467 |
+| DM-red stdout env 무영향(㉠) | ✓ | byte 동일 |
+| DM-red 레코드 계수 50+14(㉡) | ✓ | violation 50 · info 14 |
+| DM-red 표본 violation 레코드(㉡) | ✓ | #264 money.py:12 |
+| DM-red 표본 info 레코드(㉡) | ✓ | #268 money.py:7 |
+| DM-red 라인↔레코드 1:1 재구성(㉡) | ✓ | 64건 전수 |
+| DM-red run_id 단일·record_id 유일 | ✓ | record_id 64 |
+| DM-red schema 전수 findings/0 | ✓ |  |
+| CC-red exit 2 (env 유/무) | ✓ | 2/2 |
+| CC-red stdout=개작 전 실측(㉠) | ✓ | 5ce9427209a4 |
+| CC-red stdout env 무영향(㉠) | ✓ | byte 동일 |
+| CC-red rule=null+contract_ref 2건(㉡) | ✓ | application/common, application/framework |
+| dm-good green — exit 0·stdout 0·레코드 0(㉢) | ✓ | exit 0 |
+| cc-good green — exit 0·stdout 0·레코드 0(㉢) | ✓ | exit 0 |
+단언 15 · 일치 15 · 불일치 0

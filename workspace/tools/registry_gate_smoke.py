@@ -55,6 +55,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import unittest
 from pathlib import Path
 
 ROOT: Path = Path(__file__).resolve().parents[2]
@@ -250,7 +251,94 @@ def _pre_repair_gate(td: Path) -> "Path | None":
     return gate
 
 
+
+class CacheSnapshotRegression(unittest.TestCase):
+    def test_snapshot_gate_skips_only_optional_cache_and_preserves_original_bytes(self):
+        from pregate_fixture_run import _load_module
+        sys.path.insert(0, str(GATE.parent))
+        gate = _load_module(GATE, "cache_snapshot_gate")
+        slots = (
+            "domain_layer/vanished",
+            "application_layer/order/vanished",
+            "driving_layer/open_host_service/vanished",
+            "application_layer/port/vanished",
+            "driven_layer/adapter/email_sender/vanished_adapter",
+        )
+        with tempfile.TemporaryDirectory(prefix="cache-snapshot-") as temp:
+            td = Path(temp)
+            repo, anchor = _make_repo(td, "repo")
+            for relative in slots:
+                _write(repo, "application/orders/" + relative + "/deep/__pycache__/old.pyc", "cache bytes")
+            _write(repo, "harmless.txt", "working change")
+            before = {str(p.relative_to(repo)): p.read_bytes() for p in repo.rglob("*")
+                      if p.is_file() and ".git" not in p.relative_to(repo).parts}
+            snapshot = td / "snapshot"
+            gate._snapshot_current(repo, snapshot)
+            code, out = _gate(repo, anchor)
+            self.assertEqual(code, 0, out)
+            self.assertNotIn("vanished", out)
+            for relative in slots:
+                self.assertFalse((snapshot / "application/orders" / relative).exists(), relative)
+            for relative in slots:
+                _write(repo, "application/orders/" + relative + "/__init__.py", "")
+            code, out = _gate(repo, anchor)
+            self.assertEqual(code, 2, out)
+            for rule in ("#299", "#256", "#193", "#570", "#569", "#152", "#218", "#225"):
+                self.assertTrue(any(rule in line and "vanished" in line for line in out.splitlines()), (rule, out))
+            for relative in slots:
+                (repo / "application/orders" / relative / "__init__.py").unlink()
+            after = {str(p.relative_to(repo)): p.read_bytes() for p in repo.rglob("*")
+                     if p.is_file() and ".git" not in p.relative_to(repo).parts
+                     and ".dddjango" not in p.relative_to(repo).parts}
+            self.assertEqual(after, before)
+
+    def test_snapshot_keeps_fixed_parents_hidden_files_empty_instances_and_other_parents(self):
+        from pregate_fixture_run import _load_module
+        sys.path.insert(0, str(GATE.parent))
+        gate = _load_module(GATE, "cache_boundary_gate")
+        with tempfile.TemporaryDirectory(prefix="cache-boundary-") as temp:
+            td = Path(temp)
+            repo = td / "repo"
+            shutil.copytree(BASE_FIXTURE, repo)
+            fixed = repo / "application/orders/application_layer/port/unit_of_work"
+            shutil.rmtree(fixed)
+            _write(repo, str(fixed.relative_to(repo)) + "/__pycache__/old.pyc", "cache")
+            _write(repo, "other/domain_layer/vanished/__pycache__/old.pyc", "cache")
+            _write(repo, "application/orders/driving_layer/api/order/order_controller/__pycache__/old.pyc", "cache")
+            _write(repo, "application/orders/domain_layer/hidden/__pycache__/old.pyc", "cache")
+            _write(repo, "application/orders/domain_layer/hidden/.real", "hidden source")
+            (repo / "application/orders/domain_layer/empty").mkdir()
+            _write(repo, "application/cache_bc/domain_layer/__pycache__/old.pyc", "cache")
+            snapshot = td / "snapshot"
+            gate._snapshot_current(repo, snapshot)
+            for relative in (str(fixed.relative_to(repo)), "other/domain_layer/vanished",
+                             "application/orders/domain_layer/hidden", "application/orders/domain_layer/empty",
+                             "application/cache_bc/domain_layer",
+                             "application/orders/driving_layer/api/order/order_controller"):
+                self.assertTrue((snapshot / relative).is_dir(), relative)
+            proc = subprocess.run([sys.executable, "-B", str(GATE.parent / "check-layer-skeleton.py"),
+                                   str(snapshot)], capture_output=True, text=True, env=_scrubbed_env())
+            self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
+            self.assertTrue(any("#488" in line and "unit_of_work" in line for line in proc.stdout.splitlines()))
+
+    def test_nested_application_container_uses_same_optional_slots_as_direct_checker(self):
+        from pregate_fixture_run import _load_module
+        sys.path.insert(0, str(GATE.parent))
+        gate = _load_module(GATE, "nested_cache_gate")
+        with tempfile.TemporaryDirectory(prefix="nested-cache-") as temp:
+            td = Path(temp)
+            root = td / "repo"
+            shutil.copytree(BASE_FIXTURE, root / "src")
+            relative = "src/application/orders/domain_layer/vanished"
+            _write(root, relative + "/__pycache__/old.pyc", "cache")
+            snapshot = td / "snapshot"
+            gate._snapshot_current(root, snapshot)
+            self.assertFalse((snapshot / relative).exists())
+
 def main() -> int:
+    result = unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(CacheSnapshotRegression))
+    if not result.wasSuccessful():
+        return 2
     if not GATE.is_file() or not BASE_FIXTURE.is_dir():
         print("재료 결손: registry_gate.py 또는 skeleton/good_bc fixture 없음", file=sys.stderr)
         return 1

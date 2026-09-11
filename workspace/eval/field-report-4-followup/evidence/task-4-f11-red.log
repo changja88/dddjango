@@ -1,0 +1,36 @@
+test_closed_enum_validation_and_dynamic_opposites (__main__.CheckerRegression.test_closed_enum_validation_and_dynamic_opposites) ... 
+  test_closed_enum_validation_and_dynamic_opposites (__main__.CheckerRegression.test_closed_enum_validation_and_dynamic_opposites) (base='Enum') ... FAIL
+  test_closed_enum_validation_and_dynamic_opposites (__main__.CheckerRegression.test_closed_enum_validation_and_dynamic_opposites) (base='Closed') ... FAIL
+  test_closed_enum_validation_and_dynamic_opposites (__main__.CheckerRegression.test_closed_enum_validation_and_dynamic_opposites) (base='standard.IntEnum') ... FAIL
+
+======================================================================
+FAIL: test_closed_enum_validation_and_dynamic_opposites (__main__.CheckerRegression.test_closed_enum_validation_and_dynamic_opposites) (base='Enum')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 158, in test_closed_enum_validation_and_dynamic_opposites
+    self.assertNotIn("#268", self.enum_rules(header + f"\nclass Kind({base}):\n    ONE = 1\n")[1])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: '#268' unexpectedly found in ['#268']
+
+======================================================================
+FAIL: test_closed_enum_validation_and_dynamic_opposites (__main__.CheckerRegression.test_closed_enum_validation_and_dynamic_opposites) (base='Closed')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 158, in test_closed_enum_validation_and_dynamic_opposites
+    self.assertNotIn("#268", self.enum_rules(header + f"\nclass Kind({base}):\n    ONE = 1\n")[1])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: '#268' unexpectedly found in ['#268']
+
+======================================================================
+FAIL: test_closed_enum_validation_and_dynamic_opposites (__main__.CheckerRegression.test_closed_enum_validation_and_dynamic_opposites) (base='standard.IntEnum')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 158, in test_closed_enum_validation_and_dynamic_opposites
+    self.assertNotIn("#268", self.enum_rules(header + f"\nclass Kind({base}):\n    ONE = 1\n")[1])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: '#268' unexpectedly found in ['#268']
+
+----------------------------------------------------------------------
+Ran 1 test in 0.006s
+
+FAILED (failures=3)

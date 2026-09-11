@@ -1,0 +1,67 @@
+test_class_global_surface_rejects_the_entire_service_update (__main__.FieldReportTest.test_class_global_surface_rejects_the_entire_service_update) ... ok
+test_class_local_names_do_not_block_new_module_functions (__main__.FieldReportTest.test_class_local_names_do_not_block_new_module_functions) ... ok
+test_compile_failure_is_reported_without_partial_update (__main__.FieldReportTest.test_compile_failure_is_reported_without_partial_update) ... ok
+test_declaration_only_cli_and_report_dispositions (__main__.FieldReportTest.test_declaration_only_cli_and_report_dispositions) ... ok
+test_dto_type_provenance_nested_alias_forward_and_candidates (__main__.FieldReportTest.test_dto_type_provenance_nested_alias_forward_and_candidates) ... ok
+test_effect_declaration_contract_and_hash (__main__.FieldReportTest.test_effect_declaration_contract_and_hash) ... ok
+test_existing_class_decorator_and_alias_remain_s5_alongside_new_function (__main__.FieldReportTest.test_existing_class_decorator_and_alias_remain_s5_alongside_new_function) ... ok
+test_existing_names_and_unmodeled_updates_are_never_replaced (__main__.FieldReportTest.test_existing_names_and_unmodeled_updates_are_never_replaced) ... ok
+test_explicit_service_raise_only_clears_exception_finding (__main__.FieldReportTest.test_explicit_service_raise_only_clears_exception_finding) ... ok
+test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) ... 
+  test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) (rows=[{'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:5', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}, {'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}], provenance={'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py': [{'owner': 'First', 'method': 'after_commit', 'lineno': 5, 'end_lineno': 6}, {'owner': 'Second', 'method': 'after_commit', 'lineno': 15, 'end_lineno': 16}]}, unmatched=[]) ... FAIL
+test_generated_uow_cli_defers_only_generated_body_and_preserves_original (__main__.FieldReportTest.test_generated_uow_cli_defers_only_generated_body_and_preserves_original) ... FAIL
+test_marker_new_list_evaluates_after_pytest_binding (__main__.FieldReportTest.test_marker_new_list_evaluates_after_pytest_binding) ... ok
+test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) ... ok
+test_marker_update_cli_real_test_config_rule (__main__.FieldReportTest.test_marker_update_cli_real_test_config_rule) ... ok
+test_marker_update_noop_and_import_binding_are_preserved (__main__.FieldReportTest.test_marker_update_noop_and_import_binding_are_preserved) ... ok
+test_module_bindings_and_raise_helper_collisions_are_preserved (__main__.FieldReportTest.test_module_bindings_and_raise_helper_collisions_are_preserved) ... ok
+test_new_operation_clears_pair_finding_and_preserves_source_body (__main__.FieldReportTest.test_new_operation_clears_pair_finding_and_preserves_source_body) ... ok
+test_only_exact_real_ohs_service_paths_are_updated (__main__.FieldReportTest.test_only_exact_real_ohs_service_paths_are_updated) ... ok
+test_plain_signature_defaults_remain_transcribable (__main__.FieldReportTest.test_plain_signature_defaults_remain_transcribable) ... ok
+test_real_uow_cli_retains_bad_body_and_missing_robust_even_stub_text (__main__.FieldReportTest.test_real_uow_cli_retains_bad_body_and_missing_robust_even_stub_text) ... ok
+test_run_gate_rejects_missing_material_and_unexplained_raw_red (__main__.FieldReportTest.test_run_gate_rejects_missing_material_and_unexplained_raw_red) ... ok
+test_safe_imports_transcribe_but_conflicts_reject_the_whole_entry (__main__.FieldReportTest.test_safe_imports_transcribe_but_conflicts_reject_the_whole_entry) ... ok
+test_signals_use_first_python_artifact_and_strip_nodeid (__main__.FieldReportTest.test_signals_use_first_python_artifact_and_strip_nodeid) ... ok
+test_signature_named_expressions_reject_the_entire_service_update (__main__.FieldReportTest.test_signature_named_expressions_reject_the_entire_service_update) ... ok
+test_typegraph_container_identity_and_literal_alias (__main__.FieldReportTest.test_typegraph_container_identity_and_literal_alias) ... ok
+test_typegraph_real_tree_cross_module_alias_cycles_and_ohs_imports (__main__.FieldReportTest.test_typegraph_real_tree_cross_module_alias_cycles_and_ohs_imports) ... ok
+test_unlisted_first_artifact_nonadd_and_missing_markers_do_not_signal (__main__.FieldReportTest.test_unlisted_first_artifact_nonadd_and_missing_markers_do_not_signal) ... ok
+test_unresolved_uow_never_confirms_and_declaration_owners_group (__main__.FieldReportTest.test_unresolved_uow_never_confirms_and_declaration_owners_group) ... ok
+test_update_marker_final_state_and_preservation (__main__.FieldReportTest.test_update_marker_final_state_and_preservation) ... ok
+test_wrong_operation_name_and_signature_remain_real_findings (__main__.FieldReportTest.test_wrong_operation_name_and_signature_remain_real_findings) ... ok
+
+======================================================================
+FAIL: test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) (rows=[{'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py:5', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}, {'checker': 'check-port-adapter-pairing.py', 'rule': '#376', 'severity': 'error', 'file': 'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py', 'message': 'after_commit 구현이 transaction.on_commit 으로 채워지지 않았다'}], provenance={'application/orders/driven_layer/adapter/persistence/unit_of_work/order_unit_of_work.py': [{'owner': 'First', 'method': 'after_commit', 'lineno': 5, 'end_lineno': 6}, {'owner': 'Second', 'method': 'after_commit', 'lineno': 15, 'end_lineno': 16}]}, unmatched=[])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 500, in test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations
+    self.assertEqual((len(retained), len(deferred)), want)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Tuples differ: (0, 1) != (1, 0)
+
+First differing element 0:
+0
+1
+
+- (0, 1)
++ (1, 0)
+
+======================================================================
+FAIL: test_generated_uow_cli_defers_only_generated_body_and_preserves_original (__main__.FieldReportTest.test_generated_uow_cli_defers_only_generated_body_and_preserves_original)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 457, in test_generated_uow_cli_defers_only_generated_body_and_preserves_original
+    self.assertEqual(run.returncode, 2, run.stdout + run.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 3 != 2 : 실행 모드: 초기 예보(기준선 기본 HEAD)
+file-plan은 승인 제품 변경의 경로다. coordinator 작업 기록·gate report·임시 로그는 계획 재료 밖이다. 작업기록 오편입 사례는 경로의 역할을 검토할 근거이며 파일명만으로 삭제하지 않는다. docs/**와 비-Python 제품 파일도 승인 범위이면 포함할 수 있다.
+형식 red — 1건 (기계 블록이 규범 문법 밖이다 · architect 반송 재료):
+  use-case-effects add/update 선행 클래스 부재: application/orders/application_layer/orders/read_orders/read_orders_result.py::ReadOrdersResult
+
+요약: 형식 red 1건(문법) · 기준선 0fb07c90c4ce · 모드 차단
+
+
+----------------------------------------------------------------------
+Ran 30 tests in 32.052s
+
+FAILED (failures=2)

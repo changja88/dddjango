@@ -1,0 +1,6 @@
+test_later_import_shadow_invalidates_standard_enum_origin (__main__.CheckerRegression.test_later_import_shadow_invalidates_standard_enum_origin) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.002s
+
+OK

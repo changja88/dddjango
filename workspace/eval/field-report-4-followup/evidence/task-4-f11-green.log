@@ -1,0 +1,6 @@
+test_closed_enum_validation_and_dynamic_opposites (__main__.CheckerRegression.test_closed_enum_validation_and_dynamic_opposites) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.006s
+
+OK

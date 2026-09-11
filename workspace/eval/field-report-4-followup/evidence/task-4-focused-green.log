@@ -1,0 +1,14 @@
+test_ohs_execution_provenance_and_count (__main__.CheckerRegression.test_ohs_execution_provenance_and_count) ... ok
+test_closed_enum_validation_and_dynamic_opposites (__main__.CheckerRegression.test_closed_enum_validation_and_dynamic_opposites) ... ok
+test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) ... ok
+test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) ... ok
+test_origin_scope_rebindings_remain_unknown (__main__.CheckerRegression.test_origin_scope_rebindings_remain_unknown) ... ok
+test_uow_injected_fields_and_factory_alias_scope (__main__.CheckerRegression.test_uow_injected_fields_and_factory_alias_scope) ... ok
+test_declared_usecase_and_enum_constructor_opposites (__main__.CheckerRegression.test_declared_usecase_and_enum_constructor_opposites) ... ok
+test_nested_repository_parameters_do_not_retype_outer_bindings (__main__.CheckerRegression.test_nested_repository_parameters_do_not_retype_outer_bindings) ... ok
+test_custom_enum_validation_does_not_prove_closed_members (__main__.CheckerRegression.test_custom_enum_validation_does_not_prove_closed_members) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.080s
+
+OK

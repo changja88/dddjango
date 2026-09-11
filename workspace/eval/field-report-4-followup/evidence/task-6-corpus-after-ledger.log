@@ -1,0 +1,19 @@
+  ✓            architecture-api             inv1=in_sync inv2=in_sync
+  ✓            architecture-db              inv1=in_sync inv2=in_sync
+  ✓            architecture-ddd             inv1=in_sync inv2=in_sync
+  ✓            discipline-cleancode         inv1=in_sync inv2=in_sync
+  ‼ STRUCTURE  discipline-houserules        inv1=structure inv2=in_sync
+               · discipline-houserules: 소스 미러에서 s003-0 기준선 스팬 매칭 0건(기대 1)
+  ✓            discipline-tdd               inv1=in_sync inv2=in_sync
+  ✓            implementation-django        inv1=in_sync inv2=in_sync
+  ‼ STRUCTURE  implementation-django-ninja  inv1=structure inv2=in_sync
+               · implementation-django-ninja: 소스 미러에서 s023-6.2 기준선 스팬 매칭 0건(기대 1)
+  ✓            implementation-django-web    inv1=in_sync inv2=in_sync
+  ✓            implementation-python        inv1=in_sync inv2=in_sync
+  ✓            implementation-test          inv1=in_sync inv2=in_sync
+
+  [--write 수행]
+    + discipline-houserules: 구조 깨짐 → 자동 동기 불가, 건너뜀
+    + implementation-django-ninja: 구조 깨짐 → 자동 동기 불가, 건너뜀
+
+  9/11 in-sync · STRUCTURE 위반 있음(exit3)

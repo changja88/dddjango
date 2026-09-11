@@ -932,6 +932,43 @@ def _enforce_unit_checks() -> "list[str]":
     return out
 
 
+def _run_execution_modes_bundle(scratch: Path, failures: list[str]) -> None:
+    """12 CLI combinations retain tag semantics and explain initial versus explicit reforecast."""
+    for baseline in (False, True):
+        repo = _make_repo(scratch, f'modes-{baseline}')
+        target = repo / MID_ADD
+        target.parent.mkdir(parents=True, exist_ok=True)
+        original = 'class LaneMarker:\n    value: str\n'
+        target.write_text(original)
+        if baseline:
+            _git(repo, 'add', '-A')
+            _git(repo, 'commit', '-qm', 'mode baseline')
+        for tag in ('add', 'empty', 'update'):
+            for explicit in (False, True):
+                spec = scratch / 'mode-spec.md'
+                spec.write_text('<!-- machine: file-plan -->\n```paths\n' + f'{tag} {MID_ADD}\n```\n'
+                    '<!-- machine: symbols -->\n```symbols\n' + (f'{MID_ADD}::LaneMarker {{value: str}}\n'
+                    if tag == 'add' else '') + '```\n')
+                report = scratch / f'mode-{baseline}-{tag}-{explicit}.md'
+                run = _run_pregate(spec, repo, report, ['--base', 'HEAD'] if explicit else [])
+                expected = (4 if tag == 'update' else 3) if baseline else (3 if tag == 'update' or not explicit else 0)
+                label = f'mode baseline={baseline} tag={tag} explicit={explicit}'
+                text = report.read_text() if report.exists() else ''
+                mode = '명시 재예보(--base HEAD)' if explicit else '초기 예보(기준선 기본 HEAD)'
+                cause = ('기준선 실존' if baseline else '기준선 부재·오버레이 실존') if tag == 'add' else ''
+                if run.returncode != expected or mode not in run.stdout or mode not in text:
+                    failures.append(f'{label}: exit {run.returncode} != {expected} or missing execution mode\n{run.stdout}{run.stderr}')
+                if expected == 3 and cause and cause not in text:
+                    failures.append(f'{label}: missing specific cause {cause}')
+                if tag == 'update' and not baseline and not all(x in text for x in ('초기 예보', '재예보')):
+                    failures.append(f'{label}: absent update needs both execution purposes')
+                if '승인 제품 변경' not in text or '작업 기록' not in text:
+                    failures.append(f'{label}: file-plan scope guidance absent')
+                if target.read_text() != original:
+                    failures.append(f'{label}: source bytes changed')
+                print(f'{label}: exit {run.returncode} (expected {expected})')
+
+
 def main(argv: "list[str]") -> int:
     ap: argparse.ArgumentParser = argparse.ArgumentParser(description="pre-gate 픽스처 러너")
     ap.add_argument("--keep", action="store_true", help="합성 저장소 보존(디버그)")
@@ -943,6 +980,7 @@ def main(argv: "list[str]") -> int:
     failures.extend(_existence_unit_checks())
     failures.extend(_enforce_unit_checks())
     try:
+        _run_execution_modes_bundle(scratch, failures)
         _run_base_bundle(scratch, failures)
         _run_p1_bundle(scratch, failures)
         _run_mid_bundle(scratch, failures)

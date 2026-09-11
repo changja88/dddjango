@@ -712,6 +712,373 @@ def _exempt_override(fn: "ast.FunctionDef | ast.AsyncFunctionDef", cls: "ast.Cla
     return False
 
 
+# Closed origins verified from Django admin and Parler's admin inheritance.
+_ADMIN_BASES = {f"django.contrib.admin{module}.{name}"
+                for module in ("", ".options")
+                for name in ("ModelAdmin", "InlineModelAdmin", "TabularInline", "StackedInline")}
+_ADMIN_BASES |= {f"parler.admin.{name}" for name in (
+    "TranslatableAdmin", "TranslatableInlineModelAdmin", "TranslatableStackedInline", "TranslatableTabularInline")}
+_ADMIN_CONTEXT = {"changeform_view": "extra_context", "change_view": "extra_context",
+                  "add_view": "extra_context", "changelist_view": "extra_context", "render_change_form": "context"}
+_ADMIN_KWARGS = {"get_form", "get_formset", "get_fieldsets", "get_readonly_fields"}
+
+
+def _admin_classes(mod: ast.Module) -> dict[ast.ClassDef, str]:
+    """Resolve only static module origins/aliases and local bases; never execute an MRO."""
+    origins = _origin_bindings(mod)
+    aliases = _alias_defs(mod)
+    definitions: dict[str, ast.AST] = {}
+
+    def collect(stmts: list[ast.stmt]) -> None:
+        for st in stmts:
+            if isinstance(st, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+                definitions[st.name] = st
+            elif isinstance(st, (ast.Assign, ast.AnnAssign)):
+                for target in st.targets if isinstance(st, ast.Assign) else [st.target]:
+                    for name in ast.walk(target):
+                        if isinstance(name, ast.Name):
+                            definitions[name.id] = st.value or st
+            elif isinstance(st, (ast.If, ast.Try)):
+                collect(st.body)
+                collect(st.orelse)
+                if isinstance(st, ast.Try):
+                    for handler in st.handlers:
+                        collect(handler.body)
+                    collect(st.finalbody)
+    collect(mod.body)
+    # Only current runtime alias plus TYPE_CHECKING alternatives are relevant.
+    aliases = {name: [(value, tc) for value, tc in values if tc or value is definitions.get(name)]
+               for name, values in aliases.items()}
+
+    def resolve(node: ast.AST, seen: frozenset[str]) -> str:
+        if isinstance(node, ast.Subscript):
+            return resolve(node.value, seen)
+        origin = _dotted(node, origins)
+        if origin in _ADMIN_BASES:
+            return "allow"
+        if isinstance(node, ast.Name) and node.id not in origins:
+            if node.id in seen:
+                return "candidate"
+            seen = seen | {node.id}
+            definition = definitions.get(node.id)
+            if isinstance(definition, ast.ClassDef):
+                statuses = [resolve(base, seen) for base in definition.bases]
+                return "allow" if "allow" in statuses else ("candidate" if "candidate" in statuses else "ordinary")
+            if isinstance(definition, (ast.Name, ast.Attribute, ast.Subscript)):
+                statuses = [resolve(value, seen) for value, _ in aliases.get(node.id, [(definition, False)])]
+                return "allow" if statuses and all(s == "allow" for s in statuses) else (
+                    "candidate" if any(s != "ordinary" for s in statuses) else "ordinary")
+            if definition is not None or node.id == "object":
+                return "ordinary"
+        return "candidate"
+
+    result: dict[ast.ClassDef, str] = {}
+    for cls in (n for n in mod.body if isinstance(n, ast.ClassDef)):
+        statuses = [resolve(base, frozenset({cls.name})) for base in cls.bases]
+        result[cls] = "allow" if "allow" in statuses else ("candidate" if "candidate" in statuses else "ordinary")
+    return result
+
+
+def _admin_context_policy(mod: ast.Module, rel: Path) -> dict[int, tuple[str, str]]:
+    """Annotation identity policy for connected admin UI bindings, not entire functions.
+
+    A context component includes copies/merges and directly passed private-helper
+    bindings. Consumption dominates unknown escapes, which dominate UI transport.
+    This is deliberately bounded AST analysis; it does not infer arbitrary callees.
+    """
+    policy: dict[int, tuple[str, str]] = {}
+    origins = _origin_bindings(mod)
+    module_shadowed: set[str] = set(origins)
+    pending: list[ast.AST] = list(mod.body)
+    while pending:
+        node = pending.pop()
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            module_shadowed.add(node.name)
+            continue
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            module_shadowed.add(node.id)
+        pending.extend(ast.iter_child_nodes(node))
+    rank = {"allow": 0, "candidate": 1, "ordinary": 2}
+    for cls, origin_status in _admin_classes(mod).items():
+        if origin_status == "ordinary":
+            continue
+        methods = {st.name: st for st in cls.body if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef))}
+        # Duplicate/rebound methods cannot prove direct helper dispatch.
+        counts = {name: sum(isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)) and st.name == name
+                            for st in cls.body) for name in methods}
+        for st in cls.body:
+            if isinstance(st, (ast.Assign, ast.AnnAssign)):
+                for target in st.targets if isinstance(st, ast.Assign) else [st.target]:
+                    if isinstance(target, ast.Name) and target.id in counts:
+                        counts[target.id] += 1
+        states: dict[tuple[ast.AST, str], str] = {}
+        edges: dict[tuple[ast.AST, str], set[tuple[ast.AST, str]]] = {}
+        annotations: dict[tuple[ast.AST, str], list[ast.AST]] = {}
+        active: set[ast.AST] = set()
+        parents: dict[ast.AST, ast.AST] = {}
+        bodies: dict[ast.AST, list[ast.AST]] = {}
+        shadowed: dict[ast.AST, set[str]] = {}
+
+        def put(fn: ast.AST, name: str, status: str = "allow") -> tuple[ast.AST, str]:
+            key = (fn, name)
+            states[key] = max(states.get(key, origin_status), status, key=rank.get)
+            return key
+
+        def link(left: tuple[ast.AST, str], right: tuple[ast.AST, str]) -> None:
+            edges.setdefault(left, set()).add(right)
+            edges.setdefault(right, set()).add(left)
+
+        def fixed(ann: ast.AST | None, *, kwargs: bool = False) -> None:
+            if ann is not None and (kwargs or any(isinstance(n, ast.Subscript) and _dotted(n.value, origins) in _ADMIN_BASES
+                                                 for n in ast.walk(_unstring(ann)))):
+                policy[id(ann)] = (origin_status, "확인된 admin framework override 슬롯" if origin_status == "allow" else "admin base 출처 불명")
+
+        for fn in methods.values():
+            if fn.name in _ADMIN_CONTEXT:
+                active.add(fn)
+            nodes: list[ast.AST] = []
+            def walk(node: ast.AST) -> None:
+                nodes.append(node)
+                for child in ast.iter_child_nodes(node):
+                    parents[child] = node
+                    if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+                        continue
+                    walk(child)
+            for st in fn.body:
+                walk(st)
+            bodies[fn] = nodes
+            local_bindings: set[str] = set()
+            for st in fn.body:
+                _record_syntax_bindings(st, local_bindings)
+                if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                    local_bindings.add(st.name)
+            local_bindings.update(a.arg for a in [*fn.args.posonlyargs, *fn.args.args, *fn.args.kwonlyargs])
+            local_bindings.update(a.arg for a in (fn.args.vararg, fn.args.kwarg) if a is not None)
+            shadowed[fn] = local_bindings
+            for arg in [*fn.args.posonlyargs, *fn.args.args, *fn.args.kwonlyargs]:
+                if arg.annotation is not None:
+                    annotations.setdefault((fn, arg.arg), []).append(arg.annotation)
+                if arg.arg == _ADMIN_CONTEXT.get(fn.name):
+                    put(fn, arg.arg)
+                    active.add(fn)
+            if fn.name in _ADMIN_KWARGS and fn.args.kwarg:
+                kwarg = fn.args.kwarg
+                fixed(kwarg.annotation, kwargs=True)
+                if kwarg.annotation is not None:
+                    annotations.setdefault((fn, kwarg.arg), []).append(kwarg.annotation)
+                put(fn, kwarg.arg)
+                active.add(fn)
+            if fn.name == "get_inline_instances":
+                fixed(fn.returns)
+            for node in nodes:
+                if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+                    annotations.setdefault((fn, node.target.id), []).append(node.annotation)
+        for st in cls.body:
+            if isinstance(st, ast.AnnAssign) and isinstance(st.target, ast.Name) and st.target.id == "inlines":
+                fixed(st.annotation)
+
+        def context_names(expr: ast.AST | None) -> set[str]:
+            if isinstance(expr, ast.Name):
+                return {expr.id}
+            if isinstance(expr, ast.BoolOp) and isinstance(expr.op, ast.Or) and len(expr.values) == 2 \
+                    and isinstance(expr.values[1], ast.Dict) and not expr.values[1].keys:
+                return context_names(expr.values[0])
+            if isinstance(expr, ast.Dict):
+                return set().union(*(context_names(v) for k, v in zip(expr.keys, expr.values) if k is None))
+            if isinstance(expr, ast.Call):
+                if isinstance(expr.func, ast.Name) and expr.func.id == "dict":
+                    return set().union(*(context_names(a) for a in expr.args))
+                if isinstance(expr.func, ast.Attribute) and expr.func.attr == "copy" and not expr.args and not expr.keywords:
+                    return context_names(expr.func.value)
+            return set()
+
+        def sink(call: ast.Call, fn: ast.AST) -> bool:
+            root = call.func
+            while isinstance(root, ast.Attribute):
+                root = root.value
+            if isinstance(root, ast.Name) and root.id in shadowed[fn] and root.id != "self":
+                return False
+            name = _dotted(call.func, origins)
+            if name in {"django.template.response.TemplateResponse", "django.shortcuts.render"}:
+                return True
+            if isinstance(call.func, ast.Attribute):
+                receiver = call.func.value
+                if isinstance(receiver, ast.Call) and isinstance(receiver.func, ast.Name) and receiver.func.id == "super":
+                    return "super" not in shadowed[fn] and "super" not in module_shadowed \
+                        and (call.func.attr == fn.name or call.func.attr == "render_change_form")
+                return isinstance(receiver, ast.Name) and receiver.id == "self" and call.func.attr == "render_change_form"
+            return False
+
+        def each_context(expr: ast.AST | None) -> bool:
+            return isinstance(expr, ast.Call) and _dotted(expr.func, {}) == "self.admin_site.each_context"
+
+        def helper_of(expr: ast.AST | None) -> ast.FunctionDef | ast.AsyncFunctionDef | None:
+            if isinstance(expr, ast.Call) and isinstance(expr.func, ast.Attribute) and isinstance(expr.func.value, ast.Name) \
+                    and expr.func.value.id == "self" and expr.func.attr.startswith("_") and counts.get(expr.func.attr) == 1:
+                return methods[expr.func.attr]
+            return None
+
+        def reaches(start: ast.AST, target: ast.AST, visited: set[ast.AST]) -> bool:
+            if start is target:
+                return True
+            if start in visited:
+                return False
+            visited.add(start)
+            return any(callee is not None and reaches(callee, target, visited)
+                       for node in bodies[start] if isinstance(node, ast.Call) for callee in [helper_of(node)])
+
+        # Monotone reachability terminates on finite function/binding identities.
+        changed = True
+        while changed:
+            before = (len(states), len(active), sum(map(len, edges.values())))
+            for fn in list(active):
+                for node in bodies[fn]:
+                    if isinstance(node, (ast.Assign, ast.AnnAssign)):
+                        targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+                        sources = context_names(node.value)
+                        for target in targets:
+                            if isinstance(target, ast.Name) and each_context(node.value):
+                                put(fn, target.id)
+                        for target in targets:
+                            if isinstance(target, ast.Name):
+                                for source in sources:
+                                    link((fn, target.id), (fn, source))
+                    if isinstance(node, ast.Call) and sink(node, fn):
+                        # The context position is owned by the resolved framework sink.
+                        if _dotted(node.func, origins) in {"django.template.response.TemplateResponse", "django.shortcuts.render"}:
+                            arguments = node.args[2:3] + [kw.value for kw in node.keywords if kw.arg == "context"]
+                        elif isinstance(node.func, ast.Attribute) and node.func.attr == "render_change_form":
+                            arguments = node.args[1:2] + [kw.value for kw in node.keywords if kw.arg == "context"]
+                        else:
+                            arguments = [kw.value for kw in node.keywords if kw.arg == _ADMIN_CONTEXT.get(fn.name)]
+                        for value in arguments:
+                            for name in context_names(value):
+                                put(fn, name)
+                    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                        receiver = node.func.value
+                        if node.func.attr == "update":
+                            for source in set().union(*(context_names(a) for a in node.args)):
+                                for dest in context_names(receiver):
+                                    link((fn, dest), (fn, source))
+                        if isinstance(receiver, ast.Name) and receiver.id == "self" and node.func.attr.startswith("_"):
+                            helper = methods.get(node.func.attr)
+                            if helper is None or counts[node.func.attr] != 1:
+                                continue
+                            args = [*helper.args.posonlyargs, *helper.args.args][1:]
+                            passed = [(arg.arg, value) for arg, value in zip(args, node.args)]
+                            passed += [(kw.arg, kw.value) for kw in node.keywords if kw.arg]
+                            for label, value in passed:
+                                for source in context_names(value):
+                                    if (fn, source) in states:
+                                        active.add(helper)
+                                        put(helper, label)
+                                        link((fn, source), (helper, label))
+                            if helper in active:
+                                parent = parents.get(node)
+                                if isinstance(parent, (ast.Assign, ast.AnnAssign)) and parent.value is node:
+                                    targets = parent.targets if isinstance(parent, ast.Assign) else [parent.target]
+                                    for target in targets:
+                                        if isinstance(target, ast.Name):
+                                            link((helper, "<return>"), (fn, target.id))
+                                elif isinstance(parent, ast.Return):
+                                    link((helper, "<return>"), (fn, "<return>"))
+                                if reaches(helper, fn, set()):
+                                    put(helper, "<return>", "candidate")
+                    if isinstance(node, ast.Return):
+                        for source in context_names(node.value):
+                            link((fn, "<return>"), (fn, source))
+                        if fn.returns is not None:
+                            annotations[(fn, "<return>")] = [fn.returns]
+                for left, rights in list(edges.items()):
+                    if left in states:
+                        for right in rights:
+                            put(*right, states[left])
+            changed = before != (len(states), len(active), sum(map(len, edges.values())))
+
+        for fn in active:
+            for node in bodies[fn]:
+                if isinstance(node, (ast.Assign, ast.AnnAssign)) and node.value is not None:
+                    targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+                    for target in targets:
+                        if isinstance(target, ast.Name) and (fn, target.id) in states:
+                            if not (context_names(node.value) or isinstance(node.value, ast.Dict) or each_context(node.value)
+                                    or (helper_of(node.value), "<return>") in states):
+                                put(fn, target.id, "candidate")
+
+        for (fn, name) in list(states):
+            if name == "<return>":
+                continue
+            for node in bodies[fn]:
+                if not isinstance(node, ast.Name) or node.id != name or not isinstance(node.ctx, ast.Load):
+                    continue
+                parent = parents.get(node)
+                status = "allow"
+                if isinstance(parent, ast.Subscript) and parent.value is node:
+                    ui_write = isinstance(parent.ctx, ast.Store) and isinstance(parent.slice, ast.Constant) \
+                        and isinstance(parent.slice.value, str) and not isinstance(parents.get(parent), ast.AugAssign)
+                    status = "allow" if ui_write else "ordinary"
+                elif isinstance(parent, (ast.BinOp, ast.UnaryOp, ast.AugAssign)):
+                    status = "ordinary"
+                elif isinstance(parent, ast.Compare):
+                    status = "allow" if len(parent.ops) == 1 and isinstance(parent.ops[0], (ast.Is, ast.IsNot)) and any(isinstance(n, ast.Constant) and n.value is None for n in [parent.left, *parent.comparators]) else "ordinary"
+                else:
+                    current: ast.AST = node
+                    while parents.get(current) is not None and not isinstance(parents[current], ast.stmt):
+                        current = parents[current]
+                        if isinstance(current, ast.Call):
+                            call = current
+                            if sink(call, fn):
+                                break
+                            if isinstance(call.func, ast.Name) and call.func.id in {"len", "sum", "min", "max", "sorted", "any", "all"}:
+                                status = "ordinary"
+                                break
+                            if isinstance(call.func, ast.Name) and call.func.id == "dict":
+                                if "dict" in shadowed[fn] or "dict" in module_shadowed:
+                                    status = "candidate"
+                                    break
+                                continue
+                            if isinstance(call.func, ast.Attribute):
+                                recv, method = call.func.value, call.func.attr
+                                if context_names(recv) & {name} and method in {"get", "pop", "popitem", "items", "values", "keys", "setdefault"}:
+                                    status = "ordinary"
+                                    break
+                                if method in {"copy", "update"} and context_names(recv) & {n for f, n in states if f is fn}:
+                                    continue
+                                if isinstance(recv, ast.Name) and recv.id == "self" and method in methods and methods[method] in active and method.startswith("_"):
+                                    # Recursion cannot prove a framework endpoint.
+                                    status = "candidate" if reaches(methods[method], fn, set()) else "allow"
+                                    break
+                            status = "candidate"
+                            break
+                    else:
+                        statement = parents.get(current)
+                        if isinstance(statement, (ast.Assign, ast.AnnAssign)):
+                            targets = statement.targets if isinstance(statement, ast.Assign) else [statement.target]
+                            if any(not isinstance(t, ast.Name) for t in targets):
+                                status = "ordinary"
+                        elif not isinstance(statement, (ast.Return, ast.Expr, ast.If)):
+                            status = "candidate"
+                put(fn, name, status)
+        # Consumption or escape propagates through connected aliases and helper parameters.
+        changed = True
+        while changed:
+            changed = False
+            for left, rights in edges.items():
+                if left not in states:
+                    continue
+                for right in rights:
+                    if right in states and rank[states[right]] < rank[states[left]]:
+                        states[right] = states[left]
+                        changed = True
+        for key, status in states.items():
+            reason = {"allow": "admin UI context 조립·framework 전달", "candidate": "admin context 흐름/호출 출처 불명", "ordinary": "context 값의 실제 소비"}[status]
+            for ann in annotations.get(key, []):
+                if status == "allow" and id(ann) in policy:
+                    continue  # 소비가 없을 때만 확인된 framework 고정 슬롯을 유지한다.
+                policy[id(ann)] = (status, reason)
+    return policy
+
+
 def _check_explicit_any(mod: ast.Module, rel: Path, out: Findings, cands: Candidates,
                         bindings: "dict[str, str] | None" = None,
                         aliases: "dict[str, list[tuple[ast.AST, bool]]] | None" = None) -> None:
@@ -723,6 +1090,7 @@ def _check_explicit_any(mod: ast.Module, rel: Path, out: Findings, cands: Candid
     names, mods = _any_bindings(mod)
     bindings = bindings if bindings is not None else _module_bindings(mod)
     in_roots = _in_rule_roots(rel)
+    admin_policy = _admin_context_policy(mod, rel)
     parent: dict[ast.AST, ast.AST] = {}
     for node in ast.walk(mod):
         for child in ast.iter_child_nodes(node):
@@ -733,6 +1101,19 @@ def _check_explicit_any(mod: ast.Module, rel: Path, out: Findings, cands: Candid
               exempt_object: bool, bare_msg: str, nested_msg: str) -> None:
         """한 애너테이션에 #647 → #645 순으로 판정한다(#645 문면·심각도는 종전 그대로 — 시그니처 bare 만 위반)."""
         v645 = _explicit_any(ann, names, mods)
+        status, reason = admin_policy.get(id(ann), ("ordinary", ""))
+        value, _ = _record_value(ann, names, mods, bindings)
+        fixed_slot = reason == "확인된 admin framework override 슬롯"
+        if status == "allow" and ((value is not None and v645 != "bare") or (fixed_slot and (v645 == "nested" or site == "sig-star"))):
+            return
+        if status == "candidate" and ann is not None:
+            value, _ = _record_value(ann, names, mods, bindings)
+            if in_roots and value is not None and v645 != "bare":
+                hits.append((lineno, "c", "#647", where, f"{label}의 열린 admin context — {reason}", RECORD_Q))
+                return
+            if v645 == "nested" or (v645 == "bare" and site == "sig-star"):
+                hits.append((lineno, "c", "#645", where, bare_msg if v645 == "bare" else nested_msg, ANY_Q))
+                return
         blocked647 = False
         if in_roots and ann is not None:
             value, _top = _record_value(ann, names, mods, bindings)

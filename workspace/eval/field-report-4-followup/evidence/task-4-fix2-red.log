@@ -1,0 +1,107 @@
+test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) ... 
+  test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from requests import Response as Source', later='if flag: Alias = dynamic') ... FAIL
+  test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from requests import Response as Source', later='while flag: Alias = dynamic') ... FAIL
+  test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from requests import Response as Source', later='for item in items: Alias = dynamic') ... FAIL
+  test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from requests import Response as Source', later='with context: Alias = dynamic') ... FAIL
+  test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from requests import Response as Source', later='try: Alias = dynamic\nexcept Exception: pass') ... FAIL
+  test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from application.lesson.domain_layer.book.kind import Kind as Source', later='if flag: Alias = dynamic') ... FAIL
+  test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from application.lesson.domain_layer.book.kind import Kind as Source', later='while flag: Alias = dynamic') ... FAIL
+  test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from application.lesson.domain_layer.book.kind import Kind as Source', later='for item in items: Alias = dynamic') ... FAIL
+  test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from application.lesson.domain_layer.book.kind import Kind as Source', later='with context: Alias = dynamic') ... FAIL
+  test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from application.lesson.domain_layer.book.kind import Kind as Source', later='try: Alias = dynamic\nexcept Exception: pass') ... FAIL
+test_nested_definition_bindings_do_not_rebind_module_constructor_alias (__main__.CheckerRegression.test_nested_definition_bindings_do_not_rebind_module_constructor_alias) ... ok
+
+======================================================================
+FAIL: test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from requests import Response as Source', later='if flag: Alias = dynamic')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 369, in test_later_module_compound_rebinding_invalidates_function_constructor
+    self.assertNotIn("#557", f)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: '#557' unexpectedly found in ['#557']
+
+======================================================================
+FAIL: test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from requests import Response as Source', later='while flag: Alias = dynamic')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 369, in test_later_module_compound_rebinding_invalidates_function_constructor
+    self.assertNotIn("#557", f)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: '#557' unexpectedly found in ['#557']
+
+======================================================================
+FAIL: test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from requests import Response as Source', later='for item in items: Alias = dynamic')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 369, in test_later_module_compound_rebinding_invalidates_function_constructor
+    self.assertNotIn("#557", f)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: '#557' unexpectedly found in ['#557']
+
+======================================================================
+FAIL: test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from requests import Response as Source', later='with context: Alias = dynamic')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 369, in test_later_module_compound_rebinding_invalidates_function_constructor
+    self.assertNotIn("#557", f)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: '#557' unexpectedly found in ['#557']
+
+======================================================================
+FAIL: test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from requests import Response as Source', later='try: Alias = dynamic\nexcept Exception: pass')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 369, in test_later_module_compound_rebinding_invalidates_function_constructor
+    self.assertNotIn("#557", f)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: '#557' unexpectedly found in ['#557']
+
+======================================================================
+FAIL: test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from application.lesson.domain_layer.book.kind import Kind as Source', later='if flag: Alias = dynamic')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 370, in test_later_module_compound_rebinding_invalidates_function_constructor
+    self.assertIn("#557", c)
+    ~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: '#557' not found in []
+
+======================================================================
+FAIL: test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from application.lesson.domain_layer.book.kind import Kind as Source', later='while flag: Alias = dynamic')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 370, in test_later_module_compound_rebinding_invalidates_function_constructor
+    self.assertIn("#557", c)
+    ~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: '#557' not found in []
+
+======================================================================
+FAIL: test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from application.lesson.domain_layer.book.kind import Kind as Source', later='for item in items: Alias = dynamic')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 370, in test_later_module_compound_rebinding_invalidates_function_constructor
+    self.assertIn("#557", c)
+    ~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: '#557' not found in []
+
+======================================================================
+FAIL: test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from application.lesson.domain_layer.book.kind import Kind as Source', later='with context: Alias = dynamic')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 370, in test_later_module_compound_rebinding_invalidates_function_constructor
+    self.assertIn("#557", c)
+    ~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: '#557' not found in []
+
+======================================================================
+FAIL: test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) (imported='from application.lesson.domain_layer.book.kind import Kind as Source', later='try: Alias = dynamic\nexcept Exception: pass')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 370, in test_later_module_compound_rebinding_invalidates_function_constructor
+    self.assertIn("#557", c)
+    ~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: '#557' not found in []
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.026s
+
+FAILED (failures=10)

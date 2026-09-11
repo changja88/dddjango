@@ -1,0 +1,272 @@
+{
+  "codex-dddjango/skills/dddjango-design-architect/SKILL.md": {
+    "before": "0ad014276cd8e97293b637421f7608b6c756035754189057bfc386e713c06ea9",
+    "after": "7ae9c454bc3fcb8b4156d79207f2b50e5a5dd081fbb9a9e75de9681e24ea5ba7",
+    "bytes": 59529
+  },
+  "codex-dddjango/skills/dddjango-design-review-api/SKILL.md": {
+    "before": "d8427e2ba2550eca62eefdc478bfa89a85e2c642f9bcda249936ca61884e3675",
+    "after": "255c67d1c85643ed841f978c3a7c6e2e8537c6686fb8fa44fc65eb83ba5f2ce4",
+    "bytes": 17876
+  },
+  "codex-dddjango/skills/dddjango-discipline-houserules/SKILL.md": {
+    "before": "45a4ef441709e4dfa5ad3d364594b26f8bc5d2af8e8b9adac4febdf97dfd8ccc",
+    "after": "f0f81d47b30246c6eadf8eeb991017c286f2bf585b7b2293bf525842a18f4e0c",
+    "bytes": 28504
+  },
+  "codex-dddjango/skills/dddjango-discipline-houserules/references/final.md": {
+    "before": "c099134b2ccc67c6137519293fba94ddef6ecb63792b985d5b6a8ef7a4334ae1",
+    "after": "768db015552547977d941d638c54a90ff5922229d70e1cbe99e6558bdc47cde1",
+    "bytes": 26569
+  },
+  "codex-dddjango/skills/dddjango-discipline-reviewer/SKILL.md": {
+    "before": "a684feab856e82966cfedacab9f1f3152f17c80e96039b76fd307b2d98c3b676",
+    "after": "1a9c7ce4f52c1ac2f3fbfdbeb77017792764d3ff4673134648b8f0425df19f3f",
+    "bytes": 54308
+  },
+  "codex-dddjango/skills/dddjango/SKILL.md": {
+    "before": "f550ca8f589f6487a0fd1b5235389fc413edac8ffbebe53792ebad4509f108ff",
+    "after": "231ee7dae528430291e0b2ad695f03e731655c88170cc06773584edfab758a41",
+    "bytes": 101045
+  },
+  "codex-dddjango/skills/dddjango/scripts/check-context-isolation.py": {
+    "before": "6ee97a89c6cc5a812f3bc20915d9bac42d69d1864648017764bc8546acc25c2d",
+    "after": "9248add559f8f27481284a1c451db45aba991e32e62eeb7545bc668046b4c075",
+    "bytes": 70752
+  },
+  "codex-dddjango/skills/dddjango/scripts/check-domain-model.py": {
+    "before": "810f941cffe36aa023aec47c235edfcbd4c16aa00362c8b4808e0fe9210ca96c",
+    "after": "1dc8871ef71255e22c586e540a07a0f3d8b258a6fe2f26e4e1cb1cbe2bdde428",
+    "bytes": 68392
+  },
+  "codex-dddjango/skills/dddjango/scripts/check-layer-skeleton.py": {
+    "before": "f2bdf8e26f9e48462e434f1a5f917643de8f46165081dfe603558fa37318e0eb",
+    "after": "9f2ea08ec409ed8e52340067685b3a828235b68d35347903cf09492f5355a645",
+    "bytes": 25044
+  },
+  "codex-dddjango/skills/dddjango/scripts/check-port-adapter-pairing.py": {
+    "before": "1900f109da8eea73cbbaa7d5977f208a828e7a5bcfa02e5fb3e089e3f0518e2f",
+    "after": "9fe24b4df8df90a6cdfdf53d735a805db830c02830a50f7ec6ae791b007c5b5b",
+    "bytes": 86416
+  },
+  "codex-dddjango/skills/dddjango/scripts/check-public-surface-annotation.py": {
+    "before": "788c9b1513ebab27e0ca2ae1d30cef0d4354f2bea873129fccaebc66c0c8074b",
+    "after": "47afd19d407adc3318a68bb799841b368f860a7b703880d522d14108e78d6e06",
+    "bytes": 89013
+  },
+  "codex-dddjango/skills/dddjango/scripts/check-usecase-dto-placement.py": {
+    "before": "e2fec2b3edb3f740e34a16013b08bf717b8ac7a29d75ad009b5735ceee2ae6d6",
+    "after": "4a51b80b722d516c3d94423bb2cdec832a7c4cf7c0be3102b882a9ddbbe7bbb7",
+    "bytes": 39497
+  },
+  "codex-dddjango/skills/dddjango/scripts/checker_target.py": {
+    "before": "b2798af6c552e98c384d2c445ba358deed81d10d71021a1e3348b2d1f1fe2ea6",
+    "after": "2efb7adbe792ddf4fadc9527699bb130ef1953481acdff70ad01e469ebdd0112",
+    "bytes": 9096
+  },
+  "codex-dddjango/skills/dddjango/scripts/design_pregate.py": {
+    "before": "88a34edc871c4a196adf8fca4e9d00f0ee01d144cba848b1e033e6e75fd3b252",
+    "after": "4d0dcb064ee6a7b49dfb7b7a1b8dd15fb707b2179a17601d4d29b2f58e8b66a8",
+    "bytes": 172133
+  },
+  "codex-dddjango/skills/dddjango/scripts/registry_gate.py": {
+    "before": "037b5088bd0884b9e41efedd6455fec95a80c1e0527b4ef09405ab041a9450df",
+    "after": "bcc7db98fe1f209f330d6c2ffb92239792580207f0d4bad317d6130fa60d273a",
+    "bytes": 55218
+  },
+  "codex-dddjango/skills/dddjango/scripts/rulepack.json": {
+    "before": "9c95472d5db364c416095120c4976013fbbab79a2aa197331255a1b48a191fbe",
+    "after": "eca32486b4c7f9eda77e58c86e8b6a690289d80990037d714bb65088e477bb55",
+    "bytes": 2232890
+  },
+  "codex-dddjango/skills/implementation-django-ninja/SKILL.md": {
+    "before": "9b24e3a408e860730da661f0b6811d5791c757980c1f229625b5cf132878b7e6",
+    "after": "fbc91023e3326b394a69064435188eac0193004e14adac2eaa8b2cba891f3338",
+    "bytes": 8382
+  },
+  "codex-dddjango/skills/implementation-django-ninja/references/final.md": {
+    "before": "c514e77509cd5be0051fcf2292e40f0f0436da802594787759b4433bb72a72c0",
+    "after": "f6276de920006a6caf6c9eca74e23e81099e8a3a10ffb2fc829298eb339642f2",
+    "bytes": 63154
+  },
+  "dddjango/agents/design-architect.md": {
+    "before": "c9315a96c0a39bbbe8ce269eaa6a966ec6a855a790ce8d7317054d6939451aec",
+    "after": "6814957c64d98e04d21475516c871c10e3ab8d75e1754e1719337f6160638a13",
+    "bytes": 60111
+  },
+  "dddjango/agents/design-review-api.md": {
+    "before": "ce8053f563384964b81e1ee02b02e6f0aa5687a9816a2632b31efe4919437c4b",
+    "after": "7db60d7a67888d2fd2874ead2d59f6bafd7f3d05e8fdc47efcdb8ed2ccf503be",
+    "bytes": 18578
+  },
+  "dddjango/agents/discipline-reviewer.md": {
+    "before": "606c18ee2d0f77274bb1f7d701f56153f26f4b1d671af533eb431235349fe10e",
+    "after": "c6cf298c7a61a76473a0ddca945dd338bff4660dd74eb393e2f85dbad252bb05",
+    "bytes": 55190
+  },
+  "dddjango/commands/dddjango.md": {
+    "before": "1b44e4286f54c2eedb85caaf8c19e71a8c3ed1cee574e2e38f2764e4d22c880b",
+    "after": "25fb90b6acd0211de2d441f2af96a428614f00a168e4ddd06985e6883d0621d0",
+    "bytes": 98658
+  },
+  "dddjango/scripts/check-context-isolation.py": {
+    "before": "6ee97a89c6cc5a812f3bc20915d9bac42d69d1864648017764bc8546acc25c2d",
+    "after": "9248add559f8f27481284a1c451db45aba991e32e62eeb7545bc668046b4c075",
+    "bytes": 70752
+  },
+  "dddjango/scripts/check-domain-model.py": {
+    "before": "810f941cffe36aa023aec47c235edfcbd4c16aa00362c8b4808e0fe9210ca96c",
+    "after": "1dc8871ef71255e22c586e540a07a0f3d8b258a6fe2f26e4e1cb1cbe2bdde428",
+    "bytes": 68392
+  },
+  "dddjango/scripts/check-layer-skeleton.py": {
+    "before": "f2bdf8e26f9e48462e434f1a5f917643de8f46165081dfe603558fa37318e0eb",
+    "after": "9f2ea08ec409ed8e52340067685b3a828235b68d35347903cf09492f5355a645",
+    "bytes": 25044
+  },
+  "dddjango/scripts/check-port-adapter-pairing.py": {
+    "before": "1900f109da8eea73cbbaa7d5977f208a828e7a5bcfa02e5fb3e089e3f0518e2f",
+    "after": "9fe24b4df8df90a6cdfdf53d735a805db830c02830a50f7ec6ae791b007c5b5b",
+    "bytes": 86416
+  },
+  "dddjango/scripts/check-public-surface-annotation.py": {
+    "before": "788c9b1513ebab27e0ca2ae1d30cef0d4354f2bea873129fccaebc66c0c8074b",
+    "after": "47afd19d407adc3318a68bb799841b368f860a7b703880d522d14108e78d6e06",
+    "bytes": 89013
+  },
+  "dddjango/scripts/check-usecase-dto-placement.py": {
+    "before": "e2fec2b3edb3f740e34a16013b08bf717b8ac7a29d75ad009b5735ceee2ae6d6",
+    "after": "4a51b80b722d516c3d94423bb2cdec832a7c4cf7c0be3102b882a9ddbbe7bbb7",
+    "bytes": 39497
+  },
+  "dddjango/scripts/checker_target.py": {
+    "before": "b2798af6c552e98c384d2c445ba358deed81d10d71021a1e3348b2d1f1fe2ea6",
+    "after": "2efb7adbe792ddf4fadc9527699bb130ef1953481acdff70ad01e469ebdd0112",
+    "bytes": 9096
+  },
+  "dddjango/scripts/design_pregate.py": {
+    "before": "88a34edc871c4a196adf8fca4e9d00f0ee01d144cba848b1e033e6e75fd3b252",
+    "after": "4d0dcb064ee6a7b49dfb7b7a1b8dd15fb707b2179a17601d4d29b2f58e8b66a8",
+    "bytes": 172133
+  },
+  "dddjango/scripts/registry_gate.py": {
+    "before": "037b5088bd0884b9e41efedd6455fec95a80c1e0527b4ef09405ab041a9450df",
+    "after": "bcc7db98fe1f209f330d6c2ffb92239792580207f0d4bad317d6130fa60d273a",
+    "bytes": 55218
+  },
+  "dddjango/scripts/rulepack.json": {
+    "before": "9c95472d5db364c416095120c4976013fbbab79a2aa197331255a1b48a191fbe",
+    "after": "eca32486b4c7f9eda77e58c86e8b6a690289d80990037d714bb65088e477bb55",
+    "bytes": 2232890
+  },
+  "dddjango/skills/discipline-houserules/SKILL.md": {
+    "before": "d2d9038955f8d2c5b85a3b03377a23a92d505feb2d11fa9b28ba308cc2f4cc53",
+    "after": "1c1fc1f8d1e39e9ebe246b91c71d4051ca4c442a3026f65092c3e42fa8f8dfce",
+    "bytes": 29740
+  },
+  "dddjango/skills/discipline-houserules/references/final.md": {
+    "before": "c099134b2ccc67c6137519293fba94ddef6ecb63792b985d5b6a8ef7a4334ae1",
+    "after": "768db015552547977d941d638c54a90ff5922229d70e1cbe99e6558bdc47cde1",
+    "bytes": 26569
+  },
+  "dddjango/skills/implementation-django-ninja/SKILL.md": {
+    "before": "f31771a4af65e292446e896e504db2f032a05f0b56d902f11daabef9fdc4736c",
+    "after": "ee52e8f2556c873d824797ca90ac270cf344f57b0a59b04e036b2791bf579e67",
+    "bytes": 8910
+  },
+  "dddjango/skills/implementation-django-ninja/references/final.md": {
+    "before": "c514e77509cd5be0051fcf2292e40f0f0436da802594787759b4433bb72a72c0",
+    "after": "f6276de920006a6caf6c9eca74e23e81099e8a3a10ffb2fc829298eb339642f2",
+    "bytes": 63154
+  },
+  "docs/file_tree.html": {
+    "before": "c9ca32c587d73cfd1a23ca48de4073ce120188feebd1dfcd9fe2a80cdb376b17",
+    "after": "62cefa2c055b9a02653f52c2fd5fc9e2615a0b8a02faba7602d82590bd314fe0",
+    "bytes": 733669
+  },
+  "docs/mkrev2.py": {
+    "before": "049fcc6a03289f1321d53a6192740a0cb4c43529f8b1dd7f0244b37b3ace7c4d",
+    "after": "6192fe66215f6f38f87b279cfc9282adb30bb5c2c31716a82cfa492b6848491d",
+    "bytes": 1237673
+  },
+  "ontology/LEDGER.tsv": {
+    "before": "7459b5d6779531bf22a153eff20b1d0fba9e2a360cae7cb90b4e8df028cd1fcf",
+    "after": "6697fe96cd028983be6c78125107a0af8ac74870626c0eb18b06dfa54bfcbf82",
+    "bytes": 322936
+  },
+  "ontology/rules/agent-design-architect.ttl": {
+    "before": "a0a57735092853071940be471e086fff1777772651f8e7f706355f45b2e57a3e",
+    "after": "9865c8f5787809d3e0cd6e5cdcb119b859d20615a524d7fde1322330a4213f0a",
+    "bytes": 158852
+  },
+  "ontology/rules/agent-design-review-api.ttl": {
+    "before": "e83632a251018273422a9ed07d2471b824d1715e57b7c947e400020988aba101",
+    "after": "59106ddea0462475988cbcfdd1839f06c5d1a6ef8f72e6a4730ee5f275a32ba7",
+    "bytes": 75258
+  },
+  "ontology/rules/agent-discipline-reviewer.ttl": {
+    "before": "467e1e64963162052b340ea6e0e56e07eeb7d0d524fa1fc700282b32a7ec06fa",
+    "after": "f95d45237c92e1ea22f799327de15b88b08677c6a20f371769b42e0b0ad4479b",
+    "bytes": 197933
+  },
+  "ontology/rules/command-dddjango.ttl": {
+    "before": "9a7b9cd2220f255a2168d5ef3a69db43c0fedc103407a8b23e1d19ad9ce65e62",
+    "after": "454d396ab85aa5fa52b7c6172f197abc9605afd99e96691f3d93661ec6ee1f27",
+    "bytes": 271307
+  },
+  "ontology/rules/discipline-houserules-final.ttl": {
+    "before": "d9541bba84466676267f3c0f2c6d05f54a7ed97e04501f9863da6820ea183d40",
+    "after": "bb03b9469a1fcef876db4f1c31287c0c34cea9585aeeda45cea886268835306a",
+    "bytes": 74929
+  },
+  "ontology/rules/discipline-houserules-skill.ttl": {
+    "before": "6e3374ffec14a4cce4869a9072b10da58da4419ef89f2c35e6506e650816449e",
+    "after": "9f05cfd377fd819ac9e7abed29aee1283e9c5d9afa9144a7e6a58ca5c43f8a6a",
+    "bytes": 89053
+  },
+  "ontology/rules/implementation-django-ninja-final.ttl": {
+    "before": "e24b78dd3aab0a147d3458a3872d96c853f621395057a422860ac3ec5b0ddfce",
+    "after": "b184ade4fccfa20554614d3460e2841ea800eb731ce54553d1f4adbf9d1339a9",
+    "bytes": 239987
+  },
+  "ontology/rules/implementation-django-ninja-skill.ttl": {
+    "before": "369af739aae344af378c4c53a14ea5858464a0a6f5c4d7c284097e29f3fee947",
+    "after": "85fcd3471eeb56cecb0d99509941f44ed651c52bb2dda76ac549c7a057d6130a",
+    "bytes": 53102
+  },
+  "workspace/design/2026-08-08-tree-revision-spec.md": {
+    "before": "bdb75a96497e134f2d8d421c71894bc43333a36a6195ddc3a9e16b07fa4aebfc",
+    "after": "6558beb0ff00947a226751d2de9883f05d41e8b3cc8eeb2152c1af687aa1d375",
+    "bytes": 226902
+  },
+  "workspace/design/2026-08-11-predicates.md": {
+    "before": "c9252a46e9fb330a2f8e0cf8b2baa9f11f2c323a3bf14aea325e27c3c8efe717",
+    "after": "2176d4e20b464ee7fa7f1f1c56431ac088d3d430f5ce51afd5e7bb8ad92c2ce0",
+    "bytes": 44644
+  },
+  "workspace/plan/2026-08-11-rule-owner-map.md": {
+    "before": "aaf43bd127b3185f99154fa55d4dda25cf0478df0c0f3fd4c2556da96d421e95",
+    "after": "f059d7380d62a249d2c4922c2e432c8e723222ec7930226d92f89160b6d01317",
+    "bytes": 47586
+  },
+  "workspace/tools/field_report_checker_smoke.py": {
+    "before": "9c60eeca4c726232ce8478cf84d940b6e4d4bbf16126de9afb42b5e55878bdcc",
+    "after": "c3864f94a996ff8e345a7d35854d95219e0fad6ae94239b61052f116fd1b2ab2",
+    "bytes": 61132
+  },
+  "workspace/tools/pregate_field_report_smoke.py": {
+    "before": "7ae26bffa9e8dbe3aa027a66faf3c6c3c7b74fc183cd80d0e5ede8ff86a5c9fa",
+    "after": "f50bbe33afb4e94becaedd9a6b548fa7c353eff38f4d5ce758ca3caeb8dcb809",
+    "bytes": 58440
+  },
+  "workspace/tools/pregate_fixture_run.py": {
+    "before": "5a6daf354bd6b57147a69ac22f03d00086756a34cb591116d4b1778efc1b229d",
+    "after": "29a1aa46ea7a8979c04230fc8afb2adc31745eecde2b059abd7edb3578e43539",
+    "bytes": 73368
+  },
+  "workspace/tools/registry_gate_smoke.py": {
+    "before": "14fe3ee63b654db6b916f89acbccb4c1c208e14d2e53cb7471414ae38abbb8b6",
+    "after": "ff22017079c33a4b568720b7f28e6a7cee909de3cb5e65309d9167447804ce7c",
+    "bytes": 46969
+  }
+}

@@ -1,0 +1,24 @@
+[
+  {
+    "doc_key": "discipline-houserules-final",
+    "section_key": "s003-0",
+    "baseline_sha256": "337f2f48e8157c93be09c8431e909b638192d8eb9b4068a7f2ae6258f251722d",
+    "owner": "graph",
+    "migrated_sha256": "1b4fddca027005fc52618807bbbea8b088d5b77b141c29d404a09dd9747ae5f1",
+    "block_total": "-",
+    "block_norm": "-",
+    "commit": "-",
+    "note": "source-address:2026-09-11 Task6 verified unique pre-Task6 preserved workspace source span; previous migrated field absent (-); records preserved source address, not an asserted original migration date; current baseline/owner/counts unchanged"
+  },
+  {
+    "doc_key": "implementation-django-ninja-final",
+    "section_key": "s023-6.2",
+    "baseline_sha256": "68ea52bea42066fd7d5d2f22e08f089fe392fba9d1af66d321935b70a8b0e70d",
+    "owner": "graph",
+    "migrated_sha256": "11b862b4cbcab5bf329b7fa3939e97c6813446543bbb1604ebd2f60b4ad2eba2",
+    "block_total": "-",
+    "block_norm": "-",
+    "commit": "-",
+    "note": "source-address:2026-09-11 Task6 verified unique pre-Task6 preserved workspace source span; previous migrated field absent (-); records preserved source address, not an asserted original migration date; current baseline/owner/counts unchanged"
+  }
+]

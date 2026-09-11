@@ -1,0 +1,9 @@
+| `check-domain-model.py` | exit 2 | b571ad8ca4677a58 | ✓ |
+| `check-common-container.py` | exit 2 | 5ce9427209a47503 | ✓ |
+| `check-api-error-controller-contract.py` | exit 2 | 7e3edccdbc247574 | ✓ |
+| `check-error-centralization.py` | exit 2 | 5d21b130e5a23bc5 | ✓ |
+| `check-composition-root.py` | exit 2 | 81938fb23b67216c | ✓ |
+| `check-openapi-error-declaration.py` | exit 2 | 92eb113f8e75c74e | ✓ |
+| `check-response-schema-bypass.py` | exit 2 | b1a77bebb4272f9e | ✓ |
+| `check-context-isolation.py` | exit 2 | f87209775b8432b9 | ✓ |
+대표 8종 byte 골든 · 일치 8 · 불일치 0

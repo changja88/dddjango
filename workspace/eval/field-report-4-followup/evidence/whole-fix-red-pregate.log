@@ -1,0 +1,131 @@
+$ python3 -B workspace/tools/pregate_field_report_smoke.py FieldReportTest.test_marker_method_mutations_preserve_bytes_and_report_s5 FieldReportTest.test_unresolved_named_uow_alias_keeps_declaration_candidate
+test_marker_method_mutations_preserve_bytes_and_report_s5 (__main__.FieldReportTest.test_marker_method_mutations_preserve_bytes_and_report_s5) ... 
+  test_marker_method_mutations_preserve_bytes_and_report_s5 (__main__.FieldReportTest.test_marker_method_mutations_preserve_bytes_and_report_s5) (mutation='pytestmark.append(pytest.mark.django_db)', markers='') ... FAIL
+  test_marker_method_mutations_preserve_bytes_and_report_s5 (__main__.FieldReportTest.test_marker_method_mutations_preserve_bytes_and_report_s5) (mutation='pytestmark.append(pytest.mark.django_db)', markers='slow') ... FAIL
+  test_marker_method_mutations_preserve_bytes_and_report_s5 (__main__.FieldReportTest.test_marker_method_mutations_preserve_bytes_and_report_s5) (mutation='pytestmark.pop()', markers='') ... FAIL
+  test_marker_method_mutations_preserve_bytes_and_report_s5 (__main__.FieldReportTest.test_marker_method_mutations_preserve_bytes_and_report_s5) (mutation='pytestmark.pop()', markers='slow') ... FAIL
+  test_marker_method_mutations_preserve_bytes_and_report_s5 (__main__.FieldReportTest.test_marker_method_mutations_preserve_bytes_and_report_s5) (mutation='if True:\n    pytestmark.extend([pytest.mark.django_db])', markers='') ... FAIL
+  test_marker_method_mutations_preserve_bytes_and_report_s5 (__main__.FieldReportTest.test_marker_method_mutations_preserve_bytes_and_report_s5) (mutation='if True:\n    pytestmark.extend([pytest.mark.django_db])', markers='slow') ... FAIL
+test_marker_method_mutations_preserve_bytes_and_report_s5 (__main__.FieldReportTest.test_marker_method_mutations_preserve_bytes_and_report_s5) ... FAIL
+test_unresolved_named_uow_alias_keeps_declaration_candidate (__main__.FieldReportTest.test_unresolved_named_uow_alias_keeps_declaration_candidate) ... 
+  test_unresolved_named_uow_alias_keeps_declaration_candidate (__main__.FieldReportTest.test_unresolved_named_uow_alias_keeps_declaration_candidate) (effect='read-only', aliases=['alias U = StrangeUnitOfWork']) ... FAIL
+  test_unresolved_named_uow_alias_keeps_declaration_candidate (__main__.FieldReportTest.test_unresolved_named_uow_alias_keeps_declaration_candidate) (effect='read-only', aliases=['alias U = V', 'alias V = StrangeUnitOfWork']) ... FAIL
+  test_unresolved_named_uow_alias_keeps_declaration_candidate (__main__.FieldReportTest.test_unresolved_named_uow_alias_keeps_declaration_candidate) (effect='read-only', aliases=['alias U = list[StrangeUnitOfWork]']) ... FAIL
+
+======================================================================
+FAIL: test_marker_method_mutations_preserve_bytes_and_report_s5 (__main__.FieldReportTest.test_marker_method_mutations_preserve_bytes_and_report_s5) (mutation='pytestmark.append(pytest.mark.django_db)', markers='')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 873, in test_marker_method_mutations_preserve_bytes_and_report_s5
+    self.assertEqual((self.copy / TEST).read_bytes(), original.encode())
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: b'imp[21 chars]k = []\npytestmark.append(pytest.mark.django_db)\n' != b'imp[21 chars]k = [pytest.mark.slow]\npytestmark.append(pyte[16 chars]b)\n'
+
+======================================================================
+FAIL: test_marker_method_mutations_preserve_bytes_and_report_s5 (__main__.FieldReportTest.test_marker_method_mutations_preserve_bytes_and_report_s5) (mutation='pytestmark.append(pytest.mark.django_db)', markers='slow')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 876, in test_marker_method_mutations_preserve_bytes_and_report_s5
+    self.assertTrue(any('S5' in note and 'method' in note for note in report['unsimulated']), report)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : {'materialized': [], 'already_built': [], 'unsimulated': ['S5 update(OHS 서비스 본체 밖; module marker 후상태가 현재와 동일 — 실효 조치 없음): application/garden/test/integration/test_catalog.py'], 'pruned_dirs': [], 'generated_methods': {}}
+
+======================================================================
+FAIL: test_marker_method_mutations_preserve_bytes_and_report_s5 (__main__.FieldReportTest.test_marker_method_mutations_preserve_bytes_and_report_s5) (mutation='pytestmark.pop()', markers='')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 873, in test_marker_method_mutations_preserve_bytes_and_report_s5
+    self.assertEqual((self.copy / TEST).read_bytes(), original.encode())
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: b'import pytest\npytestmark = []\npytestmark.pop()\n' != b'import pytest\npytestmark = [pytest.mark.slow]\npytestmark.pop()\n'
+
+======================================================================
+FAIL: test_marker_method_mutations_preserve_bytes_and_report_s5 (__main__.FieldReportTest.test_marker_method_mutations_preserve_bytes_and_report_s5) (mutation='pytestmark.pop()', markers='slow')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 876, in test_marker_method_mutations_preserve_bytes_and_report_s5
+    self.assertTrue(any('S5' in note and 'method' in note for note in report['unsimulated']), report)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : {'materialized': [], 'already_built': [], 'unsimulated': ['S5 update(OHS 서비스 본체 밖; module marker 후상태가 현재와 동일 — 실효 조치 없음): application/garden/test/integration/test_catalog.py'], 'pruned_dirs': [], 'generated_methods': {}}
+
+======================================================================
+FAIL: test_marker_method_mutations_preserve_bytes_and_report_s5 (__main__.FieldReportTest.test_marker_method_mutations_preserve_bytes_and_report_s5) (mutation='if True:\n    pytestmark.extend([pytest.mark.django_db])', markers='')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 873, in test_marker_method_mutations_preserve_bytes_and_report_s5
+    self.assertEqual((self.copy / TEST).read_bytes(), original.encode())
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: b'imp[21 chars]k = []\nif True:\n    pytestmark.extend([pytes[16 chars]])\n' != b'imp[21 chars]k = [pytest.mark.slow]\nif True:\n    pytestma[32 chars]])\n'
+
+======================================================================
+FAIL: test_marker_method_mutations_preserve_bytes_and_report_s5 (__main__.FieldReportTest.test_marker_method_mutations_preserve_bytes_and_report_s5) (mutation='if True:\n    pytestmark.extend([pytest.mark.django_db])', markers='slow')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 876, in test_marker_method_mutations_preserve_bytes_and_report_s5
+    self.assertTrue(any('S5' in note and 'method' in note for note in report['unsimulated']), report)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : {'materialized': [], 'already_built': [], 'unsimulated': ['S5 update(OHS 서비스 본체 밖; module marker 후상태가 현재와 동일 — 실효 조치 없음): application/garden/test/integration/test_catalog.py'], 'pruned_dirs': [], 'generated_methods': {}}
+
+======================================================================
+FAIL: test_marker_method_mutations_preserve_bytes_and_report_s5 (__main__.FieldReportTest.test_marker_method_mutations_preserve_bytes_and_report_s5)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 882, in test_marker_method_mutations_preserve_bytes_and_report_s5
+    self.assertIn('method', report)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+AssertionError: 'method' not found in '\n## pre-gate 예보 — 2026-09-11T12:53:34Z · design.md\n\n- 기준선 SHA: `5713ba379d710d553c73478debe71abf6d9da157` (--base HEAD) · 프로필: auto · 모드: 차단(enforce) · 실행기: design_pregate.py · dddjango v2.18.2 · 블록 해시 e0c25d8ceae0\n- 예보는 Phase 2 step 6(G2 registry 게이트)의 실행·증거 요구를 어떤 형태로도 대체·축약하지 않는다.\n- 실행 모드: 초기 예보(기준선 기본 HEAD)\n- file-plan은 승인 제품 변경의 경로다. coordinator 작업 기록·gate report·임시 로그는 계획 재료 밖이다. 작업기록 오편입 사례는 경로의 역할을 검토할 근거이며 파일명만으로 삭제하지 않는다. docs/**와 비-Python 제품 파일도 승인 범위이면 포함할 수 있다.\n- 판정: skip\n\n- skip — 실체화 0건(add/empty/remove 및 제한 update 실효 조치 없음): 게이트를 부르지 않는다(공허 차분 가드 · 사유 명시)\n- 미시뮬레이션: S5 update(OHS 서비스 본체 밖; module marker 후상태가 현재와 동일 — 실효 조치 없음): application/garden/test/integration/test_catalog.py\n- 채널 메모: S5 use-case-effects 무기재 — 읽기/쓰기 효과 미검증\n\n### 선언 확정 (0건)\n\n- (없음)\n\n### 선언 후보 (0건)\n\n- (없음)\n\n### 계약 실존 (boundary-imports 3단 · 결손 0건 · 안정 ID = e-sha256(모듈+이름)[:12])\n\n- 집계: 행 0 · 이름 판정 0 · 실존 확인 0 · 자기 add 해소 0 · 자기 update 해소 0 · 저장소 밖(검사 밖) 0 · 판정 불능 0 · 결손 0(항목 0)\n- (없음) — 명세가 선언한 경계 import 계약 전건 실존(저장소 밖 0건은 검사 밖·자기 add 0건은 symbols 채널 소관·자기 update 0건은 update 칸 symbols 선언)\n'
+
+======================================================================
+FAIL: test_unresolved_named_uow_alias_keeps_declaration_candidate (__main__.FieldReportTest.test_unresolved_named_uow_alias_keeps_declaration_candidate) (effect='read-only', aliases=['alias U = StrangeUnitOfWork'])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 906, in test_unresolved_named_uow_alias_keeps_declaration_candidate
+    self.assertEqual([(f.rule, f.confirmed) for f in found], expected if effect == 'read-only' else [])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != [('#197', False)]
+
+Second list contains 1 additional elements.
+First extra element 0:
+('#197', False)
+
+- []
++ [('#197', False)]
+
+======================================================================
+FAIL: test_unresolved_named_uow_alias_keeps_declaration_candidate (__main__.FieldReportTest.test_unresolved_named_uow_alias_keeps_declaration_candidate) (effect='read-only', aliases=['alias U = V', 'alias V = StrangeUnitOfWork'])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 906, in test_unresolved_named_uow_alias_keeps_declaration_candidate
+    self.assertEqual([(f.rule, f.confirmed) for f in found], expected if effect == 'read-only' else [])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != [('#197', False)]
+
+Second list contains 1 additional elements.
+First extra element 0:
+('#197', False)
+
+- []
++ [('#197', False)]
+
+======================================================================
+FAIL: test_unresolved_named_uow_alias_keeps_declaration_candidate (__main__.FieldReportTest.test_unresolved_named_uow_alias_keeps_declaration_candidate) (effect='read-only', aliases=['alias U = list[StrangeUnitOfWork]'])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 906, in test_unresolved_named_uow_alias_keeps_declaration_candidate
+    self.assertEqual([(f.rule, f.confirmed) for f in found], expected if effect == 'read-only' else [])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != [('#197', False)]
+
+Second list contains 1 additional elements.
+First extra element 0:
+('#197', False)
+
+- []
++ [('#197', False)]
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.610s
+
+FAILED (failures=10)
+
+EXIT=1

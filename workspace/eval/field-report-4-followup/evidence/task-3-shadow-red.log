@@ -1,0 +1,14 @@
+F
+======================================================================
+FAIL: test_admin_context_shadowed_transport_names_are_not_framework_proof (field_report_checker_smoke.CheckerRegression.test_admin_context_shadowed_transport_names_are_not_framework_proof)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 237, in test_admin_context_shadowed_transport_names_are_not_framework_proof
+    self.assertTrue(any(r['rule'] == '#647' and r['severity'] == 'info' for r in rows), rows)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : [{'schema': 'findings/0', 'run_id': 'check-public-surface-annotation.py-20260911T105044Z-2003', 'ts': '2026-09-11T10:50:44Z', 'record_id': 'check-public-surface-annotation.py-20260911T105044Z-2003:0001', 'rule': '#493', 'sentinel': None, 'contract_ref': None, 'checker': 'check-public-surface-annotation.py', 'file': 'framework/admin/book.py:6', 'symbol': None, 'severity': 'violation', 'message': '지역 변수 `Response` 의 첫 대입에 타입이 없다 — `name: T = …`', 'expression': None, 'experiment_run_id': None}]
+
+----------------------------------------------------------------------
+Ran 1 test in 0.061s
+
+FAILED (failures=1)

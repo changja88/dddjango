@@ -1,0 +1,16 @@
+[render] agent-design-architect: 그래프 소유 절 7 — s001, s002, s003, s004, s005, s006, s007
+[render] agent-design-architect: 투영 적용(변경)
+[render] command-dddjango: 그래프 소유 절 11 — s001, s002, s003, s004, s005, s006, s007, s008, s009, s010, s011
+[render] command-dddjango: 투영 적용(변경)
+[render] discipline-houserules-skill: 그래프 소유 절 10 — s001, s003, s004-1, s005-2, s006-3, s007-4, s008-4.1, s009-5, s011-6.1, s012-6.2
+[render] discipline-houserules-skill: 투영 적용(변경)
+[render] discipline-houserules-final: 그래프 소유 절 16 — s001, s002, s003-0, s004-1, s006, s007, s008, s009, s010, s011-3, s013, s014, s015, s016, s017, s018-5
+[render] discipline-houserules-final: 투영 적용(변경)
+[render] agent-discipline-reviewer: 그래프 소유 절 8 — s001, s002, s003, s004, s005, s006, s007, s008
+[render] agent-discipline-reviewer: 투영 적용(변경)
+[render] agent-design-review-api: 그래프 소유 절 7 — s001, s002, s003, s004, s005, s006, s007
+[render] agent-design-review-api: 투영 적용(변경)
+[render] implementation-django-ninja-final: 그래프 소유 절 23 — s001, s004-1.1, s005-1.2, s006-1.3, s008-2.1, s009-2.2, s010-2.3, s012-3.1, s013-3.2, s014-3.3, s016-4.1, s017-4.2, s019-5.1, s020-5.2, s022-6.1, s023-6.2, s024-6.3, s025-7, s026-8, s028-9.1, s029-9.2, s030-10, s031-11
+[render] implementation-django-ninja-final: 투영 적용(변경)
+[render] implementation-django-ninja-skill: 그래프 소유 절 4 — s001, s003, s004, s005
+[render] implementation-django-ninja-skill: 투영 적용(변경)

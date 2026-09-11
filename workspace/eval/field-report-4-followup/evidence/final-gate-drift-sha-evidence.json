@@ -1,0 +1,14 @@
+{
+  "check-domain-model.py": {
+    "old_sha": "4398d7d774da5d4d7bc6542bf5c5f19d0d99dbf6f3682a41a7c742803d3c415a",
+    "new_sha": "b571ad8ca4677a586c856199281b6fd4d76a848426e453e147803b1f505f06b7",
+    "exit_before": 2,
+    "exit_after": 2
+  },
+  "check-context-isolation.py": {
+    "old_sha": "f519601d1dceaab05e7452329158d2eea8b05a86f3698af629911c94febcc8b1",
+    "new_sha": "f87209775b8432b9fbdbe621dd9f2224611596aa006aecf4b24d31c8e1e230b5",
+    "exit_before": 2,
+    "exit_after": 2
+  }
+}

@@ -1,0 +1,197 @@
+[verify-base-regen] 검증 세트 (regen-golden·regen-loop·runtime-parity·rulepack-smoke·pregate-kinds·pregate-fixture)
+[self-test] 주입 골든 일치 · owner-map 유출 0 · injection 경계 유지(제어문자 2건 보고)
+| 케이스 | 기대 | 실측 | 일치 | 비고 |
+|---|---|---|---|---|
+| T1 no_progress 비종료 | budget/3회전 | budget/3회전 | ✓ | no_progress 2회 발생하되 종료 안 함 |
+| T2 2→3 전이 후 수렴 | zero/3회전 | zero/3회전 | ✓ | 2회전 no_progress 뒤에도 3회전을 돌아 수렴 |
+| T3 범위 밖 편집 | scope_violation/exit 3 | scope_violation/exit 3 | ✓ | 위반 delta 가 아니라 편집 자체로 잡는다 |
+| T4 귀속 0 | zero/1회전 | zero/1회전 | ✓ | 고칠 것이 없으면 즉시 수렴 |
+| T5 C암 배선 발화 | 프롬프트 상이·rules>0 | b≠c True · rules 191 | ✓ | 루프가 실제로 팩을 탄다(단위 시험 아님) |
+케이스 5 · 일치 5 · 불일치 0
+[parity] step 6′ 재생성 루프: 정합 (3108자)
+[parity] 대조 절 1종 전건 정합 — 두 런타임 의미 미러 유지
+| 단언 | 판정 | 실측 |
+|---|---|---|
+| G1 팩 검사기 키 ⊆ 로스터 | ✓ | 이탈 0 |
+| G2 B암 byte 불변(T2-3 판형 독립 재구성) | ✓ | 595자 |
+| G3a C 중복 제거 + 집합 보존 | ✓ | ['r:2', 'r:1', 'r:4'] |
+| G3b C 발화(순서 상이 + <rules> 실재) | ✓ | rules 2 |
+| G3c 폴백은 뒤에 원래 순서로 | ✓ | tier [1, 1, 1, 3] |
+| G3d alias 정밀 조인 생존 | ✓ | alias·R-0124·rules 1 |
+| G4 본문 미동봉(팩·프롬프트 공히) | ✓ | text 필드 0 |
+| G5 주입 경계(적대 명칭·적대 문면) | ✓ | 리터럴 꺾쇠 0 |
+| G6 fail-closed(부재·손상·스키마) | ✓ | 3/3 |
+| G7 Q1 matcher conformance(글롭 단위 10케이스) | ✓ | 케이스 10 · 실패 0 |
+| G8 CLI stdout ↔ T2-3 독립 오라클 | ✓ | CLI 867B ↔ 오라클 867B |
+| G9 순열 불변(같은 multiset = 같은 프롬프트) | ✓ | tier1·2 3건 순열 1종 프롬프트 |
+| G10 손상 팩 fail-closed(5종) | ✓ | 손상 5종 · 미검출 0 |
+| G11 글롭 문법 폐쇄(음성 8·양성 3) | ✓ | 음성 8·양성 3 · 이탈 0 |
+단언 14 · 통과 14 · 실패 0
+in-sync: pregate_symbol_kinds.json ≡ 재생성 결과 (종류 56·검사기 27종·양쪽 미러 일치)
+mode baseline=False tag=add explicit=False: exit 3 (expected 3)
+mode baseline=False tag=add explicit=True: exit 0 (expected 0)
+mode baseline=False tag=empty explicit=False: exit 3 (expected 3)
+mode baseline=False tag=empty explicit=True: exit 0 (expected 0)
+mode baseline=False tag=update explicit=False: exit 3 (expected 3)
+mode baseline=False tag=update explicit=True: exit 3 (expected 3)
+mode baseline=True tag=add explicit=False: exit 3 (expected 3)
+mode baseline=True tag=add explicit=True: exit 3 (expected 3)
+mode baseline=True tag=empty explicit=False: exit 3 (expected 3)
+mode baseline=True tag=empty explicit=True: exit 3 (expected 3)
+mode baseline=True tag=update explicit=False: exit 4 (expected 4)
+mode baseline=True tag=update explicit=True: exit 4 (expected 4)
+green-spec: exit 0 (예보 0) — 기대 일치
+green2-spec: exit 0 (예보 0) — 기대 일치
+form-red-spec: exit 3 (중복 인자 → compile 형식 red) — 기대 일치
+red-spec: exit 2 · 귀속 ['#267', '#472', '#81'] — 기대 일치
+green3-spec: exit 0 (사설 타입·대입식 필드·마이그레이션 정형 예보 0) — 기대 일치
+red2-spec: exit 2 · 귀속 ['#325', '#81'] (마이그레이션 오배치 경로 진탐) — 기대 일치
+E1: exit 0 · 사본 스텁 · 기실현 0 (커밋된 add 는 사본 밖) — 기대 일치
+E2: exit 0 · 기실현 1 · 스텁 대체(실물 #267 미혼입) · 해소 0·anchor 열 0 — 기대 일치
+E3: exit 3 (미지정 `--base` — add 충돌 유지) — 기대 일치
+E4: exit 3 (기준선 트리 실존 add — 계획↔실물 모순 유지) — 기대 일치
+E1′/E2′: exit 2·2 · 같은 ID(#267) · E2′ 기실현 1·해소 0·anchor 열 0 (기실현 add 앵커 무오염) — 기대 일치
+imports-green-spec: exit 0 · 결손 0 · 집계 K2/S1/S′1/X1 (실존 확인·서브모듈·자기 add·update 대상 새 심볼·서드파티) — 기대 일치
+imports-red-spec: exit 5 · ⑴⑵⑶ 각 1 · 귀속 0 (권고·비차단) — 기대 일치
+imports-update-only-spec: exit 5 · 실체화 0 · ⑵ 1 (kkebi S2 판형 — update 소비자 포함) — 기대 일치
+noblock-spec: exit 3 · 요약: 형식 red 1건(블록 부재) · 판정 «형식 red(블록 부재)» — 기대 일치
+empty-block-spec: exit 3 · 요약: 형식 red 1건(블록 공허) · 판정 «형식 red(블록 공허)» — 기대 일치
+update-target ⓐ(기준선 부재): exit 3 · 요약: 형식 red 1건(update 대상 부재 1) · 판정 «형식 red» — 기대 일치
+remove-target-spec: exit 3 · 요약: 형식 red 1건(remove 대상 부재 1) · 판정 «형식 red» — 기대 일치
+empty-conflict-spec: exit 3 · 요약: 형식 red 1건(empty 충돌 1) · 판정 «형식 red» — 기대 일치
+remove-deferred-spec: exit 4 (remove@L1 은 판정 밖 · 실체화 0) — 기대 일치
+update-target ⓒ(승격 폴더 미커밋): exit 3 · 요약: 형식 red 1건(update 대상 부재 1) · 판정 «형식 red» — 기대 일치
+update-target ⓑ(승격 형태 커밋): exit 4 · 예외 통과 문면 — 기대 일치
+check-report red 미라벨: exit 3 · 불비 1건 — 기대 일치
+check-report ignored 2 append: exit 3 · 불비 1건 — 기대 일치
+check-report 3번째 corrected(불인정): exit 3 · 불비 1건 — 기대 일치
+check-report 3번째 filtered(전건): exit 0 · 정합 — 기대 일치
+check-report 오염 행 무영향: exit 0 · 정합 — 기대 일치
+check-report 다른 명세(stale): exit 3 · 불비 1건 — 기대 일치
+check-report 표 형식 처분(불인정): exit 3 · 불비 1건 — 기대 일치
+check-report red 재실행: exit 2 — 기대 일치
+check-report 형식 red 마지막: exit 3 · 불비 1건 — 기대 일치
+check-report 블록 부재 마지막: exit 3 · 불비 1건 — 기대 일치
+check-report skip·결손 통과: exit 0 · 정합 — 기대 일치
+check-report 구판 헤더(해시 토큰 없음): exit 3 · 불비 1건 — 기대 일치
+check-report 리포트 부재: exit 1 — 기대 일치
+check-report 절 부재: exit 1 — 기대 일치
+
+PASS — pre-gate 픽스처 15종+E 계열 6단계+유닛 기대 일치 (green×3 예보 0 · 형식 red exit 3 · red 귀속 3건·red2 귀속 2건 정합 · 재발화 판형 E1~E4+E1′/E2′ · 계약 실존 imports 3종 exit 0/5/5 · 차단 모드 enforce 7(블록 부재·공허·update/remove 부재·승격 예외) · --check-report 14단계 + 유닛 매트릭스)
+test_decorator_order_arguments_and_signal_base_survive (__main__.TranscriptionTest.test_decorator_order_arguments_and_signal_base_survive) ... ok
+test_existing_function_named_alias_remains_valid (__main__.TranscriptionTest.test_existing_function_named_alias_remains_valid) ... ok
+test_malformed_new_rows_fail_closed_even_for_update (__main__.TranscriptionTest.test_malformed_new_rows_fail_closed_even_for_update) ... ok
+test_migration_ignored_alias_is_reported (__main__.TranscriptionTest.test_migration_ignored_alias_is_reported) ... ok
+test_no_decorator_no_reference_and_fake_import_remain_violations (__main__.TranscriptionTest.test_no_decorator_no_reference_and_fake_import_remain_violations) ... ok
+test_overlay_only_removal_skips_registry_and_never_regenerates_bc (__main__.TranscriptionTest.test_overlay_only_removal_skips_registry_and_never_regenerates_bc) ... ok
+test_partial_and_fixed_slot_removals_keep_path_diagnostics (__main__.TranscriptionTest.test_partial_and_fixed_slot_removals_keep_path_diagnostics) ... ok
+test_pruning_does_not_traverse_symlink_ancestor (__main__.TranscriptionTest.test_pruning_does_not_traverse_symlink_ancestor) ... ok
+test_public_helper_dataclass_is_transcribed_with_import_aliases (__main__.TranscriptionTest.test_public_helper_dataclass_is_transcribed_with_import_aliases) ... ok
+test_remove_keeps_surviving_files_new_files_and_deferred_paths (__main__.TranscriptionTest.test_remove_keeps_surviving_files_new_files_and_deferred_paths) ... ok
+test_remove_prunes_only_its_empty_ancestors (__main__.TranscriptionTest.test_remove_prunes_only_its_empty_ancestors) ... ok
+test_remove_whole_instances_eliminates_phantom_path_findings (__main__.TranscriptionTest.test_remove_whole_instances_eliminates_phantom_path_findings) ... ok
+test_type_checking_alias_preserves_both_branches_without_646 (__main__.TranscriptionTest.test_type_checking_alias_preserves_both_branches_without_646) ... ok
+test_unconditional_alias_and_nonadmin_keep_real_findings (__main__.TranscriptionTest.test_unconditional_alias_and_nonadmin_keep_real_findings) ... ok
+test_update_alias_declaration_resolves_import_without_stub_mutation (__main__.TranscriptionTest.test_update_alias_declaration_resolves_import_without_stub_mutation) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 2.887s
+
+OK
+test_admin_source_business_body_is_legacy_not_generated_s1 (__main__.FieldReportTest.test_admin_source_business_body_is_legacy_not_generated_s1) ... ok
+test_class_global_surface_rejects_the_entire_service_update (__main__.FieldReportTest.test_class_global_surface_rejects_the_entire_service_update) ... ok
+test_class_local_names_do_not_block_new_module_functions (__main__.FieldReportTest.test_class_local_names_do_not_block_new_module_functions) ... ok
+test_compile_failure_is_reported_without_partial_update (__main__.FieldReportTest.test_compile_failure_is_reported_without_partial_update) ... ok
+test_declaration_only_cli_and_report_dispositions (__main__.FieldReportTest.test_declaration_only_cli_and_report_dispositions) ... ok
+test_dto_type_provenance_nested_alias_forward_and_candidates (__main__.FieldReportTest.test_dto_type_provenance_nested_alias_forward_and_candidates) ... ok
+test_effect_declaration_contract_and_hash (__main__.FieldReportTest.test_effect_declaration_contract_and_hash) ... ok
+test_existing_class_decorator_and_alias_remain_s5_alongside_new_function (__main__.FieldReportTest.test_existing_class_decorator_and_alias_remain_s5_alongside_new_function) ... ok
+test_existing_names_and_unmodeled_updates_are_never_replaced (__main__.FieldReportTest.test_existing_names_and_unmodeled_updates_are_never_replaced) ... ok
+test_explicit_service_raise_only_clears_exception_finding (__main__.FieldReportTest.test_explicit_service_raise_only_clears_exception_finding) ... ok
+test_generated_admin_cli_defers_open_slots_but_keeps_bare_any (__main__.FieldReportTest.test_generated_admin_cli_defers_open_slots_but_keeps_bare_any) ... ok
+test_generated_admin_exact_multiline_slots_and_mixed_cohorts (__main__.FieldReportTest.test_generated_admin_exact_multiline_slots_and_mixed_cohorts) ... ok
+test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations (__main__.FieldReportTest.test_generated_partition_uses_full_normalized_cohort_and_all_raw_locations) ... ok
+test_generated_ranges_follow_final_marker_composition (__main__.FieldReportTest.test_generated_ranges_follow_final_marker_composition) ... ok
+test_generated_uow_cli_defers_only_generated_body_and_preserves_original (__main__.FieldReportTest.test_generated_uow_cli_defers_only_generated_body_and_preserves_original) ... ok
+test_marker_method_mutations_preserve_bytes_and_report_s5 (__main__.FieldReportTest.test_marker_method_mutations_preserve_bytes_and_report_s5) ... ok
+test_marker_new_list_evaluates_after_pytest_binding (__main__.FieldReportTest.test_marker_new_list_evaluates_after_pytest_binding) ... ok
+test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) ... ok
+test_marker_update_cli_real_test_config_rule (__main__.FieldReportTest.test_marker_update_cli_real_test_config_rule) ... ok
+test_marker_update_noop_and_import_binding_are_preserved (__main__.FieldReportTest.test_marker_update_noop_and_import_binding_are_preserved) ... ok
+test_module_bindings_and_raise_helper_collisions_are_preserved (__main__.FieldReportTest.test_module_bindings_and_raise_helper_collisions_are_preserved) ... ok
+test_new_operation_clears_pair_finding_and_preserves_source_body (__main__.FieldReportTest.test_new_operation_clears_pair_finding_and_preserves_source_body) ... ok
+test_only_exact_real_ohs_service_paths_are_updated (__main__.FieldReportTest.test_only_exact_real_ohs_service_paths_are_updated) ... ok
+test_plain_signature_defaults_remain_transcribable (__main__.FieldReportTest.test_plain_signature_defaults_remain_transcribable) ... ok
+test_provenance_records_only_current_render_ast_ranges (__main__.FieldReportTest.test_provenance_records_only_current_render_ast_ranges) ... ok
+test_real_uow_cli_retains_bad_body_and_missing_robust_even_stub_text (__main__.FieldReportTest.test_real_uow_cli_retains_bad_body_and_missing_robust_even_stub_text) ... ok
+test_run_gate_preserves_complete_material_and_optional_candidates (__main__.FieldReportTest.test_run_gate_preserves_complete_material_and_optional_candidates) ... ok
+test_run_gate_rejects_missing_material_and_unexplained_raw_red (__main__.FieldReportTest.test_run_gate_rejects_missing_material_and_unexplained_raw_red) ... ok
+test_safe_imports_transcribe_but_conflicts_reject_the_whole_entry (__main__.FieldReportTest.test_safe_imports_transcribe_but_conflicts_reject_the_whole_entry) ... ok
+test_signals_use_first_python_artifact_and_strip_nodeid (__main__.FieldReportTest.test_signals_use_first_python_artifact_and_strip_nodeid) ... ok
+test_signature_named_expressions_reject_the_entire_service_update (__main__.FieldReportTest.test_signature_named_expressions_reject_the_entire_service_update) ... ok
+test_typegraph_container_identity_and_literal_alias (__main__.FieldReportTest.test_typegraph_container_identity_and_literal_alias) ... ok
+test_typegraph_real_tree_cross_module_alias_cycles_and_ohs_imports (__main__.FieldReportTest.test_typegraph_real_tree_cross_module_alias_cycles_and_ohs_imports) ... ok
+test_unlisted_first_artifact_nonadd_and_missing_markers_do_not_signal (__main__.FieldReportTest.test_unlisted_first_artifact_nonadd_and_missing_markers_do_not_signal) ... ok
+test_unresolved_named_uow_alias_keeps_declaration_candidate (__main__.FieldReportTest.test_unresolved_named_uow_alias_keeps_declaration_candidate) ... ok
+test_unresolved_uow_never_confirms_and_declaration_owners_group (__main__.FieldReportTest.test_unresolved_uow_never_confirms_and_declaration_owners_group) ... ok
+test_update_marker_final_state_and_preservation (__main__.FieldReportTest.test_update_marker_final_state_and_preservation) ... ok
+test_wrong_operation_name_and_signature_remain_real_findings (__main__.FieldReportTest.test_wrong_operation_name_and_signature_remain_real_findings) ... ok
+
+----------------------------------------------------------------------
+Ran 38 tests in 53.195s
+
+OK
+test_cache_cannot_hide_fixed_skeleton_and_promoted_parts_have_no_floor (__main__.CacheInstanceRegression.test_cache_cannot_hide_fixed_skeleton_and_promoted_parts_have_no_floor) ... ok
+test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates (__main__.CacheInstanceRegression.test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates) ... ok
+test_cache_predicate_requires_cache_and_rejects_actual_files_links_and_read_errors (__main__.CacheInstanceRegression.test_cache_predicate_requires_cache_and_rejects_actual_files_links_and_read_errors) ... ok
+test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics (__main__.CacheInstanceRegression.test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics) ... ok
+test_validation_scan_respects_owning_cache_only_area_and_usecase (__main__.CacheInstanceRegression.test_validation_scan_respects_owning_cache_only_area_and_usecase) ... ok
+test_admin_augmented_write_and_module_super_shadow_preserve_diagnostics (__main__.CheckerRegression.test_admin_augmented_write_and_module_super_shadow_preserve_diagnostics) ... ok
+test_admin_context_origin_alias_fixed_slots_and_local_business (__main__.CheckerRegression.test_admin_context_origin_alias_fixed_slots_and_local_business) ... ok
+test_admin_context_real_parler_helper_and_business_opposite (__main__.CheckerRegression.test_admin_context_real_parler_helper_and_business_opposite) ... ok
+test_admin_context_shadowed_transport_names_are_not_framework_proof (__main__.CheckerRegression.test_admin_context_shadowed_transport_names_are_not_framework_proof) ... ok
+test_admin_context_sources_consumption_rebind_and_bare_slots (__main__.CheckerRegression.test_admin_context_sources_consumption_rebind_and_bare_slots) ... ok
+test_admin_helper_return_cycles_and_mixed_bare_annotation (__main__.CheckerRegression.test_admin_helper_return_cycles_and_mixed_bare_annotation) ... ok
+test_admin_kwargs_actual_consumption_and_unknown_escape (__main__.CheckerRegression.test_admin_kwargs_actual_consumption_and_unknown_escape) ... ok
+test_anchor_collects_existing_tree_and_code_findings (__main__.CheckerRegression.test_anchor_collects_existing_tree_and_code_findings) ... ok
+test_baseline_local_exits_and_argument_guards (__main__.CheckerRegression.test_baseline_local_exits_and_argument_guards) ... ok
+test_closed_enum_validation_and_dynamic_opposites (__main__.CheckerRegression.test_closed_enum_validation_and_dynamic_opposites) ... ok
+test_constructor_branch_invalidates_contract_field_origin (__main__.CheckerRegression.test_constructor_branch_invalidates_contract_field_origin) ... ok
+test_constructor_branch_invalidates_uow_field_origin (__main__.CheckerRegression.test_constructor_branch_invalidates_uow_field_origin) ... ok
+test_custom_enum_validation_does_not_prove_closed_members (__main__.CheckerRegression.test_custom_enum_validation_does_not_prove_closed_members) ... ok
+test_declared_usecase_and_enum_constructor_opposites (__main__.CheckerRegression.test_declared_usecase_and_enum_constructor_opposites) ... ok
+test_domain_failure_name_is_a_question_not_a_blocker (__main__.CheckerRegression.test_domain_failure_name_is_a_question_not_a_blocker) ... ok
+test_empty_api_content_is_not_an_active_registrar (__main__.CheckerRegression.test_empty_api_content_is_not_an_active_registrar) ... ok
+test_incomplete_baseline_analysis_is_not_successful_collection (__main__.CheckerRegression.test_incomplete_baseline_analysis_is_not_successful_collection) ... ok
+test_initial_static_module_alias_preserves_origin_but_rebinding_does_not (__main__.CheckerRegression.test_initial_static_module_alias_preserves_origin_but_rebinding_does_not) ... ok
+test_later_import_shadow_invalidates_standard_enum_origin (__main__.CheckerRegression.test_later_import_shadow_invalidates_standard_enum_origin) ... ok
+test_later_module_compound_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_module_compound_rebinding_invalidates_function_constructor) ... ok
+test_later_with_item_rebinding_invalidates_function_constructor (__main__.CheckerRegression.test_later_with_item_rebinding_invalidates_function_constructor) ... ok
+test_multiple_shapes_stay_blocked_and_field_words_stay_neutral (__main__.CheckerRegression.test_multiple_shapes_stay_blocked_and_field_words_stay_neutral) ... ok
+test_nested_definition_bindings_do_not_rebind_module_constructor_alias (__main__.CheckerRegression.test_nested_definition_bindings_do_not_rebind_module_constructor_alias) ... ok
+test_nested_repository_parameters_do_not_retype_outer_bindings (__main__.CheckerRegression.test_nested_repository_parameters_do_not_retype_outer_bindings) ... ok
+test_new_code_stays_new_with_old_tree (__main__.CheckerRegression.test_new_code_stays_new_with_old_tree) ... ok
+test_new_tree_stays_new_with_old_code (__main__.CheckerRegression.test_new_tree_stays_new_with_old_code) ... ok
+test_ohs_execution_provenance_and_count (__main__.CheckerRegression.test_ohs_execution_provenance_and_count) ... ok
+test_ohs_module_definitions_invalidate_imported_builder (__main__.CheckerRegression.test_ohs_module_definitions_invalidate_imported_builder) ... ok
+test_open_enum_reason_does_not_claim_constructor_raise_is_absent (__main__.CheckerRegression.test_open_enum_reason_does_not_claim_constructor_raise_is_absent) ... ok
+test_origin_scope_rebindings_remain_unknown (__main__.CheckerRegression.test_origin_scope_rebindings_remain_unknown) ... ok
+test_plain_tree_preemption_and_code_only_baseline_are_preserved (__main__.CheckerRegression.test_plain_tree_preemption_and_code_only_baseline_are_preserved) ... ok
+test_property_comparisons_use_actual_origin_on_both_sides (__main__.CheckerRegression.test_property_comparisons_use_actual_origin_on_both_sides) ... ok
+test_real_controller_webhook_and_explicit_registrar_keep_107 (__main__.CheckerRegression.test_real_controller_webhook_and_explicit_registrar_keep_107) ... ok
+test_rebound_annotated_factory_is_not_revived (__main__.CheckerRegression.test_rebound_annotated_factory_is_not_revived) ... ok
+test_uow_injected_fields_and_factory_alias_scope (__main__.CheckerRegression.test_uow_injected_fields_and_factory_alias_scope) ... ok
+test_uow_lexical_regions_and_unknown_boundaries (__main__.CheckerRegression.test_uow_lexical_regions_and_unknown_boundaries) ... ok
+test_uow_module_class_shadow_keeps_unknown_region_candidate (__main__.CheckerRegression.test_uow_module_class_shadow_keeps_unknown_region_candidate) ... ok
+test_while_guard_execute_repeats_but_for_iterable_executes_once (__main__.CheckerRegression.test_while_guard_execute_repeats_but_for_iterable_executes_once) ... ok
+test_admin_policy_names_actual_consumption_boundary (__main__.NormativeContractRegression.test_admin_policy_names_actual_consumption_boundary) ... ok
+test_internal_normalization_and_public_500_are_distinct_in_six_sources (__main__.NormativeContractRegression.test_internal_normalization_and_public_500_are_distinct_in_six_sources) ... ok
+test_optional_effects_poststate_and_s1_limits_are_explicit (__main__.NormativeContractRegression.test_optional_effects_poststate_and_s1_limits_are_explicit) ... ok
+test_promotion_has_no_birth_floor_and_keeps_zero_part_reversion (__main__.NormativeContractRegression.test_promotion_has_no_birth_floor_and_keeps_zero_part_reversion) ... ok
+test_rebaseline_keeps_frozen_source_and_supports_existing_current_mirrors (__main__.SourceMirrorRegression.test_rebaseline_keeps_frozen_source_and_supports_existing_current_mirrors) ... ok
+test_unapproved_source_changes_and_ambiguous_spans_remain_structure_errors (__main__.SourceMirrorRegression.test_unapproved_source_changes_and_ambiguous_spans_remain_structure_errors) ... ok
+
+----------------------------------------------------------------------
+Ran 49 tests in 15.097s
+
+OK

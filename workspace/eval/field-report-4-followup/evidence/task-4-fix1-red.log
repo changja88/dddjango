@@ -1,0 +1,88 @@
+test_while_guard_execute_repeats_but_for_iterable_executes_once (__main__.CheckerRegression.test_while_guard_execute_repeats_but_for_iterable_executes_once) ... 
+  test_while_guard_execute_repeats_but_for_iterable_executes_once (__main__.CheckerRegression.test_while_guard_execute_repeats_but_for_iterable_executes_once) (statement='while unit.execute(): pass') ... FAIL
+test_later_import_shadow_invalidates_standard_enum_origin (__main__.CheckerRegression.test_later_import_shadow_invalidates_standard_enum_origin) ... 
+  test_later_import_shadow_invalidates_standard_enum_origin (__main__.CheckerRegression.test_later_import_shadow_invalidates_standard_enum_origin) (header='from enum import Enum\nfrom custom import Enum') ... FAIL
+  test_later_import_shadow_invalidates_standard_enum_origin (__main__.CheckerRegression.test_later_import_shadow_invalidates_standard_enum_origin) (header='import enum as standard\nimport custom as standard') ... FAIL
+test_rebound_annotated_factory_is_not_revived (__main__.CheckerRegression.test_rebound_annotated_factory_is_not_revived) ... FAIL
+test_constructor_branch_invalidates_uow_field_origin (__main__.CheckerRegression.test_constructor_branch_invalidates_uow_field_origin) ... FAIL
+test_constructor_branch_invalidates_contract_field_origin (__main__.CheckerRegression.test_constructor_branch_invalidates_contract_field_origin) ... FAIL
+test_initial_static_module_alias_preserves_origin_but_rebinding_does_not (__main__.CheckerRegression.test_initial_static_module_alias_preserves_origin_but_rebinding_does_not) ... 
+  test_initial_static_module_alias_preserves_origin_but_rebinding_does_not (__main__.CheckerRegression.test_initial_static_module_alias_preserves_origin_but_rebinding_does_not) (imported='from requests import Response as Source', suffix='') ... FAIL
+  test_initial_static_module_alias_preserves_origin_but_rebinding_does_not (__main__.CheckerRegression.test_initial_static_module_alias_preserves_origin_but_rebinding_does_not) (imported='from application.lesson.domain_layer.book.kind import Kind as Source', suffix='') ... FAIL
+
+======================================================================
+FAIL: test_while_guard_execute_repeats_but_for_iterable_executes_once (__main__.CheckerRegression.test_while_guard_execute_repeats_but_for_iterable_executes_once) (statement='while unit.execute(): pass')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 314, in test_while_guard_execute_repeats_but_for_iterable_executes_once
+    self.assertEqual("#153" in c, candidate)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False != True
+
+======================================================================
+FAIL: test_later_import_shadow_invalidates_standard_enum_origin (__main__.CheckerRegression.test_later_import_shadow_invalidates_standard_enum_origin) (header='from enum import Enum\nfrom custom import Enum')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 322, in test_later_import_shadow_invalidates_standard_enum_origin
+    self.assertIn("#268", self.enum_rules(header + f"\nclass Kind({base}):\n    ONE = 1\n")[1])
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: '#268' not found in []
+
+======================================================================
+FAIL: test_later_import_shadow_invalidates_standard_enum_origin (__main__.CheckerRegression.test_later_import_shadow_invalidates_standard_enum_origin) (header='import enum as standard\nimport custom as standard')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 322, in test_later_import_shadow_invalidates_standard_enum_origin
+    self.assertIn("#268", self.enum_rules(header + f"\nclass Kind({base}):\n    ONE = 1\n")[1])
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: '#268' not found in []
+
+======================================================================
+FAIL: test_rebound_annotated_factory_is_not_revived (__main__.CheckerRegression.test_rebound_annotated_factory_is_not_revived)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 328, in test_rebound_annotated_factory_is_not_revived
+    self.assertIn("#546", c)
+    ~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: '#546' not found in []
+
+======================================================================
+FAIL: test_constructor_branch_invalidates_uow_field_origin (__main__.CheckerRegression.test_constructor_branch_invalidates_uow_field_origin)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 337, in test_constructor_branch_invalidates_uow_field_origin
+    self.assertIn("#546", [e.rule for e in c.entries])
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: '#546' not found in []
+
+======================================================================
+FAIL: test_constructor_branch_invalidates_contract_field_origin (__main__.CheckerRegression.test_constructor_branch_invalidates_contract_field_origin)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 343, in test_constructor_branch_invalidates_contract_field_origin
+    self.assertIn("#557", c)
+    ~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: '#557' not found in []
+
+======================================================================
+FAIL: test_initial_static_module_alias_preserves_origin_but_rebinding_does_not (__main__.CheckerRegression.test_initial_static_module_alias_preserves_origin_but_rebinding_does_not) (imported='from requests import Response as Source', suffix='')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 355, in test_initial_static_module_alias_preserves_origin_but_rebinding_does_not
+    self.assertEqual("#557" in f, wanted == "violation")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False != True
+
+======================================================================
+FAIL: test_initial_static_module_alias_preserves_origin_but_rebinding_does_not (__main__.CheckerRegression.test_initial_static_module_alias_preserves_origin_but_rebinding_does_not) (imported='from application.lesson.domain_layer.book.kind import Kind as Source', suffix='')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 356, in test_initial_static_module_alias_preserves_origin_but_rebinding_does_not
+    self.assertEqual("#557" in c, wanted == "candidate")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True != False
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.055s
+
+FAILED (failures=8)

@@ -1,0 +1,44 @@
+FFF
+======================================================================
+FAIL: test_admin_context_real_parler_helper_and_business_opposite (field_report_checker_smoke.CheckerRegression.test_admin_context_real_parler_helper_and_business_opposite)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 135, in test_admin_context_real_parler_helper_and_business_opposite
+    self.assertEqual([r for r in rows if r['rule'] in ('#645', '#647')], [])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [{'schema': 'findings/0', 'run_id': 'check[3046 chars]one}] != []
+
+First list contains 5 additional elements.
+First extra element 0:
+{'schema': 'findings/0', 'run_id': 'check-public-surface-annotation.py-20260911T103838Z-92257', 'ts': '2026-09-11T10:38:38Z', 'record_id': 'check-public-surface-annotation.py-20260911T103838Z-92257:0004', 'rule': '#647', 'sentinel': None, 'contract_ref': None, 'checker': 'check-public-surface-annotation.py', 'file': 'framework/admin/book.py:4', 'symbol': None, 'severity': 'violation', 'message': '`changeform_view()` 매개변수 `extra_context`의 값 자리가 `Any` 다 — 키가 정해진 값 묶음은 `TypedDict`(파싱한 JSON 은 `TypeAdapter` 검증 파싱) · 조회표는 `dict[K, 구체 V]` · 통과 값은 `JsonValue`', 'expression': None, 'experiment_run_id': None}
+
+Diff is 3571 characters long. Set self.maxDiff to None to see it.
+
+======================================================================
+FAIL: test_admin_context_origin_alias_fixed_slots_and_local_business (field_report_checker_smoke.CheckerRegression.test_admin_context_origin_alias_fixed_slots_and_local_business)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 166, in test_admin_context_origin_alias_fixed_slots_and_local_business
+    self.assertEqual([r for r in rows if r['rule'] in ('#645', '#647')], [])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [{'schema': 'findings/0', 'run_id': 'check[4074 chars]one}] != []
+
+First list contains 7 additional elements.
+First extra element 0:
+{'schema': 'findings/0', 'run_id': 'check-public-surface-annotation.py-20260911T103838Z-92259', 'ts': '2026-09-11T10:38:38Z', 'record_id': 'check-public-surface-annotation.py-20260911T103838Z-92259:0002', 'rule': '#645', 'sentinel': None, 'contract_ref': None, 'checker': 'check-public-surface-annotation.py', 'file': 'framework/admin/book.py:9', 'symbol': None, 'severity': 'violation', 'message': '`get_form()` 매개변수 `*kwargs` 가 `Any` 다 — 검사 포기다 — `object`/정확 타입으로 받아 즉시 좁힌다(TypeIs·isinstance)', 'expression': None, 'experiment_run_id': None}
+
+Diff is 4709 characters long. Set self.maxDiff to None to see it.
+
+======================================================================
+FAIL: test_generated_admin_cli_defers_open_slots_but_keeps_bare_any (pregate_field_report_smoke.FieldReportTest.test_generated_admin_cli_defers_open_slots_but_keeps_bare_any)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/pregate_field_report_smoke.py", line 423, in test_generated_admin_cli_defers_open_slots_but_keeps_bare_any
+    self.assertIn('S1:', section)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+AssertionError: 'S1:' not found in ' (0건)\n\n- (없음)\n\n'
+
+----------------------------------------------------------------------
+Ran 3 tests in 4.320s
+
+FAILED (failures=3)

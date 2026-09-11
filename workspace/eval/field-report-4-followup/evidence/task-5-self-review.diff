@@ -1,0 +1,801 @@
+--- before/codex-dddjango/skills/dddjango/scripts/check-context-isolation.py
++++ codex-dddjango/skills/dddjango/scripts/check-context-isolation.py
+@@ -350,6 +350,8 @@
+             out.add("#150", rel0 / f.name, "`open_host_service/` 의 1차 축은 `<service>/` 폴더다 — 평면 `.py` 를 두지 않는다")
+ 
+     for svc in dirs:
++        if checker_target.cache_only_instance(svc):
++            continue
+         srel = rel0 / svc.name
+         tokens = set(svc.name.split("_"))
+         if tokens & TECH_NAME_TOKENS or tokens & (all_bcs - {bc.name}):
+
+--- before/codex-dddjango/skills/dddjango/scripts/check-domain-model.py
++++ codex-dddjango/skills/dddjango/scripts/check-domain-model.py
+@@ -171,7 +171,8 @@
+ 
+ def _aggregate_dirs(domain: Path) -> list[Path]:
+     return [p for p in sorted(domain.iterdir())
+-            if p.is_dir() and p.name not in DOMAIN_FIXED and p.name != "__pycache__"]
++            if p.is_dir() and p.name not in DOMAIN_FIXED and p.name != "__pycache__"
++            and not checker_target.cache_only_instance(p)]
+ 
+ 
+ def _check_layout(root: Path, bc: Path, f: Findings, cand: Candidates) -> None:
+@@ -217,7 +218,7 @@
+             _check_domain_services(root, bc, ds, f, cand)
+     if app.is_dir():
+         for d in sorted(p for p in app.iterdir() if p.is_dir() and p.name != "__pycache__"):
+-            if d.name == "port":
++            if d.name == "port" or checker_target.cache_only_instance(d):
+                 continue
+             if d.name in KIND_DENY:
+                 f.add("#17", _rel(root, d),
+
+--- before/codex-dddjango/skills/dddjango/scripts/check-layer-skeleton.py
++++ codex-dddjango/skills/dddjango/scripts/check-layer-skeleton.py
+@@ -92,7 +92,6 @@
+ # (houserules SKILL §1 감사 주도 배정 — 신호는 무조건 방출, 판정 의무의 diff 한정은 감사자 몫)
+ PROMO_ACTION_ROWS = frozenset({12, 18, 24, 41, 61, 74, 92, 94, 96})
+ PROMO_SIGNAL_LINES = 200   # ⓓ#644 후보 문턱(물리 행·빈 줄 제외)
+-PROMO_PART_MIN_LINES = 50  # #642 부품 출생 하한
+ JUNK_DRAWER_NAMES = frozenset({"utils.py", "helpers.py", "util.py", "helper.py", "common.py", "misc.py"})
+ _CASCADE_Q = "역할 밖 응집 단위가 있는가 — ①이동/②동명 폴더 승격/③유지 (houserules §1 캐스케이드)"
+ 
+@@ -145,8 +144,6 @@
+         if f.name in JUNK_DRAWER_NAMES:
+             out.add("#640", f, "승격 폴더 안 정크드로어 이름 — 부품은 응집 단위의 이름을 가진다")
+         n = _phys_lines(f)
+-        if n < PROMO_PART_MIN_LINES:
+-            out.add("#642", f, f"부품 {n}행 — 출생 하한 50행 미만(신규 여부는 게이트 앵커 차분이 가른다 · 기존분은 잔존 보고)")
+         if crow.r in PROMO_ACTION_ROWS and n > PROMO_SIGNAL_LINES:
+             cand.add("#644", f, f"행위 칸 승격 부품 {n}행(>{PROMO_SIGNAL_LINES}) — 캐스케이드 판정 의무 (트리 {crow.r}행)", _CASCADE_Q)
+     if body.is_file():
+@@ -277,6 +274,9 @@
+         if dir_placeholder is not None:
+             inst_bind = dict(bindings)
+             pattern = dir_placeholder.name.rstrip("/")
++            if (not pattern.endswith("_adapter") or _file_pattern_ok(p.name, pattern)) \
++                    and checker_target.cache_only_instance(p):
++                continue
+             if pattern.endswith("_adapter"):
+                 if not _file_pattern_ok(p.name, pattern):
+                     out.add("#490", p, "어댑터 패키지 이름은 `<이름>_adapter/` 다")
+
+--- before/codex-dddjango/skills/dddjango/scripts/check-port-adapter-pairing.py
++++ codex-dddjango/skills/dddjango/scripts/check-port-adapter-pairing.py
+@@ -185,7 +185,7 @@
+             f.add("#215", _rel(root, p),
+                   "port/ 직계 파일 — 능력 하나 = 폴더 하나다(포트를 파일 하나로 두지 않는다)")
+     for cap in sorted(p for p in port.iterdir() if p.is_dir() and p.name != "__pycache__"):
+-        if cap.name in ("domain_bypass_query", "unit_of_work"):
++        if cap.name in ("domain_bypass_query", "unit_of_work") or checker_target.cache_only_instance(cap):
+             continue
+         _check_capability_folder(root, bc, cap, bc_vocab_set, tech, f, cand)
+     bypass = port / "domain_bypass_query"
+@@ -315,6 +315,8 @@
+         if p.is_file() and p.suffix == ".py" and p.name != "__init__.py":
+             f.add("#232", _rel(root, p), "domain_bypass_query/ 직계 파일 — 능력 하나 = 폴더 하나다")
+     for cap in sorted(p for p in bypass.iterdir() if p.is_dir() and p.name != "__pycache__"):
++        if checker_target.cache_only_instance(cap):
++            continue
+         toks = set(cap.name.split("_"))
+         if toks & (TECH_EXACT | vocab.bc_names(root)):
+             f.add("#233", _rel(root, cap),
+@@ -704,7 +706,8 @@
+     thin = persistence / "domain_bypass_query"
+     port_bypass = bc / "application_layer" / "port" / "domain_bypass_query"
+     if thin.is_dir():
+-        contract_caps = {p.name for p in port_bypass.iterdir() if p.is_dir()} \
++        contract_caps = {p.name for p in port_bypass.iterdir() if p.is_dir()
++                         and p.name != "__pycache__" and not checker_target.cache_only_instance(p)} \
+             if port_bypass.is_dir() else set()
+         for py in checker_target.slot_glob(thin, "*_query.py"):
+             capname = py.stem[: -len("_query")]
+@@ -879,7 +882,8 @@
+ def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
+                             bc_vocab_set: set, f: Findings, cand: Candidates) -> None:
+     for bundle in sorted(adapter.rglob("*_adapter")):
+-        if not bundle.is_dir() or not checker_target.adapter_bundle(bundle):
++        if not bundle.is_dir() or not checker_target.adapter_bundle(bundle) \
++                or checker_target.cache_only_instance(bundle):
+             continue
+         for role in checker_target.ADAPTER_ROLES:
+             for py in sorted((bundle / role).glob("*.py")):
+@@ -896,6 +900,8 @@
+     if acl.is_dir():
+         bcs = vocab.bc_names(root)
+         for d in sorted(p for p in acl.iterdir() if p.is_dir() and p.name != "__pycache__"):
++            if checker_target.cache_only_instance(d):
++                continue
+             if d.name not in bcs:
+                 # 스펙 대장 #365 부칙(2026-08-25) — «우리 BC»는 병렬 워크트리 개발로 이
+                 # 스냅숏에 없는 자사 BC 를 포함한다. 대상 부재 시 구조 순수성(통신 축
+@@ -915,6 +921,8 @@
+             if p.is_file() and p.suffix == ".py" and p.name != "__init__.py":
+                 f.add("#369", _rel(root, p), "external_system/ 직계 파일 — 벤더 하나 = 폴더 하나다")
+         for system in sorted(p for p in ext.iterdir() if p.is_dir() and p.name != "__pycache__"):
++            if checker_target.cache_only_instance(system):
++                continue
+             for py in checker_target.adapter_implementations(system):
+                 if py.name == "__init__.py":
+                     continue
+
+--- before/codex-dddjango/skills/dddjango/scripts/check-usecase-dto-placement.py
++++ codex-dddjango/skills/dddjango/scripts/check-usecase-dto-placement.py
+@@ -283,7 +283,7 @@
+     dirs, _ = _entries(app)
+     areas: list[Path] = []
+     for p in dirs:
+-        if p.name == "port":
++        if p.name == "port" or checker_target.cache_only_instance(p):
+             continue
+         if p.name in KIND_FOLDER_NAMES:
+             out.add("#182", rel / p.name, "`application_layer/` 직계는 `<area>/`·`port/` 둘뿐이다 — 종류 폴더는 자리가 없다(`domain_bypass_query/`·`unit_of_work/` 는 `port/` 안이다)")
+@@ -301,7 +301,8 @@
+     api = _driving_api(bc)
+     if api is not None and _has_concrete_api_surface(root, api, bc.name):
+         api_dirs, _ = _entries(api)
+-        api_areas = {p.name for p in api_dirs if p.name != "webhook"}
++        api_areas = {p.name for p in api_dirs if p.name != "webhook"
++                     and not checker_target.cache_only_instance(p)}
+         app_areas = {p.name for p in areas}
+         for name in sorted(app_areas - api_areas):
+             out.add("#188", rel / name, f"`<area>` 는 `driving_layer/api/<area>` 와 1:1 이다 — api 쪽에 `{name}/` 이 없다")
+@@ -312,6 +313,8 @@
+     for area in areas:
+         a_dirs, _ = _entries(area)
+         for p in a_dirs:
++            if checker_target.cache_only_instance(p):
++                continue
+             if p.name in KIND_FOLDER_NAMES:
+                 out.add("#192", rel / area.name / p.name, "절차 조각은 `<use_case>_use_case.py` 안 `_` 사설 함수로 둔다 — `service/` 같은 종류 폴더를 만들지 않는다")
+             else:
+@@ -326,6 +329,8 @@
+ 
+ 
+ def _check_use_case(uc: Path, uc_rel: Path, agg_names: set[str], out: Findings, cand: Candidates) -> None:
++    if checker_target.cache_only_instance(uc):
++        return
+     name = uc.name
+     dirs, files = _entries(uc)
+ 
+
+--- before/codex-dddjango/skills/dddjango/scripts/checker_target.py
++++ codex-dddjango/skills/dddjango/scripts/checker_target.py
+@@ -22,11 +22,40 @@
+ 
+ import ast
+ import re
++import stat
+ import sys
+ import fnmatch
+ from pathlib import Path
+ 
+ _BC_LAYER_DIRS: "tuple[str, ...]" = ("domain_layer", "application_layer", "driving_layer", "driven_layer")
++
++
++def cache_only_instance(path: Path) -> bool:
++    """실파일 없이 __pycache__ 아래 캐시만 남은 선택 인스턴스인가.
++
++    빈 디렉터리는 허용하지만 캐시 파일 하나는 필요하다. 링크·읽기 불능은
++    제외 근거가 아니므로 False로 남긴다. Git 추적 상태는 사용하지 않는다.
++    """
++    found = False
++    pending = [(path, False)]
++    try:
++        while pending:
++            current, in_cache = pending.pop()
++            mode = current.lstat().st_mode
++            if stat.S_ISLNK(mode):
++                return False
++            if stat.S_ISDIR(mode):
++                cached = in_cache or current.name == "__pycache__"
++                pending.extend((child, cached) for child in current.iterdir())
++            elif stat.S_ISREG(mode) and in_cache and current.suffix in (".pyc", ".pyo"):
++                with current.open("rb") as stream:
++                    stream.read(1)
++                found = True
++            else:
++                return False
++    except OSError:
++        return False
++    return found
+ 
+ 
+ def skeleton_placeholder(path: Path) -> bool:
+
+--- before/codex-dddjango/skills/dddjango/scripts/registry_gate.py
++++ codex-dddjango/skills/dddjango/scripts/registry_gate.py
+@@ -91,6 +91,7 @@
+ sys.path.insert(0, str(_SCRIPTS_DIR))
+ import anchor_diff  # noqa: E402  — git·앵커 스냅숏·빚 로더·빚 매칭 공용(복제 통합)
+ import checker_target  # noqa: E402
++import standard_tree as tree  # noqa: E402
+ import findings  # noqa: E402  — sink 환경변수 이름·라인 재구성 문법의 단일 출처
+ from checker_registry import REGISTRY, checker_argv  # noqa: E402
+ 
+@@ -115,9 +116,63 @@
+         raise SystemExit(1)
+ 
+ 
++def _snapshot_cache_instances(root: Path) -> set[Path]:
++    """골격의 BC 내부 선택 폴더 칸만 원 작업 트리에서 수집한다."""
++    omitted: set[Path] = set()
++    token = re.compile(r"<([a-z_]+)>")
++
++    def walk(directory: Path, row: tree.Row, bindings: dict[str, str]) -> None:
++        if directory.is_symlink() or not directory.is_dir():
++            return
++        children = tree.children(row)
++        fixed = {tree.concrete_name(c, bindings).rstrip("/"): c for c in children
++                 if tree.is_dir(c) and c.kind in ("fixed", "reappear")}
++        optional = next((c for c in children if tree.is_dir(c) and c.kind == "placeholder"
++                         and "/" not in c.name.rstrip("/")), None)
++        files = [tree.concrete_name(c, bindings) for c in children if not tree.is_dir(c)]
++        for child in sorted(directory.iterdir()):
++            if not child.is_dir() or child.is_symlink() or child.name.startswith(".") or child.name == "__pycache__":
++                continue
++            if child.name in fixed:
++                walk(child, fixed[child.name], bindings)
++                continue
++            # 파일의 승격 실현은 선택 폴더 인스턴스가 아니다.
++            if any(re.fullmatch(token.sub(".+", name), child.name + ".py") for name in files):
++                continue
++            if optional is None:
++                continue
++            pattern = optional.name.rstrip("/")
++            if not re.fullmatch(token.sub(".+", pattern), child.name):
++                continue
++            if checker_target.cache_only_instance(child):
++                omitted.add(child.relative_to(root))
++                continue
++            values = dict(bindings)
++            for name in token.findall(pattern):
++                values[name] = child.name.removesuffix("_adapter") if pattern.endswith("_adapter") else child.name
++            walk(child, optional, values)
++
++    ignore = shutil.ignore_patterns(*_IGNORE_COPY)
++    for application in sorted(root.rglob("application")):
++        if not application.is_dir() or application.is_symlink() \
++                or ignore(str(root), list(application.relative_to(root).parts)):
++            continue
++        for bc in sorted(application.iterdir()):
++            if not bc.name.startswith("."):
++                walk(bc, tree.ROWS[0], {"bounded_context": bc.name})
++    return omitted
++
++
+ def _snapshot_current(root: Path, dest: Path) -> None:
+     """working tree 를 비-git 사본으로 복사한다(무거운 비-소스 디렉터리 제외)."""
+-    shutil.copytree(root, dest, ignore=shutil.ignore_patterns(*_IGNORE_COPY))
++    omitted = _snapshot_cache_instances(root)
++    ignore = shutil.ignore_patterns(*_IGNORE_COPY)
++
++    def ignore_current(directory: str, names: list[str]) -> set[str]:
++        parent = Path(directory).relative_to(root)
++        return ignore(directory, names) | {name for name in names if parent / name in omitted}
++
++    shutil.copytree(root, dest, ignore=ignore_current)
+ 
+ 
+ def _parse_fail_findings(target: Path) -> "set[str]":
+
+--- before/dddjango/scripts/check-context-isolation.py
++++ dddjango/scripts/check-context-isolation.py
+@@ -350,6 +350,8 @@
+             out.add("#150", rel0 / f.name, "`open_host_service/` 의 1차 축은 `<service>/` 폴더다 — 평면 `.py` 를 두지 않는다")
+ 
+     for svc in dirs:
++        if checker_target.cache_only_instance(svc):
++            continue
+         srel = rel0 / svc.name
+         tokens = set(svc.name.split("_"))
+         if tokens & TECH_NAME_TOKENS or tokens & (all_bcs - {bc.name}):
+
+--- before/dddjango/scripts/check-domain-model.py
++++ dddjango/scripts/check-domain-model.py
+@@ -171,7 +171,8 @@
+ 
+ def _aggregate_dirs(domain: Path) -> list[Path]:
+     return [p for p in sorted(domain.iterdir())
+-            if p.is_dir() and p.name not in DOMAIN_FIXED and p.name != "__pycache__"]
++            if p.is_dir() and p.name not in DOMAIN_FIXED and p.name != "__pycache__"
++            and not checker_target.cache_only_instance(p)]
+ 
+ 
+ def _check_layout(root: Path, bc: Path, f: Findings, cand: Candidates) -> None:
+@@ -217,7 +218,7 @@
+             _check_domain_services(root, bc, ds, f, cand)
+     if app.is_dir():
+         for d in sorted(p for p in app.iterdir() if p.is_dir() and p.name != "__pycache__"):
+-            if d.name == "port":
++            if d.name == "port" or checker_target.cache_only_instance(d):
+                 continue
+             if d.name in KIND_DENY:
+                 f.add("#17", _rel(root, d),
+
+--- before/dddjango/scripts/check-layer-skeleton.py
++++ dddjango/scripts/check-layer-skeleton.py
+@@ -92,7 +92,6 @@
+ # (houserules SKILL §1 감사 주도 배정 — 신호는 무조건 방출, 판정 의무의 diff 한정은 감사자 몫)
+ PROMO_ACTION_ROWS = frozenset({12, 18, 24, 41, 61, 74, 92, 94, 96})
+ PROMO_SIGNAL_LINES = 200   # ⓓ#644 후보 문턱(물리 행·빈 줄 제외)
+-PROMO_PART_MIN_LINES = 50  # #642 부품 출생 하한
+ JUNK_DRAWER_NAMES = frozenset({"utils.py", "helpers.py", "util.py", "helper.py", "common.py", "misc.py"})
+ _CASCADE_Q = "역할 밖 응집 단위가 있는가 — ①이동/②동명 폴더 승격/③유지 (houserules §1 캐스케이드)"
+ 
+@@ -145,8 +144,6 @@
+         if f.name in JUNK_DRAWER_NAMES:
+             out.add("#640", f, "승격 폴더 안 정크드로어 이름 — 부품은 응집 단위의 이름을 가진다")
+         n = _phys_lines(f)
+-        if n < PROMO_PART_MIN_LINES:
+-            out.add("#642", f, f"부품 {n}행 — 출생 하한 50행 미만(신규 여부는 게이트 앵커 차분이 가른다 · 기존분은 잔존 보고)")
+         if crow.r in PROMO_ACTION_ROWS and n > PROMO_SIGNAL_LINES:
+             cand.add("#644", f, f"행위 칸 승격 부품 {n}행(>{PROMO_SIGNAL_LINES}) — 캐스케이드 판정 의무 (트리 {crow.r}행)", _CASCADE_Q)
+     if body.is_file():
+@@ -277,6 +274,9 @@
+         if dir_placeholder is not None:
+             inst_bind = dict(bindings)
+             pattern = dir_placeholder.name.rstrip("/")
++            if (not pattern.endswith("_adapter") or _file_pattern_ok(p.name, pattern)) \
++                    and checker_target.cache_only_instance(p):
++                continue
+             if pattern.endswith("_adapter"):
+                 if not _file_pattern_ok(p.name, pattern):
+                     out.add("#490", p, "어댑터 패키지 이름은 `<이름>_adapter/` 다")
+
+--- before/dddjango/scripts/check-port-adapter-pairing.py
++++ dddjango/scripts/check-port-adapter-pairing.py
+@@ -185,7 +185,7 @@
+             f.add("#215", _rel(root, p),
+                   "port/ 직계 파일 — 능력 하나 = 폴더 하나다(포트를 파일 하나로 두지 않는다)")
+     for cap in sorted(p for p in port.iterdir() if p.is_dir() and p.name != "__pycache__"):
+-        if cap.name in ("domain_bypass_query", "unit_of_work"):
++        if cap.name in ("domain_bypass_query", "unit_of_work") or checker_target.cache_only_instance(cap):
+             continue
+         _check_capability_folder(root, bc, cap, bc_vocab_set, tech, f, cand)
+     bypass = port / "domain_bypass_query"
+@@ -315,6 +315,8 @@
+         if p.is_file() and p.suffix == ".py" and p.name != "__init__.py":
+             f.add("#232", _rel(root, p), "domain_bypass_query/ 직계 파일 — 능력 하나 = 폴더 하나다")
+     for cap in sorted(p for p in bypass.iterdir() if p.is_dir() and p.name != "__pycache__"):
++        if checker_target.cache_only_instance(cap):
++            continue
+         toks = set(cap.name.split("_"))
+         if toks & (TECH_EXACT | vocab.bc_names(root)):
+             f.add("#233", _rel(root, cap),
+@@ -704,7 +706,8 @@
+     thin = persistence / "domain_bypass_query"
+     port_bypass = bc / "application_layer" / "port" / "domain_bypass_query"
+     if thin.is_dir():
+-        contract_caps = {p.name for p in port_bypass.iterdir() if p.is_dir()} \
++        contract_caps = {p.name for p in port_bypass.iterdir() if p.is_dir()
++                         and p.name != "__pycache__" and not checker_target.cache_only_instance(p)} \
+             if port_bypass.is_dir() else set()
+         for py in checker_target.slot_glob(thin, "*_query.py"):
+             capname = py.stem[: -len("_query")]
+@@ -879,7 +882,8 @@
+ def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
+                             bc_vocab_set: set, f: Findings, cand: Candidates) -> None:
+     for bundle in sorted(adapter.rglob("*_adapter")):
+-        if not bundle.is_dir() or not checker_target.adapter_bundle(bundle):
++        if not bundle.is_dir() or not checker_target.adapter_bundle(bundle) \
++                or checker_target.cache_only_instance(bundle):
+             continue
+         for role in checker_target.ADAPTER_ROLES:
+             for py in sorted((bundle / role).glob("*.py")):
+@@ -896,6 +900,8 @@
+     if acl.is_dir():
+         bcs = vocab.bc_names(root)
+         for d in sorted(p for p in acl.iterdir() if p.is_dir() and p.name != "__pycache__"):
++            if checker_target.cache_only_instance(d):
++                continue
+             if d.name not in bcs:
+                 # 스펙 대장 #365 부칙(2026-08-25) — «우리 BC»는 병렬 워크트리 개발로 이
+                 # 스냅숏에 없는 자사 BC 를 포함한다. 대상 부재 시 구조 순수성(통신 축
+@@ -915,6 +921,8 @@
+             if p.is_file() and p.suffix == ".py" and p.name != "__init__.py":
+                 f.add("#369", _rel(root, p), "external_system/ 직계 파일 — 벤더 하나 = 폴더 하나다")
+         for system in sorted(p for p in ext.iterdir() if p.is_dir() and p.name != "__pycache__"):
++            if checker_target.cache_only_instance(system):
++                continue
+             for py in checker_target.adapter_implementations(system):
+                 if py.name == "__init__.py":
+                     continue
+
+--- before/dddjango/scripts/check-usecase-dto-placement.py
++++ dddjango/scripts/check-usecase-dto-placement.py
+@@ -283,7 +283,7 @@
+     dirs, _ = _entries(app)
+     areas: list[Path] = []
+     for p in dirs:
+-        if p.name == "port":
++        if p.name == "port" or checker_target.cache_only_instance(p):
+             continue
+         if p.name in KIND_FOLDER_NAMES:
+             out.add("#182", rel / p.name, "`application_layer/` 직계는 `<area>/`·`port/` 둘뿐이다 — 종류 폴더는 자리가 없다(`domain_bypass_query/`·`unit_of_work/` 는 `port/` 안이다)")
+@@ -301,7 +301,8 @@
+     api = _driving_api(bc)
+     if api is not None and _has_concrete_api_surface(root, api, bc.name):
+         api_dirs, _ = _entries(api)
+-        api_areas = {p.name for p in api_dirs if p.name != "webhook"}
++        api_areas = {p.name for p in api_dirs if p.name != "webhook"
++                     and not checker_target.cache_only_instance(p)}
+         app_areas = {p.name for p in areas}
+         for name in sorted(app_areas - api_areas):
+             out.add("#188", rel / name, f"`<area>` 는 `driving_layer/api/<area>` 와 1:1 이다 — api 쪽에 `{name}/` 이 없다")
+@@ -312,6 +313,8 @@
+     for area in areas:
+         a_dirs, _ = _entries(area)
+         for p in a_dirs:
++            if checker_target.cache_only_instance(p):
++                continue
+             if p.name in KIND_FOLDER_NAMES:
+                 out.add("#192", rel / area.name / p.name, "절차 조각은 `<use_case>_use_case.py` 안 `_` 사설 함수로 둔다 — `service/` 같은 종류 폴더를 만들지 않는다")
+             else:
+@@ -326,6 +329,8 @@
+ 
+ 
+ def _check_use_case(uc: Path, uc_rel: Path, agg_names: set[str], out: Findings, cand: Candidates) -> None:
++    if checker_target.cache_only_instance(uc):
++        return
+     name = uc.name
+     dirs, files = _entries(uc)
+ 
+
+--- before/dddjango/scripts/checker_target.py
++++ dddjango/scripts/checker_target.py
+@@ -22,11 +22,40 @@
+ 
+ import ast
+ import re
++import stat
+ import sys
+ import fnmatch
+ from pathlib import Path
+ 
+ _BC_LAYER_DIRS: "tuple[str, ...]" = ("domain_layer", "application_layer", "driving_layer", "driven_layer")
++
++
++def cache_only_instance(path: Path) -> bool:
++    """실파일 없이 __pycache__ 아래 캐시만 남은 선택 인스턴스인가.
++
++    빈 디렉터리는 허용하지만 캐시 파일 하나는 필요하다. 링크·읽기 불능은
++    제외 근거가 아니므로 False로 남긴다. Git 추적 상태는 사용하지 않는다.
++    """
++    found = False
++    pending = [(path, False)]
++    try:
++        while pending:
++            current, in_cache = pending.pop()
++            mode = current.lstat().st_mode
++            if stat.S_ISLNK(mode):
++                return False
++            if stat.S_ISDIR(mode):
++                cached = in_cache or current.name == "__pycache__"
++                pending.extend((child, cached) for child in current.iterdir())
++            elif stat.S_ISREG(mode) and in_cache and current.suffix in (".pyc", ".pyo"):
++                with current.open("rb") as stream:
++                    stream.read(1)
++                found = True
++            else:
++                return False
++    except OSError:
++        return False
++    return found
+ 
+ 
+ def skeleton_placeholder(path: Path) -> bool:
+
+--- before/dddjango/scripts/registry_gate.py
++++ dddjango/scripts/registry_gate.py
+@@ -91,6 +91,7 @@
+ sys.path.insert(0, str(_SCRIPTS_DIR))
+ import anchor_diff  # noqa: E402  — git·앵커 스냅숏·빚 로더·빚 매칭 공용(복제 통합)
+ import checker_target  # noqa: E402
++import standard_tree as tree  # noqa: E402
+ import findings  # noqa: E402  — sink 환경변수 이름·라인 재구성 문법의 단일 출처
+ from checker_registry import REGISTRY, checker_argv  # noqa: E402
+ 
+@@ -115,9 +116,63 @@
+         raise SystemExit(1)
+ 
+ 
++def _snapshot_cache_instances(root: Path) -> set[Path]:
++    """골격의 BC 내부 선택 폴더 칸만 원 작업 트리에서 수집한다."""
++    omitted: set[Path] = set()
++    token = re.compile(r"<([a-z_]+)>")
++
++    def walk(directory: Path, row: tree.Row, bindings: dict[str, str]) -> None:
++        if directory.is_symlink() or not directory.is_dir():
++            return
++        children = tree.children(row)
++        fixed = {tree.concrete_name(c, bindings).rstrip("/"): c for c in children
++                 if tree.is_dir(c) and c.kind in ("fixed", "reappear")}
++        optional = next((c for c in children if tree.is_dir(c) and c.kind == "placeholder"
++                         and "/" not in c.name.rstrip("/")), None)
++        files = [tree.concrete_name(c, bindings) for c in children if not tree.is_dir(c)]
++        for child in sorted(directory.iterdir()):
++            if not child.is_dir() or child.is_symlink() or child.name.startswith(".") or child.name == "__pycache__":
++                continue
++            if child.name in fixed:
++                walk(child, fixed[child.name], bindings)
++                continue
++            # 파일의 승격 실현은 선택 폴더 인스턴스가 아니다.
++            if any(re.fullmatch(token.sub(".+", name), child.name + ".py") for name in files):
++                continue
++            if optional is None:
++                continue
++            pattern = optional.name.rstrip("/")
++            if not re.fullmatch(token.sub(".+", pattern), child.name):
++                continue
++            if checker_target.cache_only_instance(child):
++                omitted.add(child.relative_to(root))
++                continue
++            values = dict(bindings)
++            for name in token.findall(pattern):
++                values[name] = child.name.removesuffix("_adapter") if pattern.endswith("_adapter") else child.name
++            walk(child, optional, values)
++
++    ignore = shutil.ignore_patterns(*_IGNORE_COPY)
++    for application in sorted(root.rglob("application")):
++        if not application.is_dir() or application.is_symlink() \
++                or ignore(str(root), list(application.relative_to(root).parts)):
++            continue
++        for bc in sorted(application.iterdir()):
++            if not bc.name.startswith("."):
++                walk(bc, tree.ROWS[0], {"bounded_context": bc.name})
++    return omitted
++
++
+ def _snapshot_current(root: Path, dest: Path) -> None:
+     """working tree 를 비-git 사본으로 복사한다(무거운 비-소스 디렉터리 제외)."""
+-    shutil.copytree(root, dest, ignore=shutil.ignore_patterns(*_IGNORE_COPY))
++    omitted = _snapshot_cache_instances(root)
++    ignore = shutil.ignore_patterns(*_IGNORE_COPY)
++
++    def ignore_current(directory: str, names: list[str]) -> set[str]:
++        parent = Path(directory).relative_to(root)
++        return ignore(directory, names) | {name for name in names if parent / name in omitted}
++
++    shutil.copytree(root, dest, ignore=ignore_current)
+ 
+ 
+ def _parse_fail_findings(target: Path) -> "set[str]":
+
+--- before/workspace/tools/field_report_checker_smoke.py
++++ workspace/tools/field_report_checker_smoke.py
+@@ -638,6 +638,125 @@
+         partition.assert_not_called()
+ 
+ 
++class CacheInstanceRegression(unittest.TestCase):
++    def setUp(self):
++        self.tmp = tempfile.TemporaryDirectory(prefix="field-cache-")
++        self.addCleanup(self.tmp.cleanup)
++        self.root = Path(self.tmp.name) / "project"
++        shutil.copytree(FIXTURES / "skeleton/good_bc", self.root)
++        self.env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1",
++                        DJR_FINDINGS_JSON=str(Path(self.tmp.name) / "records.jsonl"),
++                        DJR_VIOLATIONS_DIR=str(Path(self.tmp.name) / "violations"))
++
++    def plant(self, relative, extra=None):
++        path = self.root / relative
++        (path / "nested/__pycache__").mkdir(parents=True, exist_ok=True)
++        (path / "nested/__pycache__/old.cpython-314.pyc").write_bytes(b"cache")
++        (path / "empty").mkdir(exist_ok=True)
++        if extra is not None:
++            (path / extra).write_text("", encoding="utf-8")
++        return path
++
++    def run_checker(self, script):
++        result = subprocess.run([sys.executable, "-B", str(SCRIPTS / script), str(self.root)],
++                                capture_output=True, text=True, env=self.env)
++        self.assertIn(result.returncode, (0, 2), result.stdout + result.stderr)
++        return result.stdout + result.stderr
++
++    def test_cache_predicate_requires_cache_and_rejects_actual_files_links_and_read_errors(self):
++        import checker_target
++        predicate = checker_target.cache_only_instance
++        path = self.plant("scratch")
++        self.assertTrue(predicate(path))
++        (path / "nested").rename(path / "deep")
++        self.assertTrue(predicate(path))
++        direct = self.root / "direct/__pycache__"
++        direct.mkdir(parents=True)
++        self.assertFalse(predicate(direct.parent))
++        (direct / "cached.pyc").write_bytes(b"cache")
++        self.assertTrue(predicate(direct.parent))
++        (direct / "real.py").write_text("pass\n")
++        self.assertFalse(predicate(direct.parent))
++        for extra in ("real.py", "__init__.py", ".hidden", "notes.txt", "loose.pyc"):
++            with self.subTest(extra=extra):
++                (path / extra).write_bytes(b"")
++                self.assertFalse(predicate(path))
++                (path / extra).unlink()
++        for name in ("link", "__pycache__/linked.pyc"):
++            link = path / name
++            link.parent.mkdir(exist_ok=True)
++            link.symlink_to(path / "deep")
++            self.assertFalse(predicate(path))
++            link.unlink()
++        with patch.object(Path, "iterdir", side_effect=PermissionError("denied")):
++            self.assertFalse(predicate(path))
++        with patch.object(Path, "open", side_effect=PermissionError("denied")):
++            self.assertFalse(predicate(path))
++        empty = self.root / "empty_only/nested"
++        empty.mkdir(parents=True)
++        self.assertFalse(predicate(empty.parent))
++        self.assertFalse(predicate(self.root / "missing"))
++
++    def test_optional_instances_skip_only_cache_and_keep_real_and_empty_diagnostics(self):
++        cases = [
++            ("domain_layer/vanished", "check-domain-model.py", ("#299", "#256")),
++            ("application_layer/order/vanished", "check-usecase-dto-placement.py", ("#193", "#570", "#569")),
++            ("driving_layer/open_host_service/vanished", "check-context-isolation.py", ("#152",)),
++            ("application_layer/port/vanished", "check-port-adapter-pairing.py", ("#218", "#225")),
++            ("application_layer/port/domain_bypass_query/vanished", "check-port-adapter-pairing.py", ("#234", "#238")),
++            ("driven_layer/adapter/email_sender/vanished_adapter", "check-layer-skeleton.py", ("#488",)),
++        ]
++        for relative, script, rules in cases:
++            path = self.plant("application/orders/" + relative)
++            for extra in (None, "__init__.py", "source.py", ".hidden"):
++                with self.subTest(slot=relative, extra=extra):
++                    if extra:
++                        (path / extra).write_text("pass\n" if extra == "source.py" else "")
++                    output = self.run_checker(script)
++                    hits = [line for line in output.splitlines() if "vanished" in line]
++                    for rule in rules:
++                        self.assertEqual(any(rule in line for line in hits), extra is not None, output)
++                    if extra:
++                        (path / extra).unlink()
++            shutil.rmtree(path)
++            path.mkdir()
++            output = self.run_checker(script)
++            for rule in rules:
++                self.assertTrue(any(rule in line and "vanished" in line for line in output.splitlines()), output)
++            shutil.rmtree(path)
++
++    def test_cache_cannot_hide_fixed_skeleton_and_promoted_parts_have_no_floor(self):
++        fixed = self.root / "application/orders/application_layer/port/unit_of_work"
++        shutil.rmtree(fixed)
++        self.plant(str(fixed.relative_to(self.root)))
++        output = self.run_checker("check-layer-skeleton.py")
++        self.assertTrue(any("#488" in line and "unit_of_work" in line for line in output.splitlines()), output)
++        shutil.rmtree(self.root)
++        shutil.copytree(FIXTURES / "skeleton/good_promoted", self.root)
++        promoted = self.root / "application/orders/driving_layer/api/order/order_controller"
++        part = promoted / "order_sse_renderer.py"
++        for lines in (1, 49, 201):
++            part.write_text("pass\n" * lines)
++            output = self.run_checker("check-layer-skeleton.py")
++            self.assertNotIn("#642", output)
++            self.assertEqual(any("#644" in line and "order_sse_renderer.py" in line for line in output.splitlines()), lines == 201, output)
++        part.unlink()
++        self.assertIn("#643", self.run_checker("check-layer-skeleton.py"))
++        part.write_text("pass\n")
++        for change, rule in (("missing", "#638"), ("nested", "#641"), ("junk", "#640"), ("sibling", "#639")):
++            with self.subTest(change=change):
++                if change == "missing":
++                    victim = promoted / "order_controller.py"
++                    victim.unlink()
++                elif change == "nested":
++                    (promoted / "nested").mkdir()
++                elif change == "junk":
++                    (promoted / "utils.py").write_text("pass\n")
++                else:
++                    (promoted.parent / "order_controller.py").write_text("pass\n")
++                self.assertIn(rule, self.run_checker("check-layer-skeleton.py"))
++
++
+ class SourceMirrorRegression(unittest.TestCase):
+     """규범 개정 뒤에도 이관 원문 주소와 현재 렌더 주소를 혼동하지 않는다."""
+ 
+
+--- before/workspace/tools/registry_gate_smoke.py
++++ workspace/tools/registry_gate_smoke.py
+@@ -55,6 +55,7 @@
+ import subprocess
+ import sys
+ import tempfile
++import unittest
+ from pathlib import Path
+ 
+ ROOT: Path = Path(__file__).resolve().parents[2]
+@@ -250,7 +251,94 @@
+     return gate
+ 
+ 
++
++class CacheSnapshotRegression(unittest.TestCase):
++    def test_snapshot_gate_skips_only_optional_cache_and_preserves_original_bytes(self):
++        from pregate_fixture_run import _load_module
++        sys.path.insert(0, str(GATE.parent))
++        gate = _load_module(GATE, "cache_snapshot_gate")
++        slots = (
++            "domain_layer/vanished",
++            "application_layer/order/vanished",
++            "driving_layer/open_host_service/vanished",
++            "application_layer/port/vanished",
++            "driven_layer/adapter/email_sender/vanished_adapter",
++        )
++        with tempfile.TemporaryDirectory(prefix="cache-snapshot-") as temp:
++            td = Path(temp)
++            repo, anchor = _make_repo(td, "repo")
++            for relative in slots:
++                _write(repo, "application/orders/" + relative + "/deep/__pycache__/old.pyc", "cache bytes")
++            _write(repo, "harmless.txt", "working change")
++            before = {str(p.relative_to(repo)): p.read_bytes() for p in repo.rglob("*")
++                      if p.is_file() and ".git" not in p.relative_to(repo).parts}
++            snapshot = td / "snapshot"
++            gate._snapshot_current(repo, snapshot)
++            code, out = _gate(repo, anchor)
++            self.assertEqual(code, 0, out)
++            self.assertNotIn("vanished", out)
++            for relative in slots:
++                self.assertFalse((snapshot / "application/orders" / relative).exists(), relative)
++            for relative in slots:
++                _write(repo, "application/orders/" + relative + "/__init__.py", "")
++            code, out = _gate(repo, anchor)
++            self.assertEqual(code, 2, out)
++            for rule in ("#299", "#256", "#193", "#570", "#569", "#152", "#218", "#225"):
++                self.assertTrue(any(rule in line and "vanished" in line for line in out.splitlines()), (rule, out))
++            for relative in slots:
++                (repo / "application/orders" / relative / "__init__.py").unlink()
++            after = {str(p.relative_to(repo)): p.read_bytes() for p in repo.rglob("*")
++                     if p.is_file() and ".git" not in p.relative_to(repo).parts
++                     and ".dddjango" not in p.relative_to(repo).parts}
++            self.assertEqual(after, before)
++
++    def test_snapshot_keeps_fixed_parents_hidden_files_empty_instances_and_other_parents(self):
++        from pregate_fixture_run import _load_module
++        sys.path.insert(0, str(GATE.parent))
++        gate = _load_module(GATE, "cache_boundary_gate")
++        with tempfile.TemporaryDirectory(prefix="cache-boundary-") as temp:
++            td = Path(temp)
++            repo = td / "repo"
++            shutil.copytree(BASE_FIXTURE, repo)
++            fixed = repo / "application/orders/application_layer/port/unit_of_work"
++            shutil.rmtree(fixed)
++            _write(repo, str(fixed.relative_to(repo)) + "/__pycache__/old.pyc", "cache")
++            _write(repo, "other/domain_layer/vanished/__pycache__/old.pyc", "cache")
++            _write(repo, "application/orders/driving_layer/api/order/order_controller/__pycache__/old.pyc", "cache")
++            _write(repo, "application/orders/domain_layer/hidden/__pycache__/old.pyc", "cache")
++            _write(repo, "application/orders/domain_layer/hidden/.real", "hidden source")
++            (repo / "application/orders/domain_layer/empty").mkdir()
++            _write(repo, "application/cache_bc/domain_layer/__pycache__/old.pyc", "cache")
++            snapshot = td / "snapshot"
++            gate._snapshot_current(repo, snapshot)
++            for relative in (str(fixed.relative_to(repo)), "other/domain_layer/vanished",
++                             "application/orders/domain_layer/hidden", "application/orders/domain_layer/empty",
++                             "application/cache_bc/domain_layer",
++                             "application/orders/driving_layer/api/order/order_controller"):
++                self.assertTrue((snapshot / relative).is_dir(), relative)
++            proc = subprocess.run([sys.executable, "-B", str(GATE.parent / "check-layer-skeleton.py"),
++                                   str(snapshot)], capture_output=True, text=True, env=_scrubbed_env())
++            self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
++            self.assertTrue(any("#488" in line and "unit_of_work" in line for line in proc.stdout.splitlines()))
++
++    def test_nested_application_container_uses_same_optional_slots_as_direct_checker(self):
++        from pregate_fixture_run import _load_module
++        sys.path.insert(0, str(GATE.parent))
++        gate = _load_module(GATE, "nested_cache_gate")
++        with tempfile.TemporaryDirectory(prefix="nested-cache-") as temp:
++            td = Path(temp)
++            root = td / "repo"
++            shutil.copytree(BASE_FIXTURE, root / "src")
++            relative = "src/application/orders/domain_layer/vanished"
++            _write(root, relative + "/__pycache__/old.pyc", "cache")
++            snapshot = td / "snapshot"
++            gate._snapshot_current(root, snapshot)
++            self.assertFalse((snapshot / relative).exists())
++
+ def main() -> int:
++    result = unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(CacheSnapshotRegression))
++    if not result.wasSuccessful():
++        return 2
+     if not GATE.is_file() or not BASE_FIXTURE.is_dir():
+         print("재료 결손: registry_gate.py 또는 skeleton/good_bc fixture 없음", file=sys.stderr)
+         return 1
+

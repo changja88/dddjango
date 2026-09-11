@@ -1,0 +1,6 @@
+test_ohs_module_definitions_invalidate_imported_builder (__main__.CheckerRegression.test_ohs_module_definitions_invalidate_imported_builder) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.005s
+
+OK

@@ -1,0 +1,103 @@
+test_validation_scan_respects_owning_cache_only_area_and_usecase (__main__.CacheInstanceRegression.test_validation_scan_respects_owning_cache_only_area_and_usecase) ... 
+  test_validation_scan_respects_owning_cache_only_area_and_usecase (__main__.CacheInstanceRegression.test_validation_scan_respects_owning_cache_only_area_and_usecase) (channel='direct', instance='order/vanished', banned='validation', source=None) ... FAIL
+  test_validation_scan_respects_owning_cache_only_area_and_usecase (__main__.CacheInstanceRegression.test_validation_scan_respects_owning_cache_only_area_and_usecase) (channel='direct', instance='order/vanished', banned='validators', source=None) ... FAIL
+  test_validation_scan_respects_owning_cache_only_area_and_usecase (__main__.CacheInstanceRegression.test_validation_scan_respects_owning_cache_only_area_and_usecase) (channel='direct', instance='vanished_area/vanished', banned='validation', source=None) ... FAIL
+  test_validation_scan_respects_owning_cache_only_area_and_usecase (__main__.CacheInstanceRegression.test_validation_scan_respects_owning_cache_only_area_and_usecase) (channel='direct', instance='vanished_area/vanished', banned='validators', source=None) ... FAIL
+test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates (__main__.CacheInstanceRegression.test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates) ... 
+  test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates (__main__.CacheInstanceRegression.test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates) (channel='direct', instance='domain_layer/place_order', source=None, rule='#191') ... FAIL
+  test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates (__main__.CacheInstanceRegression.test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates) (channel='direct', instance='domain_layer/order_lookup', source=None, rule='#151') ... FAIL
+  test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates (__main__.CacheInstanceRegression.test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates) (channel='direct', instance='application_layer/order/vanished', source=None, rule='#565') ... FAIL
+  test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates (__main__.CacheInstanceRegression.test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates) (channel='direct', instance='application_layer/vanished_area/vanished', source=None, rule='#565') ... FAIL
+
+======================================================================
+FAIL: test_validation_scan_respects_owning_cache_only_area_and_usecase (__main__.CacheInstanceRegression.test_validation_scan_respects_owning_cache_only_area_and_usecase) (channel='direct', instance='order/vanished', banned='validation', source=None)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 752, in test_validation_scan_respects_owning_cache_only_area_and_usecase
+    self.assertEqual(code, 2 if source else 0, output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : blocker 1건 — 유스케이스·경계 자료 규율 위반
+  [#183] application/orders/application_layer/order/vanished/validation: `application_layer/` 아래에 `validation/` 폴더를 두지 않는다 — 검사 자리는 입구(schema_in)와 도메인 둘뿐이다
+
+
+======================================================================
+FAIL: test_validation_scan_respects_owning_cache_only_area_and_usecase (__main__.CacheInstanceRegression.test_validation_scan_respects_owning_cache_only_area_and_usecase) (channel='direct', instance='order/vanished', banned='validators', source=None)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 752, in test_validation_scan_respects_owning_cache_only_area_and_usecase
+    self.assertEqual(code, 2 if source else 0, output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : blocker 1건 — 유스케이스·경계 자료 규율 위반
+  [#183] application/orders/application_layer/order/vanished/validators: `application_layer/` 아래에 `validation/` 폴더를 두지 않는다 — 검사 자리는 입구(schema_in)와 도메인 둘뿐이다
+
+
+======================================================================
+FAIL: test_validation_scan_respects_owning_cache_only_area_and_usecase (__main__.CacheInstanceRegression.test_validation_scan_respects_owning_cache_only_area_and_usecase) (channel='direct', instance='vanished_area/vanished', banned='validation', source=None)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 752, in test_validation_scan_respects_owning_cache_only_area_and_usecase
+    self.assertEqual(code, 2 if source else 0, output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : blocker 1건 — 유스케이스·경계 자료 규율 위반
+  [#183] application/orders/application_layer/vanished_area/vanished/validation: `application_layer/` 아래에 `validation/` 폴더를 두지 않는다 — 검사 자리는 입구(schema_in)와 도메인 둘뿐이다
+
+
+======================================================================
+FAIL: test_validation_scan_respects_owning_cache_only_area_and_usecase (__main__.CacheInstanceRegression.test_validation_scan_respects_owning_cache_only_area_and_usecase) (channel='direct', instance='vanished_area/vanished', banned='validators', source=None)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 752, in test_validation_scan_respects_owning_cache_only_area_and_usecase
+    self.assertEqual(code, 2 if source else 0, output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : blocker 1건 — 유스케이스·경계 자료 규율 위반
+  [#183] application/orders/application_layer/vanished_area/vanished/validators: `application_layer/` 아래에 `validation/` 폴더를 두지 않는다 — 검사 자리는 입구(schema_in)와 도메인 둘뿐이다
+
+
+======================================================================
+FAIL: test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates (__main__.CacheInstanceRegression.test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates) (channel='direct', instance='domain_layer/place_order', source=None, rule='#191')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 784, in test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates
+    self.assertEqual(len(hits), 1 if source else 0, output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : ⓓ 후보 1건 — 기계가 좁힌 후보다(exit 불산입). 마무리는 discipline-reviewer 의 물음이 한다:
+  [ⓓ#191] application/orders/application_layer/order/place_order: 폴더 이름 `place_order` 이 애그리거트 이름이다 — 동사로 짓는다 — 물음: Q1(이 이름이 «판정이 되는 물음»인가)
+clean — BC 1개 · 자료 계약 규율 일치 (트리 39~44행 · standard_tree 7d08c08915426747)
+
+
+======================================================================
+FAIL: test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates (__main__.CacheInstanceRegression.test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates) (channel='direct', instance='domain_layer/order_lookup', source=None, rule='#151')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 784, in test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates
+    self.assertEqual(len(hits), 1 if source else 0, output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : ⓓ 후보 1건 — 기계가 좁힌 후보다(exit 불산입). 마무리는 discipline-reviewer 의 물음이 한다:
+  [ⓓ#151] application/orders/driving_layer/open_host_service/order_lookup: 창구 이름 `order_lookup` 이 애그리거트 이름과 같다 — 물음: Q1(이 이름이 «무엇을 해 주는가»를 말하나)
+clean — BC 1개 격리 규율 일치 (standard_tree 7d08c08915426747)
+
+
+======================================================================
+FAIL: test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates (__main__.CacheInstanceRegression.test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates) (channel='direct', instance='application_layer/order/vanished', source=None, rule='#565')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 784, in test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates
+    self.assertEqual(len(hits), 1 if source else 0, output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : [ⓓ#565] application/orders/domain_layer/order/value_object/workflow.py:3: 도메인 Enum 값 `vanished` 이 유스케이스 이름과 겹친다 — 워크플로를 도메인 어휘로 위장한 것이면 자리는 유스케이스다 — 물음: 업무가 이 단계 이름을 «입으로 부르나»
+
+
+======================================================================
+FAIL: test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates (__main__.CacheInstanceRegression.test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates) (channel='direct', instance='application_layer/vanished_area/vanished', source=None, rule='#565')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 784, in test_cache_only_names_do_not_change_real_usecase_service_or_enum_candidates
+    self.assertEqual(len(hits), 1 if source else 0, output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : [ⓓ#565] application/orders/domain_layer/order/value_object/workflow.py:3: 도메인 Enum 값 `vanished` 이 유스케이스 이름과 겹친다 — 워크플로를 도메인 어휘로 위장한 것이면 자리는 유스케이스다 — 물음: 업무가 이 단계 이름을 «입으로 부르나»
+
+
+----------------------------------------------------------------------
+Ran 2 tests in 5.473s
+
+FAILED (failures=8)

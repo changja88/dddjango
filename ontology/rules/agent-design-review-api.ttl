@@ -577,12 +577,18 @@ djr:R-2676 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-2677 a djr:Obligation ;
-    skos:prefLabel "slot 10 — raw infra 기본 500·승인된 안정 public meaning만 consuming BC internal exception 정규화 후 ErrorSchema 생성 확인"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2677@2026-08-22> .
+    skos:prefLabel "내부 실패 정규화와 공개 HTTP 계약 승인 분리 검수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2677@2026-09-11> .
 
 <https://numchida.com/ns/djr#R-2677@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2677 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2677@2026-09-11> a djr:Expression ;
+    prov:specializationOf djr:R-2677 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2677@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-2678 a djr:Exception ;
     skos:prefLabel "slot 10 — preserve의 profile-native preparation/mapping 또는 evidenced none|not applicable 인정·code-profile chain 미강제"@ko ;
@@ -1106,7 +1112,7 @@ djr:R-2709 a djr:Prohibition ;
     djr:order 11 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b11> ;
     djr:statesNorm djr:R-2674, djr:R-2675, djr:R-2676, djr:R-2677, djr:R-2678 ;
-    djr:text "10. **`prepared error mapping`**: `dddjango-code-json`은 concrete domain/application exception 또는 조회의 `None` → no-arg concrete `ErrorSchema`, 또는 event-specific 값으로 명시적으로 채운 BC base `ErrorSchema` → direct `Status(<승인된 HTTP status 표현>, error)` chain과 slot-6 exact literal body/approved header가 완전한지 본다. internal failure type과 output object를 혼동하면 blocker다. 공개 문자열은 `str(exc)`를 자동 사용하거나 sensitive data를 노출하면 안 된다. raw infra는 기본 500이고 approved stable public meaning만 consuming BC internal exception으로 정규화한 뒤 `ErrorSchema`을 만드는지 확인한다. `preserve-established`는 observed profile-native preparation/mapping 또는 evidenced `none | not applicable`인지 보고 code-profile chain을 강제하지 않는다.\n"@ko .
+    djr:text "10. **`prepared error mapping`**: `dddjango-code-json`은 concrete domain/application exception 또는 조회의 `None` → no-arg concrete `ErrorSchema`, 또는 event-specific 값으로 명시적으로 채운 BC base `ErrorSchema` → direct `Status(<승인된 HTTP status 표현>, error)` chain과 slot-6 exact literal body/approved header가 완전한지 본다. internal failure type과 output object를 혼동하면 blocker다. 공개 문자열은 `str(exc)`를 자동 사용하거나 sensitive data를 노출하면 안 된다. 이미 잡은 IntegrityError의 승인된 알려진 제약 실패는 구체 계약 예외로, 나머지는 승인된 일반 저장소 실패 계약으로 번역한다. repository 실패 계약은 domain 소유, capability port 실패 계약은 해당 port 소유다. 이 내부 정규화는 공개 HTTP 오류 승인이 아니므로 일반 저장소 실패의 외부 응답은 기존 safe 500을 유지한다. 새 ErrorCode/ErrorSchema/4xx/503을 만들지 않는다. 잡지 않은 unknown 인프라 오류를 새로 catch-all하지 않는다. 안정된 public meaning이 별도로 승인된 경우에만 그 외부 계약에 맞는 controller mapping을 한다. 이미 선언된 계약 예외의 관찰 후 재던짐은 허용한다. `preserve-established`는 observed profile-native preparation/mapping 또는 evidenced `none | not applicable`인지 보고 code-profile chain을 강제하지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006/b12> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006> ;

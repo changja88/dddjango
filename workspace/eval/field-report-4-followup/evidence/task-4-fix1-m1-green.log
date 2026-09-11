@@ -1,0 +1,6 @@
+test_while_guard_execute_repeats_but_for_iterable_executes_once (__main__.CheckerRegression.test_while_guard_execute_repeats_but_for_iterable_executes_once) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.004s
+
+OK

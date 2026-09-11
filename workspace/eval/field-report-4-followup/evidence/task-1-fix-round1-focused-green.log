@@ -1,0 +1,7 @@
+test_marker_new_list_evaluates_after_pytest_binding (__main__.FieldReportTest.test_marker_new_list_evaluates_after_pytest_binding) ... ok
+test_marker_subscript_mutations_remain_s5_without_writes (__main__.FieldReportTest.test_marker_subscript_mutations_remain_s5_without_writes) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.482s
+
+OK

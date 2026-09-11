@@ -1,0 +1,10 @@
+compile PASS dddjango/scripts/design_pregate.py
+compile PASS codex-dddjango/skills/dddjango/scripts/design_pregate.py
+compile PASS workspace/tools/pregate_field_report_smoke.py
+compile PASS workspace/tools/pregate_fixture_run.py
+byte mirror PASS
+git diff --check exit 0
+
+final supplemental raw-location fixture compile PASS
+final git diff --check exit 0
+

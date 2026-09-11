@@ -1,0 +1,157 @@
+[
+  {
+    "doc": "agent-design-architect",
+    "work": "R-1617",
+    "label": "내부 실패 정규화와 공개 HTTP 계약 승인 분리"
+  },
+  {
+    "doc": "agent-design-review-api",
+    "work": "R-2677",
+    "label": "내부 실패 정규화와 공개 HTTP 계약 승인 분리 검수"
+  },
+  {
+    "doc": "agent-discipline-reviewer",
+    "work": "R-1037",
+    "label": "내부 실패 계약 정규화와 safe 500 공개 경계"
+  },
+  {
+    "doc": "agent-discipline-reviewer",
+    "work": "R-1071",
+    "label": "ACL known failure 전수 번역과 일반 내부 계약·공개 500 분리"
+  },
+  {
+    "doc": "implementation-django-ninja-final",
+    "work": "R-0084",
+    "label": "인프라 내부 계약 정규화와 공개 오류 승인 분리"
+  },
+  {
+    "doc": "implementation-django-ninja-skill",
+    "work": "R-2941",
+    "label": "인프라 내부 계약 번역과 공개 safe 500 유지"
+  },
+  {
+    "doc": "agent-design-architect",
+    "work": "R-3424",
+    "label": "기계가독 다섯 채널과 선택 효과 — 무기재 의미·선언 검증·본문 미검증 분리"
+  },
+  {
+    "doc": "agent-design-architect",
+    "work": "R-3431",
+    "label": "machine 마커 concrete 계획 한정·명시 효과와 admin 소비 범위"
+  },
+  {
+    "doc": "agent-design-architect",
+    "work": "R-3425",
+    "label": "file-plan 기준선 태그·제거와 실체화 0 선언 검증"
+  },
+  {
+    "doc": "agent-design-architect",
+    "work": "R-3426",
+    "label": "공개 심볼과 add/update 선언 후상태·본문 미검증 분리"
+  },
+  {
+    "doc": "agent-design-architect",
+    "work": "R-3427",
+    "label": "경계 import 실존·전사와 선언 출처 검증 분리"
+  },
+  {
+    "doc": "agent-design-architect",
+    "work": "R-3428",
+    "label": "물리 신호 — add 부재·update marker 현행 유지/최종 목록·미지원 S5"
+  },
+  {
+    "doc": "agent-design-architect",
+    "work": "R-3429",
+    "label": "입장 표 6열·첫 artifact add/update 결합·후속 주소 비전파"
+  },
+  {
+    "doc": "command-dddjango",
+    "work": "R-3432",
+    "label": "pre-gate 실행 의무 — 명세 변경/배너 직전/dispatch 전 최종 예보·선언 포함"
+  },
+  {
+    "doc": "command-dddjango",
+    "work": "R-3433",
+    "label": "pre-gate 귀속 및 선언 확정 red 전건 처분·후보/S1 비차단 분리"
+  },
+  {
+    "doc": "command-dddjango",
+    "work": "R-3434",
+    "label": "예보·선언·생성 S1의 Phase 0/G2/G0 실증 비대체·앵커 불간섭"
+  },
+  {
+    "doc": "command-dddjango",
+    "work": "R-3435",
+    "label": "격리 사본 결정적 투영물·명시 후상태와 기존 본문 미검증"
+  },
+  {
+    "doc": "command-dddjango",
+    "work": "R-3436",
+    "label": "machine 부재/공허 형식 red·실체화 0에서도 선언 검증"
+  },
+  {
+    "doc": "command-dddjango",
+    "work": "R-3445",
+    "label": "선택 effects 포함 캐시 해시·기존 무기재 해시 보존·재발화 최신성"
+  },
+  {
+    "doc": "discipline-houserules-skill",
+    "work": "R-3447",
+    "label": "Any 기존 금지/후보와 확인된 framework admin 슬롯 제한 허용"
+  },
+  {
+    "doc": "discipline-houserules-skill",
+    "work": "R-3448",
+    "label": "경계 object 즉시 좁힘·JSON 검증 유지·admin UI context 실제 소비 경계"
+  },
+  {
+    "doc": "discipline-houserules-skill",
+    "work": "R-3451",
+    "label": "업무 레코드 구조 선언과 framework admin UI context 구분"
+  },
+  {
+    "doc": "discipline-houserules-skill",
+    "work": "R-3452",
+    "label": "업무 레코드 TypedDict와 admin context 조립 경계"
+  },
+  {
+    "doc": "discipline-houserules-skill",
+    "work": "R-3457",
+    "label": "실제 타입 사용과 admin framework 슬롯 구분"
+  },
+  {
+    "doc": "discipline-houserules-skill",
+    "work": "R-3417",
+    "label": "소관·응집으로 동명 폴더 승격·행수 하한 없이 참조 전수 조사"
+  },
+  {
+    "doc": "discipline-houserules-final",
+    "work": "R-3410",
+    "label": "부품 0 승격 폴더 환원 신호·신규 산출/기존 빚 처분"
+  },
+  {
+    "doc": "discipline-houserules-final",
+    "work": "R-3468",
+    "label": "어댑터 고정 역할 골격과 승격 신호 비적용"
+  },
+  {
+    "doc": "agent-discipline-reviewer",
+    "work": "R-1117",
+    "label": "운영 기능/장고 배선·admin UI context 조립과 실제 소비 검수"
+  },
+  {
+    "doc": "agent-discipline-reviewer",
+    "work": "R-1118",
+    "label": "표현 조건 업무 판정 Q2·admin context 출처/소비 미해소 후보"
+  },
+  {
+    "doc": "agent-discipline-reviewer",
+    "work": "R-1104",
+    "label": "닫힌 Enum 검증 제외·open Enum Q2와 트랜잭션 영역 후보 검수"
+  },
+  {
+    "doc": "agent-discipline-reviewer",
+    "work": "R-1119",
+    "label": "포트/어댑터 판정과 vendor 오류 속성 출처 후보 검수"
+  }
+]

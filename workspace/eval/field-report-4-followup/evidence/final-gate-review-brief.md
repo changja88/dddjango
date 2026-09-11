@@ -1,0 +1,9 @@
+# Task 7 final gate consistency repair — scoped independent review
+
+Read-only review after the implementer freezes `final-gate-fix-report.md` and its hash manifest. Worktree `/Users/hyun/.cache/dddjango-field4-followup-20260911`. Latest user authorized approved 12 issues through final validation; no new policy or F4-20 work. Existing review/audit findings were closed before the first whole verification. This is the current gate's necessary repair, not a new source-feature phase.
+
+Read final-gate-fix-diagnosis/report, exact diff against final-gate-fix-before, and attempt1 raw verify logs. Verify each expected count/fingerprint against literal record deltas and unchanged fixture inputs: approved #546/#557 confirmed→candidate boundaries and any exact approved message changes. Independently assess the +31 Expression count and preserved revisions. Verify pregate kinds changed only necessary source hashes, schema/kind set unchanged, byte mirror exact. Reject broad expectation regeneration, removed checks, altered fixture source or unexplained deltas.
+
+Compare all 54 original audited source/test hashes in whole-fix-final-hashes.json, plus root's 56 pre-gate-repair hashes in final-gate-before-hashes.json. The original detector/normative source must remain unchanged. Assess any narrowly changed metadata beyond those 56 using the implementer's snapshots. Targeted log results support this repair, not the pending full verify. Do not rerun broad suites or demand optional runtime/role-pressure tests outside approved scope.
+
+Output `final-gate-fix-review.md` under SDD with spec/quality verdict, B/M/m, each delta's closure and scope/evidence boundaries. No file changes except your report; no primary/master/report cleanup/F4-20/Git/seal edits, no agents. Serena/Graphify opt-in absent. Root owns reseal, final make verify-mutation/make verify, and transfer.

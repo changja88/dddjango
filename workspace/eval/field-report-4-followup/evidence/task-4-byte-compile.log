@@ -1,0 +1,4 @@
+check-context-isolation.py: byte mirror + both compile PASS
+check-domain-model.py: byte mirror + both compile PASS
+check-port-adapter-pairing.py: byte mirror + both compile PASS
+field_report_checker_smoke.py: compile PASS

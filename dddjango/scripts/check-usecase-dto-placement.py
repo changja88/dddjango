@@ -282,15 +282,23 @@ def _check_structure(root: Path, bc: Path, bc_rel: Path, out: Findings) -> list[
     rel = bc_rel / app.name
     dirs, _ = _entries(app)
     areas: list[Path] = []
+    cache_instances: set[Path] = set()
     for p in dirs:
         if p.name == "port":
             continue
+        if checker_target.cache_only_instance(p):
+            cache_instances.add(p)
+            continue
+        instance_dirs, _ = _entries(p)
+        cache_instances.update(child for child in instance_dirs if checker_target.cache_only_instance(child))
         if p.name in KIND_FOLDER_NAMES:
             out.add("#182", rel / p.name, "`application_layer/` 직계는 `<area>/`·`port/` 둘뿐이다 — 종류 폴더는 자리가 없다(`domain_bypass_query/`·`unit_of_work/` 는 `port/` 안이다)")
         else:
             areas.append(p)
 
     for p in app.rglob("*"):
+        if p in cache_instances or any(parent in cache_instances for parent in p.parents):
+            continue
         if set(p.relative_to(app).parts) & SKIP_DIRS:
             continue
         if p.is_dir() and p.name in ("validation", "validators"):
@@ -301,7 +309,8 @@ def _check_structure(root: Path, bc: Path, bc_rel: Path, out: Findings) -> list[
     api = _driving_api(bc)
     if api is not None and _has_concrete_api_surface(root, api, bc.name):
         api_dirs, _ = _entries(api)
-        api_areas = {p.name for p in api_dirs if p.name != "webhook"}
+        api_areas = {p.name for p in api_dirs if p.name != "webhook"
+                     and not checker_target.cache_only_instance(p)}
         app_areas = {p.name for p in areas}
         for name in sorted(app_areas - api_areas):
             out.add("#188", rel / name, f"`<area>` 는 `driving_layer/api/<area>` 와 1:1 이다 — api 쪽에 `{name}/` 이 없다")
@@ -312,6 +321,8 @@ def _check_structure(root: Path, bc: Path, bc_rel: Path, out: Findings) -> list[
     for area in areas:
         a_dirs, _ = _entries(area)
         for p in a_dirs:
+            if checker_target.cache_only_instance(p):
+                continue
             if p.name in KIND_FOLDER_NAMES:
                 out.add("#192", rel / area.name / p.name, "절차 조각은 `<use_case>_use_case.py` 안 `_` 사설 함수로 둔다 — `service/` 같은 종류 폴더를 만들지 않는다")
             else:
@@ -326,6 +337,8 @@ def _top_public_classes(mod: ast.Module) -> list[ast.ClassDef]:
 
 
 def _check_use_case(uc: Path, uc_rel: Path, agg_names: set[str], out: Findings, cand: Candidates) -> None:
+    if checker_target.cache_only_instance(uc):
+        return
     name = uc.name
     dirs, files = _entries(uc)
 
@@ -666,7 +679,8 @@ def main(argv: list[str]) -> int:
         dl = bc / "domain_layer"
         if dl.is_dir():
             agg_dirs, _ = _entries(dl)
-            agg_names = {p.name for p in agg_dirs if p.name not in ("shared_value_object", "domain_service")}
+            agg_names = {p.name for p in agg_dirs if p.name not in ("shared_value_object", "domain_service")
+                         and not checker_target.cache_only_instance(p)}
 
         if app is not None:
             scanned_layers += 1

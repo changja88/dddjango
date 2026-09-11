@@ -1,0 +1,102 @@
+$ python3 -B workspace/tools/field_report_checker_smoke.py CheckerRegression.test_admin_kwargs_actual_consumption_and_unknown_escape CheckerRegression.test_ohs_module_definitions_invalidate_imported_builder CheckerRegression.test_uow_module_class_shadow_keeps_unknown_region_candidate
+test_admin_kwargs_actual_consumption_and_unknown_escape (__main__.CheckerRegression.test_admin_kwargs_actual_consumption_and_unknown_escape) ... 
+  test_admin_kwargs_actual_consumption_and_unknown_escape (__main__.CheckerRegression.test_admin_kwargs_actual_consumption_and_unknown_escape) (body="if kwargs['amount'] > 10:\n            charge(kwargs['amount'])\n        return super().get_form(request, **kwargs)") ... FAIL
+  test_admin_kwargs_actual_consumption_and_unknown_escape (__main__.CheckerRegression.test_admin_kwargs_actual_consumption_and_unknown_escape) (body="options = kwargs\n        charge(options['amount'])\n        return super().get_form(request, **kwargs)") ... FAIL
+  test_admin_kwargs_actual_consumption_and_unknown_escape (__main__.CheckerRegression.test_admin_kwargs_actual_consumption_and_unknown_escape) (body='unknown(kwargs)\n        return super().get_form(request, **kwargs)') ... FAIL
+test_ohs_module_definitions_invalidate_imported_builder (__main__.CheckerRegression.test_ohs_module_definitions_invalidate_imported_builder) ... 
+  test_ohs_module_definitions_invalidate_imported_builder (__main__.CheckerRegression.test_ohs_module_definitions_invalidate_imported_builder) (definition='def _prepare(): return cursor\n') ... FAIL
+  test_ohs_module_definitions_invalidate_imported_builder (__main__.CheckerRegression.test_ohs_module_definitions_invalidate_imported_builder) (definition='async def _prepare(): return cursor\n') ... FAIL
+  test_ohs_module_definitions_invalidate_imported_builder (__main__.CheckerRegression.test_ohs_module_definitions_invalidate_imported_builder) (definition='class _prepare: pass\n') ... FAIL
+test_uow_module_class_shadow_keeps_unknown_region_candidate (__main__.CheckerRegression.test_uow_module_class_shadow_keeps_unknown_region_candidate) ... 
+  test_uow_module_class_shadow_keeps_unknown_region_candidate (__main__.CheckerRegression.test_uow_module_class_shadow_keeps_unknown_region_candidate) (header='class Work: pass\n') ... FAIL
+
+======================================================================
+FAIL: test_admin_kwargs_actual_consumption_and_unknown_escape (__main__.CheckerRegression.test_admin_kwargs_actual_consumption_and_unknown_escape) (body="if kwargs['amount'] > 10:\n            charge(kwargs['amount'])\n        return super().get_form(request, **kwargs)")
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 433, in test_admin_kwargs_actual_consumption_and_unknown_escape
+    self.assertEqual([r['severity'] for r in rows if r['rule'] == '#645'], expected, rows)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != ['violation']
+
+Second list contains 1 additional elements.
+First extra element 0:
+'violation'
+
+- []
++ ['violation'] : [{'schema': 'findings/0', 'run_id': 'check-public-surface-annotation.py-20260911T125335Z-85912', 'ts': '2026-09-11T12:53:35Z', 'record_id': 'check-public-surface-annotation.py-20260911T125335Z-85912:0001', 'rule': '#646', 'sentinel': None, 'contract_ref': None, 'checker': 'check-public-surface-annotation.py', 'file': 'framework/admin/book.py:4', 'symbol': None, 'severity': 'violation', 'message': '`BookAdmin` 이 django-stubs 제네릭 기저 `ModelAdmin` 를 맨몸으로 상속했다 — mypy strict `[type-arg]` 빚 · `if TYPE_CHECKING:` 별칭으로 모델 타입 인자를 적는다', 'expression': None, 'experiment_run_id': None}]
+
+======================================================================
+FAIL: test_admin_kwargs_actual_consumption_and_unknown_escape (__main__.CheckerRegression.test_admin_kwargs_actual_consumption_and_unknown_escape) (body="options = kwargs\n        charge(options['amount'])\n        return super().get_form(request, **kwargs)")
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 433, in test_admin_kwargs_actual_consumption_and_unknown_escape
+    self.assertEqual([r['severity'] for r in rows if r['rule'] == '#645'], expected, rows)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != ['violation']
+
+Second list contains 1 additional elements.
+First extra element 0:
+'violation'
+
+- []
++ ['violation'] : [{'schema': 'findings/0', 'run_id': 'check-public-surface-annotation.py-20260911T125335Z-85913', 'ts': '2026-09-11T12:53:35Z', 'record_id': 'check-public-surface-annotation.py-20260911T125335Z-85913:0001', 'rule': '#493', 'sentinel': None, 'contract_ref': None, 'checker': 'check-public-surface-annotation.py', 'file': 'framework/admin/book.py:6', 'symbol': None, 'severity': 'violation', 'message': '지역 변수 `options` 의 첫 대입에 타입이 없다 — `name: T = …`', 'expression': None, 'experiment_run_id': None}, {'schema': 'findings/0', 'run_id': 'check-public-surface-annotation.py-20260911T125335Z-85913', 'ts': '2026-09-11T12:53:35Z', 'record_id': 'check-public-surface-annotation.py-20260911T125335Z-85913:0002', 'rule': '#646', 'sentinel': None, 'contract_ref': None, 'checker': 'check-public-surface-annotation.py', 'file': 'framework/admin/book.py:4', 'symbol': None, 'severity': 'violation', 'message': '`BookAdmin` 이 django-stubs 제네릭 기저 `ModelAdmin` 를 맨몸으로 상속했다 — mypy strict `[type-arg]` 빚 · `if TYPE_CHECKING:` 별칭으로 모델 타입 인자를 적는다', 'expression': None, 'experiment_run_id': None}]
+
+======================================================================
+FAIL: test_admin_kwargs_actual_consumption_and_unknown_escape (__main__.CheckerRegression.test_admin_kwargs_actual_consumption_and_unknown_escape) (body='unknown(kwargs)\n        return super().get_form(request, **kwargs)')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 433, in test_admin_kwargs_actual_consumption_and_unknown_escape
+    self.assertEqual([r['severity'] for r in rows if r['rule'] == '#645'], expected, rows)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != ['info']
+
+Second list contains 1 additional elements.
+First extra element 0:
+'info'
+
+- []
++ ['info'] : [{'schema': 'findings/0', 'run_id': 'check-public-surface-annotation.py-20260911T125335Z-85914', 'ts': '2026-09-11T12:53:35Z', 'record_id': 'check-public-surface-annotation.py-20260911T125335Z-85914:0001', 'rule': '#646', 'sentinel': None, 'contract_ref': None, 'checker': 'check-public-surface-annotation.py', 'file': 'framework/admin/book.py:4', 'symbol': None, 'severity': 'violation', 'message': '`BookAdmin` 이 django-stubs 제네릭 기저 `ModelAdmin` 를 맨몸으로 상속했다 — mypy strict `[type-arg]` 빚 · `if TYPE_CHECKING:` 별칭으로 모델 타입 인자를 적는다', 'expression': None, 'experiment_run_id': None}]
+
+======================================================================
+FAIL: test_ohs_module_definitions_invalidate_imported_builder (__main__.CheckerRegression.test_ohs_module_definitions_invalidate_imported_builder) (definition='def _prepare(): return cursor\n')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 450, in test_ohs_module_definitions_invalidate_imported_builder
+    self.assertEqual('#153' in c, expected)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False != True
+
+======================================================================
+FAIL: test_ohs_module_definitions_invalidate_imported_builder (__main__.CheckerRegression.test_ohs_module_definitions_invalidate_imported_builder) (definition='async def _prepare(): return cursor\n')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 450, in test_ohs_module_definitions_invalidate_imported_builder
+    self.assertEqual('#153' in c, expected)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False != True
+
+======================================================================
+FAIL: test_ohs_module_definitions_invalidate_imported_builder (__main__.CheckerRegression.test_ohs_module_definitions_invalidate_imported_builder) (definition='class _prepare: pass\n')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 450, in test_ohs_module_definitions_invalidate_imported_builder
+    self.assertEqual('#153' in c, expected)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False != True
+
+======================================================================
+FAIL: test_uow_module_class_shadow_keeps_unknown_region_candidate (__main__.CheckerRegression.test_uow_module_class_shadow_keeps_unknown_region_candidate) (header='class Work: pass\n')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/field_report_checker_smoke.py", line 460, in test_uow_module_class_shadow_keeps_unknown_region_candidate
+    self.assertEqual('#546' in c, expected)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False != True
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.367s
+
+FAILED (failures=7)
+
+EXIT=1

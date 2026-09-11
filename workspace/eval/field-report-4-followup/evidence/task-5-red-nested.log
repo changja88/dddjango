@@ -1,0 +1,15 @@
+test_nested_application_container_uses_same_optional_slots_as_direct_checker (registry_gate_smoke.CacheSnapshotRegression.test_nested_application_container_uses_same_optional_slots_as_direct_checker) ... FAIL
+
+======================================================================
+FAIL: test_nested_application_container_uses_same_optional_slots_as_direct_checker (registry_gate_smoke.CacheSnapshotRegression.test_nested_application_container_uses_same_optional_slots_as_direct_checker)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/hyun/.cache/dddjango-field4-followup-20260911/workspace/tools/registry_gate_smoke.py", line 336, in test_nested_application_container_uses_same_optional_slots_as_direct_checker
+    self.assertFalse((snapshot / relative).exists())
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false
+
+----------------------------------------------------------------------
+Ran 1 test in 0.100s
+
+FAILED (failures=1)

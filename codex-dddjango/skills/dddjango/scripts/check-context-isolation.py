@@ -27,7 +27,8 @@ Kernel 없음)·#83(BC 삭제 내성)은 아래 각론 진단이 집행한다.
 
 ast+ 후보 채널 (㉰ — exit 불산입, 마무리는 discipline-reviewer):
   #151(창구 이름 — 기술·타 BC 토큰은 «확정» 위반) · #153(도메인 예외 속성 접근은 «확정»,
-  유스케이스 호출 0/2회↑는 후보) · #171(접미사뿐인 예외 이름) · #347(admin feature 의
+  출처가 확인된 usecase 실행 수가 1이 아니거나 출처·반복 횟수가 미해소이면 후보;
+  builder 준비·미호출 nested 정의는 실행 수에 불산입) · #171(접미사뿐인 예외 이름) · #347(admin feature 의
   애그리거트 쓰기) · #11(경계 애너테이션의 Model/QuerySet 은 «확정», 그 외 후보)
 
   framework #470 강등의 사후 신호 — 공개 시그니처에 `kind`·`mode`·`bc`·`is_*` 매개변수(D38)
@@ -350,6 +351,8 @@ def _check_ohs(ohs: Path, bc: Path, bc_rel: Path, agg_names: set[str], all_bcs: 
             out.add("#150", rel0 / f.name, "`open_host_service/` 의 1차 축은 `<service>/` 폴더다 — 평면 `.py` 를 두지 않는다")
 
     for svc in dirs:
+        if checker_target.cache_only_instance(svc):
+            continue
         srel = rel0 / svc.name
         tokens = set(svc.name.split("_"))
         if tokens & TECH_NAME_TOKENS or tokens & (all_bcs - {bc.name}):
@@ -388,6 +391,161 @@ def _check_ohs(ohs: Path, bc: Path, bc_rel: Path, agg_names: set[str], all_bcs: 
             _check_contract_kind(contract / "request", "Request", "#157", "#156", ops, srel, out)
             _check_contract_kind(contract / "response", "Response", "#160", "#159", ops, srel, out)
             _check_published_exceptions(contract / "exception", svc.name, srel, out, cand)
+
+
+def _ohs_execution_count(entry: Path, mod: ast.Module, fn: ast.AST) -> tuple[int, bool]:
+    """현재 함수의 정적 execute 수. builder 준비와 미호출 내부 정의는 세지 않는다."""
+    root = next((p.parent for p in entry.parents if p.name == "application"), entry.parent)
+
+    def imports(body, source):
+        result = {}
+        for st in body:
+            if isinstance(st, ast.Import):
+                for a in st.names:
+                    result[a.asname or a.name.split(".")[0]] = a.name if a.asname else a.name.split(".")[0]
+            elif isinstance(st, ast.ImportFrom):
+                module = st.module or ""
+                if st.level:
+                    parts = source.relative_to(root).with_suffix("").parts[:-1]
+                    module = ".".join((*parts[:len(parts) - st.level + 1], *module.split(".")))
+                for a in st.names:
+                    result[a.asname or a.name] = module + "." + a.name
+            elif isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                result.pop(st.name, None)
+            elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+                for t in st.targets if isinstance(st, ast.Assign) else [st.target]:
+                    for n in ast.walk(t):
+                        if isinstance(n, ast.Name):
+                            result.pop(n.id, None)
+        return result
+
+    def address(expr, env):
+        if isinstance(expr, ast.Constant) and isinstance(expr.value, str):
+            try:
+                return address(ast.parse(expr.value, mode="eval").body, env)
+            except SyntaxError:
+                return ""
+        if isinstance(expr, ast.Name):
+            return env.get(expr.id, "")
+        if isinstance(expr, ast.Attribute):
+            base = address(expr.value, env)
+            return base + "." + expr.attr if base else ""
+        return ""
+
+    def usecase(name):
+        parts = name.split(".")
+        if not ("application_layer" in parts and len(parts) > 1 and parts[-2].endswith("_use_case")):
+            return False
+        source = root.joinpath(*parts[:-1]).with_suffix(".py")
+        declaration = _parse(source) if source.is_file() else None
+        return declaration is not None and any(isinstance(st, ast.ClassDef) and st.name == parts[-1] for st in declaration.body)
+
+    def builder(name):
+        parts = name.split(".")
+        if "composition_root" not in parts or not re.fullmatch(r"build_.+_use_case", parts[-1]):
+            return False
+        source = root.joinpath(*parts[:-1]).with_suffix(".py")
+        if not source.is_file():
+            source = root.joinpath(*parts[:-1], "__init__.py")
+        declaration = _parse(source)
+        if declaration is None:
+            return False
+        env = imports(declaration.body, source)
+        target = next((st for st in declaration.body if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)) and st.name == parts[-1]), None)
+        if target is None:
+            return False
+        if usecase(address(target.returns, env)):
+            return True
+        return any(isinstance(st, ast.Return) and isinstance(st.value, ast.Call)
+                   and usecase(address(st.value.func, env)) for st in target.body)
+
+    def origin(expr, env):
+        if isinstance(expr, ast.Call):
+            name = address(expr.func, env)
+            return "@usecase" if usecase(name) or builder(name) else ""
+        return address(expr, env)
+
+    count, unknown = 0, False
+
+    def inspect(expr, env):
+        nonlocal count, unknown
+        if isinstance(expr, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+            return
+        if isinstance(expr, ast.Call) and isinstance(expr.func, ast.Attribute) and expr.func.attr == "execute":
+            receiver = origin(expr.func.value, env)
+            if receiver == "@usecase" or usecase(receiver):
+                count += 1
+            else:
+                unknown = True
+        before = count
+        for child in ast.iter_child_nodes(expr):
+            inspect(child, env)
+        if isinstance(expr, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)) and count != before:
+            unknown = True
+
+    def block(body, env):
+        nonlocal unknown
+        for st in body:
+            if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                env[st.name] = ""
+                continue
+            if isinstance(st, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try, ast.With, ast.AsyncWith)):
+                branches = []
+                if isinstance(st, (ast.With, ast.AsyncWith)):
+                    for item in st.items:
+                        inspect(item.context_expr, env)
+                    branch = dict(env)
+                    for item in st.items:
+                        if item.optional_vars:
+                            for n in ast.walk(item.optional_vars):
+                                if isinstance(n, ast.Name): branch[n.id] = ""
+                    block(st.body, branch)
+                    branches = [branch, env]
+                else:
+                    condition_before = count
+                    for field in ("test", "iter"):
+                        value = getattr(st, field, None)
+                        if value is not None: inspect(value, env)
+                    if isinstance(st, ast.While) and count != condition_before:
+                        unknown = True
+                    branch = dict(env)
+                    if isinstance(st, (ast.For, ast.AsyncFor)):
+                        for n in ast.walk(st.target):
+                            if isinstance(n, ast.Name): branch[n.id] = ""
+                    before = count
+                    block(st.body, branch)
+                    if isinstance(st, (ast.For, ast.AsyncFor, ast.While)) and count != before:
+                        unknown = True
+                    other = dict(env)
+                    block(st.orelse, other)
+                    branches = [branch, other]
+                    if isinstance(st, ast.Try):
+                        for handler in st.handlers:
+                            branch = dict(env)
+                            if handler.name: branch[handler.name] = ""
+                            block(handler.body, branch)
+                            branches.append(branch)
+                for key in set().union(*(b.keys() for b in branches)):
+                    values = {b.get(key, "") for b in branches}
+                    env[key] = values.pop() if len(values) == 1 else ""
+                if isinstance(st, ast.Try): block(st.finalbody, env)
+                continue
+            inspect(st, env)
+            if isinstance(st, (ast.Import, ast.ImportFrom)):
+                env.update(imports([st], entry))
+            elif isinstance(st, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+                value = origin(st.value, env) if not isinstance(st, ast.AugAssign) else ""
+                for t in st.targets if isinstance(st, ast.Assign) else [st.target]:
+                    for n in ast.walk(t):
+                        if isinstance(n, ast.Name): env[n.id] = value if isinstance(t, ast.Name) else ""
+        return env
+
+    env = imports(mod.body, entry)
+    for arg in (*fn.args.posonlyargs, *fn.args.args, *fn.args.kwonlyargs):
+        name = address(arg.annotation, env)
+        env[arg.arg] = "@usecase" if usecase(name) else ""
+    block(fn.body, env)
+    return count, unknown
 
 
 def _check_ohs_service(entry: Path, rel, out: Findings, cand: Candidates) -> set[str]:
@@ -440,16 +598,9 @@ def _check_ohs_service(entry: Path, rel, out: Findings, cand: Candidates) -> set
                         if isinstance(inner, ast.Attribute) and isinstance(inner.value, ast.Name) and inner.value.id == sub.name:
                             out.add("#153", rel, f"도메인 예외는 «타입»으로만 쓴다 — `{sub.name}.{inner.attr}` 속성 접근은 계약이 도메인 모양에 얹힌 것이다")
                             break
-        calls = sum(
-            1 for sub in ast.walk(fn)
-            if isinstance(sub, ast.Call) and "use_case" in ast.dump(sub.func).lower()
-        )
-        exec_calls = sum(
-            1 for sub in ast.walk(fn)
-            if isinstance(sub, ast.Call) and isinstance(sub.func, ast.Attribute) and sub.func.attr == "execute"
-        )
-        if max(calls, exec_calls) != 1:
-            cand.add("#153", f"{rel}:{fn.lineno}", f"`{fn.name}` 의 유스케이스 호출이 {max(calls, exec_calls)}회다 — 창구는 「바꾸고·부르고·되돌리는 일만」 한다", "「이 문장이 «계약↔응용 DTO 변환»인가」")
+        exec_calls, unknown_execution = _ohs_execution_count(entry, mod, fn)
+        if exec_calls != 1 or unknown_execution:
+            cand.add("#153", f"{rel}:{fn.lineno}", f"`{fn.name}` 의 확인된 유스케이스 실행 {exec_calls}회 — 실행 횟수/출처 확인 필요", "「이 문장이 «계약↔응용 DTO 변환»인가」")
         for d in fn.decorator_list:
             ids = _ann_idents(d)
             # 라우팅·등록 데코레이터만 문다 — 호출형 데코레이터 일반(@lru_cache(...) 류)은 #149 의 대상이 아니다.
@@ -1135,7 +1286,8 @@ def main(argv: list[str]) -> int:
         agg_names: set[str] = set()
         if dl.is_dir():
             agg_dirs, _ = _entries(dl)
-            agg_names = {p.name for p in agg_dirs if p.name not in ("shared_value_object", "domain_service")}
+            agg_names = {p.name for p in agg_dirs if p.name not in ("shared_value_object", "domain_service")
+                         and not checker_target.cache_only_instance(p)}
 
         for f in sorted(bc.rglob("*.py")):
             if set(f.relative_to(bc).parts) & SKIP_DIRS:

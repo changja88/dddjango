@@ -1,0 +1,6 @@
+Changed paths: ['workspace/design/2026-08-08-tree-revision-spec.md']
+Unchanged owned paths: 43/44
+Outside-owned tracked changes: []
+Exact two-text-replacement comparison: PASS
+#189 no-floor branch and cross-usecase ownership preserved: PASS
+Reading-guide count: 552 - 7 = 545 PASS
