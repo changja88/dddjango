@@ -1,0 +1,12 @@
+:root {
+  --zero: 0; --full: 100%; --page-min-height: 100vh;
+  --surface-page: #f6f5f2; --surface-card: #ffffff; --text-primary: #292823;
+  --text-secondary: #646159; --text-tertiary: #888276; --border-default: #d5d1c7;
+  --accent: #8f675b; --type-body: 14px/1.5 sans-serif;
+  --space-half: 2px; --space-1: 4px; --space-2: 8px; --space-5: 20px; --space-6: 24px;
+  --dialog-width: 344px; --dialog-height: 316px; --radius-dialog: 24px;
+  --title-size: 20px; --title-line: 28px; --caption-size: 13px; --caption-line: 20px;
+  --input-gap: 10px; --input-height: 52px; --input-padding: 14px; --border-width: 1px;
+  --radius-input: 16px; --duration-fast: 160ms; --input-focus-shadow: 0 0 0 3px rgba(143, 103, 91, .18);
+  --icon-size: 18px; --button-height: 44px; --radius-button: 14px;
+}

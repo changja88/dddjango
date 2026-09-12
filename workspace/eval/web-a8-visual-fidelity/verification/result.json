@@ -1,0 +1,41 @@
+{
+  "base_head": "3e786dce64eee3da81d98e1dc2dcad598ab5d026",
+  "initial_verify": {
+    "exit": 2,
+    "passed_groups": 5,
+    "failed_group": "verify-base-core",
+    "cause": "Previous backend 2.18.2 manifest seal differed from current 2.18.3; both old hashes matched HEAD^ including execution bit.",
+    "log": "initial-verify.log"
+  },
+  "reseal_command": ".venv/bin/python workspace/tools/manifest_seal.py --write",
+  "final_verify": {
+    "command": "make verify",
+    "exit": 0,
+    "passed_groups": 6,
+    "elapsed_seconds": 293,
+    "log": "final-verify.log",
+    "full_logs": "/tmp/djr-verify.F7naM3"
+  },
+  "strict_manifest": {
+    "command": "claude plugin validate dddjango-web --strict",
+    "exit": 0,
+    "stdout": "Validation passed"
+  },
+  "verified_files_sha256": {
+    "dddjango-web/commands/dddjango-web.md": "6470aa0752a3f91129880c50a8501e846bdad3ec454d4404483339d084d4d6a8",
+    "dddjango-web/agents/coder-web.md": "f64bf9212f5f5b17a7a96df8f1695ab441f49b4965fc5a710109c5d7a930aa5b",
+    "dddjango-web/agents/design-review-web.md": "ac364328ecf6ea02e3112f2af1e50c415e975286feb14b2f6e7b9581086e602d",
+    "dddjango-web/agents/design-architect-web.md": "a6ceeee1dbd0fbc02298fa0fec6465bb91d8fb2d0744de14a17ad2b646ce03ea",
+    "dddjango-web/agents/discipline-reviewer-web.md": "76c53c28cfcaedf411910a45a071af96be46ab41b083caa71734060657c63418",
+    "dddjango-web/skills/implementation-ui/references/final.md": "7ef6ad2ede128aab920e3b5a2e41aed5d7dd7aba83e7c6ded4a59f6de9ccc464",
+    "codex-dddjango-web/skills/dddjango-web/SKILL.md": "4eb7c999520be75a5205fe2e96b52714744095cff7978c96f196222ae60be898",
+    "codex-dddjango-web/skills/dddjango-web-coder-web/SKILL.md": "9f302a37348364a09e09057333a24ec46874b43a30320e959da6e282661b6663",
+    "codex-dddjango-web/skills/dddjango-web-design-review-web/SKILL.md": "d7ee4c14be44b18d4b6d22de795cefd6e25f3c52dcbecb5403efc18557213bd3",
+    "codex-dddjango-web/skills/dddjango-web-design-architect-web/SKILL.md": "0ca64d72ac1d65143a32d10d56dc112b354cf2b8e93f5f8c6ca7b51bc02bf2d7",
+    "codex-dddjango-web/skills/dddjango-web-discipline-reviewer-web/SKILL.md": "f32e293ae9f745aaf551de40c45e0974eef749532fff65279ba685e4af6d3bcf",
+    "codex-dddjango-web/skills/implementation-ui/references/final.md": "7ef6ad2ede128aab920e3b5a2e41aed5d7dd7aba83e7c6ded4a59f6de9ccc464",
+    "workspace/eval/ab/T2-0b-manifest.json": "bc2501fcc185b6a280f5a03ccb2404ed3c23770155d0770083c4cea886e7d821",
+    "workspace/design/2026-08-20-ontology-t2-0b-design.md": "e6f3c428aa37a849e8dab7c498be3f95ae0c32ad7f9b10f6dad422bd5e5be34e"
+  },
+  "scope": "Runtime/source seal bytes verified; checkpoint and micro evidence files are separate runtime observations."
+}

@@ -1,0 +1,25 @@
+{
+  "fresh_context_calls": [
+    "/root/a8_baseline/baseline_trial_01",
+    "/root/a8_baseline/baseline_trial_02",
+    "/root/a8_baseline/baseline_trial_03",
+    "/root/a8_baseline/baseline_trial_04",
+    "/root/a8_baseline/baseline_trial_05",
+    "/root/a8_baseline/candidate_trial_01",
+    "/root/a8_baseline/candidate_trial_02",
+    "/root/a8_baseline/candidate_trial_03",
+    "/root/a8_baseline/candidate_trial_04",
+    "/root/a8_baseline/candidate_trial_05"
+  ],
+  "independent_smoke_passes": 10,
+  "fixture_protected_files_unchanged": true,
+  "guidance_copies_unchanged": true,
+  "frozen_inputs_unchanged": true,
+  "feature_css_output_hashes": [
+    "1f237383d45e916d55e79bced177f7aa60bdfe2a532019ca065bf2db066db61e"
+  ],
+  "runtime_candidate_hashes_unchanged": 12,
+  "behavioral_score": "baseline 5/5 PASS, candidate 5/5 PASS",
+  "browser_observation_by_micro_trials": "none; unverified handoff expected",
+  "raw_tool_transcript_exported": false
+}

@@ -1,0 +1,83 @@
+{
+  "scope": "Independent fresh coder checkpoint: create-person-step1, fixture-v1, cases-v1, viewport 390x844",
+  "codeChanged": [
+    "feature.css"
+  ],
+  "change": "Only .people-scroll padding: var(--space-half) var(--space-half) var(--space-1)",
+  "beforeEvidence": "observations-before.json",
+  "beforeBrowserEvidence": "browser-observations-before.json",
+  "afterBrowserEvidence": "browser-observations-after.json",
+  "captureComparisonEvidence": "capture-comparisons.json",
+  "afterHashes": {
+    "source.html": "269d9114a7ffcd135d3fb0f1b18824f511d4b654977f439213f9551005368090",
+    "source.css": "0cf2a17eb473b31c24472a5a24fea654e68fd7626b0d9b0e5e0122b19d7ffd8b",
+    "app.html": "7c101e70043c821bda66dfe8f42b9ace2f2da28b44ef6af42e034f1cf0ee86c3",
+    "tokens.css": "c075ad5a4834a6a801b694e4fcdec255a3b897e13e26e8ed13cceb36483f639c",
+    "design-system.css": "eac39358865cb1f01add4c38f4300735ad03eb29fb461394bb6814f0a999858f",
+    "feature.css": "1f237383d45e916d55e79bced177f7aa60bdfe2a532019ca065bf2db066db61e",
+    "smoke.py": "85be8fb63c6370cad01069a0ca9659a273bb42f2e036eb2357ac402ae01a807c"
+  },
+  "structureSmoke": {
+    "cwd": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app",
+    "command": "python3 smoke.py",
+    "chunk_id": "7cc28a",
+    "wall_time_seconds": 0.0000015,
+    "exit_code": 0,
+    "original_token_count": 21,
+    "output": "PASS: HTML id uniqueness and stylesheet wiring only; no render or visual assertions\n"
+  },
+  "browserRecovery": {
+    "initialErrors": "Two Browser is already in use errors recorded in observations-before.json; parent cleared its own control session.",
+    "metadataProbeError": "ReferenceError: process is not defined; removed process access. Browser metadata and both subsequent observation passes succeeded."
+  },
+  "browserCleanup": {
+    "createdPagesClosed": [
+      "source-current",
+      "implementation-before",
+      "source-current-post",
+      "implementation-after"
+    ],
+    "inventoryAfterCreatedPagesClosed": "- 0: (current) [](about:blank)",
+    "finalTool": "mcp__playwright__browser_close",
+    "finalRawResult": "No open tabs. Navigate to a URL to create one.",
+    "userPagesChanged": false
+  },
+  "capturesDirectlyOpened": [
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-default.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-focus-entry-live.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-empty-focused.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-focus-boundary-detail.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-filled-focused.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-focus-exit-live.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-filled-blurred-button-focused.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-after-button-activation.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-before-default.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-before-focus-entry-live.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-before-empty-focused.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-before-focus-boundary-detail.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-before-filled-focused.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-before-focus-exit-live.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-before-filled-blurred-button-focused.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-before-after-button-activation.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-default.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-focus-entry-live.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-empty-focused.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-focus-boundary-detail.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-filled-focused.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-focus-exit-live.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-filled-blurred-button-focused.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-after-button-activation.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-default.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-focus-entry-live.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-empty-focused.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-focus-boundary-detail.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-filled-focused.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-focus-exit-live.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-filled-blurred-button-focused.png",
+    "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-after-button-activation.png"
+  ],
+  "providedCaptureDirectlyOpened": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/browser/source-default.png",
+  "remainingInScopeVisualStatesUnobserved": [],
+  "nativePipelineOrIndependentAuditExecuted": false,
+  "serenaGraphify": "Neither searched, loaded, called nor initialized: no opt-in."
+}

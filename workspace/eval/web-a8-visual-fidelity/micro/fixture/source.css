@@ -1,0 +1,16 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { min-height: 100vh; display: grid; place-items: center; background: #f6f5f2; color: #292823; font: 14px/1.5 sans-serif; }
+.source-dialog { display: flex; flex-direction: column; width: 344px; height: 316px; padding: 20px; gap: 20px; border-radius: 24px; background: #ffffff; }
+h1 { margin: 0; font-size: 20px; line-height: 28px; }
+.source-scroll { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; gap: 24px; overflow-y: auto; padding: 2px 2px 4px; }
+.source-step { display: flex; flex-direction: column; gap: 24px; }
+.source-field { display: flex; flex-direction: column; gap: 8px; }
+.source-label { font-size: 13px; line-height: 20px; color: #646159; }
+.source-input { display: flex; align-items: center; gap: 10px; width: 100%; height: 52px; padding: 0 14px; border: 1px solid #d5d1c7; border-radius: 16px; background: #ffffff; transition: border-color 160ms ease, box-shadow 160ms ease; }
+.source-input:focus-within { border-color: #8f675b; box-shadow: 0 0 0 3px rgba(143, 103, 91, .18); }
+.source-icon { flex: 0 0 auto; font-size: 18px; line-height: 20px; color: #888276; }
+.source-input input { flex: 1 1 auto; min-width: 0; width: 100%; padding: 0; border: 0; outline: none; color: inherit; background: transparent; font: inherit; }
+.source-input input::placeholder { color: #888276; }
+.source-note { margin: 0; color: #646159; font-size: 13px; line-height: 20px; }
+button { height: 44px; flex: 0 0 auto; border: 0; border-radius: 14px; background: #8f675b; color: #ffffff; font: inherit; }

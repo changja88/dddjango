@@ -1,0 +1,7 @@
+{
+  "tool": "collaboration.spawn_agent",
+  "fork_turns": "none",
+  "task_name": "whole_branch_review",
+  "canonical_task_name": "/root/a8_baseline/whole_branch_review",
+  "message": "최종 whole-branch 적대 구현 리뷰입니다. 첫 입력으로 /Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/final-review-input.md만 읽고 지정된 범위와 근거를 따라 리뷰하세요. 14개 tracked 파일의 전체 diff와 패킷이 지정한 실제 행동 증거를 대조하고 Spec/Quality/ReadyToRelease 및 Critical/Important 발견을 반환하세요. 소스·runtime·기존 증거는 읽기 전용이며 지정 final-review.md 한 파일만 쓸 수 있습니다. 다른 코드·평가 결과를 고치지 마세요. 기존 기본 도구만 사용하고 새 CLI·권한 확장·자동 승인 옵션·추가 서브에이전트는 사용하지 마세요. 패킷 밖의 이전 대화 문맥은 제공하지 않습니다. 리뷰 결과와 실제 확인 범위·한계를 최종 답변으로도 반환하세요."
+}

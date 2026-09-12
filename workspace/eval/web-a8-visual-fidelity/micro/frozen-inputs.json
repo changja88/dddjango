@@ -1,0 +1,16 @@
+{
+  "fixture/app.html": "7c101e70043c821bda66dfe8f42b9ace2f2da28b44ef6af42e034f1cf0ee86c3",
+  "fixture/design-system.css": "eac39358865cb1f01add4c38f4300735ad03eb29fb461394bb6814f0a999858f",
+  "fixture/feature.css": "30b7549f1d4ef1a8e6f59d325239cc4b343adea1bedaac88e2f5200922dffb2d",
+  "fixture/scope.md": "dacdb19cc71870666eafed6c63e169b8f174fecf709ee3f7b0e10dd1e37b9ded",
+  "fixture/smoke.py": "85be8fb63c6370cad01069a0ca9659a273bb42f2e036eb2357ac402ae01a807c",
+  "fixture/source.css": "0cf2a17eb473b31c24472a5a24fea654e68fd7626b0d9b0e5e0122b19d7ffd8b",
+  "fixture/source.html": "269d9114a7ffcd135d3fb0f1b18824f511d4b654977f439213f9551005368090",
+  "fixture/tokens.css": "c075ad5a4834a6a801b694e4fcdec255a3b897e13e26e8ed13cceb36483f639c",
+  "guidance-baseline/implementation-ui/SKILL.md": "07984244deb9220f7ea5282b01bbac7b9f4747ad714adb458f3e1f2418b808e7",
+  "guidance-baseline/implementation-ui/references/design-acquisition.md": "93ed8f585d1595563cb6eef95a1db9c08e7dedd7c488d995a6d7378459c4cd55",
+  "guidance-baseline/implementation-ui/references/design-evidence.md": "70d328b5281c2196889536b83b606f9229800505fb5bd352741b1024a5d32989",
+  "guidance-baseline/implementation-ui/references/final.md": "450c86696c3a0483a1e5113061849722c3395116f384717714d58e0be2409653",
+  "oracle.md": "396df13ac7ce237a4a9c2b950fb1fd912bb4c523a91bd3b43171f6a076499436",
+  "prompt.txt": "9d00a816fb923257346a2bb2e02b59545f6b440d83126ca7fcf2adfa25715f21"
+}

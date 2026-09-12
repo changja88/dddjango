@@ -1,0 +1,11 @@
+* { box-sizing: border-box; }
+html, body { margin: var(--zero); }
+body { min-height: var(--page-min-height); display: grid; place-items: center; background: var(--surface-page); color: var(--text-primary); font: var(--type-body); }
+.ds-field { display: flex; flex-direction: column; gap: var(--space-2); }
+.ds-label { font-size: var(--caption-size); line-height: var(--caption-line); color: var(--text-secondary); }
+.ds-input { display: flex; align-items: center; gap: var(--input-gap); width: var(--full); height: var(--input-height); padding: var(--zero) var(--input-padding); border: var(--border-width) solid var(--border-default); border-radius: var(--radius-input); background: var(--surface-card); transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease; }
+.ds-input:focus-within { border-color: var(--accent); box-shadow: var(--input-focus-shadow); }
+.ds-icon { flex: 0 0 auto; font-size: var(--icon-size); line-height: var(--caption-line); color: var(--text-tertiary); }
+.ds-input input { flex: 1 1 auto; min-width: var(--zero); width: var(--full); padding: var(--zero); border: var(--zero); outline: none; color: inherit; background: transparent; font: inherit; }
+.ds-input input::placeholder { color: var(--text-tertiary); }
+.ds-button { height: var(--button-height); flex: 0 0 auto; border: var(--zero); border-radius: var(--radius-button); background: var(--accent); color: var(--surface-card); font: inherit; }

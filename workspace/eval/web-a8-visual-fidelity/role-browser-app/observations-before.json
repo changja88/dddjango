@@ -1,0 +1,41 @@
+{
+  "case": "create-person-step1",
+  "source_version": "fixture-v1",
+  "case_version": "cases-v1",
+  "viewport_requested": {
+    "width": 390,
+    "height": 844
+  },
+  "before_feature_css": ".people-dialog { display: flex; flex-direction: column; width: var(--dialog-width); height: var(--dialog-height); padding: var(--space-5); gap: var(--space-5); border-radius: var(--radius-dialog); background: var(--surface-card); }\n.people-dialog h1 { margin: var(--zero); font-size: var(--title-size); line-height: var(--title-line); }\n.people-scroll { display: flex; flex-direction: column; flex: 1 1 auto; min-height: var(--zero); gap: var(--space-6); overflow-y: auto; }\n.people-step { display: flex; flex-direction: column; gap: var(--space-6); }\n.people-note { margin: var(--zero); color: var(--text-secondary); font-size: var(--caption-size); line-height: var(--caption-line); }\n",
+  "before_hashes": {
+    "source.html": "269d9114a7ffcd135d3fb0f1b18824f511d4b654977f439213f9551005368090",
+    "source.css": "0cf2a17eb473b31c24472a5a24fea654e68fd7626b0d9b0e5e0122b19d7ffd8b",
+    "app.html": "7c101e70043c821bda66dfe8f42b9ace2f2da28b44ef6af42e034f1cf0ee86c3",
+    "feature.css": "30b7549f1d4ef1a8e6f59d325239cc4b343adea1bedaac88e2f5200922dffb2d",
+    "tokens.css": "c075ad5a4834a6a801b694e4fcdec255a3b897e13e26e8ed13cceb36483f639c",
+    "design-system.css": "eac39358865cb1f01add4c38f4300735ad03eb29fb461394bb6814f0a999858f",
+    "smoke.py": "85be8fb63c6370cad01069a0ca9659a273bb42f2e036eb2357ac402ae01a807c"
+  },
+  "structure_smoke": {
+    "cwd": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app",
+    "command": "python3 smoke.py",
+    "exit": 0,
+    "stdout": "PASS: HTML id uniqueness and stylesheet wiring only; no render or visual assertions\n"
+  },
+  "browser_attempts": [
+    {
+      "tool": "mcp__playwright__browser_run_code_unsafe",
+      "attempt": 1,
+      "code_executed": false,
+      "error": "Error: Browser is already in use for /Users/hyun/Library/Caches/ms-playwright-mcp/mcp-chrome-6bb91ef, use --isolated to run multiple instances of the same browser"
+    },
+    {
+      "tool": "mcp__playwright__browser_run_code_unsafe",
+      "attempt": 2,
+      "code_executed": false,
+      "error": "Error: Browser is already in use for /Users/hyun/Library/Caches/ms-playwright-mcp/mcp-chrome-6bb91ef, use --isolated to run multiple instances of the same browser"
+    }
+  ],
+  "provided_capture_opened": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/browser/source-default.png",
+  "first_code_edit_performed": false
+}

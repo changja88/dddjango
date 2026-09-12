@@ -1,0 +1,12 @@
+{
+  "fixture_files_changed": [
+    "feature.css"
+  ],
+  "guidance_unchanged": true,
+  "independent_smoke": {
+    "exit_code": 0,
+    "stdout": "PASS: HTML id uniqueness and stylesheet wiring only; no render or visual assertions\n",
+    "stderr": ""
+  },
+  "feature_css_sha256": "1f237383d45e916d55e79bced177f7aa60bdfe2a532019ca065bf2db066db61e"
+}

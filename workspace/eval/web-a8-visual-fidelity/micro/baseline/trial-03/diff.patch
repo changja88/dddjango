@@ -1,0 +1,9 @@
+--- fixture/feature.css
++++ trial-03/feature.css
+@@ -1,5 +1,5 @@
+ .people-dialog { display: flex; flex-direction: column; width: var(--dialog-width); height: var(--dialog-height); padding: var(--space-5); gap: var(--space-5); border-radius: var(--radius-dialog); background: var(--surface-card); }
+ .people-dialog h1 { margin: var(--zero); font-size: var(--title-size); line-height: var(--title-line); }
+-.people-scroll { display: flex; flex-direction: column; flex: 1 1 auto; min-height: var(--zero); gap: var(--space-6); overflow-y: auto; }
++.people-scroll { display: flex; flex-direction: column; flex: 1 1 auto; min-height: var(--zero); gap: var(--space-6); overflow-y: auto; padding: var(--space-half) var(--space-half) var(--space-1); }
+ .people-step { display: flex; flex-direction: column; gap: var(--space-6); }
+ .people-note { margin: var(--zero); color: var(--text-secondary); font-size: var(--caption-size); line-height: var(--caption-line); }

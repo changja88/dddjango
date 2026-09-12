@@ -1,0 +1,160 @@
+{
+  "method": "Python pathlib.read_bytes exact PNG byte comparison after direct image inspection; equal PNG bytes also imply equal encoded pixels. Different bytes alone do not locate visual difference. Live transition captures are excluded because capture times differ.",
+  "comparisons": [
+    {
+      "left": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-default.png",
+      "right": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-default.png",
+      "state": "default",
+      "png_bytes_identical": true,
+      "sha256_left": "da52c5ee09a1ce098b02919ba51492800415b8e42c227e19e470473b01e286d4",
+      "sha256_right": "da52c5ee09a1ce098b02919ba51492800415b8e42c227e19e470473b01e286d4"
+    },
+    {
+      "left": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-empty-focused.png",
+      "right": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-empty-focused.png",
+      "state": "empty-focused",
+      "png_bytes_identical": true,
+      "sha256_left": "6838482594ece221f1931ad509368da80e03c3c81150d76d208205f36c6d7a76",
+      "sha256_right": "6838482594ece221f1931ad509368da80e03c3c81150d76d208205f36c6d7a76"
+    },
+    {
+      "left": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-focus-boundary-detail.png",
+      "right": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-focus-boundary-detail.png",
+      "state": "focus-boundary-detail",
+      "png_bytes_identical": true,
+      "sha256_left": "9ad76326af98cdb62afc25bc6f51f6f98a3cb4b76b6c5b2328fccbcb0dd4cdfd",
+      "sha256_right": "9ad76326af98cdb62afc25bc6f51f6f98a3cb4b76b6c5b2328fccbcb0dd4cdfd"
+    },
+    {
+      "left": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-filled-focused.png",
+      "right": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-filled-focused.png",
+      "state": "filled-focused",
+      "png_bytes_identical": true,
+      "sha256_left": "87dad98010e98a7b7e5de834a64f47eaf110ef8a5c842d9bcd03ecb736ee5483",
+      "sha256_right": "87dad98010e98a7b7e5de834a64f47eaf110ef8a5c842d9bcd03ecb736ee5483"
+    },
+    {
+      "left": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-filled-blurred-button-focused.png",
+      "right": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-filled-blurred-button-focused.png",
+      "state": "filled-blurred-button-focused",
+      "png_bytes_identical": true,
+      "sha256_left": "ba8cb92dfc7977b9a3b019674b9fc054ee239d02ff21aed8b80714bc9a15e445",
+      "sha256_right": "ba8cb92dfc7977b9a3b019674b9fc054ee239d02ff21aed8b80714bc9a15e445"
+    },
+    {
+      "left": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-after-button-activation.png",
+      "right": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-after-button-activation.png",
+      "state": "after-button-activation",
+      "png_bytes_identical": true,
+      "sha256_left": "ba8cb92dfc7977b9a3b019674b9fc054ee239d02ff21aed8b80714bc9a15e445",
+      "sha256_right": "ba8cb92dfc7977b9a3b019674b9fc054ee239d02ff21aed8b80714bc9a15e445"
+    },
+    {
+      "left": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-default.png",
+      "right": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-default.png",
+      "state": "default",
+      "png_bytes_identical": true,
+      "sha256_left": "da52c5ee09a1ce098b02919ba51492800415b8e42c227e19e470473b01e286d4",
+      "sha256_right": "da52c5ee09a1ce098b02919ba51492800415b8e42c227e19e470473b01e286d4"
+    },
+    {
+      "left": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-empty-focused.png",
+      "right": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-empty-focused.png",
+      "state": "empty-focused",
+      "png_bytes_identical": true,
+      "sha256_left": "6838482594ece221f1931ad509368da80e03c3c81150d76d208205f36c6d7a76",
+      "sha256_right": "6838482594ece221f1931ad509368da80e03c3c81150d76d208205f36c6d7a76"
+    },
+    {
+      "left": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-focus-boundary-detail.png",
+      "right": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-focus-boundary-detail.png",
+      "state": "focus-boundary-detail",
+      "png_bytes_identical": true,
+      "sha256_left": "9ad76326af98cdb62afc25bc6f51f6f98a3cb4b76b6c5b2328fccbcb0dd4cdfd",
+      "sha256_right": "9ad76326af98cdb62afc25bc6f51f6f98a3cb4b76b6c5b2328fccbcb0dd4cdfd"
+    },
+    {
+      "left": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-filled-focused.png",
+      "right": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-filled-focused.png",
+      "state": "filled-focused",
+      "png_bytes_identical": true,
+      "sha256_left": "87dad98010e98a7b7e5de834a64f47eaf110ef8a5c842d9bcd03ecb736ee5483",
+      "sha256_right": "87dad98010e98a7b7e5de834a64f47eaf110ef8a5c842d9bcd03ecb736ee5483"
+    },
+    {
+      "left": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-filled-blurred-button-focused.png",
+      "right": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-filled-blurred-button-focused.png",
+      "state": "filled-blurred-button-focused",
+      "png_bytes_identical": true,
+      "sha256_left": "ba8cb92dfc7977b9a3b019674b9fc054ee239d02ff21aed8b80714bc9a15e445",
+      "sha256_right": "ba8cb92dfc7977b9a3b019674b9fc054ee239d02ff21aed8b80714bc9a15e445"
+    },
+    {
+      "left": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-post-after-button-activation.png",
+      "right": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-after-button-activation.png",
+      "state": "after-button-activation",
+      "png_bytes_identical": true,
+      "sha256_left": "ba8cb92dfc7977b9a3b019674b9fc054ee239d02ff21aed8b80714bc9a15e445",
+      "sha256_right": "ba8cb92dfc7977b9a3b019674b9fc054ee239d02ff21aed8b80714bc9a15e445"
+    },
+    {
+      "left": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-before-default.png",
+      "right": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-default.png",
+      "state": "default",
+      "png_bytes_identical": false,
+      "sha256_left": "98529a20d2ed9f149baf79f2b0c189cbeb727dccd91201f1c5fd8d3e19f6ea90",
+      "sha256_right": "da52c5ee09a1ce098b02919ba51492800415b8e42c227e19e470473b01e286d4"
+    },
+    {
+      "left": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-before-empty-focused.png",
+      "right": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-empty-focused.png",
+      "state": "empty-focused",
+      "png_bytes_identical": false,
+      "sha256_left": "f64e944dbb908ae5ae465b5e329ed85446812e1d50d1ae022840a65008e307b4",
+      "sha256_right": "6838482594ece221f1931ad509368da80e03c3c81150d76d208205f36c6d7a76"
+    },
+    {
+      "left": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-before-focus-boundary-detail.png",
+      "right": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-focus-boundary-detail.png",
+      "state": "focus-boundary-detail",
+      "png_bytes_identical": false,
+      "sha256_left": "16c15b5415f94e9d6f2245e7b0c12a09053fe6614b202656751f449eaa3a8591",
+      "sha256_right": "9ad76326af98cdb62afc25bc6f51f6f98a3cb4b76b6c5b2328fccbcb0dd4cdfd"
+    },
+    {
+      "left": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-before-filled-focused.png",
+      "right": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-filled-focused.png",
+      "state": "filled-focused",
+      "png_bytes_identical": false,
+      "sha256_left": "4fe5ca5c4687ee090f6b2452dd232ee5db70be148f7b9d60365cf50671addd49",
+      "sha256_right": "87dad98010e98a7b7e5de834a64f47eaf110ef8a5c842d9bcd03ecb736ee5483"
+    },
+    {
+      "left": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-before-filled-blurred-button-focused.png",
+      "right": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-filled-blurred-button-focused.png",
+      "state": "filled-blurred-button-focused",
+      "png_bytes_identical": false,
+      "sha256_left": "80d968d66266e31d0e87db2217134ba33135b2a4c9415b48d2710f1566eca91b",
+      "sha256_right": "ba8cb92dfc7977b9a3b019674b9fc054ee239d02ff21aed8b80714bc9a15e445"
+    },
+    {
+      "left": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-before-after-button-activation.png",
+      "right": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/implementation-after-after-button-activation.png",
+      "state": "after-button-activation",
+      "png_bytes_identical": false,
+      "sha256_left": "80d968d66266e31d0e87db2217134ba33135b2a4c9415b48d2710f1566eca91b",
+      "sha256_right": "ba8cb92dfc7977b9a3b019674b9fc054ee239d02ff21aed8b80714bc9a15e445"
+    }
+  ],
+  "provided_vs_current_default": {
+    "provided": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/browser/source-default.png",
+    "current": "/Users/hyun/.cache/dddjango-web-a8-20260913/workspace/eval/web-a8-visual-fidelity/role-browser-app/source-current-default.png",
+    "png_bytes_identical": true
+  },
+  "earlier_optional_diagnostic": {
+    "command": "python3 - <<PY (PIL Image/ImageChops pixel comparison)",
+    "exit": 1,
+    "output": "Traceback (most recent call last):\n  File \"<stdin>\", line 2, in <module>\nModuleNotFoundError: No module named 'PIL'\n",
+    "outcome": "No file generated by failed diagnostic. No package installed. Used standard-library byte comparison instead."
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "browser": "152.0.7977.83",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "states": [
+    {
+      "name": "source",
+      "input": {
+        "x": 45,
+        "y": 362,
+        "width": 300,
+        "height": 52
+      },
+      "parent": {
+        "x": 43,
+        "y": 332,
+        "width": 304,
+        "height": 164
+      },
+      "padding": "2px 2px 4px",
+      "overflowX": "auto",
+      "overflowY": "auto",
+      "boxShadow": "rgba(143, 103, 91, 0.18) 0px 0px 0px 3px",
+      "focused": "person-name",
+      "captures": [
+        "source-default.png",
+        "source-focus.png"
+      ]
+    },
+    {
+      "name": "omitted",
+      "input": {
+        "x": 43,
+        "y": 360,
+        "width": 304,
+        "height": 52
+      },
+      "parent": {
+        "x": 43,
+        "y": 332,
+        "width": 304,
+        "height": 164
+      },
+      "padding": "0px",
+      "overflowX": "auto",
+      "overflowY": "auto",
+      "boxShadow": "rgba(143, 103, 91, 0.18) 0px 0px 0px 3px",
+      "focused": "person-name",
+      "captures": [
+        "omitted-default.png",
+        "omitted-focus.png"
+      ]
+    },
+    {
+      "name": "room-control",
+      "input": {
+        "x": 47,
+        "y": 364,
+        "width": 296,
+        "height": 52
+      },
+      "parent": {
+        "x": 43,
+        "y": 332,
+        "width": 304,
+        "height": 164
+      },
+      "padding": "4px",
+      "overflowX": "auto",
+      "overflowY": "auto",
+      "boxShadow": "rgba(143, 103, 91, 0.18) 0px 0px 0px 3px",
+      "focused": "person-name",
+      "captures": [
+        "room-control-default.png",
+        "room-control-focus.png"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "dddjango-web/commands/dddjango-web.md": "6470aa0752a3f91129880c50a8501e846bdad3ec454d4404483339d084d4d6a8",
+  "dddjango-web/agents/coder-web.md": "f64bf9212f5f5b17a7a96df8f1695ab441f49b4965fc5a710109c5d7a930aa5b",
+  "dddjango-web/agents/design-review-web.md": "ac364328ecf6ea02e3112f2af1e50c415e975286feb14b2f6e7b9581086e602d",
+  "dddjango-web/agents/design-architect-web.md": "a6ceeee1dbd0fbc02298fa0fec6465bb91d8fb2d0744de14a17ad2b646ce03ea",
+  "dddjango-web/agents/discipline-reviewer-web.md": "76c53c28cfcaedf411910a45a071af96be46ab41b083caa71734060657c63418",
+  "dddjango-web/skills/implementation-ui/references/final.md": "7ef6ad2ede128aab920e3b5a2e41aed5d7dd7aba83e7c6ded4a59f6de9ccc464",
+  "codex-dddjango-web/skills/dddjango-web/SKILL.md": "4eb7c999520be75a5205fe2e96b52714744095cff7978c96f196222ae60be898",
+  "codex-dddjango-web/skills/dddjango-web-coder-web/SKILL.md": "9f302a37348364a09e09057333a24ec46874b43a30320e959da6e282661b6663",
+  "codex-dddjango-web/skills/dddjango-web-design-review-web/SKILL.md": "d7ee4c14be44b18d4b6d22de795cefd6e25f3c52dcbecb5403efc18557213bd3",
+  "codex-dddjango-web/skills/dddjango-web-design-architect-web/SKILL.md": "0ca64d72ac1d65143a32d10d56dc112b354cf2b8e93f5f8c6ca7b51bc02bf2d7",
+  "codex-dddjango-web/skills/dddjango-web-discipline-reviewer-web/SKILL.md": "f32e293ae9f745aaf551de40c45e0974eef749532fff65279ba685e4af6d3bcf",
+  "codex-dddjango-web/skills/implementation-ui/references/final.md": "7ef6ad2ede128aab920e3b5a2e41aed5d7dd7aba83e7c6ded4a59f6de9ccc464"
+}
