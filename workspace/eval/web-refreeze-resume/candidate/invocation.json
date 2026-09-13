@@ -1,0 +1,24 @@
+{
+  "command": [
+    "claude",
+    "--print",
+    "--safe-mode",
+    "--tools",
+    "",
+    "--no-session-persistence",
+    "--output-format",
+    "json"
+  ],
+  "cwd": "/Users/hyun/.cache/dddjango-web-resume-20260913",
+  "source_sha256": {
+    "dddjango-web/commands/dddjango-web.md": "295541ff00e1cef6457a957886e3874cb396bc54f72f0887d9ec1cf17888cb6d",
+    "dddjango-web/agents/design-review-web.md": "ece019ad254adbab7b8d5efe8532950b86e5c54fdb8d9c494a72cb9c9e380b45",
+    "dddjango-web/skills/architecture-web/references/final.md": "3438ae12f489d0ccd3e2d28068e58fad871a9543a867adc538df7fd4d4611f03",
+    "dddjango-web/skills/implementation-ui/references/final.md": "7ef6ad2ede128aab920e3b5a2e41aed5d7dd7aba83e7c6ded4a59f6de9ccc464",
+    "dddjango-web/skills/implementation-ui/references/design-acquisition.md": "93ed8f585d1595563cb6eef95a1db9c08e7dedd7c488d995a6d7378459c4cd55"
+  },
+  "prompt_sha256": "40a046ed40a8c180dc4a94fff2fbb2df26a5add3278664e7c80e4e3d6dacb9ae",
+  "scenario_sha256": "c155a94169c490fce9139c3ab8370e777c49e9c344218dac805e6fa28990a42f",
+  "kind": "tool-free native decision probe, not full plugin execution",
+  "exit_code": 0
+}

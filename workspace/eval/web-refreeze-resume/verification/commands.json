@@ -1,0 +1,38 @@
+[
+  {
+    "command": "make verify-web",
+    "phase": "baseline",
+    "exit_code": 0,
+    "log": "baseline-web.log"
+  },
+  {
+    "command": "python3 workspace/tools/request_guide_contract.py --self-test",
+    "exit_code": 0,
+    "result": "157/157 passed"
+  },
+  {
+    "command": "python3 workspace/tools/request_guide_contract.py",
+    "exit_code": 0,
+    "result": "installation, discovery and mirror contracts PASS"
+  },
+  {
+    "command": "python3 workspace/tools/manifest_seal.py --check --draft",
+    "phase": "baseline",
+    "exit_code": 0,
+    "result": "green; 10 groups, 261 sealed files, 18 runs, draft"
+  },
+  {
+    "command": "make verify",
+    "exit_code": 0,
+    "log": "final-verify.log"
+  },
+  {
+    "command": "claude plugin validate dddjango-web --strict",
+    "exit_code": 0,
+    "result": "Validation passed"
+  },
+  {
+    "command": "git diff --check",
+    "exit_code": 0
+  }
+]

@@ -1,0 +1,23 @@
+{
+  "source": "/Users/hyun/.cache/dddjango-web-resume-20260913",
+  "target": "/Users/hyun/Desktop/dddjango",
+  "base_commit": "382837c97c3dc3722d4e30368d879dd622e12dc2",
+  "runtime_sha256": {
+    "codex-dddjango-web/REQUEST_GUIDE.md": "88d5b99c3d63ba63e61918628bb5fe2bf7a4b2e4279c00af38f2659dbddf61d4",
+    "codex-dddjango-web/skills/dddjango-web-design-review-web/SKILL.md": "01d01b1805e12f984c6a699529b9ebdcd1ace5e5f58257623bbafef2f4a6f5e9",
+    "codex-dddjango-web/skills/dddjango-web/SKILL.md": "799d663549c62bfdca9e03ad693c0ac2a85ff3d769f253477e5dbd0672c4f9e9",
+    "dddjango-web/REQUEST_GUIDE.md": "88d5b99c3d63ba63e61918628bb5fe2bf7a4b2e4279c00af38f2659dbddf61d4",
+    "dddjango-web/agents/design-review-web.md": "ece019ad254adbab7b8d5efe8532950b86e5c54fdb8d9c494a72cb9c9e380b45",
+    "dddjango-web/commands/dddjango-web.md": "295541ff00e1cef6457a957886e3874cb396bc54f72f0887d9ec1cf17888cb6d"
+  },
+  "existing_changes_preserved_sha256": {
+    "docs/master.html": "3515dcfab136b7e0bebdff32f7ac7decada1f124ab51cebd05c95028def5e360",
+    "workspace/eval/field-report-4/2026-09-10-spring-dream-overhaul-lanes.md": "d36d7794b489353ca5b891b9ebcf2145f03ff6a753bcf8bc9cef6dd42a93096a"
+  },
+  "copied_records": [
+    "workspace/eval/web-refreeze-resume",
+    "workspace/plan/2026-09-13-web-refreeze-resume.md"
+  ],
+  "commit_created": false,
+  "release_performed": false
+}

@@ -1,0 +1,165 @@
+[verify-ontology 0/10] 도구 사슬 스모크
+[ontology-env-smoke] OK — python·rdflib·pySHACL·rdfcanon 사슬 green
+[verify-ontology 1/10] 4단 저작 게이트 (전 ttl)
+[ontology-gate] green ontology/prefixes.ttl
+[ontology-gate] green ontology/rules/agent-acceptance-tester.ttl
+[ontology-gate] green ontology/rules/agent-coder.ttl
+[ontology-gate] green ontology/rules/agent-design-architect.ttl
+[ontology-gate] green ontology/rules/agent-design-review-api.ttl
+[ontology-gate] green ontology/rules/agent-design-review-db.ttl
+[ontology-gate] green ontology/rules/agent-design-review-ddd.ttl
+[ontology-gate] green ontology/rules/agent-discipline-reviewer.ttl
+[ontology-gate] green ontology/rules/architecture-api-final.ttl
+[ontology-gate] green ontology/rules/architecture-api-skill.ttl
+[ontology-gate] green ontology/rules/architecture-db-final.ttl
+[ontology-gate] green ontology/rules/architecture-db-skill.ttl
+[ontology-gate] green ontology/rules/architecture-ddd-final.ttl
+[ontology-gate] green ontology/rules/architecture-ddd-skill.ttl
+[ontology-gate] green ontology/rules/command-dddjango.ttl
+[ontology-gate] green ontology/rules/discipline-cleancode-final.ttl
+[ontology-gate] green ontology/rules/discipline-cleancode-skill.ttl
+[ontology-gate] green ontology/rules/discipline-houserules-final.ttl
+[ontology-gate] green ontology/rules/discipline-houserules-skill.ttl
+[ontology-gate] green ontology/rules/discipline-tdd-final.ttl
+[ontology-gate] green ontology/rules/discipline-tdd-skill.ttl
+[ontology-gate] green ontology/rules/implementation-django-final.ttl
+[ontology-gate] green ontology/rules/implementation-django-ninja-final.ttl
+[ontology-gate] green ontology/rules/implementation-django-ninja-skill.ttl
+[ontology-gate] green ontology/rules/implementation-django-skill.ttl
+[ontology-gate] green ontology/rules/implementation-django-web-final.ttl
+[ontology-gate] green ontology/rules/implementation-django-web-skill.ttl
+[ontology-gate] green ontology/rules/implementation-python-final.ttl
+[ontology-gate] green ontology/rules/implementation-python-skill.ttl
+[ontology-gate] green ontology/rules/implementation-test-final.ttl
+[ontology-gate] green ontology/rules/implementation-test-skill.ttl
+[ontology-gate] green ontology/shapes/djr-shapes.ttl
+[ontology-gate] green ontology/shapes/golden/alias-missing-type-invalid.ttl
+[ontology-gate] green ontology/shapes/golden/alias-valid.ttl
+[ontology-gate] green ontology/shapes/golden/block-extraprop-invalid.ttl
+[ontology-gate] green ontology/shapes/golden/block-missing-kind-invalid.ttl
+[ontology-gate] green ontology/shapes/golden/block-missing-order-invalid.ttl
+[ontology-gate] green ontology/shapes/golden/block-valid.ttl
+[ontology-gate] green ontology/shapes/golden/expression-noprov-invalid.ttl
+[ontology-gate] green ontology/shapes/golden/expression-valid.ttl
+[ontology-gate] green ontology/shapes/golden/preflabel-duplang-invalid.ttl
+[ontology-gate] green ontology/shapes/golden/preflabel-valid.ttl
+[ontology-gate] green ontology/shapes/golden/section-badglob-invalid.ttl
+[ontology-gate] green ontology/shapes/golden/section-glob-valid.ttl
+[ontology-gate] green ontology/shapes/golden/section-noowner-invalid.ttl
+[ontology-gate] green ontology/shapes/golden/section-valid.ttl
+[ontology-gate] green ontology/shapes/golden/syncdebt-noreason-invalid.ttl
+[ontology-gate] green ontology/shapes/golden/syncdebt-valid.ttl
+[ontology-gate] green ontology/shapes/golden/violation-badseverity-invalid.ttl
+[ontology-gate] green ontology/shapes/golden/violation-multiexprun-invalid.ttl
+[ontology-gate] green ontology/shapes/golden/violation-valid.ttl
+[ontology-gate] green ontology/shapes/golden/work-delegated-valid.ttl
+[ontology-gate] green ontology/shapes/golden/work-norm-valid.ttl
+[ontology-gate] green ontology/shapes/golden/work-untyped-invalid.ttl
+[ontology-gate] green ontology/shapes/golden/work-unwired-invalid.ttl
+[ontology-gate] green ontology/shapes/meta-house.ttl
+[ontology-gate] green ontology/vocab/djr.ttl
+[ontology-gate] green ontology/wiring/agent-acceptance-tester.ttl
+[ontology-gate] green ontology/wiring/agent-coder.ttl
+[ontology-gate] green ontology/wiring/agent-design-architect.ttl
+[ontology-gate] green ontology/wiring/agent-design-review-api.ttl
+[ontology-gate] green ontology/wiring/agent-design-review-db.ttl
+[ontology-gate] green ontology/wiring/agent-design-review-ddd.ttl
+[ontology-gate] green ontology/wiring/agent-discipline-reviewer.ttl
+[ontology-gate] green ontology/wiring/aliases.ttl
+[ontology-gate] green ontology/wiring/architecture-api-final.ttl
+[ontology-gate] green ontology/wiring/architecture-api-skill.ttl
+[ontology-gate] green ontology/wiring/architecture-db-final.ttl
+[ontology-gate] green ontology/wiring/architecture-db-skill.ttl
+[ontology-gate] green ontology/wiring/architecture-ddd-final.ttl
+[ontology-gate] green ontology/wiring/architecture-ddd-skill.ttl
+[ontology-gate] green ontology/wiring/command-dddjango.ttl
+[ontology-gate] green ontology/wiring/discipline-cleancode-final.ttl
+[ontology-gate] green ontology/wiring/discipline-cleancode-skill.ttl
+[ontology-gate] green ontology/wiring/discipline-houserules-final.ttl
+[ontology-gate] green ontology/wiring/discipline-houserules-skill.ttl
+[ontology-gate] green ontology/wiring/discipline-tdd-final.ttl
+[ontology-gate] green ontology/wiring/discipline-tdd-skill.ttl
+[ontology-gate] green ontology/wiring/implementation-django-final.ttl
+[ontology-gate] green ontology/wiring/implementation-django-ninja-final.ttl
+[ontology-gate] green ontology/wiring/implementation-django-ninja-skill.ttl
+[ontology-gate] green ontology/wiring/implementation-django-skill.ttl
+[ontology-gate] green ontology/wiring/implementation-django-web-final.ttl
+[ontology-gate] green ontology/wiring/implementation-django-web-skill.ttl
+[ontology-gate] green ontology/wiring/implementation-python-final.ttl
+[ontology-gate] green ontology/wiring/implementation-python-skill.ttl
+[ontology-gate] green ontology/wiring/implementation-test-final.ttl
+[ontology-gate] green ontology/wiring/implementation-test-skill.ttl
+[ontology-gate] green ontology/wiring/paths.ttl
+[ontology-gate] green ontology/wiring/registry.ttl
+[ontology-gate] 90파일 — green 90 · red 0
+[verify-ontology 2/10] meta-SHACL 2층
+[meta-shacl] 1층(SHACL-SHACL) green — 셰이프 파일 2개
+[meta-shacl] 2층(하우스) green
+[verify-ontology 3/10] SHACL 본검증 (전량 병합)
+[shacl-full] 데이터 64파일 병합 — 위반 없음
+[verify-ontology 4/10] 계층 병합·적용 대상 계수 회귀
+[hierarchy] 셰이프 9종 — 불일치 0 (계층 병합·타깃 계수 green)
+[verify-ontology 5/10] 골든 페어 red/green
+[ontology-golden] ok   alias-missing-type-invalid.ttl: 기대 red → 실제 red
+[ontology-golden] ok   alias-valid.ttl: 기대 green → 실제 green
+[ontology-golden] ok   block-extraprop-invalid.ttl: 기대 red → 실제 red
+[ontology-golden] ok   block-missing-kind-invalid.ttl: 기대 red → 실제 red
+[ontology-golden] ok   block-missing-order-invalid.ttl: 기대 red → 실제 red
+[ontology-golden] ok   block-valid.ttl: 기대 green → 실제 green
+[ontology-golden] ok   expression-noprov-invalid.ttl: 기대 red → 실제 red
+[ontology-golden] ok   expression-valid.ttl: 기대 green → 실제 green
+[ontology-golden] ok   preflabel-duplang-invalid.ttl: 기대 red → 실제 red
+[ontology-golden] ok   preflabel-valid.ttl: 기대 green → 실제 green
+[ontology-golden] ok   section-badglob-invalid.ttl: 기대 red → 실제 red
+[ontology-golden] ok   section-glob-valid.ttl: 기대 green → 실제 green
+[ontology-golden] ok   section-noowner-invalid.ttl: 기대 red → 실제 red
+[ontology-golden] ok   section-valid.ttl: 기대 green → 실제 green
+[ontology-golden] ok   syncdebt-noreason-invalid.ttl: 기대 red → 실제 red
+[ontology-golden] ok   syncdebt-valid.ttl: 기대 green → 실제 green
+[ontology-golden] ok   violation-badseverity-invalid.ttl: 기대 red → 실제 red
+[ontology-golden] ok   violation-multiexprun-invalid.ttl: 기대 red → 실제 red
+[ontology-golden] ok   violation-valid.ttl: 기대 green → 실제 green
+[ontology-golden] ok   work-delegated-valid.ttl: 기대 green → 실제 green
+[ontology-golden] ok   work-norm-valid.ttl: 기대 green → 실제 green
+[ontology-golden] ok   work-untyped-invalid.ttl: 기대 red → 실제 red
+[ontology-golden] ok   work-unwired-invalid.ttl: 기대 red → 실제 red
+[ontology-golden] 23골든 — 불일치 0
+[verify-ontology 6/10] 게이트 스모크 (오류 계열→차단 단 매핑 표)
+[gate-smoke] ok  blank-node-rules: 기대 2-canon → 실패 단 ['2-canon']
+[gate-smoke] ok  blank-node-shape: 기대 2-canon → 실패 단 ['2-canon']
+[gate-smoke] ok  cons-cell-green: 기대 통과(green 대조군) → 통과
+[gate-smoke] ok  unregistered-prefix: 기대 2-canon → 실패 단 ['2-canon']
+[gate-smoke] ok  hash-comment: 기대 2-canon → 실패 단 ['2-canon']
+[gate-smoke] ok  noncanon-serialization: 기대 2-canon → 실패 단 ['2-canon']
+[gate-smoke] ok  hash-mutation: 기대 3-hash → 실패 단 ['3-hash']
+[gate-smoke] ok  expression-iri-compaction: 기대 1-parse → 실패 단 ['1-parse']
+[gate-smoke] ok  fragment-syntax: 기대 2-canon → 실패 단 ['2-canon']
+[gate-smoke] ok  shacl-unwired-norm: 기대 4-shacl → 실패 단 ['4-shacl']
+[gate-smoke] ok  closed-nonleaf: meta 2층 red 기대 → exit 1
+[gate-smoke] ok  closed-noignore: meta 2층 red 기대 → exit 1
+[gate-smoke] 12케이스 — 불일치 0
+[verify-ontology 7/10] ISSUED 대장↔정본 정합
+[issued-check] 정합 — 위반 0
+[verify-ontology 8/10] 원장 부식 검사 (LEDGER 926 기준선)
+[ledger-check] 정합 — 위반 0
+[verify-ontology 9/10] 렌더 동기 (투영물 == render(그래프))
+[render-sync] 그래프 소유 절 541 — red 0 · warn 0 · SyncDebt 0
+[verify-ontology 10/11] 구조 검증 (SPARQL 7종·순서·datatype·alias 함수성·pathGlob)
+| self-test 단언(임시 정본 트리 end-to-end) | 판정 | 실측 |
+|---|---|---|
+| 정상 대조군(rule#3→R-9001) | ✓ | green |
+| ⑥ 함수성 — 같은 텍스트 두 Work | ✓ | red: ⑥ alias 함수성 위반 1건: rule#5→2Work; ⑥′ 미해소 alias 1건: ['st-d2→R-9002(ISSUE |
+| ⑥ 우회 시도 — IRI 에 golden 포함 | ✓ | red: ⑥ alias 함수성 위반 1건: rule#5→2Work; ⑥′ 미해소 alias 1건: ['st-plain→R-9002(IS |
+| ⑥′ 미발행 Work(ISSUED 밖) | ✓ | red: ⑥′ 미해소 alias 1건: ['st-bare→R-9002(ISSUED 미발행)'] |
+| ⑥′ 판본 없는 Work(currentExpression 0) | ✓ | red: ⑥′ 미해소 alias 1건: ['st-noexpr→R-9003(currentExpression 0개)'] |
+| ⑥′ 채번 형식 아님 | ✓ | red: ⑥′ 미해소 alias 1건: ['st-notwork→not-a-work(채번 형식 아님)'] |
+| ⑥″ 비한정 문법(#10) | ✓ | red: ⑥″ alias 문법 위반 1건: ["st-bare-hash:'#10'(문법)"] |
+| ⑥″ 전치 0(rule#010) | ✓ | red: ⑥″ alias 문법 위반 1건: ["st-zero:'rule#010'(문법)"] |
+| ⑥″ 원장 미실재 번호(rule#99999) | ✓ | red: ⑥″ alias 문법 위반 1건: ["st-ghost:'rule#99999'(원장 미실재)"] |
+| ⑥″ contract 문법 통과(간선 실재) | ✓ | green |
+| ⑥″ contract 레인 밖 검사기 | ✓ | red: ⑥″ alias 문법 위반 1건: ["st-c-out:'contract#check-naming.py'(선행 계약 레인 밖 검사 |
+| ⑥″ contract enforcedBy 간선 부재 | ✓ | red: ⑥″ alias 문법 위반 1건: ["st-c-noedge:'contract#check-common-container.py'( |
+[structural] self-test 통과: ⑥·⑥′·⑥″ 검출력 12/12 실증 (golden 이름 우회·미발행·판본 부재·문법 전건)
+[structural] 정합 — 7종 조인·순서·datatype·alias·pathGlob 전부 성립
+[verify-ontology 11/11] 질의 카탈로그 골든 (Q1~Q4 양성·음성·run 격리)
+[query-golden] 질의 7종 · 양성·음성 전건 일치 (Q2 런 격리 실증 포함)
