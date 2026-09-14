@@ -1,0 +1,17 @@
+/dddjango-web:dddjango-web
+
+A8 관계인 화면의 G0 시안 관찰·동결 checkpoint를 수행해 주세요. 기존 시안과 관찰 자료를 인계합니다. 원본 범위와 실제 조작 상태를 확인하고 필요한 원본 관찰을 보완해 다음 설계 역할이 소비할 현재 동결 입력으로 정리하세요.
+
+이번 요청 범위는 G0 원본 관찰·입력 준비까지입니다. Phase 1·구현·G2·배포는 실행하지 마세요. 제품 범위는 인계한 scope.md의 관계인 전체 상태와 설정의 관계인 진입 행입니다. 기존 캔버스 knob 기본형 한정 등 사용자 결정은 유지합니다. 새로운 제품 결정이 필요하지 않으면 진행하고, 필요하면 현재 부족 사실을 반환하세요.
+
+실행 환경:
+- 현재 plugin root: /tmp/dddjango-web-a8-interactions-20260913/final-plugin/dddjango-web (명시 --plugin-dir 설치본). 해당 Coordinator 커맨드를 적용하세요.
+- 원본 A8 project: /Users/hyun/.herdr/worktrees/spring_dream_server/a8 — 읽기 전용.
+- 작업용 build: /tmp/dddjango-web-a8-interactions-20260913/coordinator-live/build — A8 build의 그대로 복사본입니다. 이 복사본과 /tmp/dddjango-web-a8-interactions-20260913/coordinator-live에만 관찰 증거/임시 코드/로그를 쓸 수 있습니다. 원래 A8 build와 앱·DB·git·플러그인 설치본은 수정하지 마세요.
+- 동결 원본: /tmp/dddjango-web-a8-interactions-20260913/coordinator-live/build/design-ref. 제공된 export 바이트를 시안 입력으로 사용합니다. 원본 변형 파일을 만들지 마세요.
+- 원본 서버는 이미 준비됐습니다: http://127.0.0.1:57232/관계인.dc.html 및 설정.dc.html. 서버가 제공하는 파일은 원래 A8 design-ref 바이트로 작업용 design-ref와 동일합니다. 기존 서버를 중지하거나 새 서버/패키지/브라우저를 설치하지 마세요.
+- 제공 Playwright MCP는 별도 headless Chrome 프로필이고 browser viewport 560×1040입니다. 시안 내 390×844 앱 캔버스와 브라우저 viewport는 구별해 기록하세요. UI 조작은 이 원본 페이지의 임시 메모리에서만 일어납니다.
+- 검사 project-root는 /tmp/dddjango-web-a8-interactions-20260913/coordinator-live, build는 /tmp/dddjango-web-a8-interactions-20260913/coordinator-live/build를 사용합니다(실제 앱 변경 없이 G0 검사만 수행할 수 있는 진단 경계).
+- 현재 요청과 관계없는 다른 실행·평가 기록을 찾아 읽지 마세요. 현재 build, 제공 원본과 plugin 지침만 입력입니다.
+
+독립 입력범위 검토는 다음 별도 실행자가 담당합니다. 현재 checkpoint는 관찰 자료·design-input·visual-check 정리 및 prepare까지 하고, reviewer에 보낼 정확한 입력 경로·review_digest·미관찰 사항을 반환하세요. 여기서는 리뷰어를 직접 호출하거나 자기 입력에 pass 판정을 쓰지 마세요. 이 실행 경계는 G0 checkpoint를 분리한 것이며 입력 검토 생략/전체 완료 승인이 아닙니다.

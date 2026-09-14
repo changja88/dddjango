@@ -88,6 +88,8 @@ make ontology-env      # python3.14 .venv + rdflib·pySHACL·rdfcanon (버전 �
 make ontology-hooks    # core.hooksPath = workspace/hooks (pre-commit 게이트)
 ```
 
+`make verify-web`은 **Node 22 이상이 필수**다 — dddjango-web K3 상호작용 관찰 스위트(`node:test`)가 이를 요구한다. 별도 설치 타깃은 없으니 로컬 Node 버전을 직접 맞춘다.
+
 ## 3. 규범 수정 — 표준 루프
 
 md에서 `<!-- graph-owned: … -->` 마커가 붙은 절은 **직접 수정 금지**다. 고치면 pre-commit 훅과 `ontology_render_sync`가 red로 잡는다. 대신:
@@ -124,6 +126,9 @@ md에서 `<!-- graph-owned: … -->` 마커가 붙은 절은 **직접 수정 금
 | `make verify-mutation` | rulepack·selector를 건드린 커밋 |
 | `make verify-firing` | 설치본 cache 발화 증명 (개발 중엔 `ALLOW_STALE=1`) |
 | `make verify-runready` | 실런(A/B 평가) 진입 직전에만 — verify + 변이 + 발화 + 봉인 엄격 대조 |
+| `make verify-web-browser` | dddjango-web K3 상호작용 관찰 브라우저 스위트 — `release-web` 선행 조건, 상시 `verify`/`verify-web`에는 없음 |
+
+`verify-web-browser`는 `DDDJANGO_WEB_PLAYWRIGHT_MODULE`과 (`DDDJANGO_WEB_BROWSER_CHANNEL` 또는 `DDDJANGO_WEB_BROWSER_CDP`) 둘 다 env로 필요하다 — 없으면 `ERROR:` + exit 1. `DRY=1`이면 env 유무와 무관하게 안내만 하고 통과한다. `make verify-web`(상시 검증)은 같은 스위트를 브라우저 없이 SKIP(exit 0)으로 넘긴다 — SKIP·ERROR 의미론은 `test_observe_interactions.mjs` 자신이 소유한다.
 
 ## 6. 릴리즈
 
@@ -134,6 +139,8 @@ make release DRY=1        # 미리보기 (변경 없음) — release-web DRY=1 �
 ```
 
 플러그인별 타깃이 대상 변수(manifest 2곳·태그 접두사)만 지정하고 공통 절차 `_release`를 부른다. main 브랜치·클린 worktree·origin 동기 상태에서만 진행된다. 두 마켓 manifest에 같은 버전을 기록하고, 커밋 → annotated 태그(`dddjango--vX.Y.Z` · `dddjango-web--vX.Y.Z`) → push → GitHub Release까지 한 번에 간다. 한 저장소에 두 릴리즈 시리즈가 태그 접두사로 나란히 쌓인다. 선택지 `0) current`는 버전 그대로 태그만 발행한다(첫 릴리즈·태그 누락 보완용 — manifest 무변경이면 커밋 없이 현재 HEAD에 태그).
+
+`make release-web`은 `_release` 전에 `verify-web-browser`(K3 브라우저 스위트, §5)를 먼저 돈다 — env 없으면 그 자리에서 막힌다(`DRY=1`이면 안내만).
 
 ## 7. 더 읽기
 

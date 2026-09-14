@@ -1,0 +1,33 @@
+{
+  "argv": [
+    "claude",
+    "--print",
+    "--plugin-dir",
+    "/tmp/dddjango-web-a8-interactions-20260913/mode-split-plugin/dddjango-web",
+    "--agent",
+    "dddjango-web:design-review-web",
+    "--setting-sources",
+    "user",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "/tmp/dddjango-web-a8-interactions-20260913/g0-normal-negative/mcp.json",
+    "--no-session-persistence",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--tools",
+    "Read,Grep,Glob,Skill",
+    "--allowedTools",
+    "Read",
+    "Grep",
+    "Glob",
+    "Skill",
+    "mcp__playwright__*",
+    "--add-dir",
+    "/Users/hyun/.herdr/worktrees/spring_dream_server/a8",
+    "/tmp/dddjango-web-a8-interactions-20260913"
+  ],
+  "cwd": "/tmp/dddjango-web-a8-interactions-20260913/g0-normal-negative",
+  "started": 1789277618.10387,
+  "kind": "current G0 dispatch contract on unchanged actual A8 evidence"
+}

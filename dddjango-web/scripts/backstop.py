@@ -92,6 +92,51 @@ def design_commit(root: Path, reference: str) -> str | None:
     return result.stdout.strip() if result.returncode == 0 else None
 
 
+def legacy_v1_allowed(root: Path, build: Path, diff_base: str | None) -> bool:
+    """K3 legacy v1 게이트 — build 폴더가 git에 추적되고 diff-base(없으면 HEAD) 대비
+    추적 변경이 없으며 untracked·ignored 파일이 없을 때만 True(git 실패·비git은
+    안전 쪽 False — 스펙 K3 "v1 observation")."""
+    try:
+        relative = build.resolve().relative_to(root.resolve()).as_posix()
+    except ValueError:
+        return False
+    base = design_commit(root, diff_base or 'HEAD')
+    if base is None:
+        return False
+    tracked = subprocess.run(['git', '-C', str(root), 'ls-files', '-z', '--', relative],
+                             capture_output=True)
+    if tracked.returncode != 0 or not tracked.stdout.strip(b'\0'):
+        return False
+    diff = subprocess.run(['git', '-C', str(root), 'diff', '--quiet', base, '--', relative],
+                          capture_output=True)
+    if diff.returncode != 0:
+        return False
+    # 「untracked/ignored 0」(K3) — 무시되지 않은 신규 파일과 무시된 파일을 각각 확인한다.
+    # (git ls-files --others --ignored 단독으로는 ignored 파일만 잡히고 일반 untracked
+    # 추가분은 새지 않는다 — 실측으로 확인.)
+    for extra in (['--exclude-standard'], ['--ignored', '--exclude-standard']):
+        untracked = subprocess.run(
+            ['git', '-C', str(root), 'ls-files', '-z', '--others', *extra, '--', relative],
+            capture_output=True)
+        if untracked.returncode != 0 or untracked.stdout.strip(b'\0'):
+            return False
+    return True
+
+
+def observes_legacy_v1(build: Path, design_spec: dict) -> bool:
+    """검사기가 방금 통과시킨 design-input의 case 관찰 문서 중 version 1이 하나라도 있는가 —
+    legacy v1 통지는 실제로 v1을 소비한 빌드에만 낸다(git-clean v2 빌드는 침묵)."""
+    for case in design_spec.get('cases', []):
+        pointer = case.get('source_observation') or {}
+        try:
+            observed = json.loads((build / str(pointer.get('path', ''))).read_bytes())
+        except (OSError, ValueError):
+            continue
+        if isinstance(observed, dict) and observed.get('version') == 1:
+            return True
+    return False
+
+
 def current_nondesign_scope(root: Path, diff_base: str | None, builds: list[Path],
                            states: dict[Path, dict]) -> bool:
     """Skip only completed, unchanged history for one explicit non-design snapshot."""
@@ -240,7 +285,11 @@ def main(argv: List[str]) -> int:
                 design_defects.append('design build 디렉터리/증거가 없음: %s' % build)
             else:
                 try:
-                    design_spec, input_value, _items = validate_inputs(build, root)
+                    legacy_v1: bool = legacy_v1_allowed(root, build, diff_base)
+                    design_spec, input_value, _items = validate_inputs(build, root, legacy_v1=legacy_v1)
+                    if legacy_v1 and observes_legacy_v1(build, design_spec):
+                        ctx.notices.append('[info] legacy v1 observation: %s' %
+                                           build.relative_to(root).as_posix())
                     implementation_value: str = implementation_digest(root, design_spec)
                     validate_visual(build, root, design_spec, input_value, implementation_value)
                 except Defects as error:

@@ -1,0 +1,293 @@
+{
+  "version": 1,
+  "collector": {
+    "name": "interaction_audit",
+    "snippet_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "driver": "observe_interactions.pw.js",
+    "driver_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "path": "node",
+    "capabilities": {
+      "react_props": true,
+      "cdp_listeners": true
+    }
+  },
+  "archive_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "entrypoint": {
+    "path": "screen.dc.html",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "url": "http://127.0.0.1:9000/toggle.dc.html",
+  "browser_viewport": [390, 844],
+  "content_crop": {"x": 0, "y": 0, "w": 390, "h": 844},
+  "root": {
+    "selector": "[data-screen-label=\"생년월일\"]",
+    "found": true,
+    "fingerprint": {"tag": "div", "label": "생년월일", "descendants": 8, "rect": {"x": 0, "y": 0, "w": 390, "h": 844}}
+  },
+  "outside_root": {"count": 0, "sample": []},
+  "excluded_regions": [],
+  "served": {"toggle.dc.html": "0000000000000000000000000000000000000000000000000000000000000000"},
+  "declared": [],
+  "declared_unmatched": [],
+  "observed_at": "2026-09-13T00:00:00Z",
+  "targets": {
+    "leap-label": {
+      "role": "",
+      "name": "윤달",
+      "input_type": "",
+      "owner": "",
+      "owner_items_hash": "",
+      "dom_path": "div:nth-of-type(1)/label:nth-of-type(1)",
+      "kind": "handler",
+      "first_seen_step": 0,
+      "declared": false,
+      "found_by": ["react_props"],
+      "live": false
+    },
+    "cover-label": {
+      "role": "",
+      "name": "덮개",
+      "input_type": "",
+      "owner": "",
+      "owner_items_hash": "",
+      "dom_path": "div:nth-of-type(1)/span:nth-of-type(1)",
+      "kind": "handler",
+      "first_seen_step": 0,
+      "declared": false,
+      "found_by": ["onclick"],
+      "live": false
+    },
+    "cover-inner": {
+      "role": "button",
+      "name": "덮개 안 버튼",
+      "input_type": "",
+      "owner": "",
+      "owner_items_hash": "",
+      "dom_path": "div:nth-of-type(1)/span:nth-of-type(1)/button:nth-of-type(1)",
+      "kind": "button",
+      "first_seen_step": 0,
+      "declared": false,
+      "found_by": ["semantic"],
+      "live": false
+    },
+    "card-wrap": {
+      "role": "",
+      "name": "",
+      "input_type": "",
+      "owner": "",
+      "owner_items_hash": "",
+      "dom_path": "div:nth-of-type(1)",
+      "kind": "handler",
+      "first_seen_step": 0,
+      "declared": false,
+      "found_by": ["react_props"],
+      "live": false
+    },
+    "save-button": {
+      "role": "button",
+      "name": "저장",
+      "input_type": "",
+      "owner": "",
+      "owner_items_hash": "",
+      "dom_path": "div:nth-of-type(1)/button:nth-of-type(1)",
+      "kind": "button",
+      "first_seen_step": 0,
+      "declared": false,
+      "found_by": ["semantic"],
+      "live": false
+    }
+  },
+  "initial": {
+    "inventory": [
+      {"id": "card-wrap", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "occluded": false, "live": false},
+      {"id": "cover-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "occluded": false, "live": false},
+      {"id": "cover-inner", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false},
+      {"id": "leap-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "occluded": false, "live": false},
+      {"id": "save-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false}
+    ],
+    "state_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "surface_key": "s-initial",
+    "capture": {"path": "captures/toggle-initial.png", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"}
+  },
+  "steps": [
+    {
+      "n": 1,
+      "path": ["leap-label"],
+      "target": "leap-label",
+      "action": "click",
+      "option": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": null,
+      "context": "0123456789abcdef",
+      "status": "executed",
+      "error": null,
+      "before": {
+        "inventory": [
+          {"id": "card-wrap", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "occluded": false, "live": false},
+          {"id": "cover-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "occluded": false, "live": false},
+          {"id": "cover-inner", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false},
+          {"id": "leap-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "occluded": false, "live": false},
+          {"id": "save-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false}
+        ],
+        "state_hash": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "after": {
+        "inventory": [
+          {"id": "card-wrap", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "occluded": false, "live": false},
+          {"id": "cover-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "occluded": false, "live": false},
+          {"id": "cover-inner", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false},
+          {"id": "leap-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "occluded": false, "live": false},
+          {"id": "save-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false}
+        ],
+        "state_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+        "surface_key": "s-initial"
+      },
+      "changes": {"added": [], "removed": [], "values": []},
+      "navigated": null,
+      "discovery": false
+    },
+    {
+      "n": 2,
+      "path": ["card-wrap"],
+      "target": "card-wrap",
+      "action": "click",
+      "option": null,
+      "value": null,
+      "context": "0123456789abcdef",
+      "status": "executed",
+      "error": null,
+      "before": {
+        "inventory": [
+          {"id": "card-wrap", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "occluded": false, "live": false},
+          {"id": "cover-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "occluded": false, "live": false},
+          {"id": "cover-inner", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false},
+          {"id": "leap-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "occluded": false, "live": false},
+          {"id": "save-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false}
+        ],
+        "state_hash": "2222222222222222222222222222222222222222222222222222222222222222"
+      },
+      "after": {
+        "inventory": [
+          {"id": "card-wrap", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "occluded": false, "live": false},
+          {"id": "cover-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "occluded": false, "live": false},
+          {"id": "cover-inner", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false},
+          {"id": "leap-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "occluded": false, "live": false},
+          {"id": "save-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false}
+        ],
+        "state_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+        "surface_key": "s-initial"
+      },
+      "changes": {"added": [], "removed": [], "values": []},
+      "navigated": null,
+      "discovery": false
+    },
+    {
+      "n": 3,
+      "path": ["save-button"],
+      "target": "save-button",
+      "action": "click",
+      "option": null,
+      "value": null,
+      "context": "0123456789abcdef",
+      "status": "executed",
+      "error": null,
+      "before": {
+        "inventory": [
+          {"id": "card-wrap", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "occluded": false, "live": false},
+          {"id": "cover-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "occluded": false, "live": false},
+          {"id": "cover-inner", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false},
+          {"id": "leap-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "occluded": false, "live": false},
+          {"id": "save-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false}
+        ],
+        "state_hash": "2222222222222222222222222222222222222222222222222222222222222222"
+      },
+      "after": {
+        "inventory": [
+          {"id": "card-wrap", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "occluded": false, "live": false},
+          {"id": "cover-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "occluded": false, "live": false},
+          {"id": "cover-inner", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false},
+          {"id": "leap-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "occluded": false, "live": false},
+          {"id": "save-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false}
+        ],
+        "state_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+        "surface_key": "s-initial"
+      },
+      "changes": {"added": [], "removed": [], "values": []},
+      "navigated": null,
+      "discovery": false
+    },
+    {
+      "n": 4,
+      "path": ["cover-label"],
+      "target": "cover-label",
+      "action": "click",
+      "option": null,
+      "value": null,
+      "context": "0123456789abcdef",
+      "status": "executed",
+      "error": null,
+      "before": {
+        "inventory": [
+          {"id": "card-wrap", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "occluded": false, "live": false},
+          {"id": "cover-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "occluded": false, "live": false},
+          {"id": "cover-inner", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false},
+          {"id": "leap-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "occluded": false, "live": false},
+          {"id": "save-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false}
+        ],
+        "state_hash": "2222222222222222222222222222222222222222222222222222222222222222"
+      },
+      "after": {
+        "inventory": [
+          {"id": "card-wrap", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "occluded": false, "live": false},
+          {"id": "cover-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "occluded": false, "live": false},
+          {"id": "cover-inner", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false},
+          {"id": "leap-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "occluded": false, "live": false},
+          {"id": "save-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false}
+        ],
+        "state_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+        "surface_key": "s-initial"
+      },
+      "changes": {"added": [], "removed": [], "values": []},
+      "navigated": null,
+      "discovery": false
+    },
+    {
+      "n": 5,
+      "path": ["cover-inner"],
+      "target": "cover-inner",
+      "action": "click",
+      "option": null,
+      "value": null,
+      "context": "0123456789abcdef",
+      "status": "executed",
+      "error": null,
+      "before": {
+        "inventory": [
+          {"id": "card-wrap", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "occluded": false, "live": false},
+          {"id": "cover-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "occluded": false, "live": false},
+          {"id": "cover-inner", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false},
+          {"id": "leap-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "occluded": false, "live": false},
+          {"id": "save-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false}
+        ],
+        "state_hash": "2222222222222222222222222222222222222222222222222222222222222222"
+      },
+      "after": {
+        "inventory": [
+          {"id": "card-wrap", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "occluded": false, "live": false},
+          {"id": "cover-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "occluded": false, "live": false},
+          {"id": "cover-inner", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false},
+          {"id": "leap-label", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "occluded": false, "live": false},
+          {"id": "save-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false}
+        ],
+        "state_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+        "surface_key": "s-initial"
+      },
+      "changes": {"added": [], "removed": [], "values": []},
+      "navigated": null,
+      "discovery": false
+    }
+  ],
+  "discovery_limits": [],
+  "partial": false,
+  "caps_hit": [],
+  "environment_error": null
+}

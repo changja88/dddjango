@@ -41,6 +41,53 @@ python PLUGIN/scripts/archive_design.py EXPORT/screen.dc.html --source-root EXPO
 기존 실패 manifest의 필드를 손으로 바꿔 archive로 승격하지 않는다. 수집 진단 실패
 내역은 보존해 관찰 검토에 전달한다. 실제 파일을 못 읽거나 보관하지 못한 실패는 해결한다.
 
+### 재동결
+
+원본이 바뀌었는지 기계로 대조하려면 같은 `archive_design.py`에 `--compare-build`·
+`--compare-out`을 더해 실행한다. staging은 `BUILD` 밖이거나 `BUILD` 안 `_staging-<ts>`
+(호출마다 새 디렉터리)여야 한다:
+
+```bash
+python PLUGIN/scripts/archive_design.py EXPORT/screen.dc.html --source-root EXPORT \
+  --out BUILD/_staging-<ts>/design-ref --manifest BUILD/_staging-<ts>/source-manifest.json \
+  --compare-build BUILD --compare-out BUILD/refreeze-diff.json [--carried <local_path> …]
+```
+
+기준은 `BUILD/design-input.json`의 `manifests[0]`이다(인자로 고르지 않는다). 새로
+보관한 파일마다 기준과 대조해 `same`(바이트 동일)·`changed`(다른 바이트)·`added`·
+`removed`·`carried`(기준과 대조하지 않고 "미확인"으로만 셈) 중 하나를 매기고, 그
+결과를 `refreeze-diff.json`에 기준 manifest sha·파일별 상태·크기·sha 앞 12자·mtime
+으로 남긴다. exit는 이 명령 고유의 체계이며 `check_design_evidence.py`·`backstop.py`의
+0/1/2와 다르고 그쪽이 소비하지도 않는다: **0** 전부 same · **3** changed·added·
+removed가 하나라도 있음 · **4** same과 carried만 있음(미확인이 남음) · **1** 오류·
+의존성 누락·closure 안 파일을 `--carried`로 지정·staging에도 기준에도 없는 경로를
+`--carried`로 지정(`carried target not in staging: <local_path>` — 오타는 조용히 지나가지 않는다).
+
+staging 파일의 출처(`source`)가 `reference_root`·`BUILD/_history`·(이번 `--out`의
+상위가 아닌) 다른 `BUILD/_staging-*` 아래면 자동으로 carried다. 명시 `--carried`는
+entrypoint 의존성 closure **밖**의 파일에만 쓸 수 있고, closure 안의 파일을 지정하면
+exit 1로 끝난다. carried로 분류된 새 manifest 행에는 `carried_from`(기준 manifest의
+sha256)이 남는다. 대조가 끝나면 exit 0·4는 `_staging-*` 디렉터리를 즉시 지우고,
+exit 3은 아래 «새 기준 설치»(`_staging-<ts>/design-ref`를 `design-ref`로 옮긴다)를
+마친 **뒤**에 남은 `_staging-*`를 지운다 — 어느 경우든 `refreeze-diff.json`만
+남기며 이 파일이 커밋 대상이다. staging 폴더의 출처 자체를 기계가 증명하지는
+못하므로, mtime·sha 표로 실제 작업 transcript와 대조 가능한 정도로만 신뢰한다.
+`_history/vN` 보존은 규범이 아니다 — 이전 바이트는 커밋된 git 이력이 보존한다.
+
+재동결은 사용자가 재동결이나 원본 차이 확인을 요청했을 때만 실행한다 — 자동
+staleness 감지는 없다. 결과는 배너나 대화체 요약이 아니라 `refreeze-diff.json`으로만
+보고한다. exit 4(미확인)면 미확인 파일 수와 목록을 사용자에게 보이고 "미확인 수용"
+또는 "전체 export 다시 제공"(§1의 정상 수집 경로) 중 하나를 고르게 한다. 동일(0)·
+차이(3)·미확인(4)의 뜻은 exit로만 말하며, 화면 HTML 1개가 같다는 이유로 "동일"을
+단언하지 않는다.
+
+exit 3(차이 있음)이면 새 기준을 설치한 뒤 영향받은 case를 다시 관찰한다 — 순서는
+기존 `design-ref`를 지우고 → `_staging-<ts>/design-ref`를 `design-ref`로 옮기고
+(`archive_design.py`는 새 출력 디렉터리를 요구하므로 처음부터 `--out`을 `design-ref`
+로 주지 않는다) → manifest를 새 것으로 교체한다 → 그제야 남은 `_staging-<ts>`를
+지운다. 이 순서 뒤 `archive_sha256`이 바뀌므로 같은 라운드 안에서 영향받은 case의
+재관찰·수집기 재실행·독립 검토·`inputs`를 마친다.
+
 ## 3. 에이전트가 원본 관찰
 
 1. 원본 엔진을 가용한 브라우저로 열거나, 동결 export의 원본 런타임을 그대로 서빙한다.
@@ -59,7 +106,53 @@ python PLUGIN/scripts/archive_design.py EXPORT/screen.dc.html --source-root EXPO
    행동과 결과, 실제 DOM/스타일, 이미지 currentSrc·로드 크기, 폰트 로드/적용, 필요한
    네트워크 응답과 실패. CSS 배경·가상 요소·자식 장식도 확인한다. 접근 가능한 원본은
    기존 render_audit.js 전체를 실행해 치수·색·타이포 비교 자료를 확보한다.
-6. 동적 URL과 폰트 fallback은 **그 상태에서 실제 표시된 결과**로 확인한다. 404를 전부
+6. 조작 상태 수집: entrypoint·viewport마다 드라이버를 실행해 실제로 조작해 본 기록을
+   `interactions.json`으로 동결한다(필드는 design-evidence.md 「`interactions.json`
+   version 1」이 단일 출처). Node 경로는
+
+   ```bash
+   node PLUGIN/scripts/observe_interactions.mjs --url URL --root '[data-screen-label="LABEL"]' \
+     --viewport 560x1040 --crop-root --entrypoint-sha SHA --archive-sha SHA \
+     --out BUILD/captures/<screen>-interactions.json --captures-dir BUILD/captures \
+     [--declared DECLARED.json] [--excluded-regions EXCLUDED.json] [--hover-selectors HOVER.json] \
+     [--playwright-module DIR] [--browser-channel chrome | --cdp WS] \
+     [--max-steps N --max-depth N --max-minutes N] [--resume]
+   ```
+
+   로 부른다(모듈 경로·채널·CDP는 각각 env `DDDJANGO_WEB_PLAYWRIGHT_MODULE`·
+   `DDDJANGO_WEB_BROWSER_CHANNEL`·`DDDJANGO_WEB_BROWSER_CDP`로도 줄 수 있다 — 둘 다
+   없으면 exit 1 + 안내). exit 0은 완료, 3은 상한(`--max-minutes`/`--max-steps`/
+   `--max-depth`)에 걸린 partial(문서는 이미 작성돼 있다), 1은 환경 오류(모듈·브라우저
+   부재, 원격 URL 거부 등 — 문서 미작성)이거나 드라이버 예외다. Coordinator의 Bash
+   도구 상한(≤600초) 때문에 드라이버는 백그라운드로 실행하고 호출 1회에
+   `--max-minutes 8`을 주며, exit 3이면 같은 `--out`에 `--resume`을 더해 이어서
+   실행한다(총 예산 90분 — 다 써도 archive/served sha가 그대로면 이어진다). 소스
+   검토로 찾은 비의미 대상은 `--declared`(행마다 `selector`·`reason`, 선택
+   `value` — 있으면 채움 표본보다 그 값을 우선한다)로 준다: 대상을 늘릴 뿐 줄이지
+   못한다. `--excluded-regions`는 `{selector, reason}` 행 배열이다 — 선언에 매칭된
+   요소는 스니펫이 `outside_root.count`에서 빼므로, 문서에 남은 `count>0`은 선언
+   유무와 무관하게 결함이다(선언을 더 정확히 고쳐 다시 돌린다). MCP 경로에서는
+   `browser_run_code_unsafe`의 `code`에
+
+   ```js
+   async (page) => (await import('<abs>/observe_interactions.pw.js')).default(page, {...})
+   ```
+
+   한 줄(같은 파일을 부르는 트램폴린 — opts가 없어 `filename`을 따로 지정하지
+   않는다)만 넘긴다. `--cdp`로 붙었을 때는 그 브라우저가 이미 연 컨텍스트 안에서만
+   관찰하며(인증 세션 유지), 모션 환원은 적용되지 않는다 — 실행 경계에 그대로 적는다.
+   산출은 대상·잔여 근사·caps_hit를 담은 1행 JSON 요약과
+   `captures/<screen>-interactions.json`·상태 캡처 PNG다. 같은 `--out`은 `--resume`이
+   아니면 문서·PNG를 덮어쓰므로, 한 화면을 viewport마다 실행할 때는
+   `--out captures/<screen>-<w>x<h>-interactions.json`으로 파일을 나눈다(상태 캡처
+   PNG도 그 접두 `<screen>-<w>x<h>-`로 저장되므로 `--captures-dir`는 같은 `captures/`
+   여도 겹치지 않는다) — 각 case의 `source_observation.interactions`가 자기 viewport의
+   그 파일을 가리킨다(검사기는 case가 가리키는 경로로 읽는다). 잔여·`outside_root`·
+   `declared_unmatched`·연결되지 않은 표면이 남으면 재실행이 아니라 실제로 보완한다:
+   먼저 선언(`--declared`/`--excluded-regions`)을 늘려 다시 돌리고, 그래도 남으면
+   case를 추가해 표면을 잇거나, 마지막으로 scope.md 사용자 승인을 받아
+   `interaction_exclusions` 예외 행을 단다 — 사유 없이 잔여를 지우지 않는다.
+7. 동적 URL과 폰트 fallback은 **그 상태에서 실제 표시된 결과**로 확인한다. 404를 전부
    무시하거나 `document.fonts.ready`만으로 정상이라고 판정하지 않는다. 실제 사용된
    폰트·이미지·컴포넌트와 해소되지 않은 실패를 구분하고, 구현에 필요한 추가 외부 파일은
    실제 응답에서 바이트를 확보해 출처와 함께 보관한다. placeholder·영상 자체 제작으로
@@ -77,6 +170,15 @@ reference_capture는 실제 원본 캡처를 가리킨다. source_observation에
 design-evidence.md의 archive 버전·case·캡처·브라우저 원문 연결을 작성한다.
 PNG만 남겨 원본 소스의 버전 연결을 잃지 않는다. 여러 화면도 전체 트리의 archive manifest 하나를
 공유하며, 각 case는 그 안의 해당 원본 HTML/JSX를 가리킨다.
+
+source_observation은 **version 2**를 쓴다 — 위 6번에서 동결한
+`interactions.json`을 가리키는 `interactions` 포인터가 늘어난 형태다(정확한 필드는
+design-evidence.md 「`interactions.json` version 1」). case에는 그 문서 안 도달
+지점을 가리키는 `reached_by`도 함께 적는다. version 1(포인터 없이)은 새로 관찰하는
+어떤 case에도 쓸 수 없다 — `backstop.py`가 발견한 build가 git으로 완전히 추적되고
+`--diff-base`(없으면 HEAD) 대비 무변경일 때만 그 build 자체가 legacy로 통과할 뿐이며,
+이 조건은 `check_design_evidence.py`를 직접 호출할 때도 같은 legacy 플래그 없이는
+적용되지 않는다.
 
 ```bash
 python PLUGIN/scripts/check_design_evidence.py --build BUILD --project-root PROJECT --phase prepare

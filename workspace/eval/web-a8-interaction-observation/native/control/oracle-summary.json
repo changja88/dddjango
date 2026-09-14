@@ -1,0 +1,99 @@
+{
+ "page_closed_steps": 0,
+ "unreachable_reasons": {},
+ "named_handler_surfaces": {
+  "정우재친구 · 1988": 2,
+  "박도윤자녀 · 2019": 3,
+  "이하람부모 · 음력 1": 2,
+  "김서연배우자 · 199": 2,
+  "윤달에 태어났어요": 2,
+  "태어난 시간을 몰라요": 2,
+  "태어난 곳을 못려요": 2
+ },
+ "targets": 223,
+ "steps": 1602,
+ "by_status": {
+  "executed": 1600,
+  "unclickable": 2
+ },
+ "executed_units": 251,
+ "surfaces": 28,
+ "captures": 751,
+ "partial": true,
+ "caps_hit": [
+  "max_minutes"
+ ],
+ "capabilities": {
+  "react_props": true,
+  "cdp_listeners": true
+ },
+ "found_by": {
+  "semantic": 214,
+  "react_props": 220,
+  "cdp_listener": 217,
+  "structure": 1
+ },
+ "kinds": {
+  "button": 10,
+  "handler": 8,
+  "overlay": 4,
+  "trigger": 4,
+  "input": 2,
+  "radio": 4,
+  "menuitem": 190,
+  "textarea": 1
+ },
+ "discovery_limits": [
+  {
+   "kind": "scroll-container",
+   "dom_path": "div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(2)/div:nth-of-type(2)/div:nth-of-type(1)/div:nth-of-type(2)/div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(2)/div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(1)",
+   "reason": "2 위치를 훑어 재인벤토리했다(활성이 된 대상 2) — 컨테이너 안 항목 열거는 완전하지 않을 수 있다(훑은 상태 1)"
+  },
+  {
+   "kind": "scroll-container",
+   "dom_path": "div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(2)/div:nth-of-type(2)/div:nth-of-type(1)/div:nth-of-type(2)/div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(2)/div:nth-of-type(1)/div:nth-of-type(2)/div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(1)",
+   "reason": "3 위치를 훑어 재인벤토리했다(활성이 된 대상 6) — 컨테이너 안 항목 열거는 완전하지 않을 수 있다(훑은 상태 3)"
+  },
+  {
+   "kind": "scroll-container",
+   "dom_path": "div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(2)/div:nth-of-type(2)/div:nth-of-type(1)/div:nth-of-type(2)/div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(2)/div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(1)/div:nth-of-type(1)",
+   "reason": "3 위치를 훑어 재인벤토리했다(활성이 된 대상 6) — 컨테이너 안 항목 열거는 완전하지 않을 수 있다(훑은 상태 3)"
+  }
+ ],
+ "declared": 0,
+ "navigated": [
+  "about:blank",
+  "about:blank"
+ ],
+ "oracle": {
+  "relation_8": [
+   8,
+   []
+  ],
+  "hours_12": [
+   12,
+   []
+  ],
+  "regions_17": [
+   17,
+   []
+  ],
+  "cities_153": [
+   153,
+   []
+  ],
+  "scrim_click_outside": 1,
+  "escape": 7,
+  "toggle_two_state": [
+   "김서연배우자 · 199",
+   "박도윤자녀 · 2019",
+   "윤달에 태어났어요",
+   "이하람부모 · 음력 1",
+   "정우재친구 · 1988",
+   "태어난 곳을 못려요",
+   "태어난 시간을 몰라요"
+  ],
+  "empty_list_steps": []
+ },
+ "never_executed_active_targets": []
+}

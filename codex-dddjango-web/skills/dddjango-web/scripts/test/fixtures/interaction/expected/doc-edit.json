@@ -1,0 +1,237 @@
+{
+  "version": 1,
+  "collector": {
+    "name": "interaction_audit",
+    "snippet_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "driver": "observe_interactions.pw.js",
+    "driver_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "path": "node",
+    "capabilities": { "react_props": true, "cdp_listeners": true }
+  },
+  "archive_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "entrypoint": { "path": "screen.dc.html", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+  "url": "http://127.0.0.1:9000/edit.dc.html",
+  "browser_viewport": [390, 844],
+  "content_crop": { "x": 0, "y": 0, "w": 390, "h": 844 },
+  "root": {
+    "selector": "[data-screen-label=\"관계인수정\"]",
+    "found": true,
+    "fingerprint": { "tag": "div", "label": "관계인수정", "descendants": 6, "rect": { "x": 0, "y": 0, "w": 390, "h": 844 } }
+  },
+  "outside_root": { "count": 0, "sample": [] },
+  "excluded_regions": [],
+  "served": { "edit.dc.html": "0000000000000000000000000000000000000000000000000000000000000000" },
+  "declared": [],
+  "declared_unmatched": [],
+  "observed_at": "2026-09-13T00:05:00Z",
+  "targets": {
+    "name-input": {
+      "role": "textbox", "name": "이름", "input_type": "text", "owner": "", "owner_items_hash": "",
+      "dom_path": "body>form>input[name=name]", "kind": "input", "first_seen_step": 0,
+      "declared": false, "found_by": ["semantic"], "live": false
+    },
+    "agree-checkbox": {
+      "role": "checkbox", "name": "약관 동의", "input_type": "checkbox", "owner": "", "owner_items_hash": "",
+      "dom_path": "body>form>input[name=agree]", "kind": "checkbox", "first_seen_step": 0,
+      "declared": false, "found_by": ["semantic"], "live": false
+    },
+    "next-button": {
+      "role": "button", "name": "다음", "input_type": "", "owner": "", "owner_items_hash": "",
+      "dom_path": "body>form>button[type=submit]", "kind": "button", "first_seen_step": 0,
+      "declared": false, "found_by": ["semantic", "react_props"], "live": false
+    },
+    "region-select": {
+      "role": "listbox", "name": "지역", "input_type": "select", "owner": "", "owner_items_hash": "",
+      "dom_path": "body>form>select[name=region]", "kind": "select", "first_seen_step": 0,
+      "declared": false, "found_by": ["semantic"], "live": false
+    },
+    "region-seoul": {
+      "role": "option", "name": "서울", "input_type": "", "owner": "region-select", "owner_items_hash": "region-items-hash",
+      "dom_path": "", "kind": "option", "value": "seoul", "first_seen_step": 0,
+      "declared": false, "found_by": ["semantic"], "live": false
+    },
+    "region-busan": {
+      "role": "option", "name": "부산", "input_type": "", "owner": "region-select", "owner_items_hash": "region-items-hash",
+      "dom_path": "", "kind": "option", "value": "busan", "first_seen_step": 0,
+      "declared": false, "found_by": ["semantic"], "live": false
+    },
+    "region-daegu": {
+      "role": "option", "name": "대구", "input_type": "", "owner": "region-select", "owner_items_hash": "region-items-hash",
+      "dom_path": "", "kind": "option", "value": "daegu", "first_seen_step": 0,
+      "declared": false, "found_by": ["semantic"], "live": false
+    }
+  },
+  "initial": {
+    "inventory": [
+      { "id": "name-input", "enabled": true, "checked": null, "face": null, "value_empty": false, "surface": null, "occluded": false, "live": false },
+      { "id": "agree-checkbox", "enabled": true, "checked": false, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+      { "id": "next-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+      { "id": "region-select", "enabled": true, "checked": null, "face": "선택", "value_empty": null, "surface": null, "occluded": false, "live": false }
+    ],
+    "state_hash": "e0",
+    "surface_key": "ef0",
+    "capture": { "path": "captures/edit-initial.png", "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" }
+  },
+  "steps": [
+    {
+      "n": 1, "path": ["name-input"], "target": "name-input", "action": "focus", "option": null, "value": null,
+      "context": "ctx-name-input-0", "status": "executed", "error": null,
+      "before": {
+        "inventory": [
+          { "id": "name-input", "enabled": true, "checked": null, "face": null, "value_empty": false, "surface": null, "occluded": false, "live": false },
+          { "id": "agree-checkbox", "enabled": true, "checked": false, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "next-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "e0"
+      },
+      "after": {
+        "inventory": [
+          { "id": "name-input", "enabled": true, "checked": null, "face": null, "value_empty": false, "surface": null, "occluded": false, "live": false },
+          { "id": "agree-checkbox", "enabled": true, "checked": false, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "next-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "e0", "surface_key": "ef0"
+      },
+      "changes": { "added": [], "removed": [], "values": [] },
+      "navigated": null, "discovery": false
+    },
+    {
+      "n": 2, "path": ["name-input"], "target": "name-input", "action": "fill", "option": null, "value": "검증 입력",
+      "context": "ctx-name-input-0", "status": "executed", "error": null,
+      "before": {
+        "inventory": [
+          { "id": "name-input", "enabled": true, "checked": null, "face": null, "value_empty": false, "surface": null, "occluded": false, "live": false },
+          { "id": "agree-checkbox", "enabled": true, "checked": false, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "next-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "e0"
+      },
+      "after": {
+        "inventory": [
+          { "id": "name-input", "enabled": true, "checked": null, "face": null, "value_empty": false, "surface": null, "occluded": false, "live": false },
+          { "id": "agree-checkbox", "enabled": true, "checked": false, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "next-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "e1", "surface_key": "ef0"
+      },
+      "changes": { "added": [], "removed": [], "values": [{ "target": "name-input", "before": "홍길동", "after": "검증 입력" }] },
+      "navigated": null, "discovery": false
+    },
+    {
+      "n": 3, "path": ["name-input"], "target": "name-input", "action": "blur", "option": null, "value": null,
+      "context": "ctx-name-input-1", "status": "executed", "error": null,
+      "before": {
+        "inventory": [
+          { "id": "name-input", "enabled": true, "checked": null, "face": null, "value_empty": false, "surface": null, "occluded": false, "live": false },
+          { "id": "agree-checkbox", "enabled": true, "checked": false, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "next-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "e1"
+      },
+      "after": {
+        "inventory": [
+          { "id": "name-input", "enabled": true, "checked": null, "face": null, "value_empty": false, "surface": null, "occluded": false, "live": false },
+          { "id": "agree-checkbox", "enabled": true, "checked": false, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "next-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "e1", "surface_key": "ef0"
+      },
+      "changes": { "added": [], "removed": [], "values": [] },
+      "navigated": null, "discovery": false
+    },
+    {
+      "n": 4, "path": ["agree-checkbox"], "target": "agree-checkbox", "action": "click", "option": false, "value": null,
+      "context": "ctx-agree-checkbox-0", "status": "executed", "error": null,
+      "before": {
+        "inventory": [
+          { "id": "name-input", "enabled": true, "checked": null, "face": null, "value_empty": false, "surface": null, "occluded": false, "live": false },
+          { "id": "agree-checkbox", "enabled": true, "checked": false, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "next-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "e1"
+      },
+      "after": {
+        "inventory": [
+          { "id": "name-input", "enabled": true, "checked": null, "face": null, "value_empty": false, "surface": null, "occluded": false, "live": false },
+          { "id": "agree-checkbox", "enabled": true, "checked": true, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "next-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "e2", "surface_key": "ef0"
+      },
+      "changes": { "added": [], "removed": [], "values": [] },
+      "navigated": null, "discovery": false
+    },
+    {
+      "n": 5, "path": ["agree-checkbox"], "target": "agree-checkbox", "action": "click", "option": true, "value": null,
+      "context": "ctx-agree-checkbox-1", "status": "executed", "error": null,
+      "before": {
+        "inventory": [
+          { "id": "name-input", "enabled": true, "checked": null, "face": null, "value_empty": false, "surface": null, "occluded": false, "live": false },
+          { "id": "agree-checkbox", "enabled": true, "checked": true, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "next-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "e2"
+      },
+      "after": {
+        "inventory": [
+          { "id": "name-input", "enabled": true, "checked": null, "face": null, "value_empty": false, "surface": null, "occluded": false, "live": false },
+          { "id": "agree-checkbox", "enabled": true, "checked": false, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "next-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "e1", "surface_key": "ef0"
+      },
+      "changes": { "added": [], "removed": [], "values": [] },
+      "navigated": null, "discovery": false
+    },
+    {
+      "n": 6, "path": ["next-button"], "target": "next-button", "action": "click", "option": null, "value": null,
+      "context": "ctx-next-button-0", "status": "executed", "error": null,
+      "before": {
+        "inventory": [
+          { "id": "name-input", "enabled": true, "checked": null, "face": null, "value_empty": false, "surface": null, "occluded": false, "live": false },
+          { "id": "agree-checkbox", "enabled": true, "checked": false, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "next-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "e1"
+      },
+      "after": {
+        "inventory": [
+          { "id": "name-input", "enabled": true, "checked": null, "face": null, "value_empty": false, "surface": null, "occluded": false, "live": false },
+          { "id": "agree-checkbox", "enabled": true, "checked": false, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "next-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "e1", "surface_key": "ef0"
+      },
+      "changes": { "added": [], "removed": [], "values": [] },
+      "navigated": null, "discovery": false
+    },
+    {
+      "n": 7, "path": ["region-select", "region-seoul"], "target": "region-seoul", "action": "select", "option": "seoul", "value": null,
+      "context": "ctx-region-select-0", "status": "executed", "error": null,
+      "before": {
+        "inventory": [
+          { "id": "name-input", "enabled": true, "checked": null, "face": null, "value_empty": false, "surface": null, "occluded": false, "live": false },
+          { "id": "agree-checkbox", "enabled": true, "checked": false, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "next-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "region-select", "enabled": true, "checked": null, "face": "선택", "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "e1"
+      },
+      "after": {
+        "inventory": [
+          { "id": "name-input", "enabled": true, "checked": null, "face": null, "value_empty": false, "surface": null, "occluded": false, "live": false },
+          { "id": "agree-checkbox", "enabled": true, "checked": false, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "next-button", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "region-select", "enabled": true, "checked": null, "face": "서울", "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "e3", "surface_key": "ef0"
+      },
+      "changes": { "added": [], "removed": [], "values": [] },
+      "navigated": null, "discovery": false
+    }
+  ],
+  "discovery_limits": [],
+  "partial": false,
+  "caps_hit": [],
+  "environment_error": null
+}

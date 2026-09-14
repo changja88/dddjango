@@ -1,0 +1,172 @@
+{
+  "version": 1,
+  "generated_at": "2026-09-14T10:48:14Z",
+  "base_manifest_sha256": "bddc54ec19c5fbbe245d508d0892a80e0b21729025ff71d37360492f4fe7419f",
+  "rows": [
+    {
+      "local_path": "_ds/chunmong-design-system-9ad494f0-e78e-410b-b52f-e515367f30e9/_adherence.oxlintrc.json",
+      "status": "same",
+      "size_bytes": 34060,
+      "sha12": "efbbdce6c0d9",
+      "mtime": 1789382894.375263
+    },
+    {
+      "local_path": "_ds/chunmong-design-system-9ad494f0-e78e-410b-b52f-e515367f30e9/_ds_bundle.js",
+      "status": "same",
+      "size_bytes": 115341,
+      "sha12": "3d86061bf05a",
+      "mtime": 1789382894.374547
+    },
+    {
+      "local_path": "_ds/chunmong-design-system-9ad494f0-e78e-410b-b52f-e515367f30e9/_ds_manifest.json",
+      "status": "same",
+      "size_bytes": 53656,
+      "sha12": "873c69b76448",
+      "mtime": 1789382894.3749073
+    },
+    {
+      "local_path": "_ds/chunmong-design-system-9ad494f0-e78e-410b-b52f-e515367f30e9/assets/currency/wonbo.png",
+      "status": "carried",
+      "size_bytes": 1874353,
+      "sha12": "d57c0881befe",
+      "mtime": 1789382894.3863862,
+      "carried_from": "bddc54ec19c5fbbe245d508d0892a80e0b21729025ff71d37360492f4fe7419f"
+    },
+    {
+      "local_path": "_ds/chunmong-design-system-9ad494f0-e78e-410b-b52f-e515367f30e9/assets/icons/lucide.css",
+      "status": "same",
+      "size_bytes": 854,
+      "sha12": "79ccb7941371",
+      "mtime": 1789382894.3792014
+    },
+    {
+      "local_path": "_ds/chunmong-design-system-9ad494f0-e78e-410b-b52f-e515367f30e9/assets/logo.png",
+      "status": "carried",
+      "size_bytes": 1375132,
+      "sha12": "fff90e15e1ee",
+      "mtime": 1789382894.3785775,
+      "carried_from": "bddc54ec19c5fbbe245d508d0892a80e0b21729025ff71d37360492f4fe7419f"
+    },
+    {
+      "local_path": "_ds/chunmong-design-system-9ad494f0-e78e-410b-b52f-e515367f30e9/assets/ornaments/gold-blossom.png",
+      "status": "carried",
+      "size_bytes": 1328354,
+      "sha12": "25f77e178e4b",
+      "mtime": 1789382894.3807232,
+      "carried_from": "bddc54ec19c5fbbe245d508d0892a80e0b21729025ff71d37360492f4fe7419f"
+    },
+    {
+      "local_path": "_ds/chunmong-design-system-9ad494f0-e78e-410b-b52f-e515367f30e9/assets/saju/wood/00-element.png",
+      "status": "carried",
+      "size_bytes": 943637,
+      "sha12": "bdf012a09fb9",
+      "mtime": 1789382894.3772416,
+      "carried_from": "bddc54ec19c5fbbe245d508d0892a80e0b21729025ff71d37360492f4fe7419f"
+    },
+    {
+      "local_path": "_ds/chunmong-design-system-9ad494f0-e78e-410b-b52f-e515367f30e9/readme.md",
+      "status": "same",
+      "size_bytes": 31638,
+      "sha12": "7f243312bfd8",
+      "mtime": 1789382894.3756177
+    },
+    {
+      "local_path": "_ds/chunmong-design-system-9ad494f0-e78e-410b-b52f-e515367f30e9/styles.css",
+      "status": "same",
+      "size_bytes": 426,
+      "sha12": "355669a2e725",
+      "mtime": 1789382894.3741531
+    },
+    {
+      "local_path": "_ds/chunmong-design-system-9ad494f0-e78e-410b-b52f-e515367f30e9/tokens/base.css",
+      "status": "same",
+      "size_bytes": 1539,
+      "sha12": "e62a8f5afdd5",
+      "mtime": 1789382894.3900456
+    },
+    {
+      "local_path": "_ds/chunmong-design-system-9ad494f0-e78e-410b-b52f-e515367f30e9/tokens/colors.css",
+      "status": "same",
+      "size_bytes": 8066,
+      "sha12": "bc25c6bab01d",
+      "mtime": 1789382894.3883924
+    },
+    {
+      "local_path": "_ds/chunmong-design-system-9ad494f0-e78e-410b-b52f-e515367f30e9/tokens/fonts.css",
+      "status": "same",
+      "size_bytes": 1497,
+      "sha12": "690632d92516",
+      "mtime": 1789382894.38942
+    },
+    {
+      "local_path": "_ds/chunmong-design-system-9ad494f0-e78e-410b-b52f-e515367f30e9/tokens/glass.css",
+      "status": "same",
+      "size_bytes": 6902,
+      "sha12": "3486a5e7edc9",
+      "mtime": 1789382894.38877
+    },
+    {
+      "local_path": "_ds/chunmong-design-system-9ad494f0-e78e-410b-b52f-e515367f30e9/tokens/layout.css",
+      "status": "same",
+      "size_bytes": 1148,
+      "sha12": "2f682dd5e2ff",
+      "mtime": 1789382894.3890884
+    },
+    {
+      "local_path": "_ds/chunmong-design-system-9ad494f0-e78e-410b-b52f-e515367f30e9/tokens/motion.css",
+      "status": "same",
+      "size_bytes": 1103,
+      "sha12": "5c5d01b6eea1",
+      "mtime": 1789382894.3897421
+    },
+    {
+      "local_path": "_ds/chunmong-design-system-9ad494f0-e78e-410b-b52f-e515367f30e9/tokens/radius.css",
+      "status": "same",
+      "size_bytes": 460,
+      "sha12": "1e059eda6a67",
+      "mtime": 1789382894.3876536
+    },
+    {
+      "local_path": "_ds/chunmong-design-system-9ad494f0-e78e-410b-b52f-e515367f30e9/tokens/spacing.css",
+      "status": "same",
+      "size_bytes": 670,
+      "sha12": "4a20713a82eb",
+      "mtime": 1789382894.387987
+    },
+    {
+      "local_path": "_ds/chunmong-design-system-9ad494f0-e78e-410b-b52f-e515367f30e9/tokens/typography.css",
+      "status": "same",
+      "size_bytes": 2139,
+      "sha12": "fe32d4cc9946",
+      "mtime": 1789382894.3872283
+    },
+    {
+      "local_path": "support.js",
+      "status": "same",
+      "size_bytes": 69150,
+      "sha12": "8fe7df74405f",
+      "mtime": 1789382894.3724823
+    },
+    {
+      "local_path": "관계인.dc.html",
+      "status": "same",
+      "size_bytes": 34922,
+      "sha12": "cf2fe3486ca8",
+      "mtime": 1789382894.3732474
+    },
+    {
+      "local_path": "설정.dc.html",
+      "status": "same",
+      "size_bytes": 11815,
+      "sha12": "b88e995b5f77",
+      "mtime": 1789382894.3718789
+    }
+  ],
+  "summary": {
+    "same": 18,
+    "changed": 0,
+    "added": 0,
+    "removed": 0,
+    "carried": 4
+  }
+}

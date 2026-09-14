@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "claude",
+    "--print",
+    "--plugin-dir",
+    "/tmp/dddjango-web-a8-interactions-20260913/discovery-first-plugin/dddjango-web",
+    "--setting-sources",
+    "user",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "/tmp/dddjango-web-a8-interactions-20260913/activation-probe/mcp.json",
+    "--no-session-persistence",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--tools",
+    ""
+  ],
+  "cwd": "/tmp/dddjango-web-a8-interactions-20260913/activation-probe",
+  "started": 1789279938.5388072
+}

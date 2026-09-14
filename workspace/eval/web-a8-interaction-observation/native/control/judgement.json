@@ -1,0 +1,270 @@
+{
+  "build": "/tmp/dddjango-web-interaction-evidence-20260913/native/a8-control/.dddjango-web/20260912-1640-web-related-persons",
+  "cases": 14,
+  "observation_versions": {
+    "2": 12,
+    "1": 2
+  },
+  "interactions_docs": {
+    "captures/related-interactions.json": {
+      "exists": true,
+      "sha_matches_pointer": true,
+      "driver_sha_ok": true,
+      "snippet_sha_ok": true,
+      "targets": 223,
+      "steps": 1602,
+      "executed": 1600,
+      "by_status": {
+        "executed": 1600,
+        "unclickable": 2
+      },
+      "partial": true,
+      "caps_hit": [
+        "max_minutes"
+      ],
+      "discovery_limits": 3,
+      "capabilities": {
+        "react_props": true,
+        "cdp_listeners": true
+      },
+      "declared": 0,
+      "excluded_regions": 0,
+      "surfaces": 28,
+      "url": "http://127.0.0.1:8733/%EA%B4%80%EA%B3%84%EC%9D%B8.dc.html",
+      "viewport": [
+        560,
+        1040
+      ],
+      "crop": {
+        "x": 85,
+        "y": 40,
+        "w": 390,
+        "h": 877
+      },
+      "observed_at": "2026-09-14T13:55:54Z",
+      "archive_sha": "bddc54ec19c5"
+    },
+    "captures/settings-interactions.json": {
+      "exists": true,
+      "sha_matches_pointer": true,
+      "driver_sha_ok": true,
+      "snippet_sha_ok": true,
+      "targets": 30,
+      "steps": 484,
+      "executed": 366,
+      "by_status": {
+        "executed": 366,
+        "unreachable": 46,
+        "unclickable": 72
+      },
+      "partial": true,
+      "caps_hit": [
+        "max_minutes"
+      ],
+      "discovery_limits": 1,
+      "capabilities": {
+        "react_props": true,
+        "cdp_listeners": true
+      },
+      "declared": 0,
+      "excluded_regions": 0,
+      "surfaces": 12,
+      "url": "http://127.0.0.1:8733/%EC%84%A4%EC%A0%95.dc.html",
+      "viewport": [
+        560,
+        1040
+      ],
+      "crop": {
+        "x": 85,
+        "y": 40,
+        "w": 390,
+        "h": 877
+      },
+      "observed_at": "2026-09-14T13:23:30Z",
+      "archive_sha": "bddc54ec19c5"
+    }
+  },
+  "j1_driver_ran": true,
+  "checker_inputs": {
+    "exit": 2,
+    "stdout": "",
+    "stderr_lines": [
+      "[design-evidence] defect: cases[related/list].interactions(captures/related-interactions.json): 새 표면 '02afefb1ed277a8cc4c9d89770befb0b4962fc4f75d378b692fe3eae2f9378bd'에 도달한 case reached_by도 승인 예외도 없다",
+      "[design-evidence] defect: cases[related/list].interactions(captures/related-interactions.json): 새 표면 '19c9b33969e6377d52fd4557b218edeacb911191b6f965047f0b8242b3c2fa68'에 도달한 case reached_by도 승인 예외도 없다",
+      "[design-evidence] defect: cases[related/list].interactions(captures/related-interactions.json): 새 표면 '2212b81aacb2132c0aa9c0606125d2ea5098995df1b9c3ad1844f769e1aa66bb'에 도달한 case reached_by도 승인 예외도 없다",
+      "[design-evidence] defect: cases[related/list].interactions(captures/related-interactions.json): 새 표면 '40aebdc7373f21a7cbba20f80897d320d31a399fc8250df12918542612fdfff8'에 도달한 case reached_by도 승인 예외도 없다",
+      "[design-evidence] defect: cases[related/list].interactions(captures/related-interactions.json): 새 표면 '41212a862d0120b63b01bacd5511214ba5d2fc859f037c1405082c830dc1d779'에 도달한 case reached_by도 승인 예외도 없다",
+      "[design-evidence] defect: cases[related/list].interactions(captures/related-interactions.json): 새 표면 '43b8052f1a66abdb14db5ff41dc00373d514839383a8dd41a30f4da43e3b5d33'에 도달한 case reached_by도 승인 예외도 없다",
+      "[design-evidence] defect: cases[related/list].interactions(captures/related-interactions.json): 새 표면 '7de9210a8f71586df14f4c13532b8ee23d22a92887ef64dc61cdd2e0f9f745f7'에 도달한 case reached_by도 승인 예외도 없다",
+      "[design-evidence] defect: cases[related/list].interactions(captures/related-interactions.json): 새 표면 '80918812685690d52fd8560ef5ecc89a5e60e30cdcffc77e991bec564a8cb845'에 도달한 case reached_by도 승인 예외도 없다",
+      "[design-evidence] defect: cases[related/list].interactions(captures/related-interactions.json): 새 표면 '8df0c1321368ff485668f02c276094514ac721ec3a255bfd52d190ffb45c705a'에 도달한 case reached_by도 승인 예외도 없다",
+      "[design-evidence] defect: cases[related/list].interactions(captures/related-interactions.json): 새 표면 'c2dfa5c8eef4c02cf22ec733f875bb1e4ebd5cd1e6bddbd05e86094be2ce85b1'에 도달한 case reached_by도 승인 예외도 없다",
+      "[design-evidence] defect: cases[related/list].interactions(captures/related-interactions.json): 새 표면 'd369106b0c3fb29349e8448c2f82722ca825924733d7fbbfe5ab74c236e45938'에 도달한 case reached_by도 승인 예외도 없다",
+      "[design-evidence] defect: cases[related/list].interactions(captures/related-interactions.json): 새 표면 'd8e628f71b1d006556f6d0bf6e850b5415bddd3d532e32e84360425dbc503073'에 도달한 case reached_by도 승인 예외도 없다",
+      "[design-evidence] defect: cases[related/list].interactions(captures/related-interactions.json): 새 표면 'e9c88a3c6096d8eda459d3ec29e2071bdb0e5a171766c999cb2db326551006c2'에 도달한 case reached_by도 승인 예외도 없다",
+      "[design-evidence] defect: cases[related/list].interactions(captures/related-interactions.json): 새 표면 'ec116e08692f851bb2e16d42f355f89c1d037339c4f0806529e699447245d82d'에 도달한 case reached_by도 승인 예외도 없다",
+      "[design-evidence] defect: cases[related/list].interactions(captures/related-interactions.json): 새 표면 'f6931b6183671dbaad1e132844e2c5a3da4a7ea3f489ecaea5c2540cb282591c'에 도달한 case reached_by도 승인 예외도 없다",
+      "[design-evidence] defect: cases[related/list].interactions(captures/related-interactions.json): 새 표면 'ffa6d8c2a8ddbc6712876122e09a2ad32dbb0a06e062134df3483ae7f6e3c103'에 도달한 case reached_by도 승인 예외도 없다",
+      "[design-evidence] defect: cases[1].source_observation: interaction evidence required (version 2 with interactions)",
+      "[design-evidence] defect: cases[12].source_observation: interaction evidence required (version 2 with interactions)",
+      "[design-evidence] defect: coverage_review: reviewed-input does not match current source/cases/observations",
+      "[design-evidence] defect: coverage_review: independent review-result: pass required"
+    ]
+  },
+  "j2_residual_zero_exit0": false,
+  "exclusions": 6,
+  "j3_exclusions": true,
+  "reached_by": [
+    {
+      "id": "related/list",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": "initial",
+        "capture": "captures/related-initial.png"
+      }
+    },
+    {
+      "id": "related/empty",
+      "reached_by": false,
+      "capture_sha_match": false,
+      "detail": null
+    },
+    {
+      "id": "related/detail",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 33,
+        "capture": "captures/related-step-33.png"
+      }
+    },
+    {
+      "id": "related/delete-confirm",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 24,
+        "capture": "captures/related-step-24.png"
+      }
+    },
+    {
+      "id": "related/register-step1",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 7,
+        "capture": "captures/related-step-7.png"
+      }
+    },
+    {
+      "id": "related/edit-step1",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 269,
+        "capture": "captures/related-step-269.png"
+      }
+    },
+    {
+      "id": "related/form-step2-solar",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 270,
+        "capture": "captures/related-step-270.png"
+      }
+    },
+    {
+      "id": "related/form-step2-lunar",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 73,
+        "capture": "captures/related-step-73.png"
+      }
+    },
+    {
+      "id": "related/form-step3",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 271,
+        "capture": "captures/related-step-271.png"
+      }
+    },
+    {
+      "id": "related/form-step4",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 272,
+        "capture": "captures/related-step-272.png"
+      }
+    },
+    {
+      "id": "related/form-step4-sigungu",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 75,
+        "capture": "captures/related-step-75.png"
+      }
+    },
+    {
+      "id": "related/register-step4",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 456,
+        "capture": "captures/related-step-456.png"
+      }
+    },
+    {
+      "id": "related/form-error",
+      "reached_by": false,
+      "capture_sha_match": false,
+      "detail": null
+    },
+    {
+      "id": "settings/related-row",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": "initial",
+        "capture": "captures/settings-initial.png"
+      }
+    }
+  ],
+  "j4_surface_linked": false,
+  "result": {
+    "subtype": "success",
+    "num_turns": 131,
+    "duration_ms": 8151978,
+    "total_cost_usd": 33.87455775,
+    "is_error": false
+  },
+  "tools": {
+    "Bash": 126,
+    "Read": 75,
+    "Agent": 1,
+    "Grep": 31,
+    "Glob": 8
+  },
+  "agent_calls": [
+    {
+      "subagent_type": "dddjango-web:design-review-web",
+      "description": "입력범위 독립 검토(관계인 G0)"
+    }
+  ],
+  "bash_driver_cmds": 17,
+  "bash_resume_cmds": 11,
+  "j5_review_agent": true,
+  "verdict": {
+    "j1_driver_ran": true,
+    "j2_residual_zero_exit0": false,
+    "j3_exclusions": true,
+    "j4_surface_linked": false,
+    "j5_review_agent": true
+  }
+}

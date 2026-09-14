@@ -1,0 +1,160 @@
+{
+  "version": 1,
+  "collector": {
+    "name": "interaction_audit",
+    "snippet_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "driver": "observe_interactions.pw.js",
+    "driver_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "path": "node",
+    "capabilities": { "react_props": true, "cdp_listeners": true }
+  },
+  "archive_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "entrypoint": { "path": "screen.dc.html", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+  "url": "http://127.0.0.1:9000/cascade.dc.html",
+  "browser_viewport": [390, 844],
+  "content_crop": { "x": 0, "y": 0, "w": 390, "h": 844 },
+  "root": {
+    "selector": "[data-screen-label=\"주소선택\"]",
+    "found": true,
+    "fingerprint": { "tag": "div", "label": "주소선택", "descendants": 8, "rect": { "x": 0, "y": 0, "w": 390, "h": 844 } }
+  },
+  "outside_root": { "count": 0, "sample": [] },
+  "excluded_regions": [],
+  "served": { "cascade.dc.html": "0000000000000000000000000000000000000000000000000000000000000000" },
+  "declared": [],
+  "declared_unmatched": [],
+  "observed_at": "2026-09-13T00:10:00Z",
+  "targets": {
+    "trigger-a": {
+      "role": "combobox", "name": "시/도", "input_type": "", "owner": "", "owner_items_hash": "",
+      "dom_path": "body>form>button[name=sido]", "kind": "trigger", "first_seen_step": 0,
+      "declared": false, "found_by": ["semantic", "react_props"], "live": false
+    },
+    "trigger-b": {
+      "role": "combobox", "name": "시/군/구", "input_type": "", "owner": "", "owner_items_hash": "",
+      "dom_path": "body>form>button[name=sigungu]", "kind": "trigger", "first_seen_step": 0,
+      "declared": false, "found_by": ["semantic", "react_props"], "live": false
+    },
+    "item-a-seoul": {
+      "role": "menuitem", "name": "서울", "input_type": "", "owner": "trigger-a", "owner_items_hash": "hash-a-items",
+      "dom_path": "", "kind": "menuitem", "first_seen_step": 1, "declared": false, "found_by": ["semantic"], "live": false
+    },
+    "item-a-busan": {
+      "role": "menuitem", "name": "부산", "input_type": "", "owner": "trigger-a", "owner_items_hash": "hash-a-items",
+      "dom_path": "", "kind": "menuitem", "first_seen_step": 1, "declared": false, "found_by": ["semantic"], "live": false
+    },
+    "item-b-gangnam-seoul": {
+      "role": "menuitem", "name": "강남구", "input_type": "", "owner": "trigger-b", "owner_items_hash": "hash-b-seoul",
+      "dom_path": "", "kind": "menuitem", "first_seen_step": 3, "declared": false, "found_by": ["semantic"], "live": false
+    },
+    "item-b-jongno-seoul": {
+      "role": "menuitem", "name": "종로구", "input_type": "", "owner": "trigger-b", "owner_items_hash": "hash-b-seoul",
+      "dom_path": "", "kind": "menuitem", "first_seen_step": 3, "declared": false, "found_by": ["semantic"], "live": false
+    }
+  },
+  "initial": {
+    "inventory": [
+      { "id": "trigger-a", "enabled": true, "checked": null, "face": "선택", "value_empty": null, "surface": null, "occluded": false, "live": false },
+      { "id": "trigger-b", "enabled": true, "checked": null, "face": "선택", "value_empty": null, "surface": null, "occluded": false, "live": false }
+    ],
+    "state_hash": "c0",
+    "surface_key": "surface-initial",
+    "capture": { "path": "captures/cascade-initial.png", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" }
+  },
+  "steps": [
+    {
+      "n": 1, "path": ["trigger-a"], "target": "trigger-a", "action": "click", "option": null, "value": null,
+      "context": "ctx-trigger-a-0", "status": "executed", "error": null,
+      "before": {
+        "inventory": [
+          { "id": "trigger-a", "enabled": true, "checked": null, "face": "선택", "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "trigger-b", "enabled": true, "checked": null, "face": "선택", "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "c0"
+      },
+      "after": {
+        "inventory": [
+          { "id": "trigger-a", "enabled": true, "checked": null, "face": "선택", "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "trigger-b", "enabled": true, "checked": null, "face": "선택", "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "item-a-seoul", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "item-a-busan", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "c1", "surface_key": "surface-menu-a-open",
+        "capture": { "path": "captures/cascade-1.png", "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd" }
+      },
+      "changes": { "added": ["item-a-seoul", "item-a-busan"], "removed": [], "values": [] },
+      "navigated": null, "discovery": false
+    },
+    {
+      "n": 2, "path": ["trigger-a", "item-a-seoul"], "target": "item-a-seoul", "action": "click", "option": null, "value": null,
+      "context": "ctx-item-a-seoul-0", "status": "executed", "error": null,
+      "before": {
+        "inventory": [
+          { "id": "trigger-a", "enabled": true, "checked": null, "face": "선택", "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "trigger-b", "enabled": true, "checked": null, "face": "선택", "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "item-a-seoul", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "item-a-busan", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "c1"
+      },
+      "after": {
+        "inventory": [
+          { "id": "trigger-a", "enabled": true, "checked": null, "face": "서울", "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "trigger-b", "enabled": true, "checked": null, "face": "선택", "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "c2", "surface_key": "surface-a-seoul-selected"
+      },
+      "changes": { "added": [], "removed": ["item-a-seoul", "item-a-busan"], "values": [] },
+      "navigated": null, "discovery": false
+    },
+    {
+      "n": 3, "path": ["trigger-b"], "target": "trigger-b", "action": "click", "option": null, "value": null,
+      "context": "ctx-trigger-b-0", "status": "executed", "error": null,
+      "before": {
+        "inventory": [
+          { "id": "trigger-a", "enabled": true, "checked": null, "face": "서울", "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "trigger-b", "enabled": true, "checked": null, "face": "선택", "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "c2"
+      },
+      "after": {
+        "inventory": [
+          { "id": "trigger-a", "enabled": true, "checked": null, "face": "서울", "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "trigger-b", "enabled": true, "checked": null, "face": "선택", "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "item-b-gangnam-seoul", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "item-b-jongno-seoul", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "c3", "surface_key": "surface-menu-b-seoul-open",
+        "capture": { "path": "captures/cascade-3.png", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" }
+      },
+      "changes": { "added": ["item-b-gangnam-seoul", "item-b-jongno-seoul"], "removed": [], "values": [] },
+      "navigated": null, "discovery": false
+    },
+    {
+      "n": 4, "path": ["trigger-b", "item-b-gangnam-seoul"], "target": "item-b-gangnam-seoul", "action": "click", "option": null, "value": null,
+      "context": "ctx-item-b-gangnam-seoul-0", "status": "executed", "error": null,
+      "before": {
+        "inventory": [
+          { "id": "trigger-a", "enabled": true, "checked": null, "face": "서울", "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "trigger-b", "enabled": true, "checked": null, "face": "선택", "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "item-b-gangnam-seoul", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "item-b-jongno-seoul", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "c3"
+      },
+      "after": {
+        "inventory": [
+          { "id": "trigger-a", "enabled": true, "checked": null, "face": "서울", "value_empty": null, "surface": null, "occluded": false, "live": false },
+          { "id": "trigger-b", "enabled": true, "checked": null, "face": "강남구", "value_empty": null, "surface": null, "occluded": false, "live": false }
+        ],
+        "state_hash": "c4", "surface_key": "surface-b-gangnam-selected"
+      },
+      "changes": { "added": [], "removed": ["item-b-gangnam-seoul", "item-b-jongno-seoul"], "values": [] },
+      "navigated": null, "discovery": false
+    }
+  ],
+  "discovery_limits": [],
+  "partial": false,
+  "caps_hit": [],
+  "environment_error": null
+}

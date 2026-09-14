@@ -1,0 +1,9 @@
+G0 입력범위 모드의 독립 검토를 수행해 주세요. 현재 동결 입력이 사용자 범위와 원본 관찰 증거를 충족하는지 대조하고 검토 원문을 반환하세요. 설계 명세 검토/구현 작업은 이번 호출 대상이 아닙니다.
+
+build: /tmp/dddjango-web-a8-interactions-20260913/coordinator-live/build
+project: /tmp/dddjango-web-a8-interactions-20260913/coordinator-live
+plugin: /tmp/dddjango-web-a8-interactions-20260913/mode-split-plugin/dddjango-web
+입력: build의 scope.md(사용자 요구·실행 경계·구체 승인 출처), design-input.json, case별 원본 entrypoint(design-ref/ 아래), 전체 source-manifest.json, 원본 captures와 source_observation/브라우저 trace, visual-check.md. 변경 시 이전 case 목록·범위변경 근거도 대조하세요. manifest·case 수나 이전 판정은 정답 목록이 아닙니다.
+prepare의 실제 review_digest: 23908d43d49a0c2aca8604466080f9b73c114c0409ff8e7e3469cc492c5915de
+
+실행 경계: 모두 읽기 전용. 원본/앱/DB/git/설치본·검토 파일을 수정하지 마세요. 독립 검토 원문만 반환하면 Coordinator가 보존합니다. 이번 검토는 제공된 원본과 브라우저 증거에 대한 감사이며 새 관찰 실행은 Coordinator가 담당합니다. 현재 입력과 plugin 지침만 소비하고 다른 평가 실행·진단·계획을 찾아 읽지 마세요. 이전 coverage-review 결론을 판단 근거로 쓰지 마세요. reviewed-input과 review-result는 실제 독립 판정에 따라 반환하세요.

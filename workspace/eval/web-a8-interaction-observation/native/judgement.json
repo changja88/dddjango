@@ -1,0 +1,405 @@
+{
+  "build": "/tmp/dddjango-web-interaction-evidence-20260913/native/a8-native/.dddjango-web/20260912-1640-web-related-persons",
+  "cases": 30,
+  "observation_versions": {
+    "2": 30
+  },
+  "interactions_docs": {
+    "captures/related-persons-interactions.json": {
+      "exists": true,
+      "sha_matches_pointer": true,
+      "driver_sha_ok": true,
+      "snippet_sha_ok": true,
+      "targets": 223,
+      "steps": 614,
+      "executed": 612,
+      "by_status": {
+        "executed": 612,
+        "unclickable": 2
+      },
+      "partial": true,
+      "caps_hit": [
+        "max_minutes"
+      ],
+      "discovery_limits": 3,
+      "capabilities": {
+        "react_props": true,
+        "cdp_listeners": true
+      },
+      "declared": 0,
+      "excluded_regions": 0,
+      "surfaces": 25,
+      "url": "http://127.0.0.1:8747/%EA%B4%80%EA%B3%84%EC%9D%B8.dc.html",
+      "viewport": [
+        560,
+        1040
+      ],
+      "crop": {
+        "x": 85,
+        "y": 40,
+        "w": 390,
+        "h": 877
+      },
+      "observed_at": "2026-09-14T14:21:53Z",
+      "archive_sha": "bddc54ec19c5"
+    },
+    "captures/preferences-interactions.json": {
+      "exists": true,
+      "sha_matches_pointer": true,
+      "driver_sha_ok": true,
+      "snippet_sha_ok": true,
+      "targets": 30,
+      "steps": 239,
+      "executed": 178,
+      "by_status": {
+        "executed": 178,
+        "unreachable": 21,
+        "unclickable": 40
+      },
+      "partial": true,
+      "caps_hit": [
+        "max_minutes"
+      ],
+      "discovery_limits": 5,
+      "capabilities": {
+        "react_props": true,
+        "cdp_listeners": true
+      },
+      "declared": 0,
+      "excluded_regions": 0,
+      "surfaces": 8,
+      "url": "http://127.0.0.1:8747/%EC%84%A4%EC%A0%95.dc.html",
+      "viewport": [
+        560,
+        1040
+      ],
+      "crop": {
+        "x": 85,
+        "y": 40,
+        "w": 390,
+        "h": 877
+      },
+      "observed_at": "2026-09-14T14:30:47Z",
+      "archive_sha": "bddc54ec19c5"
+    }
+  },
+  "j1_driver_ran": true,
+  "checker_inputs": {
+    "exit": 2,
+    "stdout": "",
+    "stderr_lines": [
+      "[design-evidence] defect: coverage_review: independent review-result: pass required"
+    ]
+  },
+  "j2_residual_zero_exit0": false,
+  "exclusions": 0,
+  "j3_exclusions": true,
+  "reached_by": [
+    {
+      "id": "related/list",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": "initial",
+        "capture": "captures/related-persons-initial.png"
+      }
+    },
+    {
+      "id": "related/detail",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 33,
+        "capture": "captures/related-persons-step-33.png"
+      }
+    },
+    {
+      "id": "related/delete-confirm",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 24,
+        "capture": "captures/related-persons-step-24.png"
+      }
+    },
+    {
+      "id": "related/register-step1",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 7,
+        "capture": "captures/related-persons-step-7.png"
+      }
+    },
+    {
+      "id": "related/edit-step1",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 265,
+        "capture": "captures/related-persons-step-265.png"
+      }
+    },
+    {
+      "id": "related/form-step2-solar",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 266,
+        "capture": "captures/related-persons-step-266.png"
+      }
+    },
+    {
+      "id": "related/form-step2-lunar",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 73,
+        "capture": "captures/related-persons-step-73.png"
+      }
+    },
+    {
+      "id": "related/form-step3",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 267,
+        "capture": "captures/related-persons-step-267.png"
+      }
+    },
+    {
+      "id": "related/form-step4",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 268,
+        "capture": "captures/related-persons-step-268.png"
+      }
+    },
+    {
+      "id": "related/form-step1-relation-menu",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 10,
+        "capture": "captures/related-persons-step-10.png"
+      }
+    },
+    {
+      "id": "related/form-step3-hour-menu",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 57,
+        "capture": "captures/related-persons-step-57.png"
+      }
+    },
+    {
+      "id": "related/form-step4-city",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 75,
+        "capture": "captures/related-persons-step-75.png"
+      }
+    },
+    {
+      "id": "related/form-step4-region-menu",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 78,
+        "capture": "captures/related-persons-step-78.png"
+      }
+    },
+    {
+      "id": "related/form-step4-city-menu-gyeongnam",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 77,
+        "capture": "captures/related-persons-step-77.png"
+      }
+    },
+    {
+      "id": "related/form-step4-city-menu-gyeonggi",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 120,
+        "capture": "captures/related-persons-step-120.png"
+      }
+    },
+    {
+      "id": "related/form-step4-city-menu-gangwon",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 154,
+        "capture": "captures/related-persons-step-154.png"
+      }
+    },
+    {
+      "id": "related/form-step4-city-menu-chungbuk",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 173,
+        "capture": "captures/related-persons-step-173.png"
+      }
+    },
+    {
+      "id": "related/form-step4-city-menu-chungnam",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 185,
+        "capture": "captures/related-persons-step-185.png"
+      }
+    },
+    {
+      "id": "related/form-step4-city-menu-jeonbuk",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 197,
+        "capture": "captures/related-persons-step-197.png"
+      }
+    },
+    {
+      "id": "related/form-step4-city-menu-jeonnam",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 212,
+        "capture": "captures/related-persons-step-212.png"
+      }
+    },
+    {
+      "id": "related/form-step4-city-menu-gyeongbuk",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 235,
+        "capture": "captures/related-persons-step-235.png"
+      }
+    },
+    {
+      "id": "related/form-step4-city-menu-jeju",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 258,
+        "capture": "captures/related-persons-step-258.png"
+      }
+    },
+    {
+      "id": "related/form-step4-register-empty",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 456,
+        "capture": "captures/related-persons-step-456.png"
+      }
+    },
+    {
+      "id": "related/list-after-delete",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 270,
+        "capture": "captures/related-persons-step-270.png"
+      }
+    },
+    {
+      "id": "related/list-after-save",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 80,
+        "capture": "captures/related-persons-step-80.png"
+      }
+    },
+    {
+      "id": "settings/related-row",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": "initial",
+        "capture": "captures/preferences-initial.png"
+      }
+    },
+    {
+      "id": "settings/leave-dialog",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 14,
+        "capture": "captures/preferences-step-14.png"
+      }
+    },
+    {
+      "id": "settings/logout-dialog",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 23,
+        "capture": "captures/preferences-step-23.png"
+      }
+    },
+    {
+      "id": "settings/leave-dialog-portal-variant",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 144,
+        "capture": "captures/preferences-step-144.png"
+      }
+    },
+    {
+      "id": "settings/logout-dialog-portal-variant",
+      "reached_by": true,
+      "capture_sha_match": true,
+      "detail": {
+        "step": 199,
+        "capture": "captures/preferences-step-199.png"
+      }
+    }
+  ],
+  "j4_surface_linked": true,
+  "result": {
+    "subtype": "success",
+    "num_turns": 113,
+    "duration_ms": 5705135,
+    "total_cost_usd": 38.13588175000002,
+    "is_error": false
+  },
+  "tools": {
+    "Bash": 94,
+    "Read": 152,
+    "Agent": 2,
+    "Grep": 66,
+    "Glob": 3,
+    "SendMessage": 1
+  },
+  "agent_calls": [
+    {
+      "subagent_type": "dddjango-web:design-review-web",
+      "description": "G0 입력범위 독립 검토(관계인)"
+    },
+    {
+      "subagent_type": "dddjango-web:design-review-web",
+      "description": "G0 입력범위 독립 검토 2차(관계인)"
+    }
+  ],
+  "bash_driver_cmds": 9,
+  "bash_resume_cmds": 9,
+  "j5_review_agent": true,
+  "verdict": {
+    "j1_driver_ran": true,
+    "j2_residual_zero_exit0": false,
+    "j3_exclusions": true,
+    "j4_surface_linked": true,
+    "j5_review_agent": true
+  }
+}

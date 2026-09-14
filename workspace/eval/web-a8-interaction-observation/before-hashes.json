@@ -1,0 +1,330 @@
+{
+ "captured_at": "2026-09-13",
+ "before_dir": "/tmp/dddjango-web-interaction-evidence-20260913/before",
+ "files": {
+  "dddjango-web/assets/render_audit.js": {
+   "sha256": "d121f31fbfad93047d0a9c0c6b7480cd1950970c148d9b1a229287fab33affbc",
+   "size": 14469
+  },
+  "dddjango-web/scripts/check_design_evidence.py": {
+   "sha256": "6b6d80ed56a6e139f42941a4274a1aa7687e092104dcbb9cd08624d9375c9edc",
+   "size": 31293
+  },
+  "dddjango-web/scripts/archive_design.py": {
+   "sha256": "fd257b0be337a721485aab885e95af4fb4accfacd0d05d791853d8b6766b094d",
+   "size": 9377
+  },
+  "dddjango-web/scripts/backstop.py": {
+   "sha256": "e08ab3836562ef9b180bd085b68d5205b1d37f06d68d7d1d434d3c414bc6a584",
+   "size": 12496
+  },
+  "dddjango-web/scripts/test/test_design_evidence.py": {
+   "sha256": "72ff414748e2df1f0a569c798706b771a30661d58e965ca96b682dab20f5f30c",
+   "size": 37849
+  },
+  "dddjango-web/scripts/test/test_design_archive.py": {
+   "sha256": "87a7775f2f53aef87054fce072429a8e714fea1a4c9895d590f3ceffb53f17f3",
+   "size": 24219
+  },
+  "dddjango-web/scripts/test/run_fixtures.sh": {
+   "sha256": "7b13b833ac4faa9dd43c06d37546dd1afdbb99ba05b00cf8368e2af5052b8c70",
+   "size": 728
+  },
+  "dddjango-web/skills/implementation-ui/references/design-evidence.md": {
+   "sha256": "70d328b5281c2196889536b83b606f9229800505fb5bd352741b1024a5d32989",
+   "size": 14532
+  },
+  "dddjango-web/skills/implementation-ui/references/design-acquisition.md": {
+   "sha256": "33ec33663f2e60756bcc09a8b34084cb6e20f3a8c5ce7a2c6a7f2b0c3720bb5a",
+   "size": 8575
+  },
+  "dddjango-web/skills/implementation-ui/references/final.md": {
+   "sha256": "a71173c7283263ac380b618400145144a5552501319844631ff2d36452f8a28c",
+   "size": 36647
+  },
+  "dddjango-web/skills/architecture-web/references/final.md": {
+   "sha256": "2536f3f0d5a770a26c917b8d271ab80ae8fba217f1506ae8309437a1176bfabd",
+   "size": 22290
+  },
+  "dddjango-web/commands/dddjango-web.md": {
+   "sha256": "bce4fbd403f191b4ae48c8b255d41e9b1260989805f1026503b9beeae78fdd72",
+   "size": 100772
+  },
+  "dddjango-web/agents/design-review-web.md": {
+   "sha256": "370b8f33aac9b0efb3f1910dd2c7788d57b18abeacb723c60cc84ee7561ac7fb",
+   "size": 14212
+  },
+  "dddjango-web/REQUEST_GUIDE.md": {
+   "sha256": "953dfc3dced3da5f92ad20f0ef44ff04e6a6507d10191068a0012627ecdb6b0f",
+   "size": 11628
+  },
+  "codex-dddjango-web/skills/dddjango-web/SKILL.md": {
+   "sha256": "983eeae4f40972f7c0a3ea1faf6bc6d3c384d34a262b3354c8338397efcb8855",
+   "size": 106891
+  },
+  "codex-dddjango-web/skills/dddjango-web-design-review-web/SKILL.md": {
+   "sha256": "ccc00f695009197e54a1f148ee45360ae0909c90c221cf9b4fb4da9beedc2748",
+   "size": 14409
+  },
+  "codex-dddjango-web/REQUEST_GUIDE.md": {
+   "sha256": "953dfc3dced3da5f92ad20f0ef44ff04e6a6507d10191068a0012627ecdb6b0f",
+   "size": 11628
+  },
+  "codex-dddjango-web/skills/implementation-ui/references/design-evidence.md": {
+   "sha256": "70d328b5281c2196889536b83b606f9229800505fb5bd352741b1024a5d32989",
+   "size": 14532
+  },
+  "codex-dddjango-web/skills/implementation-ui/references/design-acquisition.md": {
+   "sha256": "33ec33663f2e60756bcc09a8b34084cb6e20f3a8c5ce7a2c6a7f2b0c3720bb5a",
+   "size": 8575
+  },
+  "Makefile": {
+   "sha256": "815bed63809dce99a3c3afba4aa7c06a81ca25920dd8d4a48ebdd0007b471ec8",
+   "size": 25002
+  },
+  "docs/DEVELOPMENT.md": {
+   "sha256": "1403a43d0ea173e6a59a29880893079ef9895877a3c5f24eb9032041636fe511",
+   "size": 11983
+  },
+  ".gitignore": {
+   "sha256": "92ae584366a79a0447717f1dfa5ba74cb08b5d6a99227b0f6a82f7e655743406",
+   "size": 752
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/design_sources.py": {
+   "sha256": "1cc60bc5dbdb1a5b97a87be45c502c3041b49f587a05ea7a11d42e25ea2f71ee",
+   "size": 15865
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/fetch_images.py": {
+   "sha256": "e73456ce2f21c55514d30c92202e70269ef6a7759379640e6ba25c949fda9eb3",
+   "size": 12020
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/asset_io.py": {
+   "sha256": "60094fbee14a26d27fcb21164bb4321caecd689e9ded53298df8c3fe123a4202",
+   "size": 10265
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/compare_render_audit.py": {
+   "sha256": "36a7d06e052e516c1a1e55d91ded0ba4ef064fcb8ba1aff20f319de73e81b072",
+   "size": 14388
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/extract_design.py": {
+   "sha256": "d76f63faf8a80848d126f956bf457ce8ab05c07cb88e8321625c079e68d70f94",
+   "size": 20347
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/freeze_design.py": {
+   "sha256": "f7e4e105fa221345c4ad78fd2c895e15f0a3aa281c80d12a1272957b31b3b88f",
+   "size": 8785
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/check_design_evidence.py": {
+   "sha256": "6b6d80ed56a6e139f42941a4274a1aa7687e092104dcbb9cd08624d9375c9edc",
+   "size": 31293
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/archive_design.py": {
+   "sha256": "fd257b0be337a721485aab885e95af4fb4accfacd0d05d791853d8b6766b094d",
+   "size": 9377
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/check_motion_spec.py": {
+   "sha256": "01510fea9498e730be8f25360242b67182c75a5d2daf72fe058c77488983a65d",
+   "size": 18673
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/extract_dc.py": {
+   "sha256": "96c289d0dd9fd47e4004eee0b7ebf7cdfd60befd49c29479e765580294b0a4b3",
+   "size": 15090
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/backstop.py": {
+   "sha256": "e08ab3836562ef9b180bd085b68d5205b1d37f06d68d7d1d434d3c414bc6a584",
+   "size": 12496
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/extract_contract.py": {
+   "sha256": "e1b4f860413bbbe87ea8dd2ab17505a5735de761bb7f48905db7ca42a65b3aec",
+   "size": 10548
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/test/fixtures_motion_spec.sh": {
+   "sha256": "22beff3904df413d8a4719bd14dc922a580a3b4aa82dd2de139ca8e09e55c3e7",
+   "size": 14246
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/test/test_assets.py": {
+   "sha256": "05c3b4e4eaa661898c044c7dec5e982742d656d4a8bdfecccb7816abb0fe660a",
+   "size": 25321
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/test/fixtures_backstop.sh": {
+   "sha256": "e1c04d3121f7048cd8a4547be4ff86dd569399a24b4806659249a0a351586415",
+   "size": 25419
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/test/run_fixtures.sh": {
+   "sha256": "7b13b833ac4faa9dd43c06d37546dd1afdbb99ba05b00cf8368e2af5052b8c70",
+   "size": 728
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/test/fixtures_ui_javascript.sh": {
+   "sha256": "29a6feb1c51b67e58a8b54e3fd2f0161e75968fd65119042000ba7479895569b",
+   "size": 12072
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/test/fixtures_design_evidence.sh": {
+   "sha256": "45acab0995846c733bc69c402ae9722c032a4a3868311c0b6c147a9761d714d9",
+   "size": 145
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/test/fixtures_contract.sh": {
+   "sha256": "e863e2acaec06bef4ec65adb15946eb65dea1557f50ca07a0c7d5043f82da5ae",
+   "size": 8536
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/test/test_design_evidence.py": {
+   "sha256": "72ff414748e2df1f0a569c798706b771a30661d58e965ca96b682dab20f5f30c",
+   "size": 37849
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/test/fixtures_extract.sh": {
+   "sha256": "96418139c2dfb9f61c815d55bc7143d18b4dd47fe450b8fbb66c7e916aa033a5",
+   "size": 11893
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/test/fixtures_assets.sh": {
+   "sha256": "f14dd521fedd52974d17c82f4e3fdfc696890d529091bdc2c94f02cfdfaada68",
+   "size": 69
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/test/test_design_archive.py": {
+   "sha256": "87a7775f2f53aef87054fce072429a8e714fea1a4c9895d590f3ceffb53f17f3",
+   "size": 24219
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/test/fixtures_audit.sh": {
+   "sha256": "833e36acd4d2140bea96b74a202b5ef09513b06158a999f2319e5cf9f558fc12",
+   "size": 10772
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/test/fixtures_templates.sh": {
+   "sha256": "8775cf33397bf653c27af83f92b896c8d28c609efe8d4752d630d9e7a5c37f36",
+   "size": 3092
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/src/check_naming.py": {
+   "sha256": "a901094702d1302af609bb2da4e0228110eca46729750c000e6690b938074889",
+   "size": 10120
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/src/check_purity.py": {
+   "sha256": "70616e75d84b15cb51d847d8f7e4ba1b6f6d993fc6639bd869b04cedd4fbc1ef",
+   "size": 14325
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/src/__init__.py": {
+   "sha256": "ccf43e4d771c1e5cfe5fd60f25795ed3e5bd024bb0d632fba67125146c9eda8e",
+   "size": 78
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/src/check_structure.py": {
+   "sha256": "391a8b2643ccda13752f43911b2dbc1bcd7cb94a765c3af6f1e3ae193e377bda",
+   "size": 14693
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/src/common.py": {
+   "sha256": "ad507594a9e670b237f9da1dd414203dd4b48d922b0c8775a2237c4cad438650",
+   "size": 21847
+  },
+  "codex-dddjango-web/skills/dddjango-web/scripts/src/check_imports.py": {
+   "sha256": "1d451493459cbc616e75ec669477bcd5c92622a403cd86fd14a386426bc33a4d",
+   "size": 4496
+  },
+  "codex-dddjango-web/skills/dddjango-web/assets/render_audit.js": {
+   "sha256": "d121f31fbfad93047d0a9c0c6b7480cd1950970c148d9b1a229287fab33affbc",
+   "size": 14469
+  },
+  "codex-dddjango-web/skills/dddjango-web/assets/motion.js": {
+   "sha256": "a2a45914776367efd6a800b3b773bfe60b33d52478629a981c1a66f610dbba00",
+   "size": 1498
+  },
+  "dddjango-web/scripts/design_sources.py": {
+   "sha256": "1cc60bc5dbdb1a5b97a87be45c502c3041b49f587a05ea7a11d42e25ea2f71ee",
+   "size": 15865
+  },
+  "dddjango-web/scripts/fetch_images.py": {
+   "sha256": "e73456ce2f21c55514d30c92202e70269ef6a7759379640e6ba25c949fda9eb3",
+   "size": 12020
+  },
+  "dddjango-web/scripts/asset_io.py": {
+   "sha256": "60094fbee14a26d27fcb21164bb4321caecd689e9ded53298df8c3fe123a4202",
+   "size": 10265
+  },
+  "dddjango-web/scripts/compare_render_audit.py": {
+   "sha256": "36a7d06e052e516c1a1e55d91ded0ba4ef064fcb8ba1aff20f319de73e81b072",
+   "size": 14388
+  },
+  "dddjango-web/scripts/extract_design.py": {
+   "sha256": "d76f63faf8a80848d126f956bf457ce8ab05c07cb88e8321625c079e68d70f94",
+   "size": 20347
+  },
+  "dddjango-web/scripts/freeze_design.py": {
+   "sha256": "f7e4e105fa221345c4ad78fd2c895e15f0a3aa281c80d12a1272957b31b3b88f",
+   "size": 8785
+  },
+  "dddjango-web/scripts/check_motion_spec.py": {
+   "sha256": "01510fea9498e730be8f25360242b67182c75a5d2daf72fe058c77488983a65d",
+   "size": 18673
+  },
+  "dddjango-web/scripts/extract_dc.py": {
+   "sha256": "96c289d0dd9fd47e4004eee0b7ebf7cdfd60befd49c29479e765580294b0a4b3",
+   "size": 15090
+  },
+  "dddjango-web/scripts/extract_contract.py": {
+   "sha256": "e1b4f860413bbbe87ea8dd2ab17505a5735de761bb7f48905db7ca42a65b3aec",
+   "size": 10548
+  },
+  "dddjango-web/scripts/test/fixtures_motion_spec.sh": {
+   "sha256": "22beff3904df413d8a4719bd14dc922a580a3b4aa82dd2de139ca8e09e55c3e7",
+   "size": 14246
+  },
+  "dddjango-web/scripts/test/test_assets.py": {
+   "sha256": "05c3b4e4eaa661898c044c7dec5e982742d656d4a8bdfecccb7816abb0fe660a",
+   "size": 25321
+  },
+  "dddjango-web/scripts/test/fixtures_backstop.sh": {
+   "sha256": "e1c04d3121f7048cd8a4547be4ff86dd569399a24b4806659249a0a351586415",
+   "size": 25419
+  },
+  "dddjango-web/scripts/test/fixtures_ui_javascript.sh": {
+   "sha256": "29a6feb1c51b67e58a8b54e3fd2f0161e75968fd65119042000ba7479895569b",
+   "size": 12072
+  },
+  "dddjango-web/scripts/test/fixtures_design_evidence.sh": {
+   "sha256": "45acab0995846c733bc69c402ae9722c032a4a3868311c0b6c147a9761d714d9",
+   "size": 145
+  },
+  "dddjango-web/scripts/test/fixtures_contract.sh": {
+   "sha256": "e863e2acaec06bef4ec65adb15946eb65dea1557f50ca07a0c7d5043f82da5ae",
+   "size": 8536
+  },
+  "dddjango-web/scripts/test/fixtures_extract.sh": {
+   "sha256": "96418139c2dfb9f61c815d55bc7143d18b4dd47fe450b8fbb66c7e916aa033a5",
+   "size": 11893
+  },
+  "dddjango-web/scripts/test/fixtures_assets.sh": {
+   "sha256": "f14dd521fedd52974d17c82f4e3fdfc696890d529091bdc2c94f02cfdfaada68",
+   "size": 69
+  },
+  "dddjango-web/scripts/test/fixtures_audit.sh": {
+   "sha256": "833e36acd4d2140bea96b74a202b5ef09513b06158a999f2319e5cf9f558fc12",
+   "size": 10772
+  },
+  "dddjango-web/scripts/test/fixtures_templates.sh": {
+   "sha256": "8775cf33397bf653c27af83f92b896c8d28c609efe8d4752d630d9e7a5c37f36",
+   "size": 3092
+  },
+  "dddjango-web/scripts/src/check_naming.py": {
+   "sha256": "a901094702d1302af609bb2da4e0228110eca46729750c000e6690b938074889",
+   "size": 10120
+  },
+  "dddjango-web/scripts/src/check_purity.py": {
+   "sha256": "70616e75d84b15cb51d847d8f7e4ba1b6f6d993fc6639bd869b04cedd4fbc1ef",
+   "size": 14325
+  },
+  "dddjango-web/scripts/src/__init__.py": {
+   "sha256": "ccf43e4d771c1e5cfe5fd60f25795ed3e5bd024bb0d632fba67125146c9eda8e",
+   "size": 78
+  },
+  "dddjango-web/scripts/src/check_structure.py": {
+   "sha256": "391a8b2643ccda13752f43911b2dbc1bcd7cb94a765c3af6f1e3ae193e377bda",
+   "size": 14693
+  },
+  "dddjango-web/scripts/src/common.py": {
+   "sha256": "ad507594a9e670b237f9da1dd414203dd4b48d922b0c8775a2237c4cad438650",
+   "size": 21847
+  },
+  "dddjango-web/scripts/src/check_imports.py": {
+   "sha256": "1d451493459cbc616e75ec669477bcd5c92622a403cd86fd14a386426bc33a4d",
+   "size": 4496
+  },
+  "dddjango-web/assets/motion.js": {
+   "sha256": "a2a45914776367efd6a800b3b773bfe60b33d52478629a981c1a66f610dbba00",
+   "size": 1498
+  }
+ }
+}

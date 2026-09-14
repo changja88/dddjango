@@ -1,0 +1,424 @@
+{
+  "version": 1,
+  "collector": {
+    "name": "interaction_audit",
+    "snippet_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "driver": "observe_interactions.pw.js",
+    "driver_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "path": "node",
+    "capabilities": {
+      "react_props": true,
+      "cdp_listeners": true
+    }
+  },
+  "archive_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "entrypoint": {
+    "path": "screen.dc.html",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "url": "http://127.0.0.1:9000/mixed.dc.html",
+  "browser_viewport": [
+    390,
+    844
+  ],
+  "content_crop": {
+    "x": 0,
+    "y": 0,
+    "w": 390,
+    "h": 844
+  },
+  "root": {
+    "selector": "[data-screen-label=\"목록\"]",
+    "found": true,
+    "fingerprint": {
+      "tag": "div",
+      "label": "목록",
+      "descendants": 6,
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      }
+    }
+  },
+  "outside_root": {
+    "count": 0,
+    "sample": []
+  },
+  "excluded_regions": [],
+  "served": {
+    "mixed.dc.html": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "declared": [],
+  "declared_unmatched": [],
+  "observed_at": "2026-09-14T00:00:00Z",
+  "targets": {
+    "select-all": {
+      "role": "checkbox",
+      "name": "전체 선택",
+      "input_type": "",
+      "owner": "",
+      "owner_items_hash": "",
+      "dom_path": "div:nth-of-type(1)/button:nth-of-type(1)",
+      "kind": "checkbox",
+      "first_seen_step": 0,
+      "declared": false,
+      "found_by": [
+        "semantic",
+        "react_props"
+      ],
+      "live": false
+    },
+    "row-1": {
+      "role": "checkbox",
+      "name": "행 1",
+      "input_type": "checkbox",
+      "owner": "",
+      "owner_items_hash": "",
+      "dom_path": "div:nth-of-type(2)/input:nth-of-type(1)",
+      "kind": "checkbox",
+      "first_seen_step": 0,
+      "declared": false,
+      "found_by": [
+        "semantic"
+      ],
+      "live": false
+    },
+    "row-2": {
+      "role": "checkbox",
+      "name": "행 2",
+      "input_type": "checkbox",
+      "owner": "",
+      "owner_items_hash": "",
+      "dom_path": "div:nth-of-type(2)/input:nth-of-type(2)",
+      "kind": "checkbox",
+      "first_seen_step": 0,
+      "declared": false,
+      "found_by": [
+        "semantic"
+      ],
+      "live": false
+    }
+  },
+  "initial": {
+    "inventory": [
+      {
+        "id": "select-all",
+        "enabled": true,
+        "checked": "mixed",
+        "face": null,
+        "value_empty": null,
+        "surface": null,
+        "occluded": false,
+        "live": false
+      },
+      {
+        "id": "row-1",
+        "enabled": true,
+        "checked": true,
+        "face": null,
+        "value_empty": null,
+        "surface": null,
+        "occluded": false,
+        "live": false
+      },
+      {
+        "id": "row-2",
+        "enabled": true,
+        "checked": false,
+        "face": null,
+        "value_empty": null,
+        "surface": null,
+        "occluded": false,
+        "live": false
+      }
+    ],
+    "state_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "surface_key": "s-list",
+    "capture": {
+      "path": "captures/mixed-initial.png",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  "steps": [
+    {
+      "n": 1,
+      "path": [
+        "select-all"
+      ],
+      "target": "select-all",
+      "action": "click",
+      "option": "mixed",
+      "value": null,
+      "context": "ctx-header",
+      "status": "executed",
+      "error": null,
+      "before": {
+        "inventory": [
+          {
+            "id": "select-all",
+            "enabled": true,
+            "checked": "mixed",
+            "face": null,
+            "value_empty": null,
+            "surface": null,
+            "occluded": false,
+            "live": false
+          },
+          {
+            "id": "row-1",
+            "enabled": true,
+            "checked": true,
+            "face": null,
+            "value_empty": null,
+            "surface": null,
+            "occluded": false,
+            "live": false
+          },
+          {
+            "id": "row-2",
+            "enabled": true,
+            "checked": false,
+            "face": null,
+            "value_empty": null,
+            "surface": null,
+            "occluded": false,
+            "live": false
+          }
+        ],
+        "state_hash": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "after": {
+        "inventory": [
+          {
+            "id": "select-all",
+            "enabled": true,
+            "checked": true,
+            "face": null,
+            "value_empty": null,
+            "surface": null,
+            "occluded": false,
+            "live": false
+          },
+          {
+            "id": "row-1",
+            "enabled": true,
+            "checked": true,
+            "face": null,
+            "value_empty": null,
+            "surface": null,
+            "occluded": false,
+            "live": false
+          },
+          {
+            "id": "row-2",
+            "enabled": true,
+            "checked": true,
+            "face": null,
+            "value_empty": null,
+            "surface": null,
+            "occluded": false,
+            "live": false
+          }
+        ],
+        "state_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+        "surface_key": "s-list"
+      },
+      "changes": {
+        "added": [],
+        "removed": [],
+        "values": []
+      },
+      "navigated": null,
+      "discovery": false
+    },
+    {
+      "n": 2,
+      "path": [
+        "select-all",
+        "select-all"
+      ],
+      "target": "select-all",
+      "action": "click",
+      "option": true,
+      "value": null,
+      "context": "ctx-header",
+      "status": "executed",
+      "error": null,
+      "before": {
+        "inventory": [
+          {
+            "id": "select-all",
+            "enabled": true,
+            "checked": true,
+            "face": null,
+            "value_empty": null,
+            "surface": null,
+            "occluded": false,
+            "live": false
+          },
+          {
+            "id": "row-1",
+            "enabled": true,
+            "checked": true,
+            "face": null,
+            "value_empty": null,
+            "surface": null,
+            "occluded": false,
+            "live": false
+          },
+          {
+            "id": "row-2",
+            "enabled": true,
+            "checked": true,
+            "face": null,
+            "value_empty": null,
+            "surface": null,
+            "occluded": false,
+            "live": false
+          }
+        ],
+        "state_hash": "2222222222222222222222222222222222222222222222222222222222222222"
+      },
+      "after": {
+        "inventory": [
+          {
+            "id": "select-all",
+            "enabled": true,
+            "checked": false,
+            "face": null,
+            "value_empty": null,
+            "surface": null,
+            "occluded": false,
+            "live": false
+          },
+          {
+            "id": "row-1",
+            "enabled": true,
+            "checked": false,
+            "face": null,
+            "value_empty": null,
+            "surface": null,
+            "occluded": false,
+            "live": false
+          },
+          {
+            "id": "row-2",
+            "enabled": true,
+            "checked": false,
+            "face": null,
+            "value_empty": null,
+            "surface": null,
+            "occluded": false,
+            "live": false
+          }
+        ],
+        "state_hash": "3333333333333333333333333333333333333333333333333333333333333333",
+        "surface_key": "s-list"
+      },
+      "changes": {
+        "added": [],
+        "removed": [],
+        "values": []
+      },
+      "navigated": null,
+      "discovery": false
+    },
+    {
+      "n": 3,
+      "path": [
+        "row-1"
+      ],
+      "target": "row-1",
+      "action": "click",
+      "option": true,
+      "value": null,
+      "context": "ctx-plain",
+      "status": "executed",
+      "error": null,
+      "before": {
+        "inventory": [
+          {
+            "id": "select-all",
+            "enabled": true,
+            "checked": "mixed",
+            "face": null,
+            "value_empty": null,
+            "surface": null,
+            "occluded": false,
+            "live": false
+          },
+          {
+            "id": "row-1",
+            "enabled": true,
+            "checked": true,
+            "face": null,
+            "value_empty": null,
+            "surface": null,
+            "occluded": false,
+            "live": false
+          },
+          {
+            "id": "row-2",
+            "enabled": true,
+            "checked": false,
+            "face": null,
+            "value_empty": null,
+            "surface": null,
+            "occluded": false,
+            "live": false
+          }
+        ],
+        "state_hash": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "after": {
+        "inventory": [
+          {
+            "id": "select-all",
+            "enabled": true,
+            "checked": false,
+            "face": null,
+            "value_empty": null,
+            "surface": null,
+            "occluded": false,
+            "live": false
+          },
+          {
+            "id": "row-1",
+            "enabled": true,
+            "checked": false,
+            "face": null,
+            "value_empty": null,
+            "surface": null,
+            "occluded": false,
+            "live": false
+          },
+          {
+            "id": "row-2",
+            "enabled": true,
+            "checked": false,
+            "face": null,
+            "value_empty": null,
+            "surface": null,
+            "occluded": false,
+            "live": false
+          }
+        ],
+        "state_hash": "3333333333333333333333333333333333333333333333333333333333333333",
+        "surface_key": "s-list"
+      },
+      "changes": {
+        "added": [],
+        "removed": [],
+        "values": []
+      },
+      "navigated": null,
+      "discovery": false
+    }
+  ],
+  "discovery_limits": [],
+  "partial": false,
+  "caps_hit": [],
+  "environment_error": null
+}

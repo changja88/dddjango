@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>interaction fixture</title>
+<style>
+  body { margin: 0; font: 14px/1.4 system-ui, -apple-system, sans-serif; }
+  h2 { font-size: 14px; margin: 10px 0 2px; }
+  #screen { position: relative; width: 620px; padding: 12px; }
+  .row { display: flex; gap: 8px; align-items: center; padding: 1px 0; }
+  #rows button:hover { text-decoration: underline; }
+  #scroll-box { height: 70px; width: 240px; overflow-y: auto; border: 1px solid #ccc; }
+  #scroll-box p { margin: 6px; }
+  .scrim { position: absolute; inset: 0; background: rgba(0, 0, 0, .35); z-index: 10; }
+  .panel { position: absolute; left: 180px; top: 240px; width: 200px; padding: 12px;
+           background: #fff; border: 1px solid #333; z-index: 11; }
+  #menu-do, #menu-gun, #hover-menu { width: 160px; padding: 4px; border: 1px solid #999; }
+  .toggle { cursor: pointer; display: inline-block; }
+  .box { display: inline-block; width: 12px; height: 12px; border: 1px solid #333; vertical-align: middle; }
+  .box.on { background: #333; }
+  #vanilla { cursor: pointer; display: inline-block; }
+  #contents-wrap { display: contents; }
+  #frame { width: 220px; height: 56px; border: 0; }
+  #frame-hidden { width: 220px; height: 56px; border: 0; visibility: hidden; }
+  #star.on { background: #333; color: #fff; }
+  #knobs { padding: 8px; border-top: 2px solid #eee; }
+</style>
+</head>
+<body>
+
+<div id="screen" data-screen-label="fixture">
+
+  <h2>사람 목록</h2>
+  <div id="rows">
+    <div class="row"><span>김하나</span><button type="button" onclick="removeRow(this)">삭제</button></div>
+    <div class="row"><span>이두리</span><button type="button" onclick="removeRow(this)">삭제</button></div>
+    <div class="row"><span>박세연</span><button type="button" onclick="removeRow(this)">삭제</button></div>
+    <div class="row"><span>최네온</span><button type="button" onclick="removeRow(this)">삭제</button></div>
+  </div>
+  <p id="rows-empty" hidden>등록된 사람이 없습니다.</p>
+
+  <h2>위저드</h2>
+  <!-- 같은 identity(«다음»)를 서로 다른 context에서 실행시키려면 단계마다 다른 대상이
+       하나씩 있어야 한다 — 단계 표시(span)는 대상이 아니라 state context를 바꾸지 못한다. -->
+  <div id="step-1"><span>1단계</span> <button type="button" onclick="goStep(2)">다음</button></div>
+  <div id="step-2" hidden><span>2단계</span> <button type="button" onclick="goStep(1)">이전</button>
+    <button type="button" onclick="goStep(3)">다음</button></div>
+  <div id="step-3" hidden><span>3단계</span> <button type="button" onclick="goStep(1)">처음으로</button>
+    <button type="button" onclick="goStep(1)">다음</button></div>
+
+  <h2>주소</h2>
+  <label for="trg-do">시·도</label>
+  <button type="button" id="trg-do" role="combobox" aria-haspopup="menu" aria-expanded="false"
+          aria-controls="menu-do" onclick="toggleMenu('menu-do')">선택</button>
+  <div id="menu-do" role="menu" hidden>
+    <button type="button" role="menuitem" onclick="pickDo('서울')">서울</button>
+    <button type="button" role="menuitem" onclick="pickDo('부산')">부산</button>
+  </div>
+  <label for="trg-gun">시·군</label>
+  <button type="button" id="trg-gun" aria-haspopup="menu" aria-expanded="false"
+          aria-controls="menu-gun" onclick="toggleMenu('menu-gun')">선택</button>
+  <div id="menu-gun" role="menu" hidden></div>
+
+  <h2>입력</h2>
+  <label id="agree" class="toggle" onclick="toggleAgree()"><span id="agree-box" class="box"></span> 동의합니다</label>
+  <button type="button" id="save" disabled>저장</button>
+  <label for="rel">관계</label>
+  <select id="rel">
+    <option value="">선택</option>
+    <option value="spouse">배우자</option>
+    <option value="child">자녀</option>
+  </select>
+  <a id="leave" href="about:blank">이탈</a>
+
+  <div id="toast" role="status"><span>저장했습니다</span> <button type="button" onclick="hideToast()">실행 취소</button></div>
+
+  <h2>더보기</h2>
+  <button type="button" id="hover-trigger" onmouseenter="openHover()">더보기</button>
+  <div id="hover-menu" role="menu" hidden>
+    <button type="button" role="menuitem" onclick="closeHover()">복제</button>
+  </div>
+
+  <h2>긴 목록</h2>
+  <div id="scroll-box">
+    <p>목록 1</p><p>목록 2</p><p>목록 3</p><p>목록 4</p>
+    <button type="button" id="scroll-end" onclick="bump()">맨 끝</button>
+  </div>
+
+  <h2>입력 상세</h2>
+  <label for="birth">생년월일</label>
+  <input id="birth" inputmode="numeric" placeholder="1992.07.04">
+  <label for="nick">별명</label>
+  <input id="nick" placeholder="별명을 입력하세요">
+  <label for="phone">전화</label>
+  <input id="phone" placeholder="010-0000-0000">
+  <label for="memo">메모</label>
+  <textarea id="memo" rows="2"></textarea>
+
+  <h2>선택 묶음</h2>
+  <div role="radiogroup" aria-label="성별">
+    <label><input type="radio" name="sex" value="m">남</label>
+    <label><input type="radio" name="sex" value="f">여</label>
+  </div>
+  <!-- aria-checked가 없는 토글 — checked가 아니라 surface(자기 tag·class·텍스트 sha)가
+       상태다(K2). 그래서 클래스는 자기 자신에 건다. -->
+  <button type="button" id="star" role="switch" onclick="toggleStar()">즐겨찾기</button>
+  <div role="tablist">
+    <button type="button" role="tab" aria-selected="true" onclick="pickTab(1)">요약</button>
+    <button type="button" role="tab" aria-selected="false" onclick="pickTab(2)">상세</button>
+  </div>
+  <p id="tab-panel">요약 내용</p>
+
+  <h2>비의미 요소</h2>
+  <div id="vanilla" onclick="bump()">직접 클릭</div>
+  <div id="ael-only">리스너만</div>
+  <div id="contents-wrap"><button type="button" onclick="bump()">래퍼 안 버튼</button></div>
+
+  <iframe id="frame" src="frame.html" title="프레임"></iframe>
+  <iframe id="frame-hidden" src="frame.html" title="숨긴 프레임"></iframe>
+
+  <p><button type="button" id="open-dialog" onclick="openDialog()">열기</button></p>
+  <div id="scrim" class="scrim" hidden onclick="closeDialog()"></div>
+  <div id="panel" class="panel" role="dialog" aria-label="확인 대화상자" hidden onclick="event.stopPropagation()">
+    <div id="panel-chips"></div>
+    <button type="button" onclick="closeDialog()">확인</button>
+    <button type="button" onclick="closeDialog()">취소</button>
+  </div>
+
+</div>
+
+<div id="knobs"><button type="button">노브</button></div>
+
+<script>
+  function bump() {
+    document.body.dataset.clicks = String((Number(document.body.dataset.clicks) || 0) + 1);
+  }
+  function removeRow(btn) {
+    btn.parentNode.remove();
+    document.getElementById('rows-empty').hidden = document.querySelectorAll('#rows .row').length > 0;
+  }
+  function goStep(n) {
+    for (var i = 1; i <= 3; i++) document.getElementById('step-' + i).hidden = (i !== n);
+  }
+  function toggleMenu(id) {
+    var menu = document.getElementById(id);
+    var trigger = document.querySelector('[aria-controls="' + id + '"]');
+    menu.hidden = !menu.hidden;
+    trigger.setAttribute('aria-expanded', String(!menu.hidden));
+  }
+  function pickDo(name) {
+    document.getElementById('trg-do').textContent = name;
+    var items = name === '서울' ? ['강남구', '종로구', '마포구'] : ['해운대구', '수영구'];
+    var menu = document.getElementById('menu-gun');
+    menu.textContent = '';
+    items.forEach(function (label) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.setAttribute('role', 'menuitem');
+      b.textContent = label;
+      b.addEventListener('click', function () {
+        document.getElementById('trg-gun').textContent = label;
+        toggleMenu('menu-gun');
+      });
+      menu.appendChild(b);
+    });
+    toggleMenu('menu-do');
+  }
+  function toggleAgree() {
+    document.getElementById('agree-box').classList.toggle('on');
+  }
+  function toggleStar() {
+    document.getElementById('star').classList.toggle('on');
+  }
+  function pickTab(n) {
+    var tabs = document.querySelectorAll('[role="tab"]');
+    for (var i = 0; i < tabs.length; i++) tabs[i].setAttribute('aria-selected', String(i === n - 1));
+    document.getElementById('tab-panel').textContent = n === 1 ? '요약 내용' : '상세 내용';
+  }
+  function hideToast() {
+    document.getElementById('toast').hidden = true;
+  }
+  function openHover() {
+    document.getElementById('hover-menu').hidden = false;
+  }
+  function closeHover() {
+    document.getElementById('hover-menu').hidden = true;
+  }
+  function openDialog() {
+    var chips = document.getElementById('panel-chips');
+    chips.textContent = '';
+    document.querySelectorAll('#rows .row span').forEach(function (name) {
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.textContent = name.textContent;
+      chip.addEventListener('click', bump);
+      chips.appendChild(chip);
+    });
+    document.getElementById('scrim').hidden = false;
+    document.getElementById('panel').hidden = false;
+  }
+  function closeDialog() {
+    document.getElementById('scrim').hidden = true;
+    document.getElementById('panel').hidden = true;
+  }
+  document.getElementById('ael-only').addEventListener('click', bump);
+</script>
+</body>
+</html>

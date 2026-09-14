@@ -1,0 +1,32 @@
+{
+  "argv": [
+    "claude",
+    "--print",
+    "--plugin-dir",
+    "/tmp/dddjango-web-a8-interactions-20260913/baseline-plugin/dddjango-web",
+    "--agent",
+    "dddjango-web:design-review-web",
+    "--setting-sources",
+    "user",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "/tmp/dddjango-web-a8-interactions-20260913/baseline/mcp.json",
+    "--no-session-persistence",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--tools",
+    "Read,Grep,Glob,Skill",
+    "--allowedTools",
+    "Read",
+    "Grep",
+    "Glob",
+    "Skill",
+    "mcp__playwright__*",
+    "--add-dir",
+    "/Users/hyun/.herdr/worktrees/spring_dream_server/a8",
+    "/tmp/dddjango-web-a8-interactions-20260913"
+  ],
+  "cwd": "/tmp/dddjango-web-a8-interactions-20260913/baseline",
+  "started": 1789274817.2965498
+}

@@ -1,0 +1,245 @@
+{
+  "sample": "integrity",
+  "source": "workspace/eval/web-design-source-integrity/2026-09-07/fixture/source-positive (정적 HTML+JS 위저드)",
+  "entrypoint": {
+    "path": "index.html",
+    "sha256": "a262c5c794122eeb80d774fab2fc46a350492b0683108c18136bf87019cbd723"
+  },
+  "archive_sha256": "c64134df126294ecb53f430dcb0a94fcf2c7dbe7d7d009e4831531ee60f461b8",
+  "url": "http://127.0.0.1:8791/index.html",
+  "root_selector": "main[data-flow]",
+  "browser_viewport": [
+    390,
+    844
+  ],
+  "content_crop": {
+    "x": 12,
+    "y": 18,
+    "w": 366,
+    "h": 720
+  },
+  "invocation": {
+    "driver": "dddjango-web/scripts/observe_interactions.mjs",
+    "args": [
+      "--url",
+      "http://127.0.0.1:8791/index.html",
+      "--root",
+      "main[data-flow]",
+      "--viewport",
+      "390x844",
+      "--crop-root",
+      "--entrypoint-sha",
+      "a262c5c794122eeb80d774fab2fc46a350492b0683108c18136bf87019cbd723",
+      "--archive-sha",
+      "c64134df126294ecb53f430dcb0a94fcf2c7dbe7d7d009e4831531ee60f461b8",
+      "--out",
+      "BUILD/captures/index-interactions.json",
+      "--captures-dir",
+      "BUILD/captures",
+      "--max-minutes",
+      "8"
+    ],
+    "env": {
+      "DDDJANGO_WEB_PLAYWRIGHT_MODULE": "/Users/hyun/.npm/_npx/9833c18b2d85bc59/node_modules/playwright",
+      "DDDJANGO_WEB_BROWSER_CHANNEL": "chrome"
+    },
+    "node": "v26",
+    "slices": 1,
+    "resume": false
+  },
+  "exit": 0,
+  "elapsed_s": 268,
+  "stdout_summary": {
+    "targets": 10,
+    "executed": 148,
+    "residual": [],
+    "surfaces": 4,
+    "partial": false,
+    "capsHit": [],
+    "environmentError": null
+  },
+  "collector": {
+    "snippet_sha256": "a3c138804c4bf846020d3fdae273c12005d81460fcf771c892f7d3fd4938cf2a",
+    "driver_sha256": "4ad627df4174da8170ec4c277b7c6ad248b0a5ac17b0adef9033d3cccefcfc84",
+    "path": "node",
+    "capabilities": {
+      "react_props": true,
+      "cdp_listeners": true
+    }
+  },
+  "served": [
+    "assets/mark.png",
+    "index.html",
+    "steps.js",
+    "styles/base.css",
+    "styles/effects.css"
+  ],
+  "outside_root": {
+    "count": 0,
+    "sample": []
+  },
+  "declared": [],
+  "declared_unmatched": [],
+  "targets": {
+    "count": 10,
+    "by_kind": {
+      "handler": 1,
+      "input": 1,
+      "button": 4,
+      "link": 2,
+      "radio": 2
+    },
+    "by_found_by": {
+      "cdp_listener": 1,
+      "semantic": 9
+    },
+    "rows": [
+      {
+        "id": "88dca37fe632",
+        "kind": "handler",
+        "role": "",
+        "name": "",
+        "dom_path": "",
+        "first_seen_step": 0,
+        "found_by": [
+          "cdp_listener"
+        ]
+      },
+      {
+        "id": "b2ed486d9d4d",
+        "kind": "input",
+        "role": "textbox",
+        "name": "이름",
+        "dom_path": "section:nth-of-type(1)/input:nth-of-type(1)",
+        "first_seen_step": 0,
+        "found_by": [
+          "semantic"
+        ]
+      },
+      {
+        "id": "7cbb15a54d37",
+        "kind": "button",
+        "role": "button",
+        "name": "다음",
+        "dom_path": "section:nth-of-type(1)/button:nth-of-type(1)",
+        "first_seen_step": 0,
+        "found_by": [
+          "semantic"
+        ]
+      },
+      {
+        "id": "3de9ded4fe7e",
+        "kind": "link",
+        "role": "link",
+        "name": "설정 안내",
+        "dom_path": "footer:nth-of-type(1)/a:nth-of-type(1)",
+        "first_seen_step": 0,
+        "found_by": [
+          "semantic"
+        ]
+      },
+      {
+        "id": "803667c55447",
+        "kind": "link",
+        "role": "link",
+        "name": "도움말",
+        "dom_path": "footer:nth-of-type(1)/a:nth-of-type(2)",
+        "first_seen_step": 0,
+        "found_by": [
+          "semantic"
+        ]
+      },
+      {
+        "id": "8af211a5a521",
+        "kind": "radio",
+        "role": "radio",
+        "name": "차분하게",
+        "dom_path": "section:nth-of-type(2)/fieldset:nth-of-type(1)/label:nth-of-type(1)/input:nth-of-type(1)",
+        "first_seen_step": 4,
+        "found_by": [
+          "semantic"
+        ]
+      },
+      {
+        "id": "928c57279976",
+        "kind": "radio",
+        "role": "radio",
+        "name": "밝게",
+        "dom_path": "section:nth-of-type(2)/fieldset:nth-of-type(1)/label:nth-of-type(2)/input:nth-of-type(1)",
+        "first_seen_step": 4,
+        "found_by": [
+          "semantic"
+        ]
+      },
+      {
+        "id": "59da63d5c6bf",
+        "kind": "button",
+        "role": "button",
+        "name": "이전",
+        "dom_path": "section:nth-of-type(2)/div:nth-of-type(1)/button:nth-of-type(1)",
+        "first_seen_step": 4,
+        "found_by": [
+          "semantic"
+        ]
+      },
+      {
+        "id": "824bef432825",
+        "kind": "button",
+        "role": "button",
+        "name": "완료",
+        "dom_path": "section:nth-of-type(3)/div:nth-of-type(1)/button:nth-of-type(2)",
+        "first_seen_step": 13,
+        "found_by": [
+          "semantic"
+        ]
+      },
+      {
+        "id": "7ccfeb5a93ca",
+        "kind": "button",
+        "role": "button",
+        "name": "다시 시작",
+        "dom_path": "section:nth-of-type(4)/button:nth-of-type(1)",
+        "first_seen_step": 14,
+        "found_by": [
+          "semantic"
+        ]
+      }
+    ]
+  },
+  "steps": {
+    "count": 148,
+    "by_status": {
+      "executed": 148
+    },
+    "by_action": {
+      "fill": 8,
+      "click": 124,
+      "blur": 8,
+      "focus": 8
+    },
+    "per_target": {
+      "b2ed486d9d4d": 24,
+      "803667c55447": 24,
+      "3de9ded4fe7e": 24,
+      "7cbb15a54d37": 16,
+      "59da63d5c6bf": 12,
+      "928c57279976": 8,
+      "8af211a5a521": 8,
+      "88dca37fe632": 24,
+      "824bef432825": 4,
+      "7ccfeb5a93ca": 4
+    },
+    "navigated": 0,
+    "errors": []
+  },
+  "surfaces": 4,
+  "step_captures": 36,
+  "distinct_capture_sha": 15,
+  "residual": [],
+  "discovery_limits": [],
+  "partial": false,
+  "caps_hit": [],
+  "environment_error": null,
+  "observed_at": "2026-09-14T10:55:11Z",
+  "raw_location": "/tmp/dddjango-web-interaction-evidence-20260913/samples/integrity/ (interactions.json·PNG·logs — 저장소 밖)"
+}
