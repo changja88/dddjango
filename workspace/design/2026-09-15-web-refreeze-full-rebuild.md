@@ -257,6 +257,7 @@ static-only 그대로라 hook이 매 프롬프트마다 «decision required befo
 | `scripts/archive_design.py` (+미러) | `--compare-build`·`--compare-out`·`--carried`·`compare_manifests()`·exit 3/4·`_history` 자동 carried |
 | `scripts/test/test_design_archive.py` (+미러) | `RefreezeCompareTests` 10건(잔여 32건이 비-compare 기능을 계속 덮음) |
 | `scripts/check_design_evidence.py` (+미러) | `carried_from` 수용 |
+| `scripts/test/test_interaction_evidence.py:626` (+미러) | `test_manifest_row_accepts_carried_from_only`의 `carried_from` → exit 0 단언. **상시 검증 경로**(`fixtures_interactions.sh:9` → `run_fixtures.sh` → `verify-web`)라 함께 고치지 않으면 red |
 | `commands/dddjango-web.md` (+Codex `SKILL.md` 의미 미러) | 재동결 절 재작성(§1~R9) · `:144` 재기준 문장 대체 · `:227` «openapi 재동결» 분리 · `<대상 폴더>` 정의 추가 · **치환(완전성은 §8이 보증)** |
 | `references/design-acquisition.md` (+byte 미러) | §2 «재동결» 전면 재작성 · `BUILD`→`TARGET` 치환 |
 | `references/design-evidence.md` (+byte 미러) | `carried_from`·exit 체계 — **절 단위 재작성** |
