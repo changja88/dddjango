@@ -1,0 +1,58 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="css/design_system/foundation/tokens.css">
+<link rel="stylesheet" href="css/design_system/foundation/motion.css">
+<link rel="stylesheet" href="css/static/css/base.css">
+<link rel="stylesheet" href="css/static/css/app_shell.css">
+<link rel="stylesheet" href="css/static/css/components.css">
+<link rel="stylesheet" href="css/static/css/related_persons.css">
+<title>clip repro</title></head>
+<body class="app-shell">
+<div class="app-frame"><div class="app-frame__body"><div class="app-frame__content">
+<div class="rp-page">
+<div id="rp-overlay">
+<div id="rpe-step" class="rp-dialog rpe-dialog" data-dialog role="dialog" aria-modal="true" aria-labelledby="rpe-title" tabindex="-1">
+  <div class="rp-dialog__scrim" data-dialog-dismiss aria-hidden="true"></div>
+  <form class="glass-panel glass-panel--strong rp-dialog__panel" method="post">
+    <span class="glass-panel__sheen" aria-hidden="true"></span>
+    <div class="glass-panel__content rp-dialog__inner">
+      <h2 class="rpe-title" id="rpe-title">관계인 등록하기</h2>
+      <div class="rpe-scroll" data-cm-dialog-scroll="true">
+        <div class="rpe-fields">
+          <div class="select-field">
+            <label class="select-field__label" for="relation_kind">관계</label>
+            <div class="select-field__control">
+              <select class="select-field__select" id="relation_kind" name="relation_kind" aria-label="관계">
+                <option value="" disabled hidden selected>관계를 선택해주세요</option>
+                <option value="friend">친구</option>
+              </select>
+              <i class="select-field__chevron icon-chevron-down" aria-hidden="true"></i>
+            </div>
+          </div>
+          <div class="input-field">
+            <label class="input-field__label" for="display_name">이름</label>
+            <div class="input-field__control">
+              <i class="input-field__icon icon-user-round" aria-hidden="true"></i>
+              <input class="input-field__input" id="display_name" name="display_name" type="text" placeholder="이름을 입력해주세요" value="">
+            </div>
+          </div>
+          <div class="rpe-field">
+            <span class="input-field__label">성별</span>
+            <div class="choice-pair choice-pair--md" role="radiogroup" aria-label="성별">
+              <input class="choice-pair__input" type="radio" id="gender__female" name="gender" value="female">
+              <label class="choice-pair__option" for="gender__female">여자</label>
+              <input class="choice-pair__input" type="radio" id="gender__male" name="gender" value="male">
+              <label class="choice-pair__option" for="gender__male">남자</label>
+              <span class="choice-pair__thumb" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="rpe-actions">
+        <button type="button" class="standard-button standard-button--ghost">이전</button>
+        <button type="submit" class="standard-button">다음</button>
+      </div>
+    </div>
+  </form>
+</div></div></div></div></div>
+</body></html>

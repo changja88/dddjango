@@ -30,8 +30,14 @@ dddjango-web/             ← 자매 플러그인 (웹 표현계층 빌더 — /
 ├── REQUEST_GUIDE.md       사람용 화면 작업 요청 가이드 정본
 ├── hooks/hooks.json       플러그인 hook(SessionStart·UserPromptSubmit → scripts/evidence_debt_hook.py —
 │                          시안 빌드의 조작 상태 증거 부채와 중단된 재동결을 Coordinator 경로와 무관하게 고지)
-└── scripts/refreeze.py    재동결 집행(begin/check/commit/abort) — 기존 동결물 전량 폐기 후 재동결.
-                           staging에 새로 동결하고 파일 단위 트랜잭션으로 교체한다(대조하지 않는다)
+├── scripts/refreeze.py    재동결 집행(begin/check/commit/abort) — 기존 동결물 전량 폐기 후 재동결.
+│                          staging에 새로 동결하고 파일 단위 트랜잭션으로 교체한다(대조하지 않는다)
+├── scripts/check_token_disposition.py
+│                          토큰 전수 처분 집행(G1 --spec-only) — 전수성·양방향·**기각 정당성**
+│                          (기각한 토큰의 값을 동결 시안이 실제로 쓰면 FINDING·architect 반송)
+└── scripts/check_clip_clearance.py
+                           클리핑 컨테이너의 링 여유 정적 검사(G2·트리비얼 ③) — 브라우저 불요.
+                           바깥 링을 지는 요소가 overflow≠visible 조상에서 확장만큼 여유를 못 얻으면 발견
 
 codex-dddjango-web/       ← dddjango-web의 Codex 설치본 미러
 ├── REQUEST_GUIDE.md       dddjango-web/REQUEST_GUIDE.md의 byte 동일 미러
