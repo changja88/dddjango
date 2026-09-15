@@ -280,6 +280,17 @@ def main(argv: List[str]) -> int:
                                '완료된 과거 시안 빌드 %d개의 visual 검사 생략' % len(discovered))
         elif configured and not discovered:
             design_defects.append('design_source is configured but no design build was found; --design-build required')
+        for build in discovered:
+            # 중단된 재동결 — hook 은 SessionStart·UserPromptSubmit 에서만 발화해 같은 턴의
+            # 산출물 커밋을 막지 못한다. 마무리 backstop 이 마지막 그물이다.
+            if not build.is_dir():
+                continue
+            leftovers = sorted(item.name for item in build.iterdir()
+                               if item.is_dir() and item.name.startswith(('_refreeze-', '_prev-')))
+            if leftovers:
+                design_defects.append(
+                    '%s: interrupted refreeze — %s 가 남아 있다 · refreeze.py commit --resume '
+                    '(완료 전이면 abort)' % (build.relative_to(root).as_posix(), ', '.join(leftovers)))
         for build in builds:
             if not build.is_dir():
                 design_defects.append('design build 디렉터리/증거가 없음: %s' % build)

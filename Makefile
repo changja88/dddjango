@@ -106,7 +106,10 @@ verify-web:
 	PYTHONUTF8=1 python3 workspace/tools/request_guide_contract.py; \
 	echo "[verify-web] hooks.json 계약(Claude·Codex 증거 부채 hook)"; \
 	PYTHONUTF8=1 python3 workspace/tools/web_hooks_contract.py --self-test; \
-	PYTHONUTF8=1 python3 workspace/tools/web_hooks_contract.py
+	PYTHONUTF8=1 python3 workspace/tools/web_hooks_contract.py; \
+	echo "[verify-web] 재동결 계약(유보·잔존·경로 치환 불변식)"; \
+	PYTHONUTF8=1 python3 workspace/tools/web_refreeze_contract.py --self-test; \
+	PYTHONUTF8=1 python3 workspace/tools/web_refreeze_contract.py
 
 # K3 상호작용 관찰 증거 — 브라우저 필요 스위트. verify-web(위)은 이 스위트를 브라우저
 # 없이 SKIP(exit 0)으로 통과시킨다(test_observe_interactions.mjs가 소유한 의미론). 이

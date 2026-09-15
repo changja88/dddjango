@@ -623,13 +623,13 @@ class InteractionEvidenceTests(unittest.TestCase):
         self.reject('10%')
 
     # ---- manifest·design-input 확장 ------------------------------------
-    def test_manifest_row_accepts_carried_from_only(self):
-        for field, value in (('carried_from', '4' * 64), ('carried_from', 'not-a-sha'), ('foo', 'bar')):
-            with self.subTest(field=field, value=value[:8]):
+    def test_manifest_row_rejects_unknown_fields(self):
+        for field, value in (('unknown_field', '4' * 64), ('foo', 'bar')):
+            with self.subTest(field=field):
                 manifest = json.loads(self.manifest.read_text())
                 for row in manifest['files']:
                     if row['local_path'] == 'support.js':
-                        row.pop('carried_from', None)
+                        row.pop('unknown_field', None)
                         row.pop('foo', None)
                         row[field] = value
                 self.manifest.write_text(json.dumps(manifest, ensure_ascii=False), encoding='utf-8')
@@ -638,8 +638,7 @@ class InteractionEvidenceTests(unittest.TestCase):
                 self.observation['archive_sha256'] = sha(self.manifest)
                 self.sync()
                 result = self.run_gate('prepare')
-                expected = 0 if (field, value) == ('carried_from', '4' * 64) else 2
-                self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
 
     def test_v1_observation_passes_only_in_legacy_mode(self):
         self.observation = {key: value for key, value in self.observation.items()

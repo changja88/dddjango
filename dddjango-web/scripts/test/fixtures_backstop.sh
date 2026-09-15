@@ -494,6 +494,20 @@ P2="$T/f29_noweb"; mkdir -p "$P2"
 OUT=$(run_backstop "$P2"); E=$?
 assert "F29e web/ 없음(전제 실패) → 1" 1 "web/ 없음" - "$E" "$OUT"
 
+# ---------- F30: 중단된 재동결 잔존 — 마무리 backstop 이 마지막 그물
+P="$T/f30"; BASE=$(mkproj "$P")
+mkdir -p "$P/.dddjango-web/20260101-0000-screen/_refreeze-20260915-000000"
+printf '{"version":1,"cases":[]}\n' > "$P/.dddjango-web/20260101-0000-screen/design-input.json"
+OUT=$(run_backstop "$P" --diff-base "$BASE"); E=$?
+assert "F30 중단된 재동결 잔존 → BLOCKER" 2 "interrupted refreeze" - "$E" "$OUT"
+
+# ---------- F30b: 잔존 없으면 그 줄이 없다
+P="$T/f30b"; BASE=$(mkproj "$P")
+mkdir -p "$P/.dddjango-web/20260101-0000-screen"
+printf '{"version":1,"cases":[]}\n' > "$P/.dddjango-web/20260101-0000-screen/design-input.json"
+OUT=$(run_backstop "$P" --diff-base "$BASE"); E=$?
+assert "F30b 잔존 없음 → interrupted 줄 없음" 2 - "interrupted refreeze" "$E" "$OUT"
+
 echo
 echo "fixtures_backstop: PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" = 0 ]

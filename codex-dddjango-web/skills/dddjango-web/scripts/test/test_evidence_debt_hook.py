@@ -78,7 +78,7 @@ class HookOutput(unittest.TestCase):
         self.assertEqual(doc['systemMessage'], '[dddjango-web] evidence debt: undecided 1 · deferred 0 · observing 0')
 
     def test_decided_builds_only_on_session_start(self) -> None:
-        defer = {'decision': 'defer', 'at': '2026-09-15T10:00:00+09:00', 'quote': '지금은 재동결만 확인하고 넘어가자', 'reason': 'r', 'cases': 1}
+        defer = {'decision': 'defer', 'at': '2026-09-15T10:00:00+09:00', 'quote': '지금은 보고만 받고 넘어가자', 'reason': 'r', 'cases': 1}
         observe = {'decision': 'observe', 'at': '2026-09-15T11:00:00+09:00', 'quote': '드라이버 돌려서 전부 수집해줘', 'reason': 'r', 'cases': 1}
         make_build(self.project, 'a-defer', observations=[observation(1)], decision=defer)
         make_build(self.project, 'b-observe', observations=[observation(1)], decision=observe)
@@ -87,7 +87,7 @@ class HookOutput(unittest.TestCase):
         code, out, _ = run_hook('session-start', cwd=self.project)
         context = parse(out)['hookSpecificOutput']['additionalContext']
         self.assertIn('scanned 2 build(s): undecided 0 · deferred 1 · observing 1', context)
-        self.assertIn(ANCHOR + 'a-defer: deferred since 2026-09-15T10:00:00+09:00 — "지금은 재동결만 확인하고 넘어가자"', context)
+        self.assertIn(ANCHOR + 'a-defer: deferred since 2026-09-15T10:00:00+09:00 — "지금은 보고만 받고 넘어가자"', context)
         self.assertIn(ANCHOR + 'b-observe: observation pending since 2026-09-15T11:00:00+09:00', context)
 
     def test_quote_truncated_to_20_chars(self) -> None:
@@ -198,6 +198,63 @@ class ProjectDiscovery(unittest.TestCase):
                               capture_output=True, text=True, timeout=30)
         self.assertEqual(done.returncode, 0)
         self.assertIn(ANCHOR + 'a:', parse(done.stdout)['hookSpecificOutput']['additionalContext'])
+
+
+class InterruptedRefreeze(unittest.TestCase):
+    """중단된 재동결은 부채 판정과 무관하게 보고된다 — design-input 유무·ready 게이트 양쪽 바깥."""
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name).resolve()
+        self.project = self.root / 'proj'
+        self.project.mkdir()
+
+    def tearDown(self) -> None:
+        self.tmp.cleanup()
+
+    def test_staging_without_design_input_is_reported(self) -> None:
+        """commit 도중 design-input.json이 _prev로 옮겨진 창 — _builds()가 놓치는 상태."""
+        build = self.project / '.dddjango-web' / 'halfway'
+        (build / '_refreeze-20260915-000000').mkdir(parents=True)
+        code, out, _ = run_hook('session-start', cwd=self.project)
+        self.assertEqual(code, 0)
+        context = parse(out)['hookSpecificOutput']['additionalContext']
+        self.assertIn('[dddjango-web] interrupted refreeze — halfway', context)
+        self.assertIn('commit --resume', context)
+
+    def test_prev_when_design_status_not_ready_is_reported(self) -> None:
+        """blocked 빌드는 build_debt가 None을 내 부채 줄이 없다 — 중단 감지는 그 밖에서 돈다."""
+        build = make_build(self.project, 'blocked-build', design_status='blocked',
+                           observations=[observation(1)])
+        (build / '_prev-20260915-000000').mkdir()
+        code, out, _ = run_hook('session-start', cwd=self.project)
+        context = parse(out)['hookSpecificOutput']['additionalContext']
+        self.assertIn('[dddjango-web] interrupted refreeze — blocked-build', context)
+
+    def test_user_prompt_reports_interrupted_even_without_undecided(self) -> None:
+        build = make_build(self.project, 'clean-build', observations=[observation(2)])
+        (build / '_refreeze-20260915-000000').mkdir()
+        code, out, _ = run_hook('user-prompt', cwd=self.project)
+        self.assertEqual(code, 0)
+        context = parse(out)['hookSpecificOutput']['additionalContext']
+        self.assertIn('[dddjango-web] interrupted refreeze — clean-build', context)
+
+    def test_clean_build_has_no_interrupted_line(self) -> None:
+        make_build(self.project, 'clean-build', observations=[observation(2)])
+        _code, out, _ = run_hook('session-start', cwd=self.project)
+        context = parse(out)['hookSpecificOutput']['additionalContext']
+        self.assertNotIn('interrupted refreeze', context)
+
+
+class DeferWording(unittest.TestCase):
+    def test_defer_no_longer_allows_refreeze(self) -> None:
+        text = (Path(__file__).resolve().parents[1] / 'evidence_debt_hook.py').read_text(encoding='utf-8')
+        flat = ' '.join(text.split())
+        marker = 'defer = '
+        start = flat.index(marker) + len(marker)
+        window = flat[start:start + 80].split('—')[0]
+        self.assertNotIn('refreeze', window,
+                         '유보(defer)가 재동결을 허용으로 열거하면 안 된다 — 재동결은 ⓐ 경로다')
 
 
 if __name__ == '__main__':

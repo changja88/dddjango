@@ -28,8 +28,10 @@ dddjango-web/             ← 자매 플러그인 (웹 표현계층 빌더 — /
                            md·py를 직접 수정한다. 픽스처는 make verify(verify-web)가 실행.
                            빌드 스펙 정본: workspace/design/2026-08-23-web-presentation-layer-spec.md
 ├── REQUEST_GUIDE.md       사람용 화면 작업 요청 가이드 정본
-└── hooks/hooks.json       플러그인 hook(SessionStart·UserPromptSubmit → scripts/evidence_debt_hook.py —
-                           시안 빌드의 조작 상태 증거 부채를 Coordinator 경로와 무관하게 고지)
+├── hooks/hooks.json       플러그인 hook(SessionStart·UserPromptSubmit → scripts/evidence_debt_hook.py —
+│                          시안 빌드의 조작 상태 증거 부채와 중단된 재동결을 Coordinator 경로와 무관하게 고지)
+└── scripts/refreeze.py    재동결 집행(begin/check/commit/abort) — 기존 동결물 전량 폐기 후 재동결.
+                           staging에 새로 동결하고 파일 단위 트랜잭션으로 교체한다(대조하지 않는다)
 
 codex-dddjango-web/       ← dddjango-web의 Codex 설치본 미러
 ├── REQUEST_GUIDE.md       dddjango-web/REQUEST_GUIDE.md의 byte 동일 미러
@@ -118,6 +120,7 @@ md에서 `<!-- graph-owned: … -->` 마커가 붙은 절은 **직접 수정 금
 
 - 검사기 27종은 `dddjango/scripts/check-*.py`가 원본이고 `codex-dddjango/…/scripts/`는 **byte 동일 미러**다 — 한쪽만 고치면 verify-base 마지막 단(`diff -rq`)이 red다. 둘 다 갱신한다.
 - `workspace/tools/request_guide_contract.py`는 가이드 존재·byte 미러·marketplace name/path/ref와 subdir 내용·manifest homepage/repository·Codex websiteURL/defaultPrompt·설치본 권위 문구를 검사한다. 링크 검사는 canonical source surface의 drift backstop이다. README의 `## 작업 요청 가이드`부터 다음 `## ` heading 직전과 전체 README source에 `[dddjango 작업 요청 가이드](dddjango/REQUEST_GUIDE.md)` 및 `[dddjango-web 작업 요청 가이드](dddjango-web/REQUEST_GUIDE.md)`가 각각 정확히 한 번 있어야 한다. 네 guide에는 위 상대 목적지 구문 금지 규칙을 적용한다. CommonMark 문맥이나 실제 rendered/clickable 동작·렌더러 등가성은 판정하지 않으며 README의 코드·주석 안 token도 센다. `--self-test`는 실제 두 heading 구조의 tempfile 정상 fixture와 독립 변이의 `validate` 결과를 literal 기대값으로 검사한다. 계약을 바꾸면 해당 검출력 fixture도 함께 유지한다. 표준 라이브러리만 쓰고 네트워크나 공개 URL 생존성은 검사하지 않는다. `verify-base-core`는 dddjango pair 비교 → self-test → 실제 계약을, `verify-web`은 web pair 비교 → 실제 계약을 실행한다.
+- `workspace/tools/web_refreeze_contract.py`는 **재동결 규범 편집의 완전성**을 사람이 만든 목록 대신 불변식으로 보증한다 — 손으로 만든 편집 대상 목록이 두 번 샜기 때문이다(설계 v3·v4). A 유보(defer) 허용 열거에 재동결이 없다(줄 단위로는 못 잡는다 — 파일을 한 줄로 펴서 «허용 열거 시작 어휘» 뒤 창을 보고 문장 경계에서 끊는다) · B `--compare-build`·`refreeze-diff`·`carried_from` 잔존 0(`scripts/refreeze.py`가 폐기 대상으로 «명명»하는 `refreeze-diff`만 예외) · C `refreeze.py` 4 서브커맨드 실재 · D1 수집·검사 인자의 빌드 자리표시자(`<산출물 폴더>`·`BUILD`)가 폐기·교체 대상을 가리키지 않는다(«산출물 위치» 절과 `refreeze.py` 자신의 `--build`는 예외) · D2 보존 대상 경로는 치환되지 않았다 · D3 재수집 구간의 `scope.md` 쓰기가 `<대상 폴더>/`를 수식한다 · D4 `<대상 폴더>` 정의가 «산출물 위치» 절에 있다. `--self-test`는 정상·변이 fixture로 각 검사의 검출력을 확인한다. **한계**: D1은 자리표시자와 대상 이름의 리터럴 인접만 본다 — 산문으로 풀어 쓴 지시는 놓친다. `verify-web`이 self-test → 실제 계약 순으로 실행한다.
 - `workspace/tools/reverse_coverage.py`의 닫힌 분류표는 dddjango 루트 `REQUEST_GUIDE.md`를 사람용 사용자 가이드로 명시한다. 새 설치 파일의 존재 근거를 유지하되 이 가이드에 런타임 규칙 소유권을 부여하지 않는다.
 - 측정 도구 일부는 manifest 봉인 대상이다(`workspace/tools/manifest_seal.py`의 글롭 목록 참조). 봉인 파일을 고치면 봉인 재발행이 필요하다.
 - **봉인은 커밋 직전 마지막 단계다** — `make verify` 가 RED 여서 봉인 대상(측정 도구·byte 골든 EXPECTED·매트릭스)을 다시 고쳤으면 `manifest_seal.py --write` 를 다시 발행하고 `make verify` 를 처음부터 다시 돈다. 커밋 메시지·기록의 verify 수치는 **마지막 실행 로그**(evidence 경로 병기)의 것만 적는다 — 중간 실행의 green 을 옮겨 적지 않는다(2026-09-04 `d701df8` «verify 6/6» 거짓 표기 · 정정 `cad221b`).

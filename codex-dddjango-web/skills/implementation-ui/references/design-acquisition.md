@@ -5,6 +5,10 @@ Claude Design URL은 원본을 찾을 주소다. Coordinator가 원본 파일과
 
 ## 1. 현재 원본 확보
 
+`BUILD`는 산출물 폴더, `PROJECT`는 타깃 프로젝트 루트다. **`TARGET`은 평시에는 `BUILD`이고 재동결 중에는
+그 빌드의 staging(`BUILD/_refreeze-<ts>`)이다** — 폐기·교체 대상 산출물을 쓰거나 읽는 인자는 `TARGET`을
+가리킨다(§2 «재동결»). `--assets-root`는 언제나 `PROJECT`다.
+
 - URL의 프로젝트·파일을 확인하고 가용한 DesignSync 읽기 도구로 파일 목록과 원본을
   수집한다. 링크 자체의 인증/접근 실패와 로컬 정적 분석기의 한계를 구별한다.
 - 사용자가 제공한 동일 프로젝트 export는 정상 원본 수집 경로다. 폴더 전체를 같은
@@ -24,10 +28,10 @@ Claude Design URL은 원본을 찾을 주소다. Coordinator가 원본 파일과
 허용된 staging 폴더에 원본 수집을 마친 뒤, 실제 경로로 실행한다:
 
 ```bash
-python PLUGIN/scripts/archive_design.py EXPORT/screen.dc.html --source-root EXPORT --out BUILD/design-ref --manifest BUILD/source-manifest.json
+python PLUGIN/scripts/archive_design.py EXPORT/screen.dc.html --source-root EXPORT --out TARGET/design-ref --manifest TARGET/source-manifest.json
 ```
 
-`EXPORT`와 `BUILD/design-ref`는 겹치지 않는 폴더다. manifest는 `design-ref` 밖의 형제
+`EXPORT`와 `TARGET/design-ref`는 겹치지 않는 폴더다. manifest는 `design-ref` 밖의 형제
 파일이다. 충돌이 있으면 새 staging을 사용한다. 이 명령은 `.DS_Store`를 제외한 전체
 파일을 바이트 그대로 보관하며 `collection=archive`, `archive_ready=true`,
 `source_ready=false`를 기록한다. manifest의 `dependencies`는 선택한 원본부터 따라간
@@ -43,50 +47,66 @@ python PLUGIN/scripts/archive_design.py EXPORT/screen.dc.html --source-root EXPO
 
 ### 재동결
 
-원본이 바뀌었는지 기계로 대조하려면 같은 `archive_design.py`에 `--compare-build`·
-`--compare-out`을 더해 실행한다. staging은 `BUILD` 밖이거나 `BUILD` 안 `_staging-<ts>`
-(호출마다 새 디렉터리)여야 한다:
+재동결은 **기존 동결물을 전량 폐기하고 처음부터 다시 동결하는 것**이다. 차이를 대조하지 않는다.
+사용자가 요청했을 때만 실행하며(자동 staleness 감지는 없다), **요청이 있으면 항상 전량 재실행한다** —
+직전 결과를 재사용하거나 «이번 세션에 이미 했다»는 판단으로 생략하지 않는다.
+
+파괴적 구간은 `refreeze.py`가 집행한다. live 빌드 폴더는 교체 순간까지 손대지 않는다.
 
 ```bash
-python PLUGIN/scripts/archive_design.py EXPORT/screen.dc.html --source-root EXPORT \
-  --out BUILD/_staging-<ts>/design-ref --manifest BUILD/_staging-<ts>/source-manifest.json \
-  --compare-build BUILD --compare-out BUILD/refreeze-diff.json [--carried <local_path> …]
+python PLUGIN/scripts/refreeze.py begin --build BUILD --project-root PROJECT --quote "<재동결 요청 원문>"
+# 재수집 — step 5-4·5-5를 그대로 다시 하되 경로는 TARGET(= BUILD/_refreeze-<ts>)이다
+python PLUGIN/scripts/refreeze.py check  --build BUILD [--render-audit-skipped "<enum 사유>"]
+python PLUGIN/scripts/check_design_evidence.py --build TARGET --project-root PROJECT --phase prepare
+# 독립 검토 → --phase inputs exit 0 까지 staging 에서 통과시킨다
+python PLUGIN/scripts/refreeze.py commit --build BUILD
 ```
 
-기준은 `BUILD/design-input.json`의 `manifests[0]`이다(인자로 고르지 않는다). 새로
-보관한 파일마다 기준과 대조해 `same`(바이트 동일)·`changed`(다른 바이트)·`added`·
-`removed`·`carried`(기준과 대조하지 않고 "미확인"으로만 셈) 중 하나를 매기고, 그
-결과를 `refreeze-diff.json`에 기준 manifest sha·파일별 상태·크기·sha 앞 12자·mtime
-으로 남긴다. exit는 이 명령 고유의 체계이며 `check_design_evidence.py`·`backstop.py`의
-0/1/2와 다르고 그쪽이 소비하지도 않는다: **0** 전부 same · **3** changed·added·
-removed가 하나라도 있음 · **4** same과 carried만 있음(미확인이 남음) · **1** 오류·
-의존성 누락·closure 안 파일을 `--carried`로 지정·staging에도 기준에도 없는 경로를
-`--carried`로 지정(`carried target not in staging: <local_path>` — 오타는 조용히 지나가지 않는다).
+`begin`은 staging을 만들고 입력(`scope.md`·`<screen>-declared.json`·`--excluded-regions` 입력)을
+복사하며 `journal.json`에 **폐기 집합·고아·이미지 목록·기존 예외 행·기존 부채 결정**을 확정하고
+`build-state.json.evidence_debt`를 `observe`로 기록한다.
 
-staging 파일의 출처(`source`)가 `reference_root`·`BUILD/_history`·(이번 `--out`의
-상위가 아닌) 다른 `BUILD/_staging-*` 아래면 자동으로 carried다. 명시 `--carried`는
-entrypoint 의존성 closure **밖**의 파일에만 쓸 수 있고, closure 안의 파일을 지정하면
-exit 1로 끝난다. carried로 분류된 새 manifest 행에는 `carried_from`(기준 manifest의
-sha256)이 남는다. 대조가 끝나면 exit 0·4는 `_staging-*` 디렉터리를 즉시 지우고,
-exit 3은 아래 «새 기준 설치»(`_staging-<ts>/design-ref`를 `design-ref`로 옮긴다)를
-마친 **뒤**에 남은 `_staging-*`를 지운다 — 어느 경우든 `refreeze-diff.json`만
-남기며 이 파일이 커밋 대상이다. staging 폴더의 출처 자체를 기계가 증명하지는
-못하므로, mtime·sha 표로 실제 작업 transcript와 대조 가능한 정도로만 신뢰한다.
-`_history/vN` 보존은 규범이 아니다 — 이전 바이트는 커밋된 git 이력이 보존한다.
+**폐기 집합은 포인터로만 정한다** — `design-input.json`의 case에서 `reference_capture`·
+`source_observation`, 그 관찰 문서의 `capture`·`trace`·`interactions`, 그 interactions 문서의
+`initial.capture`·`steps[].after.capture`까지 3겹으로 순회하고, 여기에 `design-ref/**`·
+`source-manifest.json`·`design-tokens.json`·`asset-manifest.json`·`screen-meta.json`·
+`render-audit.json`·`design-input.json`·`coverage-review.md`·`scope.md`·`<screen>-declared.json`을
+더한다. `visual-evidence.json`이 가리키는 구현 캡처는 재동결이 만들지 않으므로 **보존**한다.
+`motion-notes.md`·`build-state.json`·`visual-check.md`·`design-spec.md`도 보존이다.
 
-재동결은 사용자가 재동결이나 원본 차이 확인을 요청했을 때만 실행한다 — 자동
-staleness 감지는 없다. 결과는 배너나 대화체 요약이 아니라 `refreeze-diff.json`으로만
-보고한다. exit 4(미확인)면 미확인 파일 수와 목록을 사용자에게 보이고 "미확인 수용"
-또는 "전체 export 다시 제공"(§1의 정상 수집 경로) 중 하나를 고르게 한다. 동일(0)·
-차이(3)·미확인(4)의 뜻은 exit로만 말하며, 화면 HTML 1개가 같다는 이유로 "동일"을
-단언하지 않는다.
+**고아**(`captures/` 중 어느 포인터에도 없는 파일 — 스모크 캡처·실패 회차 잔재·`captures/external/*`
+같은 재수집 불가 수동 입력)는 **지우지 않는다**. `journal.json`에 기록되고 배너에 건수로 보고된다.
 
-exit 3(차이 있음)이면 새 기준을 설치한 뒤 영향받은 case를 다시 관찰한다 — 순서는
-기존 `design-ref`를 지우고 → `_staging-<ts>/design-ref`를 `design-ref`로 옮기고
-(`archive_design.py`는 새 출력 디렉터리를 요구하므로 처음부터 `--out`을 `design-ref`
-로 주지 않는다) → manifest를 새 것으로 교체한다 → 그제야 남은 `_staging-<ts>`를
-지운다. 이 순서 뒤 `archive_sha256`이 바뀌므로 같은 라운드 안에서 영향받은 case의
-재관찰·수집기 재실행·독립 검토·`inputs`를 마친다.
+`check`(exit 0 완전·3 미완·1 오류)는 `--phase prepare`가 보지 않는 축까지 본다 — staging의
+`design-ref/`·`source-manifest.json`·`design-tokens.json`·`asset-manifest.json`·`screen-meta.json`·
+`design-input.json`·(`journal`의 `has_render_audit`이면) `render-audit.json` 실재, 3겹 포인터 해소,
+archive 원본이면 case마다 v2 관찰 실재, 그리고 **폐기 집합이 3겹 포인터를 모두 덮는가**.
+재측정이 렌더 실측 생략 enum 사유로 불가능하면 `--render-audit-skipped <사유>`가 journal 값을
+내리는 유일한 경로다.
+
+**`prepare` exit 2는 실패가 아니라 보완 루프 진입이다** — live가 무손상이므로 staging에서 몇 번이든
+반복한다. 재수집 중 **live `scope.md`에 쓰지 않는다**: 실행 경계·렌더 실측 생략 사유·새 승인 원문은
+staging 사본에만 적고 `commit`이 그것을 live로 옮긴다(live가 바뀌었으면 `commit`이 exit 1로 멈춘다).
+독립 검토는 `scope.md` 최종 확정 뒤에 받는다.
+
+`commit`은 **`check` 를 통과한 staging 에서만** 시작한다(통과 기록이 없으면 전량 폐기 전에 거부한다).
+파일 단위 트랜잭션이며 `planned → discarded → installed → verified → done` 순으로 진행하고
+`_prev-<ts>/swap-plan.json`에 단계를 적는다. 중단되면 `commit --resume`이 그 단계에서 이어간다.
+**되감기는 단계 기록에 의존하지 않는다** — `abort`는 `_prev`에 실제로 들어 있는 것을 전부 되돌리므로
+단계 «도중» 죽어도 원본이 사라지지 않는다. **디렉터리 이동은 하지 않는다**(`captures/`에 보존 대상이
+섞여 있다). `installed`는 staging 쪽이 있으면 대상 존재와 무관하게 덮어쓴다. `verified`가 실패하면
+되감고 이미지·부채까지 원상 복구한 뒤 exit 3이다.
+
+재동결은 `web/static/images/`에 **실제로 쓴다**(`--assets-root`는 언제나 프로젝트 루트다). 같은
+이미지는 멱등이지만 인라인 이미지는 토큰이 밀려 새 파일명으로 떨어질 수 있다. 그래서 **실패 시
+`abort`는 선택이 아니라 의무**이며, `journal.images_before` 차집합만 되돌린다 — 그 때문에 재동결 중
+같은 프로젝트의 **병행 실행을 금지한다**.
+
+결과는 «변화 0/차이 있음»이 아니라 **«무엇을 다시 동결했는가» 목록과 exit**로만 보고한다.
+완료 빌드를 재동결하면 `implementation_visual`이 `pending`으로 내려가 G2 재대조 전까지 마무리
+backstop이 막힌다. 승인된 `interaction_exclusions`가 있었으면 새 관찰의 target id 기준으로 행을
+다시 짓는다(승인 원문·앵커는 staging `scope.md`에서 재사용 · 10% 상한은 새 분모로 재검증 ·
+대응 단위를 못 찾은 행은 버리지 않고 배너에 올린다).
 
 ## 3. 에이전트가 원본 관찰
 
@@ -113,7 +133,7 @@ exit 3(차이 있음)이면 새 기준을 설치한 뒤 영향받은 case를 다
    ```bash
    node PLUGIN/scripts/observe_interactions.mjs --url URL --root '[data-screen-label="LABEL"]' \
      --viewport 560x1040 --crop-root --entrypoint-sha SHA --archive-sha SHA \
-     --out BUILD/captures/<screen>-interactions.json --captures-dir BUILD/captures \
+     --out TARGET/captures/<screen>-interactions.json --captures-dir TARGET/captures \
      [--declared DECLARED.json] [--excluded-regions EXCLUDED.json] [--hover-selectors HOVER.json] \
      [--playwright-module DIR] [--browser-channel chrome | --cdp WS] \
      [--max-steps N --max-depth N --max-minutes N] [--resume]
@@ -181,7 +201,7 @@ design-evidence.md 「`interactions.json` version 1」). case에는 그 문서 �
 적용되지 않는다.
 
 ```bash
-python PLUGIN/scripts/check_design_evidence.py --build BUILD --project-root PROJECT --phase prepare
+python PLUGIN/scripts/check_design_evidence.py --build TARGET --project-root PROJECT --phase prepare
 ```
 
 이 명령은 독립 리뷰 **전**의 파일·관찰 연결을 검사하고 `review_digest`를 반환한다.

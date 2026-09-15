@@ -30,14 +30,17 @@ from evidence_debt import BuildDebt, build_debt  # noqa: E402
 
 ANCHOR = '[dddjango-web] evidence debt — '
 ACTIVE = '[dddjango-web] evidence hook active — '
+INTERRUPTED = '[dddjango-web] interrupted refreeze — '
+STAGING_PREFIXES = ('_refreeze-', '_prev-')
 EVENTS = {'session-start': 'SessionStart', 'user-prompt': 'UserPromptSubmit'}
 SKIP_DIRS = {'node_modules', '_history', '__pycache__', 'venv'}
 QUOTE_CHARS = 20
 DECISION_LINE = ('[dddjango-web] evidence debt: {count} undecided build(s). Record the user\'s decision in '
                  'build-state.json evidence_debt (ⓐ observe = re-collect chain: observe ≤90 min → independent '
-                 'review → inputs → visual re-evidence → backstop · ⓑ defer = non-implementation runs only '
-                 '(refreeze, inspection, reporting); implementation re-entry requires ⓐ) before any run on that '
-                 'folder, including refreeze-only or scope-only runs. Quote the folder line verbatim in the banner.')
+                 'review → inputs → visual re-evidence → backstop · ⓑ defer = inspection and reporting only. '
+                 'Refreezing re-collects interaction states and therefore takes the ⓐ path; implementation '
+                 're-entry requires ⓐ) before any run on that folder, including inspection-only or scope-only '
+                 'runs. Quote the folder line verbatim in the banner.')
 
 
 def _stdin_cwd() -> Path | None:
@@ -106,12 +109,34 @@ def _project_roots(candidates: list[Path]) -> list[Path]:
     return sorted(roots)
 
 
-def _builds(root: Path) -> list[Path]:
+def _folders(root: Path) -> list[Path]:
     try:
-        folders = sorted(p for p in (root / '.dddjango-web').iterdir() if p.is_dir())
+        return sorted(p for p in (root / '.dddjango-web').iterdir() if p.is_dir())
     except OSError:
         return []
-    return [p for p in folders if (p / 'design-input.json').is_file()]
+
+
+def _builds(root: Path) -> list[Path]:
+    return [p for p in _folders(root) if (p / 'design-input.json').is_file()]
+
+
+def _interrupted(root: Path) -> list[Path]:
+    """중단된 재동결 — design-input 유무·design_status ready 게이트 양쪽 바깥에서 본다.
+
+    commit 이 discarded 와 installed 사이에서 멈추면 live 에 design-input.json 이 없어
+    _builds() 가 그 폴더를 놓치고, blocked 상태면 build_debt() 가 None 을 낸다. 둘 다
+    «부채 없음»이 아니라 «판정 불가»이므로 이 줄이 유일한 신호다.
+    """
+    found = []
+    for folder in _folders(root):
+        try:
+            leftovers = [p for p in folder.iterdir()
+                         if p.is_dir() and p.name.startswith(STAGING_PREFIXES)]
+        except OSError:
+            continue
+        if leftovers:
+            found.append(folder)
+    return found
 
 
 def _quote(decision: dict) -> str:
@@ -148,6 +173,9 @@ def run(event: str) -> int:
     if not roots:
         return 0
     builds = [build for root in roots for build in _builds(root)]
+    stalled = [folder for root in roots for folder in _interrupted(root)]
+    stalled_lines = [f'{INTERRUPTED}{folder.name}: staging left behind · '
+                     'refreeze.py commit --resume (or abort if not completed)' for folder in stalled]
     debts = [debt for debt in (build_debt(build) for build in builds) if debt is not None]
     by_status: dict[str, list[BuildDebt]] = {}
     for debt in debts:
@@ -159,16 +187,21 @@ def run(event: str) -> int:
     counts = f'undecided {len(undecided)} · deferred {len(deferred)} · observing {len(observing)}'
     if errors:
         counts += f' · error {len(errors)}'
+    if stalled:
+        counts += f' · interrupted refreeze {len(stalled)}'
     if event == 'SessionStart':
         active = f'{ACTIVE}scanned {len(builds)} build(s): {counts}'
-        context = [active] + [_line(debt) for debt in undecided + deferred + observing + errors]
+        context = ([active] + [_line(debt) for debt in undecided + deferred + observing + errors]
+                   + stalled_lines)
         if undecided:
             context.append(DECISION_LINE.format(count=len(undecided)))
         _emit(event, context, active)
         return 0
-    if not undecided:
+    if not undecided and not stalled:
         return 0
-    context = [_line(debt) for debt in undecided] + [DECISION_LINE.format(count=len(undecided))]
+    context = [_line(debt) for debt in undecided] + stalled_lines
+    if undecided:
+        context.append(DECISION_LINE.format(count=len(undecided)))
     _emit(event, context, f'[dddjango-web] evidence debt: {counts}')
     return 0
 

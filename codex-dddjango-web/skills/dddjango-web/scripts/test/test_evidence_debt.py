@@ -161,7 +161,7 @@ class BuildDebtCases(unittest.TestCase):
         self.assertIsNone(evidence_debt.build_debt(folder))
 
     def test_decision_classification(self) -> None:
-        defer = {'decision': 'defer', 'at': '2026-09-15T10:00:00+09:00', 'quote': '지금은 재동결만 확인하자', 'reason': 'r', 'cases': 1}
+        defer = {'decision': 'defer', 'at': '2026-09-15T10:00:00+09:00', 'quote': '지금은 보고만 받고 넘어가자', 'reason': 'r', 'cases': 1}
         observe = {'decision': 'observe', 'at': '2026-09-15T10:00:00+09:00', 'quote': '드라이버 돌려서 다 수집해', 'reason': 'r', 'cases': 1}
         d = evidence_debt.build_debt(make_build(self.root, 'd', observations=[observation(1)], decision=defer))
         o = evidence_debt.build_debt(make_build(self.root, 'o', observations=[observation(1)], decision=observe))

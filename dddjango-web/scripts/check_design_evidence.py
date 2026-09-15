@@ -1136,11 +1136,8 @@ def validate_inputs(build: Path, project: Path, *, require_review: bool = True,
         for row_index, row in enumerate(rows):
             here = f'manifests[{index}].files[{row_index}]'
             required_row = {'source', 'source_document', 'local_path', 'kind', 'status', 'sha256', 'size_bytes', 'reason'}
-            if not isinstance(row, dict) or not required_row <= set(row) or set(row) - required_row - {'requested_source', 'carried_from'}:
+            if not isinstance(row, dict) or not required_row <= set(row) or set(row) - required_row - {'requested_source'}:
                 issues.append(f'{here}: invalid source-manifest row fields')
-                continue
-            if 'carried_from' in row and not _is_sha(row['carried_from']):
-                issues.append(f'{here}.carried_from: base manifest sha256 required')
                 continue
             if row.get('status') != 'ok':
                 issues.append(f'{here}: successful row required')

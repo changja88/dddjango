@@ -23,10 +23,9 @@ declared phase is consistent, 1 means a usage/internal error prevented the
 check, and 2 means a defect or insufficient evidence. An interaction document
 with a non-null `environment_error` counts as the former, not a defect: the
 collection never finished, so every phase (prepare/inputs/visual) exits 1
-rather than 2. `archive_design.py
---compare-build`'s exit codes (0/3/4/1, see "`interactions.json` version 1"
-below) belong only to that separate re-freeze comparison; `check_design_evidence.py`
-and `backstop.py` never read or gate on them. `--phase visual` always
+rather than 2. Re-freezing discards the frozen evidence wholesale and rebuilds it
+(`refreeze.py`, see `design-acquisition.md`); it produces no comparison and no
+exit code this checker reads. `--phase visual` always
 rechecks inputs. `backstop.py --design-build` joins the visual phase to the
 existing 26 checks; `--only` cannot disable it. Without `--design-build`, the runner
 discovers source-bearing builds under `PROJECT/.dddjango-web/` and validates all
@@ -111,9 +110,8 @@ Two more top-level/case fields are allowed beyond this shape. A top-level
 `interaction_exclusions` list and a per-case `reached_by` object carry the
 interaction-evidence exemptions and case-to-surface bindings defined in full in
 "`interactions.json` version 1" below; `reached_by` is required on every
-archive HTML/component case and forbidden on a static or image case. Any
-manifest file row, static or archive, may also carry `carried_from`, described
-in the same section.
+archive HTML/component case and forbidden on a static or image case.
+Unrecognized manifest row fields are rejected.
 
 Static collection supports HTML/CSS literal resources, `x-import`, literal ES
 imports, literal dynamic imports, `export ... from`, and literal imports in
@@ -333,17 +331,14 @@ the result JSON — so Coordinator can carry them into the G0 banner as a
 first-class item, never a silent pass.
 
 Manifest rows — in `design-input.json`'s own list and in archive/static source
-manifests alike — accept one further optional field, `carried_from`: the
-lowercase SHA-256 of the base manifest a re-freeze compare
-(`archive_design.py --compare-build`, see `design-acquisition.md`) carried
-that row forward from without re-verifying it against fresh bytes. Any other
-unrecognized row field is still rejected.
+manifests alike — reject every unrecognized field. Nothing marks a row as
+carried forward from an older manifest: re-freezing rebuilds the manifest from
+freshly collected bytes, so every row is verified against what was just fetched.
 
-`archive_design.py --compare-build`'s own exit code — 0 fully same, 3
-changed/added/removed, 4 same-plus-unconfirmed-carried, 1 error — belongs only
-to that manual re-freeze comparison; `backstop.py` does not read or gate on it,
-and it must not be confused with `check_design_evidence.py`'s 0/1/2 above. See
-`design-acquisition.md` for the re-freeze procedure that produces it.
+`archive_design.py` exits 0 or 1 only. `refreeze.py` has its own scheme
+(0 done · 2 already in progress · 3 incomplete or rewound · 1 error) that
+neither `check_design_evidence.py` nor `backstop.py` reads or gates on. See
+`design-acquisition.md` for the re-freeze procedure.
 
 ## Limits
 
