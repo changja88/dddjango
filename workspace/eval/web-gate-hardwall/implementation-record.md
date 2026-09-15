@@ -108,3 +108,35 @@ sr-only 오탐)을 먼저 닫았다.
 판정은 그것을 내린 자리에서 태깅해야 한다.
 
 최종 회귀: 원장 **103** · 재동결 **45** · 링 18 · backstop 65 · `run_fixtures` 16파일 실패 0.
+
+---
+
+## 후속 — 검사기 주석 오탐 (2026-09-16 · v1.1.18)
+
+배포 다음 날 A8 세션이 보고했다: `check_focus_ring`·`check_clip_clearance`가 **Django 주석
+속 리터럴 태그를 실제 요소로 셌다**. A8은 통과시키려고 부품 docstring을 훼손했다.
+
+```diff
+-    href      — 지정 시 <a> 링크로 렌더 (glass back email 단계)
+-    hx_get    — 지정 시 <button> HTMX 트리거 (glass back code/password 단계)
++    href      — 지정 시 a 링크로 렌더 (glass back email 단계)
++    hx_get    — 지정 시 button HTMX 트리거 (glass back code/password 단계)
+```
+
+**내 결함이다.** 오탐 자체보다 나쁜 건 그 오탐이 **소스를 도구에 맞춰 훼손하게 만들었다는
+것**이다 — 도구가 산문을 코드로 읽으면 사람은 산문을 지운다. 진단 때 나는 같은 자리를
+`login.html`의 무클래스 `<button>`으로 보고 «표시 문제»로 넘겼다. 동료 보고가 그걸 뒤집었다.
+
+수리: `template_graph`가 본문을 읽는 **한 자리**에서 `strip_comments()`를 통과시킨다
+(`{% comment %}`·`{# … #}` · 줄 수 보존). `check_focus_ring`이 `template_graph`를
+import하므로 두 검사기가 한 수리로 낫는다.
+
+| 확인 | 결과 |
+|---|---|
+| A8 web 사본 + **원래 주석 복원**(`git show HEAD:…/icon_button.html`) | `[focus-ring] 발견 0건 · exit 0` ✅ |
+| 회귀 FR14(주석 속 `<a>`·`<button>`·`<select>`) | PASS · 링 19건 ✅ |
+| 회귀 CC11(주석 속 `<input>` 리터럴) | PASS · 절단 24건 ✅ |
+| `run_fixtures.sh` 16파일 | 실패 0 ✅ |
+| `make verify` | **6/6 green (237초)** ✅ |
+
+A8은 주석을 원복했다.

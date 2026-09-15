@@ -134,6 +134,13 @@ d=$(mk cc18 "$RING
 .scroll { overflow-y: auto; padding: 3px 3px 4px; }" "$BOX")
 out=$(run "$d"); rc=$?; assert CC18_blur비지배 0 "발견 0건" "FINDING" $rc "$out"
 
+# CC11 ★ Django 주석 속 리터럴 태그는 링 보유 요소가 아니다 — 주석을 스트립하지 않으면
+#      산문이 발견을 만든다(실결함: 부품 docstring 의 <button> 이 오탐으로 잡혔다).
+d=$(mk cc11 "$RING
+.scroll { overflow-y: auto; }" \
+'<div class="scroll">{% comment %}예시: <div class="field"><input type="text"></div>{% endcomment %}{# <div class="field">도 예시 #}<p>글자만</p></div>')
+out=$(run "$d"); rc=$?; assert CC11_주석속_리터럴마크업 0 "링 보유 요소 없음" "FINDING" $rc "$out"
+
 # U1 사용법 · 디렉터리 아님
 out=$(run); rc=$?; assert U1_사용법 1 "사용:" - $rc "$out"
 out=$(run "$T/nope"); rc=$?; assert U2_경로부재 1 "디렉터리가 아니다" - $rc "$out"

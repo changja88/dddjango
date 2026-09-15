@@ -117,6 +117,17 @@ $WRAP
 out=$(run "$d"); rc=$?
 assert FR13_순서함정 2 '<select class="sel">' "-" $rc "$out"
 
+# FR14 ★ Django 주석 속 리터럴 태그는 요소가 아니다 — 오탐이 나면 소스를 도구에 맞춰
+#      훼손하게 된다(실제로 났다: 부품 docstring 의 <a>·<button> 이 발견으로 잡혀 a·button 으로 고쳐졌다).
+d=$(mk fr14 "$GLOBAL
+$WRAP
+.sel:focus-visible { box-shadow: none; }" \
+'<div class="ctl">{% comment %}
+  href   — 지정 시 <a> 링크로 렌더
+  hx_get — 지정 시 <button> HTMX 트리거
+{% endcomment %}{# 한 줄 주석 속 <select> #}<select class="sel"><option>x</option></select></div>')
+out=$(run "$d"); rc=$?; assert FR14_주석속_리터럴태그 0 "발견 0건" "FINDING" $rc "$out"
+
 # U1·U2 사용법 — 미실행(exit 1)은 통과가 아니다.
 out=$(run 2>&1); rc=$?; assert U1_인자없음 1 "사용:" "-" $rc "$out"
 out=$(run "$T/없는경로" 2>&1); rc=$?; assert U2_디렉터리아님 1 "디렉터리가 아니다" "-" $rc "$out"

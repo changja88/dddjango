@@ -58,6 +58,10 @@ HEX_RE = re.compile(r"#[0-9a-fA-F]{3,8}")
 INCLUDE_RE = re.compile(r"\{%\s*include\s+[\"']([^\"']+)[\"']")
 EXTENDS_RE = re.compile(r"\{%\s*extends\s+[\"']([^\"']+)[\"']")
 BLOCK_RE = re.compile(r"\{%\s*block\s+\w+")
+# Django 주석 — 산문 안의 리터럴 `<button>`·`<select>` 를 실제 요소로 오인하면 오탐이고,
+# 그 오탐은 소스를 도구에 맞춰 훼손하게 만든다(실제로 났다: 부품 docstring 의 `<a>`·`<button>`
+# 이 발견으로 잡혀 `a`·`button` 으로 고쳐졌다). 줄 수는 보존한다.
+DJANGO_COMMENT_RE = re.compile(r"\{%\s*comment\s*%\}.*?\{%\s*endcomment\s*%\}|\{#.*?#\}", re.S)
 RING_TRIGGER_RE = re.compile(r":focus(-visible|-within)?\b|:checked\b")
 FOCUSABLE_RE = re.compile(r"<(input|button|select|textarea)\b|<a\s[^>]*href=|tabindex\s*=", re.I)
 CLIPPING = ("auto", "scroll", "hidden", "clip")
@@ -188,12 +192,17 @@ def members(selector: str) -> list[str]:
     return [m.strip() for m in split_top(selector) if m.strip()]
 
 
+def strip_comments(text: str) -> str:
+    """Django 주석을 지우되 줄 수는 유지한다 — 주석 속 리터럴 태그는 요소가 아니다."""
+    return DJANGO_COMMENT_RE.sub(lambda m: "\n" * m.group(0).count("\n"), text)
+
+
 def template_graph(web_root: Path) -> tuple[dict[Path, str], dict[Path, set[Path]], dict[Path, set[Path]]]:
     """템플릿 본문과 방향 있는 두 그래프 — include(내려감)와 extends 역방향(블록을 채워줌)."""
     texts: dict[Path, str] = {}
     for path in sorted(web_root.rglob("*.html")):
         try:
-            texts[path] = path.read_text(encoding="utf-8", errors="replace")
+            texts[path] = strip_comments(path.read_text(encoding="utf-8", errors="replace"))
         except OSError:
             continue
     by_name: dict[str, list[Path]] = {}
