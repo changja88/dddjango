@@ -456,6 +456,122 @@ class RegressionTests(RefreezeTestCase):
                                       '--staging', str(self.tmp)), 1)
 
 
+class HardwallTests(RefreezeTestCase):
+    """§4 — 재동결이 «어떤 이유로든 불가능» 해지지 않는다. 대신 사실을 지우지도 않는다."""
+
+    def break_evidence(self):
+        """증거 포인터를 읽을 수 없게 만든다 — 재동결이 고쳐야 할 바로 그 상태다."""
+        self.intact = (self.build / 'design-input.json').read_text(encoding='utf-8')
+        (self.build / 'design-input.json').write_text('{ 깨진 json', encoding='utf-8')
+
+    def recollect(self):
+        """재동결의 본론 — 새로 동결한 증거로 staging 을 채운다(깨진 원본은 폐기 대상이다)."""
+        (self.build / 'design-input.json').write_text(self.intact, encoding='utf-8')
+        self.fx.fill_staging()
+
+    def discarded(self):
+        return sorted(p.name for p in self.build.glob('_discarded-*'))
+
+    def test_begin_records_unreadable_and_proceeds(self):
+        """판독 실패로 begin 이 죽으면 재동결이 고칠 대상이 재동결을 막는다."""
+        self.break_evidence()
+        self.assertEqual(self.begin(), 0)
+        self.assertTrue(self.journal()['unreadable'], '사실이 journal 에 남아야 한다')
+
+    def test_check_warns_on_unreadable_instead_of_blocking(self):
+        """begin 만 고치면 벽이 check 로 한 칸 밀린다."""
+        self.break_evidence()
+        self.begin()
+        self.recollect()
+        self.assertEqual(self.run_cli('check', '--build', str(self.build)), 0,
+                         '판독 실패를 이유로 check 가 막으면 벽이 한 칸 밀린 것뿐이다')
+
+    def test_commit_preserves_one_generation_and_stays_resumable(self):
+        """폐기분을 한 세대 남기되 `_prev` 의 «진행 중» 표식 의미는 건드리지 않는다."""
+        self.begin()
+        self.fx.fill_staging()
+        self.assertEqual(self.run_cli('check', '--build', str(self.build)), 0)
+        self.assertEqual(self.run_cli('commit', '--build', str(self.build)), 0)
+        kept = self.discarded()
+        self.assertEqual(len(kept), 1, kept)
+        self.assertTrue((self.build / kept[0] / 'journal.json').is_file())
+        self.assertFalse(list(self.build.glob('_prev-*')), '_prev 는 그대로 사라져야 한다')
+        self.assertFalse(list(self.build.glob('_refreeze-*')))
+
+    def test_discarded_leftover_does_not_block_the_next_refreeze(self):
+        """백업이 다음 재동결을 «진행 중» 으로 오인시키면 새 하드월이다."""
+        self.begin()
+        self.fx.fill_staging()
+        self.run_cli('check', '--build', str(self.build))
+        self.run_cli('commit', '--build', str(self.build))
+        self.assertTrue(self.discarded())
+        self.assertEqual(self.begin(), 0, '_discarded-* 가 있어도 다시 시작할 수 있어야 한다')
+
+    def test_abort_backs_up_journalless_leftover_before_deleting(self):
+        """journal 없는 `_prev` 를 지우는 유일한 문이 abort 다 — 유일본이 들어 있을 수 있다."""
+        orphan = self.build / '_prev-20260101-000000'
+        orphan.mkdir()
+        (orphan / 'only-copy.json').write_text('{"유일본": true}', encoding='utf-8')
+        self.assertEqual(self.run_cli('abort', '--build', str(self.build)), 0)
+        self.assertFalse(orphan.is_dir())
+        kept = self.discarded()
+        self.assertEqual(len(kept), 1, kept)
+        self.assertTrue((self.build / kept[0] / 'only-copy.json').is_file(), '유일본이 살아 있어야 한다')
+
+    def downgrade_observation(self):
+        """드라이버를 못 돌린 상태 — 브라우저 채널이 없으면 이게 유일하게 가능한 결과다."""
+        staging = self.fx.staging()
+        rel = 'captures/screen-source-observation.json'
+        doc = json.loads((staging / rel).read_text())
+        doc['version'] = 1
+        doc.pop('interactions', None)
+        write(staging / rel, json.dumps(doc))
+        spec = json.loads((staging / 'design-input.json').read_text())
+        spec['cases'][0]['source_observation'] = pointer(staging, rel)
+        write(staging / 'design-input.json', json.dumps(spec))
+
+    def test_observation_skip_reason_opens_the_browserless_axis(self):
+        """렌더 실측 축에만 탈출구가 있고 조작 상태 축에는 없으면 재동결이 «불가능» 해진다."""
+        self.begin()
+        self.fx.fill_staging()
+        self.downgrade_observation()
+        self.assertEqual(self.run_cli('check', '--build', str(self.build)), 3)
+        self.assertEqual(self.run_cli('check', '--build', str(self.build),
+                                      '--render-audit-skipped', '브라우저 채널 부재'), 3,
+                         '렌더 실측 사유가 조작 상태 축을 열면 안 된다')
+        self.assertEqual(self.run_cli('check', '--build', str(self.build),
+                                      '--observation-skipped', '브라우저 채널 부재'), 0)
+        self.assertEqual(self.journal()['observation_skip_reason'], '브라우저 채널 부재')
+
+    def test_observation_skip_reason_is_an_enum(self):
+        self.begin()
+        self.fx.fill_staging()
+        self.assertEqual(self.run_cli('check', '--build', str(self.build),
+                                      '--observation-skipped', '그냥'), 1)
+
+    def test_unverified_facts_survive_into_build_state(self):
+        """벽을 없앤 자리에 표면이 없으면 열린 길이 무엇이 미검증인지 지운다(불변식 II)."""
+        self.break_evidence()
+        self.begin()
+        self.recollect()
+        self.downgrade_observation()
+        self.assertEqual(self.run_cli('check', '--build', str(self.build),
+                                      '--observation-skipped', '브라우저 채널 부재'), 0)
+        self.assertEqual(self.run_cli('commit', '--build', str(self.build)), 0)
+        facts = self.state()['refreeze_unverified']
+        self.assertTrue(facts['unreadable'])
+        self.assertEqual(facts['observation_skipped'], '브라우저 채널 부재')
+
+    def test_preserve_never_collides(self):
+        import refreeze as module
+        source = self.build / '_prev-x'
+        source.mkdir()
+        (source / 'a.txt').write_text('a', encoding='utf-8')
+        module._preserve(source, '시험')
+        module._preserve(source, '시험')
+        self.assertEqual(len(self.discarded()), 2, self.discarded())
+
+
 class RollbackTests(RefreezeTestCase):
     def test_abort_restores_images_and_debt(self):
         self.begin()

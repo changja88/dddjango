@@ -330,6 +330,26 @@ finished `partial`, to stderr as human-facing notices — stdout carries only
 the result JSON — so Coordinator can carry them into the G0 banner as a
 first-class item, never a silent pass.
 
+`evidence-ledger.json` — the unverified ledger — is the last door, and it is a
+**whitelist**: the only findings it admits are the four the checker reaches
+*after* computing everything (residual, the 10% exclusion cap, an unlinked new
+surface, and a `partial`/`caps_hit` mismatch). Everything else is closed by
+default, including «no interaction evidence yet» and a stale `coverage_review`
+— observe first, regenerate the review. A deny-list was tried and rejected:
+one short-circuit finding (`cases: nonempty list required`) stood in for an
+entire subtree the checker never computed, so a single approved row opened
+everything. Rows are written only by `ledger.py add`, which runs the checker
+itself, takes the finding by index, and re-runs it afterwards to confirm that
+finding actually disappeared. A row carries the approval quote (which must sit
+inside an H2-or-deeper section of `scope.md`), that section's sha256, the
+observation fingerprint, and the magnitude at approval time; it goes stale — and
+the wall returns — when the section changes, the observation changes, or the
+magnitude grows. Deleting the ledger does not buy passage: the findings block
+again, because the record and the right of way are the same file. The checker
+consults it where `validate_inputs` and `validate_visual` settle their issue
+lists, so `backstop.py` — which calls `validate_inputs` in-process — passes
+through the same door, and both digests plus `validate_visual` stay alive.
+
 Manifest rows — in `design-input.json`'s own list and in archive/static source
 manifests alike — reject every unrecognized field. Nothing marks a row as
 carried forward from an older manifest: re-freezing rebuilds the manifest from

@@ -494,12 +494,23 @@ P2="$T/f29_noweb"; mkdir -p "$P2"
 OUT=$(run_backstop "$P2"); E=$?
 assert "F29e web/ 없음(전제 실패) → 1" 1 "web/ 없음" - "$E" "$OUT"
 
-# ---------- F30: 중단된 재동결 잔존 — 마무리 backstop 이 마지막 그물
+# ---------- F30: 중단된 재동결 잔존 — 마무리 backstop 이 마지막 그물.
+#   journal 이 있으면 되감을 계획이 있다 = 진짜 «중단된 재동결» → BLOCKER.
 P="$T/f30"; BASE=$(mkproj "$P")
 mkdir -p "$P/.dddjango-web/20260101-0000-screen/_refreeze-20260915-000000"
+printf '{"version":1}\n' > "$P/.dddjango-web/20260101-0000-screen/_refreeze-20260915-000000/journal.json"
 printf '{"version":1,"cases":[]}\n' > "$P/.dddjango-web/20260101-0000-screen/design-input.json"
 OUT=$(run_backstop "$P" --diff-base "$BASE"); E=$?
-assert "F30 중단된 재동결 잔존 → BLOCKER" 2 "interrupted refreeze" - "$E" "$OUT"
+assert "F30 중단된 재동결(journal 有) → BLOCKER" 2 "interrupted refreeze" - "$E" "$OUT"
+
+# ---------- F30c: journal 없는 껍데기는 되감을 계획이 없다 → BLOCKER 가 아니라 notice.
+#   실물에서 유일한 문이 abort(내용 삭제)인데 메시지는 commit --resume 을 안내했다 —
+#   사용자가 따를 수 없는 지시로 프로젝트 전역을 잠그면 하드월이다.
+P="$T/f30c"; BASE=$(mkproj "$P")
+mkdir -p "$P/.dddjango-web/20260101-0000-screen/_prev-20260101-000000"
+printf '{"version":1,"cases":[]}\n' > "$P/.dddjango-web/20260101-0000-screen/design-input.json"
+OUT=$(run_backstop "$P" --diff-base "$BASE"); E=$?
+assert "F30c journal 없는 잔존물 → interrupted BLOCKER 아님" 2 "journal 없는 재동결 잔존물" "interrupted refreeze" "$E" "$OUT"
 
 # ---------- F30b: 잔존 없으면 그 줄이 없다
 P="$T/f30b"; BASE=$(mkproj "$P")

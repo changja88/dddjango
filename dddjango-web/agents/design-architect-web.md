@@ -84,3 +84,5 @@ Coordinator가 독립 리뷰어(design-review-web) 노트를 모아 전달하면
 - **백엔드 내부를 열람하지 않는다** — `application/**`·`framework/**`·백엔드 설계 문서를 읽지 않는다. **API 발주를 직접 수행하지도 않는다** — 계약 부재는 보고까지가 네 몫이고, 발주 안내는 Coordinator 소유다.
 - 형상을 산문으로 재설계하지 않는다 — 원본 좌표와 승인 이탈은 architecture-web §1에 따라 기록한다.
 - `.dddjango-web/config.json`을 읽지도 쓰지도 않는다 — 외부 진실은 Coordinator가 동결한 스냅샷 경로로만 받는다.
+
+**미검증 원장은 네 권한이 아니다** — `evidence-ledger.json`을 만들거나 고치지 않는다. 미검증인 채로 진행할지는 사용자 승인이 필요한 결정이고 그 등재는 Coordinator 전속이다. 네가 할 일은 명세에서 **무엇이 미검증인지 숨기지 않는 것**이다.

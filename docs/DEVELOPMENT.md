@@ -31,13 +31,28 @@ dddjango-web/             ← 자매 플러그인 (웹 표현계층 빌더 — /
 ├── hooks/hooks.json       플러그인 hook(SessionStart·UserPromptSubmit → scripts/evidence_debt_hook.py —
 │                          시안 빌드의 조작 상태 증거 부채와 중단된 재동결을 Coordinator 경로와 무관하게 고지)
 ├── scripts/refreeze.py    재동결 집행(begin/check/commit/abort) — 기존 동결물 전량 폐기 후 재동결.
-│                          staging에 새로 동결하고 파일 단위 트랜잭션으로 교체한다(대조하지 않는다)
+│                          staging에 새로 동결하고 파일 단위 트랜잭션으로 교체한다(대조하지 않는다).
+│                          증거 판독 실패·브라우저 부재(--observation-skipped)로 막지 않고 기록하고
+│                          진행하며, 넘긴 사실은 build-state.refreeze_unverified 로 승격돼 backstop이
+│                          매 실행 고지한다. 폐기분은 _discarded-<ts>/ 로 한 세대 **복사** 보존한다
+│                          (개명하면 _prev의 «commit 진행 중» 표식이 사라져 재개가 live를 재폐기한다)
+├── scripts/ledger.py       미검증 원장(add/list/drop) — 게이트의 유일한 통행문.
+│                          `check_design_evidence.validate_inputs`/`validate_visual`이 발견을
+│                          확정하는 자리에서 조회한다(main()의 except 가 아니다 — backstop 은
+│                          validate_inputs 를 인프로세스로 부르고, 거기서 exit 0 을 내면 두 digest 와
+│                          validate_visual 이 사라진다). 받는 것은 «끝까지 계산한 뒤의 판정» 넷뿐이고
+│                          (잔여·예외 상한·새 표면·partial) 나머지는 기본 폐쇄다. 원장을 지우면 다시 막힌다
 ├── scripts/check_token_disposition.py
 │                          토큰 전수 처분 집행(G1 --spec-only) — 전수성·양방향·**기각 정당성**
 │                          (기각한 토큰의 값을 동결 시안이 실제로 쓰면 FINDING·architect 반송)
-└── scripts/check_clip_clearance.py
-                           클리핑 컨테이너의 링 여유 정적 검사(G2·트리비얼 ③) — 브라우저 불요.
-                           바깥 링을 지는 요소가 overflow≠visible 조상에서 확장만큼 여유를 못 얻으면 발견
+├── scripts/check_clip_clearance.py
+│                          클리핑 컨테이너의 링 여유 정적 검사(G2·트리비얼 ③) — 브라우저 불요.
+│                          바깥 링을 지는 요소가 overflow≠visible 조상에서 확장만큼 여유를 못 얻으면 발견
+└── scripts/check_focus_ring.py
+                           포커스 링 중첩 정적 검사(G2·트리비얼 ③ — clip_clearance와 한 배너 항목,
+                           종료 코드는 각각) — 브라우저 불요. 요소 무관 전역 링이 있는데 래퍼가
+                           :focus-within 링을 또 얹고 자손에 억제가 없으면 링이 두 겹이다.
+                           «전역·타입 링 0건 = 판정 안 함»은 «발견 0»과 다른 결과로 낸다
 
 codex-dddjango-web/       ← dddjango-web의 Codex 설치본 미러
 ├── REQUEST_GUIDE.md       dddjango-web/REQUEST_GUIDE.md의 byte 동일 미러

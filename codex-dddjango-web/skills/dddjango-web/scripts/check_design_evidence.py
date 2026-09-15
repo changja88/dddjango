@@ -30,6 +30,18 @@ EXCLUDED_FILES = {'.DS_Store'}
 EXCLUDED_SUFFIXES = {'.pyc', '.pyo'}
 
 
+# 미검증 원장이 받을 수 있는 «끝까지 계산한 뒤의 판정» — 검사기가 그 자리에서 종류를 실어 보낸다.
+# 문자열 매칭으로는 안 된다: 경로·case id·표면 이름이 메시지에 그대로 박히므로 사용자 데이터가
+# 판정을 사칭할 수 있다(실측: 관찰 경로를 'captures/잔여 1건 — none.json' 으로 두면 «관찰 미실시»
+# 발견이 «잔여» 판정으로 승격됐다). 이 사전은 한 실행 동안만 유효하다.
+LEDGER_VERDICTS: dict[str, str] = {}
+
+
+def verdict(kind: str, message: str) -> str:
+    LEDGER_VERDICTS[message] = kind
+    return message
+
+
 class Defects(Exception):
     def __init__(self, messages: list[str]):
         self.messages = messages
@@ -714,7 +726,7 @@ def _check_document(document: dict, label: str, issues: list[str]) -> dict | Non
     if not _strings(caps) or set(caps) - CAPS or len(set(caps)) != len(caps):
         issues.append(f'{label}.caps_hit: unique {sorted(CAPS)} required ({caps!r})')
     elif document['partial'] is False and caps:
-        issues.append(f'{label}: partial:false인데 caps_hit={caps} — 상한에 걸린 수집은 완주가 아니다')
+        issues.append(verdict('partial', f'{label}: partial:false인데 caps_hit={caps} — 상한에 걸린 수집은 완주가 아니다'))
     if document['environment_error'] is not None and not isinstance(document['environment_error'], str):
         issues.append(f'{label}.environment_error: string or null required')
     targets = _check_targets(document, label, issues)
@@ -894,7 +906,7 @@ def _check_exclusions(build: Path, spec: dict, items: list[tuple[str, bytes]], i
             issues.append(f'{here}.scope_ref: 앵커가 실제로 없다 ({reference!r})')
     active = _active_targets(items)
     if len(rows) * 10 > active:
-        issues.append(f'interaction_exclusions: 예외 {len(rows)}행은 활성 대상 {active}개의 10% 상한을 넘는다')
+        issues.append(verdict('exclusion_cap', f'interaction_exclusions: 예외 {len(rows)}행은 활성 대상 {active}개의 10% 상한을 넘는다'))
 
 
 def _surface_at(document: dict, step: Any) -> str | None:
@@ -957,7 +969,7 @@ def _check_surfaces(document: dict, path: str, spec: dict, label: str, issues: l
     for surface in sorted(linked_surfaces(document)):
         if surface in reached or surface in exempt:
             continue
-        issues.append(f'{label}: 새 표면 {surface!r}에 도달한 case reached_by도 승인 예외도 없다')
+        issues.append(verdict('surface', f'{label}: 새 표면 {surface!r}에 도달한 case reached_by도 승인 예외도 없다'))
 
 
 def _check_residual(document: dict, spec: dict, label: str, issues: list[str]) -> None:
@@ -971,7 +983,7 @@ def _check_residual(document: dict, spec: dict, label: str, issues: list[str]) -
         shown += f' 외 {len(remaining) - 20}건'
     caps = ','.join(document.get('caps_hit') or []) if document.get('partial') is True else ''
     prefix = f'partial(caps_hit={caps}) 수집인데 ' if caps else ''
-    issues.append(f'{label}: {prefix}잔여 {len(remaining)}건 — {shown}')
+    issues.append(verdict('residual', f'{label}: {prefix}잔여 {len(remaining)}건 — {shown}'))
 
 
 def validate_interactions(build: Path, case: dict, observed: dict, archive_path: Path,
@@ -1253,8 +1265,29 @@ def validate_inputs(build: Path, project: Path, *, require_review: bool = True,
             if re.findall(r'^review-result: (\S+)$', report, re.M) != ['pass']:
                 issues.append('coverage_review: independent review-result: pass required')
     if issues:
+        issues = _ledgered(build, issues)
+    if issues:
         raise Defects(issues)
     return spec, canonical_digest(digest_items), digest_items
+
+
+def _ledgered(build: Path, issues: list[str]) -> list[str]:
+    """미검증 원장이 연 발견을 빼고 남은 것만 돌려준다 — 게이트의 유일한 통행문.
+
+    이 자리인 이유: `main()` 의 except 에 두면 `backstop.py` 가 안 지나고(그쪽은
+    `validate_inputs` 를 인프로세스로 부른다), 거기서 exit 0 을 내면 두 digest 와
+    `validate_visual` 이 통째로 사라진다. `issues` 묶음에만 붙으므로 조기 `raise Defects([...])`
+    는 구조적으로 원장 밖이다."""
+    try:
+        from ledger import filter_issues
+    except ImportError:
+        return issues
+    remaining, opened, dead = filter_issues(build, issues, LEDGER_VERDICTS)
+    for message in dead:
+        print(f'[design-evidence] 원장 행 무효: {message}', file=sys.stderr)
+    for message in opened:
+        print(f'[design-evidence] 미검증(원장): {message}', file=sys.stderr)
+    return remaining
 
 
 def implementation_digest(project: Path, spec: dict) -> str:
@@ -1328,6 +1361,8 @@ def validate_visual(build: Path, project: Path, spec: dict, input_digest: str, i
         if row.get('result') != 'pass':
             issues.append(f'{here}.result: pass required')
         _validate_media(build, source.get('media', []), row.get('media'), here, issues)
+    if issues:
+        issues = _ledgered(build, issues)
     if issues:
         raise Defects(issues)
 
@@ -1412,6 +1447,15 @@ def run(args: argparse.Namespace) -> dict[str, str]:
         result['implementation_digest'] = implementation_digest(project, spec)
     if not args.fingerprint and args.phase == 'visual':
         validate_visual(build, project, spec, input_value, result['implementation_digest'])
+    try:
+        from ledger import valid_entries
+        alive, _dead = valid_entries(build)
+    except ImportError:
+        alive = []
+    if alive:
+        result['unverified_ledger'] = json.dumps(
+            [{'key': row.get('key'), 'magnitude': row.get('magnitude'), 'label': row.get('label')}
+             for row in alive], ensure_ascii=False, sort_keys=True)
     return result
 
 
@@ -1426,7 +1470,9 @@ def main(argv: list[str] | None = None) -> int:
         result = run(args)
     except Defects as error:
         for message in error.messages:
-            print(f'[design-evidence] defect: {message}', file=sys.stderr)
+            kind = LEDGER_VERDICTS.get(message)
+            tag = f'defect[{kind}]' if kind else 'defect'
+            print(f'[design-evidence] {tag}: {message}', file=sys.stderr)
         return 2
     except (OSError, ValueError) as error:
         print(f'[design-evidence] usage/error: {error}', file=sys.stderr)

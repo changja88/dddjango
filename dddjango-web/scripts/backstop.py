@@ -17,7 +17,7 @@ import sys
 import json
 import subprocess
 import traceback
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import List, Optional, Set
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -118,9 +118,35 @@ def legacy_v1_allowed(root: Path, build: Path, diff_base: str | None) -> bool:
         untracked = subprocess.run(
             ['git', '-C', str(root), 'ls-files', '-z', '--others', *extra, '--', relative],
             capture_output=True)
-        if untracked.returncode != 0 or untracked.stdout.strip(b'\0'):
+        if untracked.returncode != 0:
+            return False
+        names = [name for name in untracked.stdout.decode('utf-8', 'replace').split('\0') if name]
+        if [name for name in names if not _gate_bookkeeping(name)]:
             return False
     return True
+
+
+# 게이트 자신이 만드는 장부는 「untracked 0」의 예외다 — 원장을 적는 행위가 legacy v1 유예를
+# 뒤집어 «원장이 받지 않는 발견»을 새로 세우면, 기록을 남길수록 길이 닫힌다(불변식 II 역행).
+# 백업(_discarded-*)도 같다 — 되돌릴 근거를 남긴 대가로 게이트가 막히면 아무도 남기지 않는다.
+GATE_BOOKKEEPING = ('evidence-ledger.json',)
+GATE_BOOKKEEPING_DIRS = ('_discarded-',)
+
+
+def ledger_notice(build: Path) -> int:
+    """미검증 원장의 유효 행 수 — 비어 있지 않은 동안 매 실행 고지한다."""
+    try:
+        from ledger import valid_entries
+        alive, _dead = valid_entries(build)
+    except Exception:
+        return 0
+    return len(alive)
+
+
+def _gate_bookkeeping(name: str) -> bool:
+    parts = PurePosixPath(name).parts
+    return (parts[-1] in GATE_BOOKKEEPING
+            or any(part.startswith(GATE_BOOKKEEPING_DIRS) for part in parts))
 
 
 def observes_legacy_v1(build: Path, design_spec: dict) -> bool:
@@ -280,17 +306,50 @@ def main(argv: List[str]) -> int:
                                '완료된 과거 시안 빌드 %d개의 visual 검사 생략' % len(discovered))
         elif configured and not discovered:
             design_defects.append('design_source is configured but no design build was found; --design-build required')
-        for build in discovered:
-            # 중단된 재동결 — hook 은 SessionStart·UserPromptSubmit 에서만 발화해 같은 턴의
-            # 산출물 커밋을 막지 못한다. 마무리 backstop 이 마지막 그물이다.
+        for build in (builds or discovered):
+            # 재동결이 «막지 않고 넘어간» 사실은 매 실행 표면화한다 — 벽을 걷어낸 자리에
+            # 표면이 없으면 열린 길이 무엇이 미검증인지 지운다(불변식 II).
+            if not build.is_dir():
+                continue
+            try:
+                facts = json.loads((build / 'build-state.json').read_text(encoding='utf-8'))
+            except (OSError, ValueError):
+                continue
+            unverified = facts.get('refreeze_unverified') if isinstance(facts, dict) else None
+            if isinstance(unverified, dict) and len(unverified) > 1:
+                ctx.notices.append('[info] %s: 재동결 미검증 — %s' % (
+                    build.name, ' · '.join(f'{k}={v}' for k, v in sorted(unverified.items()) if k != 'at')))
+            ledger_rows = ledger_notice(build)
+            if ledger_rows:
+                ctx.notices.append('[info] %s: 미검증 원장 %d행 — 지우면 그 발견이 다시 막는다'
+                                   % (build.name, ledger_rows))
+
+        # 중단된 재동결 — hook 은 SessionStart·UserPromptSubmit 에서만 발화해 같은 턴의
+        # 산출물 커밋을 막지 못한다. 마무리 backstop 이 마지막 그물이다.
+        # 대상 빌드가 지정되면 거기만 본다 — 다른 빌드의 잔존물로 이번 실행을 막으면
+        # 사용자가 손댈 수 없는 자리에서 프로젝트 전역이 잠긴다.
+        for build in (builds or discovered):
             if not build.is_dir():
                 continue
             leftovers = sorted(item.name for item in build.iterdir()
                                if item.is_dir() and item.name.startswith(('_refreeze-', '_prev-')))
-            if leftovers:
+            resumable = [name for name in leftovers if (build / name / 'journal.json').is_file()]
+            orphaned = [name for name in leftovers if name not in resumable]
+            try:    # --design-build 는 루트 밖을 가리킬 수 있다(시험 하네스·외부 빌드)
+                where = build.resolve().relative_to(root.resolve()).as_posix()
+            except ValueError:
+                where = str(build)
+            if resumable:
                 design_defects.append(
                     '%s: interrupted refreeze — %s 가 남아 있다 · refreeze.py commit --resume '
-                    '(완료 전이면 abort)' % (build.relative_to(root).as_posix(), ', '.join(leftovers)))
+                    '(완료 전이면 abort)' % (where, ', '.join(resumable)))
+            if orphaned:
+                # journal 이 없으면 되감을 계획 자체가 없다 — «중단된 재동결» 이 아니라 껍데기다.
+                # 유일한 문이 abort 이고 그건 내용을 지운다(백업은 _discarded- 로 남는다).
+                ctx.notices.append(
+                    '[info] %s: journal 없는 재동결 잔존물 %s — 되감을 계획이 없다. '
+                    'refreeze.py abort 만이 치울 수 있고 내용은 _discarded-<ts>/ 로 한 세대 보존된다'
+                    % (where, ', '.join(orphaned)))
         for build in builds:
             if not build.is_dir():
                 design_defects.append('design build 디렉터리/증거가 없음: %s' % build)

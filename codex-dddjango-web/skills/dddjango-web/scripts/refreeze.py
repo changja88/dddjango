@@ -42,6 +42,7 @@ IMAGES_SUBDIR = Path('web') / 'static' / 'images'
 PHASES = ('planned', 'discarded', 'installed', 'verified', 'done')
 STAGING_PREFIX = '_refreeze-'
 PREV_PREFIX = '_prev-'
+DISCARDED_PREFIX = '_discarded-'
 JOURNAL = 'journal.json'
 PLAN = 'swap-plan.json'
 BOOKKEEPING = (JOURNAL, PLAN)
@@ -345,10 +346,10 @@ def cmd_begin(build: Path, project_root: Path, quote: str) -> int:
         return 2
     errors: list[str] = []
     discard = discard_set(build, errors)
-    if errors:
-        for issue in errors:
-            print(f'[refreeze] 증거 문서를 읽을 수 없다 — 폐기 집합이 불완전하다: {issue}')
-        return 1
+    for issue in errors:
+        # 재동결이 고칠 대상이 재동결을 막으면 안 된다 — 사실을 journal 에 적고 진행한다.
+        # 되감기 안전성은 `_prev` 가 지므로 폐기 집합이 불완전해도 되돌릴 수 있다.
+        print(f'[refreeze] 증거 문서를 읽을 수 없다 — 폐기 집합이 불완전하다(기록하고 진행): {issue}')
     staging = build / f'{STAGING_PREFIX}{time.strftime("%Y%m%d-%H%M%S")}'
     staging.mkdir()
     try:
@@ -362,7 +363,12 @@ def cmd_begin(build: Path, project_root: Path, quote: str) -> int:
         spec = build / 'design-input.json'
         exclusions = []
         if spec.is_file():
-            value = load_json(spec)
+            try:
+                value = load_json(spec)
+            except Exception as error:   # 폐기 집합과 같은 이유로 여기서도 막으면 안 된다
+                errors.append(f'design-input.json: {type(error).__name__}: {error}')
+                print(f'[refreeze] 예외 목록을 읽을 수 없다(기록하고 진행): {error}')
+                value = None
             if isinstance(value, dict) and isinstance(value.get('interaction_exclusions'), list):
                 exclusions = value['interaction_exclusions']
         journal = {
@@ -383,6 +389,8 @@ def cmd_begin(build: Path, project_root: Path, quote: str) -> int:
             'interaction_exclusions': exclusions,
             'evidence_debt_before': state.get('evidence_debt'),
             'copied_inputs': sorted(copied),
+            # 판독 실패는 «막지 않되 지우지도 않는다» — check·commit 이 매번 표면화한다.
+            'unreadable': errors,
         }
         dump_json(staging / JOURNAL, journal)
         state['evidence_debt'] = {
@@ -398,13 +406,15 @@ def cmd_begin(build: Path, project_root: Path, quote: str) -> int:
         shutil.rmtree(staging, ignore_errors=True)
         raise
     print(f'[refreeze] staging {staging.name} · 폐기 {len(discard)}건 · '
-          f'고아 {len(journal["orphans"])}건(지우지 않음)')
+          f'고아 {len(journal["orphans"])}건(지우지 않음)'
+          + (f' · 판독 실패 {len(errors)}건(폐기 집합 불완전 — journal 에 기록)' if errors else ''))
     return 0
 
 
 # --- check -----------------------------------------------------------------
 
-def cmd_check(build: Path, staging: Path | None, skip_reason: str | None) -> int:
+def cmd_check(build: Path, staging: Path | None, skip_reason: str | None,
+              observation_skip: str | None = None) -> int:
     staging = _single(build, STAGING_PREFIX, staging)
     if staging is None:
         raise RefreezeError('staging 이 없다 — begin 을 먼저 실행한다')
@@ -418,6 +428,11 @@ def cmd_check(build: Path, staging: Path | None, skip_reason: str | None) -> int
         journal['has_render_audit'] = False
         journal['render_audit_skip_reason'] = skip_reason
         dump_json(journal_path, journal)
+    if observation_skip is not None:
+        if observation_skip not in SKIP_REASONS:
+            raise RefreezeError('조작 상태 관찰 생략 사유는 enum 이다: ' + ' · '.join(SKIP_REASONS))
+        journal['observation_skip_reason'] = observation_skip
+        dump_json(journal_path, journal)
     missing: list[str] = []
     design_ref = staging / 'design-ref'
     if not design_ref.is_dir() or not any(design_ref.rglob('*')):
@@ -429,12 +444,31 @@ def cmd_check(build: Path, staging: Path | None, skip_reason: str | None) -> int
         missing.append('render-audit.json')
     errors: list[str] = []
     issues = missing + pointer_health(staging)
-    issues.extend(_archive_observation_issues(staging))
+    observation_issues = _archive_observation_issues(staging)
+    if observation_issues and journal.get('observation_skip_reason'):
+        # 브라우저 채널이 없으면 이 축은 어떤 행동으로도 못 닫힌다 — 렌더 실측 축과 같은 등급의
+        # 명시 사유로 통과시키고, «무엇이 미검증인지» 는 journal·build-state 에 남긴다.
+        for issue in observation_issues:
+            print(f'[refreeze] 조작 상태 관찰 생략({journal["observation_skip_reason"]}): {issue}')
+    else:
+        issues.extend(observation_issues)
     covered = set(journal.get('discard_set') or ())
     live = [rel for rel in evidence_pointers(build, errors) if (build / rel).is_file()]
-    issues.extend(f'증거 문서를 읽을 수 없다: {issue}' for issue in errors)
-    issues.extend(f'폐기 집합 자기 검사: 포인터가 빠졌다 ({rel})'
-                  for rel in sorted(set(live) - covered - preserved_set(build)))
+    for issue in errors:
+        print(f'[refreeze] 경고 — 증거 문서를 읽을 수 없다(차단하지 않는다): {issue}')
+    for issue in journal.get('unreadable') or ():
+        print(f'[refreeze] 경고 — begin 시점 판독 실패가 기록돼 있다: {issue}')
+    uncovered = sorted(set(live) - covered - preserved_set(build))
+    if uncovered and (journal.get('unreadable') or errors):
+        # begin 때 증거를 못 읽어 폐기 집합이 불완전했던 것뿐이다. 지금은 읽히니 **보정한다** —
+        # 여기서 막으면 벽이 begin 에서 check 로 한 칸 밀린 것일 뿐이다(불변식 I).
+        journal['discard_set'] = sorted(covered | set(uncovered))
+        journal['discard_amended'] = uncovered
+        dump_json(journal_path, journal)
+        for rel in uncovered:
+            print(f'[refreeze] 폐기 집합을 보정했다(begin 시점 판독 실패분): {rel}')
+    else:
+        issues.extend(f'폐기 집합 자기 검사: 포인터가 빠졌다 ({rel})' for rel in uncovered)
     if issues:
         for issue in issues:
             print(f'[refreeze] {issue}')
@@ -616,13 +650,67 @@ def _restore_debt(build: Path, journal: dict) -> None:
     write_state(build, state)
 
 
+def _preserve(folder: Path, why: str) -> None:
+    """지우기 직전에 한 세대만 복사해 둔다 — `_discarded-<ts>/`.
+
+    **개명이 아니라 복사다.** `_prev-` 는 되감기 저장소이면서 «commit 진행 중» 표식을 겸하므로
+    (`cmd_commit` 의 `_single(build, PREV_PREFIX)`), 이름을 바꾸면 표식이 사라져 재개가 완료된
+    재동결을 새 교체로 오인하고 방금 설치된 live 산출물을 다시 폐기한다(실측으로 재현됐다).
+    복사는 `_prev` 의 생성·소멸 시점과 의미를 전혀 건드리지 않는다.
+
+    백업은 차단 사유가 아니다 — 실패하면 경고만 내고 정리를 계속한다."""
+    if not folder.is_dir():
+        return
+    stamp = time.strftime('%Y%m%d-%H%M%S')
+    target = folder.parent / f'{DISCARDED_PREFIX}{stamp}'
+    serial = 2
+    while target.exists():
+        target = folder.parent / f'{DISCARDED_PREFIX}{stamp}-{serial}'
+        serial += 1
+    try:
+        shutil.copytree(folder, target)
+    except OSError as error:
+        shutil.rmtree(target, ignore_errors=True)   # 부분본을 완전본처럼 남기지 않는다
+        print(f'[refreeze] 폐기분 백업 실패(정리는 계속한다): {folder.name} — {error}')
+        return
+    print(f'[refreeze] 폐기분을 {target.name}/ 에 한 세대 남겼다 ({why} · 확인 뒤 직접 지운다)')
+
+
 def _cleanup(staging: Path, prev: Path) -> None:
+    _preserve(prev, '재동결 완료')
     shutil.rmtree(staging, ignore_errors=True)
     shutil.rmtree(prev, ignore_errors=True)
 
 
+def _unverified(journal: dict) -> dict:
+    """이번 재동결이 «막지 않고 넘어간» 것들 — 벽을 없앤 자리에는 표면이 있어야 한다.
+
+    벽만 걷어내고 기록을 어디에도 남기지 않으면 «열린 길이 무엇이 미검증인지 지운다»
+    (불변식 II 위반). journal 은 완료와 함께 `_discarded-` 로 들어가므로 build-state 로 승격한다."""
+    facts: dict = {}
+    if journal.get('unreadable'):
+        facts['unreadable'] = list(journal['unreadable'])
+    if journal.get('discard_amended'):
+        facts['discard_amended'] = list(journal['discard_amended'])
+    if journal.get('observation_skip_reason'):
+        facts['observation_skipped'] = journal['observation_skip_reason']
+    if journal.get('render_audit_skip_reason'):
+        facts['render_audit_skipped'] = journal['render_audit_skip_reason']
+    return facts
+
+
 def _finish(build: Path, staging: Path, prev: Path, journal: dict) -> None:
     state = read_state(build)
+    facts = _unverified(journal)
+    if facts:
+        facts['at'] = now()
+        state['refreeze_unverified'] = facts
+        print('[refreeze] 이번 재동결에서 막지 않고 넘어간 것 — build-state.refreeze_unverified 에 남긴다:')
+        for key, value in sorted(facts.items()):
+            if key != 'at':
+                print(f'  · {key}: {value}')
+    else:
+        state.pop('refreeze_unverified', None)
     if state.get('g2_approved') is True or state.get('implementation_visual') == 'verified':
         state['implementation_visual'] = 'pending'
     state['has_render_audit'] = bool(journal.get('has_render_audit'))
@@ -653,6 +741,7 @@ def cmd_abort(build: Path, staging: Path | None) -> int:
         # journal 을 만들다 실패한 껍데기 — 지워야 hook·backstop 의 영구 BLOCKER가 풀린다.
         for leftover in (staging, prev):
             if leftover is not None:
+                _preserve(leftover, 'journal 없는 잔존물 정리')
                 shutil.rmtree(leftover, ignore_errors=True)
         print('[refreeze] journal 없는 잔존물을 치웠다 — live 빌드 폴더와 이미지는 손대지 않았다')
         return 0
@@ -687,7 +776,9 @@ def main(argv: list[str] | None = None) -> int:
             child.add_argument('--staging', type=Path, default=None)
         if name == 'check':
             child.add_argument('--render-audit-skipped', default=None, metavar='REASON',
-                               help='생략 사유(enum): ' + ' · '.join(SKIP_REASONS))
+                               help='렌더 실측 생략 사유(enum): ' + ' · '.join(SKIP_REASONS))
+            child.add_argument('--observation-skipped', default=None, metavar='REASON',
+                               help='조작 상태 관찰 생략 사유(enum): ' + ' · '.join(SKIP_REASONS))
         if name == 'commit':
             child.add_argument('--resume', action='store_true')
             child.add_argument('--stop-after', choices=PHASES, default=None)
@@ -697,7 +788,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == 'begin':
             return cmd_begin(build, args.project_root.resolve(), args.quote)
         if args.command == 'check':
-            return cmd_check(build, args.staging, args.render_audit_skipped)
+            return cmd_check(build, args.staging, args.render_audit_skipped,
+                             args.observation_skipped)
         if args.command == 'commit':
             return cmd_commit(build, args.staging, args.resume, args.stop_after)
         return cmd_abort(build, args.staging)
