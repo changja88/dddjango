@@ -22,7 +22,7 @@ from urllib.parse import unquote, urlsplit
 from asset_io import image_extension
 from archive_design import archive_dependencies, archive_files
 from design_sources import dependencies, resource_kind
-from evidence_debt import has_interaction_evidence
+from evidence_debt import OBSERVATION_V1_FIELDS, OBSERVATION_V2_FIELDS, is_interaction_observation
 from freeze_design import resolve_source
 
 EXCLUDED_DIRS = {'__pycache__', '.pytest_cache', '.mypy_cache', '.ruff_cache'}
@@ -1039,16 +1039,13 @@ def _source_observation(build: Path, case: dict, archive_path: Path, label: str,
     except ValueError:
         issues.append(f'{label}.source_observation: invalid JSON')
         return None
-    required = {'version', 'archive_sha256', 'entrypoint', 'case_id', 'screen', 'state',
-                'viewport', 'url', 'observed_at', 'capture', 'trace'}
+    # 관찰 문서 필드 집합과 조작 상태 증거 판정은 evidence_debt와 단일 출처 — hook 고지와 검사기가 같은 규칙을 쓴다.
     version = observed.get('version') if isinstance(observed, dict) else None
-    if version == 2:
-        required = required | {'interactions'}
+    required = set(OBSERVATION_V2_FIELDS if version == 2 else OBSERVATION_V1_FIELDS)
     if not isinstance(observed, dict) or set(observed) != required or version not in (1, 2):
         issues.append(f'{label}.source_observation: exact version 1 or 2 fields required')
         return None
-    # 조작 상태 증거 유무는 evidence_debt 술어와 단일 출처 — hook 고지와 검사기 판정이 같은 규칙을 쓴다.
-    if not legacy_v1 and not has_interaction_evidence(observed):
+    if not legacy_v1 and not is_interaction_observation(observed):
         issues.append(f'{label}.source_observation: interaction evidence required '
                       '(version 2 with interactions)')
         return None

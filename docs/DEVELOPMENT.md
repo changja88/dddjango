@@ -146,6 +146,8 @@ make release DRY=1        # 미리보기 (변경 없음) — release-web DRY=1 �
 
 `make release-web`은 `_release` 전에 `verify-web-browser`(K3 브라우저 스위트, §5)를 먼저 돈다 — env 없으면 그 자리에서 막힌다(`DRY=1`이면 안내만).
 
+봉인(`manifest_seal.py --write`)은 봉인 대상 파일(Makefile 등)을 바꾼 커밋 **뒤에** 별도 chore 커밋으로 재발행한다 — 같은 커밋에 넣으면 `sealed_commit`이 변경 이전을 가리켜 strict `--check`가 RED가 된다(`make verify`의 `--draft` 대조는 통과하므로 놓치기 쉽다).
+
 `hooks/hooks.json`이 바뀐 dddjango-web 릴리즈(command 문자열·이벤트·timeout — 스크립트 본문만 바뀐 경우는 해당 없음)는 GitHub Release 노트에 «Codex 사용자는 `/hooks`에서 dddjango-web hook을 재신뢰» 1줄을 넣는다. Codex는 hook *정의*의 해시로 신뢰를 기록해 정의가 바뀌면 승인 전까지 그 hook을 건너뛰고, 건너뛴 상태는 세션 시작 시 `[dddjango-web] evidence hook active` 줄이 없는 것으로만 드러난다.
 
 ## 7. 더 읽기

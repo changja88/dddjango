@@ -6,10 +6,12 @@ Coordinator가 어떤 경로(재동결만·조회만·구현)를 고르든 그�
 
 인자: `session-start` | `user-prompt`(기본). stdin: 하네스 JSON(`cwd`).
 출력: 단일 JSON 문서 — `hookSpecificOutput.additionalContext`(모델 컨텍스트) + `systemMessage`(사용자 화면).
-  session-start: 빌드가 하나라도 있으면 항상 «evidence hook active …» 1줄(이 줄이 없으면 hook 미작동) + 상태 줄.
-  user-prompt: 미결정(undecided) 또는 판정 불가(error) 빌드가 있을 때만. 결정된 빌드(deferred·observing)는
-  SessionStart에서만 상태 줄을 낸다 — 매 프롬프트 같은 명령문을 반복하지 않는다(재질문·무시 학습 방지).
-exit는 항상 0(UserPromptSubmit exit 2는 프롬프트를 지운다). 어떤 예외도 stderr 1줄로 삼킨다.
+  session-start: `.dddjango-web/`가 있는 프로젝트면 빌드 0개여도 항상 «evidence hook active …» 1줄
+  (이 줄이 없으면 hook 미작동) + 상태 줄(undecided·deferred·observing·error).
+  user-prompt: 미결정(undecided) 빌드가 있을 때만. 결정된 빌드·판정 불가 빌드는 SessionStart에서만
+  상태 줄을 낸다 — 매 프롬프트 같은 문장을 반복하지 않는다(재질문·무시 학습 방지).
+exit는 항상 0(UserPromptSubmit exit 2는 프롬프트를 지운다). 어떤 예외도 삼킨다 — session-start에서는
+오류를 additionalContext·systemMessage로 알리고, user-prompt에서는 stderr 1줄만 낸다.
 """
 from __future__ import annotations
 
@@ -27,14 +29,15 @@ sys.path.insert(0, str(HERE))
 from evidence_debt import BuildDebt, build_debt  # noqa: E402
 
 ANCHOR = '[dddjango-web] evidence debt — '
+ACTIVE = '[dddjango-web] evidence hook active — '
 EVENTS = {'session-start': 'SessionStart', 'user-prompt': 'UserPromptSubmit'}
 SKIP_DIRS = {'node_modules', '_history', '__pycache__', 'venv'}
 QUOTE_CHARS = 20
 DECISION_LINE = ('[dddjango-web] evidence debt: {count} undecided build(s). Record the user\'s decision in '
                  'build-state.json evidence_debt (ⓐ observe = re-collect chain: observe ≤90 min → independent '
-                 'review → inputs → visual re-evidence → backstop · ⓑ defer = non-implementation runs only; '
-                 'implementation re-entry requires ⓐ) before any run on that folder, including refreeze-only '
-                 'or scope-only runs.')
+                 'review → inputs → visual re-evidence → backstop · ⓑ defer = non-implementation runs only '
+                 '(refreeze, inspection, reporting); implementation re-entry requires ⓐ) before any run on that '
+                 'folder, including refreeze-only or scope-only runs. Quote the folder line verbatim in the banner.')
 
 
 def _stdin_cwd() -> Path | None:
@@ -56,13 +59,19 @@ def _candidates() -> list[Path]:
     env = os.environ.get('CLAUDE_PROJECT_DIR')
     found: list[Path] = []
     for value in (Path(env) if env else None, _stdin_cwd(), Path(os.getcwd())):
-        if value is not None and value.is_dir():
-            found.append(value)
+        try:
+            if value is not None and value.is_dir():
+                found.append(value)
+        except OSError:
+            continue
     return found
 
 
 def _has_builds(directory: Path) -> bool:
-    return (directory / '.dddjango-web').is_dir()
+    try:
+        return (directory / '.dddjango-web').is_dir()
+    except OSError:
+        return False
 
 
 def _subdirs(directory: Path) -> list[Path]:
@@ -116,8 +125,11 @@ def _line(debt: BuildDebt) -> str:
     if status == 'error':
         return f'{ANCHOR}{name}: cannot evaluate ({debt.error})'
     if status == 'undecided':
-        return (f'{ANCHOR}{name}: {debt.cases_debt}/{debt.cases_total} archive case without interaction '
-                'evidence (observation v1/absent) · decision required before any run on this folder')
+        r = debt.reasons
+        return (f'{ANCHOR}{name}: {debt.cases_debt}/{debt.cases_total} archive case(s) have no interaction-state '
+                f'observation — static-only {r.get("static_only", 0)} · missing {r.get("missing", 0)} · '
+                f'unreadable {r.get("unreadable", 0) + r.get("malformed", 0)}; dropdown/dialog/toggle states were '
+                'never driven (not a file-format issue) · decision required before any run on this folder')
     at = str(debt.decision.get('at', '?')) if debt.decision else '?'
     if status == 'deferred':
         return f'{ANCHOR}{name}: deferred since {at} — "{_quote(debt.decision)}"'
@@ -131,12 +143,11 @@ def _emit(event: str, context: list[str], system: str) -> None:
     sys.stdout.buffer.flush()
 
 
-def run(argv: list[str]) -> int:
-    event = EVENTS.get(argv[0] if argv else 'user-prompt', 'UserPromptSubmit')
+def run(event: str) -> int:
     roots = _project_roots(_candidates())
-    builds = [build for root in roots for build in _builds(root)]
-    if not builds:
+    if not roots:
         return 0
+    builds = [build for root in roots for build in _builds(root)]
     debts = [debt for debt in (build_debt(build) for build in builds) if debt is not None]
     by_status: dict[str, list[BuildDebt]] = {}
     for debt in debts:
@@ -149,26 +160,31 @@ def run(argv: list[str]) -> int:
     if errors:
         counts += f' · error {len(errors)}'
     if event == 'SessionStart':
-        active = f'[dddjango-web] evidence hook active — scanned {len(builds)} build(s): {counts}'
+        active = f'{ACTIVE}scanned {len(builds)} build(s): {counts}'
         context = [active] + [_line(debt) for debt in undecided + deferred + observing + errors]
         if undecided:
             context.append(DECISION_LINE.format(count=len(undecided)))
         _emit(event, context, active)
         return 0
-    if not undecided and not errors:
+    if not undecided:
         return 0
-    context = [_line(debt) for debt in undecided + errors]
-    if undecided:
-        context.append(DECISION_LINE.format(count=len(undecided)))
+    context = [_line(debt) for debt in undecided] + [DECISION_LINE.format(count=len(undecided))]
     _emit(event, context, f'[dddjango-web] evidence debt: {counts}')
     return 0
 
 
 def main(argv: list[str]) -> int:
+    event = EVENTS.get(argv[0] if argv else 'user-prompt', 'UserPromptSubmit')
     try:
-        return run(argv)
+        return run(event)
     except Exception as error:  # noqa: BLE001 — hook은 어떤 경우에도 프롬프트를 막지 않는다
-        sys.stderr.write(f'[dddjango-web] evidence hook error: {type(error).__name__}: {error}\n')
+        message = f'[dddjango-web] evidence hook error: {type(error).__name__}: {error}'
+        sys.stderr.write(message + '\n')
+        if event == 'SessionStart':
+            try:
+                _emit(event, [message], message)
+            except Exception:  # noqa: BLE001
+                pass
         return 0
 
 

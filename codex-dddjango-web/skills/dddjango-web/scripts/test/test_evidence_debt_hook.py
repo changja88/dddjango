@@ -70,10 +70,11 @@ class HookOutput(unittest.TestCase):
         doc = parse(out)
         self.assertEqual(doc['hookSpecificOutput']['hookEventName'], 'UserPromptSubmit')
         context = doc['hookSpecificOutput']['additionalContext']
-        self.assertIn(ANCHOR + '20260912-1640-web-related-persons: 2/3 archive case without interaction evidence (observation v1/absent) · decision required before any run on this folder', context)
+        self.assertIn(ANCHOR + '20260912-1640-web-related-persons: 2/3 archive case(s) have no interaction-state observation — static-only 2 · missing 0 · unreadable 0; dropdown/dialog/toggle states were never driven (not a file-format issue) · decision required before any run on this folder', context)
         self.assertIn('[dddjango-web] evidence debt: 1 undecided build(s). Record the user\'s decision in build-state.json evidence_debt', context)
         self.assertIn('ⓐ observe', context)
         self.assertIn('ⓑ defer', context)
+        self.assertNotIn('v1', context)
         self.assertEqual(doc['systemMessage'], '[dddjango-web] evidence debt: undecided 1 · deferred 0 · observing 0')
 
     def test_decided_builds_only_on_session_start(self) -> None:
@@ -103,12 +104,26 @@ class HookOutput(unittest.TestCase):
         _, out, _ = run_hook('user-prompt', cwd=self.project)
         self.assertEqual(out, '')
 
-    def test_error_build_reported_and_exit_zero(self) -> None:
+    def test_error_build_reported_on_session_start_only(self) -> None:
         build = make_build(self.project, 'bad')
         (build / 'design-input.json').write_text('{broken', encoding='utf-8')
         code, out, _ = run_hook('user-prompt', cwd=self.project)
+        self.assertEqual((code, out), (0, ''))
+        code, out, _ = run_hook('session-start', cwd=self.project)
         self.assertEqual(code, 0)
-        self.assertIn(ANCHOR + 'bad: cannot evaluate (', parse(out)['hookSpecificOutput']['additionalContext'])
+        context = parse(out)['hookSpecificOutput']['additionalContext']
+        self.assertIn('scanned 1 build(s): undecided 0 · deferred 0 · observing 0 · error 1', context)
+        self.assertIn(ANCHOR + 'bad: cannot evaluate (', context)
+
+    def test_session_start_active_even_with_zero_builds(self) -> None:
+        (self.project / '.dddjango-web').mkdir()
+        (self.project / '.dddjango-web' / 'config.json').write_text('{}', encoding='utf-8')
+        code, out, _ = run_hook('session-start', cwd=self.project)
+        self.assertEqual(code, 0)
+        doc = parse(out)
+        self.assertEqual(doc['systemMessage'], '[dddjango-web] evidence hook active — scanned 0 build(s): undecided 0 · deferred 0 · observing 0')
+        code, out, _ = run_hook('user-prompt', cwd=self.project)
+        self.assertEqual((code, out), (0, ''))
 
     def test_unknown_event_treated_as_user_prompt_and_exit_zero(self) -> None:
         make_build(self.project, 'a', observations=[observation(1)])

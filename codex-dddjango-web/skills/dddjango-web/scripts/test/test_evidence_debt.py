@@ -1,4 +1,4 @@
-"""evidence_debt 술어 단위 테스트 — 구조 판정(메시지 grep 없음)·대상 한정·결정 분류."""
+"""evidence_debt 술어 단위 테스트 — 구조 판정(메시지 grep 없음)·대상 한정·사유 분류·결정 분류·검사기 단일 출처."""
 from __future__ import annotations
 
 import json
@@ -31,7 +31,7 @@ def observation(version: int, *, interactions: bool = True) -> dict:
 
 def make_build(root: Path, name: str, *, archive: bool = True, design_status: str | None = 'ready',
                observations: list | None = None, decision: dict | None = None,
-               build_state: bool = True) -> Path:
+               build_state: bool = True, pointer_keys: set | None = None) -> Path:
     """observations: 항목마다 dict(관찰 문서) | 'missing' | 'broken' | 'escape' | 'nopointer'."""
     build = root / '.dddjango-web' / name
     build.mkdir(parents=True)
@@ -42,18 +42,21 @@ def make_build(root: Path, name: str, *, archive: bool = True, design_status: st
         case = {'id': f'c{index}', 'screen': 'login', 'state': 'initial', 'viewport': [390, 844],
                 'entrypoint': 'login.dc.html'}
         rel = f'captures/c{index}-source-observation.json'
+        pointer = {'path': rel, 'sha256': '0' * 64}
+        if pointer_keys is not None:
+            pointer = {key: pointer.get(key, 'x') for key in pointer_keys}
         if spec == 'nopointer':
             pass
         elif spec == 'escape':
             case['source_observation'] = {'path': '../outside.json', 'sha256': '0' * 64}
         elif spec == 'missing':
-            case['source_observation'] = {'path': rel, 'sha256': '0' * 64}
+            case['source_observation'] = pointer
         elif spec == 'broken':
-            case['source_observation'] = {'path': rel, 'sha256': '0' * 64}
+            case['source_observation'] = pointer
             (build / rel).parent.mkdir(parents=True, exist_ok=True)
             (build / rel).write_text('{not json', encoding='utf-8')
         else:
-            case['source_observation'] = {'path': rel, 'sha256': '0' * 64}
+            case['source_observation'] = pointer
             write_json(build / rel, spec)
         cases.append(case)
     write_json(build / 'design-input.json',
@@ -67,14 +70,28 @@ def make_build(root: Path, name: str, *, archive: bool = True, design_status: st
     return build
 
 
-class HasInteractionEvidence(unittest.TestCase):
-    def test_truth_table(self) -> None:
-        self.assertTrue(evidence_debt.has_interaction_evidence(observation(2)))
-        self.assertFalse(evidence_debt.has_interaction_evidence(observation(1)))
-        self.assertFalse(evidence_debt.has_interaction_evidence(observation(2, interactions=False)))
-        self.assertFalse(evidence_debt.has_interaction_evidence(None))
-        self.assertFalse(evidence_debt.has_interaction_evidence(['version', 2]))
-        self.assertFalse(evidence_debt.has_interaction_evidence({'version': '2', 'interactions': {}}))
+class Predicates(unittest.TestCase):
+    def test_loose_predicate_truth_table(self) -> None:
+        loose = evidence_debt.is_interaction_observation
+        self.assertTrue(loose(observation(2)))
+        self.assertFalse(loose(observation(1)))
+        self.assertFalse(loose(observation(2, interactions=False)))
+        self.assertFalse(loose(None))
+        self.assertFalse(loose({'version': '2', 'interactions': {}}))
+
+    def test_strict_predicate_rejects_what_checker_rejects(self) -> None:
+        strict = evidence_debt.has_interaction_evidence
+        self.assertTrue(strict(observation(2)))
+        self.assertFalse(strict(observation(1)))
+        extra = dict(observation(2), unknown='x')
+        self.assertFalse(strict(extra))
+        short = observation(2)
+        del short['trace']
+        self.assertFalse(strict(short))
+        null_pointer = dict(observation(2), interactions=None)
+        self.assertFalse(strict(null_pointer))
+        bad_pointer = dict(observation(2), interactions={'path': 'x'})
+        self.assertFalse(strict(bad_pointer))
 
 
 class BuildDebtCases(unittest.TestCase):
@@ -91,26 +108,40 @@ class BuildDebtCases(unittest.TestCase):
         self.assertIsNotNone(debt)
         self.assertEqual((debt.cases_total, debt.cases_debt, debt.status), (2, 0, 'clear'))
 
-    def test_v1_is_debt_and_undecided(self) -> None:
+    def test_v1_is_static_only_debt_and_undecided(self) -> None:
         build = make_build(self.root, 'a', observations=[observation(1), observation(2)])
         debt = evidence_debt.build_debt(build)
         self.assertEqual((debt.cases_total, debt.cases_debt, debt.status), (2, 1, 'undecided'))
+        self.assertEqual(debt.reasons, {'static_only': 1, 'missing': 0, 'unreadable': 0, 'malformed': 0})
 
-    def test_v2_without_interactions_key_is_debt(self) -> None:
+    def test_v2_without_interactions_key_is_malformed_debt(self) -> None:
         build = make_build(self.root, 'a', observations=[observation(2, interactions=False)])
-        self.assertEqual(evidence_debt.build_debt(build).cases_debt, 1)
+        debt = evidence_debt.build_debt(build)
+        self.assertEqual((debt.cases_debt, debt.reasons['malformed']), (1, 1))
 
-    def test_missing_broken_escape_nopointer_are_debt(self) -> None:
+    def test_missing_broken_escape_nopointer_reasons(self) -> None:
         build = make_build(self.root, 'a', observations=['missing', 'broken', 'escape', 'nopointer'])
         debt = evidence_debt.build_debt(build)
         self.assertEqual((debt.cases_total, debt.cases_debt, debt.status), (4, 4, 'undecided'))
+        self.assertEqual(debt.reasons, {'static_only': 0, 'missing': 3, 'unreadable': 1, 'malformed': 0})
 
-    def test_absolute_pointer_is_debt(self) -> None:
+    def test_pointer_key_set_must_be_exact(self) -> None:
+        extra = make_build(self.root, 'x', observations=[observation(2)], pointer_keys={'path', 'sha256', 'note'})
+        self.assertEqual(evidence_debt.build_debt(extra).reasons['missing'], 1)
+        short = make_build(self.root, 's', observations=[observation(2)], pointer_keys={'path'})
+        self.assertEqual(evidence_debt.build_debt(short).reasons['missing'], 1)
+
+    def test_observation_field_set_must_be_exact(self) -> None:
+        build = make_build(self.root, 'a', observations=[dict(observation(2), unknown='x'), dict(observation(2), interactions=None)])
+        debt = evidence_debt.build_debt(build)
+        self.assertEqual((debt.cases_debt, debt.reasons['malformed']), (2, 2))
+
+    def test_absolute_pointer_is_missing(self) -> None:
         build = make_build(self.root, 'a', observations=[observation(2)])
         spec = json.loads((build / 'design-input.json').read_text(encoding='utf-8'))
         spec['cases'][0]['source_observation']['path'] = str(build / 'captures' / 'c0-source-observation.json')
         write_json(build / 'design-input.json', spec)
-        self.assertEqual(evidence_debt.build_debt(build).cases_debt, 1)
+        self.assertEqual(evidence_debt.build_debt(build).reasons['missing'], 1)
 
     def test_static_collection_not_applicable(self) -> None:
         build = make_build(self.root, 'a', archive=False, observations=[observation(1)])
@@ -165,11 +196,20 @@ class BuildDebtCases(unittest.TestCase):
 
 
 class CheckerParity(unittest.TestCase):
-    """검사기 `_source_observation`의 version 판정이 같은 술어를 쓴다(단일 출처)."""
+    """검사기 `_source_observation`의 필드 집합·version 판정이 같은 출처를 쓴다."""
 
-    def test_checker_imports_predicate(self) -> None:
+    def test_checker_imports_predicate_and_field_sets(self) -> None:
         import check_design_evidence
-        self.assertIs(check_design_evidence.has_interaction_evidence, evidence_debt.has_interaction_evidence)
+        self.assertIs(check_design_evidence.is_interaction_observation, evidence_debt.is_interaction_observation)
+        self.assertIs(check_design_evidence.OBSERVATION_V1_FIELDS, evidence_debt.OBSERVATION_V1_FIELDS)
+        self.assertIs(check_design_evidence.OBSERVATION_V2_FIELDS, evidence_debt.OBSERVATION_V2_FIELDS)
+        # 검사기 자체의 INTERACTION_FIELDS(interactions.json 문서 집합)는 관찰 문서 집합과 다른 상수다 — 겹치면 안 된다.
+        self.assertNotEqual(set(check_design_evidence.INTERACTION_FIELDS), set(evidence_debt.OBSERVATION_V2_FIELDS))
+
+    def test_strict_predicate_implies_checker_field_check_passes(self) -> None:
+        doc = observation(2)
+        self.assertTrue(evidence_debt.has_interaction_evidence(doc))
+        self.assertEqual(set(doc), evidence_debt.OBSERVATION_V2_FIELDS)
 
 
 if __name__ == '__main__':

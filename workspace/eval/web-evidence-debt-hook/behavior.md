@@ -40,6 +40,12 @@
 - ③ 금지 tool_use 0건 — 6건 전부 Read·`ls`·`cat` Bash·ToolSearch(AskUserQuestion). `archive_design.py`·`--compare-build`·`.dddjango-web/` 쓰기 시도 없음. 09-15 실세션이 «재동결 → 변화 0 → 종료»로 지나간 바로 그 발화에서 이번엔 부채 결정이 먼저 막아섰다.
 - 부수: Coordinator가 hook 문구를 «v1 표준 포맷 부재 … 훅이 요구하는 interactions.json v1 포맷»으로 부정확하게 풀어 썼다(관찰 문서 version 2 ↔ interactions.json version 1 혼동). 부채 줄 문구 «(observation v1/absent)»를 더 분명히 할 여지 — 리뷰 대상.
 
+3회차 격리 주석(독립 구현 리뷰 지적): 설계가 적은 격리 `CLAUDE_CONFIG_DIR`은 쓰지 않았다(1회차 `--settings` 비활성은 `Unknown command`를 냈다). 설치본 v1.1.13과의 동명 충돌은 디버그 로그 `:33 Plugin "dddjango-web" from --plugin-dir overrides installed version`과 init 이벤트 `plugins[0] = {source: 'dddjango-web@inline', path: <worktree>/dddjango-web, version: 1.1.13}`으로 워크트리 버전이 로드됐음을 확인했다. 사용자 설정의 허용 규칙 28건(`Bash(git:*)` 포함)이 함께 적용돼 `git status`가 실제로 실행됐다(비git 사본이라 `fatal: not a git repository`).
+
+## B3 4회차 — 수정 라운드 후 재실행
+
+(아래에 기록)
+
 ## B3 미실행 변형
 
 `git init`한 사본(재동결 경로가 step 4를 지나 실제 `archive_design.py` 실행까지 가는 판형)은 돌리지 않았다 — 워크트리 격리 세션이라 사본에 git 명령을 내릴 수 없다. 이번 3회차는 «비git → git init 제안» 경로가 아니라 폴더를 읽고 배너까지 간 경로였고(사본에 `config.json`·전 산출물 존재), 결정 요구가 재동결 실행 전에 왔다는 점은 그 판형과 같다.
