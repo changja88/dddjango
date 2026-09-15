@@ -103,7 +103,7 @@ A8 실측: 표적 빌드 7건(`smoke-*-impl.png`·비390 구현 캡처), 다른 
 |---|---|---|
 | `begin` | `--build` `--project-root` `--quote <사용자 재동결 발화>` | 0 · 2 선점 · 1 오류 |
 | `check` | `--build` `[--staging]` `[--render-audit-skipped <enum 사유>]` | 0 완전 · 3 미완 · 1 오류 |
-| `commit` | `--build` `[--staging]` `[--resume]` | 0 완료 · 3 중단·되감김 · 1 오류 |
+| `commit` | `--build` `[--staging]` `[--resume]` `[--stop-after <phase>]` | 0 완료 · 3 중단·되감김(`--stop-after`의 의도적 중단 포함 — `--resume`이 필요한 상태를 뜻한다) · 1 오류 |
 | `abort` | `--build` `[--staging]` | 0 완료 · 1 오류·거부 |
 
 - `--staging` 생략 시 `_refreeze-*`가 정확히 하나일 때만 자동 선택, 둘 이상이면 exit 1 + 목록.
@@ -257,7 +257,7 @@ static-only 그대로라 hook이 매 프롬프트마다 «decision required befo
 | `scripts/archive_design.py` (+미러) | `--compare-build`·`--compare-out`·`--carried`·`compare_manifests()`·exit 3/4·`_history` 자동 carried |
 | `scripts/test/test_design_archive.py` (+미러) | `RefreezeCompareTests` 10건(잔여 32건이 비-compare 기능을 계속 덮음) |
 | `scripts/check_design_evidence.py` (+미러) | `carried_from` 수용 |
-| `scripts/test/test_interaction_evidence.py:626` (+미러) | `test_manifest_row_accepts_carried_from_only`의 `carried_from` → exit 0 단언. **상시 검증 경로**(`fixtures_interactions.sh:9` → `run_fixtures.sh` → `verify-web`)라 함께 고치지 않으면 red |
+| `scripts/test/test_interaction_evidence.py:626-641` (+미러) | `carried_from` **리터럴을 제거**한다 — 그 시험의 의도(«미지 필드는 exit 2»)는 일반 이름(`unknown_field`)으로 보존하고, `carried_from`이라는 이름을 남기지 않는다. 남기면 §8-B의 «잔존 0»과 충돌한다. **상시 검증 경로**(`fixtures_interactions.sh:9` → `run_fixtures.sh` → `verify-web`)라 함께 고치지 않으면 red |
 | `commands/dddjango-web.md` (+Codex `SKILL.md` 의미 미러) | 재동결 절 재작성(§1~R9) · `:144` 재기준 문장 대체 · `:227` «openapi 재동결» 분리 · `<대상 폴더>` 정의 추가 · **치환(완전성은 §8이 보증)** |
 | `references/design-acquisition.md` (+byte 미러) | §2 «재동결» 전면 재작성 · `BUILD`→`TARGET` 치환 |
 | `references/design-evidence.md` (+byte 미러) | `carried_from`·exit 체계 — **절 단위 재작성** |

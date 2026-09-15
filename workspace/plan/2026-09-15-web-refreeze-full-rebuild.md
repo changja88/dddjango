@@ -69,7 +69,7 @@
   - verified 실패 → 되감기 + 이미지 차집합 제거 + `evidence_debt_before` 복원 → exit 3(설계 §4.6-4)
   - **`done` 순서**(설계 §4.6-5) — build-state 갱신 → `completed_at` → staging 삭제 → `_prev` 삭제
   - `abort`의 `completed_at` 거부 · `--staging` 중복 시 exit 1
-  - **`--stop-after <phase>`**(시험용) — 지정 phase 직후 중단해 B3·B4의 중간 상태를 **재현 가능하게** 만든다
+  - **`commit --stop-after <phase>`**(시험용 · 설계 §4.1 표에 등재됨) — 지정 phase 직후 **exit 3**(중단·`--resume` 필요)으로 멈춰 B3·B4의 중간 상태를 **재현 가능하게** 만든다
 - [ ] **Step 2** red 확인 — `python3 -m unittest dddjango-web/scripts/test/test_refreeze.py`
 - [ ] **Step 3** 구현 — 설계 §2.1·§2.2·§3·§4.1~4.6·R7
 - [ ] **Step 4** `fixtures_refreeze.sh` 작성(기존 `fixtures_*.sh` 판형) → `run_fixtures.sh` 글롭에 잡히는지 확인
@@ -130,7 +130,7 @@
 - [ ] **Step 1** `archive_design.py`에서 `--compare-build`·`--compare-out`·`--carried`·`compare_manifests()`·exit 3/4·`_history` 자동 carried 제거
 - [ ] **Step 2** `test_design_archive.py`의 `RefreezeCompareTests` 10건 제거 — 잔여 32건이 `archive()`·`archive_files()`·`archive_dependencies()`를 계속 덮는지 확인
 - [ ] **Step 3** `check_design_evidence.py`의 `carried_from` 수용 제거
-- [ ] **Step 4** **`test_interaction_evidence.py:626` `test_manifest_row_accepts_carried_from_only` 수정** — `carried_from`이 이제 미지 필드이므로 기대 exit를 2로. 이 시험은 `fixtures_interactions.sh:9` → `verify-web` 경로에 있어 빠뜨리면 red(plan-review BL-2)
+- [ ] **Step 4** **`test_interaction_evidence.py:626-641`에서 `carried_from` 리터럴을 제거**한다 — 시험의 의도(«미지 필드는 exit 2»)는 일반 이름(`unknown_field`)으로 보존하고 이름 자체를 남기지 않는다. 단언만 exit 2로 바꾸고 이름을 남기면 검사 B(«`carried_from` 잔존 0»)가 영구 red가 되어 같은 Task의 합격 조건과 모순된다(plan-rereview 신규 충돌 1). 이 시험은 `fixtures_interactions.sh:9` → `verify-web` 경로에 있어 빠뜨리면 red(plan-review BL-2)
 - [ ] **Step 5** green + 미러 0 + 기록
 
 **합격**: `bash run_fixtures.sh` green · **`dddjango-web/scripts/` 안의** `--compare-build`·`carried_from` 잔존 0(규범 쪽은 Task 6·7 소관)
