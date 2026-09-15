@@ -27,10 +27,14 @@ dddjango-web/             ← 자매 플러그인 (웹 표현계층 빌더 — /
                            전 파일 «산문 정본» — 온톨로지 코퍼스 밖. graph-owned 절이 없고
                            md·py를 직접 수정한다. 픽스처는 make verify(verify-web)가 실행.
                            빌드 스펙 정본: workspace/design/2026-08-23-web-presentation-layer-spec.md
-└── REQUEST_GUIDE.md       사람용 화면 작업 요청 가이드 정본
+├── REQUEST_GUIDE.md       사람용 화면 작업 요청 가이드 정본
+└── hooks/hooks.json       플러그인 hook(SessionStart·UserPromptSubmit → scripts/evidence_debt_hook.py —
+                           시안 빌드의 조작 상태 증거 부채를 Coordinator 경로와 무관하게 고지)
 
 codex-dddjango-web/       ← dddjango-web의 Codex 설치본 미러
-└── REQUEST_GUIDE.md       dddjango-web/REQUEST_GUIDE.md의 byte 동일 미러
+├── REQUEST_GUIDE.md       dddjango-web/REQUEST_GUIDE.md의 byte 동일 미러
+└── hooks/hooks.json       위 hook의 의미 미러(플러그인 루트 변수·경로만 다름 — verify-web의
+                           workspace/tools/web_hooks_contract.py가 이벤트·command·timeout을 리터럴 대조)
 
 .claude-plugin/marketplace.json   ← Claude marketplace: dddjango · dddjango-web subdir
 .agents/plugins/marketplace.json ← Codex marketplace: ./codex-dddjango · ./codex-dddjango-web subdir
@@ -141,6 +145,8 @@ make release DRY=1        # 미리보기 (변경 없음) — release-web DRY=1 �
 플러그인별 타깃이 대상 변수(manifest 2곳·태그 접두사)만 지정하고 공통 절차 `_release`를 부른다. main 브랜치·클린 worktree·origin 동기 상태에서만 진행된다. 두 마켓 manifest에 같은 버전을 기록하고, 커밋 → annotated 태그(`dddjango--vX.Y.Z` · `dddjango-web--vX.Y.Z`) → push → GitHub Release까지 한 번에 간다. 한 저장소에 두 릴리즈 시리즈가 태그 접두사로 나란히 쌓인다. 선택지 `0) current`는 버전 그대로 태그만 발행한다(첫 릴리즈·태그 누락 보완용 — manifest 무변경이면 커밋 없이 현재 HEAD에 태그).
 
 `make release-web`은 `_release` 전에 `verify-web-browser`(K3 브라우저 스위트, §5)를 먼저 돈다 — env 없으면 그 자리에서 막힌다(`DRY=1`이면 안내만).
+
+`hooks/hooks.json`이 바뀐 dddjango-web 릴리즈(command 문자열·이벤트·timeout — 스크립트 본문만 바뀐 경우는 해당 없음)는 GitHub Release 노트에 «Codex 사용자는 `/hooks`에서 dddjango-web hook을 재신뢰» 1줄을 넣는다. Codex는 hook *정의*의 해시로 신뢰를 기록해 정의가 바뀌면 승인 전까지 그 hook을 건너뛰고, 건너뛴 상태는 세션 시작 시 `[dddjango-web] evidence hook active` 줄이 없는 것으로만 드러난다.
 
 ## 7. 더 읽기
 

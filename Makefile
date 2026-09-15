@@ -103,7 +103,10 @@ verify-web:
 	echo "[verify-web] REQUEST_GUIDE byte 미러 대조"; \
 	cmp -s dddjango-web/REQUEST_GUIDE.md codex-dddjango-web/REQUEST_GUIDE.md || { echo "ERROR: dddjango-web REQUEST_GUIDE 누락 또는 Codex byte 미러 불일치"; exit 1; }; \
 	echo "[verify-web] 요청 가이드 배포·발견 계약"; \
-	PYTHONUTF8=1 python3 workspace/tools/request_guide_contract.py
+	PYTHONUTF8=1 python3 workspace/tools/request_guide_contract.py; \
+	echo "[verify-web] hooks.json 계약(Claude·Codex 증거 부채 hook)"; \
+	PYTHONUTF8=1 python3 workspace/tools/web_hooks_contract.py --self-test; \
+	PYTHONUTF8=1 python3 workspace/tools/web_hooks_contract.py
 
 # K3 상호작용 관찰 증거 — 브라우저 필요 스위트. verify-web(위)은 이 스위트를 브라우저
 # 없이 SKIP(exit 0)으로 통과시킨다(test_observe_interactions.mjs가 소유한 의미론). 이
