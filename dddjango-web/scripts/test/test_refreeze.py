@@ -518,6 +518,42 @@ class HardwallTests(RefreezeTestCase):
         self.assertEqual(len(kept), 1, kept)
         self.assertTrue((self.build / kept[0] / 'only-copy.json').is_file(), '유일본이 살아 있어야 한다')
 
+    def test_abort_backs_up_staging_work_before_deleting(self):
+        """staging 은 백업이 아니라 **재동결 산출물이 쌓이는 자리**다 — 여기가 가장 많이 버린다.
+
+        `cmd_begin` 이 넣는 것은 `INPUT_GLOBS` 뿐이지만 `cmd_check` 는 `REQUIRED_STAGING`·
+        `design-ref/`·관찰 문서를 staging 에서 찾는다. 완료 폐기(`_cleanup`)와 journal 없는
+        잔존물은 보존하면서 이 자리만 보존하지 않던 것이 비대칭이었다."""
+        self.begin()
+        self.fx.fill_staging()
+        staging = self.fx.staging()
+        write(staging / 'captures' / 'screen-step-17.png', b'DRIVER-SAVED-17')
+        made = sorted(p.relative_to(staging).as_posix()
+                      for p in staging.rglob('*') if p.is_file())
+        self.assertEqual(self.run_cli('abort', '--build', str(self.build)), 0)
+        self.assertFalse(list(self.build.glob('_refreeze-*')))
+        kept = self.discarded()
+        self.assertEqual(len(kept), 1, kept)
+        saved = sorted(p.relative_to(self.build / kept[0]).as_posix()
+                       for p in (self.build / kept[0]).rglob('*') if p.is_file())
+        self.assertEqual(saved, made, '중단해도 수집분은 한 세대 남아야 한다')
+
+    def test_abort_after_partial_swap_backs_up_rolled_back_work(self):
+        """`_rewind` 는 설치분을 staging 으로 되돌린 뒤 지운다 — 되돌린 것도 보존 대상이다."""
+        self.begin()
+        self.fx.fill_staging()
+        self.assertEqual(self.run_cli('check', '--build', str(self.build)), 0)
+        self.assertEqual(self.run_cli('commit', '--build', str(self.build),
+                                      '--stop-after', 'discarded'), 3)
+        self.assertTrue(list(self.build.glob('_prev-*')))
+        self.assertEqual(self.run_cli('abort', '--build', str(self.build)), 0)
+        kept = self.discarded()
+        self.assertEqual(len(kept), 1, kept)
+        self.assertEqual((self.build / kept[0] / 'design-ref' / 'screen.dc.html').read_bytes(),
+                         b'<html>NEW</html>', '되돌린 새 산출물이 백업에 있어야 한다')
+        self.assertEqual((self.build / 'design-ref' / 'screen.dc.html').read_bytes(),
+                         b'<html>original</html>', 'live 는 재동결 이전으로 돌아간다')
+
     def downgrade_observation(self):
         """드라이버를 못 돌린 상태 — 브라우저 채널이 없으면 이게 유일하게 가능한 결과다."""
         staging = self.fx.staging()

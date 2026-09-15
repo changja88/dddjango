@@ -97,6 +97,13 @@ staging 사본에만 적고 `commit`이 그것을 live로 옮긴다(live가 바�
 섞여 있다). `installed`는 staging 쪽이 있으면 대상 존재와 무관하게 덮어쓴다. `verified`가 실패하면
 되감고 이미지·부채까지 원상 복구한 뒤 exit 3이다.
 
+`abort`는 staging을 지우기 전에 **`_discarded-<ts>/`로 한 세대 복사**한다. staging은 백업이
+아니라 **재동결 산출물이 쌓이는 자리**이기 때문이다 — `begin`이 넣는 것은 `INPUT_GLOBS`뿐이고
+`REQUIRED_STAGING`·`design-ref/`·관찰 문서는 거기서 새로 만들어진다. `_prev`가 있는 되감기도
+설치분을 staging으로 되돌린 뒤 지우므로 같은 보존을 받는다. 복사는 **차단 사유가 아니다**(실패하면
+경고만 내고 정리를 계속한다). 남은 `_discarded-*`는 다음 재동결을 막지 않고 게이트의 «untracked 0»
+예외이며, 확인한 뒤 직접 지운다.
+
 재동결은 `web/static/images/`에 **실제로 쓴다**(`--assets-root`는 언제나 프로젝트 루트다). 같은
 이미지는 멱등이지만 인라인 이미지는 토큰이 밀려 새 파일명으로 떨어질 수 있다. 그래서 **실패 시
 `abort`는 선택이 아니라 의무**이며, `journal.images_before` 차집합만 되돌린다 — 그 때문에 재동결 중

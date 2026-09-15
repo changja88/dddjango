@@ -140,3 +140,67 @@ import하므로 두 검사기가 한 수리로 낫는다.
 | `make verify` | **6/6 green (237초)** ✅ |
 
 A8은 주석을 원복했다.
+
+---
+
+## 후속 2 — 재동결 중단의 보존 누락 (2026-09-16 · v1.1.19)
+
+A8이 «정상 abort 경로엔 `_discarded-` 복사가 없더라»를 보고했다. 내 첫 반응은 «staging은
+사본이라 잃을 게 없다»였고 **그것도 틀렸다.**
+
+| | |
+|---|---|
+| `cmd_begin`이 staging에 넣는 것 | `INPUT_GLOBS` 3종뿐 |
+| `cmd_check`가 staging에서 **찾는** 것 | `REQUIRED_STAGING` 5종 · `design-ref/` · `render-audit.json` · 관찰 문서 |
+
+즉 staging은 백업이 아니라 **재동결 산출물이 쌓이는 자리**다. `_rewind`도 설치분을 staging으로
+되돌린 뒤 지우므로 같은 성질이다. **완료 폐기(`_cleanup`)와 journal 없는 잔존물은 보존하는데
+가장 많이 버리는 이 자리만 보존하지 않았다.** 원인은 범위 착오 — 설계 §ⓒ 제목이
+«**`_prev`** 한 세대 보존»이라 rv-E가 재현한 «개명이 표식을 없앤다»만 고치고 멈췄다.
+
+### 재현 (코드 독해가 아니라 실측)
+
+`RefreezeTestCase`를 그대로 써서 begin → staging에 산출물 3개 작성 → abort:
+
+```
+abort 직전 staging 파일 6개
+staging 존재?  False
+_discarded-*:  없음          ← R1
+살아남은 산출물: 0개
+```
+
+수리 뒤 같은 재현: `_discarded-20260916-024636` · **살아남은 산출물 6개.**
+
+### 적대 검토 — «기록을 남기는 행위가 새 벽을 세우는가»
+
+v1.1.17에서 나를 문 함정(빌드 폴더 untracked가 `legacy_v1_allowed`를 뒤집는다)을 같은 자리에서
+다시 봤다. 넷 다 통과:
+
+| 물은 것 | 답 |
+|---|---|
+| `orphan_set`이 `_discarded-` 안을 고아로 세는가 | 아니다 — `build/captures`만 훑는다(`:203-212`) |
+| `legacy_v1_allowed`의 «untracked 0»을 깨는가 | 아니다 — `GATE_BOOKKEEPING_DIRS = ('_discarded-',)` |
+| 잔존물 BLOCKER를 새로 세우는가 | 아니다 — 접두가 `('_refreeze-','_prev-')`뿐(`backstop:335`) |
+| 다음 `begin`을 «진행 중»으로 막는가 | 아니다 — glob이 `_refreeze-*`·`_prev-*`뿐 |
+
+자기 정정: `backstop.py:348`의 «내용은 `_discarded-<ts>/`로 한 세대 보존된다»를 **거짓 약속으로
+의심했으나 아니었다** — 그 문구는 journal 없는 분기의 것이고 그 분기는 실제로 보존한다.
+
+### 같이 고친 것 — 재동결 중 승인 절의 자리 (R2)
+
+원장은 승인 원문을 `build/scope.md`의 H2 앵커에서 읽고(`ledger.py:222-226`), `cmd_commit`은
+**live** `scope.md`가 begin 이후 바뀌면 교체를 거부한다(`refreeze.py:547-550`). 그래서 재동결
+중에 live를 고치면 교체가 막히고, staging에만 쓰면 교체 전까지 행이 무효다 — **순서가 서로를
+막는다.** 깨지지 않는 길(staging에 쓰고 `--build <staging>`으로 등재)이 어디에도 문서화돼
+있지 않았다. `design-evidence.md`·`design-acquisition.md`에 명문화했다.
+
+### 후보에서 뺀 것
+
+**v2 case 계약 문서화 부족** — A8이 `source_observation`의 2단 간접을 틀렸기에 문서 결함을
+의심했으나, `design-evidence.md:162-177`이 관찰 문서 구조를 **정확히** 싣고 있었다. 참조
+미열람이지 결함이 아니다. 고치지 않았다.
+
+### 시험
+
+`test_refreeze` **45 → 47**(정상 abort 보존 · `_rewind` 경로 보존) · `run_fixtures` 16파일 실패 0 ·
+Codex 미러 4파일 byte 동일.

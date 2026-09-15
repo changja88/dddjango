@@ -350,6 +350,14 @@ consults it where `validate_inputs` and `validate_visual` settle their issue
 lists, so `backstop.py` — which calls `validate_inputs` in-process — passes
 through the same door, and both digests plus `validate_visual` stay alive.
 
+During a re-freeze the approval section belongs in the staging copy of
+`scope.md`, and rows are added against the staging folder (`ledger.py add
+--build <staging>`), which is also where `backstop.py --design-build` reads
+them. Editing the live `scope.md` instead makes `refreeze.py commit` refuse the
+swap — it requires the live file to still hash to what `begin` recorded, so a
+live-only edit cannot vanish under the staging copy — while the staging edit
+becomes live at the swap and carries the rows with it.
+
 Manifest rows — in `design-input.json`'s own list and in archive/static source
 manifests alike — reject every unrecognized field. Nothing marks a row as
 carried forward from an older manifest: re-freezing rebuilds the manifest from

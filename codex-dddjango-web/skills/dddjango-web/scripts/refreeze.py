@@ -756,6 +756,12 @@ def cmd_abort(build: Path, staging: Path | None) -> int:
         _restore_images(project_root, journal)
         _restore_debt(build, journal)
     if staging is not None:
+        # staging 은 백업이 아니라 **재동결 산출물이 쌓이는 자리**다 — `cmd_begin` 이 넣는 것은
+        # `INPUT_GLOBS` 뿐이지만 `cmd_check` 는 `REQUIRED_STAGING`·`design-ref/`·관찰 문서를
+        # 여기서 찾는다. 그리고 `_rewind` 는 되감으면서 설치분을 여기로 되돌려 놓는다.
+        # 그래서 이 자리가 한 번에 가장 많이 버리는 자리인데, 완료 폐기(`_cleanup`)와
+        # journal 없는 잔존물은 보존하면서 여기만 보존하지 않던 것이 비대칭이었다.
+        _preserve(staging, '재동결 중단')
         shutil.rmtree(staging, ignore_errors=True)
     print('[refreeze] 되돌렸다 — live 빌드 폴더와 이미지가 재동결 이전 상태다')
     return 0
