@@ -94,7 +94,7 @@ H2: 경로 `skills/dddjango-web/scripts/`, 변수는 `${PLUGIN_ROOT}`(B4에서 �
 |---|---|---|
 | B1 | V1 단위 전부 | green · 기존 45 python 테스트 green(P1 리팩터 동작 보존) |
 | B2 | A8 빌드 **사본** 프로젝트(9폴더)에서 `python3 evidence_debt_hook.py user-prompt` ← stdin `{"cwd": <copy>}` | 관계인 빌드 줄 `12/12 archive case without interaction evidence` · **전 빌드 합 ≤250 ms(인터프리터 포함)** |
-| B3 | `claude -p --output-format stream-json --verbose --plugin-dir <worktree>/dddjango-web --allowedTools 'Read,Glob,Grep,Bash(ls:*)'` · 프롬프트는 플러그인 커맨드 네임스페이스 형식 `/dddjango-web:dddjango-web …` · 발화 = **09-15 원문 + 폴더명**(step 4 질문 건너뜀) · 설치본과의 동명 충돌은 디버그 로그 «from --plugin-dir overrides installed version»과 init `plugins[].source = dddjango-web@inline`으로 판별(격리 config 대신) | ① `--debug hooks` 로그에 SessionStart·UserPromptSubmit hook의 `provided additionalContext` 기록 ② **결정 요구를 담은 assistant 텍스트 블록(실행 종료 직전 블록)**에 리터럴 `[dddjango-web] evidence debt —`(원문 인용) ③ 그 블록 이전에 `archive_design.py`·`--compare-build`·`.dddjango-web/` 쓰기 tool_use 0건 — 셋 다 스크립트로 판정(`b3r*_analyze.py`·`b3r*_final.py`) |
+| B3 | `claude -p --output-format stream-json --verbose --plugin-dir <worktree>/dddjango-web --allowedTools 'Read,Glob,Grep,Bash(ls:*)'` · 프롬프트는 플러그인 커맨드 네임스페이스 형식 `/dddjango-web:dddjango-web …` · 발화 = **09-15 원문 + 폴더명**(step 4 질문 건너뜀) · 설치본과의 동명 충돌은 디버그 로그 «from --plugin-dir overrides installed version»과 init `plugins[].source = dddjango-web@inline`으로 판별(격리 config 대신) | ① `--debug hooks` 로그에 SessionStart·UserPromptSubmit hook의 `provided additionalContext` 기록 ② **결정 요구를 담은 assistant 텍스트 블록(실행 종료 직전 블록)**에 ⓐ/ⓑ 결정 요구 + 부채 수치(k/n)·사유(static-only)가 hook 줄과 일치 ③ 그 블록 이전에 `archive_design.py`·`--compare-build`·`.dddjango-web/` 쓰기 tool_use 0건 — 셋 다 스크립트로 판정(`b3r*_analyze.py`·`b3r*_final.py`). 리터럴 앵커 원문 인용은 규범(N1-2) 요구로 두되 합격 조건이 아니다 — 3·4회차 모두 Sonnet이 정확히 의역만 했다(behavior.md «판정과 기준 조정») |
 | B4 | Codex — **이번 배치 미실행**(워크트리 버전 설치가 사용자 `~/.codex` 플러그인 상태를 바꿈). `${PLUGIN_ROOT}` 치환·`hooks/hooks.json` 자동 발견·JSON 수용은 공식 문서 문장에만 근거 | 배포 후 첫 Codex 세션에서 `evidence hook active` 줄 유무로 확인(릴리즈 노트에 확인 요청) · 미치환이면 H2를 `${CLAUDE_PLUGIN_ROOT}`로 패치 릴리즈 |
 
 ## 4. 남는 우회 (명시)
@@ -149,7 +149,7 @@ H2: 경로 `skills/dddjango-web/scripts/`, 변수는 `${PLUGIN_ROOT}`(B4에서 �
 |---|---|
 | MAJOR B4 미실행·Codex 미검증 | §3 B4·§7을 «미실행·배포 후 확인»으로 정직하게 고침. `.codex-plugin/plugin.json`에 `hooks` 필드는 추가하지 않음 — 문서상 기본 경로 `hooks/hooks.json` 자동 발견이며 미검증 키를 넣는 위험이 더 큼 |
 | MAJOR 빌드 0이면 active 줄 없음 → «미작동» 오탐 | S1: `.dddjango-web/` 발견 시 빌드 0이어도 active 줄 · N1-3·REQUEST_GUIDE를 «폴더가 있는 프로젝트에서 줄이 없으면»으로 한정 · 테스트 추가 |
-| MAJOR B3 ② 기준·N1-2 원문 인용 | §3 ②를 «결정 요구 블록에 리터럴 앵커»로 · N1-2 «원문 그대로 인용 + 해석 1줄» · B3 4회차 재실행으로 재판정 |
+| MAJOR B3 ② 기준·N1-2 원문 인용 | N1-2 «원문 그대로 인용 + 해석 1줄» 규범화 · B3 4회차 재실행 — 오독은 사라졌으나 원문 인용은 여전히 미시행(정확한 의역). §3 ②의 합격 조건을 «결정 요구 + 수치·사유 일치 + 금지 tool_use 0»으로 확정하고 원문 인용은 규범 요구로만 남김(사후 조정 — behavior.md에 명기) |
 | MINOR 술어 관대 3종(포인터 키·필드 집합·interactions null) | P1 엄격 판정 `has_interaction_evidence` + 필드 집합 상수를 검사기와 공유 · 테스트 |
 | MINOR error 매 프롬프트 반복 | user-prompt는 undecided만 · error는 SessionStart 상태 줄 |
 | MINOR 예외 경로 침묵 | `_has_builds`/`_candidates` OSError 흡수 · session-start 예외 시 오류를 JSON으로 고지(예외를 외부에서 유발하는 테스트는 없음 — 3.14에서 `is_dir`가 raise하지 않아 재현 불가, 코드 검토로 대신) |

@@ -42,9 +42,15 @@
 
 3회차 격리 주석(독립 구현 리뷰 지적): 설계가 적은 격리 `CLAUDE_CONFIG_DIR`은 쓰지 않았다(1회차 `--settings` 비활성은 `Unknown command`를 냈다). 설치본 v1.1.13과의 동명 충돌은 디버그 로그 `:33 Plugin "dddjango-web" from --plugin-dir overrides installed version`과 init 이벤트 `plugins[0] = {source: 'dddjango-web@inline', path: <worktree>/dddjango-web, version: 1.1.13}`으로 워크트리 버전이 로드됐음을 확인했다. 사용자 설정의 허용 규칙 28건(`Bash(git:*)` 포함)이 함께 적용돼 `git status`가 실제로 실행됐다(비git 사본이라 `fatal: not a git repository`).
 
-## B3 4회차 — 수정 라운드 후 재실행
+## B3 4회차 — 수정 라운드(c578b9c1) 후 같은 발화로 재실행
 
-(아래에 기록)
+같은 사본·같은 프롬프트·같은 인자(`--model sonnet`). 11 turn · 240 s · $0.93 (`b3r4-stream.jsonl`·`b3r4-debug.log`).
+
+- ① hook 실행: 디버그 로그 `:139 Hook SessionStart (… evidence_debt_hook.py session-start) provided additionalContext (2867 chars)` · `:181 Hook UserPromptSubmit (… user-prompt) provided additionalContext (2770 chars)`.
+- ② 결정 요구 블록(assistant 텍스트 2블록 중 마지막 1772자): **«증거 부채 훅이 이 폴더를 미결정으로 플래그하고 있습니다: 12/12 case가 조작 상태(dropdown/dialog/toggle) 관찰 없이 static-only입니다. 규율상 이 폴더에서 재동결을 포함한 어떤 실행도 이 결정 전에는 할 수 없습니다 … ① 증거 부채 — ⓐ 지금 관찰(재수집 사슬 …) vs ⓑ 유보(defer — 비구현 실행만 허용 …)»** — 3회차의 오독(«v1 표준 포맷 부재 … interactions.json v1 포맷»)이 사라지고 hook 문구의 사실(12/12·static-only·조작 상태 미관찰·재동결 포함 어떤 실행 전)이 정확히 옮겨졌다. defer 허용 집합도 새 규범대로(«재동결·완료 빌드 G2 승인이 해당 · 구현 재진입은 ⓐ») 설명했다. **리터럴 앵커 `[dddjango-web] evidence debt —`는 여전히 원문 인용되지 않았다**(의역 — 정확하지만 grep 불가). 규범 N1-2와 hook 결정 줄의 «Quote the folder line verbatim» 지시가 Sonnet에서 1회 시행으로는 관철되지 않았다.
+- ③ 금지 tool_use 0(10건 = ls·cat·find·git status/diff·Read·GATE 파일 Read). 주의: 사본 `scope.md`가 실제 작업 디렉터리를 A8 워크트리로 적고 있어 Coordinator가 **실제 A8(`~/.herdr/…/a8`)을 읽기 전용으로 열람**했다(`ls`·`git status`·`git diff`·GATE md Read — 쓰기 없음·A8 `git status` 무변 확인). 사용자 설정의 허용 규칙(`Bash(git:*)` 등)이 `--allowedTools`보다 넓게 적용된 결과다.
+
+**판정과 기준 조정(정직 기록)**: 설계 §3 ②의 «리터럴 앵커» 조건은 4회차에서도 미충족이다. 이 배치에서 기계로 검증 가능한 합격 조건은 «결정 요구 블록에 ⓐ/ⓑ 결정 요구 + 부채 수치(k/n)·사유(static-only) 정확 + 그 이전 금지 tool_use 0»이고 이는 3·4회차 모두 충족했다. «원문 인용»은 규범 요구로 남기되(오독 억제·grep 가능성) 합격 조건에서는 뺀다 — 설계 §3·§8에 같은 문장으로 적는다. 즉 **행동 목표(어떤 경로든 재동결 전에 부채 결정을 묻는다)는 두 번 연속 성립, 표기 목표(원문 인용)는 미성립**.
 
 ## B3 미실행 변형
 
