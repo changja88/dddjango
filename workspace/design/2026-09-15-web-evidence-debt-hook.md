@@ -51,7 +51,7 @@ exit는 항상 0(UserPromptSubmit exit 2는 프롬프트를 지운다). 이벤�
     - observing: `[dddjango-web] evidence debt — <folder>: observation pending since <at>`
     - error: `[dddjango-web] evidence debt — <folder>: cannot evaluate (<type>: <msg>)`
   - 결정 요구 1줄(undecided 있을 때): `[dddjango-web] evidence debt: <u> undecided build(s). Record the user's decision in build-state.json evidence_debt (ⓐ observe = re-collect chain: observe ≤90 min → independent review → inputs → visual re-evidence → backstop · ⓑ defer = non-implementation runs only; implementation re-entry requires ⓐ) before any run on that folder, including refreeze-only or scope-only runs.`
-  - `systemMessage`(사용자 화면)는 요약 1줄만: `[dddjango-web] evidence debt: <u> undecided · <d> deferred · <o> observing`.
+  - `systemMessage`(사용자 화면)는 요약 1줄만: `[dddjango-web] evidence debt: undecided <u> · deferred <d> · observing <o>`(error가 있으면 ` · error <e>` 추가 — SessionStart 줄과 같은 판형).
 - `.dddjango-web`가 없으면 무출력(session-start도 무출력 — 무관한 프로젝트 소음 0).
 
 ### D1 결정 기록 `build-state.json.evidence_debt` (Coordinator가 쓴다 · hook·검사기가 읽는다)

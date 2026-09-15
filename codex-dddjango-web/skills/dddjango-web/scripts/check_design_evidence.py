@@ -22,6 +22,7 @@ from urllib.parse import unquote, urlsplit
 from asset_io import image_extension
 from archive_design import archive_dependencies, archive_files
 from design_sources import dependencies, resource_kind
+from evidence_debt import has_interaction_evidence
 from freeze_design import resolve_source
 
 EXCLUDED_DIRS = {'__pycache__', '.pytest_cache', '.mypy_cache', '.ruff_cache'}
@@ -1046,7 +1047,8 @@ def _source_observation(build: Path, case: dict, archive_path: Path, label: str,
     if not isinstance(observed, dict) or set(observed) != required or version not in (1, 2):
         issues.append(f'{label}.source_observation: exact version 1 or 2 fields required')
         return None
-    if version == 1 and not legacy_v1:
+    # 조작 상태 증거 유무는 evidence_debt 술어와 단일 출처 — hook 고지와 검사기 판정이 같은 규칙을 쓴다.
+    if not legacy_v1 and not has_interaction_evidence(observed):
         issues.append(f'{label}.source_observation: interaction evidence required '
                       '(version 2 with interactions)')
         return None
