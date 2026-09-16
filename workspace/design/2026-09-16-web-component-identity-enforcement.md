@@ -101,3 +101,30 @@ iter 2(1.1.21) 결과: A8가 native↔커스텀 Select 격차를 **정확히 식
 > exit 2면 사용자에게 되묻거나 의도 확인을 요구하지 말고 **바로 수리**한다. 디자인 파일이 안 바뀌어도(byte-동일) 이 비순응은 «확인하고 수정해»가 지시하는 명백한 수리 대상이며, «저장 안 됨/다른 변경» 대안을 제시하며 멈추지 않는다.
 
 스크립트 변경 0(스킬 프로즈만) · codex SKILL 미러 · make verify-web GREEN.
+
+---
+## §13. 전제 정정 + 코히런트 재수리 (Round 1 · 롤백 후)
+
+**전제 정정(사용자 확인):** A8 인수 테스트는 `/dddjango-web`을 **명시적으로 앞에 붙여** 호출한다
+(`/dddjango-web <URL> 에 디자인변경이 있다 확인하고 수정해`). «딱 이렇게만»은 뒤 과제 문구에
+힌트 금지라는 뜻이고 /dddjango-web 접두는 정상 호출이다. §10~12의 "3회 자율 수리 실패"는
+상당 부분 **테스트를 맨 프롬프트로 돌린 오류**였다 — /dddjango-web 없이 보내 파이프라인·게이트·
+검사기가 아예 안 돌았고(18:34 A8 트랜스크립트: 첫 메시지가 URL로 바로 시작), 그래서 정체 검사기가
+발화조차 못 했다. 검사기 자체는 실측에서 exit 2로 결정적 작동한다.
+
+**재규정된 결함:** 잠근 결함(파이프라인이 선언된 컴포넌트 정체를 이탈로 대체 가능하게 취급)은
+**규범에 성문화된 규칙**이었다 — design-architect-web «native=내부결정» · design-review-web
+리뷰축=«최종 외형» · 이탈 표 차원=외형(배치·치수·타이포·색·variant)뿐 · 「native로 충분하면」
+권장 · `component-from-global-scope` 플러그인 0회. §10~12는 검사기·mandate를 이 규범 **위에**
+얹어 내부 모순 상태였다(코더 헌장·"native 충분"·final.md:42 「native+CSS 평탄화 축복」 미수정).
+
+**Round 1 코히런트 수리(파이프라인 경로 결정화):**
+- 검사기 복원(6cfd87f1): `validate_component_identity` + `--phase identity` + `validate_visual`
+  fold(backstop 경로). 정본↔codex byte 동일. 픽스처 8/8·verify-web green.
+- 규범 카브아웃(모순 일괄 해소): 형상 공리에 「정체=이탈 불가 불변식」 · 기술책임 「native 충분」에
+  정체 예외 · implementation-ui §2 native+CSS 축복에 정체 예외 · coder-web 헌장 정체 보존 ·
+  design-architect-web:50 「native=내부결정」을 «선언 안 된 자리 한정»으로 · design-review-web
+  리뷰축에 정체 하위검사 신설 · 두 SKILL 본문에 정체 불변식 bullet. 정본 10 + codex 10 = 20파일.
+- 4중 방어(파이프라인): architect(이탈 승인 불가)·coder(평탄화 금지)·검사기(결정적 반송)·
+  reviewer(정체 검수). 서브에이전트는 skills: frontmatter로 스킬 본문 자동 로드 → mandate 도달.
+- 검증: `/dddjango-web`으로 A8 재테스트(맨 프롬프트 아님).

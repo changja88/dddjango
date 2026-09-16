@@ -20,6 +20,7 @@ description: dddjango-web 프레젠테이션 아키텍처 — view/section/widge
 - web은 «내부의 외부 클라이언트»다 — 백엔드 BC는 실물 API 계약(URL+JSON)으로만 소비, `application/**` import 0. 없는 API는 가정하지 않고 «/dddjango로 발주»를 안내한다 (§1·§6)
 - 요청 구동 MVVM — VM은 무상태 조립기로 매 요청 재조립된다. watch·구독·상주 상태 없음 (§1)
 - 형상의 근거는 확인된 동결 시안과 항목별 결정된 이탈이다 — 산문 레이아웃 재설계·직수입 금지. Python/HTML/HTMX/CSS와 승인된 UI JS의 책임을 기존 명세의 `UI 동작 계약`에 연결하고 native로 충분하면 JS를 만들지 않는다 (§1)
+- **컴포넌트 정체 불변식** — 시안이 `component-from-global-scope`로 선언한 커스텀 컴포넌트(예: Select)의 정체는 이탈 표가 관할하는 외형과 별개의, 이탈로 바꿀 수 없는 불변식이다. native 등가(native `<select>` 등)로 평탄화하면 «외형·옵션이 같아도» 비순응이며 `check_design_evidence.py --phase identity`(및 visual 백스톱)가 결정적으로 반송한다 — 선언된 그 컴포넌트로 구현·검수하고(메뉴·상호작용 JS는 implementation-javascript) 이 검사 없이 «시안과 일치»로 결론짓지 않는다 (§1)
 - 3단은 크기가 아니라 상태 조립(view)/화면 전속(section)/재사용(widget)으로 가른다 — 판별은 위에서부터, 처음 해당하는 것이 답 (§2)
 - view는 얇은 진입점(URL 바인딩·VM 호출·render·fragment 소유)뿐 — 판단 금지, 서버 표시 판정은 VM이 유일한 자리다 (§3)
 - state는 불변 dataclass·템플릿이 아는 유일한 모양 — 패키지 타입 직노출 금지(예외: 검증 실패 재렌더용 Django Form 1종 허용). 입력 검증=form(`form/` 조건 생성)·표시 상태=VM 분담 (§3)

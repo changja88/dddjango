@@ -20,6 +20,7 @@ user-invocable: false
 ## 핵심 운영 원칙
 
 - **외형 보존·내부 구조 통합** — 원본 DOM 관계·CSS 선언/값/효과를 템플릿·토큰·CSS 소유 위치에 보존한다. 엔진 런타임 전체 직수입·Django 책임 우회 금지 (§2)
+- **컴포넌트 정체 보존** — 시안이 `component-from-global-scope`로 선언한 커스텀 컴포넌트(예: Select)는 native 등가(native `<select>` 등)로 평탄화하거나 숨은 native mirror를 두지 않고 선언된 그 컴포넌트로 구현한다. 외형·옵션을 CSS로 맞춰도 정체가 다르면 비순응이며 `check_design_evidence.py --phase identity`(및 visual 백스톱)가 결정적으로 반송한다 — 메뉴·상호작용에 JS가 필요하면 implementation-javascript (§2)
 - 시안 빌드의 모든 coder 호출은 첫 변경 전 직접 inputs 입장을 거친다(코더 역할 계약). 데이터만 구현할 때도 inputs는 적용하며 visual 완료와 구별한다. 임시 검증은 scope의 사용자 실행 경계를 따른다 (§2)
 - 시안이 애초에 없으면 기존 design_system 관례로 자체 설계한다. 수집 실패는 시안 없음이 아니다. 변경/근사는 구체적인 이탈 결정 후 적용하고 실제 렌더 증적을 남긴다 (§2)
 - view는 함수 뷰 고정 — URL 바인딩·form 수신·세션 쿠키 추출·VM 호출·render·fragment 분기(HX-Request 헤더 또는 전용 라우트)만, 판단 금지. auth는 `@login_required` — 페이지·fragment 라우트 동일 적용 (§3)
