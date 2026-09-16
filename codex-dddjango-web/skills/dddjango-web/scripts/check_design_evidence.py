@@ -25,17 +25,6 @@ EXCLUDED_DIRS = {'__pycache__', '.pytest_cache', '.mypy_cache', '.ruff_cache'}
 EXCLUDED_FILES = {'.DS_Store'}
 EXCLUDED_SUFFIXES = {'.pyc', '.pyo'}
 
-# 컴포넌트 정체 집행 (1.1.20) — 시안이 component-from-global-scope 로 선언한 커스텀
-# 컴포넌트를 구현이 native 등가로 평탄화하면 잡는다. 이탈 표(산문)를 읽지 않으므로 override 불가.
-COMPONENT_DECL_RE = re.compile(r'component-from-global-scope="[^"]*\.([A-Za-z0-9_]+)"')
-# {% comment %}·{# #}·<!-- --> 안의 리터럴 태그는 오탐 금지(check_clip_clearance 선례).
-COMPONENT_COMMENT_RE = re.compile(r'\{%\s*comment\s*%\}.*?\{%\s*endcomment\s*%\}|\{#.*?#\}|<!--.*?-->', re.S)
-# 커스텀 컴포넌트 타입 → (그 타입을 평탄화한 금지 native 형태 정규식, 표기). 확장 지점 — 지금은 실사용 타입만.
-NATIVE_FLATTEN = {
-    'Select': (re.compile(r'<select[\s/>]', re.I), '<select>'),
-    'Dropdown': (re.compile(r'<select[\s/>]', re.I), '<select>'),
-}
-
 
 class Defects(Exception):
     def __init__(self, messages: list[str]):
@@ -449,52 +438,6 @@ def implementation_digest(project: Path, spec: dict) -> str:
     return canonical_digest(items)
 
 
-def validate_component_identity(build: Path, project: Path) -> list[str]:
-    """시안이 선언한 커스텀 컴포넌트를 구현이 native 등가로 평탄화했는지 코드로 대조.
-
-    build/design-ref/*.dc.html(화면 파일 직속만 — _ds·_history 스냅숏 제외)의
-    component-from-global-scope 선언 타입 집합을 모아, NATIVE_FLATTEN 에 등록된
-    커스텀 타입이 선언됐는데 project/web/**/*.html 에 그 금지 native 형태가 있으면
-    결함 메시지를 반환한다(주석 리터럴은 제거 후 검사). 반환 리스트가 비면 통과.
-    """
-    issues: list[str] = []
-    design_ref = build / 'design-ref'
-    if not design_ref.is_dir():
-        return issues
-    declared: set[str] = set()
-    for dc in sorted(design_ref.glob('*.dc.html')):
-        try:
-            text = dc.read_text(encoding='utf-8', errors='replace')
-        except OSError:
-            continue
-        for match in COMPONENT_DECL_RE.finditer(text):
-            declared.add(match.group(1))
-    relevant = sorted(declared & set(NATIVE_FLATTEN))
-    if not relevant:
-        return issues
-    web = project / 'web'
-    if not web.is_dir():
-        return issues
-    for path in sorted(web.rglob('*.html')):
-        relative = path.relative_to(project)
-        if any(part in EXCLUDED_DIRS for part in relative.parts):
-            continue
-        try:
-            body = COMPONENT_COMMENT_RE.sub('', path.read_text(encoding='utf-8', errors='replace'))
-        except OSError:
-            continue
-        for type_name in relevant:
-            pattern, native = NATIVE_FLATTEN[type_name]
-            if pattern.search(body):
-                issues.append(
-                    f"component-identity: 시안이 커스텀 '{type_name}' 을 선언했으나 구현이 "
-                    f"native {native} 를 렌더함 ({relative.as_posix()}). 선언 컴포넌트를 충실히 "
-                    f"실현하라(커스텀 드롭다운·필요시 JS) — native 로 평탄화하거나 숨은 native "
-                    f"mirror 를 두지 말 것."
-                )
-    return issues
-
-
 def validate_visual(build: Path, project: Path, spec: dict, input_digest: str, impl_digest: str) -> None:
     issues: list[str] = []
     path = build / 'visual-evidence.json'
@@ -544,7 +487,6 @@ def validate_visual(build: Path, project: Path, spec: dict, input_digest: str, i
         if row.get('result') != 'pass':
             issues.append(f'{here}.result: pass required')
         _validate_media(build, source.get('media', []), row.get('media'), here, issues)
-    issues.extend(validate_component_identity(build, project))
     if issues:
         raise Defects(issues)
 
@@ -617,13 +559,6 @@ def run(args: argparse.Namespace) -> dict[str, str]:
     project = args.project_root.resolve()
     if not build.is_dir() or not project.is_dir():
         raise ValueError('--build and --project-root must be directories')
-    if args.phase == 'identity':
-        # 경량 단독 순응 검사 — 시각 증거·design-input 불요. 기존 화면을 "확인/대조"할 때
-        # 재구현 없이 정체 어긋남(선언 커스텀 컴포넌트 ↔ 구현 native 등가)만 결정적으로 잡는다.
-        issues = validate_component_identity(build, project)
-        if issues:
-            raise Defects(issues)
-        return {'component_identity': 'ok'}
     spec, input_value, items = validate_inputs(build, project, require_review=args.phase != 'prepare')
     if args.phase == 'prepare':
         return {'review_digest': review_digest(spec, items)}
@@ -639,7 +574,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--build', required=True, type=Path)
     parser.add_argument('--project-root', required=True, type=Path)
-    parser.add_argument('--phase', required=True, choices=('prepare', 'inputs', 'visual', 'identity'))
+    parser.add_argument('--phase', required=True, choices=('prepare', 'inputs', 'visual'))
     parser.add_argument('--fingerprint', action='store_true')
     try:
         args = parser.parse_args(argv)

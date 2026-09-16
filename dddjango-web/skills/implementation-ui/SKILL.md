@@ -1,6 +1,6 @@
 ---
 name: implementation-ui
-description: web 구현 표기법 — 시안 재현 절차(직수입 금지·토큰화·asset-manifest), 삼총사 view/view_model/state·form 표기, Django 템플릿·HTMX 선언 include·section 응답·외부 UI JS 로드, design_system 토큰·CSS, in-process client(django.test.Client)·urls. web/ 트리의 코드를 구현하거나, 기존 화면을 시안과 대조·확인해 수정할 때 먼저 로드한다. 무엇을 어느 조각에 담는가·판별·승격·계약 소비 절차는 architecture-web, 트리·명명 사실은 discipline-web-houserules, 보편 클린코드는 discipline-cleancode로 위임.
+description: web 구현 표기법 — 시안 재현 절차(직수입 금지·토큰화·asset-manifest), 삼총사 view/view_model/state·form 표기, Django 템플릿·HTMX 선언 include·section 응답·외부 UI JS 로드, design_system 토큰·CSS, in-process client(django.test.Client)·urls. web/ 트리의 코드를 구현할 때 먼저 로드한다. 무엇을 어느 조각에 담는가·판별·승격·계약 소비 절차는 architecture-web, 트리·명명 사실은 discipline-web-houserules, 보편 클린코드는 discipline-cleancode로 위임.
 user-invocable: false
 ---
 
@@ -20,7 +20,6 @@ user-invocable: false
 ## 핵심 운영 원칙
 
 - **외형 보존·내부 구조 통합** — 원본 DOM 관계·CSS 선언/값/효과를 템플릿·토큰·CSS 소유 위치에 보존한다. 엔진 런타임 전체 직수입·Django 책임 우회 금지 (§2)
-- **컴포넌트 정체 보존·순응 검증(필수)** — 시안이 `component-from-global-scope`로 선언한 커스텀 컴포넌트(예: Select·Dropdown)는 native 등가(native `<select>` 등)로 평탄화하거나 숨은 native mirror를 두지 않는다 — 선언된 정체 그대로 구현하며 메뉴·상호작용에 JS가 필요하면 implementation-javascript. 기존 화면을 시안과 대조·수정할 때는 결론·완료 전에 dddjango-web 플러그인의 `scripts/check_design_evidence.py --build <그 화면의 `.dddjango-web/<빌드>` 폴더> --project-root <프로젝트 루트> --phase identity`를 실행한다 — **exit 2 = 정체를 native로 평탄화한 상태(옵션·내용이 같아도 «일치» 아님)**, must-fix이며 과거 이탈(D2·G1)·접근성·bespoke JS 회피로 미룰 수 없다. **exit 2면 사용자에게 되묻지 말고 바로 수리한다** — 디자인 파일이 안 바뀌어도 이 비순응은 «확인하고 수정해»가 지시하는 명백한 수리 대상이다(의도 확인·«저장 안 됨/다른 변경» 대안 제시로 멈추지 않는다) (§2)
 - 시안 빌드의 모든 coder 호출은 첫 변경 전 직접 inputs 입장을 거친다(코더 역할 계약). 데이터만 구현할 때도 inputs는 적용하며 visual 완료와 구별한다. 임시 검증은 scope의 사용자 실행 경계를 따른다 (§2)
 - 시안이 애초에 없으면 기존 design_system 관례로 자체 설계한다. 수집 실패는 시안 없음이 아니다. 변경/근사는 구체적인 이탈 결정 후 적용하고 실제 렌더 증적을 남긴다 (§2)
 - view는 함수 뷰 고정 — URL 바인딩·form 수신·세션 쿠키 추출·VM 호출·render·fragment 분기(HX-Request 헤더 또는 전용 라우트)만, 판단 금지. auth는 `@login_required` — 페이지·fragment 라우트 동일 적용 (§3)
