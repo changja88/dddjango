@@ -92,3 +92,12 @@ iter 1 실패 근본원인: 일반 프롬프트("확인하고 수정해")로는 
   - `architecture-web`(검수/리뷰 경로)·`implementation-ui`(수정 경로) description에 "기존 화면을 시안과 대조·확인·수정할 때 로드" 추가 → A8의 "확인" 작업이 스킬을 로드.
   - 두 스킬 본문에 **필수 순응 검증**: 결론 전 `--phase identity` 실행 · exit 2 = must-fix 비순응(내용 동등·D2·접근성으로 미룰 수 없음) · 선언 커스텀 컴포넌트로 재구현(JS 허용) · "검사 없이 일치/변경없음 결론 금지".
 - codex byte 미러(scripts) + SKILL 미러. make verify-web GREEN.
+
+## 12. iter 3 (1.1.22) — 「되묻지 말고 바로 수리」
+
+iter 2(1.1.21) 결과: A8가 native↔커스텀 Select 격차를 **정확히 식별**했으나, 디자인 파일 byte-동일(변경 없음)을 보고 AskUserQuestion으로 «의도 확인»하며 정지 — 자율 수리 미달. 강제문구가 "must-fix·재구현"까지였지 "되묻지 말라"가 아니었음.
+
+**1.1.22 조치:** architecture-web·implementation-ui 강제문구에 추가 —
+> exit 2면 사용자에게 되묻거나 의도 확인을 요구하지 말고 **바로 수리**한다. 디자인 파일이 안 바뀌어도(byte-동일) 이 비순응은 «확인하고 수정해»가 지시하는 명백한 수리 대상이며, «저장 안 됨/다른 변경» 대안을 제시하며 멈추지 않는다.
+
+스크립트 변경 0(스킬 프로즈만) · codex SKILL 미러 · make verify-web GREEN.
