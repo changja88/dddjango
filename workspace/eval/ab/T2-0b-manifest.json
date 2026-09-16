@@ -815,7 +815,7 @@
     },
     "protocol": {
       "files": {
-        "Makefile": "91907653de93b8013b7dad21e35e6caa1ed8d485d078eec64ee7154b154d5ebb",
+        "Makefile": "059ee6c5f997ab0cd4e309ec59ab6ac2bf99c511e55b4819f46825a8e64109d6",
         "workspace/design/2026-08-20-ontology-t2-0b-design.md": "90f5f2d30f5745df55a788a2cef864e02176e4f08f4dcaf0d7bebea48aad2783",
         "workspace/plan/2026-08-12-bc-rebuild-protocol.md": "a39ba66e58cb8bde5ad8f84d630b6fd9b04300f7130d4bbc2d149751c2f6c492",
         "workspace/plan/templates/request-template.md": "531bb5c0e9b147d51665981bc3218aa027ddc4170101ea920ecc8a87f7018fe4",
@@ -831,7 +831,7 @@
         "workspace/design/2026-08-20-ontology-t2-0b-design.md"
       ],
       "n_files": 6,
-      "tree_sha256": "a6edc54aeb495f6318fe824d12316e6cba7ed54d90b3c821279acd3401c6fff9",
+      "tree_sha256": "15110dde088ef4be853b5db02c87a4e9c3702bff974feb4c119aa5d7bafe80c8",
       "why": "**전이 의존** — 발주문이 «그대로 따르라»고 가리키는 판형과, 인수 판정이 부르는 도구와, 게이트를 배선하는 Makefile. 이 중 하나만 바뀌어도 모델이 받는 요청문·허용 범위·STOP 규약·shape 합격 여부·실런 진입 조건이 바뀐다. 그런데 대조는 글롭에 든 것만 재전개하므로, 봉인 밖이면 그 변경은 드리프트가 아니었다(레인 AU 발견 4)."
     },
     "queries": {
@@ -961,8 +961,8 @@
     "source-claude": "38aa7cd297b70d31f9acf0a09513ee2622ff9cb74f5458d695445cdba26a4ec8",
     "source-codex": "38aa7cd297b70d31f9acf0a09513ee2622ff9cb74f5458d695445cdba26a4ec8"
   },
-  "sealed_commit": "23709e261f69fd4d945413536139e84a2e93ac23",
-  "self_sha256": "de0c9577b1f3583ee2aa4b734a8a8ac0a68c0e3df139c462e315de6c56a4ca5c",
+  "sealed_commit": "c627d8f6b382e97f04066302b1133421ce1c4b4d",
+  "self_sha256": "804f2977bce0bd7bb4e6571661715d1bf686c3c81dcb60e2cfc6c2fa3d7dfc1f",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [
