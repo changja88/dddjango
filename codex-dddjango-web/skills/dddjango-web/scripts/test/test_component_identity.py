@@ -6,6 +6,7 @@
 """
 from __future__ import annotations
 
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -95,6 +96,27 @@ class ComponentIdentityTests(unittest.TestCase):
         # design-ref 에 .dc.html 이 없으면(이미지 단독·비시안) no-op.
         self.impl(NATIVE)
         self.assertEqual(self.run_check(), [])
+
+
+    # --- CLI --phase identity (경량 단독 순응 검사 · 재구현/시각증거 없이 "확인"에서 실행) ---
+    def run_cli_identity(self):
+        return subprocess.run(
+            [sys.executable, str(SCRIPTS / 'check_design_evidence.py'),
+             '--build', str(self.build), '--project-root', str(self.project), '--phase', 'identity'],
+            capture_output=True, text=True, timeout=15)
+
+    def test_cli_phase_identity_flattened_exit2(self):
+        self.screen(SELECT_DECL)
+        self.impl(NATIVE)
+        r = self.run_cli_identity()
+        self.assertEqual(r.returncode, 2, r.stderr)
+        self.assertIn('component-identity', r.stderr)
+
+    def test_cli_phase_identity_faithful_exit0(self):
+        self.screen(SELECT_DECL)
+        self.impl(CUSTOM)
+        r = self.run_cli_identity()
+        self.assertEqual(r.returncode, 0, r.stderr)
 
 
 if __name__ == '__main__':

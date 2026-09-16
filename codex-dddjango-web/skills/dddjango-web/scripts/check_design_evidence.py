@@ -617,6 +617,13 @@ def run(args: argparse.Namespace) -> dict[str, str]:
     project = args.project_root.resolve()
     if not build.is_dir() or not project.is_dir():
         raise ValueError('--build and --project-root must be directories')
+    if args.phase == 'identity':
+        # 경량 단독 순응 검사 — 시각 증거·design-input 불요. 기존 화면을 "확인/대조"할 때
+        # 재구현 없이 정체 어긋남(선언 커스텀 컴포넌트 ↔ 구현 native 등가)만 결정적으로 잡는다.
+        issues = validate_component_identity(build, project)
+        if issues:
+            raise Defects(issues)
+        return {'component_identity': 'ok'}
     spec, input_value, items = validate_inputs(build, project, require_review=args.phase != 'prepare')
     if args.phase == 'prepare':
         return {'review_digest': review_digest(spec, items)}
@@ -632,7 +639,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--build', required=True, type=Path)
     parser.add_argument('--project-root', required=True, type=Path)
-    parser.add_argument('--phase', required=True, choices=('prepare', 'inputs', 'visual'))
+    parser.add_argument('--phase', required=True, choices=('prepare', 'inputs', 'visual', 'identity'))
     parser.add_argument('--fingerprint', action='store_true')
     try:
         args = parser.parse_args(argv)

@@ -81,3 +81,14 @@ subagent 적대 검토가 잡은 항목을 반영해 구현:
 - **[LOW] `<select[\s/>]`**: 커스텀 엘리먼트 `<select-x>` 오탐 회피 · `*.html`만 스캔.
 
 **증명**: 픽스처 6/6 green · 실제 A8 관계인 빌드 대상 발화 2건 확인(재실행 시 반송 확정) · `make verify-web` green.
+
+## 11. iter 2 (1.1.21) — 검사를 「확인/수정」 경로까지 도달시킴
+
+iter 1 실패 근본원인: 일반 프롬프트("확인하고 수정해")로는 `/dddjango-web` 커맨드(`disable-model-invocation: true`)가 안 돌아 파이프라인·게이트가 통째로 우회됨. A8는 informal 내용 diff로 "일치·변경 없음" 결론 → 정체 검사(구현 게이트 위치)가 발화조차 못 함.
+
+**1.1.21 조치:**
+- `check_design_evidence.py`에 **`--phase identity`** 추가 — 시각증거·design-input 없이 `validate_component_identity`만 결정적 실행(exit 2=평탄화). 실제 A8 관계인 빌드에 exit 2·native 2건 확인. 픽스처 8/8(함수 6 + CLI 2).
+- **자동 로드 스킬에 강제 문구 + 로드 트리거 확장**:
+  - `architecture-web`(검수/리뷰 경로)·`implementation-ui`(수정 경로) description에 "기존 화면을 시안과 대조·확인·수정할 때 로드" 추가 → A8의 "확인" 작업이 스킬을 로드.
+  - 두 스킬 본문에 **필수 순응 검증**: 결론 전 `--phase identity` 실행 · exit 2 = must-fix 비순응(내용 동등·D2·접근성으로 미룰 수 없음) · 선언 커스텀 컴포넌트로 재구현(JS 허용) · "검사 없이 일치/변경없음 결론 금지".
+- codex byte 미러(scripts) + SKILL 미러. make verify-web GREEN.
