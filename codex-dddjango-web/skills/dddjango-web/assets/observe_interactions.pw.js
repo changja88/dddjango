@@ -28,13 +28,54 @@ const LOOPBACK_HOSTS = ['127.0.0.1', 'localhost', '[::1]'];
 const DEFAULT_LIMITS = { maxSteps: 8000, maxDepth: 24, maxMinutes: 90 };
 const OPERATION_TIMEOUT_MS = 5000;
 const NAVIGATION_TIMEOUT_MS = 15000;
+// 워치독 유예 — 상한을 넘긴 뒤 정상 종료 경로가 끝날 시간을 준다. 이 안에도 못 끝나면
+// 루프가 어딘가에 갇힌 것이므로 프로세스를 끝낸다(문서는 쓰지 않는다 · 아래 armWatchdog).
+const WATCHDOG_GRACE_MS = 60000;
 
 // 환경 오류 = 수집을 시작조차 못 한 조건(K5 exit 1). partial(exit 3)과 구별해야 하므로
 // 별도 타입으로 던지고 observe가 잡아 요약에만 남긴다 — 문서는 쓰지 않는다.
 class EnvironmentError extends Error {}
 
+// `--max-steps`·`--max-minutes` 는 **항목 사이에서만** 재므로(capHit 호출 지점 넷 전부),
+// 한 `await` 가 안 풀리면 상한이 영영 발화하지 않는다. `page.setDefaultTimeout` 이 그걸
+// 막아 주지만 Playwright 의 `evaluate` 계열과 `CDPSession.send` 에는 **타임아웃 인자가
+// 없다** — 그 22곳이 실제로 프로세스를 8시간 52분 세웠다(A8 실측 · CPU 0.0%).
+//
+// 막힐 수 있는 자리를 열거해 고치지 않는다. 열거는 다음 편집 한 줄로 다시 열린다
+// (거부 목록이 완전할 수 없다는 v1.1.17 의 교훈과 같은 모양). 대신 그 계열을 **전부**
+// 이 한 지점으로 통과시키고, 통과하지 않은 호출이 남으면 픽스처가 red 로 잡는다.
+//
+// 초과는 새 의미가 아니다 — 조작 예외와 같은 경로로 그 step 이 failed 가 되고 탐색은
+// 계속된다(파일 머리의 타임아웃 주석이 이미 규정한 동작).
+function withDeadline(promise, label, ms = OPERATION_TIMEOUT_MS) {
+  let timer = null;
+  const deadline = new Promise((_resolve, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label}: ${ms}ms 안에 반환하지 않았다`)), ms);
+  });
+  return Promise.race([promise, deadline]).finally(() => clearTimeout(timer));
+}
+
+// 종료 보증 — ① 이 놓친 자리가 생겨도 프로세스가 상한을 넘겨 살아남지 못한다.
+//
+// **문서는 쓰지 않는다.** 워치독이 도는 시점에 다른 async 작업이 `run.steps` 를 덧붙이거나
+// 캡처 PNG 를 flush 하는 중일 수 있고, 그 상태로 쓰면 sha 가 실물과 어긋난 문서가 나온다.
+// 그건 «막힌 것» 보다 나쁘다 — 막힘은 보이지만 어긋난 문서는 조용히 통과한다. `exit 1` 은
+// 계약상 이미 «미실행» 이라 백스톱이 통과로 세지 않는다.
+function armWatchdog(limits) {
+  const budget = limits.maxMinutes * 60000 + WATCHDOG_GRACE_MS;
+  const timer = setTimeout(() => {
+    process.stderr.write(
+      `[observe] 워치독: ${limits.maxMinutes}분 상한 + 유예 ${WATCHDOG_GRACE_MS / 1000}초를 넘겨도 `
+      + '끝나지 않았다 — 루프가 반환하지 않는 await 에 갇혔다. 문서를 쓰지 않고 종료한다(미실행).\n');
+    process.exit(1);
+  }, budget);
+  timer.unref?.();
+  return () => clearTimeout(timer);
+}
+
 export default async function observe(page, opts) {
   let ctx = null;
+  let disarm = null;
   try {
     // 조작·이동 타임아웃 — 상한(--max-steps/--max-minutes)은 항목 사이에서만 재므로,
     // 한 조작이 기본 30s를 끌면 도구 상한(600초) 분할 실행이 무너진다. 초과는 조작
@@ -42,6 +83,7 @@ export default async function observe(page, opts) {
     page.setDefaultTimeout(OPERATION_TIMEOUT_MS);
     page.setDefaultNavigationTimeout(NAVIGATION_TIMEOUT_MS);
     ctx = prepare(page, opts);
+    disarm = armWatchdog(ctx.limits);
     watchResponses(ctx);
     watchLoadFailures(ctx);
     await open(ctx);
@@ -74,6 +116,7 @@ export default async function observe(page, opts) {
     if (err instanceof EnvironmentError) return summarize(null, null, [], false, [], err.message);
     throw err;
   } finally {
+    if (disarm) disarm();   // 정상 종료 경로에서는 워치독이 프로세스를 잡고 있으면 안 된다
     // 예외로 빠져도 CDP 세션은 닫는다(수정 라운드 1 M7).
     if (ctx) await detachListenerSession(ctx);
   }
@@ -293,9 +336,9 @@ async function open(ctx) {
 // 루트 확인은 인벤토리보다 앞이다 — 로드 실패를 «루트 미발견»으로 오진하지 않도록
 // assertLoaded 뒤에 두고, dom.inventory와 같은 querySelector로 본다(K3 루트 규칙).
 async function assertRootPresent(ctx) {
-  const found = await ctx.page.evaluate(
+  const found = await withDeadline(ctx.page.evaluate(
     (selector) => document.querySelector(selector) !== null, ctx.rootSelector,
-  );
+  ), 'ctx.page.evaluate');
   if (!found) throw new EnvironmentError(`루트 selector를 찾지 못했다: ${ctx.rootSelector}`);
 }
 
@@ -360,16 +403,16 @@ async function detachListenerSession(ctx) {
 async function listenerIndexesOf(ctx) {
   if (!ctx.cdp) return null;
   try {
-    const evaluated = await ctx.cdp.send('Runtime.evaluate', {
+    const evaluated = await withDeadline(ctx.cdp.send('Runtime.evaluate', {
       expression: MARKED_ELEMENTS, objectGroup: LISTENER_OBJECT_GROUP,
-    });
+    }), 'ctx.cdp.send');
     const arrayId = evaluated.result ? evaluated.result.objectId : null;
     if (!arrayId) return null;
-    const props = await ctx.cdp.send('Runtime.getProperties', { objectId: arrayId, ownProperties: true });
+    const props = await withDeadline(ctx.cdp.send('Runtime.getProperties', { objectId: arrayId, ownProperties: true }), 'ctx.cdp.send');
     const table = {};
     for (const prop of props.result) {
       if (!INDEX_KEY.test(prop.name) || !prop.value || !prop.value.objectId) continue;
-      const listed = await ctx.cdp.send('DOMDebugger.getEventListeners', { objectId: prop.value.objectId });
+      const listed = await withDeadline(ctx.cdp.send('DOMDebugger.getEventListeners', { objectId: prop.value.objectId }), 'ctx.cdp.send');
       if (listed.listeners.length > 0) table[prop.name] = listed.listeners.map((row) => row.type);
     }
     return table;
@@ -381,7 +424,7 @@ async function listenerIndexesOf(ctx) {
     // 배열과 원소 핸들이 한 그룹에 들어가므로 한 번에 놓아준다 — 인벤토리마다 쌓이는
     // 원격 핸들을 남기지 않는다(수정 라운드 1 M5 · 해제 뒤 원소 사용 불가를 실측).
     if (ctx.cdp) {
-      await ctx.cdp.send('Runtime.releaseObjectGroup', { objectGroup: LISTENER_OBJECT_GROUP }).catch(() => {});
+      await withDeadline(ctx.cdp.send('Runtime.releaseObjectGroup', { objectGroup: LISTENER_OBJECT_GROUP }), 'ctx.cdp.send').catch(() => {});
     }
   }
 }
@@ -392,12 +435,12 @@ async function listenerIndexesOf(ctx) {
 // 계산한다(엔트리가 identity 원본 4필드를 갖는 것은 스니펫의 계약이다).
 // ---------------------------------------------------------------------
 async function inventorySnapshot(ctx) {
-  await ctx.page.evaluate(
+  await withDeadline(ctx.page.evaluate(
     (rootSelector) => globalThis.__interactionAudit.dom.markCandidates(rootSelector),
     ctx.rootSelector,
-  );
+  ), 'ctx.page.evaluate');
   const listenerIndexes = await listenerIndexesOf(ctx);
-  const snapshot = await ctx.page.evaluate(
+  const snapshot = await withDeadline(ctx.page.evaluate(
     ([rootSelector, invOpts, url]) => {
       const audit = globalThis.__interactionAudit;
       const inv = audit.dom.inventory(rootSelector, invOpts);
@@ -408,7 +451,7 @@ async function inventorySnapshot(ctx) {
       };
     },
     [ctx.rootSelector, inventoryOptions(ctx, listenerIndexes), ctx.url.href],
-  );
+  ), 'ctx.page.evaluate');
   noteLimits(ctx, snapshot.inventory.limits);
   return snapshot;
 }
@@ -512,7 +555,7 @@ async function recordInitial(ctx, snapshot) {
 // (position:fixed 오버레이가 제자리에 남는다), 넘칠 때만 fullPage + 문서 좌표를 쓴다
 // (clip만으로는 뷰포트 폭에서 잘림을 실측 — 수정 라운드 1 I-4).
 async function captureClipOf(ctx) {
-  const view = await ctx.page.evaluate(
+  const view = await withDeadline(ctx.page.evaluate(
     (selector) => {
       const el = selector ? document.querySelector(selector) : null;
       const rect = el ? el.getBoundingClientRect() : null;
@@ -525,7 +568,7 @@ async function captureClipOf(ctx) {
       };
     },
     ctx.cropToRoot ? ctx.rootSelector : null,
-  );
+  ), 'ctx.page.evaluate');
   const rect = view.rect || { x: 0, y: 0, w: ctx.viewport[0], h: ctx.viewport[1] };
   const fits = rect.w <= ctx.viewport[0] && rect.h <= ctx.viewport[1];
   return {
@@ -1308,7 +1351,7 @@ async function discover(ctx, run, snapshot, ops) {
 // K3가 "path가 가리키는 step 미존재"를 반례로 두므로 재생 경로에도 넣을 수 없다.
 // 대신 «컨테이너를 끝까지 연 상태»를 상태 정규화로 두고 discovery_limits에 적는다.
 async function discoverScroll(ctx, run, snapshot, ops) {
-  const containers = await ctx.page.evaluate(() => globalThis.__interactionAudit.dom.scrollContainers());
+  const containers = await withDeadline(ctx.page.evaluate(() => globalThis.__interactionAudit.dom.scrollContainers()), 'ctx.page.evaluate');
   let current = snapshot;
   for (const container of containers) {
     // 훑음 판정은 **(현재 상태 해시, dom_path)**다(드라이런 6차 결정 B2). dom_path 전역으로
@@ -1413,7 +1456,7 @@ async function sweepContainer(ctx, run, snapshot, container, ops) {
 // hover는 DOM을 바꾸므로(메뉴가 열린다) 재생 가능한 op여야 한다 — `discovery:true`인
 // step으로 적고, 거기서 드러난 대상의 재생 경로에 `{action:'hover'}`가 들어간다.
 async function discoverHover(ctx, run, snapshot, ops) {
-  const candidates = await ctx.page.evaluate(() => globalThis.__interactionAudit.dom.hoverCandidates());
+  const candidates = await withDeadline(ctx.page.evaluate(() => globalThis.__interactionAudit.dom.hoverCandidates()), 'ctx.page.evaluate');
   let current = snapshot;
   let currentOps = ops;
   for (const id of candidates) {
@@ -1491,7 +1534,7 @@ function hoverItem(ctx, snapshot, id, target, ops) {
 // 스크롤 컨테이너는 대상이 아닐 수 있어(스니펫 `scrollContainers`의 `id`가 null)
 // identity도 clickPoint도 없으므로 경로가 유일한 손잡이다(보고서 §우려).
 function scrollByDomPath(ctx, domPath, mode) {
-  return ctx.page.evaluate(([rootSelector, path, how]) => {
+  return withDeadline(ctx.page.evaluate(([rootSelector, path, how]) => {
     const root = document.querySelector(rootSelector);
     if (!root) return false;
     let el = root;
@@ -1521,7 +1564,7 @@ function scrollByDomPath(ctx, domPath, mode) {
       page: { h: el.clientHeight, w: el.clientWidth },
       max: { top: el.scrollHeight - el.clientHeight, left: el.scrollWidth - el.clientWidth },
     };
-  }, [ctx.rootSelector, domPath, mode]);
+  }, [ctx.rootSelector, domPath, mode]), 'ctx.page.evaluate');
 }
 
 const scrollIntoViewOf = (ctx, domPath) => scrollByDomPath(ctx, domPath, 'view');
@@ -1684,11 +1727,11 @@ async function applyElementOperation(ctx, op, pointTarget, handle) {
   }
   if (op.action === 'blur') {
     // blur 핸들러는 focus를 거친 요소에서만 돈다 — 한 조작 안에서 둘 다 일으킨다.
-    await handle.evaluate((el) => { el.focus(); el.blur(); });
+    await withDeadline(handle.evaluate((el) => { el.focus(); el.blur(); }), 'handle.evaluate');
     return { status: 'executed', error: null };
   }
   if (op.action === 'fill') {
-    const info = await handle.evaluate((el, declared) => ({
+    const info = await withDeadline(handle.evaluate((el, declared) => ({
       value: typeof el.value === 'string' ? el.value : '',
       placeholder: el.getAttribute('placeholder') || '',
       inputmode: el.getAttribute('inputmode') || '',
@@ -1696,17 +1739,17 @@ async function applyElementOperation(ctx, op, pointTarget, handle) {
       declared: (declared || [])
         .filter((row) => { try { return el.matches(row.selector); } catch (err) { return false; } })
         .map((row) => row.value)[0],
-    }), ctx.declared.filter((row) => row && typeof row.value === 'string'));
+    }), ctx.declared.filter((row) => row && typeof row.value === 'string')), 'handle.evaluate');
     const value = fillSample(info);
     await handle.fill(value);
     // "값이 걸러져 비어도 executed로 세되 changes.values에 사실대로 남는다"(K2).
-    const after = await handle.evaluate((el) => (typeof el.value === 'string' ? el.value : ''));
+    const after = await withDeadline(handle.evaluate((el) => (typeof el.value === 'string' ? el.value : '')), 'handle.evaluate');
     return { status: 'executed', error: null, value, values: [{ target: op.target, before: info.value, after }] };
   }
   if (op.action === 'select') {
-    const before = await handle.evaluate((el) => (typeof el.value === 'string' ? el.value : ''));
+    const before = await withDeadline(handle.evaluate((el) => (typeof el.value === 'string' ? el.value : '')), 'handle.evaluate');
     await handle.selectOption({ value: op.option === null ? '' : op.option });
-    const after = await handle.evaluate((el) => (typeof el.value === 'string' ? el.value : ''));
+    const after = await withDeadline(handle.evaluate((el) => (typeof el.value === 'string' ? el.value : '')), 'handle.evaluate');
     return { status: 'executed', error: null, values: [{ target: pointTarget, before, after }] };
   }
   return { status: 'failed', error: `알 수 없는 조작: ${op.action}` };
@@ -1728,9 +1771,9 @@ function outsideViewport(ctx, point) {
 
 function pointOf(ctx, op, pointTarget) {
   if (op.action === 'click' && op.option === 'outside') {
-    return ctx.page.evaluate((id) => globalThis.__interactionAudit.dom.outsidePoint(id), op.target);
+    return withDeadline(ctx.page.evaluate((id) => globalThis.__interactionAudit.dom.outsidePoint(id), op.target), 'ctx.page.evaluate');
   }
-  return ctx.page.evaluate((id) => globalThis.__interactionAudit.dom.clickPoint(id), pointTarget);
+  return withDeadline(ctx.page.evaluate((id) => globalThis.__interactionAudit.dom.clickPoint(id), pointTarget), 'ctx.page.evaluate');
 }
 
 // 지점의 요소를 잡는다. 스니펫의 rect·클릭 지점은 프레임 오프셋을 이미 더한 최상위
@@ -1744,7 +1787,7 @@ async function elementAt(ctx, point) {
   let x = point.x;
   let y = point.y;
   for (let depth = 0; depth <= MAX_FRAME_DEPTH; depth += 1) {
-    const handle = await frame.evaluateHandle(([px, py]) => document.elementFromPoint(px, py), [x, y]);
+    const handle = await withDeadline(frame.evaluateHandle(([px, py]) => document.elementFromPoint(px, py), [x, y]), 'frame.evaluateHandle');
     const element = handle.asElement();
     if (!element) {
       await handle.dispose();
@@ -1753,7 +1796,7 @@ async function elementAt(ctx, point) {
     const inner = await element.contentFrame(); // iframe이 아니면 null이다
     if (!inner) return element;
     const box = await element.boundingBox(); // 최상위 프레임 기준 좌표
-    const border = await element.evaluate((el) => [el.clientLeft, el.clientTop]);
+    const border = await withDeadline(element.evaluate((el) => [el.clientLeft, el.clientTop]), 'element.evaluate');
     await element.dispose();
     if (!box) return null;
     frame = inner;
@@ -1858,7 +1901,7 @@ async function settle(ctx) {
 async function navigatedUrl(ctx) {
   let alive = false;
   try {
-    alive = await ctx.page.evaluate(() => !!globalThis.__interactionAudit);
+    alive = await withDeadline(ctx.page.evaluate(() => !!globalThis.__interactionAudit), 'ctx.page.evaluate');
   } catch (err) {
     alive = false;
   }
@@ -1868,7 +1911,7 @@ async function navigatedUrl(ctx) {
 
 async function waitStable(ctx) {
   try {
-    await ctx.page.evaluate(([quiet, max]) => new Promise((resolve) => {
+    await withDeadline(ctx.page.evaluate(([quiet, max]) => new Promise((resolve) => {
       let quietTimer = null;
       const finish = () => {
         clearTimeout(quietTimer);
@@ -1885,7 +1928,7 @@ async function waitStable(ctx) {
       observer.observe(document.documentElement, {
         subtree: true, childList: true, attributes: true, characterData: true,
       });
-    }), [STABLE_QUIET_MS, STABLE_MAX_MS]);
+    }), [STABLE_QUIET_MS, STABLE_MAX_MS]), 'ctx.page.evaluate');
   } catch (err) {
     // 조작이 이탈을 일으키면 실행 컨텍스트가 사라진다 — 이탈 판정은 호출자 몫이다.
   }

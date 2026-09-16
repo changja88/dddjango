@@ -457,6 +457,32 @@ class InteractionEvidenceTests(unittest.TestCase):
         self.sync()
         self.reject('data-screen-label')
 
+    def test_root_may_descend_into_the_declared_screen(self):
+        """디자인 툴이 라벨 요소 **안에** 화면 이름표를 함께 내보내면 라벨 루트가 비교 뷰포트보다
+        크다(실측 390x877 대 390x844). 동등만 허용하면 `content_crop == viewport` 와 서로를 막아
+        v2 관찰을 만들 방법이 사라진다 — 프레임을 명시해 내려가는 것을 받는다."""
+        for selector in ('[data-screen-label="관계인"] > *:nth-child(2) > div',
+                         '[data-screen-label="관계인"]>div',
+                         '[data-screen-label="관계인"] .app-frame'):
+            with self.subTest(selector=selector):
+                self.doc = self.base_doc()
+                self.doc['root']['selector'] = selector
+                self.sync()
+                result = self.run_gate('prepare')
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_root_selector_must_stay_anchored_to_the_screen(self):
+        """내려가는 것은 받아도 «붙어 있지 않은» 셀렉터는 안 된다 — 접두만 같은 다른 셀렉터와
+        앞에 조상이 붙은 꼴이 통과하면 규칙이 없는 것과 같다."""
+        for selector in ('[data-screen-label="관계인"]x',
+                         'div [data-screen-label="관계인"]',
+                         '[data-screen-label="관계인2"]'):
+            with self.subTest(selector=selector):
+                self.doc = self.base_doc()
+                self.doc['root']['selector'] = selector
+                self.sync()
+                self.reject('data-screen-label')
+
     def test_outside_root_count_is_a_defect_even_with_declarations(self):
         """스니펫 scanOutsideRoot가 excluded_regions 매칭을 이미 count에서 뺀다 — 문서의 count는
         «선언으로 닫히지 않은 잔여»이므로 선언 행이 있어도 count>0은 결함이다(최종 리뷰 검사기 I4)."""

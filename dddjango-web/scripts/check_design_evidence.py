@@ -776,8 +776,9 @@ def _check_bindings(build: Path, document: dict, case: dict, archive_path: Path,
             selected = None
         if isinstance(selected, dict) and selected.get('source_sha256') == entry.get('sha256'):
             expected = f'[data-screen-label="{selected.get("screen_label")}"]'
-            if root.get('selector') != expected:
-                issues.append(f'{label}.root.selector: {expected}이어야 한다 ({root.get("selector")!r})')
+            if not _anchored_root(root.get('selector'), expected):
+                issues.append(f'{label}.root.selector: {expected} 이거나 그 안으로 내려간 셀렉터여야 '
+                              f'한다 ({root.get("selector")!r})')
     served = document.get('served')
     if isinstance(served, dict):
         entry_key = posixpath.basename(entry_path)
@@ -954,6 +955,27 @@ def _check_reached_by(case: dict, document: dict, path: str, label: str, issues:
     if capture.get('sha256') != expected:
         issues.append(f'{label}: reference_capture sha가 reached_by step의 캡처와 다르다 '
                       f'({expected} ≠ {capture.get("sha256")})')
+
+
+def _anchored_root(selector: Any, expected: str) -> bool:
+    """관찰 루트는 «선언된 화면» 이거나 **그 안으로 내려간** 셀렉터여야 한다.
+
+    동등만 허용하면 규칙 둘이 서로를 막는다(실측): 디자인 툴이 `data-screen-label` 요소 안에
+    화면 이름표(`<span data-dc-tpl>` 19px)를 함께 내보내므로 라벨 루트가 390x877 이 되는데,
+    `content_crop{w,h} == case.viewport [390,844]` 는 그 33px 를 허용하지 않는다. 루트를
+    내리면 이 규칙에, 두면 저 규칙에 걸려 **어떤 행동으로도 v2 관찰을 만들 수 없었다**.
+
+    캡션을 «chrome» 으로 자동 분류해 벗기는 길은 택하지 않는다 — `extract_dc.py` 가
+    «source frames are evidence, never inferred chrome» 으로 이미 그 선을 그었다. 대신
+    프레임을 **에이전트가 명시**하게 하고, 그 명시가 선언된 화면에 묶여 있는지만 본다.
+
+    좁게 내려가 대상을 숨기는 우회는 이 규칙이 아니라 `outside_root.count > 0` 이 막는다 —
+    그쪽은 선언 유무와 무관한 결함이라 루트를 줄이면 숨긴 대상이 그대로 드러난다.
+    """
+    if not isinstance(selector, str) or not selector.startswith(expected):
+        return False
+    rest = selector[len(expected):]
+    return rest == '' or rest[0] in ' >+~'
 
 
 def _check_surfaces(document: dict, path: str, spec: dict, label: str, issues: list[str]) -> None:
