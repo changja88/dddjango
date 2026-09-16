@@ -20,12 +20,7 @@ python scripts/backstop.py PROJECT --diff-base COMMIT --design-build BUILD
 `implementation_digest`; it never writes or updates an evidence file. Record
 those printed values only for a new observation round. Exit 0 means the
 declared phase is consistent, 1 means a usage/internal error prevented the
-check, and 2 means a defect or insufficient evidence. An interaction document
-with a non-null `environment_error` counts as the former, not a defect: the
-collection never finished, so every phase (prepare/inputs/visual) exits 1
-rather than 2. Re-freezing discards the frozen evidence wholesale and rebuilds it
-(`refreeze.py`, see `design-acquisition.md`); it produces no comparison and no
-exit code this checker reads. `--phase visual` always
+check, and 2 means a defect or insufficient evidence. `--phase visual` always
 rechecks inputs. `backstop.py --design-build` joins the visual phase to the
 existing 26 checks; `--only` cannot disable it. Without `--design-build`, the runner
 discovers source-bearing builds under `PROJECT/.dddjango-web/` and validates all
@@ -106,13 +101,6 @@ size and hash with local bytes and rescans supported static dependencies. A
 reference capture must be a valid image container. A valid original image may
 be both entrypoint and reference capture.
 
-Two more top-level/case fields are allowed beyond this shape. A top-level
-`interaction_exclusions` list and a per-case `reached_by` object carry the
-interaction-evidence exemptions and case-to-surface bindings defined in full in
-"`interactions.json` version 1" below; `reached_by` is required on every
-archive HTML/component case and forbidden on a static or image case.
-Unrecognized manifest row fields are rejected.
-
 Static collection supports HTML/CSS literal resources, `x-import`, literal ES
 imports, literal dynamic imports, `export ... from`, and literal imports in
 inline script/module bodies. Comments, quoted strings, inert template chunks,
@@ -164,7 +152,7 @@ requires a `source_observation` path/sha256 pointer relative to BUILD. It points
 
 ```json
 {
-  "version": 2,
+  "version": 1,
   "archive_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "entrypoint": {"path": "screen.dc.html", "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
   "case_id": "login/default",
@@ -174,22 +162,9 @@ requires a `source_observation` path/sha256 pointer relative to BUILD. It points
   "url": "http://127.0.0.1:9000/screen.dc.html",
   "observed_at": "2026-09-07T03:30:00Z",
   "capture": {"path": "captures/login-original.png", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"},
-  "trace": {"path": "captures/login-original-observation.json", "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"},
-  "interactions": {"path": "captures/login-original-interactions.json", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}
+  "trace": {"path": "captures/login-original-observation.json", "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}
 }
 ```
-
-`version` is 1 or 2. Version 2 adds the `interactions` pointer shown above,
-addressing the collector document defined in "`interactions.json` version 1"
-below, and is required for every archive HTML/component case. A version 1
-pointer (without `interactions`) still passes only when `backstop.py`'s
-discovered-build run allows it as a legacy observation: the build folder is
-fully git-tracked and unchanged against `--diff-base` (or `HEAD`) with no
-untracked or ignored files in it. That allowance is a property of the specific
-`backstop.py` run, not of the build folder by itself, and `check_design_evidence.py`
-called directly still requires version 2 unless its own caller passes the same
-legacy flag. A build with any local edit, once touched again, needs a fresh
-version 2 observation; there is no partial or author-declared exemption.
 
 The archive hash is the hash of the manifest bytes. Entrypoint, case ID, screen,
 state, viewport and capture must match the case exactly. The trace is nonempty
@@ -222,193 +197,6 @@ as the original browser evidence. Changed source/cases/observations require fres
 preparation and independent review. A fingerprint is not a new observation.
 The prepare command is usable before web/ implementation exists. The existing
 `--fingerprint` behavior still requires valid inputs and web/ implementation.
-
-## `interactions.json` version 1
-
-A version 2 `source_observation.interactions` pointer addresses this document.
-It is the collector's own report of every operable control it found under the
-frozen archive's root and how it drove them; nobody hand-authors or hand-edits
-it.
-
-```json
-{
-  "version": 1,
-  "collector": {"name": "interaction_audit", "snippet_sha256": "…", "driver": "observe_interactions.pw.js", "driver_sha256": "…",
-                "path": "node|mcp", "capabilities": {"react_props": true, "cdp_listeners": true}},
-  "archive_sha256": "…", "entrypoint": {"path": "screen.dc.html", "sha256": "…"},
-  "url": "http://127.0.0.1:9000/screen.dc.html", "browser_viewport": [560, 1040], "content_crop": {"x": 85, "y": 98, "w": 390, "h": 844},
-  "root": {"selector": "[data-screen-label=\"관계인\"]", "found": true, "fingerprint": {"tag": "div", "label": "관계인", "descendants": 412, "rect": {"x": 85, "y": 98, "w": 390, "h": 844}}},
-  "outside_root": {"count": 0, "sample": []}, "excluded_regions": [],
-  "served": {"screen.dc.html": "…", "support.js": "…", "_ds/…/_ds_bundle.js": "…"},
-  "declared": [], "declared_unmatched": [],
-  "observed_at": "2026-09-13T05:00:00Z",
-  "targets": {"a1b2c3d4e5f6": {"role": "menuitem", "name": "배우자", "input_type": "", "owner": "…", "owner_items_hash": "…", "dom_path": "…", "kind": "menuitem", "first_seen_step": 7, "declared": false, "found_by": ["semantic", "react_props"], "live": false},
-              "0f0f0f0f0f0f": {"role": "", "name": "", "input_type": "", "owner": "", "owner_items_hash": "…", "dom_path": "div:nth-of-type(3)", "kind": "overlay", "first_seen_step": 3, "declared": false, "found_by": ["structure"], "live": false, "scrim": true}},
-  "initial": {"inventory": [{"id": "…", "enabled": true, "checked": null, "face": null, "value_empty": null, "surface": null, "occluded": false, "live": false}], "state_hash": "…", "surface_key": "…", "capture": {"path": "captures/…-initial.png", "sha256": "…"}},
-  "steps": [{"n": 1, "path": ["…"], "target": "…", "action": "click", "option": null, "value": null, "context": "…", "status": "executed", "error": null,
-             "before": {"inventory": [], "state_hash": "…"}, "after": {"inventory": [], "state_hash": "…", "surface_key": "…", "capture": {"path": "…", "sha256": "…"}},
-             "changes": {"added": [], "removed": [], "values": [{"target": "…", "before": "", "after": "검증 입력"}]}, "navigated": null, "discovery": false}],
-  "discovery_limits": [], "partial": false, "caps_hit": [], "environment_error": null
-}
-```
-
-This block is the single source for the field set; `check_design_evidence.py`'s
-exact-field check recurses into every nested object against exactly these
-fields, including `targets` entries (`value` on a `select` option target,
-`scrim` on an overlay target are the only two kind-specific optional fields)
-and every `steps[]` row. `after.capture` exists only on `initial` and on a step
-whose `changes.added` is nonempty; a `navigated` step (the document/URL changed)
-has `after: null` and no capture, because its root no longer exists to crop.
-`found_by` lists every detection channel that flagged a target — `semantic`,
-`react_props`, `onclick`, `cdp_listener`, `cursor`, `structure`, `declared`.
-`live` marks membership in a `role=status`/`aria-live` subtree: a live target
-still carries full enumeration and execution obligations, it only drops out of
-`state_hash` and `surface_key` inputs so animated status text cannot mint new
-surfaces or scramble replay. An inventory entry's `checked` is
-`true|false|"mixed"|null` — `"mixed"` is the `aria-checked="mixed"` tri-state
-of a select-all header, and the residual counts it as one more observed toggle
-state (one `click` unit with `option: "mixed"`), exactly as the snippet does.
-
-`collector.snippet_sha256` and `collector.driver_sha256` must equal this
-plugin's own `assets/interaction_audit.js` and `assets/observe_interactions.pw.js`
-bytes; a mismatch is a defect no matter what the rest of the document says.
-`root.selector` must be exactly `[data-screen-label="<label>"]` whenever
-`screen-meta.json`'s `source_sha256` matches this case's entrypoint hash; any
-other entrypoint (a multi-screen build's settings screen, an unlabeled
-original) records its `--root` as a declared input instead, and the
-independent reviewer audits it. The snippet already subtracts every element
-matched by an `excluded_regions` declaration from `outside_root.count`, so the
-recorded count is the number of outside-root targets no declaration closed:
-`outside_root.count` greater than zero is a defect whether or not declarations
-are present (fix the declaration and re-run). `content_crop.w`/`.h`
-must equal the case `viewport` exactly; `browser_viewport` is the actual
-browser window, which can be larger than the cropped root when an engine
-canvas holds more than one screen.
-
-`served` records the body bytes of same-origin 2xx responses, excluding
-204/205 (no body); keys are paths relative to the entrypoint directory with
-the query string ignored. Every key must resolve, through the archive
-manifest's file list, to a byte-identical row; a served path escaping the
-reference root, a served entrypoint whose bytes disagree with the frozen
-entrypoint, or a percent-decoded URL basename that disagrees with the
-entrypoint's own basename, are each a defect. External-origin and non-2xx
-responses fall outside this comparison.
-
-The residual unit is `(identity, action, option)`. Every unit observed active
-in any recorded inventory needs at least one `status: "executed"` step;
-`failed`, `unreachable`, and `unclickable` steps never close it. The pure
-`interaction_residual` in `check_design_evidence.py` and the snippet's own pure
-function compute this independently over the same fixture JSON and must agree
-— it is the same computation the collector itself uses to decide what remains
-in its queue.
-
-A surface key identifies the set of active identities visible after a step,
-independent of their face/checked/value/surface/`owner_items_hash` values, so
-two menus that differ only in which sibling row is open still count as one
-surface. Every step whose `changes.added` is nonempty introduces a surface, and
-`check_design_evidence.py` requires either a case `reached_by` step that
-reaches it or a `{surface, scope_ref, approval_quote}` exclusion row for it; a
-`removed`-only step (a close, a pick), a value-only step, and a `navigated`
-step carry no such obligation. Every archive case itself needs `reached_by:
-{"interactions": "<path>", "step": n | "initial"}` naming this document; the
-referenced step (or `initial`) must exist and be `executed`, and its
-`after.capture.sha256` (or `initial.capture.sha256`) must equal the case's own
-`reference_capture.sha256` — the frozen reference image is always driver-saved,
-root-cropped bytes, never a hand-made screenshot.
-
-`interaction_exclusions` in `design-input.json` — unit rows
-`{target, action, option, scope_ref, approval_quote}` or surface rows
-`{surface, scope_ref, approval_quote}` — are the only exemption from a
-nonempty residual or an unlinked surface; there is no author-granted waiver
-field. `approval_quote` must be at least 10 characters of literal,
-whitespace/NFC-normalized scope text found in `scope.md`; `scope_ref` must
-resolve to an existing anchor in it; and the combined row count cannot exceed
-10% of the active target count across the build's interaction documents. On a
-successful `prepare`/`inputs` run, `check_design_evidence.py` writes every
-exclusion row, and a one-line notice for any interaction document that
-finished `partial`, to stderr as human-facing notices — stdout carries only
-the result JSON — so Coordinator can carry them into the G0 banner as a
-first-class item, never a silent pass.
-
-`evidence-ledger.json` — the unverified ledger — is the last door, and it is a
-**whitelist**: the only findings it admits are the four the checker reaches
-*after* computing everything (residual, the 10% exclusion cap, an unlinked new
-surface, and a `partial`/`caps_hit` mismatch). Everything else is closed by
-default, including «no interaction evidence yet» and a stale `coverage_review`
-— observe first, regenerate the review. A deny-list was tried and rejected:
-one short-circuit finding (`cases: nonempty list required`) stood in for an
-entire subtree the checker never computed, so a single approved row opened
-everything. Rows are written only by `ledger.py add`, which runs the checker
-itself, takes the finding by index, and re-runs it afterwards to confirm that
-finding actually disappeared. A row carries the approval quote (which must sit
-inside an H2-or-deeper section of `scope.md`), that section's sha256, the
-observation fingerprint, and the magnitude at approval time; it goes stale — and
-the wall returns — when the section changes, the observation changes, or the
-magnitude grows. Deleting the ledger does not buy passage: the findings block
-again, because the record and the right of way are the same file. The checker
-consults it where `validate_inputs` and `validate_visual` settle their issue
-lists, so `backstop.py` — which calls `validate_inputs` in-process — passes
-through the same door, and both digests plus `validate_visual` stay alive.
-
-During a re-freeze the approval section belongs in the staging copy of
-`scope.md`, and rows are added against the staging folder (`ledger.py add
---build <staging>`), which is also where `backstop.py --design-build` reads
-them. Editing the live `scope.md` instead makes `refreeze.py commit` refuse the
-swap — it requires the live file to still hash to what `begin` recorded, so a
-live-only edit cannot vanish under the staging copy — while the staging edit
-becomes live at the swap and carries the rows with it.
-
-Manifest rows — in `design-input.json`'s own list and in archive/static source
-manifests alike — reject every unrecognized field. Nothing marks a row as
-carried forward from an older manifest: re-freezing rebuilds the manifest from
-freshly collected bytes, so every row is verified against what was just fetched.
-
-`archive_design.py` exits 0 or 1 only. `refreeze.py` has its own scheme
-(0 done · 2 already in progress · 3 incomplete or rewound · 1 error) that
-neither `check_design_evidence.py` nor `backstop.py` reads or gates on. See
-`design-acquisition.md` for the re-freeze procedure.
-
-## Limits
-
-The static collection path (`freeze_design`) does not collect JavaScript
-interaction state at all; this document and its checks apply only to archive
-HTML/JSX entrypoints. A target reachable only through a reverse cascade — a
-child control that precedes, in document order, the trigger that reveals it —
-is not found by the driver's queue ordering; closing that gap is a declared-input
-(`--declared`) and independent-reviewer responsibility, not a machine guarantee.
-Hover discovery fires once per candidate identity and excludes item-kind
-targets (`menuitem`, `option`, `radio`, `checkbox`, `switch`, `tab`); a
-two-level menu that only opens by hovering one of those items is not found
-this way. Cross-origin iframes and the off-DOM rows of a virtualized list are
-not enumerated; `discovery_limits` and `declared_unmatched` surface the gap
-when it exists, and the independent reviewer's audit is the remaining
-discretionary channel. A `discovery_limits` row's `dom_path` is the
-container's child path from the root, and `.` means the root element itself
-is the scroll container (a long mobile screen whose root scrolls). Inside a same-origin iframe, an element that is a
-target only because it carries a handler — not a semantic control — is not
-detected through the CDP listener channel; and on a non-React engine without a
-`--cdp` connection, handler detection falls back to the `onclick` attribute and
-the cursor heuristic alone, so `collector.capabilities` should be read
-alongside `discovery_limits` before trusting a clean residual. `state_hash`
-cannot distinguish two states of the same `select`/combobox trigger whose
-displayed face text is identical but whose underlying option list differs. An
-empty-name container's identity depends on `dom_path`, which is fragile to
-portal sibling reordering between runs. The scroll positions a page-by-page
-sweep discovers targets at are not themselves recorded, so `--resume` cannot
-guarantee reaching the same drifted scroll state again. A target sitting
-behind a fixed header or footer surfaces as an `unclickable` residual, which
-Coordinator closes only through an actual declaration or an approved
-exception, never by assumption. A step whose only effect is a value change (a
-toggle's resulting state, for instance) carries no surface-linking obligation.
-Neither the provenance of a re-freeze staging folder nor the authenticity of
-an `interactions.json` document itself is machine-provable; the collector-sha,
-served-byte, root-fingerprint, and mtime records only make a transcript
-cross-check possible, not a proof. Extending the static-manifest closure rule
-so that any closure containing a script-kind dependency also requires version
-2 evidence is recorded only as a future candidate here, not adopted.
-Interaction evidence does not change the `motion-notes.md` format; citing a
-specific interaction step number in a "measured" provenance row is a
-recommendation, not an enforced field.
 
 ## `visual-evidence.json` version 1
 

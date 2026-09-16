@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -14,7 +13,6 @@ import unittest
 from test_design_evidence import png
 
 SCRIPTS = Path(__file__).resolve().parents[1]
-ASSETS = SCRIPTS.parent / 'assets'
 
 
 def sha(path):
@@ -59,18 +57,17 @@ class ArchiveTests(unittest.TestCase):
             'images': [{'currentSrc': 'http://127.0.0.1:9000/logo.png', 'complete': True, 'naturalWidth': 1}],
             'fonts': [{'family': 'system-ui', 'status': 'loaded'}], 'failures': []}))
         entry = self.pointer(self.ref / 'screen.dc.html', self.ref)
-        self.observation = {'version': 2, 'archive_sha256': sha(self.manifest),
+        self.observation = {'version': 1, 'archive_sha256': sha(self.manifest),
             'entrypoint': entry, 'case_id': 'login/default', 'screen': 'login', 'state': 'default',
             'viewport': [390, 844], 'url': 'http://127.0.0.1:9000/screen.dc.html',
             'observed_at': '2026-09-07T03:30:00Z', 'capture': self.pointer(self.build / 'original.png'),
             'trace': self.pointer(self.build / 'browser-trace.json')}
-        self.write_interactions(entry)
+        self.write_observation()
         self.spec = {'version': 1, 'reference_root': 'design-ref', 'manifests': ['source-manifest.json'],
             'scope': self.pointer(self.build / 'scope.md'), 'coverage_review': None,
             'cases': [{'id': 'login/default', 'screen': 'login', 'state': 'default',
                 'viewport': [390, 844], 'scope_refs': ['scope.md#login'], 'entrypoint': entry,
                 'reference_capture': self.pointer(self.build / 'original.png'),
-                'reached_by': {'interactions': 'interactions.json', 'step': 'initial'},
                 'source_observation': self.pointer(self.build / 'observation.json')}]}
         self.write_spec()
         ready = self.gate('prepare')
@@ -78,36 +75,6 @@ class ArchiveTests(unittest.TestCase):
 
     def write_observation(self):
         (self.build / 'observation.json').write_text(json.dumps(self.observation))
-
-    def interactions(self, entry):
-        """조작 대상이 없는 원본의 최소 v2 증거(K7) — 잔여·표면 모두 비어 있다."""
-        name = entry['path'].rsplit('/', 1)[-1]
-        return {
-            'version': 1,
-            'collector': {'name': 'interaction_audit', 'snippet_sha256': sha(ASSETS / 'interaction_audit.js'),
-                          'driver': 'observe_interactions.pw.js',
-                          'driver_sha256': sha(ASSETS / 'observe_interactions.pw.js'),
-                          'path': 'node', 'capabilities': {'react_props': True, 'cdp_listeners': True}},
-            'archive_sha256': sha(self.manifest), 'entrypoint': entry,
-            'url': f'http://127.0.0.1:9000/{name}', 'browser_viewport': [390, 844],
-            'content_crop': {'x': 0, 'y': 0, 'w': 390, 'h': 844},
-            'root': {'selector': '[data-screen]', 'found': True,
-                     'fingerprint': {'tag': 'div', 'label': None, 'descendants': 1,
-                                     'rect': {'x': 0, 'y': 0, 'w': 390, 'h': 844}}},
-            'outside_root': {'count': 0, 'sample': []}, 'excluded_regions': [],
-            'served': {name: entry['sha256']}, 'declared': [], 'declared_unmatched': [],
-            'observed_at': '2026-09-07T03:30:00Z', 'targets': {},
-            'initial': {'inventory': [], 'state_hash': 'state-0', 'surface_key': 'surface-0',
-                        'capture': self.pointer(self.build / 'original.png')},
-            'steps': [], 'discovery_limits': [], 'partial': False, 'caps_hit': [],
-            'environment_error': None,
-        }
-
-    def write_interactions(self, entry):
-        path = self.build / 'interactions.json'
-        path.write_text(json.dumps(self.interactions(entry), ensure_ascii=False), encoding='utf-8')
-        self.observation['interactions'] = self.pointer(path)
-        self.write_observation()
 
     def write_spec(self):
         (self.build / 'design-input.json').write_text(json.dumps(self.spec))
@@ -376,7 +343,7 @@ export function Logo() { return <div dangerouslySetInnerHTML={{__html: markup}} 
         entry = self.pointer(self.ref / 'Logo.jsx', self.ref)
         self.spec['cases'][0]['entrypoint'] = entry
         self.observation['entrypoint'] = entry
-        self.write_interactions(entry)
+        self.write_observation()
         self.spec['cases'][0]['source_observation'] = self.pointer(self.build / 'observation.json')
         self.write_spec()
         self.review()

@@ -178,10 +178,8 @@ def main() -> int:
         print(f'[design-archive] missing: {row["source"]!r} in {row["source_document"]}: {row["reason"]}', file=sys.stderr)
     print(f'[design-archive] {len(manifest["files"])} files preserved; {len(missing)} missing local dependencies; '
           'source_ready=false; original browser observations required')
-    if missing:
-        return 1
-    return 0
+    return 1 if missing else 0
 
 
 if __name__ == '__main__':
-    raise SystemExit(main())
+    sys.exit(main())

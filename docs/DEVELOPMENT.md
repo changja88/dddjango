@@ -25,23 +25,10 @@ codex-dddjango/           ← Codex 설치본 미러 (scripts는 byte 동일을 
 
 dddjango-web/             ← 자매 플러그인 (웹 표현계층 빌더 — /dddjango-web)
                            전 파일 «산문 정본» — 온톨로지 코퍼스 밖. graph-owned 절이 없고
-                           md·py를 직접 수정한다. 픽스처는 make verify(verify-web)가 실행.
+                           md·py를 직접 수정한다. 픽스처는 `make verify-web`으로 직접 돈다
+                           (2026-09-16 hyun 지시로 자동 경로에서 분리 — §5).
                            빌드 스펙 정본: workspace/design/2026-08-23-web-presentation-layer-spec.md
 ├── REQUEST_GUIDE.md       사람용 화면 작업 요청 가이드 정본
-├── hooks/hooks.json       플러그인 hook(SessionStart·UserPromptSubmit → scripts/evidence_debt_hook.py —
-│                          시안 빌드의 조작 상태 증거 부채와 중단된 재동결을 Coordinator 경로와 무관하게 고지)
-├── scripts/refreeze.py    재동결 집행(begin/check/commit/abort) — 기존 동결물 전량 폐기 후 재동결.
-│                          staging에 새로 동결하고 파일 단위 트랜잭션으로 교체한다(대조하지 않는다).
-│                          증거 판독 실패·브라우저 부재(--observation-skipped)로 막지 않고 기록하고
-│                          진행하며, 넘긴 사실은 build-state.refreeze_unverified 로 승격돼 backstop이
-│                          매 실행 고지한다. 폐기분은 _discarded-<ts>/ 로 한 세대 **복사** 보존한다
-│                          (개명하면 _prev의 «commit 진행 중» 표식이 사라져 재개가 live를 재폐기한다)
-├── scripts/ledger.py       미검증 원장(add/list/drop) — 게이트의 유일한 통행문.
-│                          `check_design_evidence.validate_inputs`/`validate_visual`이 발견을
-│                          확정하는 자리에서 조회한다(main()의 except 가 아니다 — backstop 은
-│                          validate_inputs 를 인프로세스로 부르고, 거기서 exit 0 을 내면 두 digest 와
-│                          validate_visual 이 사라진다). 받는 것은 «끝까지 계산한 뒤의 판정» 넷뿐이고
-│                          (잔여·예외 상한·새 표면·partial) 나머지는 기본 폐쇄다. 원장을 지우면 다시 막힌다
 ├── scripts/check_token_disposition.py
 │                          토큰 전수 처분 집행(G1 --spec-only) — 전수성·양방향·**기각 정당성**
 │                          (기각한 토큰의 값을 동결 시안이 실제로 쓰면 FINDING·architect 반송)
@@ -55,9 +42,7 @@ dddjango-web/             ← 자매 플러그인 (웹 표현계층 빌더 — /
                            «전역·타입 링 0건 = 판정 안 함»은 «발견 0»과 다른 결과로 낸다
 
 codex-dddjango-web/       ← dddjango-web의 Codex 설치본 미러
-├── REQUEST_GUIDE.md       dddjango-web/REQUEST_GUIDE.md의 byte 동일 미러
-└── hooks/hooks.json       위 hook의 의미 미러(플러그인 루트 변수·경로만 다름 — verify-web의
-                           workspace/tools/web_hooks_contract.py가 이벤트·command·timeout을 리터럴 대조)
+└── REQUEST_GUIDE.md       dddjango-web/REQUEST_GUIDE.md의 byte 동일 미러
 
 .claude-plugin/marketplace.json   ← Claude marketplace: dddjango · dddjango-web subdir
 .agents/plugins/marketplace.json ← Codex marketplace: ./codex-dddjango · ./codex-dddjango-web subdir
@@ -115,8 +100,6 @@ make ontology-env      # python3.14 .venv + rdflib·pySHACL·rdfcanon (버전 �
 make ontology-hooks    # core.hooksPath = workspace/hooks (pre-commit 게이트)
 ```
 
-`make verify-web`은 **Node 22 이상이 필수**다 — dddjango-web K3 상호작용 관찰 스위트(`node:test`)가 이를 요구한다. 별도 설치 타깃은 없으니 로컬 Node 버전을 직접 맞춘다.
-
 ## 3. 규범 수정 — 표준 루프
 
 md에서 `<!-- graph-owned: … -->` 마커가 붙은 절은 **직접 수정 금지**다. 고치면 pre-commit 훅과 `ontology_render_sync`가 red로 잡는다. 대신:
@@ -141,7 +124,6 @@ md에서 `<!-- graph-owned: … -->` 마커가 붙은 절은 **직접 수정 금
 
 - 검사기 27종은 `dddjango/scripts/check-*.py`가 원본이고 `codex-dddjango/…/scripts/`는 **byte 동일 미러**다 — 한쪽만 고치면 verify-base 마지막 단(`diff -rq`)이 red다. 둘 다 갱신한다.
 - `workspace/tools/request_guide_contract.py`는 가이드 존재·byte 미러·marketplace name/path/ref와 subdir 내용·manifest homepage/repository·Codex websiteURL/defaultPrompt·설치본 권위 문구를 검사한다. 링크 검사는 canonical source surface의 drift backstop이다. README의 `## 작업 요청 가이드`부터 다음 `## ` heading 직전과 전체 README source에 `[dddjango 작업 요청 가이드](dddjango/REQUEST_GUIDE.md)` 및 `[dddjango-web 작업 요청 가이드](dddjango-web/REQUEST_GUIDE.md)`가 각각 정확히 한 번 있어야 한다. 네 guide에는 위 상대 목적지 구문 금지 규칙을 적용한다. CommonMark 문맥이나 실제 rendered/clickable 동작·렌더러 등가성은 판정하지 않으며 README의 코드·주석 안 token도 센다. `--self-test`는 실제 두 heading 구조의 tempfile 정상 fixture와 독립 변이의 `validate` 결과를 literal 기대값으로 검사한다. 계약을 바꾸면 해당 검출력 fixture도 함께 유지한다. 표준 라이브러리만 쓰고 네트워크나 공개 URL 생존성은 검사하지 않는다. `verify-base-core`는 dddjango pair 비교 → self-test → 실제 계약을, `verify-web`은 web pair 비교 → 실제 계약을 실행한다.
-- `workspace/tools/web_refreeze_contract.py`는 **재동결 규범 편집의 완전성**을 사람이 만든 목록 대신 불변식으로 보증한다 — 손으로 만든 편집 대상 목록이 두 번 샜기 때문이다(설계 v3·v4). A 유보(defer) 허용 열거에 재동결이 없다(줄 단위로는 못 잡는다 — 파일을 한 줄로 펴서 «허용 열거 시작 어휘» 뒤 창을 보고 문장 경계에서 끊는다) · B `--compare-build`·`refreeze-diff`·`carried_from` 잔존 0(`scripts/refreeze.py`가 폐기 대상으로 «명명»하는 `refreeze-diff`만 예외) · C `refreeze.py` 4 서브커맨드 실재 · D1 수집·검사 인자의 빌드 자리표시자(`<산출물 폴더>`·`BUILD`)가 폐기·교체 대상을 가리키지 않는다(«산출물 위치» 절과 `refreeze.py` 자신의 `--build`는 예외) · D2 보존 대상 경로는 치환되지 않았다 · D3 재수집 구간의 `scope.md` 쓰기가 `<대상 폴더>/`를 수식한다 · D4 `<대상 폴더>` 정의가 «산출물 위치» 절에 있다. `--self-test`는 정상·변이 fixture로 각 검사의 검출력을 확인한다. **한계**: D1은 자리표시자와 대상 이름의 리터럴 인접만 본다 — 산문으로 풀어 쓴 지시는 놓친다. `verify-web`이 self-test → 실제 계약 순으로 실행한다.
 - `workspace/tools/reverse_coverage.py`의 닫힌 분류표는 dddjango 루트 `REQUEST_GUIDE.md`를 사람용 사용자 가이드로 명시한다. 새 설치 파일의 존재 근거를 유지하되 이 가이드에 런타임 규칙 소유권을 부여하지 않는다.
 - 측정 도구 일부는 manifest 봉인 대상이다(`workspace/tools/manifest_seal.py`의 글롭 목록 참조). 봉인 파일을 고치면 봉인 재발행이 필요하다.
 - **봉인은 커밋 직전 마지막 단계다** — `make verify` 가 RED 여서 봉인 대상(측정 도구·byte 골든 EXPECTED·매트릭스)을 다시 고쳤으면 `manifest_seal.py --write` 를 다시 발행하고 `make verify` 를 처음부터 다시 돈다. 커밋 메시지·기록의 verify 수치는 **마지막 실행 로그**(evidence 경로 병기)의 것만 적는다 — 중간 실행의 green 을 옮겨 적지 않는다(2026-09-04 `d701df8` «verify 6/6» 거짓 표기 · 정정 `cad221b`).
@@ -154,9 +136,8 @@ md에서 `<!-- graph-owned: … -->` 마커가 붙은 절은 **직접 수정 금
 | `make verify-mutation` | rulepack·selector를 건드린 커밋 |
 | `make verify-firing` | 설치본 cache 발화 증명 (개발 중엔 `ALLOW_STALE=1`) |
 | `make verify-runready` | 실런(A/B 평가) 진입 직전에만 — verify + 변이 + 발화 + 봉인 엄격 대조 |
-| `make verify-web-browser` | dddjango-web K3 상호작용 관찰 브라우저 스위트 — `release-web` 선행 조건, 상시 `verify`/`verify-web`에는 없음 |
+| `make verify-web` | dddjango-web 픽스처·미러 대조 — **수동 전용**(2026-09-16 `VERIFY_TARGETS`에서 제외) |
 
-`verify-web-browser`는 `DDDJANGO_WEB_PLAYWRIGHT_MODULE`과 (`DDDJANGO_WEB_BROWSER_CHANNEL` 또는 `DDDJANGO_WEB_BROWSER_CDP`) 둘 다 env로 필요하다 — 없으면 `ERROR:` + exit 1. `DRY=1`이면 env 유무와 무관하게 안내만 하고 통과한다. `make verify-web`(상시 검증)은 같은 스위트를 브라우저 없이 SKIP(exit 0)으로 넘긴다 — SKIP·ERROR 의미론은 `test_observe_interactions.mjs` 자신이 소유한다.
 
 ## 6. 릴리즈
 
@@ -168,11 +149,10 @@ make release DRY=1        # 미리보기 (변경 없음) — release-web DRY=1 �
 
 플러그인별 타깃이 대상 변수(manifest 2곳·태그 접두사)만 지정하고 공통 절차 `_release`를 부른다. main 브랜치·클린 worktree·origin 동기 상태에서만 진행된다. 두 마켓 manifest에 같은 버전을 기록하고, 커밋 → annotated 태그(`dddjango--vX.Y.Z` · `dddjango-web--vX.Y.Z`) → push → GitHub Release까지 한 번에 간다. 한 저장소에 두 릴리즈 시리즈가 태그 접두사로 나란히 쌓인다. 선택지 `0) current`는 버전 그대로 태그만 발행한다(첫 릴리즈·태그 누락 보완용 — manifest 무변경이면 커밋 없이 현재 HEAD에 태그).
 
-`make release-web`은 `_release` 전에 `verify-web-browser`(K3 브라우저 스위트, §5)를 먼저 돈다 — env 없으면 그 자리에서 막힌다(`DRY=1`이면 안내만).
+`make release-web`은 곧장 `_release`로 간다. 2026-09-16 hyun 지시로 `verify-web`을 `VERIFY_TARGETS`에서 뺐다(막아 세운 결함 0 · 실제 결함은 전부 A8 실사용이 잡았다). 같은 배치에서 **실패한 브라우저 관찰 서브시스템(1.1.13~1.1.19)을 전량 철거**했다 — `verify-web-browser`(K3)·`observe_interactions`·`evidence_debt`·`refreeze.py`·`ledger.py`와 그 계약·hook을 지우고 검사기를 v1.1.12 정적 형태로 되돌렸다(정본: workspace/design/2026-09-16-web-strip-observation-subsystem.md). 웹 쪽 검증이 필요하면 `make verify-web`을 직접 돈다. **release-web 에서 사라진 보증은 Codex byte 미러 대조다** — `codex-dddjango-web/`가 어긋나도 릴리즈가 막지 않으므로, 검사기를 고치면 미러를 손으로 맞춘다(`make verify-web`이 `diff -rq`로 잡는다).
 
 봉인(`manifest_seal.py --write`)은 봉인 대상 파일(Makefile 등)을 바꾼 커밋 **뒤에** 별도 chore 커밋으로 재발행한다 — 같은 커밋에 넣으면 `sealed_commit`이 변경 이전을 가리켜 strict `--check`가 RED가 된다(`make verify`의 `--draft` 대조는 통과하므로 놓치기 쉽다).
 
-`hooks/hooks.json`이 바뀐 dddjango-web 릴리즈(command 문자열·이벤트·timeout — 스크립트 본문만 바뀐 경우는 해당 없음)는 GitHub Release 노트에 «Codex 사용자는 `/hooks`에서 dddjango-web hook을 재신뢰» 1줄을 넣는다. Codex는 hook *정의*의 해시로 신뢰를 기록해 정의가 바뀌면 승인 전까지 그 hook을 건너뛰고, 건너뛴 상태는 세션 시작 시 `[dddjango-web] evidence hook active` 줄이 없는 것으로만 드러난다.
 
 ## 7. 더 읽기
 

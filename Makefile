@@ -3,7 +3,7 @@ SHELL := /bin/bash
 # DRY=1 이면 실제 변경/커밋/푸시/Release 없이 시뮬레이션만 (버전 선택·기록 미리보기까지 실제 로직 실행)
 DRY ?= 0
 
-.PHONY: release release-web _release ontology-env ontology-hooks verify verify-ontology verify-base verify-base-core verify-base-cross verify-base-backstop verify-base-regen verify-web verify-web-browser verify-mutation verify-firing verify-runready rulepack
+.PHONY: release release-web _release ontology-env ontology-hooks verify verify-ontology verify-base verify-base-core verify-base-cross verify-base-backstop verify-base-regen verify-web verify-mutation verify-firing verify-runready rulepack
 
 VENV_PY := .venv/bin/python
 
@@ -20,7 +20,10 @@ VENV_PY := .venv/bin/python
 # CR+EL 이 마지막 물리 줄만 지워 잔재가 매초 쌓인다(2026-08-25 실측 수리 — 여유 8은
 # 한글 더블폭 표시 보정). 카운터·경과를 이름 앞에 둬 잘려도 정보가 남는다.
 # 롤백·중단 시 되돌림: VERIFY_TARGETS 에서 verify-ontology 삭제 (t0-plan §7)
-VERIFY_TARGETS := verify-ontology verify-base-core verify-base-cross verify-base-backstop verify-base-regen verify-web
+# 2026-09-16 hyun 지시 — verify-web 을 자동 경로에서 뺀다. 이번 배치 결함 4건(주석 오탐·
+# 정상 abort 의 staging 삭제·드라이버 8h52m 정지·루트/크롭 모순)을 이 레인은 **한 건도**
+# 잡지 못했고 전부 A8 실사용이 잡았다. 타깃 자체는 남아 있으니 `make verify-web` 으로 직접 돈다.
+VERIFY_TARGETS := verify-ontology verify-base-core verify-base-cross verify-base-backstop verify-base-regen
 
 VERBOSE ?= 0
 
@@ -103,29 +106,7 @@ verify-web:
 	echo "[verify-web] REQUEST_GUIDE byte 미러 대조"; \
 	cmp -s dddjango-web/REQUEST_GUIDE.md codex-dddjango-web/REQUEST_GUIDE.md || { echo "ERROR: dddjango-web REQUEST_GUIDE 누락 또는 Codex byte 미러 불일치"; exit 1; }; \
 	echo "[verify-web] 요청 가이드 배포·발견 계약"; \
-	PYTHONUTF8=1 python3 workspace/tools/request_guide_contract.py; \
-	echo "[verify-web] hooks.json 계약(Claude·Codex 증거 부채 hook)"; \
-	PYTHONUTF8=1 python3 workspace/tools/web_hooks_contract.py --self-test; \
-	PYTHONUTF8=1 python3 workspace/tools/web_hooks_contract.py; \
-	echo "[verify-web] 재동결 계약(유보·잔존·경로 치환 불변식)"; \
-	PYTHONUTF8=1 python3 workspace/tools/web_refreeze_contract.py --self-test; \
-	PYTHONUTF8=1 python3 workspace/tools/web_refreeze_contract.py
-
-# K3 상호작용 관찰 증거 — 브라우저 필요 스위트. verify-web(위)은 이 스위트를 브라우저
-# 없이 SKIP(exit 0)으로 통과시킨다(test_observe_interactions.mjs가 소유한 의미론). 이
-# 타깃은 그 SKIP을 막고(DDDJANGO_WEB_REQUIRE_BROWSER=1) 실제로 돌린다 — release-web의
-# 선행 조건. DRY=1이면 env 유무와 무관하게 안내만 하고 통과시킨다(사용자 결정 — DRY는
-# 시뮬레이션 모드이므로 로컬에 브라우저 설치가 없어도 release-web DRY=1 이 막히면 안 된다).
-verify-web-browser:
-	@set -euo pipefail; \
-	if [[ "$(DRY)" == 1 ]]; then \
-		echo "[verify-web-browser] DRY=1 — 브라우저 관찰 스위트(K3) 실행을 건너뛰었다(안내만·미차단)"; \
-		exit 0; \
-	fi; \
-	[[ -n "$${DDDJANGO_WEB_PLAYWRIGHT_MODULE:-}" ]] || { echo "ERROR: DDDJANGO_WEB_PLAYWRIGHT_MODULE 미설정 — Playwright 설치 디렉터리 경로 필요"; exit 1; }; \
-	[[ -n "$${DDDJANGO_WEB_BROWSER_CHANNEL:-}" || -n "$${DDDJANGO_WEB_BROWSER_CDP:-}" ]] || { echo "ERROR: DDDJANGO_WEB_BROWSER_CHANNEL 또는 DDDJANGO_WEB_BROWSER_CDP 중 하나 필요"; exit 1; }; \
-	echo "[verify-web-browser] 상호작용 관찰 브라우저 스위트(K3) — DDDJANGO_WEB_REQUIRE_BROWSER=1"; \
-	DDDJANGO_WEB_REQUIRE_BROWSER=1 node --test dddjango-web/scripts/test/test_observe_interactions.mjs
+	PYTHONUTF8=1 python3 workspace/tools/request_guide_contract.py
 
 # 온톨로지 단 — .venv 파이썬 고정 (T0 A8)
 verify-ontology:
@@ -302,7 +283,10 @@ release-web: NAME := dddjango-web
 release-web: PLUGIN := dddjango-web
 release-web: CLAUDE_MANIFEST := dddjango-web/.claude-plugin/plugin.json
 release-web: CODEX_MANIFEST := codex-dddjango-web/.codex-plugin/plugin.json
-release-web: verify-web-browser _release
+# 2026-09-16 hyun 지시 — 실패한 브라우저 관찰 서브시스템(1.1.13~1.1.19)을 전량 철거(1.1.20).
+# K3 브라우저 스위트·verify-web-browser·observe_interactions·evidence_debt·refreeze.py·ledger.py를
+# 지우고 검사기를 v1.1.12 정적 형태로 되돌렸다. verify-web 도 자동 경로에서 빠져 수동 전용이다.
+release-web: _release
 
 _release:
 	@set -euo pipefail; \
@@ -383,9 +367,8 @@ _release:
 			rm -f "$$tmp"; \
 		done; \
 		echo ""; echo "[dry-run] 실제 실행 시 수행할 단계 (미실행):"; \
-		if [[ "$(NAME)" == "dddjango-web" ]]; then echo "    [0] 브라우저 픽스처 검증(verify-web-browser) — DRY 안내만, 미실행"; fi; \
 		echo "    [1] claude plugin validate $(PLUGIN) --strict"; \
-		echo "    [2] make verify (병렬 하네스 — verify-ontology · verify-base 4그룹 · verify-web)"; \
+		echo "    [2] make verify (병렬 하네스 — verify-ontology · verify-base 4그룹)"; \
 		echo "    [3] 두 manifest에 v$$V 기록 (위 미리보기)"; \
 		echo "    [4] git commit -m 'release: $(NAME) v$$V' (manifest 2곳 — 버전 무변경이면 커밋 생략)"; \
 		echo "    [5] git tag -a $$TAG -m '$(NAME) v$$V'"; \
