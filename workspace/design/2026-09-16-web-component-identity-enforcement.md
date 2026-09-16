@@ -128,3 +128,21 @@ iter 2(1.1.21) 결과: A8가 native↔커스텀 Select 격차를 **정확히 식
 - 4중 방어(파이프라인): architect(이탈 승인 불가)·coder(평탄화 금지)·검사기(결정적 반송)·
   reviewer(정체 검수). 서브에이전트는 skills: frontmatter로 스킬 본문 자동 로드 → mandate 도달.
 - 검증: `/dddjango-web`으로 A8 재테스트(맨 프롬프트 아님).
+
+---
+## §14. Round 2 — Coordinator 순응 감사 (확인/수정은 디자인 델타 없어도 정체 감사)
+
+**Round 1(1.1.23) A8 재테스트(`/dddjango-web:dddjango-web`):** 파이프라인이 이번엔 제대로 실행됨
+(Coordinator 91·Phase 0 24·Phase 1 34·서브에이전트 2·component-from-global-scope 149·검사기 언급 17).
+그러나 Coordinator가 Phase 0에서 «관계인.dc.html이 마지막 동결본과 byte-동일 → 디자인 변경 미검출»로
+**단락**, "어떤 변경을 관찰?"로 정지. `--phase identity`를 Bash로 **실행한 적 없음**(Phase 2 visual에
+fold돼 있는데 거기 미도달). native `<select>`는 «디자인 델타»가 아니라 «기존 구현 비순응»이라,
+「디자인 델타 탐지」만 하는 Coordinator가 놓쳤다.
+
+**수리(1.1.24):** commands/dddjango-web.md 「기존 화면 재개 입구」에 **step 4 신설(결정적·필수)** —
+구현 수정·검증 포함 요청(«확인하고 수정» 등)은 «변경 없음/완료» 결론·되묻기 **전에** 반드시
+`--phase identity`를 실행하고, exit 2(선언 커스텀 컴포넌트의 native 평탄화)면 디자인 원본이 byte-동일
+이어도 «변경 없음»이 아니라 must-fix로 수정 흐름(architect 명세 갱신→coder 구현→G2 백스톱 재검) 진입.
+「디자인 델타 부재」를 완료 근거로 못 쓴다. codex 미러(skills/dddjango-web/SKILL.md) 동기화.
+Round 1(규범+검사기)은 정답이나 «검사기 도달»이 빠진 불완전 — Round 2가 그 도달을 결정적으로 보장.
+verify-web green. → 1.1.24 배포 → A8 재테스트.
