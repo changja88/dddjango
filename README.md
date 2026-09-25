@@ -2,7 +2,7 @@
 
 **Django 프로젝트에 DDD(도메인 주도 설계)를 제대로 입히는 Claude Code·Codex 플러그인.**
 
-Claude Code의 `/dddjango <기능>` 또는 Codex의 `dddjango를 사용해 <기능>` 요청으로 시작하면, 한 기능을 **요구 정리 → 설계 → 구현(TDD)** 까지 전문 에이전트들이 협업해 깔끔한 4계층 DDD 구조로 완성한다. 매 단계 당신의 승인을 받고 진행한다.
+Claude Code의 `/dddjango:dddjango <기능>` 또는 Codex의 `dddjango를 사용해 <기능>` 요청으로 시작하면, 한 기능을 **요구 정리 → 설계 → 구현(TDD)** 까지 전문 에이전트들이 협업해 깔끔한 4계층 DDD 구조로 완성한다. 매 단계 당신의 승인을 받고 진행한다.
 
 ---
 
@@ -60,16 +60,16 @@ codex plugin add dddjango-web@changja88-dddjango         # Codex
 
 설치한 각 플러그인 루트의 `REQUEST_GUIDE.md`가 해당 runtime의 권위 있는 가이드 사본이다. 아래 링크는 저장소에서 최신 가이드를 찾는 진입점이다.
 
-`dddjango`는 한 기능과 원하는 업무 변화로 시작할 수 있다. `dddjango-web` 화면 발주에는 Claude Design 공유 URL과 그 안에서 구현할 화면이 필수다. 그 밖의 정보는 이미 알고 있거나 정한 부분만 보태면 된다.
+`dddjango`는 한 기능과 원하는 업무 변화로 시작할 수 있다. `dddjango-web` 화면 발주에는 Claude Design 시안(공유 URL 또는 같은 시안을 내려받은 폴더)과 그 안에서 구현할 화면이 필수다. 그 밖의 정보는 이미 알고 있거나 정한 부분만 보태면 된다.
 
 | 플러그인 | 요청 정보 | 작업 경계 | 가이드 |
 |---|---|---|---|
 | **dddjango** | 원하는 업무 변화·대표 성공 결과·이미 정한 핵심 규칙과 실패 뒤 상태·보존/변경/제외 범위 | 시안 재현 중심의 화면 작업은 `dddjango-web`으로 이어간다. Django admin 등 기존 업무 기능에 포함된 화면은 `dddjango`가 담당하는 경우도 있으며, 플러그인이 코드를 조사해 안내한다. | [dddjango 작업 요청 가이드](dddjango/REQUEST_GUIDE.md) |
-| **dddjango-web** | Claude Design 공유 URL과 구현할 화면(필수)·이미 정한 상태/폭/UI 동작·의도적인 차이·데이터 연동 의도 | 브라우저의 임시 UI 동작에 필요한 경우 JavaScript를 사용한다. 새 API나 인증·권한·업무 규칙·데이터 처리가 필요하면 플러그인이 별도 `dddjango` 작업 범위를 안내한다. | [dddjango-web 작업 요청 가이드](dddjango-web/REQUEST_GUIDE.md) |
+| **dddjango-web** | Claude Design 시안(공유 URL 또는 내려받은 폴더)과 구현할 화면(필수)·이미 정한 상태/폭/UI 동작·의도적인 차이·데이터 연동 의도 | 브라우저의 임시 UI 동작에 필요한 경우 JavaScript를 사용한다. 새 API나 인증·권한·업무 규칙·데이터 처리가 필요하면 플러그인이 별도 `dddjango` 작업 범위를 안내한다. | [dddjango-web 작업 요청 가이드](dddjango-web/REQUEST_GUIDE.md) |
 
-알고 있는 코드·문서·테스트 경로, 별도 이미지·폰트, API 자료 위치는 조사를 빠르게 하는 선택 정보다. API 위치를 모르면 플러그인이 프로젝트에서 조사한다. `dddjango-web`의 기준 시안은 Claude Design 공유 URL로 전달하며, 접근 문제가 있으면 공유 설정이나 접근 가능한 공유 URL을 먼저 준비한다.
+알고 있는 코드·문서·테스트 경로, 별도 이미지·폰트, API 자료 위치는 조사를 빠르게 하는 선택 정보다. API 위치를 모르면 플러그인이 조사하거나 묻는다. `dddjango-web`의 기준 시안은 Claude Design 공유 URL이나 같은 시안을 내려받은 폴더로 전달하며, 접근 문제가 있으면 공유 설정을 확인하거나 내려받은 폴더를 준다.
 
-플러그인이 프로젝트와 자료를 조사하고 설계·agent/skill 선택·구현·테스트·검증 방법을 맡는다. 조사만으로 정할 수 없는 제품 결정과 필요한 승인은 플러그인이 질문한다. 자세한 요청 예시와 선택 정보는 각 가이드에서 확인할 수 있다.
+플러그인이 프로젝트와 자료를 조사하고 설계·agent/skill 선택·구현·테스트·검증 방법을 맡는다. 그래서 요청에는 진행 방식·파일 위치·경로 목록·선례·구현 수단을 적지 않는다. 조사만으로 정할 수 없는 제품 결정과 필요한 승인은 플러그인이 질문한다. 자세한 요청 예시, 요청에 적지 않을 것, 다른 세션에 맡겨 요청할 때의 규칙은 각 가이드에서 확인할 수 있다.
 
 ---
 
@@ -104,10 +104,10 @@ $ codex plugin list
 
 | Claude Code | Codex |
 |---|---|
-| `/dddjango 재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능` | `dddjango를 사용해 재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능을 만들어 줘.` |
-| `/dddjango-web "주문 상태별로 주문을 찾아볼 수 있는 목록 화면을 만들어 줘. 시안은 없어."` | `dddjango-web을 사용해 주문 상태별로 주문을 찾아볼 수 있는 목록 화면을 만들어 줘. 시안은 없어.` |
+| `/dddjango:dddjango 재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능` | `dddjango를 사용해 재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능을 만들어 줘.` |
+| `/dddjango-web:dddjango-web 주문 목록 화면을 시안대로 구현해 줘. Claude Design 공유 URL: <공유 URL> · 구현 대상: 주문 목록 / 기본` | `dddjango-web을 사용해 주문 목록 화면을 시안대로 구현해 줘. Claude Design 공유 URL: <공유 URL> · 구현 대상: 주문 목록 / 기본` |
 
-기준 시안이 있다면 구현할 화면·프레임·페이지를 알려 주고, OpenAPI URL이나 로컬 파일 경로를 알고 있다면 함께 적는다.
+`dddjango-web`은 기준 시안 안에서 구현할 화면·상태 이름을 알려 주고, OpenAPI URL이나 로컬 파일 경로를 알고 있다면 함께 적는다.
 
 `dddjango`는 요구 정리부터 테스트까지, `dddjango-web`은 화면 요구 정리부터 시안·계약 검증까지 단계별로 진행하며 각 게이트에서 당신이 승인한다.
 
@@ -117,7 +117,7 @@ $ codex plugin list
 
 ### 전문가 팀처럼 일한다
 
-`/dddjango`를 실행하면 **Coordinator**(프로젝트 매니저 역할)가 붙어, 각 전문 에이전트에게 일을 나눠 주고 결과를 모은다. 당신은 **원하는 업무 결과·보존할 동작·작업 범위를 확인하고 승인**하며, 조사만으로 정할 수 없는 제품 선택에 답한다.
+`/dddjango:dddjango`를 실행하면 **Coordinator**(프로젝트 매니저 역할)가 붙어, 각 전문 에이전트에게 일을 나눠 주고 결과를 모은다. 당신은 **원하는 업무 결과·보존할 동작·작업 범위를 확인하고 승인**하며, 조사만으로 정할 수 없는 제품 선택에 답한다.
 
 | 역할 | 하는 일 |
 |---|---|
@@ -134,7 +134,7 @@ $ codex plugin list
 
 진행은 **3개의 게이트**로 끊긴다. 각 게이트에서 요약을 보고 "승인 / 수정 요청"을 고른다. 승인 전에는 절대 다음으로 넘어가지 않는다.
 
-- **G0 · 요구·경계** — 원하는 업무 결과·보존할 동작·작업 범위를 확정한다. 기능 배치와 리뷰 구성은 Coordinator가 프로젝트 조사에 따라 정하고, 제품 결과에 영향을 주는 선택은 당신에게 묻는다.
+- **G0 · 요구·경계** — 원하는 업무 결과·보존할 동작·작업 범위를 확정한다. 리뷰 구성은 Coordinator가 프로젝트 조사에 따라 제안하고, 기능을 둘 업무 영역, 조사에서 찾은 작업 영역의 기존 표준 위반을 먼저 정리할지, 제품 결과에 영향을 주는 선택은 당신에게 묻는다.
 - **G1 · 설계** — 당신은 architect의 설계 명세와 리뷰 결과에 담긴 업무·외부 계약의 의미와 보존할 동작을 확인하고 승인한다. **영구 테스트 입장표**의 작성·검토는 플러그인이 맡는다. 이 명세가 이후 테스트·코드의 **단일 근거**가 된다.
 - **G2 · 구현** — 플러그인이 테스트 실행 결과와 테스트 diff를 감수하고 **27종 결정적 백스톱**을 실행한다. 당신은 구현된 업무 결과·외부 계약과 보존할 동작을 확인하고 승인한다.
 
@@ -149,11 +149,11 @@ Python·Django·Pydantic의 기본 동작, private helper나 validator 배치, i
 ### 워크스루: "재고 있을 때만 주문 생성" 기능
 
 ```
-/dddjango 재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능
+/dddjango:dddjango 재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능
 ```
 
 **1) G0 — 요구·경계 확정**
-Coordinator가 기존 프로젝트를 조사해 기능 배치와 필요한 리뷰 구성을 정하고, 업무 결과와 범위를 정리해 보여준다: "재고가 충분하면 주문을 생성하고 재고를 차감. 재고가 부족하면 주문을 생성하지 않고 재고 유지." → 당신은 이 결과와 보존할 동작·작업 범위를 확인하고 승인한다.
+Coordinator가 기존 프로젝트를 조사해 필요한 리뷰 구성을 제안하고(기존 업무 영역과 겹치면 둘 자리, 작업 영역에 기존 표준 위반이 있으면 먼저 정리할지를 묻는다), 업무 결과와 범위를 정리해 보여준다: "재고가 충분하면 주문을 생성하고 재고를 차감. 재고가 부족하면 주문을 생성하지 않고 재고 유지." → 당신은 이 결과와 보존할 동작·작업 범위를 확인하고 승인한다.
 
 **2) 설계 → G1**
 design-architect가 설계 명세를 쓴다 — `Order` 애그리거트, 재고는 다른 컨텍스트라 `ProductStockPort`로 협력, 동시성 안전한 차감 방식, 4계층 파일 배치와 테스트 후보별 입장 결정까지. 동시에 ddd·api·db 리뷰어가 **병렬로** 계약 근거·독자 실패·중복 여부를 비평하고, architect가 이를 반영·중재한다. → 당신은 설계가 약속하는 업무 결과·외부 계약과 보존할 동작을 확인하고 승인한다.
@@ -300,7 +300,7 @@ dddjango는 작업 규모를 보고 알맞게 움직인다.
 
 ## 구성 요소
 
-- **커맨드 1개**: `/dddjango`
+- **커맨드 1개**: `/dddjango:dddjango`
 - **에이전트 7개**: `design-architect`, `design-review-ddd`, `design-review-api`, `design-review-db`, `acceptance-tester`, `coder`, `discipline-reviewer`
 - **스킬 11개**: 아키텍처(`architecture-ddd`/`-api`/`-db`), 규율(`discipline-houserules`/`-cleancode`/`-tdd`), 구현(`implementation-django`/`-django-ninja`/`-django-web`/`-python`/`-test`)
 - **결정적 백스톱 27종**: 구조·계약 회귀를 G2 직전에 자동 차단하는 파이썬 검사 스크립트
@@ -309,12 +309,12 @@ dddjango는 작업 규모를 보고 알맞게 움직인다.
 
 ## 자매 플러그인: dddjango-web
 
-`/dddjango-web <화면 요구>` — **실제 URL+JSON API 계약을 외부 클라이언트처럼 소비**해 화면(웹 표현계층)을 빌드하는 **독립 플러그인**이다. API를 만든 도구가 반드시 dddjango일 필요는 없다.
+`/dddjango-web:dddjango-web <화면 요구>` — **실제 URL+JSON API 계약을 외부 클라이언트처럼 소비**해 화면(웹 표현계층)을 빌드하는 **독립 플러그인**이다. API를 만든 도구가 반드시 dddjango일 필요는 없다.
 
-- **시나리오 3종**: 클로드 디자인 시안 반영 · 기존 웹페이지 카피(외형은 같게, HTML 구조는 표준으로 재구축) · 기존 화면 수정
-- **표준**: 순수 HTML + HTMX + CSS(커스텀 JS 없음) · 요청 구동 MVVM(view/view_model/state + 템플릿) · design_system 토큰
-- **경계**: `web/` 트리는 «내부의 외부 클라이언트» — 백엔드 코드를 import하지 않고(백스톱이 차단) in-process HTTP로 계약만 소비한다. 필요한 API가 없으면 `/dddjango`로 발주를 안내한다.
-- **구성**: 커맨드 1(`/dddjango-web`) · 에이전트 4(`design-architect-web`·`design-review-web`·`coder-web`·`discipline-reviewer-web`) · 스킬 4(`architecture-web`·`implementation-ui`·`discipline-web-houserules`·`discipline-cleancode`) · 결정적 백스톱(구조·격리·명명·순수성) + 시안 절단 도구
+- **시나리오**: 클로드 디자인 시안 반영(공유 URL 또는 같은 시안을 내려받은 폴더) · 기존 화면 수정
+- **표준**: HTML + HTMX + CSS(브라우저 안의 임시 UI 동작에 필요한 경우에만 JavaScript) · 요청 구동 MVVM(view/view_model/state + 템플릿) · design_system 토큰
+- **경계**: `web/` 트리는 «내부의 외부 클라이언트» — 백엔드 코드를 import하지 않고(백스톱이 차단) in-process HTTP로 계약만 소비한다. 필요한 API가 없으면 `/dddjango:dddjango`로 발주를 안내한다.
+- **구성**: 커맨드 1(`/dddjango-web:dddjango-web`) · 에이전트 4(`design-architect-web`·`design-review-web`·`coder-web`·`discipline-reviewer-web`) · 스킬 4(`architecture-web`·`implementation-ui`·`discipline-web-houserules`·`discipline-cleancode`) · 결정적 백스톱(구조·격리·명명·순수성) + 시안 절단 도구
 - **검증**: 결정적 백스톱은 측정 대상인 구조 규율만 확인하며 전체 품질이나 픽셀 동일을 증명하지 않는다. 자동 측정 결과와 규율 감사를 함께 보고, 승인한 상태·viewport의 전체 스크롤과 동작은 게이트에서 **사용자가 육안 확인**한다.
 
 ---
