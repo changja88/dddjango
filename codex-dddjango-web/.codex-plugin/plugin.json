@@ -33,9 +33,9 @@
     ],
     "websiteURL": "https://github.com/changja88/dddjango/blob/main/dddjango-web/REQUEST_GUIDE.md",
     "defaultPrompt": [
-      "dddjango-web으로 designs/orders.dc.html의 ‘주문 목록/기본’ 화면을 1440px·390px의 로딩·빈 목록·오류 상태까지 구현해줘.",
-      "dddjango-web으로 시안 없이 실제 주문 데이터를 보여 주는 목록 화면을 만들어줘. 주문 상태를 선택하면 해당 상태의 주문만 보여야 해.",
-      "dddjango-web으로 회원가입 화면을 구현해줘. 원본 시안은 현재 접근 불가이고, 비밀번호 안내문은 의도적으로 추가해줘. 1440px·390px에서 스크롤로 하단 내용까지 볼 수 있고 안내문이 잘리지 않아야 해."
+      "dddjango-web으로 Claude Design에서 내려받은 designs/orders 폴더의 ‘주문 목록/기본’ 화면을 1440px·390px의 로딩·빈 목록·오류 상태까지 구현해줘.",
+      "dddjango-web으로 Claude Design 공유 URL [공유 URL]의 ‘주문 목록/기본’ 화면을 실제 주문 데이터로 구현해줘. 주문 상태를 선택하면 해당 상태의 주문만 보여야 해.",
+      "dddjango-web으로 회원가입 화면을 구현해줘. 공유 URL은 권한 오류가 나서 같은 시안을 내려받은 designs/signup 폴더를 기준으로 해줘. 비밀번호 입력란 아래에 ‘8자 이상, 영문과 숫자 포함’ 안내문을 추가하고, 1440px·390px에서 스크롤로 하단 내용까지 볼 수 있고 안내문이 잘리지 않아야 해."
     ],
     "brandColor": "#0C4A6E"
   }
