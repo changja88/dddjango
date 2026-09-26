@@ -1644,3 +1644,4 @@ command-dddjango	s009	27c35b8f7554b212b8bc4c4291743358aa8f7bc65588887453aa02d3b2
 command-dddjango	s011	915ffda9648eb8d32107904c1bb5db5571bf94458a591c371214d667c2db6510	graph	-	-	-	-	rebaseline:2026-09-26 리팩터 요청 경로 수리 — 정리 요청 라우팅·수정 모드 빚 스캔·ⓑ 결정 출처·실행과 앵커·비위반 이동 STOP
 discipline-houserules-skill	s004-1	86d78d89750a6f345fe0dcc0d57e140646d6153f686c0ead31b5d2d378c59128	graph	-	-	-	-	rebaseline:2026-09-26 리팩터 요청 경로 수리 — 정리 요청 라우팅·수정 모드 빚 스캔·ⓑ 결정 출처·실행과 앵커·비위반 이동 STOP
 command-dddjango	s010	963132e4cbd3399a57ee96bb806a1eb2b4917a1f973e359e13a378822fdd61ac	graph	-	-	-	-	rebaseline:2026-09-26 리팩터 요청 경로 수리 — 정리 요청 라우팅·수정 모드 빚 스캔·ⓑ 결정 출처·실행과 앵커·비위반 이동 STOP
+discipline-houserules-skill	s007-4	4eaf048174c99544c42003108e20b9f5b3aa85c8b18e84e1b57921816ecf45a7	graph	-	-	-	-	rebaseline:2026-09-26 F4-24 #647 폼 clean() 면제 문언을 검사기(Form·ModelForm 계열)에 맞춤 — R-3448 clarification

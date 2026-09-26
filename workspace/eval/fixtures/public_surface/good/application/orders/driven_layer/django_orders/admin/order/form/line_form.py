@@ -16,3 +16,7 @@ class OrderLineForm(_OrderLineFormBase):
     class Meta:
         model = AccountUser
         fields = ("email", "display_name")
+
+    def clean(self) -> dict[str, object]:  # ModelForm 도 스텁상 BaseForm.clean 오버라이드 — 별칭 기저 해소 뒤 `dict[str, object]` 반환은 #647 면제
+        super().clean()
+        return {"email": self.cleaned_data.get("email")}

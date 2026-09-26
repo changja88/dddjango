@@ -71,7 +71,7 @@
     },
     {
       "path": "ontology/rules/discipline-houserules-skill.ttl",
-      "sha256": "8d9fb8fb11922d852737d564ffa405666d434c1975adbb897557bafd03127dab"
+      "sha256": "f4a629bf45f87fbfaeda655f7b897a592f3376a43c4bd496b8cade9381465f86"
     },
     {
       "path": "ontology/rules/discipline-tdd-final.ttl",
@@ -60985,7 +60985,7 @@
         "check-public-surface-annotation.py"
       ],
       "document": "dddjango/skills/discipline-houserules/SKILL.md",
-      "expression": "https://numchida.com/ns/djr#R-3448@2026-09-11",
+      "expression": "https://numchida.com/ns/djr#R-3448@2026-09-26",
       "label": "경계 object 즉시 좁힘·JSON 검증 유지·admin UI context 실제 소비 경계",
       "order_rank": 2151,
       "section": "dddjango/skills/discipline-houserules/SKILL.md/s007-4",
