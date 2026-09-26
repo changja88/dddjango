@@ -32,7 +32,11 @@
 
 단순화(정직 기록): #195 의 «루트 메서드 호출을 받은 객체» 판정은 지역 흐름만 본다 —
 save 인자가 같은 함수에서 메서드 호출을 받았거나 도메인 팩토리 호출로 태어났으면 통과,
-`obj.field = x` 직접 대입만 받았거나 아무 일도 없었으면 위반.
+`obj.field = x` 직접 대입만 받았거나 아무 일도 없었으면 위반. 반복 변수(for·컴프리헨션
+target)는 원소식이 팩토리 호출인 컬렉션(`[F(..) for ..]`·`tuple(F(..) for ..)` 와 그
+이름)을 돌 때만 «팩토리로 태어남»을 물려받는다 — 튜플 언패킹·필터 체인·리터럴 목록·
+sorted/map/zip 은 전파하지 않는다. 판정은 이름 단위라, 같은 함수에서 그 이름이 비팩토리
+반복·대입으로도 묶이면(컬렉션 이름의 재대입 포함) 전파하지 않는다(fail-closed · 2026-09-26 F4-20).
 
 이관 계약(명세 조각 ⓐ): 채택 신호 2원(#78) · 대상 0건 가드(#74, touched 필터 없음) ·
 ImportError fail-closed. ⓓ 후보는 exit 에 불산입, `[ⓓ#N]` 으로만 출력.
@@ -464,6 +468,13 @@ def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFun
             return node.attr in attr_repos
         return False
 
+    def _is_factory_call(value: "ast.AST | None") -> bool:
+        if not isinstance(value, ast.Call) or not isinstance(value.func, (ast.Name, ast.Attribute)):
+            return False
+        fn_node = value.func
+        return (not _is_repo_recv(fn_node.value if isinstance(fn_node, ast.Attribute) else fn_node)
+                and _attr_root(fn_node) not in repo_names)
+
     method_called: set[str] = set()      # 루트 메서드 호출을 받은 이름
     factory_born: set[str] = set()       # 도메인 팩토리/생성자 호출로 태어난 이름
     attr_assigned: set[str] = set()      # obj.field = x 직접 대입을 받은 이름
@@ -475,14 +486,8 @@ def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFun
             target, value = node.targets[0], node.value
         elif isinstance(node, ast.AnnAssign) and node.value is not None:
             target, value = node.target, node.value
-        if isinstance(value, ast.Call) and isinstance(target, ast.Name):
-            fn_node = value.func
-            if isinstance(fn_node, (ast.Name, ast.Attribute)):
-                name = target.id
-                callee_root = _attr_root(fn_node)
-                if not _is_repo_recv(fn_node.value if isinstance(fn_node, ast.Attribute) else fn_node) \
-                        and callee_root not in repo_names:
-                    factory_born.add(name)
+        if isinstance(target, ast.Name) and _is_factory_call(value):
+            factory_born.add(target.id)
         if isinstance(node, ast.Assign):
             for t in node.targets:
                 if isinstance(t, ast.Attribute) and isinstance(t.value, ast.Name):
@@ -495,6 +500,40 @@ def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFun
                     writes.append((arg.id if isinstance(arg, ast.Name) else "", node))
             elif isinstance(recv, ast.Name):
                 method_called.add(recv.id)
+
+    # 반복 변수 — «x = <원소식>» 과 같은 판정을 원소식에 적용해 물려준다(F4-20).
+    # 컬렉션 이름 수집과 반복 변수 전파를 두 번의 walk 로 나눠 walk 순서에 기대지 않는다.
+    # 이름 단위 판정이라, 같은 이름이 비팩토리로도 묶이면 전파하지 않는다(fail-closed).
+    element_factory: set[str] = set()   # 원소식이 팩토리 호출인 컬렉션 이름
+    element_other: set[str] = set()     # 비팩토리 컬렉션·값에도 묶인 이름
+    scalar_other: set[str] = set()      # 팩토리 호출이 아닌 값에 대입된 이름
+    loop_factory: set[str] = set()
+    loop_other: set[str] = set()
+
+    def _elements_factory_born(it: ast.AST) -> bool:
+        if isinstance(it, (ast.ListComp, ast.SetComp, ast.GeneratorExp)):
+            return _is_factory_call(it.elt)
+        if (isinstance(it, ast.Call) and isinstance(it.func, ast.Name)
+                and it.func.id in ("tuple", "list", "frozenset", "set")
+                and len(it.args) == 1 and not it.keywords):
+            return _elements_factory_born(it.args[0])
+        return isinstance(it, ast.Name) and it.id in element_factory
+
+    for node in ast.walk(fn):
+        target = value = None
+        if isinstance(node, ast.Assign) and len(node.targets) == 1:
+            target, value = node.targets[0], node.value
+        elif isinstance(node, ast.AnnAssign) and node.value is not None:
+            target, value = node.target, node.value
+        if isinstance(target, ast.Name) and value is not None:
+            (element_factory if _elements_factory_born(value) else element_other).add(target.id)
+            if not _is_factory_call(value):
+                scalar_other.add(target.id)
+    element_factory -= element_other
+    for node in ast.walk(fn):
+        if isinstance(node, (ast.For, ast.AsyncFor, ast.comprehension)) and isinstance(node.target, ast.Name):
+            (loop_factory if _elements_factory_born(node.iter) else loop_other).add(node.target.id)
+    factory_born |= loop_factory - loop_other - scalar_other
 
     # #197 — UoW 를 받았는데 도달 범위 어디에도 쓰기 API 가 없다(측정 정밀화 2026-08-25).
     # «with uow» 진입 자체는 인정하지 않는다 — 읽기 전용+UoW 는 성문 문면 그대로 위반이다.

@@ -25,7 +25,7 @@
     "check-response-schema-bypass.py": "0fd510470a0ac985",
     "check-synthetic-infra-exc.py": "f30d0f3e8320ee6b",
     "check-test-config.py": "a82133a31bf9db76",
-    "check-transaction-boundary.py": "5660df577ba001e2",
+    "check-transaction-boundary.py": "0400895d29d9ba61",
     "check-transient-overmapping.py": "c3dff5700493ecb6",
     "check-usecase-dto-placement.py": "4a51b80b722d516c"
   },
