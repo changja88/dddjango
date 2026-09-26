@@ -1645,3 +1645,13 @@ command-dddjango	s011	915ffda9648eb8d32107904c1bb5db5571bf94458a591c371214d667c2
 discipline-houserules-skill	s004-1	86d78d89750a6f345fe0dcc0d57e140646d6153f686c0ead31b5d2d378c59128	graph	-	-	-	-	rebaseline:2026-09-26 리팩터 요청 경로 수리 — 정리 요청 라우팅·수정 모드 빚 스캔·ⓑ 결정 출처·실행과 앵커·비위반 이동 STOP
 command-dddjango	s010	963132e4cbd3399a57ee96bb806a1eb2b4917a1f973e359e13a378822fdd61ac	graph	-	-	-	-	rebaseline:2026-09-26 리팩터 요청 경로 수리 — 정리 요청 라우팅·수정 모드 빚 스캔·ⓑ 결정 출처·실행과 앵커·비위반 이동 STOP
 discipline-houserules-skill	s007-4	4eaf048174c99544c42003108e20b9f5b3aa85c8b18e84e1b57921816ecf45a7	graph	-	-	-	-	rebaseline:2026-09-26 F4-24 #647 폼 clean() 면제 문언을 검사기(Form·ModelForm 계열)에 맞춤 — R-3448 clarification
+command-dddjango	s002	da0f9852ec9eb963a525abfe9c385a0a15ea3457a0252fd591bfd81798cd4930	graph	-	-	-	-	rebaseline:2026-09-27 로드맵 3 pre-gate 수리 — 승인 유입·기대 기준선·실행 경계·digest·#574 예보·포트 자료 방향(R-3500·R-3501)
+command-dddjango	s003	01c8cec74556edc5797a28e939f8b3c53bb00959841a82feca52d8b56a6748b8	graph	-	-	-	-	rebaseline:2026-09-27 로드맵 3 pre-gate 수리 — 승인 유입·기대 기준선·실행 경계·digest·#574 예보·포트 자료 방향(R-3500·R-3501)
+command-dddjango	s005	a011b5003d1f907c98be60123e76c88ad4a384805188c46a156a1e0ae32d8287	graph	-	-	-	-	rebaseline:2026-09-27 로드맵 3 pre-gate 수리 — 승인 유입·기대 기준선·실행 경계·digest·#574 예보·포트 자료 방향(R-3500·R-3501)
+command-dddjango	s006	2e143ae1bdffa854bef85cfe9cabe9e0b80443fbf5882ee18b835107a7f30173	graph	-	-	-	-	rebaseline:2026-09-27 로드맵 3 pre-gate 수리 — 승인 유입·기대 기준선·실행 경계·digest·#574 예보·포트 자료 방향(R-3500·R-3501)
+command-dddjango	s007	e66bc5ee0bf76cb243ea289a80c379dd5e7879bf23f5ee51766ab921a999417c	graph	-	-	-	-	rebaseline:2026-09-27 로드맵 3 pre-gate 수리 — 승인 유입·기대 기준선·실행 경계·digest·#574 예보·포트 자료 방향(R-3500·R-3501)
+command-dddjango	s009	0038b9c806050f60ecdae1c83231cfcf9ef6da5f14d32f2e1d9b3271e18d0a5d	graph	-	-	-	-	rebaseline:2026-09-27 로드맵 3 pre-gate 수리 — 승인 유입·기대 기준선·실행 경계·digest·#574 예보·포트 자료 방향(R-3500·R-3501)
+command-dddjango	s010	631a075d76ff5cb99de37a7053738630f195cdf406567c8dd94d8f5b3394fbaf	graph	-	-	-	-	rebaseline:2026-09-27 로드맵 3 pre-gate 수리 — 승인 유입·기대 기준선·실행 경계·digest·#574 예보·포트 자료 방향(R-3500·R-3501)
+command-dddjango	s011	b2dbfaebab3aef52ae9b2a2c7c6f0efc88e5ffa607bc39c5032e2fdaff6adf8d	graph	-	-	-	-	rebaseline:2026-09-27 로드맵 3 pre-gate 수리 — 승인 유입·기대 기준선·실행 경계·digest·#574 예보·포트 자료 방향(R-3500·R-3501)
+agent-design-architect	s005	87efdcd2814447c8f83f177bddfb1eb5bdcda7b5ea3bb0e1ab5fd17e761e2608	graph	-	-	-	-	rebaseline:2026-09-27 로드맵 3 pre-gate 수리 — 승인 유입·기대 기준선·실행 경계·digest·#574 예보·포트 자료 방향(R-3500·R-3501)
+discipline-houserules-final	s011-3	5069b097ee75170cf46fb3b1270403e8671f22fde32122873d9cd33995739739	graph	-	-	-	-	rebaseline:2026-09-27 로드맵 3 pre-gate 수리 — 승인 유입·기대 기준선·실행 경계·digest·#574 예보·포트 자료 방향(R-3500·R-3501)

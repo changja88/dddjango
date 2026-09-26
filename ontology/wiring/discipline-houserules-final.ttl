@@ -153,3 +153,7 @@ djr:R-3468 djr:enforcedBy <https://numchida.com/ns/djr#c/check-port-adapter-pair
 
 djr:R-3469 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
     djr:enforcedBy <https://numchida.com/ns/djr#c/check-layer-skeleton.py> .
+
+djr:R-3500 djr:enforcedBy <https://numchida.com/ns/djr#c/check-port-adapter-pairing.py>, <https://numchida.com/ns/djr#c/design_pregate.py> .
+
+djr:R-3501 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .

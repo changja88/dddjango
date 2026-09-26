@@ -20,7 +20,7 @@
     "check-naming.py": "b8b093aa3bb2ed40",
     "check-ninja-boundary-middleware.py": "e2f4aed8fef47305",
     "check-openapi-error-declaration.py": "5a57e8958cc6d992",
-    "check-port-adapter-pairing.py": "9fe24b4df8df90a6",
+    "check-port-adapter-pairing.py": "1050c72d3df50da5",
     "check-public-surface-annotation.py": "b94b4101403d5992",
     "check-response-schema-bypass.py": "0fd510470a0ac985",
     "check-synthetic-infra-exc.py": "f30d0f3e8320ee6b",

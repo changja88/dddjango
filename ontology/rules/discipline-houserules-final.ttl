@@ -640,6 +640,22 @@ djr:R-3469 a djr:Obligation ;
     prov:specializationOf djr:R-3469 ;
     djr:revision 1 .
 
+djr:R-3500 a djr:Prohibition ;
+    skos:prefLabel "포트·조회 계약 메서드 인자를 <data>_in 으로 두지 않는다 — _in 은 어댑터만 만든다(#574) · 같은 BC 계약이 돌려준 _in 의 중계는 예외 · 실물에 이미 있는 _in 인자는 의미 빚"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3500@2026-09-27> .
+
+<https://numchida.com/ns/djr#R-3500@2026-09-27> a djr:Expression ;
+    prov:specializationOf djr:R-3500 ;
+    djr:revision 1 .
+
+djr:R-3501 a djr:Obligation ;
+    skos:prefLabel "포트·조회 계약 메서드가 돌려주는 이름 붙인 자료는 <data>_in(방향 기준점 = 우리 안쪽 · 원시 값·None 밖) · 이 규칙 이전 _out 반환 자료는 의미 빚 — 새 자료는 _in · 기존 _out 자료의 재사용은 허용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3501@2026-09-27> .
+
+<https://numchida.com/ns/djr#R-3501@2026-09-27> a djr:Expression ;
+    prov:specializationOf djr:R-3501 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/references/final.md> a djr:Document ;
     skos:prefLabel "discipline-houserules-final"@ko .
 
@@ -999,7 +1015,14 @@ djr:R-3469 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
     djr:statesNorm djr:R-3223 ;
-    djr:text "- **BC(앱)명↔애그리거트명 유사 변형 금지(권장 — 기계 검사기 없음·reviewer 점검)**: `ordering` vs `order` 같은 한 글자·복수형 차이로 헷갈리게 두지 않는다 — 같게 하거나 명확히 다른 컨텍스트명으로 한다(#82 물음에 딸린 점검 · 08-12 삭제분 감사에서 복원).\n\n"@ko .
+    djr:text "- **BC(앱)명↔애그리거트명 유사 변형 금지(권장 — 기계 검사기 없음·reviewer 점검)**: `ordering` vs `order` 같은 한 글자·복수형 차이로 헷갈리게 두지 않는다 — 같게 하거나 명확히 다른 컨텍스트명으로 한다(#82 물음에 딸린 점검 · 08-12 삭제분 감사에서 복원).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s011-3/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s011-3> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-3500, djr:R-3501 ;
+    djr:text "- **포트 자료의 방향**(2026-09-27): 방향의 기준점은 우리 안쪽이다 — 들어오면 `<data>_in`, 나가면 `<data>_out`. 포트·조회 계약(`port/<capability>/` · `port/domain_bypass_query/<capability>/` · `framework/<capability>/`) 메서드의 **인자**(우리가 내보내는 자료)를 `<data>_in` 으로 두지 않는다 — `_in` 은 어댑터만 만든다(#574). 같은 BC(framework 포트는 framework)의 다른 계약이 돌려준 `_in`(그 필드 포함)을 그대로 넘기는 것은 만드는 것이 아니다. 기계 판정은 G1 pre-gate 예보(선언 확정 #574)와 G2 #574(유스케이스의 생성 호출)다. 메서드가 이름 붙인 자료를 **돌려주면**(바깥의 답이 들어온다) 그 자료는 `<data>_in` 이다(원시 값·`None` 은 이 규칙 밖) — 기계 검사기가 없어 discipline-reviewer 가 설계 경량 점검과 구현 감사에서 본다. 이 규칙 이전의 `_out` 반환 자료와 실물 메서드에 이미 있는 `_in` 인자는 의미 빚이다 — 새로 만드는 자료는 이 규칙을 따르고, 기존 `_out` 자료를 새 메서드가 그대로 돌려주는 것은 허용한다(중복 `_in` 을 만들지 않는다 — 개명은 의미 빚 정리에서 한다). 파일 접미와 클래스 접미의 교차(`_out.py` 안의 `…In` 등)는 #573(`port/<capability>/` 만)이다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s013> a djr:Section ;
     djr:headingSnapshot "### 이관 종료 (2026-08-12)"@ko ;

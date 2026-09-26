@@ -553,7 +553,7 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 233 | `domain_bypass_query/<capability>/` 이름은 «무엇을 알고 싶은가»로 짓고 누가 그걸 주는지는 이름에 넣지 않는다. | 트리 52행 | `ast+` | principle |  | **blocker** |
 | 234 | `domain_bypass_query/<capability>/<capability>_query.py` 는 계약 하나 = 파일 하나이고 파일 이름은 폴더 이름과 같다. | 트리 53행+D33 | `ast` | principle |  | **blocker** |
 | 235 | `domain_bypass_query/<capability>/<capability>_query.py` 의 클래스는 `<Capability>DomainBypassQuery` 로 끝나고, 구현은 같은 접미사에 접두사로 갈린다(`Django<Capability>DomainBypassQuery`). | 트리 53행+D33 | `ast` | principle |  | **blocker** |
-| 236 | `domain_bypass_query/` 가 내보내는 자료는 «이름 붙인 정적 타입» 하나다 — 도메인 타입도 ORM 로우도 `QuerySet` 도 넘기지 않는다(트리 54·55행은 이것을 DTO 라 부르지 않는다 — `<use_case>_command`/`<use_case>_result` 은 유스케이스의 입출력 어휘다). | 트리 54행+D29 결정④+D8 | `ast` | principle |  | **blocker** |
+| 236 | `domain_bypass_query/` 가 돌려주는 자료는 «이름 붙인 정적 타입» 하나다 — 도메인 타입도 ORM 로우도 `QuerySet` 도 넘기지 않는다(트리 54·55행은 이것을 DTO 라 부르지 않는다 — `<use_case>_command`/`<use_case>_result` 은 유스케이스의 입출력 어휘다 · 돌려주는 자료는 들어오는 쪽이라 `<data>_in` 이다 — 2026-09-27 정정). | 트리 55행+D29 결정④+D8 | `ast` | principle |  | **blocker** |
 | 238 | `domain_bypass_query/<capability>/exception.py` 를 둔다 — 필수다. | 트리 56행+D27+D29 | `path` | principle |  | **blocker** |
 | 239 | `domain_bypass_query/` 의 예외는 도메인 예외를 상속하지 않는다. | 트리 56행+D27 | `ast` | principle |  | **blocker** |
 | 240 | UnitOfWork 선언은 `port/unit_of_work/` 에 둔다 — «괄호»라 대화 계약(`<capability>/`)과 형제로 갈리지만, «바깥에 있어야 하는 것의 선언»이라 `port/` 아래 산다. | 트리 57행+D14+D37 | `path` | principle |  | **blocker** |

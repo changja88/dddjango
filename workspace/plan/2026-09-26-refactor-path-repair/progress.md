@@ -51,3 +51,10 @@
 | 결정 5 반영 | ⑶ 규칙 이전 폴더 = 끝남 → 새 실행(s005/b13 · R-3483 라벨) · render · LEDGER · rulepack · Codex 미러 · 봉인 draft · **`make verify` green 5/5** · 재시험 T5n·T5c 합격 | `behavior-tests.md` · `evidence/verify-2026-09-26-decision5.log` |
 | 로드맵 1 커밋 | `e3ad8e16` 변경 커밋 · `6c88ae1b` 봉인 재발행 chore(strict `--check` 는 이전에도 RED 19 — 실런 전용 · 이번 추가분은 설치본≠소스 트리 해시로 배포 전 정상 · draft 대조 green) | git |
 | 로드맵 2 F4-24 | s007-4/b7 문언 정정 · R-3448 rev4 clarification(`@2026-09-26`) · render · LEDGER · 계수표 Expression 3699 · rulepack · Codex 미러 · 잠금 픽스처(`public_surface/good/…/form/line_form.py` ModelForm 별칭 기저 `clean() -> dict[str, object]` — 현행 exit 0 · 면제 좁힌 검사기 exit 2) · 행렬 4종 무변 | 이 표 아래 verify 로그 |
+| 로드맵 3 설계 v1 | pre-gate 4종 설계(실측 비용순 F4-22 → F4-21 → F4-23+digest · G-2 필수 · S-1b expect-base · S-3b 변종 안내) → 적대 검토 E(코드)·F(규범·현장) 진행 | `step3-pregate-design-v1.md` |
+| 로드맵 4 설계 v1 | 동작 보존 장치 최소판에 결정 2 적용(모든 슬라이스 0 창 · D 층 보고 · 약한 단언 제외) → 적대 검토 G 진행 | `step4-behavior-guard-design-v1.md` |
+| 로드맵 3 설계 v2 · 검토 E·F·H | v2(설계+계획) · 계획 검토 H: blocker 전건 해소 · 새 major 5(매핑표·문면 누락·기준선 값 규칙·실행 경계) | `step3-pregate-design-v2.md` · `review-{E,F,H}-*.md` |
+| 로드맵 3 스크립트 구현 | S-4·S-3·S-1·S-1b·S-3b·S-2 구현 · 러너 PASS · 음성 대조 4종 · S-2 현장 재생 5건 확정·sweep 78 오탐 0 — **미커밋 · Codex 미러·graph 일괄·리뷰·verify 남음** | `step3-impl-log.md` |
+| 로드맵 4 설계 v2 · 재검토 G2 | v2 → G2: 새 major 10 · 추정 6~8일 → 축소안 사용자 결정 필요 | `step4-behavior-guard-design-v2.md` · `review-G2-step4-v2.md` |
+| 결정 7·8 (09-27 00:52·00:59) | 7 = 포트 반환 `_in`(규칙대로) · 8 = 로드맵 4 최소한(테스트 고정 + 마이그레이션) | `evening-report.md` §5 |
+| 로드맵 3 graph 일괄 | 매핑표(`step3-norm-map.md`) → ttl(개정 13 · 신설 R-3500·R-3501 · 새 블록 s011-3/b3) → gate green 90/90 → render 3 → LEDGER 10행 → 계수표(Block 2927 · Expression 3714 · Norm/Work 3510) → q4 3501 → 소스 미러 교체 + corpus 11/11 → rulepack → Codex 의미 미러 2 · #236 정정 · REQUEST_GUIDE · DEVELOPMENT §6 · 러너 PASS · field smoke 38 OK → 독립 구현 리뷰 I · verify 진행 | `step3-norm-map.md` |

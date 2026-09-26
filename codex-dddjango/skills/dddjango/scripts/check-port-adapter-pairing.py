@@ -13,7 +13,7 @@
          #313 domain_layer/<agg>/port/ 금지
   bypass #229 계약은 port/domain_bypass_query/ · #231 domain_layer 에 조회 계약 금지 ·
          #232 능력=폴더·셋 낱말 · #233[ast+] 「무엇을 알고 싶은가」(확정: 기술·BC 토큰) ·
-         #234 파일명=폴더명·하나 · #235 <Capability>DomainBypassQuery · #236 반출은 이름
+         #234 파일명=폴더명·하나 · #235 <Capability>DomainBypassQuery · #236 반환은 이름
          붙인 정적 타입(QuerySet·dict·Model ✗) · #238 exception.py 필수 · #239 도메인
          예외 비상속 · #465 _repository 접미 금지 · #475[ast+] 날것으로 업무 판정(후보)
   uow    #240 선언은 port/unit_of_work/ · #241 대화 계약과 «괄호»의 분리(포트에 uow
@@ -355,7 +355,7 @@ def _check_bypass(root: Path, bypass: Path, tech: set, f: Findings, cand: Candid
                         names = _ann_names(m.returns)
                         if names & {"QuerySet", "dict", "Dict"} or any(n.endswith("Model") for n in names):
                             f.add("#236", _rel(root, py, m.lineno),
-                                  f"`{m.name}` 반환 {sorted(names)[:3]} — 내보내는 자료는 «이름 붙인 "
+                                  f"`{m.name}` 반환 {sorted(names)[:3]} — 돌려주는 자료는 «이름 붙인 "
                                   "정적 타입» 하나다(도메인·ORM 로우·QuerySet ✗)")
 
 

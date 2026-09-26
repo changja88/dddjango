@@ -151,6 +151,8 @@ make release DRY=1        # 미리보기 (변경 없음) — release-web DRY=1 �
 
 `make release-web`은 곧장 `_release`로 간다. 2026-09-16 hyun 지시로 `verify-web`을 `VERIFY_TARGETS`에서 뺐다(막아 세운 결함 0 · 실제 결함은 전부 A8 실사용이 잡았다). 같은 배치에서 **실패한 브라우저 관찰 서브시스템(1.1.13~1.1.19)을 전량 철거**했다 — `verify-web-browser`(K3)·`observe_interactions`·`evidence_debt`·`refreeze.py`·`ledger.py`와 그 계약·hook을 지우고 검사기를 v1.1.12 정적 형태로 되돌렸다(정본: workspace/design/2026-09-16-web-strip-observation-subsystem.md). 웹 쪽 검증이 필요하면 `make verify-web`을 직접 돈다. **release-web 에서 사라진 보증은 Codex byte 미러 대조다** — `codex-dddjango-web/`가 어긋나도 릴리즈가 막지 않으므로, 검사기를 고치면 미러를 손으로 맞춘다(`make verify-web`이 `diff -rq`로 잡는다).
 
+**릴리즈 창**: dddjango 릴리즈 전에 타깃 저장소들에 G0 승인 뒤 G2 승인 전의 진행 레인이 없는지 확인하고, 있으면 그 레인의 G2 승인(착륙)까지 릴리즈를 보류한다(설치본이 레인 도중에 규범을 바꾸지 않게). 특히 `dddjango/scripts/` 가 바뀐 릴리즈는 pre-gate 실행 트리 digest 를 바꾸므로, 진행 중 레인의 마지막 예보가 `--check-report` 에서 «툴체인 stale»이 되어 재예보를 요구한다 — Phase 1 레인은 싼 재실행으로 끝나지만 G1~G2 레인은 Phase 2 재발화가 든다(2026-09-27).
+
 봉인(`manifest_seal.py --write`)은 봉인 대상 파일(Makefile 등)을 바꾼 커밋 **뒤에** 별도 chore 커밋으로 재발행한다 — 같은 커밋에 넣으면 `sealed_commit`이 변경 이전을 가리켜 strict `--check`가 RED가 된다(`make verify`의 `--draft` 대조는 통과하므로 놓치기 쉽다).
 
 

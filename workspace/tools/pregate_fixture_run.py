@@ -252,8 +252,12 @@ def _unit_checks() -> "list[str]":
     cli: "subprocess.CompletedProcess[str]" = subprocess.run(
         [sys.executable, str(EXECUTOR), str(FIXTURES / "green2-spec.md"), ".", "--block-hash"],
                          capture_output=True, text=True)
-    if cli.returncode != 0 or cli.stdout.strip() != f"블록 해시 {h1}":
-        out.append(f"`--block-hash` CLI 출력 {cli.stdout.strip()!r}(exit {cli.returncode}) ≠ `블록 해시 {h1}`")
+    # 2026-09-27 로드맵 3 S-4: 둘째 행에 실행 트리 digest(캐시 skip 이 툴체인 교체도 대조) — 첫 행은 종전 그대로
+    cli_lines: "list[str]" = cli.stdout.strip().splitlines()
+    if (cli.returncode != 0 or len(cli_lines) != 2 or cli_lines[0] != f"블록 해시 {h1}"
+            or re.fullmatch(r"실행 트리 digest [0-9a-f]{16}", cli_lines[1]) is None):
+        out.append(f"`--block-hash` CLI 출력 {cli.stdout.strip()!r}(exit {cli.returncode}) ≠ "
+                   f"`블록 해시 {h1}` + `실행 트리 digest <16hex>`")
 
     # ③ 버전 probe 동치 — 두 스크립트 각자 보유 · Claude/Codex 레이아웃 2경로 · manifest 값과 일치.
     rg: "types.ModuleType" = _load_module(GATE, "_registry_gate_mod")
@@ -636,6 +640,41 @@ def _run_mid_bundle(scratch: Path, failures: "list[str]") -> None:
     if _header_count(report) != 6:
         failures.append(f"[mid] 리포트 append 횟수 {_header_count(report)} ≠ 기대 6 ({report})")
 
+    # 2026-09-27 로드맵 3 S-3 — F4-23 회귀 가드(별도 리포트 · 위 헤더 계수 무접촉).
+    report_f: Path = scratch / "pregate-report-mid-f423.md"
+    green_spec: Path = FIXTURES / "green-spec.md"
+    wip_outside: "tuple[str, ...]" = ("application/billing/test/__init__.py", "application/billing/test/unit/__init__.py")
+    # E5 — 기준선 이후 S1 커밋(신규 BC 일부) + 계획 밖 WIP(새 폴더 `__init__.py`) → `--base <기준선>`:
+    # 오버레이 생략(기준선≠HEAD) → 사본 = 기준선 트리 → 골격 실체화 → green · «dirty overlay 생략» 행.
+    repo = _make_repo(scratch, "repo-mid-e5")
+    base = _git(repo, "rev-parse", "HEAD")
+    s1: Path = repo / "application/billing/domain_layer/shared_value_object/invoice_number.py"
+    s1.parent.mkdir(parents=True, exist_ok=True)
+    s1.write_text("class InvoiceNumber:\n    value: str\n", encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "slice 1: billing value object")
+    for rel in wip_outside:
+        (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+        (repo / rel).write_text("", encoding="utf-8")
+    e5: "subprocess.CompletedProcess[str]" = _run_pregate(green_spec, repo, report_f, ["--base", base])
+    if e5.returncode != 0 or "dirty overlay 생략: 기준선≠HEAD · 작업 트리 변경 2경로" not in e5.stdout:
+        failures.append(f"E5(F4-23) 기대 exit 0 · «dirty overlay 생략 … 2경로» ≠ 실측 exit {e5.returncode}")
+        _dump("E5", e5)
+    else:
+        print("E5: exit 0 · dirty overlay 생략 2경로 (기준선≠HEAD 재발화 — 혼합 사본 없음 · F4-23) — 기대 일치")
+    # E6 — 기준선 = HEAD(첫 슬라이스 미커밋) + 계획 밖 WIP 가 신규 BC 폴더를 만든 상태 → 기본 실행:
+    # 골격 가드는 기준선 트리로 판정 → 신규 BC 골격 실체화 → green(앵커 오염으로 골격을 건너뛰지 않는다 · 검토 E m7).
+    repo = _make_repo(scratch, "repo-mid-e6")
+    for rel in wip_outside:
+        (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+        (repo / rel).write_text("", encoding="utf-8")
+    e6: "subprocess.CompletedProcess[str]" = _run_pregate(green_spec, repo, report_f)
+    if e6.returncode != 0 or "dirty overlay 생략" in e6.stdout:
+        failures.append(f"E6(골격 가드 기준선화) 기대 exit 0 · 오버레이 유지 ≠ 실측 exit {e6.returncode}")
+        _dump("E6", e6)
+    else:
+        print("E6: exit 0 · 기준선 = HEAD 오버레이 유지 · 신규 BC 골격 실체화 (계획 밖 WIP 앵커 오염 무해) — 기대 일치")
+
 
 def _run_imports_bundle(scratch: Path, failures: "list[str]") -> None:
     """계약 실존 e2e 3종 — 합성 저장소 2(`mini_repo` + `imports_overlay/`) · 리포트 각 1."""
@@ -776,6 +815,102 @@ def _expect_check(label: str, proc: "subprocess.CompletedProcess[str]", code: in
         print(f"check-report {label}: exit {code}{' · ' + m.group(1) if m else ''} — 기대 일치")
 
 
+def _run_inflow_bundle(scratch: Path, failures: "list[str]") -> None:
+    """로드맵 3 S-1·S-1b(F4-21) — 발주자 승인 머지 유입(추가·수정·삭제)과 check-report 기준선 치환 봉쇄."""
+    spec: Path = FIXTURES / "inflow-spec.md"
+    spec_add: Path = FIXTURES / "inflow-addconflict-spec.md"
+    report: Path = scratch / "pregate-report-inflow.md"
+    repo: Path = _make_repo(scratch, "repo-inflow")
+    # 기준선 이전 머지(불참이어야 한다): side 가지를 기준선 전에 한 번 받는다.
+    root_branch: str = _git(repo, "rev-parse", "--abbrev-ref", "HEAD")
+    _git(repo, "checkout", "-q", "-b", "side")
+    (repo / "docs_side.md").write_text("side\n", encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "side note")
+    _git(repo, "checkout", "-q", root_branch)
+    _git(repo, "merge", "-q", "--no-ff", "-m", "early merge side", "side")
+    early: str = _git(repo, "rev-parse", "HEAD")
+    base: str = early
+    # 레인 S1 · main 쪽(추가·수정·삭제) · 승인 머지.
+    _git(repo, "checkout", "-q", "-b", "upstream")
+    (repo / "config/inflow_settings.py").write_text("INFLOW_FLAG: bool = True\n", encoding="utf-8")
+    (repo / "config/api.py").write_text((repo / "config/api.py").read_text(encoding="utf-8")
+                                        + "INFLOW_ROUTE: str = \"inflow\"\n", encoding="utf-8")
+    _git(repo, "rm", "-q", "config/celery.py")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "upstream: add/modify/delete")
+    _git(repo, "checkout", "-q", root_branch)
+    (repo / "docs_lane.md").write_text("lane S1\n", encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "lane S1")
+    lane_s1: str = _git(repo, "rev-parse", "HEAD")
+    _git(repo, "merge", "-q", "--no-ff", "-m", "approved merge upstream", "upstream")
+    merge: str = _git(repo, "rev-parse", "HEAD")
+    approved: Path = scratch / "approved-merges.txt"
+    approved.write_text(f"{early} 기준선 이전(불참)\n{merge} 승인\n", encoding="utf-8")
+    flag: "list[str]" = ["--approved-merge-file", str(approved)]
+    bad_before: int = len(failures)
+
+    a = _run_pregate(spec, repo, report, ["--base", base])
+    if a.returncode != 3 or "update 대상 기준선 이후 실존: config/inflow_settings.py" not in a.stdout \
+            or "--approved-merge-file" not in a.stdout:
+        failures.append(f"inflow 무플래그 기대 exit 3 · «update 대상 기준선 이후 실존» + 승인 유입 갈래 안내 ≠ 실측 exit {a.returncode}")
+        _dump("inflow-a", a)
+    b = _run_pregate(spec, repo, report, ["--base", base] + flag)
+    if (b.returncode != 0 or "승인 유입: 3경로(추가 1 · 수정 1 · 삭제 1)" not in b.stdout
+            or "불참 머지 1" not in b.stdout or "요약: 귀속 0건 · 실존 결손 0건" not in b.stdout):
+        failures.append(f"inflow 플래그 기대 exit 0 · 승인 유입 3경로(추가 1·수정 1·삭제 1) · 불참 1 · 결손 0 ≠ 실측 exit {b.returncode}")
+        _dump("inflow-b", b)
+    c = _run_pregate(spec_add, repo, scratch / "pregate-report-inflow-add.md", ["--base", base] + flag)
+    if c.returncode != 3 or "승인 유입 add 충돌: config/inflow_settings.py" not in c.stdout:
+        failures.append(f"inflow add 충돌 기대 exit 3 · «승인 유입 add 충돌» ≠ 실측 exit {c.returncode}")
+        _dump("inflow-c", c)
+    bad_list: Path = scratch / "approved-bad.txt"
+    bad_list.write_text(f"{lane_s1} 비머지\n", encoding="utf-8")
+    d = _run_pregate(spec, repo, scratch / "pregate-report-inflow-bad.md",
+                     ["--base", base, "--approved-merge-file", str(bad_list)])
+    if d.returncode != 1 or "승인 머지 목록 검증 실패" not in d.stderr:
+        failures.append(f"inflow 비머지 목록 기대 exit 1 · «검증 실패» ≠ 실측 exit {d.returncode} · {d.stderr.strip()[:120]}")
+    e = _run_pregate(spec, repo, scratch / "pregate-report-inflow-missing.md",
+                     ["--base", base, "--approved-merge-file", str(scratch / "no-such.txt")])
+    if e.returncode != 1 or "승인 머지 목록 부재" not in e.stderr:
+        failures.append(f"inflow 목록 부재 기대 exit 1 ≠ 실측 exit {e.returncode}")
+    # S-1b — 기대 기준선: 전체 · 7자 접두 일치 → 0 · 다른 SHA → 3 «기준선 치환» · --check-report 없이 → 1.
+    def check(expect: "str | None") -> "subprocess.CompletedProcess[str]":
+        extra: "list[str]" = ["--expect-base", expect] if expect is not None else []
+        return subprocess.run([sys.executable, str(EXECUTOR), str(spec), ".", "--check-report", str(report)] + extra,
+                              capture_output=True, text=True)
+    for label, expect, want, needle in (("전체", base, 0, "정합"), ("7자 접두", base[:7], 0, "정합"),
+                                        ("치환", lane_s1, 3, "기준선 치환")):
+        r = check(expect)
+        if r.returncode != want or needle not in r.stdout:
+            failures.append(f"check-report --expect-base[{label}] 기대 exit {want} · «{needle}» ≠ 실측 exit {r.returncode}")
+            print(r.stdout[-600:])
+    lone = subprocess.run([sys.executable, str(EXECUTOR), str(spec), ".", "--expect-base", base],
+                          capture_output=True, text=True)
+    if lone.returncode != 1 or "--check-report 와 함께만" not in lone.stderr:
+        failures.append(f"--expect-base 단독 기대 exit 1 ≠ 실측 exit {lone.returncode}")
+    # S-3b — 기준선 이후 레인 커밋이 만든 계약을 file-plan 없이 소비 → 결손(판정 무변) + «기준선 이후 바뀐 파일» 처방.
+    repo_p: Path = _make_repo(scratch, "repo-postbase")
+    base_p: str = _git(repo_p, "rev-parse", "HEAD")
+    (repo_p / "framework/test").mkdir(parents=True, exist_ok=True)
+    (repo_p / "framework/test/lane_helper.py").write_text("class LaneHelper:\n    pass\n", encoding="utf-8")
+    _git(repo_p, "add", "-A")
+    _git(repo_p, "commit", "-q", "-m", "lane S1 helper")
+    f = _run_pregate(FIXTURES / "postbase-defect-spec.md", repo_p, scratch / "pregate-report-postbase.md", ["--base", base_p])
+    if (f.returncode != 5 or "기준선 이후 바뀐 파일 `framework/test/lane_helper.py`" not in f.stdout
+            or "그 이름을 symbols 에 선언" not in f.stdout):
+        failures.append(f"S-3b 결손 안내 기대 exit 5 · «기준선 이후 바뀐 파일 … symbols 에 선언» ≠ 실측 exit {f.returncode}")
+        _dump("postbase", f)
+    g = _run_pregate(FIXTURES / "postbase-defect-spec.md", repo_p, scratch / "pregate-report-postbase-head.md")
+    if g.returncode != 4 or "기준선 이후 바뀐 파일" in g.stdout:  # update 만 · 실체화 0 · 결손 0 = skip(4)
+        failures.append(f"S-3b 기본 실행(HEAD) 기대 exit 4(skip · 결손 0) · 안내 없음 ≠ 실측 exit {g.returncode}")
+        _dump("postbase-head", g)
+    if len(failures) == bad_before:
+        print("inflow: 무플래그 exit 3 · 플래그 exit 0(추가 1·수정 1·삭제 1 · 불참 1 · 결손 0) · add 충돌 3 · "
+              "비머지·부재 목록 1 · --expect-base 전체/7자 0 · 치환 3 · 단독 1 · 기준선 이후 결손 안내(exit 5)·HEAD 결손 0(skip 4) — 기대 일치")
+
+
 def _run_checkreport_bundle(scratch: Path, failures: "list[str]") -> None:
     """`--check-report` — 리포트 최신성·처분 완결 대조(전용 저장소·리포트 · 실제 실행기 출력 위에 처분 행 append)."""
     repo: Path = _make_repo(scratch, "repo-cr")
@@ -882,11 +1017,11 @@ def _enforce_unit_checks() -> "list[str]":
                            f"{want_kinds} · {sorted(want_promoted)}")
     spec_text: str = (FIXTURES / "green-spec.md").read_text(encoding="utf-8")
     h: str = dp.block_hash(spec_text)
-    def head(hh: str, verdict: str) -> str:
+    def head(hh: str, verdict: str, mode: str = "", base: str = "0" * 40) -> str:
         """실행기 자신의 stub writer 로 헤더를 만든다 — 손 합성이 아니라 형식 드리프트에 같이 움직인다(5단계 리뷰 A8)."""
         with tempfile.TemporaryDirectory(prefix="pregate-cr-") as td:
             rp: Path = Path(td) / "r.md"
-            dp.write_report_stub(rp, Path("green-spec.md"), "HEAD", "0" * 40, verdict, [], hh)
+            dp.write_report_stub(rp, Path("green-spec.md"), "HEAD", base, verdict, [], hh, execution_mode=mode)
             return rp.read_text(encoding="utf-8") + "\n"
     noblock_text: str = (FIXTURES / "noblock-spec.md").read_text(encoding="utf-8")
     red_body: str = ("### 예보 항목 (2건 · 안정 ID = sha256(규칙#+경로)[:12])\n\n- `aaaaaaaaaaaa` [#81] x\n- `bbbbbbbbbbbb` [#267] y\n\n"
@@ -895,6 +1030,18 @@ def _enforce_unit_checks() -> "list[str]":
     red_v: str = "예보 red — P/S/I급 결정 계약 위반 예보 2건 · 계약 실존 결손 1건(권고·비차단)"
     coord: str = "\n## pre-gate 처분 라벨 (코디네이터 소유)\n"
     disp = lambda i, label: f"- `{i}` [#x] p → **{label}**(근거)\n"
+    cur_digest: str = dp._pregate_digest()
+    A40, B40 = "a" * 40, "b" * 40
+    rec = lambda sha: f"\n- pre-gate 기준선 — {sha} · 2026-09-27T00:00:00Z\n"
+    decl_v: str = "예보 red — P/S/I급 결정 계약 위반 예보 0건 · 선언 확정 1건 · 계약 실존 결손 0건(권고·비차단)"
+    decl_body: str = "### 선언 확정 (1건)\n\n- `dddddddddddd` [#574] a/ledger_port.py — LedgerPort.record: 포트 인자\n"
+    disp574 = lambda label, rule="#574": f"- `dddddddddddd` [{rule}] a/ledger_port.py → **{label}**(근거)\n"
+
+    def decl_head(rule: str = "#574") -> str:
+        """스텁의 빈 «선언 확정» 소절을 선언 확정 1건으로 바꾼다(실행기 writer 형식)."""
+        text_: str = head(h, decl_v)
+        assert "### 선언 확정 (0건)\n\n- (없음)\n" in text_
+        return text_.replace("### 선언 확정 (0건)\n\n- (없음)\n", decl_body.replace("[#574]", f"[{rule}]"))
     rcases: "list[tuple[str, str, int, str]]" = [
         ("green 정합", head(h, green_v), 0, "green"),
         ("stale", head("f" * 12, green_v), 3, "stale"),
@@ -917,6 +1064,37 @@ def _enforce_unit_checks() -> "list[str]":
         ("같은 ID ignored+corrected → 통과", head(h, red_v) + red_body + coord + disp("aaaaaaaaaaaa", "corrected") + disp("aaaaaaaaaaaa", "ignored") + disp("bbbbbbbbbbbb", "filtered"), 0, "처분 전건"),
         ("ID 행 ≠ 라벨 행(불인정)", head(h, red_v) + red_body + coord + "- `aaaaaaaaaaaa` [#x] p\n  → **ignored**(근거)\n" + disp("bbbbbbbbbbbb", "filtered"), 3, "미기재 1건"),
         ("구형 skip + 마커 없는 명세", None, 3, "블록 부재"),
+        # 2026-09-27 로드맵 3 S-4 — 툴체인 최신성(실행 트리 digest)
+        ("툴체인 stale", head(h, green_v).replace(f"실행 트리 digest {cur_digest}", "실행 트리 digest " + "0" * 16),
+         3, "stale(툴체인)", 1),
+        ("digest 토큰 없음(구판 헤더)", head(h, green_v).replace(f" · 실행 트리 digest {cur_digest}", ""),
+         3, "툴체인 증명 불가", 1),
+        # 로드맵 3 S-1b · 검토 H-M2/H-M3 — 명시 재예보의 기준선 대조 의무 · 새 실행 경계(폴더 재사용)
+        ("명시 재예보 · --expect-base 누락", head(h, green_v, "명시 재예보(--base " + "0" * 40 + ")"),
+         3, "기준선 대조 누락", 1),
+        ("앞 실행 예보 · 명세 불변(옛 digest·명시 재예보여도 정합)",
+         head(h, green_v, "명시 재예보(--base " + "0" * 40 + ")").replace(f"실행 트리 digest {cur_digest}",
+                                                                        "실행 트리 digest " + "0" * 16)
+         + "\n- 실행 경계 — 새 실행 G0 승인 2026-09-26T16:00:00Z\n", 0, "앞 실행 예보(명세 불변)"),
+        ("앞 실행 예보 · 명세 변경", head("f" * 12, green_v) + "\n- 실행 경계 — 새 실행 G0 승인 2026-09-26T16:00:00Z\n",
+         3, "stale"),
+        # 검토 I-M1 — `--base` 를 빼고 HEAD 로 다시 돌린 재발화 · 리포트 `pre-gate 기준선` 행 대조(플래그 무관)
+        ("I-M1 명시→HEAD 판형 · 기준선 행 없음", head(h, green_v, f"명시 재예보(--base {A40})", A40) + head(h, green_v, base=B40),
+         3, "기준선 대조 누락", 1),
+        ("I-M1 명시→HEAD 판형 · 기준선 행 있음", head(h, green_v, base=A40) + rec(A40)
+         + head(h, green_v, f"명시 재예보(--base {A40})", A40) + head(h, green_v, base=B40), 3, "기준선 치환", 1),
+        ("기준선 행 · 명시 재예보 일치", head(h, green_v, base=A40) + rec(A40) + head(h, green_v, f"명시 재예보(--base {A40})", A40),
+         0, "green"),
+        ("기준선 행만 · Phase 1 마지막 절 일치", head(h, green_v, base=A40) + rec(A40), 0, "green"),
+        ("기준선 행 · Phase 1 마지막 절 불일치", head(h, green_v, base=B40) + rec(A40), 3, "기준선 치환", 1),
+        ("기준선 행 중복", head(h, green_v, base=A40) + rec(A40) + rec(A40), 3, "기준선 행 중복", 1),
+        ("기준선 행 형식 불비", head(h, green_v, base=A40) + "- pre-gate 기준선 — HEAD\n", 3, "기준선 행 형식 불비", 1),
+        ("경계 앞 기준선 행은 이번 실행 밖", head(h, green_v, base=A40) + rec(A40)
+         + "\n- 실행 경계 — 실행 · G0 승인 20260927-0100 · 2026-09-26T16:00:00Z\n" + head(h, green_v, base=B40), 0, "green"),
+        # 검토 I-m4 — 선언 확정 #574 의 filtered 는 기계로 불인정
+        ("#574 filtered 불인정", decl_head() + coord + disp574("filtered"), 3, "#574 는 filtered 불인정", 1),
+        ("#574 ignored 인정", decl_head() + coord + disp574("ignored"), 0, "처분 전건"),
+        ("#574 외 선언 확정은 filtered 인정", decl_head("#197") + coord + disp574("filtered", "#197"), 0, "처분 전건"),
     ]
     for case in rcases:
         label, text, want_code, needle = case[:4]
@@ -929,6 +1107,147 @@ def _enforce_unit_checks() -> "list[str]":
         if code != want_code or needle not in blob or (want_n is not None and len(problems) != want_n):
             out.append(f"check_report[{label}] = exit {code} · {problems} · {info.get('short')} ≠ 기대 exit {want_code}·«{needle}»"
                        + (f"·사유 {want_n}" if want_n is not None else ""))
+    # 검토 I-m1 — 앞 실행 예보 정합은 대조 생략을 요약에 밝힌다(`--expect-base` 를 줘도 조용히 넘기지 않는다)
+    prior_text: str = head(h, green_v) + "\n- 실행 경계 — 실행 · G0 승인 20260927-0100 · 2026-09-26T16:00:00Z\n"
+    code_p, _probs_p, info_p = dp.check_report(spec_text, prior_text, expect_base="c" * 12)
+    if code_p != 0 or "대조 생략" not in info_p.get("short", "") or "미대조" not in info_p.get("short", ""):
+        out.append(f"check_report[앞 실행 · --expect-base 미대조 표기] = exit {code_p} · {info_p.get('short')}")
+    # 로드맵 3 S-4: digest 는 판정 입력만 본다 — rulepack.json(그래프 명칭 투영물) 변경은 무반응 · 검사기 변경은 반응
+    with tempfile.TemporaryDirectory(prefix="pregate-digest-") as td:
+        copy_dir: Path = Path(td) / "scripts"
+        shutil.copytree(EXECUTOR.parent, copy_dir, ignore=shutil.ignore_patterns("__pycache__"))
+        saved_dir: Path = dp.SCRIPTS_DIR
+        try:
+            dp.SCRIPTS_DIR = copy_dir
+            base_d: str = dp._pregate_digest()
+            (copy_dir / "rulepack.json").write_text("{}", encoding="utf-8")
+            rulepack_d: str = dp._pregate_digest()
+            checker: Path = sorted(copy_dir.glob("check-*.py"))[0]
+            checker.write_text(checker.read_text(encoding="utf-8") + "\n# touched\n", encoding="utf-8")
+            checker_d: str = dp._pregate_digest()
+        finally:
+            dp.SCRIPTS_DIR = saved_dir
+        if base_d != cur_digest or rulepack_d != base_d or checker_d == base_d:
+            out.append(f"_pregate_digest 판정 입력 범위 위반 — 사본 {base_d} · 현재 {cur_digest} · rulepack 변경 뒤 "
+                       f"{rulepack_d} · 검사기 변경 뒤 {checker_d}(rulepack 무반응 · 검사기 반응이어야 한다)")
+    return out
+
+
+def _in_argument_unit_checks() -> "list[str]":
+    """로드맵 3 S-2(F4-22) — 포트 인자 `<data>_in` 의 #574 예보. 현장형(같은 폴더 import 행 없음) 양성 · `_out` 개명 ·
+    반환 중계 · 필드 중계 · update 부분 선언(실물 반환 유지) · 손대지 않은 legacy · 해소 불능 반환(후보) · framework 포트."""
+    dp = _load_module(EXECUTOR, "_design_pregate_s2")
+    out: "list[str]" = []
+    port = "application/billing/application_layer/port/ledger"
+
+    def spec(plan: "list[str]", symbols: "list[str]") -> str:
+        return ("# s2\n\n<!-- machine: file-plan -->\n```paths\n" + "\n".join(plan) + "\n```\n\n"
+                "<!-- machine: symbols -->\n```symbols\n" + "\n".join(symbols) + "\n```\n")
+
+    def run(label: str, text: str, real: "dict[str, str]", want: "list[tuple[str, bool]]") -> None:
+        plan, errors = dp.parse_spec(text)
+        if errors or plan is None:
+            out.append(f"S-2[{label}] 명세 파싱 실패: {errors}")
+            return
+        with tempfile.TemporaryDirectory(prefix="pregate-s2-") as td:
+            copy = Path(td)
+            for rel, body in real.items():
+                (copy / rel).parent.mkdir(parents=True, exist_ok=True)
+                (copy / rel).write_text(body, encoding="utf-8")
+            got = [(f.owner, f.confirmed) for f in dp.check_in_argument_forecast(plan, copy)]
+        if got != want:
+            out.append(f"S-2[{label}] = {got} ≠ 기대 {want}")
+
+    run("현장형 양성(import 행 없음)", spec(
+        [f"add\t{port}/ledger_port.py", f"add\t{port}/entry_in.py"],
+        [f"{port}/entry_in.py::EntryIn {{amount: int}}", f"{port}/ledger_port.py::LedgerPort(ABC) {{}}",
+         f"{port}/ledger_port.py::LedgerPort.record(self, entry: EntryIn) -> None"]), {},
+        [("LedgerPort.record", True)])
+    run("컨테이너 안(tuple[XIn, ...])", spec(
+        [f"add\t{port}/ledger_port.py", f"add\t{port}/entry_in.py"],
+        [f"{port}/entry_in.py::EntryIn {{amount: int}}", f"{port}/ledger_port.py::LedgerPort(ABC) {{}}",
+         f"{port}/ledger_port.py::LedgerPort.record_many(self, entries: tuple[EntryIn, ...]) -> None"]), {},
+        [("LedgerPort.record_many", True)])
+    run("_out 개명(음성)", spec(
+        [f"add\t{port}/ledger_port.py", f"add\t{port}/entry_out.py"],
+        [f"{port}/entry_out.py::EntryOut {{amount: int}}", f"{port}/ledger_port.py::LedgerPort(ABC) {{}}",
+         f"{port}/ledger_port.py::LedgerPort.record(self, entry: EntryOut) -> None"]), {}, [])
+    run("반환 중계(음성)", spec(
+        [f"add\t{port}/ledger_port.py", f"add\t{port}/entry_in.py"],
+        [f"{port}/entry_in.py::EntryIn {{amount: int}}", f"{port}/ledger_port.py::LedgerPort(ABC) {{}}",
+         f"{port}/ledger_port.py::LedgerPort.fetch(self) -> EntryIn",
+         f"{port}/ledger_port.py::LedgerPort.record(self, entry: EntryIn) -> None"]), {}, [])
+    run("필드 중계(음성)", spec(
+        [f"add\t{port}/ledger_port.py", f"add\t{port}/page_in.py", f"add\t{port}/item_in.py"],
+        [f"{port}/item_in.py::ItemIn {{x: int}}", f"{port}/page_in.py::PageIn {{items: tuple[ItemIn, ...]}}",
+         f"{port}/ledger_port.py::LedgerPort(ABC) {{}}",
+         f"{port}/ledger_port.py::LedgerPort.search(self) -> PageIn",
+         f"{port}/ledger_port.py::LedgerPort.detail(self, item: ItemIn) -> None"]), {}, [])
+    real_port = ("from abc import ABC\n\nfrom application.billing.application_layer.port.ledger.entry_in import EntryIn\n\n\n"
+                 "class LedgerPort(ABC):\n    def get(self) -> EntryIn: ...\n")
+    real_in = "class EntryIn:\n    amount: int\n"
+    run("update 부분 선언 — 실물 반환 유지(음성)", spec(
+        [f"update\t{port}/ledger_port.py"],
+        [f"{port}/ledger_port.py::LedgerPort(ABC) {{}}",
+         f"{port}/ledger_port.py::LedgerPort.put(self, item: EntryIn) -> None"]),
+        {f"{port}/ledger_port.py": real_port, f"{port}/entry_in.py": real_in}, [])
+    legacy_port = ("from abc import ABC\n\nfrom application.billing.application_layer.port.ledger.entry_in import EntryIn\n\n\n"
+                   "class LedgerPort(ABC):\n    def put(self, item: EntryIn) -> None: ...\n")
+    run("손대지 않은 legacy 메서드(음성)", spec(
+        [f"update\t{port}/ledger_port.py"],
+        [f"{port}/ledger_port.py::LedgerPort(ABC) {{}}", f"{port}/ledger_port.py::LedgerPort.touch(self) -> None",
+         f"{port}/ledger_port.py::LedgerPort.put(self, item: EntryIn) -> None"]),
+        {f"{port}/ledger_port.py": legacy_port, f"{port}/entry_in.py": real_in}, [])
+    run("typing 컨테이너 반환 중계(import 행 없음 · 음성)", spec(
+        [f"add\t{port}/ledger_port.py", f"add\t{port}/z_in.py"],
+        [f"{port}/z_in.py::ZIn {{v: int}}", f"{port}/ledger_port.py::LedgerPort(ABC) {{}}",
+         f"{port}/ledger_port.py::LedgerPort.stream(self) -> Iterator[ZIn]",
+         f"{port}/ledger_port.py::LedgerPort.push(self, z: ZIn) -> None"]), {}, [])
+    run("해소 불능 반환 안의 같은 이름(후보)", spec(
+        [f"add\t{port}/ledger_port.py", f"add\t{port}/z_in.py"],
+        [f"{port}/z_in.py::ZIn {{v: int}}", f"{port}/ledger_port.py::LedgerPort(ABC) {{}}",
+         f"{port}/ledger_port.py::LedgerPort.stream(self) -> Page[ZIn]",
+         f"{port}/ledger_port.py::LedgerPort.push(self, z: ZIn) -> None"]), {}, [("LedgerPort.push", False)])
+    # 검토 I-m2 — typing 컨테이너 인자(import 행 없음)도 잎까지 본다
+    for head_, ann in (("Optional", "Optional[EntryIn]"), ("Sequence", "Sequence[EntryIn]"),
+                       ("Mapping", "Mapping[str, EntryIn]"), ("Annotated", "Annotated[EntryIn, 'x']")):
+        run(f"{head_} 인자(양성)", spec(
+            [f"add\t{port}/ledger_port.py", f"add\t{port}/entry_in.py"],
+            [f"{port}/entry_in.py::EntryIn {{amount: int}}", f"{port}/ledger_port.py::LedgerPort(ABC) {{}}",
+             f"{port}/ledger_port.py::LedgerPort.record(self, entry: {ann}) -> None"]), {},
+            [("LedgerPort.record", True)])
+    other = "application/billing/application_layer/port/other"
+    run("다른 폴더의 동명 반환은 중계가 아니다(양성)", spec(
+        [f"add\t{port}/ledger_port.py", f"add\t{port}/entry_in.py", f"add\t{other}/other_port.py",
+         f"add\t{other}/entry_in.py"],
+        [f"{port}/entry_in.py::EntryIn {{amount: int}}", f"{other}/entry_in.py::EntryIn {{v: int}}",
+         f"{other}/other_port.py::OtherPort(ABC) {{}}", f"{other}/other_port.py::OtherPort.get(self) -> EntryIn",
+         f"{port}/ledger_port.py::LedgerPort(ABC) {{}}",
+         f"{port}/ledger_port.py::LedgerPort.record(self, entry: EntryIn) -> None"]), {},
+        [("LedgerPort.record", True)])
+    # 검토 I-m3 — legacy 의 기존 `_in` 인자는 빚(문면 차이·서명의 다른 변경 무관) · 새로 들이는 `_in` 인자만 예보
+    str_legacy = legacy_port.replace("item: EntryIn", "item: 'EntryIn'")
+    run("legacy 문자열 주석(음성)", spec(
+        [f"update\t{port}/ledger_port.py"],
+        [f"{port}/ledger_port.py::LedgerPort(ABC) {{}}",
+         f"{port}/ledger_port.py::LedgerPort.put(self, item: EntryIn) -> None"]),
+        {f"{port}/ledger_port.py": str_legacy, f"{port}/entry_in.py": real_in}, [])
+    run("legacy 서명 변경 · 기존 _in 인자 유지(음성)", spec(
+        [f"update\t{port}/ledger_port.py"],
+        [f"{port}/ledger_port.py::LedgerPort(ABC) {{}}",
+         f"{port}/ledger_port.py::LedgerPort.put(self, item: EntryIn, *, force: bool = False) -> None"]),
+        {f"{port}/ledger_port.py": legacy_port, f"{port}/entry_in.py": real_in}, [])
+    run("legacy 에 새 _in 인자(양성)", spec(
+        [f"update\t{port}/ledger_port.py", f"add\t{port}/extra_in.py"],
+        [f"{port}/extra_in.py::ExtraIn {{v: int}}", f"{port}/ledger_port.py::LedgerPort(ABC) {{}}",
+         f"{port}/ledger_port.py::LedgerPort.put(self, item: EntryIn, extra: ExtraIn) -> None"]),
+        {f"{port}/ledger_port.py": legacy_port, f"{port}/entry_in.py": real_in}, [("LedgerPort.put", True)])
+    fw = "framework/notify"
+    run("framework 포트(양성)", spec(
+        [f"add\t{fw}/notify_port.py", f"add\t{fw}/message_in.py"],
+        [f"{fw}/message_in.py::MessageIn {{body: str}}", f"{fw}/notify_port.py::NotifyPort(ABC) {{}}",
+         f"{fw}/notify_port.py::NotifyPort.send(self, message: MessageIn) -> None"]), {},
+        [("NotifyPort.send", True)])
     return out
 
 
@@ -979,6 +1298,7 @@ def main(argv: "list[str]") -> int:
     failures.extend(_unit_checks())
     failures.extend(_existence_unit_checks())
     failures.extend(_enforce_unit_checks())
+    failures.extend(_in_argument_unit_checks())
     try:
         _run_execution_modes_bundle(scratch, failures)
         _run_base_bundle(scratch, failures)
@@ -987,6 +1307,7 @@ def main(argv: "list[str]") -> int:
         _run_imports_bundle(scratch, failures)
         _run_enforce_bundle(scratch, failures)
         _run_checkreport_bundle(scratch, failures)
+        _run_inflow_bundle(scratch, failures)
 
         if failures:
             print("\nFAIL — pre-gate 픽스처 기대 불일치:")
