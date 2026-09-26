@@ -751,3 +751,9 @@ djr:R-3497 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 djr:R-3498 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
 djr:R-3499 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3502 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3503 djr:enforcedBy <https://numchida.com/ns/djr#c/behavior_guard.py> .
+
+djr:R-3504 djr:enforcedBy <https://numchida.com/ns/djr#c/behavior_guard.py> .

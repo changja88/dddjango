@@ -25,6 +25,9 @@
 <https://numchida.com/ns/djr#a/command-dddjango> a djr:Agent ;
     skos:prefLabel "command-dddjango"@ko .
 
+<https://numchida.com/ns/djr#c/behavior_guard.py> a djr:Checker ;
+    skos:prefLabel "behavior_guard.py"@ko .
+
 <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py> a djr:Checker ;
     skos:prefLabel "check-api-error-controller-contract.py"@ko .
 

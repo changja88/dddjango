@@ -2644,6 +2644,22 @@ djr:R-3422 a djr:Obligation ;
     prov:specializationOf djr:R-3422 ;
     djr:revision 1 .
 
+djr:R-3507 a djr:Exception ;
+    skos:prefLabel "0C 창 close green 테스트 치환 hunk 는 일반 retain 무편집의 예외 — 치환이 명세 이동·개명과 맞는지만 감사"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3507@2026-09-27> .
+
+<https://numchida.com/ns/djr#R-3507@2026-09-27> a djr:Expression ;
+    prov:specializationOf djr:R-3507 ;
+    djr:revision 1 .
+
+djr:R-3508 a djr:Obligation ;
+    skos:prefLabel "0T 창 테스트 편집 hunk 는 ⓐ 항목과 대조해 전후 보호 동등 감사(단언 약화·같은 이름 재작성 — close 사각)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3508@2026-09-27> .
+
+<https://numchida.com/ns/djr#R-3508@2026-09-27> a djr:Expression ;
+    prov:specializationOf djr:R-3508 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/agents/discipline-reviewer.md> a djr:Document ;
     skos:prefLabel "agent-discipline-reviewer"@ko .
 
@@ -2844,8 +2860,8 @@ djr:R-3422 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s005> ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
-    djr:statesNorm djr:R-0897, djr:R-0898, djr:R-0899, djr:R-0900 ;
-    djr:text "- **Phase 2 hunk 대조**: 모든 test diff hunk를 승인 행과 unique production failure에 대조한다. `add/update`만 새·변경 Red와 test edit을 허용하고, `reuse/reject`는 write 0, 일반 `retain`은 무편집, `remove/weaken`은 승인 exact target과 종료 근거를 요구한다. `implementation-test`는 입장 승인 뒤 mechanics·assertion 품질을 판단할 때만 적용하며, 그 recipe로 입장 결정을 새로 만들지 않는다.\n"@ko .
+    djr:statesNorm djr:R-0897, djr:R-0898, djr:R-0899, djr:R-0900, djr:R-3507, djr:R-3508 ;
+    djr:text "- **Phase 2 hunk 대조**: 모든 test diff hunk를 승인 행과 unique production failure에 대조한다. `add/update`만 새·변경 Red와 test edit을 허용하고, `reuse/reject`는 write 0, 일반 `retain`은 무편집, `remove/weaken`은 승인 exact target과 종료 근거를 요구한다. `implementation-test`는 입장 승인 뒤 mechanics·assertion 품질을 판단할 때만 적용하며, 그 recipe로 입장 결정을 새로 만들지 않는다. 슬라이스 0 창의 hunk 는 창 종류로 가른다(2026-09-27): 0C 창에서 Coordinator 의 `behavior_guard.py close` 가 green 으로 판정한 테스트 치환 hunk(close 기록의 `green_files` — 옮긴·개명한 코드를 따라간 import·문자열 속 경로·이름)는 일반 `retain` 무편집의 예외다 — 치환이 명세의 이동·개명과 맞는지만 본다. 0T 창의 테스트 편집 hunk 는 ⓐ 항목과 대조해 전후 보호가 같은지 본다(단언 약화·같은 이름 재작성·parametrize 감소·conftest 이동의 범위 변화는 close 가 못 보는 자리다). 창별 close 보고는 Coordinator 가 감사 입력에 붙인다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s005/b6> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s005> ;

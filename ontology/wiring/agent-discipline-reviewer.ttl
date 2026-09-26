@@ -755,3 +755,7 @@ djr:R-1147 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 djr:R-3404 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
 djr:R-3422 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3507 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-3508 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .

@@ -26,7 +26,7 @@
 
 <!-- MANIFEST-FACTS (기계 렌더 — 손으로 고치지 않는다) -->
 
-**봉인 실측**(기계 렌더 — 해시 정본은 `T2-0b-manifest.json`): 그룹 **10** · 파일 **261** · 배정 18런
+**봉인 실측**(기계 렌더 — 해시 정본은 `T2-0b-manifest.json`): 그룹 **10** · 파일 **262** · 배정 18런
 
 | 그룹 | 파일 |
 |---|---|
@@ -34,7 +34,7 @@
 | `harness` | 35 |
 | `orders` | 8 |
 | `packs` | 3 |
-| `pipeline` | 6 |
+| `pipeline` | 7 |
 | `plugin_payload` | 64 |
 | `preregistration` | 1 |
 | `protocol` | 6 |
@@ -43,7 +43,7 @@
 
 **스키마**: `arm-receipt/0` · `findings/0` · `gate-contract/0` · `gate-introduced/0` · `injection-capacity/3` · `regen-prompt/1` · `rulepack/1`
 
-**미러**: 39파일 동일 · **설치본**: {'claude': '2.18.4', 'codex': '2.18.4'} · cache_parity claude=drift codex=drift
+**미러**: 40파일 동일 · **설치본**: {'claude': '2.18.4', 'codex': '2.18.4'} · cache_parity claude=drift codex=drift
 
 <!-- /MANIFEST-FACTS -->
 

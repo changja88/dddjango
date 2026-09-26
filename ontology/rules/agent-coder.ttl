@@ -1056,6 +1056,22 @@ djr:R-3405 a djr:Override ;
     prov:specializationOf djr:R-3405 ;
     djr:revision 1 .
 
+djr:R-3505 a djr:Permission ;
+    skos:prefLabel "0C 창 — 옮긴·개명한 코드를 따라가는 테스트 치환 편집(import·문자열 경로·이름)은 소유 무관 coder · 로직·단언 무변 · 판정은 close"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3505@2026-09-27> .
+
+<https://numchida.com/ns/djr#R-3505@2026-09-27> a djr:Expression ;
+    prov:specializationOf djr:R-3505 ;
+    djr:revision 1 .
+
+djr:R-3506 a djr:Obligation ;
+    skos:prefLabel "0T 창 — ⓐ 수리 테스트 편집만(소유 무관 · 새 case·케이스 개명·제품 편집 금지) · 반대쪽 본문이 필요하면 편집 말고 보고"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3506@2026-09-27> .
+
+<https://numchida.com/ns/djr#R-3506@2026-09-27> a djr:Expression ;
+    prov:specializationOf djr:R-3506 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/agents/coder.md> a djr:Document ;
     skos:prefLabel "agent-coder"@ko .
 
@@ -1412,3 +1428,10 @@ djr:R-3405 a djr:Override ;
     djr:order 5 ;
     djr:statesNorm djr:R-2605 ;
     djr:text "- 명세·슬라이스 밖 기능을 만들지 않는다(스코프 고수).\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s006/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s006> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-3505, djr:R-3506 ;
+    djr:text "- **슬라이스 0 창**(2026-09-27): Coordinator 가 창 종류(0T | 0C)를 준다. **0C**(코드 정리)에서는 옮긴·개명한 코드를 따라가는 테스트 치환 편집(import·문자열 속 경로·이름)을 테스트 소유와 무관하게(외부 계약 테스트 포함) 네가 한다 — 테스트의 로직·단언은 바꾸지 않고, 판정은 Coordinator 의 `behavior_guard.py close` 다. **0T**(테스트 정리)에서는 입력된 ⓐ 항목을 고치는 테스트 편집만 테스트 소유와 무관하게 한다 — 새 case 를 더하거나 케이스 이름을 바꾸지 않고, 제품 코드를 편집하지 않는다(루트 pytest 설정 절은 테스트 쪽이다). 어느 창이든 반대쪽 본문(0C 의 테스트 로직 · 0T 의 제품 코드)을 고쳐야 정리가 되면 편집하지 말고 그 사실을 보고한다.\n"@ko .

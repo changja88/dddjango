@@ -77,6 +77,8 @@ GROUPS: "dict[str, dict]" = {
             "dddjango/scripts/registry_gate.py",
             # pre-gate 실행기 — 차단 승격(2026-09-03)으로 G1/G1′·G2 배너의 근거를 내는 실행 경로가 됐다(설계 §9-6).
             "dddjango/scripts/design_pregate.py",
+            # 동작 보존 장치 — 리팩터 창 판정이 G2 배너 `동작 보존:` 행의 근거가 된다(로드맵 4).
+            "dddjango/scripts/behavior_guard.py",
             "dddjango/commands/dddjango.md",
             "codex-dddjango/skills/dddjango/SKILL.md",
         ],

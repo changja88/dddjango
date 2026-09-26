@@ -140,6 +140,11 @@ def main() -> int:
                        "예보용으로 돌린다(차단 모드 2026-09-03 승격 · G2 비대체 — R-3432~R-3438·R-3444·R-3445 · "
                        "`--check-report` 가 배너·G2 근거의 기계 출처) · "
                        "pregate_fixture_run 이 green/red 픽스처로 행동 고정")
+            elif rel.name == "behavior_guard.py":
+                why = ("동작 보존 장치(2026-09-27 로드맵 4 — 슬라이스 0 창의 테스트 고정·마이그레이션 무변 판정) — "
+                       "0T(제품 고정)·0C(테스트 고정 · 이동·개명 치환만 허용) 창을 open/close 로 재고 verify 가 "
+                       "G2 배너 `동작 보존:` 행의 기계 출처다(R-3503~R-3506 enforcedBy) · "
+                       "behavior_guard_fixture_run 이 20사례·창 절차로 행동 고정")
             elif rel.name == "pregate_symbol_kinds.json":
                 why = ("pre-gate Base 병기 의무 종류 소성물(R-3426 — 검사기 소스 기계 추출 닫힌 목록) — "
                        "저자는 workspace/tools/gen_pregate_symbol_kinds.py 하나뿐이고 --check 가 "

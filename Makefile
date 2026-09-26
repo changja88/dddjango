@@ -190,13 +190,14 @@ verify-base-backstop:
 
 verify-base-regen:
 	@set -euo pipefail; \
-	echo "[verify-base-regen] 검증 세트 (regen-golden·regen-loop·runtime-parity·rulepack-smoke·pregate-kinds·pregate-fixture)"; \
+	echo "[verify-base-regen] 검증 세트 (regen-golden·regen-loop·runtime-parity·rulepack-smoke·pregate-kinds·pregate-fixture·behavior-guard)"; \
 	PYTHONUTF8=1 python3 workspace/tools/regen_loop_prototype.py --self-test; \
 	PYTHONUTF8=1 python3 workspace/tools/regen_loop_smoke.py; \
 	PYTHONUTF8=1 python3 workspace/tools/runtime_parity_check.py; \
 	PYTHONUTF8=1 python3 workspace/tools/rulepack_smoke.py; \
 	PYTHONUTF8=1 python3 workspace/tools/gen_pregate_symbol_kinds.py --check; \
 	PYTHONUTF8=1 python3 workspace/tools/pregate_fixture_run.py; \
+	PYTHONUTF8=1 python3 workspace/tools/behavior_guard_fixture_run.py; \
 	PYTHONUTF8=1 python3 workspace/tools/pregate_transcription_smoke.py; \
 	PYTHONUTF8=1 python3 workspace/tools/pregate_field_report_smoke.py; \
 	PYTHONUTF8=1 python3 workspace/tools/field_report_checker_smoke.py
