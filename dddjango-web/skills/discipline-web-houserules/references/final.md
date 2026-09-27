@@ -101,7 +101,7 @@ web/
 | 신규 `<view>/` (화면 개념) | `view/`·`view_model/`·`state/`·`section/` 종류 4폴더 전부 — `form/`은 입력 form이 있는 화면에서 첫 Form 때 생성(골격 대상 아님, exception.py 판형) |
 | 신규 `client/<bc>/` | `<capability>_client.py` + `response/` — `exception.py`는 첫 계약 오류 표현 때 생성(골격 대상 아님) |
 
-- HTMX core의 입수·설치는 Coordinator의 web 배선 전제조건(ⓕ) 소관이다. 신규 core는 `static/htmx/htmx.min.js`, 기존 `static/js/htmx.min.js`·`htmx.js`는 기존 설치로만 소비한다. `motion.js`는 러너 채택 ≥1일 때 조건 설치하고 존재하면 byte 판형을 검증한다(§5⑤). 골격은 css/·js/·htmx/·images/ 네 폴더이며 기능 JS·선언 파일은 실제 요구가 있을 때만 생성한다.
+- HTMX core의 입수·설치는 Coordinator의 web 배선 전제조건 (6) 소관이다. 신규 core는 `static/htmx/htmx.min.js`, 기존 `static/js/htmx.min.js`·`htmx.js`는 기존 설치로만 소비한다. `motion.js`는 러너 채택 ≥1일 때 조건 설치하고 존재하면 byte 판형을 검증한다(§5⑤). 골격은 css/·js/·htmx/·images/ 네 폴더이며 기능 JS·선언 파일은 실제 요구가 있을 때만 생성한다.
 - **마커 파일**: Python 패키지 폴더(`.py`가 사는 곳 — `view/`·`view_model/`·`state/`·`form/`·`client/` 계열)는 비어 있어도 `__init__.py`를 둔다. HTML 전용 폴더(`section/`·`widget/`·`design_system/component/`)는 git이 빈 디렉터리를 추적하지 않으므로 비면 `.gitkeep`을 둔다. 두 마커 파일은 «직속 파일 금지»의 명시 예외다.
 - design_system은 foundation·component **2칸 시작** — `theme/`·`util/`은 *만들지 않는 칸*이다. 실수요가 생기면 그때 증설하고, 미리 파지 않는다.
 - **영구 test/ 없음** — 생성 앱의 `web/`에 `test/`·`test_*.py`·빈 테스트 파일을 만들지 않는다. 임시 Django 렌더·브라우저 smoke는 implementation-ui §2에 따라 실제 수행하고, 실행 결과와 스크린샷은 산출물 폴더에 보존한다. 기존 프로젝트의 적용 가능한 검사는 함께 실행한다. 플러그인 자체의 회귀 픽스처는 이 생성 앱 규칙의 대상이 아니다.
@@ -194,24 +194,27 @@ dddjango-web 파이프라인은 이 하우스룰의 기계 판별 가능 부분�
 
 ```
 python "${CLAUDE_PLUGIN_ROOT}"/scripts/backstop.py <대상 프로젝트 루트> [--diff-base <commit>] [--all]
+python "${CLAUDE_PLUGIN_ROOT}"/scripts/backstop.py <대상 프로젝트 루트> --debt-scan [--json <경로>]
+python "${CLAUDE_PLUGIN_ROOT}"/scripts/backstop.py <대상 프로젝트 루트> --debt-residual <산출물 폴더>
 ```
 
 (파이프라인에서는 Coordinator가 플러그인 루트를 해소해 호출한다 — 에이전트가 경로를 추측하지 않는다.)
 
 - 검사 패밀리 4종: **WS(구조·골격) · WI(격리 — §5) · WN(명명 — §4) · WP(UI 실행 경계 — §5⑤)**. 발견은 전부 blocker — 일괄 반송.
 - **exit 계약**: 0 = 통과 / 1 = 미실행(전제 실패 — 통과가 아니다) / 2 = blocker 발견·일괄 반송.
-- **게이트 의미론**: 구조·명명은 **added**(새로 만든 파일·디렉터리)만, 격리·순수성은 touched 파일의 **added 줄**만, 골격 완비는 **신규 단위**(영역·화면 개념·client BC 폴더)만. → **레거시(기존 drift)에는 불발화한다** — "새 코드부터 표준" 원칙의 기계 집행.
-- `--all`은 게이트 무시 전역 감사용 — 레거시 프로젝트에서 발견 폭주가 정상이며 파이프라인 게이트 용도가 아니다.
+- **게이트 의미론**: 구조·명명은 **added**(새로 만든 파일·디렉터리)만, 격리·순수성은 touched 파일의 **added 줄**만, 골격 완비는 **신규 단위**(영역·화면 개념·client BC 폴더)만. → 이번 작업이 들인 위반만 잡는다. 기존 코드의 위반은 면제가 아니라 빚이며 아래 빚 모드가 다룬다.
+- **빚 모드**: `--debt-scan`은 web/ 전체(git 추적 + 미추적·비무시 파일)를 «모두 새 것»으로 보고 4패밀리를 돌려 키 (검사, 경로)마다 `C<n>`을 매긴다(Phase 0 빚 스캔 — exit 0 = 빚 0[git 저장소에 web/이 아직 없는 첫 실행 포함] · 2 = 빚 있음 · 1 = 실행 불능[비git · web/이 심볼릭 링크이거나 git 밖·무시돼 우주가 빔]). 브라운필드 허용 규범 — 기존 legacy HTMX core 설치 1개와 그 base 로드 태그(core 중복이 없을 때) · motion.js 판형(플러그인 갱신 사안) · 기존 단위의 골격 미비 — 은 빚으로 내지 않는다. `--debt-residual <산출물 폴더>`는 같은 의미론으로 다시 스캔해 `debt-g2.json`에 쓰고 `refactor-scope.md`의 마지막 `## G0` 절부터 순서대로 G0·G0 재승인 절의 ⓐ·요구 키를 더하고 `ⓐ 재상정` 절의 키를 뺀 집합이 사라졌는지 센다(G2 — exit 0 = 잔존 0 · 2 = 잔존 있음 · 1 = 판정 불가[마지막 `## G0` 절이 `debt-g0.json` 스캔보다 이르면 이번 요청의 G0 절이 없는 것이다]). 두 플래그는 단독 모드다(`--diff-base`·`--all`·`--only`·`--design-build`와 함께 쓰지 않는다).
+- `--all`은 게이트 무시 전역 감사용 — 레거시 프로젝트에서 발견 폭주가 정상이며 파이프라인 경로가 아니다(빚 조사는 `--debt-scan`).
 - 순환 등 래칫형 검사가 도입되면 기준선은 `.dddjango-web/backstop-baseline.json`(커밋 대상).
 - **green 판정**: `py_compile`·`manage.py check`는 문법/시스템 검사다. 화면 슬라이스는 실제 렌더 내용과 브라우저 확인까지 보고한다(implementation-ui §2). 미실행은 미검증으로 남기고 구조 검사 통과와 구별한다. **WP6**는 추가/변경된 잘못된 Django 짧은 주석을 차단한다(유효한 단일줄·comment 블록·verbatim 원문 예시는 제외).
 - **CSS 병치 결정**: design_system CSS(tokens.css·motion.css)는 `design_system/foundation/` **병치**가 결정이다 — 화면 CSS(`static/css/`)와 별개다. 병치 파일의 정적 서빙은 커맨드의 web 배선이 해결한다(아래 handoff).
-- **호스트 배선 handoff**: 호스트 프로젝트 배선(INSTALLED_APPS·TEMPLATES DIRS·STATICFILES_DIRS 프리픽스 튜플·ROOT_URLCONF include·`ALLOWED_HOSTS`의 "testserver"·vendored JS 설치[htmx — ⓕ·motion.js — 조건 설치])은 **커맨드(Coordinator Phase 0 «web 배선 전제조건 검사»·Phase 2 진입 준비) 소관**이다 — 이 스킬은 배선을 규정하지 않는다.
+- **호스트 배선 handoff**: 호스트 프로젝트 배선(INSTALLED_APPS·TEMPLATES DIRS·STATICFILES_DIRS 프리픽스 튜플·ROOT_URLCONF include·`ALLOWED_HOSTS`의 "testserver"·vendored JS 설치[htmx — Phase 0 step 1 (6)·motion.js — 조건 설치])은 **커맨드(Coordinator Phase 0 «web 배선 전제조건 검사»·Phase 2 진입 준비) 소관**이다 — 이 스킬은 배선을 규정하지 않는다.
 - **반송 패밀리 → 교정 절 백링크**: WS(구조·골격) → §1 트리·§2 성장·§3 골격 / WI(격리) → §5 / WN(명명) → §4 / WP(순수성) → §5⑤.
 - **에이전트 분업**: 러너가 잡는 것(경로·격리·명명·순수성)은 흉내내지 말고 이 문서대로 만들면 통과한다. 러너가 못 보는 **의미 판별 6종**(view/section, 화면 전속, BC 어휘, 영역 귀속, 두 번째 개념, base «거의 빈»)은 `undecidable-web.md`가 판별 절차·배정의 단일 출처다.
 
 ## §8. 표기 표준화 — 브라운필드 관행 교정 사전
 
-대상 프로젝트에서 흔히 발견되는 Django 관행을 표준 어휘로 옮기는 교정 사전이다. 적용 경계는 경계 규칙 그대로 — **표기는 파일(모든 새 파일)·구조는 단위(신규 단위부터)**, 기존 파일의 개명·이동을 요구하지 않는다.
+대상 프로젝트에서 흔히 발견되는 Django 관행을 표준 어휘로 옮기는 교정 사전이다. 새 코드의 적용 경계는 경계 규칙 그대로다 — **표기는 파일(모든 새 파일)·구조는 단위(신규 단위부터)**. 기존 코드에 남은 관행은 면제가 아니라 빚이다 — 백스톱이 내는 것은 기능 요청의 G0 빚 질문(슬라이스 0)으로, 백스톱이 내지 않는 관행 교정(이 사전의 대부분)은 리팩토링 입구(Claude `/dddjango-web:refactor` · Codex `$dddjango-web-refactor`)로 다룬다. 기능 작업이 기존 파일을 이 사전대로 옮기거나 개명하지는 않는다(SKILL §1 1번의 «이동»).
 
 | 발견된 관행 | 표준 |
 |---|---|

@@ -33,13 +33,13 @@ there is no project-local source-bearing build. A `design_source` object of type
 build requires an explicit build path. `DESIGN_SYSTEM` token pointers alone do not
 signal a screen design.
 
-A non-design run may omit `--design-build` without rechecking completed history
+A non-design run may omit `--design-build` without rechecking past design builds
 only when its valid `--diff-base` resolves to exactly one current state's
 `git_snapshot`, that state says `has_design_screen=false`, and its build has no
-source markers. Every historical design build must explicitly be `finalize`,
-`g2_approved=true`, `implementation_visual=verified`, `design_status=ready`, with
-all recorded slices done. Config and other build records must be unchanged since
-the base, including deletions and untracked files. The runner prints a skip notice;
+source markers. `.dddjango-web/config.json` must be unchanged since the base,
+including deletion and an untracked copy. Past design builds are not judgment
+input for this run: their phase, approval, slice status and record changes do not
+block the skip. The runner prints a skip notice with the past build count;
 missing or ambiguous conditions retain the full design check. Explicit build
 selection still identifies the requested build; it does not infer or authenticate
 the user's current scope from a folder name. The final blocker total

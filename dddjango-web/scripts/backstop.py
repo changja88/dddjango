@@ -6,9 +6,14 @@
 #   python backstop.py <대상 프로젝트 루트> [--diff-base <commit>] [--all]
 #                      [--only ws,wi,wn,wp|<검사ID>…]
 #                      [--design-build <증거 build 디렉터리>]
+#   python backstop.py <대상 프로젝트 루트> --debt-scan [--json <경로>]
+#   python backstop.py <대상 프로젝트 루트> --debt-residual <.dddjango-web/<폴더>>
 #
 # 종료코드: 0=clean / 1=사용·내부 오류(미실행 — 통과가 아니다) / 2=blocker(발견 일괄
 # 출력 — fail-fast 금지). (houserules §7 exit 계약)
+# 빚 모드(src/debt.py — Phase 0 step 4′·G2): --debt-scan 은 web/ 전체 기존 위반(빚)을
+# 키 (검사, 경로)로 동결하고, --debt-residual 은 G0 절의 ⓐ·요구 키 잔존을 센다.
+# 두 플래그는 서로, 그리고 --diff-base·--all·--only·--design-build 와 함께 쓰지 않는다.
 # 게이트: 구조·명명=added 파일/디렉터리, 격리·순수성=touched 파일의 added 줄,
 # 골격 완비=신규 단위 → 레거시 불발화. 비git·기준 부재 시 전역 검사로 퇴화 notice.
 # 디자인 작업은 인자와 프로젝트의 현재/추적 원본 표식으로 식별한다.
@@ -27,13 +32,15 @@ from src.check_structure import run_structure  # noqa: E402
 from src.check_imports import run_imports  # noqa: E402
 from src.check_naming import run_naming  # noqa: E402
 from src.check_purity import run_purity  # noqa: E402
+from src.debt import cli_residual, cli_scan  # noqa: E402
 from check_design_evidence import Defects, implementation_digest, validate_inputs, validate_visual  # noqa: E402
 
 TOTAL_CHECKS: int = 26  # WS8 + WI4 + WN8 + WP6
 
 _USAGE: str = ('사용: python backstop.py <대상 프로젝트 루트> '
                '[--diff-base <commit>] [--all] [--only ws,wi,wn,wp] '
-               '[--design-build <dir>]')
+               '[--design-build <dir>] | --debt-scan [--json <경로>] | '
+               '--debt-residual <폴더>')
 
 
 def project_design_record(root: Path, name: str) -> dict | None:
@@ -94,7 +101,7 @@ def design_commit(root: Path, reference: str) -> str | None:
 
 def current_nondesign_scope(root: Path, diff_base: str | None, builds: list[Path],
                            states: dict[Path, dict]) -> bool:
-    """Skip only completed, unchanged history for one explicit non-design snapshot."""
+    """Skip past design builds for one uniquely identified current non-design snapshot."""
     if not diff_base or not builds:
         return False
     base = design_commit(root, diff_base)
@@ -111,25 +118,12 @@ def current_nondesign_scope(root: Path, diff_base: str | None, builds: list[Path
     if (state.get('has_design_screen') is not False or current in builds
             or not (current / 'build-state.json').is_file()):
         return False
-    for build in builds:
-        prior = states.get(build, {})
-        if (prior.get('has_design_screen') is not True or prior.get('phase') != 'finalize'
-                or prior.get('g2_approved') is not True or prior.get('implementation_visual') != 'verified'
-                or prior.get('design_status') != 'ready'):
-            return False
-        if 'slices' in prior and (not isinstance(prior['slices'], list)
-                or any(not isinstance(row, dict) or row.get('status') != 'done' for row in prior['slices'])):
-            return False
-    for command in (['diff', '--relative', '--name-only', '-z', '--no-renames', base, '--', '.dddjango-web'],
-                    ['ls-files', '--others', '-z', '--', '.dddjango-web']):
+    for command in (['diff', '--relative', '--name-only', '-z', '--no-renames', base, '--',
+                     '.dddjango-web/config.json'],
+                    ['ls-files', '--others', '-z', '--', '.dddjango-web/config.json']):
         result = subprocess.run(['git', '-C', str(root), *command], capture_output=True)
-        if result.returncode != 0:
+        if result.returncode != 0 or result.stdout.strip(b'\0'):
             return False
-        for name in result.stdout.decode('utf-8').strip('\0').split('\0'):
-            parts = Path(name).parts
-            if (name == '.dddjango-web/config.json'
-                    or (len(parts) >= 3 and parts[0] == '.dddjango-web' and parts[1] != current.name)):
-                return False
     return True
 
 
@@ -139,6 +133,9 @@ def main(argv: List[str]) -> int:
     all_mode: bool = False
     only: Set[str] = set()
     design_build: Optional[str] = None
+    debt_scan: bool = False
+    debt_residual: Optional[str] = None
+    json_path: Optional[str] = None
 
     i: int = 0
     while i < len(argv):
@@ -163,6 +160,17 @@ def main(argv: List[str]) -> int:
                 print('[backstop] 사용 오류: --design-build 값 없음', file=sys.stderr)
                 return 1
             design_build = argv[i]
+        elif a == '--debt-scan':
+            debt_scan = True
+        elif a in ('--debt-residual', '--json'):
+            i += 1
+            if i >= len(argv):
+                print('[backstop] 사용 오류: %s 값 없음' % a, file=sys.stderr)
+                return 1
+            if a == '--json':
+                json_path = argv[i]
+            else:
+                debt_residual = argv[i]
         elif a.startswith('--'):
             print('[backstop] 사용 오류: 알 수 없는 옵션 %s' % a, file=sys.stderr)
             return 1
@@ -177,6 +185,15 @@ def main(argv: List[str]) -> int:
     if not root.is_dir():
         print('[backstop] 사용 오류: 디렉터리 아님 — %s' % target, file=sys.stderr)
         return 1
+
+    if debt_scan or debt_residual is not None or json_path is not None:
+        if (debt_scan == (debt_residual is not None) or diff_base is not None or all_mode
+                or only or design_build is not None or (json_path is not None and not debt_scan)):
+            print('[backstop] 사용 오류: --debt-scan·--debt-residual 은 단독 모드다 — '
+                  '서로, 그리고 --diff-base·--all·--only·--design-build 와 함께 쓰지 않는다'
+                  '(--json 은 --debt-scan 전용)', file=sys.stderr)
+            return 1
+        return cli_scan(root, json_path) if debt_scan else cli_residual(root, debt_residual)
 
     def family_on(fam: str) -> bool:
         return (not only) or fam in only or any(o.startswith(fam) and len(o) > 2 for o in only)
@@ -232,7 +249,8 @@ def main(argv: List[str]) -> int:
         elif current_nondesign_scope(root, diff_base, discovered, states):
             builds = []
             ctx.notices.append('[info] git_snapshot이 일치하는 현재 비시안 작업 — '
-                               '완료된 과거 시안 빌드 %d개의 visual 검사 생략' % len(discovered))
+                               '과거 시안 빌드 %d개의 visual 검사 생략(판정 입력 아님)'
+                               % len(discovered))
         elif configured and not discovered:
             design_defects.append('design_source is configured but no design build was found; --design-build required')
         for build in builds:

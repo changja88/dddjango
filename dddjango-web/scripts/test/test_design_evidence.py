@@ -643,12 +643,12 @@ class EvidenceTests(unittest.TestCase):
                 if mutation == 'ambiguous-snapshot':
                     shutil.rmtree(other)
 
-    def test_backstop_nondesign_exception_keeps_changed_or_unfinished_history(self):
+    def test_backstop_nondesign_skip_ignores_history_state(self):
         projects = self.project
         scenarios = {'unfinished': {'g2_approved': False}, 'blocked': {'design_status': 'blocked'},
                      'legacy': {'implementation_visual': None}, 'implementing': {'phase': 'implement'},
                      'pending-slice': {'slices': [{'status': 'pending'}]},
-                     'deleted-state': {}, 'new-evidence': {}}
+                     'deleted-state': {}, 'new-evidence': {}, 'stopped-folder': {}}
         for mutation, state_changes in scenarios.items():
             with self.subTest(mutation=mutation):
                 self.project = projects / mutation
@@ -659,8 +659,14 @@ class EvidenceTests(unittest.TestCase):
                     (previous / 'build-state.json').unlink()
                 elif mutation == 'new-evidence':
                     (previous / 'new-capture.png').write_bytes(png())
+                elif mutation == 'stopped-folder':
+                    stopped = previous.with_name('stopped')
+                    stopped.mkdir()
+                    (stopped / 'refactor-scope.md').write_text('## G0 정지 2026-09-27 10:00\n')
+                    (stopped / 'debt-g0.json').write_text('{}')
                 result = self.backstop('--diff-base', snapshot)
-                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn('판정 입력 아님', result.stdout)
         self.project = projects
 
 

@@ -98,11 +98,12 @@ verify-web:
 	echo "[verify-web] codex 미러 byte 대조(scripts·assets)"; \
 	diff -rq --exclude=__pycache__ dddjango-web/scripts codex-dddjango-web/skills/dddjango-web/scripts; \
 	diff -rq dddjango-web/assets codex-dddjango-web/skills/dddjango-web/assets; \
-	echo "[verify-web] references byte 미러 대조(implementation-ui·architecture-web)"; \
+	echo "[verify-web] references byte 미러 대조(implementation-ui·architecture-web·discipline-web-houserules)"; \
 	cmp -s dddjango-web/skills/implementation-ui/references/design-evidence.md codex-dddjango-web/skills/implementation-ui/references/design-evidence.md || { echo "ERROR: implementation-ui design-evidence.md Codex byte 미러 불일치"; exit 1; }; \
 	cmp -s dddjango-web/skills/implementation-ui/references/design-acquisition.md codex-dddjango-web/skills/implementation-ui/references/design-acquisition.md || { echo "ERROR: implementation-ui design-acquisition.md Codex byte 미러 불일치"; exit 1; }; \
 	cmp -s dddjango-web/skills/implementation-ui/references/final.md codex-dddjango-web/skills/implementation-ui/references/final.md || { echo "ERROR: implementation-ui final.md Codex byte 미러 불일치"; exit 1; }; \
 	cmp -s dddjango-web/skills/architecture-web/references/final.md codex-dddjango-web/skills/architecture-web/references/final.md || { echo "ERROR: architecture-web final.md Codex byte 미러 불일치"; exit 1; }; \
+	cmp -s dddjango-web/skills/discipline-web-houserules/references/final.md codex-dddjango-web/skills/discipline-web-houserules/references/final.md || { echo "ERROR: discipline-web-houserules final.md Codex byte 미러 불일치"; exit 1; }; \
 	echo "[verify-web] REQUEST_GUIDE byte 미러 대조"; \
 	cmp -s dddjango-web/REQUEST_GUIDE.md codex-dddjango-web/REQUEST_GUIDE.md || { echo "ERROR: dddjango-web REQUEST_GUIDE 누락 또는 Codex byte 미러 불일치"; exit 1; }; \
 	echo "[verify-web] 요청 가이드 배포·발견 계약"; \

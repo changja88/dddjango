@@ -22,9 +22,10 @@ byte-exact로 미러하고, checker script는 별도 byte mirror로 검증한다
   `agents/*.md`(7개 subagent) +
   `skills/*/SKILL.md`(11개 스킬) + `scripts/check-*.py`(결정적 백스톱 27종).
 - `dddjango-web/` — **자매 플러그인**(웹 표현계층 빌더 — `/dddjango-web`). 커맨드 1 +
-  에이전트 4 + 스킬 4 + `scripts/backstop.py`(검사 24종)·시안 절단 도구.
+  에이전트 4 + 스킬 4 + `scripts/backstop.py`(검사 24종 · 빚 모드 `--debt-scan`·`--debt-residual`)·시안 절단 도구.
   **전 파일 산문 정본**(온톨로지 코퍼스 밖 — graph-owned 절 없음, md를 직접 수정한다).
-  Codex 미러는 `codex-dddjango-web/`. 픽스처 검증은 `make verify`의 `verify-web`이 실행.
+  Codex 미러는 `codex-dddjango-web/`. 픽스처 검증은 `make verify-web`으로 직접 돈다
+  (`make verify` 자동 경로 밖 — web 변경은 커밋 전에 실행한다).
   빌드 스펙 정본: `workspace/design/2026-08-23-web-presentation-layer-spec.md`.
 - `ontology/` — 규범 **정본**(그래프): `rules/*.ttl`(30 문서 키) · `vocab/` · `shapes/` ·
   `wiring/` · `ISSUED`(채번 대장) · `LEDGER.tsv`(산문 절 기준선 원장).

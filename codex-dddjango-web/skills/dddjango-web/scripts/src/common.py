@@ -415,12 +415,7 @@ class BackstopContext:
                 files.append(fn if rel_dir == '.' else rel_dir + '/' + fn)
         files.sort()
 
-        # 프로젝트 패키지 실측 — settings.py(또는 settings/) 보유 루트 직속 패키지 (§5① 대상)
-        project_pkgs: Set[str] = set()
-        for child in root.iterdir():
-            if child.is_dir() and child.name not in ('web', '.git'):
-                if (child / 'settings.py').is_file() or (child / 'settings').is_dir():
-                    project_pkgs.add(child.name)
+        project_pkgs: Set[str] = _project_pkgs(root)
 
         git_repo: bool = _git(root, ['rev-parse', '--is-inside-work-tree']) == 'true'
         touched: Set[str] = set()
@@ -507,6 +502,32 @@ class BackstopContext:
 
         return BackstopContext(root, git_repo, diff_base, all_mode, files, dirs,
                                project_pkgs, touched, added, base_files, added_spans)
+
+    @staticmethod
+    def from_files(root: Path, files: List[str]) -> 'BackstopContext':
+        """주어진 web-상대 파일 목록을 전부 added 로 보는 컨텍스트(빚 스캔 전용).
+        dirs = 파일 조상 전부. base_files = 같은 목록이라 브라운필드 legacy core 소비
+        판정(WP2)은 이 트리 기준이다. 기준점이 없으므로 WS5 는 기존 notice 로 생략된다."""
+        ordered: List[str] = sorted(set(files))
+        dirs: Set[str] = set()
+        for f in ordered:
+            s: List[str] = segs_of(f)
+            for k in range(1, len(s)):
+                dirs.add('/'.join(s[:k]))
+        git_repo: bool = _git(root, ['rev-parse', '--is-inside-work-tree']) == 'true'
+        return BackstopContext(root, git_repo, None, True, ordered, dirs,
+                               _project_pkgs(root), set(ordered), set(ordered),
+                               set(ordered), {})
+
+
+def _project_pkgs(root: Path) -> Set[str]:
+    """프로젝트 패키지 실측 — settings.py(또는 settings/) 보유 루트 직속 패키지 (§5① 대상)."""
+    pkgs: Set[str] = set()
+    for child in root.iterdir():
+        if child.is_dir() and child.name not in ('web', '.git'):
+            if (child / 'settings.py').is_file() or (child / 'settings').is_dir():
+                pkgs.add(child.name)
+    return pkgs
 
 
 def _git(root: Path, args: List[str]) -> Optional[str]:

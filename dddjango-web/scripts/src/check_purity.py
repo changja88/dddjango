@@ -49,6 +49,12 @@ _STATIC_ARG_RE = re.compile(
     r'''\{%\s*static\s+(?:"([^"]+)"|'([^']+)')\s*%\}''')
 _FEATURE_JS_RE = re.compile(r'^static/js/[a-z0-9_]+\.js$')
 
+# WP1 core 중복 사유 · WP2 실행 순서 사유 — 빚 스캔의 브라운필드 면제(src/debt.py)가 발견
+# 문자열만으로 legacy core 설치·로드 태그를 식별한다. WP2 사유 끝에는 ` — <src 경로>` 가 붙는다.
+WP1_CORE_DUPLICATE_REASON: str = 'HTMX core 중복 — canonical과 legacy 설치를 합쳐 한 파일이어야 한다'
+WP2_ASYNC_REASON: str = 'async 실행 금지 — DOM·의존 순서를 보존한다'
+WP2_DEFER_REASON: str = 'classic 외부 스크립트는 defer가 필요하다'
+
 
 def _script_openers(text: str) -> List[Tuple[int, int, str]]:
     """quoted `>`를 건너뛰고 script 시작 태그의 정확한 offset 범위를 돌려준다."""
@@ -158,8 +164,7 @@ def run_purity(ctx: BackstopContext) -> List[Finding]:
                     '중첩·다른 폴더·`.min.js`·`.mjs`·`.cjs` 없이 static/js/<기능>.js로 둔다.',
                     '§5⑤'))
             if f in HTMX_ALLOWED and sum(1 for h in HTMX_ALLOWED if h in ctx.files_set) > 1:
-                out.append(Finding('WP1', f, None,
-                    'HTMX core 중복 — canonical과 legacy 설치를 합쳐 한 파일이어야 한다',
+                out.append(Finding('WP1', f, None, WP1_CORE_DUPLICATE_REASON,
                     '기존 core를 소비하거나, core가 없을 때만 static/htmx/htmx.min.js를 설치한다.',
                     '§5⑤'))
 
@@ -223,11 +228,11 @@ def run_purity(ctx: BackstopContext) -> List[Finding]:
                 elif not _script_location_allowed(f):
                     reason = '실행 script 위치 위반 — fragment가 아니라 base 또는 view/ 페이지여야 한다'
                 elif _has_attr(attrs, 'async'):
-                    reason = 'async 실행 금지 — DOM·의존 순서를 보존한다'
+                    reason = '%s — %s' % (WP2_ASYNC_REASON, path)
                 else:
                     script_type = (_attr_value(attrs, 'type') or '').strip().lower()
                     if script_type != 'module' and not _has_attr(attrs, 'defer'):
-                        reason = 'classic 외부 스크립트는 defer가 필요하다'
+                        reason = '%s — %s' % (WP2_DEFER_REASON, path)
                     elif path_counts.get(path, 0) > 1:
                         reason = '같은 페이지/base 템플릿의 script 중복 로드 — %s' % path
                 if reason is not None:
