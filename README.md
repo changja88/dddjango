@@ -106,6 +106,7 @@ $ codex plugin list
 |---|---|
 | `/dddjango:dddjango 재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능` | `dddjango를 사용해 재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능을 만들어 줘.` |
 | `/dddjango-web:dddjango-web 주문 목록 화면을 시안대로 구현해 줘. Claude Design 공유 URL: <공유 URL> · 구현 대상: 주문 목록 / 기본` | `dddjango-web을 사용해 주문 목록 화면을 시안대로 구현해 줘. Claude Design 공유 URL: <공유 URL> · 구현 대상: 주문 목록 / 기본` |
+| `/dddjango:refactor order 규칙 하나를 고칠 때 여러 곳을 고쳐야 해` | `$dddjango-refactor order 규칙 하나를 고칠 때 여러 곳을 고쳐야 해` |
 
 `dddjango-web`은 기준 시안 안에서 구현할 화면·상태 이름을 알려 주고, OpenAPI URL이나 로컬 파일 경로를 알고 있다면 함께 적는다.
 
@@ -300,7 +301,7 @@ dddjango는 작업 규모를 보고 알맞게 움직인다.
 
 ## 구성 요소
 
-- **커맨드 1개**: `/dddjango:dddjango`
+- **커맨드 2개**: `/dddjango:dddjango`(기능 빌드) · `/dddjango:refactor <대상 BC>`(대상 BC 하나의 기존 코드 전체를 표준으로 정리하는 리팩토링 입구 — 동작 불변 · Codex 는 `$dddjango-refactor`)
 - **에이전트 7개**: `design-architect`, `design-review-ddd`, `design-review-api`, `design-review-db`, `acceptance-tester`, `coder`, `discipline-reviewer`
 - **스킬 11개**: 아키텍처(`architecture-ddd`/`-api`/`-db`), 규율(`discipline-houserules`/`-cleancode`/`-tdd`), 구현(`implementation-django`/`-django-ninja`/`-django-web`/`-python`/`-test`)
 - **결정적 백스톱 27종**: 구조·계약 회귀를 G2 직전에 자동 차단하는 파이썬 검사 스크립트

@@ -61,9 +61,7 @@ def collect_docs(root: Path) -> "list[Path]":
         + sorted(skills.glob("*/SKILL.md"))
         + sorted((root / "dddjango" / "agents").glob("*.md"))
     )
-    cmd = root / "dddjango" / "commands" / "dddjango.md"
-    if cmd.is_file():
-        docs.append(cmd)
+    docs += sorted((root / "dddjango" / "commands").glob("*.md"))   # Coordinator + 리팩토링 입구
     if not docs:
         raise StructureError(f"배포 md 코퍼스 0건: {skills}")
     return docs
@@ -80,7 +78,7 @@ def is_normative(root: Path, p: Path) -> bool:
         rel.endswith("discipline-houserules/references/final.md")
         or rel.endswith("SKILL.md")
         or "/agents/" in rel
-        or rel.endswith("commands/dddjango.md")
+        or "/commands/" in rel
     )
 
 

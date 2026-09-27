@@ -498,3 +498,17 @@ djr:R-3430 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect
 
 djr:R-3431 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect> ;
     djr:enforcedBy <https://numchida.com/ns/djr#c/design_pregate.py> .
+
+djr:R-3568 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3569 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3570 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3571 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3572 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3573 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3574 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .

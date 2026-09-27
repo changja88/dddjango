@@ -181,3 +181,7 @@ djr:R-3316 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 djr:R-3317 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
 djr:R-3318 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3575 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3576 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .

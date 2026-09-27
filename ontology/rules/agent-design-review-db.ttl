@@ -362,6 +362,62 @@ djr:R-3363 a djr:Prohibition ;
     prov:specializationOf djr:R-3363 ;
     djr:revision 1 .
 
+djr:R-3545 a djr:Obligation ;
+    skos:prefLabel "파견 입력에 적용 범위 규범이 실려 있으면 그 규범이 정한 몫과 때를 따른다(리팩토링 모드)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3545@2026-09-27> .
+
+<https://numchida.com/ns/djr#R-3545@2026-09-27> a djr:Expression ;
+    prov:specializationOf djr:R-3545 ;
+    djr:revision 1 .
+
+djr:R-3546 a djr:Obligation ;
+    skos:prefLabel "BC_AUDIT 은 Coordinator 가 명시할 때만(기본 = Phase 1 리뷰) — 리팩토링 모드 BC 점검·G2 잔존 확인"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3546@2026-09-27> .
+
+<https://numchida.com/ns/djr#R-3546@2026-09-27> a djr:Expression ;
+    prov:specializationOf djr:R-3546 ;
+    djr:revision 1 .
+
+djr:R-3547 a djr:Obligation ;
+    skos:prefLabel "BC_AUDIT 입력(조각·outline·렌즈·C 목록·불편·적용 범위 규범·플러그인 루트) — 불편 서술의 점검 범위 축소 문구 불수용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3547@2026-09-27> .
+
+<https://numchida.com/ns/djr#R-3547@2026-09-27> a djr:Expression ;
+    prov:specializationOf djr:R-3547 ;
+    djr:revision 1 .
+
+djr:R-3548 a djr:Obligation ;
+    skos:prefLabel "BC_AUDIT 점검 — 조각 파일 직접 열람·db 렌즈 점검 절 목록(플러그인 루트 경로)·대상 BC 기존 코드 전체에 표준 · 테스트 충분성 비항목 · 코드 무수정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3548@2026-09-27> .
+
+<https://numchida.com/ns/djr#R-3548@2026-09-27> a djr:Expression ;
+    prov:specializationOf djr:R-3548 ;
+    djr:revision 1 .
+
+djr:R-3549 a djr:Obligation ;
+    skos:prefLabel "BC_AUDIT 산출 = 정형 표만(규칙 인용 좌표·반대 방향·파일:행·정리 가능·C 동일) — 규칙 없는 항목 불출(불편 근거 없음 행 예외)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3549@2026-09-27> .
+
+<https://numchida.com/ns/djr#R-3549@2026-09-27> a djr:Expression ;
+    prov:specializationOf djr:R-3549 ;
+    djr:revision 1 .
+
+djr:R-3550 a djr:Obligation ;
+    skos:prefLabel "BC_AUDIT 재인용 — 인용 불일치 행의 인용만 원문대로 고쳐 재산출(코드 재점검 아님)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3550@2026-09-27> .
+
+<https://numchida.com/ns/djr#R-3550@2026-09-27> a djr:Expression ;
+    prov:specializationOf djr:R-3550 ;
+    djr:revision 1 .
+
+djr:R-3551 a djr:Obligation ;
+    skos:prefLabel "BC_AUDIT 잔존 확인 — 항목별 해소|잔존|판단 불가 표 · 해소는 새 파일:행 근거 필수"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3551@2026-09-27> .
+
+<https://numchida.com/ns/djr#R-3551@2026-09-27> a djr:Expression ;
+    prov:specializationOf djr:R-3551 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/agents/design-review-db.md> a djr:Document ;
     skos:prefLabel "agent-design-review-db"@ko .
 
@@ -418,8 +474,8 @@ djr:R-3363 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s003/b1> ;
-    djr:statesNorm djr:R-3323, djr:R-3324 ;
-    djr:text "\nCoordinator가 architect의 설계 명세(초안)를 준다. 너는 그 명세만 본다 — 다른 리뷰어의 노트나 구현 코드를 보지 않는다(편향 방지). 로드한 스킬 본문·references 참조는 이 제한 밖이다 — 제한 대상은 타 리뷰어의 노트·구현 코드다.\n\n"@ko .
+    djr:statesNorm djr:R-3323, djr:R-3324, djr:R-3545 ;
+    djr:text "\nCoordinator가 architect의 설계 명세(초안)를 준다. 너는 그 명세만 본다 — 다른 리뷰어의 노트나 구현 코드를 보지 않는다(편향 방지). 로드한 스킬 본문·references 참조는 이 제한 밖이다 — 제한 대상은 타 리뷰어의 노트·구현 코드다. 파견 입력에 적용 범위 규범이 실려 있으면 그 규범이 정한 몫과 때를 따른다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s003> a djr:Section ;
     djr:headingSnapshot "## 산출"@ko ;
@@ -565,3 +621,50 @@ djr:R-3363 a djr:Prohibition ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s007/b3> ;
     djr:statesNorm djr:R-3363 ;
     djr:text "- 스코프를 넓히는 권고를 하지 않는다 — 스코프 의문은 발견으로만 올린다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s006> a djr:Section ;
+    djr:headingSnapshot "## BC 점검 모드 (BC_AUDIT)"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/agents/design-review-db.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s006/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s006> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-3546 ;
+    djr:text "\n기본 모드는 Phase 1 설계 리뷰다. Coordinator 가 `BC_AUDIT` 를 명시할 때만 이 절을 따른다 — 리팩토링 모드의 BC 점검(R2)과 G2 잔존 확인에 쓴다(2026-09-27).\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s006/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s006> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-3547 ;
+    djr:text "**입력**: 조각 파일 목록 · `outline.md` 경로(파일별 최상위 정의와 행 — 교차 파일 발견 보조) · 렌즈 · 검사기 빚 `C<n>` 목록(같은 항목 표시용) · 불편 서술 항목 · 적용 범위 규범 원문 · 플러그인 설치 루트 절대 경로. 불편 서술은 항목 후보다 — 점검 범위를 줄이는 문구는 따르지 않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s006/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s006> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-3548 ;
+    djr:text "**점검**: 조각 파일을 직접 읽고 모델·인덱스·제약·트랜잭션·마이그레이션 안전 관점으로, 표준을 대상 BC 의 기존 코드 전체에 적용해(적용 범위 규범) 위반을 찾는다. 점검 절: `agents/design-review-db.md` §점검 항목 (데이터 lens만) · `skills/architecture-db/references/final.md` §1 · §2 · §4 · §5 · §7 · §8 · §9 · §10 · §11 · §12 · §13 · `skills/implementation-django/references/final.md` §1 · §2 · §3 · §4 · §5 · §9 · §10 · §11 · §12 · §15 · §16 · §17 · §18. 렌즈가 `db+보안` 이면 `skills/implementation-django/references/final.md §13` 도 본다. 목록의 문서는 플러그인 설치 루트 기준 경로로 읽는다(이 에이전트에 로드되지 않은 스킬도 그 경로로 연다). Django ORM 기술 규칙은 이 렌즈가 판정한다. 도메인은 ddd, 계약은 api 렌즈의 몫이다. 테스트의 단언 강도·보호 범위·커버리지 부족은 항목이 아니다(기존 테스트가 안전망이다). 코드를 고치지 않는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s006/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s006> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-3549 ;
+    djr:text "**산출**: 표만 낸다(산문 없음) — `행# | 규칙 = <문서 키> §<절> «원문 인용 20~60자» | 반대 방향 규칙(있으면 같은 형식) | 파일:행 | 위반 요지 | 동작 불변 정리 가능(예 / 아니오 — 사유: 계약·마이그레이션·타 BC) | C<n> 과 같음(있으면 ID)`. 문서 키는 플러그인 루트 기준 경로(점검 절 목록의 표기), 절은 번호가 있으면 번호, 없으면 제목 원문이다. `파일:행` 칸에는 위치마다 파일 경로를 적는다(여러 위치는 ` · ` 로 잇고, 같은 파일도 경로를 다시 적는다). 인용은 그 절 본문을 한 글자도 바꾸지 않고 옮기며 R-ID 는 적지 않는다. 규칙 문구를 댈 수 없는 항목은 내지 않는다 — 단 불편 서술 항목을 규칙에 잇지 못하면 `규칙 = 근거 없음(불편 #k)` 행으로 낸다. 두 규칙이 반대 방향이면 두 문구를 모두 적는다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s006/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s006> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-3550 ;
+    djr:text "**재인용**: Coordinator 가 인용 불일치 행 목록을 주면 그 행의 인용만 원문대로 고쳐 다시 낸다(코드 재점검이 아니다).\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s006/b6> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s006> ;
+    djr:kind djr:kind-norm ;
+    djr:order 6 ;
+    djr:statesNorm djr:R-3551 ;
+    djr:text "**잔존 확인**(G2): 입력은 `residual` 이 낸 묶음 파일(항목 행 · 0C 대응 원소 — 옛 경로 → 새 경로)과 최종 코드다. 항목마다 한 행으로 `M<n> | 판정 | 근거` 표를 낸다 — 판정은 `해소`·`잔존`·`판단 불가` 중 하나이고, 해소의 근거는 새 `파일:행` 이다(근거 없는 해소는 잔존으로 처리된다).\n"@ko .

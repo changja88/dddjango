@@ -145,6 +145,11 @@ def main() -> int:
                        "0T(제품 고정)·0C(테스트 고정 · 이동·개명 치환만 허용) 창을 open/close 로 재고 verify 가 "
                        "G2 배너 `동작 보존:` 행의 기계 출처다(R-3503~R-3506 enforcedBy) · "
                        "behavior_guard_fixture_run 이 20사례·창 절차로 행동 고정")
+            elif rel.name == "refactor_audit.py":
+                why = ("리팩토링 모드 결정적 도구(2026-09-27 로드맵 5 — BC 점검 R2·판정 R3·G2 잔존) — "
+                       "렌즈·조각 계획 · 리뷰어 인용 검사와 블록 결속(팩 blocks 해시) · 판정 네 출구 검사 · "
+                       "적용 범위 규범 대상 목록 차단 · G2 의미 항목 잔존 층 판정 · "
+                       "refactor_audit_fixture_run 이 사례로 행동 고정")
             elif rel.name == "pregate_symbol_kinds.json":
                 why = ("pre-gate Base 병기 의무 종류 소성물(R-3426 — 검사기 소스 기계 추출 닫힌 목록) — "
                        "저자는 workspace/tools/gen_pregate_symbol_kinds.py 하나뿐이고 --check 가 "
@@ -170,7 +175,8 @@ def main() -> int:
             else:
                 problems.append(f"미설명: `{key}` — ⓓ 규칙 0건인데 절차 전용 목록에도 없다")
         elif parts[0] == "commands":
-            why = "flow 정본 — 게이트·registry 렌더·ⓒ⑥⑦(빚 스캔·유일 flow 예외)"
+            why = ("리팩토링 입구 — Coordinator 로 Skill 위임(규칙 0 · 산문)" if rel.name == "refactor.md"
+                   else "flow 정본 — 게이트·registry 렌더·ⓒ⑥⑦(빚 스캔·유일 flow 예외)")
         elif parts[0] == "skills":
             skill = parts[1]
             if skill == "discipline-houserules":

@@ -79,7 +79,10 @@ GROUPS: "dict[str, dict]" = {
             "dddjango/scripts/design_pregate.py",
             # 동작 보존 장치 — 리팩터 창 판정이 G2 배너 `동작 보존:` 행의 근거가 된다(로드맵 4).
             "dddjango/scripts/behavior_guard.py",
+            # 리팩토링 모드 결정적 도구 — R2·R3·G2 잔존 판정이 G0·G2 배너의 근거가 된다(로드맵 5).
+            "dddjango/scripts/refactor_audit.py",
             "dddjango/commands/dddjango.md",
+            "dddjango/commands/refactor.md",
             "codex-dddjango/skills/dddjango/SKILL.md",
         ],
     },

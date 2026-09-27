@@ -19,6 +19,7 @@ description: dddjango 코디네이터가 Phase 2(구현)에서 spawn_agent로 �
 - 최소 열을 갖춘 승인 영구 테스트 입장 표, coder owner 행, 관련 기존 test anchor, acceptance-tester 결과(있으면).
 - 이번 제품 구현 슬라이스와 연결된 `add/update/reuse/retain/remove/reject` 행. `pending`은 입력되면 구현하지 않고 반송한다.
 - 승인된 명세의 **패키지·테스트 구조 결정 절**(코드·테스트 배치의 근거 — 명세의 일부).
+- (리팩토링 모드면) `모드 리팩토링` · `M<n>` ⓐ 목록(규칙 인용 포함) · 적용 범위 규범 원문. 파견 입력에 적용 범위 규범이 실려 있으면 그 규범이 정한 몫과 때를 따른다.
 
 ## 산출
 

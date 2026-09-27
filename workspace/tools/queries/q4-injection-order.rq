@@ -10,24 +10,31 @@
 #       서수(sNNN) 키로 소유한다 — 여기 ORDER BY 는 안정성 보조일 뿐이다.
 # 금지: 블록 리터럴(`djr:text`)은 **뽑지 않는다** — 설치본 팩에 규범 본문을 싣지 않는다
 #       (동결 E8 «전체 규범 재주입 금지» · 절차 정본 step 6′ · 개정 8).
+# 종류: ?normKind 는 규범 클래스 다섯 중 하나(리팩토링 모드 판정 — 제외·오탐 근거 검사).
+#       VALUES 형은 rdflib 에서 150초+ 로 멈춘다(계획 리뷰 P5 원형 3) — FILTER 형으로 둔다.
+# overrides: djr:overrides 목적어(적용 범위 Override 가 가리키는 대상 규범).
 PREFIX djr: <https://numchida.com/ns/djr#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
-SELECT ?work ?label ?document ?section ?sectionNumber ?block ?blockOrder ?expression
+SELECT ?work ?label ?normKind ?document ?section ?sectionNumber ?block ?blockOrder ?expression
        (GROUP_CONCAT(DISTINCT STR(?checker); separator="\u001F") AS ?checkers)
        (GROUP_CONCAT(DISTINCT STR(?agent); separator="\u001F") AS ?agents)
        (GROUP_CONCAT(DISTINCT STR(?aliasText); separator="\u001F") AS ?aliases)
+       (GROUP_CONCAT(DISTINCT STR(?overridden); separator="\u001F") AS ?overrides)
 WHERE {
   ?block djr:statesNorm ?work ;
          djr:inSection ?section ;
          djr:order ?blockOrder .
   ?section djr:inDocument ?document .
   OPTIONAL { ?section djr:sectionNumber ?sectionNumber }
-  ?work skos:prefLabel ?label .
+  ?work skos:prefLabel ?label ;
+        a ?normKind .
+  FILTER(?normKind IN (djr:Obligation, djr:Prohibition, djr:Permission, djr:Exception, djr:Override))
   OPTIONAL { ?work djr:currentExpression ?expression }
   OPTIONAL { ?work djr:enforcedBy ?checker }
   OPTIONAL { ?work djr:delegatedTo ?agent }
   OPTIONAL { ?aliasNode djr:aliasFor ?work ; djr:aliasText ?aliasText }
+  OPTIONAL { ?work djr:overrides ?overridden }
 }
-GROUP BY ?work ?label ?document ?section ?sectionNumber ?block ?blockOrder ?expression
+GROUP BY ?work ?label ?normKind ?document ?section ?sectionNumber ?block ?blockOrder ?expression
 ORDER BY ?document ?sectionNumber ?blockOrder ?work

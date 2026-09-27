@@ -10,6 +10,11 @@
 **명칭**(`skos:prefLabel` — E5 가 «명칭만»으로 못박은 필드)뿐이다. 블록 리터럴이 팩에 존재하지
 않으므로 코드가 실수해도 실을 본문이 없다.
 
+**블록 결속 투영**(`blocks` — 리팩토링 모드 로드맵 5): 규범을 진술하는 블록마다 본문의
+정규화 해시(`h`)·행 수(`n`)·진술 규범(`works`)만 싣는다. 본문 자체는 싣지 않는다(E8 그대로).
+정규화는 설치본 `dddjango/scripts/refactor_audit.py` 의 `normalize` 를 빌린다 — 설치본이 문서에서
+블록을 찾는 대조와 팩의 해시가 한 함수에서 나온다.
+
 **정렬은 생성기가 소유한다**: `order_rank`(0..N-1 정수)를 미리 박아 넣는다. 소비자가 절 번호를
 다시 자연 정렬하면 두 구현이 갈라질 수 있어서다 — 팩이 순서의 단일 출처다.
 
@@ -118,8 +123,9 @@ def build(root: "Path | None" = None) -> "tuple[dict, list[str]]":
         if not _WORK_RE.fullmatch(wid):
             problems.append(f"채번 형식 밖 Work: {work_iri}")
             continue
-        if wid in works:                                   # 한 Work = 한 블록 계약
-            problems.append(f"Work {wid} 가 블록 2개 이상에서 진술된다 — 정렬 키가 모호하다")
+        if wid in works:                                   # 한 Work = 한 블록 · 한 종류 계약
+            problems.append(f"Work {wid} 가 블록 2개 이상에서 진술되거나 규범 종류가 둘 이상이다"
+                            " — 정렬 키·종류가 모호하다")
             continue
         label: str = str(r.label)
         checkers: "list[str]" = sorted(_local(c) for c in _split(r.checkers))
@@ -130,8 +136,15 @@ def build(root: "Path | None" = None) -> "tuple[dict, list[str]]":
             for v in values:
                 if SEP in v:
                     problems.append(f"{wid}.{field} 값에 구분자 {SEP!r} 가 섞였다: {v!r}")
+        norm_kind: str = _local(str(r.normKind))
+        overrides: "list[str]" = sorted(_local(o) for o in _split(r.overrides))
+        for o in overrides:
+            if not _WORK_RE.fullmatch(o):
+                problems.append(f"{wid}.overrides 목적어가 규범이 아니다: {o!r}")
         works[wid] = {
             "label": label,
+            "norm_kind": norm_kind,
+            "overrides": overrides,
             "document": _local(str(r.document)),
             "section": _local(str(r.section)),
             "section_number": str(r.sectionNumber) if r.sectionNumber is not None else None,
@@ -185,8 +198,26 @@ def build(root: "Path | None" = None) -> "tuple[dict, list[str]]":
         except ValueError as exc:
             problems.append(f"글롭 문법 위반: {exc}")
 
+    # 블록 결속 투영 — 본문 대신 정규화 해시와 행 수(E8: 본문 미동봉).
+    import refactor_audit as _ra
+    from rdflib import Namespace as _Ns
+    _djr = _Ns("https://numchida.com/ns/djr#")
+    blocks: "dict[str, dict]" = {}
+    for wid, w in works.items():
+        blocks.setdefault(w["block"], {"works": []})["works"].append(wid)
+    for bid, entry in blocks.items():
+        texts = list(g.objects(_djr["s/" + bid], _djr.text))
+        if len(texts) != 1:
+            problems.append(f"블록 {bid} 본문이 {len(texts)}개다 — 결속 해시를 낼 수 없다")
+            continue
+        text = str(texts[0])
+        entry["h"] = _ra.block_hash(text)
+        entry["n"] = _ra.line_count(text)
+        entry["works"].sort()
+
     pack: "dict" = {
         "_generated": GENERATED_BY,
+        "blocks": blocks,
         "by_path": by_path,
         "schema": SCHEMA,
         "built_from": [{"path": str(f.relative_to(base)), "sha256": _sha256(f)} for f in files],
@@ -217,6 +248,7 @@ def build(root: "Path | None" = None) -> "tuple[dict, list[str]]":
         f"[rulepack] 무앵커 절 Work {len(anchorless)}건 포함(T3 q4 개정 — 전량 반환이 진짜 전량)",
         f"[rulepack] 검사기 도달 불가 규범 {len(unreached)}건 — selector 진입로 없음(침묵 탈락 금지)",
         f"[rulepack] 재료 ttl {len(files)}개 · 본문(text) 미동봉 — 개정 8",
+        f"[rulepack] 결속 블록 {len(blocks)}개(해시·행 수만) · overrides {sum(len(w['overrides']) for w in works.values())}건",
         f"[rulepack] 경로 글롭 {len(by_path)}건(Q1 — 처치 밖 카탈로그)",
     ]
     return pack, report + [f"[rulepack] RED {p}" for p in problems]

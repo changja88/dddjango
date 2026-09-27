@@ -1213,7 +1213,10 @@ def cmd_close(folder: Path, repo: Path) -> int:
     closes.append({"closed": _now(), "verdict": verdict, "range": f"{head0}..{head}", "reds": reds, "notes": notes,
                    "green_files": sorted(green_files), "merged_excluded": sorted(merged),
                    "maps": {"pairs": len(maps.pairs), "dirs": len(maps.dirs), "modules": len(maps.mm),
-                            "definitions": len(maps.dm), "renames": len(maps.rn)}})
+                            "definitions": len(maps.dm), "renames": len(maps.rn)},
+                   # 대응 원소(옛 경로 → 새 경로) — 리팩토링 모드 G2 잔존 판정·5번 감사가 옮긴 자리를 읽는다.
+                   "map_items": {"pairs": dict(sorted(maps.pairs.items())), "dirs": dict(sorted(maps.dirs.items())),
+                                 "fm": dict(sorted(maps.fm.items()))}})
     _dump(run_dir / f"w{n}-close.json", closes)
     for r in reds:
         print(f"  red: {r}")

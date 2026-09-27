@@ -118,7 +118,7 @@ djr:IsProhibition a sh:NodeShape ;
 
 djr:NormShape a sh:NodeShape ;
     sh:or ( djr:HasChecker djr:HasDelegate ), ( djr:IsObligation djr:IsProhibition djr:IsPermission djr:IsException djr:IsOverride ) ;
-    sh:property djr:NormShape-delegatedTo, djr:NormShape-enforcedBy ;
+    sh:property djr:NormShape-delegatedTo, djr:NormShape-enforcedBy, djr:NormShape-overrides ;
     sh:targetClass djr:Norm .
 
 djr:NormShape-delegatedTo a sh:PropertyShape ;
@@ -130,6 +130,11 @@ djr:NormShape-enforcedBy a sh:PropertyShape ;
     sh:class djr:Checker ;
     sh:nodeKind sh:IRI ;
     sh:path djr:enforcedBy .
+
+djr:NormShape-overrides a sh:PropertyShape ;
+    sh:class djr:Norm ;
+    sh:nodeKind sh:IRI ;
+    sh:path djr:overrides .
 
 djr:PrefLabelShape a sh:NodeShape ;
     sh:property djr:PrefLabelShape-label ;

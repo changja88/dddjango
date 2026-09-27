@@ -111,3 +111,6 @@
 
 <https://numchida.com/ns/djr#c/design_pregate.py> a djr:Checker ;
     skos:prefLabel "design_pregate.py"@ko .
+
+<https://numchida.com/ns/djr#c/refactor_audit.py> a djr:Checker ;
+    skos:prefLabel "refactor_audit.py"@ko .

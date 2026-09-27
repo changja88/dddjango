@@ -17,7 +17,7 @@ ontology/                 ← 규범 «정본» (그래프)
 
 dddjango/                 ← Claude Code 설치본 (플러그인)
 ├── REQUEST_GUIDE.md       사람용 작업 요청 가이드 정본
-├── commands/ agents/ skills/   md의 graph-owned 절 = 그래프의 «렌더 투영물»
+├── commands/ agents/ skills/   md의 graph-owned 절 = 그래프의 «렌더 투영물»(입구 commands/refactor.md 는 산문 — 봉인 pipeline 등재)
 └── scripts/               결정적 백스톱 27종 + rulepack.json(빌드타임 SPARQL «소성물»)
 
 codex-dddjango/           ← Codex 설치본 미러 (scripts는 byte 동일을 verify가 강제)

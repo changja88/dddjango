@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -32,6 +33,40 @@ import rulepack as rp        # noqa: E402
 
 sys.path.insert(0, str(ROOT / "workspace" / "tools"))
 from checker_registry import REGISTRY  # noqa: E402
+
+# G12 라벨 드리프트(로드맵 5 · 재검토 N-m3) — 규범 명칭이 이 식에 걸리면 «적용 범위 한정·보존» 후보다.
+# 적중 ID 는 전부 검토 완료 집합에 있어야 한다: 대상(적용 범위 규범의 overrides) 또는 N(대상 아님) 으로
+# `workspace/plan/2026-09-26-refactor-path-repair/scope-limit-norms.md` 에서 분류한 뒤 여기에 ID 만 더한다
+# (사유는 분류 문서가 갖는다 — 배포 스크립트·미러·봉인에 싣지 않는다).
+DRIFT_RE: "re.Pattern[str]" = re.compile(r"신규|touched|레거시|legacy|기존|diff|확립|이번 작업|보존|brownfield|새 코드|새 파일|새 실행|손대|존중|established")
+DRIFT_REVIEWED: "frozenset[str]" = frozenset("""
+R-0011 R-0013 R-0014 R-0026 R-0034 R-0040 R-0044 R-0071 R-0094 R-0095 R-0096 R-0097 R-0123 R-0125 R-0138 R-0164
+R-0166 R-0180 R-0182 R-0188 R-0189 R-0204 R-0206 R-0226 R-0227 R-0229 R-0238 R-0255 R-0257 R-0261 R-0263 R-0266
+R-0277 R-0284 R-0286 R-0291 R-0293 R-0306 R-0321 R-0323 R-0325 R-0328 R-0329 R-0345 R-0347 R-0348 R-0351 R-0352
+R-0363 R-0364 R-0369 R-0370 R-0374 R-0376 R-0389 R-0408 R-0410 R-0411 R-0423 R-0430 R-0431 R-0480 R-0580 R-0651
+R-0661 R-0662 R-0663 R-0670 R-0673 R-0674 R-0696 R-0697 R-0698 R-0700 R-0705 R-0715 R-0716 R-0717 R-0732 R-0754
+R-0774 R-0796 R-0808 R-0822 R-0840 R-0841 R-0844 R-0848 R-0886 R-0887 R-0893 R-0896 R-0897 R-0903 R-0908 R-0913
+R-0925 R-0941 R-0947 R-0965 R-0982 R-0994 R-1015 R-1018 R-1030 R-1032 R-1039 R-1045 R-1056 R-1057 R-1058 R-1059
+R-1060 R-1157 R-1182 R-1228 R-1231 R-1263 R-1268 R-1269 R-1270 R-1274 R-1279 R-1304 R-1464 R-1526 R-1528 R-1560
+R-1565 R-1566 R-1572 R-1573 R-1587 R-1595 R-1598 R-1603 R-1606 R-1645 R-1649 R-1650 R-1655 R-1673 R-1681 R-1682
+R-1714 R-1720 R-1721 R-1724 R-1743 R-1746 R-1769 R-1794 R-1799 R-1844 R-1850 R-1851 R-1852 R-1864 R-1898 R-1908
+R-1912 R-1913 R-1975 R-1976 R-1980 R-1981 R-1982 R-1987 R-2001 R-2005 R-2018 R-2032 R-2069 R-2080 R-2115 R-2133
+R-2142 R-2143 R-2144 R-2146 R-2153 R-2167 R-2184 R-2228 R-2229 R-2230 R-2237 R-2244 R-2299 R-2301 R-2307 R-2330
+R-2343 R-2357 R-2397 R-2398 R-2412 R-2438 R-2490 R-2492 R-2493 R-2499 R-2505 R-2512 R-2515 R-2521 R-2543 R-2549
+R-2551 R-2552 R-2571 R-2572 R-2573 R-2577 R-2583 R-2586 R-2587 R-2589 R-2603 R-2612 R-2632 R-2637 R-2641 R-2643
+R-2652 R-2657 R-2661 R-2662 R-2671 R-2692 R-2696 R-2697 R-2702 R-2721 R-2725 R-2832 R-2840 R-2851 R-2852 R-2857
+R-2858 R-2870 R-2874 R-2916 R-2919 R-2921 R-2950 R-2951 R-2952 R-2954 R-3018 R-3048 R-3049 R-3065 R-3066 R-3069
+R-3070 R-3095 R-3096 R-3100 R-3110 R-3111 R-3115 R-3118 R-3121 R-3122 R-3125 R-3126 R-3128 R-3131 R-3135 R-3137
+R-3145 R-3146 R-3159 R-3161 R-3163 R-3168 R-3169 R-3188 R-3238 R-3242 R-3245 R-3258 R-3259 R-3265 R-3266 R-3273
+R-3277 R-3290 R-3292 R-3306 R-3308 R-3311 R-3347 R-3355 R-3356 R-3389 R-3403 R-3404 R-3405 R-3408 R-3410 R-3413
+R-3420 R-3421 R-3422 R-3435 R-3442 R-3447 R-3471 R-3482 R-3483 R-3485 R-3487 R-3493 R-3497 R-3501 R-3503 R-3504
+R-3517 R-3519 R-3526 R-3534 R-3541 R-3544 R-3548 R-3551 R-3556 R-3559 R-3564 R-3567
+""".split())
+
+
+def _labels(pack: "rp.Rulepack") -> "dict[str, str]":
+    return {wid: str(w.get("label", "")) for wid, w in pack.works.items()}
+
 
 # 픽스처: tier 1(alias 2건) · tier 1 중복 1건 · tier 3(팩 밖) 1건.
 FIXTURE: "list" = [
@@ -85,7 +120,7 @@ def _check(out: "list", name: str, fn) -> None:
 def run(pack: "rp.Rulepack") -> "list":
     """(이름, 통과여부, 실측) 9행."""
     out: "list" = []
-    roster = {script for script, _ in REGISTRY} | {"design_pregate.py", "behavior_guard.py"}  # 레지스트리 밖 예보 게이트(R-3424~R-3431 enforcedBy)·동작 보존 장치(R-3503~R-3506 enforcedBy) — wiring/registry.ttl Checker 개체 실재
+    roster = {script for script, _ in REGISTRY} | {"design_pregate.py", "behavior_guard.py", "refactor_audit.py"}  # 레지스트리 밖 예보 게이트(R-3424~R-3431 enforcedBy)·동작 보존 장치(R-3503~R-3506 enforcedBy) — wiring/registry.ttl Checker 개체 실재
 
     def g1():
         stray = sorted(set(pack.by_checker) - roster)
@@ -269,6 +304,12 @@ def run(pack: "rp.Rulepack") -> "list":
                 leaked.append(f"정상인데 거절: {g}")
         return not leaked, f"음성 {len(bad)}·양성 {len(ok_cases)} · 이탈 {leaked or 0}"
 
+    def g12():
+        """라벨 드리프트 — 식 적중 ⊆ 검토 완료 집합(새 범위 규범이 대상·N 분류 밖으로 들어오지 않게)."""
+        hits = sorted(w for w, label in _labels(pack).items() if DRIFT_RE.search(label))
+        new = [w for w in hits if w not in DRIFT_REVIEWED]
+        return not new, f"적중 {len(hits)} · 미검토 {new or 0}"
+
     for name, fn in (("G1 팩 검사기 키 ⊆ 로스터", g1),
                      ("G2 B암 byte 불변(T2-3 판형 독립 재구성)", g2),
                      ("G3a C 중복 제거 + 집합 보존", g3a),
@@ -282,7 +323,8 @@ def run(pack: "rp.Rulepack") -> "list":
                      ("G8 CLI stdout ↔ T2-3 독립 오라클", g8),
                      ("G9 순열 불변(같은 multiset = 같은 프롬프트)", g9),
                      ("G10 손상 팩 fail-closed(5종)", g10),
-                     ("G11 글롭 문법 폐쇄(음성 8·양성 3)", g11)):
+                     ("G11 글롭 문법 폐쇄(음성 8·양성 3)", g11),
+                     ("G12 라벨 드리프트(식 적중 ⊆ 검토 완료 집합)", g12)):
         _check(out, name, fn)
     return out
 
@@ -299,6 +341,7 @@ _MUTATIONS: "tuple" = (
     ("M9 중복 대표를 first-seen 으로", "firstseen"),
     ("M10 팩 참조 무결성 검사 제거", "norefcheck"),
     ("M11 글롭 문법 검사 제거", "noglobcheck"),
+    ("M12 분류 밖 범위 규범 유입", "drift"),
 )
 
 
@@ -308,7 +351,10 @@ def _mutate(kind: str, pack: "rp.Rulepack") -> "tuple":
     orig_rank = type(pack).rank
     orig_refs, orig_validate = type(pack)._validate_refs, rp.validate_glob
 
+    orig_labels = globals()["_labels"]
+
     def restore() -> None:
+        globals()["_labels"] = orig_labels
         rc.select_graph, rc._data_block = orig_select, orig_block
         type(pack).locate, type(pack).rank = orig_locate, orig_rank
         type(pack)._validate_refs, rp.validate_glob = orig_refs, orig_validate
@@ -356,6 +402,8 @@ def _mutate(kind: str, pack: "rp.Rulepack") -> "tuple":
         type(pack)._validate_refs = lambda self: None
     elif kind == "noglobcheck":
         rp.validate_glob = lambda glob: list(str(glob).split("/"))
+    elif kind == "drift":
+        globals()["_labels"] = lambda pk: {**orig_labels(pk), "R-9999": "신규 코드 한정 적용(분류 밖 유입)"}
     elif kind == "escape":
         rc._data_block = lambda tag, items: [
             f"<{tag}>", json.dumps(items, ensure_ascii=False, indent=2, sort_keys=True),

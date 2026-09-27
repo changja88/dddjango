@@ -1,0 +1,6 @@
+interface:
+  display_name: "dddjango-refactor"
+  short_description: "대상 BC 하나의 기존 코드 전체를 dddjango 표준으로 정리(동작 불변 리팩토링 입구)"
+  default_prompt: "Use $dddjango-refactor <bounded context> [pain points] to run the dddjango Coordinator in refactoring mode for one bounded context. Explicit invocation only."
+policy:
+  allow_implicit_invocation: false

@@ -21,9 +21,10 @@ ROOT: Path = Path(__file__).resolve().parents[2]
 CLAUDE: Path = ROOT / "dddjango" / "commands" / "dddjango.md"
 CODEX: Path = ROOT / "codex-dddjango" / "skills" / "dddjango" / "SKILL.md"
 
-# 대조할 절 — (표시 이름, 시작 정규식, 끝 정규식)
-SECTIONS: "tuple[tuple[str, str, str], ...]" = (
+# 대조할 절 — (표시 이름, 시작 정규식, 끝 정규식 — None 이면 파일 끝까지)
+SECTIONS: "tuple[tuple[str, str, str | None], ...]" = (
     ("step 6′ 재생성 루프", r"^6′\. \*\*재생성 루프", r"^7\. \*\*G2 배너\*\*"),
+    ("리팩토링 모드", r"^## 리팩토링 모드", None),       # 두 런타임 모두 문서 끝 절(로드맵 5)
 )
 
 # 런타임 표기 차이 — 의미가 같고 표기만 다른 것만 정규화한다(내용 차이를 지우면 안 된다).
@@ -33,28 +34,33 @@ NORMALIZE: "tuple[tuple[str, str], ...]" = (
     (r"`scripts/regen_core\.py`\(이 스킬 폴더 기준 — 실행 시 절대 경로로 편다\)",
      "`<PLUGIN>/scripts/regen_core.py`"),
     (r"`\$\{CLAUDE_PLUGIN_ROOT\}/scripts/regen_core\.py`", "`<PLUGIN>/scripts/regen_core.py`"),
+    (r"^<!-- graph-owned:.*-->\n?", ""),  # claude 투영물의 절 마커 행(codex 는 마커가 없다)
     (r"dddjango:", "dddjango-"),          # 서브에이전트 지정 표기(claude `:` ↔ codex `-`)
+    (r"\$dddjango-refactor", "/dddjango-refactor"),   # 리팩토링 입구(claude `/dddjango:refactor` ↔ codex 스킬)
     (r"AskUserQuestion", "게이트 질문 채널"),
     (r"`Bash`", "`네이티브 셸`"),
 )
 
 
-def _extract(text: str, start: str, end: str) -> "str | None":
+def _extract(text: str, start: str, end: "str | None") -> "str | None":
     lines: "list[str]" = text.splitlines()
-    s_re, e_re = re.compile(start), re.compile(end)
+    s_re = re.compile(start)
+    e_re = re.compile(end) if end is not None else None
     begin: int = -1
     for i, line in enumerate(lines):
         if begin < 0 and s_re.match(line):
             begin = i
             continue
-        if begin >= 0 and e_re.match(line):
+        if begin >= 0 and e_re is not None and e_re.match(line):
             return "\n".join(lines[begin:i]).strip()
+    if begin >= 0 and e_re is None:
+        return "\n".join(lines[begin:]).strip()
     return None
 
 
 def _normalize(text: str) -> str:
     for pat, rep in NORMALIZE:
-        text = re.sub(pat, rep, text)
+        text = re.sub(pat, rep, text, flags=re.M)
     return re.sub(r"[ \t]+", " ", text).strip()
 
 

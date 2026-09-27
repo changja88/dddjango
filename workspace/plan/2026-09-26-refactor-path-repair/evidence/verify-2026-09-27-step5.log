@@ -1,0 +1,14 @@
+# make verify — 로드맵 5 봉인 write 뒤 · 2026-09-27 11:32 KST · HEAD 203cdffb + 작업 트리
+[verify] 병렬 실행: verify-ontology verify-base-core verify-base-cross verify-base-backstop verify-base-regen
+(전체 로그: /tmp/djr-verify.TIE6UT · 상세 출력: make verify VERBOSE=1)
+  ✓ verify-base-core green (73초)
+  ✓ verify-ontology green (84초)
+  ✓ verify-base-backstop green (115초)
+  ✓ verify-base-cross green (244초)
+  ✓ verify-base-regen green (332초)
+  ✓ verify green — 5/5 (332초 · 전체 로그: /tmp/djr-verify.TIE6UT)
+make verify  951.72s user 281.82s system 371% cpu 5:31.94 total
+
+# make verify-mutation — 봉인 write 직전(같은 작업 트리 · 봉인 대상 무변)
+[mutation] 변이 12종 전건 red — 검출력 확인
+make verify-mutation  2.10s user 0.40s system 96% cpu 2.587 total

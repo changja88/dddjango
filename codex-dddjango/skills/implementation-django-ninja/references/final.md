@@ -855,7 +855,7 @@ framework-native carveout이다. 어느 carveout도 오류 helper나 raw 오류 
 소비자·테스트가 승인된 wire contract에 의존한다면 관찰한 status, body, header, media type을
 그대로 보존한다. 보존이 정당한 근거는 둘뿐이다 — ⑴ 밖이 의존한다(wire shape) ⑵ 되돌릴 수 없다.
 «먼저 작성돼 있음»(brownfield)은 근거가 아니며 코드의 «자리»는 둘 어디에도 안 걸린다(자리는
-백스톱 위반 = 리팩터링 대상). 이 짧은 carveout은 wire 계약을 지키기 위한 것이며, 새
+백스톱 위반 = 기능 요청의 리팩터링 대상 · 리팩토링 모드는 BC 의미 점검 항목도 대상). 이 짧은 carveout은 wire 계약을 지키기 위한 것이며, 새
 helper·handler 레시피나 code-profile과의 혼합을 제시하지 않는다.
 
 ### 6.3 콘텐츠 협상 실패 (406/415)

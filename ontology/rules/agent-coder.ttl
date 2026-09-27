@@ -1072,6 +1072,22 @@ djr:R-3506 a djr:Obligation ;
     prov:specializationOf djr:R-3506 ;
     djr:revision 1 .
 
+djr:R-3577 a djr:Obligation ;
+    skos:prefLabel "리팩토링 모드 파견 입력 = 모드 리팩토링 · M ⓐ 목록(규칙 인용) · 적용 범위 규범 원문"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3577@2026-09-27> .
+
+<https://numchida.com/ns/djr#R-3577@2026-09-27> a djr:Expression ;
+    prov:specializationOf djr:R-3577 ;
+    djr:revision 1 .
+
+djr:R-3578 a djr:Obligation ;
+    skos:prefLabel "파견 입력에 적용 범위 규범이 실려 있으면 그 규범이 정한 몫과 때를 따른다(리팩토링 모드)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3578@2026-09-27> .
+
+<https://numchida.com/ns/djr#R-3578@2026-09-27> a djr:Expression ;
+    prov:specializationOf djr:R-3578 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/agents/coder.md> a djr:Document ;
     skos:prefLabel "agent-coder"@ko .
 
@@ -1153,7 +1169,8 @@ djr:R-3506 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s002> ;
     djr:kind djr:kind-prose ;
     djr:order 5 ;
-    djr:text "- 승인된 명세의 **패키지·테스트 구조 결정 절**(코드·테스트 배치의 근거 — 명세의 일부).\n\n"@ko .
+    djr:statesNorm djr:R-3577, djr:R-3578 ;
+    djr:text "- 승인된 명세의 **패키지·테스트 구조 결정 절**(코드·테스트 배치의 근거 — 명세의 일부).\n- (리팩토링 모드면) `모드 리팩토링` · `M<n>` ⓐ 목록(규칙 인용 포함) · 적용 범위 규범 원문. 파견 입력에 적용 범위 규범이 실려 있으면 그 규범이 정한 몫과 때를 따른다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s003> a djr:Section ;
     djr:headingSnapshot "## 산출"@ko ;

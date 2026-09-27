@@ -18,7 +18,8 @@ byte-exact로 미러하고, checker script는 별도 byte mirror로 검증한다
 ## 저장소 구조
 
 - `dddjango/` — 실제 플러그인. `.claude-plugin/plugin.json`(매니페스트) +
-  `commands/dddjango.md`(Coordinator) + `agents/*.md`(7개 subagent) +
+  `commands/dddjango.md`(Coordinator) + `commands/refactor.md`(리팩토링 입구 — Coordinator 로 Skill 위임) +
+  `agents/*.md`(7개 subagent) +
   `skills/*/SKILL.md`(11개 스킬) + `scripts/check-*.py`(결정적 백스톱 27종).
 - `dddjango-web/` — **자매 플러그인**(웹 표현계층 빌더 — `/dddjango-web`). 커맨드 1 +
   에이전트 4 + 스킬 4 + `scripts/backstop.py`(검사 24종)·시안 절단 도구.

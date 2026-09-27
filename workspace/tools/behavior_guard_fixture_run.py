@@ -432,6 +432,18 @@ def procedure_checks() -> "list[str]":
         code, out = _guard(repo, "close")
         if code != 1 or "머지 겹침" not in out:
             fails.append(f"머지 겹침: exit {code}\n{out}")
+    with tempfile.TemporaryDirectory(prefix="bg-items-") as td:  # close 기록이 대응 원소(옛 → 새 경로)를 싣는다(로드맵 5 G2 잔존)
+        repo = _repo(Path(td))
+        _guard(repo, "open", "--kind", "code")
+        _write(repo, with_test_paths(moved_money(), "app.core.money", "app.shared.money"))
+        _commit(repo)
+        code, out = _guard(repo, "close")
+        import json
+        closes = json.loads((repo / FOLDER / "behavior" / "20260927-0300" / "w1-close.json").read_text(encoding="utf-8"))
+        items = closes[-1].get("map_items") or {}
+        if code != 0 or items.get("pairs", {}).get("app/core/money.py") != "app/shared/money.py" \
+                or items.get("fm", {}).get("app/core/money.py") != "app/shared/money.py":
+            fails.append(f"close 대응 원소 기록: exit {code} · map_items {items}\n{out}")
     return fails
 
 
@@ -443,7 +455,7 @@ def main() -> int:
         if msg:
             fails.append(msg)
     proc = procedure_checks()
-    print(("  ✗ " if proc else "  ✓ ") + "창 절차(앵커 선행 · 창 누락 · 재open 거부 · 열린 창 · close 재실행 · 두 번째 창 · 재상정 · 머지)")
+    print(("  ✗ " if proc else "  ✓ ") + "창 절차(앵커 선행 · 창 누락 · 재open 거부 · 열린 창 · close 재실행 · 두 번째 창 · 재상정 · 머지 · 대응 원소 기록)")
     fails += proc
     if fails:
         print("\nFAIL — behavior_guard 픽스처 기대 불일치:")

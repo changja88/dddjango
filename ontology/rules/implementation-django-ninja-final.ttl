@@ -841,12 +841,18 @@ djr:R-0095 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0096 a djr:Prohibition ;
-    skos:prefLabel "brownfield·코드 자리의 보존 근거 불인정(자리는 리팩터링 대상)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0096@2026-08-19> .
+    skos:prefLabel "brownfield·코드 자리의 보존 근거 불인정(자리는 기능 요청의 리팩터링 대상 · 리팩토링 모드는 BC 의미 점검 대상)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0096@2026-09-27> .
 
 <https://numchida.com/ns/djr#R-0096@2026-08-19> a djr:Expression ;
     prov:specializationOf djr:R-0096 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0096@2026-09-27> a djr:Expression ;
+    prov:specializationOf djr:R-0096 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0096@2026-08-19> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0097 a djr:Prohibition ;
     skos:prefLabel "carveout의 신규 helper 레시피·profile 혼합 제시 금지"@ko ;
@@ -3568,7 +3574,7 @@ djr:R-3465 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 36 ;
     djr:statesNorm djr:R-0094, djr:R-0095, djr:R-0096, djr:R-0097 ;
-    djr:text "**승인된 wire 보존 — 근거는 소비자 의존.** 기존 범위가 RFC 9457 Problem Details를 이미 공개하고\n소비자·테스트가 승인된 wire contract에 의존한다면 관찰한 status, body, header, media type을\n그대로 보존한다. 보존이 정당한 근거는 둘뿐이다 — ⑴ 밖이 의존한다(wire shape) ⑵ 되돌릴 수 없다.\n«먼저 작성돼 있음»(brownfield)은 근거가 아니며 코드의 «자리»는 둘 어디에도 안 걸린다(자리는\n백스톱 위반 = 리팩터링 대상). 이 짧은 carveout은 wire 계약을 지키기 위한 것이며, 새\nhelper·handler 레시피나 code-profile과의 혼합을 제시하지 않는다.\n\n"@ko .
+    djr:text "**승인된 wire 보존 — 근거는 소비자 의존.** 기존 범위가 RFC 9457 Problem Details를 이미 공개하고\n소비자·테스트가 승인된 wire contract에 의존한다면 관찰한 status, body, header, media type을\n그대로 보존한다. 보존이 정당한 근거는 둘뿐이다 — ⑴ 밖이 의존한다(wire shape) ⑵ 되돌릴 수 없다.\n«먼저 작성돼 있음»(brownfield)은 근거가 아니며 코드의 «자리»는 둘 어디에도 안 걸린다(자리는\n백스톱 위반 = 기능 요청의 리팩터링 대상 · 리팩토링 모드는 BC 의미 점검 항목도 대상). 이 짧은 carveout은 wire 계약을 지키기 위한 것이며, 새\nhelper·handler 레시피나 code-profile과의 혼합을 제시하지 않는다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2> ;
