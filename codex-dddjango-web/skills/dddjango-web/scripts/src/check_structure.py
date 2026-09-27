@@ -172,6 +172,11 @@ def run_structure(ctx: BackstopContext) -> List[Finding]:
 # ---------------------------------------------------------------- WS5 구현
 
 
+def run_skeleton(ctx: BackstopContext) -> List[Finding]:
+    """WS5 를 기준점 없이 돌린다 — 리팩토링 빚 스캔 전용(비게이트 컨텍스트라 모든 기존 단위가 대상)."""
+    return _skeleton(ctx)
+
+
 def _skeleton(ctx: BackstopContext) -> List[Finding]:
     out: List[Finding] = []
 

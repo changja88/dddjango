@@ -196,6 +196,8 @@ dddjango-web 파이프라인은 이 하우스룰의 기계 판별 가능 부분�
 python "${CLAUDE_PLUGIN_ROOT}"/scripts/backstop.py <대상 프로젝트 루트> [--diff-base <commit>] [--all]
 python "${CLAUDE_PLUGIN_ROOT}"/scripts/backstop.py <대상 프로젝트 루트> --debt-scan [--json <경로>]
 python "${CLAUDE_PLUGIN_ROOT}"/scripts/backstop.py <대상 프로젝트 루트> --debt-residual <산출물 폴더>
+python "${CLAUDE_PLUGIN_ROOT}"/scripts/backstop.py <대상 프로젝트 루트> --debt-scan --refactor [--json <경로>]
+python "${CLAUDE_PLUGIN_ROOT}"/scripts/backstop.py <대상 프로젝트 루트> --subst-check <기준 커밋> <대상 커밋> [--names <design-spec.md>] [--except <경로>]…
 ```
 
 (파이프라인에서는 Coordinator가 플러그인 루트를 해소해 호출한다 — 에이전트가 경로를 추측하지 않는다.)
@@ -203,7 +205,7 @@ python "${CLAUDE_PLUGIN_ROOT}"/scripts/backstop.py <대상 프로젝트 루트> 
 - 검사 패밀리 4종: **WS(구조·골격) · WI(격리 — §5) · WN(명명 — §4) · WP(UI 실행 경계 — §5⑤)**. 발견은 전부 blocker — 일괄 반송.
 - **exit 계약**: 0 = 통과 / 1 = 미실행(전제 실패 — 통과가 아니다) / 2 = blocker 발견·일괄 반송.
 - **게이트 의미론**: 구조·명명은 **added**(새로 만든 파일·디렉터리)만, 격리·순수성은 touched 파일의 **added 줄**만, 골격 완비는 **신규 단위**(영역·화면 개념·client BC 폴더)만. → 이번 작업이 들인 위반만 잡는다. 기존 코드의 위반은 면제가 아니라 빚이며 아래 빚 모드가 다룬다.
-- **빚 모드**: `--debt-scan`은 web/ 전체(git 추적 + 미추적·비무시 파일)를 «모두 새 것»으로 보고 4패밀리를 돌려 키 (검사, 경로)마다 `C<n>`을 매긴다(Phase 0 빚 스캔 — exit 0 = 빚 0[git 저장소에 web/이 아직 없는 첫 실행 포함] · 2 = 빚 있음 · 1 = 실행 불능[비git · web/이 심볼릭 링크이거나 git 밖·무시돼 우주가 빔]). 브라운필드 허용 규범 — 기존 legacy HTMX core 설치 1개와 그 base 로드 태그(core 중복이 없을 때) · motion.js 판형(플러그인 갱신 사안) · 기존 단위의 골격 미비 — 은 빚으로 내지 않는다. `--debt-residual <산출물 폴더>`는 같은 의미론으로 다시 스캔해 `debt-g2.json`에 쓰고 `refactor-scope.md`의 마지막 `## G0` 절부터 순서대로 G0·G0 재승인 절의 ⓐ·요구 키를 더하고 `ⓐ 재상정` 절의 키를 뺀 집합이 사라졌는지 센다(G2 — exit 0 = 잔존 0 · 2 = 잔존 있음 · 1 = 판정 불가[마지막 `## G0` 절이 `debt-g0.json` 스캔보다 이르면 이번 요청의 G0 절이 없는 것이다]). 두 플래그는 단독 모드다(`--diff-base`·`--all`·`--only`·`--design-build`와 함께 쓰지 않는다).
+- **빚 모드**: `--debt-scan`은 web/ 전체(git 추적 + 미추적·비무시 파일)를 «모두 새 것»으로 보고 4패밀리를 돌려 키 (검사, 경로)마다 `C<n>`을 매긴다(Phase 0 빚 스캔 — exit 0 = 빚 0[git 저장소에 web/이 아직 없는 첫 실행 포함] · 2 = 빚 있음 · 1 = 실행 불능[비git · web/이 심볼릭 링크이거나 git 밖·무시돼 우주가 빔]). 브라운필드 허용 규범 — 기존 legacy HTMX core 설치 1개와 그 base 로드 태그(core 중복이 없을 때) · motion.js 판형(플러그인 갱신 사안) · 기존 단위의 골격 미비 — 은 빚으로 내지 않는다. `--debt-residual <산출물 폴더>`는 같은 의미론으로 다시 스캔해 `debt-g2.json`에 쓰고 `refactor-scope.md`의 마지막 `## G0` 절부터 순서대로 G0·G0 재승인 절의 ⓐ·요구 키를 더하고 `ⓐ 재상정` 절의 키를 뺀 집합이 사라졌는지 센다(G2 — exit 0 = 잔존 0 · 2 = 잔존 있음 · 1 = 판정 불가[마지막 `## G0` 절이 `debt-g0.json` 스캔보다 이르면 이번 요청의 G0 절이 없는 것이다]). 두 플래그는 단독 모드다(`--diff-base`·`--all`·`--only`·`--design-build`와 함께 쓰지 않는다). **리팩토링 스캔** `--debt-scan --refactor`(리팩토링 입구 R1)는 기존 단위의 골격 미비(WS5)도 빚으로 내고, legacy core 면제는 그 base 로드 태그 면제가 없을 때만 걷는다(있으면 core·태그 한 쌍을 그대로 둔다 — 태그에 defer 를 붙이는 것은 실행 순서 변경이다) · `debt-g0.json` 의 `mode` 가 `--debt-residual` 의 의미론을 정한다. **치환 확인** `--subst-check <기준> <대상>`(슬라이스 0 끝 green ④)은 기준..대상 사이 web/ 밖 변경이 테스트 파일의 옛 경로·옛 이름 → 새 경로·새 이름 치환뿐인지 본다(exit 0 = 치환만 · 2 = 어긋남 · 1 = 실행 불능[web/ 밖 미커밋 변경 포함]).
 - `--all`은 게이트 무시 전역 감사용 — 레거시 프로젝트에서 발견 폭주가 정상이며 파이프라인 경로가 아니다(빚 조사는 `--debt-scan`).
 - 순환 등 래칫형 검사가 도입되면 기준선은 `.dddjango-web/backstop-baseline.json`(커밋 대상).
 - **green 판정**: `py_compile`·`manage.py check`는 문법/시스템 검사다. 화면 슬라이스는 실제 렌더 내용과 브라우저 확인까지 보고한다(implementation-ui §2). 미실행은 미검증으로 남기고 구조 검사 통과와 구별한다. **WP6**는 추가/변경된 잘못된 Django 짧은 주석을 차단한다(유효한 단일줄·comment 블록·verbatim 원문 예시는 제외).

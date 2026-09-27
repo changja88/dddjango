@@ -6,14 +6,20 @@
 #   python backstop.py <대상 프로젝트 루트> [--diff-base <commit>] [--all]
 #                      [--only ws,wi,wn,wp|<검사ID>…]
 #                      [--design-build <증거 build 디렉터리>]
-#   python backstop.py <대상 프로젝트 루트> --debt-scan [--json <경로>]
+#   python backstop.py <대상 프로젝트 루트> --debt-scan [--refactor] [--json <경로>]
 #   python backstop.py <대상 프로젝트 루트> --debt-residual <.dddjango-web/<폴더>>
+#   python backstop.py <대상 프로젝트 루트> --subst-check <기준 커밋> <대상 커밋>
+#                      [--names <design-spec.md>] [--except <web/ 밖 비테스트 경로>]…
 #
 # 종료코드: 0=clean / 1=사용·내부 오류(미실행 — 통과가 아니다) / 2=blocker(발견 일괄
 # 출력 — fail-fast 금지). (houserules §7 exit 계약)
 # 빚 모드(src/debt.py — Phase 0 step 4′·G2): --debt-scan 은 web/ 전체 기존 위반(빚)을
 # 키 (검사, 경로)로 동결하고, --debt-residual 은 G0 절의 ⓐ·요구 키 잔존을 센다.
 # 두 플래그는 서로, 그리고 --diff-base·--all·--only·--design-build 와 함께 쓰지 않는다.
+# --refactor 는 --debt-scan 전용(리팩토링 입구의 스캔 — debt-g0.json mode 가 잔존 의미론을 정한다).
+# 치환 확인(src/subst.py — 슬라이스 0 끝 green ④): --subst-check 는 기준..대상 사이 web/ 밖 변경이
+# 테스트 파일의 옛 경로·옛 이름 치환뿐인지 본다(exit 0/2/1). --names·--except 는 그 전용이고,
+# 다른 모든 모드 플래그와 함께 쓰지 않는다.
 # 게이트: 구조·명명=added 파일/디렉터리, 격리·순수성=touched 파일의 added 줄,
 # 골격 완비=신규 단위 → 레거시 불발화. 비git·기준 부재 시 전역 검사로 퇴화 notice.
 # 디자인 작업은 인자와 프로젝트의 현재/추적 원본 표식으로 식별한다.
@@ -33,14 +39,16 @@ from src.check_imports import run_imports  # noqa: E402
 from src.check_naming import run_naming  # noqa: E402
 from src.check_purity import run_purity  # noqa: E402
 from src.debt import cli_residual, cli_scan  # noqa: E402
+from src.subst import cli_subst_check  # noqa: E402
 from check_design_evidence import Defects, implementation_digest, validate_inputs, validate_visual  # noqa: E402
 
 TOTAL_CHECKS: int = 26  # WS8 + WI4 + WN8 + WP6
 
 _USAGE: str = ('사용: python backstop.py <대상 프로젝트 루트> '
                '[--diff-base <commit>] [--all] [--only ws,wi,wn,wp] '
-               '[--design-build <dir>] | --debt-scan [--json <경로>] | '
-               '--debt-residual <폴더>')
+               '[--design-build <dir>] | --debt-scan [--refactor] [--json <경로>] | '
+               '--debt-residual <폴더> | --subst-check <기준> <대상> [--names <명세>] '
+               '[--except <경로>]…')
 
 
 def project_design_record(root: Path, name: str) -> dict | None:
@@ -136,6 +144,10 @@ def main(argv: List[str]) -> int:
     debt_scan: bool = False
     debt_residual: Optional[str] = None
     json_path: Optional[str] = None
+    refactor: bool = False
+    subst: Optional[List[str]] = None
+    names: Optional[str] = None
+    excepts: List[str] = []
 
     i: int = 0
     while i < len(argv):
@@ -162,6 +174,24 @@ def main(argv: List[str]) -> int:
             design_build = argv[i]
         elif a == '--debt-scan':
             debt_scan = True
+        elif a == '--refactor':
+            refactor = True
+        elif a == '--subst-check':
+            if i + 2 >= len(argv) or argv[i + 1].startswith('--') or argv[i + 2].startswith('--'):
+                print('[backstop] 사용 오류: --subst-check 값 둘(기준 커밋 · 대상 커밋) 필요',
+                      file=sys.stderr)
+                return 1
+            subst = [argv[i + 1], argv[i + 2]]
+            i += 2
+        elif a in ('--names', '--except'):
+            i += 1
+            if i >= len(argv):
+                print('[backstop] 사용 오류: %s 값 없음' % a, file=sys.stderr)
+                return 1
+            if a == '--names':
+                names = argv[i]
+            else:
+                excepts.append(argv[i])
         elif a in ('--debt-residual', '--json'):
             i += 1
             if i >= len(argv):
@@ -186,14 +216,24 @@ def main(argv: List[str]) -> int:
         print('[backstop] 사용 오류: 디렉터리 아님 — %s' % target, file=sys.stderr)
         return 1
 
-    if debt_scan or debt_residual is not None or json_path is not None:
-        if (debt_scan == (debt_residual is not None) or diff_base is not None or all_mode
-                or only or design_build is not None or (json_path is not None and not debt_scan)):
+    gate_flags: bool = diff_base is not None or all_mode or bool(only) or design_build is not None
+    if subst is not None or names is not None or excepts:
+        if (subst is None or gate_flags or debt_scan or debt_residual is not None
+                or json_path is not None or refactor):
+            print('[backstop] 사용 오류: --subst-check 는 단독 모드다 — --debt-scan·--debt-residual·'
+                  '--json·--refactor·--diff-base·--all·--only·--design-build 와 함께 쓰지 않는다'
+                  '(--names·--except 는 --subst-check 전용)', file=sys.stderr)
+            return 1
+        return cli_subst_check(root, subst[0], subst[1], names, excepts)
+    if debt_scan or debt_residual is not None or json_path is not None or refactor:
+        if (debt_scan == (debt_residual is not None) or gate_flags
+                or (json_path is not None and not debt_scan) or (refactor and not debt_scan)):
             print('[backstop] 사용 오류: --debt-scan·--debt-residual 은 단독 모드다 — '
                   '서로, 그리고 --diff-base·--all·--only·--design-build 와 함께 쓰지 않는다'
-                  '(--json 은 --debt-scan 전용)', file=sys.stderr)
+                  '(--json·--refactor 는 --debt-scan 전용)', file=sys.stderr)
             return 1
-        return cli_scan(root, json_path) if debt_scan else cli_residual(root, debt_residual)
+        return (cli_scan(root, json_path, refactor) if debt_scan
+                else cli_residual(root, debt_residual))
 
     def family_on(fam: str) -> bool:
         return (not only) or fam in only or any(o.startswith(fam) and len(o) > 2 for o in only)

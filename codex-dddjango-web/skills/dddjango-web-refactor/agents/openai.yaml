@@ -1,0 +1,6 @@
+interface:
+  display_name: "dddjango-web-refactor"
+  short_description: "대상 단위 하나의 기존 web 코드 전체를 dddjango-web 표준으로 정리(동작 불변 리팩토링 입구)"
+  default_prompt: "Use $dddjango-web-refactor <web unit, e.g. web/home> [pain points] to run the dddjango-web Coordinator in refactoring mode for one web unit. Explicit invocation only."
+policy:
+  allow_implicit_invocation: false

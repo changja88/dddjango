@@ -436,5 +436,110 @@ scope_md "$P" run '## G0 @NOW@
 OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
 assert "D23b 대조: 펜스 밖이면 새 G0 절(요청 경계)로 판정 exit 0" 0 "ⓐ 잔존 0" - "$E" "$OUT"
 
+# ---------- D24: 리팩토링 스캔(--refactor) — 기존 단위 골격 미비(WS5)도 빚 · notice 없음 · mode 기록
+P="$T/d24"; mkproj "$P" >/dev/null
+mkdir -p "$P/web/billing"; echo "urlpatterns = []" > "$P/web/billing/urls.py"
+rm "$P/web/static/images/.gitkeep"; commit_all "$P" gaps >/dev/null
+OUT=$(run_backstop "$P" --debt-scan --refactor --json "$T/d24.json"); E=$?
+assert "D24a 리팩토링 스캔은 기존 단위 WS5 를 빚으로" 2 "[WS5]" "빚 모드 제외" "$E" "$OUT"
+assert "D24b 영역 폴더 키 billing/" 0 "WS5|billing/=1" - 0 "$(counts_of "$T/d24.json")"
+assert "D24c 컨테이너 빈 경로 키" 0 "WS5|=1" - 0 "$(counts_of "$T/d24.json")"
+assert "D24d JSON mode = refactor" 0 '"refactor"' - 0 "$(field_of "$T/d24.json" mode)"
+run_backstop "$P" --debt-scan --json "$T/d24f.json" >/dev/null
+assert "D24e 대조: 기본 스캔은 WS5 키 0 · mode feature" 0 '"feature"' - 0 "$(field_of "$T/d24f.json" mode)"
+assert "D24f 대조: 기본 스캔 counts 에 WS5 없음" 0 - "WS5" 0 "$(counts_of "$T/d24f.json")"
+
+# ---------- D25: legacy core 면제 해제는 로드 태그 면제가 없을 때만(WP1·WP2 한 쌍)
+P="$T/d25"; mkproj "$P" >/dev/null
+rm "$P/web/static/htmx/htmx.min.js"; rmdir "$P/web/static/htmx"
+printf '(function(){})();\n' > "$P/web/static/js/htmx.min.js"
+cat > "$P/web/base/base.html" <<'HTML'
+{% load static %}<html><body><script src="{% static 'js/htmx.min.js' %}"></script></body></html>
+HTML
+commit_all "$P" legacy-core >/dev/null
+run_backstop "$P" --debt-scan --refactor --json "$T/d25.json" >/dev/null
+assert "D25a defer 없는 legacy 태그 → WP1·WP2 한 쌍 면제 유지" 0 - "WP1" 0 "$(counts_of "$T/d25.json")"
+assert "D25b 쌍 유지 + 컨테이너 골격 누락(static/htmx/) → WS5| 키로 fail-closed" 0 "WS5|=1" "WP2" 0 "$(counts_of "$T/d25.json")"
+cat > "$P/web/base/base.html" <<'HTML'
+{% load static %}<html><body><script src="{% static 'js/htmx.min.js' %}" defer></script></body></html>
+HTML
+commit_all "$P" defer-tag >/dev/null
+run_backstop "$P" --debt-scan --refactor --json "$T/d25b.json" >/dev/null
+assert "D25c defer 있는 legacy 태그 → WP1 면제 걷힘" 0 "WP1|static/js/htmx.min.js=1" - 0 "$(counts_of "$T/d25b.json")"
+run_backstop "$P" --debt-scan --json "$T/d25c.json" >/dev/null
+assert "D25d 대조: 기본 스캔은 legacy core 면제 그대로" 0 - "WP1" 0 "$(counts_of "$T/d25c.json")"
+
+# ---------- D26: --debt-residual 은 debt-g0.json mode 를 따른다(리팩토링 동결본 → WS5 잔존 판정)
+P="$T/d26"; mkproj "$P" >/dev/null
+mkdir -p "$P/web/billing"; echo "urlpatterns = []" > "$P/web/billing/urls.py"; commit_all "$P" gap >/dev/null
+mkdir -p "$P/.dddjango-web/run"
+run_backstop "$P" --debt-scan --refactor --json "$P/.dddjango-web/run/debt-g0.json" >/dev/null
+scope_md "$P" run '## G0 @NOW@
+ⓐ 키: C1
+요구 키: -
+의미 ⓐ 키: -
+의미 audit: 20260927-120000'
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D26a 리팩토링 동결본 — WS5 미해소 잔존 exit 2(mkproj 의 빈 static/js/ 가 컨테이너 키)" 2 "잔존 ⓐ C1 WS5|" - "$E" "$OUT"
+python3 - "$P/.dddjango-web/run/debt-g0.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1])); d['mode'] = 'feature'; json.dump(d, open(sys.argv[1], 'w'))
+PY
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D26b 대조: 같은 동결본을 mode feature 로 읽으면 WS5 를 보지 않아 해소 exit 0" 0 "ⓐ 잔존 0" - "$E" "$OUT"
+
+# ---------- D27: --refactor·--subst-check·--names·--except 배타
+P="$T/d27"; mkproj "$P" >/dev/null
+OUT=$(run_backstop "$P" --refactor); E=$?
+assert "D27a --refactor 단독 = 사용 오류" 1 "단독 모드" - "$E" "$OUT"
+OUT=$(run_backstop "$P" --debt-scan --refactor --diff-base HEAD); E=$?
+assert "D27b --refactor + --diff-base = 사용 오류" 1 "단독 모드" - "$E" "$OUT"
+mkdir -p "$P/.dddjango-web/run"
+OUT=$(run_backstop "$P" --refactor --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D27c --refactor + --debt-residual = 사용 오류(모드는 debt-g0.json 이 정한다)" 1 "단독 모드" - "$E" "$OUT"
+OUT=$(run_backstop "$P" --names x.md); E=$?
+assert "D27d --names 단독 = 사용 오류" 1 "단독 모드" - "$E" "$OUT"
+OUT=$(run_backstop "$P" --except config/settings.py); E=$?
+assert "D27e --except 단독 = 사용 오류" 1 "단독 모드" - "$E" "$OUT"
+OUT=$(run_backstop "$P" --subst-check HEAD HEAD --debt-scan); E=$?
+assert "D27f --subst-check + --debt-scan = 사용 오류" 1 "단독 모드" - "$E" "$OUT"
+OUT=$(run_backstop "$P" --subst-check HEAD HEAD); E=$?
+assert "D27g 대조: --subst-check 단독은 실행(변경 0 = green)" 0 "치환 확인 — web/ 밖 변경 파일 0" - "$E" "$OUT"
+
+# ---------- D28: 의미(M) 행 — 6a C 판정 무변 · 값 검사는 접는 절에서만
+P="$T/d28"; mkproj "$P" >/dev/null; bad_images "$P"; run_folder "$P" run
+scope_md "$P" run '## G0 @NOW@
+ⓐ 키: C1
+요구 키: -
+의미 ⓐ 키: M1 M2
+의미 audit: 20260927-120000'
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D28a 의미 행이 있어도 C 판정 무변(C1 잔존)" 2 "잔존 ⓐ C1" - "$E" "$OUT"
+scope_md "$P" run '## G0 2026-01-01 09:00
+ⓐ 키: -
+요구 키: -
+의미 ⓐ 키: C1
+
+## G0 @NOW@
+ⓐ 키: -
+요구 키: -'
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D28b 옛 절의 어긋난 의미 행은 판정 입력 아님 exit 0" 0 "ⓐ 잔존 0" - "$E" "$OUT"
+
+# ---------- D29: 명세 정형 행 파서(--subst-check --names · plan --names 공통) — `## 슬라이스 0` 절만
+P="$T/d29"; mkproj "$P" >/dev/null
+printf '# 명세\n이름: web.x.y → broken\n\n## 슬라이스 0\n이름: web.a.m.f → web.b.n.f\n\n## 슬라이스 1\n경로: nope\n' > "$T/d29-ok.md"
+OUT=$(run_backstop "$P" --subst-check HEAD HEAD --names "$T/d29-ok.md"); E=$?
+assert "D29a 절 밖 어긋난 행은 무시 — green" 0 "치환 확인 — web/ 밖 변경 파일 0 · 쌍 1" - "$E" "$OUT"
+printf '## 슬라이스 0\n이름: web.a.m.f → n.f\n' > "$T/d29-bad.md"
+OUT=$(run_backstop "$P" --subst-check HEAD HEAD --names "$T/d29-bad.md"); E=$?
+assert "D29b 절 안 형식 어긋남 = 실행 불능" 1 "web. 으로 시작하는 전체 점 경로" - "$E" "$OUT"
+printf '## 슬라이스 0\n\n## 슬라이스 0 — 둘째\n' > "$T/d29-dup.md"
+OUT=$(run_backstop "$P" --subst-check HEAD HEAD --names "$T/d29-dup.md"); E=$?
+assert "D29c 절 머리 중복 = 실행 불능" 1 "절 머리가 2개" - "$E" "$OUT"
+printf '# 명세\n' > "$T/d29-none.md"
+OUT=$(run_backstop "$P" --subst-check HEAD HEAD --names "$T/d29-none.md"); E=$?
+assert "D29d 절 머리 없음(--names 를 준 호출) = 실행 불능" 1 "절이 없다" - "$E" "$OUT"
+
 echo "fixtures_debt: PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" = 0 ]

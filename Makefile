@@ -95,6 +95,10 @@ verify-web:
 	@set -euo pipefail; \
 	echo "[verify-web] dddjango-web 픽스처(백스톱·절단 도구)"; \
 	bash dddjango-web/scripts/test/run_fixtures.sh; \
+	echo "[verify-web] refactor_audit self-test(플랫폼 구조 판별 · 점검 절 · 적용 한정 어구 · 극성 표본)"; \
+	python3 dddjango-web/scripts/refactor_audit.py --self-test; \
+	python3 codex-dddjango-web/skills/dddjango-web/scripts/refactor_audit.py --self-test; \
+	cmp -s <(grep -F '**적용 범위 규범**:' dddjango-web/commands/dddjango-web.md) <(grep -F '**적용 범위 규범**:' codex-dddjango-web/skills/dddjango-web/SKILL.md) || { echo "ERROR: 적용 범위 규범 문단(적용 한정 어구) Claude·Codex 불일치"; exit 1; }; \
 	echo "[verify-web] codex 미러 byte 대조(scripts·assets)"; \
 	diff -rq --exclude=__pycache__ dddjango-web/scripts codex-dddjango-web/skills/dddjango-web/scripts; \
 	diff -rq dddjango-web/assets codex-dddjango-web/skills/dddjango-web/assets; \

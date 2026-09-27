@@ -107,6 +107,7 @@ $ codex plugin list
 | `/dddjango:dddjango 재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능` | `dddjango를 사용해 재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능을 만들어 줘.` |
 | `/dddjango-web:dddjango-web 주문 목록 화면을 시안대로 구현해 줘. Claude Design 공유 URL: <공유 URL> · 구현 대상: 주문 목록 / 기본` | `dddjango-web을 사용해 주문 목록 화면을 시안대로 구현해 줘. Claude Design 공유 URL: <공유 URL> · 구현 대상: 주문 목록 / 기본` |
 | `/dddjango:refactor order 규칙 하나를 고칠 때 여러 곳을 고쳐야 해` | `$dddjango-refactor order 규칙 하나를 고칠 때 여러 곳을 고쳐야 해` |
+| `/dddjango-web:refactor web/home 화면마다 같은 렌더 코드가 반복돼` | `$dddjango-web-refactor web/home 화면마다 같은 렌더 코드가 반복돼` |
 
 `dddjango-web`은 기준 시안 안에서 구현할 화면·상태 이름을 알려 주고, OpenAPI URL이나 로컬 파일 경로를 알고 있다면 함께 적는다.
 
@@ -315,7 +316,7 @@ dddjango는 작업 규모를 보고 알맞게 움직인다.
 - **시나리오**: 클로드 디자인 시안 반영(공유 URL 또는 같은 시안을 내려받은 폴더) · 기존 화면 수정
 - **표준**: HTML + HTMX + CSS(브라우저 안의 임시 UI 동작에 필요한 경우에만 JavaScript) · 요청 구동 MVVM(view/view_model/state + 템플릿) · design_system 토큰
 - **경계**: `web/` 트리는 «내부의 외부 클라이언트» — 백엔드 코드를 import하지 않고(백스톱이 차단) in-process HTTP로 계약만 소비한다. 필요한 API가 없으면 `/dddjango:dddjango`로 발주를 안내한다.
-- **구성**: 커맨드 1(`/dddjango-web:dddjango-web`) · 에이전트 4(`design-architect-web`·`design-review-web`·`coder-web`·`discipline-reviewer-web`) · 스킬 4(`architecture-web`·`implementation-ui`·`discipline-web-houserules`·`discipline-cleancode`) · 결정적 백스톱(구조·격리·명명·순수성) + 시안 절단 도구
+- **구성**: 커맨드 2(`/dddjango-web:dddjango-web`(화면 빌드) · `/dddjango-web:refactor <대상 단위>`(대상 단위 하나의 기존 web 코드 전체를 표준으로 정리하는 리팩토링 입구 — 동작 불변 · Codex 는 `$dddjango-web-refactor`)) · 에이전트 4(`design-architect-web`·`design-review-web`·`coder-web`·`discipline-reviewer-web`) · 스킬 4(`architecture-web`·`implementation-ui`·`discipline-web-houserules`·`discipline-cleancode`) · 결정적 백스톱(구조·격리·명명·순수성) + 시안 절단 도구
 - **검증**: 결정적 백스톱은 측정 대상인 구조 규율만 확인하며 전체 품질이나 픽셀 동일을 증명하지 않는다. 자동 측정 결과와 규율 감사를 함께 보고, 승인한 상태·viewport의 전체 스크롤과 동작은 게이트에서 **사용자가 육안 확인**한다.
 
 ---
