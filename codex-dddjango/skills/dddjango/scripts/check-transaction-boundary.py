@@ -31,12 +31,44 @@
 `<aggregate>_repository.py` 에서 온 것»으로 가른다 — audit_log.save() 는 안 걸린다.
 
 단순화(정직 기록): #195 의 «루트 메서드 호출을 받은 객체» 판정은 지역 흐름만 본다 —
-save 인자가 같은 함수에서 메서드 호출을 받았거나 도메인 팩토리 호출로 태어났으면 통과,
+save 인자가 같은 함수에서 메서드 호출을 받았거나 팩토리 호출로 태어났으면 통과(스칼라의
+«팩토리 호출» = 리포지토리가 수신자가 아닌 호출 전부라 넓다 — `next(iter(조회))` 도 통과한다),
 `obj.field = x` 직접 대입만 받았거나 아무 일도 없었으면 위반. 반복 변수(for·컴프리헨션
-target)는 원소식이 팩토리 호출인 컬렉션(`[F(..) for ..]`·`tuple(F(..) for ..)` 와 그
-이름)을 돌 때만 «팩토리로 태어남»을 물려받는다 — 튜플 언패킹·필터 체인·리터럴 목록·
-sorted/map/zip 은 전파하지 않는다. 판정은 이름 단위라, 같은 함수에서 그 이름이 비팩토리
-반복·대입으로도 묶이면(컬렉션 이름의 재대입 포함) 전파하지 않는다(fail-closed · 2026-09-26 F4-20).
+target)는 두 모양을 돌 때만 «팩토리로 태어남»을 물려받는다 — ① 원소식이 팩토리 호출인
+컬렉션(`[F(..) for ..]`·`tuple(F(..) for ..)` 와 그 이름) ② 인자 없는 도메인 컬렉션 팩토리
+호출(`C.m()`·`tuple(C.m())` 과 그 이름). ②의 C 는 같은 BC `domain_layer` 에서 최상위 절대
+`from <…>.application.<bc>.domain_layer.<…> import C` 로 들여온 클래스(import 경로는 대상 루트
+기준 모듈 경로의 접미여야 한다), m 은 C 의 본문에 직접 정의된 동기 @classmethod/@staticmethod
+로 반환 애너테이션이 C(또는 Self)의 컬렉션(`tuple[C, ...]`·`list[C]`·`Sequence[C]` 등)인
+것이다 — 도메인은 바깥을 import 하지 못하므로(#8·#1 — import 문 기준) 입력 없는 도메인 호출은
+조회된 애그리거트를 손에 쥘 길이 없다(2026-09-28 R8-D2). 이 가정 밖: 클래스 속성·모듈
+전역(기본값 인자 포함)에 상태 — 받은 인스턴스·자기 등록 레지스트리·주입된 로더/리포지토리
+(서비스 로케이터)·그것을 내놓는 제너레이터·공유 가변 list 를 그대로 돌려주는 메서드 — 를 두는
+도메인과 `importlib` 우회는 이 전파를 속이며, 애그리거트 모듈의 이런 상태는 어느 검사기도 막지
+않는다(스칼라 채널은 수리 전부터 같은 통로가 더 넓게 열려 있다). 그 밖의 «컬렉션을 돌려주는 호출»
+— 인자를 받는 도메인 컬렉션 팩토리·선별 헬퍼(`C.m(xs)`)·리포지토리 조회·비도메인 호출 — 과
+튜플 언패킹·필터 체인·리터럴 목록·sorted/map/zip 은 전파하지 않는다. 상속한 메서드
+(`Sub.m()`)·async 메서드·`list[C] | None`·`Optional[...]` 선언, 상대 import·모듈 경유 호출
+(`mod.C.m()`)·최상위 밖(`if TYPE_CHECKING:`) import·`__init__` 재수출 경유 클래스, 모듈
+범위에서 다시 묶이거나(`try` 안 재 import 포함) `global` 로 선언되거나 그 함수에서 다시 묶인
+C 도 해소하지 않는다(fail-closed). 판정은 이름 단위이며 fail-closed 다 — 컬렉션 이름은 모든
+결속이 단순 대입(`x = v`·`x: T = v`)이고 값이 원소 팩토리일 때만(값이 가리키는 이름도 같은 조건 —
+대입 순서와 무관) 원소 출처를 물려준다. 값이 가변 컬렉션(list·set 등)이면 여기에 더해 그 이름이
+반복 원천·복사 래퍼 인자(반복 원천이나 단순 대입 우변에 놓인 `tuple(x)`·`list(x)` 등)·원소를
+들이지 못하는 순수 읽기 자리 — `len(x)`·`bool(x)`·`isinstance(x, …)` 인자, 비교 피연산자(`==`·
+`!=`·`in`·`not in`·`is`·`is not`), `x.sort(..)`·`x.reverse()`, `if x`·`not x` 류 조건, 이 함수
+자신의 `return x`(복사 포함) — 밖에서 읽히지 않아야 한다. 별칭·호출 인자(로깅·도메인 검증기·결과
+DTO 포함)·그 밖의 메서드 수신(`extend`·`append`·`insert` 등)·첨자 대입·`+=`·`locals()`/`vars()`·
+중첩 def 의 `return x` 같은 탈출이 하나라도 있으면 물려주지 않는다 — 그래서 가변 컬렉션 이름을
+호출 인자로 넘기는 모양은 F4-20 때 통과했더라도 전파를 잃는다(fail-closed 비용 · 피호출자가
+원소를 넣을 수 있다). 모든 값이 불변 컬렉션(함수 안에서 가려지지 않은 `tuple(..)`·`frozenset(..)`·
+제너레이터 식)인 이름은 내용이 바뀌지 않으므로 탈출을 보지 않는다. 반복 변수는 이 함수 안의 결속 가운데 단순 대입·단일
+이름 반복 target 밖의 것(이 함수의 파라미터·`:=`·`+=`·언패킹·with/except as·`match` 캡처·함수 안
+import·def)이 하나라도 있으면 물려받지 않는다. 한계(fail-open): 중첩 def·lambda 의 파라미터는
+결속으로 보지 않아 동명 파라미터로 조회 인스턴스를 save 하는 모양을 놓치고, 복사 래퍼·순수 읽기
+이름(`list`·`tuple`·`len`·`isinstance` 등)이 내장인지는 보지 않아 함수 안 `list = …` 가림에
+속으며, 비교·`in` 의 상대 객체가 사용자 정의 `__eq__`/`__contains__` 로 피연산자를 바꾸는 코드는
+가정 밖이다(2026-09-26 F4-20 · 2026-09-29 R8-D2 리뷰 M-1 · 재검토 M-1·m-1 · 순수 읽기 확장).
 
 이관 계약(명세 조각 ⓐ): 채택 신호 2원(#78) · 대상 0건 가드(#74, touched 필터 없음) ·
 ImportError fail-closed. ⓓ 후보는 exit 에 불산입, `[ⓓ#N]` 으로만 출력.
@@ -82,6 +114,14 @@ WRITE_PREFIX_BAN = ("add", "store", "persist", "insert", "put", "delete", "upser
 RETURN_WRAPPERS = {"Sequence", "list", "List", "Iterable", "Iterator", "tuple", "Tuple", "Optional", "Union"}
 RETURN_PRIMITIVES = {"bool", "int", "None"}
 RETURN_BAN = {"QuerySet", "dict", "Dict", "str", "float"}
+# #195 — 도메인 컬렉션 팩토리의 반환 애너테이션 바깥 이름(반복 원소 전파 · R8-D2).
+COLLECTION_RETURNS = {"tuple", "Tuple", "list", "List", "Sequence", "frozenset", "FrozenSet",
+                      "set", "Set", "Iterable", "Iterator", "Collection"}
+# #195 — `match` 캡처 결속 노드(3.10+ · 그 아래 파이썬에는 match 문 자체가 없다).
+MATCH_CAPTURES = tuple(t for t in (getattr(ast, "MatchAs", None), getattr(ast, "MatchStar", None)) if t)
+MATCH_MAPPING = getattr(ast, "MatchMapping", None)
+# #195 — 컬렉션 이름을 원소를 들이지 않고 읽는 비교 연산자.
+PURE_COMPARE_OPS = (ast.Eq, ast.NotEq, ast.In, ast.NotIn, ast.Is, ast.IsNot)
 
 
 def _has_adoption_signal(bc_dir: Path) -> bool:
@@ -410,10 +450,110 @@ def _uow_write_reach(fn: ast.FunctionDef | ast.AsyncFunctionDef,
     return False
 
 
+def _domain_class_index(root: Path, bc: Path
+                        ) -> "dict[tuple[str, ...], tuple[int, dict[str, ast.ClassDef]]]":
+    """같은 BC `domain_layer/**.py` 의 최상위 클래스.
+
+    키 = 대상 루트부터의 모듈 경로, 값 = (BC 폴더부터의 경로 길이, {클래스 이름: 정의}).
+    import 경로는 키의 접미이면서 BC 폴더 한 칸 위(`application`)까지 담아야 이 BC 로 해소된다.
+    """
+    index: "dict[tuple[str, ...], tuple[int, dict[str, ast.ClassDef]]]" = {}
+    domain = _domain_layer(bc)
+    if domain is None:
+        return index
+    for py in _py_files(domain):
+        mod = _parse(py)
+        if mod is not None:
+            index[py.relative_to(root).with_suffix("").parts] = (
+                len(py.relative_to(bc.parent).parts),
+                {n.name: n for n in mod.body if isinstance(n, ast.ClassDef)})
+    return index
+
+
+def _module_rebound_names(mod: ast.Module) -> set[str]:
+    """모듈 범위에서 두 번 이상 묶인 이름과 어느 함수에서든 `global` 로 선언된 이름.
+
+    모듈 범위 = 함수·클래스 본문 밖(`if`·`try` 안 포함). import 한 도메인 클래스 이름이 여기
+    들면 그 이름의 호출은 도메인 클래스라고 보증할 수 없다.
+    """
+    counts: "dict[str, int]" = {}
+    rebound: set[str] = set()
+    stack: "list[ast.AST]" = list(mod.body)
+    while stack:
+        node = stack.pop()
+        names: "list[str]" = []
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            names = [a.asname or a.name.split(".")[0] for a in node.names]
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            names = [node.name]
+            rebound |= {n for g in ast.walk(node) if isinstance(g, ast.Global) for n in g.names}
+        elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            names = [node.id]
+        elif isinstance(node, ast.ExceptHandler) and node.name:
+            names = [node.name]
+        for n in names:
+            counts[n] = counts.get(n, 0) + 1
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+            stack.extend(ast.iter_child_nodes(node))
+    return rebound | {n for n, c in counts.items() if c > 1}
+
+
+def _returns_own_collection(m: ast.FunctionDef, cls_name: str) -> bool:
+    """반환 애너테이션이 C(또는 Self)의 컬렉션인가 — `tuple[C, ...]`·`list[C]`·`Sequence["C"]` 등."""
+    ret = m.returns
+    if isinstance(ret, ast.Constant) and isinstance(ret.value, str):
+        try:
+            ret = ast.parse(ret.value, mode="eval").body
+        except SyntaxError:
+            return False
+    if not isinstance(ret, ast.Subscript):
+        return False
+    outer = ret.value.id if isinstance(ret.value, ast.Name) else getattr(ret.value, "attr", "")
+    return outer in COLLECTION_RETURNS and _annotation_names(ret.slice) in ({cls_name}, {"Self"})
+
+
+def _domain_collection_factories(
+        mod: ast.Module,
+        domain_classes: "dict[tuple[str, ...], tuple[int, dict[str, ast.ClassDef]]]"
+) -> "dict[str, set[str]]":
+    """유스케이스 모듈의 {지역 클래스 이름: 도메인 컬렉션 팩토리 메서드 이름들}.
+
+    최상위 절대 `from <…>.application.<bc>.domain_layer.<…> import C` 만 같은 BC 의 클래스
+    정의로 해소한다(모듈 범위에서 C 가 다시 묶이면 해소하지 않는다). 도메인 컬렉션 팩토리 =
+    클래스 본문에 직접 정의된 동기 `@classmethod`/`@staticmethod` 이고 반환 애너테이션이
+    C(또는 Self)의 컬렉션인 메서드. 무인자·지역 가림 조건은 호출 지점(`_elements_factory_born`)이 본다.
+    """
+    out: "dict[str, set[str]]" = {}
+    rebound = _module_rebound_names(mod)
+    for node in mod.body:
+        if not isinstance(node, ast.ImportFrom) or node.level or not node.module:
+            continue
+        mparts = tuple(node.module.split("."))
+        for parts, (bc_len, classes) in domain_classes.items():
+            if not (bc_len < len(mparts) <= len(parts) and parts[-len(mparts):] == mparts):
+                continue
+            for a in node.names:
+                cdef = classes.get(a.name)
+                if cdef is None:
+                    continue
+                meths = {
+                    m.name for m in cdef.body
+                    if isinstance(m, ast.FunctionDef)
+                    and {d.id if isinstance(d, ast.Name) else getattr(d, "attr", "")
+                         for d in m.decorator_list} & {"classmethod", "staticmethod"}
+                    and _returns_own_collection(m, cdef.name)
+                }
+                local = a.asname or a.name
+                if meths and local not in rebound:
+                    out[local] = meths
+    return out
+
+
 def _check_use_case_writes(root: Path, bc: Path, f: Findings) -> None:
     app_layer = bc / "application_layer"
     if not app_layer.is_dir():
         return
+    domain_classes = _domain_class_index(root, bc)
     for py in _py_files(app_layer):
         # rglob+이름 필터라 동명 폴더 승격(#490 교체형)의 본체
         # (`<uc>_use_case/<uc>_use_case.py`)도 그대로 걸린다 — slot_glob 등가.
@@ -424,6 +564,7 @@ def _check_use_case_writes(root: Path, bc: Path, f: Findings) -> None:
         mod = _parse(py)
         if mod is None:
             continue
+        collection_factories = _domain_collection_factories(mod, domain_classes)
         classes = [n for n in mod.body if isinstance(n, ast.ClassDef)]
         for cls in classes:
             attr_repos = _init_attr_repos(cls)
@@ -450,12 +591,13 @@ def _check_use_case_writes(root: Path, bc: Path, f: Findings) -> None:
             for m in cls.body:
                 if not isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef)) or m.name.startswith("_"):
                     continue
-                _check_execute_body(root, py, m, attr_repos, attr_uows, helpers, f)
+                _check_execute_body(root, py, m, attr_repos, attr_uows, helpers, collection_factories, f)
 
 
 def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFunctionDef,
                         attr_repos: set[str], attr_uows: set[str],
                         helpers: "dict[str, ast.FunctionDef | ast.AsyncFunctionDef]",
+                        collection_factories: "dict[str, set[str]]",
                         f: Findings) -> None:
     repo_names = _repo_param_names(fn)
     uow_names = _uow_param_names(fn)
@@ -501,35 +643,138 @@ def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFun
             elif isinstance(recv, ast.Name):
                 method_called.add(recv.id)
 
-    # 반복 변수 — «x = <원소식>» 과 같은 판정을 원소식에 적용해 물려준다(F4-20).
-    # 컬렉션 이름 수집과 반복 변수 전파를 두 번의 walk 로 나눠 walk 순서에 기대지 않는다.
-    # 이름 단위 판정이라, 같은 이름이 비팩토리로도 묶이면 전파하지 않는다(fail-closed).
-    element_factory: set[str] = set()   # 원소식이 팩토리 호출인 컬렉션 이름
-    element_other: set[str] = set()     # 비팩토리 컬렉션·값에도 묶인 이름
-    scalar_other: set[str] = set()      # 팩토리 호출이 아닌 값에 대입된 이름
+    # 반복 변수 — «x = <원소식>» 과 같은 판정을 원소식에 적용해 물려준다(F4-20 · R8-D2).
+    # 이름 단위 판정이고 fail-closed 다.
+    #   컬렉션 이름: 모든 결속이 단순 대입(`x = v`·`x: T = v`)이고 값이 원소 팩토리일 때만(값이
+    #     가리키는 이름도 같은 조건 — 최소 고정점이라 대입 순서에 기대지 않는다) 원소 출처를 싣는다.
+    #     가변 컬렉션이면 반복 원천·(반복 원천·단순 대입 우변의) 복사 래퍼 인자·순수 읽기 자리
+    #     (아래 목록) 밖에서 읽히지 않아야 한다 — 별칭·호출 인자·메서드 수신(extend 등)·첨자 대입처럼
+    #     밖으로 새면 그 객체가 무엇을 담게 될지 모른다. 불변 컬렉션은 면제한다.
+    #   반복 변수: 이 함수 안의 결속 가운데 단순 대입·단일 이름 반복 target 밖의 것(이 함수의
+    #     파라미터·`:=`·`+=`·언패킹·with/except as·`match` 캡처·함수 안 import·def)이 하나라도
+    #     있으면 물려받지 않는다(중첩 def·lambda 파라미터는 보지 않는다).
+    wrappers = ("tuple", "list", "frozenset", "set")
+
+    def _unwrapped(expr: ast.AST) -> ast.AST:
+        while (isinstance(expr, ast.Call) and isinstance(expr.func, ast.Name) and expr.func.id in wrappers
+               and len(expr.args) == 1 and not expr.keywords):
+            expr = expr.args[0]
+        return expr
+
+    params = {a.arg for a in fn.args.posonlyargs + fn.args.args + fn.args.kwonlyargs}
+    params |= {a.arg for a in (fn.args.vararg, fn.args.kwarg) if a is not None}
+    simple: "dict[str, list[ast.AST]]" = {}   # 단순 대입 이름 → 대입 값들
+    simple_ids: set[int] = set()             # 단순 대입·맨 선언(`x: T`) target 노드
+    loop_ids: set[int] = set()               # 단일 이름 반복 target 노드
+    source_ids: set[int] = set()             # 반복 원천·복사 래퍼 인자·순수 읽기 자리의 이름 노드
+    nested_returns = {id(r) for d in ast.walk(fn)
+                      if d is not fn and isinstance(d, (ast.FunctionDef, ast.AsyncFunctionDef))
+                      for r in ast.walk(d) if isinstance(r, ast.Return)}
+    for node in ast.walk(fn):
+        if isinstance(node, (ast.For, ast.AsyncFor, ast.comprehension)):
+            if isinstance(node.target, ast.Name):
+                loop_ids.add(id(node.target))
+            src = _unwrapped(node.iter)
+            if isinstance(src, ast.Name):
+                source_ids.add(id(src))
+        # 원소를 들이지 못하는 순수 읽기 자리 — `len(x)`·`bool(x)`·`isinstance(x, …)` 인자 · 비교
+        # 피연산자(`==`·`!=`·`in`·`not in`·`is`·`is not`) · `x.sort(..)`·`x.reverse()`(순서만 바꾼다) ·
+        # `if x`/`while x`/`assert x`/`… if x else …`·`not x` · 이 함수 자신의 `return x`(복사 포함 —
+        # 함수를 떠난다. 중첩 def 의 return 은 그 def 를 부른 쪽으로 새므로 넣지 않는다).
+        reads: "list[ast.AST]" = []
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and not node.keywords:
+            if node.func.id in ("len", "bool") and len(node.args) == 1:
+                reads = [node.args[0]]
+            elif node.func.id == "isinstance" and len(node.args) == 2:
+                reads = [node.args[0]]
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
+                and node.func.attr in ("sort", "reverse"):
+            reads = [node.func.value]
+        elif isinstance(node, ast.Compare) and all(isinstance(op, PURE_COMPARE_OPS) for op in node.ops):
+            reads = [node.left, *node.comparators]
+        elif isinstance(node, (ast.If, ast.While, ast.IfExp, ast.Assert)):
+            reads = [node.test]
+        elif isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+            reads = [node.operand]
+        elif isinstance(node, ast.Return) and node.value is not None and id(node) not in nested_returns:
+            reads = [_unwrapped(node.value)]
+        source_ids |= {id(r) for r in reads if isinstance(r, ast.Name)}
+        target = value = None
+        if isinstance(node, ast.Assign) and len(node.targets) == 1:
+            target, value = node.targets[0], node.value
+        elif isinstance(node, ast.AnnAssign):
+            target, value = node.target, node.value
+        if isinstance(target, ast.Name):
+            simple_ids.add(id(target))
+            if value is not None:
+                simple.setdefault(target.id, []).append(value)
+                src = _unwrapped(value)
+                if src is not value and isinstance(src, ast.Name):   # 복사만 — 별칭(`x = y`)은 샌다
+                    source_ids.add(id(src))
+    bound_other: set[str] = set(params)      # 단순 대입·단일 이름 반복 target 밖의 결속
+    loop_bound: set[str] = set()
+    escaped: set[str] = set()
+    for node in ast.walk(fn):
+        if isinstance(node, ast.Name):
+            if isinstance(node.ctx, ast.Store) and id(node) not in simple_ids:
+                (loop_bound if id(node) in loop_ids else bound_other).add(node.id)
+            elif isinstance(node.ctx, ast.Load) and node.id in simple and id(node) not in source_ids:
+                escaped.add(node.id)
+        elif isinstance(node, (ast.Import, ast.ImportFrom)):
+            bound_other |= {a.asname or a.name.split(".")[0] for a in node.names}
+        elif isinstance(node, (ast.Global, ast.Nonlocal)):
+            bound_other |= set(node.names)
+        elif isinstance(node, ast.ExceptHandler) and node.name:
+            bound_other.add(node.name)
+        elif isinstance(node, MATCH_CAPTURES) and node.name:
+            bound_other.add(node.name)
+        elif MATCH_MAPPING is not None and isinstance(node, MATCH_MAPPING) and node.rest:
+            bound_other.add(node.rest)
+        elif (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+              and node.func.id in ("locals", "vars") and not node.args):
+            escaped |= set(simple)                # 이름 공간을 통째로 내준다 — 전 컬렉션 이름이 샌다
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and node is not fn:
+            bound_other.add(node.name)
+    local_names = bound_other | loop_bound | set(simple)   # 이 함수에서 묶인 이름(클래스 가림 판정)
+
+    def _immutable(value: ast.AST) -> bool:
+        """내용이 태어날 때 고정되는 값 — `tuple(..)`·`frozenset(..)`(가려지지 않은 내장)·제너레이터 식."""
+        return isinstance(value, ast.GeneratorExp) or (
+            isinstance(value, ast.Call) and isinstance(value.func, ast.Name)
+            and value.func.id in ("tuple", "frozenset") and value.func.id not in local_names)
+
+    # 불변 컬렉션은 별칭·인자 전달·메서드 수신으로 내용이 바뀌지 않는다(재결속은 결속 판정이 막는다).
+    escaped = {n for n in escaped if not all(_immutable(v) for v in simple[n])}
+    element_other = bound_other | loop_bound | escaped
+    scalar_other = bound_other | {n for n, vs in simple.items() if not all(_is_factory_call(v) for v in vs)}
+    element_factory: set[str] = set()        # 원소 출처를 싣는 컬렉션 이름(아래 고정점)
     loop_factory: set[str] = set()
     loop_other: set[str] = set()
 
     def _elements_factory_born(it: ast.AST) -> bool:
         if isinstance(it, (ast.ListComp, ast.SetComp, ast.GeneratorExp)):
             return _is_factory_call(it.elt)
-        if (isinstance(it, ast.Call) and isinstance(it.func, ast.Name)
-                and it.func.id in ("tuple", "list", "frozenset", "set")
+        if (isinstance(it, ast.Call) and isinstance(it.func, ast.Name) and it.func.id in wrappers
                 and len(it.args) == 1 and not it.keywords):
             return _elements_factory_born(it.args[0])
+        # 인자 없는 도메인 컬렉션 팩토리 `C.m()` — 입력이 없는 도메인 호출은 조회된 애그리거트를
+        # 손에 쥘 길이 없다(#8·#1). 인자가 있으면 받은 인스턴스를 돌려줄 수 있어 전파하지 않고,
+        # C 가 이 함수에서 다시 묶였으면 도메인 클래스라고 보증할 수 없어 전파하지 않는다(R8-D2).
+        if (isinstance(it, ast.Call) and not it.args and not it.keywords
+                and isinstance(it.func, ast.Attribute) and isinstance(it.func.value, ast.Name)
+                and it.func.value.id not in local_names
+                and it.func.attr in collection_factories.get(it.func.value.id, ())):
+            return True
         return isinstance(it, ast.Name) and it.id in element_factory
 
-    for node in ast.walk(fn):
-        target = value = None
-        if isinstance(node, ast.Assign) and len(node.targets) == 1:
-            target, value = node.targets[0], node.value
-        elif isinstance(node, ast.AnnAssign) and node.value is not None:
-            target, value = node.target, node.value
-        if isinstance(target, ast.Name) and value is not None:
-            (element_factory if _elements_factory_born(value) else element_other).add(target.id)
-            if not _is_factory_call(value):
-                scalar_other.add(target.id)
-    element_factory -= element_other
+    grew = True
+    while grew:
+        grew = False
+        for name, values in simple.items():
+            if (name not in element_factory and name not in element_other
+                    and all(_elements_factory_born(v) for v in values)):
+                element_factory.add(name)
+                grew = True
     for node in ast.walk(fn):
         if isinstance(node, (ast.For, ast.AsyncFor, ast.comprehension)) and isinstance(node.target, ast.Name):
             (loop_factory if _elements_factory_born(node.iter) else loop_other).add(node.target.id)
