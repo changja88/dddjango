@@ -1,8 +1,12 @@
 # dddjango-web 치환 확인 (값 정본: 커맨드 «슬라이스 0 호출» 끝 green ④ · houserules §7).
 #
 # --subst-check <기준> <대상> [--names <design-spec.md>] [--except <경로>]…: 기준..대상 사이의 web/ 밖
-#   변경이 테스트 파일의 옛 경로·옛 이름 → 새 경로·새 이름 치환뿐인지 본다. 쌍은 web/ 개명(git diff -M)
-#   · 옛 폴더 전체 이동 · 명세 `## 슬라이스 0` 절의 `이름:` 행에서 만든다. .py 의 import 는 원문을
+#   변경이 테스트 파일의 옛 경로·옛 이름 → 새 경로·새 이름 치환뿐인지 본다. 쌍은 web/ 개명(git diff -M
+#   — 누적 1회와 구간 안 커밋별 개명 사슬) · 옛 폴더 전체 이동 · 명세 `## 슬라이스 0` 절의 `이름:` 행에서
+#   만든다. 사슬 쌍은 옛 경로가 기준에만 · 새 경로가 대상에만 있을 때만 쓰고, 구간 안에서 새로 생긴
+#   경로(A · 뿌리 커밋이 들인 경로 포함)는 계보를 끊는다. 사슬은 첫 부모 줄기만 본다. 쌍이 없는(fail-closed)
+#   한계 셋: 곁가지 안에서 개명과 대폭 교체를 함께 한 뒤 머지 · 한 커밋 안에서 개명과 대폭 교정을 함께 함 ·
+#   개명된 경로를 한 커밋이 지우고 뒤 커밋이 다시 만듦(트리는 개명+제자리 교체와 같아도). .py 의 import 는 원문을
 #   바인딩으로 펼친 뒤 대상 쪽에 쌍을 거꾸로 적용해 블록·위치별 다중집합으로 대조하고, import 밖은
 #   대상 원문을 거꾸로 치환해 ast 로 대조한다. 그 밖 파일은 바뀐 줄의 다중집합으로 대조한다.
 
@@ -89,10 +93,12 @@ def _tree_files(root: Path, rev: str) -> Set[str]:
     return {p[len('web/'):] for p in out.decode('utf-8').split('\0') if p.startswith('web/')}
 
 
-def _renames(root: Path, base: str, target: str) -> List[Tuple[str, str]]:
+def _web_changes(root: Path, base: str, target: str) -> Tuple[List[Tuple[str, str]], Set[str]]:
+    """기준..대상의 web/ 개명 쌍(옛·새 모두 web/)과 새로 생긴 web/ 경로(A · web/ 밖에서 들어온 것 포함)."""
     out: List[str] = _git(root, ['diff', '-M', '--name-status', '-z', base, target,
                                  '--', 'web/']).decode('utf-8').split('\0')
     pairs: List[Tuple[str, str]] = []
+    added: Set[str] = set()
     i: int = 0
     while i < len(out) and out[i]:
         status: str = out[i]
@@ -100,10 +106,41 @@ def _renames(root: Path, base: str, target: str) -> List[Tuple[str, str]]:
             old, new = out[i + 1], out[i + 2]
             if status[0] == 'R' and old.startswith('web/') and new.startswith('web/'):
                 pairs.append((old[len('web/'):], new[len('web/'):]))
+            elif new.startswith('web/'):
+                added.add(new[len('web/'):])
             i += 3
         else:
+            if status[0] == 'A' and out[i + 1].startswith('web/'):
+                added.add(out[i + 1][len('web/'):])
             i += 2
-    return pairs
+    return pairs, added
+
+
+def _history_renames(root: Path, base: str, target: str, base_files: Set[str],
+                     target_files: Set[str]) -> List[Tuple[str, str]]:
+    """누적 개명 ∪ 커밋별 개명 사슬. 사슬 쌍은 누적 개명과 같은 트리 조건(옛 경로는 기준에만 ·
+    새 경로는 대상에만 있다)을 채울 때만 더한다 — 슬라이스 0 이 개명한 파일을 뒤 커밋이 고쳐 쓰면
+    누적 diff 는 D+A 로 본다. 구간 안에서 새로 생긴 경로는 계보가 없다(비운 옛 이름에 다시 만든
+    파일을 기준 파일의 후계로 잡지 않는다)."""
+    found: Dict[str, str] = {new: old for old, new in _web_changes(root, base, target)[0]}
+    origin: Dict[str, Optional[str]] = {}
+    lines: List[str] = _git(root, ['rev-list', '--reverse', '--first-parent', '--parents',
+                                   '%s..%s' % (base, target)]).decode().splitlines()
+    for line in lines:
+        ids: List[str] = line.split()
+        # 뿌리 커밋은 빈 트리와 비교한다 — 뿌리가 들인 경로도 구간 안에서 새로 생긴 경로다.
+        parent: str = ids[1] if len(ids) > 1 else _git(
+            root, ['hash-object', '-t', 'tree', '/dev/null']).decode().strip()
+        renames, added = _web_changes(root, parent, ids[0])
+        for old, new in renames:
+            origin[new] = origin.pop(old, old)
+        for path in added:
+            origin[path] = None
+    for new, source in origin.items():
+        if (source is not None and source in base_files and source not in target_files
+                and new in target_files and new not in base_files):
+            found.setdefault(new, source)
+    return sorted((old, new) for new, old in found.items())
 
 
 def _folder_pairs(renames: List[Tuple[str, str]], base_files: Set[str],
@@ -134,14 +171,16 @@ def _strip_static(rel: str) -> str:
 
 def build_pairs(root: Path, base: str, target: str, names_file: Optional[str]) -> _Pairs:
     pairs: _Pairs = _Pairs()
-    renames: List[Tuple[str, str]] = _renames(root, base, target)
+    base_files: Set[str] = _tree_files(root, base)
+    target_files: Set[str] = _tree_files(root, target)
+    renames: List[Tuple[str, str]] = _history_renames(root, base, target, base_files, target_files)
     for old, new in renames:
         old_tail, new_tail = tail_of(old), tail_of(new)
         pairs.text[new_tail[0]] = old_tail[0]
         old_mod, new_mod = module_of(old), module_of(new)
         if old_mod and new_mod:
             pairs.prefix[new_mod] = old_mod
-    for folder, dest in _folder_pairs(renames, _tree_files(root, base), _tree_files(root, target)):
+    for folder, dest in _folder_pairs(renames, base_files, target_files):
         pairs.text[_strip_static(dest) + '/'] = _strip_static(folder) + '/'
         pairs.prefix['web.' + dest.replace('/', '.')] = 'web.' + folder.replace('/', '.')
     if names_file is not None:

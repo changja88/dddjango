@@ -316,5 +316,142 @@ commit_all "$P" s13 >/dev/null
 OUT=$(run_backstop "$P" --subst-check "$BASE" HEAD); E=$?
 assert "S13b 대상 파일 파싱 실패 = 실행 불능" 1 "파싱 실패" - "$E" "$OUT"
 
+# ---------- S14: 커밋별 개명 사슬 — 개명 커밋 뒤 다른 커밋이 같은 파일을 고쳐 쓰면 누적 diff 는 D+A 로 본다
+rewrite() { # rewrite <파일> <표지> — 옛 내용과 닮지 않은 새 내용(유사도 50% 미만)
+  printf 'PNG-NEW-%s-zzzzzzzzzzzzzzzzzzzzzzzz' "$2" > "$1"
+}
+P=$(case_repo s14a)
+git -C "$P" mv web/static/images/old.png web/static/images/new_image.png
+sub "$P/tests/web/test_img.py" images/old.png images/new_image.png
+commit_all "$P" s0 >/dev/null
+rewrite "$P/web/static/images/new_image.png" s14a; commit_all "$P" feat >/dev/null
+OUT=$(run_backstop "$P" --subst-check "$BASE" HEAD); E=$?
+assert "S14a 개명 뒤 다른 커밋의 내용 교체 = green(커밋별 개명 사슬)" 0 "치환 확인 — web/ 밖 변경 파일 1" "[subst]" "$E" "$OUT"
+P=$(case_repo s14b)
+git -C "$P" mv web/a/q.py web/a/r.py
+sub "$P/tests/web/test_m.py" "import web.a.q
+" "import web.a.r
+"
+sub "$P/tests/web/test_m.py" "web.a.q.VALUE" "web.a.r.VALUE"
+commit_all "$P" s0 >/dev/null
+printf 'from dataclasses import dataclass\n\nVALUE = 3\n\n\n@dataclass\nclass R:\n    x: int\n' > "$P/web/a/r.py"
+commit_all "$P" feat >/dev/null
+OUT=$(run_backstop "$P" --subst-check "$BASE" HEAD); E=$?
+assert "S14b .py 개명 뒤 다른 커밋의 본문 재작성 = green" 0 "치환 확인 — web/ 밖 변경 파일 1" "[subst]" "$E" "$OUT"
+P=$(case_repo s14c)
+git -C "$P" mv web/static/images/old.png web/static/images/mid.png; commit_all "$P" c1 >/dev/null
+git -C "$P" mv web/static/images/mid.png web/static/images/last.png; commit_all "$P" c2 >/dev/null
+rewrite "$P/web/static/images/last.png" s14c
+sub "$P/tests/web/test_img.py" images/old.png images/last.png; commit_all "$P" c3 >/dev/null
+OUT=$(run_backstop "$P" --subst-check "$BASE" HEAD); E=$?
+assert "S14c 개명 사슬 합성(old→mid→last · 뒤 교체) = green" 0 "치환 확인 — web/ 밖 변경 파일 1" "[subst]" "$E" "$OUT"
+P=$(case_repo s14d)
+git -C "$P" mv web/static/images/old.png web/static/images/mid.png; commit_all "$P" c1 >/dev/null
+git -C "$P" mv web/static/images/mid.png web/static/images/last.png; commit_all "$P" c2 >/dev/null
+rewrite "$P/web/static/images/last.png" s14d
+sub "$P/tests/web/test_img.py" images/old.png images/mid.png; commit_all "$P" c3 >/dev/null
+OUT=$(run_backstop "$P" --subst-check "$BASE" HEAD); E=$?
+assert "S14d 대조: 사슬 중간 이름(대상에 없음)으로 치환 = red" 2 "치환만으로 설명되지 않는다" - "$E" "$OUT"
+P=$(case_repo s14e)
+git -C "$P" mv web/static/images/old.png web/static/images/new_image.png; commit_all "$P" s0 >/dev/null
+rewrite "$P/web/static/images/old.png" s14e
+sub "$P/tests/web/test_img.py" images/old.png images/new_image.png; commit_all "$P" feat >/dev/null
+OUT=$(run_backstop "$P" --subst-check "$BASE" HEAD); E=$?
+assert "S14e 대조: 개명 뒤 옛 경로가 대상에 되살아나면 쌍 없음 = red" 2 "치환만으로 설명되지 않는다" - "$E" "$OUT"
+P=$(case_repo s14f)
+git -C "$P" mv web/static/images/old.png web/static/images/tmp.png; commit_all "$P" c1 >/dev/null
+git -C "$P" mv web/static/images/other.png web/static/images/old.png; commit_all "$P" c2 >/dev/null
+git -C "$P" mv web/static/images/tmp.png web/static/images/other.png; commit_all "$P" c3 >/dev/null
+sub "$P/tests/web/test_img.py" 'IMG = "images/old.png"
+OTHER = "images/other.png"' 'IMG = "images/other.png"
+OTHER = "images/old.png"'
+commit_all "$P" c4 >/dev/null
+OUT=$(run_backstop "$P" --subst-check "$BASE" HEAD); E=$?
+assert "S14f 대조: 커밋에 걸친 경로 맞바꿈 = red(S5b 와 같은 fail-closed)" 2 "치환만으로 설명되지 않는다" - "$E" "$OUT"
+# S14g·S14n 은 사례 전용 기준 커밋(S3 방식) — 테스트가 기준 web/ 에 없는 경로(ghost.png)를 가리킨다
+P=$(case_repo s14g)
+echo "images/ghost.png" >> "$P/tests/web/refs.txt"; S14GBASE=$(commit_all "$P" s14g-base)
+rewrite "$P/web/static/images/ghost.png" s14g; commit_all "$P" c1 >/dev/null
+git -C "$P" mv web/static/images/ghost.png web/static/images/ghost_2.png; commit_all "$P" c2 >/dev/null
+sub "$P/tests/web/refs.txt" images/ghost.png images/ghost_2.png; commit_all "$P" c3 >/dev/null
+OUT=$(run_backstop "$P" --subst-check "$S14GBASE" HEAD); E=$?
+assert "S14g 대조: 구간에서 새로 만든 파일의 개명 사슬(옛 경로가 기준에 없음) = red" 2 "치환만으로 설명되지 않는다" - "$E" "$OUT"
+P=$(case_repo s14i)
+git -C "$P" mv web/static/images/old.png web/static/images/keep.png; commit_all "$P" c1 >/dev/null
+rewrite "$P/web/static/images/old.png" s14i; commit_all "$P" c2 >/dev/null
+git -C "$P" mv web/static/images/old.png web/static/images/r.png; commit_all "$P" c3 >/dev/null
+sub "$P/tests/web/test_img.py" images/old.png images/r.png; commit_all "$P" c4 >/dev/null
+OUT=$(run_backstop "$P" --subst-check "$BASE" HEAD); E=$?
+assert "S14i 대조: 비운 옛 이름에 새로 만든 파일의 개명은 기준 파일의 후계가 아니다 = red" 2 "치환만으로 설명되지 않는다" - "$E" "$OUT"
+P=$(case_repo s14j)
+git -C "$P" mv web/static/images/old.png web/static/images/gone.png; commit_all "$P" c1 >/dev/null
+git -C "$P" rm -q web/static/images/gone.png; commit_all "$P" c2 >/dev/null
+sub "$P/tests/web/test_img.py" images/old.png images/gone.png; commit_all "$P" c3 >/dev/null
+OUT=$(run_backstop "$P" --subst-check "$BASE" HEAD); E=$?
+assert "S14j 대조: 개명 뒤 삭제(새 경로가 대상에 없음) = red" 2 "치환만으로 설명되지 않는다" - "$E" "$OUT"
+P=$(case_repo s14k)
+git -C "$P" rm -q web/static/images/other.png; commit_all "$P" c1 >/dev/null
+git -C "$P" mv web/static/images/old.png web/static/images/other.png; commit_all "$P" c2 >/dev/null
+sub "$P/tests/web/refs.txt" images/old.png images/other.png; commit_all "$P" c3 >/dev/null
+OUT=$(run_backstop "$P" --subst-check "$BASE" HEAD); E=$?
+assert "S14k 대조: 새 경로가 기준에 있던 경로(other 자리 덮어쓰기) = red" 2 "치환만으로 설명되지 않는다" - "$E" "$OUT"
+P=$(case_repo s14l)
+git -C "$P" checkout -qb side
+git -C "$P" mv web/static/images/old.png web/static/images/new_image.png
+sub "$P/tests/web/test_img.py" images/old.png images/new_image.png; commit_all "$P" s0 >/dev/null
+git -C "$P" checkout -q -
+git -C "$P" -c user.name=t -c user.email=t@t merge -q --no-ff side -m merge
+rewrite "$P/web/static/images/new_image.png" s14l; commit_all "$P" feat >/dev/null
+OUT=$(run_backstop "$P" --subst-check "$BASE" HEAD); E=$?
+assert "S14l 곁가지 개명 → 머지 → 본선 교체 = green(첫 부모 diff 의 개명)" 0 "치환 확인 — web/ 밖 변경 파일 1" "[subst]" "$E" "$OUT"
+P=$(case_repo s14m)
+git -C "$P" checkout -qb side
+git -C "$P" mv web/static/images/old.png web/static/images/new_image.png
+sub "$P/tests/web/test_img.py" images/old.png images/new_image.png; commit_all "$P" s1 >/dev/null
+rewrite "$P/web/static/images/new_image.png" s14m; commit_all "$P" s2 >/dev/null
+git -C "$P" checkout -q -
+git -C "$P" -c user.name=t -c user.email=t@t merge -q --no-ff side -m merge
+OUT=$(run_backstop "$P" --subst-check "$BASE" HEAD); E=$?
+assert "S14m 곁가지 안 개명+교체 → 머지 = red(첫 부모 밖 — fail-closed 한계 기록)" 2 "치환만으로 설명되지 않는다" - "$E" "$OUT"
+P=$(case_repo s14n)
+echo "images/ghost.png" >> "$P/tests/web/refs.txt"; S14NBASE=$(commit_all "$P" s14n-base)
+git -C "$P" checkout -q --orphan unrelated
+rewrite "$P/web/static/images/ghost.png" s14n; commit_all "$P" root >/dev/null
+git -C "$P" mv web/static/images/ghost.png web/static/images/ghost_2.png
+sub "$P/tests/web/refs.txt" images/ghost.png images/ghost_2.png; commit_all "$P" c1 >/dev/null
+OUT=$(run_backstop "$P" --subst-check "$S14NBASE" HEAD); E=$?
+assert "S14n 대조: 무관 이력(구간에 뿌리 커밋) · 뿌리 파일의 개명(옛 경로가 기준에 없음) = red(실행 불능 아님)" 2 "치환만으로 설명되지 않는다" "실행 불능" "$E" "$OUT"
+P=$(case_repo s14n2)
+git -C "$P" checkout -q --orphan unrelated
+rewrite "$P/web/static/images/old.png" s14n2; commit_all "$P" root >/dev/null
+git -C "$P" mv web/static/images/old.png web/static/images/x.png
+sub "$P/tests/web/test_img.py" images/old.png images/x.png; commit_all "$P" c1 >/dev/null
+OUT=$(run_backstop "$P" --subst-check "$BASE" HEAD); E=$?
+assert "S14n′ 대조: 무관 이력의 뿌리가 기준과 같은 경로를 다른 내용으로 들인 뒤 개명 = red(뿌리 경로도 계보를 끊는다)" 2 "치환만으로 설명되지 않는다" "실행 불능" "$E" "$OUT"
+# S14o 는 기준이 대상의 첫 부모 줄기 밖(곁가지 커밋)이라 사슬이 기준이 아닌 트리에서 시작한다
+P=$(case_repo s14o)
+git -C "$P" checkout -qb side
+git -C "$P" rm -q web/static/images/other.png; S14OBASE=$(commit_all "$P" side-base)
+git -C "$P" checkout -q -
+git -C "$P" mv web/static/images/other.png web/static/images/other_2.png
+sub "$P/tests/web/refs.txt" images/other.png images/other_2.png; commit_all "$P" c1 >/dev/null
+git -C "$P" -c user.name=t -c user.email=t@t merge -q -s ours side -m merge
+OUT=$(run_backstop "$P" --subst-check "$S14OBASE" HEAD); E=$?
+assert "S14o 대조: 기준이 첫 부모 줄기 밖 · 기준에서 지운 경로의 개명(옛 경로가 기준에 없음) = red" 2 "치환만으로 설명되지 않는다" - "$E" "$OUT"
+# S14h 는 사례 전용 기준 커밋(S3 방식) — 공용 기준에 파일을 더하면 다른 사례의 쌍 계수가 바뀐다
+P=$(case_repo s14h)
+mkdir -p "$P/web/a/x"
+printf 'def f():\n    return 1\n' > "$P/web/a/x/f.py"; printf 'def g():\n    return 2\n' > "$P/web/a/x/g.py"
+S14HBASE=$(commit_all "$P" s14h-base)
+mkdir -p "$P/web/a/z"; git -C "$P" mv web/a/x/f.py web/a/z/f.py; commit_all "$P" c1 >/dev/null
+mkdir -p "$P/web/b/x"; git -C "$P" mv web/a/x/g.py web/b/x/g.py; commit_all "$P" c2 >/dev/null
+sub "$P/tests/web/test_m.py" "import web.a.q
+" "import web.b.q
+"
+sub "$P/tests/web/test_m.py" "web.a.q.VALUE" "web.b.q.VALUE"
+commit_all "$P" c3 >/dev/null
+OUT=$(run_backstop "$P" --subst-check "$S14HBASE" HEAD); E=$?
+assert "S14h 대조(X2 M3 커밋 분리판): 파일을 커밋마다 다른 폴더로 옮겨도 폴더 거짓 쌍 없음 = red" 2 "import 구간" - "$E" "$OUT"
+
 echo "fixtures_subst: PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" = 0 ]
