@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>리팩토링 진행표</title>
+<style>
+:root { --bg:#f7f7f5; --panel:#fff; --text:#1d1d1f; --muted:#6b6b70; --line:#e2e2dc;
+  --done:#1f8a4c; --doing:#c47a00; --todo:#9a9aa2; --doing-bg:#fdf1dc; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg:#151517; --panel:#1f1f22; --text:#ececef; --muted:#a0a0a8; --line:#333338;
+  --done:#5fcf8e; --doing:#f0b04a; --todo:#7a7a82; --doing-bg:#3a2c12; } }
+:root[data-theme="dark"] { --bg:#151517; --panel:#1f1f22; --text:#ececef; --muted:#a0a0a8; --line:#333338;
+  --done:#5fcf8e; --doing:#f0b04a; --todo:#7a7a82; --doing-bg:#3a2c12; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--text);
+  font:15px/1.6 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+main { max-width:960px; margin:0 auto; padding:28px 16px 60px; }
+h1 { font-size:22px; margin:0 0 4px; }
+.sub { color:var(--muted); font-size:13px; margin:0 0 20px; }
+.cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media (max-width:700px) { .cols { grid-template-columns:1fr; } }
+.col { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 18px; }
+.col h2 { font-size:17px; margin:0 0 12px; }
+.stage { font-size:12px; color:var(--muted); margin:14px 0 4px; font-weight:600; }
+ul { list-style:none; margin:0; padding:0; }
+li { display:flex; gap:8px; padding:5px 6px; border-radius:6px; }
+li .m { width:18px; flex:none; text-align:center; font-weight:700; }
+li.done .m { color:var(--done); }
+li.done { color:var(--muted); }
+li.doing { background:var(--doing-bg); }
+li.doing .m { color:var(--doing); }
+li.todo .m { color:var(--todo); }
+.note { color:var(--muted); font-size:12px; }
+.next { margin-top:18px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 18px; }
+.next b { color:var(--doing); }
+.theme { position:fixed; top:10px; right:10px; background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:3px 9px; font-size:12px; cursor:pointer; }
+</style>
+</head>
+<body>
+<button class="theme" onclick="var r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'||(!r.dataset.theme&&matchMedia('(prefers-color-scheme: dark)').matches))?'light':'dark'">밝게/어둡게</button>
+<main>
+<h1>리팩토링 진행표</h1>
+<p class="sub">갱신 2026-09-30 02시 · ✓ 끝 · ▶ 진행 중 · ○ 남음</p>
+
+<div class="cols">
+<section class="col">
+<h2>dddjango</h2>
+<div class="stage">1. 기능 완성</div>
+<ul>
+<li class="done"><span class="m">✓</span>기능 요청 빚 처리 · 동작 보존 장치</li>
+<li class="done"><span class="m">✓</span>리팩토링 커맨드 <code>/dddjango:refactor</code></li>
+<li class="done"><span class="m">✓</span>통합 검증</li>
+<li class="done"><span class="m">✓</span>리허설 — 기능 요청</li>
+<li class="done"><span class="m">✓</span><span>리허설 — 리팩토링 <code>service_policy</code> <span class="note">· G2 완주 · 결함 1 찾음</span></span></li>
+<li class="done"><span class="m">✓</span><span>결함 수리 — 검사기 #195 <span class="note">· 커밋 완료</span></span></li>
+<li class="doing"><span class="m">▶</span><span>개선 — 정리 가능 여부 미리 판정 · 검사기 인자 팩토리 · 질문 줄이기(상시 답) <span class="note">· 커밋 끝(재리허설 질문 5 → 1) · 후속 수리 2건(잔존 근거 판독 · 병합 표기) 진행</span></span></li>
+<li class="doing"><span class="m">▶</span><span>배포 대기 <span class="note">· 현장 진행 중 레인 3개가 G2 넘기면</span></span></li>
+<li class="todo"><span class="m">○</span><span>설치본 갱신 <span class="note">· 사용자 <code>/plugin</code></span></span></li>
+</ul>
+<div class="stage">2. 테스트 드라이브 <span class="note">(spring_dream_server 작업 완료 뒤)</span></div>
+<ul><li class="todo"><span class="m">○</span>BC 1개 리팩토링</li></ul>
+<div class="stage">3. 전체 일괄</div>
+<ul><li class="todo"><span class="m">○</span><span>나머지 BC 전부 <span class="note">· 3개씩 파동 · G0 질문은 파동마다 한 번에 · 캠페인 전 상시 답 한 줄 직접 작성</span></span></li></ul>
+</section>
+
+<section class="col">
+<h2>dddjango-web</h2>
+<div class="stage">1. 기능 완성</div>
+<ul>
+<li class="done"><span class="m">✓</span>기능 요청 빚 처리</li>
+<li class="done"><span class="m">✓</span>리팩토링 커맨드 <code>/dddjango-web:refactor</code></li>
+<li class="done"><span class="m">✓</span>통합 검증</li>
+<li class="done"><span class="m">✓</span>리허설 — 기능 요청</li>
+<li class="done"><span class="m">✓</span><span>리허설 — 리팩토링 <code>web/home</code> <span class="note">· 결함 0</span></span></li>
+<li class="done"><span class="m">✓</span><span>결함 수리 — 치환 확인 · 계약 절단 문구 <span class="note">· 커밋 완료</span></span></li>
+<li class="doing"><span class="m">▶</span><span>개선 — Codex 문구 정렬 · 계약 절단 기록 · 되살아난 옛 문단 정리 · 상시 답 <span class="note">· 커밋 끝(로고 교체 질문 1 → 0 · 비용 −34%) · 후속 수리 1건(잔존 근거 판독) 진행</span></span></li>
+<li class="doing"><span class="m">▶</span><span>배포 대기 <span class="note">· dddjango 와 함께</span></span></li>
+<li class="todo"><span class="m">○</span><span>설치본 갱신 <span class="note">· 사용자 <code>/plugin</code></span></span></li>
+</ul>
+<div class="stage">2. 테스트 드라이브 <span class="note">(spring_dream_server 작업 완료 뒤)</span></div>
+<ul><li class="todo"><span class="m">○</span>web 단위 1개 리팩토링</li></ul>
+<div class="stage">3. 전체 일괄</div>
+<ul><li class="todo"><span class="m">○</span>나머지 web 단위 전부</li></ul>
+</section>
+</div>
+
+<div class="next"><b>지금</b> — 개선 커밋 끝(질문 8 → 3) · 후속 수리 8c(잔존 판정 근거 판독 · 병합 표기) 진행<br><b>다음</b> — 현장 진행 중 레인이 G2 를 넘기면 배포(<code>make release</code> · <code>make release-web</code>) · 개선이 그 전에 끝나면 함께 · 그 뒤 설치본 갱신은 사용자 <code>/plugin</code></div>
+</main>
+</body>
+</html>
