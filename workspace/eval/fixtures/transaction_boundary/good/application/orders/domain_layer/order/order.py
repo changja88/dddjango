@@ -21,3 +21,11 @@ class Order:
         order_ids: set[str] = {order._order_id for order in orders}
         if len(order_ids) != len(orders):
             raise ValueError("주문 식별자가 겹친다")
+
+    @classmethod
+    def open_batch(cls, order_ids: tuple[str, ...]) -> tuple["Order", ...]:
+        orders: list[Order] = []
+        order_id: str
+        for order_id in order_ids:
+            orders.append(cls.open_pending(order_id))
+        return tuple(orders)

@@ -35,19 +35,44 @@ save 인자가 같은 함수에서 메서드 호출을 받았거나 팩토리 �
 «팩토리 호출» = 리포지토리가 수신자가 아닌 호출 전부라 넓다 — `next(iter(조회))` 도 통과한다),
 `obj.field = x` 직접 대입만 받았거나 아무 일도 없었으면 위반. 반복 변수(for·컴프리헨션
 target)는 두 모양을 돌 때만 «팩토리로 태어남»을 물려받는다 — ① 원소식이 팩토리 호출인
-컬렉션(`[F(..) for ..]`·`tuple(F(..) for ..)` 와 그 이름) ② 인자 없는 도메인 컬렉션 팩토리
-호출(`C.m()`·`tuple(C.m())` 과 그 이름). ②의 C 는 같은 BC `domain_layer` 에서 최상위 절대
-`from <…>.application.<bc>.domain_layer.<…> import C` 로 들여온 클래스(import 경로는 대상 루트
-기준 모듈 경로의 접미여야 한다), m 은 C 의 본문에 직접 정의된 동기 @classmethod/@staticmethod
-로 반환 애너테이션이 C(또는 Self)의 컬렉션(`tuple[C, ...]`·`list[C]`·`Sequence[C]` 등)인
-것이다 — 도메인은 바깥을 import 하지 못하므로(#8·#1 — import 문 기준) 입력 없는 도메인 호출은
-조회된 애그리거트를 손에 쥘 길이 없다(2026-09-28 R8-D2). 이 가정 밖: 클래스 속성·모듈
-전역(기본값 인자 포함)에 상태 — 받은 인스턴스·자기 등록 레지스트리·주입된 로더/리포지토리
-(서비스 로케이터)·그것을 내놓는 제너레이터·공유 가변 list 를 그대로 돌려주는 메서드 — 를 두는
-도메인과 `importlib` 우회는 이 전파를 속이며, 애그리거트 모듈의 이런 상태는 어느 검사기도 막지
-않는다(스칼라 채널은 수리 전부터 같은 통로가 더 넓게 열려 있다). 그 밖의 «컬렉션을 돌려주는 호출»
-— 인자를 받는 도메인 컬렉션 팩토리·선별 헬퍼(`C.m(xs)`)·리포지토리 조회·비도메인 호출 — 과
-튜플 언패킹·필터 체인·리터럴 목록·sorted/map/zip 은 전파하지 않는다. 상속한 메서드
+컬렉션(`[F(..) for ..]`·`tuple(F(..) for ..)` 와 그 이름) ② 도메인 컬렉션 팩토리 호출(`C.m(..)`·
+`tuple(C.m(..))` 과 그 이름 — 인자가 없으면 선언만으로, 인자가 있으면 본문 증명이 설 때만). ②의 C 는 같은
+BC `domain_layer` 에서 최상위 절대 `from <…>.application.<bc>.domain_layer.<…> import C` 로 들여온
+클래스(import 경로는 대상 루트 기준 모듈 경로의 접미여야 한다), m 은 C 의 본문에 직접 정의된 동기
+@classmethod/@staticmethod 로 반환 애너테이션이 C(또는 Self)의 컬렉션(`tuple[C, ...]`·`list[C]`·
+`Sequence[C]` 등)인 것이다 — 도메인은 바깥을 import 하지 못하므로(#8·#1 — import 문 기준) 입력 없는
+도메인 호출은 조회된 애그리거트를 손에 쥘 길이 없다(2026-09-28 R8-D2). 인자가 있으면 받은 인스턴스를
+돌려줄 수 있으므로 m 의 본문이 원소를 모두 새로 짓는다고 AST 로 보여야 한다(2026-09-29 R8-I2) — 모든
+return 이 새 원소(`cls(..)`·`C(..)`·`cls.__new__(cls)` — 셋 다 클래스 본문 범위 어디서도 `__new__` 가 묶이지
+않을 때만 — ·`object.__new__(cls)`·같은 규칙으로 증명된 C 의 단일 팩토리 `cls.f(..)`·그런 값에만 묶인 지역
+이름)만 담은 컴프리헨션·리터럴·복사 래퍼·`sorted(.., key=, reverse=)`·`reversed(..)`·`+`·조건식·증명된
+컬렉션 팩토리 호출이거나, 빈 컬렉션이나 그런 컬렉션에서 시작해 새 원소만 들인(append/add/insert/extend/
+update/`+=`) 지역 누적 이름이어야 하고, 누적 이름은 들이기·sort/reverse·복사 래퍼·sorted 인자·바로 소비되는
+reversed 인자(`tuple/list/set/frozenset/sorted` 의 유일 인자·반복 원천·return 에 놓인 `reversed(x)` — 역순
+반복자는 원본을 쥐므로 `r = reversed(x)` 처럼 이름에 담으면 fail-closed)·반복 원천·별표 풀기·`+` 피연산자
+(상대도 새 컬렉션일 때 — 누적 이름끼리의 `+` 는 fail-closed)·순수 읽기·그 메서드 자신의 return 밖에서 읽히지
+않아야 한다. 증명 대상은 데코레이터가 모듈·클래스 본문 어디서도 가려지지 않은 @classmethod/@staticmethod
+하나뿐인 동기 def 로 yield·await·`locals()`/`vars()` 가 없고 클래스 본문 범위(`if`·`try` 안의 def·import·
+대입 포함)에서 한 번만 묶인 것이고, metaclass 를 지정한 클래스와 모듈 범위에서 다시 묶인 클래스는 증명하지
+않는다. 중첩 def·class·lambda 안의 대입은 단순 대입으로 세지 않고(그 이름은 증명에서 떨어진다), 최소
+고정점이라 재귀 순환은 증명되지 않는다.
+본문 증명은 `cls(..)` 가 새 인스턴스라는 데 기대므로 베이스 클래스의 `__new__`·metaclass(Enum 등)·클래스
+데코레이터·클래스 본문 밖에서 메서드를 바꿔 끼우는 코드(`C.m = …`·`setattr`)·`builtins.X = …`·
+`globals()['X'] = …` 로 내장을 바꿔 끼우는 코드·`gc`(`get_objects`·`get_referents`)로 객체를 찾아 고치는
+코드는 가정 밖이고, 받은
+인스턴스를 베껴 새로 짓는 복제 팩토리(`cls(code=k.code, …)`·`cls(**vars(k))`·`cls(**asdict(k))`, 새
+인스턴스에 `__dict__` 를 대입해 상태를 공유하는 모양 포함)는 새 원소로 본다(스칼라 `C(**vars(x))` 와 같은
+부류 — 필드 출처까지 막으면 받은 값을 읽어 새로 짓는 팩토리와 가를 수 없다). 누적 이름과 비교되는 상대
+객체의 사용자 정의 `__eq__` 등이 누적 이름에 원소를 들이는 코드도 가정 밖이다(아래 유스케이스 쪽 가정과
+같다). 무인자 호출은 본문을 보지 않으므로 이 가정 밖: 클래스 속성·모듈 전역(기본값 인자 포함)에 상태 —
+받은 인스턴스·자기 등록 레지스트리·주입된 로더/리포지토리(서비스 로케이터)·그것을 내놓는 제너레이터·공유
+가변 list 를 그대로 돌려주는 메서드 — 를 두는 도메인과 지연 import·`importlib` 우회는 이 전파를 속이고,
+모듈 상수로 미리 지은 인스턴스나 `functools.cache` 로 호출 사이에 같은 인스턴스를 돌려주는 메서드도 무인자면
+전파된다(R8-D2 와 같다 · 탐침 L1–L8·L14·A40·k·L6 — 애그리거트 모듈의 이런 상태는 어느 검사기도 막지
+않으며, 스칼라 채널은 수리 전부터 같은 통로가 더 넓게 열려 있다). 그 밖의 «컬렉션을 돌려주는 호출» —
+본문 증명이 서지 않는 인자 받는 도메인 호출(받은 인스턴스를 고르는 선별 헬퍼 `C.m(xs)`·받은 컬렉션을 섞는
+누적·증명 안 된 헬퍼 위임·본문이 dict 값·map·`.copy()` 로 돌려주는 것)·리포지토리 조회·비도메인 호출 —
+과, 유스케이스 반복 원천의 튜플 언패킹·필터 체인·리터럴 목록·sorted/map/zip 은 전파하지 않는다. 상속한 메서드
 (`Sub.m()`)·async 메서드·`list[C] | None`·`Optional[...]` 선언, 상대 import·모듈 경유 호출
 (`mod.C.m()`)·최상위 밖(`if TYPE_CHECKING:`) import·`__init__` 재수출 경유 클래스, 모듈
 범위에서 다시 묶이거나(`try` 안 재 import 포함) `global` 로 선언되거나 그 함수에서 다시 묶인
@@ -122,6 +147,9 @@ MATCH_CAPTURES = tuple(t for t in (getattr(ast, "MatchAs", None), getattr(ast, "
 MATCH_MAPPING = getattr(ast, "MatchMapping", None)
 # #195 — 컬렉션 이름을 원소를 들이지 않고 읽는 비교 연산자.
 PURE_COMPARE_OPS = (ast.Eq, ast.NotEq, ast.In, ast.NotIn, ast.Is, ast.IsNot)
+# #195 — 도메인 본문 증명(R8-I2): 누적 이름에 새 원소 하나를 들이는 메서드(원소 인자 위치)와 새 컬렉션을 들이는 메서드.
+BUILD_ELEMENT_ARG = {"append": 0, "add": 0, "insert": 1}
+BUILD_COLLECTION_METHODS = ("extend", "update")
 
 
 def _has_adoption_signal(bc_dir: Path) -> bool:
@@ -451,13 +479,14 @@ def _uow_write_reach(fn: ast.FunctionDef | ast.AsyncFunctionDef,
 
 
 def _domain_class_index(root: Path, bc: Path
-                        ) -> "dict[tuple[str, ...], tuple[int, dict[str, ast.ClassDef]]]":
+                        ) -> "dict[tuple[str, ...], tuple[int, dict[str, ast.ClassDef], dict[str, set[str]]]]":
     """같은 BC `domain_layer/**.py` 의 최상위 클래스.
 
-    키 = 대상 루트부터의 모듈 경로, 값 = (BC 폴더부터의 경로 길이, {클래스 이름: 정의}).
-    import 경로는 키의 접미이면서 BC 폴더 한 칸 위(`application`)까지 담아야 이 BC 로 해소된다.
+    키 = 대상 루트부터의 모듈 경로, 값 = (BC 폴더부터의 경로 길이, {클래스 이름: 정의},
+    {클래스 이름: 본문 증명된 컬렉션 팩토리}). import 경로는 키의 접미이면서 BC 폴더 한 칸 위
+    (`application`)까지 담아야 이 BC 로 해소된다.
     """
-    index: "dict[tuple[str, ...], tuple[int, dict[str, ast.ClassDef]]]" = {}
+    index: "dict[tuple[str, ...], tuple[int, dict[str, ast.ClassDef], dict[str, set[str]]]]" = {}
     domain = _domain_layer(bc)
     if domain is None:
         return index
@@ -466,7 +495,8 @@ def _domain_class_index(root: Path, bc: Path
         if mod is not None:
             index[py.relative_to(root).with_suffix("").parts] = (
                 len(py.relative_to(bc.parent).parts),
-                {n.name: n for n in mod.body if isinstance(n, ast.ClassDef)})
+                {n.name: n for n in mod.body if isinstance(n, ast.ClassDef)},
+                _built_collection_factories(mod))
     return index
 
 
@@ -498,6 +528,263 @@ def _module_rebound_names(mod: ast.Module) -> set[str]:
     return rebound | {n for n, c in counts.items() if c > 1}
 
 
+def _module_bound_names(mod: ast.Module) -> set[str]:
+    """모듈 범위(함수·클래스 본문 밖 · `if`·`try` 안 포함)에서 한 번이라도 묶인 이름과 함수·클래스 본문이
+    `global` 로 선언한 이름 — 내장 가림 판정용."""
+    bound: set[str] = set()
+    stack: "list[ast.AST]" = list(mod.body)
+    while stack:
+        node = stack.pop()
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            bound |= {a.asname or a.name.split(".")[0] for a in node.names}
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            bound.add(node.name)
+            bound |= {n for g in ast.walk(node) if isinstance(g, ast.Global) for n in g.names}
+        elif isinstance(node, ast.Name) and isinstance(node.ctx, (ast.Store, ast.Del)):
+            bound.add(node.id)
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+            stack.extend(ast.iter_child_nodes(node))
+    return bound
+
+
+def _built_collection_factories(mod: ast.Module) -> "dict[str, set[str]]":
+    """도메인 모듈의 {클래스 이름: 본문 증명된 컬렉션 팩토리 메서드}(인자 있는 호출의 전파 근거 · R8-I2).
+
+    본문 증명 = 메서드의 모든 return 이 «그 본문에서 새로 지은 C 인스턴스만 담은 컬렉션»임을 AST 로 보인다.
+    새 원소 = `cls(..)`(classmethod 첫 파라미터)·`C(..)`·`cls.__new__(cls)`(셋 다 클래스 본문 범위 어디서도
+    `__new__` 가 묶이지 않을 때만)·`object.__new__(cls)`·본문 증명된 C 의 단일 팩토리 호출(`cls.m(..)`·
+    `C.m(..)`)·그런 값에만 단순 대입된 지역 이름·두 갈래가 모두 새 원소인 조건식. 단일 팩토리 = 모든 return 이
+    새 원소인 메서드. 새 컬렉션 = 새 원소만 담은 컴프리헨션·리터럴(별표 풀기는 새 컬렉션만)·가려지지 않은
+    `tuple/list/set/frozenset` 복사·새 컬렉션의 `sorted(.., key=, reverse=)`·`reversed(..)`·본문 증명된 C 의
+    컬렉션 팩토리 호출·새 컬렉션끼리의 `+`·조건식·누적 이름.
+    누적 이름 = 모든 결속이 새 컬렉션 단순 대입이거나 `+=` 새 컬렉션이고, append/add/insert(새 원소)·extend/
+    update(새 컬렉션)·sort/reverse 수신·복사 래퍼·sorted 인자·바로 소비되는 reversed 인자(복사 래퍼·sorted 의
+    유일 인자·반복 원천·return — 역순 반복자는 원본을 쥔다)·반복 원천·별표 풀기·`+` 피연산자(상대도 새
+    컬렉션일 때 · 누적 이름끼리는 fail-closed)·순수 읽기(len·bool·isinstance·비교·조건)·이 메서드 자신의 return
+    밖에서 읽히지 않는 이름.
+    중첩 def·class·lambda 안의 대입은 단순 대입으로 세지 않는다(그 이름은 증명에서 떨어진다). 최소 고정점이라
+    재귀 순환은 증명되지 않는다(fail-closed). 증명 대상 = 클래스 본문 범위(`if`·`try` 안의 def·import·대입 포함
+    · 메서드 본문 밖)에서 한 번만 묶인 동기 def 로 데코레이터가 `@classmethod`·`@staticmethod`(모듈·클래스 본문
+    범위 어디서도 가려지지 않은 내장) 하나뿐이고 yield·await·`locals()`/`vars()` 가 없는 것. 클래스가 metaclass
+    를 지정하거나 모듈 범위에서 C 가 다시 묶이면 그 클래스는 증명하지 않는다.
+    """
+    rebound = _module_rebound_names(mod)
+    module_bound = _module_bound_names(mod)
+    out: "dict[str, set[str]]" = {}
+    for cdef in (n for n in mod.body if isinstance(n, ast.ClassDef)):
+        if cdef.name in rebound or any(k.arg == "metaclass" for k in cdef.keywords):
+            continue
+        counts: "dict[str, int]" = {}
+        stack: "list[ast.AST]" = list(cdef.body)
+        while stack:            # 클래스 본문 범위의 결속(`if`·`try`·`with` 안 포함 · 메서드 본문 밖)
+            n = stack.pop()
+            names = ([n.name] if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+                     else [a.asname or a.name.split(".")[0] for a in n.names]
+                     if isinstance(n, (ast.Import, ast.ImportFrom))
+                     else [n.id] if isinstance(n, ast.Name) and not isinstance(n.ctx, ast.Load) else [])
+            for x in names:
+                counts[x] = counts.get(x, 0) + 1
+            if not isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+                stack.extend(ast.iter_child_nodes(n))
+        plain = "__new__" not in counts
+        cands = {
+            m.name: m for m in cdef.body
+            if isinstance(m, ast.FunctionDef) and counts.get(m.name) == 1 and len(m.decorator_list) == 1
+            and isinstance(m.decorator_list[0], ast.Name)
+            and m.decorator_list[0].id in ("classmethod", "staticmethod")
+            and m.decorator_list[0].id not in module_bound and m.decorator_list[0].id not in counts
+        }
+        scalar: set[str] = set()
+        coll: set[str] = set()
+        grew = True
+        while grew:
+            grew = False
+            for name, m in cands.items():
+                for want_coll, bucket in ((False, scalar), (True, coll)):
+                    if name not in bucket and _proves_fresh(m, want_coll, cdef.name, scalar, coll,
+                                                            module_bound, plain):
+                        bucket.add(name)
+                        grew = True
+        if coll:
+            out[cdef.name] = coll
+    return out
+
+
+def _proves_fresh(m: ast.FunctionDef, want_coll: bool, cname: str, scalar: set[str], coll: set[str],
+                  module_bound: set[str], plain: bool) -> bool:
+    """메서드 m 의 모든 return 이 새 원소(want_coll=False)·새 컬렉션(True)인가 — `_built_collection_factories` 참조.
+
+    plain = 클래스 본문 범위 어디서도 `__new__` 가 묶이지 않았다(그때만 `cls(..)`·`C(..)`·`cls.__new__(cls)` 가
+    새 인스턴스다).
+    """
+    params = m.args.posonlyargs + m.args.args
+    first = params[0].arg if m.decorator_list[0].id == "classmethod" and params else None
+    if m.decorator_list[0].id == "classmethod" and first is None:
+        return False
+    simple: "dict[str, list[ast.AST]]" = {}
+    aug: "dict[str, list[ast.AugAssign]]" = {}
+    rebinds: set[str] = set()               # 단순 대입·`+=`·파라미터 밖의 결속(중첩 범위 포함)
+    handled: set[int] = set()
+    parents: "dict[int, ast.AST]" = {}
+    arg_counts: "dict[str, int]" = {}
+    nested_returns = {id(r) for d in ast.walk(m)
+                      if d is not m and isinstance(d, (ast.FunctionDef, ast.AsyncFunctionDef))
+                      for r in ast.walk(d) if isinstance(r, ast.Return)}
+    nested = {id(x) for d in ast.walk(m)
+              if d is not m and isinstance(d, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda))
+              for x in ast.walk(d) if x is not d}
+    for node in ast.walk(m):
+        for child in ast.iter_child_nodes(node):
+            parents[id(child)] = node
+        if isinstance(node, (ast.Yield, ast.YieldFrom, ast.Await)):
+            return False
+        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                and node.func.id in ("locals", "vars") and not node.args):
+            return False
+        if isinstance(node, ast.arg):
+            arg_counts[node.arg] = arg_counts.get(node.arg, 0) + 1
+        elif id(node) in nested and isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+            pass                            # 중첩 범위의 대입 — target 은 아래 «그 밖의 결속» 으로 센다(fail-closed)
+        elif isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+            simple.setdefault(node.targets[0].id, []).append(node.value)
+            handled.add(id(node.targets[0]))
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            if node.value is not None:
+                simple.setdefault(node.target.id, []).append(node.value)
+            handled.add(id(node.target))
+        elif isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name):
+            aug.setdefault(node.target.id, []).append(node)
+            handled.add(id(node.target))
+        elif isinstance(node, ast.Name) and not isinstance(node.ctx, ast.Load) and id(node) not in handled:
+            rebinds.add(node.id)
+        elif isinstance(node, (ast.Import, ast.ImportFrom)):
+            rebinds |= {a.asname or a.name.split(".")[0] for a in node.names}
+        elif isinstance(node, (ast.Global, ast.Nonlocal)):
+            rebinds |= set(node.names)
+        elif isinstance(node, ast.ExceptHandler) and node.name:
+            rebinds.add(node.name)
+        elif isinstance(node, MATCH_CAPTURES) and node.name:
+            rebinds.add(node.name)
+        elif MATCH_MAPPING is not None and isinstance(node, MATCH_MAPPING) and node.rest:
+            rebinds.add(node.rest)
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and node is not m:
+            rebinds.add(node.name)
+    other = rebinds | set(arg_counts)       # 단순 대입·`+=` 밖의 결속(파라미터 포함)
+    local = set(simple) | set(aug) | other
+    returns = [r for r in ast.walk(m) if isinstance(r, ast.Return) and id(r) not in nested_returns]
+    if not returns or any(r.value is None for r in returns):
+        return False
+
+    def _builtin(name: str) -> bool:
+        return name not in module_bound and name not in local
+
+    def _own(node: ast.AST) -> bool:      # cls(첫 파라미터로만 묶임) 또는 가려지지 않은 C
+        if not isinstance(node, ast.Name):
+            return False
+        if first is not None and node.id == first:
+            return arg_counts.get(first) == 1 and first not in simple and first not in aug and first not in rebinds
+        return node.id == cname and cname not in local
+
+    def _elem(e: ast.AST, seen: frozenset) -> bool:
+        if isinstance(e, ast.Call):
+            f = e.func
+            if (isinstance(f, ast.Attribute) and f.attr == "__new__" and len(e.args) == 1 and not e.keywords
+                    and _own(e.args[0]) and ((isinstance(f.value, ast.Name) and f.value.id == "object"
+                                              and _builtin("object")) or (plain and _own(f.value)))):
+                return True
+            return (plain and _own(f)) or (isinstance(f, ast.Attribute) and _own(f.value) and f.attr in scalar)
+        if isinstance(e, ast.Name):
+            return (e.id not in seen and e.id in simple and e.id not in other and e.id not in aug
+                    and all(_elem(v, seen | {e.id}) for v in simple[e.id]))
+        if isinstance(e, ast.IfExp):
+            return _elem(e.body, seen) and _elem(e.orelse, seen)
+        return False
+
+    def _coll(e: ast.AST, seen: frozenset) -> bool:
+        if isinstance(e, (ast.ListComp, ast.SetComp, ast.GeneratorExp)):
+            return _elem(e.elt, seen)
+        if isinstance(e, (ast.Tuple, ast.List, ast.Set)):
+            return all(_coll(x.value, seen) if isinstance(x, ast.Starred) else _elem(x, seen) for x in e.elts)
+        if isinstance(e, ast.Call):
+            f = e.func
+            if isinstance(f, ast.Name) and f.id in ("tuple", "list", "set", "frozenset") and _builtin(f.id):
+                return not e.keywords and (not e.args or (len(e.args) == 1 and not isinstance(e.args[0], ast.Starred)
+                                                          and _coll(e.args[0], seen)))
+            if isinstance(f, ast.Name) and f.id in ("sorted", "reversed") and _builtin(f.id):   # 원소 재배열
+                return (len(e.args) == 1 and not isinstance(e.args[0], ast.Starred) and _coll(e.args[0], seen)
+                        and all(k.arg in (("key", "reverse") if f.id == "sorted" else ()) for k in e.keywords))
+            return isinstance(f, ast.Attribute) and _own(f.value) and f.attr in coll
+        if isinstance(e, ast.BinOp) and isinstance(e.op, ast.Add):
+            return _coll(e.left, seen) and _coll(e.right, seen)
+        if isinstance(e, ast.IfExp):
+            return _coll(e.body, seen) and _coll(e.orelse, seen)
+        if isinstance(e, ast.Name):
+            return _accumulator(e.id, seen)
+        return False
+
+    def _accumulator(n: str, seen: frozenset) -> bool:
+        if n in seen or n not in simple or n in other:
+            return False
+        seen = seen | {n}
+        if not all(_coll(v, seen) for v in simple[n]):
+            return False
+        if not all(isinstance(a.op, ast.Add) and _coll(a.value, seen) for a in aug.get(n, [])):
+            return False
+        for node in ast.walk(m):
+            if isinstance(node, ast.Name) and node.id == n and isinstance(node.ctx, ast.Load):
+                if not _read_ok(node, seen):
+                    return False
+        return True
+
+    def _read_ok(node: ast.Name, seen: frozenset) -> bool:
+        p = parents.get(id(node))
+        if isinstance(p, ast.Attribute) and p.value is node:
+            call = parents.get(id(p))
+            if not (isinstance(call, ast.Call) and call.func is p):
+                return False
+            if p.attr in ("sort", "reverse"):
+                return True
+            if call.keywords or any(isinstance(a, ast.Starred) for a in call.args):
+                return False
+            if p.attr in BUILD_ELEMENT_ARG:
+                i = BUILD_ELEMENT_ARG[p.attr]
+                return len(call.args) == i + 1 and _elem(call.args[i], seen)
+            if p.attr in BUILD_COLLECTION_METHODS:
+                return len(call.args) == 1 and _coll(call.args[0], seen)
+            return False
+        if (isinstance(p, ast.Call) and isinstance(p.func, ast.Name) and _builtin(p.func.id) and p.args == [node]
+                and p.func.id == "sorted" and all(k.arg in ("key", "reverse") for k in p.keywords)):
+            return True
+        if (isinstance(p, ast.Call) and isinstance(p.func, ast.Name) and p.func.id == "reversed"
+                and _builtin("reversed") and p.args == [node] and not p.keywords):   # 역순 반복자는 원본을 쥔다
+            gp = parents.get(id(p))
+            return ((isinstance(gp, ast.Call) and isinstance(gp.func, ast.Name) and _builtin(gp.func.id)
+                     and gp.func.id in ("tuple", "list", "set", "frozenset", "sorted") and gp.args == [p])
+                    or (isinstance(gp, (ast.comprehension, ast.For)) and gp.iter is p)
+                    or (isinstance(gp, ast.Return) and id(gp) not in nested_returns))
+        if isinstance(p, ast.Call) and isinstance(p.func, ast.Name) and _builtin(p.func.id) and not p.keywords:
+            if p.func.id in ("tuple", "list", "set", "frozenset", "len", "bool") and p.args == [node]:
+                return True
+            return p.func.id == "isinstance" and len(p.args) == 2 and p.args[0] is node
+        if isinstance(p, (ast.comprehension, ast.For)) and p.iter is node:
+            return True
+        if isinstance(p, ast.Starred):
+            return isinstance(parents.get(id(p)), (ast.Tuple, ast.List, ast.Set))
+        if isinstance(p, ast.BinOp) and isinstance(p.op, ast.Add):     # 상대도 새 컬렉션일 때만(`__radd__` 차단)
+            other_side = p.right if p.left is node else p.left
+            return (isinstance(other_side, ast.Name) and other_side.id == node.id) or _coll(other_side, seen)
+        if isinstance(p, ast.Compare):
+            return all(isinstance(op, PURE_COMPARE_OPS) for op in p.ops)
+        if isinstance(p, (ast.If, ast.While, ast.IfExp, ast.Assert)) and p.test is node:
+            return True
+        if isinstance(p, ast.UnaryOp) and isinstance(p.op, ast.Not):
+            return True
+        return isinstance(p, ast.Return) and id(p) not in nested_returns
+
+    check = _coll if want_coll else _elem
+    return all(check(r.value, frozenset()) for r in returns)
+
+
 def _returns_own_collection(m: ast.FunctionDef, cls_name: str) -> bool:
     """반환 애너테이션이 C(또는 Self)의 컬렉션인가 — `tuple[C, ...]`·`list[C]`·`Sequence["C"]` 등."""
     ret = m.returns
@@ -514,22 +801,23 @@ def _returns_own_collection(m: ast.FunctionDef, cls_name: str) -> bool:
 
 def _domain_collection_factories(
         mod: ast.Module,
-        domain_classes: "dict[tuple[str, ...], tuple[int, dict[str, ast.ClassDef]]]"
-) -> "dict[str, set[str]]":
-    """유스케이스 모듈의 {지역 클래스 이름: 도메인 컬렉션 팩토리 메서드 이름들}.
+        domain_classes: "dict[tuple[str, ...], tuple[int, dict[str, ast.ClassDef], dict[str, set[str]]]]"
+) -> "dict[str, dict[str, bool]]":
+    """유스케이스 모듈의 {지역 클래스 이름: {도메인 컬렉션 팩토리 메서드 이름: 본문 증명 여부}}.
 
     최상위 절대 `from <…>.application.<bc>.domain_layer.<…> import C` 만 같은 BC 의 클래스
     정의로 해소한다(모듈 범위에서 C 가 다시 묶이면 해소하지 않는다). 도메인 컬렉션 팩토리 =
     클래스 본문에 직접 정의된 동기 `@classmethod`/`@staticmethod` 이고 반환 애너테이션이
-    C(또는 Self)의 컬렉션인 메서드. 무인자·지역 가림 조건은 호출 지점(`_elements_factory_born`)이 본다.
+    C(또는 Self)의 컬렉션인 메서드. 인자·지역 가림 조건은 호출 지점(`_elements_factory_born`)이 본다 —
+    무인자 호출은 선언만으로, 인자 있는 호출은 본문 증명(`_built_collection_factories`)이 있을 때만 전파한다.
     """
-    out: "dict[str, set[str]]" = {}
+    out: "dict[str, dict[str, bool]]" = {}
     rebound = _module_rebound_names(mod)
     for node in mod.body:
         if not isinstance(node, ast.ImportFrom) or node.level or not node.module:
             continue
         mparts = tuple(node.module.split("."))
-        for parts, (bc_len, classes) in domain_classes.items():
+        for parts, (bc_len, classes, built) in domain_classes.items():
             if not (bc_len < len(mparts) <= len(parts) and parts[-len(mparts):] == mparts):
                 continue
             for a in node.names:
@@ -537,7 +825,7 @@ def _domain_collection_factories(
                 if cdef is None:
                     continue
                 meths = {
-                    m.name for m in cdef.body
+                    m.name: m.name in built.get(a.name, ()) for m in cdef.body
                     if isinstance(m, ast.FunctionDef)
                     and {d.id if isinstance(d, ast.Name) else getattr(d, "attr", "")
                          for d in m.decorator_list} & {"classmethod", "staticmethod"}
@@ -597,7 +885,7 @@ def _check_use_case_writes(root: Path, bc: Path, f: Findings) -> None:
 def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFunctionDef,
                         attr_repos: set[str], attr_uows: set[str],
                         helpers: "dict[str, ast.FunctionDef | ast.AsyncFunctionDef]",
-                        collection_factories: "dict[str, set[str]]",
+                        collection_factories: "dict[str, dict[str, bool]]",
                         f: Findings) -> None:
     repo_names = _repo_param_names(fn)
     uow_names = _uow_param_names(fn)
@@ -757,13 +1045,14 @@ def _check_execute_body(root: Path, py: Path, fn: ast.FunctionDef | ast.AsyncFun
         if (isinstance(it, ast.Call) and isinstance(it.func, ast.Name) and it.func.id in wrappers
                 and len(it.args) == 1 and not it.keywords):
             return _elements_factory_born(it.args[0])
-        # 인자 없는 도메인 컬렉션 팩토리 `C.m()` — 입력이 없는 도메인 호출은 조회된 애그리거트를
-        # 손에 쥘 길이 없다(#8·#1). 인자가 있으면 받은 인스턴스를 돌려줄 수 있어 전파하지 않고,
-        # C 가 이 함수에서 다시 묶였으면 도메인 클래스라고 보증할 수 없어 전파하지 않는다(R8-D2).
-        if (isinstance(it, ast.Call) and not it.args and not it.keywords
-                and isinstance(it.func, ast.Attribute) and isinstance(it.func.value, ast.Name)
+        # 도메인 컬렉션 팩토리 `C.m(..)` — 인자가 없으면 선언만으로 전파한다(입력이 없는 도메인 호출은
+        # 조회된 애그리거트를 손에 쥘 길이 없다 — #8·#1 · R8-D2). 인자가 있으면 받은 인스턴스를 돌려줄 수
+        # 있어 본문 증명(원소를 모두 그 본문에서 새로 짓는다)이 있을 때만 전파한다(R8-I2). C 가 이 함수에서
+        # 다시 묶였으면 도메인 클래스라고 보증할 수 없어 전파하지 않는다.
+        if (isinstance(it, ast.Call) and isinstance(it.func, ast.Attribute) and isinstance(it.func.value, ast.Name)
                 and it.func.value.id not in local_names
-                and it.func.attr in collection_factories.get(it.func.value.id, ())):
+                and it.func.attr in collection_factories.get(it.func.value.id, {})
+                and (not (it.args or it.keywords) or collection_factories[it.func.value.id][it.func.attr])):
             return True
         return isinstance(it, ast.Name) and it.id in element_factory
 

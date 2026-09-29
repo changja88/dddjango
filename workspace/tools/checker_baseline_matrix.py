@@ -258,7 +258,7 @@ EXPECTED: "dict[str, tuple[int, int, int, int, bool]]" = {
     "check-db-table.py": (2, 26, 26, 2, False),
     "check-choices-literal-consumption.py": (2, 0, 0, 6, True),
     "check-usecase-dto-placement.py": (2, 34, 34, 8, False),
-    "check-transaction-boundary.py": (2, 22, 21, 3, False),
+    "check-transaction-boundary.py": (2, 25, 24, 3, False),
     "check-domain-model.py": (2, 50, 48, 15, False),
     "check-port-adapter-pairing.py": (2, 95, 92, 13, False),
     "check-event-publish.py": (2, 20, 20, 5, False),
