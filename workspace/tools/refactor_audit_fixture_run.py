@@ -316,6 +316,9 @@ def verdict_cases(fails: "list[str]", aud: Audit, nov: "tuple[str, str, str]") -
     fb.write_text("출처 = 대리 답 ⓐ <record.md:1>(0305) — 사용자 원문 없음\n", encoding="utf-8")
     expect(fails, "출처 값 머리가 대리인데 «사용자 원문» 부분 문자열 → 여전히 대리(축소 red)",
            cv(a, "--feedback", str(fb)), 2, "대리 출처")
+    fb.write_text("출처 = 상시 답 .dddjango/standing-answer.md:3@0123456789ab\n", encoding="utf-8")
+    expect(fails, "S13 상시 답 출처 피드백의 채택 축소 → 대리(red — R3 로 새지 않는다)",
+           cv(a, "--feedback", str(fb)), 2, "대리 출처")
     expect(fails, "앞 확정 판이 있는데 --feedback 없이 재실행해 채택 축소 → red", cv(a), 2, "출처 없는 재실행")
     fb.write_text("출처 = 본인 직접(0310)\n", encoding="utf-8")
     expect(fails, "본인 직접 출처 피드백은 축소 가능 → green", cv(a, "--feedback", str(fb)), 0, "제외 1")
@@ -409,6 +412,373 @@ def residual_cases(fails: "list[str]", td: Path) -> None:
            run(repo, "residual", str(folder), "--candidates", str(cand)), 0, "리뷰어 확인 대상 1(ddd)", "M_m 미정")
 
 
+RES_HEAD: str = ("| M | 요지# | 요지(원 행 발췌) | 판정 | 불가 범주 | 막는 것(파일:행) | 처방 앵커 | 되돌리지 않는 이유 |\n"
+                 "|---|---|---|---|---|---|---|---|\n")
+RES_BODY: str = ("# 설계 명세 — demo\n\n## 4. 슬라이스 0 처방\n\n**M1 — 규칙 함수 이름 통일** policy.py 의 규칙 함수를 한 이름 규약으로.\n\n"
+                 "**M2 — 컨트롤러 예외 매핑 정리** 예외를 매핑 표 한 곳에서 번역한다.\n\n")
+T_LOC: str = "application/demo/test/test_policy.py:1"
+X_LOC: str = "application/other/domain_layer/x.py:1"
+RES_ROWS: "dict[str, str]" = {
+    "M1": "| M1(+M4) | 1 | 규칙 이름 흩어짐 | 해소 | — | — | M1 — 규칙 함수 이름 통일 | — |\n",
+    "M2a": "| M2 | 1 | 예외 매핑 흩어짐 | 해소 | — | — | M2 — 컨트롤러 예외 매핑 정리 | 뺀 요지의 처방은 인자 형태만 바꾼다 |\n",
+    "M2b": f"| M2 | 2 | 긴 위치 인자 목록 | 불가 | 테스트 본문 동반 | {T_LOC} — 호출문 인자 형태가 바뀐다 | — | — |\n",
+    "M3": f"| M3 | 1 | 판정이 어댑터에 | 불가 | 외부 관찰 동작 | {C_LOC} — 404 응답이 도메인 예외로 바뀐다 | — | — |\n",
+}
+RES_SCOPE: str = ("실행 · G0 승인 20260929-0300 · 모드 리팩토링 · audit 20260927-0250 · build_anchor {anchor}\n\n"
+                  "- M1, M2, M3 · 결정 = ⓐ · 사유 = 픽스처 · 출처 = 본인 직접(0300)\n")
+RES_RECON: str = ("\n## ⓐ 재상정 20260929-0400 — STOP_FOR_USER_APPROVAL(부분·불가)\n\n"
+                  "- M2 · 결정 = 요지 축소 · 남긴 요지 = #1 · 뺀 요지 = #2 → 별도 요청 · 남김 근거 = 해소 판정 표 · 출처 = 본인 직접(0400)\n"
+                  "- M3 · 결정 = 별도 요청 · 사유 = 픽스처 · 출처 = 본인 직접(0400)\n")
+RED_M2: str = "- M2 · 결정 = 요지 축소 · 남긴 요지 = #1 · 뺀 요지 = #2 → 별도 요청"
+WHOLE_M2: str = "\n## ⓐ 재상정 20260929-0600 — G2 잔존\n\n- M2 · 결정 = 별도 요청 · 사유 = 잔존 · 출처 = 본인 직접(0600)\n"
+
+
+def resolution_cases(fails: "list[str]", td: Path) -> None:
+    """`resolution [--gate]` 판정 표 검사와 재상정 닫힌 어휘·요지 축소(F1 봉쇄) — 설계 R8-I1 v2 §8 · §11."""
+    repo: Path = _project(td / "rsl")
+    folder, anchor = _res_folder(repo, [row(1, V_B9, where=P_LOC), row(2, V_B9, where=C_LOC),
+                                        row(3, V_B9, where=C_LOC), row(4, V_B9, where=P_LOC)],
+                                 ["M1 | ddd-01#1 | 채택 | | ", "M2 | ddd-01#2 | 채택 | | ", "M3 | ddd-01#3 | 채택 | | ",
+                                  "M4 | ddd-01#4 | 병합 → M1 | | "])
+    scope_path: Path = folder / "refactor-scope.md"
+    spec_path: Path = folder / "design-spec.md"
+    scope_rel: str = scope_path.relative_to(repo).as_posix()
+
+    def spec(rows: "dict[str, str]", body: str = RES_BODY, heading: str = "## 5. 슬라이스 0 해소 판정") -> None:
+        spec_path.write_text(body + f"{heading}\n\n" + RES_HEAD + "".join(rows.values()) + "\n## 6. 끝\n", encoding="utf-8")
+
+    def scope(recon: str = "") -> None:
+        scope_path.write_text(RES_SCOPE.format(anchor=anchor) + recon, encoding="utf-8")
+
+    rs = lambda *extra: run(repo, "resolution", str(folder), *extra)  # noqa: E731
+    scope()
+    spec(RES_ROWS)
+    expect(fails, "resolution 정상 표(해소·부분·불가 · `M1(+M4)` 병합 표기) → green · 해소 판정 1행 · 렌즈별 M(병합 원 행 포함)", rs(), 0,
+           "해소 판정: 해소 1 · 부분 1 · 불가 1", "렌즈 ddd: M1 · M2 · M3", "red 0")
+    spec({k: v for k, v in RES_ROWS.items() if k != "M3"})
+    expect(fails, "resolution 범위 안 ⓐ 항목에 판정 행 없음 → red", rs(), 2, "M3 판정 없음")
+    spec({**RES_ROWS, "M3": RES_ROWS["M3"].replace("외부 관찰 동작", "기존 보호 부족")})
+    expect(fails, "resolution 불가 범주가 닫힌 목록 밖(«기존 보호 부족» 포함) → red", rs(), 2, "`기존 보호 부족`", "닫힌 목록")
+    spec({**RES_ROWS, "M3": RES_ROWS["M3"].replace(C_LOC, "application/demo/driving_layer/api/thing/thing_controller.py:999")})
+    expect(fails, "resolution 막는 것 파일:행 부재 → red", rs(), 2, "대상 프로젝트에 없다")
+    spec({**RES_ROWS, "M1": RES_ROWS["M1"].replace("M1 — 규칙 함수 이름 통일", "명세에 없는 처방 문장")})
+    expect(fails, "resolution 처방 앵커 원문이 표 밖 본문에 없음 → red", rs(), 2, "M1 #1 처방 앵커")
+    spec({**RES_ROWS, "M2a": RES_ROWS["M2a"].replace("뺀 요지의 처방은 인자 형태만 바꾼다", "—")})
+    expect(fails, "resolution 부분 항목 해소 행의 되돌리지 않는 이유 공란 → red", rs(), 2, "되돌리지 않는 이유")
+    spec({**RES_ROWS, "M4": "| M4 | 1 | 병합 항목 | 해소 | — | — | M1 — 규칙 함수 이름 통일 | — |\n",
+          "M1": RES_ROWS["M1"].replace("| 해소 |", "| 부분 |")})
+    expect(fails, "resolution 병합 항목 행(범위 밖)·요지 판정 값 밖 → red", rs(), 2, "M4 범위 밖", "`부분` 이 `해소`·`불가` 밖")
+    spec(RES_ROWS, heading="## 5. 해소 여부")
+    expect(fails, "resolution 판정 표 제목 없음 → red(기대 형태 표시)", rs(), 2, "제목이 없다", "기대 형태")
+    spec({})
+    expect(fails, "m-6 제목은 있는데 표 행 0 → red «표에 행이 없다»", rs(), 2, "표에 행이 없다")
+    # §11 M-2 · n-1 · n-2 · n-5 · m-2 · m-6(표 형식)
+    spec({**RES_ROWS, "M3": RES_ROWS["M3"].replace(" — 404 응답이 도메인 예외로 바뀐다", "")})
+    expect(fails, "M-2 불가 행 막는 것에 «— 한 구» 없음 → red", rs(), 2, "M3 #1 막는 것에 «— 무엇이 바뀌어야")
+    spec({**RES_ROWS, "M3": RES_ROWS["M3"].replace("404 응답이 도메인 예외로 바뀐다", "응답: 404 → 500")})
+    expect(fails, "M-2 한 구 안의 `:` 는 위치로 읽지 않는다 → green", rs(), 0, "red 0")
+    spec({**RES_ROWS, "M1": RES_ROWS["M1"].replace("| M1 — 규칙 함수 이름 통일 |", "| M1 — 규칙 |")})
+    expect(fails, "n-1 처방 앵커 정규화 8자 미만 → red", rs(), 2, "M1 #1 처방 앵커가 너무 짧다")
+    spec({**RES_ROWS, "M1": RES_ROWS["M1"].replace("| 해소 | — |", "| 해소 | 외부 관찰 동작 |")})
+    expect(fails, "n-2 해소 행에 불가 범주 → red", rs(), 2, "M1 #1 해소 행의 불가 범주·막는 것은")
+    spec({**RES_ROWS, "M3": RES_ROWS["M3"].replace("| — | — |\n", "| M1 — 규칙 함수 이름 통일 | — |\n")})
+    expect(fails, "n-2 불가 행에 처방 앵커 → red", rs(), 2, "M3 #1 불가 행의 처방 앵커")
+    spec(RES_ROWS, heading="## 5. **슬라이스 0 해소 판정**")
+    expect(fails, "n-5 제목 강조 표기 → 인식 green", rs(), 0, "red 0")
+    spec({**RES_ROWS, "M2a": RES_ROWS["M2a"].replace("예외 매핑 흩어짐", "`str \\| None` 반환이 흩어짐")})
+    expect(fails, "m-2 칸 속 `\\|` 이스케이프 → green", rs(), 0, "red 0")
+    spec({**RES_ROWS, "M2a": RES_ROWS["M2a"].replace("예외 매핑 흩어짐", "str | None 반환")})
+    expect(fails, "m-2 이스케이프 안 된 칸 속 `|` → 칸 밀림 red(fail-closed)", rs(), 2, "판정 `None 반환`")
+    spec({**RES_ROWS, "M2b": RES_ROWS["M2b"].replace("| M2 | 2 |", "| M2 | 1 |")})
+    expect(fails, "m-6 요지# 중복 → red", rs(), 2, "M2 요지# 가 1 이상 정수가 아니거나 항목 안에서 겹친다")
+    spec_path.write_text(RES_BODY + "## 5. 슬라이스 0 해소 판정\n\n" + RES_HEAD + "".join(RES_ROWS.values())
+                         + "\n## 7. 슬라이스 0 해소 판정\n\n" + RES_HEAD + "\n## 8. 끝\n", encoding="utf-8")
+    expect(fails, "m-6 판정 표 제목 둘 → red", rs(), 2, "제목이 2개다")
+    spec({**RES_ROWS, "M3b": "| M3 | 2 | 짧은 행 |\n"})
+    expect(fails, "m-6 칸 부족 행 → red", rs(), 2, "칸 부족(3 < 8)")
+    spec(RES_ROWS)
+    expect(fails, "resolution --gate 부분·불가 항목에 재상정 결정 줄 없음 → red", rs("--gate"), 2,
+           "M2 부분 항목에 재상정 결정 줄", "M3 불가 항목에 재상정 결정 줄이 없다")
+    scope(RES_RECON)
+    expect(fails, "resolution --gate 부분 = 요지 축소(번호 = 표) · 불가 = 별도 요청 → green", rs("--gate"), 0, "red 0 · gate")
+    scope(RES_RECON.replace("\n\n- M2", "\n\n### 처분\n\n- M2"))
+    expect(fails, "n-3 재상정 절 안 하위 제목은 절을 끊지 않는다 → green", rs("--gate"), 0, "red 0 · gate")
+    scope(RES_RECON.replace("남긴 요지 = #1 · 뺀 요지 = #2", "남긴 요지 = #2 · 뺀 요지 = #1"))
+    expect(fails, "resolution --gate 요지 축소 줄 번호 ≠ 표 → red", rs("--gate"), 2, "번호가 표와 다르다")
+    scope(RES_RECON.replace("뺀 요지 = #2", "뺀 요지 = #3"))
+    expect(fails, "m-6 뺀 번호만 어긋남 → red", rs("--gate"), 2, "줄 남긴 [1] · 뺀 [3]")
+    scope(RES_RECON.replace("남긴 요지 = #1", "남긴 요지 = #3"))
+    expect(fails, "m-6 남긴 번호만 어긋남 → red", rs("--gate"), 2, "줄 남긴 [3] · 뺀 [2]")
+    scope(RES_RECON + "- M1 · 결정 = 요지 축소 · 남긴 요지 = #1 · 뺀 요지 = #2 → 플러그인 결함 · 남김 근거 = 사용자 선택 · "
+                      "출처 = 본인 직접(0500)\n")
+    expect(fails, "resolution --gate 표가 해소인데 요지 축소 줄 → red(표 갱신 G1′)", rs("--gate"), 2, "M1 표가 해소인데")
+    scope(RES_RECON + RED_M2.replace("M2", "M4") + " · 남김 근거 = 해소 판정 표 · 출처 = 본인 직접(0400)\n")
+    expect(fails, "m-6 판정 표 밖 항목의 요지 축소 줄 → red", rs("--gate"), 2, "M4 요지 축소 줄 항목이 판정 표에 없다")
+    scope(RES_RECON.replace("- M3 · 결정 = 별도 요청 · 사유 = 픽스처", RED_M2.replace("M2", "M3") + " · 남김 근거 = 해소 판정 표"))
+    expect(fails, "m-6 불가 항목에 요지 축소 줄 → red", rs("--gate"), 2, "M3 불가 항목에 요지 축소 줄이 걸렸다")
+    # §11 M-1 — 전체 제외 줄이 표의 해소 요지를 덮지 못하게
+    scope("\n## ⓐ 재상정 20260929-0400 — 오탐 STOP\n\n- M2 카탈로그 부분 · 결정 = 플러그인 결함 — 슬라이스 0 에서 빼고 진행"
+          "(예외 매핑 정리는 유지) · 출처 = 본인 직접(0400)\n- M3 · 결정 = 별도 요청 · 사유 = 픽스처 · 출처 = 본인 직접(0400)\n")
+    expect(fails, "M-1a R8-R 실물 모양 전체 제외 줄 + 표의 해소 요지 → red", rs("--gate"), 2,
+           "M2 전체 제외 항목의 판정 표에 해소 요지가 남아 있다")
+    scope(RES_RECON + WHOLE_M2)
+    expect(fails, "M-1b 요지 축소 뒤 G2 전체 철회 줄 · 표 무수정 → red", rs("--gate"), 2,
+           "M2 전체 제외 항목의 판정 표에 해소 요지가 남아 있다")
+    whole_no: int = next(i for i, ln in enumerate(scope_path.read_text(encoding="utf-8").split("\n"), 1)
+                         if ln.startswith("- M2 · 결정 = 별도 요청"))
+    fixed: str = (f"| M2 | 1 | 예외 매핑 흩어짐 | 불가 | 재상정 제외 | {scope_rel}:{whole_no} — G2 잔존 철회로 항목 전체를 뺐다 "
+                  "| — | — |\n")
+    spec({**RES_ROWS, "M2a": fixed})
+    expect(fails, "M-1c 표를 전체 불가(해소이던 요지 = 재상정 제외 · 막는 것 = 결정 줄)로 고침 → green", rs("--gate"), 0,
+           "red 0 · gate")
+    scope()
+    spec({**RES_ROWS, "M3": RES_ROWS["M3"].replace("외부 관찰 동작", "재상정 제외")})
+    expect(fails, "M-1d 전체 제외 줄 없이 범주 `재상정 제외` → red", rs(), 2, "M3 #1 범주 `재상정 제외` 인데")
+    spec(RES_ROWS)
+    for label, recon in (("요지 축소 → 전체 제외", RES_RECON + WHOLE_M2),
+                         ("전체 제외 → 요지 축소", WHOLE_M2 + RES_RECON.replace("20260929-0400", "20260929-0700"))):
+        scope(recon)
+        _ts, adopted, removed, reductions, _lines = ra._scope(folder)
+        expect(fails, f"m-6 같은 항목에 요지 축소 줄과 전체 제외 줄({label}) → 전체 제외가 이긴다",
+               (0 if "M2" in removed and "M2" not in adopted - removed and "M2" in reductions else 9,
+                f"removed={sorted(removed)} reductions={sorted(reductions)}"), 0)
+    # 재상정 줄 어휘·정형(fail-closed)
+    scope(RES_RECON.replace("- M3 · 결정 = 별도 요청", "- M3 · 결정 = 부분 정리"))
+    expect(fails, "재상정 결정 칸 첫 낱말 어휘 밖 → resolution 실행 불능(fail-closed)", rs(), 1, "닫힌 어휘")
+    expect(fails, "재상정 결정 칸 첫 낱말 어휘 밖 → residual 실행 불능(F1 fail-open 봉쇄)",
+           run(repo, "residual", str(folder)), 1, "닫힌 어휘")
+    scope(RES_RECON.replace(" · 남김 근거 = 해소 판정 표", ""))
+    expect(fails, "요지 축소 줄 정형 불비(남김 근거 없음) → 실행 불능", rs(), 1, "정형이 아니다", "남김 근거")
+    scope(RES_RECON.replace("→ 별도 요청", "→ 요지 축소"))
+    expect(fails, "요지 축소 줄 뺀 요지 처분이 어휘 밖(요지) → 실행 불능", rs(), 1, "뺀 요지 처분")
+    scope(RES_RECON.replace("뺀 요지 = #2", "뺀 요지 = #1·#2"))
+    expect(fails, "m-6 요지 축소 줄 남긴·뺀 번호 겹침 → 실행 불능", rs(), 1, "번호 겹침")
+    scope(RES_RECON.replace("- M2 · 결정 = 요지 축소", "- M2 · M3 · 결정 = 요지 축소"))
+    expect(fails, "m-6 요지 축소 줄에 항목 둘 → 실행 불능", rs(), 1, "항목 하나")
+    # residual — 요지 축소 항목은 빼지 않고 남긴 요지로 묶는다(F1 봉쇄) · 전체 제외 줄은 종전대로 뺀다(F7)
+    scope(RES_RECON)
+    thing: Path = repo / "application/demo/driving_layer/api/thing/thing_controller.py"
+    thing.write_text(thing.read_text(encoding="utf-8") + "\n# 정리\n", encoding="utf-8")
+    first = run(repo, "residual", str(folder))
+    expect(fails, "residual 요지 축소 항목(M2)은 남고 전체 제외(M3)만 빠짐 · 요약 «요지 축소 1»", first, 0,
+           "결정적 잔존 1", "리뷰어 확인 대상 1(ddd)", "요지 축소 1")
+    stamp: str = first[1].split("--finalize ", 1)[1].split(")", 1)[0].split()[0] if "--finalize " in first[1] else ""
+    bundle_path: Path = folder / "residual" / stamp / "review-ddd.md"
+    bundle: str = bundle_path.read_text(encoding="utf-8") if bundle_path.is_file() else ""
+    expect(fails, "residual 묶음에 요지 축소 줄(남긴·뺀 요지 원문 — 명세 표) · 머리 지시 1줄",
+           (0 if "- 요지 축소(재상정 20260929-0400): 남긴 요지 #1 «예외 매핑 흩어짐» — 이 요지만 확인한다" in bundle
+            and "뺀 요지 #2 «긴 위치 인자 목록» → 별도 요청" in bundle and "요지 축소 항목은 남긴 요지만 본다" in bundle
+            and "### M3" not in bundle else 9, bundle), 0)
+    (folder / "residual" / stamp / "result-ddd.md").write_text(
+        f"| M | 판정 | 근거 |\n|---|---|---|\n| M2 | 해소 | {C_LOC} |\n", encoding="utf-8")
+    fin = run(repo, "residual", str(folder), "--finalize", stamp)
+    result: str = (folder / "residual" / stamp / "result.md").read_text(encoding="utf-8") if fin[0] != 1 else ""
+    expect(fails, "residual --finalize 요지 축소 항목 해소 표시 · 요약 «요지 축소 1»", (fin[0], fin[1] + result), 2,
+           "M_m=1", "요지 축소 1", "| M2 | 해소(요지 축소 — 남긴 요지) |")
+    scope(RES_RECON.replace("남긴 요지 = #1", "남긴 요지 = #1·#7"))
+    expect(fails, "residual 요지 축소 번호가 명세 표에 없음 → 실행 불능", run(repo, "residual", str(folder)), 1,
+           "명세 해소 판정 표에 없다")
+
+
+STD_FILE: str = ".dddjango/standing-answer.md"
+STD_BODY: str = "# 상시 답\n\n«동작 변경이나 테스트 수정이 필요해 이번에 못 끝내는 항목은 별도 요청으로».\n"
+STD_SPEC: str = ("# 설계 명세 — demo\n\n**M2 — 예외 매핑 정리 처방** 매핑 표 한 곳.\n\n**M4 — 규칙 이름 통일 처방** 한 규약.\n\n"
+                 "**M6 — 판정 소유 이동 처방** 도메인으로.\n\n## 5. 슬라이스 0 해소 판정\n\n" + RES_HEAD
+                 + f"| M1 | 1 | 판정 흩어짐 | 불가 | 외부 관찰 동작 | {C_LOC} — 상태 코드가 바뀐다 | — | — |\n"
+                 + "| M2 | 1 | 예외 매핑 | 해소 | — | — | M2 — 예외 매핑 정리 처방 | 뺀 요지 처방은 인자만 바꾼다 |\n"
+                 + f"| M2 | 2 | 인자 목록 | 불가 | 테스트 본문 동반 | {T_LOC} — 호출문이 바뀐다 | — | — |\n"
+                 + f"| M3 | 1 | 공용 기저 | 불가 | 편집 범위 밖 | {X_LOC} — BC 밖 파일을 고친다 | — | — |\n"
+                 + "| M4 | 1 | 이름 | 해소 | — | — | M4 — 규칙 이름 통일 처방 | 뺀 요지 처방은 호출 자리만 바꾼다 |\n"
+                 + f"| M4 | 2 | 호출문 | 불가 | 테스트 본문 동반 | {T_LOC} — 호출문이 바뀐다 | — | — |\n"
+                 + f"| M4 | 3 | 공용 | 불가 | 편집 범위 밖 | {X_LOC} — BC 밖 파일을 고친다 | — | — |\n"
+                 + f"| M5 | 1 | 상태 코드 | 불가 | 외부 관찰 동작 | {C_LOC} — 응답이 바뀐다 | — | — |\n"
+                 + f"| M5 | 2 | 규칙 충돌 | 불가 | 반대 방향 규칙 | {P_LOC} — 조회 조율 자리가 바뀐다 | — | — |\n"
+                 + "| M6 | 1 | 판정 소유 | 해소 | — | — | M6 — 판정 소유 이동 처방 | — |\n\n## 6. 끝\n")
+STD_G0: str = ("실행 · G0 승인 20260929-0300 · 모드 리팩토링 · audit 20260927-0250 · build_anchor {anchor}\n\n"
+               "- M1, M2, M3, M4, M5, M6 · 결정 = ⓐ · 사유 = 픽스처 · 출처 = 본인 직접(0300)\n")
+STD_SECTION: str = ("\n## ⓐ 재상정 20260929-0500 — G1 재상정 · 상시 답 적용 2건\n\n"
+                    "- M1 · 결정 = 별도 요청 · 사유 = 불가(외부 관찰 동작 — 해소 판정 표) · 출처 = 상시 답 {src}\n"
+                    "- M2 · 결정 = 요지 축소 · 남긴 요지 = #1 · 뺀 요지 = #2 → 별도 요청 · 남김 근거 = 해소 판정 표 · 출처 = 상시 답 {src}\n"
+                    "- M3 · 결정 = ⓑ · 사유 = 픽스처 · 출처 = 본인 직접(0500)\n"
+                    "- M4 · 결정 = 요지 축소 · 남긴 요지 = #1 · 뺀 요지 = #2·#3 → 별도 요청 · 남김 근거 = 해소 판정 표 · "
+                    "출처 = 본인 직접(0500)\n"
+                    "- M5 · 결정 = 별도 요청 · 사유 = 픽스처 · 출처 = 본인 직접(0500)\n")
+
+
+def standing_cases(fails: "list[str]", td: Path) -> None:
+    """㉯ 상시 답 — 인식 · 적용 예정/묻는 항목 · `--gate` 네 검사(커밋·행 · 처분 모양 · 표 조건 · 자리) — 설계 §12-4 S1~S15."""
+    repo: Path = _project(td / "std")
+    folder, anchor = _res_folder(repo, [row(k, V_B9, where=w) for k, w in
+                                        enumerate((C_LOC, C_LOC, P_LOC, P_LOC, C_LOC, P_LOC, C_LOC), 1)],
+                                 [f"M{k} | ddd-01#{k} | 채택 | | " for k in range(1, 7)] + ["M7 | ddd-01#7 | 병합 → M1 | | "])
+    (folder / "design-spec.md").write_text(STD_SPEC, encoding="utf-8")
+    scope_path: Path = folder / "refactor-scope.md"
+    std: Path = repo / STD_FILE
+    rs = lambda *extra: run(repo, "resolution", str(folder), *extra)  # noqa: E731
+
+    def commit(body: "str | None", msg: str) -> str:
+        if body is None:
+            _git(repo, "rm", "-q", STD_FILE)
+        else:
+            std.write_text(body, encoding="utf-8")
+            _git(repo, "add", STD_FILE)
+        _git(repo, "commit", "-qm", msg)
+        return _git(repo, "rev-parse", "HEAD").strip()[:12]
+
+    def scope(extra: str = "", src: str = "") -> None:
+        scope_path.write_text(STD_G0.format(anchor=anchor) + extra.replace("{src}", src), encoding="utf-8")
+
+    scope()
+    got = rs()
+    expect(fails, "S1 파일 없음 → 출력에 상시 답 행 없음(I1 그대로)", (got[0] if "상시 답" not in got[1] else 9, got[1]), 0,
+           "해소 판정: 해소 1 · 부분 2 · 불가 3")
+    std.parent.mkdir(parents=True, exist_ok=True)
+    std.write_text(STD_BODY, encoding="utf-8")
+    expect(fails, "S3 미추적 → 인식 안 함 · 기대 문장 · exit 0", rs(), 0, "상시 답: 인식 안 함(미추적) — 적용 0",
+           "기대 문장: 동작 변경이나 테스트 수정이")
+    _git(repo, "add", STD_FILE)
+    expect(fails, "S3 커밋되지 않은 수정(스테이지만) → 인식 안 함", rs(), 0, "인식 안 함(커밋되지 않은 수정)")
+    commit(STD_BODY + "- 동작 변경이나 테스트 수정이 필요해 이번에 못 끝내는 항목은 별도 요청으로\n", "two")
+    expect(fails, "S3 인식 줄 2개 → 인식 안 함", rs(), 0, "인식 안 함(인식 줄 2개)")
+    commit("동작 변경·테스트 수정이 필요해 이번에 못 끝내는 항목은 별도 요청으로\n", "draft")
+    expect(fails, "S3′ 리뷰 초안 문장(«동작 변경·테스트 수정이») → 인식 안 함(문장 없음)", rs(), 0, "인식 안 함(문장 없음)")
+    commit("메모\n- 동작 변경이나 테스트 수정이 필요해 이번에 못 끝내는 항목은 별도 요청으로\n", "list")
+    expect(fails, "S3′ 목록 머리 줄 → 인식(2행)", rs(), 0, "상시 답 출처: 상시 답 .dddjango/standing-answer.md:2@")
+    c: str = commit(STD_BODY, "standing")
+    src: str = f"{STD_FILE}:3@{c}"
+    got = rs()
+    order_ok: bool = got[1].find("요약:") < got[1].find("  상시 답:")
+    expect(fails, "S2 «…» 감쌈 + 끝 마침표 인식 · 적용 예정 M1·M2(S14·S15: M3·M4·M5 는 묻는다) · 출처 값 · `요약:` 뒤",
+           (got[0] if order_ok else 9, got[1]), 0, "상시 답: 적용 예정 M1 · M2 · 묻는 재상정 M3 · M4 · M5",
+           f"상시 답 출처: 상시 답 {src}", "red 0 · 상시 답 2")
+    std.write_text(STD_BODY + "추가\n", encoding="utf-8")
+    expect(fails, "S3 커밋된 파일의 미커밋 수정 → 인식 안 함", rs(), 0, "인식 안 함(커밋되지 않은 수정)")
+    _git(repo, "checkout", "--", STD_FILE)
+    scope(STD_SECTION, src)
+    expect(fails, "S4 --gate 정상(상시 답 2 · 사용자 답 3) → green", rs("--gate"), 0, "red 0 · gate")
+    expect(fails, "implB 결정 줄을 적은 항목은 적용 예정·묻는 목록에서 빠진다(G1′ 재실행)", rs(), 0,
+           "상시 답: 적용 예정 없음 · 묻는 재상정 없음")
+    scope(STD_SECTION.replace("- M1 · 결정 = 별도 요청", "- M1(+M7) · 결정 = 별도 요청"), src)
+    expect(fails, "MA-1 병합 표기 머리 `M1(+M7)` 상시 답 줄 → 괄호 안 키는 줄의 키가 아니다 · green", rs("--gate"), 0,
+           "red 0 · gate")
+    scope(STD_SECTION, src)
+    m1_no: int = next(i for i, ln in enumerate(scope_path.read_text(encoding="utf-8").split("\n"), 1)
+                      if ln.startswith("- M1 · 결정 = 별도 요청"))
+    spec_path: Path = folder / "design-spec.md"
+    spec_path.write_text(STD_SPEC.replace(
+        f"| M1 | 1 | 판정 흩어짐 | 불가 | 외부 관찰 동작 | {C_LOC} — 상태 코드가 바뀐다 | — | — |",
+        f"| M1 | 1 | 판정 흩어짐 | 불가 | 재상정 제외 | refactor-scope.md:{m1_no} — override 로 풀리게 됐으나 결정대로 뺐다 | — | — |"),
+        encoding="utf-8")
+    expect(fails, "MA-2·mi-4 상시 답으로 뺀 항목을 `재상정 제외`(막는 것 = 맨 `refactor-scope.md:<행>`)로 고침 → green",
+           rs("--gate"), 0, "red 0 · gate")
+    spec_path.write_text(STD_SPEC, encoding="utf-8")
+    scope(STD_SECTION.replace("- M2 · 결정 = 요지 축소 · 남긴 요지 = #1 · 뺀 요지 = #2 → 별도 요청 · 남김 근거 = 해소 판정 표",
+                              "- M2 · 결정 = 별도 요청 · 사유 = 불가"), src)
+    expect(fails, "implB 부분 항목에 전체 제외 모양 상시 답 줄 → red ②(제자리 교정 대상)", rs("--gate"), 2,
+           "M2 상시 답 줄", "② 처분이")
+    scope_path.write_text(STD_G0.format(anchor=anchor) + "- M6 · 결정 = ⓐ · 사유 = x · 출처 = `상시 답 " + src + "`\n"
+                          + STD_SECTION.replace("{src}", src), encoding="utf-8")
+    expect(fails, "mi-3 백틱으로 감싼 상시 답 출처(G0 줄)도 탐지 → red ④", rs("--gate"), 2, "M6 상시 답 줄", "④ 머리에")
+    scope(STD_SECTION.replace("· 출처 = 상시 답 {src}\n- M2", "· 출처 = **상시 답** {src}\n- M2"), src)
+    expect(fails, "mi-3 강조 표기 상시 답 출처 → 탐지 · red ①(정형 아님)", rs("--gate"), 2, "M1 상시 답 줄", "① 출처 값이")
+    scope_path.write_text(STD_G0.format(anchor=anchor) + "- M6 · 사용자 판단 = 위반 · 출처 = 상시 답 " + src + "\n"
+                          + STD_SECTION.replace("{src}", src), encoding="utf-8")
+    expect(fails, "mi-3 사용자 판단 줄의 상시 답 출처 → red ④", rs("--gate"), 2, "M6 상시 답 줄", "결정 줄(`· 결정 =`)이 아닌 줄")
+    scope(STD_SECTION + "- M6 · 사용자 판단 = 위반 · 출처 = 상시 답 {src}\n", src)
+    expect(fails, "mi-3 `상시 답 적용` 절 안이라도 결정 줄이 아닌 상시 답 줄 → red ④", rs("--gate"), 2, "M6 상시 답 줄",
+           "결정 줄(`· 결정 =`)이 아닌 줄")
+    scope(STD_SECTION.replace("- M1 · 결정 = 별도 요청", "- M1 · 결정 = ⓑ")
+          + "\n## 메모\n\n- M1 · 결정 = 별도 요청 · 사유 = x · 출처 = 본인 직접(0700)\n", src)
+    expect(fails, "implB 재상정 절 밖의 뒤 줄은 대체하지 않는다 → red ② 유지", rs("--gate"), 2, "M1 상시 답 줄", "② 처분이")
+    scope(STD_SECTION.replace("- M1 · 결정 = 별도 요청", "- M1 · 결정 = ⓑ")
+          + "\n## ⓐ 재상정 20260929-0700 — 상시 답 적용 1건\n\n- M1 · 사용자 판단 = 위반 · 출처 = 상시 답 {src}\n", src)
+    expect(fails, "implB 결정 줄이 아닌 뒤 줄은 대체하지 않는다 → red ② 유지(+ 그 줄 ④)", rs("--gate"), 2, "② 처분이",
+           "결정 줄(`· 결정 =`)이 아닌 줄")
+    g2: str = "\n## ⓐ 재상정 20260929-0900 — G2 잔존\n\n- M6 · 결정 = 별도 요청 · 사유 = 잔존 · 출처 = 상시 답 {src}\n"
+    scope(STD_SECTION + g2, src)
+    expect(fails, "mi-2 G2 잔존 절의 상시 답 줄 → residual 실행 불능", run(repo, "residual", str(folder)), 1,
+           "상시 답 출처 줄이 `상시 답 적용` 재상정 절의 결정 줄이 아니다")
+    scope(STD_SECTION + g2 + "\n## ⓐ 재상정 20260929-0910 — 재질문\n\n- M6 · 결정 = 별도 요청 · 사유 = 잔존 · "
+                             "출처 = 본인 직접(0910)\n", src)
+    expect(fails, "mi-2 뒤 사용자 답이 대체한 G2 상시 답 줄 → residual 진행(결정적 잔존)", run(repo, "residual", str(folder)), 2,
+           "결정적 잔존", "요지 축소 2")
+    scope_path.write_text(STD_G0.format(anchor=anchor) + "- M1 · 결정 = ⓐ · 사유 = 사용자 판단 위반 · 출처 = 사용자 원문 "
+                          "/x/answers.md:1(0300)\n" + STD_SECTION.replace("{src}", src), encoding="utf-8")
+    expect(fails, "S9′ G0 의 사용자 원문 ⓐ 줄은 ④ 순서 검사에 세지 않는다 → green", rs("--gate"), 0, "red 0 · gate")
+    scope(STD_SECTION.replace("- M3 · 결정 = ⓑ · 사유 = 픽스처 · 출처 = 본인 직접(0500)",
+                              "- M3 · 결정 = 별도 요청 · 사유 = 불가 · 출처 = 상시 답 {src}"), src)
+    expect(fails, "S5 `편집 범위 밖` 항목에 상시 답 → red ③", rs("--gate"), 2, "M3 상시 답 줄", "③ M3 은 판정 표에서 상시 답이")
+    scope(STD_SECTION, f"{STD_FILE}:4@{c}")
+    expect(fails, "S6 행 번호 어긋남 → red ①", rs("--gate"), 2, f"① 커밋 {c} 판의 4행이 유일한 인식 줄이 아니다")
+    scope(STD_SECTION, f"{STD_FILE}:3@0123456789ab")
+    expect(fails, "S6 없는 커밋 → red ①", rs("--gate"), 2, "① 커밋 0123456789ab 이 없다")
+    scope(STD_SECTION, f".dddjango/other.md:3@{c}")
+    expect(fails, "S6 경로 다름 → red ①", rs("--gate"), 2, "① 경로 `.dddjango/other.md`")
+    _git(repo, "checkout", "-q", "-b", "side")
+    side: str = commit(STD_BODY + "곁가지\n", "side")
+    _git(repo, "checkout", "-q", "main")
+    scope(STD_SECTION, f"{STD_FILE}:3@{side}")
+    expect(fails, "S6 HEAD 의 조상이 아닌 커밋 → red ①", rs("--gate"), 2, f"① 커밋 {side} 이 HEAD 의 조상이 아니다")
+    scope(STD_SECTION.replace("- M1 · 결정 = 별도 요청", "- M1 · 결정 = ⓑ"), src)
+    expect(fails, "S7 상시 답으로 ⓑ → red ②", rs("--gate"), 2, "M1 상시 답 줄", "② 처분이")
+    scope(STD_SECTION.replace("#2 → 별도 요청 · 남김 근거 = 해소 판정 표 · 출처 = 상시 답", "#2 → ⓑ · 남김 근거 = 해소 판정 표 · 출처 = 상시 답"), src)
+    expect(fails, "S7 요지 축소 `→ ⓑ` 에 상시 답 → red ②", rs("--gate"), 2, "M2 상시 답 줄", "② 처분이")
+    scope(STD_SECTION.replace("#2 → 별도 요청 · 남김 근거 = 해소 판정 표 · 출처 = 상시 답", "#2 → 별도 요청 · 남김 근거 = 사용자 선택 · 출처 = 상시 답"), src)
+    expect(fails, "S7 `남김 근거 = 사용자 선택` 에 상시 답 → red ②", rs("--gate"), 2, "M2 상시 답 줄", "② 처분이")
+    scope(STD_SECTION.replace(" · 상시 답 적용 2건", ""), src)
+    expect(fails, "S8 `상시 답 적용` 표지 없는 재상정 절 → red ④", rs("--gate"), 2, "④ 머리에 `상시 답 적용`")
+    scope_path.write_text(STD_G0.format(anchor=anchor) + "- M6 · 결정 = ⓐ · 사유 = x · 출처 = 상시 답 " + src + "\n"
+                          + STD_SECTION.replace("{src}", src), encoding="utf-8")
+    expect(fails, "S8 재상정 절 밖(G0 줄)의 상시 답 → red ④", rs("--gate"), 2, "M6 상시 답 줄", "④ 머리에")
+    scope(STD_SECTION + "- C3 · 결정 = 별도 요청 · 사유 = x · 출처 = 상시 답 {src}\n", src)
+    expect(fails, "S8 `C<n>` 상시 답 줄 → red ③", rs("--gate"), 2, "C3 상시 답 줄", "③ `C<n>`")
+    scope("\n## ⓐ 재상정 20260929-0400 — 앞선 STOP\n\n- M1 · 결정 = 별도 요청 · 사유 = x · 출처 = 본인 직접(0400)\n"
+          + STD_SECTION, src)
+    expect(fails, "S9 앞선 재상정 사용자 답 줄 뒤 같은 항목 상시 답 → red ④", rs("--gate"), 2,
+           "④ M1 의 앞선 재상정 사용자 답 줄보다 뒤다")
+    scope(STD_SECTION + "- M6 · 결정 = 별도 요청 · 사유 = x · 출처 = 상시 답 {src}\n", src)
+    expect(fails, "S10 표에서 해소인 항목에 상시 답(승인 뒤 override) → red ③ · architect 반송", rs("--gate"), 2,
+           "③ M6 은 판정 표에서 상시 답이 덮는 항목이 아니다", "architect 반송")
+    later_user: str = ("\n## ⓐ 재상정 20260929-0600 — 상시 답 red 뒤 재질문\n\n"
+                       "- M1 · 결정 = 별도 요청 · 사유 = 재질문 · 출처 = 본인 직접(0600)\n")
+    scope(STD_SECTION.replace("- M1 · 결정 = 별도 요청", "- M1 · 결정 = ⓑ") + later_user, src)
+    expect(fails, "K3 red 인 상시 답 줄 뒤 같은 항목의 사용자 답(새 재상정 절) → 대체 · green", rs("--gate"), 0, "red 0 · gate")
+    fixed_std: str = ("\n## ⓐ 재상정 20260929-0610 — 상시 답 적용 2건(고침)\n\n"
+                      "- M1 · 결정 = 별도 요청 · 사유 = 불가(외부 관찰 동작 — 해소 판정 표) · 출처 = 상시 답 {fix}\n"
+                      "- M2 · 결정 = 요지 축소 · 남긴 요지 = #1 · 뺀 요지 = #2 → 별도 요청 · 남김 근거 = 해소 판정 표 · "
+                      "출처 = 상시 답 {fix}\n")
+    scope(STD_SECTION + fixed_std.replace("{fix}", src), f"{STD_FILE}:4@{c}")
+    expect(fails, "K3 행 어긋난 상시 답 줄 뒤 고친 상시 답 줄 → 대체 · green", rs("--gate"), 0, "red 0 · gate")
+    scope(STD_SECTION + fixed_std.replace("{fix}", f"{STD_FILE}:5@{c}"), f"{STD_FILE}:4@{c}")
+    expect(fails, "K3 고친 상시 답 줄도 어긋나면 그 줄(뒤 줄)은 검사한다 → red ①", rs("--gate"), 2,
+           f"① 커밋 {c} 판의 5행이 유일한 인식 줄이 아니다")
+    scope(STD_SECTION.replace("- M1 · 결정 = 별도 요청 · 사유 = 불가", "- M1 · M5 · 결정 = 별도 요청 · 사유 = 불가"), src)
+    expect(fails, "K3 여러 키 상시 답 줄에서 뒤 사용자 답이 대체한 키(M5)만 빼고 검사 → green", rs("--gate"), 0,
+           "red 0 · gate")
+    scope(STD_SECTION, src)
+    commit(None, "remove standing")
+    got = rs("--gate")
+    expect(fails, "S11 적용 커밋 뒤 파일 삭제 커밋 → 기록 유효(exit 0) · 상시 답 행 없음",
+           (got[0] if "상시 답:" not in got[1] else 9, got[1]), 0, "red 0 · gate")
+
+
+def self_test_negative_case(fails: "list[str]") -> None:
+    """`--self-test` 의 불가 범주·재상정 어휘·상시 답 범주 대조에 이빨이 있는가 — 상수를 하나 빼면 red."""
+    import contextlib
+    import io
+    corpus = ra.Corpus("claude")
+    for name in ("RESOLUTION_CATEGORIES", "RECONSIDER_TOKENS", "STANDING_CATEGORIES"):
+        saved = getattr(ra, name)
+        setattr(ra, name, saved[:-1])
+        buf = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(buf):
+                code: int = ra.cmd_self_test(corpus)
+        finally:
+            setattr(ra, name, saved)
+        expect(fails, f"self-test {name} 상수 ≠ 규범 문면 → red", (code, buf.getvalue()), 2, "상수 ≠ 규범 문면")
+
+
 def corpus_cases(fails: "list[str]", nov_id: str) -> None:
     corpus = ra.Corpus("claude")
     total: int = len(corpus.blocks)
@@ -446,7 +816,10 @@ def main() -> int:
         verdict_cases(fails, aud, nov)
         residual_cases(fails, td)
         residual_moved_case(fails, td)
+        resolution_cases(fails, td)
+        standing_cases(fails, td)
     corpus_cases(fails, nov[0])
+    self_test_negative_case(fails)
     if fails:
         print("\nFAIL — refactor_audit 픽스처 기대 불일치:")
         for f in fails:

@@ -748,7 +748,8 @@ djr:R-3496 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
 djr:R-3497 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
-djr:R-3498 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+djr:R-3498 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/refactor_audit.py> .
 
 djr:R-3499 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
@@ -816,3 +817,26 @@ djr:R-3535 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 djr:R-3536 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
 djr:R-3537 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3579 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3580 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/refactor_audit.py> .
+
+djr:R-3581 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/refactor_audit.py> .
+
+djr:R-3582 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3583 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3584 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/refactor_audit.py> .
+
+djr:R-3587 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/refactor_audit.py> .
+
+djr:R-3588 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/refactor_audit.py> .
+
+djr:R-3589 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .

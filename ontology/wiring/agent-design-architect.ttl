@@ -512,3 +512,8 @@ djr:R-3572 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 djr:R-3573 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
 djr:R-3574 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3585 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/refactor_audit.py> .
+
+djr:R-3586 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
