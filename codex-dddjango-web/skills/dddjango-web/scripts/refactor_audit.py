@@ -18,7 +18,10 @@ Coordinator 만 돌리고, 산출은 파일로 쓰고 경로만 넘긴다. 규�
                                       verdict.md 검사 → verdict-log.md append · (exit 0) verdict-final.md · g0-lists.md
   refactor_audit.py residual <산출물 폴더> [--finalize <시각>]
                                       G2 의미 항목 잔존(결정적 바닥 → 리뷰어 재확인 묶음)
-  refactor_audit.py --self-test       점검 절 실재 · 경로 사상 · 적용 한정 어구 목록 · pathspec · 극성 표본
+  refactor_audit.py standing [<산출물 폴더> --gate]
+                                      상시 답 인식(`.dddjango/standing-answer.md` — core 와 같은 파일) ·
+                                      --gate: `refactor-scope.md` 상시 답 결정 줄 검사(마지막 `## G0` 뒤)
+  refactor_audit.py --self-test       점검 절 실재 · 경로 사상 · 적용 한정 어구 목록 · pathspec · 극성 표본 · 상시 답 문면
 공통: --platform claude|codex(기본: 구조로 판별) · --plugin-root <경로> · --project <대상 루트>
 exit 0 = 통과 · 2 = red(검사 실패·잔존·불일치) · 1 = 실행 불능. 모든 하위 명령이 `요약:` 1행을 낸다.
 """
@@ -1731,6 +1734,265 @@ def cmd_residual(project: Path, folder: Path, finalize: "str | None") -> int:
     return EXIT_RED if m_m else EXIT_OK
 
 
+# ── 상시 답(standing) ─────────────────────────────────────────────────────────
+
+# ── 상시 답 인식 블록 시작(core·web byte 동일 — verify-web 이 대조한다 · 모듈의 다른 함수를 부르지 않는다) ──
+# Coordinator 리팩토링 모드 절 «상시 답» 문단 — 덮는 범주·문장·경로는 `--self-test` 가 문면과 대조한다.
+STANDING_FILE: str = ".dddjango/standing-answer.md"
+STANDING_SENTENCE: str = "동작 변경이나 테스트 수정이 필요해 이번에 못 끝내는 항목은 별도 요청으로"
+STANDING_CATEGORIES: "tuple[str, ...]" = ("외부 관찰 동작", "테스트 본문 동반", "테스트 새 판정")
+STANDING_MARK: str = "상시 답이 덮는 범주"
+STANDING_SECTION: str = "상시 답 적용"
+STANDING_EXPECT: str = f"기대 문장: {STANDING_SENTENCE}"
+
+
+def _standing_rows(text: str) -> "list[int]":
+    """상시 답 인식 줄의 행 번호(1 기준) — 문장만 본다(공백·강조·백틱·인용·목록 머리·감싼 따옴표/괄호·끝 문장부호 무시)."""
+    want: str = re.sub(r"[\s*`]", "", STANDING_SENTENCE)
+    rows: "list[int]" = []
+    for no, line in enumerate(text.split("\n"), 1):
+        s: str = re.sub(r"^\s*(?:>\s*)*(?:(?:[-*+]|\d+[.)])\s+)?", "", line).strip()
+        prev: "str | None" = None
+        while s != prev:
+            prev = s
+            s = s.rstrip(".。!").strip()
+            for a, b in ("«»", "‹›", '""', "''", "“”", "‘’", "「」", "()"):
+                if len(s) >= 2 and s[0] == a and s[-1] == b:
+                    s = s[1:-1].strip()
+        if s and re.sub(r"[\s*`]", "", s) == want:
+            rows.append(no)
+    return rows
+
+
+def _standing_verdict(text: str) -> "tuple[int | None, str]":
+    """(인식 행, 인식 안 함 사유) — 인식 줄은 정확히 하나여야 한다(없거나 둘 이상이면 인식 안 함)."""
+    rows: "list[int]" = _standing_rows(text)
+    if len(rows) == 1:
+        return rows[0], ""
+    return None, ("문장 없음" if not rows else f"인식 줄 {len(rows)}개")
+# ── 상시 답 인식 블록 끝 ──
+
+
+_STANDING_SRC: "re.Pattern[str]" = re.compile(r"출처\s*=\s*상시 답\s+(\S+?):(\d+)@([0-9a-f]{12})(?![0-9a-f])")
+_USER_SRC: "re.Pattern[str]" = re.compile(r"출처\s*=\s*(?:본인 직접|사용자 원문)")
+_SCOPE_HEAD: "re.Pattern[str]" = re.compile(r"^## (G0 재승인|G0 정지|G0|ⓐ 재상정) \S")
+_SCOPE_KEY_ROW: "re.Pattern[str]" = re.compile(r"^(?:- )?(의미 재상정 키|재상정 키):[ \t]*(.*?)\s*$")
+_FIELD: "re.Pattern[str]" = re.compile(r"·\s*(결정|사유|출처)\s*=\s*")
+_STANDING_MARK_LINE: "re.Pattern[str]" = re.compile(rf"^-?\s*{STANDING_SECTION}\s*\d+\s*건\s*$")
+_STANDING_REASON: "re.Pattern[str]" = re.compile(r"^동작 불변 불가\((.*)\)$")
+_ASK: str = " — 묻는다(재상정 STOP)"
+_FIX: str = " — 고친 줄을 새 `ⓐ 재상정` 절에 적는다"
+
+
+def _git_try(project: Path, *args: str) -> "tuple[int, str]":
+    p = subprocess.run(["git", "-C", str(project), *args], capture_output=True, text=True)
+    return p.returncode, p.stdout
+
+
+def _standing(project: Path) -> "dict[str, str] | None":
+    """상시 답 파일 — 없으면 None · 인식이면 {row, commit, when} · 아니면 {why}(실행 불능으로 가지 않는다)."""
+    path: Path = project / STANDING_FILE
+    if not path.is_file():
+        return None
+    if _git_try(project, "ls-files", "--error-unmatch", STANDING_FILE)[0] != 0:
+        return {"why": "미추적"}
+    if _git_try(project, "diff", "--quiet", "HEAD", "--", STANDING_FILE)[0] != 0:
+        return {"why": "커밋되지 않은 수정"}
+    row, why = _standing_verdict(path.read_text(encoding="utf-8", errors="replace"))
+    if row is None:
+        return {"why": why}
+    code, out = _git_try(project, "log", "-1", "--format=%H %cI", "--", STANDING_FILE)
+    if code != 0 or len(out.split()) < 2:
+        return {"why": "커밋 없음"}
+    commit, when = out.split()[:2]
+    return {"row": str(row), "commit": commit[:12], "when": when}
+
+
+def _standing_source_ok(project: Path, path: str, row: int, commit: str) -> str:
+    """상시 답 출처 값의 커밋·행 — 사유(비면 통과). 적용 뒤 파일이 바뀌어도 그 커밋 판으로 본다."""
+    if path != STANDING_FILE:
+        return f"경로 `{path}` 가 `{STANDING_FILE}` 가 아니다"
+    code, full = _git_try(project, "rev-parse", "--verify", "--quiet", f"{commit}^{{commit}}")
+    if code != 0:
+        return f"커밋 {commit} 이 없다"
+    if _git_try(project, "merge-base", "--is-ancestor", full.strip(), "HEAD")[0] != 0:
+        return f"커밋 {commit} 이 HEAD 의 조상이 아니다"
+    code, body = _git_try(project, "show", f"{full.strip()}:{STANDING_FILE}")
+    if code != 0:
+        return f"커밋 {commit} 판에 파일이 없다"
+    if _standing_verdict(body)[0] != row:
+        return f"커밋 {commit} 판의 {row}행이 유일한 인식 줄이 아니다"
+    return ""
+
+
+def _scope_decisions(text: str) -> "tuple[list[dict], list[dict]]":
+    """`refactor-scope.md` 의 마지막 `## G0` 절부터 — (절 [{kind, mark, rows}], 결정 줄 [{no, sec, keys, fields, …}]).
+    결정 줄 = `· 결정 =` 칸이 있는 줄. 칸 값은 다음 칸 이름(`· 사유 =`·`· 출처 =`) 앞까지다. 머리 `결정 줄:` 은 떼고,
+    병합 괄호 `(+M<k>)` 안은 키가 아니다."""
+    sections: "list[dict]" = []
+    decisions: "list[dict]" = []
+    fenced: bool = False
+    for no, line in enumerate(text.split("\n"), 1):
+        if re.match(r"^\s*(```|~~~)", line):
+            fenced = not fenced
+            continue
+        if fenced:
+            continue
+        if line.startswith("## "):
+            head = _SCOPE_HEAD.match(line)
+            sections.append({"kind": head.group(1) if head else "", "body": [], "rows": {}})
+            continue
+        if not sections:
+            continue
+        sec: dict = sections[-1]
+        sec["body"].append(line)
+        row = _SCOPE_KEY_ROW.match(line)
+        if row:
+            sec["rows"].setdefault(row.group(1), []).append(row.group(2))
+        cells = list(_FIELD.finditer(line))
+        standing: bool = bool(re.search(r"출처\s*=\s*상시 답", line))
+        if not standing and (not cells or cells[0].group(1) != "결정"):    # 상시 답 줄은 모양이 틀려도 검사 대상
+            continue
+        fields: "dict[str, str]" = {}
+        for k, m in enumerate(cells):
+            fields.setdefault(m.group(1), line[m.end():cells[k + 1].start() if k + 1 < len(cells) else len(line)].strip())
+        head_text: str = re.sub(r"^\s*(?:-\s*)?(?:결정 줄\s*:\s*)?", "", line[:cells[0].start()] if cells else line)
+        keys: "list[str]" = re.findall(r"(?<![A-Za-z0-9])([MC][1-9]\d*)(?!\d)", re.sub(r"\(\+[^)]*\)", "", head_text))
+        decisions.append({"no": no, "sec": len(sections) - 1, "keys": keys, "fields": fields, "standing": standing,
+                          "user": bool(_USER_SRC.search(line)), "text": line})
+    for sec in sections:
+        first: str = next((l for l in sec["body"] if l.strip()), "")
+        sec["mark"] = bool(_STANDING_MARK_LINE.match(first.strip()))
+    start: int = max((i for i, s in enumerate(sections) if s["kind"] == "G0"), default=0)
+    return sections[start:], [dict(d, sec=d["sec"] - start) for d in decisions if d["sec"] >= start]
+
+
+def _snapshot_lines(project: Path, snap: str, rel: str, memo: "dict[str, int | None]") -> "int | None":
+    """`git_snapshot` 판의 줄 수(`web/` 없이 쓴 web 경로도 받는다) — 없으면 None."""
+    if rel not in memo:
+        memo[rel] = None
+        for cand in (rel, "web/" + rel) if not rel.startswith("web/") else (rel,):
+            try:
+                code, out = _git_try(project, "cat-file", "blob", f"{snap}:{cand}")     # 디렉터리(트리)는 실패
+            except UnicodeDecodeError:
+                code, out = 0, ""                                                       # 비UTF-8 은 0행(`_lines_of` 와 같다)
+            if code == 0:
+                memo[rel] = len(out.splitlines())
+                break
+    return memo[rel]
+
+
+def _standing_gate(project: Path, folder: Path) -> "tuple[list[str], int, int]":
+    """`standing --gate` — 상시 답 줄의 ① 출처 커밋·행 ② 처분 ③ 항목·범주·위치 ④ 자리 ⑤ 키 행 결속 · 대체."""
+    text: str = _read(folder / "refactor-scope.md")
+    try:
+        _when, _audit, adopted, _gone = residual_m_sets(text)
+    except DebtError as exc:
+        raise ToolError(str(exc)) from None
+    sections, decisions = _scope_decisions(text)
+    standing: "list[dict]" = [d for d in decisions if d["standing"]]
+    reds: "list[str]" = []
+    snap: str = ""
+    memo: "dict[str, int | None]" = {}
+    replaced: int = 0
+    for d in standing:
+        tag: str = f"{' · '.join(d['keys']) or '(키 없음)'} 상시 답 줄({d['no']}행)"
+        live: "set[str]" = {k for k in d["keys"] if not any(         # 뒤 재상정 절 줄(사용자 답·고친 상시 답)이 대체한 키
+            o["sec"] > d["sec"] and sections[o["sec"]]["kind"] == "ⓐ 재상정" and (o["user"] or o["standing"])
+            and k in o["keys"] for o in decisions)}
+        if d["keys"] and not live:
+            replaced += 1
+            continue
+        sec: dict = sections[d["sec"]]
+        if sec["kind"] != "ⓐ 재상정" or not sec["mark"]:
+            reds.append(f"{tag} ④ 첫 줄 `- {STANDING_SECTION} k건` 이 있는 `ⓐ 재상정` 절 밖이다{_FIX}")
+        sm = _STANDING_SRC.search(d["text"])
+        why: str = (_standing_source_ok(project, sm.group(1), int(sm.group(2)), sm.group(3)) if sm
+                    else "출처 값이 `상시 답 <파일>:<행>@<커밋 12자>` 정형이 아니다")
+        if why:
+            reds.append(f"{tag} ① {why}{_FIX}")
+        if d["fields"].get("결정") != "별도 요청":
+            reds.append(f"{tag} ② 처분이 «별도 요청»이 아니다{_FIX}")
+        mkeys: "list[str]" = [k for k in d["keys"] if k.startswith("M")]
+        if any(k.startswith("C") for k in d["keys"]):
+            reds.append(f"{tag} ③ `C<n>` 에는 상시 답을 쓰지 않는다{_ASK}")
+        elif len(mkeys) != 1:
+            reds.append(f"{tag} ③ 키가 `M<n>` 하나가 아니다(항목마다 한 줄){_FIX}")
+        for mid in (k for k in mkeys if k in live):
+            if mid not in adopted:
+                reds.append(f"{tag} ③ {mid} 이 마지막 `## G0` 의 의미 ⓐ 항목이 아니다{_FIX}")
+            if any(o["user"] and o["sec"] < d["sec"] and sections[o["sec"]]["kind"] == "ⓐ 재상정" and mid in o["keys"]
+                   for o in decisions):
+                reds.append(f"{tag} ④ {mid} 의 앞선 재상정 사용자 답 줄보다 뒤다 — 사용자 답이 이긴다(그 답을 새 절에 다시 적는다){_FIX}")
+        rm = _STANDING_REASON.match(d["fields"].get("사유", ""))
+        cats_part, sep, locs_part = rm.group(1).partition(" — ") if rm else ("", "", "")
+        if not sep:
+            reds.append(f"{tag} ③ 사유가 `동작 불변 불가(<범주>[ · <범주>] — <파일:행>[ · <파일:행>])` 정형이 아니다{_FIX}")
+            continue
+        cats: "list[str]" = [c.strip().strip("`").strip() for c in re.split(r"[·,]", cats_part) if c.strip()]
+        if not cats or not set(cats) <= set(STANDING_CATEGORIES):
+            reds.append(f"{tag} ③ 범주 {cats} 가 {' · '.join(STANDING_CATEGORIES)} 셋 안이 아니다{_ASK}")
+        locs: "list[str]" = [t.strip() for t in re.split(r"\s*·\s*", locs_part) if t.strip()]
+        if not locs:
+            reds.append(f"{tag} ③ 막는 `파일:행` 이 없다{_FIX}")
+        for tok in locs:
+            loc = _parse_location(tok)
+            if not loc or loc[0].startswith("/") or not 1 <= loc[1] <= loc[2]:
+                reds.append(f"{tag} ③ 위치 `{tok}` 가 `파일:행[-행]`(저장소 상대 · 1 ≤ 시작 ≤ 끝) 정형이 아니다"
+                            f"(맨 `:행`·행만 적은 것은 받지 않는다){_FIX}")
+                continue
+            if not snap:
+                state: dict = json.loads(_read(folder / "build-state.json"))
+                snap = str(state.get("git_snapshot") or "").strip()
+                if not snap:
+                    raise ToolError("build-state.json 에 git_snapshot 이 없다 — `standing --gate` 는 Phase 2 진입 준비 "
+                                    "⑥(`git_snapshot` 기록) 뒤에 돈다")
+            n = _snapshot_lines(project, snap, loc[0], memo)
+            if n is None or loc[2] > n:
+                reds.append(f"{tag} ③ 위치 `{tok}` 가 git_snapshot 판({snap[:12]})의 파일·줄 범위에 없다{_FIX}")
+    for i, sec in enumerate(sections):
+        if sec["kind"] != "ⓐ 재상정" or not sec["mark"]:
+            continue
+        mine: "list[dict]" = [d for d in decisions if d["sec"] == i]
+        for d in mine:
+            if not d["standing"]:
+                reds.append(f"{' · '.join(d['keys']) or '(키 없음)'} 결정 줄({d['no']}행) ④ 상시 답 절에 상시 답 아닌 "
+                            f"결정 줄이 있다 — 고친 줄을 새 `ⓐ 재상정` 절에 적는다")
+        keys: "set[str]" = {k for d in mine if d["standing"] for k in d["keys"] if k.startswith("M")}
+        rows: "list[str]" = sec["rows"].get("의미 재상정 키", [])
+        listed: "set[str]" = set(rows[0].split()) - {"-"} if len(rows) == 1 else set()
+        if len(rows) != 1 or listed != keys:
+            reds.append(f"상시 답 절 ⑤ `의미 재상정 키:` {sorted(listed)} ≠ 상시 답 줄 키 {sorted(keys)} — "
+                        f"고친 절을 새로 적는다")
+        if sec["rows"].get("재상정 키", []) != ["-"]:
+            reds.append("상시 답 절 ⑤ `재상정 키:` 가 `-` 한 행이 아니다 — 고친 절을 새로 적는다")
+    return reds, len(standing), replaced
+
+
+def cmd_standing(project: Path, folder: "Path | None", gate: bool) -> int:
+    if gate:
+        if folder is None:
+            raise ToolError("standing --gate 는 <산출물 폴더> 를 받는다")
+        reds, count, replaced = _standing_gate(project, folder)
+        for r in reds:
+            print(f"  red: {r}")
+        print(f"요약: standing gate · 상시 답 줄 {count} · 대체 {replaced} · red {len(reds)}")
+        return EXIT_RED if reds else EXIT_OK
+    found: "dict[str, str] | None" = _standing(project)
+    if found is None:
+        print("  상시 답: 없음")
+        print("요약: standing 없음 — 적용 0")
+    elif "row" in found:
+        print(f"  상시 답: 인식 — {STANDING_FILE}:{found['row']}(커밋 {found['commit']} · {found['when']})")
+        print(f"  상시 답 출처: 상시 답 {STANDING_FILE}:{found['row']}@{found['commit']}")
+        print("요약: standing 인식")
+    else:
+        print(f"  상시 답: 인식 안 함({found['why']}) — 적용 0")
+        print(f"  {STANDING_EXPECT}")
+        print("요약: standing 인식 안 함 — 적용 0")
+    return EXIT_OK
+
+
 # ── self-test ────────────────────────────────────────────────────────────────
 
 def cmd_self_test(corpus: Corpus) -> int:
@@ -1761,6 +2023,15 @@ def cmd_self_test(corpus: Corpus) -> int:
         spec: str = "-- " + " ".join(f"'{p}'" if p != "web" else p for p in REF_PATHSPEC)
         if spec not in coord:
             reds.append(f"참조 완전성 pathspec 상수가 Coordinator 문면의 grep 명령과 다르다: {spec}")
+        if STANDING_MARK not in coord:
+            reds.append(f"상시 답 범주 문면(«{STANDING_MARK}»)을 Coordinator 에서 찾지 못했다")
+        else:
+            listed: "list[str]" = re.findall(r"`([^`]+)`", coord.split(STANDING_MARK, 1)[1].split("셋뿐", 1)[0])
+            if listed != list(STANDING_CATEGORIES):
+                reds.append(f"상시 답 범주 상수 ≠ 규범 문면: 상수 {list(STANDING_CATEGORIES)} · 문면 {listed}")
+        for const, name in ((STANDING_SENTENCE, "상시 답 문장"), (STANDING_FILE, "상시 답 파일")):
+            if const not in coord:
+                reds.append(f"{name} 상수 ≠ 규범 문면: «{const}» 가 Coordinator 에 없다")
     if corpus.path_of(ARCHITECT).is_file() and f"`{SPEC_SLICE0_HEAD}`" not in _read(corpus.path_of(ARCHITECT)):
         reds.append(f"architect 문면에 슬라이스 0 절 머리 `{SPEC_SLICE0_HEAD}` 가 없다")
     for sentence, want in POLARITY_SAMPLES:
@@ -1798,6 +2069,9 @@ def main(argv: "list[str]") -> int:
     p = sub.add_parser("residual")
     p.add_argument("folder")
     p.add_argument("--finalize")
+    p = sub.add_parser("standing")
+    p.add_argument("folder", nargs="?")
+    p.add_argument("--gate", action="store_true")
     try:
         ns = ap.parse_args(argv)
     except SystemExit as exc:
@@ -1814,6 +2088,8 @@ def main(argv: "list[str]") -> int:
                             Path(ns.against) if ns.against else None, Path(ns.names) if ns.names else None)
         if ns.command == "residual":
             return cmd_residual(project, Path(ns.folder), ns.finalize)
+        if ns.command == "standing":
+            return cmd_standing(project, Path(ns.folder) if ns.folder else None, ns.gate)
         corpus: Corpus = Corpus(ns.platform, Path(ns.plugin_root).resolve() if ns.plugin_root else None)
         if ns.self_test:
             return cmd_self_test(corpus)

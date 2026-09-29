@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# dddjango-web refactor_audit.py 픽스처 (plan · plan --against · plan --names · check · check-verdict · residual · self-test).
+# dddjango-web refactor_audit.py 픽스처 (plan · plan --against · plan --names · check · check-verdict · residual · standing · self-test).
 # 합성 web 프로젝트 + 합성 플러그인 루트(판정 문장을 고정) — 각 red 에 양성 대조 짝.
 set -u
 SCRIPTS="$(cd "$(dirname "$0")/.." && pwd)"
@@ -459,6 +459,120 @@ printf 'from web.home.home.view_model.card_view_model import go\n' > "$Q/web/cha
 commit_all "$Q" card >/dev/null
 OUT=$(wn6_plan); E=$?
 assert "L2 대조: WN6 접두 불일치(개명 교정) 키의 참조 줄 = 참조 치환 줄 1" 0 "참조 치환 줄 1" - "$E" "$OUT"
+
+# ---------- M: standing — 상시 답 인식(core 와 같은 블록) · --gate ① 출처 ② 처분 ③ 항목·범주·위치 ④ 자리 ⑤ 키 행 · 대체 · 재사용 폴더
+SP="$T/standing"
+mkdir -p "$SP/web/home/view" "$SP/tests/web"
+printf 'a\nb\nc\nd\ne\n' > "$SP/web/home/view/home_view.py"
+printf 'x\ny\nz\n' > "$SP/tests/web/test_home.py"
+git -C "$SP" init -q; commit_all "$SP" base >/dev/null
+SR() { (cd "$SP" && python3 "$SCRIPTS/refactor_audit.py" standing "$@" 2>&1); }
+OUT=$(SR); E=$?
+assert "M1 파일 없음 = 상시 답 없음 · 출처 값 없음" 0 "요약: standing 없음 — 적용 0" "상시 답 출처" "$E" "$OUT"
+mkdir -p "$SP/.dddjango"
+printf '# 상시 답\n\n«동작 변경이나 테스트 수정이 필요해 이번에 못 끝내는 항목은 별도 요청으로.»\n' > "$SP/.dddjango/standing-answer.md"
+OUT=$(SR); E=$?
+assert "M2a 미추적 = 인식 안 함 + 기대 문장" 0 "기대 문장: 동작 변경이나 테스트 수정이" "상시 답 출처" "$E" "$OUT"
+assert "M2a′ 사유 미추적" 0 "인식 안 함(미추적) — 적용 0" - "$E" "$OUT"
+C1=$(commit_all "$SP" standing); C12=${C1:0:12}
+OUT=$(SR); E=$?
+assert "M2b 커밋본 = 인식 · 출처 값(행·커밋 12자)" 0 "상시 답 출처: 상시 답 .dddjango/standing-answer.md:3@$C12" - "$E" "$OUT"
+printf '더함\n' >> "$SP/.dddjango/standing-answer.md"
+OUT=$(SR); E=$?
+assert "M2c 커밋되지 않은 수정 = 인식 안 함" 0 "인식 안 함(커밋되지 않은 수정)" "상시 답 출처" "$E" "$OUT"
+git -C "$SP" checkout -q -- .dddjango/standing-answer.md
+F2="$SP/.dddjango-web/r"; mkdir -p "$F2"
+printf '{"git_snapshot": "%s", "mode": "refactor"}\n' "$(git -C "$SP" rev-parse HEAD)" > "$F2/build-state.json"
+SRC="출처 = 상시 답 .dddjango/standing-answer.md:3@$C12"
+G0='## G0 2026-09-29 10:00
+
+- 결정 줄: M3 M5 M8 M9 · 결정 = ⓐ · 사유 = 빚은 먼저 정리 · 출처 = 대리 답 ⓐ /x/scope.md:50(2026-09-29 09:59)
+- 결정 줄: M7 · 결정 = ⓐ · 사유 = 사용자 판단 «위반 — 정리» · 출처 = 사용자 원문 /x/user-answers.md:10(2026-09-29 09:59)
+
+의미 audit: 20260929-100000
+의미 ⓐ 키: M3 M5 M7 M8 M9
+ⓐ 키: -
+요구 키: -'
+USER() { printf '\n## ⓐ 재상정 %s\n\n- 결정 줄: %s · 결정 = 별도 요청 · 사유 = 동작 불변 정리 불가 · 출처 = 본인 직접(%s)\n\n재상정 키: -\n의미 재상정 키: %s\n' "$1" "$2" "$1" "$2"; }
+SEC() { # SEC <시각> <결정 줄…> — 표지 · 줄 · 키 행(상시 답 절 정형)
+  local when="$1" keys=""; shift
+  printf '\n## ⓐ 재상정 %s\n\n- 상시 답 적용 %s건\n' "$when" "$#"
+  for l in "$@"; do printf '%s\n' "$l"; keys="$keys $(grep -oE '^- (결정 줄: )?M[0-9]+' <<<"$l" | grep -oE 'M[0-9]+')"; done
+  printf '\n재상정 키: -\n의미 재상정 키:%s\n' "$keys"
+}
+GATE() { { echo "$G0"; printf '%s' "$@"; } > "$F2/refactor-scope.md"; SR "$F2" --gate; }
+L() { echo "- 결정 줄: $1 · 결정 = 별도 요청 · 사유 = 동작 불변 불가($2) · $SRC"; }
+L5=$(L M5 "테스트 본문 동반 — tests/web/test_home.py:2")
+L7="- M7 · 결정 = 별도 요청 · 사유 = 동작 불변 불가(외부 관찰 동작 · 테스트 새 판정 — home/view/home_view.py:2-4 · tests/web/test_home.py:3) · $SRC"
+OUT=$(GATE "$(USER '2026-09-29 10:05' M3)"); E=$?
+assert "M3a 사용자 출처 재상정만(파일 무관 흐름) = gate exit 0 · 상시 답 줄 0" 0 "상시 답 줄 0 · 대체 0 · red 0" - "$E" "$OUT"
+OUT=$(GATE "$(USER '2026-09-29 10:05' M3)" "$(SEC '2026-09-29 10:20' "$L5" "$L7")"); E=$?
+assert "M3b 정상(결정 줄 머리 · web 상대 위치 · G0 사용자 판단 줄 뒤 M7) = exit 0" 0 "상시 답 줄 2 · 대체 0 · red 0" - "$E" "$OUT"
+OUT=$(GATE "$(SEC '2026-09-29 10:20' "$(L M5 '경계 교차 — tests/web/test_home.py:2')" \
+  "$(L M7 '외부 관찰 동작 · 경계 교차 — tests/web/test_home.py:3')" "$(L C3 '외부 관찰 동작 — tests/web/test_home.py:1')" \
+  "$(L M4 '외부 관찰 동작 — tests/web/test_home.py:1')")"); E=$?
+assert "M4a 범주 셋 밖(단독) = 묻는다" 2 "③ 범주 ['경계 교차'] 가" - "$E" "$OUT"
+assert "M4b 범주 혼합 = 묻는다" 2 "③ 범주 ['외부 관찰 동작', '경계 교차'] 가 외부 관찰 동작 · 테스트 본문 동반 · 테스트 새 판정 셋 안이 아니다 — 묻는다" - "$E" "$OUT"
+assert "M4c C 키 = 묻는다" 2 "③ \`C<n>\` 에는 상시 답을 쓰지 않는다 — 묻는다" - "$E" "$OUT"
+assert "M4d G0 의미 ⓐ 밖 M = 고친 줄" 2 "③ M4 이 마지막 \`## G0\` 의 의미 ⓐ 항목이 아니다 — 고친 줄" - "$E" "$OUT"
+NOANC=$(git -C "$SP" commit-tree "$C1^{tree}" -m orphan)
+OUT=$(GATE "$(SEC '2026-09-29 10:20' "${L5/:3@/:2@}" "${L7/@$C12/@${NOANC:0:12}}" \
+  "- M8 · 결정 = ⓑ · 사유 = 동작 불변 불가(외부 관찰 동작 — tests/web/test_home.py:1) · $SRC")"); E=$?
+assert "M5a 출처 행 어긋남 = ①" 2 "① 커밋 $C12 판의 2행이 유일한 인식 줄이 아니다" - "$E" "$OUT"
+assert "M5b 출처 커밋이 HEAD 조상 아님 = ①" 2 "이 HEAD 의 조상이 아니다" - "$E" "$OUT"
+assert "M5c 처분 ⓑ = ②" 2 "② 처분이 «별도 요청»이 아니다" - "$E" "$OUT"
+OUT=$(GATE "$(SEC '2026-09-29 10:20' "- 결정 줄: M5 결정 = 별도 요청 · 사유 = 동작 불변 불가(테스트 본문 동반 — tests/web/test_home.py:2) · $SRC")"); E=$?
+assert "M5d 칸 모양이 틀린 상시 답 줄도 검사 대상(조용히 빠지지 않음) = ②" 2 "② 처분이 «별도 요청»이 아니다" - "$E" "$OUT"
+OUT=$(GATE "$(printf '\n## ⓐ 재상정 2026-09-29 10:20\n\n%s\n\n재상정 키: -\n의미 재상정 키: M5\n' "$L5")"); E=$?
+assert "M6a 표지 없는 재상정 절 = ④" 2 "④ 첫 줄 \`- 상시 답 적용 k건\` 이 있는 \`ⓐ 재상정\` 절 밖이다" - "$E" "$OUT"
+OUT=$(GATE "$(printf '\n%s\n' "$L5")" "$(SEC '2026-09-29 10:20' "$L7" "- 결정 줄: M9 · 결정 = 별도 요청 · 사유 = 동작 불변 정리 불가 · 출처 = 본인 직접(10:20)")"); E=$?
+assert "M6b G0 절 안 상시 답 줄 = ④" 2 "④ 첫 줄 \`- 상시 답 적용 k건\` 이 있는 \`ⓐ 재상정\` 절 밖이다" - "$E" "$OUT"
+assert "M6c 상시 답 절 안 사용자 결정 줄 = ④" 2 "④ 상시 답 절에 상시 답 아닌 결정 줄이 있다" - "$E" "$OUT"
+OUT=$(GATE "$(USER '2026-09-29 10:05' M3)" "$(SEC '2026-09-29 10:20' "$(L M3 '외부 관찰 동작 — home/view/home_view.py:1')")"); E=$?
+assert "M7 앞선 재상정 사용자 답 뒤 상시 답 줄 = ④(사용자 답이 이긴다)" 2 "④ M3 의 앞선 재상정 사용자 답 줄보다 뒤다" - "$E" "$OUT"
+OUT=$(GATE "$(SEC '2026-09-29 10:20' "$(L M5 '경계 교차 — tests/web/test_home.py:2')" "$(L M7 '외부 관찰 동작 — :67')")" \
+  "$(USER '2026-09-29 10:30' M5)" "$(SEC '2026-09-29 10:31' "$L7")"); E=$?
+assert "M8 대체 — 뒤 절 사용자 답 · 고친 상시 답 줄이 앞 red 줄을 대체" 0 "상시 답 줄 3 · 대체 2 · red 0" - "$E" "$OUT"
+OUT=$(GATE "$(SEC '2026-09-29 10:20' "$(L M5 '테스트 본문 동반 — :2')" "$(L M7 '외부 관찰 동작 — tests/web/test_home.py:2·3')" \
+  "$(L M8 '외부 관찰 동작 — home/view/home_view.py:9')" "$(L M9 '외부 관찰 동작 — tests/web/test_home.py:2 단언')")"); E=$?
+assert "M9a 맨 \`:행\` = ③ 형식" 2 "③ 위치 \`:2\` 가 \`파일:행[-행]\`(저장소 상대 · 1 ≤ 시작 ≤ 끝) 정형이 아니다" - "$E" "$OUT"
+assert "M9b \`행·행\` 이어 적기 = ③ 형식(조용히 버리지 않음)" 2 "③ 위치 \`3\` 가" - "$E" "$OUT"
+assert "M9c git_snapshot 판 줄 수 밖 = ③" 2 "③ 위치 \`home/view/home_view.py:9\` 가 git_snapshot 판" - "$E" "$OUT"
+assert "M9e 위치 뒤 꼬리 글 = ③ 형식(앞머리만 맞춰 통과시키지 않음)" 2 "③ 위치 \`tests/web/test_home.py:2 단언\` 가 \`파일:행[-행]\`(저장소 상대" - "$E" "$OUT"
+printf 'a\n' > "$SP/web/home/view/home_view.py"; commit_all "$SP" slice0 >/dev/null
+OUT=$(GATE "$(SEC '2026-09-29 10:20' "$L7")"); E=$?
+assert "M9d 슬라이스 0 뒤 파일이 줄어도 git_snapshot 판 기준 = exit 0" 0 "상시 답 줄 1 · 대체 0 · red 0" - "$E" "$OUT"
+OUT=$(GATE "$(SEC '2026-09-29 10:20' "$L5" "$L7" | sed -e 's/^의미 재상정 키:.*/의미 재상정 키: M5/' -e 's/^재상정 키: -$/재상정 키: C1/')"); E=$?
+assert "M10a 의미 재상정 키 ≠ 상시 답 줄 키 = ⑤" 2 "⑤ \`의미 재상정 키:\` ['M5'] ≠ 상시 답 줄 키 ['M5', 'M7']" - "$E" "$OUT"
+assert "M10b 재상정 키 ≠ - = ⑤" 2 "⑤ \`재상정 키:\` 가 \`-\` 한 행이 아니다" - "$E" "$OUT"
+{ printf '%s\n' '## G0 2026-09-28 09:00' '의미 audit: 20260928-090000' '의미 ⓐ 키: M5 M7' 'ⓐ 키: -' '요구 키: -'
+  SEC '2026-09-28 09:10' "${L5/:3@/:2@}"; USER '2026-09-28 09:20' M7; echo
+  printf '%s\n' '## G0 2026-09-29 10:00' '의미 audit: 20260929-100000' '의미 ⓐ 키: M7' 'ⓐ 키: -' '요구 키: -'; } > "$F2/refactor-scope.md"
+{ cat "$F2/refactor-scope.md"; SEC '2026-09-29 10:20' "$L7"; } > "$F2/scope.tmp"; mv "$F2/scope.tmp" "$F2/refactor-scope.md"
+OUT=$(SR "$F2" --gate); E=$?
+assert "M11 재사용 폴더 — 마지막 \`## G0\` 앞 실행 줄은 보지 않는다" 0 "상시 답 줄 1 · 대체 0 · red 0" - "$E" "$OUT"
+printf '바꿈\n' > "$SP/.dddjango/standing-answer.md"; commit_all "$SP" edit >/dev/null
+git -C "$SP" rm -q .dddjango/standing-answer.md; commit_all "$SP" delete >/dev/null
+OUT=$(GATE "$(SEC '2026-09-29 10:20' "$L5" "$L7")"); E=$?
+assert "M12 적용 커밋 뒤 파일 수정·삭제 = 커밋 기준으로 유효 exit 0" 0 "상시 답 줄 2 · 대체 0 · red 0" - "$E" "$OUT"
+OUT=$(SR); E=$?
+assert "M12′ 삭제 뒤 standing = 없음(다음 BC 부터 원래대로)" 0 "요약: standing 없음 — 적용 0" - "$E" "$OUT"
+OUT=$(GATE "$(SEC '2026-09-29 10:20' "- M3(+M12) · 결정 = 별도 요청 · 사유 = 동작 불변 불가(외부 관찰 동작 — tests/web/test_home.py:1) · $SRC")"); E=$?
+assert "M13 병합 괄호 M3(+M12) — 괄호 안은 키가 아니다 = exit 0" 0 "상시 답 줄 1 · 대체 0 · red 0" - "$E" "$OUT"
+OUT=$(GATE "$(SEC '2026-09-29 10:20' "$(L M5 '경계 교차 — tests/web/test_home.py:2')")" \
+  "$(printf '\n## G0 재승인 2026-09-29 10:30\n\n- 결정 줄: M5 · 결정 = 별도 요청 · 사유 = x · 출처 = 본인 직접(10:30)\n\nⓐ 키: -\n요구 키: -\n')"); E=$?
+assert "M14 대체는 뒤 재상정 절만 — G0 재승인 절 사용자 줄은 대체하지 않는다" 2 "③ 범주 ['경계 교차'] 가" "대체 1" "$E" "$OUT"
+OUT=$(GATE "$(SEC '2026-09-29 10:20' "$(L 'M3 M5' '경계 교차 — tests/web/test_home.py:2')")" "$(USER '2026-09-29 10:30' M3)"); E=$?
+assert "M15 다중 키 줄을 뒤 사용자 답이 일부 키만 다루면 나머지 키는 계속 검사(키별 대체)" 2 "③ 범주 ['경계 교차'] 가" "대체 1" "$E" "$OUT"
+OUT=$(GATE "$(SEC '2026-09-29 10:20' "$(L M7 '`외부 관찰 동작`, `테스트 새 판정` — tests/web/test_home.py:1')")"); E=$?
+assert "M16 범주를 백틱째·쉼표로 옮겨도 인식 = exit 0" 0 "상시 답 줄 1 · 대체 0 · red 0" - "$E" "$OUT"
+printf '\x89PNG\r\n\x1a\n\xff\xfe' > "$SP/web/logo.png"; commit_all "$SP" logo >/dev/null
+printf '{"git_snapshot": "%s", "mode": "refactor"}\n' "$(git -C "$SP" rev-parse HEAD)" > "$F2/build-state.json"
+OUT=$(GATE "$(SEC '2026-09-29 10:20' "$(L M5 '테스트 본문 동반 — logo.png:1 · tests:1 · tests/web/test_home.py:3-2 · /etc/hosts:1')")"); E=$?
+assert "M17a 비UTF-8 파일 = red(실행 불능 아님)" 2 "③ 위치 \`logo.png:1\` 가 git_snapshot 판" - "$E" "$OUT"
+assert "M17b 디렉터리 = red" 2 "③ 위치 \`tests:1\` 가 git_snapshot 판" - "$E" "$OUT"
+assert "M17c 역순 행 = 형식 red" 2 "③ 위치 \`tests/web/test_home.py:3-2\` 가 \`파일:행[-행]\`(저장소 상대" - "$E" "$OUT"
+assert "M17d 절대 경로 = 형식 red" 2 "③ 위치 \`/etc/hosts:1\` 가 \`파일:행[-행]\`(저장소 상대" - "$E" "$OUT"
 
 echo "fixtures_refactor_audit: PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" = 0 ]
