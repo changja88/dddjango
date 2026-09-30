@@ -41,7 +41,7 @@ li.todo .m { color:var(--todo); }
 <button class="theme" onclick="var r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'||(!r.dataset.theme&&matchMedia('(prefers-color-scheme: dark)').matches))?'light':'dark'">밝게/어둡게</button>
 <main>
 <h1>리팩토링 진행표</h1>
-<p class="sub">갱신 2026-09-30 02시 · ✓ 끝 · ▶ 진행 중 · ○ 남음</p>
+<p class="sub">갱신 2026-09-30 11시 · ✓ 끝 · ▶ 진행 중 · ○ 남음</p>
 
 <div class="cols">
 <section class="col">
@@ -54,7 +54,7 @@ li.todo .m { color:var(--todo); }
 <li class="done"><span class="m">✓</span>리허설 — 기능 요청</li>
 <li class="done"><span class="m">✓</span><span>리허설 — 리팩토링 <code>service_policy</code> <span class="note">· G2 완주 · 결함 1 찾음</span></span></li>
 <li class="done"><span class="m">✓</span><span>결함 수리 — 검사기 #195 <span class="note">· 커밋 완료</span></span></li>
-<li class="doing"><span class="m">▶</span><span>개선 — 정리 가능 여부 미리 판정 · 검사기 인자 팩토리 · 질문 줄이기(상시 답) <span class="note">· 커밋 끝(재리허설 질문 5 → 1) · 후속 수리 2건(잔존 근거 판독 · 병합 표기) 진행</span></span></li>
+<li class="doing"><span class="m">▶</span><span>개선 — 정리 가능 여부 미리 판정 · 검사기 인자 팩토리 · 질문 줄이기(상시 답) <span class="note">· 커밋 끝(재리허설 질문 5 → 1) · 후속 수리 8c 커밋 끝 · 결함 후보 1건 진단 중</span></span></li>
 <li class="doing"><span class="m">▶</span><span>배포 대기 <span class="note">· 현장 진행 중 레인 3개가 G2 넘기면</span></span></li>
 <li class="todo"><span class="m">○</span><span>설치본 갱신 <span class="note">· 사용자 <code>/plugin</code></span></span></li>
 </ul>
@@ -74,7 +74,7 @@ li.todo .m { color:var(--todo); }
 <li class="done"><span class="m">✓</span>리허설 — 기능 요청</li>
 <li class="done"><span class="m">✓</span><span>리허설 — 리팩토링 <code>web/home</code> <span class="note">· 결함 0</span></span></li>
 <li class="done"><span class="m">✓</span><span>결함 수리 — 치환 확인 · 계약 절단 문구 <span class="note">· 커밋 완료</span></span></li>
-<li class="doing"><span class="m">▶</span><span>개선 — Codex 문구 정렬 · 계약 절단 기록 · 되살아난 옛 문단 정리 · 상시 답 <span class="note">· 커밋 끝(로고 교체 질문 1 → 0 · 비용 −34%) · 후속 수리 1건(잔존 근거 판독) 진행</span></span></li>
+<li class="doing"><span class="m">▶</span><span>개선 — Codex 문구 정렬 · 계약 절단 기록 · 되살아난 옛 문단 정리 · 상시 답 <span class="note">· 커밋 끝(로고 교체 질문 1 → 0 · 비용 −34%) · 후속 수리 8c 커밋 끝 · 결함 후보 1건 진단 중</span></span></li>
 <li class="doing"><span class="m">▶</span><span>배포 대기 <span class="note">· dddjango 와 함께</span></span></li>
 <li class="todo"><span class="m">○</span><span>설치본 갱신 <span class="note">· 사용자 <code>/plugin</code></span></span></li>
 </ul>
@@ -85,7 +85,7 @@ li.todo .m { color:var(--todo); }
 </section>
 </div>
 
-<div class="next"><b>지금</b> — 개선 커밋 끝(질문 8 → 3) · 후속 수리 8c(잔존 판정 근거 판독 · 병합 표기) 진행<br><b>다음</b> — 현장 진행 중 레인이 G2 를 넘기면 배포(<code>make release</code> · <code>make release-web</code>) · 개선이 그 전에 끝나면 함께 · 그 뒤 설치본 갱신은 사용자 <code>/plugin</code></div>
+<div class="next"><b>지금</b> — 개선 8b·8c 커밋 끝 · 결함 후보 2건(core 판정 재분류 누락 · web 영향 범위 누락) 진단 중 → 수리 여부 결정<br><b>다음</b> — 현장 진행 중 레인이 G2 를 넘기면 배포(<code>make release</code> · <code>make release-web</code>) · 개선이 그 전에 끝나면 함께 · 그 뒤 설치본 갱신은 사용자 <code>/plugin</code></div>
 </main>
 </body>
 </html>
