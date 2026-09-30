@@ -682,7 +682,7 @@ def compute_plan(project: Path, unit: str, debt: dict) -> PlanData:
                 elif verdict == "경계 교차":
                     data.cross[f] = "·".join(sorted(areas))
     scope_paths: "set[str]" = {"web/" + f for f in data.scope}
-    # 경계 교차 소비자 · 줄 편집 (가) — 범위 파일을 가리키는 범위 밖 web/ 줄
+    # 경계 교차 소비자 · 줄 편집 (가) — 범위 파일을 가리키는 범위 밖 web/ 줄(소비자 = 정적 로드만 하는 줄 밖 전부)
     for f in sorted(data.scope):
         for path, line, text in _refs(project, f):
             if not path.startswith("web/") or path in scope_paths:
@@ -690,9 +690,10 @@ def compute_plan(project: Path, unit: str, debt: dict) -> PlanData:
                     data.outside_refs.append(f"{path}:{line}")
                 continue
             where: str = f"{path}:{line}"
-            if CONSUMER_LINE.search(text):
+            load: bool = bool(LOAD_LINE.search(text))
+            if CONSUMER_LINE.search(text) or not load:      # 정적 로드 줄(<script>·<link>)만 빼고 모양과 무관 — import·render·문자열 포함
                 data.consumers.append(where)
-            if LOAD_LINE.search(text):
+            if load:
                 data.line_edits[where] = "(가)"
     findings: "list[dict]" = _findings(debt)
     ids: "dict[str, str]" = _key_ids(debt)
