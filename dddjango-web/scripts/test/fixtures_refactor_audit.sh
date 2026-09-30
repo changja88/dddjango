@@ -662,6 +662,16 @@ assert "K4 재상정 뒤 재승인이 다시 적은 M10 은 되살아난다" 0 "
 sed -i.bak 's/^의미 ⓐ 키: M9 M10$/의미 ⓐ 키: C1/' "$F/refactor-scope.md"; rm -f "$F/refactor-scope.md.bak"
 OUT=$(RA residual "$F"); E=$?
 assert "K5 의미 ⓐ 키 값 형식 어긋남(C1) = 실행 불능" 1 "실행 불능" - "$E" "$OUT"
+A3="$F/audit/20260930-140000"; mkdir -p "$A3"; cp "$A/plan.md" "$A/screen-01.md" "$A/discipline-01.md" "$A3/"
+{ echo '| M | 원 행 | 판정 | 근거 | 파일:행 |'; echo '|---|---|---|---|---|'; echo "$V1" | sed 's/| M9 | screen-01#6 | 채택 | — |/| M9 | screen-01#6 | 병합 → M12 | — |/'; echo "| M12 | screen-01#2 | 채택 | — | $LOC |"; } > "$A3/verdict.md"
+RAP check-verdict "$A3" >/dev/null; OUT=$(RAP check-verdict "$A3" --final); E=$?
+assert "K6 --final 이 병합 대상(M12 — 원 행이 통과 행 아님)을 빼면 병합 항목 M9 는 채택으로 확정(고아 병합 금지)" 0 "재분류: M9 병합 대상 M12 이 확정 기록의 채택 항목이 아니다 → 채택" - "$E" "$OUT"
+assert "K6b 확정 표 M9 = 채택 · 병합 → M12 없음" 0 "| M9 | screen-01#6 | 채택 |" "병합 → M12" 0 "$(cat "$A3/verdict-final.md" 2>/dev/null)"
+assert "K6c 고아 병합 교정은 대상 M 만 — 검사기 키 병합 M8 은 확정 표에 그대로" 0 "| M8 | screen-01#14 | 병합 → WN8" - 0 "$(cat "$A3/verdict-final.md" 2>/dev/null)"
+A4="$F/audit/20260930-150000"; mkdir -p "$A4"; cp "$A/plan.md" "$A/screen-01.md" "$A/discipline-01.md" "$A4/"
+{ echo '| M | 원 행 | 판정 | 근거 | 파일:행 |'; echo '|---|---|---|---|---|'; echo "$V1" | sed 's/| M9 | screen-01#6 | 채택 | — |/| M1 | screen-01#6 | 채택 | — |/; s/| M10 | screen-01#11 | 채택 | — |/| M10 | screen-01#11 | 병합 → M1 | — |/'; } > "$A4/verdict.md"
+RAP check-verdict "$A4" >/dev/null; RAP check-verdict "$A4" --final >/dev/null
+assert "K7 번호 중복으로 병합 대상 M1 이 제외 항목으로 남으면 병합 항목 M10 은 채택(제외에 붙지 않는다)" 0 "| M10 | screen-01#11 | 채택 |" "병합 → M1" 0 "$(cat "$A4/verdict-final.md" 2>/dev/null)"
 
 # ---------- L: WN6 «대응 미완»(생성)은 개명·이동 교정이 아니다 — 참조 치환 줄에 올리지 않는다(접두 불일치 대조 짝)
 Q="$T/wn6"

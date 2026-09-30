@@ -1545,6 +1545,11 @@ def _finalize_verdicts(verdicts: "list[Verdict]", reds: "list[tuple[str, str, st
         mid: str = fresh()
         out.append(Verdict([mid, o, "채택", "", ""]))
         reclass.append((mid, f"판정 없는 통과 행 {o} → 채택(새 번호)"))
+    adopted_m: "set[str]" = {v.mid for v in out if v.kind == "채택"}
+    for v in out:                                   # 대상이 기록에서 빠진 병합 → 채택(고아 병합 금지)
+        if v.kind == "병합" and re.fullmatch(r"M\d+", v.merge_to) and v.merge_to not in adopted_m:
+            reclass.append((v.mid, f"병합 대상 {v.merge_to} 이 확정 기록의 채택 항목이 아니다 → 채택"))
+            v.kind, v.merge_to = "채택", ""
     return out
 
 
