@@ -4079,7 +4079,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s012/b12": {
-      "h": "46b6127a7a5a5707",
+      "h": "21291a652f378328",
       "n": 1,
       "works": [
         "R-3535",
@@ -14662,7 +14662,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "128399a8b5dfd4c8e7b6bb35bc9d8d266e4effcfcd40f5e9ea0ffd7f3ca456c9"
+      "sha256": "79fc99dce4a2c865d7d7ebbc12cfb1bbea2cf6e39146dc85c42ec8d85849b3ba"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -84193,8 +84193,8 @@
       "block_order": 12,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3535@2026-09-29",
-      "label": "리팩토링 모드 G2 잔존 M = M_c + M_m — M_m 은 residual(결정적 바닥 + 렌즈별 잔존 확인 1회 · 근거 없는 해소는 잔존 · 요지 축소 항목은 남긴 요지로 · 재상정 어휘 밖·요지 축소 정형 불비·표지 절 밖 상시 답 줄은 실행 불능)",
+      "expression": "https://numchida.com/ns/djr#R-3535@2026-09-30",
+      "label": "리팩토링 모드 G2 잔존 M = M_c + M_m — M_m 은 residual(결정적 바닥 + 렌즈별 잔존 확인 1회 · 해소 근거 = ` — ` 앞 새 위치 · 근거 판형 아님은 시각마다 같은 렌즈 재기재 1회 뒤 잔존 · 요지 축소 항목은 남긴 요지로 · 재상정 어휘 밖·요지 축소 정형 불비·표지 절 밖 상시 답 줄은 실행 불능)",
       "norm_kind": "Obligation",
       "order_rank": 1391,
       "overrides": [],

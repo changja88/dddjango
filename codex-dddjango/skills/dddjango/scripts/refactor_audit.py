@@ -72,6 +72,8 @@ LAYER_ORDER: "tuple[str, ...]" = ("driving_layer", "application_layer", "domain_
 OUTSIDE: str = "트리 밖"
 CHUNK_LINES: int = 5000
 LENSES: "tuple[str, ...]" = ("ddd", "api", "db", "discipline")
+# 두 플러그인의 실행 산출물 폴더(프로젝트 상대) — 그 아래 파일은 residual 해소 근거가 아니다.
+OUTPUT_ROOTS: "tuple[str, ...]" = (".dddjango/", ".dddjango-web/")
 
 # 렌즈별 점검 절(토큰 `<문서 키> §<절>` — 문서 키 = 팩 document 에서 `dddjango/` 를 뗀 경로 ·
 # 절 = 번호 있는 제목이면 번호, 없으면 제목 원문). 절은 하위 절을 포함한다. 목록 근거·제외 사유는
@@ -585,6 +587,44 @@ def _location_ok(project: Path, loc: "tuple[str, int, int]") -> bool:
 
 def _locations(cell: str) -> "list[str]":
     return [t for t in re.split(r"\s*[,·]\s*|\s+", cell.strip()) if t and ":" in t]
+
+
+def _ground(cell: str) -> "tuple[list[tuple[str, int, int]], str]":
+    """해소 근거 칸 `<새 파일:행>[ · …] — <한 구>` 의 머리(첫 `—` 앞) 위치와 첫 불량 토큰(비면 판형) — 꼬리는 읽지 않는다.
+
+    머리는 모든 토큰이 위치여야 한다(산문·조사가 섞이면 판형 아님 · 조용히 버리지 않는다). 절대·`..` 경로도 판형 아님.
+    """
+    toks: "list[str]" = [t for t in re.split(r"\s*[,·]\s*|\s+", cell.partition("—")[0].strip()) if t]
+    if not toks:
+        return [], "(머리 없음)"
+    locs: "list[tuple[str, int, int]]" = []
+    for t in toks:
+        loc = _parse_location(t)
+        norm: str = os.path.normpath(loc[0]).replace(os.sep, "/") if loc else ""
+        if loc is None or os.path.isabs(loc[0]) or norm == ".." or norm.startswith("../"):
+            return [], t
+        locs.append(loc)
+    return locs, ""
+
+
+def _answer_state(cell: str) -> str:
+    """잔존 확인 판정 칸 — `*`·백틱을 벗긴 뒤 `해소`·`판단 불가` 는 정확히, `잔존` 은 접두어로(`잔존(일부)`) 읽는다 · 그 밖 = 판단 불가."""
+    text: str = re.sub(r"[*`]", "", cell).strip()
+    return "잔존" if text.startswith("잔존") else text if text in ("해소", "판단 불가") else "판단 불가"
+
+
+def _same_stamp(path: Path) -> "tuple[dict[str, str], list[str], dict[str, dict[str, str | None]]]":
+    """같은 시각 앞 확정 판(`result.json`) — (M → 판정, 판형 아님 이력 M, 해소 지문). 없으면 빈 값 · 모양이 틀리면 실행 불능."""
+    if not path.is_file():
+        return {}, [], {}
+    try:                                                    # 문자열 아닌 값의 `.strip`·dict 아닌 값의 `.items`·목록 아닌 redo 의 `+` 가 실패한다
+        data = json.loads(path.read_text(encoding="utf-8"))
+        states: "dict[str, str]" = {k: v.strip() for k, v in data.get("states", {}).items()}
+        redo: "list[str]" = [m.strip() for m in data.get("redo", []) + []]
+        solved: "dict[str, dict[str, str | None]]" = {m: dict(v.items()) for m, v in data.get("solved", {}).items()}
+    except (TypeError, AttributeError, ValueError):
+        raise ToolError(f"{path} 의 states·redo·solved 가 residual 확정 판 모양이 아니다 — 같은 시각 재확정 불가") from None
+    return states, redo, solved
 
 
 # ── plan ─────────────────────────────────────────────────────────────────────
@@ -1339,12 +1379,15 @@ def _scope(folder: Path) -> "tuple[str, set[str], set[str], dict[str, Reduction]
     재상정 절의 `M<n>` 결정 줄은 첫 낱말이 닫힌 어휘여야 한다(밖이면 실행 불능). `요지` 줄은 빼지 않고
     요지 축소로 싣는다(같은 항목의 뒤 줄이 이긴다) — 같은 항목에 전체 제외 줄이 있으면 제외가 이긴다.
     재상정 절 제목보다 깊은 제목(하위 제목)은 절을 끊지 않는다.
+    G0 확정 판정의 병합 항목은 대상 항목을 따르므로 결정 줄 표기와 무관하게 ⓐ 키에서 뺀다 — verdict-log.md 마지막 exit 0 판과
+    verdict.md 가 둘 다 병합이고, 대상 `M<n>` 이 ⓐ 키이거나 대상 `C<n>` 이 ⓐ 결정 줄에 있을 때만(로그가 없으면 빼지 않는다).
     """
     text: str = re.split(r"(?m)^#+\s*앞 실행", _read(folder / "refactor-scope.md"))[0]
     m = re.search(r"^\s*실행 · G0 승인 \S+ · 모드 리팩토링 · audit (\S+)", text, re.M)
     if not m:
         raise ToolError("refactor-scope.md 에 리팩토링 실행 줄(`실행 · G0 승인 <값> · 모드 리팩토링 · audit <시각>`)이 없다")
     adopted: "set[str]" = set()
+    adopted_c: "set[str]" = set()
     removed: "set[str]" = set()
     reductions: "dict[str, Reduction]" = {}
     lines: "list[DecisionLine]" = []
@@ -1384,7 +1427,13 @@ def _scope(folder: Path) -> "tuple[str, set[str], set[str], dict[str, Reduction]
                 removed |= keys
         elif token.startswith("ⓐ") and not token.startswith("ⓐ′"):
             adopted |= keys
-    return m.group(1), adopted, removed, reductions, lines
+            adopted_c |= set(re.findall(r"\bC\d+\b", re.sub(r"\([^)]*\)", "", dm.group(1))))   # 괄호 안 C 는 ⓐ 가 아니다
+    audit: Path = folder / "audit" / m.group(1)
+    kinds, _origin = _previous(audit / "verdict-log.md")
+    merged: "set[str]" = {v.mid for v in _load_verdicts(audit) if v.kind == "병합"
+                          and kinds.get(v.mid) in ("병합→M", "병합→C")
+                          and v.merge_to in (adopted_c if v.merge_to.startswith("C") else adopted)} if kinds else set()
+    return m.group(1), adopted - merged, removed, reductions, lines
 
 
 # ── resolution(명세 «슬라이스 0 해소 판정» 표) ──────────────────────────────
@@ -1846,7 +1895,13 @@ def cmd_residual(project: Path, folder: Path, candidates: "Path | None", finaliz
     if finalize is None:
         for lens, mids in to_review.items():
             body: "list[str]" = [f"# 잔존 확인 — {lens} · {stamp}", "",
-                                 "결과 표(`result-<렌즈>.md`): `M<n> | 해소|잔존|판단 불가 | 근거(해소면 새 파일:행 필수)`", ""]
+                                 "결과 표(`result-<렌즈>.md`): `M<n> | 해소|잔존|판단 불가 | 근거`", "",
+                                 "해소의 근거 칸 판형: `<새 파일:행[-행]>[ · <새 파일:행[-행]>…] — <무엇이 어떻게 사라졌는지 한 구>`. "
+                                 "` — ` 앞에는 저장소 루트 기준 새 위치만 적는다(조사·괄호·설명 없이 — 이 위치만 근거로 센다). "
+                                 "위치마다 경로:행을 전부 적는다(`:16`·`15·16` 줄임 없이) · 구분은 ` · `. 남은 것·제외 범주·설계 근거 같은 "
+                                 "맥락 위치는 ` — ` 뒤에만 적는다. 판형이 아니면 그 행을 다시 요청받는다.",
+                                 "예: `M3 | 해소 | application/<bc>/domain_layer/x/x.py:12-18 · "
+                                 "application/<bc>/application_layer/y/y_use_case.py:40 — 판정을 루트 메서드 한 곳으로 옮겼다`", ""]
             if any(m in notes for m in mids):
                 body += ["요지 축소 항목은 남긴 요지만 본다 — 뺀 요지는 재상정 처분 몫이라 잔존으로 세지 않는다. "
                          "원 규칙의 처방이 아닌 대체 형태는 해소가 아니다.", ""]
@@ -1873,50 +1928,77 @@ def cmd_residual(project: Path, folder: Path, candidates: "Path | None", finaliz
             {"stamp": stamp, "solved": {m: prev_solved[m] for m in carried}}, ensure_ascii=False, sort_keys=True)
             + "\n", encoding="utf-8")
         return EXIT_RED if floor else EXIT_OK
-    results: "dict[str, list[tuple[str, str]]]" = {}
+    results: "dict[str, list[tuple[str, str, str]]]" = {}     # M → (렌즈, 판정 칸, 근거 칸)
     for lens in to_review:
         path: Path = out_dir / f"result-{lens}.md"
         for cells in _table_rows(path.read_text(encoding="utf-8")) if path.is_file() else []:
             if len(cells) >= 2 and re.fullmatch(r"M\d+", cells[0]):
-                results.setdefault(cells[0], []).append((cells[1], cells[2] if len(cells) > 2 else ""))
-    reviewer_left: "list[str]" = []
-    unknown: "list[str]" = []
-    solved: "list[str]" = []
+                results.setdefault(cells[0], []).append((lens, cells[1], cells[2] if len(cells) > 2 else ""))
+    # 같은 시각 재확정 — 동결은 좋아지는 쪽만 막는다. 앞 판이 판형 아님·답 없음이면 다시 판정하고, 그 밖에는 이번 행이
+    # 있으면 이번 판정을 쓰되 앞 판이 잔존·잔존(반복)·판단 불가면 해소·판형 아님·답 없음(다시 판정 쪽)으로 가지 않는다
+    # (앞 판 해소의 강등은 모두 받는다 · 행이 없으면 앞 판 판정·지문 유지).
+    # 판형 아님 이력(`redo`)은 판정과 따로 쌓는다 — 이력 있는 M 이 다시 판형 아님이면 잔존(반복)이다.
+    before_states, redo_before, kept = _same_stamp(out_dir / "result.json")
+    code_changed: "set[str]" = {p for p in changed if not p.startswith(OUTPUT_ROOTS)}   # 산출물 파일은 해소 근거가 아니다
+    states: "dict[str, str]" = {}
+    unformatted: "dict[str, list[tuple[str, str]]]" = {}     # M → [(렌즈, 불량 토큰)]
     for mid in pending_ids:
+        was: str = before_states.get(mid, "")
         answers = results.get(mid, [])
-        if not answers:
-            unknown.append(mid)
+        if was and was not in ("판형 아님", "답 없음") and not answers:
+            states[mid] = was                               # 행 없음 — 앞 판 판정·지문 유지
             continue
-        allowed: "set[str]" = changed | set(watched[mid])      # 해소 근거 = 앵커 이후 바뀐 파일 ∪ 대응 새 경로
-        states = []
-        for state, ground in answers:
-            if state.startswith("해소"):
-                locs = [l for l in (_parse_location(t) for t in _locations(ground)) if l]
-                states.append("해소" if locs and all(_location_ok(project, l) and os.path.normpath(l[0]) in allowed
-                                                    for l in locs) else "잔존")
-            elif state.startswith("잔존"):
-                states.append("잔존")
+        allowed: "set[str]" = code_changed | set(watched[mid])   # 해소 근거 = 앵커 이후 바뀐 코드 파일 ∪ 대응 새 경로
+        answered: "set[str]" = {lens for lens, _c, _g in answers}
+        got: "list[str]" = ["답 없음" for lens, ms in to_review.items() if mid in ms and lens not in answered]
+        for lens, cell, ground in answers:
+            state: str = _answer_state(cell)
+            if state == "해소":
+                locs, bad = _ground(ground)
+                bad = bad or next((f"{l[0]}:{l[1]}" + (f"-{l[2]}" if l[2] != l[1] else "")
+                                   for l in locs if not _location_ok(project, l)), "")
+                if bad:
+                    got.append("판형 아님")
+                    unformatted.setdefault(mid, []).append((lens, bad))
+                else:
+                    got.append("해소" if all(os.path.normpath(l[0]) in allowed for l in locs) else "잔존")
             else:
-                states.append("판단 불가")
-        if all(st == "해소" for st in states):
-            solved.append(mid)
-        elif "잔존" in states:
-            reviewer_left.append(mid)
-        else:
-            unknown.append(mid)
-    m_m: int = len(floor) + len(reviewer_left) + len(unknown)
+                got.append(state)
+        verdict: str = ("해소" if got and all(g == "해소" for g in got) else "잔존" if "잔존" in got
+                        else "판형 아님" if "판형 아님" in got else "답 없음" if "답 없음" in got else "판단 불가")
+        now: str = "잔존(반복)" if verdict == "판형 아님" and mid in redo_before else verdict
+        held: bool = was in ("잔존", "잔존(반복)", "판단 불가") and now not in ("잔존", "잔존(반복)", "판단 불가")
+        states[mid] = was if held else now
+    redo: "list[str]" = sorted(set(redo_before) | {m for m, s in states.items() if s == "판형 아님"},
+                               key=lambda k: int(k[1:]))
+    solved: "list[str]" = [m for m in pending_ids if states[m] == "해소"]
+    reviewer_left: "list[str]" = [m for m in pending_ids if states[m] in ("잔존", "잔존(반복)")]
+    unformed: "list[str]" = [m for m in pending_ids if states[m] == "판형 아님"]
+    unknown: "list[str]" = [m for m in pending_ids if states[m] in ("판단 불가", "답 없음")]
+    m_m: int = len(floor) + len(reviewer_left) + len(unformed) + len(unknown)
     lines = [f"# residual 결과 — {stamp}", "", "| M | 판정 |", "|---|---|"]
-    lines += [f"| {m} | 잔존(결정적) |" for m in floor] + [f"| {m} | 잔존(리뷰어 · 근거 없는 해소 포함) |" for m in reviewer_left]
+    lines += [f"| {m} | 잔존(결정적) |" for m in floor]
+    lines += [f"| {m} | {'잔존(근거 판형 아님 반복)' if states[m] == '잔존(반복)' else '잔존(리뷰어 · 근거 없는 해소 포함)'} |"
+              for m in reviewer_left]
+    lines += [f"| {m} | 근거 판형 아님({'·'.join(sorted({lens for lens, _t in unformatted[m]}))}) |" for m in unformed]
     lines += [f"| {m} | 판단 불가 |" for m in unknown]
     lines += [f"| {m} | 해소{'(요지 축소 — 남긴 요지)' if m in reduced else ''} |" for m in solved]
     lines += [f"| {m} | 해소(직전 {prev_stamp} 이월) |" for m in carried]
     (out_dir / "result.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    snapshot: "dict[str, dict[str, str | None]]" = {m: {p: _file_sha(project, p) for p in watched[m]} for m in solved}
+    snapshot: "dict[str, dict[str, str | None]]" = {
+        m: kept[m] if m in kept and before_states.get(m) == "해소" else {p: _file_sha(project, p) for p in watched[m]}
+        for m in solved}
     snapshot.update({m: prev_solved[m] for m in carried})
-    (out_dir / "result.json").write_text(json.dumps({"stamp": stamp, "solved": snapshot}, ensure_ascii=False,
-                                                    sort_keys=True) + "\n", encoding="utf-8")
-    print(f"요약: residual M_m={m_m}(결정적 잔존 {len(floor)} · 리뷰어 잔존 {len(reviewer_left)} · 판단 불가 {len(unknown)}) · "
-          f"해소 {len(solved) + len(carried)}{f'(이월 {len(carried)})' if carried else ''}{red_tail} → {out_dir / 'result.md'}")
+    (out_dir / "result.json").write_text(json.dumps({"stamp": stamp, "solved": snapshot, "states": states, "redo": redo},
+                                                    ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"요약: residual M_m={m_m}(결정적 잔존 {len(floor)} · 리뷰어 잔존 {len(reviewer_left)} · 근거 판형 아님 {len(unformed)} · "
+          f"판단 불가 {len(unknown)}) · 해소 {len(solved) + len(carried)}{f'(이월 {len(carried)})' if carried else ''}{red_tail} "
+          f"→ {out_dir / 'result.md'}")
+    if unformed:                                            # `요약:` 뒤 — 재기재 안내(코드 재개봉·새 시각이 아니다)
+        notes_redo: str = " · ".join(m + "(" + ", ".join(f"{lens}: `{tok}`" for lens, tok in unformatted[m]) + ")"
+                                      for m in unformed)
+        print(f"  근거 판형 아님: {notes_redo} — 그 행만 같은 렌즈 리뷰어에게 묶음 머리의 판형대로 다시 받아 result-<렌즈>.md 에 "
+              f"고쳐 쓰고 --finalize {stamp} 한 번 더(코드 재개봉·새 시각 아님 · 다시 판형 아님이면 잔존)")
     return EXIT_RED if m_m else EXIT_OK
 
 

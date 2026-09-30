@@ -326,8 +326,9 @@ def verdict_cases(fails: "list[str]", aud: Audit, nov: "tuple[str, str, str]") -
     expect(fails, "R3 재실행이 기존 M 번호를 바꿈 → red", cv(a), 2, "번호를 M1 → M2")
 
 
-def _res_folder(repo: Path, rows: "list[str]", verdicts: "list[str]") -> "tuple[Path, str]":
-    """리팩토링 실행 산출물 폴더(G0 ⓐ 뒤 · 앵커 기록) — (폴더, 앵커)."""
+def _res_folder(repo: Path, rows: "list[str]", verdicts: "list[str]",
+                disc: "list[str] | None" = None) -> "tuple[Path, str]":
+    """리팩토링 실행 산출물 폴더(G0 ⓐ 뒤 · 앵커 기록) — (폴더, 앵커). `disc` = discipline 렌즈 표 행."""
     anchor: str = _git(repo, "rev-parse", "HEAD").strip()
     folder: Path = repo / ".dddjango" / "refactor-demo"
     audit: Path = folder / "audit" / "20260927-0250"
@@ -335,10 +336,23 @@ def _res_folder(repo: Path, rows: "list[str]", verdicts: "list[str]") -> "tuple[
     if code != 0:
         raise RuntimeError(f"residual 준비 plan 실패: {out}")
     for name, _l, _c in ra.Plan(audit).dispatch:
-        (audit / name).write_text(HEADER + ("".join(rows) if name.startswith("ddd-") else ""), encoding="utf-8")
+        body: str = "".join(rows) if name.startswith("ddd-") else "".join(disc or []) if name.startswith("discipline-") else ""
+        (audit / name).write_text(HEADER + body, encoding="utf-8")
     Audit.verdict(audit, verdicts)
     (folder / "build_anchor").write_text(anchor + "\n", encoding="utf-8")
     return folder, anchor
+
+
+def _fresh_stamp(repo: Path, folder: Path, clear: bool = False) -> Path:
+    """residual 시각을 새로 연다(`clear` = 앞 시각 폴더를 지워 이월 없이) — 그 시각 폴더."""
+    if clear:
+        shutil.rmtree(folder / "residual", ignore_errors=True)
+    got = run(repo, "residual", str(folder))
+    if "--finalize " not in got[1]:                  # 열리지 않음 — residual 밖 자리표시(뒤 --finalize 가 실행 불능 exit 1)
+        placeholder: Path = folder / "(열리지 않음)"
+        placeholder.mkdir(parents=True, exist_ok=True)
+        return placeholder
+    return folder / "residual" / got[1].split("--finalize ", 1)[1].split()[0]
 
 
 def residual_moved_case(fails: "list[str]", td: Path) -> None:
@@ -380,15 +394,19 @@ def residual_cases(fails: "list[str]", td: Path) -> None:
     expect(fails, "residual 잔존 확인 묶음에 병합 행(원 행 전부)과 «(병합 M<k>)» 표시",
            (0 if "- 원 행 ddd-01#2:" in bundle and "- 원 행 ddd-01#5 (병합 M5):" in bundle else 9, bundle), 0)
     (rdir / "result-ddd.md").write_text("| M | 판정 | 근거 |\n|---|---|---|\n| M2 | 해소 | 고쳤다 |\n", encoding="utf-8")
-    expect(fails, "residual 근거 없는 해소 → 잔존", run(repo, "residual", str(folder), "--finalize", stamp), 2,
-           "M_m=2", "리뷰어 잔존 1")
+    expect(fails, "residual 근거 칸 머리가 위치가 아닌 해소 → 근거 판형 아님(잔존 아님 · 재기재 안내)",
+           run(repo, "residual", str(folder), "--finalize", stamp), 2, "M_m=2", "리뷰어 잔존 0 · 근거 판형 아님 1",
+           "근거 판형 아님: M2(ddd: `고쳤다`)")
+    # 같은 시각 재확정은 판형 아님 행만 다시 본다(동결) — 사례마다 시각을 새로 연다.
+    rdir = _fresh_stamp(repo, folder, clear=True)
     (rdir / "result-ddd.md").write_text(
         "| M | 판정 | 근거 |\n|---|---|---|\n| M2 | 해소 | application/demo/test/test_policy.py:1 |\n", encoding="utf-8")
     expect(fails, "residual 해소 근거가 앵커 이후 안 바뀐 파일(대응 경로도 아님) → 잔존",
-           run(repo, "residual", str(folder), "--finalize", stamp), 2, "M_m=2", "리뷰어 잔존 1")
+           run(repo, "residual", str(folder), "--finalize", rdir.name), 2, "M_m=2", "리뷰어 잔존 1")
+    rdir = _fresh_stamp(repo, folder, clear=True)
     (rdir / "result-ddd.md").write_text(
         f"| M | 판정 | 근거 |\n|---|---|---|\n| M2 | 해소 | {C_LOC} |\n", encoding="utf-8")
-    expect(fails, "residual 새 파일:행 근거가 있는 해소 → 해소", run(repo, "residual", str(folder), "--finalize", stamp), 2,
+    expect(fails, "residual 새 파일:행 근거가 있는 해소 → 해소", run(repo, "residual", str(folder), "--finalize", rdir.name), 2,
            "M_m=1", "해소 1")
     scope: Path = folder / "refactor-scope.md"
     scope.write_text(scope.read_text(encoding="utf-8").replace("C1, M1, M2, M3", "C1, M1, M2, M3, M4"), encoding="utf-8")
@@ -410,6 +428,164 @@ def residual_cases(fails: "list[str]", td: Path) -> None:
     thing.write_text(thing.read_text(encoding="utf-8") + "# 반송 편집\n", encoding="utf-8")
     expect(fails, "residual 직전 해소 항목의 파일을 반송이 건드림 → 이월 없이 다시 묶는다",
            run(repo, "residual", str(folder), "--candidates", str(cand)), 0, "리뷰어 확인 대상 1(ddd)", "M_m 미정")
+
+
+def residual_ground_cases(fails: "list[str]", td: Path) -> None:
+    """E1 — 해소 근거 칸 판형(머리 = 첫 `—` 앞 위치만) · 근거 판형 아님 · 같은 시각 동결 · 렌즈 완전성 · 산출물 폴더 ·
+    판정 칸 정확 일치(설계 R8c §2.1 · §4.1 · §7). M1 = 무변 파일(결정적 잔존 1 고정) · M2 = 바뀐 파일(ddd 리뷰어 확인)."""
+    repo: Path = _project(td / "grd")
+    folder, anchor = _res_folder(repo, [row(1, V_B9, where=P_LOC), row(2, V_B9, where=C_LOC), row(3, V_B9, where=C_LOC)],
+                                 ["M1 | ddd-01#1 | 채택 | | ", "M2 | ddd-01#2 | 채택 | | ",
+                                  "M3 | ddd-01#3 · discipline-01#1 | 채택 | | "], disc=[row(1, V_DR13, where=C_LOC)])
+    scope_path: Path = folder / "refactor-scope.md"
+
+    def scope(keys: str) -> None:
+        scope_path.write_text(f"실행 · G0 승인 20260927-0300 · 모드 리팩토링 · audit 20260927-0250 · build_anchor {anchor}\n\n"
+                              f"- {keys} · 결정 = ⓐ · 사유 = 픽스처 · 출처 = 본인 직접(0300)\n", encoding="utf-8")
+
+    def fin(rdir: Path, ddd: str, disc: "str | None" = None) -> "tuple[int, str]":
+        head: str = "| M | 판정 | 근거 |\n|---|---|---|\n"
+        (rdir / "result-ddd.md").write_text(head + ddd, encoding="utf-8")
+        if disc is not None:
+            (rdir / "result-discipline.md").write_text(head + disc, encoding="utf-8")
+        got = run(repo, "residual", str(folder), "--finalize", rdir.name)
+        result: Path = rdir / "result.md"
+        return got[0], got[1] + (result.read_text(encoding="utf-8") if result.is_file() else "")
+
+    thing: Path = repo / "application/demo/driving_layer/api/thing/thing_controller.py"
+    thing.write_text(thing.read_text(encoding="utf-8") + "\n# 정리\n", encoding="utf-8")
+    scope("M1, M2")
+    rdir: Path = _fresh_stamp(repo, folder, clear=True)
+    bundle: str = (rdir / "review-ddd.md").read_text(encoding="utf-8") if (rdir / "review-ddd.md").is_file() else ""
+    expect(fails, "O2 묶음 머리에 근거 칸 판형(` — ` 앞 위치만 · 줄임 없이 · 구분 ` · `)과 예시",
+           (0 if "` — ` 앞에는 저장소 루트 기준 새 위치만" in bundle and "`:16`·`15·16` 줄임 없이" in bundle
+            and "예: `M3 | 해소 | application/<bc>/domain_layer/x/x.py:12-18 · " in bundle else 9, bundle), 0)
+    got = fin(rdir, f"| M2 | 해소 | 이 파일의 리터럴은 {C_LOC}의 정의 한 곳 |\n")
+    expect(fails, "G1 머리에 조사(WR2 M11 모양) → 근거 판형 아님 1 · 리뷰어 잔존 0 · exit 2", got, 2,
+           "M_m=2(결정적 잔존 1 · 리뷰어 잔존 0 · 근거 판형 아님 1 · 판단 불가 0)", "| M2 | 근거 판형 아님(ddd) |")
+    expect(fails, "O1 `요약:` 뒤 재기재 안내 — 항목·렌즈·불량 토큰 · 같은 시각 --finalize", got, 2,
+           "  근거 판형 아님: M2(ddd: `이`) — 그 행만 같은 렌즈 리뷰어에게", f"--finalize {rdir.name} 한 번 더")
+    got = fin(rdir, f"| M2 | 해소 | {C_LOC} — 리터럴은 {C_LOC}의 정의 한 곳 |\n")
+    expect(fails, "N6b 판형 아님 행을 같은 시각에 판형대로 고쳐 재확정 → 해소", got, 2, "근거 판형 아님 0", "해소 1",
+           "| M2 | 해소 |")
+    cases: "list[tuple[str, str, tuple[str, ...]]]" = [
+        ("G2 조사가 꼬리", f"{C_LOC} — 리터럴은 {C_LOC}의 정의 한 곳", ("근거 판형 아님 0", "해소 1")),
+        ("G3 괄호·설계 근거 위치가 꼬리(WR2 M10 모양)",
+         f"{C_LOC} — 남은 두 return(:46 · :49)은 표기 반복(design-spec.md:103에 이유)", ("리뷰어 잔존 0", "해소 1")),
+        ("G4 맥락·제외 위치가 꼬리(R2 M18·M1 모양)",
+         f"{C_LOC} — 남은 리터럴 thing_controller.py:3·5 는 처음부터 제외한 범주 · policy.py:9 문구는 뺀 요지 몫",
+         ("리뷰어 잔존 0", "해소 1")),
+        ("N1 꼬리에만 위치 → 판형 아님(해소 아님)", f"— 남은 리터럴 {C_LOC} 는 제외 범주", ("근거 판형 아님 1", "해소 0")),
+        ("N2 허용 밖(안 바뀐 파일) 머리 → 리뷰어 잔존(판형 아님 아님)", f"{T_LOC} — 테스트에서 확인",
+         ("리뷰어 잔존 1 · 근거 판형 아님 0",)),
+        ("N3 머리에 바뀐 파일·안 바뀐 파일 섞임 → 잔존", f"{C_LOC} · {T_LOC} — 둘 다 고쳤다", ("리뷰어 잔존 1",)),
+        ("N4a 실재 안 함(맨 파일 이름) → 판형 아님", "thing_controller.py:7 — 고쳤다", ("근거 판형 아님 1", "`thing_controller.py:7`")),
+        ("N4b 행 범위 밖 → 판형 아님", "application/demo/driving_layer/api/thing/thing_controller.py:999 — 고쳤다",
+         ("근거 판형 아님 1",)),
+        ("N5 머리에 산문 → 판형 아님", f"{C_LOC} 에서 고침 — 매핑 한 곳", ("근거 판형 아님 1", "`에서`")),
+        ("대시 변형(en dash) 은 구분자가 아니다 → 판형 아님", f"{C_LOC} – 고쳤다", ("근거 판형 아님 1", "해소 0")),
+        ("m2 절대 경로 머리(실재 · 바뀐 파일) → 판형 아님", f"{repo}/{C_LOC} — 고쳤다", ("근거 판형 아님 1", "해소 0")),
+        ("m2 `..` 경로 머리(실재 · 바뀐 파일) → 판형 아님", f"../proj/{C_LOC} — 고쳤다", ("근거 판형 아님 1", "해소 0")),
+        ("M2 산출물 폴더 파일(미추적 = 바뀐 파일) 머리 → 잔존(해소 아님)",
+         ".dddjango/refactor-demo/refactor-scope.md:1 — 명세에 적었다", ("리뷰어 잔존 1", "해소 0")),
+    ]
+    for label, cell, needles in cases:
+        rdir = _fresh_stamp(repo, folder, clear=True)
+        expect(fails, label, fin(rdir, f"| M2 | 해소 | {cell} |\n"), 2, *needles)
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    expect(fails, "m1 판정 칸 «해소 안 됨» → 판단 불가(접두어로 해소 아님)", fin(rdir, f"| M2 | 해소 안 됨 | {C_LOC} — 남아 있다 |\n"),
+           2, "판단 불가 1", "해소 0")
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    expect(fails, "m1 판정 칸 강조·백틱(`**해소**`)은 벗겨 읽는다 → 해소", fin(rdir, f"| M2 | **`해소`** | {C_LOC} — 고쳤다 |\n"),
+           2, "판단 불가 0", "해소 1")
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    expect(fails, "N7 같은 M 두 행 잔존 + 판형 아님 해소 → 리뷰어 잔존 1 · 판형 아님 0",
+           fin(rdir, "| M2 | 잔존 | 남았다 |\n| M2 | 해소 | 고쳤다 |\n"), 2, "리뷰어 잔존 1 · 근거 판형 아님 0")
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    fin(rdir, f"| M2 | 해소 | — 남은 리터럴 {C_LOC} 는 제외 범주 |\n")
+    got = fin(rdir, f"| M2 | 해소 | — 남은 리터럴 {C_LOC} 는 제외 범주 |\n")
+    expect(fails, "N6 같은 시각 재확정에도 판형 아님 → 잔존(근거 판형 아님 반복)", got, 2,
+           "리뷰어 잔존 1 · 근거 판형 아님 0", "| M2 | 잔존(근거 판형 아님 반복) |")
+    expect(fails, "N6 세 번째 재확정(판형대로 고침)도 잔존 유지(동결)", fin(rdir, f"| M2 | 해소 | {C_LOC} — 고쳤다 |\n"), 2,
+           "리뷰어 잔존 1", "해소 0")
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    fin(rdir, "| M2 | 잔존 | 남았다 |\n")
+    expect(fails, "M1 같은 시각 재확정으로 잔존 행을 해소로 뒤집기 → 잔존 유지(동결)",
+           fin(rdir, f"| M2 | 해소 | {C_LOC} — 다시 보니 해소 |\n"), 2, "리뷰어 잔존 1", "해소 0")
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    fin(rdir, f"| M2 | 해소 | {C_LOC} — 고쳤다 |\n")
+    expect(fails, "MJ1 같은 시각 재확정에서 앞 판 해소를 리뷰어가 잔존으로 고쳐 씀 → 잔존(나빠지는 쪽은 막지 않는다)",
+           fin(rdir, "| M2 | 잔존 | 다시 보니 남았다 |\n"), 2, "리뷰어 잔존 1", "해소 0")
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    fin(rdir, f"| M2 | 해소 | {C_LOC} — 고쳤다 |\n")
+    expect(fails, "MJ1 짝 — 같은 시각 재확정에 M2 행 없음 → 앞 판 해소 유지", fin(rdir, ""), 2, "리뷰어 잔존 0", "해소 1",
+           "| M2 | 해소 |")
+    # §9.7 강등 일반화 — 앞 판 해소의 강등은 모두 받고, 해소 아닌 확정은 해소·다시 판정 쪽으로 가지 않는다
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    fin(rdir, f"| M2 | 해소 | {C_LOC} — 고쳤다 |\n")
+    expect(fails, "§9.7 앞 판 해소 → 이번 판단 불가 → 판단 불가(exit 2)", fin(rdir, "| M2 | 판단 불가 | 다시 보니 모르겠다 |\n"), 2,
+           "판단 불가 1", "해소 0")
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    fin(rdir, f"| M2 | 해소 | {C_LOC} — 고쳤다 |\n")
+    expect(fails, "§9.7 앞 판 해소 → 이번 판형 아님 행 → 판형 아님(exit 2 · 재기재 안내)", fin(rdir, "| M2 | 해소 | 고쳤다 |\n"), 2,
+           "근거 판형 아님 1", "해소 0", "근거 판형 아님: M2(ddd: `고쳤다`)")
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    fin(rdir, "| M2 | 판단 불가 | 모르겠다 |\n")
+    expect(fails, "§9.7 앞 판 판단 불가 → 이번 해소 → 판단 불가 유지", fin(rdir, f"| M2 | 해소 | {C_LOC} — 고쳤다 |\n"), 2,
+           "판단 불가 1", "해소 0")
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    fin(rdir, "| M2 | 잔존 | 남았다 |\n")
+    expect(fails, "§9.7 앞 판 잔존 → 이번 판형 아님 행 → 잔존 유지(판형 아님 경유 우회 봉쇄)",
+           fin(rdir, "| M2 | 해소 | 고쳤다 |\n"), 2, "리뷰어 잔존 1 · 근거 판형 아님 0", "해소 0")
+    # mi3 — 같은 시각 재확정의 해소 유지는 앞 판 지문을 쓴다(그 사이 편집이 이월을 통과하지 못한다)
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    fin(rdir, f"| M2 | 해소 | {C_LOC} — 고쳤다 |\n")
+    thing.write_text(thing.read_text(encoding="utf-8") + "# 재확정 사이 편집\n", encoding="utf-8")
+    fin(rdir, f"| M2 | 해소 | {C_LOC} — 고쳤다 |\n")
+    expect(fails, "mi3 1차 해소 → 파일 편집 → 같은 시각 2차(앞 판 지문 유지) → 새 시각은 이월 없이 M2 를 다시 묶는다",
+           run(repo, "residual", str(folder)), 0, "리뷰어 확인 대상 1(ddd) · M_m 미정")
+    # mi2 — 판형 아님 이력은 행 삭제(답 없음)로 끊기지 않는다(리뷰 x2 순서)
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    fin(rdir, "| M2 | 해소 | 고쳤다 |\n")
+    fin(rdir, "")
+    got = fin(rdir, "| M2 | 해소 | 고쳤다 |\n")
+    expect(fails, "mi2 판형 아님 → 행 삭제(답 없음) → 판형 아님 → 잔존(근거 판형 아님 반복)", got, 2,
+           "리뷰어 잔존 1 · 근거 판형 아님 0", "| M2 | 잔존(근거 판형 아님 반복) |")
+    expect(fails, "mi2 뒤이어 판형대로 고쳐도 잔존 유지(동결)", fin(rdir, f"| M2 | 해소 | {C_LOC} — 고쳤다 |\n"), 2,
+           "리뷰어 잔존 1", "해소 0")
+    # n1 — 다른 플러그인 산출물 폴더(.dddjango-web/…)도 해소 근거가 아니다
+    other: Path = repo / ".dddjango-web" / "20260930-home" / "design-spec.md"
+    other.parent.mkdir(parents=True)
+    other.write_text("a\nb\n", encoding="utf-8")
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    expect(fails, "n1 web 산출물 폴더 파일(미추적) 머리 → 잔존(해소 아님)",
+           fin(rdir, "| M2 | 해소 | .dddjango-web/20260930-home/design-spec.md:1 — 명세에 적었다 |\n"), 2, "리뷰어 잔존 1", "해소 0")
+    shutil.rmtree(repo / ".dddjango-web")
+    # n2 — 같은 시각 result.json 모양이 틀리면 실행 불능(트레이스백 아님)
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    (rdir / "result.json").write_text(json.dumps({"stamp": rdir.name, "solved": {}, "states": ["M2"]}), encoding="utf-8")
+    expect(fails, "n2 result.json states 가 dict 아님 → 실행 불능(exit 1)", fin(rdir, f"| M2 | 해소 | {C_LOC} — 고쳤다 |\n"), 1,
+           "실행 불능", "result.json", "states·redo·solved")
+    scope("M3")
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    expect(fails, "M3 렌즈 완전성 — 두 렌즈 항목에 ddd 만 해소 → 판단 불가(discipline 답 없음)",
+           fin(rdir, f"| M3 | 해소 | {C_LOC} — 고쳤다 |\n"), 2, "M_m=1(결정적 잔존 0 · 리뷰어 잔존 0 · 근거 판형 아님 0 · 판단 불가 1)")
+    expect(fails, "M3 렌즈 완전성 — 같은 시각에 빠진 렌즈 답을 채워 재확정 → 해소(답 없음은 다시 판정)",
+           fin(rdir, f"| M3 | 해소 | {C_LOC} — 고쳤다 |\n", f"| M3 | 해소 | {C_LOC} — 리터럴 한 곳 |\n"), 0, "M_m=0", "해소 1")
+    # n4 — `잔존(일부)` 는 잔존(접두어)이라 판형 아님보다 앞서고 동결된다(리뷰 x9)
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    expect(fails, "n4 ddd «잔존(일부)» + discipline 판형 아님 → 잔존(판단 불가·판형 아님 아님)",
+           fin(rdir, f"| M3 | 잔존(일부) | {C_LOC} 에 남음 |\n", "| M3 | 해소 | 고쳤다 |\n"), 2,
+           "리뷰어 잔존 1 · 근거 판형 아님 0 · 판단 불가 0")
+    expect(fails, "n4 같은 시각 2차에 두 렌즈 모두 해소로 고쳐 써도 잔존 유지(동결)",
+           fin(rdir, f"| M3 | 해소 | {C_LOC} — x |\n", f"| M3 | 해소 | {C_LOC} — x |\n"), 2, "리뷰어 잔존 1", "해소 0")
+    # mi-A — 잔존 → (한 렌즈 행 삭제 = 답 없음) → 해소 로 빠져나가지 못한다
+    rdir = _fresh_stamp(repo, folder, clear=True)
+    fin(rdir, "| M3 | 잔존 | 남음 |\n", f"| M3 | 해소 | {C_LOC} — x |\n")
+    expect(fails, "mi-A 1차 ddd 잔존 · discipline 해소 → 2차 ddd 행 삭제(답 없음) → 잔존 유지",
+           fin(rdir, "", f"| M3 | 해소 | {C_LOC} — x |\n"), 2, "리뷰어 잔존 1 · 근거 판형 아님 0 · 판단 불가 0")
+    expect(fails, "mi-A 3차 두 렌즈 해소 → 잔존 유지(답 없음 경유 이탈 없음)",
+           fin(rdir, f"| M3 | 해소 | {C_LOC} — x |\n", f"| M3 | 해소 | {C_LOC} — x |\n"), 2, "리뷰어 잔존 1", "해소 0")
 
 
 RES_HEAD: str = ("| M | 요지# | 요지(원 행 발췌) | 판정 | 불가 범주 | 막는 것(파일:행) | 처방 앵커 | 되돌리지 않는 이유 |\n"
@@ -578,6 +754,126 @@ def resolution_cases(fails: "list[str]", td: Path) -> None:
     scope(RES_RECON.replace("남긴 요지 = #1", "남긴 요지 = #1·#7"))
     expect(fails, "residual 요지 축소 번호가 명세 표에 없음 → 실행 불능", run(repo, "residual", str(folder)), 1,
            "명세 해소 판정 표에 없다")
+
+
+E2_SCOPE: str = ("실행 · G0 승인 20260929-0300 · 모드 리팩토링 · audit 20260927-0250 · build_anchor {anchor}\n\n"
+                 "- {keys} · 결정 = ⓐ · 사유 = 픽스처 · 출처 = 본인 직접(0300)\n")
+
+
+def e2_cases(fails: "list[str]", td: Path) -> None:
+    """E2 — `_scope` 가 G0 확정 판정(verdict-log 마지막 exit 0 판)의 병합 항목을 ⓐ 키에서 뺀다(결정 줄 표기와 무관) ·
+    로그 없으면 빼지 않는다 · `--final` 재분류(병합 → 채택)는 따른다(설계 R8c §2.2 · §4.1 E2 · §7 B1·m5)."""
+    repo: Path = _project(td / "e2r")
+    folder, anchor = _res_folder(repo, [row(1, V_B9, where=P_LOC), row(2, V_B9, where=C_LOC),
+                                        row(3, V_B9, where=C_LOC), row(4, V_B9, where=P_LOC)],
+                                 ["M1 | ddd-01#1 | 채택 | | ", "M2 | ddd-01#2 | 채택 | | ", "M3 | ddd-01#3 | 채택 | | ",
+                                  "M4 | ddd-01#4 | 병합 → M1 | | "])
+    audit: Path = folder / "audit" / "20260927-0250"
+    spec_path: Path = folder / "design-spec.md"
+
+    def spec(rows: "dict[str, str]") -> None:
+        spec_path.write_text(RES_BODY + "## 5. 슬라이스 0 해소 판정\n\n" + RES_HEAD + "".join(rows.values()) + "\n## 6. 끝\n",
+                             encoding="utf-8")
+
+    def scope(keys: str) -> None:
+        (folder / "refactor-scope.md").write_text(E2_SCOPE.format(anchor=anchor, keys=keys), encoding="utf-8")
+
+    rs = lambda: run(repo, "resolution", str(folder))  # noqa: E731
+    spec(RES_ROWS)
+    scope("M1(+M4), M2, M3")
+    expect(fails, "E2-0 verdict-log 없음 → 병합 차감 없음(fail-closed) · 괄호 안 M4 판정 없음 red", rs(), 2, "M4 판정 없음")
+    expect(fails, "E2 준비 — check-verdict 가 verdict-log 에 병합→M 을 확정(exit 0)", run(repo, "check-verdict", str(audit)), 0,
+           "병합→M 1", "red 0")
+    expect(fails, "E2-1 `M1(+M4)` 병합 표기 결정 줄 → 병합 항목은 ⓐ 판정 대상이 아니다 · red 0", rs(), 0, "red 0")
+    scope("M1, M2, M3, M4")
+    expect(fails, "E2-2 병합 키를 명시한 결정 줄 → red 0(표기와 무관)", rs(), 0, "red 0")
+    scope("M1(+M4), M2, M3")
+    spec({**RES_ROWS, "M4": "| M4 | 1 | 병합 항목 | 해소 | — | — | M1 — 규칙 함수 이름 통일 | — |\n"})
+    expect(fails, "E2-3 역방향 — 병합 항목의 판정 표 행 → «M4 범위 밖» red", rs(), 2, "M4 범위 밖")
+    scope("M1, M2(M3 는 사용자 판단 뒤 ⓐ)")
+    spec({k: v for k, v in RES_ROWS.items() if k != "M3"})
+    expect(fails, "E2-4 괄호 안에 적힌 진짜 ⓐ 키는 지우지 않는다 → «M3 판정 없음» red", rs(), 2, "M3 판정 없음")
+    # residual — 병합 키가 독립 항목으로 묶이지 않는다(R8-R2 M9·M27·M28 모양)
+    repo2: Path = _project(td / "e2s")
+    folder2, anchor2 = _res_folder(repo2, [row(1, V_B9, where=P_LOC), row(2, V_B9, where=C_LOC), row(3, V_B9, where=P_LOC),
+                                           row(5, V_B9, where="application/demo/domain_layer/policy.py:9")],
+                                   ["M1 | ddd-01#1 | 채택 | | ", "M2 | ddd-01#2 | 채택 | | ", "M3 | ddd-01#3 | 채택 | | ",
+                                    "M5 | ddd-01#5 | 병합 → M2 | | "])
+    prep = run(repo2, "check-verdict", str(folder2 / "audit" / "20260927-0250"))
+    (folder2 / "refactor-scope.md").write_text(
+        E2_SCOPE.format(anchor=anchor2, keys="C1, M1, M2(+M5), M3")
+        + "\n## ⓐ 재상정 20260927-0400\n\n- M3 · 결정 = 별도 요청 · 사유 = 픽스처 · 출처 = 본인 직접(0400)\n", encoding="utf-8")
+    thing: Path = repo2 / "application/demo/driving_layer/api/thing/thing_controller.py"
+    thing.write_text(thing.read_text(encoding="utf-8") + "\n# 정리\n", encoding="utf-8")
+    got = run(repo2, "residual", str(folder2))
+    stamp: str = got[1].split("--finalize ", 1)[1].split()[0] if "--finalize " in got[1] else ""
+    bundle_path: Path = folder2 / "residual" / stamp / "review-ddd.md"
+    bundle: str = bundle_path.read_text(encoding="utf-8") if bundle_path.is_file() else ""
+    expect(fails, "E2-5 residual `M2(+M5)` → 결정적 잔존 1(M1) · 묶음에 `### M5` 없음 · M2 아래 «(병합 M5)»",
+           (got[0] if prep[0] == 0 and "### M5" not in bundle and "- 원 행 ddd-01#5 (병합 M5):" in bundle else 9,
+            prep[1] + got[1] + bundle), 0, "결정적 잔존 1", "리뷰어 확인 대상 1(ddd)")
+    # 재상정·--final 재분류 — verdict: M2 병합→M1 · M3 제외 · M4 병합→M3(사슬 red → --final 이 채택으로 기록)
+    repo3: Path = _project(td / "e2f")
+    folder3, anchor3 = _res_folder(repo3, [row(1, V_B9, where=C_LOC), row(2, V_B9, where=P_LOC), row(3, V_IMPL8, where=C_LOC),
+                                           row(4, V_B9, where=P_LOC)],
+                                   ["M1 | ddd-01#1 | 채택 | | ", "M2 | ddd-01#2 | 병합 → M1 | | ",
+                                    f"M3 | ddd-01#3 | 제외 | {EXCL_OK} | ", "M4 | ddd-01#4 | 병합 → M3 | | "])
+    audit3: Path = folder3 / "audit" / "20260927-0250"
+    first = run(repo3, "check-verdict", str(audit3))
+    final = run(repo3, "check-verdict", str(audit3), "--final")
+    log: str = (audit3 / "verdict-log.md").read_text(encoding="utf-8") if (audit3 / "verdict-log.md").is_file() else ""
+    expect(fails, "E2 준비 — 사슬 병합 red → --final 이 M4 를 채택으로 재분류(verdict-log 에만 남는다)",
+           (final[0] if first[0] == 2 else 9, final[1] + log), 0, "| M4 | ddd-01#4 | 채택 |", "| M2 | ddd-01#2 | 병합→M |")
+    (folder3 / "refactor-scope.md").write_text(
+        E2_SCOPE.format(anchor=anchor3, keys="M1(+M2)")
+        + "\n## ⓐ 재상정 20260927-0400\n\n- M1 · 결정 = 별도 요청 · 사유 = 픽스처 · 출처 = 본인 직접(0400)\n", encoding="utf-8")
+    expect(fails, "E2-6 `M1(+M2)` 뒤 재상정 `M1 · 별도 요청` → 병합 항목 M2 도 함께 빠진다(결정적 잔존 0 · 확인 대상 0)",
+           run(repo3, "residual", str(folder3)), 0, "M_m=0(결정적 잔존 0)", "리뷰어 확인 대상 0")
+    shutil.rmtree(folder3 / "residual", ignore_errors=True)
+    (folder3 / "refactor-scope.md").write_text(E2_SCOPE.format(anchor=anchor3, keys="M1, M4"), encoding="utf-8")
+    expect(fails, "E2-7 --final 로 채택된 M4(verdict.md 는 병합) 는 ⓐ 에 남는다 → residual 결정적 잔존 2",
+           run(repo3, "residual", str(folder3)), 2, "M_m=2(결정적 잔존 2)")
+    (folder3 / "design-spec.md").write_text(
+        RES_BODY + "## 5. 슬라이스 0 해소 판정\n\n" + RES_HEAD
+        + "| M1 | 1 | 규칙 이름 흩어짐 | 해소 | — | — | M1 — 규칙 함수 이름 통일 | — |\n\n## 6. 끝\n", encoding="utf-8")
+    expect(fails, "E2-7 --final 로 채택된 M4 → resolution «M4 판정 없음» red(조용히 빠지지 않는다)",
+           run(repo3, "resolution", str(folder3)), 2, "M4 판정 없음")
+    # mi1 — 차감 = 로그 병합 ∩ verdict.md 병합 ∩ (대상 M 이 ⓐ 키 | 대상 C 가 ⓐ 줄) · 코드 무변(M1 = 바뀐 파일만)
+    def g0(name: str, rows: "list[str]", verdicts: "list[str]", keys: str) -> "tuple[Path, Path, tuple[int, str]]":
+        rp: Path = _project(td / name)
+        fd, an = _res_folder(rp, rows, verdicts)
+        cv = run(rp, "check-verdict", str(fd / "audit" / "20260927-0250"))
+        (fd / "refactor-scope.md").write_text(E2_SCOPE.format(anchor=an, keys=keys), encoding="utf-8")
+        tc: Path = rp / "application/demo/driving_layer/api/thing/thing_controller.py"
+        tc.write_text(tc.read_text(encoding="utf-8") + "\n# 정리\n", encoding="utf-8")
+        return rp, fd, cv
+
+    two: "list[str]" = [row(1, V_B9, where=C_LOC), row(2, V_B9, where=P_LOC)]
+    rp, fd, cv = g0("x3", two, ["M1 | ddd-01#1 | 채택 | | ", "M2 | ddd-01#2 | 병합 → M1 | | "], "M1, M2")
+    Audit.verdict(fd / "audit" / "20260927-0250", ["M1 | ddd-01#1 | 채택 | | ", "M2 | ddd-01#2 | 채택 | | "])
+    got = run(rp, "residual", str(fd))
+    expect(fails, "mi1 x3 로그 병합 뒤 verdict.md 만 채택으로 고침(재실행 없음) → M2 를 빼지 않는다(결정적 잔존 1)",
+           (got[0] if cv[0] == 0 else 9, cv[1] + got[1]), 0, "결정적 잔존 1", "리뷰어 확인 대상 1(ddd)")
+    rp, fd, cv = g0("x4", two, ["M1 | ddd-01#1 | 채택 | | ", "M2 | ddd-01#2 | 병합 → M1 | | "], "M2")
+    got = run(rp, "residual", str(fd))
+    expect(fails, "mi1 x4 고아 병합 M — 결정 줄에 M2 만(대상 M1 은 ⓐ 아님) → M2 를 빼지 않는다(M_m=1)",
+           (got[0] if cv[0] == 0 else 9, cv[1] + got[1]), 2, "M_m=1(결정적 잔존 1)")
+    four: "list[str]" = [row(1, V_B9, where=C_LOC), row(2, V_B9, where=P_LOC), row(3, V_B9, where=P_LOC),
+                         row(4, V_B9, where=P_LOC, same_c="C1")]
+    four_v: "list[str]" = ["M1 | ddd-01#1 | 채택 | | ", "M2 | ddd-01#2 | 채택 | | ", "M3 | ddd-01#3 | 채택 | | ",
+                           "M4 | ddd-01#4 | 병합 → C1 | 리뷰어 표시 | "]
+    rp, fd, cv = g0("x5", four, four_v, "M1, M4")
+    got = run(rp, "residual", str(fd))
+    expect(fails, "mi1 x5 고아 병합 C — 결정 줄 `M1, M4`(C1 은 ⓐ 아님) → M4 를 빼지 않는다(결정적 잔존 1)",
+           (got[0] if cv[0] == 0 else 9, cv[1] + got[1]), 0, "결정적 잔존 1", "리뷰어 확인 대상 1(ddd)")
+    (fd / "refactor-scope.md").write_text(
+        (fd / "refactor-scope.md").read_text(encoding="utf-8").replace("- M1, M4 ·", "- C1, M1, M4 ·"), encoding="utf-8")
+    expect(fails, "mi1 x5 짝 — 결정 줄에 C1 이 있으면 병합→C1 인 M4 는 C1 을 따른다(결정적 잔존 0)",
+           run(rp, "residual", str(fd)), 0, "결정적 잔존 0", "리뷰어 확인 대상 1(ddd)")
+    (fd / "refactor-scope.md").write_text((fd / "refactor-scope.md").read_text(encoding="utf-8").replace(
+        "- C1, M1, M4 ·", "- M1, M4(C1 은 ⓑ 로 미룸) ·"), encoding="utf-8")
+    expect(fails, "mi-B 괄호 안 C1(ⓐ 아님) → 병합→C1 인 M4 를 빼지 않는다(결정적 잔존 1 · HEAD 와 같음)",
+           run(rp, "residual", str(fd)), 0, "결정적 잔존 1", "리뷰어 확인 대상 1(ddd)")
 
 
 STD_FILE: str = ".dddjango/standing-answer.md"
@@ -816,7 +1112,9 @@ def main() -> int:
         verdict_cases(fails, aud, nov)
         residual_cases(fails, td)
         residual_moved_case(fails, td)
+        residual_ground_cases(fails, td)
         resolution_cases(fails, td)
+        e2_cases(fails, td)
         standing_cases(fails, td)
     corpus_cases(fails, nov[0])
     self_test_negative_case(fails)

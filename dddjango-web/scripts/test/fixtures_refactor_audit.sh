@@ -365,10 +365,113 @@ printf 'def _render_page(request):\n    return 1\n' > "$P/web/home/home/view/hom
 commit_all "$P" fix >/dev/null
 OUT=$(RA residual "$F"); E=$?
 assert "I2 바뀐 파일 항목 = 리뷰어 확인 묶음(M_m 미정 exit 0)" 0 "리뷰어 확인 대상 2(screen) · M_m 미정" - "$E" "$OUT"
-STAMP=$(ls "$F/residual" | sort | tail -1)
-printf '| M | 판정 | 근거 |\n|---|---|---|\n| M9 | 해소 | web/home/home/view/home_view.py:2 |\n| M10 | 해소 | 이유만 적음 |\n' > "$F/residual/$STAMP/result-screen.md"
-OUT=$(RA residual "$F" --finalize "$STAMP"); E=$?
-assert "I3 새 파일:행 없는 해소는 잔존 exit 2" 2 "M_m=1(결정적 잔존 0 · 리뷰어 잔존 1" - "$E" "$OUT"
+STAMP=$(sed -n 's/.*--finalize \([^ ]*\) .*/\1/p' <<<"$OUT")
+BUNDLE=$(cat "$F/residual/$STAMP/review-screen.md" 2>/dev/null)
+assert "I2b 묶음 머리 = 근거 칸 판형(\` — \` 앞 위치만 · 줄임 없이) + web 예시" 0 "\` — \` 앞에는 저장소 루트 기준 새 위치만" - 0 "$BUNDLE"
+assert "I2c 묶음 머리 web 예시" 0 "예: \`M3 | 해소 | web/<영역>/<화면>/view_model/<화면>_view_model.py:15-16 — " - 0 "$BUNDLE"
+# 같은 시각 재확정은 판형 아님·답 없음 행만 다시 본다(동결) — 사례마다 시각을 새로 연다(앞 시각 폴더를 지워 이월 없이).
+OPEN() { rm -rf "$F/residual"; local s; s=$(RA residual "$F" | sed -n 's/.*--finalize \([^ ]*\) .*/\1/p'); echo "${s:-(열리지 않음)}"; }
+FIN() { # FIN <시각> <M10 결과 행> — M9 는 판형대로 해소 · result-screen.md 를 쓰고 그 시각으로 확정(+ result.md)
+  [ "$1" = "(열리지 않음)" ] && { echo "시각이 열리지 않았다"; return 9; }
+  mkdir -p "$F/residual/$1"
+  printf '| M | 판정 | 근거 |\n|---|---|---|\n| M9 | 해소 | web/home/home/view/home_view.py:2 |\n%s\n' "$2" > "$F/residual/$1/result-screen.md"
+  RA residual "$F" --finalize "$1"; local e=$?; cat "$F/residual/$1/result.md" 2>/dev/null; return $e; }
+H='web/home/home/view/home_view.py'
+S=$(OPEN)
+OUT=$(FIN "$S" '| M10 | 해소 | 이유만 적음 |'); E=$?
+assert "I3 머리가 위치가 아닌 해소 = 근거 판형 아님(리뷰어 잔존 아님) exit 2" 2 "M_m=1(결정적 잔존 0 · 리뷰어 잔존 0 · 근거 판형 아님 1 · 판단 불가 0)" - "$E" "$OUT"
+assert "I3′ \`요약:\` 뒤 재기재 안내(렌즈·불량 토큰 · 같은 시각)" 2 "  근거 판형 아님: M10(screen: \`이유만\`) — 그 행만 같은 렌즈 리뷰어에게" - "$E" "$OUT"
+assert "I3″ 재기재 안내의 같은 시각 --finalize" 2 "--finalize $S 한 번 더" - "$E" "$OUT"
+OUT=$(FIN "$S" "| M10 | 해소 | $H:2 — 이유를 고쳐 적음 |"); E=$?
+assert "I3‴ 같은 시각에 판형대로 고쳐 재확정 = 해소 exit 0" 0 "M_m=0" - "$E" "$OUT"
+S=$(OPEN); OUT=$(FIN "$S" "| M10 | 해소 | $H:2의 정의 |"); E=$?
+assert "I3a 머리에 조사(WR2 M11 모양) = 판형 아님" 2 "근거 판형 아님 1" - "$E" "$OUT"
+S=$(OPEN); OUT=$(FIN "$S" "| M10 | 해소 | $H:2 — $H:1의 정의 한 곳 |"); E=$?
+assert "I3b 조사가 꼬리 = 해소" 0 "M_m=0" - "$E" "$OUT"
+S=$(OPEN); OUT=$(FIN "$S" "| M10 | 해소 | $H:1-2 — 남은 두 return(:46 · :49)은 표기(design-spec.md:103에) |"); E=$?
+assert "I3c 괄호·설계 근거가 꼬리(WR2 M10 모양) = 해소" 0 "M_m=0" - "$E" "$OUT"
+S=$(OPEN); OUT=$(FIN "$S" "| M10 | 해소 | home/home/view/home_view.py:2 — 정의 한 곳 |"); E=$?
+assert "I3d web/ 없는 머리 = 해소(_repo_path 유지)" 0 "M_m=0" - "$E" "$OUT"
+S=$(OPEN); OUT=$(FIN "$S" "| M10 | 해소 | — 남은 $H:2 는 제외 범주 |"); E=$?
+assert "I3e 꼬리에만 위치 = 판형 아님(해소 아님)" 2 "근거 판형 아님 1" "| M10 | 해소 |" "$E" "$OUT"
+S=$(OPEN); OUT=$(FIN "$S" "| M10 | 해소 | web/base/base.html:1 — 로드 줄 |"); E=$?
+assert "I3f 무변 파일 머리 = 잔존(판형 아님 아님)" 2 "리뷰어 잔존 1 · 근거 판형 아님 0" - "$E" "$OUT"
+S=$(OPEN); OUT=$(FIN "$S" "| M10 | 해소 | .dddjango-web/run/refactor-scope.md:1 — 명세에 적었다 |"); E=$?
+assert "I3h 산출물 폴더 파일 머리 = 잔존(해소 아님)" 2 "리뷰어 잔존 1" "| M10 | 해소 |" "$E" "$OUT"
+S=$(OPEN); OUT=$(FIN "$S" "| M10 | 해소 | $P/$H:2 — 고침 |"); E=$?
+assert "I3i 절대 경로 머리(실재 · 바뀐 파일) = 판형 아님" 2 "근거 판형 아님 1" - "$E" "$OUT"
+S=$(OPEN); OUT=$(FIN "$S" "| M10 | 해소 | $H:2 – 고침 |"); E=$?
+assert "I3j 대시 변형(en dash) = 판형 아님" 2 "근거 판형 아님 1" - "$E" "$OUT"
+S=$(OPEN); OUT=$(FIN "$S" "| M10 | 해소 안 됨 | $H:2 — 남아 있다 |"); E=$?
+assert "I3k 판정 칸 «해소 안 됨» = 판단 불가(접두어로 해소 아님)" 2 "판단 불가 1" - "$E" "$OUT"
+S=$(OPEN); OUT=$(FIN "$S" "| M10 | 해소 | $H:2 · web/base/base.html:1 — 둘 다 고침 |"); E=$?
+assert "I3n 머리에 바뀐 파일·무변 파일 섞임 = 잔존" 2 "리뷰어 잔존 1 · 근거 판형 아님 0" - "$E" "$OUT"
+S=$(OPEN); OUT=$(FIN "$S" $'| M10 | 잔존 | 남았다 |\n| M10 | 해소 | 고쳤다 |'); E=$?
+assert "I3o 같은 M 두 행 잔존 + 판형 아님 해소 = 리뷰어 잔존 1 · 판형 아님 0" 2 "리뷰어 잔존 1 · 근거 판형 아님 0" - "$E" "$OUT"
+S=$(OPEN); OUT=$(FIN "$S" "| M10 | 해소 | $H:999 — 고침 |"); E=$?
+assert "I3p 행 범위 밖 머리 = 판형 아님" 2 "근거 판형 아님 1" - "$E" "$OUT"
+S=$(OPEN); FIN "$S" "| M10 | 해소 | $H:2 — 고침 |" >/dev/null
+OUT=$(FIN "$S" '| M10 | 잔존 | 다시 보니 남음 |'); E=$?
+assert "I3r 같은 시각 재확정에서 앞 판 해소를 잔존으로 고쳐 씀 = 잔존(나빠지는 쪽은 막지 않는다)" 2 "리뷰어 잔존 1" "| M10 | 해소 |" "$E" "$OUT"
+S=$(OPEN); FIN "$S" "| M10 | 해소 | $H:2 — 고침 |" >/dev/null
+OUT=$(FIN "$S" ''); E=$?
+assert "I3s 짝 — 같은 시각 재확정에 M10 행 없음 = 앞 판 해소 유지" 0 "M_m=0" - "$E" "$OUT"
+S=$(OPEN); FIN "$S" "| M10 | 해소 | $H:2 — 고침 |" >/dev/null
+OUT=$(FIN "$S" '| M10 | 판단 불가 | 다시 보니 모름 |'); E=$?
+assert "I3x 앞 판 해소 → 이번 판단 불가 = 판단 불가(exit 2)" 2 "판단 불가 1" "| M10 | 해소 |" "$E" "$OUT"
+S=$(OPEN); FIN "$S" "| M10 | 해소 | $H:2 — 고침 |" >/dev/null
+OUT=$(FIN "$S" '| M10 | 해소 | 고쳤다 |'); E=$?
+assert "I3y 앞 판 해소 → 이번 판형 아님 행 = 판형 아님(exit 2)" 2 "근거 판형 아님 1" "| M10 | 해소 |" "$E" "$OUT"
+S=$(OPEN); FIN "$S" '| M10 | 판단 불가 | 모름 |' >/dev/null
+OUT=$(FIN "$S" "| M10 | 해소 | $H:2 — 고침 |"); E=$?
+assert "I3z 앞 판 판단 불가 → 이번 해소 = 판단 불가 유지" 2 "판단 불가 1" "| M10 | 해소 |" "$E" "$OUT"
+S=$(OPEN); FIN "$S" '| M10 | 잔존 | 남음 |' >/dev/null
+OUT=$(FIN "$S" '| M10 | 해소 | 고쳤다 |'); E=$?
+assert "I3z′ 앞 판 잔존 → 이번 판형 아님 행 = 잔존 유지(판형 아님 경유 우회 봉쇄)" 2 "리뷰어 잔존 1 · 근거 판형 아님 0" - "$E" "$OUT"
+S=$(OPEN); FIN "$S" '| M10 | 해소 | 고쳤다 |' >/dev/null; FIN "$S" '' >/dev/null
+OUT=$(FIN "$S" '| M10 | 해소 | 고쳤다 |'); E=$?
+assert "I3t 판형 아님 → 행 삭제(답 없음) → 판형 아님 = 잔존(근거 판형 아님 반복)" 2 "| M10 | 잔존(근거 판형 아님 반복) |" - "$E" "$OUT"
+mkdir -p "$P/.dddjango"; printf 'a\nb\n' > "$P/.dddjango/note.md"
+S=$(OPEN); OUT=$(FIN "$S" '| M10 | 해소 | .dddjango/note.md:1 — 적었다 |'); E=$?
+assert "I3u core 산출물 폴더(.dddjango/…) 머리 = 잔존(해소 아님)" 2 "리뷰어 잔존 1" "| M10 | 해소 |" "$E" "$OUT"
+rm -rf "$P/.dddjango"
+S=$(OPEN); [ -d "$F/residual/$S" ] && printf '{"stamp": "%s", "solved": {}, "states": ["M10"]}\n' "$S" > "$F/residual/$S/result.json"
+OUT=$(FIN "$S" "| M10 | 해소 | $H:2 — 고침 |"); E=$?
+assert "I3v result.json states 가 dict 아님 = 실행 불능(exit 1)" 1 "실행 불능" - "$E" "$OUT"
+S=$(OPEN); FIN "$S" "| M10 | 해소 | $H:2 — 고침 |" >/dev/null
+cp "$P/$H" "$T/hv.bak"; printf '# 재확정 사이 편집\n' >> "$P/$H"
+FIN "$S" "| M10 | 해소 | $H:2 — 고침 |" >/dev/null
+OUT=$(RA residual "$F"); E=$?
+assert "I3w 1차 해소 → 편집 → 같은 시각 2차(앞 판 지문 유지) → 새 시각은 이월 없이 다시 묶는다" 0 "리뷰어 확인 대상 2(screen) · M_m 미정" "해소 유지" "$E" "$OUT"
+cp "$T/hv.bak" "$P/$H"
+cp "$A/verdict-final.md" "$T/vf.bak"; cp "$A/discipline-01.md" "$T/d01.bak"
+printf '| 행# | 규칙 | 반대 방향 규칙 | 파일:행 | 위반 요지 | 동작 불변 정리 가능 | 편집할 곳 | 같은 검사기 키 |\n|---|---|---|---|---|---|---|---|\n| 1 | %s §1 «공용 헬퍼는 금지다» | — | %s | z | 예 | — | — |\n' "$R" "$LOC" > "$A/discipline-01.md"
+sed -i.bak 's/^| M10 | screen-01#11 |/| M10 | screen-01#11 · discipline-01#1 |/' "$A/verdict-final.md"; rm -f "$A/verdict-final.md.bak"
+S=$(OPEN); OUT=$(FIN "$S" "| M10 | 해소 | $H:2 — 정의 한 곳 |"); E=$?
+assert "I3l 렌즈 완전성 — 두 렌즈 항목에 screen 만 해소 = 판단 불가(discipline 답 없음)" 2 "M_m=1(결정적 잔존 0 · 리뷰어 잔존 0 · 근거 판형 아님 0 · 판단 불가 1)" - "$E" "$OUT"
+DISC() { [ -d "$F/residual/$1" ] && printf '| M | 판정 | 근거 |\n|---|---|---|\n%s\n' "$2" > "$F/residual/$1/result-discipline.md"; }
+S=$(OPEN); DISC "$S" '| M10 | 해소 | 고쳤다 |'
+OUT=$(FIN "$S" '| M10 | 잔존(일부) | 남음 |'); E=$?
+assert "I3q screen «잔존(일부)» + discipline 판형 아님 = 잔존(판단 불가·판형 아님 아님)" 2 "리뷰어 잔존 1 · 근거 판형 아님 0 · 판단 불가 0" - "$E" "$OUT"
+DISC "$S" "| M10 | 해소 | $H:2 — 고침 |"
+OUT=$(FIN "$S" "| M10 | 해소 | $H:2 — 고침 |"); E=$?
+assert "I3q′ 같은 시각 2차에 두 렌즈 해소로 고쳐도 잔존 유지(동결)" 2 "리뷰어 잔존 1" - "$E" "$OUT"
+S=$(OPEN); DISC "$S" "| M10 | 해소 | $H:2 — 고침 |"; FIN "$S" '| M10 | 잔존 | 남음 |' >/dev/null
+OUT=$(FIN "$S" ''); E=$?
+assert "I3q″ 잔존 → screen 행 삭제(답 없음) = 잔존 유지" 2 "리뷰어 잔존 1 · 근거 판형 아님 0 · 판단 불가 0" - "$E" "$OUT"
+DISC "$S" "| M10 | 해소 | $H:2 — 고침 |"
+OUT=$(FIN "$S" "| M10 | 해소 | $H:2 — 고침 |"); E=$?
+assert "I3q‴ 이어서 두 렌즈 해소 = 잔존 유지(답 없음 경유 이탈 없음)" 2 "리뷰어 잔존 1" - "$E" "$OUT"
+cp "$T/vf.bak" "$A/verdict-final.md"; cp "$T/d01.bak" "$A/discipline-01.md"
+S=$(OPEN)
+OUT=$(FIN "$S" "| M10 | 해소 | — 남은 $H:2 는 제외 범주 |"); E=$?
+OUT=$(FIN "$S" "| M10 | 해소 | — 남은 $H:2 는 제외 범주 |"); E=$?
+assert "I3g 같은 시각 재확정에도 판형 아님 = 잔존(근거 판형 아님 반복)" 2 "| M10 | 잔존(근거 판형 아님 반복) |" - "$E" "$OUT"
+OUT=$(FIN "$S" "| M10 | 해소 | $H:2 — 고침 |"); E=$?
+assert "I3g′ 세 번째 재확정(판형대로)도 잔존 유지(동결)" 2 "리뷰어 잔존 1" - "$E" "$OUT"
+S=$(OPEN); FIN "$S" '| M10 | 잔존 | 남았다 |' >/dev/null
+OUT=$(FIN "$S" "| M10 | 해소 | $H:2 — 다시 보니 해소 |"); E=$?
+assert "I3m 같은 시각 재확정으로 잔존을 해소로 뒤집기 = 잔존 유지(동결 · 끝 판 M9 해소)" 2 "리뷰어 잔존 1" - "$E" "$OUT"
 cat >> "$F/refactor-scope.md" <<EOF
 
 ## ⓐ 재상정 $(date '+%Y-%m-%d %H:%M')
