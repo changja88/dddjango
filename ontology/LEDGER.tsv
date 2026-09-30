@@ -1702,3 +1702,4 @@ command-dddjango	s012	b3f24ae3012dab385a5fa109aeb29e7bd38a7d2eb491403693a4c056bd
 command-dddjango	s012	d8f15609316ee7bd3c914eaabc7a322ff8629b27ff7480d61452ad9c1bf11bec	graph	-	-	-	-	rebaseline:2026-09-30 로드맵 8c R8c E1 — R-3535 rev3 «근거 판형 아님» 재기재 절차 한 문장(residual 시각마다 한 번 · 반송·STOP 판단 전 · 같은 렌즈 · 같은 시각 --finalize)
 command-dddjango	s012	ede6b5ba82fa95b68183343b21faa4b380799c2bffe701c6e84464e9791dc095	graph	-	-	-	-	rebaseline:2026-09-30 로드맵 8c R8c 구현 리뷰 n3 — R-3535 rev3 안 문면 모순 제거(«새 파일:행 근거 없는 해소는 잔존» → «머리 위치가 바뀐 파일·감시 경로 밖인 해소는 잔존»)
 command-dddjango	s012	fb660fe9b731e054d050ba3ba7b1cd052d49911031663f4e433eb4fb5dd1a1e8	graph	-	-	-	-	rebaseline:2026-09-30 로드맵 8c R8c 재검토 n-A — R-3535 rev3 안 괄호 용어를 prefLabel 과 같게(«머리 위치가 …» → «` — ` 앞 위치가 바뀐 파일·감시 경로 밖인 해소는 잔존»)
+command-dddjango	s012	63f5e53c187796dc57ecc77bcce2eab36acd2043a4ce1b50784857e4a90d9592	graph	-	-	-	-	rebaseline:2026-09-30 로드맵 8d ① — R-3517 rev2 잇기 M 목록 동결 대상 verdict.md → verdict-final.md

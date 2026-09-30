@@ -4088,7 +4088,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s012/b2": {
-      "h": "d3fc1051e9f0f6b6",
+      "h": "b2730747dd868a0a",
       "n": 2,
       "works": [
         "R-3516",
@@ -14662,7 +14662,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "79fc99dce4a2c865d7d7ebbc12cfb1bbea2cf6e39146dc85c42ec8d85849b3ba"
+      "sha256": "6fae9c98eb957b3a6d5619b3c011a3f355dccdcbb29bcc316e482337c83628a7"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -83828,8 +83828,8 @@
       "block_order": 2,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3517@2026-09-27",
-      "label": "잇기는 «모드 리팩토링» 미종료 실행만(verdict 동결·새 빚은 R1 분만) · 새 실행은 R2·R3 새로(audit 재사용 없음)",
+      "expression": "https://numchida.com/ns/djr#R-3517@2026-09-30",
+      "label": "잇기는 «모드 리팩토링» 미종료 실행만(verdict-final 동결·새 빚은 R1 분만) · 새 실행은 R2·R3 새로(audit 재사용 없음)",
       "norm_kind": "Obligation",
       "order_rank": 1365,
       "overrides": [],

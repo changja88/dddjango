@@ -13,7 +13,7 @@ Coordinator «리팩토링 모드» 절이 이 도구를 부른다. 리뷰어·a
   refactor_audit.py check <audit 폴더>                  리뷰어 표 인용·위치 검사 + 블록 결속 → check.md
   refactor_audit.py sections <audit 폴더>               판정 입력(절 원문·규범 주석·적용 범위 규범) → sections.md
   refactor_audit.py check-verdict <audit 폴더> [--feedback <파일>] [--final]
-                                                        verdict.md 검사 → verdict-log.md append · `요약:` 1행
+                                                        verdict.md 검사 → verdict-log.md append · (exit 0) verdict-final.md · `요약:` 1행
   refactor_audit.py resolution <산출물 폴더> [--gate]    명세 «슬라이스 0 해소 판정» 표 검사(커버 · 판정 값 · 불가 범주 ·
                                                         막는 것 파일:행 · 처방 앵커 · 부분의 이유) + 렌즈별 M 목록 —
                                                         --gate 는 부분·불가의 재상정 결정 줄 · 요지 축소 번호 일치까지
@@ -998,12 +998,37 @@ class Verdict:
         return self.kind
 
 
-def _load_verdicts(audit: Path) -> "list[Verdict]":
+VERDICT_FINAL: str = "verdict-final.md"
+
+
+def _load_verdicts(audit: Path, name: str = "verdict.md") -> "list[Verdict]":
     out: "list[Verdict]" = []
-    for cells in _table_rows(_read(audit / "verdict.md")):
+    for cells in _table_rows(_read(audit / name)):
         if cells and re.fullmatch(r"M\d+", cells[0].strip()) and len(cells) >= 3:
             out.append(Verdict(cells))
     return out
+
+
+def _write_final(audit: Path, verdicts: "list[Verdict]", final: bool) -> None:
+    """exit 0 판의 확정 표 — resolution·residual 이 읽는 한 목록(`--final`·별도 요청 재분류 반영 · verdict.md 는 원문 보존)."""
+    def cell(text: str) -> str:
+        return text.replace("|", "\\|")
+
+    out: "list[str]" = [f"# verdict-final — check-verdict exit 0 {_now()}{' · final' if final else ''}", "",
+                        "| M | 원 행 | 판정 | 근거 | 파일:행 목록 |", "|---|---|---|---|---|"]
+    for v in verdicts:
+        kind: str = f"병합 → {v.merge_to}" if v.kind == "병합" else v.kind
+        out.append(f"| {v.mid} | {' · '.join(v.origin)} | {cell(kind)} | {cell(v.ground)} | {cell(v.where)} |")
+    (audit / VERDICT_FINAL).write_text("\n".join(out) + "\n", encoding="utf-8")
+
+
+def _final_verdicts(audit: Path) -> "dict[str, Verdict]":
+    """G0 확정 판정(`verdict-final.md`) — 없으면 실행 불능(재실행 안내는 대상 BC 무변일 때만 · 바뀌었으면 멈춤)."""
+    if not (audit / VERDICT_FINAL).is_file():
+        raise ToolError(f"의미 audit 의 {VERDICT_FINAL} 이 없다(check-verdict exit 0 판 없음) — 대상 BC 가 그 plan.md 의 "
+                        f"HEAD 뒤 바뀌지 않았을 때만(G0 정지 재개 조건) `check-verdict {audit}` 를 다시 돌린다(앞 확정 판이 final "
+                        f"이면 --final). 바뀌었으면 다시 돌리지 않고 멈춘다 — 재실행은 바뀐 코드로 원 행을 다시 검사해 G0 확정 표를 바꾼다")
+    return {v.mid: v for v in _load_verdicts(audit, VERDICT_FINAL)}
 
 
 def _previous(log: Path) -> "tuple[dict[str, str], dict[str, str]]":
@@ -1235,6 +1260,11 @@ def _finalize_verdicts(verdicts: "list[Verdict]", reds: "list[tuple[str, str, st
         mid: str = fresh()
         out.append(Verdict([mid, o, "채택", "", ""]))
         reclass.append((mid, f"판정 없는 통과 행 {o} → 채택(새 번호)"))
+    adopted_m: "set[str]" = {v.mid for v in out if v.kind == "채택"}
+    for v in out:                                   # 대상이 기록에서 빠진 병합 → 채택(고아 병합 금지)
+        if v.kind == "병합" and v.merge_to.startswith("M") and v.merge_to not in adopted_m:
+            reclass.append((v.mid, f"병합 대상 {v.merge_to} 이 확정 기록의 채택 항목이 아니다 → 채택"))
+            v.kind, v.merge_to = "채택", ""
     return out
 
 
@@ -1292,6 +1322,8 @@ def cmd_check_verdict(corpus: Corpus, project: Path, audit: Path, feedback: "Pat
     log += [summary, ""]
     with (audit / "verdict-log.md").open("a", encoding="utf-8") as fh:
         fh.write("\n".join(log) + "\n")
+    if code == EXIT_OK:
+        _write_final(audit, verdicts, final)
     for m, _k, w in reds:
         print(f"  red: {m} {w}")
     for m, w in reclass:
@@ -1379,8 +1411,8 @@ def _scope(folder: Path) -> "tuple[str, set[str], set[str], dict[str, Reduction]
     재상정 절의 `M<n>` 결정 줄은 첫 낱말이 닫힌 어휘여야 한다(밖이면 실행 불능). `요지` 줄은 빼지 않고
     요지 축소로 싣는다(같은 항목의 뒤 줄이 이긴다) — 같은 항목에 전체 제외 줄이 있으면 제외가 이긴다.
     재상정 절 제목보다 깊은 제목(하위 제목)은 절을 끊지 않는다.
-    G0 확정 판정의 병합 항목은 대상 항목을 따르므로 결정 줄 표기와 무관하게 ⓐ 키에서 뺀다 — verdict-log.md 마지막 exit 0 판과
-    verdict.md 가 둘 다 병합이고, 대상 `M<n>` 이 ⓐ 키이거나 대상 `C<n>` 이 ⓐ 결정 줄에 있을 때만(로그가 없으면 빼지 않는다).
+    G0 확정 판정(`verdict-final.md`)의 병합 항목은 대상 항목을 따르므로 결정 줄 표기와 무관하게 ⓐ 키에서 뺀다 — 대상
+    `M<n>` 이 ⓐ 키이거나 대상 `C<n>` 이 ⓐ 결정 줄에 있을 때만(확정 표가 없으면 실행 불능).
     """
     text: str = re.split(r"(?m)^#+\s*앞 실행", _read(folder / "refactor-scope.md"))[0]
     m = re.search(r"^\s*실행 · G0 승인 \S+ · 모드 리팩토링 · audit (\S+)", text, re.M)
@@ -1428,11 +1460,8 @@ def _scope(folder: Path) -> "tuple[str, set[str], set[str], dict[str, Reduction]
         elif token.startswith("ⓐ") and not token.startswith("ⓐ′"):
             adopted |= keys
             adopted_c |= set(re.findall(r"\bC\d+\b", re.sub(r"\([^)]*\)", "", dm.group(1))))   # 괄호 안 C 는 ⓐ 가 아니다
-    audit: Path = folder / "audit" / m.group(1)
-    kinds, _origin = _previous(audit / "verdict-log.md")
-    merged: "set[str]" = {v.mid for v in _load_verdicts(audit) if v.kind == "병합"
-                          and kinds.get(v.mid) in ("병합→M", "병합→C")
-                          and v.merge_to in (adopted_c if v.merge_to.startswith("C") else adopted)} if kinds else set()
+    merged: "set[str]" = {v.mid for v in _final_verdicts(folder / "audit" / m.group(1)).values() if v.kind == "병합"
+                          and v.merge_to in (adopted_c if v.merge_to.startswith("C") else adopted)}
     return m.group(1), adopted - merged, removed, reductions, lines
 
 
@@ -1515,7 +1544,7 @@ def _origins(verdicts: "dict[str, Verdict]", mid: str) -> "list[tuple[str, str]]
     """M → (원 행, 병합해 온 M 또는 "") — 채택 행과 그 항목으로 병합된 행 전부."""
     v = verdicts.get(mid)
     if v is None:
-        raise ToolError(f"ⓐ 항목 {mid} 이 verdict.md 에 없다")
+        raise ToolError(f"ⓐ 항목 {mid} 이 {VERDICT_FINAL} 에 없다")
     merged = [x for x in verdicts.values() if x.kind == "병합" and x.merge_to == mid]
     return [(o, "") for o in v.origin] + [(o, x.mid) for x in merged for o in x.origin]
 
@@ -1705,7 +1734,7 @@ def _standing_gate_reds(project: Path, lines: "list[DecisionLine]", by_m: "dict[
 def cmd_resolution(project: Path, folder: Path, gate: bool) -> int:
     audit_ts, adopted, removed, reductions, lines = _scope(folder)
     audit: Path = folder / "audit" / audit_ts
-    verdicts: "dict[str, Verdict]" = {v.mid: v for v in _load_verdicts(audit)}
+    verdicts: "dict[str, Verdict]" = _final_verdicts(audit)
     rows: "dict[str, Row]" = {r.rid: r for r in _load_rows(audit, Plan(audit))}
     table, body, reds = _resolution_table(folder / "design-spec.md")
     by_m: "dict[str, list[ResolutionRow]]" = {}
@@ -1845,7 +1874,7 @@ def cmd_residual(project: Path, folder: Path, candidates: "Path | None", finaliz
     notes: "dict[str, str]" = _reduction_notes(folder, reduced)
     red_tail: str = f" · 요지 축소 {len(reduced)}" if reduced else ""
     audit: Path = folder / "audit" / audit_ts
-    verdicts: "dict[str, Verdict]" = {v.mid: v for v in _load_verdicts(audit)}
+    verdicts: "dict[str, Verdict]" = _final_verdicts(audit)
     plan: Plan = Plan(audit)
     rows: "dict[str, Row]" = {r.rid: r for r in _load_rows(audit, plan)}
     run_value: str = re.search(r"실행 · G0 승인 (\S+)", _read(folder / "refactor-scope.md")).group(1)  # type: ignore[union-attr]
