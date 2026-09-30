@@ -158,6 +158,8 @@ printf '# web.home.home.view_model.home_view_model의 HomeViewModel 을 쓴다\n
 mkdir -p "$Q/web/client/users/response"
 printf 'def parse(payload):\n    return payload\n' > "$Q/web/client/users/response/user_response.py"
 printf 'from web.client.users.response.user_response import parse\n' > "$Q/web/chart/chart/view/s_r_client.py"
+printf 'Y = 2\n' > "$Q/web/home/home/view_model/home_view_model2.py"
+printf 'from web.home.home.view_model.home_view_model2 import Y\n' > "$Q/web/chart/chart/view/s_p_sibling.py"
 git -C "$Q" init -q; commit_all "$Q" base >/dev/null
 mkdir -p "$Q/.dddjango-web/run"
 python3 "$SCRIPTS/backstop.py" "$Q" --debt-scan --refactor --json "$Q/.dddjango-web/run/debt-g0.json" >/dev/null
@@ -165,7 +167,7 @@ RQ() { (cd "$Q" && python3 "$SCRIPTS/refactor_audit.py" "$@" 2>&1); }
 AQ="$Q/.dddjango-web/run/audit/20260930-120000"
 OUT=$(RQ plan web/home --debt .dddjango-web/run/debt-g0.json --out "$AQ"); E=$?
 CQ=$(PSEC "$AQ/plan.md" '경계 교차 소비자')
-assert "AQ0 plan web/home(모양 표본 저장소)" 0 "소비자 12" - "$E" "$OUT"
+assert "AQ0 plan web/home(모양 표본 저장소)" 0 "소비자 13" - "$E" "$OUT"
 for s in s_a_from_import.py:1 s_b_import_as.py:1 s_c_pkg_import.py:1 s_e_string.py:1 s_f_multiline.py:1 s_g_local_import.py:2 \
          s_h_render_tpl.py:2 s_i_state.py:1 s_j_importlib.py:2; do
   assert "AQ1 Python·문자열 모양 $s = 소비자" 0 "\`web/auth/login/view/$s\`" - 0 "$CQ"
@@ -186,6 +188,25 @@ assert "AQ6 수리 전 plan.md(Python 소비자 없음) --against = 다름 경�
 assert "AQ7 주석 줄(한글이 바로 붙은 점 경로) = 소비자" 0 '`web/chart/chart/view/s_o_korean.py:1`' - 0 "$CQ"
 OUT=$(RQ plan web/client/users --debt .dddjango-web/run/debt-g0.json --out "$T/aqc"); E=$?
 assert "AQ8 client 단위 — 다른 영역의 import 줄 = 소비자(HEAD 는 0 → G2 영향 화면 공백)" 0 '`web/chart/chart/view/s_r_client.py:1`' - "$E" "$(PSEC "$T/aqc/plan.md" '경계 교차 소비자')"
+
+# ---------- A″ (R8d D): 꼬리 묶음 grep — 파일별 분배 = git grep -w 성분 경계 · git grep 호출 수가 꼬리 수와 무관
+OUT=$(cd "$Q" && python3 -c "
+import sys; sys.path.insert(0, '$SCRIPTS')
+from pathlib import Path
+import refactor_audit as ra
+r = ra._Refs(Path('.').resolve())
+r.warm(['home/home/view_model/home_view_model.py', 'home/home/view_model/home_view_model2.py'])
+for f in ('home/home/view_model/home_view_model.py', 'home/home/view_model/home_view_model2.py'):
+    print(f, sorted(p + ':' + str(n) for p, n, _t in r(f)))
+" 2>&1); E=$?
+L1=$(grep '^home/home/view_model/home_view_model.py ' <<<"$OUT")
+assert "AD2 web.a.q 꼬리가 web.a.q2 줄을 잡지 않는다 · 한글이 붙은 줄은 잡는다(묶음 분배)" 0 "s_o_korean.py:1" "s_p_sibling" "$E" "$L1"
+assert "AD2′ 형제 모듈 꼬리는 자기 줄만(s_p_sibling:1)" 0 "home_view_model2.py ['web/chart/chart/view/s_p_sibling.py:1']" - "$E" "$OUT"
+rm -rf "$T/aq-trace"
+OUT=$(cd "$Q" && GIT_TRACE="$T/aq-trace.log" python3 "$SCRIPTS/refactor_audit.py" plan web/home --debt .dddjango-web/run/debt-g0.json --out "$T/aq-trace" 2>&1); E=$?
+N=$(grep -c "built-in: git grep" "$T/aq-trace.log" 2>/dev/null || echo 0)
+assert "AD3 plan 의 git grep 호출 ≤ 4(범위·정적 한 묶음 + 치환 대상 한 묶음 · 각 -F · -F -w)" 0 "요약: plan" - "$([ "$N" -ge 1 ] && [ "$N" -le 4 ] && echo "$E" || echo 9)" "$OUT (git grep ${N}회)"
+cmp -s "$AQ/plan.md" "$T/aq-trace/plan.md"; assert "AD4 같은 트리 두 번 plan = byte 동일" 0 - - "$?" ""
 
 # ---------- B: plan --against — 여섯 목록 대조(쓰지 않는다)
 OUT=$(RA plan web/home --debt .dddjango-web/run/debt-g0.json --against "$A/plan.md"); E=$?
@@ -249,6 +270,36 @@ OUT=$(RA plan web/static/js --debt .dddjango-web/run/debt-g0.json --out "$T/rj")
 assert "R1 정적 단위: <script src> 로드 줄 = 줄 편집 (가)" 0 '`web/home/home/view/home.html:3` — (가)' - "$E" "$(PSEC "$T/rj/plan.md" '줄 편집')"
 assert "R1′ 정적 단위: 로드 전용 줄은 소비자 아님" 0 - 'home.html:3' 0 "$(PSEC "$T/rj/plan.md" '경계 교차 소비자')"
 assert "R2 정적 단위: 비로드 참조 줄(<img>) = 소비자" 0 '`web/home/home/section/home_card.html:1`' - 0 "$(PSEC "$C/plan.md" '경계 교차 소비자')"
+
+# ---------- R′ (R8d 리뷰 보강): _Refs 전 파일 차등 대조 · --names 폴더 쌍 묶음(D)
+printf '# 원본 파일 home/home/view_model/home_view_model.py 를 본다\n' > "$Q/web/chart/chart/view/s_q_pathcomment.py"
+printf '# 옛 사본 old_home/home/view_model/home_view_model.py 도 본다\n' >> "$Q/web/chart/chart/view/s_q_pathcomment.py"
+printf '# 이 모듈(web.home.home.state.home_state)이 홈 상태를 소유한다\n' >> "$Q/web/home/home/state/home_state.py"
+OUT=$(cd "$Q" && python3 -c "
+import sys; sys.path.insert(0, '$SCRIPTS')
+from pathlib import Path
+import refactor_audit as ra
+from src.debt import debt_universe, reference_lines, tail_of
+p = Path('.').resolve(); files = debt_universe(p)
+r = ra._Refs(p); r.warm(files)
+bad = []
+for f in files:
+    t = tail_of(f); hits = reference_lines(p, [t[0]])
+    if len(t) > 1: hits += reference_lines(p, [t[1]], word=True)
+    want = sorted({h for h in hits if h[0] != 'web/' + f})
+    if r(f) != want: bad.append(f)
+print('차등', len(files), '불일치', len(bad), bad[:3])
+" 2>&1); E=$?
+assert "R3 _Refs 묶음 분배 = 파일별 개별 grep(전 파일 차등 대조)" 0 "불일치 0 " - "$E" "$OUT"
+printf '## 슬라이스 0\n\n- 경로: `home/home/` → `home/main/`\n' > "$T/specdir.md"
+rm -f "$T/nm-trace.log"
+OUT=$(cd "$P" && GIT_TRACE="$T/nm-trace.log" python3 "$SCRIPTS/refactor_audit.py" plan web/home --debt .dddjango-web/run/debt-g0.json --out "$T/nm" --names "$T/specdir.md" 2>&1); E=$?
+NG=$(grep -c "built-in: git grep" "$T/nm-trace.log" 2>/dev/null)
+assert "R4 --names 폴더 쌍 (나) = 소비 줄" 0 '`web/chart/chart/view_model/chart_view_model.py:1`' - "$E" "$(cat "$T/nm/plan-names.md" 2>/dev/null)"
+assert "R5 --names 폴더 쌍 git grep 호출이 구성원 수와 무관(1 ≤ 호출 ≤ 6 · exit 0)" 0 - - "$([ "$E" = 0 ] && [ "${NG:-0}" -ge 1 ] && [ "${NG:-99}" -le 6 ] && echo 0 || echo 9)" "exit $E · grep ${NG}회"
+printf '## 슬라이스 0\n\n- 경로: `home/home/view/home_view.py` → `home/home/view/home_page.py`\n' > "$T/specfile.md"
+OUT=$(RA plan web/home --debt .dddjango-web/run/debt-g0.json --out "$T/nf" --names "$T/specfile.md"); E=$?
+assert "R6 경로: 파일 쌍 — 점 경로는 -w(home_view2 import 줄 :2 는 (나) 밖 · home_view import 줄 :1 은 (나))" 0 '`web/chart/chart/view_model/chart_view_model.py:1`' 'chart_view_model.py:2' "$E" "$(cat "$T/nf/plan-names.md" 2>/dev/null)"
 
 # ---------- 합성 플러그인 루트(판정 문장 고정)
 PL="$T/plugin"

@@ -617,16 +617,39 @@ class PlanData:
                 "참조 치환 줄": set(self.ref_lines), "범위 안 키": set(self.keys)}
 
 
-def _refs(project: Path, rel: str) -> "list[tuple[str, int, str]]":
-    """web-상대 파일 f 의 참조 줄(6a 꼬리 grep) — 자기 자신 제외 · 저장소 상대 경로."""
-    tails: "list[str]" = tail_of(rel)
-    hits = reference_lines(project, [tails[0]])
-    if len(tails) > 1:
-        hits += reference_lines(project, [tails[1]], word=True)
-    return sorted({h for h in hits if h[0] != "web/" + rel})
+# git grep -w 의 낱말 문자(ASCII 영숫자·밑줄 — 바이트 0x80 이상은 낱말 문자가 아니다)
+_WORD_EDGE: str = "A-Za-z0-9_"
 
 
-def _owners(project: Path, rel: str, memo: "dict[str, frozenset[str]]", stack: "set[str]") -> "frozenset[str]":
+class _Refs:
+    """web-상대 파일의 참조 줄(6a 꼬리 grep) — 자기 자신 제외 · 저장소 상대 경로 · 파일마다 한 번만 센다.
+
+    `warm` 이 파일 여럿의 꼬리를 git grep 두 번(경로 꼬리 -F 한 번 · 점 경로 -F -w 한 번)으로 모으고 Python 에서 파일별로
+    나눈다 — 경로 꼬리는 부분 문자열, 점 경로는 앞뒤가 낱말 문자가 아닌 적중(`web.a.q` 가 `web.a.q2` 를 잡지 않는다)."""
+
+    def __init__(self, project: Path) -> None:
+        self.project: Path = project
+        self.memo: "dict[str, list[tuple[str, int, str]]]" = {}
+
+    def warm(self, rels: "list[str]") -> None:
+        tails: "dict[str, list[str]]" = {r: tail_of(r) for r in rels if r not in self.memo}
+        if not tails:
+            return
+        plain = reference_lines(self.project, sorted({t[0] for t in tails.values()}))
+        dotted = reference_lines(self.project, sorted({t[1] for t in tails.values() if len(t) > 1}), word=True)
+        for rel, t in tails.items():
+            hits: "set[tuple[str, int, str]]" = {h for h in plain if t[0] in h[2]}
+            if len(t) > 1:
+                edge = re.compile(rf"(?<![{_WORD_EDGE}]){re.escape(t[1])}(?![{_WORD_EDGE}])")
+                hits |= {h for h in dotted if edge.search(h[2])}
+            self.memo[rel] = sorted(h for h in hits if h[0] != "web/" + rel)
+
+    def __call__(self, rel: str) -> "list[tuple[str, int, str]]":
+        self.warm([rel])
+        return self.memo[rel]
+
+
+def _owners(refs: _Refs, rel: str, memo: "dict[str, frozenset[str]]", stack: "set[str]") -> "frozenset[str]":
     """정적 파일의 소유자 집합 — 영역 이름 · «비영역». 순환·무참조는 빈 집합(정적 단위 몫)."""
     if rel in memo:
         return memo[rel]
@@ -634,7 +657,7 @@ def _owners(project: Path, rel: str, memo: "dict[str, frozenset[str]]", stack: "
         return frozenset()
     stack.add(rel)
     found: "set[str]" = set()
-    for path, _line, _text in _refs(project, rel):
+    for path, _line, _text in refs(rel):
         if not path.startswith("web/"):
             continue
         r: str = path[len("web/"):]
@@ -642,7 +665,7 @@ def _owners(project: Path, rel: str, memo: "dict[str, frozenset[str]]", stack: "
         if is_area(unit):
             found.add(unit)
         elif unit.startswith("static"):
-            found |= _owners(project, r, memo, stack)
+            found |= _owners(refs, r, memo, stack)
         else:
             found.add("비영역")
     stack.discard(rel)
@@ -659,13 +682,15 @@ def compute_plan(project: Path, unit: str, debt: dict) -> PlanData:
     for f in files:
         if in_unit(f):
             data.scope[f] = "단위"
+    refs: _Refs = _Refs(project)
+    refs.warm(sorted(data.scope) + ([f for f in files if f.startswith("static/")] if is_area(unit) else []))
     if is_area(unit):
         memo: "dict[str, frozenset[str]]" = {}
         for f in files:
             if not f.startswith("static/"):
                 continue
-            owners: "frozenset[str]" = _owners(project, f, memo, set())
-            refs = [f"{p}:{n}" for p, n, _t in _refs(project, f) if p.startswith("web/")]
+            owners: "frozenset[str]" = _owners(refs, f, memo, set())
+            lines: "list[str]" = [f"{p}:{n}" for p, n, _t in refs(f) if p.startswith("web/")]
             areas: "set[str]" = {o for o in owners if o != "비영역"}
             if not owners:
                 verdict = "무참조"
@@ -676,7 +701,7 @@ def compute_plan(project: Path, unit: str, debt: dict) -> PlanData:
             else:
                 verdict = "영역 전속"
             if unit in areas:
-                data.verdicts.append((f, verdict, " · ".join(refs[:6]) + (" …" if len(refs) > 6 else "")))
+                data.verdicts.append((f, verdict, " · ".join(lines[:6]) + (" …" if len(lines) > 6 else "")))
                 if verdict == "영역 전속":
                     data.scope[f] = "영역 전속 정적"
                 elif verdict == "경계 교차":
@@ -684,7 +709,7 @@ def compute_plan(project: Path, unit: str, debt: dict) -> PlanData:
     scope_paths: "set[str]" = {"web/" + f for f in data.scope}
     # 경계 교차 소비자 · 줄 편집 (가) — 범위 파일을 가리키는 범위 밖 web/ 줄(소비자 = 정적 로드만 하는 줄 밖 전부)
     for f in sorted(data.scope):
-        for path, line, text in _refs(project, f):
+        for path, line, text in refs(f):
             if not path.startswith("web/") or path in scope_paths:
                 if not path.startswith("web/") and path not in scope_paths:
                     data.outside_refs.append(f"{path}:{line}")
@@ -719,8 +744,9 @@ def compute_plan(project: Path, unit: str, debt: dict) -> PlanData:
             targets |= {f for f in files if f.startswith(path)}
         elif path:
             targets.add(path)
+    refs.warm(sorted(targets))
     for f in sorted(targets):
-        for path, line, _text in _refs(project, f):
+        for path, line, _text in refs(f):
             where = f"{path}:{line}"
             if path.startswith("web/"):
                 if path not in scope_paths:
@@ -927,15 +953,19 @@ def _plan_names(project: Path, data: PlanData, debt: dict, names: Path, out: Pat
             if path.startswith("web/") and path not in scope_paths:
                 found.setdefault(f"{path}:{line}", why)
 
-    for old, _new in paths:
+    for old, _new in paths:                           # 한 쌍의 구성원은 표지가 같다 — 쌍마다 -F 한 번 · -F -w 한 번(합집합)
         members: "list[str]" = [f for f in files if f.startswith(old)] if old.endswith("/") else [old]
+        plain: "list[str]" = []
+        dotted: "list[str]" = []
         for f in members:
             tails = tail_of(f)
-            keep(reference_lines(project, [tails[0]]), f"경로 `{old}`")
+            plain.append(tails[0])
             commands.append(f"git grep -n -F -e {tails[0]} -- {' '.join(REF_PATHSPEC)}")
             if len(tails) > 1:
-                keep(reference_lines(project, [tails[1]], word=True), f"경로 `{old}`")
+                dotted.append(tails[1])
                 commands.append(f"git grep -n -F -w -e {tails[1]} -- {' '.join(REF_PATHSPEC)}")
+        keep(reference_lines(project, plain), f"경로 `{old}`")
+        keep(reference_lines(project, dotted, word=True), f"경로 `{old}`")
     for old, _new in pairs:
         module, name = old.rsplit(".", 1)
         module_hits = reference_lines(project, [module], word=True)
