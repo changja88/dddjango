@@ -41,7 +41,7 @@ li.todo .m { color:var(--todo); }
 <button class="theme" onclick="var r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'||(!r.dataset.theme&&matchMedia('(prefers-color-scheme: dark)').matches))?'light':'dark'">밝게/어둡게</button>
 <main>
 <h1>리팩토링 진행표</h1>
-<p class="sub">갱신 2026-09-30 11시 · ✓ 끝 · ▶ 진행 중 · ○ 남음</p>
+<p class="sub">갱신 2026-09-30 18시 · ✓ 끝 · ▶ 진행 중 · ○ 남음</p>
 
 <div class="cols">
 <section class="col">
@@ -85,7 +85,7 @@ li.todo .m { color:var(--todo); }
 </section>
 </div>
 
-<div class="next"><b>지금</b> — 개선 8b·8c 커밋 끝 · 결함 후보 2건(core 판정 재분류 누락 · web 영향 범위 누락) 진단 중 → 수리 여부 결정<br><b>다음</b> — 현장 진행 중 레인이 G2 를 넘기면 배포(<code>make release</code> · <code>make release-web</code>) · 개선이 그 전에 끝나면 함께 · 그 뒤 설치본 갱신은 사용자 <code>/plugin</code></div>
+<div class="next"><b>지금</b> — 개선 8b·8c·8d 커밋 끝(8d = core 판정 재분류 누락 · web 영향 범위 누락 · web plan 느림 1~2분 → 1~2초 · 고아 병합) · 현장 web 레인 두 개(problem1·problem2)가 12시간 넘게 걸린 원인을 분석하고 지금 버전에서도 남는지 리뷰 중<br><b>다음</b> — 속도 분석 결과 보고 · 현장 진행 중 레인이 G2 를 넘기면 배포(<code>make release</code> · <code>make release-web</code>) · 그 뒤 설치본 갱신은 사용자 <code>/plugin</code></div>
 </main>
 </body>
 </html>
