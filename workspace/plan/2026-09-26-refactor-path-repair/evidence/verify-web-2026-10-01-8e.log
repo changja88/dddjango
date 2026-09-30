@@ -1,0 +1,732 @@
+# make verify-web · main fd5834c8 · 2026-10-01 02:18
+[verify-web] dddjango-web 픽스처(백스톱·절단 도구)
+== fixtures_assets.sh
+..........................
+----------------------------------------------------------------------
+Ran 26 tests in 10.317s
+
+OK
+
+== fixtures_audit.sh
+PASS V1 validate 정상
+PASS A1 동일 실측 diff 0
+PASS A2 font-size diff
+PASS A3 고정 요소 소실
+PASS A3b 고정 요소 부분 소실
+PASS A4 상대 위치 diff
+PASS A5 그룹 분포 불일치
+PASS A6 line-height normal 특례
+PASS A7 미조인만 diff 0
+PASS S1 audit_version fail-loud
+PASS U1 사용법
+PASS V2 v2 validate 정상
+PASS S2 v2 motion 부재 fail-loud
+PASS RV require-version 2에 v1 거부
+PASS W1v v1 수용 warn
+PASS MIX 버전 불일치 warn
+PASS Wb 차단 시트 부분성 warn
+PASS Ws 측정 밖 엔진 warn
+PASS Wz 시트 0장 비개연 warn
+PASS A1v2 v2 동일 실측 diff 0
+PASS DET 결정론(2회 동일)
+PASS DETv2 결정론(2회 동일)
+----------------------------------------
+fixtures_audit: PASS 22 · FAIL 0
+
+== fixtures_backstop.sh
+PASS F0a gated 무변경 green
+PASS F0b 전역(--all) green(positive control 전수)
+PASS F1a WS1 web 직속 잡파일 발화
+PASS F1b WS1 control — 고정 파일·마커만이면 clean
+PASS F2a WS2 영역 직속 파일 발화
+PASS F2b WS control — 완비 신규 영역은 clean(WS5 포함)
+PASS F3a WS3 종류 밖 디렉터리+개념 직속 파일 2건
+PASS F3b WS3 control — form/ 조건 생성은 합법
+PASS F4a WS4 component 직속 파일+theme 칸 2건
+PASS F4b WS4 control — 부품군 안 부품은 clean
+PASS F5a WS5 신규 영역 widget/ 누락 발화
+PASS F5b WS5 control — 영역 골격 완비 후 clean
+PASS F5c WS5 신규 화면 개념 종류 폴더 누락 발화
+PASS F5d WS control — 개념 골격 완비(정적 화면) clean
+PASS F6a WS6 허용 외 archive 칸+직속 파일 2건
+PASS F6b WS6 control — images/ 착지는 clean
+PASS F6c WS6 fonts/files conditional directories are valid
+PASS F6d WS6 unknown static directory still blocked
+PASS F7a WS7 영역 이름 state/ 발화
+PASS F7b WS7 control — 기능 어휘 영역(orders)은 clean
+PASS F8a WS8 client 직속 파일+BC 하위 잡폴더 2건
+PASS F8b WS8 control — capability 파일 증가는 clean
+PASS F9a WI1 절대2+프로젝트 패키지+상대 클램핑 4건(주석·문자열 불발화 짝 내장)
+PASS F9b WI1 control — web 내부 import는 clean
+PASS F10a WI2 requests·urllib.request·django.test 3건
+PASS F10b WI2 control — client/ 안 호출 표면은 clean
+PASS F11a WI3 VM의 API URL 리터럴 1건(주석 불발화 짝 내장)
+PASS F11b WI3 control — client 안 리터럴은 clean
+PASS F12 WI4 루트상대 2건(외부·{% url %} 불발화 짝 내장)
+PASS F13a 레거시 위반 import 불발화(added 줄 밖)
+PASS F13b 신규 위반 줄만 발화(WI2 1건)
+PASS F14a WN1 축약 접미사 _vm.py 발화
+PASS F14b WN1 control — 규약 접미사는 clean
+PASS F15 WN2 무접두 1건(접두 짝은 clean — positive control 내장)
+PASS F16 WN3 view 이름 포함 1건(무관 어휘 짝 clean)
+PASS F17 WN4 화면명 불일치 1건(order_list.html 짝은 base에서 green)
+PASS F18 WN5 부품군 접미사 위반 1건(접미사 짝 clean)
+PASS F19a WN6 VM 대응 미완 발화
+PASS F19b WN6 control — 1:1:1:1 완성 후 clean
+PASS F19c WN6 접두-화면 개념 불일치 발화
+PASS F20a WN7 order_list_view_view_model.py 발화
+PASS F20b WN7 control — 규약 접두는 clean
+PASS F21 WN8 snake_case 위반 1건(snake 짝 clean)
+PASS F22a WP1 control — 평면 snake_case 기능 JS는 clean
+PASS F22b WP1 신규 legacy htmx core·core 중복 발화
+PASS F22c WP1 control — canonical htmx core+기능 JS는 clean
+PASS F22d WP1·WP5 control — 판형 그대로의 motion.js 공존은 clean
+PASS F22e WP5 motion.js 판형 이탈(수정) 발화
+PASS F23 WP2 inline+CDN+fragment 3건(page defer 짝 clean)
+PASS F23b WP2 CDN 위장+ghost 3건(base motion 짝 clean)
+PASS F24 WP3 onclick+hx-on 2건(hx 선언 속성 짝 clean)
+PASS F24b WP3 js:·조건식 3건(정적 JSON·이벤트명 짝 clean)
+PASS F25 WP4 색 리터럴 2건(tokens.css·var()·#anchor 짝 clean)
+PASS F26 비git 퇴화 notice + green 프로젝트 0
+PASS F27 --diff-base 없음 퇴화 notice
+PASS F28a --only wn — WI 위반 비표시
+PASS F28b --only wi — WI 위반 표시
+PASS F29a 인자 없음 → 1
+PASS F29b 디렉터리 아님 → 1
+PASS F29c diff-base 해석 불가 → 1
+PASS F29d 알 수 없는 옵션 → 1
+PASS F29e web/ 없음(전제 실패) → 1
+
+fixtures_backstop: PASS=62 FAIL=0
+
+== fixtures_clip_clearance.sh
+PASS CC1_패딩충분
+PASS CC2_결함회귀
+PASS CC2_축전파_좌
+PASS CC2_축전파_우
+PASS CC3_hidden
+PASS CC4_노이즈절단
+PASS CC5_inset제외
+PASS CC6_좌만부족
+PASS CC7_색함수
+PASS CC8_blur제외
+PASS CC9_extends추적
+PASS CC10_자기제외
+PASS CC11_콤마목록
+PASS CC12_캐스케이드
+PASS CC13_논리속성
+PASS CC14_important
+PASS CC15_calc미해석
+PASS CC16_전역링
+PASS CC17_경미
+PASS CC18_blur비지배
+PASS CC11_주석속_리터럴마크업
+PASS U1_사용법
+PASS U2_경로부재
+PASS DET_결정론
+
+fixtures_clip_clearance: PASS=24 FAIL=0
+
+== fixtures_component_identity.sh
+test_cli_phase_identity_faithful_exit0 (__main__.ComponentIdentityTests.test_cli_phase_identity_faithful_exit0) ... ok
+test_cli_phase_identity_flattened_exit2 (__main__.ComponentIdentityTests.test_cli_phase_identity_flattened_exit2) ... ok
+test_declared_select_flattened_to_native_fails (__main__.ComponentIdentityTests.test_declared_select_flattened_to_native_fails) ... ok
+test_ds_definitions_do_not_over_declare (__main__.ComponentIdentityTests.test_ds_definitions_do_not_over_declare) ... ok
+test_faithful_custom_dropdown_passes (__main__.ComponentIdentityTests.test_faithful_custom_dropdown_passes) ... ok
+test_faithful_dropdown_with_rationale_comment_passes (__main__.ComponentIdentityTests.test_faithful_dropdown_with_rationale_comment_passes) ... ok
+test_no_custom_select_declared_native_not_flagged (__main__.ComponentIdentityTests.test_no_custom_select_declared_native_not_flagged) ... ok
+test_no_dc_html_is_noop (__main__.ComponentIdentityTests.test_no_dc_html_is_noop) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.368s
+
+OK
+
+== fixtures_contract.sh
+PASS F1 정확 선별·보존·요약 stdout
+PASS F2 $ref 전이 폐쇄
+PASS F3 메서드 생략=전 메서드
+PASS F4a 인용 path 부재 exit 1
+PASS F4b 근사 후보 병기(파라미터명 차이)
+PASS F5a Swagger 2.0 거부 exit 1
+PASS F5b 같은 문서 3.x는 수용(positive control)
+PASS F6 비JSON(YAML) 파싱 실패 exit 1
+PASS F7a dangling ref [warn] stderr·exit 0 유지
+PASS F7b [warn]은 stdout 오염 없음(요약만)
+PASS F8 webhooks 비복사 [warn]
+PASS F9 결정론(2회 바이트 동일)
+PASS F10 빈 paths-file exit 1
+---
+PASS=13 FAIL=0
+
+== fixtures_debt.sh
+PASS D1a 표준 골격 빚 0
+PASS D1b .dddjango-web 미추적은 dirty 아님
+PASS D1c 대조: 루트 미추적 파일은 dirty
+PASS D2a 무시 파일 .DS_Store 키 0
+PASS D2b 대조: 무시 안 된 .DS_Store 는 빚
+PASS D3a legacy core 1개 + 로드 태그 키 0
+PASS D3b 대조: legacy+canonical 공존 = WP1 2키 + WP2 1키
+PASS D4a 골격 미비 영역 키 0(WS5 빚 모드 제외 notice)
+PASS D4b 대조: 같은 트리의 신규 단위는 diff 게이트 WS5 red
+PASS D5a 대조: 추적 파일 실재 시 WS1 빚
+PASS D5b 인덱스 전용 삭제 키 0·오류 0
+PASS D6 같은 파일 2건 키 1·수 2
+PASS D7a C1..C3 키 정렬 순
+PASS D7b 두 번 실행 동일
+PASS D8a ⓐ 미해소 = 잔존 1
+PASS D8b ⓐ 해소 = 잔존 0
+PASS D8c G2 스캔은 debt-g2.json 에 · G0 동결본 불변
+PASS D8d debt-g2.json 기록
+PASS D9a 누적 행의 앞 ⓐ 미해소 = exit 2
+PASS D9b 누적 ⓐ 전부 해소 = exit 0
+PASS D10a 재상정 제외 = exit 0
+PASS D10b 대조: 재상정 절 없으면 C2 잔존
+PASS D11a 요구 키 미해소 = 요구 잔존 1
+PASS D11b 대조: 요구 키 해소 = exit 0
+PASS D12 ⓐ·요구 모두 - = exit 0(legacy 잔존은 판정 밖)
+PASS D13a G0 절 없음 = 판정 불가
+PASS D13b 정형 행 없음 = 판정 불가
+PASS D13c 변형 절 머리 = 판정 불가
+PASS D13d debt-g0.json 만 있음 = 판정 불가
+PASS D13e 둘 다 없음 = 해당 없음(규칙 이전 G0) exit 0
+PASS D13f .dddjango-web 밖 폴더 = 판정 불가
+PASS D14 없는 ID = exit 1
+PASS D15a 잔존 판정은 키 대조라 exit 0 · 새 키 X 보고
+PASS D15b diff 게이트가 새 경로 발견 red
+PASS D15c 대조: 표준 이름으로 개명하면 diff 게이트 green
+PASS D16a 대조: 색 리터럴 없는 참조 줄 치환은 green
+PASS D16b 참조 줄의 기존 WP4 가 치환으로 새 줄 red
+PASS D17a --debt-scan + --diff-base = 사용 오류
+PASS D17b --debt-scan + --only = 사용 오류
+PASS D17c --debt-scan + --debt-residual = 사용 오류
+PASS D17d --json 단독 = 사용 오류
+PASS D17e 대조: --debt-scan 단독은 실행
+PASS D18 비git = 실행 불능 exit 1
+PASS D19a web 심볼릭 링크 = 실행 불능 exit 1
+PASS D19b 상위 저장소가 무시한 비git 프로젝트 = 실행 불능 exit 1
+PASS D19c 대조: 무시가 풀리면 상위 저장소 우주로 스캔(빚 3)
+PASS D20a web/ 부재 = 첫 실행 빚 0 exit 0
+PASS D20b G2: 새 코드의 키는 «G0 에 없던 키»(보고만) exit 0
+PASS D21a 앞 절 요구 키 C1 미해소 = 요구 잔존 1 exit 2
+PASS D21b 대조: C1 해소 = exit 0
+PASS D21c 재상정 뒤 재승인이 다시 적은 키는 되살아난다
+PASS D22a 마지막 G0 절이 스캔보다 이르다 = exit 1
+PASS D22b 대조: 이번 요청 G0 절이 있으면 그 절로 판정
+PASS D23a 펜스 안 예시 절은 무시 — C1 잔존 exit 2
+PASS D23b 대조: 펜스 밖이면 새 G0 절(요청 경계)로 판정 exit 0
+PASS D24a 리팩토링 스캔은 기존 단위 WS5 를 빚으로
+PASS D24b 영역 폴더 키 billing/
+PASS D24c 컨테이너 빈 경로 키
+PASS D24d JSON mode = refactor
+PASS D24e 대조: 기본 스캔은 WS5 키 0 · mode feature
+PASS D24f 대조: 기본 스캔 counts 에 WS5 없음
+PASS D25a defer 없는 legacy 태그 → WP1·WP2 한 쌍 면제 유지
+PASS D25b 쌍 유지 + 컨테이너 골격 누락(static/htmx/) → WS5| 키로 fail-closed
+PASS D25c defer 있는 legacy 태그 → WP1 면제 걷힘
+PASS D25d 대조: 기본 스캔은 legacy core 면제 그대로
+PASS D26a 리팩토링 동결본 — WS5 미해소 잔존 exit 2(mkproj 의 빈 static/js/ 가 컨테이너 키)
+PASS D26b 대조: 같은 동결본을 mode feature 로 읽으면 WS5 를 보지 않아 해소 exit 0
+PASS D27a --refactor 단독 = 사용 오류
+PASS D27b --refactor + --diff-base = 사용 오류
+PASS D27c --refactor + --debt-residual = 사용 오류(모드는 debt-g0.json 이 정한다)
+PASS D27d --names 단독 = 사용 오류
+PASS D27e --except 단독 = 사용 오류
+PASS D27f --subst-check + --debt-scan = 사용 오류
+PASS D27g 대조: --subst-check 단독은 실행(변경 0 = green)
+PASS D28a 의미 행이 있어도 C 판정 무변(C1 잔존)
+PASS D28b 옛 절의 어긋난 의미 행은 판정 입력 아님 exit 0
+PASS D29a 절 밖 어긋난 행은 무시 — green
+PASS D29b 절 안 형식 어긋남 = 실행 불능
+PASS D29c 절 머리 중복 = 실행 불능
+PASS D29d 절 머리 없음(--names 를 준 호출) = 실행 불능
+fixtures_debt: PASS=80 FAIL=0
+
+== fixtures_design_evidence.sh
+.................................
+----------------------------------------------------------------------
+Ran 33 tests in 29.688s
+
+OK
+................................
+----------------------------------------------------------------------
+Ran 32 tests in 8.388s
+
+OK
+
+== fixtures_extract.sh
+PASS D1 dsManifest 정상(exit 0)
+PASS D1 var() 자기참조 해소
+PASS D1 shadow 버킷·other drop
+PASS D2 tokens[] 부재 fail-loud
+PASS D3 토큰 0 fail-loud
+PASS U1 extract_design 사용법
+PASS H1 참조 HTML 정상(exit 0)
+PASS H1 tailwind 명명 색(중첩 평탄화)
+PASS H1 빈도 1위 색 후보
+PASS H1 타이포(config fontSize)
+PASS H1 임의값 클래스(변형 접두 제거)
+PASS H1b 단일 파일 위치 인자
+PASS H2 동결 HTML 없음 fail-loud
+PASS H3 토큰 0 fail-loud
+PASS C1 extract_dc 정상(exit 0)
+PASS C1 게이트 텍스트 title
+PASS C1 게이트 텍스트 cards
+PASS C1 이미지 ok·device-chrome 제외
+PASS C1 이미지 바이트 착지
+PASS C2 tokens 부재(순서 계약 MF-3)
+PASS C3 .screen 부재 fail-loud
+PASS C4 .dc.html 부재 fail-loud
+PASS F1 혼합 status·부분 실패 exit 0
+PASS F1 실패 [warn] stderr 표면화
+PASS F1 로컬 상대경로 해소(ok)
+PASS F1 인라인 착지
+PASS F2 design-ref 부재
+PASS F3 충돌 해시 접미(exit 0·ok 2)
+PASS F3 첫 토큰은 slug 그대로
+PASS F3 충돌분은 해시 접미
+PASS F3 2회 실행 결정론(byte 동일)
+----------------------------------------
+fixtures_extract: PASS 31 · FAIL 0
+
+== fixtures_focus_ring.sh
+PASS FR1_이중링_직각
+PASS FR1_대상표기
+PASS FR2_none억제
+PASS FR3_은닉면제
+PASS FR4_where타입
+PASS FR4_발견
+PASS FR5_타입불일치
+PASS FR6_스코프표기
+PASS FR7_not예외
+PASS FR8_자기선언_인벤토리
+PASS FR9_판정안함
+PASS FR10_클래스좁힘
+PASS FR11_radius일치
+PASS FR12_inset
+PASS FR13_순서함정
+PASS FR14_주석속_리터럴태그
+PASS U1_인자없음
+PASS U2_디렉터리아님
+PASS DET_결정론
+fixtures_focus_ring: PASS=19 FAIL=0
+
+== fixtures_motion_spec.sh
+PASS G1 spec-only 정상
+PASS G2 full 정상 3형
+PASS R1 전수성 위반
+PASS R2 좌표 파일 부재
+PASS R3 값 토큰 미정의
+PASS R4 역스윕 발명
+PASS R4b ui-js 유령 파일
+PASS R4c ui-js 주석 속 JS root는 근거 아님
+PASS R4c2 ui-js template interpolation 주석 root는 근거 아님
+PASS R4d ui-js HTML 주석 속 root는 근거 아님
+PASS R5 판형 위반
+PASS R3b 토큰 접두 false-pass 차단
+PASS R6 빈 id 행 조용한 증발 금지
+PASS R7 처분 표 중복 id
+PASS G3 주석 keyframes 역스윕 침묵
+PASS G4 펜스 예시 표 무시
+PASS G5 ui-js optional web prefix
+PASS G6 ui-js backtick literal root
+PASS W1 레거시 산문 warn
+PASS W2 미관찰 미검증 warn
+PASS W3 전사 이음매 warn
+PASS W3p 전사 게이트 침묵
+PASS U1 사용법
+PASS U2 파일 부재 fail-loud
+PASS DET 결정론(2회 동일)
+----------------------------------------
+fixtures_motion_spec: PASS 25 · FAIL 0
+
+== fixtures_refactor_audit.sh
+PASS A1 plan web/home 실행
+PASS A2 css/home.css = 영역 전속(범위 파일)
+PASS A3 js/shared.js = 경계 교차(소유 chart·home)
+PASS A4 js/toast.js = 비영역 참조(base 로드) — 범위 밖
+PASS A5 orphan.png 은 home 판정표에 없음(무참조)
+PASS A6 경계 교차 소비자 = chart_panel include 줄
+PASS A7 줄 편집 (가) = 범위 파일을 가리키는 범위 밖 include 줄
+PASS A8 --out 에 plan.md 가 있으면 덮지 않음
+PASS A9 단위 안쪽 경로 = 실행 불능
+PASS A10 없는 단위 = 실행 불능
+PASS A11 영역 전속 CSS 만 참조하는 이미지 = 소유자 전이로 영역 전속
+PASS A12 다른 영역 VM 의 from-import 두 줄 = 경계 교차 소비자(Python 모양)
+PASS A12′ 같은 줄은 줄 편집 (가) 아님(정적 로드 줄이 아니다)
+PASS AQ0 plan web/home(모양 표본 저장소)
+PASS AQ1 Python·문자열 모양 s_a_from_import.py:1 = 소비자
+PASS AQ1 Python·문자열 모양 s_b_import_as.py:1 = 소비자
+PASS AQ1 Python·문자열 모양 s_c_pkg_import.py:1 = 소비자
+PASS AQ1 Python·문자열 모양 s_e_string.py:1 = 소비자
+PASS AQ1 Python·문자열 모양 s_f_multiline.py:1 = 소비자
+PASS AQ1 Python·문자열 모양 s_g_local_import.py:2 = 소비자
+PASS AQ1 Python·문자열 모양 s_h_render_tpl.py:2 = 소비자
+PASS AQ1 Python·문자열 모양 s_i_state.py:1 = 소비자
+PASS AQ1 Python·문자열 모양 s_j_importlib.py:2 = 소비자
+PASS AQ2 include = 소비자 + 줄 편집 (가)
+PASS AQ2′ extends = 소비자
+PASS AQ2″ include = 소비자(소비자 절 단위)
+PASS AQ3 한계 고정 — 상대 import 미탐
+PASS AQ3′ 한계 고정 — 동적 include 미탐
+PASS AQ3″ 한계 고정 — URL 이름 참조 미탐
+PASS AQ4 web/ 밖(tests/) 적중 = web/ 밖 참조 줄
+PASS AQ4′ web/ 밖(tests/) 적중 = 소비자 아님
+PASS AQ5 같은 트리 --against = 같음
+PASS AQ6 수리 전 plan.md(Python 소비자 없음) --against = 다름 경계 교차 소비자(새 점검 · fail-closed)
+PASS AQ7 주석 줄(한글이 바로 붙은 점 경로) = 소비자
+PASS AQ8 client 단위 — 다른 영역의 import 줄 = 소비자(HEAD 는 0 → G2 영향 화면 공백)
+PASS AD2 web.a.q 꼬리가 web.a.q2 줄을 잡지 않는다 · 한글이 붙은 줄은 잡는다(묶음 분배)
+PASS AD2′ 형제 모듈 꼬리는 자기 줄만(s_p_sibling:1)
+PASS AD3 plan 의 git grep 호출 ≤ 4(범위·정적 한 묶음 + 치환 대상 한 묶음 · 각 -F · -F -w)
+PASS AD4 같은 트리 두 번 plan = byte 동일
+PASS B1 같은 트리 = 같음 exit 0
+PASS B2 다른 영역이 범위 정적 파일을 참조 = 다름 exit 2
+PASS B3 범위 파일 작업 트리 변경(목록 같음) = 다름 ② exit 2
+PASS B4 단위 안 미추적 파일 = 다름 ③ exit 2
+PASS B5 기록 plan 의 범위 미커밋 변경 1 = 다름 ① exit 2
+PASS B6 되돌린 뒤 = 같음 exit 0
+PASS C1 WN8 키 범위 안
+PASS C2 참조 치환 줄 = home_card:1
+PASS C3 참조 치환 줄의 WP4 = 편집 줄 키
+PASS C4 그 키의 다른 발견 줄 = 키 전체 줄 (다)
+PASS D1 plan --names 실행(plan.md 무변 · 절 밖 줄 무시)
+PASS D2 옛 모듈 import 줄 (나)
+PASS D3 옛 이름 호출 줄 (나)
+PASS D4 다른 영역이 스스로 정의한 같은 이름 helper 는 (나) 밖
+PASS D5 home_view2 import 줄은 점 성분 경계로 (나) 밖
+PASS D6 쌍 0 = exit 0 (나) 0
+PASS D7 이름: 형식 어긋남 = 실행 불능
+PASS R1 정적 단위: <script src> 로드 줄 = 줄 편집 (가)
+PASS R1′ 정적 단위: 로드 전용 줄은 소비자 아님
+PASS R2 정적 단위: 비로드 참조 줄(<img>) = 소비자
+PASS R3 _Refs 묶음 분배 = 파일별 개별 grep(전 파일 차등 대조)
+PASS R4 --names 폴더 쌍 (나) = 소비 줄
+PASS R5 --names 폴더 쌍 git grep 호출이 구성원 수와 무관(1 ≤ 호출 ≤ 6 · exit 0)
+PASS R6 경로: 파일 쌍 — 점 경로는 -w(home_view2 import 줄 :2 는 (나) 밖 · home_view import 줄 :1 은 (나))
+PASS F1 check 인용 불일치 2(없는 인용 · 범위 밖 위치) = exit 2
+PASS F2 범위 밖 위치 사유
+PASS F3 첫 칸 비숫자 짧은 행(위치 토큰 있음) = 칸 부족 인용 불일치(버리지 않음)
+PASS F3b check.md 에 그 행이 칸 부족으로
+PASS G1 양성 출구 전부 통과 exit 0
+PASS G2 계수
+PASS G3 G0 목록 제외 행은 위반 인용 ↔ 제외 인용
+PASS G4 긍정 술어 없는 문장 근거 제외 red
+PASS G5 부정형 문장 근거 제외 red
+PASS G6 제외 인용과 위반 인용이 같은 문장(괄호 밖) red
+PASS G7 적용 한정 어구 문장 근거 제외 red
+PASS G8 적용 범위 규범 문단 자신 인용 red
+PASS G9 같은 절 다른 문단 오탐 red
+PASS G10 반대 방향 규칙 없는 사용자 판단 red
+PASS G11 테스트 파일 web/ 밖 · 항목 모듈 import 줄 경계 교차 → 채택 재분류(exit 0)
+PASS G12 테스트 파일 web/ 밖 → 채택 재분류
+PASS G13 채택 아닌 대상으로 M→M 병합 red
+PASS G14 «아니오» 없는 별도 요청 → 채택 재분류
+PASS G17 제외 인용이 위반 인용 구간과 겹침 red
+PASS G18 Coordinator 절차 문장 근거 제외 red(규칙 문서 아님)
+PASS G19 오탐 근거 = 위반 인용 문구 자체 red
+PASS G15 대리 출처의 채택 축소 red
+PASS G16 --final 은 남은 red 를 채택으로 기록 exit 0
+PASS G16b --final 확정 표 = verdict-final.md(채택으로 되돌린 M9)
+PASS G20 통과 행 판정 누락 red · verdict-final.md 없음
+PASS G20b red 판에는 확정 표를 쓰지 않는다
+PASS G21 --final 이 판정 없는 통과 행을 새 번호로 채택
+PASS G21b 새 번호 M11 이 verdict-final.md 에(verdict.md 에는 없음)
+PASS H1 속성 이름 = 키 행은 API 계약 근거 불성립
+PASS H2 키 리터럴 + 근거 칸 리터럴 = 성립
+PASS H3 근거 칸에 리터럴 없음 = 불성립
+PASS H4 모듈 상수 section 템플릿 render 여러 줄 호출 = 외부 동작
+PASS H5 urls path( 구간 = 외부 동작
+PASS H6 일반 줄 = 불성립
+PASS H7 비 ASCII 경로 참조 줄 = 인용 없는 web/ 경로
+PASS I1 무변 파일 항목 = 결정적 잔존 exit 2
+PASS I2 바뀐 파일 항목 = 리뷰어 확인 묶음(M_m 미정 exit 0)
+PASS I2b 묶음 머리 = 근거 칸 판형(` — ` 앞 위치만 · 줄임 없이) + web 예시
+PASS I2c 묶음 머리 web 예시
+PASS I3 머리가 위치가 아닌 해소 = 근거 판형 아님(리뷰어 잔존 아님) exit 2
+PASS I3′ `요약:` 뒤 재기재 안내(렌즈·불량 토큰 · 같은 시각)
+PASS I3″ 재기재 안내의 같은 시각 --finalize
+PASS I3‴ 같은 시각에 판형대로 고쳐 재확정 = 해소 exit 0
+PASS I3a 머리에 조사(WR2 M11 모양) = 판형 아님
+PASS I3b 조사가 꼬리 = 해소
+PASS I3c 괄호·설계 근거가 꼬리(WR2 M10 모양) = 해소
+PASS I3d web/ 없는 머리 = 해소(_repo_path 유지)
+PASS I3e 꼬리에만 위치 = 판형 아님(해소 아님)
+PASS I3f 무변 파일 머리 = 잔존(판형 아님 아님)
+PASS I3h 산출물 폴더 파일 머리 = 잔존(해소 아님)
+PASS I3i 절대 경로 머리(실재 · 바뀐 파일) = 판형 아님
+PASS I3j 대시 변형(en dash) = 판형 아님
+PASS I3k 판정 칸 «해소 안 됨» = 판단 불가(접두어로 해소 아님)
+PASS I3n 머리에 바뀐 파일·무변 파일 섞임 = 잔존
+PASS I3o 같은 M 두 행 잔존 + 판형 아님 해소 = 리뷰어 잔존 1 · 판형 아님 0
+PASS I3p 행 범위 밖 머리 = 판형 아님
+PASS I3r 같은 시각 재확정에서 앞 판 해소를 잔존으로 고쳐 씀 = 잔존(나빠지는 쪽은 막지 않는다)
+PASS I3s 짝 — 같은 시각 재확정에 M10 행 없음 = 앞 판 해소 유지
+PASS I3x 앞 판 해소 → 이번 판단 불가 = 판단 불가(exit 2)
+PASS I3y 앞 판 해소 → 이번 판형 아님 행 = 판형 아님(exit 2)
+PASS I3z 앞 판 판단 불가 → 이번 해소 = 판단 불가 유지
+PASS I3z′ 앞 판 잔존 → 이번 판형 아님 행 = 잔존 유지(판형 아님 경유 우회 봉쇄)
+PASS I3t 판형 아님 → 행 삭제(답 없음) → 판형 아님 = 잔존(근거 판형 아님 반복)
+PASS I3u core 산출물 폴더(.dddjango/…) 머리 = 잔존(해소 아님)
+PASS I3v result.json states 가 dict 아님 = 실행 불능(exit 1)
+PASS I3w 1차 해소 → 편집 → 같은 시각 2차(앞 판 지문 유지) → 새 시각은 이월 없이 다시 묶는다
+PASS I3l 렌즈 완전성 — 두 렌즈 항목에 screen 만 해소 = 판단 불가(discipline 답 없음)
+PASS I3q screen «잔존(일부)» + discipline 판형 아님 = 잔존(판단 불가·판형 아님 아님)
+PASS I3q′ 같은 시각 2차에 두 렌즈 해소로 고쳐도 잔존 유지(동결)
+PASS I3q″ 잔존 → screen 행 삭제(답 없음) = 잔존 유지
+PASS I3q‴ 이어서 두 렌즈 해소 = 잔존 유지(답 없음 경유 이탈 없음)
+PASS I3g 같은 시각 재확정에도 판형 아님 = 잔존(근거 판형 아님 반복)
+PASS I3g′ 세 번째 재확정(판형대로)도 잔존 유지(동결)
+PASS I3m 같은 시각 재확정으로 잔존을 해소로 뒤집기 = 잔존 유지(동결 · 끝 판 M9 해소)
+PASS I4 재상정 뺀 M10 은 판정 밖 · 확정 해소 M9 는 파일 무변이면 이월
+PASS I5 의미 audit 행 없음 = 실행 불능
+PASS I6 mode feature 폴더 = 실행 불능
+PASS K1 새 점검의 M9(파일 무변) = 결정적 잔존 — 앞 실행 해소 이월 없음
+PASS K2 --final 새 번호 M11 을 residual 이 verdict-final.md 에서 읽음
+PASS K3 확정 표 없음 = 실행 불능
+PASS K4 재상정 뒤 재승인이 다시 적은 M10 은 되살아난다
+PASS K5 의미 ⓐ 키 값 형식 어긋남(C1) = 실행 불능
+PASS K6 --final 이 병합 대상(M12 — 원 행이 통과 행 아님)을 빼면 병합 항목 M9 는 채택으로 확정(고아 병합 금지)
+PASS K6b 확정 표 M9 = 채택 · 병합 → M12 없음
+PASS K6c 고아 병합 교정은 대상 M 만 — 검사기 키 병합 M8 은 확정 표에 그대로
+PASS K7 번호 중복으로 병합 대상 M1 이 제외 항목으로 남으면 병합 항목 M10 은 채택(제외에 붙지 않는다)
+PASS L1 WN6 대응 미완 키의 파일 참조 줄은 참조 치환 줄이 아니다
+PASS L1b 그 WN6 은 대응 미완
+PASS L2 대조: WN6 접두 불일치(개명 교정) 키의 참조 줄 = 참조 치환 줄 1
+PASS M1 파일 없음 = 상시 답 없음 · 출처 값 없음
+PASS M2a 미추적 = 인식 안 함 + 기대 문장
+PASS M2a′ 사유 미추적
+PASS M2b 커밋본 = 인식 · 출처 값(행·커밋 12자)
+PASS M2c 커밋되지 않은 수정 = 인식 안 함
+PASS M3a 사용자 출처 재상정만(파일 무관 흐름) = gate exit 0 · 상시 답 줄 0
+PASS M3b 정상(결정 줄 머리 · web 상대 위치 · G0 사용자 판단 줄 뒤 M7) = exit 0
+PASS M4a 범주 셋 밖(단독) = 묻는다
+PASS M4b 범주 혼합 = 묻는다
+PASS M4c C 키 = 묻는다
+PASS M4d G0 의미 ⓐ 밖 M = 고친 줄
+PASS M5a 출처 행 어긋남 = ①
+PASS M5b 출처 커밋이 HEAD 조상 아님 = ①
+PASS M5c 처분 ⓑ = ②
+PASS M5d 칸 모양이 틀린 상시 답 줄도 검사 대상(조용히 빠지지 않음) = ②
+PASS M6a 표지 없는 재상정 절 = ④
+PASS M6b G0 절 안 상시 답 줄 = ④
+PASS M6c 상시 답 절 안 사용자 결정 줄 = ④
+PASS M7 앞선 재상정 사용자 답 뒤 상시 답 줄 = ④(사용자 답이 이긴다)
+PASS M8 대체 — 뒤 절 사용자 답 · 고친 상시 답 줄이 앞 red 줄을 대체
+PASS M9a 맨 `:행` = ③ 형식
+PASS M9b `행·행` 이어 적기 = ③ 형식(조용히 버리지 않음)
+PASS M9c git_snapshot 판 줄 수 밖 = ③
+PASS M9e 위치 뒤 꼬리 글 = ③ 형식(앞머리만 맞춰 통과시키지 않음)
+PASS M9d 슬라이스 0 뒤 파일이 줄어도 git_snapshot 판 기준 = exit 0
+PASS M10a 의미 재상정 키 ≠ 상시 답 줄 키 = ⑤
+PASS M10b 재상정 키 ≠ - = ⑤
+PASS M11 재사용 폴더 — 마지막 `## G0` 앞 실행 줄은 보지 않는다
+PASS M12 적용 커밋 뒤 파일 수정·삭제 = 커밋 기준으로 유효 exit 0
+PASS M12′ 삭제 뒤 standing = 없음(다음 BC 부터 원래대로)
+PASS M13 병합 괄호 M3(+M12) — 괄호 안은 키가 아니다 = exit 0
+PASS M14 대체는 뒤 재상정 절만 — G0 재승인 절 사용자 줄은 대체하지 않는다
+PASS M15 다중 키 줄을 뒤 사용자 답이 일부 키만 다루면 나머지 키는 계속 검사(키별 대체)
+PASS M16 범주를 백틱째·쉼표로 옮겨도 인식 = exit 0
+PASS M17a 비UTF-8 파일 = red(실행 불능 아님)
+PASS M17b 디렉터리 = red
+PASS M17c 역순 행 = 형식 red
+PASS M17d 절대 경로 = 형식 red
+fixtures_refactor_audit: PASS=190 FAIL=0
+
+== fixtures_subst.sh
+PASS S1 경로 치환 + 줄 재정렬 = green
+PASS S2a 정의 이동(모듈 머리 분할 · TYPE_CHECKING · 문자열) = green
+PASS S2b 대조: 이름 쌍(--names) 없으면 red
+PASS S3 지역 import · 개명 속성 참조 = green
+PASS S4 import 재정렬·괄호 여러 줄 = green
+PASS S5a 이름 교환 쌍 = green(동시 치환)
+PASS S5b 경로 맞바꿈은 git 이 개명 쌍으로 못 봄 = red(fail-closed 한계 기록)
+PASS S6a 폴더 전체 이동 = green
+PASS S6b 파일 하나 이동 = 파일 쌍만(쌍 2 · 폴더 쌍 없음) green
+PASS S7a web.a.q→web.a.r 쌍이 web.a.q2→web.a.r2 편집을 덮지 않음 = red
+PASS S7b 대조: web.a.q 만 치환하면 green
+PASS S8a 같은 블록 안 문장 건너 import 이동 = red
+PASS S8b 블록 사이 import 이동 = red
+PASS S9a 넓은 영역 치환(images/ 전체) = red
+PASS S9b 단언 변경 = red
+PASS S9c 모듈 별칭 import 추가 = red(fail-closed)
+PASS S10a 테스트 밖 web/ 밖 파일 = red
+PASS S10b --except 배선 파일 제외 = green · 요약에 제외 표시
+PASS S10c --except 에 테스트 파일 = 실행 불능
+PASS S10d --except 에 web/ 아래 경로 = 실행 불능
+PASS S10e --except 에 폴더 = 실행 불능(테스트가 새어 빠지지 않게)
+PASS S10f --except 에 글롭 = 실행 불능
+PASS S10g --except 에 글롭(파일 모양) = 실행 불능
+PASS S11a 미커밋 테스트 단언 변경 = 실행 불능
+PASS S11b 대조: .dddjango-web 미추적 기록은 가드 밖 green
+PASS S11c 커밋된 .dddjango-web 기록은 대조 밖 green
+PASS S12a 새 테스트 파일 = red
+PASS S12b 테스트 파일 삭제 = red
+PASS S12c 테스트 파일 개명 = red
+PASS S12d 이진 fixture 변경 = red
+PASS S13a 없는 기준 커밋 = 실행 불능
+PASS S13b 대상 파일 파싱 실패 = 실행 불능
+PASS S14a 개명 뒤 다른 커밋의 내용 교체 = green(커밋별 개명 사슬)
+PASS S14b .py 개명 뒤 다른 커밋의 본문 재작성 = green
+PASS S14c 개명 사슬 합성(old→mid→last · 뒤 교체) = green
+PASS S14d 대조: 사슬 중간 이름(대상에 없음)으로 치환 = red
+PASS S14e 대조: 개명 뒤 옛 경로가 대상에 되살아나면 쌍 없음 = red
+PASS S14f 대조: 커밋에 걸친 경로 맞바꿈 = red(S5b 와 같은 fail-closed)
+PASS S14g 대조: 구간에서 새로 만든 파일의 개명 사슬(옛 경로가 기준에 없음) = red
+PASS S14i 대조: 비운 옛 이름에 새로 만든 파일의 개명은 기준 파일의 후계가 아니다 = red
+PASS S14j 대조: 개명 뒤 삭제(새 경로가 대상에 없음) = red
+PASS S14k 대조: 새 경로가 기준에 있던 경로(other 자리 덮어쓰기) = red
+PASS S14l 곁가지 개명 → 머지 → 본선 교체 = green(첫 부모 diff 의 개명)
+PASS S14m 곁가지 안 개명+교체 → 머지 = red(첫 부모 밖 — fail-closed 한계 기록)
+PASS S14n 대조: 무관 이력(구간에 뿌리 커밋) · 뿌리 파일의 개명(옛 경로가 기준에 없음) = red(실행 불능 아님)
+PASS S14n″ 뿌리 커밋 표지는 «뿌리»(미승인 병합 아님 — 등재 대상이 아니다)
+PASS S14n′ 대조: 무관 이력의 뿌리가 기준과 같은 경로를 다른 내용으로 들인 뒤 개명 = red(뿌리 경로도 계보를 끊는다)
+PASS S14o 대조: 기준이 첫 부모 줄기 밖 · 기준에서 지운 경로의 개명(옛 경로가 기준에 없음) = red
+PASS S14h 대조(X2 M3 커밋 분리판): 파일을 커밋마다 다른 폴더로 옮겨도 폴더 거짓 쌍 없음 = red
+PASS S15a′ 대조: 미등재 main 받기 = red(유입이 레인 편집 · 승인 목록 밖 알림)
+PASS S15a 등재한 main 받기 유입(비테스트 · 테스트 단언 · 새 테스트 · 문서) + 슬라이스 0 = green
+PASS S15b 발주·보고 문서(docs/ 아래 .md) 커밋 = green · 문서 제외 경로 표시
+PASS S15c 대조: web/ 밖 비테스트 .txt 는 문서 제외 밖 = red
+PASS S15d 대조: 테스트 경로의 .md(기록 없는 커밋) 는 문서 제외 밖 = red
+PASS S15e 등재 병합 안에 끼운 테스트 편집(앞선 기능 편집 없음) = red · 승인 병합 안 표지
+PASS S15e′ 등재 병합 안에 끼운 비테스트 편집 = red · 병합 약칭
+PASS S15f 겹침: 슬라이스 0 이 치환한 테스트를 상류도 고침(등재 · 자동 병합) = green · 목록 없음
+PASS S15g 대조: 겹친 파일의 병합 뒤 단언 변경(기능 기록 없음) = red · 슬라이스 0 대조 커밋
+PASS S15g′ 같은 편집을 기능 슬라이스 커밋으로 기록 = green · 목록
+PASS S15h 상류가 바꾼 테스트를 등재 병합이 상류 판과 다르게 만듦(앞선 기능 편집 없음) = red
+PASS S15h′ 상류가 바꾼 비테스트를 레인이 고침(기능 기록이어도) = red · 기준 = 상류 판
+PASS S15i 레인 곁가지 병합(미등재) 안의 단언 편집 = red(곁가지 커밋을 기능으로 적어도 병합이 슬라이스 0 대조)
+PASS S15j 기능 기록 없는 커밋의 web/ 밖 테스트 단언 편집 = red(슬라이스 0 대조) · 그 커밋 약칭
+PASS S15j′ 기능 슬라이스 커밋으로 기록 = green · G2 목록(파일 · 상태 · 커밋 · 슬라이스)
+PASS S15k 기능 편집 → 등재 병합 → 되돌림 = green · 목록 없음(순변화 0)
+PASS S15l 기록 없는 커밋이 상류 변경을 기준 판으로 되돌림(누적 diff 0) = red(상류 판 대비 슬라이스 0 대조)
+PASS S15m 같은 테스트를 등재한 두 번의 main 받기가 차례로 고침 = green(마지막 상류 판이 기준)
+PASS S15n 한 테스트 파일에 슬라이스 0 치환 · 기능 편집 · 기록 없는 비치환 편집 = red 는 마지막 구간만
+PASS S15p 기준 앞에서 갈라진 곁가지의 단언 편집 병합(세탁) · 미등재 = red
+PASS S15p′ 발주자가 그 병합을 등재하면 상류로 본다 · ^2 를 담은 ref 가 HEAD 가지뿐 = 역방향/합성 병합 의심 알림
+PASS S16a 승인 목록 줄 형식 오류 = 실행 불능
+PASS S16b 승인 목록에 비병합 커밋 = 실행 불능
+PASS S16c 기준..대상 첫 부모 사슬 밖 병합 등재 = 실행 불능
+PASS S16d 대조: 기준이 대상 사슬 밖이면 목록 판정 불가 = 실행 불능
+PASS S16e --build 폴더 없음 = 실행 불능
+PASS S16f build-state.json 없음 = 실행 불능
+PASS S16g build-state slices 가 목록 아님 = 실행 불능
+PASS S16h 슬라이스 0 과 기능 양쪽에 적힌 커밋 = red(기록 모순)
+PASS S16h′ 풀 수 없는 기록 알림
+PASS S16i --build 는 --subst-check 전용 = 사용 오류
+PASS S16j 주석 · 빈 줄 · 기준 이전 병합 = 판정 불참 알림 · green
+PASS S16k slices[0] 은 이름과 무관하게 슬라이스 0 = red
+PASS S17a1 리팩토링 판(slices 하나) · 등재 병합 안 끼운 단언 편집 = red
+PASS S17a2 리팩토링 판 · 상류가 바꾼 테스트의 충돌 해소에 단언 변경을 섞음 = red
+PASS S17a3 슬라이스 0 끝 ④(기능 커밋 0) · 등재 병합 안 단언 편집 = red
+PASS S17a3′ 되돌림 커밋(기록 없음) = green(병합 안 몫이 연 구간이 순변화 0)
+PASS S17a3″ 같은 편집을 기능 커밋으로 = green · 목록
+PASS S17fm 기능 편집 뒤 상류도 같은 파일을 고쳐 등재 자동 병합 = green · 목록(기능 · 병합 안)
+PASS S17cf 충돌 표지를 남긴 테스트 파일을 등재 병합이 들임 = 실행 불능(파싱 실패)
+PASS S17a4 등재 병합이 상류의 비테스트 변경을 버림 = red(기준 = 상류 판)
+PASS S17a4s 등재 병합이 -s ours(상류 테스트 변경 버림) = red
+PASS S17a4s′ 같은 병합의 비테스트 버림도 red
+PASS S17a5 상류 비테스트 변경을 먼저 cherry-pick 뒤 등재 main 받기(순변화 = 상류 판) = green
+PASS S17a6 앱 폴더 .md(기능 기록이어도) = red
+PASS S17a6′ 루트 README.md · docs/ 아래 .md = green · 경로 표시
+PASS S17a7 슬라이스 0 커밋을 기능에도 오기 = red(기록 모순)
+PASS S17a8 기록 'HEAD'(기호) = 거부 · 슬라이스 0 대조 red
+PASS S17r0 slices[0] 기록 없음 = 실행 불능
+PASS S17r1 기능 기록이 첫 슬라이스 0 기록보다 앞 = 슬라이스 0 대조 red · 알림
+PASS S17a14 한 구간의 slices[0] 커밋 · 기록 없는 커밋 = 출처 표지로 가름
+PASS S17a14′ 기록 없는 쪽을 기능으로 적으면 = green · 목록
+PASS S17a15 기록 없는 커밋 7개 = 줄에 첫 커밋도 싣는다(자르지 않음)
+PASS S17j 미승인 병합을 기능 기록에 적음 = 버림 알림 · red
+PASS S17f1 푸시된 레인(pub/lane/x 가 ^2 를 담음) · 세탁 병합 등재 = 역방향/합성 알림
+PASS S17w 얕은 이력 · 승인 병합 = 실행 불능(unshallow 안내)
+PASS S17w2 공통 조상 없는 승인 병합 = 실행 불능
+PASS S17x 테스트 파일 실행 비트만 바꿈 = green(git 과 같게 타입 변경 아님)
+PASS S17w3 얕은 이력(공통 조상은 있음) · 승인 병합 = 실행 불능
+PASS S17o 기준이 첫 부모 줄기 밖 · 기준 쪽에서만 바뀐 테스트(사슬 걸음 없음) = red(기준 판 대비)
+PASS S18o --build 인데 기준이 첫 부모 사슬 밖(첫 걸음이 기능) = 실행 불능
+PASS S18r build-state mode=refactor 의 둘째 슬라이스 기록 = 슬라이스 0 대조 red
+PASS S18r′ mode=refactor 재분류 알림
+PASS S18d 등재 병합 안에서 테스트 파일 삭제(상류는 안 건드림) = red
+PASS S18m 한 단 폴더 README.md · 앱 안 docs/ 의 .md = red(문서 자리 밖)
+PASS S18m′ 앱 안 docs/ .md 도 red
+PASS S18x 비테스트 파일 실행 비트만 = red(비테스트는 모드도 변경)
+PASS S18u 등재 병합 유입(U) 뒤 둘째 등재 병합 안 단언 편집(앞선 기능 없음) = red
+PASS S18v 미등재 main 받기의 비테스트 = 병합 유입 줄(«테스트 밖» 줄 아님 · 등재 먼저)
+PASS S18v′ 그 줄을 git_snapshot 판 복원으로 풀어도(main 변경 되돌림) = red 로 남는다(병합 줄)
+PASS S18v″ 등재하면 그 복원이 상류 판 대비 어긋남 = red(기준 = 상류 판)
+PASS S18v‴ 줄의 기준 판(상류 판)으로 복원 = green
+PASS S18w 미등재 병합 유입 경로를 레인도 고침 = 병합 유입 줄(두 표지) · «테스트 밖» 줄 아님
+PASS S18t 테스트만 들인 미등재 main 받기를 되돌림(문면 위반) = red 로 남는다(병합 줄)
+PASS S18c 루트 에이전트 지침 CLAUDE.md = red(문서 자리 아님)
+PASS S18c′ 루트 AGENTS.md = red
+PASS S18c″ 루트 지침 이름은 대소문자 무관(claude.md) = red
+PASS S18a 레인이 더한 비테스트(A · 비 .md 문서) = red
+PASS S18a′ 판에 없는 (A) 경로는 git rm 복원 커밋 = green
+PASS S18b (승인 병합 안) 되돌림 커밋을 기능으로 기록 = red 로 남는다(구간이 닫히지 않음)
+PASS S18b′ 같은 되돌림을 slices[0](슬라이스 0 반송)으로 기록 = green
+PASS S18n 기록한 슬라이스 0 커밋을 amend = 실행 불능 · 버린 사유를 함께 싣는다
+fixtures_subst: PASS=131 FAIL=0
+
+== fixtures_templates.sh
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 2.146s
+
+OK
+
+== fixtures_token_disposition.sh
+PASS TD1_정상
+PASS TD2_미처분
+PASS TD3_풀밖
+PASS TD4_중복
+PASS TD5_기각정당성
+PASS TD5_토큰명
+PASS TD6_무발견
+PASS TD7_비변별
+PASS TD8_rem환산
+PASS TD9_귀속불가
+PASS TD10_판형위반
+PASS TD11_레거시
+PASS TD12_화면범위
+PASS TD12_범위없으면발견
+PASS TD13_연속블록
+PASS TD14_중첩언랩
+PASS TD15_var인용
+PASS TD16_meta부재
+PASS U1_사용법
+PASS U2_파일부재
+PASS DET_결정론
+
+fixtures_token_disposition: PASS=21 FAIL=0
+
+== fixtures_ui_javascript.sh
+PASS J1 기능 JS·page defer·HTMX include·json_script positive
+PASS J2 WP1 wrong/nested/min/mjs/cjs 5건
+PASS J3 WS6 htmx nested·wrong js·mjs 3건
+PASS J4 WP2 actual src/defer·CDN·data·javascript·ghost·case·suffix 9건
+PASS J4b quoted greater-than opener positive
+PASS J5 WP2 no-defer·async·fragment·duplicate 발화
+PASS J5 WP2 fragment 위치 발화
+PASS J5 WP2 page/base 중복 로드 발화
+PASS J5b isolated module positive
+PASS J5c duplicate against unchanged baseline load
+PASS J5d prepended duplicate before unchanged baseline load
+PASS J6 WP2 multiline 기존 opener 내부 async 변경 검출
+PASS J7a genuine legacy baseline core remains consumable
+PASS J7b canonical+legacy core duplicate blocked
+PASS J8a 신규 legacy htmx 이름 reserved
+PASS J8b motion 이름은 byte 판형으로만 허용
+PASS J9 WP3 inline/hx-on/js:/조건식 회귀 4건
+fixtures_ui_javascript: PASS=17 FAIL=0
+
+run_fixtures: 픽스처 파일 16개 실행, 실패 0개
+[verify-web] refactor_audit self-test(플랫폼 구조 판별 · 점검 절 · 적용 한정 어구 · 극성 표본 · 상시 답 문면) · 상시 답 블록 core 대조 · 문단 Claude·Codex 대조
+요약: self-test claude · 점검 절 62 · 어구 32 · 극성 표본 18 · red 0
+요약: self-test codex · 점검 절 62 · 어구 32 · 극성 표본 18 · red 0
+[verify-web] codex 미러 byte 대조(scripts·assets)
+[verify-web] references byte 미러 대조(implementation-ui·architecture-web·discipline-web-houserules)
+[verify-web] REQUEST_GUIDE byte 미러 대조
+[verify-web] 요청 가이드 배포·발견 계약
+[request-guide] PASS: installation, discovery and mirror contracts
+make verify-web  129.48s user 135.35s system 84% cpu 5:13.57 total
+verify-web exit 0

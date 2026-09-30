@@ -41,7 +41,7 @@ li.todo .m { color:var(--todo); }
 <button class="theme" onclick="var r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'||(!r.dataset.theme&&matchMedia('(prefers-color-scheme: dark)').matches))?'light':'dark'">밝게/어둡게</button>
 <main>
 <h1>리팩토링 진행표</h1>
-<p class="sub">갱신 2026-09-30 18시 · ✓ 끝 · ▶ 진행 중 · ○ 남음</p>
+<p class="sub">갱신 2026-10-01 2시 26분 · ✓ 끝 · ▶ 진행 중 · ○ 남음</p>
 
 <div class="cols">
 <section class="col">
@@ -54,8 +54,9 @@ li.todo .m { color:var(--todo); }
 <li class="done"><span class="m">✓</span>리허설 — 기능 요청</li>
 <li class="done"><span class="m">✓</span><span>리허설 — 리팩토링 <code>service_policy</code> <span class="note">· G2 완주 · 결함 1 찾음</span></span></li>
 <li class="done"><span class="m">✓</span><span>결함 수리 — 검사기 #195 <span class="note">· 커밋 완료</span></span></li>
-<li class="doing"><span class="m">▶</span><span>개선 — 정리 가능 여부 미리 판정 · 검사기 인자 팩토리 · 질문 줄이기(상시 답) <span class="note">· 커밋 끝(재리허설 질문 5 → 1) · 후속 수리 8c 커밋 끝 · 결함 후보 1건 진단 중</span></span></li>
-<li class="doing"><span class="m">▶</span><span>배포 대기 <span class="note">· 현장 진행 중 레인 3개가 G2 넘기면</span></span></li>
+<li class="done"><span class="m">✓</span><span>개선 — 정리 가능 여부 미리 판정 · 검사기 인자 팩토리 · 질문 줄이기(상시 답) <span class="note">· 커밋 끝(재리허설 질문 5 → 1) · 후속 수리 8c·8d 커밋 끝</span></span></li>
+<li class="doing"><span class="m">▶</span><span>속도 개선 <span class="note">· 현장 8-C-0 18시간+ · 검사 병렬화 · 재리뷰 멈춤 기준 · 리뷰어 노트 직접 기록 · 설계 단계 인수 점검 · 개정 파급 대조 — 설계 리뷰 중 · 품질은 그대로</span></span></li>
+<li class="todo"><span class="m">○</span><span>배포 <span class="note">· 속도 개선 뒤(사용자 «배포는 더 나중에») · 현장 레인이 G2 넘긴 때</span></span></li>
 <li class="todo"><span class="m">○</span><span>설치본 갱신 <span class="note">· 사용자 <code>/plugin</code></span></span></li>
 </ul>
 <div class="stage">2. 테스트 드라이브 <span class="note">(spring_dream_server 작업 완료 뒤)</span></div>
@@ -74,8 +75,9 @@ li.todo .m { color:var(--todo); }
 <li class="done"><span class="m">✓</span>리허설 — 기능 요청</li>
 <li class="done"><span class="m">✓</span><span>리허설 — 리팩토링 <code>web/home</code> <span class="note">· 결함 0</span></span></li>
 <li class="done"><span class="m">✓</span><span>결함 수리 — 치환 확인 · 계약 절단 문구 <span class="note">· 커밋 완료</span></span></li>
-<li class="doing"><span class="m">▶</span><span>개선 — Codex 문구 정렬 · 계약 절단 기록 · 되살아난 옛 문단 정리 · 상시 답 <span class="note">· 커밋 끝(로고 교체 질문 1 → 0 · 비용 −34%) · 후속 수리 8c 커밋 끝 · 결함 후보 1건 진단 중</span></span></li>
-<li class="doing"><span class="m">▶</span><span>배포 대기 <span class="note">· dddjango 와 함께</span></span></li>
+<li class="done"><span class="m">✓</span><span>개선 — Codex 문구 정렬 · 계약 절단 기록 · 되살아난 옛 문단 정리 · 상시 답 <span class="note">· 커밋 끝(로고 교체 질문 1 → 0 · 비용 −34%) · 후속 수리 8c·8d·8e 커밋 끝(8e = 빚 정리한 레인이 G2 에서 멈추던 결함)</span></span></li>
+<li class="doing"><span class="m">▶</span><span>속도 개선 <span class="note">· 현장 problem1·2 17~19시간 · 기다림 폴링 줄이기 · 시안 장식 판별 · 린트 선행 · 기록 한 줄 — 설계 리뷰 중 · 품질은 그대로</span></span></li>
+<li class="todo"><span class="m">○</span><span>배포 <span class="note">· dddjango 와 함께 · 속도 개선 뒤</span></span></li>
 <li class="todo"><span class="m">○</span><span>설치본 갱신 <span class="note">· 사용자 <code>/plugin</code></span></span></li>
 </ul>
 <div class="stage">2. 테스트 드라이브 <span class="note">(spring_dream_server 작업 완료 뒤)</span></div>
@@ -85,7 +87,7 @@ li.todo .m { color:var(--todo); }
 </section>
 </div>
 
-<div class="next"><b>지금</b> — 개선 8b·8c·8d 커밋 끝(8d = core 판정 재분류 누락 · web 영향 범위 누락 · web plan 느림 1~2분 → 1~2초 · 고아 병합) · 현장 web 레인 두 개(problem1·problem2)가 12시간 넘게 걸린 원인을 분석하고 지금 버전에서도 남는지 리뷰 중<br><b>다음</b> — 속도 분석 결과 보고 · 현장 진행 중 레인이 G2 를 넘기면 배포(<code>make release</code> · <code>make release-web</code>) · 그 뒤 설치본 갱신은 사용자 <code>/plugin</code></div>
+<div class="next"><b>지금</b> — 8e 결함 수리 커밋 끝(<code>fd5834c8</code> · 봉인 <code>16038f0c</code> · main 검증 dddjango 5/5 · web 통과) → dddjango·web 수리는 모두 끝 · 속도 개선: 1순위 11건 + 설계 단계 인수 점검(C7) 설계 끝 → 적대 리뷰 2 진행 중 · 설계 리뷰 라운드 진단(C11) 끝 — 라운드를 막은 흠의 63~69% 가 «고치다 생긴 흠» → 개정 파급 대조 등 K1~K3 설계 중(사용자 «셋 다 설계에 추가») · 원칙 = 품질은 그대로<br><b>다음</b> — 리뷰 처분 → 구현(core · web 모두 지금 가능) → 리뷰·재검토 → 커밋 승인 → 배포는 속도 개선 뒤(사용자 «배포는 더 나중에»)</div>
 </main>
 </body>
 </html>

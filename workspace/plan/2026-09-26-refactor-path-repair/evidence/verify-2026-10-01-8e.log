@@ -1,0 +1,11 @@
+# make verify · main fd5834c8 + 봉인 재발행(미커밋) · 2026-10-01 02:18
+[verify] 병렬 실행: verify-ontology verify-base-core verify-base-cross verify-base-backstop verify-base-regen
+(전체 로그: /tmp/djr-verify.piNn10 · 상세 출력: make verify VERBOSE=1)
+  ✓ verify-ontology green (95초)
+  ✓ verify-base-core green (95초)
+  ✓ verify-base-backstop green (132초)
+  ✓ verify-base-cross green (283초)
+  ✓ verify-base-regen green (407초)
+  ✓ verify green — 5/5 (407초 · 전체 로그: /tmp/djr-verify.piNn10)
+make verify  968.18s user 367.26s system 327% cpu 6:47.62 total
+verify exit 0
