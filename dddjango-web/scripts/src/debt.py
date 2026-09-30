@@ -500,7 +500,8 @@ def reference_lines(root: Path, needles: List[str], word: bool = False,
 
 
 def is_test_path(path: str) -> bool:
-    """테스트 파일 판정(dddjango behavior_guard 의 TEST_SEGMENTS 와 같게) — 저장소 상대 경로."""
+    """테스트 파일 판정(경로 성분 test·tests · test_*.py · *_test.py · conftest.py — dddjango behavior_guard 의
+    판별과 다르다) — 저장소 상대 경로."""
     parts: List[str] = path.split('/')
     name: str = parts[-1]
     return (any(p in ('test', 'tests') for p in parts[:-1]) or name == 'conftest.py'

@@ -100,7 +100,7 @@ verify-web:
 	python3 codex-dddjango-web/skills/dddjango-web/scripts/refactor_audit.py --self-test; \
 	cmp -s <(grep -F '**적용 범위 규범**:' dddjango-web/commands/dddjango-web.md) <(grep -F '**적용 범위 규범**:' codex-dddjango-web/skills/dddjango-web/SKILL.md) || { echo "ERROR: 적용 범위 규범 문단(적용 한정 어구) Claude·Codex 불일치"; exit 1; }; \
 	b=$$(sed -n '/상시 답 인식 블록 시작/,/상시 답 인식 블록 끝/p' dddjango-web/scripts/refactor_audit.py); [ -n "$$b" ] && cmp -s <(printf '%s\n' "$$b") <(sed -n '/상시 답 인식 블록 시작/,/상시 답 인식 블록 끝/p' $(or $(STANDING_CORE),dddjango/scripts/refactor_audit.py)) || { echo "ERROR: 상시 답 인식 블록 core·web 불일치 — core 블록을 표지 주석째 web 에 복사한다(착륙 전 대조는 STANDING_CORE=<core refactor_audit.py>)"; exit 1; }; \
-	for p in '**Phase 1~2**' '**상시 답**'; do cmp -s <(grep -F "$$p" dddjango-web/commands/dddjango-web.md | sed -e 's/[$$]{CLAUDE_PLUGIN_ROOT}/$${SKILL_DIR}/g' -e 's/Bash로/네이티브 셸로/g') <(grep -F "$$p" codex-dddjango-web/skills/dddjango-web/SKILL.md) || { echo "ERROR: $$p 문단 Claude·Codex 불일치(플랫폼 토큰 치환 뒤)"; exit 1; }; done; \
+	for p in '**Phase 1~2**' '**상시 답**' '**슬라이스 0 호출**' '**끝 green 뒤 재확인**' '6. **G2 배너**' '그 커밋을 만든 파견 슬라이스의'; do cmp -s <(grep -F "$$p" dddjango-web/commands/dddjango-web.md | sed -e 's/[$$]{CLAUDE_PLUGIN_ROOT}/$${SKILL_DIR}/g' -e 's/Bash로/네이티브 셸로/g') <(grep -F "$$p" codex-dddjango-web/skills/dddjango-web/SKILL.md) || { echo "ERROR: $$p 문단 Claude·Codex 불일치(플랫폼 토큰 치환 뒤)"; exit 1; }; done; \
 	echo "[verify-web] codex 미러 byte 대조(scripts·assets)"; \
 	diff -rq --exclude=__pycache__ dddjango-web/scripts codex-dddjango-web/skills/dddjango-web/scripts; \
 	diff -rq dddjango-web/assets codex-dddjango-web/skills/dddjango-web/assets; \

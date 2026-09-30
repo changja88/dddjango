@@ -421,6 +421,7 @@ git -C "$P" mv web/static/images/ghost.png web/static/images/ghost_2.png
 sub "$P/tests/web/refs.txt" images/ghost.png images/ghost_2.png; commit_all "$P" c1 >/dev/null
 OUT=$(run_backstop "$P" --subst-check "$S14NBASE" HEAD); E=$?
 assert "S14n 대조: 무관 이력(구간에 뿌리 커밋) · 뿌리 파일의 개명(옛 경로가 기준에 없음) = red(실행 불능 아님)" 2 "치환만으로 설명되지 않는다" "실행 불능" "$E" "$OUT"
+assert "S14n″ 뿌리 커밋 표지는 «뿌리»(미승인 병합 아님 — 등재 대상이 아니다)" 2 "(뿌리)" "(미승인 병합)" "$E" "$OUT"
 P=$(case_repo s14n2)
 git -C "$P" checkout -q --orphan unrelated
 rewrite "$P/web/static/images/old.png" s14n2; commit_all "$P" root >/dev/null
@@ -452,6 +453,424 @@ sub "$P/tests/web/test_m.py" "web.a.q.VALUE" "web.b.q.VALUE"
 commit_all "$P" c3 >/dev/null
 OUT=$(run_backstop "$P" --subst-check "$S14HBASE" HEAD); E=$?
 assert "S14h 대조(X2 M3 커밋 분리판): 파일을 커밋마다 다른 폴더로 옮겨도 폴더 거짓 쌍 없음 = red" 2 "import 구간" - "$E" "$OUT"
+
+# ---------- S15: 대조는 레인 편집뿐 — --build <산출물 폴더> 의 approved-merges.txt(발주자 소유)에 적힌 병합의
+# 상류 유입 · docs/ · .dddjango/ · 루트의 .md 는 빼고, 슬라이스 0 대조(slices[0] · 기록 없는 커밋 · 미승인 병합 ·
+# 앞선 기능 편집을 잇지 않는 승인 병합 안 몫)는 치환만, 기능 슬라이스 커밋의 테스트 변경은 목록으로 낸다(로드맵 8e)
+# 사례마다 산출물 커밋(= git_snapshot)을 기준 위에 얹는다 — 상류 가지 up 은 BASE 에서 갈라져 그 후손이 아니다.
+snapshot() { # snapshot <저장소> — 산출물 커밋(git_snapshot) 해시 출력 · 재료 폴더 <저장소>.build(build-state: slices[0]
+  # 슬라이스 0 · slices[1] 기능 — 사례 사이 가지 이동이 추적 파일에 막히지 않게 저장소 밖에 둔다 · S15b 는 저장소 안 판)
+  mkdir -p "$1/.dddjango-web/run" "$1.build"; echo "# scope" > "$1/.dddjango-web/run/scope.md"
+  printf '{"slices": [{"name": "slice-0-debt", "commits": []}, {"name": "slice-1-feature", "commits": []}]}\n' \
+    > "$1.build/build-state.json"
+  commit_all "$1" snapshot
+}
+feature() { # feature <저장소> <커밋> — build-state 기능 슬라이스 commits 에 더한다(Coordinator 기록)
+  python3 - "$1.build/build-state.json" "$2" <<'PY'
+import json, sys
+p, sha = sys.argv[1:]
+d = json.load(open(p, encoding='utf-8')); d['slices'][1]['commits'].append(sha)
+json.dump(d, open(p, 'w', encoding='utf-8'))
+PY
+}
+approve() { echo "$2 main 받기 승인" >> "$1.build/approved-merges.txt"; }   # 발주자 등재
+record() { # record <저장소> <슬라이스 번호> <커밋> — build-state 슬라이스 commits 에 더한다(Coordinator 기록)
+  python3 - "$1.build/build-state.json" "$2" "$3" <<'PY'
+import json, sys
+p, i, sha = sys.argv[1:]
+d = json.load(open(p, encoding='utf-8')); d['slices'][int(i)]['commits'].append(sha)
+json.dump(d, open(p, 'w', encoding='utf-8'))
+PY
+}
+slice0() { # 이미지 개명 + web/ 밖 테스트 치환(명세 슬라이스 0 절 판) · slices[0] 에 기록
+  git -C "$1" mv web/static/images/old.png web/static/images/new_image.png
+  sub "$1/tests/web/test_img.py" images/old.png images/new_image.png
+  record "$1" 0 "$(commit_all "$1" slice-0)"
+}
+upstream_branch() { git -C "$1" checkout -qb up "$BASE"; }   # BASE 에서 갈라진 up 가지(상류)로 옮긴다
+merge() { git -C "$1" -c user.name=t -c user.email=t@t merge -q --no-edit "$2" >/dev/null 2>&1; git -C "$1" rev-parse HEAD; }
+check() { run_backstop "$1" --subst-check "$2" HEAD --build "$1.build"; }
+P=$(case_repo s15a); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"
+echo "DEBUG = False" >> "$P/config/settings.py"
+sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() + 0 == 1"
+printf 'def test_up():\n    assert True\n' > "$P/tests/web/test_up.py"
+mkdir -p "$P/docs"; echo "# up" > "$P/docs/UP.md"
+commit_all "$P" upstream >/dev/null; git -C "$P" checkout -q -
+MRG=$(merge "$P" up)
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15a′ 대조: 미등재 main 받기 = red(유입이 레인 편집 · 승인 목록 밖 알림)" 2 "승인 목록 밖" - "$E" "$OUT"
+approve "$P" "$MRG"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15a 등재한 main 받기 유입(비테스트 · 테스트 단언 · 새 테스트 · 문서) + 슬라이스 0 = green" 0 "병합 유입 제외 4" "[subst]" "$E" "$OUT"
+P=$(case_repo s15b); SNAP=$(snapshot "$P"); slice0 "$P"
+mkdir -p "$P/docs/orders/lane"; echo "# 보고" > "$P/docs/orders/lane/REPORT-web.md"; commit_all "$P" report >/dev/null
+echo "- 게이트" >> "$P/docs/orders/lane/REPORT-web.md"; commit_all "$P" report2 >/dev/null
+cp "$P.build/build-state.json" "$P/.dddjango-web/run/"      # 실제 자리(산출물 폴더 · 미커밋 갱신) 판
+OUT=$(run_backstop "$P" --subst-check "$SNAP" HEAD --build "$P/.dddjango-web/run"); E=$?
+assert "S15b 발주·보고 문서(docs/ 아래 .md) 커밋 = green · 문서 제외 경로 표시" 0 "문서 제외(docs/ · .dddjango/ · 루트 .md) 1: docs/orders/lane/REPORT-web.md" "[subst]" "$E" "$OUT"
+echo "notes" > "$P/docs/orders/lane/NOTE.txt"; commit_all "$P" txt >/dev/null
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15c 대조: web/ 밖 비테스트 .txt 는 문서 제외 밖 = red" 2 "NOTE.txt 테스트 밖 web/ 밖 파일 변경(A)" - "$E" "$OUT"
+P=$(case_repo s15d); SNAP=$(snapshot "$P"); slice0 "$P"
+echo "# 메모" > "$P/tests/web/NOTES.md"; commit_all "$P" test-md >/dev/null
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15d 대조: 테스트 경로의 .md(기록 없는 커밋) 는 문서 제외 밖 = red" 2 "tests/web/NOTES.md 치환이 아닌 변경(A" - "$E" "$OUT"
+P=$(case_repo s15e); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"; printf 'X = 1\n' > "$P/tests/web/up_extra.py"; commit_all "$P" upstream >/dev/null; git -C "$P" checkout -q -
+git -C "$P" -c user.name=t -c user.email=t@t merge -q --no-commit up >/dev/null 2>&1
+sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() == 2"; MRG=$(commit_all "$P" "merge up"); approve "$P" "$MRG"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15e 등재 병합 안에 끼운 테스트 편집(앞선 기능 편집 없음) = red · 승인 병합 안 표지" 2 "슬라이스 0 대조 커밋 ${MRG:0:12}(승인 병합 안)" - "$E" "$OUT"
+P=$(case_repo s15e2); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"; printf 'X = 1\n' > "$P/tests/web/up_extra.py"; commit_all "$P" upstream >/dev/null; git -C "$P" checkout -q -
+git -C "$P" -c user.name=t -c user.email=t@t merge -q --no-commit up >/dev/null 2>&1
+echo "DEBUG = True" >> "$P/config/settings.py"; MRG=$(commit_all "$P" "merge up"); approve "$P" "$MRG"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15e′ 등재 병합 안에 끼운 비테스트 편집 = red · 병합 약칭" 2 "config/settings.py 테스트 밖 web/ 밖 파일 변경(M) — 레인 커밋 ${MRG:0:12}" - "$E" "$OUT"
+P=$(case_repo s15f); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"; printf '\n\ndef test_upstream():\n    assert OTHER\n' >> "$P/tests/web/test_img.py"; commit_all "$P" upstream >/dev/null; git -C "$P" checkout -q -
+MRG=$(merge "$P" up); approve "$P" "$MRG"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15f 겹침: 슬라이스 0 이 치환한 테스트를 상류도 고침(등재 · 자동 병합) = green · 목록 없음" 0 "기능 테스트 편집 0" "[subst]" "$E" "$OUT"
+sub "$P/tests/web/test_img.py" "    assert OTHER" "    assert not OTHER"; TW=$(commit_all "$P" tweak)
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15g 대조: 겹친 파일의 병합 뒤 단언 변경(기능 기록 없음) = red · 슬라이스 0 대조 커밋" 2 "슬라이스 0 대조 커밋 ${TW:0:12}" "대조 커밋 ${MRG:0:12}" "$E" "$OUT"
+feature "$P" "$TW"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15g′ 같은 편집을 기능 슬라이스 커밋으로 기록 = green · 목록" 0 "tests/web/test_img.py(M) — 커밋 ${TW:0:12}" "[subst]" "$E" "$OUT"
+P=$(case_repo s15h); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"; sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() + 0 == 1"; echo "DEBUG = False" >> "$P/config/settings.py"
+commit_all "$P" upstream >/dev/null; git -C "$P" checkout -q -
+git -C "$P" -c user.name=t -c user.email=t@t merge -q --no-commit up >/dev/null 2>&1
+sub "$P/tests/web/test_m.py" "assert web.a.q.VALUE == 3" "assert web.a.q.VALUE == 4"; MRG=$(commit_all "$P" "merge up"); approve "$P" "$MRG"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15h 상류가 바꾼 테스트를 등재 병합이 상류 판과 다르게 만듦(앞선 기능 편집 없음) = red" 2 "슬라이스 0 대조 커밋 ${MRG:0:12}(승인 병합 안)" - "$E" "$OUT"
+sub "$P/config/settings.py" "DEBUG = False" "DEBUG = None"; FX=$(commit_all "$P" fix-settings); feature "$P" "$FX"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15h′ 상류가 바꾼 비테스트를 레인이 고침(기능 기록이어도) = red · 기준 = 상류 판" 2 "config/settings.py 테스트 밖 web/ 밖 파일 변경(M) — 레인 커밋 ${FX:0:12}(slice-1-feature) · 기준 = 상류 판" - "$E" "$OUT"
+P=$(case_repo s15i); SNAP=$(snapshot "$P"); slice0 "$P"
+git -C "$P" checkout -qb side; sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() == 2"; SIDE=$(commit_all "$P" side)
+git -C "$P" checkout -q -; MRG=$(git -C "$P" -c user.name=t -c user.email=t@t merge -q --no-ff --no-edit side >/dev/null 2>&1; git -C "$P" rev-parse HEAD)
+feature "$P" "$SIDE"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15i 레인 곁가지 병합(미등재) 안의 단언 편집 = red(곁가지 커밋을 기능으로 적어도 병합이 슬라이스 0 대조)" 2 "슬라이스 0 대조 커밋 ${MRG:0:12}" - "$E" "$OUT"
+P=$(case_repo s15j); SNAP=$(snapshot "$P"); slice0 "$P"
+sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() == 2"; FEAT=$(commit_all "$P" feature)
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15j 기능 기록 없는 커밋의 web/ 밖 테스트 단언 편집 = red(슬라이스 0 대조) · 그 커밋 약칭" 2 "슬라이스 0 대조 커밋 ${FEAT:0:12}" - "$E" "$OUT"
+feature "$P" "$FEAT"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15j′ 기능 슬라이스 커밋으로 기록 = green · G2 목록(파일 · 상태 · 커밋 · 슬라이스)" 0 "기능 슬라이스·병합 테스트 편집 tests/web/test_m.py(M) — 커밋 ${FEAT:0:12}(slice-1-feature)" "[subst]" "$E" "$OUT"
+upstream_branch "$P"; echo "DEBUG = False" >> "$P/config/settings.py"; commit_all "$P" upstream >/dev/null; git -C "$P" checkout -q -
+MRG=$(merge "$P" up); approve "$P" "$MRG"
+git -C "$P" -c user.name=t -c user.email=t@t revert --no-edit "$FEAT" >/dev/null; feature "$P" "$(git -C "$P" rev-parse HEAD)"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15k 기능 편집 → 등재 병합 → 되돌림 = green · 목록 없음(순변화 0)" 0 "기능 테스트 편집 0" "[subst]" "$E" "$OUT"
+P=$(case_repo s15l); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"; sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() + 0 == 1"; commit_all "$P" upstream >/dev/null; git -C "$P" checkout -q -
+MRG=$(merge "$P" up); approve "$P" "$MRG"; sub "$P/tests/web/test_m.py" "assert f() + 0 == 1" "assert f() == 1"; UNDO=$(commit_all "$P" undo-upstream)
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15l 기록 없는 커밋이 상류 변경을 기준 판으로 되돌림(누적 diff 0) = red(상류 판 대비 슬라이스 0 대조)" 2 "슬라이스 0 대조 커밋 ${UNDO:0:12}" - "$E" "$OUT"
+P=$(case_repo s15m); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"; sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() + 0 == 1"; commit_all "$P" up1 >/dev/null; git -C "$P" checkout -q -
+M1=$(merge "$P" up); approve "$P" "$M1"; git -C "$P" checkout -q up
+sub "$P/tests/web/test_m.py" "assert f() + 0 == 1" "assert f() + 0 + 0 == 1"; commit_all "$P" up2 >/dev/null; git -C "$P" checkout -q -
+M2=$(merge "$P" up); approve "$P" "$M2"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15m 같은 테스트를 등재한 두 번의 main 받기가 차례로 고침 = green(마지막 상류 판이 기준)" 0 "병합 유입 제외 1" "[subst]" "$E" "$OUT"
+P=$(case_repo s15n); SNAP=$(snapshot "$P"); slice0 "$P"; S0=$(git -C "$P" rev-parse HEAD)
+sub "$P/tests/web/test_img.py" "assert IMG != OTHER" "assert IMG != OTHER and OTHER"; FEAT=$(commit_all "$P" feature); feature "$P" "$FEAT"
+sub "$P/tests/web/test_img.py" 'OTHER = "images/other.png"' 'OTHER = "images/else.png"'; BAD=$(commit_all "$P" reopen)
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15n 한 테스트 파일에 슬라이스 0 치환 · 기능 편집 · 기록 없는 비치환 편집 = red 는 마지막 구간만" 2 "슬라이스 0 대조 커밋 ${BAD:0:12}" "대조 커밋 ${S0:0:12}" "$E" "$OUT"
+P=$(case_repo s15p); SNAP=$(snapshot "$P"); slice0 "$P"
+git -C "$P" checkout -qb fork "$BASE"; sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() == 2"; commit_all "$P" fork-edit >/dev/null
+git -C "$P" checkout -q -; MRG=$(merge "$P" fork); git -C "$P" branch -qD fork
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15p 기준 앞에서 갈라진 곁가지의 단언 편집 병합(세탁) · 미등재 = red" 2 "슬라이스 0 대조 커밋 ${MRG:0:12}" - "$E" "$OUT"
+approve "$P" "$MRG"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S15p′ 발주자가 그 병합을 등재하면 상류로 본다 · ^2 를 담은 ref 가 HEAD 가지뿐 = 역방향/합성 병합 의심 알림" 0 "역방향/합성 병합 의심" "[subst]" "$E" "$OUT"
+
+# ---------- S16: --build 재료 fail-closed — 승인 목록 형식(dddjango approved-merges 와 같은 뜻) · build-state
+P=$(case_repo s16); SNAP=$(snapshot "$P"); slice0 "$P"; S0=$(git -C "$P" rev-parse HEAD); MAIN=$(git -C "$P" symbolic-ref --short HEAD)
+echo "not-a-sha 메모" > "$P.build/approved-merges.txt"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S16a 승인 목록 줄 형식 오류 = 실행 불능" 1 "줄 형식 오류" - "$E" "$OUT"
+echo "$S0 비병합" > "$P.build/approved-merges.txt"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S16b 승인 목록에 비병합 커밋 = 실행 불능" 1 "두 부모 병합만" - "$E" "$OUT"
+git -C "$P" checkout -qb other "$BASE"; git -C "$P" checkout -qb other2; echo x > "$P/docs.txt"; commit_all "$P" o2 >/dev/null
+git -C "$P" checkout -q other; OM=$(git -C "$P" -c user.name=t -c user.email=t@t merge -q --no-ff --no-edit other2 >/dev/null 2>&1; git -C "$P" rev-parse HEAD); git -C "$P" checkout -q "$MAIN"
+echo "$OM 다른 가지" > "$P.build/approved-merges.txt"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S16c 기준..대상 첫 부모 사슬 밖 병합 등재 = 실행 불능" 1 "사슬 밖" - "$E" "$OUT"
+git -C "$P" checkout -qb pre "$BASE"; git -C "$P" checkout -qb pre2; echo y > "$P/pre.txt"; commit_all "$P" p2 >/dev/null
+git -C "$P" checkout -q pre; PM=$(merge "$P" pre2); git -C "$P" checkout -q "$MAIN"
+printf '// 발주자 주석\n\n%s 다른 가지\n' "$PM" > "$P.build/approved-merges.txt"
+OUT=$(run_backstop "$P" --subst-check "$PM" HEAD --build "$P.build"); E=$?
+assert "S16d 대조: 기준이 대상 사슬 밖이면 목록 판정 불가 = 실행 불능" 1 "첫 부모 사슬 밖" - "$E" "$OUT"
+rm "$P.build/approved-merges.txt"
+OUT=$(run_backstop "$P" --subst-check "$SNAP" HEAD --build "$T/no-such-folder"); E=$?
+assert "S16e --build 폴더 없음 = 실행 불능" 1 "산출물 폴더가 없다" - "$E" "$OUT"
+mkdir -p "$T/s16-empty"
+OUT=$(run_backstop "$P" --subst-check "$SNAP" HEAD --build "$T/s16-empty"); E=$?
+assert "S16f build-state.json 없음 = 실행 불능" 1 "build-state.json 을 읽을 수 없다" - "$E" "$OUT"
+mkdir -p "$T/s16-bad"; echo '{"slices": {"name": "x"}}' > "$T/s16-bad/build-state.json"
+OUT=$(run_backstop "$P" --subst-check "$SNAP" HEAD --build "$T/s16-bad"); E=$?
+assert "S16g build-state slices 가 목록 아님 = 실행 불능" 1 "객체 목록이 아니다" - "$E" "$OUT"
+sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() == 2"; FEAT=$(commit_all "$P" feature)
+python3 - "$P.build/build-state.json" "$FEAT" <<'PY'
+import json, sys
+p, sha = sys.argv[1:]
+d = json.load(open(p, encoding='utf-8')); d['slices'][0]['commits'].append(sha); d['slices'][1]['commits'] += [sha, 'deadbeefcafe']
+json.dump(d, open(p, 'w', encoding='utf-8'))
+PY
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S16h 슬라이스 0 과 기능 양쪽에 적힌 커밋 = red(기록 모순)" 2 "build-state 기록 모순 — ${FEAT:0:12} 가 slices[0] 과 slice-1-feature 양쪽에 있다" - "$E" "$OUT"
+assert "S16h′ 풀 수 없는 기록 알림" 2 "기록 deadbeefcafe 를 풀 수 없다" - "$E" "$OUT"
+OUT=$(run_backstop "$P" --debt-scan --build "$P.build"); E=$?
+assert "S16i --build 는 --subst-check 전용 = 사용 오류" 1 "--build 는 --subst-check 전용" - "$E" "$OUT"
+P=$(case_repo s16j); git -C "$P" checkout -qb early; echo z > "$P/early.txt"; commit_all "$P" early >/dev/null
+git -C "$P" checkout -q -; EM=$(git -C "$P" -c user.name=t -c user.email=t@t merge -q --no-ff --no-edit early >/dev/null 2>&1; git -C "$P" rev-parse HEAD)
+SNAP=$(snapshot "$P"); slice0 "$P"
+printf '// 발주자 주석 — 앞 실행 병합\n\n%s 기준 이전\n' "$EM" > "$P.build/approved-merges.txt"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S16j 주석 · 빈 줄 · 기준 이전 병합 = 판정 불참 알림 · green" 0 "기준 이전 — 판정 불참" "[subst]" "$E" "$OUT"
+P=$(case_repo s16k); SNAP=$(snapshot "$P"); slice0 "$P"
+sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() == 2"; ED=$(commit_all "$P" edit)
+printf '{"slices": [{"name": "slice-1-data", "commits": ["%s"]}]}\n' "$ED" > "$P.build/build-state.json"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S16k slices[0] 은 이름과 무관하게 슬라이스 0 = red" 2 "슬라이스 0 대조 커밋 ${ED:0:12}(slices[0])" - "$E" "$OUT"
+
+# ---------- S17: 리뷰 R8e 반례(도구 M1·M2·m1~m4·n2) — 병합 안 레인 몫 · 앱 .md · 상류 변경 버림 · 기록 검증 · 표지 · 얕은 이력
+refactor_state() { printf '{"slices": [{"name": "slice-0-debt", "commits": []}]}\n' > "$1.build/build-state.json"; }
+merge_evil() { # merge_evil <저장소> <편집 명령…> — up 을 --no-commit 으로 받고 편집을 끼워 커밋 · 해시 출력
+  local P="$1"; shift
+  git -C "$P" -c user.name=t -c user.email=t@t merge -q --no-commit up >/dev/null 2>&1; "$@"; commit_all "$P" "merge up"
+}
+P=$(case_repo s17a1); SNAP=$(snapshot "$P"); refactor_state "$P"; slice0 "$P"
+upstream_branch "$P"; printf 'X = 1\n' > "$P/tests/web/up_extra.py"; commit_all "$P" upstream >/dev/null; git -C "$P" checkout -q -
+MRG=$(merge_evil "$P" sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() == 2"); approve "$P" "$MRG"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17a1 리팩토링 판(slices 하나) · 등재 병합 안 끼운 단언 편집 = red" 2 "슬라이스 0 대조 커밋 ${MRG:0:12}(승인 병합 안)" - "$E" "$OUT"
+P=$(case_repo s17a2); SNAP=$(snapshot "$P"); refactor_state "$P"; slice0 "$P"
+upstream_branch "$P"; sub "$P/tests/web/test_img.py" "assert IMG != OTHER" "assert IMG != OTHER, 'up'"; commit_all "$P" upstream >/dev/null; git -C "$P" checkout -q -
+git -C "$P" -c user.name=t -c user.email=t@t merge -q --no-commit up >/dev/null 2>&1
+printf 'IMG = "images/new_image.png"\nOTHER = "images/other.png"\n\n\ndef test_img():\n    assert IMG, %s\n' "\"'up'\"" > "$P/tests/web/test_img.py"
+MRG=$(commit_all "$P" "merge up"); approve "$P" "$MRG"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17a2 리팩토링 판 · 상류가 바꾼 테스트의 충돌 해소에 단언 변경을 섞음 = red" 2 "슬라이스 0 대조 커밋 ${MRG:0:12}(승인 병합 안)" - "$E" "$OUT"
+P=$(case_repo s17a3); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"; echo "DEBUG = False" >> "$P/config/settings.py"; commit_all "$P" upstream >/dev/null; git -C "$P" checkout -q -
+MRG=$(merge_evil "$P" sub "$P/tests/web/test_m.py" "assert h() == 2 + marker - 1" "assert h() is not None"); approve "$P" "$MRG"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17a3 슬라이스 0 끝 ④(기능 커밋 0) · 등재 병합 안 단언 편집 = red" 2 "슬라이스 0 대조 커밋 ${MRG:0:12}(승인 병합 안)" - "$E" "$OUT"
+sub "$P/tests/web/test_m.py" "assert h() is not None" "assert h() == 2 + marker - 1"; commit_all "$P" undo >/dev/null
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17a3′ 되돌림 커밋(기록 없음) = green(병합 안 몫이 연 구간이 순변화 0)" 0 "기능 테스트 편집 0" "[subst]" "$E" "$OUT"
+sub "$P/tests/web/test_m.py" "assert h() == 2 + marker - 1" "assert h() is not None"; FE=$(commit_all "$P" feat); feature "$P" "$FE"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17a3″ 같은 편집을 기능 커밋으로 = green · 목록" 0 "tests/web/test_m.py(M) — 커밋 ${FE:0:12}(slice-1-feature)" "[subst]" "$E" "$OUT"
+P=$(case_repo s17fm); SNAP=$(snapshot "$P"); slice0 "$P"
+sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() == 1 and h() == 2"; FE=$(commit_all "$P" feat); feature "$P" "$FE"
+upstream_branch "$P"; sub "$P/tests/web/test_m.py" 'assert "web.a.m.f".endswith("f")' 'assert "web.a.m.f".endswith("f")  # up'; commit_all "$P" upstream >/dev/null; git -C "$P" checkout -q -
+MRG=$(merge "$P" up); approve "$P" "$MRG"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17fm 기능 편집 뒤 상류도 같은 파일을 고쳐 등재 자동 병합 = green · 목록(기능 · 병합 안)" 0 "커밋 ${FE:0:12}(slice-1-feature) ${MRG:0:12}(승인 병합 안)" "[subst]" "$E" "$OUT"
+P=$(case_repo s17cf); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"; sub "$P/tests/web/test_img.py" 'IMG = "images/old.png"' 'IMG = "images/old.png"  # up'; commit_all "$P" upstream >/dev/null; git -C "$P" checkout -q -
+git -C "$P" -c user.name=t -c user.email=t@t merge -q --no-edit up >/dev/null 2>&1; MRG=$(commit_all "$P" "merge up with markers"); approve "$P" "$MRG"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17cf 충돌 표지를 남긴 테스트 파일을 등재 병합이 들임 = 실행 불능(파싱 실패)" 1 "파싱 실패" - "$E" "$OUT"
+P=$(case_repo s17a4); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"; echo "SECURE = True" >> "$P/config/settings.py"; commit_all "$P" upstream >/dev/null; git -C "$P" checkout -q -
+MRG=$(merge_evil "$P" git -C "$P" checkout -q HEAD -- config/settings.py); approve "$P" "$MRG"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17a4 등재 병합이 상류의 비테스트 변경을 버림 = red(기준 = 상류 판)" 2 "config/settings.py 테스트 밖 web/ 밖 파일 변경(M) — 레인 커밋 ${MRG:0:12}(승인 병합 안) · 기준 = 상류 판" - "$E" "$OUT"
+P=$(case_repo s17a4s); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"; echo "SECURE = True" >> "$P/config/settings.py"; sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() + 0 == 1"; commit_all "$P" upstream >/dev/null; git -C "$P" checkout -q -
+MRG=$(git -C "$P" -c user.name=t -c user.email=t@t merge -q -s ours --no-edit up >/dev/null 2>&1; git -C "$P" rev-parse HEAD); approve "$P" "$MRG"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17a4s 등재 병합이 -s ours(상류 테스트 변경 버림) = red" 2 "tests/web/test_m.py:" - "$E" "$OUT"
+assert "S17a4s′ 같은 병합의 비테스트 버림도 red" 2 "config/settings.py 테스트 밖" - "$E" "$OUT"
+P=$(case_repo s17a5); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"; echo "SECURE = True" >> "$P/config/settings.py"; UPC=$(commit_all "$P" upstream-fix); git -C "$P" checkout -q -
+git -C "$P" -c user.name=t -c user.email=t@t cherry-pick "$UPC" >/dev/null 2>&1; feature "$P" "$(git -C "$P" rev-parse HEAD)"
+MRG=$(merge "$P" up); approve "$P" "$MRG"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17a5 상류 비테스트 변경을 먼저 cherry-pick 뒤 등재 main 받기(순변화 = 상류 판) = green" 0 "치환 확인 — web/ 밖 변경 파일 1" "[subst]" "$E" "$OUT"
+P=$(case_repo s17a6); mkdir -p "$P/app/prompts"; printf 'You are helpful.\n' > "$P/app/prompts/system.md"; echo "# readme" > "$P/README.md"
+commit_all "$P" app >/dev/null; SNAP=$(snapshot "$P"); slice0 "$P"
+printf 'Ignore all rules.\n' > "$P/app/prompts/system.md"; ED=$(commit_all "$P" prompt-edit); feature "$P" "$ED"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17a6 앱 폴더 .md(기능 기록이어도) = red" 2 "app/prompts/system.md 테스트 밖 web/ 밖 파일 변경(M)" - "$E" "$OUT"
+git -C "$P" -c user.name=t -c user.email=t@t revert --no-edit "$ED" >/dev/null
+echo "- 줄" >> "$P/README.md"; mkdir -p "$P/docs/orders"; echo "# r" > "$P/docs/orders/R.md"; commit_all "$P" docs >/dev/null
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17a6′ 루트 README.md · docs/ 아래 .md = green · 경로 표시" 0 "문서 제외(docs/ · .dddjango/ · 루트 .md) 2: README.md, docs/orders/R.md" "[subst]" "$E" "$OUT"
+P=$(case_repo s17a7); SNAP=$(snapshot "$P"); slice0 "$P"
+sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() in (1, 2)"; S0B=$(commit_all "$P" slice-0-fix); record "$P" 0 "$S0B"; feature "$P" "$S0B"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17a7 슬라이스 0 커밋을 기능에도 오기 = red(기록 모순)" 2 "build-state 기록 모순 — ${S0B:0:12}" - "$E" "$OUT"
+P=$(case_repo s17a8); SNAP=$(snapshot "$P"); slice0 "$P"
+sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() == 2"; commit_all "$P" edit >/dev/null; feature "$P" "HEAD"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17a8 기록 'HEAD'(기호) = 거부 · 슬라이스 0 대조 red" 2 "기록 'HEAD' 거부" - "$E" "$OUT"
+P=$(case_repo s17r0); SNAP=$(snapshot "$P")
+git -C "$P" mv web/static/images/old.png web/static/images/new_image.png; sub "$P/tests/web/test_img.py" images/old.png images/new_image.png; commit_all "$P" slice-0 >/dev/null
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17r0 slices[0] 기록 없음 = 실행 불능" 1 "슬라이스 0 커밋 기록이 없다" - "$E" "$OUT"
+sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() == 2"; FE=$(commit_all "$P" feat); feature "$P" "$FE"
+sub "$P/tests/web/test_img.py" "assert IMG != OTHER" "assert IMG != OTHER  # s0"; record "$P" 0 "$(commit_all "$P" slice-0-late)"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17r1 기능 기록이 첫 슬라이스 0 기록보다 앞 = 슬라이스 0 대조 red · 알림" 2 "첫 슬라이스 0 커밋보다 앞" - "$E" "$OUT"
+P=$(case_repo s17a14); SNAP=$(snapshot "$P"); slice0 "$P"; S0=$(git -C "$P" rev-parse HEAD)
+sub "$P/tests/web/test_img.py" "assert IMG != OTHER" "assert IMG != OTHER and IMG"; FE=$(commit_all "$P" feat)
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17a14 한 구간의 slices[0] 커밋 · 기록 없는 커밋 = 출처 표지로 가름" 2 "슬라이스 0 대조 커밋 ${S0:0:12}(slices[0]) ${FE:0:12}(기록 없음)" - "$E" "$OUT"
+feature "$P" "$FE"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17a14′ 기록 없는 쪽을 기능으로 적으면 = green · 목록" 0 "tests/web/test_img.py(M) — 커밋 ${FE:0:12}(slice-1-feature)" "[subst]" "$E" "$OUT"
+P=$(case_repo s17a15); SNAP=$(snapshot "$P"); slice0 "$P"
+sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() == 2"; FIRST=$(commit_all "$P" c1)
+for k in 2 3 4 5 6 7; do echo "# c$k" >> "$P/tests/web/test_m.py"; commit_all "$P" "c$k" >/dev/null; done
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17a15 기록 없는 커밋 7개 = 줄에 첫 커밋도 싣는다(자르지 않음)" 2 "${FIRST:0:12}(기록 없음)" "(기록 없음) 외" "$E" "$OUT"
+P=$(case_repo s17j); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"; sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() + 0 == 1"; commit_all "$P" upstream >/dev/null; git -C "$P" checkout -q -
+MRG=$(merge "$P" up); feature "$P" "$MRG"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17j 미승인 병합을 기능 기록에 적음 = 버림 알림 · red" 2 "기록 ${MRG:0:12} 는 병합 — 버림" - "$E" "$OUT"
+P=$(case_repo s17f1); git -C "$P" checkout -qb lane/x; SNAP=$(snapshot "$P"); slice0 "$P"
+git -C "$P" checkout -q --detach "$BASE"; sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() == 2"; FK=$(commit_all "$P" fork-edit)
+git -C "$P" checkout -q lane/x; MRG=$(merge "$P" "$FK"); approve "$P" "$MRG"
+git init -q --bare "$T/s17f1-remote.git"; git -C "$P" remote add pub "$T/s17f1-remote.git"; git -C "$P" push -q pub lane/x 2>/dev/null
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17f1 푸시된 레인(pub/lane/x 가 ^2 를 담음) · 세탁 병합 등재 = 역방향/합성 알림" 0 "역방향/합성 병합 의심" "[subst]" "$E" "$OUT"
+P=$(case_repo s17w); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"; for k in 1 2 3; do echo "U$k = 1" >> "$P/config/settings.py"; commit_all "$P" "up$k" >/dev/null; done; git -C "$P" checkout -q -
+MRG=$(merge "$P" up); approve "$P" "$MRG"
+SH="$T/s17w-shallow"; git clone -q --depth 3 "file://$P" "$SH" 2>/dev/null; cp -r "$P.build" "$SH.build"
+OUT=$(run_backstop "$SH" --subst-check "$SNAP" HEAD --build "$SH.build"); E=$?
+assert "S17w 얕은 이력 · 승인 병합 = 실행 불능(unshallow 안내)" 1 "git fetch --unshallow" - "$E" "$OUT"
+P=$(case_repo s17w2); SNAP=$(snapshot "$P"); slice0 "$P"; MAIN=$(git -C "$P" symbolic-ref --short HEAD)
+git -C "$P" checkout -q --orphan alien; git -C "$P" rm -rqf . >/dev/null; mkdir -p "$P/alien"; echo a > "$P/alien/a.txt"; commit_all "$P" alien >/dev/null
+git -C "$P" checkout -q "$MAIN"; MRG=$(git -C "$P" -c user.name=t -c user.email=t@t merge -q --allow-unrelated-histories --no-edit alien >/dev/null 2>&1; git -C "$P" rev-parse HEAD); approve "$P" "$MRG"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17w2 공통 조상 없는 승인 병합 = 실행 불능" 1 "공통 조상을 찾지 못함" - "$E" "$OUT"
+P=$(case_repo s17x); SNAP=$(snapshot "$P"); slice0 "$P"
+chmod +x "$P/tests/web/test_m.py"; commit_all "$P" chmod >/dev/null
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S17x 테스트 파일 실행 비트만 바꿈 = green(git 과 같게 타입 변경 아님)" 0 "치환 확인" "[subst]" "$E" "$OUT"
+P=$(case_repo s17w3); echo x1 > "$P/x1.txt"; commit_all "$P" x1 >/dev/null; echo x2 > "$P/x2.txt"; X2=$(commit_all "$P" x2)
+SNAP=$(snapshot "$P"); slice0 "$P"
+git -C "$P" checkout -qb up "$X2"; echo "DEBUG = False" >> "$P/config/settings.py"; commit_all "$P" upstream >/dev/null; git -C "$P" checkout -q -
+MRG=$(merge "$P" up); approve "$P" "$MRG"
+SH="$T/s17w3-shallow"; git clone -q --depth 4 "file://$P" "$SH" 2>/dev/null; cp -r "$P.build" "$SH.build"
+OUT=$(run_backstop "$SH" --subst-check "$SNAP" HEAD --build "$SH.build"); E=$?
+assert "S17w3 얕은 이력(공통 조상은 있음) · 승인 병합 = 실행 불능" 1 "얕은 이력 — 승인 병합 판정 불가" - "$E" "$OUT"
+# S17o 는 S14o 처럼 기준이 첫 부모 줄기 밖 — 기준 쪽에서만 바뀐 테스트는 사슬에 걸음이 없어도 기준 판 대비로 대조한다
+P=$(case_repo s17o)
+git -C "$P" checkout -qb side
+sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() == 2"; S17OBASE=$(commit_all "$P" side-base)
+git -C "$P" checkout -q -
+git -C "$P" -c user.name=t -c user.email=t@t merge -q -s ours side -m merge
+OUT=$(run_backstop "$P" --subst-check "$S17OBASE" HEAD); E=$?
+assert "S17o 기준이 첫 부모 줄기 밖 · 기준 쪽에서만 바뀐 테스트(사슬 걸음 없음) = red(기준 판 대비)" 2 "import 밖 본문이 치환만으로 설명되지 않는다" "실행 불능" "$E" "$OUT"
+
+# ---------- S18: 리뷰 R8e 구현(도구) 반례 — 사슬 밖 기준 · 리팩토링 mode · 병합 안 삭제 · 문서 자리 경계 · 비테스트 모드 · U 뒤 M
+P=$(case_repo s18o); MAIN=$(git -C "$P" symbolic-ref --short HEAD); git -C "$P" checkout -qb side
+sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() == 2"; S18OBASE=$(commit_all "$P" side-base)
+git -C "$P" checkout -q "$MAIN"; git -C "$P" -c user.name=t -c user.email=t@t merge -q -s ours side -m merge
+mkdir -p "$P.build"; printf '{"slices": [{"name": "slice-0-debt", "commits": []}, {"name": "slice-1-feature", "commits": []}]}\n' > "$P.build/build-state.json"
+slice0 "$P"; sub "$P/tests/web/test_m.py" 'assert "web.a.m.f".endswith("f")' 'assert "web.a.m.f".endswith("f")  # feat'; feature "$P" "$(commit_all "$P" feat)"
+OUT=$(check "$P" "$S18OBASE"); E=$?
+assert "S18o --build 인데 기준이 첫 부모 사슬 밖(첫 걸음이 기능) = 실행 불능" 1 "첫 부모 사슬 밖" "기능 슬라이스·병합 테스트 편집" "$E" "$OUT"
+P=$(case_repo s18r); SNAP=$(snapshot "$P")
+printf '{"mode": "refactor", "slices": [{"name": "slice-0-debt", "commits": []}, {"name": "slice-1-rework", "commits": []}]}\n' > "$P.build/build-state.json"
+slice0 "$P"; sub "$P/tests/web/test_img.py" "assert IMG != OTHER" "assert IMG"; record "$P" 1 "$(commit_all "$P" rework)"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S18r build-state mode=refactor 의 둘째 슬라이스 기록 = 슬라이스 0 대조 red" 2 "슬라이스 0 대조 커밋" "기능 슬라이스·병합 테스트 편집" "$E" "$OUT"
+assert "S18r′ mode=refactor 재분류 알림" 2 "[info] build-state mode=refactor — slice-1-rework 기록" - "$E" "$OUT"
+P=$(case_repo s18d); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"; echo "DEBUG = False" >> "$P/config/settings.py"; commit_all "$P" up >/dev/null; git -C "$P" checkout -q -
+MRG=$(merge_evil "$P" git -C "$P" rm -q tests/web/test_m.py); approve "$P" "$MRG"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S18d 등재 병합 안에서 테스트 파일 삭제(상류는 안 건드림) = red" 2 "tests/web/test_m.py 치환이 아닌 변경(D" - "$E" "$OUT"
+P=$(case_repo s18m); SNAP=$(snapshot "$P"); slice0 "$P"; mkdir -p "$P/pkg" "$P/app/docs"; echo a > "$P/pkg/README.md"; echo b > "$P/app/docs/P.md"; commit_all "$P" md >/dev/null
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S18m 한 단 폴더 README.md · 앱 안 docs/ 의 .md = red(문서 자리 밖)" 2 "pkg/README.md 테스트 밖" "[info] 문서 제외" "$E" "$OUT"
+assert "S18m′ 앱 안 docs/ .md 도 red" 2 "app/docs/P.md 테스트 밖" - "$E" "$OUT"
+P=$(case_repo s18x); SNAP=$(snapshot "$P"); slice0 "$P"; chmod +x "$P/config/settings.py"; commit_all "$P" chmod >/dev/null
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S18x 비테스트 파일 실행 비트만 = red(비테스트는 모드도 변경)" 2 "config/settings.py 테스트 밖 web/ 밖 파일 변경(M)" - "$E" "$OUT"
+P=$(case_repo s18u); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"; sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() + 0 == 1"; commit_all "$P" up1 >/dev/null; git -C "$P" checkout -q -
+A1=$(merge "$P" up); approve "$P" "$A1"; git -C "$P" checkout -q up; echo "U2 = 1" >> "$P/config/settings.py"; commit_all "$P" up2 >/dev/null; git -C "$P" checkout -q -
+A2=$(merge_evil "$P" sub "$P/tests/web/test_m.py" "assert web.a.q.VALUE == 3" "assert web.a.q.VALUE == 4"); approve "$P" "$A2"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S18u 등재 병합 유입(U) 뒤 둘째 등재 병합 안 단언 편집(앞선 기능 없음) = red" 2 "슬라이스 0 대조 커밋 ${A2:0:12}(승인 병합 안)" - "$E" "$OUT"
+# S18 구현 리뷰 문면 반례 — 미등재 main 받기의 비테스트는 복원 대상이 아니다 · 루트 에이전트 지침 · (A) 복원 · 병합 안 되돌림 기록
+P=$(case_repo s18v); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"; echo "DEBUG = False" >> "$P/config/settings.py"; commit_all "$P" up >/dev/null; git -C "$P" checkout -q -
+MRG=$(merge "$P" up)
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S18v 미등재 main 받기의 비테스트 = 병합 유입 줄(«테스트 밖» 줄 아님 · 등재 먼저)" 2 "config/settings.py 승인 목록 밖 병합 유입(M) — 레인 커밋 ${MRG:0:12}(미승인 병합) — 등재 먼저(복원하지 않는다)" "테스트 밖 web/ 밖 파일 변경" "$E" "$OUT"
+git -C "$P" checkout -q "$SNAP" -- config/settings.py; RS=$(commit_all "$P" restore)
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S18v′ 그 줄을 git_snapshot 판 복원으로 풀어도(main 변경 되돌림) = red 로 남는다(병합 줄)" 2 "병합 ${MRG:0:12}(미승인 병합) 승인 목록 밖 병합이 1경로를 들였다(config/settings.py) — 등재 먼저" - "$E" "$OUT"
+approve "$P" "$MRG"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S18v″ 등재하면 그 복원이 상류 판 대비 어긋남 = red(기준 = 상류 판)" 2 "config/settings.py 테스트 밖 web/ 밖 파일 변경(M) — 레인 커밋 ${RS:0:12}(기록 없음) · 기준 = 상류 판" - "$E" "$OUT"
+git -C "$P" checkout -q "$MRG^2" -- config/settings.py; commit_all "$P" upstream-restore >/dev/null
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S18v‴ 줄의 기준 판(상류 판)으로 복원 = green" 0 "병합 유입 제외 1" "[subst]" "$E" "$OUT"
+P=$(case_repo s18w); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"; echo "DEBUG = False" >> "$P/config/settings.py"; commit_all "$P" up >/dev/null; git -C "$P" checkout -q -
+MRG=$(merge "$P" up); echo "LANE = 1" >> "$P/config/settings.py"; FE=$(commit_all "$P" lane-edit); feature "$P" "$FE"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S18w 미등재 병합 유입 경로를 레인도 고침 = 병합 유입 줄(두 표지) · «테스트 밖» 줄 아님" 2 "config/settings.py 승인 목록 밖 병합 유입(M) — 레인 커밋 ${MRG:0:12}(미승인 병합) ${FE:0:12}(slice-1-feature) — 등재 먼저" "테스트 밖 web/ 밖 파일 변경" "$E" "$OUT"
+P=$(case_repo s18t); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"; sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() + 0 == 1"; commit_all "$P" up >/dev/null; git -C "$P" checkout -q -
+MRG=$(merge "$P" up); git -C "$P" checkout -q "$SNAP" -- tests/web/test_m.py; commit_all "$P" undo-main-test >/dev/null
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S18t 테스트만 들인 미등재 main 받기를 되돌림(문면 위반) = red 로 남는다(병합 줄)" 2 "병합 ${MRG:0:12}(미승인 병합) 승인 목록 밖 병합이 1경로를 들였다(tests/web/test_m.py) — 등재 먼저" - "$E" "$OUT"
+P=$(case_repo s18c); echo "# agents" > "$P/CLAUDE.md"; commit_all "$P" agents >/dev/null; SNAP=$(snapshot "$P"); slice0 "$P"
+echo "- 새 규칙" >> "$P/CLAUDE.md"; commit_all "$P" claude-md >/dev/null
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S18c 루트 에이전트 지침 CLAUDE.md = red(문서 자리 아님)" 2 "CLAUDE.md 테스트 밖 web/ 밖 파일 변경(M)" "[info] 문서 제외" "$E" "$OUT"
+P=$(case_repo s18c2); echo "# a" > "$P/AGENTS.md"; echo "# c" > "$P/claude.md"; commit_all "$P" agents >/dev/null; SNAP=$(snapshot "$P"); slice0 "$P"
+echo "- 새 규칙" >> "$P/AGENTS.md"; echo "- 새 규칙" >> "$P/claude.md"; commit_all "$P" guides >/dev/null
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S18c′ 루트 AGENTS.md = red" 2 "AGENTS.md 테스트 밖 web/ 밖 파일 변경(M)" "[info] 문서 제외" "$E" "$OUT"
+assert "S18c″ 루트 지침 이름은 대소문자 무관(claude.md) = red" 2 "claude.md 테스트 밖 web/ 밖 파일 변경(M)" - "$E" "$OUT"
+P=$(case_repo s18a); SNAP=$(snapshot "$P"); slice0 "$P"
+mkdir -p "$P/docs/orders"; echo "<p>r</p>" > "$P/docs/orders/gate.html"; FE=$(commit_all "$P" gate-html); feature "$P" "$FE"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S18a 레인이 더한 비테스트(A · 비 .md 문서) = red" 2 "docs/orders/gate.html 테스트 밖 web/ 밖 파일 변경(A)" - "$E" "$OUT"
+git -C "$P" rm -q -- docs/orders/gate.html; commit_all "$P" rm-added >/dev/null
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S18a′ 판에 없는 (A) 경로는 git rm 복원 커밋 = green" 0 "치환 확인" "[subst]" "$E" "$OUT"
+P=$(case_repo s18b); SNAP=$(snapshot "$P"); slice0 "$P"
+upstream_branch "$P"; echo "DEBUG = False" >> "$P/config/settings.py"; commit_all "$P" upstream >/dev/null; git -C "$P" checkout -q -
+MRG=$(merge_evil "$P" sub "$P/tests/web/test_m.py" "assert f() == 1" "assert f() == 2"); approve "$P" "$MRG"
+sub "$P/tests/web/test_m.py" "assert f() == 2" "assert f() == 1"; RV=$(commit_all "$P" undo-merge-edit); feature "$P" "$RV"
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S18b (승인 병합 안) 되돌림 커밋을 기능으로 기록 = red 로 남는다(구간이 닫히지 않음)" 2 "슬라이스 0 대조 커밋 ${MRG:0:12}(승인 병합 안)" - "$E" "$OUT"
+python3 - "$P.build/build-state.json" "$RV" <<'PY'
+import json, sys
+p, sha = sys.argv[1:]
+d = json.load(open(p, encoding='utf-8')); d['slices'][1]['commits'].remove(sha); d['slices'][0]['commits'].append(sha)
+json.dump(d, open(p, 'w', encoding='utf-8'))
+PY
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S18b′ 같은 되돌림을 slices[0](슬라이스 0 반송)으로 기록 = green" 0 "치환 확인" "[subst]" "$E" "$OUT"
+P=$(case_repo s18n); SNAP=$(snapshot "$P"); slice0 "$P"
+echo "# amend" >> "$P/tests/web/refs.txt"; git -C "$P" add -A; git -C "$P" -c user.name=t -c user.email=t@t commit -q --amend --no-edit
+OUT=$(check "$P" "$SNAP"); E=$?
+assert "S18n 기록한 슬라이스 0 커밋을 amend = 실행 불능 · 버린 사유를 함께 싣는다" 1 "기록이 없다 — 적은 뒤 다시(build-state slice-0-debt 기록" - "$E" "$OUT"
 
 echo "fixtures_subst: PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" = 0 ]
