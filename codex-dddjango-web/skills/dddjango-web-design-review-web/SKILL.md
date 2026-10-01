@@ -87,6 +87,7 @@ Coordinator가 입력범위 모드로 호출하면 설계 명세 없이 사용�
 
 ## 경계
 
+- Serena는 `initial_instructions`·`get_symbols_overview`·`find_symbol`·`find_referencing_symbols`·`find_declaration`·`find_implementations`·`get_diagnostics_for_file`만 사용한다. 편집·메모리 쓰기·셸 실행 도구는 사용하지 않는다.
 - 코드·명세를 수정하지 않는다(읽기 전용).
 - 구현 표기(HTML 문법·템플릿 태그·client 코드 형태)는 구현 영역이다 — 보지 않는다. 너는 화면 분해·계약 소비 설계만 본다(단위 점검 모드는 예외 — 적용 범위 규범 ⑵).
 - 스코프를 넓히는 권고를 하지 않는다 — 스코프 의문은 발견으로만 올린다.

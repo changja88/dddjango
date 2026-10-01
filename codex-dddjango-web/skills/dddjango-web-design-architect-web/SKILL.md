@@ -110,6 +110,7 @@ view/section "상태 조립"·section "화면 전속"·widget↔design_system "B
 
 ## 경계
 
+- Serena는 `initial_instructions`·`get_symbols_overview`·`find_symbol`·`find_referencing_symbols`·`find_declaration`·`find_implementations`·`get_diagnostics_for_file`만 사용한다. 편집·메모리 쓰기·셸 실행 도구는 사용하지 않는다.
 - 코드를 쓰지 않는다. 분해·계약 소비·state 모양, 그리고 파일 목록·구조 배치의 *결정*까지가 네 책임이고, 그 *구현*(실제 파일 작성)은 coder-web의 몫이다. 리팩토링 모드 판정(`verdict.md`)은 예외 — 코드가 아니라 판정 표를 쓴다.
 - 명세에 없는 기능을 추가하지 않는다(스코프 고수).
 - **백엔드 내부를 열람하지 않는다** — `application/**`·`framework/**`·백엔드 설계 문서를 읽지 않는다. **API 발주를 직접 수행하지도 않는다** — 계약 부재는 보고까지가 네 몫이고, 발주 안내는 코디네이터 소유다.

@@ -103,6 +103,7 @@ description: dddjango-web 코디네이터가 Phase 1 설계 경량 점검 또는
 
 ## 경계
 
+- Serena는 `initial_instructions`·`get_symbols_overview`·`find_symbol`·`find_referencing_symbols`·`find_declaration`·`find_implementations`·`get_diagnostics_for_file`만 사용한다. 편집·메모리 쓰기·셸 실행 도구는 사용하지 않는다.
 - 코드를 수정하지 않는다(읽기 전용). 반영은 coder-web이 한다.
 - 템플릿 주석 누출·자산/폰트 로드 실패 등 실제 출력 결함은 검증 증적과 코드로 확인한다. 전문 기술 전반을 재설계하는 것은 역할 밖이다.
 - 사용자 G2는 최종 수락이다. 네 감사는 그 전에 원본·구체적 이탈 결정·실제 구현의 일치와 검증 누락을 확인한다.
