@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 import re
 import struct
+import unicodedata
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -208,18 +209,21 @@ def source_identity_root(manifest: dict, fallback: Path) -> Path:
 
 
 def source_index(manifest: dict) -> dict:
-    """Index original/final URL aliases without reopening the origin."""
+    """Index original/final URL aliases without reopening the origin.
+
+    Keys are Unicode NFC: a macOS-unzipped export records NFD paths in `source`
+    while its files reference the same names in NFC."""
     index = {}
     for row in manifest.get('files', []):
-        index[row['source']] = row
+        index[unicodedata.normalize('NFC', row['source'])] = row
         if row.get('requested_source'):
-            index[row['requested_source']] = row
+            index[unicodedata.normalize('NFC', row['requested_source'])] = row
     return index
 
 
 def frozen_resource(source: str, by_source: dict, root: Path) -> tuple[str, str]:
     """Resolve only a recorded successful frozen file, confined to the snapshot."""
-    row = by_source.get(source, {})
+    row = by_source.get(unicodedata.normalize('NFC', source), {})
     if row.get('status') != 'ok' or not row.get('local_path') or not row.get('sha256'):
         raise ValueError('source is missing a verified frozen-file mapping')
     path = (root / row['local_path']).resolve()

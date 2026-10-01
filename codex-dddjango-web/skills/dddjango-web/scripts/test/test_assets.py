@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import unicodedata
 import unittest
 import zlib
 
@@ -191,6 +192,26 @@ class AssetTests(unittest.TestCase):
         manifest = json.loads((self.root / 'dc-images.json').read_text())
         self.assertTrue(manifest['source_ready'], manifest)
         self.assertEqual(len(manifest['images']), 2)
+
+    def test_archived_nfd_export_feeds_both_consumers_through_nfc_references(self):
+        # macOS unzip stores the Korean names in NFD while the exported files reference them in NFC.
+        nfd = lambda name: unicodedata.normalize('NFD', name)
+        self.put(nfd('화면.dc.html'), '<section data-screen-label="Example"><img src="그림.png"><img src="logo.png"></section>')
+        self.put(nfd('그림.png'), png())
+        self.put('logo.png', png(b'\0\xff\0'))
+        result = self.run_cli('archive_design.py', self.source / '화면.dc.html', '--source-root', self.source,
+                              '--out', self.out, '--manifest', self.root / 'source-manifest.json')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        tokens = self.root / 'tokens.json'
+        tokens.write_text('{}')
+        for name, *args in (('fetch_images.py', self.out, '--assets-root', self.app, '--out', self.root / 'images.json'),
+                            ('extract_dc.py', self.out / '화면.dc.html', '--tokens', tokens, '--assets-root', self.root / 'dc-app',
+                             '--asset-manifest', self.root / 'images.json', '--meta', self.root / 'meta.json')):
+            result = self.run_cli(name, *args, '--asset-base', self.out)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            manifest = json.loads((self.root / 'images.json').read_text())
+            self.assertEqual(({i['src']: i['status'] for i in manifest['images']}, manifest['unresolved']),
+                             ({'그림.png': 'ok', 'logo.png': 'ok'}, []), name)  # an archive itself stays source_ready=false
 
     def test_extensionless_frozen_html_and_css_are_read_by_manifest_kind(self):
         self.put('login', '<link rel="stylesheet" href="styles"><img src="images/logo.png">')
