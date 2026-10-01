@@ -14,7 +14,9 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import struct
 import sys
+import traceback
 
 
 def split_css(value: str, separators: str) -> list[str]:
@@ -183,12 +185,16 @@ def serialized(tree: tuple, formats: tuple[str, ...]) -> tuple:
     """관측 형식으로 직렬화한다. srgb의 6자리와 legacy rgb의 byte 정밀도를 구별한다."""
     modes = iter(formats)
 
+    def six_digits(value: Fraction) -> str:
+        # Chrome stores sRGB components as float32 before six-significant-digit serialization.
+        single = struct.unpack('f', struct.pack('f', float(value)))[0]
+        return format(single, '.6g')
+
     def visit(node: tuple) -> tuple:
         if node[0] == 'color':
             mode = next(modes)
             if mode == 'srgb':
-                return ('color', *(format(float(x / 255), '.6g') for x in node[1:4]),
-                        format(float(node[4]), '.6g'))
+                return ('color', *(six_digits(x / 255) for x in node[1:4]), six_digits(node[4]))
             return ('color', *(byte(x) for x in node[1:4]), byte(node[4] * 255))
         return tuple(visit(part) if isinstance(part, tuple) else part for part in node)
 
@@ -299,15 +305,15 @@ def inline(value: object) -> str:
 
 
 def category(prop: str) -> str:
-    if prop in ('bg', 'c', 'fill', 'stroke') or prop.endswith('.color'):
+    if prop in ('bg', 'c', 'tfc', 'fill', 'stroke') or prop.endswith('.color'):
         return 'color'
-    if prop.endswith('.width'):
+    if prop == 'sw' or prop.endswith('.width'):
         return 'border-width'
     root = prop.split('.')[0]
     return {'fs': 'font-size', 'fw': 'font-weight', 'ff': 'font', 'lh': 'line-height',
             'ls': 'tracking', 'rad': 'radius', 'pad': 'space', 'gap': 'space',
             'sh': 'shadow', 'bd': 'border', 'ol': 'border', 'op': 'opacity',
-            'minw': 'size', 'minh': 'size', 'maxw': 'size', 'maxh': 'size',
+            'w': 'size', 'h': 'size', 'minw': 'size', 'minh': 'size', 'maxw': 'size', 'maxh': 'size',
             'bf': 'blur' if prop.endswith('.blur') else 'filter',
             'fil': 'blur' if prop.endswith('.blur') else 'filter', 'bgi': 'image'}.get(root, root)
 
@@ -362,6 +368,8 @@ class TokenIndex:
     def lookup(self, prop: str, value: str, capped: bool = False) -> str:
         if capped:
             return '수동 확인(v4 길이 상한)'
+        if category(prop) not in LENGTH_CATEGORIES | {'color', 'font', 'font-weight', 'opacity', 'shadow', 'border', 'filter'}:
+            return '수동 확인(속성별 토큰 분류 미지원)'
         normal_prop = prop if prop in ('ff', 'sh', 'pad', 'rad', 'gap') else ''
         target = canonical(value, normal_prop)
         if target is None:
@@ -398,23 +406,39 @@ def sample_refs(values: set[str]) -> str:
     return f'{len(values)}개: ' + (', '.join(inline(value) for value in sorted(values)[:2]) or '없음')
 
 
+class InputError(ValueError):
+    """검증으로 확인한 입력 오류. 도구 내부 예외를 대신하지 않는다."""
+
+
 def render_sheet(censuses: dict, css: str | None) -> str:
     tokens = TokenIndex(css)
     groups = collections.defaultdict(list)
     records_by_case = {}
     children_by_case = {}
     if not isinstance(censuses, dict) or not censuses:
-        raise ValueError('census must contain cases')
+        raise InputError('census must contain cases')
+    if not all(isinstance(case, str) for case in censuses):
+        raise InputError('case names must be strings')
     for case, census in sorted(censuses.items()):
+        if (not isinstance(census, dict) or not isinstance(census.get('meta'), dict)
+                or not isinstance(census.get('records'), list)):
+            raise InputError(f'{case}: census requires meta object and records list')
         meta, records = census['meta'], census['records']
         if meta.get('census_version') != 4 or meta.get('root_matched') not in (1, 'body'):
-            raise ValueError(f'{case}: complete v4 census required')
+            raise InputError(f'{case}: complete v4 census required')
         if meta.get('partial') or meta.get('records_total', len(records)) != len(records):
-            raise ValueError(f'{case}: incomplete census pages/budget')
+            raise InputError(f'{case}: incomplete census pages/budget')
         index = {}
         for record in records:
-            if not isinstance(record['i'], int) or record['i'] in index:
-                raise ValueError(f'{case}: invalid/duplicate record index')
+            if (not isinstance(record, dict) or type(record.get('i')) is not int or record['i'] in index
+                    or not all(isinstance(record.get(k), str) for k in ('k', 'sig'))
+                    or not isinstance(record.get('s'), dict)):
+                raise InputError(f'{case}: invalid record shape/index')
+            if not all(isinstance(k, str) and (isinstance(v, str) or k == 'lines' and type(v) in (int, float))
+                       for k, v in record['s'].items()):
+                raise InputError(f'{case}: style values must be strings (lines is numeric)')
+            if not isinstance(record.get('anc', []), list) or not all(type(i) is int for i in record.get('anc', [])):
+                raise InputError(f'{case}: ancestors must be an integer list')
             index[record['i']] = record
             signature = {k: record.get(k) for k in ('k', 'sig', 'pn', 'op')}
             signature['s'] = value_rows(record['s'])
@@ -479,7 +503,7 @@ class SheetParser(argparse.ArgumentParser):
         self.exit(1, f'W8 시트: {message}\n')
 
 
-def main(argv: list[str] | None = None) -> int:
+def _main(argv: list[str] | None = None) -> int:
     parser = SheetParser(description=__doc__)
     parser.add_argument('--census', type=Path, required=True)
     parser.add_argument('--tokens', type=Path, required=True)
@@ -487,13 +511,27 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         css = args.tokens.read_text() if args.tokens.exists() else None
-        result = render_sheet(json.loads(args.census.read_text()), css)
+        data = json.loads(args.census.read_text())
+        split_css(css or '', '{};')
+    except (OSError, ValueError) as exc:
+        print(f'W8 시트 미실행: {exc}', file=sys.stderr)
+        return 1
+    try:
+        result = render_sheet(data, css)
         args.out.write_text(result)
-    except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:
+    except (OSError, InputError) as exc:
         print(f'W8 시트 미실행: {exc}', file=sys.stderr)
         return 1
     print('W8 정확값 시트: 생성(참고용·비차단)')
     return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    try:
+        return _main(argv)
+    except Exception:
+        traceback.print_exc()
+        return 70
 
 
 if __name__ == '__main__':

@@ -18,8 +18,10 @@ import argparse
 import collections
 import hashlib
 import json
+import math
 import re
 import sys
+import traceback
 from pathlib import Path
 
 PX_TOL = 0.5
@@ -867,21 +869,82 @@ def group(results: dict) -> list:
     return rows
 
 
+class InputError(ValueError):
+    """검증으로 확인한 잘못된 입력. 알고리즘 결함과 구별한다."""
+
+
+def validate_mapping(mapping):
+    if not isinstance(mapping, dict) or not mapping or not all(isinstance(k, str) and isinstance(v, str) for k, v in mapping.items()):
+        raise InputError("mapping must be a nonempty object of case names")
+    if len(set(mapping.values())) != len(mapping):
+        raise InputError("mapping repeats an implementation case")
+
+
+def validate_census(census, case):
+    def number(value):
+        return type(value) in (int, float) and math.isfinite(value)
+
+    def vector(value, size):
+        return isinstance(value, list) and len(value) == size and all(number(x) for x in value)
+
+    if not isinstance(census, dict) or not isinstance(census.get("meta"), dict) or not isinstance(census.get("records"), list):
+        raise InputError(f"{case}: census requires meta object and records list")
+    meta, records = census["meta"], census["records"]
+    for key in ("census_version", "records_total", "running_animations"):
+        if key in meta and type(meta[key]) is not int:
+            raise InputError(f"{case}: meta.{key} must be an integer")
+    if (meta.get("root_matched", 1) in (1, "body") and
+            (ALLOW_LEGACY or meta.get("census_version", 0) >= 4) and not vector(meta.get("root_rect"), 4)):
+        raise InputError(f"{case}: root_rect requires four finite numbers")
+    for key in ("sections", "fonts_failed"):
+        if key in meta and (not isinstance(meta[key], list) or not all(isinstance(x, str) for x in meta[key])):
+            raise InputError(f"{case}: meta.{key} must be a string list")
+    for key in ("assets", "sdk_globals"):
+        if meta.get(key) is not None and not isinstance(meta[key], dict):
+            raise InputError(f"{case}: meta.{key} must be an object")
+    if meta.get("assets") and not all(isinstance(k, str) and isinstance(v, str) for k, v in meta["assets"].items()):
+        raise InputError(f"{case}: asset paths and hashes must be strings")
+    if meta.get("vendor") is not None and (not isinstance(meta["vendor"], list) or not all(
+            isinstance(v, dict) and isinstance(v.get("path"), str) and type(v.get("status")) is int for v in meta["vendor"])):
+        raise InputError(f"{case}: vendor requires path/status objects")
+    indices = set()
+    for record in records:
+        if (not isinstance(record, dict) or type(record.get("i")) is not int or record["i"] in indices
+                or record.get("k") not in ("box", "text", "media", "pseudo", "frame")
+                or not vector(record.get("r"), 4) or not number(record.get("op"))
+                or not all(isinstance(record.get(k), str) for k in ("sig", "label"))
+                or not isinstance(record.get("s"), dict)):
+            raise InputError(f"{case}: invalid record shape/index/geometry")
+        indices.add(record["i"])
+        if not all(isinstance(k, str) and (isinstance(v, str) or k == "lines" and number(v)) for k, v in record["s"].items()):
+            raise InputError(f"{case}: style values must be strings (lines is numeric)")
+        if record["k"] in ("text", "pseudo") and not isinstance(record.get("t" if record["k"] == "text" else "pn"), str):
+            raise InputError(f"{case}: text/pseudo record requires t/pn string")
+        if not isinstance(record.get("anc", []), list) or not all(type(i) is int for i in record.get("anc", [])):
+            raise InputError(f"{case}: ancestors must be an integer list")
+        if record.get("pr") is not None and not vector(record["pr"], 4):
+            raise InputError(f"{case}: pseudo rect requires four finite numbers")
+        if record.get("pwh") is not None and not vector(record["pwh"], 2):
+            raise InputError(f"{case}: pseudo size requires two finite numbers")
+        if "sec" in record and type(record["sec"]) is not int:
+            raise InputError(f"{case}: section index must be an integer")
+
+
 def run(dpath: str, ipath: str, mapping: dict, out: str) -> dict:
     D = json.loads(Path(dpath).read_text())
     I = json.loads(Path(ipath).read_text())
     results = {}
-    if not isinstance(mapping, dict) or not mapping or not all(isinstance(k, str) and isinstance(v, str) for k, v in mapping.items()):
-        raise ValueError("mapping must be a nonempty object of case names")
-    if len(set(mapping.values())) != len(mapping):
-        raise ValueError("mapping repeats an implementation case")
+    validate_mapping(mapping)
+    if not isinstance(D, dict) or not isinstance(I, dict):
+        raise InputError("design/impl must be objects keyed by case name")
     for dk, ik in sorted(mapping.items()):
         if dk not in D or ik not in I:
-            raise ValueError(f"mapped case missing: {dk} -> {ik}")
+            raise InputError(f"mapped case missing: {dk} -> {ik}")
         for c in (D[dk], I[ik]):
+            validate_census(c, f"{dk} -> {ik}")
             total = c["meta"].get("records_total", len(c["records"]))
             if total != len(c["records"]):
-                raise ValueError(f"incomplete census pages: {dk} -> {ik}")
+                raise InputError(f"incomplete census pages: {dk} -> {ik}")
         results[ik] = compare_case(D[dk], I[ik], ik)
     rows = group(results)
     Path(out).write_text(json.dumps({"cases": {k: {"pairs": v["pairs"], "regions": v["regions"], "info": v["info"], "n_findings": len(v["findings"]),
@@ -892,32 +955,49 @@ def run(dpath: str, ipath: str, mapping: dict, out: str) -> dict:
 
 class ReportParser(argparse.ArgumentParser):
     def error(self, message):
+        # parse_args가 실패해도 명시된 --out의 이전 보고를 남기지 않는다.
+        args = getattr(self, "parsed", None)
+        names = ("design", "impl", "mapping", "sdk_scope")
+        if args is not None and all(isinstance(getattr(args, name, None), Path) for name in (*names, "out")):
+            try:
+                clear_report(args.out, [getattr(args, name) for name in names])
+            except (OSError, InputError) as exc:
+                print(f"W8 출력 정리 불가: {exc}", file=sys.stderr)
         self.print_usage(sys.stderr)
         self.exit(1, f"W8: {message}\n")
 
 
-def main(argv=None):
+def clear_report(output, inputs):
+    if output.resolve() in {path.resolve() for path in inputs}:
+        raise InputError("output must differ from input paths")
+    output.unlink(missing_ok=True)
+
+
+def _main(argv=None):
     global DECLARED, SDK_SCOPE, ALLOW_LEGACY
-    parser = ReportParser(description="W8 v4 비차단 보고: 후보가 있어도 exit 0, 미실행/입력 오류 exit 1")
+    parser = ReportParser(description="W8 v4 비차단 보고: 후보가 있어도 exit 0, 미실행/입력 오류 1, 도구 결함 70")
     for name in ("design", "impl", "mapping", "sdk-scope", "out"):
         parser.add_argument("--" + name, required=True, type=Path)
     parser.add_argument("--declared-data-case", action="append", default=[], metavar="CASE")
-    args = parser.parse_args(argv)
+    parser.parsed = argparse.Namespace()
+    args = parser.parse_args(argv, namespace=parser.parsed)
     try:
+        clear_report(args.out, [getattr(args, k) for k in ("design", "impl", "mapping", "sdk_scope")])
         mapping = json.loads(args.mapping.read_text())
+        validate_mapping(mapping)
         SDK_SCOPE = json.loads(args.sdk_scope.read_text())
         if not isinstance(SDK_SCOPE, dict) or not all(
             isinstance(v, dict) and all(isinstance(v.get(k, []), list) and
             all(isinstance(x, str) for x in v.get(k, [])) for k in ("files", "globals"))
             for v in SDK_SCOPE.values()
         ):
-            raise ValueError("sdk-scope must map case names to files/globals lists")
+            raise InputError("sdk-scope must map case names to files/globals lists")
         DECLARED = set(args.declared_data_case)
         if "ALL" in DECLARED or not DECLARED.issubset(set(mapping.values())):
-            raise ValueError("declare mapped implementation cases individually")
+            raise InputError("declare mapped implementation cases individually")
         ALLOW_LEGACY = False
         result = run(args.design, args.impl, mapping, args.out)
-    except (OSError, ValueError, TypeError, KeyError, AttributeError, IndexError) as exc:
+    except (OSError, UnicodeError, json.JSONDecodeError, InputError) as exc:
         print(f"W8 미실행: {exc}", file=sys.stderr)
         return 1
     groups = result["groups"]
@@ -926,6 +1006,14 @@ def main(argv=None):
     uncompared = [k for k, v in result["results"].items() if any(f["kind"] in ("unrun", "uncompared") for f in v["findings"])]
     print(f"W8 보고: 묶음 {len(groups)} · 후보 {len(candidates)} · 후보 구성원 {sum(len(g['blocking_members']) for g in candidates)} · 미대조 case {len(uncompared)} · 미실행 case {len(unrun)}")
     return 1 if unrun else 0
+
+
+def main(argv=None):
+    try:
+        return _main(argv)
+    except Exception:
+        traceback.print_exc()
+        return 70
 
 
 if __name__ == "__main__":

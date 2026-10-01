@@ -13,7 +13,7 @@ skills:
 
 ## 입력
 
-- (있으면) `observations/style-census-design.json`·`observations/style-values.md` 경로 — 정확값 참고 자료이며 외형 근거는 원본이다. W8 감사의 T 수리·공용 variant 처리는 implementation-ui `references/design-evidence.md` §W8을 따른다. D를 시안 예시 값으로 고치지 않는다.
+- (있으면) `private/w8/style-census-design.json`·`observations/style-values.md` 경로 — 정확값 참고 자료이며 외형 근거는 원본이다. W8 감사의 T 수리·공용 variant 처리는 implementation-ui `references/design-evidence.md` §W8을 따른다. D를 시안 예시 값으로 고치지 않는다.
 
 - **사용자 실행 경계**: `scope.md`의 사용자 실행 제약 위치와 이번 역할에 적용되는 실제 작업/임시 증거 경로·URL/서버·Python/브라우저/MCP 조건을 직접 전달받아 읽는다. 임시 진단·렌더·브라우저 검증도 이 경계를 따른다. 지정 환경에서 실행할 수 없으면 필요한 조건과 미실행 범위를 Coordinator에 반환하며 임의 포트·대체 브라우저/cache·범위 밖 임시 경로로 성공 증거를 만들지 않는다. 지정되지 않은 제약이나 재승인을 추가하지 않는다.
 

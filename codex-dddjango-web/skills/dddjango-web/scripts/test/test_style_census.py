@@ -101,11 +101,11 @@ class CliTest(unittest.TestCase):
             self.paths[name] = p
         self.out = self.root / 'report.json'
 
-    def run_cli(self):
+    def run_cli(self, extra_args=()):
         args = [sys.executable, '-B', str(SCRIPT)]
         for name, path in self.paths.items():
             args.extend(['--' + name, str(path)])
-        return subprocess.run(args + ['--out', str(self.out)], capture_output=True, text=True)
+        return subprocess.run(args + ['--out', str(self.out), *extra_args], capture_output=True, text=True)
 
     def test_candidates_are_reported_without_blocking_exit(self):
         result = self.run_cli()
@@ -141,6 +141,78 @@ class CliTest(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertNotIn('Traceback', result.stderr)
 
+    def test_invalid_text_encoding_is_input_error(self):
+        self.paths['mapping'].write_bytes(b'\xff')
+        result = self.run_cli()
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertNotIn('Traceback', result.stderr)
+
+    def test_input_failure_removes_previous_report(self):
+        self.assertEqual(self.run_cli().returncode, 0)
+        self.assertTrue(self.out.exists())
+        self.paths['mapping'].write_text('{"plain": "missing"}')
+        result = self.run_cli()
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertFalse(self.out.exists(), 'previous successful report survived failed input')
+
+    def test_argument_failure_also_removes_previous_report(self):
+        self.assertEqual(self.run_cli().returncode, 0)
+        result = self.run_cli(['--unknown-option'])
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertFalse(self.out.exists())
+
+    def test_unrun_replaces_previous_report_with_current_diagnostics(self):
+        self.assertEqual(self.run_cli().returncode, 0)
+        previous = self.out.read_bytes()
+        data = census()
+        data['meta']['root_matched'] = 2
+        self.paths['impl'].write_text(json.dumps({'plain': data}))
+        result = self.run_cli()
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertNotEqual(previous, self.out.read_bytes())
+        self.assertEqual(json.loads(self.out.read_text())['groups'][0]['prop'], 'root-selector-impl')
+
+    def test_output_cannot_replace_input(self):
+        self.out = self.paths['design']
+        before = self.out.read_bytes()
+        result = self.run_cli()
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertEqual(self.out.read_bytes(), before)
+
+    def test_invalid_census_and_mapping_are_input_errors(self):
+        for invalid in ([], {'plain': {'meta': [], 'records': []}},
+                        {'plain': {**census(), 'records': [{}]}}):
+            with self.subTest(input=invalid):
+                self.paths['design'].write_text(json.dumps(invalid))
+                result = self.run_cli()
+                self.assertEqual(result.returncode, 1, result.stderr)
+                self.assertNotIn('Traceback', result.stderr)
+        self.paths['mapping'].write_text('[]')
+        result = self.run_cli()
+        self.assertEqual(result.returncode, 1)
+        self.assertNotIn('Traceback', result.stderr)
+
+    def test_cli_defects_keep_traceback_and_distinct_exit(self):
+        args = [arg for name, path in self.paths.items() for arg in ('--' + name, str(path))]
+        sheet_args = ['--census', str(self.paths['design']), '--tokens', str(self.root / 'tokens.css')]
+        code = '''
+import builtins,importlib.util,sys
+spec=importlib.util.spec_from_file_location('tool',sys.argv[1]);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+def broken(*args,**kwargs): raise getattr(builtins,sys.argv[3])('injected-tool-defect')
+setattr(m,sys.argv[2],broken)
+sys.exit(m.main(sys.argv[4:]))
+'''
+        for script, function, argv in ((SCRIPT, 'compare_case', args),
+                (SCRIPT.with_name('style_value_sheet.py'), 'render_sheet', sheet_args)):
+            for defect in ('KeyError', 'TypeError', 'AttributeError', 'IndexError', 'ValueError'):
+                with self.subTest(script=script.name, defect=defect):
+                    result = subprocess.run([sys.executable, '-B', '-c', code, str(script), function, defect,
+                        *argv, '--out', str(self.out)], capture_output=True, text=True)
+                    self.assertEqual(result.returncode, 70, result.stderr)
+                    self.assertIn('Traceback', result.stderr)
+                    self.assertIn('injected-tool-defect', result.stderr)
+                    self.assertNotIn('미실행:', result.stderr)
+
 
 class SheetTest(unittest.TestCase):
     def setUp(self):
@@ -171,6 +243,18 @@ class SheetTest(unittest.TestCase):
             self.assertIn('`' + name + '`', sheet)
         for name in ('--near', '--unitless', '--near-alpha'):
             self.assertNotIn('`' + name + '`', sheet)
+
+    def test_invalid_census_is_input_error_without_traceback(self):
+        for invalid in ([], {'a': {'meta': [], 'records': []}},
+                        {'a': {**census(), 'records': [{}]}}):
+            with self.subTest(input=invalid):
+                cp = self.root / 'invalid.json'
+                cp.write_text(json.dumps(invalid))
+                result = subprocess.run([sys.executable, '-B', str(self.sheet), '--census', str(cp),
+                    '--tokens', str(self.root / 'absent.css'), '--out', str(self.root / 'invalid.md')],
+                    capture_output=True, text=True)
+                self.assertEqual(result.returncode, 1, result.stderr)
+                self.assertNotIn('Traceback', result.stderr)
 
     def test_shadow_matches_whole_ordered_layers(self):
         c = census()
@@ -290,6 +374,17 @@ class SheetTest(unittest.TestCase):
         self.assertIn('`--exact`', sheet)
         self.assertNotIn('`--near`', sheet)
 
+    def test_chrome_float32_channel_rounding_boundaries_match(self):
+        # 실제 Chromium의 rgb→srgb 직렬화. double .6g와 달라지는 4개 채널이다.
+        for channel, observed in ((8, '0.0313726'), (80, '0.313726'),
+                                  (131, '0.513726'), (182, '0.713726')):
+            with self.subTest(channel=channel):
+                c = census(color=f'color(srgb {observed} 0 0)')
+                sheet = self.sheet_for({'a': c},
+                    f':root {{ --exact: rgb({channel},0,0); --near: rgb({channel + 1},0,0); }}')
+                self.assertIn('`--exact`', sheet)
+                self.assertNotIn('`--near`', sheet)
+
     def test_unresolved_tokens_make_matching_property_manual(self):
         c = census()
         c['records'][0]['s'] = {'fs': '16px', 'c': 'rgb(1, 2, 3)'}
@@ -326,6 +421,19 @@ class SheetTest(unittest.TestCase):
         self.assertNotIn('| `bd` |', sheet)
         for value in ('none', 'normal normal', '0px 0px 0px 0px', 'rgba(0, 0, 0, 0)'):
             self.assertNotIn('| `' + value + '` |', sheet)
+
+    def test_v4_text_fill_and_icon_dimensions_use_their_value_categories(self):
+        c = census()
+        c['records'][0]['s'] = {'tfc': 'rgb(1, 2, 3)', 'sw': '1px', 'w': '32px', 'h': '48px', 'ta': 'center'}
+        sheet = self.sheet_for({'a': c}, '''
+        :root { --ink: #010203; --stroke-width: 1px; --icon-width: 32px;
+                --icon-height: 48px; --align: center; }
+        ''')
+        for name in ('--ink', '--stroke-width', '--icon-width', '--icon-height'):
+            self.assertIn('`' + name + '`', sheet)
+        row = next(line for line in sheet.splitlines() if '| `center` |' in line)
+        self.assertIn('수동 확인', row)
+        self.assertNotIn('신규 등록 필요', row)
 
     def test_lane_sized_sheet_bounds_lists_and_deduplicates_value_index(self):
         c = census()

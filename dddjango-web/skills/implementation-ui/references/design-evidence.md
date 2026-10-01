@@ -308,26 +308,33 @@ G1 토큰 검사, 기존 브라우저 확인과 발주자 G2는 그대로 수행
 해당 등록의 SDK 전역 이름을 `sdkGlobals`로 전달한다. SDK 파일 차단 같은 전용 실패
 시험은 기존 SDK 확인으로 남기며 W8의 미실행을 정상 스타일 일치로 바꾸지 않는다.
 
-빌드 폴더 `observations/`에 다음을 저장한다. census는 기계 반환값을 저장하며 값을
+아래 경로는 빌드 폴더 기준이다. census는 기계 반환값을 저장하며 값을
 손으로 보정하지 않는다. `pages>1`이면 같은 상태에서 모든 페이지를 받아 `i` 순으로
 records를 합치고 `records_total` 개수와 맞춘다. `partial`은 페이지 합치기로 해소되지
 않으므로 수집 실패로 기록한다.
 
 | 파일 | 내용 |
 |---|---|
-| `style-census-design.json` | `{원본_case_id: v4 census}` |
-| `style-census-impl.json` | 3-1에서 같은 방식으로 수집한 `{구현_case_id: v4 census}` |
-| `style-cases.json` | `{원본_case_id: 구현_case_id}`. 비교 대상마다 하나, 구현 id 중복 없음 |
-| `style-sdk.json` | 등록 목록에서 옮긴 `{구현_case_id: {"files":[벤더 URL 경로], "globals":[전역 이름]}}`. SDK 없음은 `{}` |
-| `style-values.md` | 원본 census와 프로젝트 foundation으로 생성한 참고 시트 |
-| `style-report.json` | 3-2 대조 출력. 회차는 기존 기록에서 구별하며 첫 보고와 처분 결과를 덮어 잃지 않는다 |
+| `private/w8/style-census-design.json` | `{원본_case_id: v4 census}` |
+| `private/w8/style-census-impl.json` | 3-1에서 같은 방식으로 수집한 `{구현_case_id: v4 census}` |
+| `observations/style-cases.json` | `{원본_case_id: 구현_case_id}`. 비교 대상마다 하나, 구현 id 중복 없음 |
+| `observations/style-sdk.json` | 등록 목록에서 옮긴 `{구현_case_id: {"files":[벤더 URL 경로], "globals":[전역 이름]}}`. SDK 없음은 `{}` |
+| `observations/style-values.md` | 원본 census와 프로젝트 foundation으로 생성한 참고 시트 |
+| `private/w8/style-report.json` | 3-2 대조 출력. 회차는 기존 기록에서 구별하며 첫 보고와 처분 결과를 덮어 잃지 않는다 |
+
+기존 로컬 private 증거 관례를 따라 큰 census·대조 JSON은 `private/w8/`에 보존한다.
+Coordinator는 빌드 폴더의 `.gitignore`에 **`/private/w8/` 한 행만** 추가한다.
+다른 빌드 기록을 통째로 제외하지 않는다. mapping/SDK 입력·작아진 시트·기존
+`visual-check.md`의 경로/처분/측정은 커밋 대상이다. 첫 회차 원자료도 이 제외 폴더에
+보존해 같은 레인의 독립 감사가 읽게 한다. 이미 추적 중인 원자료를 자동 삭제하거나
+Git 이력을 재작성하지 않는다.
 
 아래 `TOOL_ROOT`는 전달받은 실제 도구 루트다(Claude: 플러그인 루트,
 Codex: 설치된 `skills/dddjango-web/`). `BUILD`와 `PROJECT`도 실제 경로로 치환한다.
 
 ```bash
 python TOOL_ROOT/scripts/style_value_sheet.py \
-  --census BUILD/observations/style-census-design.json \
+  --census BUILD/private/w8/style-census-design.json \
   --tokens PROJECT/web/design_system/foundation/tokens.css \
   --out BUILD/observations/style-values.md
 ```
@@ -343,7 +350,7 @@ CSS 선언 자체라는 뜻은 아니다. v4의 `ff`는 첫 서체만이며 fall
 
 시트는 비교기의 허용 오차를 사용하지 않는다. 관측 직렬화 형식에 맞춰 숫자·RGB/hex/sRGB
 색, 단순 var 별칭, padding/radius/gap 축약, shadow 색 위치·생략된 0을 정규화한다.
-sRGB는 Chrome의 6자리 유효숫자, legacy rgb/rgba는 byte 채널·alpha 표현에서 비교한다.
+sRGB는 Chrome의 float32 저장 후 6자리 유효숫자, legacy rgb/rgba는 byte 채널·alpha 표현에서 비교한다.
 따라서 `#01020380`과 `rgba(1,2,3,.5)`처럼 관측 문자열이 구별하지 못하는 선언은 같은 후보며
 선언 원값의 무한 정밀도 동일성을 주장하지 않는다. sRGB에 남아 있는 alpha 정밀도는 보존한다.
 `color-mix(in srgb, …)` 두 색의 비율과 alpha를 계산하며 transparent 혼합도 지원한다.
@@ -355,8 +362,8 @@ shadow 층 수·순서는 보존한다. 서체 스택은 **첫 서체 일치(스
 잘린 관측값도 수동 확인이며 신규 등록의 근거가 아니다.
 P1 규모 회귀의 시트 상한은 100,000B다. 실제 레인의 개별 값/묶음을 잘라 통과시키는
 상한이 아니며, 큰 시트는 앞 색인부터 읽고 원자료에서 필요한 묶음을 확인한다.
-토큰 파일 부재도 정상 참고 시트로 출력한다. 시트 CLI는 생성 0, 미실행/사용법 오류 1이며
-어느 쪽도 새 G1 관문이 아니다.
+토큰 파일 부재도 정상 참고 시트로 출력한다. 시트 CLI는 생성 0, 미실행/사용법 오류 1,
+예상 밖 도구 결함은 traceback과 exit 70이다. 어느 쪽도 새 G1 관문이 아니다.
 
 원본 census·시트의 **경로만** architect와 coder에게 준다. 값·행 id를 명세에 펼쳐
 결속하지 않는다. architect가 원본과 기존 시각 연결표에서 후보의 적용 selector·용도·
@@ -375,13 +382,15 @@ P1 규모 회귀의 시트 상한은 100,000B다. 실제 레인의 개별 값/�
 
 ### 3-2: 보고 실행·독립 감사·수리
 
+시작할 때 같은 원본 census와 **현재** foundation `tokens.css`로 위 시트 생성 명령을 다시 실행해 G1·Phase 2의 토큰 등록을 반영한다.
+
 ```bash
 python TOOL_ROOT/scripts/compare_style_census.py \
-  --design BUILD/observations/style-census-design.json \
-  --impl BUILD/observations/style-census-impl.json \
+  --design BUILD/private/w8/style-census-design.json \
+  --impl BUILD/private/w8/style-census-impl.json \
   --mapping BUILD/observations/style-cases.json \
   --sdk-scope BUILD/observations/style-sdk.json \
-  --out BUILD/observations/style-report.json
+  --out BUILD/private/w8/style-report.json
 # G0에서 데이터 미대조를 선언한 구현 case만: --declared-data-case CASE (반복 가능)
 ```
 
@@ -393,7 +402,12 @@ SDK 기대값은 비어도 `{}` 파일을 전달한다. SDK case는 표준 route
 출력 `cases`는 짝/영역 수·진단·미짝 텍스트, `groups`는 v4 묶음 id·종류·속성·양쪽 값·
 공용 클래스 서명·case·구성원·차단 후보 구성원·대표 사례다. `blocking:true`는 **차단 후보**
 표시이며 이번 판은 **후보가 있어도 보고 exit 0**이다. **exit 1은 미실행/입력 오류**로
-범위와 이유를 기록한다. 실패한 실행에서 이전 report 파일을 새 결과로 읽지 않는다.
+범위와 이유를 기록한다. CLI는 입력 경로와 출력이 다른지 확인하고 실행 전 이전 report를
+지운다. **exit 1 + 새 report 있음**은 일부 case 미실행을 담은 이번 보고이며 나머지 case는
+사용할 수 있다. 입력 오류로 새 report가 없으면 미수행이다. 인자 오류도 입출력 경로를
+파싱했으면 이전 보고를 지운다(입력과 같은 경로는 보존·거절). 출력 정리 불가를 알린 호출이나
+입출력 경로를 확정하지 못한 인자 오류에서는 어떤 report도 읽지 않는다. 예상 밖 도구 결함은 traceback과 **exit 70**으로
+구별하며 해당 실행 결과를 사용하지 않는다. 70은 스타일 차단 판정이 아니다.
 exit 2/3, 처분 결속 검사, 재렌더, 영향 case 계산, freshness 검사는 없다.
 
 v4의 의미를 유지한다: 색 premultiplied 채널 2/255·alpha 3/255, px 0.5,
