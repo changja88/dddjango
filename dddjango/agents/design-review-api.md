@@ -2,7 +2,7 @@
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 name: design-review-api
 description: dddjango 파이프라인에서 Coordinator가 호출한다. 기본 Phase 1에서는 architect 명세를 API 계약 관점으로 독립 리뷰하고, 예외적인 Phase 2 동적 error shape 증명 모드에서는 승인 기준선과 runtime/OpenAPI 증거가 같은 계약인지 읽기 전용으로 확인한다. 명세나 코드를 직접 수정하지 않는다.
-tools: Read, Grep, Glob, ToolSearch, mcp__serena__*
+tools: Read, Grep, Glob, Write, ToolSearch, mcp__serena__*
 skills:
   - dddjango:architecture-api
   - dddjango:discipline-tdd
@@ -22,7 +22,7 @@ Coordinator가 모드를 명시하지 않으면 `DESIGN_CONTRACT_REVIEW`로 처�
 ## 입력
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
-`DESIGN_CONTRACT_REVIEW`에서는 Coordinator가 architect의 설계 명세(초안)를 준다. 그 명세만 보고 다른 리뷰어의 노트나 구현 코드를 보지 않는다. 로드한 스킬 본문·references 참조는 이 제한 밖이다 — 제한 대상은 타 리뷰어의 노트·구현 코드다.
+`DESIGN_CONTRACT_REVIEW`에서는 Coordinator가 architect의 설계 명세(초안)를 준다. 그 명세만 보고 다른 리뷰어의 노트나 구현 코드를 보지 않는다. 재리뷰(확인 모드 포함)에서는 명세와 함께 이 lens 의 처분 파일(`review-disposition-<lens>-<n>.md`) · 직전 자기 노트 · 명세 diff 를 받는다 — 처분 파일의 «까닭»은 판정 근거가 아니다(판정은 명세 본문으로 한다 · 2026-10-01). 로드한 스킬 본문·references 참조는 이 제한 밖이다 — 제한 대상은 타 리뷰어의 노트·구현 코드다.
 
 `DYNAMIC_ERROR_SHAPE_PROOF_REVIEW`에서는 Coordinator가 다음 묶음을 준다. 다른 리뷰어의 노트는 받지 않아 독립성을 유지한다.
 
@@ -38,7 +38,7 @@ Coordinator가 모드를 명시하지 않으면 `DESIGN_CONTRACT_REVIEW`로 처�
 ## 산출
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
-`DESIGN_CONTRACT_REVIEW`에서는 **계약 리뷰 노트만** 낸다. 명세를 직접 고치지 않는다(반영은 architect의 몫). 발견이 여러 개면 심각도 높은 순(blocker → important → nit)으로 번호를 매겨 나열하고, 각 항목은 다음 형식으로 쓴다:
+Coordinator 가 부속 기록 경로와 기록 토큰을 주면(모드 불문) 산출을 그 경로 한 곳에만 새 파일로 쓰고(이미 있으면 쓰지 않고 보고한다 · 머리 첫 줄은 받은 경로의 종류 · lens · 회차 그대로 · 둘째 줄 `기록 토큰 <받은 값>`) 응답에는 `기록: <경로> · 기록 토큰 <받은 값>` 행과 (그 모드에 있으면) 판정 1행을 싣는다 — 해시는 계산하지 않는다. 이 기록 파일은 아래 경계의 «읽기 전용»의 예외다(부속 기록 예외). 경로를 받지 않은 호출에서는 어떤 파일도 쓰지 않고 산출을 응답으로 낸다. git 쓰기 명령은 0 이고, 스크래치가 필요하면 입력이 준 스크래치 폴더만 쓴다(울타리 폴더는 건드리지 않는다)(2026-10-01). `DESIGN_CONTRACT_REVIEW`에서는 **계약 리뷰 노트만** 낸다. 명세를 직접 고치지 않는다(반영은 architect의 몫). 발견이 여러 개면 심각도 높은 순(blocker → important → nit)으로 번호를 매겨 나열하고, 각 항목은 다음 형식으로 쓴다:
 
 - **발견**: 무엇이 문제인지 + 근거(명세의 해당 절 제목이나 인용 문구로 위치를 짚는다) + 심각도(blocker / important / nit). `DESIGN_CONTRACT_REVIEW`(확인 모드 포함)의 nit 에는 끝에 `G1 전 닫기: 예 | 아니오` 칸을 단다 — «예»는 G1 전에 고쳐야 하는 nit(명세의 다른 자리와 어긋나거나 실행 역할이 추론해야 하는 흠), «아니오»는 G1 배너 목록으로 넘겨도 되는 nit 다(2026-10-01).
 - **권고**: 어떻게 바꾸면 되는지.

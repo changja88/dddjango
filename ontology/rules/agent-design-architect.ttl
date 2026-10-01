@@ -1611,12 +1611,18 @@ djr:R-1750 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-1751 a djr:Prohibition ;
-    skos:prefLabel "게이트별 메타 요약 블록의 명세 덧쌓기 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1751@2026-08-22> .
+    skos:prefLabel "게이트별 메타 요약 블록·리뷰 처분 표의 명세 덧쌓기 금지 — 결정 이력은 게이트 배너와 부속 기록(lens 별 처분 파일 · 명세 밖)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1751@2026-10-01> .
 
 <https://numchida.com/ns/djr#R-1751@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1751 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1751@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-1751 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1751@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
 
 djr:R-1752 a djr:Obligation ;
     skos:prefLabel "리뷰어 간 충돌의 중재와 결정·근거 명시"@ko ;
@@ -1962,6 +1968,14 @@ djr:R-3586 a djr:Obligation ;
 
 <https://numchida.com/ns/djr#R-3586@2026-09-29> a djr:Expression ;
     prov:specializationOf djr:R-3586 ;
+    djr:revision 1 .
+
+djr:R-3606 a djr:Exception ;
+    skos:prefLabel "부속 기록 예외 — Coordinator 가 부속 기록 판형으로 준 lens 별 review-disposition-<lens>-<n>.md 는 «그 밖 산출물 생성 금지»(R-1568)의 예외(받은 경로에 새 파일 · 머리 토큰 · 응답 기록 행)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3606@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3606@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3606 ;
     djr:revision 1 .
 
 <https://numchida.com/ns/djr#d/dddjango/agents/design-architect.md> a djr:Document ;
@@ -2379,8 +2393,8 @@ djr:R-3586 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s006> ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
-    djr:statesNorm djr:R-1750, djr:R-1751 ;
-    djr:text "- 타당한 지적을 명세에 반영한다 — 반영·수정은 **해당 절을 제자리에서 고쳐 쓰는 것**이다. \"G1 확정 요약 / G1' 보강 / G2 정정\" 같은 게이트별 메타 요약 블록을 명세 위에 덧쌓지 마라(명세는 현재 상태만; 결정 이력은 Coordinator 대화·게이트 배너가 가짐). *왜* — 누적 블록은 본문과 어긋나 사후 정합 정정 비용을 낳는다.\n"@ko .
+    djr:statesNorm djr:R-1750, djr:R-1751, djr:R-3606 ;
+    djr:text "- 타당한 지적을 명세에 반영한다 — 반영·수정은 **해당 절을 제자리에서 고쳐 쓰는 것**이다. \"G1 확정 요약 / G1' 보강 / G2 정정\" 같은 게이트별 메타 요약 블록이나 리뷰 처분 표·처분 이력 절을 명세 위에 덧쌓지 마라(명세는 현재 상태만; 결정 이력은 게이트 배너와 부속 기록(lens 별 처분 파일)이 가진다 — 명세 밖). Coordinator 가 lens 마다 처분 경로(`review-disposition-<lens>-<n>.md`)와 기록 토큰을 주면 그 lens 의 발견마다 발견 ID · 반영/거절/받아들임 · 명세 위치 · 까닭 한 줄을 그 경로에 새 파일로 쓰고(머리 첫 줄은 받은 경로의 종류 · lens · 회차 그대로 · 둘째 줄 `기록 토큰 <받은 값>` · 이미 있으면 쓰지 않고 보고한다) 응답에 경로마다 `기록: <경로> · 기록 토큰 <받은 값>` 행을 싣는다 — 해시는 계산하지 않는다. 이 처분 파일은 산출 절 «다른 산출물은 만들지 않는다»의 예외다(부속 기록 예외 · 2026-10-01). *왜* — 누적 블록은 본문과 어긋나 사후 정합 정정 비용을 낳는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s006/b3> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s006> ;

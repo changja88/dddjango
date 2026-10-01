@@ -851,12 +851,18 @@ djr:R-0219 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0220 a djr:Prohibition ;
-    skos:prefLabel "각 리뷰어에 architect 명세 초안만 제공(타 리뷰 노트·코드 금지 — 편향 방지)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0220@2026-08-22> .
+    skos:prefLabel "각 리뷰어에 architect 명세 초안만 제공(타 리뷰 노트·코드 금지 — 편향 방지) · 재리뷰에는 그 lens 처분 파일·직전 자기 노트·명세 diff 를 더 주고 다른 lens 것은 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0220@2026-10-01> .
 
 <https://numchida.com/ns/djr#R-0220@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0220 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0220@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-0220 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0220@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0221 a djr:Obligation ;
     skos:prefLabel "리뷰어 입력에 플러그인 설치 루트 절대 경로 동봉"@ko ;
@@ -875,20 +881,32 @@ djr:R-0222 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0223 a djr:Obligation ;
-    skos:prefLabel "산출 = lens 별 리뷰 노트"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0223@2026-08-22> .
+    skos:prefLabel "산출 = lens 별 리뷰 노트 — 리뷰어가 부속 기록 경로(g1-review-<lens>-<n>.md)·토큰을 받아 직접 기록(울타리 창 안 · Coordinator 전사 0)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0223@2026-10-01> .
 
 <https://numchida.com/ns/djr#R-0223@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0223 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-0223@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-0223 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0223@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-0224 a djr:Obligation ;
-    skos:prefLabel "노트 수신 시 형식 구문 검사·반송(존재 검사만·원문 대조 금지)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0224@2026-08-22> .
+    skos:prefLabel "노트 수신 시 형식 구문 검사·반송(존재 검사만·원문 대조 금지) · 경로를 준 호출이면 판형 대조(기록 파일 있음·머리 lens·기록 토큰·판정 1행)를 울타리 창을 닫은 뒤 다발 전체에 — 없거나 다르면 반송·새 회차·새 울타리 창"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0224@2026-10-01> .
 
 <https://numchida.com/ns/djr#R-0224@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0224 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0224@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-0224 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0224@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0225 a djr:Obligation ;
     skos:prefLabel "discipline-reviewer 를 Phase 1 lightweight 모드로 항상 호출(병렬 다발 합류)"@ko ;
@@ -1359,12 +1377,18 @@ djr:R-0281 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0282 a djr:Obligation ;
-    skos:prefLabel "감사 범위와 다음 슬라이스 작업 파일이 겹치면 감사 완료 후 배차"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0282@2026-08-22> .
+    skos:prefLabel "감사 범위와 다음 슬라이스 작업 파일이 겹치면 감사 완료 후 배차 · 쓰기 울타리 창(울타리 대상 역할의 감사)과는 겹침과 무관하게 병렬 배차 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0282@2026-10-01> .
 
 <https://numchida.com/ns/djr#R-0282@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0282 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0282@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-0282 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0282@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0283 a djr:Obligation ;
     skos:prefLabel "discipline-reviewer 를 Phase 2 implementation 모드로 호출"@ko ;
@@ -3891,6 +3915,46 @@ djr:R-3592 a djr:Obligation ;
     prov:specializationOf djr:R-3592 ;
     djr:revision 1 .
 
+djr:R-3597 a djr:Obligation ;
+    skos:prefLabel "부속 기록 판형 — 경로(회차 = 호출 일련번호)·1회용 기록 토큰은 Coordinator(그 역할 입력에만) · 역할은 받은 경로에만 새 파일(머리 첫 줄 종류·역할·회차 · 둘째 줄 기록 토큰) + 응답 «기록: 경로 · 기록 토큰» · 역할 해시 계산 0 · Coordinator 대조(파일 있음·lens·기록 토큰·판정 1행)·sha256 측정은 울타리 창을 닫은 뒤 다발 전체 · 가리키기 직전 재측정(다르면 STOP) · 전사 0 · 울타리 대상 = 리뷰어 넷(architect 는 밖) · 판정 근거 아님"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3597@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3597@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3597 ;
+    djr:revision 1 .
+
+djr:R-3598 a djr:Obligation ;
+    skos:prefLabel "쓰기 울타리 창 — 울타리 대상 역할의 모든 호출은 울타리 창 안(앞 응답 before · 돌아온 뒤 after) · 창 배타(다른 쓰기 역할 파견 0) · 창 열 때 작업 트리에 쓰는 백그라운드 작업 0 · 넘길 파일은 before 전 · 창 안 코디네이터 출력은 $TMPDIR · 스냅숏(<BF> 상대 경로 · 이름 있는 변수(위치 매개변수 0) · 서브셸 · 울타리 폴더 = mktemp -d · 작업 트리 SHA + 상태 줄 head·ref·venv) · 못 뜨면 호출 0"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3598@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3598@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3598 ;
+    djr:revision 1 .
+
+djr:R-3599 a djr:Obligation ;
+    skos:prefLabel "쓰기 울타리 대조 — diff-tree --name-status ⊆ 허용(부속 기록 A · 코디네이터 쓰기 목록 · 이번 창에 띄운 pre-gate(캐시 skip 포함)의 pregate-report.md A 또는 덧붙이기 M) · 상태 줄 칸 변동은 허용 밖(공유 가상환경 한계는 사용자 판단) · 창 안 코디네이터 작업 트리 쓰기 0(검사기는 DJR_FINDINGS_JSON 격리) · 위반이면 창 기록 무효·STOP · 보는 범위(공유 ref·stash 제외 까닭) · after·대조 실패도 허용 밖 · 역할 스크래치 = 울타리 폴더 밖 별도 mktemp · 배너 울타리 차이 행"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3599@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3599@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3599 ;
+    djr:revision 1 .
+
+djr:R-3600 a djr:Prohibition ;
+    skos:prefLabel "architect 반영 호출에 명세 안 리뷰 처분 표·처분 이력 절 요구 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3600@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3600@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3600 ;
+    djr:revision 1 .
+
+djr:R-3601 a djr:Obligation ;
+    skos:prefLabel "리뷰 처분은 architect 가 부속 기록 review-disposition-<lens>-<n>.md 에 기록(발견 ID · 반영/거절/받아들임 · 명세 위치 · 까닭 한 줄) — 반영 호출에 lens 별 경로·기록 토큰 제공 · architect 가 돌아온 뒤 판형 대조·sha256 측정"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3601@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3601@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3601 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/commands/dddjango.md> a djr:Document ;
     skos:prefLabel "command-dddjango"@ko .
 
@@ -3937,6 +4001,33 @@ djr:R-3592 a djr:Obligation ;
     djr:order 1 ;
     djr:statesNorm djr:R-0132 ;
     djr:text "\n- 스코프 메모 → `<산출물 폴더>/scope.md`\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s002/b10> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s002> ;
+    djr:kind djr:kind-norm ;
+    djr:order 10 ;
+    djr:statesNorm djr:R-3597 ;
+    djr:text "- **부속 기록 판형**(2026-10-01): 역할이 명세·코드가 아닌 기록 파일(리뷰 노트 · 리뷰 처분 · 점검 기록)을 쓸 때의 판형이다. ① 경로와 토큰은 네가 정한다 — 경로는 절대 경로 `<산출물 폴더>/<종류>-<역할|lens>-<회차>.md` 로 준다(종류 = `g1-review` · `review-disposition` 처럼 호출 목적 · `<회차>` = 그 종류·역할의 호출 일련번호로 반송 재호출도 새 번호를 받고, 무효가 된 옛 기록 파일은 남기되 가리키지 않는다 · 한 호출에 경로가 여럿일 수 있다 — architect 의 lens 별 처분)이고, 경로마다 1회용 **기록 토큰**(`openssl rand -hex 8`)을 떠서 **그 경로를 받는 역할의 입력에만** 싣는다(다른 역할의 입력에 남의 기록 토큰을 싣지 않는다). ② 역할은 받은 경로에만 **새 파일로** 쓰고(이미 있으면 쓰지 않고 보고한다) 머리 첫 줄 `# <종류> · <역할|lens> · <회차>` · 둘째 줄 `기록 토큰 <받은 값>` 을 둔다. 응답에는 경로마다 `기록: <경로> · 기록 토큰 <받은 값>` 행을 둔다 — 응답의 다른 본문(판정 1행 · 보고 항목 · Z 옵션)은 그대로 둔다. 역할은 해시를 계산하지 않는다. ③ 대조는 네 몫이고 울타리 창을 닫은 뒤(after 스냅숏과 경로 대조 뒤 · 울타리 밖 architect 는 돌아온 뒤) 다발 전체에 한 번에 한다 — 응답을 하나씩 받을 때는 형식 구문 검사만 한다. 그 경로의 파일이 있고(새 파일) · 머리의 역할/lens 가 경로와 같고 · 머리와 응답의 기록 토큰이 그 경로에 준 값과 같고 · 응답의 판정 1행이 파일의 판정 1행과 같은지 본다. 경로를 준 호출에 파일이 없거나 하나라도 다르면(lens 사이 덮어쓰기 포함) 그 기록은 무효다 — 반송하고 새로 부른다(새 회차 · 울타리 대상이면 새 울타리 창). 통과한 파일마다 sha256 을 네가 재어(`shasum -a 256` · 없으면 `sha256sum`) 한 줄 상태에 `기록 <경로> sha256 <앞 12자>` 로 남긴다. 그 기록을 가리키기 직전(재리뷰 입력 · architect 반영 입력 · 배너)마다 sha256 을 다시 재어 남긴 값과 같은지 본다 — 다르면 `STOP_FOR_USER_APPROVAL`(«기록 변조 — <경로>»). 너는 기록을 옮겨 적지 않는다. ④ 울타리 대상 역할(리뷰어 넷)의 호출은 아래 쓰기 울타리 창 안에서만 한다. architect 는 명세 전속 작성자라 울타리 밖이다 — ③ 의 대조는 그대로 하고, architect 의 그 밖 쓰기는 «다른 산출물은 만들지 않는다»가 막는다. ⑤ 부속 기록은 명세의 현재 상태도 판정 근거도 아니다 — 처분 파일의 «까닭»은 재리뷰의 판정 근거가 아니다(판정은 명세 본문으로 한다).\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s002/b11> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s002> ;
+    djr:kind djr:kind-norm ;
+    djr:order 11 ;
+    djr:statesNorm djr:R-3598 ;
+    djr:text "- **쓰기 울타리**(2026-10-01): 울타리 대상 역할의 **모든 호출** — 모드 불문 · 첫 호출 · 형식 반송 재호출 · 이어 부르기(SendMessage) — 은 울타리 창 안에서만 한다. 울타리 창 = 그 호출을 보내기 **앞 응답**에서 before 스냅숏을 끝내고, 호출이 돌아온 뒤 after 스냅숏으로 닫는다(다발이면 다발 전체가 한 울타리 창이다). 울타리 창은 배타적이다 — 그동안 같은 작업 트리에 다른 쓰기 역할(coder · acceptance-tester · architect)을 파견하지 않는다. 울타리 창을 열 때 작업 트리(산출물 폴더 포함)에 쓰는 백그라운드 작업이 돌고 있으면 안 된다 — 백그라운드 작업은 출력을 `$TMPDIR` 에 두거나 울타리 창을 열기 전에 끝낸다(그 출력 경로를 허용 목록에 더해 비켜 가지 않는다). 울타리 창에 넘길 파일(`g1-nit-<n>.diff` 등)은 before 스냅숏 전에 쓰고, 울타리 창 안 코디네이터 명령의 출력(`--check-report` 결과 · 백그라운드 pre-gate 의 표준 출력 등)은 울타리 폴더로 보낸다. 스냅숏은 아래 명령으로 뜬다(`<BF>` = 산출물 폴더의 **작업 트리 루트 기준 상대 경로** `.dddjango/<폴더>` — 절대 경로를 넣으면 덧붙이기 대조가 거짓으로 실패한다 · 서브셸이라 cwd 가 남지 않는다 · 객체는 울타리 폴더(창을 열 때 첫 명령 `mktemp -d` 가 만든 폴더 — 그 경로를 적어 두고 이 창의 뒤 명령에 `<울타리 폴더>` 로 그대로 쓴다 · 같은 폴더명을 쓰는 병렬 세션과 겹치지 않는다)에만 쓰여 `.git` 쓰기가 0 이다 · 스냅숏을 못 뜨면 호출하지 않는다). 출력 첫 줄은 작업 트리 SHA, 둘째 줄은 상태 줄 `head=<HEAD 커밋> ref=<브랜치> venv=<가상환경 .venv·venv 의 *.dist-info 이름 목록 다이제스트>` 다:\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s002/b12> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s002> ;
+    djr:kind djr:kind-code ;
+    djr:order 12 ;
+    djr:text "```sh\n# 울타리 창 열기 — 울타리 폴더를 만들고 출력 경로를 적어 둔다(이 창의 뒤 명령은 모두 그 경로를 <울타리 폴더> 로 쓴다)\nmktemp -d \"${TMPDIR:-/tmp}/<폴더명>-fence-XXXXXX\"\n# before · after 스냅숏 — 1행 = 작업 트리 SHA · 2행 = 상태 줄(head · ref · venv)\n( cd \"$(git rev-parse --show-toplevel)\" || exit 1\n  F=\"<울타리 폴더>\"; BF=\"<BF>\"; idx=\"$F/idx-$$\"; mkdir -p \"$F/objs\"\n  cp \"$(git rev-parse --git-path index)\" \"$idx\" || exit 1\n  env GIT_INDEX_FILE=\"$idx\" GIT_OBJECT_DIRECTORY=\"$F/objs\" BF=\"$BF\" \\\n      GIT_ALTERNATE_OBJECT_DIRECTORIES=\"$(git rev-parse --path-format=absolute --git-common-dir)/objects\" \\\n      sh -c 'git add -A && git add -f -A -- \"$BF\" && git write-tree' || exit 1\n  printf 'head=%s ref=%s venv=%s\\n' \"$(git rev-parse HEAD)\" \"$(git symbolic-ref -q HEAD || echo -)\" \\\n    \"$(find -H .venv venv -maxdepth 4 -name '*.dist-info' 2>/dev/null | sort | git hash-object --stdin | cut -c1-12)\" )\n# 대조 — 바뀐 경로와 종류(A 새 파일 · M 수정 · D 삭제)\n( cd \"$(git rev-parse --show-toplevel)\" || exit 1\n  F=\"<울타리 폴더>\"\n  env GIT_OBJECT_DIRECTORY=\"$F/objs\" \\\n      GIT_ALTERNATE_OBJECT_DIRECTORIES=\"$(git rev-parse --path-format=absolute --git-common-dir)/objects\" \\\n      git diff-tree -r --name-status <before 트리> <after 트리> )\n# pregate-report.md 가 M 이면 — 덧붙이기만 했는지(exit 0 = before 내용이 after 의 앞부분 그대로)\n( cd \"$(git rev-parse --show-toplevel)\" || exit 1\n  F=\"<울타리 폴더>\"; BF=\"<BF>\"; b=\"$F/pr-before\"\n  env GIT_OBJECT_DIRECTORY=\"$F/objs\" \\\n      GIT_ALTERNATE_OBJECT_DIRECTORIES=\"$(git rev-parse --path-format=absolute --git-common-dir)/objects\" \\\n      git cat-file -p \"<before 트리>:$BF/pregate-report.md\" > \"$b\" || exit 1\n  n=$(wc -c < \"$b\"); head -c \"$((n))\" \"$BF/pregate-report.md\" | cmp -s - \"$b\" )\n```\n\n" .
+
+<https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s002/b13> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s002> ;
+    djr:kind djr:kind-norm ;
+    djr:order 13 ;
+    djr:statesNorm djr:R-3599 ;
+    djr:text "before/after 의 두 줄을 적고, 울타리 창을 닫을 때 대조한다. 허용 = 이번 울타리 창의 부속 기록 경로(`A` 새 파일만) + 코디네이터 쓰기 목록(울타리 창을 열 때 적는다 · 되도록 창 뒤로 미룬다) + 이번 울타리 창에서 네가 pre-gate 를 띄웠을 때만(캐시 skip 판정과 skip 행 append 도 띄운 것이다) `pregate-report.md`(`A`, 또는 `M` 이면서 덧붙이기 대조 exit 0 — 앞부분을 고친 수정은 허용 밖)이다. 상태 줄의 칸이 달라도(`head` 이동 · `ref` 전환 · `venv` 패키지 설치) 허용 밖이다. `git add -f -A -- <BF>` 는 `.dddjango/` 를 무시하는 저장소에서도 산출물 폴더를 담는다. 울타리 창 안에서는 작업 트리에 쓰는 코디네이터 명령(검사기 직접 실행 · 시험 · 커밋 · stash)이 0 이다 — 검사기를 꼭 돌려야 하면 `DJR_FINDINGS_JSON=<울타리 폴더>/findings.jsonl` 로 sink 를 저장소 밖에 둔다(이 변수가 있으면 `.dddjango/violations/` 게시가 없다). after 스냅숏·대조·덧붙이기 대조 명령이 실패해도(exit ≠ 0 · 객체 없음) 허용 밖으로 본다. 허용 밖이 나오면 그 울타리 창의 기록을 모두 무효로 하고 멈춰 `STOP_FOR_USER_APPROVAL`(«쓰기 울타리 위반 — <경로 | 상태 head·ref·venv 가운데 바뀐 칸>»)로 올린다(자동 되돌림 없음). 울타리는 작업 트리의 추적·미추적(무시 안 된) 파일 · 산출물 폴더 전부(무시돼도) · 이 작업 트리의 HEAD · 가상환경 패키지 목록을 본다. 그 밖의 무시 경로 · 저장소 밖 쓰기 · 여러 작업 트리가 함께 쓰는 ref·stash 는 보지 않는다 — 함께 쓰는 ref·stash 는 다른 레인이 움직여 거짓 STOP 을 내고, stash·reset 으로 바뀐 작업 트리는 트리 대조가 잡는다. 가상환경을 다른 레인과 심링크로 함께 쓰면 다른 레인의 설치가 `venv` 칸 STOP 을 낼 수 있다 — 빼면 창 안 설치를 못 보므로 빼지 않고, 그 STOP 이 다른 레인 설치인지는 사용자가 판단한다. 그래서 역할의 스크래치는 울타리 폴더 밖에 따로 `mktemp -d \"${TMPDIR:-/tmp}/<폴더명>-<역할|lens>-XXXXXX\"` 로 만들어 그 경로를 입력에 준다(울타리 증거 `objs/`·index 사본을 역할이 건드리지 않게). G1·G2 배너의 다발 크기 행에 `울타리 차이 = 기록 k개 · 코디네이터 쓰기 j개` 를 덧붙인다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s002/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s002> ;
@@ -4239,7 +4330,7 @@ djr:R-3592 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
     djr:statesNorm djr:R-0213, djr:R-0214, djr:R-0215, djr:R-0216, djr:R-0217, djr:R-0218, djr:R-0219, djr:R-0220, djr:R-0221, djr:R-0222, djr:R-0223, djr:R-0224 ;
-    djr:text "2. 활성 lens별 리뷰어를 **병렬**로 호출한다: `dddjango:design-review-ddd` / `dddjango:design-review-api` / `dddjango:design-review-db` (활성 lens만). **병렬의 정의는 «한 응답 안의 서브에이전트 호출(Task/Agent — 하네스 명칭 무관) 다발»이다(2026-08-13)** — 리뷰어 전부(아래 3의 discipline lightweight 포함)를 한 메시지에서 동시에 호출한다. 하나 끝나면 다음을 부르는 순차 호출은 병렬이 아니다(라운드 2′ 실측: 문면 «병렬»인데 직렬 dispatch — Phase 1 벽시계 낭비의 최대 항목). **연속된 «개별» 응답으로 하나씩 백그라운드 배차하는 것도 순차 호출이다(라운드 3 실측 — 실행이 병렬로 겹쳐도 다발 문면 위반)** — 다발은 문자 그대로 한 응답 안이다. 모든 리뷰어는 타 노트를 받지 않으므로 순서 의존이 없다(편향 방지 원칙이 병렬을 지지한다). 단 **입력 준비가 다발보다 앞이다** — Error response contract scope 면 discipline 에 줄 project-wide tree·inventory 를 먼저 구성해 동봉한다(다발을 서두르느라 필수 입력을 비우지 않는다). 이 정의는 리뷰어를 **둘 이상 부르는 모든 호출**(재작업 재리뷰 포함)에 적용하고, 하나만 다시 부르는 재호출은 단독 호출이 정당하다. 다발에서 리뷰어를 누락했으면 늦은 단독 호출로라도 반드시 호출하고 병렬 미준수 사실을 보고한다 — 금지의 주어는 «계획된 순차»이지 «누락의 교정»이 아니다. G1 배너에 다발 크기 한 줄(예: `리뷰 다발 4종 1회`)을 남긴다. 각 리뷰어에는 architect의 명세 초안만 준다(타 리뷰 노트·코드는 주지 않는다 — 편향 방지). 입력에 플러그인 설치 루트 절대 경로를 함께 준다(로드 스킬 references 실독용 · 2026-08-17). API/DB reviewer는 자기 lens의 candidate·위험을 제안하고 각 관련 행의 evidence·독자 failure·중복을 감사하되 decision 없이 테스트를 의무화하지 않는다. 산출: lens별 리뷰 노트. 노트 수신 시 형식을 구문 검사한다 — 집행성 판정 1행, ddd 노트는 판정-소유 대조 표(또는 «판정 없음» 1행)가 없으면 그 리뷰어에게 반송한다(원문 대조는 하지 않는다 — 존재 검사만 · 2026-08-17).\n"@ko .
+    djr:text "2. 활성 lens별 리뷰어를 **병렬**로 호출한다: `dddjango:design-review-ddd` / `dddjango:design-review-api` / `dddjango:design-review-db` (활성 lens만). **병렬의 정의는 «한 응답 안의 서브에이전트 호출(Task/Agent — 하네스 명칭 무관) 다발»이다(2026-08-13)** — 리뷰어 전부(아래 3의 discipline lightweight 포함)를 한 메시지에서 동시에 호출한다. 하나 끝나면 다음을 부르는 순차 호출은 병렬이 아니다(라운드 2′ 실측: 문면 «병렬»인데 직렬 dispatch — Phase 1 벽시계 낭비의 최대 항목). **연속된 «개별» 응답으로 하나씩 백그라운드 배차하는 것도 순차 호출이다(라운드 3 실측 — 실행이 병렬로 겹쳐도 다발 문면 위반)** — 다발은 문자 그대로 한 응답 안이다. 모든 리뷰어는 타 노트를 받지 않으므로 순서 의존이 없다(편향 방지 원칙이 병렬을 지지한다). 단 **입력 준비가 다발보다 앞이다** — Error response contract scope 면 discipline 에 줄 project-wide tree·inventory 를 먼저 구성해 동봉한다(다발을 서두르느라 필수 입력을 비우지 않는다). 이 정의는 리뷰어를 **둘 이상 부르는 모든 호출**(재작업 재리뷰 포함)에 적용하고, 하나만 다시 부르는 재호출은 단독 호출이 정당하다. 다발에서 리뷰어를 누락했으면 늦은 단독 호출로라도 반드시 호출하고 병렬 미준수 사실을 보고한다 — 금지의 주어는 «계획된 순차»이지 «누락의 교정»이 아니다. G1 배너에 다발 크기 한 줄(예: `리뷰 다발 4종 1회`)을 남긴다. 각 리뷰어에는 architect의 명세 초안만 준다(타 리뷰 노트·코드는 주지 않는다 — 편향 방지). 재리뷰(재리뷰 상한의 확인 1회 포함)에서는 명세와 함께 **그 lens 의** 처분 파일(아래 4 «리뷰 처분 기록») · 직전 자기 노트 · 명세 diff 를 더 주고, 다른 lens 의 것은 주지 않는다(2026-10-01). 입력에 플러그인 설치 루트 절대 경로를 함께 준다(로드 스킬 references 실독용 · 2026-08-17). API/DB reviewer는 자기 lens의 candidate·위험을 제안하고 각 관련 행의 evidence·독자 failure·중복을 감사하되 decision 없이 테스트를 의무화하지 않는다. 산출: lens별 리뷰 노트 — 리뷰어가 부속 기록 판형 경로 `<산출물 폴더>/g1-review-<lens>-<n>.md` 와 그 기록 토큰을 받아 직접 쓴다(쓰기 울타리 창 안 · 너는 노트를 옮겨 적지 않는다 · 산출물 위치 절 · 2026-10-01). 노트 수신 시 형식을 구문 검사한다 — 집행성 판정 1행, ddd 노트는 판정-소유 대조 표(또는 «판정 없음» 1행)가 없으면 그 리뷰어에게 반송한다(원문 대조는 하지 않는다 — 존재 검사만 · 2026-08-17). 경로를 준 호출이면 산출물 위치 절 판형 ③ 의 대조(기록 파일 있음 · 머리 lens · 기록 토큰 · 판정 1행)를 울타리 창을 닫은 뒤 다발 전체에 한다 — 응답을 하나씩 받을 때는 위 형식 검사만 한다. 파일이 없거나 하나라도 다르면(lens 사이 덮어쓰기 포함) 반송하고 새 회차·새 울타리 창에서 다시 부른다(2026-10-01).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s006/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s006> ;
@@ -4252,8 +4343,8 @@ djr:R-3592 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s006> ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
-    djr:statesNorm djr:R-0230, djr:R-0231, djr:R-0232, djr:R-0233, djr:R-3590, djr:R-3591, djr:R-3592 ;
-    djr:text "4. `dddjango:design-architect`를 다시 호출해 리뷰 노트를 반영하고 리뷰어 간 충돌을 중재시킨다(아래 «재리뷰 상한» 갈래 ⓐ 는 이 반영 호출의 예외다). **scope.md가 \"범위 아님 / 필요 시 G1 제안\"으로 명시한 항목(Y)은 architect가 기본(미적용)을 명세에 현재-상태로 commit하고 배너 override 항목으로 산출**한다(architect가 'Y감이냐'를 판정하지 않고 scope.md의 그 목록을 앵커로 쓴다). 스스로 해소 못 하는 트레이드오프(양자택일·리뷰어 충돌 등 Z)만 미해결 옵션으로 남긴다.\n   - **재리뷰 상한**(2026-10-01): 리뷰 다발(재리뷰 다발 포함)을 받은 뒤 다음 넷이 모두 서면 아래 두 갈래 가운데 정확히 하나로만 G1 에 간다 — ① 활성 lens(G0 승인 lens · 자문으로 붙은 lens 포함) 리뷰어와 discipline lightweight 의 가장 최근 노트가 전부 집행성 판정 «집행 가능»이다(«조건부»·판정 1행 없음·«불가»는 불성립이다 — 단 막는 것이 사용자 결정뿐인 «집행 가능 — 사용자 결정 전제: <항목>»은, 그 항목이 명세의 Y·Z·STOP 항목(architect 가 배너 override 항목·미해결 옵션·STOP 으로 낸 것) 가운데 하나일 때만 «가능»으로 본다 — 아니면 «조건부»다. «가능»으로 본 그 항목은 아래 «사용자 결정 필요» 판형을 따른다(확인 통과의 «집행 가능»도 같다) · 이번 다발에 없던 lens 의 직전 노트는 그 뒤 개정 diff 가 그 lens 영역(아래 대응표)에 닿지 않았을 때만 인정한다) ② 열린 발견의 등급이 minor·nit 뿐이다(blocker·important·major → 불성립 · minor·nit → 후보 · 등급 미기재 → 불성립 · 같은 흠을 lens 마다 다르게 적었으면 가장 높은 등급) ③ 마지막 pre-gate 예보가 red 가 아니거나, red 전건이 처분 기재돼 고칠 것이 없다(그 다발과 함께 띄운 pre-gate 가 있으면 ③ 은 그 결과를 받은 뒤 판별한다 — 결과 전에는 기다릴 뿐 판별 불가로 보지 않는다) ④ 이번 반영에 새 입력(발주자 답·발주서 개정·main 착륙·STOP 답)이 함께 들어가지 않는다. 넷 가운데 하나라도 판별할 수 없으면 상한 밖이다(위 4의 반영·재리뷰 그대로). 기준이 서지 않은 다발에는 이 상한이 없다.\n     - **ⓐ 반영 0(기본)**: architect 를 부르지 않는다(위 4 반영 호출의 예외). 열린 minor·nit 를 G1 배너에 `미반영 minor·nit k건(목록 · 노트 위치)` 으로 싣고 G1 으로 간다 — 명세 변경이 0 이라 배너 직전 pre-gate 는 캐시 skip 판형이다.\n     - **ⓑ 반영 → 확인 정확히 1회**: 열린 minor·nit 가운데 노트가 `G1 전 닫기: 예` 칸을 단 것이 하나라도 있을 때만 이 갈래다(minor·nit 에 그 칸이 없어 갈래를 가를 수 없으면 상한 밖). architect 에 **그 항목들만** 주고 «입장 표 decision·기계 블록·API/DB 결정·슬라이스 계획을 바꾸지 않는다 — 바꿔야 끝나는 항목은 반영하지 말고 보고하라»를 싣는다. 보고가 오면 상한 밖이다(그 항목으로 위 4의 일반 루프). 반영이 오면 아래 확인 1회를 거친다 — 확인을 통과하면 더 반영하지 않고 G1 으로 가며, 확인이 낸 minor·nit 와 반영하지 않은 나머지 항목은 배너 `미반영 …` 에 싣는다. 그 가운데 확인이 `G1 전 닫기: 예` 로 적은 nit 는 배너에 따로 `확인이 G1 전 닫기로 적은 nit k건(목록) — 기본 수락이면 반영 없이 Phase 2` 1행으로 보인다(반영을 원하면 G1 답 — 아래 불릿의 길). 통과하지 못하면(판정 «불가»·«조건부»·판정 1행 없음 · 새 blocker·important · pre-gate red 반송) 상한을 풀고 위 4의 일반 루프로 돌아간다.\n     - 기준이 선 다발에서 «반영 → 확인 없이 G1»은 없다. 사용자 결정 전제로 «가능»에 든 항목(위 ①)은 G1 배너에 `사용자 결정 필요 <항목>` 으로 싣고, 그 답이 없는 승인은 Phase 2 진입으로 해석하지 않는다(아래 5 의 `pending` 과 같다 — 그 결정만 묻는다). G1 답이 배너의 `미반영` 항목 반영을 요구하거나 `사용자 결정 필요` 항목의 답이 명세를 바꾸면 발주자 답 표기 반영·G1 override 로 처리하지 않고 ⓑ 판형으로 한다 — 그 항목만 반영 → 확인 1회 → 통과면 아래 5 «G1 결정 처리» ②·③ 과 같이 dispatch 전 pre-gate 재실행 뒤 Phase 2 · 통과하지 못하면 일반 루프 뒤 새 G1.\n     - **확인 1회**: 반영된 발견을 낸 lens + 반영 diff 가 닿은 영역의 lens(아래 대응표) + (pre-gate `--block-hash` 첫 행이 바뀌었으면) discipline 을 **확인 모드**로 한 다발에 부르고, 같은 응답에서 pre-gate 를 백그라운드로 띄운다(아래 pre-gate 문단). 확인 모드 입력은 리뷰어마다 명세 · 반영 diff · **그 lens 가 낸** 반영 발견 목록 · 직전 자기 노트다 — 다른 lens 의 발견은 싣지 않고, 다른 lens 반영은 diff 로만 보게 한다(위 2 의 편향 방지). 반영 diff 는 반영 전후 명세의 diff 다 — 커밋이 있으면 `<전>..<후>`, 없으면 반영 호출 전에 `mktemp` 로 떠 둔 사본과의 diff 를 `<산출물 폴더>/g1-nit-<n>.diff` 로 둔다. 통과 = 각 확인 노트의 집행성 판정 «집행 가능» ∧ 새 blocker·important 0 ∧ pre-gate red 아님이다.\n     - **영역 → lens 대응표**: 도메인 판정·애그리거트·불변식·이벤트 → ddd · 계약·HTTP·오류 응답·12-slot → api · 스키마·인덱스·제약·트랜잭션·마이그레이션 → db · 입장 표·패키지/테스트 구조·물리 소유권·기계 블록 → discipline. diff 덩어리가 속한 `##` 절 제목으로 가르고, 못 가르면 활성 lens 전부다. 대응표가 가리키는 lens 가 활성이 아니면 그 덩어리는 discipline 이 본다. 블록 해시는 확대 조건(바뀌면 discipline 추가)으로만 쓰고 생략 조건으로 쓰지 않는다.\n     - **배너 1행**(상한으로 G1 에 갈 때): `재리뷰 상한 — 다발 <n> · 갈래 ⓐ|ⓑ · (ⓑ) 확인 lens <목록> · 판정 가능 · 새 blocker·important 0 · 미반영 minor·nit k건 · 반영 diff <전>..<후> | <산출물 폴더>/g1-nit-<n>.diff`.\n"@ko .
+    djr:statesNorm djr:R-0230, djr:R-0231, djr:R-0232, djr:R-0233, djr:R-3590, djr:R-3591, djr:R-3592, djr:R-3600, djr:R-3601 ;
+    djr:text "4. `dddjango:design-architect`를 다시 호출해 리뷰 노트를 반영하고 리뷰어 간 충돌을 중재시킨다(아래 «재리뷰 상한» 갈래 ⓐ 는 이 반영 호출의 예외다). **scope.md가 \"범위 아님 / 필요 시 G1 제안\"으로 명시한 항목(Y)은 architect가 기본(미적용)을 명세에 현재-상태로 commit하고 배너 override 항목으로 산출**한다(architect가 'Y감이냐'를 판정하지 않고 scope.md의 그 목록을 앵커로 쓴다). 스스로 해소 못 하는 트레이드오프(양자택일·리뷰어 충돌 등 Z)만 미해결 옵션으로 남긴다.\n   - **리뷰 처분 기록**(2026-10-01): 반영 호출에 명세 안의 리뷰 처분 표·처분 이력 절을 요구하지 않는다. 처분은 architect 가 부속 기록(산출물 위치 절 판형)으로 쓴다 — 반영 호출 입력에 리뷰 노트를 낸 lens 마다 `<산출물 폴더>/review-disposition-<lens>-<n>.md` 경로와 그 기록 토큰을 주고, architect 는 그 lens 의 발견마다 발견 ID · 반영/거절/받아들임 · 명세 위치 · 까닭 한 줄을 그 파일에 쓰고 응답에 경로마다 `기록:` 행을 싣는다(너는 architect 가 돌아온 뒤 판형 ③ 대로 대조하고 sha256 을 잰다). 재리뷰에 줄 입력은 위 2 의 규칙이다(그 lens 의 처분 파일만).\n   - **재리뷰 상한**(2026-10-01): 리뷰 다발(재리뷰 다발 포함)을 받은 뒤 다음 넷이 모두 서면 아래 두 갈래 가운데 정확히 하나로만 G1 에 간다 — ① 활성 lens(G0 승인 lens · 자문으로 붙은 lens 포함) 리뷰어와 discipline lightweight 의 가장 최근 노트가 전부 집행성 판정 «집행 가능»이다(«조건부»·판정 1행 없음·«불가»는 불성립이다 — 단 막는 것이 사용자 결정뿐인 «집행 가능 — 사용자 결정 전제: <항목>»은, 그 항목이 명세의 Y·Z·STOP 항목(architect 가 배너 override 항목·미해결 옵션·STOP 으로 낸 것) 가운데 하나일 때만 «가능»으로 본다 — 아니면 «조건부»다. «가능»으로 본 그 항목은 아래 «사용자 결정 필요» 판형을 따른다(확인 통과의 «집행 가능»도 같다) · 이번 다발에 없던 lens 의 직전 노트는 그 뒤 개정 diff 가 그 lens 영역(아래 대응표)에 닿지 않았을 때만 인정한다) ② 열린 발견의 등급이 minor·nit 뿐이다(blocker·important·major → 불성립 · minor·nit → 후보 · 등급 미기재 → 불성립 · 같은 흠을 lens 마다 다르게 적었으면 가장 높은 등급) ③ 마지막 pre-gate 예보가 red 가 아니거나, red 전건이 처분 기재돼 고칠 것이 없다(그 다발과 함께 띄운 pre-gate 가 있으면 ③ 은 그 결과를 받은 뒤 판별한다 — 결과 전에는 기다릴 뿐 판별 불가로 보지 않는다) ④ 이번 반영에 새 입력(발주자 답·발주서 개정·main 착륙·STOP 답)이 함께 들어가지 않는다. 넷 가운데 하나라도 판별할 수 없으면 상한 밖이다(위 4의 반영·재리뷰 그대로). 기준이 서지 않은 다발에는 이 상한이 없다.\n     - **ⓐ 반영 0(기본)**: architect 를 부르지 않는다(위 4 반영 호출의 예외). 열린 minor·nit 를 G1 배너에 `미반영 minor·nit k건(목록 · 노트 위치)` 으로 싣고 G1 으로 간다 — 명세 변경이 0 이라 배너 직전 pre-gate 는 캐시 skip 판형이다.\n     - **ⓑ 반영 → 확인 정확히 1회**: 열린 minor·nit 가운데 노트가 `G1 전 닫기: 예` 칸을 단 것이 하나라도 있을 때만 이 갈래다(minor·nit 에 그 칸이 없어 갈래를 가를 수 없으면 상한 밖). architect 에 **그 항목들만** 주고 «입장 표 decision·기계 블록·API/DB 결정·슬라이스 계획을 바꾸지 않는다 — 바꿔야 끝나는 항목은 반영하지 말고 보고하라»를 싣는다. 보고가 오면 상한 밖이다(그 항목으로 위 4의 일반 루프). 반영이 오면 아래 확인 1회를 거친다 — 확인을 통과하면 더 반영하지 않고 G1 으로 가며, 확인이 낸 minor·nit 와 반영하지 않은 나머지 항목은 배너 `미반영 …` 에 싣는다. 그 가운데 확인이 `G1 전 닫기: 예` 로 적은 nit 는 배너에 따로 `확인이 G1 전 닫기로 적은 nit k건(목록) — 기본 수락이면 반영 없이 Phase 2` 1행으로 보인다(반영을 원하면 G1 답 — 아래 불릿의 길). 통과하지 못하면(판정 «불가»·«조건부»·판정 1행 없음 · 새 blocker·important · pre-gate red 반송) 상한을 풀고 위 4의 일반 루프로 돌아간다.\n     - 기준이 선 다발에서 «반영 → 확인 없이 G1»은 없다. 사용자 결정 전제로 «가능»에 든 항목(위 ①)은 G1 배너에 `사용자 결정 필요 <항목>` 으로 싣고, 그 답이 없는 승인은 Phase 2 진입으로 해석하지 않는다(아래 5 의 `pending` 과 같다 — 그 결정만 묻는다). G1 답이 배너의 `미반영` 항목 반영을 요구하거나 `사용자 결정 필요` 항목의 답이 명세를 바꾸면 발주자 답 표기 반영·G1 override 로 처리하지 않고 ⓑ 판형으로 한다 — 그 항목만 반영 → 확인 1회 → 통과면 아래 5 «G1 결정 처리» ②·③ 과 같이 dispatch 전 pre-gate 재실행 뒤 Phase 2 · 통과하지 못하면 일반 루프 뒤 새 G1.\n     - **확인 1회**: 반영된 발견을 낸 lens + 반영 diff 가 닿은 영역의 lens(아래 대응표) + (pre-gate `--block-hash` 첫 행이 바뀌었으면) discipline 을 **확인 모드**로 한 다발에 부르고, 같은 응답에서 pre-gate 를 백그라운드로 띄운다(아래 pre-gate 문단). 확인 모드 입력은 리뷰어마다 명세 · 반영 diff · **그 lens 가 낸** 반영 발견 목록 · 직전 자기 노트다 — 다른 lens 의 발견은 싣지 않고, 다른 lens 반영은 diff 로만 보게 한다(위 2 의 편향 방지). 반영 diff 는 반영 전후 명세의 diff 다 — 커밋이 있으면 `<전>..<후>`, 없으면 반영 호출 전에 `mktemp` 로 떠 둔 사본과의 diff 를 `<산출물 폴더>/g1-nit-<n>.diff` 로 둔다. 통과 = 각 확인 노트의 집행성 판정 «집행 가능» ∧ 새 blocker·important 0 ∧ pre-gate red 아님이다.\n     - **영역 → lens 대응표**: 도메인 판정·애그리거트·불변식·이벤트 → ddd · 계약·HTTP·오류 응답·12-slot → api · 스키마·인덱스·제약·트랜잭션·마이그레이션 → db · 입장 표·패키지/테스트 구조·물리 소유권·기계 블록 → discipline. diff 덩어리가 속한 `##` 절 제목으로 가르고, 못 가르면 활성 lens 전부다. 대응표가 가리키는 lens 가 활성이 아니면 그 덩어리는 discipline 이 본다. 블록 해시는 확대 조건(바뀌면 discipline 추가)으로만 쓰고 생략 조건으로 쓰지 않는다.\n     - **배너 1행**(상한으로 G1 에 갈 때): `재리뷰 상한 — 다발 <n> · 갈래 ⓐ|ⓑ · (ⓑ) 확인 lens <목록> · 판정 가능 · 새 blocker·important 0 · 미반영 minor·nit k건 · 반영 diff <전>..<후> | <산출물 폴더>/g1-nit-<n>.diff`.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s006/b6> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s006> ;
@@ -4604,7 +4695,7 @@ djr:R-3592 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
     djr:statesNorm djr:R-0278, djr:R-0279, djr:R-0280, djr:R-0281, djr:R-0282 ;
-    djr:text "   - 슬라이스가 **3개 이상**이면 슬라이스마다 `dddjango:discipline-reviewer`를 **Phase 2 implementation 모드**의 해당 슬라이스 범위로 호출해 경량 감사하고 coder에 반영시킨다. 마지막 슬라이스는 홀리스틱 감사로 갈음할 수 있되 갈음은 조건부다(2026-08-17) — 홀리스틱 호출 입력에 «S_n 전용 경량 감사 생략 — S_n 범위 전량 실독 필수»를 명시하고, 홀리스틱 리포트가 전량 실독을 확인해야 갈음이 성립한다. 마지막 홀리스틱 1회는 갈음 여부와 무관하게 존치한다. 마지막이 아닌 슬라이스의 경량 감사 발견(blocker·important)은 다음 게이트 전에 원작성자 반송으로 반영을 완료한다(완료 = 원작성자의 처리 보고 수신 — 외부 계약 테스트 소유 발견이면 acceptance-tester가 원작성자다). 감사 대상 범위와 다음 슬라이스 작업 파일이 겹치면 감사 완료 후 배차한다(«같은 파일 병렬 편집 금지»의 적용) — 겹치지 않으면 병렬 배차 가능. Phase 2 시작 한 줄 상태에 슬라이스 목록·개수를 명시한다.\n"@ko .
+    djr:text "   - 슬라이스가 **3개 이상**이면 슬라이스마다 `dddjango:discipline-reviewer`를 **Phase 2 implementation 모드**의 해당 슬라이스 범위로 호출해 경량 감사하고 coder에 반영시킨다. 마지막 슬라이스는 홀리스틱 감사로 갈음할 수 있되 갈음은 조건부다(2026-08-17) — 홀리스틱 호출 입력에 «S_n 전용 경량 감사 생략 — S_n 범위 전량 실독 필수»를 명시하고, 홀리스틱 리포트가 전량 실독을 확인해야 갈음이 성립한다. 마지막 홀리스틱 1회는 갈음 여부와 무관하게 존치한다. 마지막이 아닌 슬라이스의 경량 감사 발견(blocker·important)은 다음 게이트 전에 원작성자 반송으로 반영을 완료한다(완료 = 원작성자의 처리 보고 수신 — 외부 계약 테스트 소유 발견이면 acceptance-tester가 원작성자다). 감사 대상 범위와 다음 슬라이스 작업 파일이 겹치면 감사 완료 후 배차한다(«같은 파일 병렬 편집 금지»의 적용) — 겹치지 않으면 병렬 배차 가능. 단 쓰기 울타리 창(울타리 대상 역할의 감사 — 산출물 위치 절)과는 겹치는지와 무관하게 병렬 배차하지 않는다(울타리 창은 배타적이다 · 2026-10-01). Phase 2 시작 한 줄 상태에 슬라이스 목록·개수를 명시한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b50> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;

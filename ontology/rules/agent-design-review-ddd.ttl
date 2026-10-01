@@ -35,12 +35,18 @@ djr:R-3367 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3368 a djr:Prohibition ;
-    skos:prefLabel "명세 한정 열람 — 타 리뷰어 노트·구현 코드 열람 금지(편향 방지)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3368@2026-08-22> .
+    skos:prefLabel "명세 한정 열람 — 타 리뷰어 노트·구현 코드 열람 금지(편향 방지) · 재리뷰에는 이 lens 처분 파일·직전 자기 노트·명세 diff 수령 — 처분 «까닭»은 판정 근거 아님(닻 효과 가드)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3368@2026-10-01> .
 
 <https://numchida.com/ns/djr#R-3368@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3368 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3368@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3368 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3368@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3369 a djr:Exception ;
     skos:prefLabel "로드한 스킬 본문·references 참조의 제한 밖 인정"@ko ;
@@ -51,12 +57,18 @@ djr:R-3369 a djr:Exception ;
     djr:revision 1 .
 
 djr:R-3370 a djr:Obligation ;
-    skos:prefLabel "도메인 리뷰 노트 한정 산출"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3370@2026-08-22> .
+    skos:prefLabel "도메인 리뷰 노트 한정 산출 · 부속 기록 경로·기록 토큰을 받으면 그 한 곳에 새 파일로 기록 + 응답 «기록: 경로 · 기록 토큰»(해시 계산 0 · 경로 없으면 파일 쓰기 0 · git 쓰기 0 · 스크래치는 입력이 준 폴더)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3370@2026-10-01> .
 
 <https://numchida.com/ns/djr#R-3370@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3370 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3370@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3370 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3370@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3371 a djr:Prohibition ;
     skos:prefLabel "명세 직접 수정 금지(반영은 architect 소유)"@ko ;
@@ -374,6 +386,14 @@ djr:R-3593 a djr:Obligation ;
     prov:specializationOf djr:R-3593 ;
     djr:revision 1 .
 
+djr:R-3602 a djr:Exception ;
+    skos:prefLabel "부속 기록 예외 — Coordinator 가 부속 기록 판형으로 준 경로의 기록 파일(리뷰 노트·리포트)은 읽기 전용 규범(R-3367 · R-3398)의 예외(받은 경로 한 곳 새 파일 · 그 밖 쓰기 0)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3602@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3602@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3602 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/agents/design-review-ddd.md> a djr:Document ;
     skos:prefLabel "agent-design-review-ddd"@ko .
 
@@ -400,7 +420,7 @@ djr:R-3593 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-ddd.md/s001> ;
     djr:kind djr:kind-prose ;
     djr:order 3 ;
-    djr:text "tools: Read, Grep, Glob, ToolSearch, mcp__serena__*\n"@ko .
+    djr:text "tools: Read, Grep, Glob, Write, ToolSearch, mcp__serena__*\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-ddd.md/s001/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-ddd.md/s001> ;
@@ -433,7 +453,7 @@ djr:R-3593 a djr:Obligation ;
     djr:order 1 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s003/b1> ;
     djr:statesNorm djr:R-3368, djr:R-3369, djr:R-3538 ;
-    djr:text "\nCoordinator가 architect의 설계 명세(초안)를 준다. 너는 그 명세만 본다 — 다른 리뷰어의 노트나 구현 코드를 보지 않는다(편향 방지). 로드한 스킬 본문·references 참조는 이 제한 밖이다 — 제한 대상은 타 리뷰어의 노트·구현 코드다. 파견 입력에 적용 범위 규범이 실려 있으면 그 규범이 정한 몫과 때를 따른다.\n\n"@ko .
+    djr:text "\nCoordinator가 architect의 설계 명세(초안)를 준다. 너는 그 명세만 본다 — 다른 리뷰어의 노트나 구현 코드를 보지 않는다(편향 방지). 재리뷰(확인 모드 포함)에서는 명세와 함께 이 lens 의 처분 파일(`review-disposition-<lens>-<n>.md`) · 직전 자기 노트 · 명세 diff 를 받는다 — 처분 파일의 «까닭»은 판정 근거가 아니다(판정은 명세 본문으로 한다 · 2026-10-01). 로드한 스킬 본문·references 참조는 이 제한 밖이다 — 제한 대상은 타 리뷰어의 노트·구현 코드다. 파견 입력에 적용 범위 규범이 실려 있으면 그 규범이 정한 몫과 때를 따른다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-ddd.md/s002/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-ddd.md/s002> ;
@@ -452,8 +472,8 @@ djr:R-3593 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s004/b1> ;
-    djr:statesNorm djr:R-3370, djr:R-3371, djr:R-3372 ;
-    djr:text "\n**도메인 리뷰 노트만** 낸다. 명세를 직접 고치지 않는다(반영은 architect의 몫). 발견이 여러 개면 심각도 높은 순(blocker → important → nit)으로 번호를 매겨 나열하고, 각 항목은 다음 형식으로 쓴다:\n\n"@ko .
+    djr:statesNorm djr:R-3370, djr:R-3371, djr:R-3372, djr:R-3602 ;
+    djr:text "\n**도메인 리뷰 노트만** 낸다. Coordinator 가 부속 기록 경로와 기록 토큰을 주면(모드 불문) 산출을 그 경로 한 곳에만 새 파일로 쓰고(이미 있으면 쓰지 않고 보고한다 · 머리 첫 줄은 받은 경로의 종류 · lens · 회차 그대로 · 둘째 줄 `기록 토큰 <받은 값>`) 응답에는 `기록: <경로> · 기록 토큰 <받은 값>` 행과 (그 모드에 있으면) 판정 1행을 싣는다 — 해시는 계산하지 않는다. 이 기록 파일은 아래 경계의 «읽기 전용»의 예외다(부속 기록 예외). 경로를 받지 않은 호출에서는 어떤 파일도 쓰지 않고 산출을 응답으로 낸다. git 쓰기 명령은 0 이고, 스크래치가 필요하면 입력이 준 스크래치 폴더만 쓴다(울타리 폴더는 건드리지 않는다)(2026-10-01). 명세를 직접 고치지 않는다(반영은 architect의 몫). 발견이 여러 개면 심각도 높은 순(blocker → important → nit)으로 번호를 매겨 나열하고, 각 항목은 다음 형식으로 쓴다:\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-ddd.md/s003/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-ddd.md/s003> ;
