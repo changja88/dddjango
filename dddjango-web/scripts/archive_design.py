@@ -10,14 +10,18 @@ check_design_evidence accepts it. Never rewrite source/runtime/CSS to make it pa
 The manifest includes a dependency report for ENTRY. Missing literal local files
 return exit 1 after preserving the archive/report; runtime and remote edges stay
 explicitly unresolved for browser observation. Exit 0 is not rendering approval.
+Archived names (entrypoint, local_path, files under --out) are Unicode NFC; each
+row's source keeps the original path. References inside files are not rewritten,
+so this assumes a filesystem that opens either form of a name (APFS, HFS+).
 """
 from __future__ import annotations
 
 import argparse
-from collections import deque
+from collections import Counter, deque
 import json
 from pathlib import Path
 import sys
+import unicodedata
 import urllib.parse
 
 from asset_io import MAX_BYTES, digest_fields, write_verified
@@ -121,7 +125,11 @@ def archive(entry: Path, source_root: Path, out: Path, manifest_path: Path) -> d
     source_root, entry = source_root.resolve(strict=True), entry.resolve(strict=True)
     out, manifest_path = out.resolve(), manifest_path.absolute()
     if not source_root.is_dir() or not entry.is_file() or not entry.is_relative_to(source_root):
-        raise ValueError('entry must be a file inside --source-root')
+        hint = ''
+        if entry.is_file() and Path(unicodedata.normalize('NFC', str(entry))).is_relative_to(
+                unicodedata.normalize('NFC', str(source_root))):
+            hint = '; ENTRY and --source-root spell a folder in different Unicode forms (NFC/NFD)'
+        raise ValueError('entry must be a file inside --source-root' + hint)
     if resource_kind(entry.as_uri()) not in ('html', 'component'):
         raise ValueError('archive entry must be original HTML/JSX; image-only designs use freeze_design.py')
     if out.is_relative_to(source_root) or source_root.is_relative_to(out):
@@ -129,12 +137,20 @@ def archive(entry: Path, source_root: Path, out: Path, manifest_path: Path) -> d
     if (manifest_path.is_symlink() or manifest_path.resolve().is_relative_to(out)
             or not manifest_path.resolve().is_relative_to(out.parent)):
         raise ValueError('--manifest must be a sibling of --out, outside the archive tree')
+    # macOS unzip writes Korean names as NFD and git checks them out as NFC. NFC names keep
+    # the manifest, the ENTRY argument (either form) and every checkout of --out in agreement.
     manifest = {'version': 1, 'collection': 'archive', 'source_root': str(source_root),
-                'entrypoint': entry.relative_to(source_root).as_posix(),
+                'entrypoint': unicodedata.normalize('NFC', entry.relative_to(source_root).as_posix()),
                 'source_ready': False, 'archive_ready': False, 'files': []}
     files = archive_files(source_root)
-    for source in files:
-        relative = source.relative_to(source_root)
+    relatives = [unicodedata.normalize('NFC', source.relative_to(source_root).as_posix()) for source in files]
+    collided = [name for name, count in Counter(relatives).items() if count > 1]
+    if collided:
+        raise ValueError(f'source names collide after Unicode NFC normalization: {", ".join(collided)}')
+    if manifest['entrypoint'] not in relatives:  # e.g. letter case typed unlike the stored name
+        raise ValueError(f'entry {manifest["entrypoint"]!r} is spelled unlike its listed file name; '
+                         'pass the name as listed in --source-root')
+    for source, relative in zip(files, relatives):
         destination = out / relative
         if not destination.resolve().is_relative_to(out):
             raise ValueError('archive destination escapes output root')
@@ -142,17 +158,19 @@ def archive(entry: Path, source_root: Path, out: Path, manifest_path: Path) -> d
             data = stream.read(MAX_BYTES + 1)
         if len(data) > MAX_BYTES:
             raise ValueError(f'archive file exceeds 32 MiB: {relative}')
-        if source == entry:
+        if relative == manifest['entrypoint']:
             if not data:
                 raise ValueError('empty original entrypoint')
             data.decode('utf-8-sig')
         kind = resource_kind(source.as_uri())
         write_verified(destination, data)
         manifest['files'].append({'source': str(source), 'source_document': '',
-            'local_path': relative.as_posix(), 'kind': kind, 'status': 'ok',
+            'local_path': relative, 'kind': kind, 'status': 'ok',
             'reason': '', **digest_fields(data)})
-    # Reusing a directory with stale/unrecorded files is not a complete archive.
-    if {p.relative_to(out).as_posix() for p in archive_files(out)} != {r['local_path'] for r in manifest['files']}:
+    # Reusing a directory with stale/unrecorded files is not a complete archive. A filesystem
+    # may store NFD (HFS+) or keep an older twin in the other form, so compare NFC lists.
+    written = sorted(unicodedata.normalize('NFC', p.relative_to(out).as_posix()) for p in archive_files(out))
+    if written != sorted(r['local_path'] for r in manifest['files']):
         raise ValueError('output inventory differs; use a fresh output directory')
     manifest['archive_ready'] = True
     manifest['dependencies'] = archive_dependencies(out, out / manifest['entrypoint'])

@@ -7,6 +7,7 @@ internal error prevented the check, and 2 means a defect or missing evidence.
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 from datetime import datetime
 import hashlib
 import json
@@ -15,6 +16,7 @@ from pathlib import Path
 import re
 import sys
 from typing import Any
+import unicodedata
 
 from asset_io import image_extension
 from archive_design import archive_dependencies, archive_files
@@ -48,6 +50,19 @@ def sha(data: bytes) -> str:
 
 def load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding='utf-8'))
+
+
+def listed(names: list[str]) -> str:
+    return ', '.join(repr(name) for name in names[:3]) + (f' (+{len(names) - 3} more)' if len(names) > 3 else '')
+
+
+def form_hint(value: Any, names: list[Any]) -> str:
+    """Point at an exact-name mismatch that is only a Unicode NFC/NFD spelling difference."""
+    names = [name for name in names if isinstance(name, str)]
+    if (isinstance(value, str) and value not in names
+            and unicodedata.normalize('NFC', value) in {unicodedata.normalize('NFC', name) for name in names}):
+        return ' — the same name exists in another Unicode form (NFC/NFD); copy it from the manifest'
+    return ''
 
 
 def confined(root: Path, value: Any, label: str, issues: list[str]) -> Path | None:
@@ -233,7 +248,10 @@ def _source_observation(build: Path, case: dict, archive_path: Path, label: str,
     for key, case_key in (('entrypoint', 'entrypoint'), ('case_id', 'id'), ('screen', 'screen'),
                           ('state', 'state'), ('viewport', 'viewport'), ('capture', 'reference_capture')):
         if observed[key] != case[case_key]:
-            issues.append(f'{label}.source_observation.{key}: does not match case')
+            hint = ''
+            if key == 'entrypoint' and isinstance(observed[key], dict) and isinstance(case[case_key], dict):
+                hint = form_hint(observed[key].get('path'), [case[case_key].get('path')])
+            issues.append(f'{label}.source_observation.{key}: does not match case{hint}')
     if not isinstance(observed['url'], str) or not re.match(r'^https?://[^/\s]+', observed['url']):
         issues.append(f'{label}.source_observation.url: original browser HTTP(S) URL required')
     try:
@@ -310,6 +328,7 @@ def validate_inputs(build: Path, project: Path, *, require_review: bool = True) 
             issues.append(f'manifests[{index}].files: nonempty list required')
             continue
         locals_seen = set()
+        opened: set[tuple[int, int]] = set()
         for row_index, row in enumerate(rows):
             here = f'manifests[{index}].files[{row_index}]'
             required_row = {'source', 'source_document', 'local_path', 'kind', 'status', 'sha256', 'size_bytes', 'reason'}
@@ -340,13 +359,38 @@ def validate_inputs(build: Path, project: Path, *, require_review: bool = True) 
                 if row.get('size_bytes') != len(data) or row.get('sha256') != sha(data):
                     issues.append(f'{here}: byte size/hash mismatch')
                 digest_items.append((f'source/{local}', data))
+                if is_archive:
+                    # 디스크 파일 하나 = 행 하나. 대소문자·일부 정규형을 접는 FS(HFS+·exFAT)에서는 두 행이 한 파일을
+                    # 열 수 있고, 그러면 아래 NFC 이름 비교가 기록 안 된 파일을 숨긴다.
+                    info = frozen.stat()
+                    if (info.st_dev, info.st_ino) in opened:
+                        issues.append(f'{here}.local_path: opens the same file as another row '
+                                      '(letter case/Unicode-equivalent name or hard link)')
+                    opened.add((info.st_dev, info.st_ino))
         if manifest.get('entrypoint') not in locals_seen:
-            issues.append(f'manifests[{index}].entrypoint: missing successful file row')
+            hint = form_hint(manifest.get('entrypoint'), list(locals_seen))
+            issues.append(f'manifests[{index}].entrypoint: missing successful file row{hint}')
         if is_archive:
             try:
-                actual = {p.relative_to(reference_root).as_posix() for p in archive_files(reference_root)}
-                if actual != locals_seen:
-                    issues.append(f'manifests[{index}]: archive inventory differs from frozen tree')
+                # 한글 이름은 체크아웃마다 NFC(git)·NFD(macOS 압축 풀기)로 다르게 온다. 비교만 NFC 로 맞추고
+                # digest 이름은 manifest 문자열 그대로 둔다. 정규화 뒤 겹치는 이름은 기록 안 된 파일·중복 행을 숨긴다.
+                actual = [unicodedata.normalize('NFC', p.relative_to(reference_root).as_posix())
+                          for p in archive_files(reference_root)]
+                recorded = [unicodedata.normalize('NFC', local) for local in locals_seen]
+                for side, names, keep in (('frozen tree file', actual, 'file'), ('manifest local_path', recorded, 'row')):
+                    collided = sorted(name for name, count in Counter(names).items() if count > 1)
+                    if collided:
+                        issues.append(f'manifests[{index}]: {side} names collide after Unicode NFC normalization: '
+                                      f'{listed(collided)} — one name in two Unicode forms (NFC/NFD); keep one {keep}')
+                missing, extra = sorted(set(recorded) - set(actual)), sorted(set(actual) - set(recorded))
+                gaps = []
+                if missing:
+                    gaps.append(f'manifest rows without a file: {listed(missing)}')
+                if extra:
+                    gaps.append(f'files without a manifest row: {listed(extra)}')
+                if gaps:
+                    issues.append(f'manifests[{index}]: archive inventory differs from frozen tree '
+                                  f'(names compared in Unicode NFC): {"; ".join(gaps)}')
             except (OSError, ValueError) as error:
                 issues.append(f'manifests[{index}]: invalid archive inventory ({error})')
         else:
@@ -384,7 +428,8 @@ def validate_inputs(build: Path, project: Path, *, require_review: bool = True) 
             issues.append(f'{here}.scope_refs: nonempty string list required')
         entry = case.get('entrypoint')
         if not isinstance(entry, dict) or set(entry) != {'path', 'sha256'} or (entry.get('path'), entry.get('sha256')) not in all_entries:
-            issues.append(f'{here}.entrypoint: must match a successful manifest file')
+            hint = form_hint(entry.get('path'), [path for path, _ in all_entries]) if isinstance(entry, dict) else ''
+            issues.append(f'{here}.entrypoint: must match a successful manifest file{hint}')
         capture = pointer(build, case.get('reference_capture'), f'{here}.reference_capture', issues, image=True)
         if capture:
             digest_items.append((f'reference-capture/{case["reference_capture"]["path"]}', capture[1]))

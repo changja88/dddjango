@@ -30,7 +30,11 @@ python PLUGIN/scripts/archive_design.py EXPORT/screen.dc.html --source-root EXPO
 `EXPORT`와 `BUILD/design-ref`는 겹치지 않는 폴더다. manifest는 `design-ref` 밖의 형제
 파일이다. 충돌이 있으면 새 staging을 사용한다. 이 명령은 `.DS_Store`를 제외한 전체
 파일을 바이트 그대로 보관하며 `collection=archive`, `archive_ready=true`,
-`source_ready=false`를 기록한다. manifest의 `dependencies`는 선택한 원본부터 따라간
+`source_ready=false`를 기록한다. 파일 이름(`entrypoint`·`local_path`·보관 파일)은 Unicode
+NFC로 쓰고 `source`는 원래 경로 그대로 둔다. 이 규칙 전에 동결한 빌드는 이름이 NFD로 남아,
+새 사본과 `diff -r`하면 같은 파일이 «Only in»으로 나오고 그 자리에 다시 보관하면
+`destination collision`이 난다. 둘 다 이름 꼴 차이라는 정상 신호이니 재동결 원본 비교는
+manifest `sha256` 집합이나 NFC 이름으로 한다. manifest의 `dependencies`는 선택한 원본부터 따라간
 참조 목록이다(`source_document`·`source`·`kind`·`local_path`·`status`·`reason`).
 `ok`는 로컬 파일 존재, `missing`은 로컬 참조 누락/경계 이탈, `inline`은 내장 자원,
 `external`은 외부 URL, `runtime`은 동적 해석이 필요한 참조다. 컴포넌트 안 자원의

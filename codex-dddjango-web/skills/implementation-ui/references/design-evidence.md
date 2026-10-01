@@ -142,8 +142,11 @@ treated as required rendering entrypoints.
 Use exactly one archive manifest for the entire reference_root; cases may point to
 different original HTML/JSX rows in it. Do not mix or duplicate per-screen manifests
 in the archive path. Its manifest lives outside reference_root. Its full file inventory (except
-`.DS_Store`) must exactly match reference_root; symlinks and changed/missing/extra
-files fail. Empty non-entry files are preserved. This is an original source archive,
+`.DS_Store`) must match reference_root after Unicode NFC normalization of both sides
+(git checks names out as NFC, macOS unzip writes NFD; digests keep the manifest strings).
+A name repeated after normalization on either side, two rows opening one file, symlinks
+and changed/missing/extra files fail. The collector writes entrypoint, local_path and
+archived file names in NFC. Empty non-entry files are preserved. This is an original source archive,
 not a successful static source manifest with failures excused. Static manifests
 retain every previous byte, type and dependency-closure requirement.
 
