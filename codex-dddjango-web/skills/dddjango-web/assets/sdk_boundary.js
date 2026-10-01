@@ -6,7 +6,8 @@
 //         apiPaths: {'<이름공간>.<함수>': [api-paths 전부…]}(선택), operatorDomains: [운영자 도메인…] }
 // 승인 이름공간의 함수를 분류표대로 바꾼다 — 수명 함수(lifecycle · 표에 없어도 이름이 수명 꼴이면)는 원본 그대로, 그 밖은
 // 기록기(원 함수를 부르지 않는다). 운영자 대상 window.open·폼 제출은 보내지 않고 기록만 한다. gateway url 은 백스톱 WV9 와
-// 같은 정규형(운영자 호스트 점 경계 → 경로만 · 쿼리·조각 제거 · 퍼센트 해제 · 끝 `/` 제거 · 소문자)으로 대조한다.
+// 같은 정규형(아래 normPath — 운영자 https 호스트 점 경계 → 경로만 · 쿼리·조각 제거 · 비예약 퍼센트 해제 · 끝 `/` 제거 ·
+// 공백·역슬래시·빈 조각·점 조각 거절 · 소문자)으로 대조한다.
 (cfg) => {
   const LIFE = ['cleanup', 'destroy', 'dispose', 'teardown'];
   const st = window.__dddjangoSdkBoundary = {
@@ -16,15 +17,35 @@
   const isOp = (u) => {
     try { return underOp(new URL(String(u), location.href).hostname.toLowerCase()); } catch (e) { return false; }
   };
+  // gateway url 정규형 — 백스톱 normalize_gateway_url 과 글자 단위로 같은 규칙(URL 파서의 해석 차이에 기대지 않는다):
+  // 출력 가능한 ASCII·역슬래시 없음 → 스킴/`//` 면 `https://<운영자 호스트>` 만 · 아니면 `/` 로 시작 → 쿼리·조각 제거 →
+  // `%XX` 는 비예약 문자로 풀리는 것만 → 끝 `/` 제거 · 빈 조각·`.`·`..` 거절 → 소문자. 거절은 null(승인 밖).
   const normPath = (u) => {
-    if (typeof u !== 'string') return null;
-    try {
-      const absolute = /^[a-z][a-z0-9+.-]*:/i.test(u) || u.startsWith('//');
-      const x = new URL(u, 'https://' + cfg.operatorDomains[0]);
-      if (absolute && (x.protocol !== 'https:' || !underOp(x.hostname.toLowerCase()))) return null;
-      const p = decodeURIComponent(x.pathname).replace(/\/+$/, '') || '/';
-      return p.toLowerCase();
-    } catch (e) { return null; }
+    if (typeof u !== 'string' || !u) return null;
+    for (const c of u) { if (c < '!' || c > '~' || c === '\\') return null; }
+    let rest = u;
+    if (/^[A-Za-z][A-Za-z0-9+.\-]*:/.test(u) || u.startsWith('//')) {
+      if (u.slice(0, 8).toLowerCase() !== 'https://') return null;
+      const after = u.slice(8);
+      let cut = after.length;
+      for (const ch of '/?#') { const k = after.indexOf(ch); if (k >= 0) cut = Math.min(cut, k); }
+      const host = after.slice(0, cut).toLowerCase();
+      if (!/^[a-z0-9.\-]+$/.test(host) || !underOp(host)) return null;
+      rest = after.slice(cut);
+      if (!rest.startsWith('/')) rest = '/' + rest;
+    } else if (!u.startsWith('/')) return null;
+    let p = rest.split(/[?#]/, 1)[0];
+    if (/%(?![0-9A-Fa-f]{2})/.test(p)) return null;
+    let bad = false;
+    p = p.replace(/%([0-9A-Fa-f]{2})/g, (m, h) => {
+      const c = String.fromCharCode(parseInt(h, 16));
+      if (!/^[A-Za-z0-9\-._~]$/.test(c)) bad = true;
+      return c;
+    });
+    if (bad) return null;
+    p = p.replace(/\/+$/, '');
+    if (p.split('/').slice(1).some((s) => s === '' || s === '.' || s === '..')) return null;
+    return (p || '/').toLowerCase();
   };
   // 운영자 대상 바깥 출구 — 기록 전용
   const open0 = window.open;

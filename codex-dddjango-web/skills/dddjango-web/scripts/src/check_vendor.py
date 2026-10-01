@@ -287,8 +287,9 @@ def _skip_arg(text: str, pos: int) -> Optional[int]:
 _CE_TOKEN = re.compile(r'\bcreateElement(NS)?\b')
 _SRCDOC_TOKEN = re.compile(r'\bsrcdoc\b')
 _DOC_NAMES: Tuple[str, ...] = ('document', 'contentDocument', 'ownerDocument')
-_ALIAS_RE = re.compile(r'([A-Za-z_$][\w$]*)\s*=\s*(?:[\w$]+\s*(?:\?\.|\.)\s*)*(document|contentDocument|ownerDocument)'
-                       r'\s*(?=[;,\n)]|$)')
+_IDENT = re.compile(r'[A-Za-z_$][\w$]*')
+_GROUP_WORDS: Set[str] = {'return', 'typeof', 'void', 'await', 'yield', 'case', 'in', 'of', 'delete', 'throw', 'new',
+                          'else', 'do'}
 _OTHER_RULES: List[Tuple[str, 're.Pattern[str]']] = [
     ('createContextualFragment', re.compile(r'\bcreateContextualFragment\b')),
     ('dynamic import', re.compile(r'\bimport\s*\(|\bimportScripts\s*\(')),
@@ -298,10 +299,79 @@ _HTML_SINK = re.compile(r'\b(?:insertAdjacentHTML|innerHTML|outerHTML)\b')
 _TIMER = re.compile(r'\bset(?:Timeout|Interval)\s*\(')
 
 
+def _member_view(view: JsView) -> Tuple[str, Set[int]]:
+    """괄호 접근을 점 접근으로 편 코드 뷰 — `x['name']`·`x["name"]`·`` x[`name`] ``(자리표시 없는 리터럴 · 값이 식별자)를
+    `x.name` 으로 바꾸고 남는 자리는 공백으로 채운다(offset 은 그대로). 바꾼 리터럴의 시작 offset 도 돌려준다."""
+    code: List[str] = list(view.code_text)
+    text: str = view.code_text
+    used: Set[int] = set()
+    for a, b, _q, value in view.literals:
+        if _PH in value or not _IDENT.fullmatch(value):
+            continue
+        i: int = a - 1
+        while i >= 0 and text[i].isspace():
+            i -= 1
+        j: int = b
+        while j < len(text) and text[j].isspace():
+            j += 1
+        if i < 0 or text[i] != '[' or j >= len(text) or text[j] != ']':
+            continue
+        k: int = i
+        lead: str = '.'
+        h: int = i - 1
+        while h >= 0 and text[h].isspace():
+            h -= 1
+        if h >= 1 and text[h - 1:h + 1] == '?.':
+            k, lead = h - 1, '?.'
+        repl: str = lead + value
+        span: int = j + 1 - k
+        if len(repl) > span:
+            continue
+        code[k:j + 1] = list(repl + ' ' * (span - len(repl)))
+        used.add(a)
+    return ''.join(code), used
+
+
+def _grouped(code: str, start: int, closes: int) -> bool:
+    """start(수신자 식 시작)에서 앞으로 여는 괄호 closes 개가 공백만 사이에 두고 이어지고, 맨 바깥 여는 괄호가 호출 괄호가
+    아닌가(앞이 식별자·`)`·`]` 가 아니다 — 단 return·typeof 류 낱말 뒤는 묶음 괄호다)."""
+    i: int = start - 1
+    for _ in range(closes):
+        while i >= 0 and code[i].isspace():
+            i -= 1
+        if i < 0 or code[i] != '(':
+            return False
+        i -= 1
+    while i >= 0 and code[i].isspace():
+        i -= 1
+    if i < 0:
+        return True
+    if code[i] in ')]':
+        return False
+    if code[i].isalnum() or code[i] in '_$':
+        j: int = i
+        while j >= 0 and (code[j].isalnum() or code[j] in '_$'):
+            j -= 1
+        return code[j + 1:i + 1] in _GROUP_WORDS
+    return True
+
+
+def _doc_names(mv: str) -> Set[str]:
+    """문서 객체 이름 — document·contentDocument·ownerDocument 와 그 지역 별칭(묶음 괄호 · 별칭의 별칭까지)."""
+    names: Set[str] = set(_DOC_NAMES)
+    chain: str = r'\(*\s*(?:[\w$]+\s*(?:\?\.|\.)\s*)*(%s)(?:\s*\))*\s*(?=[;,\n)]|$)'
+    while True:
+        rx = re.compile(r'(?<![\w$.])([A-Za-z_$][\w$]*)\s*=(?!=)\s*' + chain % '|'.join(re.escape(n) for n in sorted(names)))
+        found: Set[str] = {m.group(1) for m in rx.finditer(mv)} - names
+        if not found:
+            return names
+        names |= found
+
+
 def scan_js(text: str) -> List[Tuple[int, str]]:
     """기능 JS 외부 코드·주소 덫(WV8) — [(offset, 사유)]. text 는 주석을 지운 JS."""
     view: JsView = JsView(text)
-    code: str = view.code_text
+    mv, keyed = _member_view(view)
     hits: List[Tuple[int, str]] = []
     # ① 외부 주소 리터럴 · ② 도메인 꼴 리터럴 (리터럴 단위 · 이스케이프 해제 · `${…}` 자리표시 · 이어 붙이기 접기)
     values: List[Tuple[int, str]] = [(a, v) for a, _b, _q, v in view.literals] + view.folded()
@@ -312,18 +382,19 @@ def scan_js(text: str) -> List[Tuple[int, str]]:
             hits.append((offset, '외부 주소 리터럴 %r' % value[:60]))
         elif _domain_hit(value):
             hits.append((offset, '도메인 꼴 리터럴 %r' % value[:60]))
-    # ③ createElement·createElementNS — 토큰 뒤가 «( + 단일 문자열 리터럴» 이 아니면 발견 · 값이 script 면 발견
-    for m in _CE_TOKEN.finditer(code):
+    # ③ createElement·createElementNS — 토큰(괄호 접근을 편 뷰) 뒤가 «( + 단일 문자열 리터럴» 이 아니면 발견 · 값이
+    #    script 면 발견. 괄호 접근이 아닌 자리의 같은 이름 리터럴(`document[k]` 의 k 값 등)도 발견
+    for m in _CE_TOKEN.finditer(mv):
         j: int = m.end()
-        while j < len(code) and code[j].isspace():
+        while j < len(mv) and mv[j].isspace():
             j += 1
         name: str = m.group(0)
-        if j >= len(code) or code[j] != '(':
+        if j >= len(mv) or mv[j] != '(':
             hits.append((m.start(), '%s 를 호출 밖에서 쓴다(.call·.bind·참조 — 태그 인자 우회)' % name))
             continue
         arg_pos: Optional[int] = j + 1
         if m.group(1):
-            arg_pos = _skip_arg(code, j + 1)
+            arg_pos = _skip_arg(mv, j + 1)
             if arg_pos is None:
                 hits.append((m.start(), 'createElementNS 둘째 인자 없음'))
                 continue
@@ -333,38 +404,38 @@ def scan_js(text: str) -> List[Tuple[int, str]]:
         elif value is not None and value.strip().lower() == 'script':
             hits.append((m.start(), '%s 로 script 요소를 만든다(외부 코드 끌어오기 · 비실행 JSON 은 서버 json_script)'
                          % name))
-    for a, _b, q, value in view.literals:
-        if q != '`' and value in ('createElement', 'createElementNS'):
-            hits.append((a, '%s 를 괄호 접근으로 쓴다(태그 인자 우회)' % value))
-    # ④ srcdoc 토큰(식별자·문자열 모두) · document·contentDocument·ownerDocument(와 그 별칭)의 write·writeln
-    for m in _SRCDOC_TOKEN.finditer(code):
+    for a, _b, _q, value in view.literals:
+        if a not in keyed and _PH not in value and value in ('createElement', 'createElementNS'):
+            hits.append((a, '%s 이름을 문자열로 쓴다(괄호 접근 · 태그 인자 우회)' % value))
+    # ④ srcdoc 토큰(식별자·문자열 모두) · document·contentDocument·ownerDocument(와 그 별칭 · 묶음 괄호 · 괄호 접근)의
+    #    write·writeln
+    for m in _SRCDOC_TOKEN.finditer(view.code_text):
         hits.append((m.start(), 'srcdoc 사용(같은 출처로 실행되는 문서 주입)'))
     for a, _b, _q, value in view.literals:
         if 'srcdoc' in value.lower():
             hits.append((a, 'srcdoc 문자열(속성 이름 우회)'))
-    names: Set[str] = set(_DOC_NAMES) | {m.group(1) for m in _ALIAS_RE.finditer(code)}
-    for name in sorted(names):
-        rx = re.compile(r'\b%s\s*(?:\?\.|\.)\s*write(?:ln)?\b' % re.escape(name))
-        for m in rx.finditer(code):
+    for name in sorted(_doc_names(mv)):
+        guard: str = r'(?<![\w$])' if name in _DOC_NAMES else r'(?<![\w$.])'      # 별칭은 다른 객체의 속성 이름이 아니다
+        rx = re.compile(guard + r'%s((?:\s*\))*)\s*(?:\?\.|\.)\s*write(?:ln)?(?![\w$])' % re.escape(name))
+        for m in rx.finditer(mv):
+            closes: int = m.group(1).count(')')
+            if closes:
+                begin: int = m.start()
+                while begin > 0 and (mv[begin - 1].isalnum() or mv[begin - 1] in '_$.?' or mv[begin - 1].isspace()):
+                    begin -= 1
+                if not _grouped(mv, begin, closes):
+                    continue
             hits.append((m.start(), '%s.write 계열(문서 주입 실행)' % name))
-        rx2 = re.compile(r'\b%s\s*(?:\?\.)?\s*\[' % re.escape(name))
-        for m in rx2.finditer(code):
-            j = m.end()
-            while j < len(text) and text[j].isspace():
-                j += 1
-            lit = view.literal_at(j)
-            if lit is not None and lit[3] in ('write', 'writeln'):
-                hits.append((m.start(), '%s[\'write\'] 계열(문서 주입 실행)' % name))
-    for m in _HTML_SINK.finditer(code):
+    for m in _HTML_SINK.finditer(view.code_text):
         tail: str = text[m.end():text.find('\n', m.end()) if text.find('\n', m.end()) >= 0 else len(text)]
         if re.search(r'<script', tail, re.I) or any('<script' in v.lower() for a, _b, _q, v in view.literals
                                                      if m.end() <= a < m.end() + len(tail)):
             hits.append((m.start(), 'HTML 주입에 <script'))
     # ⑤ import() · importScripts ⑥ eval·Function ⑦ 문자열 타이머
     for label, rx in _OTHER_RULES:
-        for m in rx.finditer(code):
+        for m in rx.finditer(view.code_text):
             hits.append((m.start(), label))
-    for m in _TIMER.finditer(code):
+    for m in _TIMER.finditer(view.code_text):
         j = m.end()
         while j < len(text) and text[j].isspace():
             j += 1
@@ -419,6 +490,7 @@ def _junk(rel: str, tracked: Set[str]) -> bool:
 
 
 def unit_files(root: Path, unit: str, tracked: Set[str]) -> List[str]:
+    """단위의 내용 항목(web-상대) — 일반 파일과 심볼릭 링크(파일·디렉터리 링크 모두 · 따라가지 않고 링크 자체를 센다)."""
     base: Path = root / 'web' / unit.rstrip('/')
     if not unit.endswith('/'):
         return [unit]
@@ -426,11 +498,14 @@ def unit_files(root: Path, unit: str, tracked: Set[str]) -> List[str]:
     for cur, dirs, names in os.walk(base):
         dirs.sort()
         rel_dir: str = os.path.relpath(cur, root / 'web').replace(os.sep, '/')
+        for d in dirs:
+            if os.path.islink(os.path.join(cur, d)):
+                found.append(rel_dir + '/' + d)          # 디렉터리 링크 — os.walk 는 따라가지 않으므로 링크를 내용으로 센다
         for name in sorted(names):
             rel: str = rel_dir + '/' + name
             if not _junk(rel, tracked):
                 found.append(rel)
-    return found
+    return sorted(found)
 
 
 def unregistered_units(root: Path, ids: Set[str], tracked: Set[str]) -> List[str]:
@@ -440,7 +515,10 @@ def unregistered_units(root: Path, ids: Set[str], tracked: Set[str]) -> List[str
     units: List[str] = []
     for name in sorted(os.listdir(vendor)):
         rel: str = VENDOR_DIR + '/' + name
-        if (vendor / name).is_dir():
+        if os.path.islink(vendor / name):
+            if name not in ids:
+                units.append(rel)                      # 링크 단위 — 따라가지 않고 링크 자체가 내용이다
+        elif (vendor / name).is_dir():
             if name not in ids and unit_files(root, rel + '/', tracked):
                 units.append(rel + '/')
         elif name != '.gitattributes' and not _junk(rel, tracked):
@@ -502,7 +580,8 @@ def classify_units(root: Path, units: List[str], tracked: Set[str], current_shas
         for rel in unit_files(root, unit, tracked):
             path: Path = root / 'web' / rel
             try:
-                data: bytes = path.read_bytes()
+                # 링크는 git 처럼 대상 경로 문자열이 내용이다(따라가지 않는다)
+                data: bytes = os.fsencode(os.readlink(path)) if os.path.islink(path) else path.read_bytes()
             except OSError:
                 continue
             blob: str = hashlib.sha1(b'blob %d\0' % len(data) + data).hexdigest()

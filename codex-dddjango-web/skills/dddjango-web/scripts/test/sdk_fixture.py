@@ -10,6 +10,10 @@
   vendor <sdk_vendor 인자…>                            가짜 fetch(SDKFX_FETCH json: url → [최종 URL, Content-Type, 파일])
   edit <프로젝트> <id> <JSON 패치> [--rebind] [--rename NEW]   목록 항목 칸 바꾸기(결속 재계산은 --rebind)
   wv8                                                  WV8 리터럴 단위 표본 대조(어긋남 0 이면 exit 0)
+  gwsame <sdk_boundary.js>                             gateway 정규형 표본 — 백스톱 normalize_gateway_url 과 실제 스니펫
+                                                       기록기(node vm)가 표본 기대와 모두 같은가(어긋남 0 이면 exit 0)
+  walks <프로젝트>                                      미등재 단위 시대 판정(classify_units)의 이력 전체 조회(`log --raw`)
+                                                       횟수·git 호출 수·걸린 시간
 """
 import base64
 import hashlib
@@ -299,6 +303,56 @@ WV8_SAMPLES = [  # (원문, 기대 1 = 정적 발견 · 0 = 통과) — 설계 �
     ("p.then(eval)", 1),
     ("const s = document.createElement(`script`)", 1),
     ("const ctx = document.createRange().createContextualFragment(html)", 1),
+    # 리뷰 반영 F5 — 문서 수신자의 묶음 괄호·괄호 접근·별칭 전파 · 자리표시 없는 template-key (+ 정상 대조군)
+    ("const d = (f.contentDocument); d.write(payload);", 1),
+    ("(document).write(payload);", 1),
+    ("const d = document; const alias = d; alias.write(payload);", 1),
+    ('const d = f["contentDocument"]; d.write(payload);', 1),
+    ("document[`createElement`](tag);", 1),
+    ("document[`write`](payload);", 1),
+    ("const d = f['contentDocument']; d['writeln'](payload);", 1),
+    ('const d = f?.["contentDocument"]; d?.write(payload);', 1),
+    ("((document)).writeln(payload);", 1),
+    ("return (document).write(payload);", 1),
+    ("const w = (window.document); w.write(x)", 1),
+    ("let d; d = f.ownerDocument; d.write(x)", 1),
+    ("const k = `createElement`; document[k](tag)", 1),
+    ("const d = logger; d.write(payload);", 0),
+    ("stream(document).write(x)", 0),
+    ("const d = document.body; d.write(x)", 0),
+    ("const d = document; this.d.write(x)", 0),
+    ("el[`textContent`] = s;", 0),
+    ("const t = `createElement ${x}`;", 0),
+]
+
+GW_SAMPLES = [  # (gateway url, 기대 정규 경로 · None = 거절) — 리뷰 반영 F4 표 + 경계 짝. 승인 경로는 /v2/user/me 하나
+    ('/v2/user/me', '/v2/user/me'),
+    ('https://kapi.kakao.com/v2/user/me/?x=1', '/v2/user/me'),
+    ('/v2/user/%6De', '/v2/user/me'),
+    (' https://evil.example/v2/user/me', None),
+    ('\\\\evil.example/v2/user/me', None),
+    ('v2/user/me', None),
+    ('/v2/user/../user/me', None),
+    ('HTTPS://KAPI.KAKAO.COM/V2/User/Me', '/v2/user/me'),
+    ('https://kapi.kakao.com/v2/user/me#x', '/v2/user/me'),
+    ('//kapi.kakao.com/v2/user/me', None),
+    ('http://kapi.kakao.com/v2/user/me', None),
+    ('https://user@kapi.kakao.com/v2/user/me', None),
+    ('https://kapi.kakao.com:443/v2/user/me', None),
+    ('https://evil.example/v2/user/me', None),
+    ('https://evilkakao.com/v2/user/me', None),
+    ('https://kakao.com.evil.example/v2/user/me', None),
+    ('\t/v2/user/me', None),
+    ('/v2/user/me ', None),
+    ('/v2//user/me', None),
+    ('/v2/user/./me', None),
+    ('/v2/user/%2e%2e/me', None),
+    ('/v2/user%2Fme', None),
+    ('/v2/user/%zz', None),
+    ('/v2/user/me\\', None),
+    ('https:\\\\kapi.kakao.com/v2/user/me', None),
+    ('/v2/\u00fcser/me', None),
+    ('/v1/user/unlink', '/v1/user/unlink'),
 ]
 
 
@@ -313,6 +367,69 @@ def wv8():
             print('어긋남 기대 %d 실제 %d — %s' % (want, got, src))
     print('WV8 표본 %d · 어긋남 %d' % (len(WV8_SAMPLES), bad))
     return 1 if bad else 0
+
+
+def gwsame(asset):
+    import shutil
+    import tempfile
+    from src.sdk_registry import normalize_gateway_url
+    domains = ['kakao.com', 'kakaocdn.net']
+    bad = 0
+    for url, want in GW_SAMPLES:
+        got = normalize_gateway_url(url, domains)[0]
+        if got != want:
+            bad += 1
+            print('Python 어긋남 %r — 기대 %r 실제 %r' % (url, want, got))
+    node = shutil.which('node')
+    if node is None:
+        print('node 없음 — 브라우저 스니펫 정규형 대조 불가(통과가 아니다)')
+        return 1
+    with tempfile.TemporaryDirectory() as tmp:
+        listed = Path(tmp) / 'urls.json'
+        listed.write_text(json.dumps([u for u, _w in GW_SAMPLES]), encoding='utf-8')
+        r = subprocess.run([node, str(Path(__file__).with_name('boundary_probe.cjs')), asset, str(listed)],
+                           capture_output=True, text=True)
+    if r.returncode != 0:
+        print('스니펫 실행 실패 — %s' % r.stderr.strip()[-400:])
+        return 1
+    probe = json.loads(r.stdout)
+    for (url, want), rec in zip(GW_SAMPLES, probe['results']):
+        ok_want = want == '/v2/user/me'
+        if rec['path'] != want or rec['pathOk'] is not ok_want:
+            bad += 1
+            print('브라우저 어긋남 %r — 기대 %r(승인 %s) 실제 %r(승인 %s)' % (url, want, ok_want, rec['path'], rec['pathOk']))
+    denied = sum(1 for _u, w in GW_SAMPLES if w != '/v2/user/me')
+    if probe['findings'] != denied or probe['realCalls'] != 0 or probe['cleaned'] != 1 or not probe['installed']:
+        bad += 1
+        print('스니펫 기록 어긋남 — 승인 밖 발견 %d(기대 %d) · 원 gateway 호출 %d · 수명 함수 통과 %d'
+              % (probe['findings'], denied, probe['realCalls'], probe['cleaned']))
+    print('gateway 정규형 표본 %d · 어긋남 %d' % (len(GW_SAMPLES), bad))
+    return 1 if bad else 0
+
+
+def walks(proj):
+    import time
+    from src import check_vendor as cv
+    root = Path(proj).resolve()
+    reg = root / 'web/sdk_registry.json'
+    sdks = json.loads(reg.read_text(encoding='utf-8'))['sdks'] if reg.exists() else {}
+    tracked = cv._tracked_vendor(root)
+    units = cv.unregistered_units(root, set(sdks), tracked)
+    calls = []
+    real = cv._git
+
+    def counting(r, *args):
+        calls.append(args)
+        return real(r, *args)
+    cv._git = counting
+    began = time.perf_counter()
+    kinds = cv.classify_units(root, units, tracked, {e['sha256'] for e in sdks.values()}, reg.exists())
+    took = time.perf_counter() - began
+    cv._git = real
+    raw = sum(1 for a in calls if a[:1] == ('log',) and '--raw' in a)
+    print('units=%d raw_walks=%d git_calls=%d seconds=%.3f under3s=%s kinds=%s'
+          % (len(units), raw, len(calls), took, 'yes' if took < 3.0 else 'no', ','.join(sorted(set(kinds.values())))))
+    return 0
 
 
 def main():
@@ -335,6 +452,10 @@ def main():
         return edit(args)
     if cmd == 'wv8':
         return wv8()
+    if cmd == 'gwsame':
+        return gwsame(args[0])
+    if cmd == 'walks':
+        return walks(args[0])
     print('알 수 없는 명령 %s' % cmd)
     return 1
 

@@ -626,6 +626,12 @@ OUT=$(gw_case f "window.Kakao.API.request({url: 'https://evil.example.org/v2/use
 check "K52b-6 운영자 밖 절대 주소 — WV9 1" 2 "$E" "$OUT" "운영자 호스트가 아닌 절대 주소=1"
 OUT=$(gw_case g "window.Kakao.API.request({url: '/v9/unknown'});"); E=$?
 check "K52b-7 api-paths 밖 경로 — WV9 1" 2 "$E" "$OUT" "api-paths 밖=1"
+OUT=$(gw_case h "window.Kakao.API.request({url: ' https://evil.example/v2/user/me'});"); E=$?
+check "F4b 앞 공백 + 운영자 밖 호스트 — WV9 1(정규형 거절)" 2 "$E" "$OUT" "[WV9] BLOCKER=1" "역슬래시가 든 url=1"
+OUT=$(gw_case i "window.Kakao.API.request({url: '/v2/user/../user/me'});"); E=$?
+check "F4c 점 조각 — WV9 1(정규형 거절)" 2 "$E" "$OUT" "[WV9] BLOCKER=1" "점 조각=1"
+OUT=$(gw_case j "window.Kakao.API.request({url: 'v2/user/me'});"); E=$?
+check "F4d 슬래시로 시작하지 않는 상대 경로 — WV9 1" 2 "$E" "$OUT" "[WV9] BLOCKER=1"
 P=$(newp k52bundle); FX edit "$P" kakao_js_sdk "{\"namespace_members\": {\"API\": {\"cleanup\": \"lifecycle\", \"request\": \"gateway\"}, \"Share\": {\"cleanup\": \"lifecycle\", \"createCustomButton\": \"sdk_ui\", \"createDefaultButton\": \"sdk_ui\", \"createScrapButton\": \"sdk_ui\", \"deleteImage\": \"data_out\", \"scrapImage\": \"data_out\", \"sendCustom\": \"call\", \"sendDefault\": \"call\", \"sendScrap\": \"call\", \"uploadImage\": \"data_out\"}}, \"use_scope\": [\"Kakao.API.*\", \"Kakao.API.request\", \"Kakao.Share.*\", \"Kakao.init\", \"Kakao.isInitialized\"]}" --rebind >/dev/null
 OUT=$(BS "$P" --diff-base HEAD --only wv1); E=$?
 check "K52b-8 gateway 를 묶음·이름 원소로 — WV1 ×2" 2 "$E" "$OUT" "gateway 이름공간 묶음=1" "gateway 함수는=1"
@@ -790,9 +796,13 @@ P=$(era_proj k51a); mkdir -p "$P/web/static/vendor/bulk"; for i in $(seq 1 200);
 S0=$(date +%s); OUT=$(BS "$P" --debt-scan); E=$?; S1=$(date +%s)
 check "K51a 미등재 200파일 · 목록 이력 없음 — WV12 · 시간 상한" 2 "$E" "$OUT" "[WV12] web/static/vendor/bulk/=1"
 [ $((S1-S0)) -le 20 ]; check "K51a 시간 상한(20 s)" 0 "$?" ""
+OUT=$(FX walks "$P"); E=$?
+check "F7a K51a 단락 — 목록 이력 없음: 이력 전체 조회 0회 · 3 s 미만" 0 "$E" "$OUT" "units=1 raw_walks=0=1" "under3s=yes=1"
 must "준비 install" FX install "$P"
 OUT=$(BS "$P" --debt-scan); E=$?
 check "K51b 목록 이력 있음 — WV12(목록 이전 내용)" 2 "$E" "$OUT" "[WV12] web/static/vendor/bulk/=1"
+OUT=$(FX walks "$P"); E=$?
+check "F7b K51b 한 번 걸음 — 목록 이력 있음: 이력 전체 조회 1회 · 3 s 미만" 0 "$E" "$OUT" "units=1 raw_walks=1=1" "under3s=yes=1" "kinds=WV12=1"
 git clone -q --depth 1 "file://$P" "$T/k51c" 2>/dev/null
 OUT=$(BS "$T/k51c" --diff-base HEAD --only wv13); E=$?
 check "K51c 얕은 클론 + 미등재 단위 — exit 1 «판정 불가»(미실행)" 1 "$E" "$OUT" "판정 불가=+"
@@ -833,7 +843,7 @@ echo 'y' >> "$P/web/static/vendor/kakao_js_sdk/kakao.min.js"
 OUT=$(SDKFX_FETCH="{\"$SRC\": [\"$SRC\", \"application/javascript\", \"$T/sdk.js.bad\"]}" FX vendor restore "$P" kakao_js_sdk); E=$?
 check "ⓡ1 restore — 원본을 받지 못하면 거절 2" 2 "$E" "$OUT" "거절=1"
 
-# ---------- 리뷰 반영 F1~F3 — 독립 구현 리뷰 반례 · 각 red 에 정상 짝
+# ---------- 리뷰 반영 F1~F6(F4b~d 는 K52b · F7 은 K51 옆) — 독립 구현 리뷰 반례 · 각 red 에 정상 짝
 GOOD="$T/f-good.js"; cp "$T/base/web/static/vendor/kakao_js_sdk/kakao.min.js" "$GOOD"
 GOODF="{\"$SRC\": [\"$SRC\", \"application/javascript\", \"$GOOD\"]}"
 # F1 restore — 쓰기·링크 제거 전에 목록 구조·id↔파일·결속·경로 성분 확인(어긋나면 쓰기 0 정지)
@@ -905,6 +915,43 @@ open(p, 'w', encoding='utf-8').write(json.dumps(d, ensure_ascii=False, indent=2,
 PY
 OUT=$(inst3 "$T/cand-f3d/candidate.json"); E=$?
 check "F3f 후보의 문서 최종 주소가 operator_domains 밖 — install 거절 2" 2 "$E" "$OUT" "operator_domains 의 https 가 아니다=1"
+
+# F4 gateway 정규형 — 백스톱 normalize_gateway_url 과 실제 스니펫 기록기(node vm)가 같은 표본에서 같은 답
+OUT=$(FX gwsame "$SCRIPTS/../assets/sdk_boundary.js"); E=$?
+check "F4a gateway 정규형 표본(앞 공백·역슬래시·상대·점 조각·퍼센트 …) — Python·브라우저 어긋남 0" 0 "$E" "$OUT" "어긋남 0=1"
+
+# F5 WV8 — 문서 수신자의 묶음 괄호·괄호 접근·별칭 전파 · 자리표시 없는 template-key (백스톱 실행 · 정상 짝)
+FX mkproj "$T/f5" >/dev/null
+f5() { printf '%s\n' "$1" > "$T/f5/web/static/js/review_probe.js"; BS "$T/f5" --diff-base HEAD --only wv8; }
+for js in 'const d = (f.contentDocument); d.write(payload);' '(document).write(payload);' \
+          'const d = document; const alias = d; alias.write(payload);' 'const d = f["contentDocument"]; d.write(payload);' \
+          'document[`createElement`](tag);' 'document[`write`](payload);'; do
+  OUT=$(f5 "$js"); E=$?
+  check "F5 $js — WV8" 2 "$E" "$OUT" "[WV8] BLOCKER=+"
+done
+for js in 'logger.write(payload);' 'const d = logger; d.write(payload);' 'stream(document).write(x);' \
+          'el[`textContent`] = s;'; do
+  OUT=$(f5 "$js"); E=$?
+  check "F5 짝 $js — 0" 0 "$E" "$OUT" "BLOCKER=0"
+done
+
+# F6 미등재 단위의 심볼릭 링크(하위 디렉터리 링크 · 단위 자체가 링크) — 따라가지 않고 링크를 내용으로 센다
+mkdir -p "$T/f6-ext"; echo 'window.unregistered = true;' > "$T/f6-ext/other.js"
+P=$(newp f6a); mkdir -p "$P/web/static/vendor/new_sdk"; ln -s "$T/f6-ext" "$P/web/static/vendor/new_sdk/nested"; commit "$P" link >/dev/null
+OUT=$(SV verify "$P"); E=$?
+check "F6a 목록 시대 + 하위 디렉터리 링크만 든 미등재 단위 — verify WV13 1" 2 "$E" "$OUT" "[WV13] BLOCKER — web/static/vendor/new_sdk/=1"
+OUT=$(BS "$P" --diff-base HEAD --only wv); E=$?
+check "F6a gated — WV13 1" 2 "$E" "$OUT" "[WV13] BLOCKER=1"
+P=$(newp f6b); ln -s "$T/f6-ext" "$P/web/static/vendor/linked_sdk"; commit "$P" link >/dev/null
+OUT=$(SV verify "$P"); E=$?
+check "F6b 목록 시대 + 단위 자체가 디렉터리 링크 — verify WV13 1" 2 "$E" "$OUT" "[WV13] BLOCKER — web/static/vendor/linked_sdk=1"
+P=$(newp f6c); mkdir -p "$P/web/static/vendor/new_sdk"; cp "$T/f6-ext/other.js" "$P/web/static/vendor/new_sdk/regular.js"; commit "$P" file >/dev/null
+OUT=$(SV verify "$P"); E=$?
+check "F6c 대조: 일반 파일 — verify WV13 1" 2 "$E" "$OUT" "[WV13] BLOCKER — web/static/vendor/new_sdk/=1"
+P=$(era_proj f6d); mkdir -p "$P/web/static/vendor/old_sdk"; ln -s "$T/f6-ext" "$P/web/static/vendor/old_sdk/nested"; commit "$P" old >/dev/null
+must "F6d 준비 install" FX install "$P"
+OUT=$(BS "$P" --debt-scan); E=$?
+check "F6d 짝: 목록 이전 링크 단위 — 빚 WV12(늘 red 아님)" 2 "$E" "$OUT" "[WV12] web/static/vendor/old_sdk/=1" "[WV13]=0"
 
 echo "fixtures_sdk: PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" = 0 ]

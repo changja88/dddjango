@@ -15,7 +15,7 @@ import subprocess
 import unicodedata
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
-from urllib.parse import unquote, urlsplit
+from urllib.parse import urlsplit
 
 from .common import (LIB_CDN_HOST_SUFFIXES, LIB_CDN_HOSTS, LIB_CDN_PATHS, SDK_REGISTRY, SECRET_WORDS,
                      TRAP_TOKENS, VENDOR_DIR, mask_js)
@@ -319,22 +319,51 @@ def scope_units(entry: dict) -> List[str]:
     return units
 
 
+_GW_SCHEME = re.compile(r'^[A-Za-z][A-Za-z0-9+.\-]*:')
+_GW_HOST = re.compile(r'[a-z0-9.\-]+')
+_GW_PCT = re.compile(r'%([0-9A-Fa-f]{2})')
+_GW_UNRESERVED: str = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~'
+
+
 def normalize_gateway_url(url: str, domains: List[str]) -> Tuple[Optional[str], Optional[str]]:
-    """gateway url 정규형 — 운영자 호스트 점 경계 확인 → 경로만 · 쿼리·조각 제거 · 퍼센트 해제 · 끝 `/` 제거 ·
-    소문자. (정규 경로, 문제)."""
-    try:
-        parts = urlsplit(url)
-    except ValueError:
-        return None, 'url 해석 불가'
-    if parts.scheme or parts.netloc:
-        host: str = (parts.hostname or '').lower()
-        if parts.scheme not in ('https', '') or not host or not under(host, domains):
+    """gateway url 정규형 — (정규 경로, 문제). 브라우저 스니펫(assets/sdk_boundary.js `normPath`)과 글자 단위로 같은
+    규칙이다(URL 파서의 해석 차이 — 앞 공백·역슬래시·점 조각 — 에 기대지 않는다):
+    ① 문자열 전체가 출력 가능한 ASCII(`!`~`~`)이고 역슬래시가 없다(공백·제어문자·비ASCII·`\\` 는 거절)
+    ② 스킴이 있거나 `//` 로 시작하면 `https://<호스트>` 꼴만 — 호스트는 소문자로 바꾼 뒤 `[a-z0-9.-]` 만(userinfo·포트
+       거절)이고 운영자 도메인의 점 경계 하위여야 한다. 그 뒤가 경로다(비면 `/`)
+    ③ 그 밖은 `/` 로 시작하는 상대 경로만
+    ④ 쿼리·조각(`?`·`#` 뒤)을 떼고 `%XX` 를 푼다 — 비예약 문자(영숫자·`-._~`)로 풀리는 것만 받는다
+    ⑤ 끝 `/` 를 떼고(비면 `/`) 빈 조각·`.`·`..` 조각은 거절 ⑥ 소문자."""
+    if not isinstance(url, str) or not url:
+        return None, 'url 이 문자열이 아니다'
+    if any(not ('!' <= c <= '~') or c == '\\' for c in url):
+        return None, '공백·제어문자·비ASCII·역슬래시가 든 url %r' % url
+    rest: str = url
+    if _GW_SCHEME.match(url) or url.startswith('//'):
+        if url[:8].lower() != 'https://':
+            return None, '운영자 호스트가 아닌 절대 주소 %s(https 가 아니다)' % url
+        after: str = url[8:]
+        cut: int = len(after)
+        for ch in '/?#':
+            k: int = after.find(ch)
+            if k >= 0:
+                cut = min(cut, k)
+        host: str = after[:cut].lower()
+        if not _GW_HOST.fullmatch(host) or not under(host, domains):
             return None, '운영자 호스트가 아닌 절대 주소 %s' % url
-    path: str = unquote(parts.path)
-    if not path.startswith('/'):
+        rest = after[cut:]
+        if not rest.startswith('/'):
+            rest = '/' + rest
+    elif not url.startswith('/'):
         return None, '경로가 `/` 로 시작하지 않는다 — %s' % url
-    path = path.rstrip('/') or '/'
-    return path.lower(), None
+    path: str = re.split(r'[?#]', rest, maxsplit=1)[0]
+    if re.search(r'%(?![0-9A-Fa-f]{2})', path) or any(
+            chr(int(m.group(1), 16)) not in _GW_UNRESERVED for m in _GW_PCT.finditer(path)):
+        return None, '퍼센트 인코딩이 비예약 문자(영숫자·-._~)가 아니다 — %s' % url
+    path = _GW_PCT.sub(lambda m: chr(int(m.group(1), 16)), path).rstrip('/')
+    if any(seg in ('', '.', '..') for seg in path.split('/')[1:]):
+        return None, '빈 조각·점 조각(. ..)이 든 경로 — %s' % url
+    return (path or '/').lower(), None
 
 
 # ------------------------------------------------------------------ WV1 스키마
