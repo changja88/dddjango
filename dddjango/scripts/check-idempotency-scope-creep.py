@@ -156,20 +156,25 @@ def _is_new_or_modified(root: Path, file_path: Path) -> bool:
         return True  # git 판단 불가 → 안전하게 가드 통과(나머지 AND 가 좁힌다).
 
 
+def _has_idempotency_signal(f: Path) -> bool:
+    """멱등성 신호 — 파일 이름, 아니면 본문(읽기 실패는 신호 없음)."""
+    if _IDEMP_NAME_RE.search(f.name):
+        return True
+    try:
+        text = f.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return False
+    return any(r.search(text) for r in _IDEMP_BODY_RES)
+
+
 def _idempotency_artifacts(root: Path) -> list[Path]:
-    """(2) 이번 변경의 멱등성 프로덕션 산출물."""
+    """(2) 이번 변경의 멱등성 프로덕션 산출물.
+
+    git 은 신호가 있는 파일에만 묻는다 — 파일마다 묻으면 대형 저장소에서 수 분이 걸리고,
+    신호 없는 파일의 git 결과는 판정에 쓰이지 않는다(원소·순서 무변)."""
     found: list[Path] = []
     for f in _prod_py_under_application(root):
-        if not _is_new_or_modified(root, f):
-            continue
-        if _IDEMP_NAME_RE.search(f.name):
-            found.append(f)
-            continue
-        try:
-            text = f.read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            continue
-        if any(r.search(text) for r in _IDEMP_BODY_RES):
+        if _has_idempotency_signal(f) and _is_new_or_modified(root, f):
             found.append(f)
     return found
 

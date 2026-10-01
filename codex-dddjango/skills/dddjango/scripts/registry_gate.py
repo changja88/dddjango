@@ -68,6 +68,8 @@ provenance 차분 — 귀속의 분할이지 재정의가 아니다
 
 사용: python3 registry_gate.py <저장소 루트> --anchor <ref> [--legacy-debt-file <path>]
       [--approved-merge-file <path>] [--introduced-json <path>] [--contract-json <path>]
+환경(선택): DJR_REGISTRY_WORKERS=<양의 정수> — 검사기 동시 실행 수. 없으면 빈 코어 수(CPU − 1분 부하 · 1~8)다.
+      앵커·현재 두 벌이 한 한도를 나눠 쓴다. 출력·sidecar 는 워커 수와 무관하다(REGISTRY 순서 병합).
 exit 0 = 귀속 0 / exit 2 = 귀속 존재 / exit 1 = 사용 오류·재료 결손·공허 차분·승인 목록 형식/사슬 오류.
 flag 가 없으면 출력·sidecar 는 이 채널 도입 전과 byte 동일하다(상시 진단 «앵커가 HEAD 의 조상이
 아니다» 1행만 병리 시 추가 — exit 무변).
@@ -84,6 +86,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
+from concurrent.futures import Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -242,6 +246,62 @@ def _toolchain_line() -> str:
             f"실행 트리 digest {digest}({count}파일) · 경로 {_SCRIPTS_DIR}")
 
 
+_WORKERS_ENV: str = "DJR_REGISTRY_WORKERS"
+_MAX_AUTO_WORKERS: int = 8
+_POOL_LOCK: threading.Lock = threading.Lock()
+_pool: "ThreadPoolExecutor | None" = None
+
+
+def _registry_workers() -> int:
+    """검사기 동시 실행 수 — `DJR_REGISTRY_WORKERS`(양의 정수)가 있으면 그 값, 없으면 빈 코어 수(1~8).
+
+    빈 코어 = CPU 수 − 1분 부하 평균이라, 한 기계에 레인이 여럿 돌아 코어가 꽉 차면 스스로 1~2개로
+    줄어 다른 레인을 밀어내지 않는다. 부하를 잴 수 없는 플랫폼(`os.getloadavg` 부재 · 측정 불능)은
+    부하 미상으로 보고 CPU 수 상한만 쓴다. 출력은 워커 수와 무관하다."""
+    raw: str = os.environ.get(_WORKERS_ENV, "").strip()
+    if raw:
+        if raw.isdigit() and int(raw) > 0:
+            return int(raw)
+        print(f"주의: {_WORKERS_ENV}={raw!r} 는 양의 정수가 아니다 — 자동 워커 수를 쓴다", file=sys.stderr)
+    cpu: int = os.cpu_count() or 1
+    try:
+        idle: int = int(cpu - os.getloadavg()[0])
+    except (OSError, AttributeError):
+        idle = cpu
+    return max(1, min(_MAX_AUTO_WORKERS, idle))
+
+
+def _checker_pool() -> ThreadPoolExecutor:
+    """검사기 자식 프로세스의 프로세스 단위 한도 — 앵커·현재 두 벌과 provenance 재실행이 한 풀을 나눠 쓴다."""
+    global _pool
+    with _POOL_LOCK:
+        if _pool is None:
+            _pool = ThreadPoolExecutor(max_workers=_registry_workers(), thread_name_prefix="registry-gate")
+        return _pool
+
+
+def _run_checker(script: str, target: Path, auto: bool,
+                 env: "dict[str, str]") -> "subprocess.CompletedProcess[str]":
+    return subprocess.run(
+        checker_argv(sys.executable, script, str(target), auto),
+        capture_output=True, text=True, env=env,
+    )
+
+
+def _merge_sink_parts(sink: Path, parts: "list[Path]") -> None:
+    """작업별 sink 조각을 주어진(REGISTRY) 순서로 sink 에 이어 붙인다 — 직렬 append 와 같은 바이트.
+
+    디코드하지 않고 바이트 그대로 잇는다: 깨진 줄 하나가 판정을 죽이지 않는다는 뒤 읽기의 계약
+    (`errors="replace"` · 깨진 JSON 줄 건너뜀)을 병합 단계가 먼저 깨면 안 된다."""
+    present: "list[Path]" = [part for part in parts if part.is_file()]
+    if not present:
+        return
+    with sink.open("ab") as merged:
+        for part in present:
+            merged.write(part.read_bytes())
+            part.unlink()
+
+
 def _run_registry(target: Path,
                   sink: "Path | None" = None,
                   git_root: "Path | None" = None,
@@ -262,6 +322,12 @@ def _run_registry(target: Path,
     (세 런 공통 G2 red 의 근원). «현재» 스냅숏 실행에만 원본 루트를 넘긴다 — 스냅숏은
     working tree 의 사본이라 원본 porcelain 이 그대로 참이다. 앵커 스냅숏은 커밋된
     기준선이므로 넘기지 않는다(anchor 측 fail-closed 는 L 에만 실려 귀속을 만들지 않는다).
+
+    **병렬 실행(속도 개선 C1⑵ · 2026-10-01)**: 작업을 공용 풀(`_checker_pool`)에 모두 올리고
+    **전부 끝난 뒤** REGISTRY 순서로 거둔다 — 작업 예외는 REGISTRY 순서 첫 예외로 올라오고(직렬의
+    첫 실패와 같은 예외), 실행 중 작업이 호출측 임시 폴더 정리와 겹치지 않는다. 검사기마다 sink
+    조각(`<sink>.<REGISTRY 인덱스>.part`)을 따로 주고 REGISTRY 순서로 바이트 병합하므로 sink·exit·
+    라인 집합이 직렬 실행과 같다(검사기끼리 쓰는 파일은 sink 뿐이다).
     """
     exits: "dict[str, int]" = {}
     lines: "set[str]" = set()
@@ -271,17 +337,23 @@ def _run_registry(target: Path,
     env.pop(findings.ENV_VAR, None)
     env.pop(findings.ENV_DIR, None)
     env.pop(findings.ENV_GIT_ROOT, None)
-    if sink is not None:
-        env[findings.ENV_VAR] = str(sink)
     if git_root is not None:
         env[findings.ENV_GIT_ROOT] = str(git_root)
-    for script, auto in REGISTRY:
-        if only is not None and script not in only:
-            continue
-        proc: "subprocess.CompletedProcess[str]" = subprocess.run(
-            checker_argv(sys.executable, script, str(target), auto),
-            capture_output=True, text=True, env=env,
-        )
+    jobs: "list[tuple[str, bool, Path | None]]" = [
+        (script, auto, sink.with_name(f"{sink.name}.{index:02d}.part") if sink is not None else None)
+        for index, (script, auto) in enumerate(REGISTRY)
+        if only is None or script in only
+    ]
+    futures: "list[Future[subprocess.CompletedProcess[str]]]" = [
+        _checker_pool().submit(_run_checker, script, target, auto,
+                               env if part is None else {**env, findings.ENV_VAR: str(part)})
+        for script, auto, part in jobs
+    ]
+    wait(futures)
+    procs: "list[subprocess.CompletedProcess[str]]" = [future.result() for future in futures]
+    if sink is not None:
+        _merge_sink_parts(sink, [part for _script, _auto, part in jobs if part is not None])
+    for (script, _auto, _part), proc in zip(jobs, procs):
         exits[script] = proc.returncode
         parsed: int = 0
         for raw in (proc.stdout + "\n" + proc.stderr).splitlines():
@@ -803,11 +875,18 @@ def main(argv: "list[str]") -> int:
             except anchor_diff.AnchorDiffUsage as exc:
                 print(f"재료 결손: {exc}", file=sys.stderr)
                 return 1
-            exits_l, l_set, _l_records, l_cands = _run_registry(anc, sink_l)
+            # 앵커·현재 두 벌을 동시에 돈다 — 검사기 동시 실행 한도는 두 벌이 나눠 쓰는 공용 풀이 정한다.
+            # `with` 를 나갈 때 두 벌이 모두 끝나 있으므로 한쪽 예외도 임시 폴더 정리와 겹치지 않는다.
+            with ThreadPoolExecutor(max_workers=2, thread_name_prefix="registry-side") as sides:
+                anchor_run: "Future[tuple[dict[str, int], set[str], list[dict], set[str]]]" = sides.submit(
+                    _run_registry, anc, sink_l)
+                current_run: "Future[tuple[dict[str, int], set[str], list[dict], set[str]]]" = sides.submit(
+                    _run_registry, cur, sink_n, git_root=root)
+                exits_l, l_set, _l_records, l_cands = anchor_run.result()
+                exits_n, n_set, n_records, n_cands = current_run.result()
             l_records = _l_records
             anc_prefixes = (str(anc) + "/", str(anc))
             l_set |= _parse_fail_findings(anc)
-            exits_n, n_set, n_records, n_cands = _run_registry(cur, sink_n, git_root=root)
             n_set |= _parse_fail_findings(cur)
 
         attributed: "list[str]" = sorted(n_set - l_set)

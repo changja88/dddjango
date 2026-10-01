@@ -43,6 +43,20 @@ main 위반 커밋 → lane 에서 `git merge --no-ff main`(M) → 판정». 고
        «역방향/합성 머지 의심» 진단 1행·exit 무변(유입 3·exit 0)(P2 M-1) / P12r 같은 상태에 remote-tracking
        `refs/remotes/origin/lane`·태그를 얹어도 진단 1행(HEAD 브랜치 자신으로 계수 — 6단계 재검 MAJOR-2)
 
+병렬 실행(속도 개선 C1⑵ · 2026-10-01) — 옛 직렬 게이트(`86fc3c24` 의 registry_gate.py 를 현행 검사기 트리에
+덮어쓴 사본)와 새 게이트를 같은 픽스처에서 돌려 exit·stdout(툴체인 행 마스킹)·stderr·introduced·contract
+(휘발 필드 마스킹)를 대조한다. 새 게이트 실행마다 `$TMPDIR` 를 빈 전용 폴더로 줘 임시 폴더 누수를 센다.
+  R1   레코드 수백 건 저장소(good_bc + bad_rules 15종 — 절반 앵커·절반 작업 트리) · 워커 1·3·8·기본 → 옛과 동일·누수 0
+  R2   REGISTRY 0번 검사기 지연 주입(완료 순서 뒤집힘) · 워커 8 → 옛과 동일(병합은 REGISTRY 순서)
+  R3   검사기가 sink 에 깨진 바이트 줄 → 옛·새 exit 2 · 동일(조각은 바이트로 잇는다)
+  R4   검사기 stdout 비-UTF-8(게이트 작업 예외) → 옛·새 traceback 1 · 같은 예외 줄 · exit 1 · 누수 0
+  R5   검사기 실행 시 예외(crash) → 옛·새 exit 2 · 합성 fail-closed 귀속 동일
+  R6   `DJR_REGISTRY_WORKERS=0`(양의 정수 아님) → stderr 주의 1행 · 자동 워커 · 나머지 옛과 동일
+  (게이트에는 검사기별 timeout 이 없다 — 옛·새 같다. «느린 검사기»는 R2 지연 주입이 덮는다.)
+  유지 규칙: 게이트 출력 판형(절·진단 행)을 바꾸는 개정은 같은 변경을 직렬 판형 사본(`_SERIAL_GATE_COMMIT` 게이트 +
+  그 변경)에도 적용해 이 대조를 유지하거나, R 을 `DJR_REGISTRY_WORKERS=1` 대조로 낮추는 결정을 커밋 메시지에 적는다
+  (기준을 병렬 이후 커밋으로 올리면 «직렬 대조»라는 뜻이 사라진다).
+
 사용: python3 registry_gate_smoke.py
 exit 0 = 전 케이스 일치 / exit 2 = 불일치 / exit 1 = 재료 결손.
 """
@@ -227,28 +241,176 @@ def _mask_sidecar(path: Path) -> "dict | None":
     payload: dict = json.loads(path.read_text(encoding="utf-8"))
     for key in ("experiment_run_id",):
         payload.pop(key, None)
-    for rec in payload.get("records", []):
+    for rec in payload.get("records", []) + (payload.get("candidate_records") or []):
         for key in ("ts", "run_id", "record_id", "file_raw", "experiment_run_id"):
             rec.pop(key, None)
     return payload
 
 
-def _pre_repair_gate(td: Path) -> "Path | None":
-    """수리 전 «게이트»(`_PRE_REPAIR_COMMIT` 의 registry_gate.py)를 **현행 검사기 트리** 위에 덮어쓴 사본.
+def _gate_copy(td: Path, name: str, commit: "str | None" = None) -> "Path | None":
+    """**현행 검사기 트리** 사본의 registry_gate.py — `commit` 이 있으면 게이트만 그 커밋 판으로 덮는다.
 
     측정 대상은 게이트 불변(귀속·정규화·출력 판형)뿐이다 — 검사기 트리는 현행을 쓴다(검사기 규칙이
     바뀌면(예: 2026-09-04 #219/#635 의 골격 파일 건너뜀) 옛 검사기의 발화가 diff 를 오염시키므로).
-    옛 게이트의 import 계약(findings·anchor_diff)이 현행 모듈과 맞아야 한다 — 어긋나면 스모크가 그 사실로 red 다."""
-    dest: Path = td / "pre-repair"
+    옛 게이트의 import 계약(findings·anchor_diff)이 현행 모듈과 맞아야 한다 — 어긋나면 스모크가 그 사실로 red 다.
+    사본은 결함 주입(`_inject`)의 재료이기도 하다 — 원본 scripts 트리는 건드리지 않는다."""
+    dest: Path = td / name
     shutil.copytree(GATE.parent, dest / "dddjango" / "scripts", ignore=shutil.ignore_patterns("__pycache__"))
-    old_gate: "subprocess.CompletedProcess[bytes]" = subprocess.run(
-        ["git", "-C", str(ROOT), "show", f"{_PRE_REPAIR_COMMIT}:dddjango/scripts/registry_gate.py"],
-        capture_output=True)
-    if old_gate.returncode != 0:
-        return None
     gate: Path = dest / "dddjango" / "scripts" / "registry_gate.py"
-    gate.write_bytes(old_gate.stdout)
+    if commit is not None:
+        old_gate: "subprocess.CompletedProcess[bytes]" = subprocess.run(
+            ["git", "-C", str(ROOT), "show", f"{commit}:dddjango/scripts/registry_gate.py"],
+            capture_output=True)
+        if old_gate.returncode != 0:
+            return None
+        gate.write_bytes(old_gate.stdout)
     return gate
+
+
+def _pre_repair_gate(td: Path) -> "Path | None":
+    """수리 전 «게이트»(`_PRE_REPAIR_COMMIT` 의 registry_gate.py)를 현행 검사기 트리 위에 덮어쓴 사본(P0′)."""
+    return _gate_copy(td, "pre-repair", _PRE_REPAIR_COMMIT)
+
+
+# ── R — 병렬 실행(속도 개선 C1⑵) 옛 게이트 직접 대조 ─────────────────────────────────────
+# 옛(직렬) 게이트 = `_SERIAL_GATE_COMMIT` 의 registry_gate.py 를 현행 검사기 트리에 덮어쓴 사본(P0′ 판형).
+# 새 게이트 자기 설정끼리(워커 1 vs 기본)만 대조하면 병합 결함이 양쪽에 같이 숨는다 — 옛 코드와 직접 잰다.
+
+_SERIAL_GATE_COMMIT: str = "86fc3c24"
+_FIXTURES: Path = ROOT / "workspace" / "eval" / "fixtures"
+# 레코드가 여러 검사기에서 수백 건 나도록 겹치는 bad_rules — 앞 절반은 앵커에 커밋(legacy), 뒤 절반은 작업 트리.
+_MANY_BADS: "tuple[str, ...]" = (
+    "domain_model", "naming", "business_vocabulary", "context_isolation", "port_adapter_pairing",
+    "transaction_boundary", "db_table", "event_publish", "mechanism_ownership", "usecase_dto",
+    "public_surface", "response_schema_bypass", "choices_literal", "broker_contract", "missable_entrance",
+)
+
+
+def _many_records_repo(td: Path, name: str) -> "tuple[Path, str]":
+    repo, _good = _make_repo(td, name)
+    split: int = len(_MANY_BADS) // 2
+    for bad in _MANY_BADS[:split]:
+        shutil.copytree(_FIXTURES / bad / "bad_rules", repo / f"fx_{bad}")
+    anchor: str = _commit_all(repo, "anchor + legacy half")
+    for bad in _MANY_BADS[split:]:
+        shutil.copytree(_FIXTURES / bad / "bad_rules", repo / f"fx_{bad}")
+    _plant_violation(repo)
+    return repo, anchor
+
+
+def _inject(gate: Path, checker: str, body: str) -> None:
+    """사본의 검사기 `__main__` 블록 첫머리에 결함 코드를 심는다(옛·새 사본에 같은 주입)."""
+    path: Path = gate.parent / checker
+    text: str = path.read_text(encoding="utf-8")
+    anchor: str = '\nif __name__ == "__main__":\n'
+    if text.count(anchor) != 1:
+        raise RuntimeError(f"주입 앵커 없음: {checker}")
+    path.write_text(text.replace(anchor, anchor + "".join(f"    {line}\n" for line in body.splitlines())),
+                    encoding="utf-8")
+
+
+def _par_run(gate: Path, repo: Path, anchor: str, td: Path, workers: "str | None") -> "dict[str, object]":
+    """게이트 1회 — 사이드카는 고정 경로(출력의 경로 행이 런마다 같다) · `$TMPDIR` 는 빈 전용 폴더(누수 계수)."""
+    tmp: Path = td / "par-tmp"
+    shutil.rmtree(tmp, ignore_errors=True)
+    tmp.mkdir()
+    intro: Path = td / "par-introduced.json"
+    contract: Path = td / "par-contract.json"
+    intro.unlink(missing_ok=True)
+    contract.unlink(missing_ok=True)
+    env: "dict[str, str]" = _scrubbed_env()
+    env.pop("DJR_REGISTRY_WORKERS", None)
+    if workers is not None:
+        env["DJR_REGISTRY_WORKERS"] = workers
+    env["TMPDIR"] = str(tmp)
+    proc: "subprocess.CompletedProcess[str]" = subprocess.run(
+        [sys.executable, str(gate), str(repo), "--anchor", anchor,
+         "--introduced-json", str(intro), "--contract-json", str(contract)],
+        capture_output=True, text=True, env=env)
+    return {"exit": proc.returncode, "stdout": _mask(proc.stdout), "stderr": proc.stderr,
+            "introduced": _mask_sidecar(intro), "contract": _mask_sidecar(contract),
+            "leaked": sorted(p.name for p in tmp.iterdir())}
+
+
+def _same_output(a: "dict[str, object]", b: "dict[str, object]") -> bool:
+    return all(a[key] == b[key] for key in ("exit", "stdout", "stderr", "introduced", "contract"))
+
+
+def _last_line(text: object) -> str:
+    """traceback 의 마지막 줄(예외 종류·메시지) — 프레임 경로는 옛·새가 달라 이 줄만 대조한다."""
+    lines: "list[str]" = [line for line in str(text).splitlines() if line.strip()]
+    return lines[-1] if lines else ""
+
+
+def _parallel_rows(td: Path) -> "list[tuple[str, int, int, bool, str]]":
+    """R1~R6 — 병렬 게이트가 옛 직렬 게이트와 byte 같은가(정상·완료 순서 뒤집힘·결함 주입 셋·워커 값 오류)."""
+    rows: "list[tuple[str, int, int, bool, str]]" = []
+    serial: "Path | None" = _gate_copy(td, "serial-gate", _SERIAL_GATE_COMMIT)
+    if serial is None:
+        raise RuntimeError(f"직렬 게이트 사본({_SERIAL_GATE_COMMIT}) 추출 실패")
+
+    # R1 — 레코드 수백 건 저장소: 옛 1회 vs 새 워커 1 · 3 · 8 · 기본(빈 코어). 누수 0.
+    repo, anchor = _many_records_repo(td, "par-many")
+    ref: "dict[str, object]" = _par_run(serial, repo, anchor, td, None)
+    n_records: int = len((ref["introduced"] or {}).get("records", []))  # type: ignore[union-attr]
+    for workers in ("1", "3", "8", None):
+        got: "dict[str, object]" = _par_run(GATE, repo, anchor, td, workers)
+        rows.append((f"R1 옛 직렬 대조 · 워커 {workers or '기본'}", 2, int(got["exit"]),  # type: ignore[arg-type]
+                     ref["exit"] == 2 and n_records >= 300 and _same_output(ref, got) and not got["leaked"],
+                     f"stdout·stderr·introduced·contract 동일(레코드 {n_records}) · 임시 폴더 누수 0"))
+
+    # R2 — 완료 순서 뒤집힘: REGISTRY 0번 검사기를 늦춰(지연 주입) 첫 작업이 늦게 끝나도 병합은 REGISTRY 순서.
+    slow: "Path | None" = _gate_copy(td, "par-slow")
+    assert slow is not None
+    _inject(slow, "check-mechanism-ownership.py", "import time as _t\n_t.sleep(2)")
+    got = _par_run(slow, repo, anchor, td, "8")
+    rows.append(("R2 완료 순서 뒤집힘(첫 검사기 지연)", 2, int(got["exit"]),  # type: ignore[arg-type]
+                 _same_output(ref, got), "지연 주입 사본 · 워커 8 — 옛 직렬과 byte 동일"))
+
+    # 결함 주입 — 옛·새 사본에 같은 주입. R3·R5 는 작은 저장소(good_bc + 위반 1)로 충분하고, R4 는 예외가 올라올 때
+    # 형제 작업이 아직 돌고 있어야 «정리와 경합»을 볼 수 있으므로 레코드 수백 건 저장소에서 돈다.
+    small, small_anchor = _make_repo(td, "par-small")
+    _plant_violation(small)
+    injections: "list[tuple[str, str, str, int, bool, str]]" = [
+        ("R3 깨진 sink 줄(바이트 병합)", "check-naming.py",
+         "import os as _o\n_p = _o.environ.get('DJR_FINDINGS_JSON')\nif _p:\n"
+         "    open(_p, 'ab').write(b'{\"schema\": \"findings/0\", \"bad\": \"\\xff\\xfe\"}\\n')",
+         2, False, "옛·새 exit 2 · 판정·사이드카 동일(깨진 줄은 읽기에서 건너뜀)"),
+        ("R4 작업 예외(stdout 비-UTF-8)", "check-mechanism-ownership.py",
+         "import sys as _s\n_s.stdout.buffer.write(b'\\xff\\xfe broken\\n')\n_s.stdout.flush()",
+         1, True, "옛·새 traceback 1 · 같은 예외 · exit 1 · 임시 폴더 누수 0"),
+        ("R5 검사기 crash(실행 시 예외)", "check-naming.py", "raise RuntimeError('injected crash')",
+         2, False, "옛·새 exit 2 · 합성 fail-closed 귀속 동일"),
+    ]
+    for name, checker, body, want, on_many, note in injections:
+        tag: str = name.split()[0].lower()
+        old_gate: "Path | None" = _gate_copy(td, f"{tag}-old", _SERIAL_GATE_COMMIT)
+        new_gate: "Path | None" = _gate_copy(td, f"{tag}-new")
+        assert old_gate is not None and new_gate is not None
+        _inject(old_gate, checker, body)
+        _inject(new_gate, checker, body)
+        target, target_anchor = (repo, anchor) if on_many else (small, small_anchor)
+        old_run: "dict[str, object]" = _par_run(old_gate, target, target_anchor, td, None)
+        new_run: "dict[str, object]" = _par_run(new_gate, target, target_anchor, td, "8")
+        if want == 1:
+            ok: bool = (old_run["exit"] == 1 and str(old_run["stderr"]).count("Traceback") == 1
+                        and str(new_run["stderr"]).count("Traceback") == 1
+                        and "Directory not empty" not in str(new_run["stderr"])
+                        and _last_line(old_run["stderr"]) == _last_line(new_run["stderr"])
+                        and _last_line(new_run["stderr"]).startswith("UnicodeDecodeError")
+                        and not old_run["leaked"] and not new_run["leaked"])
+        else:
+            ok = old_run["exit"] == want and _same_output(old_run, new_run) and not new_run["leaked"]
+        rows.append((name, want, int(new_run["exit"]), ok, note))  # type: ignore[arg-type]
+
+    # R6 — 워커 값 오류(`0`): 주의 1행 뒤 자동 워커로 같은 판정(옛 직렬과 stdout·사이드카 동일).
+    small_ref: "dict[str, object]" = _par_run(serial, small, small_anchor, td, None)
+    got = _par_run(GATE, small, small_anchor, td, "0")
+    rows.append(("R6 워커 값 오류 → 자동", 2, int(got["exit"]),  # type: ignore[arg-type]
+                 all(small_ref[k] == got[k] for k in ("exit", "stdout", "introduced", "contract"))
+                 and "DJR_REGISTRY_WORKERS='0' 는 양의 정수가 아니다" in str(got["stderr"]),
+                 "stderr 주의 1행 · 나머지 옛 직렬과 동일"))
+    return rows
 
 
 
@@ -741,6 +903,13 @@ def main() -> int:
         code, out = _gate(repo, anchor, ["--approved-merge-file", str(_approved(td, "p12n", m_sha))])
         rows.append(("P12′ 정상 머지 진단 부재", 2, code, "역방향/합성 머지 의심" not in out,
                      "^2 가 main 에 도달 → 진단 0(레인 후속 커밋 뒤 상태라 exit 2)"))
+
+        # ── R — 병렬 실행(C1⑵) 옛 직렬 게이트 직접 대조 ─────────────────────────────────
+        try:
+            rows.extend(_parallel_rows(td))
+        except RuntimeError as exc:
+            print(f"재료 결손: {exc}", file=sys.stderr)
+            return 1
 
     print("| 케이스 | 기대 exit | 실측 | 내용 | 판정 |")
     print("|---|---|---|---|---|")

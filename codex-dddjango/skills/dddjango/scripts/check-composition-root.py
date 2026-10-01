@@ -638,7 +638,22 @@ def _filtered_di_findings(root: Path, inventory: CodeInventory) -> Findings:
             (path for path in eligible if _path_is_under(path, bc_relative)),
             key=Path.as_posix,
         )
+        composition_relative = bc_relative / COMPOSITION_DIR
+        # off-tree composition/ 안의 파일은 #81 사건의 일부(layer-skeleton 소유)라 후보가 아니다.
+        candidates: list[Path] = [
+            path
+            for path in bc_paths
+            if path.name == COMPOSITION_FILE
+            and (root / path).is_file()
+            and not _path_is_under(path, composition_relative)
+        ]
         if inventory.git_root is not None:
+            if not candidates:
+                # 후보 0 BC 는 touched 여부가 결과를 바꾸지 않는다 — 파일별 git 질의(대형
+                # 저장소에서 수 분)는 건너뛰고, BC 단위 트리 질의 1회만 남겨 저장소 결손을
+                # 옛 판형 그대로 UsageError(exit 1)로 드러낸다.
+                _git_tree_has_tracked_changes(inventory.git_root, root / bc_relative)
+                continue
             current_path_touched = any(
                 _git_path_is_touched(inventory.git_root, root / path) for path in bc_paths
             )
@@ -648,13 +663,8 @@ def _filtered_di_findings(root: Path, inventory: CodeInventory) -> Findings:
             if not current_path_touched and not tracked_tree_changed:
                 continue
 
-        composition_relative = bc_relative / COMPOSITION_DIR
-        for path in bc_paths:
-            if path.name != COMPOSITION_FILE or not (root / path).is_file():
-                continue
+        for path in candidates:
             local = path.relative_to(bc_relative)
-            if _path_is_under(path, composition_relative):
-                continue  # off-tree composition/ 안 — #81 사건의 일부(layer-skeleton 소유)
             findings.add(
                 "#497",
                 bc_relative,

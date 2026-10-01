@@ -1,0 +1,1224 @@
+{
+ "cases": {
+  "application_is_submodule/composition-root": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "application_is_submodule/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "application_is_submodule/idempotency": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "application_is_submodule_nocand/composition-root": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "application_is_submodule_nocand/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "application_is_submodule_nocand/idempotency": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "case_change/composition-root": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "case_change/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "case_change/idempotency": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "clean/composition-root": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "clean/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "clean/idempotency": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "composition_dir/composition-root": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "composition_dir/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "composition_dir/idempotency": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "corrupt_root_tree/composition-root": {
+   "compare_stderr": false,
+   "exit": 1,
+   "records": [],
+   "stderr": "[check-composition-root] 사용 오류: touched source 비교 불능: application/gamma/domain_layer/model.py (error: bad tree object HEAD)\n",
+   "stdout": ""
+  },
+  "corrupt_root_tree/composition-root-auto": {
+   "compare_stderr": false,
+   "exit": 1,
+   "records": [],
+   "stderr": "[check-composition-root] 사용 오류: touched source 비교 불능: application/gamma/domain_layer/model.py (error: bad tree object HEAD)\n",
+   "stdout": ""
+  },
+  "corrupt_root_tree/idempotency": {
+   "compare_stderr": false,
+   "exit": 0,
+   "records": [],
+   "stderr": "error: bad tree object HEAD\nerror: bad tree object HEAD\n",
+   "stdout": ""
+  },
+  "corrupt_root_tree_mixed/composition-root": {
+   "compare_stderr": false,
+   "exit": 1,
+   "records": [],
+   "stderr": "[check-composition-root] 사용 오류: touched source 비교 불능: application/gamma/domain_layer/model.py (error: bad tree object HEAD)\n",
+   "stdout": ""
+  },
+  "corrupt_root_tree_mixed/composition-root-auto": {
+   "compare_stderr": false,
+   "exit": 1,
+   "records": [],
+   "stderr": "[check-composition-root] 사용 오류: touched source 비교 불능: application/gamma/domain_layer/model.py (error: bad tree object HEAD)\n",
+   "stdout": ""
+  },
+  "corrupt_root_tree_mixed/idempotency": {
+   "compare_stderr": false,
+   "exit": 0,
+   "records": [],
+   "stderr": "error: bad tree object HEAD\nerror: bad tree object HEAD\nerror: bad tree object HEAD\nerror: bad tree object HEAD\n",
+   "stdout": ""
+  },
+  "corrupt_subtree_cand/composition-root": {
+   "compare_stderr": false,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "corrupt_subtree_cand/composition-root-auto": {
+   "compare_stderr": false,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "corrupt_subtree_cand/idempotency": {
+   "compare_stderr": false,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "corrupt_subtree_nocand/composition-root": {
+   "compare_stderr": false,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "corrupt_subtree_nocand/composition-root-auto": {
+   "compare_stderr": false,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "corrupt_subtree_nocand/idempotency": {
+   "compare_stderr": false,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "corrupt_subtree_staged/composition-root": {
+   "compare_stderr": false,
+   "exit": 1,
+   "records": [],
+   "stderr": "[check-composition-root] 사용 오류: touched source 비교 불능: application/gamma/composition_root.py (fatal: unable to read tree (7e3e467254a0e638f8916394a33ea86d0c683388))\n",
+   "stdout": ""
+  },
+  "corrupt_subtree_staged/composition-root-auto": {
+   "compare_stderr": false,
+   "exit": 1,
+   "records": [],
+   "stderr": "[check-composition-root] 사용 오류: touched source 비교 불능: application/gamma/composition_root.py (fatal: unable to read tree (7e3e467254a0e638f8916394a33ea86d0c683388))\n",
+   "stdout": ""
+  },
+  "corrupt_subtree_staged/idempotency": {
+   "compare_stderr": false,
+   "exit": 0,
+   "records": [],
+   "stderr": "fatal: unable to read tree (7e3e467254a0e638f8916394a33ea86d0c683388)\nfatal: unable to read tree (7e3e467254a0e638f8916394a33ea86d0c683388)\nfatal: unable to read tree (7e3e467254a0e638f8916394a33ea86d0c683388)\n",
+   "stdout": ""
+  },
+  "gitignored_candidate/composition-root": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "gitignored_candidate/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "gitignored_candidate/idempotency": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-idempotency-scope-creep.py",
+     "contract_ref": "선행 계약(architecture-api §13 멱등 스코프) 소유",
+     "expression": null,
+     "file": "application/gamma/driven_layer/idempotency_ign.py",
+     "message": "scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)",
+     "rule": null,
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-idempotency-scope-creep] BLOCKER — scope 가 멱등성을 미요청이라 단정했는데 멱등성 코드를 구현함(C3 멱등성 스코프크립 · G0=확장금지 위반):\n  - application/gamma/driven_layer/idempotency_ign.py: scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)\n  근거: `architecture-db` §9.6 Idempotency storage 행 · `design-architect`. 사용자가 멱등성(`Idempotency-Key`)을 요청하지 않았으면 전용 record 테이블·replay store를 silent하게 빌드하지 않는다. 이번 변경에서 touched된 미요청 멱등성 산출물은 G1 채택 승인이 없는 한 accepted scope 밖이다. 도입이 필요하면 G1에서 옵션/트레이드오프로 표면화해 사용자 채택을 받고, 불요·범위 외면 '미적용'(알려진 한계)으로 둔다. 채택할 거면 설계(G1)로 반송하라.\n"
+  },
+  "idem_adopted/composition-root": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "idem_adopted/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "idem_adopted/idempotency": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "linked_worktree/composition-root": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/beta",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/beta: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "linked_worktree/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/beta",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/beta: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "linked_worktree/idempotency": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-idempotency-scope-creep.py",
+     "contract_ref": "선행 계약(architecture-api §13 멱등 스코프) 소유",
+     "expression": null,
+     "file": "application/gamma/driven_layer/idempotency_wt.py",
+     "message": "scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)",
+     "rule": null,
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-idempotency-scope-creep] BLOCKER — scope 가 멱등성을 미요청이라 단정했는데 멱등성 코드를 구현함(C3 멱등성 스코프크립 · G0=확장금지 위반):\n  - application/gamma/driven_layer/idempotency_wt.py: scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)\n  근거: `architecture-db` §9.6 Idempotency storage 행 · `design-architect`. 사용자가 멱등성(`Idempotency-Key`)을 요청하지 않았으면 전용 record 테이블·replay store를 silent하게 빌드하지 않는다. 이번 변경에서 touched된 미요청 멱등성 산출물은 G1 채택 승인이 없는 한 accepted scope 밖이다. 도입이 필요하면 G1에서 옵션/트레이드오프로 표면화해 사용자 채택을 받고, 불요·범위 외면 '미적용'(알려진 한계)으로 둔다. 채택할 거면 설계(G1)로 반송하라.\n"
+  },
+  "modified_other/composition-root": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/alpha",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/alpha: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "modified_other/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/alpha",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/alpha: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "modified_other/idempotency": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-idempotency-scope-creep.py",
+     "contract_ref": "선행 계약(architecture-api §13 멱등 스코프) 소유",
+     "expression": null,
+     "file": "application/gamma/driving_layer/headers.py",
+     "message": "scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)",
+     "rule": null,
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-idempotency-scope-creep] BLOCKER — scope 가 멱등성을 미요청이라 단정했는데 멱등성 코드를 구현함(C3 멱등성 스코프크립 · G0=확장금지 위반):\n  - application/gamma/driving_layer/headers.py: scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)\n  근거: `architecture-db` §9.6 Idempotency storage 행 · `design-architect`. 사용자가 멱등성(`Idempotency-Key`)을 요청하지 않았으면 전용 record 테이블·replay store를 silent하게 빌드하지 않는다. 이번 변경에서 touched된 미요청 멱등성 산출물은 G1 채택 승인이 없는 한 accepted scope 밖이다. 도입이 필요하면 G1에서 옵션/트레이드오프로 표면화해 사용자 채택을 받고, 불요·범위 외면 '미적용'(알려진 한계)으로 둔다. 채택할 거면 설계(G1)로 반송하라.\n"
+  },
+  "no_head/composition-root": {
+   "compare_stderr": false,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/alpha",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    },
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/beta",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/alpha: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  [#497] application/beta: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "no_head/composition-root-auto": {
+   "compare_stderr": false,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/alpha",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    },
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/beta",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/alpha: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  [#497] application/beta: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "no_head/idempotency": {
+   "compare_stderr": false,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-idempotency-scope-creep.py",
+     "contract_ref": "선행 계약(architecture-api §13 멱등 스코프) 소유",
+     "expression": null,
+     "file": "application/gamma/driving_layer/headers.py",
+     "message": "scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)",
+     "rule": null,
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    },
+    {
+     "checker": "check-idempotency-scope-creep.py",
+     "contract_ref": "선행 계약(architecture-api §13 멱등 스코프) 소유",
+     "expression": null,
+     "file": "application/beta/driven_layer/idempotency_store.py",
+     "message": "scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)",
+     "rule": null,
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "fatal: bad revision 'HEAD'\nfatal: bad revision 'HEAD'\nfatal: bad revision 'HEAD'\nfatal: bad revision 'HEAD'\nfatal: bad revision 'HEAD'\nfatal: bad revision 'HEAD'\nfatal: bad revision 'HEAD'\nfatal: bad revision 'HEAD'\nfatal: bad revision 'HEAD'\nfatal: bad revision 'HEAD'\n",
+   "stdout": "[check-idempotency-scope-creep] BLOCKER — scope 가 멱등성을 미요청이라 단정했는데 멱등성 코드를 구현함(C3 멱등성 스코프크립 · G0=확장금지 위반):\n  - application/gamma/driving_layer/headers.py: scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)\n  - application/beta/driven_layer/idempotency_store.py: scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)\n  근거: `architecture-db` §9.6 Idempotency storage 행 · `design-architect`. 사용자가 멱등성(`Idempotency-Key`)을 요청하지 않았으면 전용 record 테이블·replay store를 silent하게 빌드하지 않는다. 이번 변경에서 touched된 미요청 멱등성 산출물은 G1 채택 승인이 없는 한 accepted scope 밖이다. 도입이 필요하면 G1에서 옵션/트레이드오프로 표면화해 사용자 채택을 받고, 불요·범위 외면 '미적용'(알려진 한계)으로 둔다. 채택할 거면 설계(G1)로 반송하라.\n"
+  },
+  "no_head_unstaged/composition-root": {
+   "compare_stderr": false,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/alpha",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    },
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/beta",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/alpha: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  [#497] application/beta: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "no_head_unstaged/composition-root-auto": {
+   "compare_stderr": false,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/alpha",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    },
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/beta",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/alpha: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  [#497] application/beta: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "no_head_unstaged/idempotency": {
+   "compare_stderr": false,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-idempotency-scope-creep.py",
+     "contract_ref": "선행 계약(architecture-api §13 멱등 스코프) 소유",
+     "expression": null,
+     "file": "application/gamma/driving_layer/headers.py",
+     "message": "scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)",
+     "rule": null,
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    },
+    {
+     "checker": "check-idempotency-scope-creep.py",
+     "contract_ref": "선행 계약(architecture-api §13 멱등 스코프) 소유",
+     "expression": null,
+     "file": "application/beta/driven_layer/idempotency_store.py",
+     "message": "scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)",
+     "rule": null,
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-idempotency-scope-creep] BLOCKER — scope 가 멱등성을 미요청이라 단정했는데 멱등성 코드를 구현함(C3 멱등성 스코프크립 · G0=확장금지 위반):\n  - application/gamma/driving_layer/headers.py: scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)\n  - application/beta/driven_layer/idempotency_store.py: scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)\n  근거: `architecture-db` §9.6 Idempotency storage 행 · `design-architect`. 사용자가 멱등성(`Idempotency-Key`)을 요청하지 않았으면 전용 record 테이블·replay store를 silent하게 빌드하지 않는다. 이번 변경에서 touched된 미요청 멱등성 산출물은 G1 채택 승인이 없는 한 accepted scope 밖이다. 도입이 필요하면 G1에서 옵션/트레이드오프로 표면화해 사용자 채택을 받고, 불요·범위 외면 '미적용'(알려진 한계)으로 둔다. 채택할 거면 설계(G1)로 반송하라.\n"
+  },
+  "non_git/composition-root": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/alpha",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    },
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/beta",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/alpha: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  [#497] application/beta: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "non_git/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/alpha",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    },
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/beta",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/alpha: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  [#497] application/beta: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "non_git/idempotency": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-idempotency-scope-creep.py",
+     "contract_ref": "선행 계약(architecture-api §13 멱등 스코프) 소유",
+     "expression": null,
+     "file": "application/gamma/driving_layer/headers.py",
+     "message": "scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)",
+     "rule": null,
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    },
+    {
+     "checker": "check-idempotency-scope-creep.py",
+     "contract_ref": "선행 계약(architecture-api §13 멱등 스코프) 소유",
+     "expression": null,
+     "file": "application/beta/driven_layer/idempotency_store.py",
+     "message": "scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)",
+     "rule": null,
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-idempotency-scope-creep] BLOCKER — scope 가 멱등성을 미요청이라 단정했는데 멱등성 코드를 구현함(C3 멱등성 스코프크립 · G0=확장금지 위반):\n  - application/gamma/driving_layer/headers.py: scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)\n  - application/beta/driven_layer/idempotency_store.py: scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)\n  근거: `architecture-db` §9.6 Idempotency storage 행 · `design-architect`. 사용자가 멱등성(`Idempotency-Key`)을 요청하지 않았으면 전용 record 테이블·replay store를 silent하게 빌드하지 않는다. 이번 변경에서 touched된 미요청 멱등성 산출물은 G1 채택 승인이 없는 한 accepted scope 밖이다. 도입이 필요하면 G1에서 옵션/트레이드오프로 표면화해 사용자 채택을 받고, 불요·범위 외면 '미적용'(알려진 한계)으로 둔다. 채택할 거면 설계(G1)로 반송하라.\n"
+  },
+  "rename_across_bc/composition-root": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/beta",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/beta: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "rename_across_bc/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/beta",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/beta: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "rename_across_bc/idempotency": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-idempotency-scope-creep.py",
+     "contract_ref": "선행 계약(architecture-api §13 멱등 스코프) 소유",
+     "expression": null,
+     "file": "application/gamma/driven_layer/moved_idem.py",
+     "message": "scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)",
+     "rule": null,
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-idempotency-scope-creep] BLOCKER — scope 가 멱등성을 미요청이라 단정했는데 멱등성 코드를 구현함(C3 멱등성 스코프크립 · G0=확장금지 위반):\n  - application/gamma/driven_layer/moved_idem.py: scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)\n  근거: `architecture-db` §9.6 Idempotency storage 행 · `design-architect`. 사용자가 멱등성(`Idempotency-Key`)을 요청하지 않았으면 전용 record 테이블·replay store를 silent하게 빌드하지 않는다. 이번 변경에서 touched된 미요청 멱등성 산출물은 G1 채택 승인이 없는 한 accepted scope 밖이다. 도입이 필요하면 G1에서 옵션/트레이드오프로 표면화해 사용자 채택을 받고, 불요·범위 외면 '미적용'(알려진 한계)으로 둔다. 채택할 거면 설계(G1)로 반송하라.\n"
+  },
+  "rename_candidate_across_bc/composition-root": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/gamma",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/gamma: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "rename_candidate_across_bc/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/gamma",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/gamma: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "rename_candidate_across_bc/idempotency": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "special_names/composition-root": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/delta",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/delta: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "special_names/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/delta",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/delta: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "special_names/idempotency": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "special_only_glob/composition-root": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/delta",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/delta: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "special_only_glob/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/delta",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/delta: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "special_only_glob/idempotency": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "staged_delete/composition-root": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/beta",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/beta: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "staged_delete/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/beta",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/beta: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "staged_delete/idempotency": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "staged_then_modified/composition-root": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/gamma",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/gamma: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "staged_then_modified/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/gamma",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/gamma: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "staged_then_modified/idempotency": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "subdir_target/composition-root": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/alpha",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/alpha: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "subdir_target/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/alpha",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/alpha: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "subdir_target/idempotency": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-idempotency-scope-creep.py",
+     "contract_ref": "선행 계약(architecture-api §13 멱등 스코프) 소유",
+     "expression": null,
+     "file": "application/gamma/driving_layer/headers.py",
+     "message": "scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)",
+     "rule": null,
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    },
+    {
+     "checker": "check-idempotency-scope-creep.py",
+     "contract_ref": "선행 계약(architecture-api §13 멱등 스코프) 소유",
+     "expression": null,
+     "file": "application/beta/driven_layer/idempotency_store.py",
+     "message": "scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)",
+     "rule": null,
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-idempotency-scope-creep] BLOCKER — scope 가 멱등성을 미요청이라 단정했는데 멱등성 코드를 구현함(C3 멱등성 스코프크립 · G0=확장금지 위반):\n  - application/gamma/driving_layer/headers.py: scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)\n  - application/beta/driven_layer/idempotency_store.py: scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)\n  근거: `architecture-db` §9.6 Idempotency storage 행 · `design-architect`. 사용자가 멱등성(`Idempotency-Key`)을 요청하지 않았으면 전용 record 테이블·replay store를 silent하게 빌드하지 않는다. 이번 변경에서 touched된 미요청 멱등성 산출물은 G1 채택 승인이 없는 한 accepted scope 밖이다. 도입이 필요하면 G1에서 옵션/트레이드오프로 표면화해 사용자 채택을 받고, 불요·범위 외면 '미적용'(알려진 한계)으로 둔다. 채택할 거면 설계(G1)로 반송하라.\n"
+  },
+  "submodule_bc/composition-root": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "submodule_bc/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "submodule_bc/idempotency": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-idempotency-scope-creep.py",
+     "contract_ref": "선행 계약(architecture-api §13 멱등 스코프) 소유",
+     "expression": null,
+     "file": "application/epsilon/driven_layer/idempotency_store.py",
+     "message": "scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)",
+     "rule": null,
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-idempotency-scope-creep] BLOCKER — scope 가 멱등성을 미요청이라 단정했는데 멱등성 코드를 구현함(C3 멱등성 스코프크립 · G0=확장금지 위반):\n  - application/epsilon/driven_layer/idempotency_store.py: scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)\n  근거: `architecture-db` §9.6 Idempotency storage 행 · `design-architect`. 사용자가 멱등성(`Idempotency-Key`)을 요청하지 않았으면 전용 record 테이블·replay store를 silent하게 빌드하지 않는다. 이번 변경에서 touched된 미요청 멱등성 산출물은 G1 채택 승인이 없는 한 accepted scope 밖이다. 도입이 필요하면 G1에서 옵션/트레이드오프로 표면화해 사용자 채택을 받고, 불요·범위 외면 '미적용'(알려진 한계)으로 둔다. 채택할 거면 설계(G1)로 반송하라.\n"
+  },
+  "submodule_bc_dirty/composition-root": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "submodule_bc_dirty/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "submodule_bc_dirty/idempotency": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "submodule_in_bc/composition-root": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "submodule_in_bc/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "submodule_in_bc/idempotency": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "symlinks/composition-root": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "symlinks/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "symlinks/idempotency": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "unstaged_delete_candidate/composition-root": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "unstaged_delete_candidate/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "unstaged_delete_candidate/idempotency": {
+   "compare_stderr": true,
+   "exit": 0,
+   "records": [],
+   "stderr": "",
+   "stdout": ""
+  },
+  "untracked_candidate/composition-root": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/gamma",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/gamma: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "untracked_candidate/composition-root-auto": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-composition-root.py",
+     "contract_ref": null,
+     "expression": null,
+     "file": "application/gamma",
+     "message": "composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다",
+     "rule": "#497",
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):\n  [#497] application/gamma: composition_root.py — 단일 파일 `composition_root.py` 모양은 트리에 없다 — 정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다\n  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» `application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · 사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` 폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음).\n"
+  },
+  "untracked_candidate/idempotency": {
+   "compare_stderr": true,
+   "exit": 2,
+   "records": [
+    {
+     "checker": "check-idempotency-scope-creep.py",
+     "contract_ref": "선행 계약(architecture-api §13 멱등 스코프) 소유",
+     "expression": null,
+     "file": "application/gamma/driven_layer/idempotency_new.py",
+     "message": "scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)",
+     "rule": null,
+     "schema": "findings/0",
+     "sentinel": null,
+     "severity": "violation",
+     "symbol": null
+    }
+   ],
+   "stderr": "",
+   "stdout": "[check-idempotency-scope-creep] BLOCKER — scope 가 멱등성을 미요청이라 단정했는데 멱등성 코드를 구현함(C3 멱등성 스코프크립 · G0=확장금지 위반):\n  - application/gamma/driven_layer/idempotency_new.py: scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)\n  근거: `architecture-db` §9.6 Idempotency storage 행 · `design-architect`. 사용자가 멱등성(`Idempotency-Key`)을 요청하지 않았으면 전용 record 테이블·replay store를 silent하게 빌드하지 않는다. 이번 변경에서 touched된 미요청 멱등성 산출물은 G1 채택 승인이 없는 한 accepted scope 밖이다. 도입이 필요하면 G1에서 옵션/트레이드오프로 표면화해 사용자 채택을 받고, 불요·범위 외면 '미적용'(알려진 한계)으로 둔다. 채택할 거면 설계(G1)로 반송하라.\n"
+  }
+ },
+ "emitted_from": "86fc3c24",
+ "schema": "git-touched-smoke/1"
+}
