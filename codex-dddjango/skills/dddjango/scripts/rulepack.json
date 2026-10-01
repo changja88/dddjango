@@ -3339,7 +3339,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s006/b9": {
-      "h": "2087c06a50e3cc57",
+      "h": "cc7cd8778b31e46c",
       "n": 2,
       "works": [
         "R-3432",
@@ -14662,7 +14662,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "6fae9c98eb957b3a6d5619b3c011a3f355dccdcbb29bcc316e482337c83628a7"
+      "sha256": "58ccd3e62d30b7215de1068c09a37c279e9c4f6041e2b0e0e2d3e761484a0b87"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -82348,8 +82348,8 @@
       "block_order": 9,
       "checkers": [],
       "document": "dddjango/commands/dddjango.md",
-      "expression": "https://numchida.com/ns/djr#R-3432@2026-09-11",
-      "label": "pre-gate 실행 의무 — 명세 변경/배너 직전/dispatch 전 최종 예보·선언 포함",
+      "expression": "https://numchida.com/ns/djr#R-3432@2026-10-01",
+      "label": "pre-gate 실행 의무 — 명세 변경/배너 직전/dispatch 전 최종 예보·선언 포함 · 재리뷰 다발과 같은 응답에서 백그라운드(다발 앞 직렬 금지 · 결과는 다음 반영 입력 · 결과 전 반영 호출 금지)",
       "norm_kind": "Obligation",
       "order_rank": 1136,
       "overrides": [],
