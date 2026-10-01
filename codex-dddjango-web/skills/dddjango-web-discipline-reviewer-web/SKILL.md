@@ -17,6 +17,8 @@ description: dddjango-web 코디네이터가 Phase 1 설계 경량 점검 또는
 
 ## 입력
 
+- (W8 보고가 있으면) `observations/style-census-design.json`·`observations/style-census-impl.json`·`observations/style-report.json` 경로와 미대조 사유 — 기존 시각 감사 안에서 implementation-ui `references/design-evidence.md` §W8의 T/D/F/H를 처분한다. 후보만으로 감사 범위를 줄이지 않는다.
+
 - **사용자 실행 경계**: `scope.md`의 사용자 실행 제약 위치와 이번 역할에 적용되는 실제 작업/임시 증거 경로·URL/서버·Python/브라우저/MCP 조건을 직접 전달받아 읽는다. 임시 진단·렌더·브라우저 검증도 이 경계를 따른다. 지정 환경에서 실행할 수 없으면 필요한 조건과 미실행 범위를 Coordinator에 반환하며 임의 포트·대체 브라우저/cache·범위 밖 임시 경로로 성공 증거를 만들지 않는다. 지정되지 않은 제약이나 재승인을 추가하지 않는다.
 
 시안 대상 필수 직접 입력: `design-input.json` · case별 원본 entrypoint 실제 경로 · `manifests` 전부(`source-manifest.json` 또는 화면별 manifest) · 원본 captures · `scope.md`의 사용자 요구/구체 승인 출처 · `visual-check.md` · 명세 이탈 표(작성 후). 최초 증거 준비/검증 시 implementation-ui의 `references/design-evidence.md`를 읽고 JSON의 경로·case·media 계약을 확인한다. `collection=archive`이면 case별 source_observation·실제 브라우저 trace·현재 review_digest도 직접 확인한다. archive_ready는 바이트 보관 상태이며 source_ready=false가 정상이다. 정적 closure 통과로 해석하거나 source_ready=false만으로 이 경로를 반송하지 않는다. 원본/관찰 부족은 입력 부족으로 반환한다. 원본 소스/렌더와 구체 승인은 외형 정본이며 명세는 분해·상태·동작·API 계약을 소유한다. 시안 없음은 원본 증거 비적용이다.
@@ -58,6 +60,8 @@ description: dddjango-web 코디네이터가 Phase 1 설계 경량 점검 또는
 - **권고**: 어떻게 바꾸면 되는지.
 
 문제가 없으면 "규율 관점 이상 없음"이라고 분명히 적는다. 시각 감사 반환에는 `case별 원본·구현 직접 대조 / 복합·자식·상태 효과 / raw media 대응·재생 / 구현 캡처 독립 생성 / 영향 없는 case의 현재 회차 재사용 판단 / 미검증·실패 / 최종 시각 통과 여부`를 포함한다. JSON 정합과 시각 판단을 구별하며 모든 요구 case를 확인하기 전 시각 통과를 내지 않는다.
+
+W8 처분은 묶음 id(혼합이면 구성원 범위)·T/D/F/H·근거와 T의 부품/원인 단위 수리 연결을 반환한다. D는 어느 데이터와 분기가 해당 값을 만들었는지 인과 근거를, F/H는 한 줄 근거와 H 직접 확인 결과를 남긴다. 이 처분은 기존 시각 감사 반환에 합류하며 별도 감사 회차나 파일을 만들지 않는다.
 
 ## 감사 빈도 (적응형)
 

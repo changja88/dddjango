@@ -274,3 +274,161 @@ repository. These JSON checks establish correspondence, not the authenticity
 of the browser/tool environment or the meaning of the media. HTTP failure,
 identity/source mismatch, stopped playback, a seed, or a sample substitute
 cannot support `pass`.
+
+## W8 — 비차단 스타일 보고와 정확값 시트
+
+W8는 기존 시각 감사의 판단 자료다. `check_design_evidence.py`의 입력/visual 계약,
+G1 토큰 검사, 기존 브라우저 확인과 발주자 G2는 그대로 수행한다. W8 파일의 부재나
+후보 수로 새 기계 관문을 만들지 않는다. 원본 census가 없는 기존 빌드, DOM 없는
+이미지 시안, 수집 실패는 `visual-check.md`에 미수행/미대조 사유로 남긴다.
+구버전 관측값의 version만 바꿔 v4로 취급하지 않는다.
+
+### G0: 같은 원본 캡처에서 수집·시트 생성
+
+원본 `render_audit.js` 수집 자리에서 같은 렌더 상태의 각 case에
+`assets/style_census.js` 본문을 `page.evaluate(source, options)`로 실행한다.
+콘솔 실행이면 `(<스니펫 본문>)(options)`다. 새 브라우저 드라이버를 만들지 않는다.
+원본/구현 모두 글꼴과 유한 animation이 정착한 같은 viewport·루트 크기에서 수집하고,
+판정자가 화면 아래도 볼 수 있는 전체 높이 스크린샷을 함께 보존한다.
+
+```javascript
+// root는 해당 case의 비교 틀 한 요소. SDK 없는 case의 routeSet은 null이다.
+{root: "#app", placeholders: [], exclude: [], routeSet: null,
+ sdkGlobals: [], page: 0, pageSize: 100000, budgetMs: 5000}
+```
+
+`placeholders`는 원본이 실제 placeholder로 정의한 영역, `exclude`는 기존 스코프에서
+비교 밖으로 정한 영역만 쓴다. 결함을 숨기기 위해 배경·자식 효과·SDK 영역을 제외하지
+않는다. root selector는 정확히 한 요소여야 한다. 전체 body를 명시적으로 관측하는
+기존 v4 상태(`root:null`, `root_matched:"body"`)도 보존되지만, root 실패의 대체값은 아니다.
+
+출력은 v4 `{meta, records}` 그대로다. `meta.census_version`, `root_matched`,
+`route_set`과 실제 `vendor` 응답·`sdk_globals`를 수집기가 기록한다. SDK case는
+운영자 호스트 차단만 있는 표준 상태(`routeSet:["operator-hosts"]`)에서 수집하고,
+해당 등록의 SDK 전역 이름을 `sdkGlobals`로 전달한다. SDK 파일 차단 같은 전용 실패
+시험은 기존 SDK 확인으로 남기며 W8의 미실행을 정상 스타일 일치로 바꾸지 않는다.
+
+빌드 폴더 `observations/`에 다음을 저장한다. census는 기계 반환값을 저장하며 값을
+손으로 보정하지 않는다. `pages>1`이면 같은 상태에서 모든 페이지를 받아 `i` 순으로
+records를 합치고 `records_total` 개수와 맞춘다. `partial`은 페이지 합치기로 해소되지
+않으므로 수집 실패로 기록한다.
+
+| 파일 | 내용 |
+|---|---|
+| `style-census-design.json` | `{원본_case_id: v4 census}` |
+| `style-census-impl.json` | 3-1에서 같은 방식으로 수집한 `{구현_case_id: v4 census}` |
+| `style-cases.json` | `{원본_case_id: 구현_case_id}`. 비교 대상마다 하나, 구현 id 중복 없음 |
+| `style-sdk.json` | 등록 목록에서 옮긴 `{구현_case_id: {"files":[벤더 URL 경로], "globals":[전역 이름]}}`. SDK 없음은 `{}` |
+| `style-values.md` | 원본 census와 프로젝트 foundation으로 생성한 참고 시트 |
+| `style-report.json` | 3-2 대조 출력. 회차는 기존 기록에서 구별하며 첫 보고와 처분 결과를 덮어 잃지 않는다 |
+
+아래 `TOOL_ROOT`는 전달받은 실제 도구 루트다(Claude: 플러그인 루트,
+Codex: 설치된 `skills/dddjango-web/`). `BUILD`와 `PROJECT`도 실제 경로로 치환한다.
+
+```bash
+python TOOL_ROOT/scripts/style_value_sheet.py \
+  --census BUILD/observations/style-census-design.json \
+  --tokens PROJECT/web/design_system/foundation/tokens.css \
+  --out BUILD/observations/style-values.md
+```
+
+시트는 종류·클래스 서명·가상 요소·관측 style 값이 같은 묶음의 대표값을 낸다.
+다른 variant의 값은 별도 묶음이며 case/record, 부모·자식 효과 참조를 보존한다.
+`bd` 네 면과 색/폭, `rad` 네 모서리, `pad`·`gap`, `sh` 전 층, `bf`·`fil`,
+글자·아이콘 값은 census에 있는 범위에서 읽는다. rect·누적 opacity는 관측값이고
+CSS 선언 자체라는 뜻은 아니다. v4의 `ff`는 첫 서체만이며 fallback 전체를 보증하지 않는다.
+
+시트는 비교기의 허용 오차를 사용하지 않는다. 숫자·같은 RGB/hex/sRGB 색 표기와
+단순 var 별칭, padding/radius/gap 축약, shadow의 색 위치·생략된 0만 정규화한다.
+alpha는 8bit로 반올림하지 않고, shadow의 층 수·순서를 유지한다. 정확히 같은
+토큰 이름만 후보로 나열하며 없으면 **신규 등록 필요**다. 다중 값 선언·순환/미해결
+별칭·계산식·문맥 단위(rem/em 등)·지원 밖 표현은 추측하지 않고 원본에서 수동 확인한다.
+v4의 문자열 상한에 닿은 bgi/content/mask는 정확 일치 후보를 내지 않는다.
+토큰 파일 부재도 정상 참고 시트로 출력한다. 시트 CLI는 생성 0, 미실행/사용법 오류 1이며
+어느 쪽도 새 G1 관문이 아니다.
+
+원본 census·시트의 **경로만** architect와 coder에게 준다. 값·행 id를 명세에 펼쳐
+결속하지 않는다. architect가 원본과 기존 시각 연결표에서 후보의 적용 selector·용도·
+조합을 해석하며, Coordinator가 같은 해석을 다시 만들지 않는다. `신규 등록 필요`는
+토큰 자동 추가 지시가 아니다. 원본/토큰의 표현 한계를 확인하고 기존 등록 규율을 따른다.
+
+### 3-1: 비교용 예시 데이터
+
+시안 case를 렌더할 때 쓰는 데이터는 **시안 예시 글을 재현한다(시각 고정 포함)**.
+자리는 캡처 하네스(빌드 폴더 `observations/`) 또는 그 하네스만 쓰는 전용 모듈뿐이다.
+기존 시험이 쓰는 fixture·factory·시드 데이터는 바꾸지 않는다. 회귀 시험용 데이터
+(긴 출생지 등)는 그대로 두고 별도 회귀 case로 확인하며 W8 비교 mapping에는 넣지 않는다.
+비교용 대체 데이터는 실제 API 자산/업무 동작 증거나 사용자 프리뷰로 보고하지 않는다.
+구현 census도 이 캡처에서 함께 수집한다. 같은 시안 예시를 만들 수 없는 case는 G0의
+기존 스코프 기록에 이유를 남기고 아래 `--declared-data-case`로 개별 지정한다.
+
+### 3-2: 보고 실행·독립 감사·수리
+
+```bash
+python TOOL_ROOT/scripts/compare_style_census.py \
+  --design BUILD/observations/style-census-design.json \
+  --impl BUILD/observations/style-census-impl.json \
+  --mapping BUILD/observations/style-cases.json \
+  --sdk-scope BUILD/observations/style-sdk.json \
+  --out BUILD/observations/style-report.json
+# G0에서 데이터 미대조를 선언한 구현 case만: --declared-data-case CASE (반복 가능)
+```
+
+SDK 기대값은 비어도 `{}` 파일을 전달한다. SDK case는 표준 route 집합, 기대 파일의
+200/304, 전역 존재를 교차 확인한다. SDK가 없는 case의 vendor 로드/route 집합도
+미실행이다. schema·루트/틀 크기·글꼴/animation·예산·잘린 페이지 문제를 성공 0건으로
+세지 않는다. 빈/중복 mapping과 없는 입력 case도 미실행이다.
+
+출력 `cases`는 짝/영역 수·진단·미짝 텍스트, `groups`는 v4 묶음 id·종류·속성·양쪽 값·
+공용 클래스 서명·case·구성원·차단 후보 구성원·대표 사례다. `blocking:true`는 **차단 후보**
+표시이며 이번 판은 **후보가 있어도 보고 exit 0**이다. **exit 1은 미실행/입력 오류**로
+범위와 이유를 기록한다. 실패한 실행에서 이전 report 파일을 새 결과로 읽지 않는다.
+exit 2/3, 처분 결속 검사, 재렌더, 영향 case 계산, freshness 검사는 없다.
+
+v4의 의미를 유지한다: 색 premultiplied 채널 2/255·alpha 3/255, px 0.5,
+기하 1px, opacity 0.02, 텍스트 일치율 0.85. 낮은 일치율은 미선언 case에서 미실행,
+G0 선언 case에서 데이터 미대조다. **선언/내용 차이로 모양 속성 후보를 숨기지 않는다**.
+가림·무한 animation·읽지 못한 자산 등 기계 한계와 비후보도 기존 시각 감사가 확인한다.
+`meta.assets` 바이트 지문이 없는 이미지의 내용 동일성을 파일명 비교만으로 주장하지 않는다.
+
+기존 `discipline-reviewer-web`의 독립 시각 감사에 원본/구현 census·report 경로를 전달한다.
+새 감사 회차를 별도로 만들지 않는다. 감사는 실제 원본/구현과 대조해 후보마다 아래
+처분을 반환하고 Coordinator가 기존 `visual-check.md`에 보존한다. 혼합 묶음은 해당
+구성원 범위를 표시한다. 기계의 `variant` 표시나 내용 차이만으로 D를 결정하지 않는다.
+
+| 처분 | 기존 감사 반환과 후속 처리 |
+|---|---|
+| T — 실제 스타일 차이 | 원본 대비 실제 결함·수리 부품/원인과 관련 묶음 id. coder가 G2 전에 고치고 기존 절차로 재확인한다 |
+| D — 데이터가 만든 정상 차이 | 어느 데이터가 다른지(양쪽 값/출처) → 실제 분기·variant → 해당 스타일 값의 인과 근거. 시안 예시 값으로 업무 동작/스타일을 **고치지 않는다** |
+| F — 도구 오탐 | 원본/구현에 실제 차이가 없다는 한 줄 근거 |
+| H — 사람 확인 | 기계 한계의 한 줄 이유와 직접 확인 결과(미확인이면 그대로). 확인 못 한 범위는 기존 미검증 규율을 따른다 |
+
+공용 클래스 서명이 여러 case에 걸친 같은 원인의 T는 **부품 단위 수리 1건**으로 묶는다.
+공용 부품에 원본 variant가 없으면 공용 variant 추가를 기본으로 하고 기존 호출의 기본값은
+보존한다. 기본값 변경은 사용자 결정과 영향 화면 목록을 따른다. 소유 슬라이스 밖 수정은
+기존 재개봉/설계 반송 경로로 보내며 화면별 지역 수식 클래스를 반복 복제하지 않는다.
+
+### G2와 레인 측정 — 기존 기록에 합류
+
+G2 배너에 항상 한 행을 둔다: **`W8 보고: 후보 N · T 수리 a · D b · F c · H d · 미대조 case k`**.
+N은 해당 보고의 후보 묶음 수, a는 고친 부품/원인 수, b/c/d는 처분 묶음 수다.
+T 묶음 수와 수리 수는 다르며 혼합 처분은 겹쳐 셀 수 있으므로 합산 등식으로 검증하지 않는다.
+k는 미실행·데이터 미대조 및 요구 case 중 비교 mapping 밖인 것의 중복 없는 합이며 이유를
+함께 적는다. W8 자체를 수행하지 못했으면 숫자 0 대신 `W8 보고: 미수행 — 사유`다.
+기존 모든 검사와 발주자 대조는 유지한다.
+
+새 의무 문서를 만들지 않고 `visual-check.md`의 회차 기록에 다음을 붙인다.
+첫 보고의 JSON과 처분은 재실행으로 덮어 잃지 않게 회차 이름/기존 기록으로 보존한다.
+
+| 측정 | 남길 값 |
+|---|---|
+| 첫 3-1 뒤 보고 | T/D/F/H **묶음 수**, 처분 시작/끝과 소요 분, report 경로 |
+| 첫 제출 | 시트 사용 여부·경로, 첫 제출 T 묶음 수(과거 P1 35는 참고 기준선) |
+| G2 시각 반송 | 회차별 시작/끝·사유·소요 분; 가능한 경우 레인/발주자 시간을 구별 |
+| 놓침 | 발주자가 먼저 판정한 항목 중 W8 비교 case에 있었지만 첫 보고에 없던 항목 수·대응 case |
+| 레인 벽시계 | G0 시작·G2 종료 시각 및 경과 분. 종료 전에는 진행 중 |
+
+아직 발주자 판정/시간 근거가 없으면 `미측정`으로 남겨 0과 구별한다. 발주자가 먼저
+판정하고 나중에 보고를 여는 것은 운영 절차다. 플러그인이 별도 봉인 관문을 만들거나
+발주자의 전수 대조를 줄이지 않는다. 1~2 레인 실측 뒤의 차단/입력 결속/대조 축소는
+이번 판 밖의 사용자 결정이다.
