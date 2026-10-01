@@ -1978,6 +1978,22 @@ djr:R-3606 a djr:Exception ;
     prov:specializationOf djr:R-3606 ;
     djr:revision 1 .
 
+djr:R-3610 a djr:Obligation ;
+    skos:prefLabel "슬라이스 계획 절(항상) — 표 «슬라이스 | 목적 | 인수 행 | 내부 행 | 완료 조건»(인수 행 = acceptance-tester 몫 add/update)(S1 부터 · 슬라이스 0 은 Coordinator) · 파일의 슬라이스는 file-plan 행 끝 주석 # S<n> · # S<처음>→S<끝> · 슬라이스 0 행 # S0 로만(주석 전체가 이 꼴 · 파서 무변) · 산문은 까닭만"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3610@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3610@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3610 ;
+    djr:revision 1 .
+
+djr:R-3611 a djr:Obligation ;
+    skos:prefLabel "arrange 자기 차례 — 슬라이스 Sn 의 add/update 인수 행 arrange 는 기준선과 S1..Sn 산출만 · 뒤 슬라이스 산출(머리 import 포함)·기록·데이터에 기대면 차례 변경 · 행 이동 · 재료 앞당김 · 제품 쪽도 Sn 파일이 뒤 슬라이스 모듈을 import 하지 않게"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3611@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3611@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3611 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/agents/design-architect.md> a djr:Document ;
     skos:prefLabel "agent-design-architect"@ko .
 
@@ -2336,12 +2352,26 @@ djr:R-3606 a djr:Exception ;
     djr:statesNorm djr:R-3430 ;
     djr:text "- **예외 번역표 기계 블록**: 이 명세가 이미 요구하는 예외 번역 산출물(도메인→published 매핑)을 `<!-- machine: exception-map -->` 마커의 ```exceptions 펜스(1행 = `<published 예외>` + 탭 또는 공백 2+ + `<raise 창구 파일>`)로 성문한다 — 번역표에 없는 published 예외는 어느 창구도 raise 하지 않는 «죽은 계약»으로 예보된다. add 창구 외에는, 명시 신규 함수가 실제 전사된 update OHS 서비스 파일에 한해 같은 파일 수준 raise helper로 전사한다. exception-map은 함수 주소가 아니므로 특정 함수의 raise 위치를 증명하지 않는다. 신규 함수가 없는 update 본문 변경과 산문에만 적힌 raise는 계속 S5이며, contract 안의 raise 진탐을 면제하지 않는다.\n\n"@ko .
 
+<https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b39> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 39 ;
+    djr:statesNorm djr:R-3610 ;
+    djr:text "- **슬라이스 계획 절**(lens 무관 · 항상 작성 · 2026-10-01): 명세에 `## 슬라이스 계획` 절을 둔다 — 표 `슬라이스 | 목적 | 인수 행 | 내부 행 | 완료 조건` 한 장으로 슬라이스 차례(S1 부터 · 빚 정리의 슬라이스 0 은 Coordinator 가 따로 앞에 둔다)와 슬라이스마다 목적 · 붙는 입장 행(입장 표 candidate 그대로 — **인수 행** = acceptance-tester 몫(외부 HTTP·event·사용자 관찰·공개 계약)의 `add/update` 행 · **내부 행** = 그 밖의 입장 행(coder 몫 등) · 행마다 한 칸에만) · 완료 조건(그 슬라이스 끝에 녹색이어야 하는 시험·정적 검사)을 적는다. 파일의 슬라이스는 이 절에 다시 적지 않고 file-plan 각 행 끝 주석으로만 적는다 — `# S<n>`(그 슬라이스가 바꾼다) · `# S<처음>→S<끝>`(여러 슬라이스가 차례로 바꾼다 · `->` 도 같다) · 슬라이스 0(G0 ⓐ 정리) 행은 `# S0` 이고 주석 전체가 이 꼴이다(파서는 `#` 뒤를 읽지 않으므로 file-plan 문법은 그대로다). 산문은 까닭만 적는다.\n"@ko .
+
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
     djr:statesNorm djr:R-1594, djr:R-1595, djr:R-1596 ;
     djr:text "3. **`error profile`**: scope마다 `dddjango-code-json | preserve-established` 중 하나와 선택 근거를 쓴다. RFC 9457 wire가 관찰됐다면 `preserve-established`의 profile-native 계약으로 보존할 수 있지만 파일명이나 dependency 유무는 근거가 아니다. preserve scope는 code-profile artifact와 격리한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b40> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
+    djr:kind djr:kind-norm ;
+    djr:order 40 ;
+    djr:statesNorm djr:R-3611 ;
+    djr:text "- **arrange 자기 차례**(2026-10-01): 슬라이스 Sn 의 인수 행 arrange(시험 준비 재료 — 도움 모듈·fixture·공개 함수·상수·Schema·입력 꼴)는 기준선과 S1..Sn 의 산출만 쓴다. 뒤 슬라이스의 산출(시험 쪽 도움 모듈의 머리 import 가 끌어오는 제품 모듈 포함)이나 뒤 슬라이스가 짓는 기록·데이터에 기대면 슬라이스 차례를 바꾸거나 행을 옮기거나 arrange 재료를 앞 슬라이스로 당긴다. 제품 쪽도 같다 — 슬라이스 Sn 의 file-plan 경로가 뒤 슬라이스가 만드는 모듈을 import 하게 두지 않는다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b5> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;

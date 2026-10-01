@@ -856,3 +856,9 @@ djr:R-3599 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 djr:R-3600 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
 djr:R-3601 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3607 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3608 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3609 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .

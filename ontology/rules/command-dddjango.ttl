@@ -987,12 +987,18 @@ djr:R-0233 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0234 a djr:Obligation ;
-    skos:prefLabel "G1 배너로 최종 설계 명세(경로) 제시·승인"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0234@2026-08-22> .
+    skos:prefLabel "G1 배너로 최종 설계 명세(경로) 제시·승인 · 추가 행·전제 = 재리뷰 상한 1행 · arrange 점검 1행 · 울타리 차이 행"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0234@2026-10-01> .
 
 <https://numchida.com/ns/djr#R-0234@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0234 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0234@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-0234 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0234@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0235 a djr:Obligation ;
     skos:prefLabel "Y 는 «기본=미적용·추가할래?», Z 는 옵션으로 표시"@ko ;
@@ -1273,12 +1279,18 @@ djr:R-0268 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0269 a djr:Obligation ;
-    skos:prefLabel "제품 구현 단위로 슬라이스 목록 도출·관련 입장 행 부착"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0269@2026-08-22> .
+    skos:prefLabel "명세의 슬라이스 계획 절(인수 행·내부 행)·file-plan 행 끝 슬라이스 표기를 슬라이스 목록으로 사용(계획 안 하위 분할만 명세 변경 없이) · 계획 없는 구형 명세만 제품 구현 단위로 도출·입장 행 부착"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0269@2026-10-01> .
 
 <https://numchida.com/ns/djr#R-0269@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0269 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0269@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-0269 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0269@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-redefinition .
 
 djr:R-0270 a djr:Prohibition ;
     skos:prefLabel "G0 «지금 정리» 빚은 슬라이스 0(동작 불변)으로 앞에 — 리팩터링·기능 변경 혼합 금지"@ko ;
@@ -3900,36 +3912,60 @@ djr:R-3590 a djr:Permission ;
     djr:revision 1 .
 
 djr:R-3591 a djr:Obligation ;
-    skos:prefLabel "재리뷰 상한 두 갈래 — ⓐ 반영 0(기본 · 배너 미반영 목록) · ⓑ 노트 «G1 전 닫기: 예» 항목만 반영(결정 불변 · 바꿔야 끝나면 보고) → 확인 1회 · 확인의 «예» nit 는 배너 별행 · 불통과면 일반 루프 · 무확인 G1 없음 · G1 답의 미반영 반영도 ⓑ · 사용자 결정 필요 항목은 배너에 · 그 답 없는 승인은 Phase 2 아님(pending 판형) · 답이 명세를 바꾸면 ⓑ"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3591@2026-10-01> .
+    skos:prefLabel "재리뷰 상한 두 갈래 — ⓐ 반영 0(기본 · 배너 미반영 목록) · ⓑ 노트 «G1 전 닫기: 예» 항목만 반영(결정 불변 · 바꿔야 끝나면 보고) → 확인 1회 · 확인의 «예» nit 는 배너 별행 · 불통과면 일반 루프 · 무확인 G1 없음 · G1 답의 미반영 반영도 ⓑ · 사용자 결정 필요 항목은 배너에 · 그 답 없는 승인은 Phase 2 아님(pending 판형) · 답이 명세를 바꾸면 ⓑ · 같은 다발 arrange 막힘도 불통과"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3591@2026-10-01b> .
 
 <https://numchida.com/ns/djr#R-3591@2026-10-01> a djr:Expression ;
     prov:specializationOf djr:R-3591 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-3591@2026-10-01b> a djr:Expression ;
+    prov:specializationOf djr:R-3591 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3591@2026-10-01> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3592 a djr:Obligation ;
-    skos:prefLabel "재리뷰 상한 확인 1회 — 발견 lens + diff 영역 lens(대응표 · 비활성 lens 영역은 discipline) + 블록 해시 변동 시 discipline 을 확인 모드 한 다발 · 입력은 그 lens 발견만(다른 lens 반영은 diff 로) · 같은 응답 pre-gate · 반영 diff 보관 · 통과 조건 · 배너 1행"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3592@2026-10-01> .
+    skos:prefLabel "재리뷰 상한 확인 1회 — 발견 lens + diff 영역 lens(대응표 · 비활성 lens 영역은 discipline) + 블록 해시 변동 시 discipline 을 확인 모드 한 다발 · 입력은 그 lens 발견만(다른 lens 반영은 diff 로) · 같은 응답 pre-gate · 반영 diff 보관 · 통과 조건 · 배너 1행 · 통과에 같은 다발 arrange 막힘 아님 포함"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3592@2026-10-01b> .
 
 <https://numchida.com/ns/djr#R-3592@2026-10-01> a djr:Expression ;
     prov:specializationOf djr:R-3592 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-3592@2026-10-01b> a djr:Expression ;
+    prov:specializationOf djr:R-3592 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3592@2026-10-01> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3597 a djr:Obligation ;
-    skos:prefLabel "부속 기록 판형 — 경로(회차 = 호출 일련번호)·1회용 기록 토큰은 Coordinator(그 역할 입력에만) · 역할은 받은 경로에만 새 파일(머리 첫 줄 종류·역할·회차 · 둘째 줄 기록 토큰) + 응답 «기록: 경로 · 기록 토큰» · 역할 해시 계산 0 · Coordinator 대조(파일 있음·lens·기록 토큰·판정 1행)·sha256 측정은 울타리 창을 닫은 뒤 다발 전체 · 가리키기 직전 재측정(다르면 STOP) · 전사 0 · 울타리 대상 = 리뷰어 넷(architect 는 밖) · 판정 근거 아님"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3597@2026-10-01> .
+    skos:prefLabel "부속 기록 판형 — 경로(회차 = 호출 일련번호)·1회용 기록 토큰은 Coordinator(그 역할 입력에만) · 역할은 받은 경로에만 새 파일(머리 첫 줄 종류·역할·회차 · 둘째 줄 기록 토큰) + 응답 «기록: 경로 · 기록 토큰» · 역할 해시 계산 0 · Coordinator 대조(파일 있음·lens·기록 토큰·판정 1행)·sha256 측정은 울타리 창을 닫은 뒤 다발 전체 · 가리키기 직전 재측정(다르면 STOP) · 전사 0 · 울타리 대상 = 리뷰어 넷 · acceptance-tester PHASE1_ARRANGE_CHECK(architect 는 밖) · 판정 근거 아님"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3597@2026-10-01b> .
 
 <https://numchida.com/ns/djr#R-3597@2026-10-01> a djr:Expression ;
     prov:specializationOf djr:R-3597 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-3597@2026-10-01b> a djr:Expression ;
+    prov:specializationOf djr:R-3597 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3597@2026-10-01> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3598 a djr:Obligation ;
-    skos:prefLabel "쓰기 울타리 창 — 울타리 대상 역할의 모든 호출은 울타리 창 안(앞 응답 before · 돌아온 뒤 after) · 창 배타(다른 쓰기 역할 파견 0) · 창 열 때 작업 트리에 쓰는 백그라운드 작업 0 · 넘길 파일은 before 전 · 창 안 코디네이터 출력은 $TMPDIR · 스냅숏(<BF> 상대 경로 · 이름 있는 변수(위치 매개변수 0) · 서브셸 · 울타리 폴더 = mktemp -d · 작업 트리 SHA + 상태 줄 head·ref·venv) · 못 뜨면 호출 0"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3598@2026-10-01> .
+    skos:prefLabel "쓰기 울타리 창 — 울타리 대상 역할의 모든 호출은 울타리 창 안(앞 응답 before · 돌아온 뒤 after) · 창 배타(다른 쓰기 역할 — coder · acceptance-tester Phase 2 · architect — 파견 0) · 창 열 때 작업 트리에 쓰는 백그라운드 작업 0 · 넘길 파일은 before 전 · 창 안 코디네이터 출력은 $TMPDIR · 스냅숏(<BF> 상대 경로 · 이름 있는 변수(위치 매개변수 0) · 서브셸 · 울타리 폴더 = mktemp -d · 작업 트리 SHA + 상태 줄 head·ref·venv) · 못 뜨면 호출 0"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3598@2026-10-01b> .
 
 <https://numchida.com/ns/djr#R-3598@2026-10-01> a djr:Expression ;
     prov:specializationOf djr:R-3598 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3598@2026-10-01b> a djr:Expression ;
+    prov:specializationOf djr:R-3598 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3598@2026-10-01> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3599 a djr:Obligation ;
     skos:prefLabel "쓰기 울타리 대조 — diff-tree --name-status ⊆ 허용(부속 기록 A · 코디네이터 쓰기 목록 · 이번 창에 띄운 pre-gate(캐시 skip 포함)의 pregate-report.md A 또는 덧붙이기 M) · 상태 줄 칸 변동은 허용 밖(공유 가상환경 한계는 사용자 판단) · 창 안 코디네이터 작업 트리 쓰기 0(검사기는 DJR_FINDINGS_JSON 격리) · 위반이면 창 기록 무효·STOP · 보는 범위(공유 ref·stash 제외 까닭) · after·대조 실패도 허용 밖 · 역할 스크래치 = 울타리 폴더 밖 별도 mktemp · 배너 울타리 차이 행"@ko ;
@@ -3953,6 +3989,30 @@ djr:R-3601 a djr:Obligation ;
 
 <https://numchida.com/ns/djr#R-3601@2026-10-01> a djr:Expression ;
     prov:specializationOf djr:R-3601 ;
+    djr:revision 1 .
+
+djr:R-3607 a djr:Obligation ;
+    skos:prefLabel "arrange 점검(G1 전) — 입력 = 슬라이스 계획의 인수 행 · Coordinator 측정 sha(필수) · acceptance-tester PHASE1_ARRANGE_CHECK 를 ⓘ 첫 슬라이스 계획 다발 · ⓘⓘ 재리뷰 상한 ⓑ 확인 다발 · ⓘⓘ′ 배너 직전 단독 · ⓘⓘⓘ G1′ 재리뷰 다발에 · 울타리 창 안 · ARRANGE_BLOCKED = architect 반송 · 상한 해제·일반 루프(막힘 풀릴 때까지 매 재리뷰 다발 합류) · 이견은 1회 재호출 뒤 STOP · 상한 기준 ① 밖 · 이번 실행 명세의 계획 누락·인수/내부 미구분·입장 표와 분류 불일치는 반송(구형만 해당 없음) · 배너 1행"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3607@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3607@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3607 ;
+    djr:revision 1 .
+
+djr:R-3608 a djr:Permission ;
+    skos:prefLabel "arrange 재사용 — 직전 판정 «가능» ∧ 명세 sha256 · 코드 기준선 SHA · 기록이 기준선으로 인용한 시험 쪽 파일 해시 · approved-merges 해시 모두 같을 때만(막힘이면 늘 재호출) · 배너에 재사용 표기"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3608@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3608@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3608 ;
+    djr:revision 1 .
+
+djr:R-3609 a djr:Obligation ;
+    skos:prefLabel "arrange 판정 명세 sha 일치 — 파견 입력에 Coordinator 측정 sha · 기록의 판정 명세 sha256 = 그 측정값 = 근거로 쓰는 때의 명세 sha256 · G1/G1′ 배너 · 무배너 Phase 2 진입 · Phase 2 재진입 첫 dispatch 전 · 다르면 재호출"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3609@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3609@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3609 ;
     djr:revision 1 .
 
 <https://numchida.com/ns/djr#d/dddjango/commands/dddjango.md> a djr:Document ;
@@ -4007,14 +4067,14 @@ djr:R-3601 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 10 ;
     djr:statesNorm djr:R-3597 ;
-    djr:text "- **부속 기록 판형**(2026-10-01): 역할이 명세·코드가 아닌 기록 파일(리뷰 노트 · 리뷰 처분 · 점검 기록)을 쓸 때의 판형이다. ① 경로와 토큰은 네가 정한다 — 경로는 절대 경로 `<산출물 폴더>/<종류>-<역할|lens>-<회차>.md` 로 준다(종류 = `g1-review` · `review-disposition` 처럼 호출 목적 · `<회차>` = 그 종류·역할의 호출 일련번호로 반송 재호출도 새 번호를 받고, 무효가 된 옛 기록 파일은 남기되 가리키지 않는다 · 한 호출에 경로가 여럿일 수 있다 — architect 의 lens 별 처분)이고, 경로마다 1회용 **기록 토큰**(`openssl rand -hex 8`)을 떠서 **그 경로를 받는 역할의 입력에만** 싣는다(다른 역할의 입력에 남의 기록 토큰을 싣지 않는다). ② 역할은 받은 경로에만 **새 파일로** 쓰고(이미 있으면 쓰지 않고 보고한다) 머리 첫 줄 `# <종류> · <역할|lens> · <회차>` · 둘째 줄 `기록 토큰 <받은 값>` 을 둔다. 응답에는 경로마다 `기록: <경로> · 기록 토큰 <받은 값>` 행을 둔다 — 응답의 다른 본문(판정 1행 · 보고 항목 · Z 옵션)은 그대로 둔다. 역할은 해시를 계산하지 않는다. ③ 대조는 네 몫이고 울타리 창을 닫은 뒤(after 스냅숏과 경로 대조 뒤 · 울타리 밖 architect 는 돌아온 뒤) 다발 전체에 한 번에 한다 — 응답을 하나씩 받을 때는 형식 구문 검사만 한다. 그 경로의 파일이 있고(새 파일) · 머리의 역할/lens 가 경로와 같고 · 머리와 응답의 기록 토큰이 그 경로에 준 값과 같고 · 응답의 판정 1행이 파일의 판정 1행과 같은지 본다. 경로를 준 호출에 파일이 없거나 하나라도 다르면(lens 사이 덮어쓰기 포함) 그 기록은 무효다 — 반송하고 새로 부른다(새 회차 · 울타리 대상이면 새 울타리 창). 통과한 파일마다 sha256 을 네가 재어(`shasum -a 256` · 없으면 `sha256sum`) 한 줄 상태에 `기록 <경로> sha256 <앞 12자>` 로 남긴다. 그 기록을 가리키기 직전(재리뷰 입력 · architect 반영 입력 · 배너)마다 sha256 을 다시 재어 남긴 값과 같은지 본다 — 다르면 `STOP_FOR_USER_APPROVAL`(«기록 변조 — <경로>»). 너는 기록을 옮겨 적지 않는다. ④ 울타리 대상 역할(리뷰어 넷)의 호출은 아래 쓰기 울타리 창 안에서만 한다. architect 는 명세 전속 작성자라 울타리 밖이다 — ③ 의 대조는 그대로 하고, architect 의 그 밖 쓰기는 «다른 산출물은 만들지 않는다»가 막는다. ⑤ 부속 기록은 명세의 현재 상태도 판정 근거도 아니다 — 처분 파일의 «까닭»은 재리뷰의 판정 근거가 아니다(판정은 명세 본문으로 한다).\n\n"@ko .
+    djr:text "- **부속 기록 판형**(2026-10-01): 역할이 명세·코드가 아닌 기록 파일(리뷰 노트 · 리뷰 처분 · 점검 기록)을 쓸 때의 판형이다. ① 경로와 토큰은 네가 정한다 — 경로는 절대 경로 `<산출물 폴더>/<종류>-<역할|lens>-<회차>.md` 로 준다(종류 = `g1-review` · `review-disposition` 처럼 호출 목적 · `<회차>` = 그 종류·역할의 호출 일련번호로 반송 재호출도 새 번호를 받고, 무효가 된 옛 기록 파일은 남기되 가리키지 않는다 · 한 호출에 경로가 여럿일 수 있다 — architect 의 lens 별 처분)이고, 경로마다 1회용 **기록 토큰**(`openssl rand -hex 8`)을 떠서 **그 경로를 받는 역할의 입력에만** 싣는다(다른 역할의 입력에 남의 기록 토큰을 싣지 않는다). ② 역할은 받은 경로에만 **새 파일로** 쓰고(이미 있으면 쓰지 않고 보고한다) 머리 첫 줄 `# <종류> · <역할|lens> · <회차>` · 둘째 줄 `기록 토큰 <받은 값>` 을 둔다. 응답에는 경로마다 `기록: <경로> · 기록 토큰 <받은 값>` 행을 둔다 — 응답의 다른 본문(판정 1행 · 보고 항목 · Z 옵션)은 그대로 둔다. 역할은 해시를 계산하지 않는다. ③ 대조는 네 몫이고 울타리 창을 닫은 뒤(after 스냅숏과 경로 대조 뒤 · 울타리 밖 architect 는 돌아온 뒤) 다발 전체에 한 번에 한다 — 응답을 하나씩 받을 때는 형식 구문 검사만 한다. 그 경로의 파일이 있고(새 파일) · 머리의 역할/lens 가 경로와 같고 · 머리와 응답의 기록 토큰이 그 경로에 준 값과 같고 · 응답의 판정 1행이 파일의 판정 1행과 같은지 본다. 경로를 준 호출에 파일이 없거나 하나라도 다르면(lens 사이 덮어쓰기 포함) 그 기록은 무효다 — 반송하고 새로 부른다(새 회차 · 울타리 대상이면 새 울타리 창). 통과한 파일마다 sha256 을 네가 재어(`shasum -a 256` · 없으면 `sha256sum`) 한 줄 상태에 `기록 <경로> sha256 <앞 12자>` 로 남긴다. 그 기록을 가리키기 직전(재리뷰 입력 · architect 반영 입력 · 배너)마다 sha256 을 다시 재어 남긴 값과 같은지 본다 — 다르면 `STOP_FOR_USER_APPROVAL`(«기록 변조 — <경로>»). 너는 기록을 옮겨 적지 않는다. ④ 울타리 대상 역할(리뷰어 넷 · acceptance-tester `PHASE1_ARRANGE_CHECK` 모드)의 호출은 아래 쓰기 울타리 창 안에서만 한다. architect 는 명세 전속 작성자라 울타리 밖이다 — ③ 의 대조는 그대로 하고, architect 의 그 밖 쓰기는 «다른 산출물은 만들지 않는다»가 막는다. ⑤ 부속 기록은 명세의 현재 상태도 판정 근거도 아니다 — 처분 파일의 «까닭»은 재리뷰의 판정 근거가 아니다(판정은 명세 본문으로 한다).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s002/b11> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s002> ;
     djr:kind djr:kind-norm ;
     djr:order 11 ;
     djr:statesNorm djr:R-3598 ;
-    djr:text "- **쓰기 울타리**(2026-10-01): 울타리 대상 역할의 **모든 호출** — 모드 불문 · 첫 호출 · 형식 반송 재호출 · 이어 부르기(SendMessage) — 은 울타리 창 안에서만 한다. 울타리 창 = 그 호출을 보내기 **앞 응답**에서 before 스냅숏을 끝내고, 호출이 돌아온 뒤 after 스냅숏으로 닫는다(다발이면 다발 전체가 한 울타리 창이다). 울타리 창은 배타적이다 — 그동안 같은 작업 트리에 다른 쓰기 역할(coder · acceptance-tester · architect)을 파견하지 않는다. 울타리 창을 열 때 작업 트리(산출물 폴더 포함)에 쓰는 백그라운드 작업이 돌고 있으면 안 된다 — 백그라운드 작업은 출력을 `$TMPDIR` 에 두거나 울타리 창을 열기 전에 끝낸다(그 출력 경로를 허용 목록에 더해 비켜 가지 않는다). 울타리 창에 넘길 파일(`g1-nit-<n>.diff` 등)은 before 스냅숏 전에 쓰고, 울타리 창 안 코디네이터 명령의 출력(`--check-report` 결과 · 백그라운드 pre-gate 의 표준 출력 등)은 울타리 폴더로 보낸다. 스냅숏은 아래 명령으로 뜬다(`<BF>` = 산출물 폴더의 **작업 트리 루트 기준 상대 경로** `.dddjango/<폴더>` — 절대 경로를 넣으면 덧붙이기 대조가 거짓으로 실패한다 · 서브셸이라 cwd 가 남지 않는다 · 객체는 울타리 폴더(창을 열 때 첫 명령 `mktemp -d` 가 만든 폴더 — 그 경로를 적어 두고 이 창의 뒤 명령에 `<울타리 폴더>` 로 그대로 쓴다 · 같은 폴더명을 쓰는 병렬 세션과 겹치지 않는다)에만 쓰여 `.git` 쓰기가 0 이다 · 스냅숏을 못 뜨면 호출하지 않는다). 출력 첫 줄은 작업 트리 SHA, 둘째 줄은 상태 줄 `head=<HEAD 커밋> ref=<브랜치> venv=<가상환경 .venv·venv 의 *.dist-info 이름 목록 다이제스트>` 다:\n\n"@ko .
+    djr:text "- **쓰기 울타리**(2026-10-01): 울타리 대상 역할의 **모든 호출** — 모드 불문 · 첫 호출 · 형식 반송 재호출 · 이어 부르기(SendMessage) — 은 울타리 창 안에서만 한다. 울타리 창 = 그 호출을 보내기 **앞 응답**에서 before 스냅숏을 끝내고, 호출이 돌아온 뒤 after 스냅숏으로 닫는다(다발이면 다발 전체가 한 울타리 창이다). 울타리 창은 배타적이다 — 그동안 같은 작업 트리에 다른 쓰기 역할(coder · acceptance-tester Phase 2 · architect)을 파견하지 않는다. 울타리 창을 열 때 작업 트리(산출물 폴더 포함)에 쓰는 백그라운드 작업이 돌고 있으면 안 된다 — 백그라운드 작업은 출력을 `$TMPDIR` 에 두거나 울타리 창을 열기 전에 끝낸다(그 출력 경로를 허용 목록에 더해 비켜 가지 않는다). 울타리 창에 넘길 파일(`g1-nit-<n>.diff` 등)은 before 스냅숏 전에 쓰고, 울타리 창 안 코디네이터 명령의 출력(`--check-report` 결과 · 백그라운드 pre-gate 의 표준 출력 등)은 울타리 폴더로 보낸다. 스냅숏은 아래 명령으로 뜬다(`<BF>` = 산출물 폴더의 **작업 트리 루트 기준 상대 경로** `.dddjango/<폴더>` — 절대 경로를 넣으면 덧붙이기 대조가 거짓으로 실패한다 · 서브셸이라 cwd 가 남지 않는다 · 객체는 울타리 폴더(창을 열 때 첫 명령 `mktemp -d` 가 만든 폴더 — 그 경로를 적어 두고 이 창의 뒤 명령에 `<울타리 폴더>` 로 그대로 쓴다 · 같은 폴더명을 쓰는 병렬 세션과 겹치지 않는다)에만 쓰여 `.git` 쓰기가 0 이다 · 스냅숏을 못 뜨면 호출하지 않는다). 출력 첫 줄은 작업 트리 SHA, 둘째 줄은 상태 줄 `head=<HEAD 커밋> ref=<브랜치> venv=<가상환경 .venv·venv 의 *.dist-info 이름 목록 다이제스트>` 다:\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s002/b12> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s002> ;
@@ -4318,6 +4378,13 @@ djr:R-3601 a djr:Obligation ;
     djr:statesNorm djr:R-3486, djr:R-3487, djr:R-3498, djr:R-3584 ;
     djr:text "**슬라이스 0 과 비위반 이동의 STOP(2026-09-26)**: 설계·리뷰에서 ⓐ 항목을 동작 불변으로 정리할 수 없음이 드러나면 그 항목을 슬라이스 0 에서 빼고 `STOP_FOR_USER_APPROVAL` 로 올린다(리팩토링 모드의 부분 항목은 불가 요지만 빼는 요지 축소다 — 리팩토링 모드 절) — 선택지 «동작 변경은 별도 요청으로 / 출처 있는 ⓑ / 작업 중단»(«미룰 수 없음» 항목은 «동작 변경을 포함한 별도 요청을 먼저 진행(이 요청은 여기서 정지) / 작업 중단» 둘뿐이다 · 밖에서 보이는 결과가 갈리는 물음이다 — ⓑ 로 조용히 처리하지 않는다). 리팩토링 모드의 `M<n>` ⓐ 항목의 이동·분할은 G0 ⓐ 근거가 있는 이동이다 — 아래 비위반 이동 STOP 은 그 항목 밖 이동에만 쓴다(2026-09-27). discipline-reviewer lightweight 가 «승인 목록 밖 기존 파일 이동»을 내거나 설계가 백스톱 위반이 아닌 기존 코드의 이동(`dddjango:discipline-houserules` §1 1번의 «이동»)이 필요하다고 보면 architect 에 반송해 명세에서 빼게 하고 `STOP_FOR_USER_APPROVAL` 로 올린다 — 선택지 «범위에서 빼고 진행 / 요청 종료»(답은 `scope.md` 범위 아님에 한 줄로 기록한다 — 사용자 답의 기록이다). 동작 불변 불가 STOP 과 Phase 2 3번의 검사기·동작 보존 장치 오탐 STOP 의 답은 `refactor-scope.md` 에 `ⓐ 재상정 <시각>` 절로 append 한다 — 이 절이 그 STOP 의 기록이며, 항목(경로·규칙)·처분(별도 요청 | 선행 별도 요청(정지) | ⓑ | 플러그인 결함 | 작업 중단 | 요지 축소)·결정 줄(Phase 0 «결정 출처» 정형 — 결정 칸에는 처분을 적고, ⓑ 는 출처 규칙)을 적는다. 결정 칸의 첫 낱말은 `별도`·`선행`·`ⓑ`·`플러그인`·`작업`·`요지` 가운데 하나다(리팩토링 모드에서는 `scripts/refactor_audit.py` 가 그 밖을 실행 불능으로 낸다). 결정 칸에는 선택지 문구가 아니라 처분 이름을 강조 없이 적는다(«출처 있는 ⓑ» → `ⓑ` · «동작 변경은 별도 요청으로» → `별도 요청`). **요지 축소**는 리팩토링 모드 `M<n>` 에서 요지 일부만 빼는 처분이다(리팩토링 모드 절의 부분 항목 · Phase 2 STOP 에서 사용자가 일부만 빼기를 고른 경우) — 결정 줄은 항목마다 `M<n> · 결정 = 요지 축소 · 남긴 요지 = #<k>… · 뺀 요지 = #<j>… → <처분> · 남김 근거 = 해소 판정 표 | 사용자 선택 · 출처 = <결정 출처 정형>` 이고, 요지 번호는 명세 «슬라이스 0 해소 판정» 표의 번호다(Phase 2 STOP 이면 사용자 답을 먼저 STOP 기록에 추기하고 design-architect 가 표의 요지를 나눈 뒤 그 번호로 적는다). 출처는 뺀 요지 처분의 출처이고, «사용자 결정» 표기는 `남김 근거 = 사용자 선택` 일 때만 요지 축소 자체에도 쓴다. 답을 받기 전의 자리표시는 `결정 = · …` 로만 적는다(요지 축소 칸을 미리 채우지 않는다). 스코프 메모의 슬라이스 0 줄은 고치지 않는다 — 이 절이 뺀 항목을 가리킨다. 뺀 항목의 명세 반영(file-plan·슬라이스 0)은 design-architect 재호출로 한다(네가 명세를 쓰지 않는다 · Phase 2 중이면 Phase 1 pre-gate 문단의 재발화 판형). 이 재상정은 ⓐ 동결의 예외이고(Phase 2 6번 «미룰 수 없음» 재상정과 같은 형태), STOP 답을 기록에 착지시키는 것이라 경계 절의 «사후 개정»이 아니다. 리팩토링 모드에서 재상정 뒤 남은 ⓐ(`C<n>`·`M<n>`)·불편 항목이 0 이면 설계를 이어 가지 않고 그 사실을 재상정 절에 적고 끝낸다.\n\n"@ko .
 
+<https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s006/b12> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s006> ;
+    djr:kind djr:kind-norm ;
+    djr:order 12 ;
+    djr:statesNorm djr:R-3607, djr:R-3608, djr:R-3609 ;
+    djr:text "**arrange 점검**(G1 전 · 2026-10-01): 명세의 `## 슬라이스 계획` 절과 file-plan 행 끝 슬라이스 표기(architect 명세 절)를 두고 `dddjango:acceptance-tester` 를 **`PHASE1_ARRANGE_CHECK` 모드**로 불러 «슬라이스 Sn 의 `add/update` 인수 행을 기준선과 S1..Sn 계획 산출만으로 준비(arrange)할 수 있는가»를 G1 전에 본다. 파견 직전에 `sha256(design-spec.md)` 를 네가 재고, 입력 = 명세 경로 · 그 sha256(반드시 싣는다 — 역할은 재지 않는다) · 슬라이스 계획 절의 **인수 행**(판정 대상은 이 행뿐이다) · 관련 기존 test anchor · 부속 기록 경로 `<산출물 폴더>/g1-arrange-acceptance-<n>.md` 와 그 기록 토큰(산출물 위치 절 판형)이다. 부르는 때는 넷이다 — ⓘ 명세에 슬라이스 계획이 처음 생긴 리뷰 다발에 합류(위 2 의 병렬 정의) · ⓘⓘ 재리뷰 상한 갈래 ⓑ 의 확인 1회 다발에 늘 합류 · ⓘⓘ′ 재리뷰 상한이 서지 않고 G1 으로 가거나 갈래 ⓐ 로 가면 G1 배너 직전 단독 1회(최종 pre-gate 와 같은 응답) · ⓘⓘⓘ 매 G1′ 재리뷰 다발(수정 모드 2번)에 합류. 호출은 쓰기 울타리 창 안에서 한다(산출물 위치 절). **막힘**: `ARRANGE_BLOCKED` 는 architect 반송 의무다 — pre-gate red 와 같은 자리로 G1/G1′ 배너·Phase 2 dispatch 의 근거가 될 수 없고, 재리뷰 상한(위 4)은 서지 않는다. 갈래 ⓐ·ⓑ 를 밟던 중이었으면 상한을 풀고, architect 반영 뒤 위 4 의 일반 루프(재리뷰 다발)로 간다 — 막힘이 풀릴 때까지 매 재리뷰 다발에 arrange 점검이 합류한다. architect 가 «막힘 아님 — 근거 <명세 위치>»로 답하면 그 근거를 입력에 실어 arrange 점검을 1회 다시 부르고, 그래도 막힘이면 `STOP_FOR_USER_APPROVAL`(«arrange 막힘 판정 이견 — <행>»)로 올린다. arrange 판정은 재리뷰 상한 기준 ① 의 노트에 들지 않고 영역 → lens 대응표에도 없다(G1 배너의 전제다). **슬라이스 계획이 없거나 인수 행·내부 행을 가르지 않은 명세**: 이번 실행에서 architect 가 쓰거나 개정한 명세면 슬라이스 계획 절 의무(architect) 위반이라 architect 반송이다 — 어느 행이 인수 행인지 네가 대신 가르지 않는다. 파견 전에 슬라이스 계획을 입장 표와 대조한다 — 입장 표의 `add/update` 행은 모두 인수 행·내부 행 가운데 정확히 한 칸에 있어야 하고, owner/path 나 계약이 acceptance-tester 몫(외부 HTTP·event·사용자 관찰·공개 계약 — Phase 2 의 행 배정과 같은 자)인 행은 인수 행이어야 한다 — 어긋나면 architect 반송이다. 이번 실행 전에 승인된 구형 명세(수정 모드)만 부르지 않고 배너에 `arrange 점검: 해당 없음(구형 명세 — 슬라이스 계획 없음)` 을 적는다 — 조용한 생략은 없다. G1/G1′ 배너 1행 = `arrange 점검: 가능 · 판정 명세 sha <12자> = G1 명세 sha · 슬라이스 n(차례 · 산출 · 입장 행 목록)`. **재사용**: 직전 판정을 다시 쓰는 것은 ㉠ 직전 판정이 «가능»이고 ㉡ `sha256(design-spec.md)` ㉢ 코드 기준선 SHA(pregate-report 의 `pre-gate 기준선` 행 · Phase 1 이면 pre-gate 기준선 해소값) ㉣ 그 기록이 출처 `기준선` 으로 인용한 시험 쪽 파일(기존 시험·fixture·conftest·도움 모듈) 전부의 해시 ㉤ `approved-merges.txt` 해시(있으면)가 직전 점검 때와 모두 같을 때뿐이다 — 직전 판정이 막힘이면 늘 다시 부른다. 재사용하면 배너 arrange 행에 `(재사용 <기록 경로>)` 를 덧붙인다. **판정 명세 sha**: 기록의 `판정 명세 sha256` 은 역할이 입력에서 옮겨 적은 값이라 그것만으로 받지 않는다 — 네가 파견 직전에 잰 값과 같아야 하고, 그 기록을 근거로 쓰는 때의 명세 sha256 과도 같아야 한다(`입력 없음` 이거나 다르면 그 기록은 무효다). G1/G1′ 배너뿐 아니라 무배너 Phase 2 진입(G1 결정 처리 ②·③ 의 override 반영 뒤 · 재리뷰 상한의 G1 답 반영 뒤)과 Phase 2 재진입의 첫 슬라이스 dispatch 전에도 같다 — 다르면 배너를 내거나 dispatch 하지 않고 다시 부른다.\n\n"@ko .
+
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s006/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s006> ;
     djr:kind djr:kind-norm ;
@@ -4344,14 +4411,14 @@ djr:R-3601 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
     djr:statesNorm djr:R-0230, djr:R-0231, djr:R-0232, djr:R-0233, djr:R-3590, djr:R-3591, djr:R-3592, djr:R-3600, djr:R-3601 ;
-    djr:text "4. `dddjango:design-architect`를 다시 호출해 리뷰 노트를 반영하고 리뷰어 간 충돌을 중재시킨다(아래 «재리뷰 상한» 갈래 ⓐ 는 이 반영 호출의 예외다). **scope.md가 \"범위 아님 / 필요 시 G1 제안\"으로 명시한 항목(Y)은 architect가 기본(미적용)을 명세에 현재-상태로 commit하고 배너 override 항목으로 산출**한다(architect가 'Y감이냐'를 판정하지 않고 scope.md의 그 목록을 앵커로 쓴다). 스스로 해소 못 하는 트레이드오프(양자택일·리뷰어 충돌 등 Z)만 미해결 옵션으로 남긴다.\n   - **리뷰 처분 기록**(2026-10-01): 반영 호출에 명세 안의 리뷰 처분 표·처분 이력 절을 요구하지 않는다. 처분은 architect 가 부속 기록(산출물 위치 절 판형)으로 쓴다 — 반영 호출 입력에 리뷰 노트를 낸 lens 마다 `<산출물 폴더>/review-disposition-<lens>-<n>.md` 경로와 그 기록 토큰을 주고, architect 는 그 lens 의 발견마다 발견 ID · 반영/거절/받아들임 · 명세 위치 · 까닭 한 줄을 그 파일에 쓰고 응답에 경로마다 `기록:` 행을 싣는다(너는 architect 가 돌아온 뒤 판형 ③ 대로 대조하고 sha256 을 잰다). 재리뷰에 줄 입력은 위 2 의 규칙이다(그 lens 의 처분 파일만).\n   - **재리뷰 상한**(2026-10-01): 리뷰 다발(재리뷰 다발 포함)을 받은 뒤 다음 넷이 모두 서면 아래 두 갈래 가운데 정확히 하나로만 G1 에 간다 — ① 활성 lens(G0 승인 lens · 자문으로 붙은 lens 포함) 리뷰어와 discipline lightweight 의 가장 최근 노트가 전부 집행성 판정 «집행 가능»이다(«조건부»·판정 1행 없음·«불가»는 불성립이다 — 단 막는 것이 사용자 결정뿐인 «집행 가능 — 사용자 결정 전제: <항목>»은, 그 항목이 명세의 Y·Z·STOP 항목(architect 가 배너 override 항목·미해결 옵션·STOP 으로 낸 것) 가운데 하나일 때만 «가능»으로 본다 — 아니면 «조건부»다. «가능»으로 본 그 항목은 아래 «사용자 결정 필요» 판형을 따른다(확인 통과의 «집행 가능»도 같다) · 이번 다발에 없던 lens 의 직전 노트는 그 뒤 개정 diff 가 그 lens 영역(아래 대응표)에 닿지 않았을 때만 인정한다) ② 열린 발견의 등급이 minor·nit 뿐이다(blocker·important·major → 불성립 · minor·nit → 후보 · 등급 미기재 → 불성립 · 같은 흠을 lens 마다 다르게 적었으면 가장 높은 등급) ③ 마지막 pre-gate 예보가 red 가 아니거나, red 전건이 처분 기재돼 고칠 것이 없다(그 다발과 함께 띄운 pre-gate 가 있으면 ③ 은 그 결과를 받은 뒤 판별한다 — 결과 전에는 기다릴 뿐 판별 불가로 보지 않는다) ④ 이번 반영에 새 입력(발주자 답·발주서 개정·main 착륙·STOP 답)이 함께 들어가지 않는다. 넷 가운데 하나라도 판별할 수 없으면 상한 밖이다(위 4의 반영·재리뷰 그대로). 기준이 서지 않은 다발에는 이 상한이 없다.\n     - **ⓐ 반영 0(기본)**: architect 를 부르지 않는다(위 4 반영 호출의 예외). 열린 minor·nit 를 G1 배너에 `미반영 minor·nit k건(목록 · 노트 위치)` 으로 싣고 G1 으로 간다 — 명세 변경이 0 이라 배너 직전 pre-gate 는 캐시 skip 판형이다.\n     - **ⓑ 반영 → 확인 정확히 1회**: 열린 minor·nit 가운데 노트가 `G1 전 닫기: 예` 칸을 단 것이 하나라도 있을 때만 이 갈래다(minor·nit 에 그 칸이 없어 갈래를 가를 수 없으면 상한 밖). architect 에 **그 항목들만** 주고 «입장 표 decision·기계 블록·API/DB 결정·슬라이스 계획을 바꾸지 않는다 — 바꿔야 끝나는 항목은 반영하지 말고 보고하라»를 싣는다. 보고가 오면 상한 밖이다(그 항목으로 위 4의 일반 루프). 반영이 오면 아래 확인 1회를 거친다 — 확인을 통과하면 더 반영하지 않고 G1 으로 가며, 확인이 낸 minor·nit 와 반영하지 않은 나머지 항목은 배너 `미반영 …` 에 싣는다. 그 가운데 확인이 `G1 전 닫기: 예` 로 적은 nit 는 배너에 따로 `확인이 G1 전 닫기로 적은 nit k건(목록) — 기본 수락이면 반영 없이 Phase 2` 1행으로 보인다(반영을 원하면 G1 답 — 아래 불릿의 길). 통과하지 못하면(판정 «불가»·«조건부»·판정 1행 없음 · 새 blocker·important · pre-gate red 반송) 상한을 풀고 위 4의 일반 루프로 돌아간다.\n     - 기준이 선 다발에서 «반영 → 확인 없이 G1»은 없다. 사용자 결정 전제로 «가능»에 든 항목(위 ①)은 G1 배너에 `사용자 결정 필요 <항목>` 으로 싣고, 그 답이 없는 승인은 Phase 2 진입으로 해석하지 않는다(아래 5 의 `pending` 과 같다 — 그 결정만 묻는다). G1 답이 배너의 `미반영` 항목 반영을 요구하거나 `사용자 결정 필요` 항목의 답이 명세를 바꾸면 발주자 답 표기 반영·G1 override 로 처리하지 않고 ⓑ 판형으로 한다 — 그 항목만 반영 → 확인 1회 → 통과면 아래 5 «G1 결정 처리» ②·③ 과 같이 dispatch 전 pre-gate 재실행 뒤 Phase 2 · 통과하지 못하면 일반 루프 뒤 새 G1.\n     - **확인 1회**: 반영된 발견을 낸 lens + 반영 diff 가 닿은 영역의 lens(아래 대응표) + (pre-gate `--block-hash` 첫 행이 바뀌었으면) discipline 을 **확인 모드**로 한 다발에 부르고, 같은 응답에서 pre-gate 를 백그라운드로 띄운다(아래 pre-gate 문단). 확인 모드 입력은 리뷰어마다 명세 · 반영 diff · **그 lens 가 낸** 반영 발견 목록 · 직전 자기 노트다 — 다른 lens 의 발견은 싣지 않고, 다른 lens 반영은 diff 로만 보게 한다(위 2 의 편향 방지). 반영 diff 는 반영 전후 명세의 diff 다 — 커밋이 있으면 `<전>..<후>`, 없으면 반영 호출 전에 `mktemp` 로 떠 둔 사본과의 diff 를 `<산출물 폴더>/g1-nit-<n>.diff` 로 둔다. 통과 = 각 확인 노트의 집행성 판정 «집행 가능» ∧ 새 blocker·important 0 ∧ pre-gate red 아님이다.\n     - **영역 → lens 대응표**: 도메인 판정·애그리거트·불변식·이벤트 → ddd · 계약·HTTP·오류 응답·12-slot → api · 스키마·인덱스·제약·트랜잭션·마이그레이션 → db · 입장 표·패키지/테스트 구조·물리 소유권·기계 블록 → discipline. diff 덩어리가 속한 `##` 절 제목으로 가르고, 못 가르면 활성 lens 전부다. 대응표가 가리키는 lens 가 활성이 아니면 그 덩어리는 discipline 이 본다. 블록 해시는 확대 조건(바뀌면 discipline 추가)으로만 쓰고 생략 조건으로 쓰지 않는다.\n     - **배너 1행**(상한으로 G1 에 갈 때): `재리뷰 상한 — 다발 <n> · 갈래 ⓐ|ⓑ · (ⓑ) 확인 lens <목록> · 판정 가능 · 새 blocker·important 0 · 미반영 minor·nit k건 · 반영 diff <전>..<후> | <산출물 폴더>/g1-nit-<n>.diff`.\n"@ko .
+    djr:text "4. `dddjango:design-architect`를 다시 호출해 리뷰 노트를 반영하고 리뷰어 간 충돌을 중재시킨다(아래 «재리뷰 상한» 갈래 ⓐ 는 이 반영 호출의 예외다). **scope.md가 \"범위 아님 / 필요 시 G1 제안\"으로 명시한 항목(Y)은 architect가 기본(미적용)을 명세에 현재-상태로 commit하고 배너 override 항목으로 산출**한다(architect가 'Y감이냐'를 판정하지 않고 scope.md의 그 목록을 앵커로 쓴다). 스스로 해소 못 하는 트레이드오프(양자택일·리뷰어 충돌 등 Z)만 미해결 옵션으로 남긴다.\n   - **리뷰 처분 기록**(2026-10-01): 반영 호출에 명세 안의 리뷰 처분 표·처분 이력 절을 요구하지 않는다. 처분은 architect 가 부속 기록(산출물 위치 절 판형)으로 쓴다 — 반영 호출 입력에 리뷰 노트를 낸 lens 마다 `<산출물 폴더>/review-disposition-<lens>-<n>.md` 경로와 그 기록 토큰을 주고, architect 는 그 lens 의 발견마다 발견 ID · 반영/거절/받아들임 · 명세 위치 · 까닭 한 줄을 그 파일에 쓰고 응답에 경로마다 `기록:` 행을 싣는다(너는 architect 가 돌아온 뒤 판형 ③ 대로 대조하고 sha256 을 잰다). 재리뷰에 줄 입력은 위 2 의 규칙이다(그 lens 의 처분 파일만).\n   - **재리뷰 상한**(2026-10-01): 리뷰 다발(재리뷰 다발 포함)을 받은 뒤 다음 넷이 모두 서면 아래 두 갈래 가운데 정확히 하나로만 G1 에 간다 — ① 활성 lens(G0 승인 lens · 자문으로 붙은 lens 포함) 리뷰어와 discipline lightweight 의 가장 최근 노트가 전부 집행성 판정 «집행 가능»이다(«조건부»·판정 1행 없음·«불가»는 불성립이다 — 단 막는 것이 사용자 결정뿐인 «집행 가능 — 사용자 결정 전제: <항목>»은, 그 항목이 명세의 Y·Z·STOP 항목(architect 가 배너 override 항목·미해결 옵션·STOP 으로 낸 것) 가운데 하나일 때만 «가능»으로 본다 — 아니면 «조건부»다. «가능»으로 본 그 항목은 아래 «사용자 결정 필요» 판형을 따른다(확인 통과의 «집행 가능»도 같다) · 이번 다발에 없던 lens 의 직전 노트는 그 뒤 개정 diff 가 그 lens 영역(아래 대응표)에 닿지 않았을 때만 인정한다) ② 열린 발견의 등급이 minor·nit 뿐이다(blocker·important·major → 불성립 · minor·nit → 후보 · 등급 미기재 → 불성립 · 같은 흠을 lens 마다 다르게 적었으면 가장 높은 등급) ③ 마지막 pre-gate 예보가 red 가 아니거나, red 전건이 처분 기재돼 고칠 것이 없다(그 다발과 함께 띄운 pre-gate 가 있으면 ③ 은 그 결과를 받은 뒤 판별한다 — 결과 전에는 기다릴 뿐 판별 불가로 보지 않는다) ④ 이번 반영에 새 입력(발주자 답·발주서 개정·main 착륙·STOP 답)이 함께 들어가지 않는다. 넷 가운데 하나라도 판별할 수 없으면 상한 밖이다(위 4의 반영·재리뷰 그대로). 기준이 서지 않은 다발에는 이 상한이 없다.\n     - **ⓐ 반영 0(기본)**: architect 를 부르지 않는다(위 4 반영 호출의 예외). 열린 minor·nit 를 G1 배너에 `미반영 minor·nit k건(목록 · 노트 위치)` 으로 싣고 G1 으로 간다 — 명세 변경이 0 이라 배너 직전 pre-gate 는 캐시 skip 판형이다.\n     - **ⓑ 반영 → 확인 정확히 1회**: 열린 minor·nit 가운데 노트가 `G1 전 닫기: 예` 칸을 단 것이 하나라도 있을 때만 이 갈래다(minor·nit 에 그 칸이 없어 갈래를 가를 수 없으면 상한 밖). architect 에 **그 항목들만** 주고 «입장 표 decision·기계 블록·API/DB 결정·슬라이스 계획을 바꾸지 않는다 — 바꿔야 끝나는 항목은 반영하지 말고 보고하라»를 싣는다. 보고가 오면 상한 밖이다(그 항목으로 위 4의 일반 루프). 반영이 오면 아래 확인 1회를 거친다 — 확인을 통과하면 더 반영하지 않고 G1 으로 가며, 확인이 낸 minor·nit 와 반영하지 않은 나머지 항목은 배너 `미반영 …` 에 싣는다. 그 가운데 확인이 `G1 전 닫기: 예` 로 적은 nit 는 배너에 따로 `확인이 G1 전 닫기로 적은 nit k건(목록) — 기본 수락이면 반영 없이 Phase 2` 1행으로 보인다(반영을 원하면 G1 답 — 아래 불릿의 길). 통과하지 못하면(판정 «불가»·«조건부»·판정 1행 없음 · 새 blocker·important · pre-gate red 반송 · 같은 다발 arrange 점검의 `ARRANGE_BLOCKED`) 상한을 풀고 위 4의 일반 루프로 돌아간다.\n     - 기준이 선 다발에서 «반영 → 확인 없이 G1»은 없다. 사용자 결정 전제로 «가능»에 든 항목(위 ①)은 G1 배너에 `사용자 결정 필요 <항목>` 으로 싣고, 그 답이 없는 승인은 Phase 2 진입으로 해석하지 않는다(아래 5 의 `pending` 과 같다 — 그 결정만 묻는다). G1 답이 배너의 `미반영` 항목 반영을 요구하거나 `사용자 결정 필요` 항목의 답이 명세를 바꾸면 발주자 답 표기 반영·G1 override 로 처리하지 않고 ⓑ 판형으로 한다 — 그 항목만 반영 → 확인 1회 → 통과면 아래 5 «G1 결정 처리» ②·③ 과 같이 dispatch 전 pre-gate 재실행 뒤 Phase 2 · 통과하지 못하면 일반 루프 뒤 새 G1.\n     - **확인 1회**: 반영된 발견을 낸 lens + 반영 diff 가 닿은 영역의 lens(아래 대응표) + (pre-gate `--block-hash` 첫 행이 바뀌었으면) discipline 을 **확인 모드**로 한 다발에 부르고, 같은 응답에서 pre-gate 를 백그라운드로 띄운다(아래 pre-gate 문단). 확인 모드 입력은 리뷰어마다 명세 · 반영 diff · **그 lens 가 낸** 반영 발견 목록 · 직전 자기 노트다 — 다른 lens 의 발견은 싣지 않고, 다른 lens 반영은 diff 로만 보게 한다(위 2 의 편향 방지). 반영 diff 는 반영 전후 명세의 diff 다 — 커밋이 있으면 `<전>..<후>`, 없으면 반영 호출 전에 `mktemp` 로 떠 둔 사본과의 diff 를 `<산출물 폴더>/g1-nit-<n>.diff` 로 둔다. 통과 = 각 확인 노트의 집행성 판정 «집행 가능» ∧ 새 blocker·important 0 ∧ pre-gate red 아님 ∧ 같은 다발에 합류한 arrange 점검(아래 «arrange 점검»)이 `ARRANGE_BLOCKED` 아님이다.\n     - **영역 → lens 대응표**: 도메인 판정·애그리거트·불변식·이벤트 → ddd · 계약·HTTP·오류 응답·12-slot → api · 스키마·인덱스·제약·트랜잭션·마이그레이션 → db · 입장 표·패키지/테스트 구조·물리 소유권·기계 블록 → discipline. diff 덩어리가 속한 `##` 절 제목으로 가르고, 못 가르면 활성 lens 전부다. 대응표가 가리키는 lens 가 활성이 아니면 그 덩어리는 discipline 이 본다. 블록 해시는 확대 조건(바뀌면 discipline 추가)으로만 쓰고 생략 조건으로 쓰지 않는다.\n     - **배너 1행**(상한으로 G1 에 갈 때): `재리뷰 상한 — 다발 <n> · 갈래 ⓐ|ⓑ · (ⓑ) 확인 lens <목록> · 판정 가능 · 새 blocker·important 0 · 미반영 minor·nit k건 · 반영 diff <전>..<후> | <산출물 폴더>/g1-nit-<n>.diff`.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s006/b6> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s006> ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
     djr:statesNorm djr:R-0234, djr:R-0235, djr:R-0236, djr:R-0237, djr:R-0238, djr:R-0239 ;
-    djr:text "5. **G1 배너**로 최종 설계 명세(경로)를 제시하고 승인받는다 — Y 항목은 \"기본=미적용 · 추가할래?\"로, Z는 옵션으로 보인다. 배너에는 입장 표의 `add/update/reuse/retain/remove/reject/pending`을 decision별로 직접 나열하고 각 행의 owner/path를 보여 준다(없으면 `없음`). `pending`이 하나라도 남으면 승인 입력을 Phase 2 진입으로 해석하지 않고 한정된 설계 질문으로 반송한다. 의미 보존 move/split/rename/reorganization은 새 case·assertion·Red가 없고 전후 보호가 같다는 기록까지 보여 준다. 설계 명세는 이후 테스트와 코드의 **단일 근거**다.\n"@ko .
+    djr:text "5. **G1 배너**로 최종 설계 명세(경로)를 제시하고 승인받는다 — Y 항목은 \"기본=미적용 · 추가할래?\"로, Z는 옵션으로 보인다. 배너에는 입장 표의 `add/update/reuse/retain/remove/reject/pending`을 decision별로 직접 나열하고 각 행의 owner/path를 보여 준다(없으면 `없음`). `pending`이 하나라도 남으면 승인 입력을 Phase 2 진입으로 해석하지 않고 한정된 설계 질문으로 반송한다. 의미 보존 move/split/rename/reorganization은 새 case·assertion·Red가 없고 전후 보호가 같다는 기록까지 보여 준다. 설계 명세는 이후 테스트와 코드의 **단일 근거**다. 배너의 추가 행·전제는 위 4 «재리뷰 상한»의 배너 1행 · 아래 «arrange 점검»의 1행(전제) · 산출물 위치 절 «쓰기 울타리»의 울타리 차이 행이다(2026-10-01).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s006/b7> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s006> ;
@@ -4540,7 +4607,7 @@ djr:R-3601 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
     djr:statesNorm djr:R-0269, djr:R-0270, djr:R-0271, djr:R-0272, djr:R-3488, djr:R-3489, djr:R-3499, djr:R-3502, djr:R-3503 ;
-    djr:text "3. 제품 구현 단위로 **슬라이스 목록을 도출**하고 각 슬라이스에 관련 입장 행을 붙인다. G0에서 「지금 정리」로 결정된 빚(`refactor-scope.md`)은 **리팩터링 슬라이스(슬라이스 0 · 동작 불변)**로 만들어 신규 개발 슬라이스보다 **앞에** 둔다 — 리팩터링과 기능 변경을 한 슬라이스에 섞지 않는다. 슬라이스 0 은 **0T**(테스트 정리 — 제품 코드 고정)와 **0C**(코드 정리 — 테스트 고정)로 나누고 0T 를 먼저 둔다 — ⓐ 항목의 경로가 테스트 쪽(`test`·`tests`·`factories`·`fake`·`fakes`·`fixtures` 경로 조각 아래이거나 파일명이 `test_*.py`·`*_test.py`·`conftest.py` 인 `.py` · `test_*.py` 를 품은 `test`/`tests` 디렉터리 아래 파일 · pytest 설정 절)이면 0T, 그 밖이면 0C 다. 파일 이동은 분류 중립이다(창 안에서 옮긴 파일은 옛 분류를 따르고 옮긴 자리를 추가로 세지 않는다). 한 항목이 두 쪽 본문을 함께 바꿔야 하면 Phase 1 «슬라이스 0 과 비위반 이동의 STOP»의 동작 불변 불가다(2026-09-27). 후보·recipe·coverage 목표만으로 test-adjustment/unit-Red 슬라이스를 만들지 않는다. 외부 `add/update` Red와 내부 `add/update` Red, 승인된 `remove` 대상만 해당 소유자의 test edit 입력이며, `reuse` anchor는 새 슬라이스 수를 압박하지 않는다. 슬라이스 0 은 기능 슬라이스와 커밋을 나누고, 슬라이스 0 이 끝난 시점(기능 슬라이스 전)에 관련 테스트를 실행해 green 을 확인한다 — 커밋 주체·시점은 사용자 지시·발주 계약이며, 커밋하지 않는 실행이면 G2 배너에 슬라이스 0 파일 목록과 그 시점의 관련 테스트 결과를 따로 적는다(2026-09-26). ⓐ 항목이 검사기 오탐으로 의심되면(규칙 문면상 허용되는 코드가 red) 우회 구현으로 red 를 지우지 않는다 — coder 입력에 «슬라이스 0 항목의 red 가 규칙 문면상 허용되는 코드로 보이면 우회 구현 없이 재현 근거와 함께 `STOP_FOR_USER_APPROVAL`(플러그인 결함)로 보고»를 싣고, 그 보고는 설계 반송(Phase 2 5번·엣지 절 Contract mismatch)이 아니라 사용자에게 «슬라이스 0 에서 빼고 진행(검사기 수리 대기 — 잔존은 legacy 보고) / 작업 중단»으로 올린다(답은 Phase 1 «슬라이스 0 과 비위반 이동의 STOP»의 `ⓐ 재상정` 절 · 2026-09-26).\n   - **동작 보존 창**(2026-09-27): 창은 0T·0C 종류마다 하나 이상이다(한쪽만 있으면 그 종류만). 창마다 첫 파견 직전에 `scripts/behavior_guard.py open <산출물 폴더> --kind test|code`(0T = `test` · 0C = `code`)를 돌린다 — 첫 창은 6번 규칙의 `build_anchor` 기록 뒤이고, 열린 창이 있으면 open 이 거부한다. 그 창의 마지막 슬라이스 보고를 받으면 다음 파견 전에 `scripts/behavior_guard.py close <산출물 폴더>` 를 돌린다 — 0T 는 제품 쪽 무변과 테스트 케이스 이름 불변(입장 표 `remove` 행만 감소)을, 0C 는 테스트가 옮긴·개명한 코드를 따라간 치환(import·문자열 속 경로·이름) 말고는 바뀌지 않았음을, 둘 다 마이그레이션 무변을 판정한다. red(exit 2)면 다음 파견을 하지 않는다: red 행이 가리킨 변경을 그 창의 작성 역할에 철회시키고 close 를 다시 돌린다(green 이 될 때까지 · 판정 이력은 산출 파일에 쌓인다). 철회하면 그 ⓐ 항목을 끝낼 수 없으면(반대쪽 본문 변경이 필요) Phase 1 «슬라이스 0 과 비위반 이동의 STOP»의 동작 불변 불가로, 동작 불변 치환이 red 로 판정되면(장치 오탐) 우회 편집 없이 위 검사기 오탐과 같은 선택지(`ⓐ 재상정` — 플러그인 결함)로 올리고, 어느 쪽이든 뺀 항목의 변경을 철회한 뒤 close 를 다시 돌린다. 창 안 머지는 `<산출물 폴더>/approved-merges.txt` 에 등재된 것만 유입으로 빠지고, 나머지 머지가 들여온 변경은 레인 편집으로 판정된다. exit 1(판정 불가 — 승인 머지가 들여온 경로를 레인도 바꿨다 · 창 기준 커밋이 HEAD 의 조상이 아니다(rebase·reset))도 파견하지 않는다: 그 머지·재배치를 철회하고 close 를 다시 돌리거나, 철회할 수 없으면 `STOP_FOR_USER_APPROVAL` 로 올린다. 창 안 파견 입력에는 창 종류(0T | 0C)를 싣고, 병렬 배차는 한 창 안에서만 한다. 잇기로 재개하면 첫 파견 전에 `scripts/behavior_guard.py verify <산출물 폴더>` 를 한 번 돌려 열린 창이 있으면 close 부터 한다(슬라이스 0 창을 아직 하나도 열지 않은 재개의 «창 누락» red 는 무시한다). 4번 경량 감사·5번 규율 감사의 반영이 슬라이스 0 파일을 고치면 같은 종류의 창을 새로 열어 반영 파견 → close 한다. 리팩토링 모드의 G2 잔존 반송(«리팩토링 모드» 절)도 그 항목의 원 창 종류로 새 창을 연다(2026-09-27). 창별 close 보고(red·참고 행과 `요약:`)는 5번 규율 감사 입력에 붙인다. 마이그레이션 동적 측정은 저장소 `.venv`/`venv` 인터프리터를 쓰며 그 밖의 환경이면 `--python <인터프리터>` 를 준다. 산출(`<산출물 폴더>/behavior/<G0 승인 값>/`)은 너의 기계 기록이며 G2 승인분 커밋에 포함한다.\n"@ko .
+    djr:text "3. 명세의 `## 슬라이스 계획` 절(차례 · 인수 행 · 내부 행 · 완료 조건)과 file-plan 행 끝 슬라이스 표기를 슬라이스 목록으로 쓴다 — 계획 슬라이스 **안의** 하위 분할(파일·입장 행 배정 무변)은 명세 변경 없이 할 수 있다. 계획이 없는 구형 명세만 제품 구현 단위로 **슬라이스 목록을 도출**하고 각 슬라이스에 관련 입장 행을 붙인다(2026-10-01). G0에서 「지금 정리」로 결정된 빚(`refactor-scope.md`)은 **리팩터링 슬라이스(슬라이스 0 · 동작 불변)**로 만들어 신규 개발 슬라이스보다 **앞에** 둔다 — 리팩터링과 기능 변경을 한 슬라이스에 섞지 않는다. 슬라이스 0 은 **0T**(테스트 정리 — 제품 코드 고정)와 **0C**(코드 정리 — 테스트 고정)로 나누고 0T 를 먼저 둔다 — ⓐ 항목의 경로가 테스트 쪽(`test`·`tests`·`factories`·`fake`·`fakes`·`fixtures` 경로 조각 아래이거나 파일명이 `test_*.py`·`*_test.py`·`conftest.py` 인 `.py` · `test_*.py` 를 품은 `test`/`tests` 디렉터리 아래 파일 · pytest 설정 절)이면 0T, 그 밖이면 0C 다. 파일 이동은 분류 중립이다(창 안에서 옮긴 파일은 옛 분류를 따르고 옮긴 자리를 추가로 세지 않는다). 한 항목이 두 쪽 본문을 함께 바꿔야 하면 Phase 1 «슬라이스 0 과 비위반 이동의 STOP»의 동작 불변 불가다(2026-09-27). 후보·recipe·coverage 목표만으로 test-adjustment/unit-Red 슬라이스를 만들지 않는다. 외부 `add/update` Red와 내부 `add/update` Red, 승인된 `remove` 대상만 해당 소유자의 test edit 입력이며, `reuse` anchor는 새 슬라이스 수를 압박하지 않는다. 슬라이스 0 은 기능 슬라이스와 커밋을 나누고, 슬라이스 0 이 끝난 시점(기능 슬라이스 전)에 관련 테스트를 실행해 green 을 확인한다 — 커밋 주체·시점은 사용자 지시·발주 계약이며, 커밋하지 않는 실행이면 G2 배너에 슬라이스 0 파일 목록과 그 시점의 관련 테스트 결과를 따로 적는다(2026-09-26). ⓐ 항목이 검사기 오탐으로 의심되면(규칙 문면상 허용되는 코드가 red) 우회 구현으로 red 를 지우지 않는다 — coder 입력에 «슬라이스 0 항목의 red 가 규칙 문면상 허용되는 코드로 보이면 우회 구현 없이 재현 근거와 함께 `STOP_FOR_USER_APPROVAL`(플러그인 결함)로 보고»를 싣고, 그 보고는 설계 반송(Phase 2 5번·엣지 절 Contract mismatch)이 아니라 사용자에게 «슬라이스 0 에서 빼고 진행(검사기 수리 대기 — 잔존은 legacy 보고) / 작업 중단»으로 올린다(답은 Phase 1 «슬라이스 0 과 비위반 이동의 STOP»의 `ⓐ 재상정` 절 · 2026-09-26).\n   - **동작 보존 창**(2026-09-27): 창은 0T·0C 종류마다 하나 이상이다(한쪽만 있으면 그 종류만). 창마다 첫 파견 직전에 `scripts/behavior_guard.py open <산출물 폴더> --kind test|code`(0T = `test` · 0C = `code`)를 돌린다 — 첫 창은 6번 규칙의 `build_anchor` 기록 뒤이고, 열린 창이 있으면 open 이 거부한다. 그 창의 마지막 슬라이스 보고를 받으면 다음 파견 전에 `scripts/behavior_guard.py close <산출물 폴더>` 를 돌린다 — 0T 는 제품 쪽 무변과 테스트 케이스 이름 불변(입장 표 `remove` 행만 감소)을, 0C 는 테스트가 옮긴·개명한 코드를 따라간 치환(import·문자열 속 경로·이름) 말고는 바뀌지 않았음을, 둘 다 마이그레이션 무변을 판정한다. red(exit 2)면 다음 파견을 하지 않는다: red 행이 가리킨 변경을 그 창의 작성 역할에 철회시키고 close 를 다시 돌린다(green 이 될 때까지 · 판정 이력은 산출 파일에 쌓인다). 철회하면 그 ⓐ 항목을 끝낼 수 없으면(반대쪽 본문 변경이 필요) Phase 1 «슬라이스 0 과 비위반 이동의 STOP»의 동작 불변 불가로, 동작 불변 치환이 red 로 판정되면(장치 오탐) 우회 편집 없이 위 검사기 오탐과 같은 선택지(`ⓐ 재상정` — 플러그인 결함)로 올리고, 어느 쪽이든 뺀 항목의 변경을 철회한 뒤 close 를 다시 돌린다. 창 안 머지는 `<산출물 폴더>/approved-merges.txt` 에 등재된 것만 유입으로 빠지고, 나머지 머지가 들여온 변경은 레인 편집으로 판정된다. exit 1(판정 불가 — 승인 머지가 들여온 경로를 레인도 바꿨다 · 창 기준 커밋이 HEAD 의 조상이 아니다(rebase·reset))도 파견하지 않는다: 그 머지·재배치를 철회하고 close 를 다시 돌리거나, 철회할 수 없으면 `STOP_FOR_USER_APPROVAL` 로 올린다. 창 안 파견 입력에는 창 종류(0T | 0C)를 싣고, 병렬 배차는 한 창 안에서만 한다. 잇기로 재개하면 첫 파견 전에 `scripts/behavior_guard.py verify <산출물 폴더>` 를 한 번 돌려 열린 창이 있으면 close 부터 한다(슬라이스 0 창을 아직 하나도 열지 않은 재개의 «창 누락» red 는 무시한다). 4번 경량 감사·5번 규율 감사의 반영이 슬라이스 0 파일을 고치면 같은 종류의 창을 새로 열어 반영 파견 → close 한다. 리팩토링 모드의 G2 잔존 반송(«리팩토링 모드» 절)도 그 항목의 원 창 종류로 새 창을 연다(2026-09-27). 창별 close 보고(red·참고 행과 `요약:`)는 5번 규율 감사 입력에 붙인다. 마이그레이션 동적 측정은 저장소 `.venv`/`venv` 인터프리터를 쓰며 그 밖의 환경이면 `--python <인터프리터>` 를 준다. 산출(`<산출물 폴더>/behavior/<G0 승인 값>/`)은 너의 기계 기록이며 G2 승인분 커밋에 포함한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b30> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;

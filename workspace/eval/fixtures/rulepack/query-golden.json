@@ -34,8 +34,8 @@
   },
   "q3:미바인딩거절": true,
   "q4": {
-    "distinct_works": 3606,
-    "rows": 3606,
+    "distinct_works": 3616,
+    "rows": 3616,
     "with_alias": [
       "R-0091",
       "R-0122",

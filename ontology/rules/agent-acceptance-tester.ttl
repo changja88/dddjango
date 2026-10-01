@@ -3,12 +3,18 @@
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 djr:R-3232 a djr:Obligation ;
-    skos:prefLabel "Phase 2 구현 시작 시 Coordinator 호출 대상"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3232@2026-08-22> .
+    skos:prefLabel "Phase 2 구현 시작 시 Coordinator 호출 대상 · G1 전에는 PHASE1_ARRANGE_CHECK 읽기 전용 점검으로만"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3232@2026-10-01> .
 
 <https://numchida.com/ns/djr#R-3232@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3232 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3232@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3232 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3232@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3233 a djr:Obligation ;
     skos:prefLabel "승인 현행 외부 계약·관련 테스트 대조와 입장 표 add/update 승인 외부 계약 한정 바깥 루프 Red 작성"@ko ;
@@ -720,6 +726,46 @@ djr:R-3576 a djr:Obligation ;
     prov:specializationOf djr:R-3576 ;
     djr:revision 1 .
 
+djr:R-3612 a djr:Obligation ;
+    skos:prefLabel "PHASE1_ARRANGE_CHECK 는 Coordinator 가 명시할 때만 — G1 전(또는 Phase 2 재진입 전) 판정 대상 명세로 슬라이스별 인수 행 arrange 가능성 읽기 전용 점검"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3612@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3612@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3612 ;
+    djr:revision 1 .
+
+djr:R-3613 a djr:Obligation ;
+    skos:prefLabel "arrange 점검 입력 — 판정 대상 명세 · Coordinator 측정 sha256 · 슬라이스 계획의 인수 행(판정 대상) · 슬라이스 계획(계획 절 · file-plan 행 끝 표기) · 기존 test anchor · 부속 기록 경로·기록 토큰"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3613@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3613@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3613 ;
+    djr:revision 1 .
+
+djr:R-3614 a djr:Prohibition ;
+    skos:prefLabel "arrange 점검 읽기 범위 닫힘 — 명세·시험 쪽 파일·제품 경로 실존만 · 제품 본문 열람·제품 폴더 내용 검색·심볼 조회 0(R-3242 그대로) · 명세에 없는 사실 = 명세 없음 막힘"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3614@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3614@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3614 ;
+    djr:revision 1 .
+
+djr:R-3615 a djr:Prohibition ;
+    skos:prefLabel "arrange 점검 도구 — Read·Grep·Glob 없으면 Bash 읽기 명령 닫힌 목록만(읽기 필터 cut·sort·uniq·awk 표준 출력만 · 제품 경로는 test -e · ls -d 와 그 조건·반복) · 쓰기는 기록 한 파일(Write·Edit) · python·python3·git·해시·시험·설치·리다이렉트 쓰기 0 · 계산 0(sha 는 입력값 · 없으면 «입력 없음»)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3615@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3615@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3615 ;
+    djr:revision 1 .
+
+djr:R-3616 a djr:Obligation ;
+    skos:prefLabel "arrange 판정·산출 — 인수 행별 재료·출처(기준선|S≤n 계획|뒤 슬라이스|명세 없음 — 이름만 있고 값·꼴·시그니처 없으면 명세 없음) · 제품 쪽 import 차례 · 뒤 슬라이스·명세 없음 = 막힘 · 기록 머리(기록 토큰 · 입력 sha 옮김)·표·판정 1행(가능|ARRANGE_BLOCKED k) · 인용 없는 가능 무효 · 응답 기록 행 · TREE_CONTRACT_MISMATCH 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3616@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3616@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3616 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/agents/acceptance-tester.md> a djr:Document ;
     skos:prefLabel "agent-acceptance-tester"@ko .
 
@@ -739,7 +785,7 @@ djr:R-3576 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
     djr:statesNorm djr:R-3232, djr:R-3233, djr:R-3234, djr:R-3235 ;
-    djr:text "description: dddjango 파이프라인 Phase 2(구현) 시작에 Coordinator가 호출한다. 승인된 현행 외부 계약과 관련 테스트를 대조하고, 입장 표에서 `add/update`로 승인된 외부 계약만 바깥 루프 Red로 만든다. 구현을 보지 않는 블랙박스다. 구현 코드는 쓰지 않는다.\n"@ko .
+    djr:text "description: dddjango 파이프라인 Phase 2(구현) 시작에 Coordinator가 호출한다(G1 전에는 `PHASE1_ARRANGE_CHECK` 읽기 전용 점검으로만 호출한다). 승인된 현행 외부 계약과 관련 테스트를 대조하고, 입장 표에서 `add/update`로 승인된 외부 계약만 바깥 루프 Red로 만든다. 구현을 보지 않는 블랙박스다. 구현 코드는 쓰지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s001/b3> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s001> ;
@@ -1002,3 +1048,43 @@ djr:R-3576 a djr:Obligation ;
     djr:order 4 ;
     djr:statesNorm djr:R-3317, djr:R-3318 ;
     djr:text "- Coordinator가 준 관련 경로 밖으로 전체 suite를 탐색·정리하지 않는다. 전체 suite의 무관 실패는 편집하지 않고 보고한다.\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006> a djr:Section ;
+    djr:headingSnapshot "## Phase 1 arrange 점검 모드 (PHASE1_ARRANGE_CHECK)"@ko ;
+    djr:inDocument <https://numchida.com/ns/djr#d/dddjango/agents/acceptance-tester.md> ;
+    djr:sectionOwner djr:owner-graph .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006/b1> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006> ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:statesNorm djr:R-3612 ;
+    djr:text "\n기본 모드는 Phase 2 시작의 인수 Red 작성이다. Coordinator 가 `PHASE1_ARRANGE_CHECK` 를 명시할 때만 이 절을 따른다 — G1 전(또는 Phase 2 재진입 전)에 판정 대상 명세로 «슬라이스 Sn 의 `add/update` 인수 행을 기준선과 S1..Sn 계획 산출만으로 준비(arrange)할 수 있는가»를 보는 읽기 전용 점검이다(2026-10-01).\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-3613 ;
+    djr:text "**입력**: 판정 대상 명세 경로와 Coordinator 가 잰 그 명세의 sha256 · 명세 `## 슬라이스 계획` 절의 **인수 행**(판정 대상은 이 행뿐이다 — 내부 행은 보지 않는다) · file-plan 행 끝 `# S<n>` · `# S<처음>→S<끝>` · 관련 기존 test anchor · 부속 기록 경로 `<산출물 폴더>/g1-arrange-acceptance-<n>.md` 와 그 기록 토큰.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006/b3> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006> ;
+    djr:kind djr:kind-norm ;
+    djr:order 3 ;
+    djr:statesNorm djr:R-3614 ;
+    djr:text "**읽기 범위(닫힘)**: 명세 · 시험 쪽 파일(경로 조각 `test`·`tests`·`factories`·`fake`·`fakes`·`fixtures` 아래이거나 이름이 `test_*.py`·`*_test.py`·`conftest.py` 인 파일) · 제품 경로의 **실존만**이다. 제품 파일 본문 열람 · 제품 폴더 안 내용 검색 · 심볼 조회(Serena 포함)는 0 이다 — 입력 절의 «프로덕션 구현 코드를 보지 않는다» 그대로다. 명세에 없는 사실이 필요하면 그것 자체가 «명세 없음» 막힘이다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006/b4> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006> ;
+    djr:kind djr:kind-norm ;
+    djr:order 4 ;
+    djr:statesNorm djr:R-3615 ;
+    djr:text "**도구·쓰기**: 읽기는 Read·Grep·Glob 가 있으면 그것으로 하고, 없으면 Bash 의 읽기 명령만 쓴다 — 허용 목록은 닫혀 있다: 명세·시험 쪽 파일에 `cat` · `sed -n` · `head` · `tail` · `wc` · `grep`·`rg`(재귀 검색은 시험 쪽 폴더에만) · `ls` · `find -name`(시험 쪽 폴더에만) 과 그 출력에 거는 읽기 전용 필터 `cut` · `sort` · `uniq` · `awk`(표준 출력만 — 리다이렉트·`system()`·파일 쓰기 금지), 제품 경로에 `test -e` · `ls -d`(실존 확인만 — 이것을 쓰는 셸 조건·반복 `if`·`for` 포함). 그 밖의 명령(`python`·`python3` · `git` · 해시 명령 · 시험 실행 · 설치 · 리다이렉트 쓰기 포함)은 쓰지 않는다. 쓰기는 받은 부속 기록 경로 한 파일만 Write·Edit 로 한다(처음은 새 파일 — 이미 있으면 쓰지 않고 보고한다). 이 모드에서 너는 아무것도 계산하지 않는다 — 기록의 `판정 명세 sha256` 은 입력의 값을 그대로 옮긴다. 입력에 그 값이 없으면 재지 말고 `판정 명세 sha256 입력 없음` 으로 적고 응답에 알린다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006/b5> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006> ;
+    djr:kind djr:kind-norm ;
+    djr:order 5 ;
+    djr:statesNorm djr:R-3616 ;
+    djr:text "**판정·산출**: 입력의 인수 행마다 arrange 재료(도움 모듈·fixture·공개 함수·상수·Schema·입력 꼴)와 그 출처 `기준선 | S<k≤n> 계획(명세 위치) | 뒤 슬라이스 S<k>n> | 명세 없음` 을 적는다. 출처 `S<k≤n> 계획` 은 명세가 그 재료를 arrange 에 쓸 수 있을 만큼 — 입력 꼴(필드·타입) · 상수 값 · 함수·생성자 시그니처 · 기록·데이터의 내용 · 붙는 gate·ID — 적었을 때만이다. 이름만 나오고 그 값·꼴·시그니처가 없으면 `명세 없음` 이다(이름이 명세에 있다는 것은 계획의 근거가 아니다). `기준선` 은 시험 쪽 파일이 그 꼴로 이미 쓰고 있거나 명세가 기준선의 꼴을 적었을 때만이다 — 제품 파일에 있으리라 짐작하지 않는다. 시험 쪽 파일은 본문을 읽고 모듈 머리 import 까지 따라가며, 제품 모듈은 명세의 boundary-imports·symbols·file-plan·슬라이스 표기로만 판단한다. 명세만으로 제품 쪽 차례도 본다 — 슬라이스 Sn 의 file-plan 경로가 boundary-imports 에서 뒤 슬라이스가 만드는 모듈을 import 하면 그 경로를 한 행으로 적는다(출처 `뒤 슬라이스`). `뒤 슬라이스`·`명세 없음` 이 하나라도 있으면 그 행은 막힘이다. 기록 = 머리 첫 줄 `# g1-arrange · acceptance · <n>` · 둘째 줄 `기록 토큰 <받은 값>` · 셋째 줄 `판정 명세 sha256 <입력이 준 값>`(옮긴다 — 위 도구·쓰기) · 표 `행 | 슬라이스 | 재료 | 출처 | 막힘 요지 | 명세 위치` · 끝 판정 1행 `arrange 판정: 가능 | ARRANGE_BLOCKED <막힌 행 수>`. 명세 위치 인용 없는 «가능»은 무효다. 응답 = `기록: <경로> · 기록 토큰 <받은 값>` 행과 판정 1행. 막힘 판정 이름은 `ARRANGE_BLOCKED` 다 — `TREE_CONTRACT_MISMATCH` 는 Phase 2 뜻이라 쓰지 않는다.\n"@ko .

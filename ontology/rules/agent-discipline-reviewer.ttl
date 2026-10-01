@@ -81,12 +81,18 @@ djr:R-0839 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0840 a djr:Prohibition ;
-    skos:prefLabel "Phase 1 미수령 4종(구현 diff·테스트 조정 목록·실행 결과·슬라이스)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0840@2026-08-22> .
+    skos:prefLabel "Phase 1 미수령 4종(구현 diff·테스트 조정 목록·실행 결과·슬라이스) · 명세의 슬라이스 계획 절·file-plan 슬라이스 표기는 감사 대상 밖(arrange 점검 소유)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0840@2026-10-01> .
 
 <https://numchida.com/ns/djr#R-0840@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0840 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0840@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-0840 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0840@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0841 a djr:Prohibition ;
     skos:prefLabel "production tree evidence와 Phase 2 implementation diff 혼동 금지"@ko ;
@@ -2837,7 +2843,7 @@ djr:R-3605 a djr:Exception ;
     djr:kind djr:kind-norm ;
     djr:order 2 ;
     djr:statesNorm djr:R-0837, djr:R-0838, djr:R-0839, djr:R-0840, djr:R-0841, djr:R-0842, djr:R-0843, djr:R-0844, djr:R-0845, djr:R-0846, djr:R-0847, djr:R-3404, djr:R-3422 ;
-    djr:text "- **Phase 1 lightweight**: 일반 scope는 설계 명세 초안과 모든 영구 test artifact `add/update/move/split/rename/remove/weaken` 후보의 최소 입장 표(`candidate | protected contract/evidence | unique production failure | existing authoritative coverage | decision | owner/path`)를 받는다. `Error response contract` scope에서는 여기에 현재 project-wide production tree/inventory를 추가로 받아 읽는다. 이 evidence는 모든 current API/controller/URLconf/registrar/common/error module, API instance, profile, `scope-bc`·`error-bc` membership을 포함한다. Phase 1에는 구현 변경 diff·테스트 조정 목록·실행 결과·슬라이스를 받지 않으며, 현재 production tree evidence를 Phase 2 implementation diff와 혼동하지 않는다. 받은 입력으로 입장 결정의 완결성·근거·중복과 testability·단순성을 점검한다. 그리고 **명세의 change inventory(만들·수정할 파일 목록)가 승인 스코프(+G0 ⓐ 빚 항목) 안인지** 본다 — 스코프 밖 기존 파일의 이동·재배선이 명세에 결정으로 박혀 있으면 G1 전에 발견으로 올린다(2026-08-13). inventory 의 `<칸>.py` 행은 그 칸의 두 실현(파일·동명 폴더 승격)을 승인한 것이다(houserules 등가 조항) — 승격 산출 파일(본체·부품·`__init__.py`)을 스코프 밖으로 판정하지 않는다. 리포트 말미에 **집행성 판정 1행**을 남긴다(규율 lens 범위 한정 — 입장 표·구조 결정이 대상 · 2026-08-15): 받은 명세·입장 표를 실행 역할이 추론 없이 집행할 수 있는가 — «가능»이면 근거로 확정 결정 3곳을 인용하고, «불가»면 막히는 항목을 지목한다. 인용 없는 «가능» 판정은 무효다. 집행을 막는 것이 사용자 결정 — 명세가 Y·Z·STOP 으로 올린 항목 — 뿐이면 «집행 가능 — 사용자 결정 전제: <항목>»으로 적는다 — 조건부가 아니다(그 항목은 G1 에서 사용자가 정한다). 명세가 그런 항목으로 올리지 않은 결손은 «조건부» 또는 «불가»다(2026-10-01). 그리고 Phase 2 감사(슬라이스 경량·홀리스틱)에서는 `check-layer-skeleton` 의 ⓓ 신호(행위 칸 실현 200행 초과 — 페이로드의 행수·top-level 요약 동봉)를 받은 파일과 이번 diff 가 만들었거나 키운 파일에 대해 houserules §1 의 동명 폴더 승격 캐스케이드(①이동/②승격/③유지)를 판정해 리포트에 남긴다 — ①/② 는 소유자(coder) 반송 발견이고(«권고» 채널이 아니다), AST 산출은 백스톱 페이로드를 쓰며 응집·소관·독립 변경 이유만 직접 판정한다. 신규 HTTP/JSON API 표면이 함수형 Router·plain Django view로 결정돼 있으면 그 스택 결정에 승인 evidence 참조(STOP 승인 기록 파일 경로 또는 발주서·사용자 명시 지시 인용)가 함께 적혀 있는지 대조하고, 참조가 없으면 `design-architect` 소유 발견(blocker)으로 올린다(Phase 2 implementation에서 함수형 구현을 감사할 때도 같은 대조를 적용한다).\n"@ko .
+    djr:text "- **Phase 1 lightweight**: 일반 scope는 설계 명세 초안과 모든 영구 test artifact `add/update/move/split/rename/remove/weaken` 후보의 최소 입장 표(`candidate | protected contract/evidence | unique production failure | existing authoritative coverage | decision | owner/path`)를 받는다. `Error response contract` scope에서는 여기에 현재 project-wide production tree/inventory를 추가로 받아 읽는다. 이 evidence는 모든 current API/controller/URLconf/registrar/common/error module, API instance, profile, `scope-bc`·`error-bc` membership을 포함한다. Phase 1에는 구현 변경 diff·테스트 조정 목록·실행 결과·슬라이스를 받지 않으며(명세의 `## 슬라이스 계획` 절과 file-plan 행 끝 슬라이스 표기는 감사 대상 밖이다 — Coordinator 의 arrange 점검 소유 · 2026-10-01), 현재 production tree evidence를 Phase 2 implementation diff와 혼동하지 않는다. 받은 입력으로 입장 결정의 완결성·근거·중복과 testability·단순성을 점검한다. 그리고 **명세의 change inventory(만들·수정할 파일 목록)가 승인 스코프(+G0 ⓐ 빚 항목) 안인지** 본다 — 스코프 밖 기존 파일의 이동·재배선이 명세에 결정으로 박혀 있으면 G1 전에 발견으로 올린다(2026-08-13). inventory 의 `<칸>.py` 행은 그 칸의 두 실현(파일·동명 폴더 승격)을 승인한 것이다(houserules 등가 조항) — 승격 산출 파일(본체·부품·`__init__.py`)을 스코프 밖으로 판정하지 않는다. 리포트 말미에 **집행성 판정 1행**을 남긴다(규율 lens 범위 한정 — 입장 표·구조 결정이 대상 · 2026-08-15): 받은 명세·입장 표를 실행 역할이 추론 없이 집행할 수 있는가 — «가능»이면 근거로 확정 결정 3곳을 인용하고, «불가»면 막히는 항목을 지목한다. 인용 없는 «가능» 판정은 무효다. 집행을 막는 것이 사용자 결정 — 명세가 Y·Z·STOP 으로 올린 항목 — 뿐이면 «집행 가능 — 사용자 결정 전제: <항목>»으로 적는다 — 조건부가 아니다(그 항목은 G1 에서 사용자가 정한다). 명세가 그런 항목으로 올리지 않은 결손은 «조건부» 또는 «불가»다(2026-10-01). 그리고 Phase 2 감사(슬라이스 경량·홀리스틱)에서는 `check-layer-skeleton` 의 ⓓ 신호(행위 칸 실현 200행 초과 — 페이로드의 행수·top-level 요약 동봉)를 받은 파일과 이번 diff 가 만들었거나 키운 파일에 대해 houserules §1 의 동명 폴더 승격 캐스케이드(①이동/②승격/③유지)를 판정해 리포트에 남긴다 — ①/② 는 소유자(coder) 반송 발견이고(«권고» 채널이 아니다), AST 산출은 백스톱 페이로드를 쓰며 응집·소관·독립 변경 이유만 직접 판정한다. 신규 HTTP/JSON API 표면이 함수형 Router·plain Django view로 결정돼 있으면 그 스택 결정에 승인 evidence 참조(STOP 승인 기록 파일 경로 또는 발주서·사용자 명시 지시 인용)가 함께 적혀 있는지 대조하고, 참조가 없으면 `design-architect` 소유 발견(blocker)으로 올린다(Phase 2 implementation에서 함수형 구현을 감사할 때도 같은 대조를 적용한다).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s002/b3> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s002> ;
