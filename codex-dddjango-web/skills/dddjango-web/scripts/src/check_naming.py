@@ -9,7 +9,7 @@ import re
 from typing import Dict, List, Optional, Set
 
 from .common import (
-    KIND_PY_SUFFIX, MARKER_FILES, BackstopContext, Finding, base_name_of,
+    KIND_PY_SUFFIX, MARKER_FILES, VENDOR_ATTRS, BackstopContext, Finding, base_name_of,
     segs_of, stem_of, tokens_contain,
 )
 
@@ -35,8 +35,8 @@ def run_naming(ctx: BackstopContext) -> List[Finding]:
         if base in MARKER_FILES:
             continue
 
-        # ---- WN8: 파일명 snake_case (§4 공통원칙 1 — vendored htmx는 원명 그대로 예외)
-        if not _SNAKE_RE.fullmatch(base) and not base.startswith('htmx'):
+        # ---- WN8: 파일명 snake_case (§4 공통원칙 1 — vendored htmx는 원명 그대로 예외 · vendor 표지는 §9 고정 이름)
+        if not _SNAKE_RE.fullmatch(base) and not base.startswith('htmx') and f != VENDOR_ATTRS:
             out.append(Finding('WN8', f, None,
                 '파일명 `%s` — snake_case 위반(소문자·숫자·언더스코어)' % base,
                 'snake_case로 개명한다 — 템플릿·CSS는 파일명 자체가 계약이다.', '§4'))

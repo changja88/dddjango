@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-# dddjango-web 결정적 백스톱 러너 — 단일 엔트리, 검사 26종 인프로세스 실행.
-# (판형: dddart scripts/backstop.dart · 값 정본: discipline-web-houserules §1~§5·§7)
+# dddjango-web 결정적 백스톱 러너 — 단일 엔트리, 검사 39종 인프로세스 실행.
+# (판형: dddart scripts/backstop.dart · 값 정본: discipline-web-houserules §1~§5·§7·§9)
 #
 # 사용:
 #   python backstop.py <대상 프로젝트 루트> [--diff-base <commit>] [--all]
-#                      [--only ws,wi,wn,wp|<검사ID>…]
+#                      [--only ws,wi,wn,wp,wv|<검사ID>…]
 #                      [--design-build <증거 build 디렉터리>]
 #   python backstop.py <대상 프로젝트 루트> --debt-scan [--refactor] [--json <경로>]
 #   python backstop.py <대상 프로젝트 루트> --debt-residual <.dddjango-web/<폴더>>
@@ -23,6 +23,9 @@
 # 다른 모든 모드 플래그와 함께 쓰지 않는다.
 # 게이트: 구조·명명=added 파일/디렉터리, 격리·순수성=touched 파일의 added 줄,
 # 골격 완비=신규 단위 → 레거시 불발화. 비git·기준 부재 시 전역 검사로 퇴화 notice.
+# 공식 SDK 등재(WV · src/check_vendor.py): 목록·등재 id 디렉터리·목록 시대 미등재 단위는 게이트와 무관하게 늘 검사
+# (WV1~WV6·WV13 — 미룰 수 없음) · 기능 JS·템플릿은 added 줄(WV7~WV9) · 빌드 기록 범위 격리(WV10). 얕은 이력에서
+# 미등재 단위의 목록 시대를 판정할 수 없으면 exit 1(미실행).
 # 디자인 작업은 인자와 프로젝트의 현재/추적 원본 표식으로 식별한다.
 
 import sys
@@ -39,14 +42,15 @@ from src.check_structure import run_structure  # noqa: E402
 from src.check_imports import run_imports  # noqa: E402
 from src.check_naming import run_naming  # noqa: E402
 from src.check_purity import run_purity  # noqa: E402
+from src.check_vendor import VendorUndecidable, run_vendor  # noqa: E402
 from src.debt import cli_residual, cli_scan  # noqa: E402
 from src.subst import cli_subst_check  # noqa: E402
 from check_design_evidence import Defects, implementation_digest, validate_inputs, validate_visual  # noqa: E402
 
-TOTAL_CHECKS: int = 26  # WS8 + WI4 + WN8 + WP6
+TOTAL_CHECKS: int = 39  # WS8 + WI4 + WN8 + WP6 + WV13
 
 _USAGE: str = ('사용: python backstop.py <대상 프로젝트 루트> '
-               '[--diff-base <commit>] [--all] [--only ws,wi,wn,wp] '
+               '[--diff-base <commit>] [--all] [--only ws,wi,wn,wp,wv] '
                '[--design-build <dir>] | --debt-scan [--refactor] [--json <경로>] | '
                '--debt-residual <폴더> | --subst-check <기준> <대상> [--names <명세>] '
                '[--except <경로>]… [--build <산출물 폴더>]')
@@ -270,6 +274,11 @@ def main(argv: List[str]) -> int:
             findings.extend(run_naming(ctx))
         if family_on('wp'):
             findings.extend(run_purity(ctx))
+        if family_on('wv'):
+            findings.extend(run_vendor(ctx, design_build=design_build))
+    except VendorUndecidable as error:
+        print('[backstop] 판정 불가(미실행 — 통과가 아니다) — %s' % error)
+        return 1
     except Exception:
         print('[backstop] 내부 오류:\n%s' % traceback.format_exc(), file=sys.stderr)
         return 1

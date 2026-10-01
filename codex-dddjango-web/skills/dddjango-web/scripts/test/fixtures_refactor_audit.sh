@@ -809,5 +809,36 @@ assert "M17b 디렉터리 = red" 2 "③ 위치 \`tests:1\` 가 git_snapshot 판"
 assert "M17c 역순 행 = 형식 red" 2 "③ 위치 \`tests/web/test_home.py:3-2\` 가 \`파일:행[-행]\`(저장소 상대" - "$E" "$OUT"
 assert "M17d 절대 경로 = 형식 red" 2 "③ 위치 \`/etc/hosts:1\` 가 \`파일:행[-행]\`(저장소 상대" - "$E" "$OUT"
 
+# ---------- S: 공식 SDK 벤더 단위(houserules §9 — SDK 등재 정리 전용) · 영역·컨테이너·참조 grep 에서 벤더 제외
+SX() { python3 "$SCRIPTS/test/sdk_fixture.py" "$@" 2>&1; }
+V="$T/sdkp"; SX mkproj "$V" >/dev/null; SX install "$V" >/dev/null
+printf '{%% extends "base.html" %%}\n{%% load static %%}\n{%% block scripts %%}\n<script src="{%% static '"'"'web/vendor/kakao_js_sdk/kakao.min.js'"'"' %%}" defer></script>\n{%% endblock scripts %%}\n' > "$V/web/chart/chart/view/chart.html"
+mkdir -p "$V/web/static/vendor/legacy"; printf '/* chart/chart/view/chart.html */\n' > "$V/web/static/vendor/legacy/l.js"
+mkdir -p "$V/.dddjango-web/run/sdk-candidates/naver_maps"
+printf '{"public_config": [{"attr": "data-naver-map-key", "call": "naver.init", "setting": "NAVER_MAP_KEY"}]}\n' > "$V/.dddjango-web/run/sdk-candidates/naver_maps/entry-draft.json"
+commit_all "$V" sdk >/dev/null
+python3 "$SCRIPTS/backstop.py" "$V" --debt-scan --refactor --json "$V/.dddjango-web/run/debt-g0.json" >/dev/null
+RV() { (cd "$V" && python3 "$SCRIPTS/refactor_audit.py" "$@" 2>&1); }
+RVP() { (cd "$V" && python3 "$SCRIPTS/refactor_audit.py" --platform claude --plugin-root "$T/plugin" "$@" 2>&1); }
+AV="$V/.dddjango-web/run/audit/20261001-150000"
+OUT=$(RV plan web/static/vendor --debt .dddjango-web/run/debt-g0.json --out "$AV"); E=$?
+assert "S1 R0 web/static/vendor 수용 — 벤더 단위 plan 렌즈×조각 0" 0 "조각 0 · 파견 0" - "$E" "$OUT"
+PV=$(cat "$AV/plan.md" 2>/dev/null)
+assert "S1b 벤더 단위 범위에 등재 목록 · «SDK 등재 정리 전용»" 0 '`web/sdk_registry.json` — 단위' - 0 "$PV"
+assert "S1c 벤더 단위 «등재 정리 전용» 문면" 0 "SDK 등재 정리 전용" - 0 "$PV"
+OUT=$(RVP check "$AV"); E=$?
+assert "S2a 벤더 단위 check — 0 행 exit 0" 0 "check 행 0" - "$E" "$OUT"
+OUT=$(RVP check-verdict "$AV"); E=$?
+assert "S2b 벤더 단위 check-verdict — 0 행 exit 0" 0 "red 0" - "$E" "$OUT"
+[ -f "$AV/verdict-final.md" ]; assert "S2c verdict-final.md(0 행)" 0 - - "$?" ""
+OUT=$(RV plan web/chart --debt .dddjango-web/run/debt-g0.json --out "$V/.dddjango-web/run/audit/c1"); E=$?
+PC=$(cat "$V/.dddjango-web/run/audit/c1/plan.md" 2>/dev/null)
+assert "S3 영역 plan 이 벤더를 «영역 전속 정적»에서 뺀다" 0 - "web/static/vendor/kakao_js_sdk/kakao.min.js" "$E" "$PC"
+assert "S5 참조 grep pathspec 이 벤더를 뺀다(벤더 사본 속 꼬리 문자열은 소비자 아님)" 0 - "web/static/vendor/legacy/l.js" "$E" "$PC"
+OUT=$(RV plan 'web/*.py' --debt .dddjango-web/run/debt-g0.json --out "$V/.dddjango-web/run/audit/k1"); E=$?
+assert "S4 컨테이너 plan 이 등재 목록을 뺀다" 0 - "sdk_registry.json" "$E" "$(cat "$V/.dddjango-web/run/audit/k1/plan.md" 2>/dev/null)"
+assert "S6a 벤더 단위 R1 — 등재 항목 공개 설정이 settings 에 있음" 0 '`등재 kakao_js_sdk` 공개 설정 `KAKAO_JAVASCRIPT_KEY` — settings 에 있음' - 0 "$PV"
+assert "S6b 벤더 단위 R1 — settings 에 없는 등록 후보 = ⓐ 재상정 «기능 요청 — 공개 설정 배선»" 0 '`후보 naver_maps` 공개 설정 `NAVER_MAP_KEY` — settings 에 없음 → `ⓐ 재상정` «기능 요청 — 공개 설정 배선»' - 0 "$PV"
+
 echo "fixtures_refactor_audit: PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" = 0 ]

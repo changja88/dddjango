@@ -75,6 +75,9 @@ LENSES: "tuple[str, ...]" = ("screen", "discipline")
 OUTPUT_ROOTS: "tuple[str, ...]" = (".dddjango/", ".dddjango-web/")
 NON_AREA: "frozenset[str]" = frozenset({"static", "design_system", "base", "client"})
 CONTAINER: str = "*.py"
+# 공식 SDK 벤더 단위(houserules §9) — «SDK 등재 정리 전용»: 등록·복원·미사용 제거만 · 의미 점검 조각 0 · 등재 목록도 이 단위
+VENDOR_UNIT: str = "static/vendor"
+REGISTRY_FILE: str = "sdk_registry.json"
 
 _ARCH: str = "skills/architecture-web/references/final.md"
 _UI: str = "skills/implementation-ui/references/final.md"
@@ -484,8 +487,11 @@ def _sentences_with(index: DocIndex, quote: str, rng: "tuple[int, int]") -> "lis
 # ── 대상 프로젝트 ────────────────────────────────────────────────────────────
 
 def unit_of(rel: str) -> str:
-    """web 기준 상대 경로 → 단위 id(`home` · `static/images` · `design_system` · `base` · `client/orders` · `*.py`)."""
+    """web 기준 상대 경로 → 단위 id(`home` · `static/images` · `design_system` · `base` · `client/orders` · `*.py`).
+    등재 목록 `sdk_registry.json` 은 벤더 단위(`static/vendor`)가 소유한다."""
     parts: "list[str]" = rel.split("/")
+    if rel == REGISTRY_FILE:
+        return VENDOR_UNIT
     if len(parts) == 1:
         return CONTAINER
     head: str = parts[0]
@@ -510,6 +516,8 @@ def _unit_arg(project: Path, raw: str) -> str:
     depth: int = 2 if head in ("static", "client") else 1
     if len(text.split("/")) != depth:
         raise ToolError(f"단위가 아니다(단위 안쪽 경로 또는 모양 오류) — {raw}")
+    if text == VENDOR_UNIT and (project / "web" / REGISTRY_FILE).is_file():
+        return text
     if not (project / "web" / text).is_dir():
         raise ToolError(f"단위 없음 — web/{text}")
     return text
@@ -610,6 +618,7 @@ class PlanData:
         self.keys: "dict[str, str]" = {}                 # 키 → 표시(C<n> · 편집 줄 키)
         self.outside_refs: "list[str]" = []               # web/ 밖 `경로:행`
         self.verdicts: "list[tuple[str, str, str]]" = []  # (정적 파일, 판정, 참조 줄 요약)
+        self.sdk_settings: "list[tuple[str, str, bool]]" = []  # 벤더 단위 R1 — (항목, 공개 설정 이름, settings 에 있나)
 
     def lists(self) -> "dict[str, set[str]]":
         return {"범위 파일": {"web/" + f for f in self.scope}, "경계 교차": {"web/" + f for f in self.cross},
@@ -678,17 +687,20 @@ def compute_plan(project: Path, unit: str, debt: dict) -> PlanData:
     data.unit = unit
     files: "list[str]" = debt_universe(project)
     in_unit = (lambda f: unit_of(f) == CONTAINER) if unit == CONTAINER else (
-        lambda f: f == unit or f.startswith(unit + "/"))
+        lambda f: f == unit or f.startswith(unit + "/") or (unit == VENDOR_UNIT and f == REGISTRY_FILE))
     for f in files:
         if in_unit(f):
             data.scope[f] = "단위"
     refs: _Refs = _Refs(project)
-    refs.warm(sorted(data.scope) + ([f for f in files if f.startswith("static/")] if is_area(unit) else []))
+    if unit == VENDOR_UNIT:
+        data.sdk_settings = _sdk_settings(project)
+    refs.warm(sorted(data.scope) + ([f for f in files if f.startswith("static/") and not f.startswith(VENDOR_UNIT + "/")]
+                                    if is_area(unit) else []))
     if is_area(unit):
         memo: "dict[str, frozenset[str]]" = {}
         for f in files:
-            if not f.startswith("static/"):
-                continue
+            if not f.startswith("static/") or f.startswith(VENDOR_UNIT + "/"):
+                continue                                  # 벤더 사본은 영역 소유 판정 밖(등재 정리 전용 단위)
             owners: "frozenset[str]" = _owners(refs, f, memo, set())
             lines: "list[str]" = [f"{p}:{n}" for p, n, _t in refs(f) if p.startswith("web/")]
             areas: "set[str]" = {o for o in owners if o != "비영역"}
@@ -784,6 +796,49 @@ def _edit_line_keys(data: PlanData, findings: "list[dict]", ids: "dict[str, str]
     return added
 
 
+_SETTING_LINE: str = r"^[ \t]*{name}[ \t]*(?::[^=\n]*)?="
+
+
+def _settings_files(project: Path) -> "list[Path]":
+    """프로젝트 settings 모듈 — 루트 직속 패키지의 settings.py 또는 settings/ 아래 .py."""
+    out: "list[Path]" = []
+    for child in sorted(project.iterdir()):
+        if not child.is_dir() or child.name in ("web", ".git", ".dddjango-web", ".dddjango"):
+            continue
+        if (child / "settings.py").is_file():
+            out.append(child / "settings.py")
+        if (child / "settings").is_dir():
+            out += sorted((child / "settings").rglob("*.py"))
+    return out
+
+
+def _sdk_settings(project: Path) -> "list[tuple[str, str, bool]]":
+    """벤더 단위 R1 — 등재 목록 항목과 이 프로젝트 빌드 폴더들의 후보 초안(`sdk-candidates/<id>/entry-draft.json`)의
+    공개 설정 이름이 settings 에 있는가. 리팩토링은 공개 설정 배선을 하지 않으므로 없으면 그 항목은 ⓐ 재상정이다."""
+    entries: "list[tuple[str, dict]]" = []
+    registry: Path = project / "web" / REGISTRY_FILE
+    if registry.is_file():
+        try:
+            for sid, entry in (json.loads(registry.read_text(encoding="utf-8")).get("sdks") or {}).items():
+                entries.append((f"등재 {sid}", entry))
+        except (ValueError, AttributeError):
+            pass
+    for draft in sorted((project / ".dddjango-web").glob("*/sdk-candidates/*/entry-draft.json")):
+        try:
+            entries.append((f"후보 {draft.parent.name}", json.loads(draft.read_text(encoding="utf-8"))))
+        except ValueError:
+            continue
+    texts: "list[str]" = [p.read_text(encoding="utf-8", errors="replace") for p in _settings_files(project)]
+    out: "list[tuple[str, str, bool]]" = []
+    for item, entry in entries:
+        for config in (entry.get("public_config") or []) if isinstance(entry, dict) else []:
+            name = config.get("setting") if isinstance(config, dict) else None
+            if isinstance(name, str) and re.fullmatch(r"[A-Z][A-Z0-9_]*", name):
+                rx = re.compile(_SETTING_LINE.format(name=re.escape(name)), re.M)
+                out.append((item, name, any(rx.search(t) for t in texts)))
+    return out
+
+
 def _chunks(project: Path, scope: "list[str]") -> "list[tuple[str, list[str], int]]":
     """화면 폴더(`<area>/<view>/`)로 묶고 종류 순서로 쌓아 5,000행 문턱으로 끊는다."""
     def folder(f: str) -> str:
@@ -837,7 +892,7 @@ def _write_plan(project: Path, data: PlanData, out: Path) -> "tuple[int, int]":
     pathspec: "list[str]" = sorted({"web/" + f for f in data.scope}) or ["web/"]
     dirty: int = len([ln for ln in _git(project, "status", "--porcelain", "--untracked-files=all", "--",
                                         *pathspec).splitlines() if ln.strip()])
-    chunks = _chunks(project, sorted(data.scope))
+    chunks = [] if data.unit == VENDOR_UNIT else _chunks(project, sorted(data.scope))   # 벤더 바이트는 의미 점검 밖
     lines: "list[str]" = ["# refactor_audit plan", "", f"- 단위: `{unit_path}`", f"- HEAD {head}",
                           f"- 범위 미커밋 변경 {dirty}",
                           f"- 범위 파일 {len(data.scope)} · 행 {sum(c[2] for c in chunks)} · 조각 {len(chunks)} · "
@@ -853,6 +908,14 @@ def _write_plan(project: Path, data: PlanData, out: Path) -> "tuple[int, int]":
     lines += ["## 참조 치환 줄", ""] + ([_item(w) for w in data.ref_lines] or ["- 없음"]) + [""]
     lines += ["## 범위 안 키", ""] + ([_item(k, v) for k, v in sorted(data.keys.items())] or ["- 없음"]) + [""]
     lines += ["## web/ 밖 참조 줄(치환 후보)", ""] + ([_item(w) for w in data.outside_refs] or ["- 없음"]) + [""]
+    if data.unit == VENDOR_UNIT:
+        lines += ["## SDK 등재 정리(벤더 단위 R1)", "",
+                  "- 이 단위는 SDK 등재 정리 전용이다 — 기존 등록 · 복원(ⓡ1~ⓡ4) · 미사용 제거만(새 채택·판 올림·범위 넓힘은 기능 요청)",
+                  "- 의미 점검 조각 0 · 판정 0 행(벤더 바이트는 의미 점검 대상이 아니다)", ""]
+        for item, setting, present in data.sdk_settings:
+            lines.append(f"- `{item}` 공개 설정 `{setting}` — " + ("settings 에 있음" if present else
+                         "settings 에 없음 → `ⓐ 재상정` «기능 요청 — 공개 설정 배선»(리팩토링은 배선하지 않는다)"))
+        lines.append("")
     lines += ["## 조각", "", "| 조각 | 파일 수 | 행 수 |", "|---|---|---|"]
     lines += [f"| {cid} | {len(g)} | {n} |" for cid, g, n in chunks]
     for cid, group, _n in chunks:
@@ -1036,7 +1099,7 @@ class Plan:
         sec: str = text.split("## 파견", 1)[1].split("\n## ", 1)[0] if "## 파견" in text else ""
         self.dispatch: "list[tuple[str, str, str]]" = [(r[0], r[1], r[2]) for r in _table_rows(sec)
                                                       if len(r) >= 3 and r[0].endswith(".md")]
-        if not self.dispatch:
+        if not self.dispatch and self.unit != "web/" + VENDOR_UNIT:
             raise ToolError("plan.md 에 파견 표가 없다")
 
     def in_scope(self, loc: "tuple[str, int, int]") -> bool:
@@ -1581,7 +1644,8 @@ def cmd_check_verdict(corpus: Corpus, project: Path, audit: Path, feedback: "Pat
     _check_rows(corpus, project, plan, rows)
     by_id: "dict[str, Row]" = {r.rid: r for r in rows}
     passed: "set[str]" = {r.rid for r in rows if r.status == "통과"}
-    verdicts: "list[Verdict]" = _load_verdicts(audit)
+    verdicts: "list[Verdict]" = (_load_verdicts(audit) if plan.dispatch or (audit / "verdict.md").is_file()
+                                 else [])                 # 벤더 단위 — 판정 0 행
     reds, reclass = _judge(corpus, project, plan, verdicts, by_id, passed)
     kinds: "dict[str, str]" = {v.mid: v.kind for v in verdicts}
     prev_kinds, prev_origin = _previous(audit / "verdict-log.md")

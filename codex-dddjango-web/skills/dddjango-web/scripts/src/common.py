@@ -44,8 +44,8 @@ class Finding:
 
 # ------------------------------------------------- 트리 데이터 사본 (값 정본: houserules)
 
-# houserules §1 트리 v3.1 — web/ 직속 고정 파일·컨테이너
-WEB_TOP_FILES: Set[str] = {'urls.py', 'apps.py'}
+# houserules §1 트리 v3.1 — web/ 직속 고정 파일·컨테이너(공식 SDK 등재 목록은 §9 — 있을 때만)
+WEB_TOP_FILES: Set[str] = {'urls.py', 'apps.py', 'sdk_registry.json'}
 CONTAINER_DIRS: Set[str] = {'base', 'client', 'design_system', 'static'}
 # houserules §3 — 마커 파일은 «직속 파일 금지»의 명시 예외
 MARKER_FILES: Set[str] = {'__init__.py', '.gitkeep'}
@@ -55,8 +55,8 @@ PY_KIND_DIRS: Set[str] = {'view', 'view_model', 'state', 'form'}  # §3 마커=_
 HTML_KIND_DIRS: Set[str] = {'section', 'widget'}  # §3 마커=.gitkeep
 # houserules §1 — 영역·화면 이름 deny(컨테이너명·종류명)
 RESERVED_NAMES: Set[str] = CONTAINER_DIRS | KIND_DIRS | {'web', 'widget'}
-# houserules §1·§3 — static/ 직속 4종 + 조건부 2종
-STATIC_DIRS: Set[str] = {'css', 'js', 'htmx', 'images', 'fonts', 'files'}
+# houserules §1·§3 — static/ 직속 4종 + 조건부 3종(vendor/ 는 승인된 공식 SDK 가 있을 때만 — §9)
+STATIC_DIRS: Set[str] = {'css', 'js', 'htmx', 'images', 'fonts', 'files', 'vendor'}
 # houserules §4 — component 정크드로어 군 금지
 JUNK_GROUPS: Set[str] = {'widget', 'etc'}
 # houserules §5⑤·§4 — HTMX core는 신규 canonical 1경로. legacy 2경로는
@@ -76,6 +76,36 @@ KIND_PY_SUFFIX: Dict[str, str] = {
 BACKEND_TOP_PKGS: Set[str] = {'application', 'framework'}
 
 TEXT_EXTS: Set[str] = {'.py', '.html', '.css', '.js'}
+
+# houserules §9 — 공식 플랫폼 SDK 등재(web-상대 경로)
+SDK_REGISTRY: str = 'sdk_registry.json'
+VENDOR_DIR: str = 'static/vendor'
+VENDOR_ATTRS: str = 'static/vendor/.gitattributes'
+VENDOR_ATTRS_BYTES: bytes = b'* -text -diff -filter -ident -eol -working-tree-encoding\n'
+# §9 자격 ② — 라이브러리 배포용 공용 CDN(운영자 소유여도 거절) · 공용 호스팅 접미사(단독 운영자 도메인 거절)
+LIB_CDN_HOSTS: Set[str] = {'cdnjs.cloudflare.com', 'cdn.jsdelivr.net', 'unpkg.com', 'code.jquery.com',
+                           'cdn.skypack.dev', 'esm.sh', 'ga.jspm.io', 'cdn.statically.io',
+                           'raw.githubusercontent.com', 'rawcdn.githack.com'}
+LIB_CDN_HOST_SUFFIXES: Tuple[str, ...] = ('.github.io',)
+LIB_CDN_PATHS: Tuple[str, ...] = ('/ajax/libs/',)
+HOSTING_SUFFIXES: Set[str] = {'cloudfront.net', 'amazonaws.com', 'vercel.app', 'pages.dev', 'netlify.app',
+                              'azureedge.net', 'github.io', 'herokuapp.com', 'appspot.com', 'web.app',
+                              'firebaseapp.com'}
+# §9 제외 범주의 낱말 덫(영숫자 밖 문자로 자른 정확 토큰 · 구분자를 지운 결합형) — 덫일 뿐 보증이 아니다
+TRAP_TOKENS: Set[str] = {'html2canvas', 'domtoimage', 'htmltoimage', 'modernscreenshot', 'jquery', 'react',
+                         'reactdom', 'preact', 'vue', 'vuejs', 'angular', 'svelte', 'alpine', 'alpinejs', 'lit',
+                         'stimulus', 'bootstrap', 'tailwind', 'tailwindcss', 'htmx', 'hyperscript', 'lodash',
+                         'underscore', 'axios', 'moment', 'dayjs', 'chart', 'chartjs', 'echarts', 'd3',
+                         'highcharts', 'plotly', 'apexcharts', 'gsap', 'animejs', 'lottie', 'threejs',
+                         'swiper', 'polyfill', 'polyfills', 'corejs', 'requirejs', 'systemjs', 'zepto'}
+# §9 공개 설정 이름에 쓰지 않는 낱말(공개 흐름으로 HTML 에 나간다 — JavaScript 키만)
+SECRET_WORDS: Tuple[str, ...] = ('SECRET', 'PASSWORD', 'PRIVATE', 'TOKEN', 'ADMIN', 'CLIENT_SECRET')
+# §9 OS 잡파일 — 미추적이거나 무시된 것만 세지 않는다(추적되면 발견)
+OS_JUNK_NAMES: Set[str] = {'.DS_Store', 'Thumbs.db', 'desktop.ini', 'Icon\r'}
+
+
+def is_os_junk_name(name: str) -> bool:
+    return name in OS_JUNK_NAMES or name.startswith('._')
 
 
 def segs_of(rel: str) -> List[str]:
@@ -228,6 +258,87 @@ def mask_css(src: str) -> MaskedSource:
     return _mask_block_comments(src, '/*', '*/')
 
 
+# 정규식 리터럴이 올 수 있는 앞 문자·낱말(그 밖의 `/` 는 나눗셈)
+_JS_REGEX_PREV: str = '(,=:[!&|?{};+-*%<>~^'
+_JS_REGEX_WORDS: Set[str] = {'return', 'typeof', 'instanceof', 'in', 'of', 'new', 'delete', 'void', 'throw',
+                             'case', 'do', 'else', 'yield', 'await'}
+
+
+def mask_js(src: str) -> MaskedSource:
+    """JS 주석(`//`·`/* */`)만 공백 마스킹(개행 보존) — 문자열·템플릿·정규식 리터럴은 그대로 둔다.
+    정규식 리터럴 안의 `//`·따옴표를 주석·문자열로 오인하지 않게 앞 문자로 리터럴 자리를 가른다."""
+    n: int = len(src)
+    is_comment: List[bool] = [False] * n
+    i: int = 0
+    prev: str = ''      # 마지막 의미 문자(공백·주석 제외)
+    word: str = ''      # 마지막 식별자 낱말
+    while i < n:
+        c: str = src[i]
+        if c in ('"', "'", '`'):
+            q: str = c
+            i += 1
+            while i < n:
+                s: str = src[i]
+                if s == '\\':
+                    i += 2
+                    continue
+                if s == q:
+                    i += 1
+                    break
+                if s == '\n' and q != '`':
+                    break
+                i += 1
+            prev, word = q, ''
+            continue
+        if src.startswith('//', i):
+            start: int = i
+            while i < n and src[i] != '\n':
+                i += 1
+            for k in range(start, i):
+                is_comment[k] = True
+            continue
+        if src.startswith('/*', i):
+            start = i
+            end: int = src.find('*/', i + 2)
+            i = n if end < 0 else end + 2
+            for k in range(start, i):
+                if src[k] != '\n':
+                    is_comment[k] = True
+            continue
+        if c == '/' and (prev == '' or prev in _JS_REGEX_PREV or word in _JS_REGEX_WORDS):
+            i += 1
+            in_class: bool = False
+            while i < n and src[i] != '\n':
+                s = src[i]
+                if s == '\\':
+                    i += 2
+                    continue
+                if s == '[':
+                    in_class = True
+                elif s == ']':
+                    in_class = False
+                elif s == '/' and not in_class:
+                    i += 1
+                    break
+                i += 1
+            prev, word = '/', ''
+            continue
+        if c.isspace():
+            i += 1
+            continue
+        if c.isalnum() or c in '_$':
+            j: int = i
+            while j < n and (src[j].isalnum() or src[j] in '_$'):
+                j += 1
+            word = src[i:j]
+            prev = src[j - 1]
+            i = j
+            continue
+        prev, word = c, ''
+        i += 1
+    return _views(src, is_comment, [False] * n)
+
+
 # ------------------------------------------------------------ import 파서
 
 
@@ -330,6 +441,7 @@ class BackstopContext:
         self.notices: List[str] = []
         self._mask_cache: Dict[str, MaskedSource] = {}
         self._edge_cache: Dict[str, List[ImportEdge]] = {}
+        self._sdk: Optional[object] = None
         # 영역 = web/ 직속 비컨테이너 디렉터리 (§1 — 트리 고정이라 적극 증명 불요)
         self.areas: Set[str] = {d for d in dirs if '/' not in d and d not in CONTAINER_DIRS}
 
@@ -380,6 +492,8 @@ class BackstopContext:
                 ms = mask_python(text)
             elif ext == '.css':
                 ms = mask_css(text)
+            elif ext in ('.js', '.mjs', '.cjs'):
+                ms = mask_js(text)
             else:
                 ms = mask_html(text)
             self._mask_cache[f] = ms
@@ -391,6 +505,14 @@ class BackstopContext:
             edges = parse_imports(self.mask_of(f), f)
             self._edge_cache[f] = edges
         return edges
+
+    @property
+    def sdk(self):  # -> src.sdk_registry.SdkState (지연 적재 — 순환 import 회피)
+        """등재 목록 상태와 WV2 통과 등재 파일 집합(houserules §9) — 한 실행에 한 번 계산한다."""
+        if self._sdk is None:
+            from .sdk_registry import SdkState
+            self._sdk = SdkState.load(self.root)
+        return self._sdk
 
     # ---- 빌드
 

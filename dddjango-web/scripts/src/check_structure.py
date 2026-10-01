@@ -5,12 +5,12 @@
 # houserules §1~§3이 전수 화이트리스트로 정의한다 — LLM 판단이 0인 영역이며,
 # 위반은 항상 "규약 밖 경로의 존재"라는 기계적 사실이다. (판형: dddart check_structure)
 
-from typing import List, Optional, Set
+from typing import Dict, List, Optional, Set
 
 from .common import (
     HTMX_CANONICAL, JUNK_GROUPS, KIND_DIRS, MARKER_FILES, PY_KIND_DIRS,
-    RESERVED_NAMES, STATIC_DIRS, WEB_TOP_FILES, BackstopContext, Finding,
-    base_name_of, segs_of,
+    RESERVED_NAMES, STATIC_DIRS, VENDOR_DIR, WEB_TOP_FILES, BackstopContext, Finding,
+    base_name_of, is_os_junk_name, segs_of,
 )
 
 
@@ -23,7 +23,7 @@ def run_structure(ctx: BackstopContext) -> List[Finding]:
     for f in added_files:
         if '/' not in f and f not in WEB_TOP_FILES and f not in MARKER_FILES:
             out.append(Finding('WS1', f, None,
-                'web/ 직속 허용 외 파일 — 허용: urls.py·apps.py(마커 파일 예외)',
+                'web/ 직속 허용 외 파일 — 허용: urls.py·apps.py·sdk_registry.json(마커 파일 예외)',
                 '내용의 정체대로 재배치한다 — 화면 코드는 <영역>/<화면>/ 종류 폴더로, '
                 '계약 소비는 client/<bc>/로, 시각 자산은 design_system/·static/으로.', '§1'))
 
@@ -102,7 +102,7 @@ def run_structure(ctx: BackstopContext) -> List[Finding]:
         s = segs_of(f)
         if len(s) == 2 and s[0] == 'static' and s[1] not in MARKER_FILES:
             out.append(Finding('WS6', f, None,
-                'static/ 직속 파일 금지 — css/·js/·htmx/·images/·fonts/·files/만'
+                'static/ 직속 파일 금지 — css/·js/·htmx/·images/·fonts/·files/·vendor/만'
                 '(무네임스페이스 경로 금지)',
                 '정체에 맞는 칸(css/·js/·htmx/·images/·fonts/·files/)으로 옮긴다.', '§1'))
         if len(s) == 3 and s[0] == 'static' and s[1] == 'htmx':
@@ -122,12 +122,43 @@ def run_structure(ctx: BackstopContext) -> List[Finding]:
         s = segs_of(d)
         if len(s) == 2 and s[0] == 'static' and s[1] not in STATIC_DIRS:
             out.append(Finding('WS6', d + '/', None,
-                'static/ 직속 허용 외 디렉터리 `%s/` — css/·js/·htmx/·images/·fonts/·files/만' % s[1],
-                '폰트는 fonts/, 다운로드 파일은 files/에 필요할 때만 둔다 — 임의 칸을 신설하지 않는다.', '§1'))
+                'static/ 직속 허용 외 디렉터리 `%s/` — css/·js/·htmx/·images/·fonts/·files/·vendor/만' % s[1],
+                '폰트는 fonts/, 다운로드 파일은 files/, 승인된 공식 SDK 사본은 vendor/ 에 필요할 때만 둔다 — '
+                '임의 칸을 신설하지 않는다.', '§1'))
         if len(s) == 3 and s[0] == 'static' and s[1] in ('js', 'htmx'):
             out.append(Finding('WS6', d + '/', None,
                 'static/%s/ 내부 디렉터리 `%s/` — 기능 파일 칸은 평면이다' % (s[1], s[2]),
                 '기능당 파일 하나를 static/%s/ 직속에 둔다.' % s[1], '§1'))
+
+    # ---- WS6 vendor 분기(덫 — 보증은 늘 검사 WV5): vendor/ 직속은 .gitattributes 만 · 등재 id 밖 디렉터리 ·
+    #      id 안 하위 디렉터리 · 등재 밖 파일 (§9)
+    vendor_added: bool = (any(f.startswith(VENDOR_DIR + '/') for f in added_files)
+                          or any(d.startswith(VENDOR_DIR + '/') for d in added_dirs))
+    registered: Dict[str, str] = ctx.sdk.files() if vendor_added else {}
+    for f in added_files:
+        s = segs_of(f)
+        if s[:2] != ['static', 'vendor'] or is_os_junk_name(s[-1]):
+            continue
+        if len(s) == 3 and s[2] != '.gitattributes':
+            out.append(Finding('WS6', f, None,
+                'static/vendor/ 직속 파일 — 직속은 고정 표지 .gitattributes 만(사본은 vendor/<sdk_id>/ 안)',
+                '공식 SDK 면 G1 승인 뒤 sdk_vendor.py 로 등재하고, 아니면 제3자 JS 를 들이지 않는다(§9).', '§9'))
+        elif len(s) == 4 and s[2] in registered and f != registered[s[2]]:
+            out.append(Finding('WS6', f, None,
+                '등재 id 디렉터리 `%s/` 안 등재 밖 파일 — 등재 파일 하나만 둔다' % s[2],
+                '사본·목록은 Coordinator 가 sdk_vendor.py 로만 바꾼다(§9).', '§9'))
+    for d in added_dirs:
+        s = segs_of(d)
+        if s[:2] != ['static', 'vendor']:
+            continue
+        if len(s) == 3 and s[2] not in registered:
+            out.append(Finding('WS6', d + '/', None,
+                'static/vendor/ 의 등재 id 밖 디렉터리 `%s/` — 등재되지 않은 벤더 단위' % s[2],
+                '공식 SDK 면 G1 승인 뒤 sdk_vendor.py 로 등재하고, 아니면 들이지 않는다(§9).', '§9'))
+        elif len(s) == 4 and s[2] in registered:
+            out.append(Finding('WS6', d + '/', None,
+                '등재 id 디렉터리 `%s/` 안 하위 디렉터리 `%s/` — id 디렉터리는 등재 파일 하나다' % (s[2], s[3]),
+                '판 디렉터리를 두지 않는다 — 판 올림은 sdk_vendor.py install --replace(§9).', '§9'))
 
     # ---- WS7: 영역·화면 이름 deny — 컨테이너명·종류명 금지 (§1)
     for d in added_dirs:

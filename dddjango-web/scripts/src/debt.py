@@ -8,7 +8,12 @@
 # --debt-scan --refactor: 리팩토링 입구의 스캔 — 기존 단위의 골격 미비(WS5)도 빚이고, legacy core
 #   면제는 그 base 로드 태그 면제가 없을 때만 걷는다(커맨드 «리팩토링 모드» · houserules §7).
 #   debt-g0.json 의 mode 가 --debt-residual 의 의미론을 정한다.
+# 공식 SDK 등재(WV · houserules §9): 대상별로 돈다 — 목록이 있으면 WV1·WV3·WV4·WV7·WV9·WV11, 등재 id 마다 WV2·WV5·WV6,
+#   늘 WV13·WV8, 목록 시대 전의 미등재 단위마다 WV12. 벤더 트리는 ls-files 우주가 아니라 os.walk 로 본다(디렉터리
+#   링크 사본). 늘 검사 키(WV1~WV6·WV13)는 발견 행에 `undeferrable: true` 를 싣는다(판정 물음 없이 미룰 수 없음).
+#   debt-g0.json 의 `scanner`(플러그인 판·검사 집합 해시)가 지금과 다르면 잔존 판정은 판 경계라 불가다(exit 1).
 
+import hashlib
 import json
 import re
 import subprocess
@@ -21,6 +26,7 @@ from .check_naming import run_naming
 from .check_purity import (WP1_CORE_DUPLICATE_REASON, WP2_ASYNC_REASON, WP2_DEFER_REASON,
                            run_purity)
 from .check_structure import run_skeleton, run_structure
+from .check_vendor import UNDEFERRABLE, VendorUndecidable, run_vendor
 from .common import HTMX_LEGACY, BackstopContext, Finding
 
 SCHEMA: str = 'dddjango-web-debt/1'
@@ -43,7 +49,12 @@ SPEC_SLICE0_HEAD: str = '## 슬라이스 0'
 SPEC_ROW_PATH: str = '경로'
 SPEC_ROW_NAME: str = '이름'
 # 6a 참조 완전성 grep 의 pathspec — 커맨드 문면의 명령과 같은 문자열이다(refactor_audit --self-test).
-REF_PATHSPEC: Tuple[str, ...] = ('web', '*.py', '*.html', '*.css', '*.js', ':(exclude).dddjango-web')
+REF_PATHSPEC: Tuple[str, ...] = ('web', '*.py', '*.html', '*.css', '*.js', ':(exclude).dddjango-web',
+                                  ':(exclude)web/static/vendor', ':(exclude)web/sdk_registry.json')
+# 빚 스캔 판 — 검사 집합(패밀리·번호)과 플러그인 판. 판이 다른 동결본으로는 잔존을 판정하지 않는다.
+CHECK_IDS: Tuple[str, ...] = tuple(['WS%d' % n for n in range(1, 9)] + ['WI%d' % n for n in range(1, 5)]
+                                   + ['WN%d' % n for n in range(1, 9)] + ['WP%d' % n for n in range(1, 7)]
+                                   + ['WV%d' % n for n in range(1, 14)])
 
 _HEAD_RE = re.compile(r'^## (G0 재승인|G0 정지|G0|ⓐ 재상정) '
                       r'(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2})?(?:[+-]\d{2}:?\d{2}|Z)?)\s*$')
@@ -65,6 +76,24 @@ FIRST_RUN_NOTICE: str = '[info] web/ 없음 — 첫 실행(기존 web 코드 없
 
 class DebtError(Exception):
     """실행 불능·판정 불가 — exit 1(통과가 아니다)."""
+
+
+def _plugin_version() -> str:
+    here: Path = Path(__file__).resolve()
+    for parent in list(here.parents)[:6]:
+        for manifest in (parent / '.claude-plugin' / 'plugin.json', parent / '.codex-plugin' / 'plugin.json'):
+            if manifest.is_file():
+                try:
+                    return str(json.loads(manifest.read_text(encoding='utf-8')).get('version', 'unknown'))
+                except (OSError, ValueError):
+                    return 'unknown'
+    return 'unknown'
+
+
+def scanner_stamp() -> dict:
+    """빚 스캔 판 — 플러그인 판 · 검사 집합 해시."""
+    return {'plugin': _plugin_version(),
+            'checks': hashlib.sha256(','.join(CHECK_IDS).encode('ascii')).hexdigest()[:16]}
 
 
 # ------------------------------------------------------------------ 스캔
@@ -155,6 +184,10 @@ def scan(root: Path, refactor: bool = False) -> Tuple[dict, List[str]]:
         raw.extend(run_imports(ctx))
         raw.extend(run_naming(ctx))
         raw.extend(run_purity(ctx))
+        try:
+            raw.extend(run_vendor(ctx, debt=True))
+        except VendorUndecidable as error:
+            raise DebtError(str(error))
         # 빚 모드에는 기준점이 없는 것이 정상이다 — WS5 생략 사유를 빚 모드 말로 바꿔 싣는다
         # (리팩토링 스캔은 WS5 를 직접 돌렸으므로 생략 notice 를 떨군다).
         for n in ctx.notices:
@@ -170,8 +203,10 @@ def scan(root: Path, refactor: bool = False) -> Tuple[dict, List[str]]:
     for f in kept:
         key: str = '%s|%s' % (f.check_id, f.path)
         counts[key] = counts.get(key, 0) + 1
-        rows.append({'key': key, 'check': f.check_id, 'path': f.path,
-                     'line': f.line, 'message': f.message})
+        row: dict = {'key': key, 'check': f.check_id, 'path': f.path, 'line': f.line, 'message': f.message}
+        if f.check_id in UNDEFERRABLE:
+            row['undeferrable'] = True
+        rows.append(row)
     ids: Dict[str, str] = {'C%d' % (n + 1): key for n, key in enumerate(sorted(counts))}
     head: Optional[str] = _git_out(root, ['rev-parse', '--verify', '-q', 'HEAD'])
     status: Optional[str] = _git_out(root, ['status', '--porcelain', '-z', '--untracked-files=all',
@@ -181,6 +216,7 @@ def scan(root: Path, refactor: bool = False) -> Tuple[dict, List[str]]:
     data: dict = {
         'schema': SCHEMA,
         'mode': MODE_REFACTOR if refactor else MODE_FEATURE,
+        'scanner': scanner_stamp(),
         'head': head.strip() if head else None,
         'dirty': bool(status.strip('\0')),
         'scanned_at': datetime.now().astimezone().isoformat(timespec='seconds'),
@@ -214,7 +250,8 @@ def cli_scan(root: Path, json_path: Optional[str], refactor: bool = False) -> in
     by_key: Dict[str, str] = _id_of(data)
     for row in data['findings']:
         loc: str = 'web/' + row['path'] + ('' if row['line'] is None else ':%d' % row['line'])
-        print('%s [%s] %s %s' % (by_key[row['key']], row['check'], loc, row['message']))
+        mark: str = ' (미룰 수 없음)' if row.get('undeferrable') else ''
+        print('%s [%s]%s %s %s' % (by_key[row['key']], row['check'], mark, loc, row['message']))
     print('[backstop] 빚 스캔%s — 키 %d · 발견 %d · 스캔 파일 %d'
           % (' (리팩토링)' if refactor else '', len(data['counts']), len(data['findings']),
              len(data['files'])))
@@ -378,6 +415,9 @@ def cli_residual(root: Path, folder_arg: str) -> int:
             raise DebtError('debt-g0.json 파싱 실패 — %s' % error)
         if mode not in (MODE_FEATURE, MODE_REFACTOR):
             raise DebtError('debt-g0.json mode 값 오류 — %r' % mode)
+        if g0.get('scanner') != scanner_stamp():
+            raise DebtError('판 경계 — G0 재스캔 필요(debt-g0.json 스캔 판 %r ≠ 지금 %r)'
+                            % (g0.get('scanner'), scanner_stamp()))
         g0_when, a_ids, required_ids, resubmit_ids = residual_sets(
             scope_md.read_text(encoding='utf-8'))
         scanned: str = str(g0.get('scanned_at', ''))

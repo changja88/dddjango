@@ -541,5 +541,70 @@ printf '# 명세\n' > "$T/d29-none.md"
 OUT=$(run_backstop "$P" --subst-check HEAD HEAD --names "$T/d29-none.md"); E=$?
 assert "D29d 절 머리 없음(--names 를 준 호출) = 실행 불능" 1 "절이 없다" - "$E" "$OUT"
 
+# ---------- D30~D38: 공식 SDK 등재(WV · houserules §9) — 빚 스캔 의미론
+SX() { python3 "$SCRIPTS/test/sdk_fixture.py" "$@" 2>&1; }
+sdk_proj() { # sdk_proj <dir> — 등재 + 페이지 로드 줄(커밋)
+  SX mkproj "$1" >/dev/null; SX install "$1" >/dev/null
+  printf '{%% extends "base.html" %%}\n{%% load static %%}\n{%% block scripts %%}\n<script src="{%% static '"'"'web/vendor/kakao_js_sdk/kakao.min.js'"'"' %%}" defer></script>\n{%% endblock scripts %%}\n' > "$1/web/chart/chart/view/chart.html"
+  commit_all "$1" page >/dev/null
+}
+P="$T/d30"; sdk_proj "$P"
+OUT=$(run_backstop "$P" --debt-scan --json "$T/d30.json"); E=$?
+assert "D30 정상 등재 — WV 키 0" 0 "키 0" "[WV" "$E" "$OUT"
+P="$T/d31"; SX mkproj "$P" >/dev/null; SX install "$P" >/dev/null
+OUT=$(run_backstop "$P" --debt-scan --json "$T/d31.json"); E=$?
+assert "D31 사용처 0 — WV11(미룰 수 있음)" 2 "[WV11] web/static/vendor/kakao_js_sdk/kakao.min.js" "미룰 수 없음" "$E" "$OUT"
+P="$T/d32"; sdk_proj "$P"; printf 'x' >> "$P/web/static/vendor/kakao_js_sdk/kakao.min.js"
+OUT=$(run_backstop "$P" --debt-scan --json "$T/d32.json"); E=$?
+assert "D32 지문 불일치 — WV2 · undeferrable · exit 2" 2 "[WV2] (미룰 수 없음)" - "$E" "$OUT"
+assert "D32b JSON 행 undeferrable: true" 0 '"undeferrable": true' - 0 "$(cat "$T/d32.json")"
+assert "D33 빚 스캔 — «WV10 빚 모드 생략» notice" 2 "WV10(SDK 변경 격리) 빚 모드 생략" - "$E" "$OUT"
+# D34: --debt-residual 에서 ⓐ WV2 복원 — 잔존 0
+mkdir -p "$P/.dddjango-web/run"; run_backstop "$P" --debt-scan --json "$P/.dddjango-web/run/debt-g0.json" >/dev/null
+CID=$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print([c for c,k in d["ids"].items() if k.startswith("WV2|")][0])' "$P/.dddjango-web/run/debt-g0.json")
+scope_md "$P" run "## G0 @NOW@
+ⓐ 키: $CID
+요구 키: -"
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D34a 복원 전 — ⓐ 잔존 1" 2 "잔존 ⓐ $CID WV2|" - "$E" "$OUT"
+git -C "$P" checkout -- web/static/vendor/kakao_js_sdk/kakao.min.js
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D34b ⓐ WV2 복원 뒤 — 잔존 0" 0 "ⓐ 잔존 0" - "$E" "$OUT"
+P="$T/d35"; SX mkproj "$P" >/dev/null; SX install "$P" >/dev/null; printf 'x' >> "$P/web/static/vendor/kakao_js_sdk/kakao.min.js"
+OUT=$(run_backstop "$P" --debt-scan --refactor); E=$?
+assert "D35 --refactor — D31·D32 와 같은 키" 2 "[WV2] (미룰 수 없음)" - "$E" "$OUT"
+assert "D35b --refactor — WV11 도" 2 "[WV11]" - "$E" "$OUT"
+# D36: 디렉터리 심볼릭 링크 벤더(ls-files 우주에 없음)
+P="$T/d36"; sdk_proj "$P"; mv "$P/web/static/vendor/kakao_js_sdk" "$T/d36-real"; ln -s "$T/d36-real" "$P/web/static/vendor/kakao_js_sdk"
+OUT=$(run_backstop "$P" --debt-scan); E=$?
+assert "D36a 디렉터리 링크 — WV2 키 · undeferrable" 2 "[WV2] (미룰 수 없음)" - "$E" "$OUT"
+assert "D36b 디렉터리 링크 — WV5 키 · undeferrable" 2 "[WV5] (미룰 수 없음)" - "$E" "$OUT"
+# D37: 목록 없는 벤더 사본 — WV12 + WS6/WP1(미룰 수 있음) · notice
+P="$T/d37"; SX mkproj "$P" >/dev/null; mkdir -p "$P/web/static/vendor/legacy"; echo 'x()' > "$P/web/static/vendor/legacy/legacy.min.js"; commit_all "$P" legacy >/dev/null
+OUT=$(run_backstop "$P" --debt-scan); E=$?
+assert "D37a 목록 없는 사본 — WV12 키" 2 "[WV12] web/static/vendor/legacy/" "미룰 수 없음" "$E" "$OUT"
+assert "D37b WS6·WP1 키(미룰 수 있음)" 2 "[WP1] web/static/vendor/legacy/legacy.min.js" - "$E" "$OUT"
+assert "D37c G0 알림 notice" 2 "미등재 벤더 단위: static/vendor/legacy/(WV12)" - "$E" "$OUT"
+# D38: --debt-residual · debt-g0.json scanner 판이 다름 — 판 경계
+P="$T/d38"; SX mkproj "$P" >/dev/null; mkdir -p "$P/.dddjango-web/run"
+run_backstop "$P" --debt-scan --json "$P/.dddjango-web/run/debt-g0.json" >/dev/null
+scope_md "$P" run "## G0 @NOW@
+ⓐ 키: -
+요구 키: -"
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D38a 같은 판 — 판정" 0 "ⓐ 잔존 0" - "$E" "$OUT"
+python3 - "$P/.dddjango-web/run/debt-g0.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1])); d['scanner'] = {'plugin': '1.1.25', 'checks': 'old'}; json.dump(d, open(sys.argv[1], 'w'))
+PY
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D38b scanner 판이 다름 — exit 1 «판 경계»" 1 "판 경계 — G0 재스캔 필요" - "$E" "$OUT"
+python3 - "$P/.dddjango-web/run/debt-g0.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1])); d.pop('scanner'); json.dump(d, open(sys.argv[1], 'w'))
+PY
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D38c scanner 없는 옛 동결본 — exit 1 «판 경계»" 1 "판 경계 — G0 재스캔 필요" - "$E" "$OUT"
+
 echo "fixtures_debt: PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" = 0 ]
