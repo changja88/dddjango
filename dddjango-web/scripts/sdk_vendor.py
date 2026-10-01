@@ -41,13 +41,13 @@ from src.check_vendor import (JsView, VendorUndecidable, run_vendor, unregistere
 from src.common import (SDK_REGISTRY, VENDOR_ATTRS, VENDOR_ATTRS_BYTES, VENDOR_DIR, BackstopContext,  # noqa: E402
                         mask_js)
 from src.sdk_registry import (AT_RE, DRAFT_FIELDS, FILE_NAME_RE, GATES, ID_RE, IDENT_RE, SCHEMA,  # noqa: E402
-                              RegistryError, canonical_bytes, candidate_token, check_source, compute_origins,
-                              entry_sha256, https_hosts, lib_cdn_reason, operator_words,
-                              parse_scope_item, scope_unit, sri, strict_loads, trap_hits, url_problems,
-                              validate_entry)
+                              RegistryError, approval_problems, canonical_bytes, candidate_token, check_source,
+                              compute_origins, entry_sha256, host_of, https_hosts, lib_cdn_reason, operator_words,
+                              parse_scope_item, scope_unit, sri, strict_loads, trap_hits, under, url_problems,
+                              validate_entry, validate_registry)
 
 EXIT_OK, EXIT_ERR, EXIT_RED = 0, 1, 2
-CANDIDATE_SCHEMA: str = 'dddjango-web-sdk-candidate/1'
+CANDIDATE_SCHEMA: str = 'dddjango-web-sdk-candidate/2'
 API_PATH_LITERAL = re.compile(r'^/v\d+(?:/[A-Za-z0-9_.\-]+)+$')
 SRI_TOKEN = re.compile(r'sha(?:256|384|512)-[A-Za-z0-9+/]{20,}={0,2}')
 LOADER_MARKERS: Tuple[str, ...] = ('importScripts(', 'import(', 'eval(', 'new Function', 'document.write')
@@ -149,6 +149,18 @@ def _first_comment(text: str) -> str:
     return ''
 
 
+def _final_problems(final_url: str, label: str, allowed_sites: Set[str]) -> None:
+    """리다이렉트 최종 주소 — https · 라이브러리 CDN 아님 · 원본·문서의 운영자 도메인 안. 어기면 거절."""
+    problems = url_problems(final_url, '%s 리다이렉트 최종 주소' % label)
+    if problems:
+        raise Refused(' · '.join(problems))
+    reason = lib_cdn_reason(final_url)
+    if reason:
+        raise Refused('%s 리다이렉트 최종 주소가 %s' % (label, reason))
+    if registrable(urlsplit(final_url).hostname or '') not in allowed_sites:
+        raise Refused('%s 리다이렉트 최종 주소 %s 가 원본·문서의 운영자 도메인 밖' % (label, final_url))
+
+
 def cmd_candidate(ns: argparse.Namespace) -> int:
     root: Path = Path(ns.root).resolve()
     sid: str = ns.id
@@ -191,23 +203,18 @@ def cmd_candidate(ns: argparse.Namespace) -> int:
         raise Refused('원본 응답이 비었다')
     if data.lstrip()[:15].lower().startswith((b'<!doctype', b'<html')):
         raise Refused('원본 응답이 HTML 이다')
-    final_problems = url_problems(final_url, 'final_url')
-    if final_problems:
-        raise Refused(' · '.join(final_problems))
-    final_host: str = urlsplit(final_url).hostname or ''
-    if lib_cdn_reason(final_url):
-        raise Refused('리다이렉트 최종 주소가 %s' % lib_cdn_reason(final_url))
-    if registrable(final_host) not in allowed_sites:
-        raise Refused('리다이렉트 최종 주소 %s 가 원본·문서의 운영자 도메인 밖' % final_url)
-    # 운영자 문서
+    _final_problems(final_url, '원본', allowed_sites)
+    # 운영자 문서 — 원본과 같이 리다이렉트 최종 주소까지 운영자 공식 https 여야 한다(받은 바이트를 쓰기 전에)
+    docs_final: Optional[str] = None
     if ns.docs_file:
         docs: bytes = Path(ns.docs_file).read_bytes()
         fetched_from: str = 'file'
     else:
         try:
-            _durl, _dtype, docs = fetch(ns.docs_url)
+            docs_final, _dtype, docs = fetch(ns.docs_url)
         except (urllib.error.URLError, OSError, ValueError) as error:
             raise UsageError('운영자 문서를 받을 수 없다 — %s(JS 렌더 문서면 --docs-file)' % error)
+        _final_problems(docs_final, '운영자 문서', allowed_sites)
         fetched_from = 'network'
     doc_text: str = html.unescape(docs.decode('utf-8', 'replace')).replace('\\/', '/')
     source_parts = urlsplit(ns.source_url)
@@ -254,7 +261,8 @@ def cmd_candidate(ns: argparse.Namespace) -> int:
     sha256: str = hashlib.sha256(data).hexdigest()
     candidate: dict = {
         'schema': CANDIDATE_SCHEMA, 'id': sid, 'version': ns.version, 'source_url': ns.source_url,
-        'final_url': final_url, 'docs_url': ns.docs_url, 'file': '%s/%s/%s' % (VENDOR_DIR, sid, name),
+        'final_url': final_url, 'docs_url': ns.docs_url, 'docs_final_url': docs_final,
+        'file': '%s/%s/%s' % (VENDOR_DIR, sid, name),
         'size': len(data), 'sha256': sha256, 'upstream_integrity': upstream,
         'evidence': {'docs_sha256': hashlib.sha256(docs).hexdigest(), 'cites_source': True,
                      'integrity_from_docs': upstream is not None, 'fetched_from': fetched_from},
@@ -269,10 +277,11 @@ def cmd_candidate(ns: argparse.Namespace) -> int:
     (out / 'license-header.txt').write_text(_first_comment(text) + '\n', encoding='utf-8')
     (out / 'api-paths.txt').write_text(''.join(p + '\n' for p in api_paths), encoding='utf-8')
     (out / 'candidate.json').write_bytes(canonical_bytes(candidate))
-    print('[sdk] 후보 %s · %d B · sha256 %s · 무결성 %s · 문서 인용 확인(%s) · 이름공간 %s · api 경로 %d · 함수 표 출처 %s%s'
+    print('[sdk] 후보 %s · %d B · sha256 %s · 무결성 %s · 문서 인용 확인(%s%s) · 이름공간 %s · api 경로 %d · 함수 표 출처 %s%s'
           % (candidate['candidate_token'], len(data), sha256[:12],
              '운영자 문서 공개 값과 일치' if upstream else '운영자 공개 값 없음/문서 인용 미확인',
-             fetched_from, ','.join(features) or '없음', len(api_paths), members_source,
+             fetched_from, ' · 최종 주소 %s' % docs_final if docs_final else '', ','.join(features) or '없음',
+             len(api_paths), members_source,
              '' if provenance != 'file-unverified' else ' · %s(사용자 제공 파일)' % UNVERIFIED))
     for n in notes:
         print('[sdk] 알림 — %s' % n)
@@ -312,8 +321,10 @@ def _docs_counts(folder: Path, words: Dict[str, List[str]]) -> List[str]:
     return rows
 
 
-def _scope_groups(entry: dict, units: List[Tuple[str, str, str, str]], source_kind: str) -> List[Tuple[str, List[str]]]:
-    groups: List[Tuple[str, List[str]]] = [('운영자·제품 낱말', operator_words(entry))]
+def _unit_groups(entry: dict, units: List[Tuple[str, str, str, str]], source_kind: str) -> List[Tuple[str, List[str]]]:
+    """승인 단위마다 원문이 담아야 할 낱말 묶음 — gateway 경로 단위는 그 경로 문자열 그대로(낱말 표가 없다 ·
+    첫 채택·기존 등록·범위 넓힘 모두 같은 판정), 묶음·이름 지정 단위는 그 단위의 namespace_words."""
+    groups: List[Tuple[str, List[str]]] = []
     words: dict = entry.get('namespace_words') or {}
     for kind, ns, fn, path in units:
         if kind == 'gateway':
@@ -399,7 +410,7 @@ def cmd_install(ns: argparse.Namespace) -> int:
             entry['use_scope'].append(item)
         entry['use_scope'] = sorted(entry['use_scope'])
         info_kind: str = 'user' if ns.approval_source.startswith('사용자 원문') else 'self'
-        groups = _scope_groups(entry, units, info_kind) + extra_groups
+        groups = [('운영자·제품 낱말', operator_words(entry))] + _unit_groups(entry, units, info_kind) + extra_groups
         line_sha, problems, more = check_source(root, ns.approval_source, groups)
         notes += more
         if problems:
@@ -428,6 +439,13 @@ def cmd_install(ns: argparse.Namespace) -> int:
                     'evidence', 'features_in_file'):
             entry[key] = candidate.get(key)
         entry['origins'] = compute_origins(data_bytes, entry.get('operator_domains') or [])
+        docs_final: Optional[str] = candidate.get('docs_final_url')
+        if candidate['evidence'].get('fetched_from') == 'network':
+            domains: List[str] = [d for d in entry.get('operator_domains') or [] if isinstance(d, str)]
+            if url_problems(docs_final, 'docs_final_url') or not under(host_of(docs_final) or '', domains):
+                raise Refused('운영자 문서 리다이렉트 최종 주소 %s 가 operator_domains 의 https 가 아니다' % docs_final)
+        elif docs_final is not None:
+            raise Refused('파일로 받은 운영자 문서(--docs-file)에 최종 주소가 있다 — 후보를 다시 뽑는다')
         members = entry.get('namespace_members') or {}
         enumerated = candidate.get('members')
         masked: str = mask_js(data_bytes.decode('utf-8', 'replace')).no_comments
@@ -460,18 +478,22 @@ def cmd_install(ns: argparse.Namespace) -> int:
             if missing:
                 raise Refused('리팩토링 등록은 공개 설정 배선을 하지 않는다 — settings 에 %s 없음 → ⓐ 재상정 '
                               '«기능 요청 — 공개 설정 배선»' % ', '.join(missing))
+        g = (entry.get('lifecycle') or {}).get('global', '') if isinstance(entry.get('lifecycle'), dict) else ''
+        units = [p for p in (parse_scope_item(s, g) for s in entry.get('use_scope') or []) if p]
         groups = [('운영자·제품 낱말', operator_words(entry)),
                   ('판 또는 표지', [str(candidate.get('version')), str(candidate.get('candidate_token'))])]
         if candidate.get('provenance') == 'file-unverified':
             groups.append(('«%s» 확인' % UNVERIFIED, [UNVERIFIED]))
+        if not ns.replace:
+            # 첫 채택·기존 등록이 함께 들이는 gateway 경로도 경로마다 범위 넓힘이다 — 사용자 원문이면 경로 문자열이
+            # 그 줄에 있어야 한다(범위 넓힘과 같은 판정 · 판 올림은 단위를 새로 들이지 않고 옛 출처를 잇는다)
+            groups += _unit_groups(entry, [u for u in units if u[0] == 'gateway'], 'self')
         prev_source: Optional[str] = previous['approval']['source'] if ns.replace else None
         line_sha, problems, more = check_source(root, ns.approval_source, groups + extra_groups, prev_source,
                                                 candidate.get('fetched_at'))
         notes += more
         if problems:
             raise UsageError('승인 출처 거절 — ' + ' · '.join(problems))
-        g = (entry.get('lifecycle') or {}).get('global', '') if isinstance(entry.get('lifecycle'), dict) else ''
-        units = [p for p in (parse_scope_item(s, g) for s in entry.get('use_scope') or []) if p]
         if ns.replace:
             old_sources: dict = dict(previous['approval']['namespace_sources'])
             new_units = [scope_unit(*u) for u in units if scope_unit(*u) not in old_sources]
@@ -492,9 +514,10 @@ def cmd_install(ns: argparse.Namespace) -> int:
         banner.append('%s: %s %s · 표지 %s · 운영자 %s(%s)' % (
             kind_label, sid, candidate.get('version'), candidate.get('candidate_token'), entry.get('operator'),
             '·'.join(entry.get('operator_domains') or [])))
-        banner.append('  · 원본 %s · 운영자 문서 인용 확인(docs.html sha256 %s · %s)' % (
+        banner.append('  · 원본 %s · 운영자 문서 인용 확인(docs.html sha256 %s · %s%s)' % (
             candidate.get('source_url'), str(candidate['evidence']['docs_sha256'])[:12],
-            candidate['evidence']['fetched_from']))
+            candidate['evidence']['fetched_from'],
+            ' · 최종 주소 %s' % docs_final if docs_final else ''))
         banner.append('  · 무결성: %s · 지문 sha256 %s · %s B · %s' % (
             '운영자 문서 공개 %s 와 일치' % str(candidate.get('upstream_integrity')).split('-')[0]
             if candidate.get('upstream_integrity') else '운영자 공개 값 없음/문서 인용 미확인 — 다시 받은 바이트와 대조함'
@@ -629,37 +652,76 @@ def cmd_verify(ns: argparse.Namespace) -> int:
     return EXIT_RED if findings else EXIT_OK
 
 
+def _dir_chain_problem(root: Path, parts: List[str]) -> Optional[str]:
+    """root 아래 성분이(있으면) 심볼릭 링크가 아닌 디렉터리인가 — 문제 문자열 또는 None."""
+    cur: Path = root
+    for part in parts:
+        cur = cur / part
+        if os.path.islink(cur):
+            return '경로 성분 %s 가 심볼릭 링크다' % cur.relative_to(root).as_posix()
+        if os.path.lexists(cur) and not cur.is_dir():
+            return '경로 성분 %s 가 디렉터리가 아니다' % cur.relative_to(root).as_posix()
+    return None
+
+
 def cmd_restore(ns: argparse.Namespace) -> int:
+    """승인 불요 복원(ⓡ1·ⓡ2·ⓡ3) — 쓰기·링크 제거 전에 목록 구조 · id 와 파일 경로의 결합 · 승인 결속 · 경로 성분을
+    모두 확인하고, 하나라도 어긋나면 아무것도 쓰지 않고 멈춘다(결속이 깨진 항목은 G1 재승인 또는 승인 기록과 맞는 판으로
+    되돌림 — 복원 대상이 아니다)."""
     root: Path = Path(ns.root).resolve()
-    path: Path = root / 'web' / SDK_REGISTRY
+    web: Path = root / 'web'
+    problem: Optional[str] = _dir_chain_problem(root, ['web'])
+    if problem:
+        raise Refused('%s — 복원하지 않는다(쓰기 0)' % problem)
+    path: Path = web / SDK_REGISTRY
     registry = read_registry(root)
     if registry is None or ns.id not in registry['sdks']:
         raise Refused('%s 가 등재되지 않았다' % ns.id)
-    entry: dict = registry['sdks'][ns.id]
     canonical: bytes = canonical_bytes(registry)
-    if path.read_bytes() != canonical:
-        write_bytes(path, canonical)
-        print('[sdk] ⓡ2 목록 재정규화(내용 같음 · 바이트 꼴만)')
-    attrs: Path = root / 'web' / VENDOR_ATTRS
-    if attrs.is_symlink() or not attrs.is_file() or attrs.read_bytes() != VENDOR_ATTRS_BYTES:
-        write_bytes(attrs, VENDOR_ATTRS_BYTES)
-        print('[sdk] ⓡ3 vendor 표지 재기록')
-    target: Path = root / 'web' / str(entry.get('file'))
-    current_ok: bool = (target.is_file() and not target.is_symlink() and not target.parent.is_symlink()
+    data: dict = strict_loads(canonical)                    # ⓡ2 뒤의 목록 내용(NFC) — 확인은 이것으로
+    stops: List[str] = [p for sid, p in validate_registry(data) if sid in ('', ns.id)]
+    entry: dict = data['sdks'][ns.id]
+    if not stops:
+        stops, _notes = approval_problems(root, ns.id, entry)
+    if stops:
+        raise Refused('승인 불요 복원 대상이 아니다(쓰기 0) — %s → G1 재승인(새 출처) 또는 승인 기록과 맞는 판으로 '
+                      '되돌린다' % ' · '.join(stops))
+    name: str = entry['file'].split('/')[3]                 # static/vendor/<id>/<파일> — WV1 이 꼴과 id 결합을 확인했다
+    problem = _dir_chain_problem(root, ['web', 'static', 'vendor'])
+    if problem:
+        raise Refused('%s — 복원하지 않는다(쓰기 0)' % problem)
+    id_dir: Path = web / VENDOR_DIR / ns.id
+    target: Path = id_dir / name
+    if os.path.lexists(id_dir) and not os.path.islink(id_dir) and not id_dir.is_dir():
+        raise Refused('vendor/%s 가 디렉터리가 아니다 — 복원하지 않는다(쓰기 0)' % ns.id)
+    id_link: bool = os.path.islink(id_dir)
+    if not id_link and os.path.lexists(target) and not os.path.islink(target) and not target.is_file():
+        raise Refused('등재 파일 자리 %s 가 일반 파일이 아니다 — 복원하지 않는다(쓰기 0)' % entry['file'])
+    current_ok: bool = (not id_link and not os.path.islink(target) and target.is_file()
                         and hashlib.sha256(target.read_bytes()).hexdigest() == entry.get('sha256'))
+    payload: Optional[bytes] = None
     if not current_ok:
         try:
-            _final, _ctype, data = fetch(str(entry.get('source_url')))
+            _final, _ctype, payload = fetch(str(entry.get('source_url')))
         except (urllib.error.URLError, OSError, ValueError) as error:
             raise Refused('원본을 다시 받을 수 없다 — %s(판 올림(G1)·제거·정지)' % error)
         integrity = entry.get('upstream_integrity')
-        if hashlib.sha256(data).hexdigest() != entry.get('sha256') or (
-                isinstance(integrity, str) and sri(data, integrity.split('-', 1)[0]) != integrity):
+        if hashlib.sha256(payload).hexdigest() != entry.get('sha256') or (
+                isinstance(integrity, str) and sri(payload, integrity.split('-', 1)[0]) != integrity):
             raise Refused('다시 받은 바이트가 등재 지문과 다르다 — 승인 불요 복원 불가(판 올림(G1)·제거·정지)')
-        if target.parent.is_symlink():
-            target.parent.unlink()
-        write_bytes(target, data)
-        print('[sdk] ⓡ1 등재 바이트 복원 — %s' % entry.get('file'))
+    # 쓰기 — 위 확인을 모두 통과한 뒤에만
+    if os.path.islink(path) or path.read_bytes() != canonical:
+        write_bytes(path, canonical)
+        print('[sdk] ⓡ2 목록 재정규화(내용 같음 · 바이트 꼴만)')
+    attrs: Path = web / VENDOR_ATTRS
+    if attrs.is_symlink() or not attrs.is_file() or attrs.read_bytes() != VENDOR_ATTRS_BYTES:
+        write_bytes(attrs, VENDOR_ATTRS_BYTES)
+        print('[sdk] ⓡ3 vendor 표지 재기록')
+    if payload is not None:
+        if id_link:
+            id_dir.unlink()                                 # 링크 자체만 지운다(따라가지 않는다)
+        write_bytes(target, payload)
+        print('[sdk] ⓡ1 등재 바이트 복원 — %s' % entry['file'])
     try:
         findings, notes = verify_findings(root)
     except VendorUndecidable as error:

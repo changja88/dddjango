@@ -275,7 +275,7 @@ FX sdkjs "$T/sdk.js" >/dev/null; FX docs "$T/docs.html" "$T/sdk.js" >/dev/null
 FX docs "$T/docs-bad.html" "$T/sdk.js" badsri >/dev/null; FX docs "$T/docs-nocite.html" "$T/sdk.js" nocite >/dev/null
 FX docs "$T/docs-nosri.html" "$T/sdk.js" nosri >/dev/null
 SRC=https://t1.kakaocdn.net/kakao_js_sdk/2.8.3/kakao.min.js; DOC=https://developers.kakao.com/docs/en/javascript/download
-fetch_of() { printf '{"%s": ["%s", "%s", "%s"], "%s": ["%s", "text/html", "%s"]}' "$SRC" "${3:-$SRC}" "${4:-application/javascript}" "$1" "$DOC" "$DOC" "$2"; }
+fetch_of() { printf '{"%s": ["%s", "%s", "%s"], "%s": ["%s", "text/html", "%s"]}' "$SRC" "${3:-$SRC}" "${4:-application/javascript}" "$1" "$DOC" "${5:-$DOC}" "$2"; }
 cand() { SDKFX_FETCH="$1" FX vendor candidate "$T/k1" --id kakao_js_sdk --version 2.8.3 --source-url "$3" --docs-url "$DOC" --out "$T/cand-$2" "${@:4}"; }
 OUT=$(cand "$(fetch_of "$T/sdk.js" "$T/docs.html")" a "$SRC" --from-file "$T/sdk.js"); E=$?
 check "K14a --from-file + 문서 integrity 일치 — 0" 0 "$E" "$OUT" "운영자 문서 공개 값과 일치=1"
@@ -832,6 +832,79 @@ check "ⓡ1 restore — 등재 바이트 복원 0" 0 "$E" "$OUT" "ⓡ1 등재 �
 echo 'y' >> "$P/web/static/vendor/kakao_js_sdk/kakao.min.js"
 OUT=$(SDKFX_FETCH="{\"$SRC\": [\"$SRC\", \"application/javascript\", \"$T/sdk.js.bad\"]}" FX vendor restore "$P" kakao_js_sdk); E=$?
 check "ⓡ1 restore — 원본을 받지 못하면 거절 2" 2 "$E" "$OUT" "거절=1"
+
+# ---------- 리뷰 반영 F1~F3 — 독립 구현 리뷰 반례 · 각 red 에 정상 짝
+GOOD="$T/f-good.js"; cp "$T/base/web/static/vendor/kakao_js_sdk/kakao.min.js" "$GOOD"
+GOODF="{\"$SRC\": [\"$SRC\", \"application/javascript\", \"$GOOD\"]}"
+# F1 restore — 쓰기·링크 제거 전에 목록 구조·id↔파일·결속·경로 성분 확인(어긋나면 쓰기 0 정지)
+P=$(newp f1a); printf 'keep me\n' > "$T/f1-victim.js"
+FX edit "$P" kakao_js_sdk '{"file": "../../f1-victim.js"}' >/dev/null
+OUT=$(SDKFX_FETCH="$GOODF" FX vendor restore "$P" kakao_js_sdk); E=$?
+check "F1a 목록 file 이 프로젝트 밖(결속 그대로) — 거절 2 · 쓰기 0" 2 "$E" "$OUT" "쓰기 0=1" "ⓡ1=0" "ⓡ2=0"
+check "F1a 프로젝트 밖 파일 그대로" 0 "$(cmp -s "$T/f1-victim.js" <(printf 'keep me\n'); echo $?)" ""
+P=$(newp f1b); printf 'keep me\n' > "$T/f1b-victim.js"
+FX edit "$P" kakao_js_sdk '{"file": "../../f1b-victim.js"}' --rebind >/dev/null
+OUT=$(SDKFX_FETCH="$GOODF" FX vendor restore "$P" kakao_js_sdk); E=$?
+check "F1b 목록 file 이 프로젝트 밖(결속 재계산) — 거절 2 · 쓰기 0" 2 "$E" "$OUT" "쓰기 0=1" "ⓡ1=0"
+check "F1b 프로젝트 밖 파일 그대로" 0 "$(cmp -s "$T/f1b-victim.js" <(printf 'keep me\n'); echo $?)" ""
+P=$(newp f1c); FX edit "$P" kakao_js_sdk '{"license": "MIT"}' >/dev/null
+echo 'x' >> "$P/web/static/vendor/kakao_js_sdk/kakao.min.js"; cp "$P/web/static/vendor/kakao_js_sdk/kakao.min.js" "$T/f1c-before.js"
+OUT=$(SDKFX_FETCH="$GOODF" FX vendor restore "$P" kakao_js_sdk); E=$?
+check "F1c 결속 깨진 항목 + 사본 변조 — 거절 2 · 쓰기 0(재승인 안내)" 2 "$E" "$OUT" "승인 결속 불일치=1" "쓰기 0=1" "ⓡ1=0"
+check "F1c 변조 사본을 덮지 않았다" 0 "$(cmp -s "$T/f1c-before.js" "$P/web/static/vendor/kakao_js_sdk/kakao.min.js"; echo $?)" ""
+P=$(newp f1d); mv "$P/web/static" "$T/f1d-static"; ln -s "$T/f1d-static" "$P/web/static"
+echo 'x' >> "$T/f1d-static/vendor/kakao_js_sdk/kakao.min.js"; cp "$T/f1d-static/vendor/kakao_js_sdk/kakao.min.js" "$T/f1d-before.js"
+OUT=$(SDKFX_FETCH="$GOODF" FX vendor restore "$P" kakao_js_sdk); E=$?
+check "F1d web/static 이 프로젝트 밖 링크 — 거절 2 · 쓰기 0" 2 "$E" "$OUT" "심볼릭 링크다=1" "쓰기 0=1" "ⓡ1=0"
+check "F1d 링크 너머 파일 그대로" 0 "$(cmp -s "$T/f1d-before.js" "$T/f1d-static/vendor/kakao_js_sdk/kakao.min.js"; echo $?)" ""
+P=$(newp f1e); mv "$P/web/static/vendor/kakao_js_sdk" "$T/f1e-out"; ln -s "$T/f1e-out" "$P/web/static/vendor/kakao_js_sdk"
+echo 'x' >> "$T/f1e-out/kakao.min.js"; cp "$T/f1e-out/kakao.min.js" "$T/f1e-before.js"
+OUT=$(SDKFX_FETCH="$GOODF" FX vendor restore "$P" kakao_js_sdk); E=$?
+check "F1e 짝: id 디렉터리 링크 — 링크만 지우고 ⓡ1 복원 0" 0 "$E" "$OUT" "ⓡ1 등재 바이트 복원=1" "발견 0건=1"
+check "F1e 링크 너머 파일 그대로 · id 디렉터리는 일반 디렉터리" 0 "$(cmp -s "$T/f1e-before.js" "$T/f1e-out/kakao.min.js" && [ ! -L "$P/web/static/vendor/kakao_js_sdk" ]; echo $?)" ""
+
+# F2 첫 채택이 함께 들이는 gateway 경로 — 사용자 원문 줄에 경로 문자열이 없으면 설치 전 정지(범위 넓힘과 같은 판정)
+GWD='{"use_scope": ["Kakao.API.request:/v2/user/me", "Kakao.Share.*", "Kakao.init", "Kakao.isInitialized"], "namespace_members": {"API": {"cleanup": "lifecycle", "request": "gateway"}, "Share": {"cleanup": "lifecycle", "createCustomButton": "sdk_ui", "createDefaultButton": "sdk_ui", "createScrapButton": "sdk_ui", "deleteImage": "data_out", "scrapImage": "data_out", "sendCustom": "call", "sendDefault": "call", "sendScrap": "call", "uploadImage": "data_out"}}, "gateway_paths": {"API.request": {"/v1/api/talk/friends": "read", "/v1/api/talk/friends/message/default/send": "data_out", "/v1/user/unlink": "data_out", "/v2/api/talk/message/image/upload": "data_out", "/v2/user/me": "read"}}}'
+order_src() { # order_src <프로젝트> <원문 줄> — docs/order.md 1행 커밋 → «사용자 원문» 출처
+  printf '%s\n' "$2" > "$1/docs/order.md"; commit "$1" order >/dev/null
+  echo "사용자 원문 docs/order.md@$(G "$1" rev-parse --short=12 HEAD):1(2026-10-01 15:00:00 +0900)"
+}
+FX mkproj "$T/f2a" >/dev/null; S=$(order_src "$T/f2a" '카카오 SDK 2.8.3 채택 승인 2026-10-01 15:00:00 +0900')
+OUT=$(FX install "$T/f2a" --source "$S" --draft "$GWD"); E=$?
+check "F2a 첫 채택 + gateway · 원문에 경로 없음 — 설치 전 정지 1" 1 "$E" "$OUT" "gateway 경로 /v2/user/me 가 없다=1" "[sdk] 설치=0"
+check "F2a 목록·사본 없음(쓰기 0)" 0 "$([ ! -e "$T/f2a/web/sdk_registry.json" ] && [ ! -e "$T/f2a/web/static/vendor" ]; echo $?)" ""
+FX mkproj "$T/f2b" >/dev/null; S=$(order_src "$T/f2b" '카카오 SDK 2.8.3 채택 승인 · 사용자 정보 읽기 /v2/user/me 2026-10-01 15:00:00 +0900')
+OUT=$(FX install "$T/f2b" --source "$S" --draft "$GWD"); E=$?
+check "F2b 짝: 원문에 경로 문자열 — 설치 0" 0 "$E" "$OUT" "[sdk] 설치 kakao_js_sdk=1"
+OUT=$(SV verify "$T/f2b"); E=$?
+check "F2b verify 0" 0 "$E" "$OUT" "발견 0건=1"
+FX mkproj "$T/f2c" >/dev/null
+OUT=$(FX install "$T/f2c" --draft "$GWD"); E=$?
+check "F2c 짝: 본인 직접(G1 질문에 경로가 든다) — 설치 0" 0 "$E" "$OUT" "[sdk] 설치 kakao_js_sdk=1"
+
+# F3 운영자 문서 리다이렉트 최종 주소 — https · 운영자 도메인(원본과 같은 판정) · 후보에 보존 · install 재확인
+FX mkproj "$T/f3" >/dev/null
+cand3() { SDKFX_FETCH="$1" FX vendor candidate "$T/f3" --id kakao_js_sdk --version 2.8.3 --source-url "$SRC" --docs-url "$DOC" --out "$T/cand-f3$2"; }
+OUT=$(cand3 "$(fetch_of "$T/sdk.js" "$T/docs.html" "" "" "http://unrelated.example/docs")" a); E=$?
+check "F3a 문서가 http 외부 호스트로 리다이렉트 — 거절 2 · 후보 없음" 2 "$E" "$OUT" "운영자 문서 리다이렉트 최종 주소=+" "https 여야=1"
+check "F3a candidate.json 없음" 0 "$([ ! -e "$T/cand-f3a/candidate.json" ]; echo $?)" ""
+OUT=$(cand3 "$(fetch_of "$T/sdk.js" "$T/docs.html" "" "" "https://unrelated.example/docs")" b); E=$?
+check "F3b 문서가 https 외부 호스트로 리다이렉트 — 거절 2" 2 "$E" "$OUT" "운영자 도메인 밖=1"
+OUT=$(cand3 "$(fetch_of "$T/sdk.js" "$T/docs.html" "" "" "https://developers.kakao.com.evil.example/docs")" c); E=$?
+check "F3c 운영자 이름을 앞에 단 외부 호스트 — 거절 2" 2 "$E" "$OUT" "운영자 도메인 밖=1"
+OUT=$(cand3 "$(fetch_of "$T/sdk.js" "$T/docs.html" "" "" "https://developers.kakao.com/docs/ko/javascript/download")" d); E=$?
+check "F3d 짝: 운영자 도메인 안 https 리다이렉트 — 0 · 최종 주소 보존" 0 "$E" "$(cat "$T/cand-f3d/candidate.json")" '"docs_final_url": "https://developers.kakao.com/docs/ko/javascript/download"=1'
+python3 -c "import json,sys; sys.path.insert(0,'$HERE'); import sdk_fixture as f; print(json.dumps(f.DRAFT, ensure_ascii=False))" > "$T/f3-draft.json"
+inst3() { SV install "$T/f3" "$1" --entry "$T/f3-draft.json" --approval-source '본인 직접(2026-10-01 15:00:00 +0900)' --approved-at '2026-10-01 15:00 +0900' --gate G1 --build "$T/f3/.dddjango-web/run" --dry-run; }
+OUT=$(inst3 "$T/cand-f3d/candidate.json"); E=$?
+check "F3e 짝: install dry-run — 0 · 배너에 문서 최종 주소" 0 "$E" "$OUT" "최종 주소 https://developers.kakao.com/docs/ko/javascript/download=1"
+python3 - "$T/cand-f3d/candidate.json" <<'PY'
+import json, sys
+p = sys.argv[1]; d = json.load(open(p, encoding='utf-8')); d['docs_final_url'] = 'https://unrelated.example/docs'
+open(p, 'w', encoding='utf-8').write(json.dumps(d, ensure_ascii=False, indent=2, sort_keys=True, separators=(',', ': ')) + '\n')
+PY
+OUT=$(inst3 "$T/cand-f3d/candidate.json"); E=$?
+check "F3f 후보의 문서 최종 주소가 operator_domains 밖 — install 거절 2" 2 "$E" "$OUT" "operator_domains 의 https 가 아니다=1"
 
 echo "fixtures_sdk: PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" = 0 ]
