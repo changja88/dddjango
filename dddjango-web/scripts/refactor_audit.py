@@ -104,9 +104,9 @@ LENS_SECTIONS: "dict[str, tuple[str, ...]]" = {
     "discipline": ("agents/discipline-reviewer-web.md §점검 항목",
                    *_sections(_CLEAN, tuple(range(1, 19))),
                    *_sections(_HOUSE_SKILL, (1, 2, 3)),
-                   *_sections(_HOUSE, (1, 2, 3, 4, 5, 6, 8)),
+                   *_sections(_HOUSE, (1, 2, 3, 4, 5, 6, 8, 9)),
                    *_sections(_UNDECIDABLE, (1, 3, 4, 5, 6)),
-                   *_sections(_JS, (1, 2, 3, 4, 5, 6, 7)),
+                   *_sections(_JS, (1, 2, 3, 4, 5, 6, 7, 8)),
                    *_sections(_UI, (4, 6, 7))),
 }
 

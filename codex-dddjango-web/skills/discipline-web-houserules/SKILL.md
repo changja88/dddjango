@@ -14,7 +14,7 @@ dddjango-web이 만드는 `web/` 코드에 한정된 집안 규칙이다. **표�
 1. **새로 만드는 코드는 표준을 따른다. 기존 코드의 위반은 면제가 아니라 빚이다** — 백스톱 검사기가 내는 빚은 기능 요청의 G0 빚 질문(지금 정리 → 슬라이스 0 · 출처 있는 미룸)으로, 검사기가 내지 않는 관행·의미 정리는 리팩토링 입구 `$dddjango-web-refactor`로 다룬다. 기존 코드의 **이동**(파일·폴더를 다른 경로·이름으로 옮기는 일 — 개명 포함)은 이 두 경로에서만 한다: G0에서 «지금 정리»로 정한 빚의 교정이 아닌 이동을 기능 작업에 섞지 않는다. 새 코드의 적용 경계는 둘로 갈린다: 표기(파일명·접두·접미사·클래스)는 **모든 새 파일**에, 폴더 구조는 **신규 단위부터** — §2 경계 규칙.
 2. **신규 단위(영역·화면 개념·client BC 폴더)는 표준 트리를 적용한다** — `references/final.md` §1을 반드시 읽는다. 생략·축소 불가 골격(final.md §3 정신 — YAGNI로 접을 수 없다):
    - 화면 개념 = **종류 4폴더(view·view_model·state·section) 항상 생성** — `form/`은 조건 생성(입력 form이 있는 화면만 — final.md §3). 빈 폴더 마커는 Python 패키지 `__init__.py`·HTML 전용 `.gitkeep`(final.md §3). 그 외 선택 폴더 없음.
-   - 신규 static 골격은 `css/`·`js/`·`htmx/`·`images/` 네 폴더다. `fonts/`·`files/`는 검증된 파일이 필요할 때만 생성한다. 기능 JS/HTMX 선언은 각각 기능당 한 파일이며 평면 snake_case다(final.md §3~§5).
+   - 신규 static 골격은 `css/`·`js/`·`htmx/`·`images/` 네 폴더다. `fonts/`·`files/`는 검증된 파일이 필요할 때만 생성한다. `vendor/`·`web/sdk_registry.json` 은 승인된 공식 SDK 가 있을 때만 Coordinator 도구가 만든다(final.md §9). 기능 JS/HTMX 선언은 각각 기능당 한 파일이며 평면 snake_case다(final.md §3~§5).
    - `widget/`은 영역 수준 — 화면 개념 폴더 안에 만들지 않는다.
    - `design_system/`은 foundation·component **2칸 시작** — theme·util 칸은 만들지 않는다(final.md §3).
    - **영구 test/ 없음** — 생성 앱의 테스트 폴더·파일을 만들지 않는다. 임시 Django 렌더·브라우저 검증을 수행하고 증적은 보존한다(final.md §3).
@@ -45,7 +45,7 @@ dddjango-web이 만드는 `web/` 코드에 한정된 집안 규칙이다. **표�
 
 ## §4 백스톱 연동
 
-파이프라인 게이트에서 결정적 러너가 **구조·골격(WS)·격리(WI)·명명(WN)·순수성(WP)** 4패밀리를 검사한다 — 발견은 전부 blocker·일괄 반송. 게이트는 added(새 파일·디렉터리)·added 줄·신규 단위 기준이라 **이번 작업이 들인 위반**을 잡는다. 기존 코드의 위반(빚)은 Phase 0 빚 스캔(`--debt-scan` — web/ 전체)이 G0에 드러내고, G2 잔존 판정(`--debt-residual`)이 «지금 정리»한 빚이 사라졌는지 확인한다(final.md §7). 검사를 흉내내지 말고 이 하우스룰대로 만들면 통과한다. 러너 사용법·게이트 의미론은 final.md §7, 러너가 못 보는 의미 판별은 undecidable-web.md 소유.
+파이프라인 게이트에서 결정적 러너가 **구조·골격(WS)·격리(WI)·명명(WN)·순수성(WP)·공식 SDK 등재(WV)** 5패밀리를 검사한다 — 발견은 전부 blocker·일괄 반송. 게이트는 added(새 파일·디렉터리)·added 줄·신규 단위 기준이라 **이번 작업이 들인 위반**을 잡는다. 기존 코드의 위반(빚)은 Phase 0 빚 스캔(`--debt-scan` — web/ 전체)이 G0에 드러내고, G2 잔존 판정(`--debt-residual`)이 «지금 정리»한 빚이 사라졌는지 확인한다(final.md §7). 검사를 흉내내지 말고 이 하우스룰대로 만들면 통과한다. 러너 사용법·게이트 의미론은 final.md §7, 러너가 못 보는 의미 판별은 undecidable-web.md 소유.
 
 ## 상세 레퍼런스
 
@@ -59,6 +59,7 @@ dddjango-web이 만드는 `web/` 코드에 한정된 집안 규칙이다. **표�
 | widget·section·component·view 입장 위치 답(판별 순서는 architecture-web §2) | final.md §6 |
 | 백스톱 러너·게이트 의미론·배선 handoff | final.md §7 |
 | 표기 표준화 — 브라운필드 관행 교정 사전 | final.md §8 |
+| 공식 플랫폼 SDK — 자격·제외·등재 목록·늘 검사·승인·범위·로드·키 | final.md §9 |
 | 의미 판별 6종 절차·배정 | [`references/undecidable-web.md`](references/undecidable-web.md) |
 
 각 절은 필요한 절만 읽는다(전체 로드 불필요 — `## §N.` 헤더로 grep 가능).

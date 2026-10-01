@@ -165,6 +165,17 @@ section은 화면 전속 조각이자 HTMX 부분 재렌더 단위다(역할 규
 {% endblock scripts %}
 ```
 
+승인된 공식 SDK(houserules §9)는 그 SDK 를 쓰는 페이지의 `{% block scripts %}` **안에서**, 그 SDK 를 부르는 기능 JS 보다 **앞에** 한 번 로드한다. 속성은 `src`·`defer` 만 쓴다(모든 페이지가 쓸 때만 base 의 `{% block scripts %}` 앞).
+
+```html
+{% block scripts %}
+  <script src="{% static 'web/vendor/<sdk_id>/<파일>' %}" defer></script>
+  <script src="{% static 'web/js/<기능>.js' %}" defer></script>
+{% endblock scripts %}
+```
+
+공개 키는 VM 이 settings 에서 읽어 state 에 담고, root 의 escape 된 `data-*` 속성(값은 `{{ … }}` 만)이나 `json_script` 로 넘긴다.
+
 서버 구조화 데이터는 `{{ state.ui_data|json_script:"ui-data" }}`의 비실행 JSON을 외부 JS에서 textContent→JSON.parse로 소비한다. 단일 값은 정상 escape된 quoted `data-*` 속성으로 충분할 수 있다. 반복 UI라면 JSON id도 유일하게 정한다. 수동 JSON 조립·템플릿 값의 실행 소스 보간은 금지다.
 
 ## §6. widget·design_system component 표기
@@ -219,7 +230,7 @@ widget(영역 재사용 조각)과 design_system component(전역 순수 부품)
 
 **이미지·파일.** 시안 파일은 Coordinator가 실제 바이트를 수집해 `design-ref/`에 보관한다. 수집 manifest는 출처·로컬 경로·크기·SHA-256·성공/실패 사유를 담는다. 렌더용 CSS·JS·JSX·폰트 등 원본 의존성과 앱에 배선할 자산을 구별한다. 이미지 인벤토리는 `asset-manifest.json`이며 성공 여부와 무관하게 전달받는다. `failed/skipped`는 이미지 없음이 아니다.
 
-이미지는 manifest의 해당 문서·해소된 출처 행으로 조인해 검증된 `local_path`를 그대로 쓴다. 착지는 `web/static/images/`, `{% static %}` 인자는 프로젝트 경로의 `web/static/`를 static 프리픽스 `web/`로 바꾼 값이다(예: `web/static/images/logo.png` → `{% static 'web/images/logo.png' %}`). source CSS의 이미지 `url()`도 이 매핑을 따라 배선한다. 폰트·다운로드 파일이 필요하면 `web/static/fonts/`·`web/static/files/`에 검증된 파일을 복사하고 출처→배선 경로를 같은 검증 기록에 남긴다. 골격으로 미리 만들지는 않는다.
+이미지는 manifest의 해당 문서·해소된 출처 행으로 조인해 검증된 `local_path`를 그대로 쓴다. 착지는 `web/static/images/`, `{% static %}` 인자는 프로젝트 경로의 `web/static/`를 static 프리픽스 `web/`로 바꾼 값이다(예: `web/static/images/logo.png` → `{% static 'web/images/logo.png' %}`). source CSS의 이미지 `url()`도 이 매핑을 따라 배선한다. 폰트·다운로드 파일이 필요하면 `web/static/fonts/`·`web/static/files/`에 검증된 파일을 복사하고 출처→배선 경로를 같은 검증 기록에 남긴다. 골격으로 미리 만들지는 않는다. 공식 SDK 사본은 Coordinator 가 `sdk_vendor.py` 로 `web/static/vendor/` 에 설치한다 — 코더는 내려받기·복사·수정하지 않는다.
 
 파일 존재·HTTP 200·CSS 선언만으로 로드를 판정하지 않는다. 브라우저에서 이미지 decode/naturalWidth, 네트워크 오류, 실제 폰트 face·weight 로드와 적용을 확인한다. 폰트 URL을 기억으로 조립하지 말고 원본 선언/실제 응답을 따른다. 선언만 된 폰트 이름이나 시스템 fallback을 원본 폰트 성공으로 보고하지 않는다. 수집기가 다루지 못한 동적 src·inline SVG·component 장식도 렌더와 대조해 처리한다. manifest의 행 수가 전체 시각 요소 수는 아니다.
 

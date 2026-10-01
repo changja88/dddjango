@@ -45,9 +45,9 @@ description: web 구현 표기법 — 시안 재현 절차(직수입 금지·토
 | 시안 증거 최초 준비/검증·inputs/visual·fingerprint·media JSON 계약 | [`references/design-evidence.md`](references/design-evidence.md) |
 | view·view_model·form·state 파일 표기 | final.md §3 |
 | 페이지 템플릿·base.html 표기 | final.md §4 |
-| section·HTMX 선언 include·CSRF·외부 JS 로드·데이터 전달 | final.md §5 |
+| section·HTMX 선언 include·CSRF·외부 JS 로드·공식 SDK 로드 태그·데이터 전달 | final.md §5 |
 | widget·component include 표기 | final.md §6 |
-| tokens.css·이미지 에셋 표기 | final.md §7 |
+| tokens.css·이미지 에셋 표기(공식 SDK 사본은 Coordinator 설치) | final.md §7 |
 | client 호출·신원 이월·응답 모델·예외 변환 표기 | final.md §8 |
 | urls 정의·include 합산·name 참조 표기 | final.md §9 |
 

@@ -15,6 +15,7 @@
 - §6. 입장 위치 답 — widget·component·section·view
 - §7. 백스톱 연동 — 러너·게이트
 - §8. 표기 표준화 — 브라운필드 관행 교정 사전
+- §9. 공식 플랫폼 SDK — 등재·사본·로드
 
 ---
 
@@ -26,6 +27,7 @@
 web/
   urls.py                              # 전 영역 urls 합산 (root_router 번역)
   apps.py
+  sdk_registry.json                    # 공식 SDK 등재 목록 — SDK 가 있을 때만(§9)
   base/
     base.html                          # 공통 문서 골격·내비 셸 (root_scaffold 번역 — «거의 빈» 규범)
   <screen_area>/                       # 내비게이션 영역
@@ -64,6 +66,7 @@ web/
     images/                            # 시안 이미지 착지 (fetch 도구·asset-manifest 배선)
     fonts/                             # 폰트 파일이 필요한 경우만 생성
     files/                             # 다운로드 파일이 필요한 경우만 생성
+    vendor/                            # 승인된 공식 SDK 사본 — .gitattributes(고정 표지) + <sdk_id>/<파일> · 필요할 때만(§9)
 ```
 
 읽는 법:
@@ -71,7 +74,7 @@ web/
 - `<screen_area>`(아래 표에서는 `<area>`) = **내비게이션 영역** — 전역 내비에서 한 묶음으로 노출되는 단위다(도메인 경계·백엔드 BC 경계가 아니다). `<view>` = **화면 개념**(예: `order_list`). `<bounded_context>`(아래 표에서는 `<bc>`) = 계약을 제공하는 백엔드 BC명, `<capability>` = 그 BC 계약에서 web이 소비하는 능력 묶음.
 - **공존**: 대상 프로젝트 저장소 최상위에서 `web/`은 백엔드 표준 트리(`application/`·`framework/`·`<project>/`)와 **공존**한다. 두 세계는 트리 위치로 기계 구분되며, 연결은 실물 API 계약(URL+JSON)뿐이다(§5).
 - 페이지 템플릿(`<view>.html`)은 `view/` 폴더에 `.py`와 병치한다 — 화면의 진입 코드와 페이지 템플릿은 한 폴더에서 함께 읽힌다.
-- `form/`은 **조건 생성**이다 — 입력 form이 있는 화면만 `<view>_form.py`를 만든다(골격 완비 비대상 — §3, exception.py 판형). `static/fonts/`·`static/files/`는 검증된 폰트·다운로드 파일이 필요할 때만 생성한다(골격 필수 아님). `static/images/`는 **시안 이미지 착지** 칸이다(fetch 도구·asset-manifest 배선 — 에셋 규율은 implementation-ui 소유).
+- `form/`은 **조건 생성**이다 — 입력 form이 있는 화면만 `<view>_form.py`를 만든다(골격 완비 비대상 — §3, exception.py 판형). `static/fonts/`·`static/files/`는 검증된 폰트·다운로드 파일이 필요할 때만 생성한다(골격 필수 아님). `static/vendor/`·`web/sdk_registry.json`은 사용자가 승인한 공식 플랫폼 SDK 가 있을 때만 생긴다(조건 생성 — §9). `static/images/`는 **시안 이미지 착지** 칸이다(fetch 도구·asset-manifest 배선 — 에셋 규율은 implementation-ui 소유).
 - `motion.css`는 **공용 모션의 거처**다 — 공용 `@keyframes`·모션 유틸 클래스(`motion-*` 명명·화면 어휘 금지)만 오고, custom property 정의는 모션 값(`--duration-*`·`--ease-*` 류) 포함 전부 `tokens.css`다. **화면 전속 `@keyframes`는 그 화면 CSS(`static/css/`)에 `<view>_` 접두로** 둔다 — 화면 어휘를 design_system에 넣지 않는다. `static/js/`의 `motion.js`는 동적 표현 발동 러너(vendored 고정물 — §5⑤)로, 설계 명세가 러너 분류 항목을 채택한 빌드에만 설치된다(**조건 설치**).
 - 각 폴더에 담기는 코드의 내용 규칙(동작 규율)은 architecture-web 소유다: 3단 판별 §2 / 삼총사 규율 §3 / section·widget §4 / 승격·이동 §5 / 계약 소비 §6 / 라우팅 §7 / design_system 사용 §8. 구현 표기는 implementation-ui 소유. 이 문서는 **어떤 폴더·파일·이름이 존재해야 하는가(사실)** 를 소유한다.
 
@@ -101,7 +104,7 @@ web/
 | 신규 `<view>/` (화면 개념) | `view/`·`view_model/`·`state/`·`section/` 종류 4폴더 전부 — `form/`은 입력 form이 있는 화면에서 첫 Form 때 생성(골격 대상 아님, exception.py 판형) |
 | 신규 `client/<bc>/` | `<capability>_client.py` + `response/` — `exception.py`는 첫 계약 오류 표현 때 생성(골격 대상 아님) |
 
-- HTMX core의 입수·설치는 Coordinator의 web 배선 전제조건 (6) 소관이다. 신규 core는 `static/htmx/htmx.min.js`, 기존 `static/js/htmx.min.js`·`htmx.js`는 기존 설치로만 소비한다. `motion.js`는 러너 채택 ≥1일 때 조건 설치하고 존재하면 byte 판형을 검증한다(§5⑤). 골격은 css/·js/·htmx/·images/ 네 폴더이며 기능 JS·선언 파일은 실제 요구가 있을 때만 생성한다.
+- HTMX core의 입수·설치는 Coordinator의 web 배선 전제조건 (6) 소관이다. 신규 core는 `static/htmx/htmx.min.js`, 기존 `static/js/htmx.min.js`·`htmx.js`는 기존 설치로만 소비한다. `motion.js`는 러너 채택 ≥1일 때 조건 설치하고 존재하면 byte 판형을 검증한다(§5⑤). 골격은 css/·js/·htmx/·images/ 네 폴더이며 기능 JS·선언 파일은 실제 요구가 있을 때만 생성한다. `static/vendor/`·`sdk_registry.json` 은 승인된 공식 SDK 가 있을 때만 생긴다(골격 아님 — §9).
 - **마커 파일**: Python 패키지 폴더(`.py`가 사는 곳 — `view/`·`view_model/`·`state/`·`form/`·`client/` 계열)는 비어 있어도 `__init__.py`를 둔다. HTML 전용 폴더(`section/`·`widget/`·`design_system/component/`)는 git이 빈 디렉터리를 추적하지 않으므로 비면 `.gitkeep`을 둔다. 두 마커 파일은 «직속 파일 금지»의 명시 예외다.
 - design_system은 foundation·component **2칸 시작** — `theme/`·`util/`은 *만들지 않는 칸*이다. 실수요가 생기면 그때 증설하고, 미리 파지 않는다.
 - **영구 test/ 없음** — 생성 앱의 `web/`에 `test/`·`test_*.py`·빈 테스트 파일을 만들지 않는다. 임시 Django 렌더·브라우저 smoke는 implementation-ui §2에 따라 실제 수행하고, 실행 결과와 스크린샷은 산출물 폴더에 보존한다. 기존 프로젝트의 적용 가능한 검사는 함께 실행한다. 플러그인 자체의 회귀 픽스처는 이 생성 앱 규칙의 대상이 아니다.
@@ -122,6 +125,7 @@ web/
 |---|---|---|---|
 | `web/` 직속 | 고정 | `urls.py` | `web/urls.py` — 전 영역 urls include 합산 |
 | `web/` 직속 | 고정 | `apps.py` | AppConfig 클래스 `WebConfig` |
+| `web/` 직속 | 고정 | `sdk_registry.json` | 공식 SDK 등재 목록 — Coordinator 가 도구로만 쓴다(§9) |
 | `base/` | 고정 | `base.html` | 공통 문서 골격·내비 셸 (§1 base 핵심 사실) |
 | `<area>/` 직속 | 고정 | `urls.py` | `web/orders/urls.py` — 영역 path·name 리터럴 단일 출처 |
 | `<area>/urls.py`의 `name=` | 화면 개념 | 페이지 `<view>` · fragment `<view>_<조각>` | `name="order_list"` · fragment `name="order_list_filter_bar"` — 리터럴 거처는 §5④ |
@@ -143,6 +147,8 @@ web/
 | `static/css/` | 기능·범위 | `<이름>.css` | 파일명 snake_case — 시각 값은 tokens.css의 `var()` 참조·화면 전속 `@keyframes`는 `<view>_` 접두 |
 | `static/images/` | 시안 자산 | `<이름>_<내용hash>.<확장자>` — snake_case | 절단 도구가 정한 manifest 경로를 그대로 사용(에셋 규율은 implementation-ui 소유) |
 | `static/fonts/`·`static/files/` | 폰트·다운로드 파일 | `<이름>.<확장자>` — snake_case | 필요 시 검증된 파일만 복사·출처/배선 매핑 기록(implementation-ui §7) |
+| `static/vendor/` | 고정 | `.gitattributes` | 바이트 안정 표지 — 도구가 쓰는 고정 내용(§9) |
+| `static/vendor/<sdk_id>/` | 운영자 원본 | `<운영자 파일 이름>`(WN8 꼴 · 확장자 없으면 `<sdk_id>.js`) | `kakao_js_sdk/kakao.min.js` — 등재된 한 파일·byte 그대로·수정 금지(§9) |
 
 - 부품군 폴더 = 파일 접미사 — `button/` 안은 `*_button.html`. 축약(`btn`)·직속 파일·정크드로어 군(`widget/`·`etc/`) 금지.
 - 접미사는 전체 표기다 — `_view_model.py`를 `_vm.py`로, `_state.py`를 `_st.py`로 축약하지 않는다.
@@ -160,12 +166,12 @@ web/
 
 ④ **라우트 리터럴의 유일 거처 2곳** — web 자신의 path·name 리터럴은 `urls.py`뿐이다(영역 리터럴은 `<screen_area>/urls.py`, `web/urls.py`는 영역 include 합산만). 그 외 어디서든 — 템플릿 href·hx-get·redirect — `{% url %}`/`reverse`의 **이름만** 참조한다. BC API URL 리터럴은 그 계약의 client 모듈이 유일 거처다 — VM·view·템플릿에 API URL 문자열이 보이면 위반이다.
 
-⑤ **UI JavaScript와 HTMX 경계**: 승인된 UI 동작만 `static/js/<기능>.js`에 기능당 한 파일로 둔다. 기능 이름은 snake_case·평면이며 초기화/이벤트/정리를 함수별 파일로 나누지 않는다. native HTML/CSS로 충분하면 JS 파일은 없다. 업무 권한·금액·저장 판정·별도 업무 API 호출·SPA 상태 계층·새 JS 프레임워크/라이브러리는 금지다.
+⑤ **UI JavaScript와 HTMX 경계**: 승인된 UI 동작만 `static/js/<기능>.js`에 기능당 한 파일로 둔다. 기능 이름은 snake_case·평면이며 초기화/이벤트/정리를 함수별 파일로 나누지 않는다. native HTML/CSS로 충분하면 JS 파일은 없다. 업무 권한·금액·저장 판정·별도 업무 API 호출·SPA 상태 계층·새 JS 프레임워크/라이브러리는 금지다(승인·등재된 공식 플랫폼 SDK 는 §9 의 예외 — 그 밖 제3자 JS 는 등재와 무관하게 금지).
 
 - HTMX 선언은 `static/htmx/<기능>.html`에 기능당 한 파일로 두고 Django `{% include %}`로 렌더한다. 공개 static 원문에는 비밀·사용자별 렌더 결과를 저장하지 않는다. 데이터·권한·CSRF·fragment 응답은 view/section 소유이며 static URL은 업무 fragment endpoint가 아니다. 기존 TEMPLATES DIRS의 web 루트로 include하고 새 finder·middleware·템플릿 엔진은 만들지 않는다.
 - 신규 HTMX core는 `static/htmx/htmx.min.js` 한 파일이다. 기존 `static/js/htmx.min.js` 또는 `static/js/htmx.js`는 브라운필드 설치로만 소비한다. 새 이중 설치·조용한 이동/업그레이드 금지. 누락 시 Coordinator가 공식 2.0.10 고정 배포 파일을 설치하고 버전·출처를 기록한다.
 - `static/js/motion.js`는 러너 채택 시 조건 설치하는 byte 고정 판형이다. 수정·확장·기능명으로 덮어쓰기 금지. 다른 기능 JS와 core 이름이 충돌하면 기능 이름을 다시 결정한다.
-- 기능 실행 태그는 base 공통 로드 또는 페이지의 범용 scripts block에서 외부 `{% static %}` 참조로 페이지당 한 번만 둔다. fragment/선언 조각에는 실행 script가 없다. classic은 `defer`, 기존 module 방식은 허용하고 `async`로 DOM·의존 순서를 깨지 않는다. CDN 실행 태그·inline 실행 JS·on* handler·hx-on·js:·hx-trigger 조건식은 금지다.
+- 기능 실행 태그는 base 공통 로드 또는 페이지의 범용 scripts block에서 외부 `{% static %}` 참조로 페이지당 한 번만 둔다. fragment/선언 조각에는 실행 script가 없다. classic은 `defer`, 기존 module 방식은 허용하고 `async`로 DOM·의존 순서를 깨지 않는다. CDN 실행 태그·inline 실행 JS·on* handler·hx-on·js:·hx-trigger 조건식은 금지다(템플릿 URL 속성의 `javascript:` 류·템플릿 태그로 이어 붙인 스킴·`srcdoc`·SVG `set/animate` 의 href 포함). 공식 SDK 도 CDN 이 아니라 등재 사본을 로드한다(§9). 기능 JS 는 외부 스크립트를 끌어오지 않고(`createElement('script')`·`createElementNS(…, 'script')`·`srcdoc` 대입·`document.write`·`import()`·문자열 실행), 외부 절대 URL 문자열을 담지 않는다(W3C 이름공간 URI 만 예외 — 외부 주소는 서버가 state 로 넘긴다). 기능 JS 의 네트워크 요청(fetch·XHR·WebSocket·EventSource·sendBeacon)과 JS 가 만드는 iframe 은 프로젝트 출처(레인 서버 · settings 의 정적·미디어·저장소 출처)로만 간다 — 외부 서비스는 서버나 등재 SDK 가 부른다.
 - 데이터 전달은 Django `json_script`의 비실행 JSON 또는 escape된 quoted data 속성이다. 템플릿 값을 수동으로 실행 소스에 보간하지 않는다. 업무 로직 부재·기능과 파일의 의미상 일대일·JS 모션 전수성은 검사기 통과만으로 증명되지 않으며 감수와 실제 동작 증거로 확인한다.
 
 ⑥ **지식은 view → VM → client 한 방향** — 역방향 참조(client가 VM을, VM이 view·템플릿을 아는 것) 금지. **템플릿은 state만 읽는다** — 템플릿에서 VM 메서드 호출·client 접근 금지, widget에는 명시 context만 넘긴다.
@@ -202,16 +208,16 @@ python "${CLAUDE_PLUGIN_ROOT}"/scripts/backstop.py <대상 프로젝트 루트> 
 
 (파이프라인에서는 Coordinator가 플러그인 루트를 해소해 호출한다 — 에이전트가 경로를 추측하지 않는다.)
 
-- 검사 패밀리 4종: **WS(구조·골격) · WI(격리 — §5) · WN(명명 — §4) · WP(UI 실행 경계 — §5⑤)**. 발견은 전부 blocker — 일괄 반송.
+- 검사 패밀리 5종: **WS(구조·골격) · WI(격리 — §5) · WN(명명 — §4) · WP(UI 실행 경계 — §5⑤) · WV(공식 SDK 등재 — §9)**. 발견은 전부 blocker — 일괄 반송.
 - **exit 계약**: 0 = 통과 / 1 = 미실행(전제 실패 — 통과가 아니다) / 2 = blocker 발견·일괄 반송.
-- **게이트 의미론**: 구조·명명은 **added**(새로 만든 파일·디렉터리)만, 격리·순수성은 touched 파일의 **added 줄**만, 골격 완비는 **신규 단위**(영역·화면 개념·client BC 폴더)만. → 이번 작업이 들인 위반만 잡는다. 기존 코드의 위반은 면제가 아니라 빚이며 아래 빚 모드가 다룬다.
-- **빚 모드**: `--debt-scan`은 web/ 전체(git 추적 + 미추적·비무시 파일)를 «모두 새 것»으로 보고 4패밀리를 돌려 키 (검사, 경로)마다 `C<n>`을 매긴다(Phase 0 빚 스캔 — exit 0 = 빚 0[git 저장소에 web/이 아직 없는 첫 실행 포함] · 2 = 빚 있음 · 1 = 실행 불능[비git · web/이 심볼릭 링크이거나 git 밖·무시돼 우주가 빔]). 브라운필드 허용 규범 — 기존 legacy HTMX core 설치 1개와 그 base 로드 태그(core 중복이 없을 때) · motion.js 판형(플러그인 갱신 사안) · 기존 단위의 골격 미비 — 은 빚으로 내지 않는다. `--debt-residual <산출물 폴더>`는 같은 의미론으로 다시 스캔해 `debt-g2.json`에 쓰고 `refactor-scope.md`의 마지막 `## G0` 절부터 순서대로 G0·G0 재승인 절의 ⓐ·요구 키를 더하고 `ⓐ 재상정` 절의 키를 뺀 집합이 사라졌는지 센다(G2 — exit 0 = 잔존 0 · 2 = 잔존 있음 · 1 = 판정 불가[마지막 `## G0` 절이 `debt-g0.json` 스캔보다 이르면 이번 요청의 G0 절이 없는 것이다]). 두 플래그는 단독 모드다(`--diff-base`·`--all`·`--only`·`--design-build`와 함께 쓰지 않는다). **리팩토링 스캔** `--debt-scan --refactor`(리팩토링 입구 R1)는 기존 단위의 골격 미비(WS5)도 빚으로 내고, legacy core 면제는 그 base 로드 태그 면제가 없을 때만 걷는다(있으면 core·태그 한 쌍을 그대로 둔다 — 태그에 defer 를 붙이는 것은 실행 순서 변경이다) · `debt-g0.json` 의 `mode` 가 `--debt-residual` 의 의미론을 정한다. **치환 확인** `--subst-check <기준> <대상> --build <산출물 폴더>`(슬라이스 0 끝 green ④)은 기준..대상 첫 부모 사슬의 web/ 밖 레인 편집을 본다. 테스트 파일(경로 성분 `test`·`tests` · `test_*.py`·`*_test.py`·`conftest.py` — dddjango 동작 보존 판별과 다르다)은 슬라이스 0 대조 커밋(build-state `slices[0]` 기록 · 기능 슬라이스 기록이 없는 커밋 · 승인 목록 밖 병합 · 앞선 기능 편집을 잇지 않는 승인 병합 안 몫)이 잇달아 바꾼 구간마다 옛 경로·옛 이름 → 새 경로·새 이름 치환뿐이어야 하고, 기능 슬라이스 커밋(과 그 뒤 승인 병합 안 몫)의 변경은 목록으로 낸다(build-state `mode: refactor` 면 모든 기록이 슬라이스 0 대조). 비테스트 파일은 누가 바꿨든 어긋남이다(최상위 `docs/`·`.dddjango/`·저장소 루트의 `.md` 만 대조 밖 — 루트 `CLAUDE.md`·`AGENTS.md` 는 대소문자와 무관하게 대조 · 경로를 알린다). 승인 목록 밖 병합은 병합마다 한 줄(등재 먼저 — 되돌려도 남는다)을 내고, 그 병합이 들인 비테스트는 «승인 목록 밖 병합 유입» 줄로 낸다. 산출물 폴더 `approved-merges.txt`(발주자 소유 · dddjango 와 같은 뜻)에 적힌 병합이 상류 쪽으로 바꾼 경로의 기준은 그 병합의 둘째 부모 판이다. build-state 기록은 7~40 hex · 기준..대상 첫 부모 사슬 위 비병합 커밋만 받고 양쪽 기록은 어긋남이다(exit 0 = 치환만 · 2 = 어긋남 · 1 = 실행 불능[web/ 밖 미커밋 변경 · 승인 목록·build-state 불량 · `slices[0]` 기록 없음 · 얕은 이력·공통 조상 없는 승인 병합 · 기준이 첫 부모 사슬 밖]).
+- **게이트 의미론**: 구조·명명은 **added**(새로 만든 파일·디렉터리)만, 격리·순수성은 touched 파일의 **added 줄**만, 골격 완비는 **신규 단위**(영역·화면 개념·client BC 폴더)만. → 이번 작업이 들인 위반만 잡는다. 기존 코드의 위반은 면제가 아니라 빚이며 아래 빚 모드가 다룬다. WV 늘 검사는 §9 «늘 검사의 대상»을 따른다.
+- **빚 모드**: `--debt-scan`은 web/ 전체(git 추적 + 미추적·비무시 파일)를 «모두 새 것»으로 보고 4패밀리를 돌려 키 (검사, 경로)마다 `C<n>`을 매긴다(Phase 0 빚 스캔 — exit 0 = 빚 0[git 저장소에 web/이 아직 없는 첫 실행 포함] · 2 = 빚 있음 · 1 = 실행 불능[비git · web/이 심볼릭 링크이거나 git 밖·무시돼 우주가 빔]). 브라운필드 허용 규범 — 기존 legacy HTMX core 설치 1개와 그 base 로드 태그(core 중복이 없을 때) · motion.js 판형(플러그인 갱신 사안) · 기존 단위의 골격 미비 — 은 빚으로 내지 않는다. `--debt-residual <산출물 폴더>`는 같은 의미론으로 다시 스캔해 `debt-g2.json`에 쓰고 `refactor-scope.md`의 마지막 `## G0` 절부터 순서대로 G0·G0 재승인 절의 ⓐ·요구 키를 더하고 `ⓐ 재상정` 절의 키를 뺀 집합이 사라졌는지 센다(G2 — exit 0 = 잔존 0 · 2 = 잔존 있음 · 1 = 판정 불가[마지막 `## G0` 절이 `debt-g0.json` 스캔보다 이르면 이번 요청의 G0 절이 없는 것이다]). 두 플래그는 단독 모드다(`--diff-base`·`--all`·`--only`·`--design-build`와 함께 쓰지 않는다). **리팩토링 스캔** `--debt-scan --refactor`(리팩토링 입구 R1)는 기존 단위의 골격 미비(WS5)도 빚으로 내고, legacy core 면제는 그 base 로드 태그 면제가 없을 때만 걷는다(있으면 core·태그 한 쌍을 그대로 둔다 — 태그에 defer 를 붙이는 것은 실행 순서 변경이다) · `debt-g0.json` 의 `mode` 가 `--debt-residual` 의 의미론을 정한다. 빚 스캔은 늘 검사 키에 `undeferrable` 을 표시하고, `debt-g0.json` 의 `scanner` 판이 다르면 잔존 판정은 불가다. **치환 확인** `--subst-check <기준> <대상> --build <산출물 폴더>`(슬라이스 0 끝 green ④)은 기준..대상 첫 부모 사슬의 web/ 밖 레인 편집을 본다. 테스트 파일(경로 성분 `test`·`tests` · `test_*.py`·`*_test.py`·`conftest.py` — dddjango 동작 보존 판별과 다르다)은 슬라이스 0 대조 커밋(build-state `slices[0]` 기록 · 기능 슬라이스 기록이 없는 커밋 · 승인 목록 밖 병합 · 앞선 기능 편집을 잇지 않는 승인 병합 안 몫)이 잇달아 바꾼 구간마다 옛 경로·옛 이름 → 새 경로·새 이름 치환뿐이어야 하고, 기능 슬라이스 커밋(과 그 뒤 승인 병합 안 몫)의 변경은 목록으로 낸다(build-state `mode: refactor` 면 모든 기록이 슬라이스 0 대조). 비테스트 파일은 누가 바꿨든 어긋남이다(최상위 `docs/`·`.dddjango/`·저장소 루트의 `.md` 만 대조 밖 — 루트 `CLAUDE.md`·`AGENTS.md` 는 대소문자와 무관하게 대조 · 경로를 알린다). 승인 목록 밖 병합은 병합마다 한 줄(등재 먼저 — 되돌려도 남는다)을 내고, 그 병합이 들인 비테스트는 «승인 목록 밖 병합 유입» 줄로 낸다. 산출물 폴더 `approved-merges.txt`(발주자 소유 · dddjango 와 같은 뜻)에 적힌 병합이 상류 쪽으로 바꾼 경로의 기준은 그 병합의 둘째 부모 판이다. build-state 기록은 7~40 hex · 기준..대상 첫 부모 사슬 위 비병합 커밋만 받고 양쪽 기록은 어긋남이다(exit 0 = 치환만 · 2 = 어긋남 · 1 = 실행 불능[web/ 밖 미커밋 변경 · 승인 목록·build-state 불량 · `slices[0]` 기록 없음 · 얕은 이력·공통 조상 없는 승인 병합 · 기준이 첫 부모 사슬 밖]).
 - `--all`은 게이트 무시 전역 감사용 — 레거시 프로젝트에서 발견 폭주가 정상이며 파이프라인 경로가 아니다(빚 조사는 `--debt-scan`).
 - 순환 등 래칫형 검사가 도입되면 기준선은 `.dddjango-web/backstop-baseline.json`(커밋 대상).
 - **green 판정**: `py_compile`·`manage.py check`는 문법/시스템 검사다. 화면 슬라이스는 실제 렌더 내용과 브라우저 확인까지 보고한다(implementation-ui §2). 미실행은 미검증으로 남기고 구조 검사 통과와 구별한다. **WP6**는 추가/변경된 잘못된 Django 짧은 주석을 차단한다(유효한 단일줄·comment 블록·verbatim 원문 예시는 제외).
 - **CSS 병치 결정**: design_system CSS(tokens.css·motion.css)는 `design_system/foundation/` **병치**가 결정이다 — 화면 CSS(`static/css/`)와 별개다. 병치 파일의 정적 서빙은 커맨드의 web 배선이 해결한다(아래 handoff).
 - **호스트 배선 handoff**: 호스트 프로젝트 배선(INSTALLED_APPS·TEMPLATES DIRS·STATICFILES_DIRS 프리픽스 튜플·ROOT_URLCONF include·`ALLOWED_HOSTS`의 "testserver"·vendored JS 설치[htmx — Phase 0 step 1 (6)·motion.js — 조건 설치])은 **커맨드(Coordinator Phase 0 «web 배선 전제조건 검사»·Phase 2 진입 준비) 소관**이다 — 이 스킬은 배선을 규정하지 않는다.
-- **반송 패밀리 → 교정 절 백링크**: WS(구조·골격) → §1 트리·§2 성장·§3 골격 / WI(격리) → §5 / WN(명명) → §4 / WP(순수성) → §5⑤.
+- **반송 패밀리 → 교정 절 백링크**: WS(구조·골격) → §1 트리·§2 성장·§3 골격 / WI(격리) → §5 / WN(명명) → §4 / WP(순수성) → §5⑤ / WV → §9.
 - **에이전트 분업**: 러너가 잡는 것(경로·격리·명명·순수성)은 흉내내지 말고 이 문서대로 만들면 통과한다. 러너가 못 보는 **의미 판별 6종**(view/section, 화면 전속, BC 어휘, 영역 귀속, 두 번째 개념, base «거의 빈»)은 `undecidable-web.md`가 판별 절차·배정의 단일 출처다.
 
 ## §8. 표기 표준화 — 브라운필드 관행 교정 사전
@@ -228,6 +234,49 @@ python "${CLAUDE_PLUGIN_ROOT}"/scripts/backstop.py <대상 프로젝트 루트> 
 | inline 실행 JS·HTMX JS 채널 | 승인된 동작을 native HTML/CSS·HTMX 선언 include 또는 기능별 외부 UI JS로 표현(§5⑤) |
 | 템플릿·CSS의 색·크기 리터럴 | tokens.css 토큰 — `var()` 참조(§4 tokens 행) |
 | 무네임스페이스 static 경로(`static/style.css` 류) | 프리픽스 경로 — STATICFILES_DIRS 프리픽스 튜플 배선 전제(§7 handoff) |
+| CDN 실행 태그로 플랫폼 SDK 로드 · static/js/ 에 SDK 사본 | 등재 사본 `static/vendor/<id>/` + 로컬 defer 태그(§9) — 공식이 아니면 제거(별도 요청) |
+
+## §9. 공식 플랫폼 SDK — 등재·사본·로드
+
+플랫폼 운영자가 자기 서비스 API 를 부르라고 직접 배포하는 브라우저 SDK 는 사용자가 G1 에서 한 번 승인하고 `web/sdk_registry.json` 에 등재한 것만 `static/vendor/<sdk_id>/<파일>` 에 운영자 원본 그대로 둔다.
+
+**자격**(모두):
+① 배포자 = 그 서비스의 운영자
+② 원본·문서 주소가 운영자 공식 도메인의 https(리다이렉트 최종 주소 포함). 공용 라이브러리 CDN(cdnjs·jsdelivr·unpkg·code.jquery.com·skypack·esm.sh·`/ajax/libs/` 경로 …)은 운영자 소유여도 아니다
+③ 운영자 자기 문서 쪽이 그 원본 주소를 인용(도구가 직접 받은 원문으로 확인)
+④ 라이선스·약관 확인
+⑤ 승인된 요구의 결과가 서버·평범한 링크·native 로는 안 됨을 운영자 문서로 보임
+⑥ 원본 그대로 한 파일이고 실행 중 다른 코드를 받아 실행하지 않음
+⑦ 운영자 자기 서비스 API 의 클라이언트(사본의 주석 밖 코드가 배포·문서 호스트와 다른 운영자 서비스 호스트를 부른다)
+
+**제외**: UI 프레임워크·컴포넌트 라이브러리, 상태 계층, 일반 유틸리티, 화면 캡처·렌더, 차트·시각화, 애니메이션, 폴리필·로더, htmx 와 그 확장, 비공식 래퍼. 운영자가 냈더라도 자기 서비스를 부르지 않으면 제외다. SDK 가 우리 DOM 에 UI 를 그리는 기능·ESM 전용·여러 파일·SDK CSS 는 받지 않는다.
+
+**목록**: 스키마 `dddjango-web-sdk-registry/2` · 정규 JSON 바이트(키 정렬 · 2칸 · NFC)다. 해시·크기·최종 주소·문서 증거·접속 호스트·파일이 담은 기능은 도구만 쓴다. `use_scope` 는 이 승인이 덮는 SDK 함수다. `operator`·`name` 에는 운영자 문서의 공식 이름과 사용자가 부르는 이름을 함께 적는다(예: `Kakao Corp.(카카오)`) — 승인 원문 대조의 운영자 낱말이 여기서 나온다. 공개 설정 이름에는 `SECRET`·`PASSWORD`·`PRIVATE`·`TOKEN`·`ADMIN` 낱말을 쓰지 않는다(공개 흐름으로 HTML 에 나간다 — JavaScript 키만).
+
+**늘 검사의 대상**:
+- 목록이 있으면 목록 자체(형식·결속·공식성)와 **등재 id 디렉터리**·그것을 가리키는 모든 템플릿 참조·`vendor/.gitattributes` 가 게이트와 무관하게 늘 검사되고, 발견은 «미룰 수 없음»이다.
+- 목록에 없는 벤더 단위(`vendor/` 아래 디렉터리 또는 직속 파일)는 지금 내용이 처음 생긴 때로 가른다. 목록이 저장소에 들어온 뒤(«목록 시대» — 목록을 들인 커밋의 자손)에 처음 생긴 내용이 하나라도 있으면 늘 발견이다(강등 금지 — 목록 삭제·항목 삭제·개명·병합 해소 탈락 모두). 등재에서 빠지는 길은 디렉터리째 지우는 `remove` 뿐이다. 목록에서 빠진 등재 바이트의 사본은 어디에 있든 늘 발견이다. 지금도 등재된 바이트의 다른 자리 사본은 목록 이전에 그 자리에 있던 것만 «등재 전»이다. 목록 시대는 마지막 SDK 를 지워도 끝나지 않는다. 얕은 이력에서는 판정하지 않고 멈춘다.
+- 목록이 생기기 전부터 있던 내용만 담은 미등재 단위는 «등재 전»이다. 새 벤더 파일·새 로드 줄만 diff 게이트가 막고, 빚 스캔은 이관 항목 WV12 를 내며, G0 배너에 입구를 알린다. 그 사본이 main 에 들어오면 main 을 받는 레인의 diff 게이트가 등록 착륙까지 red 이므로, 미등재 사본을 main 에 들이지 않는다. 그런 사본이 든 가지는 merge 로 합친다(rebase·squash 로 합치면 «목록 시대에 생긴 내용»이 된다).
+- OS 잡파일(고정 목록 · 미추적이거나 무시된 것)은 세지 않는다.
+
+**승인**: 승인은 approval 을 뺀 항목 전체의 정규 JSON sha256(NFC)에 묶인다. 한 칸이라도 바뀌면 다시 승인한다. 출처는 «본인 직접(<시각>)» 또는 «사용자 원문 <저장소 상대 경로>@<커밋>:<행>(<시각>)» 뿐이고, 대리할 수 없다. 원문은 다음을 모두 지켜야 한다.
+- 커밋이 지금 HEAD 의 조상이고, 경로가 `web/`·`.dddjango-web/` 밖이다.
+- 그 줄에 시각과, 도구가 항목에서 뽑은 운영자·제품 낱말과, 판(또는 도구가 만든 표지 `<id>@<판>#<지문 앞 12>`)이 있다. 시각이 후보 수집보다 이르면 배너에 알린다.
+- 판 올림은 새 판(새 표지)을 담은 새 원문이고, 범위 넓힘은 그 이름공간의 낱말(예: «카카오 로그인»)을 담은 원문이다.
+
+**범위**: 승인은 `use_scope` 의 원소 — 핵심 함수 · `<이름공간>.*` 묶음 · 이름 지정 함수 — 만 덮는다. 묶음은 그 이름공간의 호출형·수명 함수만 덮는다. 사용자 자료·계정 상태를 운영자 쪽에 보내거나 바꾸거나 지우는 함수(업로드·저장류)는 묶음에 들지 않고, 이름을 적어 따로 승인한다. 운영자 API 경로를 인자로 받는 범용 함수는 경로마다 적어 따로 승인한다. 한 요청이 함께 들이는 것은 한 번에 묻는다. SDK 가 우리 DOM 에 UI 를 그리는 함수는 어떤 승인으로도 쓰지 않는다. 함수 분류는 목록의 `namespace_members` 에 있고 승인에 묶인다. 같은 이름공간 안 호출형 함수는 다시 묻지 않는다(정보 줄). 새 이름공간·이름 지정 함수·범용 함수 경로는 G1 에서 한 줄로 다시 묻고, 요청 원문이 대응 낱말로 이미 말했으면 그 줄이 출처다(범용 함수 경로는 예외 없이 묻는다). 파일이 담은 다른 기능은 이렇게 다시 승인하기 전에는 쓰지 않는다.
+
+**바이트**: 사본은 심볼릭 링크·변환 속성 없이 git 에 일반 파일로 저장된 운영자 원본이다(`static/vendor/.gitattributes` 고정 표지).
+
+**쓰는 쪽**: 목록·사본은 Coordinator 가 `sdk_vendor.py` 로만, 그 둘만 담은 `chore(web-sdk):` 커밋으로 바꾼다. 설계자·코더는 읽기만 한다.
+
+**복원**: 다시 받은 원본이 등재 지문과 같을 때의 복원, 목록 재정규화(NFC 포함), 표지 재기록, 아무도 부르지 않는 비등재 사본 제거는 승인 없이 어느 작업에서든 언제든 한다(G0 뒤에 들어온 파손 포함).
+
+**로드**: 그 SDK 를 쓰는 페이지의 `{% block scripts %}` 안(모든 페이지가 쓰면 base 의 `{% block scripts %}` 앞)에 외부 `{% static 'web/vendor/<id>/<파일>' %}` 로 한 번 둔다. 속성은 `src`·`defer` 만이고, 그 SDK 를 부르는 기능 JS 태그보다 앞이다. base·페이지 중복 로드는 금지다.
+
+**호출·키**: SDK 호출은 UI 동작 계약이 지정한 기능 JS 안에서, `use_scope` 묶음의 함수만, 부르는 순간 전역 경로로 한다. 공개 키는 settings 값만 출처다 — VM 이 state 에 담고 템플릿이 escape 된 data 속성·`json_script` 로 넘긴다. 키 리터럴·`os.environ` 직접 읽기·새 context processor 는 금지다.
+
+**정리 단위**: 벤더 칸은 리팩토링에서 «SDK 등재 정리 전용» 단위다(등록·복원·미사용 제거만).
 
 ---
 

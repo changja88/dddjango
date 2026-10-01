@@ -19,7 +19,7 @@ web은 **«내부의 외부 클라이언트»**다 — 같은 저장소의 `web/
 
 - **요청 구동 MVVM**: 구조 표준은 view/view_model/state 삼총사 + 템플릿이다. VM은 **무상태 조립기**다 — 매 요청 새로 조립되고 요청이 끝나면 사라진다. 서버 VM에 watch·구독·상주 상태는 존재하지 않는다. 브라우저의 임시 UI 상태는 아래 UI 동작 계약으로 별도 소유한다. 갱신 표준은 HTMX 부분 재렌더다(§4).
 - **형상 공리**: 확인된 화면·상태의 외형 근거는 동결 시안(이미지 또는 렌더 확인된 HTML)이다. 명세는 구조·동작·계약을 결정하며 형상을 재해석하지 않는다. 시안과 다른 요구가 있으면 명세에 `| id | 대상·상태 | 시안 근거 | 변경 | 사유 | 결정 근거 |` 이탈 표를 둔다. 결정 근거는 해당 변경을 지목한 사용자 요구/승인 또는 명시적으로 위임된 결정의 기록 위치다. 기존의 구체적 승인은 재사용하며, 미결정 행은 적용하지 않는다. 이미 승인된 원본 재현으로 되돌리는 결함 수정은 새로운 이탈 승인을 요구하지 않는다. 원본과 다른 변경을 유지하려 할 때 이탈 결정을 확인한다. 기술 제약·근사 보고·포괄 승인만으로 표에 없는 변경을 정당화하지 않는다. 명세에는 시안 경계·viewport·요소/토큰 대응 좌표와 승인 이탈만 기록하고 독립적인 산문 레이아웃을 만들지 않는다. 재현 절차는 implementation-ui §2 소유다. **컴포넌트 정체는 이탈 대상이 아니다** — 시안이 `component-from-global-scope`로 선언한 커스텀 컴포넌트(예: Select)의 정체는 이탈 표가 관할하는 외형(배치·치수·타이포·색·variant)과 별개의 불변식이라, native 등가(native `<select>` 등)로 평탄화하는 것은 이탈이 아니라 **비순응**이다(외형·옵션이 같아도 정체가 다르면 불일치). `check_design_evidence.py --phase identity`(및 visual 백스톱)가 결정적으로 반송하며, 선언된 그 컴포넌트로 구현한다(메뉴·상호작용 JS는 implementation-javascript).
-- **기술 책임**: Python/Django는 요청·form 검증·VM의 서버 표시 상태 조립·client 계약 소비, HTML은 구조·의미·native 동작, HTMX는 서버 요청과 HTML 교체, CSS는 시각 값·레이아웃·전환을 소유한다. JavaScript는 승인된 UI 동작 계약의 브라우저 임시 상호작용만 담당한다. native HTML/CSS로 충분하면 JS를 만들지 않는다(단 시안이 커스텀 컴포넌트로 선언한 정체를 native로 대체하라는 뜻이 아니다 — 형상 공리의 정체 불변식이 우선하며, 그 컴포넌트의 메뉴·상호작용에 JS가 필요하면 만든다). 업무 권한·금액·저장 판정·별도 업무 API 호출·SPA 상태 계층을 JS로 옮기지 않는다. 서버/브라우저 분담과 swap 경계는 이 스킬, 파일·로드 경계는 discipline-web-houserules §5⑤, DOM·수명 표기는 implementation-javascript가 소유한다.
+- **기술 책임**: Python/Django는 요청·form 검증·VM의 서버 표시 상태 조립·client 계약 소비, HTML은 구조·의미·native 동작, HTMX는 서버 요청과 HTML 교체, CSS는 시각 값·레이아웃·전환을 소유한다. JavaScript는 승인된 UI 동작 계약의 브라우저 임시 상호작용만 담당한다. 승인·등재된 공식 플랫폼 SDK 는 그 상호작용 안에서 운영자 서비스를 부르는 도구로만, 승인 범위의 기능만 쓴다(등재·로드 사실은 houserules §9). native HTML/CSS로 충분하면 JS를 만들지 않는다(단 시안이 커스텀 컴포넌트로 선언한 정체를 native로 대체하라는 뜻이 아니다 — 형상 공리의 정체 불변식이 우선하며, 그 컴포넌트의 메뉴·상호작용에 JS가 필요하면 만든다). 업무 권한·금액·저장 판정·별도 업무 API 호출·SPA 상태 계층을 JS로 옮기지 않는다. 서버/브라우저 분담과 swap 경계는 이 스킬, 파일·로드 경계는 discipline-web-houserules §5⑤, DOM·수명 표기는 implementation-javascript가 소유한다.
 
 ### UI 동작 계약
 
@@ -29,8 +29,9 @@ web은 **«내부의 외부 클라이언트»**다 — 같은 저장소의 `web/
 |---|---|---|---|---|---|---|---|---|
 | 비밀번호 표시 | 승인 요구의 표시 버튼 | HTML + UI JS | static/js/password_visibility.js; HTMX 필요 없음 | [data-password-visibility] 안 input·button | 요청 없음; 교체되면 현재 자식을 조회 | input 표시 상태; 외부 자원 없음 | button 키보드 동작·aria-pressed; JS 실패 시 password 유지 | 클릭·키보드·요구된 반복 인스턴스·실제 swap 뒤 재동작 |
 | 안내 펼침 | 승인 요구의 접힘 안내 | native details/summary | 필요 없음: native 동작으로 충족 | details·summary | 요청·swap 없음 | open 속성; 자원 없음 | native 키보드 경로 | 펼침·접힘·포커스 |
+| 플랫폼 공유 | 승인 요구의 공유 단추 | HTML + UI JS + SDK:<sdk_id> | static/js/<기능>.js | [data-<root>] 안 단추·공유 자료 JSON | 공유 자료는 서버 렌더·HTMX 로 클릭 전에 준비 · SDK 호출은 우리 서버 요청 없음 | 없음(문서 수명 SDK 초기화 1회) | 키 빈 값 = 설정 실패 · SDK 없음 = 일시 실패 · 결과를 알 수 없으면 성공 표시 없음 | 호출 경계 기록 대조·사용자 동작 안 호출·두 실패 행 |
 
-예시는 해당 요구가 있을 때만 소비한다. root·대상, 요청 유무, innerHTML/outerHTML 교체 범위, 유지되는 DOM, 자원과 비동기 완료의 유효성, 적용 가능한 키보드·실패·정리와 실제 확인 행위를 연결한다. 쓰지 않는 자원이나 swap·다중 인스턴스 검증을 억지로 추가하지 않는다. HTMX가 필요하면 `static/htmx/<기능>.html`의 선언과 이를 include하는 section, 서버 fragment view를 같은 행에 연결한다. 기능 파일·로드 위치는 houserules §4·§5, 표기는 implementation-ui §5와 implementation-javascript가 소유한다.
+«담당 기술»에는 등재된 공식 SDK 를 부르는 행에 한해 `SDK:<sdk_id>` 값을 쓴다(그 행의 SDK 사용은 명세 SDK 사용 표가 정한다). 예시는 해당 요구가 있을 때만 소비한다. root·대상, 요청 유무, innerHTML/outerHTML 교체 범위, 유지되는 DOM, 자원과 비동기 완료의 유효성, 적용 가능한 키보드·실패·정리와 실제 확인 행위를 연결한다. 쓰지 않는 자원이나 swap·다중 인스턴스 검증을 억지로 추가하지 않는다. HTMX가 필요하면 `static/htmx/<기능>.html`의 선언과 이를 include하는 section, 서버 fragment view를 같은 행에 연결한다. 기능 파일·로드 위치는 houserules §4·§5, 표기는 implementation-ui §5와 implementation-javascript가 소유한다.
 
 **handoff** — 이 스킬이 안 다루는 것:
 

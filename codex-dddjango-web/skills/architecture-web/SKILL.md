@@ -35,7 +35,7 @@ description: dddjango-web 프레젠테이션 아키텍처 — view/section/widge
 
 | 주제 | 절 |
 |---|---|
-| web 트랙의 정의·경계·handoff | [`references/final.md`](references/final.md) §1 |
+| web 트랙의 정의·경계·handoff · UI 동작 계약(`SDK:<sdk_id>` 담당 기술 행) | [`references/final.md`](references/final.md) §1 |
 | 이 조각은 view·section·widget 중 무엇인가 | final.md §2 |
 | view·VM·state 규율과 forms 분담 | final.md §3 |
 | section·widget·HTMX fragment 규율 | final.md §4 |
