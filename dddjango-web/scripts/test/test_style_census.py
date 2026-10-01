@@ -142,5 +142,131 @@ class CliTest(unittest.TestCase):
         self.assertNotIn('Traceback', result.stderr)
 
 
+class SheetTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.sheet = SCRIPT.with_name('style_value_sheet.py')
+
+    def sheet_for(self, data, tokens, seed=0):
+        cp, tp, out = (self.root / name for name in ('census.json', 'tokens.css', 'sheet.md'))
+        cp.write_text(json.dumps(data))
+        if tokens is not None:
+            tp.write_text(tokens)
+        result = subprocess.run([sys.executable, '-B', str(self.sheet), '--census', str(cp),
+                                 '--tokens', str(tp), '--out', str(out)], capture_output=True, text=True,
+                                env={**os.environ, 'PYTHONHASHSEED': str(seed)})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return out.read_text()
+
+    def test_exact_values_and_aliases_exclude_near_values(self):
+        c = census(color='rgba(1, 2, 3, 0.1)')
+        c['records'][0]['s']['fs'] = '26px'
+        sheet = self.sheet_for({'a': c}, '''
+        :root { --size: 26px; --alias: var(--size); --near: 26.4px;
+                --unitless: 26; --ink: rgba(1,2,3,.1); --near-alpha: rgba(1,2,3,.11); }
+        ''')
+        for name in ('--size', '--alias', '--ink'):
+            self.assertIn('`' + name + '`', sheet)
+        for name in ('--near', '--unitless', '--near-alpha'):
+            self.assertNotIn('`' + name + '`', sheet)
+
+    def test_shadow_matches_whole_ordered_layers(self):
+        c = census()
+        c['records'][0]['s']['sh'] = 'rgb(0, 0, 0) 0px 1px 2px 0px, rgb(255, 255, 255) 0px 0px 1px 0px inset'
+        sheet = self.sheet_for({'a': c}, '''
+        :root { --shadow: 0 1px 2px #000, inset 0 0 1px #fff;
+                --one-layer: 0 1px 2px #000;
+                --reversed: inset 0 0 1px #fff, 0 1px 2px #000; }
+        ''')
+        self.assertIn('`--shadow`', sheet)
+        self.assertNotIn('`--one-layer`', sheet)
+        self.assertNotIn('`--reversed`', sheet)
+
+    def test_four_sides_and_corners_keep_exact_tokens(self):
+        c = census()
+        c['records'][0]['s'].update(rad='26px 26px 34px 34px',
+                                    pad='2px 4px 2px 4px', gap='8px 12px',
+                                    bd='1px solid rgb(1, 2, 3) | 0 | 2px solid rgb(4, 5, 6) | 0')
+        sheet = self.sheet_for({'a': c}, '''
+        :root { --r26: 26px; --r34: 34px; --padding: 2px 4px;
+                --gap: 8px 12px; --top: #010203; --bottom: #040506; }
+        ''')
+        for name in ('--r26', '--r34', '--padding', '--gap', '--top', '--bottom'):
+            self.assertIn('`' + name + '`', sheet)
+        for prop in ('bd.top', 'bd.right', 'bd.bottom', 'bd.left', 'rad.top-left', 'rad.bottom-right'):
+            self.assertIn('`' + prop + '`', sheet)
+
+    def test_variants_and_child_effects_remain_separate(self):
+        c = census()
+        c['records'][0].update(k='box', sig='div.panel', s={'bg': 'rgb(255, 255, 255)'})
+        child = copy.deepcopy(c['records'][0])
+        child.update(i=1, k='pseudo', pn='::before', c=0, anc=[0], s={'sh': 'rgb(0, 0, 0) 0px 0px 2px 0px'})
+        variant = copy.deepcopy(c['records'][0])
+        variant.update(i=2, s={'bg': 'rgb(0, 0, 0)'})
+        c['records'].extend([child, variant])
+        c['meta']['records_total'] = 3
+        sheet = self.sheet_for({'a': c}, ':root { --white: #fff; --black: #000; }')
+        self.assertEqual(sheet.count('### S-'), 3)
+        self.assertIn('::before', sheet)
+        self.assertIn('a#1', sheet)
+        self.assertIn('자식 효과', sheet)
+        self.assertIn('`--white`', sheet)
+        self.assertIn('`--black`', sheet)
+
+    def test_ambiguous_and_unresolved_values_do_not_get_guessed(self):
+        c = census()
+        sheet = self.sheet_for({'a': c}, '''
+        :root { --duplicate: 16px; --cycle-a: var(--cycle-b); --cycle-b: var(--cycle-a);
+                --relative: 1rem; --calc: calc(8px + 8px); --alias: var(--duplicate); }
+        .other { --duplicate: 18px; }
+        ''')
+        for name in ('--duplicate', '--cycle-a', '--cycle-b', '--relative', '--calc', '--alias'):
+            self.assertNotIn('`' + name + '`', sheet)
+        self.assertIn('신규 등록 필요', sheet)
+        self.assertIn('수동 확인', sheet)
+
+    def test_missing_token_file_is_a_reference_sheet_not_a_gate(self):
+        sheet = self.sheet_for({'a': census()}, None)
+        self.assertIn('토큰 파일 없음', sheet)
+        self.assertIn('신규 등록 필요', sheet)
+
+    def test_multiword_font_quotes_preserve_exact_family(self):
+        c = census()
+        c['records'][0]['s']['ff'] = 'Noto Sans'
+        sheet = self.sheet_for({'a': c}, ':root { --font: "Noto Sans"; --other: "Noto Serif"; }')
+        self.assertIn('`--font`', sheet)
+        self.assertNotIn('`--other`', sheet)
+
+    def test_v4_truncated_value_is_visible_but_never_an_exact_match(self):
+        c = census()
+        c['records'][0].update(k='pseudo', pn='::before')
+        c['records'][0]['s']['bgi'] = 'linear-gradient(rgb(255, 0, 0), rgb(0, 0,'
+        c['records'][0]['s']['content'] = '"abcdefghijklmno'
+        sheet = self.sheet_for({'a': c}, ':root { --size: 16px; }')
+        self.assertIn('linear-gradient', sheet)
+        self.assertIn('v4 길이 상한', sheet)
+        self.assertIn('`--size`', sheet)
+
+    def test_alpha_is_not_rounded_to_eight_bits(self):
+        c = census(color='rgba(1, 2, 3, 0.5)')
+        sheet = self.sheet_for({'a': c}, ':root { --exact: rgba(1,2,3,.5); --rounded: #01020380; }')
+        self.assertIn('`--exact`', sheet)
+        self.assertNotIn('`--rounded`', sheet)
+
+    def test_sheet_bytes_are_independent_of_map_record_and_token_order(self):
+        a = census()
+        r = copy.deepcopy(a['records'][0])
+        r.update(i=1, sig='p.other')
+        a['records'].append(r)
+        a['meta']['records_total'] = 2
+        b = census(color='rgb(255, 0, 0)')
+        one = self.sheet_for({'a': a, 'b': b}, ':root { --a: 16px; --b: #f00; }')
+        a['records'].reverse()
+        two = self.sheet_for({'b': b, 'a': a}, ':root { --b: #f00; --a: 16px; }', seed=7)
+        self.assertEqual(one, two)
+
+
 if __name__ == '__main__':
     unittest.main()
