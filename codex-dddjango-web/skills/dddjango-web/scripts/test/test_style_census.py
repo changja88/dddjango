@@ -195,8 +195,10 @@ class SheetTest(unittest.TestCase):
         ''')
         for name in ('--r26', '--r34', '--padding', '--gap', '--top', '--bottom'):
             self.assertIn('`' + name + '`', sheet)
-        for prop in ('bd.top', 'bd.right', 'bd.bottom', 'bd.left', 'rad.top-left', 'rad.bottom-right'):
+        for prop in ('bd.top', 'bd.bottom', 'rad.top-left', 'rad.bottom-right'):
             self.assertIn('`' + prop + '`', sheet)
+        self.assertNotIn('`bd.right`', sheet)
+        self.assertNotIn('`bd.left`', sheet)
 
     def test_variants_and_child_effects_remain_separate(self):
         c = census()
@@ -208,7 +210,7 @@ class SheetTest(unittest.TestCase):
         c['records'].extend([child, variant])
         c['meta']['records_total'] = 3
         sheet = self.sheet_for({'a': c}, ':root { --white: #fff; --black: #000; }')
-        self.assertEqual(sheet.count('### S-'), 3)
+        self.assertEqual(sheet.count('| S-'), 3)
         self.assertIn('::before', sheet)
         self.assertIn('a#1', sheet)
         self.assertIn('자식 효과', sheet)
@@ -224,7 +226,7 @@ class SheetTest(unittest.TestCase):
         ''')
         for name in ('--duplicate', '--cycle-a', '--cycle-b', '--relative', '--calc', '--alias'):
             self.assertNotIn('`' + name + '`', sheet)
-        self.assertIn('신규 등록 필요', sheet)
+        self.assertNotIn('신규 등록 필요', sheet)
         self.assertIn('수동 확인', sheet)
 
     def test_missing_token_file_is_a_reference_sheet_not_a_gate(self):
@@ -249,11 +251,105 @@ class SheetTest(unittest.TestCase):
         self.assertIn('v4 길이 상한', sheet)
         self.assertIn('`--size`', sheet)
 
-    def test_alpha_is_not_rounded_to_eight_bits(self):
+    def test_hex_alpha_matches_indistinguishable_browser_serialization(self):
         c = census(color='rgba(1, 2, 3, 0.5)')
         sheet = self.sheet_for({'a': c}, ':root { --exact: rgba(1,2,3,.5); --rounded: #01020380; }')
         self.assertIn('`--exact`', sheet)
-        self.assertNotIn('`--rounded`', sheet)
+        self.assertIn('`--rounded`', sheet)
+
+    def test_p1_serialized_colors_shadow_and_font_find_existing_tokens(self):
+        c = census()
+        c['records'][0]['s'] = {
+            'bg': 'color(srgb 1 0.992157 0.976471 / 0.52)',
+            'c': 'color(srgb 0.309804 0.541176 0.423529 / 0.14)',
+            'fill': 'color(srgb 0.121569 0.109804 0.0941176 / 0.06)',
+            'sh': ('color(srgb 0.121569 0.109804 0.0941176 / 0.07) 0px 2px 6px 0px, '
+                   'color(srgb 0.121569 0.109804 0.0941176 / 0.1) 0px 10px 28px 0px'),
+            'ff': 'Pretendard Variable',
+        }
+        sheet = self.sheet_for({'p1': c}, '''
+        :root { --ink-900: #1F1C18; --jade-500: #4F8A6C;
+          --glass-tint-strong: rgba(255,253,249,.52);
+          --success-soft: color-mix(in srgb,var(--jade-500) 14%,transparent);
+          --surface-muted: color-mix(in srgb,var(--ink-900) 6%,transparent);
+          --shadow-2: 0 2px 6px rgba(31,28,24,.07), 0 10px 28px rgba(31,28,24,.10);
+          --shadow-near: 0 2px 6px rgba(31,28,24,.07), 0 10px 28px rgba(31,28,24,.11);
+          --font-sans: "Pretendard Variable", Pretendard, system-ui, sans-serif; }
+        ''')
+        for name in ('--glass-tint-strong', '--success-soft', '--surface-muted', '--shadow-2', '--font-sans'):
+            self.assertIn('`' + name + '`', sheet)
+        self.assertNotIn('`--shadow-near`', sheet)
+        self.assertIn('첫 서체 일치(스택 확인)', sheet)
+
+    def test_srgb_visible_alpha_precision_is_not_collapsed(self):
+        c = census(color='color(srgb 0.1 0.2 0.3 / 0.5005)')
+        sheet = self.sheet_for({'a': c}, '''
+        :root { --exact: color(srgb .1 .2 .3 / .5005);
+                --near: color(srgb .1 .2 .3 / .5); }
+        ''')
+        self.assertIn('`--exact`', sheet)
+        self.assertNotIn('`--near`', sheet)
+
+    def test_unresolved_tokens_make_matching_property_manual(self):
+        c = census()
+        c['records'][0]['s'] = {'fs': '16px', 'c': 'rgb(1, 2, 3)'}
+        sheet = self.sheet_for({'a': c}, '''
+        :root { --fs-relative: 1rem; --fs-calculated: calc(8px + 8px);
+                --ink-mix: color-mix(in oklab, #123 20%, transparent); }
+        ''')
+        for value in ('16px', 'rgb(1, 2, 3)'):
+            row = next(line for line in sheet.splitlines() if '| `' + value + '` |' in line)
+            self.assertIn('수동 확인', row)
+            self.assertNotIn('신규 등록 필요', row)
+
+    def test_unsupported_named_color_is_not_reported_as_missing(self):
+        c = census(color='rgb(102, 51, 153)')
+        sheet = self.sheet_for({'a': c}, ':root { --border-ink: rebeccapurple; }')
+        row = next(line for line in sheet.splitlines() if '| `rgb(102, 51, 153)` |' in line)
+        self.assertIn('수동 확인', row)
+        self.assertNotIn('신규 등록 필요', row)
+
+    def test_defaults_and_wrong_token_families_do_not_enter_reference_rows(self):
+        c = census()
+        c['records'][0]['s'] = {'bg': 'rgba(0, 0, 0, 0)', 'bf': 'none', 'maxh': 'none',
+                              'pad': '0px 0px 0px 0px', 'gap': 'normal normal', 'op': '1',
+                              'bd': '1px solid rgb(1, 2, 3) | 0 | 0 | 0', 'lh': '13px'}
+        sheet = self.sheet_for({'a': c}, '''
+        :root { --settings-toast-z: 1; --shadow-0: none; --ls-caption: 0px;
+                --fs-caption: 13px; --chat-review-stars-tracking: 1px;
+                --border-width: 1px; --line-height: 13px; }
+        ''')
+        for name in ('--settings-toast-z', '--shadow-0', '--ls-caption', '--fs-caption', '--chat-review-stars-tracking'):
+            self.assertNotIn('`' + name + '`', sheet)
+        for name in ('--border-width', '--line-height'):
+            self.assertIn('`' + name + '`', sheet)
+        self.assertNotIn('| `bd` |', sheet)
+        for value in ('none', 'normal normal', '0px 0px 0px 0px', 'rgba(0, 0, 0, 0)'):
+            self.assertNotIn('| `' + value + '` |', sheet)
+
+    def test_lane_sized_sheet_bounds_lists_and_deduplicates_value_index(self):
+        c = census()
+        c['records'] = []
+        # P1 233묶음과 비슷한 240묶음, 7,200 records. 반복 구성원 폭증을 잡는다.
+        for group in range(240):
+            for repeat in range(30):
+                i = len(c['records'])
+                c['records'].append({'i': i, 'k': 'box', 'sig': f'div.panel-{group}',
+                    'r': [0, 0, 100, 100], 'op': 1, 'anc': [0] if i else [],
+                    's': {'bg': 'rgb(1, 2, 3)', 'rad': '26px 26px 26px 26px',
+                          'pad': '8px 12px 8px 12px', 'bf': 'none', 'minh': 'auto',
+                          'bd': '0 | 0 | 0 | 0', 'gap': 'normal normal',
+                          'fs': f'{12 + group % 24}px', 'lh': f'{20 + group % 30}px',
+                          'c': f'rgb({group % 24}, 51, 153)',
+                          'sh': f'rgba(31, 28, 24, 0.1) 0px {group % 12}px {group % 20}px 0px'}})
+        c['meta']['records_total'] = len(c['records'])
+        sheet = self.sheet_for({'lane': c}, ':root { --ink: #010203; --radius: 26px; --space: 8px 12px; }')
+        self.assertLessEqual(len(sheet.encode()), 100_000)
+        self.assertIn('값 → 토큰', sheet)
+        self.assertEqual(sheet.count('| S-'), 240)
+        self.assertIn('7199', sheet)  # 루트의 전체 자식 수는 표본 절단 뒤에도 남는다.
+        self.assertNotIn('lane#7199', sheet)
+        self.assertLess(sheet.count('`--ink`'), 3)
 
     def test_sheet_bytes_are_independent_of_map_record_and_token_order(self):
         a = census()
