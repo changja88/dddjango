@@ -7,6 +7,10 @@
 from __future__ import annotations
 
 import ast
+import contextlib
+import errno
+import io
+import json
 import os
 import re
 import subprocess
@@ -14,6 +18,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from pregate_fixture_run import _git, _load_module
 
@@ -30,6 +35,66 @@ def spec_text(paths: list[str], symbols: list[str] = (), imports: list[str] = ()
     return ("<!-- machine: file-plan -->\n```paths\n" + "\n".join(paths) + "\n```\n"
             "<!-- machine: symbols -->\n```symbols\n" + "\n".join(symbols) + "\n```\n"
             "<!-- machine: boundary-imports -->\n```imports\n" + "\n".join(imports) + "\n```\n")
+
+
+class ScratchLifecycleTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="pregate-lifecycle-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.repo = self.root / "repo"
+        self.repo.mkdir()
+        (self.repo / "README.md").write_text("fixture\n")
+        self.spec = self.root / "spec.md"
+        self.spec.write_text(spec_text(["update README.md"]))
+        _git(self.repo, "init", "-q", "--object-format=sha1")
+        _git(self.repo, "add", "README.md")
+        _git(self.repo, "commit", "-qm", "fixture")
+
+    def test_repeated_pregate_cleans_scratch_without_starting_auto_maintenance(self) -> None:
+        # SHA-1 fanout 17의 blob 8개: gc.auto=1이면 기존 git 호출의 자동 정리가 실제 발화한다.
+        for seed in (507, 873, 1155, 1195, 1278, 1776, 1864, 1982):
+            (self.repo / f"payload-{seed}.txt").write_text(f"pregate auto-maintenance probe {seed}\n")
+        config = self.root / "gitconfig"
+        config.write_text("[gc]\n auto = 1\n autoDetach = true\n"
+                          "[maintenance]\n auto = true\n autoDetach = true\n")
+        env = dict(os.environ, GIT_CONFIG_GLOBAL=str(config), GIT_CONFIG_NOSYSTEM="1")
+        for iteration in range(3):
+            with self.subTest(iteration=iteration):
+                scratch_root = self.root / f"scratch-{iteration}"
+                scratch_root.mkdir()
+                trace = self.root / f"trace-{iteration}.jsonl"
+                proc = subprocess.run([sys.executable, str(SCRIPTS / "design_pregate.py"),
+                                       str(self.spec), str(self.repo)], capture_output=True, text=True,
+                                      env=dict(env, TMPDIR=str(scratch_root), TMP=str(scratch_root),
+                                               TEMP=str(scratch_root), GIT_TRACE2_EVENT=str(trace)))
+                self.assertEqual(proc.returncode, 4, proc.stdout + proc.stderr)
+                self.assertEqual(list(scratch_root.glob("design-pregate-*")), [])
+                events = [json.loads(line) for line in trace.read_text().splitlines()]
+                starts = [event["argv"] for event in events if event["event"] == "start"
+                          and any(arg in ("maintenance", "gc", "repack", "pack-objects")
+                                  for arg in event.get("argv", []))]
+                self.assertEqual(starts, [], "격리 사본에서 자동 git 정리가 발화했다")
+
+    def test_cleanup_failure_is_reported_as_execution_failure_with_scratch_path(self) -> None:
+        scratch = self.root / "design-pregate-cleanup-failure"
+        scratch.mkdir()
+        real_rmdir = os.rmdir
+
+        def raced_rmdir(path, *args, **kwargs):
+            if Path(path) == scratch:
+                raise OSError(errno.ENOTEMPTY, "injected concurrent writer", str(scratch))
+            return real_rmdir(path, *args, **kwargs)
+
+        stderr = io.StringIO()
+        with mock.patch.object(pg.tempfile, "mkdtemp", return_value=str(scratch)), \
+                mock.patch.object(os, "rmdir", side_effect=raced_rmdir), \
+                contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(stderr):
+            code = pg.main([str(self.spec), str(self.repo)])
+        self.assertEqual(code, 1, stderr.getvalue())
+        self.assertIn("정리 실패", stderr.getvalue())
+        self.assertIn(str(scratch), stderr.getvalue())
+        self.assertTrue(scratch.exists())
 
 
 class TranscriptionTest(unittest.TestCase):

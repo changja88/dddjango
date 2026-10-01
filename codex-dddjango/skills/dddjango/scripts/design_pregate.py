@@ -1116,9 +1116,10 @@ def render_stub(entry: PlanEntry) -> str:
 # ── 격리 사본 — archive + dirty overlay + init (D1) ─────────────────────────
 
 def _git(cwd: Path, *args: str, check: bool = True) -> "subprocess.CompletedProcess[bytes]":
-    """훅 억제·서명 억제 git 호출 — 실패는 RunError(실행 불능)."""
+    """훅·서명·자동 정리를 억제한다 — 단명 사본에 분리 정리 프로세스를 남기지 않는다."""
     argv: "list[str]" = ["git", "-C", str(cwd), "-c", "core.hooksPath=",
                          "-c", "commit.gpgsign=false",
+                         "-c", "maintenance.auto=false", "-c", "gc.auto=0",
                          "-c", "user.email=pregate@local", "-c", "user.name=pregate"] + list(args)
     proc: "subprocess.CompletedProcess[bytes]" = subprocess.run(argv, capture_output=True)
     if check and proc.returncode != 0:
@@ -3641,7 +3642,10 @@ def _main(argv: "list[str]") -> int:
         if ns.keep:
             print(f"(--keep) 격리 사본 보존: {scratch}")
         else:
-            shutil.rmtree(scratch, ignore_errors=True)
+            try:
+                shutil.rmtree(scratch)
+            except OSError as exc:
+                raise RunError(f"격리 사본 정리 실패: {scratch} — {exc}") from exc
 
 
 if __name__ == "__main__":
