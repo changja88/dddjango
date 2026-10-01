@@ -105,8 +105,8 @@ _LINENO_RE: "re.Pattern[str]" = re.compile(r":\d+")
 _IGNORE_COPY: "tuple[str, ...]" = (
     ".git", ".venv", "venv", "__pycache__", "*.pyc", "node_modules",
     "graphify-out", ".mypy_cache", ".pytest_cache", ".ruff_cache", "staticfiles",
-    # F-C(2026-08-14): 숨김 디렉터리 전부 = 도구·하네스 영역(`.codex/`·`.dddjango/` 등) —
-    # 검사 표면이 아니다(라운드 3 실측: `.codex/cleanroom-guard.py` #493×4 오탐 귀속).
+    # F-C: 숨김 경로는 도구·하네스 영역 — 검사 표면에서 제외한다.
+    # 멱등성 검사 입력인 .dddjango/*/{scope,design-spec}.md 만 복사 뒤 별도로 보존한다.
     ".*", "site-packages", "build", "dist",
 )
 
@@ -177,6 +177,12 @@ def _snapshot_current(root: Path, dest: Path) -> None:
         return ignore(directory, names) | {name for name in names if parent / name in omitted}
 
     shutil.copytree(root, dest, ignore=ignore_current)
+    for name in ("scope.md", "design-spec.md"):
+        for source in sorted((root / ".dddjango").glob(f"*/{name}")):
+            if source.is_file():
+                target = dest / source.relative_to(root)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, target)
 
 
 def _parse_fail_findings(target: Path) -> "set[str]":

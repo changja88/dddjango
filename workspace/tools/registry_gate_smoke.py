@@ -414,6 +414,88 @@ def _parallel_rows(td: Path) -> "list[tuple[str, int, int, bool, str]]":
 
 
 
+class IdempotencySnapshotRegression(unittest.TestCase):
+    artifact = "application/orders/domain_layer/order/idempotency_record.py"
+    scope = "멱등성 처리는 이번 요청에 명시되지 않았다.\n"
+    approval = "G1 사용자 승인: 멱등성 도입 채택\n"
+    checker = "check-idempotency-scope-creep.py"
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix="idempotency-snapshot-")
+        self.addCleanup(self.temp.cleanup)
+        self.td = Path(self.temp.name)
+        self.repo, self.anchor = _make_repo(self.td, "repo")
+
+    def direct(self):
+        return subprocess.run([sys.executable, str(GATE.parent / self.checker), str(self.repo)],
+                              capture_output=True, text=True, env=_scrubbed_env()).returncode
+
+    def test_unrequested_untracked_artifact_fires_in_direct_checker_and_gate(self):
+        _write(self.repo, ".dddjango/orders/scope.md", self.scope)
+        self.anchor = _commit_all(self.repo, "scope")
+        _write(self.repo, self.artifact, "")
+        self.assertEqual(self.direct(), 2)
+        code, out = _gate(self.repo, self.anchor)
+        self.assertEqual(code, 2, out)
+        self.assertRegex(out, rf"\| `{re.escape(self.checker)}` \| 0 \| 2 \|")
+
+    def test_untracked_scope_and_approval_inputs_preserve_checker_decision(self):
+        _write(self.repo, ".dddjango/orders/scope.md", self.scope)
+        _write(self.repo, self.artifact, "")
+        code, out = _gate(self.repo, self.anchor)
+        self.assertEqual(code, 2, out)
+        self.assertRegex(out, rf"\| `{re.escape(self.checker)}` \| 0 \| 2 \|")
+        other_rows = [line for line in out.splitlines() if line.startswith("| `")
+                      and self.checker not in line]
+        for document in ("scope.md", "design-spec.md"):
+            with self.subTest(document=document):
+                _write(self.repo, ".dddjango/orders/" + document, self.scope + self.approval)
+                self.assertEqual(self.direct(), 0)
+                code, out = _gate(self.repo, self.anchor)
+                self.assertRegex(out, rf"\| `{re.escape(self.checker)}` \| 0 \| 0 \|")
+                self.assertNotIn(self.checker + " ::", out)
+                self.assertEqual([line for line in out.splitlines() if line.startswith("| `")
+                                  and self.checker not in line], other_rows)
+                _write(self.repo, ".dddjango/orders/" + document, self.scope)
+
+    def test_snapshot_copies_only_checker_documents_with_current_bytes(self):
+        from pregate_fixture_run import _load_module
+        sys.path.insert(0, str(GATE.parent))
+        gate = _load_module(GATE, "idempotency_snapshot_gate")
+        documents = {".dddjango/orders/scope.md": self.scope,
+                     ".dddjango/orders/design-spec.md": self.approval,
+                     ".dddjango/another/scope.md": "다른 범위\n"}
+        for relative, content in documents.items():
+            _write(self.repo, relative, content)
+        for relative in (".codex/guard.py", ".env", ".dddjango/guard.py",
+                         ".dddjango/orders/guard.py", ".dddjango/orders/nested/scope.md",
+                         "src/.dddjango/orders/scope.md"):
+            _write(self.repo, relative, "hidden\n")
+        snapshot = self.td / "snapshot"
+        gate._snapshot_current(self.repo, snapshot)
+        hidden = {str(p.relative_to(snapshot)): p.read_text(encoding="utf-8")
+                  for p in snapshot.rglob("*") if p.is_file()
+                  and any(part.startswith(".") for part in p.relative_to(snapshot).parts)}
+        self.assertEqual(hidden, documents)
+
+    def test_pregate_planned_artifact_fires_with_archived_and_overlaid_scope(self):
+        for tracked in (False, True):
+            with self.subTest(tracked=tracked):
+                _write(self.repo, ".dddjango/orders/scope.md", self.scope)
+                if tracked:
+                    _commit_all(self.repo, "scope")
+                spec = self.td / "design-spec.md"
+                spec.write_text("<!-- machine: file-plan -->\n```paths\nadd " + self.artifact
+                                + "\n```\n<!-- machine: symbols -->\n```symbols\n```\n"
+                                "<!-- machine: boundary-imports -->\n```imports\n```\n", encoding="utf-8")
+                proc = subprocess.run([sys.executable, str(GATE.parent / "design_pregate.py"),
+                                       str(spec), str(self.repo)], capture_output=True, text=True,
+                                      env=_scrubbed_env())
+                out = proc.stdout + proc.stderr
+                self.assertEqual(proc.returncode, 2, out)
+                self.assertRegex(out, rf"\| `{re.escape(self.checker)}` \| 0 \| 2 \|")
+
+
 class CacheSnapshotRegression(unittest.TestCase):
     def test_snapshot_gate_skips_only_optional_cache_and_preserves_original_bytes(self):
         from pregate_fixture_run import _load_module
@@ -498,7 +580,9 @@ class CacheSnapshotRegression(unittest.TestCase):
             self.assertFalse((snapshot / relative).exists())
 
 def main() -> int:
-    result = unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(CacheSnapshotRegression))
+    suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case)
+                               for case in (CacheSnapshotRegression, IdempotencySnapshotRegression))
+    result = unittest.TextTestRunner(verbosity=2).run(suite)
     if not result.wasSuccessful():
         return 2
     if not GATE.is_file() or not BASE_FIXTURE.is_dir():
