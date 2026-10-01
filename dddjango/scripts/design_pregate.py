@@ -3645,7 +3645,7 @@ def _main(argv: "list[str]") -> int:
             try:
                 shutil.rmtree(scratch)
             except OSError as exc:
-                raise RunError(f"격리 사본 정리 실패: {scratch} — {exc}") from exc
+                print(f"격리 사본 정리 실패: {scratch} — {exc} (수동 삭제 필요)", file=sys.stderr)
 
 
 if __name__ == "__main__":

@@ -76,14 +76,15 @@ class ScratchLifecycleTest(unittest.TestCase):
                                   for arg in event.get("argv", []))]
                 self.assertEqual(starts, [], "격리 사본에서 자동 git 정리가 발화했다")
 
-    def test_cleanup_failure_is_reported_as_execution_failure_with_scratch_path(self) -> None:
+    def test_cleanup_failure_preserves_verdict_and_reports_manual_cleanup(self) -> None:
         scratch = self.root / "design-pregate-cleanup-failure"
         scratch.mkdir()
         real_rmdir = os.rmdir
+        cleanup_error = OSError(errno.ENOTEMPTY, "injected concurrent writer", str(scratch))
 
         def raced_rmdir(path, *args, **kwargs):
             if Path(path) == scratch:
-                raise OSError(errno.ENOTEMPTY, "injected concurrent writer", str(scratch))
+                raise cleanup_error
             return real_rmdir(path, *args, **kwargs)
 
         stderr = io.StringIO()
@@ -91,9 +92,9 @@ class ScratchLifecycleTest(unittest.TestCase):
                 mock.patch.object(os, "rmdir", side_effect=raced_rmdir), \
                 contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(stderr):
             code = pg.main([str(self.spec), str(self.repo)])
-        self.assertEqual(code, 1, stderr.getvalue())
-        self.assertIn("정리 실패", stderr.getvalue())
-        self.assertIn(str(scratch), stderr.getvalue())
+        self.assertEqual(code, 4, stderr.getvalue())
+        self.assertEqual(stderr.getvalue(),
+                         f"격리 사본 정리 실패: {scratch} — {cleanup_error} (수동 삭제 필요)\n")
         self.assertTrue(scratch.exists())
 
 
