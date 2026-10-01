@@ -1,0 +1,10 @@
+[verify] 병렬 실행: verify-ontology verify-base-core verify-base-cross verify-base-backstop verify-base-regen
+(전체 로그: /tmp/djr-verify.3a7oP7 · 상세 출력: make verify VERBOSE=1)
+  ✓ verify-ontology green (86초)
+  ✓ verify-base-core green (114초)
+  ✓ verify-base-backstop green (119초)
+  ✓ verify-base-cross green (325초)
+  ✓ verify-base-regen green (333초)
+  ✓ verify green — 5/5 (333초 · 전체 로그: /tmp/djr-verify.3a7oP7)
+make verify  1072.52s user 677.36s system 525% cpu 5:32.73 total
+verify exit 0
