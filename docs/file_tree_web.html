@@ -735,7 +735,7 @@
           <dt>목적</dt><dd><p>이 폴더 하나가 <b>대상 프로젝트의 웹 표현계층 전부</b>다. 저장소 최상위에서 백엔드 표준 트리(<code>application/</code>·<code>framework/</code>)와 <b>공존</b>하며, 두 세계는 트리 위치로 기계 구분되고 연결은 <b>실물 API 계약(URL+JSON)뿐</b>이다.</p>
   <p><b>web 은 «내부의 외부 클라이언트»다 — Model 이 없다.</b> 같은 저장소에 살지만 백엔드 BC 의 domain·use_case·infra 를 <b>소유하지도 import 하지도 않는다</b>. dddart 검증 판형의 현지화이되, BC·DDD 개념은 전부 덜어냈다 — 분할 축은 도메인 경계가 아니라 <b>내비게이션 영역</b>이다.</p>
   <p><b>파일트리가 곧 규약이다</b> — 어떤 파일을 어디에 어떤 이름으로 만드는지가 이 플러그인의 핵심 강제이고, 그 기계 판별 가능 부분을 백스톱 4패밀리(WS·WI·WN·WP)가 게이트에서 지킨다.</p></dd>
-          <dt>들어오는 것</dt><dd><p><b>일곱 가지</b> — <code>urls.py</code> · <code>apps.py</code> · <code>base/</code> · <code>&lt;screen_area&gt;/</code>(여럿) · <code>client/</code> · <code>design_system/</code> · <code>static/</code>. 컨테이너 최초 생성 때 골격을 <b>전부</b> 만든다 — 폴더는 무조건, 코드는 필요할 때만.</p></dd>
+          <dt>들어오는 것</dt><dd><p><b>일곱 가지</b> — <code>urls.py</code> · <code>apps.py</code> · <code>base/</code> · <code>&lt;screen_area&gt;/</code>(여럿) · <code>client/</code> · <code>design_system/</code> · <code>static/</code>. 컨테이너 최초 생성 때 골격을 <b>전부</b> 만든다 — 폴더는 무조건, 코드는 필요할 때만. 승인된 공식 SDK 가 있을 때만 등재 목록 <code>sdk_registry.json</code>이 더해진다(houserules §9).</p></dd>
           <dt class="no">안 들어오는 것</dt><dd><p><b><code>test/</code> — web 트랙은 자동 테스트를 두지 않는다.</b> <code>test_*.py</code>·빈 테스트 파일도 금지다. 검증 채널은 사용자 육안 + 결정적 백스톱 + 규율 감사 셋이다.</p>
   <p>루트 직속의 화면 파일·유틸 모듈. 화면은 반드시 <code>&lt;screen_area&gt;/&lt;view&gt;/</code> 안이고, 공용 조각은 widget·component 로 판별해 들어간다 — «어디에도 못 넣는 파일»이 생기면 트리가 아니라 판별이 틀린 것이다.</p></dd>
           <dt class="wy">이 모양이 된 까닭</dt><dd><p>dddart 의 «표준 트리가 곧 규약» 판형이 운영에서 검증됐고(D11 — 전수 현지화), web 은 거기서 <b>Model·BC·상주 상태·테스트를 뺀 것</b>이다. 뺀 자리마다 이유가 결정 대장에 있다 — Model 은 실물 계약 소비(D5)로, 상주 상태는 요청 구동(D6)으로, 테스트는 «사용자가 항상 본다»로 대체됐다.</p></dd>
@@ -986,7 +986,7 @@
           <dt class="wy">이 모양이 된 까닭</dt><dd><p>자산 종류별로 폴더를 분리하고, JS와 HTMX 각각에서 기능과 파일이 일대일로 대응하게 한다. 기능은 비밀번호 표시 전환·목록 필터 같은 <b>화면 동작 단위</b>다. 같은 기능을 구현하는 내부 함수나 HTML 요소는 같은 파일에 둔다.</p></dd>
           <dt>반영 범위</dt><dd><p>Claude·Codex 플러그인 지침·역할 주입·백스톱에 반영된 현재 통합 소스다. <a href="work_flow_web_guide.html">스킬 5개·에이전트 4개의 협력 흐름</a>과 연결된다. 커밋·배포 완료를 뜻하지 않는다.</p></dd>
         </dl>
-        <p class="rd-w"><b>조건 자산:</b> <code>static/fonts/&lt;이름&gt;.&lt;확장자&gt;</code>·<code>static/files/&lt;이름&gt;.&lt;확장자&gt;</code>는 필요 시 검증된 파일만 두고 출처→배선 경로를 기록한다(snake_case). 네 폴더 골격으로 미리 만들지 않는다. <code>static/js/motion.js</code>는 러너 채택 시에만 설치한다.</p>
+        <p class="rd-w"><b>조건 자산:</b> <code>static/fonts/&lt;이름&gt;.&lt;확장자&gt;</code>·<code>static/files/&lt;이름&gt;.&lt;확장자&gt;</code>는 필요 시 검증된 파일만 두고 출처→배선 경로를 기록한다(snake_case). 네 폴더 골격으로 미리 만들지 않는다. <code>static/js/motion.js</code>는 러너 채택 시에만 설치한다. 사용자가 승인한 공식 플랫폼 SDK 가 있을 때만 <code>static/vendor/&lt;sdk_id&gt;/&lt;파일&gt;</code>(운영자 원본 그대로 · 고정 표지 <code>static/vendor/.gitattributes</code>)와 등재 목록 <code>web/sdk_registry.json</code>이 생긴다 — Coordinator 가 <code>sdk_vendor.py</code> 로만 쓰고, 백스톱 WV 가 게이트와 무관하게 늘 검사한다(houserules §9).</p>
         <div class="rd-hd"><b>한 칸씩 — 무엇이 오나</b><span class="rd-c">8칸</span></div>
         <ol class="rowdocs">
           <li class="rd" id="rd-34">
