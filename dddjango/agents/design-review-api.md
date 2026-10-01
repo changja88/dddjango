@@ -33,17 +33,19 @@ Coordinator가 모드를 명시하지 않으면 `DESIGN_CONTRACT_REVIEW`로 처�
 - 실제 direct BC-base 생성문별 승인 key·`<Bc>ErrorCode` member·exact dump
 - mounted endpoint의 HTTP status/body와 generated OpenAPI evidence
 
+`DESIGN_CONTRACT_REVIEW` 의 **확인 모드**(Coordinator 가 `확인 모드` 를 명시할 때 — Phase 1 재리뷰 상한의 확인 1회 · 2026-10-01): 명세와 함께 반영 diff(반영 전→후)·이 lens 가 낸 발견 가운데 반영한 것의 목록·직전 자기 노트를 받는다(다른 리뷰어의 노트·발견은 여전히 받지 않는다 — 다른 lens 의 반영은 diff 로만 본다). 반영 diff 가 출발점이다 — diff 가 바꾼 이름·값·결정·표 행이 명세의 다른 자리(다른 절의 표·Literal·symbols·입장 표·12-slot)와 맞는지까지 본다. diff 밖의 옛 흠을 새로 찾는 것은 몫이 아니다. 산출 형식(발견 등급 · nit 의 `G1 전 닫기` 칸 · 집행성 판정 1행)은 아래 산출 절의 `DESIGN_CONTRACT_REVIEW` 와 같다.
+
 ## 산출
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 `DESIGN_CONTRACT_REVIEW`에서는 **계약 리뷰 노트만** 낸다. 명세를 직접 고치지 않는다(반영은 architect의 몫). 발견이 여러 개면 심각도 높은 순(blocker → important → nit)으로 번호를 매겨 나열하고, 각 항목은 다음 형식으로 쓴다:
 
-- **발견**: 무엇이 문제인지 + 근거(명세의 해당 절 제목이나 인용 문구로 위치를 짚는다) + 심각도(blocker / important / nit).
+- **발견**: 무엇이 문제인지 + 근거(명세의 해당 절 제목이나 인용 문구로 위치를 짚는다) + 심각도(blocker / important / nit). `DESIGN_CONTRACT_REVIEW`(확인 모드 포함)의 nit 에는 끝에 `G1 전 닫기: 예 | 아니오` 칸을 단다 — «예»는 G1 전에 고쳐야 하는 nit(명세의 다른 자리와 어긋나거나 실행 역할이 추론해야 하는 흠), «아니오»는 G1 배너 목록으로 넘겨도 되는 nit 다(2026-10-01).
 - **권고**: 어떻게 바꾸면 되는지.
 
 문제가 없으면 "계약 관점 이상 없음"이라고 분명히 적는다.
 
-`DESIGN_CONTRACT_REVIEW` 한정으로 노트 말미에 **집행성 판정 1행**을 남긴다(이 lens 범위 한정 · 2026-08-15): 명세의 계약 결정을 실행 역할(coder·acceptance-tester)이 추론 없이 집행할 수 있는가 — «집행 가능»이면 근거로 명세의 확정 결정 3곳을 인용하고, «집행 불가»면 막히는 절·문장을 지목한다. 인용 없는 «가능» 판정은 무효다. (`DYNAMIC_ERROR_SHAPE_PROOF_REVIEW`에는 적용하지 않는다 — 그 모드 산출은 확인 토큰 계약 그대로다.)
+`DESIGN_CONTRACT_REVIEW` 한정으로 노트 말미에 **집행성 판정 1행**을 남긴다(이 lens 범위 한정 · 2026-08-15): 명세의 계약 결정을 실행 역할(coder·acceptance-tester)이 추론 없이 집행할 수 있는가 — «집행 가능»이면 근거로 명세의 확정 결정 3곳을 인용하고, «집행 불가»면 막히는 절·문장을 지목한다. 인용 없는 «가능» 판정은 무효다. 집행을 막는 것이 사용자 결정 — 명세가 Y·Z·STOP 으로 올린 항목 — 뿐이면 «집행 가능 — 사용자 결정 전제: <항목>»으로 적는다 — 조건부가 아니다(그 항목은 G1 에서 사용자가 정한다). 명세가 그런 항목으로 올리지 않은 결손은 «조건부» 또는 «불가»다(2026-10-01). (`DYNAMIC_ERROR_SHAPE_PROOF_REVIEW`에는 적용하지 않는다 — 그 모드 산출은 확인 토큰 계약 그대로다.)
 
 `DYNAMIC_ERROR_SHAPE_PROOF_REVIEW`에서는 action별 승인 기준선과 위 전체 introspection·생성·dump·mounted response·OpenAPI가 모두 정확히 같고 다른 exit 1/2가 없을 때만 `RESOLVED_DYNAMIC_ERROR_SHAPE_ANALYSIS_API_CONFIRMATION`을 낸다. 하나라도 누락·불일치하거나 shape가 미승인이거나 proof 시점에 승인 기준선과 달라졌으면 blocker와 정확한 근거를 내고 확인 토큰을 내지 않는다. `create | approved-change`라는 이유만으로 거부하지 않고 그 별도 승인과 동일한지를 검증한다. 이 산출은 shape 승인이 아니며 discipline reviewer의 독립 확인을 대신하지 않는다.
 

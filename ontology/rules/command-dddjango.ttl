@@ -931,12 +931,18 @@ djr:R-0229 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-0230 a djr:Obligation ;
-    skos:prefLabel "design-architect 재호출로 리뷰 노트 반영·리뷰어 충돌 중재"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0230@2026-08-22> .
+    skos:prefLabel "design-architect 재호출로 리뷰 노트 반영·리뷰어 충돌 중재 — 재리뷰 상한 갈래 ⓐ(반영 0)는 예외"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0230@2026-10-01> .
 
 <https://numchida.com/ns/djr#R-0230@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0230 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0230@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-0230 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0230@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0231 a djr:Obligation ;
     skos:prefLabel "scope.md 의 Y 항목은 기본(미적용) 현재-상태 commit + 배너 override 항목 산출"@ko ;
@@ -2597,12 +2603,18 @@ djr:R-0417 a djr:Obligation ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-0418 a djr:Obligation ;
-    skos:prefLabel "영향받는 lens 만 재실행 → G1′ 로 바뀐 설계 부분만 승인"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0418@2026-08-22> .
+    skos:prefLabel "영향받는 lens 만 재실행 → G1′ 로 바뀐 설계 부분만 승인 · 재리뷰에 Phase 1 재리뷰 상한 기준·갈래 동일 적용(기준 ① lens = 영향 lens)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0418@2026-10-01> .
 
 <https://numchida.com/ns/djr#R-0418@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0418 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0418@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-0418 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0418@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-0419 a djr:Obligation ;
     skos:prefLabel "Phase 1 step 5 와 동일하게 입장 표 갱신·배너에 decision 별 owner/path 나열"@ko ;
@@ -3855,6 +3867,30 @@ djr:R-3589 a djr:Prohibition ;
     prov:specializationOf djr:R-3589 ;
     djr:revision 1 .
 
+djr:R-3590 a djr:Permission ;
+    skos:prefLabel "재리뷰 상한 기준 — 활성 lens·discipline 최근 노트 전부 «집행 가능»(사용자 결정 전제 가능은 그 항목이 명세의 Y·Z·STOP 일 때만 — 아니면 조건부) · 열린 발견 minor·nit 뿐 · pre-gate red 아님(또는 전건 처분 · 함께 띄운 결과는 받은 뒤 판별) · 새 입력 없음 — 넷이 서면 두 갈래 하나로만 G1 · 판별 불가면 상한 밖"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3590@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3590@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3590 ;
+    djr:revision 1 .
+
+djr:R-3591 a djr:Obligation ;
+    skos:prefLabel "재리뷰 상한 두 갈래 — ⓐ 반영 0(기본 · 배너 미반영 목록) · ⓑ 노트 «G1 전 닫기: 예» 항목만 반영(결정 불변 · 바꿔야 끝나면 보고) → 확인 1회 · 확인의 «예» nit 는 배너 별행 · 불통과면 일반 루프 · 무확인 G1 없음 · G1 답의 미반영 반영도 ⓑ · 사용자 결정 필요 항목은 배너에 · 그 답 없는 승인은 Phase 2 아님(pending 판형) · 답이 명세를 바꾸면 ⓑ"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3591@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3591@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3591 ;
+    djr:revision 1 .
+
+djr:R-3592 a djr:Obligation ;
+    skos:prefLabel "재리뷰 상한 확인 1회 — 발견 lens + diff 영역 lens(대응표 · 비활성 lens 영역은 discipline) + 블록 해시 변동 시 discipline 을 확인 모드 한 다발 · 입력은 그 lens 발견만(다른 lens 반영은 diff 로) · 같은 응답 pre-gate · 반영 diff 보관 · 통과 조건 · 배너 1행"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3592@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3592@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3592 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/commands/dddjango.md> a djr:Document ;
     skos:prefLabel "command-dddjango"@ko .
 
@@ -4216,8 +4252,8 @@ djr:R-3589 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s006> ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
-    djr:statesNorm djr:R-0230, djr:R-0231, djr:R-0232, djr:R-0233 ;
-    djr:text "4. `dddjango:design-architect`를 다시 호출해 리뷰 노트를 반영하고 리뷰어 간 충돌을 중재시킨다. **scope.md가 \"범위 아님 / 필요 시 G1 제안\"으로 명시한 항목(Y)은 architect가 기본(미적용)을 명세에 현재-상태로 commit하고 배너 override 항목으로 산출**한다(architect가 'Y감이냐'를 판정하지 않고 scope.md의 그 목록을 앵커로 쓴다). 스스로 해소 못 하는 트레이드오프(양자택일·리뷰어 충돌 등 Z)만 미해결 옵션으로 남긴다.\n"@ko .
+    djr:statesNorm djr:R-0230, djr:R-0231, djr:R-0232, djr:R-0233, djr:R-3590, djr:R-3591, djr:R-3592 ;
+    djr:text "4. `dddjango:design-architect`를 다시 호출해 리뷰 노트를 반영하고 리뷰어 간 충돌을 중재시킨다(아래 «재리뷰 상한» 갈래 ⓐ 는 이 반영 호출의 예외다). **scope.md가 \"범위 아님 / 필요 시 G1 제안\"으로 명시한 항목(Y)은 architect가 기본(미적용)을 명세에 현재-상태로 commit하고 배너 override 항목으로 산출**한다(architect가 'Y감이냐'를 판정하지 않고 scope.md의 그 목록을 앵커로 쓴다). 스스로 해소 못 하는 트레이드오프(양자택일·리뷰어 충돌 등 Z)만 미해결 옵션으로 남긴다.\n   - **재리뷰 상한**(2026-10-01): 리뷰 다발(재리뷰 다발 포함)을 받은 뒤 다음 넷이 모두 서면 아래 두 갈래 가운데 정확히 하나로만 G1 에 간다 — ① 활성 lens(G0 승인 lens · 자문으로 붙은 lens 포함) 리뷰어와 discipline lightweight 의 가장 최근 노트가 전부 집행성 판정 «집행 가능»이다(«조건부»·판정 1행 없음·«불가»는 불성립이다 — 단 막는 것이 사용자 결정뿐인 «집행 가능 — 사용자 결정 전제: <항목>»은, 그 항목이 명세의 Y·Z·STOP 항목(architect 가 배너 override 항목·미해결 옵션·STOP 으로 낸 것) 가운데 하나일 때만 «가능»으로 본다 — 아니면 «조건부»다. «가능»으로 본 그 항목은 아래 «사용자 결정 필요» 판형을 따른다(확인 통과의 «집행 가능»도 같다) · 이번 다발에 없던 lens 의 직전 노트는 그 뒤 개정 diff 가 그 lens 영역(아래 대응표)에 닿지 않았을 때만 인정한다) ② 열린 발견의 등급이 minor·nit 뿐이다(blocker·important·major → 불성립 · minor·nit → 후보 · 등급 미기재 → 불성립 · 같은 흠을 lens 마다 다르게 적었으면 가장 높은 등급) ③ 마지막 pre-gate 예보가 red 가 아니거나, red 전건이 처분 기재돼 고칠 것이 없다(그 다발과 함께 띄운 pre-gate 가 있으면 ③ 은 그 결과를 받은 뒤 판별한다 — 결과 전에는 기다릴 뿐 판별 불가로 보지 않는다) ④ 이번 반영에 새 입력(발주자 답·발주서 개정·main 착륙·STOP 답)이 함께 들어가지 않는다. 넷 가운데 하나라도 판별할 수 없으면 상한 밖이다(위 4의 반영·재리뷰 그대로). 기준이 서지 않은 다발에는 이 상한이 없다.\n     - **ⓐ 반영 0(기본)**: architect 를 부르지 않는다(위 4 반영 호출의 예외). 열린 minor·nit 를 G1 배너에 `미반영 minor·nit k건(목록 · 노트 위치)` 으로 싣고 G1 으로 간다 — 명세 변경이 0 이라 배너 직전 pre-gate 는 캐시 skip 판형이다.\n     - **ⓑ 반영 → 확인 정확히 1회**: 열린 minor·nit 가운데 노트가 `G1 전 닫기: 예` 칸을 단 것이 하나라도 있을 때만 이 갈래다(minor·nit 에 그 칸이 없어 갈래를 가를 수 없으면 상한 밖). architect 에 **그 항목들만** 주고 «입장 표 decision·기계 블록·API/DB 결정·슬라이스 계획을 바꾸지 않는다 — 바꿔야 끝나는 항목은 반영하지 말고 보고하라»를 싣는다. 보고가 오면 상한 밖이다(그 항목으로 위 4의 일반 루프). 반영이 오면 아래 확인 1회를 거친다 — 확인을 통과하면 더 반영하지 않고 G1 으로 가며, 확인이 낸 minor·nit 와 반영하지 않은 나머지 항목은 배너 `미반영 …` 에 싣는다. 그 가운데 확인이 `G1 전 닫기: 예` 로 적은 nit 는 배너에 따로 `확인이 G1 전 닫기로 적은 nit k건(목록) — 기본 수락이면 반영 없이 Phase 2` 1행으로 보인다(반영을 원하면 G1 답 — 아래 불릿의 길). 통과하지 못하면(판정 «불가»·«조건부»·판정 1행 없음 · 새 blocker·important · pre-gate red 반송) 상한을 풀고 위 4의 일반 루프로 돌아간다.\n     - 기준이 선 다발에서 «반영 → 확인 없이 G1»은 없다. 사용자 결정 전제로 «가능»에 든 항목(위 ①)은 G1 배너에 `사용자 결정 필요 <항목>` 으로 싣고, 그 답이 없는 승인은 Phase 2 진입으로 해석하지 않는다(아래 5 의 `pending` 과 같다 — 그 결정만 묻는다). G1 답이 배너의 `미반영` 항목 반영을 요구하거나 `사용자 결정 필요` 항목의 답이 명세를 바꾸면 발주자 답 표기 반영·G1 override 로 처리하지 않고 ⓑ 판형으로 한다 — 그 항목만 반영 → 확인 1회 → 통과면 아래 5 «G1 결정 처리» ②·③ 과 같이 dispatch 전 pre-gate 재실행 뒤 Phase 2 · 통과하지 못하면 일반 루프 뒤 새 G1.\n     - **확인 1회**: 반영된 발견을 낸 lens + 반영 diff 가 닿은 영역의 lens(아래 대응표) + (pre-gate `--block-hash` 첫 행이 바뀌었으면) discipline 을 **확인 모드**로 한 다발에 부르고, 같은 응답에서 pre-gate 를 백그라운드로 띄운다(아래 pre-gate 문단). 확인 모드 입력은 리뷰어마다 명세 · 반영 diff · **그 lens 가 낸** 반영 발견 목록 · 직전 자기 노트다 — 다른 lens 의 발견은 싣지 않고, 다른 lens 반영은 diff 로만 보게 한다(위 2 의 편향 방지). 반영 diff 는 반영 전후 명세의 diff 다 — 커밋이 있으면 `<전>..<후>`, 없으면 반영 호출 전에 `mktemp` 로 떠 둔 사본과의 diff 를 `<산출물 폴더>/g1-nit-<n>.diff` 로 둔다. 통과 = 각 확인 노트의 집행성 판정 «집행 가능» ∧ 새 blocker·important 0 ∧ pre-gate red 아님이다.\n     - **영역 → lens 대응표**: 도메인 판정·애그리거트·불변식·이벤트 → ddd · 계약·HTTP·오류 응답·12-slot → api · 스키마·인덱스·제약·트랜잭션·마이그레이션 → db · 입장 표·패키지/테스트 구조·물리 소유권·기계 블록 → discipline. diff 덩어리가 속한 `##` 절 제목으로 가르고, 못 가르면 활성 lens 전부다. 대응표가 가리키는 lens 가 활성이 아니면 그 덩어리는 discipline 이 본다. 블록 해시는 확대 조건(바뀌면 discipline 추가)으로만 쓰고 생략 조건으로 쓰지 않는다.\n     - **배너 1행**(상한으로 G1 에 갈 때): `재리뷰 상한 — 다발 <n> · 갈래 ⓐ|ⓑ · (ⓑ) 확인 lens <목록> · 판정 가능 · 새 blocker·important 0 · 미반영 minor·nit k건 · 반영 diff <전>..<후> | <산출물 폴더>/g1-nit-<n>.diff`.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s006/b6> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s006> ;
@@ -4705,7 +4741,7 @@ djr:R-3589 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
     djr:statesNorm djr:R-0418, djr:R-0419, djr:R-0420, djr:R-0421, djr:R-3492 ;
-    djr:text "2. 영향받는 lens만 재실행 → **G1′** — 바뀐 설계 부분만 승인한다. Phase 1 step 5와 동일하게 모든 영구 test artifact `add/update/move/split/rename/remove/weaken` 후보의 입장 표를 갱신하고 배너에 `add/update/reuse/retain/remove/reject/pending`을 owner/path와 함께 decision별로 직접 나열한다. design-spec 개정이 있으면 **G1′ 제시 직전 최종본에 pre-gate 를 재실행**하고 예보 1행을 배너에 병기한다(Phase 1 pre-gate 문단 — 트리거는 수정 모드에도 같다 · Phase 2 중이면 Phase 1 «캐시 skip·재발화 판형» ② 의 플래그 전부). `pending`이 남으면 Phase 2로 가지 않는다. (G1과 동일하게 Y=기본 commit+배너 override 항목·Z=옵션, 채택 시 `scope.md` 갱신·`design-architect` override 재호출 — design-spec 갱신을 네가 직접 쓰지 않는다.) G0 에서 ⓐ 항목이 나왔으면(슬라이스 0) 그 경로 목록에도 Phase 0 2번 lens 판정을 적용해 G1′ lens 에 합치고, `dddjango:discipline-reviewer` lightweight 를 G1′ 다발에 합류시킨다(2026-09-26).\n"@ko .
+    djr:text "2. 영향받는 lens만 재실행 → **G1′** — 바뀐 설계 부분만 승인한다(재작업의 재리뷰에도 Phase 1 4번 «재리뷰 상한»의 기준·갈래를 그대로 쓴다 — 그 기준 ① 의 lens 는 이 G1′ 에서 영향받는 lens 다 · 2026-10-01). Phase 1 step 5와 동일하게 모든 영구 test artifact `add/update/move/split/rename/remove/weaken` 후보의 입장 표를 갱신하고 배너에 `add/update/reuse/retain/remove/reject/pending`을 owner/path와 함께 decision별로 직접 나열한다. design-spec 개정이 있으면 **G1′ 제시 직전 최종본에 pre-gate 를 재실행**하고 예보 1행을 배너에 병기한다(Phase 1 pre-gate 문단 — 트리거는 수정 모드에도 같다 · Phase 2 중이면 Phase 1 «캐시 skip·재발화 판형» ② 의 플래그 전부). `pending`이 남으면 Phase 2로 가지 않는다. (G1과 동일하게 Y=기본 commit+배너 override 항목·Z=옵션, 채택 시 `scope.md` 갱신·`design-architect` override 재호출 — design-spec 갱신을 네가 직접 쓰지 않는다.) G0 에서 ⓐ 항목이 나왔으면(슬라이스 0) 그 경로 목록에도 Phase 0 2번 lens 판정을 적용해 G1′ lens 에 합치고, `dddjango:discipline-reviewer` lightweight 를 G1′ 다발에 합류시킨다(2026-09-26).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s009/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s009> ;

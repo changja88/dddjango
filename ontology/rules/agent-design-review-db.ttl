@@ -75,12 +75,18 @@ djr:R-3327 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3328 a djr:Obligation ;
-    skos:prefLabel "발견 항목 형식(문제+근거 위치 인용+심각도 3단계)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3328@2026-08-22> .
+    skos:prefLabel "발견 항목 형식(문제+근거 위치 인용+심각도 3단계) · Phase 1 nit 의 «G1 전 닫기: 예|아니오» 칸"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3328@2026-10-01> .
 
 <https://numchida.com/ns/djr#R-3328@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3328 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3328@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3328 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3328@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3329 a djr:Obligation ;
     skos:prefLabel "권고 항목 형식(변경 방법 제시)"@ko ;
@@ -99,12 +105,18 @@ djr:R-3330 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3331 a djr:Obligation ;
-    skos:prefLabel "집행성 판정 1행 기재(가능=명세 확정 결정 3곳 인용·불가=막히는 절·문장 지목)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3331@2026-08-22> .
+    skos:prefLabel "집행성 판정 1행 기재(가능=명세 확정 결정 3곳 인용·불가=막히는 절·문장 지목) · 막는 것이 명세의 Y·Z·STOP 사용자 결정뿐이면 «집행 가능 — 사용자 결정 전제: <항목>»(조건부 아님 · 그 밖 결손은 조건부·불가)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3331@2026-10-01> .
 
 <https://numchida.com/ns/djr#R-3331@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3331 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3331@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3331 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3331@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3332 a djr:Prohibition ;
     skos:prefLabel "인용 없는 «집행 가능» 판정 무효"@ko ;
@@ -418,6 +430,14 @@ djr:R-3551 a djr:Obligation ;
     prov:specializationOf djr:R-3551 ;
     djr:revision 1 .
 
+djr:R-3595 a djr:Obligation ;
+    skos:prefLabel "확인 모드(Coordinator 명시 · 재리뷰 상한 확인 1회) — 명세·반영 diff·이 lens 반영 발견·직전 자기 노트 수령(다른 lens 반영은 diff 로만) · diff 출발 교차 절 대조 · diff 밖 옛 흠은 몫 아님 · 산출 형식 동일"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3595@2026-10-01> .
+
+<https://numchida.com/ns/djr#R-3595@2026-10-01> a djr:Expression ;
+    prov:specializationOf djr:R-3595 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/agents/design-review-db.md> a djr:Document ;
     skos:prefLabel "agent-design-review-db"@ko .
 
@@ -477,6 +497,13 @@ djr:R-3551 a djr:Obligation ;
     djr:statesNorm djr:R-3323, djr:R-3324, djr:R-3545 ;
     djr:text "\nCoordinator가 architect의 설계 명세(초안)를 준다. 너는 그 명세만 본다 — 다른 리뷰어의 노트나 구현 코드를 보지 않는다(편향 방지). 로드한 스킬 본문·references 참조는 이 제한 밖이다 — 제한 대상은 타 리뷰어의 노트·구현 코드다. 파견 입력에 적용 범위 규범이 실려 있으면 그 규범이 정한 몫과 때를 따른다.\n\n"@ko .
 
+<https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s002/b2> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s002> ;
+    djr:kind djr:kind-norm ;
+    djr:order 2 ;
+    djr:statesNorm djr:R-3595 ;
+    djr:text "**확인 모드**(Coordinator 가 `확인 모드` 를 명시할 때 — Phase 1 재리뷰 상한의 확인 1회 · 2026-10-01): 명세와 함께 반영 diff(반영 전→후)·이 lens 가 낸 발견 가운데 반영한 것의 목록·직전 자기 노트를 받는다(다른 리뷰어의 노트·발견은 여전히 받지 않는다 — 다른 lens 의 반영은 diff 로만 본다). 반영 diff 가 출발점이다 — diff 가 바꾼 이름·값·결정·표 행이 명세의 다른 자리(다른 절의 표·Literal·symbols·입장 표·12-slot)와 맞는지까지 본다. diff 밖의 옛 흠을 새로 찾는 것은 몫이 아니다. 산출 형식(발견 등급 · nit 의 `G1 전 닫기` 칸 · 집행성 판정 1행)은 아래 산출 절과 같다.\n\n"@ko .
+
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s003> a djr:Section ;
     djr:headingSnapshot "## 산출"@ko ;
     djr:inDocument <https://numchida.com/ns/djr#d/dddjango/agents/design-review-db.md> ;
@@ -496,7 +523,7 @@ djr:R-3551 a djr:Obligation ;
     djr:order 2 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s004/b2> ;
     djr:statesNorm djr:R-3328 ;
-    djr:text "- **발견**: 무엇이 문제인지 + 근거(명세의 해당 절 제목이나 인용 문구로 위치를 짚는다) + 심각도(blocker / important / nit).\n"@ko .
+    djr:text "- **발견**: 무엇이 문제인지 + 근거(명세의 해당 절 제목이나 인용 문구로 위치를 짚는다) + 심각도(blocker / important / nit). Phase 1 리뷰(확인 모드 포함)의 nit 에는 끝에 `G1 전 닫기: 예 | 아니오` 칸을 단다 — «예»는 G1 전에 고쳐야 하는 nit(명세의 다른 자리와 어긋나거나 실행 역할이 추론해야 하는 흠), «아니오»는 G1 배너 목록으로 넘겨도 되는 nit 다(2026-10-01).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s003/b3> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s003> ;
@@ -520,7 +547,7 @@ djr:R-3551 a djr:Obligation ;
     djr:order 5 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s004/b5> ;
     djr:statesNorm djr:R-3331, djr:R-3332 ;
-    djr:text "노트 말미에 **집행성 판정 1행**을 남긴다(이 lens 범위 한정 · 2026-08-15): 명세의 데이터 결정을 실행 역할(coder·acceptance-tester)이 추론 없이 집행할 수 있는가 — «집행 가능»이면 근거로 명세의 확정 결정 3곳을 인용하고, «집행 불가»면 막히는 절·문장을 지목한다. 인용 없는 «가능» 판정은 무효다.\n\n"@ko .
+    djr:text "노트 말미에 **집행성 판정 1행**을 남긴다(이 lens 범위 한정 · 2026-08-15): 명세의 데이터 결정을 실행 역할(coder·acceptance-tester)이 추론 없이 집행할 수 있는가 — «집행 가능»이면 근거로 명세의 확정 결정 3곳을 인용하고, «집행 불가»면 막히는 절·문장을 지목한다. 인용 없는 «가능» 판정은 무효다. 집행을 막는 것이 사용자 결정 — 명세가 Y·Z·STOP 으로 올린 항목 — 뿐이면 «집행 가능 — 사용자 결정 전제: <항목>»으로 적는다 — 조건부가 아니다(그 항목은 G1 에서 사용자가 정한다). 명세가 그런 항목으로 올리지 않은 결손은 «조건부» 또는 «불가»다(2026-10-01).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s004> a djr:Section ;
     djr:headingSnapshot "## 점검 항목 (데이터 lens만)"@ko ;
