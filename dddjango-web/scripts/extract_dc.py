@@ -28,6 +28,7 @@ import os
 import re
 import sys
 from typing import Dict, List, Optional
+import unicodedata
 
 IMAGES_SUBDIR = os.path.join("web", "static", "images")
 
@@ -202,10 +203,11 @@ def collect_images(app: str, doc_slug: str, asset_base: str, images_dir: str, do
     files = frozen_manifest.get("files", [])
     by_source = source_index(frozen_manifest)
     identity_root = source_identity_root(frozen_manifest, root)
-    by_local = {row["local_path"]: row for row in files if row.get("local_path")}
+    # The typed document path and an older manifest may spell a Korean name in different Unicode forms.
+    by_local = {unicodedata.normalize("NFC", row["local_path"]): row for row in files if row.get("local_path")}
     document_path = Path(document).resolve()
     relative = document_path.relative_to(root).as_posix() if document_path.is_relative_to(root) else ""
-    origin = by_local.get(relative, {}).get("source", str(document_path))
+    origin = by_local.get(unicodedata.normalize("NFC", relative), {}).get("source", str(document_path))
     pending = [(app, "html", origin)]
     images = []
     unresolved = []

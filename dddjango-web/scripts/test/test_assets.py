@@ -213,6 +213,48 @@ class AssetTests(unittest.TestCase):
             self.assertEqual(({i['src']: i['status'] for i in manifest['images']}, manifest['unresolved']),
                              ({'그림.png': 'ok', 'logo.png': 'ok'}, []), name)  # an archive itself stays source_ready=false
 
+    def test_older_nfd_archive_feeds_both_consumers_from_a_nfc_checkout(self):
+        # Archives frozen before NFC naming kept NFD local_path; git then checks the files out as NFC.
+        nfd = lambda name: unicodedata.normalize('NFD', name)
+        self.put(nfd('화면.dc.html'), '<section data-screen-label="Example"><img src="그림.png"><img src="logo.png"></section>')
+        self.put(nfd('그림.png'), png())
+        self.put('logo.png', png(b'\0\xff\0'))
+        source_manifest = self.root / 'source-manifest.json'
+        result = self.run_cli('archive_design.py', self.source / '화면.dc.html', '--source-root', self.source,
+                              '--out', self.out, '--manifest', source_manifest)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        recorded = json.loads(source_manifest.read_text())
+        recorded['entrypoint'] = nfd(recorded['entrypoint'])
+        for row in recorded['files']:
+            row['local_path'] = nfd(row['local_path'])
+        source_manifest.write_text(json.dumps(recorded, ensure_ascii=False))
+        self.assertIn('화면.dc.html', [path.name for path in self.out.iterdir()])  # the checkout is NFC
+        tokens = self.root / 'tokens.json'
+        tokens.write_text('{}')
+        extract = ('--tokens', tokens, '--assets-root', self.root / 'dc-app', '--asset-manifest', self.root / 'images.json',
+                   '--meta', self.root / 'meta.json')
+        for name, *args in (('fetch_images.py', self.out, '--assets-root', self.app, '--out', self.root / 'images.json'),
+                            ('extract_dc.py', self.out / '화면.dc.html', *extract),  # typed by hand
+                            ('extract_dc.py', self.out / nfd('화면.dc.html'), *extract)):  # copied from the manifest
+            result = self.run_cli(name, *args, '--asset-base', self.out)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            manifest = json.loads((self.root / 'images.json').read_text())
+            self.assertEqual(({i['src']: i['status'] for i in manifest['images']}, manifest['unresolved']),
+                             ({'그림.png': 'ok', 'logo.png': 'ok'}, []), name)
+
+    def test_redirect_alias_is_found_in_either_unicode_form(self):
+        sys.path.insert(0, str(SCRIPTS))
+        self.addCleanup(sys.path.remove, str(SCRIPTS))
+        from asset_io import frozen_resource, source_index
+        self.out.mkdir()
+        (self.out / 'final.png').write_bytes(png())
+        requested = 'http://127.0.0.1:9/이미지/그림.png'
+        index = source_index({'files': [{'source': 'http://127.0.0.1:9/final.png', 'local_path': 'final.png', 'status': 'ok',
+                                         'sha256': hashlib.sha256(png()).hexdigest(),
+                                         'requested_source': unicodedata.normalize('NFD', requested)}]})
+        path, _digest = frozen_resource(unicodedata.normalize('NFC', requested), index, self.out)
+        self.assertEqual(Path(path), (self.out / 'final.png').resolve())
+
     def test_extensionless_frozen_html_and_css_are_read_by_manifest_kind(self):
         self.put('login', '<link rel="stylesheet" href="styles"><img src="images/logo.png">')
         self.put('styles', '.x {background:url(images/background.png)}')
