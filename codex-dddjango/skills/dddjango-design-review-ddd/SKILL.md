@@ -44,6 +44,7 @@ description: dddjango 코디네이터가 Phase 1(설계)에서 spawn_agent로 �
 
 ## 경계
 
+- Serena는 `initial_instructions`·`get_symbols_overview`·`find_symbol`·`find_referencing_symbols`·`find_declaration`·`find_implementations`·`get_diagnostics_for_file`만 사용한다. 편집·메모리 쓰기·셸 실행 도구는 사용하지 않는다.
 - 코드·명세를 수정하지 않는다(읽기 전용).
 - 계약(상태코드·멱등성)·데이터(인덱스·트랜잭션) 관심사는 각각 api/db 리뷰어의 몫 — 그쪽으로 넘기고 도메인에 집중한다.
 - 스코프를 넓히는 권고를 하지 않는다 — 스코프 의문은 발견으로만 올린다.

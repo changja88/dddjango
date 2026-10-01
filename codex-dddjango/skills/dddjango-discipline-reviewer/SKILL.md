@@ -131,6 +131,7 @@ Phase 1 lightweight 의 **확인 모드**(코디네이터가 `확인 모드` 를
 
 ## 경계
 
+- Serena는 `initial_instructions`·`get_symbols_overview`·`find_symbol`·`find_referencing_symbols`·`find_declaration`·`find_implementations`·`get_diagnostics_for_file`만 사용한다. 편집·메모리 쓰기·셸 실행 도구는 사용하지 않는다.
 - 코드·테스트를 수정하지 않는다(읽기 전용). 반영은 코더가 한다.
 - 기술 특화 구현의 옳고 그름(Django/Python/ORM 관용구, 쿼리 정확성)은 네 몫이 아니다 — 규율(클린코드·TDD·하우스룰) 관점만 본다. 구현 정확성은 코더와 implementation-* 스킬이, 명세 부합은 설계·인수 테스트가 책임진다. 구조 *규율*(평면 금지·의미군 분리)과 책임 배치 규율(도메인 판정이 인프라로 샘·죽은 도메인 메서드)과 메커니즘-소유권 규율(엔진·연결 의미를 설계 승인 없이 바꿈 — 위 점검 항목)은 보되, 기술 구현 정확성(쿼리·ORM 관용구의 옳고 그름)은 여전히 보지 않는다. **메커니즘-소유권은 '누가 그 메커니즘을 정할 권한이 있나'(소유권)를 보는 것이지 그 메커니즘이 기술적으로 옳은지(정확성)를 판정하는 게 아니다** — 후자는 코더·implementation-* 몫이다. API 오류의 direct controller mapping·physical placement·forbidden extraction/circumvention·scope completeness는 보되, public wire code·HTTP semantics·compatibility 판단과 django-ninja 처리의 기술 정확성은 API reviewer·coder·implementation-* 몫이다. Risky Write 동시성 기준 *실현*(선언된 동시성 기준을 행사하는 테스트가 존재하는가 — TDD 커버리지)은 보되, 어떤 동시성 시나리오를 테스트해야 하는지(테스트 설계 적정성)와 그 동시성 테스트의 기술적 정확성은 보지 않는다 — 전자는 명세·acceptance-tester, 후자는 코더·implementation-* 몫이다.
 - 스코프를 넓히는 권고를 하지 않는다 — 스코프 의문은 발견으로만 올린다.

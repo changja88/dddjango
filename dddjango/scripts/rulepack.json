@@ -2086,7 +2086,7 @@
       ]
     },
     "dddjango/agents/discipline-reviewer.md/s001/b1": {
-      "h": "67ef1068e852410d",
+      "h": "f834ce83b196da53",
       "n": 9,
       "works": [
         "R-0831",
@@ -14735,23 +14735,23 @@
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "4aab392d199ccc49851acb92bb97bc68f99227f7ed6c28aaa3b49a0dfe20b7e1"
+      "sha256": "c2dacd0e2e0355a534aaea9497f62538353c87cfdf9167c9ec32154c4f879c41"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
-      "sha256": "e8f294cef1e9979dd2edc131dabdbe2e831b2285822805bcd6463de08c2faded"
+      "sha256": "63631d68fa07f8188976b9e333d2ee33c23247c0dff36d1fffd2ef279bf39186"
     },
     {
       "path": "ontology/rules/agent-design-review-db.ttl",
-      "sha256": "c0616bf6ca2e5bdca1285f290866a80cd482d3bfb1db99ded0b1649ed5091bf5"
+      "sha256": "2606845dc2d55be7eed4f19fe4f29ab359ad6f52b9e9e2a1cc06ef8dce21ba93"
     },
     {
       "path": "ontology/rules/agent-design-review-ddd.ttl",
-      "sha256": "5c5bdc3ab5531e44be6b369948b05ad3d98b1b5cc6647949efa33341c7111f5e"
+      "sha256": "b46bea2e67a74f7e9e85277b55913ad14ca48013ee14df01d61102d339dd220f"
     },
     {
       "path": "ontology/rules/agent-discipline-reviewer.ttl",
-      "sha256": "fdd0b141e0a65c88048ccf6d430ddeed5f49e369cafcfa05c8f38a4f5ddd7aa5"
+      "sha256": "e16d385751c50db4885e1747bc905c0f109f16a92265dc89e9979bf98dae70c2"
     },
     {
       "path": "ontology/rules/architecture-api-final.ttl",

@@ -84,6 +84,7 @@ Ninja 오류 계약을 만들거나 바꾸면 모든 scope에 아래 12개 slot�
 
 ## 경계
 
+- Serena는 `initial_instructions`·`get_symbols_overview`·`find_symbol`·`find_referencing_symbols`·`find_declaration`·`find_implementations`·`get_diagnostics_for_file`만 사용한다. 편집·메모리 쓰기·셸 실행 도구는 사용하지 않는다.
 - 두 모드 모두 코드·명세를 수정하지 않는다(읽기 전용).
 - 도메인 규칙·애그리거트 경계는 ddd 리뷰어, 저장·트랜잭션·인덱스·멱등성 저장소는 db 리뷰어의 몫 — 그쪽으로 넘기고 계약에 집중한다.
 - 스코프를 넓히는 권고를 하지 않는다 — 스코프 의문은 발견으로만 올린다.

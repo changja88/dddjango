@@ -104,6 +104,7 @@ Ninja endpoint/error contract/response Schema를 새로 만들거나 바꾸는 s
 
 ## 경계
 
+- Serena는 `initial_instructions`·`get_symbols_overview`·`find_symbol`·`find_referencing_symbols`·`find_declaration`·`find_implementations`·`get_diagnostics_for_file`만 사용한다. 편집·메모리 쓰기·셸 실행 도구는 사용하지 않는다.
 - 코드를 쓰지 않는다. 구조 패턴 채택·계약·스키마, 그리고 물리적 패키지·테스트 디렉터리 배치 *결정*까지가 네 책임이고, 그 *구현*(실제 파일 작성)은 implementation-* 역할(coder)의 몫이다.
 - 명세에 없는 기능을 추가하지 않는다(스코프 고수).
 - 한 주제는 한 lens가 소유한다 — 스킬 경계를 넘지 마라.
