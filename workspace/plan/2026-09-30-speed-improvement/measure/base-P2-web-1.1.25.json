@@ -1,0 +1,465 @@
+{
+ "runtime": "codex",
+ "source": "/Users/hyun/.herdr/worktrees/spring_dream_server/lane-8-B-3",
+ "sessions": [
+  "rollout-2026-09-29T20-27-47-01a0eceb-bd32-7e02-be13-21c55251b091.jsonl",
+  "rollout-2026-09-29T18-15-42-01a0ec72-d10c-7951-ae62-72bbbbcee650.jsonl",
+  "rollout-2026-09-29T17-43-16-01a0ec55-1c95-73c1-9094-909221e1f6f7.jsonl",
+  "rollout-2026-09-29T17-28-13-01a0ec47-5533-7361-a40c-84ecccd068d9.jsonl",
+  "rollout-2026-09-29T17-20-51-01a0ec40-98ba-7350-99c5-c81e454c248c.jsonl",
+  "rollout-2026-09-29T18-53-49-01a0ec95-b437-7d71-b332-1d12f0dbe74f.jsonl",
+  "rollout-2026-09-29T18-15-23-01a0ec72-8629-7cd0-912a-2e2bd532ba34.jsonl",
+  "rollout-2026-09-29T18-22-15-01a0ec78-d05e-7d13-a0cd-e5034f3a630f.jsonl",
+  "rollout-2026-09-29T23-07-24-01a0ed7d-df00-7fb3-88e0-a8adbd4a1b1b.jsonl",
+  "rollout-2026-09-29T18-07-55-01a0ec6b-af1a-79a0-9a75-7a663c0f25c5.jsonl",
+  "rollout-2026-09-29T18-04-56-01a0ec68-f5a1-7853-85b2-e169a25aff35.jsonl",
+  "rollout-2026-09-29T23-43-04-01a0ed9e-8540-7b50-a4b5-dccf9853d233.jsonl",
+  "rollout-2026-09-29T16-51-33-01a0ec25-c420-7ea2-ad84-8d75432f7131.jsonl",
+  "rollout-2026-09-29T17-20-51-01a0ec40-986c-7e21-8006-ed9b9ace4297.jsonl",
+  "rollout-2026-09-29T21-03-04-01a0ed0c-0baa-72b3-9c38-388fcffc990e.jsonl",
+  "rollout-2026-09-29T17-06-34-01a0ec33-83e5-7350-91d8-8c8217fa5e21.jsonl",
+  "rollout-2026-09-29T17-06-34-01a0ec33-843f-73f3-b2fc-2a4606c4a337.jsonl",
+  "rollout-2026-09-29T21-42-37-01a0ed30-4143-7252-af46-b2e8a8c562b6.jsonl",
+  "rollout-2026-09-29T23-45-06-01a0eda0-637d-7cb0-8ab1-d422349f6a5c.jsonl",
+  "rollout-2026-09-29T22-52-43-01a0ed70-6d66-7ec3-8879-15ac71be7cb8.jsonl",
+  "rollout-2026-09-29T20-42-09-01a0ecf8-e488-7120-89bf-98d9a7f10c9c.jsonl",
+  "rollout-2026-09-29T19-41-19-01a0ecc1-31c7-7a61-b8bc-25f0bf1c269a.jsonl",
+  "rollout-2026-09-29T21-03-04-01a0ed0c-0b4d-7971-9695-57fcda37accb.jsonl",
+  "rollout-2026-09-29T19-54-48-01a0eccd-8924-7c83-b702-c45ec8033a95.jsonl",
+  "rollout-2026-09-29T15-44-47-01a0ebe8-a26d-7ef0-b486-28c35876a66c.jsonl",
+  "rollout-2026-09-29T15-27-01-01a0ebd8-609e-7c63-b85f-3fbf51b42a74.jsonl",
+  "rollout-2026-09-29T22-46-43-01a0ed6a-ef00-74f2-a8d3-2894e42e2175.jsonl",
+  "rollout-2026-09-29T18-01-03-01a0ec65-661e-7533-ac4e-aa7149183efc.jsonl",
+  "rollout-2026-09-29T18-55-50-01a0ec97-8edc-71c3-a33a-118d89731ab1.jsonl",
+  "rollout-2026-09-29T20-30-56-01a0ecee-9ed2-7c61-a183-3acbb9437b99.jsonl",
+  "rollout-2026-09-29T20-42-09-01a0ecf8-e423-7522-9c3e-66d06b241974.jsonl",
+  "rollout-2026-09-29T23-07-24-01a0ed7d-df5b-7043-b332-f4895aa435e9.jsonl",
+  "rollout-2026-09-29T15-27-01-01a0ebd8-6192-7672-aa72-49a462c8064c.jsonl",
+  "rollout-2026-09-29T20-56-08-01a0ed05-b1eb-79d3-8a5f-95d6c8a16a66.jsonl",
+  "rollout-2026-09-29T19-54-47-01a0eccd-8806-7493-ab46-931f7c8f504a.jsonl",
+  "rollout-2026-09-29T22-25-40-01a0ed57-aa2e-7283-bfcd-02f787860755.jsonl",
+  "rollout-2026-09-29T18-49-02-01a0ec91-54e3-7ff2-8d95-0a2dab7dbad5.jsonl",
+  "rollout-2026-09-29T19-41-19-01a0ecc1-3164-7aa1-a046-aca365a1ba7e.jsonl",
+  "rollout-2026-09-29T15-48-49-01a0ebec-55d7-77c0-bbf3-a768a4974c2c.jsonl",
+  "rollout-2026-09-29T17-28-12-01a0ec47-54e0-7f90-9ee5-a6f3c601734e.jsonl",
+  "rollout-2026-09-29T18-04-56-01a0ec68-f54d-7d33-82c5-c82215e510f8.jsonl",
+  "rollout-2026-09-29T16-51-56-01a0ec26-1f09-7fc2-92c1-d54e70f0bc3a.jsonl",
+  "rollout-2026-09-29T20-30-56-01a0ecee-9f3c-7972-974f-a0a5a7b11e73.jsonl",
+  "rollout-2026-09-29T22-52-43-01a0ed70-6dc9-7a32-bb11-61f498995bb2.jsonl",
+  "rollout-2026-09-29T17-43-16-01a0ec55-1ce6-7950-a29f-dbf21b7d29a8.jsonl",
+  "rollout-2026-09-29T20-27-47-01a0eceb-bcab-7863-851b-ae5540b6a51c.jsonl",
+  "rollout-2026-09-29T22-46-43-01a0ed6a-eea4-77d2-bdaa-2c4a616fc717.jsonl",
+  "rollout-2026-09-29T18-41-31-01a0ec8a-7426-73a0-afde-1ec643bd14a1.jsonl",
+  "rollout-2026-09-29T16-30-23-01a0ec12-62bc-7703-ac4d-98a7e2df3521.jsonl",
+  "rollout-2026-09-29T17-31-43-01a0ec4a-8d25-7c82-9d42-4f73710fd58a.jsonl",
+  "rollout-2026-09-29T20-26-45-01a0ecea-cbf1-7bd1-928d-6b9170162b98.jsonl",
+  "rollout-2026-09-29T18-15-42-01a0ec72-d07a-78f2-8614-d453fb4fb742.jsonl",
+  "rollout-2026-09-29T17-39-00-01a0ec51-3655-76a1-b301-3003f76b31f5.jsonl",
+  "rollout-2026-09-29T16-30-23-01a0ec12-631b-7b53-adf4-0f7cfa770079.jsonl",
+  "rollout-2026-09-29T19-18-02-01a0ecab-e323-7131-8bc9-07ba19d6a5e4.jsonl",
+  "rollout-2026-09-29T16-51-56-01a0ec26-1f5f-7f53-929f-943a6f10700f.jsonl",
+  "rollout-2026-09-29T20-26-45-01a0ecea-cc81-7483-b041-0fb0f9c36acf.jsonl",
+  "rollout-2026-09-29T22-25-40-01a0ed57-aa8c-7c62-b832-16f621823876.jsonl",
+  "rollout-2026-09-29T19-18-03-01a0ecab-e3a7-7e31-ac21-26b2bf78c0be.jsonl",
+  "rollout-2026-09-29T20-36-25-01a0ecf3-a41e-7560-b451-70f86d550190.jsonl",
+  "rollout-2026-09-29T18-07-55-01a0ec6b-af6e-7880-8705-7aaa92c86ac0.jsonl",
+  "rollout-2026-09-29T18-22-15-01a0ec78-d0b6-7c93-be49-632c175fa9c6.jsonl",
+  "rollout-2026-09-29T17-31-43-01a0ec4a-8cd0-7e73-9968-4d112b562f8b.jsonl",
+  "rollout-2026-09-29T18-49-03-01a0ec91-5788-7ca1-88ad-aab0936bd575.jsonl",
+  "rollout-2026-09-29T17-00-30-01a0ec2d-f52a-7433-b2bf-1807e3065c85.jsonl",
+  "rollout-2026-09-29T18-41-31-01a0ec8a-73cb-7220-877f-d1a8f43ac788.jsonl",
+  "rollout-2026-09-29T18-53-49-01a0ec95-b5f0-7722-988a-fafb82cf011a.jsonl",
+  "rollout-2026-09-29T23-26-44-01a0ed8f-92b0-7c32-8749-5a30673074bc.jsonl",
+  "rollout-2026-09-29T18-13-15-01a0ec70-9062-7770-a721-d283ee0135ee.jsonl",
+  "rollout-2026-09-29T23-26-44-01a0ed8f-930a-7551-b127-9222ea2a855a.jsonl",
+  "rollout-2026-09-29T16-51-33-01a0ec25-c3c6-7ae3-ac20-d5eb7dffd58f.jsonl",
+  "rollout-2026-09-29T18-01-03-01a0ec65-65c4-75d2-b37e-876329b12ab7.jsonl",
+  "rollout-2026-09-29T17-39-00-01a0ec51-356d-7091-af25-ce97c923b9fa.jsonl",
+  "rollout-2026-09-29T21-42-38-01a0ed30-4244-7233-bd77-31b2d5e89701.jsonl",
+  "rollout-2026-09-29T23-45-06-01a0eda0-6314-7743-8436-c9fbf6b2da08.jsonl",
+  "rollout-2026-09-29T18-13-15-01a0ec70-90e9-7c51-a7f4-708a0059fb69.jsonl",
+  "rollout-2026-09-30T09-13-46-01a0efa9-0371-7e02-bdd3-9d78add195ae.jsonl",
+  "rollout-2026-09-30T03-03-58-01a0ee56-7626-71d0-98ef-0894400a5a20.jsonl",
+  "rollout-2026-09-30T02-38-38-01a0ee3f-43cf-7f93-9344-5555410d4005.jsonl",
+  "rollout-2026-09-30T07-04-06-01a0ef32-4eab-7de3-9476-0f1de14f281a.jsonl",
+  "rollout-2026-09-30T01-02-37-01a0ede7-5bb5-72e2-b4c3-a2b68729246c.jsonl",
+  "rollout-2026-09-30T03-07-31-01a0ee59-b4ff-76b1-9c7c-1b05fc7fa903.jsonl",
+  "rollout-2026-09-30T00-58-23-01a0ede3-7c7a-7fb3-862a-626af37a74b7.jsonl",
+  "rollout-2026-09-30T03-46-09-01a0ee7d-14fc-7872-abaa-e84d6417c6e4.jsonl",
+  "rollout-2026-09-30T02-38-56-01a0ee3f-88f9-7aa2-89f7-cedee402137f.jsonl",
+  "rollout-2026-09-30T02-31-25-01a0ee38-a6b9-7733-ae86-9a799f26b0e4.jsonl",
+  "rollout-2026-09-30T02-31-31-01a0ee38-bfa4-71c1-bb19-4842fff710e4.jsonl",
+  "rollout-2026-09-30T07-03-58-01a0ef32-2d48-7861-8023-7ee310a743c6.jsonl"
+ ],
+ "window": {
+  "first": "09-29 15:27",
+  "last": "09-30 09:46"
+ },
+ "plugin_versions": [
+  "dddjango-web 1.1.25 ×1775",
+  "dddjango 2.18.4 ×99",
+  "dddjango 2.18.2 ×8",
+  "dddjango 2.18.3 ×7",
+  "dddjango-web 1.1.24 ×4"
+ ],
+ "time": {
+  "wall_min": 1099.2,
+  "work_min": 887.8,
+  "limit_min": null,
+  "idle_min": 211.3
+ },
+ "roles": {
+  "coder": {
+   "agents": 11,
+   "requests": 2296,
+   "model_min": 398.4,
+   "tool_min": 109.4,
+   "avg_input_k": 133.7,
+   "max_input_k": 227.4,
+   "cache_write_M": 0.0,
+   "cache_read_M": 301.4,
+   "output_k": 835.3,
+   "cold_rewrites": 0,
+   "compacts": 21
+  },
+  "design-architect": {
+   "agents": 3,
+   "requests": 314,
+   "model_min": 65.7,
+   "tool_min": 2.3,
+   "avg_input_k": 121.5,
+   "max_input_k": 232.1,
+   "cache_write_M": 0.0,
+   "cache_read_M": 36.7,
+   "output_k": 159.4,
+   "cold_rewrites": 0,
+   "compacts": 6
+  },
+  "discipline-audit": {
+   "agents": 1,
+   "requests": 12,
+   "model_min": 2.4,
+   "tool_min": 0.1,
+   "avg_input_k": 74.8,
+   "max_input_k": 92.7,
+   "cache_write_M": 0.0,
+   "cache_read_M": 0.8,
+   "output_k": 5.8,
+   "cold_rewrites": 0,
+   "compacts": 1
+  },
+  "guardian": {
+   "agents": 53,
+   "requests": 29,
+   "model_min": 2.4,
+   "tool_min": 0.0,
+   "avg_input_k": 50.9,
+   "max_input_k": 84.1,
+   "cache_write_M": 0.0,
+   "cache_read_M": 1.2,
+   "output_k": 3.3,
+   "cold_rewrites": 0,
+   "compacts": 0
+  },
+  "main": {
+   "agents": 1,
+   "requests": 3221,
+   "model_min": 445.0,
+   "tool_min": 442.8,
+   "avg_input_k": 135.7,
+   "max_input_k": 233.4,
+   "cache_write_M": 0.0,
+   "cache_read_M": 432.3,
+   "output_k": 747.5,
+   "cold_rewrites": 0,
+   "compacts": 14
+  },
+  "other-sub": {
+   "agents": 3,
+   "requests": 109,
+   "model_min": 22.1,
+   "tool_min": 3.1,
+   "avg_input_k": 86.0,
+   "max_input_k": 146.3,
+   "cache_write_M": 0.0,
+   "cache_read_M": 9.1,
+   "output_k": 50.6,
+   "cold_rewrites": 0,
+   "compacts": 3
+  },
+  "review": {
+   "agents": 16,
+   "requests": 1141,
+   "model_min": 196.8,
+   "tool_min": 32.9,
+   "avg_input_k": 127.4,
+   "max_input_k": 238.6,
+   "cache_write_M": 0.0,
+   "cache_read_M": 140.1,
+   "output_k": 409.5,
+   "cold_rewrites": 0,
+   "compacts": 24
+  }
+ },
+ "threads": {
+  "architect_motion_coordinates": {
+   "model_min": 35.8,
+   "tool_min": 1.8
+  },
+  "coder_catalog_data": {
+   "model_min": 11.7,
+   "tool_min": 1.7
+  },
+  "coder_design_system": {
+   "model_min": 34.6,
+   "tool_min": 6.2
+  },
+  "coder_detail_sections": {
+   "model_min": 66.6,
+   "tool_min": 21.7
+  },
+  "coder_integration": {
+   "model_min": 119.3,
+   "tool_min": 33.0
+  },
+  "coder_payment_entry": {
+   "model_min": 51.6,
+   "tool_min": 11.8
+  },
+  "coder_poster_a": {
+   "model_min": 21.5,
+   "tool_min": 4.4
+  },
+  "coder_poster_b": {
+   "model_min": 18.7,
+   "tool_min": 9.8
+  },
+  "coder_review_fragments": {
+   "model_min": 19.7,
+   "tool_min": 8.8
+  },
+  "coder_review_relay_data": {
+   "model_min": 6.0,
+   "tool_min": 1.1
+  },
+  "coder_state_routes": {
+   "model_min": 13.9,
+   "tool_min": 3.9
+  },
+  "coder_teller_sections": {
+   "model_min": 34.7,
+   "tool_min": 7.0
+  },
+  "design_architect_revision": {
+   "model_min": 9.4,
+   "tool_min": 0.1
+  },
+  "design_architect_web": {
+   "model_min": 20.6,
+   "tool_min": 0.3
+  },
+  "design_desktop_overlay": {
+   "model_min": 10.7,
+   "tool_min": 0.5
+  },
+  "design_discipline_review": {
+   "model_min": 2.4,
+   "tool_min": 0.1
+  },
+  "design_input_review": {
+   "model_min": 25.1,
+   "tool_min": 2.2
+  },
+  "design_review_web": {
+   "model_min": 8.0,
+   "tool_min": 0.3
+  },
+  "design_token_correction": {
+   "model_min": 5.0,
+   "tool_min": 0.1
+  },
+  "guardian": {
+   "model_min": 2.4,
+   "tool_min": 0.0
+  },
+  "main": {
+   "model_min": 0.0,
+   "tool_min": 0.0
+  },
+  "maintain_poster_tests": {
+   "model_min": 6.4,
+   "tool_min": 2.5
+  },
+  "review_catalog_data": {
+   "model_min": 1.8,
+   "tool_min": 0.0
+  },
+  "review_design_correction": {
+   "model_min": 1.9,
+   "tool_min": 0.0
+  },
+  "review_design_system": {
+   "model_min": 3.5,
+   "tool_min": 0.1
+  },
+  "review_desktop_overlay": {
+   "model_min": 4.2,
+   "tool_min": 0.2
+  },
+  "review_detail_sections": {
+   "model_min": 12.1,
+   "tool_min": 1.0
+  },
+  "review_missing_detail_retry": {
+   "model_min": 2.2,
+   "tool_min": 0.0
+  },
+  "review_motion_coordinates": {
+   "model_min": 1.4,
+   "tool_min": 0.0
+  },
+  "review_payment_entry": {
+   "model_min": 11.6,
+   "tool_min": 1.5
+  },
+  "review_poster_a": {
+   "model_min": 36.1,
+   "tool_min": 17.5
+  },
+  "review_poster_b": {
+   "model_min": 70.2,
+   "tool_min": 9.1
+  },
+  "review_review_fragments": {
+   "model_min": 3.9,
+   "tool_min": 0.2
+  },
+  "review_review_relay_data": {
+   "model_min": 2.2,
+   "tool_min": 0.2
+  },
+  "review_state_routes": {
+   "model_min": 2.4,
+   "tool_min": 0.1
+  },
+  "review_teller_sections": {
+   "model_min": 10.3,
+   "tool_min": 0.3
+  }
+ },
+ "main_commands": {
+  "backstop": {
+   "n": 12,
+   "min": 0.7
+  },
+  "design_evidence": {
+   "n": 200,
+   "min": 10.6
+  },
+  "registry_gate": {
+   "n": 14,
+   "min": 1.6
+  },
+  "tests": {
+   "n": 35,
+   "min": 2.2
+  }
+ },
+ "main_calls": {
+  "exec": 1975,
+  "js": 2,
+  "spawn_agent": 35,
+  "list_agents": 77,
+  "wait_agent": 789,
+  "send_message": 203,
+  "wait": 26,
+  "followup_task": 79,
+  "request_user_input_async": 2,
+  "sleep": 12
+ },
+ "wait_timeouts": 619,
+ "markers": {},
+ "human": {
+  "messages": 15,
+  "rejections": 5
+ },
+ "spec": {
+  "revisions": 10,
+  "first_kb": 111,
+  "last_kb": 111,
+  "max_kb": 111,
+  "path": ".dddjango-web/20260922-1647-teller-detail-sheet/prior-20260929-pre-8b3/design-spec.md",
+  "all_paths": {
+   ".dddjango/20260929-0827-counter-service-evidence/design-spec.md": 1,
+   ".dddjango-web/20260922-1647-teller-detail-sheet/prior-20260929-pre-8b3/design-spec.md": 1,
+   ".dddjango-web/20260922-1647-teller-detail-sheet/design-spec.md": 9,
+   ".dddjango-web/20260908-1534-web-chart/design-spec.md": 14,
+   ".dddjango-web/20260908-1534-web-chart/_history/pre-6-3-11-20260929/design-spec.md": 1,
+   ".dddjango-web/20260907-2302-user-info-input/design-spec.md": 1,
+   ".dddjango-web/20260907-2302-user-info-input/_prev-20260929-before-guide-video/design-spec.md": 1,
+   ".dddjango/20260929-1707-fortune-house-notice-phrases/design-spec.md": 2
+  },
+  "rows": [
+   {
+    "commit": "ddd6dcfa8",
+    "at": "09-29 17:19",
+    "path": ".dddjango-web/20260922-1647-teller-detail-sheet/prior-20260929-pre-8b3/design-spec.md",
+    "bytes": 113278
+   },
+   {
+    "commit": "ddd6dcfa8",
+    "at": "09-29 17:19",
+    "path": ".dddjango-web/20260922-1647-teller-detail-sheet/design-spec.md",
+    "bytes": 85059
+   },
+   {
+    "commit": "afc7b7c69",
+    "at": "09-29 18:20",
+    "path": ".dddjango-web/20260922-1647-teller-detail-sheet/design-spec.md",
+    "bytes": 86690
+   },
+   {
+    "commit": "ead34f1d9",
+    "at": "09-29 19:16",
+    "path": ".dddjango-web/20260922-1647-teller-detail-sheet/design-spec.md",
+    "bytes": 90780
+   },
+   {
+    "commit": "cb3eee65d",
+    "at": "09-29 21:01",
+    "path": ".dddjango-web/20260922-1647-teller-detail-sheet/design-spec.md",
+    "bytes": 94441
+   },
+   {
+    "commit": "dfcc7638c",
+    "at": "09-30 01:43",
+    "path": ".dddjango-web/20260922-1647-teller-detail-sheet/design-spec.md",
+    "bytes": 94514
+   },
+   {
+    "commit": "9f47a77d0",
+    "at": "09-30 03:32",
+    "path": ".dddjango-web/20260922-1647-teller-detail-sheet/design-spec.md",
+    "bytes": 99429
+   },
+   {
+    "commit": "b82ca08f4",
+    "at": "09-30 04:53",
+    "path": ".dddjango-web/20260922-1647-teller-detail-sheet/design-spec.md",
+    "bytes": 104437
+   },
+   {
+    "commit": "a259f6a73",
+    "at": "09-30 07:52",
+    "path": ".dddjango-web/20260922-1647-teller-detail-sheet/design-spec.md",
+    "bytes": 113280
+   },
+   {
+    "commit": "ea80d6737",
+    "at": "09-30 08:25",
+    "path": ".dddjango-web/20260922-1647-teller-detail-sheet/design-spec.md",
+    "bytes": 113419
+   }
+  ]
+ }
+}

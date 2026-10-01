@@ -1,0 +1,522 @@
+{
+ "runtime": "codex",
+ "source": "/Users/hyun/.herdr/worktrees/spring_dream_server/lane-6-3-11",
+ "sessions": [
+  "rollout-2026-09-29T21-55-33-01a0ed3c-1719-78d2-ac36-db401f29ceb3.jsonl",
+  "rollout-2026-09-29T19-10-06-01a0eca4-9c36-7993-9e76-b1e47955195f.jsonl",
+  "rollout-2026-09-29T18-35-13-01a0ec84-aefd-7432-81a8-14bcd3b76bbf.jsonl",
+  "rollout-2026-09-29T23-26-13-01a0ed8f-17ff-7150-bb40-85d10b9f256d.jsonl",
+  "rollout-2026-09-29T15-52-01-01a0ebef-433f-70e2-b792-844d89bc7561.jsonl",
+  "rollout-2026-09-29T21-46-20-01a0ed33-a617-73f3-81e4-5f23f522c04f.jsonl",
+  "rollout-2026-09-29T19-14-21-01a0eca8-8066-7370-a831-99008e1a172a.jsonl",
+  "rollout-2026-09-29T19-46-49-01a0ecc6-3b04-7493-b03f-5a1ef97df47e.jsonl",
+  "rollout-2026-09-29T21-01-23-01a0ed0a-819e-7c43-9a70-ae262208112d.jsonl",
+  "rollout-2026-09-29T22-55-54-01a0ed73-5985-7822-b084-5368c08e83f9.jsonl",
+  "rollout-2026-09-29T18-43-24-01a0ec8c-2aa8-7240-8288-86ab896ebedb.jsonl",
+  "rollout-2026-09-29T21-36-59-01a0ed2b-18b0-7353-8161-9525aa9d2f35.jsonl",
+  "rollout-2026-09-29T19-04-44-01a0ec9f-b4d0-74e0-a259-6e9550be9af4.jsonl",
+  "rollout-2026-09-29T21-49-38-01a0ed36-ac68-7b90-b570-c877680c0f46.jsonl",
+  "rollout-2026-09-29T19-08-52-01a0eca3-7b5d-7f91-90d1-c551c371cccb.jsonl",
+  "rollout-2026-09-29T21-13-36-01a0ed15-af41-7972-9c22-c7b5f71c07a4.jsonl",
+  "rollout-2026-09-29T23-46-29-01a0eda1-a5d8-79f0-8168-0c1d3c219704.jsonl",
+  "rollout-2026-09-29T16-04-54-01a0ebfb-0efd-71d0-9b6e-2881d92c68c3.jsonl",
+  "rollout-2026-09-29T18-31-07-01a0ec80-ef01-7b62-b753-5e751445b031.jsonl",
+  "rollout-2026-09-29T15-22-46-01a0ebd4-7b50-7970-808f-185645af80dc.jsonl",
+  "rollout-2026-09-29T19-10-05-01a0eca4-9bdc-7492-bdbb-c65caeec8f62.jsonl",
+  "rollout-2026-09-29T18-32-51-01a0ec82-83a0-7080-98c8-8c5a5a623e93.jsonl",
+  "rollout-2026-09-29T21-09-40-01a0ed12-1630-7c23-a763-a54fcf82b20b.jsonl",
+  "rollout-2026-09-29T21-52-12-01a0ed39-06b0-7683-a795-49cbc0c0099e.jsonl",
+  "rollout-2026-09-29T19-49-25-01a0ecc8-9b0c-7620-8a1a-374a9e37c513.jsonl",
+  "rollout-2026-09-29T19-09-37-01a0eca4-2e87-7b10-a63f-83c3081ad03d.jsonl",
+  "rollout-2026-09-29T23-36-21-01a0ed98-5e85-7420-9be3-9fafc24635a1.jsonl",
+  "rollout-2026-09-29T20-40-40-01a0ecf7-872b-7ea2-809a-fa4ce5072cda.jsonl",
+  "rollout-2026-09-29T20-43-01-01a0ecf9-afc3-7e70-90c4-f343d2262ee4.jsonl",
+  "rollout-2026-09-29T19-42-44-01a0ecc2-7e30-7842-92b8-5b1e7e085b25.jsonl",
+  "rollout-2026-09-29T20-18-24-01a0ece3-25f6-71d0-9645-57e94f1977e9.jsonl",
+  "rollout-2026-09-29T15-37-03-01a0ebe1-912c-7a23-9ec9-da3abe7496f3.jsonl",
+  "rollout-2026-09-29T23-36-53-01a0ed98-db53-7120-a332-81cbe0b4ca37.jsonl",
+  "rollout-2026-09-29T20-19-58-01a0ece4-962e-7e70-9bda-bcacb7583719.jsonl",
+  "rollout-2026-09-29T18-30-51-01a0ec80-ae07-7a30-846f-c8e029e1a371.jsonl",
+  "rollout-2026-09-29T15-37-03-01a0ebe1-917e-7791-b904-d0788872f35b.jsonl",
+  "rollout-2026-09-29T20-19-58-01a0ece4-959a-7642-81fe-aae48141a9f6.jsonl",
+  "rollout-2026-09-29T18-33-50-01a0ec83-6ace-7c91-b8fe-9087cd076033.jsonl",
+  "rollout-2026-09-29T22-55-55-01a0ed73-59d9-7133-a647-3612eecc76ce.jsonl",
+  "rollout-2026-09-29T19-47-59-01a0ecc7-4d73-7691-a3d7-d138ff750128.jsonl",
+  "rollout-2026-09-29T23-06-40-01a0ed7d-329a-70c0-af34-9208af4d243b.jsonl",
+  "rollout-2026-09-29T19-27-18-01a0ecb4-5bf3-7482-83dd-0ec6e35481aa.jsonl",
+  "rollout-2026-09-29T21-26-33-01a0ed21-8a88-7730-b843-b697eac157cb.jsonl",
+  "rollout-2026-09-29T15-52-00-01a0ebef-40a2-76a1-9818-0456c5f5b29f.jsonl",
+  "rollout-2026-09-29T22-56-02-01a0ed73-783e-7593-9024-50f390d40ee6.jsonl",
+  "rollout-2026-09-29T19-55-45-01a0ecce-6a5b-7f02-9ae9-01e184a4c417.jsonl",
+  "rollout-2026-09-29T21-32-38-01a0ed27-1c8f-7f51-8740-2d01bb165631.jsonl",
+  "rollout-2026-09-29T18-35-46-01a0ec85-2f7c-7050-a4fd-f2a17c23c531.jsonl",
+  "rollout-2026-09-29T21-44-18-01a0ed31-c942-7f01-84f0-45450f7d2f63.jsonl",
+  "rollout-2026-09-29T18-17-11-01a0ec74-2c1a-7c02-bfc2-4352435b7729.jsonl",
+  "rollout-2026-09-29T21-36-59-01a0ed2b-1913-77e1-bac8-3ddf1cf0c451.jsonl",
+  "rollout-2026-09-29T20-18-24-01a0ece3-2769-74b0-b84b-5f6f7fef8284.jsonl",
+  "rollout-2026-09-29T16-04-53-01a0ebfb-0baa-72d3-8c49-14b114a9d89f.jsonl",
+  "rollout-2026-09-29T21-12-24-01a0ed14-96d3-7331-8862-e1cf45b5f127.jsonl",
+  "rollout-2026-09-29T18-41-04-01a0ec8a-0afd-75b2-8764-19210066cbea.jsonl",
+  "rollout-2026-09-29T19-57-22-01a0eccf-e4e3-7da2-899c-ca88f16787a6.jsonl",
+  "rollout-2026-09-29T22-56-02-01a0ed73-7896-7922-9933-0e6ed7459a6a.jsonl",
+  "rollout-2026-09-29T18-05-09-01a0ec69-273c-7773-b609-b3f66cf4c813.jsonl",
+  "rollout-2026-09-29T21-01-23-01a0ed0a-8146-7652-a5d8-3faa727de464.jsonl",
+  "rollout-2026-09-29T19-27-18-01a0ecb4-5c56-7033-bca3-b0e2e8526183.jsonl",
+  "rollout-2026-09-29T22-58-03-01a0ed75-4f0b-72c1-9f90-67f75b1345f9.jsonl",
+  "rollout-2026-09-29T20-08-46-01a0ecda-545c-7391-be2d-a4205511729f.jsonl",
+  "rollout-2026-09-29T22-19-26-01a0ed51-f6f0-7802-a11f-c17f05d5c3e2.jsonl",
+  "rollout-2026-09-29T18-03-34-01a0ec67-b596-7602-8d8b-d3e8f3bce14e.jsonl",
+  "rollout-2026-09-29T18-05-09-01a0ec69-26ed-70d2-b7c5-1be415b3aa34.jsonl",
+  "rollout-2026-09-29T20-08-46-01a0ecda-53ea-7e60-8b4b-f86f950ef677.jsonl",
+  "rollout-2026-09-29T20-43-36-01a0ecfa-395f-7073-8a25-cb0a4fca4b37.jsonl",
+  "rollout-2026-09-29T18-41-05-01a0ec8a-0b5c-7021-b04a-fde4779cf151.jsonl",
+  "rollout-2026-09-29T19-55-46-01a0ecce-6c9a-74a0-ba0b-f209b61e8b13.jsonl",
+  "rollout-2026-09-29T23-02-27-01a0ed79-57a9-7a82-89e5-5684c902cc47.jsonl",
+  "rollout-2026-09-29T20-39-20-01a0ecf6-4fe0-7af0-bd65-60a4c344430c.jsonl",
+  "rollout-2026-09-29T22-57-35-01a0ed74-e106-7622-b2a3-4eda33163127.jsonl",
+  "rollout-2026-09-29T18-36-28-01a0ec85-d2b2-79c0-ba51-2510d844a0dd.jsonl",
+  "rollout-2026-09-29T21-49-50-01a0ed36-dcd0-7cb2-9b1f-2ed5ab5bfaa2.jsonl",
+  "rollout-2026-09-29T19-42-44-01a0ecc2-7dc5-7333-be1a-57a4aeecd61c.jsonl",
+  "rollout-2026-09-29T21-16-26-01a0ed18-46d2-7a62-b702-c01f481fd82d.jsonl",
+  "rollout-2026-09-29T18-33-50-01a0ec83-6a6e-73f0-8bee-d51a920fbd3d.jsonl",
+  "rollout-2026-09-29T20-46-56-01a0ecfd-44a9-7fb0-bfd9-eed80d392447.jsonl",
+  "rollout-2026-09-29T15-39-28-01a0ebe3-c65c-7fa0-88c6-372f98acc478.jsonl",
+  "rollout-2026-09-29T18-22-42-01a0ec79-38f7-79f0-b342-efba79c11158.jsonl",
+  "rollout-2026-09-29T22-58-03-01a0ed75-4eb2-7d70-ae50-63bd086057c4.jsonl",
+  "rollout-2026-09-29T20-40-40-01a0ecf7-878b-78b0-b5c2-550d3fbd3575.jsonl",
+  "rollout-2026-09-29T22-57-35-01a0ed74-e0a9-7c83-936c-dec572411adf.jsonl",
+  "rollout-2026-09-29T15-22-46-01a0ebd4-7c6c-7580-a6db-586fa2f47ad9.jsonl",
+  "rollout-2026-09-30T03-00-12-01a0ee53-02da-7232-a7fa-8f86dfab3683.jsonl",
+  "rollout-2026-09-30T03-09-07-01a0ee5b-2a09-7b32-8877-0ef172226720.jsonl",
+  "rollout-2026-09-30T01-31-14-01a0ee01-8eff-7053-aa52-4595e7651343.jsonl",
+  "rollout-2026-09-30T06-50-32-01a0ef25-e1ab-7c21-abc5-31f410e5f112.jsonl",
+  "rollout-2026-09-30T00-14-02-01a0edba-df6d-7382-8615-88be3791c5d5.jsonl",
+  "rollout-2026-09-30T03-09-00-01a0ee5b-0f00-75a1-8752-509c481c403d.jsonl",
+  "rollout-2026-09-30T03-36-37-01a0ee74-57f5-7941-8324-c1596ec0ecea.jsonl",
+  "rollout-2026-09-30T01-31-29-01a0ee01-c962-7672-aaaa-f70014a9fb95.jsonl",
+  "rollout-2026-09-30T00-14-02-01a0edba-dfca-7843-9e56-6556b4957e34.jsonl",
+  "rollout-2026-09-30T01-39-58-01a0ee09-8c54-7720-847a-20268c9941c9.jsonl",
+  "rollout-2026-09-30T03-14-47-01a0ee60-5b95-75f3-aa13-8abbdf7ebbd1.jsonl",
+  "rollout-2026-09-30T03-22-27-01a0ee67-6088-71e2-a7a7-c78623259d75.jsonl",
+  "rollout-2026-09-30T07-57-17-01a0ef63-0057-7d50-a9bb-e8837ec7dade.jsonl",
+  "rollout-2026-09-30T01-31-29-01a0ee01-c9b5-7173-87d5-14ce8fd0e7ca.jsonl",
+  "rollout-2026-09-30T03-02-50-01a0ee55-691c-7602-936c-01fcf37d6f1f.jsonl",
+  "rollout-2026-09-30T01-39-58-01a0ee09-8cac-7f00-8be0-b4a0a9eba445.jsonl",
+  "rollout-2026-09-30T01-32-15-01a0ee02-7e03-70a3-8cd5-6679de83eb34.jsonl",
+  "rollout-2026-09-30T03-09-00-01a0ee5b-0e41-7621-8727-ce93aa97ce99.jsonl",
+  "rollout-2026-09-30T02-10-57-01a0ee25-eab4-7f71-98a1-f9d421fe3a33.jsonl",
+  "rollout-2026-09-30T02-05-12-01a0ee20-a5d2-7cf2-86ea-c193b04b200c.jsonl",
+  "rollout-2026-09-30T03-36-37-01a0ee74-579d-7b61-b597-9dce4c527598.jsonl",
+  "rollout-2026-09-30T01-31-14-01a0ee01-8ea7-7f52-841b-04a413c4c0fb.jsonl",
+  "rollout-2026-09-30T03-14-47-01a0ee60-5bfa-79d3-be3c-be63c37c6eae.jsonl",
+  "rollout-2026-09-30T01-32-15-01a0ee02-7dad-7221-82da-ecfe24a87503.jsonl",
+  "rollout-2026-09-30T02-05-12-01a0ee20-a638-7de1-b6b1-50776cd52621.jsonl",
+  "rollout-2026-09-30T03-09-07-01a0ee5b-29a9-7bb2-8407-2f793e2c6e7b.jsonl",
+  "rollout-2026-09-30T03-00-12-01a0ee53-036e-7430-a953-8628e5d179da.jsonl",
+  "rollout-2026-09-30T01-58-51-01a0ee1a-d843-73b2-9b47-7d174cf69746.jsonl",
+  "rollout-2026-09-30T04-15-45-01a0ee98-2c24-70a1-840e-2fe7d9edffa6.jsonl"
+ ],
+ "window": {
+  "first": "09-29 15:24",
+  "last": "09-30 08:53"
+ },
+ "plugin_versions": [
+  "dddjango-web 1.1.25 ×1498",
+  "dddjango 2.18.4 ×396",
+  "dddjango 2.18.3 ×4"
+ ],
+ "time": {
+  "wall_min": 1049.2,
+  "work_min": 642.3,
+  "limit_min": null,
+  "idle_min": 406.9
+ },
+ "roles": {
+  "coder": {
+   "agents": 7,
+   "requests": 992,
+   "model_min": 163.4,
+   "tool_min": 58.9,
+   "avg_input_k": 139.5,
+   "max_input_k": 227.9,
+   "cache_write_M": 0.0,
+   "cache_read_M": 135.8,
+   "output_k": 359.8,
+   "cold_rewrites": 0,
+   "compacts": 11
+  },
+  "design-architect": {
+   "agents": 3,
+   "requests": 294,
+   "model_min": 65.7,
+   "tool_min": 1.8,
+   "avg_input_k": 135.7,
+   "max_input_k": 228.8,
+   "cache_write_M": 0.0,
+   "cache_read_M": 38.6,
+   "output_k": 161.4,
+   "cold_rewrites": 0,
+   "compacts": 5
+  },
+  "discipline-audit": {
+   "agents": 3,
+   "requests": 295,
+   "model_min": 59.1,
+   "tool_min": 8.8,
+   "avg_input_k": 135.7,
+   "max_input_k": 240.3,
+   "cache_write_M": 0.0,
+   "cache_read_M": 38.5,
+   "output_k": 102.9,
+   "cold_rewrites": 0,
+   "compacts": 6
+  },
+  "guardian": {
+   "agents": 81,
+   "requests": 241,
+   "model_min": 16.7,
+   "tool_min": 0.2,
+   "avg_input_k": 63.9,
+   "max_input_k": 149.5,
+   "cache_write_M": 0.0,
+   "cache_read_M": 12.6,
+   "output_k": 29.0,
+   "cold_rewrites": 0,
+   "compacts": 0
+  },
+  "main": {
+   "agents": 1,
+   "requests": 2716,
+   "model_min": 403.5,
+   "tool_min": 238.6,
+   "avg_input_k": 139.6,
+   "max_input_k": 230.9,
+   "cache_write_M": 0.0,
+   "cache_read_M": 373.4,
+   "output_k": 689.7,
+   "cold_rewrites": 0,
+   "compacts": 13
+  },
+  "other-sub": {
+   "agents": 3,
+   "requests": 311,
+   "model_min": 54.7,
+   "tool_min": 15.3,
+   "avg_input_k": 125.2,
+   "max_input_k": 218.0,
+   "cache_write_M": 0.0,
+   "cache_read_M": 38.3,
+   "output_k": 92.7,
+   "cold_rewrites": 0,
+   "compacts": 4
+  },
+  "review": {
+   "agents": 12,
+   "requests": 547,
+   "model_min": 98.9,
+   "tool_min": 23.5,
+   "avg_input_k": 127.6,
+   "max_input_k": 230.1,
+   "cache_write_M": 0.0,
+   "cache_read_M": 67.0,
+   "output_k": 197.0,
+   "cold_rewrites": 0,
+   "compacts": 14
+  },
+  "visual": {
+   "agents": 3,
+   "requests": 780,
+   "model_min": 143.0,
+   "tool_min": 74.4,
+   "avg_input_k": 138.6,
+   "max_input_k": 222.8,
+   "cache_write_M": 0.0,
+   "cache_read_M": 106.6,
+   "output_k": 280.4,
+   "cold_rewrites": 0,
+   "compacts": 6
+  }
+ },
+ "threads": {
+  "branch_hanja_contract": {
+   "model_min": 1.7,
+   "tool_min": 0.0
+  },
+  "coder_slice_1": {
+   "model_min": 27.5,
+   "tool_min": 4.4
+  },
+  "coder_slice_2": {
+   "model_min": 41.0,
+   "tool_min": 16.8
+  },
+  "coder_slice_3": {
+   "model_min": 18.3,
+   "tool_min": 4.2
+  },
+  "coder_slice_4": {
+   "model_min": 27.7,
+   "tool_min": 3.8
+  },
+  "coder_slice_5": {
+   "model_min": 26.1,
+   "tool_min": 9.6
+  },
+  "design_architect": {
+   "model_min": 52.6,
+   "tool_min": 1.5
+  },
+  "design_review": {
+   "model_min": 17.8,
+   "tool_min": 2.1
+  },
+  "g2_discipline_audit": {
+   "model_min": 27.3,
+   "tool_min": 5.5
+  },
+  "g2_real_account_visual": {
+   "model_min": 56.5,
+   "tool_min": 36.6
+  },
+  "g2_rework_discipline_audit": {
+   "model_min": 17.2,
+   "tool_min": 3.0
+  },
+  "g2_rework_hanja": {
+   "model_min": 6.3,
+   "tool_min": 1.2
+  },
+  "g2_rework_ui": {
+   "model_min": 46.7,
+   "tool_min": 14.0
+  },
+  "g2_second_architect": {
+   "model_min": 4.5,
+   "tool_min": 0.1
+  },
+  "g2_second_coder": {
+   "model_min": 16.5,
+   "tool_min": 15.8
+  },
+  "g2_second_input_review": {
+   "model_min": 3.3,
+   "tool_min": 0.1
+  },
+  "g2_second_reviewer": {
+   "model_min": 26.8,
+   "tool_min": 15.3
+  },
+  "g2_second_visual": {
+   "model_min": 23.0,
+   "tool_min": 4.2
+  },
+  "g2_visual_browser": {
+   "model_min": 63.5,
+   "tool_min": 33.6
+  },
+  "guardian": {
+   "model_min": 16.7,
+   "tool_min": 0.2
+  },
+  "input_review": {
+   "model_min": 15.4,
+   "tool_min": 3.7
+  },
+  "main": {
+   "model_min": 0.0,
+   "tool_min": 0.0
+  },
+  "review_slice_1": {
+   "model_min": 4.6,
+   "tool_min": 0.4
+  },
+  "review_slice_2": {
+   "model_min": 4.7,
+   "tool_min": 0.1
+  },
+  "review_slice_3": {
+   "model_min": 4.5,
+   "tool_min": 0.1
+  },
+  "review_slice_4": {
+   "model_min": 5.9,
+   "tool_min": 0.2
+  },
+  "review_slice_5": {
+   "model_min": 4.1,
+   "tool_min": 0.5
+  },
+  "review_toast_fix": {
+   "model_min": 3.1,
+   "tool_min": 0.1
+  },
+  "unknown_hour_architect": {
+   "model_min": 8.6,
+   "tool_min": 0.2
+  },
+  "unknown_hour_coder": {
+   "model_min": 6.5,
+   "tool_min": 4.4
+  },
+  "unknown_hour_design_review": {
+   "model_min": 4.6,
+   "tool_min": 0.7
+  },
+  "unknown_hour_discipline_review": {
+   "model_min": 14.6,
+   "tool_min": 0.3
+  },
+  "unknown_hour_input_review": {
+   "model_min": 4.1,
+   "tool_min": 0.3
+  }
+ },
+ "main_commands": {
+  "backstop": {
+   "n": 14,
+   "min": 0.5
+  },
+  "debt_scan": {
+   "n": 1,
+   "min": 0.0
+  },
+  "design_evidence": {
+   "n": 152,
+   "min": 5.3
+  },
+  "registry_gate": {
+   "n": 13,
+   "min": 0.6
+  },
+  "tests": {
+   "n": 107,
+   "min": 21.9
+  }
+ },
+ "main_calls": {
+  "exec": 1758,
+  "js": 2,
+  "spawn_agent": 31,
+  "list_agents": 70,
+  "wait_agent": 450,
+  "send_message": 247,
+  "followup_task": 76,
+  "interrupt_agent": 1,
+  "wait": 46,
+  "sleep": 6
+ },
+ "wait_timeouts": 441,
+ "markers": {
+  "G1′": 5
+ },
+ "human": {
+  "messages": 22,
+  "rejections": 8
+ },
+ "spec": {
+  "revisions": 15,
+  "first_kb": 71,
+  "last_kb": 93,
+  "max_kb": 93,
+  "path": ".dddjango-web/20260908-1534-web-chart/design-spec.md",
+  "all_paths": {
+   ".dddjango/20260929-0827-counter-service-evidence/design-spec.md": 1,
+   ".dddjango-web/20260908-1534-web-chart/design-spec.md": 14,
+   ".dddjango-web/20260908-1534-web-chart/_history/pre-6-3-11-20260929/design-spec.md": 1,
+   ".dddjango-web/20260907-2302-user-info-input/design-spec.md": 1,
+   ".dddjango-web/20260907-2302-user-info-input/_prev-20260929-before-guide-video/design-spec.md": 1
+  },
+  "rows": [
+   {
+    "commit": "14873bc14",
+    "at": "09-29 18:03",
+    "path": ".dddjango-web/20260908-1534-web-chart/design-spec.md",
+    "bytes": 72945
+   },
+   {
+    "commit": "14873bc14",
+    "at": "09-29 18:03",
+    "path": ".dddjango-web/20260908-1534-web-chart/_history/pre-6-3-11-20260929/design-spec.md",
+    "bytes": 63050
+   },
+   {
+    "commit": "39b40a155",
+    "at": "09-29 18:40",
+    "path": ".dddjango-web/20260908-1534-web-chart/design-spec.md",
+    "bytes": 73649
+   },
+   {
+    "commit": "566197974",
+    "at": "09-29 19:25",
+    "path": ".dddjango-web/20260908-1534-web-chart/design-spec.md",
+    "bytes": 75220
+   },
+   {
+    "commit": "54f771533",
+    "at": "09-29 19:55",
+    "path": ".dddjango-web/20260908-1534-web-chart/design-spec.md",
+    "bytes": 77621
+   },
+   {
+    "commit": "dfc83d291",
+    "at": "09-29 20:16",
+    "path": ".dddjango-web/20260908-1534-web-chart/design-spec.md",
+    "bytes": 77713
+   },
+   {
+    "commit": "507c12cc3",
+    "at": "09-29 22:20",
+    "path": ".dddjango-web/20260908-1534-web-chart/design-spec.md",
+    "bytes": 80181
+   },
+   {
+    "commit": "0aded7dcc",
+    "at": "09-29 23:05",
+    "path": ".dddjango-web/20260908-1534-web-chart/design-spec.md",
+    "bytes": 81774
+   },
+   {
+    "commit": "46dc1c7bf",
+    "at": "09-29 23:27",
+    "path": ".dddjango-web/20260908-1534-web-chart/design-spec.md",
+    "bytes": 82573
+   },
+   {
+    "commit": "6ecf95010",
+    "at": "09-29 23:42",
+    "path": ".dddjango-web/20260908-1534-web-chart/design-spec.md",
+    "bytes": 83968
+   },
+   {
+    "commit": "35270edcf",
+    "at": "09-30 01:36",
+    "path": ".dddjango-web/20260908-1534-web-chart/design-spec.md",
+    "bytes": 85050
+   },
+   {
+    "commit": "90774f856",
+    "at": "09-30 03:41",
+    "path": ".dddjango-web/20260908-1534-web-chart/design-spec.md",
+    "bytes": 93494
+   },
+   {
+    "commit": "b3cd448db",
+    "at": "09-30 04:58",
+    "path": ".dddjango-web/20260908-1534-web-chart/design-spec.md",
+    "bytes": 94104
+   },
+   {
+    "commit": "1fa4aed86",
+    "at": "09-30 07:02",
+    "path": ".dddjango-web/20260908-1534-web-chart/design-spec.md",
+    "bytes": 94516
+   },
+   {
+    "commit": "270d42e7f",
+    "at": "09-30 07:17",
+    "path": ".dddjango-web/20260908-1534-web-chart/design-spec.md",
+    "bytes": 94919
+   }
+  ]
+ }
+}

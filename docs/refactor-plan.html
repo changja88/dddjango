@@ -45,7 +45,7 @@ li.todo .m { color:var(--todo); }
 <button class="theme" onclick="var r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'||(!r.dataset.theme&&matchMedia('(prefers-color-scheme: dark)').matches))?'light':'dark'">밝게/어둡게</button>
 <main>
 <h1>리팩토링 진행표</h1>
-<p class="sub">갱신 2026-10-01 20시 37분 · ✓ 끝 · ▶ 진행 중 · ○ 남음</p>
+<p class="sub">갱신 2026-10-02 00시 32분 · ✓ 끝 · ▶ 진행 중 · ○ 남음</p>
 
 <div class="cols">
 <section class="col">
@@ -64,8 +64,10 @@ li.todo .m { color:var(--todo); }
 <li class="done"><span class="m">✓</span><span>속도 개선 2차 커밋 <span class="note">· 리뷰어 노트 직접 기록(C4·C5) · 설계 단계 인수 점검(C7) — 리허설 통과(C7 결함 8개 중 6개 찾음 · 잘못 막음 0) — 커밋 끝(verify 5/5)</span></span></li>
 <li class="done"><span class="m">✓</span><span>새 결함 3건 수리 <span class="note">· 중복 요청 검사가 게이트 안에서 안 돎 · 리뷰어 Serena 편집 도구 → 읽기 전용 7개 · pre-gate 사본의 백그라운드 git 정리·삭제 경합 — Codex(gpt-6-astra) 수리 + 운영자 리뷰 1건 반영 · 커밋 끝(verify 5/5)</span></span></li>
 <li class="done"><span class="m">✓</span><span>남은 속도 가능성 공식 자료 확인 <span class="note">· Codex(gpt-6-astra · 웹 검색) 조사 + 운영자 원문 대조 — 네 후보(설계자 새로 부르기 · Codex 대화 상속 끊기 · 리팩토링 절 분리 · 입력 크기→지연)는 옵션 뜻만 확정, 효과는 실험 필요 → 배포 뒤 첫 레인 실측 먼저 · <b>새 발견</b>: 서브에이전트 캐시 기본 5분 → 8-C-0 설계자가 다시 깨울 때마다 대화 전체를 재처리(40회 · 32회는 1시간 안) — 1시간 설정이면 시간 약 4분 · 설계자 사용량 약 −14%(API 단가 환산) · 품질 무관 · 플러그인에서는 못 바꾸고 사용자 설정 한 줄(<code>"subagentPromptCacheTtl": "1h"</code>) · 기록 <code>workspace/plan/2026-10-01-speed-docs-research/</code></span></span></li>
-<li class="todo"><span class="m">○</span><span>배포 <span class="note">· 사용자 «두 레인 착륙 뒤» — lane-8-C-0 · lane-admin-2 가 G2 를 넘긴 뒤(개발 절차 릴리즈 창 규칙) · <code>make release</code> 는 깨끗한 작업 트리가 필요(사용자 파일 4종 처리는 그때 확인)</span></span></li>
-<li class="todo"><span class="m">○</span><span>설치본 갱신 <span class="note">· 사용자 <code>/plugin</code></span></span></li>
+<li class="done"><span class="m">✓</span><span>배포 <b>v2.19.0</b> <span class="note">· 사용자 «dddjango도 배포는 해도 될거 같아. 레인 끝나면 내가 알아서 업데이트할게» → 21시 01분 <code>make release</code>(새 기능 포함이라 minor) · 태그 <code>dddjango--v2.19.0</code> · GitHub Release · 작업 트리 파일 7종 보관·복원(해시 73/73)</span></span></li>
+<li class="todo"><span class="m">○</span><span>설치본 갱신 <span class="note">· 사용자 <code>/plugin</code> — lane-8-C-0 · lane-admin-2 착륙 뒤 사용자가 직접</span></span></li>
+<li class="done"><span class="m">✓</span><span>첫 레인 실측 도구 준비 <span class="note">· <code>workspace/tools/lane_metrics.py</code>(Claude·Codex 세션 기록 읽기 전용) — 기준 3레인(8-C-0 · P1 · P2)으로 분석 문서 수치 재현 확인(작업 973.1/973.5 · 642.3/641.7 · 887.8/887.9분) · 개선별 지표 대응표 · 사용법 <code>workspace/plan/2026-09-30-speed-improvement/measure/README.md</code></span></span></li>
+<li class="todo"><span class="m">○</span><span>새 버전 첫 레인 실측 비교 <span class="note">· 사용자가 설치본 갱신 뒤 레인을 돌리면 명령 두 줄로 옛 버전과 나란히 비교 → 다음 실험 순서 결정</span></span></li>
 </ul>
 <div class="stage">2. 테스트 드라이브 <span class="note">(spring_dream_server 작업 완료 뒤)</span></div>
 <ul><li class="todo"><span class="m">○</span>BC 1개 리팩토링</li></ul>
@@ -90,8 +92,9 @@ li.todo .m { color:var(--todo); }
 <li class="done"><span class="m">✓</span><span>W8 방향 결정 <span class="note">· 사용자 «web 배포 뒤 바로 (권장)» — 배포 뒤 1순위로 W8(G2 전 기계 대조) + 입력 쪽 정확값 표 설계·구현(K1~K3 보다 먼저 · 설계 1~2일 · 구현 2~3일)</span></span></li>
 <li class="done"><span class="m">✓</span><span>web 리뷰어 Serena 도구 제한 <span class="note">· 리뷰어 3종 읽기 전용 7개(core 와 같은 목록) · Codex 미러 · verify 5/5 · verify-web 0 · 사용자 «커밋 (권장)» → <code>870cb0bb</code> + 봉인 <code>94f27fef</code></span></span></li>
 <li class="todo"><span class="m">○</span><span>web 리뷰어 Serena 편집 도구 제한 <span class="note">· core 와 같은 결함(design-review-web · discipline-reviewer-web · design-architect-web) · SDK 착지 뒤</span></span></li>
-<li class="todo"><span class="m">○</span><span>배포 <span class="note">· SDK 리뷰 반영·커밋 뒤 <code>make release-web</code></span></span></li>
-<li class="todo"><span class="m">○</span><span>설치본 갱신 <span class="note">· 사용자 <code>/plugin</code></span></span></li>
+<li class="done"><span class="m">✓</span><span>배포 v1.2.0 <span class="note">· 10-01 20시 45분 · 태그 <code>dddjango-web--v1.2.0</code> · GitHub Release · 사용자 파일 4종 보관·복원(해시 일치)</span></span></li>
+<li class="todo"><span class="m">○</span><span>설치본 갱신 <span class="note">· 사용자 <code>/plugin</code> 에서 <b>dddjango-web 만</b>(dddjango 는 버전 고정이라 그대로 · 배포는 두 레인 착륙 뒤) · Codex 설치본도 web 만</span></span></li>
+<li class="doing"><span class="m">▶</span><span>W8 + 입력 쪽 정확값 표 <span class="note">· 사용자 «web 배포 뒤 바로» · «Codex 초안 → Claude 검토» — Codex(gpt-6-astra) 설계 v5 초안 끝(21시 15분 · 입력 쪽 요소별 정확값·관계 표 + 같은 측정의 G2 전 대조 · 경고 → 그림자 두 레인 → 차단 · 12~16인일 추정 · <b>속도 절감은 설계 스스로 미확정</b>) → Claude 적대 검토 «범위 축소 권고»(초안대로면 속도가 확실히 주는 길이 없음 · 확실한 절감은 발주자 손 전수 대조 축소뿐) → 사용자 «작은 판 먼저» · «대조 축소는 결과 보고 정하기» · «Codex 구현 → Claude 리뷰» → <b>작은 판</b>(W8 보고판 + 막지 않는 정확값 시트) Codex 구현 끝(22시 45분 · 3커밋 · 새 시험 19 · verify-web 0 · verify 5/5 · P1·P2 보관 6회차 판정 보존 · T 35/35 · 결정성 확인) → Claude 독립 리뷰 «수정 후 승인»(보고·연결은 문제없음 · 정확값 시트 major 2 = 있는 토큰을 «신규 등록 필요»로 적음 · 시트 약 1MB 잡음 · minor 4) → Codex 반영 끝(10-02 00시 05분 · 수정 2커밋 · 시험 35) → 운영자 닫힘 확인(기존 토큰 5/5 일치 · 신규 등록 오판 0 · 시트 1.1MB→88KB · 46.6초→0.6초 · 보관 6회차 판정 보존 · T 35/35 · 시드 무관 동일) → 사본 verify 5/5 · verify-web 0 → 사용자 «커밋 (권장)» → main <code>259ec081</code> → web 1.3.0 배포(사용자 «지금 · 갱신은 레인 뒤») → 1~2 레인 실측 뒤 2단계</span></span></li>
 </ul>
 <div class="stage">2. 테스트 드라이브 <span class="note">(spring_dream_server 작업 완료 뒤)</span></div>
 <ul><li class="todo"><span class="m">○</span>web 단위 1개 리팩토링</li></ul>
@@ -100,7 +103,7 @@ li.todo .m { color:var(--todo); }
 </section>
 </div>
 
-<div class="next"><b>지금</b>(20시 37분) — dddjango: 속도 개선 + 새 결함 3건 커밋 끝 · 남은 속도 가능성 자료 확인 끝(새 발견: 서브에이전트 캐시 1시간 — 사용자 설정) · 배포는 lane-8-C-0·lane-admin-2 착륙 뒤 / web: 2차 커밋 <code>95efa891</code> · Serena 제한 커밋 · W8 = 배포 뒤 1순위 · 지금 기록 커밋 → web 배포</div>
+<div class="next"><b>지금</b>(00시 32분) — dddjango: <b>v2.19.0 배포 끝</b>(속도 개선 + 새 결함 3건 · 설치본 갱신은 레인 착륙 뒤 사용자가 직접) · 새 후보 C13 서브에이전트 캐시 1시간(사용자 설정) / web: 2차 커밋 <code>95efa891</code> · Serena 제한 커밋 · W8 = 배포 뒤 1순위 · 기록 커밋 <code>1718e930</code> · <b>web v1.2.0 배포 끝</b>(설치본 갱신은 <code>/plugin</code> 에서 dddjango-web 만) · W8 작은 판 커밋 <code>259ec081</code> → web 1.3.0 배포 중(진행 중 web 레인 2개는 G2 뒤 사용자가 갱신)</div>
 
 <div class="next">
 <b>남은 일정</b> <span class="note">· 커밋 승인 기다리는 시간은 뺀 추정 · 리뷰 결과에 따라 늘 수 있다</span>
@@ -113,9 +116,9 @@ li.todo .m { color:var(--todo); }
 <tr><td>✓</td><td>web SDK 리뷰 지적 반영 → 재확인 · 사본 검증 → 커밋</td><td>약 1시간 20분</td><td>10-01 20시 22분 끝</td></tr>
 <tr><td>✓</td><td>web 리뷰어 Serena 도구 제한(작은 수리)</td><td>약 25분</td><td>10-01 20시 40분 끝</td></tr>
 <tr><td>✓</td><td>W8 방향 결정(사용자 «web 배포 뒤 바로») · 기록 커밋</td><td>—</td><td>10-01 20시 37분</td></tr>
-<tr><td>▶</td><td>web 배포(<code>make release-web</code>) — 사용자 «지금 · 파일 보관/복원»</td><td>약 20분</td><td>10-01 밤</td></tr>
-<tr><td>6</td><td>W8 + 입력 쪽 정확값 표 설계·구현(web 다음 1순위)</td><td>설계 1~2일 · 구현 2~3일</td><td>web 배포 뒤</td></tr>
-<tr><td>5</td><td>dddjango 배포(<code>make release</code>)</td><td>약 20분</td><td>lane-8-C-0 · lane-admin-2 착륙 뒤</td></tr>
+<tr><td>✓</td><td>web 배포 <b>v1.2.0</b>(<code>make release-web</code> · 새 기능 포함이라 minor) — 사용자 파일 4종 보관·복원(해시 70/70 일치)</td><td>약 6분</td><td>10-01 20시 45분 끝</td></tr>
+<tr><td>▶</td><td>W8 작은 판(보고판 + 막지 않는 정확값 시트) — Codex 구현 → Claude 리뷰 → 커밋 승인 → web 배포 → 1~2 레인 실측</td><td>약 4~5인일</td><td>10-02~10-04</td></tr>
+<tr><td>✓</td><td>dddjango 배포 <b>v2.19.0</b>(<code>make release</code>) — 설치본 갱신은 레인 착륙 뒤 사용자가 직접</td><td>약 5분</td><td>10-01 21시 01분 끝</td></tr>
 </table>
 <p class="note">배포 뒤: 남은 속도 후보(구현 단계 시간 분석 · 기존 테스트 백그라운드 C8 · pre-gate 사본 재사용 · Codex 이력 안 넘기기 C12 · 리팩토링 절 분리 D1 등 — 사용자 «우선 구현을 마무리») · 품질 묶음(K1~K3 · C7 «명세 모순» 판정 범주) · W8 은 실험 결과를 보고 사용자가 순서 결정</p>
 </div>

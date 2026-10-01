@@ -1,0 +1,337 @@
+{
+ "runtime": "claude",
+ "source": "/Users/hyun/.claude/projects/-Users-hyun--herdr-worktrees-spring-dream-server-lane-8-C-0",
+ "sessions": [
+  "e3cf6de3-1448-447c-b8c6-666a9908db83"
+ ],
+ "window": {
+  "first": "09-30 03:41",
+  "last": "09-30 21:45"
+ },
+ "plugin_versions": [
+  "dddjango 2.18.4 ×928",
+  "dddjango-web 1.1.25 ×4"
+ ],
+ "time": {
+  "wall_min": 1084.5,
+  "work_min": 973.1,
+  "limit_min": 98.5,
+  "idle_min": 12.9
+ },
+ "roles": {
+  "acceptance-tester": {
+   "agents": 7,
+   "requests": 539,
+   "model_min": 115.5,
+   "tool_min": 32.9,
+   "avg_input_k": 315.3,
+   "max_input_k": 620.6,
+   "cache_write_M": 3.77,
+   "cache_read_M": 166.2,
+   "output_k": 160.5,
+   "cold_rewrites": 3,
+   "compacts": 0
+  },
+  "coder": {
+   "agents": 2,
+   "requests": 169,
+   "model_min": 34.8,
+   "tool_min": 27.5,
+   "avg_input_k": 319.3,
+   "max_input_k": 580.0,
+   "cache_write_M": 2.06,
+   "cache_read_M": 51.9,
+   "output_k": 69.9,
+   "cold_rewrites": 3,
+   "compacts": 0
+  },
+  "design-architect": {
+   "agents": 1,
+   "requests": 1455,
+   "model_min": 330.8,
+   "tool_min": 6.9,
+   "avg_input_k": 536.6,
+   "max_input_k": 968.0,
+   "cache_write_M": 17.32,
+   "cache_read_M": 763.5,
+   "output_k": 1947.6,
+   "cold_rewrites": 19,
+   "compacts": 5
+  },
+  "design-review-api": {
+   "agents": 10,
+   "requests": 457,
+   "model_min": 97.9,
+   "tool_min": 1.8,
+   "avg_input_k": 216.9,
+   "max_input_k": 373.1,
+   "cache_write_M": 2.9,
+   "cache_read_M": 96.2,
+   "output_k": 431.7,
+   "cold_rewrites": 0,
+   "compacts": 0
+  },
+  "design-review-db": {
+   "agents": 12,
+   "requests": 630,
+   "model_min": 153.2,
+   "tool_min": 2.7,
+   "avg_input_k": 206.2,
+   "max_input_k": 412.1,
+   "cache_write_M": 3.87,
+   "cache_read_M": 126.0,
+   "output_k": 742.8,
+   "cold_rewrites": 1,
+   "compacts": 0
+  },
+  "design-review-ddd": {
+   "agents": 9,
+   "requests": 369,
+   "model_min": 82.4,
+   "tool_min": 2.0,
+   "avg_input_k": 198.4,
+   "max_input_k": 360.5,
+   "cache_write_M": 2.33,
+   "cache_read_M": 70.9,
+   "output_k": 352.1,
+   "cold_rewrites": 0,
+   "compacts": 0
+  },
+  "discipline-reviewer": {
+   "agents": 16,
+   "requests": 1003,
+   "model_min": 203.9,
+   "tool_min": 3.8,
+   "avg_input_k": 269.3,
+   "max_input_k": 507.0,
+   "cache_write_M": 5.37,
+   "cache_read_M": 264.7,
+   "output_k": 927.4,
+   "cold_rewrites": 0,
+   "compacts": 0
+  },
+  "main": {
+   "agents": 1,
+   "requests": 525,
+   "model_min": 129.2,
+   "tool_min": 112.5,
+   "avg_input_k": 335.9,
+   "max_input_k": 745.6,
+   "cache_write_M": 3.92,
+   "cache_read_M": 172.4,
+   "output_k": 879.7,
+   "cold_rewrites": 5,
+   "compacts": 4
+  }
+ },
+ "main_commands": {
+  "debt_scan": {
+   "n": 2,
+   "min": 0.1,
+   "bg_n": 0,
+   "bg_min": 0.0
+  },
+  "git": {
+   "n": 34,
+   "min": 1.3,
+   "bg_n": 0,
+   "bg_min": 0.0
+  },
+  "other": {
+   "n": 236,
+   "min": 19.0,
+   "bg_n": 2,
+   "bg_min": 53.8
+  },
+  "pregate": {
+   "n": 36,
+   "min": 73.2,
+   "bg_n": 9,
+   "bg_min": 64.2
+  },
+  "registry_gate": {
+   "n": 12,
+   "min": 6.7,
+   "bg_n": 1,
+   "bg_min": 6.3
+  },
+  "tests": {
+   "n": 19,
+   "min": 8.5,
+   "bg_n": 0,
+   "bg_min": 0.0
+  }
+ },
+ "sub_gate_runs": {
+  "acceptance-tester:pregate": 1,
+  "coder:registry_gate": 4
+ },
+ "spawns": {
+  "design-architect": 1,
+  "design-review-ddd": 9,
+  "design-review-api": 10,
+  "design-review-db": 12,
+  "discipline-reviewer": 16,
+  "acceptance-tester": 7,
+  "coder": 2
+ },
+ "send_message": 27,
+ "review_rounds": {
+  "count": 14,
+  "starts": [
+   "09-30 04:52×4",
+   "09-30 07:06×4",
+   "09-30 08:38×4",
+   "09-30 09:36×4",
+   "09-30 10:26×4",
+   "09-30 11:59×4",
+   "09-30 12:42×3",
+   "09-30 13:23×4",
+   "09-30 13:47×2",
+   "09-30 14:05×2",
+   "09-30 18:17×3",
+   "09-30 18:55×3",
+   "09-30 20:26×2",
+   "09-30 20:51×2"
+  ]
+ },
+ "main_note_bytes": 581243,
+ "markers": {
+  "TREE_CONTRACT_MISMATCH": 6,
+  "G1′": 6,
+  "G1″": 5
+ },
+ "human": {
+  "messages": 32,
+  "rejections": 2
+ },
+ "spec": {
+  "revisions": 18,
+  "first_kb": 180,
+  "last_kb": 610,
+  "max_kb": 610,
+  "path": ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md",
+  "all_paths": {
+   ".dddjango-web/20260908-1534-web-chart/design-spec.md": 4,
+   ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md": 18,
+   ".dddjango-web/20260922-1647-teller-detail-sheet/design-spec.md": 3,
+   ".dddjango/20260930-0252-book-seed-import/design-spec.md": 3,
+   ".dddjango/20260930-0259-fortune-house-target-card/design-spec.md": 11,
+   ".dddjango/20260929-1456-chart-share-public-link/design-spec.md": 3,
+   ".dddjango/20260930-1309-chart-relation-shinsal-lines/design-spec.md": 3,
+   ".dddjango-web/20260921-1420-employee-choice/design-spec.md": 1,
+   ".dddjango/20260930-1802-chart-save-image/design-spec.md": 5,
+   ".dddjango/20260930-1741-operator-guide-api/design-spec.md": 4
+  },
+  "rows": [
+   {
+    "commit": "87ba2d474",
+    "at": "09-30 04:51",
+    "path": ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md",
+    "bytes": 183852
+   },
+   {
+    "commit": "39df528b9",
+    "at": "09-30 06:56",
+    "path": ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md",
+    "bytes": 303892
+   },
+   {
+    "commit": "d6afe7e49",
+    "at": "09-30 07:06",
+    "path": ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md",
+    "bytes": 305636
+   },
+   {
+    "commit": "4bb9fbde4",
+    "at": "09-30 08:24",
+    "path": ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md",
+    "bytes": 378990
+   },
+   {
+    "commit": "0dcba3d0f",
+    "at": "09-30 08:37",
+    "path": ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md",
+    "bytes": 383373
+   },
+   {
+    "commit": "b914edd08",
+    "at": "09-30 09:25",
+    "path": ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md",
+    "bytes": 428042
+   },
+   {
+    "commit": "19b59ee92",
+    "at": "09-30 10:18",
+    "path": ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md",
+    "bytes": 467062
+   },
+   {
+    "commit": "9dfaa0063",
+    "at": "09-30 11:52",
+    "path": ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md",
+    "bytes": 491631
+   },
+   {
+    "commit": "72b05696b",
+    "at": "09-30 12:34",
+    "path": ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md",
+    "bytes": 506335
+   },
+   {
+    "commit": "467797329",
+    "at": "09-30 13:14",
+    "path": ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md",
+    "bytes": 522431
+   },
+   {
+    "commit": "e0b01cda8",
+    "at": "09-30 13:39",
+    "path": ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md",
+    "bytes": 528155
+   },
+   {
+    "commit": "6b76b8425",
+    "at": "09-30 13:58",
+    "path": ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md",
+    "bytes": 531532
+   },
+   {
+    "commit": "85eeaf98f",
+    "at": "09-30 18:17",
+    "path": ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md",
+    "bytes": 552602
+   },
+   {
+    "commit": "0a85e3d09",
+    "at": "09-30 18:55",
+    "path": ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md",
+    "bytes": 570078
+   },
+   {
+    "commit": "923543159",
+    "at": "09-30 19:20",
+    "path": ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md",
+    "bytes": 580280
+   },
+   {
+    "commit": "dd75352f0",
+    "at": "09-30 20:26",
+    "path": ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md",
+    "bytes": 602026
+   },
+   {
+    "commit": "ace1248bc",
+    "at": "09-30 20:51",
+    "path": ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md",
+    "bytes": 616673
+   },
+   {
+    "commit": "2e8bd6d63",
+    "at": "09-30 21:12",
+    "path": ".dddjango/20260930-0357-concept-dictionary-switch/design-spec.md",
+    "bytes": 624722
+   }
+  ]
+ }
+}
