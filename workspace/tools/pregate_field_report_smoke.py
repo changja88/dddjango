@@ -102,6 +102,14 @@ class FieldReportTest(unittest.TestCase):
         self.assertTrue(any(SERVICE in s and "S5" in s for s in report["unsimulated"]))
         compile(source, SERVICE, "exec")
 
+    def test_application_root_file_is_not_a_new_bc(self) -> None:
+        # F4-42 — `application/` 바로 아래 «파일»은 BC 가 아니다(`application/__init__.py/__init__.py` 를 만들려다 실행 불능).
+        root_init, bc_init = "application/__init__.py", "application/fortune/__init__.py"
+        _, report = self.materialize(spec_text([f"empty {root_init}", f"empty {bc_init}"]))
+        self.assertTrue((self.copy / root_init).is_file())
+        self.assertIn(root_init, report["materialized"])
+        self.assertTrue(any(p.is_dir() for p in (self.copy / "application/fortune").iterdir()))
+
     def test_wrong_operation_name_and_signature_remain_real_findings(self) -> None:
         for operation, rule in [("another_query() -> str", "#483"),
                                 ("list_books_query(value: int) -> ListBooksResponse", "#633"),

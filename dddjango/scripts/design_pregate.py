@@ -2326,7 +2326,8 @@ def materialize(copy: Path, plan: Plan, *, realized: "frozenset[str]" = frozense
     new_bcs: "set[str]" = set()
     for entry in plan.entries.values():
         parts: "tuple[str, ...]" = PurePosixPath(entry.path).parts
-        if entry.tag in ("add", "empty") and len(parts) >= 2 and parts[0] == "application":
+        # `application/<파일>`(예: `application/__init__.py`)은 BC 가 아니다 — 폴더 아래 경로만(F4-42).
+        if entry.tag in ("add", "empty") and len(parts) >= 3 and parts[0] == "application":
             new_bcs.add(parts[1])
     for bc in sorted(new_bcs):
         if baseline_bcs is not None:
