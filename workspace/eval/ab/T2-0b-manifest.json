@@ -337,51 +337,26 @@
     "claude": {
       "checked": 73,
       "mismatch": [
-        "dddjango/.claude-plugin/plugin.json",
-        "dddjango/agents/acceptance-tester.md",
-        "dddjango/agents/coder.md",
-        "dddjango/agents/design-architect.md",
-        "dddjango/agents/design-review-api.md",
-        "dddjango/agents/design-review-db.md",
-        "dddjango/agents/design-review-ddd.md",
-        "dddjango/agents/discipline-reviewer.md",
-        "dddjango/commands/dddjango.md",
-        "dddjango/scripts/check-composition-root.py",
-        "dddjango/scripts/check-idempotency-scope-creep.py",
-        "dddjango/scripts/check-port-adapter-pairing.py",
-        "dddjango/scripts/check-transaction-boundary.py",
-        "dddjango/scripts/design_pregate.py",
-        "dddjango/scripts/pregate_symbol_kinds.json",
-        "dddjango/scripts/registry_gate.py",
-        "dddjango/scripts/rulepack.json",
-        "dddjango/skills/discipline-houserules/SKILL.md",
-        "dddjango/skills/discipline-houserules/references/final.md",
-        "dddjango/skills/implementation-django-ninja/references/final.md"
+        "dddjango/scripts/design_pregate.py"
       ],
-      "missing": [
-        "dddjango/commands/refactor.md",
-        "dddjango/scripts/behavior_guard.py",
-        "dddjango/scripts/refactor_audit.py"
-      ],
-      "root": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.18.4",
+      "missing": [],
+      "root": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.19.0",
       "status": "drift"
     },
     "codex": {
       "checked": 35,
-      "mismatch": [
-        "codex-dddjango/.codex-plugin/plugin.json"
-      ],
+      "mismatch": [],
       "missing": [],
-      "root": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.18.4",
-      "status": "drift"
+      "root": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.19.0",
+      "status": "ok"
     }
   },
   "claude_install": {
-    "git_commit_sha": "c1f78938f4ed2ed4ed3937778fe3ca6e2fc120ef",
-    "install_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.18.4",
+    "git_commit_sha": "02946da995f4f3a025412a9c59a4ad859e04fc73",
+    "install_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.19.0",
     "key": "dddjango@changja88-dddjango",
     "source": "installed_plugins.json",
-    "version": "2.18.4"
+    "version": "2.19.0"
   },
   "external_annex": {
     "initial_memory": {
@@ -660,7 +635,7 @@
         "workspace/tools/firing_probe.py": "09994ac306dbb06dfce46429bdd8701cdd39bf6964f515e596dbae3dbd918003",
         "workspace/tools/manifest_seal.py": "0d054c401a5e3aa9e60475b970386e0507bac73dc6ef533336aea53e66ba6f6f",
         "workspace/tools/ontology-requirements.txt": "0329866c8aeec21f64af929ec52362d6a2ee3058cb9266025b147da367ee77ea",
-        "workspace/tools/pregate_field_report_smoke.py": "0b27d50b00f07982e1f1c80ba0e1a0e865b6eb8bbb195c22560f14296dd64fab",
+        "workspace/tools/pregate_field_report_smoke.py": "40b4d94b4762c89c019c722f1db62d5ad95f6555c5f9dd56758718c0894834b4",
         "workspace/tools/pregate_transcription_smoke.py": "6588e2a6ef46e42fcdd1e426c78b38ceedf051c27e7f4a1a8b536c554b6801eb",
         "workspace/tools/query_golden_check.py": "522756a089322ad0dee7af78b741e2fc8dda26cc1b00300a37c5a82ed19c522e",
         "workspace/tools/regen_loop_prototype.py": "206d87a302058303fc68986275ea8624a27ea8fa0654fe2d4e94e71e33fc31f5",
@@ -690,7 +665,7 @@
         "workspace/eval/fixtures/api_error_contract/requirements.txt"
       ],
       "n_files": 35,
-      "tree_sha256": "50d7d2600217b64ba903e8c70301b741674feff94c0bff1fe5c57d25c4d03ce1",
+      "tree_sha256": "2564a26220419bc591c90fa733b8a0d13aca834fb569aee6968d1e153fbf8281",
       "why": "측정기. 실런 중 측정기가 바뀌면 앞뒤 런의 수치가 같은 자를 안 쓴 것이 된다(D11)."
     },
     "orders": {
@@ -733,7 +708,7 @@
         "dddjango/commands/dddjango.md": "2d40d17314ac308a49e3e3573dc06e57b5eabf19aa2499cf21622fcb0bc79a19",
         "dddjango/commands/refactor.md": "4ec2d88b8772b7ded1ea0aaa2e79506e2f952f1185add600b7aa963169725d2d",
         "dddjango/scripts/behavior_guard.py": "50240ec8f9269e693d6c37c38541f0302e7da68a04a3e70c0902e410b7eca7e0",
-        "dddjango/scripts/design_pregate.py": "4f9cbdae8ac9930916455528455c8e154dc46afe2c3c32f1f05f7c43829dd387",
+        "dddjango/scripts/design_pregate.py": "9196876e838a3d081649ca49db366ec899d2c8a925d9768aea297c9339153990",
         "dddjango/scripts/refactor_audit.py": "915eb2c19b5f61036b080d0e6ec0e92ae22eb4b3dddb013edcb671f02a9a7208",
         "dddjango/scripts/regen_core.py": "48181a610743fce534ea4d327d34878863da22b207a08ecc2a88ebbdcb05b763",
         "dddjango/scripts/registry_gate.py": "6e5def20fb8407770371d194469034423b3489e008774c022030301fead49cc3",
@@ -751,7 +726,7 @@
         "codex-dddjango/skills/dddjango/SKILL.md"
       ],
       "n_files": 9,
-      "tree_sha256": "444f30036159a76b3a5e21f3c2c6b3ac31589b0509ac4d596d69e162f6dcd7cc",
+      "tree_sha256": "05bbc8f1e4f196e93e184ff65852715054e011d14d1f51e5bd4d90c6712d40c4",
       "why": "3암이 공유하는 실행 경로. 암 사이 차이는 스위치 둘뿐이어야 하고, 그 «둘뿐»을 성립시키는 것이 이 파일들의 동일성이다."
     },
     "plugin_payload": {
@@ -851,7 +826,7 @@
     "protocol": {
       "files": {
         "Makefile": "69839d7774558a80c11f75b133fa1a272c1d7972d0e6f9dab74c96e17072219f",
-        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "abc5cd163dd0a1d685802fd1bbfdc5c5536fb5a80f527ab4883f236cd6909abe",
+        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "fdbc7de7ab0993bd802047809b1c3f4700d86d0e0e71f310882788525239bbfa",
         "workspace/plan/2026-08-12-bc-rebuild-protocol.md": "a39ba66e58cb8bde5ad8f84d630b6fd9b04300f7130d4bbc2d149751c2f6c492",
         "workspace/plan/templates/request-template.md": "531bb5c0e9b147d51665981bc3218aa027ddc4170101ea920ecc8a87f7018fe4",
         "workspace/tools/openapi_shape.py": "ea564e3b0ce0550352935b7a572f93dfae404f1a1d24f0fd9d4acf6dc4bc4932",
@@ -866,7 +841,7 @@
         "workspace/design/2026-08-20-ontology-t2-0b-design.md"
       ],
       "n_files": 6,
-      "tree_sha256": "2f6649042526c2b36401b325ed63276626c6131f78778fce66d297cce0b44db2",
+      "tree_sha256": "b6cb9a2c23e8b31f042831fcd75bb334f153f11c7366eb54fabba7a68a6c297d",
       "why": "**전이 의존** — 발주문이 «그대로 따르라»고 가리키는 판형과, 인수 판정이 부르는 도구와, 게이트를 배선하는 Makefile. 이 중 하나만 바뀌어도 모델이 받는 요청문·허용 범위·STOP 규약·shape 합격 여부·실런 진입 조건이 바뀐다. 그런데 대조는 글롭에 든 것만 재전개하므로, 봉인 밖이면 그 변경은 드리프트가 아니었다(레인 AU 발견 4)."
     },
     "queries": {
@@ -989,15 +964,15 @@
     ]
   },
   "script_trees": {
-    "cache-claude": "38aa7cd297b70d31f9acf0a09513ee2622ff9cb74f5458d695445cdba26a4ec8",
-    "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.18.4/scripts",
+    "cache-claude": "9ad04e8d170932ce5f2b245dc6d73fbb211b173bcd43f0038aee0cb1893a3e7a",
+    "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.19.0/scripts",
     "cache-codex": "9ad04e8d170932ce5f2b245dc6d73fbb211b173bcd43f0038aee0cb1893a3e7a",
-    "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.18.4/skills/dddjango/scripts",
-    "source-claude": "9ad04e8d170932ce5f2b245dc6d73fbb211b173bcd43f0038aee0cb1893a3e7a",
-    "source-codex": "9ad04e8d170932ce5f2b245dc6d73fbb211b173bcd43f0038aee0cb1893a3e7a"
+    "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.19.0/skills/dddjango/scripts",
+    "source-claude": "1cfb43dae65b03c8cf71b0bf76f3e955120b04febab0c7ad1e3a8332e1814dc9",
+    "source-codex": "1cfb43dae65b03c8cf71b0bf76f3e955120b04febab0c7ad1e3a8332e1814dc9"
   },
-  "sealed_commit": "7d68a7dda50c310508bc0698c25f7dff07086ae6",
-  "self_sha256": "34975fa304be7c786abc7c6bbda65099f1db75442c31e2c1c65438e5abdf1e84",
+  "sealed_commit": "2b3d9fcbf2cb5e3787cbb4ed0428b358076b1e83",
+  "self_sha256": "1f363c1f1aac1be8142f00b5013c8a304934a6aa2a60ac7625cc8325fa7a01b0",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [
