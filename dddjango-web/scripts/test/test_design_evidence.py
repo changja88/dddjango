@@ -445,6 +445,57 @@ class EvidenceTests(unittest.TestCase):
             self.write_visual(media=media)
             self.assertEqual(self.run_gate('visual').returncode, 2, key)
 
+    def media_gate(self, endpoint, observed_endpoint, src, current_src):
+        requirement = {'id': 'portrait', 'kind': 'image', 'environment': 'dev', 'endpoint': endpoint,
+                       'identity_pointer': '/asset/id', 'source_pointer': '/asset/src'}
+        case = json.loads((self.build / 'design-input.json').read_text())['cases'][0]
+        case['media'] = [requirement]
+        self.write_input([case])
+        response_path, browser_path = self.build / 'response.json', self.build / 'browser.json'
+        response_path.write_text(json.dumps({'observed_at': '2026-10-03T12:00:00Z', 'environment': 'dev',
+                                             'endpoint': observed_endpoint, 'status': 200,
+                                             'body': {'asset': {'id': 'portrait-7', 'src': src}}}))
+        browser_path.write_text(json.dumps({'observed_at': '2026-10-03T12:00:01Z', 'current_src': current_src,
+                                            'status': 200, 'loaded': True}))
+        self.write_visual(media=[{'requirement_id': 'portrait', 'response': self.ptr(response_path),
+                                  'browser': self.ptr(browser_path)}])
+        return self.run_gate('visual')
+
+    def test_media_relative_source_resolves_against_case_url(self):
+        # Django MEDIA_URL 의 상대 주소 — 브라우저 current_src 는 case url 로 푼 절대 주소다.
+        api = '/api/employees/7'
+        result = self.media_gate(api, api, '/media/portrait.png', 'http://127.0.0.1/media/portrait.png')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        result = self.media_gate(api, api, '//cdn.test/portrait.png', 'http://cdn.test/portrait.png')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for src, current_src in (('/media/portrait.png', 'http://cdn.test/media/portrait.png'),
+                                 ('/media/portrait.png', 'http://127.0.0.1/media/other.png'),
+                                 ('/media/portrait.png', '/media/portrait.png'),
+                                 ('http://[::1/portrait.png', 'http://127.0.0.1/portrait.png')):
+            result = self.media_gate(api, api, src, current_src)
+            self.assertEqual(result.returncode, 2, (src, current_src, result.stderr))
+            self.assertIn('response source/current_src mismatch', result.stderr)
+        self.assertNotIn('sig=', self.media_gate(api, api, '/a.png?sig=secret', 'http://127.0.0.1/b.png').stderr)
+
+    def test_media_endpoint_slot_matches_one_segment_only(self):
+        src = 'https://cdn.test/portrait.png'
+        for template, observed in (('/api/employees/{employee_id}', '/api/employees/42'),
+                                   ('/api/{employee_id}/media/{employee_id}', '/api/42/media/42')):
+            result = self.media_gate(template, observed, src, src)
+            self.assertEqual(result.returncode, 0, (template, observed, result.stderr))
+        for template, observed in (('/api/employees/{employee_id}', '/api/employees/42/7'),
+                                   ('/api/employees/{employee_id}', '/api/employees/'),
+                                   ('/api/employees/{employee_id}', '/api/employees/42?x=1'),
+                                   ('/api/employees/{employee_id}', '/api/staff/42'),
+                                   ('/api/{employee_id}/media/{employee_id}', '/api/42/media/43'),
+                                   ('/api/employees/{employee_id}', '/api/employees/..'),
+                                   ('/api/employees/{employee_id}', '/api/employees/42\n'),
+                                   ('/api/employees?id={employee_id}', '/api/employees?id=42'),
+                                   ('/api/employees/42', '/api/employees/43')):
+            result = self.media_gate(template, observed, src, src)
+            self.assertEqual(result.returncode, 2, (template, observed))
+            self.assertIn('environment/endpoint mismatch', result.stderr)
+
     def test_fingerprint_does_not_modify_evidence_files(self):
         self.write_visual()
         before = (self.build / 'visual-evidence.json').read_bytes()

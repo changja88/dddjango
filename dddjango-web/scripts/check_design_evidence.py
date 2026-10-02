@@ -17,6 +17,7 @@ import re
 import sys
 from typing import Any
 import unicodedata
+from urllib.parse import urljoin, urlsplit
 
 from asset_io import image_extension
 from archive_design import archive_dependencies, archive_files
@@ -588,13 +589,53 @@ def validate_visual(build: Path, project: Path, spec: dict, input_digest: str, i
                 issues.append(f'{here}.capture: identity check failed ({error})')
         if row.get('result') != 'pass':
             issues.append(f'{here}.result: pass required')
-        _validate_media(build, source.get('media', []), row.get('media'), here, issues)
+        _validate_media(build, source.get('media', []), row.get('media'), row.get('url'), here, issues)
     issues.extend(validate_component_identity(build, project))
     if issues:
         raise Defects(issues)
 
 
-def _validate_media(build: Path, requirements: list[dict], observations: Any, label: str, issues: list[str]) -> None:
+# 요구 endpoint 경로의 `{이름}` = 관찰 전에는 없는 식별자 자리 — 경로 한 칸에만 맞고, 같은 이름은 같은 값.
+_ENDPOINT_SLOT = re.compile(r'\{([A-Za-z_][A-Za-z0-9_]*)\}')
+
+
+def _endpoint_matches(template: str, observed: Any) -> bool:
+    if not isinstance(observed, str):
+        return False
+    path_end = min((i for i in (template.find('?'), template.find('#')) if i >= 0), default=len(template))
+    pattern, seen, last = [], set(), 0
+    for slot in _ENDPOINT_SLOT.finditer(template, 0, path_end):
+        pattern.append(re.escape(template[last:slot.start()]))
+        name = slot.group(1)
+        pattern.append(f'(?P={name})' if name in seen else f'(?P<{name}>[^/?#\s]+)')
+        seen.add(name)
+        last = slot.end()
+    pattern.append(re.escape(template[last:]))
+    match = re.fullmatch(''.join(pattern), observed)
+    return match is not None and not {'.', '..'} & set(match.groupdict().values())
+
+
+def _resolve_source(page_url: Any, source: Any) -> Any:
+    """current_src 는 브라우저가 문서 주소로 푼 절대 주소다 — 응답의 상대 주소(`/media/…`)를 case url 로 푼다(RFC 3986)."""
+    if not isinstance(source, str) or not isinstance(page_url, str):
+        return source
+    try:
+        return urljoin(page_url, source)
+    except ValueError:
+        return None
+
+
+def _url_shape(value: Any) -> str:
+    # 진단용 — 서명 URL 의 query 는 남기지 않는다.
+    try:
+        parts = urlsplit(value) if isinstance(value, str) else None
+    except ValueError:
+        parts = None
+    return f'{parts.scheme}://{parts.netloc}{parts.path}' if parts and parts.scheme else repr(value)[:120]
+
+
+def _validate_media(build: Path, requirements: list[dict], observations: Any, page_url: Any, label: str,
+                    issues: list[str]) -> None:
     if observations is None:
         observations = []
     if not isinstance(observations, list):
@@ -638,7 +679,7 @@ def _validate_media(build: Path, requirements: list[dict], observations: Any, la
                     raise ValueError
             except (AttributeError, ValueError):
                 issues.append(f'{here}.{owner}.observed_at: timezone-aware ISO 8601 required')
-        if response['environment'] != requirement['environment'] or response['endpoint'] != requirement['endpoint']:
+        if response['environment'] != requirement['environment'] or not _endpoint_matches(requirement['endpoint'], response['endpoint']):
             issues.append(f'{here}: environment/endpoint mismatch')
         if not isinstance(response['status'], int) or not 200 <= response['status'] < 300:
             issues.append(f'{here}.response.status: 2xx required')
@@ -649,8 +690,10 @@ def _validate_media(build: Path, requirements: list[dict], observations: Any, la
         if (not isinstance(identity, (str, int, float)) or isinstance(identity, bool)
                 or identity == '' or isinstance(identity, float) and not math.isfinite(identity)):
             issues.append(f'{here}: nonempty asset identity required')
-        if not isinstance(source, str) or not source or source != browser['current_src']:
-            issues.append(f'{here}: response source/current_src mismatch')
+        resolved = _resolve_source(page_url, source)
+        if not isinstance(source, str) or not source or resolved != browser['current_src']:
+            issues.append(f'{here}: response source/current_src mismatch '
+                          f'({_url_shape(resolved)} != {_url_shape(browser["current_src"])})')
         if requirement['kind'] == 'video':
             start, end = browser.get('playback_start'), browser.get('playback_end')
             if not all(isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x) for x in (start, end)) or end <= start:

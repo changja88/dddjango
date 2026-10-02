@@ -229,7 +229,9 @@ The prepare command is usable before web/ implementation exists. The existing
 ```
 
 The visual case set and viewport values must exactly match `design-input.json`;
-each case needs a nonempty URL, valid capture, and `result: "pass"`. The
+each case needs a nonempty URL, valid capture, and `result: "pass"`. The URL
+is the document URL the browser loaded, as `location.href` reports it; media
+sources are resolved against it. The
 original and implementation captures may have identical bytes after a perfect
 match, but they must not be the same file or hardlink. Independent creation is
 confirmed from the browser trace by the final auditor.
@@ -249,6 +251,13 @@ use RFC 6901 path form beginning with `/`, including `~0` for `~` and `~1` for
 `/`. Array selectors are canonical nonnegative decimal tokens: `0` or a
 nonzero digit followed by digits. Object keys retain literal token semantics.
 Pointers must resolve in the response `body` to a nonempty identity and source URL.
+When the identifier in `endpoint` exists only after observation (for example a
+record created during the case), name that path segment `{name}` (ASCII
+letters, digits, `_`; not starting with a digit) before any `?` or `#`. The
+observed endpoint must equal the requirement with each `{name}` replaced by one
+nonempty segment without `/`, `?`, `#`, or whitespace, other than `.` or `..`;
+a repeated name must take the same value. Everything else, including any
+`{name}` in a query or fragment, compares literally.
 
 Response evidence has exactly:
 
@@ -264,7 +273,10 @@ Browser evidence for video has exactly:
 
 For an image, omit `playback_start` and `playback_end`. Observation timestamps
 are timezone-aware ISO 8601 strings. API and browser statuses must be 2xx, `loaded` must be
-true, response source must equal `current_src`, and video playback values must
+true, response source resolved against the case `url` (RFC 3986 reference
+resolution of a relative source such as `/media/a.png`, with no further
+normalization; a document `<base>` is not applied) must equal `current_src`,
+and video playback values must
 be finite numbers with end greater than start. Media observation rows must
 match requirements exactly, without omissions, additions, or duplicate IDs.
 
