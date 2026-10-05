@@ -93,30 +93,16 @@ verify:
 
 verify-web:
 	@set -euo pipefail; \
-	echo "[verify-web] dddjango-web 픽스처(백스톱·절단 도구)"; \
+	echo "[verify-web] dddjango-web 픽스처(백스톱 검사 72종 · 추출 도구 — run_fixtures.sh 가 fixtures_extract·fixtures_contract 를 이어 부른다)"; \
 	bash dddjango-web/scripts/test/run_fixtures.sh; \
-	echo "[verify-web] refactor_audit self-test(플랫폼 구조 판별 · 점검 절 · 적용 한정 어구 · 극성 표본 · 상시 답 문면) · 상시 답 블록 core 대조 · 문단 Claude·Codex 대조"; \
-	python3 dddjango-web/scripts/refactor_audit.py --self-test; \
-	python3 codex-dddjango-web/skills/dddjango-web/scripts/refactor_audit.py --self-test; \
-	cmp -s <(grep -F '**적용 범위 규범**:' dddjango-web/commands/dddjango-web.md) <(grep -F '**적용 범위 규범**:' codex-dddjango-web/skills/dddjango-web/SKILL.md) || { echo "ERROR: 적용 범위 규범 문단(적용 한정 어구) Claude·Codex 불일치"; exit 1; }; \
-	b=$$(sed -n '/상시 답 인식 블록 시작/,/상시 답 인식 블록 끝/p' dddjango-web/scripts/refactor_audit.py); [ -n "$$b" ] && cmp -s <(printf '%s\n' "$$b") <(sed -n '/상시 답 인식 블록 시작/,/상시 답 인식 블록 끝/p' $(or $(STANDING_CORE),dddjango/scripts/refactor_audit.py)) || { echo "ERROR: 상시 답 인식 블록 core·web 불일치 — core 블록을 표지 주석째 web 에 복사한다(착륙 전 대조는 STANDING_CORE=<core refactor_audit.py>)"; exit 1; }; \
-	for p in '**Phase 1~2**' '**상시 답**' '**슬라이스 0 호출**' '**끝 green 뒤 재확인**' '6. **G2 배너**' '그 커밋을 만든 파견 슬라이스의' '**discipline 감사 = touched 파일 한정 경량 1회**' '**SDK 채택 확인(G1 배너 직전'; do cmp -s <(grep -F "$$p" dddjango-web/commands/dddjango-web.md | sed -e 's/[$$]{CLAUDE_PLUGIN_ROOT}/$${SKILL_DIR}/g' -e 's/Bash로/네이티브 셸로/g') <(grep -F "$$p" codex-dddjango-web/skills/dddjango-web/SKILL.md) || { echo "ERROR: $$p 문단 Claude·Codex 불일치(플랫폼 토큰 치환 뒤)"; exit 1; }; done; \
-	r=$$(grep -F '수정 모드에서는 G2 직전 1회' dddjango-web/agents/discipline-reviewer-web.md | sed 's/^Coordinator가/코디네이터가/'); [ -n "$$r" ] && cmp -s <(printf '%s\n' "$$r") <(grep -F '수정 모드에서는 G2 직전 1회' codex-dddjango-web/skills/dddjango-web-discipline-reviewer-web/SKILL.md) || { echo "ERROR: 감사 빈도(수정 모드) 문단 Claude·Codex 불일치"; exit 1; }; \
-	r=$$(grep -F '**행위 목록 ↔ 코드 실현 대조**' dddjango-web/agents/discipline-reviewer-web.md); [ -n "$$r" ] && cmp -s <(printf '%s\n' "$$r") <(grep -F '**행위 목록 ↔ 코드 실현 대조**' codex-dddjango-web/skills/dddjango-web-discipline-reviewer-web/SKILL.md) || { echo "ERROR: 점검 항목 1 문단 Claude·Codex 불일치"; exit 1; }; \
-	echo "[verify-web] codex 미러 byte 대조(scripts·assets)"; \
-	diff -rq --exclude=__pycache__ dddjango-web/scripts codex-dddjango-web/skills/dddjango-web/scripts; \
-	diff -rq dddjango-web/assets codex-dddjango-web/skills/dddjango-web/assets; \
-	echo "[verify-web] references byte 미러 대조(implementation-ui·architecture-web·discipline-web-houserules·implementation-javascript)"; \
-	cmp -s dddjango-web/skills/implementation-ui/references/design-evidence.md codex-dddjango-web/skills/implementation-ui/references/design-evidence.md || { echo "ERROR: implementation-ui design-evidence.md Codex byte 미러 불일치"; exit 1; }; \
-	cmp -s dddjango-web/skills/implementation-ui/references/design-acquisition.md codex-dddjango-web/skills/implementation-ui/references/design-acquisition.md || { echo "ERROR: implementation-ui design-acquisition.md Codex byte 미러 불일치"; exit 1; }; \
-	cmp -s dddjango-web/skills/implementation-ui/references/final.md codex-dddjango-web/skills/implementation-ui/references/final.md || { echo "ERROR: implementation-ui final.md Codex byte 미러 불일치"; exit 1; }; \
-	cmp -s dddjango-web/skills/architecture-web/references/final.md codex-dddjango-web/skills/architecture-web/references/final.md || { echo "ERROR: architecture-web final.md Codex byte 미러 불일치"; exit 1; }; \
-	cmp -s dddjango-web/skills/discipline-web-houserules/references/final.md codex-dddjango-web/skills/discipline-web-houserules/references/final.md || { echo "ERROR: discipline-web-houserules final.md Codex byte 미러 불일치"; exit 1; }; \
-	cmp -s dddjango-web/skills/implementation-javascript/references/final.md codex-dddjango-web/skills/implementation-javascript/references/final.md || { echo "ERROR: implementation-javascript final.md Codex byte 미러 불일치"; exit 1; }; \
-	echo "[verify-web] REQUEST_GUIDE byte 미러 대조"; \
-	cmp -s dddjango-web/REQUEST_GUIDE.md codex-dddjango-web/REQUEST_GUIDE.md || { echo "ERROR: dddjango-web REQUEST_GUIDE 누락 또는 Codex byte 미러 불일치"; exit 1; }; \
-	echo "[verify-web] 요청 가이드 배포·발견 계약"; \
-	PYTHONUTF8=1 python3 workspace/tools/request_guide_contract.py
+	echo "[verify-web] 문단 Claude·Codex 대조(플랫폼 토큰 치환 뒤)"; \
+	p='**discipline 감사 = touched 파일 한정 경량 1회**'; c=$$(grep -F "$$p" dddjango-web/commands/dddjango-web.md | sed -e 's/[$$]{CLAUDE_PLUGIN_ROOT}/$${SKILL_DIR}/g' -e 's/Bash로/네이티브 셸로/g'); [ -n "$$c" ] && cmp -s <(printf '%s\n' "$$c") <(grep -F "$$p" codex-dddjango-web/skills/dddjango-web/SKILL.md) || { echo "ERROR: $$p 문단 Claude·Codex 불일치(또는 문단 없음)"; exit 1; }; \
+	echo "[verify-web] codex 미러 byte 대조(scripts — test/ 픽스처는 Codex 에 싣지 않는다)"; \
+	diff -rq --exclude=__pycache__ --exclude=test dddjango-web/scripts codex-dddjango-web/skills/dddjango-web/scripts; \
+	echo "[verify-web] references byte 미러 대조(지식 스킬 12 — Codex 는 dddjango-web-<스킬> 접두 폴더)"; \
+	n=0; for s in dddjango-web/skills/*/; do k=$$(basename "$$s"); n=$$((n+1)); diff -rq "$$s/references" "codex-dddjango-web/skills/dddjango-web-$$k/references" || { echo "ERROR: $$k references Codex byte 미러 불일치"; exit 1; }; done; \
+	m=$$(ls -d codex-dddjango-web/skills/*/references | wc -l | tr -d ' '); \
+	[ "$$n" = 12 ] && [ "$$m" = 12 ] || { echo "ERROR: 지식 스킬 수 Claude=$$n Codex=$$m — 둘 다 12 기대"; exit 1; }
 
 # 온톨로지 단 — .venv 파이썬 고정 (T0 A8)
 verify-ontology:

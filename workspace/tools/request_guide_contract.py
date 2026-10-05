@@ -5,6 +5,9 @@
 링크 검사는 README exact source token과 guide의 상대 목적지 구문 drift로 한정한다.
 CommonMark 문맥이나 실제 rendered/clickable 동작은 판정하지 않는다.
 Guide의 코드·주석·예시에도 상대 목적지 구문을 허용하지 않는다.
+가이드 계약(README token·guide 존재·byte 미러·homepage/websiteURL=가이드 URL)은 GUIDE_PLUGINS만,
+marketplace·manifest name/repository·defaultPrompt 계약은 PLUGINS 전부에 건다.
+가이드가 없는 플러그인의 homepage·Codex websiteURL은 저장소 루트를 가리킨다.
 exit 0 = 계약 충족 / exit 1 = self-test 실패 / exit 2 = 배포 계약 위반.
 """
 from __future__ import annotations
@@ -14,6 +17,18 @@ import json
 from pathlib import Path
 import re
 import tempfile
+
+REPOSITORY = "https://github.com/changja88/dddjango"
+PLUGINS = ("dddjango", "dddjango-web")
+# dddjango-web 2.0.0 부터 REQUEST_GUIDE.md 를 싣지 않는다(dddart화 — 가이드 없음).
+GUIDE_PLUGINS = ("dddjango",)
+
+
+def homepage_url(plugin: str) -> str:
+    """manifest homepage·Codex websiteURL의 기대값 — 가이드가 있으면 가이드 공개 URL, 없으면 저장소 루트."""
+    if plugin in GUIDE_PLUGINS:
+        return f"{REPOSITORY}/blob/main/{plugin}/REQUEST_GUIDE.md"
+    return REPOSITORY
 
 
 def guide_section_source(text: str) -> str:
@@ -43,8 +58,8 @@ def source_link_targets(text: str) -> list[str]:
 def validate(root: Path) -> list[str]:
     """저장소의 배포 계약 위반을 수집한다."""
     errors: list[str] = []
-    repository = "https://github.com/changja88/dddjango"
-    plugins = ("dddjango", "dddjango-web")
+    repository = REPOSITORY
+    plugins = PLUGINS
 
     def read_text(relative: str, code: str) -> str | None:
         try:
@@ -69,7 +84,7 @@ def validate(root: Path) -> list[str]:
 
     readme = read_text("README.md", "readme-link")
     section = guide_section_source(readme) if readme is not None else ""
-    for plugin in plugins:
+    for plugin in GUIDE_PLUGINS:
         canonical = f"{plugin}/REQUEST_GUIDE.md"
         mirror = f"codex-{plugin}/REQUEST_GUIDE.md"
         token = f"[{plugin} 작업 요청 가이드]({canonical})"
@@ -114,7 +129,7 @@ def validate(root: Path) -> list[str]:
             # 미신뢰 path는 순회하지 않는다. exact 매핑된 설치 경계에서 내용 존재를 검사한다.
             manifest_path = f"{directory}/{manifest_dir}/plugin.json"
             manifest = read_json(manifest_path, "manifest-missing")
-            url = f"{repository}/blob/main/{plugin}/REQUEST_GUIDE.md"
+            url = homepage_url(plugin)
             for key, expected in (("name", plugin), ("homepage", url), ("repository", repository)):
                 if manifest.get(key) != expected:
                     code = "manifest-name" if key == "name" else key
@@ -137,13 +152,12 @@ def validate(root: Path) -> list[str]:
 
 def self_test() -> int:
     """각 fixture 변이는 지정된 계약 검사가 빠지면 반드시 실패한다."""
-    repository = "https://github.com/changja88/dddjango"
+    repository = REPOSITORY
     authority = "설치된 플러그인 루트의 이 `REQUEST_GUIDE.md`가 해당 runtime에 대한 권위 있는 가이드 사본입니다."
     fixtures: dict[str, str] = {
         "README.md": (
             "# 플러그인\n\n## 작업 요청 가이드\n\n"
             "[dddjango 작업 요청 가이드](dddjango/REQUEST_GUIDE.md)\n"
-            "[dddjango-web 작업 요청 가이드](dddjango-web/REQUEST_GUIDE.md)\n"
             "\n## 업데이트\n\n설치본 갱신 방법\n"
         ),
     }
@@ -152,13 +166,14 @@ def self_test() -> int:
         ("codex-", ".codex-plugin", ".agents/plugins/marketplace.json"),
     ):
         entries = []
-        for plugin in ("dddjango", "dddjango-web"):
+        for plugin in PLUGINS:
             directory = prefix + plugin
-            url = f"{repository}/blob/main/{plugin}/REQUEST_GUIDE.md"
-            fixtures[f"{directory}/REQUEST_GUIDE.md"] = (
-                f"# {plugin}\n\n{authority}\n\n## 시작\n"
-                "[시작](#시작) [공개 문서](https://example.com/guide)\n"
-            )
+            url = homepage_url(plugin)
+            if plugin in GUIDE_PLUGINS:
+                fixtures[f"{directory}/REQUEST_GUIDE.md"] = (
+                    f"# {plugin}\n\n{authority}\n\n## 시작\n"
+                    "[시작](#시작) [공개 문서](https://example.com/guide)\n"
+                )
             manifest = {"name": plugin, "homepage": url, "repository": repository}
             if prefix:
                 manifest["interface"] = {"websiteURL": url, "defaultPrompt": [f"{plugin}로 작업해줘."]}
@@ -179,7 +194,7 @@ def self_test() -> int:
         target[keys[-1]] = value
         return {path: json.dumps(data)}
 
-    for plugin in ("dddjango", "dddjango-web"):
+    for plugin in GUIDE_PLUGINS:
         canonical = f"{plugin}/REQUEST_GUIDE.md"
         mirror = f"codex-{plugin}/REQUEST_GUIDE.md"
         token = f"[{plugin} 작업 요청 가이드]({canonical})"
@@ -271,14 +286,18 @@ def self_test() -> int:
         cases.append((f"{plugin}: authority line deleted", {
             path: fixtures[path].replace(authority, "") for path in (canonical, mirror)
         }, "guide-authority"))
+
+    for plugin in PLUGINS:
+        # homepage·websiteURL 의 «헷갈린 값» — 가이드가 있으면 저장소 루트, 없으면 가이드 URL.
+        confused = repository if plugin in GUIDE_PLUGINS else repository + f"/blob/main/{plugin}/REQUEST_GUIDE.md"
         for prefix, manifest_dir in (("", ".claude-plugin"), ("codex-", ".codex-plugin")):
             manifest = f"{prefix}{plugin}/{manifest_dir}/plugin.json"
             cases.append((f"{manifest}: subdir manifest missing", {manifest: None}, "manifest-missing"))
-            for key, value in (("homepage", repository), ("repository", repository + f"/blob/main/{plugin}/REQUEST_GUIDE.md")):
+            for key, value in (("homepage", confused), ("repository", repository + f"/blob/main/{plugin}/REQUEST_GUIDE.md")):
                 cases.append((f"{manifest}: {key} confusion", change_json(manifest, (key,), value), key))
             cases.append((f"{manifest}: name corrupted", change_json(manifest, ("name",), "other"), "manifest-name"))
             if prefix:
-                cases.append((f"{plugin}: websiteURL corrupted", change_json(manifest, ("interface", "websiteURL"), repository), "websiteURL"))
+                cases.append((f"{plugin}: websiteURL corrupted", change_json(manifest, ("interface", "websiteURL"), confused), "websiteURL"))
                 for label, value in (
                     ("wrong type", "dddjango"), ("empty list", []), ("non-string", [1]),
                     ("blank string", ["   "]), ("plugin-name omission", ["기능을 만들어줘."]),

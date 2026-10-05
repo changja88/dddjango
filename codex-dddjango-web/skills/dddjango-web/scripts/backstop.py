@@ -1,36 +1,33 @@
 #!/usr/bin/env python3
-# dddjango-web 결정적 백스톱 러너 — 단일 엔트리, 검사 39종 인프로세스 실행.
-# (판형: dddart scripts/backstop.dart · 값 정본: discipline-web-houserules §1~§5·§7·§9)
+# dddjango-web 결정적 백스톱 러너 — 단일 엔트리, 검사 72종 인프로세스 실행.
+# (판형: dddart scripts/backstop.dart — 같은 인자·같은 종료 코드·같은 게이트)
 #
 # 사용:
-#   python backstop.py <대상 프로젝트 루트> [--diff-base <commit>] [--all]
-#                      [--only ws,wi,wn,wp,wv|<검사ID>…]
-#                      [--design-build <증거 build 디렉터리>]
-#   python backstop.py <대상 프로젝트 루트> --debt-scan [--refactor] [--json <경로>]
-#   python backstop.py <대상 프로젝트 루트> --debt-residual <.dddjango-web/<폴더>>
-#   python backstop.py <대상 프로젝트 루트> --subst-check <기준 커밋> <대상 커밋>
-#                      [--names <design-spec.md>] [--except <web/ 밖 비테스트 경로>]… [--build <산출물 폴더>]
+#   python3 backstop.py <대상 프로젝트 루트> [--diff-base <commit>] [--all]
+#                       [--only st,im,nm,cy,tg,pj,md,pu|<검사ID>…] [--update-baseline]
 #
-# 종료코드: 0=clean / 1=사용·내부 오류(미실행 — 통과가 아니다) / 2=blocker(발견 일괄
-# 출력 — fail-fast 금지). (houserules §7 exit 계약)
-# 빚 모드(src/debt.py — Phase 0 step 4′·G2): --debt-scan 은 web/ 전체 기존 위반(빚)을
-# 키 (검사, 경로)로 동결하고, --debt-residual 은 G0 절의 ⓐ·요구 키 잔존을 센다.
-# 두 플래그는 서로, 그리고 --diff-base·--all·--only·--design-build 와 함께 쓰지 않는다.
-# --refactor 는 --debt-scan 전용(리팩토링 입구의 스캔 — debt-g0.json mode 가 잔존 의미론을 정한다).
-# 치환 확인(src/subst.py — 슬라이스 0 끝 green ④): --subst-check 는 기준..대상 사이 web/ 밖 레인 편집이
-# 슬라이스 0 커밋의 테스트 치환뿐인지 본다(승인 병합 유입·문서 자리 .md 제외 · 기능 슬라이스 테스트 편집은
-# 목록 · exit 0/2/1). --build 는 approved-merges.txt·build-state.json 을 읽는다. --names·--except·--build 는 그 전용이고,
-# 다른 모든 모드 플래그와 함께 쓰지 않는다.
-# 게이트: 구조·명명=added 파일/디렉터리, 격리·순수성=touched 파일의 added 줄,
-# 골격 완비=신규 단위 → 레거시 불발화. 비git·기준 부재 시 전역 검사로 퇴화 notice.
-# 공식 SDK 등재(WV · src/check_vendor.py): 목록·등재 id 디렉터리·목록 시대 미등재 단위는 게이트와 무관하게 늘 검사
-# (WV1~WV6·WV13 — 미룰 수 없음) · 기능 JS·템플릿은 added 줄(WV7~WV9) · 빌드 기록 범위 격리(WV10). 얕은 이력에서
-# 미등재 단위의 목록 시대를 판정할 수 없으면 exit 1(미실행).
-# 디자인 작업은 인자와 프로젝트의 현재/추적 원본 표식으로 식별한다.
+# 종료코드: 0=clean / 1=사용·내부 오류 / 2=blocker(발견 일괄 출력 — fail-fast 금지).
+# 게이트: 구조·명명=added, import=touched의 added 줄, 골격=신규 단위, 순환=전역+베이스라인
+# (.dddjango-web/backstop-baseline.json). 참조 = Python import(함수 안 포함) + 템플릿 extends·include·static
+# + CSS @import·url() — 조각 CSS(static/application/·static/root/)는 소유자의 presentation 자리로 센다.
+# 스크립트는 파이프라인 상태(build-state.json)를 모른다 — 컨텍스트는 전부 인자.
+#
+# 검사 72종 (dddart 번호 그대로 · 옮길 수 없는 번호는 비움 · 새 검사는 패밀리 끝 번호 뒤):
+#   ST 13 — ST0~ST11(dddart) + ST12(web/static/ 트리 — application·root·js·htmx·vendor·images·fonts)
+#   IM 27 — IM1~IM23(dddart) + IM24(상대 import) · IM25(백엔드 import) · IM26(extends 대상) · IM27(HTTP 표면·API URL 리터럴)
+#   NM 19 — NM1~NM6 · NM8(common 상태 동작 proxy — common @riverpod 자리) · NM9~NM17(dddart)
+#           + NM18(view 짝) · NM19(조각 CSS 짝 — BC·root) · NM20(snake_case) · NM7 비움(@riverpod 허용 위치)
+#   CY 1  — CY1
+#   TG 1  — TG1(web_test/ 미러)
+#   MD 2  — MD1(frozen dataclass 형태) · MD2(from_json 형태)
+#   PJ 3  — PJ1(pytest·pytest-django 선언) · PJ2(htmx core 단일 고정 판) · PJ3(vendor 버전 고정 사본)
+#   PU 6  — PU1 · PU2 · PU3 · PU6(v1.3.1 WP 번호 그대로) + PU7(자동 이스케이프 우회) · PU8(JS 동적 실행)
+#           · PU4 비움(색 리터럴 → NM10) · PU5 비움(motion.js 판형 — 러너 없음)
+#   (RV·HV 는 옮기지 않는다 — riverpod·hive 없음)
+
+from __future__ import annotations
 
 import sys
-import json
-import subprocess
 import traceback
 from pathlib import Path
 from typing import List, Optional, Set
@@ -38,307 +35,126 @@ from typing import List, Optional, Set
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from src.common import BackstopContext, Finding  # noqa: E402
-from src.check_structure import run_structure  # noqa: E402
+from src.check_cycles import run_cycles  # noqa: E402
 from src.check_imports import run_imports  # noqa: E402
+from src.check_models import run_models  # noqa: E402
 from src.check_naming import run_naming  # noqa: E402
+from src.check_project import run_project  # noqa: E402
 from src.check_purity import run_purity  # noqa: E402
-from src.check_vendor import VendorUndecidable, run_vendor  # noqa: E402
-from src.debt import cli_residual, cli_scan  # noqa: E402
-from src.subst import cli_subst_check  # noqa: E402
-from check_design_evidence import Defects, implementation_digest, validate_inputs, validate_visual  # noqa: E402
+from src.check_structure import run_structure  # noqa: E402
+from src.check_tests import run_tests  # noqa: E402
 
-TOTAL_CHECKS: int = 39  # WS8 + WI4 + WN8 + WP6 + WV13
+FAMILIES: List[str] = ['st', 'md', 'im', 'nm', 'cy', 'tg', 'pj', 'pu']
+CHECK_IDS: List[str] = (
+    ['ST%d' % n for n in range(0, 13)]                                  # ST0~ST12
+    + ['IM%d' % n for n in range(1, 28)]                                # IM1~IM27
+    + ['NM%d' % n for n in range(1, 21) if n != 7]                      # NM1~NM20 · NM7 비움
+    + ['CY1', 'TG1', 'MD1', 'MD2', 'PJ1', 'PJ2', 'PJ3']
+    + ['PU1', 'PU2', 'PU3', 'PU6', 'PU7', 'PU8'])                       # PU4·PU5 비움
+TOTAL_CHECKS: int = len(CHECK_IDS)  # 72 = ST13 + IM27 + NM19 + CY1 + TG1 + MD2 + PJ3 + PU6
 
-_USAGE: str = ('사용: python backstop.py <대상 프로젝트 루트> '
-               '[--diff-base <commit>] [--all] [--only ws,wi,wn,wp,wv] '
-               '[--design-build <dir>] | --debt-scan [--refactor] [--json <경로>] | '
-               '--debt-residual <폴더> | --subst-check <기준> <대상> [--names <명세>] '
-               '[--except <경로>]… [--build <산출물 폴더>]')
-
-
-def project_design_record(root: Path, name: str) -> dict | None:
-    """Read the current record, or its index/HEAD bytes if it was deleted."""
-    path = root / name
-    if not path.resolve().is_relative_to(root):
-        raise ValueError('project design record escapes project root')
-    if path.exists():
-        return json.loads(path.read_text(encoding='utf-8'))
-    for revision in ('', 'HEAD'):
-        result = subprocess.run(['git', '-C', str(root), 'show', f'{revision}:./{name}'],
-                                capture_output=True)
-        if result.returncode == 0:
-            return json.loads(result.stdout.decode('utf-8'))
-    return None
-
-
-def project_design_builds(root: Path) -> tuple[list[Path], bool, dict[Path, dict]]:
-    """Discover source-bearing builds, including tracked files deleted in this run."""
-    folder = root / '.dddjango-web'
-    if not folder.resolve().is_relative_to(root):
-        raise ValueError('project design directory escapes project root')
-    names = {path.relative_to(root).as_posix() for path in folder.rglob('*')}
-    for command in (['ls-files', '-z', '--', '.dddjango-web'],
-                    ['ls-tree', '-rz', '--name-only', 'HEAD', '--', '.dddjango-web']):
-        result = subprocess.run(['git', '-C', str(root), *command], capture_output=True)
-        if result.returncode == 0:
-            names.update(result.stdout.decode('utf-8').strip('\0').split('\0'))
-    markers = {'design-ref', 'design-input.json', 'source-manifest.json', 'render-audit.json'}
-    builds = set()
-    states = {}
-    for name in names:
-        parts = Path(name).parts
-        if len(parts) >= 3 and parts[0] == '.dddjango-web' and parts[2] in markers:
-            builds.add(folder / parts[1])
-        if len(parts) == 3 and parts[0] == '.dddjango-web' and parts[2] == 'build-state.json':
-            state = project_design_record(root, name)
-            if state:
-                states[(folder / parts[1]).resolve()] = state
-                if state.get('has_design_screen') is True:
-                    builds.add(folder / parts[1])
-    configured = False
-    if '.dddjango-web/config.json' in names:
-        config = project_design_record(root, '.dddjango-web/config.json')
-        source = config.get('design_source') if config else None
-        configured = (isinstance(source, dict) and (source.get('type') == 'PROJECT'
-                      or ('type' not in source and source.get('engine') == 'claude-design')))
-    if any(not build.resolve().is_relative_to(root) for build in builds):
-        raise ValueError('project design build escapes project root')
-    return sorted(build.resolve() for build in builds), configured, states
-
-
-def design_commit(root: Path, reference: str) -> str | None:
-    result = subprocess.run(['git', '-C', str(root), 'rev-parse', '--verify', '--end-of-options',
-                             reference + '^{commit}'], capture_output=True, text=True)
-    return result.stdout.strip() if result.returncode == 0 else None
-
-
-def current_nondesign_scope(root: Path, diff_base: str | None, builds: list[Path],
-                           states: dict[Path, dict]) -> bool:
-    """Skip past design builds for one uniquely identified current non-design snapshot."""
-    if not diff_base or not builds:
-        return False
-    base = design_commit(root, diff_base)
-    if base is None:
-        return False
-    matching = []
-    for build, state in states.items():
-        snapshot = state.get('git_snapshot')
-        if isinstance(snapshot, str) and snapshot and design_commit(root, snapshot) == base:
-            matching.append((build, state))
-    if len(matching) != 1:
-        return False
-    current, state = matching[0]
-    if (state.get('has_design_screen') is not False or current in builds
-            or not (current / 'build-state.json').is_file()):
-        return False
-    for command in (['diff', '--relative', '--name-only', '-z', '--no-renames', base, '--',
-                     '.dddjango-web/config.json'],
-                    ['ls-files', '--others', '-z', '--', '.dddjango-web/config.json']):
-        result = subprocess.run(['git', '-C', str(root), *command], capture_output=True)
-        if result.returncode != 0 or result.stdout.strip(b'\0'):
-            return False
-    return True
+_USAGE: str = ('사용: python3 backstop.py <대상 프로젝트 루트> '
+               '[--diff-base <commit>] [--all] [--only st,md,im,nm,cy,tg,pj,pu] [--update-baseline]')
 
 
 def main(argv: List[str]) -> int:
     target: Optional[str] = None
     diff_base: Optional[str] = None
     all_mode: bool = False
+    update_baseline: bool = False
     only: Set[str] = set()
-    design_build: Optional[str] = None
-    debt_scan: bool = False
-    debt_residual: Optional[str] = None
-    json_path: Optional[str] = None
-    refactor: bool = False
-    subst: Optional[List[str]] = None
-    names: Optional[str] = None
-    excepts: List[str] = []
-    build: Optional[str] = None
 
     i: int = 0
     while i < len(argv):
         a: str = argv[i]
-        if a == '--diff-base':
-            i += 1
-            if i >= len(argv):
-                print('[backstop] 사용 오류: --diff-base 값 없음', file=sys.stderr)
+        if a in ('--diff-base', '--only'):
+            if i + 1 >= len(argv):
+                print('[backstop] 사용 오류: %s 값 없음' % a, file=sys.stderr)
                 return 1
-            diff_base = argv[i]
-        elif a == '--all':
-            all_mode = True
-        elif a == '--only':
-            i += 1
-            if i >= len(argv):
-                print('[backstop] 사용 오류: --only 값 없음', file=sys.stderr)
-                return 1
-            only.update(s.strip().lower() for s in argv[i].split(',') if s.strip())
-        elif a == '--design-build':
-            i += 1
-            if i >= len(argv):
-                print('[backstop] 사용 오류: --design-build 값 없음', file=sys.stderr)
-                return 1
-            design_build = argv[i]
-        elif a == '--debt-scan':
-            debt_scan = True
-        elif a == '--refactor':
-            refactor = True
-        elif a == '--subst-check':
-            if i + 2 >= len(argv) or argv[i + 1].startswith('--') or argv[i + 2].startswith('--'):
-                print('[backstop] 사용 오류: --subst-check 값 둘(기준 커밋 · 대상 커밋) 필요',
-                      file=sys.stderr)
-                return 1
-            subst = [argv[i + 1], argv[i + 2]]
+            if a == '--diff-base':
+                diff_base = argv[i + 1]
+            else:
+                only.update(s.strip().lower() for s in argv[i + 1].split(',') if s.strip())
             i += 2
-        elif a in ('--names', '--except', '--build'):
-            i += 1
-            if i >= len(argv):
-                print('[backstop] 사용 오류: %s 값 없음' % a, file=sys.stderr)
-                return 1
-            if a == '--names':
-                names = argv[i]
-            elif a == '--build':
-                build = argv[i]
-            else:
-                excepts.append(argv[i])
-        elif a in ('--debt-residual', '--json'):
-            i += 1
-            if i >= len(argv):
-                print('[backstop] 사용 오류: %s 값 없음' % a, file=sys.stderr)
-                return 1
-            if a == '--json':
-                json_path = argv[i]
-            else:
-                debt_residual = argv[i]
+            continue
+        if a == '--all':
+            all_mode = True
+        elif a == '--update-baseline':
+            update_baseline = True
         elif a.startswith('--'):
             print('[backstop] 사용 오류: 알 수 없는 옵션 %s' % a, file=sys.stderr)
             return 1
         else:
             target = a
         i += 1
-
     if target is None:
         print(_USAGE, file=sys.stderr)
         return 1
-    root: Path = Path(target).resolve()
+    known: Set[str] = set(FAMILIES) | {c.lower() for c in CHECK_IDS}
+    unknown: List[str] = sorted(only - known)
+    if unknown:  # 없는 패밀리·검사 ID 를 조용히 0건으로 통과시키지 않는다
+        print('[backstop] 사용 오류: 알 수 없는 --only 값 %s — 패밀리 %s 또는 검사 ID(예 st4·im5)'
+              % (', '.join(unknown), ','.join(FAMILIES)), file=sys.stderr)
+        return 1
+
+    root: Path = Path(target)
     if not root.is_dir():
         print('[backstop] 사용 오류: 디렉터리 아님 — %s' % target, file=sys.stderr)
         return 1
-
-    gate_flags: bool = diff_base is not None or all_mode or bool(only) or design_build is not None
-    if subst is not None or names is not None or excepts or build is not None:
-        if (subst is None or gate_flags or debt_scan or debt_residual is not None
-                or json_path is not None or refactor):
-            print('[backstop] 사용 오류: --subst-check 는 단독 모드다 — --debt-scan·--debt-residual·'
-                  '--json·--refactor·--diff-base·--all·--only·--design-build 와 함께 쓰지 않는다'
-                  '(--names·--except·--build 는 --subst-check 전용)', file=sys.stderr)
-            return 1
-        return cli_subst_check(root, subst[0], subst[1], names, excepts, build)
-    if debt_scan or debt_residual is not None or json_path is not None or refactor:
-        if (debt_scan == (debt_residual is not None) or gate_flags
-                or (json_path is not None and not debt_scan) or (refactor and not debt_scan)):
-            print('[backstop] 사용 오류: --debt-scan·--debt-residual 은 단독 모드다 — '
-                  '서로, 그리고 --diff-base·--all·--only·--design-build 와 함께 쓰지 않는다'
-                  '(--json·--refactor 는 --debt-scan 전용)', file=sys.stderr)
-            return 1
-        return (cli_scan(root, json_path, refactor) if debt_scan
-                else cli_residual(root, debt_residual))
+    root = root.resolve()
 
     def family_on(fam: str) -> bool:
-        return (not only) or fam in only or any(o.startswith(fam) and len(o) > 2 for o in only)
+        return not only or fam in only or any(o.startswith(fam) and len(o) > 2 for o in only)
 
-    def id_on(check_id: str) -> bool:
+    def id_on(cid: str) -> bool:
         if not only:
             return True
-        l: str = check_id.lower()
-        return l in only or l[:2] in only
+        low: str = cid.lower()
+        return low in only or low[:2] in only
 
-    ctx: BackstopContext = BackstopContext.build(root=root, diff_base=diff_base,
-                                                 all_mode=all_mode)
+    ctx: BackstopContext = BackstopContext.build(root, diff_base, all_mode)
 
     if not ctx.git_repo:
-        ctx.notices.append('[info] git 저장소 아님 — 게이트 불가, 전역 검사로 퇴화'
-                           '(레거시 발견 폭주 가능). 파이프라인 경로는 git 프로젝트에서 '
-                           'Phase 2 진입 스냅샷을 주입한다(houserules §7).')
+        ctx.notices.append('[info] git 저장소 아님 — 게이트 불가, 전역 검사로 퇴화(레거시 발견 폭주 가능). '
+                           'G0의 git init+초기 커밋 제안이 정답 경로.')
     elif diff_base is None and not all_mode:
         ctx.notices.append('[info] --diff-base 없음 — 게이트 불가, 전역 검사로 퇴화. '
-                           '파이프라인 호출은 Phase 2 진입 스냅샷(git_snapshot)을 '
-                           '주입한다(houserules §7).')
+                           '파이프라인 호출은 Phase 2 진입 스냅샷을 주입한다.')
 
     findings: List[Finding] = []
     try:
-        if family_on('ws'):
+        if family_on('st'):
             findings.extend(run_structure(ctx))
-        if family_on('wi'):
+        if family_on('md'):
+            findings.extend(run_models(ctx))
+        if family_on('im'):
             findings.extend(run_imports(ctx))
-        if family_on('wn'):
+        if family_on('nm'):
             findings.extend(run_naming(ctx))
-        if family_on('wp'):
+        if family_on('cy'):
+            findings.extend(run_cycles(ctx, update_baseline))
+        if family_on('tg'):
+            findings.extend(run_tests(ctx))
+        if family_on('pj'):
+            findings.extend(run_project(ctx))
+        if family_on('pu'):
             findings.extend(run_purity(ctx))
-        if family_on('wv'):
-            findings.extend(run_vendor(ctx, design_build=design_build))
-    except VendorUndecidable as error:
-        print('[backstop] 판정 불가(미실행 — 통과가 아니다) — %s' % error)
-        return 1
-    except Exception:
+    except Exception:  # noqa: BLE001 — 내부 오류는 미실행(통과 아님)으로 exit 1
         print('[backstop] 내부 오류:\n%s' % traceback.format_exc(), file=sys.stderr)
         return 1
 
-    shown: List[Finding] = sorted(
-        (f for f in findings if id_on(f.check_id)),
-        key=lambda f: (f.check_id, f.path, f.line or 0))
-
-    design_defects: List[str] = []
-    try:
-        discovered, configured, states = project_design_builds(root)
-        builds = discovered
-        if design_build is not None:
-            selected = Path(design_build).resolve()
-            if discovered and selected not in discovered:
-                design_defects.append('--design-build must select a project design build: %s' %
-                                      ', '.join(str(path) for path in discovered))
-                builds = []
-            else:
-                builds = [selected]
-        elif current_nondesign_scope(root, diff_base, discovered, states):
-            builds = []
-            ctx.notices.append('[info] git_snapshot이 일치하는 현재 비시안 작업 — '
-                               '과거 시안 빌드 %d개의 visual 검사 생략(판정 입력 아님)'
-                               % len(discovered))
-        elif configured and not discovered:
-            design_defects.append('design_source is configured but no design build was found; --design-build required')
-        for build in builds:
-            if not build.is_dir():
-                design_defects.append('design build 디렉터리/증거가 없음: %s' % build)
-            else:
-                try:
-                    design_spec, input_value, _items = validate_inputs(build, root)
-                    implementation_value: str = implementation_digest(root, design_spec)
-                    validate_visual(build, root, design_spec, input_value, implementation_value)
-                except Defects as error:
-                    design_defects.extend(f'{build}: {message}' for message in error.messages)
-    except Exception:
-        print('[backstop] design evidence 내부 오류:\n%s' % traceback.format_exc(), file=sys.stderr)
-        return 1
-
+    shown: List[Finding] = sorted((f for f in findings if id_on(f.check_id)),
+                                  key=lambda f: (f.check_id, f.path, f.line or 0))
     for n in ctx.notices:
         print(n)
     if ctx.notices:
-        print()
+        print('')
     for f in shown:
         print(f)
-        print()
-    for message in design_defects:
-        print('[DESIGN] BLOCKER — %s' % message)
-        print()
-    if ctx.gated and diff_base is not None:
-        mode: str = 'gated(diff-base %s)' % diff_base[:8]
-    elif all_mode:
-        mode = 'all'
-    else:
-        mode = '전역 퇴화'
-    print('[backstop] 검사 %d종(%s) — blocker %d건 (구조 %d · 시안 %d)' %
-          (TOTAL_CHECKS, mode, len(shown) + len(design_defects), len(shown), len(design_defects)))
-    return 0 if not shown and not design_defects else 2
+        print('')
+    mode: str = ('gated(diff-base %s)' % diff_base[:8]) if ctx.gated and diff_base else ('all' if all_mode else '전역 퇴화')
+    print('[backstop] 검사 %d종(%s) — blocker %d건' % (TOTAL_CHECKS, mode, len(shown)))
+    return 0 if not shown else 2
 
 
 if __name__ == '__main__':

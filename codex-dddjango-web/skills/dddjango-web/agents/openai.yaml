@@ -1,4 +1,4 @@
 interface:
   display_name: "dddjango-web"
-  short_description: "Django 화면을 시안 충실 재현·MVVM+HTMX로 게이트로 빌드"
-  default_prompt: "Use dddjango-web to build one screen into an existing Django project's web presentation layer with design-faithful reproduction and MVVM+HTMX discipline: scope (G0) → design (G1) → implementation (G2), dispatching design-architect-web, design-review-web, coder-web, and discipline-reviewer-web as subagents. Consumes backend only through real API contracts. Requires multi_agent."
+  short_description: "Django 화면을 간소화 DDD+MVVM으로 요구→설계→구현까지 게이트로 빌드"
+  default_prompt: "dddjango-web으로 기존 Django 프로젝트에 한 기능의 화면(HTML · HTMX · JS)을 간소화 DDD+MVVM으로 빌드한다(요구 G0 → 설계 G1 → 구현 G2). 요청은 순서대로 준다 — ① 기능 설명, ② (선택) OpenAPI 문서 URL. 디자인은 인자가 아니라 G0에서 정한다(Claude Design 프로젝트·내려받은 Claude Design 시안 폴더·로컬 이미지·자체 설계). 예: 날씨 7일 예보 화면을 만들어줘 https://api.example.com/schema?format=json"

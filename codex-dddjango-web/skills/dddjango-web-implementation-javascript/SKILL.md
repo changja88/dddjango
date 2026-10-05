@@ -1,0 +1,48 @@
+---
+name: dddjango-web-implementation-javascript
+description: 승인된 UI JavaScript의 구현·감수 표기법 — DOM 이벤트, 기능별 상태, HTMX 교체 수명, 비동기 완료, 안전한 데이터 소비, 키보드·포커스, 명세가 고른 외부 JS 고정 사본 소비. 브라우저 UI 동작을 작성하거나 그 동작을 검수할 때 사용한다. 업무 판정·API 계약·파일트리 결정·HTMX 요청 설계는 소유하지 않는다.
+user-invocable: false
+---
+
+# UI JavaScript 구현
+
+## 적용 조건과 경계
+
+dddjango-web의 승인된 설계 명세가 정한 브라우저 UI 동작(외부 관찰 가능 행위 목록의 해당 항목)에 따라 UI JS를 구현·감수한다. 이 스킬은 coder-web과 discipline-reviewer-web에 직접 주입된다. 파일·호스트 로딩은 dddjango-web-discipline-houserules와 Coordinator가 확정한 경계를 소비하며, 명세 누락·충돌은 보고한다. 규칙·백스톱을 직접 바꿔 통과시키지 않는다.
+
+화면의 임시 상호작용과 브라우저 API 사용법이 소관이다. Python/VM의 State 조립, 도메인 판정·권한·금액 계산, HTMX 요청·응답 계약, HTML 구조·CSS 시각 값은 각 소유자에게 맡긴다. 시안에 없는 기능을 예제로부터 만들어내지 않는다.
+
+| 필요한 판단 | 소유 |
+|---|---|
+| view/section/widget 분해·부품 표시 경로 | `dddjango-web-architecture-ui` |
+| 상태·갱신 계약(조각 교체·HX-Trigger) | `dddjango-web-architecture-state`·`dddjango-web-implementation-htmx` |
+| 파일 트리·이름·외부 JS 사본 자리·참조 격리 | `dddjango-web-discipline-houserules` |
+| Django 템플릿·CSS·에셋·서버 코드 표기 | `dddjango-web-implementation-django` |
+| UI JS 이벤트·DOM·브라우저 API·수명 처리 | 이 스킬 |
+| 브라우저 테스트 메커니즘 | `dddjango-web-implementation-test` §4 |
+| 일반 명명·함수·중복 규율 | `dddjango-web-discipline-cleancode` |
+| 호스트 설정·htmx 설치·로드 배선 | Coordinator의 승인 범위 |
+
+## 구현·감수 순서
+
+1. 명세의 동작이 native HTML/CSS 또는 기존 HTMX 표현만으로 충족되는지 확인한다. 충족되면 JS 파일을 만들지 않는다.
+2. JS가 필요한 동작은 **기능·root·변경할 DOM/임시 상태·교체 경계·소유 자원**을 명세의 해당 행위 항목과 구현 보고에 연결한다. 새 명세 문서를 요구하지 않는다. 같은 기능의 초기화·이벤트·정리는 한 파일에 모은다.
+3. 최소 연결 방식을 고른다. 단순 동작은 한 번 설치한 이벤트 위임으로 충분하다. 인스턴스별 초기화가 필요하면 root를 포함해 발견하고, 반복 초기화에도 중복 효과가 없게 한다.
+4. 교체되는 노드와 유지되는 노드를 구분한다. **자식 정리 이벤트가 왔다고 부모 기능 전체를 파괴하지 않는다.** 자원을 소유하는 root나 실제 종속 노드가 제거될 때만 해당 수명을 끝낸다. 살아 있는 root의 자식이 바뀌면 이전 참조를 계속 쓰지 않는다.
+5. 늦은 비동기 완료는 현재 작업·동일 UI가 유효할 때만 반영한다. 문자열은 텍스트로 소비하고, 성공·실패·초점 상태를 실제 결과에 맞춘다.
+6. 요구에 있는 초기 진입·여러 인스턴스·실제 HTMX 교체를 확인한다. 자원이 있으면 정리, 비동기가 있으면 지연·실패, 키보드 UI면 키보드 경로를 추가한다. 검수는 코드 형태가 아니라 이 동작과 소유 경계를 근거로 판정한다.
+
+## 필요한 상세만 읽기
+
+| 상황 | [references/final.md](references/final.md)의 절 |
+|---|---|
+| JS 필요성·기술 책임·파일 단위 | §1 |
+| 외부 스크립트 로드·DOM 계약·이벤트 위임 예제 | §2 |
+| HTMX 추가·교체·삭제·인스턴스 정리 | §3 |
+| 복사·파일 미리보기·타이머 등 브라우저 자원·비동기 | §4 |
+| 서버 값·문자열·동적 HTML 경계 | §5 |
+| 키보드·포커스·상태 안내 | §6 |
+| 구현 검증·감수·통과 근거 | §7 |
+| 명세가 고른 외부 JS 고정 사본 소비(자리·로드·불러들이기 금지) | §8 |
+
+감수 때 리스너 위임·인스턴스 초기화 중 하나를 정답 형태로 강제하지 않는다. 쓰지 않는 자원의 cleanup, 전역 UI 레지스트리, 범용 런타임을 추가하게 하지 않는다.

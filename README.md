@@ -58,16 +58,16 @@ codex plugin add dddjango-web@changja88-dddjango         # Codex
 
 ## 작업 요청 가이드
 
-설치한 각 플러그인 루트의 `REQUEST_GUIDE.md`가 해당 runtime의 권위 있는 가이드 사본이다. 아래 링크는 저장소에서 최신 가이드를 찾는 진입점이다.
+설치한 `dddjango` 플러그인 루트의 `REQUEST_GUIDE.md`가 해당 runtime의 권위 있는 가이드 사본이다. 아래 링크는 저장소에서 최신 가이드를 찾는 진입점이다. `dddjango-web`(2.0.0부터)은 가이드 파일을 싣지 않는다 — 아래 표와 «빠른 시작»의 형식으로 요청한다.
 
-`dddjango`는 한 기능과 원하는 업무 변화로 시작할 수 있다. `dddjango-web` 화면 발주에는 Claude Design 시안(공유 URL 또는 같은 시안을 내려받은 폴더)과 그 안에서 구현할 화면이 필수다. 그 밖의 정보는 이미 알고 있거나 정한 부분만 보태면 된다.
+`dddjango`는 한 기능과 원하는 업무 변화로 시작할 수 있다. `dddjango-web`은 만들 화면 기능의 설명으로 시작하고, OpenAPI 문서 URL을 알면 뒤에 붙인다. 디자인 출처(Claude Design 시안·로컬 이미지·자체 설계)는 요청에 적지 않아도 G0에서 함께 정한다. 그 밖의 정보는 이미 알고 있거나 정한 부분만 보태면 된다.
 
 | 플러그인 | 요청 정보 | 작업 경계 | 가이드 |
 |---|---|---|---|
-| **dddjango** | 원하는 업무 변화·대표 성공 결과·이미 정한 핵심 규칙과 실패 뒤 상태·보존/변경/제외 범위 | 시안 재현 중심의 화면 작업은 `dddjango-web`으로 이어간다. Django admin 등 기존 업무 기능에 포함된 화면은 `dddjango`가 담당하는 경우도 있으며, 플러그인이 코드를 조사해 안내한다. | [dddjango 작업 요청 가이드](dddjango/REQUEST_GUIDE.md) |
-| **dddjango-web** | Claude Design 시안(공유 URL 또는 내려받은 폴더)과 구현할 화면(필수)·이미 정한 상태/폭/UI 동작·의도적인 차이·데이터 연동 의도 | 브라우저의 임시 UI 동작에 필요한 경우 JavaScript를 사용한다. 새 API나 인증·권한·업무 규칙·데이터 처리가 필요하면 플러그인이 별도 `dddjango` 작업 범위를 안내한다. | [dddjango-web 작업 요청 가이드](dddjango-web/REQUEST_GUIDE.md) |
+| **dddjango** | 원하는 업무 변화·대표 성공 결과·이미 정한 핵심 규칙과 실패 뒤 상태·보존/변경/제외 범위 | 화면 작업은 `dddjango-web`으로 이어간다. Django admin 등 기존 업무 기능에 포함된 화면은 `dddjango`가 담당하는 경우도 있으며, 플러그인이 코드를 조사해 안내한다. | [dddjango 작업 요청 가이드](dddjango/REQUEST_GUIDE.md) |
+| **dddjango-web** | 만들 화면 기능의 설명·(선택) OpenAPI 문서 URL — 디자인 출처는 G0에서 정한다 | 백엔드 코드는 고치지 않는다. 필요한 API가 없으면 가정 계약으로 짓고 실제 API는 `dddjango`로 요청하도록 안내한다. 브라우저 UI 동작에 필요한 경우 JavaScript를 쓴다. | 없음(2.0.0) |
 
-알고 있는 코드·문서·테스트 경로, 별도 이미지·폰트, API 자료 위치는 조사를 빠르게 하는 선택 정보다. API 위치를 모르면 플러그인이 조사하거나 묻는다. `dddjango-web`의 기준 시안은 Claude Design 공유 URL이나 같은 시안을 내려받은 폴더로 전달하며, 접근 문제가 있으면 공유 설정을 확인하거나 내려받은 폴더를 준다.
+알고 있는 코드·문서·테스트 경로, 별도 이미지·폰트, API 자료 위치는 조사를 빠르게 하는 선택 정보다. API 위치를 모르면 플러그인이 조사하거나 묻는다. `dddjango-web`에서 Claude Design 시안을 쓰려면 G0에서 시안 프로젝트를 고르거나 내려받은 시안 폴더의 경로를 준다.
 
 플러그인이 프로젝트와 자료를 조사하고 설계·agent/skill 선택·구현·테스트·검증 방법을 맡는다. 그래서 요청에는 진행 방식·파일 위치·경로 목록·선례·구현 수단을 적지 않는다. 조사만으로 정할 수 없는 제품 결정과 필요한 승인은 플러그인이 질문한다. 자세한 요청 예시, 요청에 적지 않을 것, 다른 세션에 맡겨 요청할 때의 규칙은 각 가이드에서 확인할 수 있다.
 
@@ -105,13 +105,12 @@ $ codex plugin list
 | Claude Code | Codex |
 |---|---|
 | `/dddjango:dddjango 재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능` | `dddjango를 사용해 재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능을 만들어 줘.` |
-| `/dddjango-web:dddjango-web 주문 목록 화면을 시안대로 구현해 줘. Claude Design 공유 URL: <공유 URL> · 구현 대상: 주문 목록 / 기본` | `dddjango-web을 사용해 주문 목록 화면을 시안대로 구현해 줘. Claude Design 공유 URL: <공유 URL> · 구현 대상: 주문 목록 / 기본` |
+| `/dddjango-web:dddjango-web "주문 목록 화면" https://api.example.com/schema?format=json` | `dddjango-web을 사용해 주문 목록 화면을 만들어 줘. https://api.example.com/schema?format=json` |
 | `/dddjango:refactor order 규칙 하나를 고칠 때 여러 곳을 고쳐야 해` | `$dddjango-refactor order 규칙 하나를 고칠 때 여러 곳을 고쳐야 해` |
-| `/dddjango-web:refactor web/home 화면마다 같은 렌더 코드가 반복돼` | `$dddjango-web-refactor web/home 화면마다 같은 렌더 코드가 반복돼` |
 
-`dddjango-web`은 기준 시안 안에서 구현할 화면·상태 이름을 알려 주고, OpenAPI URL이나 로컬 파일 경로를 알고 있다면 함께 적는다.
+`dddjango-web`은 기능 설명을 따옴표로 감싸고, OpenAPI 문서 URL을 알면 뒤에 붙인다(없으면 설정 파일 → 가정 계약 순으로 정한다). 디자인은 인자가 아니다 — G0에서 Claude Design 시안·로컬 이미지·자체 설계 가운데서 정한다. web 리팩토링 입구(`/dddjango-web:refactor`)는 2.0.0에 없고 2.1.0에서 돌아온다.
 
-`dddjango`는 요구 정리부터 테스트까지, `dddjango-web`은 화면 요구 정리부터 시안·계약 검증까지 단계별로 진행하며 각 게이트에서 당신이 승인한다.
+`dddjango`는 요구 정리부터 테스트까지, `dddjango-web`은 화면 요구 정리부터 설계·구현·테스트까지 단계별로 진행하며 각 게이트에서 당신이 승인한다.
 
 ---
 
@@ -311,13 +310,14 @@ dddjango는 작업 규모를 보고 알맞게 움직인다.
 
 ## 자매 플러그인: dddjango-web
 
-`/dddjango-web:dddjango-web <화면 요구>` — **실제 URL+JSON API 계약을 외부 클라이언트처럼 소비**해 화면(웹 표현계층)을 빌드하는 **독립 플러그인**이다. API를 만든 도구가 반드시 dddjango일 필요는 없다.
+`/dddjango-web:dddjango-web "<기능 설명>" [OpenAPI URL]` — 기존 Django 프로젝트에 한 기능의 화면(HTML·HTMX·JS)을 **간소화 DDD + 철저한 MVVM**으로 빌드하는 **독립 플러그인**이다(2.0.0부터 Flutter 판 `dddart`와 같은 절차·구조 — 구현 기술만 Django·HTML·HTMX·JS). **실제 URL+JSON API 계약을 외부 클라이언트처럼 소비**하며, API를 만든 도구가 반드시 dddjango일 필요는 없다.
 
-- **시나리오**: 클로드 디자인 시안 반영(공유 URL 또는 같은 시안을 내려받은 폴더) · 기존 화면 수정
-- **표준**: HTML + HTMX + CSS(브라우저 안의 임시 UI 동작에 필요한 경우에만 JavaScript) · 요청 구동 MVVM(view/view_model/state + 템플릿) · design_system 토큰
-- **경계**: `web/` 트리는 «내부의 외부 클라이언트» — 백엔드 코드를 import하지 않고(백스톱이 차단) in-process HTTP로 계약만 소비한다. 필요한 API가 없으면 `/dddjango:dddjango`로 발주를 안내한다.
-- **구성**: 커맨드 2(`/dddjango-web:dddjango-web`(화면 빌드) · `/dddjango-web:refactor <대상 단위>`(대상 단위 하나의 기존 web 코드 전체를 표준으로 정리하는 리팩토링 입구 — 동작 불변 · Codex 는 `$dddjango-web-refactor`)) · 에이전트 4(`design-architect-web`·`design-review-web`·`coder-web`·`discipline-reviewer-web`) · 스킬 4(`architecture-web`·`implementation-ui`·`discipline-web-houserules`·`discipline-cleancode`) · 결정적 백스톱(구조·격리·명명·순수성) + 시안 절단 도구
-- **검증**: 결정적 백스톱은 측정 대상인 구조 규율만 확인하며 전체 품질이나 픽셀 동일을 증명하지 않는다. 자동 측정 결과와 규율 감사를 함께 보고, 승인한 상태·viewport의 전체 스크롤과 동작은 게이트에서 **사용자가 육안 확인**한다.
+- **구조**: `web/` 앱 — `root/`·`application/<bc>/`(domain·application·infra·presentation 4층)·`common/`·`design_system/`(foundation CSS 변수 7·theme·component·util)·`static/` + 테스트 `web_test/`(web/ 1:1 미러)
+- **표준**: 요청마다 view가 VM을 만들어 State를 그리고 HTMX 조각 응답으로 부분 교체 · design_system 토큰 · UI 동작 JavaScript는 기능당 한 파일
+- **경계**: `web/` 트리는 «내부의 외부 클라이언트» — 백엔드 코드를 import하지 않고(백스톱이 차단) in-process HTTP로 계약만 소비한다. 필요한 API가 없으면 가정 계약으로 짓고(tracer → 미니 게이트) 실제 API는 `/dddjango:dddjango`로 요청하도록 안내한다.
+- **구성**: 커맨드 1(`/dddjango-web:dddjango-web`) · 에이전트 7(`design-architect-web`·`design-review-ddd-web`·`design-review-ui-web`·`design-review-state-web`·`design-review-data-web`·`coder-web`·`discipline-reviewer-web`) · 스킬 12(`architecture-ddd`/`-ui`/`-state`/`-data`·`discipline-cleancode`/`-houserules`/`-test`·`implementation-test`/`-python`/`-django`/`-htmx`/`-javascript`) · 결정적 백스톱(검사 72종 — 구조·import·명명·순환·테스트·토대·모델·출력 안전) + 추출 도구 4
+- **검증**: 행위마다 영구 테스트(`pytest web_test --import-mode=importlib`)와 `manage.py check`·백스톱을 G2 전에 돈다. 결정적 백스톱은 측정 대상인 구조 규율만 확인하며 전체 품질이나 픽셀 동일을 증명하지 않는다. 시안과의 시각 일치는 게이트에서 **사용자가 육안 확인**한다.
+- **2.1.0 예정**: 빚 정리 · 리팩토링 입구(`/dddjango-web:refactor`) · 외부 JS 승인 절차
 
 ---
 
