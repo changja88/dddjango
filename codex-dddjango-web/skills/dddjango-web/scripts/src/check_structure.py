@@ -354,6 +354,13 @@ def _skeleton(ctx: BackstopContext) -> List[Finding]:
                 '비어 있어도 표준 종류 폴더 전부+표지(Python 경로 __init__.py · design_system .gitkeep)를 생성한다 — '
                 '폴더는 무조건, 코드는 필요할 때만.'))
 
+    def direct_kinds(layer_path: str, kinds: Set[str]) -> Set[str]:
+        """app·pres 계층 직속에 요구할 종류 — 개념 1차로 분할된 계층(직속 비종류 디렉터리 = 개념 폴더 보유)은 없다:
+        종류 폴더는 각 개념 폴더 안에 완비하고(houserules §2·§3) 그 완비는 아래 «신규 개념 폴더»가 본다."""
+        split: bool = any(x.startswith(layer_path + '/') and x.count('/') == layer_path.count('/') + 1
+                          and segs_of(x)[-1] not in kinds for x in ctx.dirs)
+        return set() if split else kinds
+
     # 신규 BC (area 하위 포함 — `application/<bc>` 또는 `application/<area>/<bc>`)
     for d in sorted(ctx.dirs):
         s: List[str] = segs_of(d)
@@ -363,9 +370,9 @@ def _skeleton(ctx: BackstopContext) -> List[Finding]:
             continue
         bc_name: str = s[-1]
         require_unit(d, '신규 BC `%s`' % bc_name, {
-            'application_layer': APP_KINDS,
+            'application_layer': direct_kinds(d + '/application_layer', APP_KINDS),
             'infra_layer': INFRA_KINDS,
-            'presentation_layer': PRES_KINDS,
+            'presentation_layer': direct_kinds(d + '/presentation_layer', PRES_KINDS),
             'domain_layer': set(),
         }, [LOCAL_LINT])  # 타입 명시 국소 lint(houserules §3)
         dom: str = d + '/domain_layer'
