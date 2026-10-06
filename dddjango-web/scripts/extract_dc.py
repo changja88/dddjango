@@ -101,6 +101,7 @@ class ScreenParser(HTMLParser):
         self.frames = []
         self.roots = []      # <x-dc> — Claude Design 내보내기 루트(.screen·data-screen-label 없는 꼴)
         self.helmets = []    # <helmet> — x-dc 의 문서 머리(디자인 시스템 링크·전역 style) · 화면이 아니다
+        self.template_depth = 0   # <template> 안은 렌더되지 않는다 — 그 안 x-dc·helmet 은 세지 않는다
 
     def source_position(self):
         line, column = self.getpos()
@@ -117,9 +118,11 @@ class ScreenParser(HTMLParser):
         record = {"tag": tag, "start": self.source_position(), "label": attributes.get("data-screen-label"), "end": None} if candidate else None
         if record:
             self.screens.append(record)
-        elif tag in ("x-dc", "helmet"):
-            record = {"tag": tag, "start": self.source_position(), "label": None, "end": None}
+        elif tag in ("x-dc", "helmet") and not self.template_depth:
+            record = {"tag": tag, "start": self.source_position(), "label": None, "end": None, "close": None}
             (self.roots if tag == "x-dc" else self.helmets).append(record)
+        if tag == "template":
+            self.template_depth += 1
         if tag not in {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}:
             self.stack.append((tag, record))
 
@@ -128,11 +131,14 @@ class ScreenParser(HTMLParser):
         self.handle_endtag(tag)
 
     def handle_endtag(self, tag):
+        if tag == "template" and self.template_depth:
+            self.template_depth -= 1
         for index in range(len(self.stack) - 1, -1, -1):
             if self.stack[index][0] == tag:
                 for _, record in self.stack[index:]:
                     if record and record["tag"] == tag:
-                        record["end"] = self.source.find(">", self.source_position()) + 1
+                        record["close"] = self.source_position()          # 닫는 태그 `</` 의 원문 좌표
+                        record["end"] = self.source.find(">", record["close"]) + 1
                 del self.stack[index:]
                 break
 
@@ -143,16 +149,20 @@ def xdc_screen(html: str, parser: "ScreenParser") -> Optional[str]:
     if len(parser.roots) != 1 or not parser.roots[0]["end"]:
         return None
     root = parser.roots[0]
-    inner_start = tag_end(html, root["start"]) + 1
-    inner_end = html.lower().rfind("</x-dc", inner_start, root["end"])
-    if inner_start <= 0 or inner_end < inner_start:
+    inner_start = tag_end(html, root["start"]) + 1      # 원문 좌표로만 자른다(대소문자 변환은 길이를 바꿀 수 있다)
+    inner_end = root["close"]
+    if inner_start <= 0 or inner_end is None or inner_end < inner_start:
         return None
     parts: List[str] = []
     cursor = inner_start
     for helmet in sorted(parser.helmets, key=lambda row: row["start"]):
-        if helmet["end"] and inner_start <= helmet["start"] and helmet["end"] <= inner_end:
-            parts.append(html[cursor:helmet["start"]])
-            cursor = helmet["end"]
+        if not helmet["end"] or helmet["start"] < inner_start or helmet["end"] > inner_end:
+            continue
+        if helmet["start"] < cursor:                    # 앞서 뺀 helmet 안(중첩) — 커서를 되돌리지 않는다
+            cursor = max(cursor, helmet["end"])
+            continue
+        parts.append(html[cursor:helmet["start"]])
+        cursor = helmet["end"]
     parts.append(html[cursor:inner_end])
     return "".join(parts)
 
@@ -224,23 +234,36 @@ def gate_text(app: str) -> Dict[str, object]:
 HUMAN_ATTRS = ("alt", "aria-label", "label", "placeholder", "title")
 SKIP_TEXT_TAGS = {"script", "style", "helmet", "template"}
 BINDING_RE = re.compile(r"\{\{.*?\}\}", re.S)
+UNCLOSED_BINDING_RE = re.compile(r"\{\{.*$", re.S)    # 태그 경계에서 끊긴 바인딩의 앞 조각
+UNOPENED_BINDING_RE = re.compile(r"^.*?\}\}", re.S)   # 그 뒤 조각
 XDC_CARDS = 10
 
 
 class VisibleText(HTMLParser):
-    """텍스트 노드 + 사람용 속성(alt·aria-label·label·placeholder·title) — `{{ }}` 바인딩은 뺀다."""
+    """텍스트 노드 + 사람용 속성(alt·aria-label·label·placeholder·title) — `{{ }}` 바인딩은 뺀다.
+    HTMLParser 는 한 텍스트 노드를 여러 조각으로 넘기므로(`{{ a < 3 }}` 의 `<` 앞뒤) 태그 경계까지 모아서 지운다.
+    태그 경계에서 끊긴 바인딩(`{{` 만 · `}}` 만 남은 조각)도 그 몫을 뺀다."""
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.skip = 0
         self.items: List[str] = []
+        self.pending: List[str] = []
 
     def add(self, value: str) -> None:
-        clean = WS_COLLAPSE_RE.sub(" ", BINDING_RE.sub(" ", value)).strip()
+        clean = BINDING_RE.sub(" ", value)
+        clean = UNOPENED_BINDING_RE.sub(" ", UNCLOSED_BINDING_RE.sub(" ", clean))
+        clean = WS_COLLAPSE_RE.sub(" ", clean).strip()
         if any(ch.isalnum() for ch in clean) and clean not in self.items:
             self.items.append(clean)
 
+    def flush(self) -> None:
+        if self.pending:
+            self.add("".join(self.pending))
+            self.pending = []
+
     def handle_starttag(self, tag, attrs):
+        self.flush()
         if tag in SKIP_TEXT_TAGS:
             self.skip += 1
         if not self.skip:
@@ -254,17 +277,23 @@ class VisibleText(HTMLParser):
             self.handle_starttag(tag, attrs)
 
     def handle_endtag(self, tag):
+        self.flush()
         if tag in SKIP_TEXT_TAGS and self.skip:
             self.skip -= 1
 
     def handle_data(self, data):
         if not self.skip:
-            self.add(data)
+            self.pending.append(data)
+
+    def close(self):
+        super().close()
+        self.flush()
 
 
 def xdc_gate_text(app: str) -> Dict[str, object]:
     parser = VisibleText()
     parser.feed(app)
+    parser.close()
     items = parser.items
     return {
         "title": items[0] if items else "",

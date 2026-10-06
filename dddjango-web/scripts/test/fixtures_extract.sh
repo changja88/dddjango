@@ -243,6 +243,37 @@ OUT=$(run_py extract_dc.py "$P/design-ref/two.dc.html" --tokens "$P/design-token
   --asset-base "$P/design-ref" --meta "$P/screen-meta.json"); E=$?
 assert "C5b 대조: x-dc 루트 둘 = 고르지 않음(exit 1)" 1 "candidate count 0" - "$E" "$OUT"
 
+run_xdc() { # run_xdc <케이스 폴더> <.dc.html 본문> — x-dc 한 파일 추출(토큰 존재만 확인되는 빈 토큰)
+  mkdir -p "$1/design-ref" "$1/root"; printf '%s\n' "$2" > "$1/design-ref/screen.dc.html"; echo '{}' > "$1/design-tokens.json"
+  run_py extract_dc.py "$1/design-ref/screen.dc.html" --tokens "$1/design-tokens.json" \
+    --asset-manifest "$1/asset-manifest.json" --assets-root "$1/root" --asset-base "$1/design-ref" --meta "$1/screen-meta.json"
+}
+
+# ---------- C6: `<` 가 든 바인딩도 통째 뺀다(HTMLParser 가 글을 나눠 넘겨도)
+P="$T/c6"; OUT=$(run_xdc "$P" '<x-dc><p>{{ count < 3 ? "적음" : "많음" }}</p><p>실제 화면</p></x-dc>'); E=$?
+assert "C6 x-dc 바인딩 안 < (exit 0)" 0 "[extract-dc] screen.dc.html" - "$E" "$OUT"
+assert_file "C6 title = 실제 화면 · 바인딩 조각 없음" "$P/screen-meta.json" '"title": "실제 화면"' '적음'
+assert_file "C6 subtitle 빈" "$P/screen-meta.json" '"subtitle": "",' -
+assert_file "C6 cards 없음" "$P/screen-meta.json" '"cards": [],' -
+
+# ---------- C7: template 안 <x-dc> 는 화면 루트가 아니다 — 그것뿐이면 실패 · 실제 루트와 같이 있으면 실제 하나를 고른다
+P="$T/c7"; OUT=$(run_xdc "$P" '<body><template><x-dc><p>가짜 화면</p></x-dc></template></body>'); E=$?
+assert "C7 template 안 x-dc 뿐 = 고르지 않음(exit 1)" 1 "candidate count 0" - "$E" "$OUT"
+P="$T/c7b"; OUT=$(run_xdc "$P" '<body><template><x-dc><p>가짜 화면</p></x-dc></template><x-dc><p>실제 화면</p></x-dc></body>'); E=$?
+assert "C7b template 밖 실제 x-dc 하나를 고름(exit 0)" 0 "[extract-dc] screen.dc.html" - "$E" "$OUT"
+assert_file "C7b title = 실제 화면" "$P/screen-meta.json" '"title": "실제 화면"' '가짜 화면'
+
+# ---------- C8: 중첩 helmet 은 바깥 helmet 통째로 뺀다(안의 글·이미지 다시 들이지 않음)
+P="$T/c8"; OUT=$(run_xdc "$P" '<x-dc><helmet><helmet>내부</helmet>제외<img src="discard.png"></helmet><p>실제 화면</p></x-dc>'); E=$?
+assert "C8 중첩 helmet(exit 0)" 0 "[extract-dc] screen.dc.html" - "$E" "$OUT"
+assert_file "C8 title = 실제 화면 · helmet 글 없음" "$P/screen-meta.json" '"title": "실제 화면"' '제외'
+assert_file "C8 helmet 안 이미지 수집 안 함" "$P/asset-manifest.json" '"images": []' 'discard.png'
+
+# ---------- C9: 원문 좌표로 자른다(소문자 변환이 길이를 바꾸는 글자 — İ — 가 앞에 있어도)
+P="$T/c9"; OUT=$(run_xdc "$P" '<title>İstanbul İzmir</title><x-dc><p>화면</p></x-dc>'); E=$?
+assert "C9 x-dc 앞 İ(exit 0)" 0 "[extract-dc] screen.dc.html" - "$E" "$OUT"
+assert_file "C9 title = 화면" "$P/screen-meta.json" '"title": "화면"' 'İstanbul'
+
 # ========== fetch_images ==========
 
 # ---------- F1(positive control): 혼합 status(ok/inline/failed/skipped) — 부분 실패에도 exit 0
