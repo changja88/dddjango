@@ -6,6 +6,7 @@
 # F9~F14 검토 r1 고침 막이: #3 NM12 htmx 상태 클래스 · #5 json_field(MD2·IM19) · #8 PJ2 브라운필드 ·
 #   #10 최소 root ST4 · #11 NM10 ID 선택자 · #16 --only 검증
 # F15·F16 W4 결함 둘: 옛 배치 파일 층 의존 IM 불발화(층 무관 IM25 는 발화) · IM26 조각의 component extends
+# F17 F-X4-3: 도구 캐시 폴더(.ruff_cache 류)는 검사 대상 밖 · 일반 이름 비표준 폴더는 그대로 발화
 # 픽스처는 mktemp -d 안의 git 저장소로 만들고 끝나면 지운다(Django 설치 불필요 — 파일 검사기).
 set -u
 SCRIPTS="$(cd "$(dirname "$0")/.." && pwd)"
@@ -482,6 +483,22 @@ w "$RP/view/chart_detail_view.html" '{% extends "root/scaffold/view/root_view.ht
 OUT=$(run_backstop "$P" --diff-base "$BASE" --only im26); E=$?
 assert "F16b section 이 root_view extends — IM26 발화" 2 'IM26\] BLOCKER — web/application/chart/presentation_layer/section/chart_shell_section.html' - "$E" "$OUT"
 assert "F16c 페이지가 component extends — IM26 발화 · 페이지 → root_view 불발화" 2 'IM26\] BLOCKER — web/application/chart/presentation_layer/view/chart_view.html' 'chart_detail_view' "$E" "$OUT"
+
+# ---------- F17 (F-X4-3): 도구 캐시 폴더(.ruff_cache·.pytest_cache·.mypy_cache·__pycache__ — 스스로 git 무시 표지를 둔다)는
+#            검사 대상이 아니다(빚 스캔의 git 우주에도 없다) · 대조: 일반 이름의 비표준 폴더는 그대로 ST3·ST8 발화
+P="$T/f17"; mkproj "$P" >/dev/null; mkclean "$P"; BASE=$(commit "$P" clean)
+for c in "$P/web/application/order/.ruff_cache" "$P/web/root/.ruff_cache" "$P/web/application/order/.pytest_cache" \
+         "$P/web/application/order/.mypy_cache"; do
+  w "$c/.gitignore" "*"; w "$c/CACHEDIR.TAG" "Signature: 8a477f597d28d172789f06886806bc55"; w "$c/0.6.9/1234" "cache"
+done
+w "$P/web/application/order/application_layer/view_model/__pycache__/order_list_vm.cpython-312.pyc" "pyc"
+OUT=$(run_backstop "$P" --diff-base "$BASE"); E=$?
+assert "F17a 도구 캐시 폴더 — blocker 0" 0 "blocker 0건" '\.ruff_cache\|\.pytest_cache\|\.mypy_cache\|__pycache__' "$E" "$OUT"
+w "$P/web/application/order/ruff_cache/notes.txt" "x"
+w "$P/web/root/lint_cache/notes.txt" "x"
+OUT=$(run_backstop "$P" --diff-base "$BASE" --only st3,st8); E=$?
+assert "F17b 대조: 일반 이름 비표준 폴더 — ST3 발화" 2 'ST3\] BLOCKER — web/application/order/ruff_cache' '\.ruff_cache' "$E" "$OUT"
+assert "F17c 대조: root 직속 비표준 폴더 — ST8 발화" 2 'ST8\] BLOCKER — web/root/lint_cache' '\.ruff_cache' "$E" "$OUT"
 
 # ---------- F7: 사용 오류 — exit 1(미실행은 통과가 아니다)
 OUT=$(run_backstop --help); E=$?

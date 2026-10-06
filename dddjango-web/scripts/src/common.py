@@ -68,6 +68,8 @@ BACKEND_TOP_PKGS: Set[str] = {'application', 'framework'}
 CODE_EXTS: Set[str] = {'.py', '.html', '.css', '.js', '.mjs', '.cjs'}
 JS_EXTS: Set[str] = {'.js', '.mjs', '.cjs'}
 OS_JUNK: Set[str] = {'.DS_Store', 'Thumbs.db', 'desktop.ini'}
+# 도구 캐시 폴더 — 검사 대상이 아니다(바이트코드 · 스스로 git 무시 표지 `*` 를 두는 캐시라 빚 스캔의 git 우주에도 없다)
+TOOL_CACHE_DIRS: Set[str] = {'__pycache__', '.ruff_cache', '.pytest_cache', '.mypy_cache'}
 # 코어 검사 목록(단일 출처 — backstop CHECK_IDS 는 이것 + check_vendor.VENDOR_CHECK_IDS). dddart 번호 그대로 ·
 # 옮길 수 없는 번호는 비움(NM7 · PU4 · PU5 · PJ3[2.1.0 — vendor 버전 폴더 길이 공식 SDK 등재 절차로 바뀜]).
 CORE_FAMILIES: Tuple[str, ...] = ('st', 'md', 'im', 'nm', 'cy', 'tg', 'pj', 'pu')
@@ -641,7 +643,7 @@ class BackstopContext:
         files: List[str] = []
         dirs: Set[str] = set()
         for cur, dnames, fnames in os.walk(web):
-            dnames[:] = [d for d in dnames if d not in ('__pycache__', '.git')]
+            dnames[:] = [d for d in dnames if d not in TOOL_CACHE_DIRS and d != '.git']
             rel_dir: str = os.path.relpath(cur, web).replace(os.sep, '/')
             for d in dnames:
                 dirs.add(d if rel_dir == '.' else rel_dir + '/' + d)
