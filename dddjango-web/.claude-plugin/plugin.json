@@ -1,7 +1,7 @@
 {
   "name": "dddjango-web",
   "displayName": "dddjango-web",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "간소화 DDD + 철저한 MVVM으로 Django 화면(HTML · HTMX · JS)을 설계·구현하는 오케스트레이터. /dddjango-web으로 요구→설계→구현을 단계별 게이트로 빌드한다.",
   "author": { "name": "changja88", "email": "dev@numchida.com" },
   "license": "MIT",
