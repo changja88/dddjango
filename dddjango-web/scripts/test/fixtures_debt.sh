@@ -640,5 +640,29 @@ commit_all "$P" slice-0-move-edit >/dev/null
 OUT=$(run_backstop "$P" --diff-base "$BASE" --only tg1); E=$?
 assert "D34c 옮기며 참조 치환한 작은 파일(개명 유사도 50% 밑)도 옮긴 파일 — TG1 불발화" 0 "옮긴 파일만" "TG1] BLOCKER" "$E" "$OUT"
 
+# ---------- D35 (F-X4-1): 폴더 발견(ST12 static/ 직속 허용 외 디렉터리)도 빚은 파일 단위다 — 범위가 소유한 파일(1)만 옮기면
+#   ⓐ 잔존 0 · 같은 폴더에 남은 범위 밖 파일(10)은 «범위 밖 남은 빚»(보고만). ⓐ 고르기는 커맨드 빚 목록 규칙
+#   (경로가 소유 파일인 키 + 그 파일을 품은 폴더 키)이라 고치기 전 판(폴더 키 하나)에서도 같은 명령이다.
+P="$T/d35"; mkproj "$P" >/dev/null
+w "$P/web/static/css/chart.css" ".chart { color: red; }"
+for k in 01 02 03 04 05 06 07 08 09 10; do w "$P/web/static/css/screen_$k.css" ".screen-$k { color: red; }"; done
+commit_all "$P" legacy-css >/dev/null
+run_folder "$P" run
+CID=$(python3 -c 'import json,sys
+d = json.load(open(sys.argv[1])); own = "static/css/chart.css"
+print(" ".join(c for c, k in sorted(d["ids"].items()) if k.split("|", 1)[1].rstrip("/") == own
+               or own.startswith(k.split("|", 1)[1].rstrip("/") + "/")))' "$P/.dddjango-web/run/debt-g0.json")
+scope_md "$P" run "## G0 @NOW@
+ⓐ 키: $CID
+요구 키: -"
+assert "D35a G0 빚 키는 파일 단위 — 소유 파일 키 하나" 0 '"ST12|static/css/chart.css"' '"ST12|static/css"' 0 \
+  "$(field_of "$P/.dddjango-web/run/debt-g0.json" ids)"
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D35b 대조: 소유 파일을 안 옮기면 ⓐ 잔존 1" 2 "ⓐ 잔존 1" - "$E" "$OUT"
+git -C "$P" mv web/static/css/chart.css web/static/application/order/chart.css
+commit_all "$P" slice-0-chart-css >/dev/null
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D35c 소유 파일만 옮김 = ⓐ 잔존 0 · 같은 폴더 범위 밖 10 은 보고만" 0 "범위 밖 남은 빚 — 폴더 \`static/css/\` 키 10" "잔존 ⓐ" "$E" "$OUT"
+
 echo "fixtures_debt: PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" = 0 ]

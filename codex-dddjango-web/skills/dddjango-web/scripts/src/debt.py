@@ -3,14 +3,16 @@
 #
 # --debt-scan: web/ 전체(git 추적 + 미추적·비무시, 작업 트리 실재 파일)를 «모두 added» 로 보고
 #   ST · MD · IM · NM · PU · WV 패밀리를 돌린다(CY 순환은 베이스라인 래칫 · TG 는 테스트 추가라 동작 불변
-#   정리 밖 · PJ 는 늘 검사라 빚 모드에 넣지 않는다). 표준 트리 밖 옛 배치는 파일마다 ST0 키로 잡는다
-#   (게이트의 ST0 폴더 발견을 그 아래 파일 키로 펼침 — «빚 정리 = 손대는 파일 + 부르는 곳»이 파일 단위로 고르고
-#   G2 잔존도 옮긴 파일만큼 줄게. 층 판정 불가 레거시라 층 의존 IM 은 그 파일에 걸리지 않는다 — 슬라이스 0 이
-#   새 배치로 옮긴다).
+#   정리 밖 · PJ 는 늘 검사라 빚 모드에 넣지 않는다). 게이트의 ST 폴더 발견(표준 트리 밖 옛 배치 최상위 폴더 ST0 ·
+#   허용 밖 디렉터리 ST3·ST5~ST8·ST10~ST12)은 그 아래 파일마다의 키로 펼친다 — «빚 정리 = 손대는 파일 + 부르는
+#   곳»이 파일 단위로 고르고 G2 잔존도 범위가 옮긴 파일만큼 줄게(ST4 골격 미비 · static/vendor/ 벤더 단위는 폴더
+#   키 그대로). 펼친 행에는 `folder`(원 폴더)를 싣는다 — 잔존 판정이 같은 폴더의 범위 밖 남은 키를 보고만 한다.
+#   옛 배치 파일은 층 판정 불가 레거시라 층 의존 IM 이 걸리지 않는다 — 슬라이스 0 이 새 배치로 옮긴다.
 #   브라운필드 허용 규범은 빚이 아니다(_exempt). 키 = (검사, 경로).
 # --debt-residual: 같은 의미론으로 다시 스캔해 refactor-scope.md 의 마지막 `## G0` 절과 그 뒤
 #   재승인 절들의 ⓐ·요구 키(재상정 뺌)가 사라졌는지 센다(키 대조 — 개명 추적 없음.
-#   개명·이동의 새 경로 발견은 --diff-base 게이트 몫).
+#   개명·이동의 새 경로 발견은 --diff-base 게이트 몫). ⓐ·요구 키와 같은 폴더 발견에서 펼친 다른 키가 남으면
+#   «범위 밖 남은 빚»으로 보고만 한다(잔존 아님).
 # --debt-scan --refactor: 리팩토링 입구의 스캔 — 기존 단위의 골격 미비(ST4)도 빚이고, legacy core
 #   면제는 그 root_view 로드 태그 면제가 없을 때만 걷는다(커맨드 «리팩토링 모드» · houserules §8).
 #   debt-g0.json 의 mode 가 --debt-residual 의 의미론을 정한다.
@@ -33,7 +35,8 @@ from .check_project import _is_htmx_core
 from .check_purity import run_purity
 from .check_structure import _skeleton, run_structure
 from .check_vendor import UNDEFERRABLE, VENDOR_CHECK_IDS, VendorUndecidable, run_vendor
-from .common import CORE_CHECK_IDS, ROOT_VIEW_TEMPLATE, WEB_TOP_DIRS, BackstopContext, Finding
+from .common import CORE_CHECK_IDS, ROOT_VIEW_TEMPLATE, BackstopContext, Finding
+from .sdk_registry import VENDOR_DIR
 
 SCHEMA: str = 'dddjango-web-debt/1'
 
@@ -61,6 +64,8 @@ REF_PATHSPEC: Tuple[str, ...] = ('web', 'web_test', '*.py', '*.html', '*.css', '
 DEBT_FAMILIES: Tuple[str, ...] = ('st', 'md', 'im', 'nm', 'pu')
 CHECK_IDS: Tuple[str, ...] = tuple([c for c in CORE_CHECK_IDS if c[:2].lower() in DEBT_FAMILIES]
                                    + list(VENDOR_CHECK_IDS))
+# 빚 키 의미론 — 폴더 발견을 파일 키로 펼친 판(이 값이 다른 동결본은 판 경계)
+KEY_SCHEME: str = 'st-folder-to-file'
 # 브라운필드 legacy htmx core(기존 설치 그대로 소비) — 신규 이름으로는 금지(PU1)
 HTMX_LEGACY: Tuple[str, ...] = ('static/js/htmx.min.js', 'static/js/htmx.js')
 # PU2 의 실행 순서 사유(check_purity 문면 머리) — 문면이 바뀌면 fixtures_debt.sh D3·D25 가 깨진다
@@ -101,9 +106,10 @@ def _plugin_version() -> str:
 
 
 def scanner_stamp() -> dict:
-    """빚 스캔 판 — 플러그인 판 · 검사 집합 해시."""
+    """빚 스캔 판 — 플러그인 판 · 검사 집합 해시 · 키 의미론."""
     return {'plugin': _plugin_version(),
-            'checks': hashlib.sha256(','.join(CHECK_IDS).encode('ascii')).hexdigest()[:16]}
+            'checks': hashlib.sha256(','.join(CHECK_IDS).encode('ascii')).hexdigest()[:16],
+            'keys': KEY_SCHEME}
 
 
 # ------------------------------------------------------------------ 스캔
@@ -154,17 +160,27 @@ def _legacy_tag(f: Finding) -> bool:
 LEGACY_MESSAGE: str = '표준 트리 밖 옛 배치 파일 — 층 판정 불가 레거시(슬라이스 0 이 새 배치로 옮긴다)'
 
 
-def _legacy_files(findings: List[Finding], files: List[str]) -> List[Finding]:
-    """게이트의 옛 배치 최상위 폴더 ST0 발견 하나를 그 아래 파일마다의 ST0 키로 펼친다(빚 모드 전용)."""
+def _folder_files(findings: List[Finding], files: List[str]) -> Tuple[List[Finding], Dict[str, str]]:
+    """게이트의 ST 폴더 발견(옛 배치 최상위 폴더 ST0 · 허용 밖 디렉터리)을 그 아래 파일마다의 키로 펼친다(빚 모드
+    전용) — (발견, {키: 폴더}). 빚 범위(손대는 파일 + 부르는 곳)가 파일 단위로 고르고 G2 잔존도 범위가 옮긴 파일만큼
+    줄게 한다(범위 밖 파일이 같은 폴더에 남아도 범위 몫의 잔존이 아니다). 펼치지 않는 것: ST4 골격 미비(생성이라
+    폴더가 단위다) · static/vendor/ 의 벤더 단위(등재·제거가 폴더째 — Coordinator 소관)."""
     out: List[Finding] = []
+    folder_of: Dict[str, str] = {}
+    file_set: Set[str] = set(files)
     for f in findings:
-        if f.check_id == 'ST0' and '/' not in f.path and f.path not in WEB_TOP_DIRS \
-                and any(x.startswith(f.path + '/') for x in files):
-            out.extend(Finding('ST0', x, None, LEGACY_MESSAGE, f.rule, f.fix)
-                       for x in files if x.startswith(f.path + '/'))
-        else:
+        members: List[str] = []
+        if f.check_id.startswith('ST') and f.check_id != 'ST4' and not (
+                f.path + '/').startswith(VENDOR_DIR + '/') and f.path not in file_set:
+            members = [x for x in files if x.startswith(f.path + '/')]
+        if not members:
             out.append(f)
-    return out
+            continue
+        message: str = LEGACY_MESSAGE if f.check_id == 'ST0' else '%s — 폴더 `%s/` 의 파일' % (f.message, f.path)
+        for x in members:
+            out.append(Finding(f.check_id, x, None, message, f.rule, f.fix))
+            folder_of['%s|%s' % (f.check_id, x)] = f.path
+    return out, folder_of
 
 
 def _exempt(findings: List[Finding], files: List[str], refactor: bool = False) -> List[Finding]:
@@ -224,7 +240,8 @@ def scan(root: Path, refactor: bool = False) -> Tuple[dict, List[str]]:
             elif not refactor:
                 notices.append('[info] ST4(골격 완비) 빚 모드 제외 — 기존 단위의 골격 미비는 빚이 아니다'
                                '(브라운필드 허용 · 새 단위 골격은 G2 diff 게이트가 본다)')
-    kept: List[Finding] = sorted(_exempt(_legacy_files(raw, files), files, refactor),
+    expanded, folder_of = _folder_files(raw, files)
+    kept: List[Finding] = sorted(_exempt(expanded, files, refactor),
                                  key=lambda f: (f.check_id, f.path, f.line or 0, f.message))
     counts: Dict[str, int] = {}
     rows: List[dict] = []
@@ -234,6 +251,8 @@ def scan(root: Path, refactor: bool = False) -> Tuple[dict, List[str]]:
         row: dict = {'key': key, 'check': f.check_id, 'path': f.path, 'line': f.line, 'message': f.message}
         if f.check_id in UNDEFERRABLE:
             row['undeferrable'] = True
+        if key in folder_of:
+            row['folder'] = folder_of[key]
         rows.append(row)
     ids: Dict[str, str] = {'C%d' % (n + 1): key for n, key in enumerate(sorted(counts))}
     head: Optional[str] = None
@@ -479,14 +498,31 @@ def cli_residual(root: Path, folder_arg: str) -> int:
     remaining_a: List[str] = [c for c in a_live if counts.get(ids[c], 0) > 0]
     remaining_r: List[str] = [c for c in r_live if counts.get(ids[c], 0) > 0]
     new_keys: List[str] = sorted(set(counts) - g0_keys)
+    outside: Dict[str, List[str]] = _outside_left(g0, g2, {ids[c] for c in a_live + r_live})
     for label, rows in (('ⓐ', remaining_a), ('요구', remaining_r)):
         for cid in rows:
             print('잔존 %s %s %s — 발견 %d' % (label, cid, ids[cid], counts[ids[cid]]))
     for key in new_keys:
         print('[info] G0 에 없던 키 %s — 발견 %d(보고만)' % (key, counts[key]))
-    print('[backstop] 빚 잔존 — ⓐ 잔존 %d · 요구 잔존 %d · 재상정 제외 %d · G0 에 없던 키 %d'
-          % (len(remaining_a), len(remaining_r), excluded, len(new_keys)))
+    for folder, keys in sorted(outside.items()):
+        print('[info] 범위 밖 남은 빚 — 폴더 `%s/` 키 %d(이번 ⓐ·요구 키와 같은 폴더 발견 · 범위 밖 파일 — 보고만): %s%s'
+              % (folder, len(keys), ' '.join(keys[:5]), ' 외 %d' % (len(keys) - 5) if len(keys) > 5 else ''))
+    print('[backstop] 빚 잔존 — ⓐ 잔존 %d · 요구 잔존 %d · 재상정 제외 %d · G0 에 없던 키 %d · 범위 밖 남은 빚 %d'
+          % (len(remaining_a), len(remaining_r), excluded, len(new_keys), sum(len(k) for k in outside.values())))
     return 0 if not remaining_a and not remaining_r else 2
+
+
+def _outside_left(g0: dict, g2: dict, judged: Set[str]) -> Dict[str, List[str]]:
+    """판정 키(ⓐ·요구)와 같은 폴더 발견에서 펼친 G0 키 가운데 판정 밖인데 G2 에 남은 것 — {폴더: [키…]}.
+    폴더 발견의 범위 밖 파일 몫이다(잔존이 아니다 — 보고만)."""
+    folder_of: Dict[str, str] = {r['key']: r['folder'] for r in g0.get('findings', [])
+                                 if isinstance(r, dict) and r.get('folder') and r.get('key')}
+    folders: Set[str] = {folder_of[k] for k in judged if k in folder_of}
+    left: Dict[str, List[str]] = {}
+    for key in sorted(set(g2['counts']) & set(folder_of)):
+        if key not in judged and folder_of[key] in folders:
+            left.setdefault(folder_of[key], []).append(key)
+    return left
 
 
 # ------------------------------------------------------------------ 명세 정형 행 · 참조 grep
