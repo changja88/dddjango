@@ -30,6 +30,7 @@ dddjango-web/             ← 자매 플러그인 (웹 표현계층 빌더 — /
                            2.0.0(dddart화): Flutter 판 dddart와 같은 절차·구조 — 구현 기술만
                            Django·HTML·HTMX·JS.
                            빌드 스펙 정본: workspace/plan/2026-10-06-web-dddart/mapping.md
+├── REQUEST_GUIDE.md           사람용 작업 요청 가이드 정본(2.0.1 — 2.0.0 동작 기준으로 새로 씀)
 ├── commands/dddjango-web.md   Coordinator (커맨드 1 — 리팩토링 입구는 2.1.0에서 돌아온다)
 ├── agents/*-web.md            에이전트 7 — architect · 리뷰어 4(ddd·ui·state·data) · coder · discipline-reviewer
 ├── skills/*/                  지식 스킬 12 — architecture-ddd·ui·state·data · discipline-cleancode·houserules·test
@@ -42,6 +43,7 @@ codex-dddjango-web/       ← dddjango-web의 Codex 설치본 미러
                            지식 스킬 12종은 전부 `dddjango-web-<스킬>` 접두 폴더(dddart·dddjango Codex 판과
                            이름 충돌 회피) · references와 scripts는 byte 동일(scripts/test/ 제외 — verify-web이 대조)
                            · 동기 절차: codex-dddjango-web/README.md
+└── REQUEST_GUIDE.md       dddjango-web/REQUEST_GUIDE.md의 byte 동일 미러
 
 .claude-plugin/marketplace.json   ← Claude marketplace: dddjango · dddjango-web subdir
 .agents/plugins/marketplace.json ← Codex marketplace: ./codex-dddjango · ./codex-dddjango-web subdir
@@ -68,29 +70,29 @@ docs/                     ← 공식 문서 (이 문서 · master.html — 통�
 
 ### 사람용 작업 요청 가이드의 소유권
 
-위 `dddjango/REQUEST_GUIDE.md` 정본은 runtime prompt나 ontology corpus가 아닌 사람용 문서다.
+위 두 정본(`dddjango/REQUEST_GUIDE.md`·`dddjango-web/REQUEST_GUIDE.md`)은 runtime prompt나 ontology corpus가 아닌 사람용 문서다.
 graph-owned marker·`ISSUED`·`LEDGER.tsv`의 대상이 아니며 `corpus_mirror_sync.py`도 갱신하지 않는다.
 Claude 정본에 Claude와 Codex 시작 문법을 함께 적고, Codex 사본은 의미 미러가 아닌 byte 동일 미러로 유지한다.
 루트 README는 정본 링크와 두 플러그인의 짧은 비교를 소유하고 상세 템플릿은 복제하지 않는다.
-dddjango-web은 2.0.0부터 `REQUEST_GUIDE.md`를 싣지 않는다(dddart화 — 요청 형식은 README «빠른 시작»).
+dddjango-web은 2.0.0(dddart화)에서 `REQUEST_GUIDE.md`를 뺐고, 2.0.1에서 2.0.0 동작 기준으로 새로 썼다.
 
 편집 순서는 Claude 정본 편집 → Codex 파일에 byte 복사 또는 동일 patch → 아래 targeted 비교 → `make verify`다.
 
 ```bash
 cmp -s dddjango/REQUEST_GUIDE.md codex-dddjango/REQUEST_GUIDE.md
+cmp -s dddjango-web/REQUEST_GUIDE.md codex-dddjango-web/REQUEST_GUIDE.md
 python3 workspace/tools/request_guide_contract.py --self-test
 python3 workspace/tools/request_guide_contract.py
 python3 workspace/tools/reverse_coverage.py
 ```
 
-각 가이드는 설치본 안에서 독립적으로 읽을 수 있어야 한다. 두 installed guide source(dddjango Claude·Codex) 어디에도
+각 가이드는 설치본 안에서 독립적으로 읽을 수 있어야 한다. 네 installed guide source(두 플러그인 × Claude·Codex) 어디에도
 상대 목적지처럼 보이는 Markdown inline/image·reference definition·HTML `href`/`src` 구문을 넣지 않는다.
 Scheme URI와 `#fragment`만 허용하며 code span·fence·HTML comment·escape·예시도 예외가 아니다.
 설치된 플러그인 루트의 사본이 해당 runtime의 권위 있는
 가이드임을 상단에 밝힌다. README와 manifest homepage는 발견 경로이며, `main`의 공개 homepage는 최신
-온라인 가이드이므로 설치 버전 정본을 대신하지 않는다. dddjango의 두 manifest homepage와 Codex
-`interface.websiteURL`은 Claude 정본의 공개 URL을, 가이드가 없는 dddjango-web의 두 manifest homepage와
-Codex `interface.websiteURL`은 저장소 루트를, `repository`는 모두 저장소 루트를 가리킨다.
+온라인 가이드이므로 설치 버전 정본을 대신하지 않는다. 두 플러그인 모두 두 manifest homepage와 Codex
+`interface.websiteURL`은 각자 Claude 정본의 공개 URL을, `repository`는 모두 저장소 루트를 가리킨다.
 두 marketplace의 정확한 경로는 위 지도와 같고 네 source는 각각의 설치 subdir와 `ref: main`을 유지한다.
 
 ## 2. 환경 구축 (1회)
@@ -123,7 +125,7 @@ md에서 `<!-- graph-owned: … -->` 마커가 붙은 절은 **직접 수정 금
 ## 4. 검사기(백스톱)·도구 수정
 
 - 검사기 27종은 `dddjango/scripts/check-*.py`가 원본이고 `codex-dddjango/…/scripts/`는 **byte 동일 미러**다 — 한쪽만 고치면 verify-base 마지막 단(`diff -rq`)이 red다. 둘 다 갱신한다.
-- `workspace/tools/request_guide_contract.py`는 가이드 존재·byte 미러·marketplace name/path/ref와 subdir 내용·manifest homepage/repository·Codex websiteURL/defaultPrompt·설치본 권위 문구를 검사한다. 링크 검사는 canonical source surface의 drift backstop이다. 가이드 계약(README token·guide 존재·byte 미러·권위 문구·homepage/websiteURL=가이드 URL)은 `GUIDE_PLUGINS`(dddjango)에만, marketplace·manifest name/repository·Codex defaultPrompt(각 prompt가 플러그인 이름을 부른다) 계약은 `PLUGINS`(dddjango·dddjango-web) 모두에 건다. 가이드가 없는 플러그인의 homepage·websiteURL은 저장소 루트여야 한다. README의 `## 작업 요청 가이드`부터 다음 `## ` heading 직전과 전체 README source에 `[dddjango 작업 요청 가이드](dddjango/REQUEST_GUIDE.md)`가 정확히 한 번 있어야 한다. 두 guide에는 위 상대 목적지 구문 금지 규칙을 적용한다. CommonMark 문맥이나 실제 rendered/clickable 동작·렌더러 등가성은 판정하지 않으며 README의 코드·주석 안 token도 센다. `--self-test`는 실제 두 heading 구조의 tempfile 정상 fixture와 독립 변이의 `validate` 결과를 literal 기대값으로 검사한다. 계약을 바꾸면 해당 검출력 fixture도 함께 유지한다. 표준 라이브러리만 쓰고 네트워크나 공개 URL 생존성은 검사하지 않는다. `verify-base-core`는 dddjango pair 비교 → self-test → 실제 계약을 실행한다.
+- `workspace/tools/request_guide_contract.py`는 가이드 존재·byte 미러·marketplace name/path/ref와 subdir 내용·manifest homepage/repository·Codex websiteURL/defaultPrompt·설치본 권위 문구를 검사한다. 링크 검사는 canonical source surface의 drift backstop이다. 가이드 계약(README token·guide 존재·byte 미러·권위 문구·homepage/websiteURL=가이드 URL)은 `GUIDE_PLUGINS`(dddjango·dddjango-web — web은 2.0.1부터)에, marketplace·manifest name/repository·Codex defaultPrompt(각 prompt가 플러그인 이름을 부른다) 계약은 `PLUGINS`(dddjango·dddjango-web) 모두에 건다. 가이드가 없는 플러그인이 생기면 그 homepage·websiteURL은 저장소 루트여야 한다. README의 `## 작업 요청 가이드`부터 다음 `## ` heading 직전과 전체 README source에 `[dddjango 작업 요청 가이드](dddjango/REQUEST_GUIDE.md)`와 `[dddjango-web 작업 요청 가이드](dddjango-web/REQUEST_GUIDE.md)`가 각각 정확히 한 번 있어야 한다(README의 다른 절에서는 가이드를 링크 없이 글로만 부른다). 두 guide에는 위 상대 목적지 구문 금지 규칙을 적용한다. CommonMark 문맥이나 실제 rendered/clickable 동작·렌더러 등가성은 판정하지 않으며 README의 코드·주석 안 token도 센다. `--self-test`는 실제 두 heading 구조의 tempfile 정상 fixture와 독립 변이의 `validate` 결과를 literal 기대값으로 검사한다. 계약을 바꾸면 해당 검출력 fixture도 함께 유지한다. 표준 라이브러리만 쓰고 네트워크나 공개 URL 생존성은 검사하지 않는다. `verify-base-core`는 dddjango pair 비교 → self-test → 실제 계약을 실행한다(dddjango-web pair의 byte 미러는 실제 계약이 대조한다).
 - `workspace/tools/reverse_coverage.py`의 닫힌 분류표는 dddjango 루트 `REQUEST_GUIDE.md`를 사람용 사용자 가이드로 명시한다. 새 설치 파일의 존재 근거를 유지하되 이 가이드에 런타임 규칙 소유권을 부여하지 않는다.
 - 측정 도구 일부는 manifest 봉인 대상이다(`workspace/tools/manifest_seal.py`의 글롭 목록 참조). 봉인 파일을 고치면 봉인 재발행이 필요하다.
 - **봉인은 커밋 직전 마지막 단계다** — `make verify` 가 RED 여서 봉인 대상(측정 도구·byte 골든 EXPECTED·매트릭스)을 다시 고쳤으면 `manifest_seal.py --write` 를 다시 발행하고 `make verify` 를 처음부터 다시 돈다. 커밋 메시지·기록의 verify 수치는 **마지막 실행 로그**(evidence 경로 병기)의 것만 적는다 — 중간 실행의 green 을 옮겨 적지 않는다(2026-09-04 `d701df8` «verify 6/6» 거짓 표기 · 정정 `cad221b`).
@@ -151,7 +153,7 @@ make release DRY=1        # 미리보기 (변경 없음) — release-web DRY=1 �
 
 `make release-web`은 곧장 `_release`로 간다. 2026-09-16 hyun 지시로 `verify-web`을 `VERIFY_TARGETS`에서 뺐다(막아 세운 결함 0 · 실제 결함은 전부 A8 실사용이 잡았다). 같은 배치에서 **실패한 브라우저 관찰 서브시스템(1.1.13~1.1.19)을 전량 철거**했다 — `verify-web-browser`(K3)·`observe_interactions`·`evidence_debt`·`refreeze.py`·`ledger.py`와 그 계약·hook을 지우고 검사기를 v1.1.12 정적 형태로 되돌렸다(정본: workspace/design/2026-09-16-web-strip-observation-subsystem.md). 웹 쪽 검증이 필요하면 `make verify-web`을 직접 돈다. **release-web 에서 사라진 보증은 Codex byte 미러 대조다** — `codex-dddjango-web/`가 어긋나도 릴리즈가 막지 않으므로, 검사기나 references를 고치면 미러를 손으로 맞춘다(해소 명령은 `codex-dddjango-web/README.md` «동기 절차» · `make verify-web`이 `diff -rq`로 잡는다).
 
-2.0.0(dddart화)은 1.x의 시안 기계 검사 전부(렌더 숫자 대조·모션·포커스 링·토큰 처분·정체 감사 등)·정확값 토큰 규칙·시각 연결표·`REQUEST_GUIDE.md`·빚 정리·리팩토링 입구·외부 JS 승인 절차를 뺐다. 빚 정리·리팩토링 입구·외부 JS 승인 절차는 2.1.0에서 새 구조에 맞춰 돌아온다(스펙: `workspace/plan/2026-10-06-web-dddart/mapping.md`).
+2.0.0(dddart화)은 1.x의 시안 기계 검사 전부(렌더 숫자 대조·모션·포커스 링·토큰 처분·정체 감사 등)·정확값 토큰 규칙·시각 연결표·`REQUEST_GUIDE.md`·빚 정리·리팩토링 입구·외부 JS 승인 절차를 뺐다. 가이드는 2.0.1에서 2.0.0 동작 기준으로 새로 썼다(API 위치 세 꼴 — `http(s)://` 주소·로컬 파일 경로·이 프로젝트 안 path — 와 함께). 빚 정리·리팩토링 입구·외부 JS 승인 절차는 2.1.0에서 새 구조에 맞춰 돌아온다(스펙: `workspace/plan/2026-10-06-web-dddart/mapping.md`).
 
 **릴리즈 창**: dddjango 릴리즈 전에 타깃 저장소들에 G0 승인 뒤 G2 승인 전의 진행 레인이 없는지 확인하고, 있으면 그 레인의 G2 승인(착륙)까지 릴리즈를 보류한다(설치본이 레인 도중에 규범을 바꾸지 않게). 특히 `dddjango/scripts/` 가 바뀐 릴리즈는 pre-gate 실행 트리 digest 를 바꾸므로, 진행 중 레인의 마지막 예보가 `--check-report` 에서 «툴체인 stale»이 되어 재예보를 요구한다 — Phase 1 레인은 싼 재실행으로 끝나지만 G1~G2 레인은 Phase 2 재발화가 든다(2026-09-27).
 

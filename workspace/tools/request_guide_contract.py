@@ -20,8 +20,8 @@ import tempfile
 
 REPOSITORY = "https://github.com/changja88/dddjango"
 PLUGINS = ("dddjango", "dddjango-web")
-# dddjango-web 2.0.0 부터 REQUEST_GUIDE.md 를 싣지 않는다(dddart화 — 가이드 없음).
-GUIDE_PLUGINS = ("dddjango",)
+# 두 플러그인 모두 REQUEST_GUIDE.md 를 싣는다(dddjango-web 은 2.0.0 에서 뺐다가 2.0.1 에서 2.0.0 동작 기준으로 새로 씀).
+GUIDE_PLUGINS = ("dddjango", "dddjango-web")
 
 
 def homepage_url(plugin: str) -> str:
@@ -158,6 +158,7 @@ def self_test() -> int:
         "README.md": (
             "# 플러그인\n\n## 작업 요청 가이드\n\n"
             "[dddjango 작업 요청 가이드](dddjango/REQUEST_GUIDE.md)\n"
+            "[dddjango-web 작업 요청 가이드](dddjango-web/REQUEST_GUIDE.md)\n"
             "\n## 업데이트\n\n설치본 갱신 방법\n"
         ),
     }

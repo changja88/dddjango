@@ -9,6 +9,7 @@
 | `commands/dddjango-web.md` | `dddjango-web/SKILL.md` | Coordinator → 사용자 트리거 스킬. scripts(백스톱 러너·추출 도구 4 — extract_contract·extract_design·extract_dc·fetch_images와 그 의존 모듈 asset_io·design_sources·freeze_design) 동봉(`scripts/test/` 픽스처는 싣지 않는다) |
 | `agents/<역할>-web.md` ×7 | `dddjango-web-<역할>-web/SKILL.md` ×7 | 서브에이전트 → 역할 스킬(코디네이터가 spawn_agent로 디스패치) |
 | `skills/<스킬>/` ×12 | `dddjango-web-<스킬>/` ×12 | 그대로 복사(references — byte-exact). 단 **형제 플러그인(dddart·dddjango)과 이름이 겹치므로 12종 전부** 전역 이름 충돌 회피로 `dddjango-web-<스킬>/` 접두 폴더이며, SKILL.md의 `name`과 스킬 인용도 접두 표기다 |
+| `REQUEST_GUIDE.md` | `REQUEST_GUIDE.md`(플러그인 루트 — `skills/` 밖) | byte 동일 미러(사람용 작업 요청 가이드 — 런타임 규범 밖. Claude·Codex 요청 방법을 한 문서에 함께 적는다) |
 
 ## 기능 축소표 (Claude → Codex)
 
@@ -26,16 +27,18 @@
 
 ## 동기 절차
 
-references·scripts 수정은 항상 **Claude 배포본(`dddjango-web/`)을 먼저 고친 뒤 codex로 복사**하는 경로다(codex 쪽 직접 수정 금지). 저장소 루트에서 drift 검사·해소:
+references·scripts·`REQUEST_GUIDE.md` 수정은 항상 **Claude 배포본(`dddjango-web/`)을 먼저 고친 뒤 codex로 복사**하는 경로다(codex 쪽 직접 수정 금지). 저장소 루트에서 drift 검사·해소:
 
 ```bash
 # 검사 (출력 없음 = in-sync)
 diff -rq --exclude=__pycache__ --exclude=test dddjango-web/scripts codex-dddjango-web/skills/dddjango-web/scripts
 for s in dddjango-web/skills/*/; do n=$(basename "$s"); diff -rq "$s/references" "codex-dddjango-web/skills/dddjango-web-$n/references"; done
+cmp -s dddjango-web/REQUEST_GUIDE.md codex-dddjango-web/REQUEST_GUIDE.md || echo "REQUEST_GUIDE drift"
 
 # 해소 (Claude 배포본 → codex)
 rsync -a --delete --exclude=__pycache__ --exclude=test dddjango-web/scripts/ codex-dddjango-web/skills/dddjango-web/scripts/
 for s in dddjango-web/skills/*/; do n=$(basename "$s"); rsync -a --delete "$s/references/" "codex-dddjango-web/skills/dddjango-web-$n/references/"; done
+cp dddjango-web/REQUEST_GUIDE.md codex-dddjango-web/REQUEST_GUIDE.md
 ```
 
 커맨드·역할 스킬·지식 스킬의 SKILL.md는 복사 대상 밖이다(plugin-native 단일 파일 — Claude판 수정 시 수동으로 재변환).

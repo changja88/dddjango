@@ -26,7 +26,8 @@ byte-exact로 미러하고, checker script는 별도 byte mirror로 검증한다
   Django·HTML·HTMX·JS로 바꾼 판이다. 커맨드 1 + 에이전트 7(`design-architect-web` · 리뷰어 4
   `design-review-{ddd,ui,state,data}-web` · `coder-web` · `discipline-reviewer-web`) + 스킬 12 +
   `scripts/backstop.py`(검사 72종 — ST·IM·NM·CY·TG·PJ·MD·PU) · 추출 도구 4(`extract_contract`·`extract_design`·
-  `extract_dc`·`fetch_images`). 빚 정리 · 리팩토링 입구(`/dddjango-web:refactor`) · 외부 JS 승인 절차는
+  `extract_dc`·`fetch_images`) + `REQUEST_GUIDE.md`(사람용 작업 요청 가이드 — 2.0.1부터 · Codex byte 미러).
+  빚 정리 · 리팩토링 입구(`/dddjango-web:refactor`) · 외부 JS 승인 절차는
   2.0.0에 없고 2.1.0에서 새 구조에 맞춰 돌아온다.
   **전 파일 산문 정본**(온톨로지 코퍼스 밖 — graph-owned 절 없음, md를 직접 수정한다).
   Codex 미러는 `codex-dddjango-web/`(지식 스킬 12종 전부 `dddjango-web-<스킬>` 접두 폴더 · references와

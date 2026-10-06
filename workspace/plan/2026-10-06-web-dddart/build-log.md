@@ -106,6 +106,7 @@ dddart 에 없는 새 파일(10):
 - 경계 새 줄: 백엔드 코드는 고치지 않음 — 필요한 API 가 없으면 가정 계약으로 짓고 실제 API 는 `/dddjango` 로 요청 안내(dddart 는 서버가 다른 저장소라 저절로 지켜지던 것).
 - coder-web: codegen 항목 뺌 · render-smoke 는 `web_test/application/<bc>/_support.py` 의 `SCREEN_PROBES` + `render_smoke_test.py` · FID 평가 하네스 언급 뺌 · JS 동작은 브라우저 테스트 `<화면>_browser_test.py`(pytest-playwright — JS 기능이 있을 때만) · 의존성은 requirements 고정 · 외부 JS 는 `web/static/vendor/<라이브러리>/<버전>/`.
 - 리뷰어: state 는 keepAlive → 요청 · 세션 · 프로세스 수명 · `HX-Trigger`. data 는 hive 항목 뺌. discipline-reviewer-web 은 implementation-javascript 를 함께 싣고 «UI JS 는 표시 동작만» 한 구절.
+- (2.0.1 · 사용자 결정 10-06 «API는 https,http 아니어도 괜찮아 왜냐하면 서버 프로젝트도 같은 컴퓨터에 있을수 있어.» · «넣자») API 위치 세 꼴 — `http(s)://` 주소(`curl`) · 로컬 OpenAPI 파일 경로(`cp` — web 1.3.1 문장 복원) · 이 프로젝트 안 path(`/api/openapi.json` 꼴 — `manage.py shell -c` 로 Django 테스트 클라이언트 GET · 서버 없이 · 2xx 이고 JSON 일 때만 저장). dddart(와 2.0.0)는 `http(s)://` 주소만 받는다. config 키 `openapi_url` 과 동결 뒤 처리(extract_contract · G1 절단)는 그대로.
 
 ### 5-3. 스킬
 - architecture-state: 액션 에러 소비 단위 = 응답 하나(State 가 요청 수명이라 `consumeError()` · `ref.mounted` 없음) · SharedState = 세션 수명 + `HX-Trigger` 갱신 + reset(view 가 넘긴 세션 매핑을 `MutableMapping` 으로 받음 — 백스톱 IM12 가 application_layer 의 django · request 토큰을 막음) · Service = 비화면 이벤트(시그널 연결은 root_initializer) · 게이트 redirect = root_request_handler 미들웨어(Django urls 에 전역 redirect 훅이 없음).

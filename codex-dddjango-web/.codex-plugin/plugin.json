@@ -6,7 +6,7 @@
     "name": "changja88",
     "email": "dev@numchida.com"
   },
-  "homepage": "https://github.com/changja88/dddjango",
+  "homepage": "https://github.com/changja88/dddjango/blob/main/dddjango-web/REQUEST_GUIDE.md",
   "repository": "https://github.com/changja88/dddjango",
   "license": "MIT",
   "keywords": [
@@ -32,10 +32,10 @@
       "Read",
       "Write"
     ],
-    "websiteURL": "https://github.com/changja88/dddjango",
+    "websiteURL": "https://github.com/changja88/dddjango/blob/main/dddjango-web/REQUEST_GUIDE.md",
     "defaultPrompt": [
-      "dddjango-web으로 날씨 7일 예보 화면을 만들어줘 https://api.example.com/schema?format=json",
-      "dddjango-web으로 채널 목록 화면을 DDD로 빌드해줘 — 순서대로 기능 설명, (선택) OpenAPI URL (디자인은 G0에서 정함)",
+      "dddjango-web으로 \"날씨 7일 예보 화면\"을 만들어줘 /api/openapi.json",
+      "dddjango-web으로 \"채널 목록 화면\"을 DDD로 빌드해줘 — 순서대로 기능 설명, (선택) OpenAPI 위치(이 프로젝트 안 경로·파일 경로·http(s) 주소). 디자인: 내려받은 시안 폴더 경로 · 화면: 화면 파일 이름",
       "주문 내역 화면을 dddjango-web 파이프라인으로 설계하고 구현해줘."
     ],
     "brandColor": "#0C4A6E"
