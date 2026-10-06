@@ -3,7 +3,7 @@
 # 케이스마다 negative(오류 검출)에 positive-control(정상 통과) 짝을 둔다:
 #   D1(정상) ↔ D2(tokens[] 부재)·D3(토큰 0)·U1(사용법)
 #   H1(정상) ↔ H2(HTML 0)·H3(토큰 0)
-#   C1(정상) ↔ C2(tokens 부재·순서 계약)·C3(.screen 부재)·C4(.dc.html 부재)
+#   C1(정상)·C5(x-dc 내보내기 꼴) ↔ C2(tokens 부재·순서 계약)·C3(.screen 부재)·C4(.dc.html 부재)·C5b(x-dc 루트 둘)
 #   F1(정상·혼합 status)·F3(토큰 충돌·결정론) ↔ F2(design-ref 부재)
 set -u
 SCRIPTS="$(cd "$(dirname "$0")/.." && pwd)"
@@ -189,6 +189,59 @@ OUT=$(run_py extract_dc.py "$P/no-such.dc.html" --tokens "$P/design-tokens.json"
   --asset-manifest "$P/asset-manifest.json" --assets-root "$P" \
   --asset-base "$P" --meta "$P/screen-meta.json"); E=$?
 assert "C4 .dc.html 부재 fail-loud" 1 ".dc.html 부재" - "$E" "$OUT"
+
+# ---------- C5: Claude Design 새 내보내기 꼴(<x-dc> 루트 하나 — .screen·data-screen-label 없음) → 그 안(<helmet> 빼고)이
+#   화면 하나 · 라벨은 파일 이름 · 게이트 글은 보이는 글(텍스트 · label/placeholder/title — {{ }} 바인딩 뺌) ·
+#   이미지 · CSS url 수집은 그대로 · helmet 의 _ds 링크(시안 디자인 시스템)는 화면 의존이 아니다
+P="$T/c5"; mkdir -p "$P/design-ref/assets" "$P/root"
+png_fixture "$P/design-ref/assets/logo.png"
+png_fixture "$P/design-ref/assets/bg.png"
+cat > "$P/design-ref/Admin Login.dc.html" <<'EOF'
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><script src="./support.js"></script></head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/design-system-1/styles.css">
+<script src="_ds/design-system-1/_ds_bundle.js"></script>
+<style>body{background:var(--bg-app);}</style>
+</helmet>
+<div style="min-height:100vh;background:url(assets/bg.png);">
+  <x-import component-from-global-scope="DS_1.GlassPanel" tone="strong" hint-size="100%,440px">
+    <img src="assets/logo.png" alt="춘몽 로고">
+    <span style="font-size:var(--fs-label);">관리자</span>
+    <x-import component-from-global-scope="DS_1.Input" label="이메일" placeholder="이메일을 입력해주세요" value="{{ email }}" title="{{ hint }}"></x-import>
+    <x-import component-from-global-scope="DS_1.Button" type="submit" loading="{{ busy }}">로그인</x-import>
+    <p>{{ message }}</p>
+    <p>비밀번호를 잊었다면 최고 관리자에게 요청해주세요</p>
+  </x-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic { renderVals() { return { email: '스크립트 글은 화면 글이 아니다' }; } }
+</script>
+</body></html>
+EOF
+cp "$T/d1/design-tokens.json" "$P/design-tokens.json"
+OUT=$(run_py extract_dc.py "$P/design-ref/Admin Login.dc.html" --tokens "$P/design-tokens.json" \
+  --asset-manifest "$P/asset-manifest.json" --assets-root "$P/root" \
+  --asset-base "$P/design-ref" --meta "$P/screen-meta.json"); E=$?
+assert "C5 x-dc 루트 하나 = 화면 하나(exit 0)" 0 "[extract-dc] Admin Login.dc.html" - "$E" "$OUT"
+assert_file "C5 라벨 = 파일 이름" "$P/screen-meta.json" '"screen_label": "Admin Login"' -
+assert_file "C5 게이트 title = 첫 보이는 글(alt)" "$P/screen-meta.json" '"title": "춘몽 로고"' -
+assert_file "C5 게이트 subtitle = 둘째 보이는 글" "$P/screen-meta.json" '"subtitle": "관리자"' -
+assert_file "C5 게이트 cards — label · placeholder · 텍스트 · 바인딩 뺌" "$P/screen-meta.json" '"이메일을 입력해주세요"' '{{'
+assert_file "C5 게이트 — helmet · 스크립트 글 제외" "$P/screen-meta.json" '"로그인"' '스크립트 글'
+assert_file "C5 이미지 · CSS url 수집 · helmet 링크는 의존 아님" "$P/asset-manifest.json" '"source_ready": true' '_ds/design-system-1'
+assert_file "C5 인라인 style url 이미지 착지" "$P/asset-manifest.json" '"token": "bg"' -
+assert_file "C5 img 이미지 착지" "$P/asset-manifest.json" '"token": "logo"' '"status": "failed"'
+P="$T/c5b"; mkdir -p "$P/design-ref" "$P/root"
+printf '<x-dc><div>하나</div></x-dc>\n<x-dc><div>둘</div></x-dc>\n' > "$P/design-ref/two.dc.html"
+echo '{}' > "$P/design-tokens.json"
+OUT=$(run_py extract_dc.py "$P/design-ref/two.dc.html" --tokens "$P/design-tokens.json" \
+  --asset-manifest "$P/asset-manifest.json" --assets-root "$P/root" \
+  --asset-base "$P/design-ref" --meta "$P/screen-meta.json"); E=$?
+assert "C5b 대조: x-dc 루트 둘 = 고르지 않음(exit 1)" 1 "candidate count 0" - "$E" "$OUT"
 
 # ========== fetch_images ==========
 

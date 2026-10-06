@@ -4,6 +4,9 @@
 Supports legacy `.screen` and `data-screen-label` on arbitrary HTML elements.
 Multiple candidates require --screen-label <exact label> or --screen-index <0-based>;
 a single candidate is automatic. Nested device decoration is never a screen.
+With no such candidate, a single `<x-dc>` root (newer Claude Design export) is the
+screen: its content minus `<helmet>`, labelled by the file name, with gate text from
+visible text (text nodes and alt/aria-label/label/placeholder/title, `{{ }}` removed).
 
 Usage: extract_dc.py <screen.dc.html> --tokens <design-tokens.json>
        --asset-manifest <asset-manifest.json> --assets-root <project root>
@@ -96,6 +99,8 @@ class ScreenParser(HTMLParser):
         self.stack = []
         self.screens = []
         self.frames = []
+        self.roots = []      # <x-dc> — Claude Design 내보내기 루트(.screen·data-screen-label 없는 꼴)
+        self.helmets = []    # <helmet> — x-dc 의 문서 머리(디자인 시스템 링크·전역 style) · 화면이 아니다
 
     def source_position(self):
         line, column = self.getpos()
@@ -112,6 +117,9 @@ class ScreenParser(HTMLParser):
         record = {"tag": tag, "start": self.source_position(), "label": attributes.get("data-screen-label"), "end": None} if candidate else None
         if record:
             self.screens.append(record)
+        elif tag in ("x-dc", "helmet"):
+            record = {"tag": tag, "start": self.source_position(), "label": None, "end": None}
+            (self.roots if tag == "x-dc" else self.helmets).append(record)
         if tag not in {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}:
             self.stack.append((tag, record))
 
@@ -129,9 +137,35 @@ class ScreenParser(HTMLParser):
                 break
 
 
-def select_screen(html: str, label: Optional[str] = None, index: Optional[int] = None):
+def xdc_screen(html: str, parser: "ScreenParser") -> Optional[str]:
+    """`.screen`·`data-screen-label` 후보가 없고 `<x-dc>` 루트가 정확히 하나면 그 안(`<helmet>` 빼고)이 화면 하나다
+    (Claude Design 새 내보내기 꼴 — 화면 마크업 + `x-import` 디자인 시스템 부품 + `{{ }}` 바인딩)."""
+    if len(parser.roots) != 1 or not parser.roots[0]["end"]:
+        return None
+    root = parser.roots[0]
+    inner_start = tag_end(html, root["start"]) + 1
+    inner_end = html.lower().rfind("</x-dc", inner_start, root["end"])
+    if inner_start <= 0 or inner_end < inner_start:
+        return None
+    parts: List[str] = []
+    cursor = inner_start
+    for helmet in sorted(parser.helmets, key=lambda row: row["start"]):
+        if helmet["end"] and inner_start <= helmet["start"] and helmet["end"] <= inner_end:
+            parts.append(html[cursor:helmet["start"]])
+            cursor = helmet["end"]
+    parts.append(html[cursor:inner_end])
+    return "".join(parts)
+
+
+def select_screen(html: str, label: Optional[str] = None, index: Optional[int] = None,
+                  file_label: str = ""):
+    """(화면 마크업, 라벨, x-dc 꼴인가)."""
     parser = ScreenParser(html)
     parser.feed(html)
+    if not parser.screens and label is None and index in (None, 0):
+        app = xdc_screen(html, parser)
+        if app is not None:
+            return app, file_label, True
     candidates = [row for row in parser.screens if row["label"] is not None] or parser.screens
     if label is not None:
         candidates = [row for row in candidates if row["label"] == label]
@@ -142,7 +176,7 @@ def select_screen(html: str, label: Optional[str] = None, index: Optional[int] =
     selected = candidates[0]
     if not selected["end"]:
         raise ValueError("selected screen subtree is incomplete")
-    return html[selected["start"]:selected["end"]], selected["label"] or ""
+    return html[selected["start"]:selected["end"]], selected["label"] or "", False
 
 
 # ---- 게이트 텍스트: .title·.subtitle·카드 .rtitle ----
@@ -182,6 +216,60 @@ def gate_text(app: str) -> Dict[str, object]:
         "title": titles[0] if titles else "",
         "subtitle": subtitles[0] if subtitles else "",
         "cards": all_text_by_class(app, "rtitle"),
+    }
+
+
+# x-dc 꼴 게이트 글 — `.title`·`.subtitle`·`.rtitle` class 가 없다. 화면에 보이는 글을 문서 순서로 모아
+# 첫째 = title · 둘째 = subtitle · 다음 XDC_CARDS 개 = cards (결정적 · 같은 글은 처음 것만).
+HUMAN_ATTRS = ("alt", "aria-label", "label", "placeholder", "title")
+SKIP_TEXT_TAGS = {"script", "style", "helmet", "template"}
+BINDING_RE = re.compile(r"\{\{.*?\}\}", re.S)
+XDC_CARDS = 10
+
+
+class VisibleText(HTMLParser):
+    """텍스트 노드 + 사람용 속성(alt·aria-label·label·placeholder·title) — `{{ }}` 바인딩은 뺀다."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.skip = 0
+        self.items: List[str] = []
+
+    def add(self, value: str) -> None:
+        clean = WS_COLLAPSE_RE.sub(" ", BINDING_RE.sub(" ", value)).strip()
+        if any(ch.isalnum() for ch in clean) and clean not in self.items:
+            self.items.append(clean)
+
+    def handle_starttag(self, tag, attrs):
+        if tag in SKIP_TEXT_TAGS:
+            self.skip += 1
+        if not self.skip:
+            values = dict(attrs)
+            for name in HUMAN_ATTRS:
+                if values.get(name):
+                    self.add(values[name])
+
+    def handle_startendtag(self, tag, attrs):
+        if tag not in SKIP_TEXT_TAGS:
+            self.handle_starttag(tag, attrs)
+
+    def handle_endtag(self, tag):
+        if tag in SKIP_TEXT_TAGS and self.skip:
+            self.skip -= 1
+
+    def handle_data(self, data):
+        if not self.skip:
+            self.add(data)
+
+
+def xdc_gate_text(app: str) -> Dict[str, object]:
+    parser = VisibleText()
+    parser.feed(app)
+    items = parser.items
+    return {
+        "title": items[0] if items else "",
+        "subtitle": items[1] if len(items) > 1 else "",
+        "cards": items[2:2 + XDC_CARDS],
     }
 
 
@@ -318,12 +406,13 @@ def main(argv: List[str]) -> None:
     except UnicodeError as error:
         die(f"source is not complete UTF-8: {error}")
 
+    screen_name = os.path.basename(dc_html)
+    file_label = re.sub(r"\.dc\.html?$|\.html?$", "", screen_name, flags=re.IGNORECASE)
     try:
-        app, selected_label = select_screen(html, screen_label, screen_index)
+        app, selected_label, xdc = select_screen(html, screen_label, screen_index, file_label)
     except ValueError as error:
         die(str(error))
 
-    screen_name = os.path.basename(dc_html)
     doc_slug = re.sub(r"[^a-z0-9]+", "_",
                       re.sub(r"\.dc\.html?$|\.html?$", "", screen_name, flags=re.IGNORECASE).lower()
                       ).strip("_") or "screen"
@@ -333,7 +422,7 @@ def main(argv: List[str]) -> None:
         images, unresolved = collect_images(app, doc_slug, asset_base, images_dir, dc_html, source_manifest_arg)
     except (OSError, ValueError) as error:
         die(f"invalid source manifest: {error}")
-    meta = gate_text(app)
+    meta = xdc_gate_text(app) if xdc else gate_text(app)
     selected_parser = ScreenParser(app)
     selected_parser.feed(app)
     meta.update(screen_label=selected_label, explicit_frames=selected_parser.frames,
