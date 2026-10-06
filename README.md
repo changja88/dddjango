@@ -319,7 +319,7 @@ dddjango는 작업 규모를 보고 알맞게 움직인다.
 - **구성**: 커맨드 2(`/dddjango-web:dddjango-web`(화면 빌드) · `/dddjango-web:refactor <대상 단위>`(대상 단위 하나의 기존 web 코드 전체를 표준으로 정리하는 리팩토링 입구 — 동작 불변 · Codex 는 `$dddjango-web-refactor`)) · 에이전트 7(`design-architect-web`·`design-review-ddd-web`·`design-review-ui-web`·`design-review-state-web`·`design-review-data-web`·`coder-web`·`discipline-reviewer-web`) · 스킬 12(`architecture-ddd`/`-ui`/`-state`/`-data`·`discipline-cleancode`/`-houserules`/`-test`·`implementation-test`/`-python`/`-django`/`-htmx`/`-javascript`) · 결정적 백스톱(검사 84종 — 구조·import·명명·순환·테스트·토대·모델·출력 안전·외부 JS) + 추출 도구 4 + 외부 JS 등재 도구
 - **빚 정리**: 기능 요청이 손대는 파일과 그 파일을 부르는 곳에 남은 옛 위반은 G0에서 묻고, 기능 구현 전에 슬라이스 0에서 동작 그대로 정리한다. 남은 빚은 G2에서 다시 판정한다.
 - **외부 JS**: 외부 JS 라이브러리는 공식 배포 파일을 등재 도구로 버전 고정해 들이고, G1에서 따로 승인받는다.
-- **검증**: 행위마다 영구 테스트(`pytest web_test --import-mode=importlib`)와 `manage.py check`·백스톱을 G2 전에 돈다. 결정적 백스톱은 측정 대상인 구조 규율만 확인하며 전체 품질이나 픽셀 동일을 증명하지 않는다. 시안과의 시각 일치는 게이트에서 **사용자가 육안 확인**한다.
+- **검증**: 행위마다 영구 테스트(`pytest web_test --import-mode=importlib`)와 `manage.py check`·백스톱을 G2 전에 돈다(백스톱의 구조 검사는 슬라이스가 끝날 때마다 먼저 한 번씩 돈다). 결정적 백스톱은 측정 대상인 구조 규율만 확인하며 전체 품질이나 픽셀 동일을 증명하지 않는다. 시안과의 시각 일치는 게이트에서 **사용자가 육안 확인**한다.
 
 ---
 

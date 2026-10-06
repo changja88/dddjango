@@ -127,3 +127,6 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/backstop.py <대상 프로젝트 루트> [
 - Serena · Graphify 쓰지 않음. 검토 바퀴 · 안전 도구 · 채점 도구 · 판정기를 새로 만들지 않음. 하위 에이전트를 띄우지 않음.
 - md 파일은 Write/Edit 로만(셸 heredoc 금지). 시각은 `date` 출력만, 어림은 [추정].
 - 끝나면 자기 파일 목록 · 바이트 · dddart 와 어쩔 수 없이 달라진 곳(까닭 한 줄씩)을 보고에 담는다.
+
+## 8. 2.2.0 에서 dddart 와 달라진 것(이 문서는 2.0.0 대응 규약 — 덧)
+- 백스톱 실행 시점: dddart 는 G2 직전 한 번이다. dddjango-web 2.2.0 은 슬라이스가 끝날 때마다 `backstop.py … --slice-end` 로 먼저 돌고(뒤 슬라이스가 채울 검사 일곱 CY1 · NM4 · NM5 · NM18 · NM19 · ST4 · TG1 은 미룸) G2 직전에 84종을 전부 돈다. 게이트 의미론(added · added 줄 · 신규 단위 · 순환 래칫)은 그대로다. 스펙: `plan-2.2.0.md`.

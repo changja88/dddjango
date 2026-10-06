@@ -23,10 +23,10 @@ byte-exact로 미러하고, checker script는 별도 byte mirror로 검증한다
   `skills/*/SKILL.md`(11개 스킬) + `scripts/check-*.py`(결정적 백스톱 27종).
 - `dddjango-web/` — **자매 플러그인**(웹 표현계층 빌더 — `/dddjango-web`). 2.0.0부터 Flutter 판 `dddart`와
   같은 절차·구조(간소화 DDD 4층 + MVVM · G0/G1/G2 · 가정 계약 → tracer → 미니 게이트)에 구현 기술만
-  Django·HTML·HTMX·JS로 바꾼 판이다. 커맨드 2(메인 + 리팩토링 입구 `/dddjango-web:refactor <대상 단위>`)
+  Django·HTML·HTMX·JS로 바꾼 판이다. 2.2.0부터 한 가지가 dddart와 다르다 — 구조 검사(백스톱)를 G2 직전에만이 아니라 슬라이스가 끝날 때마다도 돈다(`backstop.py --slice-end`). 커맨드 2(메인 + 리팩토링 입구 `/dddjango-web:refactor <대상 단위>`)
   + 에이전트 7(`design-architect-web` · 리뷰어 4 `design-review-{ddd,ui,state,data}-web` · `coder-web` ·
   `discipline-reviewer-web`) + 스킬 12 + `scripts/backstop.py`(검사 84종 — ST·IM·NM·CY·TG·PJ·MD·PU·WV ·
-  빚 모드 `--debt-scan`[`--refactor`]·`--debt-residual` · 치환 확인 `--subst-check`) ·
+  빚 모드 `--debt-scan`[`--refactor`]·`--debt-residual` · 치환 확인 `--subst-check` · 슬라이스 끝 실행 `--slice-end`) ·
   `scripts/refactor_audit.py`(리팩토링 모드 판정 도구) · 공식 SDK 등재 도구 `scripts/sdk_vendor.py` ·
   추출 도구 4(`extract_contract`·`extract_design`·`extract_dc`·`fetch_images`) + `REQUEST_GUIDE.md`(사람용 작업 요청 가이드 — 2.0.1부터 · Codex byte 미러).
   **전 파일 산문 정본**(온톨로지 코퍼스 밖 — graph-owned 절 없음, md를 직접 수정한다).
@@ -35,7 +35,7 @@ byte-exact로 미러하고, checker script는 별도 byte mirror로 검증한다
   픽스처 검증은 `make verify-web`으로 직접 돈다(`make verify` 자동 경로 밖 — web 변경은 커밋 전에 실행한다).
   빌드 스펙 정본: `workspace/plan/2026-10-06-web-dddart/mapping.md`(2.0.0) ·
   `workspace/plan/2026-10-06-web-dddart/plan-2.1.0.md` + `build-log-2.1.0.md`(2.1.0 — 빚 정리 · 외부 JS ·
-  리팩토링 입구).
+  리팩토링 입구) · `plan-2.2.0.md` + `build-log-2.2.0.md`(2.2.0 — 슬라이스 끝 구조 검사).
 - `ontology/` — 규범 **정본**(그래프): `rules/*.ttl`(30 문서 키) · `vocab/` · `shapes/` ·
   `wiring/` · `ISSUED`(채번 대장) · `LEDGER.tsv`(산문 절 기준선 원장).
 - `workspace/reference/**` — 배포 reference의 출처·P1 메타데이터를 보존하는 소스 미러.
