@@ -25,6 +25,7 @@ description: dddjango-web 코디네이터가 Phase 2(구현)에서 spawn_agent�
 - **check 베이스라인**(Phase 2 진입 시 Coordinator가 캡처) — green 판정의 기준.
 - **build-state의 `test_command`**(G0가 확정한 한 줄 — 예 `pytest web_test --import-mode=importlib --ds=config.settings`) — green 래칫·전수 테스트는 이 명령 그대로 실행한다(settings 지정을 바꾸거나 빼지 않는다).
 - **build-state의 `htmx_core_static`**(G0가 확인한 실제 htmx core static 경로 — 예 `web/htmx/htmx.min.js` · 브라운필드 `web/js/htmx.min.js`) — 문서 셸(`root_view.html`)은 이 static 경로를 로드한다.
+- **슬라이스 끝 검사 실행문**(Coordinator가 주는 한 줄 — 결정적 러너의 `--slice-end` 실행 · 실행 위치는 타깃 프로젝트 루트) — 슬라이스가 green이 된 뒤 끝 래칫에서 그대로 실행한다.
 - (있으면) **반영할 감사 발견 목록**(discipline-reviewer-web 리포트·백스톱 발견) — 이 호출은 새 슬라이스 구현이 아니라 해당 슬라이스의 "기존 수정"이다: 골격 플래그·슬라이스 귀속을 되묻지 말고 발견을 반영한 뒤 green을 재확인한다.
 - (슬라이스 0이면) «슬라이스 0 = 리팩터링(동작 불변)»과 명세 `## 슬라이스 0` 절·`refactor-scope.md` 경로 — G0에서 «지금 정리»로 결정된 기존 위반(빚)의 교정이다.
 
@@ -40,6 +41,7 @@ description: dddjango-web 코디네이터가 Phase 2(구현)에서 spawn_agent�
 - **구현 전에 명세의 파일 목록·구조 결정 절을 읽고, 새 파일을 그 레이아웃에 맞춰 배치한다.** 구조를 새로 결정하지 않고 명세를 집행한다. 명세에 구조 결정이 없으면 임의로 정하지 말고 보고한다(설계로 반송). **'구조 결정'은 *분해*(view/section/widget·파일 배치)이지 *레이아웃 형상*이 아니다** — 명세가 축·배치를 안 적은 것은 정상이며(코퍼스는 형상 미규정) 반송 사유가 아니다. 형상은 design-ref에서 가져와 재현한다. **명세의 구조 결정이 `dddjango-web-discipline-houserules`의 골격 완비·명명·위치 규약을 빠뜨렸거나 접었으면, 임의 보정도 그대로 집행도 하지 말고 보고한다**(명세-표준 괴리 = 설계 반송). 명세 파일 경로의 `application/<area>/` 세그먼트도 그대로 집행한다 — area 세그먼트를 임의로 추가·제거하지 않으며, 골격·`ruff.toml`은 area 폴더가 아니라 그 안의 **BC 루트**에 만들고, area 이름을 클래스명·URL name 등 어떤 식별자에도 넣지 않는다(houserules final.md §1 area 핵심 사실 — area는 경로에만 존재한다).
 - **bottom-up 순서**: Model 슬라이스 = 골격(플래그 시) → domain → infra → application. View 슬라이스 = presentation → 배선(BC router `path()`·root_router include·root_initializer의 ui_extension 필터 조립·context processor·handler 연결 — Coordinator가 만든 연결 대상 최소 자리는 «기존 수정»으로 채운다). 명세 파일 목록이 닿는 계층만 만든다. *왜* — 참조가 항상 실재하는 쪽(아래)부터 쌓아야 오류가 국소화되고, 도메인을 먼저 만들어야 판정이 위층으로 새지 않는다.
 - **층별 green 래칫**: 각 계층을 끝낼 때마다 `python -m py_compile <이번 계층 .py>`·`python manage.py check`(+ ruff가 있으면 `ruff check`)를 네이티브 셸로 실제 실행한다(자동 통과 간주 금지). **green = 입력받은 베이스라인 대비 신규 이슈 0**이며, **`web_test/`에 `*_test.py`가 하나라도 있으면 추가로 입력받은 `test_command` exit 0**이다 — check는 브라운필드의 기존 경고·오류에 불발화한다(기존 파일 수정은 파일별 green·touched 파일에 error 0). 테스트가 아직 없는 바닥 계층(domain 먼저 쌓는 단계)은 check-only지만, **슬라이스 완료 시점엔 행위 테스트가 존재해 `test_command`가 전수 통과해야 한다**(신규 BC는 백스톱 TG1이 부재를 차단). 깨진 테스트를 삭제로 비우지 말고 행위 테스트로 *대체*한다(테스트 0개로 비워 exit 회피 금지). 실시각·외부 네트워크·브라우저 타이밍 같은 환경성 실패는 테스트 관용구(고정 날짜 주입·`monkeypatch`·명시 대기)로 *원천 회피*한다 — "환경이라 무시"로 자기 면제하지 않으며, 못 통과하면 보고한다.
+- **슬라이스 끝 구조 검사**: 슬라이스가 green이 되면 입력받은 슬라이스 끝 검사 실행문을 네이티브 셸로 실제 실행한다(뒤 슬라이스가 채울 짝·골격·미러 검사는 러너가 미룬다). exit 2면 발견을 고치고 green과 이 실행을 다시 확인한다(같은 발견에 수정 시도 3회가 한도다). 이번 슬라이스 파일 밖을 고쳐야 닫히는 발견과 `위반:` 줄이 뒤 슬라이스의 파일이 없다고 한 발견은 고치지 않고 발견 원문 그대로 보고한다. exit 1은 미실행으로 보고한다(통과로 적지 않는다).
 - 임계 근접 호출(생성 줄 수 ~1.2k 초과 예상)이면 공개 표면(시그니처·State 모양) 먼저 → check → 본문의 2단을 권장한다. 호출 경계를 넘는 타입 스텁 파일 선생성은 금지다.
 - 작업에 맞는 스킬을 골라 쓴다: 언어 관용구·frozen dataclass·Either=dddjango-web-implementation-python, 템플릿·urls·in-process client·정적 파일=dddjango-web-implementation-django, 요청 구동 VM·HTMX 부분 교체·`HX-Trigger`=dddjango-web-implementation-htmx, 승인된 UI 동작 JS=dddjango-web-implementation-javascript. 클린코드·하우스룰 규율(dddjango-web-discipline-cleancode·dddjango-web-discipline-houserules)을 따른다. 각 스킬은 SKILL.md의 라우팅 표로 필요한 절만 부분 적재한다 — references 전량을 읽지 않는다.
 - `web/apps.py`·`web/urls.py` 신규 작성·수정이 슬라이스에 포함되면 "최소형" 판별의 1차 결정은 네 소유다 — 로드한 `dddjango-web-discipline-houserules` 스킬 폴더의 `references/undecidable.md`의 해당 절차를 읽고 따른다. 구현 중 명세 파일 목록에 없는 "두 번째 개념"을 발견하면(같은 종류 폴더에 다른 개념 파일을 쌓게 되는 신호) 디렉터리를 대조하고 보고한다(2차 발견자 — 1차 결정은 architect).
@@ -55,6 +57,7 @@ description: dddjango-web 코디네이터가 Phase 2(구현)에서 spawn_agent�
 - **기존 BC 수정 시 같은 판정의 기존 복제를 발견했다** — 새 판정을 구현하기 전에 그 BC에서 같은 판정을 검색으로 찾고, 이미 있으면 구현을 멈추고 보고한다(판정 소유 강등 규칙의 관측자는 너다).
 - check·테스트가 시도 한도를 넘겨도 green이 안 된다 — **같은 오류 시그니처에 수정 시도 3회가 한도다**(무한 루프 금지). 명세 가정 오류인지 구현 난점인지 구분해 보고한다.
 - **슬라이스 0 항목이 동작 불변으로 고쳐지지 않거나 검사기 발견이 오탐으로 보인다**(교정하면 동작이 바뀌거나, 교정할 것이 아닌데 발견이 난다) — 동작을 바꾸거나 검사기를 피해 가는 형태로 고치지 말고 보고한다(Coordinator가 재상정을 묻는다).
+- **슬라이스 끝 검사 발견이 오탐으로 보인다**(교정할 것이 아닌데 발견이 나거나 규칙 문장과 검사기가 어긋난다) — 검사기를 피해 가는 형태로 고치지 말고 발견 원문과 그 규칙 문장(스킬·reference의 자리와 함께)을 보고한다(Coordinator가 «검사기 이의»로 처분한다).
 
 ## 경계
 
