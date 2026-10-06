@@ -17,6 +17,9 @@
 - 04:56 ~ 05:13 구현 ①(Codex 쓰기 · `codex_rw`): F19 먼저 넣어 red(F19 22줄 가운데 FAIL 12) → 러너 → green(22/22) · 전체 픽스처 FAIL 0 · 미러 `cmp` 같음. lead 가 diff 를 읽고 `make verify-web` exit 0(05:13:44 ~ 05:19:47) → 커밋 `9675aa1b`.
 - 05:20 ~ 05:30 구현 ②(Codex 쓰기): 규정 여덟 파일 + Makefile 한 줄 — 넣을 문장은 lead 가 글자째 주고 Codex 는 자리 · 두 런타임 맞춤 · 검증. lead 가 넣은 글을 항목마다 대조 · `make verify-web` exit 0(05:30:50 ~ 05:38:05) → 커밋 `e0aeb56e`(규정) · `4dd09e9f`(Makefile 106행 — 따로).
 - 05:38 ~ 05:57 구현 ③(Codex 쓰기): 결함 수리 한 문장 + 문서 다섯 파일. Codex 의 첫 `make verify-web` 에서 SDK 픽스처가 256 통과 · 2 실패로 한 번 났다(파일 수정 없이 다시 돌려 258/0 · 실패 사례 이름은 못 남김 — 원인 미확인). lead 의 `make verify-web` exit 0(05:57:57 ~ 06:04:36 · SDK 258/0) → 커밋 `2bc80b4d`(결함 수리).
+- 06:05 문서 커밋 `9c475db6`(계획 · 짓기 기록 · 저장소 글).
+- 06:05 ~ 06:14 구현 검토(Codex 읽기 전용 한 번): blocker 2 · important 3 · nit 1 — 모두 «검사기 이의» · 사용자 미커밋 파일 예외 · 배너 행의 글이다(러너 지적 0). 처분은 `plan-2.2.0.md` «구현 검토 처분 표».
+- 06:15 ~ 06:18 검토 반영(Codex 쓰기): 두 Coordinator 다섯 자리 + `docs/file_tree_web.html` 한 문장. lead 가 넣은 글을 대조(두 런타임의 바뀐 줄이 치환 뒤 같음) · `make verify-web` exit 0(06:19:07 ~ 06:25:43) → 커밋 둘(규정 고침 · 문서).
 
 ## 넣은 것
 - 러너: `--slice-end`(게이트 인자) · 상수 `SLICE_END_DEFERRED`(CY1 · NM4 · NM5 · NM18 · NM19 · ST4 · TG1 — 단일 출처) · CY 호출 건너뜀(기준선 파일 안 만듦) · 요약 줄 `검사 84종 중 77종(슬라이스 끝 — 미룸 7: …)` · `--update-baseline` · `--only` · 러너 모드와 같이 쓰면 exit 1 · 게이트 실행의 `git status` 실패는 exit 1(`--all` 은 그대로). 검사 수 84 · 검사 ID 변화 없음.
