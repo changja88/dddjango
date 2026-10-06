@@ -2,41 +2,152 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "dddjango-web · 에이전트 협력 흐름",
+    "title": "dddjango-web 2.1.0 · 에이전트 협력 흐름",
     "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "feature-path",
+        "label": "기능 요청의 본선",
+        "focus": [
+          "request",
+          "phase0",
+          "g0",
+          "architect",
+          "reviews",
+          "g1",
+          "slices",
+          "audit",
+          "backstop",
+          "g2",
+          "finish"
+        ],
+        "note": "G0 → G1 → G2 를 지나는 한 기능의 길 — Coordinator 는 위임과 판정만 한다."
+      },
+      {
+        "id": "debt-path",
+        "label": "기존 코드 정리(빚)",
+        "focus": [
+          "phase0",
+          "g0",
+          "architect",
+          "slice0",
+          "slices",
+          "backstop",
+          "g2"
+        ],
+        "note": "G0 에서 빚을 묻고, 고르면 슬라이스 0 이 기능보다 먼저 동작 그대로 정리한다. G2 에서 남은 빚을 다시 센다."
+      },
+      {
+        "id": "refactor-path",
+        "label": "리팩토링 입구",
+        "focus": [
+          "refactor",
+          "phase0",
+          "g0",
+          "architect",
+          "reviews",
+          "g1",
+          "slice0",
+          "audit",
+          "backstop",
+          "g2",
+          "finish"
+        ],
+        "note": "대상 단위 하나를 동작 그대로 정리한다 — 기능 슬라이스 없이 슬라이스 0 만 돈다."
+      },
+      {
+        "id": "design-review",
+        "label": "설계와 4축 리뷰",
+        "focus": [
+          "architect",
+          "reviews",
+          "g1",
+          "tools"
+        ],
+        "note": "설계자가 명세를 홀로 쓰고, 리뷰어 넷이 서로 모르게 본 노트를 설계자가 반영해 G1 에 올린다."
+      }
+    ],
     "legend": {
       "entries": {
         "external": {
-          "label": "Coordinator"
+          "label": "사용자 입구"
         },
-        "backend": {
-          "label": "설계·독립 리뷰"
-        },
-        "frontend": {
-          "label": "구현"
+        "cloud": {
+          "label": "Coordinator 단계"
         },
         "security": {
-          "label": "백스톱·사용자 인수"
+          "label": "사용자 게이트"
+        },
+        "backend": {
+          "label": "설계·감수 에이전트"
+        },
+        "frontend": {
+          "label": "구현 에이전트"
         },
         "messagebus": {
-          "label": "UI JS 스킬"
+          "label": "결정적 도구"
         }
       }
     }
   },
   "components": [
     {
-      "id": "coordinator",
-      "type": "external",
-      "label": "Coordinator",
-      "sublabel": "요구·시안·에셋·API 확보",
-      "tag": "모든 에이전트 호출·반송 관리",
+      "id": "tools",
+      "type": "messagebus",
+      "label": "추출 도구",
+      "sublabel": "시안·토큰·계약 기계 절단",
+      "tag": "extract_* · fetch_images",
       "pos": [
-        40,
-        100
+        300,
+        40
       ],
       "size": [
-        140,
+        180,
+        64
+      ]
+    },
+    {
+      "id": "request",
+      "type": "external",
+      "label": "기능 요청",
+      "sublabel": "/dddjango-web",
+      "tag": "기능 설명 · API 위치",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        150,
+        84
+      ]
+    },
+    {
+      "id": "phase0",
+      "type": "cloud",
+      "label": "Phase 0 · 범위",
+      "sublabel": "연결 점검 · 출처 동결 · 빚 스캔",
+      "tag": "Coordinator",
+      "pos": [
+        300,
+        150
+      ],
+      "size": [
+        180,
+        84
+      ]
+    },
+    {
+      "id": "g0",
+      "type": "security",
+      "label": "G0 승인",
+      "sublabel": "모드 · 빚 ⓐ/ⓑ",
+      "tag": "사용자",
+      "pos": [
+        570,
+        150
+      ],
+      "size": [
+        150,
         84
       ]
     },
@@ -47,166 +158,305 @@
       "sublabel": "design-architect-web",
       "tag": "명세의 단일 작성자",
       "pos": [
-        260,
-        100
+        810,
+        150
       ],
       "size": [
-        140,
+        190,
         84
       ]
     },
     {
-      "id": "design-reviewer",
+      "id": "g1",
+      "type": "security",
+      "label": "G1 승인",
+      "sublabel": "명세 · 외부 JS 문항",
+      "tag": "사용자",
+      "pos": [
+        1120,
+        150
+      ],
+      "size": [
+        170,
+        84
+      ]
+    },
+    {
+      "id": "refactor",
+      "type": "external",
+      "label": "리팩토링 입구",
+      "sublabel": "/dddjango-web:refactor",
+      "tag": "대상 단위 하나",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        190,
+        68
+      ]
+    },
+    {
+      "id": "reviews",
       "type": "backend",
-      "label": "설계 리뷰어",
-      "sublabel": "design-review-web",
-      "tag": "명세·시안·계약 독립 검토",
+      "label": "설계 리뷰 4축",
+      "sublabel": "ddd · ui · state · data",
+      "tag": "병렬 · 서로 모름",
       "pos": [
-        480,
-        100
+        810,
+        300
       ],
       "size": [
-        140,
-        84
+        190,
+        68
       ]
     },
     {
-      "id": "coder",
+      "id": "slice0",
       "type": "frontend",
-      "label": "화면 구현자",
-      "sublabel": "coder-web",
-      "tag": "코드·실제 브라우저 증거",
+      "label": "슬라이스 0",
+      "sublabel": "빚 정리 · 고르면 먼저",
+      "tag": "coder-web · 동작 불변",
       "pos": [
-        700,
-        100
+        40,
+        470
       ],
       "size": [
-        140,
+        150,
         84
       ]
     },
     {
-      "id": "discipline-reviewer",
+      "id": "slices",
+      "type": "frontend",
+      "label": "기능 슬라이스",
+      "sublabel": "coder-web",
+      "tag": "tracer 먼저 · 층별 green",
+      "pos": [
+        260,
+        470
+      ],
+      "size": [
+        150,
+        84
+      ]
+    },
+    {
+      "id": "audit",
       "type": "backend",
       "label": "규율 감수자",
       "sublabel": "discipline-reviewer-web",
-      "tag": "코드·증거의 의미 감사",
+      "tag": "의미 감사",
       "pos": [
-        920,
-        100
+        480,
+        470
       ],
       "size": [
-        180,
+        190,
         84
       ]
     },
     {
-      "id": "gate",
-      "type": "security",
-      "label": "백스톱 → G2",
-      "sublabel": "Coordinator → 사용자",
-      "tag": "인수 후 결과·한계 보고",
-      "pos": [
-        1180,
-        100
-      ],
-      "size": [
-        140,
-        84
-      ]
-    },
-    {
-      "id": "javascript",
+      "id": "backstop",
       "type": "messagebus",
-      "label": "UI JavaScript 구현 스킬",
-      "sublabel": "implementation-javascript",
-      "tag": "적용 완료 · 승인된 UI 동작에만",
+      "label": "백스톱 84종",
+      "sublabel": "빚 잔존 · 전수 테스트",
+      "tag": "backstop.py",
       "pos": [
-        800,
-        510
+        740,
+        470
       ],
       "size": [
-        270,
+        160,
+        84
+      ]
+    },
+    {
+      "id": "g2",
+      "type": "security",
+      "label": "G2 승인",
+      "sublabel": "브라우저로 확인",
+      "tag": "사용자",
+      "pos": [
+        970,
+        470
+      ],
+      "size": [
+        130,
+        84
+      ]
+    },
+    {
+      "id": "finish",
+      "type": "cloud",
+      "label": "마무리",
+      "sublabel": "검증 보고 · 미커밋 합치기",
+      "tag": "Coordinator",
+      "pos": [
+        1170,
+        470
+      ],
+      "size": [
+        170,
         84
       ]
     }
   ],
   "connections": [
     {
-      "id": "g0-dispatch",
-      "from": "coordinator",
+      "id": "request-scope",
+      "from": "request",
+      "to": "phase0",
+      "label": "기능 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "refactor-scope",
+      "from": "refactor",
+      "to": "phase0",
+      "label": "정리 요청",
+      "variant": "dashed"
+    },
+    {
+      "id": "scope-tools",
+      "from": "phase0",
+      "to": "tools",
+      "label": "동결·추출",
+      "variant": "dashed"
+    },
+    {
+      "id": "scope-g0",
+      "from": "phase0",
+      "to": "g0",
+      "label": "G0 보고",
+      "variant": "emphasis"
+    },
+    {
+      "id": "g0-design",
+      "from": "g0",
       "to": "architect",
-      "label": "G0 승인",
+      "label": "승인",
       "variant": "emphasis"
     },
     {
-      "id": "draft-review",
+      "id": "design-review",
       "from": "architect",
-      "to": "design-reviewer",
+      "to": "reviews",
       "label": "명세 초안",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        905,
+        267
+      ]
+    },
+    {
+      "id": "design-g1",
+      "from": "architect",
+      "to": "g1",
+      "label": "노트 반영본",
       "variant": "emphasis"
     },
     {
-      "id": "g1-dispatch",
-      "from": "design-reviewer",
-      "to": "coder",
-      "label": "G1 승인",
+      "id": "g1-slice0",
+      "from": "g1",
+      "to": "slice0",
+      "label": "승인 · 계약 절단",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          1205,
+          400
+        ],
+        [
+          115,
+          400
+        ]
+      ],
+      "labelSegment": 1
+    },
+    {
+      "id": "slice0-slices",
+      "from": "slice0",
+      "to": "slices",
+      "label": "정리 끝",
       "variant": "emphasis"
     },
     {
-      "id": "code-evidence",
-      "from": "coder",
-      "to": "discipline-reviewer",
+      "id": "slices-audit",
+      "from": "slices",
+      "to": "audit",
       "label": "코드·증거",
       "variant": "emphasis"
     },
     {
-      "id": "audit-report",
-      "from": "discipline-reviewer",
-      "to": "gate",
-      "label": "감수 결과",
+      "id": "audit-backstop",
+      "from": "audit",
+      "to": "backstop",
+      "label": "감수 반영",
       "variant": "emphasis"
     },
     {
-      "id": "javascript-code",
-      "from": "javascript",
-      "to": "coder",
-      "variant": "dashed",
-      "fromSide": "top",
-      "toSide": "bottom"
+      "id": "backstop-g2",
+      "from": "backstop",
+      "to": "g2",
+      "label": "통과",
+      "variant": "emphasis"
     },
     {
-      "id": "javascript-review",
-      "from": "javascript",
-      "to": "discipline-reviewer",
+      "id": "g2-finish",
+      "from": "g2",
+      "to": "finish",
+      "label": "승인",
+      "variant": "emphasis"
+    },
+    {
+      "id": "backstop-return",
+      "from": "backstop",
+      "to": "slices",
+      "label": "위반 반송",
       "variant": "dashed",
       "fromSide": "top",
-      "toSide": "bottom"
+      "toSide": "top",
+      "via": [
+        [
+          820,
+          440
+        ],
+        [
+          335,
+          440
+        ]
+      ],
+      "labelSegment": 1
     }
   ],
   "cards": [
     {
       "dot": "emerald",
-      "title": "산출물의 전달 순서",
+      "title": "단계와 게이트",
       "items": [
-        "화살표는 Coordinator가 중계하는 작업 순서다. 에이전트가 서로 호출하지 않는다.",
-        "설계 리뷰 노트는 설계자에게 반영시킨 뒤 G1을 받는다. 승인 후 서버 계약을 동결한다."
+        "화살표는 Coordinator 가 중계하는 작업 순서다. 에이전트끼리 서로 부르지 않는다.",
+        "G0 · G1 · G2 는 사용자가 승인한다. 설계를 바꾸지 않는 수정은 G1 을 건너뛰고, 작은 수정은 한 번만 승인받는다."
       ]
     },
     {
       "dot": "orange",
-      "title": "스킬 5개 · 에이전트 4개",
+      "title": "2.1.0 에서 돌아온 것",
       "items": [
-        "JS 스킬은 구현자와 규율 감수자 2개 역할에 직접 주입한다. 설계자는 UI 동작 계약을 소유한다.",
-        "스킬 5개의 전체 주입 관계와 실행 경계는 웹 동작 흐름 문서의 협력표에 표시한다."
+        "빚 정리 — G0 에서 손대는 파일과 부르는 파일의 위반을 묻고, 고르면 슬라이스 0 이 기능보다 먼저 동작 그대로 고친다.",
+        "외부 JS 승인 — 플랫폼 공식 SDK 만 G1 에서 따로 묻고 등재한다. 리팩토링 입구 — 대상 단위 하나를 따로 정리한다."
       ]
     },
     {
       "dot": "rose",
       "title": "검증과 반송",
       "items": [
-        "실제 브라우저 확인 → 독립 감수 → 백스톱 → G2 인수. 백스톱만으로 업무 의미·UI 수명을 증명하지 않는다.",
-        "코드 결함은 구현자, 설계 변경은 설계자와 G1으로 반송한다. 통합 소스 적용 완료·배포 없음."
+        "규율 감수 → 백스톱 84종 · 빚 잔존 → 전수 테스트 → G2. 백스톱 통과만으로 업무 의미를 증명하지 않는다.",
+        "코드 결함은 coder-web, 설계 변경은 화면 설계자와 G1 으로 돌려보낸다."
       ]
     }
   ]

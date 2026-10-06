@@ -1,17 +1,17 @@
 {
   "diagram_type": "architecture",
-  "purpose": "dddjango-web 에이전트 협력 흐름",
+  "purpose": "dddjango-web 2.1.0 에이전트 협력 흐름",
   "output": "/Users/hyun/Desktop/dddjango/docs/work_flow_web.html",
   "document": "/Users/hyun/Desktop/dddjango/docs/work_flow_web_guide.html",
   "specification": {
     "path": "/Users/hyun/Desktop/dddjango/docs/work_flow_web.spec.json",
-    "sha256": "f97f06155fe18ad486c81675565695ce83e141416ee1bd0a3eacd827fe5bc45b",
-    "bytes": 4928
+    "sha256": "0902b5bea97ba1e864bc9e73a3c80be2dd28f1c725c44e8ae9adcfcaddd74069",
+    "bytes": 9927
   },
   "artifact": {
     "path": "/Users/hyun/Desktop/dddjango/docs/work_flow_web.html",
-    "sha256": "abb9c90fe0df5421a12ad2d943860d0196e3c47ab3b1fce245e9c64b8edca122",
-    "bytes": 670067
+    "sha256": "00a1b80731ddb24e02c63686ed87268b380ab2dc6bbc83a27cddb830ab0c0318",
+    "bytes": 686388
   },
   "validation": {
     "checks": "9/9",
@@ -36,12 +36,19 @@
     "1920x1080",
     "2048x1320"
   ],
+  "static_checks": {
+    "label_node_clearance_min_px": 4,
+    "label_node_issues": 0,
+    "label_label_issues": 0,
+    "embedded_absolute_paths": 0
+  },
   "integration": {
-    "master_navigation": "passed",
-    "skill_rows": 5,
-    "agent_columns": 4,
-    "existing_injections": 10,
-    "local_links": "passed",
-    "applied_js_injections": 2
+    "master_navigation": "unchanged — docs/master.html 의 web 두 항목 설명 글은 이번 판에서 고치지 않음",
+    "skill_rows": 12,
+    "agent_columns": 7,
+    "existing_injections": 21,
+    "local_links": "passed (static)",
+    "views": 4,
+    "pages_checked": "file_tree_web.html · work_flow_web_guide.html — headless Chrome 1440/2048/390 · light/dark · 가로 넘침 0 · 트리 행 겹침 0 · 탭/행 선택/말풍선/2장→1장 이동 동작"
   }
 }

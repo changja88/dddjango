@@ -4,14 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>dddjango-web 동작 흐름 · UI JS 통합</title>
+<title>dddjango-web 동작 흐름</title>
 <style>
   :root { --paper:#f2f4f3; --card:#fafbfa; --ink:#172529; --muted:#52676c; --line:#ccd7d6; --accent:#176c67; --wash:#e0efeb; --new:#a65a0c; --new-bg:#fff1da; --sans:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',system-ui,sans-serif; }
-  @media (prefers-color-scheme:dark) { :root { --paper:#10191c; --card:#19262a; --ink:#e3eeee; --muted:#a5babc; --line:#34484c; --accent:#78d5c6; --wash:#183e37; --new:#ffd398; --new-bg:#423019; } }
+  @media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) { --paper:#10191c; --card:#19262a; --ink:#e3eeee; --muted:#a5babc; --line:#34484c; --accent:#78d5c6; --wash:#183e37; --new:#ffd398; --new-bg:#423019; } }
+  :root[data-theme="dark"] { --paper:#10191c; --card:#19262a; --ink:#e3eeee; --muted:#a5babc; --line:#34484c; --accent:#78d5c6; --wash:#183e37; --new:#ffd398; --new-bg:#423019; }
   * { box-sizing:border-box; }
   html { scroll-behavior:smooth; }
   body { margin:0; background:var(--paper); color:var(--ink); font:14px/1.7 var(--sans); }
-  main { max-width:1500px; margin:auto; padding:32px clamp(18px,3vw,44px) 64px; }
+  main { max-width:1500px; margin:auto; padding:32px clamp(16px,3vw,44px) 64px; }
   a { color:var(--accent); text-underline-offset:3px; }
   h1,h2,h3,p { margin-top:0; }
   h1 { font-size:clamp(25px,3vw,36px); line-height:1.25; letter-spacing:-.035em; margin-bottom:14px; }
@@ -32,119 +33,175 @@
   .table-wrap { overflow-x:auto; border:1px solid var(--line); border-radius:10px; margin:16px 0; background:var(--card); }
   table { border-collapse:collapse; width:100%; font-size:13px; text-align:left; }
   caption { text-align:left; padding:14px 16px; font-weight:700; background:var(--wash); }
-  th,td { padding:13px 14px; border-bottom:1px solid var(--line); border-right:1px solid var(--line); vertical-align:top; }
+  th,td { padding:11px 12px; border-bottom:1px solid var(--line); border-right:1px solid var(--line); vertical-align:top; }
   th:last-child,td:last-child { border-right:0; }
   tr:last-child td,tr:last-child th { border-bottom:0; }
   thead th { background:var(--wash); font-weight:700; }
-  tbody th { width:22%; }
-  .matrix { min-width:780px; table-layout:fixed; }
-  .matrix th:first-child { width:24%; }
-  .matrix th:not(:first-child) { width:19%; }
-  .matrix small { display:block; color:var(--muted); font-size:11px; margin-top:4px; }
+  tbody th { width:20%; }
+  .matrix { min-width:1060px; table-layout:fixed; }
+  .matrix th:first-child { width:22%; }
+  .matrix thead th:not(:first-child) { width:11.1%; }
+  .matrix small { display:block; color:var(--muted); font-size:11px; margin-top:4px; font-weight:400; }
+  .matrix td { font-size:12.5px; }
   .active { font-weight:700; color:var(--accent); }
-  .proposed { background:var(--new-bg); color:var(--new); font-weight:700; }
   .unused { color:var(--muted); }
   .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:16px 0; }
-  .card { padding:20px; background:var(--card); border:1px solid var(--line); border-radius:10px; }
+  .grid.three { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .card { padding:20px; background:var(--card); border:1px solid var(--line); border-radius:10px; min-width:0; }
   .card p:last-child { margin-bottom:0; }
+  .card ul { margin:0 0 10px; padding-left:1.15em; }
   .number { color:var(--accent); font:700 12px ui-monospace,monospace; margin-bottom:8px; }
-  .pipeline { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:16px 0; }
+  .pipeline { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; margin:16px 0; }
+  .pipeline.four { grid-template-columns:repeat(4,minmax(0,1fr)); }
   .pipeline .card { padding:16px; }
   .pipeline h3 { font-size:15px; }
   .pipeline p { font-size:13px; }
+  .new-tag { display:inline-block; font:700 10.5px ui-monospace,monospace; color:var(--new); background:var(--new-bg); border:1px solid var(--new); border-radius:4px; padding:0 6px; margin-left:6px; vertical-align:2px; }
   .sources { border-top:1px solid var(--line); padding-top:18px; margin-top:36px; font-size:12px; color:var(--muted); }
-  @media (max-width:900px) { .pipeline { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-  @media (max-width:600px) { main { padding-top:22px; } .grid,.pipeline { grid-template-columns:1fr; } .diagram { height:980px; } }
+  @media (max-width:1100px) { .pipeline { grid-template-columns:repeat(3,minmax(0,1fr)); } .pipeline.four { grid-template-columns:repeat(2,minmax(0,1fr)); } .grid.three { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media (max-width:640px) { main { padding-top:22px; } .grid,.grid.three,.pipeline,.pipeline.four { grid-template-columns:1fr; } .diagram { height:760px; } }
   @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
 </style>
 </head>
 <body>
 <main>
   <header>
-    <p class="eyebrow">01 · DDDJANGO-WEB / 동작 흐름</p>
-    <h1>JS 스킬을 포함한 웹 빌더의 협력 구조</h1>
-    <p class="lead">Coordinator가 진행을 맡고, 기존 에이전트 4개가 명세·코드·검토를 나눠 소유합니다. <code>implementation-javascript</code>를 포함한 스킬 5개의 현재 사용 관계와 작업 전달 과정을 함께 보여줍니다.</p>
-    <div class="notice"><span class="status">통합 소스 적용 완료</span>Claude·Codex 실행 지침, 기존 에이전트 4개의 역할, JS 스킬 주입과 백스톱에 반영했습니다. 각 런타임의 통제된 생성 샘플에서 실제 Django·HTMX·UI JS 동작을 확인했습니다. 커밋·배포 상태를 뜻하지 않습니다.</div>
+    <p class="eyebrow">01 · DDDJANGO-WEB 2.1.0 / 동작 흐름</p>
+    <h1>간소화 DDD + MVVM 으로 화면을 짓는 웹 빌더의 협력 구조</h1>
+    <p class="lead">Coordinator 가 진행을 맡고, 에이전트 7개가 명세 · 리뷰 · 코드 · 감수를 나눠 소유합니다. 새 화면은 범위(G0) → 설계(G1) → 구현(G2) 세 단계마다 사용자 승인을 받고 넘어갑니다. 2.1.0 에서는 <b>기존 코드 정리(빚)</b> · <b>외부 JS 승인 절차</b> · <b>리팩토링 입구</b>가 새 구조에 맞춰 돌아왔습니다.</p>
+    <div class="notice"><span class="status">2.1.0</span>dddjango-web 2.1.0 의 Coordinator · 에이전트 7 · 스킬 12 · <code>REQUEST_GUIDE.md</code> 를 기준으로 그렸습니다. 1.x 의 구조(화면 영역 · client · 에이전트 4 · 스킬 5)는 2.0.0 에서 dddart 판 구조로 바뀌었습니다.</div>
     <nav aria-label="문서 목차">
-      <a href="#flow">협력 흐름</a><a href="#skills">모든 스킬의 사용 관계</a><a href="#owners">역할과 산출물</a><a href="#runtime">기술별 책임</a><a href="#example">JS 기능 한 건의 진행</a>
+      <a href="#flow">협력 흐름</a><a href="#journey">요청에서 끝까지</a><a href="#modes">진행 방식 넷</a><a href="#skills">스킬 12 × 에이전트 7</a><a href="#owners">역할과 산출물</a><a href="#debt">기존 코드 정리</a><a href="#sdk">외부 JS 승인</a><a href="#refactor">리팩토링 입구</a><a href="#runtime">기술별 책임</a>
     </nav>
   </header>
 
   <section id="flow" aria-labelledby="flow-title">
     <h2 id="flow-title">작업은 이렇게 전달됩니다</h2>
-    <p class="caption">선은 산출물의 전달 순서입니다. 호출·입력 전달·반송은 모두 Coordinator가 중계하며, G0·G1·G2는 사용자가 승인합니다.</p>
-    <iframe class="diagram" src="work_flow_web.html" title="archify로 작성한 dddjango-web 에이전트 협력 흐름"></iframe>
-    <p class="caption">archify 대화형 흐름도 · <a href="work_flow_web.html" target="_blank" rel="noopener">독립 화면으로 열기</a> · <a href="work_flow_web.spec.json">재생성용 명세</a></p>
+    <p class="caption">선은 산출물이 전달되는 순서입니다. 호출 · 입력 전달 · 반송은 모두 Coordinator 가 중계하고, G0 · G1 · G2 는 사용자가 승인합니다. 위 줄이 범위와 설계, 아래 줄이 구현과 마무리입니다.</p>
+    <iframe class="diagram" src="work_flow_web.html" title="archify 로 그린 dddjango-web 2.1.0 에이전트 협력 흐름"></iframe>
+    <p class="caption">archify 대화형 흐름도 · <a href="work_flow_web.html" target="_blank" rel="noopener">독립 화면으로 열기</a> · <a href="work_flow_web.spec.json">다시 만들 때 쓰는 명세</a> · 그림 안 «보기» 단추로 «기능 요청의 본선 · 기존 코드 정리 · 리팩토링 입구 · 설계와 4축 리뷰»를 골라 볼 수 있습니다.</p>
+  </section>
+
+  <section id="journey" aria-labelledby="journey-title">
+    <h2 id="journey-title">요청에서 끝까지 — 사용자가 보는 순서</h2>
+    <p>요청에는 세 가지만 주면 됩니다. 나머지는 플러그인이 프로젝트를 조사하고, 사람이 정해야 하는 것만 묻습니다(근거: <code>dddjango-web/REQUEST_GUIDE.md</code>).</p>
+    <div class="pipeline">
+      <article class="card"><p class="number">00 · 요청</p><h3>세 가지를 준다</h3><p>① 만들 기능(결과로) ② OpenAPI 문서 위치 — 이 프로젝트 안 경로(<code>/api/openapi.json</code>, 추천) · 파일 경로 · 웹 주소 ③ 디자인 — Claude Design 화면 주소 또는 내려받은 시안 폴더(없으면 이미지 · 자체 설계).</p></article>
+      <article class="card"><p class="number">01 · G0 범위</p><h3>범위와 출발 점검</h3><p>정리한 범위 · 진행 방식과 근거 · Django 연결 점검 결과 · API 와 디자인 출처를 봅니다. 시안이면 «이 화면이 맞나요?»를 묻고, 손댈 파일 쪽 기존 위반(빚)이 있으면 정리할지 묻습니다.</p></article>
+      <article class="card"><p class="number">02 · G1 설계</p><h3>설계 승인</h3><p>설계 문서 경로와 요지, 기본으로 빼 둔 항목, 설계가 혼자 못 정한 선택지, 가정한 API 목록을 확인합니다. 외부 JS(공식 SDK)가 필요하면 <b>따로 한 문항</b>으로 묻습니다. 승인한 설계가 코드의 유일한 근거가 됩니다.</p></article>
+      <article class="card"><p class="number">03 · G2 구현</p><h3>직접 띄워 확인</h3><p>화면 동작 목록(위험 항목 별표) · 시안(또는 토큰)과의 비교 · 빚 한 줄을 봅니다. <code>python manage.py runserver</code> 로 직접 띄워 브라우저에서 확인한 뒤 승인합니다. API 를 가정했으면 첫 줄기 직후 한 번 더 묻습니다.</p></article>
+      <article class="card"><p class="number">04 · 끝</p><h3>검증 보고 · 한 묶음</h3><p>실제로 돌린 검증만 보고합니다. 깨끗한 상태에서 시작했으면 작업 중 커밋을 <b>스테이징된 미커밋 한 묶음</b>으로 모아 둡니다 — <code>git diff --staged</code> 로 보고 직접 커밋합니다.</p></article>
+    </div>
+    <p class="caption">요청에 적지 않을 것: 진행 방식 · 폴더 · 파일 · 클래스 이름 · 화면 쪼개기 · 라이브러리 · 테스트 명령 · 단계 미리 승인 · 빚 정리 미루기 — 플러그인 단계가 정하고 게이트에서 확인받습니다. 한 번 준 API 위치와 시안 출처는 <code>.dddjango-web/config.json</code> 에 남아 다음 요청에서 다시 묻지 않습니다.</p>
+  </section>
+
+  <section id="modes" aria-labelledby="modes-title">
+    <h2 id="modes-title">진행 방식 네 가지 — 파일 수가 아니라 구조 단위로 가른다</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th scope="col">방식</th><th scope="col">언제</th><th scope="col">게이트</th><th scope="col">설계 리뷰</th><th scope="col">규율 감수</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">풀 파이프라인</th><td>새 화면(view 삼총사) · 새 애그리거트 · 새 BC · 라우트 추가 중 하나라도 생길 때</td><td>G0 → G1 → G2 → 마무리</td><td>4축(ddd · ui · state · data) <b>전부 병렬</b> — 스코프로 축을 고르지 않는다</td><td>G2 직전 전체 1회 + Model/View 경계 경량 1회 + (슬라이스 3개 이상) 슬라이스별</td></tr>
+        <tr><th scope="row">수정</th><td>기존 구조 안의 파일 추가 · 수정(예: 기존 화면에 section 하나)</td><td>G0 → (G1′) → G2 → 마무리. 설계 변경이 없고 승인된 명세가 있으면 G1′ 생략 — 단 빚 정리 · SDK 변경이 있으면 생략하지 않는다</td><td>건드린 층으로 기계 매핑(domain→ddd · infra→data · application→state · presentation→ui) + ddd 항상</td><td>건드린 파일 한정 경량 1회</td></tr>
+        <tr><th scope="row">트리비얼</th><td>새 파일 0 + 문구 · 토큰 값 · 아이콘만 바꿀 때</td><td>판정 승인 1회 → Coordinator 가 직접 편집 → 백스톱 + check → 보고(G2 없음 · 기록 폴더 없음)</td><td>없음</td><td>없음. 고칠 파일 쪽에 빚이 있거나 구조를 건드리게 되면 수정 모드로 올린다</td></tr>
+        <tr><th scope="row">리팩토링 <span class="new-tag">2.1.0</span></th><td><code>/dddjango-web:refactor &lt;단위&gt;</code> 로만 — 화면 동작은 그대로 두고 단위 하나를 정리</td><td>R0~R3 점검 → G0 → G1 → G2 → 마무리(기능 슬라이스 없이 슬라이스 0 만)</td><td>R2 단위 점검은 리뷰어 다섯(4축 + 규율) 전부. 슬라이스 0 명세의 G1 리뷰는 닿는 층 + ddd</td><td>Phase 1 경량 점검 필수 + G2 감사</td></tr>
+      </tbody>
+    </table></div>
+    <p class="caption">판별한 방식과 근거는 G0 보고에 항상 보이고 승인받습니다. 정리만 원하는 요청을 <code>/dddjango-web:dddjango-web</code> 에 주면 리팩토링 입구를 안내하고 멈춥니다.</p>
   </section>
 
   <section id="skills" aria-labelledby="skills-title">
-    <h2 id="skills-title">스킬 5개 × 에이전트 4개 — 전체 협력표</h2>
-    <p>스킬은 판단·작성 기준이며 실행 담당자가 아닙니다. 아래의 <strong class="active">● 기본 주입</strong>은 Claude 에이전트의 <code>skills:</code> 목록과 대응 Codex 역할의 스킬 로딩 지침을 뜻합니다. JS 스킬의 직접 주입 대상은 구현자와 규율 감수자 두 역할입니다.</p>
+    <h2 id="skills-title">스킬 12 × 에이전트 7 — 전체 주입표</h2>
+    <p>스킬은 판단 · 작성 기준이고 실행 담당자가 아닙니다. <strong class="active">●</strong> 는 Claude 에이전트의 <code>skills:</code> 목록(Codex 는 대응 역할의 스킬 로딩 지침)에 들어 있다는 뜻입니다. 설계 리뷰어 넷은 자기 축의 architecture 스킬 하나만 받고, 설계자는 네 축을 모두 받습니다.</p>
     <div class="table-wrap">
       <table class="matrix">
-        <caption>현재 스킬 5개의 직접 주입 관계</caption>
-        <thead><tr><th scope="col">스킬 · 소유하는 지식</th><th scope="col">화면 설계자<small><code>design-architect-web</code></small></th><th scope="col">설계 리뷰어<small><code>design-review-web</code></small></th><th scope="col">화면 구현자<small><code>coder-web</code></small></th><th scope="col">규율 감수자<small><code>discipline-reviewer-web</code></small></th></tr></thead>
+        <caption>스킬 12개의 직접 주입 관계(합계 21)</caption>
+        <thead><tr><th scope="col">스킬 · 소유하는 지식</th><th scope="col">화면 설계자<small><code>design-architect-web</code></small></th><th scope="col">리뷰 ddd<small><code>design-review-ddd-web</code></small></th><th scope="col">리뷰 ui<small><code>design-review-ui-web</code></small></th><th scope="col">리뷰 state<small><code>design-review-state-web</code></small></th><th scope="col">리뷰 data<small><code>design-review-data-web</code></small></th><th scope="col">구현자<small><code>coder-web</code></small></th><th scope="col">규율 감수자<small><code>discipline-reviewer-web</code></small></th></tr></thead>
         <tbody>
-          <tr><th scope="row"><code>architecture-web</code><small>구조·기술 경계·상태의 소유</small></th><td><span class="active">● 기본 주입</span><br>화면 분해·계약·기술별 책임을 명세</td><td><span class="active">● 기본 주입</span><br>명세의 구조·계약·시안 충실도 검토</td><td class="unused">기본 주입 없음<br>승인된 명세로 설계 결정을 소비</td><td class="unused">기본 주입 없음<br>역할 지침·명세의 책임 경계를 대조</td></tr>
-          <tr><th scope="row"><code>discipline-web-houserules</code><small>표준 트리·명명·참조 격리</small></th><td><span class="active">● 기본 주입</span><br>전체 파일 목록·배치·이름 확정</td><td class="unused">기본 주입 없음</td><td><span class="active">● 기본 주입</span><br>명세대로 파일 배치·참조</td><td><span class="active">● 기본 주입</span><br>배치·명명·격리의 의미 위반 감수</td></tr>
-          <tr><th scope="row"><code>discipline-cleancode</code><small>공통 코드 품질·단순성</small></th><td class="unused">기본 주입 없음</td><td class="unused">기본 주입 없음</td><td><span class="active">● 기본 주입</span><br>명확성·중복·책임·오류 처리</td><td><span class="active">● 기본 주입</span><br>구현 품질 감수<br><small>설계 경량 모드에서는 과분해·과추상 점검</small></td></tr>
-          <tr><th scope="row"><code>implementation-ui</code><small>Django·HTML·HTMX·CSS·client 표기</small></th><td class="unused">기본 주입 없음</td><td class="unused">기본 주입 없음</td><td><span class="active">● 기본 주입</span><br>화면 구현·시안 재현·실제 렌더 확인</td><td class="unused">기본 주입 없음<br>역할 지침이 지정한 구현 표기 절은 필요 시 참조</td></tr>
-          <tr><th scope="row"><code>implementation-javascript</code><small>UI JS 작성·수명·검증</small></th><td class="unused">주입 추가 없음<br><code>architecture-web</code>에서 JS 허용 범위를 설계</td><td class="unused">주입 추가 없음<br>기술·상태 경계를 설계 관점에서 검토</td><td class="active">● 기본 주입<br>UI JS가 필요한 기능을 작성·브라우저 검증</td><td class="active">● 기본 주입<br>같은 스킬로 UI JS의 구현·수명·검증 증거 감수</td></tr>
+          <tr><th scope="row"><code>architecture-ddd</code><small>간소화 DDD · 애그리거트 · 판정 소유 · UseCase 관문</small></th><td class="active">●</td><td class="active">●</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td></tr>
+          <tr><th scope="row"><code>architecture-ui</code><small>view · section · widget · ui_extension · router · navigator</small></th><td class="active">●</td><td class="unused">—</td><td class="active">●</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td></tr>
+          <tr><th scope="row"><code>architecture-state</code><small>VM 3변종 · State · 에러 2채널 · 세션·프로세스 수명</small></th><td class="active">●</td><td class="unused">—</td><td class="unused">—</td><td class="active">●</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td></tr>
+          <tr><th scope="row"><code>architecture-data</code><small>Repo Either · safe_api_call · DataSource · OpenAPI 스냅샷</small></th><td class="active">●</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="active">●</td><td class="unused">—</td><td class="unused">—</td></tr>
+          <tr><th scope="row"><code>discipline-houserules</code><small>표준 트리 · 명명 · import 방향 · 공식 SDK 등재</small></th><td class="active">●</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="active">●</td><td class="active">●</td></tr>
+          <tr><th scope="row"><code>discipline-cleancode</code><small>이름 · 함수 형태 · 캡슐화 · 상속보다 반복</small></th><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="active">●</td><td class="active">●</td></tr>
+          <tr><th scope="row"><code>discipline-test</code><small>무엇을 테스트 · 오라클 · 단언 FORM · 헛테스트 차단</small></th><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="active">●</td><td class="active">●</td></tr>
+          <tr><th scope="row"><code>implementation-python</code><small>PEP 8 선별 · frozen dataclass · match · Either</small></th><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="active">●</td><td class="unused">—</td></tr>
+          <tr><th scope="row"><code>implementation-django</code><small>urls · in-process ApiClient · 템플릿 · CSS · 정적 자산 · SDK 로드</small></th><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="active">●</td><td class="unused">—</td></tr>
+          <tr><th scope="row"><code>implementation-htmx</code><small>htmx 2.0.10 · 요청 구동 VM · hx-* · HX-Trigger</small></th><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="active">●</td><td class="unused">—</td></tr>
+          <tr><th scope="row"><code>implementation-javascript</code><small>승인된 UI JS · HTMX 교체 수명 · 공식 SDK 소비</small></th><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="active">●</td><td class="active">●</td></tr>
+          <tr><th scope="row"><code>implementation-test</code><small>pytest-django · HTML 단언 · 더블 · 브라우저 테스트</small></th><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="unused">—</td><td class="active">●</td><td class="unused">—</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="caption">‘기본 주입 없음’은 관련 규범을 무시한다는 뜻이 아닙니다. 명세·역할 지침·스킬의 교차 참조로 소비하는 경우를 기본 주입과 구분했습니다. 필요한 reference 절만 읽는 현행 방식을 유지합니다.</p>
+    <p class="caption">«—» 는 그 규범을 무시한다는 뜻이 아닙니다. 승인된 명세 · 역할 지침 · 스킬의 교차 참조로 소비하는 경우를 직접 주입과 구분했습니다. 각 스킬은 SKILL.md 의 라우팅 표로 필요한 절만 읽습니다.</p>
   </section>
 
   <section id="owners" aria-labelledby="owners-title">
     <h2 id="owners-title">역할마다 입력과 산출물의 주인이 있습니다</h2>
-    <div class="notice"><strong>Coordinator — 진행의 주인</strong><br>요구·시안·이미지와 파일·API 계약을 확보하고 출처와 수집 실패도 기록합니다. G0/G1/G2, 에이전트 호출, 계약 동결, 슬라이스, 감수·백스톱 실행, 반송·증거 통합·최종 보고를 관리합니다. 명세는 설계자에게, 코드는 구현자에게 맡깁니다.</div>
+    <div class="notice"><strong>Coordinator — 진행의 주인</strong><br>요청을 받아 진행 방식을 가르고, Django 연결 설정을 점검해 승인받은 줄만 넣고, OpenAPI 문서와 시안을 <b>동결</b>합니다(시안 토큰 · 이미지 · 계약은 스크립트로 기계 절단 — 사람이 손으로 베끼지 않습니다). 빚 스캔 · 게이트 · 에이전트 호출 · 슬라이스 도출 · 백스톱 · 전수 테스트 · 반송 · 최종 보고 · 미커밋 합치기를 맡습니다. 직접 쓰는 것은 스코프 메모 · 동결 스냅샷 · 연결 설정 · <code>build-state.json</code> · 빚 기록 · 공식 SDK 설치(격리 커밋)뿐이고, <b>명세는 설계자에게, 코드는 구현자에게</b> 맡깁니다.</div>
     <div class="grid">
-      <article class="card"><p class="number">AGENT 01 · PHASE 1</p><h3>화면 설계자</h3><p><code>design-architect-web</code></p><p><strong>입력:</strong> G0 범위, 동결 시안·에셋·API 계약.</p><p><strong>산출:</strong> <code>design-spec.md</code>. <code>UI 동작 계약</code>에 요구 근거, 담당 기술, JS/HTMX 파일, root·대상, 서버 요청·swap 경계, 임시 상태·자원, 키보드·실패·정리, 검증 행위를 확정합니다. JS가 필요 없으면 이유를 남깁니다. 리뷰 노트와 설계 반송을 반영하는 유일한 명세 작성자입니다.</p></article>
-      <article class="card"><p class="number">AGENT 02 · PHASE 1</p><h3>설계 리뷰어</h3><p><code>design-review-web</code></p><p><strong>입력:</strong> 명세 초안과 시안·실물 계약 근거.</p><p><strong>산출:</strong> 독립 리뷰 노트. JS가 HTMX·서버 상태를 침범하는지 설계 관점에서 검토합니다. 명세·코드는 직접 수정하지 않으며, Coordinator가 설계자에게 노트를 전달합니다.</p></article>
-      <article class="card"><p class="number">AGENT 03 · PHASE 2</p><h3>화면 구현자</h3><p><code>coder-web</code></p><p><strong>입력:</strong> G1 명세, 동결 계약·시안·에셋, 이번 슬라이스.</p><p><strong>산출:</strong> <code>web/</code> 코드와 실제 렌더·브라우저 증거. Python·HTML·HTMX·CSS와 필요한 JS를 함께 구현합니다. 설계 결정을 바꿔야 하면 Coordinator에 반송합니다.</p></article>
-      <article class="card"><p class="number">AGENT 04 · PHASE 2</p><h3>규율 감수자</h3><p><code>discipline-reviewer-web</code></p><p><strong>입력:</strong> 코드, 승인 명세, 감사 범위, 브라우저·시안 대조 증거.</p><p><strong>산출:</strong> 감수 리포트. 새 JS 스킬로 초기화·정리·UI 상태·키보드 동작의 구현 의미와 증거를 대조합니다. 직접 수정하지 않으며, 코드 수정은 구현자에게 돌아갑니다.</p></article>
+      <article class="card"><p class="number">AGENT 01 · PHASE 1</p><h3>화면 설계자</h3><p><code>design-architect-web</code></p><p><strong>입력:</strong> 승인된 스코프 메모 · 동결 OpenAPI · 시안(design-ref) · 디자인 토큰 · 이미지 매니페스트 · (있으면) BC 배치 · area 판정 · 빚 정리 목록.</p><p><strong>산출:</strong> 통합 설계 명세 <code>design-spec.md</code> 하나 — 도메인 · 화면 · 상태 · 데이터 네 관점, 외부 관찰 가능 행위 목록, 판정 소유 라벨, 계약 위험 표기, 파일 목록 · 구조 결정, (빚 정리가 있으면) <code>## 슬라이스 0</code> 절, (필요하면) SDK 사용 표. 리뷰 노트를 반영 · 중재하는 <b>유일한 명세 작성자</b>이고 코드는 쓰지 않습니다.</p></article>
+      <article class="card"><p class="number">AGENT 02~05 · PHASE 1</p><h3>설계 리뷰어 넷</h3><p><code>design-review-{ddd,ui,state,data}-web</code></p><ul><li><b>ddd</b> — 애그리거트 경계 · 판정 소유 · BC 배치 · 교차 BC 채널</li><li><b>ui</b> — 화면 분해 · design_system 재사용 · 내비게이션 · view 수동성 · 시안 대조</li><li><b>state</b> — SharedState 채택 · 갱신 채널 · 수명 · 일회성 이벤트 · State 계약</li><li><b>data</b> — 서버 계약 대조 · Either 계약 · DataSource 분해 · 공식 SDK</li></ul><p><strong>산출:</strong> 축별 리뷰 노트. 서로의 노트를 보지 않고(편향 방지), 관심사가 없으면 «해당 없음 + 근거 한 줄»을 반드시 냅니다. 명세 · 코드는 고치지 않습니다.</p></article>
+      <article class="card"><p class="number">AGENT 06 · PHASE 2</p><h3>화면 구현자</h3><p><code>coder-web</code></p><p><strong>입력:</strong> 승인 명세 · 이번 슬라이스 · <code>server-contract.json</code>(또는 가정 계약 절) · 시안 · 이미지 매니페스트 · check 베이스라인 · <code>test_command</code> · htmx 경로.</p><p><strong>산출:</strong> 코드 + 행위 검증 테스트(<code>web_test/</code>). 아래층부터(domain → infra → application → presentation → 배선) 쌓고, 층마다 <code>py_compile</code> · <code>manage.py check</code> 를 실제로 돌려 <b>베이스라인 대비 신규 0</b>, 테스트가 생기면 <code>test_command</code> 전수 통과까지 확인합니다. 명세에 없는 구조 결정 · 층 밖 파일 수정 · 기존 판정 복제를 만나면 멈추고 보고합니다.</p></article>
+      <article class="card"><p class="number">AGENT 07 · PHASE 2</p><h3>규율 감수자</h3><p><code>discipline-reviewer-web</code></p><p><strong>입력:</strong> 코드 · 명세 · 슬라이스 계획 · 지금 끝난 슬라이스(=감사 범위 — «아직 안 만든 것»과 «누락»을 가른다).</p><p><strong>산출:</strong> 감수 리포트(blocker → important → nit). 행위↔코드 대조 · 판정 소유(빈혈) · 에러 2채널 · view 수동성 · 클린코드 · 백스톱이 못 보는 구조 · 명명의 의미 변종 · 테스트 FORM · 슬라이스 0 대조 · 공식 SDK 소비를 봅니다. 코드는 고치지 않고, 반영은 구현자 몫입니다.</p></article>
     </div>
-    <p class="caption">규율 감수자는 필요하면 Phase 1에서 명세 단순성만 경량 점검합니다. 이때는 아직 없는 코드나 브라우저 증거를 요구하지 않습니다.</p>
+    <p class="caption">규율 감수자는 Phase 1 에서 명세 단순성만 보는 경량 점검으로도 불립니다 — 명세에 슬라이스 0 절이 있으면 생략할 수 없습니다. 리팩토링 입구에서는 리뷰어 넷과 규율 감수자가 «단위 점검(UNIT_AUDIT)» 모드로, 설계자가 «의미 항목 판정» 모드로 불립니다.</p>
+  </section>
+
+  <section id="debt" aria-labelledby="debt-title">
+    <h2 id="debt-title">기존 코드 정리(빚) <span class="new-tag">2.1.0</span> — 면제가 아니라 아직 안 갚은 빚</h2>
+    <p>백스톱 게이트는 이번 작업이 들인 위반만 잡습니다. 기존 코드의 위반은 G0 에서 따로 드러내고, <b>이번 요청이 손대는 파일과 그 파일을 부르는 곳</b>의 것만 묻습니다. 범위 밖 빚은 기록에만 남고 다음 요청의 스캔이 다시 냅니다.</p>
+    <div class="pipeline four">
+      <article class="card"><p class="number">01 · G0 빚 스캔</p><h3>찾고 묻는다</h3><p><code>backstop.py --debt-scan</code> 이 <code>web/</code> 전체를 훑어 <code>debt-g0.json</code> 으로 얼립니다. 범위에 빚이 있으면 G0 보고 전에 «<b>지금 정리하고 시작</b>(권장) / 이번에는 미룸(사유와 결정 출처) / 리팩토링 입구로 따로(이 요청은 멈춤 — 여러 단위에 걸칠 때만)»을 묻습니다. 이번 결과를 해치는 위반은 미룰 수 없습니다.</p></article>
+      <article class="card"><p class="number">02 · G1 명세</p><h3>정리 계획을 명세에</h3><p>설계자가 명세에 <code>## 슬라이스 0</code> 절을 씁니다 — 옮길 파일(<code>경로:</code>) · 바꿀 이름(<code>이름:</code>) · 함께 고칠 참조. 동작 그대로 정리할 수 없는 항목이 드러나면 빼고 멈춰 묻습니다. 규율 감수자의 경량 점검이 필수입니다.</p></article>
+      <article class="card"><p class="number">03 · 슬라이스 0</p><h3>기능보다 먼저</h3><p>구현자가 기능 슬라이스 앞에서 동작 그대로 정리합니다. 끝 green 다섯 — ① check 신규 0 ② 정리하기로 한 빚 잔존 0 ③ 옮긴 경로의 옛 참조 0 ④ web/ 밖 테스트 변경은 경로 · 이름 치환뿐 ⑤ 정리 앞뒤 기존 테스트의 새 실패 0.</p></article>
+      <article class="card"><p class="number">04 · G2 빚 잔존</p><h3>남았는지 다시 센다</h3><p><code>backstop.py --debt-residual</code> 이 같은 방식으로 다시 스캔해 «지금 정리»로 고른 빚이 사라졌는지 셉니다. 남았으면 G2 를 내지 않고 슬라이스 0 을 다시 엽니다. G2 보고에 빚 한 줄(잔존 · 미룬 수 · G0 에 없던 키)이 붙습니다.</p></article>
+    </div>
+    <p class="caption">«미룸»은 사용자 본인의 답이나 사용자 원문(파일:행 · 시각)이 있어야 받습니다. 발주 · 다른 세션의 판단 · 일정 발화 · 일반 방침은 출처가 아닙니다. 표준 트리 밖 옛 배치 파일(1.x 의 <code>&lt;screen_area&gt;/</code>·<code>client/</code>·<code>base/</code> 류)은 파일마다 <code>ST0</code> 빚으로 나오고, 정리하면 새 트리의 자리 · 이름으로 옮겨집니다.</p>
+  </section>
+
+  <section id="sdk" aria-labelledby="sdk-title">
+    <h2 id="sdk-title">외부 JS 승인 <span class="new-tag">2.1.0</span> — 플랫폼 공식 SDK 만, 따로 묻고 등재한다</h2>
+    <p>web 이 들이는 외부 JavaScript 는 <b>플랫폼 운영자가 자기 서비스 API 를 부르라고 직접 배포하는 브라우저 SDK</b>(카카오 SDK 류) 하나뿐입니다. 차트 · UI 프레임워크 · 유틸 같은 일반 라이브러리는 후보가 아니고, 그런 결과는 서버가 만드는 설계 · 평범한 링크 · native 로 냅니다.</p>
+    <div class="grid three">
+      <article class="card"><p class="number">PHASE 1</p><h3>설계와 후보 사실</h3><p>설계자가 명세에 <b>SDK 사용 표</b>(쓰는 기능 묶음 · 부르는 기능 JS · 로드 위치 · 공개 설정 이름 · 실패 동작 · 검증 행위)를 둡니다. Coordinator 는 <code>sdk_vendor.py candidate</code> 로 운영자 원본 · 문서를 직접 받아 인용 · 무결성 · 지문 · 라이선스 사실을 모으고, 데이터 리뷰어가 «공식 SDK» 항목을 봅니다.</p></article>
+      <article class="card"><p class="number">G1</p><h3>설계 승인과 따로 한 문항</h3><p>새 채택 · 판 올림 · 범위 넓힘 · 기존 등록은 명세 승인과 <b>따로</b> 쉬운 말 한 문항으로 묻습니다 — «승인 / 기각 — 이 도구 없이 다시 설계». 출처는 본인 직접 답 또는 커밋된 사용자 원문뿐이라 대리할 수 없습니다. 기각하면 그 SDK 없이 다시 설계합니다.</p></article>
+      <article class="card"><p class="number">PHASE 2 · G2</p><h3>격리 커밋과 경계 확인</h3><p>승인된 SDK 는 <code>sdk_vendor.py install</code> → <code>verify</code> 뒤 목록 · 사본만 담은 <code>chore(web-sdk):</code> 격리 커밋으로 들어옵니다(<code>web/sdk_registry.json</code> · <code>web/static/vendor/&lt;id&gt;/</code>). G2 전에는 운영자 호스트를 막은 브라우저에서 호출 경계를 기록 대조합니다 — 실제 발송은 0, 실제 왕복은 등록 도메인에서 사용자가 확인합니다.</p></article>
+    </div>
+    <p class="caption">공개 키는 settings 값만 출처입니다(키 값은 요청에 적지 않습니다). 승인한 도구는 같은 기능 묶음이면 다음 요청에서 다시 묻지 않습니다. 등재 목록 · 사본은 백스톱 WV 13종이 게이트와 무관하게 늘 검사합니다.</p>
+  </section>
+
+  <section id="refactor" aria-labelledby="refactor-title">
+    <h2 id="refactor-title">리팩토링 입구 <span class="new-tag">2.1.0</span> — 단위 하나를 동작 그대로 정리</h2>
+    <p><code>/dddjango-web:refactor &lt;단위&gt; [불편한 점]</code> — 단위는 업무 묶음 하나(<code>web/application/order</code>) · 정적 칸 하나(<code>web/static/images</code>) · <code>web/root</code> · <code>web/common</code> · <code>web/design_system</code> · 옛 배치 최상위 폴더 하나 가운데 하나입니다(Codex 는 <code>$dddjango-web-refactor</code>). 페이지 주소 · 화면 결과 · 화면이 쓰는 API 는 그대로 두고, 기존 테스트를 정리 앞뒤로 돌려 새로 깨진 것이 없는지 봅니다.</p>
+    <div class="pipeline">
+      <article class="card"><p class="number">R0 · R0′</p><h3>대상과 폴더</h3><p>대상 단위를 정확히 하나 읽고, <code>refactor-&lt;단위&gt;</code> 폴더를 정합니다. 새 동작을 요구하면 기능 요청으로 안내하고 멈춥니다.</p></article>
+      <article class="card"><p class="number">R1</p><h3>검사기 빚</h3><p><code>--debt-scan --refactor</code> — 기존 단위의 골격 미비까지 빚으로 냅니다.</p></article>
+      <article class="card"><p class="number">R2 · R2′</p><h3>의미 점검</h3><p>도구가 범위 · 조각 · 파견 표(<code>plan.md</code>)를 만들고, 조각마다 리뷰어 <b>다섯</b>(4축 + 규율)이 단위 점검 모드로 봅니다. 인용이 맞는지 도구가 다시 확인합니다.</p></article>
+      <article class="card"><p class="number">R3</p><h3>판정</h3><p>설계자가 항목마다 채택 · 병합 · 제외 · 오탐 · 사용자 판단 · 별도 요청으로 판정하고, 도구가 근거를 대조해 확정 표(<code>verdict-final.md</code>)를 씁니다.</p></article>
+      <article class="card"><p class="number">G0 → G2</p><h3>슬라이스 0 만</h3><p>G0 에서 항목마다 정리할지 묻고(사용자 판단 항목은 대리 답 불가), 슬라이스 0 명세 → G1 → 슬라이스 0 구현 → G2(남은 항목 수 · 영향 화면 전후 대조) → 마무리.</p></article>
+    </div>
+    <p class="caption">API 계약 · 다른 단위 본문 · web/ 밖 비테스트 파일을 바꿔야 하는 항목은 «별도 요청»으로 빠집니다(API 는 <code>/dddjango</code>). Django 연결 설정 미비는 보고만 하고 적용하지 않습니다 — 설정 변경은 동작 변경이기 때문입니다.</p>
   </section>
 
   <section id="runtime" aria-labelledby="runtime-title">
-    <h2 id="runtime-title">한 구현자가 다루되, 기술의 책임은 분리합니다</h2>
+    <h2 id="runtime-title">한 구현자가 다루되, 기술의 책임은 층으로 나뉩니다</h2>
     <div class="table-wrap"><table>
-      <thead><tr><th scope="col">기술</th><th scope="col">맡는 일</th><th scope="col">기준과 경계</th></tr></thead>
+      <thead><tr><th scope="col">기술</th><th scope="col">맡는 일</th><th scope="col">자리와 경계</th></tr></thead>
       <tbody>
-        <tr><th scope="row">Python · Django</th><td>API 계약 소비, form·표시 상태 준비, 서버 HTML 렌더링</td><td><code>architecture-web</code> + <code>implementation-ui</code>. 비즈니스 판정은 백엔드 서버가 소유합니다.</td></tr>
-        <tr><th scope="row">HTML</th><td>의미 있는 문서·폼·접근성 구조와 서버가 준비한 상태 표시</td><td><code>implementation-ui</code>. 표시 판정이나 별도의 비즈니스 계산을 복제하지 않습니다.</td></tr>
-        <tr><th scope="row">HTMX</th><td>서버 요청, 서버가 렌더한 HTML의 부분 교체</td><td><code>architecture-web</code> + <code>implementation-ui</code>. 폴링·SSE·WebSocket 등 실시간 통신 채택은 별도 결정입니다.</td></tr>
-        <tr><th scope="row">CSS</th><td>시안의 색·간격·서체·레이아웃·반응형·시각 전환</td><td><code>implementation-ui</code>. 동결 시안·토큰·에셋과 실제 렌더를 대조합니다.</td></tr>
-        <tr><th scope="row">JavaScript</th><td>포커스, 토글, 파일 미리보기, 브라우저 API, 임시 UI 상태</td><td><code>implementation-javascript</code>. 승인된 UI 동작만 구현하며 권한·금액·저장 판정, 별도 업무 API 호출, SPA 상태 계층을 만들지 않습니다. native HTML/CSS로 충분하면 JS 파일이 없습니다.</td></tr>
+        <tr><th scope="row">Python — Model</th><td>도메인 판정 · UseCase · Repo · DataSource</td><td><code>domain_layer</code>(순수 Python — django import 금지) · <code>application_layer/use_case</code> · <code>infra_layer</code>. 데이터는 같은 프로세스 안 <code>ApiClient</code> 로 JSON API 에서만 — 백엔드 코드 import 0. <code>architecture-ddd</code> · <code>architecture-data</code> · <code>implementation-python</code>.</td></tr>
+        <tr><th scope="row">Python — ViewModel</th><td>요청마다 State 조립 · 세션 수명 공유 값 · 비화면 이벤트</td><td><code>application_layer/view_model · state · shared_state · service</code> — <code>request</code> 를 모른다. <code>architecture-state</code> · <code>implementation-htmx</code>.</td></tr>
+        <tr><th scope="row">Django 템플릿 · urls</th><td>화면 3단(view · section · widget) · 라우팅 짝</td><td><code>presentation_layer</code> · <code>&lt;bc&gt;_router.py</code> · <code>&lt;bc&gt;_navigator.py</code>. 템플릿은 State 만 읽고 href 도 State 에서 받는다. <code>architecture-ui</code> · <code>implementation-django</code>.</td></tr>
+        <tr><th scope="row">HTMX 2.0.10</th><td>서버가 그린 section 의 부분 교체 · 재조회</td><td>조각 응답 함수 <code>&lt;화면&gt;_&lt;조각&gt;_fragment</code> · <code>HX-Trigger</code> 재조회. <code>hx-on</code> · <code>js:</code> · 조건식 · 확장 금지. core 는 <code>web/static/htmx/htmx.min.js</code> 한 파일. <code>implementation-htmx</code>.</td></tr>
+        <tr><th scope="row">CSS</th><td>시안의 색 · 글자 · 간격 · 모서리 · 그림자 · 연출 시간 · 레이아웃</td><td>값은 <code>design_system/foundation</code> 7파일의 변수만 — 리터럴 금지. 조각 CSS 는 <code>web/static/application/…/&lt;조각 stem&gt;.css</code> 로 템플릿과 짝. <code>implementation-django</code>.</td></tr>
+        <tr><th scope="row">JavaScript</th><td>포커스 · 토글 · 파일 미리보기 같은 승인된 UI 동작 · 공식 SDK 호출</td><td><code>web/static/js/&lt;기능&gt;.js</code> — 기능당 한 파일. 업무 판정 · 별도 API 호출 · SPA 상태 계층을 만들지 않는다. native HTML/CSS 로 되면 JS 없음. <code>implementation-javascript</code>.</td></tr>
       </tbody>
     </table></div>
-    <p><strong>파일 기준:</strong> <code>web/static/js/&lt;기능&gt;.js</code> — UI 기능 하나당 파일 하나입니다. 한 기능의 초기화·이벤트·정리 함수는 같은 파일에 둡니다. <a href="file_tree_web.html">웹 표준 트리</a>의 <code>css/</code>·<code>js/</code>·<code>htmx/</code>·<code>images/</code> 네 폴더 골격을 따릅니다. 검증된 폰트·다운로드 파일이 필요할 때만 <code>fonts/</code>·<code>files/</code>를 생성합니다.</p>
-    <p><strong>HTMX 포함 경계:</strong> <code>static/htmx/&lt;기능&gt;.html</code>은 snake_case·평면으로 기능당 한 선언 조각을 두고, 페이지/section에서 <code>{% include "static/htmx/&lt;기능&gt;.html" %}</code>로 렌더합니다. 기존 TEMPLATES DIRS의 web 루트를 사용하며 새 finder·middleware·템플릿 엔진을 만들지 않습니다. 공개 static 원문에 비밀·사용자별 렌더 결과를 저장하지 않습니다. 데이터·권한·CSRF·fragment 응답은 view/section이 소유하며 static URL은 업무 fragment endpoint가 아닙니다.</p>
-    <p><strong>실행 위치:</strong> 기능 JS는 snake_case·평면 파일을 base 공통 로드 또는 페이지의 범용 script block에서 외부 static 참조로 한 번만 로드합니다. classic은 <code>defer</code>, 기존 module 방식도 허용하며 <code>async</code>로 순서를 깨지 않습니다. fragment 실행 script와 inline JS·<code>on*</code>·<code>hx-on</code>·<code>js:</code>·<code>hx-trigger</code> 조건식은 금지합니다. 데이터는 <code>json_script</code> 또는 escape된 data 속성으로 전달하고 실행 소스에 보간하지 않습니다.</p>
-    <p><strong>고정 라이브러리:</strong> 신규 core는 <code>static/htmx/htmx.min.js</code> 한 파일입니다. 기존 <code>static/js/htmx.min.js</code>·<code>htmx.js</code>는 브라운필드 설치로만 소비하며 이중 설치·조용한 이동/업그레이드는 금지합니다. core 누락 시 공식 2.0.10 고정 파일을 설치하고 버전·출처를 기록합니다. <code>static/js/motion.js</code>는 러너 채택 시 조건 설치하는 byte 고정 예약 이름으로, 기능 JS로 덮어쓰지 않습니다.</p>
-    <p class="caption">모션 명세의 <code>ui-js</code>는 <code>static/js/&lt;기능&gt;.js :: [data-&lt;root&gt;]</code> 좌표와 근거·실제 동작 증거를 연결합니다. 백스톱은 경로·실행 채널·판형과 파일/root 존재를 확인합니다. 기능 일대일의 의미, 업무 로직 부재, JS 내부 모션 전수성은 독립 감수와 실제 동작 검증의 몫입니다. <code>static_only</code>도 필요한 로컬 UI JS를 허용합니다.</p>
-  </section>
-
-  <section id="example" aria-labelledby="example-title">
-    <h2 id="example-title">예: 파일 미리보기 한 기능이 들어오면</h2>
-    <p class="caption">역할 전달을 설명하는 예시입니다. 통제된 평가 앱에서 비밀번호 표시·로컬 파일 미리보기·실제 HTTP 교체·native disclosure를 확인한 범위와 한계는 <a href="../workspace/eval/web-ui-javascript-integration/2026-09-05/summary.md">실행 평가 기록</a>에서 확인할 수 있습니다.</p>
-    <div class="pipeline">
-      <article class="card"><p class="number">01 · 설계</p><h3>서버와 UI를 구분</h3><p>설계자는 업로드 처리·검증은 서버, 선택 파일의 로컬 미리보기는 JS로 명세합니다. 설계 리뷰어가 경계를 검토하고 사용자가 G1을 승인합니다.</p></article>
-      <article class="card"><p class="number">02 · 구현</p><h3>기존 구현자가 JS 작성</h3><p>구현자는 HTML·CSS를 구현하고, JS 스킬을 읽어 <code>file_preview.js</code>를 작성합니다. 임시 URL·이벤트·정리도 같은 UI 기능 안에서 관리합니다.</p></article>
-      <article class="card"><p class="number">03 · 브라우저 확인</p><h3>재사용·교체 상황 확인</h3><p>재선택, 초기화 중복, 여러 미리보기의 상태 격리, HTMX 교체 후 새 UI 연결과 이전 자원 정리, 키보드·포커스를 확인합니다.</p></article>
-      <article class="card"><p class="number">04 · 감수·인수</p><h3>같은 JS 기준으로 감수</h3><p>규율 감수자가 코드와 증거를 독립 대조합니다. Coordinator는 개정된 백스톱을 실행하고, G2에 실제 결과와 미검증 항목을 제시합니다.</p></article>
-    </div>
-    <div class="grid">
-      <article class="card"><h3>코드가 명세를 어긴 경우</h3><p>감수·브라우저 확인·백스톱 발견 → Coordinator → <strong>coder-web 수정</strong> → 영향을 받은 확인·감수·검사 재실행.</p></article>
-      <article class="card"><h3>명세의 기술 결정이 바뀌어야 하는 경우</h3><p>구현자가 사유 보고 → Coordinator → <strong>design-architect-web 수정</strong> → 관련 설계 재검토·G1 재확인 → 계약·슬라이스를 맞춘 뒤 구현 재개.</p></article>
-    </div>
+    <p class="caption">파일 자리와 이름의 정본은 <a href="file_tree_web.html">웹 표준 트리</a>입니다. 시안 HTML · JSX 는 그대로 옮기지 않고 토큰 · 아이콘 · 이미지 src 만 뽑아 템플릿 · CSS 로 새로 씁니다.</p>
   </section>
 
   <footer class="sources">
-    <p><strong>읽어 확인한 기준:</strong> <code>dddjango-web/commands/dddjango-web.md</code>, <code>dddjango-web/agents/*.md</code>의 역할·입출력·<code>skills:</code> 목록, <a href="file_tree_web.html">웹 표준 트리</a>. JS 스킬 직접 주입과 실행 경계는 현재 소스에 반영된 계약입니다.</p>
-    <p>2026-09-05 · UI JS 통합 소스 반영 · 커밋·배포 없음 · 평가는 런타임별 통제 샘플과 Chrome 환경으로 한정</p>
+    <p><strong>읽어 확인한 기준(2.1.0):</strong> <code>dddjango-web/commands/dddjango-web.md</code>(Phase 0~3 · 수정 · 트리비얼 · 리팩토링 모드) · <code>commands/refactor.md</code> · <code>agents/*.md</code> 7개의 역할 · 입출력 · <code>skills:</code> 목록 · <code>skills/*/SKILL.md</code> 12개 · <code>skills/discipline-houserules/references/final.md</code> · <code>REQUEST_GUIDE.md</code>.</p>
+    <p>2026-10-06 · dddjango-web 2.1.0 기준</p>
   </footer>
 </main>
 </body>
