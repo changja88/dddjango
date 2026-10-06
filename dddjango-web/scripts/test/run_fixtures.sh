@@ -8,6 +8,7 @@
 # F15·F16 W4 결함 둘: 옛 배치 파일 층 의존 IM 불발화(층 무관 IM25 는 발화) · IM26 조각의 component extends
 # F17 F-X4-3: 도구 캐시 폴더(.ruff_cache 류)는 검사 대상 밖 · 일반 이름 비표준 폴더는 그대로 발화
 # F18 F-A2-2: 처음부터 개념 1차로 지은 새 BC 는 계층 직속 종류 폴더 없이 ST4 불발화 · 개념 내부·평면·혼합 배치의 누락은 그대로 발화
+# F19 2.2.0: --slice-end — 슬라이스 끝 실행은 뒤 슬라이스가 채울 검사 일곱을 미루고 국소 검사는 그대로 · 순환 기준선 파일을 만들지 않는다 · 금지 조합과 게이트 실행의 git status 실패는 exit 1
 # 픽스처는 mktemp -d 안의 git 저장소로 만들고 끝나면 지운다(Django 설치 불필요 — 파일 검사기).
 set -u
 SCRIPTS="$(cd "$(dirname "$0")/.." && pwd)"
@@ -575,6 +576,69 @@ concept_split "$B" application_layer ticket; concept_split "$B" presentation_lay
 commit "$P" split >/dev/null
 OUT=$(run_backstop "$P" --debt-scan --refactor --json "$T/f18m.json"); E=$?
 assert "F18m 기존 개념 1차 BC의 리팩토링 빚 스캔 — ST4 빚 0" 0 '빚 스캔 (리팩토링) — 키 0 · 발견 0' 'ST4' "$E" "$OUT"
+
+# ---------- F19 (2.2.0): --slice-end — 슬라이스 끝 실행은 뒤 슬라이스가 채울 검사 일곱(CY1·NM4·NM5·NM18·NM19·ST4·TG1)을 미루고
+#   그 파일 자체로 정해지는 검사는 그대로 낸다 · CY1 기준선 파일을 만들지 않는다 · 인자 없이 돌리면(G2 직전) 일곱이 그대로 난다
+P="$T/f19"; mkproj "$P" >/dev/null; mkclean "$P"; BASE=$(commit "$P" clean)
+H="$P/web/application/shop"
+# 새 BC shop 의 Model 슬라이스만 끝난 상태 — 골격 일부(ST4) · VM 은 있고 view·state 는 아직(NM4) · web_test 없음(TG1) · order↔shop 순환(CY1)
+w "$H/domain_layer/shop/shop.py" "import django.utils" "from dataclasses import dataclass" "" "" \
+  "@dataclass(frozen=True, slots=True, kw_only=True)" "class Shop:" "    key: str"                          # IM1(국소 — 슬라이스 끝에도 난다)
+w "$H/application_layer/use_case/shop_use_case.py" \
+  "from web.application.order.application_layer.use_case.get_orders_use_case import GetOrdersUseCase" "" "" \
+  "class ShopUseCase:" "    def execute(self) -> object:" "        return GetOrdersUseCase().execute()"
+w "$H/application_layer/view_model/shop_list_vm.py" \
+  "from web.application.shop.application_layer.use_case.shop_use_case import ShopUseCase" "" "" \
+  "class ShopListVM:" "    def build(self) -> object:" "        return ShopUseCase().execute()"                   # NM4
+w "$P/web/application/order/application_layer/use_case/shop_probe_use_case.py" \
+  "from web.application.shop.application_layer.use_case.shop_use_case import ShopUseCase" "" "" \
+  "class ShopProbeUseCase:" "    def execute(self) -> object:" "        return ShopUseCase().execute()"          # CY1(order ↔ shop)
+# 화면 슬라이스가 반쯤 — section 만(NM5) · view .py 만(NM18) · 조각 CSS 만(NM19)
+w "$H/presentation_layer/section/shop_list_filter_section.html" '<div class="shop-list-filter">{{ state.count }}</div>'   # NM5
+w "$H/presentation_layer/view/shop_detail_view.py" "from django.http import HttpRequest, HttpResponse" "" "" \
+  "def shop_detail_view(request: HttpRequest) -> HttpResponse:" "    return HttpResponse()"                    # NM18
+w "$P/web/static/application/shop/shop_banner_section.css" ".shop-banner { color: var(--color-primary); }"       # NM19
+markers "$P"
+OUT=$(run_backstop "$P" --diff-base "$BASE"); E=$?
+assert "F19a 인자 없이(G2 직전) — exit 2" 2 "IM1\] BLOCKER" - "$E" "$OUT"
+expect_ids "F19a 인자 없이 — 일곱이 그대로 난다" "$OUT" ST4 NM4 NM5 NM18 NM19 TG1 CY1
+OUT=$(run_backstop "$P" --diff-base "$BASE" --slice-end); E=$?
+assert "F19b 슬라이스 끝 — 국소 발견(IM1)은 난다 · exit 2" 2 "IM1\] BLOCKER — web/application/shop/domain_layer/shop/shop.py" - "$E" "$OUT"
+assert "F19b 슬라이스 끝 — 일곱은 발견 줄로 안 난다" 2 - '\[\(ST4\|NM4\|NM5\|NM18\|NM19\|TG1\|CY1\)\] BLOCKER' "$E" "$OUT"
+assert "F19b 슬라이스 끝 — 요약 줄이 미룬 목록을 낸다" 2 "검사 84종 중 77종(슬라이스 끝 — 미룸 7: CY1 · NM4 · NM5 · NM18 · NM19 · ST4 · TG1" - "$E" "$OUT"
+w "$H/domain_layer/shop/shop.py" "from dataclasses import dataclass" "" "" \
+  "@dataclass(frozen=True, slots=True, kw_only=True)" "class Shop:" "    key: str"
+OUT=$(run_backstop "$P" --diff-base "$BASE" --slice-end); E=$?
+assert "F19c 슬라이스 끝 — 미룬 일곱만 남으면 exit 0" 0 "blocker 0건" "BLOCKER —" "$E" "$OUT"
+# CY1 기준선: 슬라이스 끝 실행은 만들지 않는다(덜 지은 상태의 순환을 동결하지 않는다) — 인자 없는 실행이 만든다
+P="$T/f19cy"; BASE=$(mkproj "$P")
+U="application_layer/use_case"; D="application_layer.use_case"
+w "$P/web/application/a/$U/a_use_case.py" "from web.application.b.$D.b_use_case import BUseCase" "class AUseCase:" "    pass"
+w "$P/web/application/b/$U/b_use_case.py" "from web.application.a.$D.a_use_case import AUseCase" "class BUseCase:" "    pass"
+OUT=$(run_backstop "$P" --diff-base "$BASE" --slice-end); E=$?
+[ -e "$P/.dddjango-web/backstop-baseline.json" ] && B=있음 || B=없음
+assert "F19d 슬라이스 끝 — CY1 기준선 파일을 만들지 않는다" 0 - "베이스라인 생성" "$E" "$OUT [기준선 $B]"
+assert "F19d 기준선 파일 없음" 0 "\[기준선 없음\]" - "$E" "$OUT [기준선 $B]"
+OUT=$(run_backstop "$P" --diff-base "$BASE" --only cy); E=$?
+assert "F19d 인자 없는 실행이 기준선을 만든다" 0 "베이스라인 생성" - "$E" "$OUT"
+# 같이 못 쓰는 인자 — exit 1
+OUT=$(run_backstop "$P" --diff-base "$BASE" --slice-end --update-baseline); E=$?
+assert "F19e --slice-end + --update-baseline → exit 1" 1 "\-\-slice-end 는" - "$E" "$OUT"
+OUT=$(run_backstop "$P" --diff-base "$BASE" --slice-end --only im); E=$?
+assert "F19e --slice-end + --only → exit 1" 1 "\-\-slice-end 는" - "$E" "$OUT"
+OUT=$(run_backstop "$P" --debt-scan --slice-end); E=$?
+assert "F19e --slice-end + --debt-scan → exit 1(단독 모드)" 1 "단독 모드" - "$E" "$OUT"
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/none" --slice-end); E=$?
+assert "F19e --slice-end + --debt-residual → exit 1(단독 모드)" 1 "단독 모드" - "$E" "$OUT"
+OUT=$(run_backstop "$P" --subst-check "$BASE" HEAD --slice-end); E=$?
+assert "F19e --slice-end + --subst-check → exit 1(단독 모드)" 1 "단독 모드" - "$E" "$OUT"
+# git status 수집 실패 — 미추적 새 파일이 검사에서 빠진 채 exit 0 이 되지 않는다(미실행 = exit 1)
+mkdir -p "$T/fakegit"; REAL_GIT="$(command -v git)"
+printf '%s\n' '#!/bin/sh' 'for a in "$@"; do [ "$a" = status ] && exit 128; done' "exec \"$REAL_GIT\" \"\$@\"" > "$T/fakegit/git"; chmod +x "$T/fakegit/git"
+OUT=$(PATH="$T/fakegit:$PATH" run_backstop "$T/f19" --diff-base "$(G "$T/f19" rev-parse HEAD)" --slice-end); E=$?
+assert "F19f git status 실패 → exit 1(빈 목록으로 넘어가지 않는다)" 1 "git status" - "$E" "$OUT"
+OUT=$(PATH="$T/fakegit:$PATH" run_backstop "$T/f19" --diff-base "$(G "$T/f19" rev-parse HEAD)" --all); E=$?
+assert "F19f --all(게이트 없음)은 git status 실패에 막히지 않는다" 2 "blocker" "git status" "$E" "$OUT"
 
 # ---------- F7: 사용 오류 — exit 1(미실행은 통과가 아니다)
 OUT=$(run_backstop --help); E=$?

@@ -3,7 +3,7 @@
 # (판형: dddart scripts/backstop.dart — 같은 인자·같은 종료 코드·같은 게이트)
 #
 # 사용:
-#   python3 backstop.py <대상 프로젝트 루트> [--diff-base <commit>] [--all]
+#   python3 backstop.py <대상 프로젝트 루트> [--diff-base <commit>] [--all] [--slice-end]
 #                       [--only st,im,nm,cy,tg,pj,md,pu,wv|<검사ID>…] [--update-baseline]
 #                       [--design-build <산출물 폴더>]
 #   python3 backstop.py <대상 프로젝트 루트> --debt-scan [--refactor] [--json <경로>]
@@ -17,6 +17,9 @@
 # + CSS @import·url() — 조각 CSS(static/application/·static/root/)는 소유자의 presentation 자리로 센다.
 # 스크립트는 파이프라인 상태(build-state.json)를 모른다 — 컨텍스트는 전부 인자(--design-build · --build 가 주는 폴더만 읽는다).
 #
+# 슬라이스 끝 실행(--slice-end — Phase 2 에서 슬라이스 커밋 앞): 뒤 슬라이스가 채울 검사(SLICE_END_DEFERRED)를 미룬다 —
+#   그 발견을 내지 않고 CY 는 돌지도 않는다(순환 기준선 파일을 만들지 않는다). 미룬 검사는 G2 직전 실행(인자 없음)이 본다.
+#   --update-baseline · --only · 러너 모드와 함께 쓰지 않는다.
 # 러너 모드(검사 ID 가 아니다 — v1.3.1 그대로):
 #   빚 모드(src/debt.py — Phase 0 step 4′ · G2): --debt-scan 은 web/ 전체의 기존 위반(빚)을 키 (검사, 경로)로
 #   동결하고(ST·MD·IM·NM·PU·WV), --debt-residual 은 G0 절의 ⓐ·요구 키 잔존을 센다. --refactor 는 --debt-scan 전용.
@@ -63,9 +66,11 @@ from src.subst import cli_subst_check  # noqa: E402
 FAMILIES: List[str] = list(CORE_FAMILIES) + ['wv']
 CHECK_IDS: List[str] = list(CORE_CHECK_IDS) + list(VENDOR_CHECK_IDS)
 TOTAL_CHECKS: int = len(CHECK_IDS)  # 84 = ST13 + IM27 + NM19 + CY1 + TG1 + MD2 + PJ2 + PU6 + WV13
+# 슬라이스 끝(--slice-end)에 미루는 검사 — 짝 · 골격 · 미러 · 순환은 뒤 슬라이스가 채운다(G2 직전 실행이 본다 · 이 목록이 단일 출처)
+SLICE_END_DEFERRED: List[str] = ['CY1', 'NM4', 'NM5', 'NM18', 'NM19', 'ST4', 'TG1']
 
 _USAGE: str = ('사용: python3 backstop.py <대상 프로젝트 루트> '
-               '[--diff-base <commit>] [--all] [--only st,md,im,nm,cy,tg,pj,pu,wv] [--update-baseline] '
+               '[--diff-base <commit>] [--all] [--slice-end] [--only st,md,im,nm,cy,tg,pj,pu,wv] [--update-baseline] '
                '[--design-build <폴더>] | --debt-scan [--refactor] [--json <경로>] | --debt-residual <폴더> | '
                '--subst-check <기준> <대상> [--names <명세>] [--except <경로>]… [--build <폴더>]')
 
@@ -74,6 +79,7 @@ def main(argv: List[str]) -> int:
     target: Optional[str] = None
     diff_base: Optional[str] = None
     all_mode: bool = False
+    slice_end: bool = False
     update_baseline: bool = False
     only: Set[str] = set()
     design_build: Optional[str] = None
@@ -122,6 +128,8 @@ def main(argv: List[str]) -> int:
             continue
         if a == '--all':
             all_mode = True
+        elif a == '--slice-end':
+            slice_end = True
         elif a == '--update-baseline':
             update_baseline = True
         elif a == '--debt-scan':
@@ -152,7 +160,7 @@ def main(argv: List[str]) -> int:
 
     # ---- 러너 모드(단독) — 빚 스캔 · 빚 잔존 · 치환 확인
     gate_flags: bool = (diff_base is not None or all_mode or bool(only) or design_build is not None
-                        or update_baseline)
+                        or update_baseline or slice_end)
     if subst is not None or names is not None or excepts or build is not None:
         if (subst is None or gate_flags or debt_scan or debt_residual is not None
                 or json_path is not None or refactor):
@@ -171,6 +179,11 @@ def main(argv: List[str]) -> int:
         return cli_scan(root, json_path, refactor) if debt_scan else cli_residual(root, debt_residual)
 
     # ---- 게이트 모드
+    if slice_end and (update_baseline or only):
+        print('[backstop] 사용 오류: --slice-end 는 --update-baseline·--only 와 함께 쓰지 않는다'
+              '(슬라이스 끝 실행은 기준선을 건드리지 않고 미룰 검사를 스스로 정한다)', file=sys.stderr)
+        return 1
+
     def family_on(fam: str) -> bool:
         return not only or fam in only or any(o.startswith(fam) and len(o) > 2 for o in only)
 
@@ -199,7 +212,7 @@ def main(argv: List[str]) -> int:
             findings.extend(run_imports(ctx))
         if family_on('nm'):
             findings.extend(run_naming(ctx))
-        if family_on('cy'):
+        if family_on('cy') and not slice_end:
             findings.extend(run_cycles(ctx, update_baseline))
         if family_on('tg'):
             findings.extend(run_tests(ctx))
@@ -216,7 +229,8 @@ def main(argv: List[str]) -> int:
         print('[backstop] 내부 오류:\n%s' % traceback.format_exc(), file=sys.stderr)
         return 1
 
-    shown: List[Finding] = sorted((f for f in findings if id_on(f.check_id)),
+    shown: List[Finding] = sorted((f for f in findings if id_on(f.check_id)
+                                  and (not slice_end or f.check_id not in SLICE_END_DEFERRED)),
                                   key=lambda f: (f.check_id, f.path, f.line or 0))
     for n in ctx.notices:
         print(n)
@@ -226,7 +240,12 @@ def main(argv: List[str]) -> int:
         print(f)
         print('')
     mode: str = ('gated(diff-base %s)' % diff_base[:8]) if ctx.gated and diff_base else ('all' if all_mode else '전역 퇴화')
-    print('[backstop] 검사 %d종(%s) — blocker %d건' % (TOTAL_CHECKS, mode, len(shown)))
+    if slice_end:
+        print('[backstop] 검사 %d종 중 %d종(슬라이스 끝 — 미룸 %d: %s · %s) — blocker %d건'
+              % (TOTAL_CHECKS, TOTAL_CHECKS - len(SLICE_END_DEFERRED), len(SLICE_END_DEFERRED),
+                 ' · '.join(SLICE_END_DEFERRED), mode, len(shown)))
+    else:
+        print('[backstop] 검사 %d종(%s) — blocker %d건' % (TOTAL_CHECKS, mode, len(shown)))
     return 0 if not shown else 2
 
 

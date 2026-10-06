@@ -704,7 +704,12 @@ class BackstopContext:
                 i += 2
             # 2) porcelain — 미추적 파일(-uall 필수: 기본값은 신규 디렉터리를 한 줄로 접어
             #    신규 BC 전체가 누락된다 — dddart 적대 점검 P0)
-            p_out: str = _git_raw(root, ['status', '--porcelain', '-z', '--untracked-files=all']) or ''
+            p_out: Optional[str] = _git_raw(root, ['status', '--porcelain', '-z', '--untracked-files=all'])
+            if p_out is None:
+                if not all_mode:
+                    print('[backstop] 사용 오류: git status 수집 실패 — 미추적 파일을 볼 수 없다(미실행)', file=sys.stderr)
+                    sys.exit(1)
+                p_out = ''
             pt: List[str] = p_out.split('\x00')
             i = 0
             while i < len(pt):
