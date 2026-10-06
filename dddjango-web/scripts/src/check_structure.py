@@ -4,7 +4,8 @@
 # *왜 결정적 백스톱인가*: 트리의 형태(어떤 폴더·어떤 직속 파일이 합법인가)는 제1 규약
 # §2·§5가 전수 화이트리스트로 정의한다 — LLM 판단이 0인 영역이며, 위반은 항상
 # "규약 밖 경로의 존재"라는 기계적 사실이다. 거짓양성 게이트 = added 한정(레거시 면책).
-# (판형: dddart check_structure.dart — ST0~ST11 번호 그대로 · ST12 = web/static/ 트리)
+# (판형: dddart check_structure.dart — ST0~ST11 번호 그대로 · ST12 = web/static/ 트리 · ST12 vendor 분기 =
+#  v1.3.1 WS6 vendor 분기 — 등재 공식 SDK 사본 자리(discipline-houserules §9))
 
 from __future__ import annotations
 
@@ -16,6 +17,7 @@ from .common import (
     WEB_TOP_DIRS, WEB_TOP_FILES, BackstopContext, Finding, base_name_of, bc_index, ext_of,
     is_marker, is_python_path, segs_of,
 )
+from .sdk_registry import VENDOR_DIR, is_os_junk_name, sdk_state
 
 _RULE2: str = '제1 규약 §2 표준 트리'
 _RULE5: str = '제1 규약 §5 골격 완비'
@@ -215,7 +217,7 @@ def run_structure(ctx: BackstopContext) -> List[Finding]:
                 'common/ 직속 허용 외 디렉터리 `%s/` — 4종만%s' % (s[1], _typo_hint(s[1], COMMON_DIRS)),
                 '제1 규약 §6·§9-11', '입장 판별(§6)대로 — BC 어휘면 그 BC로, 조립이면 root/로, 그 외 4종 중 하나로.'))
 
-    # ---- ST12: web/static/ 트리 — 직속 7칸 · js/·htmx/·root/ 평면 · application/ 은 BC 미러 CSS 만
+    # ---- ST12: web/static/ 트리 — 직속 7칸 · js/·htmx/·root/ 평면 · application/ 은 BC 미러 CSS 만 · vendor/ 는 등재 id
     out.extend(_static_tree(ctx))
 
     # ---- ST4: 신규 단위 골격 완비
@@ -267,11 +269,47 @@ def _static_tree(ctx: BackstopContext) -> List[Finding]:
             out.append(Finding('ST12', d, None,
                 'static/ 직속 허용 외 디렉터리 `%s/` — application/·root/·js/·htmx/·vendor/·images/·fonts/만%s'
                 % (s[1], _typo_hint(s[1], STATIC_DIRS)), rule,
-                '임의 칸을 신설하지 않는다 — 시안 이미지는 images/, 웹폰트는 fonts/, 외부 JS 고정 사본은 vendor/.'))
+                '임의 칸을 신설하지 않는다 — 시안 이미지는 images/, 웹폰트는 fonts/, 승인·등재된 공식 SDK 사본은 vendor/.'))
         if len(s) == 3 and s[1] in ('js', 'htmx', 'root'):
             out.append(Finding('ST12', d, None,
                 'static/%s/ 내부 디렉터리 `%s/` — 평면이다' % (s[1], s[2]), rule,
                 '기능당 파일 하나를 static/%s/ 직속에 둔다.' % s[1]))
+    out.extend(_vendor_tree(ctx))
+    return out
+
+
+def _vendor_tree(ctx: BackstopContext) -> List[Finding]:
+    """ST12 vendor 분기(덫 — 보증은 늘 검사 WV5·WV13): vendor/ 직속은 고정 표지 .gitattributes 만 · 등재 id 밖
+    디렉터리 · 등재 id 안 하위 디렉터리 · 등재 id 안 등재 밖 파일 (discipline-houserules §9 · 바탕: v1.3.1 WS6 vendor 분기)."""
+    out: List[Finding] = []
+    rule: str = 'discipline-houserules §9 공식 SDK'
+    prefix: str = VENDOR_DIR + '/'
+    added_files: List[str] = [f for f in ctx.all_files if f.startswith(prefix) and ctx.is_added(f)
+                              and base_name_of(f) != '.gitkeep' and not is_os_junk_name(base_name_of(f))]
+    added_dirs: List[str] = sorted(d for d in ctx.dirs if d.startswith(prefix) and ctx.is_added_dir(d))
+    if not added_files and not added_dirs:
+        return out
+    registered: Dict[str, str] = sdk_state(ctx).files()
+    for f in added_files:
+        s: List[str] = segs_of(f)
+        if len(s) == 3 and s[2] != '.gitattributes':
+            out.append(Finding('ST12', f, None,
+                'static/vendor/ 직속 파일 — 직속은 고정 표지 .gitattributes 만(사본은 vendor/<sdk_id>/ 안)', rule,
+                '공식 SDK 면 G1 승인 뒤 sdk_vendor.py 로 등재하고, 아니면 제3자 JS 를 들이지 않는다.'))
+        elif len(s) == 4 and s[2] in registered and f != registered[s[2]]:
+            out.append(Finding('ST12', f, None,
+                '등재 id 디렉터리 `%s/` 안 등재 밖 파일 — 등재 파일 하나만 둔다' % s[2], rule,
+                '사본·목록은 Coordinator 가 sdk_vendor.py 로만 바꾼다.'))
+    for d in added_dirs:
+        s = segs_of(d)
+        if len(s) == 3 and s[2] not in registered:
+            out.append(Finding('ST12', d, None,
+                'static/vendor/ 의 등재 id 밖 디렉터리 `%s/` — 등재되지 않은 벤더 단위' % s[2], rule,
+                '공식 SDK 면 G1 승인 뒤 sdk_vendor.py 로 등재하고, 아니면 들이지 않는다.'))
+        elif len(s) == 4 and s[2] in registered:
+            out.append(Finding('ST12', d, None,
+                '등재 id 디렉터리 `%s/` 안 하위 디렉터리 `%s/` — id 디렉터리는 등재 파일 하나다' % (s[2], s[3]), rule,
+                '판 디렉터리를 두지 않는다 — 판 올림은 sdk_vendor.py install --replace.'))
     return out
 
 

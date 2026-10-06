@@ -29,19 +29,25 @@ dddjango-web/             ← 자매 플러그인 (웹 표현계층 빌더 — /
                            (2026-09-16 hyun 지시로 자동 경로에서 분리 — §5).
                            2.0.0(dddart화): Flutter 판 dddart와 같은 절차·구조 — 구현 기술만
                            Django·HTML·HTMX·JS.
-                           빌드 스펙 정본: workspace/plan/2026-10-06-web-dddart/mapping.md
-├── REQUEST_GUIDE.md           사람용 작업 요청 가이드 정본(2.0.1 — 2.0.0 동작 기준으로 새로 씀)
-├── commands/dddjango-web.md   Coordinator (커맨드 1 — 리팩토링 입구는 2.1.0에서 돌아온다)
+                           빌드 스펙 정본: workspace/plan/2026-10-06-web-dddart/mapping.md(2.0.0)
+                           · plan-2.1.0.md + build-log-2.1.0.md(2.1.0 — 빚 정리 · 외부 JS 승인 · 리팩토링 입구)
+├── REQUEST_GUIDE.md           사람용 작업 요청 가이드 정본(2.0.1부터 — 2.1.0에서 빚 정리 · 리팩토링 입구 · 외부 JS 줄을 더함)
+├── commands/dddjango-web.md   Coordinator
+├── commands/refactor.md       리팩토링 입구 /dddjango-web:refactor <대상 단위> — Coordinator 로 Skill 위임(동작 불변)
 ├── agents/*-web.md            에이전트 7 — architect · 리뷰어 4(ddd·ui·state·data) · coder · discipline-reviewer
 ├── skills/*/                  지식 스킬 12 — architecture-ddd·ui·state·data · discipline-cleancode·houserules·test
 │                              · implementation-test·python·django·htmx·javascript
-└── scripts/backstop.py        결정적 백스톱 — 검사 72종(ST·IM·NM·CY·TG·PJ·MD·PU)
+├── assets/sdk_boundary.js     외부 JS 경계 검사 보조(공식 SDK 승인 절차)
+└── scripts/backstop.py        결정적 백스톱 — 검사 84종(ST·IM·NM·CY·TG·PJ·MD·PU·WV)
+                               · 빚 모드 --debt-scan [--refactor] · --debt-residual · 치환 확인 --subst-check
+                               + refactor_audit.py(리팩토링 모드 판정) · sdk_vendor.py(공식 SDK 등재)
                                + 추출 도구 4(extract_contract·extract_design·extract_dc·fetch_images)
-                               · 픽스처 scripts/test/run_fixtures.sh(백스톱 뒤 fixtures_extract·fixtures_contract 를 이어 부른다)
+                               · 픽스처 scripts/test/run_fixtures.sh(백스톱 뒤 빚 · 치환 · SDK · 리팩토링 판정 · 추출 도구 픽스처를 이어 부른다)
 
 codex-dddjango-web/       ← dddjango-web의 Codex 설치본 미러
                            지식 스킬 12종은 전부 `dddjango-web-<스킬>` 접두 폴더(dddart·dddjango Codex 판과
-                           이름 충돌 회피) · references와 scripts는 byte 동일(scripts/test/ 제외 — verify-web이 대조)
+                           이름 충돌 회피) · 리팩토링 입구 `skills/dddjango-web-refactor/`($dddjango-web-refactor)
+                           · references · scripts · assets는 byte 동일(scripts/test/ 제외 — verify-web이 대조)
                            · 동기 절차: codex-dddjango-web/README.md
 └── REQUEST_GUIDE.md       dddjango-web/REQUEST_GUIDE.md의 byte 동일 미러
 
@@ -138,7 +144,7 @@ md에서 `<!-- graph-owned: … -->` 마커가 붙은 절은 **직접 수정 금
 | `make verify-mutation` | rulepack·selector를 건드린 커밋 |
 | `make verify-firing` | 설치본 cache 발화 증명 (개발 중엔 `ALLOW_STALE=1`) |
 | `make verify-runready` | 실런(A/B 평가) 진입 직전에만 — verify + 변이 + 발화 + 봉인 엄격 대조 |
-| `make verify-web` | dddjango-web 픽스처(백스톱·추출 도구)·Codex 미러 대조(scripts·지식 스킬 12 references) — **수동 전용**(2026-09-16 `VERIFY_TARGETS`에서 제외) |
+| `make verify-web` | dddjango-web 픽스처(백스톱·빚·치환·SDK·리팩토링 판정·추출 도구)·refactor_audit self-test·상시 답 블록 core 대조·리팩토링 입구 표지 대조·Codex 미러 대조(scripts·assets·지식 스킬 12 references) — **수동 전용**(2026-09-16 `VERIFY_TARGETS`에서 제외) |
 
 
 ## 6. 릴리즈
@@ -153,7 +159,7 @@ make release DRY=1        # 미리보기 (변경 없음) — release-web DRY=1 �
 
 `make release-web`은 곧장 `_release`로 간다. 2026-09-16 hyun 지시로 `verify-web`을 `VERIFY_TARGETS`에서 뺐다(막아 세운 결함 0 · 실제 결함은 전부 A8 실사용이 잡았다). 같은 배치에서 **실패한 브라우저 관찰 서브시스템(1.1.13~1.1.19)을 전량 철거**했다 — `verify-web-browser`(K3)·`observe_interactions`·`evidence_debt`·`refreeze.py`·`ledger.py`와 그 계약·hook을 지우고 검사기를 v1.1.12 정적 형태로 되돌렸다(정본: workspace/design/2026-09-16-web-strip-observation-subsystem.md). 웹 쪽 검증이 필요하면 `make verify-web`을 직접 돈다. **release-web 에서 사라진 보증은 Codex byte 미러 대조다** — `codex-dddjango-web/`가 어긋나도 릴리즈가 막지 않으므로, 검사기나 references를 고치면 미러를 손으로 맞춘다(해소 명령은 `codex-dddjango-web/README.md` «동기 절차» · `make verify-web`이 `diff -rq`로 잡는다).
 
-2.0.0(dddart화)은 1.x의 시안 기계 검사 전부(렌더 숫자 대조·모션·포커스 링·토큰 처분·정체 감사 등)·정확값 토큰 규칙·시각 연결표·`REQUEST_GUIDE.md`·빚 정리·리팩토링 입구·외부 JS 승인 절차를 뺐다. 가이드는 2.0.1에서 2.0.0 동작 기준으로 새로 썼다(API 위치 세 꼴 — `http(s)://` 주소·로컬 파일 경로·이 프로젝트 안 path — 와 함께). 빚 정리·리팩토링 입구·외부 JS 승인 절차는 2.1.0에서 새 구조에 맞춰 돌아온다(스펙: `workspace/plan/2026-10-06-web-dddart/mapping.md`).
+2.0.0(dddart화)은 1.x의 시안 기계 검사 전부(렌더 숫자 대조·모션·포커스 링·토큰 처분·정체 감사 등)·정확값 토큰 규칙·시각 연결표·`REQUEST_GUIDE.md`·빚 정리·리팩토링 입구·외부 JS 승인 절차를 뺐다(스펙: `workspace/plan/2026-10-06-web-dddart/mapping.md`). 가이드는 2.0.1에서 2.0.0 동작 기준으로 새로 썼다(API 위치 세 꼴 — `http(s)://` 주소·로컬 파일 경로·이 프로젝트 안 path — 와 함께). 2.1.0에서 빚 정리·리팩토링 입구(대상 단위 = BC · root · common · design_system · static 칸 · 옛 배치 최상위 폴더 등)·외부 JS 승인 절차를 새 구조에 맞춰 다시 넣었다(스펙: `workspace/plan/2026-10-06-web-dddart/plan-2.1.0.md`). 시안 기계 검사·정확값 토큰은 되살리지 않는다. web `refactor_audit.py`의 «상시 답 인식 블록»은 core `dddjango/scripts/refactor_audit.py`와 byte 동일해야 한다 — `make verify-web`이 대조한다(core 블록을 바꾸면 표지 주석째 web·Codex 에 복사).
 
 **릴리즈 창**: dddjango 릴리즈 전에 타깃 저장소들에 G0 승인 뒤 G2 승인 전의 진행 레인이 없는지 확인하고, 있으면 그 레인의 G2 승인(착륙)까지 릴리즈를 보류한다(설치본이 레인 도중에 규범을 바꾸지 않게). 특히 `dddjango/scripts/` 가 바뀐 릴리즈는 pre-gate 실행 트리 digest 를 바꾸므로, 진행 중 레인의 마지막 예보가 `--check-report` 에서 «툴체인 stale»이 되어 재예보를 요구한다 — Phase 1 레인은 싼 재실행으로 끝나지만 G1~G2 레인은 Phase 2 재발화가 든다(2026-09-27).
 

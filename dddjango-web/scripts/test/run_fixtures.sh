@@ -168,7 +168,6 @@ mkclean() { # mkclean <proj> — 표준 트리 완비 + order BC 실코드(모�
     '  <button hx-get="{{ state.more_href }}" hx-target="#list">{{ state.count|order_status_class }}</button>' \
     "</section>" \
     "<link rel=\"stylesheet\" href=\"{% static 'web/application/order/order_list_view.css' %}\">" \
-    "<script src=\"{% static 'web/vendor/chart/4.4.1/chart.umd.js' %}\" defer></script>" \
     "<script src=\"{% static 'web/js/order_filter.js' %}\" defer></script>" "{% endblock %}"
   w "$O/presentation_layer/section/order_list_summary_section.html" '<div class="order-list-summary">{{ state.count }}</div>'
   w "$O/presentation_layer/widget/price_tag_widget.html" '<span class="price-tag">{{ amount }}</span>'
@@ -179,7 +178,6 @@ mkclean() { # mkclean <proj> — 표준 트리 완비 + order BC 실코드(모�
   # static · 테스트 · 선언
   w "$W/static/htmx/htmx.min.js" 'var htmx={version:"2.0.10"};'
   w "$W/static/js/order_filter.js" 'document.addEventListener("htmx:afterSwap", () => {});'
-  w "$W/static/vendor/chart/4.4.1/chart.umd.js" "window.Chart = {};"
   w "$W/static/root/root_view.css" '@import url("../../design_system/foundation/app_color.css");' \
     ".root-shell { background: var(--color-primary); }"
   w "$W/static/application/order/order_list_view.css" \
@@ -281,7 +279,7 @@ w "$R/widget/PriceBadge_widget.html" "<span></span>"                           #
 # PJ · PU
 w "$P/requirements.txt" "Django==5.1.2" "pytest==8.3.3"                        # PJ1
 w "$W/static/js/htmx.min.js" 'var htmx={version:"2.0.10"};'                    # PJ2·PU1(legacy 이름)
-w "$W/static/vendor/lodash/lodash.min.js" "window._ = {};"                     # PJ3
+w "$W/static/vendor/lodash/lodash.min.js" "window._ = {};"                     # ST12·PU1(미등재 벤더 — 공식 SDK 등재 밖)
 w "$R/view/inline.js" "x = 1;"                                                 # PU1
 w "$W/static/js/probe_eval.js" 'eval("1 + 1");'                                # PU8
 OUT=$(run_backstop "$P" --diff-base "$BASE"); E=$?
@@ -289,7 +287,8 @@ assert "F1 위반 diff — exit 2" 2 "blocker" - "$E" "$OUT"
 expect_ids "F1" "$OUT" ST0 ST1 ST2 ST3 ST4 ST5 ST6 ST7 ST8 ST9 ST10 ST11 ST12 \
   IM1 IM2 IM3 IM4 IM5 IM6 IM7 IM8 IM9 IM10 IM11 IM12 IM13 IM14 IM15 IM16 IM17 IM18 IM19 IM20 IM21 IM22 IM23 \
   IM24 IM25 IM26 IM27 NM1 NM2 NM3 NM4 NM5 NM6 NM8 NM9 NM10 NM11 NM12 NM13 NM14 NM15 NM16 NM17 NM18 NM19 NM20 \
-  CY1 TG1 MD1 MD2 PJ1 PJ2 PJ3 PU1 PU2 PU3 PU6 PU7 PU8
+  CY1 TG1 MD1 MD2 PJ1 PJ2 PU1 PU2 PU3 PU6 PU7 PU8
+assert "F1 미등재 벤더 사본 — PU1(PJ3 비움 · WV 등재 절차)" 2 "PU1\] BLOCKER — web/static/vendor/lodash/lodash.min.js" "PJ3\]" "$E" "$OUT"
 assert "F1 깨끗한 기존 파일 불발화(order_list_view·either)" 2 - 'BLOCKER — web/application/order/presentation_layer/view/order_list_view\|BLOCKER — web/common/util/either' "$E" "$OUT"
 assert "F1 함수 안 import 도 IM 이 센다(IM21)" 2 "IM21\] BLOCKER — web/application/order/order_navigator.py:15" - "$E" "$OUT"
 assert "F1 NM19 root 조각 CSS" 2 "BLOCKER — web/static/root/stray_root.css" - "$E" "$OUT"
@@ -502,4 +501,9 @@ echo "결과: PASS $PASS / FAIL $FAIL"
 SUB=0
 OUT=$(bash "$(dirname "$0")/fixtures_extract.sh" 2>&1) || SUB=1; echo "$OUT" | tail -1
 OUT=$(bash "$(dirname "$0")/fixtures_contract.sh" 2>&1) || SUB=1; echo "$OUT" | tail -1
+
+# ---------- 2.1.0 픽스처: 빚 정리(debt · subst) · 공식 SDK 승인 절차(sdk) · 리팩토링 입구(refactor_audit)
+for SUBFIX in fixtures_debt.sh fixtures_subst.sh fixtures_sdk.sh fixtures_refactor_audit.sh; do
+  OUT=$(bash "$(dirname "$0")/$SUBFIX" 2>&1) || SUB=1; echo "$SUBFIX: $(echo "$OUT" | tail -1)"
+done
 [ $FAIL = 0 ] && [ $SUB = 0 ]

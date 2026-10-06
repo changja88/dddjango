@@ -68,6 +68,15 @@ BACKEND_TOP_PKGS: Set[str] = {'application', 'framework'}
 CODE_EXTS: Set[str] = {'.py', '.html', '.css', '.js', '.mjs', '.cjs'}
 JS_EXTS: Set[str] = {'.js', '.mjs', '.cjs'}
 OS_JUNK: Set[str] = {'.DS_Store', 'Thumbs.db', 'desktop.ini'}
+# 코어 검사 목록(단일 출처 — backstop CHECK_IDS 는 이것 + check_vendor.VENDOR_CHECK_IDS). dddart 번호 그대로 ·
+# 옮길 수 없는 번호는 비움(NM7 · PU4 · PU5 · PJ3[2.1.0 — vendor 버전 폴더 길이 공식 SDK 등재 절차로 바뀜]).
+CORE_FAMILIES: Tuple[str, ...] = ('st', 'md', 'im', 'nm', 'cy', 'tg', 'pj', 'pu')
+CORE_CHECK_IDS: Tuple[str, ...] = tuple(
+    ['ST%d' % n for n in range(0, 13)]                                  # ST0~ST12
+    + ['IM%d' % n for n in range(1, 28)]                                # IM1~IM27
+    + ['NM%d' % n for n in range(1, 21) if n != 7]                      # NM1~NM20 · NM7 비움
+    + ['CY1', 'TG1', 'MD1', 'MD2', 'PJ1', 'PJ2']                        # PJ3 비움
+    + ['PU1', 'PU2', 'PU3', 'PU6', 'PU7', 'PU8'])                       # PU4·PU5 비움
 STDLIB: Set[str] = set(getattr(sys, 'stdlib_module_names', ())) | {'__future__', 'typing', 'dataclasses'}
 
 # ------------------------------------------------------------ 경로 술어
@@ -642,32 +651,7 @@ class BackstopContext:
                 files.append(fn if rel_dir == '.' else rel_dir + '/' + fn)
         files.sort()
 
-        # area 판별 — 적극 증명될 때만: `application/` 직속 <x>의 직속에 코드 파일이 없고
-        # (`__init__.py` 표지 제외), 직속 디렉터리가 1개 이상이며 전부 BC꼴(각각 4계층 폴더 중
-        # 하나 이상을 직속 보유)일 때만 x=area. 그 외 전부 s[1]=BC 폴백(보수 — 레거시·drift
-        # 형상의 분류 불변 → CY 베이스라인·IM 분류 무회귀).
-        areas: Set[str] = set()
-        child_dirs: Dict[str, Set[str]] = {}
-        child_has_file: Set[str] = set()
-        for d in dirs:
-            s: List[str] = d.split('/')
-            if s[0] != 'application':
-                continue
-            if len(s) == 2:
-                child_dirs.setdefault(s[1], set())
-            if len(s) == 3:
-                child_dirs.setdefault(s[1], set()).add(s[2])
-        for f in files:
-            s = f.split('/')
-            if len(s) == 3 and s[0] == 'application' and ext_of(f) in CODE_EXTS and s[2] != '__init__.py':
-                child_has_file.add(s[1])
-        for x, children in child_dirs.items():
-            if x in child_has_file or x in LAYER_NAMES or not children:
-                continue
-            if any(c in LAYER_NAMES for c in children):
-                continue  # x 자신이 BC(계층 직속 보유)
-            if all(any('application/%s/%s/%s' % (x, y, ly) in dirs for ly in LAYER_NAMES) for y in children):
-                areas.add(x)
+        areas: Set[str] = _areas(files, dirs)
 
         git_repo: bool = _git(root, ['rev-parse', '--is-inside-work-tree']) == 'true'
         touched: Set[str] = set()
@@ -755,6 +739,53 @@ class BackstopContext:
 
         return BackstopContext(root, git_repo, diff_base, all_mode, files, dirs, areas,
                                _project_pkgs(root), touched, added, base_files, added_spans)
+
+    @staticmethod
+    def from_files(root: Path, files: List[str]) -> 'BackstopContext':
+        """주어진 web-상대 파일 목록을 전부 added 로 보는 컨텍스트(빚 스캔 전용 — `--debt-scan`).
+        dirs = 파일 조상 전부 · base_files = 같은 목록(브라운필드 legacy core 소비 판정은 이 트리 기준) ·
+        기준점이 없으므로 ST4 · TG 는 생략 notice 를 낸다(리팩토링 스캔은 골격을 따로 돈다)."""
+        ordered: List[str] = sorted({f for f in files if base_name_of(f) not in OS_JUNK
+                                     and not base_name_of(f).startswith('._')})
+        dirs: Set[str] = set()
+        for f in ordered:
+            s: List[str] = segs_of(f)
+            for k in range(1, len(s)):
+                dirs.add('/'.join(s[:k]))
+        git_repo: bool = _git(root, ['rev-parse', '--is-inside-work-tree']) == 'true'
+        return BackstopContext(root, git_repo, None, True, ordered, dirs, _areas(ordered, dirs),
+                               _project_pkgs(root), set(ordered), set(ordered), set(ordered), {})
+
+
+def _areas(files: List[str], dirs: Set[str]) -> Set[str]:
+    """area 판별(build · from_files 공통)."""
+    # area 판별 — 적극 증명될 때만: `application/` 직속 <x>의 직속에 코드 파일이 없고
+    # (`__init__.py` 표지 제외), 직속 디렉터리가 1개 이상이며 전부 BC꼴(각각 4계층 폴더 중
+    # 하나 이상을 직속 보유)일 때만 x=area. 그 외 전부 s[1]=BC 폴백(보수 — 레거시·drift
+    # 형상의 분류 불변 → CY 베이스라인·IM 분류 무회귀).
+    areas: Set[str] = set()
+    child_dirs: Dict[str, Set[str]] = {}
+    child_has_file: Set[str] = set()
+    for d in dirs:
+        s: List[str] = d.split('/')
+        if s[0] != 'application':
+            continue
+        if len(s) == 2:
+            child_dirs.setdefault(s[1], set())
+        if len(s) == 3:
+            child_dirs.setdefault(s[1], set()).add(s[2])
+    for f in files:
+        s = f.split('/')
+        if len(s) == 3 and s[0] == 'application' and ext_of(f) in CODE_EXTS and s[2] != '__init__.py':
+            child_has_file.add(s[1])
+    for x, children in child_dirs.items():
+        if x in child_has_file or x in LAYER_NAMES or not children:
+            continue
+        if any(c in LAYER_NAMES for c in children):
+            continue  # x 자신이 BC(계층 직속 보유)
+        if all(any('application/%s/%s/%s' % (x, y, ly) in dirs for ly in LAYER_NAMES) for y in children):
+            areas.add(x)
+    return areas
 
 
 def _project_pkgs(root: Path) -> Set[str]:

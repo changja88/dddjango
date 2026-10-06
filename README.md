@@ -107,8 +107,9 @@ $ codex plugin list
 | `/dddjango:dddjango 재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능` | `dddjango를 사용해 재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능을 만들어 줘.` |
 | `/dddjango-web:dddjango-web "주문 목록 화면. 디자인: <Claude Design 화면 주소>" /api/openapi.json` | `dddjango-web을 사용해 "주문 목록 화면"을 만들어 줘. /api/openapi.json 디자인: <내려받은 시안 폴더 경로> · 화면: OrderList` |
 | `/dddjango:refactor order 규칙 하나를 고칠 때 여러 곳을 고쳐야 해` | `$dddjango-refactor order 규칙 하나를 고칠 때 여러 곳을 고쳐야 해` |
+| `/dddjango-web:refactor web/application/order 화면마다 같은 렌더 코드가 반복돼` | `$dddjango-web-refactor web/application/order 화면마다 같은 렌더 코드가 반복돼` |
 
-`dddjango-web`은 기능 설명을 따옴표로 감싸고, 디자인 주소도 따옴표 안에 적는다. 닫는 따옴표 뒤는 OpenAPI 문서 위치 자리다 — 이 프로젝트 안 경로(`/api/openapi.json` 꼴 — 서버를 켜지 않고 읽는다)·파일 경로·`http(s)://` 주소 가운데 하나를 붙인다(없으면 설정 파일 → 가정 계약 순으로 정한다). 자세한 요청 방법은 dddjango-web 작업 요청 가이드(설치본 루트의 `REQUEST_GUIDE.md`)에 있다. web 리팩토링 입구(`/dddjango-web:refactor`)는 2.0.0에 없고 2.1.0에서 돌아온다.
+`dddjango-web`은 기능 설명을 따옴표로 감싸고, 디자인 주소도 따옴표 안에 적는다. 닫는 따옴표 뒤는 OpenAPI 문서 위치 자리다 — 이 프로젝트 안 경로(`/api/openapi.json` 꼴 — 서버를 켜지 않고 읽는다)·파일 경로·`http(s)://` 주소 가운데 하나를 붙인다(없으면 설정 파일 → 가정 계약 순으로 정한다). 자세한 요청 방법은 dddjango-web 작업 요청 가이드(설치본 루트의 `REQUEST_GUIDE.md`)에 있다. web 리팩토링 입구(`/dddjango-web:refactor <대상 단위> [불편 서술]` · Codex `$dddjango-web-refactor`)는 대상 단위 하나(예 `web/application/order` · `web/static/images`)의 기존 web 코드를 동작 그대로 표준에 맞춘다.
 
 `dddjango`는 요구 정리부터 테스트까지, `dddjango-web`은 화면 요구 정리부터 설계·구현·테스트까지 단계별로 진행하며 각 게이트에서 당신이 승인한다.
 
@@ -315,9 +316,10 @@ dddjango는 작업 규모를 보고 알맞게 움직인다.
 - **구조**: `web/` 앱 — `root/`·`application/<bc>/`(domain·application·infra·presentation 4층)·`common/`·`design_system/`(foundation CSS 변수 7·theme·component·util)·`static/` + 테스트 `web_test/`(web/ 1:1 미러)
 - **표준**: 요청마다 view가 VM을 만들어 State를 그리고 HTMX 조각 응답으로 부분 교체 · design_system 토큰 · UI 동작 JavaScript는 기능당 한 파일
 - **경계**: `web/` 트리는 «내부의 외부 클라이언트» — 백엔드 코드를 import하지 않고(백스톱이 차단) in-process HTTP로 계약만 소비한다. 필요한 API가 없으면 가정 계약으로 짓고(tracer → 미니 게이트) 실제 API는 `/dddjango:dddjango`로 요청하도록 안내한다.
-- **구성**: 커맨드 1(`/dddjango-web:dddjango-web`) · 에이전트 7(`design-architect-web`·`design-review-ddd-web`·`design-review-ui-web`·`design-review-state-web`·`design-review-data-web`·`coder-web`·`discipline-reviewer-web`) · 스킬 12(`architecture-ddd`/`-ui`/`-state`/`-data`·`discipline-cleancode`/`-houserules`/`-test`·`implementation-test`/`-python`/`-django`/`-htmx`/`-javascript`) · 결정적 백스톱(검사 72종 — 구조·import·명명·순환·테스트·토대·모델·출력 안전) + 추출 도구 4
+- **구성**: 커맨드 2(`/dddjango-web:dddjango-web`(화면 빌드) · `/dddjango-web:refactor <대상 단위>`(대상 단위 하나의 기존 web 코드 전체를 표준으로 정리하는 리팩토링 입구 — 동작 불변 · Codex 는 `$dddjango-web-refactor`)) · 에이전트 7(`design-architect-web`·`design-review-ddd-web`·`design-review-ui-web`·`design-review-state-web`·`design-review-data-web`·`coder-web`·`discipline-reviewer-web`) · 스킬 12(`architecture-ddd`/`-ui`/`-state`/`-data`·`discipline-cleancode`/`-houserules`/`-test`·`implementation-test`/`-python`/`-django`/`-htmx`/`-javascript`) · 결정적 백스톱(검사 84종 — 구조·import·명명·순환·테스트·토대·모델·출력 안전·외부 JS) + 추출 도구 4 + 외부 JS 등재 도구
+- **빚 정리**: 기능 요청이 손대는 파일과 그 파일을 부르는 곳에 남은 옛 위반은 G0에서 묻고, 기능 구현 전에 슬라이스 0에서 동작 그대로 정리한다. 남은 빚은 G2에서 다시 판정한다.
+- **외부 JS**: 외부 JS 라이브러리는 공식 배포 파일을 등재 도구로 버전 고정해 들이고, G1에서 따로 승인받는다.
 - **검증**: 행위마다 영구 테스트(`pytest web_test --import-mode=importlib`)와 `manage.py check`·백스톱을 G2 전에 돈다. 결정적 백스톱은 측정 대상인 구조 규율만 확인하며 전체 품질이나 픽셀 동일을 증명하지 않는다. 시안과의 시각 일치는 게이트에서 **사용자가 육안 확인**한다.
-- **2.1.0 예정**: 빚 정리 · 리팩토링 입구(`/dddjango-web:refactor`) · 외부 JS 승인 절차
 
 ---
 

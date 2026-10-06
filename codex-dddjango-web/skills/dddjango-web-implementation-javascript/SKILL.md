@@ -1,6 +1,6 @@
 ---
 name: dddjango-web-implementation-javascript
-description: 승인된 UI JavaScript의 구현·감수 표기법 — DOM 이벤트, 기능별 상태, HTMX 교체 수명, 비동기 완료, 안전한 데이터 소비, 키보드·포커스, 명세가 고른 외부 JS 고정 사본 소비. 브라우저 UI 동작을 작성하거나 그 동작을 검수할 때 사용한다. 업무 판정·API 계약·파일트리 결정·HTMX 요청 설계는 소유하지 않는다.
+description: 승인된 UI JavaScript의 구현·감수 표기법 — DOM 이벤트, 기능별 상태, HTMX 교체 수명, 비동기 완료, 안전한 데이터 소비, 키보드·포커스, 등재된 공식 플랫폼 SDK 소비. 브라우저 UI 동작을 작성하거나 그 동작을 검수할 때 사용한다. 업무 판정·API 계약·파일트리 결정·HTMX 요청 설계는 소유하지 않는다.
 user-invocable: false
 ---
 
@@ -16,7 +16,7 @@ dddjango-web의 승인된 설계 명세가 정한 브라우저 UI 동작(외부 
 |---|---|
 | view/section/widget 분해·부품 표시 경로 | `dddjango-web-architecture-ui` |
 | 상태·갱신 계약(조각 교체·HX-Trigger) | `dddjango-web-architecture-state`·`dddjango-web-implementation-htmx` |
-| 파일 트리·이름·외부 JS 사본 자리·참조 격리 | `dddjango-web-discipline-houserules` |
+| 파일 트리·이름·공식 SDK 등재·사본 자리·참조 격리 | `dddjango-web-discipline-houserules`(§9) |
 | Django 템플릿·CSS·에셋·서버 코드 표기 | `dddjango-web-implementation-django` |
 | UI JS 이벤트·DOM·브라우저 API·수명 처리 | 이 스킬 |
 | 브라우저 테스트 메커니즘 | `dddjango-web-implementation-test` §4 |
@@ -43,6 +43,6 @@ dddjango-web의 승인된 설계 명세가 정한 브라우저 UI 동작(외부 
 | 서버 값·문자열·동적 HTML 경계 | §5 |
 | 키보드·포커스·상태 안내 | §6 |
 | 구현 검증·감수·통과 근거 | §7 |
-| 명세가 고른 외부 JS 고정 사본 소비(자리·로드·불러들이기 금지) | §8 |
+| 공식 SDK 소비(로드·불러진 뒤·초기화 1회·부르는 순간 찾기·동기 호출·범위·외부 코드·주소 금지) | §8 |
 
 감수 때 리스너 위임·인스턴스 초기화 중 하나를 정답 형태로 강제하지 않는다. 쓰지 않는 자원의 cleanup, 전역 UI 레지스트리, 범용 런타임을 추가하게 하지 않는다.

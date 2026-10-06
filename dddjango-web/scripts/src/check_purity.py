@@ -3,9 +3,12 @@
 #
 # *왜 결정적 백스톱인가*: 파일 경로·실행 태그·인라인 JS 채널·자동 이스케이프 우회·동적 실행처럼
 # 형태로 환원되는 경계만 검사한다. 기능 JS의 업무 의미·실제 동작은 감수와 브라우저 테스트가 맡는다.
-# 외부 JS 는 web/static/vendor/<라이브러리>/<버전>/ 고정 사본으로만 들이고 CDN 실행 태그는 금지한다.
+# 외부 JS 는 G1 승인·등재된 공식 SDK 사본(web/static/vendor/<sdk_id>/<파일> — discipline-houserules §9)으로만 들이고
+# CDN 실행 태그는 금지한다. 등재 사본의 로드 태그 규칙(속성 · 페이지 block · 기능 JS 앞 · root_view block 여는 줄 앞 ·
+# root_view·페이지 중복)은 PU2 벤더 분기가 본다.
 # (바탕: dddjango-web v1.3.1 check_purity.py WP1~WP6 — 번호 그대로 PU 로 · WP4 색 리터럴은 NM10 으로
-#  옮겨 PU4 비움 · WP5 motion.js 판형은 러너를 들이지 않아 PU5 비움 · PU7·PU8 = 새 검사)
+#  옮겨 PU4 비움 · WP5 motion.js 판형은 러너를 들이지 않아 PU5 비움 · PU7·PU8 = 새 검사 · 벤더 분기 = v1.3.1
+#  WP1·WP2 벤더 분기 · base.html 자리 = root/scaffold/view/root_view.html)
 
 from __future__ import annotations
 
@@ -15,11 +18,13 @@ from html.parser import HTMLParser
 from typing import Dict, List, Optional, Tuple
 
 from .common import (
-    HTMX_CORE, JS_EXTS, VERBATIM_RE, BackstopContext, Finding, base_name_of, ext_of, has_seg,
-    parent_dir_of, segs_of,
+    HTMX_CORE, JS_EXTS, ROOT_VIEW_TEMPLATE, VERBATIM_RE, BackstopContext, Finding, base_name_of, ext_of, has_seg,
+    parent_dir_of,
 )
+from .sdk_registry import VENDOR_DIR, sdk_state
 
 _RULE: str = '제1 규약 §6 출력 안전'
+_RULE_SDK: str = 'discipline-houserules §9 공식 SDK'
 _HTMX_LEGACY = ('static/js/htmx.min.js', 'static/js/htmx.js')
 _FEATURE_JS_RE = re.compile(r'^static/js/[a-z0-9_]+\.js$')
 
@@ -51,6 +56,10 @@ _SCHEME_POS_RE = re.compile(r'^[A-Za-z0-9+.\-]*$')
 _SVG_HREF_RE = re.compile(r'<(?:set|animate\w*)\b[^>]*attributeName\s*=\s*["\'](?:xlink:)?href["\']', re.I)
 _SCRIPT_START_RE = re.compile(r'<script\b', re.IGNORECASE)
 _STATIC_ARG_RE = re.compile(r'''\{%\s*static\s+(?:"([^"]+)"|'([^']+)')\s*%\}''')
+# 등재 공식 SDK 로드 태그(discipline-houserules §9 «로드») — 속성은 src·defer(·CSP nonce)만
+_VENDOR_ATTRS = frozenset({'src', 'defer', 'nonce'})
+_BLOCK_SCRIPTS_RE = re.compile(r'\{%-?\s*block\s+scripts\s*-?%\}')
+_ENDBLOCK_RE = re.compile(r'\{%-?\s*endblock(?:\s+scripts)?\s*-?%\}')
 _REMOTE_RE = re.compile(r'^\s*(?:https?:)?//', re.I)
 # PU7 — 자동 이스케이프 우회
 _SAFE_TPL_RE = re.compile(r'\|\s*safe(?:seq)?\b|\{%-?\s*autoescape\s+off\b')
@@ -149,9 +158,8 @@ def _script_location_allowed(path: str) -> bool:
     return path.startswith('root/scaffold/view/') or has_seg(path, 'presentation_layer')
 
 
-def _is_vendor_copy(path: str) -> bool:
-    s: List[str] = segs_of(path)
-    return len(s) == 5 and s[:2] == ['static', 'vendor']
+def _is_vendor(path: Optional[str]) -> bool:
+    return path is not None and path.startswith(VENDOR_DIR + '/')
 
 
 def _script_path_allowed(ctx: BackstopContext, path: str, standard_prefix: bool) -> bool:
@@ -159,21 +167,103 @@ def _script_path_allowed(ctx: BackstopContext, path: str, standard_prefix: bool)
         return path in ctx.base_files  # 브라운필드 설치만 소비
     if not standard_prefix:
         return False
-    return path == HTMX_CORE or _is_vendor_copy(path) or _FEATURE_JS_RE.fullmatch(path) is not None
+    if _is_vendor(path):
+        return path in sdk_state(ctx).passed()  # 등재 · 사본 바이트(WV2) 통과 사본만
+    return path == HTMX_CORE or _FEATURE_JS_RE.fullmatch(path) is not None
 
 
 def _changed(ctx: BackstopContext, f: str, ms, start: int, end: int) -> bool:
     return any(ctx.line_is_added(f, n) for n in range(ms.line_of(start), ms.line_of(max(start, end - 1)) + 1))
 
 
+def _script_records(ctx: BackstopContext, f: str):
+    """템플릿의 script 시작 태그 — (마스킹 본문, [(start, end, attrs, path, standard_prefix)])."""
+    ms = ctx.mask_of(f)
+    records = []
+    for start, end, tag in _script_openers(ms.no_comments):
+        attrs = _attrs_of(tag)
+        path, std = _local_static_path(attrs)
+        records.append((start, end, attrs, path, std))
+    return ms, records
+
+
+def _block_ranges(text: str) -> List[Tuple[int, int]]:
+    ranges: List[Tuple[int, int]] = []
+    for m in _BLOCK_SCRIPTS_RE.finditer(text):
+        end = _ENDBLOCK_RE.search(text, m.end())
+        ranges.append((m.start(), end.end() if end else len(text)))
+    return ranges
+
+
+def _vendor_reasons(ctx: BackstopContext, f: str, ms, records, root_vendor: Dict[str, bool]) -> List[Tuple[int, str]]:
+    """등재 SDK 로드 태그 규칙(discipline-houserules §9 «로드») — ① 속성 ② 페이지 block 밖 ③ 같은 파일 기능 JS 뒤
+    ④ root_view block 여는 줄 뒤 ⑤ root_view·페이지 중복. ③⑤ 는 벤더 태그나 상대 태그 어느 쪽 줄이 added 여도 낸다."""
+    out: List[Tuple[int, str]] = []
+    passed = sdk_state(ctx).passed()
+    text: str = ms.no_comments
+    blocks = _block_ranges(text)
+    is_root: bool = f == ROOT_VIEW_TEMPLATE
+    features = [(s, e) for s, e, _a, path, std in records
+                if path is not None and std and _FEATURE_JS_RE.fullmatch(path)]
+    block_lines: bool = any(_changed(ctx, f, ms, m.start(), m.end())
+                            for rx in (_BLOCK_SCRIPTS_RE, _ENDBLOCK_RE) for m in rx.finditer(text))
+    for start, end, attrs, path, std in records:
+        if not (std and path in passed):
+            continue
+        changed: bool = _changed(ctx, f, ms, start, end)
+        extra = sorted({name.lower() for name, _v in attrs} - _VENDOR_ATTRS - {'async'})  # async 는 공통 사유가 낸다
+        if changed and extra:
+            out.append((start, '등재 SDK 태그 속성은 src·defer(·CSP nonce)만 — %s · %s' % (', '.join(extra), path)))
+        if not is_root and (changed or block_lines) and not any(a <= start < b for a, b in blocks):
+            out.append((start, '등재 SDK 태그가 페이지 `{%% block scripts %%}` 밖 — %s' % path))
+        before = [(s, e) for s, e in features if s < start]
+        if before and (changed or any(_changed(ctx, f, ms, s, e) for s, e in before)):
+            out.append((start, '등재 SDK 태그가 같은 파일 기능 JS 태그보다 뒤 — %s' % path))
+        if is_root and (changed or block_lines) and any(a < start for a, _b in blocks):
+            out.append((start, '등재 SDK 태그가 root_view 의 `{%% block scripts %%}` 여는 줄보다 뒤 — %s' % path))
+        if not is_root and path in root_vendor and (changed or root_vendor[path]):
+            out.append((start, 'root_view·페이지 중복 로드 — %s(root_view 가 이미 싣는다)' % path))
+    return out
+
+
+def _root_vendor(ctx: BackstopContext) -> Dict[str, bool]:
+    """root_view.html 이 싣는 등재 SDK 경로 → 그 태그 줄이 added 인가."""
+    if ROOT_VIEW_TEMPLATE not in ctx.files_set or not any(f.startswith(VENDOR_DIR + '/') for f in ctx.all_files):
+        return {}
+    ms, records = _script_records(ctx, ROOT_VIEW_TEMPLATE)
+    passed = sdk_state(ctx).passed()
+    found: Dict[str, bool] = {}
+    for start, end, _attrs, path, std in records:
+        if std and path in passed:
+            found[path] = found.get(path, False) or _changed(ctx, ROOT_VIEW_TEMPLATE, ms, start, end)
+    return found
+
+
 def run_purity(ctx: BackstopContext) -> List[Finding]:
     out: List[Finding] = []
+    root_vendor: Dict[str, bool] = _root_vendor(ctx)
+    vendor_seen: set = set()
+    fix_vendor: str = ("등재 SDK 는 `{% static 'web/vendor/<sdk_id>/<파일>' %}` 외부 태그 하나로, 속성 src·defer 만, 그 SDK 를 "
+                       '쓰는 페이지의 `{% block scripts %}` 안 기능 JS 태그보다 앞에 둔다(모든 페이지가 쓰면 root_view 의 '
+                       'block 여는 줄 앞 · 중복 금지 — discipline-houserules §9).')
+
+    def vendor_findings(f: str, ms, records) -> None:
+        for start, reason in _vendor_reasons(ctx, f, ms, records, root_vendor):
+            if (f, start, reason) not in vendor_seen:
+                vendor_seen.add((f, start, reason))
+                out.append(Finding('PU2', f, ms.line_of(start), reason, _RULE_SDK, fix_vendor))
+
     for f in ctx.files:
         ext: str = ext_of(f)
         vendored: bool = f.startswith('static/vendor/') or f == HTMX_CORE or f in _HTMX_LEGACY
 
-        # ---- PU1: 신규 JS 경로·형태 + core 예약 이름
-        if ext in JS_EXTS and ctx.is_added(f) and not f.startswith('static/vendor/'):
+        # ---- PU1: 신규 JS 경로·형태 + core 예약 이름 · 벤더 자리는 등재 공식 SDK 사본만
+        if ext in JS_EXTS and ctx.is_added(f) and _is_vendor(f):
+            if f not in sdk_state(ctx).files().values():
+                out.append(Finding('PU1', f, None,
+                    '등재되지 않은 벤더 JS — static/vendor/ 에는 G1 승인·등재된 공식 SDK 사본만 둔다', _RULE_SDK,
+                    '공식 SDK 면 G1 승인 뒤 Coordinator 가 sdk_vendor.py 로 등재하고, 아니면 제3자 JS 를 들이지 않는다.'))
+        elif ext in JS_EXTS and ctx.is_added(f):
             if f in _HTMX_LEGACY:
                 out.append(Finding('PU1', f, None,
                     'htmx legacy core 예약 이름 `%s` 신설 — 기존 설치로만 소비 가능' % base_name_of(f), _RULE,
@@ -181,8 +271,14 @@ def run_purity(ctx: BackstopContext) -> List[Finding]:
             elif f != HTMX_CORE and not _FEATURE_JS_RE.fullmatch(f):
                 out.append(Finding('PU1', f, None,
                     '신규 JavaScript 경로·형태 위반 — 기능 JS는 static/js/<기능>.js snake_case 평면 한 파일, '
-                    '외부 JS는 static/vendor/<라이브러리>/<버전>/ 고정 사본만', _RULE,
+                    '외부 JS는 등재된 공식 SDK 사본(static/vendor/<sdk_id>/<파일>)만', _RULE,
                     '중첩·다른 폴더·`.min.js`·`.mjs`·`.cjs` 없이 static/js/<기능>.js로 둔다.'))
+
+        # ---- PU2 벤더 분기 ⑤ root_view·페이지 중복: root_view 태그 줄만 added 여도 페이지 파일에 낸다(교차 파일 색인)
+        if (ext == '.html' and not ctx.is_touched(f) and f != ROOT_VIEW_TEMPLATE
+                and any(root_vendor.values()) and _script_location_allowed(f)):
+            page_ms, page_records = _script_records(ctx, f)
+            vendor_findings(f, page_ms, page_records)
 
         if not ctx.is_touched(f):
             continue
@@ -199,12 +295,9 @@ def run_purity(ctx: BackstopContext) -> List[Finding]:
                         '한 줄은 {# … #}, 여러 줄은 {% comment %}…{% endcomment %}를 쓴다.'))
 
             # ---- PU2: 실행 script — 로컬 static 외부 참조 · 허용 경로 · 자리 · 실행 순서 · CDN 금지
-            records = []
+            _ms, records = _script_records(ctx, f)
             path_counts: Dict[str, int] = {}
-            for start, end, tag in _script_openers(ms.no_comments):
-                attrs = _attrs_of(tag)
-                path, std = _local_static_path(attrs)
-                records.append((start, end, attrs, path, std))
+            for _s, _e, _a, path, _std in records:
                 if path is not None:
                     path_counts[path] = path_counts.get(path, 0) + 1
             for start, end, attrs, path, std in records:
@@ -219,19 +312,23 @@ def run_purity(ctx: BackstopContext) -> List[Finding]:
                 elif path not in ctx.files_set:
                     reason = 'script src가 가리키는 로컬 static 파일 없음 — %s' % path
                 elif not _script_path_allowed(ctx, path, std):
-                    reason = 'script src 경로가 기능 JS·htmx core·vendor 고정 사본 경로가 아니다 — %s' % path
+                    reason = 'script src 경로가 기능 JS·htmx core·등재 공식 SDK 사본(WV2 통과) 경로가 아니다 — %s' % path
                 elif not _script_location_allowed(f):
                     reason = '실행 script 위치 위반 — 조각(section·widget·component)이 아니라 root_view 또는 페이지 view 템플릿이어야 한다'
                 elif _has_attr(attrs, 'async'):
                     reason = 'async 실행 금지 — DOM·의존 순서를 보존한다 — %s' % path
-                elif (_attr_value(attrs, 'type') or '').strip().lower() != 'module' and not _has_attr(attrs, 'defer'):
+                elif ((_is_vendor(path) or (_attr_value(attrs, 'type') or '').strip().lower() != 'module')
+                      and not _has_attr(attrs, 'defer')):
                     reason = 'classic 외부 스크립트는 defer가 필요하다 — %s' % path
                 elif path_counts.get(path, 0) > 1:
                     reason = '같은 템플릿의 script 중복 로드 — %s' % path
                 if reason is not None:
                     out.append(Finding('PU2', f, ms.line_of(start), reason, _RULE,
                         "실재하는 로컬 파일을 `{% static 'web/…' %}`로 한 번 참조하고, classic은 defer·module은 "
-                        'type="module"을 쓰며 async와 조각 로드를 제거한다 — 외부 JS 는 static/vendor/<라이브러리>/<버전>/ 고정 사본으로.'))
+                        'type="module"을 쓰며 async와 조각 로드를 제거한다 — 외부 JS 는 G1 승인·등재된 공식 SDK 사본'
+                        "(`{% static 'web/vendor/<sdk_id>/<파일>' %}`)만."))
+            if _script_location_allowed(f) and (root_vendor or any(_is_vendor(r[3]) for r in records)):
+                vendor_findings(f, ms, records)
 
             # ---- PU3: 인라인 이벤트 핸들러·htmx JS 채널·스크립트 스킴 금지
             for m in _ON_ATTR_RE.finditer(ms.no_comments):
@@ -284,5 +381,5 @@ def run_purity(ctx: BackstopContext) -> List[Finding]:
                 if ctx.line_is_added(f, line):
                     out.append(Finding('PU8', f, line, 'JS 동적 실행·외부 로드 `%s`' % m.group(0).strip(), _RULE,
                         'eval·Function·document.write·문자열 타이머·원격 import·script 요소 생성 없이 정적 코드만 쓴다 — '
-                        '외부 JS 는 static/vendor/<라이브러리>/<버전>/ 고정 사본을 페이지에서 defer 로 싣는다.'))
+                        '외부 JS 는 G1 승인·등재된 공식 SDK 사본을 페이지에서 defer 로 싣는다.'))
     return out

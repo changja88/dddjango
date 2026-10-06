@@ -1,6 +1,6 @@
 ---
 name: implementation-django
-description: Django 스택 표기법 — urls(path·<Bc>Routes·navigator reverse·문서 셸 탭·게이트 redirect), 탭 재탭 2단 동작(링크 이동), in-process api_client·safe_api_call 실패 종류·DataSource, 템플릿·요청 수명·CSRF, 정적 이미지·레이아웃 형상 재현, CSS(foundation 변수·theme·부품 CSS)·외부 JS 고정 사본. 라우팅·DataSource·템플릿·CSS·정적 자산 코드를 쓸 때 로드한다.
+description: Django 스택 표기법 — urls(path·<Bc>Routes·navigator reverse·문서 셸 탭·게이트 redirect), 탭 재탭 2단 동작(링크 이동), in-process api_client·safe_api_call 실패 종류·DataSource, 템플릿·요청 수명·CSRF, 정적 이미지·레이아웃 형상 재현, CSS(foundation 변수·theme·부품 CSS)·공식 SDK 사본 로드. 라우팅·DataSource·템플릿·CSS·정적 자산 코드를 쓸 때 로드한다.
 user-invocable: false
 ---
 
@@ -8,7 +8,7 @@ user-invocable: false
 
 ## 언제 쓰나
 
-URL·내비게이션·문서 셸(탭) 코드를 쓸 때, DataSource·api_client를 쓸 때, 템플릿·CSRF·요청 수명을 다룰 때, 정적 이미지·CSS·웹폰트·외부 JS 사본을 배선할 때 로드한다. 전문을 읽지 말고 아래 라우팅 표로 필요한 절만 부분 적재한다. 경계:
+URL·내비게이션·문서 셸(탭) 코드를 쓸 때, DataSource·api_client를 쓸 때, 템플릿·CSRF·요청 수명을 다룰 때, 정적 이미지·CSS·웹폰트·공식 SDK 로드 태그를 배선할 때 로드한다. 전문을 읽지 말고 아래 라우팅 표로 필요한 절만 부분 적재한다. 경계:
 
 - 라우팅 짝의 역할·리터럴 단일 출처 규율 → `architecture-ui`
 - root 동작 규율·refresh 처방 → `architecture-state`
@@ -31,7 +31,7 @@ URL·내비게이션·문서 셸(탭) 코드를 쓸 때, DataSource·api_client�
 - VM은 요청마다 새로 — 요청 사이 값을 VM·모듈 전역에 두지 않는다 · POST는 CSRF(`{% csrf_token %}`·`hx-headers`) · 출력은 자동 이스케이프만(`|safe` 금지) · Django Form 층 없음 (§6)
 - 정적 이미지 `<img src="{% static 'web/images/…' %}">` — 경로는 asset-manifest `local_path` 그대로 (§8) · 형상은 동결 시안을 템플릿+CSS로 빠짐없이 재현·직수입 금지 (§9)
 - 색·글자 리터럴은 `design_system/foundation/*.css` 안에서만 — 조각 CSS·부품 CSS·`style` 속성 금지(NM10) · 부품 CSS 클래스는 `<수식>-<군>` 접두·상태는 BEM `--`·`aria-*`/`data-*`(NM12) · 초기화·웹폰트는 theme (§10)
-- 외부 JS는 명세가 고른 것만 `web/static/vendor/<라이브러리>/<버전>/` 고정 사본 — CDN 실행 태그 금지 (§11)
+- 외부 JS는 G1 승인·등재된 공식 플랫폼 SDK 사본(`web/static/vendor/<sdk_id>/<파일>`)뿐 — 사본·등재 목록은 Coordinator 의 `sdk_vendor.py` 소관(읽기만) · 로드 태그는 페이지 `{% block scripts %}` 안 기능 JS 앞 `src`·`defer` 만 · CDN 실행 태그 금지 (§11)
 - **테스트는 전용 스킬로 이전**: 무엇을/오라클/비-vacuity/단언 FORM은 `discipline-test`, Django 메커니즘(VM 대체·테스트 클라이언트·HTML 단언·HTMX 헤더·`unittest.mock`·날짜 주입·브라우저 테스트)은 `implementation-test` (§7)
 
 ## 상세 레퍼런스
@@ -48,6 +48,6 @@ URL·내비게이션·문서 셸(탭) 코드를 쓸 때, DataSource·api_client�
 | 정적 이미지 에셋·`{% static %}` 표기 | final.md §8 |
 | 레이아웃 형상 — 시안 충실 재현 | final.md §9 |
 | foundation 변수·theme(초기화·웹폰트)·부품/조각 CSS | final.md §10 |
-| 외부 JS 고정 사본 | final.md §11 |
+| 공식 SDK 사본 — 자리·로드 태그·공개 키 흐름 | final.md §11 |
 
 각 절은 필요한 절만 읽는다(`## §N.` 헤더로 grep 가능 — 전체 로드 불필요).

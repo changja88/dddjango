@@ -17,7 +17,7 @@
 - §8. 정적 이미지 에셋 — `{% static %}`·web/static/images
 - §9. 레이아웃 형상 — 시안 충실 재현
 - §10. CSS 표기 — foundation 변수·theme·부품/조각 CSS
-- §11. 외부 JS 고정 사본 — static/vendor
+- §11. 공식 SDK 사본 — static/vendor
 
 ---
 
@@ -489,10 +489,10 @@ body {
 
 - `design_system/util/`은 시각 동작 헬퍼 CSS(미디어쿼리 묶음·스크롤 동작)다 — 토큰을 정의하지 않는다.
 
-## §11. 외부 JS 고정 사본 — static/vendor
+## §11. 공식 SDK 사본 — static/vendor
 
-- **명세가 고른 외부 JS만** 들인다 — 공식 배포 파일을 `web/static/vendor/<라이브러리>/<버전>/<파일>`로 **한 번 내려받아 고정**한다(버전 폴더 필수 — 판 올림은 새 버전 폴더·백스톱 PJ3). 받은 파일은 고치지 않는다.
-- 버전 값은 훈련 기억으로 적지 않는다 — 명세가 정한 판 또는 공식 배포처가 실제로 내주는 판을 받아 그 판 번호를 폴더 이름으로 쓴다.
-- 실행 태그는 그 라이브러리를 쓰는 페이지의 `{% block scripts %}` 안에서, 그 라이브러리를 부르는 기능 JS보다 **앞에** 한 번 둔다: `<script src="{% static 'web/vendor/<라이브러리>/<버전>/<파일>' %}" defer></script>`. CDN 실행 태그(`<script src="https://…">`)·`async`·조각 안 실행 태그는 쓰지 않는다(백스톱 PU2).
+- **외부 JS 는 G1 승인·등재된 공식 플랫폼 SDK 뿐이다**(discipline-houserules §9) — 사본은 `web/static/vendor/<sdk_id>/<파일>` 하나(판 폴더 없음 · 판 올림은 같은 자리 바꿔 쓰기)이고 등재 목록은 `web/sdk_registry.json` 이다. 내려받기·복사·판 올림·등재·복원·제거는 Coordinator 가 `sdk_vendor.py` 로만, 목록·사본만 담은 `chore(web-sdk):` 격리 커밋으로 한다 — coder 는 `web/static/vendor/**`·`web/sdk_registry.json` 을 읽기만 한다(섞이면 백스톱 WV10). 명세에 없는 라이브러리·SDK 기능이 필요해 보이면 파일 복사·CDN·동적 로드로 우회하지 않고 설계로 반송한다.
+- 실행 태그는 그 SDK 를 쓰는 페이지의 `{% block scripts %}` 안에서, 그 SDK 를 부르는 기능 JS보다 **앞에** `src`·`defer` 만 달아 한 번 둔다: `<script src="{% static 'web/vendor/<sdk_id>/<파일>' %}" defer></script>`(모든 페이지가 쓰면 `root_view.html` 의 `{% block scripts %}` 여는 줄 앞 · root_view·페이지 중복 금지). CDN 실행 태그(`<script src="https://…">`)·`async`·`type`·조각 안 실행 태그는 쓰지 않는다(백스톱 PU2 · WV6).
+- 공개 키는 settings 값만 출처다 — `common/` 의 설정 읽기(django.conf — application_layer 는 django 를 모른다) → VM 이 state 에 담고 → 템플릿이 escape 된 data 속성(`data-<키>="{{ state.<키> }}"` — 값은 순수 `{{ … }}` 하나 · 백스톱 WV7)·`json_script` 로 넘긴다. settings 에 공개 설정 이름이 없으면 Coordinator 가 G1 승인 하에 선택형(빈 문자열 = 미설정)으로 배선한다.
 - htmx core는 이 절 밖이다 — Coordinator가 G0에서 실제 core 경로를 확인해 build-state `htmx_core_static`에 적고(새 설치는 `web/static/htmx/htmx.min.js` 2.0.10 하나 · 브라운필드는 기존 경로), 문서 셸이 그 경로를 로드한다(§2·implementation-htmx §1). 소비 표기(전역 이름·초기화·호출 시점)는 implementation-javascript §8.
 - Python 패키지는 호스트의 의존 선언(requirements·pyproject)에 버전 고정(`==`)으로 추가한다 — 무핀 설치로 resolve된 실버전.

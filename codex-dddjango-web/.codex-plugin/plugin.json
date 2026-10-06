@@ -24,7 +24,7 @@
   "interface": {
     "displayName": "dddjango-web",
     "shortDescription": "Django 화면을 간소화 DDD+MVVM으로 요구→설계→구현까지 게이트로 빌드",
-    "longDescription": "dddjango-web은 기존 Django 프로젝트에 한 기능의 화면(HTML · HTMX · JS)을 간소화 DDD 4계층(domain/application/infra/presentation) + 철저한 MVVM으로 추가한다. dddjango-web 코디네이터가 design-architect-web·리뷰어 4종(ddd/ui/state/data)·coder-web·discipline-reviewer-web 역할을 서브에이전트로 디스패치하고, G0(요구)·G1(설계)·G2(구현) 게이트마다 사용자 승인을 받는다. multi_agent 기능 필요.",
+    "longDescription": "dddjango-web은 기존 Django 프로젝트에 한 기능의 화면(HTML · HTMX · JS)을 간소화 DDD 4계층(domain/application/infra/presentation) + 철저한 MVVM으로 추가한다. dddjango-web 코디네이터가 design-architect-web·리뷰어 4종(ddd/ui/state/data)·coder-web·discipline-reviewer-web 역할을 서브에이전트로 디스패치하고, G0(요구)·G1(설계)·G2(구현) 게이트마다 사용자 승인을 받는다. 기존 web 코드의 빚은 G0에서 드러내 슬라이스 0으로 먼저 정리하고, 외부 JS는 G1에서 승인·등재한 공식 플랫폼 SDK만 쓴다. $dddjango-web-refactor 는 대상 단위 하나의 기존 web 코드를 동작 불변으로 표준 정리하는 리팩토링 입구다. multi_agent 기능 필요.",
     "developerName": "changja88",
     "category": "Coding",
     "capabilities": [
@@ -36,7 +36,8 @@
     "defaultPrompt": [
       "dddjango-web으로 \"날씨 7일 예보 화면\"을 만들어줘 /api/openapi.json",
       "dddjango-web으로 \"채널 목록 화면\"을 DDD로 빌드해줘 — 순서대로 기능 설명, (선택) OpenAPI 위치(이 프로젝트 안 경로·파일 경로·http(s) 주소). 디자인: 내려받은 시안 폴더 경로 · 화면: 화면 파일 이름",
-      "주문 내역 화면을 dddjango-web 파이프라인으로 설계하고 구현해줘."
+      "주문 내역 화면을 dddjango-web 파이프라인으로 설계하고 구현해줘.",
+      "dddjango-web으로 주문 BC의 기존 web 코드를 동작 그대로 표준 구조로 정리해줘: $dddjango-web-refactor web/application/order"
     ],
     "brandColor": "#0C4A6E"
   }

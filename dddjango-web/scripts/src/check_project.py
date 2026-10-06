@@ -1,10 +1,10 @@
-# PJ — web 토대 어설션 3종. 게이트: 입력 불변식(시나리오 무관·항상).
+# PJ — web 토대 어설션 2종 (PJ1·PJ2 · PJ3 비움). 게이트: 입력 불변식(시나리오 무관·항상).
 #
-# *왜 결정적 백스톱인가*: 테스트 도구 선언(pytest·pytest-django) · htmx core 단일 고정 판 ·
-# 외부 JS 고정 사본의 버전 폴더는 어느 입력에도 불변인 토대 사실이며, 그 부재는
-# «테스트가 돌지 않는 green»·«두 htmx 가 섞인 화면»·«판이 흐르는 외부 JS»의 토대다.
-# 거짓양성 가드: PJ1은 web_test/ 에 테스트가 *있을 때만*, PJ2는 *새로 더한* htmx core 가 있을 때만,
-# PJ3은 vendor 파일이 *있을 때만* 발화.
+# *왜 결정적 백스톱인가*: 테스트 도구 선언(pytest·pytest-django) · htmx core 단일 고정 판은
+# 어느 입력에도 불변인 토대 사실이며, 그 부재는 «테스트가 돌지 않는 green»·«두 htmx 가 섞인 화면»의 토대다.
+# 거짓양성 가드: PJ1은 web_test/ 에 테스트가 *있을 때만*, PJ2는 *새로 더한* htmx core 가 있을 때만 발화.
+# PJ3(vendor/<라이브러리>/<버전>/ 고정 사본 · 2.0.0)은 비운다 — 2.1.0 부터 외부 JS 는 G1 승인·등재된 공식 SDK
+# 사본(static/vendor/<sdk_id>/<파일>)뿐이고 그 자리·바이트는 WV(src/check_vendor.py)·ST12 vendor 분기가 본다.
 # (판형: dddart check_pubspec.dart — riverpod 토대 자리를 web 토대로)
 
 from __future__ import annotations
@@ -13,12 +13,11 @@ import re
 from pathlib import Path
 from typing import List, Set
 
-from .common import HTMX_CORE, HTMX_VERSION, BackstopContext, Finding, base_name_of, segs_of
+from .common import HTMX_CORE, HTMX_VERSION, BackstopContext, Finding, segs_of
 
-_RULE_PJ: str = '토대 규약 — pytest·pytest-django 선언 · htmx core 단일 고정 판 · vendor/<라이브러리>/<버전>/ 고정 사본'
+_RULE_PJ: str = '토대 규약 — pytest·pytest-django 선언 · htmx core 단일 고정 판'
 _DECL_FILES = ('requirements*.txt', 'requirements/*.txt', 'pyproject.toml', 'Pipfile', 'setup.cfg', 'setup.py')
 _NAME_RE = re.compile(r'''(?<![\w.\-])["']?([A-Za-z][A-Za-z0-9_.\-]*)\s*(?:\[[^\]\n]*\])?\s*(?:==|>=|<=|~=|!=|===|>|<|=|$|["',;\s])''')
-_VERSION_DIR_RE = re.compile(r'^v?\d+(?:\.\d+)*(?:[-+.][0-9A-Za-z.]+)?$')
 _HTMX_VERSION_RE = re.compile(r'''version\s*:\s*["'](\d+\.\d+\.\d+[^"']*)["']''')
 
 
@@ -63,16 +62,6 @@ def run_project(ctx: BackstopContext) -> List[Finding]:
             out.append(Finding('PJ2', HTMX_CORE, None,
                 'htmx core 판 `%s` — 고정 판은 %s' % (m.group(1), HTMX_VERSION), _RULE_PJ,
                 '`curl -fsSL https://unpkg.com/htmx.org@%s/dist/htmx.min.js` 로 고정 판을 받는다.' % HTMX_VERSION))
-
-    # ---- PJ3: vendor 고정 사본 = static/vendor/<라이브러리>/<버전>/<파일>
-    for f in ctx.all_files:
-        s: List[str] = segs_of(f)
-        if s[:2] != ['static', 'vendor'] or base_name_of(f) == '.gitkeep':
-            continue
-        if len(s) != 5 or not _VERSION_DIR_RE.match(s[3]):
-            out.append(Finding('PJ3', f, None,
-                '버전 고정 없는 vendor 사본 — 자리는 static/vendor/<라이브러리>/<버전>/<파일>', _RULE_PJ,
-                '명세가 고른 외부 JS 의 공식 배포 파일을 버전 폴더 아래 한 번 내려받아 고정한다(판 올림 = 새 버전 폴더).'))
     return out
 
 
