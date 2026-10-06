@@ -355,10 +355,11 @@ def _skeleton(ctx: BackstopContext) -> List[Finding]:
                 '폴더는 무조건, 코드는 필요할 때만.'))
 
     def direct_kinds(layer_path: str, kinds: Set[str]) -> Set[str]:
-        """app·pres 계층 직속에 요구할 종류 — 개념 1차로 분할된 계층(직속 비종류 디렉터리 = 개념 폴더 보유)은 없다:
-        종류 폴더는 각 개념 폴더 안에 완비하고(houserules §2·§3) 그 완비는 아래 «신규 개념 폴더»가 본다."""
-        split: bool = any(x.startswith(layer_path + '/') and x.count('/') == layer_path.count('/') + 1
-                          and segs_of(x)[-1] not in kinds for x in ctx.dirs)
+        """app·pres 계층 직속에 요구할 종류 — 직속 디렉터리가 있고 종류 이름이 하나도 없을 때만 요구하지 않는다.
+        개념 폴더 안 완비(houserules §2·§3)는 아래 «신규 개념 폴더»가 본다."""
+        children: Set[str] = {segs_of(x)[-1] for x in ctx.dirs
+                              if x.startswith(layer_path + '/') and x.count('/') == layer_path.count('/') + 1}
+        split: bool = bool(children) and not (children & kinds)
         return set() if split else kinds
 
     # 신규 BC (area 하위 포함 — `application/<bc>` 또는 `application/<area>/<bc>`)

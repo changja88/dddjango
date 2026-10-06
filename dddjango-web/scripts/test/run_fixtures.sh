@@ -7,7 +7,7 @@
 #   #10 최소 root ST4 · #11 NM10 ID 선택자 · #16 --only 검증
 # F15·F16 W4 결함 둘: 옛 배치 파일 층 의존 IM 불발화(층 무관 IM25 는 발화) · IM26 조각의 component extends
 # F17 F-X4-3: 도구 캐시 폴더(.ruff_cache 류)는 검사 대상 밖 · 일반 이름 비표준 폴더는 그대로 발화
-# F18 F-A2-2: 처음부터 개념 1차로 지은 새 BC 는 계층 직속 종류 폴더 없이 ST4 불발화 · 개념 폴더 안 누락·평면 직속 누락은 그대로 발화
+# F18 F-A2-2: 처음부터 개념 1차로 지은 새 BC 는 계층 직속 종류 폴더 없이 ST4 불발화 · 개념 내부·평면·혼합 배치의 누락은 그대로 발화
 # 픽스처는 mktemp -d 안의 git 저장소로 만들고 끝나면 지운다(Django 설치 불필요 — 파일 검사기).
 set -u
 SCRIPTS="$(cd "$(dirname "$0")/.." && pwd)"
@@ -502,7 +502,7 @@ assert "F17b 대조: 일반 이름 비표준 폴더 — ST3 발화" 2 'ST3\] BLO
 assert "F17c 대조: root 직속 비표준 폴더 — ST8 발화" 2 'ST8\] BLOCKER — web/root/lint_cache' '\.ruff_cache' "$E" "$OUT"
 
 # ---------- F18 (F-A2-2): 처음부터 개념 1차로 지은 새 BC — 종류 폴더는 각 개념 폴더 안에 완비한다(houserules §2·§3).
-#            계층 직속 종류 폴더가 없어도 ST4 불발화 · 대조: 개념 폴더 안 종류 누락 · 평면 BC 의 직속 종류 누락은 그대로 발화
+#            계층 직속 종류 폴더가 없어도 ST4 불발화 · 대조: 개념 폴더 안 종류 누락 · 평면·혼합 배치의 직속 종류 누락은 그대로 발화
 concept_split() { # concept_split <BC 절대경로> <계층> <개념…> — 계층 직속 종류 폴더를 걷고 개념마다 종류 폴더를 완비
   local layer="$1/$2" kinds="use_case view_model state shared_state service" k c
   [ "$2" = presentation_layer ] && kinds="view section widget ui_extension"
@@ -532,7 +532,49 @@ assert "F18d application 만 개념 1차 · presentation 은 평면 완비 — S
 P="$T/f18e"; BASE=$(mkproj "$P"); B="$P/web/application/notice"
 mkbc "$P" application/notice; mv "$B/application_layer/use_case" "$B/application_layer/usecase"; markers "$P"
 OUT=$(run_backstop "$P" --diff-base "$BASE" --only st4); E=$?
-assert "F18e 대조: 종류 폴더 오타(usecase)는 개념 폴더로 읽혀도 — ST4가 그 폴더를 지목" 2 'ST4\] BLOCKER — web/application/notice/application_layer/usecase$' - "$E" "$OUT"
+assert "F18e 대조: 종류 폴더 오타(usecase) — ST4가 BC의 application_layer/use_case/ 누락을 지목" 2 'notice. 골격 미완비 — 누락: application_layer/use_case/' - "$E" "$OUT"
+P="$T/f18f"; BASE=$(mkproj "$P"); B="$P/web/application/notice"
+mkbc "$P" application/notice; concept_split "$B" application_layer ticket
+mkdir -p "$B/application_layer/service/use_case"; markers "$P"
+OUT=$(run_backstop "$P" --diff-base "$BASE" --only st4); E=$?
+assert "F18f 개념 완비 + 직속 service/use_case/만 — ST4가 BC를 지목" 2 'ST4\] BLOCKER — web/application/notice$' - "$E" "$OUT"
+P="$T/f18g"; BASE=$(mkproj "$P"); B="$P/web/application/notice"
+mkbc "$P" application/notice; concept_split "$B" application_layer ticket
+mkbc "$P" application/notice; markers "$P"; rm "$B/application_layer/service/__init__.py"
+OUT=$(run_backstop "$P" --diff-base "$BASE" --only st4); E=$?
+assert "F18g 개념 완비 + 직속 종류 전부 + service 표지 누락 — ST4 발화" 2 'notice. 골격 미완비 — 누락: application_layer/service/__init__.py' - "$E" "$OUT"
+P="$T/f18h"; BASE=$(mkproj "$P"); B="$P/web/application/notice"
+mkbc "$P" application/notice; concept_split "$B" presentation_layer ticket
+mkdir -p "$B/presentation_layer/widget"; markers "$P"
+OUT=$(run_backstop "$P" --diff-base "$BASE" --only st4); E=$?
+assert "F18h 개념 완비 + 직속 widget/만 — ST4가 BC의 직속 종류 누락을 지목" 2 'notice. 골격 미완비 — 누락: presentation_layer/section/' - "$E" "$OUT"
+P="$T/f18i"; BASE=$(mkproj "$P"); B="$P/web/application/notice"
+mkbc "$P" application/notice
+concept_split "$B" application_layer ticket; concept_split "$B" presentation_layer ticket
+mkbc "$P" application/notice; markers "$P"
+OUT=$(run_backstop "$P" --diff-base "$BASE" --only st4); E=$?
+assert "F18i 개념·직속 종류 모두 완비한 혼합 새 BC — ST4 불발화" 0 - 'ST4' "$E" "$OUT"
+P="$T/f18j"; mkproj "$P" >/dev/null; B="$P/web/application/notice"
+mkbc "$P" application/notice; markers "$P"; BASE=$(commit "$P" flat)
+for k in use_case view_model state shared_state service; do mkdir -p "$B/application_layer/ticket/$k"; done
+markers "$P"
+OUT=$(run_backstop "$P" --diff-base "$BASE" --only st4); E=$?
+assert "F18j 기존 평면 완비 BC에 완비 개념 추가 — ST4 불발화" 0 - 'ST4' "$E" "$OUT"
+P="$T/f18k"; BASE=$(mkproj "$P"); B="$P/web/application/support/notice"
+mkbc "$P" application/support/notice
+concept_split "$B" application_layer ticket; concept_split "$B" presentation_layer ticket; markers "$P"
+OUT=$(run_backstop "$P" --diff-base "$BASE" --only st4); E=$?
+assert "F18k area 하위 개념 1차 새 BC — ST4 불발화" 0 - 'ST4' "$E" "$OUT"
+P="$T/f18l"; BASE=$(mkproj "$P")
+mkbc "$P" application/notice; concept_split "$P/web/application/notice" presentation_layer ticket; markers "$P"
+OUT=$(run_backstop "$P" --diff-base "$BASE" --only st4); E=$?
+assert "F18l presentation 만 개념 1차 · application 은 평면 완비 — ST4 불발화" 0 - 'ST4' "$E" "$OUT"
+P="$T/f18m"; mkproj "$P" >/dev/null; mkclean "$P"; B="$P/web/application/notice"
+mkbc "$P" application/notice
+concept_split "$B" application_layer ticket; concept_split "$B" presentation_layer ticket; markers "$P"
+commit "$P" split >/dev/null
+OUT=$(run_backstop "$P" --debt-scan --refactor --json "$T/f18m.json"); E=$?
+assert "F18m 기존 개념 1차 BC의 리팩토링 빚 스캔 — ST4 빚 0" 0 '빚 스캔 (리팩토링) — 키 0 · 발견 0' 'ST4' "$E" "$OUT"
 
 # ---------- F7: 사용 오류 — exit 1(미실행은 통과가 아니다)
 OUT=$(run_backstop --help); E=$?
