@@ -111,15 +111,15 @@ Read/Grep/Glob로 대상 영역의 존재·규모를 빠르게 확인하고 모�
    1. 커맨드 인자에 OpenAPI 위치(세 꼴 — 아래 4)가 있으면 그것을 쓰고 `.dddjango-web/config.json`의 `openapi_url`에 저장/갱신한다.
    2. 없으면 config의 `openapi_url`을 읽어 한 줄 보고한다.
    3. 둘 다 없으면 1회 안내 후 저장한다. 답이 없으면 폴백: 기존 DataSource 패턴 → 가정 계약(G1 확인 항목 승격). **동결 실패(죽은 주소·인증 필요·파일 없음·2xx 아님·JSON 아님)도 '없음'과 같은 폴백에 합류시키고 G0 배너에 표시한다**(어느 꼴로 읽었는지와 실패 사유를 함께).
-   4. **꼴 판별(위에서부터 첫 일치)**: ⓐ `http://`·`https://`로 시작 → 주소 꼴 / ⓑ 실재 파일(`test -f` — 절대 경로 또는 프로젝트 루트 상대·`~`는 홈으로 편다) → 파일 꼴 / ⓒ `/`로 시작 → 이 프로젝트 안 path 꼴 / ⓓ 그 밖 → 해소 실패(위 3의 폴백). 절대 파일 경로와 path가 둘 다 `/`로 시작하므로 파일 실재를 path보다 먼저 본다.
+   4. **꼴 판별(위에서부터 첫 일치)**: ⓐ `http://`·`https://`로 시작 → 주소 꼴 / ⓑ 실재 파일(`test -f` — 절대 경로 또는 프로젝트 루트 상대·`~`는 홈으로 편다) → 파일 꼴 / ⓒ `/`로 시작하고 `/[A-Za-z0-9._~/?=&%-]*` 꼴(영문·숫자와 `. _ ~ / ? = & % -`만)인 값 → 이 프로젝트 안 path 꼴 / ⓓ 그 밖(`'`·`$`·공백 등이 든 path 포함) → 해소 실패(위 3의 폴백 · G0 배너). 절대 파일 경로와 path가 둘 다 `/`로 시작하므로 파일 실재를 path보다 먼저 본다.
    5. **G0 승인 후 원본 전체를 `<산출물 폴더>/openapi-full.json`으로 동결**한다 — 꼴마다 명령 하나다:
       - 주소 꼴: `curl -fsSL <url> -o <산출물 폴더>/openapi-full.json`.
       - 파일 꼴: `cp <파일 경로> <산출물 폴더>/openapi-full.json`(로컬 파일도 출처로 허용 — 공백이 든 경로는 따옴표로 감싼다).
-      - 이 프로젝트 안 path 꼴: 개발 서버를 켜지 않고 이 Django 프로젝트에서 같은 프로세스로 그 path를 GET한다(Django 테스트 클라이언트 — `setup_test_environment()`가 `ALLOWED_HOSTS`에 `testserver`를 넣어 주므로 G0 연결 설정 전이어도 된다). 2xx이고 JSON일 때만 저장하고, 아니면 파일을 쓰지 않고 0 아닌 코드로 끝난다:
+      - 이 프로젝트 안 path 꼴: 개발 서버를 켜지 않고 이 Django 프로젝트에서 같은 프로세스로 그 path를 GET한다(Django 테스트 클라이언트 — `setup_test_environment()`가 `ALLOWED_HOSTS`에 `testserver`를 넣어 주므로 G0 연결 설정 전이어도 된다). path와 출력 경로는 코드에 넣지 않고 환경변수로 넘긴다 — `OPENAPI_PATH`는 ⓒ 꼴 검사를 통과한 값이라 작은따옴표 안에서 원문 그대로 보존되고, `OPENAPI_OUT`은 산출물 폴더의 상대 경로(`.dddjango-web/<생성일>-<기능-slug>/openapi-full.json` — 숫자·영문 케밥이라 따옴표 문자가 없다)다. 명령 안에서도 path 꼴을 다시 확인하고, 2xx이고 JSON일 때만 저장하며, 아니면 파일을 쓰지 않고 0 아닌 코드로 끝난다:
         ```
-        python manage.py shell -c "import json, pathlib, sys; from django.test.utils import setup_test_environment; setup_test_environment(); from django.test import Client; r = Client().get('<path>'); r.status_code // 100 == 2 or sys.exit(f'HTTP {r.status_code}'); json.loads(r.content); pathlib.Path('<산출물 폴더>/openapi-full.json').write_bytes(r.content)"
+        OPENAPI_PATH='<path>' OPENAPI_OUT='<산출물 폴더>/openapi-full.json' python manage.py shell -c "import json, os, pathlib, re, sys; from django.conf import settings; from django.test import Client; from django.test.utils import setup_test_environment; print('settings:', settings.SETTINGS_MODULE, file=sys.stderr); p = os.environ['OPENAPI_PATH']; re.fullmatch(r'/[A-Za-z0-9._~/?=&%-]*', p) or sys.exit('bad path'); setup_test_environment(); r = Client().get(p); r.status_code // 100 == 2 or sys.exit(f'HTTP {r.status_code}'); json.loads(r.content); pathlib.Path(os.environ['OPENAPI_OUT']).write_bytes(r.content)"
         ```
-        설정 모듈은 프로젝트 `manage.py`의 기본값을 쓴다. 그 설정으로 프로젝트가 뜨지 않으면(필수 환경변수 부재 등) G0에서 쓸 설정 모듈을 사용자에게 묻고 `--settings=<모듈>`을 붙인다.
+        설정 모듈 우선순위는 `--settings=<모듈>` > 실행 환경의 `DJANGO_SETTINGS_MODULE` > 프로젝트 `manage.py`의 기본값이다(표준 `manage.py`는 `setdefault`라 이미 있는 환경변수가 먼저다). 명령이 실제로 쓴 설정 모듈을 stderr에 `settings: <모듈>`로 찍으니, 그 값을 G0 보고(배너 또는 한 줄 상태)와 scope.md에 적는다. 그 설정으로 프로젝트가 뜨지 않으면(필수 환경변수 부재 등) G0에서 쓸 설정 모듈을 사용자에게 묻고 `--settings=<모듈>`을 붙인다(`python manage.py shell --settings=<모듈> -c "…"`).
 
       "관련 엔드포인트 절단"은 여기서 하지 않는다 — '관련' 판별은 LLM 재량이고 G0엔 명세가 없다. **절단은 G1 직후 기계 수행**(Phase 1 step 6 — 세 꼴 모두 같다).
 4. **화면 디자인 출처 해소** (디자인은 인자가 아니다 — step 4 진입 시 아래 순서로 능동 해소한다):
