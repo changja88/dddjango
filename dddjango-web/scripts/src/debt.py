@@ -18,7 +18,8 @@
 #   debt-g0.json 의 mode 가 --debt-residual 의 의미론을 정한다.
 # 공식 SDK 등재(WV — src/check_vendor.py `run_vendor(ctx, debt=True)`): 늘 검사 키(check_vendor.UNDEFERRABLE)는
 #   발견 행에 `undeferrable: true` 를 싣는다(판정 물음 없이 미룰 수 없음).
-#   debt-g0.json 의 `scanner`(플러그인 판·검사 집합 해시)가 지금과 다르면 잔존 판정은 판 경계라 불가다(exit 1).
+#   debt-g0.json 의 `scanner` 검사 집합 해시·키 의미론이 지금과 다르면 판 경계라 잔존 판정 불가다(exit 1).
+#   플러그인 판 글자만 다르면 알림 한 줄을 내고 잔존 판정을 잇는다.
 
 import hashlib
 import json
@@ -60,11 +61,12 @@ SPEC_ROW_NAME: str = '이름'
 # 6a 참조 완전성 grep 의 pathspec — 커맨드 문면의 명령과 같은 문자열이다(refactor_audit --self-test).
 REF_PATHSPEC: Tuple[str, ...] = ('web', 'web_test', '*.py', '*.html', '*.css', '*.js', ':(exclude).dddjango-web',
                                   ':(exclude)web/static/vendor', ':(exclude)web/sdk_registry.json')
-# 빚 스캔이 도는 패밀리와 그 검사 집합 — 판이 다른 동결본으로는 잔존을 판정하지 않는다(scanner 지문).
+# 빚 스캔이 도는 패밀리와 그 검사 집합 — 검사 집합이 다른 동결본으로는 잔존을 판정하지 않는다(scanner 지문).
 DEBT_FAMILIES: Tuple[str, ...] = ('st', 'md', 'im', 'nm', 'pu')
 CHECK_IDS: Tuple[str, ...] = tuple([c for c in CORE_CHECK_IDS if c[:2].lower() in DEBT_FAMILIES]
                                    + list(VENDOR_CHECK_IDS))
 # 빚 키 의미론 — 폴더 발견을 파일 키로 펼친 판(이 값이 다른 동결본은 판 경계)
+# 빚 키의 꼴(검사 ID·경로 표현)을 바꾸는 고침은 이 값을 올린다 — 플러그인 판 글자는 경계가 아니다
 KEY_SCHEME: str = 'st-folder-to-file'
 # 브라운필드 legacy htmx core(기존 설치 그대로 소비) — 신규 이름으로는 금지(PU1)
 HTMX_LEGACY: Tuple[str, ...] = ('static/js/htmx.min.js', 'static/js/htmx.js')
@@ -106,7 +108,8 @@ def _plugin_version() -> str:
 
 
 def scanner_stamp() -> dict:
-    """빚 스캔 판 — 플러그인 판 · 검사 집합 해시 · 키 의미론."""
+    """빚 스캔 판 — 플러그인 판 · 검사 집합 해시 · 키 의미론.
+    경계는 검사 집합 해시·키 의미론 — 플러그인 판은 기록·알림용."""
     return {'plugin': _plugin_version(),
             'checks': hashlib.sha256(','.join(CHECK_IDS).encode('ascii')).hexdigest()[:16],
             'keys': KEY_SCHEME}
@@ -467,9 +470,17 @@ def cli_residual(root: Path, folder_arg: str) -> int:
             raise DebtError('debt-g0.json 파싱 실패 — %s' % error)
         if mode not in (MODE_FEATURE, MODE_REFACTOR):
             raise DebtError('debt-g0.json mode 값 오류 — %r' % mode)
-        if g0.get('scanner') != scanner_stamp():
+        scanner = g0.get('scanner')
+        stamp: dict = scanner_stamp()
+        if (not isinstance(scanner, dict) or scanner.get('checks') != stamp['checks']
+                or scanner.get('keys') != stamp['keys']):
             raise DebtError('판 경계 — G0 재스캔 필요(debt-g0.json 스캔 판 %r ≠ 지금 %r)'
-                            % (g0.get('scanner'), scanner_stamp()))
+                            % (scanner, stamp))
+        notice: str = ''
+        if scanner.get('plugin') != stamp['plugin']:
+            notice = ('[info] 플러그인 판 바뀜 — G0 스캔 %s → 지금 %s'
+                      '(검사 집합·키 의미론이 같아 잔존 판정을 잇는다)'
+                      % (scanner.get('plugin', 'unknown'), stamp['plugin']))
         g0_when, a_ids, required_ids, resubmit_ids = residual_sets(
             scope_md.read_text(encoding='utf-8'))
         scanned: str = str(g0.get('scanned_at', ''))
@@ -482,6 +493,8 @@ def cli_residual(root: Path, folder_arg: str) -> int:
             raise DebtError('debt-g0.json ids 에 없는 ID — %s' % ' '.join(unknown))
         if not (a_ids | required_ids) - resubmit_ids and not _is_git(root):
             # 비git 첫 실행(G0 빚 0)의 G2 — 판정할 키가 없고 비git 이라 재스캔할 우주가 없다
+            if notice:
+                print(notice)
             print('[info] git 저장소 아님 — 판정할 ⓐ·요구 키 0 이라 재스캔 생략(G0 첫 실행 · 새 키 보고 없음)')
             print('[backstop] 빚 잔존 — ⓐ 잔존 0 · 요구 잔존 0 · 재상정 제외 %d · G0 에 없던 키 판정 밖(비git)'
                   % len((a_ids | required_ids) & resubmit_ids))
@@ -499,6 +512,8 @@ def cli_residual(root: Path, folder_arg: str) -> int:
     remaining_r: List[str] = [c for c in r_live if counts.get(ids[c], 0) > 0]
     new_keys: List[str] = sorted(set(counts) - g0_keys)
     outside: Dict[str, List[str]] = _outside_left(g0, g2, {ids[c] for c in a_live + r_live})
+    if notice:
+        print(notice)
     for label, rows in (('ⓐ', remaining_a), ('요구', remaining_r)):
         for cid in rows:
             print('잔존 %s %s %s — 발견 %d' % (label, cid, ids[cid], counts[ids[cid]]))

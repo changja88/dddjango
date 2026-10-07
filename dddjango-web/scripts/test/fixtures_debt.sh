@@ -588,6 +588,71 @@ PY
 OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
 assert "D32c scanner 없는 옛 동결본 — exit 1 «판 경계»" 1 "판 경계 — G0 재스캔 필요" - "$E" "$OUT"
 
+P="$T/d32d"; mkproj "$P" >/dev/null; run_folder "$P" run
+scope_md "$P" run '## G0 @NOW@
+ⓐ 키: -
+요구 키: -'
+python3 - "$P/.dddjango-web/run/debt-g0.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1])); d['scanner']['plugin'] = '0.0.0-other'; json.dump(d, open(sys.argv[1], 'w'))
+PY
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D32d plugin 만 다름 — 알림 뒤 판정을 잇는다(exit 0)" 0 "ⓐ 잔존 0" "판 경계" "$E" "$OUT"
+assert "D32d′ plugin 만 다름 — 플러그인 판 바뀜 알림" 0 "[info] 플러그인 판 바뀜 — G0 스캔 0.0.0-other → 지금 " - "$E" "$OUT"
+
+P="$T/d32e"; mkproj "$P" >/dev/null; run_folder "$P" run
+scope_md "$P" run '## G0 @NOW@
+ⓐ 키: -
+요구 키: -'
+python3 - "$P/.dddjango-web/run/debt-g0.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1])); d['scanner']['keys'] = 'old-keys'; json.dump(d, open(sys.argv[1], 'w'))
+PY
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D32e keys 만 다름 — exit 1 «판 경계» · 알림 없음" 1 "판 경계 — G0 재스캔 필요" "플러그인 판 바뀜" "$E" "$OUT"
+
+P="$T/d32f"; mkproj "$P" >/dev/null; run_folder "$P" run
+scope_md "$P" run '## G0 @NOW@
+ⓐ 키: -
+요구 키: -'
+python3 - "$P/.dddjango-web/run/debt-g0.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1])); d['scanner']['checks'] = 'old'; json.dump(d, open(sys.argv[1], 'w'))
+PY
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D32f checks 만 다름 — exit 1 «판 경계» · 알림 없음" 1 "판 경계 — G0 재스캔 필요" "플러그인 판 바뀜" "$E" "$OUT"
+
+P="$T/d32g"; mkproj "$P" >/dev/null; bad_handlers "$P"; run_folder "$P" run
+scope_md "$P" run '## G0 @NOW@
+ⓐ 키: C1
+요구 키: -'
+python3 - "$P/.dddjango-web/run/debt-g0.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1])); d['scanner']['plugin'] = '0.0.0-other'; json.dump(d, open(sys.argv[1], 'w'))
+PY
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D32g plugin 만 다름 — ⓐ 잔존 판정을 잇는다(exit 2)" 2 "잔존 ⓐ C1" "판 경계" "$E" "$OUT"
+assert "D32g′ plugin 만 다름 — ⓐ 잔존에도 플러그인 판 바뀜 알림" 2 "플러그인 판 바뀜" - "$E" "$OUT"
+
+P="$T/d32h"; mkproj "$P" >/dev/null; run_folder "$P" run
+scope_md "$P" run '## G0 @NOW@
+ⓐ 키: -
+요구 키: -'
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D32h 같은 판 — 잔존 0 · 플러그인 판 바뀜 알림 없음" 0 "ⓐ 잔존 0" "플러그인 판 바뀜" "$E" "$OUT"
+
+P="$T/d32i"; mkdir -p "$P/.dddjango-web/run"
+run_backstop "$P" --debt-scan --json "$P/.dddjango-web/run/debt-g0.json" >/dev/null
+scope_md "$P" run '## G0 @NOW@
+ⓐ 키: -
+요구 키: -'
+python3 - "$P/.dddjango-web/run/debt-g0.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1])); d['scanner']['plugin'] = '0.0.0-other'; json.dump(d, open(sys.argv[1], 'w'))
+PY
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D32i 비git 첫 실행 · plugin 만 다름 — 알림 뒤 판정을 잇는다(exit 0)" 0 "플러그인 판 바뀜" "판 경계" "$E" "$OUT"
+
 # ---------- D33 (2.1.0 검토 r1 #1): 비git · web/ 없는 첫 실행 = 빚 0 — git 보다 web/ 부재를 먼저 본다 · 잔존도 판정할 키 0 이면 비git 이어도 exit 0
 P="$T/d33"; w "$P/config/settings.py" "SECRET_KEY = 'x'"; mkdir -p "$P/.dddjango-web/run"
 OUT=$(run_backstop "$P" --debt-scan --json "$P/.dddjango-web/run/debt-g0.json"); E=$?
