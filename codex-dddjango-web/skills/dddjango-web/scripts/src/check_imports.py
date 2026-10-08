@@ -6,7 +6,7 @@
 # `{% include %}`·`{% static %}`(TEMPLATES DIRS = web/ 뿌리) + CSS `@import`·`url()`. 조각 CSS
 # (`static/application/…`·`static/root/…`)는 소유자의 presentation 자리로 센다(houserules §5).
 # 거짓양성 게이트 = added 줄 한정(레거시 파일의 기존 위반 참조에 불발화) + 표준 트리 밖 옛 배치 파일은 층 판정 불가
-# 레거시라 층 무관 IM(IM24·IM25·IM27)만 건다
+# 레거시라 층 무관 IM(IM24·IM25·IM27)만 건다 — 옛 배치에서는 *_data_source.py 를 DataSource 로 본다.
 # + 주석·문자열 마스킹(교정 주석의 토큰이 재차 blocker가 되는 루프 차단).
 # (판형: dddart check_imports.dart — IM1~IM23 번호 그대로 · IM24~IM27 = web 새 검사)
 
@@ -22,7 +22,8 @@ from .common import (
 )
 
 # 층과 상관없는 IM — 표준 트리 밖 옛 배치 파일(층 판정 불가 레거시)에도 건다. 나머지 IM 은 전부 층(경로 마디)
-# 의존이라 옛 배치 파일에는 걸지 않는다(houserules §7·§8 — 레거시 불발화 · 이동 요구 없음).
+# 의존이라 옛 배치 파일에는 걸지 않는다(houserules §7·§8 — 레거시 불발화 · 이동 요구 없음). 옛 배치에서는
+# *_data_source.py 를 DataSource 로 본다.
 LAYER_FREE_IM: Set[str] = {'IM24', 'IM25', 'IM27'}
 _COMPONENT_PREFIX: str = 'design_system/component/'
 _HTTP_SURFACE: Set[str] = {'requests', 'httpx', 'aiohttp', 'urllib.request', 'http.client', 'django.test'}
@@ -291,9 +292,11 @@ def run_imports(ctx: BackstopContext) -> List[Finding]:
                         % ('router' if is_bc_router else 'navigator'),
                         'architecture-ddd §3.72·architecture-ui §6', '날짜→path 변환은 도메인 VO·VM 단일 거주, router·navigator는 str 전달만.')
         # IM27(리터럴 절반): API URL 리터럴은 DataSource·common/network 전속
-        if ext != '.css' and not in_network and not (in_infra and parent == 'data_source'):
+        if ext != '.css' and not in_network and not (
+                (in_infra and parent == 'data_source') or (legacy and base.endswith('_data_source.py'))):
             ms = ctx.mask_of(f)
             for line, _ in scan_tokens(ms, _API_LITERAL_RE, view='no_comments'):
                 add('IM27', line, 'DataSource 밖 API URL 리터럴 `/api/…`', '제1 규약 §3.4',
-                    'API path 는 그 BC infra_layer/data_source/<개념>_data_source.py 에만 둔다.')
+                    ('옛 배치 단위에서는 API path 를 <개념>_data_source.py 파일에만 둔다(표준 단위는 그 BC infra_layer/data_source/).'
+                     if legacy else 'API path 는 그 BC infra_layer/data_source/<개념>_data_source.py 에만 둔다.'))
     return out

@@ -640,6 +640,94 @@ assert "F19f git status 실패 → exit 1(빈 목록으로 넘어가지 않는�
 OUT=$(PATH="$T/fakegit:$PATH" run_backstop "$T/f19" --diff-base "$(G "$T/f19" rev-parse HEAD)" --all); E=$?
 assert "F19f --all(게이트 없음)은 git status 실패에 막히지 않는다" 2 "blocker" "git status" "$E" "$OUT"
 
+# ---------- F20 (2.2.2 B): 옛 view/ 페이지의 기능 JS 자리 — 조각·인라인·async 금지는 그대로
+for CASE in a b c d; do
+  P="$T/f20$CASE"; mkproj "$P" >/dev/null; L="$P/web/chart/chart"
+  w "$L/view/chart.html" '{% extends "base/base.html" %}' '{% load static %}' \
+    '{% block scripts %}{% endblock scripts %}'
+  w "$L/section/chart_part.html" '<div>{{ title }}</div>'
+  w "$P/web/static/js/chart_flow.js" 'document.addEventListener("click", () => {});'
+  BASE=$(commit "$P" legacy)
+  TARGET="$L/view/chart.html"
+  TAG="<script defer src=\"{% static 'web/js/chart_flow.js' %}\"></script>"
+  case "$CASE" in
+    b) TARGET="$L/section/chart_part.html" ;;
+    c) TAG='<script>var a = 1;</script>' ;;
+    d) TAG="<script async defer src=\"{% static 'web/js/chart_flow.js' %}\"></script>" ;;
+  esac
+  if [ "$CASE" = b ]; then
+    w "$TARGET" '<div>{{ title }}</div>' "$TAG"
+  else
+    w "$TARGET" '{% extends "base/base.html" %}' '{% load static %}' \
+      '{% block scripts %}' "$TAG" '{% endblock scripts %}'
+  fi
+  OUT=$(run_backstop "$P" --diff-base "$BASE" --only pu); E=$?
+  case "$CASE" in
+    a) assert "F20a 옛 view/ 페이지 기능 JS — blocker 0" 0 - 'BLOCKER' "$E" "$OUT" ;;
+    b) assert "F20b 옛 section/ 기능 JS — PU2" 2 'PU2\] BLOCKER — web/chart/chart/section/chart_part.html' - "$E" "$OUT"
+       assert "F20b 실행 script 위치 위반" 2 '실행 script 위치 위반' - "$E" "$OUT" ;;
+    c) assert "F20c 옛 view/ 인라인 — PU2" 2 'PU2\] BLOCKER — web/chart/chart/view/chart.html' - "$E" "$OUT"
+       assert "F20c 인라인 script 금지" 2 '인라인 script 금지' - "$E" "$OUT" ;;
+    d) assert "F20d 옛 view/ 기능 JS async — async 실행 금지" 2 'async 실행 금지' '실행 script 위치 위반' "$E" "$OUT" ;;
+  esac
+done
+
+# ---------- F21 (2.2.2 C): 옛 *_data_source.py 의 API path 자리 — HTTP import 금지는 그대로
+for CASE in a b c d e; do
+  P="$T/f21$CASE"; mkproj "$P" >/dev/null; L="$P/web/chart/chart"
+  w "$L/view/chart_view.py" 'x: int = 1'
+  BASE=$(commit "$P" legacy)
+  case "$CASE" in
+    a|e) w "$L/chart_catalog_data_source.py" 'CHART_PATH: str = "/api/charts"' ;;
+    b) w "$L/data_source/chart_submit_data_source.py" 'CHART_PATH: str = "/api/charts"' ;;
+    c) printf '%s\n' 'Y: str = "/api/charts"' >> "$L/view/chart_view.py" ;;
+    d) w "$P/web/application/chart/presentation_layer/view/chart_view.py" 'Y: str = "/api/charts"' ;;
+  esac
+  [ "$CASE" = e ] && printf '%s\n' 'import requests' >> "$L/chart_catalog_data_source.py"
+  OUT=$(run_backstop "$P" --diff-base "$BASE" --only im27); E=$?
+  case "$CASE" in
+    a) assert "F21a 옛 단위 직속 DataSource API path — blocker 0" 0 - 'BLOCKER' "$E" "$OUT" ;;
+    b) assert "F21b 옛 data_source/ DataSource API path — blocker 0" 0 - 'BLOCKER' "$E" "$OUT" ;;
+    c) assert "F21c 옛 view/ API path — IM27" 2 'IM27\] BLOCKER — web/chart/chart/view/chart_view.py' - "$E" "$OUT"
+       assert "F21c 옛 배치 교정 문장" 2 '옛 배치 단위에서는 API path 를 <개념>_data_source.py 파일에만 둔다(표준 단위는 그 BC infra_layer/data_source/).' - "$E" "$OUT" ;;
+    d) assert "F21d 표준 view/ API path — IM27" 2 'IM27\] BLOCKER — web/application/chart/presentation_layer/view/chart_view.py' - "$E" "$OUT"
+       assert "F21d 표준 트리 교정 문장 유지" 2 'infra_layer/data_source/<개념>_data_source.py 에만 둔다' '옛 배치 단위에서는' "$E" "$OUT" ;;
+    e) assert "F21e 옛 DataSource requests import — IM27" 2 'IM27\] BLOCKER — web/chart/chart/chart_catalog_data_source.py' - "$E" "$OUT"
+       assert "F21e HTTP 호출 표면 금지 유지" 2 'HTTP 호출 표면' - "$E" "$OUT" ;;
+  esac
+done
+
+# ---------- F22 (2.2.2 D): 옛 최상위 폴더 직속 <폴더>_router.py 만 라우터(NM3·NM13 예외)
+for CASE in a b c d; do
+  P="$T/f22$CASE"; mkproj "$P" >/dev/null
+  w "$P/web/chart/__init__.py" ''
+  BASE=$(commit "$P" legacy)
+  case "$CASE" in
+    a) TARGET="$P/web/chart/chart_router.py" ;;
+    b) TARGET="$P/web/chart/chart/view/chart_view.py" ;;
+    c) TARGET="$P/web/chart/other_router.py" ;;
+    d) TARGET="$P/web/chart/chart/chart_router.py" ;;
+  esac
+  if [ "$CASE" = b ]; then
+    # NM 은 added 파일만 본다 — 옛 폴더 안 view 파일을 새로 더한다(기존 파일 수정은 검사 대상 밖).
+    w "$TARGET" 'x: int = 1' 'from django.urls import path' 'path("x/", None)'
+  else
+    w "$TARGET" '"""차트 진입 경로와 URL 이름의 단일 출처."""' '' \
+      'from django.urls import URLPattern, path' '' \
+      'from web.chart.chart.view.chart_view import chart_view' '' 'app_name: str = "chart"' '' '' \
+      'class ChartRoutes:' '    """차트 Navigator가 참조하는 URL 이름."""' '' \
+      '    HOME: str = "chart:home"' '' '' \
+      'urlpatterns: list[URLPattern] = [' '    path("chart/", chart_view, name="home"),' ']'
+  fi
+  OUT=$(run_backstop "$P" --diff-base "$BASE" --only nm); E=$?
+  case "$CASE" in
+    a) assert "F22a 옛 최상위 직속 chart_router.py — NM3·NM13 없음" 0 - 'BLOCKER' "$E" "$OUT" ;;
+    b) assert "F22b 옛 view/ path() — NM13" 2 'NM13\] BLOCKER — web/chart/chart/view/chart_view.py' - "$E" "$OUT" ;;
+    c) assert "F22c 옛 최상위 직속 other_router.py — NM13" 2 'NM13\] BLOCKER — web/chart/other_router.py' - "$E" "$OUT" ;;
+    d) assert "F22d 옛 중첩 chart_router.py — NM13" 2 'NM13\] BLOCKER — web/chart/chart/chart_router.py' - "$E" "$OUT" ;;
+  esac
+done
+
 # ---------- F7: 사용 오류 — exit 1(미실행은 통과가 아니다)
 OUT=$(run_backstop --help); E=$?
 assert "F7a 알 수 없는 옵션 --help → exit 1" 1 "사용 오류" - "$E" "$OUT"

@@ -729,5 +729,34 @@ commit_all "$P" slice-0-chart-css >/dev/null
 OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
 assert "D35c 소유 파일만 옮김 = ⓐ 잔존 0 · 같은 폴더 범위 밖 10 은 보고만" 0 "범위 밖 남은 빚 — 폴더 \`static/css/\` 키 10" "잔존 ⓐ" "$E" "$OUT"
 
+# ---------- D36 (2.2.2 B·C): 옛 페이지·DataSource 의 역할은 알아보되 ST0 빚은 파일마다 유지
+P="$T/d36"; mkproj "$P" >/dev/null; L="$P/web/chart/chart"
+w "$L/view/chart.html" '{% extends "base/base.html" %}' '{% load static %}' '{% block scripts %}' \
+  "<script defer src=\"{% static 'web/js/chart_flow.js' %}\"></script>" '{% endblock scripts %}'
+w "$L/view/chart_inline.html" '{% extends "base/base.html" %}' '{% load static %}' '{% block scripts %}' \
+  '<script>var a = 1;</script>' '{% endblock scripts %}'
+w "$L/chart_catalog_data_source.py" 'CHART_PATH: str = "/api/charts"'
+w "$P/web/static/js/chart_flow.js" 'document.addEventListener("click", () => {});'
+commit_all "$P" legacy-roles >/dev/null
+OUT=$(run_backstop "$P" --debt-scan --json "$T/d36.json"); E=$?
+assert "D36a 옛 배치 역할의 빚 스캔 — exit 2" 2 '빚 스캔' - "$E" "$OUT"
+KEYS=$(python3 - "$T/d36.json" <<'PY'
+import json, sys
+counts = json.load(open(sys.argv[1]))['counts']
+want = {
+    'PU2|chart/chart/view/chart_inline.html': True,
+    'PU2|chart/chart/view/chart.html': False,
+    'IM27|chart/chart/chart_catalog_data_source.py': False,
+    'ST0|chart/chart/view/chart_inline.html': True,
+    'ST0|chart/chart/view/chart.html': True,
+    'ST0|chart/chart/chart_catalog_data_source.py': True,
+}
+got = {key: key in counts for key in want}
+assert got == want, got
+print('역할 키 일치 · 세 파일 ST0 유지')
+PY
+); E=$?
+assert "D36b JSON — 인라인 PU2만 · DataSource IM27 없음 · 세 파일 ST0" 0 '역할 키 일치' - "$E" "$KEYS"
+
 echo "fixtures_debt: PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" = 0 ]

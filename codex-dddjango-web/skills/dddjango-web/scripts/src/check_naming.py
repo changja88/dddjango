@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from .common import (
     BackstopContext, Finding, FOUNDATION_TOKENS, base_name_of, bc_dir_of, bc_of, casefold, ext_of, has_seg,
-    is_bc_root_path, is_string_literal, first_arg_of, parent_dir_of, scan_tokens, segs_of, stem_of,
+    is_bc_root_path, is_standard_path, is_string_literal, first_arg_of, parent_dir_of, scan_tokens, segs_of, stem_of,
     top_level_decls,
 )
 
@@ -110,7 +110,8 @@ def run_naming(ctx: BackstopContext) -> List[Finding]:
         in_static: bool = segs[0] == 'static'
         vendored: bool = f.startswith('static/vendor/') or f.startswith('static/htmx/')
         is_router: bool = (base.endswith('_router.py') and (
-            is_bc_root_path(f, ctx.areas) or f == 'root/router/root_router.py')) or f == 'urls.py'
+            is_bc_root_path(f, ctx.areas) or f == 'root/router/root_router.py'
+            or (len(segs) == 2 and not is_standard_path(f) and base == '%s_router.py' % segs[0]))) or f == 'urls.py'
         if base == '__init__.py':
             continue
 

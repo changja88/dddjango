@@ -6,6 +6,7 @@
 # 외부 JS 는 G1 승인·등재된 공식 SDK 사본(web/static/vendor/<sdk_id>/<파일> — discipline-houserules §9)으로만 들이고
 # CDN 실행 태그는 금지한다. 등재 사본의 로드 태그 규칙(속성 · 페이지 block · 기능 JS 앞 · root_view block 여는 줄 앞 ·
 # root_view·페이지 중복)은 PU2 벤더 분기가 본다.
+# 옛 배치 view/ 페이지는 기능 JS·htmx core 실행 태그의 자리로 받는다 — 벤더 분기는 표준 자리만.
 # (바탕: dddjango-web v1.3.1 check_purity.py WP1~WP6 — 번호 그대로 PU 로 · WP4 색 리터럴은 NM10 으로
 #  옮겨 PU4 비움 · WP5 motion.js 판형은 러너를 들이지 않아 PU5 비움 · PU7·PU8 = 새 검사 · 벤더 분기 = v1.3.1
 #  WP1·WP2 벤더 분기 · base.html 자리 = root/scaffold/view/root_view.html)
@@ -19,7 +20,7 @@ from typing import Dict, List, Optional, Tuple
 
 from .common import (
     HTMX_CORE, JS_EXTS, ROOT_VIEW_TEMPLATE, VERBATIM_RE, BackstopContext, Finding, base_name_of, ext_of, has_seg,
-    parent_dir_of,
+    is_standard_path, parent_dir_of,
 )
 from .sdk_registry import VENDOR_DIR, sdk_state
 
@@ -156,6 +157,11 @@ def _script_location_allowed(path: str) -> bool:
     if not path.endswith('.html') or parent_dir_of(path) != 'view':
         return False
     return path.startswith('root/scaffold/view/') or has_seg(path, 'presentation_layer')
+
+
+def _legacy_page(path: str) -> bool:
+    """옛 배치 view/ 폴더의 페이지 템플릿인가."""
+    return not is_standard_path(path) and path.endswith('.html') and parent_dir_of(path) == 'view'
 
 
 def _is_vendor(path: Optional[str]) -> bool:
@@ -313,7 +319,7 @@ def run_purity(ctx: BackstopContext) -> List[Finding]:
                     reason = 'script src가 가리키는 로컬 static 파일 없음 — %s' % path
                 elif not _script_path_allowed(ctx, path, std):
                     reason = 'script src 경로가 기능 JS·htmx core·등재 공식 SDK 사본(WV2 통과) 경로가 아니다 — %s' % path
-                elif not _script_location_allowed(f):
+                elif not (_script_location_allowed(f) or (_legacy_page(f) and not _is_vendor(path))):
                     reason = '실행 script 위치 위반 — 조각(section·widget·component)이 아니라 root_view 또는 페이지 view 템플릿이어야 한다'
                 elif _has_attr(attrs, 'async'):
                     reason = 'async 실행 금지 — DOM·의존 순서를 보존한다 — %s' % path

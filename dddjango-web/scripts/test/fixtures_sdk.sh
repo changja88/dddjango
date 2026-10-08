@@ -1080,5 +1080,14 @@ printf '["/v2/user/me"]\n' > "$T/r8-urls.json"
 OUT=$(node "$HERE/boundary_probe.cjs" "$SCRIPTS/../assets/sdk_boundary.js" "$T/r8-urls.json" noinit 2>&1); E=$?
 check "R8 isInitialized 없는 이미 초기화된 SDK — patched:API.request · 원 gateway 호출 0" 0 "$E" "$OUT" '"patched:API.request"=1' '"realCalls":0=1'
 
+# ---------- 2.2.2 B: 옛 view/ 페이지의 등재 SDK 로드는 실행 script 위치 위반 그대로
+P=$(newp legacy-view-sdk); mkdir -p "$P/web/chart/chart/view"
+printf '{%% extends "base/base.html" %%}\n{%% load static %%}\n{%% block scripts %%}{%% endblock scripts %%}\n' > "$P/web/chart/chart/view/chart.html"
+B=$(commit "$P" legacy-page)
+printf '{%% extends "base/base.html" %%}\n{%% load static %%}\n{%% block scripts %%}\n<script defer src="{%% static '"'"'web/vendor/kakao_js_sdk/kakao.min.js'"'"' %%}"></script>\n{%% endblock scripts %%}\n' > "$P/web/chart/chart/view/chart.html"
+OUT=$(BS "$P" --diff-base "$B" --only pu); E=$?
+check "2.2.2 B 옛 view/ 페이지의 등재 SDK — PU2 위치 위반 유지" 2 "$E" "$OUT" \
+  '[PU2] BLOCKER — web/chart/chart/view/chart.html=1' '실행 script 위치 위반=1'
+
 echo "fixtures_sdk: PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" = 0 ]
