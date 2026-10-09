@@ -33,6 +33,7 @@ G2 를 통과할 수 없었다(같은 게이트를 다른 레인은 «해석»�
 from __future__ import annotations
 
 import os
+import ast
 import re
 import subprocess
 import sys
@@ -56,6 +57,116 @@ DEBT_FLAG: str = "--legacy-debt-file"
 # 도구는 소유(누가 썼는가)를 검증하지 않고 형식·git 사실(ⓐ resolve · ⓑ 부모 2 · ⓒ 앵커..HEAD
 # first-parent 사슬 위 · ⓓ 앵커 이전이면 판정 불참)만 fail-closed 로 검증한다.
 APPROVED_MERGE_FLAG: str = "--approved-merge-file"
+
+# pre-gate 사본에서도 원 TARGET의 소유 조건을 쓰기 위한 내부 전달 채널.
+SISTER_SOURCE_ENV: str = "DJR_SISTER_SOURCE_ROOT"
+SISTER_TITLE: str = "자매 플러그인 영역(dddjango-web 소유 — 서버 판정 밖 · 보고만)"
+_SISTER_ROOTS: "tuple[str, ...]" = ("web", "web_test", ".dddjango-web")
+
+
+def sister_owned(target: Path) -> bool:
+    """원 TARGET의 명확한 채택·프로젝트 실경로만으로 한 번 판정한다."""
+    try:
+        root: Path = target.resolve(strict=True)
+        marker: Path = root / ".dddjango-web"
+        if marker.is_symlink() or not marker.is_dir():
+            return False
+        siblings: "list[Path]" = []
+        for name in _SISTER_ROOTS:
+            path: Path = root / name
+            if path.is_symlink():
+                return False
+            if path.exists():
+                if not path.is_dir():
+                    return False
+                siblings.append(path)
+        module: ast.Module = ast.parse((root / "manage.py").read_text(encoding="utf-8"))
+        def is_environ(node: ast.AST) -> bool:
+            return (isinstance(node, ast.Attribute) and node.attr == "environ"
+                    and isinstance(node.value, ast.Name) and node.value.id == "os")
+
+        mentions: "list[ast.AST]" = [node for node in ast.walk(module)
+            if (isinstance(node, ast.Constant) and node.value == "DJANGO_SETTINGS_MODULE")
+            or (isinstance(node, ast.Name) and node.id == "DJANGO_SETTINGS_MODULE")
+            or (isinstance(node, ast.Attribute) and node.attr == "DJANGO_SETTINGS_MODULE")
+            or (isinstance(node, ast.keyword) and node.arg == "DJANGO_SETTINGS_MODULE")]
+        if len(mentions) != 1:
+            return False
+        values: "list[ast.expr]" = []
+        for node in ast.walk(module):
+            # 동적 키·mapping은 settings를 덮는지 알 수 없다. 단일 리터럴과 함께 있어도 거절한다.
+            if isinstance(node, ast.Subscript) and isinstance(node.ctx, ast.Store) \
+                    and is_environ(node.value) and not (isinstance(node.slice, ast.Constant)
+                    and isinstance(node.slice.value, str)):
+                return False
+            if isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Store) and is_environ(node):
+                return False
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
+                    and is_environ(node.func.value):
+                if node.func.attr == "update" and (any(kw.arg is None for kw in node.keywords)
+                        or any(not isinstance(arg, ast.Dict) or any(
+                            not isinstance(key, ast.Constant) or not isinstance(key.value, str)
+                            for key in arg.keys) for arg in node.args)):
+                    return False
+                if node.func.attr in ("setdefault", "__setitem__") and (not node.args
+                        or not isinstance(node.args[0], ast.Constant)
+                        or not isinstance(node.args[0].value, str)):
+                    return False
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
+                    and isinstance(node.func.value, ast.Name) and node.func.value.id == "os" \
+                    and node.func.attr == "putenv" and (not node.args
+                    or not isinstance(node.args[0], ast.Constant) or not isinstance(node.args[0].value, str)):
+                return False
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
+                    and is_environ(node.func.value) \
+                    and node.func.attr == "setdefault" and len(node.args) == 2 \
+                    and node.args[0] is mentions[0] and not node.keywords:
+                values.append(node.args[1])
+            elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+                targets: "list[ast.expr]" = node.targets if isinstance(node, ast.Assign) else [node.target]
+                if node.value is not None and len(targets) == 1 \
+                        and isinstance(targets[0], ast.Subscript) and is_environ(targets[0].value) \
+                        and targets[0].slice is mentions[0]:
+                    values.append(node.value)
+        if len(values) != 1 or not isinstance(values[0], ast.Constant) \
+                or not isinstance(values[0].value, str):
+            return False
+        settings: str = values[0].value
+        if not re.fullmatch(r"[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)+", settings):
+            return False
+        project: Path = (root / settings.split(".", 1)[0]).resolve(strict=True)
+        if not project.is_dir():
+            return False
+        # samefile은 대소문자 무구별 파일시스템의 별칭도 해소한다.
+        return not any(os.path.samefile(parent, sister)
+                       for parent in (project, *project.parents) for sister in siblings)
+    except (OSError, ValueError, SyntaxError, UnicodeError, RuntimeError):
+        return False
+
+
+def sister_path(path: "str | None") -> bool:
+    """주어의 저장소 상대 첫 성분만 본다. 부재 locator도 허용하며 모호한 꼴은 남긴다."""
+    if path is None:
+        return False
+    plain: str = re.sub(r"(?::(?:\d+|N))+$", "", path)
+    if not plain or re.search(r"[\s,;|<>\\\[\]:]", plain) or plain.startswith("/"):
+        return False
+    parts: "list[str]" = plain.split("/")
+    if ".." in parts or "" in parts:
+        return False
+    if parts[0] == ".":
+        parts = parts[1:]
+    return bool(parts) and parts[0] in _SISTER_ROOTS
+
+
+def subject_path(line: str) -> "str | None":
+    """정상 숫자 진단·계약 행의 주어 칸만 읽는다. 메시지 안 경로는 읽지 않는다."""
+    match: "re.Match[str] | None" = re.fullmatch(r"(?:\[#\d+\]|-) (.+?): (.*)", line.strip())
+    return match.group(1) if match is not None else None
+
+
+def measurement_failed(lines: "list[str] | set[str]") -> bool:
+    return any("[진단 미파싱" in line or "[분석]" in line for line in lines)
 
 _LINENO_RE: "re.Pattern[str]" = re.compile(r":\d+")
 
@@ -383,6 +494,7 @@ def partition_exit(
             raise AnchorDiffUsage(f"빚 목록 {debt_path} 없음")
         debt_rules = load_debt(debt_path)
     resolved_target: Path = target.resolve()
+    has_sister: bool = sister_owned(resolved_target)
     sha: str = resolve_anchor(resolved_target, anchor)
     with tempfile.TemporaryDirectory() as td:
         snap: Path = Path(td) / "anchor"
@@ -398,6 +510,8 @@ def partition_exit(
         if code not in (0, 2):
             lines = []
             used = "기준선 불능(fail-closed — 전량 신규 취급)"
+        normal_measurement: bool = (code in (0, 2) and not analysis_pending
+                                    and not measurement_failed(lines) and not measurement_failed(findings))
         roots: "tuple[str, ...]" = (
             str(snap) + "/", str(snap), str(resolved_target) + "/", str(resolved_target),
         )
@@ -416,6 +530,13 @@ def partition_exit(
             (debt if hit else rest).append(line)
         new = rest
 
+    sister: "list[str]" = []
+    if has_sister and normal_measurement:
+        rest = []
+        for line in new:
+            (sister if sister_path(subject_path(line)) else rest).append(line)
+        new = rest
+
     print(f"{label} 앵커 차분(--anchor {sha[:12]} · 기준선={used}):")
     print(f"  신규분(앵커 이후) {len(new)}건 · 앵커 기존분(잔존) {len(existing)}건 · 이관 빚 {len(debt)}건")
     if new:
@@ -425,6 +546,10 @@ def partition_exit(
     if debt:
         print("  == 이관 빚(사용자 승인 목록 매칭 — exit 제외·기록 의무) ==")
         for line in debt:
+            print(f"  {line.strip()}")
+    if sister:
+        print(f"  == {SISTER_TITLE} {len(sister)}건 ==")
+        for line in sister:
             print(f"  {line.strip()}")
     if existing:
         print("  == 앵커 기존분 — blocker 아님·보고 의무(침묵 금지)·이 빌드에서 즉석 수리하지 않는다 ==")

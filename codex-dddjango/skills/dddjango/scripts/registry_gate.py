@@ -312,10 +312,12 @@ def _run_registry(target: Path,
                   sink: "Path | None" = None,
                   git_root: "Path | None" = None,
                   only: "frozenset[str] | None" = None,
+                  unclassifiable: "set[str] | None" = None,
                   ) -> "tuple[dict[str, int], set[str], list[dict], set[str]]":
     """로스터 전체(또는 `only` 의 검사기만)를 돌려 (검사기별 exit, 정규화 위반 라인 집합, 구조화 레코드)를 낸다.
 
     `only` 는 provenance 차분의 스냅숏 재실행 전용이다(후보 라인의 검사기 집합만 — 비용 한정).
+    `unclassifiable` 에는 원 출력·레코드 채널이 무효인 검사기를 기록한다(자매 분류만 금지).
 
     **sink 격리(T2-3)**: 검사기 서브프로세스는 부모 환경을 상속하므로, 격리하지 않으면
     앵커 실행과 현재 실행의 레코드가 **같은 파일에 뒤섞여** 소비자가 legacy 와 신규를
@@ -357,6 +359,30 @@ def _run_registry(target: Path,
     ]
     wait(futures)
     procs: "list[subprocess.CompletedProcess[str]]" = [future.result() for future in futures]
+    # 차분 라인·출력은 그대로 둔다. 원 출력과 검사기별 sink의 유효성만 별도 전달한다.
+    if unclassifiable is not None:
+        for (script, _auto, part), proc in zip(jobs, procs):
+            raw_output: str = proc.stdout + "\n" + proc.stderr
+            failed: bool = ("[분석]" in raw_output or "구조화 레코드 채널 비활성" in raw_output)
+            numeric_records: int = 0
+            if part is not None and part.is_file():
+                for raw in part.read_text(encoding="utf-8", errors="replace").splitlines():
+                    if not raw.strip():
+                        continue
+                    try:
+                        rec: object = json.loads(raw)
+                    except json.JSONDecodeError:
+                        failed = True
+                        continue
+                    if not isinstance(rec, dict):
+                        failed = True
+                        continue
+                    numeric_records += int(_FINDING_RE.match(findings.line_of_record(rec)) is not None)
+            if sink is not None:
+                failed |= numeric_records != sum(_FINDING_RE.match(raw) is not None
+                                                  for raw in raw_output.splitlines())
+            if failed:
+                unclassifiable.add(script)
     if sink is not None:
         _merge_sink_parts(sink, [part for _script, _auto, part in jobs if part is not None])
     for (script, _auto, _part), proc in zip(jobs, procs):
@@ -799,6 +825,17 @@ def main(argv: "list[str]") -> int:
         print(f"사용 오류: {bad}", file=sys.stderr)
         return 1
 
+    source_root: Path = root
+    supplied: str = os.environ.get(anchor_diff.SISTER_SOURCE_ENV, "")
+    if supplied:
+        try:
+            candidate: Path = Path(supplied).resolve(strict=True)
+            if candidate.is_dir() and os.access(candidate, os.R_OK | os.X_OK):
+                source_root = candidate
+        except (OSError, ValueError, RuntimeError):
+            pass  # 읽을 수 없는 전달값은 원래 TARGET 판정으로 돌아간다.
+    has_sister: bool = anchor_diff.sister_owned(source_root)
+
     debt_rules: "list[tuple[str, str]]" = []
     if ns.legacy_debt_file is not None:
         debt_path: Path = Path(ns.legacy_debt_file)
@@ -837,10 +874,13 @@ def main(argv: "list[str]") -> int:
         # 계약 sidecar 의 앵커 차분 재료 — 비-git 분기에서는 앵커가 없어 전량이 «신규»다.
         l_records: "list[dict]" = []
         anc_prefixes: "tuple[str, ...]" = ()
+        unclassifiable_n: "set[str]" = set()
+        unclassifiable_l: "set[str]" = set()
 
         if not is_git:
             print("주의: 비-git TARGET — 차분 불능이라 fail-closed(현재 위반 전량 귀속)")
-            exits_n, n_set, n_records, n_cands = _run_registry(cur, sink_n)  # 원본도 비-git — 넘길 루트 없음
+            exits_n, n_set, n_records, n_cands = _run_registry(
+                cur, sink_n, unclassifiable=unclassifiable_n)  # 원본도 비-git — 넘길 루트 없음
             n_set |= _parse_fail_findings(cur)
             l_set: "set[str]" = set()
             l_cands: "set[str]" = set()
@@ -885,9 +925,9 @@ def main(argv: "list[str]") -> int:
             # `with` 를 나갈 때 두 벌이 모두 끝나 있으므로 한쪽 예외도 임시 폴더 정리와 겹치지 않는다.
             with ThreadPoolExecutor(max_workers=2, thread_name_prefix="registry-side") as sides:
                 anchor_run: "Future[tuple[dict[str, int], set[str], list[dict], set[str]]]" = sides.submit(
-                    _run_registry, anc, sink_l)
+                    _run_registry, anc, sink_l, unclassifiable=unclassifiable_l)
                 current_run: "Future[tuple[dict[str, int], set[str], list[dict], set[str]]]" = sides.submit(
-                    _run_registry, cur, sink_n, git_root=root)
+                    _run_registry, cur, sink_n, git_root=root, unclassifiable=unclassifiable_n)
                 exits_l, l_set, _l_records, l_cands = anchor_run.result()
                 exits_n, n_set, n_records, n_cands = current_run.result()
             l_records = _l_records
@@ -917,6 +957,41 @@ def main(argv: "list[str]") -> int:
             inflow_lines: "set[str]" = provenance.inflow_lines
             attributed = [line for line in attributed if line not in inflow_lines]
 
+        sister: "list[str]" = []
+        if has_sister:
+            invalid: "set[str]" = {checker for exits in (exits_n, exits_l)
+                                   for checker, code in exits.items() if code not in (0, 2)}
+            invalid.update(unclassifiable_n | unclassifiable_l)
+            invalid.update(line.split(" :: ", 1)[0] for line in n_set | l_set
+                           if anchor_diff.measurement_failed([line]))
+            # 숫자 진단과 [분석]이 함께 나오면 라인 집합에는 숫자만 남는다.
+            # 측정 표지는 레코드 채널에서도 읽어 그 검사기의 정상 판정을 막는다.
+            invalid.update(str(rec.get("checker")) for rec in n_records + l_records
+                           if anchor_diff.measurement_failed([findings.line_of_record(rec)]))
+            paths: "dict[str, str | None]" = _line_paths(attributed, n_records, cur_prefixes)
+            rest: "list[str]" = []
+            for line in attributed:
+                checker: str = line.split(" :: ", 1)[0]
+                path: "str | None" = paths[line]
+                if checker == "(pre-scan)":
+                    match: "re.Match[str] | None" = re.fullmatch(
+                        r"\(pre-scan\) :: \[#parse-fail\] (.+?): (.*)", line)
+                    path = match.group(1) if match is not None else None
+                normal: bool = (checker not in invalid and not (
+                    provenance is not None and provenance.retained.get(line, "").startswith("측정 무효(")))
+                (sister if normal and anchor_diff.sister_path(path) else rest).append(line)
+            attributed = rest
+            # 계약은 숫자 차분 집합에 넣지 않는다. 신규 계약 레코드의 주어를 따로 가르고 보고한다.
+            legacy_contract: "set[str]" = {_contract_key(rec, anc_prefixes)
+                                            for rec in l_records if rec.get("rule") is None}
+            sister_contract: "set[str]" = {_contract_key(rec, cur_prefixes) for rec in n_records
+                if rec.get("rule") is None and rec.get("sentinel") is None
+                and rec.get("checker") not in invalid
+                and _contract_key(rec, cur_prefixes) not in legacy_contract
+                and anchor_diff.sister_path(anchor_diff.subject_path(
+                    _normalize(findings.line_of_record(rec), cur_prefixes)))}
+            sister = sorted(set(sister) | sister_contract)
+
     print(f"# registry_gate — 판정 차분 · {root.name} · 앵커 {anchor_sha[:12]}")
     print(_toolchain_line())
     print("**귀속 0 ≠ 전체 clean** — 이 게이트는 «이번 런이 위반을 늘렸나»만 판정한다(legacy 격리).")
@@ -935,6 +1010,10 @@ def main(argv: "list[str]") -> int:
             print(f"  {line}")
     if provenance is not None:
         _print_inflow(provenance)
+    if sister:
+        print(f"\n== {anchor_diff.SISTER_TITLE} {len(sister)}건 ==")
+        for line in sister:
+            print(f"  {line}")
     by_checker: "dict[str, int]" = {}
     for line in residual:
         by_checker[line.split(" :: ", 1)[0]] = by_checker.get(line.split(" :: ", 1)[0], 0) + 1
@@ -957,7 +1036,10 @@ def main(argv: "list[str]") -> int:
                           n_records, cur_prefixes, provenance,
                           cand_new if (n_cands or l_cands) else None)
     if ns.contract_json is not None:
-        _write_contract(Path(ns.contract_json), anchor_sha, n_records,
+        sister_keys: "set[str]" = set(sister)
+        server_records: "list[dict]" = [rec for rec in n_records
+                                       if _contract_key(rec, cur_prefixes) not in sister_keys]
+        _write_contract(Path(ns.contract_json), anchor_sha, server_records,
                         l_records, cur_prefixes, anc_prefixes)
 
     tail: str = f"(승인 유입 {len(provenance.inflow)}건 제외)" if provenance is not None else ""

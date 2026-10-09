@@ -40,6 +40,12 @@ import os
 import subprocess
 import sys
 import tempfile
+import unittest
+import contextlib
+import io
+import re
+import json
+from unittest.mock import patch
 from pathlib import Path
 
 ROOT: Path = Path(__file__).resolve().parents[2]
@@ -164,7 +170,198 @@ def _run(script: Path, target: Path, extra: "list[str]") -> "tuple[int, str]":
     return proc.returncode, proc.stdout + proc.stderr
 
 
+class SisterAnchorRegression(unittest.TestCase):
+    """주어 칸만 분할하며 기준선·분석 실패와 사용 오류는 보호한다."""
+    title = "자매 플러그인 영역(dddjango-web 소유 — 서버 판정 밖 · 보고만)"
+
+    def setUp(self):
+        sys.path.insert(0, str(S))
+        import anchor_diff
+        self.diff = anchor_diff
+        self.temp = tempfile.TemporaryDirectory(prefix="sister-anchor-")
+        self.addCleanup(self.temp.cleanup)
+        self.td = Path(self.temp.name)
+        self.repo, _ = _init_repo(self.td, "repo", F / "skeleton/good_bc")
+        _write(self.repo, "manage.py", 'import os\nos.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")\n')
+        _write(self.repo, "config/settings.py", "")
+        _write(self.repo, ".gitignore", ".dddjango-web/\n")
+        (self.repo / ".dddjango-web").mkdir()
+        self.anchor = _commit_all(self.repo, "server project")
+        _write(self.repo, "dirty.md", "dirty\n")
+
+    def partition(self, findings, runs=((0, []),), **kwargs):
+        out = io.StringIO()
+        with patch.object(self.diff, "_run_lines", side_effect=runs), contextlib.redirect_stdout(out):
+            code = self.diff.partition_exit(script=CTX, label="[check-context-isolation]",
+                target=self.repo, anchor=self.anchor, argv=[str(self.repo)], findings=findings, **kwargs)
+        return code, out.getvalue()
+
+    def section(self, out, title):
+        match = re.search(rf"^  == {re.escape(title)}.*?\n(.*?)(?=^  == |^판정:|\Z)", out, re.S | re.M)
+        return {line.strip() for line in match.group(1).splitlines()} if match else set()
+
+    def test_numeric_contract_folder_and_missing_locator_report_only(self):
+        findings = ["[#95] web/application/shop/a.py:8: 위반", "- web_test/missing.py: 계약 위반",
+                    "[#488] .dddjango-web/missing.py: 없음", "[#450] web/application/shop: 폴더 위반"]
+        code, out = self.partition(findings)
+        self.assertEqual(code, 0, out)
+        self.assertIn(f"== {self.title} 4건 ==", out)
+        self.assertEqual(self.section(out, self.title), set(findings))
+        self.assertIn("신규분(앵커 이후) 0건", out)
+
+    def test_mixed_subject_only_each_server_line_stays(self):
+        server = ["[#95] application/orders/a.py: 의존 web/application/shop/a.py",
+                  "- application/orders/missing.py: web/helper.py 의존",
+                  "[#488] application/orders: 폴더 위반"]
+        web = ["[#95] web/application/shop/a.py: 서버 의존 application/orders/a.py"]
+        code, out = self.partition(server + web)
+        self.assertEqual(code, 2, out)
+        self.assertEqual(self.section(out, "신규분"), set(server))
+        self.assertEqual(self.section(out, self.title), set(web))
+
+    def test_settings_setters_require_one_supported_literal_environment_write(self):
+        supported = [
+            'os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")',
+            'os.environ["DJANGO_SETTINGS_MODULE"] = "config.settings"',
+        ]
+        unsupported = [
+            'os.environ.update(DJANGO_SETTINGS_MODULE="config.settings")',
+            'os.environ.update({"DJANGO_SETTINGS_MODULE": "config.settings"})',
+            'os.putenv("DJANGO_SETTINGS_MODULE", "config.settings")',
+            'os.putenv(key(), "config.settings")',
+            'os.environ.__setitem__("DJANGO_SETTINGS_MODULE", "config.settings")',
+            'os.environ.setdefault("DJANGO_SETTINGS_MODULE", choose())',
+            'os.environ["DJANGO_SETTINGS_MODULE"] = choose()',
+            'other.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")',
+            'DJANGO_SETTINGS_MODULE = "config.settings"',
+            'os.environ[key()] = "config.settings"',
+            'os.environ.update(values)',
+            'os.environ.update(**values)',
+        ]
+        for statement in supported:
+            with self.subTest(supported=statement):
+                _write(self.repo, "manage.py", "import os\n" + statement + "\n")
+                self.assertTrue(self.diff.sister_owned(self.repo))
+        for statement in unsupported + [supported[0]]:
+            for prefix in ("", supported[0] + "\n"):
+                # 단독의 알려진 setdefault는 위의 정상 대조군. 복수는 거절한다.
+                if not prefix and statement == supported[0]:
+                    continue
+                with self.subTest(statement=statement, prefix=prefix):
+                    _write(self.repo, "manage.py", "import os\n" + prefix + statement + "\n")
+                    code, out = self.partition(["[#446] web/settings/dev.py: 서버 설정"])
+                    self.assertEqual(code, 2, out)
+                    self.assertNotIn(self.title, out)
+                    self.assertEqual(self.section(out, "신규분"), {"[#446] web/settings/dev.py: 서버 설정"})
+
+    def test_ambiguous_analysis_synthetic_target_and_outside_stay(self):
+        for finding in ("[#74] (target): 대상 0", "[#95] ../web/a.py: 위반",
+                        "[#95] /web/a.py: 위반", "[#95] web/../application/a.py: 위반",
+                        "[#95] web/a.py, application/a.py: 두 주어", "알 수 없음 web/a.py",
+                        "[분석] web/a.py: 실패", "[진단 미파싱 · exit 2] web/a.py"):
+            with self.subTest(finding=finding):
+                code, out = self.partition([finding])
+                self.assertEqual(code, 2, out)
+                self.assertEqual(self.section(out, "신규분"), {finding})
+                self.assertNotIn(self.title, out)
+
+    def test_selector_downgrade_success_splits_failure_keeps(self):
+        finding = "[#95] web/a.py: 위반"
+        code, out = self.partition([finding], runs=((1, ["selector 실패"]), (0, [])))
+        self.assertEqual(code, 0, out)
+        self.assertIn("positional 기준선", out)
+        self.assertEqual(self.section(out, self.title), {finding})
+        code, out = self.partition([finding], runs=((1, ["selector 실패"]), (1, ["positional 실패"])))
+        self.assertEqual(code, 2, out)
+        self.assertIn("기준선 불능", out)
+        self.assertEqual(self.section(out, "신규분"), {finding})
+        self.assertNotIn(self.title, out)
+
+    def test_pending_analysis_and_unparsed_baseline_preserve_stop(self):
+        finding = "[#95] web/a.py: 위반"
+        for kwargs in ({"analysis_pending": True},
+                       {"runs": ((2, ["[진단 미파싱 · exit 2] fail-closed"]),)}):
+            with self.subTest(kwargs=kwargs):
+                code, out = self.partition([finding], **kwargs)
+                self.assertEqual(code, 2, out)
+                self.assertEqual(self.section(out, "신규분"), {finding})
+                self.assertNotIn(self.title, out)
+
+    def test_debt_first_and_material_archive_failures_remain(self):
+        debt = self.td / "debt.txt"
+        debt.write_text("#95 web/a.py\n")
+        code, out = self.partition(["[#95] web/a.py: 위반", "[#96] web/b.py: 위반"], debt_file=str(debt))
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.section(out, "이관 빚"), {"[#95] web/a.py: 위반"})
+        self.assertEqual(self.section(out, self.title), {"[#96] web/b.py: 위반"})
+        with patch.object(self.diff, "snapshot_anchor", side_effect=self.diff.AnchorDiffUsage("git archive 실패")):
+            with self.assertRaisesRegex(self.diff.AnchorDiffUsage, "archive 실패"):
+                self.partition(["[#95] web/a.py: 위반"])
+        self.anchor = "deadbeef"
+        with self.assertRaisesRegex(self.diff.AnchorDiffUsage, "resolve 불능"):
+            self.partition(["[#95] web/a.py: 위반"])
+
+    def test_no_split_output_matches_head_2191(self):
+        import importlib.util
+        old = self.td / "anchor_diff.py"
+        proc = _git(ROOT, "show", "HEAD:dddjango/scripts/anchor_diff.py")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        old.write_text(proc.stdout)
+        spec = importlib.util.spec_from_file_location("sister_old_anchor", old)
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = mod
+        spec.loader.exec_module(mod)
+        for finding in ("[#95] application/orders/a.py: web/a.py 의존", "[#74] (target): 대상 0"):
+            with self.subTest(finding=finding):
+                code, out = self.partition([finding])
+                previous = io.StringIO()
+                with patch.object(mod, "_run_lines", return_value=(0, [])), contextlib.redirect_stdout(previous):
+                    old_code = mod.partition_exit(script=CTX, label="[check-context-isolation]", target=self.repo,
+                        anchor=self.anchor, argv=[str(self.repo)], findings=[finding])
+                self.assertEqual((code, out), (old_code, previous.getvalue()))
+
+    def test_actual_error_schema_web_helper_contract_record_and_analysis_stay(self):
+        for rel, source in _T_FILES.items():
+            _write(self.repo, rel, source)
+        self.anchor = _commit_all(self.repo, "code profile anchor")
+        _write(self.repo, "web/helper.py", "def enrich(value): return value\n")
+        _write(self.repo, _LESSON_SCHEMA_REL, "from web.helper import enrich\n"
+               + _LESSON_STATIC_SRC + "\nhelper = enrich\n")
+        sink = self.td / "findings.jsonl"
+        env = _scrubbed_env()
+        env["DJR_FINDINGS_JSON"] = str(sink)
+        proc = subprocess.run([sys.executable, str(CENT), str(self.repo), *_T_ARGS,
+                               "--anchor", self.anchor], capture_output=True, text=True, env=env)
+        out = proc.stdout + proc.stderr
+        self.assertEqual(proc.returncode, 2, out)
+        contract = [r for r in map(json.loads, sink.read_text().splitlines())
+                    if r["file"] == _LESSON_SCHEMA_REL + ":20"]
+        self.assertEqual(len(contract), 1, out)
+        self.assertIsNone(contract[0]["rule"])
+        self.assertEqual(contract[0]["message"], "BC error module helper/mutation/side effect forbidden: helper = enrich")
+        self.assertEqual(self.section(out, "신규분"),
+            {"- " + _LESSON_SCHEMA_REL + ":20: " + contract[0]["message"]})
+        self.assertIn("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED", out)
+        self.assertNotIn(self.title, out)
+
+    def test_actual_sister_only_anchor_and_no_anchor_stop(self):
+        web = "web/application/shop/driving_layer/api/item/schema/invalid.py"
+        _write(self.repo, web, "from application.orders.domain_layer.order.order import Order\n")
+        code, out = _run(CTX, self.repo, [])
+        self.assertEqual(code, 2, out)
+        self.assertIn("[#12] " + web + ":", out)
+        self.assertNotIn(self.title, out)
+        code, out = _run(CTX, self.repo, ["--anchor", self.anchor])
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.section(out, self.title),
+            {"[#12] " + web + ": 타 BC 에서 부를 수 있는 것은 OHS·published_event 둘이다(#83 — 이 import 는 BC 삭제 내성을 깬다) — `application.orders.domain_layer.order.order`"})
+
+
 def main() -> int:
+    result = unittest.TextTestRunner(verbosity=2).run(
+        unittest.defaultTestLoader.loadTestsFromTestCase(SisterAnchorRegression))
+    if not result.wasSuccessful():
+        return 2
     base: Path = F / "skeleton" / "good_bc"
     sel_good: Path = F / "composition_selector" / "good"
     sel_bad: Path = F / "composition_selector" / "bad_rules"

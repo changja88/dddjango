@@ -70,6 +70,9 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import contextlib
+import io
+from unittest.mock import patch
 from pathlib import Path
 
 ROOT: Path = Path(__file__).resolve().parents[2]
@@ -579,9 +582,366 @@ class CacheSnapshotRegression(unittest.TestCase):
             gate._snapshot_current(root, snapshot)
             self.assertFalse((snapshot / relative).exists())
 
+class SisterGateRegression(unittest.TestCase):
+    """자매 주어 분할이 서버 진단 또는 측정 실패를 숨기는 변경을 잡는다."""
+    checker = "check-context-isolation.py"
+    sister_title = "자매 플러그인 영역(dddjango-web 소유 — 서버 판정 밖 · 보고만)"
+
+    def setUp(self):
+        from pregate_fixture_run import _load_module
+        sys.path.insert(0, str(GATE.parent))
+        self.gate = _load_module(GATE, "sister_registry_gate")
+        self.temp = tempfile.TemporaryDirectory(prefix="sister-gate-")
+        self.addCleanup(self.temp.cleanup)
+        self.td = Path(self.temp.name)
+        self.repo, _ = _make_repo(self.td, "repo")
+        _write(self.repo, "manage.py", 'import os\nos.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")\n')
+        _write(self.repo, "config/settings.py", "")
+        _write(self.repo, ".gitignore", ".dddjango-web/\n")
+        (self.repo / ".dddjango-web").mkdir()
+        self.anchor = _commit_all(self.repo, "server project")
+        _write(self.repo, "note.md", "dirty\n")
+
+    def measure(self, subjects, *, current_exit=2, anchor_exit=0,
+                synthetic=False, no_records=False, retained=None, extra=None):
+        # 검사기 실행 경계만 대역. 실제 archive·주어 매칭·분할·출력·sidecar를 실행한다.
+        records = []
+        def run(target, sink=None, git_root=None, only=None, unclassifiable=None):
+            current = target.name == "current"
+            lines = set()
+            recs = []
+            if current:
+                for rule, subject, message in subjects:
+                    rec = {"checker": self.checker, "rule": rule, "file": subject,
+                           "message": message, "kind": "violation", "severity": "error"}
+                    if rule is None:
+                        rec["contract_ref"] = "선행 계약 시험"
+                    else:
+                        lines.add(self.gate._normalize(f"{self.checker} :: [{rule}] {subject}: {message}", ()))
+                    if not no_records:
+                        recs.append(rec)
+                records[:] = recs
+            if synthetic:
+                lines.add(f"{self.checker} :: [진단 미파싱 · exit 2] fail-closed 귀속")
+            return {self.checker: current_exit if current else anchor_exit}, lines, recs, set()
+        args = [str(self.repo), "--anchor", self.anchor,
+                "--introduced-json", str(self.td / "introduced.json"),
+                "--contract-json", str(self.td / "contract.json"), *(extra or [])]
+        out = io.StringIO()
+        with patch.object(self.gate, "_run_registry", side_effect=run), contextlib.redirect_stdout(out):
+            if retained is None:
+                code = self.gate.main(args)
+            else:
+                prov = self.gate._ProvenanceResult(merges=[], chain=[])
+                prov.retained = {f"{self.checker} :: [{r}] {p}: {m}": retained for r, p, m in subjects}
+                with patch.object(self.gate, "_provenance_split", return_value=prov):
+                    code = self.gate.main(args)
+        return code, out.getvalue(), json.loads((self.td / "introduced.json").read_text()), records
+
+    def test_sister_only_report_and_empty_sidecars(self):
+        code, out, payload, _ = self.measure([("#95", "web/application/shop/a.py:7", "위반")])
+        self.assertEqual(code, 0, out)
+        self.assertIn(f"== {self.sister_title} 1건 ==", out)
+        self.assertEqual(_lines_of(out, "귀속(N∖L)"), set())
+        self.assertEqual(_lines_of(out, self.sister_title),
+                         {self.checker + " :: [#95] web/application/shop/a.py:N: 위반"})
+        self.assertEqual(payload["records"], [])
+        self.assertEqual(payload["attributed_lines"], [])
+
+    def test_null_rule_sister_contract_excluded_and_server_contract_preserved(self):
+        subjects = [("#95", "web/a.py", "숫자 위반"),
+                    (None, "web/contract.py:9", "자매 계약"),
+                    (None, "application/orders/contract.py:8", "서버 계약")]
+        code, out, payload, _ = self.measure(subjects)
+        self.assertEqual(code, 0, out)
+        self.assertEqual(payload["records"], [])
+        contract = json.loads((self.td / "contract.json").read_text())
+        self.assertEqual(contract["total"], 1, contract)
+        self.assertEqual([(r["file"], r["message"], r["contract_ref"]) for r in contract["records"]],
+                         [("application/orders/contract.py:8", "서버 계약", "선행 계약 시험")])
+        self.assertEqual(_lines_of(out, self.sister_title),
+                         {self.checker + " :: [#95] web/a.py: 숫자 위반",
+                          self.checker + " :: - web/contract.py:N: 자매 계약"})
+        code, out, _, _ = self.measure(subjects, current_exit=1)
+        self.assertEqual(code, 2, out)
+        self.assertNotIn(self.sister_title, out)
+        contract = json.loads((self.td / "contract.json").read_text())
+        self.assertEqual({r["message"] for r in contract["records"]}, {"자매 계약", "서버 계약"})
+
+    def test_keyword_settings_update_keeps_server_diagnostic_and_record(self):
+        manage = self.repo / "manage.py"
+        manage.write_text(manage.read_text() + 'os.environ.update(DJANGO_SETTINGS_MODULE="web.settings.dev")\n')
+        _write(self.repo, "web/settings/dev.py", "")
+        code, out, payload, records = self.measure([("#446", "web/settings/dev.py", "서버 설정 위반")])
+        self.assertEqual(code, 2, out)
+        self.assertNotIn(self.sister_title, out)
+        self.assertEqual(payload["records"], records)
+        self.assertEqual(_lines_of(out, "귀속(N∖L)"),
+                         {self.checker + " :: [#446] web/settings/dev.py: 서버 설정 위반"})
+
+    def test_mixed_preserves_each_server_rule_record_and_message_path(self):
+        server = [("#95", "application/orders/a.py", "의존 web/application/shop/a.py"),
+                  ("#450", "application/orders", "폴더 위반"),
+                  ("#488", "application/orders/missing.py", "없는 locator")]
+        web = [("#95", "web_test/shop/a.py", "위반"), ("#488", ".dddjango-web/missing.py", "위반")]
+        code, out, payload, records = self.measure(server + web)
+        self.assertEqual(code, 2, out)
+        self.assertEqual(payload["records"], records[:3])
+        self.assertEqual(set(payload["attributed_lines"]),
+                         {f"{self.checker} :: [{r}] {p}: {m}" for r, p, m in server})
+        self.assertEqual(_lines_of(out, self.sister_title),
+                         {f"{self.checker} :: [{r}] {p}: {m}" for r, p, m in web})
+
+    def test_ambiguous_unmatched_and_outside_subjects_stay(self):
+        subjects = ["(target)", "../web/a.py", "/web/a.py", "web/../application/a.py",
+                    "web/a.py, application/a.py", "web/a.py | web/b.py", "application/web/a.py"]
+        code, out, payload, _ = self.measure([("#74", p, "위반") for p in subjects])
+        self.assertEqual(code, 2, out)
+        self.assertEqual(len(payload["records"]), len(subjects))
+        self.assertNotIn(self.sister_title, out)
+        code, out, payload, _ = self.measure([("#95", "web/a.py", "위반")], no_records=True)
+        self.assertEqual(code, 2, out)
+        self.assertEqual(payload["unmatched_lines"], [self.checker + " :: [#95] web/a.py: 위반"])
+        self.assertNotIn(self.sister_title, out)
+
+    def test_uncertain_ownership_keeps_web_attributed(self):
+        manage = self.repo / "manage.py"
+        original = manage.read_text()
+        cases = [None, 'import os\nos.environ.setdefault("DJANGO_SETTINGS_MODULE", choose())\n',
+                 original + 'os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")\n',
+                 'import os\nos.environ.setdefault("DJANGO_SETTINGS_MODULE", "web.settings")\n']
+        _write(self.repo, "web/settings.py", "")
+        for source in cases:
+            with self.subTest(manage=source):
+                if source is None:
+                    manage.unlink()
+                else:
+                    manage.write_text(source)
+                code, out, payload, _ = self.measure([("#95", "web/a.py", "위반")])
+                self.assertEqual(code, 2, out)
+                self.assertEqual(payload["records"][0]["file"], "web/a.py")
+                self.assertNotIn(self.sister_title, out)
+        manage.write_text(original)
+        for name in (".dddjango-web", "web", "web_test"):
+            with self.subTest(link=name):
+                path = self.repo / name
+                if path.exists():
+                    shutil.rmtree(path)
+                path.symlink_to(self.repo / "config", target_is_directory=True)
+                code, out, _, _ = self.measure([("#95", "web/a.py", "위반")])
+                self.assertEqual(code, 2, out)
+                self.assertNotIn(self.sister_title, out)
+                path.unlink()
+                path.mkdir()
+        (self.repo / ".dddjango-web").rmdir()
+        code, out, _, _ = self.measure([("#95", "web/a.py", "위반")])
+        self.assertEqual(code, 2, out)
+        self.assertNotIn(self.sister_title, out)
+
+    def test_project_realpath_alias_and_subtarget_do_not_split(self):
+        shutil.rmtree(self.repo / "config")
+        _write(self.repo, "web/settings.py", "")
+        (self.repo / "config").symlink_to(self.repo / "web", target_is_directory=True)
+        code, out, _, _ = self.measure([("#446", "web/settings.py", "서버 설정")])
+        self.assertEqual(code, 2, out)
+        self.assertNotIn(self.sister_title, out)
+        self.repo = self.repo / "web"
+        (self.repo / "application").mkdir()
+        self.anchor = _head(self.repo)
+        code, out, _, _ = self.measure([("#95", "web/a.py", "하위 TARGET")])
+        self.assertEqual(code, 2, out)
+        self.assertNotIn(self.sister_title, out)
+
+    def test_abnormal_exit_and_identical_unparsed_block_sister_split(self):
+        for kwargs in ({"current_exit": 1}, {"anchor_exit": 3}, {"synthetic": True}):
+            with self.subTest(kwargs=kwargs):
+                code, out, payload, _ = self.measure([("#95", "web/a.py", "위반")], **kwargs)
+                self.assertEqual(code, 2, out)
+                self.assertEqual(payload["records"][0]["file"], "web/a.py")
+                self.assertNotIn(self.sister_title, out)
+
+    def test_numbered_diagnostic_then_process_exit_3_stays_attributed(self):
+        gate = _gate_copy(self.td, "crashed-checker")
+        path = gate.parent / self.checker
+        path.write_text("import sys\nfrom pathlib import Path\nfrom findings import Findings, emit_all\n"
+                        "if Path(sys.argv[1]).name == 'anchor': raise SystemExit(0)\n"
+                        "out = Findings(defer=True)\nout.add('#95', Path('web/a.py'), 'partial diagnostic')\n"
+                        "emit_all(out, printer=print)\nraise SystemExit(3)\n")
+        source = gate.read_text()
+        gate.write_text(source.replace("from checker_registry import REGISTRY, checker_argv",
+                "from checker_registry import checker_argv\nREGISTRY = [('check-context-isolation.py', False)]"))
+        code, out = _gate(self.repo, self.anchor, gate=gate)
+        self.assertEqual(code, 2, out)
+        self.assertIn("| `check-context-isolation.py` | 0 | 3 |", out)
+        self.assertEqual(_lines_of(out, "귀속(N∖L)"),
+                         {self.checker + " :: [#95] web/a.py: partial diagnostic"})
+        self.assertNotIn(self.sister_title, out)
+
+    def test_numbered_diagnostic_with_analysis_record_stays_attributed(self):
+        gate = _gate_copy(self.td, "analysis-checker")
+        (gate.parent / self.checker).write_text(
+            "import sys\nfrom pathlib import Path\nfrom findings import Findings, emit_all\n"
+            "if Path(sys.argv[1]).name == 'anchor': raise SystemExit(0)\n"
+            "out = Findings(defer=True)\nout.add('#95', Path('web/a.py'), 'numeric')\n"
+            "out.add('분석', Path('web/a.py'), 'parse failure')\n"
+            "emit_all(out, printer=print)\nraise SystemExit(2)\n")
+        source = gate.read_text()
+        gate.write_text(source.replace("from checker_registry import REGISTRY, checker_argv",
+                "from checker_registry import checker_argv\nREGISTRY = [('check-context-isolation.py', False)]"))
+        code, out = _gate(self.repo, self.anchor, gate=gate)
+        self.assertEqual(code, 2, out)
+        self.assertEqual(_lines_of(out, "귀속(N∖L)"), {self.checker + " :: [#95] web/a.py: numeric"})
+        self.assertNotIn(self.sister_title, out)
+
+    def test_raw_analysis_or_record_channel_failure_blocks_sister_split(self):
+        gate = _gate_copy(self.td, "lost-analysis-checker")
+        source = gate.read_text()
+        gate.write_text(source.replace("from checker_registry import REGISTRY, checker_argv",
+                "from checker_registry import checker_argv\nREGISTRY = [('check-context-isolation.py', False)]"))
+        failures = {
+            "lost analysis stdout": "print('[분석] web/a.py: lost analysis record')\n",
+            "lost analysis stderr": "print('[분석] web/a.py: lost analysis record', file=sys.stderr)\n",
+            "record write warning": "print('주의: 구조화 레코드 채널 비활성 — DJR_FINDINGS_JSON 경로에 쓸 수 없다', file=sys.stderr)\n",
+            "broken json": "with open(os.environ['DJR_FINDINGS_JSON'], 'a') as f: f.write('{broken\\n')\n",
+            "missing numeric record": "print('[#96] web/b.py: lost numeric record')\n",
+            "extra numeric record": "extra = Findings(defer=True)\nextra.add('#96', Path('web/b.py'), 'record without line')\nemit_all(extra)\n",
+        }
+        for side in ("current", "anchor"):
+            for label, failure in failures.items():
+                with self.subTest(side=side, failure=label):
+                    (gate.parent / self.checker).write_text(
+                        "import os, sys\nfrom pathlib import Path\nfrom findings import Findings, emit_all\n"
+                        "side = Path(sys.argv[1]).name\n"
+                        "if side == 'anchor':\n"
+                        "    if " + repr(side) + " != 'anchor': raise SystemExit(0)\n"
+                        "out = Findings(defer=True)\n"
+                        "out.add('#95', Path('web/a.py'), 'numeric' if side == 'current' else 'legacy')\n"
+                        "emit_all(out, printer=print)\n"
+                        "if side == " + repr(side) + ":\n" +
+                        "".join("    " + line + "\n" for line in failure.splitlines()) +
+                        "raise SystemExit(2)\n")
+                    introduced = self.td / "introduced.json"
+                    code, out = _gate(self.repo, self.anchor, gate=gate,
+                                      extra=["--introduced-json", str(introduced)])
+                    self.assertEqual(code, 2, out)
+                    self.assertNotIn(self.sister_title, out)
+                    self.assertIn(self.checker + " :: [#95] web/a.py: numeric",
+                                  _lines_of(out, "귀속(N∖L)"))
+                    payload = json.loads(introduced.read_text())
+                    self.assertEqual([(r["rule"], r["file"], r["message"]) for r in payload["records"]],
+                                     [("#95", "web/a.py", "numeric")])
+
+    def test_case_alias_missing_package_and_unreadable_source_fallback(self):
+        _write(self.repo, "web/settings.py", "")
+        manage = self.repo / "manage.py"
+        for module in ("missing.settings", "Web.settings"):
+            with self.subTest(module=module):
+                manage.write_text('import os\nos.environ.setdefault("DJANGO_SETTINGS_MODULE", "' + module + '")\n')
+                code, out, _, _ = self.measure([("#446", "web/settings.py", "설정 위반")])
+                self.assertEqual(code, 2, out)
+                self.assertNotIn(self.sister_title, out)
+        manage.write_text('import os\nos.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")\n')
+        with patch.dict(os.environ, {"DJR_SISTER_SOURCE_ROOT": str(self.td / "unreadable-missing")}):
+            code, out, payload, _ = self.measure([("#95", "web/a.py", "위반")])
+        self.assertEqual(code, 0, out)
+        self.assertEqual(payload["records"], [])
+        self.assertIn(self.sister_title, out)
+
+    def test_provenance_measurement_invalid_stays_with_reason(self):
+        approved = self.td / "approved.txt"
+        approved.write_text("")
+        code, out, payload, _ = self.measure([("#95", "web/a.py", "위반")],
+            retained="측정 무효(스냅숏 실패) — abcdef123456",
+            extra=["--approved-merge-file", str(approved)])
+        self.assertEqual(code, 2, out)
+        self.assertIn("↳ 귀속 유지: 측정 무효(스냅숏 실패)", out)
+        self.assertEqual(payload["records"][0]["file"], "web/a.py")
+        self.assertNotIn(self.sister_title, out)
+
+    def test_parse_fail_web_reports_server_stays(self):
+        _write(self.repo, "web/broken.py", "def broken(:\n")
+        _write(self.repo, "application/orders/broken.py", "def broken(:\n")
+        code, out, payload, _ = self.measure([])
+        self.assertEqual(code, 2, out)
+        self.assertEqual(len(payload["attributed_lines"]), 1)
+        self.assertIn("[#parse-fail] application/orders/broken.py:", payload["attributed_lines"][0])
+        self.assertIn("[#parse-fail] web/broken.py:", _section(out, self.sister_title))
+        (self.repo / "application/orders/broken.py").unlink()
+        code, out, payload, _ = self.measure([])
+        self.assertEqual(code, 0, out)
+        self.assertEqual(payload["attributed_lines"], [])
+        self.assertIn(f"{self.sister_title} 1건", out)
+
+    def test_pregate_original_root_reaches_copy_without_marker(self):
+        from pregate_fixture_run import _load_module
+        pregate = _load_module(GATE.parent / "design_pregate.py", "sister_design_pregate")
+        copy = self.td / "copy"
+        shutil.copytree(self.repo, copy, ignore=shutil.ignore_patterns(".dddjango-web"))
+        self.assertFalse((copy / ".dddjango-web").exists())
+        _write(copy, "web/broken.py", "def broken(:\n")
+        scratch = self.td / "scratch"
+        scratch.mkdir()
+        result = pregate.run_gate(copy, scratch, sys.executable, source_root=self.repo)
+        self.assertIn("[#parse-fail] web/broken.py:", _section(result["raw_stdout"], self.sister_title))
+        self.assertFalse(any("[#parse-fail] web/" in line for line in result["attributed_lines"]))
+
+    def test_no_split_output_matches_head_2191(self):
+        old_gate = _gate_copy(self.td, "head-scripts", "HEAD")
+        for filename in ("anchor_diff.py", "design_pregate.py"):
+            proc = _git(ROOT, "show", "HEAD:dddjango/scripts/" + filename)
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            (old_gate.parent / filename).write_text(proc.stdout)
+        for marker in (False, True):
+            with self.subTest(marker=marker):
+                if not marker:
+                    (self.repo / ".dddjango-web").rmdir()
+                    _write(self.repo, "web/server.py", "from application.orders.domain_layer.order.order import Order\n")
+                    _write(self.repo, "web/settings.py", "")
+                    _write(self.repo, "manage.py", 'import os\nos.environ.setdefault("DJANGO_SETTINGS_MODULE", "web.settings")\n')
+                else:
+                    (self.repo / ".dddjango-web").mkdir()
+                    shutil.rmtree(self.repo / "web")
+                    _write(self.repo, "manage.py", 'import os\nos.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")\n')
+                    _plant_violation(self.repo)
+                old_code, old = _gate(self.repo, self.anchor, gate=old_gate)
+                code, out = _gate(self.repo, self.anchor)
+                self.assertEqual(code, old_code)
+                self.assertEqual(_mask(out), _mask(old))
+
+    def test_actual_server_bc_import_and_web_model_choices_records_survive(self):
+        server = _VIOLATION_REL
+        _write(self.repo, server, "from web.application.shop.domain_layer.item.item import Item\n"
+               "from web.model import ShopModel\nShopModel.objects.filter(status='open')\n")
+        _write(self.repo, "web/model.py", "from django.db import models\nclass ShopModel(models.Model):\n"
+               "    status = models.CharField(choices=Status.choices)\n")
+        _write(self.repo, "web/application/shop/domain_layer/item/item.py", "class Item: ...\n")
+        web = "web/application/shop/driving_layer/api/item/schema/invalid.py"
+        _write(self.repo, web, "from application.orders.domain_layer.order.order import Order\n")
+        out = io.StringIO()
+        selected = [(self.checker, False), ("check-choices-literal-consumption.py", False)]
+        with patch.object(self.gate, "REGISTRY", selected), contextlib.redirect_stdout(out):
+            code = self.gate.main([str(self.repo), "--anchor", self.anchor,
+                "--introduced-json", str(self.td / "introduced.json"),
+                "--contract-json", str(self.td / "contract.json")])
+        self.assertEqual(code, 2, out.getvalue())
+        payload = json.loads((self.td / "introduced.json").read_text())
+        matched = [r for r in payload["records"] if r["file"] == server and r["rule"] == "#12"]
+        self.assertEqual(len(matched), 1, payload)
+        self.assertIn("web.application.shop.domain_layer", matched[0]["message"])
+        self.assertTrue(any("[#12] " + server in l for l in payload["attributed_lines"]))
+        self.assertEqual(_lines_of(out.getvalue(), self.sister_title),
+            {self.checker + " :: [#12] " + web + ": 타 BC 에서 부를 수 있는 것은 OHS·published_event 둘이다(#83 — 이 import 는 BC 삭제 내성을 깬다) — `application.orders.domain_layer.order.order`"})
+        contract = json.loads((self.td / "contract.json").read_text())
+        self.assertEqual(contract["total"], 1, contract)
+        rec = contract["records"][0]
+        self.assertEqual(rec["contract_ref"], "선행 계약(2026-07-06 상수 승격) 소유")
+        self.assertEqual(rec["file"], server + ":3")
+        self.assertIn("ShopModel.objects.filter/exclude(status=리터럴)", rec["message"])
+
+
 def main() -> int:
     suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case)
-                               for case in (CacheSnapshotRegression, IdempotencySnapshotRegression))
+                               for case in (CacheSnapshotRegression, IdempotencySnapshotRegression, SisterGateRegression))
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     if not result.wasSuccessful():
         return 2

@@ -2376,13 +2376,17 @@ def _interpreter_gap_reason(repo: Path, python_bin: str) -> "str | None":
             f"{cur[0]}.{cur[1]} 다 — fail-open 침묵 clean 위험. 대상 venv 인터프리터를 --python 으로 넘겨라")
 
 
-def run_gate(copy: Path, scratch: Path, python_bin: str) -> GateResult:
+def run_gate(copy: Path, scratch: Path, python_bin: str,
+             source_root: "Path | None" = None) -> GateResult:
     """registry 원 exit/stdout과 전체 귀속/원본 레코드 재료를 보존한다."""
     introduced: Path = scratch / "introduced.json"
     env: "dict[str, str]" = dict(os.environ)
     env["DJR_FINDINGS_JSON"] = str(scratch / "findings.jsonl")  # 스크래치 격리(D3)
     env.pop("DJR_VIOLATIONS_DIR", None)
     env.pop("DJR_SOURCE_GIT_ROOT", None)
+    env.pop("DJR_SISTER_SOURCE_ROOT", None)
+    if source_root is not None:
+        env["DJR_SISTER_SOURCE_ROOT"] = str(source_root)
     proc: "subprocess.CompletedProcess[str]" = subprocess.run(
         [python_bin, str(SCRIPTS_DIR / "registry_gate.py"), str(copy),
          "--anchor", "HEAD", "--introduced-json", str(introduced)],
@@ -3606,7 +3610,7 @@ def _main(argv: "list[str]") -> int:
         print(f"실체화 {len(mat['materialized'])}건 · dirty overlay {len(overlaid)}건 · "
               f"미시뮬레이션 {len(mat['unsimulated'])}건 · already-built {len(mat['already_built'])}건")
 
-        gate_result = run_gate(copy, scratch, ns.python_bin)
+        gate_result = run_gate(copy, scratch, ns.python_bin, source_root=repo)
         attributed, deferred = partition_generated_findings(gate_result, mat["generated_methods"], copy)
         print("\n== 원 registry 결과 ==\n" + gate_result["raw_stdout"].rstrip())
         raw_summary = (f"원 registry 결과: exit {gate_result['raw_exit']} · 귀속 {len(gate_result['attributed_lines'])}건 · "
