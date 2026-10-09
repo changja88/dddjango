@@ -19,11 +19,12 @@ G2 를 통과할 수 없었다(같은 게이트를 다른 레인은 «해석»�
   (`commands/dddjango.md` Phase 2 step 6 절차 소유 · registry_gate 와 동일 관례).
 - 앵커=HEAD 이고 working tree 가 clean 이면 차분이 공허하므로 사용 오류다
   (「커밋 뒤 검사」로 위반 전량을 기존분으로 세탁하는 우회 차단 — registry_gate 동형).
-- 앵커 재실행은 `--anchor-baseline` 모드다: 앵커 트리에 없는 selected source 는
-  호출측(여기)이 argv 에서 걷어내고(그 표면은 앵커에 없었으므로 그 진단은 정의상
-  전건 신규다), 검사기는 그 모드에서 path-repeat selector 의 필수 개수 검사만
-  완화한다. 이 모드는 비-git 스냅숏 전용이다(git 저장소 TARGET 에선 사용 오류 —
-  실전 렌더 계약 완화로의 오용 차단).
+- 앵커 재실행은 `--anchor-baseline` 모드다: 앵커에 없는 경로 selector 와
+  BC 뿌리의 부재가 확인된 `--scope-bc`·`--error-bc` 이름 selector 를 argv 에서
+  걷는다. 검사기는 이 모드에서 path-repeat selector 의 필수 개수를 완화하고
+  빈 scope BC 집합을 허용하되 분석은 계속한다. 앵커에 없는 정규화 진단문은
+  신규로 남는다. 이 모드는 비-git 스냅숏 전용이다(git 저장소 TARGET 에선 사용
+  오류 — 실전 렌더 계약 완화로의 오용 차단).
 - 앵커 재실행이 사용/분석 오류(exit 1)면 로스터 positional 기준선(`checker_registry.
   checker_argv` — registry_gate 가 내부 실행하는 그 호출)으로 한 번 강등하고,
   그마저 오류면 fail-closed(전량 신규 취급 = blocker 유지)한다.
@@ -35,6 +36,7 @@ from __future__ import annotations
 import os
 import ast
 import re
+import stat
 import subprocess
 import sys
 import tempfile
@@ -227,16 +229,39 @@ def snapshot_anchor(root: Path, sha: str, dest: Path) -> None:
         )
 
 
+def _bc_root_absent(snapshot: Path, name: str) -> bool:
+    """실제 application 디렉터리 아래에서 lstat로 확인된 BC 부재만 참이다."""
+    application: Path = snapshot / "application"
+    try:
+        parent: os.stat_result = os.lstat(application)
+    except OSError:
+        return False
+    if not stat.S_ISDIR(parent.st_mode):
+        return False  # lstat이므로 링크도 실제 디렉터리가 아니다.
+    try:
+        os.lstat(application / name)
+    except FileNotFoundError:
+        return True
+    except OSError:
+        return False
+    return False  # 빈 폴더·동명 파일·정상/끊어진/순환 링크 모두 유지한다.
+
+
 def _baseline_argv(
     script: Path, snapshot: Path, argv: "list[str]", path_flags: "frozenset[str]"
 ) -> "list[str]":
     """앵커 재실행 argv — 원 argv 에서 --anchor 를 걷고 target 을 스냅숏으로 바꾼다.
 
-    앵커 트리에 없는 path-selector 값은 걷는다(그 표면의 진단은 정의상 전건 신규).
+    앵커에 없는 경로 selector와 BC 뿌리의 부재가 확인된 이름 selector를 걷는다.
+    BC 이름은 그대로 application/<이름>에 대입하며, 실제 application 디렉터리
+    아래 자식의 lstat가 FileNotFoundError일 때만 부재다. 같은 판정을 두 이름
+    플래그의 각 출현에 적용하고 중복은 보존한다. 검사기는 baseline에서 빈 scope
+    BC 집합을 받아 분석을 계속한다. 앵커에 없는 정규화 진단문은 신규로 남는다.
     전제: 다섯 검사기의 모든 `--flag` 는 값 1개를 받는다(store_true 없음 — 이
     모듈이 주입하는 BASELINE_FLAG 만 예외이고 그것은 원 argv 에 오지 않는다).
     """
     out: "list[str]" = [sys.executable, str(script), str(snapshot)]
+    absent_bcs: "dict[str, bool]" = {}
     i: int = 0
     while i < len(argv):
         token: str = argv[i]
@@ -253,6 +278,12 @@ def _baseline_argv(
             if name in path_flags and value is not None and not (snapshot / value).exists():
                 i += step
                 continue
+            if name in ("--scope-bc", "--error-bc") and value is not None:
+                if value not in absent_bcs:
+                    absent_bcs[value] = _bc_root_absent(snapshot, value)
+                if absent_bcs[value]:
+                    i += step
+                    continue
             out.append(token)
             if not eq and value is not None:
                 out.append(value)

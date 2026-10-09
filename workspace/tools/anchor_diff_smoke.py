@@ -45,6 +45,8 @@ import contextlib
 import io
 import re
 import json
+import errno
+import importlib.util
 from unittest.mock import patch
 from pathlib import Path
 
@@ -54,6 +56,8 @@ F: Path = ROOT / "workspace" / "eval" / "fixtures"
 CTX: Path = S / "check-context-isolation.py"
 COMP: Path = S / "check-composition-root.py"
 CENT: Path = S / "check-error-centralization.py"
+OPENAPI: Path = S / "check-openapi-error-declaration.py"
+CONTRACT: Path = S / "check-api-error-controller-contract.py"
 
 _GIT_ID: "list[str]" = ["-c", "user.email=smoke@dddjango", "-c", "user.name=smoke"]
 
@@ -168,6 +172,326 @@ def _run(script: Path, target: Path, extra: "list[str]") -> "tuple[int, str]":
         env=_scrubbed_env(),
     )
     return proc.returncode, proc.stdout + proc.stderr
+
+
+def _section(out: str, title: str) -> set[str]:
+    match = re.search(rf"^  == {re.escape(title)}.*?\n(.*?)(?=^  == |^판정:|\Z)", out, re.S | re.M)
+    return {line.strip() for line in match.group(1).splitlines()} if match else set()
+
+
+def _checker_module(script: Path):
+    sys.path.insert(0, str(S))
+    name = "anchor_smoke_" + script.stem.replace("-", "_")
+    if name not in sys.modules:
+        spec = importlib.util.spec_from_file_location(name, script)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[name] = module
+        spec.loader.exec_module(module)
+    return sys.modules[name]
+
+
+class BaselineBcArgvRegression(unittest.TestCase):
+    """완성된 argv 전체로 이름·경로 selector의 제거와 보존을 검사한다."""
+
+    def setUp(self):
+        sys.path.insert(0, str(S))
+        import anchor_diff
+        self.diff = anchor_diff
+        self.temp = tempfile.TemporaryDirectory(prefix="baseline-bc-")
+        self.addCleanup(self.temp.cleanup)
+        self.snap = Path(self.temp.name)
+        (self.snap / "application").mkdir()
+        _write(self.snap, _LESSON_SCHEMA_REL, _LESSON_STATIC_SRC)
+        _write(self.snap, "config/api.py", "api = None\n")
+
+    def assert_argv(self, args, kept, snapshot=None):
+        snap = snapshot or self.snap
+        got = self.diff._baseline_argv(CENT, snap, ["/current", *args], frozenset({
+            "--api-module", "--controller-module", "--project-code-error-module"}))
+        self.assertEqual(got, [sys.executable, str(CENT), str(snap), *kept, "--anchor-baseline"])
+
+    def test_missing_both_flags_split_and_equals(self):
+        for args in (["--scope-bc", "report", "--error-bc", "report"],
+                     ["--error-bc=report", "--scope-bc=report"]):
+            with self.subTest(args=args):
+                self.assert_argv(args, [])
+
+    def test_existing_both_flags_split_and_equals(self):
+        for args in (["--scope-bc", "lesson", "--error-bc", "lesson"],
+                     ["--error-bc=lesson", "--scope-bc=lesson"]):
+            with self.subTest(args=args):
+                self.assert_argv(args, args)
+
+    def test_mixed_order_paths_next_option_and_repeated_occurrences(self):
+        args = ["--error-bc=report", "--scope", "public-v1", "--scope-bc", "lesson",
+                "--controller-module", "application/report/driving_layer/controller.py",
+                "--error-bc", "lesson", "--scope-bc=report", "--scope-bc", "report",
+                "--project-code-error-module=" + _LESSON_SCHEMA_REL,
+                "--scope-bc=lesson", "--error-bc", "report", "--error-bc=lesson",
+                "--api-module", "config/api.py", "--anchor", "abc", "--anchor=def",
+                "--legacy-debt-file", "debt.txt", "--legacy-debt-file=other.txt",
+                "--anchor-baseline", "--error-profile=dddjango-code-json"]
+        kept = ["--scope", "public-v1", "--scope-bc", "lesson", "--error-bc", "lesson",
+                "--project-code-error-module=" + _LESSON_SCHEMA_REL,
+                "--scope-bc=lesson", "--error-bc=lesson", "--api-module", "config/api.py",
+                "--error-profile=dddjango-code-json"]
+        self.assert_argv(args, kept)
+
+    def test_bc_root_empty_file_and_all_link_forms_preserved(self):
+        app = self.snap / "application"
+        (app / "empty").mkdir()  # canonical 파일이 없어도 뿌리가 있으면 유지
+        (app / "file").write_text("same name file\n")
+        (app / "linked").symlink_to("lesson", target_is_directory=True)
+        (app / "dangling").symlink_to("missing", target_is_directory=True)
+        (app / "loop").symlink_to("loop", target_is_directory=True)
+        for name in ("empty", "file", "linked", "dangling", "loop"):
+            for args in (["--scope-bc", name, "--error-bc", name],
+                         [f"--error-bc={name}", f"--scope-bc={name}"]):
+                with self.subTest(name=name, args=args):
+                    self.assert_argv(args, args)
+
+    def test_application_absent_file_and_all_link_forms_preserved(self):
+        for kind in ("absent", "file", "linked", "dangling", "loop"):
+            with self.subTest(kind=kind):
+                snap = self.snap / kind
+                snap.mkdir()
+                app = snap / "application"
+                if kind == "file":
+                    app.write_text("not a directory\n")
+                elif kind == "linked":
+                    app.symlink_to(self.snap / "application", target_is_directory=True)
+                elif kind == "dangling":
+                    app.symlink_to("missing", target_is_directory=True)
+                elif kind == "loop":
+                    app.symlink_to("application", target_is_directory=True)
+                args = ["--scope-bc", "report", "--error-bc=report", "--scope", "next"]
+                self.assert_argv(args, args, snap)
+
+    def test_no_case_normalization_or_area_search(self):
+        _write(self.snap, "application/area/report/only.py", "")
+        (self.snap / "application" / "Report").mkdir()
+        real_lstat = os.lstat
+        calls = []
+
+        def case_sensitive_lstat(path, *args, **kwargs):
+            # 대소문자 비구별 파일시스템에서도 정확한 소문자 조회의 부재를 재현한다.
+            calls.append(Path(path))
+            if Path(path) == self.snap / "application" / "report":
+                raise FileNotFoundError(errno.ENOENT, "missing lowercase BC")
+            return real_lstat(path, *args, **kwargs)
+
+        with patch.object(self.diff.os, "lstat", side_effect=case_sensitive_lstat):
+            self.assert_argv(["--scope-bc", "report", "--error-bc=report"], [])
+        self.assertIn(self.snap / "application" / "report", calls)
+        self.assertNotIn(self.snap / "application" / "Report", calls)
+        self.assertNotIn(self.snap / "application" / "area" / "report", calls)
+
+    def test_lstat_uncertainty_parent_and_child_preserves(self):
+        real_lstat = os.lstat
+        for level in ("application", "application/report"):
+            for error in (PermissionError(errno.EACCES, "denied"),
+                          NotADirectoryError(errno.ENOTDIR, "not directory"),
+                          OSError(errno.ELOOP, "loop"), OSError(errno.EIO, "io failure")):
+                with self.subTest(level=level, error=error.errno):
+                    def uncertain(path, *args, **kwargs):
+                        if Path(path) == self.snap / level:
+                            raise error
+                        return real_lstat(path, *args, **kwargs)
+                    args = ["--scope-bc", "report", "--error-bc=report"]
+                    with patch.object(self.diff.os, "lstat", side_effect=uncertain):
+                        self.assert_argv(args, args)
+
+
+class EmptyScopeBcRegression(unittest.TestCase):
+    """세 검사기 × 두 explicit profile의 parser 계약과 실행 흐름을 고정한다."""
+    scripts = (CENT, OPENAPI, CONTRACT)
+    profiles = ("dddjango-code-json", "preserve-established")
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix="empty-scope-bc-")
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        for rel, source in _T_FILES.items():
+            _write(self.root, rel, source)
+
+    def args(self, script, profile):
+        args = [str(self.root), "--error-profile", profile, "--scope", "public-v1",
+                "--api-module", "config/api.py", "--controller-module",
+                "application/lesson/driving_layer/controller.py"]
+        if script == CENT and profile == "dddjango-code-json":
+            args += ["--project-code-error-module", "framework/ninja/framework_error_schema.py",
+                     "--project-code-error-module", _LESSON_SCHEMA_REL]
+        return args
+
+    def test_baseline_empty_scope_parser_accepts_all_six(self):
+        for script in self.scripts:
+            module = _checker_module(script)
+            for profile in self.profiles:
+                with self.subTest(checker=script.name, profile=profile):
+                    self.assertIn(profile, module.ERROR_PROFILES)
+                    config = module._parse_config([*self.args(script, profile), "--anchor-baseline"])
+                    self.assertEqual(config.scope_bcs, ())
+                    self.assertEqual(config.error_bcs, ())
+
+    def test_normal_empty_scope_same_required_error_all_six(self):
+        for script in self.scripts:
+            module = _checker_module(script)
+            for profile in self.profiles:
+                with self.subTest(checker=script.name, profile=profile):
+                    with self.assertRaises(module.UsageError) as raised:
+                        module._parse_config(self.args(script, profile))
+                    self.assertEqual(str(raised.exception), "필수 인자 누락: --scope-bc")
+
+    def test_baseline_remaining_error_bc_outside_scope_rejected_all_six(self):
+        for script in self.scripts:
+            module = _checker_module(script)
+            for profile in self.profiles:
+                with self.subTest(checker=script.name, profile=profile):
+                    with self.assertRaises(module.UsageError) as raised:
+                        module._parse_config([*self.args(script, profile), "--anchor-baseline",
+                                              "--error-bc", "lesson"])
+                    self.assertEqual(str(raised.exception), "--error-bc는 --scope-bc의 부분집합이어야 함")
+
+    def test_name_grammar_and_duplicates_still_rejected(self):
+        for script in self.scripts:
+            module = _checker_module(script)
+            for profile in self.profiles:
+                for baseline in ([], ["--anchor-baseline"]):
+                    for option in ("--scope-bc", "--error-bc"):
+                        with self.subTest(checker=script.name, profile=profile,
+                                          baseline=baseline, option=option):
+                            args = [*self.args(script, profile), *baseline, "--scope-bc", "lesson"]
+                            repeated = ([option, "lesson"] if option == "--scope-bc" else
+                                        [option, "lesson", option + "=lesson"])
+                            with self.assertRaisesRegex(module.UsageError, "반복 인자 중복: " + option):
+                                module._parse_config([*args, *repeated])
+                            with self.assertRaisesRegex(module.UsageError, "잘못된 BC 이름: " + option + "=Lesson"):
+                                module._parse_config([*args, option, "Lesson"])
+
+    def test_git_target_baseline_forbidden_all_six(self):
+        self.assertEqual(_git(self.root, "init", "-q").returncode, 0)
+        for script in self.scripts:
+            module = _checker_module(script)
+            for profile in self.profiles:
+                with self.subTest(checker=script.name, profile=profile):
+                    with self.assertRaisesRegex(module.UsageError, "git 저장소 TARGET 금지"):
+                        module._parse_config([*self.args(script, profile), "--scope-bc", "lesson",
+                                              "--anchor-baseline"])
+
+    def test_empty_scope_runs_analysis_instead_of_early_success(self):
+        # parser 검사는 위에서 별도 단언한다. 정상 tree에서 #2의 schema 분석을 확인한다.
+        _write(self.root, "framework/ninja/framework_error_schema.py",
+               _COMMON_SRC.replace("FrameworkErrorSchema(Schema)", "FrameworkErrorSchema(object)"))
+        code, out = _run(CENT, self.root,
+                         [*self.args(CENT, "dddjango-code-json")[1:], "--anchor-baseline"])
+        self.assertEqual(code, 2, out)
+        self.assertIn("common FrameworkErrorSchema must directly inherit ninja.Schema", out)
+        self.assertIn("BLOCKER — code-profile", out)
+        # #5의 공통 source는 parser의 선택 source 검사 뒤 code 분석에서 읽는다.
+        # #15는 빈 error BC에서도 선택 API source 분석을 계속한다.
+        for script, source_path in ((OPENAPI, "framework/ninja/framework_error_schema.py"),
+                                    (CONTRACT, "config/api.py")):
+            with self.subTest(checker=script.name):
+                _write(self.root, source_path, "invalid syntax ???\n")
+                code, out = _run(script, self.root,
+                                 [*self.args(script, "dddjango-code-json")[1:], "--anchor-baseline"])
+                self.assertEqual(code, 1, out)
+                self.assertNotIn("필수 인자 누락: --scope-bc", out)
+                self.assertIn("production source 분석 불능: " + source_path, out)
+
+
+class BcSelectorPartitionRegression(unittest.TestCase):
+    """실제 #2 렌더의 신규·기존 정규화 진단문 집합을 literal 기대값과 대조한다."""
+    legacy = {"[#572] " + _LESSON_SCHEMA_REL + ":N: BC base must preserve common required/default semantics: code: LessonErrorCode = LessonErrorCode.NOT_FOUND"}
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix="bc-selector-partition-")
+        self.addCleanup(self.temp.cleanup)
+        self.repo = Path(self.temp.name) / "repo"
+        for rel, source in _T_FILES.items():
+            _write(self.repo, rel, source)
+        _write(self.repo, _LESSON_SCHEMA_REL, _LESSON_BASE_DEFAULT_SRC)
+        self.assertEqual(_git(self.repo, "init", "-q").returncode, 0)
+        self.anchor = _commit_all(self.repo, "legacy code contract")
+
+    def add_bc(self, name, source=_LESSON_STATIC_SRC):
+        rel = f"application/{name}/driving_layer/api/bc_error_schema.py"
+        _write(self.repo, rel, source.replace("Lesson", name.title()).replace("lesson_", name + "_"))
+        return ["--scope-bc", name, "--error-bc=" + name, "--project-code-error-module", rel]
+
+    def assert_partition(self, extra, new, existing=None):
+        code, out = _run(CENT, self.repo, [*_T_ARGS, *extra, "--anchor", self.anchor])
+        self.assertEqual(code, 2 if new else 0, out)
+        self.assertIn("기준선=selector 렌더 재실행", out)
+        self.assertNotIn("positional 기준선", out)
+        self.assertNotIn("사용 오류", out)
+        normalize = lambda lines: {re.sub(r":\d+(?=:|\b)", ":N", line) for line in lines}
+        self.assertEqual(normalize(_section(out, "신규분")), new, out)
+        self.assertEqual(normalize(_section(out, "앵커 기존분")), self.legacy if existing is None else existing, out)
+
+    def test_absent_bc_names_keep_legacy_strings_without_downgrade(self):
+        self.assert_partition(self.add_bc("report"), set())
+
+    def test_contract_absent_bc_split_and_equals_keep_exact_legacy_set(self):
+        repo, anchor = _init_repo(Path(self.temp.name), "contract",
+                                  F / "api_error_controller_code/bad_rules")
+        _write(repo, "application/report/driving_layer/api/bc_error_schema.py",
+               _LESSON_STATIC_SRC.replace("Lesson", "Report").replace("lesson_", "report_"))
+        _write(repo, "application/report/driving_layer/controller.py", "def report(request): return {}\n")
+        existing = {
+            "[#62] application/lesson/driving_layer/controller.py:N: bare catch forbidden: except:",
+            "[#62] application/lesson/driving_layer/controller.py:N: catch must be direct own-BC application/domain exception: except Exception:",
+            "[#59] application/lesson/driving_layer/controller.py:N: custom Ninja exception_handler forbidden: @router.exception_handler(LessonMissing)",
+        }
+        for selectors in (["--scope-bc", "report", "--error-bc", "report"],
+                          ["--scope-bc=report", "--error-bc=report"]):
+            with self.subTest(selectors=selectors):
+                code, out = _run(CONTRACT, repo, [*_T_ARGS[:-4], *selectors,
+                    "--controller-module=application/report/driving_layer/controller.py", "--anchor", anchor])
+                self.assertEqual(code, 0, out)
+                self.assertIn("기준선=selector 렌더 재실행", out)
+                self.assertNotIn("positional 기준선", out)
+                self.assertNotIn("사용 오류", out)
+                self.assertEqual(_section(out, "신규분"), set(), out)
+                normalized = {re.sub(r":\d+(?=:|\b)", ":N", line)
+                              for line in _section(out, "앵커 기존분")}
+                self.assertEqual(normalized, existing, out)
+
+    def test_new_violation_in_existing_bc_stays_new(self):
+        extra = self.add_bc("report")
+        _write(self.repo, _LESSON_SCHEMA_REL, _LESSON_BASE_DEFAULT_SRC + _LESSON_RAW_CONCRETE_SRC)
+        prefix = "- " + _LESSON_SCHEMA_REL + ":N: "
+        self.assert_partition(extra, {
+            prefix + 'raw string FrameworkErrorSchema discriminator: code: LessonErrorCode = "lesson_expired"',
+            prefix + 'concrete discriminator default must use own ErrorCode member: code: LessonErrorCode = "lesson_expired"',
+        })
+
+    def test_new_bc_own_violation_stays_new(self):
+        extra = self.add_bc("report", _LESSON_BASE_DEFAULT_SRC)
+        self.assert_partition(extra, {"[#572] application/report/driving_layer/api/bc_error_schema.py:N: BC base must preserve common required/default semantics: code: ReportErrorCode = ReportErrorCode.NOT_FOUND"})
+
+    def test_new_bc_first_wire_collision_with_existing_subject_stays_new(self):
+        extra = self.add_bc("report")
+        rel = "application/report/driving_layer/api/bc_error_schema.py"
+        _write(self.repo, rel, (self.repo / rel).read_text().replace('"report_not_found"', '"lesson_not_found"'))
+        self.assert_partition(extra, {"- " + _LESSON_SCHEMA_REL + ":N: duplicate project code wire value: lesson_not_found: from enum import StrEnum"})
+
+    def test_common_schema_change_stays_new(self):
+        extra = self.add_bc("report")
+        _write(self.repo, "framework/ninja/framework_error_schema.py",
+               _COMMON_SRC.replace("FrameworkErrorSchema(Schema)", "FrameworkErrorSchema(object)"))
+        self.assert_partition(extra, {"- framework/ninja/framework_error_schema.py:N: common FrameworkErrorSchema must directly inherit ninja.Schema: class FrameworkErrorSchema(object):"})
+
+    def test_known_limit_existing_wire_collision_added_owner_same_string_is_existing(self):
+        old = self.add_bc("report")
+        rel = "application/report/driving_layer/api/bc_error_schema.py"
+        _write(self.repo, rel, (self.repo / rel).read_text().replace('"report_not_found"', '"lesson_not_found"'))
+        self.anchor = _commit_all(self.repo, "existing two-owner collision")
+        new = self.add_bc("zebra")
+        rel = "application/zebra/driving_layer/api/bc_error_schema.py"
+        _write(self.repo, rel, (self.repo / rel).read_text().replace('"zebra_not_found"', '"lesson_not_found"'))
+        collision = "- " + _LESSON_SCHEMA_REL + ":N: duplicate project code wire value: lesson_not_found: from enum import StrEnum"
+        self.assert_partition([*old, *new], set(), self.legacy | {collision})
 
 
 class SisterAnchorRegression(unittest.TestCase):
@@ -358,8 +682,10 @@ class SisterAnchorRegression(unittest.TestCase):
 
 
 def main() -> int:
+    suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case) for case in (
+        BaselineBcArgvRegression, EmptyScopeBcRegression, BcSelectorPartitionRegression, SisterAnchorRegression))
     result = unittest.TextTestRunner(verbosity=2).run(
-        unittest.defaultTestLoader.loadTestsFromTestCase(SisterAnchorRegression))
+        suite)
     if not result.wasSuccessful():
         return 2
     base: Path = F / "skeleton" / "good_bc"

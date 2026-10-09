@@ -333,7 +333,7 @@ def _parse_config(argv: list[str]) -> Config:
     if explicit and not controller_modules and not namespace.anchor_baseline:
         # anchor-baseline 모드에선 앵커 트리에 없는 controller 가 걷혀 빈 집합이 정상이다.
         issues.append("필수 인자 누락: --controller-module")
-    if explicit and not scope_bcs:
+    if explicit and not scope_bcs and not namespace.anchor_baseline:
         issues.append("필수 인자 누락: --scope-bc")
     if scope is not None and not scope.strip():
         issues.append("--scope는 빈 문자열일 수 없음")

@@ -1,7 +1,7 @@
 {
   "schema": "pregate-symbol-kinds/0",
   "source_sha": {
-    "check-api-error-controller-contract.py": "2b013b5ec7291e14",
+    "check-api-error-controller-contract.py": "5f1401b69cfa4349",
     "check-app-container.py": "89825155e2def314",
     "check-broker-contract.py": "e6ffad609bc11c91",
     "check-business-vocabulary.py": "09b39ca59eeb29ef",
@@ -11,7 +11,7 @@
     "check-context-isolation.py": "bb68853338db1326",
     "check-db-table.py": "3858f5b128891feb",
     "check-domain-model.py": "ded715d2026c7556",
-    "check-error-centralization.py": "9f43e4ee63adf095",
+    "check-error-centralization.py": "52b8f90cad34be2c",
     "check-event-publish.py": "7d751a39960a42a0",
     "check-idempotency-scope-creep.py": "ab24f922f91bed67",
     "check-layer-skeleton.py": "32810abb897f3dfc",
@@ -19,7 +19,7 @@
     "check-missable-entrance.py": "a5b91c4088799c66",
     "check-naming.py": "b8b093aa3bb2ed40",
     "check-ninja-boundary-middleware.py": "e2f4aed8fef47305",
-    "check-openapi-error-declaration.py": "5a57e8958cc6d992",
+    "check-openapi-error-declaration.py": "8b916fcf55638900",
     "check-port-adapter-pairing.py": "1050c72d3df50da5",
     "check-public-surface-annotation.py": "b94b4101403d5992",
     "check-response-schema-bypass.py": "0fd510470a0ac985",
