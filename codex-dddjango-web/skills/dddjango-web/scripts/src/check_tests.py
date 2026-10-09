@@ -186,6 +186,7 @@ class Static:
     chars: tuple[int, ...] = ()
     runner: bool = False
     anchors: frozenset[int] = frozenset()
+    items: tuple[Static, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -263,6 +264,8 @@ def _value(node, env):
         return node.value
     if isinstance(node, ast.Name):
         return env.get(node.id)
+    if isinstance(node, ast.NamedExpr):
+        return _value(node.value, env)
     if isinstance(node, ast.Attribute) and node.attr == 'parent':
         value = _value(node.value, env)
         return str(Path(value).parent) if value is not None else None
@@ -350,7 +353,12 @@ def _static(node, env, source):
             anchors |= env.get(n.id, Static()).anchors
     if isinstance(node, ast.Name):
         old = env.get(node.id, Static())
-        return Static(old.value, places, old.chars, old.runner, anchors)
+        return Static(old.value, places, old.chars, old.runner, anchors, old.items)
+    if isinstance(node, ast.NamedExpr):
+        old = _static(node.value, env, source)
+        return Static(old.value, places | old.places, old.chars, old.runner, anchors | old.anchors, old.items)
+    if isinstance(node, (ast.List, ast.Tuple, ast.Set)):
+        return Static(None, places, anchors=anchors, items=tuple(_static(n, env, source) for n in node.elts))
     if isinstance(node, ast.Constant) and isinstance(node.value, str):
         return Static(node.value, places, _literal_chars(node, source), anchors=anchors)
     chars = ()
@@ -362,6 +370,12 @@ def _static(node, env, source):
     if isinstance(node, ast.Call) and _call_name(node.func) == 'shutil.which' and len(node.args) == 1:
         name = _value(node.args[0], {k: v.value for k, v in env.items()})
         return Static(None, places, runner=name in _JS_RUNNERS, anchors=anchors)
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in ('glob', 'rglob', 'iterdir'):
+        parent = _static(node.func.value, env, source)
+        if parent.value is not None:
+            # 와일드카드는 실파일명이 아니라 그 iter 원소의 정적 출처를 나타낸다.
+            item = Static(str(Path(parent.value) / '*'), places, anchors=anchors)
+            return Static(None, places, anchors=anchors, items=(item,))
     value = _value(node, {k: v.value for k, v in env.items()})
     return Static(value, places, chars, anchors=anchors)
 
@@ -590,10 +604,24 @@ def _js_checks(source, root, argv=None):
     return out
 
 
+_COMPREHENSIONS = (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)
+
+
+def _comprehension_expressions(node):
+    for generator in node.generators:
+        yield generator.iter
+        yield from generator.ifs
+    if isinstance(node, ast.DictComp):
+        yield node.key
+        yield node.value
+    else:
+        yield node.elt
+
+
 def _own_nodes(node):
-    """실행 영역 하나만 순회한다. 자식 실행 블록·함수 몸통은 scope가 맡는다."""
-    yield node
-    if isinstance(node, ast.Lambda):
+    """식은 평가 순서로 순회한다. 블록·함수와 컴프리헨션의 스코프는 별도로 처리한다."""
+    if isinstance(node, (ast.Lambda, *_COMPREHENSIONS)):
+        yield node
         return
     for field, value in ast.iter_fields(node):
         if field in ('body', 'orelse', 'finalbody', 'handlers', 'cases') and isinstance(value, list):
@@ -601,11 +629,19 @@ def _own_nodes(node):
         for child in value if isinstance(value, list) else [value]:
             if isinstance(child, ast.AST):
                 yield from _own_nodes(child)
+    yield node
 
 
 def _bound_names(node):
     """지원하지 않는 재바인딩에서도 기존 값·출처를 무효화한다."""
     names = set()
+    if isinstance(node, ast.Lambda):
+        return names
+    if isinstance(node, _COMPREHENSIONS):
+        # 반복 target은 지역 이름이다. 대입식 target만 둘러싼 스코프에 속한다.
+        for child in _comprehension_expressions(node):
+            names.update(_bound_names(child))
+        return names
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
         return {node.name}
     if isinstance(node, ast.Name) and isinstance(node.ctx, (ast.Store, ast.Del)):
@@ -637,7 +673,8 @@ def _analyze(source, root, rel):
                     return
                 if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
                     assignments[node.id] = assignments.get(node.id, []) + [node.lineno]
-                for child in ast.iter_child_nodes(node):
+                children = _comprehension_expressions(node) if isinstance(node, _COMPREHENSIONS) else ast.iter_child_nodes(node)
+                for child in children:
                     stores(child)
             for statement in body:
                 stores(statement)
@@ -688,8 +725,64 @@ def _analyze(source, root, rel):
                     yield from path_values(child)
             else:
                 yield _static(node, env, source)
-        def inspect(statement):
+        def bind(target, val, frames):
+            if isinstance(target, ast.Name):
+                ps = _places(target)
+                for frame, frame_screens in frames:
+                    frame[target.id] = Static(val.value, val.places | ps, val.chars, val.runner, val.anchors | ps, val.items)
+                    frame_screens[target.id] = Screen(None, val.places | ps)
+            elif isinstance(target, (ast.Tuple, ast.List)):
+                items = val.items if val.items is not None and len(val.items) == len(target.elts) else (Static(None, val.places),) * len(target.elts)
+                for child, item in zip(target.elts, items):
+                    bind(child, item, frames)
+            elif isinstance(target, ast.Starred):
+                bind(target.value, Static(None, val.places), frames)
+        def comprehension(node, frames):
+            nonlocal env, screens
+            outer_env, outer_screens = env, screens
+            first = node.generators[0]
+            # 맨 왼쪽 iter만 바깥에서 평가한다. 뒤 iter·if에는 모든 target이 지역 이름이다.
+            inspect(first.iter, frames)
+            iterable = _static(first.iter, env, source)
+            targets = set().union(*(_bound_names(g.target) for g in node.generators))
+            env, screens = shadow(targets, frozenset().union(*(_places(g.target) for g in node.generators)))
+            if isinstance(node, ast.GeneratorExp):
+                # 생성 시 몸통은 실행되지 않는다. 내부 대입식은 지연된 스코프 사본에만 반영한다.
+                frames = [(dict(frame), dict(frame_screens)) for frame, frame_screens in frames]
+            def visit(index, active_frames, values=None):
+                nonlocal env, screens
+                generator = node.generators[index]
+                if values is None:
+                    inspect(generator.iter, active_frames)
+                    values = _static(generator.iter, env, source)
+                items = values.items if values.items is not None else (Static(None, values.places),)
+                for item in items:
+                    prior_env, prior_screens = env, screens
+                    env, screens = dict(env), dict(screens)
+                    local_frames = active_frames + [(env, screens)]
+                    bind(generator.target, item, [(env, screens)])
+                    for condition in generator.ifs:
+                        inspect(condition, local_frames)
+                    if index + 1 < len(node.generators):
+                        visit(index + 1, local_frames)
+                    elif isinstance(node, ast.DictComp):
+                        inspect(node.key, local_frames)
+                        inspect(node.value, local_frames)
+                    else:
+                        inspect(node.elt, local_frames)
+                    env, screens = prior_env, prior_screens
+            visit(0, frames + [(env, screens)], iterable)
+            env, screens = outer_env, outer_screens
+        def inspect(statement, frames=None):
+            if frames is None:
+                frames = [(env, screens)]
             for n in _own_nodes(statement):
+                if isinstance(n, _COMPREHENSIONS):
+                    comprehension(n, frames)
+                    continue
+                if isinstance(n, ast.NamedExpr):
+                    bind(n.target, _static(n.value, env, source), frames)
+                    continue
                 if in_function and isinstance(n, ast.Compare):
                     operands = [n.left] + n.comparators
                     for slot, (op, left, right) in enumerate(zip(n.ops, operands, operands[1:])):
@@ -752,6 +845,11 @@ def _analyze(source, root, rel):
                         column = offset - js.value.rfind('\n', 0, offset) - 1
                         out.append(Probe(probe.check_id, (js.chars[offset], column), ps, probe.active, probe.slot))
         for statement in body:
+            # inspect가 평가한 대입식은 이미 올바른 스코프에 반영됐다.
+            named_writes = {n.target.id for n in _own_nodes(statement) if isinstance(n, ast.NamedExpr)}
+            for n in _own_nodes(statement):
+                if isinstance(n, _COMPREHENSIONS):
+                    named_writes |= _bound_names(n)
             if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 local = dict(env)
                 for arg in statement.args.posonlyargs + statement.args.args + statement.args.kwonlyargs + [statement.args.vararg, statement.args.kwarg]:
@@ -781,7 +879,7 @@ def _analyze(source, root, rel):
                 captured = screen(statement.value)
                 for target in targets:
                     if isinstance(target, ast.Name):
-                        env[target.id] = Static(val.value, val.places | _places(target), val.chars, val.runner, val.anchors | _places(target))
+                        env[target.id] = Static(val.value, val.places | _places(target), val.chars, val.runner, val.anchors | _places(target), val.items)
                         writes = assignments.get(target.id, [])
                         if len(writes) == 1 and not isinstance(statement.value, ast.Name):
                             screens[target.id] = Screen(captured.origin, captured.places | _places(target))
@@ -819,7 +917,7 @@ def _analyze(source, root, rel):
                     nested = getattr(statement, field, None)
                     if isinstance(nested, list):
                         scope(nested, env, in_function, screens, assignments)
-            names = _bound_names(statement)
+            names = _bound_names(statement) - named_writes
             if any(isinstance(n, ast.ImportFrom) and any(a.name == '*' for a in n.names) for n in ast.walk(statement)):
                 names |= set(env)
             # 부모의 사슬에 블록 전체 행을 넣지 않고 실제 바인딩 자리만 넣는다.
@@ -840,6 +938,11 @@ def _content_tests(ctx: BackstopContext) -> List[Finding]:
     서버는 fixture_server/start_server/run_server, 프로세스는 subprocess의 run/Popen/call/check_call/check_output이다.
     IfExp의 조건·각 가지, BoolOp, with 항목·호출 인자 안의 직접 sink 호출도 순회한다.
     with/async with는 각 항목의 표현식 검사 뒤 그 항목의 바인딩을 무효화하고 다음 항목을 검사한다.
+    list/set/dict 컴프리헨션·generator는 첫 iter를 바깥 환경에서, 뒤 iter·if·결과 식을 target 지역 환경에서 검사한다.
+    모든 for target은 바깥 바인딩을 가리며 튜플 target도 원소별로 바인딩한다. 정적 리터럴·glob/rglob/iterdir
+    (지역 별칭 포함)의 원소 출처를 보존하며 미확정 iter의 target은 미확정이다. 반복 target은 바깥으로 새지 않는다.
+    대입식은 RHS 평가 뒤 가장 가까운 함수/모듈 환경과 활성 컴프리헨션 환경에 반영한다(중첩 포함).
+    generator 몸통의 대입식은 생성 시 바깥에 반영하지 않는다. 동적 소비·조건의 참/거짓·반복 횟수는 추론하지 않는다.
     분기 뒤 이름 무효화는 문장 수준 재바인딩에 적용하며 조건식 결과의 값 합류는 추론하지 않는다.
     Python 안 JS는 list/tuple 명령의 node/nodejs/node.exe 정적 이름 또는 shutil.which 출처가 확정된 실행기의
     -- 옵션 종료·스크립트 entry point 앞의 -e/--eval/-p/--print 정적 문자열만 실행 코드로 추출한다.

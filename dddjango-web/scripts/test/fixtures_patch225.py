@@ -333,6 +333,79 @@ def gate_case(name, before, after, want, operation=None):
             operation(root)
         check('줄 게이트 ' + name, ids(root, base), want)
 
+comprehension_prefix = 'from pathlib import Path\np = Path(".dddjango-web/unused")\n'
+for name, expression in [
+    ('list', '[q.read_text() for q in Path("tests/data").glob("*.txt")]'),
+    ('set', '{q.read_text() for q in Path("tests/data").glob("*.txt")}'),
+    ('dict', '{q: q.read_text() for q in Path("tests/data").glob("*.txt")}'),
+    ('generator', '(q.read_text() for q in Path("tests/data").glob("*.txt"))'),
+]:
+    before = comprehension_prefix + 'def test_fixture_files():\n    texts = ' + expression + '\n    assert texts'
+    gate_case('재검토⑧ ' + name + ' 반복 변수 q→p', before, before.replace('q', 'p'), set())
+
+comprehension_cases = [
+    ('미확정 iter shadow', '[p.read_text() for p in paths]', []),
+    ('미확정 tuple target', '[p.read_text() for key, p in rows]', []),
+    ('확정 tuple target 안전', '[p.read_text() for key, p in [("key", Path("tests/data"))]]', []),
+    ('확정 tuple target 금지', '[p.read_text() for key, p in [("key", Path(".dddjango-web/data"))]]', [4]),
+    ('중첩 tuple target 금지', '[p.read_text() for key, (index, p) in [("key", (0, Path(".dddjango-web/data")))]]', [4]),
+    ('여러 for 이전 target 출처', '[p.read_text() for folder in [Path(".dddjango-web/data")] for p in folder.glob("*")]', [4]),
+    ('여러 for 안전 target shadow', '[p.read_text() for folder in paths for p in folder.glob("*")]', []),
+    ('뒤 for target 미바인딩 if', '[q for q in paths if p.read_text() for p in other]', []),
+    ('뒤 for target 미바인딩 iter', '[q for q in paths for other in p.read_text() for p in more]', []),
+    ('첫 iter는 바깥 스코프', '[p.read_text() for p in p.glob("*")]', [4]),
+    ('if 안전 원소 I/O', '[p for p in Path("tests/data").glob("*") if p.read_text()]', []),
+    ('if 금지 원소 I/O', '[p for p in [Path(".dddjango-web/data")] if p.read_text()]', [4]),
+    ('dict key 금지 원소 I/O', '{p.read_text(): key for key, p in [("key", Path(".dddjango-web/data"))]}', [4]),
+    ('중첩 안쪽 target shadow', '[[p.read_text() for p in paths] for p in [Path(".dddjango-web/data")]]', []),
+    ('중첩 첫 iter 바깥 target', '[[p.read_text() for p in p.glob("*")] for p in [Path(".dddjango-web/data")]]', [4]),
+    ('중첩 뒤 iter는 안쪽 스코프', '[[q for q in paths for item in p.read_text() for p in more] for p in [Path(".dddjango-web/data")]]', []),
+    ('여러 정적 원소 금지 출처', '[p.read_text() for p in [Path("tests/data"), Path(".dddjango-web/data")]]', [4]),
+    ('반복 target 바깥 보존', '[p for p in paths]\n    p.read_text()', [5]),
+    ('대입식 원소 출처', '[(saved := p).read_text() for p in [Path(".dddjango-web/data")]]', [4]),
+    ('대입식 같은 컴프리헨션 참조', '[saved.read_text() for p in [Path(".dddjango-web/data")] if (saved := p)]', [4]),
+    ('대입식 바깥 누출', '[saved := p for p in [Path(".dddjango-web/data")]]\n    saved.read_text()', [5]),
+    ('대입식 안전 값 바깥 누출', '[p := item for item in [Path("tests/data")]]\n    p.read_text()', []),
+    ('대입식 미확정 값 바깥 누출', '[p := item for item in paths]\n    p.read_text()', []),
+    ('중첩 대입식 바깥 누출', '[[saved := p for p in [Path(".dddjango-web/data")]] for item in [1]]\n    saved.read_text()', [5]),
+    ('중첩 대입식 바깥 comp 참조', '[(saved.read_text(), [saved := p for p in [Path(".dddjango-web/data")]]) for item in [1]]', []),
+    ('중첩 대입식 뒤 바깥 comp 참조', '[([saved := p for p in [Path(".dddjango-web/data")]], saved.read_text()) for item in [1]]', [4]),
+    ('generator 대입식 실행 전 바깥 보존', '(p := item for item in [Path("tests/data")])\n    p.read_text()', [5]),
+    ('generator 대입식 생성만으로 누출 안 함', '(saved := p for p in [Path(".dddjango-web/data")])\n    saved.read_text()', []),
+    ('generator 대입식 내부 참조', '((saved := p).read_text() for p in [Path(".dddjango-web/data")])', [4]),
+    ('빈 iter 대입식 바깥 보존', '[p := item for item in []]\n    p.read_text()', [5]),
+]
+with tempfile.TemporaryDirectory(prefix='web225-comprehension-') as tmp:
+    root = Path(tmp)
+    write(root, 'web/__init__.py', '')
+    git(root, 'init', '-q'); git(root, 'add', '.'); git(root, 'commit', '-qm', 'base')
+    base = git(root, 'rev-parse', 'HEAD')
+    test = 'tests/test_comprehension.py'
+    for name, expression, lines in comprehension_cases:
+        write(root, test, comprehension_prefix + 'def test_paths():\n    ' + expression)
+        check('재검토⑧ ' + name, [f.line for f in findings(root, base) if f.check_id == 'TG2'], lines)
+    for name, expression in [
+        ('list', '[\n        p\n        for p in BUILD.glob("*")\n    ]'),
+        ('set', '{\n        p\n        for p in BUILD.glob("*")\n    }'),
+        ('dict', '{\n        p: p\n        for p in BUILD.glob("*")\n    }'),
+        ('generator', '(\n        p\n        for p in BUILD.glob("*")\n    )'),
+    ]:
+        before = 'from pathlib import Path\nBUILD = Path(".dddjango-web/data")\ndef test_paths():\n    texts = ' + expression
+        after = before.replace('        p\n', '        p.read_text()\n').replace('        p: p\n', '        p: p.read_text()\n')
+        write(root, test, before)
+        git(root, 'add', '.'); git(root, 'commit', '-qm', name)
+        base = git(root, 'rev-parse', 'HEAD')
+        write(root, test, after)
+        check('재검토⑧ ' + name + ' 금지 iter 원소 I/O 새 줄', [f.line for f in findings(root, base) if f.check_id == 'TG2'], [5])
+        write(root, test, before + '\n    assert texts')
+        check('재검토⑧ ' + name + ' 금지 iter 무관 추가 줄', ids(root, base), set())
+
+for name, source, want in [
+    ('screenshot 반복 target shadow', 'def test_image():\n    p = page.screenshot()\n    b = page.screenshot()\n    pairs = [p != b for p in captures]', set()),
+    ('screenshot 바깥 target 보존', 'def test_image():\n    p = page.screenshot()\n    b = page.screenshot()\n    pairs = [p for p in captures]\n    assert p != b', {'TG3'}),
+]:
+    gate_case('재검토⑧ ' + name, '', source, want)
+
 for assertion in ('assertEqual', 'assertNotEqual'):
     image_call = ('def test_image(self):\n    a = page.screenshot()\n    b = page.screenshot()\n'
                   '    self.' + assertion + '(\n        a,\n        b,\n        msg="old",\n    )')
