@@ -109,6 +109,8 @@ def test_password_toggle_reveals_input(page: Page, live_server: LiveServer) -> N
 - 브라우저 테스트도 discipline-test FORM을 그대로 쓴다: 정확 개수 `to_have_count(n)` · 정확 글자 `to_have_text(x)`(부분 일치 `to_contain_text` 금지) · non-edge `nth(2)`.
 - **샌드박스 안 브라우저**: macOS 샌드박스(예: Codex 셸 샌드박스)는 Chrome 시작에 필요한 시스템 서비스를 막아 브라우저가 시작 즉시 죽는다 — 이 환경에서 브라우저 테스트가 섞인 실행은 처음부터 샌드박스 밖에서 돈다(어디서·어떻게는 Coordinator·coder-web의 «브라우저 실행 환경» 규칙). 샌드박스 안에서 돈 실행의 브라우저 시작 실패(`BrowserType.launch: Target page, context or browser has been closed` · 브라우저 프로세스 `SIGABRT`/`SIGTRAP` · `bootstrap_check_in … Permission denied`)는 그것만으로 원인을 정하지 않는다 — 샌드박스 밖에서 다시 돈 결과가 그 테스트의 결과다(밖에서도 실패하면 실제 실패). 같은 실행에서 브라우저 없이 돈 테스트의 결과는 그대로다. 테스트를 건너뛰거나 지우거나 하니스·브라우저 판을 바꿔 우회하지 않는다.
 
+**영구 시험 재현성**: `web_test/`·호스트 시험 트리와 시험 지원 코드(`conftest.py`·`_support.py` 등)는 `.dddjango-web/`를 읽거나 쓰지 않고 프로젝트 루트 밖 머신 고정 고정물·기준판·캐시에 기대지 않는다. 고정물·기대 자료는 시험 트리에, 실행 기록은 `tmp_path` 등 임시 폴더에 둔다. 선택 도구 부재는 호스트 규칙대로 skip하고 설치된 도구의 고장은 실패로 남긴다. 레인 전용 환경 변수 존재 단언으로 실행 전제를 만들지 않는다 — 정상 환경 변수 행위 시험·필수 settings는 허용하며 환경 변수 의미 판정은 TG2 밖, discipline 감수와 G2 표준 실행이 확인한다.
+
 ## §5. 날짜·시간 결정성 — 주입
 
 시간 의존 테스트는 pre-commit에서 *무관한 날*에 깨진다(테스트 수행 시각에 통과 여부가 달라지면 결함이다). dddjango-web은 시간을 **주입**으로만 들인다(게이트 없음·시계 고정 도구 불필요):
@@ -138,6 +140,8 @@ page.goto(live_server.url + ChannelNavigator.channel_list_href())
 - `{% static %}` 이미지(시안 이미지 — implementation-django §8)는 미해당이다 — `live_server`가 정적 파일을 같은 출처로 서빙한다. 아이콘이 글꼴 리거처면 미해당이다 — 외부 주소 이미지를 *그리는* 화면에서만 발동하는 일반 함정이다. `TINY_PNG`는 §7 헬퍼.
 
 ## §7. 헬퍼 계약 — 단일 정의
+
+영구 시험 헬퍼도 §4의 재현성 계약을 따른다. 호스트 도구 탐색 결과(`shutil.which` 등)는 허용하되 머신 고정 실행파일·캐시 주소를 새로 박지 않는다. G0에서 명령·settings 지정·호스트 필수 환경 출처·레인 추가 변수 이름을 확정하고 G2에서는 레인 추가 변수만 제거한 같은 명령을 실행한다(`env -i` 아님). 바뀐 `tests/` 시험을 실제 수집하는 호스트 명령도 확인하고 skip 수·사유를 실행 통과와 분리해 보고한다.
 
 discipline-test §3 FORM이 쓰는 헬퍼의 *계약*을 여기서 정의한다(이름은 weather 예시 — BC에 맞춰 환언하되 계약은 유지). 같은 헬퍼를 테스트 파일마다 재정의하지 말고 `web_test/application/[<area>/]<bc>/_support.py` 한 곳에 두고 `from web_test.application.[<area>.]<bc>._support import …`로 가져온다 — 실제 BC 경로(area 그루핑이면 area 세그먼트 포함)를 그대로 미러한다(render-smoke 파일도 같은 폴더). `--import-mode=importlib`은 테스트 폴더를 `sys.path`에 넣지 않아 형제 모듈 상대 import가 안 되고, pytest-django가 `manage.py` 폴더를 `sys.path`에 넣으므로 `web_test.` 절대 import가 된다. `_support.py`는 `*_test.py`가 아니라 수집되지 않는다:
 
@@ -192,7 +196,7 @@ repo를 갈아끼우는 헬퍼(`FakeRepo` 류)는 만들지 않는다 — dddjan
 
 ## §8. 안 쓰는 것 — 스크린샷 비교·외부 E2E 러너·pytest-mock·mutation
 
-- **스크린샷 비교**(Playwright `to_have_screenshot`·픽셀 diff) — **비채택**. 시각 충실도는 인간 오라클이 본다(G2 배너). 스크린샷 도구 자체가 폰트·플랫폼 렌더 비결정을 인정(허용 오차·OS별 기준 이미지)하는 점이 생성 파이프라인 결정성과 상충한다.
+- **스크린샷 비교**(Playwright `to_have_screenshot`·픽셀 diff) — **비채택**. 같은 실행·같은 브라우저의 옛 판 ↔ 지금 판 이미지 비교도 비채택이며, 승인 명세나 시험 목록에 있어도 예외가 아니다. 사람 눈 확인용 갈무리는 그대로 유지한다. 시각 충실도는 인간 오라클이 본다(G2 배너). 스크린샷 도구 자체가 폰트·플랫폼 렌더 비결정을 인정(허용 오차·OS별 기준 이미지)하는 점이 생성 파이프라인 결정성과 상충한다.
 - **외부 E2E 러너**(Selenium·Cypress) — 주석-제외. 브라우저가 필요한 곳은 pytest-playwright 한 줄기로 *얇게*(정전 = unit 두텁게).
 - **pytest-mock**(`mocker`) — 주석-제외. 표준 `unittest.mock`+`monkeypatch`가 같은 일을 설치 없이 한다(§1).
 - **mutation**(`mutmut`·`cosmic-ray`) — 이번 회차 비채택(dddart 009 조건부 승계). generic 연산자/불리언 변이라 "두 enum case가 색을 공유" 같은 *도메인 의미* 변이는 생성하지 않고 변이마다 테스트 1회라 느리다 — 색 distinctness는 discipline-test §3.1 집합-크기 FORM이 직접 보장한다.

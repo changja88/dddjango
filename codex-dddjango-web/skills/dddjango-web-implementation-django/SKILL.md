@@ -34,6 +34,9 @@ URL·내비게이션·문서 셸(탭) 코드를 쓸 때, DataSource·api_client�
 - 외부 JS는 G1 승인·등재된 공식 플랫폼 SDK 사본(`web/static/vendor/<sdk_id>/<파일>`)뿐 — 사본·등재 목록은 Coordinator 의 `sdk_vendor.py` 소관(읽기만) · 로드 태그는 페이지 `{% block scripts %}` 안 기능 JS 앞 `src`·`defer` 만 · CDN 실행 태그 금지 (§11)
 - **테스트는 전용 스킬로 이전**: 무엇을/오라클/비-vacuity/단언 FORM은 `dddjango-web-discipline-test`, Django 메커니즘(VM 대체·테스트 클라이언트·HTML 단언·HTMX 헤더·`unittest.mock`·날짜 주입·브라우저 테스트)은 `dddjango-web-implementation-test` (§7)
 
+- `font-size`는 아이콘 글리프에도 foundation 토큰으로 쓴다. 글리프 크기는 `app_spacing.css`의 `--spacing-icon-*`로 정의하고 `font-size: var(--spacing-icon-*)`로 인용한다. `width`·박스 `height` 등 비-typography 크기는 dddjango-web-architecture-ui §8의 추출값 직접 인용 규칙을 따른다.
+- 일반 이동은 이름 기반이며 기본 홈 주소 한 건은 dddjango-web-architecture-ui §6의 소유 router→소유 navigator를 따른다(폴백 금지).
+
 ## 상세 레퍼런스
 
 | 질문 | 위치 |

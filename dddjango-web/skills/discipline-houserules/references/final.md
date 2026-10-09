@@ -44,7 +44,7 @@ web/                                         # Django 앱 "web" — dddjango-web
 │   │   └── <bc>/                            #   area 하위 BC — 내부 구조는 아래 <bc>/와 완전 동일
 │   └── <bc>/                                # 바운디드 컨텍스트 (기능 영역) 1개
 │       ├── <bc>_router.py                   # urlpatterns·app_name·<Bc>Routes — URL path·name 단일 출처
-│       ├── <bc>_navigator.py                # 정적 href 헬퍼(reverse) — URL name만 참조, View import 금지
+│       ├── <bc>_navigator.py                # 정적 href 헬퍼 — 일반 이동은 이름 기반, 기본 홈 주소 예외는 architecture-ui §6, View import 금지
 │       │
 │       ├── domain_layer/                    # 순수 Python — django import 금지
 │       │   └── <aggregate>/                 # 애그리거트(개념) 1차
@@ -164,7 +164,7 @@ select = ["E4", "E7", "E9", "F", "ANN"]
 
 공통 원칙 (규약 §7.1):
 
-1. **파일명 = 주 선언명의 snake_case.** 한 파일에 주 선언 하나 (도메인 `exception.py`는 예외). 주 선언이 클래스가 아닌 파일(view 함수·ui_extension 필터 모듈·router 모듈·템플릿·CSS)은 아래 표의 이름 규칙을 따른다.
+1. **파일명 = 주 선언명의 snake_case.** 한 파일에 주 선언 하나 (도메인 `exception.py`는 예외). View 주 선언 밖에는 architecture-ui §2의 private 필드 전용 타입 Protocol만 동거한다(확정된 Protocol 베이스 하나·class keyword/데코레이터 없음·값 없는 단순 이름 필드 annotation만·실행식 없음). 주 선언이 클래스가 아닌 파일(view 함수·ui_extension 필터 모듈·router 모듈·템플릿·CSS)은 아래 표의 이름 규칙을 따른다.
 2. **종류는 폴더가 결정하고, 접미사가 그것을 재확인한다.** 접미사 판별은 긴 것 우선 — `_shared_state.py`는 shared_state 종류이지 state 종류가 아니다.
 3. **화면 삼총사는 같은 접두**: `<화면>_view.py`(+ `<화면>_view.html`) ↔ `<화면>_vm.py` ↔ `<화면>_state.py` 1:1:1 대응. 조각(버튼) 단위 VM도 동일(`chat_request_btn_view` ↔ `chat_request_btn_vm`). 검사 방향은 **VM 기준** — VM이 존재하면 같은 접두의 view·state가 대응해야 하며, VM이 필요 없는 정적 view(약관·안내)는 VM·State 없이 허용. **접두 `<화면>`은 view 파일 stem에서 `_view`를 뗀 것이다** — view=`weekly_forecast_view.py`면 접두는 `weekly_forecast`이고 VM·State는 `weekly_forecast_vm.py`·`weekly_forecast_state.py`(클래스 `WeeklyForecastVM`·`WeeklyForecastState`)다. 접두에 `_view`를 끼운 `weekly_forecast_view_vm.py`·`weekly_forecast_view_state.py`(클래스 `…ViewVM`·`…ViewState`)는 **금지** — `_view_state.py`는 백스톱 NM2 deny 접미사이고 `…_view_vm`은 짝 view 부재로 NM4가 발화한다.
 4. **UseCase는 화면이 아니라 도메인 개념 단위로 짓는다** — 여러 VM이 하나의 UseCase를 공유한다 (판별 배정은 `undecidable.md` §8).
@@ -210,7 +210,7 @@ select = ["E4", "E7", "E9", "F", "ANN"]
 | 테스트 | SUT 경로 | `web_test/<web/와 같은 경로>/<sut>_test.py` | — |
 
 - 폴더명은 `repository/`(전체 표기), 파일 접미사는 `_repo.py`(축약) — 혼동 주의.
-- 라우트 path·name 문자열 리터럴은 `<bc>_router.py` 안에서만 등장한다 — `class <Bc>Routes`(클래스 상수)로 묶고 navigator·root_destination_handler는 이 상수만 참조. 템플릿은 URL name을 직접 쓰지 않고 State가 준 href를 쓴다.
+- 라우트 path·name 문자열 리터럴은 `<bc>_router.py` 안에서만 등장한다 — `class <Bc>Routes`(클래스 상수)로 묶고 일반 이동의 navigator·root_destination_handler는 이 이름 상수를 참조한다. **기본 홈 주소의 좁은 예외**: 활성 URLconf와 무관하게 반환해야 하는 **프로젝트의 기본 홈 목적지 한 건**만 예외로 둔다. 명세에 소유 BC·router 상수·navigator 메서드를 적고, 그 단일 상수를 소유 navigator가 가공 없이 반환한다. 다른 BC는 그 navigator를 호출한다. 상수 복제·타 BC router 직접 import(IM5)·BC별 기본 주소·개별 화면·조각 주소로의 확대는 금지한다. 나머지 named href의 역참조 실패를 이 주소로 폴백하지 않는다(`NoReverseMatch`를 잡아 아무 주소로 넘기기 금지). URLconf 독립은 href 반환에 URL 이름 등록이 필요 없다는 뜻이며 모든 격리 URLconf에서 그 주소를 GET할 수 있다는 뜻은 아니다. 템플릿은 URL name을 직접 쓰지 않고 State가 준 href를 쓴다.
 - `--typography-*`는 `font` 줄임 묶음 값이다 — 쓰는 쪽은 `font: var(--typography-title)`이고, 같은 규칙에서 그 뒤에 `font-*`를 다시 선언하지 않는다.
 
 ## §5. import 방향 — 계층 매트릭스·교차 BC 4채널·root 방향 규칙
@@ -235,7 +235,7 @@ select = ["E4", "E7", "E9", "F", "ANN"]
 |---|---|---|
 | ① | 도메인 타입 import | 엔티티·VO·enum (예: channel이 member의 `Candidate` 사용) |
 | ② | 타 BC UseCase 호출 | 행위·데이터 접근의 단일 관문 |
-| ③ | 타 BC navigator 호출 | URL name만 — href를 얻는다 |
+| ③ | 타 BC navigator 호출 | 일반 이동은 이름 기반 — href를 얻는다. 기본 홈 주소 한 건은 architecture-ui §6의 소유 navigator를 호출한다 |
 | ④ | 타 BC view 임베드 | `view/`는 전부 임베드 가능 — 임베드는 부모 템플릿의 자리 하나 `<div hx-get="{{ state.<자식>_embed_href }}" hx-trigger="load" hx-swap="outerHTML">`다(href는 부모 VM이 ③으로 자식 BC navigator의 `<화면>_embed_href()`에서 받음). 자식 view의 셸 없는 첫 렌더 `<화면>_embed_fragment`가 자기 VM을 스스로 부르므로 임베드는 배치만 |
 
 **금지**: 타 BC의 Repo·DataSource 직접 호출, 타 BC VM 호출, 타 BC SharedState 읽기·구독(root만 면제), 타 BC section·widget 템플릿 include·ui_extension 사용(부품 재사용은 design_system 승격 경유). 채널 *선택* 절차(어느 채널이 적정한가)는 architecture-ddd §2·architecture-state §7 소유.
@@ -268,7 +268,7 @@ select = ["E4", "E7", "E9", "F", "ANN"]
 
 **design_system — BC 어휘도 도메인 어휘도 모르는 시각 요소**:
 
-- `foundation/` 7토큰이 시각 값의 **단일 출처** — BC presentation·root scaffold·component의 템플릿·CSS에서 색 리터럴(`#…`·`rgb(…)`)·생 글자 스타일(`font-size`·`font-family` 등 리터럴)·연출 시간(`transition`·`animation`의 `ms`/`s` 리터럴 — 전환·애니메이션·press 피드백은 `--duration-*`/`--easing-*` 토큰) 금지. *비시각* duration(네트워크 timeout·디바운스 — `hx-trigger`의 `delay:` 등)·구조 명명 값(`transparent`·`currentColor`처럼 브랜드 시각값 아닌 것)은 제외 — 상세 경계는 architecture-ui §7.
+- `foundation/` 7토큰이 시각 값의 **단일 출처** — BC presentation·root scaffold·component의 템플릿·CSS에서 색 리터럴(`#…`·`rgb(…)`)·생 글자 스타일(`font-size`·`font-family` 등 리터럴)·연출 시간(`transition`·`animation`의 `ms`/`s` 리터럴 — 전환·애니메이션·press 피드백은 `--duration-*`/`--easing-*` 토큰) 금지. *비시각* duration(네트워크 timeout·디바운스 — `hx-trigger`의 `delay:` 등)·구조 명명 값(`transparent`·`currentColor`처럼 브랜드 시각값 아닌 것)은 제외 — 상세 경계는 architecture-ui §7. `font-size`는 아이콘 글리프에도 foundation 토큰으로 쓴다. 글리프 크기는 `app_spacing.css`의 `--spacing-icon-*`로 정의하고 `font-size: var(--spacing-icon-*)`로 인용한다. `width`·박스 `height` 등 비-typography 크기는 architecture-ui §8의 추출값 직접 인용 규칙을 따른다.
 - `component/`는 부품군 1차 — **부품군 폴더 = 파일 접미사 = CSS 클래스 접두의 군**(`button/` 안은 `*_button.html`+`*_button.css` → 클래스 `<수식>-button`). 축약(btn)·직속 파일·정크드로어 군(`widget/`·`etc/`) 금지. 분류 안 되는 부품이 생기면 새 부품군 폴더를 만든다.
 - 컴포넌트 표시 경로 규율(전역 JS 진입 함수 `show()` 금지 포함)은 architecture-ui §7 소유 — 규칙 본문은 그 스킬에만 둔다.
 
@@ -290,7 +290,7 @@ HaffHaff-App 전수 조사에서 발견된 변형들(web 표기로 옮김). dddj
 | `<화면>_view_state.py` 변형 | `<화면>_state.py` — `view`를 끼우지 않는다 |
 | state 폴더 파일의 `_state` 접미사 누락 | `_state.py` 필수 |
 | section·widget의 VM 호출 (커스텀 템플릿 태그로 우회 포함) | dumb 유지 — 상태가 필요하면 view+vm 쌍으로 승격 |
-| navigator가 presentation_layer에 | BC 루트 `<bc>_navigator.py` — URL name만 참조, View import 금지 |
+| navigator가 presentation_layer에 | BC 루트 `<bc>_navigator.py` — 일반 이동은 이름 기반, 기본 홈 주소 예외는 architecture-ui §6, View import 금지 |
 | BC 어휘 enum이 common에 | 그 BC의 `domain_layer/.../enum/` |
 | 전 화면 URL name 상수가 common에 | `<bc>_router.py`로 해체 — URL path·name의 단일 출처 |
 | BC 공유 상태가 common에 | 해당 BC의 `application_layer/shared_state/` |
@@ -334,9 +334,9 @@ python3 "${CLAUDE_PLUGIN_ROOT}"/scripts/backstop.py <대상 프로젝트 루트>
 
 (파이프라인에서는 Coordinator가 플러그인 루트를 해소해 호출한다 — 에이전트가 경로를 추측하지 않는다.)
 
-- 검사 패밀리 4종: **구조(ST)·import(IM)·명명(NM)·순환(CY)**(+ 테스트 존재 TG·토대 PJ·모델 형태 MD·출력 안전 PU·공식 SDK 등재 WV — §9 · 합계 84종은 러너 머리말이 단일 출처). 승인 유입도 발견이며 종료 코드 밖이고 보고 의무가 있다 — 남은 blocker는 반송(오탐으로 보이는 발견의 처분은 Coordinator의 «검사기 이의» — 에이전트가 스스로 면제하지 않는다).
-- **게이트 의미론**: 구조·명명은 **added**(새로 만든 파일·디렉터리)만, import는 touched 파일의 **added 줄**만, 골격 완비는 **신규 단위**(새 BC·애그리거트·개념 폴더)만, 순환은 전역+베이스라인 래칫(`.dddjango-web/backstop-baseline.json`). → 게이트는 **이번 작업이 들인 위반**만 잡는다 — 기존 코드의 위반(drift)은 면제가 아니라 빚이며 아래 빚 모드가 다룬다. **표준 트리 밖 옛 배치 파일 = 층 판정 불가 레거시** — 층 규칙 IM은 불발화하고, 층 무관 IM(상대 import·백엔드 import·HTTP 표면·DataSource 밖 API 주소 리터럴)은 그대로 걸고, 옛 배치 단위 안에 표준 표기로 둔 페이지·DataSource·라우터는 그 역할로 알아본다(§7 ⓒ). 반대 방향(표준 트리 안 파일이 옛 배치 파일을 참조)은 그 표준 파일의 층 규칙으로 판정한다. 승인 목록이 있으면 그 산출물 폴더를 `--design-build`로 전달한다 — 검사를 다 돌린 뒤 W·F1·L로 증명된 승인 유입만 종료 코드에서 빼며 CY·WV·ST12·PU1·PU2는 늘 blocker다. 승인 유입도 발견이므로 원문을 보고한다.
-- **슬라이스 끝 실행**(`--slice-end`): Phase 2에서 슬라이스가 끝날 때마다 커밋 전에 돈다(coder가 끝 래칫에서, Coordinator가 커밋 앞에서 — 실행문은 Coordinator가 준다). 뒤 슬라이스가 채울 짝·골격·미러·순환 검사(목록은 러너 요약 줄이 단일 출처)를 미루고 순환 기준선 파일을 만들지 않는다 — 미룬 검사는 G2 직전 실행(`--slice-end` 없이 84종 전부)이 본다. `--update-baseline`·`--only`·빚·치환 모드와 함께 쓰지 않는다. exit 0은 잔여 blocker 0이며 승인 유입도 발견이다 — 그 절의 원문·증명 M·부모 표지를 슬라이스 보고로 Coordinator에 전달해 G2 배너에 올린다. exit 2의 수정·반송은 남은 blocker 대상이고 exit 1은 미실행이다.
+- 검사 패밀리 4종: **구조(ST)·import(IM)·명명(NM)·순환(CY)**(+ 시험 존재·재현성·방법 TG·토대 PJ·모델 형태 MD·출력 안전 PU·공식 SDK 등재 WV — §9 · 합계 86종은 러너 머리말이 단일 출처). 승인 유입도 발견이며 종료 코드 밖이고 보고 의무가 있다 — 남은 blocker는 반송(오탐으로 보이는 발견의 처분은 Coordinator의 «검사기 이의» — 에이전트가 스스로 면제하지 않는다).
+- **게이트 의미론**: 구조·명명은 **added**(새로 만든 파일·디렉터리)만, import는 touched 파일의 **added 줄**만, 골격 완비는 **신규 단위**(새 BC·애그리거트·개념 폴더)만, TG2·TG3은 기준 commit→현재 작업 트리(staged·unstaged·커밋된 변경 포함)의 root 상대 diff에서 영구 시험·지원 파일을 수집하되, **새쪽 추가 줄과 검출 사슬의 실제 표현식·대입·I/O·실행·비교 위치가 겹칠 때만** 발화한다. TG2는 해당 입력 식·정의·대입·호출 함수 이름, TG3 비교는 비교 두 입력·두 screenshot 생성 출처·호출 함수 이름(==/!=는 연산자) 위치로 좁힌다. 호출·함수·클래스·블록 전체나 비교의 메시지·다른 키워드·JS 미사용 argv·같은 숫자 행끼리의 비교를 사슬 대응으로 쓰지 않는다. **안전한 재대입·출처 무효화 줄의 삭제로 같은 sink에 새 금지 사슬이 닿는 경우**는 지원 정적 범위의 기준판↔현재판 사슬 비교로 발화한다. 시험→시험 순수 rename은 새 줄 0이며 내용 변경은 old→new 새쪽 hunk를 쓴다(명시 rename 판별·D/A 동일 blob 이동 대응). copy·시험 밖에서 영구 시험으로 편입·기준점에 없는 비무시 미추적은 전 줄 새 줄이고, 기준점 파일이 미추적이 된 경우는 기준판과 비교한다. 삭제된 파일은 검사하지 않는다. 모듈 상수→함수 내부 등 지원 흐름의 원점·중간 대입 위치와 실행 JS의 Python 문자열 정의·중간 대입·실행 인자 및 디코드 문자→원본 좌표를 보존한다. 확정된 Node 명령은 `--` 옵션 종료·스크립트 entry point 앞의 eval/print 옵션만 실행 JS로 추출하고, 코드·옵션 표지·JS I/O에서 쓰지 않은 argv를 일반 Python 경로로 다시 판정하지 않는다. JS는 키워드 뒤 정규식의 가짜 호출을 제외하며 세미콜론 없는 ASI 대입의 screenshot 비교도 판정한다. `with` 항목은 표현식 검사 뒤 해당 바인딩을 갱신하고 다음 항목을 검사한다. 함수 인자·반환·타 파일 전달 등 지원 밖은 감수 대상이며 추적 실패를 무관함의 증명으로 쓰지 않는다. G0 명시 시험 경로는 `git_snapshot`과 `--diff-base`를 같은 commit OID로 해소해 비교한 기록에서 수집한다(관례·pytest 설정 밖도 포함). 개별 build-state의 읽기·JSON·snapshot·`test_command` 형상(null·비문자열)/shell quoting 실패는 그 기록만 건너뛰고 다른 기록·관례 시험 수집은 계속한다. 기준점·old/new 대응·위치 해석 실패는 범위 미확정·미실행을 고지하며 파일 전체 검사로 퇴화하지 않고 `ctx.files`도 넓히지 않는다. 환경 변수 단언의 의미는 TG2 밖으로 감수·G2 표준 실행이 본다. 순환은 전역+베이스라인 래칫(`.dddjango-web/backstop-baseline.json`). → 게이트는 **이번 작업이 들인 위반**만 잡는다 — 기존 코드의 위반(drift)은 면제가 아니라 빚이며 아래 빚 모드가 다룬다. **표준 트리 밖 옛 배치 파일 = 층 판정 불가 레거시** — 층 규칙 IM은 불발화하고, 층 무관 IM(상대 import·백엔드 import·HTTP 표면·DataSource 밖 API 주소 리터럴)은 그대로 걸고, 옛 배치 단위 안에 표준 표기로 둔 페이지·DataSource·라우터는 그 역할로 알아본다(§7 ⓒ). 반대 방향(표준 트리 안 파일이 옛 배치 파일을 참조)은 그 표준 파일의 층 규칙으로 판정한다. 승인 목록이 있으면 그 산출물 폴더를 `--design-build`로 전달한다 — 검사를 다 돌린 뒤 W·F1·L로 증명된 승인 유입만 종료 코드에서 빼며 CY·WV·ST12·PU1·PU2는 늘 blocker다. 승인 유입도 발견이므로 원문을 보고한다.
+- **슬라이스 끝 실행**(`--slice-end`): Phase 2에서 슬라이스가 끝날 때마다 커밋 전에 돈다(coder가 끝 래칫에서, Coordinator가 커밋 앞에서 — 실행문은 Coordinator가 준다). 86종 중 79종을 실행하며 TG2·TG3은 미루지 않는다. 뒤 슬라이스가 채울 짝·골격·미러·순환 검사(목록은 러너 요약 줄이 단일 출처)를 미루고 순환 기준선 파일을 만들지 않는다 — 미룬 검사는 G2 직전 실행(`--slice-end` 없이 86종 전부)이 본다. `--update-baseline`·`--only`·빚·치환 모드와 함께 쓰지 않는다. exit 0은 잔여 blocker 0이며 승인 유입도 발견이다 — 그 절의 원문·증명 M·부모 표지를 슬라이스 보고로 Coordinator에 전달해 G2 배너에 올린다. exit 2의 수정·반송은 남은 blocker 대상이고 exit 1은 미실행이다.
 - **빚 모드**(러너 모드 — 검사 ID가 아니다):
 
   ```

@@ -19,13 +19,15 @@ user-invocable: false
 
 - 3단은 크기가 아니라 VM 보유(view)/화면 전속(section)/재사용(widget)으로 가른다 — 판별은 위에서부터, 처음 해당하는 것이 답 (§1)
 - VM 호출은 view 하나뿐 — view는 자기 VM(+같은 BC SharedState)만 부른다, 임베드 view는 자기 VM을 스스로 부르므로 배치만(`hx-trigger="load"` 자리 하나 → 자식 `<화면>_embed_fragment`) (§2)
+- **private 필드 전용 타입 Protocol만 동거 허용**: 베이스가 import 해석으로 확정된 `typing.Protocol` 또는 `typing_extensions.Protocol` 하나(두 모듈의 import 별칭 포함)이고 class keyword(`metaclass=` 등)·데코레이터가 없어야 한다. 몸통은 한 개 이상의 값 없는 `AnnAssign`만이며 target은 단순 Name, annotation은 호출·대입식 등 실행식 없는 타입 표기다. `pass`·`...`·docstring·메서드·대입·초깃값·attribute target은 예외 밖이다. 선언 전 재바인딩·조건부 import로 불확정하거나 AST 해석에 실패하면 면제하지 않는다. 소비는 annotation/cast용으로 한정한다. (§2)
 - section·widget은 VM·SharedState 접근 금지 — include 인자·href만. section은 화면 State 가능(전속), widget은 화면 State 금지 (§3)
 - 테스트가 집는 슬롯·tile은 안정 식별 속성·공개 표면으로 노출 — 구별 슬롯에 리터럴 `data-testid` 부착(dddjango-web-discipline-test §3.3/§3.4 FORM과 짝) (§3)
 - 자기 상태·로직이 필요하면 버튼 하나여도 view 삼총사로 — section에 VM 호출이 필요해지는 것은 승격 신호이지 예외가 아니다 (§1·§4)
 - 성장하면 단을 옮긴다: 두 번째 화면→widget으로, 상태 발생→view+vm으로, BC 어휘 탈피→design_system으로 (§4)
 - 도메인 enum·VO→UI 매핑(CSS 클래스·아이콘 이름·라벨)은 ui_extension이 유일한 자리 — 템플릿 필터만, 템플릿 조각·상태 금지 (§5)
-- URL path·name 리터럴은 `<bc>_router.py` 안에서만 — navigator는 이름만 참조(`reverse`), View import 금지, 템플릿은 State의 href (§6)
+- URL path·name 리터럴은 `<bc>_router.py` 안에서만 — navigator의 일반 이동은 이름 기반(`reverse`), 기본 홈 목적지 한 건만 소유 router의 단일 상수를 소유 navigator가 가공 없이 반환(§6·폴백 금지), View import 금지, 템플릿은 State의 href (§6)
 - 시각 값·정적 에셋 경로는 foundation 토큰만 — 색·생 글자 스타일·매직 연출 시간·raw 이미지 경로 리터럴 금지, CSS의 정적 래스터 경로는 `--asset-*` (§7)
+- `font-size`는 아이콘 글리프에도 foundation 토큰으로 쓴다. 글리프 크기는 `app_spacing.css`의 `--spacing-icon-*`로 정의하고 `font-size: var(--spacing-icon-*)`로 인용한다. `width`·박스 `height` 등 비-typography 크기는 dddjango-web-architecture-ui §8의 추출값 직접 인용 규칙을 따른다. (§7·§8)
 - design_system 컴포넌트에 전역 JS 진입 함수로 스스로를 띄우는 show() 경로 금지 — 표시는 view 템플릿이 State로 include한다 (§7)
 - BC 어휘를 벗은 부품만 design_system 승격 — 부품군 폴더로, 정크드로어 금지 (§4·§7)
 

@@ -38,7 +38,7 @@ dddjango-web/             ← 자매 플러그인 (웹 표현계층 빌더 — /
 ├── skills/*/                  지식 스킬 12 — architecture-ddd·ui·state·data · discipline-cleancode·houserules·test
 │                              · implementation-test·python·django·htmx·javascript
 ├── assets/sdk_boundary.js     외부 JS 경계 검사 보조(공식 SDK 승인 절차)
-└── scripts/backstop.py        결정적 백스톱 — 검사 84종(ST·IM·NM·CY·TG·PJ·MD·PU·WV)
+└── scripts/backstop.py        결정적 백스톱 — 검사 86종(ST·IM·NM·CY·TG·PJ·MD·PU·WV)
                                · 빚 모드 --debt-scan [--refactor] · --debt-residual · 치환 확인 --subst-check
                                + refactor_audit.py(리팩토링 모드 판정) · sdk_vendor.py(공식 SDK 등재)
                                + 추출 도구 4(extract_contract·extract_design·extract_dc·fetch_images)

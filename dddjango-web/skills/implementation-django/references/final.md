@@ -65,12 +65,12 @@ urlpatterns: list[URLPattern] = [
 
 - 경로 인자는 변환기(`<str:…>`·`<int:…>`·`<slug:…>`)로 받고 view 함수의 키워드 인자로 들어온다. 쿼리는 view가 `request.GET`에서 읽는다(입력 읽기는 view 소유 — architecture-state §2). 라우트당 view 함수 하나 — 페이지는 `<화면>_view`, 조각은 `<화면>_<조각>_fragment`(discipline-houserules §4). 고정 경로(`channels/list/`)는 같은 자리의 변환기 경로(`channels/<str:channel_id>/`)보다 **앞에** 둔다 — Django는 위에서부터 처음 맞는 path를 쓴다.
 - **임베드 라우트**: 다른 화면(같은 BC든 타 BC든)이 이 화면을 임베드할 수 있으면 셸 없는 첫 렌더 함수 `<화면>_embed_fragment`와 그 라우트를 둔다 — 이 화면의 VM `build()`로 자기 본문 section을 렌더한다(부모는 자식 VM을 부르지 않는다 · 자리 표기는 implementation-htmx §7). 주소는 navigator의 `<화면>_embed_href()`다.
-- **이동 의미론**: 링크 이동(`<a href>` — 브라우저 기록에 쌓기)·redirect 응답(요청 결과를 다른 주소로 교체 — POST 뒤 PRG)·HTMX 부분 교체(기록 불변 — implementation-htmx §7) 셋이다. 이름 기반이 dddjango-web 채널이다 — 주소는 언제나 navigator가 `reverse(<Bc>Routes.…)`로 만든 href다. `reverse`·`redirect`에 문자열 리터럴을 넘기지 않는다(백스톱 NM13). view의 redirect는 `redirect(state.next_href)` 하나다 — 조각(HTMX) 요청의 3xx 응답은 `RootRequestHandler`가 200 + `HX-Redirect: <Location>`으로 바꿔 htmx가 전체 이동하게 한다(아래 게이트).
-- **요청 없는 호출**: 이동 주소 계산 전부가 `reverse()`이고 `reverse()`는 urlconf만 알면 되므로 **`request` 없이 같은 결과를 낸다** — navigator 정적 헬퍼를 VM에서 부르는 것(architecture-state §2·architecture-ui §6)의 공식 근거.
+- **이동 의미론**: 링크 이동(`<a href>` — 브라우저 기록에 쌓기)·redirect 응답(요청 결과를 다른 주소로 교체 — POST 뒤 PRG)·HTMX 부분 교체(기록 불변 — implementation-htmx §7) 셋이다. 일반 이동은 이름 기반이며 navigator가 `reverse(<Bc>Routes.…)`로 href를 만든다. 기본 홈 목적지 한 건만 architecture-ui §6의 소유 router 상수를 소유 navigator가 가공 없이 반환한다(타 BC는 그 navigator 호출 · 폴백 금지). `reverse`·`redirect`에 문자열 리터럴을 넘기지 않는다(백스톱 NM13). view의 redirect는 `redirect(state.next_href)` 하나다 — 조각(HTMX) 요청의 3xx 응답은 `RootRequestHandler`가 200 + `HX-Redirect: <Location>`으로 바꿔 htmx가 전체 이동하게 한다(아래 게이트).
+- **요청 없는 호출**: 일반 이동 주소는 `reverse()`가 활성 URLconf의 이름 등록으로 계산하고, 기본 홈 주소 한 건은 이름 역참조 없이 반환하므로 **`request` 없이 같은 결과를 낸다** — navigator 정적 헬퍼를 VM에서 부르는 것(architecture-state §2·architecture-ui §6)의 공식 근거.
 - **navigator — router는 헬퍼 함수 안에서 import한다**:
 
 ```python
-# application/channel/channel_navigator.py — URL name만 참조, View import 금지
+# application/channel/channel_navigator.py — 일반 이동은 이름 기반, View import 금지
 from django.urls import reverse
 
 
@@ -92,6 +92,23 @@ class ChannelNavigator:
         from web.application.channel.channel_router import ChannelRoutes
 
         return reverse(ChannelRoutes.SUMMARY_EMBED)
+```
+
+기본 홈 목적지 소유 BC를 `landing`으로 명세한 경우의 예다(소유 BC 이름을 규약으로 고정하지 않는다). 활성 URLconf에 home 이름이 없어도 아래 반환은 성공하며, 일반 named href의 누락은 `NoReverseMatch`로 남는다 — 예외 주소로 폴백하지 않는다.
+
+```python
+# application/landing/landing_router.py — 기본 홈 주소의 단일 출처
+DEFAULT_HOME_URL: str = "/"
+
+# application/landing/landing_navigator.py
+class LandingNavigator:
+    @staticmethod
+    def default_home_href() -> str:
+        from web.application.landing.landing_router import DEFAULT_HOME_URL
+
+        return DEFAULT_HOME_URL  # 가공 없이 반환
+
+# 다른 BC는 router가 아니라 이 navigator를 호출한다.
 ```
 
 `<bc>_router.py`는 path 바인딩 때문에 view를 import하고, view→VM→navigator로 이어진다. navigator가 모듈 머리에서 router를 import하면 첫 import에서 router가 아직 `ChannelRoutes`를 정의하기 전이라 `ImportError`(부분 초기화 모듈)가 난다 — 그래서 **router import는 navigator 헬퍼 함수 안에 둔다**(호출 시점에는 urlconf가 다 올라와 있다). 이 자리가 dddjango-web의 정당한 함수 안 import다 — 국소 `ruff.toml`(discipline-houserules §3)에 `PLC0415`(import-outside-toplevel)를 켜지 않는다. `<Bc>Routes`를 별도 파일로 빼서 사슬을 끊지 않는다(architecture-ui §6).
@@ -423,7 +440,7 @@ def channel_detail_view(request: HttpRequest, channel_id: str) -> HttpResponse:
 ```
 
 - `--typography-*`는 `font` 줄임 묶음 값이다 — 쓰는 쪽은 `font: var(--typography-title)`이고, 같은 규칙에서 그 뒤에 `font-*`를 다시 선언하지 않는다(architecture-ui §8).
-- **리터럴은 foundation 안에서만**: 색(`#…`·`rgb()`·`hsl()`)·글자(`font`·`font-size`·`font-family`·`font-weight`·`line-height`) 리터럴은 `design_system/foundation/*.css` 밖에서 쓰지 않는다 — 조각 CSS·부품 CSS·템플릿 `style`·`<style>` 전부(백스톱 NM10). 연출 시간도 `--duration-*`·`--easing-*` 토큰이다(architecture-ui §7). 한 곳에서만 쓰는 비-typography 크기(`width`·`height`·아이콘 크기)는 추출값 숫자 그대로 허용한다(architecture-ui §8). 신규 색은 architect가 토큰을 추가한다.
+- **리터럴은 foundation 안에서만**: 색(`#…`·`rgb()`·`hsl()`)·글자(`font`·`font-size`·`font-family`·`font-weight`·`line-height`) 리터럴은 `design_system/foundation/*.css` 밖에서 쓰지 않는다 — 조각 CSS·부품 CSS·템플릿 `style`·`<style>` 전부(백스톱 NM10). 연출 시간도 `--duration-*`·`--easing-*` 토큰이다(architecture-ui §7). `font-size`는 아이콘 글리프에도 foundation 토큰으로 쓴다. 글리프 크기는 `app_spacing.css`의 `--spacing-icon-*`로 정의하고 `font-size: var(--spacing-icon-*)`로 인용한다. `width`·박스 `height` 등 비-typography 크기는 architecture-ui §8의 추출값 직접 인용 규칙을 따른다. 신규 색은 architect가 토큰을 추가한다.
 
 **theme — 문서 전역 기본값** — `design_system/theme/app_theme.css`가 foundation 토큰으로 브라우저 기본 여백 초기화·웹폰트 `@font-face`·`body` 글꼴·색을 조립한다(architecture-ui §7). root_view가 foundation 7파일 다음에 한 번 링크한다(§2):
 

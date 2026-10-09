@@ -93,7 +93,7 @@ verify:
 
 verify-web:
 	@set -euo pipefail; \
-	echo "[verify-web] dddjango-web 픽스처(백스톱 검사 84종 · 빚 · 치환 · SDK · 리팩토링 판정 · 추출 도구 — run_fixtures.sh 가 이어 부른다)"; \
+	echo "[verify-web] dddjango-web 픽스처(백스톱 검사 86종 · 빚 · 치환 · SDK · 리팩토링 판정 · 추출 도구 — run_fixtures.sh 가 이어 부른다)"; \
 	bash dddjango-web/scripts/test/run_fixtures.sh; \
 	echo "[verify-web] refactor_audit self-test(Claude·Codex 두 자리 — 플랫폼 구조 판별) · 상시 답 블록 core 대조"; \
 	python3 dddjango-web/scripts/refactor_audit.py --self-test; \
@@ -103,7 +103,7 @@ verify-web:
 	m='리팩토링 모드(입구 /dddjango-web:refactor) · 대상: '; grep -qF "$$m" dddjango-web/commands/refactor.md && grep -qF "$$m" dddjango-web/commands/dddjango-web.md || { echo "ERROR: Claude 리팩토링 입구 표지 불일치"; exit 1; }; \
 	m='리팩토링 모드(입구 $$dddjango-web-refactor) · 대상: '; grep -qF "$$m" codex-dddjango-web/skills/dddjango-web-refactor/SKILL.md && grep -qF "$$m" codex-dddjango-web/skills/dddjango-web/SKILL.md && test -f codex-dddjango-web/skills/dddjango-web-refactor/agents/openai.yaml || { echo "ERROR: Codex 리팩토링 입구 표지 불일치 또는 agents/openai.yaml 없음"; exit 1; }; \
 	echo "[verify-web] 문단 Claude·Codex 대조(플랫폼 토큰 치환 뒤)"; \
-	for p in '**discipline 감사 = touched 파일 한정 경량 1회**' '**적용 범위 규범**:' '**Phase 1~2**' '**상시 답**' '**슬라이스 0 호출**' '**끝 green 뒤 재확인**' '그 커밋을 만든 파견 슬라이스의' '**SDK 채택 확인(G1 배너 직전' '**슬라이스 끝 구조 검사**' '**검사기 이의**'; do c=$$(grep -F "$$p" dddjango-web/commands/dddjango-web.md | sed -e 's/[$$]{CLAUDE_PLUGIN_ROOT}/$${SKILL_DIR}/g' -e 's/Bash로/네이티브 셸로/g' -e 's/dddjango-web:/dddjango-web-/g'); [ -n "$$c" ] && cmp -s <(printf '%s\n' "$$c") <(grep -F "$$p" codex-dddjango-web/skills/dddjango-web/SKILL.md) || { echo "ERROR: $$p 문단 Claude·Codex 불일치(또는 문단 없음)"; exit 1; }; done; \
+	for p in '**discipline 감사 = touched 파일 한정 경량 1회**' '**적용 범위 규범**:' '**Phase 1~2**' '**상시 답**' '**슬라이스 0 호출**' '**끝 green 뒤 재확인**' '그 커밋을 만든 파견 슬라이스의' '**SDK 채택 확인(G1 배너 직전' '**슬라이스 끝 구조 검사**' '**검사기 이의**' '**시험 방법 채택 확인**' '**영구 시험 표준 실행**'; do c=$$(grep -F "$$p" dddjango-web/commands/dddjango-web.md | sed -e 's/[$$]{CLAUDE_PLUGIN_ROOT}/$${SKILL_DIR}/g' -e 's/Bash로/네이티브 셸로/g' -e 's/dddjango-web:/dddjango-web-/g'); [ -n "$$c" ] && cmp -s <(printf '%s\n' "$$c") <(grep -F "$$p" codex-dddjango-web/skills/dddjango-web/SKILL.md) || { echo "ERROR: $$p 문단 Claude·Codex 불일치(또는 문단 없음)"; exit 1; }; done; \
 	echo "[verify-web] codex 미러 byte 대조(scripts — test/ 픽스처는 Codex 에 싣지 않는다 · assets)"; \
 	diff -rq --exclude=__pycache__ --exclude=test dddjango-web/scripts codex-dddjango-web/skills/dddjango-web/scripts; \
 	diff -rq dddjango-web/assets codex-dddjango-web/skills/dddjango-web/assets; \
