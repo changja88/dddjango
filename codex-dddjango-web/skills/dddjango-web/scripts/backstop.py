@@ -11,14 +11,16 @@
 #   python3 backstop.py <대상 프로젝트 루트> --subst-check <기준 커밋> <대상 커밋>
 #                       [--names <design-spec.md>] [--except <web/ 밖 비테스트 경로>]… [--build <산출물 폴더>]
 #
-# 종료코드: 0=clean / 1=사용·내부 오류·판정 불가(미실행 — 통과가 아니다) / 2=blocker(발견 일괄 출력 — fail-fast 금지).
+# 종료코드: 0=잔여 blocker 0 / 1=사용·내부 오류·판정 불가(미실행 — 통과가 아니다) / 2=잔여 blocker 있음(발견 일괄 출력).
 # 게이트: 구조·명명=added, import=touched의 added 줄, 골격=신규 단위, 순환=전역+베이스라인
 # (.dddjango-web/backstop-baseline.json). 참조 = Python import(함수 안 포함) + 템플릿 extends·include·static
 # + CSS @import·url() — 조각 CSS(static/application/·static/root/)는 소유자의 presentation 자리로 센다.
-# 스크립트는 파이프라인 상태(build-state.json)를 모른다 — 컨텍스트는 전부 인자(--design-build · --build 가 주는 폴더만 읽는다).
+# 게이트 출력 직전 승인 유입(W·F1·L)을 분할한다(src/inflow.py) — 종료 코드 밖 발견도 G2 보고 의무다.
+# 산출물은 --design-build 또는 git_snapshot 일치 자동 탐색으로 읽는다(승인 목록은 발주자 소유 · 상태를 쓰지 않는다).
 #
 # 슬라이스 끝 실행(--slice-end — Phase 2 에서 슬라이스 커밋 앞): 뒤 슬라이스가 채울 검사(SLICE_END_DEFERRED)를 미룬다 —
 #   그 발견을 내지 않고 CY 는 돌지도 않는다(순환 기준선 파일을 만들지 않는다). 미룬 검사는 G2 직전 실행(인자 없음)이 본다.
+#   승인 유입 원문·증명 병합은 슬라이스 보고에 보존해 G2 배너로 전달한다(0이어도 발견이 없다는 뜻은 아니다).
 #   --update-baseline · --only · 러너 모드와 함께 쓰지 않는다.
 # 러너 모드(검사 ID 가 아니다 — v1.3.1 그대로):
 #   빚 모드(src/debt.py — Phase 0 step 4′ · G2): --debt-scan 은 web/ 전체의 기존 위반(빚)을 키 (검사, 경로)로
@@ -62,6 +64,7 @@ from src.check_tests import run_tests  # noqa: E402
 from src.check_vendor import VENDOR_CHECK_IDS, VendorUndecidable, run_vendor  # noqa: E402
 from src.debt import cli_residual, cli_scan  # noqa: E402
 from src.subst import cli_subst_check  # noqa: E402
+from src.inflow import split_inflow  # noqa: E402
 
 FAMILIES: List[str] = list(CORE_FAMILIES) + ['wv']
 CHECK_IDS: List[str] = list(CORE_CHECK_IDS) + list(VENDOR_CHECK_IDS)
@@ -232,20 +235,37 @@ def main(argv: List[str]) -> int:
     shown: List[Finding] = sorted((f for f in findings if id_on(f.check_id)
                                   and (not slice_end or f.check_id not in SLICE_END_DEFERRED)),
                                   key=lambda f: (f.check_id, f.path, f.line or 0))
+    inflow = split_inflow(ctx, shown, design_build)
+    shown = inflow.remaining
+    ctx.notices.extend(inflow.notices)
     for n in ctx.notices:
         print(n)
     if ctx.notices:
         print('')
     for f in shown:
         print(f)
+        if id(f) in inflow.reasons:
+            print('  ↳ 이 레인 몫으로 남김: %s' % inflow.reasons[id(f)])
         print('')
+    if inflow.inflow:
+        print('== 승인 유입(발주자 승인 병합 경유 · 증명 — 종료 코드 제외 · G2 배너에 올린다) %d건 ==' % len(inflow.inflow))
+        for sha, parent1, parent2, subject, notes in inflow.merges:
+            group = [f for f, merge in inflow.inflow if merge == sha]
+            print('  [M %s] %s · ^1 %s · ^2 %s · 유입 %d건' % (sha[:12], subject, parent1[:12], parent2[:12], len(group)))
+            for note in notes:
+                print('    ↳ %s' % note)
+            for f in group:
+                print(f)
+                print('    ↳ 유입: %s(L 증명) · 파일 그대로' % sha[:12])
+                print('')
     mode: str = ('gated(diff-base %s)' % diff_base[:8]) if ctx.gated and diff_base else ('all' if all_mode else '전역 퇴화')
+    suffix: str = ' · 승인 유입 %d건(종료 코드 제외)' % len(inflow.inflow) if inflow.inflow else ''
     if slice_end:
         print('[backstop] 검사 %d종 중 %d종(슬라이스 끝 — 미룸 %d: %s · %s) — blocker %d건'
               % (TOTAL_CHECKS, TOTAL_CHECKS - len(SLICE_END_DEFERRED), len(SLICE_END_DEFERRED),
-                 ' · '.join(SLICE_END_DEFERRED), mode, len(shown)))
+                 ' · '.join(SLICE_END_DEFERRED), mode, len(shown)) + suffix)
     else:
-        print('[backstop] 검사 %d종(%s) — blocker %d건' % (TOTAL_CHECKS, mode, len(shown)))
+        print('[backstop] 검사 %d종(%s) — blocker %d건' % (TOTAL_CHECKS, mode, len(shown)) + suffix)
     return 0 if not shown else 2
 
 

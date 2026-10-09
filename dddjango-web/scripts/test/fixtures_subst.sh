@@ -913,5 +913,353 @@ commit_all "$P" move-off-mirror >/dev/null
 OUT=$(run_backstop "$P" --subst-check "$B20" HEAD); E=$?
 assert "S20c 대조: SUT 미러 밖으로 옮긴 테스트 = red(치환이 아닌 변경)" 2 "치환이 아닌 변경" - "$E" "$OUT"
 
+# ---------- I (2.2.3): 승인 병합 유입 — 실제 main/lane · 절별 ID/경로/문장
+# 도우미는 이 묶음에만 둔다. HEAD 러너는 별도 임시 사본으로 비교한다.
+I_OUT=$(PYTHONDONTWRITEBYTECODE=1 python3 -B - "$SCRIPTS" "$T" <<'PY'
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import time
+
+scripts, temp = map(Path, sys.argv[1:])
+runner = scripts / 'backstop.py'
+env = dict(os.environ, GIT_OPTIONAL_LOCKS='0', PYTHONDONTWRITEBYTECODE='1')
+old = temp / 'i-old'
+old.mkdir()
+archive = subprocess.run(['git', '-C', str(scripts.parents[1]), 'archive', 'HEAD', 'dddjango-web/scripts'],
+                         capture_output=True, check=True, env=env)
+subprocess.run(['tar', '-x', '-C', str(old)], input=archive.stdout, check=True)
+old_runner = old / 'dddjango-web/scripts/backstop.py'
+old_runner.write_bytes(subprocess.check_output(
+    ['git', '-C', str(scripts.parents[1]), 'show', 'HEAD:dddjango-web/scripts/backstop.py'], env=env))
+BAD = 'from application.models import Item\n'
+PAGE = '{% extends "design_system/component/bar/app_bar.html" %}\n'
+LEGACY = 'web/old/old_view.py'
+VIEW = 'web/application/order/presentation_layer/view/order_view.html'
+MSG25 = 'web에서 백엔드 내부 `application.models` import — web 과 백엔드의 계약은 API(URL+JSON)뿐'
+MSG26 = '`{% extends %}` 대상 `design_system/component/bar/app_bar.html` — 페이지(그 밖) 템플릿의 상속 대상은 root_view.html 하나'
+
+
+def git(p, *args, check=True):
+    r = subprocess.run(['git', '-C', str(p), '-c', 'user.name=t', '-c', 'user.email=t@t', *args],
+                       capture_output=True, text=True, env=env)
+    if check and r.returncode:
+        raise RuntimeError(r.stderr)
+    return r.stdout.strip()
+
+
+def write(p, name, text):
+    f = p / name
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(text, encoding='utf-8')
+
+
+def commit(p, msg):
+    git(p, 'add', '-A')
+    git(p, 'commit', '-qm', msg)
+    return git(p, 'rev-parse', 'HEAD')
+
+
+def project(name, prefix=''):
+    p = temp / ('i-' + name)
+    p.mkdir()
+    git(p, 'init', '-q', '-b', 'main')
+    root = p / prefix
+    for name in ('__init__.py', 'apps.py', 'urls.py'):
+        write(root, 'web/' + name, '')
+    write(root, LEGACY, 'pass\n')
+    write(root, VIEW.replace('order_view.html', 'order_base_view.html'), '{% extends "root/scaffold/view/root_view.html" %}\n')
+    write(root, 'web/root/scaffold/view/root_view.html', '<html></html>\n')
+    write(root, 'web/design_system/component/bar/app_bar.html', '<div></div>\n')
+    write(root, '.dddjango-web/backstop-baseline.json', '{"cycle_pairs": []}')
+    base = commit(p, 'base')
+    git(p, 'checkout', '-qb', 'lane')
+    write(root, 'lane.txt', 'lane\n'); commit(p, 'lane')
+    folder = root / '.dddjango-web/build'
+    write(folder, 'build-state.json', json.dumps({'git_snapshot': base, 'slices': []}))
+    return p, root, base, folder
+
+
+def incoming(p, root, changes, approve=True, folder=None, resolve=None):
+    git(p, 'checkout', '-q', 'main')
+    for path, text in changes.items():
+        write(root, path, text)
+    commit(p, 'main-change')
+    git(p, 'checkout', '-q', 'lane')
+    git(p, 'merge', '--no-ff', '--no-commit', 'main', check=False)
+    if resolve:
+        resolve()
+    sha = commit(p, 'receive-main')
+    if approve:
+        with (folder / 'approved-merges.txt').open('a') as f:
+            f.write(sha + ' main\n')
+    return sha
+
+
+def run(root, base=None, only='im', extra=(), script=runner, fault=None):
+    args = [str(root)]
+    if base:
+        args += ['--diff-base', base]
+    if only:
+        args += ['--only', only]
+    args += list(extra)
+    if fault:
+        # 실제 러너는 유지하고 실패 경계만 주입한다.
+        code = "import runpy,sys,tempfile,subprocess; sys.argv=sys.argv[1:]; "
+        if fault == 'temp':
+            code += "tempfile.mkdtemp=lambda *a,**k: (_ for _ in ()).throw(PermissionError('fixture TMP')); "
+        elif fault == 'parent':
+            code += "original=subprocess.Popen; subprocess.Popen=lambda a,*x,**k: (_ for _ in ()).throw(OSError('fixture parent')) if '-B' in a else original(a,*x,**k); "
+        elif fault == 'output':
+            code += "original=subprocess.run; subprocess.run=lambda a,*x,**k: subprocess.CompletedProcess(a,2,b'not a Finding\\n',b'') if '-B' in a else original(a,*x,**k); "
+        elif fault == 'status':
+            code += "original=subprocess.run; subprocess.run=lambda a,*x,**k: subprocess.CompletedProcess(a,128,b'',b'fixture git failure') if 'status' in a and 'env' in k else original(a,*x,**k); "
+        else:
+            code += "original=subprocess.run; subprocess.run=lambda a,*x,**k: subprocess.CompletedProcess(a,128,b'',b'fixture chain failure') if '--reverse' in a else original(a,*x,**k); "
+        code += "runpy.run_path(sys.argv[0],run_name='__main__')"
+        cmd = [sys.executable, '-B', '-c', code, str(script), *args]
+    else:
+        cmd = [sys.executable, '-B', str(script), *args]
+    r = subprocess.run(cmd, capture_output=True, env=env)
+    return r.returncode, r.stdout.decode() + r.stderr.decode()
+
+
+def result(name, ok, detail=''):
+    print(('PASS ' if ok else 'FAIL ') + name)
+    if not ok:
+        print('    ' + detail.replace('\n', '\n    ')[:1600])
+
+
+def sections(out):
+    parts = out.split('== 승인 유입(', 1)
+    return re.split(r'^== ', parts[0], maxsplit=1, flags=re.M)[0], parts[1].split('[backstop]', 1)[0] if len(parts) == 2 else ''
+
+
+def finding(name, got, cid, path, message, inflow=False, reason=None, exitcode=None, merge=None):
+    e, out = got
+    blocker, approved = sections(out)
+    want, other = (approved, blocker) if inflow else (blocker, approved)
+    pat = r'\[' + re.escape(cid) + r'\] BLOCKER — ' + re.escape(path) + r'(?::\d+)?\n  위반: ' + re.escape(message)
+    ok = bool(re.search(pat, want)) and not re.search(pat, other)
+    ok = ok and e == (exitcode if exitcode is not None else (0 if inflow else 2))
+    if inflow:
+        ok = ok and '(L 증명) · 파일 그대로' in approved and ' · ^1 ' in approved and ' · ^2 ' in approved
+    if merge:
+        proof = pat + r' \([^\n]+\)\n  교정: [^\n]+\n    ↳ 유입: ' + re.escape(merge[:12]) + r'\(L 증명\) · 파일 그대로\n'
+        ok = ok and bool(re.search(proof, want))
+    if reason:
+        ok = ok and '↳ 이 레인 몫으로 남김: ' + reason in blocker
+    result(name, ok, f'exit={e}\n{out}')
+
+
+def same(name, root, base=None, only='im', extra=(), fault=None):
+    now = run(root, base, only, extra, fault=fault)
+    before = run(root, base, only, extra, old_runner, fault=fault)
+    result(name, now == before, f'현재={now}\nHEAD={before}')
+
+
+p, root, base, folder = project('good')
+m = incoming(p, root, {LEGACY: BAD, VIEW: PAGE}, folder=folder)
+started = time.monotonic(); got = run(root, base)
+print('I 시간: %.3f초(자동 탐색 가름 1회)' % (time.monotonic() - started))
+finding('I1a 자동 IM25 승인 유입', got, 'IM25', LEGACY, MSG25, True)
+finding('I1b 자동 IM26 승인 유입', got, 'IM26', VIEW, MSG26, True)
+write(root, '.dddjango-web/other/build-state.json', json.dumps({'git_snapshot': base}))
+got = run(root, base, extra=['--design-build', str(folder)])
+finding('I2a 명시 IM25 승인 유입', got, 'IM25', LEGACY, MSG25, True)
+finding('I2b 명시 IM26 승인 유입', got, 'IM26', VIEW, MSG26, True)
+shutil.rmtree(root / '.dddjango-web/other')
+got = run(root, base, only=None, extra=['--slice-end'])
+finding('I3 슬라이스 끝 IM26 승인 유입', got, 'IM26', VIEW, MSG26, True)
+finding('I4 --only im26', run(root, base, 'im26'), 'IM26', VIEW, MSG26, True)
+finding('I5 검사 ID 선택 im25', run(root, base, 'im25'), 'IM25', LEGACY, MSG25, True)
+# 기존 build/status가 끝난 뒤 stat를 낡게 만들어 새 W의 색인 쓰기만 잰다.
+sys.path.insert(0, str(scripts))
+from src.common import BackstopContext, Finding
+ctx = BackstopContext.build(root, base, False)
+index = p / '.git/index'; os.utime(root / LEGACY, None)
+before = (hashlib.sha256(index.read_bytes()).hexdigest(), index.stat().st_mtime_ns)
+try:
+    from src.inflow import split_inflow
+    split_inflow(ctx, [Finding('IM25', 'old/old_view.py', 1, MSG25, '제1 규약 §3.7', '')], None)
+    ok = before == (hashlib.sha256(index.read_bytes()).hexdigest(), index.stat().st_mtime_ns)
+except ImportError:
+    ok = False
+result('I6 새 W 원 색인 hash·mtime 무쓰기', ok)
+write(root, 'web/old/lane_view.py', BAD); commit(p, 'own')
+finding('I7 레인 자기 파일', run(root, base), 'IM25', 'web/old/lane_view.py', MSG25, reason='비머지 커밋 경유')
+write(root, LEGACY, '# lane\n' + BAD)
+finding('I8 미커밋 유입 파일 수정', run(root, base), 'IM25', LEGACY, MSG25, reason='작업 트리 수정 중')
+commit(p, 'lane-edit')
+finding('I9 커밋한 유입 파일 수정', run(root, base), 'IM25', LEGACY, MSG25, reason='레인 커밋 수정')
+p, root, base, folder = project('discard')
+incoming(p, root, {LEGACY: BAD}, folder=folder, resolve=lambda: (root / LEGACY).unlink())
+write(root, LEGACY, BAD); commit(p, 'restore')
+finding('I10 병합에서 버린 판 재작성', run(root, base), 'IM25', LEGACY, MSG25, reason='레인 커밋 수정')
+p, root, base, folder = project('same')
+write(root, LEGACY, BAD); commit(p, 'lane-first')
+incoming(p, root, {LEGACY: BAD}, folder=folder)
+finding('I11 레인이 먼저 같은 파일 작성', run(root, base), 'IM25', LEGACY, MSG25, reason='비머지 커밋 경유')
+p, root, base, folder = project('both')
+write(root, LEGACY, BAD); commit(p, 'lane-first')
+incoming(p, root, {LEGACY: '\n' + BAD}, folder=folder, resolve=lambda: write(root, LEGACY, '\n' + BAD))
+finding('I12 M1에도 있던 지적·줄번호 정규화', run(root, base), 'IM25', LEGACY, MSG25, reason='유입 증명 실패(이중 원인)')
+p, root, base, folder = project('unapproved')
+m = incoming(p, root, {LEGACY: BAD}, approve=False)
+got = run(root, base)
+finding('I13a 목록 없음·병합 있음', got, 'IM25', LEGACY, MSG25)
+result('I13b 목록 밖 병합 알림', '[info] 승인 목록 밖 병합 ' + m[:9] in got[1])
+write(folder, 'approved-merges.txt', '')
+finding('I14 빈 목록·미승인 머지', run(root, base), 'IM25', LEGACY, MSG25, reason='미승인 머지 경유')
+write(folder, 'approved-merges.txt', 'bad-input\n'); got = run(root, base)
+finding('I15a 목록 형식 오류 보존', got, 'IM25', LEGACY, MSG25)
+result('I15b 판정 불가 알림', '[info] 승인 유입 판정 불가 — ' in got[1])
+shutil.rmtree(folder); got = run(root, base)
+finding('I16a 산출물 폴더 없음', got, 'IM25', LEGACY, MSG25)
+result('I16b 폴더 지정 안내', '산출물 폴더를 찾지 못함: --design-build 로 준다' in got[1])
+p, root, base, folder = project('off-chain')
+git(p, 'checkout', '-q', 'main'); write(root, LEGACY, BAD); upstream = commit(p, 'main')
+git(p, 'checkout', '-q', 'lane'); git(p, 'merge', '--no-ff', '-qm', 'merge', 'main')
+m = git(p, 'rev-parse', 'HEAD'); write(folder, 'approved-merges.txt', m + '\n')
+write(root, LEGACY, BAD.replace('Item', 'Other')); got = run(root, upstream)
+finding('I17a 기준이 첫 부모 밖', got, 'IM25', LEGACY, MSG25)
+result('I17b 사슬 오류 알림', '첫 부모 사슬 밖' in got[1])
+p, root, base, folder = project('merging')
+git(p, 'checkout', '-q', 'main'); write(root, LEGACY, BAD); commit(p, 'main')
+git(p, 'checkout', '-q', 'lane'); git(p, 'merge', '--no-ff', '--no-commit', 'main')
+got = run(root, base)
+finding('I18a 병합 중 보존', got, 'IM25', LEGACY, MSG25)
+result('I18b MERGE_HEAD 알림', '[info] 병합 중(MERGE_HEAD)' in got[1])
+p, root, base, folder = project('untracked')
+incoming(p, root, {LEGACY: BAD}, folder=folder); git(p, 'rm', '-q', '--cached', LEGACY)
+finding('I19 미추적 재작성 W', run(root, base), 'IM25', LEGACY, MSG25, reason='작업 트리 수정 중')
+p, root, base, folder = project('parse')
+write(root, 'web/old/broken.py', 'def broken(:\n'); commit(p, 'broken')
+incoming(p, root, {LEGACY: BAD, 'web/old/broken.py': 'pass\n'}, folder=folder,
+         resolve=lambda: write(root, 'web/old/broken.py', 'pass\n'))
+finding('I20 부모 파싱 실패 비대칭', run(root, base), 'IM25', LEGACY, MSG25, reason='측정 무효(')
+p, root, base, folder = project('link')
+write(root, '.dddjango/settings_pkg/settings.py', '')
+(root / 'config').symlink_to('.dddjango/settings_pkg'); commit(p, 'link')
+incoming(p, root, {LEGACY: BAD}, folder=folder)
+finding('I21 제외 폴더를 가리키는 링크', run(root, base), 'IM25', LEGACY, MSG25, reason='측정 무효(')
+p, root, base, folder = project('fault')
+incoming(p, root, {LEGACY: BAD}, folder=folder)
+got = run(root, base, fault='temp')
+finding('I22a 임시 폴더 생성 실패', got, 'IM25', LEGACY, MSG25)
+result('I22b 임시 폴더 실패 알림', '[info] 승인 유입 판정 불가 — fixture TMP' in got[1])
+finding('I23 부모 실행 실패', run(root, base, fault='parent'), 'IM25', LEGACY, MSG25, reason='측정 무효(')
+finding('I40 부모 출력 판독 불가', run(root, base, fault='output'), 'IM25', LEGACY, MSG25, reason='측정 무효(')
+got = run(root, base, fault='status')
+finding('I41a 새 Git 조회 실패 보존', got, 'IM25', LEGACY, MSG25)
+result('I41b 새 Git 조회 실패 알림', '[info] 승인 유입 판정 불가 — ' in got[1])
+same('I42 병합 있어도 --all byte 동일', root, base, extra=['--all'])
+got = run(root, base, fault='chain')
+finding('I45a 사슬 조회 실패 보존', got, 'IM25', LEGACY, MSG25)
+result('I45b 사슬 조회 실패 알림', '[info] 승인 유입 판정 불가 — ' in got[1])
+fakebin = temp / 'i-bin'; fakebin.mkdir()
+write(fakebin, 'tar', '#!/bin/sh\nexit 1\n'); (fakebin / 'tar').chmod(0o755)
+saved_path = env['PATH']; env['PATH'] = str(fakebin) + ':' + saved_path
+finding('I24 스냅숏 실패', run(root, base), 'IM25', LEGACY, MSG25, reason='측정 무효(')
+env['PATH'] = saved_path
+# 제외 ID 및 비-blob — 실제 검사 발화; 원문은 HEAD 러너에서 잡아 절별 대조한다.
+p, root, base, folder = project('excluded')
+incoming(p, root, {'web/static/site.css': 'body {}\n',
+    'web/application/order/presentation_layer/view/inline.js': 'x=1;\n', VIEW: '<script>x()</script>\n',
+    'web/application/alpha/application_layer/use_case/a.py': 'from web.application.beta.application_layer.use_case.b import b\na=1\n',
+    'web/application/beta/application_layer/use_case/b.py': 'from web.application.alpha.application_layer.use_case.a import a\nb=1\n',
+    'web/static/vendor/probe/probe.js': 'window.probe={};\n'}, folder=folder)
+write(root, 'web/sdk_registry.json', '{'); commit(p, 'malformed-sdk')
+for n, cid in enumerate(['ST4', 'ST12', 'PU1', 'PU2', 'CY1', 'WV1'], 25):
+    only = cid.lower()
+    baseline = run(root, base, only, script=old_runner)
+    match = re.search(r'\[' + cid + r'\] BLOCKER — ([^\n]+)\n  위반: (.+) \([^\n]+\)\n  교정:', baseline[1])
+    if not match:
+        result(f'I{n} {cid} 제외/비-blob', False, baseline[1]); continue
+    path = re.sub(r':\d+$', '', match[1])
+    finding(f'I{n} {cid} 제외/비-blob', run(root, base, only), cid, path, match[2],
+            reason='비-blob 경로' if cid == 'ST4' else '가름 제외 검사')
+write(root, 'requirements.txt', 'pytest\n')
+write(root, 'web_test/order_test.py', 'def test_order():\n    assert True\n'); commit(p, 'pytest-declaration')
+baseline = run(root, base, 'pj1', script=old_runner)
+match = re.search(r'\[PJ1\] BLOCKER — ([^\n]+)\n  위반: (.+) \([^\n]+\)\n  교정:', baseline[1])
+got = run(root, base, 'pj1')
+if match:
+    finding('I31 PJ1 root_rel 비-blob', got, 'PJ1', match[1], match[2], reason='비-blob 경로')
+else:
+    result('I31 PJ1 root_rel 비-blob', False, baseline[1])
+# 미룸 검사도 G2에서는 발화한다. main의 unchanged 파일은 L 증명 유입, BC 폴더는 blocker.
+p, root, base, folder = project('deferred-g2')
+incoming(p, root, {
+    'web/application/shop/application_layer/view_model/shop_list_vm.py': 'class ShopListVM:\n    pass\n',
+    'web/application/shop/presentation_layer/view/shop_detail_view.py': 'def shop_detail_view(request):\n    pass\n',
+    'web/static/application/shop/shop_banner_section.css': '.shop-banner { color: var(--color-primary); }\n',
+}, folder=folder)
+got = run(root, base, only=None)  # --slice-end·--only 없이 전체 G2 실행; ST4·TG1이 남아 exit 2.
+finding('I47 G2 NM4 승인 유입', got, 'NM4',
+        'web/application/shop/application_layer/view_model/shop_list_vm.py',
+        '삼총사 미완 — 같은 접두 shop_list_view.py·shop_list_view.html·shop_list_state.py 부재', True, exitcode=2)
+finding('I48 G2 NM18 승인 유입', got, 'NM18',
+        'web/application/shop/presentation_layer/view/shop_detail_view.py',
+        'view 짝 미완 — 같은 폴더 `shop_detail_view.html` 부재', True, exitcode=2)
+finding('I49 G2 NM19 승인 유입', got, 'NM19',
+        'web/static/application/shop/shop_banner_section.css',
+        '조각 CSS `shop_banner_section.css` — 소유자(BC presentation_layer · root scaffold)에 같은 stem 의 템플릿이 없다',
+        True, exitcode=2)
+finding('I50 G2 TG1 비-blob 유지', got, 'TG1', 'web/application/shop',
+        '신규 BC `shop` 행위검증 테스트 부재 — `web_test/application/shop/`에 `*_test.py` 0건. '
+        'green 빌드가 비-vacuous 검증으로 안 이어진다.', reason='비-blob 경로')
+p, root, base, folder = project('nested', 'project')
+write(p, LEGACY, '# repository root\n'); commit(p, 'same-name')
+incoming(p, root, {LEGACY: BAD}, folder=folder)
+finding('I32 하위 대상 루트·동명 파일', run(root, base), 'IM25', LEGACY, MSG25, True)
+p, root, base, folder = project('accepted-limit')
+incoming(p, root, {LEGACY: BAD}, folder=folder)
+incoming(p, root, {LEGACY: 'pass\n'}, approve=False)
+write(root, LEGACY, BAD); commit(p, 'restore-approved')
+finding('I33 수락한 한계·앞 승인 판 복원', run(root, base), 'IM25', LEGACY, MSG25, True)
+# 꺼짐: 같은 인자의 2.2.2 HEAD 러너와 exit+출력 byte 대조
+p, root, base, folder = project('no-merge')
+write(root, LEGACY, BAD); commit(p, 'own')
+same('I34 병합 없음 byte 동일', root, base)
+same('I35 목록 없음+병합 없음 byte 동일', root, base)
+same('I46 무병합 사슬 조회 실패 byte 동일', root, base, fault='chain')
+write(folder, 'approved-merges.txt', 'invalid-but-inactive\n')
+same('I36 --all byte 동일', root, base, extra=['--all'])
+same('I37 기준 없음 byte 동일', root)
+non = temp / 'i-nongit'; shutil.copytree(root / 'web', non / 'web')
+same('I38 비git byte 동일', non, base)
+p, root, base, folder = project('prior')
+m = incoming(p, root, {LEGACY: BAD}, folder=folder); base = git(p, 'rev-parse', 'HEAD')
+write(folder, 'build-state.json', json.dumps({'git_snapshot': base}))
+write(root, 'web/old/new_view.py', BAD); commit(p, 'own-after-base')
+same('I39 기준 이전 승인만·무병합 byte 동일', root, base)
+# 충돌 해소분은 incoming과 다른 바이트라 F1 실패.
+p, root, base, folder = project('conflict')
+write(root, LEGACY, BAD + '# lane\n'); commit(p, 'lane-conflict')
+incoming(p, root, {LEGACY: BAD + '# main\n'}, folder=folder,
+         resolve=lambda: write(root, LEGACY, BAD + '# resolved\n'))
+finding('I43 충돌 해소분', run(root, base), 'IM25', LEGACY, MSG25, reason='충돌 해소분(M≠M^2)')
+# 첫 전달 병합 측정이 무효여도 다른 승인 병합이 L을 증명하면 유입(∃M).
+p, root, base, folder = project('exists')
+write(root, 'web/old/broken.py', 'def broken(:\n'); commit(p, 'broken')
+incoming(p, root, {LEGACY: BAD}, folder=folder)
+(root / 'web/old/broken.py').unlink(); write(root, LEGACY, 'pass\n'); commit(p, 'repair')
+proof_merge = incoming(p, root, {'main-again.txt': 'main again\n'}, folder=folder,
+                       resolve=lambda: write(root, LEGACY, BAD))
+finding('I44 다른 승인 병합이 L 증명', run(root, base), 'IM25', LEGACY, MSG25, True, merge=proof_merge)
+PY
+); I_STATUS=$?
+printf '%s\n' "$I_OUT"
+I_PASS=$(printf '%s\n' "$I_OUT" | grep -c '^PASS I' || true)
+I_FAIL=$(printf '%s\n' "$I_OUT" | grep -c '^FAIL I' || true)
+PASS=$((PASS+I_PASS)); FAIL=$((FAIL+I_FAIL))
+[ "$I_STATUS" = 0 ] && [ "$I_PASS" -gt 0 ] || { FAIL=$((FAIL+1)); echo 'FAIL I 묶음 미실행/도우미 오류'; }
+
 echo "fixtures_subst: PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" = 0 ]
