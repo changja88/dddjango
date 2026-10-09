@@ -107,6 +107,7 @@ def test_password_toggle_reveals_input(page: Page, live_server: LiveServer) -> N
 - `live_server`는 같은 프로세스의 다른 스레드에서 돈다 — `monkeypatch`로 바꾼 VM(seam B)이 브라우저 요청에도 그대로 적용된다. `{% static %}` 파일도 함께 서빙된다(`django.contrib.staticfiles` 설치 시).
 - **기다림은 `expect(…)`의 자동 재시도 단언만** 쓴다 — `page.wait_for_timeout`·`time.sleep` 고정 대기 금지(느린 기계에서 깨지고 빠른 기계에서 시간을 버린다). 타이머·지연 진행 자체가 필요하면 `page.clock`(`install` 후 `run_for`)으로 결정적으로 진행한다 — 끝나지 않는 대기를 걸어 둔 채 테스트를 끝내지 않는다.
 - 브라우저 테스트도 discipline-test FORM을 그대로 쓴다: 정확 개수 `to_have_count(n)` · 정확 글자 `to_have_text(x)`(부분 일치 `to_contain_text` 금지) · non-edge `nth(2)`.
+- **샌드박스 안 브라우저**: macOS 샌드박스(예: Codex 셸 샌드박스)는 Chrome 시작에 필요한 시스템 서비스를 막아 브라우저가 시작 즉시 죽는다 — 이 환경에서 브라우저 테스트가 섞인 실행은 처음부터 샌드박스 밖에서 돈다(어디서·어떻게는 Coordinator·coder-web의 «브라우저 실행 환경» 규칙). 샌드박스 안에서 돈 실행의 브라우저 시작 실패(`BrowserType.launch: Target page, context or browser has been closed` · 브라우저 프로세스 `SIGABRT`/`SIGTRAP` · `bootstrap_check_in … Permission denied`)는 그것만으로 원인을 정하지 않는다 — 샌드박스 밖에서 다시 돈 결과가 그 테스트의 결과다(밖에서도 실패하면 실제 실패). 같은 실행에서 브라우저 없이 돈 테스트의 결과는 그대로다. 테스트를 건너뛰거나 지우거나 하니스·브라우저 판을 바꿔 우회하지 않는다.
 
 ## §5. 날짜·시간 결정성 — 주입
 
