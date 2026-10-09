@@ -336,34 +336,25 @@
   "cache_parity": {
     "claude": {
       "checked": 73,
-      "mismatch": [
-        "dddjango/.claude-plugin/plugin.json",
-        "dddjango/scripts/anchor_diff.py",
-        "dddjango/scripts/check-api-error-controller-contract.py",
-        "dddjango/scripts/check-error-centralization.py",
-        "dddjango/scripts/check-openapi-error-declaration.py",
-        "dddjango/scripts/pregate_symbol_kinds.json"
-      ],
+      "mismatch": [],
       "missing": [],
-      "root": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.19.2",
-      "status": "drift"
+      "root": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.19.3",
+      "status": "ok"
     },
     "codex": {
       "checked": 35,
-      "mismatch": [
-        "codex-dddjango/.codex-plugin/plugin.json"
-      ],
+      "mismatch": [],
       "missing": [],
-      "root": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.19.2",
-      "status": "drift"
+      "root": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.19.3",
+      "status": "ok"
     }
   },
   "claude_install": {
-    "git_commit_sha": "8bdc6feaf0ad3ef0ce4de4f9f5dac711b9492647",
-    "install_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.19.2",
+    "git_commit_sha": "cef7e22b8a7d8b5f777c9917c57035b044bb29c3",
+    "install_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.19.3",
     "key": "dddjango@changja88-dddjango",
     "source": "installed_plugins.json",
-    "version": "2.19.2"
+    "version": "2.19.3"
   },
   "external_annex": {
     "initial_memory": {
@@ -832,8 +823,8 @@
     },
     "protocol": {
       "files": {
-        "Makefile": "23aa1df7e094c3a51a5714b16324fec24162106def7e8bb771d0a163bb2c47e5",
-        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "0f3b541c5ee60570eed76796918e71721d5dcea811a800defc5b1561ad2c6af0",
+        "Makefile": "74c470875d2ae41ff50e26d6036f8b407c69641e221bebbb0cd671d81c9b8cbf",
+        "workspace/design/2026-08-20-ontology-t2-0b-design.md": "4145119f7c2c82cbd98b7e7960eb003916ecfa3eba44e09e91d99b5e059335f3",
         "workspace/plan/2026-08-12-bc-rebuild-protocol.md": "a39ba66e58cb8bde5ad8f84d630b6fd9b04300f7130d4bbc2d149751c2f6c492",
         "workspace/plan/templates/request-template.md": "531bb5c0e9b147d51665981bc3218aa027ddc4170101ea920ecc8a87f7018fe4",
         "workspace/tools/openapi_shape.py": "ea564e3b0ce0550352935b7a572f93dfae404f1a1d24f0fd9d4acf6dc4bc4932",
@@ -848,7 +839,7 @@
         "workspace/design/2026-08-20-ontology-t2-0b-design.md"
       ],
       "n_files": 6,
-      "tree_sha256": "06eafe926647d4f80872c33d9b0f266c2ddaf399eb292108319a05f83af13a3d",
+      "tree_sha256": "b20e0cb724100a20662ce0735a0c153a0db17f073ec3850cc54bdfe291f248f0",
       "why": "**전이 의존** — 발주문이 «그대로 따르라»고 가리키는 판형과, 인수 판정이 부르는 도구와, 게이트를 배선하는 Makefile. 이 중 하나만 바뀌어도 모델이 받는 요청문·허용 범위·STOP 규약·shape 합격 여부·실런 진입 조건이 바뀐다. 그런데 대조는 글롭에 든 것만 재전개하므로, 봉인 밖이면 그 변경은 드리프트가 아니었다(레인 AU 발견 4)."
     },
     "queries": {
@@ -971,15 +962,15 @@
     ]
   },
   "script_trees": {
-    "cache-claude": "618c50d5ef5d8e601c8fbc229952b822211cc1f1375dc94f36196e0bbaab1a9b",
-    "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.19.2/scripts",
-    "cache-codex": "618c50d5ef5d8e601c8fbc229952b822211cc1f1375dc94f36196e0bbaab1a9b",
-    "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.19.2/skills/dddjango/scripts",
+    "cache-claude": "d5d6c27dc500a69a843865df68d9a9f2bf75a49b0b97e789f2805e01f6ca3c35",
+    "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.19.3/scripts",
+    "cache-codex": "d5d6c27dc500a69a843865df68d9a9f2bf75a49b0b97e789f2805e01f6ca3c35",
+    "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.19.3/skills/dddjango/scripts",
     "source-claude": "d5d6c27dc500a69a843865df68d9a9f2bf75a49b0b97e789f2805e01f6ca3c35",
     "source-codex": "d5d6c27dc500a69a843865df68d9a9f2bf75a49b0b97e789f2805e01f6ca3c35"
   },
-  "sealed_commit": "cef7e22b8a7d8b5f777c9917c57035b044bb29c3",
-  "self_sha256": "2267c0c9ae858fa3e5853bec58ed23746f3d765b3d942157a671245135caea86",
+  "sealed_commit": "186783c3b14147ae3766858c23e8f8b0a60f9a0f",
+  "self_sha256": "8f3e9c97026781f74195ae466865bec90c21b67c86721b837ba296d6beed1ee4",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [
