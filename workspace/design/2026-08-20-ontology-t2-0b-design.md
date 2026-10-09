@@ -43,7 +43,7 @@
 
 **스키마**: `arm-receipt/0` · `findings/0` · `gate-contract/0` · `gate-introduced/0` · `injection-capacity/3` · `regen-prompt/1` · `rulepack/1`
 
-**미러**: 41파일 동일 · **설치본**: {'claude': '2.19.1', 'codex': '2.19.1'} · cache_parity claude=drift codex=drift
+**미러**: 41파일 동일 · **설치본**: {'claude': '2.19.2', 'codex': '2.19.2'} · cache_parity claude=drift codex=drift
 
 <!-- /MANIFEST-FACTS -->
 
