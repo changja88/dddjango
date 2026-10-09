@@ -86,6 +86,101 @@ _COMMON_STATE_RE = re.compile(
 _ALIAS_RE = re.compile(r'(?m)^(?:type[ \t]+)?([A-Za-z_]\w*)[ \t]*(?::[ \t]*TypeAlias[ \t]*)?(?:\[[^\]\n]*\])?[ \t]*=[ \t]*[^=\n]*\|')
 
 
+def _field_protocols(source: str) -> Set[Tuple[str, int]]:
+    """확정된 typing 계열의 private 필드 전용 Protocol만 NM17에서 제외한다.
+    조건부 바인딩·재정의·클래스 장치·실행 annotation·AST 실패는 면제하지 않는다.
+    annotation/cast 전용 소비 여부는 discipline 감수가 확인한다.
+    """
+    try:
+        tree = ast.parse(source)
+    except (SyntaxError, ValueError):
+        return set()
+    bindings: Dict[str, str] = {}
+    out: Set[Tuple[str, int]] = set()
+    type_nodes = (ast.Name, ast.Attribute, ast.Subscript, ast.Tuple, ast.List,
+                  ast.Constant, ast.BinOp, ast.BitOr, ast.Slice, ast.Load)
+    for node in tree.body:
+        if isinstance(node, ast.ClassDef):
+            base = node.bases[0] if len(node.bases) == 1 else None
+            actual = (isinstance(base, ast.Name) and bindings.get(base.id) == 'protocol') or (
+                isinstance(base, ast.Attribute) and base.attr == 'Protocol'
+                and isinstance(base.value, ast.Name) and bindings.get(base.value.id) == 'module')
+            if (node.name.startswith('_') and actual and not node.keywords and not node.decorator_list
+                    and node.body and all(isinstance(n, ast.AnnAssign) and isinstance(n.target, ast.Name)
+                                         and n.value is None
+                                         and all(isinstance(a, type_nodes) for a in ast.walk(n.annotation))
+                                         for n in node.body)):
+                out.add((node.name, node.lineno))
+        # 한 top-level 문장이 바꾸는 이름을 먼저 무효화한다. 함수 몸통은 import 시 실행되지 않는다.
+        def changed(n: ast.AST) -> Set[str]:
+            names: Set[str] = set()
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                names.add(n.name)
+                # default·decorator·베이스는 선언 시 실행된다. 함수 몸통은 제외한다.
+                for field, value in ast.iter_fields(n):
+                    if field == 'body':
+                        continue
+                    for child in value if isinstance(value, list) else [value]:
+                        if isinstance(child, ast.AST):
+                            names.update(changed(child))
+                if isinstance(n, ast.ClassDef):
+                    def globals_here(child: ast.AST) -> Set[str]:
+                        if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+                            return set()
+                        if isinstance(child, ast.Global):
+                            return set(child.names)
+                        return set().union(*(globals_here(item) for item in ast.iter_child_nodes(child)))
+                    def nested_classes(child: ast.AST):
+                        if isinstance(child, ast.ClassDef):
+                            yield child
+                        elif not isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+                            for item in ast.iter_child_nodes(child):
+                                yield from nested_classes(item)
+                    def class_effects(cls: ast.ClassDef) -> Set[str]:
+                        global_names = set().union(*(globals_here(child) for child in cls.body))
+                        effects = set().union(*(changed(child) & global_names for child in cls.body))
+                        for child in cls.body:
+                            for inner in nested_classes(child):
+                                effects.update(class_effects(inner))
+                        return effects
+                    names.update(class_effects(n))
+                return names
+            if isinstance(n, ast.Lambda):
+                return changed(n.args)
+            if isinstance(n, ast.Name) and isinstance(n.ctx, (ast.Store, ast.Del)):
+                names.add(n.id)
+            if isinstance(n, ast.Attribute) and isinstance(n.ctx, (ast.Store, ast.Del)):
+                owner = n.value
+                while isinstance(owner, ast.Attribute):
+                    owner = owner.value
+                if isinstance(owner, ast.Name):
+                    names.add(owner.id)
+            if isinstance(n, (ast.Import, ast.ImportFrom)):
+                names.update(a.asname or a.name.split('.')[0] for a in n.names)
+                if any(a.name == '*' for a in n.names):
+                    names.update(bindings)
+            if isinstance(n, (ast.MatchAs, ast.MatchStar)) and n.name:
+                names.add(n.name)
+            if isinstance(n, ast.MatchMapping) and n.rest:
+                names.add(n.rest)
+            if isinstance(n, ast.ExceptHandler) and n.name:
+                names.add(n.name)
+            for child in ast.iter_child_nodes(n):
+                names.update(changed(child))
+            return names
+        for name in changed(node):
+            bindings.pop(name, None)
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name in ('typing', 'typing_extensions'):
+                    bindings[alias.asname or alias.name] = 'module'
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module in ('typing', 'typing_extensions'):
+            for alias in node.names:
+                if alias.name == 'Protocol':
+                    bindings[alias.asname or alias.name] = 'protocol'
+    return out
+
+
 def run_naming(ctx: BackstopContext) -> List[Finding]:
     out: List[Finding] = []
     added: List[str] = [f for f in ctx.files if ctx.is_added(f)]
@@ -298,14 +393,18 @@ def run_naming(ctx: BackstopContext) -> List[Finding]:
         # ---- NM17: view 직접 빌드 차단 (주 view 함수·`<화면>_<조각>_fragment` 함수 밖의 함수·클래스 금지)
         if parent == 'view' and base.endswith('_view.py') and bc is not None:
             prefix = base[:-len('_view.py')]
+            type_protocols: Set[Tuple[str, int]] = _field_protocols(ms.original)
             for kind, name, line, _off in decls:
+                if kind == 'class' and (name, line) in type_protocols:
+                    continue
                 if kind == 'def' and (name == '%s_view' % prefix
                                       or re.fullmatch(r'%s_\w+_fragment' % re.escape(prefix), name)):
                     continue
                 out.append(Finding('NM17', f, line,
-                    'view 파일에 추가 top-level %s `%s` — view `.py`는 `%s_view`·`%s_<조각>_fragment` 함수만' % (
+                    'view 파일에 추가 top-level %s `%s` — view `.py` 허용 선언은 `%s_view`·`%s_<조각>_fragment` 함수와 private 필드 전용 Protocol' % (
                         '함수' if kind == 'def' else '클래스', name, prefix, prefix),
-                    '제1 규약 §3.5', '요청에서 원시값을 꺼내 자기 VM에 넘기고 렌더할 뿐 — 조립은 section/widget 템플릿으로, '
+                    '제1 규약 §3.5', ('architecture-ui §2의 private 필드 전용 Protocol 조건에 맞지 않음. ' if kind == 'class' else '') +
+                    '요청에서 원시값을 꺼내 자기 VM에 넘기고 렌더할 뿐 — 조립은 section/widget 템플릿으로, '
                     '변환·판정은 VM·도메인으로 옮긴다.'))
 
         # ---- NM18: view 짝 — `<화면>_view.py` ↔ `<화면>_view.html`

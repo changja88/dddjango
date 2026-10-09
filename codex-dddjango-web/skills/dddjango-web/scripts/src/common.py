@@ -77,7 +77,7 @@ CORE_CHECK_IDS: Tuple[str, ...] = tuple(
     ['ST%d' % n for n in range(0, 13)]                                  # ST0~ST12
     + ['IM%d' % n for n in range(1, 28)]                                # IM1~IM27
     + ['NM%d' % n for n in range(1, 21) if n != 7]                      # NM1~NM20 · NM7 비움
-    + ['CY1', 'TG1', 'MD1', 'MD2', 'PJ1', 'PJ2']                        # PJ3 비움
+    + ['CY1', 'TG1', 'TG2', 'TG3', 'MD1', 'MD2', 'PJ1', 'PJ2']                        # PJ3 비움
     + ['PU1', 'PU2', 'PU3', 'PU6', 'PU7', 'PU8'])                       # PU4·PU5 비움
 STDLIB: Set[str] = set(getattr(sys, 'stdlib_module_names', ())) | {'__future__', 'typing', 'dataclasses'}
 

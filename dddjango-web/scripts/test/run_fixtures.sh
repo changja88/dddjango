@@ -285,12 +285,13 @@ w "$W/static/js/htmx.min.js" 'var htmx={version:"2.0.10"};'                    #
 w "$W/static/vendor/lodash/lodash.min.js" "window._ = {};"                     # ST12·PU1(미등재 벤더 — 공식 SDK 등재 밖)
 w "$R/view/inline.js" "x = 1;"                                                 # PU1
 w "$W/static/js/probe_eval.js" 'eval("1 + 1");'                                # PU8
+w "$P/tests/test_patch225.py" 'Path(".dddjango-web/data").read_text()' 'expect(page).to_have_screenshot()'  # TG2·TG3
 OUT=$(run_backstop "$P" --diff-base "$BASE"); E=$?
 assert "F1 위반 diff — exit 2" 2 "blocker" - "$E" "$OUT"
 expect_ids "F1" "$OUT" ST0 ST1 ST2 ST3 ST4 ST5 ST6 ST7 ST8 ST9 ST10 ST11 ST12 \
   IM1 IM2 IM3 IM4 IM5 IM6 IM7 IM8 IM9 IM10 IM11 IM12 IM13 IM14 IM15 IM16 IM17 IM18 IM19 IM20 IM21 IM22 IM23 \
   IM24 IM25 IM26 IM27 NM1 NM2 NM3 NM4 NM5 NM6 NM8 NM9 NM10 NM11 NM12 NM13 NM14 NM15 NM16 NM17 NM18 NM19 NM20 \
-  CY1 TG1 MD1 MD2 PJ1 PJ2 PU1 PU2 PU3 PU6 PU7 PU8
+  CY1 TG1 TG2 TG3 MD1 MD2 PJ1 PJ2 PU1 PU2 PU3 PU6 PU7 PU8
 assert "F1 미등재 벤더 사본 — PU1(PJ3 비움 · WV 등재 절차)" 2 "PU1\] BLOCKER — web/static/vendor/lodash/lodash.min.js" "PJ3\]" "$E" "$OUT"
 assert "F1 깨끗한 기존 파일 불발화(order_list_view·either)" 2 - 'BLOCKER — web/application/order/presentation_layer/view/order_list_view\|BLOCKER — web/common/util/either' "$E" "$OUT"
 assert "F1 함수 안 import 도 IM 이 센다(IM21)" 2 "IM21\] BLOCKER — web/application/order/order_navigator.py:15" - "$E" "$OUT"
@@ -605,7 +606,7 @@ expect_ids "F19a 인자 없이 — 일곱이 그대로 난다" "$OUT" ST4 NM4 NM
 OUT=$(run_backstop "$P" --diff-base "$BASE" --slice-end); E=$?
 assert "F19b 슬라이스 끝 — 국소 발견(IM1)은 난다 · exit 2" 2 "IM1\] BLOCKER — web/application/shop/domain_layer/shop/shop.py" - "$E" "$OUT"
 assert "F19b 슬라이스 끝 — 일곱은 발견 줄로 안 난다" 2 - '\[\(ST4\|NM4\|NM5\|NM18\|NM19\|TG1\|CY1\)\] BLOCKER' "$E" "$OUT"
-assert "F19b 슬라이스 끝 — 요약 줄이 미룬 목록을 낸다" 2 "검사 84종 중 77종(슬라이스 끝 — 미룸 7: CY1 · NM4 · NM5 · NM18 · NM19 · ST4 · TG1" - "$E" "$OUT"
+assert "F19b 슬라이스 끝 — 요약 줄이 미룬 목록을 낸다" 2 "검사 86종 중 79종(슬라이스 끝 — 미룸 7: CY1 · NM4 · NM5 · NM18 · NM19 · ST4 · TG1" - "$E" "$OUT"
 w "$H/domain_layer/shop/shop.py" "from dataclasses import dataclass" "" "" \
   "@dataclass(frozen=True, slots=True, kw_only=True)" "class Shop:" "    key: str"
 OUT=$(run_backstop "$P" --diff-base "$BASE" --slice-end); E=$?
@@ -748,6 +749,8 @@ OUT=$(bash "$(dirname "$0")/fixtures_extract.sh" 2>&1) || SUB=1; echo "$OUT" | t
 OUT=$(bash "$(dirname "$0")/fixtures_contract.sh" 2>&1) || SUB=1; echo "$OUT" | tail -1
 
 # ---------- 2.1.0 픽스처: 빚 정리(debt · subst) · 공식 SDK 승인 절차(sdk) · 리팩토링 입구(refactor_audit)
+OUT=$(python3 "$(dirname "$0")/fixtures_patch225.py" 2>&1) || SUB=1; echo "$OUT"
+
 for SUBFIX in fixtures_debt.sh fixtures_subst.sh fixtures_sdk.sh fixtures_refactor_audit.sh; do
   OUT=$(bash "$(dirname "$0")/$SUBFIX" 2>&1) || SUB=1; echo "$SUBFIX: $(echo "$OUT" | tail -1)"
 done

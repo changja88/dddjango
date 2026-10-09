@@ -1060,6 +1060,8 @@ def finding(name, got, cid, path, message, inflow=False, reason=None, exitcode=N
 def same(name, root, base=None, only='im', extra=(), fault=None):
     now = run(root, base, only, extra, fault=fault)
     before = run(root, base, only, extra, old_runner, fault=fault)
+    # 2.2.5는 검사 합계만 84→86으로 바꾼다. 비교 대상인 유입 판정·발견·종료 코드는 그대로 대조한다.
+    before = (before[0], before[1].replace('[backstop] 검사 84종', '[backstop] 검사 86종'))
     result(name, now == before, f'현재={now}\nHEAD={before}')
 
 

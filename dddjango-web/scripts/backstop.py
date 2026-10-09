@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# dddjango-web 결정적 백스톱 러너 — 단일 엔트리, 검사 84종 인프로세스 실행.
+# dddjango-web 결정적 백스톱 러너 — 단일 엔트리, 검사 86종 인프로세스 실행.
 # (판형: dddart scripts/backstop.dart — 같은 인자·같은 종료 코드·같은 게이트)
 #
 # 사용:
@@ -29,13 +29,13 @@
 #   테스트 치환뿐인지 본다(--names·--except·--build 는 그 전용).
 #   모드끼리, 그리고 --diff-base·--all·--only·--design-build·--update-baseline 과 함께 쓰지 않는다.
 #
-# 검사 84종 (dddart 번호 그대로 · 옮길 수 없는 번호는 비움 · 새 검사는 패밀리 끝 번호 뒤):
+# 검사 86종 (dddart 번호 그대로 · 옮길 수 없는 번호는 비움 · 새 검사는 패밀리 끝 번호 뒤):
 #   ST 13 — ST0~ST11(dddart) + ST12(web/static/ 트리 — application·root·js·htmx·vendor·images·fonts)
 #   IM 27 — IM1~IM23(dddart) + IM24(상대 import) · IM25(백엔드 import) · IM26(extends 대상) · IM27(HTTP 표면·API URL 리터럴)
 #   NM 19 — NM1~NM6 · NM8(common 상태 동작 proxy — common @riverpod 자리) · NM9~NM17(dddart)
 #           + NM18(view 짝) · NM19(조각 CSS 짝 — BC·root) · NM20(snake_case) · NM7 비움(@riverpod 허용 위치)
 #   CY 1  — CY1
-#   TG 1  — TG1(web_test/ 미러)
+#   TG 3  — TG1(web_test/ 미러) · TG2(변경 영구 시험 재현성) · TG3(비채택 이미지 비교)
 #   MD 2  — MD1(frozen dataclass 형태) · MD2(from_json 형태)
 #   PJ 2  — PJ1(pytest·pytest-django 선언) · PJ2(htmx core 단일 고정 판) · PJ3 비움(2.1.0 — vendor 는 공식 SDK 등재 절차 WV)
 #   PU 6  — PU1 · PU2 · PU3 · PU6(v1.3.1 WP 번호 그대로) + PU7(자동 이스케이프 우회) · PU8(JS 동적 실행)
@@ -68,7 +68,7 @@ from src.inflow import split_inflow  # noqa: E402
 
 FAMILIES: List[str] = list(CORE_FAMILIES) + ['wv']
 CHECK_IDS: List[str] = list(CORE_CHECK_IDS) + list(VENDOR_CHECK_IDS)
-TOTAL_CHECKS: int = len(CHECK_IDS)  # 84 = ST13 + IM27 + NM19 + CY1 + TG1 + MD2 + PJ2 + PU6 + WV13
+TOTAL_CHECKS: int = len(CHECK_IDS)  # 86 = ST13 + IM27 + NM19 + CY1 + TG3 + MD2 + PJ2 + PU6 + WV13
 # 슬라이스 끝(--slice-end)에 미루는 검사 — 짝 · 골격 · 미러 · 순환은 뒤 슬라이스가 채운다(G2 직전 실행이 본다 · 이 목록이 단일 출처)
 SLICE_END_DEFERRED: List[str] = ['CY1', 'NM4', 'NM5', 'NM18', 'NM19', 'ST4', 'TG1']
 
