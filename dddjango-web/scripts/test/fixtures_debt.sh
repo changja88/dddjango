@@ -440,6 +440,42 @@ scope_md "$P" run '## G0 @NOW@
 OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
 assert "D23b 대조: 펜스 밖이면 새 G0 절(요청 경계)로 판정 exit 0" 0 "ⓐ 잔존 0" - "$E" "$OUT"
 
+# ---------- D23′: 빚 스캔 절 · 끝 green 기록 안의 소제목 «문서 글 적중(이동을 막지 않음)» 은 절이 아니다 — 잔존 판독 그대로
+P="$T/d23s"; mkproj "$P" >/dev/null; bad_handlers "$P"; run_folder "$P" run
+DOCNOTE='### 문서 글 적중(이동을 막지 않음)
+
+- `docs/official/master.html:11134`
+- `docs/official/master.html:11143` — ⓐ 키: C9 를 설명하는 글'
+scope_md "$P" run "## 빚 스캔 @NOW@
+
+- 명령: backstop.py --debt-scan · exit 2
+
+$DOCNOTE
+
+## G0 @NOW@
+ⓐ 키: C1
+요구 키: -
+
+끝 green ③ exit 1
+
+$DOCNOTE"
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D23′a 알림 소제목을 넣은 기록 — C1 잔존 판독 그대로 exit 2" 2 "ⓐ 잔존 1 · 요구 잔존 0" - "$E" "$OUT"
+git -C "$P" mv web/root/handler/a_handler.py web/root/handler/root_a_handler.py
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D23′b 대조: 해소 뒤 exit 0(소제목 줄이 정형 행으로 읽히지 않는다)" 0 "ⓐ 잔존 0 · 요구 잔존 0 · 재상정 제외 0" - "$E" "$OUT"
+scope_md "$P" run "## 빚 스캔 @NOW@
+
+$DOCNOTE
+
+- 없음
+
+## G0 @NOW@
+ⓐ 키: -
+요구 키: -"
+OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
+assert "D23′c 소제목 아래 «- 없음» 꼴 — 판독 그대로 exit 0" 0 "ⓐ 잔존 0 · 요구 잔존 0" - "$E" "$OUT"
+
 # ---------- D24: 리팩토링 스캔(--refactor) — 기존 단위 골격 미비(ST4)도 빚 · notice 없음 · mode 기록
 P="$T/d24"; mkproj "$P" >/dev/null
 w "$P/web/application/billing/billing_router.py" "urlpatterns: list[object] = []"

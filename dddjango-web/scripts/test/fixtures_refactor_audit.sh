@@ -208,7 +208,7 @@ assert "AQ7 주석 줄(한글이 바로 붙은 점 경로) = 소비자" 0 '`web/
 OUT=$(RQ plan web/application/users --debt .dddjango-web/run/debt-g0.json --out "$T/aqc"); E=$?
 assert "AQ8 다른 BC 의 import 줄 = 소비자" 0 '`web/application/chart/presentation_layer/view/s_r_client.py:1`' - "$E" "$(PSEC "$T/aqc/plan.md" '경계 교차 소비자')"
 
-# ---------- A″: 꼬리 묶음 grep — 파일별 분배 = git grep -w 성분 경계 · git grep 호출 수가 꼬리 수와 무관
+# ---------- A″: 꼬리 묶음 grep — 파일별 분배 = git grep -w 성분 경계 · git grep 호출 수가 꼬리 수와 무관(문서 글 알림 조회 포함)
 F1='application/home/application_layer/view_model/home_vm.py'
 F2='application/home/application_layer/view_model/home_vm2.py'
 OUT=$(cd "$Q" && python3 -c "
@@ -226,7 +226,7 @@ assert "AD2′ 형제 모듈 꼬리는 자기 줄만(s_p_sibling:1)" 0 "$F2 ['we
 rm -rf "$T/aq-trace"
 OUT=$(cd "$Q" && GIT_TRACE="$T/aq-trace.log" python3 "$SCRIPTS/refactor_audit.py" plan web/application/home --debt .dddjango-web/run/debt-g0.json --out "$T/aq-trace" 2>&1); E=$?
 N=$(grep -c "built-in: git grep" "$T/aq-trace.log" 2>/dev/null || echo 0)
-assert "AD3 plan 의 git grep 호출 ≤ 4(범위·정적 한 묶음 + 치환 대상 한 묶음 · 각 -F · -F -w)" 0 "요약: plan" - "$([ "$N" -ge 1 ] && [ "$N" -le 4 ] && echo "$E" || echo 9)" "$OUT (git grep ${N}회)"
+assert "AD3 plan 의 git grep 호출 ≤ 6(범위·정적 한 묶음 + 치환 대상 한 묶음 + 문서 글 알림 한 묶음 · 각 -F · -F -w)" 0 "요약: plan" - "$([ "$N" -ge 1 ] && [ "$N" -le 6 ] && echo "$E" || echo 9)" "$OUT (git grep ${N}회)"
 cmp -s "$AQ/plan.md" "$T/aq-trace/plan.md"; assert "AD4 같은 트리 두 번 plan = byte 동일" 0 - - "$?" ""
 
 # ---------- B: plan --against — 여섯 목록 대조(쓰지 않는다)
@@ -323,7 +323,7 @@ rm -f "$T/nm-trace.log"
 OUT=$(cd "$P" && GIT_TRACE="$T/nm-trace.log" python3 "$SCRIPTS/refactor_audit.py" plan web/application/home --debt .dddjango-web/run/debt-g0.json --out "$T/nm" --names "$T/specdir.md" 2>&1); E=$?
 NG=$(grep -c "built-in: git grep" "$T/nm-trace.log" 2>/dev/null)
 assert "R4 --names 폴더 쌍 (나) = 소비 줄" 0 '`web/application/chart/application_layer/view_model/chart_vm.py:1`' - "$E" "$(cat "$T/nm/plan-names.md" 2>/dev/null)"
-assert "R5 --names 폴더 쌍 git grep 호출이 구성원 수와 무관(1 ≤ 호출 ≤ 6 · exit 0)" 0 - - "$([ "$E" = 0 ] && [ "${NG:-0}" -ge 1 ] && [ "${NG:-99}" -le 6 ] && echo 0 || echo 9)" "exit $E · grep ${NG}회"
+assert "R5 --names 폴더 쌍 git grep 호출이 구성원 수와 무관(1 ≤ 호출 ≤ 10 — plan 6 + 쌍 판정 2 + 쌍 알림 2 · exit 0)" 0 - - "$([ "$E" = 0 ] && [ "${NG:-0}" -ge 1 ] && [ "${NG:-99}" -le 10 ] && echo 0 || echo 9)" "exit $E · grep ${NG}회"
 printf '## 슬라이스 0\n\n- 경로: `application/home/presentation_layer/view/home_view.py` → `application/home/presentation_layer/view/home_page.py`\n' > "$T/specfile.md"
 OUT=$(RA plan web/application/home --debt .dddjango-web/run/debt-g0.json --out "$T/nf" --names "$T/specfile.md"); E=$?
 assert "R6 경로: 파일 쌍 — 점 경로는 -w(home_view2 import 줄 :2 는 (나) 밖 · home_view import 줄 :1 은 (나))" 0 '`web/application/chart/application_layer/view_model/chart_vm.py:1`' 'chart_vm.py:2' "$E" "$(cat "$T/nf/plan-names.md" 2>/dev/null)"
@@ -896,6 +896,202 @@ assert "S3 BC plan 이 외부 JS 고정 사본을 정적 판정·범위에서 �
 assert "S5 참조 grep pathspec 이 벤더를 뺀다(벤더 사본 속 꼬리 문자열은 소비자 아님)" 0 - "web/static/vendor/legacy/l.js" "$E" "$PC"
 OUT=$(RV plan 'web/*.py' --debt .dddjango-web/run/debt-g0.json --out "$V/.dddjango-web/run/audit/k1"); E=$?
 assert "S4 컨테이너 plan 이 등재 목록을 뺀다" 0 - "sdk_registry.json" "$E" "$(cat "$V/.dddjango-web/run/audit/k1/plan.md" 2>/dev/null)"
+
+# ---------- DG: 최상위 docs/ 의 옛 경로 글 = 문서 글(판정 밖 · 알림 절) — 그 밖의 web/ 밖 적중과 기록 폴더 .dddjango/ 는 판정 그대로
+G="$T/docp"
+mkdir -p "$G/config" "$G/web/consultation" "$G/web/legacy_notes" "$G/web/docs" "$G/web/static/images" "$G/otherapp/templates/otherapp" \
+  "$G/docs/official" "$G/docs_site" "$G/mydocs" "$G/.dddjango/20261010-rec" "$G/.dddjango-web/rec" "$G/web_test/consultation"
+: > "$G/web/__init__.py"
+printf 'urlpatterns = []\n' > "$G/web/consultation/urls.py"
+printf 'Q = 1\n' > "$G/web/consultation/q.py"
+printf 'Q2 = 2\n' > "$G/web/consultation/q2.py"
+printf '<p>card</p>\n' > "$G/web/consultation/card.html"
+printf '<p>only</p>\n' > "$G/web/consultation/only_doc.html"
+printf '<p>memo</p>\n' > "$G/web/legacy_notes/memo.html"
+printf 'png' > "$G/web/static/images/consult_bg.png"
+printf "from django.urls import include, path\n\nurlpatterns = [path('c/', include('web.consultation.urls'))]\n" > "$G/config/urls.py"
+printf '{%% include "consultation/card.html" %%}\n<img src="{%% static %s %%}">\n' "'web/images/consult_bg.png'" > "$G/otherapp/templates/otherapp/page.html"
+printf 'from web.consultation.urls import urlpatterns\n' > "$G/web_test/consultation/urls_test.py"
+printf '# 사본: consultation/urls.py · web.consultation.urls\n' > "$G/.dddjango/20261010-rec/x.py"
+printf '# 사본: consultation/urls.py · web.consultation.urls\n' > "$G/.dddjango-web/rec/x.py"
+printf '<p>consultation/card.html</p>\n' > "$G/web/docs/x.html"
+printf '<p>consultation/card.html</p>\n' > "$G/docs_site/x.html"
+printf '<p>consultation/card.html</p>\n' > "$G/mydocs/x.html"
+printf '옛 자리 web/consultation/urls.py · web.consultation.urls\n' > "$G/docs/x.md"
+{
+  echo '<h1>작업 기록</h1>'
+  echo '<p>옛 자리 web/consultation/urls.py 를 옮겼다.</p>'
+  echo '<p>모듈 web.consultation.urls 와 그림 images/consult_bg.png</p>'
+  echo '<p>web/consultation/urls.py 와 web.consultation.urls 를 한 줄에 적었다.</p>'
+  echo '<p>형제 모듈 web.consultation.q2 만 적은 줄</p>'
+  echo '<p>문서에만 나오는 consultation/only_doc.html</p>'
+  echo '<p>모듈 web.consultation.q 만 적은 줄</p>'
+  echo '<p>옛 화면 legacy_notes/memo.html 을 옮긴 기록</p>'
+} > "$G/docs/official/master.html"
+printf '# 예제: web.consultation.urls\n' > "$G/docs/tool.py"
+printf '/* consultation/card.html 의 옛 스타일 */\n' > "$G/docs/site.css"
+printf '// consultation/urls.py 를 부르던 스크립트\n' > "$G/docs/app.js"
+git -C "$G" init -q; commit_all "$G" docs >/dev/null
+mkdir -p "$G/docs/draft" "$G/.dddjango-web/run"
+for x in py html css js; do printf 'consultation/urls.py (미추적 %s)\n' "$x" > "$G/docs/draft/note.$x"; done
+python3 "$SCRIPTS/backstop.py" "$G" --debt-scan --refactor --json "$G/.dddjango-web/run/debt-g0.json" >/dev/null
+RG() { (cd "$G" && python3 "$SCRIPTS/refactor_audit.py" "$@" 2>&1); }
+ONCE() { [ "$(grep -cF -- "$1" <<<"$2")" = 1 ] && echo 0 || echo 9; }   # ONCE <문자열> <본문> — 정확히 한 줄이면 0
+DOCSEC='문서 글 적중(알림 — 이동을 막지 않음)'
+GA="$G/.dddjango-web/run/audit/g1"
+OUT=$(RG plan web/consultation --debt .dddjango-web/run/debt-g0.json --out "$GA"); E=$?
+GO=$(PSEC "$GA/plan.md" 'web\/ 밖 참조 줄(치환 후보)'); GD=$(PSEC "$GA/plan.md" "$DOCSEC")
+assert "DG1 plan web/consultation(문서 글 표본 저장소)" 0 "요약: plan 단위 web/consultation" - "$E" "$OUT"
+assert "DG2 최상위 docs/ 의 옛 경로 글(.html — 꼬리 · 점 경로) = web/ 밖 참조 줄 아님" 0 '`config/urls.py:3`' 'docs/official/master.html' 0 "$GO"
+for f in tool.py site.css app.js draft/note; do
+  assert "DG2′ 최상위 docs/$f = web/ 밖 참조 줄 아님" 0 '`config/urls.py:3`' "\`docs/$f" 0 "$GO"
+done
+for w in official/master.html:2 official/master.html:3 official/master.html:4 official/master.html:6 tool.py:1 site.css:1 app.js:1; do
+  assert "DG3 문서 글 적중 절 — 추적 docs/$w" 0 "\`docs/$w\`" - 0 "$GD"
+done
+for x in py html css js; do
+  assert "DG3′ 문서 글 적중 절 — 미추적 docs/draft/note.$x" 0 "\`docs/draft/note.$x:1\`" - 0 "$GD"
+done
+assert "DG3″ 꼬리와 점 경로가 같이 걸린 줄은 한 번만" 0 - - "$(ONCE '`docs/official/master.html:4`' "$GD")" "$GD"
+assert "DG4 docs/ 밖 비테스트 .py(config/urls.py 의 include) = 판정 그대로" 0 '`config/urls.py:3`' - 0 "$GO"
+assert "DG4′ 다른 앱 템플릿 {% include %} = 판정 그대로" 0 '`otherapp/templates/otherapp/page.html:1`' - 0 "$GO"
+assert "DG4″ web/ 밖 테스트 적중 = 판정 그대로" 0 '`web_test/consultation/urls_test.py:1`' - 0 "$GO"
+assert "DG5 기록 폴더 .dddjango/ 의 적중 = 판정 그대로(빼지 않는다)" 0 '`.dddjango/20261010-rec/x.py:1`' - 0 "$GO"
+assert "DG5′ .dddjango/ 적중은 알림 절이 아니다" 0 '`docs/tool.py:1`' '.dddjango/' 0 "$GD"
+assert "DG5″ 기록 폴더 .dddjango-web/ = 판정 0 · 알림 0(그대로)" 0 '`docs/tool.py:1`' '.dddjango-web/' 0 "$GO$GD"
+assert "DG6 이름이 비슷한 docs_site/ = 판정" 0 '`docs_site/x.html:1`' - 0 "$GO"
+assert "DG6′ 이름이 비슷한 mydocs/ = 판정" 0 '`mydocs/x.html:1`' - 0 "$GO"
+assert "DG6″ docs_site/ 는 알림 절이 아니다" 0 '`docs/site.css:1`' 'docs_site/' 0 "$GD"
+assert "DG6‴ mydocs/ 는 알림 절이 아니다" 0 '`docs/site.css:1`' 'mydocs/' 0 "$GD"
+assert "DG7 최상위가 아닌 web/docs/ = web/ 참조 줄(소비자)" 0 '`web/docs/x.html:1`' - 0 "$(PSEC "$GA/plan.md" '경계 교차 소비자')"
+assert "DG7′ web/docs/ 는 알림 절이 아니다" 0 '`docs/site.css:1`' 'web/docs/' 0 "$GD"
+assert "DG8 docs/x.md = 어느 쪽에도 없음" 0 '`docs/tool.py:1`' 'docs/x.md' 0 "$GO$GD"
+OUT=$(RG plan web/static/images --debt .dddjango-web/run/debt-g0.json --out "$G/.dddjango-web/run/audit/g2"); E=$?
+assert "DG9 다른 앱 템플릿 {% static %} = 판정 그대로 · 같은 꼬리의 docs/ 글은 판정 밖" 0 '`otherapp/templates/otherapp/page.html:2`' 'docs/official' "$E" "$(PSEC "$G/.dddjango-web/run/audit/g2/plan.md" 'web\/ 밖 참조 줄(치환 후보)')"
+assert "DG9′ 정적 파일 꼬리의 docs/ 글 = 문서 글 적중 절" 0 '`docs/official/master.html:3`' - 0 "$(PSEC "$G/.dddjango-web/run/audit/g2/plan.md" "$DOCSEC")"
+OUT=$(RG plan web/legacy_notes --debt .dddjango-web/run/debt-g0.json --out "$G/.dddjango-web/run/audit/g3"); E=$?
+assert "DG9a 옛 배치 파일(개명·이동 키 ST0)의 옛 경로가 docs/ 글에만 있다 = 문서 글 적중 1 · 요약에 건수" 0 "문서 글 적중 1 →" - "$E" "$OUT"
+assert "DG9b 그 파일의 web/ 밖 참조 줄 = 없음(개명·이동을 막는 줄 0)" 0 "- 없음" "docs/" 0 "$(PSEC "$G/.dddjango-web/run/audit/g3/plan.md" 'web\/ 밖 참조 줄(치환 후보)')"
+assert "DG9c 그 줄은 문서 글 적중 절에" 0 '`docs/official/master.html:8`' - 0 "$(PSEC "$G/.dddjango-web/run/audit/g3/plan.md" "$DOCSEC")"
+assert "DG9d 그 키는 범위 안 키 그대로(문서 글이 키를 빼지 않는다)" 0 '`ST0|legacy_notes/memo.html`' - 0 "$(PSEC "$G/.dddjango-web/run/audit/g3/plan.md" '범위 안 키')"
+OUT=$(RG plan web/legacy_notes --debt .dddjango-web/run/debt-g0.json --against "$G/.dddjango-web/run/audit/g3/plan.md"); E=$?
+assert "DG9e 같은 트리 --against = 같음" 0 "plan --against 같음" - "$E" "$OUT"
+printf '<p>legacy_notes/memo.html 을 다시 적은 새 문서</p>\n' > "$G/docs/later.html"
+OUT=$(RG plan web/legacy_notes --debt .dddjango-web/run/debt-g0.json --against "$G/.dddjango-web/run/audit/g3/plan.md"); E=$?
+assert "DG9f 문서 글이 늘어도 --against = 같음(문서 글 적중은 여섯 목록이 아니다)" 0 "plan --against 같음" - "$E" "$OUT"
+rm "$G/docs/later.html"
+OUT=$(cd "$G" && python3 - "$SCRIPTS" <<'PY'
+import sys
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+import refactor_audit as ra
+from src import debt
+p = Path('.').resolve()
+docs = list(debt.DOC_PATHSPEC)
+fmt = lambda hits: sorted('%s:%d' % (a, b) for a, b, _c in hits)
+print('판정 문서만', fmt(debt.reference_lines(p, ['consultation/only_doc.html'])))
+print('알림 문서만', fmt(debt.reference_lines(p, ['consultation/only_doc.html'], paths=docs)))
+print('판정 점', fmt(debt.reference_lines(p, ['web.consultation.urls'], word=True)))
+print('알림 점', fmt(debt.reference_lines(p, ['web.consultation.urls'], word=True, paths=docs)))
+print('알림 형제 q', fmt(debt.reference_lines(p, ['web.consultation.q'], word=True, paths=docs)))
+names = ['consultation/q.py', 'consultation/q2.py', 'consultation/urls.py']
+r = ra._Refs(p)
+r.warm(names)
+r.warm_docs(names)
+print('분배 q', fmt(r.docs('consultation/q.py')))
+print('분배 q2', fmt(r.docs('consultation/q2.py')))
+print('판정 캐시 속 docs/', sorted(h[0] for f in r.memo for h in r.memo[f] if h[0].startswith('docs/')))
+print('알림 캐시 속 docs/ 밖', sorted(h[0] for f in r.doc_memo for h in r.doc_memo[f] if not h[0].startswith('docs/')))
+print('판정 캐시 urls', fmt(r('consultation/urls.py')))
+PY
+)
+assert "DG10 문서에만 나오는 꼬리 = 판정 적중 0" 0 "판정 문서만 []" - 0 "$OUT"
+assert "DG10′ 문서에만 나오는 꼬리 = 알림 적중" 0 "알림 문서만 ['docs/official/master.html:6']" - 0 "$OUT"
+assert "DG10″ 문서와 실제 참조가 같이 걸린 점 경로 — 실제 참조는 판정에 남는다" 0 "판정 점 ['.dddjango/20261010-rec/x.py:1', 'config/urls.py:3', 'web_test/consultation/urls_test.py:1']" - 0 "$OUT"
+assert "DG10‴ 같은 점 경로의 알림 = docs/ 의 줄만(.md 밖)" 0 "알림 점 ['docs/official/master.html:3', 'docs/official/master.html:4', 'docs/tool.py:1']" - 0 "$OUT"
+assert "DG11 알림도 -w 성분 경계 — web.consultation.q 가 web.consultation.q2 줄을 잡지 않는다" 0 "알림 형제 q ['docs/official/master.html:7']" - 0 "$OUT"
+assert "DG11′ 문서 캐시의 파일별 분배 — q" 0 "분배 q ['docs/official/master.html:7']" - 0 "$OUT"
+assert "DG11″ 문서 캐시의 파일별 분배 — q2" 0 "분배 q2 ['docs/official/master.html:5']" - 0 "$OUT"
+assert "DG12 판정 캐시에 docs/ 줄이 섞이지 않는다" 0 "판정 캐시 속 docs/ []" - 0 "$OUT"
+assert "DG12′ 문서 캐시에 docs/ 밖 줄이 섞이지 않는다" 0 "알림 캐시 속 docs/ 밖 []" - 0 "$OUT"
+assert "DG12″ 판정 캐시 = docs/ 밖 참조 줄 그대로" 0 "판정 캐시 urls ['.dddjango/20261010-rec/x.py:1', 'config/urls.py:3', 'web_test/consultation/urls_test.py:1']" - 0 "$OUT"
+# 프로젝트 루트가 저장소 하위 폴더 — 그 폴더의 docs/ 가 문서 자리다(저장소 최상위 docs/ 는 조회 밖)
+SR="$T/subrepo"; SP2="$SR/proj"
+mkdir -p "$SR/docs" "$SP2/docs/guide" "$SP2/web/consultation" "$SP2/config"
+: > "$SP2/web/__init__.py"
+printf 'urlpatterns = []\n' > "$SP2/web/consultation/urls.py"
+printf "urlpatterns = [include('web.consultation.urls')]\n" > "$SP2/config/urls.py"
+printf '<p>web/consultation/urls.py</p>\n' > "$SP2/docs/guide/move.html"
+printf '<p>web/consultation/urls.py</p>\n' > "$SR/docs/top.html"
+git -C "$SR" init -q; commit_all "$SR" sub >/dev/null
+mkdir -p "$SP2/.dddjango-web/run"
+python3 "$SCRIPTS/backstop.py" "$SP2" --debt-scan --refactor --json "$SP2/.dddjango-web/run/debt-g0.json" >/dev/null
+OUT=$(cd "$SP2" && python3 "$SCRIPTS/refactor_audit.py" plan web/consultation --debt .dddjango-web/run/debt-g0.json --out "$SP2/.dddjango-web/run/audit/s1" 2>&1); E=$?
+assert "DG13 하위 폴더 루트 — 그 폴더의 docs/ 글은 판정 밖 · docs/ 밖 참조는 판정" 0 '`config/urls.py:1`' 'docs/' "$E" "$(PSEC "$SP2/.dddjango-web/run/audit/s1/plan.md" 'web\/ 밖 참조 줄(치환 후보)')"
+assert "DG13′ 하위 폴더 루트 — 알림 절은 그 폴더의 docs/ 줄만(저장소 최상위 docs/ 없음)" 0 '`docs/guide/move.html:1`' 'top.html' 0 "$(PSEC "$SP2/.dddjango-web/run/audit/s1/plan.md" "$DOCSEC")"
+# plan --names — 파일 이동 · 폴더 이동 · 이름 쌍마다 문서 글 적중 절과 알림 명령 기록
+printf '## 슬라이스 0\n\n- 경로: `consultation/urls.py` → `application/consultation/consultation_router.py`\n' > "$T/dg-file.md"
+OUT=$(RG plan web/consultation --debt .dddjango-web/run/debt-g0.json --out "$GA" --names "$T/dg-file.md"); E=$?
+ND=$(PSEC "$GA/plan-names.md" "$DOCSEC"); NC=$(PSEC "$GA/plan-names.md" 'grep 명령')
+assert "DG14 --names 파일 이동 쌍 — 문서 글 적중 절(꼬리 적중 · 사유)" 0 '`docs/official/master.html:2` — 경로 `consultation/urls.py`' - "$E" "$ND"
+assert "DG14′ 파일 이동 쌍 — 점 경로(-w) 적중 줄 · 다른 파일의 문서 글은 없음" 0 '`docs/tool.py:1`' 'docs/site.css' 0 "$ND"
+assert "DG14″ 파일 이동 쌍 — 꼬리와 점 경로가 같이 걸린 줄은 한 번만" 0 - - "$(ONCE '`docs/official/master.html:4`' "$ND")" "$ND"
+assert "DG14‴ 파일 이동 쌍 — 문서 글은 (나) 줄이 아니다" 0 "(나) 줄 0" - "$E" "$OUT"
+assert "DG15 명령 기록 — 판정 명령(문면과 같은 pathspec 꼴)" 0 "git grep -n -F -e consultation/urls.py -- web web_test '*.py' '*.html' '*.css' '*.js' ':(exclude).dddjango-web' ':(exclude)docs' ':(exclude)web/static/vendor' ':(exclude)web/sdk_registry.json'" - 0 "$NC"
+assert "DG15′ 명령 기록 — 알림 명령(옵션이 같고 pathspec 만 다르다)" 0 "git grep -n -F -e consultation/urls.py -- 'docs/*.py' 'docs/*.html' 'docs/*.css' 'docs/*.js'" - 0 "$NC"
+assert "DG15″ 명령 기록 — 점 경로 알림 명령(-w)" 0 "git grep -n -F -w -e web.consultation.urls -- 'docs/*.py' 'docs/*.html' 'docs/*.css' 'docs/*.js'" - 0 "$NC"
+OUT=$(cd "$G" && python3 - "$SCRIPTS" "$GA" <<'PY'
+import sys
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+import refactor_audit as ra
+plan = ra.Plan(Path(sys.argv[2]))
+print('web 밖 허용', sorted(k for k in plan.allowed if not k.startswith('web/')))
+PY
+)
+assert "DG16 문서 글 적중 줄은 편집 허용 줄이 아니다(plan-names 의 web/ 줄만 읽는다)" 0 "web 밖 허용 []" - 0 "$OUT"
+printf '## 슬라이스 0\n\n- 경로: `consultation/` → `application/consultation/legacy/`\n' > "$T/dg-dir.md"
+rm -f "$T/dg-trace.log"
+OUT=$(cd "$G" && GIT_TRACE="$T/dg-trace.log" python3 "$SCRIPTS/refactor_audit.py" plan web/consultation --debt .dddjango-web/run/debt-g0.json --out "$T/dg-dir" --names "$T/dg-dir.md" 2>&1); E=$?
+NG=$(grep -c "built-in: git grep" "$T/dg-trace.log" 2>/dev/null)
+assert "DG17 --names 폴더 이동 쌍 — 구성원 전부의 문서 글" 0 '`docs/site.css:1` — 경로 `consultation/`' - "$E" "$(PSEC "$T/dg-dir/plan-names.md" "$DOCSEC")"
+assert "DG17′ 폴더 이동 쌍 — 문서와 같이 걸린 실제 참조는 (나) 에 남는다" 0 '`web/docs/x.html:1`' 'docs/site.css' 0 "$(PSEC "$T/dg-dir/plan-names.md" '명세 참조 줄 (나)')"
+assert "DG17″ 폴더 이동 쌍 — 알림 조회를 더해도 git grep 호출이 구성원 수와 무관(1 ≤ 호출 ≤ 10)" 0 - - "$([ "$E" = 0 ] && [ "${NG:-0}" -ge 1 ] && [ "${NG:-99}" -le 10 ] && echo 0 || echo 9)" "exit $E · grep ${NG}회"
+printf '## 슬라이스 0\n\n이름: web.consultation.urls.urlpatterns → web.application.consultation.consultation_router.urlpatterns\n' > "$T/dg-name.md"
+OUT=$(RG plan web/consultation --debt .dddjango-web/run/debt-g0.json --out "$T/dg-name" --names "$T/dg-name.md"); E=$?
+assert "DG18 --names 이름 쌍 — 모듈 점 경로의 문서 글(꼬리만 적은 줄은 없음)" 0 '`docs/tool.py:1` — 이름 `web.consultation.urls.urlpatterns`(모듈)' 'master.html:2`' "$E" "$(PSEC "$T/dg-name/plan-names.md" "$DOCSEC")"
+assert "DG18′ 이름 쌍 — 모듈 알림 명령 기록" 0 "git grep -n -F -w -e web.consultation.urls -- 'docs/*.py' 'docs/*.html' 'docs/*.css' 'docs/*.js'" - 0 "$(PSEC "$T/dg-name/plan-names.md" 'grep 명령')"
+# self-test — Coordinator 의 두 자리(G0 «개명·이동 묶음» · «슬라이스 0 호출» 끝 green ③)마다 판정 · 알림 pathspec 을 대조한다
+SELF() { python3 "$SCRIPTS/refactor_audit.py" --platform "$1" --plugin-root "$2" --self-test 2>&1; }
+G0P='\*\*개명·이동 묶음\*\*'; S0P='\*\*슬라이스 0 호출\*\*'
+OLDJ="s#':(exclude)docs' ##"; BADN="s#'docs/\\*\\.html'#'docs/*.htm'#"
+SC="$T/plug-spec"; CO="$PLUGIN/commands/dddjango-web.md"
+mkdir -p "$SC"; cp -R "$PLUGIN/commands" "$PLUGIN/agents" "$PLUGIN/skills" "$SC/"
+OUT=$(SELF claude "$SC"); E=$?
+assert "DG19 설치본 사본 self-test = green(대조 짝)" 0 "red 0" - "$E" "$OUT"
+sed "/$G0P/$OLDJ" "$CO" > "$SC/commands/dddjango-web.md"; OUT=$(SELF claude "$SC"); E=$?
+assert "DG19a G0 묶음 문단만 옛 판정 명령 = red" 2 "참조 완전성 pathspec 상수가 Coordinator «G0 개명·이동 묶음» 문단" "«슬라이스 0 끝 green ③» 문단" "$E" "$OUT"
+sed "/$S0P/$OLDJ" "$CO" > "$SC/commands/dddjango-web.md"; OUT=$(SELF claude "$SC"); E=$?
+assert "DG19b 끝 green ③ 문단만 옛 판정 명령 = red" 2 "참조 완전성 pathspec 상수가 Coordinator «슬라이스 0 끝 green ③» 문단" "«G0 개명·이동 묶음» 문단" "$E" "$OUT"
+sed "/$G0P/$BADN" "$CO" > "$SC/commands/dddjango-web.md"; OUT=$(SELF claude "$SC"); E=$?
+assert "DG19c G0 묶음 문단의 알림 명령만 어긋남 = red" 2 "문서 글 적중(알림) pathspec 상수가 Coordinator «G0 개명·이동 묶음» 문단" "참조 완전성 pathspec 상수" "$E" "$OUT"
+sed "/$S0P/$BADN" "$CO" > "$SC/commands/dddjango-web.md"; OUT=$(SELF claude "$SC"); E=$?
+assert "DG19d 끝 green ③ 문단의 알림 명령만 어긋남 = red" 2 "문서 글 적중(알림) pathspec 상수가 Coordinator «슬라이스 0 끝 green ③» 문단" "참조 완전성 pathspec 상수" "$E" "$OUT"
+CX="$PLUGIN/../codex-dddjango-web"   # Codex 벌은 저장소 배치에서만 옆에 있다(설치본에는 없다 — 그때는 건너뛴다)
+if [ -f "$CX/skills/dddjango-web/SKILL.md" ]; then
+  SX="$T/codex-spec"; XO="$CX/skills/dddjango-web/SKILL.md"
+  mkdir -p "$SX"; cp -R "$CX/skills" "$SX/"
+  OUT=$(SELF codex "$SX"); E=$?
+  assert "DG20 Codex 사본 self-test = green(대조 짝)" 0 "red 0" - "$E" "$OUT"
+  sed "/$G0P/$OLDJ" "$XO" > "$SX/skills/dddjango-web/SKILL.md"; OUT=$(SELF codex "$SX"); E=$?
+  assert "DG20a Codex G0 묶음 문단만 옛 판정 명령 = red" 2 "참조 완전성 pathspec 상수가 Coordinator «G0 개명·이동 묶음» 문단" "«슬라이스 0 끝 green ③» 문단" "$E" "$OUT"
+  sed "/$S0P/$OLDJ" "$XO" > "$SX/skills/dddjango-web/SKILL.md"; OUT=$(SELF codex "$SX"); E=$?
+  assert "DG20b Codex 끝 green ③ 문단만 옛 판정 명령 = red" 2 "참조 완전성 pathspec 상수가 Coordinator «슬라이스 0 끝 green ③» 문단" "«G0 개명·이동 묶음» 문단" "$E" "$OUT"
+  sed "/$G0P/$BADN" "$XO" > "$SX/skills/dddjango-web/SKILL.md"; OUT=$(SELF codex "$SX"); E=$?
+  assert "DG20c Codex G0 묶음 문단의 알림 명령만 어긋남 = red" 2 "문서 글 적중(알림) pathspec 상수가 Coordinator «G0 개명·이동 묶음» 문단" "참조 완전성 pathspec 상수" "$E" "$OUT"
+  sed "/$S0P/$BADN" "$XO" > "$SX/skills/dddjango-web/SKILL.md"; OUT=$(SELF codex "$SX"); E=$?
+  assert "DG20d Codex 끝 green ③ 문단의 알림 명령만 어긋남 = red" 2 "문서 글 적중(알림) pathspec 상수가 Coordinator «슬라이스 0 끝 green ③» 문단" "참조 완전성 pathspec 상수" "$E" "$OUT"
+fi
 
 # ---------- N: area 안 BC · 렌즈 점검 절 · Codex 경로 사상 · 설치본 self-test
 W="$T/areap"

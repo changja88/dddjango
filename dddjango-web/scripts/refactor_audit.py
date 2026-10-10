@@ -13,11 +13,12 @@ Coordinator 만 돌리고, 산출은 파일로 쓰고 경로만 넘긴다. 규�
 사용(대상 프로젝트 루트에서):
   refactor_audit.py plan <단위> --debt <debt-g0.json> --out <audit 폴더>
                                       범위 파일·경계 교차·줄 편집·범위 안 키·렌즈 × 조각 → plan.md
+                                      (문서 자리 `docs/` 의 옛 경로 글은 판정 밖 — «문서 글 적중» 절에 알림으로만)
   refactor_audit.py plan <단위> --debt <debt-g0.json> --against <audit 폴더>/plan.md
                                       G0 정지 재개 조건 ①~④ 대조(기록 plan 무미커밋 · 그 HEAD 이후 범위 파일 무변 ·
                                       범위 미추적 0 · 여섯 목록 같음 — 쓰지 않는다)
   refactor_audit.py plan <단위> --debt <debt-g0.json> --out <audit 폴더> --names <design-spec.md>
-                                      명세 `## 슬라이스 0` 절의 쌍 → 명세 참조 줄 (나) → plan-names.md
+                                      명세 `## 슬라이스 0` 절의 쌍 → 명세 참조 줄 (나) · 문서 글 적중(알림) → plan-names.md
   refactor_audit.py check <audit 폴더>                리뷰어 표 인용·위치 검사 → check.md
   refactor_audit.py check-verdict <audit 폴더> [--feedback <파일>] [--final]
                                       verdict.md 검사 → verdict-log.md append · (exit 0) verdict-final.md · g0-lists.md
@@ -40,13 +41,14 @@ import os
 import re
 import subprocess
 import sys
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from src.debt import (DebtError, SPEC_SLICE0_HEAD, REF_PATHSPEC, debt_universe,  # noqa: E402
-                      module_of, parse_spec_pairs, reference_lines, residual_m_sets, tail_of)
+from src.debt import (DebtError, DOC_PATHSPEC, SPEC_SLICE0_HEAD, REF_PATHSPEC, debt_universe,  # noqa: E402
+                      doc_reference_lines, module_of, parse_spec_pairs, reference_lines, residual_m_sets, tail_of)
 
 _QUOTE_HEAD: "re.Pattern[str]" = re.compile(r"^[ \t]*>[ \t]?", re.M)
 _SPACE: "re.Pattern[str]" = re.compile(r"\s+")
@@ -186,6 +188,17 @@ EDIT_LINE_FAMILIES: "tuple[str, ...]" = ("IM", "PU")
 LOAD_LINE: "re.Pattern[str]" = re.compile(r"<script\b|<link\b|\{%\s*include\b")
 CONSUMER_LINE: "re.Pattern[str]" = re.compile(r"\{%\s*(?:include|extends)\b")
 AGAINST_LISTS: "tuple[str, ...]" = ("범위 파일", "경계 교차", "경계 교차 소비자", "줄 편집", "참조 치환 줄", "범위 안 키")
+# 문서 글 적중(알림) 절 머리 — plan.md · plan-names.md 가 같은 머리를 쓴다. 판정 목록(AGAINST_LISTS)·편집 허용 줄이 아니다.
+DOC_SECTION: str = "문서 글 적중(알림 — 이동을 막지 않음)"
+# Coordinator 문면에서 참조 완전성 명령이 적히는 두 자리(문단 표지 → 이름) — self-test 가 자리마다 판정 · 알림 pathspec 을 대조한다.
+REF_COMMAND_PARAGRAPHS: "tuple[tuple[str, str], ...]" = (("**개명·이동 묶음**", "G0 개명·이동 묶음"),
+                                                        ("**슬라이스 0 호출**", "슬라이스 0 끝 green ③"))
+
+
+def _pathspec_text(spec: "tuple[str, ...]") -> str:
+    """pathspec 을 커맨드 문면의 꼴로 — 셸이 읽는 글자(`*`·`:`·괄호)가 있는 토큰만 작은따옴표로 감싼다."""
+    return "-- " + " ".join(f"'{p}'" if re.search(r"[*:()]", p) else p for p in spec)
+
 
 # 극성 표본(설계 6b §5-2) — (문장, 유효한 허용 술어가 있는가).
 POLARITY_SAMPLES: "tuple[tuple[str, bool], ...]" = (
@@ -692,6 +705,7 @@ class PlanData:
         self.ref_lines: "list[str]" = []                  # `web/…:행`
         self.keys: "dict[str, str]" = {}                 # 키 → 표시(C<n> · 편집 줄 키)
         self.outside_refs: "list[str]" = []               # web/ 밖 `경로:행`
+        self.doc_refs: "list[str]" = []                   # 문서 글 적중(알림) `docs/…:행` — 판정 목록 밖
         self.verdicts: "list[tuple[str, str, str]]" = []  # (정적 파일, 판정, 참조 줄 요약)
 
     def lists(self) -> "dict[str, set[str]]":
@@ -708,28 +722,41 @@ class _Refs:
     """web-상대 파일의 참조 줄(6a 꼬리 grep) — 자기 자신 제외 · 저장소 상대 경로 · 파일마다 한 번만 센다.
 
     `warm` 이 파일 여럿의 꼬리를 git grep 두 번(경로 꼬리 -F 한 번 · 점 경로 -F -w 한 번)으로 모으고 Python 에서 파일별로
-    나눈다 — 경로 꼬리는 부분 문자열, 점 경로는 앞뒤가 낱말 문자가 아닌 적중(`web.a.q` 가 `web.a.q2` 를 잡지 않는다)."""
+    나눈다 — 경로 꼬리는 부분 문자열, 점 경로는 앞뒤가 낱말 문자가 아닌 적중(`web.a.q` 가 `web.a.q2` 를 잡지 않는다).
+    문서 글 적중(알림 pathspec)은 `warm_docs` 가 같은 꼴 두 번으로 따로 모아 `doc_memo` 에 둔다 — 판정 `memo` 와 섞지 않는다."""
 
     def __init__(self, project: Path) -> None:
         self.project: Path = project
         self.memo: "dict[str, list[tuple[str, int, str]]]" = {}
+        self.doc_memo: "dict[str, list[tuple[str, int, str]]]" = {}
 
-    def warm(self, rels: "list[str]") -> None:
-        tails: "dict[str, list[str]]" = {r: tail_of(r) for r in rels if r not in self.memo}
+    def _gather(self, rels: "list[str]", memo: "dict[str, list[tuple[str, int, str]]]",
+                lookup: "Callable[..., list[tuple[str, int, str]]]") -> None:
+        tails: "dict[str, list[str]]" = {r: tail_of(r) for r in rels if r not in memo}
         if not tails:
             return
-        plain = reference_lines(self.project, sorted({t[0] for t in tails.values()}))
-        dotted = reference_lines(self.project, sorted({t[1] for t in tails.values() if len(t) > 1}), word=True)
+        plain = lookup(self.project, sorted({t[0] for t in tails.values()}))
+        dotted = lookup(self.project, sorted({t[1] for t in tails.values() if len(t) > 1}), word=True)
         for rel, t in tails.items():
             hits: "set[tuple[str, int, str]]" = {h for h in plain if t[0] in h[2]}
             if len(t) > 1:
                 edge = re.compile(rf"(?<![{_WORD_EDGE}]){re.escape(t[1])}(?![{_WORD_EDGE}])")
                 hits |= {h for h in dotted if edge.search(h[2])}
-            self.memo[rel] = sorted(h for h in hits if h[0] != "web/" + rel)
+            memo[rel] = sorted(h for h in hits if h[0] != "web/" + rel)
+
+    def warm(self, rels: "list[str]") -> None:
+        self._gather(rels, self.memo, reference_lines)
+
+    def warm_docs(self, rels: "list[str]") -> None:
+        self._gather(rels, self.doc_memo, doc_reference_lines)
 
     def __call__(self, rel: str) -> "list[tuple[str, int, str]]":
         self.warm([rel])
         return self.memo[rel]
+
+    def docs(self, rel: str) -> "list[tuple[str, int, str]]":
+        self.warm_docs([rel])
+        return self.doc_memo[rel]
 
 
 def _owners(refs: _Refs, rel: str, areas: "frozenset[str]", memo: "dict[str, frozenset[str]]",
@@ -829,6 +856,10 @@ def compute_plan(project: Path, unit: str, debt: dict, files: "list[str]", areas
                     data.ref_lines.append(where)
             else:
                 data.outside_refs.append(where)
+    # 문서 글 적중(알림) — 범위 파일과 개명·이동 대상의 옛 경로 글 가운데 문서 자리(DOC_PATHSPEC) 줄. 한 묶음으로 조회한다.
+    noted: "list[str]" = sorted(set(data.scope) | targets)
+    refs.warm_docs(noted)
+    data.doc_refs = sorted({f"{path}:{line}" for f in noted for path, line, _text in refs.docs(f)})
     # 편집 줄 키 · 키 전체 줄 (다)
     edit_lines: "set[tuple[str, int]]" = set()
     for where in list(data.line_edits) + data.ref_lines:
@@ -932,6 +963,7 @@ def _write_plan(project: Path, data: PlanData, out: Path) -> "tuple[int, int]":
     lines += ["## 참조 치환 줄", ""] + ([_item(w) for w in data.ref_lines] or ["- 없음"]) + [""]
     lines += ["## 범위 안 키", ""] + ([_item(k, v) for k, v in sorted(data.keys.items())] or ["- 없음"]) + [""]
     lines += ["## web/ 밖 참조 줄(치환 후보)", ""] + ([_item(w) for w in data.outside_refs] or ["- 없음"]) + [""]
+    lines += [f"## {DOC_SECTION}", ""] + ([_item(w) for w in data.doc_refs] or ["- 없음"]) + [""]
     lines += ["## 조각", "", "| 조각 | 파일 수 | 행 수 |", "|---|---|---|"]
     lines += [f"| {cid} | {len(g)} | {n} |" for cid, g, n in chunks]
     for cid, group, _n in chunks:
@@ -1016,7 +1048,8 @@ def cmd_plan(project: Path, raw_unit: str, debt_path: Path, out: "Path | None", 
     chunks, dirty = _write_plan(project, data, out)
     print(f"요약: plan 단위 {raw_unit} · 범위 파일 {len(data.scope)} · 경계 교차 {len(data.cross)} · "
           f"소비자 {len(data.consumers)} · 줄 편집 {len(data.line_edits)} · 참조 치환 줄 {len(data.ref_lines)} · "
-          f"범위 안 키 {len(data.keys)} · 조각 {chunks} · 파견 {chunks * len(LENSES)} · 미커밋 {dirty} → {out / 'plan.md'}")
+          f"범위 안 키 {len(data.keys)} · 조각 {chunks} · 파견 {chunks * len(LENSES)} · 미커밋 {dirty} · "
+          f"문서 글 적중 {len(data.doc_refs)} → {out / 'plan.md'}")
     return EXIT_OK
 
 
@@ -1030,11 +1063,18 @@ def _plan_names(project: Path, data: PlanData, debt: dict, names: Path, out: Pat
     files: "list[str]" = debt_universe(project)
     commands: "list[str]" = []
     found: "dict[str, str]" = {}
+    docs: "dict[str, str]" = {}                       # 문서 글 적중(알림) `경로:행` → 사유 — (나) 줄이 아니다
+    judged: str = _pathspec_text(REF_PATHSPEC)
+    noted: str = _pathspec_text(DOC_PATHSPEC)
 
     def keep(hits: "list[tuple[str, int, str]]", why: str) -> None:
         for path, line, _text in hits:
             if path.startswith("web/") and path not in scope_paths:
                 found.setdefault(f"{path}:{line}", why)
+
+    def note(hits: "list[tuple[str, int, str]]", why: str) -> None:
+        for path, line, _text in hits:                # 같은 줄이 여러 꼬리에 걸려도 한 번만
+            docs.setdefault(f"{path}:{line}", why)
 
     for old, _new in paths:                           # 한 쌍의 구성원은 표지가 같다 — 쌍마다 -F 한 번 · -F -w 한 번(합집합)
         members: "list[str]" = [f for f in files if f.startswith(old)] if old.endswith("/") else [old]
@@ -1043,17 +1083,20 @@ def _plan_names(project: Path, data: PlanData, debt: dict, names: Path, out: Pat
         for f in members:
             tails = tail_of(f)
             plain.append(tails[0])
-            commands.append(f"git grep -n -F -e {tails[0]} -- {' '.join(REF_PATHSPEC)}")
+            commands += [f"git grep -n -F -e {tails[0]} {judged}", f"git grep -n -F -e {tails[0]} {noted}"]
             if len(tails) > 1:
                 dotted.append(tails[1])
-                commands.append(f"git grep -n -F -w -e {tails[1]} -- {' '.join(REF_PATHSPEC)}")
+                commands += [f"git grep -n -F -w -e {tails[1]} {judged}", f"git grep -n -F -w -e {tails[1]} {noted}"]
         keep(reference_lines(project, plain), f"경로 `{old}`")
         keep(reference_lines(project, dotted, word=True), f"경로 `{old}`")
+        note(doc_reference_lines(project, plain), f"경로 `{old}`")       # 알림 조회도 쌍마다 같은 꼴 두 번
+        note(doc_reference_lines(project, dotted, word=True), f"경로 `{old}`")
     for old, _new in pairs:
         module, name = old.rsplit(".", 1)
         module_hits = reference_lines(project, [module], word=True)
-        commands.append(f"git grep -n -F -w -e {module} -- {' '.join(REF_PATHSPEC)}")
+        commands += [f"git grep -n -F -w -e {module} {judged}", f"git grep -n -F -w -e {module} {noted}"]
         keep(module_hits, f"이름 `{old}`(모듈)")
+        note(doc_reference_lines(project, [module], word=True), f"이름 `{old}`(모듈)")
         importers: "list[str]" = sorted({p for p, _l, _t in module_hits if p.startswith("web/")})
         if importers:
             # 맨 이름은 옛 모듈을 참조하는 파일에서만 — BC 마다 같은 이름 helper 를 두는 정형(반복 > 상속).
@@ -1072,11 +1115,12 @@ def _plan_names(project: Path, data: PlanData, debt: dict, names: Path, out: Pat
     body += ["", "## 편집 줄 키(G0 재승인 대상)", ""]
     body += [_item(k, data.keys[k]) for k in sorted(new_keys)] or ["- 없음"]
     body += ["", "## 키 전체 줄 (다)", ""] + ([_item(w) for w in key_full] or ["- 없음"])
+    body += ["", f"## {DOC_SECTION}", ""] + ([_item(w, why) for w, why in sorted(docs.items())] or ["- 없음"])
     body += ["", "## grep 명령", ""] + [f"- `{c}`" for c in commands] + [""]
     out.mkdir(parents=True, exist_ok=True)
     (out / "plan-names.md").write_text("\n".join(body), encoding="utf-8")
     print(f"요약: plan --names 쌍 경로 {len(paths)} · 이름 {len(pairs)} · (나) 줄 {len(found)} · "
-          f"편집 줄 키 {len(new_keys)} · 키 전체 줄 {len(key_full)} → {out / 'plan-names.md'}")
+          f"편집 줄 키 {len(new_keys)} · 키 전체 줄 {len(key_full)} · 문서 글 적중 {len(docs)} → {out / 'plan-names.md'}")
     return EXIT_OK
 
 
@@ -1115,7 +1159,8 @@ class Plan:
         if names.is_file():
             for w in set(re.findall(r"^- `([^`]+:\d+)`", _read(names), re.M)):
                 path, _s, line = w.rpartition(":")
-                self.allowed.setdefault(path, set()).add(int(line))
+                if path.startswith("web/"):            # (나)·(다) 는 web/ 줄뿐이다 — 문서 글 적중 절의 줄은 편집 허용 줄이 아니다
+                    self.allowed.setdefault(path, set()).add(int(line))
         sec: str = text.split("## 파견", 1)[1].split("\n## ", 1)[0] if "## 파견" in text else ""
         self.dispatch: "list[tuple[str, str, str]]" = [(r[0], r[1], r[2]) for r in _table_rows(sec)
                                                       if len(r) >= 3 and r[0].endswith(".md")]
@@ -2229,9 +2274,15 @@ def cmd_self_test(corpus: Corpus) -> int:
         reds.append(str(exc))
     if corpus.path_of(COORDINATOR).is_file():
         coord: str = _read(corpus.path_of(COORDINATOR))
-        spec: str = "-- " + " ".join(f"'{p}'" if re.search(r"[*:()]", p) else p for p in REF_PATHSPEC)
-        if spec not in coord:
-            reds.append(f"참조 완전성 pathspec 상수가 Coordinator 문면의 grep 명령과 다르다: {spec}")
+        for mark, place in REF_COMMAND_PARAGRAPHS:       # 문면 어딘가가 아니라 명령이 적히는 자리마다 본다
+            found: "list[str]" = [ln for ln in coord.splitlines() if mark in ln]
+            if len(found) != 1:
+                reds.append(f"Coordinator «{place}» 문단(표지 {mark})이 {len(found)}개다 — 하나여야 grep 명령을 대조한다")
+                continue
+            for spec, label in ((REF_PATHSPEC, "참조 완전성"), (DOC_PATHSPEC, "문서 글 적중(알림)")):
+                if _pathspec_text(spec) not in found[0]:
+                    reds.append(f"{label} pathspec 상수가 Coordinator «{place}» 문단의 grep 명령과 다르다: "
+                                f"{_pathspec_text(spec)}")
         if STANDING_MARK not in coord:
             reds.append(f"상시 답 범주 문면(«{STANDING_MARK}»)을 Coordinator 에서 찾지 못했다")
         else:

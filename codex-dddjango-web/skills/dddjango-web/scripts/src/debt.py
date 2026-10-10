@@ -58,9 +58,14 @@ MODE_REFACTOR: str = 'refactor'
 SPEC_SLICE0_HEAD: str = '## 슬라이스 0'
 SPEC_ROW_PATH: str = '경로'
 SPEC_ROW_NAME: str = '이름'
-# 6a 참조 완전성 grep 의 pathspec — 커맨드 문면의 명령과 같은 문자열이다(refactor_audit --self-test).
+# 6a 참조 완전성 grep 의 pathspec(판정) — 커맨드 문면의 명령과 같은 문자열이다(refactor_audit --self-test).
+# 프로젝트 루트 바로 아래 docs/ 는 문서 자리다 — 그 안의 옛 경로 글은 참조가 아니라 판정에 들지 않는다.
 REF_PATHSPEC: Tuple[str, ...] = ('web', 'web_test', '*.py', '*.html', '*.css', '*.js', ':(exclude).dddjango-web',
-                                  ':(exclude)web/static/vendor', ':(exclude)web/sdk_registry.json')
+                                  ':(exclude)docs', ':(exclude)web/static/vendor',
+                                  ':(exclude)web/sdk_registry.json')
+# 문서 글 적중(알림)의 pathspec — 판정에 들지 않는다. 조회 옵션은 판정과 같고 pathspec 만 다르다
+# (`*` 가 `/` 를 넘어 docs/ 아래 깊은 파일까지 잡는다 — `:(glob)` 로 바꾸지 않는다).
+DOC_PATHSPEC: Tuple[str, ...] = ('docs/*.py', 'docs/*.html', 'docs/*.css', 'docs/*.js')
 # 빚 스캔이 도는 패밀리와 그 검사 집합 — 검사 집합이 다른 동결본으로는 잔존을 판정하지 않는다(scanner 지문).
 DEBT_FAMILIES: Tuple[str, ...] = ('st', 'md', 'im', 'nm', 'pu')
 CHECK_IDS: Tuple[str, ...] = tuple([c for c in CORE_CHECK_IDS if c[:2].lower() in DEBT_FAMILIES]
@@ -627,6 +632,11 @@ def reference_lines(root: Path, needles: List[str], word: bool = False,
         path, line, text = raw.split(':', 2)
         hits.append((path, int(line), text))
     return hits
+
+
+def doc_reference_lines(root: Path, needles: List[str], word: bool = False) -> List[Tuple[str, int, str]]:
+    """문서 글 적중(알림) — reference_lines 와 같은 조회를 DOC_PATHSPEC 으로 한다. 판정에 들지 않는다."""
+    return reference_lines(root, needles, word=word, paths=list(DOC_PATHSPEC))
 
 
 def is_test_path(path: str) -> bool:
