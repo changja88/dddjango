@@ -39,6 +39,8 @@ overlap 절 — #62·#474 는 handler 행, ⓓ#125 는 route 함수 def 행 좌�
   |                    |                | C2 `caught exception read outside the approved event-value form`(응용 · 계약) |
   | preserve-established | 모든 읽기에 #474(그대로) · `--event-value` 는 사용 오류 | 판정 0(그대로) |
   비켜 주기는 api/<area>/<area>_controller.py 진입점(승격 본체 포함)에만 — webhook · OHS `*_service.py` 는 그대로다.
+  머리 대입(키 · 값)에 실을 수 있는 것은 승인 필드 읽기 꼴뿐이다 — 잡은 예외를 통째로 쓰면(`f"{n}"` · `"%s" % n` · `n`)
+  호출이 없어도 막는다(가지 문법 줄 + 응용 catch 는 C2 · 도메인 catch 는 트리 #474 — 구현 검토 보완).
 
 그래프 좌표(T2-2): 규범 정본 = 온톨로지 그래프(`ontology/rules/`) · 이 검사기의 #N ↔ Work 조인은
   alias 대장(`ontology/wiring/aliases.ttl`)이 소유한다. 조인 확정: 없음(대장 미등재 — #74 소유자
@@ -3324,11 +3326,31 @@ def _exact_status_return(
     return call
 
 
+def _whole_caught_loads(statement: ast.AST, caught: str | None) -> list[ast.Name]:
+    """문장 안에서 잡은 이름을 «통째» 로 쓴 Load — 속성 읽기 `n.<x>` 의 `n` 은 뺀다(그쪽은 사건 값 꼴 판정 몫)."""
+    if not caught:
+        return []
+    attribute_bases = {
+        id(node.value)
+        for node in ast.walk(statement)
+        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name)
+    }
+    return [
+        node
+        for node in ast.walk(statement)
+        if isinstance(node, ast.Name)
+        and node.id == caught
+        and isinstance(node.ctx, ast.Load)
+        and id(node) not in attribute_bases
+    ]
+
+
 def _header_assignment_valid(
     operation: Operation,
     statement: ast.stmt,
     analysis: list[str],
     atoms: dict[int, str] | None = None,
+    caught: str | None = None,
 ) -> bool:
     if not isinstance(statement, ast.Assign) or len(statement.targets) != 1:
         return False
@@ -3338,6 +3360,10 @@ def _header_assignment_valid(
         and isinstance(target.value, ast.Name)
         and target.value.id in operation.response_parameters
     ):
+        return False
+    if _whole_caught_loads(statement, caught):
+        # F4-80 구현 검토 — 머리 대입(키 · 값)에 잡은 예외를 통째로 쓰면(`f"{n}"` · `"%s" % n` · `n` …) 호출이 없어도
+        # 막는다. forwarding 은 호출 인자만 보므로 이 꼴을 놓친다 — 머리에 실을 수 있는 것은 승인 필드 읽기 꼴뿐이다.
         return False
     atoms = atoms or {}
     value_atoms = [node for node in ast.walk(statement.value) if id(node) in atoms]
@@ -3379,6 +3405,7 @@ def _validate_mapping_body(
     category: str,
     delegated_category: str,
     atoms: dict[int, str] | None = None,
+    caught: str | None = None,
 ) -> bool:
     body = _without_docstrings(statements)
     if len(body) < 2:
@@ -3426,7 +3453,7 @@ def _validate_mapping_body(
         valid = False
 
     for statement in body[1:-1]:
-        if not _header_assignment_valid(operation, statement, analysis, atoms):
+        if not _header_assignment_valid(operation, statement, analysis, atoms, caught):
             valid = False
     final = body[-1]
     status_call = (
@@ -3572,12 +3599,16 @@ class EventReads:
     # 속성 읽기 `n.<x>` 의 n(Name) id — 예외 «통째» 쓰기(`raise n` · `helper(n)` · `str(n)`)는 forwarding 몫이라
     # C2(꼴 밖 «읽기»)에서 빠진다(설계 A.3 «계속 막는 것» 표).
     attribute_reads: set[int] | None = None
+    # 머리 대입 꼴 문장(`<x>[<키>] = <값>`)의 키 · 값 안에서 잡은 이름을 통째로 쓴 Load 의 id — 호출이 없어 forwarding 이
+    # 못 보는 자리라 C2 가 맡는다(F4-80 구현 검토).
+    header_whole: set[int] | None = None
 
     def __post_init__(self) -> None:
         self.in_form = {} if self.in_form is None else self.in_form
         self.out_of_form = [] if self.out_of_form is None else self.out_of_form
         self.atoms = {} if self.atoms is None else self.atoms
         self.attribute_reads = set() if self.attribute_reads is None else self.attribute_reads
+        self.header_whole = set() if self.header_whole is None else self.header_whole
 
 
 def _sole_import_origins(tree: ast.Module, path: Path) -> dict[str, str]:
@@ -3799,6 +3830,15 @@ def _event_value_reads(
         if isinstance(node, ast.Attribute)
         and isinstance(node.value, ast.Name)
         and node.value.id == caught
+    }
+    reads.header_whole = {
+        id(name)
+        for statement in handler.body
+        for node in ast.walk(statement)
+        if isinstance(node, ast.Assign)
+        and len(node.targets) == 1
+        and isinstance(node.targets[0], ast.Subscript)
+        for name in _whole_caught_loads(node, caught)
     }
     rebound = any(
         isinstance(node, ast.Name) and node.id == caught and not isinstance(node.ctx, ast.Load)
@@ -4125,6 +4165,7 @@ def _validate_presence_branch(
             category,
             delegated_category,
             reads.atoms,
+            reads.caught,
         ):
             return False
         body = _without_docstrings(branch)
@@ -4313,6 +4354,7 @@ def _analyze_try(
             allowed_status_calls,
             *categories,
             reads.atoms,
+            handler.name,
         )
 
 
@@ -4325,8 +4367,8 @@ def _event_value_findings(
     seen: set[tuple[Path, int, str]],
 ) -> None:
     """C1 — 꼴 맞는 읽기의 `원 경로.필드` 가 `--event-value` 목록 밖(도메인 = #474 · handler 행 overlap / 응용 = 계약).
-    C2 — 응용 catch 의 꼴 밖 속성 읽기 `n.<x>`(계약 — 예외 통째 쓰기는 forwarding 몫). 도메인 catch 의 꼴 밖 읽기는
-    트리 #474 가 모든 프로필에서 낸다(새 줄 없음)."""
+    C2 — 응용 catch 의 꼴 밖 속성 읽기 `n.<x>` 와 머리 대입(키 · 값) 안 통째 쓰기(계약 — 호출 인자 속 통째 쓰기는
+    forwarding 몫). 도메인 catch 의 꼴 밖 읽기는 트리 #474 가 모든 프로필에서 낸다(새 줄 없음)."""
     if not reads.in_form and not reads.out_of_form:
         return
     layers: set[str | None] = {
@@ -4355,7 +4397,10 @@ def _event_value_findings(
         )
     if layer == "application":
         for name_node in reads.out_of_form:
-            if id(name_node) not in reads.attribute_reads:
+            if (
+                id(name_node) not in reads.attribute_reads
+                and id(name_node) not in reads.header_whole
+            ):
                 continue
             _append_finding(
                 findings,

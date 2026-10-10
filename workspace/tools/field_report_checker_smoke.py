@@ -2,6 +2,7 @@
 """현장 F4/F7/F8 회귀: 골격·의미 후보·앵커 전체 수집의 반대 대조를 고정한다."""
 from __future__ import annotations
 
+import ast
 import contextlib
 import csv
 import hashlib
@@ -2077,10 +2078,55 @@ def handle_provider_event(request: HttpRequest, response: HttpResponse) -> None:
                      module="AccountSuspended = InvalidCredentials\n"), [EV_LABEL],
             {mode: (2, [("#474", '= suspended.reason_label', T474)]) for mode in ("auto", "cj", "bl", "pre")}),
     # 덧붙임 1 ① — 12-slot 없음 + 오류 status 선언 없음 + 꼴 맞는 승인 밖 읽기: auto 는 비켜 준다(반송은 Coordinator R-0331 몫)
-    "N29": (ev_files(ev_arm('''payload_error: AccountsErrorSchema = AccountSuspendedError(message=suspended.reason_code)
+    # (구현 검토 보완) 입력 조건을 그대로 만든다 — `response=` 에 오류 status 선언이 없고 두 가지 모두 raw 403 이다.
+    "N29": ({EV_CTRL: ev_controller(ev_arm('''payload_error: AccountsErrorSchema = AccountSuspendedError(message=suspended.reason_code)
 return JsonResponse(payload_error.model_dump(), status=403)
-'''), imports="from django.http import JsonResponse\n"), [], {"auto": (0, [])}),
+'''), imports="from django.http import JsonResponse\n").replace(
+        "response={200: AccountOut, 403: InvalidCredentialsError | AccountSuspendedError},", "response={200: AccountOut},").replace(
+        "            invalid_credentials: AccountsErrorSchema = InvalidCredentialsError()\n"
+        "            return Status(403, invalid_credentials)\n",
+        '            return JsonResponse({"error": "invalid_credentials"}, status=403)\n')}, [], {"auto": (0, [])}),
 })
+
+
+def _ev_whole_in_header(name: str, template: str, form: str = "f2") -> None:
+    """잡은 예외를 «통째» 로, 호출 없이 머리 대입(값 · 키)에 싣는 한 변종(구현 검토 차단 1) — forwarding 은 호출 인자만 본다.
+
+    도메인 판은 트리 #474(모든 프로필) · 응용 판은 code-json 에서 C2(그 머리 행) + 가지 문법 줄 · auto 는 code lane 이
+    없어 응용 판이 통과한다(R-0331 몫). form: f2 = 꼴 2 의 값 있는 가지 · f1ev = 꼴 1 + 승인 사건 값 · f1no = 사건 값 없는 가지."""
+    for suffix, caught, head, origin in (("", "suspended", "AccountSuspended as suspended", EV_SUSP),
+                                         ("-app", "blocked", "LoginBlocked as blocked", EV_APP)):
+        line = template.replace("NAME", caught)
+        if form == "f2":
+            present = ("until_error: AccountsErrorSchema = AccountSuspendedError()\n"
+                       f"response[_LOGIN_BLOCKED_UNTIL_HEADER] = {caught}.blocked_until.astimezone(UTC).isoformat()\n"
+                       f"{line}\nreturn Status(403, until_error)\n")
+            body = ev_form2(present, EV_ABSENT_STATIC, f"{caught}.blocked_until is not None")
+            flags = [f"{origin}.blocked_until"]
+            code_lane = [("-", f"if {caught}.blocked_until is not None", EV_ARM), *EV_OWN4]
+        else:
+            body = ev_single(f"message={caught}.reason_label" if form == "f1ev" else "", headers=(line,))
+            flags = [f"{origin}.reason_label"] if form == "f1ev" else []
+            code_lane = [("-", "suspended_error: AccountsErrorSchema", EV_ARM), *EV_OWN2]
+        files = ev_files(ev_arm(body, head=head), imports=EV_APP_IMPORT if suffix else "")
+        if suffix:
+            expectations = {"auto": (0, []), "cj": (2, [("-", line, EV_C2), *code_lane]),
+                            "bl": (2, [("-", line, EV_C2), *code_lane])}
+        else:
+            expectations = {"auto": (2, [("#474", line, T474)]), "cj": (2, [("#474", line, T474)]),
+                            "bl": (2, [("#474", line, T474), *code_lane])}
+        EV_CASES[name + suffix] = (files, flags, expectations)
+
+
+_ev_whole_in_header("N30a", 'response["Login-Blocked-Debug"] = f"{NAME}"')
+_ev_whole_in_header("N30b", 'response[f"{NAME}"] = "x"')
+_ev_whole_in_header("N30c", 'response["Login-Blocked-Debug"] = "%s" % NAME')
+_ev_whole_in_header("N30d", 'response["Login-Blocked-Debug"] = "blocked: " + NAME')
+_ev_whole_in_header("N30e", 'response["Login-Blocked-Debug"] = NAME')
+_ev_whole_in_header("N30f", 'response["Login-Blocked-Debug"] = (lambda: NAME)')
+_ev_whole_in_header("N31", 'response["Login-Blocked-Debug"] = f"{NAME}"', form="f1ev")
+_ev_whole_in_header("N32a", 'response["Login-Blocked-Debug"] = f"{NAME}"', form="f1no")
+_ev_whole_in_header("N32b", 'response[f"{NAME}"] = "x"', form="f1no")
 
 # lesson 꼴(트리 밖 `driving_layer/controller.py` — code lane 행렬 픽스처와 같은 자리)
 EV_LESSON_CTRL = "application/lesson/driving_layer/controller.py"
@@ -2300,6 +2346,17 @@ class EventValueRegression(unittest.TestCase):
         self.assertEqual(code, 2, output)
         self.assertIn("신규분(앵커 이후) 1건 · 앵커 기존분(잔존) 0건", output)
         self.assertNotIn("사용 오류", output)
+
+    def test_n29_fixture_declares_no_error_status(self) -> None:
+        # 덧붙임 1 의 누락 사례 입력 조건 — 12-slot 없이(auto) `response=` 에 오류 status 선언이 없고 raw 403 으로 답한다.
+        source = EV_CASES["N29"][0][EV_CTRL]
+        declared = [key.value for node in ast.walk(ast.parse(source)) if isinstance(node, ast.keyword)
+                    and node.arg == "response" and isinstance(node.value, ast.Dict)
+                    for key in node.value.keys if isinstance(key, ast.Constant)]
+        self.assertEqual(declared, [200])
+        self.assertNotIn("Status(4", source)
+        self.assertEqual(source.count("status=403"), 2)
+        self.assertIn("message=suspended.reason_code", source)
 
     def test_event_value_review_duties_are_written(self) -> None:
         """R1 ~ R7 · A.10 · B — 기계 밖 책임이 개정 문장에 글로 있다(문장 있음 대조 · 레인 실제 대조는 G1 · G2 몫)."""
