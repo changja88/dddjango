@@ -28,13 +28,14 @@
 
 from __future__ import annotations
 
+import ast
 import re
-from typing import List, Optional, Set
+from typing import Callable, Dict, Iterator, List, Optional, Set, Tuple, Union
 
 from .common import (
     API_CLIENT, BACKEND_TOP_PKGS, ENTRY_FILES, JSON_FIELD, ROOT_VIEW_TEMPLATE, STDLIB, BackstopContext, Finding,
-    base_name_of, bc_of, ext_of, has_seg, is_bc_root_path, is_standard_path, parent_dir_of, ref_path, scan_tokens,
-    segs_of,
+    MaskedSource, base_name_of, bc_of, ext_of, has_seg, is_bc_root_path, is_standard_path, parent_dir_of, ref_path,
+    scan_tokens, segs_of,
 )
 from .products import Products, products_state
 
@@ -47,6 +48,330 @@ _HTTP_SURFACE: Set[str] = {'requests', 'httpx', 'aiohttp', 'urllib.request', 'ht
 _RULE_MIX: str = 'discipline-houserules §5·§6 제품 CSS 혼입'
 _RULE_SHELL: str = 'discipline-houserules §1·§3·§5 제품 셸'
 _API_LITERAL_RE = re.compile(r'''["'`]\s*/api/''')
+# IM27 리터럴 절반의 예외(.py · AST) — 들어온 요청의 경로를 비교하기만 하는 글자는 API 를 부르는 주소가 아니다.
+#   경로 식 P = 함수 인자 `request` 의 `.path` · `.path_info` · `.get_full_path()` · `.get_full_path_info()`(인자 없이) ·
+#     `.META["PATH_INFO"]` · `.META.get("PATH_INFO")`, 또는 그 함수 안에서 `이름 = P`(`이름: T = P`) 한 번으로만 바인딩된 지역 이름.
+#   빠지는 글자 = `P == "…"` · `"…" == P` · `!=`(연쇄 비교 아님) · `P.startswith(…)` · `P.endswith(…)`(인자 하나 — 글자 또는
+#     글자 튜플) · `P in (…)` · `P not in (…)`(튜플 · 리스트 · 집합 리터럴의 원소) 자리에 직접 놓인 문자열 상수의 그 위치뿐이다
+#     (값이나 줄이 아니다 — 같은 줄의 다른 글자 · 같은 값의 다른 출현은 그대로 IM27).
+#   경계(하나라도 어기면 그 함수의 글자는 하나도 빠지지 않는다): 인자 `request` 가 그 함수에서 다시 바인딩되지 않는다 · P 와 그
+#     지역 이름이 비교 자리(비교식의 피연산자 · startswith/endswith 의 받는 쪽)와 첫 `이름 = P` 밖에서 쓰이지 않는다(호출 인자 ·
+#     반환 · 다른 이름에 대입 · 조건식의 값 · 안쪽 함수 · lambda · comprehension 에서 읽기 포함).
+#   로그 문장의 인자로 읽는 것은 다시 쓰는 것으로 세지 않는다 — 아래 넷이 다 맞을 때만이다(하나라도 어기면 다시 쓰는 것이다).
+#     ① 받는 쪽이 logging 출처로 확인된다: `logging.<수준>(…)` · `logging.getLogger(…).<수준>(…)` · `getLogger(…).<수준>(…)` ·
+#        `<이름>.<수준>(…)`. `logging` · `getLogger` 는 모듈 범위에서 `import logging [as X]` · `from logging import getLogger
+#        [as Y]` 한 번으로만 바인딩되고 그 함수 · 바깥 함수가 다시 바인딩하지 않은 이름, `<이름>` 은 모듈 범위나 그 함수 범위에서
+#        `이름 = logging.getLogger(…)`(`이름: T = …` · `getLogger(…)`) 한 번으로만 바인딩되고 가려지거나 global · nonlocal 로 다시
+#        쓰이지 않는 이름이다.
+#     ② 그 호출이 독립된 표현식 문장이다(반환 · 대입 · 다른 호출의 인자 · await 안이면 아니다).
+#     ③ P 에서 그 호출까지 올라가는 길에 키워드 · f-문자열 · 튜플 · 사전 · 왼쪽이 문자열 상수인 `%` 만 낀다(다른 연산 · 호출 ·
+#        walrus · await · yield · 별표 · 조건식 · 첨자 · 속성 · 안쪽 범위가 끼거나 받는 쪽에서 읽으면 아니다).
+#     ④ 수준 = debug · info · warning · warn · error · exception · critical · log. `log` 는 첫 위치 인자(level)가 있고 P 가 그
+#        자리가 아니다.
+#     로그 인자 안의 `/api/` 글자 자체는 그대로 IM27 이다(빠지는 것은 비교 자리의 글자뿐).
+#   안쪽 범위가 같은 이름을 가리면(인자 · 지역 바인딩 · comprehension 대상) 그 안의 이름은 바깥 것이 아니다 — 바깥 판정에 섞지 않는다.
+#   한계: 이름이 `request` 인 인자가 실제 요청 객체인지 증명하지 않는다 · 값의 흐름을 끝까지 쫓지 않는다(`request` 를 통째로 넘긴
+#     뒤의 사용 · `request` 의 별칭 · getattr 는 보지 않는다). logging 출처를 확인할 수 없는 로그(`self.logger` · 인자로 받은
+#     logger · 함수 안 import · 다른 객체의 같은 이름 메서드)와 응답 · 이동 호출에 경로를 넘기는 꼴(`JsonResponse({"path": path})` ·
+#     `redirect(request.path)`)은 다시 쓰는 것으로 센다(그 함수의 비교 글자는 그대로 IM27 — 과보고). f-문자열 · 인접 문자열 결합 ·
+#     walrus · 변수에 담은 컨테이너 · 템플릿의 같은 꼴은 예외가 아니다(지금 판정 그대로).
+_REQUEST: str = 'request'
+_PATH_ATTRS: Set[str] = {'path', 'path_info'}
+_PATH_CALLS: Set[str] = {'get_full_path', 'get_full_path_info'}
+_PREFIX_CALLS: Set[str] = {'startswith', 'endswith'}
+_LOGGING: str = 'logging'
+_GET_LOGGER: str = 'getLogger'
+_LOG_CALLS: Set[str] = {'debug', 'info', 'warning', 'warn', 'error', 'exception', 'critical', 'log'}
+_LOG_ARG_NODES = (ast.keyword, ast.JoinedStr, ast.FormattedValue, ast.Tuple, ast.Dict)
+_Function = Union[ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda]
+_FUNCTIONS = (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)
+_COMPREHENSIONS = (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)
+_SCOPES = _FUNCTIONS + (ast.ClassDef,) + _COMPREHENSIONS
+# 바인딩 값 — 대상 하나짜리 대입의 값 식 · import 꼴 표지(_LOGGING · _GET_LOGGER) · 그 밖 바인딩은 None
+_Binding = Union[ast.AST, str, None]
+_Bindings = Tuple[Dict[str, List[_Binding]], Set[str], Set[str]]
+# 문자열 리터럴 하나(접두 허용) — 마스킹 본문(tokens_view: 문자열 내용이 공백)에서 본다. 인접 문자열 결합은 맞지 않는다.
+_ONE_LITERAL_RE = re.compile(r'''[rRbBuU]{0,2}("""|\'\'\'|"|')\s*\1''')
+
+
+def _split(scope: ast.AST) -> Tuple[List[ast.AST], List[ast.AST]]:
+    """범위 노드의 자식 → (바깥 범위가 평가하는 것, 자기 범위의 것). 바깥 몫 = 장식자 · 인자 기본값과 주석 · 상속 목록 ·
+    comprehension 의 첫 iter."""
+    if isinstance(scope, _COMPREHENSIONS):
+        first: ast.comprehension = scope.generators[0]
+        return [first.iter], [c for c in ast.iter_child_nodes(scope) if c is not first] + [first.target] + list(first.ifs)
+    body = getattr(scope, 'body')
+    own: List[ast.AST] = list(body) if isinstance(body, list) else [body]
+    mine: Set[int] = {id(b) for b in own}
+    return [c for c in ast.iter_child_nodes(scope) if id(c) not in mine], own
+
+
+def _walk_scope(roots: List[ast.AST]) -> Iterator[Tuple[ast.AST, Optional[ast.AST]]]:
+    """한 범위의 (노드, 부모) — 안쪽 범위 노드는 내되 그 몸으로 들어가지 않고 바깥이 평가하는 자식으로만 들어간다."""
+    stack: List[Tuple[ast.AST, Optional[ast.AST]]] = [(r, None) for r in roots]
+    while stack:
+        node, parent = stack.pop()
+        yield node, parent
+        children = _split(node)[0] if isinstance(node, _SCOPES) else ast.iter_child_nodes(node)
+        stack.extend((c, node) for c in children)
+
+
+def _bindings(roots: List[ast.AST], args: Optional[ast.arguments] = None) -> _Bindings:
+    """한 범위(함수의 자기 범위 · 모듈 본문)의 이름별 바인딩 값(_Binding) · global 선언 이름 · nonlocal 선언 이름.
+    comprehension 안의 walrus 는 이 범위의 바인딩이다."""
+    binds: Dict[str, List[_Binding]] = {}
+    global_names: Set[str] = set()
+    nonlocal_names: Set[str] = set()
+    if args is not None:
+        for a in args.posonlyargs + args.args + args.kwonlyargs + [x for x in (args.vararg, args.kwarg) if x]:
+            binds.setdefault(a.arg, []).append(None)
+    nodes: List[ast.AST] = [n for n, _parent in _walk_scope(roots)]
+    simple: Dict[int, ast.AST] = {}
+    for node in nodes:
+        if isinstance(node, ast.Assign) and len(node.targets) == 1:
+            simple[id(node.targets[0])] = node.value
+        elif isinstance(node, ast.AnnAssign) and node.value is not None:
+            simple[id(node.target)] = node.value
+    for node in nodes:
+        bound: List[Tuple[str, _Binding]] = []
+        if isinstance(node, ast.Name):
+            if isinstance(node.ctx, (ast.Store, ast.Del)):
+                bound = [(node.id, simple.get(id(node)) if isinstance(node.ctx, ast.Store) else None)]
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            bound = [(node.name, None)]
+        elif isinstance(node, _COMPREHENSIONS):
+            bound = [(n.target.id, None) for n in ast.walk(node)
+                     if isinstance(n, ast.NamedExpr) and isinstance(n.target, ast.Name)]
+        elif isinstance(node, ast.ExceptHandler) and node.name:
+            bound = [(node.name, None)]
+        elif isinstance(node, ast.Import):
+            bound = [(al.asname or al.name.split('.')[0], _LOGGING if al.name == _LOGGING else None) for al in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            from_logging: bool = node.module == _LOGGING and not node.level
+            bound = [(al.asname or al.name, _GET_LOGGER if from_logging and al.name == _GET_LOGGER else None)
+                     for al in node.names]
+        elif isinstance(node, (ast.MatchAs, ast.MatchStar)) and node.name:
+            bound = [(node.name, None)]
+        elif isinstance(node, ast.MatchMapping) and node.rest:
+            bound = [(node.rest, None)]
+        elif isinstance(node, ast.Global):
+            global_names.update(node.names)
+        elif isinstance(node, ast.Nonlocal):
+            nonlocal_names.update(node.names)
+        for name, value in bound:
+            binds.setdefault(name, []).append(value)
+    return binds, global_names, nonlocal_names
+
+
+def _fn_bindings(fn: _Function) -> _Bindings:
+    return _bindings(_split(fn)[1], fn.args)
+
+
+def _is_str(node: ast.AST, value: Optional[str] = None) -> bool:
+    return isinstance(node, ast.Constant) and isinstance(node.value, str) and (value is None or node.value == value)
+
+
+def _is_request_meta(node: ast.AST) -> bool:
+    return (isinstance(node, ast.Attribute) and node.attr == 'META'
+            and isinstance(node.value, ast.Name) and node.value.id == _REQUEST)
+
+
+def _is_request_path(node: _Binding) -> bool:
+    """요청 경로 식(이름 `request` 를 직접 읽는 꼴)인가 — 경로 메서드는 인자 · 키워드가 없을 때만."""
+    if isinstance(node, ast.Attribute):
+        return node.attr in _PATH_ATTRS and isinstance(node.value, ast.Name) and node.value.id == _REQUEST
+    if isinstance(node, ast.Subscript):
+        return _is_request_meta(node.value) and _is_str(node.slice, 'PATH_INFO')
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and not node.keywords:
+        func: ast.Attribute = node.func
+        if func.attr in _PATH_CALLS and not node.args:
+            return isinstance(func.value, ast.Name) and func.value.id == _REQUEST
+        if func.attr == 'get' and len(node.args) == 1:
+            return _is_request_meta(func.value) and _is_str(node.args[0], 'PATH_INFO')
+    return False
+
+
+def _shadows(scope: ast.AST) -> Set[str]:
+    """안쪽 범위가 가리는 이름 — 함수 · lambda 는 인자 · 자기 범위 바인딩 · global 선언(nonlocal 선언은 바깥 것 그대로),
+    comprehension 은 for 대상. 클래스 몸은 가리지 않는 것으로 본다(보수적)."""
+    if isinstance(scope, _COMPREHENSIONS):
+        return {n.id for g in scope.generators for n in ast.walk(g.target) if isinstance(n, ast.Name)}
+    if not isinstance(scope, _FUNCTIONS):
+        return set()
+    binds, global_names, nonlocal_names = _fn_bindings(scope)
+    return (set(binds) | global_names) - nonlocal_names
+
+
+def _inner_touches(scope: ast.AST, names: Set[str], request_live: bool) -> bool:
+    """안쪽 범위(와 그 안쪽들)가 가리지 않은 채 바깥의 지역 이름을 건드리거나(읽기 · nonlocal 쓰기) 바깥 `request` 의
+    경로 식을 읽거나 `request` 를 다시 바인딩하는가."""
+    hidden: Set[str] = _shadows(scope)
+    names = names - hidden
+    request_live = request_live and _REQUEST not in hidden
+    if not names and not request_live:
+        return False
+    for node, _parent in _walk_scope(_split(scope)[1]):
+        if isinstance(node, ast.Name):
+            if node.id in names or (request_live and node.id == _REQUEST and not isinstance(node.ctx, ast.Load)):
+                return True
+        elif isinstance(node, _SCOPES):
+            if _inner_touches(node, names, request_live):
+                return True
+        elif request_live and _is_request_path(node):
+            return True
+    return False
+
+
+class _LogSources:
+    """모듈 범위에서 한 번으로만 바인딩된 이름의 바인딩 값 — logging 출처(`import logging` · `from logging import getLogger` ·
+    `이름 = logging.getLogger(…)`) 확인의 바탕. 어느 함수든 global 로 선언한 이름은 다시 쓰일 수 있어 뺀다."""
+
+    def __init__(self, tree: ast.Module) -> None:
+        self._binds: Dict[str, List[_Binding]] = _bindings(list(tree.body))[0]
+        self._rewritten: Set[str] = {n for node in ast.walk(tree) if isinstance(node, ast.Global) for n in node.names}
+
+    def once(self, name: str) -> _Binding:
+        values: List[_Binding] = self._binds.get(name, [])
+        return values[0] if len(values) == 1 and name not in self._rewritten else None
+
+
+def _is_get_logger(node: _Binding, lookup: Callable[[str], _Binding]) -> bool:
+    """`logging.getLogger(…)` · `getLogger(…)` 호출인가 — 이름은 lookup 이 import 꼴 표지로 확인한다."""
+    if not isinstance(node, ast.Call):
+        return False
+    func: ast.expr = node.func
+    if isinstance(func, ast.Name):
+        return lookup(func.id) == _GET_LOGGER
+    return (isinstance(func, ast.Attribute) and func.attr == _GET_LOGGER
+            and isinstance(func.value, ast.Name) and lookup(func.value.id) == _LOGGING)
+
+
+def _is_log_source(recv: ast.AST, module: _LogSources, scope: _Bindings, hidden: Set[str], rewritten: Set[str]) -> bool:
+    """로그 호출의 받는 쪽이 logging 출처로 확인되는가(머리 주석 ①). scope = 그 함수의 바인딩, hidden = 바깥 함수들이 바인딩한
+    이름, rewritten = 그 함수의 안쪽 함수가 nonlocal 로 선언한 이름."""
+    binds, global_names, nonlocal_names = scope
+    outside: Set[str] = global_names | nonlocal_names
+
+    def imported(name: str) -> _Binding:  # 그 함수 · 바깥 함수가 바인딩하지 않은 모듈 범위 이름
+        return None if name in binds or name in outside or name in hidden else module.once(name)
+
+    if not isinstance(recv, ast.Name):
+        return _is_get_logger(recv, imported)
+    name: str = recv.id
+    if name in outside:
+        return False
+    if name in binds:  # 그 함수의 지역 이름
+        values: List[_Binding] = binds[name]
+        return len(values) == 1 and name not in rewritten and _is_get_logger(values[0], imported)
+    if name in hidden:
+        return False
+    value: _Binding = module.once(name)
+    return value == _LOGGING or _is_get_logger(value, module.once)
+
+
+def _logged(node: ast.AST, parent_of: Dict[int, Optional[ast.AST]], is_source: Callable[[ast.AST], bool]) -> bool:
+    """경로 식이 logging 출처의 독립된 로그 문장 인자 안에서 읽히는가(머리 주석 ① ~ ④)."""
+    child: ast.AST = node
+    parent: Optional[ast.AST] = parent_of.get(id(node))
+    while isinstance(parent, _LOG_ARG_NODES) or (
+            isinstance(parent, ast.BinOp) and isinstance(parent.op, ast.Mod) and _is_str(parent.left)):
+        child, parent = parent, parent_of.get(id(parent))
+    if not (isinstance(parent, ast.Call) and isinstance(parent.func, ast.Attribute) and parent.func.attr in _LOG_CALLS
+            and isinstance(parent_of.get(id(parent)), ast.Expr)):
+        return False
+    if not (any(child is a for a in parent.args) or any(child is k for k in parent.keywords)):
+        return False  # 받는 쪽에서 읽는다
+    if parent.func.attr == 'log' and (not parent.args or isinstance(parent.args[0], ast.Starred) or child is parent.args[0]):
+        return False
+    return is_source(parent.func.value)
+
+
+def _compared_literals(fn: _Function, module: _LogSources, hidden: Set[str]) -> List[ast.expr]:
+    """함수 하나에서 요청 경로와 비교되는 자리에 직접 놓인 문자열 상수 — 경계(머리 주석)를 하나라도 어기면 빈 목록.
+    hidden = 바깥 함수들이 바인딩한 이름."""
+    args: ast.arguments = fn.args
+    if _REQUEST not in {a.arg for a in args.posonlyargs + args.args + args.kwonlyargs}:
+        return []
+    scope: _Bindings = _fn_bindings(fn)
+    binds, global_names, nonlocal_names = scope
+    outside: Set[str] = global_names | nonlocal_names
+    if len(binds[_REQUEST]) != 1 or _REQUEST in outside:
+        return []
+    first_values: Dict[str, _Binding] = {n: vs[0] for n, vs in binds.items()
+                                         if len(vs) == 1 and _is_request_path(vs[0]) and n not in outside}
+    aliases: Set[str] = set(first_values)
+    first_ids: Set[int] = {id(v) for v in first_values.values()}
+    nodes: List[Tuple[ast.AST, Optional[ast.AST]]] = list(_walk_scope(_split(fn)[1]))
+    parent_of: Dict[int, Optional[ast.AST]] = {id(n): p for n, p in nodes}
+    rewritten: Set[str] = {n for node, _parent in nodes if isinstance(node, _SCOPES)
+                           for inner in ast.walk(node) if isinstance(inner, ast.Nonlocal) for n in inner.names}
+
+    def is_path(node: ast.AST) -> bool:
+        return _is_request_path(node) or (isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load)
+                                           and node.id in aliases)
+
+    def is_source(recv: ast.AST) -> bool:
+        return _is_log_source(recv, module, scope, hidden, rewritten)
+
+    found: List[ast.expr] = []
+    for node, parent in nodes:
+        if isinstance(node, _SCOPES):
+            if _inner_touches(node, aliases, True):
+                return []
+        elif is_path(node) and id(node) not in first_ids:
+            grand: Optional[ast.AST] = parent_of.get(id(parent))
+            if not (isinstance(parent, ast.Compare) or (
+                    isinstance(parent, ast.Attribute) and parent.attr in _PREFIX_CALLS
+                    and isinstance(grand, ast.Call) and grand.func is parent) or _logged(node, parent_of, is_source)):
+                return []
+        if isinstance(node, ast.Compare) and len(node.ops) == 1:
+            op, lhs, rhs = node.ops[0], node.left, node.comparators[0]
+            if isinstance(op, (ast.Eq, ast.NotEq)):
+                found += [other for side, other in ((lhs, rhs), (rhs, lhs)) if is_path(side) and _is_str(other)]
+            elif isinstance(op, (ast.In, ast.NotIn)) and is_path(lhs) and isinstance(rhs, (ast.Tuple, ast.List, ast.Set)):
+                found += [e for e in rhs.elts if _is_str(e)]
+        elif (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in _PREFIX_CALLS
+              and len(node.args) == 1 and not node.keywords and is_path(node.func.value)):
+            arg: ast.expr = node.args[0]
+            found += [arg] if _is_str(arg) else [e for e in arg.elts if _is_str(e)] if isinstance(arg, ast.Tuple) else []
+    return found
+
+
+def _functions(tree: ast.Module) -> Iterator[Tuple[_Function, Set[str]]]:
+    """모듈 안의 함수 · lambda 와 그 바깥 함수들이 바인딩(global · nonlocal 선언 포함)한 이름. 클래스 몸의 이름은 메서드에서
+    보이지 않으니 넣지 않는다."""
+    stack: List[Tuple[ast.AST, Set[str]]] = [(tree, set())]
+    while stack:
+        node, hidden = stack.pop()
+        if isinstance(node, _FUNCTIONS):
+            yield node, hidden
+            binds, global_names, nonlocal_names = _fn_bindings(node)
+            hidden = hidden | set(binds) | global_names | nonlocal_names
+        stack.extend((c, hidden) for c in ast.iter_child_nodes(node))
+
+
+def _request_path_spans(ms: MaskedSource) -> List[Tuple[int, int]]:
+    """요청 경로와 비교되는 문자열 상수의 본문 오프셋 구간 [시작, 끝) — 파싱하지 못하면 빈 목록(지금처럼 IM27).
+    AST 의 열은 UTF-8 바이트 자리라 글자 자리로 바꾼다. 마스킹 본문 · 원문은 읽기만 한다."""
+    try:
+        tree: ast.Module = ast.parse(ms.original)
+    except (SyntaxError, ValueError):
+        return []
+    text: str = ms.original
+
+    def offset(line: int, col: int) -> int:
+        start: int = ms.line_starts[line - 1]
+        end: int = ms.line_starts[line] if line < len(ms.line_starts) else len(text)
+        return start + len(text[start:end].encode('utf-8')[:col].decode('utf-8', errors='ignore'))
+
+    module: _LogSources = _LogSources(tree)
+    spans: List[Tuple[int, int]] = []
+    for fn, hidden in _functions(tree):
+        for c in _compared_literals(fn, module, hidden):
+            a, b = offset(c.lineno, c.col_offset), offset(c.end_lineno or c.lineno, c.end_col_offset or 0)
+            if _ONE_LITERAL_RE.fullmatch(ms.tokens_view, a, b):  # 인접 문자열 결합은 상수 하나가 아니다
+                spans.append((a, b))
+    return spans
 
 
 def _http_surface(module: str, names: List[str]) -> Optional[str]:
@@ -346,11 +671,15 @@ def run_imports(ctx: BackstopContext) -> List[Finding]:
                     add_token('IM23', line, 'BC 루트(%s)에서 날짜 직렬화(`strftime`/`isoformat`) 보유 — BC 루트는 변환을 모른다'
                         % ('router' if is_bc_router else 'navigator'),
                         'architecture-ddd §3.72·architecture-ui §6', '날짜→path 변환은 도메인 VO·VM 단일 거주, router·navigator는 str 전달만.')
-        # IM27(리터럴 절반): API URL 리터럴은 DataSource·common/network 전속
+        # IM27(리터럴 절반): API URL 리터럴은 DataSource·common/network 전속 — .py 의 요청 경로 비교 글자는 뺀다(머리 상수 주석)
         if ext != '.css' and not in_network and not (
                 (in_infra and parent == 'data_source') or (legacy and base.endswith('_data_source.py'))):
             ms = ctx.mask_of(f)
-            for line, _ in scan_tokens(ms, _API_LITERAL_RE, view='no_comments'):
+            hits: List[Tuple[int, int]] = scan_tokens(ms, _API_LITERAL_RE, view='no_comments')
+            compared: List[Tuple[int, int]] = _request_path_spans(ms) if ext == '.py' and hits else []
+            for line, end in hits:
+                if any(a < end <= b for a, b in compared):
+                    continue
                 add('IM27', line, 'DataSource 밖 API URL 리터럴 `/api/…`', '제1 규약 §3.4',
                     ('옛 배치 단위에서는 API path 를 <개념>_data_source.py 파일에만 둔다(표준 단위는 그 BC infra_layer/data_source/).'
                      if legacy else 'API path 는 그 BC infra_layer/data_source/<개념>_data_source.py 에만 둔다.'))

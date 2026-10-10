@@ -27,7 +27,7 @@ URL·내비게이션·문서 셸(탭) 코드를 쓸 때, DataSource·api_client�
 - **탭 재탭 2단 동작(확정)·전환 복원**: RootVM이 현재 탭은 첫 화면 href, 다른 탭은 세션 `root.tab_last`의 마지막 경로로 — 재탭은 첫 화면 복귀·맨 위, 전환은 마지막 위치 복원, BC는 무관여 (§3)
 - BC 화면의 유일한 접점: 최상위에 별도 스크롤 컨테이너를 두지 않는다(문서 스크롤 유지) · 탭 링크에 hx-get·hx-boost 금지 (§3)
 - in-process 실패 종류는 셋(상태코드 `ApiStatusError`·백엔드 미처리 예외=500·파싱) — 타임아웃 없음, 세션 이월(미들웨어+contextvar)은 쿠키 부착 한정·정규화는 safe_api_call 단일 출구 (§4)
-- DataSource는 `ApiClient`로 엔드포인트를 부르는 plain class — 도메인 엔티티 직반환, 백엔드 경로 리터럴의 유일 거처 (§4)
+- DataSource는 `ApiClient`로 엔드포인트를 부르는 plain class — 도메인 엔티티 직반환, 백엔드 경로 리터럴의 유일 거처(들어온 요청의 경로를 비교만 하는 글자는 API 호출 주소가 아니다) (§4)
 - VM은 요청마다 새로 — 요청 사이 값을 VM·모듈 전역에 두지 않는다 · POST는 CSRF(`{% csrf_token %}`·`hx-headers`) · 출력은 자동 이스케이프만(`|safe` 금지) · Django Form 층 없음 (§6)
 - 정적 이미지 `<img src="{% static 'web/images/…' %}">` — 경로는 asset-manifest `local_path` 그대로 (§8) · 형상은 동결 시안을 템플릿+CSS로 빠짐없이 재현·직수입 금지 (§9)
 - 색·글자 리터럴은 `design_system/[<제품>/]foundation/*.css` 안에서만(제품 뿌리는 선언이 있을 때만) — 조각 CSS·부품 CSS·`style` 속성 금지(NM10) · 부품 CSS 클래스는 `<수식>-<군>` 접두·상태는 BEM `--`·`aria-*`/`data-*`(NM12) · 초기화·웹폰트는 theme(제품 선언이 있으면 자기 제품 것만 · own theme의 상대 `url()`은 한 칸 깊어짐) (§10)

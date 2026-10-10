@@ -752,6 +752,7 @@ OUT=$(bash "$(dirname "$0")/fixtures_contract.sh" 2>&1) || SUB=1; echo "$OUT" | 
 OUT=$(python3 "$(dirname "$0")/fixtures_patch225.py" 2>&1) || SUB=1; echo "$OUT"
 OUT=$(python3 "$(dirname "$0")/fixtures_patch226.py" 2>&1) || SUB=1; echo "$OUT"
 OUT=$(python3 "$(dirname "$0")/fixtures_patch230.py" 2>&1) || SUB=1; echo "$OUT"
+OUT=$(python3 "$(dirname "$0")/fixtures_im27.py" 2>&1) || SUB=1; echo "$OUT" | tail -1
 
 for SUBFIX in fixtures_debt.sh fixtures_subst.sh fixtures_sdk.sh fixtures_refactor_audit.sh; do
   OUT=$(bash "$(dirname "$0")/$SUBFIX" 2>&1) || SUB=1; echo "$SUBFIX: $(echo "$OUT" | tail -1)"
