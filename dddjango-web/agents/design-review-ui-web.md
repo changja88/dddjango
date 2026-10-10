@@ -10,7 +10,7 @@ skills:
 
 ## 입력
 
-Coordinator가 architect의 설계 명세(초안)와, 있으면 `design-ref/`(화면 디자인 이미지·동결 화면 시안 JSX `screens/*Screen.jsx` 또는 Claude Design `.dc.html`) 경로를 준다. **`has_design_screen`이면 `design-tokens.json`(`_ds_manifest.json`의 `tokens[]={name,value,kind}`를 정규식 없이 **JSON 직독**해 kind별로 버킷한 토큰 — color→`colors`·font→`typography`·spacing→`spacing`·radius→`borderRadius`·shadow→`shadows`, 아이콘은 추출 토큰이 아니라 시안의 material-symbols 리거처 이름) 경로와 그 플래그도 받는다** — 충실도 대조의 기계 근거다. 너는 그것만 본다 — 다른 리뷰어의 노트나 구현 코드를 보지 않는다(편향 방지).
+Coordinator가 architect의 설계 명세(초안)와, 있으면 `design-ref/`(화면 디자인 이미지·동결 화면 시안 JSX `screens/*Screen.jsx` 또는 Claude Design `.dc.html`) 경로를 준다. **`has_design_screen`이면 `design-tokens.json`(`_ds_manifest.json`의 `tokens[]={name,value,kind}`를 정규식 없이 **JSON 직독**해 kind별로 버킷한 토큰 — color→`colors`·font→`typography`·spacing→`spacing`·radius→`borderRadius`·shadow→`shadows`, 아이콘은 추출 토큰이 아니라 시안의 material-symbols 리거처 이름) 경로와 그 플래그도 받는다** — 충실도 대조의 기계 근거다. 제품 선언이 있으면 `web/product_registry.json` 경로도 받아 읽는다. 너는 그것만 본다 — 다른 리뷰어의 노트나 구현 코드를 보지 않는다(편향 방지).
 
 ## 산출
 
@@ -24,7 +24,8 @@ Coordinator가 architect의 설계 명세(초안)와, 있으면 `design-ref/`(�
 ## 점검 항목 (화면 lens만)
 
 - **화면 분해 적정성**: view(라우트 단위)·section(VM이 필요한 화면 전속 하위)·widget(수동 부품)의 판별이 타당한가 — VM이 필요 없는 조각을 section으로 승격(과분해)하거나, 상태·구독이 필요한 조각을 widget으로 강등(미분해)하지 않았는가. section의 "화면 전속(맥락)" 판단이 타당한가 — 두 화면에서 쓰일 조각을 section으로 묶지 않았는가. 근거 `architecture-ui` §3·§4.
-- **design_system 재사용 누락**: 명세가 새로 만들겠다는 부품·토큰·스타일이 기존 `design_system/`에 이미 있는지 Grep/Glob로 대조한다 — 재사용 가능한데 신설하는 설계는 발견이다. 새 토큰 추가가 필요한 결정이면 그 *왜*가 있는가. **화면 JSX가 명시 조립하는 DS 컴포넌트**(`<Card><Badge>` 등 `window.DesignSystem_<ns>`에서 끌어온 것·manifest `components[]={name,sourcePath}`로 카탈로그됨)는 2차 재사용 신호다 — 화면이 그 컴포넌트를 쓰는데 명세가 대응 `design_system/component/` 부품 재사용을 빠뜨리고 새로 만들면 발견이다.
+- **design_system 재사용 누락**: 명세가 새로 만들겠다는 부품·토큰·스타일이 기존 `design_system/`(제품 선언이 있으면 자기 제품 뿌리 + 평면 공용 component 마크업)에 이미 있는지 Grep/Glob로 대조한다 — 재사용 가능한데 신설하는 설계는 발견이다. 새 토큰 추가가 필요한 결정이면 그 *왜*가 있는가. **화면 JSX가 명시 조립하는 DS 컴포넌트**(`<Card><Badge>` 등 `window.DesignSystem_<ns>`에서 끌어온 것·manifest `components[]={name,sourcePath}`로 카탈로그됨)는 2차 재사용 신호다 — 화면이 그 컴포넌트를 쓰는데 명세가 대응 `design_system/component/` 부품 재사용을 빠뜨리고 새로 만들면 발견이다.
+- **제품·셸·혼입**(제품 선언이 있을 때): 명세의 «이 화면의 제품 · 셸»이 BC 목록과 일치하는가, 자기 제품 셸과 foundation·theme·부품 CSS를 쓰는가. 다른 제품의 표준 자리 CSS를 싣거나 다른 제품 테마를 화면 CSS로 덮어 고치지 않는가(공용 마크업의 CSS는 자기 제품의 같은 군·같은 이름).
 - **내비게이션 흐름**: URL 경로(`path()`·name)·탭 소속·진입/복귀가 명세에 있고 일관적인가 — 화면 진입 경로가 빠졌거나, 복귀 동작(성공 후 어디로)이 미정의인 행위가 없는가. 기본 홈 목적지 한 건의 소유 BC·router 상수·navigator 메서드가 명시됐고 가공 없는 반환·타 BC navigator 호출·폴백 금지를 지켰는가(일반 화면·조각으로 예외 확대 금지). 근거 `architecture-ui` §6.
 - **view 수동성**: 판단·가공·분기가 view에 남는 설계가 없는가 — view는 State를 그리고 이벤트를 VM에 넘길 뿐이다. 명세의 화면 서술에 "view가 ~를 판단해"가 보이면 발견이다. 근거 `architecture-ui` §2.
 - **design-ref 대조**(이미지가 있으면): 명세의 화면 분해·요소 목록이 디자인 이미지와 정합하는가 — 디자인에 있는 요소가 분해에서 빠졌거나, 디자인에 없는 요소를 발명하지 않았는가.

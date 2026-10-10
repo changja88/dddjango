@@ -29,6 +29,7 @@ user-invocable: false
 - 시각 값·정적 에셋 경로는 foundation 토큰만 — 색·생 글자 스타일·매직 연출 시간·raw 이미지 경로 리터럴 금지, CSS의 정적 래스터 경로는 `--asset-*` (§7)
 - `font-size`는 아이콘 글리프에도 foundation 토큰으로 쓴다. 글리프 크기는 `app_spacing.css`의 `--spacing-icon-*`로 정의하고 `font-size: var(--spacing-icon-*)`로 인용한다. `width`·박스 `height` 등 비-typography 크기는 architecture-ui §8의 추출값 직접 인용 규칙을 따른다. (§7·§8)
 - design_system 컴포넌트에 전역 JS 진입 함수로 스스로를 띄우는 show() 경로 금지 — 표시는 view 템플릿이 State로 include한다 (§7)
+- 제품 선언이 있으면 토큰·theme의 한 곳은 그 제품의 한 곳이다 — 재사용 조사는 자기 제품 뿌리 + 평면 공용 마크업, 승격은 쓰는 문서의 제품 자리(없으면 기존 평면 한 벌). 다른 제품 테마를 화면 CSS로 덮어 고치지 않는다 (§7·§8)
 - BC 어휘를 벗은 부품만 design_system 승격 — 부품군 폴더로, 정크드로어 금지 (§4·§7)
 
 ## 상세 레퍼런스

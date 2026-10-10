@@ -114,7 +114,7 @@ class LandingNavigator:
 `<bc>_router.py`는 path 바인딩 때문에 view를 import하고, view→VM→navigator로 이어진다. navigator가 모듈 머리에서 router를 import하면 첫 import에서 router가 아직 `ChannelRoutes`를 정의하기 전이라 `ImportError`(부분 초기화 모듈)가 난다 — 그래서 **router import는 navigator 헬퍼 함수 안에 둔다**(호출 시점에는 urlconf가 다 올라와 있다). 이 자리가 dddjango-web의 정당한 함수 안 import다 — 국소 `ruff.toml`(discipline-houserules §3)에 `PLC0415`(import-outside-toplevel)를 켜지 않는다. `<Bc>Routes`를 별도 파일로 빼서 사슬을 끊지 않는다(architecture-ui §6).
 
 - **템플릿은 URL을 만들지 않는다**: `{% url %}`·`href="/…"` 경로 리터럴을 쓰지 않고 State가 준 href를 쓴다(`<a href="{{ state.detail_href }}">` — 백스톱 NM13). 정적 파일만 `{% static %}`(§8).
-- **문서 셸·탭** — `root/scaffold/view/root_view.html`이 모든 페이지가 `{% extends %}`하는 문서 셸이다(탭 프레임 — 페이지가 셸을 가리키는 방향은 Django 템플릿 상속의 방향이라 BC가 root를 아는 유일한 예외 — discipline-houserules §5):
+- **문서 셸·탭** — `root/scaffold/view/root_view.html`이 기본 문서 셸이다. 제품 선언이 없으면 모든 페이지가 extends하고, 선언 BC의 페이지는 자기 제품 셸만 extends한다(탭 프레임 — 페이지가 셸을 가리키는 방향은 Django 템플릿 상속의 방향이라 BC가 root를 아는 유일한 예외 — discipline-houserules §5):
 
 ```django
 {# root/scaffold/view/root_view.html — 문서 셸 (탭 프레임) #}
@@ -143,6 +143,8 @@ class LandingNavigator:
 </body>
 </html>
 ```
+
+제품 선언이 있으면 own 셸도 위와 같은 독립 문서이며 다른 제품 셸을 extends하지 않는다. 예: `root/scaffold/view/root_console_view.html`은 자기 `design_system/console/foundation/`의 표준 7파일 다음에 `design_system/console/theme/app_theme.css`만 링크하고, 틀 CSS는 `web/root/root_console_view.css`다(기존 `root_vm.py`·`root_state.py`를 함께 쓴다).
 
 탭 href는 RootVM이 만든다 — context processor `root_context(request)`가 `request.session`과 현재 BC(`request.resolver_match.namespaces[0]`)를 RootVM에 넘기고, RootVM이 root의 탭 표(BC → 탭)로 탭마다 `href`·`is_current`를 채운다: 현재 탭은 그 탭 첫 화면 href, 다른 탭은 세션 `root.tab_last`의 마지막 경로(없으면 첫 화면 — §3). 탭 기록은 `RootRequestHandler.process_view`가 적는다(아래) — BC는 탭 기록을 모른다(architecture-state §10 "거의 빈 VM").
 
@@ -391,7 +393,7 @@ def channel_detail_view(request: HttpRequest, channel_id: str) -> HttpResponse:
 
 **템플릿 표기**:
 
-- **extends 대상은 둘뿐이다**: 페이지 템플릿(`<화면>_view.html`·root 게이트 화면 `root_<게이트>_view.html`) → `root/scaffold/view/root_view.html`만 · 조각 템플릿(section·widget·design_system component) → `design_system/component/**/*.html`만(공용 부품의 마크업 자리 채우기 — §10 slot 부품). 조각이 root_view.html을 extends하거나 페이지가 component를 extends하지 않는다(백스톱 IM26). `{% extends %}`는 그 템플릿의 첫 비주석 줄에 둔다.
+- **extends 대상은 둘뿐이다**: 페이지 템플릿(`<화면>_view.html`·root 게이트 화면 `root_<게이트>_view.html`) → 문서 셸만(선언이 없으면 `root/scaffold/view/root_view.html`, 제품 선언 BC의 페이지는 자기 제품 셸만) · 조각 템플릿(section·widget·design_system component) → `design_system/[<제품>/]component/**/*.html`만(제품 뿌리는 선언이 있을 때만 · 공용 부품의 마크업 자리 채우기 — §10 slot 부품). 조각이 문서 셸을 extends하거나 페이지가 component를 extends하지 않는다(백스톱 IM26). `{% extends %}`는 그 템플릿의 첫 비주석 줄에 둔다.
 - Django 짧은 주석 `{# … #}`는 한 줄만 쓴다 — 여러 줄은 `{% comment %}…{% endcomment %}`. 여러 줄 `{# … #}`는 응답에 그대로 새어 나온다(백스톱 PU6).
 - block은 역할 이름으로 열고 이름으로 닫는다(`{% endblock content %}`). `{% load %}`는 알파벳순 — ui_extension 필터는 builtins 조립이라 `{% load %}` 없이 쓴다(architecture-ui §5). `{{ variable }}`·`{% tag %}` 안쪽에 한 칸 공백.
 - 템플릿은 **State만 참조**하고 표시 분기만 한다 — 계산·필터링·정렬은 VM으로 가져간다(`dictsort`·산수 필터로 판정하지 않는다). *왜*: 템플릿에 숨은 판단은 리뷰·재사용 어느 쪽에서도 안 보인다.
@@ -424,7 +426,9 @@ def channel_detail_view(request: HttpRequest, channel_id: str) -> HttpResponse:
 
 ## §10. CSS 표기 — foundation 변수·theme·부품/조각 CSS
 
-**foundation 변수 7파일** — `design_system/foundation/app_color.css`·`app_typography.css`·`app_spacing.css`·`app_radius.css`·`app_shadow.css`·`app_duration.css`·`app_asset.css`. 각 파일은 `:root { … }`에 custom property만 정의하고, 접두는 파일별이다(`--color-*`·`--typography-*`·`--spacing-*`·`--radius-*`·`--shadow-*`·`--duration-*`/`--easing-*`·`--asset-*` — discipline-houserules §4):
+아래 `design_system/[<제품>/]…` 표기의 제품 부분은 제품 선언이 있을 때 own 뿌리에만 붙인다(없으면 기존 평면 경로). 각 제품은 자기 foundation·theme·component·util을 쓴다.
+
+**foundation 변수 7파일** — `design_system/[<제품>/]foundation/app_color.css`·`app_typography.css`·`app_spacing.css`·`app_radius.css`·`app_shadow.css`·`app_duration.css`·`app_asset.css`. 각 파일은 `:root { … }`에 custom property만 정의하고, 접두는 파일별이다(`--color-*`·`--typography-*`·`--spacing-*`·`--radius-*`·`--shadow-*`·`--duration-*`/`--easing-*`·`--asset-*` — discipline-houserules §4):
 
 ```css
 /* design_system/foundation/app_color.css */
@@ -440,9 +444,9 @@ def channel_detail_view(request: HttpRequest, channel_id: str) -> HttpResponse:
 ```
 
 - `--typography-*`는 `font` 줄임 묶음 값이다 — 쓰는 쪽은 `font: var(--typography-title)`이고, 같은 규칙에서 그 뒤에 `font-*`를 다시 선언하지 않는다(architecture-ui §8).
-- **리터럴은 foundation 안에서만**: 색(`#…`·`rgb()`·`hsl()`)·글자(`font`·`font-size`·`font-family`·`font-weight`·`line-height`) 리터럴은 `design_system/foundation/*.css` 밖에서 쓰지 않는다 — 조각 CSS·부품 CSS·템플릿 `style`·`<style>` 전부(백스톱 NM10). 연출 시간도 `--duration-*`·`--easing-*` 토큰이다(architecture-ui §7). `font-size`는 아이콘 글리프에도 foundation 토큰으로 쓴다. 글리프 크기는 `app_spacing.css`의 `--spacing-icon-*`로 정의하고 `font-size: var(--spacing-icon-*)`로 인용한다. `width`·박스 `height` 등 비-typography 크기는 architecture-ui §8의 추출값 직접 인용 규칙을 따른다. 신규 색은 architect가 토큰을 추가한다.
+- **리터럴은 foundation 안에서만**: 색(`#…`·`rgb()`·`hsl()`)·글자(`font`·`font-size`·`font-family`·`font-weight`·`line-height`) 리터럴은 `design_system/[<제품>/]foundation/*.css` 밖에서 쓰지 않는다 — 조각 CSS·부품 CSS·템플릿 `style`·`<style>` 전부(백스톱 NM10). 연출 시간도 `--duration-*`·`--easing-*` 토큰이다(architecture-ui §7). `font-size`는 아이콘 글리프에도 foundation 토큰으로 쓴다. 글리프 크기는 `app_spacing.css`의 `--spacing-icon-*`로 정의하고 `font-size: var(--spacing-icon-*)`로 인용한다. `width`·박스 `height` 등 비-typography 크기는 architecture-ui §8의 추출값 직접 인용 규칙을 따른다. 신규 색은 architect가 토큰을 추가한다.
 
-**theme — 문서 전역 기본값** — `design_system/theme/app_theme.css`가 foundation 토큰으로 브라우저 기본 여백 초기화·웹폰트 `@font-face`·`body` 글꼴·색을 조립한다(architecture-ui §7). root_view가 foundation 7파일 다음에 한 번 링크한다(§2):
+**theme — 문서 전역 기본값** — `design_system/[<제품>/]theme/app_theme.css`가 foundation 토큰으로 브라우저 기본 여백 초기화·웹폰트 `@font-face`·`body` 글꼴·색을 조립한다(architecture-ui §7). 문서 셸이 foundation 7파일 다음에 한 번 링크한다(제품 선언이 있으면 자기 제품 것만 — §2):
 
 ```css
 /* design_system/theme/app_theme.css */
@@ -464,9 +468,10 @@ body {
 ```
 
 - **초기화**: *왜* — 시안(디자인 도구 렌더)은 문단·제목 기본 여백이 없는 세계라, `<p>`·`<h2>`를 쓰는 순간 브라우저 기본 여백이 시안에 없는 간격을 만든다 — 필요한 간격은 초기화 위에 `--spacing-*`로 명시한다. 화면·부품 CSS가 각자 기본 여백을 지우거나 글꼴을 선언하지 않는다.
+- 제품 선언이 있으면 own theme의 상대 `url()`은 뿌리가 한 칸 깊다 — 위 평면 예의 `../../web/fonts/…`는 `../../../web/fonts/…`로 맞춘다.
 - **웹폰트**: 폰트 파일은 `web/static/fonts/`에 둔다(필요할 때만). 출처는 시안의 원본 폰트 선언·실제 응답이다 — 폰트 URL을 기억으로 조립하지 않는다. `@font-face`의 face 이름 선언은 theme의 일이고, 그 이름을 쓰는 글자 묶음 값은 foundation `--typography-*`다.
 
-**부품 CSS** — design_system component는 템플릿 옆에 같은 stem으로 둔다(`component/dialog/confirm_dialog.html` + `confirm_dialog.css`). 클래스 접두는 `<수식>-<군>`이다(`.confirm-dialog`·`.confirm-dialog__title`·`.confirm-dialog--danger`). 상태는 BEM `--` 수식 또는 `[aria-*]`·`[data-*]` 속성 선택자로 쓴다 — `.is-active` 같은 무접두 상태 클래스는 쓰지 않는다(백스톱 NM12). htmx가 붙이는 상태 클래스(`htmx-request`·`htmx-indicator`·`htmx-settling`·`htmx-swapping`·`htmx-added`)만 접두 붙은 클래스와 겹친 선택자(`.spinner-loading.htmx-request`)로 쓸 수 있다:
+**부품 CSS** — design_system component는 템플릿 옆에 같은 stem으로 둔다(`component/dialog/confirm_dialog.html` + `confirm_dialog.css`). 제품 선언이 있으면 평면 공용 마크업을 쓸 수 있고, CSS는 자기 제품 뿌리의 같은 군·같은 이름이다. 클래스 접두는 `<수식>-<군>`이다(`.confirm-dialog`·`.confirm-dialog__title`·`.confirm-dialog--danger`). 상태는 BEM `--` 수식 또는 `[aria-*]`·`[data-*]` 속성 선택자로 쓴다 — `.is-active` 같은 무접두 상태 클래스는 쓰지 않는다(백스톱 NM12). htmx가 붙이는 상태 클래스(`htmx-request`·`htmx-indicator`·`htmx-settling`·`htmx-swapping`·`htmx-added`)만 접두 붙은 클래스와 겹친 선택자(`.spinner-loading.htmx-request`)로 쓸 수 있다:
 
 ```css
 /* design_system/component/dialog/confirm_dialog.css */
@@ -476,7 +481,7 @@ body {
 .confirm-dialog[aria-busy="true"] { opacity: 0.6; }
 ```
 
-부품 CSS는 그 부품을 쓰는 페이지 템플릿의 `{% block head %}`에서 `{% static 'design_system/component/<군>/<파일>.css' %}`로 한 번 링크한다 — 조각 응답에는 `<link>`를 넣지 않는다(조각은 이미 링크된 페이지 안에서 교체된다).
+부품 CSS는 그 부품을 쓰는 페이지 템플릿의 `{% block head %}`에서 `{% static 'design_system/[<제품>/]component/<군>/<파일>.css' %}`로 한 번 링크한다 — 조각 응답에는 `<link>`를 넣지 않는다(조각은 이미 링크된 페이지 안에서 교체된다).
 
 **slot 부품 — 마크업 자리 채우기** — 공용 부품이 값이 아니라 *마크업*(앞쪽 아이콘·동작 단추 묶음 같은 자리)을 받아야 하면, 부품이 이름 붙은 `{% block <자리> %}기본값{% endblock <자리> %}`을 내놓고 쓰는 쪽 조각 템플릿(section·widget·design_system component)이 첫 줄에서 그 부품을 `{% extends %}`한 뒤 block만 채운다. block 이름은 부품 접두를 붙여(`app_bar_actions`) 다른 부품·셸의 block과 겹치지 않게 한다:
 
@@ -504,7 +509,7 @@ body {
 
 **조각 CSS** — presentation 조각(view·section·widget) CSS는 `web/static/application/[<area>/]<bc>/<조각 stem>.css`(템플릿과 같은 stem · 필요한 조각만), root scaffold 조각 CSS는 `web/static/root/<조각 stem>.css`다 — `.py` 옆이 아니라 static 쪽에 둔다(discipline-houserules §1). 링크는 페이지의 `{% block head %}`에서 `{% static 'web/application/<bc>/<stem>.css' %}`.
 
-- `design_system/util/`은 시각 동작 헬퍼 CSS(미디어쿼리 묶음·스크롤 동작)다 — 토큰을 정의하지 않는다.
+- `design_system/[<제품>/]util/`은 시각 동작 헬퍼 CSS(미디어쿼리 묶음·스크롤 동작)다 — 토큰을 정의하지 않는다.
 
 ## §11. 공식 SDK 사본 — static/vendor
 

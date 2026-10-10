@@ -314,6 +314,7 @@ dddjango는 작업 규모를 보고 알맞게 움직인다.
 `/dddjango-web:dddjango-web "<기능 설명>" [OpenAPI 위치]` — 기존 Django 프로젝트에 한 기능의 화면(HTML·HTMX·JS)을 **간소화 DDD + 철저한 MVVM**으로 빌드하는 **독립 플러그인**이다(2.0.0부터 Flutter 판 `dddart`와 같은 절차·구조 — 구현 기술만 Django·HTML·HTMX·JS). **실제 URL+JSON API 계약을 외부 클라이언트처럼 소비**하며, API를 만든 도구가 반드시 dddjango일 필요는 없다.
 
 - **구조**: `web/` 앱 — `root/`·`application/<bc>/`(domain·application·infra·presentation 4층)·`common/`·`design_system/`(foundation CSS 변수 7·theme·component·util)·`static/` + 테스트 `web_test/`(web/ 1:1 미러)
+- **제품**: 2.3.0부터 한 web 앱에 제품이 여럿이면 사용자 결정으로 `web/product_registry.json`을 선언하고 제품별 design_system 뿌리·독립 문서 셸을 쓴다. 선언이 없으면 기존 평면 뿌리·셸 하나를 그대로 쓴다.
 - **표준**: 요청마다 view가 VM을 만들어 State를 그리고 HTMX 조각 응답으로 부분 교체 · design_system 토큰 · UI 동작 JavaScript는 기능당 한 파일
 - **경계**: `web/` 트리는 «내부의 외부 클라이언트» — 백엔드 코드를 import하지 않고(백스톱이 차단) in-process HTTP로 계약만 소비한다. 필요한 API가 없으면 가정 계약으로 짓고(tracer → 미니 게이트) 실제 API는 `/dddjango:dddjango`로 요청하도록 안내한다.
 - **구성**: 커맨드 2(`/dddjango-web:dddjango-web`(화면 빌드) · `/dddjango-web:refactor <대상 단위>`(대상 단위 하나의 기존 web 코드 전체를 표준으로 정리하는 리팩토링 입구 — 동작 불변 · Codex 는 `$dddjango-web-refactor`)) · 에이전트 7(`design-architect-web`·`design-review-ddd-web`·`design-review-ui-web`·`design-review-state-web`·`design-review-data-web`·`coder-web`·`discipline-reviewer-web`) · 스킬 12(`architecture-ddd`/`-ui`/`-state`/`-data`·`discipline-cleancode`/`-houserules`/`-test`·`implementation-test`/`-python`/`-django`/`-htmx`/`-javascript`) · 결정적 백스톱(검사 86종 — 구조·import·명명·순환·테스트·토대·모델·출력 안전·외부 JS) + 추출 도구 4 + 외부 JS 등재 도구

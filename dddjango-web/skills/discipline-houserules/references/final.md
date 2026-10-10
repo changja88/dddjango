@@ -30,7 +30,8 @@ web/                                         # Django 앱 "web" — dddjango-web
 │   ├── router/                              #   ① 내비 그래프
 │   │   └── root_router.py                   #     전 BC <bc>_router 합산 (urlpatterns · BC 네임스페이스 include — plain 모듈 전역)
 │   ├── scaffold/                            #   ② 루트 스캐폴드 (개념 폴더) — 문서 셸 + BC 어휘 없는 전역 게이트만
-│   │   ├── view/                            #     root_view.html — 모든 페이지가 extends 하는 문서 셸(탭·내비 프레임)
+│   │   ├── view/                            #     root_view.html — 기본 문서 셸(탭·내비 프레임)
+│   │   │   └── root_<제품>_view.html          #     제품 선언이 있을 때 own 제품의 독립 문서 셸
 │   │   ├── view_model/                      #     root_vm.py — "거의 빈 VM" 규범 (context processor root_context가 RootState를 셸에 준다)
 │   │   └── state/                           #     root_state.py
 │   ├── handler/                             #   ③ 전 BC 배선 — 이벤트원당 1파일 (*_handler)
@@ -89,16 +90,19 @@ web/                                         # Django 앱 "web" — dddjango-web
     ├── component/                           # 공용 부품 — 부품군 1차, 직속 파일 금지 (부품 템플릿 + 옆에 부품 CSS)
     │   ├── app_bar/ · button/ · dialog/ · bottom_sheet/
     │   └── input/ · loading/ · image/ · feedback/ · background/ …
-    └── util/                                # 시각 동작 헬퍼 CSS (미디어쿼리·스크롤 동작)
+    ├── util/                                # 시각 동작 헬퍼 CSS (미디어쿼리·스크롤 동작)
+    └── <제품>/                              # 제품 선언이 있을 때 own 뿌리 — foundation·theme·component·util, foundation 표준 7파일
 
 web/static/                                  # Django 정적 자리 (STATICFILES 접두 web) — .py와 섞이면 .py가 정적 파일로 나가서 따로 둔다
 ├── application/[<area>/]<bc>/<조각 stem>.css   # presentation 조각 CSS — 템플릿과 같은 stem · sparse
 ├── root/<조각 stem>.css                      # root scaffold 조각 CSS(셸 프레임 · 게이트 화면) — 템플릿과 같은 stem · sparse
+├── root/root_<제품>_view.css                  # 제품 선언이 있을 때 own 제품 셸의 틀 CSS
 ├── js/<기능>.js                             # 승인된 UI 동작 JS — 기능당 한 파일 (implementation-javascript)
 ├── htmx/htmx.min.js                         # 2.0.10 고정 (Coordinator가 G0에 설치)
 ├── vendor/<sdk_id>/<파일> · vendor/.gitattributes   # G1 승인·등재된 공식 플랫폼 SDK 사본 + 고정 표지 (조건 생성 — Coordinator 도구만 · §9)
 └── images/ · fonts/                         # 시안 이미지·웹폰트 (필요할 때만)
 
+web/product_registry.json                    # 제품 선언(선택) — 사용자 결정으로만, 자리는 아래 제품 규약 고정
 web/sdk_registry.json                        # 공식 SDK 등재 목록 (조건 생성 — 승인된 SDK가 있을 때만 · Coordinator 도구만 · §9)
 
 web_test/                                    # web/ 1:1 미러 · sparse · <sut>_test.py · 브라우저 테스트 <화면>_browser_test.py
@@ -106,9 +110,15 @@ web_test/                                    # web/ 1:1 미러 · sparse · <sut
 
 계층·종류의 동작 규율(각 폴더에 담기는 코드의 내용 규칙)은 lens 스킬 소유다: domain_layer 내부 → architecture-ddd(전술 패턴 §3·§4·판정 소유 §5) / application_layer 내부 → architecture-state(VM 3변종 §1·State 계약 §3·에러 2채널 §4) / infra_layer 내부 → architecture-data(safe_api_call §2·Either §3) / presentation_layer 내부·design_system 사용 → architecture-ui(3단 판별 §1·승격 규칙 §4). 이 문서는 **어떤 폴더·파일·이름이 존재해야 하는가(사실)** 를 소유한다.
 
-**root/ 핵심 사실** (규약 §3.6 — 동작 규율은 architecture-state §10, view 작성 규율은 architecture-ui §2 위임): root는 application·common·design_system 세 컨테이너를 전부 아는 유일한 곳이라 `application/` 밖, `apps.py`·`urls.py` 옆이 정위치다. 내부는 계층 없이 역할 4폴더(`router/`·`scaffold/`·`handler/`·`initializer/`)이고 scaffold만 종류 2차(view·view_model·state)를 갖는다. root/ 이하 모든 파일은 `root_` 접두를 유지한다 — BC 코드의 `import …root_…` 한 줄로 위반이 즉시 식별된다(페이지 템플릿의 `root_view.html` extends 하나만 예외 — §5). 다수 BC 투영 화면(예: 피드 `home_view`)은 root가 아니라 자기 이름의 **일반 BC**다.
+**root/ 핵심 사실** (규약 §3.6 — 동작 규율은 architecture-state §10, view 작성 규율은 architecture-ui §2 위임): root는 application·common·design_system 세 컨테이너를 전부 아는 유일한 곳이라 `application/` 밖, `apps.py`·`urls.py` 옆이 정위치다. 내부는 계층 없이 역할 4폴더(`router/`·`scaffold/`·`handler/`·`initializer/`)이고 scaffold만 종류 2차(view·view_model·state)를 갖는다. root/ 이하 모든 파일은 `root_` 접두를 유지한다 — BC 코드의 `import …root_…` 한 줄로 위반이 즉시 식별된다(페이지 템플릿의 문서 셸 extends만 예외 — 제품 선언이 있으면 자기 제품 셸 · §5). 다수 BC 투영 화면(예: 피드 `home_view`)은 root가 아니라 자기 이름의 **일반 BC**다.
 
 **area 핵심 사실** (feedback-031 — opt-in 그루핑): `application/` 직속에는 BC 폴더 외에 **area 폴더**(BC 그루핑 — `application/<area>/<bc>/`)를 둘 수 있다. area는 **순전히 사람의 시각적 도움을 위한 네임스페이스**다: ⓐ **기본은 평면** — area는 G0에서 사용자가 명시 판정할 때만 쓴다(에이전트 자동 추론 금지 — 판별 배정은 `undecidable.md` §13) ⓑ area 직속은 BC 폴더만(`__init__.py` 외 파일·`ruff.toml`·`.gitkeep` 금지)·중첩 1단만·빈 area 금지 ⓒ **BC 이름은 web 전역 유일 유지(접두 유지)** — area는 어떤 식별자·클래스명·URL name·`app_name`·파일명에도 등장하지 않는다. URL 네임스페이스(`app_name`)·CSS 클래스·HTMX 이벤트 이름은 전역이라 접두를 폴더로 대체하면 전역 충돌한다 — area는 접두의 *대체*가 아니라 접두 *위의* 그루핑이다 ⓓ area·BC 이름에 계층명(`*_layer` 4종)·컨테이너명(root·application·common·design_system) 금지 ⓔ **리트머스** — area 폴더를 지워 평면으로 되돌려도 바뀌는 것은 경로(web·web_test·static 미러의 디렉터리 위치, import 문, 템플릿 경로 문자열)뿐, 식별자·클래스명·URL name·파일명·코드 동작은 불변이어야 한다. 러너는 area를 적극 증명될 때만 인정(직속 파일 0·직속 전부 BC꼴)하고 그 외 전부 기존대로 BC 취급한다(보수 폴백 — 레거시·drift 형상의 분류 불변).
+
+**제품 핵심 사실** (제품 선언이 있을 때만): 기본은 한 제품이다. 선언이 없으면 평면 `design_system/`·`root_view.html`을 그대로 쓰고 제품 폴더를 자동 발견하지 않는다. `web/product_registry.json`은 제품 선언의 예약 이름이며 사용자 결정으로만 쓴다(Coordinator 또는 사용자 — coder는 읽기만). 형식은 `{"schema":"dddjango-web-products/1","products":{"console":{"design_system":"flat","bcs":["console_order"]},"shop":{"design_system":"own","bcs":"*"}}}`다. 제품 id는 소문자 snake_case이며 `foundation`·`theme`·`component`·`util`과 겹치지 않는다.
+
+선언에는 `flat`이 정확히 하나, `own`은 여럿 올 수 있다. 자리는 규약 고정이다: `flat`은 평면 뿌리와 `root/scaffold/view/root_view.html`, `own`은 `design_system/<제품>/`·`root/scaffold/view/root_<제품>_view.html`·`static/root/root_<제품>_view.css`다. 화면 범위 `bcs`는 `application/` 아래 BC 전체 경로(`<bc>` 또는 `<area>/<bc>`) 배열 또는 나머지 BC 전부를 뜻하는 `"*"`(최대 한 제품)다. 페이지 소속은 BC 목록으로 정하며 상속한 셸에서 거꾸로 읽지 않는다. 예정 BC는 아직 없어도 오류가 아니고 `[info] 제품 선언의 BC 가 아직 web/application 에 없다(예정 BC — 오류 아님): <제품> → <BC>`로 알린다. 옛 배치 페이지는 어느 제품에도 속하지 않는다(기존 ST0 빚·층 규칙 IM 면제 유지).
+
+제품마다 자기 뿌리의 CSS를 쓴다(다른 제품 표준 자리 CSS 혼입 금지 — §5). 평면 `design_system/component/<군>/*.html` 마크업은 어느 제품이든 공용으로 include할 수 있고, CSS는 그 제품 뿌리의 같은 군·같은 이름이다. 평면 뿌리 직속 폴더는 네 종류와 등록된 own 뿌리만, own 뿌리 직속 폴더는 네 종류만 허용한다. 선언 안 된 `root_<이름>_view.html`은 제품 셸이 아니라 기존 게이트 화면으로 취급한다.
 
 **web_test/ 핵심 사실** (pytest가 찾는 자리 — 프로젝트 뿌리, `web/`의 형제. 뿌리 `test/`는 백엔드 `application/` 트리와 헷갈려서 쓰지 않는다): 테스트는 `web_test/`에 두고 **`web/` 구조를 1:1 미러**한다 — `web/application/<bc>/<계층>/<sut>.py` → `web_test/application/<bc>/<계층>/<sut>_test.py` (area 그루핑 시에도 그대로 — `web/application/<area>/<bc>/…` → `web_test/application/<area>/<bc>/…`). 단 **web_test/는 sparse다 — SUT가 있는 자리에만 테스트 파일을 두고 빈 미러 폴더·빈 테스트 파일을 만들지 않는다**(골격 완비의 명시적 예외 — §3). 무엇을 테스트할지·단언 FORM은 discipline-test, Django 메커니즘·결정성은 implementation-test 소유다. 백스톱 TG1은 신규 BC의 행위 테스트 *존재*만 검사하고(부재 차단 — 슬라이스 0이 기존 파일을 옮기기만 해 생긴 BC는 새 테스트를 요구하지 않는다: 리팩토링은 기존 테스트 충분 가정이다 · 옮긴 SUT의 미러 테스트는 같은 경로 대응으로 함께 옮기고 단언은 그대로다), 미러 배치·FORM은 discipline-reviewer가 감사한다.
 
@@ -146,7 +156,7 @@ BC를 만들면 **4계층 폴더와 모든 표준 종류 폴더를 항상 생성
 - 빈 폴더 표지: `web/` 아래 Python 경로(design_system·static 제외)는 전부 `__init__.py`를 둔다(Python 패키지 표지 겸 빈 폴더 표지 — git은 빈 디렉터리를 추적하지 않는다). design_system·static의 빈 폴더에는 `.gitkeep`을 둔다.
 - 개념 1차로 분할된 경우(§2) 표준 종류 폴더는 **각 개념 폴더 안에** 완비한다.
 - `web/root/`는 BC 골격 비적용 — 자체 골격(역할 4폴더 + scaffold 하위 `view/`·`view_model/`·`state/`)을 비어 있어도 항상 생성한다.
-- design_system 골격(foundation·theme·component·util 4폴더 + foundation 7파일 자리)도 같은 정신으로 항상 생성한다.
+- design_system 골격(foundation·theme·component·util 4폴더 + foundation 표준 7파일)도 같은 정신으로 항상 생성한다. 제품 선언이 있으면 각 제품 뿌리도 같은 골격이다. own 제품 셸은 독립 문서이며, 셸을 더해도 VM·State 짝을 더 요구하지 않는다(기존 `root_vm.py`·`root_state.py`를 함께 쓴다).
 - BC 루트 직속에는 `<bc>_router.py`·`<bc>_navigator.py` 둘만 온다(+ 패키지 표지 `__init__.py`·국소 `ruff.toml`) — `application/` 직속은 BC(또는 area) 폴더만(조립 파일 금지). area 폴더 자체는 골격 비대상이다(§1 area 핵심 사실 — 직속은 BC 폴더만·빈 area 금지) — BC 골격은 area 유무 무관 동일하게 완비한다.
 - **`web_test/`는 골격 완비의 명시적 예외 — sparse다.** "선택 폴더 없음"은 `web/` 한정이다: `web/`는 빈 폴더로 자리를 안내하지만 `web_test/`는 *빈 미러 폴더·빈 테스트 파일을 만들지 않는다* — 테스트는 SUT가 생긴 자리에만 둔다(§1 web_test/ 핵심 사실). 빈 슬롯을 채우려는 유혹이 헛테스트(vacuous)를 부르기 때문이다(테스트 규율은 discipline-test). 미러 배치 자체는 리지드 골격 검사가 아니라 discipline-reviewer 감사 대상이다(nav·fixture·common·VM-unit 등 '미러'가 자명하지 않은 자리가 있어 false-FAIL·게이밍을 피한다).
 - **타입 강제 국소 lint** — 골격을 만들 때 dddjango-web 생성 영역 루트(BC `application/<bc>/` 또는 `application/<area>/<bc>/`·`common/`·`root/` — `.py`가 없는 `design_system/`은 제외)마다 `ruff.toml`을 생성해 타입 전면 명시(implementation-python §2 일탈3)를 *그 폴더에 국소* 강제한다. **호스트 루트 ruff 설정(`ruff.toml`·`pyproject.toml`의 `[tool.ruff]`)은 절대 수정하지 않는다** — ruff는 파일마다 가장 가까운 설정 파일 하나를 쓰고 하위가 부모를 *대체*하므로(병합 아님 — `extend`를 쓰면 부모를 잇게 되므로 쓰지 않는다) 템플릿에 규칙을 전부 명시한다(plugin 경계 — 호스트 기존 lint 정책 무파괴). 코드 생성물은 없으므로 exclude 대상도 없다:
@@ -209,6 +219,7 @@ select = ["E4", "E7", "E9", "F", "ANN"]
 | common 4종·ds `util/` | 기능·도구 | 파일명 = 주 선언명 snake_case (`service/`는 `<기능>_service.py`) | 주 선언명 |
 | 테스트 | SUT 경로 | `web_test/<web/와 같은 경로>/<sut>_test.py` | — |
 
+- 제품 선언이 있으면 design_system 명명은 제품 뿌리를 뗀 상대 경로에 같은 규칙을 적용한다. own 제품 셸은 `root_<제품>_view.html`, 틀 CSS는 같은 stem `root_<제품>_view.css`다.
 - 폴더명은 `repository/`(전체 표기), 파일 접미사는 `_repo.py`(축약) — 혼동 주의.
 - 라우트 path·name 문자열 리터럴은 `<bc>_router.py` 안에서만 등장한다 — `class <Bc>Routes`(클래스 상수)로 묶고 일반 이동의 navigator·root_destination_handler는 이 이름 상수를 참조한다. **기본 홈 주소의 좁은 예외**: 활성 URLconf와 무관하게 반환해야 하는 **프로젝트의 기본 홈 목적지 한 건**만 예외로 둔다. 명세에 소유 BC·router 상수·navigator 메서드를 적고, 그 단일 상수를 소유 navigator가 가공 없이 반환한다. 다른 BC는 그 navigator를 호출한다. 상수 복제·타 BC router 직접 import(IM5)·BC별 기본 주소·개별 화면·조각 주소로의 확대는 금지한다. 나머지 named href의 역참조 실패를 이 주소로 폴백하지 않는다(`NoReverseMatch`를 잡아 아무 주소로 넘기기 금지). URLconf 독립은 href 반환에 URL 이름 등록이 필요 없다는 뜻이며 모든 격리 URLconf에서 그 주소를 GET할 수 있다는 뜻은 아니다. 템플릿은 URL name을 직접 쓰지 않고 State가 준 href를 쓴다.
 - `--typography-*`는 `font` 줄임 묶음 값이다 — 쓰는 쪽은 `font: var(--typography-title)`이고, 같은 규칙에서 그 뒤에 `font-*`를 다시 선언하지 않는다.
@@ -242,12 +253,13 @@ select = ["E4", "E7", "E9", "F", "ANN"]
 
 **root·common·전역 방향 규칙**:
 
-- **`root/`를 아는 곳은 `web/apps.py`·`web/urls.py`·호스트 settings(문자열 경로)뿐.** BC가 root를 알면 전체를 알게 되어 격리가 무너진다. 유일한 예외는 페이지 템플릿의 `{% extends "root/scaffold/view/root_view.html" %}` 하나다 — Django 템플릿 상속은 자식 페이지가 부모 셸을 가리키는 방향이라 셸이 화면을 임베드하는 구조를 그대로 옮길 수 없다. root/ 내부의 상호 참조는 자유.
-- **템플릿 상속 채널**: 페이지 템플릿(`presentation_layer/view/*_view.html`·root 게이트 화면 `root/scaffold/view/root_*_view.html`) → `root/scaffold/view/root_view.html`만 · 조각 템플릿(section·widget·design_system component) → design_system component(`design_system/component/**/*.html`)만이다. 조각의 extends는 slot = block 채우기다 — 공용 부품이 내놓은 이름 붙은 `{% block %}`만 채우며, 그 조각 파일은 그 부품의 채워진 사례 하나다(같은 파일 안에 다른 마크업·두 번째 extends·block 밖 내용 금지). 조각이 root_view.html을, 페이지가 component를 extends하면 위반이다(백스톱 IM26).
+- **`root/`를 아는 곳은 `web/apps.py`·`web/urls.py`·호스트 settings(문자열 경로)뿐.** BC가 root를 알면 전체를 알게 되어 격리가 무너진다. 유일한 예외는 페이지 템플릿의 문서 셸 extends다(선언이 없으면 `root/scaffold/view/root_view.html`, 제품 선언이 있으면 자기 제품 셸) — Django 템플릿 상속은 자식 페이지가 부모 셸을 가리키는 방향이라 셸이 화면을 임베드하는 구조를 그대로 옮길 수 없다. root/ 내부의 상호 참조는 자유.
+- **템플릿 상속 채널**: 페이지 템플릿(`presentation_layer/view/*_view.html`·root 게이트 화면 `root/scaffold/view/root_*_view.html`) → 문서 셸만(선언이 없으면 `root/scaffold/view/root_view.html`, 제품 선언 BC의 페이지는 자기 제품 셸만) · 조각 템플릿(section·widget·design_system component) → design_system component(`design_system/[<제품>/]component/**/*.html` — 제품 뿌리는 선언이 있을 때만)만이다. 조각의 extends는 slot = block 채우기다 — 공용 부품이 내놓은 이름 붙은 `{% block %}`만 채우며, 그 조각 파일은 그 부품의 채워진 사례 하나다(같은 파일 안에 다른 마크업·두 번째 extends·block 밖 내용 금지). 조각이 문서 셸을, 페이지가 component를 extends하면 위반이다(백스톱 IM26).
+- **제품 CSS 혼입 금지**(제품 선언이 있을 때): 소속이 정해진 셸·페이지·제품 CSS는 다른 제품의 표준 자리 CSS(foundation 표준 7파일의 정확한 이름 · `theme/app_theme.css` · `component/<군>/*.css` · `util/*.css`)를 `{% static %}` 링크·CSS `@import`로 싣지 않는다. 페이지·BC 조각 CSS는 그 BC의 제품, 셸·틀 CSS는 그 셸의 제품, design_system CSS는 소유 뿌리의 제품이다. 평면 component 마크업 include는 허용한다. 표준 7파일 밖 foundation 파일은 혼입 판정 밖이다(옛 배치 빚은 그대로다). 페이지가 자기 제품 셸 CSS를 직접 링크해도 root 참조 위반이다(IM2 — 셸 extends만 예외).
 - **root → BC는 자유**(전부 아는 것이 존재 이유 — 4채널 면제). 단 Model 방향 규율은 동일: root도 BC의 **UseCase만** 호출(Repo·DataSource 직행 금지). `root_initializer` → BC `presentation_layer/ui_extension/<개념>_ui_extension.py`(템플릿 필터 조립 — 시동 배선)는 Model 접근이 아니라 이 규율 밖이다.
 - **`common/`은 `application/`·`root/`를 import하지 않는다.** common은 모두가 아는 곳, root는 모두를 아는 곳.
 - **`design_system/`은 `application/`·`root/`를 참조하지 않는다.**
-- **`web/apps.py`·`web/urls.py`는 엔트리포인트 최소형** — `WebConfig.ready()`는 `root_initializer` 시동 한 줄, `web/urls.py`는 `root_router`의 urlpatterns를 내보내는 한 줄. 전역 에러는 호스트 루트 urls의 `handler404`·`handler500`이 `root_error_handler`로 위임한다 — 빈 핸들러로 전역 에러를 침묵 삼키지 않는다; `root_error_handler`도 받은 에러를 침묵 삼키지 않고 최소한 관찰 가능하게 둔다(로그 — 외부 크래시리포트 SDK 연결은 앱 소관·§7 반송표). 테마는 `root_view.html`의 `app_theme.css` 링크 한 줄. import 화이트리스트: root/·django 계열 — 정확한 경계는 러너가 단일 출처(§8). 역방향(`application/`·`common/`·`design_system/`이 `apps.py`·`urls.py`를 import) 금지 — BC 무관 전역 인스턴스(logger 등)는 common 소속이다.
+- **`web/apps.py`·`web/urls.py`는 엔트리포인트 최소형** — `WebConfig.ready()`는 `root_initializer` 시동 한 줄, `web/urls.py`는 `root_router`의 urlpatterns를 내보내는 한 줄. 전역 에러는 호스트 루트 urls의 `handler404`·`handler500`이 `root_error_handler`로 위임한다 — 빈 핸들러로 전역 에러를 침묵 삼키지 않는다; `root_error_handler`도 받은 에러를 침묵 삼키지 않고 최소한 관찰 가능하게 둔다(로그 — 외부 크래시리포트 SDK 연결은 앱 소관·§7 반송표). 테마는 문서 셸의 `app_theme.css` 링크 한 줄이다(제품 선언이 있으면 자기 제품 뿌리의 theme). import 화이트리스트: root/·django 계열 — 정확한 경계는 러너가 단일 출처(§8). 역방향(`application/`·`common/`·`design_system/`이 `apps.py`·`urls.py`를 import) 금지 — BC 무관 전역 인스턴스(logger 등)는 common 소속이다.
 - domain_layer는 `django` import 금지 — `dataclasses`·`enum`·`typing`·`datetime`·`decimal` 등 순수 표준 라이브러리만. 단 domain → common은 `common/util/json_field.py` 하나만 예외다(직파싱 단일 출처 — dddart에서 모델이 json_serializable 패키지를 쓰던 자리).
 
 ## §6. common·design_system 입장 판별
@@ -268,13 +280,16 @@ select = ["E4", "E7", "E9", "F", "ANN"]
 
 **design_system — BC 어휘도 도메인 어휘도 모르는 시각 요소**:
 
-- `foundation/` 7토큰이 시각 값의 **단일 출처** — BC presentation·root scaffold·component의 템플릿·CSS에서 색 리터럴(`#…`·`rgb(…)`)·생 글자 스타일(`font-size`·`font-family` 등 리터럴)·연출 시간(`transition`·`animation`의 `ms`/`s` 리터럴 — 전환·애니메이션·press 피드백은 `--duration-*`/`--easing-*` 토큰) 금지. *비시각* duration(네트워크 timeout·디바운스 — `hx-trigger`의 `delay:` 등)·구조 명명 값(`transparent`·`currentColor`처럼 브랜드 시각값 아닌 것)은 제외 — 상세 경계는 architecture-ui §7. `font-size`는 아이콘 글리프에도 foundation 토큰으로 쓴다. 글리프 크기는 `app_spacing.css`의 `--spacing-icon-*`로 정의하고 `font-size: var(--spacing-icon-*)`로 인용한다. `width`·박스 `height` 등 비-typography 크기는 architecture-ui §8의 추출값 직접 인용 규칙을 따른다.
+- `foundation/` 7토큰이 시각 값의 **단일 출처**(제품 선언이 있으면 제품마다 그 제품의 7파일 — 같은 토큰 이름을 제품마다 정의해도 된다) — BC presentation·root scaffold·component의 템플릿·CSS에서 색 리터럴(`#…`·`rgb(…)`)·생 글자 스타일(`font-size`·`font-family` 등 리터럴)·연출 시간(`transition`·`animation`의 `ms`/`s` 리터럴 — 전환·애니메이션·press 피드백은 `--duration-*`/`--easing-*` 토큰) 금지. *비시각* duration(네트워크 timeout·디바운스 — `hx-trigger`의 `delay:` 등)·구조 명명 값(`transparent`·`currentColor`처럼 브랜드 시각값 아닌 것)은 제외 — 상세 경계는 architecture-ui §7. `font-size`는 아이콘 글리프에도 foundation 토큰으로 쓴다. 글리프 크기는 `app_spacing.css`의 `--spacing-icon-*`로 정의하고 `font-size: var(--spacing-icon-*)`로 인용한다. `width`·박스 `height` 등 비-typography 크기는 architecture-ui §8의 추출값 직접 인용 규칙을 따른다.
 - `component/`는 부품군 1차 — **부품군 폴더 = 파일 접미사 = CSS 클래스 접두의 군**(`button/` 안은 `*_button.html`+`*_button.css` → 클래스 `<수식>-button`). 축약(btn)·직속 파일·정크드로어 군(`widget/`·`etc/`) 금지. 분류 안 되는 부품이 생기면 새 부품군 폴더를 만든다.
+- 제품 선언이 있으면 평면 component HTML 마크업은 공용이고, CSS는 쓰는 문서의 제품 뿌리 안 같은 군·같은 이름으로 둔다. 토큰 단일 출처는 이관 완료 계약이다 — 이관 중 옛 값 파일을 계속 싣더라도 표준 파일로 인정하거나 빚을 면제하지 않는다.
 - 컴포넌트 표시 경로 규율(전역 JS 진입 함수 `show()` 금지 포함)은 architecture-ui §7 소유 — 규칙 본문은 그 스킬에만 둔다.
 
 ## §7. 표기 표준화 — drift와 교정
 
 HaffHaff-App 전수 조사에서 발견된 변형들(web 표기로 옮김). dddjango-web은 **새로 만드는 코드에서 아래 표준만 쓰며**, 백스톱이 변형을 잡는다. 기존 코드의 변형은 면제가 아니라 **빚**이다 — 기능 요청이 손대는 파일과 그 파일을 부르는 곳의 빚은 G0 빚 질문으로 정해 슬라이스 0(동작 불변)에서 먼저 정리하고, 그 밖의 기존 코드 수정은 요구하지 않는다(§8 빚 모드).
+
+제품 선언이 있으면 옛 파일의 표준 교정처는 그 파일을 싣는 문서의 제품 뿌리다. 문서들의 제품이 갈리거나 판정이 안 서면 묻는다 — 선언을 바꿔 교정처를 임의로 고르지 않는다.
 
 **적용 경계 — 표기는 파일, 구조는 단위**: ⓐ **새로 만드는 파일은 어느 폴더에 두든 표준 표기**(파일명·접미사·클래스)만 쓴다 — 아래 표의 변형 표기(`_app.py`·`_bridge.py` 류)로 새 파일을 만들지 않는다. 백스톱 명명 검사는 added 파일 기준으로 폴더와 무관하게 발화한다. ⓑ **폴더 구조의 표준 강제는 신규 단위**(BC·개념 폴더·화면 삼총사)**부터** — 레거시 단위 내부에 파일을 추가할 때 표준 폴더 신설을 강제하지 않으며(구조 검사는 added 디렉터리 기준), 게이트는 기존 파일의 개명·이동을 요구하지 않는다(규약 §8 문면 그대로 — "새로 만드는 코드에서 표준만") — 기존 파일의 위반은 빚으로 따로 다룬다(위 문단 · §8 빚 모드). ⓒ **표준 트리 밖 옛 배치 파일**(`web/root`·`web/application`·`web/common`·`web/design_system`·`web/static`·`web/{__init__,apps,urls}.py` 밖)은 **층 판정 불가 레거시**다 — 그 파일에 줄을 더해도 층 규칙 import 검사(«X는 Y만» 허용 자리·층별 금지)는 불발화하고, 층 무관 import 검사(상대 import·백엔드 `application.`/`framework.` import·HTTP 호출 표면·DataSource 밖 API 주소 리터럴)는 그대로 건다. 옛 배치 단위 안에 표준 표기로 둔 파일은 그 역할로 알아본다 — `view/` 폴더의 템플릿은 페이지(기능 JS·htmx core 실행 태그의 자리 — 조각 폴더와 공식 SDK 로드는 그대로다), `<개념>_data_source.py`는 DataSource(API 주소 리터럴의 자리), 옛 배치 최상위 폴더 직속 `<폴더>_router.py`는 라우터(`path()`·라우트 리터럴·`class <Bc>Routes`의 자리)다. 옛 배치 파일 자체는 빚이다 — 빚 스캔이 파일마다 `ST0` 키로 내고, 빚 범위(손대는 파일 + 부르는 곳)에 든 것은 슬라이스 0이 새 트리로 옮긴다(옮긴 파일은 새 트리의 층·명명·골격 규칙을 처음 받는다 · 범위 밖 옛 배치는 그대로 둔다):
 
@@ -336,6 +351,9 @@ python3 "${CLAUDE_PLUGIN_ROOT}"/scripts/backstop.py <대상 프로젝트 루트>
 
 - 검사 패밀리 4종: **구조(ST)·import(IM)·명명(NM)·순환(CY)**(+ 시험 존재·재현성·방법 TG·토대 PJ·모델 형태 MD·출력 안전 PU·공식 SDK 등재 WV — §9 · 합계 86종은 러너 머리말이 단일 출처). 승인 유입도 발견이며 종료 코드 밖이고 보고 의무가 있다 — 남은 blocker는 반송(오탐으로 보이는 발견의 처분은 Coordinator의 «검사기 이의» — 에이전트가 스스로 면제하지 않는다).
 - **게이트 의미론**: 구조·명명은 **added**(새로 만든 파일·디렉터리)만, import는 touched 파일의 **added 줄**만, 골격 완비는 **신규 단위**(새 BC·애그리거트·개념 폴더)만, TG2·TG3은 기준 commit→현재 작업 트리(staged·unstaged·커밋된 변경 포함)의 root 상대 diff에서 영구 시험·지원 파일을 수집하되, **새쪽 추가 줄과 검출 사슬의 실제 표현식·대입·I/O·실행·비교 위치가 겹칠 때만** 발화한다. TG2는 해당 입력 식·정의·대입·호출 함수 이름, TG3 비교는 비교 두 입력·두 screenshot 생성 출처·호출 함수 이름(==/!=는 연산자) 위치로 좁힌다. 호출·함수·클래스·블록 전체나 비교의 메시지·다른 키워드·JS 미사용 argv·같은 숫자 행끼리의 비교를 사슬 대응으로 쓰지 않는다. **안전한 재대입·출처 무효화 줄의 삭제로 같은 sink에 새 금지 사슬이 닿는 경우**는 지원 정적 범위의 기준판↔현재판 사슬 비교로 발화한다. 시험→시험 순수 rename은 새 줄 0이며 내용 변경은 old→new 새쪽 hunk를 쓴다(명시 rename 판별·D/A 동일 blob 이동 대응). copy·시험 밖에서 영구 시험으로 편입·기준점에 없는 비무시 미추적은 전 줄 새 줄이고, 기준점 파일이 미추적이 된 경우는 기준판과 비교한다. 기록 폴더(`.dddjango-web/`·`.dddjango/`) 아래 파일은 추적 여부와 무관하게 영구 시험·지원 파일 후보가 아니다 — 그 사본을 영구 시험으로 옮겨 오면 편입이다(전 줄 새 줄). 삭제된 파일은 검사하지 않는다. 모듈 상수→함수 내부 등 지원 흐름의 원점·중간 대입 위치와 실행 JS의 Python 문자열 정의·중간 대입·실행 인자 및 디코드 문자→원본 좌표를 보존한다. 확정된 Node 명령은 `--` 옵션 종료·스크립트 entry point 앞의 eval/print 옵션만 실행 JS로 추출하고, 코드·옵션 표지·JS I/O에서 쓰지 않은 argv를 일반 Python 경로로 다시 판정하지 않는다. JS는 키워드 뒤 정규식의 가짜 호출을 제외하며 세미콜론 없는 ASI 대입의 screenshot 비교도 판정한다. `with` 항목은 표현식 검사 뒤 해당 바인딩을 갱신하고 다음 항목을 검사한다. 함수 인자·반환·타 파일 전달 등 지원 밖은 감수 대상이며 추적 실패를 무관함의 증명으로 쓰지 않는다. G0 명시 시험 경로는 `git_snapshot`과 `--diff-base`를 같은 commit OID로 해소해 비교한 기록에서 수집한다(관례·pytest 설정 밖도 포함). 개별 build-state의 읽기·JSON·snapshot·`test_command` 형상(null·비문자열)/shell quoting 실패는 그 기록만 건너뛰고 다른 기록·관례 시험 수집은 계속한다. 기준점·old/new 대응·위치 해석 실패는 범위 미확정·미실행을 고지하며 파일 전체 검사로 퇴화하지 않고 `ctx.files`도 넓히지 않는다. 환경 변수 단언의 의미는 TG2 밖으로 감수·G2 표준 실행이 본다. 순환은 전역+베이스라인 래칫(`.dddjango-web/backstop-baseline.json`). → 게이트는 **이번 작업이 들인 위반**만 잡는다 — 기존 코드의 위반(drift)은 면제가 아니라 빚이며 아래 빚 모드가 다룬다. **표준 트리 밖 옛 배치 파일 = 층 판정 불가 레거시** — 층 규칙 IM은 불발화하고, 층 무관 IM(상대 import·백엔드 import·HTTP 표면·DataSource 밖 API 주소 리터럴)은 그대로 걸고, 옛 배치 단위 안에 표준 표기로 둔 페이지·DataSource·라우터는 그 역할로 알아본다(§7 ⓒ). 반대 방향(표준 트리 안 파일이 옛 배치 파일을 참조)은 그 표준 파일의 층 규칙으로 판정한다. 승인 목록이 있으면 그 산출물 폴더를 `--design-build`로 전달한다 — 검사를 다 돌린 뒤 W·F1·L로 증명된 승인 유입만 종료 코드에서 빼며 CY·WV·ST12·PU1·PU2는 늘 blocker다. TG2·TG3 발견의 승인 유입은 부모 측정 대신 **수신 증명**으로 가른다 — 기준 뒤 그 파일을 바꾼 첫 부모 걸음이 전부 승인 병합의 상류판 그대로 수신이고 작업 트리 현물이 그 판의 바이트 그대로일 때만이다(필터·줄 끝 변환 없이 대조한다 · 관례 시험 자리 — `web_test`·`test`·`tests` 폴더 아래와 `conftest.py` — 의 파일에만 서고, 레인이 손댄 현물 심볼릭 링크가 프로젝트 루트 밖을 가리키면 하지 않는다). 병합 뒤 레인이 그 파일을 더 고쳤으면 그 파일의 발견은 기준판 대비 그대로 이 레인 몫이다. 승인 유입도 발견이므로 G2 배너에 원문으로 올리고(발주자·호스트의 몫으로 남는다), 수신 증명이 선 시험 파일의 «자동 판정 밖 흐름» 고지만 이 레인의 discipline 감수 대상에서 빠진다.
+- **제품 선언 검증**(선언이 있을 때): 선언을 쓰는 모든 입구에서 패밀리 실행보다 먼저 검증한다(일반 게이트 · `--slice-end` · `--only` · 빚 스캔·잔존 · `refactor_audit.py`의 plan(범위 조사)·plan --names·plan --against). 선언의 읽기·형식 오류(JSON 파손·중복 키·schema·타입·모르는 키·id 꼴·flat 수·wildcard 중복·BC 중복·경로 꼴)는 exit 1 «판정 불가»다 — 무선언 동작으로 내려앉지 않는다. 게이트는 `[backstop] 판정 불가 — 제품 선언 web/product_registry.json — <사유>`, audit은 `요약: refactor_audit plan 실행 불능 — 판정 불가 — …`로 알린다. `--subst-check`는 선언을 읽지 않는다. 선언된 own 뿌리의 네 폴더·표준 7파일 또는 셸이 없으면 신설 여부와 무관하게 ST4다(G2 직전 실행·빚 스캔 — 슬라이스 끝에서는 미룸).
+- **제품 혼입 게이트**(선언이 있을 때): 새 CSS 링크·`@import` 줄은 그 줄을, 새 extends 줄은 그 문서의 직접 CSS 링크 전부를 대조한다. 파일을 손댔다는 이유만으로 옛 링크를 새 위반으로 만들지 않고, 선언만 바뀌어도 기존 참조를 새 줄로 보지 않는다. 빚 스캔은 전수다. 선언 파일이 기준점 뒤 신설·변경·삭제된 게이트의 알림은 `[info] 제품 선언이 기준점 뒤 바뀌었다 — G2 배너에 diff 원문(web/product_registry.json — 선언은 사용자 결정으로만 바뀐다)`다. G2 배너에 선언 diff 원문을 올린다. 선언만으로 옛 빚을 숨기지 않는다 — 선언 유입으로 판정만 바뀐 레인 파일은 승인 유입으로 자동 가르지 않고 기존 게이트·STOP을 따른다.
+- **제품 판정의 한계**(선언이 있을 때): 옛 배치 페이지·include된 조각 안 링크·동적 경로·비표준 foundation을 거친 간접 `@import`·다른 제품 토큰의 `var()` 참조·제품 뿌리 직속 파일은 검사 보증 밖이다. design_system의 NM10~12는 foundation·component에 같은 규칙을 적용하며 theme·util 리터럴 검사를 새로 켜지 않는다. SDK 로드 규칙은 평면 셸 기준 그대로다 — own 셸의 block 밖 과보고·평면 셸 SDK의 중복 과보고·own 셸과 페이지의 중복 누락이 남는다.
 - **슬라이스 끝 실행**(`--slice-end`): Phase 2에서 슬라이스가 끝날 때마다 커밋 전에 돈다(coder가 끝 래칫에서, Coordinator가 커밋 앞에서 — 실행문은 Coordinator가 준다). 86종 중 79종을 실행하며 TG2·TG3은 미루지 않는다. 뒤 슬라이스가 채울 짝·골격·미러·순환 검사(목록은 러너 요약 줄이 단일 출처)를 미루고 순환 기준선 파일을 만들지 않는다 — 미룬 검사는 G2 직전 실행(`--slice-end` 없이 86종 전부)이 본다. `--update-baseline`·`--only`·빚·치환 모드와 함께 쓰지 않는다. exit 0은 잔여 blocker 0이며 승인 유입도 발견이다 — 그 절의 원문·증명 M·부모 표지를 슬라이스 보고로 Coordinator에 전달해 G2 배너에 올린다. exit 2의 수정·반송은 남은 blocker 대상이고 exit 1은 미실행이다.
 - **빚 모드**(러너 모드 — 검사 ID가 아니다):
 

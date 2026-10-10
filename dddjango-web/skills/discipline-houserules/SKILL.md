@@ -19,7 +19,8 @@ dddjango-web이 만드는 코드에 한정된 집안 규칙이다. **표준 파�
    - domain_layer는 **항상 애그리거트(개념) 1차** + 루트 파일 `<aggregate>.py`. 불명확하면 BC 동명 애그리거트.
    - application·presentation은 **두 번째 개념 등장 시** 개념 1차 분할, infra는 평면 유지 — 하위층 없음(final.md §2).
    - `application/` 직속은 BC 폴더만 — 단 **G0에서 사용자가 area 판정한 접두**는 `application/<area>/<bc>/`로 그루핑한다(area = 순수 시각 네임스페이스·직속은 BC 폴더만·식별자 미등장 — final.md §1 area 핵심 사실·판별은 undecidable.md §13). BC 루트 직속은 `<bc>_router.py`·`<bc>_navigator.py` 둘만.
-   - `web/root/`는 자체 골격(역할 4폴더, scaffold만 삼총사), design_system은 4폴더(foundation·theme·component·util)+foundation 7토큰 자리 — 부품군 폴더는 수요 시 생성(final.md §3·§6).
+   - `web/root/`는 자체 골격(역할 4폴더, scaffold만 삼총사), design_system은 4폴더(foundation·theme·component·util)+foundation 7토큰 자리(제품 선언이 있으면 제품 뿌리마다 같은 골격) — 부품군 폴더는 수요 시 생성(final.md §3·§6).
+   - 제품 선언은 선택이다 — 없으면 평면 뿌리·셸 하나 그대로, 있으면 `web/product_registry.json`의 BC 목록에 따라 제품 뿌리·문서 셸을 고른다(사용자 결정으로만 · coder는 읽기만). 표준 자리는 final.md §1 제품 핵심 사실, 혼입·선언 오류·알려진 한계는 §5·§8이다.
    - **테스트는 `web_test/`(web/ 1:1 미러·sparse)** — `web/.../<sut>.py` → `web_test/.../<sut>_test.py`. 단 SUT가 있는 자리에만 두고 빈 미러 폴더·빈 테스트 파일을 만들지 않는다(골격 완비의 *명시적 예외* — final.md §1·§3). 무엇을·단언 FORM은 discipline-test, Django 메커니즘은 implementation-test.
 3. **배치 판별**: BC 어휘를 알면 그 BC → 전 BC 조립이면 `web/root/` → 시각 부품이면 `design_system/` → 그 외 횡단 기반만 `common/`(final.md §6). 이름은 명명 총괄표(final.md §4)에서 찾는다 — 위치·접두·접미사가 전부 정해져 있다.
 4. **의미 판별 18종**(view/section, BC 어휘, 판정·계산의 귀속, 살아있는 상태, 두 번째 개념, 접두↔area 등)은 `references/undecidable.md`의 절차·배정을 따른다 — 1차 결정자와 검증자가 같은 파일을 본다.
@@ -40,7 +41,7 @@ dddjango-web이 만드는 코드에 한정된 집안 규칙이다. **표준 파�
 - 구명칭·변형: `app/`·`bridge/`·`block/`(→ use_case·shared_state·section), `viewmodel/`·`repo/` 폴더, `_view_state.py`, `container/`.
 - 화면 삼총사 접두 불일치(VM 기준 — `<화면>_view`↔`_vm`↔`_state`), UseCase가 화면명, section에 화면 접두 없음, widget이 화면 State를 받음.
 - navigator가 presentation_layer에, URL path·name 리터럴이 `<bc>_router.py` 밖에(템플릿의 URL name 직접 사용 포함).
-- BC 코드가 `root_` 파일을 참조(`root/`를 아는 곳은 `web/apps.py`·`web/urls.py`뿐 — 페이지 템플릿의 `root_view.html` extends만 예외), `common/`·`design_system/`이 `application/`·`root/`를 참조, `common/`에 상태 동작(시그널 수신·세션 쓰기)·BC 어휘·비표준 종류 폴더.
+- BC 코드가 `root_` 파일을 참조(`root/`를 아는 곳은 `web/apps.py`·`web/urls.py`뿐 — 페이지 템플릿의 문서 셸 extends만 예외 — 제품 선언이 있으면 자기 제품 셸), `common/`·`design_system/`이 `application/`·`root/`를 참조, `common/`에 상태 동작(시그널 수신·세션 쓰기)·BC 어휘·비표준 종류 폴더.
 - domain_layer에 `django` import·`common/util/json_field.py` 밖의 common import, VM·UseCase·State가 design_system을 참조(component 템플릿 경로·CSS 변수 이름 보유 — 허용 위치는 닫힌 열거 — final.md §5), 타 BC의 Repo·DataSource·VM·SharedState 직접 접근(4채널 밖 — final.md §5).
 - 상태 동작(State 조립·세션 보관·시그널 수신 연결)이 VM·SharedState·Service·root 2변종 밖에(UseCase·Repo·DataSource는 무상태 plain class 직접 생성).
 - shared_state에 과거형 사건명(`*_added` 류), component 직속 파일·정크드로어 군, 색 리터럴(`#…`)·생 글자 스타일 리터럴(foundation 토큰만).
