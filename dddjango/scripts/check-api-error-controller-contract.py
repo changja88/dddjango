@@ -26,6 +26,20 @@ overlap 절 — #62·#474 는 handler 행, ⓓ#125 는 route 함수 def 행 좌�
        성공 union 응답은 `RootModel[Annotated[A | B, Field(discriminator=…)]]` 단독 상속). 파일 한정 없음.
   둘 다 api/** 전 파일 + OHS `*_service.py`(트리 슬라이스 대상)에서 돌고 overlap 억제 비대상(keys None).
 
+잡은 예외의 승인 필드 값(사건 값 — 2026-10-11 F4-80 · 사용자 결정 22 «가»):
+  managed catch 가 `as <n>` 으로 잡은 자기 BC 구체 예외 하나에서 slot 10 이 승인한 공개 필드만 읽어 공통 shape 의
+  유일한 일반 `str` 설명 칸 keyword 값과 승인 머리 값에만 싣는다. 꼴: `str` → `n.f` · `datetime` →
+  `n.f.astimezone(UTC).isoformat()` · `int` → f-string `{n.f}`. 값 유무로 가를 때만 catch 본문을
+  `if n.f is not None: … else: …` 한 꼴(두 가지 같은 concrete · 식별자 · 실제 status 값)로 둔다(꼴 2).
+  `--event-value <예외 모듈>.<클래스>.<필드>`(반복 · 중복은 사용 오류 · code-json 전용 · `--anchor-baseline` 에서는
+  BC 소속 대조 생략)가 승인 목록이다.
+  | 프로필 | 트리 #474(도메인 예외 읽기) | code lane |
+  | auto | 꼴 맞는 읽기는 비켜 준다(승인 대조 없음) | 돌지 않는다 |
+  | dddjango-code-json | auto 와 같다 | C1 `caught exception field read not approved by slot 10`(도메인 #474 · 응용 계약) ·
+  |                    |                | C2 `caught exception read outside the approved event-value form`(응용 · 계약) |
+  | preserve-established | 모든 읽기에 #474(그대로) · `--event-value` 는 사용 오류 | 판정 0(그대로) |
+  비켜 주기는 api/<area>/<area>_controller.py 진입점(승격 본체 포함)에만 — webhook · OHS `*_service.py` 는 그대로다.
+
 그래프 좌표(T2-2): 규범 정본 = 온톨로지 그래프(`ontology/rules/`) · 이 검사기의 #N ↔ Work 조인은
   alias 대장(`ontology/wiring/aliases.ttl`)이 소유한다. 조인 확정: 없음(대장 미등재 — #74 소유자
   checker_lint(rule-owner-map) — 자기 조인 없음).
@@ -55,7 +69,8 @@ from typing import Iterator
 # 소유 5규칙(#59 «전역 예외 핸들러 금지» · #62 «except Exception 금지» · #125 «입구
 # 로직 금지» · #126 «매핑을 helper 로 옮기지 않는다» · #474 «도메인 예외는 타입으로만»)
 # 의 술어에 포섭되는 category 는 해당 #N violation 으로 방출하고(귀속 매핑표 v2 —
-# 2026-08-19-ontology-t2-1-attribution-map §1: 원자 술어 23 = #N 12 · 계약 11),
+# 2026-08-19-ontology-t2-1-attribution-map §1: 원자 술어 26 = #N 13 · 계약 13 — 2026-10-11
+# F4-80 사건 값 C1(도메인 #474 · 응용 계약) · C2(계약) 가산),
 # 그 밖의 category 만 08-04 선행 계약(rule=null + contract_ref)로 남는다.
 CONTRACT_REF = "선행 계약(08-04 API-error) 소유"
 
@@ -123,6 +138,13 @@ RESULT_VARIANT_BRANCH_FORBIDDEN = (
     "Result variant/outcome failure branch forbidden — known failures take the "
     "exception path; a use-case result carries only the success shape (#571)"
 )
+# 2026-10-11 F4-80 — 잡은 예외의 승인 필드 값(사건 값). code-json 은 `--event-value`(slot 10 «사건 값» 칸 렌더)
+# 목록과 꼴 맞는 읽기를 대조한다(C1 — 도메인 = #474 · 응용 = 계약) · 응용 예외의 꼴 밖 읽기는 C2(계약).
+EVENT_VALUE_NOT_APPROVED = "caught exception field read not approved by slot 10"
+EVENT_VALUE_OUTSIDE_FORM = "caught exception read outside the approved event-value form"
+EVENT_VALUE_LAYERS = ("domain_layer", "application_layer")
+EVENT_VALUE_UTC = "datetime.UTC"
+EVENT_VALUE_RELAXED_PROFILES = frozenset({"auto", "dddjango-code-json"})
 
 
 class UsageError(Exception):
@@ -146,6 +168,7 @@ class Config:
     anchor: str | None
     anchor_debt_file: str | None
     anchor_baseline: bool = False
+    event_values: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -196,6 +219,11 @@ class ErrorLanguage:
     discriminator_default_is_member_by_bc: dict[str, bool]
     bases_by_bc: dict[str, str]
     prepared_by_bc: dict[str, frozenset[str]]
+    # F4-80 — 설명 칸(공통 shape 의 유일한 일반 `str` 칸 · 식별자 아님 · 생성 key 확실 · 경로 길이 1) ·
+    # 설명 칸을 Literal 로 좁힌 클래스(base · concrete 원 경로) · 클래스별 정수 칸 정적 default(꼴 2 status 같음).
+    description_field_by_bc: dict[str, str]
+    literal_description_classes: frozenset[str]
+    static_int_defaults: dict[str, dict[str, int | None]]
 
     @property
     def all_types(self) -> frozenset[str]:
@@ -253,6 +281,8 @@ def _argument_parser() -> _UsageParser:
     parser.add_argument("--controller-module", action="append", default=[])
     parser.add_argument("--scope-bc", action="append", default=[])
     parser.add_argument("--error-bc", action="append", default=[])
+    # F4-80 — slot 10 «사건 값» 칸의 승인 필드(`<예외 모듈>.<클래스>.<필드>`) — Coordinator 가 registry #15 에만 렌더.
+    parser.add_argument("--event-value", action="append", default=[])
     # 판정 차분(anchor_diff) — 신규분만 blocker·앵커 기존분은 보고 강등(2026-08-15 r2″).
     parser.add_argument("--anchor", default=None)
     parser.add_argument(anchor_diff.BASELINE_FLAG, action="store_true", dest="anchor_baseline")
@@ -279,6 +309,22 @@ def _unique(option: str, values: list[str], issues: list[str]) -> tuple[str, ...
     if len(values) != len(set(values)):
         issues.append(f"반복 인자 중복: {option}")
     return tuple(values)
+
+
+def _event_value_parts(value: str) -> tuple[str, str, str] | None:
+    """`application.<bc>.(domain_layer|application_layer).<…>.<Class>.<field>` → (bc, 클래스 원 경로, 필드).
+
+    `application.<bc>.` 뒤 마디는 `_` 로 시작하지 않고(사설 모듈 · 클래스 · 필드 금지) 마디는 5개 이상이다."""
+    parts = value.split(".")
+    if (
+        len(parts) < 5
+        or parts[0] != "application"
+        or not BC_NAME_RE.fullmatch(parts[1])
+        or parts[2] not in EVENT_VALUE_LAYERS
+        or any(not part.isidentifier() or part.startswith("_") for part in parts[2:])
+    ):
+        return None
+    return parts[1], ".".join(parts[:-1]), parts[-1]
 
 
 def _source_path(option: str, raw: str, issues: list[str]) -> Path | None:
@@ -319,6 +365,7 @@ def _parse_config(argv: list[str]) -> Config:
             namespace.controller_module,
             namespace.scope_bc,
             namespace.error_bc,
+            namespace.event_value,
         )
     )
     if profile is not None and profile not in ERROR_PROFILES:
@@ -344,6 +391,20 @@ def _parse_config(argv: list[str]) -> Config:
     )
     scope_bcs = _unique("--scope-bc", namespace.scope_bc, issues)
     error_bcs = _unique("--error-bc", namespace.error_bc, issues)
+    event_values = _unique("--event-value", namespace.event_value, issues)
+    if profile == "preserve-established" and event_values:
+        issues.append("preserve-established profile에는 --event-value 를 전달하지 않음(승인 대조는 code-json 몫)")
+    for value in event_values:
+        parts = _event_value_parts(value)
+        if parts is None:
+            issues.append(
+                f"잘못된 --event-value: {value} "
+                "(application.<bc>.(domain_layer|application_layer).<모듈>.<클래스>.<필드> · `_` 마디 금지)"
+            )
+        elif parts[0] not in error_bcs and not namespace.anchor_baseline:
+            # 앵커 기준선 재실행은 앵커에 없는 BC 의 --error-bc 를 걷는다(anchor_diff._baseline_argv) — BC 소속
+            # 대조를 건너뛴다(F4-80 A.2 «앵커 재실행»).
+            issues.append(f"--event-value 의 BC 가 --error-bc 밖: {value}")
     if explicit and not controller_raw and not namespace.anchor_baseline:
         # anchor-baseline 모드에선 앵커 트리에 없는 controller 가 걷혀 빈 집합이 정상이다.
         issues.append("필수 인자 누락: --controller-module")
@@ -402,6 +463,7 @@ def _parse_config(argv: list[str]) -> Config:
         anchor=namespace.anchor,
         anchor_debt_file=namespace.anchor_debt_file,
         anchor_baseline=namespace.anchor_baseline,
+        event_values=event_values,
     )
 
 
@@ -1115,6 +1177,56 @@ def _scalar_int_annotation(
                 and any(_scalar_int_annotation(part, bindings) for part in parts)
             )
     return False
+
+
+def _scalar_str_annotation(
+    annotation: ast.AST,
+    bindings: dict[str, Binding],
+) -> bool:
+    """맨 `str`(Optional · Literal · Annotated · 다른 타입 아님) — F4-80 설명 칸 후보."""
+    resolved = _resolve_binding(annotation, bindings)
+    if resolved is not None:
+        return resolved.origin in {"str", "builtins.str"}
+    return isinstance(annotation, ast.Name) and annotation.id == "str"
+
+
+def _literal_in_annotation(
+    annotation: ast.AST,
+    bindings: dict[str, Binding],
+) -> bool:
+    """annotation 안 어디든 `Literal[...]` 이 있으면 참(Annotated · Optional 감싸기 포함)."""
+    for node in ast.walk(annotation):
+        if not isinstance(node, ast.Subscript):
+            continue
+        resolved = _resolve_binding(node.value, bindings)
+        wrapper = resolved.origin if resolved is not None else _expression_name(node.value)
+        if wrapper in {"Literal", "typing.Literal", "typing_extensions.Literal"}:
+            return True
+    return False
+
+
+def _class_static_int_defaults(
+    parsed: ParsedSource,
+    node: ast.ClassDef,
+    bindings: dict[str, Binding],
+) -> dict[str, int | None]:
+    """클래스 본문이 선언한 칸 → 정적 정수 default(정수가 아니거나 정적이 아니면 None — «알 수 없음»)."""
+    before = _class_body_bindings(parsed, node, bindings)
+    defaults: dict[str, int | None] = {}
+    for statement in node.body:
+        if not isinstance(statement, ast.AnnAssign) or not isinstance(statement.target, ast.Name):
+            continue
+        statement_bindings = before.get(id(statement), bindings)
+        expression = _field_default_expression(statement, statement_bindings)
+        value = (
+            _static_value(expression, statement_bindings)
+            if expression is not None
+            else _NO_STATIC_VALUE
+        )
+        defaults[statement.target.id] = (
+            value if isinstance(value, int) and not isinstance(value, bool) else None
+        )
+    return defaults
 
 
 def _is_required_sentinel(
@@ -2037,6 +2149,9 @@ def _error_language(
     constructor_targets_by_key: dict[str, tuple[ConstructorTarget, ...]] = {}
     certain_constructor_keys: frozenset[str] = frozenset()
     constructor_key_issues: list[str] = []
+    plain_str_common_fields: set[str] = set()
+    static_int_defaults: dict[str, dict[str, int | None]] = {}
+    literal_description_classes: set[str] = set()
     if common is None:
         analysis.append(f"필수 common FrameworkErrorSchema source 없음: {COMMON_ERROR_PATH}")
     else:
@@ -2064,6 +2179,21 @@ def _error_language(
             analysis.extend(field_issues)
             if not common_fields:
                 analysis.append(f"{COMMON_ERROR_PATH}: common public field set 분석 불능")
+            common_before = _class_body_bindings(common, common_node, common_bindings)
+            for statement in common_node.body:
+                if (
+                    isinstance(statement, ast.AnnAssign)
+                    and isinstance(statement.target, ast.Name)
+                    and statement.target.id in common_fields
+                    and _scalar_str_annotation(
+                        statement.annotation,
+                        common_before.get(id(statement), common_bindings),
+                    )
+                ):
+                    plain_str_common_fields.add(statement.target.id)
+            static_int_defaults[COMMON_ERROR_OUT] = _class_static_int_defaults(
+                common, common_node, common_bindings
+            )
             (
                 constructor_targets_by_key,
                 certain_constructor_keys,
@@ -2144,6 +2274,25 @@ def _error_language(
                 resolved_default,
                 enum_origin,
             )
+        static_int_defaults[base_origin] = _class_static_int_defaults(
+            source, base_node, base_bindings
+        )
+        description_candidate = _description_field_candidate(
+            plain_str_common_fields,
+            discriminator_fields.get(bc),
+            constructor_targets_by_key,
+        )
+        if description_candidate is not None and any(
+            isinstance(statement, ast.AnnAssign)
+            and isinstance(statement.target, ast.Name)
+            and statement.target.id == description_candidate
+            and _literal_in_annotation(
+                statement.annotation,
+                base_before.get(id(statement), base_bindings),
+            )
+            for statement in base_node.body
+        ):
+            literal_description_classes.add(base_origin)
         known: set[str] = set()
         for node in classes:
             if node in base_nodes:
@@ -2155,9 +2304,36 @@ def _error_language(
             ]
             if len(node.bases) == 1 and direct[0] is not None and direct[0].origin == base_origin:
                 known.add(f"{module}.{node.name}")
+                static_int_defaults[f"{module}.{node.name}"] = _class_static_int_defaults(
+                    source, node, bindings
+                )
+                node_before = _class_body_bindings(source, node, bindings)
+                if base_origin in literal_description_classes or (
+                    description_candidate is not None
+                    and any(
+                        isinstance(statement, ast.AnnAssign)
+                        and isinstance(statement.target, ast.Name)
+                        and statement.target.id == description_candidate
+                        and _literal_in_annotation(
+                            statement.annotation,
+                            node_before.get(id(statement), bindings),
+                        )
+                        for statement in node.body
+                    )
+                ):
+                    literal_description_classes.add(f"{module}.{node.name}")
             elif any((_expression_name(base) or "").rsplit(".", 1)[-1] == base_name for base in node.bases):
                 analysis.append(f"{path}:{node.lineno} prepared FrameworkErrorSchema base provenance 분석 불능")
         prepared[bc] = frozenset(known)
+    description_fields: dict[str, str] = {}
+    for bc in bases:
+        candidate = _description_field_candidate(
+            plain_str_common_fields,
+            discriminator_fields.get(bc),
+            constructor_targets_by_key,
+        )
+        if candidate is not None:
+            description_fields[bc] = candidate
     return ErrorLanguage(
         frozenset(common_fields),
         frozenset(required_common_fields),
@@ -2169,7 +2345,34 @@ def _error_language(
         discriminator_defaults,
         bases,
         prepared,
+        description_fields,
+        frozenset(literal_description_classes),
+        static_int_defaults,
     )
+
+
+def _description_field_candidate(
+    plain_str_fields: set[str],
+    discriminator: str | None,
+    constructor_targets_by_key: dict[str, tuple[ConstructorTarget, ...]],
+) -> str | None:
+    """F4-80 설명 칸(확인 3) — 공통 shape 의 맨 `str` 칸 가운데 그 BC 의 식별자 칸이 아닌 것이 정확히 하나이고,
+    그 칸에 닿는 생성 key 가 확실하고 경로 길이 1 일 때만 그 칸이다(둘 이상이면 None — 안전 쪽)."""
+    if discriminator is None:
+        return None
+    candidates = sorted(plain_str_fields - {discriminator})
+    if len(candidates) != 1:
+        return None
+    field = candidates[0]
+    if any(
+        targets and all(
+            target.field == field and len(target.path) == 1 and target.certain
+            for target in targets
+        )
+        for targets in constructor_targets_by_key.values()
+    ):
+        return field
+    return None
 
 
 def _node_symbol(node: ast.AST) -> str | None:
@@ -2959,11 +3162,41 @@ def _constructor_arguments_valid(
     language: ErrorLanguage,
     operation: Operation,
     analysis: list[str],
+    atoms: dict[int, str] | None = None,
 ) -> bool:
+    atoms = atoms or {}
+    bc = _constructor_bc(constructor_origin, language)
     if kind == "prepared":
-        return not call.args and not call.keywords
+        # 준비된 concrete — 무인자, 또는 설명 칸 keyword 하나(문자 · 승인 사건 값 · F4-80). 설명 칸을 Literal 로
+        # 좁힌 concrete 는 keyword 를 받지 못한다.
+        if call.args:
+            return False
+        if not call.keywords:
+            return True
+        if len(call.keywords) != 1 or call.keywords[0].arg is None:
+            return False
+        keyword = call.keywords[0]
+        if (
+            language.constructor_key_issues
+            and keyword.arg not in language.certain_constructor_keys
+        ):
+            analysis.extend(language.constructor_key_issues)
+            return False
+        return (
+            _description_keyword(keyword.arg, bc, language)
+            and constructor_origin not in language.literal_description_classes
+            and _event_description_value_valid(keyword.value, atoms)
+        )
     if kind != "base" or call.args:
         return False
+    for keyword in call.keywords:
+        # BC base — 꼴 맞는 사건 값 원자를 담은 값은 설명 칸 keyword 에만 · S 문법(F4-80).
+        if any(id(node) in atoms for node in ast.walk(keyword.value)) and not (
+            _description_keyword(keyword.arg, bc, language)
+            and constructor_origin not in language.literal_description_classes
+            and _event_description_value_valid(keyword.value, atoms)
+        ):
+            return False
     names = [keyword.arg for keyword in call.keywords]
     if not all(name is not None for name in names) or len(names) != len(set(names)):
         return False
@@ -3007,15 +3240,7 @@ def _constructor_arguments_valid(
     if not language.required_common_fields <= actual_fields <= language.common_fields:
         return False
 
-    bc = next(
-        (
-            owner
-            for owner, base_origin in language.bases_by_bc.items()
-            if base_origin == constructor_origin
-        ),
-        None,
-    )
-    if bc is None:
+    if bc is None or language.bases_by_bc.get(bc) != constructor_origin:
         return False
     discriminator = language.discriminator_fields_by_bc.get(bc)
     if discriminator is None:
@@ -3103,6 +3328,7 @@ def _header_assignment_valid(
     operation: Operation,
     statement: ast.stmt,
     analysis: list[str],
+    atoms: dict[int, str] | None = None,
 ) -> bool:
     if not isinstance(statement, ast.Assign) or len(statement.targets) != 1:
         return False
@@ -3113,9 +3339,32 @@ def _header_assignment_valid(
         and target.value.id in operation.response_parameters
     ):
         return False
-    if any(isinstance(node, ast.Call) for node in ast.walk(statement)):
+    atoms = atoms or {}
+    value_atoms = [node for node in ast.walk(statement.value) if id(node) in atoms]
+    if not value_atoms:
+        return not any(isinstance(node, ast.Call) for node in ast.walk(statement))
+    # F4-80 — 사건 값을 실은 머리: 값은 S 문법, 호출은 날짜 원자 안 두 호출(`.astimezone(UTC)` · `.isoformat()`)만,
+    # 키는 문자 상수이거나 정적 `str` 로 풀리는 이름이다(키에 잡은 이름 · 지역 이름 · 호출 금지).
+    exempt_calls: set[int] = set()
+    for node in value_atoms:
+        if atoms.get(id(node)) == "datetime" and isinstance(node, ast.Call):
+            exempt_calls.add(id(node))
+            if isinstance(node.func, ast.Attribute):
+                exempt_calls.add(id(node.func.value))
+    if any(
+        isinstance(node, ast.Call) and id(node) not in exempt_calls
+        for node in ast.walk(statement)
+    ):
         return False
-    return True
+    if not _event_description_value_valid(statement.value, atoms):
+        return False
+    key = target.slice
+    if isinstance(key, ast.Constant):
+        return isinstance(key.value, str)
+    root_name = (_expression_name(key) or "").split(".", 1)[0]
+    if not root_name or root_name in operation.local_names:
+        return False
+    return _static_string(key, operation.body_bindings) is not None
 
 
 def _validate_mapping_body(
@@ -3129,6 +3378,7 @@ def _validate_mapping_body(
     allowed_status_calls: set[int],
     category: str,
     delegated_category: str,
+    atoms: dict[int, str] | None = None,
 ) -> bool:
     body = _without_docstrings(statements)
     if len(body) < 2:
@@ -3169,13 +3419,14 @@ def _validate_mapping_body(
         language,
         operation,
         analysis,
+        atoms,
     ):
         valid = False
     elif constructor[0] == "common":
         valid = False
 
     for statement in body[1:-1]:
-        if not _header_assignment_valid(operation, statement, analysis):
+        if not _header_assignment_valid(operation, statement, analysis, atoms):
             valid = False
     final = body[-1]
     status_call = (
@@ -3293,13 +3544,469 @@ def _handler_forwarding_attribution(
     return "caught exception forwarding forbidden", None
 
 
-def _caught_exception_forwarded(handler: ast.ExceptHandler) -> bool:
+# ── F4-80 — 잡은 예외의 승인 필드 값(사건 값) 읽기 꼴(트리 슬라이스 · code lane 공용) ─────────────────
+#
+# 꼴(설계 A.3 F1 ~ F5): 잡은 타입은 이름 하나로 자기 BC `domain_layer`/`application_layer` 모듈에 «바로» 정의된 클래스이고,
+# 필드는 그 클래스 본문 `f: T` · `__init__` 의 `self.f: T` 로 선언된 공개 필드(`str` · `int` · `datetime.datetime` · 그
+# `| None`/`Optional`)다. 원자는 `str` → `n.f` · `datetime` → `n.f.astimezone(UTC).isoformat()` · `int` → f-string
+# `{n.f}` 뿐이고, 자리는 (가) 꼴 2 검사식 `n.f is not None` · (나) 가지 첫 문장 호출의 keyword 값 · (다) 가지 머리 대입의
+# 값이다. `T | None` 필드의 원자는 꼴 2 의 값 있는 가지에서 검사식이 본 그 필드만 된다.
+
+
+@dataclass(frozen=True)
+class EventRead:
+    field: str
+    place: str  # "test" | "keyword" | "header"
+    keyword: str | None = None
+    call: ast.Call | None = None
+
+
+@dataclass
+class EventReads:
+    caught: str | None = None
+    class_origin: str | None = None
+    in_form: dict[int, tuple[ast.Name, EventRead]] | None = None
+    out_of_form: list[ast.Name] | None = None
+    atoms: dict[int, str] | None = None
+    presence: tuple[ast.If, str] | None = None
+    # 속성 읽기 `n.<x>` 의 n(Name) id — 예외 «통째» 쓰기(`raise n` · `helper(n)` · `str(n)`)는 forwarding 몫이라
+    # C2(꼴 밖 «읽기»)에서 빠진다(설계 A.3 «계속 막는 것» 표).
+    attribute_reads: set[int] | None = None
+
+    def __post_init__(self) -> None:
+        self.in_form = {} if self.in_form is None else self.in_form
+        self.out_of_form = [] if self.out_of_form is None else self.out_of_form
+        self.atoms = {} if self.atoms is None else self.atoms
+        self.attribute_reads = set() if self.attribute_reads is None else self.attribute_reads
+
+
+def _sole_import_origins(tree: ast.Module, path: Path) -> dict[str, str]:
+    """모듈에서 그 이름을 묶는 문장이 import 하나뿐인 이름 → 원 경로(다시 묶이면 빠진다).
+
+    모듈 수준 문장(복합문 아래 포함 · 함수/클래스 본문 제외)의 바인딩 · except 이름 · walrus · match 캡처를 세고,
+    어느 함수든 `global` 로 선언한 이름은 다시 묶일 수 있어 뺀다."""
+    counts: dict[str, int] = {}
+    imports: dict[str, Binding] = {}
+    excluded: set[str] = set()
+    for node in _iter_lexical_nodes(tree.body):
+        names: set[str] = set()
+        if isinstance(node, ast.stmt):
+            names = _statement_bound_names(node)
+            if isinstance(node, (ast.Import, ast.ImportFrom)):
+                imports.update(_import_bindings(path, node))
+        elif isinstance(node, ast.ExceptHandler) and node.name:
+            names = {node.name}
+        elif isinstance(node, ast.NamedExpr):
+            names = _target_names(node.target)
+        elif MATCH_AS is not None and isinstance(node, MATCH_AS) and node.name:
+            names = {node.name}
+        elif MATCH_STAR is not None and isinstance(node, MATCH_STAR) and node.name:
+            names = {node.name}
+        elif MATCH_MAPPING is not None and isinstance(node, MATCH_MAPPING) and node.rest:
+            names = {node.rest}
+        for name in names:
+            counts[name] = counts.get(name, 0) + 1
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Global):
+            excluded.update(node.names)
+    return {
+        name: binding.origin
+        for name, binding in imports.items()
+        if counts.get(name) == 1 and name not in excluded
+    }
+
+
+def _module_bound_names(tree: ast.Module) -> set[str]:
+    names: set[str] = set()
+    for node in _iter_lexical_nodes(tree.body):
+        if isinstance(node, ast.stmt):
+            names.update(_statement_bound_names(node))
+    return names
+
+
+def _event_field_kind(
+    annotation: ast.AST,
+    origins: dict[str, str],
+    module_bound: set[str],
+) -> tuple[str, bool] | None:
+    """필드 annotation → (꼴 종류 `str`·`int`·`datetime`, optional). 별칭 · Annotated · 문자열 annotation 은 None."""
+
+    def dotted_origin(node: ast.AST) -> str | None:
+        dotted = _expression_name(node)
+        if dotted is None:
+            return None
+        head, _, rest = dotted.partition(".")
+        origin = origins.get(head)
+        if origin is None:
+            return None
+        return f"{origin}.{rest}" if rest else origin
+
+    def base_kind(node: ast.AST) -> str | None:
+        if isinstance(node, ast.Name) and node.id in {"str", "int"} and node.id not in module_bound:
+            return node.id
+        origin = dotted_origin(node)
+        if origin == "datetime.datetime":
+            return "datetime"
+        if origin in {"builtins.str", "builtins.int"}:
+            return origin.rsplit(".", 1)[-1]
+        return None
+
+    def is_none(node: ast.AST) -> bool:
+        return isinstance(node, ast.Constant) and node.value is None
+
+    if isinstance(annotation, ast.BinOp) and isinstance(annotation.op, ast.BitOr):
+        if is_none(annotation.right):
+            kind = base_kind(annotation.left)
+        elif is_none(annotation.left):
+            kind = base_kind(annotation.right)
+        else:
+            kind = None
+        return (kind, True) if kind is not None else None
+    if isinstance(annotation, ast.Subscript) and dotted_origin(annotation.value) == "typing.Optional":
+        kind = base_kind(annotation.slice)
+        return (kind, True) if kind is not None else None
+    kind = base_kind(annotation)
+    return (kind, False) if kind is not None else None
+
+
+_EXCEPTION_FIELDS_CACHE: dict[tuple[str, str], dict[str, tuple[str, bool]] | None] = {}
+
+
+def _exception_class_fields(root: Path, origin: str) -> dict[str, tuple[str, bool]] | None:
+    """잡은 예외 클래스(그 모듈 파일에 «바로» 정의 — 재수출을 따라가지 않는다)의 공개 필드 → (꼴 종류, optional).
+
+    상속 필드는 보지 않는다. 같은 필드를 다른 꼴로 두 번 선언하면 뺀다. 모듈 · 클래스를 못 찾으면 None."""
+    key = (str(root), origin)
+    if key in _EXCEPTION_FIELDS_CACHE:
+        return _EXCEPTION_FIELDS_CACHE[key]
+    module, _, class_name = origin.rpartition(".")
+    parsed: ParsedSource | None = None
+    for relative in (
+        Path(*module.split(".")).with_suffix(".py"),
+        Path(*module.split(".")) / "__init__.py",
+    ):
+        try:
+            candidate = (root / relative).resolve()
+            candidate.relative_to(root.resolve())
+            text = candidate.read_text(encoding="utf-8")
+            parsed = ParsedSource(relative, text, ast.parse(text, filename=relative.as_posix()))
+            break
+        except (OSError, UnicodeError, SyntaxError, ValueError):
+            continue
+    result: dict[str, tuple[str, bool]] | None = None
+    if parsed is not None:
+        classes = [
+            node
+            for node in parsed.tree.body
+            if isinstance(node, ast.ClassDef) and node.name == class_name
+        ]
+        expected = Binding(f"{_module_name(parsed.relative_path)}.{class_name}", "local_definition")
+        if len(classes) == 1 and _binding_timeline(parsed).final.get(class_name) == expected:
+            origins = _sole_import_origins(parsed.tree, parsed.relative_path)
+            module_bound = _module_bound_names(parsed.tree)
+            declared: dict[str, tuple[str, bool] | None] = {}
+            conflicts: set[str] = set()
+
+            def declare(name: str, annotation: ast.AST) -> None:
+                if name.startswith("_"):
+                    return
+                kind = _event_field_kind(annotation, origins, module_bound)
+                if name in declared and declared[name] != kind:
+                    conflicts.add(name)
+                declared[name] = kind
+
+            for statement in classes[0].body:
+                if isinstance(statement, ast.AnnAssign) and isinstance(statement.target, ast.Name):
+                    declare(statement.target.id, statement.annotation)
+                elif (
+                    isinstance(statement, ast.FunctionDef)
+                    and statement.name == "__init__"
+                    and statement.args.args
+                ):
+                    receiver = statement.args.args[0].arg
+                    for node in _iter_lexical_nodes(statement.body):
+                        if (
+                            isinstance(node, ast.AnnAssign)
+                            and isinstance(node.target, ast.Attribute)
+                            and isinstance(node.target.value, ast.Name)
+                            and node.target.value.id == receiver
+                        ):
+                            declare(node.target.attr, node.annotation)
+            result = {
+                name: kind
+                for name, kind in declared.items()
+                if kind is not None and name not in conflicts
+            }
+    _EXCEPTION_FIELDS_CACHE[key] = result
+    return result
+
+
+def _event_class_origin_ok(origin: str | None, own_bc: str) -> bool:
+    if origin is None:
+        return False
+    parts = origin.split(".")
+    return (
+        len(parts) >= 4
+        and parts[0] == "application"
+        and parts[1] == own_bc
+        and parts[2] in EVENT_VALUE_LAYERS
+        and all(part.isidentifier() and not part.startswith("_") for part in parts[2:])
+    )
+
+
+def _presence_test_field(test: ast.AST, caught: str) -> tuple[ast.Name, str] | None:
+    """꼴 2 검사식 `n.f is not None` 그대로만."""
+    if (
+        isinstance(test, ast.Compare)
+        and len(test.ops) == 1
+        and isinstance(test.ops[0], ast.IsNot)
+        and len(test.comparators) == 1
+        and isinstance(test.comparators[0], ast.Constant)
+        and test.comparators[0].value is None
+        and isinstance(test.left, ast.Attribute)
+        and isinstance(test.left.value, ast.Name)
+        and test.left.value.id == caught
+    ):
+        return test.left.value, test.left.attr
+    return None
+
+
+def _event_value_reads(
+    handler: ast.ExceptHandler,
+    *,
+    root: Path,
+    own_bc: str,
+    resolve_name,
+) -> EventReads:
+    """잡은 이름의 모든 Load 를 «꼴 맞음»(in_form — 자리 · 필드) · «꼴 밖»(out_of_form, ast.walk 순서)으로 나눈다.
+
+    `resolve_name(이름)` 은 그 이름이 다시 묶이지 않은 import 하나로 풀리는 원 경로(아니면 None)다 — 잡은 타입과
+    `UTC` 에 쓴다. 승인 대조 · 설명 칸 · 머리 키 · 두 가지의 같음은 여기서 보지 않는다(code lane 몫)."""
+    reads = EventReads(caught=handler.name)
+    caught = handler.name
+    if not caught:
+        return reads
+    loads = [
+        node
+        for node in ast.walk(handler)
+        if isinstance(node, ast.Name) and node.id == caught and isinstance(node.ctx, ast.Load)
+    ]
+    if not loads:
+        return reads
+    reads.attribute_reads = {
+        id(node.value)
+        for node in ast.walk(handler)
+        if isinstance(node, ast.Attribute)
+        and isinstance(node.value, ast.Name)
+        and node.value.id == caught
+    }
+    rebound = any(
+        isinstance(node, ast.Name) and node.id == caught and not isinstance(node.ctx, ast.Load)
+        for statement in handler.body
+        for node in ast.walk(statement)
+    )
+    fields: dict[str, tuple[str, bool]] | None = None
+    if isinstance(handler.type, ast.Name) and not rebound:
+        origin = resolve_name(handler.type.id)
+        if _event_class_origin_ok(origin, own_bc):
+            fields = _exception_class_fields(root, origin)
+            if fields is not None:
+                reads.class_origin = origin
+    if fields is None:
+        reads.out_of_form = loads
+        return reads
+
+    body = _without_docstrings(handler.body)
+    branches: list[tuple[list[ast.stmt], bool | None]] = []
+    tested: str | None = None
+    if len(body) == 1 and isinstance(body[0], ast.If):
+        node_if = body[0]
+        presence = _presence_test_field(node_if.test, caught)
+        if (
+            presence is not None
+            and node_if.orelse
+            and not (len(node_if.orelse) == 1 and isinstance(node_if.orelse[0], ast.If))
+            and fields.get(presence[1], ("", False))[1]
+        ):
+            tested = presence[1]
+            reads.in_form[id(presence[0])] = (presence[0], EventRead(tested, "test"))
+            reads.presence = (node_if, tested)
+            branches = [(node_if.body, True), (node_if.orelse, False)]
+    else:
+        branches = [(body, None)]
+
+    def atom(expression: ast.AST) -> tuple[ast.Name, str, str, bool] | None:
+        if (
+            isinstance(expression, ast.Attribute)
+            and isinstance(expression.value, ast.Name)
+            and expression.value.id == caught
+        ):
+            info = fields.get(expression.attr)
+            if info is not None and info[0] in {"str", "int"}:
+                return expression.value, expression.attr, info[0], info[1]
+            return None
+        if (
+            isinstance(expression, ast.Call)
+            and not expression.args
+            and not expression.keywords
+            and isinstance(expression.func, ast.Attribute)
+            and expression.func.attr == "isoformat"
+            and isinstance(expression.func.value, ast.Call)
+        ):
+            inner = expression.func.value
+            if (
+                len(inner.args) == 1
+                and not inner.keywords
+                and isinstance(inner.args[0], ast.Name)
+                and resolve_name(inner.args[0].id) == EVENT_VALUE_UTC
+                and isinstance(inner.func, ast.Attribute)
+                and inner.func.attr == "astimezone"
+                and isinstance(inner.func.value, ast.Attribute)
+                and isinstance(inner.func.value.value, ast.Name)
+                and inner.func.value.value.id == caught
+            ):
+                info = fields.get(inner.func.value.attr)
+                if info is not None and info[0] == "datetime":
+                    return inner.func.value.value, inner.func.value.attr, "datetime", info[1]
+        return None
+
+    def accept(
+        expression: ast.AST,
+        *,
+        in_fstring: bool,
+        present: bool | None,
+        place: str,
+        keyword: str | None = None,
+        call: ast.Call | None = None,
+    ) -> None:
+        hit = atom(expression)
+        if hit is None:
+            return
+        name_node, field, kind, optional = hit
+        if kind == "int" and not in_fstring:
+            return
+        if optional and not (present is True and field == tested):
+            return
+        reads.in_form[id(name_node)] = (name_node, EventRead(field, place, keyword, call))
+        reads.atoms[id(expression)] = kind
+
+    def mark(
+        value: ast.AST,
+        *,
+        present: bool | None,
+        place: str,
+        keyword: str | None = None,
+        call: ast.Call | None = None,
+    ) -> None:
+        if isinstance(value, ast.JoinedStr):
+            for part in value.values:
+                if (
+                    isinstance(part, ast.FormattedValue)
+                    and part.conversion == -1
+                    and part.format_spec is None
+                ):
+                    accept(part.value, in_fstring=True, present=present, place=place, keyword=keyword, call=call)
+        else:
+            accept(value, in_fstring=False, present=present, place=place, keyword=keyword, call=call)
+
+    for statements, present in branches:
+        statements = _without_docstrings(statements)
+        if not statements:
+            continue
+        first = statements[0]
+        value = (
+            _statement_value(first)
+            if isinstance(first, (ast.Assign, ast.AnnAssign))
+            else None
+        )
+        if isinstance(value, ast.Call):
+            for keyword in value.keywords:
+                if keyword.arg is not None:
+                    mark(keyword.value, present=present, place="keyword", keyword=keyword.arg, call=value)
+        for statement in statements[1:]:
+            if (
+                isinstance(statement, ast.Assign)
+                and len(statement.targets) == 1
+                and isinstance(statement.targets[0], ast.Subscript)
+            ):
+                mark(statement.value, present=present, place="header")
+    reads.out_of_form = [node for node in loads if id(node) not in reads.in_form]
+    return reads
+
+
+def _event_description_value_valid(value: ast.AST, atoms: dict[int, str]) -> bool:
+    """설명 칸 값 S(머리 값 H 도 같은 문법) — 문자 상수 · f-string(상수 조각 + 꼴 맞는 원자) · str 을 내는 원자 하나."""
+    if isinstance(value, ast.Constant) and isinstance(value.value, str):
+        return True
+    if isinstance(value, ast.JoinedStr):
+        for part in value.values:
+            if isinstance(part, ast.Constant) and isinstance(part.value, str):
+                continue
+            if (
+                isinstance(part, ast.FormattedValue)
+                and part.conversion == -1
+                and part.format_spec is None
+                and id(part.value) in atoms
+            ):
+                continue
+            return False
+        return True
+    return atoms.get(id(value)) in {"str", "datetime"}
+
+
+def _constructor_bc(origin: str, language: ErrorLanguage) -> str | None:
+    for bc, base_origin in language.bases_by_bc.items():
+        if origin == base_origin or origin in language.prepared_by_bc.get(bc, frozenset()):
+            return bc
+    return None
+
+
+def _description_keyword(keyword: str | None, bc: str | None, language: ErrorLanguage) -> bool:
+    """keyword 가 그 BC 의 설명 칸 하나에 확실히(경로 길이 1) 닿는가."""
+    field = language.description_field_by_bc.get(bc) if bc is not None else None
+    targets = language.constructor_targets_by_key.get(keyword or "")
+    return (
+        field is not None
+        and keyword in language.certain_constructor_keys
+        and bool(targets)
+        and all(
+            target.field == field and len(target.path) == 1 and target.certain
+            for target in targets or ()
+        )
+    )
+
+
+def _code_event_reads(
+    operation: Operation,
+    handler: ast.ExceptHandler,
+    root: Path | None,
+) -> EventReads:
+    """code lane 의 읽기 판정 — 이름 풀이는 그 모듈의 «import 하나뿐» 바인딩 + 함수 지역 이름 제외."""
+    if root is None:
+        return EventReads(caught=handler.name)
+    origins = _sole_import_origins(operation.parsed.tree, operation.parsed.relative_path)
+    return _event_value_reads(
+        handler,
+        root=root,
+        own_bc=operation.owner_bc,
+        resolve_name=lambda name: None if name in operation.local_names else origins.get(name),
+    )
+
+
+def _caught_exception_forwarded(
+    handler: ast.ExceptHandler,
+    exempt: frozenset[int] = frozenset(),
+) -> bool:
+    """잡은 이름이 어떤 호출의 인자 · keyword 안에 있으면 전달이다 — 단 설명 칸 keyword 값 · 머리 값 안의 꼴 맞는
+    사건 값 원자(exempt — 잡은 이름 Name 노드 id)는 세지 않는다(F4-80)."""
     if not handler.name:
         return False
 
     def contains_caught_name(root: ast.AST) -> bool:
         return any(
-            isinstance(candidate, ast.Name) and candidate.id == handler.name
+            isinstance(candidate, ast.Name)
+            and candidate.id == handler.name
+            and id(candidate) not in exempt
             for candidate in _iter_evaluated_nodes(root)
         )
 
@@ -3311,6 +4018,144 @@ def _caught_exception_forwarded(handler: ast.ExceptHandler) -> bool:
             if any(contains_caught_name(value) for value in values):
                 return True
     return False
+
+
+def _event_status_value(
+    operation: Operation,
+    status_call: ast.Call,
+    construction: ast.Call,
+    constructor: tuple[str, str],
+    language: ErrorLanguage,
+) -> int | None:
+    """`Status` 첫 인자의 실제 정적 status 값(덧붙임 1 ② — 같은 오류 칸 읽기면 생성 호출의 keyword · default · alias
+    를 반영한 그 칸의 값). 모르면 None."""
+    first = status_call.args[0]
+    if isinstance(first, ast.Constant) and isinstance(first.value, int) and not isinstance(first.value, bool):
+        return first.value
+    error_name = status_call.args[1].id if isinstance(status_call.args[1], ast.Name) else None
+    if (
+        isinstance(first, ast.Attribute)
+        and isinstance(first.value, ast.Name)
+        and first.value.id == error_name
+    ):
+        field = first.attr
+        if constructor[0] == "base":
+            for keyword in construction.keywords:
+                targets = language.constructor_targets_by_key.get(keyword.arg or "", ())
+                if any(target.field == field for target in targets):
+                    if not all(target.field == field and len(target.path) == 1 for target in targets):
+                        return None
+                    value = _static_value(keyword.value, operation.body_bindings)
+                    return value if isinstance(value, int) and not isinstance(value, bool) else None
+        chain = [constructor[1]]
+        bc = _constructor_bc(constructor[1], language)
+        if constructor[0] == "prepared" and bc is not None:
+            chain.append(language.bases_by_bc[bc])
+        chain.append(COMMON_ERROR_OUT)
+        for origin in chain:
+            defaults = language.static_int_defaults.get(origin, {})
+            if field in defaults:
+                return defaults[field]
+        return None
+    root_name = (_expression_name(first) or "").split(".", 1)[0]
+    if not root_name or root_name in operation.local_names:
+        return None
+    resolved = _resolve_binding(first, operation.body_bindings)
+    if resolved is None:
+        return None
+    static_status = _static_literal_value(resolved)
+    if isinstance(static_status, int) and not isinstance(static_status, bool):
+        return static_status
+    if resolved.origin.startswith(("ninja.status.", "ninja_extra.status.")):
+        match = re.search(r"HTTP_([45]\d\d)(?:_|$)", resolved.origin)
+        return int(match.group(1)) if match else None
+    if resolved.origin.startswith("http.HTTPStatus."):
+        member = HTTPStatus.__members__.get(resolved.origin.rsplit(".", 1)[-1])
+        return int(member) if member is not None else None
+    return None
+
+
+def _event_discriminator_key(
+    operation: Operation,
+    construction: ast.Call,
+    constructor: tuple[str, str],
+    language: ErrorLanguage,
+) -> str | None:
+    if constructor[0] != "base":
+        return constructor[1]
+    bc = _constructor_bc(constructor[1], language)
+    discriminator = language.discriminator_fields_by_bc.get(bc) if bc is not None else None
+    for keyword in construction.keywords:
+        targets = language.constructor_targets_by_key.get(keyword.arg or "", ())
+        if any(target.field == discriminator for target in targets):
+            resolved = _resolve_binding(keyword.value, operation.body_bindings)
+            return resolved.origin if resolved is not None else None
+    return "<default>"
+
+
+def _validate_presence_branch(
+    operation: Operation,
+    reads: EventReads,
+    language: ErrorLanguage,
+    analysis: list[str],
+    allowed_error_calls: set[int],
+    allowed_status_calls: set[int],
+    category: str,
+    delegated_category: str,
+) -> bool:
+    """꼴 2(값 유무 가지 — F4-80 운영자 결정 2): `if n.f is not None: … else: …` 두 가지가 각각 꼴 1 이고,
+    같은 원 경로 concrete(BC base 면 같은 식별자) · 같은 실제 status 값일 때만 승인 arm 으로 받는다."""
+    assert reads.presence is not None
+    node_if = reads.presence[0]
+    shapes: list[tuple[str, str | None, int | None]] = []
+    error_calls: set[int] = set()
+    status_calls: set[int] = set()
+    for branch in (node_if.body, node_if.orelse):
+        branch_errors: set[int] = set()
+        branch_statuses: set[int] = set()
+        if not _validate_mapping_body(
+            operation,
+            branch,
+            language,
+            analysis,
+            [],
+            set(),
+            branch_errors,
+            branch_statuses,
+            category,
+            delegated_category,
+            reads.atoms,
+        ):
+            return False
+        body = _without_docstrings(branch)
+        construction = _statement_value(body[0])
+        final = body[-1]
+        if not isinstance(construction, ast.Call) or not isinstance(final, ast.Return):
+            return False
+        constructor = _known_constructor(operation, construction, language, analysis)
+        if constructor is None or not isinstance(final.value, ast.Call):
+            return False
+        shapes.append(
+            (
+                constructor[1],
+                _event_discriminator_key(operation, construction, constructor, language),
+                _event_status_value(operation, final.value, construction, constructor, language),
+            )
+        )
+        error_calls |= branch_errors
+        status_calls |= branch_statuses
+    (first_origin, first_code, first_status), (second_origin, second_code, second_status) = shapes
+    if (
+        first_origin != second_origin
+        or first_code is None
+        or first_code != second_code
+        or first_status is None
+        or first_status != second_status
+    ):
+        return False
+    allowed_error_calls |= error_calls
+    allowed_status_calls |= status_calls
+    return True
 
 
 def _try_root_call(statement: ast.stmt) -> ast.Call | None:
@@ -3329,6 +4174,8 @@ def _analyze_try(
     seen: set[tuple[Path, int, str]],
     allowed_error_calls: set[int],
     allowed_status_calls: set[int],
+    root: Path | None = None,
+    event_values: frozenset[str] = frozenset(),
 ) -> None:
     if node.orelse or node.finalbody:
         _append_finding(
@@ -3404,7 +4251,29 @@ def _analyze_try(
                 rule="#125",
                 overlap_line=operation.node.lineno,
             )
-        if _caught_exception_forwarded(handler):
+        reads = _code_event_reads(operation, handler, root)
+        _event_value_findings(
+            operation, handler, reads, event_values, findings, seen
+        )
+        exempt = frozenset(
+            name_id
+            for name_id, (_, read) in reads.in_form.items()
+            if read.place == "header"
+            or (
+                read.place == "keyword"
+                and read.call is not None
+                and (
+                    constructor := _known_constructor(
+                        operation, read.call, language, analysis
+                    )
+                )
+                is not None
+                and _description_keyword(
+                    read.keyword, _constructor_bc(constructor[1], language), language
+                )
+            )
+        )
+        if _caught_exception_forwarded(handler, exempt):
             # 행7 분할(U1·V5) — 도메인 전달 = #474 / 응용 전달·층 미확정 = 계약.
             forward_category, forward_rule = _handler_forwarding_attribution(
                 operation, handler
@@ -3418,6 +4287,21 @@ def _analyze_try(
                 rule=forward_rule,
                 overlap_line=handler.lineno if forward_rule == "#474" else None,
             )
+        categories = (
+            "managed catch must directly construct FrameworkErrorSchema and return Status",
+            "managed catch delegates error construction to helper/factory/serializer",
+        )
+        if reads.presence is not None and _validate_presence_branch(
+            operation,
+            reads,
+            language,
+            analysis,
+            allowed_error_calls,
+            allowed_status_calls,
+            *categories,
+        ):
+            continue
+        # 꼴 2 가 서지 않으면 지금처럼 본문 전체를 꼴 1 로 본다(If 하나면 그 행에 category 한 줄).
         _validate_mapping_body(
             operation,
             handler.body,
@@ -3427,9 +4311,59 @@ def _analyze_try(
             seen,
             allowed_error_calls,
             allowed_status_calls,
-            "managed catch must directly construct FrameworkErrorSchema and return Status",
-            "managed catch delegates error construction to helper/factory/serializer",
+            *categories,
+            reads.atoms,
         )
+
+
+def _event_value_findings(
+    operation: Operation,
+    handler: ast.ExceptHandler,
+    reads: EventReads,
+    event_values: frozenset[str],
+    findings: list[Finding],
+    seen: set[tuple[Path, int, str]],
+) -> None:
+    """C1 — 꼴 맞는 읽기의 `원 경로.필드` 가 `--event-value` 목록 밖(도메인 = #474 · handler 행 overlap / 응용 = 계약).
+    C2 — 응용 catch 의 꼴 밖 속성 읽기 `n.<x>`(계약 — 예외 통째 쓰기는 forwarding 몫). 도메인 catch 의 꼴 밖 읽기는
+    트리 #474 가 모든 프로필에서 낸다(새 줄 없음)."""
+    if not reads.in_form and not reads.out_of_form:
+        return
+    layers: set[str | None] = {
+        _exception_origin_layer(operation, type_node)
+        for type_node in _handler_type_names(handler.type) or []
+    }
+    if layers == {"domain"}:
+        layer = "domain"
+    elif layers == {"application"}:
+        layer = "application"
+    else:
+        return
+    for name_node, read in sorted(
+        reads.in_form.values(), key=lambda item: (item[0].lineno, item[0].col_offset)
+    ):
+        if f"{reads.class_origin}.{read.field}" in event_values:
+            continue
+        _append_finding(
+            findings,
+            seen,
+            operation.parsed,
+            name_node,
+            EVENT_VALUE_NOT_APPROVED,
+            rule="#474" if layer == "domain" else None,
+            overlap_line=handler.lineno if layer == "domain" else None,
+        )
+    if layer == "application":
+        for name_node in reads.out_of_form:
+            if id(name_node) not in reads.attribute_reads:
+                continue
+            _append_finding(
+                findings,
+                seen,
+                operation.parsed,
+                name_node,
+                EVENT_VALUE_OUTSIDE_FORM,
+            )
 
 
 def _result_compare_kind(test: ast.AST) -> str | None:
@@ -6047,6 +6981,8 @@ def _analyze_operation(
     analysis: list[str],
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
+    root: Path | None = None,
+    event_values: frozenset[str] = frozenset(),
 ) -> None:
     allowed_error_calls: set[int] = set()
     allowed_status_calls: set[int] = set()
@@ -6065,6 +7001,8 @@ def _analyze_operation(
                 seen,
                 allowed_error_calls,
                 allowed_status_calls,
+                root,
+                event_values,
             )
     _analyze_results(
         operation,
@@ -6942,7 +7880,15 @@ def _semantic_findings(
         operations = _discover_operations(source, owner, analysis)
         operations_by_path[path] = operations
         for operation in operations:
-            _analyze_operation(operation, language, analysis, findings, seen)
+            _analyze_operation(
+                operation,
+                language,
+                analysis,
+                findings,
+                seen,
+                config.root,
+                frozenset(config.event_values),
+            )
 
     canonical_error_paths = {_bc_error_path(bc) for bc in config.error_bcs}
     mutation_paths = {*managed_paths}
@@ -7073,6 +8019,8 @@ def _run(config: Config) -> tuple[list[str], list[Finding]]:
 #   #131 기술 이름은 파일이 아니라 클래스에(ninja_*.py 금지)
 #   #132 라우트 데코·인증·상태 코드는 «컨트롤러 파일»에만
 #   #474 입구 파일은 도메인 예외를 «타입»으로만 — except … as e 의 e 참조 금지
+#        (예외 하나 — auto · code-json 의 api 컨트롤러 managed catch 가 승인된 사건 값 꼴로 선언된 공개 필드를
+#        읽는 것(F4-80). 승인 목록 대조는 code-json code lane 의 C1 몫 · preserve · webhook · OHS 는 예외 없음)
 #   #59·#62 는 전역 핸들러·except Exception — 입구 파일의 catch-all 을 #62 로 잡고,
 #        전역(project) 쪽은 기존 code-profile 기계가 담당한다.
 
@@ -7216,7 +8164,10 @@ def _slice_check_controller_ast(
     finding_keys: "list[tuple[str, str, int] | None]",
     candidate_keys: "list[tuple[str, str, int] | None]",
     is_controller: bool,
+    root: "Path | None" = None,
 ) -> None:
+    # root 가 있으면(auto · code-json 의 api/<area>/<area>_controller.py 진입점 — webhook · OHS 제외) #474 는 꼴 맞는
+    # 사건 값 읽기(F4-80 — 승인 대조는 code lane 몫)를 비켜 준다. root 가 없으면(preserve 등) 지금 그대로다.
     # 라인은 공용 포매터의 violation/candidate 문법으로 emit_all 이 생성한다(B형
     # locator 콜론 정형화 — 출력 계약 v2). keys 는 엔트리와 같은 순서의 tree↔code
     # 동일 사건 좌표다(#62·#474 = handler 행 · ⓓ#125 = route 함수 def 행 — overlap 절).
@@ -7230,6 +8181,14 @@ def _slice_check_controller_ast(
             if "domain_layer" in node.module.split("."):
                 domain_names.update(a.asname or a.name for a in node.names)
     origins: dict[str, str] = _tree_origins(mod)
+    sole_origins: dict[str, str] = _sole_import_origins(mod, rel) if root is not None else {}
+    enclosing: "dict[int, _ast.FunctionDef | _ast.AsyncFunctionDef]" = {}
+    if root is not None:
+        for function in _ast.walk(mod):
+            if isinstance(function, (_ast.FunctionDef, _ast.AsyncFunctionDef)):
+                for inner in _iter_lexical_nodes(function.body):
+                    if isinstance(inner, _ast.ExceptHandler):
+                        enclosing[id(inner)] = function
     for node in _ast.walk(mod):
         if isinstance(node, _ast.ClassDef) and _schema_rootmodel_mix(node, origins):
             msg = f"`{node.name}` 이 ninja `Schema` 와 pydantic `RootModel` 을 함께 상속했다 — 메타클래스 충돌 · 성공 union 응답은 `RootModel[Annotated[A | B, Field(discriminator=…)]]` 단독 상속이다"
@@ -7286,8 +8245,27 @@ def _slice_check_controller_ast(
                 findings.add("#62", where, msg)
                 finding_keys.append(("#62", rel.as_posix(), node.lineno))
             if node.name and set(caught_names) & domain_names:
+                in_form: "set[int]" = set()
+                if root is not None and len(rel.parts) > 1:
+                    function = enclosing.get(id(node))
+                    local_names = _function_local_names(function) if function is not None else set()
+                    in_form = set(
+                        _event_value_reads(
+                            node,
+                            root=root,
+                            own_bc=rel.parts[1],
+                            resolve_name=lambda name, local=local_names: (
+                                None if name in local else sole_origins.get(name)
+                            ),
+                        ).in_form
+                    )
                 for sub in _ast.walk(node):
-                    if isinstance(sub, _ast.Name) and sub.id == node.name and isinstance(sub.ctx, _ast.Load):
+                    if (
+                        isinstance(sub, _ast.Name)
+                        and sub.id == node.name
+                        and isinstance(sub.ctx, _ast.Load)
+                        and id(sub) not in in_form
+                    ):
                         sub_where = f"{rel}:{sub.lineno}"
                         msg = f"도메인 예외를 `as {node.name}` 로 묶어 참조했다 — 입구 파일은 도메인 예외를 «타입»으로만 쓴다"
                         # locator 는 참조 행이지만 사건 좌표는 handler 행이다
@@ -7306,7 +8284,7 @@ def _is_exc_mapping_if(node: _ast.If, domain_names: set[str]) -> bool:
 
 
 def _tree_slice2(
-    root: Path, bcs: list[Path]
+    root: Path, bcs: list[Path], profile: "str | None" = None
 ) -> "tuple[Findings, Candidates, list[tuple[str, str, int] | None], list[tuple[str, str, int] | None]]":
     # 구조화 엔트리 수집 — 방출은 호출측 emit_all 이 한 순서로 수행한다(출력 계약 v2).
     # keys 두 목록은 엔트리와 같은 순서·같은 길이다(선점 억제 zip 좌표 — 억제 비대상
@@ -7315,6 +8293,9 @@ def _tree_slice2(
     candidates: Candidates = Candidates(defer=True)
     finding_keys: "list[tuple[str, str, int] | None]" = []
     candidate_keys: "list[tuple[str, str, int] | None]" = []
+    # F4-80 — #474 의 사건 값 예외는 auto · code-json 의 api/<area>/<area>_controller.py 진입점(승격 본체 포함)에만.
+    relaxed = profile in EVENT_VALUE_RELAXED_PROFILES
+    entries: "set[Path]" = set()
     for bc in bcs:
         app_layer = bc / "application_layer"
         app_areas = (
@@ -7343,6 +8324,8 @@ def _tree_slice2(
                         finding_keys.append(None)
                     # 진입점 칸은 동명 폴더 승격 가능 — entry 는 실현(파일 또는 승격 본체)이다.
                     entry = checker_target.slot_file(area / f"{area.name}_controller.py")
+                    if entry is not None:
+                        entries.add(entry)
                     if entry is None:
                         msg = f"진입점 `{area.name}_controller.py` 파일 하나가 온다"
                         findings.add("#123", area_where, msg)
@@ -7365,6 +8348,7 @@ def _tree_slice2(
                     _slice_check_controller_ast(
                         p, rel, findings, candidates, finding_keys, candidate_keys,
                         p.name.endswith("_controller.py"),
+                        root if relaxed and p in entries else None,
                     )
             for ohs_name in _TREE_OHS:
                 ohs = bc / driving / ohs_name
@@ -7457,7 +8441,9 @@ def main(argv: list[str]) -> int:
     # 같은 전 슬라이스 진단을 수집해야 기존 code 진단이 신규로 오분류되지 않는다.
     collected: list[str] = []
     pending_analysis: list[str] = []
-    tree_findings, tree_candidates, tree_keys, candidate_keys = _tree_slice2(config.root, bcs)
+    tree_findings, tree_candidates, tree_keys, candidate_keys = _tree_slice2(
+        config.root, bcs, config.profile
+    )
     if tree_findings and config.anchor is None and not config.anchor_baseline:
         # tree 위반이 code 레인 전에 exit 2 를 선점한다(현행) — code 미실행이라
         # 선점 억제 없음(tree 단독 그대로).

@@ -8,10 +8,12 @@ import hashlib
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
+import textwrap
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -19,6 +21,7 @@ from unittest.mock import patch
 from pregate_fixture_run import _git, _load_module
 import corpus_mirror_sync as corpus
 from ontology_census import parse_sections
+import api_error_backstop_matrix as backstop_matrix
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = ROOT / "dddjango/scripts"
@@ -1368,6 +1371,965 @@ class CheckerArgumentKindsRegression(unittest.TestCase):
         shapes = (("positional", "order: Order"), ("kw-only", "*, order: Order"), ("pos-only", "order: Order, /"))
         self.assert_shapes("check-port-adapter-pairing.py", self.repository_adapter(True), shapes, 0, [])
         self.assert_shapes("check-port-adapter-pairing.py", self.repository_adapter(False), shapes, 2, ["#545"])
+
+
+# ── F4-80 · F4-79 — 오류 설명의 사건 값(--event-value) ─────────────────────────────────────────
+# 설계 `f80/design.md` A.8(+ 덧붙임 1) — 양성 P · 음성 N(변종 하나씩) · 줄은 표지(marker)가 가리키는 원문 행으로 고정한다.
+EV_A = "application/accounts"
+EV_CTRL = f"{EV_A}/driving_layer/api/account/account_controller.py"
+EV_EXC_DIR = f"{EV_A}/domain_layer/account/exception"
+EV_PORT_EXC = f"{EV_A}/application_layer/port/login_block/exception.py"
+EV_OHS = f"{EV_A}/driving_layer/open_host_service/session_user/session_user_service.py"
+EV_HOOK = f"{EV_A}/driving_layer/api/webhook/provider/provider_controller.py"
+EV_DOM = "application.accounts.domain_layer.account.exception"
+EV_SUSP = f"{EV_DOM}.account_suspended.AccountSuspended"
+EV_UNTIL, EV_DECIDED, EV_REVIEW = f"{EV_SUSP}.blocked_until", f"{EV_SUSP}.decided_at", f"{EV_SUSP}.review_at"
+EV_LABEL, EV_CODE, EV_STRIKES = f"{EV_SUSP}.reason_label", f"{EV_SUSP}.reason_code", f"{EV_SUSP}.strikes"
+EV_APP = "application.accounts.application_layer.port.login_block.exception.LoginBlocked"
+EV_SELECT = ["--scope", "accounts", "--api-module", "spring_dream_server/api.py", "--controller-module", EV_CTRL,
+             "--scope-bc", "accounts", "--error-bc", "accounts"]
+EV_C1 = "caught exception field read not approved by slot 10"
+EV_C2 = "caught exception read outside the approved event-value form"
+EV_FWD_D = "caught domain exception forwarding forbidden"
+EV_FWD_A = "caught application exception forwarding forbidden"
+EV_ARM = "managed catch must directly construct FrameworkErrorSchema and return Status"
+EV_OWN_C = "FrameworkErrorSchema construction is not owned by an approved catch/Result arm"
+EV_OWN_S = "error Status mapping is not owned by an approved catch/Result arm"
+EV_CATCH62 = "catch must be direct own-BC application/domain exception"
+
+
+def ev_tree(name: str) -> str:
+    return f"도메인 예외를 `as {name}` 로 묶어 참조했다 — 입구 파일은 도메인 예외를 «타입»으로만 쓴다"
+
+
+EV_SUSPENDED_SRC = '''from __future__ import annotations
+
+from datetime import datetime
+
+
+class AccountSuspended(Exception):
+    """정지로 로그인이 막혔다 — 풀리는 때가 없으면 끝 없는 정지다."""
+
+    reason_label: str
+
+    def __init__(
+        self,
+        blocked_until: datetime | None,
+        *,
+        decided_at: datetime,
+        review_at: datetime | None = None,
+        reason_label: str = "policy",
+        reason_code: str = "R-1",
+        strikes: int = 1,
+    ) -> None:
+        super().__init__("Account is suspended.")
+        self.blocked_until: datetime | None = blocked_until
+        self.decided_at: datetime = decided_at
+        self.review_at: datetime | None = review_at
+        self.reason_label = reason_label
+        self.reason_code: str = reason_code
+        self.strikes: int = strikes
+        self._secret: str = "internal"
+
+    def describe(self) -> str:
+        return self.reason_label
+'''
+EV_LOCKED_SRC = '''from __future__ import annotations
+
+
+class LockBase(Exception):
+    def __init__(self, lock_note: str) -> None:
+        super().__init__(lock_note)
+        self.lock_note: str = lock_note
+
+
+class AccountLocked(LockBase):
+    """잠긴 계정."""
+'''
+EV_LOGIN_BLOCKED_SRC = '''from __future__ import annotations
+
+from datetime import datetime
+
+
+class LoginBlockUnavailable(Exception):
+    """service_policy 에 묻지 못했다."""
+
+
+class LoginBlocked(Exception):
+    """로그인이 막혀 있다."""
+
+    def __init__(
+        self,
+        *,
+        blocked_until: datetime | None,
+        decided_at: datetime,
+        review_at: datetime | None = None,
+        reason_label: str = "policy",
+        reason_code: str = "R-1",
+        strikes: int = 1,
+    ) -> None:
+        super().__init__("Login is blocked.")
+        self.blocked_until: datetime | None = blocked_until
+        self.decided_at: datetime = decided_at
+        self.review_at: datetime | None = review_at
+        self.reason_label: str = reason_label
+        self.reason_code: str = reason_code
+        self.strikes: int = strikes
+        self._secret: str = "internal"
+
+    def describe(self) -> str:
+        return self.reason_label
+
+
+class LoginThrottled(Exception):
+    def __init__(self, reason_label: str) -> None:
+        super().__init__(reason_label)
+        self.reason_label: str = reason_label
+'''
+EV_ERRORS_SRC = '''from enum import StrEnum
+from typing import Literal
+
+from framework.ninja.framework_error_schema import FrameworkErrorSchema
+
+
+class AccountsErrorCode(StrEnum):
+    INVALID_CREDENTIALS = "invalid_credentials"
+    ACCOUNT_SUSPENDED = "account_suspended"
+    ACCOUNT_LOCKED = "account_locked"
+    LOGIN_BLOCK_MISSING = "login_block_missing"
+
+
+class AccountsErrorSchema(FrameworkErrorSchema):
+    error: AccountsErrorCode
+
+
+class InvalidCredentialsError(AccountsErrorSchema):
+    error: AccountsErrorCode = AccountsErrorCode.INVALID_CREDENTIALS
+    message: str = "Credentials are invalid."
+
+
+class AccountSuspendedError(AccountsErrorSchema):
+    error: AccountsErrorCode = AccountsErrorCode.ACCOUNT_SUSPENDED
+    message: str = "Account is suspended."
+
+
+class AccountSuspendedNarrowError(AccountsErrorSchema):
+    error: AccountsErrorCode = AccountsErrorCode.ACCOUNT_SUSPENDED
+    message: Literal["Account is suspended."] = "Account is suspended."
+
+
+class AccountLockedError(AccountsErrorSchema):
+    error: AccountsErrorCode = AccountsErrorCode.ACCOUNT_LOCKED
+    message: str = "Account is locked."
+
+
+class LoginBlockMissingError(AccountsErrorSchema):
+    error: AccountsErrorCode = AccountsErrorCode.LOGIN_BLOCK_MISSING
+    message: str = "No login block is recorded."
+'''
+EV_CONTROLLER = '''from datetime import UTC
+
+from django.http import HttpRequest, HttpResponse
+from ninja import Status
+from ninja_extra import api_controller, route
+
+from application.accounts.application_layer.account.authenticate_account.authenticate_account_command import (
+    AuthenticateAccountCommand,
+)
+from application.accounts.application_layer.account.authenticate_account.authenticate_account_result import (
+    AuthenticateAccountResult,
+)
+from application.accounts.application_layer.account.authenticate_account.authenticate_account_use_case import (
+    AuthenticateAccountUseCase,
+)
+from application.accounts.composition_root.dependency_wiring import build_authenticate_account_use_case
+from application.accounts.domain_layer.account.exception.account_suspended import AccountSuspended
+from application.accounts.domain_layer.account.exception.invalid_credentials import InvalidCredentials
+from application.accounts.driving_layer.api.account.schema.schema_in import AccountLoginIn
+from application.accounts.driving_layer.api.account.schema.schema_out import AccountOut
+from application.accounts.driving_layer.api.bc_error_schema import (
+    AccountsErrorSchema,
+    AccountSuspendedError,
+    InvalidCredentialsError,
+)
+__IMPORTS__
+_LOGIN_BLOCKED_REASON_HEADER: str = "Login-Blocked-Reason"
+_LOGIN_BLOCKED_UNTIL_HEADER: str = "Login-Blocked-Until"
+__MODULE__
+
+@api_controller("/accounts", tags=["accounts"], auto_import=False)
+class AccountController:
+    """계정 자원의 HTTP 입구."""
+
+    @route.post(
+        "/sessions",
+        response={200: AccountOut, 403: InvalidCredentialsError | AccountSuspendedError},
+        summary="로그인",
+    )
+    def create_session(
+        self,
+        request: HttpRequest,
+        response: HttpResponse,
+        payload: AccountLoginIn,
+    ) -> AccountOut | Status[AccountsErrorSchema]:
+        command: AuthenticateAccountCommand = AuthenticateAccountCommand(email=payload.email, password=payload.password)
+        use_case: AuthenticateAccountUseCase = build_authenticate_account_use_case()
+__PRE__        try:
+            result: AuthenticateAccountResult = use_case.execute(command)
+        except InvalidCredentials:
+            invalid_credentials: AccountsErrorSchema = InvalidCredentialsError()
+            return Status(403, invalid_credentials)
+__ARM__        return AccountOut(account_id=result.account_id, email=result.email)
+__OPS__'''
+EV_STATIC_ARM = '''suspended_error: AccountsErrorSchema = AccountSuspendedError()
+response[_LOGIN_BLOCKED_REASON_HEADER] = "account_suspended"
+return Status(403, suspended_error)
+'''
+
+
+def ev_arm(body: str, head: str = "AccountSuspended as suspended") -> str:
+    return f"        except {head}:\n" + textwrap.indent(textwrap.dedent(body), " " * 12)
+
+
+def ev_controller(arm: str | None = None, imports: str = "", module: str = "", pre: str = "", ops: str = "") -> str:
+    return (EV_CONTROLLER.replace("__ARM__", ev_arm(EV_STATIC_ARM) if arm is None else arm)
+            .replace("__IMPORTS__\n", imports).replace("__MODULE__\n", module)
+            .replace("__PRE__", pre).replace("__OPS__", ops))
+
+
+EV_BASE = {
+    "spring_dream_server/__init__.py": "",
+    "spring_dream_server/api.py": 'from ninja_extra import NinjaExtraAPI\n\napi: NinjaExtraAPI = NinjaExtraAPI(urls_namespace="api")\n',
+    "framework/__init__.py": "",
+    "framework/ninja/__init__.py": "",
+    "framework/ninja/framework_error_schema.py":
+        "from ninja import Schema\n\n\nclass FrameworkErrorSchema(Schema):\n    error: str\n    message: str\n",
+    "application/__init__.py": "",
+    f"{EV_A}/__init__.py": "",
+    f"{EV_A}/domain_layer/__init__.py": "",
+    f"{EV_A}/domain_layer/account/__init__.py": "",
+    f"{EV_EXC_DIR}/__init__.py": "",
+    f"{EV_EXC_DIR}/account_suspended.py": EV_SUSPENDED_SRC,
+    f"{EV_EXC_DIR}/account_locked.py": EV_LOCKED_SRC,
+    f"{EV_EXC_DIR}/invalid_credentials.py": "class InvalidCredentials(Exception):\n    pass\n",
+    f"{EV_A}/application_layer/__init__.py": "",
+    f"{EV_A}/application_layer/account/__init__.py": "",
+    f"{EV_A}/application_layer/account/authenticate_account/__init__.py": "",
+    f"{EV_A}/application_layer/account/authenticate_account/authenticate_account_command.py":
+        "class AuthenticateAccountCommand:\n    pass\n",
+    f"{EV_A}/application_layer/account/authenticate_account/authenticate_account_result.py":
+        "class AuthenticateAccountResult:\n    pass\n",
+    f"{EV_A}/application_layer/account/authenticate_account/authenticate_account_use_case.py":
+        "class AuthenticateAccountUseCase:\n    pass\n",
+    f"{EV_A}/application_layer/port/__init__.py": "",
+    f"{EV_A}/application_layer/port/login_block/__init__.py": "",
+    EV_PORT_EXC: EV_LOGIN_BLOCKED_SRC,
+    f"{EV_A}/composition_root/__init__.py": "",
+    f"{EV_A}/composition_root/dependency_wiring.py": "def build_authenticate_account_use_case():\n    return None\n",
+    f"{EV_A}/driving_layer/__init__.py": "",
+    f"{EV_A}/driving_layer/api/__init__.py": "",
+    f"{EV_A}/driving_layer/api/bc_error_schema.py": EV_ERRORS_SRC,
+    f"{EV_A}/driving_layer/api/account/__init__.py": "",
+    f"{EV_A}/driving_layer/api/account/schema/__init__.py": "",
+    f"{EV_A}/driving_layer/api/account/schema/schema_in.py":
+        "from ninja import Schema\n\n\nclass AccountLoginIn(Schema):\n    email: str\n    password: str\n",
+    f"{EV_A}/driving_layer/api/account/schema/schema_out.py":
+        "from ninja import Schema\n\n\nclass AccountOut(Schema):\n    account_id: int\n    email: str\n",
+    EV_CTRL: ev_controller(),
+}
+EV_APP_IMPORT = "from application.accounts.application_layer.port.login_block.exception import LoginBlocked\n"
+EV_LOCKED_IMPORT = "from application.accounts.domain_layer.account.exception.account_locked import AccountLocked\n"
+
+
+def ev_app(arm: str) -> str:
+    """같은 꼴을 응용 예외(포트 예외 LoginBlocked)로 — C2 를 보는 판."""
+    return arm.replace("AccountSuspended as suspended", "LoginBlocked as blocked").replace("suspended.", "blocked.")
+
+
+def ev_files(arm: str | None = None, *, imports: str = "", module: str = "", pre: str = "", ops: str = "",
+             app: bool = False, **extra: str) -> dict[str, str]:
+    """사례 하나의 덮어쓰기 — 컨트롤러 본문 + 그 밖의 파일(경로=키)."""
+    if app and arm is not None:
+        arm = ev_app(arm)
+        imports = EV_APP_IMPORT + imports
+    files = {EV_CTRL: ev_controller(arm, imports=imports, module=module, pre=pre, ops=ops)}
+    files.update({path.replace("__", "/"): text for path, text in extra.items()})
+    return files
+
+
+# P1 레인 꼴(꼴 2) — 값 있는 가지만 값을 읽고 else 는 다른 정적 문구.
+EV_P1 = '''if suspended.blocked_until is not None:
+    until_error: AccountsErrorSchema = AccountSuspendedError(
+        message=f"Account is suspended until {suspended.blocked_until.astimezone(UTC).isoformat()}."
+    )
+    response[_LOGIN_BLOCKED_REASON_HEADER] = "account_suspended"
+    response[_LOGIN_BLOCKED_UNTIL_HEADER] = suspended.blocked_until.astimezone(UTC).isoformat()
+    return Status(403, until_error)
+else:
+    indefinite_error: AccountsErrorSchema = AccountSuspendedError(message="Account is suspended indefinitely.")
+    response[_LOGIN_BLOCKED_REASON_HEADER] = "account_suspended"
+    return Status(403, indefinite_error)
+'''
+
+
+def ev_form2(present: str, absent: str, test: str = "suspended.blocked_until is not None") -> str:
+    return (f"if {test}:\n" + textwrap.indent(textwrap.dedent(present), "    ")
+            + "else:\n" + textwrap.indent(textwrap.dedent(absent), "    "))
+
+
+EV_PRESENT_STATIC = '''until_error: AccountsErrorSchema = AccountSuspendedError()
+response[_LOGIN_BLOCKED_REASON_HEADER] = "account_suspended"
+return Status(403, until_error)
+'''
+EV_ABSENT_STATIC = '''indefinite_error: AccountsErrorSchema = AccountSuspendedError(message="Account is suspended indefinitely.")
+response[_LOGIN_BLOCKED_REASON_HEADER] = "account_suspended"
+return Status(403, indefinite_error)
+'''
+EV_OWN4 = [("-", "until_error: AccountsErrorSchema", EV_OWN_C), ("-", "return Status(403, until_error)", EV_OWN_S),
+           ("-", "indefinite_error: AccountsErrorSchema", EV_OWN_C), ("-", "return Status(403, indefinite_error)", EV_OWN_S)]
+EV_OWN2 = [("-", "suspended_error: AccountsErrorSchema", EV_OWN_C), ("-", "return Status(403, suspended_error)", EV_OWN_S)]
+
+
+def ev_single(ctor_kw: str = "", headers: tuple[str, ...] = (), extra: tuple[str, ...] = ()) -> str:
+    lines = [f"suspended_error: AccountsErrorSchema = AccountSuspendedError({ctor_kw})", *extra,
+             'response[_LOGIN_BLOCKED_REASON_HEADER] = "account_suspended"', *headers,
+             "return Status(403, suspended_error)"]
+    return "\n".join(lines) + "\n"
+
+
+# 사례 표 — 이름 → (덮어쓸 파일, --event-value 목록, 실행별 기대). 기대: 실행 → (exit, [(tag, 표지, category[, 경로])])
+# tag "#474" · "#62" = violation, "-" = 08-04 계약. 표지가 가리키는 행의 원문이 그 줄의 끝이다(트리 #474 는 원문 없음).
+# 실행: auto = `--error-profile auto` · cj = code-json(+flag) · bl = code-json(+flag) --anchor-baseline · pre = preserve(flag 없음 — usage 기대 사례만 flag).
+# usage 기대는 (1, "stderr 조각").
+T474 = ev_tree("suspended")
+EV_CASES: dict[str, tuple[dict[str, str], list[str], dict[str, tuple[int, object]]]] = {
+    "base": (ev_files(), [], {"auto": (0, []), "cj": (0, []), "bl": (0, []), "pre": (0, [])}),
+    "P1": (ev_files(ev_arm(EV_P1)), [EV_UNTIL], {"auto": (0, []), "cj": (0, []), "bl": (0, [])}),
+    "P2": (ev_files(ev_arm('''until_error: AccountsErrorSchema = AccountSuspendedError(
+    message=f"Account is suspended until {suspended.blocked_until.astimezone(UTC).isoformat()}."
+)
+response[_LOGIN_BLOCKED_REASON_HEADER] = "account_suspended"
+response[_LOGIN_BLOCKED_UNTIL_HEADER] = suspended.blocked_until.astimezone(UTC).isoformat()
+return Status(403, until_error)
+''', head="AccountSuspendedUntil as suspended") + ev_arm('''indefinite_error: AccountsErrorSchema = AccountSuspendedError(message="Account is suspended indefinitely.")
+response[_LOGIN_BLOCKED_REASON_HEADER] = "account_suspended"
+return Status(403, indefinite_error)
+''', head="AccountSuspendedIndefinitely"),
+        imports="from application.accounts.domain_layer.account.exception.account_suspended_indefinitely import (\n"
+                "    AccountSuspendedIndefinitely,\n)\n"
+                "from application.accounts.domain_layer.account.exception.account_suspended_until import AccountSuspendedUntil\n",
+        **{f"{EV_EXC_DIR}/account_suspended_until.py": '''from __future__ import annotations
+
+from datetime import datetime
+
+
+class AccountSuspendedUntil(Exception):
+    def __init__(self, blocked_until: datetime) -> None:
+        super().__init__("Account is suspended.")
+        self.blocked_until: datetime = blocked_until
+''', f"{EV_EXC_DIR}/account_suspended_indefinitely.py": '''from __future__ import annotations
+
+
+class AccountSuspendedIndefinitely(Exception):
+    """끝 없는 정지."""
+'''}), [f"{EV_DOM}.account_suspended_until.AccountSuspendedUntil.blocked_until"],
+        {"auto": (0, []), "cj": (0, []), "bl": (0, [])}),
+    "P3": (ev_files(ev_arm(ev_single(headers=(
+        "response[_LOGIN_BLOCKED_UNTIL_HEADER] = suspended.decided_at.astimezone(UTC).isoformat()",)))),
+        [EV_DECIDED], {"auto": (0, []), "cj": (0, []), "bl": (0, [])}),
+    "P4": (ev_files(ev_arm(ev_single('message="Account is suspended for now."'), head="AccountSuspended")),
+           [], {"auto": (0, []), "cj": (0, []), "bl": (0, [])}),
+    "P5": (ev_files(ev_arm(ev_single("message=suspended.reason_label", headers=(
+        'response["Login-Blocked-Label"] = suspended.reason_label',)))),
+        [EV_LABEL], {"auto": (0, []), "cj": (0, []), "bl": (0, [])}),
+    "P6": (ev_files(ev_arm(ev_single('message=f"Suspended after {suspended.strikes} strikes."', headers=(
+        'response["Login-Strikes"] = f"{suspended.strikes}"',)))),
+        [EV_STRIKES], {"auto": (0, []), "cj": (0, []), "bl": (0, [])}),
+    "P7": (ev_files(ev_arm('''suspended_error: AccountsErrorSchema = AccountsErrorSchema(
+    error=AccountsErrorCode.ACCOUNT_SUSPENDED,
+    message=f"Account was suspended at {suspended.decided_at.astimezone(UTC).isoformat()}.",
+)
+return Status(403, suspended_error)
+'''), imports="from application.accounts.driving_layer.api.bc_error_schema import AccountsErrorCode\n"),
+        [EV_DECIDED], {"auto": (0, []), "cj": (0, []), "bl": (0, [])}),
+    "P9": (ev_files(ev_arm(EV_P1), app=True), [f"{EV_APP}.blocked_until"],
+           {"auto": (0, []), "cj": (0, []), "bl": (0, [])}),
+    "P10": ({EV_CTRL: ev_controller(ev_arm(ev_single(headers=(
+        "response[_LOGIN_BLOCKED_UNTIL_HEADER] = suspended.decided_at.astimezone(UTC).isoformat()",)),
+        head="Suspended as suspended")).replace(
+        "account_suspended import AccountSuspended\n", "account_suspended import AccountSuspended as Suspended\n")},
+        [EV_DECIDED], {"auto": (0, []), "cj": (0, []), "bl": (0, [])}),
+    "P11": ({EV_CTRL: ev_controller(ev_arm(ev_single(headers=(
+        "response[_LOGIN_BLOCKED_UNTIL_HEADER] = suspended.decided_at.astimezone(Z).isoformat()",)))).replace(
+        "from datetime import UTC\n", "from datetime import UTC as Z\n"),
+        f"{EV_EXC_DIR}/account_suspended.py": EV_SUSPENDED_SRC.replace(
+            "from datetime import datetime\n", "from datetime import datetime as dt\n").replace(
+            "self.decided_at: datetime = decided_at", "self.decided_at: dt = decided_at").replace(
+            "decided_at: datetime,", "decided_at: dt,").replace("datetime | None", "dt | None")},
+        [EV_DECIDED], {"auto": (0, []), "cj": (0, []), "bl": (0, [])}),
+    "P12": (ev_files(ev_arm(ev_single(
+        'message=f"Account was suspended at {suspended.decided_at.astimezone(UTC).isoformat()}."', headers=(
+            "response[_LOGIN_BLOCKED_UNTIL_HEADER] = suspended.decided_at.astimezone(UTC).isoformat()",)))),
+        [EV_DECIDED], {"auto": (0, []), "cj": (0, []), "bl": (0, [])}),
+    "P13": (ev_files(imports="from application.accounts.driving_layer.api.bc_error_schema import LoginBlockMissingError\n",
+                     ops='''
+    @route.get("/me/login-block", response={200: AccountOut, 404: LoginBlockMissingError}, summary="내 로그인 막힘")
+    def get_my_login_block(self, request: HttpRequest) -> AccountOut | Status[AccountsErrorSchema]:
+        use_case: AuthenticateAccountUseCase = build_authenticate_account_use_case()
+        result: AccountOut | None = use_case.find()
+        if result is None:
+            missing: AccountsErrorSchema = LoginBlockMissingError(message="No login block is recorded yet.")
+            return Status(404, missing)
+        return result
+'''), [], {"cj": (0, []), "bl": (0, [])}),
+    # ── 음성(변종 하나씩) ───────────────────────────────────────────────────────────────────
+    "N1": (ev_files(ev_arm(ev_single("message=str(suspended)"))), [],
+           {"auto": (2, [("#474", "message=str(suspended)", T474)]),
+            "cj": (2, [("#474", "message=str(suspended)", T474)]),
+            "bl": (2, [("#474", "except AccountSuspended as suspended", EV_FWD_D),
+                       ("-", "suspended_error: AccountsErrorSchema", EV_ARM), *EV_OWN2])}),
+    "N2": (ev_files(ev_arm(ev_single("message=suspended"))), [],
+           {"auto": (2, [("#474", "message=suspended)", T474)]),
+            "bl": (2, [("#474", "except AccountSuspended as suspended", EV_FWD_D),
+                       ("-", "suspended_error: AccountsErrorSchema", EV_ARM), *EV_OWN2])}),
+    "N3": (ev_files(ev_arm(ev_single(headers=('response["Login-Blocked-Code"] = suspended.reason_code',)))), [EV_UNTIL],
+           {"auto": (0, []), "cj": (2, [("#474", "suspended.reason_code", EV_C1)]),
+            "bl": (2, [("#474", "suspended.reason_code", EV_C1)])}),
+    "N4": (ev_files(ev_arm(ev_single(headers=('response["Login-Blocked-Label"] = suspended.reason_label',)))), [],
+           {"auto": (0, []), "cj": (2, [("#474", "suspended.reason_label", EV_C1)]),
+            "bl": (2, [("#474", "suspended.reason_label", EV_C1)])}),
+}
+
+
+def _ev_out_of_form(name: str, header_value: str, *, extra_bl: tuple = (), app_extra: tuple = (),
+                    imports: str = "") -> None:
+    """머리 값 자리의 꼴 밖 읽기 한 변종 — 도메인 판(트리 #474) · 응용 판(C2) 둘."""
+    arm = ev_arm(ev_single(headers=(f'response["Login-Blocked-X"] = {header_value}',)))
+    EV_CASES[name] = (ev_files(arm, imports=imports), [EV_LABEL],
+                      {"auto": (2, [("#474", header_value, T474)]), "cj": (2, [("#474", header_value, T474)]),
+                       "bl": (2, [("#474", header_value, T474), *extra_bl])})
+    app_value = header_value.replace("suspended.", "blocked.")
+    EV_CASES[name + "-app"] = (ev_files(arm, app=True, imports=imports), [f"{EV_APP}.reason_label"],
+                               {"auto": (0, []), "cj": (2, [("-", app_value, EV_C2), *app_extra]),
+                                "bl": (2, [("-", app_value, EV_C2), *app_extra])})
+
+
+EV_HEADER_CALL = (("-", "suspended_error: AccountsErrorSchema", EV_ARM), *EV_OWN2)
+EV_HEADER_CALL_APP = (("-", "suspended_error: AccountsErrorSchema", EV_ARM), *EV_OWN2)
+_ev_out_of_form("N5a", "suspended.args")
+_ev_out_of_form("N5b", "suspended._secret")
+_ev_out_of_form("N5c", "suspended.__dict__")
+_ev_out_of_form("N5d", "suspended.describe()", extra_bl=EV_HEADER_CALL, app_extra=EV_HEADER_CALL_APP)
+_ev_out_of_form("N9a", "suspended.decided_at.isoformat()", extra_bl=EV_HEADER_CALL, app_extra=EV_HEADER_CALL_APP)
+_ev_out_of_form("N9b", 'suspended.decided_at.strftime("%Y-%m-%d")', extra_bl=EV_HEADER_CALL,
+                app_extra=EV_HEADER_CALL_APP)
+_ev_out_of_form("N9c", "suspended.decided_at.astimezone(timezone.utc).isoformat()", extra_bl=EV_HEADER_CALL,
+                app_extra=EV_HEADER_CALL_APP, imports="from datetime import timezone\n")
+_ev_out_of_form("N12l", "suspended.blocked_until.astimezone(UTC).isoformat()", extra_bl=EV_HEADER_CALL,
+                app_extra=EV_HEADER_CALL_APP)
+EV_CASES["N18"] = (ev_files(ev_arm(ev_single(headers=('response[suspended.reason_label] = "y"',)))), [EV_LABEL],
+                   {"auto": (2, [("#474", "response[suspended.reason_label]", T474)]),
+                    "bl": (2, [("#474", "response[suspended.reason_label]", T474)])})
+EV_CASES["N18-app"] = (ev_files(ev_arm(ev_single(headers=('response[suspended.reason_label] = "y"',))), app=True),
+                       [f"{EV_APP}.reason_label"],
+                       {"auto": (0, []), "cj": (2, [("-", "response[blocked.reason_label]", EV_C2)])})
+
+
+def _ev_message_out_of_form(name: str, message: str, marker: str) -> None:
+    """설명 keyword 자리의 꼴 밖 읽기 — 도메인 판은 수집 실행에서 forwarding · ⑶ · ⑹, 응용 판은 C2 + 같은 줄들."""
+    arm = ev_arm(ev_single(f"message={message}"))
+    EV_CASES[name] = (ev_files(arm, module="\n\ndef _fmt(value: object) -> str:\n    return str(value)\n"), [EV_LABEL],
+                      {"auto": (2, [("#474", marker, T474)]), "cj": (2, [("#474", marker, T474)]),
+                       "bl": (2, [("#474", "except AccountSuspended as suspended", EV_FWD_D),
+                                  ("-", "suspended_error: AccountsErrorSchema", EV_ARM), *EV_OWN2])})
+    EV_CASES[name + "-app"] = (
+        ev_files(arm, app=True, module="\n\ndef _fmt(value: object) -> str:\n    return str(value)\n"),
+        [f"{EV_APP}.reason_label"],
+        {"auto": (0, []),
+         "cj": (2, [("-", marker.replace("suspended", "blocked"), EV_C2), ("-", "except LoginBlocked as blocked", EV_FWD_A),
+                    ("-", "suspended_error: AccountsErrorSchema", EV_ARM), *EV_OWN2])})
+
+
+_ev_message_out_of_form("N8", "_fmt(suspended.decided_at)", "_fmt(suspended.decided_at)")
+_ev_message_out_of_form("N10b", 'f"{suspended.reason_label!s}"', "reason_label!s")
+_ev_message_out_of_form("N10c", 'f"{suspended.reason_label!r}"', "reason_label!r")
+_ev_message_out_of_form("N10d", 'f"{suspended.decided_at:%Y}"', "decided_at:%Y")
+_ev_message_out_of_form("N10e", 'f"{suspended.strikes + 1}"', "strikes + 1")
+_ev_message_out_of_form("N10f", '"Suspended: " + suspended.reason_label', '"Suspended: " + suspended.reason_label')
+
+EV_CASES.update({
+    "N6": (ev_files(ev_arm(ev_single(headers=('response["Login-Blocked-Note"] = failed.note',)),
+                           head="PaymentFailed as failed").replace("suspended_error", "failed_error"),
+                    imports="from application.billing.domain_layer.payment.exception.payment_failed import PaymentFailed\n",
+                    **{"application/billing/__init__.py": "", "application/billing/domain_layer/__init__.py": "",
+                       "application/billing/domain_layer/payment/__init__.py": "",
+                       "application/billing/domain_layer/payment/exception/__init__.py": "",
+                       "application/billing/domain_layer/payment/exception/payment_failed.py":
+                           "class PaymentFailed(Exception):\n    def __init__(self, note: str) -> None:\n"
+                           "        super().__init__(note)\n        self.note: str = note\n"}), [],
+           {"auto": (2, [("#474", "failed.note", ev_tree("failed"))]),
+            "bl": (2, [("#474", "failed.note", ev_tree("failed")),
+                       ("#62", "except PaymentFailed as failed", EV_CATCH62)])}),
+    "N7a": (ev_files(ev_arm('''suspended_error: AccountsErrorSchema = AccountsErrorSchema(error=suspended.reason_code, message="Account is suspended.")
+return Status(403, suspended_error)
+'''), imports="from application.accounts.driving_layer.api.bc_error_schema import AccountsErrorCode\n"), [EV_CODE],
+        {"auto": (0, []),
+         "cj": (2, [("#474", "except AccountSuspended as suspended", EV_FWD_D),
+                    ("-", "suspended_error: AccountsErrorSchema", EV_ARM), *EV_OWN2])}),
+    "N7b": (ev_files(ev_arm(ev_single("error=AccountsErrorCode.ACCOUNT_SUSPENDED"), head="AccountSuspended"),
+                     imports="from application.accounts.driving_layer.api.bc_error_schema import AccountsErrorCode\n"),
+            [], {"auto": (0, []), "cj": (2, [("-", "suspended_error: AccountsErrorSchema", EV_ARM), *EV_OWN2])}),
+    "N10a": (ev_files(ev_arm(ev_single('message=f"{suspended.reason_label} / {suspended.reason_code}"'))), [EV_LABEL],
+             {"auto": (0, []), "cj": (2, [("#474", "suspended_error: AccountsErrorSchema", EV_C1)])}),
+    "N11": (ev_files(ev_arm(ev_single(headers=('response["Login-Blocked-Label"] = suspended.reason_label',)),
+                            head="(AccountSuspended, AccountLocked) as suspended"), imports=EV_LOCKED_IMPORT),
+            [EV_LABEL], {"auto": (2, [("#474", "= suspended.reason_label", T474)]),
+                         "bl": (2, [("#474", "= suspended.reason_label", T474)])}),
+    "N11-app": (ev_files(ev_arm(ev_single(headers=('response["Login-Blocked-Label"] = blocked.reason_label',)),
+                                head="(LoginBlocked, LoginThrottled) as blocked"),
+                         imports="from application.accounts.application_layer.port.login_block.exception import (\n"
+                                 "    LoginBlocked,\n    LoginThrottled,\n)\n"),
+                [f"{EV_APP}.reason_label"], {"auto": (0, []), "cj": (2, [("-", "= blocked.reason_label", EV_C2)])}),
+    "N12a": (ev_files(ev_arm(ev_form2(EV_PRESENT_STATIC, EV_ABSENT_STATIC, "suspended.blocked_until is None"))),
+             [EV_UNTIL], {"auto": (2, [("#474", "if suspended.blocked_until is None", T474)]),
+                          "bl": (2, [("#474", "if suspended.blocked_until is None", T474),
+                                     ("-", "if suspended.blocked_until is None", EV_ARM), *EV_OWN4])}),
+    "N12b": (ev_files(ev_arm(ev_form2(EV_PRESENT_STATIC, EV_ABSENT_STATIC, "suspended.blocked_until"))),
+             [EV_UNTIL], {"auto": (2, [("#474", "if suspended.blocked_until:", T474)]),
+                          "bl": (2, [("#474", "if suspended.blocked_until:", T474),
+                                     ("-", "if suspended.blocked_until:", EV_ARM), *EV_OWN4])}),
+    "N12c": (ev_files(ev_arm('''if suspended.blocked_until is not None:
+    until_error: AccountsErrorSchema = AccountSuspendedError()
+    return Status(403, until_error)
+elif suspended.review_at is not None:
+    review_error: AccountsErrorSchema = AccountSuspendedError()
+    return Status(403, review_error)
+else:
+    indefinite_error: AccountsErrorSchema = AccountSuspendedError()
+    return Status(403, indefinite_error)
+''')), [EV_UNTIL, EV_REVIEW],
+        {"auto": (2, [("#474", "if suspended.blocked_until is not None", T474)]),
+         "bl": (2, [("#474", "if suspended.blocked_until is not None", T474),
+                    ("-", "if suspended.blocked_until is not None", EV_ARM), *EV_OWN4,
+                    ("-", "review_error: AccountsErrorSchema", EV_OWN_C),
+                    ("-", "return Status(403, review_error)", EV_OWN_S)])}),
+    "N12d": (ev_files(ev_arm(ev_form2('''until_error: AccountsErrorSchema = AccountSuspendedError()
+if _NOTICE:
+    response["Login-Notice"] = "yes"
+return Status(403, until_error)
+''', EV_ABSENT_STATIC)), module="_NOTICE: bool = True\n"), [EV_UNTIL],
+        {"auto": (0, []), "cj": (2, [("-", "if suspended.blocked_until is not None", EV_ARM), *EV_OWN4])}),
+    "N12e": (ev_files(ev_arm('''if suspended.blocked_until is not None:
+    until_error: AccountsErrorSchema = AccountSuspendedError()
+    return Status(403, until_error)
+indefinite_error: AccountsErrorSchema = AccountSuspendedError()
+return Status(403, indefinite_error)
+''')), [EV_UNTIL], {"auto": (2, [("#474", "if suspended.blocked_until is not None", T474)]),
+                     "bl": (2, [("#474", "if suspended.blocked_until is not None", T474),
+                                ("-", "if suspended.blocked_until is not None", EV_ARM), *EV_OWN4])}),
+    "N12f": (ev_files(ev_arm(ev_form2(EV_PRESENT_STATIC, EV_ABSENT_STATIC.replace(
+        'AccountSuspendedError(message="Account is suspended indefinitely.")', "AccountLockedError()"))),
+        imports="from application.accounts.driving_layer.api.bc_error_schema import AccountLockedError\n"), [EV_UNTIL],
+        {"auto": (0, []), "cj": (2, [("-", "if suspended.blocked_until is not None", EV_ARM), *EV_OWN4])}),
+    "N12g": (ev_files(ev_arm(ev_form2(EV_PRESENT_STATIC, EV_ABSENT_STATIC.replace(
+        "return Status(403, indefinite_error)", "return Status(409, indefinite_error)")))), [EV_UNTIL],
+        {"auto": (0, []), "cj": (2, [("-", "if suspended.blocked_until is not None", EV_ARM), *EV_OWN4[:3],
+                                     ("-", "return Status(409, indefinite_error)", EV_OWN_S)])}),
+    "N12h": (ev_files(ev_arm(ev_form2(
+        'until_error: AccountsErrorSchema = AccountsErrorSchema(error=AccountsErrorCode.ACCOUNT_SUSPENDED, message="a")\n'
+        "return Status(403, until_error)\n",
+        'indefinite_error: AccountsErrorSchema = AccountsErrorSchema(error=AccountsErrorCode.ACCOUNT_LOCKED, message="b")\n'
+        "return Status(403, indefinite_error)\n")),
+        imports="from application.accounts.driving_layer.api.bc_error_schema import AccountsErrorCode\n"), [EV_UNTIL],
+        {"auto": (0, []), "cj": (2, [("-", "if suspended.blocked_until is not None", EV_ARM), *EV_OWN4])}),
+    "N12i": (ev_files(ev_arm(ev_form2(EV_PRESENT_STATIC, EV_ABSENT_STATIC, "suspended.review_at is not None"))),
+             [EV_UNTIL], {"auto": (0, []), "cj": (2, [("#474", "if suspended.review_at is not None", EV_C1)])}),
+    "N12j": (ev_files(ev_arm(ev_form2(EV_PRESENT_STATIC, EV_ABSENT_STATIC, "suspended.decided_at is not None"))),
+             [EV_DECIDED], {"auto": (2, [("#474", "if suspended.decided_at is not None", T474)]),
+                            "bl": (2, [("#474", "if suspended.decided_at is not None", T474),
+                                       ("-", "if suspended.decided_at is not None", EV_ARM), *EV_OWN4])}),
+    "N12k": (ev_files(ev_arm(ev_form2(EV_PRESENT_STATIC, '''indefinite_error: AccountsErrorSchema = AccountSuspendedError(
+    message=f"Until {suspended.blocked_until.astimezone(UTC).isoformat()}."
+)
+return Status(403, indefinite_error)
+'''))), [EV_UNTIL], {"auto": (2, [("#474", 'message=f"Until', T474)]),
+                     "bl": (2, [("#474", "except AccountSuspended as suspended", EV_FWD_D),
+                                ("-", "if suspended.blocked_until is not None", EV_ARM), *EV_OWN4])}),
+    "N12m": (ev_files(ev_arm(ev_form2(EV_PRESENT_STATIC, EV_ABSENT_STATIC, "_present(suspended)")),
+                      module="\n\ndef _present(value: object) -> bool:\n    return value is not None\n"), [EV_UNTIL],
+             {"auto": (2, [("#474", "if _present(suspended)", T474)]),
+              "bl": (2, [("#474", "except AccountSuspended as suspended", EV_FWD_D),
+                         ("-", "if _present(suspended)", EV_ARM), *EV_OWN4])}),
+    # 덧붙임 1 ③ — 검사식이 본 필드가 아닌 별개 optional 필드를 값 있는 가지에서 읽는다
+    "N12n": (ev_files(ev_arm(ev_form2('''until_error: AccountsErrorSchema = AccountSuspendedError()
+response[_LOGIN_BLOCKED_UNTIL_HEADER] = suspended.review_at.astimezone(UTC).isoformat()
+return Status(403, until_error)
+''', EV_ABSENT_STATIC))), [EV_UNTIL, EV_REVIEW],
+        {"auto": (2, [("#474", "suspended.review_at.astimezone", T474)]),
+         "bl": (2, [("#474", "suspended.review_at.astimezone", T474),
+                    ("-", "if suspended.blocked_until is not None", EV_ARM), *EV_OWN4])}),
+    "N13": (ev_files(ev_arm(ev_single(extra=("label_text: str = suspended.reason_label",)))), [EV_LABEL],
+            {"auto": (2, [("#474", "label_text: str = suspended.reason_label", T474)]),
+             "bl": (2, [("#474", "label_text: str = suspended.reason_label", T474),
+                        ("-", "suspended_error: AccountsErrorSchema", EV_ARM), *EV_OWN2])}),
+    "N15": (ev_files(ev_arm(ev_single('message="Account is suspended."').replace(
+        "AccountSuspendedError(", "AccountSuspendedNarrowError("), head="AccountSuspended"),
+        imports="from application.accounts.driving_layer.api.bc_error_schema import AccountSuspendedNarrowError\n"), [],
+        {"auto": (0, []), "cj": (2, [("-", "suspended_error: AccountsErrorSchema", EV_ARM),
+                                     ("-", "suspended_error: AccountsErrorSchema", EV_OWN_C),
+                                     ("-", "return Status(403, suspended_error)", EV_OWN_S)])}),
+    "N16a": (ev_files(**{EV_OHS: '''from datetime import UTC
+
+from application.accounts.domain_layer.account.exception.account_suspended import AccountSuspended
+
+
+def find_login_block_query(account_id: int) -> dict[str, str]:
+    try:
+        return {}
+    except AccountSuspended as suspended:
+        return {"until": suspended.decided_at.astimezone(UTC).isoformat()}
+''', f"{EV_A}/driving_layer/open_host_service/__init__.py": "",
+        f"{EV_A}/driving_layer/open_host_service/session_user/__init__.py": ""}), [EV_DECIDED],
+        {"auto": (2, [("#474", "suspended.decided_at", T474, EV_OHS)]),
+         "cj": (2, [("#474", "suspended.decided_at", T474, EV_OHS)]),
+         "bl": (2, [("#474", "suspended.decided_at", T474, EV_OHS)])}),
+    "N16b": (ev_files(**{EV_HOOK: '''from datetime import UTC
+
+from django.http import HttpRequest, HttpResponse
+
+from application.accounts.domain_layer.account.exception.account_suspended import AccountSuspended
+
+
+def handle_provider_event(request: HttpRequest, response: HttpResponse) -> None:
+    try:
+        return None
+    except AccountSuspended as suspended:
+        response["Login-Blocked-Until"] = suspended.decided_at.astimezone(UTC).isoformat()
+''', f"{EV_A}/driving_layer/api/webhook/__init__.py": "",
+        f"{EV_A}/driving_layer/api/webhook/provider/__init__.py": ""}), [EV_DECIDED],
+        {"auto": (2, [("#474", "suspended.decided_at", T474, EV_HOOK)]),
+         "cj": (2, [("#474", "suspended.decided_at", T474, EV_HOOK)])}),
+    "N17a": (ev_files(), [EV_UNTIL], {"auto": (1, "auto profile에는 selector를 전달하지 않음")}),
+    "N17b": (ev_files(), [EV_UNTIL], {"pre": (1, "--event-value")}),
+    "N17c": (ev_files(), ["application.billing.domain_layer.payment.exception.payment_failed.PaymentFailed.note"],
+             {"cj": (1, "--event-value")}),
+    "N17d1": (ev_files(), [f"{EV_DOM}.account_suspended._Hidden.blocked_until"], {"cj": (1, "--event-value")}),
+    "N17d2": (ev_files(), [f"{EV_SUSP}._secret"], {"cj": (1, "--event-value")}),
+    "N17e": (ev_files(), [EV_UNTIL, EV_UNTIL], {"cj": (1, "반복 인자 중복: --event-value")}),
+    "N17f1": (ev_files(), ["application.accounts.domain_layer.blocked_until"], {"cj": (1, "--event-value")}),
+    "N17f2": (ev_files(), ["application.accounts.driving_layer.api.AccountSuspendedError.message"],
+              {"cj": (1, "--event-value")}),
+    "N19": (ev_files(ev_arm(ev_single(headers=("response[header_name] = suspended.reason_label",))),
+                     pre="        header_name: str = payload.email\n"), [EV_LABEL],
+            {"auto": (0, []), "cj": (2, [("-", "suspended_error: AccountsErrorSchema", EV_ARM), *EV_OWN2])}),
+    "N20a": (ev_files(ev_arm(ev_single(headers=(
+        "response[_LOGIN_BLOCKED_UNTIL_HEADER] = suspended.decided_at.astimezone(UTC).isoformat()",))),
+        imports="from datetime import timezone\n", pre="        UTC = timezone.utc\n"), [EV_DECIDED],
+        {"auto": (2, [("#474", "suspended.decided_at.astimezone(UTC)", T474)]),
+         "bl": (2, [("#474", "suspended.decided_at.astimezone(UTC)", T474), *EV_HEADER_CALL])}),
+    "N20b": (ev_files(ev_arm(ev_single(headers=(
+        "response[_LOGIN_BLOCKED_UNTIL_HEADER] = suspended.decided_at.astimezone(UTC).isoformat()",))),
+        imports="from datetime import timezone\n", module="UTC = timezone.utc\n"), [EV_DECIDED],
+        {"auto": (2, [("#474", "suspended.decided_at.astimezone(UTC)", T474)]),
+         "bl": (2, [("#474", "suspended.decided_at.astimezone(UTC)", T474), *EV_HEADER_CALL])}),
+    "N23": (ev_files(ev_arm(ev_single(headers=(
+        "response[_LOGIN_BLOCKED_UNTIL_HEADER] = suspended.decided_at.astimezone(UTC).isoformat()",))),
+        **{f"{EV_EXC_DIR}/account_suspended.py": EV_SUSPENDED_SRC.replace(
+            "from datetime import datetime\n", "from datetime import datetime\n\nInstant = datetime\n").replace(
+            "self.decided_at: datetime = decided_at", "self.decided_at: Instant = decided_at")}), [EV_DECIDED],
+        {"auto": (2, [("#474", "suspended.decided_at.astimezone(UTC)", T474)]),
+         "bl": (2, [("#474", "suspended.decided_at.astimezone(UTC)", T474), *EV_HEADER_CALL])}),
+    "N24": (ev_files(ev_arm(ev_single(headers=(
+        "response[_LOGIN_BLOCKED_UNTIL_HEADER] = suspended.decided_at.astimezone(UTC).isoformat()",)))), [],
+        {"pre": (2, [("#474", "suspended.decided_at.astimezone(UTC)", T474)])}),
+    "N26": (ev_files(ev_arm(ev_single(headers=('response["Login-Blocked-Label"] = blocked.reason_label',)),
+                            head="LoginBlocked as blocked"),
+                     imports="from application.accounts.application_layer.account.authenticate_account.authenticate_account_use_case import LoginBlocked\n",
+                     **{f"{EV_A}/application_layer/account/authenticate_account/authenticate_account_use_case.py":
+                        "from application.accounts.application_layer.port.login_block.exception import LoginBlocked\n\n\n"
+                        "class AuthenticateAccountUseCase:\n    pass\n"}),
+            [f"{EV_APP}.reason_label"], {"auto": (0, []), "cj": (2, [("-", "= blocked.reason_label", EV_C2)])}),
+    "N27": (ev_files(ev_arm(ev_single(headers=('response["Login-Lock-Note"] = locked.lock_note',)),
+                            head="AccountLocked as locked").replace("suspended_error", "locked_error"),
+                     imports=EV_LOCKED_IMPORT), [f"{EV_DOM}.account_locked.AccountLocked.lock_note"],
+            {"auto": (2, [("#474", "locked.lock_note", ev_tree("locked"))]),
+             "bl": (2, [("#474", "locked.lock_note", ev_tree("locked"))])}),
+    # 설계가 «그대로» 라 한 셋 — 고치기 전 검사기와 같은 출력(옛 · 새 검사기 대조: scratch f80/impl/extra_cases.py).
+    # N21 은 모듈 별칭 대입 `Suspended = AccountSuspended` 뒤 catch — 트리(도메인 import 이름 아님)도 code lane(꼴 밖 · 도메인)도
+    # 줄을 내지 않는다(기존 틈 · 이 수리로 넓어지지 않음 — 다음 판 후보).
+    "N14": (ev_files(ops='''
+    @route.get("/me/login-block", response={200: AccountOut, 403: AccountSuspendedError}, summary="내 로그인 막힘")
+    def get_my_login_block(self, request: HttpRequest, response: HttpResponse) -> AccountOut | Status[AccountsErrorSchema]:
+        use_case: AuthenticateAccountUseCase = build_authenticate_account_use_case()
+        result: AccountOut = use_case.find()
+        if result.outcome == "suspended":
+            suspended_outcome: AccountsErrorSchema = AccountSuspendedError()
+            response[_LOGIN_BLOCKED_UNTIL_HEADER] = result.until_text
+            return Status(403, suspended_outcome)
+        return result
+'''), [EV_UNTIL], {"auto": (0, []), "pre": (0, []),
+                     "cj": (2, [("-", 'if result.outcome == "suspended"', controller.RESULT_VARIANT_BRANCH_FORBIDDEN)]),
+                     "bl": (2, [("-", 'if result.outcome == "suspended"', controller.RESULT_VARIANT_BRANCH_FORBIDDEN)])}),
+    "N21": (ev_files(ev_arm(ev_single(headers=('response["Login-Blocked-Label"] = suspended.reason_label',)),
+                            head="Suspended as suspended"), module="Suspended = AccountSuspended\n"), [EV_LABEL],
+            {"auto": (0, []), "cj": (0, []), "bl": (0, []), "pre": (0, [])}),
+    "N22": (ev_files(ev_arm(ev_single(headers=('response["Login-Blocked-Label"] = suspended.reason_label',))),
+                     module="AccountSuspended = InvalidCredentials\n"), [EV_LABEL],
+            {mode: (2, [("#474", '= suspended.reason_label', T474)]) for mode in ("auto", "cj", "bl", "pre")}),
+    # 덧붙임 1 ① — 12-slot 없음 + 오류 status 선언 없음 + 꼴 맞는 승인 밖 읽기: auto 는 비켜 준다(반송은 Coordinator R-0331 몫)
+    "N29": (ev_files(ev_arm('''payload_error: AccountsErrorSchema = AccountSuspendedError(message=suspended.reason_code)
+return JsonResponse(payload_error.model_dump(), status=403)
+'''), imports="from django.http import JsonResponse\n"), [], {"auto": (0, [])}),
+})
+
+# lesson 꼴(트리 밖 `driving_layer/controller.py` — code lane 행렬 픽스처와 같은 자리)
+EV_LESSON_CTRL = "application/lesson/driving_layer/controller.py"
+EV_LESSON_SELECT = ["--scope", "lesson", "--api-module", "config/api.py", "--controller-module", EV_LESSON_CTRL,
+                    "--scope-bc", "lesson", "--error-bc", "lesson"]
+EV_GONE = "application.lesson.domain_layer.lesson.exception.lesson_gone.LessonGone"
+EV_LESSON_BASE = {
+    "framework/ninja/__init__.py": "",
+    "config/api.py": "from ninja_extra import NinjaExtraAPI\n\napi = NinjaExtraAPI()\n",
+    "application/lesson/application_layer/use_cases.py": "def get_lesson(lesson_id: int):\n    return {'id': lesson_id}\n",
+    "application/lesson/domain_layer/lesson/exception/lesson_gone.py": '''from __future__ import annotations
+
+from datetime import datetime
+
+
+class LessonGone(Exception):
+    def __init__(self, *, until: datetime | None, label: str, http_status: int) -> None:
+        super().__init__(label)
+        self.until: datetime | None = until
+        self.label: str = label
+        self.http_status: int = http_status
+''',
+}
+EV_LESSON_CONTROLLER = '''from datetime import UTC
+
+from ninja import Router, Status
+
+from application.lesson.application_layer.use_cases import get_lesson
+from application.lesson.domain_layer.lesson.exception.lesson_gone import LessonGone
+from application.lesson.driving_layer.api.bc_error_schema import __NAMES__
+
+router = Router()
+
+
+@router.get("/{lesson_id}", response={200: dict, 404: LessonNotFoundError})
+def get_lesson_controller(request, lesson_id: int):
+    try:
+        lesson = get_lesson(lesson_id)
+    except LessonGone as gone:
+__ARM__    return lesson
+'''
+
+
+def ev_lesson(common: str, bc: str, arm: str, names: str = "LessonErrorCode, LessonErrorSchema, LessonNotFoundError") -> dict[str, str]:
+    return {**EV_LESSON_BASE, "framework/ninja/framework_error_schema.py": common,
+            "application/lesson/driving_layer/api/bc_error_schema.py": bc,
+            EV_LESSON_CTRL: EV_LESSON_CONTROLLER.replace("__NAMES__", names).replace(
+                "__ARM__", textwrap.indent(textwrap.dedent(arm), " " * 8))}
+
+
+EV_UNCERTAIN_COMMON = '''from ninja import Schema
+from pydantic import Field
+
+from framework.ninja.alias_source import message_alias
+
+
+class FrameworkErrorSchema(Schema):
+    error_type: str
+    msg: str = Field(alias=message_alias())
+'''
+EV_LESSON_OWN = [("-", "error: LessonErrorSchema", EV_OWN_C), ("-", "return Status(404, error)", EV_OWN_S)]
+EV_LESSON_CASES = {
+    "P14": (ev_lesson(backstop_matrix.CUSTOM_COMMON_ERROR_OUT, backstop_matrix.CUSTOM_LESSON_ERROR_OUT,
+                      'error: LessonErrorSchema = LessonNotFoundError(msg=f"Lesson {gone.label} is gone.")\n'
+                      "return Status(404, error)\n"), [f"{EV_GONE}.label"], {"auto": (0, []), "cj": (0, []), "bl": (0, [])}),
+    "P15": (ev_lesson(backstop_matrix.FLEXIBLE_COMMON_ERROR_OUT, backstop_matrix.FLEXIBLE_LESSON_ERROR_OUT,
+                      "error: LessonErrorSchema = LessonNotFoundError(msg=gone.label)\nreturn Status(404, error)\n"),
+            [f"{EV_GONE}.label"], {"cj": (0, []), "bl": (0, [])}),
+    "N7c": (ev_lesson(backstop_matrix.COMMON_ERROR_OUT, backstop_matrix.LESSON_ERROR_OUT,
+                      "error: LessonErrorSchema = LessonErrorSchema(code=LessonErrorCode.NOT_FOUND, title=\"Gone\", "
+                      "status=gone.http_status, detail=\"Gone.\")\nreturn Status(404, error)\n"),
+            # `int` 필드 맨 읽기는 꼴 밖(F3 — f-string 안만) — base 생성 인자 판정(⑶)은 꼴 맞는 원자만 보므로 forwarding 만
+            # 선다(꼴 밖 읽기에 ⑶ 을 더하면 재현 e2b · e3 의 수집 출력이 바뀐다 — S3 무변).
+            [f"{EV_GONE}.http_status"], {"cj": (2, [("#474", "except LessonGone as gone", EV_FWD_D)])}),
+    "N7d": (ev_lesson(backstop_matrix.CUSTOM_COMMON_ERROR_OUT, backstop_matrix.CUSTOM_LESSON_ERROR_OUT,
+                      "error: LessonErrorSchema = LessonErrorSchema(error_type=LessonErrorCode.NOT_FOUND, msg=\"Gone.\", "
+                      "is_show=gone.label)\nreturn Status(404, error)\n"),
+            [f"{EV_GONE}.label"], {"cj": (2, [("#474", "except LessonGone as gone", EV_FWD_D),
+                                              ("-", "error: LessonErrorSchema", EV_ARM), *EV_LESSON_OWN])}),
+    "N25": (ev_lesson(backstop_matrix.COMMON_ERROR_OUT, backstop_matrix.LESSON_ERROR_OUT,
+                      'error: LessonErrorSchema = LessonNotFoundError(detail=f"Gone: {gone.label}")\nreturn Status(404, error)\n'),
+            [f"{EV_GONE}.label"], {"cj": (2, [("#474", "except LessonGone as gone", EV_FWD_D),
+                                              ("-", "error: LessonErrorSchema", EV_ARM), *EV_LESSON_OWN])}),
+    "N28": (ev_lesson(EV_UNCERTAIN_COMMON, backstop_matrix.CUSTOM_LESSON_ERROR_OUT,
+                      'error: LessonErrorSchema = LessonNotFoundError(msg=f"Lesson {gone.label} is gone.")\n'
+                      "return Status(404, error)\n"),
+            [f"{EV_GONE}.label"], {"cj": (1, "alias constructor-key 분석 불능: msg")}),
+    # 덧붙임 1 ② — 두 가지의 status 는 «같은 오류 칸 읽기» 라도 생성 호출이 정한 값이 같아야 한다
+    "N12g2": (ev_lesson(backstop_matrix.COMMON_ERROR_OUT, backstop_matrix.LESSON_ERROR_OUT, '''if gone.until is not None:
+    until_error: LessonErrorSchema = LessonErrorSchema(code=LessonErrorCode.NOT_FOUND, title="Gone", status=404, detail="Gone.")
+    return Status(until_error.status, until_error)
+else:
+    forever_error: LessonErrorSchema = LessonErrorSchema(code=LessonErrorCode.NOT_FOUND, title="Gone", status=410, detail="Gone.")
+    return Status(forever_error.status, forever_error)
+'''), [f"{EV_GONE}.until"], {"cj": (2, [("-", "if gone.until is not None", EV_ARM),
+                                       ("-", "until_error: LessonErrorSchema", EV_OWN_C),
+                                       ("-", "return Status(until_error.status, until_error)", EV_OWN_S),
+                                       ("-", "forever_error: LessonErrorSchema", EV_OWN_C),
+                                       ("-", "return Status(forever_error.status, forever_error)", EV_OWN_S)])}),
+    "P12g2": (ev_lesson(backstop_matrix.COMMON_ERROR_OUT, backstop_matrix.LESSON_ERROR_OUT, '''if gone.until is not None:
+    until_error: LessonErrorSchema = LessonErrorSchema(code=LessonErrorCode.NOT_FOUND, title="Gone", status=404, detail="Gone.")
+    return Status(until_error.status, until_error)
+else:
+    forever_error: LessonErrorSchema = LessonErrorSchema(code=LessonErrorCode.NOT_FOUND, title="Gone", status=404, detail="Gone.")
+    return Status(404, forever_error)
+'''), [f"{EV_GONE}.until"], {"cj": (0, []), "bl": (0, [])}),
+}
+EV_LINE = re.compile(r"^  (?:\[(#\d+)\]|(-)) (\S+?):(\d+): (.*)$")
+
+
+class EventValueRegression(unittest.TestCase):
+    """F4-80 — 잡은 예외의 승인 필드 값(사건 값)을 설명 칸 · 머리 값에만 싣는 꼴(꼴 1 · 꼴 2)과 `--event-value` 승인 대조.
+
+    auto 는 «꼴» 만 보고 비켜 준다(확인 1) · code-json 은 승인 목록 대조(C1) · 응용 예외의 꼴 밖 읽기(C2) ·
+    가지 문법 · 생성 인자 · 머리를 본다 · preserve 는 #474 를 그대로 낸다. 줄은 표지 행 원문까지 고정한다.
+    """
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="field-event-value-")
+        self.addCleanup(self.tmp.cleanup)
+        self.env = {"DJR_VIOLATIONS_DIR": str(Path(self.tmp.name) / "violations")}
+
+    def project(self, name: str, base: dict[str, str], files: dict[str, str]) -> Path:
+        root = Path(self.tmp.name) / name
+        for rel, source in {**base, **files}.items():
+            target = root / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(source, encoding="utf-8")
+        return root
+
+    def run_main(self, root: Path, args: list[str]) -> tuple[int, str, str]:
+        out, err = io.StringIO(), io.StringIO()
+        with patch.dict(os.environ, self.env), contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = controller.main(["checker", str(root), *args])
+        return code, out.getvalue(), err.getvalue()
+
+    @staticmethod
+    def found(stdout: str) -> list[tuple[str, str, int, str]]:
+        rows = []
+        for line in stdout.splitlines():
+            hit = EV_LINE.match(line)
+            if hit:
+                rows.append((hit.group(1) or "-", hit.group(3), int(hit.group(4)), hit.group(5)))
+        return sorted(rows)
+
+    @staticmethod
+    def expected(root: Path, entries: list[tuple], default: str) -> list[tuple[str, str, int, str]]:
+        rows = []
+        for entry in entries:
+            tag, marker, category = entry[:3]
+            path = entry[3] if len(entry) > 3 else default
+            source = (root / path).read_text(encoding="utf-8").splitlines()
+            hits = [index for index, text in enumerate(source, 1) if marker in text]
+            assert hits, (path, marker)
+            line = hits[0]
+            shown = source[line - 1].strip()
+            message = category if category.startswith("도메인 예외를") else f"{category}: {shown}"
+            rows.append((tag, path, line, message))
+        return sorted(rows)
+
+    def assert_cases(self, cases: dict, base: dict[str, str], select: list[str], default: str) -> None:
+        modes = {"auto": ["--error-profile", "auto"], "cj": ["--error-profile", "dddjango-code-json", *select],
+                 "bl": ["--error-profile", "dddjango-code-json", *select, "--anchor-baseline"],
+                 "pre": ["--error-profile", "preserve-established", *select]}
+        for name, (files, flags, expectations) in cases.items():
+            root = self.project(name, base, files)
+            event_args = [token for value in flags for token in ("--event-value", value)]
+            for mode, (exit_code, entries) in expectations.items():
+                args = modes[mode] + (event_args if mode in ("cj", "bl") or exit_code == 1 else [])
+                with self.subTest(case=name, mode=mode):
+                    code, stdout, stderr = self.run_main(root, args)
+                    self.assertEqual(code, exit_code, stdout + stderr)
+                    if exit_code == 1:
+                        self.assertIn(entries, stderr)
+                        continue
+                    self.assertEqual(self.found(stdout), self.expected(root, entries, default), stdout + stderr)
+                    if exit_code == 0:
+                        self.assertEqual(stderr, "")
+
+    def test_event_value_shapes_on_standard_tree(self) -> None:
+        self.assert_cases(EV_CASES, EV_BASE, EV_SELECT, EV_CTRL)
+
+    def test_event_value_shapes_on_code_lane_matrix_fixture(self) -> None:
+        self.assert_cases(EV_LESSON_CASES, {}, EV_LESSON_SELECT, EV_LESSON_CTRL)
+
+    def anchor_run(self, anchor_files: dict[str, str], current: dict[str, str], flags: list[str]) -> tuple[int, str]:
+        root = Path(self.tmp.name) / "anchored"
+        self.project("anchored", anchor_files, {})
+        _git(root, "init", "-q")
+        _git(root, "add", "-A")
+        _git(root, "commit", "-qm", "anchor")
+        anchor = _git(root, "rev-parse", "HEAD").strip()
+        for rel, source in current.items():
+            target = root / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(source, encoding="utf-8")
+        args = ["--error-profile", "dddjango-code-json", *EV_SELECT, "--anchor", anchor]
+        args += [token for value in flags for token in ("--event-value", value)]
+        done = subprocess.run([sys.executable, "-B", str(SCRIPTS / "check-api-error-controller-contract.py"),
+                               str(root), *args], capture_output=True, text=True, env={**os.environ, **self.env})
+        return done.returncode, done.stdout + done.stderr
+
+    def test_anchor_baseline_keeps_event_value_without_bc_usage_error(self) -> None:
+        # P16 — 앵커에 없는 새 BC: 기준선 재실행은 --error-bc 를 걷고 --event-value 는 남긴다(사용 오류 없이 돈다).
+        stray = {f"{EV_A}/driving_layer/api/account/ninja_helpers.py": "VALUE: int = 1\n"}
+        anchor_only = {path: text for path, text in EV_BASE.items() if not path.startswith("application/")}
+        code, output = self.anchor_run(anchor_only, {**EV_BASE, **EV_CASES["P1"][0], **stray}, [EV_UNTIL])
+        self.assertEqual(code, 2, output)
+        self.assertIn("신규분(앵커 이후) 1건 · 앵커 기존분(잔존) 0건", output)
+        self.assertNotIn("사용 오류", output)
+
+    def test_anchor_baseline_with_new_exception_file(self) -> None:
+        # P16b — 앵커에 없는 새 예외 파일(P2 의 AccountSuspendedUntil): 모듈은 읽기가 나올 때만 푼다.
+        stray = {f"{EV_A}/driving_layer/api/account/ninja_helpers.py": "VALUE: int = 1\n"}
+        files, flags, _ = EV_CASES["P2"]
+        code, output = self.anchor_run(EV_BASE, {**EV_BASE, **files, **stray}, flags)
+        self.assertEqual(code, 2, output)
+        self.assertIn("신규분(앵커 이후) 1건 · 앵커 기존분(잔존) 0건", output)
+        self.assertNotIn("사용 오류", output)
+
+    def test_event_value_review_duties_are_written(self) -> None:
+        """R1 ~ R7 · A.10 · B — 기계 밖 책임이 개정 문장에 글로 있다(문장 있음 대조 · 레인 실제 대조는 G1 · G2 몫)."""
+        phrases = {
+            "dddjango/agents/discipline-reviewer.md": (
+                "slot 10 이 정한 머리 누락", "메시지와 머리의 날짜 불일치", "slot 10 이 정하지 않은 머리",
+                "`str(다른 예외)`", "aware datetime", "`--event-value`"),
+            "dddjango/agents/design-review-api.md": ("`str(다른 예외)`", "operation `description`", "생략의 뜻"),
+            "dddjango/agents/design-architect.md": ("사건 값", "operation `description`", "발주자 도출 · 설계 가정"),
+            "dddjango/commands/dddjango.md": ("`--event-value`", "`response=` 선언 유무와 관계없이"),
+            "dddjango/skills/implementation-django-ninja/references/final.md": (
+                "`n.f.astimezone(UTC).isoformat()`", "`if <n>.<f> is not None:`"),
+            "dddjango/skills/discipline-houserules/references/final.md": ("`<project>/settings` 의 문자열로 등록해",),
+        }
+        for rel, expected in phrases.items():
+            text = (ROOT / rel).read_text(encoding="utf-8")
+            for phrase in expected:
+                with self.subTest(path=rel, phrase=phrase):
+                    self.assertIn(phrase, text)
+        codex = {
+            "codex-dddjango/skills/dddjango/SKILL.md": ("`--event-value`", "`response=` 선언 유무와 관계없이"),
+            "codex-dddjango/skills/dddjango-discipline-reviewer/SKILL.md": ("slot 10 이 정한 머리 누락", "aware datetime"),
+            "codex-dddjango/skills/dddjango-design-review-api/SKILL.md": ("`str(다른 예외)`",),
+            "codex-dddjango/skills/dddjango-design-architect/SKILL.md": ("사건 값", "발주자 도출 · 설계 가정"),
+        }
+        for rel, expected in codex.items():
+            text = (ROOT / rel).read_text(encoding="utf-8")
+            for phrase in expected:
+                with self.subTest(path=rel, phrase=phrase):
+                    self.assertIn(phrase, text)
 
 
 if __name__ == "__main__":
