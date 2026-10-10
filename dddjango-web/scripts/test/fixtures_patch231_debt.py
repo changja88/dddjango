@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""계약 C: 실제 CLI · 임시 저장소 · 2.3.0 byte 대조(별도 실행)."""
+"""계약 C: 실제 CLI · 임시 저장소 · 2.3.0 byte 대조. 재현 장면(옛 배치 파일 셋 · G0 동결본 · refactor-scope 변형)은
+이 파일이 임시 폴더에 스스로 만든다 — 저장소 밖 파일을 읽지 않는다."""
 import io
 import json
 import os
@@ -13,12 +14,134 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPTS = ROOT / 'dddjango-web/scripts'
-SCRATCH = ROOT.parent
-REPRO = SCRATCH / 'f75/crepo'
 BASE = 'f349f878'
 ENV = dict(os.environ, GIT_OPTIONAL_LOCKS='0', PYTHONDONTWRITEBYTECODE='1')
 WHEN = '2026-10-10 23:00'
 AUDIT = '20261010-230000'
+# 재현 장면 — 옛 배치 파일 셋(빚 C1 · C2 = legacy 폴더 · C3 = other 폴더)과 그 G0 동결본 · refactor-scope.md 변형 v1 ~ v5.
+# 픽스처가 임시 폴더에 스스로 만든다(저장소 밖 파일을 읽지 않는다).
+REPRO_WEB = {
+    '__init__.py': '',
+    'legacy/alpha.py': 'def a() -> int:\n    return 1\n',
+    'legacy/beta.py': 'def b() -> int:\n    return 2\n',
+    'other/gamma.py': 'def c() -> int:\n    return 3\n',
+}
+REPRO_G0 = '''{
+  "counts": {
+    "ST0|legacy/alpha.py": 1,
+    "ST0|legacy/beta.py": 1,
+    "ST0|other/gamma.py": 1
+  },
+  "dirty": false,
+  "files": [
+    "__init__.py",
+    "legacy/alpha.py",
+    "legacy/beta.py",
+    "other/gamma.py"
+  ],
+  "findings": [
+    {
+      "check": "ST0",
+      "folder": "legacy",
+      "key": "ST0|legacy/alpha.py",
+      "line": null,
+      "message": "표준 트리 밖 옛 배치 파일 — 층 판정 불가 레거시(슬라이스 0 이 새 배치로 옮긴다)",
+      "path": "legacy/alpha.py"
+    },
+    {
+      "check": "ST0",
+      "folder": "legacy",
+      "key": "ST0|legacy/beta.py",
+      "line": null,
+      "message": "표준 트리 밖 옛 배치 파일 — 층 판정 불가 레거시(슬라이스 0 이 새 배치로 옮긴다)",
+      "path": "legacy/beta.py"
+    },
+    {
+      "check": "ST0",
+      "folder": "other",
+      "key": "ST0|other/gamma.py",
+      "line": null,
+      "message": "표준 트리 밖 옛 배치 파일 — 층 판정 불가 레거시(슬라이스 0 이 새 배치로 옮긴다)",
+      "path": "other/gamma.py"
+    }
+  ],
+  "head": "b69e2e0f8b222fbf9955ac907c4334881051d2ce",
+  "ids": {
+    "C1": "ST0|legacy/alpha.py",
+    "C2": "ST0|legacy/beta.py",
+    "C3": "ST0|other/gamma.py"
+  },
+  "mode": "feature",
+  "scanned_at": "2026-10-10T20:07:43+09:00",
+  "scanner": {
+    "checks": "e49c83776ff9faf6",
+    "keys": "st-folder-to-file",
+    "plugin": "2.2.6"
+  },
+  "schema": "dddjango-web-debt/1"
+}
+'''
+REPRO_VARIANTS = (
+    # v1
+    '''# refactor-scope (측정용)
+
+## G0 2026-10-10 20:08
+C1 · 결정 = ⓐ · 사유 = 측정 · 출처 = 본인 직접(2026-10-10 20:08)
+C2 · 결정 = 플러그인 결함(수리 대기 · 이 정리만 빼고 진행) · 출처 = 본인 직접(2026-10-10 20:08)
+C3 · 결정 = 다른 요청 몫 · 출처 = 본인 직접(2026-10-10 20:08)
+ⓐ 키: C1
+요구 키: -
+''',
+    # v2
+    '''# refactor-scope (측정용)
+
+## G0 2026-10-10 20:08
+C1 C2 · 결정 = ⓐ · 사유 = 측정 · 출처 = 본인 직접(2026-10-10 20:08)
+ⓐ 키: C1 C2
+요구 키: -
+
+## ⓐ 재상정 2026-10-10 20:09
+C2 · web/legacy/beta.py · ST0 · 처분 = 플러그인 결함 · 결정 = 본인 직접(2026-10-10 20:09)
+재상정 키: C2
+''',
+    # v3
+    '''# refactor-scope (측정용)
+
+## G0 2026-10-10 20:08
+C1 · 결정 = ⓐ · 출처 = 본인 직접(2026-10-10 20:08)
+ⓐ 키: C1
+요구 키: -
+
+## G0 재승인 2026-10-10 20:09
+C2 · 결정 = 플러그인 수리 대기 · C3 · 결정 = 다른 요청 몫 · 출처 = 본인 직접(2026-10-10 20:09)
+ⓐ 키: -
+요구 키: -
+수리 대기 키: C2
+다른 요청 몫 키: C3
+''',
+    # v4
+    '''# refactor-scope (측정용)
+
+## G0 2026-10-10 20:08
+C1 · 결정 = ⓐ · 출처 = 본인 직접(2026-10-10 20:08)
+ⓐ 키: C1
+요구 키: -
+
+## G0 수리 대기 2026-10-10 20:09
+C2 · 결정 = 플러그인 수리 대기
+''',
+    # v5
+    '''# refactor-scope (측정용)
+
+## G0 2026-10-10 20:08
+C1 · 결정 = ⓐ · 출처 = 본인 직접(2026-10-10 20:08)
+ⓐ 키: C1
+요구 키: -
+
+## G0 재승인 2026-10-10 20:09
+C2 · 결정 = 플러그인 수리 대기 · 출처 = 본인 직접(2026-10-10 20:09)
+''',
+)
 # 시간만 고정한다. 양쪽 CLI·git·스캔·JSON 직렬화는 실제 구현을 실행한다.
 RUN = '''
 import datetime, importlib.util, pathlib, sys
@@ -93,13 +216,13 @@ class ContractC(unittest.TestCase):
     def setUp(self):
         self.p = self.tmp / self.id().split('.')[-1]
         self.p.mkdir()
-        # 재현 폴더는 읽기·복제 원본으로만 쓴다(.git 도 복제하지 않는다).
-        shutil.copytree(REPRO / 'web', self.p / 'web')
+        for rel, body in REPRO_WEB.items():
+            write(self.p / 'web' / rel, body)
         git(self.p, 'init', '-q')
         self.anchor = commit(self.p)
         self.f = self.p / '.dddjango-web/run'
         self.f.mkdir(parents=True)
-        frozen = json.loads((REPRO / '.dddjango-web/20261010-0000-c/debt-g0.json').read_text())
+        frozen = json.loads(REPRO_G0)
         frozen.update(head=self.anchor, scanned_at='2026-10-10T20:07:43+09:00')
         # 재현 동결본의 판도 보존한다. 기존 판 바뀜 알림까지 양쪽에서 대조한다.
         write(self.f / 'debt-g0.json', json.dumps(frozen))
@@ -396,7 +519,7 @@ class ContractC(unittest.TestCase):
 
     def test_byte_baseline_variants_and_commands(self):
         for i, code in enumerate((2, 2, 2, 1, 1), 1):
-            text = (SCRATCH / f'f75/cvar/v{i}.md').read_text()
+            text = REPRO_VARIANTS[i - 1]
             new = self.c(text, code)
             new_json = (self.f / 'debt-g2.json').read_bytes() if (self.f / 'debt-g2.json').exists() else None
             old = self.c(text, code, old=True)
@@ -423,4 +546,8 @@ class ContractC(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    outcome = unittest.main(verbosity=2, exit=False).result
+    bad = len(outcome.failures) + len(outcome.errors)
+    sys.stderr.flush()
+    print('2.3.1 빚 미룸 정형 픽스처: PASS %d / FAIL %d' % (outcome.testsRun - bad, bad))
+    sys.exit(0 if outcome.wasSuccessful() else 1)

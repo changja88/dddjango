@@ -6,7 +6,9 @@
 묶음: U 무변(2.3.0 과 같은 입력의 refactor_audit 출력 byte 대조) · S 정상 · B 보호 분기 비켜 감 · R 반례 거절 ·
 N 미검증(skip · xfail · 수집 0 · 수집 오류 · 정상 실패 · 시간 초과 · 요동 · 판독 불능) · M 어긋남(반례 무효 · 단언 다름 ·
 단언 밖 실패 · 매개 case) · C 중단 뒤 재개 복구 · A 검증 뒤 0C 가 시작된 다음 다시 불림 · D dirty 트리 ·
-L 생명주기(build-state · 0T 커밋 사슬 · 명세 행) · P 기록 플러그인.
+L 생명주기(build-state · 0T 커밋 사슬 · 명세 행) · P 기록 플러그인 · X 승인 행 판독은 한 곳(치환 확인 · plan --names ·
+switch-check 가 받는 행이 같다) · J 이어 붙인 흐름(0T → 치환 확인 → switch-check → 기록 → 0C → 치환 확인 · 음성 넷 ·
+임시 변경이 남은 채 취소로 적힌 모순 상태).
 고치기 전 판 = BASELINE 커밋의 scripts(`git show <커밋>:<경로>` 로 임시 폴더에 푼다 — 작업 사본을 stash 하지 않는다).
 그 커밋이 이력에 없으면(얕은 clone 등) U 묶음을 건너뛰고 건너뛴 사실을 출력한다(실패로 세지 않는다)."""
 import hashlib
@@ -207,7 +209,7 @@ ROW = ('- 시험 전환: `tests/test_gate.py::test_gate` · 행위 `web.app.view
 
 class Scene:
     def __init__(self, tmp, name, new_test=None, old_test=None, mutants=(MUT_URL,), row=None, spec=None,
-                 test_switch=None, view=None):
+                 test_switch=None, view=None, extra=None):
         self.tmp = Path(tmp)
         self.root = Path(tmp) / name
         self.root.mkdir(parents=True)
@@ -216,6 +218,8 @@ class Scene:
         self.w('web/app/__init__.py')
         self.w('web/app/view.py', *(view or VIEW))
         self.w('tests/test_gate.py', *(old_test or OLD_TEST))
+        for rel, lines in (extra or {}).items():        # 바탕에 더 두는 파일(경로 → 줄 목록)
+            self.w(rel, *lines)
         self.base = self.commit('base')
         self.folder = self.root / RUN
         (self.folder / 'test-switch').mkdir(parents=True)
@@ -868,9 +872,365 @@ def bundle_unchanged(tmp):
               '새 판\n%s\n옛 판\n%s' % (new[1][-500:], before[1][-500:]))
 
 
+# ====================================================================== X — 승인 행 판독은 한 곳
+
+def _row_modules():
+    """scripts 의 src 꾸러미를 이 프로세스에 싣는다(바이트코드는 쓰지 않는다)."""
+    sys.dont_write_bytecode = True
+    sys.path.insert(0, str(SCRIPTS))
+    try:
+        from src import debt, subst, switch_check
+    finally:
+        sys.path.remove(str(SCRIPTS))
+    return debt, subst, switch_check
+
+
+def bundle_rows(tmp):
+    """같은 행 묶음을 세 입구에 넣는다 — 치환 확인(subst.parse_spec_approvals) · switch-check(switch_check.parse_rows) ·
+    plan --names(debt.parse_spec_methods). 한 입구가 받는 행을 다른 입구가 버리는 꼴이 0 이어야 한다."""
+    debt, subst, switch_check = _row_modules()
+    test, old, new = 'tests/test_gate.py::test_gate', 'web.app.view._render_page', 'web.app.view.page_view'
+    branch, m1, m2 = 'web/app/view.py:11-12', 'test-switch/1.mutant.diff', 'test-switch/2.mutant.diff'
+
+    def switch_row(head='', test=test, old=old, new=new, branch=branch, mutants=m1, arrow='→', tick=''):
+        return '%s시험 전환: %s%s%s · 행위 %s%s%s %s %s%s%s · 보호 분기 %s%s%s · 반례 %s' % (
+            head, tick, test, tick, tick, old, tick, arrow, tick, new, tick, tick, branch, tick,
+            ' '.join(tick + m + tick for m in mutants.split()))
+
+    def spec_of(line, section='## 슬라이스 0'):
+        return '# 명세\n\n%s\n\n%s\n\n## 슬라이스 1\n' % (section, line)
+
+    def read_switch(spec):
+        """(치환 확인이 읽은 행, switch-check 가 읽은 행 또는 None, switch-check 사유)."""
+        left = [(s.path, s.func, s.old, s.new) for s in subst.parse_spec_approvals(spec)[1]]
+        try:
+            right = [(r.test, r.func, r.old, r.new) for r in switch_check.parse_rows(spec)]
+            why = ''
+        except switch_check.Unverified as error:
+            right, why = None, str(error)
+        return left, right, why
+
+    accepted = [
+        ('맨 줄', switch_row()),
+        ('`- ` 머리', switch_row('- ')),
+        ('`* ` 머리', switch_row('* ')),
+        ('들여쓴 `- ` 머리', switch_row('  - ')),
+        ('칸마다 백틱', switch_row('- ', tick='`')),
+        ('반례 둘', switch_row('- ', mutants='%s %s' % (m1, m2))),
+        ('반례 둘 · 백틱', switch_row('- ', mutants='%s %s' % (m1, m2), tick='`')),
+        ('web_test/ 미러 시험', switch_row(test='web_test/app/view_test.py::test_gate')),
+        ('보호 분기 한 줄(17-17)', switch_row(branch='web/app/view.py:17-17')),
+    ]
+    for label, line in accepted:
+        left, right, why = read_switch(spec_of(line))
+        check('X1 받는 행(%s) — 치환 확인 · switch-check 둘 다 같은 행 하나' % label,
+              len(left) == 1 and left == right, '치환 확인 %r\nswitch-check %r %s\n%s' % (left, right, why, line))
+    rejected = [
+        ('머리 뒤 공백 둘', switch_row('-  '), '형식 오류'),
+        ('줄 전체를 백틱 한 쌍으로', '- `%s`' % switch_row(), '형식 오류'),
+        ('칸 사이 백틱(→ 를 감쌈)', switch_row(arrow='`→`'), '형식 오류'),
+        ('ASCII 화살표', switch_row(arrow='->'), '형식 오류'),
+        ('보호 분기 줄 범위 없음', switch_row(branch='web/app/view.py:11'), '형식 오류'),
+        ('보호 분기가 web 기준 상대 경로', switch_row(branch='app/view.py:11-12'), '보호 분기는 web/ 비시험 파일이다'),
+        ('보호 분기가 시험 파일', switch_row(branch='tests/test_gate.py:5-6'), '보호 분기는 web/ 비시험 파일이다'),
+        ('보호 분기 줄 범위 뒤집힘', switch_row(branch='web/app/view.py:12-11'), '줄 범위가 잘못됐다'),
+        ('보호 분기 0행', switch_row(branch='web/app/view.py:0-3'), '줄 범위가 잘못됐다'),
+        ('반례 없음', switch_row().rsplit(' · 반례', 1)[0], '형식 오류'),
+        ('반례 절대 경로', switch_row(mutants='/tmp/1.mutant.diff'), '반례는 산출물 폴더 상대 경로다'),
+        ('반례 .. 성분', switch_row(mutants='../1.mutant.diff'), '반례는 산출물 폴더 상대 경로다'),
+        ('시험 파일이 web/ 안', switch_row(test='web/app/tests/test_gate.py::test_gate'), '시험 파일은 web/ 밖'),
+        ('시험 파일이 아님', switch_row(test='scripts/run.py::main'), '시험 파일은 web/ 밖'),
+        ('클래스 안 시험', switch_row(test='tests/test_gate.py::TestGate::test_gate'), '시험 파일은 web/ 밖'),
+        ('시험 경로 글롭', switch_row(test='tests/test_*.py::test_gate'), '시험 파일은 web/ 밖'),
+        ('시험 경로 ./ 머리', switch_row(test='./tests/test_gate.py::test_gate'), '시험 파일은 web/ 밖'),
+        ('시험 경로 절대', switch_row(test='/tests/test_gate.py::test_gate'), '시험 파일은 web/ 밖'),
+        ('시험 함수 이름에 한글', switch_row(test='tests/test_gate.py::test_게이트'), '형식 오류'),
+        ('행위가 web. 경로가 아님', switch_row(old='app.view._render_page'), '행위는 web. 으로 시작하는 점 경로 쌍'),
+        ('산문 줄', '시험 전환: 아래 두 함수를 0T 에서 먼저 바꾼다', '형식 오류'),
+    ]
+    for label, line, needle in rejected:
+        left, right, why = read_switch(spec_of(line))
+        check('X2 버리는 행(%s) — 치환 확인은 읽지 않고 switch-check 는 사유를 낸다' % label,
+              left == [] and right is None and needle in why, '치환 확인 %r\nswitch-check %r %s\n%s' % (left, right, why, line))
+    both = spec_of('%s\n%s' % (switch_row('- '), switch_row('-  ', test='tests/test_gate.py::test_other')))
+    left, right, why = read_switch(both)
+    check('X3 받는 행 + 꼴 어긋난 행 — 치환 확인은 받는 행만 · switch-check 는 멈춘다(exit 1 감)', len(left) == 1 and
+          right is None and '형식 오류' in why, '%r %r %s' % (left, right, why))
+    for label, spec in (('절 밖', spec_of(switch_row('- '), '## 다른 절')),
+                        ('코드 울타리 안', spec_of('```\n%s\n```' % switch_row('- ')))):
+        left, right, why = read_switch(spec)
+        check('X4 %s 행 — 둘 다 읽지 않는다' % label, left == [] and right is None and '행이 없다' in why,
+              '%r %r %s' % (left, right, why))
+    same = spec_of(switch_row('- ', new=old))
+    left, right, why = read_switch(same)
+    try:
+        subst._check_approvals([], subst.parse_spec_approvals(same)[1], [])
+        conflict = ''
+    except debt.DebtError as error:
+        conflict = str(error)
+    check('X5 옛 대상 = 새 대상 — 치환 확인 판정 불가 · switch-check 도 멈춘다', '옛 대상과 새 대상이 같다' in conflict
+          and right is None and '옛 대상과 새 대상이 같다' in why, '%r | %r %s' % (conflict, right, why))
+
+    o, n, t = 'web.home.vm.HomeVM.go', 'web.auth.vm.LoginVM.go', 'tests/web/test_home.py::test_a'
+
+    def move_row(head='', old=o, new=n, tests=t, tick='', arrow='→'):
+        return '%s메서드 이동: %s%s%s %s %s%s%s · 시험 %s' % (head, tick, old, tick, arrow, tick, new, tick,
+                                                         ' '.join(tick + x + tick for x in tests.split()))
+
+    moves = [
+        ('맨 줄', move_row(), 1), ('`- ` 머리', move_row('- '), 1), ('`* ` 머리', move_row('* '), 1),
+        ('들여쓴 머리', move_row('  - '), 1), ('백틱', move_row('- ', tick='`'), 1),
+        ('시험 둘', move_row('- ', tests='%s tests/web/test_b.py::test_b' % t), 1),
+        ('머리 뒤 공백 둘', move_row('-  '), 0), ('줄 전체 백틱', '- `%s`' % move_row(), 0),
+        ('ASCII 화살표', move_row(arrow='->'), 0), ('시험 없음', move_row().rsplit(' 시험', 1)[0] + ' 시험', 0),
+        ('뒤에 글', move_row() + ' (근거 아래)', 0), ('모듈 대문자', move_row(old='web.Home.vm.HomeVM.go'), 0),
+        ('클래스 소문자', move_row(old='web.home.vm.homevm.go'), 0),
+        ('클래스 이름에 비 ASCII', move_row(old='web.home.vm.Homé.go'), 0),
+        ('메서드 이름에 비 ASCII', move_row(old='web.home.vm.HomeVM.gó'), 0),
+        ('시험 함수 이름에 한글', move_row(tests='tests/web/test_home.py::test_가'), 0),
+        ('시험 경로 글롭', move_row(tests='tests/web/test_*.py::test_a'), 0),
+        ('클래스 안 시험', move_row(tests='tests/web/test_home.py::TestA::test_a'), 0),
+        ('시험 파일이 아님', move_row(tests='scripts/run.py::main'), 0),
+        ('시험 경로 절대', move_row(tests='/tests/web/test_home.py::test_a'), 0),
+        ('시험 경로 .. 성분', move_row(tests='tests/../tests/test_home.py::test_a'), 0),
+        ('시험 경로 ./ 머리', move_row(tests='./tests/web/test_home.py::test_a'), 0),
+    ]
+    for label, line, want in moves:
+        spec = spec_of(line)
+        plan = debt.parse_spec_methods(spec)
+        approved = [(m.old, m.new) for m in subst.parse_spec_approvals(spec)[0]]
+        check('X6 메서드 이동 행(%s) — plan --names · 치환 확인이 같은 행을 읽는다(%d)' % (label, want),
+              plan == approved and len(plan) == want, 'plan --names %r\n치환 확인 %r\n%s' % (plan, approved, line))
+
+
+    # 글 ↔ 도구 — Coordinator 문면의 0T 확인 명령은 self-test 가 도구의 하위 명령 · 선택지 이름과 대조한다(두 플랫폼)
+    needle = "refactor_audit.py switch-check <산출물 폴더> --test-cmd '<그 프로젝트의 시험 명령 앞부분>'"
+    codex = PLUGIN.parent / 'codex-dddjango-web'
+    for platform, source, doc in (('claude', PLUGIN, 'commands/dddjango-web.md'),
+                                  ('codex', codex, 'skills/dddjango-web/SKILL.md')):
+        if not (source / doc).is_file():
+            print('SKIP X7 %s — 그 플랫폼 문서가 옆에 없다(설치본) — 실패로 세지 않는다' % platform)
+            continue
+        copy = Path(tmp) / ('plug-' + platform)
+        for part in ('commands', 'agents', 'skills'):
+            if (source / part).is_dir():
+                shutil.copytree(source / part, copy / part)
+        args = ['--platform', platform, '--plugin-root', copy, '--self-test']
+        e, out = run_script(SCRIPTS / 'refactor_audit.py', *args)
+        check('X7 %s 문면 사본 self-test — green(0T 확인 명령 원문이 있다)' % platform, e == 0 and 'red 0' in out and
+              needle in (copy / doc).read_text(encoding='utf-8'), out[-600:])
+        original = (copy / doc).read_text(encoding='utf-8')
+        for label, bad in (('선택지 이름이 다름', original.replace(needle, needle.replace('--test-cmd', '--test-command'))),
+                           ('하위 명령 이름이 다름', original.replace(needle, needle.replace('switch-check', 'switch-verify'))),
+                           ('명령 인자 표기가 다름', original.replace(needle, needle.replace('<산출물 폴더> ', '')))):
+            (copy / doc).write_text(bad, encoding='utf-8')
+            e, out = run_script(SCRIPTS / 'refactor_audit.py', *args)
+            check('X7 %s 문면의 0T 확인 명령 — %s = red' % (platform, label), e == 2 and
+                  '0T 확인 명령이 Coordinator 문면에 글자 그대로 없다' in out, out[-600:])
+        (copy / doc).write_text(original, encoding='utf-8')
+
+# ====================================================================== J — 이어 붙인 흐름(0T → switch-check → 기록 → 0C → 치환 확인)
+
+J_VIEW = [
+    "CHOICE_URL = '/choose/'",
+    '',
+    '',
+    'class Response:',
+    "    def __init__(self, status, location=''):",
+    '        self.status = status',
+    '        self.location = location',
+    '',
+    '',
+    'def _render_page(request, employees, selected):',
+    '    if employees > 1 and selected is None:',
+    '        return Response(302, CHOICE_URL)',
+    '    return Response(200)',
+    '',
+    '',
+    'def page_view(request):',
+    "    context = request.get('context')",
+    '    if context is None:',
+    '        return Response(302, CHOICE_URL)',
+    "    return _render_page(request, context['employees'], context['selected'])",
+]
+J_VIEW_INLINED = J_VIEW[:9] + [
+    'def page_view(request):',
+    "    context = request.get('context')",
+    '    if context is None:',
+    '        return Response(302, CHOICE_URL)',
+    "    if context['employees'] > 1 and context['selected'] is None:",
+    '        return Response(302, CHOICE_URL)',
+    '    return Response(200)',
+]
+# 기존 시험은 도움 함수를 함수 안 import 로 들여 직접 부른다 — 0T 는 그 함수의 준비 · 호출과 전용 import 만 바꾼다
+J_OLD = [
+    'def test_gate():',
+    '    from web.app.view import _render_page',
+    '    request = {}',
+    '    response = _render_page(request, 2, None)',
+    '    assert response.status == 302',
+    "    assert response.location == '/choose/'",
+]
+J_NEW = [
+    'def test_gate():',
+    '    from web.app.view import page_view',
+    '    request = {}',
+    "    request['context'] = {'employees': 2, 'selected': None}",
+    '    response = page_view(request)',
+    '    assert response.status == 302',
+    "    assert response.location == '/choose/'",
+]
+J_VM = ['class LegacyVM:', '    def greeting(self):', "        return 'hi'", '', '    def farewell(self):', "        return 'bye'",
+        '', '', 'class GreetingVM:', '    def name(self):', "        return 'greeting'"]
+J_VM_MOVED = ['class LegacyVM:', '    def farewell(self):', "        return 'bye'", '', '', 'class GreetingVM:',
+              '    def name(self):', "        return 'greeting'", '', '    def greeting(self):', "        return 'hi'"]
+J_GREET = ['from web.app.vm import LegacyVM', '', '', 'def test_greeting():', "    assert LegacyVM().greeting() == 'hi'"]
+J_GREET_MOVED = ['from web.app.vm import GreetingVM', '', '', 'def test_greeting():',
+                 "    assert GreetingVM().greeting() == 'hi'"]
+J_MOVE_ROW = '- 메서드 이동: `web.app.vm.LegacyVM.greeting` → `web.app.vm.GreetingVM.greeting` · 시험 `tests/test_greeting.py::test_greeting`'
+J_OK = OK_LINE % (2, '2 · 1')
+
+
+def j_scene(tmp, name, **kw):
+    return Scene(tmp, name, view=J_VIEW, old_test=J_OLD, new_test=J_NEW, mutants=(MUT_URL, MUT_IF), **kw)
+
+
+def j_record(state, commits, cancels=(), evidence=''):
+    return {'state': state, 'commits': list(commits), 'cancel_commits': list(cancels), 'evidence': evidence}
+
+
+def j_state(s, commits, switch):
+    zero = {'name': 'slice-0-debt', 'status': 'in-progress', 'commits': list(commits)}
+    if switch is not None:
+        zero['test_switch'] = switch
+    s.state(slices=[zero, {'name': 'slice-1-gate', 'status': 'pending', 'commits': []}])
+
+
+def j_subst(s, names=None):
+    return run_script(SCRIPTS / 'backstop.py', s.root, '--subst-check', s.snapshot, 'HEAD', '--build', s.folder,
+                      '--names', names or s.folder / 'design-spec.md', cwd=s.root)
+
+
+def j_commit(s, message, *paths):
+    git(s.root, 'add', '--', *paths)
+    git(s.root, 'commit', '-qm', message)
+    return git(s.root, 'rev-parse', 'HEAD')
+
+
+def bundle_joined(tmp):
+    evidence = RUN + '/test-switch/evidence.json'
+    s = j_scene(tmp, 'j1', test_switch=j_record('prepared', []))
+    t = s.t
+    j_state(s, [t], j_record('prepared', [t]))
+    e, out = j_subst(s)
+    check('J1 0T 커밋 뒤(state=prepared) — 치환 확인이 0T 꼴을 받는다 exit 0', e == 0 and '[subst]' not in out, out[-900:])
+    j_state(s, [t], j_record('verifying', [t]))
+    e, out = s.switch()
+    check('J2 switch-check — exit 0 · 행 결과 줄 · 증거', e == 0 and J_OK in out and (s.evidence() or {}).get('t_head') == t,
+          out[-900:])
+    j_state(s, [t], j_record('verified', [t], evidence=evidence))
+    s.w('web/app/view.py', *J_VIEW_INLINED)
+    c = j_commit(s, 'refactor(web): 0C', 'web/app/view.py')
+    j_state(s, [t, c], j_record('verified', [t], evidence=evidence))
+    e, out = j_subst(s)
+    check('J3 0C(제품만) 뒤 · verified 기록 — 치환 확인 exit 0', e == 0 and '[subst]' not in out and
+          'web/ 밖 변경 파일 1' in out, out[-900:])
+    e, out = s.switch(cmd='/nonexistent/pytest-x')
+    check('J4 0C 뒤 switch-check 다시 — «이미 검증됨» exit 0(시험을 돌리지 않는다)', e == 0 and '이미 검증됨' in out, out[-700:])
+    # ⓐ verified 기록 없이 0C
+    j_state(s, [t, c], None)
+    e, out = j_subst(s)
+    check('J5 ⓐ test_switch 기록 없이 0C — 0T 커밋이 보통 슬라이스 0 걸음으로 대조돼 exit 2', e == 2 and
+          '[subst] tests/test_gate.py' in out and '0T 시험 전환' not in out, out[-900:])
+    for name in ('prepared', 'verifying'):
+        j_state(s, [t, c], j_record(name, [t]))
+        e, out = j_subst(s)
+        check('J5 ⓐ state=%s 인데 0C 커밋 — exit 2' % name, e == 2 and '0T 검증 전(state=%s)인데 0C 커밋 %s 가 있다'
+              % (name, c[:12]) in out, out[-900:])
+    e, out = s.switch()
+    check('J5 ⓐ switch-check — 검증 기록 없이 T 뒤에 0C 가 있다 exit 1', e == 1 and '검증 전에는 0C 를 보내지 않는다' in out,
+          out[-700:])
+    # ⓑ T 뒤 시험을 더 고침
+    s.w('tests/test_gate.py', *J_NEW[:-1])
+    x = j_commit(s, 'test(web): 0C 뒤 시험을 더 고침 — 단언 하나 뺌', 'tests/test_gate.py')
+    j_state(s, [t, c, x], j_record('verified', [t], evidence=evidence))
+    e, out = j_subst(s)
+    check('J6 ⓑ 0C 뒤 시험을 더 고침(단언 뺌) — 치환 확인 exit 2', e == 2 and
+          '[subst] tests/test_gate.py' in out and '치환만으로 설명되지 않는다' in out and x[:12] in out, out[-900:])
+    s2 = j_scene(tmp, 'j2')
+    s2.w('tests/test_gate.py', *[line.replace("'employees': 2", "'employees': 3") for line in J_NEW])
+    y = j_commit(s2, 'test(web): T 뒤 준비를 더 고침(T 로 기록하지 않음)', 'tests/test_gate.py')
+    j_state(s2, [s2.t], j_record('verifying', [s2.t]))       # y 는 어느 슬라이스에도 적지 않았다(기록 없는 커밋)
+    e, out = s2.switch()
+    check('J6 ⓑ T 뒤(0C 앞) T 아닌 커밋이 시험을 더 고침 — switch-check exit 1', e == 1 and
+          '0T 커밋이 아닌 %s 가 행의 시험 파일 tests/test_gate.py 를 바꾼다' % y[:12] in out, out[-700:])
+    e, out = j_subst(s2)
+    check('J6 ⓑ 같은 꼴 — 치환 확인 exit 2', e == 2 and '[subst] tests/test_gate.py' in out, out[-900:])
+    # ⓒ 0T 취소
+    s3 = j_scene(tmp, 'j3')
+    git(s3.root, 'revert', '--no-edit', s3.t)
+    x3 = git(s3.root, 'rev-parse', 'HEAD')
+    j_state(s3, [s3.t, x3], j_record('cancelled', [s3.t], [x3]))
+    e, out = j_subst(s3)
+    check('J7 ⓒ 0T 취소(역 커밋 · cancel_commits) — 치환 확인이 T + 취소를 빼고 exit 0', e == 0 and '[subst]' not in out,
+          out[-900:])
+    e, out = s3.switch()
+    check('J7 ⓒ switch-check — 취소된 0T 는 확인하지 않는다 exit 1', e == 1 and 'test_switch.state 가 cancelled' in out,
+          out[-600:])
+    untouched(s3, 'J7 ⓒ switch-check')
+    # 모순 상태 — 확인이 끊겨 반례 · 옛 시험 임시 파일이 남았는데 취소 커밋을 얹고 cancelled 로 적음
+    s4 = j_scene(tmp, 'j4')
+    s4.switch(env={'FAKE_KILL_WHEN': "'/elsewhere/'"})
+    pending = (s4.state_json() or {}).get('pending') or []
+    old_tmp = [p['path'] for p in pending if p.get('kind') == 'old-test']
+    check('J8 픽스처 자체 — 끊긴 확인이 반례 · 옛 시험 임시 파일을 남겼다', {p.get('kind') for p in pending} ==
+          {'mutant', 'old-test'} and "'/elsewhere/'" in s4.read('web/app/view.py'), json.dumps(pending, ensure_ascii=False))
+    git(s4.root, 'revert', '--no-edit', s4.t)
+    x4 = git(s4.root, 'rev-parse', 'HEAD')
+    j_state(s4, [s4.t, x4], j_record('cancelled', [s4.t], [x4]))
+    e, out = j_subst(s4)
+    check('J8 모순 상태(임시 변경이 남은 채 cancelled) — 치환 확인은 통과하지 않는다 exit 1(미커밋 web/ 밖 변경)', e == 1 and
+          '미커밋 web/ 밖 변경' in out and bool(old_tmp) and old_tmp[0] in out, out[-700:])
+    e, out = s4.switch()
+    check('J8 switch-check — 먼저 복구한 뒤 «취소된 0T 는 확인하지 않는다» exit 1', e == 1 and
+          '[switch] 복구 — web/app/view.py 반례 되돌림' in out and '옛 시험 임시 파일 지움' in out and
+          out.index('[switch] 복구') < out.index('test_switch.state 가 cancelled'), out[-900:])
+    check('J8 복구 뒤 — 작업 트리 깨끗 · 남은 임시 변경 0 · 제품이 HEAD 그대로', s4.clean() == '' and
+          (s4.state_json() or {}).get('pending') == [] and "'/elsewhere/'" not in s4.read('web/app/view.py'),
+          '%r %r' % (s4.clean(), s4.state_json()))
+    e, out = j_subst(s4)
+    check('J8 복구 뒤 치환 확인 — T + 취소를 빼고 exit 0', e == 0 and '[subst]' not in out, out[-700:])
+    # ⓓ 메서드 이동 행과 시험 전환 행이 한 명세에
+    rows = '%s\n%s' % (ROW % '`test-switch/1.mutant.diff` `test-switch/2.mutant.diff`', J_MOVE_ROW)
+    s5 = j_scene(tmp, 'j5', row=rows, extra={'web/app/vm.py': J_VM, 'tests/test_greeting.py': J_GREET})
+    e, out = s5.switch()
+    check('J9 ⓓ 두 행이 같이 든 명세 — switch-check exit 0(메서드 이동 행은 건드리지 않는다)', e == 0 and J_OK in out, out[-900:])
+    s5.w('web/app/view.py', *J_VIEW_INLINED)
+    s5.w('web/app/vm.py', *J_VM_MOVED)
+    s5.w('tests/test_greeting.py', *J_GREET_MOVED)
+    c5 = j_commit(s5, 'refactor(web): 0C — 도움 함수 넣기 + 메서드 이동', 'web/app/view.py', 'web/app/vm.py',
+                  'tests/test_greeting.py')
+    j_state(s5, [s5.t, c5], j_record('verified', [s5.t], evidence=evidence))
+    e, out = j_subst(s5)
+    check('J9 ⓓ 치환 확인 — 두 행이 모두 서서 exit 0', e == 0 and '[subst]' not in out and
+          '[info] 메서드 이동 web.app.vm.LegacyVM.greeting → web.app.vm.GreetingVM.greeting — 승인 시험 함수 1' in out and
+          '[info] 메서드 이동 자리 정규화 tests/test_greeting.py — 1곳' in out and 'web/ 밖 변경 파일 2' in out, out[-1200:])
+    spec = s5.read(RUN + '/design-spec.md')
+    only_switch = s5.tmp / 'j5-only-switch.md'
+    only_switch.write_text('\n'.join(l for l in spec.split('\n') if '메서드 이동:' not in l), encoding='utf-8')
+    only_move = s5.tmp / 'j5-only-move.md'
+    only_move.write_text('\n'.join(l for l in spec.split('\n') if '시험 전환:' not in l), encoding='utf-8')
+    e, out = j_subst(s5, only_switch)
+    check('J9 ⓓ 대조 — 메서드 이동 행을 빼면 그 시험이 어긋난다 exit 2', e == 2 and
+          '[subst] tests/test_greeting.py' in out and '[subst] tests/test_gate.py' not in out, out[-900:])
+    e, out = j_subst(s5, only_move)
+    check('J9 ⓓ 대조 — 시험 전환 행을 빼면 0T 커밋이 어긋난다 exit 2', e == 2 and 'tests/test_gate.py' in out and
+          '[subst] tests/test_greeting.py' not in out, out[-900:])
+
+
 def main():
     bundles = [bundle_unchanged, bundle_normal, bundle_bypass, bundle_reject, bundle_unverified, bundle_mismatch,
-               bundle_crash, bundle_after, bundle_dirty, bundle_lifecycle, bundle_probe]
+               bundle_crash, bundle_after, bundle_dirty, bundle_lifecycle, bundle_probe, bundle_rows, bundle_joined]
     only = set(sys.argv[1:])
     for bundle in bundles:
         if only and bundle.__name__[len('bundle_'):] not in only:

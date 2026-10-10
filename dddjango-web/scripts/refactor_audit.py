@@ -204,6 +204,12 @@ REF_COMMAND_PARAGRAPHS: "tuple[tuple[str, str], ...]" = (("**개명·이동 묶�
                                                         ("**슬라이스 0 호출**", "슬라이스 0 끝 green ③"))
 # Coordinator 문면의 알림 명령이 꼬리 자리에 적는 표기.
 DOC_COMMAND_NEEDLE: str = "<꼬리>…"
+# 0T 확인 명령 — 하위 명령 · 선택지 이름은 아래 argparse 등록과 같은 상수다. Coordinator 문면의 명령 원문(플랫폼 경로 뒤)은
+# self-test 가 글자 그대로 대조한다(두 플랫폼 문면이 도구의 이름과 같이 움직인다).
+SWITCH_COMMAND: str = "switch-check"
+SWITCH_TEST_CMD: str = "--test-cmd"
+SWITCH_COMMAND_NEEDLE: str = (f"scripts/refactor_audit.py {SWITCH_COMMAND} <산출물 폴더> {SWITCH_TEST_CMD} "
+                              "'<그 프로젝트의 시험 명령 앞부분>'")
 
 
 def _pathspec_text(spec: "tuple[str, ...] | list[str]") -> str:
@@ -2353,6 +2359,10 @@ def cmd_self_test(corpus: Corpus) -> int:
             if notice not in found[0]:
                 reds.append(f"문서 글 적중(알림) 명령이 Coordinator «{place}» 문단에 글자 그대로 없다"
                             f"(도구의 조회 옵션 · pathspec 과 같아야 한다): {notice}")
+        calls: "list[str]" = [ln for ln in coord.splitlines() if f"refactor_audit.py {SWITCH_COMMAND} " in ln]
+        if not calls or any(SWITCH_COMMAND_NEEDLE not in ln for ln in calls):
+            reds.append(f"0T 확인 명령이 Coordinator 문면에 글자 그대로 없다(하위 명령 · 선택지 이름이 도구와 같아야 한다): "
+                        f"{SWITCH_COMMAND_NEEDLE}")
         if STANDING_MARK not in coord:
             reds.append(f"상시 답 범주 문면(«{STANDING_MARK}»)을 Coordinator 에서 찾지 못했다")
         else:
@@ -2410,9 +2420,9 @@ def main(argv: "list[str]") -> int:
     p = sub.add_parser("standing")
     p.add_argument("folder", nargs="?")
     p.add_argument("--gate", action="store_true")
-    p = sub.add_parser("switch-check")
+    p = sub.add_parser(SWITCH_COMMAND)
     p.add_argument("folder")
-    p.add_argument("--test-cmd", required=True)
+    p.add_argument(SWITCH_TEST_CMD, dest="test_cmd", required=True)
     p.add_argument("--timeout", type=int)
     try:
         ns = ap.parse_args(argv)
@@ -2432,7 +2442,7 @@ def main(argv: "list[str]") -> int:
             return cmd_residual(project, Path(ns.folder), ns.finalize)
         if ns.command == "standing":
             return cmd_standing(project, Path(ns.folder) if ns.folder else None, ns.gate)
-        if ns.command == "switch-check":
+        if ns.command == SWITCH_COMMAND:
             return cmd_switch_check(project, Path(ns.folder), ns.test_cmd, ns.timeout)
         corpus: Corpus = Corpus(ns.platform, Path(ns.plugin_root).resolve() if ns.plugin_root else None)
         if ns.self_test:

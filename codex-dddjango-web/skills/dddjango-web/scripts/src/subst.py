@@ -52,7 +52,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Dict, Iterator, List, NamedTuple, Optional, Sequence, Set, Tuple, Union
 
-from .debt import _FENCE_RE, _SPEC_HEAD_RE, DebtError, is_test_path, module_of, parse_spec_pairs
+from .debt import (DebtError, is_test_path, module_of, parse_spec_moves, parse_spec_pairs,
+                   parse_spec_switches)
 
 _IDENT: str = 'A-Za-z0-9_'
 Func = Union[ast.FunctionDef, ast.AsyncFunctionDef]
@@ -262,14 +263,6 @@ def build_pairs(root: Path, base: str, target: str, names_file: Optional[str]) -
 
 # ------------------------------------------------------------------ 승인 행(메서드 이동 · 시험 전환)
 
-_MOVE_PATH: str = r'web(?:\.[a-z_][a-z0-9_]*)+\.[A-Z][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*'
-_TEST_REF: str = r'[^\s`:]+\.py::[A-Za-z_][A-Za-z0-9_]*'
-_TARGET_PATH: str = r'web(?:\.[A-Za-z_][A-Za-z0-9_]*)+'
-_MOVE_ROW_RE = re.compile(r'^\s*(?:[-*] )?메서드 이동:\s*`?(%s)`?\s*→\s*`?(%s)`?\s*·\s*시험((?:\s+`?%s`?)+)\s*$'
-                          % (_MOVE_PATH, _MOVE_PATH, _TEST_REF))
-_SWITCH_ROW_RE = re.compile(r'^\s*(?:[-*] )?시험 전환:\s*`?([^\s`:]+\.py)::([A-Za-z_][A-Za-z0-9_]*)`?\s*·\s*'
-                            r'행위\s+`?(%s)`?\s*→\s*`?(%s)`?\s*·\s*보호 분기\s+\S.*?\s*·\s*반례\s+\S.*$'
-                            % (_TARGET_PATH, _TARGET_PATH))
 _MARKER_RE = re.compile(r'__dddjango_m\d+__')
 
 
@@ -300,39 +293,15 @@ class _TestSwitch(NamedTuple):
     new: str        # 새 행위 대상
 
 
-def _is_test_file(path: str) -> bool:
-    return (path.endswith('.py') and not path.startswith('/') and '..' not in path.split('/')
-            and is_test_path(path))
-
-
 def parse_spec_approvals(text: str) -> Tuple[List[_MethodMove], List[_TestSwitch]]:
-    """design-spec.md `## 슬라이스 0` 절 안 승인 행 — (메서드 이동, 시험 전환). 절 밖 줄 · 코드 울타리 안 줄은 읽지 않고,
-    꼴이 어긋난 줄은 승인으로 읽지 않는다(알림 없음 — 그 시험은 지금처럼 대조된다). 절 머리 수와 `경로:` · `이름:`
-    행 형식은 parse_spec_pairs 가 먼저 본다."""
-    inside: bool = False
-    fenced: bool = False
-    moves: List[_MethodMove] = []
-    switches: List[_TestSwitch] = []
-    for line in text.splitlines():
-        if _FENCE_RE.match(line):
-            fenced = not fenced
-            continue
-        if fenced:
-            continue
-        if line.startswith('#') and not line.startswith('###'):
-            inside = bool(_SPEC_HEAD_RE.match(line))
-            continue
-        if not inside:
-            continue
-        move = _MOVE_ROW_RE.match(line)
-        if move:
-            tests: List[Tuple[str, str]] = [tuple(ref.split('::')) for ref in re.findall(_TEST_REF, move.group(3))]
-            if all(_is_test_file(path) for path, _func in tests):
-                moves.append(_MethodMove(len(moves), move.group(1), move.group(2), tests))
-            continue
-        switch = _SWITCH_ROW_RE.match(line)
-        if switch and _is_test_file(switch.group(1)):
-            switches.append(_TestSwitch(*switch.group(1, 2, 3, 4)))
+    """design-spec.md `## 슬라이스 0` 절 안 승인 행 — (메서드 이동, 시험 전환). 행의 꼴은 debt 의 한 곳이 정한다
+    (parse_spec_moves · parse_spec_switches — plan --names · switch-check 와 같은 판독). 절 밖 줄 · 코드 울타리 안 줄은
+    읽지 않고, 꼴이 어긋난 줄은 승인으로 읽지 않는다(알림 없음 — 그 시험은 지금처럼 대조된다). 절 머리 수와 `경로:` ·
+    `이름:` 행 형식은 parse_spec_pairs 가 먼저 본다."""
+    moves: List[_MethodMove] = [_MethodMove(index, row.old, row.new, list(row.tests))
+                                for index, row in enumerate(parse_spec_moves(text))]
+    switches: List[_TestSwitch] = [_TestSwitch(row.test, row.func, row.old, row.new)
+                                   for row in parse_spec_switches(text)[0]]
     return moves, switches
 
 

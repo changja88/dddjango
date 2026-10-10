@@ -46,7 +46,7 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .debt import SPEC_SLICE0_HEAD, is_test_path
+from .debt import SPEC_SLICE0_HEAD, SpecSwitch, parse_spec_switches
 
 OUTPUT_ROOT: str = '.dddjango-web'
 SWITCH_DIR: str = 'test-switch'
@@ -64,13 +64,6 @@ LIVE_STATES: tuple = ('prepared', 'verifying', STATE_VERIFIED)
 EXIT_OK, EXIT_ERR, EXIT_RED = 0, 1, 2
 
 _HASH_RE = re.compile(r'^[0-9a-f]{7,40}$')
-_DOTTED_RE = re.compile(r'^web(\.[A-Za-z_][A-Za-z0-9_]*)+$')
-_FENCE_RE = re.compile(r'^\s*(```|~~~)')
-_HEAD_RE = re.compile(r'^%s(?:\s|$)' % re.escape(SPEC_SLICE0_HEAD))
-_ROW_START_RE = re.compile(r'^\s*(?:[-*]\s+)?시험 전환:')
-_ROW_RE = re.compile(r'^\s*(?:[-*]\s+)?시험 전환:\s*(?P<test>\S+?)::(?P<func>[A-Za-z_]\w*)\s*·\s*행위\s+(?P<old>\S+)\s*→\s*'
-                     r'(?P<new>\S+)\s*·\s*보호 분기\s+(?P<branch>\S+?):(?P<start>\d+)-(?P<end>\d+)\s*·\s*반례\s+'
-                     r'(?P<mutants>\S+(?:\s+\S+)*)\s*$')
 _HUNK_RE = re.compile(rb'^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@')
 _PATCH_FORBIDDEN: tuple = (b'new file mode', b'deleted file mode', b'rename from', b'rename to', b'copy from',
                            b'copy to', b'old mode', b'new mode', b'similarity index', b'dissimilarity index',
@@ -159,16 +152,16 @@ class Git:
 # ── 명세 행 ──────────────────────────────────────────────────────────────────
 
 class Row:
-    def __init__(self, number: int, match: re.Match) -> None:
-        self.number = number
-        self.test: str = match['test']
-        self.func: str = match['func']
-        self.old: str = match['old']
-        self.new: str = match['new']
-        self.branch: str = match['branch']
-        self.start: int = int(match['start'])
-        self.end: int = int(match['end'])
-        self.mutants: list = match['mutants'].split()
+    def __init__(self, parsed: SpecSwitch) -> None:
+        self.number: int = parsed.number
+        self.test: str = parsed.test
+        self.func: str = parsed.func
+        self.old: str = parsed.old
+        self.new: str = parsed.new
+        self.branch: str = parsed.branch
+        self.start: int = parsed.start
+        self.end: int = parsed.end
+        self.mutants: list = list(parsed.mutants)
 
     @property
     def label(self) -> str:
@@ -184,42 +177,15 @@ class Row:
 
 
 def parse_rows(text: str) -> list:
-    """명세 `## 슬라이스 0` 절의 `시험 전환:` 행(백틱 · `- ` 머리 허용 · 코드 울타리 안과 절 밖은 읽지 않는다)."""
-    heads: int = 0
-    inside: bool = False
-    fenced: bool = False
-    rows: list = []
-    for number, raw in enumerate(text.splitlines(), 1):
-        if _FENCE_RE.match(raw):
-            fenced = not fenced
-            continue
-        if fenced:
-            continue
-        if raw.startswith('#') and not raw.startswith('###'):
-            inside = bool(_HEAD_RE.match(raw))
-            heads += inside
-            continue
-        line: str = raw.replace('`', '')
-        if not inside or not _ROW_START_RE.match(line):
-            continue
-        match = _ROW_RE.match(line)
-        if not match:
-            raise Unverified('명세 `%s` 절 `시험 전환:` 행 형식 오류 %d행 — %s' % (SPEC_SLICE0_HEAD, number, raw.strip()))
-        row = Row(number, match)
-        if not (_relative_ok(row.test) and row.test.endswith('.py') and is_test_path(row.test)) or row.test.startswith('web/'):
-            raise Unverified('`시험 전환:` 의 시험 파일은 web/ 밖 저장소 상대 경로의 시험 .py 다 %d행 — %s' % (number, row.test))
-        if not (_DOTTED_RE.match(row.old) and _DOTTED_RE.match(row.new)):
-            raise Unverified('`시험 전환:` 의 행위는 web. 으로 시작하는 점 경로 쌍이다 %d행 — %s → %s' % (number, row.old, row.new))
-        if not (row.branch.startswith('web/') and _relative_ok(row.branch)) or is_test_path(row.branch):
-            raise Unverified('`시험 전환:` 의 보호 분기는 web/ 비시험 파일이다 %d행 — %s' % (number, row.branch))
-        if not 1 <= row.start <= row.end:
-            raise Unverified('`시험 전환:` 의 보호 분기 줄 범위가 잘못됐다 %d행 — %s' % (number, row.branch_label))
-        for rel in row.mutants:
-            if not _relative_ok(rel):
-                raise Unverified('`시험 전환:` 의 반례는 산출물 폴더 상대 경로다 %d행 — %s' % (number, rel))
-        rows.append(row)
+    """명세 `## 슬라이스 0` 절의 `시험 전환:` 행. 행의 꼴은 치환 확인과 같은 한 곳(debt.parse_spec_switches)이 정한다 —
+    백틱 · `- ` 머리는 `경로:` · `이름:` 행과 같은 폭이고, 코드 울타리 안과 절 밖은 읽지 않는다. 꼴이 어긋난 줄이 하나라도
+    있으면 멈춘다(치환 확인은 그 줄을 읽지 않으므로 여기서 알린다)."""
+    parsed, errors, heads = parse_spec_switches(text)
+    if errors:
+        raise Unverified(errors[0])
     if heads > 1:
         raise Unverified('명세에 `%s` 절 머리가 %d개다' % (SPEC_SLICE0_HEAD, heads))
+    rows: list = [Row(item) for item in parsed]
     if not rows:
         raise Unverified('명세 `%s` 절에 `시험 전환:` 행이 없다' % SPEC_SLICE0_HEAD)
     seen: set = set()
@@ -227,6 +193,8 @@ def parse_rows(text: str) -> list:
         if row.label in seen:
             raise Unverified('`시험 전환:` 행이 같은 시험 함수를 두 번 적었다 — %s' % row.label)
         seen.add(row.label)
+        if row.old == row.new:
+            raise Unverified('`시험 전환:` 행의 옛 대상과 새 대상이 같다 %d행 — %s' % (row.number, row.old))
     return rows
 
 

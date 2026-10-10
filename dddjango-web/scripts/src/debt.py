@@ -31,7 +31,7 @@ import re
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, NamedTuple, Optional, Set, Tuple
 
 from .check_imports import run_imports
 from .check_models import run_models
@@ -806,16 +806,48 @@ def parse_spec_pairs(text: str, require: bool = False) -> Tuple[List[Tuple[str, 
     return paths, names
 
 
-def parse_spec_methods(text: str) -> List[Tuple[str, str]]:
-    """plan --names 의 메서드 참조 후보. 승인·제품·시험 검증은 치환 확인이 맡는다.
-    슬라이스 0 밖·펜스 안·비정형 줄은 알림 없이 무시한다."""
-    dotted: str = r'web(?:\.[a-z_][a-z0-9_]*)+\.[A-Z]\w*\.[A-Za-z_]\w*'
-    row_re = re.compile(r'^\s*(?:- )?메서드 이동:\s*`?(' + dotted + r')`?\s*→\s*`?('
-                        + dotted + r')`?\s*·\s*시험\s+(.+?)\s*$')
+# 승인 행(`메서드 이동:` · `시험 전환:`)의 꼴은 여기 한 곳이 정한다 — 치환 확인(subst) · plan --names(refactor_audit) ·
+# switch-check(switch_check)가 같은 판독을 쓴다(한 입구가 받는 행을 다른 입구가 버리지 않게). 머리(`- ` · `* `)와 백틱은
+# `경로:` · `이름:` 행과 같은 폭이고, 식별자는 `이름:` 행처럼 ASCII 다.
+_SPEC_MOVE_PATH: str = r'web(?:\.[a-z_][a-z0-9_]*)+\.[A-Z][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*'
+_SPEC_TEST_REF: str = r'[^\s`:*?\[\]]+\.py::[A-Za-z_][A-Za-z0-9_]*'
+_SPEC_MOVE_ROW_RE = re.compile(r'^\s*(?:[-*] )?메서드 이동:\s*`?(%s)`?\s*→\s*`?(%s)`?\s*·\s*시험((?:\s+`?%s`?)+)\s*$'
+                               % (_SPEC_MOVE_PATH, _SPEC_MOVE_PATH, _SPEC_TEST_REF))
+# `시험 전환:` 으로 시작하는 줄(백틱을 걷고 본다)은 행으로 쓰려던 줄이다 — 정형에 안 맞으면 꼴 어긋남으로 센다.
+_SPEC_SWITCH_START_RE = re.compile(r'^\s*(?:[-*]\s+)?시험 전환:')
+_SPEC_SWITCH_ROW_RE = re.compile(
+    r'^\s*(?:[-*] )?시험 전환:\s*`?(?P<test>[^\s`]+?)::(?P<func>[A-Za-z_][A-Za-z0-9_]*)`?\s*·\s*'
+    r'행위\s+`?(?P<old>[^\s`]+)`?\s*→\s*`?(?P<new>[^\s`]+)`?\s*·\s*'
+    r'보호 분기\s+`?(?P<branch>[^\s`]+?):(?P<start>\d+)-(?P<end>\d+)`?\s*·\s*반례(?P<mutants>(?:\s+`?[^\s`]+`?)+)\s*$')
+
+
+class SpecMove(NamedTuple):
+    """`메서드 이동:` 한 행 — 옛 · 새 `<모듈>.<클래스>.<메서드>` 와 승인 범위((시험 파일, 최상위 함수 이름)…)."""
+    old: str
+    new: str
+    tests: Tuple[Tuple[str, str], ...]
+
+
+class SpecSwitch(NamedTuple):
+    """`시험 전환:` 한 행."""
+    number: int                 # 명세의 행 번호
+    test: str                   # 시험 파일(저장소 상대 · web/ 밖)
+    func: str                   # 최상위 시험 함수 이름
+    old: str                    # 옛 행위 대상(web. 점 경로)
+    new: str                    # 새 행위 대상
+    branch: str                 # 보호 분기 파일(저장소 상대 · web/ 비시험)
+    start: int                  # 보호 분기 줄 범위(양 끝 포함)
+    end: int
+    mutants: Tuple[str, ...]    # 반례(산출물 폴더 상대 경로)
+
+
+def _slice0_lines(text: str) -> Tuple[List[Tuple[int, str]], int]:
+    """design-spec.md `## 슬라이스 0` 절 안 줄 [(행 번호, 줄)] 과 그 절 머리 수 — 절 밖 줄 · 코드 울타리 안 줄은 뺀다."""
+    heads: int = 0
     inside: bool = False
     fenced: bool = False
-    pairs: List[Tuple[str, str]] = []
-    for line in text.splitlines():
+    lines: List[Tuple[int, str]] = []
+    for number, line in enumerate(text.splitlines(), 1):
         if _FENCE_RE.match(line):
             fenced = not fenced
             continue
@@ -823,15 +855,76 @@ def parse_spec_methods(text: str) -> List[Tuple[str, str]]:
             continue
         if line.startswith('#') and not line.startswith('###'):
             inside = bool(_SPEC_HEAD_RE.match(line))
+            heads += inside
             continue
-        row = row_re.match(line) if inside else None
-        if row:
-            tests = row.group(3).split()
-            if all(re.fullmatch(r'`?[^`\s:*?\[\]]+\.py::[A-Za-z_]\w*`?', t)
-                   and not t.strip('`').startswith('/') and '..' not in t.strip('`').split('::')[0].split('/')
-                   for t in tests):
-                pairs.append((row.group(1), row.group(2)))
-    return pairs
+        if inside:
+            lines.append((number, line))
+    return lines, heads
+
+
+def _spec_relative(path: str) -> bool:
+    """상대 경로의 꼴 — 절대 경로 · 역슬래시 · 빈 성분 · `.` · `..` 성분이 없다(git 이 내는 경로와 글자 그대로 맞는 꼴)."""
+    return bool(path) and '\\' not in path and all(part not in ('', '.', '..') for part in path.split('/'))
+
+
+def _spec_test_file(path: str) -> bool:
+    """승인 행의 시험 파일 — 저장소 상대 경로의 시험 .py(글롭 · `:` 없음)."""
+    return (path.endswith('.py') and _spec_relative(path) and not re.search(r'[:*?\[\]]', path)
+            and is_test_path(path))
+
+
+def parse_spec_moves(text: str) -> List[SpecMove]:
+    """`## 슬라이스 0` 절의 `메서드 이동:` 정형 행. 절 밖 · 울타리 안 · 꼴이 어긋난 줄 · 시험 파일이 아닌 경로가 든 줄은
+    읽지 않는다(알림 없음 — 그 시험은 지금처럼 대조된다)."""
+    moves: List[SpecMove] = []
+    for _number, line in _slice0_lines(text)[0]:
+        row = _SPEC_MOVE_ROW_RE.match(line)
+        if not row:
+            continue
+        tests: Tuple[Tuple[str, str], ...] = tuple(
+            (ref.split('::')[0], ref.split('::')[1]) for ref in re.findall(_SPEC_TEST_REF, row.group(3)))
+        if all(_spec_test_file(path) for path, _func in tests):
+            moves.append(SpecMove(row.group(1), row.group(2), tests))
+    return moves
+
+
+def parse_spec_methods(text: str) -> List[Tuple[str, str]]:
+    """plan --names 의 메서드 참조 후보(옛, 새) — 치환 확인이 승인으로 읽는 `메서드 이동:` 행과 같은 판독이다
+    (parse_spec_moves). 승인 · 제품 · 시험 검증은 치환 확인이 맡는다."""
+    return [(move.old, move.new) for move in parse_spec_moves(text)]
+
+
+def parse_spec_switches(text: str) -> Tuple[List[SpecSwitch], List[str], int]:
+    """`## 슬라이스 0` 절의 `시험 전환:` 정형 행 — (행, 꼴이 어긋난 줄의 사유, 절 머리 수). 꼴이 어긋난 줄은 행으로 읽지
+    않는다 — switch-check 는 그 사유를 내고 멈추고(exit 1), 치환 확인은 알림 없이 건너뛴다(그 0T 커밋은 «행 밖 파일» ·
+    «행에 없는 시험 파일» 로 어긋난다)."""
+    lines, heads = _slice0_lines(text)
+    rows: List[SpecSwitch] = []
+    errors: List[str] = []
+    for number, raw in lines:
+        if not _SPEC_SWITCH_START_RE.match(raw.replace('`', '')):
+            continue
+        row = _SPEC_SWITCH_ROW_RE.match(raw)
+        if not row:
+            errors.append('명세 `%s` 절 `시험 전환:` 행 형식 오류 %d행 — %s' % (SPEC_SLICE0_HEAD, number, raw.strip()))
+            continue
+        test, old, new, branch = row['test'], row['old'], row['new'], row['branch']
+        start, end = int(row['start']), int(row['end'])
+        mutants: Tuple[str, ...] = tuple(re.findall(r'[^\s`]+', row['mutants']))
+        outside: List[str] = [rel for rel in mutants if not _spec_relative(rel)]
+        if not _spec_test_file(test) or test.startswith('web/'):
+            errors.append('`시험 전환:` 의 시험 파일은 web/ 밖 저장소 상대 경로의 시험 .py 다 %d행 — %s' % (number, test))
+        elif not (_DOTTED_RE.match(old) and _DOTTED_RE.match(new)):
+            errors.append('`시험 전환:` 의 행위는 web. 으로 시작하는 점 경로 쌍이다 %d행 — %s → %s' % (number, old, new))
+        elif not (branch.startswith('web/') and _spec_relative(branch)) or is_test_path(branch):
+            errors.append('`시험 전환:` 의 보호 분기는 web/ 비시험 파일이다 %d행 — %s' % (number, branch))
+        elif not 1 <= start <= end:
+            errors.append('`시험 전환:` 의 보호 분기 줄 범위가 잘못됐다 %d행 — %s:%d-%d' % (number, branch, start, end))
+        elif outside:
+            errors.append('`시험 전환:` 의 반례는 산출물 폴더 상대 경로다 %d행 — %s' % (number, outside[0]))
+        else:
+            rows.append(SpecSwitch(number, test, row['func'], old, new, branch, start, end, mutants))
+    return rows, errors, heads
 
 
 def module_of(rel: str) -> Optional[str]:
