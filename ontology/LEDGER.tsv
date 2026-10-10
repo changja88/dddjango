@@ -1783,3 +1783,5 @@ command-dddjango	s012	46aeb0a491b1b00c295768608803b0f9706d1bd45bf1776f7f5b5fb82b
 command-dddjango	s012	534c409031d747eb6ef67a23acff3c9e72fd0350b10f3a3dec49d071461aa608	graph	-	-	-	-	rebaseline:2026-10-06 B1R-5 — 닫힌 변경 창에서 집행된 V 의 바뀌는 기대(그 창 기준선 · 고치지 않음)(설계 design-B1R5-repair §2)
 command-dddjango	s012	3b829b81296b68dc92447e9dd6fef965effe8d648a8f2752fa370eb582ca44c3	graph	-	-	-	-	rebaseline:2026-10-06 B1R-5 — 닫힌 변경 창에서 집행된 V 의 바뀌는 기대(그 창 기준선 · 고치지 않음)(설계 design-B1R5-repair §2)
 command-dddjango	s007	3dfadad40f925eb92bea46db8b25692313a6117d14de7c093fe4c94bf3815377	graph	-	-	-	-	rebaseline:2026-10-10 JP7 — RD 묶음을 새 바탕 f19ced8b 위로 합침(2.19.2 R-3617 자매 영역 블록 + RD · D17 s007 변경 · RD 새 규범 번호 R-3617~R-3651 → R-3618~R-3652)
+agent-design-architect	s005	54102098383ac8d7661eade2d0d35d6e35c046670d8d9a5aa6d1a4dde88a8e45	graph	-	-	-	-	rebaseline:2026-10-10 F4-73 — 도메인 저장소 add/update 메서드 서명의 선언 #355·#597 예보(새 규범 R-3653 · R-3426 명확화)
+command-dddjango	s006	50f652f0215893ef6d27c14155a03557b19672ecff055deddcd128e816825e42	graph	-	-	-	-	rebaseline:2026-10-10 F4-73 — pre-gate S5 범위 문장에 저장소 선언 예보(#355·#597) 명시(R-3435 명확화)

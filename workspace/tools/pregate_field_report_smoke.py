@@ -30,6 +30,14 @@ SUPPORT = "application/garden/test/integration/test_support.py"
 ORIGINAL = ('"""Existing service. 원문 보존."""\nfrom __future__ import annotations\n'
             'from decimal import Decimal\n\n'
             'def old_query() -> str:\n    return "unchanged"\n')
+# F4-73 — 현장 반례(8-D-2): update 저장소의 새 메서드 반환 `frozenset[UUID]` 가 G1 전 선언 확정으로 선다.
+RECORD_DOMAIN = "application/fortune_record/domain_layer/fortune_record"
+REPOSITORY = f"{RECORD_DOMAIN}/fortune_record_repository.py"
+REPOSITORY_ORIGINAL = ('from __future__ import annotations\n\nfrom abc import ABC, abstractmethod\nfrom uuid import UUID\n\n'
+                       'from application.fortune_record.domain_layer.fortune_record.fortune_record import FortuneRecord\n\n\n'
+                       'class FortuneRecordRepository(ABC):\n'
+                       '    @abstractmethod\n    def find(self, record_id: UUID) -> FortuneRecord | None: ...\n')
+RECORDED_VO = f"{RECORD_DOMAIN}/value_object/recorded_character_ids.py"
 
 
 def spec_text(paths, symbols=(), imports=(), exceptions=(), owner="") -> str:
@@ -912,6 +920,75 @@ class BookAdmin(TranslatableAdmin):
                     self.assertEqual(errors, [])
                     found = pg.check_declarations(plan, self.source)
                     self.assertEqual([(f.rule, f.confirmed) for f in found], expected if effect == 'read-only' else [])
+
+    def repository_fixture(self) -> None:
+        self.write(self.source, REPOSITORY, REPOSITORY_ORIGINAL)
+        self.write(self.source, f'{RECORD_DOMAIN}/fortune_record.py', 'class FortuneRecord:\n    pass\n')
+        self.write(self.source, RECORDED_VO, 'class RecordedCharacterIds:\n    pass\n')
+        _git(self.source, 'add', '-A')
+        _git(self.source, 'commit', '-qm', 'repository fixture')
+
+    def repository_spec(self, *methods, imports=()):
+        return spec_text([f'update {REPOSITORY}'], [f'{REPOSITORY}::FortuneRecordRepository(ABC)',
+                         *[f'{REPOSITORY}::FortuneRecordRepository.{m}' for m in methods]],
+                         [f'{REPOSITORY}  {i}' for i in imports])
+
+    def test_repository_return_forecast_blocks_without_materialization(self):
+        self.repository_fixture()
+        text = self.repository_spec(
+            'recorded_character_ids(account_id: int, character_ids: frozenset[UUID]) -> frozenset[UUID]',
+            'recorded_rows(account_id: int) -> dict[str, int]', 'exists_for(account_id: int) -> bool')
+        run, report = self.cli(text)
+        self.assertEqual(run.returncode, 2, run.stdout + run.stderr)
+        self.assertIn('실체화 0', run.stdout)
+        self.assertIn('선언 확정 1건', run.stdout)
+        stable = pg._stable_id(f'[#355] {REPOSITORY}')
+        confirmed = pg._subsection(report, '선언 확정')
+        self.assertEqual(confirmed.count(f'`{stable}`'), 1, confirmed)
+        self.assertIn(f'- `{stable}` [#355] {REPOSITORY} — FortuneRecordRepository.recorded_character_ids: '
+                      '`recorded_character_ids` 반환 `UUID.frozenset` 이 애그리거트도 값 객체도 아니다', confirmed)
+        self.assertIn('FortuneRecordRepository.recorded_rows:', confirmed)
+        self.assertIn('FortuneRecordRepository.exists_for:', pg._subsection(report, '선언 후보'))
+        self.assertEqual(pg.check_report(text, report)[0], 3)
+        disposed = report + f'\n- `{stable}` **ignored** 빚 매칭 검토\n'
+        code, problems, info = pg.check_report(text, disposed)
+        self.assertEqual(code, 0, problems)
+        self.assertEqual((info['attributed'], info['declarations'], info['candidates']), ('0', '1', '1'))
+        code, problems, _ = pg.check_report(text, disposed, current_digest='0' * 16)
+        self.assertEqual(code, 3)
+        self.assertTrue(any('stale(툴체인)' in p for p in problems), problems)
+        self.assertEqual((self.source / REPOSITORY).read_text(), REPOSITORY_ORIGINAL)
+
+    def test_repository_candidate_is_nonblocking_and_explicit_import_is_clean(self):
+        self.repository_fixture()
+        text = self.repository_spec('recorded(account_id: int) -> RecordedCharacterIds')
+        run, report = self.cli(text)
+        self.assertEqual(run.returncode, 4, run.stdout + run.stderr)
+        self.assertIn('예보 불확정', pg._subsection(report, '선언 후보'))
+        self.assertEqual(pg.check_report(text, report)[0], 0)
+        text = self.repository_spec('recorded(account_id: int) -> RecordedCharacterIds', imports=[
+            'from application.fortune_record.domain_layer.fortune_record.value_object.recorded_character_ids '
+            'import RecordedCharacterIds'])
+        run, report = self.cli(text)
+        self.assertEqual(run.returncode, 4, run.stdout + run.stderr)
+        self.assertNotIn(REPOSITORY, pg._subsection(report, '선언 확정') + pg._subsection(report, '선언 후보'))
+
+    def test_repository_add_shares_registry_id_and_needs_one_disposition(self):
+        self.repository_fixture()
+        added = 'application/fortune_record/domain_layer/character/character_repository.py'
+        text = spec_text([f'add {added}'], [f'{added}::CharacterRepository(ABC)',
+                         f'{added}::CharacterRepository.recorded_character_ids(account_id: int) -> frozenset[UUID]'],
+                         [f'{added}  from uuid import UUID'])
+        run, report = self.cli(text)
+        self.assertEqual(run.returncode, 2, run.stdout + run.stderr)
+        stable = pg._stable_id(f'[#355] {added}')
+        self.assertIn(f'`{stable}`', pg._subsection(report, '예보 항목'))
+        self.assertIn(f'`{stable}`', pg._subsection(report, '선언 확정'))
+        ids = set(pg._REPORT_ID_RE.findall(pg._subsection(report, '예보 항목'))
+                  + pg._REPORT_ID_RE.findall(pg._subsection(report, '선언 확정')))
+        disposed = report + ''.join(f'\n- `{i}` **ignored** 빚 매칭 검토' for i in sorted(ids)) + '\n'
+        self.assertEqual(disposed.count(f'`{stable}` **ignored**'), 1)
+        self.assertEqual(pg.check_report(text, disposed)[0], 0)
 
 
 if __name__ == "__main__":

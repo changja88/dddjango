@@ -29,6 +29,23 @@ ci = _load_module(SCRIPTS / "check-context-isolation.py", "transcription_context
 ps = _load_module(SCRIPTS / "check-public-surface-annotation.py", "transcription_surface")
 RESPONSE = "application/garden/driving_layer/open_host_service/catalog/contract/response/list_books_response.py"
 PANEL = "application/garden/driven_layer/django_garden/admin/book/panel.py"
+# F4-73 — 도메인 저장소 선언 예보(#355 · #597). 기준선 실물은 현장 저장소 꼴(애그리거트 · VO import · 기존 빚)을 줄였다.
+DOMAIN = "application.fortune_record.domain_layer.fortune_record"
+AGGREGATE = "application/fortune_record/domain_layer/fortune_record/fortune_record.py"
+REPOSITORY = "application/fortune_record/domain_layer/fortune_record/fortune_record_repository.py"
+REPOSITORY_BASELINE = (
+    '"""Fortune record repository."""\nfrom __future__ import annotations\n\n'
+    "from abc import ABC, abstractmethod\nfrom uuid import UUID\n\n"
+    f"from {DOMAIN}.fortune_record import FortuneRecord\n"
+    f"from {DOMAIN}.value_object.fortune_record_index import FortuneRecordIndex\n\n\n"
+    "class FortuneRecordRepository(ABC):\n"
+    "    @abstractmethod\n    def save(self, record: FortuneRecord) -> None: ...\n\n"
+    "    @abstractmethod\n    def find(self, record_id: UUID) -> FortuneRecord | None: ...\n\n"
+    "    @abstractmethod\n    def indexes(self, account_id: int) -> tuple[FortuneRecordIndex, ...]: ...\n\n"
+    "    @abstractmethod\n    def legacy_ids(self, account_id: int) -> frozenset[UUID]: ...\n\n"
+    "    @abstractmethod\n    def delete_old(self, account_id: int) -> None: ...\n")
+FIELD_METHOD = "recorded_character_ids(account_id: int, character_ids: frozenset[UUID]) -> frozenset[UUID]"
+FIELD_DETAIL = "`recorded_character_ids` 반환 `UUID.frozenset` 이 애그리거트도 값 객체도 아니다"
 
 
 def spec_text(paths: list[str], symbols: list[str] = (), imports: list[str] = ()) -> str:
@@ -340,6 +357,164 @@ class TranscriptionTest(unittest.TestCase):
                 self.assertFalse(list(scratch.rglob("book.py")), output)
                 self.assertFalse(any(p.name == "garden" for p in scratch.rglob("garden")), output)
                 self.assertIn("빈 부모", (self.root / "report.md").read_text())
+
+
+class RepositoryForecastTest(unittest.TestCase):
+    """F4-73 — add/update 저장소 메서드 서명이 실검사기 #355·#597 판정으로 선언 예보된다(물리 전사 없이)."""
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="pregate-repository-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.repo = self.root / "repo"
+        self.scratch = self.root / "scratch"
+        self.scratch.mkdir()
+        self.env = dict(os.environ, DJR_FINDINGS_JSON=str(self.root / "findings.jsonl"),
+                        DJR_VIOLATIONS_DIR=str(self.root / "violations"), PYTHONDONTWRITEBYTECODE="1")
+        self.write(REPOSITORY, REPOSITORY_BASELINE)
+        self.write(AGGREGATE, "class FortuneRecord:\n    pass\n")
+        _git(self.repo, "init", "-q")
+        _git(self.repo, "add", "-A")
+        _git(self.repo, "commit", "-qm", "fixture")
+
+    def write(self, path: str, content: str) -> None:
+        target = self.repo / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+
+    def snapshot(self) -> dict[str, bytes]:
+        return {p.relative_to(self.repo).as_posix(): p.read_bytes() for p in sorted(self.repo.rglob("*"))
+                if p.is_file() and ".git" not in p.relative_to(self.repo).parts}
+
+    def forecast(self, methods: list[str], *, tag: str = "update", path: str = REPOSITORY,
+                 owner: str = "FortuneRecordRepository(ABC)", imports: list[str] = (), aliases: list[str] = ()):
+        name = owner.split("(", 1)[0]
+        rows = [f"{path}::alias {a}" for a in aliases] + [f"{path}::{owner}"] + [f"{path}::{name}.{m}" for m in methods]
+        plan, errors = pg.parse_spec(spec_text([f"{tag} {path}"], rows, [f"{path}  {i}" for i in imports]))
+        self.assertEqual(errors, [], " | ".join(errors))
+        baseline = pg.repository_baseline(self.repo, plan)
+        if tag == "add":
+            pg.materialize(self.repo, plan)
+        before = self.snapshot()
+        found = pg.check_repository_forecast(plan, self.repo, self.scratch, baseline)
+        self.assertEqual(self.snapshot(), before, "분석 투영 밖 실물이 바뀌었다")
+        return found
+
+    def outcome(self, methods: list[str], **kwargs) -> list[tuple[str, bool]]:
+        return sorted((f.rule, f.confirmed) for f in self.forecast(methods, **kwargs))
+
+    def test_field_counterexample_is_confirmed_with_checker_text(self) -> None:
+        plan, errors = pg.parse_spec(spec_text([f"update {REPOSITORY}"], [
+            f"{REPOSITORY}::FortuneRecordRepository(ABC)", f"{REPOSITORY}::FortuneRecordRepository.{FIELD_METHOD}"]))
+        self.assertEqual(errors, [])
+        entry = plan.entries[REPOSITORY]
+        self.assertEqual((entry.symbols, entry.declarations[0].methods[0].ret), ([], "frozenset[UUID]"))
+        found = self.forecast([FIELD_METHOD])
+        self.assertEqual([(f.rule, f.path, f.owner, f.detail, f.confirmed) for f in found],
+                         [("#355", REPOSITORY, "FortuneRecordRepository.recorded_character_ids", FIELD_DETAIL, True)])
+        self.assertTrue(list((self.scratch / "repository-declarations").rglob("fortune_record_repository.py")))
+        # 같은 서명을 실물에 넣으면 실검사기가 같은 진단문을 낸다(판정·문면 복제 0).
+        self.write(REPOSITORY, REPOSITORY_BASELINE + f"\n    @abstractmethod\n    def {FIELD_METHOD}: ...\n")
+        result = subprocess.run([sys.executable, str(SCRIPTS / "check-transaction-boundary.py"), str(self.repo)],
+                                env=self.env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertRegex(result.stdout, rf"\[#355\] {re.escape(REPOSITORY)}:\d+: {re.escape(FIELD_DETAIL)}")
+
+    def test_update_baseline_scopes_new_or_changed_returns_only(self) -> None:
+        for methods, expected in [
+            (["find(record_id: UUID) -> dict[str, int]"], [("#355", True)]),
+            (["find(record_id: UUID) -> FortuneRecord | None"], []),
+            (["find(record_id: UUID, lock: bool) -> FortuneRecord | None"], []),
+            (["find(record_id: UUID) -> 'FortuneRecord | None'"], []),
+            (["legacy_ids(account_id: int) -> frozenset[UUID]"], []),
+            (["legacy_ids(account_id: int, limit: int) -> frozenset[UUID]"], []),
+            (["delete_old(account_id: int, force: bool) -> None"], []),
+        ]:
+            with self.subTest(methods=methods):
+                self.assertEqual(self.outcome(methods), expected)
+
+    def test_checker_policy_is_preserved_not_tightened(self) -> None:
+        for methods, expected in [
+            (["latest(account_id: int) -> FortuneRecord | None", "all_for(account_id: int) -> list[FortuneRecord]",
+              "summaries(account_id: int) -> tuple[FortuneRecordIndex, ...]", "touch(account_id: int) -> None",
+              "pairs(account_id: int) -> tuple[FortuneRecord, UUID]", "unique(account_id: int) -> frozenset[FortuneRecord]",
+              "page(account_id: int) -> Page[FortuneRecord]", "untyped(account_id: int)"], []),
+            (["save_many(records: list[FortuneRecord]) -> int", "remove_by_ids(ids: frozenset[UUID]) -> frozenset[UUID]",
+              "save(record: FortuneRecord) -> dict[str, int]"], []),
+            (["exists_for(account_id: int) -> bool"], [("#355", False)]),
+            (["count_records(account_id: int) -> int"], [("#355", False)]),
+            (["record_numbers(account_id: int) -> list[int]"], [("#355", False)]),
+            (["saveSomething(record: FortuneRecord) -> frozenset[UUID]"], [("#355", True)]),
+            (["rows(account_id: int) -> QuerySet[FortuneRecord]"], [("#355", True)]),
+            (["model(account_id: int) -> FortuneRecordModel"], [("#355", True)]),
+            (["delete_many(ids: frozenset[UUID]) -> frozenset[UUID]"], [("#355", True), ("#597", True)]),
+            (["delete_many(ids: frozenset[UUID]) -> None"], [("#597", True)]),
+            (["store(record: FortuneRecord) -> None", "persist_all(records: list[FortuneRecord]) -> None"],
+             [("#597", True), ("#597", True)]),
+            (["add_all(records: list[FortuneRecord]) -> None", "update_score(record_id: UUID, score: int) -> None"], []),
+        ]:
+            with self.subTest(methods=methods):
+                self.assertEqual(self.outcome(methods), expected)
+
+    def test_provenance_only_decides_confirmed_or_candidate(self) -> None:
+        vo = f"{DOMAIN}.value_object.recorded_character_ids"
+        for methods, imports, aliases, expected in [
+            (["recorded(account_id: int) -> RecordedCharacterIds"], [], [], [("#355", False)]),
+            (["recorded(account_id: int) -> RecordedCharacterIds"], [f"from {vo} import RecordedCharacterIds"], [], []),
+            (["recorded(account_id: int) -> Ids"], [f"from {vo} import RecordedCharacterIds as Ids"], [], []),
+            (["recorded(account_id: int) -> RecordedCharacterIds"],
+             ["from application.fortune_record.domain_layer import RecordedCharacterIds"], [], []),
+            (["token(account_id: int) -> Token"], ["from application.shared.a import Token"], [], [("#355", True)]),
+            (["token(account_id: int) -> Token"],
+             ["from application.shared.a import Token", "from application.shared.b import Token"], [], [("#355", False)]),
+            (["token(account_id: int) -> Token"], ["from application.shared.types import *"], [], [("#355", False)]),
+            (["ids(account_id: int) -> Ids"], [], ["Ids = frozenset[UUID]"], [("#355", False)]),
+        ]:
+            with self.subTest(methods=methods, imports=imports, aliases=aliases):
+                found = self.forecast(methods, imports=imports, aliases=aliases)
+                self.assertEqual(sorted((f.rule, f.confirmed) for f in found), expected)
+                for item in found:
+                    if not item.confirmed:
+                        self.assertIn("예보 불확정", item.detail)
+                        self.assertIn("애그리거트도 값 객체도 아니다", item.detail)
+
+    def test_targets_follow_checker_selection_without_name_or_base_rules(self) -> None:
+        self.assertEqual(self.outcome(["ids(account_id: int) -> frozenset[UUID]"], owner="Store"), [("#355", True)])
+        misnamed = "application/fortune_record/domain_layer/fortune_record/record_repository.py"
+        self.assertEqual(self.outcome([FIELD_METHOD], tag="add", path=misnamed, imports=["from uuid import UUID"]),
+                         [("#355", True)])
+        for outside in ("application/fortune_record/domain_layer/fortune_record/repository/fortune_record_repository.py",
+                        "application/fortune_record/driven_layer/fortune_record/fortune_record_repository.py"):
+            with self.subTest(path=outside):
+                self.assertEqual(self.outcome([FIELD_METHOD], tag="add", path=outside,
+                                              imports=["from uuid import UUID"]), [])
+
+    def test_add_counts_every_declared_method_despite_own_stub(self) -> None:
+        added = "application/fortune_record/domain_layer/character/character_repository.py"
+        found = self.forecast([FIELD_METHOD, "exists_for(account_id: int) -> bool"], tag="add", path=added,
+                              owner="CharacterRepository(ABC)", imports=["from uuid import UUID"])
+        self.assertIn("recorded_character_ids", (self.repo / added).read_text())
+        self.assertEqual(sorted((f.rule, f.owner, f.confirmed) for f in found),
+                         [("#355", "CharacterRepository.exists_for", False),
+                          ("#355", "CharacterRepository.recorded_character_ids", True)])
+
+    def test_unreadable_or_ambiguous_baseline_never_confirms(self) -> None:
+        duplicate = REPOSITORY_BASELINE + "\n\nclass FortuneRecordRepository(ABC):\n    pass\n"
+        for baseline in (duplicate, REPOSITORY_BASELINE.replace("def legacy_ids", "def find"),
+                         "class FortuneRecordRepository(:\n"):
+            with self.subTest(baseline=baseline[-40:]):
+                self.write(REPOSITORY, baseline)
+                found = self.forecast(["find(record_id: UUID) -> dict[str, int]"])
+                self.assertEqual([(f.rule, f.confirmed) for f in found], [("#355", False)])
+                self.assertIn("예보 불확정", found[0].detail)
+
+    def test_bundled_checker_load_failure_is_run_error(self) -> None:
+        plan, _ = pg.parse_spec(spec_text([f"update {REPOSITORY}"], [
+            f"{REPOSITORY}::FortuneRecordRepository(ABC)", f"{REPOSITORY}::FortuneRecordRepository.{FIELD_METHOD}"]))
+        with mock.patch.object(pg, "TRANSACTION_CHECKER", self.root / "missing-checker.py"), \
+                mock.patch.object(pg, "_TRANSACTION_CHECKER_MODULE", None):
+            with self.assertRaises(pg.RunError):
+                pg.check_repository_forecast(plan, self.repo, self.scratch, pg.repository_baseline(self.repo, plan))
 
 
 if __name__ == "__main__":

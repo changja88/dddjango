@@ -125,6 +125,11 @@ first-parent 사슬의 참여 머지가 들여온 verbatim 변경(추가·수정
 같은 BC(framework 포트는 framework) 계약 메서드의 반환 우주(실물 ∪ 선언 · `_in` 필드 닫힘) 밖이면 유스케이스가
 만들 수밖에 없다 → 선언 확정 #574(근거: houserules §3 «포트 자료의 방향» · G2 판정자는 #574 생성 호출 검사).
 반환 우주를 가를 수 없으면 선언 후보(비차단). update 는 실물과 서명이 같은 메서드를 제외한다.
+도메인 저장소(검사기 선택 그대로 — 채택 BC `domain_layer/<애그리거트>/*_repository.py`) add/update 의 명시 메서드 서명은
+번들 `check-transaction-boundary.py` 의 저장소 계약 판정을 선언만 담은 분석 투영(스크래치 `repository-declarations/`)에
+그대로 돌려 #355(반환)·#597(쓰기 이름)을 선언 확정으로 예보한다(F4-73 — 물리 전사 아님 · 사본 실물 무접촉). update 는
+전사 전 기준선 실물 대비 새 메서드·반환이 바뀐 메서드만(#597 은 새 이름만) · 검사기 후보(bool/int)와 반환 이름 출처
+미해소(import 무기재·별칭·상충·`import *`)·기준선 비교 불능은 선언 후보다. 검사기 로드·투영 실패는 실행 불능(exit 1).
 `--base` 명시(재발화 판형 — Phase 2 진입 후 명세 개정 재실행): 기준선 ≠ HEAD 면 dirty overlay 를 생략한다(사본 =
 기준선 트리 · 작업 트리 미커밋분은 사본 밖 — 규약 준수 실행과 같다 · 헤더 «dirty overlay 생략» 행). 기준선 = HEAD
 (명시 `--base HEAD` 포함)일 때만 오버레이가 있고, 기준선 트리에 없던 계획 add 가
@@ -137,6 +142,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import builtins
 import copy as copy_module
 import errno
 import hashlib
@@ -152,6 +158,7 @@ import tarfile
 import tempfile
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
+from types import ModuleType
 from typing import TypedDict
 from pathlib import Path, PurePosixPath
 
@@ -2291,6 +2298,279 @@ def check_in_argument_forecast(plan: Plan, copy: Path) -> list[DeclarationFindin
     return out
 
 
+# ── #355 · #597 예보(F4-73) — 도메인 저장소 add/update 메서드 서명 ─────────────────────────────────────────
+# 대상 선택(`_find_bcs` → `_has_adoption_signal` → `_check_repository_files`)·판정(`_check_repository_contract`)·진단문은
+# 번들 검사기를 그대로 부른다 — 판정·상수·표를 여기 복제하지 않는다(검사기 무변). 출처 해소는 확정/후보 경계에만 쓴다.
+TRANSACTION_CHECKER: Path = SCRIPTS_DIR / "check-transaction-boundary.py"
+_TRANSACTION_CHECKER_MODULE: "ModuleType | None" = None
+_REPOSITORY_RULES: "frozenset[str]" = frozenset({"#355", "#597"})
+_REPOSITORY_QUESTION: str = "값 객체면 그 domain import 를 boundary-imports 에 적었는가 · 이 반환이 의도한 계약인가"
+
+
+def _transaction_checker() -> ModuleType:
+    """번들 `check-transaction-boundary.py` 를 한 번 로드한다(main 가드라 import 만으로 검사를 돌리지 않는다).
+    로드 실패는 실행 불능(RunError)이다 — 무출력 통과로 두지 않는다."""
+    global _TRANSACTION_CHECKER_MODULE
+    if _TRANSACTION_CHECKER_MODULE is None:
+        try:
+            spec = importlib.util.spec_from_file_location("_pregate_transaction_boundary", TRANSACTION_CHECKER)
+            if spec is None or spec.loader is None:
+                raise ImportError("모듈 명세를 만들지 못했다")
+            module: ModuleType = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+        except (Exception, SystemExit) as exc:
+            raise RunError(f"번들 검사기 로드 실패 — {TRANSACTION_CHECKER.name}: {exc}") from exc
+        _TRANSACTION_CHECKER_MODULE = module
+    return _TRANSACTION_CHECKER_MODULE
+
+
+def repository_baseline(copy: Path, plan: Plan) -> "dict[str, bytes | None]":
+    """#355·#597 예보의 비교 기준선 — 명세 전사(`materialize`) «전» 사본(기준선 트리 ⊕ 승인 유입 ⊕ dirty overlay)에서
+    update 저장소 후보(`*_repository.py`) 실물 bytes 를 잡는다. 호스트의 나중 HEAD 는 다시 읽지 않는다. 읽기 불능·부재는
+    None 이다(새 서명인지 가를 수 없다 → 후보)."""
+    baseline: "dict[str, bytes | None]" = {}
+    for entry in plan.entries.values():
+        if entry.tag != "update" or not entry.path.endswith("_repository.py"):
+            continue
+        target: Path = copy / entry.path
+        try:
+            baseline[entry.path] = target.read_bytes() if target.is_file() and not target.is_symlink() else None
+        except OSError:
+            baseline[entry.path] = None
+    return baseline
+
+
+def _repository_bindings(sources: "list[ast.Module]", entry: PlanEntry) -> "tuple[dict[str, set[tuple[str, ...]]], bool]":
+    """반환 이름의 출처표(확정/후보 경계 전용) — import 는 전 깊이(검사기의 `ast.walk` 와 같다) · 클래스·함수·대입은
+    모듈 범위 · 명세의 클래스·함수·별칭 선언. 반환: (이름 → 출처 집합, `import *` 여부)."""
+    table: "dict[str, set[tuple[str, ...]]]" = {}
+    opaque: bool = False
+
+    def put(name: str, origin: "tuple[str, ...]") -> None:
+        table.setdefault(name, set()).add(origin)
+
+    def scope(body: "list[ast.stmt]") -> None:
+        for node in body:
+            if isinstance(node, ast.ClassDef):
+                put(node.name, ("class",))
+            elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                put(node.name, ("def",))
+            elif isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if isinstance(target, ast.Name):
+                        put(target.id, ("alias",))
+            elif isinstance(node, ast.AnnAssign):
+                if isinstance(node.target, ast.Name):
+                    put(node.target.id, ("alias",))
+            elif _TYPE_ALIAS_NODE is not None and isinstance(node, _TYPE_ALIAS_NODE):
+                put(node.name.id, ("alias",))
+            elif not isinstance(node, (ast.Import, ast.ImportFrom)):
+                nested: "list[ast.stmt]" = [c for c in ast.iter_child_nodes(node) if isinstance(c, ast.stmt)]
+                for handler in getattr(node, "handlers", []):
+                    nested += handler.body
+                scope(nested)
+
+    for module in sources:
+        for node in ast.walk(module):
+            if isinstance(node, ast.ImportFrom):
+                for alias in node.names:
+                    if alias.name == "*":
+                        opaque = True
+                    else:
+                        put(alias.asname or alias.name, ("from", "." * node.level + (node.module or ""), alias.name))
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    put(alias.asname or alias.name.split(".")[0],
+                        ("import", alias.name if alias.asname else alias.name.split(".")[0]))
+        scope(module.body)
+    for symbol in entry.declarations:
+        put(symbol.name, ("class",) if symbol.kind == "class" else ("def",))
+    for alias_row in entry.declaration_aliases:
+        put(alias_row.name, ("alias",))
+    return table, opaque
+
+
+def _unresolved_return_names(ck: ModuleType, returns: "ast.expr | None", aggregate: str, domain: "set[str]",
+                             table: "dict[str, set[tuple[str, ...]]]", opaque: bool) -> "list[str]":
+    """검사기 #355 위반을 확정으로 둘 수 없게 하는 반환 이름들 — 금지 이름 판정은 출처와 무관하므로 늘 확정이다. 그 밖은
+    애그리거트도 domain import 도 아닌 이름 가운데 «확실히 domain 밖»(단일 정적 import·모듈 import·클래스·함수 · 미바인딩
+    내장)인 것이 하나도 없을 때만 미해소 이름 전부를 돌려준다(빠진 import 하나로 통과할 수 있는 후상태)."""
+    names: "set[str]" = ck._annotation_names(returns)
+    if names & ck.RETURN_BAN or any(n.endswith("Model") for n in names):
+        return []
+    outside: "set[str]" = names - ck.RETURN_WRAPPERS - ck.RETURN_PRIMITIVES - domain - {aggregate}
+
+    def certain(name: str) -> bool:
+        origins: "set[tuple[str, ...]]" = table.get(name, set())
+        if opaque:
+            return False
+        if not origins:
+            return hasattr(builtins, name)
+        return len(origins) == 1 and next(iter(origins))[0] in ("from", "import", "class", "def")
+
+    unresolved: "list[str]" = sorted(n for n in outside if not certain(n))
+    return unresolved if len(unresolved) == len(outside) else []
+
+
+def _repository_entry_forecast(ck: ModuleType, entry: PlanEntry, root: Path,
+                               prior: "bytes | None") -> list[DeclarationFinding]:
+    """한 저장소 파일 — 선언만 담은 분석 투영(기준선/명시 import + 대상 메서드 서명)을 `root` 아래 원래 상대 경로로 쓰고
+    검사기 `_check_repository_contract()` 를 부른다. update 대상 = 기준선 클래스에 없는 메서드(#355·#597) · 반환이 바뀐
+    메서드(#355만). 기준선 클래스·메서드 중복 또는 실물 파싱 불능이면 새 서명으로 단정하지 않는다(후보)."""
+    sources: "list[ast.Module]" = []
+    imports: "list[str]" = []
+    unclear: str = ""
+    real: "ast.Module | None" = None
+    if entry.tag == "update":
+        try:
+            real = ast.parse(prior.decode("utf-8")) if prior is not None else None
+        except (UnicodeError, SyntaxError, ValueError):
+            real = None
+        if real is None:
+            unclear = "기준선 실물을 읽거나 파싱하지 못했다(새 서명인지 가를 수 없음)"
+        else:
+            sources.append(real)
+            imports += [ast.unparse(n) for n in ast.walk(real) if isinstance(n, (ast.Import, ast.ImportFrom))
+                        and not (isinstance(n, ast.ImportFrom) and n.module == "__future__")]
+    opaque_rows: bool = False
+    for statement in entry.imports:
+        try:
+            parsed: ast.Module = ast.parse(statement)
+        except SyntaxError:
+            opaque_rows = True
+            continue
+        if not all(isinstance(n, (ast.Import, ast.ImportFrom)) for n in parsed.body):
+            opaque_rows = True
+            continue
+        sources.append(parsed)
+        imports += [ast.unparse(n) for n in parsed.body if not (isinstance(n, ast.ImportFrom) and n.module == "__future__")]
+    real_classes: "dict[str, list[ast.ClassDef]]" = {}
+    for node in (real.body if real is not None else []):
+        if isinstance(node, ast.ClassDef):
+            real_classes.setdefault(node.name, []).append(node)
+    lines: "list[str]" = imports + [""]
+    rows: "dict[int, tuple[str, str, bool, bool, str]]" = {}  # 투영 행 → (클래스, 메서드, #355 대상, #597 대상, 불확정 사유)
+    for symbol in entry.declarations:
+        if symbol.kind != "class":
+            continue
+        members: "list[tuple[Method, bool, bool, str]]" = []
+        for method in symbol.methods:
+            fn: "ast.FunctionDef | None" = _method_def(method.name, method.params, method.ret)
+            if fn is None or method.name.startswith("__"):
+                continue
+            check355: bool = True
+            check597: bool = True
+            reason: str = unclear
+            if entry.tag == "update" and not reason:
+                same: "list[ast.ClassDef]" = real_classes.get(symbol.name, [])
+                if len(same) > 1:
+                    reason = f"기준선 클래스 `{symbol.name}` 중복"
+                elif same:
+                    defs: "list[ast.FunctionDef | ast.AsyncFunctionDef]" = [
+                        n for n in same[0].body
+                        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == method.name]
+                    if len(defs) > 1:
+                        reason = f"기준선 메서드 `{symbol.name}.{method.name}` 중복"
+                    elif defs:
+                        check597 = False
+                        old_ret: "str | None" = _norm_annotation(defs[0].returns) if defs[0].returns is not None else None
+                        new_ret: "str | None" = _norm_annotation(fn.returns) if fn.returns is not None else None
+                        check355 = old_ret != new_ret
+            if check355 or check597:
+                members.append((method, check355, check597, reason))
+        if not members:
+            continue
+        lines.append(f"class {symbol.name}:")
+        for method, check355, check597, reason in members:
+            rows[len(lines) + 1] = (symbol.name, method.name, check355, check597, reason)
+            lines.append(f"    def {method.name}(self{', ' if method.params else ''}{method.params})"
+                         f"{' -> ' + method.ret if method.ret else ''}: ...")
+        lines.append("")
+    if not rows:
+        return []
+    text: str = "\n".join(lines) + "\n"
+    try:
+        projection: ast.Module = ast.parse(text)
+    except SyntaxError as exc:
+        raise RunError(f"저장소 선언 분석 투영 파싱 불능 — {entry.path}: {exc}") from exc
+    target: Path = root / entry.path
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text, encoding="utf-8")
+        if target.read_text(encoding="utf-8") != text:
+            raise OSError("되읽은 내용이 다르다")
+    except OSError as exc:
+        raise RunError(f"저장소 선언 분석 투영 쓰기·읽기 불능 — {entry.path}: {exc}") from exc
+    aggregate_stem: str = Path(entry.path).stem[: -len("_repository")]
+    found = ck.Findings(defer=True)
+    asked = ck.Candidates(defer=True)
+    ck._check_repository_contract(root, target, aggregate_stem, found, asked)
+    table, opaque = _repository_bindings(sources, entry)
+    opaque = opaque or opaque_rows
+    domain: "set[str]" = ck._value_object_imports(projection)
+    returns: "dict[int, ast.expr | None]" = {
+        n.lineno: n.returns for cls in projection.body if isinstance(cls, ast.ClassDef)
+        for n in cls.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
+    out: list[DeclarationFinding] = []
+    for item, from_candidates in [(e, False) for e in found.entries] + [(e, True) for e in asked.entries]:
+        if item.rule not in _REPOSITORY_RULES:
+            continue
+        line_text: str = item.where.rsplit(":", 1)[-1]
+        row: "tuple[str, str, bool, bool, str] | None" = rows.get(int(line_text)) if line_text.isdigit() else None
+        if row is None:
+            continue
+        owner_class, method_name, check355, check597, reason = row
+        if not (check355 if item.rule == "#355" else check597):
+            continue
+        detail: str = item.msg
+        confirmed: bool = False
+        if from_candidates:
+            detail = f"{item.msg} — 물음: {item.question}" + (f" — 예보 불확정: {reason}" if reason else "")
+        elif reason:
+            detail = f"{item.msg} — 예보 불확정: {reason} — 물음: 이 서명이 새로 들이거나 반환을 바꾸는가"
+        else:
+            unresolved: "list[str]" = (
+                _unresolved_return_names(ck, returns.get(int(line_text)), ck._camel(aggregate_stem), domain, table, opaque)
+                if item.rule == "#355" else [])
+            if unresolved:
+                detail = (f"{item.msg} — 예보 불확정: 반환 이름 " + ", ".join(f"`{n}`" for n in unresolved)
+                          + " 출처 미해소(import 무기재·별칭·상충·`import *`) — 물음: " + _REPOSITORY_QUESTION)
+            else:
+                confirmed = True
+        finding: DeclarationFinding = DeclarationFinding(item.rule, entry.path, f"{owner_class}.{method_name}",
+                                                         detail, confirmed)
+        if finding not in out:
+            out.append(finding)
+    return out
+
+
+def check_repository_forecast(plan: Plan, copy: Path, scratch: Path,
+                              baseline: "dict[str, bytes | None]") -> list[DeclarationFinding]:
+    """F4-73 — 도메인 저장소 add/update 의 명시 메서드 서명을 번들 검사기의 #355(반환)·#597(쓰기 이름) 판정으로 선언 예보한다.
+
+    대상 파일 = 검사기 선택(채택 BC 의 `domain_layer/<애그리거트>/*_repository.py`)을 사본에 그대로 돌린 경로 ∩ file-plan
+    add/update. add 는 명시 메서드 전부(자기 스텁을 기준선으로 쓰지 않는다) · update 는 `baseline`(materialize 전 실물) 대비
+    새 메서드와 반환 주석이 바뀐 메서드(#597 은 새 이름만). 분석 투영은 `scratch/repository-declarations/` 에만 쓰고 사본 실물은
+    바꾸지 않는다. 검사기 위반은 그대로 선언 확정 · 검사기 후보(bool/int)는 선언 후보 · 반환 이름 출처 미해소(import 무기재·
+    별칭·상충·`import *`)나 기준선 비교 불능은 선언 후보로 낮춘다. #283·#287·#599 등은 이 채널에 싣지 않는다."""
+    paths: "set[str]" = {e.path for e in plan.entries.values()
+                         if e.tag in ("add", "update") and e.path.endswith("_repository.py")}
+    if not paths:
+        return []
+    ck: ModuleType = _transaction_checker()
+    selected: "set[str]" = set()
+    sink = ck.Findings(defer=True)
+    for bc in ck._find_bcs(copy):
+        if ck._has_adoption_signal(bc):
+            selected |= {p.relative_to(copy).as_posix() for p in ck._check_repository_files(copy, bc, sink)}
+    root: Path = scratch / "repository-declarations"
+    out: list[DeclarationFinding] = []
+    for path in sorted(paths & selected):
+        entry: PlanEntry = plan.entries[path]
+        out += _repository_entry_forecast(ck, entry, root, baseline.get(path) if entry.tag == "update" else None)
+    return out
+
+
 def _generated_methods(module: ast.Module) -> list[GeneratedMethod]:
     """이번 렌더의 함수·메서드 범위만 기록한다(기존 실물의 스텁 문구는 근거가 아니다)."""
     result: list[GeneratedMethod] = []
@@ -3032,7 +3312,8 @@ BLIND_SPOTS: "tuple[str, ...]" = (
     "스냅숏에 실리므로 «기준선의 레인 실물 × 유입» 상호작용 위반은 L∩N 으로 사라진다 — 그 판정자는 G2 registry 의 "
     "provenance 차분이다.",
     "S5 미시뮬레이션: update는 실존 OHS 서비스의 명시 새 모듈 함수·안전한 import·파일 수준 raise helper만 "
-    "전사하고, 정적으로 해소된 module pytestmark 최종 목록을 반영한다. add/update 명시 선언 후상태는 별도 검사하며 기존 signature/body·decorator/alias/class 본문 변경, 효과 무기재, 지원 밖 marker/base/client와 후행 remove(@Ln)는 미검증으로 위 목록 병기.",
+    "전사하고, 정적으로 해소된 module pytestmark 최종 목록을 반영한다. add/update 명시 선언 후상태는 별도 검사하며(도메인 저장소 메서드 서명의 #355·#597 은 "
+    "선언 예보 — update 는 기준선 대비 새·반환 변경 메서드만) 기존 signature/body·decorator/alias/class 본문 변경, 효과 무기재, 지원 밖 marker/base/client와 후행 remove(@Ln)는 미검증으로 위 목록 병기.",
     "S6 정형 보충(apps.py name/label·모델 Meta.db_table·마이그레이션 칸): 결손 시 규약 유도값을 합성한다 — 기계 블록 "
     "전사가 있으면 전사 우선이지만, «산문»으로만 규약 밖 값을 계획한 일탈은 예보 표면 밖이다.",
     "S7 기실현 add(`--base` 명시 ∧ 기준선 = HEAD — 명시 `--base HEAD` 포함): 사본 = 기준선 트리 + (worktree−HEAD) "
@@ -3636,6 +3917,8 @@ def _main(argv: "list[str]") -> int:
         _git(copy, "init", "-q")
         _git(copy, "add", "-A")
         _git(copy, "commit", "-q", "-m", "pregate-anchor", "--allow-empty")
+        # 저장소 선언 예보(#355·#597)의 비교 기준선 — 명세 전사 «전» 실물(F4-73).
+        repository_material: "dict[str, bytes | None]" = repository_baseline(copy, plan)
 
         try:
             mat: MaterializationReport = materialize(copy, plan, realized=realized, base_short=base_sha[:12],
@@ -3647,7 +3930,8 @@ def _main(argv: "list[str]") -> int:
             return 3
 
         # 계약 실존 — materialize(+골격·`__init__` 체인) 뒤 · 실체화-0 분기 앞(update 소비자만의 명세도 판정한다).
-        declarations = check_declarations(plan, copy) + check_in_argument_forecast(plan, copy)
+        declarations = (check_declarations(plan, copy) + check_in_argument_forecast(plan, copy)
+                        + check_repository_forecast(plan, copy, scratch, repository_material))
         declaration_count = len({(item.rule, item.path) for item in declarations if item.confirmed})
         for line in _declaration_lines(declarations):
             print(line)
