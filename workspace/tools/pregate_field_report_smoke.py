@@ -38,6 +38,11 @@ REPOSITORY_ORIGINAL = ('from __future__ import annotations\n\nfrom abc import AB
                        'class FortuneRecordRepository(ABC):\n'
                        '    @abstractmethod\n    def find(self, record_id: UUID) -> FortuneRecord | None: ...\n')
 RECORDED_VO = f"{RECORD_DOMAIN}/value_object/recorded_character_ids.py"
+# 기준선에만 있는 프로젝트 import 는 후상태의 확정 근거가 아니다(구현이 같은 이름을 domain 에서 들이면 실검사기는 통과한다).
+ORDER_DOMAIN = "application/orders/domain_layer/order"
+ORDER_REPOSITORY = f"{ORDER_DOMAIN}/order_repository.py"
+ORDER_ORIGINAL = ('from abc import ABC, abstractmethod\nfrom support.read_models import Summary\n\n\n'
+                  'class OrderRepository(ABC):\n    pass\n')
 
 
 def spec_text(paths, symbols=(), imports=(), exceptions=(), owner="") -> str:
@@ -973,6 +978,35 @@ class BookAdmin(TranslatableAdmin):
         self.assertEqual(run.returncode, 4, run.stdout + run.stderr)
         self.assertNotIn(REPOSITORY, pg._subsection(report, '선언 확정') + pg._subsection(report, '선언 후보'))
 
+    def test_repository_baseline_only_origin_is_candidate_until_the_spec_states_it(self):
+        self.write(self.source, ORDER_REPOSITORY, ORDER_ORIGINAL)
+        self.write(self.source, f'{ORDER_DOMAIN}/order.py', 'class Order:\n    pass\n')
+        self.write(self.source, f'{ORDER_DOMAIN}/value_object/summary.py', 'class Summary:\n    pass\n')
+        self.write(self.source, 'support/read_models.py', 'class Summary:\n    pass\n')
+        _git(self.source, 'add', '-A')
+        _git(self.source, 'commit', '-qm', 'order repository fixture')
+        rows = [f'{ORDER_REPOSITORY}::OrderRepository(ABC)', f'{ORDER_REPOSITORY}::OrderRepository.summary() -> Summary']
+        detail = 'OrderRepository.summary: `summary` 반환 `Summary` 이 애그리거트도 값 객체도 아니다'
+        stable = pg._stable_id(f'[#355] {ORDER_REPOSITORY}')
+        text = spec_text([f'update {ORDER_REPOSITORY}'], rows)
+        run, report = self.cli(text)
+        self.assertEqual(run.returncode, 4, run.stdout + run.stderr)
+        self.assertNotIn(ORDER_REPOSITORY, pg._subsection(report, '선언 확정'))
+        candidates = pg._subsection(report, '선언 후보')
+        self.assertIn(f'- `{stable}` [#355] {ORDER_REPOSITORY} — {detail} — 예보 불확정: 반환 이름 `Summary` '
+                      '출처 미해소(기준선에만 있는 출처', candidates)
+        code, problems, info = pg.check_report(text, report)
+        self.assertEqual(code, 0, problems)
+        self.assertEqual((info['attributed'], info['declarations'], info['candidates']), ('0', '0', '1'))
+        text = spec_text([f'update {ORDER_REPOSITORY}'], rows, [f'{ORDER_REPOSITORY}  from support.read_models import Summary'])
+        run, report = self.cli(text)
+        self.assertEqual(run.returncode, 2, run.stdout + run.stderr)
+        self.assertIn('선언 확정 1건', run.stdout)
+        self.assertIn(f'- `{stable}` [#355] {ORDER_REPOSITORY} — {detail}\n', pg._subsection(report, '선언 확정') + '\n')
+        self.assertNotIn(ORDER_REPOSITORY, pg._subsection(report, '선언 후보'))
+        self.assertEqual(pg.check_report(text, report)[0], 3)
+        self.assertEqual((self.source / ORDER_REPOSITORY).read_text(), ORDER_ORIGINAL)
+
     def test_repository_add_shares_registry_id_and_needs_one_disposition(self):
         self.repository_fixture()
         added = 'application/fortune_record/domain_layer/character/character_repository.py'
@@ -984,11 +1018,26 @@ class BookAdmin(TranslatableAdmin):
         stable = pg._stable_id(f'[#355] {added}')
         self.assertIn(f'`{stable}`', pg._subsection(report, '예보 항목'))
         self.assertIn(f'`{stable}`', pg._subsection(report, '선언 확정'))
-        ids = set(pg._REPORT_ID_RE.findall(pg._subsection(report, '예보 항목'))
-                  + pg._REPORT_ID_RE.findall(pg._subsection(report, '선언 확정')))
-        disposed = report + ''.join(f'\n- `{i}` **ignored** 빚 매칭 검토' for i in sorted(ids)) + '\n'
-        self.assertEqual(disposed.count(f'`{stable}` **ignored**'), 1)
-        self.assertEqual(pg.check_report(text, disposed)[0], 0)
+        registry_ids = pg._REPORT_ID_RE.findall(pg._subsection(report, '예보 항목'))
+        declared_ids = pg._REPORT_ID_RE.findall(pg._subsection(report, '선언 확정'))
+        self.assertEqual((registry_ids.count(stable), declared_ids.count(stable)), (1, 1))
+        # 두 채널에 실린 같은 ID 는 처분 한 줄로 닫힌다 — 그 한 줄이 없으면 나머지를 다 처분해도 불비다.
+        others = ''.join(f'\n- `{i}` **ignored** 빚 매칭 검토' for i in sorted(set(registry_ids + declared_ids) - {stable}))
+        self.assertEqual(pg.check_report(text, report + others + '\n')[0], 3)
+        self.assertEqual(pg.check_report(text, report + others + f'\n- `{stable}` **ignored** 빚 매칭 검토\n')[0], 0)
+
+    def test_repository_forecast_reads_dot_slash_plan_path(self):
+        self.repository_fixture()
+        dotted = f'./{REPOSITORY}'
+        text = spec_text([f'update {dotted}'], [f'{dotted}::FortuneRecordRepository(ABC)',
+                         f'{dotted}::FortuneRecordRepository.recorded_character_ids(account_id: int) -> frozenset[UUID]'])
+        run, report = self.cli(text)
+        self.assertEqual(run.returncode, 2, run.stdout + run.stderr)
+        stable = pg._stable_id(f'[#355] {REPOSITORY}')
+        self.assertIn(f'- `{stable}` [#355] {REPOSITORY} — FortuneRecordRepository.recorded_character_ids: '
+                      '`recorded_character_ids` 반환 `UUID.frozenset` 이 애그리거트도 값 객체도 아니다',
+                      pg._subsection(report, '선언 확정'))
+        self.assertEqual(pg.check_report(text, report)[0], 3)
 
 
 if __name__ == "__main__":

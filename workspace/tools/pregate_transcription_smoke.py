@@ -46,6 +46,26 @@ REPOSITORY_BASELINE = (
     "    @abstractmethod\n    def delete_old(self, account_id: int) -> None: ...\n")
 FIELD_METHOD = "recorded_character_ids(account_id: int, character_ids: frozenset[UUID]) -> frozenset[UUID]"
 FIELD_DETAIL = "`recorded_character_ids` 반환 `UUID.frozenset` 이 애그리거트도 값 객체도 아니다"
+# 기준선에만 있는 프로젝트 출처는 후상태의 확정 근거가 아니다 — 구현이 같은 이름을 domain 에서 들이면 실검사기는 통과한다.
+ORDER_DOMAIN = "application/orders/domain_layer/order"
+ORDER_REPOSITORY = f"{ORDER_DOMAIN}/order_repository.py"
+ORDER_HEAD = "from abc import ABC, abstractmethod\n"
+ORDER_OUTSIDE = "from support.read_models import Summary\n"
+ORDER_CLASS = "\n\nclass OrderRepository(ABC):\n    pass\n"
+SUMMARY_VO = "application.orders.domain_layer.order.value_object.summary"
+SUMMARY_DETAIL = "`summary` 반환 `Summary` 이 애그리거트도 값 객체도 아니다"
+BASELINE_ONLY = "기준선에만 있는 출처"
+# 기존 빚을 다시 적은 줄은 새 위반이 아니다(G2 registry 차분으로도 귀속 0) — 철자·감싸개만 바뀐 반환 · 같은 파일의 베이스
+# 클래스에서 물려받은 메서드 · 클래스 본문 복합문 아래 메서드.
+DEBT_BASELINE = (
+    REPOSITORY_BASELINE.replace("from uuid import UUID\n", "from typing import TYPE_CHECKING, Optional\nfrom uuid import UUID\n")
+    + "\n    @abstractmethod\n    def legacy_opt(self, account_id: int) -> Optional[UUID]: ...\n"
+    "\n    @abstractmethod\n    def legacy_many(self, account_id: int) -> tuple[UUID, ...]: ...\n"
+    "\n    @abstractmethod\n    def legacy_rows(self, account_id: int) -> dict[str, int]: ...\n"
+    "\n    if TYPE_CHECKING:\n        def guarded(self, account_id: int) -> frozenset[UUID]: ...\n"
+    "\n\nclass ArchivedFortuneRecordRepository(FortuneRecordRepository):\n    pass\n")
+DEBT_RESTATED = (DEBT_BASELINE.replace("-> Optional[UUID]", "-> UUID | None").replace("-> tuple[UUID, ...]", "-> list[UUID]")
+                 .replace("-> dict[str, int]", "-> dict[str, str]"))
 
 
 def spec_text(paths: list[str], symbols: list[str] = (), imports: list[str] = ()) -> str:
@@ -478,11 +498,161 @@ class RepositoryForecastTest(unittest.TestCase):
                         self.assertIn("예보 불확정", item.detail)
                         self.assertIn("애그리거트도 값 객체도 아니다", item.detail)
 
+    def test_baseline_only_origin_never_confirms_what_the_checker_passes_afterwards(self) -> None:
+        baseline = ORDER_HEAD + ORDER_OUTSIDE + ORDER_CLASS
+        self.write(ORDER_REPOSITORY, baseline)
+        order = dict(path=ORDER_REPOSITORY, owner="OrderRepository(ABC)")
+        found = self.forecast(["summary() -> Summary"], **order)
+        self.assertEqual([(f.rule, f.path, f.owner, f.confirmed) for f in found],
+                         [("#355", ORDER_REPOSITORY, "OrderRepository.summary", False)])
+        self.assertIn(f"{SUMMARY_DETAIL} — 예보 불확정: 반환 이름 `Summary` 출처 미해소({BASELINE_ONLY}", found[0].detail)
+        self.assertIn("domain 에서 들이면 통과", found[0].detail)
+        # 같은 import 를 명세가 적으면 그것이 후상태다 → 확정(문면은 검사기 그대로).
+        stated = self.forecast(["summary() -> Summary"], imports=[ORDER_OUTSIDE.strip()], **order)
+        self.assertEqual([(f.rule, f.owner, f.detail, f.confirmed) for f in stated],
+                         [("#355", "OrderRepository.summary", SUMMARY_DETAIL, True)])
+        # 후상태 대조 — 기준선 import 를 그대로 두고 domain import 를 더한 구현은 실검사기 #355 0 · 더하지 않은 구현은 같은 진단문.
+        declared = ORDER_CLASS.replace("    pass\n", "    @abstractmethod\n    def summary(self) -> Summary: ...\n")
+        for added, hits in [(f"from {SUMMARY_VO} import Summary\n", 0), ("", 1)]:
+            with self.subTest(added=added):
+                self.write(ORDER_REPOSITORY, ORDER_HEAD + ORDER_OUTSIDE + added + declared)
+                result = subprocess.run([sys.executable, str(SCRIPTS / "check-transaction-boundary.py"), str(self.repo)],
+                                        env=self.env, capture_output=True, text=True)
+                self.assertIn(result.returncode, (0, 2), result.stdout + result.stderr)
+                self.assertEqual(result.stdout.count(f"[#355] {ORDER_REPOSITORY}:"), hits, result.stdout)
+                self.assertEqual(len(re.findall(re.escape(SUMMARY_DETAIL), result.stdout)), hits, result.stdout)
+
+    def test_baseline_origin_confirms_only_when_stated_or_standard_library(self) -> None:
+        outside = ORDER_HEAD + ORDER_OUTSIDE + ORDER_CLASS
+        standard = ORDER_HEAD + "from datetime import datetime\nfrom decimal import Decimal\nfrom uuid import UUID\n" + ORDER_CLASS
+        own_class = ORDER_HEAD + "\n\nclass Summary:\n    pass\n" + ORDER_CLASS
+        for label, baseline, methods, imports, expected, why in [
+            ("기준선에만 있는 프로젝트 import", outside, ["summary() -> Summary"], [], [("#355", False)], BASELINE_ONLY),
+            ("같은 import 를 명세가 명시", outside, ["summary() -> Summary"], [ORDER_OUTSIDE.strip()], [("#355", True)], ""),
+            ("기준선의 표준 라이브러리 import", standard,
+             ["token() -> UUID", "seen_at() -> datetime", "total() -> Decimal"], [], [("#355", True)] * 3, ""),
+            ("기준선 밖 + 명세의 다른 밖(상충)", outside, ["summary() -> Summary"],
+             ["from support.other_models import Summary"], [("#355", False)], "출처 미해소"),
+            ("기준선 밖 + 명세의 domain(같은 이름) — 실검사기 통과 그대로", outside, ["summary() -> Summary"],
+             [f"from {SUMMARY_VO} import Summary"], [], ""),
+            ("기준선 파일 자기 클래스", own_class, ["summary() -> Summary"], [], [("#355", False)], BASELINE_ONLY),
+            ("명세가 선언한 클래스", ORDER_HEAD + ORDER_CLASS, ["twin() -> OrderRepository"], [], [("#355", True)], ""),
+        ]:
+            with self.subTest(label=label):
+                self.write(ORDER_REPOSITORY, baseline)
+                found = self.forecast(methods, path=ORDER_REPOSITORY, owner="OrderRepository(ABC)", imports=imports)
+                self.assertEqual(sorted((f.rule, f.confirmed) for f in found), expected)
+                for item in found:
+                    self.assertEqual("예보 불확정" in item.detail, not item.confirmed, item.detail)
+                    self.assertEqual(BASELINE_ONLY in item.detail, why == BASELINE_ONLY, item.detail)
+                    self.assertIn(why, item.detail)
+
+    def test_root_module_shadowing_a_standard_library_name_is_a_project_origin(self) -> None:
+        self.write(ORDER_REPOSITORY, ORDER_HEAD + "from calendar import Event\n" + ORDER_CLASS)
+        order = dict(path=ORDER_REPOSITORY, owner="OrderRepository(ABC)")
+        self.assertEqual(self.outcome(["events() -> Event"], **order), [("#355", True)])
+        self.write("calendar/__init__.py", "class Event:\n    pass\n")
+        found = self.forecast(["events() -> Event"], **order)
+        self.assertEqual([(f.rule, f.confirmed) for f in found], [("#355", False)])
+        self.assertIn(BASELINE_ONLY, found[0].detail)
+
+    def test_restated_baseline_debt_is_not_forecast_again(self) -> None:
+        self.write(REPOSITORY, DEBT_BASELINE)
+        archived = "ArchivedFortuneRecordRepository(FortuneRecordRepository)"
+        own = "FortuneRecordRepository(ABC)"
+        for label, owner, methods, expected in [
+            ("Optional → | None", own, ["legacy_opt(account_id: int) -> UUID | None"], []),
+            ("tuple → list", own, ["legacy_many(account_id: int) -> list[UUID]"], []),
+            ("dict 값 타입만", own, ["legacy_rows(account_id: int) -> dict[str, str]"], []),
+            ("클래스 본문 if 아래 메서드", own, ["guarded(account_id: int) -> frozenset[UUID]"], []),
+            ("물려받은 메서드", archived, ["legacy_ids(account_id: int) -> frozenset[UUID]",
+                                    "delete_old(account_id: int) -> None"], []),
+            ("금지 A → 금지 B", own, ["legacy_opt(account_id: int) -> dict[str, int]"], [("#355", True)]),
+            ("정상 → 위반", own, ["find(record_id: UUID) -> UUID | None"], [("#355", True)]),
+            ("같은 반환의 새 이름", own, ["other_ids(account_id: int) -> frozenset[UUID]"], [("#355", True)]),
+            ("물려받은 메서드의 반환 변경", archived, ["legacy_ids(account_id: int) -> dict[str, int]"], [("#355", True)]),
+            ("새 쓰기 이름", archived, ["delete_new(account_id: int) -> None"], [("#597", True)]),
+        ]:
+            with self.subTest(label=label):
+                self.assertEqual(self.outcome(methods, owner=owner), expected)
+
+        # 실검사기 대조 — 다시 적은 후상태의 저장소 줄은 행 번호만 지우면 기준선과 같다(registry 차분 = 귀속 0).
+        def repository_lines() -> set[str]:
+            result = subprocess.run([sys.executable, str(SCRIPTS / "check-transaction-boundary.py"), str(self.repo)],
+                                    env=self.env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+            return {re.sub(r":\d+", ":N", line.strip()) for line in result.stdout.splitlines() if REPOSITORY in line}
+
+        before = repository_lines()
+        self.assertIn(f"[#355] {REPOSITORY}:N: `legacy_opt` 반환 `UUID` 이 애그리거트도 값 객체도 아니다", before)
+        self.write(REPOSITORY, DEBT_RESTATED)
+        self.assertEqual(repository_lines(), before)
+
+    def test_one_certainly_outside_name_confirms_and_uppercase_builtins_do_not(self) -> None:
+        warning = f"from {DOMAIN}.value_object.warning import Warning"
+        for label, methods, imports, expected in [
+            ("섞인 꼴 — 새 값 객체 + 표준 라이브러리 이름", ["pairs_of(account_id: int) -> tuple[RecordKind, UUID]"], [],
+             [("#355", True)]),
+            ("import 없는 frozenset[새 값 객체] — 소문자 내장", ["kinds(account_id: int) -> frozenset[RecordKind]"], [],
+             [("#355", True)]),
+            ("소문자 내장", ["raw(account_id: int) -> bytes"], [], [("#355", True)]),
+            ("대문자 내장과 같은 이름 — import 무기재", ["warnings(account_id: int) -> tuple[Warning, ...]"], [],
+             [("#355", False)]),
+            ("대문자 내장과 같은 이름 — domain import 명시", ["warnings(account_id: int) -> tuple[Warning, ...]"], [warning], []),
+            ("import * 는 표준 라이브러리 import 도 가린다", ["ids(account_id: int) -> tuple[UUID, ...]"],
+             ["from application.shared.types import *"], [("#355", False)]),
+        ]:
+            with self.subTest(label=label):
+                found = self.forecast(methods, imports=imports)
+                self.assertEqual(sorted((f.rule, f.confirmed) for f in found), expected)
+                for item in found:
+                    self.assertEqual("출처 미해소(import 무기재" in item.detail, not item.confirmed, item.detail)
+        # 후상태 대조 — 값 객체 `Warning` 을 domain 에서 들인 구현은 실검사기가 그 메서드를 통과시킨다.
+        self.write(REPOSITORY, REPOSITORY_BASELINE.replace("\n\n\nclass", f"\n{warning}\n\n\nclass")
+                   + "\n    @abstractmethod\n    def warnings(self, account_id: int) -> tuple[Warning, ...]: ...\n")
+        result = subprocess.run([sys.executable, str(SCRIPTS / "check-transaction-boundary.py"), str(self.repo)],
+                                env=self.env, capture_output=True, text=True)
+        self.assertIn("`legacy_ids` 반환", result.stdout)
+        self.assertNotIn("`warnings`", result.stdout)
+
+    def test_plan_path_spelling_does_not_hide_the_repository(self) -> None:
+        for spelled in (f"./{REPOSITORY}", REPOSITORY.replace("/", "//", 1)):
+            with self.subTest(path=spelled):
+                found = self.forecast([FIELD_METHOD], path=spelled)
+                self.assertEqual([(f.rule, f.path, f.owner, f.detail, f.confirmed) for f in found],
+                                 [("#355", REPOSITORY, "FortuneRecordRepository.recorded_character_ids", FIELD_DETAIL, True)])
+
+    def test_baseline_is_read_before_the_spec_is_materialized(self) -> None:
+        spec = self.root / "design.md"
+        spec.write_text(spec_text([f"update {REPOSITORY}"], [
+            f"{REPOSITORY}::FortuneRecordRepository(ABC)", f"{REPOSITORY}::FortuneRecordRepository.{FIELD_METHOD}"]),
+            encoding="utf-8")
+        real_materialize = pg.materialize
+
+        def transcribing(copy: Path, plan, **kwargs):
+            # 전사가 저장소 파일에 새 서명을 써 넣는다고 해도, 비교 기준선은 그 «전» 실물이어야 한다.
+            report = real_materialize(copy, plan, **kwargs)
+            target = copy / REPOSITORY
+            target.write_text(target.read_text(encoding="utf-8") + "\n    @abstractmethod\n    def "
+                              + FIELD_METHOD.replace("(", "(self, ", 1) + ": ...\n", encoding="utf-8")
+            return report
+
+        out = io.StringIO()
+        quiet = {key: self.env[key] for key in ("DJR_FINDINGS_JSON", "DJR_VIOLATIONS_DIR")}
+        with mock.patch.object(pg, "materialize", side_effect=transcribing), mock.patch.dict(os.environ, quiet), \
+                contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+            code = pg.main([str(spec), str(self.repo), "--report", str(self.root / "report.md")])
+        self.assertEqual(code, 2, out.getvalue())
+        self.assertIn(f"FortuneRecordRepository.recorded_character_ids: {FIELD_DETAIL}", out.getvalue())
+
     def test_targets_follow_checker_selection_without_name_or_base_rules(self) -> None:
         self.assertEqual(self.outcome(["ids(account_id: int) -> frozenset[UUID]"], owner="Store"), [("#355", True)])
+        # 이름이 어긋난 파일도 대상이고, 자기 애그리거트는 폴더 이름(`FortuneRecord`)이 아니라 파일 이름(`record_repository` → `Record`)이다.
         misnamed = "application/fortune_record/domain_layer/fortune_record/record_repository.py"
-        self.assertEqual(self.outcome([FIELD_METHOD], tag="add", path=misnamed, imports=["from uuid import UUID"]),
-                         [("#355", True)])
+        found = self.forecast(["mine(account_id: int) -> frozenset[Record]", "latest(account_id: int) -> Record | None",
+                               "theirs(account_id: int) -> frozenset[FortuneRecord]"], tag="add", path=misnamed, owner="Store")
+        self.assertEqual([(f.rule, f.owner, f.detail, f.confirmed) for f in found],
+                         [("#355", "Store.theirs", "`theirs` 반환 `FortuneRecord.frozenset` 이 애그리거트도 값 객체도 아니다", True)])
         for outside in ("application/fortune_record/domain_layer/fortune_record/repository/fortune_record_repository.py",
                         "application/fortune_record/driven_layer/fortune_record/fortune_record_repository.py"):
             with self.subTest(path=outside):
