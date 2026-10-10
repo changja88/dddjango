@@ -2197,7 +2197,30 @@ def _mark(use_case: AuthenticateAccountUseCase, command: AuthenticateAccountComm
 ''').replace("= use_case.execute(command)\n        except InvalidCredentials",
              "= self._authenticate(use_case, command, response)\n        except InvalidCredentials")},
              [], EV_UNMANAGED_RUNS),
+    # N33e — 모듈 수준 `if` 아래의 `@router.post` 함수: route 데코가 달렸어도 code lane 이 operation 으로 보지 않는 자리다
+    # (operation = 모듈 · 클래스 본문에 바로 놓인 함수). 승인 밖 필드를 꼴 맞게 읽어도 트리 #474 가 그대로 선다 — 비켜 주기
+    # 대상을 «route 처럼 보이는 데코가 달린 함수» 로 넓힌 변이를 잡는다(재검토 보완).
+    "N33e": (ev_files(imports="from ninja import Router\n", module='''
+router: Router = Router()
+
+if _LOGIN_BLOCKED_REASON_HEADER:
+
+    @router.post("/sessions/legacy", response={200: AccountOut, 403: AccountSuspendedError})
+    def create_legacy_session(
+        request: HttpRequest, response: HttpResponse, use_case: AuthenticateAccountUseCase, command: AuthenticateAccountCommand
+    ) -> None:
+''' + textwrap.indent(EV_UNMANAGED_READ, " " * 8) + "\n"), [], EV_UNMANAGED_RUNS),
+    # N33f — `except*` handler 는 managed catch 가 아니다: 트리 #474 가 그대로 서고, code lane 은 수집 실행에서 분석 오류로
+    # 멈춘다(통과가 아니다). `except*` 는 `except` 와 한 try 에 섞지 못하고 본문에 `return` 을 못 둔다.
+    "N33f": ({EV_CTRL: ev_controller(ev_arm('marker: str = "x"\nresponse["Login-Blocked-Code"] = suspended.reason_code\n').replace(
+        "        except AccountSuspended as suspended:", "        except* AccountSuspended as suspended:")).replace(
+        "        except InvalidCredentials:\n            invalid_credentials: AccountsErrorSchema = InvalidCredentialsError()\n"
+        "            return Status(403, invalid_credentials)\n", "")},
+        [], {"auto": (2, EV_UNMANAGED_474), "cj": (2, EV_UNMANAGED_474), "bl": (1, "except* direct grammar unsupported")}),
 })
+assert "    @router.post(" in EV_CASES["N33e"][0][EV_CTRL] and "\nif _LOGIN_BLOCKED_REASON_HEADER:\n" in EV_CASES["N33e"][0][EV_CTRL]
+assert "except* AccountSuspended as suspended:" in EV_CASES["N33f"][0][EV_CTRL]
+assert "except InvalidCredentials" not in EV_CASES["N33f"][0][EV_CTRL]
 # N34 — 머리 값 S 문법: 승인 필드 원자와 다른 값을 한 f-string 머리에 섞는다(꼴 · 승인은 맞으므로 auto 통과 · code-json ⑷)
 for _suffix in ("", "-app"):
     EV_CASES["N34" + _suffix] = (
@@ -2215,6 +2238,62 @@ EV_CASES["N35"] = (
     ev_files(ev_arm(ev_single(headers=('response["Login-Blocked-Label"] = suspended.reason_label',))),
              **{f"{EV_EXC_DIR}/account_suspended.py": EV_UNDECLARED_SRC}),
     [EV_LABEL], {mode: (2, [("#474", "= suspended.reason_label", T474)]) for mode in ("auto", "cj", "bl", "pre")})
+
+# N36 — 사건 값을 읽는 catch 안에서는 «평가되지 않는 자리»(람다 본문)의 통째 쓰기도 막는다(F4-80 재검토 보완). forwarding 은
+# 평가되는 호출 인자만 봐서, BC base 설명 칸의 `(lambda: str(n))()` 가 꼴 2 · 꼴 1 + 사건 값 안에서 code-json 을 지나갔다
+# (준비된 concrete 는 S 문법이 막는다). 응용 판은 그 생성 행에 C2 · 도메인 판은 트리 #474 그대로다.
+# N36d-app — 사건 값을 읽지 않는 응용 catch 의 같은 꼴은 행렬이 clean 으로 고정한 기존 결정이라 그대로 통과한다(기계 밖 —
+# 감수 몫 · `controller-clean-caught-exception-nested-lambda-scope` · `controller-fresh-clean-caught-exception-in-lambda-body-scope`).
+# N36e — 평가되는 호출 인자 속 통째 쓰기(`message=str(n)`)는 forwarding 줄 하나 그대로다(이 보완이 C2 를 겹쳐 내지 않는다).
+# P18 — 같은 틀(BC base 두 가지)의 양성: 설명 칸이 승인 원자 f-string 이면 통과한다.
+EV_CODE_IMPORT = "from application.accounts.driving_layer.api.bc_error_schema import AccountsErrorCode\n"
+
+
+def _ev_base_message(name: str, template: str, form: str, verdict: str) -> None:
+    """BC base 생성의 설명 칸 값 한 변종 — form: f2 = 꼴 2 의 값 있는 가지 · f1ev = 꼴 1 + 승인 사건 값(머리) · f1no = 사건 값 없음.
+
+    verdict: block = 응용 C2(그 생성 행) · 도메인 트리 #474 / keep = 응용 통과(기존 결정) · 도메인 트리 #474 / pass = 둘 다 통과 /
+    forward = 평가되는 호출 인자 속 통째 쓰기 — forwarding 줄 하나 그대로(C2 를 더하지 않는다 · 수집 실행의 도메인 판도 forwarding)."""
+    for suffix, caught, head, origin in (("", "suspended", "AccountSuspended as suspended", EV_SUSP),
+                                         ("-app", "blocked", "LoginBlocked as blocked", EV_APP)):
+        message = template.replace("NAME", caught)
+        ctor = f"AccountsErrorSchema(error=AccountsErrorCode.ACCOUNT_SUSPENDED, message={message})"
+        if form == "f2":
+            body = ev_form2(
+                f"until_error: AccountsErrorSchema = {ctor}\n"
+                f"response[_LOGIN_BLOCKED_UNTIL_HEADER] = {caught}.blocked_until.astimezone(UTC).isoformat()\n"
+                "return Status(403, until_error)\n",
+                "indefinite_error: AccountsErrorSchema = AccountsErrorSchema(\n"
+                '    error=AccountsErrorCode.ACCOUNT_SUSPENDED, message="Account is suspended indefinitely."\n)\n'
+                "return Status(403, indefinite_error)\n", f"{caught}.blocked_until is not None")
+            flags = [f"{origin}.blocked_until"]
+        else:
+            read = [f'response["Login-Blocked-Label"] = {caught}.reason_label'] if form == "f1ev" else []
+            body = "\n".join([f"suspended_error: AccountsErrorSchema = {ctor}", *read,
+                              "return Status(403, suspended_error)"]) + "\n"
+            flags = [f"{origin}.reason_label"] if form == "f1ev" else []
+        files = ev_files(ev_arm(body, head=head), imports=EV_CODE_IMPORT + (EV_APP_IMPORT if suffix else ""))
+        if verdict == "pass" or (verdict == "keep" and suffix):
+            expectations = {"auto": (0, []), "cj": (0, []), "bl": (0, [])}
+        elif verdict == "forward" and suffix:
+            forwarded = (2, [("-", f"except {head}", EV_FWD_A)])
+            expectations = {"auto": (0, []), "cj": forwarded, "bl": forwarded}
+        elif verdict == "forward":
+            expectations = {"auto": (2, [("#474", message, T474)]), "cj": (2, [("#474", message, T474)]),
+                            "bl": (2, [("#474", f"except {head}", EV_FWD_D)])}
+        elif suffix:
+            expectations = {"auto": (0, []), "cj": (2, [("-", message, EV_C2)]), "bl": (2, [("-", message, EV_C2)])}
+        else:
+            expectations = {mode: (2, [("#474", message, T474)]) for mode in ("auto", "cj", "bl")}
+        EV_CASES[name + suffix] = (files, flags, expectations)
+
+
+_ev_base_message("N36a", "(lambda: str(NAME))()", "f2", "block")
+_ev_base_message("N36b", "(lambda: NAME)", "f2", "block")
+_ev_base_message("N36c", "(lambda: str(NAME))()", "f1ev", "block")
+_ev_base_message("N36d", "(lambda: str(NAME))()", "f1no", "keep")
+_ev_base_message("N36e", "str(NAME)", "f1ev", "forward")
+_ev_base_message("P18", 'f"Account is suspended until {NAME.blocked_until.astimezone(UTC).isoformat()}."', "f2", "pass")
 
 # lesson 꼴(트리 밖 `driving_layer/controller.py` — code lane 행렬 픽스처와 같은 자리)
 EV_LESSON_CTRL = "application/lesson/driving_layer/controller.py"

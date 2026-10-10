@@ -43,6 +43,8 @@ overlap 절 — #62·#474 는 handler 행, ⓓ#125 는 route 함수 def 행 좌�
   `*_service.py` 는 그대로다.
   머리 대입(키 · 값)에 실을 수 있는 것은 승인 필드 읽기 꼴뿐이다 — 잡은 예외를 통째로 쓰면(`f"{n}"` · `"%s" % n` · `n`)
   호출이 없어도 막는다(가지 문법 줄 + 응용 catch 는 C2 · 도메인 catch 는 트리 #474 — 구현 검토 보완).
+  사건 값을 읽는 응용 catch 에서는 람다 본문처럼 평가되지 않는 자리의 통째 쓰기(`message=(lambda: str(n))()`)도 C2 다
+  (도메인 catch 는 트리 #474 — 재검토 보완). 사건 값을 읽지 않는 응용 catch 의 같은 꼴은 그대로다(기계 밖 — 감수 몫).
 
 그래프 좌표(T2-2): 규범 정본 = 온톨로지 그래프(`ontology/rules/`) · 이 검사기의 #N ↔ Work 조인은
   alias 대장(`ontology/wiring/aliases.ttl`)이 소유한다. 조인 확정: 없음(대장 미등재 — #74 소유자
@@ -4369,8 +4371,9 @@ def _event_value_findings(
     seen: set[tuple[Path, int, str]],
 ) -> None:
     """C1 — 꼴 맞는 읽기의 `원 경로.필드` 가 `--event-value` 목록 밖(도메인 = #474 · overlap 키 없음 / 응용 = 계약).
-    C2 — 응용 catch 의 꼴 밖 속성 읽기 `n.<x>` 와 머리 대입(키 · 값) 안 통째 쓰기(계약 — 호출 인자 속 통째 쓰기는
-    forwarding 몫). 도메인 catch 의 꼴 밖 읽기는 트리 #474 가 모든 프로필에서 낸다(새 줄 없음)."""
+    C2 — 응용 catch 의 꼴 밖 속성 읽기 `n.<x>` 와 머리 대입(키 · 값) 안 통째 쓰기, 그리고 사건 값을 읽는 catch 의
+    평가되지 않는 자리(람다 본문 등) 안 통째 쓰기(계약 — 평가되는 호출 인자 속 통째 쓰기는 forwarding 몫).
+    도메인 catch 의 꼴 밖 읽기는 트리 #474 가 모든 프로필에서 낸다(새 줄 없음)."""
     if not reads.in_form and not reads.out_of_form:
         return
     layers: set[str | None] = {
@@ -4399,10 +4402,18 @@ def _event_value_findings(
             rule="#474" if layer == "domain" else None,
         )
     if layer == "application":
+        # 재검토 보완 — 사건 값을 읽는 handler(in_form 있음)에서는 «평가되지 않는 자리»(람다 본문 등)의 통째 쓰기도 C2 다:
+        # forwarding 은 평가되는 호출 인자만 봐서 `message=(lambda: str(n))()` 를 놓친다. 사건 값을 읽지 않는 handler 는
+        # 그대로다(unevaluated 가 비어 있다 — 행렬이 clean 으로 고정한 람다 본문 사례).
+        unevaluated: set[int] = set()
+        if reads.in_form:
+            evaluated = {id(node) for statement in handler.body for node in _iter_evaluated_nodes(statement)}
+            unevaluated = {id(name_node) for name_node in reads.out_of_form} - evaluated
         for name_node in reads.out_of_form:
             if (
                 id(name_node) not in reads.attribute_reads
                 and id(name_node) not in reads.header_whole
+                and id(name_node) not in unevaluated
             ):
                 continue
             _append_finding(
