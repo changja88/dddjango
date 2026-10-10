@@ -31,7 +31,7 @@ URL·내비게이션·문서 셸(탭) 코드를 쓸 때, DataSource·api_client�
 - VM은 요청마다 새로 — 요청 사이 값을 VM·모듈 전역에 두지 않는다 · POST는 CSRF(`{% csrf_token %}`·`hx-headers`) · 출력은 자동 이스케이프만(`|safe` 금지) · Django Form 층 없음 (§6)
 - 정적 이미지 `<img src="{% static 'web/images/…' %}">` — 경로는 asset-manifest `local_path` 그대로 (§8) · 형상은 동결 시안을 템플릿+CSS로 빠짐없이 재현·직수입 금지 (§9)
 - 색·글자 리터럴은 `design_system/foundation/*.css` 안에서만 — 조각 CSS·부품 CSS·`style` 속성 금지(NM10) · 부품 CSS 클래스는 `<수식>-<군>` 접두·상태는 BEM `--`·`aria-*`/`data-*`(NM12) · 초기화·웹폰트는 theme (§10)
-- 외부 JS는 G1 승인·등재된 공식 플랫폼 SDK 사본(`web/static/vendor/<sdk_id>/<파일>`)뿐 — 사본·등재 목록은 Coordinator 의 `sdk_vendor.py` 소관(읽기만) · 로드 태그는 페이지 `{% block scripts %}` 안 기능 JS 앞 `src`·`defer` 만 · CDN 실행 태그 금지 (§11)
+- 외부 JS는 G1 승인·등재된 공식 플랫폼 SDK 사본(`web/static/vendor/<sdk_id>/<파일>`)뿐 — 사본·등재 목록은 Coordinator 의 `sdk_vendor.py` 소관(읽기만) · 로드 태그는 페이지 `{% block scripts %}` 안에서 그 SDK 를 부르는 기능 JS 태그보다 앞 · `src`·`defer` 만 · CDN 실행 태그 금지 (§11)
 - **테스트는 전용 스킬로 이전**: 무엇을/오라클/비-vacuity/단언 FORM은 `discipline-test`, Django 메커니즘(VM 대체·테스트 클라이언트·HTML 단언·HTMX 헤더·`unittest.mock`·날짜 주입·브라우저 테스트)은 `implementation-test` (§7)
 
 - `font-size`는 아이콘 글리프에도 foundation 토큰으로 쓴다. 글리프 크기는 `app_spacing.css`의 `--spacing-icon-*`로 정의하고 `font-size: var(--spacing-icon-*)`로 인용한다. `width`·박스 `height` 등 비-typography 크기는 architecture-ui §8의 추출값 직접 인용 규칙을 따른다.

@@ -109,7 +109,7 @@ def test_password_toggle_reveals_input(page: Page, live_server: LiveServer) -> N
 - 브라우저 테스트도 discipline-test FORM을 그대로 쓴다: 정확 개수 `to_have_count(n)` · 정확 글자 `to_have_text(x)`(부분 일치 `to_contain_text` 금지) · non-edge `nth(2)`.
 - **샌드박스 안 브라우저**: macOS 샌드박스(예: Codex 셸 샌드박스)는 Chrome 시작에 필요한 시스템 서비스를 막아 브라우저가 시작 즉시 죽는다 — 이 환경에서 브라우저 테스트가 섞인 실행은 처음부터 샌드박스 밖에서 돈다(어디서·어떻게는 Coordinator·coder-web의 «브라우저 실행 환경» 규칙). 샌드박스 안에서 돈 실행의 브라우저 시작 실패(`BrowserType.launch: Target page, context or browser has been closed` · 브라우저 프로세스 `SIGABRT`/`SIGTRAP` · `bootstrap_check_in … Permission denied`)는 그것만으로 원인을 정하지 않는다 — 샌드박스 밖에서 다시 돈 결과가 그 테스트의 결과다(밖에서도 실패하면 실제 실패). 같은 실행에서 브라우저 없이 돈 테스트의 결과는 그대로다. 테스트를 건너뛰거나 지우거나 하니스·브라우저 판을 바꿔 우회하지 않는다.
 
-**영구 시험 재현성**: `web_test/`·호스트 시험 트리와 시험 지원 코드(`conftest.py`·`_support.py` 등)는 `.dddjango-web/`를 읽거나 쓰지 않고 프로젝트 루트 밖 머신 고정 고정물·기준판·캐시에 기대지 않는다. 고정물·기대 자료는 시험 트리에, 실행 기록은 `tmp_path` 등 임시 폴더에 둔다. 선택 도구 부재는 호스트 규칙대로 skip하고 설치된 도구의 고장은 실패로 남긴다. 레인 전용 환경 변수 존재 단언으로 실행 전제를 만들지 않는다 — 정상 환경 변수 행위 시험·필수 settings는 허용하며 환경 변수 의미 판정은 TG2 밖, discipline 감수와 G2 표준 실행이 확인한다.
+**영구 시험 재현성**: `web_test/`·호스트 시험 트리와 시험 지원 코드(`conftest.py`·`_support.py` 등)는 `.dddjango-web/`를 읽거나 쓰지 않고 프로젝트 루트 밖 머신 고정 고정물·기준판·캐시에 기대지 않는다. 기록 폴더(`.dddjango-web/`·`.dddjango/`)에 둔 시험 원문 사본은 영구 시험이 아니다 — 그 사본을 영구 시험으로 옮겨 오면 새 시험으로 본다. 고정물·기대 자료는 시험 트리에, 실행 기록은 `tmp_path` 등 임시 폴더에 둔다. 선택 도구 부재는 호스트 규칙대로 skip하고 설치된 도구의 고장은 실패로 남긴다. 레인 전용 환경 변수 존재 단언으로 실행 전제를 만들지 않는다 — 정상 환경 변수 행위 시험·필수 settings는 허용하며 환경 변수 의미 판정은 TG2 밖, discipline 감수와 G2 표준 실행이 확인한다.
 
 ## §5. 날짜·시간 결정성 — 주입
 

@@ -304,7 +304,7 @@ def channel_summary_embed_fragment(request: HttpRequest) -> HttpResponse:
 | 검사 | 이 스킬·짝 스킬의 규약 |
 |---|---|
 | PU1 — 신규 JS 경로·형태(htmx legacy core 이름 신설·기능 JS 평면 경로·vendor 자리는 등재 공식 SDK 사본만) | §1 · implementation-django §11 |
-| PU2 — 실행 태그(로컬 `{% static %}` 한 번·classic은 `defer`·`async`·조각 안 로드·CDN 금지 · 등재 SDK 태그는 `src`·`defer` 만·페이지 block 안 기능 JS 앞) | §1 · §9 · implementation-django §11 |
+| PU2 — 실행 태그(로컬 `{% static %}` 한 번·classic은 `defer`·`async`·조각 안 로드·CDN 금지 · 등재 SDK 태그는 `src`·`defer` 만·페이지 block 안에서 그 SDK 를 부르는 기능 JS 태그보다 앞) | §1 · §9 · implementation-django §11 |
 | PU3 — 인라인 JS 채널(`on*`·`hx-on*`·`js:`·`[조건식]`·스크립트 스킴 주소) | §9 |
 | PU6 — 여러 줄 `{# #}` 주석 누출 | implementation-django §6 |
 | PU7 — 자동 이스케이프 우회(`|safe`·`autoescape off`·`mark_safe`) | §9 · implementation-django §6 |

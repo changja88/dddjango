@@ -29,7 +29,7 @@ dddjango-web 테스트의 **Django 메커니즘·결정성·더블 표기**가 �
 - 외부 주소 이미지를 그리는 화면의 브라우저 테스트는 `page.route`로 그 요청을 고정 응답으로 돌린다 — 테스트 클라이언트 단언은 이미지를 받지 않아 미해당 (§6)
 - 헬퍼 계약(`d()`·`fc()`·`detail_state`/`list_state`·`FakeListVM`/`FakeDetailVM`·`get_page`/`get_fragment`·`get_list`/`get_detail`·`count_text`·`format_date`/`format_temp`·`SCREEN_PROBES`)은 §7 단일 정의 — discipline-test FORM이 이 이름·계약을 쓴다. `SCREEN_PROBES`만 예외로 FORM이 아니라 **별도 render-smoke 테스트(`render_smoke_test.py`·§7)가 소비**하는 화면 진입점 맵이다(view·헬퍼 이름을 맵 안에 가둬 프로브가 BC 이름에 비의존·green 경로 강제) (§7)
 
-- **영구 시험 재현성**: `web_test/`·호스트 시험 트리와 시험 지원 코드(`conftest.py`·`_support.py` 등)는 `.dddjango-web/`를 읽거나 쓰지 않고 프로젝트 루트 밖 머신 고정 고정물·기준판·캐시에 기대지 않는다. 고정물·기대 자료는 시험 트리에, 실행 기록은 `tmp_path` 등 임시 폴더에 둔다. 선택 도구 부재는 호스트 규칙대로 skip하고 설치된 도구의 고장은 실패로 남긴다. 레인 전용 환경 변수 존재 단언으로 실행 전제를 만들지 않는다 — 정상 환경 변수 행위 시험·필수 settings는 허용하며 환경 변수 의미 판정은 TG2 밖, discipline 감수와 G2 표준 실행이 확인한다.
+- **영구 시험 재현성**: `web_test/`·호스트 시험 트리와 시험 지원 코드(`conftest.py`·`_support.py` 등)는 `.dddjango-web/`를 읽거나 쓰지 않고 프로젝트 루트 밖 머신 고정 고정물·기준판·캐시에 기대지 않는다. 기록 폴더(`.dddjango-web/`·`.dddjango/`)에 둔 시험 원문 사본은 영구 시험이 아니다 — 그 사본을 영구 시험으로 옮겨 오면 새 시험으로 본다. 고정물·기대 자료는 시험 트리에, 실행 기록은 `tmp_path` 등 임시 폴더에 둔다. 선택 도구 부재는 호스트 규칙대로 skip하고 설치된 도구의 고장은 실패로 남긴다. 레인 전용 환경 변수 존재 단언으로 실행 전제를 만들지 않는다 — 정상 환경 변수 행위 시험·필수 settings는 허용하며 환경 변수 의미 판정은 TG2 밖, discipline 감수와 G2 표준 실행이 확인한다.
 - **이미지 비교 비채택**: 같은 실행·같은 브라우저의 옛 판 ↔ 지금 판 이미지 비교도 비채택이며, 승인 명세나 시험 목록에 있어도 예외가 아니다. 사람 눈 확인용 갈무리는 그대로 유지한다.
 
 ## 상세 레퍼런스
