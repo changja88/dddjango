@@ -18,10 +18,9 @@ import re
 from html.parser import HTMLParser
 from typing import Dict, List, Optional, Tuple
 
-from .check_vendor import JsView
 from .common import (
     HTMX_CORE, JS_EXTS, ROOT_VIEW_TEMPLATE, VERBATIM_RE, BackstopContext, Finding, base_name_of, ext_of, has_seg,
-    is_standard_path, mask_js, parent_dir_of,
+    is_standard_path, parent_dir_of,
 )
 from .sdk_registry import VENDOR_DIR, sdk_state
 
@@ -212,17 +211,156 @@ def _sdk_global(ctx: BackstopContext, path: str) -> Optional[str]:
     return name if isinstance(name, str) and name else None
 
 
+# 뒤에 오는 `/` 가 정규식 리터럴인 낱말(값이 아니다). 식별자로도 쓸 수 있는 of·yield·await 는 갈림 자리로 둔다.
+_JS_REGEX_WORDS = frozenset({'return', 'typeof', 'instanceof', 'in', 'new', 'delete', 'void', 'throw', 'case', 'do', 'else'})
+_JS_SPLIT_WORDS = frozenset({'of', 'yield', 'await'})
+
+
+class _JsCode:
+    """PU2 ③ 전용 JS 낱말 가름 — 원문 글자마다 «코드» 인가를 표시한다(주석·문자열·템플릿 글·정규식 리터럴은 코드가
+    아니고, 템플릿의 `${…}` 안은 코드다 · 중첩 템플릿과 그 안의 주석을 따라간다). `/` 는 앞 낱말로 가른다 — 값 뒤는
+    나눗셈, 연산자·구두점·식 시작 뒤는 정규식이고, `)`·`}`·`++`·`--`·`.`·of·yield·await 뒤는 둘 다 가능해 나눗셈
+    (코드)으로 읽는다. 확정하지 못한 자리가 있으면 uncertain 이다: 닫히지 않은 문자열·템플릿·`${`·블록 주석·정규식,
+    그리고 갈림 자리의 `/` 가 정규식으로도 읽히면서 그 사이에 따옴표·백틱·역슬래시·`/` 가 있어 뒤 판독이 갈리는 경우.
+    WV 검사가 쓰는 mask_js·JsView 와는 따로다(그쪽 동작을 바꾸지 않는다)."""
+
+    def __init__(self, text: str) -> None:
+        self.text: str = text
+        self.code: List[bool] = [False] * len(text)
+        self.uncertain: bool = False
+        self._scan(0, True)
+
+    def _scan(self, i: int, top: bool) -> int:
+        """코드 구간을 읽는다 — top 이 아니면 `${` 다음에서 시작해 짝 맞는 `}` 다음 offset 을 돌려준다.
+        last = 앞 낱말의 갈래: op(뒤 `/` 는 정규식) · value(나눗셈) · split(갈림)."""
+        t: str = self.text
+        n: int = len(t)
+        depth: int = 0
+        last: str = 'op'
+        while i < n:
+            c: str = t[i]
+            if c.isspace():
+                i += 1
+            elif t.startswith('//', i):
+                end: int = t.find('\n', i)
+                i = n if end < 0 else end
+            elif t.startswith('/*', i):
+                end = t.find('*/', i + 2)
+                if end < 0:
+                    self.uncertain = True
+                    return n
+                i = end + 2
+            elif c in '"\'':
+                i, last = self._string(i), 'value'
+            elif c == '`':
+                i, last = self._template(i), 'value'
+            elif c == '/':
+                i, last = self._slash(i, last)
+            elif c.isalnum() or c in '_$' or ord(c) > 127:
+                j: int = i
+                while j < n and (t[j].isalnum() or t[j] in '_$' or ord(t[j]) > 127):
+                    j += 1
+                self.code[i:j] = [True] * (j - i)
+                word: str = t[i:j]
+                last = 'op' if word in _JS_REGEX_WORDS else 'split' if word in _JS_SPLIT_WORDS else 'value'
+                i = j
+            else:
+                if not top and c == '}' and depth == 0:
+                    return i + 1
+                depth += (c == '{') - (c == '}') if not top else 0
+                self.code[i] = True
+                if c in '+-' and t.startswith(c * 2, i):  # ++ · -- (후위면 뒤 `/` 는 나눗셈)
+                    self.code[i + 1] = True
+                    i, last = i + 2, 'split'
+                    continue
+                last = 'value' if c == ']' else 'split' if c in ')}.' else 'op'
+                i += 1
+        if not top:
+            self.uncertain = True  # `${` 가 닫히지 않았다
+        return n
+
+    def _string(self, i: int) -> int:
+        t: str = self.text
+        j: int = i + 1
+        while j < len(t) and t[j] != '\n':
+            if t[j] == '\\':
+                j += 2
+            elif t[j] == t[i]:
+                return j + 1
+            else:
+                j += 1
+        self.uncertain = True  # 그 줄에서 닫히지 않은 문자열
+        return min(j, len(t))
+
+    def _template(self, i: int) -> int:
+        t: str = self.text
+        j: int = i + 1
+        while j < len(t):
+            if t[j] == '\\':
+                j += 2
+            elif t[j] == '`':
+                return j + 1
+            elif t.startswith('${', j):
+                j = self._scan(j + 2, False)
+            else:
+                j += 1
+        self.uncertain = True  # 닫히지 않은 템플릿
+        return len(t)
+
+    def _regex_end(self, i: int) -> Optional[int]:
+        """i 의 `/` 를 정규식 리터럴로 읽을 때 닫는 `/` 다음 offset — 그 줄에서 닫히지 않으면 None."""
+        t: str = self.text
+        j: int = i + 1
+        in_class: bool = False
+        while j < len(t) and t[j] != '\n':
+            if t[j] == '\\':
+                j += 2
+                continue
+            if t[j] == '[':
+                in_class = True
+            elif t[j] == ']':
+                in_class = False
+            elif t[j] == '/' and not in_class:
+                return j + 1
+            j += 1
+        return None
+
+    def _slash(self, i: int, last: str) -> Tuple[int, str]:
+        t: str = self.text
+        end: Optional[int] = self._regex_end(i)
+        if last == 'op' and end is not None:  # 정규식 리터럴(플래그 포함) — 코드가 아니다
+            while end < len(t) and (t[end].isalnum() or t[end] in '_$'):
+                end += 1
+            return end, 'value'
+        if last == 'op' or (last == 'split' and end is not None and any(ch in t[i + 1:end - 1] for ch in '\'"`\\/')):
+            self.uncertain = True  # 정규식 자리인데 닫히지 않았거나, 나눗셈·정규식에 따라 뒤 판독이 갈린다
+        self.code[i] = True
+        return i + 1, 'op'
+
+
+def _js_reference_lines(source: str, name: str) -> Optional[Tuple[int, ...]]:
+    """JS 원문의 코드 부분에서 name 이 식별자 경계(앞뒤가 영숫자·`_`·`$` 가 아님)로 나오는 행.
+    원문 어디에도 그 이름이 없으면 빈 tuple 이고, 가름을 확정하지 못했는데(_JsCode.uncertain) 코드 밖으로 읽힌
+    이름이 있으면 None(판독 불명) — 실제 참조를 «참조 없음» 으로 놓치지 않는다."""
+    hits: List[int] = [m.start() for m in re.finditer(r'(?<![\w$])' + re.escape(name) + r'(?![\w$])', source)]
+    if not hits:
+        return ()
+    view = _JsCode(source)
+    code: List[int] = [offset for offset in hits if view.code[offset]]
+    if view.uncertain and len(code) != len(hits):
+        return None
+    return tuple(sorted({source.count('\n', 0, offset) + 1 for offset in code}))
+
+
 def _sdk_reference_lines(ctx: BackstopContext, js: str, name: Optional[str]) -> Optional[Tuple[int, ...]]:
     """기능 JS(web 상대) 원문의 코드 부분에서 등재 전역 이름이 식별자 경계로 나오는 행 — «그 SDK 를 부르는 JS» 판정.
 
-    코드 부분 = 주석을 지운 원문(`mask_js().no_comments`)의 `JsView` 코드 뷰에서 정규식 리터럴 자리까지 지운 것 —
-    문자열·정규식 리터럴 밖이고 템플릿 리터럴의 `${…}` 안은 코드다. 식별자 경계 = 이름 앞뒤가 영숫자·`_`·`$` 가
-    아님(`window.<전역>`·`globalThis.<전역>` 의 점 뒤는 받는다).
+    코드 부분 = 주석·문자열·템플릿 글·정규식 리터럴 밖(템플릿 리터럴의 `${…}` 안은 코드 — `_JsCode`). 식별자 경계 =
+    이름 앞뒤가 영숫자·`_`·`$` 가 아님(`window.<전역>`·`globalThis.<전역>` 의 점 뒤는 받는다).
     판정 범위: 등재 전역 이름을 담은 보수적 소비 후보 판정이다 — 같은 이름의 지역 변수·다른 객체 속성은 소비로
     센다(과보고). `window["<전역>"]` 같은 문자열 접근과 다른 JS 를 거친 간접 호출은 못 본다(감수 몫).
-    정규식 리터럴과 나눗셈은 `JsView` 의 앞 문자 규칙으로 가른다(그 규칙이 정규식으로 본 자리의 이름은 세지 않는다).
-    판독 불명(원문 없음·디코드 실패·코드 뷰 실패·등재 전역 불명)은 None — 호출 쪽이 «부르는 것» 으로 센다.
-    읽기는 ctx.web / js, 행은 원문 행(added 조회와 같은 web 상대 좌표)이다."""
+    판독 불명(원문 없음·디코드 실패·등재 전역 불명·가름을 확정하지 못한 원문에서 코드 밖으로 읽힌 이름)은 None —
+    호출 쪽이 «부르는 것» 으로 센다. 읽기는 ctx.web / js, 행은 원문 행(added 조회와 같은 web 상대 좌표)이다."""
     cache: Dict[Tuple[str, Optional[str]], Optional[Tuple[int, ...]]] = getattr(ctx, '_sdk_reference_cache', None)
     if cache is None:
         cache = {}
@@ -232,16 +370,8 @@ def _sdk_reference_lines(ctx: BackstopContext, js: str, name: Optional[str]) -> 
         cache[key] = None
         if name is not None:
             try:
-                ms = mask_js((ctx.web / js).read_text(encoding='utf-8'))
-                view = JsView(ms.no_comments)
-                code: List[str] = list(view.code_text)
-                for start, end in view.regexes:
-                    for k in range(start, end):
-                        if code[k] != '\n':
-                            code[k] = ' '
-                cache[key] = tuple(sorted({ms.line_of(m.start()) for m in re.finditer(
-                    r'(?<![\w$])' + re.escape(name) + r'(?![\w$])', ''.join(code))}))
-            except (OSError, UnicodeError, ValueError, IndexError, RecursionError):
+                cache[key] = _js_reference_lines((ctx.web / js).read_text(encoding='utf-8'), name)
+            except (OSError, UnicodeError, RecursionError):
                 pass
     return cache[key]
 

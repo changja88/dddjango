@@ -30,8 +30,9 @@ class InflowResult:
     inflow: List[Tuple[Finding, str]] = field(default_factory=list)
     # 승인 사슬 순서: (M, ^1, ^2, 제목, 역방향 의심 알림)
     merges: List[Tuple[str, str, str, str, List[str]]] = field(default_factory=list)
-    # 수신 증명이 선 시험 파일(root 상대) 가운데 미지원 흐름 고지가 있는 것 — 출력이 그 고지를 한 줄로 모은다
-    received_tests: Set[str] = field(default_factory=set)
+    # 수신 증명이 선 시험 파일(root 상대) 가운데 미지원 흐름 고지가 있는 것 → 그 파일을 마지막으로 들인 승인 병합
+    # (출력이 그 고지를 한 줄로 모으고 병합을 함께 적는다)
+    received_tests: Dict[str, str] = field(default_factory=dict)
 
 
 def _git(root: Path, *args: str) -> bytes:
@@ -201,48 +202,70 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
     links: List[bool] = []
 
     def lane_links() -> bool:
-        """root 아래에 레인이 손댄, root 밖으로 풀리는 심볼릭 링크가 있는가(한 번만 잰다).
+        """root 아래에 레인이 손댄, root 밖으로 풀리는 심볼릭 링크가 있는가(한 번만 잰다 · 현물을 본다).
 
-        TG2 의 경로 판정은 링크를 풀어 root 밖인지 본다 — 그대로 받은 시험의 발견도 레인이 더한 링크 탓일 수 있어,
-        그런 링크가 있으면 수신 증명을 하지 않는다. 손댄 링크 = 작업 트리에서 바뀌었거나 미추적인 링크, 또는 HEAD 의
-        링크 가운데 기준과 다르고 그 걸음이 전부 «승인 병합의 상류판 그대로 수신» 은 아닌 것. root 안으로 풀리는
-        링크는 판정을 밖으로 뒤집지 못하므로 세지 않는다."""
+        TG2 의 경로 판정은 현물 링크를 풀어 root 밖인지 본다 — 그대로 받은 시험의 발견도 레인이 바꾼 링크 탓일 수
+        있어, 그런 링크가 있으면 수신 증명을 하지 않는다. 색인(git status)은 assume-unchanged·skip-worktree·무시
+        규칙에 가려지므로 믿지 않고 추적 경로의 현물을 lstat 한다. 손댄 링크 =
+        ⓐ git status 가 낸 바뀐·미추적 링크
+        ⓑ HEAD 가 링크로 아는 경로의 현물이 그 링크가 아닌 것(os.readlink != HEAD blob), 또는 현물은 그대로지만
+           기준과 다르고 그 걸음이 전부 «승인 병합의 상류판 그대로 수신» 은 아닌 것
+        ⓒ HEAD 가 일반 파일·폴더로 아는 경로(추적 파일과 root 아래 그 부모 폴더들)가 현물에서는 링크인 것
+        가운데 root 밖으로 풀리는 것이다. root 안으로 풀리는 링크는 판정을 밖으로 뒤집지 못해 세지 않는다.
+        대조 실패·판독 불능은 손댄 링크로 센다(증명 실패). 한계: git 이 무시하는 미추적 링크(.venv 류)는 보지 않는다."""
         if not links:
-            inside = os.path.realpath(ctx.root)
-
-            def leaves(path: str) -> bool:
-                target = repo / path
-                return os.path.islink(target) and os.path.commonpath([os.path.realpath(target), inside]) != inside
-
-            found = any(p.startswith(prefix) and leaves(p) for p in dirty)
-            for path, entry in ([] if found else list(tree(head).items())):
-                if (entry[0] != '120000' or not path.startswith(prefix) or tree(base).get(path) == entry
-                        or not leaves(path)):
-                    continue
-                for sha, parents in chain:
-                    current = tree(sha).get(path)
-                    if current == (tree(parents[0]).get(path) if parents else None):
-                        continue
-                    if not (sha in approved and len(parents) == 2 and current == tree(parents[1]).get(path)):
-                        found = True
-                        break
-                if found:
-                    break
-            links.append(found)
+            try:
+                links.append(touched_link())
+            except (Exception, SystemExit):
+                links.append(True)
         return links[0]
+
+    def touched_link() -> bool:
+        inside = os.path.realpath(ctx.root)
+
+        def leaves(path: str) -> bool:
+            return os.path.commonpath([os.path.realpath(repo / path), inside]) != inside
+
+        if any(p.startswith(prefix) and os.path.islink(repo / p) and leaves(p) for p in dirty):
+            return True
+        folders: Set[str] = set()
+        for path, entry in tree(head).items():
+            if not path.startswith(prefix):
+                continue
+            parent = os.path.dirname(path)
+            while parent and parent + '/' != prefix and parent not in folders:
+                folders.add(parent)
+                parent = os.path.dirname(parent)
+            linked = os.path.islink(repo / path)
+            if entry[0] != '120000' or not (
+                    linked and os.fsencode(os.readlink(repo / path)) == _git(repo, 'cat-file', 'blob', entry[1])):
+                if linked and leaves(path):
+                    return True  # HEAD 가 아는 것과 다른 현물 링크
+                continue
+            if tree(base).get(path) == entry or not leaves(path):
+                continue
+            for sha, parents in chain:
+                current = tree(sha).get(path)
+                if current == (tree(parents[0]).get(path) if parents else None):
+                    continue
+                if not (sha in approved and len(parents) == 2 and current == tree(parents[1]).get(path)):
+                    return True
+        return any(os.path.islink(repo / folder) and leaves(folder) for folder in folders)
 
     receipts: Dict[str, Tuple[Optional[str], str]] = {}
 
     def receipt(path: str) -> Tuple[Optional[str], str]:
         """TG 수신 증명 — (그 경로를 마지막으로 들인 승인 병합 | None, 남긴 사유).
 
-        ① 경로가 HEAD tree 의 blob 이고 작업 트리가 그대로다 — git status 에 없고, 현물을 다시 해시한 blob 이
-           HEAD 와 같다(status 가 못 보는 수정을 막는다 · 심볼릭 링크인 시험은 가리키는 파일의 내용이 해시돼 서지 않는다).
+        ① 경로가 HEAD tree 의 blob 이고 작업 트리 현물이 그대로다 — git status 에 없고, 현물 바이트를 필터 없이
+           다시 해시한 blob 이 HEAD 와 같다(색인 플래그·clean 필터가 가린 수정을 막는다 · TG 분석이 읽는 것이 그
+           현물이다 · 심볼릭 링크인 시험은 가리키는 파일의 내용이 해시돼 서지 않는다). 줄 끝 변환·필터 때문에 현물
+           바이트가 blob 과 다른 파일은 같음을 증명하지 못해 서지 않는다(보수 쪽 한계).
         ② 기준..HEAD 첫 부모 사슬에서 그 blob 을 바꾼 걸음이 하나 이상이고, 전부 승인 병합이며 각각
            blob(M) == blob(M^2)(상류판 그대로 수신)다.
         ③ 경로가 관례 시험 자리다(conventional_test_path) — 수집 설정·G0 명시 경로에 기대 시험이 된 파일은
            레인의 설정 변경 탓일 수 있어 서지 않는다.
-        ④ root 아래에 레인이 손댄, root 밖으로 풀리는 심볼릭 링크가 없다(lane_links).
+        ④ root 아래에 레인이 손댄, root 밖으로 풀리는 현물 심볼릭 링크가 없다(lane_links).
         하나라도 어긋나면 이 레인 몫이다 — 사유는 증명을 깬 가장 늦은 걸음의 기존 문구. 부모 측정·스냅숏은 없다
         (TG2·TG3 은 기준점 없이 못 잰다). git 조회·판독 실패는 그 경로의 면제 증명 실패다(다른 발견으로 번지지 않는다).
         """
@@ -252,7 +275,8 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
                 entry = tree(head).get(path)
                 if entry is None:
                     receipts[path] = (None, '비-blob 경로')
-                elif path in dirty or _git(repo, 'hash-object', '--', path).decode().strip() != entry[1]:
+                elif (path in dirty
+                      or _git(repo, 'hash-object', '--no-filters', '--', path).decode().strip() != entry[1]):
                     receipts[path] = (None, '작업 트리 수정 중')
                 else:
                     last: Optional[str] = None
@@ -269,7 +293,7 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
                     elif last is None:
                         pass  # 기준 뒤 이 경로를 바꾼 걸음이 없다 — 기본 사유
                     elif not conventional_test_path(path[len(prefix):]):
-                        receipts[path] = (None, '유입 증명 실패(수집 설정에 기댄 시험 경로)')
+                        receipts[path] = (None, '유입 증명 실패(관례 시험 자리 밖)')
                     elif lane_links():
                         receipts[path] = (None, '유입 증명 실패(레인이 손댄 심볼릭 링크)')
                     else:
@@ -280,8 +304,9 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
 
     # 미지원 흐름 고지도 같은 술어로 가른다(그 파일에 TG 발견이 없어도). 승인 병합이 없으면 설 증명이 없다.
     for notice in (ctx.notices if active else []):
-        if isinstance(notice, UnsupportedTestFlow) and receipt(prefix + notice.path)[0]:
-            res.received_tests.add(notice.path)
+        deliver = receipt(prefix + notice.path)[0] if isinstance(notice, UnsupportedTestFlow) else None
+        if deliver:
+            res.received_tests[notice.path] = deliver
 
     candidates: List[Tuple[Finding, str]] = []
     for f in shown:

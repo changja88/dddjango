@@ -242,7 +242,12 @@ def main(argv: List[str]) -> int:
     for n in ctx.notices:
         if isinstance(n, UnsupportedTestFlow) and n.path in inflow.received_tests:
             if not gathered:
-                print('[info] TG2 일부 흐름 자동 판정 밖 — 승인 병합이 그대로 들인 시험 %d 파일은 이 레인 감수 대상이 아니다(승인 유입)' % len(inflow.received_tests))
+                sources = [m for m in inflow.merges if m[0] in set(inflow.received_tests.values())]
+                print('[info] TG2 일부 흐름 자동 판정 밖 — 승인 병합이 그대로 들인 시험 %d 파일은 이 레인 감수 대상이 아니다'
+                      '(승인 유입 · 병합 %s)' % (len(inflow.received_tests), ' · '.join(m[0][:12] for m in sources)))
+                if not inflow.inflow:  # «승인 유입» 절이 없는 실행 — 그 병합의 역방향/합성 의심 알림을 여기서 낸다
+                    for note in (note for m in sources for note in m[4]):
+                        print('[info] %s' % note)
                 gathered = True
             continue
         print(n)

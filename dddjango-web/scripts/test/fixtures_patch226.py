@@ -2,7 +2,7 @@
 
 A = 기록 폴더(.dddjango-web/ · .dddjango/)는 시험 자리가 아니다 · B = TG2·TG3 승인 유입의 수신 증명.
 «숨김 0» 묶음은 이 레인이 손댄 시험의 발견이 승인 유입으로 빠지지 않음을 본다(하나라도 빠지면 FAIL).
-HEAD 러너(고치기 전)는 별도 임시 사본으로 꺼내 출력 byte 를 대조한다.
+고치기 전 러너는 2.2.5 고정 커밋에서 별도 임시 사본으로 꺼내 출력 byte 를 대조한다(그 커밋이 없으면 건너뛰고 알린다).
 """
 from pathlib import Path
 import json
@@ -15,7 +15,7 @@ import tempfile
 
 SCRIPTS = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPTS))
-from src.common import BackstopContext
+from src.common import BackstopContext, Finding
 from src.check_tests import run_tests
 
 PASS = FAIL = 0
@@ -27,10 +27,12 @@ IMAGE = 'def test_x():\n    expect(page).to_have_screenshot("x.png")\n'
 SAFE = 'def test_x():\n    pass\n'
 LINKED = 'from pathlib import Path\ndef test_x():\n    (Path(__file__).parent / "data" / "x.json").read_text()\n'
 PROOF = '(수신 증명 — 기준 뒤 이 파일을 바꾼 걸음 = 승인 병합의 상류판 그대로뿐) · 파일 그대로'
-GATHERED = '[info] TG2 일부 흐름 자동 판정 밖 — 승인 병합이 그대로 들인 시험 %d 파일은 이 레인 감수 대상이 아니다(승인 유입)'
+GATHERED = '[info] TG2 일부 흐름 자동 판정 밖 — 승인 병합이 그대로 들인 시험 %d 파일은 이 레인 감수 대상이 아니다(승인 유입 · 병합 %s)'
+SUSPECT = '[info] 승인 병합 %s 의 ^2 %s 를 담은 ref 가 HEAD 가지뿐 — 역방향/합성 병합 의심(발주자 확인)'
 FLOW = '[info] TG2 일부 흐름 자동 판정 밖 — %s:%s 동적/미지원 입력은 무관함의 증명이 아니며 discipline 감수 대상'
 KEPT = '  ↳ 이 레인 몫으로 남김: '
 WIDE = 'st,md,im,nm,tg,pj,pu,wv'  # 순환(CY)은 기준선 파일을 쓰므로 두 러너 대조에서 뺀다
+RELEASE_225 = '1e4344a6e9028ccecee6d358e7781b4c798a4b46'  # dddjango-web 2.2.5 — «고치기 전 러너» 의 고정 판
 
 
 def git(root, *args, check=True):
@@ -62,7 +64,8 @@ def check(name, ok, detail=''):
         print('    ' + str(detail).replace('\n', '\n    ')[:2200])
 
 
-def project(temp, name, initial=None, nested=False):
+def project(temp, name, initial=None, nested=False, prepare=None):
+    """prepare(root) = 기준 커밋에 함께 실을 것(심볼릭 링크 등)을 만든다."""
     repo = temp / name
     root = repo / 'host' if nested else repo
     write(root, 'web/__init__.py', '')
@@ -70,6 +73,8 @@ def project(temp, name, initial=None, nested=False):
     write(root, 'web/static/htmx/htmx.min.js', 'var htmx={version:"2.0.10"};\n')
     for rel, source in (initial or {}).items():
         write(root, rel, source)
+    if prepare:
+        prepare(root)
     git(repo, 'init', '-q', '-b', 'main')
     base = commit(repo, 'base')
     git(repo, 'checkout', '-qb', 'lane')
@@ -152,7 +157,7 @@ def received(name, got, merge, cid='TG2', info=False, count=1):
     ok &= ' · ^1 ' in upstream and ' · ^2 ' in upstream and '승인 유입 %d건(종료 코드 제외)' % count in out
     ok &= KEPT not in out
     if info:
-        notice = GATHERED % count
+        notice = GATHERED % (count, merge[:12])
         ok &= out.count(notice) == 1 and 'discipline 감수 대상' not in out
         ok &= notice in out and out.index(notice) < out.index('[' + cid + '] BLOCKER')
     else:
@@ -184,19 +189,36 @@ def shape(name, ok, detail=''):
         check('꼴 불성립 — ' + name, False, detail)
 
 
+def hidden(repo, rel):
+    """그 경로가 git status 에 안 보이는가(색인 플래그·필터·무시로 가려졌는가)."""
+    return rel not in git(repo, 'status', '--porcelain', '--untracked-files=all')
+
+
+def unchanged(name, now, old, ok=True):
+    """2.2.5 러너와 출력 byte 대조 — 그 러너를 못 꺼냈으면 건너뛴 사실을 낸다."""
+    if old is None:
+        print('SKIP ' + name + ' — 2.2.5 러너 없음')
+    else:
+        check(name, now == old and ok, (now, old))
+
+
 with tempfile.TemporaryDirectory(prefix='web226-') as tmp:
     temp = Path(tmp).resolve()
     previous = temp / 'previous'
     previous.mkdir()
-    archive = subprocess.run(['git', '-C', str(SCRIPTS.parents[1]), 'archive', 'HEAD', 'dddjango-web/scripts'],
-                             capture_output=True, check=True, env=ENV)
-    subprocess.run(['tar', '-x', '-C', str(previous)], input=archive.stdout, check=True)
-    old_runner = previous / 'dddjango-web/scripts/backstop.py'
+    archive = subprocess.run(['git', '-C', str(SCRIPTS.parents[1]), 'archive', RELEASE_225, 'dddjango-web/scripts'],
+                             capture_output=True, env=ENV)
+    old_runner = None
+    if archive.returncode == 0:
+        subprocess.run(['tar', '-x', '-C', str(previous)], input=archive.stdout, check=True)
+        old_runner = previous / 'dddjango-web/scripts/backstop.py'
+    else:
+        print('SKIP 2.2.5 러너 대조 — 커밋 %s 가 이 저장소에 없다(2.2.5 대비 byte 대조를 건너뛴다)' % RELEASE_225[:8])
     outside = temp / 'outside-data'
     outside.mkdir()
 
     def before(root, base, extra=(), only='tg2,tg3'):
-        return run(root, base, extra, only, runner=old_runner)
+        return run(root, base, extra, only, runner=old_runner) if old_runner else None
 
     # ================= A. 기록 폴더는 시험 자리가 아니다
     for folder_name in ('.dddjango-web/run/captures/g2-return', '.dddjango/run'):
@@ -261,7 +283,7 @@ with tempfile.TemporaryDirectory(prefix='web226-') as tmp:
             git(repo, 'branch', '-D', 'main')
             got = run(root, base)
             received('B TG만 역방향 의심', got, m, info=True)
-            check('B TG만 의심 알림 출력', '    ↳ 승인 병합 ' + m[:12] in got[1] and '역방향/합성 병합 의심' in got[1], got)
+            check('B TG만 의심 알림 출력', '    ↳ 승인 병합 ' + m[:12] in got[1] and got[1].count('역방향/합성 병합 의심') == 1, got)
     repo, root, base, folder = project(temp, 'twice')
     first = incoming(repo, root, {TEST: BAD}, folder)
     m = incoming(repo, root, {TEST: BAD + '# upstream two\n'}, folder)
@@ -275,10 +297,23 @@ with tempfile.TemporaryDirectory(prefix='web226-') as tmp:
     m = incoming(repo, root, {TEST: BAD, 'web_test/test_y.py': BAD}, folder)
     received('B 수신 파일 둘 — 고지 한 줄', run(root, base), m, info=True, count=2)
     repo, root, base, folder = project(temp, 'notice-only')
-    incoming(repo, root, {TEST: 'from pathlib import Path\nPath(dynamic()).read_text()\n'}, folder)
+    m = incoming(repo, root, {TEST: 'from pathlib import Path\nPath(dynamic()).read_text()\n'}, folder)
     got = run(root, base)
-    check('B 발견 없는 수신 파일 고지 모음', got[0] == 0 and got[1].count(GATHERED % 1) == 1
-          and 'discipline 감수 대상' not in got[1] and '승인 유입(' not in got[1], got)
+    check('B 발견 없는 수신 파일 고지 모음', got[0] == 0 and got[1].count(GATHERED % (1, m[:12])) == 1
+          and 'discipline 감수 대상' not in got[1] and '승인 유입(' not in got[1] and '의심' not in got[1], got)
+    # 역방향/합성 의심 병합이 들인 파일에 고지만 있어도(«승인 유입» 절 없음) 그 의심 알림이 [info] 로 나온다.
+    upstream_tip = git(repo, 'rev-parse', m + '^2')
+    git(repo, 'branch', '-D', 'main')
+    got = run(root, base)
+    check('B 고지만 모인 실행의 역방향 의심 알림', got[0] == 0 and '승인 유입(' not in got[1]
+          and got[1].startswith(GATHERED % (1, m[:12]) + '\n' + SUSPECT % (m[:12], upstream_tip[:12]) + '\n\n[backstop] '), got)
+    repo, root, base, folder = project(temp, 'two-merges')
+    first = incoming(repo, root, {TEST: BAD}, folder)
+    m = incoming(repo, root, {'web_test/test_y.py': BAD}, folder)
+    code, out = got = run(root, base)
+    check('B 수신 파일 둘 · 병합 둘 — 모음 줄에 병합 목록', code == 0 and out.count(GATHERED % (2, first[:12] + ' · ' + m[:12])) == 1
+          and 'discipline 감수 대상' not in out and '유입: ' + first[:12] + PROOF in out and '유입: ' + m[:12] + PROOF in out
+          and '승인 유입 2건(종료 코드 제외)' in out, got)
     repo, root, base, folder = project(temp, 'with-lane-test')
     m = incoming(repo, root, {TEST: BAD}, folder)
     write(root, 'web_test/test_lane.py', BAD)
@@ -288,16 +323,35 @@ with tempfile.TemporaryDirectory(prefix='web226-') as tmp:
     check('B 수신 + 레인 시험 혼재 — 레인 몫은 그대로',
           code == 2 and heads(lane_part, 'TG2') == ['web_test/test_lane.py:3'] and heads(upstream, 'TG2') == [TEST + ':3']
           and KEPT + '비머지 커밋 경유 ' + lane[:12] in lane_part and '유입: ' + m[:12] + PROOF in upstream
-          and out.count(FLOW % ('web_test/test_lane.py', '4')) == 1 and out.count(GATHERED % 1) == 1
-          and FLOW % (TEST, '4') not in out and out.index(GATHERED % 1) < out.index('[TG2] BLOCKER')
+          and out.count(FLOW % ('web_test/test_lane.py', '4')) == 1 and out.count(GATHERED % (1, m[:12])) == 1
+          and FLOW % (TEST, '4') not in out and out.index(GATHERED % (1, m[:12])) < out.index('[TG2] BLOCKER')
           and 'blocker 1건 · 승인 유입 1건(종료 코드 제외)' in out, got)
     repo, root, base, folder = project(temp, 'upstream-link')
     m = incoming(repo, root, {TEST: LINKED}, folder, prepare=lambda: os.symlink(str(outside), root / 'web_test/data'))
     received('B 상류가 함께 들인 심볼릭 링크', run(root, base), m)
+    repo, root, base, folder = project(temp, 'base-link', prepare=lambda at: (write(at, 'web_test/keep.txt', 'k\n'),
+                                                                               os.symlink(str(outside), at / 'web_test/data')))
+    m = incoming(repo, root, {TEST: LINKED}, folder)
+    received('B 기준판부터 있던 root 밖 심볼릭 링크 — 현물 그대로', run(root, base), m)
+    link_blob = git(repo, 'rev-parse', 'HEAD:web_test/data')
+    retained('링크 대조 실패는 증명 실패', run(root, base, fault=('cat-file', link_blob)), reason='유입 증명 실패(레인이 손댄 심볼릭 링크)')
     for rel in ('application/order/test/order_flow.py', 'tests/_support.py', 'quality/conftest.py'):
         repo, root, base, folder = project(temp, 'place-' + rel.replace('/', '-'))
         m = incoming(repo, root, {rel: BAD}, folder)
         received('B 관례 시험 자리 ' + rel, run(root, base), m, info=True)
+    # 지금 동작의 단언 — 모드만 바꾼 레인 커밋(내용 그대로)은 걸음으로 세지 않는다 · 하위 폴더 root 의 기존 시험 변경.
+    repo, root, base, folder = project(temp, 'mode-only')
+    m = incoming(repo, root, {TEST: BAD}, folder)
+    os.chmod(root / TEST, 0o755)
+    lane_commit(repo, 'lane-chmod', TEST)
+    shape('모드만 바뀜', git(repo, 'ls-tree', 'HEAD', TEST).startswith('100755')
+          and git(repo, 'rev-parse', 'HEAD:' + TEST) == git(repo, 'rev-parse', m + '^2:' + TEST))
+    received('B 모드만 바꾼 레인 커밋 — 내용 그대로', run(root, base), m, info=True)
+    repo, root, base, folder = project(temp, 'prefix-existing', {TEST: SAFE}, nested=True)
+    m = incoming(repo, root, {TEST: BAD}, folder)
+    got = run(root, base)
+    check('B root 하위 폴더의 기존 시험 변경 — TG2·TG3 미실행 고지(지금 동작)', got[0] == 0 and '[TG' not in got[1]
+          and '[info] TG2·TG3 미실행 — 기준점·설정·대응 해석 실패 · 변경 시험 범위 미확정' in got[1], got)
     repo, root, base, folder = project(temp, 'inside-link')
     m = incoming(repo, root, {TEST: BAD}, folder)
     write(root, 'web_test/fixtures/a.json', '{}\n')
@@ -464,7 +518,7 @@ with tempfile.TemporaryDirectory(prefix='web226-') as tmp:
         else:
             write(root, 'pytest.ini', '[pytest]\n' + ('python_files = check_*.py\n' if mode == 'pytest-pattern' else 'testpaths = quality\n'))
             lane_commit(repo, 'lane-config', 'pytest.ini')
-        retained('수집 설정에 기댄 상류 파일 ' + mode, run(root, base), reason='유입 증명 실패(수집 설정에 기댄 시험 경로)', flow=(rel, '4'))
+        retained('수집 설정에 기댄 상류 파일 ' + mode, run(root, base), reason='유입 증명 실패(관례 시험 자리 밖)', flow=(rel, '4'))
     # 심볼릭 링크 — TG2 의 경로 판정은 링크를 풀어 본다. 레인이 손댄 링크가 있으면 받은 파일의 발견도 남긴다.
     for mode in ('committed', 'untracked'):
         repo, root, base, folder = project(temp, 'hidden-link-' + mode)
@@ -475,6 +529,59 @@ with tempfile.TemporaryDirectory(prefix='web226-') as tmp:
         if mode == 'committed':
             lane_commit(repo, 'lane-link', 'web_test/data')
         retained('레인이 더한 심볼릭 링크 ' + mode, run(root, base), reason='유입 증명 실패(레인이 손댄 심볼릭 링크)')
+    # 색인 플래그·무시 규칙으로 git status 에서 가린 현물 링크 — 색인이 아니라 현물을 본다.
+    for flag in ('assume-unchanged', 'skip-worktree'):
+        # 기준판부터 있던 링크(root 안)의 현물 대상만 root 밖으로 바꾼다.
+        repo, root, base, folder = project(temp, 'hidden-link-retarget-' + flag, {'web_test/fixtures/x.json': '{}\n'},
+                                           prepare=lambda at: os.symlink('fixtures', at / 'web_test/data'))
+        m = incoming(repo, root, {TEST: LINKED}, folder)
+        got = run(root, base)
+        shape('링크 대상 변경 앞 발견 0', got[0] == 0 and '[TG2]' not in got[1], got)
+        git(repo, 'update-index', '--' + flag, 'web_test/data')
+        (root / 'web_test/data').unlink()
+        os.symlink(str(outside), root / 'web_test/data')
+        shape('링크 대상 변경이 가려짐 ' + flag, hidden(repo, 'web_test/data') and git(repo, 'rev-parse', 'HEAD:web_test/data') == git(repo, 'rev-parse', base + ':web_test/data'))
+        retained('기준판 링크의 현물 대상을 밖으로 ' + flag, run(root, base), reason='유입 증명 실패(레인이 손댄 심볼릭 링크)')
+        # 추적 일반 파일을 현물에서 root 밖 링크로 바꾼다.
+        repo, root, base, folder = project(temp, 'hidden-link-file-swap-' + flag, {'web_test/data/x.json': '{}\n'})
+        m = incoming(repo, root, {TEST: LINKED}, folder)
+        git(repo, 'update-index', '--' + flag, 'web_test/data/x.json')
+        (root / 'web_test/data/x.json').unlink()
+        os.symlink(str(outside / 'x.json'), root / 'web_test/data/x.json')
+        shape('파일→링크가 가려짐 ' + flag, hidden(repo, 'web_test/data/x.json'))
+        retained('추적 파일을 현물에서 밖 링크로 ' + flag, run(root, base), reason='유입 증명 실패(레인이 손댄 심볼릭 링크)')
+        # 추적 폴더를 현물에서 root 밖 링크로 바꾼다(그 안 파일은 색인 플래그로, 새 링크는 무시 규칙으로 가린다).
+        repo, root, base, folder = project(temp, 'hidden-link-dir-swap-' + flag, {'web_test/data/x.json': '{}\n'})
+        m = incoming(repo, root, {TEST: LINKED}, folder)
+        git(repo, 'update-index', '--' + flag, 'web_test/data/x.json')
+        shutil.rmtree(root / 'web_test/data')
+        os.symlink(str(outside), root / 'web_test/data')
+        with (repo / '.git/info/exclude').open('a', encoding='utf-8') as f:
+            f.write('web_test/data\n')
+        shape('폴더→링크가 가려짐 ' + flag, hidden(repo, 'web_test/data'))
+        retained('추적 폴더를 현물에서 밖 링크로 ' + flag, run(root, base), reason='유입 증명 실패(레인이 손댄 심볼릭 링크)')
+    # 현물 대조는 필터 없이 — clean 필터·줄 끝 변환이 가린 차이는 «같음» 의 증명이 아니다.
+    # ⓐ 같은 길이 치환 필터 — git status 도 필터 결과만 봐 깨끗하다 ⓑ 금지 줄을 지우는 필터 + 색인 플래그.
+    relative = 'def test_x():\n    open("relative/data.txt").read()\n'
+    for mode, clean, upstream, edited in (
+            ('같은 길이 치환', "sed 's#/private/tmp/lane#relative/data.txt#'", relative, relative.replace('relative/data.txt', '/private/tmp/lane')),
+            ('줄 삭제 + assume-unchanged', "sed '/private.tmp.lane/d'", SAFE, SAFE + LANE_LINE)):
+        repo, root, base, folder = project(temp, 'hidden-clean-filter-%d' % len(clean), {'.gitattributes': 'web_test/test_x.py filter=strip\n'})
+        git(repo, 'config', 'filter.strip.clean', clean)
+        m = incoming(repo, root, {TEST: upstream}, folder)
+        got = run(root, base)
+        shape('필터 앞 발견 0 ' + mode, got[0] == 0 and '[TG2]' not in got[1], got)
+        if 'assume' in mode:
+            git(repo, 'update-index', '--assume-unchanged', TEST)
+        write(root, TEST, edited)
+        shape('clean 필터가 현물 수정을 가림 ' + mode, hidden(repo, TEST) and git(repo, 'show', 'HEAD:' + TEST) + '\n' == upstream
+              and git(repo, 'hash-object', '--', TEST) == git(repo, 'rev-parse', 'HEAD:' + TEST))
+        retained('clean 필터가 가린 현물 금지 줄 — ' + mode, run(root, base), reason='작업 트리 수정 중')
+    repo, root, base, folder = project(temp, 'hidden-crlf', {'.gitattributes': '*.py text eol=crlf\n'})
+    m = incoming(repo, root, {TEST: BAD}, folder)
+    shape('수신 파일의 현물만 CRLF', hidden(repo, TEST) and b'\r\n' in (root / TEST).read_bytes()
+          and b'\r' not in subprocess.run(['git', '-C', str(repo), 'cat-file', 'blob', 'HEAD:' + TEST], capture_output=True).stdout)
+    retained('줄 끝 변환으로 현물만 CRLF — 같음을 증명 못 함(보수)', run(root, base), reason='작업 트리 수정 중', flow=(TEST, '4'))
     repo, root, base, folder = project(temp, 'hidden-link-file')
     m = incoming(repo, root, {'web_test/impl_body.py': BAD}, folder, prepare=lambda: os.symlink('impl_body.py', root / TEST))
     write(root, 'web_test/impl_body.py', BAD + LANE_LINE)
@@ -490,7 +597,7 @@ with tempfile.TemporaryDirectory(prefix='web226-') as tmp:
     check('숨김 0 조회 실패는 그 경로만',
           code == 2 and heads(lane_part, 'TG2') == ['web_test/test_y.py:3'] and heads(upstream, 'TG2') == [TEST + ':3']
           and KEPT + '유입 증명 실패(경로 추적 불능)' in lane_part and '유입: ' + m[:12] + PROOF in upstream
-          and out.count(GATHERED % 1) == 1 and out.count(FLOW % ('web_test/test_y.py', '4')) == 1
+          and out.count(GATHERED % (1, m[:12])) == 1 and out.count(FLOW % ('web_test/test_y.py', '4')) == 1
           and '승인 유입 판정 불가' not in out and 'blocker 1건 · 승인 유입 1건(종료 코드 제외)' in out, got)
 
     # ================= B. 무변 대조 — 고치기 전 러너와 출력 byte 동일
@@ -498,17 +605,17 @@ with tempfile.TemporaryDirectory(prefix='web226-') as tmp:
     write(root, TEST, BAD + IMAGE)
     for extra, only in (([], 'tg2,tg3'), (['--slice-end'], None), ([], WIDE)):
         now = run(root, base, extra, only)
-        check('B byte 병합 없음 %s' % (' '.join(extra) or only),
-              now == before(root, base, extra, only) and now[0] == 2 and '[TG2] BLOCKER' in now[1] and FLOW % (TEST, '4') in now[1], now)
+        unchanged('B byte 병합 없음 %s' % (' '.join(extra) or only), now, before(root, base, extra, only),
+                  now[0] == 2 and '[TG2] BLOCKER' in now[1] and FLOW % (TEST, '4') in now[1])
     repo, root, base, folder = project(temp, 'same-no-tg')
     incoming(repo, root, {'web/old/bad.py': 'class Bad:\n    pass\n', TEST: SAFE}, folder)
     for only in ('nm', 'tg2,tg3', WIDE):
         now = run(root, base, only=only)
-        check('B byte TG 없는 병합 %s' % only, now == before(root, base, only=only) and '수신 증명' not in now[1], now)
+        unchanged('B byte TG 없는 병합 %s' % only, now, before(root, base, only=only), '수신 증명' not in now[1])
     write(root, 'web_test/test_lane.py', BAD)
     lane_commit(repo, 'lane-test', 'web_test/test_lane.py')
     now = run(root, base)
-    check('B byte 병합 + 레인 시험만 TG', now == before(root, base) and now[0] == 2 and FLOW % ('web_test/test_lane.py', '4') in now[1], now)
+    unchanged('B byte 병합 + 레인 시험만 TG', now, before(root, base), now[0] == 2 and FLOW % ('web_test/test_lane.py', '4') in now[1])
     repo, root, base, folder = project(temp, 'mixed')
     view = 'web/application/sample/presentation_layer/view/sample_view.py'
     m = incoming(repo, root, {TEST: BAD, view: 'def sample_view(request):\n    return request\n'}, folder)
@@ -526,7 +633,18 @@ with tempfile.TemporaryDirectory(prefix='web226-') as tmp:
     with patch.object(inflow.tempfile, 'mkdtemp', side_effect=AssertionError('TG snapshot forbidden')):
         res = inflow.split_inflow(ctx, [f for f in run_tests(ctx) if f.check_id in ('TG2', 'TG3')], str(folder))
     check('B TG 부모 측정·스냅숏 0', [(f.check_id, sha) for f, sha in res.inflow] == [('TG2', m)] and not res.remaining
-          and not res.notices and res.received_tests == {TEST}, (res.inflow, res.remaining, res.notices))
+          and not res.notices and res.received_tests == {TEST: m}, (res.inflow, res.remaining, res.notices))
+    # web 상대(root_rel=False) 발견의 경로 변환 — 실제 TG 발견은 root 상대뿐이라 합성 발견으로 본다.
+    for nested in (False, True):
+        repo, root, base, folder = project(temp, 'web-relative-%s' % nested, nested=nested)
+        m = incoming(repo, root, {'web/tests/test_w.py': BAD}, folder)
+        write(root, 'web/tests/test_l.py', BAD)
+        lane = lane_commit(repo, 'lane-test', ('host/' if nested else '') + 'web/tests/test_l.py')
+        made = [Finding('TG2', 'tests/test_l.py', 3, 'm', 'r', 'f'), Finding('TG2', 'tests/test_w.py', 3, 'm', 'r', 'f')]
+        res = inflow.split_inflow(BackstopContext.build(root, base, False), made, str(folder))
+        check('B web 상대 TG 발견의 경로 변환' + (' · root 하위 폴더' if nested else ''),
+              [(f.path, sha) for f, sha in res.inflow] == [('tests/test_w.py', m)] and res.remaining == [made[0]]
+              and res.reasons.get(id(made[0])) == '비머지 커밋 경유 ' + lane[:12], (res.inflow, res.remaining, res.reasons))
 
 print(f'fixtures_patch226: PASS={PASS} FAIL={FAIL}')
 sys.exit(bool(FAIL))

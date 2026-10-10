@@ -90,14 +90,12 @@ def _decode(body: str) -> str:
 
 class JsView:
     """주석을 지운 JS 의 리터럴 목록과 코드 뷰(리터럴 글자는 공백 — `${…}` 식은 코드로 남는다).
-    literals = [(시작 offset, 끝 offset, 따옴표, 값)] — 템플릿의 `${…}` 는 자리표시 한 글자로 값에 든다.
-    regexes = [(시작 offset, 끝 offset)] — 정규식 리터럴 자리(코드 뷰에는 원문 그대로 남는다)."""
+    literals = [(시작 offset, 끝 offset, 따옴표, 값)] — 템플릿의 `${…}` 는 자리표시 한 글자로 값에 든다."""
 
     def __init__(self, text: str) -> None:
         self.text: str = text
         self.code: List[str] = list(text)
         self.literals: List[Tuple[int, int, str, str]] = []
-        self.regexes: List[Tuple[int, int]] = []
         self._starts: Optional[Dict[int, Tuple[int, int, str, str]]] = None
         self._scan(0, len(text), top=True)
         self.code_text: str = ''.join(self.code)
@@ -188,7 +186,6 @@ class JsView:
                         j += 1
                         break
                     j += 1
-                self.regexes.append((i, j))
                 i = j
                 prev, word = '/', ''
                 continue

@@ -1196,6 +1196,91 @@ EOF
   OUT=$(BS "$P" --diff-base "$B" --only pu); E=$?
   check "K226 JS 만 변경 $CASE · 페이지 둘/root" "$WANT" "$E" "$OUT" "기능 JS 태그보다 뒤=$N" 'PU3] BLOCKER=0' '인라인 script 금지=0' '중복 로드=0'
 done
+# ---------- 코드 뷰 경계: 실제 참조를 지우지 않는다(놓침 방지) · 확정 못 하는 원문은 판독 불명 = 부르는 것(보수).
+lex_js() { # lex_js <꼴> — 그 꼴의 JS 원문
+  case "$1" in
+    template_comment) cat <<'EOF'
+const label = `${1 /* ' */ + Kakao.isInitialized()}`;
+EOF
+      ;;
+    template_line_comment) cat <<'EOF'
+const label = `${1 // '
+  + Kakao.isInitialized()}`;
+EOF
+      ;;
+    postfix_division) cat <<'EOF'
+let x = 1; const ratio = x++ / Kakao.isInitialized() / 2;
+EOF
+      ;;
+    postfix_decrement) cat <<'EOF'
+let y = 9; const rest = y-- / Kakao.count() / 3;
+EOF
+      ;;
+    nested_template_url) cat <<'EOF'
+const url = `${base ? `https://${base}` : ""}/share`;
+document.addEventListener("click", () => { window.Kakao.init(url); });
+EOF
+      ;;
+    postfix_then_statement) cat <<'EOF'
+const half = n++ / 2; window.Kakao.init("k");
+EOF
+      ;;
+    open_template) cat <<'EOF'
+const label = `열린 템플릿 ${name
+// Kakao 는 아래에서 부른다
+EOF
+      ;;
+    regex_quote) cat <<'EOF'
+const quote = /'/; Kakao.init("k");
+EOF
+      ;;
+    escaped_quote) cat <<'EOF'
+const text = 'it\'s'; Kakao.init("k");
+EOF
+      ;;
+    undecidable) cat <<'EOF'
+const r = (list) / "Kakao" / 2;
+EOF
+      ;;
+    unterminated) cat <<'EOF'
+/* Kakao 공유는 다음 판에서
+const later = 1;
+EOF
+      ;;
+    paren_division) cat <<'EOF'
+const half = (a + b) / 2; const label = "Kakao";
+EOF
+      ;;
+    comment_after_division) cat <<'EOF'
+const r = (a) / b / c; // Kakao
+EOF
+      ;;
+  esac
+}
+order_three() { # order_three <프로젝트> — 같은 기능 JS 를 SDK 앞에 싣는 템플릿 셋(페이지 둘 · root_view)을 커밋하고 HEAD 를 낸다
+  order_page "$1"
+  printf 'const unrelated = 1;\n' > "$1/web/static/js/order_probe.js"
+  cp "$1/$CHART" "$1/${CHART%/*}/second_view.html"
+  cat > "$1/$ROOTV" <<'EOF'
+{% load static %}
+<script src="{% static 'web/js/order_probe.js' %}" defer></script>
+<script src="{% static 'web/vendor/kakao_js_sdk/kakao.min.js' %}" defer></script>
+{% block scripts %}{% endblock scripts %}
+EOF
+  commit "$1" before-js
+}
+for CASE in template_comment template_line_comment postfix_division postfix_decrement nested_template_url \
+            postfix_then_statement open_template regex_quote escaped_quote undecidable unterminated \
+            paren_division comment_after_division; do
+  case "$CASE" in paren_division|comment_after_division) WANT=0; N=0; M=0 ;; *) WANT=2; N=1; M=3 ;; esac
+  P=$(newp "lex-tag-$CASE"); B=$(base_of "$P"); order_page "$P"; lex_js "$CASE" > "$P/web/static/js/order_probe.js"
+  OUT=$(BS "$P" --diff-base "$B" --only pu2); E=$?
+  check "K226 코드 뷰 $CASE · 태그 added" "$WANT" "$E" "$OUT" "기능 JS 태그보다 뒤=$N"
+  P=$(newp "lex-js-$CASE"); B=$(order_three "$P"); lex_js "$CASE" >> "$P/web/static/js/order_probe.js"
+  OUT=$(BS "$P" --diff-base "$B" --only pu2); E=$?
+  check "K226 코드 뷰 $CASE · JS 만 변경" "$WANT" "$E" "$OUT" "기능 JS 태그보다 뒤=$M"
+done
+
 for CASE in missing decode; do
   P=$(newp "order-unknown-$CASE"); B=$(base_of "$P"); order_page "$P"
   if [ "$CASE" = decode ]; then printf '\377' > "$P/web/static/js/order_probe.js"; fi
