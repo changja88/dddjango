@@ -345,7 +345,7 @@ ROWS = [
  row("fixed", ["v","v","sp","sp","l"], "schema/", "Hex", '형제 <code>&lt;area&gt;/schema/</code> 와 같은 두 칸이다. ack 본문이 없어도 <code>schema_out.py</code> 를 빈 파일로 둔다. 내용 있는 칸의 유효한 동명 폴더 승격은 그 칸을 충족한다.', "신설", "fix", pin(55)+pin(54)+pin(53)),
  row("fixed", ["v","v","sp","sp","sp","t"], "schema_in.py", "Hex", "<b>남이 정한 페이로드</b> — <b>우리가 못 고친다</b> <em>그래서 <code>&lt;area&gt;/</code> 쪽 <code>schema_in.py</code> 의 규칙 둘이 여기엔 «안» 걸린다 — 허용 key 를 닫는 것도, 이름을 우리 식으로 바꾸는 것도 우리 권한이 아니다</em>", "신설", "fix"),
  row("fixed", ["v","v","sp","sp","sp","l"], "schema_out.py", "Hex", "<b>ack 의 모양</b> — <em>바로 위 <code>&lt;provider&gt;_controller.py</code> 가 「저쪽 스펙대로 답한다」고 적은 그 응답이 여기 산다</em> · <b>형식도 저쪽이 정한다</b> <em>되돌려 줄 값이 정해져 있으면 그대로 적는다 — 우리 식으로 못 바꾼다</em> · <b>업무 실패를 여기 담지 않는다</b> <em>「왜 실패했나」를 실어 보내면 발신자가 그걸 보고 분기하기 시작해 우리 내부가 남의 계약이 된다</em>", "신설", "fix", pin(55)+pin(53)),
- row("fixed", ["v","t"], "open_host_service/", "DDD", "<b>다른 BC 가 부른다</b> — Evans 패턴명 그대로 · <b>되돌릴 수 없는 단계는 순서의 맨 끝에, 실패할 수 있는 검사는 맨 앞에</b> <em>그러면 되돌릴 것이 아예 안 남는다</em> · <b>판정: 「이 단계를 되돌리는 창구가 여기 있나」</b> <em>없으면 그 단계는 맨 끝이다</em> · <b>남이 «놓친» 사실을 되물어 오는 창구이기도 하다</b> <em>사실 통로는 유실될 수 있어서, 그 자료가 꼭 필요한 쪽은 여기로 물어 온다 — <b>내 장부가 원본이다</b><span class='dim'> 08-10 · C4</span></em> · <b>비어 있으면 「이 BC 를 부르는 다른 BC 가 없다」</b>", "개명", "fix", pin(1)+pin(9)+pin(11)+pin(42)+pin(48)),
+ row("fixed", ["v","t"], "open_host_service/", "DDD", "<b>다른 BC 가 부르거나, 설정 문자열로 등록한 framework 요청 틀(Ninja 인증 · Django 미들웨어)이 부른다</b> — Evans 패턴명 그대로 · <b>되돌릴 수 없는 단계는 순서의 맨 끝에, 실패할 수 있는 검사는 맨 앞에</b> <em>그러면 되돌릴 것이 아예 안 남는다</em> · <b>판정: 「이 단계를 되돌리는 창구가 여기 있나」</b> <em>없으면 그 단계는 맨 끝이다</em> · <b>남이 «놓친» 사실을 되물어 오는 창구이기도 하다</b> <em>사실 통로는 유실될 수 있어서, 그 자료가 꼭 필요한 쪽은 여기로 물어 온다 — <b>내 장부가 원본이다</b><span class='dim'> 08-10 · C4</span></em> · <b>비어 있으면 「이 BC 를 부르는 다른 BC 가 없다」</b>", "개명", "fix", pin(1)+pin(9)+pin(11)+pin(42)+pin(48)),
  row("fixed", ["v","v","l"], "&lt;service&gt;/", "DDD", "서비스 1차 — <code>api/</code>의 <code>&lt;area&gt;/</code> 자리", "확정", "fix", pin(9)),
  row("fixed", ["v","v","sp","t"], "&lt;service&gt;_service.py", "DDD", "공개 함수 — <code>api/</code>의 controller 자리 · <b>함수 이름은 <code>_command</code>/<code>_query</code> 로 끝난다</b> — 상태를 바꾸면 커맨드, 안 바꾸면 질의 <em>AST 한 줄 — 「의도를 안 밝힌 함수」가 걸린다</em> · <b>남이 내 자료로 «정렬·페이지네이션» 해야 하면 «내가» 해서 준다</b> <em>목록을 통째로 넘기면 부르는 쪽이 전부 가져와야 한다 — 이 창구가 잘라서 «식별자»만 돌려준다</em> · <b>«대사»는 다른 이야기다</b> <em>하루치를 맞춰 보려는 조회는 화면용 목록이 아니라 <b>기간이 곧 조건</b>이라, 식별자만이 아니라 대조에 필요한 값까지 실어 준다 — 자르는 크기는 여기가 정한다<span class='dim'> 08-10 · C4</span></em> · <b>도메인 예외는 «타입»으로만 쓴다</b> — <code>except … as e</code> 로 묶은 이름을 이 파일 안에서 참조하면 위반 <em>컨트롤러와 같은 규칙</em>", "확정", "fix", pin(9)+pin(11)+pin(39)),
  row("fixed", ["v","v","sp","l"], "contract/", "DDD", "<b>계약은 «표준 라이브러리»와 «같은 BC 의 다른 계약» 말고는 import 하지 않는다</b> <em>AST 한 줄</em>", "확정", "fix", pin(35)+pin(9)+pin(10)),
@@ -517,7 +517,7 @@ PARTS = [
   <p>그래서 <b>이 폴더의 자식 목록이 곧 «나를 부르는 전송이 몇 종류인가»</b> 라는 질문의 답이 된다. 지금은 넷이다.
   <em>«행위자가 몇 종류인가»는 이 층이 아니라 그 아래에서 답한다.</em></p>""",
   inn="""\
-<p>자식은 넷 — <b><code>api/</code></b> HTTP 로 들어오는 것 전부 · <b><code>open_host_service/</code></b> 다른 BC 가 부르는 공개 창구 ·
+<p>자식은 넷 — <b><code>api/</code></b> HTTP 로 들어오는 것 전부 · <b><code>open_host_service/</code></b> 다른 BC(또는 설정 문자열로 등록한 framework 요청 틀)가 부르는 공개 창구 ·
   <b><code>cron_job/</code></b> 스케줄러가 부르는 정기 실행 · <b><code>event_subscription/</code></b> 남이 공표한 사실이 깨우는 자리.</p>
   <p><b>넷을 가르는 축은 «어떤 전송으로 오나» 하나다</b> — HTTP · 같은 프로세스 함수 호출 · celery · 브로커.
   <em>그래서 «주기»가 아닌 비동기 작업(응답에서 떼어내는 발송 같은)이 생겨도 <b>칸은 안 는다</b> — 부르는 것이 같은 워커라 <code>cron_job/</code> 이 그대로 받는다.</em>
@@ -902,14 +902,14 @@ HTTP 면 <code>api/</code>, 같은 프로세스 함수 호출이면 <code>open_h
 10: '<p>프로젝트가 전달한 API 객체에 자기 BC 를 등록하는 <code>register_&lt;bc&gt;_api(api)</code> 함수다. 전역 API 객체를 여기서 새로 만들거나 프로젝트 모듈에서 가져오지 않는다.</p><p>Ninja Extra 스택이면 <code>NinjaExtraAPI</code> 에 컨트롤러를 등록하고, 승인된 plain Ninja 스택이면 <code>NinjaAPI</code> 에 라우터를 붙인다. 실제 프로젝트 API 객체·BC registrar·URLconf 의 등록 경로가 하나로 이어져야 한다.</p>',
 
 
-11: '<p>이 BC 가 HTTP 로 공개하는 오류 언어를 한 파일에 모은다. <b><code>dddjango-code-json</code> 프로필</b>에서는 <code>&lt;Bc&gt;ErrorCode(StrEnum)</code> 하나, 공통 <code>FrameworkErrorSchema</code> 의 식별자 필드만 좁히는 <code>&lt;Bc&gt;ErrorSchema</code> 하나, 반복되는 사건별 concrete 오류 클래스를 함께 둔다.</p><p>오류의 필드·고정값·HTTP status 는 승인된 외부 계약을 따른다. concrete 오류는 승인된 기본값으로 인자 없이 생성하며, 별도 concrete 가 필요 없는 사건으로 승인된 경우에는 controller 가 BC base 의 필드를 직접 채운다. 새로운 오류마다 파일이나 공통 코드 목록을 늘리지 않는다.</p>',
+11: '<p>이 BC 가 HTTP 로 공개하는 오류 언어를 한 파일에 모은다. <b><code>dddjango-code-json</code> 프로필</b>에서는 <code>&lt;Bc&gt;ErrorCode(StrEnum)</code> 하나, 공통 <code>FrameworkErrorSchema</code> 의 식별자 필드만 좁히는 <code>&lt;Bc&gt;ErrorSchema</code> 하나, 반복되는 사건별 concrete 오류 클래스를 함께 둔다.</p><p>오류의 필드·고정값·HTTP status 는 승인된 외부 계약을 따른다. concrete 오류는 승인된 기본값으로 인자 없이(또는 공통 shape 의 유일한 일반 <code>str</code> 설명 칸 keyword 하나로) 생성하며, 별도 concrete 가 필요 없는 사건으로 승인된 경우에는 controller 가 BC base 의 필드를 직접 채운다. 새로운 오류마다 파일이나 공통 코드 목록을 늘리지 않는다.</p>',
 
 
 12: """<b>업무 묶음 하나</b>(<code>turn/</code> · <code>pairing/</code>) — 컨트롤러 여럿이 한 업무로 묶여 사는 자리다.
 이 묶음이 <b>안팎을 잇는 유일한 고리</b>다.""",
 
 
-13: '<p>입력 Schema 를 command/query 로 바꾸고, 요청마다 <code>build_&lt;use_case&gt;()</code> 로 조립한 유스케이스를 한 번 부른 뒤 result 를 응답 Schema 로 바꾼다. 구체 어댑터를 여기서 생성하지 않는다.</p><p><code>dddjango-code-json</code> 의 known failure 는 controller 가 직접 HTTP 로 매핑한다. 입력과 유스케이스를 먼저 준비하고, <code>try</code> 안에는 application 호출 한 문장만 둔다. 구체 domain/application 예외를 잡아 BC 오류를 만든 뒤 <code>Status(status, error)</code> 를 직접 반환한다. 성공 변환은 <code>try</code> 뒤에 둔다. 단순 조회의 승인된 <code>None</code> 실패는 호출 바로 뒤의 <code>if result is None:</code> 에서 처리한다.</p><p>오류 mapping helper·catch-all 로 옮기지 않고, 도메인 예외의 속성을 읽지 않는다. 반환 주석의 <code>Status[...]</code> 상자는 하나로 합친다 — 예: <code>Out | Status[ErrorA | ErrorB]</code>.</p>',
+13: '<p>입력 Schema 를 command/query 로 바꾸고, 요청마다 <code>build_&lt;use_case&gt;()</code> 로 조립한 유스케이스를 한 번 부른 뒤 result 를 응답 Schema 로 바꾼다. 구체 어댑터를 여기서 생성하지 않는다.</p><p><code>dddjango-code-json</code> 의 known failure 는 controller 가 직접 HTTP 로 매핑한다. 입력과 유스케이스를 먼저 준비하고, <code>try</code> 안에는 application 호출 한 문장만 둔다. 구체 domain/application 예외를 잡아 BC 오류를 만든 뒤 <code>Status(status, error)</code> 를 직접 반환한다. 성공 변환은 <code>try</code> 뒤에 둔다. 단순 조회의 승인된 <code>None</code> 실패는 호출 바로 뒤의 <code>if result is None:</code> 에서 처리한다.</p><p>오류 mapping helper·catch-all 로 옮기지 않고, 승인된 사건 값(slot 10 — 잡은 예외의 승인 필드를 설명 칸·머리 값에만)과 그 값 유무 검사 말고는 예외의 속성을 읽지 않는다. 반환 주석의 <code>Status[...]</code> 상자는 하나로 합친다 — 예: <code>Out | Status[ErrorA | ErrorB]</code>.</p>',
 
 
 14: '<p>HTTP 요청·응답 Schema 가 사는 자리다. 두 방향의 칸은 고정이고 각 칸 안에는 해당 방향의 Schema 들이 온다. 유효한 동명 폴더 승격은 같은 칸의 대체 실현이며, 새로운 업무·방향 폴더를 추가하는 근거가 아니다.</p>',
@@ -967,7 +967,7 @@ HTTP 면 <code>api/</code>, 같은 프로세스 함수 호출이면 <code>open_h
 <br><b>갈리는 자는 «누가 부르나»가 아니라 «무엇을 해 주나»다</b> — 부르는 BC 가 셋이어도 해 주는 일이 하나면 창구도 하나다.""",
 
 
-25: '<p>다른 BC 가 부르는 창구다. 공개 표면은 모듈 수준 함수이며 함수 이름은 <code>_command</code> 또는 <code>_query</code> 로 끝난다. 입력은 해당 연산의 request 계약 객체 하나이고, 입력 없는 query 만 인자 0개를 허용한다(#633·#634). 공개 service 클래스를 만들지 않는다.</p><p>계약을 application DTO 로 바꾸고 유스케이스를 호출한 뒤 response 로 되돌린다. domain/application 실패는 이 창구의 published exception 으로 번역한다. 도메인 예외는 타입만 보고 속성을 읽거나 그대로 재노출하지 않는다.</p>',
+25: '<p>다른 BC 가 부르는 창구다(설정 문자열로 등록해 부르는 framework 요청 틀 — Ninja 인증 · Django 미들웨어 — 도 부르는 쪽이다). 공개 표면은 모듈 수준 함수이며 함수 이름은 <code>_command</code> 또는 <code>_query</code> 로 끝난다. 입력은 해당 연산의 request 계약 객체 하나이고, 입력 없는 query 만 인자 0개를 허용한다(#633·#634). 공개 service 클래스를 만들지 않는다.</p><p>계약을 application DTO 로 바꾸고 유스케이스를 호출한 뒤 response 로 되돌린다. domain/application 실패는 이 창구의 published exception 으로 번역한다. 도메인 예외는 타입만 보고 속성을 읽거나 그대로 재노출하지 않는다.</p>',
 
 
 26: '<p>창구의 request·response·published exception 계약을 모은다. 표준 라이브러리와 <b>같은 BC 의 다른 OHS 계약</b>만 import 할 수 있다(#472). 같은 BC 계약 사이의 보조 타입 재사용은 허용되지만 도메인·application DTO·Django·SDK·다른 BC 계약에는 의존하지 않는다.</p><p>이 표면을 바꾸면 소비 BC 의 계약도 영향을 받는다. 서비스 구현과 내부 도메인의 변경이 자동으로 공개 계약에 새지 않도록 별도 자료로 변환한다.</p>',

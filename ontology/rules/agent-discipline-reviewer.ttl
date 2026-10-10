@@ -1609,12 +1609,18 @@ djr:R-1021 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-1022 a djr:Obligation ;
-    skos:prefLabel "checker 사각 7종(a~g)의 직독 의무"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1022@2026-08-22> .
+    skos:prefLabel "checker 사각 8종(a~h)의 직독 의무"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1022@2026-10-11> .
 
 <https://numchida.com/ns/djr#R-1022@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1022 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1022@2026-10-11> a djr:Expression ;
+    prov:specializationOf djr:R-1022 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1022@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-1023 a djr:Obligation ;
     skos:prefLabel "contract scope마다 project api.py의 API instance 단독 소유"@ko ;
@@ -3168,7 +3174,7 @@ djr:R-3647 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 21 ;
     djr:statesNorm djr:R-1021, djr:R-1022 ;
-    djr:text "- **API 오류 checker/reviewer 사각(명시 검토)**: 관련 checker가 exit 0이어도 semantic compliance의 증거가 아니다. 반드시 (a) 직접 import한 1-hop class method mutation·2-hop helper·선택 source 밖 helper·renamed converter, (b) dynamic import/registration·required symbol 재수출, (c) 문법상 concrete 이름이나 의미상 broad base인 exception, (d) Ninja/`FrameworkErrorSchema` import 없이 inner layer를 흐르는 HTTP status/code DTO, (e) project-wide inventory 완전성·mixed-profile shared module·scope 안의 API instance 복수, (f) root-local catalog/mapping·registrar/composition lookalike, (g) auth backend의 truthy `FrameworkErrorSchema`/Schema와 숨은 framework-header dependency를 직접 읽는다.\n"@ko .
+    djr:text "- **API 오류 checker/reviewer 사각(명시 검토)**: 관련 checker가 exit 0이어도 semantic compliance의 증거가 아니다. 반드시 (a) 직접 import한 1-hop class method mutation·2-hop helper·선택 source 밖 helper·renamed converter, (b) dynamic import/registration·required symbol 재수출, (c) 문법상 concrete 이름이나 의미상 broad base인 exception, (d) Ninja/`FrameworkErrorSchema` import 없이 inner layer를 흐르는 HTTP status/code DTO, (e) project-wide inventory 완전성·mixed-profile shared module·scope 안의 API instance 복수, (f) root-local catalog/mapping·registrar/composition lookalike, (g) auth backend의 truthy `FrameworkErrorSchema`/Schema와 숨은 framework-header dependency, (h) 잡은 예외의 승인 필드 값(사건 값) — 예외 생성부가 승인 필드에 넣는 값의 출처(`str(다른 예외)` · 내부 id 금지), 메시지와 머리의 대응(slot 10 이 정한 머리 누락 · 메시지와 머리의 날짜 불일치 · slot 10 이 정하지 않은 머리), aware datetime, 렌더된 `--event-value` 와 slot 10 의 대조를 직접 읽는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007/b22> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/discipline-reviewer.md/s007> ;

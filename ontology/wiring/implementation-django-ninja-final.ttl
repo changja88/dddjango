@@ -605,3 +605,7 @@ djr:R-3465 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ap
 djr:R-3618 djr:enforcedBy <https://numchida.com/ns/djr#c/check-composition-root.py> .
 
 djr:R-3619 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .
+
+djr:R-3654 djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py> .
+
+djr:R-3655 djr:enforcedBy <https://numchida.com/ns/djr#c/check-api-error-controller-contract.py> .

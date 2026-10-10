@@ -662,6 +662,14 @@ djr:R-3501 a djr:Obligation ;
     prov:specializationOf djr:R-3501 ;
     djr:revision 1 .
 
+djr:R-3659 a djr:Obligation ;
+    skos:prefLabel "#90 — framework 요청 틀(Ninja 인증·Django 미들웨어)이 설정 문자열로 부르는 BC 해석 함수도 open_host_service/ 창구"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3659@2026-10-11> .
+
+<https://numchida.com/ns/djr#R-3659@2026-10-11> a djr:Expression ;
+    prov:specializationOf djr:R-3659 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/discipline-houserules/references/final.md> a djr:Document ;
     skos:prefLabel "discipline-houserules-final"@ko .
 
@@ -900,8 +908,8 @@ djr:R-3501 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s007> ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
-    djr:statesNorm djr:R-3202, djr:R-3203 ;
-    djr:text "- **#90** — `driving_layer/` 의 자식은 `api/` · `open_host_service/` · `cron_job/` · `event_subscription/` 넷뿐이고 «어떤 전송으로 오나»로만 갈린다 — HTTP · 같은 프로세스 함수 호출 · celery · 브로커. 「누가 부르나」(행위자)로 가르지 않는다.\n"@ko .
+    djr:statesNorm djr:R-3202, djr:R-3203, djr:R-3659 ;
+    djr:text "- **#90** — `driving_layer/` 의 자식은 `api/` · `open_host_service/` · `cron_job/` · `event_subscription/` 넷뿐이고 «어떤 전송으로 오나»로만 갈린다 — HTTP · 같은 프로세스 함수 호출 · celery · 브로커. 「누가 부르나」(행위자)로 가르지 않는다. 같은 프로세스 함수 호출의 부르는 쪽에는 framework 의 요청 틀(Ninja 인증 · Django 미들웨어)도 들고, 틀이 `<project>/settings` 의 문자열로 등록해 부르는 BC 해석 함수도 `open_host_service/` 창구에 둔다 — 틀은 BC 를 import 하지 않고(#46 · #430) 창구는 요청 계약 하나를 받아 표준 라이브러리 자료만 돌려주며(#633 · #472) 계약 필드 이름은 틀이 정한 중립 낱말이다(#52).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s007/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s007> ;

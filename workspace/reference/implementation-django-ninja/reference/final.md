@@ -138,7 +138,8 @@ Operation 구현 기준:
   선언 집합의 부분집합이고 키 전부 리터럴일 때만이며, 오류 status 동거·변수/상수 키·
   `**` splat 은 위반이다(fail-closed — 2026-09-01).
 - known domain/application exception은 컨트롤러가 구체적으로 catch하고, 준비된
-  no-arg concrete `ErrorSchema`를 `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다. 오류
+  concrete `ErrorSchema`(무인자 · 또는 설명 칸 keyword 하나 — §6.2 사건 값)를
+  `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다. 오류
   `(status, schema)` tuple, raw `Response`/dict, 오류 helper/factory/serializer/mapper,
   등록 handler/decorator로 우회하지 않는다(§6.2).
 - **operation을 문서화한다** — `summary`·`description`·`tags`를 decorator 인자로 주어 Swagger UI의 그룹과 설명을 채운다. 외부 client가 읽는 계약 문서다.
@@ -150,9 +151,11 @@ Operation 구현 기준:
 Operation은 10번 slot이 승인한 **한 경로**를 선택한다.
 
 - **exception path:** request를 준비한 뒤 `try`에는 최외곽 application call 한 문장만 둔다.
-  구체 exception 또는 구체 exception tuple만 catch하고, catch 안에서 no-arg concrete 또는
-  populated BC-base `ErrorSchema`, 필요하면 주입된 응답용 header를 만든 뒤 두 인자
-  `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다. 성공 변환은 `try` 뒤에 둔다.
+  구체 exception 또는 구체 exception tuple만 catch하고, catch 안에서 concrete(무인자 ·
+  설명 칸 keyword 하나) 또는 populated BC-base `ErrorSchema`, 필요하면 주입된 응답용 header를
+  만든 뒤 두 인자 `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다 — 잡은 예외의
+  승인 필드 값(사건 값)은 설명 칸과 머리 값에만 싣고, 값 유무로 가를 때만 사건 값 한 꼴 분기를
+  쓴다(§6.2). 성공 변환은 `try` 뒤에 둔다.
 - **`None` path:** 조회 use case가 대상이 없어 `None`을 돌려주는 경우에만 쓴다. application call을
   정확히 한 번 한 뒤, `try` 없이 call 바로 다음 `if result is None:`에서 같은 ErrorSchema/header/두 인자
   `Status` 구성을 직접 수행한다. 실패가 둘 이상이거나 사유가 있으면 exception path다 — 실패를 Result

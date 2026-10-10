@@ -77,7 +77,12 @@
 
 ---
 
-## 1. check-api-error-controller-contract.py — code-profile 20 category → 원자 술어 23
+## 1. check-api-error-controller-contract.py — code-profile 22 category → 원자 술어 26
+
+> **2026-10-11 F4-80 개정**: 잡은 예외의 승인 필드 값(사건 값 — `--event-value`) category 둘(행21·22)을
+> 더했다 — 20 → 22 category · 원자 술어 23 → 26(#N 12 → 13 · 계약 11 → 13). 행21 은 행7 과 같은 층 분할
+> (도메인 = #474 · 응용 = 계약 — U1·V5 준용), 행22 는 응용만이라 계약이다. 정본 설계 = scratch `f80/design.md`
+> v2 A.7 + 덧붙임 1.
 
 레인 선언: registry #15(REG:122) — 08-04 API-error 선행 계약 레인 + 표준 트리 슬라이스(#120~#132·#474·#62).
 현행 처분: `HANDLER_CATEGORIES` 2종만 `SliceFindings("#59")`, 나머지 18종 전부 `ContractFindings(rule=null)`
@@ -108,7 +113,7 @@
 v2 분할(U1·U3): 행7 → 2술어 · 행19 → 2술어 · 행20 → 2술어 ⇒ **원자 술어 23**.
 Finding dataclass(API:198–204): 현행 `path·lineno·category·shown` — `symbol` 필드 추가는 부속 A-1(U17·V10).
 
-### 1.2 매핑표 (원자 술어 23 = #N 12 · 계약 11 · 억제 0)
+### 1.2 매핑표 (원자 술어 26 = #N 13 · 계약 13 · 억제 0 — 2026-10-11 행21·22 가산)
 
 | # | category(코드 문면 그대로) | 생성 지점 | 판정 | 근거(규칙 문면 인용+출처) |
 |---|---|---|---|---|
@@ -132,6 +137,8 @@ Finding dataclass(API:198–204): 현행 `path·lineno·category·shown` — `sy
 | 18 | `FrameworkErrorSchema/model config mutation in controller forbidden` | API:6534 | **계약 (확정 — 불확실 소멸)** | mutation 대상(controller 안 model config — API:4352–4439)과 #63 의 OpenAPI `response`/postprocessor 술어(SPEC:387)는 객체가 다르다 — **U12 확정**(L-U 12 실측: API:4365). #63 소유자는 OA(OWNER:61)라 교차 방출도 금지(v1 논거 유지) |
 | 19 | `managed catch must directly construct FrameworkErrorSchema and return Status` | 동적 — API:3294 지정·3087/3134 방출 | **분할(U3)** — ⓐ helper/factory/serializer 위임 = **#126** · ⓑ 본문 형태 오류 = **계약** | `_validate_mapping_body` 는 본문 길이(len<2)·constructor 불명·constructor 인자·중간 문장·Status 반환 오류를 한 category 로 합친다(API:3084·3105·3119). 그중 helper/factory 경유 constructor 는 #126 «helper·factory 로 옮기지 않는다»(SPEC:455) 직접 포섭 — 실패 원인별 category 분해 저작: ⓐ `managed catch delegates error construction to helper/factory/serializer`(#126) · ⓑ 기존 문면 유지(계약). 분해 후 판정 불능 잔여는 계약 보수(**U3 부분 채택** — 전면 재분석 기각) |
 | 20 | `Result arm must directly construct FrameworkErrorSchema and return Status` | 동적 — API:3564 지정·3087/3134 방출 | **분할(U3)** — 행19 와 동일 2분(ⓐ #126 · ⓑ 계약) | 행19 와 같은 방출 지점 공유 — 동일 논거·동일 분해 |
+| 21 | `caught exception field read not approved by slot 10` | `_event_value_findings`(2026-10-11) — 줄 = 읽기 행 · overlap = handler 행 | **분할(U1·V5 준용)** — ⓐ 도메인 catch = **#474** · ⓑ 응용 catch = **계약** | 꼴 맞는 사건 값 읽기(F1 ~ F5)의 `원 경로.필드` 가 `--event-value`(slot 10 «사건 값» 칸 렌더) 밖이다. #474 의 예외 한 줄(api 컨트롤러 managed catch 의 승인 사건 값 꼴 — SPEC:771 2026-10-11 개정)이 «승인» 을 조건으로 하므로 도메인 쪽은 #474 술어 그대로다. 응용 쪽은 #474 주어 밖 — 08-04 계약(선 ② «메시지에 넣는 값은 설계가 승인한 값만») 고유. 층 미확정(혼합 tuple)은 꼴 밖이라 이 category 가 서지 않는다 |
+| 22 | `caught exception read outside the approved event-value form` | `_event_value_findings`(2026-10-11) — 줄 = 읽기 행 | **계약** | 응용 catch 의 꼴 밖 속성 읽기 `n.<x>` 만(예외 통째 쓰기는 행7ⓑ forwarding 몫). 도메인 catch 의 꼴 밖 읽기는 트리 #474 가 모든 프로필에서 그대로 낸다 — code 레인은 새 줄을 내지 않는다(기존 출력 byte 보존) |
 
 ### 1.3 이중 방출 — §5 로 이관
 
@@ -378,7 +385,7 @@ locator 는 `rel:lineno`(CR:1314 조립)·tree #107 은 `rel` 뿐이라 키 불�
 | CR | #440 | CR:1882–1886 (import 후 미호출) | 행8·9·행10ⓐ·행6ⓒ | code-profile 활성 URLconf 에서 tree #440 억제 |
 | CR | #437 (관찰) | CR:1844–1858 (api.py 닫힌 목록) | 행6ⓑ (decorator@api.py) | 잠재 겹침 — 적용 커밋에서 픽스처 실측 후 같은 처분 적용 여부 확정(자인 약점 차순위) |
 | API | #62 | API:6733–6736 (`rel:handler행`) | 행4·5 (handler 행) | code-profile 활성 controller 에서 tree #62 억제 |
-| API | #474 | API:6737–6743 (**Name 참조 행** — 도메인 import 이름 ∧ Load) | 행7ⓐ (**handler 행** — API:3277) | locator 가 사건의 다른 좌표를 가리켜도 같은 incident — code 활성 대상에서 tree #474 억제 |
+| API | #474 | API:6737–6743 (**Name 참조 행** — 도메인 import 이름 ∧ Load · 2026-10-11 부터 auto·code-json 의 api 컨트롤러 진입점에서는 꼴 밖 읽기만) | 행7ⓐ · 행21ⓐ (**handler 행** — API:3277) | locator 가 사건의 다른 좌표를 가리켜도 같은 incident — code 활성 대상에서 tree #474 억제 |
 | API | #125 | API:6719 (**ⓓ info** 채널) | 행3·6 (violation) | code #125 확정 발화 대상 handler 에서 tree ⓓ#125 후보 억제(확정이 후보를 이긴다 — 자인 약점 1) |
 | EC | #114 | EC:4519 (부재 — 대상: api/ 존재 BC 한정 EC:4511) | B1ⓐ (대상: config error_bcs) | 두 대상 집합의 교집합 BC 에서 tree #114 억제 |
 | EC | #572 | EC:4574–4587 (**파일** locator) | 행30ⓐ·33·35~38·40 (**class/field 행** — EC:1959) | code-profile 활성 BC 에서 tree #572 억제 |
@@ -537,7 +544,8 @@ V2/V3 사건 모양을 #81/#488 로 발화 — 억제 제거의 선행 조건) �
 ## 통계 (분할 후 원자 술어 기준 — U18 재산출)
 
 계수 단위는 category 행이 아니라 **분할 후 원자 술어**다. 혼합 행(API7·19·20 · EC17·23·24·30 · B1 ·
-CR5·6·10)은 술어 단위로 나눠 배타 계상했다.
+CR5·6·10)은 술어 단위로 나눠 배타 계상했다. (2026-10-11 F4-80 — api-error 는 23 → 26 · #N 12 → 13 · 계약
+11 → 13 이 되었다(§1 행21·22). 아래 표의 합계는 v2 확정 시점 값 그대로 두고 이 줄로만 가산을 적는다.)
 
 | 구분 | 원자 술어 수 | 내역 |
 |---|---|---|

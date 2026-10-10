@@ -532,3 +532,5 @@ djr:R-3645 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
 
 djr:R-3653 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-architect> ;
     djr:enforcedBy <https://numchida.com/ns/djr#c/design_pregate.py> .
+
+djr:R-3657 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .

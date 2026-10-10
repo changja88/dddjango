@@ -3651,3 +3651,9 @@ R-3650	2026-10-04	rules/agent-coder.ttl
 R-3651	2026-10-04	rules/agent-coder.ttl
 R-3652	2026-10-04	rules/agent-acceptance-tester.ttl
 R-3653	2026-10-10	rules/agent-design-architect.ttl
+R-3654	2026-10-11	rules/implementation-django-ninja-final.ttl
+R-3655	2026-10-11	rules/implementation-django-ninja-final.ttl
+R-3656	2026-10-11	rules/architecture-api-final.ttl
+R-3657	2026-10-11	rules/agent-design-architect.ttl
+R-3658	2026-10-11	rules/agent-design-review-api.ttl
+R-3659	2026-10-11	rules/discipline-houserules-final.ttl

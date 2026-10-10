@@ -481,12 +481,18 @@ djr:R-1991 a djr:Permission ;
     djr:revision 1 .
 
 djr:R-1992 a djr:Obligation ;
-    skos:prefLabel "공개 구별 가능 실패 한정 값 부여·내부 예외 합류 허용"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1992@2026-08-22> .
+    skos:prefLabel "소비자 행동이 다른 실패 한정 새 값 부여(같으면 설명만 달리)·내부 예외 합류 허용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1992@2026-10-11> .
 
 <https://numchida.com/ns/djr#R-1992@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1992 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1992@2026-10-11> a djr:Expression ;
+    prov:specializationOf djr:R-1992 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1992@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-1993 a djr:Prohibition ;
     skos:prefLabel "HTTP status 계약의 body property 존재 요구·가정 금지"@ko ;
@@ -505,12 +511,18 @@ djr:R-1994 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-1995 a djr:Prohibition ;
-    skos:prefLabel "공개 문자열의 str(exc) 자동 사용·민감 내부 정보 누설 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1995@2026-08-22> .
+    skos:prefLabel "공개 문자열의 str(exc) 자동 사용·민감 내부 정보 누설 금지 · 동적 값은 slot 10 승인 예외 필드 값뿐"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1995@2026-10-11> .
 
 <https://numchida.com/ns/djr#R-1995@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1995 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1995@2026-10-11> a djr:Expression ;
+    prov:specializationOf djr:R-1995 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1995@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-1996 a djr:Obligation ;
     skos:prefLabel "배포된 public 식별자 변경의 breaking change 취급"@ko ;
@@ -561,12 +573,18 @@ djr:R-2001 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2002 a djr:Obligation ;
-    skos:prefLabel "controller 직접 공개 retryable BC 오류의 Retry-After controller 소유"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2002@2026-08-22> .
+    skos:prefLabel "controller 직접 공개 BC 오류의 승인 헤더(Retry-After · 사건 값 헤더) controller 소유"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2002@2026-10-11> .
 
 <https://numchida.com/ns/djr#R-2002@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2002 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2002@2026-10-11> a djr:Expression ;
+    prov:specializationOf djr:R-2002 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2002@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-2003 a djr:Exception ;
     skos:prefLabel "RFC 9457 절의 적용 범위 자기 한정(§5.4 선택 범위)"@ko ;
@@ -1352,6 +1370,14 @@ djr:R-3467 a djr:Obligation ;
     prov:specializationOf djr:R-3467 ;
     djr:revision 1 .
 
+djr:R-3656 a djr:Obligation ;
+    skos:prefLabel "소비자가 쓸 값은 설명 문장 밖 승인 응답 머리에도 · 머리 이름·값 꼴·값 없음의 뜻을 승인 계약에"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3656@2026-10-11> .
+
+<https://numchida.com/ns/djr#R-3656@2026-10-11> a djr:Expression ;
+    prov:specializationOf djr:R-3656 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/architecture-api/references/final.md> a djr:Document ;
     skos:prefLabel "architecture-api-final"@ko .
 
@@ -1863,14 +1889,14 @@ djr:R-3467 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
     djr:statesNorm djr:R-1990, djr:R-1991, djr:R-1992 ;
-    djr:text "- 승인 shape의 한 공통 필드를 BC `ErrorCode(StrEnum)`으로 좁혀 안정적인 공개 식별자를 제공한다. 그 필드명은 고정하지 않는다. public하게 구별되거나 관찰 가능한 실패에만 값을 부여하며, 여러 내부 예외는 하나의 public 식별자로 합쳐질 수 있다.\n"@ko .
+    djr:text "- 승인 shape의 한 공통 필드를 BC `ErrorCode(StrEnum)`으로 좁혀 안정적인 공개 식별자를 제공한다. 그 필드명은 고정하지 않는다. 소비자가 다르게 행동해야 하는 실패에만 새 값을 부여하고(행동이 같으면 같은 값에 설명만 달리 쓴다), 여러 내부 예외는 하나의 public 식별자로 합쳐질 수 있다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025/b5> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025> ;
     djr:kind djr:kind-norm ;
     djr:order 5 ;
-    djr:statesNorm djr:R-1993, djr:R-1994, djr:R-1995 ;
-    djr:text "- HTTP status 계약은 body property의 존재를 요구하거나 가정하지 않는다. 승인 shape에 status field가 있으면 실제 HTTP status와 일치시켜야 하지만, 그런 field가 없으면 controller의 literal/status 상수가 계약을 소유한다. 공개 문자열은 `str(exc)`를 자동 사용하거나 민감한 내부 정보를 누설하지 않는다.\n"@ko .
+    djr:statesNorm djr:R-1993, djr:R-1994, djr:R-1995, djr:R-3656 ;
+    djr:text "- HTTP status 계약은 body property의 존재를 요구하거나 가정하지 않는다. 승인 shape에 status field가 있으면 실제 HTTP status와 일치시켜야 하지만, 그런 field가 없으면 controller의 literal/status 상수가 계약을 소유한다. 공개 문자열은 `str(exc)`를 자동 사용하거나 민감한 내부 정보를 누설하지 않으며, 동적으로 넣는 값은 설계(slot 10)가 승인한 예외 필드 값뿐이다. 소비자가 계산하거나 따로 보일 값은 설명 문장에만 두지 않고 승인된 응답 머리에도 싣고, 머리 이름 · 값 꼴 · 값 없음의 뜻을 승인 계약에 적는다 — 설명은 사람이 읽는 글이라 소비자가 뜯어 읽는 자리가 아니다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025/b6> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s025> ;
@@ -1896,7 +1922,7 @@ djr:R-3467 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
     djr:statesNorm djr:R-2000, djr:R-2001, djr:R-2002 ;
-    djr:text "\n프레임워크 기본 401/403/route 404/422/429/`HttpError`/500을 전역 handler나 helper로 BC body로 바꾸어 헤더를 합성하지 않는다. 확립된 계약이 401의 `WWW-Authenticate` 또는 429의 `Retry-After`를 요구하면 그 헤더는 보존하고 별도 설계한다. presentation controller가 직접 공개하는 retryable BC 오류는 승인된 `Retry-After` 헤더를 그 controller가 소유한다.\n\n"@ko .
+    djr:text "\n프레임워크 기본 401/403/route 404/422/429/`HttpError`/500을 전역 handler나 helper로 BC body로 바꾸어 헤더를 합성하지 않는다. 확립된 계약이 401의 `WWW-Authenticate` 또는 429의 `Retry-After`를 요구하면 그 헤더는 보존하고 별도 설계한다. presentation controller가 직접 공개하는 BC 오류의 승인된 헤더(retryable 오류의 `Retry-After` · 사건 값 헤더)는 그 controller가 소유한다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-api/references/final.md/s027-6> a djr:Section ;
     djr:headingSnapshot "## 6. RFC 9457 에러 응답 형식"@ko ;

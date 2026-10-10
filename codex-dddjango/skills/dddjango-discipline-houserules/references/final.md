@@ -237,7 +237,7 @@ dddjango 는 **DDD · 클린 아키텍처 · 헥사고날** 셋을 조합해 Dja
 
 - **#88** — BC 의 입구 계층 폴더 이름은 `driving_layer/` 다 — `presentation_layer/` 를 쓰지 않는다.
 - **#89** — 바깥 행위자가 BC 를 부르는 통로는 `driving_layer/` 뿐이다 — 다른 층에 입구를 두지 않는다.
-- **#90** — `driving_layer/` 의 자식은 `api/` · `open_host_service/` · `cron_job/` · `event_subscription/` 넷뿐이고 «어떤 전송으로 오나»로만 갈린다 — HTTP · 같은 프로세스 함수 호출 · celery · 브로커. 「누가 부르나」(행위자)로 가르지 않는다.
+- **#90** — `driving_layer/` 의 자식은 `api/` · `open_host_service/` · `cron_job/` · `event_subscription/` 넷뿐이고 «어떤 전송으로 오나»로만 갈린다 — HTTP · 같은 프로세스 함수 호출 · celery · 브로커. 「누가 부르나」(행위자)로 가르지 않는다. 같은 프로세스 함수 호출의 부르는 쪽에는 framework 의 요청 틀(Ninja 인증 · Django 미들웨어)도 들고, 틀이 `<project>/settings` 의 문자열로 등록해 부르는 BC 해석 함수도 `open_host_service/` 창구에 둔다 — 틀은 BC 를 import 하지 않고(#46 · #430) 창구는 요청 계약 하나를 받아 표준 라이브러리 자료만 돌려주며(#633 · #472) 계약 필드 이름은 틀이 정한 중립 낱말이다(#52).
 - **#91** — 새 **전송**이 실제로 생기기 전에는 `driving_layer/` 의 자식을 늘리지 않는다 — 「새 행위자」로는 늘리지 않는다(웹훅이 그 반례다: 결제사라는 새 행위자가 왔지만 전송이 HTTP 라 2차 축 `webhook/<provider>/` 로 들어갔다). **늘리는 주체는 «정본 트리»다** — 개정되면 #486 에 따라 그 전송을 안 쓰는 BC 도 그 칸을 «빈 채로» 갖는다.
 - **#92** — `driving_layer/` 의 잎은 `application_layer/<area>/` 아래만 의존한다 — 예외는 넷: 도메인 exception·값 객체(#95) · `composition_root` 의 `build_`(#97) · 남의 `published_event/`(#507) · `framework/<technology>/`·`framework/<capability>/` 의 계약·스키마(브로커 포트는 여기 없다 — `application_layer` 쪽만 #7 이 연다: `framework/broker/{internal,external}/*_broker_port.py` import 허용).
 - **#178** — 소비 task 가 껍데기를 넘어 조율을 시작하면 새 칸을 여는 것이 아니라 입구 로직 금지 위반을 고친다.
