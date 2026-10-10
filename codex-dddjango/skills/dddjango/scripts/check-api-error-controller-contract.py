@@ -38,7 +38,9 @@ overlap 절 — #62·#474 는 handler 행, ⓓ#125 는 route 함수 def 행 좌�
   | dddjango-code-json | auto 와 같다 | C1 `caught exception field read not approved by slot 10`(도메인 #474 · 응용 계약) ·
   |                    |                | C2 `caught exception read outside the approved event-value form`(응용 · 계약) |
   | preserve-established | 모든 읽기에 #474(그대로) · `--event-value` 는 사용 오류 | 판정 0(그대로) |
-  비켜 주기는 api/<area>/<area>_controller.py 진입점(승격 본체 포함)에만 — webhook · OHS `*_service.py` 는 그대로다.
+  비켜 주기는 api/<area>/<area>_controller.py 진입점(승격 본체 포함)의 managed catch(operation 본문의 `try` handler —
+  code lane 이 보는 바로 그 handler)에만 — route 아닌 메서드 · 모듈 함수 · 중첩 함수의 catch 와 webhook · OHS
+  `*_service.py` 는 그대로다.
   머리 대입(키 · 값)에 실을 수 있는 것은 승인 필드 읽기 꼴뿐이다 — 잡은 예외를 통째로 쓰면(`f"{n}"` · `"%s" % n` · `n`)
   호출이 없어도 막는다(가지 문법 줄 + 응용 catch 는 C2 · 도메인 catch 는 트리 #474 — 구현 검토 보완).
 
@@ -4366,7 +4368,7 @@ def _event_value_findings(
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
 ) -> None:
-    """C1 — 꼴 맞는 읽기의 `원 경로.필드` 가 `--event-value` 목록 밖(도메인 = #474 · handler 행 overlap / 응용 = 계약).
+    """C1 — 꼴 맞는 읽기의 `원 경로.필드` 가 `--event-value` 목록 밖(도메인 = #474 · overlap 키 없음 / 응용 = 계약).
     C2 — 응용 catch 의 꼴 밖 속성 읽기 `n.<x>` 와 머리 대입(키 · 값) 안 통째 쓰기(계약 — 호출 인자 속 통째 쓰기는
     forwarding 몫). 도메인 catch 의 꼴 밖 읽기는 트리 #474 가 모든 프로필에서 낸다(새 줄 없음)."""
     if not reads.in_form and not reads.out_of_form:
@@ -4392,8 +4394,9 @@ def _event_value_findings(
             operation.parsed,
             name_node,
             EVENT_VALUE_NOT_APPROVED,
+            # overlap 키를 주지 않는다 — 트리 #474 는 이제 «꼴 밖 읽기» 만 내므로 C1(꼴 맞는 읽기의 승인 밖)과 다른
+            # 사건이다. 키를 주면 수집(앵커) 실행에서 같은 catch 의 꼴 밖 읽기 줄을 가린다(구현 검토 보완).
             rule="#474" if layer == "domain" else None,
-            overlap_line=handler.lineno if layer == "domain" else None,
         )
     if layer == "application":
         for name_node in reads.out_of_form:
@@ -7020,6 +7023,16 @@ def _schema_contract_mutation_nodes(
     return mutations
 
 
+def _managed_catch_handlers(operation: Operation) -> Iterator[ast.ExceptHandler]:
+    """code lane 이 `_analyze_try` 로 보는 handler — operation 본문의 lexical 범위(중첩 함수 · 클래스 · 람다 밖)에 있는
+    `try` 의 handler 다. 트리 슬라이스의 사건 값 비켜 주기는 이 handler 에만 건다(승인 대조 C1 이 닿는 자리와 같게)."""
+    for node in _iter_lexical_nodes(operation.node.body):
+        if TRY_STAR is not None and isinstance(node, TRY_STAR):
+            continue
+        if isinstance(node, ast.Try):
+            yield from node.handlers
+
+
 def _analyze_operation(
     operation: Operation,
     language: ErrorLanguage,
@@ -8211,13 +8224,16 @@ def _slice_check_controller_ast(
     is_controller: bool,
     root: "Path | None" = None,
 ) -> None:
-    # root 가 있으면(auto · code-json 의 api/<area>/<area>_controller.py 진입점 — webhook · OHS 제외) #474 는 꼴 맞는
-    # 사건 값 읽기(F4-80 — 승인 대조는 code lane 몫)를 비켜 준다. root 가 없으면(preserve 등) 지금 그대로다.
+    # root 가 있으면(auto · code-json 의 api/<area>/<area>_controller.py 진입점 — webhook · OHS 제외) #474 는 managed
+    # catch(operation 본문의 `try` handler — code lane 이 보는 바로 그 handler)의 꼴 맞는 사건 값 읽기(F4-80 — 승인
+    # 대조는 code lane 몫)를 비켜 준다. route 아닌 메서드 · 모듈 함수 · operation 안 중첩 함수의 catch 는 code lane 이
+    # 보지 않으므로 비켜 주지 않는다(구현 검토 보완). root 가 없으면(preserve 등) 지금 그대로다.
     # 라인은 공용 포매터의 violation/candidate 문법으로 emit_all 이 생성한다(B형
     # locator 콜론 정형화 — 출력 계약 v2). keys 는 엔트리와 같은 순서의 tree↔code
     # 동일 사건 좌표다(#62·#474 = handler 행 · ⓓ#125 = route 함수 def 행 — overlap 절).
     try:
-        mod = _ast.parse(f.read_text(encoding="utf-8"))
+        source_text: str = f.read_text(encoding="utf-8")
+        mod = _ast.parse(source_text)
     except (SyntaxError, OSError, UnicodeDecodeError):
         return
     domain_names: set[str] = set()
@@ -8227,13 +8243,11 @@ def _slice_check_controller_ast(
                 domain_names.update(a.asname or a.name for a in node.names)
     origins: dict[str, str] = _tree_origins(mod)
     sole_origins: dict[str, str] = _sole_import_origins(mod, rel) if root is not None else {}
-    enclosing: "dict[int, _ast.FunctionDef | _ast.AsyncFunctionDef]" = {}
-    if root is not None:
-        for function in _ast.walk(mod):
-            if isinstance(function, (_ast.FunctionDef, _ast.AsyncFunctionDef)):
-                for inner in _iter_lexical_nodes(function.body):
-                    if isinstance(inner, _ast.ExceptHandler):
-                        enclosing[id(inner)] = function
+    managed: "dict[int, set[str]]" = {}  # managed catch handler id → 그 operation 의 지역 이름
+    if root is not None and len(rel.parts) > 1:
+        for operation in _discover_operations(ParsedSource(rel, source_text, mod), rel.parts[1], []):
+            for handler in _managed_catch_handlers(operation):
+                managed[id(handler)] = operation.local_names
     for node in _ast.walk(mod):
         if isinstance(node, _ast.ClassDef) and _schema_rootmodel_mix(node, origins):
             msg = f"`{node.name}` 이 ninja `Schema` 와 pydantic `RootModel` 을 함께 상속했다 — 메타클래스 충돌 · 성공 union 응답은 `RootModel[Annotated[A | B, Field(discriminator=…)]]` 단독 상속이다"
@@ -8291,9 +8305,8 @@ def _slice_check_controller_ast(
                 finding_keys.append(("#62", rel.as_posix(), node.lineno))
             if node.name and set(caught_names) & domain_names:
                 in_form: "set[int]" = set()
-                if root is not None and len(rel.parts) > 1:
-                    function = enclosing.get(id(node))
-                    local_names = _function_local_names(function) if function is not None else set()
+                if root is not None and id(node) in managed:
+                    local_names = managed[id(node)]
                     in_form = set(
                         _event_value_reads(
                             node,

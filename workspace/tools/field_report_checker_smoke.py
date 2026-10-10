@@ -1979,16 +1979,26 @@ return Status(403, until_error)
         {"auto": (0, []), "cj": (2, [("-", "suspended_error: AccountsErrorSchema", EV_ARM),
                                      ("-", "suspended_error: AccountsErrorSchema", EV_OWN_C),
                                      ("-", "return Status(403, suspended_error)", EV_OWN_S)])}),
+    # N16a · N16b — «꼴 맞는» managed catch 꼴(route 데코 operation · 생성 → 머리 → 반환)이어도 OHS · webhook 은 비켜 주지 않는다.
     "N16a": (ev_files(**{EV_OHS: '''from datetime import UTC
 
+from django.http import HttpResponse
+from ninja import Router, Status
+
 from application.accounts.domain_layer.account.exception.account_suspended import AccountSuspended
+from application.accounts.driving_layer.api.bc_error_schema import AccountsErrorSchema, AccountSuspendedError
+
+router = Router()
 
 
-def find_login_block_query(account_id: int) -> dict[str, str]:
+@router.get("/login-block")
+def find_login_block_query(request: object, response: HttpResponse) -> dict[str, str] | Status[AccountsErrorSchema]:
     try:
         return {}
     except AccountSuspended as suspended:
-        return {"until": suspended.decided_at.astimezone(UTC).isoformat()}
+        suspended_error: AccountsErrorSchema = AccountSuspendedError()
+        response["Login-Blocked-Until"] = suspended.decided_at.astimezone(UTC).isoformat()
+        return Status(403, suspended_error)
 ''', f"{EV_A}/driving_layer/open_host_service/__init__.py": "",
         f"{EV_A}/driving_layer/open_host_service/session_user/__init__.py": ""}), [EV_DECIDED],
         {"auto": (2, [("#474", "suspended.decided_at", T474, EV_OHS)]),
@@ -1997,29 +2007,42 @@ def find_login_block_query(account_id: int) -> dict[str, str]:
     "N16b": (ev_files(**{EV_HOOK: '''from datetime import UTC
 
 from django.http import HttpRequest, HttpResponse
+from ninja import Status
+from ninja_extra import api_controller, route
 
 from application.accounts.domain_layer.account.exception.account_suspended import AccountSuspended
+from application.accounts.driving_layer.api.bc_error_schema import AccountsErrorSchema, AccountSuspendedError
 
 
-def handle_provider_event(request: HttpRequest, response: HttpResponse) -> None:
-    try:
-        return None
-    except AccountSuspended as suspended:
-        response["Login-Blocked-Until"] = suspended.decided_at.astimezone(UTC).isoformat()
+@api_controller("/webhooks/provider", auto_import=False)
+class ProviderController:
+    @route.post("/events", response={200: dict, 403: AccountSuspendedError})
+    def handle_provider_event(
+        self, request: HttpRequest, response: HttpResponse
+    ) -> dict[str, str] | Status[AccountsErrorSchema]:
+        try:
+            self.accept(request)
+        except AccountSuspended as suspended:
+            suspended_error: AccountsErrorSchema = AccountSuspendedError()
+            response["Login-Blocked-Until"] = suspended.decided_at.astimezone(UTC).isoformat()
+            return Status(403, suspended_error)
+        return {}
 ''', f"{EV_A}/driving_layer/api/webhook/__init__.py": "",
         f"{EV_A}/driving_layer/api/webhook/provider/__init__.py": ""}), [EV_DECIDED],
         {"auto": (2, [("#474", "suspended.decided_at", T474, EV_HOOK)]),
          "cj": (2, [("#474", "suspended.decided_at", T474, EV_HOOK)])}),
     "N17a": (ev_files(), [EV_UNTIL], {"auto": (1, "auto profile에는 selector를 전달하지 않음")}),
-    "N17b": (ev_files(), [EV_UNTIL], {"pre": (1, "--event-value")}),
+    "N17b": (ev_files(), [EV_UNTIL], {"pre": (1, "preserve-established profile에는 --event-value 를 전달하지 않음")}),
     "N17c": (ev_files(), ["application.billing.domain_layer.payment.exception.payment_failed.PaymentFailed.note"],
-             {"cj": (1, "--event-value")}),
-    "N17d1": (ev_files(), [f"{EV_DOM}.account_suspended._Hidden.blocked_until"], {"cj": (1, "--event-value")}),
-    "N17d2": (ev_files(), [f"{EV_SUSP}._secret"], {"cj": (1, "--event-value")}),
+             {"cj": (1, "--event-value 의 BC 가 --error-bc 밖: application.billing.")}),
+    "N17d1": (ev_files(), [f"{EV_DOM}.account_suspended._Hidden.blocked_until"],
+              {"cj": (1, "잘못된 --event-value: application.accounts.domain_layer.account.exception.account_suspended._Hidden.")}),
+    "N17d2": (ev_files(), [f"{EV_SUSP}._secret"], {"cj": (1, f"잘못된 --event-value: {EV_SUSP}._secret")}),
     "N17e": (ev_files(), [EV_UNTIL, EV_UNTIL], {"cj": (1, "반복 인자 중복: --event-value")}),
-    "N17f1": (ev_files(), ["application.accounts.domain_layer.blocked_until"], {"cj": (1, "--event-value")}),
+    "N17f1": (ev_files(), ["application.accounts.domain_layer.blocked_until"],
+              {"cj": (1, "잘못된 --event-value: application.accounts.domain_layer.blocked_until")}),
     "N17f2": (ev_files(), ["application.accounts.driving_layer.api.AccountSuspendedError.message"],
-              {"cj": (1, "--event-value")}),
+              {"cj": (1, "잘못된 --event-value: application.accounts.driving_layer.api.")}),
     "N19": (ev_files(ev_arm(ev_single(headers=("response[header_name] = suspended.reason_label",))),
                      pre="        header_name: str = payload.email\n"), [EV_LABEL],
             {"auto": (0, []), "cj": (2, [("-", "suspended_error: AccountsErrorSchema", EV_ARM), *EV_OWN2])}),
@@ -2127,6 +2150,50 @@ _ev_whole_in_header("N30f", 'response["Login-Blocked-Debug"] = (lambda: NAME)')
 _ev_whole_in_header("N31", 'response["Login-Blocked-Debug"] = f"{NAME}"', form="f1ev")
 _ev_whole_in_header("N32a", 'response["Login-Blocked-Debug"] = f"{NAME}"', form="f1no")
 _ev_whole_in_header("N32b", 'response[f"{NAME}"] = "x"', form="f1no")
+
+# N33 — 비켜 주기는 managed catch(operation 본문의 try handler)에만 건다(Claude 구현 검토 차단 1). route 아닌 메서드 · 모듈
+# 함수 · operation 안 중첩 함수의 catch 는 code lane 이 보지 않으므로, 꼴이 맞아도 트리 #474 가 그대로 선다(모든 프로필).
+EV_UNMANAGED_READ = '''try:
+    use_case.execute(command)
+except AccountSuspended as suspended:
+    marker: str = "x"
+    response["Login-Blocked-Code"] = suspended.reason_code
+'''
+EV_UNMANAGED_474 = [("#474", 'response["Login-Blocked-Code"] = suspended.reason_code', T474)]
+EV_UNMANAGED_RUNS = {"auto": (2, EV_UNMANAGED_474), "cj": (2, EV_UNMANAGED_474), "bl": (2, EV_UNMANAGED_474)}
+EV_CASES.update({
+    "N33a": (ev_files(ops='''
+    def _mark(self, use_case: AuthenticateAccountUseCase, command: AuthenticateAccountCommand, response: HttpResponse) -> None:
+''' + textwrap.indent(EV_UNMANAGED_READ, " " * 8)), [EV_CODE], EV_UNMANAGED_RUNS),
+    "N33b": (ev_files(module='''
+
+def _mark(use_case: AuthenticateAccountUseCase, command: AuthenticateAccountCommand, response: HttpResponse) -> None:
+''' + textwrap.indent(EV_UNMANAGED_READ, " " * 4) + "\n"), [EV_CODE], EV_UNMANAGED_RUNS),
+    "N33c": (ev_files(pre="        def _mark() -> None:\n" + textwrap.indent(EV_UNMANAGED_READ, " " * 12)),
+             [EV_CODE], EV_UNMANAGED_RUNS),
+    # 끝까지 실리는 흐름 — operation 의 try 가 메서드를 부르고, 그 메서드가 승인 안 된 필드를 머리에 쓴 뒤 다시 던진다
+    "N33d": ({EV_CTRL: ev_controller(ev_arm(EV_STATIC_ARM, head="AccountSuspended"), ops='''
+    def _authenticate(
+        self, use_case: AuthenticateAccountUseCase, command: AuthenticateAccountCommand, response: HttpResponse
+    ) -> AuthenticateAccountResult:
+        try:
+            return use_case.execute(command)
+        except AccountSuspended as suspended:
+            marker: str = "x"
+            response["Login-Blocked-Code"] = suspended.reason_code
+            raise
+''').replace("= use_case.execute(command)\n        except InvalidCredentials",
+             "= self._authenticate(use_case, command, response)\n        except InvalidCredentials")},
+             [], EV_UNMANAGED_RUNS),
+})
+# N34 — 머리 값 S 문법: 승인 필드 원자와 다른 값을 한 f-string 머리에 섞는다(꼴 · 승인은 맞으므로 auto 통과 · code-json ⑷)
+for _suffix in ("", "-app"):
+    EV_CASES["N34" + _suffix] = (
+        ev_files(ev_arm(ev_single(headers=('response["Login-Blocked-Label"] = f"{suspended.reason_label}/{payload.email}"',))),
+                 app=bool(_suffix)),
+        [f"{EV_APP if _suffix else EV_SUSP}.reason_label"],
+        {"auto": (0, []), "cj": (2, [("-", "suspended_error: AccountsErrorSchema", EV_ARM), *EV_OWN2]),
+         "bl": (2, [("-", "suspended_error: AccountsErrorSchema", EV_ARM), *EV_OWN2])})
 
 # lesson 꼴(트리 밖 `driving_layer/controller.py` — code lane 행렬 픽스처와 같은 자리)
 EV_LESSON_CTRL = "application/lesson/driving_layer/controller.py"
@@ -2332,9 +2399,13 @@ class EventValueRegression(unittest.TestCase):
     def test_anchor_baseline_keeps_event_value_without_bc_usage_error(self) -> None:
         # P16 — 앵커에 없는 새 BC: 기준선 재실행은 --error-bc 를 걷고 --event-value 는 남긴다(사용 오류 없이 돈다).
         stray = {f"{EV_A}/driving_layer/api/account/ninja_helpers.py": "VALUE: int = 1\n"}
-        anchor_only = {path: text for path, text in EV_BASE.items() if not path.startswith("application/")}
+        # 앵커에 `application/` 은 있고 그 BC 만 없어야 anchor_diff 가 --scope-bc · --error-bc 를 걷는다(없으면 다른 사용
+        # 오류로 positional 기준선 강등 — BC 대조 건너뜀을 지운 변이도 통과하던 헛도는 꼴이었다 · 구현 검토 보완).
+        anchor_only = {path: text for path, text in EV_BASE.items()
+                       if not path.startswith("application/") or path == "application/__init__.py"}
         code, output = self.anchor_run(anchor_only, {**EV_BASE, **EV_CASES["P1"][0], **stray}, [EV_UNTIL])
         self.assertEqual(code, 2, output)
+        self.assertIn("기준선=selector 렌더 재실행", output)
         self.assertIn("신규분(앵커 이후) 1건 · 앵커 기존분(잔존) 0건", output)
         self.assertNotIn("사용 오류", output)
 
@@ -2344,8 +2415,24 @@ class EventValueRegression(unittest.TestCase):
         files, flags, _ = EV_CASES["P2"]
         code, output = self.anchor_run(EV_BASE, {**EV_BASE, **files, **stray}, flags)
         self.assertEqual(code, 2, output)
+        self.assertIn("기준선=selector 렌더 재실행", output)
         self.assertIn("신규분(앵커 이후) 1건 · 앵커 기존분(잔존) 0건", output)
         self.assertNotIn("사용 오류", output)
+
+    def test_anchor_new_out_of_form_read_is_not_hidden_by_existing_unapproved_read(self) -> None:
+        # C1(꼴 맞는 읽기의 승인 밖 — 앵커 기존분)이 같은 catch 에 새로 더한 «꼴 밖 읽기»의 트리 #474 를 가리지 않는다.
+        # 앞 레인이 승인받은 읽기가 있는 catch 를 뒤 레인이 flag 없이 다시 열어 `n._secret` 읽기를 더한 꼴.
+        before = ev_files(ev_arm(ev_single(headers=('response["Login-Blocked-Label"] = suspended.reason_label',))))
+        after = ev_files(ev_arm(ev_single(headers=('response["Login-Blocked-Label"] = suspended.reason_label',
+                                                   'response["Login-Blocked-Secret"] = suspended._secret'))))
+        code, output = self.anchor_run({**EV_BASE, **before}, after, [])
+        self.assertEqual(code, 2, output)
+        self.assertIn("기준선=selector 렌더 재실행", output)
+        self.assertIn("신규분(앵커 이후) 1건 · 앵커 기존분(잔존) 1건", output)
+        new_part = output.split("== 신규분")[1].split("== 앵커 기존분")[0]
+        self.assertIn("suspended._secret", (Path(self.tmp.name) / "anchored" / EV_CTRL).read_text(encoding="utf-8"))
+        self.assertIn(T474, new_part)
+        self.assertIn(EV_C1, output.split("== 앵커 기존분")[1])
 
     def test_n29_fixture_declares_no_error_status(self) -> None:
         # 덧붙임 1 의 누락 사례 입력 조건 — 12-slot 없이(auto) `response=` 에 오류 status 선언이 없고 raw 403 으로 답한다.
