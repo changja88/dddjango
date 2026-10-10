@@ -15,7 +15,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPTS = ROOT / 'dddjango-web/scripts'
-BASE = '41cc2c3e'  # 바로 아래 배포판(dddjango-web 2.3.1) — 판 바뀜 알림 줄이 매니페스트 판을 읽으므로 바탕 판과 같은 판이어야 한다
+BASE = '41cc2c3e'  # 바탕 판(dddjango-web 2.3.1)의 scripts — 매니페스트는 지금 판 것을 붙인다(판 바뀜 알림 줄이 매니페스트 판을 읽으므로 판을 올려도 두 실행이 같은 판 글자를 읽게)
 ENV = dict(os.environ, GIT_OPTIONAL_LOCKS='0', PYTHONDONTWRITEBYTECODE='1')
 WHEN = '2026-10-10 23:00'
 AUDIT = '20261010-230000'
@@ -213,6 +213,10 @@ class ContractC(unittest.TestCase):
                                           'dddjango-web/.claude-plugin/plugin.json'], cwd=ROOT, env=ENV)
         with tarfile.open(fileobj=io.BytesIO(archive)) as bundle:
             bundle.extractall(cls.tmp / 'baseline', filter='data')
+        # 바탕 판 scripts 에 지금 판 매니페스트를 덮는다 — 판 바뀜 알림 줄 · scanner.plugin 의 판 글자가 두 실행에서 같아
+        # 판을 올린 커밋에서도 그 줄 전체를 가리지 않고 byte 대조한다.
+        shutil.copyfile(ROOT / 'dddjango-web/.claude-plugin/plugin.json',
+                        cls.tmp / 'baseline/dddjango-web/.claude-plugin/plugin.json')
         cls.old = cls.tmp / 'baseline/dddjango-web/scripts'
 
     @classmethod
