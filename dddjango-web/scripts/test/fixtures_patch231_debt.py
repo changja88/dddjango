@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""계약 C: 실제 CLI · 임시 저장소 · 2.3.0 byte 대조. 재현 장면(옛 배치 파일 셋 · G0 동결본 · refactor-scope 변형)은
-이 파일이 임시 폴더에 스스로 만든다 — 저장소 밖 파일을 읽지 않는다. 바탕 커밋이 이력에 없으면(얕은 clone 등) 2.3.0 과의
+"""계약 C: 실제 CLI · 임시 저장소 · 2.3.1 byte 대조. 재현 장면(옛 배치 파일 셋 · G0 동결본 · refactor-scope 변형)은
+이 파일이 임시 폴더에 스스로 만든다 — 저장소 밖 파일을 읽지 않는다. 바탕 커밋이 이력에 없으면(얕은 clone 등) 2.3.1 과의
 byte 대조만 건너뛰고 건너뛴 사실을 출력한다(실패로 세지 않는다)."""
 import io
 import json
@@ -15,7 +15,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPTS = ROOT / 'dddjango-web/scripts'
-BASE = 'f349f878'
+BASE = '41cc2c3e'  # 바로 아래 배포판(dddjango-web 2.3.1) — 판 바뀜 알림 줄이 매니페스트 판을 읽으므로 바탕 판과 같은 판이어야 한다
 ENV = dict(os.environ, GIT_OPTIONAL_LOCKS='0', PYTHONDONTWRITEBYTECODE='1')
 WHEN = '2026-10-10 23:00'
 AUDIT = '20261010-230000'
@@ -206,7 +206,7 @@ class ContractC(unittest.TestCase):
         cls.tmp = Path(cls.temp.name)
         cls.old = None
         if subprocess.run(['git', 'cat-file', '-e', BASE + '^{commit}'], cwd=ROOT, env=ENV, capture_output=True).returncode:
-            print('SKIP 2.3.0 byte 대조 — 바탕 커밋 %s 이 이 저장소 이력에 없다(얕은 clone 등) — 그 대조만 건너뛴다(실패로 세지 '
+            print('SKIP 2.3.1 byte 대조 — 바탕 커밋 %s 이 이 저장소 이력에 없다(얕은 clone 등) — 그 대조만 건너뛴다(실패로 세지 '
                   '않는다)' % BASE, file=sys.stderr)
             return
         archive = subprocess.check_output(['git', 'archive', BASE, 'dddjango-web/scripts',
@@ -235,7 +235,7 @@ class ContractC(unittest.TestCase):
 
     def cli(self, entry, *args, old=False):
         if old and self.old is None:
-            self.skipTest('바탕 커밋 %s 없음 — 2.3.0 byte 대조 건너뜀' % BASE)
+            self.skipTest('바탕 커밋 %s 없음 — 2.3.1 byte 대조 건너뜀' % BASE)
         return subprocess.run([sys.executable, '-B', '-c', RUN, str(self.old if old else SCRIPTS), entry,
                                *map(str, args)], cwd=self.p, env=ENV, stdout=subprocess.PIPE,
                               stderr=subprocess.STDOUT)
