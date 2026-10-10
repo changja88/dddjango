@@ -1,7 +1,7 @@
 {
   "schema": "pregate-symbol-kinds/0",
   "source_sha": {
-    "check-api-error-controller-contract.py": "b2fa456d357e2324",
+    "check-api-error-controller-contract.py": "521ae65bf939cc67",
     "check-app-container.py": "89825155e2def314",
     "check-broker-contract.py": "9ce6cac14e6d49ee",
     "check-business-vocabulary.py": "09b39ca59eeb29ef",
