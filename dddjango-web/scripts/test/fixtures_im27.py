@@ -47,9 +47,9 @@ def git(root, *args):
     return r.stdout.strip()
 
 
-def run(root, *args, scripts=SCRIPTS):
-    """backstop 실행 → (exit, stdout, stderr)."""
-    r = subprocess.run([sys.executable, '-B', str(scripts / 'backstop.py'), str(root), *map(str, args)],
+def run(root, *args, scripts=SCRIPTS, flags=()):
+    """backstop 실행 → (exit, stdout, stderr). flags = 인터프리터 옵션(`-W error` 등)."""
+    r = subprocess.run([sys.executable, *flags, '-B', str(scripts / 'backstop.py'), str(root), *map(str, args)],
                        capture_output=True, text=True, env=ENV)
     return r.returncode, r.stdout, r.stderr
 
@@ -82,20 +82,81 @@ def marked(lines):
     return out
 
 
-def views(names, call):
-    """이름마다 «비교 갈래 안에서 그 이름으로 로그를 남기는» 함수 하나 — 비교 줄에 표지(그 이름이 logging 출처가 아니라 선다)."""
-    out = []
-    for name in names:
-        out += ['', '', 'def view_%s(request: object) -> None:' % name,
-                '    if request.path == "/api/x":  # IM27', '        ' + call % name]
-    return out
+# 로그 출처의 오염 — 꼴 하나에 파일 하나다(한 파일에 오염이 하나라도 있으면 그 파일의 로그 예외가 전부 꺼지므로 꼴마다
+# 따로 둬야 그 꼴 하나가 잡히는지 볼 수 있다). 로그는 고치지 않은 다른 이름(clean · logging)으로 남긴다 — 그래도 선다.
+LOGGER_HEAD = ['import logging', '', 'clean = logging.getLogger("clean")', 'other = logging.getLogger("other")']
+MODULE_HEAD = ['import logging', 'import logging as other']
+FACTORY_HEAD = ['import logging', 'from logging import getLogger as other']
+LOGGER_LOG = 'clean.info(request.path)'
+MODULE_LOG = 'logging.warning(request.path)'
 
 
-# 출처로 인정하지 않는 이름 — 파일 어디서든 속성 읽기의 받는 쪽(factory 는 바로 부르기)이 아닌 꼴로 한 번이라도 나온 것
-TAINTED_LOGGERS = ('assigned', 'set_by_call', 'deleted', 'counted', 'handed', 'copied', 'listed', 'returned', 'formatted',
-                   'by_dict', 'by_class', 'by_parent', 'by_item', 'called', 'shadowed')
-TAINTED_MODULES = ('by_assign', 'by_class', 'by_result', 'by_setattr', 'by_setattr_class', 'by_delete', 'by_dunder', 'bare')
-TAINTED_FACTORIES = ('passed', 'patched', 'result_patched', 'attr_read')
+def log_file(head, body, log, mark='  # IM27'):
+    """머리 줄들 · patch 함수의 몸 · 비교 갈래 안에서 log 로 남기는 view. mark 를 비우면 비교 글자가 빠지는 파일이다."""
+    return [*head, '', '', 'def patch(api_client: object) -> object:', *('    ' + line for line in body), '', '',
+            'def view(request: object) -> None:', '    if request.path == "/api/x":' + mark, '        ' + log]
+
+
+TAINTS = {
+    # logger 이름 — 속성 대입 · setattr · del · 증강 대입 · 맨이름 읽기(인자 · 대입 · 컨테이너 · f-문자열 · 반환 · getattr) ·
+    #    `__dict__` · `__class__` · 속성 사슬 끝의 대입 · 첨자 대입 · 바로 부르기
+    'logger_assign': (LOGGER_HEAD, ['other.info = api_client.get'], LOGGER_LOG),
+    'logger_setattr': (LOGGER_HEAD, ['setattr(other, "info", api_client.get)'], LOGGER_LOG),
+    'logger_delete': (LOGGER_HEAD, ['del other.info'], LOGGER_LOG),
+    'logger_augmented': (LOGGER_HEAD, ['other.calls += 1'], LOGGER_LOG),
+    'logger_passed': (LOGGER_HEAD, ['api_client.keep(other)'], LOGGER_LOG),
+    'logger_copied': (LOGGER_HEAD, ['alias = other'], LOGGER_LOG),
+    'logger_listed': (LOGGER_HEAD, ['registry = [other]'], LOGGER_LOG),
+    'logger_formatted': (LOGGER_HEAD, ['text = f"{other}"'], LOGGER_LOG),
+    'logger_returned': (LOGGER_HEAD, ['return other'], LOGGER_LOG),
+    'logger_getattr': (LOGGER_HEAD, ['getattr(other, "info")("x")'], LOGGER_LOG),
+    'logger_dict': (LOGGER_HEAD, ['other.__dict__["info"] = api_client.get'], LOGGER_LOG),
+    'logger_class': (LOGGER_HEAD, ['kind = other.__class__'], LOGGER_LOG),
+    'logger_chain': (LOGGER_HEAD, ['other.parent.info = api_client.get'], LOGGER_LOG),
+    'logger_item': (LOGGER_HEAD, ['other.handlers[0] = api_client'], LOGGER_LOG),
+    'logger_called': (LOGGER_HEAD, ['other("x")'], LOGGER_LOG),
+    # 출처가 될 수 있는 이름은 어느 범위에서 묶였든 본다 — 다른 함수의 지역 logger · 대상 둘 대입 · walrus · 주석 달린 대입
+    'logger_local': (LOGGER_HEAD[:3], ['local = logging.getLogger("local")', 'local.info = api_client.get'], LOGGER_LOG),
+    'logger_pair': (LOGGER_HEAD[:3], ['first = second = logging.getLogger("pair")', 'second.info = api_client.get'], LOGGER_LOG),
+    'logger_walrus': (LOGGER_HEAD[:3], ['if (found := logging.getLogger("found")):', '    found.info = api_client.get'],
+                      LOGGER_LOG),
+    'logger_annotated': (LOGGER_HEAD[:3], ['noted: logging.Logger = logging.getLogger("noted")', 'noted.info = api_client.get'],
+                         LOGGER_LOG),
+    # getLogger 이름으로 만든 logger 도 출처가 될 수 있는 이름이다
+    'logger_by_factory': (['import logging', 'from logging import getLogger', '', 'made = getLogger("made")'],
+                          ['made.info = api_client.get'], MODULE_LOG),
+    # 같은 글자의 인자를 고치는 다른 함수(가림을 따지지 않는다)
+    'logger_shadow': (LOGGER_HEAD + ['', '', 'def configure(other: object, api_client: object) -> None:',
+                                     '    other.info = api_client.get'], ['return None'], LOGGER_LOG),
+    # logging 모듈의 별칭 — 모듈 함수 대입 · `Logger` 메서드 대입 · getLogger 결과의 메서드 대입 · setattr 둘 · del · `__dict__` ·
+    #    맨이름 읽기 · 함수 안에서 들여온 별칭
+    'module_assign': (MODULE_HEAD, ['other.warning = api_client.get'], MODULE_LOG),
+    'module_class': (MODULE_HEAD, ['other.Logger.warning = api_client.get'], MODULE_LOG),
+    'module_result': (MODULE_HEAD, ['other.getLogger("x").warning = api_client.get'], MODULE_LOG),
+    'module_setattr': (MODULE_HEAD, ['setattr(other, "warning", api_client.get)'], MODULE_LOG),
+    'module_setattr_class': (MODULE_HEAD, ['setattr(other.Logger, "warning", api_client.get)'], MODULE_LOG),
+    'module_delattr_class': (MODULE_HEAD, ['delattr(other.Logger, "warning")'], MODULE_LOG),
+    'module_delete': (MODULE_HEAD, ['del other.warning'], MODULE_LOG),
+    'module_dict': (MODULE_HEAD, ['other.__dict__["warning"] = api_client.get'], MODULE_LOG),
+    'module_bare': (MODULE_HEAD, ['return other'], MODULE_LOG),
+    'module_inner': (MODULE_HEAD[:1], ['import logging as inner', 'inner.warning = api_client.get'], MODULE_LOG),
+    'module_submodule': (MODULE_HEAD[:1] + ['import logging.handlers'], ['logging.handlers.emit = api_client.get'],
+                         'logging.getLogger("x").warning(request.path)'),
+    # getLogger 이름 — 값으로 넘김 · 속성 대입 · 결과의 메서드 대입 · 속성 읽기
+    'factory_passed': (FACTORY_HEAD, ['factory = other'], MODULE_LOG),
+    'factory_attribute': (FACTORY_HEAD, ['other.cache = api_client'], MODULE_LOG),
+    'factory_result': (FACTORY_HEAD, ['other("x").warning = api_client.get'], MODULE_LOG),
+    'factory_read': (FACTORY_HEAD, ['note = other.cache'], MODULE_LOG),
+}
+# 같은 틀에서 허용된 꼴만 쓰는 파일 — 비교 글자가 빠진다(위 파일들이 서는 까닭이 오염 한 줄뿐임을 보인다)
+CLEANS = {
+    'logger': (LOGGER_HEAD, ['other.setLevel(logging.DEBUG)', 'return other.name'], LOGGER_LOG),
+    'module': (MODULE_HEAD, ['other.basicConfig(level=other.INFO)', 'return other.getLogger("x").name'], MODULE_LOG),
+    'factory': (FACTORY_HEAD, ['other("x").setLevel(logging.DEBUG)', 'return other("x").name'], MODULE_LOG),
+    # logging 에서 오지 않은 이름(상대 import 의 getLogger · 그것으로 만든 것)은 어떻게 쓰든 이 파일의 출처를 흐리지 않는다
+    'relative': (['import logging', 'from .logging import getLogger as local_factory', '', 'local = local_factory("local")'],
+                 ['local.info = api_client.get', 'return local_factory'], MODULE_LOG),
+}
 
 
 class Proj:
@@ -225,7 +286,13 @@ CHANGED = {
         '        forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")',
         '        if request.path.startswith("/api/") and agent and address and forwarded:',
         '            return None',
-        '        return self.get_response(request)'],
+        '        return self.get_response(request)',
+        '',
+        '',
+        'def has_header(request: object) -> bool:',
+        '    if "HTTP_AUTHORIZATION" in request.META and "HTTP_X_SKIP" not in request.META:',
+        '        return request.path.startswith("/api/")',
+        '    return False'],
     # 여러 줄 비교 — 글자가 제 줄에 따로 있다
     HANDLER + 'case_multiline.py': [
         'def handle(request: object) -> bool:',
@@ -371,7 +438,12 @@ CHANGED = {
         'def loose_logged(request: object) -> bool:',
         '    logger.warning("not found %s", request.build_absolute_uri())',
         '    logger.debug("meta %s scope %s", request.META, request.scope)',
-        '    return request.path == "/api/x"'],
+        '    return request.path == "/api/x"',
+        '',
+        '',
+        'def not_found(request: object) -> bool:',
+        '    logger.warning("Not Found: %s", request.path, extra={"status_code": 404, "request": request})',
+        '    return request.path.startswith("/api/")'],
     # `import logging` 과 `import logging.handlers` · 거듭된 `import logging` 은 같은 모듈 한 번이다
     HANDLER + 'case_log_handlers.py': [
         'import logging',
@@ -478,109 +550,44 @@ CHANGED = {
         '        logger.debug("p=%s", request.path)',
         '    logger.warning("not found: %s", request.path)',
         '    return request.path == "/api/x"'],
-    # logger 이름이 파일 어디서든 속성 읽기의 받는 쪽이 아닌 꼴로 나오면 출처가 아니다 — 속성 대입 · setattr · del · 증강 대입 ·
-    #    맨이름 읽기(인자 · 대입 · 컨테이너 · f-문자열 · 반환) · `__dict__` · `__class__` · 속성 사슬 끝의 대입 · 첨자 대입 ·
-    #    바로 부르기 · 같은 글자의 인자를 고치는 다른 함수. 이름마다 따로 본다(clean 은 그대로 출처)
-    HANDLER + 'case_log_taint.py': [
+    # 출처 이름이 여럿이어도 모두 허용된 꼴이면 그대로 출처다 — 모듈 별칭 둘 · getLogger 이름 둘 · logger 셋(밑줄 이름 · 주석 달린
+    #    대입) · 함수마다 제 지역 logger · `import logging.handlers`
+    HANDLER + 'case_log_many.py': [
         'import logging',
+        'import logging as lg',
+        'import logging.handlers',
+        'from logging import getLogger',
+        'from logging import getLogger as get_logger',
         '',
-        'clean = logging.getLogger("clean")',
-        *('%s = logging.getLogger("%s")' % (n, n) for n in TAINTED_LOGGERS),
-        'setattr(set_by_call, "info", print)',
-        '',
-        '',
-        'def patch(api_client: object) -> object:',
-        '    assigned.info = api_client.get',
-        '    del deleted.info',
-        '    counted.calls += 1',
-        '    api_client.keep(handed)',
-        '    other = copied',
-        '    registry = [listed]',
-        '    text = f"{formatted}"',
-        '    by_dict.__dict__["info"] = api_client.get',
-        '    kind = by_class.__class__',
-        '    by_parent.parent.info = api_client.get',
-        '    by_item.handlers[0] = api_client',
-        '    called("x")',
-        '    return returned',
+        '_logger: logging.Logger = logging.getLogger(__name__)',
+        'audit = lg.getLogger("audit")',
+        'access = get_logger("access")',
+        'audit.setLevel(logging.INFO)',
+        'audit.addHandler(logging.handlers.RotatingFileHandler("audit.log"))',
         '',
         '',
-        'def configure(shadowed: object, api_client: object) -> None:',
-        '    shadowed.info = api_client.get',
+        'def first(request: object) -> bool:',
+        '    log = logging.getLogger("first")',
+        '    log.info("p=%s", request.path)',
+        '    return request.path == "/api/x"',
         '',
         '',
-        'def local_assign(request: object, api_client: object) -> None:',
-        '    local_a = logging.getLogger(__name__)',
-        '    local_a.info = api_client.get',
-        '    if request.path == "/api/x":  # IM27',
-        '        local_a.info(request.path)',
+        'def second(request: object) -> bool:',
+        '    log = getLogger("second")',
+        '    log.info("p=%s", request.path)',
+        '    return request.path == "/api/x"',
         '',
         '',
-        'def local_setattr(request: object, api_client: object) -> None:',
-        '    local_b = logging.getLogger(__name__)',
-        '    setattr(local_b, "info", api_client.get)',
-        '    if request.path == "/api/x":  # IM27',
-        '        local_b.info(request.path)',
-        '',
-        '',
-        'def view_clean(request: object) -> None:',
-        '    if request.path == "/api/x":',
-        '        clean.info(request.path)',
-        *views(TAINTED_LOGGERS, '%s.info(request.path)')],
-    # logging 모듈 이름 · getLogger 이름도 같다 — 모듈 함수 대입 · `Logger` 메서드 대입 · getLogger 결과의 메서드 대입 · setattr ·
-    #    del · `__dict__` · 맨이름 읽기 · factory 를 값으로 넘김 · factory 의 속성 읽기. 그 이름으로 만든 logger 와 직접 꼴도
-    #    출처가 아니다
-    HANDLER + 'case_log_taint_module.py': [
-        'import logging as clean_module',
-        *('import logging as %s' % n for n in TAINTED_MODULES),
-        'from logging import getLogger as clean_factory',
-        *('from logging import getLogger as %s' % n for n in TAINTED_FACTORIES),
-        '',
-        'made = by_assign.getLogger("made")',
-        '',
-        '',
-        'def patch(api_client: object) -> object:',
-        '    by_assign.warning = api_client.get',
-        '    by_class.Logger.warning = api_client.get',
-        '    by_result.getLogger("x").warning = api_client.get',
-        '    setattr(by_setattr, "warning", api_client.get)',
-        '    setattr(by_setattr_class.Logger, "warning", api_client.get)',
-        '    del by_delete.warning',
-        '    by_dunder.__dict__["warning"] = api_client.get',
-        '    factory = passed',
-        '    patched.cache = api_client',
-        '    result_patched("x").warning = api_client.get',
-        '    note = attr_read.cache',
-        '    return bare',
-        '',
-        '',
-        'def view_clean_module(request: object) -> None:',
-        '    if request.path == "/api/x":',
-        '        clean_module.warning(request.path)',
-        '        clean_module.getLogger("x").warning(request.path)',
-        '',
-        '',
-        'def view_clean_factory(request: object) -> None:',
-        '    if request.path == "/api/x":',
-        '        clean_factory("x").warning(request.path)',
-        '',
-        '',
-        'def view_direct(request: object) -> None:',
-        '    if request.path == "/api/x":  # IM27',
-        '        by_assign.getLogger("x").warning(request.path)',
-        '',
-        '',
-        'def view_made(request: object) -> None:',
-        '    if request.path == "/api/x":  # IM27',
-        '        made.warning(request.path)',
-        '',
-        '',
-        'def view_local(request: object) -> None:',
-        '    local = by_assign.getLogger("x")',
-        '    if request.path == "/api/x":  # IM27',
-        '        local.warning(request.path)',
-        *views(TAINTED_MODULES, '%s.warning(request.path)'),
-        *views(TAINTED_FACTORIES, '%s("x").warning(request.path)')],
+        'def host(request: object) -> object:',
+        '    _logger.warning("Web page not found: %s", request.path)',
+        '    path: str = request.path',
+        '    if path == "/api" or path.startswith("/api/"):',
+        '        return None',
+        '    audit.info("fallback %s", path)',
+        '    access.info("fallback %s", path)',
+        '    lg.debug("fallback %s", path)',
+        '    return request'],
+    **{HANDLER + 'case_clean_%s.py' % name: log_file(*spec, mark='') for name, spec in CLEANS.items()},
     # 별표 import 가 하나라도 있는 파일 — logging 이름이 덮였는지 알 수 없어 로그 예외를 전부 끈다(로그 없는 비교는 그대로 빠진다)
     HANDLER + 'case_log_star.py': [
         'import logging',
@@ -1053,7 +1060,40 @@ SAME = {
         '',
         'def meta_get_reuse(request: object, api_client: object) -> None:',
         '    if request.path == "/api/x":  # IM27',
-        '        api_client.get(request.META.get("PATH_INFO"))'],
+        '        api_client.get(request.META.get("PATH_INFO"))',
+        '',
+        '',
+        'def unbound_prefix(request: object, api_client: object) -> bool:',
+        '    starts = request.path.startswith',
+        '    api_client.keep(starts)',
+        '    return request.path == "/api/x"  # IM27',
+        '',
+        '',
+        'def meta_has_path_key(request: object) -> bool:',
+        '    return "PATH_INFO" in request.META and request.path == "/api/x"  # IM27',
+        '',
+        '',
+        'def meta_has_variable_key(request: object, key: str) -> bool:',
+        '    return key in request.META and request.path == "/api/x"  # IM27',
+        '',
+        '',
+        'def meta_has_chained(request: object, headers: object) -> bool:',
+        '    return "HTTP_X" in request.META in headers and request.path == "/api/x"  # IM27',
+        '',
+        '',
+        'def meta_contains_reversed(request: object) -> bool:',
+        '    return request.META in ("HTTP_X",) and request.path == "/api/x"  # IM27',
+        '',
+        '',
+        'def meta_items(request: object, api_client: object) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.post(dict(request.META.items()))',
+        '',
+        '',
+        'def absolute_uri_argument(request: object) -> object:',
+        '    if request.path == "/api/x":  # IM27',
+        '        return redirect(request.build_absolute_uri("/login/"))',
+        '    return None'],
     # 계약 밖 비교 꼴 — 부분 문자열 · f-문자열 · 이어 붙인 글자 · 연쇄 비교 · 인접 문자열 결합 · walrus 로 담은 컨테이너 ·
     #    변수 컨테이너 · 정규식 · 인자가 있는 경로 메서드 · startswith 의 둘째 인자
     HANDLER + 'case_shape.py': [
@@ -1139,7 +1179,7 @@ SAME = {
     # 로그 예외의 경계 — 하나라도 어기면 그 함수의 비교 글자는 빠지지 않는다: 로그가 아닌 호출(비교 앞 · 뒤) · logging 출처로
     #    확인되지 않는 받는 쪽(다시 붙인 메서드 · 다른 객체 · self.logger · 인자 · 가림 · 재바인딩 · 함수 안 import · 바깥 함수의 이름) ·
     #    독립 문장이 아닌 로그 호출(반환 · 대입 · 바깥 호출의 인자 · 첨자) · log 의 level 자리 · 로그 호출까지 가는 길의 다른 노드 ·
-    #    다른 연산 · 받는 쪽에서 읽기 · 간접 호출 · 응답과 이동 호출(과보고로 남는 알려진 한계)
+    #    다른 연산 · 받는 쪽에서 읽기 · 로그가 아닌 함수 호출 · 응답과 이동 호출(과보고로 남는 알려진 한계)
     HANDLER + 'case_log_keep.py': [
         'import logging',
         '',
@@ -1386,12 +1426,6 @@ SAME = {
         '    return request.path == "/api/x"  # IM27',
         '',
         '',
-        'def indirect(request: object) -> bool:',
-        '    quiet = logging.getLogger("quiet")',
-        '    getattr(quiet, "info")(request.path)',
-        '    return request.path == "/api/x"  # IM27',
-        '',
-        '',
         'def plain_function(request: object) -> bool:',
         '    info(request.path)',
         '    return request.path == "/api/x"  # IM27',
@@ -1428,6 +1462,48 @@ SAME = {
         '',
         'def loose_logged_default(request: object) -> bool:',
         '    logger.warning("not found %s", request.META.get("PATH_INFO", ""))',
+        '    return request.path == "/api/x"  # IM27',
+        '',
+        '',
+        'def named_by_path(request: object) -> bool:',
+        '    logging.getLogger(request.path)',
+        '    return request.path == "/api/x"  # IM27',
+        '',
+        '',
+        'def child_by_path(request: object) -> bool:',
+        '    logger.getChild(request.path)',
+        '    return request.path == "/api/x"  # IM27'],
+    # 이름이 logging 으로 시작할 뿐인 다른 모듈
+    HANDLER + 'case_log_lookalike.py': [
+        'import loggingx',
+        '',
+        '',
+        'def view(request: object) -> bool:',
+        '    loggingx.warning("p=%s", request.path)',
+        '    loggingx.getLogger("x").warning("p=%s", request.path)',
+        '    return request.path == "/api/x"  # IM27'],
+    # 조건 갈래 · try 안의 별표 import 도 별표 import 다
+    HANDLER + 'case_log_star_branch.py': [
+        'import logging',
+        '',
+        'if logging.root.handlers:',
+        '    from web.common.util.names import *',
+        '',
+        '',
+        'def view(request: object) -> bool:',
+        '    logging.warning("p=%s", request.path)',
+        '    return request.path == "/api/x"  # IM27'],
+    HANDLER + 'case_log_star_try.py': [
+        'import logging',
+        '',
+        'try:',
+        '    from web.common.util.names import *',
+        'except ImportError:',
+        '    pass',
+        '',
+        '',
+        'def view(request: object) -> bool:',
+        '    logging.warning("p=%s", request.path)',
         '    return request.path == "/api/x"  # IM27'],
     # 상대 import 의 getLogger 는 logging 출처가 아니다
     HANDLER + 'case_log_relative.py': [
@@ -1498,6 +1574,42 @@ SAME = {
         '    handlers.info("p=%s", request.path)',
         '    handler_logger.info("p=%s", request.path)',
         '    return request.path == "/api/x"  # IM27'],
+    # 로그 출처의 오염 — 꼴 하나에 파일 하나(TAINTS)
+    **{HANDLER + 'case_taint_%s.py' % name: log_file(*spec) for name, spec in TAINTS.items()},
+    # 같은 logging 모듈을 다른 별칭으로 — 한 별칭의 함수를 바꾸면 다른 별칭으로 남긴 로그도 그 함수다
+    HANDLER + 'case_taint_alias_pair.py': [
+        'import logging as a',
+        'import logging as b',
+        '',
+        '',
+        'def view(request: object, api_client: object) -> None:',
+        '    a.warning = api_client.get',
+        '    if request.path == "/api/x":  # IM27',
+        '        b.warning(request.path)'],
+    # 같은 logger 를 다시 얻음 — 이름으로 고친 logger 를 직접 꼴(`logging.getLogger(…).info`)로 다시 쓴다
+    HANDLER + 'case_taint_reacquired.py': [
+        'import logging',
+        '',
+        '',
+        'def view(request: object, api_client: object) -> None:',
+        '    logger = logging.getLogger(__name__)',
+        '    logger.info = api_client.get',
+        '    if request.path == "/api/x":  # IM27',
+        '        logging.getLogger(__name__).info(request.path)'],
+    # 한 logger 에 속성을 대입한 파일 — 같은 파일의 다른 logger 로 남긴 로그도 예외를 못 쓴다(과보고로 남는 알려진 한계)
+    HANDLER + 'case_taint_propagate.py': [
+        'import logging',
+        '',
+        '_audit: logging.Logger = logging.getLogger("audit")',
+        '_audit.propagate = False',
+        '_logger: logging.Logger = logging.getLogger(__name__)',
+        '',
+        '',
+        'def handler(request: object) -> object:',
+        '    _logger.warning("not found: %s", request.path)',
+        '    if request.path.startswith("/api/"):  # IM27',
+        '        return None',
+        '    return request'],
     # 문법 오류 파일 — 판정하지 못하니 지금처럼 선다
     HANDLER + 'case_broken.py': [
         'def handle(request: object) -> bool:',
@@ -1643,6 +1755,11 @@ def old_scripts(tmp):
     return Path(tmp) / 'dddjango-web' / 'scripts'
 
 
+def nested(depth):
+    """괄호 없는 lambda 를 depth 겹 겹친 함수가 든 파일(비교 없음 · 첫 줄에 API 주소 글자)."""
+    return ['URL: str = "/api/v1"', '', '', 'def view(request: object) -> object:', '    return ' + 'lambda: ' * depth + '1']
+
+
 def without(out, dropped):
     """옛 판 출력에서 (경로, 행) 마다 IM27 리터럴 발견 묶음 하나를 빼고 끝 줄의 건수를 맞춘다 → (뺀 출력, 뺀 수)."""
     n = 0
@@ -1714,7 +1831,8 @@ def bundle_unchanged(tmp):
             data.pop('scanned_at', None)
             data['scanner'] = {k: v for k, v in data.get('scanner', {}).items() if k != 'plugin'}
             outs.append((e, out, err, data))
-        check('U1 %s exit · stdout · stderr · JSON(스캔 시각 · 판 글자 빼고) — 고치기 전 판과 같음' % label, outs[0] == outs[1]
+        check('U1 %s — exit · stdout · stderr 는 고치기 전 판과 byte 동일 · JSON 은 scanned_at · scanner.plugin 을 뺀 파싱 결과가 같음'
+              % label, outs[0] == outs[1]
               and any(k.startswith('IM27|') for k in outs[0][3].get('counts', {})), outs[0][1][-600:] + outs[0][2][-600:])
 
     # U2 — 빠질 글자가 든 프로젝트: 표지가 적은 만큼만 IM27 리터럴 발견이 빠지고 나머지 출력은 byte 그대로
@@ -1732,19 +1850,32 @@ def bundle_unchanged(tmp):
               '새 판 exit=%d\n%s\nstderr: %s\n옛 판(뺀 뒤) exit=%d\n%s\nstderr: %s'
               % (new[0], new[1][-900:], new[2][-600:], before[0], trimmed[-900:], before[2][-600:]))
 
-    # U3 — 파서가 받지 못할 만큼 깊은 식이 든 파일 둘(비교 없음): 보조 파싱이 죽지 않고 지금 판정 그대로다
+    # U3 — 파서가 받지 못하는 파일(깊은 식 둘 · NUL 글자)과 경고를 내는 파일(잘못된 이스케이프): 보조 파싱이 죽지도 흘리지도
+    #      않고 지금 판정 그대로다. 판정이 따라 내려가지 못할 만큼 깊게 겹친 파일도 같다. 경고를 오류로 올린 실행(-W error)에서도 같다
     p, base = mkproj(tmp / 'u3')
-    deep = {HANDLER + 'case_deep_sum.py': ['URL: str = "/api/v1/x"', 'BIG: str = ' + '+'.join(['"a"'] * 200000)],
-            HANDLER + 'case_deep_not.py': ['URL: str = "/api/v1/y"', 'FLAG: bool = ' + 'not ' * 20000 + 'True']}
-    for rel, lines in deep.items():
+    hard = {HANDLER + 'case_deep_sum.py': ['URL: str = "/api/v1/x"', 'BIG: str = ' + '+'.join(['"a"'] * 200000)],
+            HANDLER + 'case_deep_not.py': ['URL: str = "/api/v1/y"', 'FLAG: bool = ' + 'not ' * 20000 + 'True'],
+            HANDLER + 'case_nul.py': ['URL: str = "/api/v1/z"', 'NUL: str = "\x00"'],
+            HANDLER + 'case_escape_new.py': ['URL: str = "/api/v1/w"', 'PATTERN: str = "\\d+"'],
+            # 파서는 받지만 판정이 따라 내려가지 못할 만큼 깊게 겹친 lambda
+            HANDLER + 'case_nest_1000.py': nested(1000), HANDLER + 'case_nest_1100.py': nested(1100)}
+    # 그보다 얕게 겹친 파일은 여느 파일처럼 판정한다 — 로그 없는 비교 글자가 빠진다(옛 판은 선다)
+    shallow = HANDLER + 'case_nest_900.py'
+    p.w('web/' + shallow, *nested(900), '', '', 'def plain(request: object) -> bool:', '    return request.path == "/api/x"')
+    for rel, lines in hard.items():
         p.w('web/' + rel, *lines)
-    for args in (('--diff-base', base, '--only', 'im'), ('--all', '--only', 'im')):
-        new = run(p.root, *args)
-        before = run(p.root, *args, scripts=old)
-        check('U3 %s — 깊은 식 파일 둘: 고치기 전 판과 exit · stdout · stderr byte 동일 · exit 2 · 각 파일 첫 줄 IM27'
-              % ' '.join(args[:1] + args[2:]),
-              new == before and new[0] == 2 and all(im27(new[1], rel) == [1] for rel in deep),
-              '새 판 exit=%d\n%s\nstderr: %s\n옛 판 exit=%d\n%s' % (new[0], new[1][-900:], new[2][-900:], before[0], before[1][-600:]))
+    for args, flags in ((('--diff-base', base, '--only', 'im'), ()), (('--all', '--only', 'im'), ()),
+                        (('--all', '--only', 'im'), ('-W', 'error'))):
+        new = run(p.root, *args, flags=flags)
+        before = run(p.root, *args, scripts=old, flags=flags)
+        trimmed, n = without(before[1], [(shallow, 9)])
+        check('U3 %s%s — 파서가 못 받는 파일 셋 · 경고 파일 하나 · 깊게 겹친 파일 둘: 고치기 전 판과 exit · stderr byte 동일 · stdout 은 '
+              '얕게 겹친 파일의 비교 글자 한 건만 다름 · exit 2 · stderr 0 줄 · 각 파일 첫 줄 IM27'
+              % (' '.join(args[:1] + args[2:]), ' (-W error)' if flags else ''),
+              n == 1 and new == (before[0], trimmed, before[2]) and new[0] == 2 and new[2] == ''
+              and all(im27(new[1], rel) == [1] for rel in list(hard) + [shallow]),
+              '새 판 exit=%d\n%s\nstderr: %s\n옛 판 exit=%d\n%s\nstderr: %s'
+              % (new[0], new[1][-900:], new[2][-900:], before[0], trimmed[-600:], before[2][-600:]))
 
 
 def main():

@@ -60,21 +60,25 @@ _API_LITERAL_RE = re.compile(r'''["'`]\s*/api/''')
 #     반환 · 다른 이름에 대입 · 조건식의 값 · 안쪽 함수 · lambda · comprehension 에서 읽기 포함).
 #     «쓰였는가» 는 P 보다 넓게 본다(경로 읽기) — `request` 의 `.path` · `.path_info` · `.get_full_path` ·
 #     `.get_full_path_info` · `.build_absolute_uri` · `.environ` · `.scope` · `.META` 를 어떤 꼴로든(호출 · 인자 · 첨자 · 다른
-#     이름에 담기) 읽으면 경로 읽기다. `request.META["<글자>"]` · `request.META.get("<글자>"[, 기본값])` 가운데 경로 키
-#     (PATH_INFO · REQUEST_URI · RAW_URI · SCRIPT_NAME)가 아닌 것(헤더 읽기)만 경로 읽기가 아니다. P 가 아닌 경로 읽기는
-#     비교 자리 · 지역 이름 바인딩에 있어도 다시 쓰는 것이다(아래 로그 문장의 인자만 빼고).
+#     이름에 담기) 읽으면 경로 읽기다. `request.META["<글자>"]` · `request.META.get("<글자>"[, 기본값])` ·
+#     `"<글자>" in request.META`(`not in`) 가운데 경로 키(PATH_INFO · REQUEST_URI · RAW_URI · SCRIPT_NAME)가 아닌 것(헤더
+#     읽기)만 경로 읽기가 아니다. P 가 아닌 경로 읽기는 비교 자리 · 지역 이름 바인딩에 있어도 다시 쓰는 것이다(아래 로그
+#     문장의 인자만 빼고).
 #   로그 문장의 인자로 읽는 것은 다시 쓰는 것으로 세지 않는다 — 아래 넷이 다 맞을 때만이다(하나라도 어기면 다시 쓰는 것이다).
 #     ① 받는 쪽이 logging 출처로 확인된다: `logging.<수준>(…)` · `logging.getLogger(…).<수준>(…)` · `getLogger(…).<수준>(…)` ·
 #        `<이름>.<수준>(…)`. `logging` · `getLogger` 는 모듈 범위에서 `import logging [as X]` · `from logging import getLogger
 #        [as Y]` 한 번으로만 바인딩되고(거듭된 `import logging` · `import logging.<하위>` 는 같은 모듈이라 한 번으로 센다)
 #        그 함수 · 바깥 함수가 다시 바인딩하지 않은 이름, `<이름>` 은 모듈 범위나 그 함수 범위에서
 #        `이름 = logging.getLogger(…)`(`이름: T = …` · `getLogger(…)`) 한 번으로만 바인딩되고 가려지거나 global · nonlocal 로 다시
-#        쓰이지 않는 이름이다. 그 출처 이름들은 파일 어디서든(범위 · 가림을 따지지 않고 그 글자의 이름이면) 허용된 꼴로만 읽혀야
-#        한다 — 모듈 · logger 이름은 속성 읽기의 받는 쪽(`이름.<속성>` — 메서드 호출 · `logging.WARNING` 같은 상수 · 주석의
-#        `logging.Logger`), getLogger 이름은 바로 부르는 자리(`이름(…)`). 하나라도 벗어나면 그 이름은 출처가 아니다: 속성 대입 ·
-#        삭제 · 증강 대입(`이름.x = …` · `이름.a.b = …` · `이름.getLogger(…).x = …` · 첨자 대입), `__` 로 시작하는 속성 읽기
-#        (`__dict__` · `__class__`), 맨이름 읽기(`setattr(이름, …)` · 인자 · 대입 · 반환 · 컨테이너 원소), `setattr` · `delattr` 에
-#        넘긴 `이름.<속성>`. 별표 import(`from … import *`)가 하나라도 있는 파일은 출처를 확인할 수 없어 로그 예외를 쓰지 않는다.
+#        쓰이지 않는 이름이다. 그리고 그 파일에서 출처가 될 수 있는 이름 — `logging` 모듈의 모든 별칭 · `getLogger` 이름 ·
+#        `getLogger(…)` 를 대입받은 모든 이름(어느 범위에서 묶였든) — 이 파일 어디서든(범위 · 가림을 따지지 않고 그 글자의
+#        이름이면) 허용된 꼴로만 읽혀야 한다 — 모듈 · logger 이름은 속성 읽기의 받는 쪽(`이름.<속성>` — 메서드 호출 ·
+#        `logging.WARNING` 같은 상수 · 주석의 `logging.Logger`), getLogger 이름은 바로 부르는 자리(`이름(…)`). 벗어나는 꼴: 속성
+#        대입 · 삭제 · 증강 대입(`이름.x = …` · `이름.a.b = …` · `이름.getLogger(…).x = …` · 첨자 대입), `__` 로 시작하는 속성
+#        읽기(`__dict__` · `__class__`), 맨이름 읽기(`setattr(이름, …)` · 인자 · 대입 · 반환 · 컨테이너 원소), `setattr` ·
+#        `delattr` 에 넘긴 `이름.<속성>`. 이름 하나라도 벗어나면 그 파일의 로그 예외를 전부 쓰지 않는다 — 같은 모듈 · 같은
+#        logger 를 다른 별칭이나 `getLogger(…)` 로 다시 얻어 쓸 수 있어서다(어느 이름이 같은 것을 가리키는지 따지지 않는다).
+#        별표 import(`from … import *`)가 하나라도 있는 파일도 출처를 확인할 수 없어 로그 예외를 쓰지 않는다.
 #     ② 그 호출이 독립된 표현식 문장이다(반환 · 대입 · 다른 호출의 인자 · await 안이면 아니다).
 #     ③ P 에서 그 호출까지 올라가는 길에 키워드 · f-문자열 · 튜플 · 사전 · 왼쪽이 문자열 상수인 `%` 만 낀다(다른 연산 · 호출 ·
 #        walrus · await · yield · 별표 · 조건식 · 첨자 · 속성 · 안쪽 범위가 끼거나 받는 쪽에서 읽으면 아니다). P 가 아닌 경로
@@ -84,15 +88,23 @@ _API_LITERAL_RE = re.compile(r'''["'`]\s*/api/''')
 #     로그 인자 안의 `/api/` 글자 자체는 그대로 IM27 이다(빠지는 것은 비교 자리의 글자뿐).
 #   안쪽 범위가 같은 이름을 가리면(인자 · 지역 바인딩 · comprehension 대상) 그 안의 이름은 바깥 것이 아니다 — 바깥 판정에 섞지 않는다.
 #   한계: 이름이 `request` 인 인자가 실제 요청 객체인지 증명하지 않는다 · 값의 흐름을 끝까지 쫓지 않는다(`request` 를 통째로 넘긴
-#     뒤의 사용(`api_client.forward(request)`) · `request` 의 별칭(`r = request` 뒤 `r.path`) · `getattr(request, "path")` · 위
-#     목록 밖 속성으로 읽는 경로는 보지 않는다). 다른 모듈이 바깥에서 이 모듈의 logger · logging 을 고치는 것,
+#     뒤의 사용(`api_client.forward(request)`) · `request` 의 별칭(`r = request` 뒤 `r.path`) · `getattr(request, "path")` ·
+#     `match request: case object(path=p)` · 위 목록 밖 속성이나 헤더에 실린 경로(`request.META.get("HTTP_X_ORIGINAL_URI")`)는
+#     보지 않는다). `request` 를 거치지 않는 경로 값 — URL 인자로 받은 경로(`def proxy(request, path)` 의 `path`)를 호출에
+#     넘기는 것 — 과, 비교 상대가 글자가 아닌 객체일 때 그 객체로 경로가 넘어가는 것(`request.path in api_client` ·
+#     `in ("/api/x", api_client)`)도 보지 않는다. logging 이 스스로 내주는 설정 호출(`logging.setLoggerClass(…)` ·
+#     `logging.setLogRecordFactory(…)` · `logger.addHandler(…)` · `logger.addFilter(…)`)로 로그를 다른 데로 흘려보내는 것,
+#     다른 모듈이 바깥에서 이 모듈의 logger · logging 을 고치는 것,
 #     출처 이름에서 읽어 낸 값(`이름.<속성>`)을 다른 이름에 담거나 다른 함수에 넘겨 고치는 것, 다른 이름으로 들여온 logging
-#     내부(`from logging import Logger`)나 이름을 글자로 가리켜(`globals()[…]`) 고치는 것은 보지 못한다. logging 출처를
-#     확인할 수 없는 로그(`self.logger` · 인자로 받은 logger · 함수 안 import · 다른 객체의 같은 이름 메서드 · 속성을 대입한
-#     logger(`logger.propagate = False`) · 별표 import 가 있는 파일)와 응답 · 이동 호출에 경로를 넘기는 꼴(`JsonResponse({"path":
-#     path})` · `redirect(request.path)`)은 다시 쓰는 것으로 센다(그 함수의 비교 글자는 그대로 IM27 — 과보고). f-문자열 ·
+#     내부(`from logging import Logger`)나 다른 모듈을 거쳐 얻은 logger(`from x import logger`)를 고치는 것, 이름을 글자로
+#     가리켜(`globals()[…]`) 고치는 것은 보지 못한다. logging 출처를 확인할 수 없는 로그(`self.logger` · 인자로 받은 logger ·
+#     함수 안 import · 다른 객체의 같은 이름 메서드 · 별표 import 가 있는 파일 · 출처가 될 수 있는 이름 하나라도 허용된 꼴을
+#     벗어난 파일 — 한 logger 에 속성을 대입(`audit.propagate = False`)하면 같은 파일의 다른 logger 로 남긴 로그도 그렇다)와
+#     응답 · 이동 호출에 경로를 넘기는 꼴(`JsonResponse({"path": path})` · `redirect(request.path)`)은 다시 쓰는 것으로 센다
+#     (그 함수의 비교 글자는 그대로 IM27 — 과보고). 헤더만 보는 META 읽기라도 위 세 꼴이 아니면(`request.META.get(변수)` ·
+#     `request.META.items()`), 인자를 준 `request.build_absolute_uri("/login/")` 도 경로 읽기로 센다(과보고). f-문자열 ·
 #     인접 문자열 결합 · walrus · 변수에 담은 컨테이너 · 템플릿의 같은 꼴은 예외가 아니다(지금 판정 그대로). UTF-8 BOM 으로
-#     시작하는 파일은 파싱하지 못해 예외를 쓰지 않는다.
+#     시작하는 파일 · 범위가 아주 깊게 겹친 파일은 판정하지 못해 예외를 쓰지 않는다.
 _REQUEST: str = 'request'
 _PATH_ATTRS: Set[str] = {'path', 'path_info'}
 _PATH_CALLS: Set[str] = {'get_full_path', 'get_full_path_info'}
@@ -142,6 +154,11 @@ def _walk_scope(roots: List[ast.AST]) -> Iterator[Tuple[ast.AST, Optional[ast.AS
         stack.extend((c, node) for c in children)
 
 
+def _binds_logging(al: ast.alias) -> bool:
+    """`import logging [as X]` · `import logging.<하위>`(asname 없음 — 이름 logging 에 logging 모듈을 묶는다)인가."""
+    return al.name == _LOGGING or (not al.asname and al.name.startswith(_LOGGING + '.'))
+
+
 def _bindings(roots: List[ast.AST], args: Optional[ast.arguments] = None) -> _Bindings:
     """한 범위(함수의 자기 범위 · 모듈 본문)의 이름별 바인딩 값(_Binding) · global 선언 이름 · nonlocal 선언 이름.
     comprehension 안의 walrus 는 이 범위의 바인딩이다."""
@@ -170,10 +187,8 @@ def _bindings(roots: List[ast.AST], args: Optional[ast.arguments] = None) -> _Bi
                      if isinstance(n, ast.NamedExpr) and isinstance(n.target, ast.Name)]
         elif isinstance(node, ast.ExceptHandler) and node.name:
             bound = [(node.name, None)]
-        elif isinstance(node, ast.Import):  # `import logging.handlers`(asname 없음)도 이름 logging 에 logging 모듈을 묶는다
-            bound = [(al.asname or al.name.split('.')[0],
-                      _LOGGING if al.name == _LOGGING or (not al.asname and al.name.startswith(_LOGGING + '.')) else None)
-                     for al in node.names]
+        elif isinstance(node, ast.Import):
+            bound = [(al.asname or al.name.split('.')[0], _LOGGING if _binds_logging(al) else None) for al in node.names]
         elif isinstance(node, ast.ImportFrom):
             from_logging: bool = node.module == _LOGGING and not node.level
             bound = [(al.asname or al.name, _GET_LOGGER if from_logging and al.name == _GET_LOGGER else None)
@@ -221,7 +236,7 @@ def _is_request_path(node: _Binding) -> bool:
 
 def _reads_path(node: ast.AST, parent_of: Dict[int, Optional[ast.AST]]) -> bool:
     """경로 읽기인가 — `request` 의 _PATH_READ_ATTRS 속성을 어떤 꼴로든 읽는 속성 노드. `request.META["<글자>"]` ·
-    `request.META.get("<글자>"[, 기본값])` 가운데 경로 키가 아닌 것(헤더 읽기)만 아니다."""
+    `request.META.get("<글자>"[, 기본값])` · `"<글자>" in request.META`(`not in`) 가운데 경로 키가 아닌 것(헤더 읽기)만 아니다."""
     if not (isinstance(node, ast.Attribute) and node.attr in _PATH_READ_ATTRS
             and isinstance(node.value, ast.Name) and node.value.id == _REQUEST):
         return False
@@ -235,6 +250,9 @@ def _reads_path(node: ast.AST, parent_of: Dict[int, Optional[ast.AST]]) -> bool:
         call: Optional[ast.AST] = parent_of.get(id(parent))
         if isinstance(call, ast.Call) and call.func is parent and 1 <= len(call.args) <= 2 and not call.keywords:
             key = call.args[0]
+    elif (isinstance(parent, ast.Compare) and len(parent.ops) == 1 and isinstance(parent.ops[0], (ast.In, ast.NotIn))
+          and parent.comparators[0] is node):
+        key = parent.left
     return not (isinstance(key, ast.Constant) and isinstance(key.value, str) and key.value not in _PATH_KEYS)
 
 
@@ -319,34 +337,55 @@ def _name_uses(tree: ast.Module) -> Dict[str, Set[str]]:
 
 class _LogSources:
     """모듈 범위에서 한 번으로만 바인딩된 이름의 바인딩 값 — logging 출처(`import logging` · `from logging import getLogger` ·
-    `이름 = logging.getLogger(…)`) 확인의 바탕. 어느 함수든 global 로 선언한 이름은 다시 쓰일 수 있어 뺀다. 출처 이름은 파일
-    어디서든 허용된 꼴로만 읽혀야 하고(reads_only), 별표 import 가 있는 파일(star)은 출처를 확인할 수 없다."""
+    `이름 = logging.getLogger(…)`) 확인의 바탕. 어느 함수든 global 로 선언한 이름은 다시 쓰일 수 있어 뺀다. 파일 단위로
+    출처를 확인할 수 없으면(verifiable — 별표 import · 허용된 꼴을 벗어난 출처 이름) 그 파일의 로그 예외는 전부 없다."""
 
     def __init__(self, tree: ast.Module) -> None:
         self._tree: ast.Module = tree
         self._binds: Dict[str, List[_Binding]] = _bindings(list(tree.body))[0]
-        self._rewritten: Set[str] = set()
-        self.star: bool = False
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Global):
-                self._rewritten.update(node.names)
-            elif isinstance(node, ast.ImportFrom) and any(al.name == '*' for al in node.names):
-                self.star = True
-        self._uses: Optional[Dict[str, Set[str]]] = None  # 로그 출처를 처음 물을 때 센다
+        self._rewritten: Set[str] = {n for node in ast.walk(tree) if isinstance(node, ast.Global) for n in node.names}
+        self._verifiable: Optional[bool] = None  # 로그 출처를 처음 물을 때 정한다
 
-    def reads_only(self, name: str, use: str) -> bool:
-        """그 글자의 이름이 파일 어디서든 use 꼴로만 읽히는가."""
-        if self._uses is None:
-            self._uses = _name_uses(self._tree)
-        return self._uses.get(name, set()) <= {use}
+    def verifiable(self) -> bool:
+        """이 파일에서 logging 출처를 확인할 수 있는가 — 별표 import 가 없고, 출처가 될 수 있는 이름(logging 모듈의 별칭 ·
+        getLogger 이름 · `getLogger(…)` 를 대입받은 이름 — 어느 범위에서 묶였든 그 글자의 이름)이 모두 허용된 꼴로만 읽힌다.
+        같은 모듈 · 같은 logger 를 다른 이름이나 다시 얻기로 쓸 수 있으니 이름별로 가르지 않는다."""
+        if self._verifiable is None:
+            self._verifiable = self._all_sources_clean()
+        return self._verifiable
+
+    def _all_sources_clean(self) -> bool:
+        nodes: List[ast.AST] = list(ast.walk(self._tree))
+        modules: Set[str] = set()
+        factories: Set[str] = set()
+        for node in nodes:
+            if isinstance(node, ast.Import):
+                modules.update(al.asname or _LOGGING for al in node.names if _binds_logging(al))
+            elif isinstance(node, ast.ImportFrom):
+                if any(al.name == '*' for al in node.names):
+                    return False
+                if node.module == _LOGGING and not node.level:
+                    factories.update(al.asname or al.name for al in node.names if al.name == _GET_LOGGER)
+
+        def made(value: Optional[ast.AST]) -> bool:  # 그 이름들로 부른 getLogger(…) 인가
+            return (_is_get_logger(value, lambda name: _LOGGING if name in modules else None)
+                    or _is_get_logger(value, lambda name: _GET_LOGGER if name in factories else None))
+
+        loggers: Set[str] = set()
+        for node in nodes:
+            targets: List[ast.expr] = (list(node.targets) if isinstance(node, ast.Assign)
+                                       else [node.target] if isinstance(node, (ast.AnnAssign, ast.NamedExpr)) else [])
+            if targets and made(node.value):
+                loggers.update(t.id for t in targets if isinstance(t, ast.Name))
+        uses: Dict[str, Set[str]] = _name_uses(self._tree)
+        return (all(uses.get(name, set()) <= {_USE_ATTR} for name in modules | loggers)
+                and all(uses.get(name, set()) <= {_USE_CALL} for name in factories))
 
     def once(self, name: str) -> _Binding:
         values: List[_Binding] = self._binds.get(name, [])
         if values and all(v == _LOGGING for v in values):  # 거듭된 `import logging[.<하위>]` 는 같은 모듈 한 번이다
             values = values[:1]
-        if len(values) != 1 or name in self._rewritten:
-            return None
-        return values[0] if self.reads_only(name, _USE_CALL if values[0] == _GET_LOGGER else _USE_ATTR) else None
+        return values[0] if len(values) == 1 and name not in self._rewritten else None
 
 
 def _is_get_logger(node: _Binding, lookup: Callable[[str], _Binding]) -> bool:
@@ -363,7 +402,7 @@ def _is_get_logger(node: _Binding, lookup: Callable[[str], _Binding]) -> bool:
 def _is_log_source(recv: ast.AST, module: _LogSources, scope: _Bindings, hidden: Set[str], rewritten: Set[str]) -> bool:
     """로그 호출의 받는 쪽이 logging 출처로 확인되는가(머리 주석 ①). scope = 그 함수의 바인딩, hidden = 바깥 함수들이 바인딩한
     이름, rewritten = 그 함수의 안쪽 함수가 nonlocal 로 선언한 이름."""
-    if module.star:
+    if not module.verifiable():
         return False
     binds, global_names, nonlocal_names = scope
     outside: Set[str] = global_names | nonlocal_names
@@ -378,8 +417,7 @@ def _is_log_source(recv: ast.AST, module: _LogSources, scope: _Bindings, hidden:
         return False
     if name in binds:  # 그 함수의 지역 이름
         values: List[_Binding] = binds[name]
-        return (len(values) == 1 and name not in rewritten and module.reads_only(name, _USE_ATTR)
-                and _is_get_logger(values[0], imported))
+        return len(values) == 1 and name not in rewritten and _is_get_logger(values[0], imported)
     if name in hidden:
         return False
     value: _Binding = module.once(name)
@@ -482,8 +520,9 @@ def _functions(tree: ast.Module) -> Iterator[Tuple[_Function, Set[str]]]:
 
 
 def _request_path_spans(ms: MaskedSource) -> List[Tuple[int, int]]:
-    """요청 경로와 비교되는 문자열 상수의 본문 오프셋 구간 [시작, 끝) — 파싱하지 못하면 빈 목록(지금처럼 IM27).
-    AST 의 열은 UTF-8 바이트 자리라 글자 자리로 바꾼다. 마스킹 본문 · 원문은 읽기만 한다."""
+    """요청 경로와 비교되는 문자열 상수의 본문 오프셋 구간 [시작, 끝) — 파싱하지 못하거나 범위가 너무 깊게 겹쳐 판정이
+    따라 내려가지 못하면 빈 목록(지금처럼 IM27). AST 의 열은 UTF-8 바이트 자리라 글자 자리로 바꾼다. 마스킹 본문 · 원문은
+    읽기만 한다."""
     try:
         with warnings.catch_warnings():  # 보조 파싱의 경고(잘못된 이스케이프 등)를 검사기 출력에 더하지 않는다
             warnings.simplefilter('ignore')
@@ -497,13 +536,16 @@ def _request_path_spans(ms: MaskedSource) -> List[Tuple[int, int]]:
         end: int = ms.line_starts[line] if line < len(ms.line_starts) else len(text)
         return start + len(text[start:end].encode('utf-8')[:col].decode('utf-8', errors='ignore'))
 
-    module: _LogSources = _LogSources(tree)
     spans: List[Tuple[int, int]] = []
-    for fn, hidden in _functions(tree):
-        for c in _compared_literals(fn, module, hidden):
-            a, b = offset(c.lineno, c.col_offset), offset(c.end_lineno or c.lineno, c.end_col_offset or 0)
-            if _ONE_LITERAL_RE.fullmatch(ms.tokens_view, a, b):  # 인접 문자열 결합은 상수 하나가 아니다
-                spans.append((a, b))
+    try:
+        module: _LogSources = _LogSources(tree)
+        for fn, hidden in _functions(tree):
+            for c in _compared_literals(fn, module, hidden):
+                a, b = offset(c.lineno, c.col_offset), offset(c.end_lineno or c.lineno, c.end_col_offset or 0)
+                if _ONE_LITERAL_RE.fullmatch(ms.tokens_view, a, b):  # 인접 문자열 결합은 상수 하나가 아니다
+                    spans.append((a, b))
+    except (RecursionError, MemoryError):  # 안쪽 범위를 따라 내려가는 판정이 깊이 한계에 닿았다
+        return []
     return spans
 
 
