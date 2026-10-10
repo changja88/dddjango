@@ -8,7 +8,10 @@ N 미검증(skip · xfail · 수집 0 · 수집 오류 · 정상 실패 · 시�
 단언 밖 실패 · 매개 case) · C 중단 뒤 재개 복구 · A 검증 뒤 0C 가 시작된 다음 다시 불림 · D dirty 트리 ·
 L 생명주기(build-state · 0T 커밋 사슬 · 명세 행) · P 기록 플러그인 · X 승인 행 판독은 한 곳(치환 확인 · plan --names ·
 switch-check 가 받는 행이 같다) · J 이어 붙인 흐름(0T → 치환 확인 → switch-check → 기록 → 0C → 치환 확인 · 음성 넷 ·
-임시 변경이 남은 채 취소로 적힌 모순 상태).
+임시 변경이 남은 채 취소로 적힌 모순 상태) · V 구현 검토 보완(V1 걸러진 case · 대상 밖 노드 · 실행마다 다른 case 집합 ·
+V2 한 줄에 단언 둘 · 반복문 안 단언 · V3 복구가 지워도 되는 파일만 지운다 · 위조된 복구 상태 · 남은 도구 임시 폴더 ·
+V4 «이미 검증됨» 은 행 전체 · T 목록 · 갖춰진 실행 기록 · V5 반례 적용 실패 뒤 적용 전 바이트로) · O `--test-cmd` 의
+고르는 선택지 표.
 고치기 전 판 = BASELINE 커밋의 scripts(`git show <커밋>:<경로>` 로 임시 폴더에 푼다 — 작업 사본을 stash 하지 않는다).
 그 커밋이 이력에 없으면(얕은 clone 등) U 묶음을 건너뛰고 건너뛴 사실을 출력한다(실패로 세지 않는다)."""
 import hashlib
@@ -81,7 +84,9 @@ def main():
                 return 3
     sys.path.insert(0, os.getcwd())
     nodes = [a for a in sys.argv[1:] if '::' in a]
-    collected, runs = [], []
+    collected, runs, items, gone = [], [], [], []
+    keep = os.environ.get('FAKE_K')        # addopts 의 `-k <낱말>` 흉내 — 알리고 뺀다(deselected 에 적는다)
+    drop = os.environ.get('FAKE_DROP')     # conftest 수집 훅 흉내 — 알리지 않고 뺀다
     for node in nodes:
         path, func = node.split('::', 1)
         if not os.path.isfile(path):
@@ -108,9 +113,16 @@ def main():
         cases = getattr(fn, 'cases', None)
         for case in (cases if cases is not None else [None]):
             nodeid = '%s::%s' % (path, func) + ('' if case is None else '[%s]' % case)
+            entry = [nodeid, os.path.realpath(path)]
+            items.append(entry)
+            if keep and keep not in str(case):
+                gone.append(entry)
+                continue
+            if drop and drop in str(case):
+                continue
             collected.append(nodeid)
             runs.append((nodeid, fn, case))
-    write({'event': 'collected', 'nodeids': collected})
+    write({'event': 'collected', 'nodeids': collected, 'items': items, 'deselected': gone})
     counts = {'passed': 0, 'failed': 0, 'skipped': 0, 'xfailed': 0, 'xpassed': 0}
     for nodeid, fn, case in runs:
         def report(when, outcome, xfail=False, exc=None):
@@ -461,7 +473,8 @@ def bundle_unverified(tmp):
     odd.write_text(
         "import json, os, sys\n"
         "node = [a for a in sys.argv[1:] if '::' in a][0]\n"
-        "rows = [{'event': 'collected', 'nodeids': [node]},\n"
+        "rows = [{'event': 'collected', 'nodeids': [node], 'deselected': [],\n"
+        "         'items': [[node, os.path.realpath(node.split('::')[0])]]},\n"
         "        {'event': 'report', 'nodeid': node, 'when': 'call', 'outcome': 'failed', 'wasxfail': False,\n"
         "         'exc': {'type': 'builtins.AssertionError', 'frames': [['only-one-field']]}},\n"
         "        {'event': 'finish', 'exitstatus': 1}]\n"
@@ -781,6 +794,14 @@ def bundle_probe(tmp):
         else:
             sys.modules['pytest'] = saved
     item = types.SimpleNamespace(nodeid='tests/test_gate.py::test_gate')
+    here_file = Path(__file__).resolve()
+    kept = types.SimpleNamespace(nodeid='tests/test_gate.py::test_gate[keep]', path=here_file)
+    gone = types.SimpleNamespace(nodeid='tests/test_gate.py::test_gate[drop]', fspath=str(here_file))
+    late = types.SimpleNamespace(nodeid='tests/test_gate.py::test_gate[late]', path=here_file)
+    for collected in (item, kept, gone):
+        probe.pytest_itemcollected(collected)
+    probe.pytest_collection_modifyitems([item, kept, gone, late])
+    probe.pytest_deselected([gone])
     probe.pytest_collection_finish(types.SimpleNamespace(items=[item]))
     probe.pytest_collectreport(types.SimpleNamespace(failed=True, nodeid='tests/test_bad.py', longrepr='boom'))
     probe.pytest_collectreport(types.SimpleNamespace(failed=False, nodeid='tests', longrepr=None))
@@ -805,6 +826,10 @@ def bundle_probe(tmp):
           and records[3]['exc']['frames'][-1] == [here.filename, here.lineno, here.name]
           and records[3]['wasxfail'] is False and records[4]['wasxfail'] is True and records[5]['exitstatus'] == 1,
           json.dumps(records, ensure_ascii=False)[:1500])
+    real = os.path.realpath(str(here_file))
+    check('P2 수집 기록 — 걸러지기 전 항목(만들어질 때 + 수집 훅 맨 앞 · 겹침 없이 · 파일 실제 경로)과 걸러진 항목',
+          records[0].get('items') == [[item.nodeid, ''], [kept.nodeid, real], [gone.nodeid, real], [late.nodeid, real]]
+          and records[0].get('deselected') == [[gone.nodeid, real]], json.dumps(records[0], ensure_ascii=False)[:900])
 
 
 # ====================================================================== U — 무변(2.3.0 과 byte 동일)
@@ -1228,9 +1253,407 @@ def bundle_joined(tmp):
           '[subst] tests/test_greeting.py' not in out, out[-900:])
 
 
+# ====================================================================== V — 구현 검토 보완(차단 넷)
+
+V_VIEW = [
+    "CHOICE_URL = '/choose/'",
+    "HOME_URL = '/home/'",
+    '',
+    '',
+    'class Response:',
+    "    def __init__(self, status, location=''):",
+    '        self.status = status',
+    '        self.location = location',
+    '',
+    '',
+    'def _render_page(request, vm):',
+    "    if vm['needs_choice']:",
+    '        return Response(302, CHOICE_URL)',
+    '    return Response(200)',
+    '',
+    '',
+    'def page_view(request):',
+    "    context = request.get('context')",
+    '    if context is None:',
+    '        return Response(302, location=CHOICE_URL)',
+    "    response = _render_page(request, {'needs_choice': context['employees'] > 1 and context['selected'] is None})",
+    '    if response.status != 302:',
+    '        return Response(302, HOME_URL)',
+    '    return response',
+]
+V_ROW = ROW.replace(':11-12', ':12-13') % '`test-switch/1.mutant.diff`'
+V_MUT_200 = (13, '        return Response(200)')      # 옛 시험 = status(첫 단언) · 새 시험(화면 함수) = location(둘째 단언)
+V_OLD_HEAD = ['def test_gate():', '    from web.app.view import _render_page',
+              "    response = _render_page({}, {'needs_choice': True})"]
+V_NEW_HEAD = ['def test_gate():', '    from web.app.view import page_view',
+              "    request = {'context': {'employees': 2, 'selected': None}}", '    response = page_view(request)']
+V_ONE_LINE = "    assert response.status == 302; assert response.location == '/choose/'"
+V_TWO_LINES = ['    assert response.status == 302', "    assert response.location == '/choose/'"]
+V_LOOP = ["    for name, want in (('status', 302), ('location', '/choose/')):", '        assert getattr(response, name) == want']
+V_CASES_OLD = ['from web.app import view', '', '', 'def test_gate(case):', '    from web.app.view import _render_page',
+               "    response = _render_page({}, {'needs_choice': True})", '    assert response.status == 302',
+               "    assert response.location == '/choose/'", '', '']
+V_CASES_NEW = ['from web.app import view', '', '', 'def test_gate(case):', '    from web.app.view import page_view',
+               "    request = {'context': None if case == 'drop' else {'employees': 2, 'selected': None}}",
+               '    response = page_view(request)', '    assert response.status == 302',
+               "    assert response.location == '/choose/'", '', '']
+V_KEEP_DROP = ["test_gate.cases = ['keep', 'drop']"]
+OLD_TEMP = 'tests/test_gate__dddjango_switch_old.py'
+STATE_SCHEMA = 'dddjango-web-test-switch-state/1'
+
+
+def v_scene(tmp, name, old_tail, new_tail, **kw):
+    kw.setdefault('view', V_VIEW)
+    kw.setdefault('row', V_ROW)
+    kw.setdefault('mutants', (V_MUT_200,))
+    return Scene(tmp, name, old_test=V_OLD_HEAD + old_tail, new_test=V_NEW_HEAD + new_tail, **kw)
+
+
+def unverified(name, s, e, out, needle, started=True):
+    """미검증 exit 1 · 사유 · 증거 없음 · 작업 트리 그대로. `started=False` 면 시험을 돌리기 전 거절(state.json 도 없다)."""
+    check('%s — exit 1 · 사유' % name, e == 1 and needle in out and '검증됨' not in out, 'exit=%d\n%s' % (e, out[-1200:]))
+    check('%s — 증거 없음 · 작업 트리 그대로%s' % (name, '' if started else ' · state.json 없음(실행 전 거절)'),
+          s.evidence() is None and s.clean() == '' and (started or s.state_json() is None),
+          'evidence=%r status=%r state=%r' % (s.evidence(), s.clean(), s.state_json()))
+
+
+def bundle_review_cases(tmp):
+    """V1 — parametrize case 일부만 돌거나 대상 밖 노드가 섞이면 «검증됨» 이 아니다."""
+    def cases_scene(name):
+        return Scene(tmp, name, old_test=V_CASES_OLD + V_KEEP_DROP, new_test=V_CASES_NEW + V_KEEP_DROP)
+
+    s = cases_scene('v10')
+    e, out = s.switch()
+    check('V1 대조 — 전체 case 를 돌리면 [drop] 이 보호 분기를 비켜 간 것이 드러난다 exit 2', e == 2 and
+          '[drop] 에서 새 시험이 통과한다' in out, out[-900:])
+    s = cases_scene('v11')
+    e, out = s.switch(cmd=fake_cmd(tmp) + ' -k keep')
+    unverified('V1-1 --test-cmd 에 `-k keep`', s, e, out, '--test-cmd 에 시험을 고르거나 줄이는 선택지(-k)가 있다', started=False)
+    s = cases_scene('v12')
+    e, out = s.switch(env={'FAKE_K': 'keep'})
+    unverified('V1-2 addopts 로 들어온 `-k keep`(deselect 로 알려진 case)', s, e, out,
+               '대상 case tests/test_gate.py::test_gate[drop] 가 걸러져 돌지 않는다')
+    s = cases_scene('v13')
+    e, out = s.switch(env={'FAKE_DROP': 'drop'})
+    unverified('V1-3 수집 훅이 알리지 않고 뺀 case', s, e, out,
+               '대상 case tests/test_gate.py::test_gate[drop] 가 걸러져 돌지 않는다')
+    s = Scene(tmp, 'v14', extra={'tests/test_other.py': ['def test_gate():', '    assert True']})
+    e, out = s.switch(cmd=fake_cmd(tmp) + ' tests/test_other.py::test_gate')
+    unverified('V1-4 다른 파일의 같은 이름 함수가 같이 수집됨', s, e, out,
+               '판독 불능 — 대상 밖 노드 tests/test_other.py::test_gate 가 수집됐다')
+    # 반례가 case 목록 자체를 줄이는 꼴 — 정상 실행은 [a] · [b], 반례 실행은 [a] 뿐
+    view = ["CASES = ['a', 'b']"] + VIEW
+    view[11] = "    if vm['needs_choice'] and len(CASES) > 1:"
+    tail = ['test_gate.cases = view.CASES']
+    new = V_CASES_NEW[:5] + ["    request = {'context': {'employees': 2, 'selected': None}}"] + V_CASES_NEW[6:]
+    s = Scene(tmp, 'v15', view=view, old_test=V_CASES_OLD + tail, new_test=new + tail,
+              mutants=((1, "CASES = ['a']"),), row=ROW.replace(':11-12', ':1-1') % '`test-switch/1.mutant.diff`')
+    e, out = s.switch()
+    unverified('V1-5 반례 실행의 case 집합이 정상 실행과 다름', s, e, out, 'case 가 정상 실행과 다르다')
+    odd = Path(tmp) / 'no_items.py'
+    odd.write_text(
+        "import json, os, sys\n"
+        "node = [a for a in sys.argv[1:] if '::' in a][0]\n"
+        "rows = [{'event': 'collected', 'nodeids': [node]},\n"
+        "        {'event': 'report', 'nodeid': node, 'when': 'setup', 'outcome': 'passed', 'wasxfail': False, 'exc': None},\n"
+        "        {'event': 'report', 'nodeid': node, 'when': 'call', 'outcome': 'passed', 'wasxfail': False, 'exc': None},\n"
+        "        {'event': 'finish', 'exitstatus': 0}]\n"
+        "with open(os.environ['DDDJANGO_WEB_SWITCH_PROBE'], 'a') as f:\n"
+        "    f.write(''.join(json.dumps(r) + '\\n' for r in rows))\n", encoding='utf-8')
+    s = Scene(tmp, 'v16')
+    e, out = s.switch(cmd='%s -B %s' % (shlex.quote(sys.executable), shlex.quote(str(odd))))
+    unverified('V1-6 걸러지기 전 수집 목록이 없는 기록', s, e, out, '판독 불능 — 기록에 걸러지기 전 수집 목록이 없다')
+
+
+def bundle_review_asserts(tmp):
+    """V2 — 한 줄에 단언 둘 · 여러 번 도는 단언은 «같은 단언» 으로 읽지 않는다."""
+    s = v_scene(tmp, 'v20', V_TWO_LINES, V_TWO_LINES)
+    e, out = s.switch()
+    check('V2 대조 — 단언을 두 줄로 쓰면 옛 단언 1 · 새 단언 2 로 갈린다 exit 2', e == 2 and
+          '옛 단언 1 · 새 단언 2 — 같은 단언이 아니다' in out, out[-900:])
+    s = v_scene(tmp, 'v21', [V_ONE_LINE], [V_ONE_LINE])
+    e, out = s.switch()
+    unverified('V2-1 한 줄에 단언 둘(옛 · 새)', s, e, out,
+               '시험 함수 test_gate 의 단언 둘이 같은 줄에 걸친다(5행) — 한 줄에 단언은 하나만 둔다', started=False)
+    s = v_scene(tmp, 'v22', [V_ONE_LINE], V_TWO_LINES)
+    e, out = s.switch()
+    unverified('V2-2 기준 판 시험만 한 줄에 단언 둘', s, e, out, 'tests/test_gate.py(기준 판) 의 시험 함수 test_gate 의 단언 둘이 '
+               '같은 줄에 걸친다(4행)', started=False)
+    wrapped = ['    assert (response.status ==', "            302); assert response.location == '/choose/'"]
+    s = v_scene(tmp, 'v23', V_TWO_LINES, wrapped)
+    e, out = s.switch()
+    unverified('V2-3 여러 줄 단언의 끝 줄에 다른 단언', s, e, out, '단언 둘이 같은 줄에 걸친다(6행)', started=False)
+    s = v_scene(tmp, 'v24', V_LOOP, V_LOOP)
+    e, out = s.switch()
+    unverified('V2-4 반복문 안 단언 — 옛 첫 바퀴 · 새 둘째 바퀴에서 실패', s, e, out,
+               '반복문 안 단언(1)에서 실패한다 — 몇째 차례의 실패인지 가릴 수 없다')
+    calm = ['    for name in ("status", "location"):', '        assert hasattr(response, name)'] + V_TWO_LINES
+    s = Scene(tmp, 'v25', old_test=OLD_TEST[:5] + calm, new_test=NEW_TEST[:6] + calm)
+    e, out = s.switch()
+    check('V2-5 반복문 안 단언이 있어도 실패가 반복문 밖 단언이면 그대로 검증 exit 0', e == 0 and (OK_LINE % (1, '3')) in out,
+          out[-900:])
+    again_old = ['def test_gate(depth=0):', '    from web.app.view import _render_page',
+                 "    response = _render_page({}, {'needs_choice': True})", '    if depth:', '        return',
+                 '    assert response.status == 302', '    test_gate(1)']
+    again_new = ['def test_gate(depth=0):', '    from web.app.view import page_view',
+                 "    request = {'context': {'employees': 2, 'selected': None}}", '    response = page_view(request)',
+                 '    if not depth:', '        test_gate(1)', '        return', '    assert response.location == "/choose/"']
+    s = Scene(tmp, 'v26', view=V_VIEW, row=V_ROW, mutants=(V_MUT_200,), old_test=again_old, new_test=again_new)
+    e, out = s.switch()
+    unverified('V2-6 시험 함수가 자신을 다시 부른 안쪽의 단언에서 실패', s, e, out,
+               '시험 함수가 자신을 다시 부른 안쪽 단언(1)에서 실패한다 — 몇째 차례의 실패인지 가릴 수 없다')
+
+
+def crashed(tmp, name, **kw):
+    """반례 적용 중 도구가 죽어 반례 · 옛 시험 임시 파일이 남은 장면."""
+    s = Scene(tmp, name, **kw)
+    s.switch(env={'FAKE_KILL_WHEN': "'/elsewhere/'"})
+    return s
+
+
+def forge(s, *pending, **more):
+    data = dict({'schema': STATE_SCHEMA, 'pending': list(pending)}, **more)
+    (s.folder / 'test-switch' / 'state.json').write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+    return data
+
+
+def refused(name, e, out, needle='복구 불능'):
+    check('%s — 복구 불능 exit 1' % name, e == 1 and '[switch] 복구 불능' in out and needle in out and
+          '지움' not in out and '되돌림' not in out, 'exit=%d\n%s' % (e, out[-900:]))
+
+
+def bundle_review_recover(tmp):
+    """V3 — 복구는 도구가 만든 임시 자리의 추적되지 않은 파일만 지우고, 행의 보호 분기 파일만 되돌린다."""
+    old_tmp = OLD_TEMP
+    s = crashed(tmp, 'v31')
+    git(s.root, 'checkout', '--', 'web/app/view.py')
+    git(s.root, 'add', '-A')
+    git(s.root, 'commit', '-qm', 'oops: 남은 옛 시험 임시 파일까지 담아 커밋')
+    e, out = s.switch()
+    refused('V3-1 옛 시험 임시 파일이 커밋돼 버림(HEAD 에 있음)', e, out, '%s 가 git 에 추적된 파일이다' % old_tmp)
+    check('V3-1 추적 파일 보존 · 작업 트리 그대로 · 기록 그대로', (s.root / old_tmp).is_file() and s.clean() == '' and
+          len((s.state_json() or {}).get('pending') or []) == 2, 'status=%r state=%r' % (s.clean(), s.state_json()))
+    s = crashed(tmp, 'v32')
+    git(s.root, 'checkout', '--', 'web/app/view.py')
+    git(s.root, 'add', old_tmp)
+    e, out = s.switch()
+    refused('V3-2 옛 시험 임시 파일이 index 에 올라감(git add)', e, out, '%s 가 git 에 추적된 파일이다' % old_tmp)
+    check('V3-2 파일 보존', (s.root / old_tmp).is_file() and git(s.root, 'ls-files', '--', old_tmp) == old_tmp)
+    # 위조된 복구 상태 — 임시 자리가 아닌 파일을 지우게 하려는 기록
+    s = Scene(tmp, 'v33', extra={'notes.txt': ['지우면 안 되는 메모']})
+    forge(s, {'path': 'notes.txt', 'kind': 'old-test', 'original': None, 'changed': sha256(s.root / 'notes.txt')})
+    e, out = s.switch()
+    refused('V3-3 위조된 기록 — 추적된 다른 파일(notes.txt)을 옛 시험 임시 파일로 적음', e, out,
+            'notes.txt 는 명세 `시험 전환:` 행의 옛 시험 임시 자리가 아니다')
+    check('V3-3 notes.txt 보존', (s.root / 'notes.txt').is_file() and s.clean() == '', s.clean())
+    outside = Path(tmp) / 'outside-v34'
+    outside.mkdir()
+    (outside / 'victim.txt').write_text('저장소 밖 파일\n', encoding='utf-8')
+    s = Scene(tmp, 'v34')
+    os.symlink(outside, s.root / 'out')
+    forge(s, {'path': 'out/victim.txt', 'kind': 'old-test', 'original': None, 'changed': sha256(outside / 'victim.txt')})
+    e, out = s.switch()
+    refused('V3-4 위조된 기록 — 심볼릭 링크를 지나 저장소 밖 파일을 가리킴', e, out)
+    check('V3-4 저장소 밖 파일 보존', (outside / 'victim.txt').is_file())
+    # 임시 자리 이름은 맞지만 그 폴더가 저장소 밖을 가리키는 심볼릭 링크
+    s = crashed(tmp, 'v35')
+    moved = Path(tmp) / 'outside-v35'
+    shutil.move(str(s.root / 'tests'), str(moved))
+    os.symlink(moved, s.root / 'tests')
+    e, out = s.switch()
+    refused('V3-5 임시 자리의 폴더가 저장소 밖을 가리키는 심볼릭 링크', e, out, '심볼릭 링크를 지나거나 저장소 밖으로 풀린다')
+    check('V3-5 링크 너머 파일 보존', (moved / 'test_gate__dddjango_switch_old.py').is_file())
+    # 위조된 기록 — 행의 보호 분기 파일이 아닌 추적 파일(사람이 고치는 중)을 반례 적용 자리로 적음
+    s = Scene(tmp, 'v36', extra={'web/app/other.py': ['VALUE = 1']})
+    original = sha256(s.root / 'web/app/other.py')
+    s.w('web/app/other.py', 'VALUE = 2  # 사람이 고치는 중')
+    forge(s, {'path': 'web/app/other.py', 'kind': 'mutant', 'original': original,
+              'changed': sha256(s.root / 'web/app/other.py'), 'mutant': 'test-switch/1.mutant.diff'})
+    e, out = s.switch()
+    refused('V3-6 위조된 기록 — 보호 분기 파일이 아닌 파일을 되돌리게 함', e, out,
+            'web/app/other.py 는 명세 `시험 전환:` 행의 보호 분기 파일 자리가 아니다')
+    check('V3-6 사람이 고친 내용 보존', '사람이 고치는 중' in s.read('web/app/other.py'))
+    # 스키마 밖 기록 — 아무것도 지우거나 쓰지 않는다
+    s = crashed(tmp, 'v37')
+    kept = s.state_json()
+    view, temp = s.read('web/app/view.py'), s.read(old_tmp)
+    entries = {p['kind']: p for p in kept['pending']}
+    variants = [
+        ('old-test 의 original 이 null 이 아님', [dict(entries['old-test'], original=entries['old-test']['changed'])], {}),
+        ('changed 가 sha256 이 아님', [dict(entries['old-test'], changed='abc')], {}),
+        ('모르는 칸', [dict(entries['old-test'], note='x')], {}),
+        ('mutant 에 반례 칸 없음', [{k: v for k, v in entries['mutant'].items() if k != 'mutant'}], {}),
+        ('모르는 kind', [dict(entries['old-test'], kind='file')], {}),
+        ('경로가 절대', [dict(entries['old-test'], path=str(s.root / old_tmp))], {}),
+        ('pending 이 있는데 schema 가 다름', kept['pending'], {'schema': 'x/9'}),
+    ]
+    for label, pending, more in variants:
+        forge(s, *pending, **more)
+        before = (s.folder / 'test-switch' / 'state.json').read_bytes()
+        e, out = s.switch()
+        refused('V3-7 스키마 밖 기록(%s)' % label, e, out, '꼴이 아니다')
+        check('V3-7 %s — 반례 · 임시 파일 · 기록 그대로' % label, s.read('web/app/view.py') == view and
+              s.read(old_tmp) == temp and (s.folder / 'test-switch' / 'state.json').read_bytes() == before)
+    forge(s, *kept['pending'])
+    spec = s.read(RUN + '/design-spec.md')
+    (s.folder / 'design-spec.md').write_text(spec.replace('- 시험 전환:', '- 시험 전환(취소):'), encoding='utf-8')
+    e, out = s.switch()
+    refused('V3-8 명세에서 행이 사라져 기록의 경로를 확인할 수 없음', e, out, '복구 상태의 경로를 확인할 수 없다')
+    check('V3-8 반례 · 임시 파일 그대로', s.read('web/app/view.py') == view and s.read(old_tmp) == temp)
+    (s.folder / 'design-spec.md').write_text(spec, encoding='utf-8')
+    e, out = s.switch()
+    check('V3-9 기록 · 명세가 온전하면 그대로 복구하고 검증 exit 0', e == 0 and '반례 되돌림' in out and
+          '옛 시험 임시 파일 지움' in out and '· 복구 2' in out and s.clean() == '', out[-900:])
+    # 죽은 실행이 남긴 도구 임시 폴더 — 경로를 복구 상태에 적어 두고 다시 불릴 때 치운다
+    box = Path(tmp) / 'v38-box'          # 이 장면만의 도구 임시 자리(앞 장면이 남긴 폴더와 섞이지 않게)
+    box.mkdir()
+    s = crashed(box, 'v38')
+    scratch = s.tmp / 'tool-tmp'
+    left = sorted(p.name for p in scratch.glob('dddjango-web-switch-*'))
+    work = (s.state_json() or {}).get('work')
+    check('V3-10 죽은 실행 — 도구 임시 폴더가 남고 그 경로가 state.json 에 있다', len(left) == 1 and
+          isinstance(work, str) and Path(work).name == left[0], 'left=%r work=%r' % (left, work))
+    e, out = s.switch()
+    check('V3-10 다시 불림 — 남은 도구 임시 폴더를 치우고 검증 exit 0', e == 0 and
+          not list(scratch.glob('dddjango-web-switch-*')) and 'work' not in (s.state_json() or {}) and
+          '[switch] 복구 — 앞 실행이 남긴 도구 임시 폴더 지움' in out, 'left=%r\n%s' % (list(scratch.glob('*')), out[-900:]))
+    other = scratch / 'dddjango-web-switch-notmine'
+    (other / 'probe').mkdir(parents=True)
+    (other / 'keep.txt').write_text('도구가 만든 파일이 아니다\n', encoding='utf-8')
+    data = s.state_json()
+    data['work'] = str(other)
+    (s.folder / 'test-switch' / 'state.json').write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+    e, out = s.switch()
+    check('V3-11 기록의 임시 폴더가 도구가 만든 꼴이 아니면 그대로 둔다(검증은 그대로 exit 0)', e == 0 and
+          (other / 'keep.txt').is_file() and '지움' not in out, out[-900:])
+
+
+def bundle_review_evidence(tmp):
+    """V4 — «이미 검증됨» 은 증거가 지금 명세의 행 전체 · T 목록과 같고 실행 기록이 갖춰졌을 때만."""
+    s = Scene(tmp, 'v40')
+    s.w('tests/test_gate.py', *NEW_TEST, '# 다듬음')
+    t2 = s.commit('test(web): 0T 둘째')
+    two = {'state': 'verifying', 'commits': [s.t, t2], 'cancel_commits': [], 'evidence': ''}
+    s.state(two, slices=[{'name': 'slice-0-debt', 'commits': [s.t, t2], 'test_switch': two}])
+    e, out = s.switch()
+    check('V4-0 0T 검증(T 둘) — exit 0', e == 0 and (s.evidence() or {}).get('t_commits') == [s.t, t2], out[-700:])
+    with (s.root / 'web/app/view.py').open('a', encoding='utf-8') as f:
+        f.write('# 0C 정리\n')
+    git(s.root, 'add', 'web/app/view.py')
+    git(s.root, 'commit', '-qm', 'refactor(web): 0C')
+    zero_c = git(s.root, 'rev-parse', 'HEAD')
+    evidence_rel = RUN + '/test-switch/evidence.json'
+
+    def record(commits=(s.t, t2), zero=None):
+        switch = {'state': 'verified', 'commits': list(commits), 'cancel_commits': [], 'evidence': evidence_rel}
+        s.state(switch, slices=[{'name': 'slice-0-debt', 'commits': list(zero or (s.t, t2, zero_c)), 'test_switch': switch}])
+
+    record()
+    spec_path, proof_path = s.folder / 'design-spec.md', s.folder / 'test-switch' / 'evidence.json'
+    spec, proof = spec_path.read_text(encoding='utf-8'), proof_path.read_text(encoding='utf-8')
+
+    def again(name, needle, spec_text=None, proof_data=None):
+        spec_path.write_text(spec if spec_text is None else spec_text, encoding='utf-8')
+        proof_path.write_text(proof if proof_data is None else json.dumps(proof_data, ensure_ascii=False), encoding='utf-8')
+        e, out = s.switch(cmd='/nonexistent/pytest-x')
+        check('%s — exit 1' % name, e == 1 and needle in out and '이미 검증됨' not in out and
+              '검증 전에는 0C 를 보내지 않는다' in out, 'exit=%d\n%s' % (e, out[-900:]))
+
+    e, out = s.switch(cmd='/nonexistent/pytest-x')
+    check('V4-1 대조 — 명세 · 증거가 그대로면 «이미 검증됨» exit 0', e == 0 and '이미 검증됨' in out, out[-700:])
+    again('V4-2 승인 행의 보호 분기가 바뀜(:11-12 → :1-1)', '승인 행이 앞 증거와 다르다',
+          spec_text=spec.replace('view.py:11-12', 'view.py:1-1'))
+    again('V4-3 승인 행의 행위 새 대상이 바뀜', '승인 행이 앞 증거와 다르다',
+          spec_text=spec.replace('web.app.view.page_view', 'web.app.view.other_view'))
+    again('V4-4 승인 행의 행위 옛 대상이 바뀜', '승인 행이 앞 증거와 다르다',
+          spec_text=spec.replace('web.app.view._render_page', 'web.app.view._other'))
+    data = json.loads(proof)
+    forged = json.loads(proof)
+    forged['rows'][0]['branch'] = 'web/app/view.py:1-1'
+    again('V4-5 증거의 보호 분기까지 같이 고쳐 맞춤 — 반례가 새 범위 밖(행 확인을 이 길에서도 돈다)',
+          '보호 분기 web/app/view.py:1-1 줄 범위 밖을 바꾼다', spec_text=spec.replace('view.py:11-12', 'view.py:1-1'),
+          proof_data=forged)
+    bare = {'schema': data['schema'], 'snapshot': data['snapshot'], 't_head': data['t_head'], 't_commits': data['t_commits'],
+            'rows': [{'test': r['test'], 'behavior': r['behavior'], 'branch': r['branch'],
+                      'mutants': [{'path': m['path'], 'sha256': m['sha256']} for m in r['mutants']]} for r in data['rows']]}
+    again('V4-6 실행 기록이 없는 증거(견주는 칸만)', '증거에 실행 기록이 갖춰지지 않았다(정상 통과 기록', proof_data=bare)
+    partial = json.loads(proof)
+    partial['rows'][0]['mutants'][0]['old'].pop('results', None)
+    again('V4-7 반례의 옛 시험 실패 기록이 빠진 증거', '증거에 실행 기록이 갖춰지지 않았다(반례 test-switch/1.mutant.diff',
+          proof_data=partial)
+    passed = json.loads(proof)
+    for side in ('new', 'old'):
+        for item in passed['rows'][0]['mutants'][0][side].get('results', []):
+            item.update(result='pass')
+    again('V4-8 반례에서 아무 단언도 실패하지 않은 증거', '증거에 실행 기록이 갖춰지지 않았다(반례 test-switch/1.mutant.diff',
+          proof_data=passed)
+    spec_path.write_text(spec, encoding='utf-8')
+    proof_path.write_text(proof, encoding='utf-8')
+    record(commits=(t2,), zero=(t2, zero_c))
+    e, out = s.switch(cmd='/nonexistent/pytest-x')
+    check('V4-9 T 목록이 증거와 다름(첫 T 를 기록에서 뺌) — exit 1', e == 1 and '증거의 T · 기준 판이 지금 기록과 다르다' in out,
+          'exit=%d\n%s' % (e, out[-900:]))
+    record()
+    e, out = s.switch(cmd='/nonexistent/pytest-x')
+    check('V4-10 되돌리면 다시 «이미 검증됨» exit 0 · 증거를 다시 쓰지 않는다', e == 0 and '이미 검증됨' in out and
+          proof_path.read_text(encoding='utf-8') == proof, out[-700:])
+
+
+def bundle_review_apply(tmp):
+    """V5 — 반례 적용이 실패한 갈래는 그 파일을 적용 전 바이트로 되돌린다(기준 판 blob 으로 덮지 않는다)."""
+    s = Scene(tmp, 'v50', extra={'.gitattributes': ['*.py eol=crlf']})
+    raw = (s.root / 'web/app/view.py').read_bytes()
+    check('V5 픽스처 자체 — 보호 분기 파일이 작업 트리에서 CRLF · 작업 트리 깨끗', b'\r\n' in raw and s.clean() == '',
+          '%r %r' % (raw[:60], s.clean()))
+    e, out = s.switch()
+    check('V5 eol=crlf 보호 분기 파일 — 적용 결과가 기준 판 적용 내용과 달라 미검증 exit 1(판정 · 문구 그대로)', e == 1 and
+          '적용 결과가 기준 판에 그대로 적용한 내용과 다르다' in out and '· 미검증' in out, out[-900:])
+    check('V5 실패 뒤 — 그 파일이 적용 전 바이트 그대로 · git diff --name-only 0 줄 · 남은 임시 변경 0',
+          (s.root / 'web/app/view.py').read_bytes() == raw and git(s.root, 'diff', '--name-only') == '' and s.clean() == ''
+          and (s.state_json() or {}).get('pending') == [],
+          'diff=%r status=%r crlf=%s' % (git(s.root, 'diff', '--name-only'), s.clean(),
+                                        b'\r\n' in (s.root / 'web/app/view.py').read_bytes()))
+
+
+# ====================================================================== O — `--test-cmd` 의 고르는 · 줄이는 선택지
+
+def bundle_options(tmp):
+    _debt, _subst, switch_check = _row_modules()
+    probe = 'dddjango_web_switch_probe'
+    table = [
+        ('python -m pytest', None), ('python3 -m pytest --import-mode=importlib --ds=config.settings', None),
+        ('pytest -q -p no:randomly -o addopts= -W error -c pytest.ini -rxs --tb=short', None),
+        ('uv run pytest -vv', None), ('docker compose exec -T -e K=1 web pytest', None),
+        ('python -B /tmp/fake_pytest.py', None), ('pytest -o addopts=-k', None), ('pytest -n 4', None),
+        ('python -m pytest -k keep', '-k'), ('pytest -kkeep', '-k'), ('pytest -qk keep', '-k'),
+        ('python -m pytest -m slow', '-m'), ('pytest -m "not slow"', '-m'), ('python -mpytest -k a', '-k'),
+        ('pytest --deselect tests/a.py::t', '--deselect'), ('pytest --deselect=tests/a.py::t', '--deselect'),
+        ('pytest --lf', '--lf'), ('pytest --last-failed', '--last-failed'), ('pytest --ff', '--ff'),
+        ('pytest --failed-first', '--failed-first'), ('pytest --sw', '--sw'), ('pytest --stepwise', '--stepwise'),
+        ('pytest -x', '-x'), ('pytest -qx', '-x'), ('pytest --exitfirst', '--exitfirst'),
+        ('pytest --maxfail=1', '--maxfail'), ('pytest --maxfail 1', '--maxfail'), ('pytest --co', '--co'),
+        ('pytest --collect-only', '--collect-only'), ('pytest --ignore=tests/a.py', '--ignore'),
+        ('pytest --ignore-glob=*a.py', '--ignore-glob'), ('pytest --runxfail', '--runxfail'),
+        ('pytest -p no:%s' % probe, '-p no:%s' % probe), ('pytest -pno:%s' % probe, '-p no:%s' % probe),
+        ('/venv/bin/py.test -x', '-x'), ('./run-tests.sh -k a', '-k'),
+    ]
+    for cmd, want in table:
+        got = switch_check.selecting_option(shlex.split(cmd))
+        check('O1 `%s` → %s' % (cmd, want or '받는다'), got == want, 'got %r' % (got,))
+    s = Scene(tmp, 'o2')
+    for cmd, name in ((fake_cmd(tmp) + ' -x', '-x'), (fake_cmd(tmp) + ' --deselect tests/test_gate.py::test_gate', '--deselect'),
+                      (fake_cmd(tmp) + ' --maxfail=1', '--maxfail')):
+        e, out = s.switch(cmd=cmd)
+        check('O2 --test-cmd 에 %s — 실행 전 exit 1' % name, e == 1 and
+              '[switch] 시작 거절 — 판독 불능 — --test-cmd 에 시험을 고르거나 줄이는 선택지(%s)가 있다' % name in out, out[-600:])
+    untouched(s, 'O2')
+
+
 def main():
     bundles = [bundle_unchanged, bundle_normal, bundle_bypass, bundle_reject, bundle_unverified, bundle_mismatch,
-               bundle_crash, bundle_after, bundle_dirty, bundle_lifecycle, bundle_probe, bundle_rows, bundle_joined]
+               bundle_crash, bundle_after, bundle_dirty, bundle_lifecycle, bundle_probe, bundle_rows, bundle_joined,
+               bundle_review_cases, bundle_review_asserts, bundle_review_recover, bundle_review_evidence,
+               bundle_review_apply, bundle_options]
     only = set(sys.argv[1:])
     for bundle in bundles:
         if only and bundle.__name__[len('bundle_'):] not in only:

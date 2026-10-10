@@ -5,6 +5,8 @@
 #   · 반례 <산출물 폴더 상대 경로>[ <반례 …>]`(시험 파일 · 보호 분기 파일은 저장소 상대 경로) · build-state `git_snapshot` ·
 #   `slices[]` 커밋 기록 · `slices[0].test_switch`(`state` · `commits` = T · `cancel_commits`).
 # 차례(시작 전은 읽기만):
+#   -. `--test-cmd` 에 시험을 고르거나 줄이는 선택지(-k · -m · --deselect · --lf · --ff · --sw · -x · --maxfail · --co ·
+#      --ignore · --runxfail · -p no:<기록 플러그인>)가 있으면 아무것도 하지 않고 exit 1(대상 case 를 모두 돌려야 한다).
 #   0. 남은 임시 변경 복구(아래 «복구 상태») — 무엇보다 먼저.
 #   1. `.dddjango-web/` 밖 추적 · 미추적 변경 0(아니면 손대지 않고 exit 1).
 #   2. test_switch 기록 — state 가 prepared · verifying · verified(cancelled 는 확인하지 않는다) · T ⊂ slices[0].commits ·
@@ -12,25 +14,37 @@
 #   3. 명세 행의 꼴 — 시험 파일은 web/ 밖 저장소 상대 시험 .py · 행위는 web. 점 경로 쌍 · 보호 분기는 web/ 비시험 파일.
 #   4. git_snapshot..HEAD 첫 부모 사슬 — T 는 사슬 위 비병합 커밋이고 web/ 을 바꾸지 않으며 web/ 밖은 행에 적힌 시험 파일만
 #      바꾼다(산출물 폴더 `.dddjango-web/` 는 따지지 않는다 — 치환 확인과 같은 기준) · 기록된 슬라이스 커밋이 T 보다 앞에 있으면 안 된다. T 뒤에 기록된 슬라이스 커밋(0C · 기능)이 이미 있으면 다시 돌릴 수 없다 — state 가
-#      verified 이고 앞 증거가 같은 T · 같은 반례 지문이면 «이미 검증됨»(exit 0 — 시험을 돌리지 않고 아무것도 쓰지 않는다),
-#      아니면 exit 1(검증 전 0C 금지). 슬라이스 커밋이 없을 때: T 아닌 커밋이 행의 시험 파일을 바꾸면 안 되고, 보호 분기
+#      verified 이고 앞 증거가 지금 명세의 행 전체(시험 · 행위 · 보호 분기 · 반례 경로와 지문) · T 목록 · 기준 판과 같고
+#      행 확인(아래 5 — 시험은 T 끝 판으로)을 통과하며 정상 통과 · 반례마다 옛 · 새 실패 기록이 갖춰졌으면 «이미 검증됨»
+#      (exit 0 — 시험을 돌리지 않고 아무것도 쓰지 않는다), 아니면 exit 1(검증 전 0C 금지). 슬라이스 커밋이 없을 때: T 아닌
+#      커밋이 행의 시험 파일을 바꾸면 안 되고, 보호 분기
 #      파일은 기준 판 그대로여야 한다(기준 판 뒤의 연결 설정 · SDK 격리 커밋 같은 다른 커밋은 막지 않는다).
-#   5. 행마다 — 시험 파일 · 함수가 기준 판(git_snapshot)과 HEAD 에 있음 · 반례는 파일 하나 · 보호 분기 파일만 · 기준 판 그
+#   5. 행마다 — 시험 파일 · 함수가 기준 판(git_snapshot)과 HEAD 에 있음 · 그 함수(옛 · 새)의 assert 문 줄 범위가 서로
+#      겹치지 않음(한 줄에 단언 둘이면 같은 순번 단언을 가릴 수 없다) · 반례는 파일 하나 · 보호 분기 파일만 · 기준 판 그
 #      줄에 정확히 맞음 · 바뀐 줄이 보호 분기 줄 범위 안 → `git apply --check`.
 # 행마다: ① 정상 제품 + 새 시험(HEAD 판) · 옛 시험(기준 판)이 case 마다 수집 · 실행 · 통과 ② 반례 적용(`git apply`) + 새
 #   시험이 시험 함수의 k번째 assert 문에서 AssertionError(예외가 그 함수 프레임에서 났을 때만 — 도움 함수 · 제품 안
 #   AssertionError 는 단언 실패가 아니다) ③ 같은 반례 + 옛 시험이 같은 k 에서 AssertionError ④ 반례 되돌림 → 끝에 작업 트리 ·
 #   index · HEAD 가 시작 상태 그대로. 실행은 모두 두 번 해 결과가 같아야 한다(다르면 요동 — 미검증).
+#   대상 case 는 기록 플러그인의 걸러지기 전 수집 목록으로 대조한다 — 대상(같은 파일 · 같은 최상위 함수) 밖 노드가 섞이면
+#   입력 오류(exit 1), 걸러져 돌지 않은 case 가 있거나 반례 실행(옛 · 새)의 case 가 정상 실행과 다르면 미검증. 반복문 안
+#   단언 · 시험 함수가 자신을 다시 부른 안쪽 단언에서 난 실패는 몇째 차례인지 가릴 수 없어 미검증이다.
 # 옛 시험은 기준 판 원문을 시험 파일 옆 임시 파일(`<이름>__dddjango_switch_old.py`)에 써서 돌린다 — index · 작업 트리의
 #   시험 파일은 건드리지 않는다.
 # 복구 상태: 임시 변경(반례 · 옛 시험 임시 파일)은 하기 *전에* `<산출물 폴더>/test-switch/state.json` 의 `pending` 에 적고
-#   (경로 · 시작 내용 sha256 · 바뀐 내용 sha256), 되돌린 뒤 지운다. 다시 불리면 먼저 그 기록대로 되돌린다 — 파일 내용이
-#   기록의 시작 · 바뀐 내용 어느 쪽도 아니거나 HEAD 의 그 파일이 기록의 시작 내용이 아니면 아무것도 건드리지 않고 멈춘다.
+#   (경로 · 시작 내용 sha256 · 바뀐 내용 sha256), 되돌린 뒤 지운다. 다시 불리면 먼저 그 기록대로 되돌린다 — 기록 꼴이
+#   스키마 밖이거나, 경로가 명세 `시험 전환:` 행의 보호 분기 파일 · 옛 시험 임시 자리가 아니거나, 심볼릭 링크를 지나거나
+#   저장소 밖으로 풀리거나, 파일 내용이 기록의 시작 · 바뀐 내용 어느 쪽도 아니거나, 지울 옛 시험 임시 파일이 git 에
+#   추적된 파일(HEAD · index)이거나, 반례 자리의 바뀐 내용이 기록의 반례를 HEAD 내용에 그대로 적용한 결과가 아니거나,
+#   HEAD 의 그 파일이 기록의 시작 내용이 아니면 아무것도 건드리지 않고 멈춘다(복구 불능 exit 1). 시험 실행에 쓰는 도구
+#   임시 폴더도 경로를 `work` 에 적어 두고, 앞 실행이 끊겨 남은 것은 도구가 만든 꼴일 때만 다음 호출이 지운다.
 # 판정 입력은 pytest 기록 플러그인(`switch_probe.py` — 빈 임시 폴더에 복사해 `-p` 로 싣는다)이 낸 JSON 줄이다. 화면
 #   출력은 결과 줄(마지막 줄)만 증거에 옮긴다. 시험 명령에는 `-p no:cacheprovider` 도 붙이고 PYTHONDONTWRITEBYTECODE=1 로
 #   돌린다(작업 트리에 캐시를 남기지 않는다).
 # exit 0 = 모두 검증(증거 `<산출물 폴더>/test-switch/evidence.json`) · 2 = 반례 판정 어긋남 · 1 = 실행 불능 · 미검증
-#   (시작 거절 · 복구 불능 포함). 첫 어긋남 · 미검증에서 멈춘다(남은 행은 확인하지 않는다).
+#   (시작 거절 · 복구 불능 포함). 첫 어긋남 · 미검증에서 멈춘다(남은 행은 확인하지 않는다). `[switch] 시작 거절 — …` 줄은
+#   반례 · 임시 파일을 하나도 남기지 않은 입력 거절(명령 · 작업 트리 · 기록 · 행 · 반례 꼴 — 대상 밖 노드는 첫 실행에서
+#   드러나도 이 줄)이고, 행 결과 줄의 `· 미검증` · `· 어긋남` 과 `[switch] 복구 불능 — …` 이 확인 실패다.
 from __future__ import annotations
 
 import ast
@@ -58,12 +72,26 @@ PROBE_ENV: str = 'DDDJANGO_WEB_SWITCH_PROBE'
 OLD_SUFFIX: str = '__dddjango_switch_old.py'
 DEFAULT_TIMEOUT: int = 600
 ASSERTION: str = 'builtins.AssertionError'
+WORK_PREFIX: str = 'dddjango-web-switch-'
 STATE_VERIFIED: str = 'verified'
 STATE_CANCELLED: str = 'cancelled'
 LIVE_STATES: tuple = ('prepared', 'verifying', STATE_VERIFIED)
 EXIT_OK, EXIT_ERR, EXIT_RED = 0, 1, 2
 
 _HASH_RE = re.compile(r'^[0-9a-f]{7,40}$')
+_SHA256_RE = re.compile(r'^[0-9a-f]{64}$')
+_WORK_FILE_RE = re.compile(r'^(?:run-\d+\.jsonl|probe|probe/%s\.py|probe/__pycache__|probe/__pycache__/[^/]+\.pyc)$'
+                           % PROBE_MODULE)
+_ENTRY_KEYS: dict = {'old-test': {'path', 'kind', 'original', 'changed'},
+                     'mutant': {'path', 'kind', 'original', 'changed', 'mutant'}}
+# `--test-cmd` 에서 시험을 고르거나 줄이는 선택지 — 대상 노드의 모든 case 를 끝까지 돌려야 판정이 선다.
+_SELECT_LONG: tuple = ('--deselect', '--lf', '--last-failed', '--ff', '--failed-first', '--sw', '--stepwise', '--sw-skip',
+                       '--stepwise-skip', '--exitfirst', '--maxfail', '--co', '--collect-only', '--collectonly', '--ignore',
+                       '--ignore-glob', '--runxfail')
+_SELECT_SHORT: str = 'kmx'           # -k · -m · -x
+_SHORT_WITH_VALUE: str = 'cnoprW'    # 값을 받는 짧은 선택지 — 그 뒤 글자(또는 다음 인자)는 값이다
+_SHORT_PLAIN: str = 'lqsv'           # 값 없는 짧은 선택지 — 묶어 쓸 수 있다
+_PYTEST_PROGRAMS: tuple = ('pytest', 'py.test')
 _HUNK_RE = re.compile(rb'^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@')
 _PATCH_FORBIDDEN: tuple = (b'new file mode', b'deleted file mode', b'rename from', b'rename to', b'copy from',
                            b'copy to', b'old mode', b'new mode', b'similarity index', b'dissimilarity index',
@@ -76,6 +104,10 @@ class Unverified(Exception):
 
 class RecoveryError(Unverified):
     """복구 불능 — 기록 밖 내용이라 손대지 않았다(exit 1)."""
+
+
+class InputError(Unverified):
+    """입력 오류 — 첫 실행에서 드러난 명령의 꼴(대상 밖 노드). 반례 · 임시 파일을 남기지 않고 시작 거절로 낸다(exit 1)."""
 
 
 class Mismatch(Exception):
@@ -99,7 +131,99 @@ def _now() -> str:
 
 
 def _relative_ok(rel: str) -> bool:
-    return bool(rel) and not rel.startswith('/') and '\\' not in rel and '..' not in rel.split('/')
+    return bool(rel) and not rel.startswith('/') and '\\' not in rel and \
+        all(part not in ('', '.', '..') for part in rel.split('/'))
+
+
+def _pytest_args(argv: list) -> list:
+    """시험 명령에서 pytest 에 가는 인자 — `pytest` · `py.test` 실행 파일이나 `-m pytest` 뒤. 못 찾으면 첫 낱말 뒤 전부."""
+    for index, token in enumerate(argv):
+        if os.path.basename(token) in _PYTEST_PROGRAMS or token == '-mpytest':
+            return argv[index + 1:]
+        if token == '-m' and argv[index + 1:index + 2] == ['pytest']:
+            return argv[index + 2:]
+    return argv[1:]
+
+
+def selecting_option(argv: list) -> str | None:
+    """`--test-cmd` 의 고르는 · 줄이는 선택지 이름(없으면 None) — 짧은 선택지 묶음(`-qk`)과 `=` 값 꼴도 읽는다."""
+    args: list = _pytest_args(argv)
+    index: int = 0
+    while index < len(args):
+        token: str = args[index]
+        index += 1
+        if token == '--':
+            break
+        if token.startswith('--'):
+            name: str = token.split('=', 1)[0]
+            if name in _SELECT_LONG:
+                return name
+            continue
+        if len(token) < 2 or not token.startswith('-'):
+            continue
+        for at, char in enumerate(token[1:], 1):
+            if char in _SELECT_SHORT:
+                return '-' + char
+            if char in _SHORT_WITH_VALUE:
+                value: str = token[at + 1:]
+                if not value and index < len(args):
+                    value = args[index]
+                    index += 1
+                if char == 'p' and value == 'no:' + PROBE_MODULE:
+                    return '-p no:' + PROBE_MODULE
+                break
+            if char not in _SHORT_PLAIN:
+                break
+    return None
+
+
+def _entry_ok(entry: object) -> bool:
+    """복구 기록 한 건이 이 도구가 쓰는 꼴인가 — kind · 칸 이름 · 경로 · sha256 · 반례 경로."""
+    if not isinstance(entry, dict) or entry.get('kind') not in _ENTRY_KEYS or set(entry) != _ENTRY_KEYS[entry['kind']]:
+        return False
+    if not isinstance(entry['path'], str) or not _relative_ok(entry['path']):
+        return False
+    if not isinstance(entry['changed'], str) or not _SHA256_RE.match(entry['changed']):
+        return False
+    if entry['kind'] == 'old-test':
+        return entry['original'] is None
+    return isinstance(entry['original'], str) and bool(_SHA256_RE.match(entry['original'])) and \
+        isinstance(entry['mutant'], str) and _relative_ok(entry['mutant'])
+
+
+def _evidence_gap(proof: dict) -> str:
+    """증거 한 행에 실행 기록이 갖춰졌는가 — 빠진 것의 이름(갖춰졌으면 '')."""
+    def results(side: object) -> list | None:
+        items = side.get('results') if isinstance(side, dict) else None
+        if not isinstance(items, list) or not items or not all(
+                isinstance(i, dict) and isinstance(i.get('case'), str) and isinstance(i.get('node'), str) for i in items):
+            return None
+        return items
+
+    nodes = proof.get('nodes')
+    normal = proof.get('normal') if isinstance(proof.get('normal'), dict) else {}
+    new, old = results(normal.get('new')), results(normal.get('old'))
+    if not isinstance(nodes, list) or not nodes or new is None or old is None or [i['node'] for i in new] != nodes \
+            or [i['case'] for i in new] != [i['case'] for i in old] or any(i.get('result') != 'pass' for i in new + old):
+        return '정상 통과 기록'
+    cases: list = [i['case'] for i in new]
+    mutants = proof.get('mutants')
+    if not isinstance(mutants, list) or not mutants:
+        return '반례 기록'
+    for mutant in mutants:
+        mutant = mutant if isinstance(mutant, dict) else {}
+        got_new, got_old = results(mutant.get('new')), results(mutant.get('old'))
+        ok: bool = got_new is not None and got_old is not None and [i['case'] for i in got_new] == cases \
+            and [i['case'] for i in got_old] == cases and any(i.get('result') == 'assert' for i in got_new)
+        for a, b in zip(got_new or [], got_old or []):
+            if a.get('result') == b.get('result') == 'pass':
+                continue
+            k = a.get('assert')
+            if not (a.get('result') == b.get('result') == 'assert' and type(k) is int and k >= 1 and b.get('assert') == k):
+                ok = False
+        if not ok:
+            return '반례 %s 의 옛 · 새 실패 기록' % mutant.get('path')
+    return ''
 
 
 # ── git ──────────────────────────────────────────────────────────────────────
@@ -199,7 +323,8 @@ def parse_rows(text: str) -> list:
 
 
 def assert_spans(source: bytes, func: str, where: str) -> list:
-    """최상위 함수 `func` 안 assert 문의 (첫 줄, 끝 줄) — 원문 차례(중첩 함수 · 클래스 · lambda 안은 뺀다)."""
+    """최상위 함수 `func` 안 assert 문의 (첫 줄, 끝 줄, 반복문 안인가) — 원문 차례(중첩 함수 · 클래스 · lambda 안은 뺀다).
+    두 단언의 줄 범위가 겹치면(한 줄에 단언 둘) 실패 줄로 순번을 가릴 수 없으므로 거절한다."""
     try:
         tree = ast.parse(source)
     except SyntaxError as error:
@@ -209,16 +334,24 @@ def assert_spans(source: bytes, func: str, where: str) -> list:
         raise Unverified('%s 에 최상위 함수 %s 가 %d개다(하나여야 한다)' % (where, func, len(defs)))
     spans: list = []
 
-    def walk(node: ast.AST) -> None:
-        for child in ast.iter_child_nodes(node):
-            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
-                continue
-            if isinstance(child, ast.Assert):
-                spans.append((child.lineno, getattr(child, 'end_lineno', None) or child.lineno))
-            walk(child)
+    def walk(node: ast.AST, looped: bool) -> None:
+        for field, value in ast.iter_fields(node):
+            inner: bool = looped or (isinstance(node, (ast.For, ast.AsyncFor, ast.While)) and field == 'body')
+            for child in value if isinstance(value, list) else [value]:
+                if not isinstance(child, ast.AST) or isinstance(
+                        child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+                    continue
+                if isinstance(child, ast.Assert):
+                    spans.append((child.lineno, getattr(child, 'end_lineno', None) or child.lineno, inner))
+                walk(child, inner)
 
-    walk(defs[0])
-    return sorted(spans)
+    walk(defs[0], False)
+    spans.sort()
+    for before, after in zip(spans, spans[1:]):
+        if after[0] <= before[1]:
+            raise Unverified('%s 의 시험 함수 %s 의 단언 둘이 같은 줄에 걸친다(%d행) — 한 줄에 단언은 하나만 둔다(같은 순번 '
+                             '단언을 가릴 수 없다)' % (where, func, after[0]))
+    return spans
 
 
 # ── 반례 ─────────────────────────────────────────────────────────────────────
@@ -356,7 +489,7 @@ class Mutant:
 
 class Outcome:
     def __init__(self, kind: str, k: int | None = None, line: int | None = None, detail: str = '') -> None:
-        self.kind = kind          # pass · assert · other · skip · xfail · xpass · error
+        self.kind = kind          # pass · assert · again(몇째 차례인지 모르는 단언) · other · skip · xfail · xpass · error
         self.k = k
         self.line = line
         self.detail = detail
@@ -369,6 +502,8 @@ class Outcome:
             return '통과'
         if self.kind == 'assert':
             return '실패 — 단언 %d(:%d)' % (self.k, self.line)
+        if self.kind == 'again':
+            return '실패 — %s 단언 %d(:%d)' % (self.detail, self.k, self.line)
         if self.kind == 'other':
             return '실패 — %s' % self.detail
         if self.kind == 'error':
@@ -377,11 +512,12 @@ class Outcome:
 
 
 class RunResult:
-    def __init__(self, rc: int, summary: str, nodeids: list, cases: dict) -> None:
+    def __init__(self, rc: int, summary: str, nodeids: list, cases: dict, nodes: dict) -> None:
         self.rc = rc
         self.summary = summary
         self.nodeids = nodeids
         self.cases = cases        # case 표지('' 또는 '[id]') → Outcome — 수집 차례
+        self.nodes = nodes        # case 표지 → 노드 id
 
     def signature(self) -> tuple:
         return self.rc, tuple((cid, o.key()) for cid, o in self.cases.items())
@@ -455,8 +591,30 @@ class Runner:
         if errors:
             last: str = (str(errors[0].get('text') or '').strip().splitlines() or [''])[-1]
             raise Unverified('수집 오류 — %s %s' % (errors[0].get('nodeid'), last[:200]))
-        collected: list = list(dict.fromkeys(n for r in records if r.get('event') == 'collected'
-                                             for n in r.get('nodeids') or []))
+        events: list = [r for r in records if r.get('event') == 'collected']
+        if any(not isinstance(r.get('items'), list) or not isinstance(r.get('deselected'), list) for r in events):
+            raise Unverified('판독 불능 — 기록에 걸러지기 전 수집 목록이 없다(기록 플러그인이 이 판이 아니다)')
+        collected: list = list(dict.fromkeys(n for r in events for n in r.get('nodeids') or []))
+        paths: dict = {}
+        before: list = []
+        for r in events:
+            for node, path in r['items'] + r['deselected']:
+                paths.setdefault(node, path)
+            before.extend(node for node, _path in r['items'])
+        before = list(dict.fromkeys(before))
+        if not collected and not before:
+            raise Unverified('수집 0 — %s(시험 명령 exit %d)' % (target.node, rc))
+        for nodeid in dict.fromkeys(before + collected):      # 대상 = 같은 파일(실제 경로) · 같은 최상위 함수의 case
+            last_part: str = str(nodeid).partition('::')[2]
+            if paths.get(nodeid) != target.real or not (last_part == target.func or (
+                    last_part.startswith(target.func + '[') and last_part.endswith(']'))):
+                raise InputError('판독 불능 — 대상 밖 노드 %s 가 수집됐다(--test-cmd 에는 시험 경로 없이 명령 앞부분만)' % nodeid)
+        kept: set = set(collected)
+        dropped: list = [n for n in before if n not in kept]
+        if dropped:
+            told: set = {node for r in events for node, _path in r['deselected']}
+            raise Unverified('판독 불능 — 대상 case %s 가 걸러져 돌지 않는다(%s · 걸러진 case %d) — 대상의 모든 case 를 돌려야 '
+                             '판정이 선다' % (dropped[0], '선택지로 걸러짐' if dropped[0] in told else '수집 훅이 뺌', len(dropped)))
         if not collected:
             raise Unverified('수집 0 — %s(시험 명령 exit %d)' % (target.node, rc))
         if rc not in (0, 1):
@@ -469,21 +627,17 @@ class Runner:
             if r.get('when') not in seen or (r.get('exc') and not seen[r.get('when')].get('exc')):
                 seen[r.get('when')] = r           # 같은 단계 기록이 겹치면 예외가 적힌 쪽을 쓴다
         cases: dict = {}
+        nodes: dict = {}
         for nodeid in collected:
-            last_part: str = str(nodeid).rsplit('::', 1)[-1]
-            if last_part == target.func:
-                cid = ''
-            elif last_part.startswith(target.func + '['):
-                cid = last_part[len(target.func):]
-            else:
-                raise Unverified('판독 불능 — 대상 밖 노드 %s 가 수집됐다(--test-cmd 에는 시험 경로 없이 명령 앞부분만)' % nodeid)
+            cid: str = str(nodeid).partition('::')[2][len(target.func):]
             cases[cid] = self._outcome(target, phases.get(nodeid, {}), nodeid)
+            nodes[cid] = nodeid
         summary: str = ''
         for line in reversed(text.strip().splitlines()):
             if line.strip():
                 summary = line.strip().strip('=').strip()
                 break
-        return RunResult(rc, summary, collected, cases)
+        return RunResult(rc, summary, collected, cases, nodes)
 
     def _outcome(self, target: Target, phases: dict, nodeid: str) -> Outcome:
         for when in ('setup', 'teardown'):
@@ -512,8 +666,13 @@ class Runner:
         real: str = os.path.realpath(os.path.join(root, str(file)))
         where: str = os.path.relpath(real, root) if real.startswith(root + os.sep) else real
         if exc.get('type') == ASSERTION and real == target.real and name == target.func:
-            for k, (first, last) in enumerate(target.spans, 1):
+            depth: int = sum(1 for f, _l, n in frames
+                             if n == target.func and os.path.realpath(os.path.join(root, str(f))) == target.real)
+            for k, (first, last, looped) in enumerate(target.spans, 1):
                 if first <= int(line) <= last:
+                    if looped or depth > 1:
+                        return Outcome('again', k=k, line=int(line),
+                                       detail='반복문 안' if looped else '시험 함수가 자신을 다시 부른 안쪽')
                     return Outcome('assert', k=k, line=int(line))
             return Outcome('other', detail='%s · %s:%s %s(assert 문 밖 줄)' % (exc.get('type'), where, line, name))
         return Outcome('other', detail='%s · %s:%s %s' % (exc.get('type'), where, line, name))
@@ -555,38 +714,6 @@ class StateFile:
 KEEP, REMOVE, REWRITE = 'keep', 'remove', 'rewrite'
 
 
-def restore_plan(project: Path, git: Git, entry: dict, head: str) -> tuple:
-    """기록 한 건을 되돌릴 방법 — (KEEP, None) 이미 시작 상태 · (REMOVE, None) 임시 파일을 지운다 · (REWRITE, 시작 내용).
-    파일 내용이 기록의 시작 · 바뀐 내용 어느 쪽도 아니거나 HEAD 의 그 파일이 기록의 시작 내용이 아니면 RecoveryError —
-    읽기만 하므로 여러 건을 먼저 모두 확인한 뒤 되돌릴 수 있다."""
-    rel = entry.get('path')
-    if not isinstance(rel, str) or not _relative_ok(rel) or entry.get('kind') not in ('mutant', 'old-test'):
-        raise RecoveryError('복구 불능 — 복구 상태의 기록 꼴이 아니다(%r) — 손대지 않음' % (entry,))
-    current: str | None = _file_sha(project / rel)
-    if current == entry.get('original'):
-        return KEEP, None
-    if current != entry.get('changed'):
-        raise RecoveryError('복구 불능 — %s 내용이 기록(시작 · %s)과 다르다 — 손대지 않음'
-                            % (rel, '반례 적용' if entry['kind'] == 'mutant' else '옛 시험 임시 파일'))
-    if entry['kind'] == 'old-test':
-        return REMOVE, None
-    data: bytes | None = git.blob(head, rel)
-    if data is None or _sha(data) != entry.get('original'):
-        raise RecoveryError('복구 불능 — HEAD 의 %s 가 기록의 시작 내용이 아니다 — 손대지 않음' % rel)
-    return REWRITE, data
-
-
-def restore(project: Path, git: Git, entry: dict, head: str) -> bool:
-    """기록 한 건을 시작 상태로 — 되돌렸으면 True · 이미 시작 상태였으면 False."""
-    action, data = restore_plan(project, git, entry, head)
-    path: Path = project / entry['path']
-    if action == REMOVE:
-        path.unlink()
-    elif action == REWRITE:
-        path.write_bytes(data)
-    return action != KEEP
-
-
 # ── 확인 ─────────────────────────────────────────────────────────────────────
 
 class SwitchCheck:
@@ -615,25 +742,104 @@ class SwitchCheck:
         self.evidence_rel = '%s/%s/evidence.json' % (self.folder_rel, SWITCH_DIR)
 
     def recover(self) -> None:
-        data: dict | None = self.state.load()
-        pending: list = (data or {}).get('pending') or []
-        if not pending:
+        data: dict = self.state.load() or {}
+        pending: list = data.get('pending') or []
+        work = data.get('work')
+        if not pending and work is None:
             return
-        head: str | None = self.git.commit('HEAD')
-        if head is None:
-            raise RecoveryError('복구 불능 — HEAD 를 풀 수 없다 — 손대지 않음')
-        for entry in pending:                         # 먼저 모두 확인 — 하나라도 기록 밖이면 아무것도 건드리지 않는다
-            restore_plan(self.project, self.git, entry, head)
-        for entry in list(pending):
-            undone: bool = restore(self.project, self.git, entry, head)
+        if data.get('schema') != STATE_SCHEMA or (work is not None and not (isinstance(work, str) and os.path.isabs(work))):
+            raise RecoveryError('복구 불능 — 복구 상태 %s 의 꼴이 아니다(schema · work) — 손대지 않음' % self.state.path.name)
+        for entry in pending:
+            if not _entry_ok(entry):
+                raise RecoveryError('복구 불능 — 복구 상태의 기록 꼴이 아니다(%r) — 손대지 않음' % (entry,))
+        plans: list = []
+        if pending:
+            head: str | None = self.git.commit('HEAD')
+            if head is None:
+                raise RecoveryError('복구 불능 — HEAD 를 풀 수 없다 — 손대지 않음')
+            try:
+                rows: list = parse_rows(self.spec_text())
+            except Unverified as error:
+                raise RecoveryError('복구 불능 — 복구 상태의 경로를 확인할 수 없다(%s) — 손대지 않음' % error) from None
+            plans = [(entry, self.restore_plan(entry, head, rows)) for entry in pending]   # 먼저 모두 확인
+        for entry, (action, content) in plans:
+            self.apply_plan(entry, action, content)
             if entry['kind'] == 'mutant':
-                print('[switch] 복구 — %s %s' % (entry['path'], '반례 되돌림' if undone else '이미 시작 내용(그대로 둠)'))
+                print('[switch] 복구 — %s %s' % (entry['path'], '반례 되돌림' if action != KEEP else '이미 시작 내용(그대로 둠)'))
             else:
-                print('[switch] 복구 — %s %s' % (entry['path'], '옛 시험 임시 파일 지움' if undone
+                print('[switch] 복구 — %s %s' % (entry['path'], '옛 시험 임시 파일 지움' if action != KEEP
                                                  else '옛 시험 임시 파일 이미 없음'))
             self.state.drop(entry)
             self.recovered += 1
-        self.state.save(stage='recovered')
+        if plans:
+            self.state.save(stage='recovered')
+        if work is not None:
+            self.clear_work(Path(work))
+
+    def restore_plan(self, entry: dict, head: str, rows: list) -> tuple:
+        """기록 한 건을 되돌릴 방법 — (KEEP, None) 이미 시작 상태 · (REMOVE, None) 옛 시험 임시 파일을 지운다 ·
+        (REWRITE, 시작 내용). 경로는 명세 행의 자리(보호 분기 파일 · 옛 시험 임시 자리)이고 저장소 안이어야 하며, 지울 파일은
+        git 이 추적하지 않는 일반 파일 · 되돌릴 반례 자리는 기록의 반례를 HEAD 내용에 그대로 적용한 결과여야 한다 — 아니면
+        RecoveryError. 읽기만 하므로 여러 건을 먼저 모두 확인한 뒤 되돌릴 수 있다."""
+        rel: str = entry['path']
+        owner: Row | None = None
+        if entry['kind'] == 'old-test':
+            if rel not in {row.old_temp for row in rows}:
+                raise RecoveryError('복구 불능 — 기록의 %s 는 명세 `시험 전환:` 행의 옛 시험 임시 자리가 아니다 — 손대지 않음' % rel)
+        else:
+            owners: list = [row for row in rows if row.branch == rel and entry['mutant'] in row.mutants]
+            if not owners:
+                raise RecoveryError('복구 불능 — 기록의 %s 는 명세 `시험 전환:` 행의 보호 분기 파일 자리가 아니다(반례 %s) — '
+                                    '손대지 않음' % (rel, entry['mutant']))
+            owner = owners[0]
+        path: Path = self.project / rel
+        if os.path.realpath(path) != os.path.join(str(self.project), rel):
+            raise RecoveryError('복구 불능 — 기록의 %s 가 심볼릭 링크를 지나거나 저장소 밖으로 풀린다 — 손대지 않음' % rel)
+        if path.exists() and not path.is_file():
+            raise RecoveryError('복구 불능 — 기록의 %s 가 일반 파일이 아니다 — 손대지 않음' % rel)
+        current: str | None = _file_sha(path)
+        if current == entry['original']:
+            return KEEP, None
+        if current != entry['changed']:
+            raise RecoveryError('복구 불능 — %s 내용이 기록(시작 · %s)과 다르다 — 손대지 않음'
+                                % (rel, '반례 적용' if entry['kind'] == 'mutant' else '옛 시험 임시 파일'))
+        if entry['kind'] == 'old-test':
+            if self.git.call('ls-files', '--error-unmatch', '--', rel).returncode == 0 or self.git.blob(head, rel) is not None:
+                raise RecoveryError('복구 불능 — %s 가 git 에 추적된 파일이다(HEAD · index — 도구의 옛 시험 임시 파일이 아니다) — '
+                                    '손대지 않음' % rel)
+            return REMOVE, None
+        data: bytes | None = self.git.blob(head, rel)
+        if data is None or _sha(data) != entry['original']:
+            raise RecoveryError('복구 불능 — HEAD 의 %s 가 기록의 시작 내용이 아니다 — 손대지 않음' % rel)
+        try:
+            target, hunks = parse_patch((self.folder / entry['mutant']).read_bytes(), entry['mutant'])
+            expected: bytes | None = apply_exact(data, hunks, owner, entry['mutant']) if target == rel else None
+        except (OSError, Unverified):
+            expected = None
+        if expected is None or _sha(expected) != entry['changed']:
+            raise RecoveryError('복구 불능 — 기록의 %s 바뀐 내용이 반례 %s 를 HEAD 내용에 그대로 적용한 결과가 아니다 — 손대지 않음'
+                                % (rel, entry['mutant']))
+        return REWRITE, data
+
+    def apply_plan(self, entry: dict, action: str, content: bytes | None) -> None:
+        path: Path = self.project / entry['path']
+        if action == REMOVE:
+            path.unlink()
+        elif action == REWRITE:
+            path.write_bytes(content)
+
+    def clear_work(self, work: Path) -> None:
+        """앞 실행이 끊겨 남긴 도구 임시 폴더 — 도구가 만든 꼴(이름 머리 · 기록 플러그인 사본과 실행 기록뿐)일 때만 지운다."""
+        if work.is_dir() and not work.is_symlink():
+            shaped: bool = work.name.startswith(WORK_PREFIX) and all(
+                not item.is_symlink() and _WORK_FILE_RE.match(item.relative_to(work).as_posix()) for item in work.rglob('*'))
+            if shaped:
+                shutil.rmtree(work)
+                print('[switch] 복구 — 앞 실행이 남긴 도구 임시 폴더 지움')
+            else:
+                print('[switch] 복구 — 기록의 도구 임시 폴더가 도구가 만든 꼴이 아니다 — 그대로 둠(%s)' % work)
+        self.state.data.pop('work', None)
+        self.state.save()
 
     def require_clean(self) -> None:
         dirty: list = self.git.dirty()
@@ -695,29 +901,32 @@ class SwitchCheck:
             [c for c in item.get('commits') or [] if isinstance(c, str)]
         return [sha for sha in (self.git.commit(c.strip()) for c in raw if _HASH_RE.match(c.strip())) if sha]
 
-    def load_rows(self) -> None:
-        spec: Path = self.folder / 'design-spec.md'
+    def spec_text(self) -> str:
         try:
-            text: str = spec.read_text(encoding='utf-8')
+            return (self.folder / 'design-spec.md').read_text(encoding='utf-8')
         except OSError as error:
             raise Unverified('명세 design-spec.md 를 읽을 수 없다 — %s' % error) from None
-        self.rows: list = parse_rows(text)
+
+    def load_rows(self) -> None:
+        self.rows: list = parse_rows(self.spec_text())
         self.head = self.git.commit('HEAD')
 
-    def validate_rows(self) -> None:
-        """행마다 — 시험 파일 · 함수가 기준 판과 HEAD 에 있음 · 옛 시험 임시 자리 비어 있음 · 보호 분기 · 반례(읽기만)."""
+    def validate_rows(self, head: str | None = None) -> None:
+        """행마다 — 시험 파일 · 함수가 기준 판과 `head`(기본 HEAD)에 있음 · 단언 줄 범위가 겹치지 않음 · 옛 시험 임시 자리
+        비어 있음 · 보호 분기 · 반례(읽기만)."""
+        head = head or self.head
         self.sources: dict = {}
         self.mutants: dict = {}
         for row in self.rows:
             old_src = self.git.blob(self.snapshot, row.test)
             if old_src is None:
                 raise Unverified('시험 파일 %s 가 기준 판(git_snapshot %s)에 없다' % (row.test, _short(self.snapshot)))
-            new_src = self.git.blob(self.head, row.test)
+            new_src = self.git.blob(head, row.test)
             if new_src is None:
-                raise Unverified('시험 파일 %s 가 HEAD 에 없다' % row.test)
+                raise Unverified('시험 파일 %s 가 %s 에 없다' % (row.test, 'HEAD' if head == self.head else 'T 끝 판'))
             self.sources[row.label] = (assert_spans(new_src, row.func, row.test),
                                        assert_spans(old_src, row.func, '%s(기준 판)' % row.test), old_src)
-            if (self.project / row.old_temp).exists() or self.git.blob(self.head, row.old_temp) is not None:
+            if (self.project / row.old_temp).exists() or self.git.blob(head, row.old_temp) is not None:
                 raise Unverified('옛 시험 임시 자리 %s 가 이미 있다' % row.old_temp)
             original = self.git.blob(self.snapshot, row.branch)
             if original is None:
@@ -782,24 +991,9 @@ class SwitchCheck:
         return []
 
     def already_verified(self, after: list) -> int:
-        """T 뒤에 슬라이스 커밋이 있어 다시 돌릴 수 없을 때 — 검증 기록과 앞 증거가 지금 T · 반례와 같으면 exit 0."""
-        why: str = ''
-        if self.switch_state != STATE_VERIFIED:
-            why = 'test_switch.state 가 %s' % self.switch_state
-        else:
-            try:
-                proof = json.loads(self.evidence.read_text(encoding='utf-8'))
-            except (OSError, json.JSONDecodeError):
-                proof = None
-            want: list = [(row.label, [[m, _file_sha(self.folder / m)] for m in row.mutants]) for row in self.rows]
-            got: list = [(r.get('test'), [[m.get('path'), m.get('sha256')] for m in r.get('mutants') or []])
-                         for r in (proof or {}).get('rows') or [] if isinstance(r, dict)]
-            if not isinstance(proof, dict) or proof.get('schema') != EVIDENCE_SCHEMA:
-                why = '증거 %s 가 없거나 꼴이 아니다' % self.evidence_rel
-            elif proof.get('t_head') != self.t_head or proof.get('snapshot') != self.snapshot:
-                why = '증거의 T · 기준 판이 지금 기록과 다르다'
-            elif got != want:
-                why = '증거의 행 · 반례 지문이 지금 명세 · 반례와 다르다'
+        """T 뒤에 슬라이스 커밋이 있어 다시 돌릴 수 없을 때 — 검증 기록과 앞 증거가 지금 명세의 행 전체 · T 목록 · 기준 판과
+        같고 행 확인(T 끝 판)을 통과하며 실행 기록이 갖춰졌으면 exit 0."""
+        why: str = 'test_switch.state 가 %s' % self.switch_state if self.switch_state != STATE_VERIFIED else self.proof_gap()
         if why:
             raise Unverified('T 뒤에 슬라이스 커밋 %s(%s)가 있는데 0T 검증을 확인할 수 없다(%s) — 검증 전에는 0C 를 보내지 않는다'
                              % (_short(after[0]), self.slice_commits[after[0]], why))
@@ -809,6 +1003,38 @@ class SwitchCheck:
         print('요약: switch-check 행 %d · 검증 %d(앞 증거) · 어긋남 0 · 미검증 0 · 증거 %s%s'
               % (len(self.rows), len(self.rows), self.evidence_rel, ' · 복구 %d' % self.recovered if self.recovered else ''))
         return EXIT_OK
+
+    def proof_gap(self) -> str:
+        """앞 증거가 지금 기록 · 명세와 맞지 않거나 실행 기록이 빠진 사유('' = 맞음)."""
+        try:
+            proof = json.loads(self.evidence.read_text(encoding='utf-8'))
+        except (OSError, json.JSONDecodeError):
+            proof = None
+        if not isinstance(proof, dict) or proof.get('schema') != EVIDENCE_SCHEMA or not isinstance(proof.get('rows'), list):
+            return '증거 %s 가 없거나 꼴이 아니다' % self.evidence_rel
+        if proof.get('t_head') != self.t_head or proof.get('snapshot') != self.snapshot or \
+                proof.get('t_commits') != self.t_commits:
+            return '증거의 T · 기준 판이 지금 기록과 다르다'
+        rows: list = [r if isinstance(r, dict) else {} for r in proof['rows']]
+        if len(rows) != len(self.rows):
+            return '승인 행이 앞 증거와 다르다 — 행 %d · 증거 %d' % (len(self.rows), len(rows))
+        for row, got in zip(self.rows, rows):
+            mutants: list = [m if isinstance(m, dict) else {} for m in got['mutants']] \
+                if isinstance(got.get('mutants'), list) else []
+            if (got.get('test'), got.get('behavior'), got.get('branch'), [m.get('path') for m in mutants]) != \
+                    (row.label, [row.old, row.new], row.branch_label, row.mutants):
+                return '승인 행이 앞 증거와 다르다 — %s' % row.label
+            if [m.get('sha256') for m in mutants] != [_file_sha(self.folder / m) for m in row.mutants]:
+                return '증거의 행 · 반례 지문이 지금 명세 · 반례와 다르다'
+        try:
+            self.validate_rows(self.t_head)
+        except Unverified as error:
+            return str(error)
+        for row, got in zip(self.rows, rows):
+            gap: str = _evidence_gap(got)
+            if gap:
+                return '증거에 실행 기록이 갖춰지지 않았다(%s — %s)' % (gap, row.label)
+        return ''
 
     def check_apply(self) -> None:
         for mutant in self.mutants.values():
@@ -825,7 +1051,7 @@ class SwitchCheck:
             first: RunResult = self.runner.run(target)
             second: RunResult = self.runner.run(target)
         except Unverified as error:
-            raise Unverified('%s — %s' % (step, error)) from None
+            raise type(error)('%s — %s' % (step, error)) from None
         if first.signature() != second.signature():
             raise Unverified('%s — 요동: 같은 실행 두 번의 결과가 다르다(%s / %s)' % (step, first.brief(), second.brief()))
         return first
@@ -833,19 +1059,21 @@ class SwitchCheck:
     def apply_mutant(self, row: Row, mutant: Mutant) -> dict:
         entry: dict = {'path': row.branch, 'kind': 'mutant', 'original': _sha(mutant.original),
                        'changed': _sha(mutant.expected), 'mutant': mutant.rel}
-        self.state.add(entry)
         path: Path = self.project / row.branch
+        before: bytes = path.read_bytes()              # 적용 전 실제 바이트(줄 끝 변환 · 실행 중 변경 포함)
+        self.state.add(entry)
         result = self.git.call('apply', '--whitespace=nowarn', str(mutant.path))
         if result.returncode == 0 and _file_sha(path) == entry['changed']:
             return entry
-        if _file_sha(path) != entry['original']:     # 방금 이 도구가 바꾼 내용 — 시작 내용(기준 판 = HEAD)으로 되돌린다
-            path.write_bytes(mutant.original)
+        if not path.is_file() or path.read_bytes() != before:   # 방금 이 도구가 바꾼 내용 — 적용 전 바이트로 되돌린다
+            path.write_bytes(before)
         self.state.drop(entry)
         raise Unverified('반례 %s 적용 결과가 기준 판에 그대로 적용한 내용과 다르다 — %s'
                          % (mutant.rel, result.stderr.decode('utf-8', 'replace').strip()[:200]))
 
     def undo(self, entry: dict) -> None:
-        restore(self.project, self.git, entry, self.start_head)
+        action, content = self.restore_plan(entry, self.start_head, self.rows)
+        self.apply_plan(entry, action, content)
         self.state.drop(entry)
 
     def verify_row(self, index: int, row: Row) -> dict:
@@ -874,12 +1102,30 @@ class SwitchCheck:
             mut_new: RunResult = step('반례 %s · 새 시험' % rel, new)
             mut_old: RunResult = step('반례 %s · 옛 시험' % rel, old)
             self.undo(applied)
-            results.append(self._judge(mutant, mut_new, mut_old))
+            if list(mut_new.cases) != list(normal_new.cases) or list(mut_old.cases) != list(normal_new.cases):
+                raise Unverified('반례 %s 에서 돈 case 가 정상 실행과 다르다(정상 %s · 새 %s · 옛 %s)'
+                                 % (rel, list(normal_new.cases), list(mut_new.cases), list(mut_old.cases)))
+            judged: dict = self._judge(mutant, mut_new, mut_old)
+            judged['new']['results'] = self._results(mut_new)
+            judged['old']['results'] = self._results(mut_old)
+            results.append(judged)
         self.undo(entry)
         return {'test': row.label, 'behavior': [row.old, row.new], 'branch': row.branch_label,
                 'nodes': normal_new.nodeids,
-                'normal': {'new': {'summary': normal_new.summary}, 'old': {'summary': normal_old.summary}},
+                'normal': {'new': {'summary': normal_new.summary, 'results': self._results(normal_new)},
+                           'old': {'summary': normal_old.summary, 'results': self._results(normal_old)}},
                 'mutants': results}
+
+    @staticmethod
+    def _results(result: RunResult) -> list:
+        """case 마다 노드 · 결과(단언 실패면 순번 · 줄) — 증거의 실행 기록."""
+        out: list = []
+        for cid, outcome in result.cases.items():
+            item: dict = {'case': cid, 'node': result.nodes[cid], 'result': outcome.kind}
+            if outcome.kind == 'assert':
+                item.update({'assert': outcome.k, 'line': outcome.line})
+            out.append(item)
+        return out
 
     @staticmethod
     def _require_pass(result: RunResult, which: str) -> None:
@@ -894,6 +1140,10 @@ class SwitchCheck:
                 if outcome.kind in ('skip', 'xfail', 'xpass', 'error'):
                     raise Unverified('반례 %s%s 에서 %s 시험이 %s' % (mutant.rel, ' ' + cid if cid else '', which,
                                                                 outcome.describe()))
+                if outcome.kind == 'again':
+                    raise Unverified('반례 %s%s 에서 %s 시험이 %s 단언(%d)에서 실패한다 — 몇째 차례의 실패인지 가릴 수 없다(같은 '
+                                     '순번 단언으로 세지 않는다)' % (mutant.rel, ' ' + cid if cid else '', which,
+                                                                outcome.detail, outcome.k))
         if list(new.cases) != list(old.cases):
             raise Unverified('반례 %s 에서 옛 · 새 시험의 case 가 다르다' % mutant.rel)
         cases: list = []
@@ -926,6 +1176,10 @@ class SwitchCheck:
             raise Unverified('--test-cmd 를 나눌 수 없다 — %s' % error) from None
         if not cmd:
             raise Unverified('--test-cmd 가 비었다')
+        option: str | None = selecting_option(cmd)
+        if option:
+            raise Unverified('판독 불능 — --test-cmd 에 시험을 고르거나 줄이는 선택지(%s)가 있다 — 대상의 모든 case 를 돌려야 '
+                             '판정이 선다(그 프로젝트의 시험 명령 앞부분에서 빼고 다시)' % option)
         if self.timeout <= 0:
             raise Unverified('--timeout 은 양의 초다')
         self.locate()
@@ -956,9 +1210,11 @@ class SwitchCheck:
     def verify_rows(self, cmd: list) -> tuple:
         """행을 차례로 확인 → (검증된 행의 증거 목록, exit, 사유). 첫 어긋남 · 미검증에서 멈추고, 어떻게 끝나든 남은 임시
         변경을 되돌린다."""
-        work: Path = Path(tempfile.mkdtemp(prefix='dddjango-web-switch-'))
+        work: Path = Path(tempfile.mkdtemp(prefix=WORK_PREFIX))
+        self.state.save(work=str(work))                # 끊기면 다음 호출이 이 폴더도 치운다
         verified: list = []
         code, reason = EXIT_OK, ''
+        refused: InputError | None = None
         try:
             self.runner = Runner(self.project, cmd, self.timeout, work)
             for index, row in enumerate(self.rows, 1):
@@ -968,8 +1224,11 @@ class SwitchCheck:
                     code, reason = EXIT_RED, str(error)
                     print('[switch] %s — %s · 어긋남' % (row.label, error))
                     break
-                except RecoveryError:
-                    raise
+                except (RecoveryError, InputError) as error:
+                    if isinstance(error, RecoveryError):
+                        raise
+                    refused = error
+                    break
                 except Unverified as error:
                     code, reason = EXIT_ERR, str(error)
                     print('[switch] %s — %s · 미검증' % (row.label, error))
@@ -985,9 +1244,16 @@ class SwitchCheck:
                               % (m['path'], ' ' + c['case'] if c['case'] else '', row.test, c['new']['line'],
                                  c['new']['assert'], row.test, c['old']['line'], c['old']['assert']))
         finally:
-            for entry in list(self.state.data.get('pending', [])):
-                self.undo(entry)
-            shutil.rmtree(work, ignore_errors=True)
+            try:
+                for entry in list(self.state.data.get('pending', [])):
+                    self.undo(entry)
+            finally:
+                shutil.rmtree(work, ignore_errors=True)
+                self.state.data.pop('work', None)
+                self.state.save()
+        if refused is not None:                       # 입력 오류 — 임시 변경을 되돌린 뒤 시작 거절로 낸다
+            self.state.save(stage='unverified', result='unverified', reason=str(refused))
+            raise refused
         return verified, code, reason
 
     def finish(self, verified: list, code: int, reason: str) -> int:

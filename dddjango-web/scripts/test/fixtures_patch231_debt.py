@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """계약 C: 실제 CLI · 임시 저장소 · 2.3.0 byte 대조. 재현 장면(옛 배치 파일 셋 · G0 동결본 · refactor-scope 변형)은
-이 파일이 임시 폴더에 스스로 만든다 — 저장소 밖 파일을 읽지 않는다."""
+이 파일이 임시 폴더에 스스로 만든다 — 저장소 밖 파일을 읽지 않는다. 바탕 커밋이 이력에 없으면(얕은 clone 등) 2.3.0 과의
+byte 대조만 건너뛰고 건너뛴 사실을 출력한다(실패로 세지 않는다)."""
 import io
 import json
 import os
@@ -203,6 +204,11 @@ class ContractC(unittest.TestCase):
     def setUpClass(cls):
         cls.temp = tempfile.TemporaryDirectory(prefix='web231-debt-')
         cls.tmp = Path(cls.temp.name)
+        cls.old = None
+        if subprocess.run(['git', 'cat-file', '-e', BASE + '^{commit}'], cwd=ROOT, env=ENV, capture_output=True).returncode:
+            print('SKIP 2.3.0 byte 대조 — 바탕 커밋 %s 이 이 저장소 이력에 없다(얕은 clone 등) — 그 대조만 건너뛴다(실패로 세지 '
+                  '않는다)' % BASE, file=sys.stderr)
+            return
         archive = subprocess.check_output(['git', 'archive', BASE, 'dddjango-web/scripts',
                                           'dddjango-web/.claude-plugin/plugin.json'], cwd=ROOT, env=ENV)
         with tarfile.open(fileobj=io.BytesIO(archive)) as bundle:
@@ -228,6 +234,8 @@ class ContractC(unittest.TestCase):
         write(self.f / 'debt-g0.json', json.dumps(frozen))
 
     def cli(self, entry, *args, old=False):
+        if old and self.old is None:
+            self.skipTest('바탕 커밋 %s 없음 — 2.3.0 byte 대조 건너뜀' % BASE)
         return subprocess.run([sys.executable, '-B', '-c', RUN, str(self.old if old else SCRIPTS), entry,
                                *map(str, args)], cwd=self.p, env=ENV, stdout=subprocess.PIPE,
                               stderr=subprocess.STDOUT)
@@ -548,6 +556,8 @@ class ContractC(unittest.TestCase):
 if __name__ == '__main__':
     outcome = unittest.main(verbosity=2, exit=False).result
     bad = len(outcome.failures) + len(outcome.errors)
+    skipped = len(outcome.skipped)
     sys.stderr.flush()
-    print('2.3.1 빚 미룸 정형 픽스처: PASS %d / FAIL %d' % (outcome.testsRun - bad, bad))
+    print('2.3.1 빚 미룸 정형 픽스처: PASS %d / FAIL %d%s' % (outcome.testsRun - bad - skipped, bad,
+                                                         ' · 건너뜀 %d' % skipped if skipped else ''))
     sys.exit(0 if outcome.wasSuccessful() else 1)
