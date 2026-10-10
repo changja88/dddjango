@@ -1,7 +1,8 @@
 """IM27 리터럴 절반 — 들어온 요청의 경로를 비교하는 글자 예외 픽스처(임시 git 저장소만 만들고 끝나면 지운다).
 
 묶음: C 꼴(빠질 것 · 그대로 설 것 · 다른 IM 과 함께) · R 재현(오류 처리기 두 줄만 빠지고 VM 셋 그대로) · D 빚 스캔(같은 판정) ·
-U 무변(고치기 전 판 scripts 와 같은 입력의 출력 byte 대조 · 위 꼴이 든 프로젝트는 그 자리의 IM27 만 빠진다).
+U 무변(고치기 전 판 scripts 와 같은 입력의 exit · stdout · stderr byte 대조 · 위 꼴이 든 프로젝트는 그 자리의 IM27 만 빠진다 ·
+파서가 받지 못하는 파일은 지금 판정 그대로).
 꼴 파일은 줄 끝 주석 `# IM27` 로 «이 줄에 IM27 한 건이 선다» 를 적는다(두 건이면 `# IM27 IM27`) — 표지 없는 줄은 0 건이다.
 고치기 전 판 = BASELINE 커밋의 scripts(`git show <커밋>:<경로>` 로 임시 폴더에 푼다 — 작업 사본을 stash 하지 않는다).
 그 커밋이 이력에 없으면(얕은 clone 등) U 묶음을 건너뛰고 건너뛴 사실을 출력한다(실패로 세지 않는다)."""
@@ -46,10 +47,16 @@ def git(root, *args):
     return r.stdout.strip()
 
 
-def backstop(root, *args, scripts=SCRIPTS):
+def run(root, *args, scripts=SCRIPTS):
+    """backstop 실행 → (exit, stdout, stderr)."""
     r = subprocess.run([sys.executable, '-B', str(scripts / 'backstop.py'), str(root), *map(str, args)],
                        capture_output=True, text=True, env=ENV)
-    return r.returncode, r.stdout + r.stderr
+    return r.returncode, r.stdout, r.stderr
+
+
+def backstop(root, *args, scripts=SCRIPTS):
+    e, out, err = run(root, *args, scripts=scripts)
+    return e, out + err
 
 
 def lines_of(out, cid, path):
@@ -73,6 +80,22 @@ def marked(lines):
         m = re.search(r'#\s*((?:IM27\s*)+)$', line)
         out += [i] * (len(re.findall('IM27', m.group(1))) if m else 0)
     return out
+
+
+def views(names, call):
+    """이름마다 «비교 갈래 안에서 그 이름으로 로그를 남기는» 함수 하나 — 비교 줄에 표지(그 이름이 logging 출처가 아니라 선다)."""
+    out = []
+    for name in names:
+        out += ['', '', 'def view_%s(request: object) -> None:' % name,
+                '    if request.path == "/api/x":  # IM27', '        ' + call % name]
+    return out
+
+
+# 출처로 인정하지 않는 이름 — 파일 어디서든 속성 읽기의 받는 쪽(factory 는 바로 부르기)이 아닌 꼴로 한 번이라도 나온 것
+TAINTED_LOGGERS = ('assigned', 'set_by_call', 'deleted', 'counted', 'handed', 'copied', 'listed', 'returned', 'formatted',
+                   'by_dict', 'by_class', 'by_parent', 'by_item', 'called', 'shadowed')
+TAINTED_MODULES = ('by_assign', 'by_class', 'by_result', 'by_setattr', 'by_setattr_class', 'by_delete', 'by_dunder', 'bare')
+TAINTED_FACTORIES = ('passed', 'patched', 'result_patched', 'attr_read')
 
 
 class Proj:
@@ -190,6 +213,19 @@ CHANGED = {
         '',
         '',
         'IS_API = lambda request: request.path.startswith("/api/")  # noqa: E731'],
+    # 헤더를 읽는 미들웨어 — 문자열 키로 읽는 META 가운데 경로 키가 아닌 것은 경로 읽기가 아니다(비교 글자는 그대로 빠진다)
+    HANDLER + 'case_headers.py': [
+        'class HeaderMiddleware:',
+        '    def __init__(self, get_response: object) -> None:',
+        '        self.get_response = get_response',
+        '',
+        '    def __call__(self, request: object) -> object:',
+        '        agent = request.META.get("HTTP_USER_AGENT")',
+        '        address = request.META["REMOTE_ADDR"]',
+        '        forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")',
+        '        if request.path.startswith("/api/") and agent and address and forwarded:',
+        '            return None',
+        '        return self.get_response(request)'],
     # 여러 줄 비교 — 글자가 제 줄에 따로 있다
     HANDLER + 'case_multiline.py': [
         'def handle(request: object) -> bool:',
@@ -329,7 +365,30 @@ CHANGED = {
         '',
         'def same_literal(request: object) -> bool:',
         '    logger.info("/api/ %s", request.path)  # IM27',
-        '    return request.path.startswith("/api/")'],
+        '    return request.path.startswith("/api/")',
+        '',
+        '',
+        'def loose_logged(request: object) -> bool:',
+        '    logger.warning("not found %s", request.build_absolute_uri())',
+        '    logger.debug("meta %s scope %s", request.META, request.scope)',
+        '    return request.path == "/api/x"'],
+    # `import logging` 과 `import logging.handlers` · 거듭된 `import logging` 은 같은 모듈 한 번이다
+    HANDLER + 'case_log_handlers.py': [
+        'import logging',
+        'import logging.handlers',
+        'import logging',
+        '',
+        'logger = logging.getLogger(__name__)',
+        'logger.addHandler(logging.handlers.RotatingFileHandler("web.log"))',
+        '',
+        '',
+        'def handler404(request: object, exception: Exception) -> object:',
+        '    logging.getLogger(__name__).warning("Web page not found: %s", request.path)',
+        '    path: str = request.path',
+        '    if path == "/api" or path.startswith("/api/"):',
+        '        return None',
+        '    logger.info("fallback %s", path)',
+        '    return exception'],
     # logging 출처의 다른 꼴 — `import logging as X` · `from logging import getLogger as Y` · 그 Y 로 만든 모듈 수준 이름
     HANDLER + 'case_log_from.py': [
         'import logging as lg',
@@ -352,6 +411,207 @@ CHANGED = {
         '    lg.info("p=%s", request.path)',
         '    lg.getLogger("web").info("p=%s", request.path)',
         '    return request.path == "/api/x"'],
+    # 글자 자리 — 탭 들여쓰기와 탭 사이 · 삼중 따옴표 · r / u 접두 · 같은 줄의 비교 둘과 호출 하나 · 조건 갈래 안에서만 묶인 지역 이름
+    HANDLER + 'case_position.py': [
+        'def tabbed(request: object) -> int:',
+        '\tif request.path ==\t"/api/x":',
+        '\t\treturn 1',
+        '\treturn 0',
+        '',
+        '',
+        'def triple(request: object) -> bool:',
+        '    return request.path == """/api/x""" or request.path == \'\'\'/api/y\'\'\'',
+        '',
+        '',
+        'def prefixed(request: object) -> bool:',
+        '    return request.path == r"/api/x" or request.path.startswith(u"/api/y") or request.path in (R"/api/z",)',
+        '',
+        '',
+        'def two_and_call(request: object, api_client: object) -> None:',
+        '    if request.path == "/api/a" or request.path == "/api/b": api_client.get("/api/c")  # IM27',
+        '',
+        '',
+        'def branch_alias(request: object, flag: bool) -> bool:',
+        '    if flag:',
+        '        path = request.path',
+        '    return path == "/api/x"',
+        '',
+        '',
+        'def keyword_only(*, request: object) -> bool:',
+        '    return request.path == "/api/x"',
+        '',
+        '',
+        'def beside(request: object) -> tuple[bool, str]:',
+        '    return (request.path == "/api/a","/api/b")  # IM27'],
+    # 컨테이너 — 직접 놓인 원소만 빠진다(호출 인자 · 조건식 · 안쪽 튜플의 글자는 선다 · 별표 원소 옆의 직접 원소는 빠진다)
+    HANDLER + 'case_container.py': [
+        'def call_element(request: object, api_client: object) -> bool:',
+        '    return request.path in (api_client.get("/api/x"), "/api/y")  # IM27',
+        '',
+        '',
+        'def conditional_element(request: object, flag: bool) -> bool:',
+        '    return request.path in ("/api/x" if flag else "/api/y", "/api/z")  # IM27 IM27',
+        '',
+        '',
+        'def nested_tuple(request: object) -> bool:',
+        '    return request.path in (("/api/x",), "/api/z")  # IM27',
+        '',
+        '',
+        'def prefix_nested(request: object) -> bool:',
+        '    return request.path.startswith((("/api/x",), "/api/z"))  # IM27',
+        '',
+        '',
+        'def starred_element(request: object, more: tuple[str, ...]) -> bool:',
+        '    return request.path in (*more, "/api/x")'],
+    # logging 을 평범하게 쓰는 꼴은 출처 그대로 — 주석 달린 대입(`logging.Logger`) · 수준 · 핸들러 설정 · 상수 읽기
+    HANDLER + 'case_log_setup.py': [
+        'import logging',
+        '',
+        'logger: logging.Logger = logging.getLogger(__name__)',
+        'logger.setLevel(logging.DEBUG)',
+        'logger.addHandler(logging.StreamHandler())',
+        'logging.basicConfig(level=logging.INFO)',
+        '',
+        '',
+        'def view(request: object) -> bool:',
+        '    if logger.isEnabledFor(logging.DEBUG):',
+        '        logger.debug("p=%s", request.path)',
+        '    logger.warning("not found: %s", request.path)',
+        '    return request.path == "/api/x"'],
+    # logger 이름이 파일 어디서든 속성 읽기의 받는 쪽이 아닌 꼴로 나오면 출처가 아니다 — 속성 대입 · setattr · del · 증강 대입 ·
+    #    맨이름 읽기(인자 · 대입 · 컨테이너 · f-문자열 · 반환) · `__dict__` · `__class__` · 속성 사슬 끝의 대입 · 첨자 대입 ·
+    #    바로 부르기 · 같은 글자의 인자를 고치는 다른 함수. 이름마다 따로 본다(clean 은 그대로 출처)
+    HANDLER + 'case_log_taint.py': [
+        'import logging',
+        '',
+        'clean = logging.getLogger("clean")',
+        *('%s = logging.getLogger("%s")' % (n, n) for n in TAINTED_LOGGERS),
+        'setattr(set_by_call, "info", print)',
+        '',
+        '',
+        'def patch(api_client: object) -> object:',
+        '    assigned.info = api_client.get',
+        '    del deleted.info',
+        '    counted.calls += 1',
+        '    api_client.keep(handed)',
+        '    other = copied',
+        '    registry = [listed]',
+        '    text = f"{formatted}"',
+        '    by_dict.__dict__["info"] = api_client.get',
+        '    kind = by_class.__class__',
+        '    by_parent.parent.info = api_client.get',
+        '    by_item.handlers[0] = api_client',
+        '    called("x")',
+        '    return returned',
+        '',
+        '',
+        'def configure(shadowed: object, api_client: object) -> None:',
+        '    shadowed.info = api_client.get',
+        '',
+        '',
+        'def local_assign(request: object, api_client: object) -> None:',
+        '    local_a = logging.getLogger(__name__)',
+        '    local_a.info = api_client.get',
+        '    if request.path == "/api/x":  # IM27',
+        '        local_a.info(request.path)',
+        '',
+        '',
+        'def local_setattr(request: object, api_client: object) -> None:',
+        '    local_b = logging.getLogger(__name__)',
+        '    setattr(local_b, "info", api_client.get)',
+        '    if request.path == "/api/x":  # IM27',
+        '        local_b.info(request.path)',
+        '',
+        '',
+        'def view_clean(request: object) -> None:',
+        '    if request.path == "/api/x":',
+        '        clean.info(request.path)',
+        *views(TAINTED_LOGGERS, '%s.info(request.path)')],
+    # logging 모듈 이름 · getLogger 이름도 같다 — 모듈 함수 대입 · `Logger` 메서드 대입 · getLogger 결과의 메서드 대입 · setattr ·
+    #    del · `__dict__` · 맨이름 읽기 · factory 를 값으로 넘김 · factory 의 속성 읽기. 그 이름으로 만든 logger 와 직접 꼴도
+    #    출처가 아니다
+    HANDLER + 'case_log_taint_module.py': [
+        'import logging as clean_module',
+        *('import logging as %s' % n for n in TAINTED_MODULES),
+        'from logging import getLogger as clean_factory',
+        *('from logging import getLogger as %s' % n for n in TAINTED_FACTORIES),
+        '',
+        'made = by_assign.getLogger("made")',
+        '',
+        '',
+        'def patch(api_client: object) -> object:',
+        '    by_assign.warning = api_client.get',
+        '    by_class.Logger.warning = api_client.get',
+        '    by_result.getLogger("x").warning = api_client.get',
+        '    setattr(by_setattr, "warning", api_client.get)',
+        '    setattr(by_setattr_class.Logger, "warning", api_client.get)',
+        '    del by_delete.warning',
+        '    by_dunder.__dict__["warning"] = api_client.get',
+        '    factory = passed',
+        '    patched.cache = api_client',
+        '    result_patched("x").warning = api_client.get',
+        '    note = attr_read.cache',
+        '    return bare',
+        '',
+        '',
+        'def view_clean_module(request: object) -> None:',
+        '    if request.path == "/api/x":',
+        '        clean_module.warning(request.path)',
+        '        clean_module.getLogger("x").warning(request.path)',
+        '',
+        '',
+        'def view_clean_factory(request: object) -> None:',
+        '    if request.path == "/api/x":',
+        '        clean_factory("x").warning(request.path)',
+        '',
+        '',
+        'def view_direct(request: object) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        by_assign.getLogger("x").warning(request.path)',
+        '',
+        '',
+        'def view_made(request: object) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        made.warning(request.path)',
+        '',
+        '',
+        'def view_local(request: object) -> None:',
+        '    local = by_assign.getLogger("x")',
+        '    if request.path == "/api/x":  # IM27',
+        '        local.warning(request.path)',
+        *views(TAINTED_MODULES, '%s.warning(request.path)'),
+        *views(TAINTED_FACTORIES, '%s("x").warning(request.path)')],
+    # 별표 import 가 하나라도 있는 파일 — logging 이름이 덮였는지 알 수 없어 로그 예외를 전부 끈다(로그 없는 비교는 그대로 빠진다)
+    HANDLER + 'case_log_star.py': [
+        'import logging',
+        'from web.common.util.names import *',
+        '',
+        'logger = logging.getLogger(__name__)',
+        '',
+        '',
+        'def plain(request: object) -> bool:',
+        '    return request.path == "/api/x"',
+        '',
+        '',
+        'def by_module(request: object) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        logging.warning(request.path)',
+        '',
+        '',
+        'def by_direct(request: object) -> bool:',
+        '    logging.getLogger(__name__).warning("p=%s", request.path)',
+        '    return request.path == "/api/x"  # IM27',
+        '',
+        '',
+        'def by_logger(request: object) -> bool:',
+        '    logger.info("p=%s", request.path)',
+        '    return request.path == "/api/x"  # IM27',
+        '',
+        '',
+        'def by_local(request: object) -> bool:',
+        '    log = logging.getLogger("x")',
+        '    log.info("p=%s", request.path)',
+        '    return request.path == "/api/x"  # IM27'],
 }
 
 # ---------------------------------------------------------------- 꼴 — 고치기 전과 판정이 같은 파일(`/api/` 글자 전부 그대로)
@@ -452,7 +712,13 @@ SAME = {
         '',
         'def two_targets(request: object) -> bool:',
         '    path = other = request.path',
-        '    return path == "/api/" and bool(other)  # IM27'],
+        '    return path == "/api/" and bool(other)  # IM27',
+        '',
+        '',
+        'def bound_before(request: object) -> bool:',
+        '    path = ""',
+        '    path = request.path',
+        '    return path == "/api/"  # IM27'],
     # j) request 의 경계 — 다른 이름 · self.request · 모듈 수준 · 재대입 · for · with as · except as · walrus · del · *request ·
     #    바깥 함수의 request 를 쓰는 안쪽 함수
     HANDLER + 'case_j.py': [
@@ -517,7 +783,78 @@ SAME = {
         'def outer(request: object) -> object:',
         '    def inner() -> bool:',
         '        return request.path.startswith("/api/")  # IM27',
-        '    return inner'],
+        '    return inner',
+        '',
+        '',
+        'def imported(request: object) -> bool:',
+        '    from os import path as request',
+        '    return request.path == "/api/"  # IM27',
+        '',
+        '',
+        'def unpacked(request: object, pair: tuple[object, object]) -> bool:',
+        '    request, other = pair',
+        '    return request.path == "/api/" and bool(other)  # IM27',
+        '',
+        '',
+        'def augmented(request: object) -> bool:',
+        '    request += 1',
+        '    return request.path == "/api/"  # IM27',
+        '',
+        '',
+        'def matched(request: object, command: object) -> bool:',
+        '    match command:',
+        '        case request:',
+        '            pass',
+        '    return request.path == "/api/"  # IM27',
+        '',
+        '',
+        'def matched_rest(request: object, command: object) -> bool:',
+        '    match command:',
+        '        case {**request}:',
+        '            pass',
+        '    return request.path == "/api/"  # IM27',
+        '',
+        '',
+        'def matched_star(request: object, command: object) -> bool:',
+        '    match command:',
+        '        case [*request]:',
+        '            pass',
+        '    return request.path == "/api/"  # IM27',
+        '',
+        '',
+        'def comprehension_walrus(request: object, items: list[object]) -> bool:',
+        '    seen = [(request := item) for item in items]',
+        '    return request.path == "/api/" and bool(seen)  # IM27',
+        '',
+        '',
+        'def import_plain(request: object) -> bool:',
+        '    import request',
+        '    return request.path == "/api/"  # IM27',
+        '',
+        '',
+        'def import_from(request: object) -> bool:',
+        '    from os import request',
+        '    return request.path == "/api/"  # IM27',
+        '',
+        '',
+        'def function_named(request: object) -> bool:',
+        '    def request() -> None:',
+        '        pass',
+        '    return request.path == "/api/"  # IM27',
+        '',
+        '',
+        'def class_named(request: object) -> bool:',
+        '    class request:',
+        '        pass',
+        '    return request.path == "/api/"  # IM27',
+        '',
+        '',
+        'def inner_nonlocal(request: object, other: object) -> bool:',
+        '    def swap() -> None:',
+        '        nonlocal request',
+        '        request = other',
+        '    swap()',
+        '    return request.path == "/api/"  # IM27'],
     # 비교 밖에서 경로 값을 다시 쓰는 함수 — 그 함수의 비교 글자는 빠지지 않는다
     HANDLER + 'case_reuse.py': [
         'def passed(request: object, api_client: object) -> None:',
@@ -582,7 +919,141 @@ SAME = {
         '',
         'def assigned(request: object) -> bool:',
         '    request.path = "/api/x"  # IM27',
-        '    return request.path == "/api/y"  # IM27'],
+        '    return request.path == "/api/y"  # IM27',
+        '',
+        '',
+        'def or_default(request: object, api_client: object) -> None:',
+        '    target = request.path or "/"',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(target)',
+        '',
+        '',
+        'def nested_twice(request: object) -> object:',
+        '    path = request.path',
+        '',
+        '    def collect() -> list[str]:',
+        '        return [path for _ in range(1)]',
+        '    return collect() if path == "/api/x" else None  # IM27',
+        '',
+        '',
+        'def full_path_keyword(request: object, api_client: object) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(request.get_full_path(force_append_slash=True))',
+        '',
+        '',
+        'def full_path_positional(request: object, api_client: object) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(request.get_full_path(True))',
+        '',
+        '',
+        'def full_path_info_argument(request: object, api_client: object) -> object:',
+        '    if request.path == "/api/x":  # IM27',
+        '        return api_client.get(request.get_full_path_info(False))',
+        '    return None',
+        '',
+        '',
+        'def meta_default(request: object, api_client: object) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(request.META.get("PATH_INFO", ""))',
+        '',
+        '',
+        'def meta_default_alias(request: object, api_client: object) -> None:',
+        '    url = request.META.get("PATH_INFO", "")',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(url)',
+        '',
+        '',
+        'def absolute_uri(request: object, api_client: object) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(request.build_absolute_uri())',
+        '',
+        '',
+        'def environ_read(request: object, api_client: object) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(request.environ["PATH_INFO"])',
+        '',
+        '',
+        'def scope_read(request: object, api_client: object) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(request.scope["path"])',
+        '',
+        '',
+        'def meta_alias(request: object, api_client: object) -> None:',
+        '    meta = request.META',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(meta["PATH_INFO"])',
+        '',
+        '',
+        'def method_alias(request: object, api_client: object) -> None:',
+        '    reader = request.get_full_path',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(reader())',
+        '',
+        '',
+        'def meta_variable_key(request: object, api_client: object, key: str) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(request.META[key])',
+        '',
+        '',
+        'def meta_variable_get(request: object, api_client: object, key: str) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(request.META.get(key))',
+        '',
+        '',
+        'def meta_spread(request: object, api_client: object) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.post(**request.META)',
+        '',
+        '',
+        'def meta_request_uri(request: object, api_client: object) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(request.META["REQUEST_URI"])',
+        '',
+        '',
+        'def meta_raw_uri(request: object, api_client: object) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(request.META.get("RAW_URI"))',
+        '',
+        '',
+        'def meta_script_name(request: object, api_client: object) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(request.META.get("SCRIPT_NAME", ""))',
+        '',
+        '',
+        'def meta_path_info_call(request: object, api_client: object) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(request.META["PATH_INFO"])',
+        '',
+        '',
+        'def inner_loose(request: object, api_client: object) -> object:',
+        '    def fetch() -> object:',
+        '        return api_client.get(request.get_full_path(True))',
+        '    return fetch() if request.path == "/api/x" else None  # IM27',
+        '',
+        '',
+        'def inner_meta(request: object, api_client: object) -> object:',
+        '    fetch = lambda: api_client.get(request.META.get("PATH_INFO", ""))  # noqa: E731',
+        '    return fetch() if request.path == "/api/x" else None  # IM27',
+        '',
+        '',
+        'def full_path_plain(request: object, api_client: object) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(request.get_full_path())',
+        '',
+        '',
+        'def full_path_info_plain(request: object, api_client: object) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(request.get_full_path_info())',
+        '',
+        '',
+        'def path_info_reuse(request: object, api_client: object) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(request.path_info)',
+        '',
+        '',
+        'def meta_get_reuse(request: object, api_client: object) -> None:',
+        '    if request.path == "/api/x":  # IM27',
+        '        api_client.get(request.META.get("PATH_INFO"))'],
     # 계약 밖 비교 꼴 — 부분 문자열 · f-문자열 · 이어 붙인 글자 · 연쇄 비교 · 인접 문자열 결합 · walrus 로 담은 컨테이너 ·
     #    변수 컨테이너 · 정규식 · 인자가 있는 경로 메서드 · startswith 의 둘째 인자
     HANDLER + 'case_shape.py': [
@@ -648,7 +1119,23 @@ SAME = {
         '',
         '',
         'def sliced(request: object) -> bool:',
-        '    return request.path.startswith("/api/", 0)  # IM27'],
+        '    return request.path.startswith("/api/", 0)  # IM27',
+        '',
+        '',
+        'def bytes_literal(request: object) -> bool:',
+        '    return request.path == b"/api/x"  # IM27',
+        '',
+        '',
+        'def mapping(request: object) -> bool:',
+        '    return request.path in {"/api/x": 1}  # IM27',
+        '',
+        '',
+        'def ordered(request: object) -> bool:',
+        '    return request.path < "/api/x"  # IM27',
+        '',
+        '',
+        'def identity(request: object) -> bool:',
+        '    return request.path is "/api/x"  # IM27'],
     # 로그 예외의 경계 — 하나라도 어기면 그 함수의 비교 글자는 빠지지 않는다: 로그가 아닌 호출(비교 앞 · 뒤) · logging 출처로
     #    확인되지 않는 받는 쪽(다시 붙인 메서드 · 다른 객체 · self.logger · 인자 · 가림 · 재바인딩 · 함수 안 import · 바깥 함수의 이름) ·
     #    독립 문장이 아닌 로그 호출(반환 · 대입 · 바깥 호출의 인자 · 첨자) · log 의 level 자리 · 로그 호출까지 가는 길의 다른 노드 ·
@@ -900,7 +1387,8 @@ SAME = {
         '',
         '',
         'def indirect(request: object) -> bool:',
-        '    getattr(logger, "info")(request.path)',
+        '    quiet = logging.getLogger("quiet")',
+        '    getattr(quiet, "info")(request.path)',
         '    return request.path == "/api/x"  # IM27',
         '',
         '',
@@ -919,7 +1407,43 @@ SAME = {
         'def redirected(request: object) -> object:',
         '    if request.path == "/api/x":  # IM27',
         '        return redirect(request.path)',
-        '    return None'],
+        '    return None',
+        '',
+        '',
+        'def comprehension_logger(request: object, clients: list[object]) -> bool:',
+        '    seen = [(logger := client) for client in clients]',
+        '    logger.info("p=%s", request.path)',
+        '    return request.path == "/api/x" and bool(seen)  # IM27',
+        '',
+        '',
+        'def loose_logged_argument(request: object) -> bool:',
+        '    logger.warning("not found %s", request.get_full_path(True))',
+        '    return request.path == "/api/x"  # IM27',
+        '',
+        '',
+        'def loose_logged_subscript(request: object) -> bool:',
+        '    logger.warning("not found %s", request.environ["PATH_INFO"])',
+        '    return request.path == "/api/x"  # IM27',
+        '',
+        '',
+        'def loose_logged_default(request: object) -> bool:',
+        '    logger.warning("not found %s", request.META.get("PATH_INFO", ""))',
+        '    return request.path == "/api/x"  # IM27'],
+    # 상대 import 의 getLogger 는 logging 출처가 아니다
+    HANDLER + 'case_log_relative.py': [
+        'from .logging import getLogger',
+        '',
+        'logger = getLogger(__name__)',
+        '',
+        '',
+        'def direct(request: object) -> bool:',
+        '    getLogger(__name__).warning("p=%s", request.path)',
+        '    return request.path == "/api/x"  # IM27',
+        '',
+        '',
+        'def named(request: object) -> bool:',
+        '    logger.info("p=%s", request.path)',
+        '    return request.path == "/api/x"  # IM27'],
     # 모듈 범위의 logging 출처가 확인되지 않는 파일 — logger 를 두 번 바인딩 · 어느 함수가 global 로 다시 씀 ·
     #    `logging` 이름을 다시 바인딩 · logging 에서 오지 않은 이름
     HANDLER + 'case_log_twice.py': [
@@ -979,6 +1503,26 @@ SAME = {
         'def handle(request: object) -> bool:',
         '    if request.path.startswith("/api/")  # IM27',
         '        return True'],
+    # 잘못된 이스케이프가 든 파일(비교 없음 · 문법 오류와 함께) — 보조 파싱이 경고를 stderr 에 흘리지 않는다
+    HANDLER + 'case_escape.py': [
+        'API_URL: str = "/api/x"  # IM27',
+        'PATTERN: str = "\\d+"'],
+    HANDLER + 'case_escape_broken.py': [
+        'PATTERN: str = "\\d+"',
+        '',
+        '',
+        'def handle(request: object) -> bool:',
+        '    if request.path.startswith("/api/")  # IM27',
+        '        return True'],
+    # 별표 import 의 대상(`/api/` 글자 없음)
+    'common/util/names.py': [
+        'class Sender:',
+        '    def warning(self, path: str) -> str:',
+        '        return path',
+        '',
+        '',
+        'logging = Sender()',
+        '__all__ = ["logging"]'],
     # 주석 · docstring — 주석 안 글자는 지금처럼 0 · docstring 안 따옴표 글자는 지금처럼 선다
     HANDLER + 'case_text.py': [
         'def handle(request: object) -> bool:',
@@ -1009,7 +1553,8 @@ def write_cases(p, cases):
 def bundle_cases(tmp):
     p, base = mkproj(tmp / 'c')
     write_cases(p, {**CHANGED, **SAME})
-    e, out = backstop(p.root, '--diff-base', base, '--only', 'im')
+    e, out, err = run(p.root, '--diff-base', base, '--only', 'im')
+    check('C stderr 0 줄(잘못된 이스케이프가 든 파일 둘 포함 — 보조 파싱이 경고를 흘리지 않는다)', err == '' and e == 2, err[:600])
     for rel in CHANGED:
         check('C 빠짐 — %s IM27 행 %s' % (rel, WANT[rel]), im27(out, rel) == WANT[rel], im27(out, rel))
     for rel in list(SAME) + [TEMPLATE]:
@@ -1135,20 +1680,24 @@ def bundle_unchanged(tmp):
         p.w('web/' + rel, *written[rel])
 
     def both(name, *args, nonempty=None):
-        new = backstop(p.root, *args)
-        before = backstop(p.root, *args, scripts=old)
-        check('U1 %s — 고치기 전 판과 byte 동일' % name, new == before,
-              '새 판 exit=%d\n%s\n옛 판 exit=%d\n%s' % (new[0], new[1][-900:], before[0], before[1][-900:]))
+        new = run(p.root, *args)
+        before = run(p.root, *args, scripts=old)
+        check('U1 %s — 고치기 전 판과 exit · stdout · stderr byte 동일' % name, new == before,
+              '새 판 exit=%d\n%s\nstderr: %s\n옛 판 exit=%d\n%s\nstderr: %s'
+              % (new[0], new[1][-900:], new[2][-600:], before[0], before[1][-900:], before[2][-600:]))
         if nonempty:
             check('U1 %s — 헛대조 아님(%s)' % (name, nonempty), nonempty in new[1], new[1][-600:])
         return before
 
     both('게이트(--diff-base)', '--diff-base', base, nonempty='[IM27] BLOCKER')
+    only_im = both('--only im(--all)', '--all', '--only', 'im', nonempty='web/%scase_escape.py:1' % HANDLER)
+    check('U1 --only im — 옛 판도 stderr 0 줄(대조할 바탕이 빈 줄 그대로다)', only_im[2] == '', only_im[2][:600])
     both('--slice-end', '--diff-base', base, '--slice-end', nonempty='슬라이스 끝')
     both('--only st(전역 퇴화)', '--only', 'st', nonempty='BLOCKER')
     both('--only im,nm(--diff-base)', '--diff-base', base, '--only', 'im,nm', nonempty='[IM27] BLOCKER')
     both('--only cy', '--diff-base', base, '--only', 'cy', nonempty='blocker 0건')
     everything = both('--all', '--all', nonempty='[IM27] BLOCKER')
+    everything = (everything[0], everything[1] + everything[2])
     check('U1 픽스처 자체 — 그대로 설 파일의 표지가 고치기 전 판의 IM27 행과 같다(빠질 글자가 섞이지 않았다)',
           all(im27(everything[1], rel) == marked(lines) for rel, lines in written.items())
           and im27(everything[1], TEMPLATE) == WANT[TEMPLATE],
@@ -1160,26 +1709,42 @@ def bundle_unchanged(tmp):
             target = p.root / '.git' / 'debt-u.json'
             if target.exists():
                 target.unlink()
-            e, out = backstop(p.root, '--debt-scan', *extra, '--json', target, scripts=scripts)
+            e, out, err = run(p.root, '--debt-scan', *extra, '--json', target, scripts=scripts)
             data = json.loads(target.read_text(encoding='utf-8'))
             data.pop('scanned_at', None)
             data['scanner'] = {k: v for k, v in data.get('scanner', {}).items() if k != 'plugin'}
-            outs.append((e, out, data))
-        check('U1 %s 출력 · JSON(스캔 시각 · 판 글자 빼고) — 고치기 전 판과 같음' % label, outs[0] == outs[1]
-              and any(k.startswith('IM27|') for k in outs[0][2].get('counts', {})), outs[0][1][-600:])
+            outs.append((e, out, err, data))
+        check('U1 %s exit · stdout · stderr · JSON(스캔 시각 · 판 글자 빼고) — 고치기 전 판과 같음' % label, outs[0] == outs[1]
+              and any(k.startswith('IM27|') for k in outs[0][3].get('counts', {})), outs[0][1][-600:] + outs[0][2][-600:])
 
     # U2 — 빠질 글자가 든 프로젝트: 표지가 적은 만큼만 IM27 리터럴 발견이 빠지고 나머지 출력은 byte 그대로
     p, base = mkproj(tmp / 'u2')
     write_cases(p, {**CHANGED, **SAME})
     for args in (('--diff-base', base), ('--all',), ('--diff-base', base, '--only', 'im')):
-        new = backstop(p.root, *args)
-        before = backstop(p.root, *args, scripts=old)
+        new = run(p.root, *args)
+        before = run(p.root, *args, scripts=old)
         dropped = sorted((Counter({(rel, n): c for rel in CHANGED for n, c in Counter(im27(before[1], rel)).items()})
                           - Counter({(rel, n): c for rel in CHANGED for n, c in Counter(WANT[rel]).items()})).elements())
         trimmed, n = without(before[1], dropped)
-        check('U2 %s — 옛 판 출력에서 빠질 글자의 IM27 %d건만 빼면 새 판과 byte 동일' % (' '.join(args[:1] + args[2:]), n),
-              n == len(dropped) >= len(CHANGED) and (new[0], new[1]) == (before[0], trimmed),
-              '새 판 exit=%d\n%s\n옛 판(뺀 뒤) exit=%d\n%s' % (new[0], new[1][-900:], before[0], trimmed[-900:]))
+        check('U2 %s — 옛 판 stdout 에서 빠질 글자의 IM27 %d건만 빼면 새 판과 byte 동일 · exit · stderr 도 같음'
+              % (' '.join(args[:1] + args[2:]), n),
+              n == len(dropped) >= len(CHANGED) and new == (before[0], trimmed, before[2]),
+              '새 판 exit=%d\n%s\nstderr: %s\n옛 판(뺀 뒤) exit=%d\n%s\nstderr: %s'
+              % (new[0], new[1][-900:], new[2][-600:], before[0], trimmed[-900:], before[2][-600:]))
+
+    # U3 — 파서가 받지 못할 만큼 깊은 식이 든 파일 둘(비교 없음): 보조 파싱이 죽지 않고 지금 판정 그대로다
+    p, base = mkproj(tmp / 'u3')
+    deep = {HANDLER + 'case_deep_sum.py': ['URL: str = "/api/v1/x"', 'BIG: str = ' + '+'.join(['"a"'] * 200000)],
+            HANDLER + 'case_deep_not.py': ['URL: str = "/api/v1/y"', 'FLAG: bool = ' + 'not ' * 20000 + 'True']}
+    for rel, lines in deep.items():
+        p.w('web/' + rel, *lines)
+    for args in (('--diff-base', base, '--only', 'im'), ('--all', '--only', 'im')):
+        new = run(p.root, *args)
+        before = run(p.root, *args, scripts=old)
+        check('U3 %s — 깊은 식 파일 둘: 고치기 전 판과 exit · stdout · stderr byte 동일 · exit 2 · 각 파일 첫 줄 IM27'
+              % ' '.join(args[:1] + args[2:]),
+              new == before and new[0] == 2 and all(im27(new[1], rel) == [1] for rel in deep),
+              '새 판 exit=%d\n%s\nstderr: %s\n옛 판 exit=%d\n%s' % (new[0], new[1][-900:], new[2][-900:], before[0], before[1][-600:]))
 
 
 def main():

@@ -352,7 +352,7 @@ class ChannelDataSource:
 ```
 
 - 반환은 도메인 엔티티 직반환(`Channel`·`list[Channel]`·`None`) — `HttpResponse`·dict를 Repo로 올리지 않는다. 실패는 raise로 두고 Repo의 `safe_api_call`이 Either로 정규화한다(architecture-data §2·§3).
-- 백엔드 경로 리터럴의 유일 거처는 DataSource 모듈 상수다 — VM·view·템플릿에 백엔드 URL이 나타나면 위반이다(Python 코드에서 들어온 요청의 경로를 비교만 하는 글자 — `request.path` 등과 `==`·`startswith`·`in`, 그 경로 값을 `logging` 로그 말고 다른 데 넘기지 않을 때 — 는 API 호출 주소가 아니다). 경로에 값을 넣을 땐 `urllib.parse.quote`.
+- 백엔드 경로 리터럴의 유일 거처는 DataSource 모듈 상수다 — VM·view·템플릿에 백엔드 URL이 나타나면 위반이다(Python 코드에서 들어온 요청의 경로를 비교만 하는 글자 — `request.path` 등과 `==`·`startswith`·`in (…)`(튜플·리스트·집합에 든 글자), 비교 말고는 그 경로 값을 읽지 않을 때(출처가 확인된 독립 `logging` 로그 문장의 인자는 예외) — 는 API 호출 주소가 아니다). 경로에 값을 넣을 땐 `urllib.parse.quote`.
 - 계약의 단일 근거는 산출물 폴더의 `server-contract.json` 경량본이다(architecture-data §7) — URL·필드·상태코드를 훈련 기억이나 추측으로 쓰지 않는다. 필요한 API가 없으면 백엔드 코드를 고치지 않고 가정 계약으로 짓고(`계약 위험` — architecture-data §8) 실제 API는 `/dddjango`로 요청하라고 안내한다.
 
 ## §5. 로컬 저장 — hive_ce 자리
