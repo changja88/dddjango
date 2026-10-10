@@ -2450,12 +2450,15 @@ class EventValueRegression(unittest.TestCase):
         phrases = {
             "dddjango/agents/discipline-reviewer.md": (
                 "slot 10 이 정한 머리 누락", "메시지와 머리의 날짜 불일치", "slot 10 이 정하지 않은 머리",
-                "`str(다른 예외)`", "aware datetime", "`--event-value`"),
+                "`str(다른 예외)`", "시간대를 갖는 aware datetime 인지", "구현된 operation `description`", "`--event-value`"),
             "dddjango/agents/design-review-api.md": ("`str(다른 예외)`", "operation `description`", "생략의 뜻"),
-            "dddjango/agents/design-architect.md": ("사건 값", "operation `description`", "발주자 도출 · 설계 가정"),
-            "dddjango/commands/dddjango.md": ("`--event-value`", "`response=` 선언 유무와 관계없이"),
+            "dddjango/agents/design-architect.md": (
+                "사건 값", "operation `description`", "발주자 도출 · 설계 가정", "같은 concrete · 코드 · 실제 status 값으로"),
+            "dddjango/commands/dddjango.md": (
+                "`--event-value`", "`response=` 선언 유무와 관계없이", "사건 값 읽기에 승인된 code-json scope 가 없으면"),
             "dddjango/skills/implementation-django-ninja/references/final.md": (
-                "`n.f.astimezone(UTC).isoformat()`", "`if <n>.<f> is not None:`"),
+                "`n.f.astimezone(UTC).isoformat()`", "`if <n>.<f> is not None:`",
+                "`__init__`의 `self.f: T = …`", "값이 늘 있는 다른 승인 필드는 어느 가지에서든 읽을 수 있다"),
             "dddjango/skills/discipline-houserules/references/final.md": ("`<project>/settings` 의 문자열로 등록해",),
         }
         for rel, expected in phrases.items():
@@ -2464,10 +2467,13 @@ class EventValueRegression(unittest.TestCase):
                 with self.subTest(path=rel, phrase=phrase):
                     self.assertIn(phrase, text)
         codex = {
-            "codex-dddjango/skills/dddjango/SKILL.md": ("`--event-value`", "`response=` 선언 유무와 관계없이"),
-            "codex-dddjango/skills/dddjango-discipline-reviewer/SKILL.md": ("slot 10 이 정한 머리 누락", "aware datetime"),
+            "codex-dddjango/skills/dddjango/SKILL.md": (
+                "`--event-value`", "`response=` 선언 유무와 관계없이", "사건 값 읽기에 승인된 code-json scope 가 없으면"),
+            "codex-dddjango/skills/dddjango-discipline-reviewer/SKILL.md": (
+                "slot 10 이 정한 머리 누락", "시간대를 갖는 aware datetime 인지", "구현된 operation `description`"),
             "codex-dddjango/skills/dddjango-design-review-api/SKILL.md": ("`str(다른 예외)`",),
-            "codex-dddjango/skills/dddjango-design-architect/SKILL.md": ("사건 값", "발주자 도출 · 설계 가정"),
+            "codex-dddjango/skills/dddjango-design-architect/SKILL.md": (
+                "사건 값", "발주자 도출 · 설계 가정", "같은 concrete · 코드 · 실제 status 값으로"),
         }
         for rel, expected in codex.items():
             text = (ROOT / rel).read_text(encoding="utf-8")

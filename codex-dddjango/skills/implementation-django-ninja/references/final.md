@@ -775,14 +775,16 @@ return result
 method가 주입된 응답용(temporal) Django `HttpResponse`를 받아 선택된 mapping branch에서 header를 설정한 뒤 두 인자 `Status`를
 반환한다. exception path의 구체 catch는 그 branch의 한 형태다.
 managed catch가 `as`로 잡은 자기 BC 구체 예외 하나의 승인 필드 값(사건 값)은 slot 10이 승인한
-선언 필드만 읽어 공통 shape의 유일한 일반 `str` 설명 칸 keyword 값과 승인 머리 값에만 싣고, 꼴은
+선언 필드(그 예외 클래스 본문의 `f: T` 또는 `__init__`의 `self.f: T = …` — 하우스룰 §4 와 같은 꼴 · 상속 필드
+아님)만 읽어 공통 shape의 유일한 일반 `str` 설명 칸 keyword 값과 승인 머리 값에만 싣고, 꼴은
 `str` 필드 `n.f` · `datetime` 필드 `n.f.astimezone(UTC).isoformat()` · `int` 필드 f-string `{n.f}`
 뿐이며, 식별자 · status · 그 밖의 칸 · 머리 이름 · helper에는 싣지 않는다.
 승인 필드가 `T | None`이면 값이 없다는 까닭만으로 예외를 나누지 않고 catch 본문을
 `if <n>.<f> is not None:`과 `else:` 한 문장으로 두며, 두 가지는 각각 같은 concrete · 같은 코드 ·
-같은 실제 status 값으로 오류 생성 → 머리 → 반환을 따르고 값 있는 가지에서도 검사식이 본 그
-필드만 읽는다 — 이 분기는 값을 보일지 생략할지 고르는 응답 구성이라 입구 로직이 아니며, 다른 조건 ·
-중첩 · `else` 없는 꼴 · helper는 쓰지 않는다.
+같은 실제 status 값으로 오류 생성 → 머리 → 반환을 따르고, `T | None` 필드는 검사식이 본 그 필드만
+값 있는 가지에서만 읽는다(값이 늘 있는 다른 승인 필드는 어느 가지에서든 읽을 수 있다) — 이 분기는
+값을 보일지 생략할지 고르는 응답 구성이라 입구 로직이 아니며, 다른 조건 · 중첩 · `else` 없는 꼴 ·
+helper는 쓰지 않는다.
 
 ```python
 from django.http import HttpResponse

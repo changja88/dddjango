@@ -795,7 +795,7 @@
       ]
     },
     "dddjango/agents/design-architect.md/s005/b12": {
-      "h": "7be29950cc8d34fe",
+      "h": "ef14c3dd5ef0eceb",
       "n": 1,
       "works": [
         "R-1619",
@@ -2531,7 +2531,7 @@
       ]
     },
     "dddjango/agents/discipline-reviewer.md/s007/b21": {
-      "h": "76af363badadb180",
+      "h": "cdb7462ad8b84cfc",
       "n": 1,
       "works": [
         "R-1021",
@@ -3561,7 +3561,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s007/b16": {
-      "h": "e746fa179f8f74d1",
+      "h": "4b8561c8b44d7bc1",
       "n": 2,
       "works": [
         "R-0331",
@@ -10859,8 +10859,8 @@
       ]
     },
     "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b27": {
-      "h": "05c4f229e92a792f",
-      "n": 15,
+      "h": "2a470dd49084b127",
+      "n": 17,
       "works": [
         "R-0068",
         "R-0069",
@@ -14808,7 +14808,7 @@
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "7f043044d73cbd4c6320b31d864fd95f59181ab0c8f3d97c021ee6d0c23febdb"
+      "sha256": "88938316911747c7e1ea9a29654e362d0457531ded02765af264a8405be1d3c2"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
@@ -14824,7 +14824,7 @@
     },
     {
       "path": "ontology/rules/agent-discipline-reviewer.ttl",
-      "sha256": "41a5699729f9760224c5be34417cbf609a866edc4a93b62c34c979245def9182"
+      "sha256": "60e1a5025f01759a821aa3c1962c5e66a84a6fcd4aedf36097d3cde6e7d49426"
     },
     {
       "path": "ontology/rules/architecture-api-final.ttl",
@@ -14852,7 +14852,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "e3500f43546d46d8e8c31411651a484bd8109398034a3ce3134b5f595f3fde64"
+      "sha256": "9064b9240c2a0cbf89aa050a8e3379f186be4e2510d0fb664e2ff38f7951ed90"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -14884,7 +14884,7 @@
     },
     {
       "path": "ontology/rules/implementation-django-ninja-final.ttl",
-      "sha256": "bf9c9fc2442ebb61171fa4bc2fdcfc30ddf81c3c5b37d3e52555dc15f8e41916"
+      "sha256": "02c51165f36dcc47b96bb801b4313579c3b9d9b07754d274fe5fce630b1e2b0f"
     },
     {
       "path": "ontology/rules/implementation-django-ninja-skill.ttl",
