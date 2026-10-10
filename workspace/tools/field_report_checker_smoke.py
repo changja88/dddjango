@@ -966,5 +966,74 @@ class SourceMirrorRegression(unittest.TestCase):
                 self.assertEqual(result["status"], "structure", result)
 
 
+class DomainServiceArgumentsRegression(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="field-domain-service-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        aggregate = self.root / "application/orders/domain_layer/order"
+        aggregate.mkdir(parents=True)
+        (aggregate / "order.py").write_text("class Order: pass\n", encoding="utf-8")
+        (aggregate / "order_repository.py").write_text("class OrderRepository: pass\n", encoding="utf-8")
+        self.service = aggregate.parent / "domain_service/order_rule.py"
+        self.service.parent.mkdir()
+        self.records = self.root / "findings.jsonl"
+        self.env = dict(os.environ, DJR_FINDINGS_JSON=str(self.records),
+                        DJR_VIOLATIONS_DIR=str(self.root / "violations"))
+
+    def run_service(self, parameters, receiver="self", declaration="def", receiver_type="OrderRepository"):
+        decorator = "    @classmethod\n" if receiver == "cls" else ""
+        self.service.write_text(
+            f"class OrderRule:\n{decorator}    {declaration} run({receiver}: {receiver_type}, {parameters}) -> None:\n"
+            "        pass\n", encoding="utf-8")
+        self.records.unlink(missing_ok=True)
+        result = subprocess.run([sys.executable, "-B", str(SCRIPTS / "check-domain-model.py"), str(self.root)],
+                                capture_output=True, text=True, env=self.env)
+        records = [json.loads(line) for line in self.records.read_text(encoding="utf-8").splitlines()] \
+            if self.records.exists() else []
+        identities = [{key: row[key] for key in ("schema", "checker", "rule", "file", "symbol", "severity", "message")}
+                      for row in records]
+        return result.returncode, result.stdout, result.stderr, identities
+
+    def assert_parameter_shapes(self, rule, parameter, exit_code, severity):
+        for receiver in ("self", "cls"):
+            for declaration in ("def", "async def"):
+                baseline = None
+                for shape, parameters in (("positional", parameter), ("kw-only", "*, " + parameter),
+                                          ("pos-only", parameter + ", /")):
+                    with self.subTest(rule=rule, shape=shape, receiver=receiver, declaration=declaration):
+                        result = self.run_service(parameters, receiver, declaration,
+                                                  "Order" if rule == "#301" else "OrderRepository")
+                        if shape == "positional":
+                            baseline = result
+                        self.assertEqual(result[0], exit_code, result[1] + result[2])
+                        self.assertEqual(result[2], "")
+                        self.assertEqual([(row["rule"], row["severity"]) for row in result[3]], [(rule, severity)])
+                        marker = f"[ⓓ{rule}]" if severity == "info" else f"[{rule}]"
+                        self.assertEqual(result[1].count(marker), 1, result[1])
+                        self.assertEqual(result, baseline, "출력·발견 키·exit 는 위치 인자와 같아야 한다")
+
+    def test_repository_parameter_shapes(self):
+        self.assert_parameter_shapes("#304", "repository: OrderRepository", 2, "violation")
+
+    def test_port_parameter_shapes(self):
+        self.assert_parameter_shapes("#305", "port: PaymentPort", 2, "violation")
+
+    def test_primitive_parameter_shapes(self):
+        self.assert_parameter_shapes("#307", "amount: int", 2, "violation")
+
+    def test_root_parameter_shapes(self):
+        self.assert_parameter_shapes("#301", "order: Order", 0, "info")
+
+    def test_mixed_parameter_order_and_value_object_opposite(self):
+        result = self.run_service("repository: OrderRepository, /, port: PaymentPort, *, amount: int")
+        self.assertEqual(result[0], 2, result[1] + result[2])
+        self.assertEqual([row["rule"] for row in result[3]], ["#304", "#305"])
+        result = self.run_service("amount: int, /, other: int, *, money: Money")
+        self.assertEqual(result, (0, "", "", []))
+        result = self.run_service("first: Order, /, amount: int, *, second: Order")
+        self.assertEqual(result, (0, "", "", []))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

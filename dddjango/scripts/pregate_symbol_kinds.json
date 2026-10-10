@@ -10,7 +10,7 @@
     "check-composition-root.py": "abd3c0447cd83cf5",
     "check-context-isolation.py": "bb68853338db1326",
     "check-db-table.py": "6d4d0fe16386946a",
-    "check-domain-model.py": "ded715d2026c7556",
+    "check-domain-model.py": "3588edd3fdbed67a",
     "check-error-centralization.py": "a1885c4d9a99d985",
     "check-event-publish.py": "7d751a39960a42a0",
     "check-idempotency-scope-creep.py": "ab24f922f91bed67",

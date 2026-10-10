@@ -643,7 +643,8 @@ def _check_domain_services(root: Path, bc: Path, ds: Path, f: Findings, cand: Ca
         for fn in [n for n in ast.walk(mod) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]:
             if fn.name.startswith("_"):
                 continue
-            arg_anns = [(_ann_names(a.annotation), a.arg) for a in fn.args.args
+            arg_anns = [(_ann_names(a.annotation), a.arg)
+                        for a in (*fn.args.posonlyargs, *fn.args.args, *fn.args.kwonlyargs)
                         if a.arg not in ("self", "cls")]
             for names, arg in arg_anns:
                 if any(n.endswith("Repository") for n in names):
