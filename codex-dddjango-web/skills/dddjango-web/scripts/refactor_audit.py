@@ -604,7 +604,8 @@ def is_bc(unit: str) -> bool:
 
 def _unit_arg(raw: str, files: "list[str]", areas: "frozenset[str]", project: Path) -> str:
     """단위 인자 → 단위 id. 단위 목록(파일 우주에서 계산)에 있어야 한다 — 단위 안쪽 경로 · area · vendor 는 받지 않는다.
-    제품 선언 이름의 진단은 그 선언이 실제로 있을 때만이다(링크 · 폴더로 있어도 있는 것) — 없으면 여느 없는 단위와 같다."""
+    제품 선언 이름의 진단은 그 선언이 실제로 있을 때만이다 — 없으면 여느 없는 단위와 같다. 이 분기에 오는 선언은 일반 파일뿐이다
+    (링크 · 끊긴 링크 · 폴더는 cmd_plan 의 제품 사전 점검이 먼저 판정 불가로 막는다)."""
     text: str = raw.strip().rstrip("/")
     if text in ("web/*.py", "*.py"):
         return CONTAINER

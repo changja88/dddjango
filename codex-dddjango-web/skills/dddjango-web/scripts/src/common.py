@@ -571,11 +571,18 @@ def parse_css_loads(ms: MaskedSource, file_rel: str) -> List[Tuple[int, str]]:
     return loads
 
 
+_STATIC_LITERAL_END_RE = re.compile(r'(?:\s+as\s+\w+)?\s*-?%\}')
+
+
 def parse_template_loads(ms: MaskedSource) -> List[Tuple[int, str]]:
     """템플릿이 `{% static %}` 으로 직접 싣는 정적 파일 — (행, 실제로 실리는 web-상대 경로). 인자는 정적 뿌리 기준이다
-    (앞머리 `/` 는 뗀다 — static_target 과 같다)."""
+    (앞머리 `/` 는 뗀다 — static_target 과 같다). 인자가 따옴표 문자열 하나뿐일 때만(닫는 따옴표 뒤가 `%}` · `as <이름> %}`)
+    싣는 파일로 확정한다 — 필터(`|…`) · 다른 토큰이 붙은 인자는 동적 경로라 넣지 않는다(변수 인자는 _STATIC_RE 가 안 잡는다)."""
     loads: List[Tuple[int, str]] = []
-    for m in _STATIC_RE.finditer(ms.no_comments):
+    text: str = ms.no_comments
+    for m in _STATIC_RE.finditer(text):
+        if not _STATIC_LITERAL_END_RE.match(text, m.end()):
+            continue
         t: Optional[str] = loaded_file(m.group(2).strip().lstrip('/'))
         if t is not None:
             loads.append((ms.line_of(m.start()), t))

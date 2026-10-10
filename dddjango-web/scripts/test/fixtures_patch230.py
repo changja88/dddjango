@@ -1099,6 +1099,40 @@ def bundle_mixing(tmp):
           lines_of(out, 'IM13', LOBBY_PAGE) == [5, 6], '%r\n%s' % (lines_of(out, 'IM13', LOBBY_PAGE), out[-1500:]))
     p.reset(base)
 
+    # `{% static %}` 인자가 따옴표 문자열 하나뿐일 때만 실제 파일로 확정한다 — 필터(`|…`) · 다른 토큰이 붙으면 동적 경로라 판정 밖
+    # (필터 적용 뒤 값은 자기 제품 CSS 일 수도 · 정할 수 없을 수도 있다). `as <이름>` 은 인자가 문자열 하나라 확정한다.
+    cut_parent = "<link rel=\"stylesheet\" href=\"{% static './design_system/guest/../foundation/app_color.css'|cut:parent_step %}\">"
+    cut_x = "<link rel=\"stylesheet\" href=\"{% static 'design_system/foundation/app_color.css'|cut:'x' %}\">"
+    p.sub(page, '<p>lobby</p>', '\n'.join([
+        '{% with parent_step="../" %}',                                                           # 5
+        cut_parent,                                                                               # 6 동적(필터 뒤 값 = 자기 제품 CSS) — 판정 밖
+        '{% endwith %}',                                                                          # 7
+        cut_x,                                                                                    # 8 동적(필터 뒤 값은 정할 수 없다) — 판정 밖
+        '<p>lobby</p>']))
+    e, out = backstop(p.root, '--diff-base', base, '--only', 'im13')
+    check('M11 필터가 붙은 `{% static %}` 인자(`…|cut:parent_step` · `…|cut:\'x\'`) — 동적 경로라 판정 밖(IM13 0 · exit 0)',
+          e == 0 and not found(out, 'IM13', LOBBY_PAGE), 'exit=%d %r\n%s' % (e, lines_of(out, 'IM13', LOBBY_PAGE), out[-1500:]))
+    p.reset(base)
+    p.sub(page, '<p>lobby</p>', '\n'.join([
+        '{% with parent_step="../" %}',                                                           # 5
+        cut_parent,                                                                               # 6 동적 — 판정 밖
+        '{% endwith %}',                                                                          # 7
+        cut_x,                                                                                    # 8 동적 — 판정 밖
+        link('design_system/guest/foundation/app_color.css'),                                     # 9 자기 제품 — 통과
+        link('./design_system/foundation/app_color.css'),                                         # 10 운영자(앞머리 ./ · 문자열 하나) — IM13
+        "{% static 'design_system/foundation/app_color.css' as css %}",                           # 11 운영자(문자열 하나 + as) — IM13
+        '<link rel="stylesheet" href="{{ css }}">',                                               # 12
+        '<p>lobby</p>']))
+    e, out = backstop(p.root, '--diff-base', base, '--only', 'im13')
+    check('M11 따옴표 문자열 하나뿐인 인자(앞머리 `./` · `as css`)만 확정 — IM13 은 그 두 줄 · exit 2(필터 꼴 · 자기 제품은 0)',
+          e == 2 and lines_of(out, 'IM13', LOBBY_PAGE) == [10, 11], 'exit=%d %r\n%s' % (e, lines_of(out, 'IM13', LOBBY_PAGE), out[-1500:]))
+    p.commit('dynamic static args land as debt')
+    e, out, data = p.scan()
+    counts = data.get('counts', {})
+    check('M11 빚 스캔도 같은 판정 — 발견 수 2(+ 옛 링크 1) · 필터 꼴은 세지 않는다',
+          counts.get('IM13|' + LOBBY_PAGE) == 3, sorted(counts.items()))
+    p.reset(base)
+
     # 선언이 없으면 혼입 판정 자체가 없다
     p.rm(REGISTRY)
     base = p.commit('undeclare')
