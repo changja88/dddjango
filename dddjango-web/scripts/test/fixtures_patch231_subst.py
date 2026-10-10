@@ -2,7 +2,9 @@
 
 묶음: U 무변(새 입력 없는 실행 — 고치기 전 판과 출력 · exit byte 동일) · M 메서드 이동(자리 꼴 · 음성 꼴 · 대응 충돌 ·
 제품 쪽 확인) · T 0T 시험 전환(`_contrast_switch` 규칙 · T 이력 · 취소) · R 재현 장면(F4-75 sc1 — 환경 변수
-DDDJANGO_WEB_F75_SCENE 가 그 저장소를 가리킬 때만 · 없으면 건너뛴다 · 장면은 `git clone --shared --no-checkout` 사본에서만 쓴다).
+DDDJANGO_WEB_F75_SCENE 가 그 저장소를 가리킬 때만 · 없으면 건너뛴다 · 장면은 공유 없는 복제
+(`git clone --no-hardlinks --dissociate --no-checkout` — 장면 · 그 대체 저장소에 객체를 쓰지 않는다)에서만 쓴다) ·
+B 2.3.2 검토 보완(0T 더한 문장 · 승인 대상 · 조건 아래 옛 def · 형식 오류 줄 · 증거 · 0T 앞 커밋).
 고치기 전 판 = BASELINE 커밋의 scripts(`git show <커밋>:<경로>` 로 임시 폴더에 푼다 — 작업 사본을 stash 하지 않는다).
 BASELINE 이 이력에 없으면(얕은 clone 등) byte 대조를 건너뛰고 건너뛴 사실을 출력한다(실패로 세지 않는다)."""
 import json
@@ -115,8 +117,10 @@ class Proj:
         return path
 
     def build(self, name, slices, mode='modify'):
+        """산출물 폴더 — build-state.json 과 0T 검증 증거 자리(`test-switch/evidence.json` — 기록의 evidence 기본값)."""
         folder = self.root.parent / ('%s-build-%s' % (self.root.name, name))
-        folder.mkdir(parents=True, exist_ok=True)
+        (folder / 'test-switch').mkdir(parents=True, exist_ok=True)
+        (folder / 'test-switch' / 'evidence.json').write_text('{}\n', encoding='utf-8')
         (folder / 'build-state.json').write_text(json.dumps({'mode': mode, 'slices': slices}, ensure_ascii=False),
                                                  encoding='utf-8')
         return folder
@@ -928,8 +932,8 @@ SCENE_STAMP = '\n# 2.3.1 fixture(scene_commit) — 장면에 없는 객체\n'.en
 
 def scene_commit(root, parent, files, message):
     """작업 트리 없이(임시 index) parent 위에 files(경로 → bytes) 를 얹은 커밋. 파일 끝에 표지 주석을 붙여 blob · 그 위
-    tree 가 모두 장면에 없는 새 객체가 되게 한다 — git 은 이미 있는 객체를 다시 쓰면 대체 저장소(장면) 파일의 mtime 을
-    건드린다."""
+    tree 가 모두 장면에 없는 새 객체가 되게 한다 — git 은 이미 있는 객체를 다시 쓰면 대체 저장소 파일의 mtime 을
+    건드린다(복제는 공유 없이 뜨지만 표지도 그대로 둔다 — 겹쳐 막는다)."""
     index = root / '.git' / 'fixture-index'
     env = dict(ENV, GIT_INDEX_FILE=str(index))
     git(root, 'read-tree', parent, env=env)
@@ -974,8 +978,9 @@ def bundle_scene(tmp):
 
 def scene_checks(tmp):
     root = tmp / 'sc'
-    subprocess.run(['git', 'clone', '-q', '--shared', '--no-checkout', SCENE, str(root)], check=True, env=ENV,
-                   capture_output=True)
+    # 공유 없는 복제 — 객체를 복사하고 장면이 빌려 쓰는 대체 저장소에서도 떼어 낸다(이 복제에 쓰는 객체가 장면 쪽 파일을 건드릴 길이 없다)
+    subprocess.run(['git', 'clone', '-q', '--no-hardlinks', '--dissociate', '--no-checkout', SCENE, str(root)], check=True,
+                   env=ENV, capture_output=True)
     c = {k: git(root, 'rev-parse', v + '^{commit}') for k, v in SCENE_COMMITS.items()}
     git(root, 'update-ref', '--no-deref', 'HEAD', c['base0'])     # 대상이 HEAD 가 아니게(작업 트리 없음)
     spec_dir = tmp / 'spec'
@@ -988,7 +993,8 @@ def scene_checks(tmp):
 
     def build(name, slices):
         folder = tmp / ('build-' + name)
-        folder.mkdir()
+        (folder / 'test-switch').mkdir(parents=True)
+        (folder / 'test-switch' / 'evidence.json').write_text('{}\n', encoding='utf-8')
         (folder / 'build-state.json').write_text(json.dumps({'mode': 'modify', 'slices': slices}), encoding='utf-8')
         return folder
 
@@ -1036,19 +1042,319 @@ def scene_checks(tmp):
     sw = spec('switch', SC_SWITCH)
     e, out = backstop(root, '--subst-check', c['base0'], c0, '--names', sw, '--build',
                       build('case1', [{'name': 'slice-0-debt', 'commits': [t, c0],
-                                       'test_switch': {'state': 'verified', 'commits': [t], 'evidence': 'x'}}]))
+                                       'test_switch': {'state': 'verified', 'commits': [t],
+                                                       'evidence': 'test-switch/evidence.json'}}]))
     check('R5 장면 case1 = 0T(시험만) + 0C(제품만) 기록 — exit 0', e == 0 and '[subst]' not in out, out[-1500:])
     loose = gate_new.replace(b'assert response.status_code == 302', b'assert response.status_code in (301, 302)')
     check('R6 픽스처 자체 — X1 꼴 단언 완화를 만들었다', loose != gate_new)
     tx = scene_commit(root, c['base0'], {GATE_T: loose}, '0T-loose')
     e, out = backstop(root, '--subst-check', c['base0'], tx, '--names', sw, '--build',
                       build('x1', [{'name': 'slice-0-debt', 'commits': [tx],
-                                    'test_switch': {'state': 'verified', 'commits': [tx], 'evidence': 'x'}}]))
+                                    'test_switch': {'state': 'verified', 'commits': [tx],
+                                                    'evidence': 'test-switch/evidence.json'}}]))
     check('R6 장면 X1 꼴 0T(단언 완화) — exit 2 · 단언 문장이 다르다', e == 2 and '단언 문장이 다르다' in out, out[-1200:])
 
 
+# ====================================================================== B — 2.3.2 검토 보완(차단 셋 · 함께 고친 것)
+
+ENTRY = '''def _render_page(request):
+    return [1] if request.allowed else None
+
+
+def entry_view(request, *extra):
+    return _render_page(request)
+'''
+ENTRY_OLD = '''from types import SimpleNamespace
+
+
+def test_entry():
+    from web.entry import _render_page
+    request = SimpleNamespace(allowed=True)
+    expected = [1]
+    rows = [expected]
+    result = _render_page(request)
+    assert result == expected
+'''
+ENTRY_NEW = ENTRY_OLD.replace('import _render_page', 'import entry_view').replace(
+    'result = _render_page(request)', 'result = entry_view(request)')
+ENTRY_PATH = 'tests/web/test_entry.py'
+ENTRY_ROW = ('시험 전환: %s::test_entry · 행위 web.entry._render_page → web.entry.entry_view · 보호 분기 web/entry.py:2-2 · '
+             '반례 test-switch/1.mutant.diff' % ENTRY_PATH)
+ENTRY_FIXTURE_PATH = 'tests/web/test_entry_fixture.py'
+CONFTEST = '''import pytest
+
+from web.home.home_vm import HomeVM
+
+
+@pytest.fixture
+def seed():
+    return HomeVM().redirect("k")
+'''
+TEST_FIX = '''import pytest
+import pytest_asyncio
+from pytest import fixture
+from pytest import fixture as fx
+
+from web.home.home_vm import HomeVM
+
+
+def deco(func):
+    return func
+
+
+@pytest.fixture
+def seed_vm():
+    return HomeVM().redirect("k")
+
+
+@pytest.fixture(scope="module")
+def test_data():
+    return HomeVM().redirect("k")
+
+
+@fixture
+def test_bare():
+    return HomeVM().redirect("k")
+
+
+@fx
+def test_alias():
+    return HomeVM().redirect("k")
+
+
+@pytest_asyncio.fixture
+async def test_async():
+    return HomeVM().redirect("k")
+
+
+@deco
+def test_local_deco():
+    assert HomeVM().redirect("k") == "/home/"
+
+
+@pytest.mark.usefixtures("seed")
+def test_marked():
+    assert HomeVM().redirect("k") == "/home/"
+'''
+HOME_VM_IF = '''KEEP_COMPAT = True
+
+
+class HomeVM:
+    def render(self) -> str:
+        return "home"
+
+    if KEEP_COMPAT:
+        def redirect(self, key: str | None) -> str | None:
+            return "/home/" if key else None
+'''
+HOME_VM_TRY = '''class HomeVM:
+    def render(self) -> str:
+        return "home"
+
+    try:
+        def redirect(self, key: str | None) -> str | None:
+            return "/home/" if key else None
+    except NameError:
+        pass
+'''
+LOGIN_VM_IF = '''class LoginVM:
+    if True:
+        def redirect(self, key: str | None) -> str | None:
+            return "/home/" if key else None
+
+    def render_initial(self) -> str:
+        return "state"
+'''
+
+
+def swap_in(text, func):
+    """함수 하나의 첫 `HomeVM().redirect` 자리만 `LoginVM().redirect` 로 + 모듈 머리 import 에 LoginVM 을 더한다."""
+    at = text.index('HomeVM().redirect', text.index('def %s(' % func))
+    return (text[:at] + 'LoginVM' + text[at + len('HomeVM'):]).replace(IMPORT_HOME, IMPORT_BOTH, 1)
+
+
+def row_modules():
+    """scripts 의 src 꾸러미(판독 한 곳 · 0T 확인 도구의 행 판독)를 이 프로세스에 싣는다(바이트코드는 쓰지 않는다)."""
+    sys.dont_write_bytecode = True
+    sys.path.insert(0, str(SCRIPTS))
+    try:
+        from src import debt, switch_check
+    finally:
+        sys.path.remove(str(SCRIPTS))
+    return debt, switch_check
+
+
+def bundle_block(tmp):
+    # ---- B1 0T 가 더한 문장(과 새 행위 인자)이 단언의 기대값을 바꾸는 길
+    p = Proj(tmp / 'b1')
+    p.w('web/__init__.py', '')
+    p.w('web/entry.py', ENTRY)
+    p.w(ENTRY_PATH, ENTRY_OLD)
+    base = p.commit('base')
+    spec = p.spec('b1', ENTRY_ROW)
+
+    def zero_t(label, text, want, needle='', pre=None, evidence='test-switch/evidence.json', names=None, record=True):
+        p.reset(base)
+        if pre is not None:
+            pre()
+        start = git(p.root, 'rev-parse', 'HEAD')
+        p.w(ENTRY_PATH, text)
+        t = p.commit(label)
+        zero = {'name': 'slice-0-debt', 'commits': [t]}
+        if record:
+            zero['test_switch'] = {'state': 'verified', 'commits': [t], 'evidence': evidence}
+        e, out = backstop(p.root, '--subst-check', base, t, '--build', p.build('b1', [zero]), '--names', names or spec)
+        ok = e == want and (needle in out if needle else '[subst]' not in out)
+        check('%s — exit %d%s' % (label, want, ' · ' + needle if needle else ''), ok,
+              'exit=%d\n%s' % (e, out[-1400:]))
+        return start, t, out
+
+    keep = '    result = entry_view(request)\n'
+
+    def add(*lines, behavior=keep):
+        return ENTRY_NEW.replace(keep, ''.join('    %s\n' % line for line in lines) + behavior)
+
+    zero_t('B1 대조: 0T(함수 안 import · 행위만)', ENTRY_NEW, 0)
+    zero_t('B1 대조: 새로 만든 이름의 메서드(extra = dict(a=1) · merged = extra.copy()) · 새 행위 입력 객체의 속성 대입',
+           add('extra = dict(a=1)', 'merged = extra.copy()', 'request.extra = merged', 'label = "x".upper()'), 0)
+    reason = '0T 시험 전환 test_entry — 더한 문장이 단언이 읽는 이름 expected 를 읽는다'
+    zero_t('B1 기대값 객체의 메서드를 부르는 대입(discarded = expected.clear())', add('discarded = expected.clear()'), 2, reason)
+    zero_t('B1 := 로 단언이 읽는 이름을 다시 묶음(flag = (expected := []))', add('flag = (expected := [])'), 2,
+           '0T 시험 전환 test_entry — 더한 문장에 := 대입이 있다')
+    zero_t('B1 별칭을 거쳐 기대값을 바꿈(alias = expected · dropped = alias.pop())', add('alias = expected', 'dropped = alias.pop()'),
+           2, reason)
+    zero_t('B1 별칭의 첨자 대입(alias = expected · alias[0] = 2)', add('alias = expected', 'alias[0] = 2'), 2, reason)
+    zero_t('B1 앞서 묶인 이름(새 행위에 넘기지 않음)의 메서드(dropped = rows[0].clear())', add('dropped = rows[0].clear()'), 2,
+           '0T 시험 전환 test_entry — 더한 문장이 새 준비 · 새 행위 입력이 아닌 객체 rows 의 메서드를 부른다')
+    zero_t('B1 동적 실행(ran = exec("expected.clear()"))', add('ran = exec("expected.clear()")'), 2,
+           '0T 시험 전환 test_entry — 더한 문장이 동적 실행 exec 를 부른다')
+    zero_t('B1 새 행위 인자에서 기대값을 바꿈(entry_view(request, expected.clear()))',
+           add(behavior='    result = entry_view(request, expected.clear())\n'), 2,
+           '0T 시험 전환 test_entry — 새 행위가 옛 행위보다 단언이 읽는 이름 expected 를 더 읽는다')
+
+    # ---- B4 함께 고친 것 — 꼴이 어긋난 `시험 전환:` 줄 · 증거 파일 결속
+    bad = p.spec('b4-bad', ENTRY_ROW.replace(' → ', ' -> '))
+    zero_t('B4 꼴이 어긋난 `시험 전환:` 줄 + test_switch 기록 — 그 줄의 형식 오류를 [subst] 한 줄로', ENTRY_NEW, 2,
+           '[subst] 명세 `## 슬라이스 0` 절 `시험 전환:` 행 형식 오류', names=bad)
+    p.reset(base)
+    p.w(ENTRY_PATH, ENTRY_NEW)
+    t = p.commit('b4-no-record')
+    same_as_old('B4 꼴이 어긋난 `시험 전환:` 줄 · test_switch 기록 없음 — 알리지 않는다(고치기 전 판과 byte 동일)', p.root,
+                '--subst-check', base, t, '--build', p.build('b4n', [{'name': 'slice-0-debt', 'commits': [t]}]),
+                '--names', bad)
+    zero_t('B4 verified 인데 증거 파일이 없다', ENTRY_NEW, 2, '0T 검증 증거 파일이 없다', evidence='test-switch/missing.json')
+    zero_t('B4 verified 인데 증거 경로가 비었다', ENTRY_NEW, 2, '0T 검증 증거 파일이 없다', evidence='')
+    proof = p.root.parent / 'b1-proof.json'
+    proof.write_text('{}\n', encoding='utf-8')
+    zero_t('B4 대조: 증거 절대 경로가 있음', ENTRY_NEW, 0, evidence=str(proof))
+
+    # ---- G14 0T 앞 기록 없는 커밋(연결 설정 · SDK 격리) — switch-check 와 같은 기준
+    def pre_commit(*edits):
+        def run():
+            for rel, text in edits:
+                p.w(rel, text)
+                p.commit('pre %s' % rel)
+        return run
+
+    zero_t('G14 0T 앞 기록 없는 커밋이 web/ 에 연결 자리를 더함(행의 시험 · 보호 분기 파일 밖) — 받는다', ENTRY_NEW, 0,
+           pre=pre_commit(('web/bridge.py', 'SDK = "isolated"\n')))
+    zero_t('G14 0T 앞 기록 없는 커밋이 보호 분기 파일을 바꿈 — exit 2', ENTRY_NEW, 2, '보호 분기 파일 web/entry.py',
+           pre=pre_commit(('web/entry.py', ENTRY + '# touched\n')))
+    zero_t('G14 0T 앞 기록 없는 커밋이 보호 분기 파일을 바꿨다 되돌림(T 판에서 기준 판과 같음) — 받는다', ENTRY_NEW, 0,
+           pre=pre_commit(('web/entry.py', ENTRY + '# touched\n'), ('web/entry.py', ENTRY)))
+    zero_t('G14 0T 앞 기록 없는 커밋이 행의 시험 파일을 바꿈(주석만) — exit 2', ENTRY_NEW, 2, '행의 시험 파일 tests/web/test_entry.py',
+           pre=pre_commit((ENTRY_PATH, ENTRY_OLD + '# touched\n')))
+
+    # ---- B2 승인 대상이 시험 함수가 아님(conftest · 이름 · fixture 장식자)
+    fix_old = ENTRY_OLD.replace('from types import SimpleNamespace\n', 'from types import SimpleNamespace\n\nimport pytest\n', 1
+                                ).replace('def test_entry():', '@pytest.fixture\ndef test_entry():')
+    p.reset(base)
+    p.w(ENTRY_FIXTURE_PATH, fix_old)
+    fbase = p.commit('fixture-base')
+    p.w(ENTRY_FIXTURE_PATH, fix_old.replace('import _render_page', 'import entry_view').replace(
+        'result = _render_page(request)', 'result = entry_view(request)'))
+    ft = p.commit('fixture-0T')
+    e, out = backstop(p.root, '--subst-check', fbase, ft, '--build', p.build('b2s', [
+        {'name': 'slice-0-debt', 'commits': [ft], 'test_switch': ts('verified', [ft])}]),
+        '--names', p.spec('b2s', ENTRY_ROW.replace(ENTRY_PATH, ENTRY_FIXTURE_PATH)))
+    check('B2 `시험 전환:` 대상이 fixture(@pytest.fixture) — 판정 불가(exit 1)', e == 1 and '승인 대상이 시험 함수가 아니다' in out,
+          'exit=%d\n%s' % (e, out[-900:]))
+
+    q, qbase = mk_move(tmp / 'b2')
+    q.w('tests/web/conftest.py', CONFTEST)
+    q.w('tests/web/test_fix.py', TEST_FIX)
+    fixtures = q.commit('fixtures')
+
+    def target(label, rel, func, want, needle=''):
+        q.reset(fixtures)
+        move_product(q)
+        q.w(rel, swap_in(q.read(rel), func))
+        c = q.commit(label)
+        e, out = backstop(q.root, '--subst-check', fixtures, c, '--names', q.spec(label, row('%s::%s' % (rel, func))))
+        ok = e == want and (needle in out if needle else '[subst]' not in out)
+        check('%s — exit %d' % (label, want), ok, 'exit=%d\n%s' % (e, out[-900:]))
+
+    gone = '승인 대상이 시험 함수가 아니다'
+    target('B2 메서드 이동 대상이 conftest.py 의 fixture(seed)', 'tests/web/conftest.py', 'seed', 1, gone)
+    target('B2 메서드 이동 대상 이름이 test 로 시작하지 않음(@pytest.fixture seed_vm)', 'tests/web/test_fix.py', 'seed_vm', 1, gone)
+    target('B2 test 로 시작하는 fixture(@pytest.fixture(scope=…))', 'tests/web/test_fix.py', 'test_data', 1, gone)
+    target('B2 test 로 시작하는 fixture(from pytest import fixture · @fixture)', 'tests/web/test_fix.py', 'test_bare', 1, gone)
+    target('B2 test 로 시작하는 fixture(별칭 import · @fx)', 'tests/web/test_fix.py', 'test_alias', 1, gone)
+    target('B2 test 로 시작하는 fixture(@pytest_asyncio.fixture)', 'tests/web/test_fix.py', 'test_async', 1, gone)
+    target('B2 판별 못 하는 장식자(모듈 안 def deco) — 보수로 거절', 'tests/web/test_fix.py', 'test_local_deco', 1, gone)
+    target('B2 대조: @pytest.mark.usefixtures 장식 시험 함수 — 받는다', 'tests/web/test_fix.py', 'test_marked', 0)
+    debt, switch_check = row_modules()
+    move_conftest = '## 슬라이스 0\n%s\n' % row('tests/web/conftest.py::seed')
+    try:
+        found, why = debt.parse_spec_methods(move_conftest), ''
+    except debt.DebtError as error:
+        found, why = None, str(error)
+    check('B2 plan --names 판독(parse_spec_methods)도 conftest 대상 행에서 판정 불가', found is None and gone in why,
+          '%r %s' % (found, why))
+    for label, ref in (('conftest.py', 'tests/web/conftest.py::seed'), ('이름이 test 로 시작하지 않음', ENTRY_PATH + '::helper')):
+        switch_spec = '## 슬라이스 0\n%s\n' % ENTRY_ROW.replace(ENTRY_PATH + '::test_entry', ref)
+        errors = debt.parse_spec_switches(switch_spec)[1]
+        try:
+            rows, why = switch_check.parse_rows(switch_spec), ''
+        except switch_check.Unverified as error:
+            rows, why = None, str(error)
+        check('B2 `시험 전환:` 대상(%s) — 판독 한 곳이 사유를 내고 switch-check 행 판독도 멈춘다' % label,
+              any(gone in err for err in errors) and rows is None and gone in why, '%r | %r %s' % (errors, rows, why))
+        e, out = backstop(q.root, '--subst-check', qbase, qbase, '--names', q.spec('sw', switch_spec.split('\n', 1)[1]))
+        check('B2 `시험 전환:` 대상(%s) — 치환 확인 판정 불가(exit 1 · 기록 없어도)' % label, e == 1 and gone in out,
+              'exit=%d\n%s' % (e, out[-600:]))
+
+    # ---- B3 조건문 아래 남은 옛 def · 해석 불가 구조
+    s_row = q.spec('b3', row(REDIRECT, DOC))
+
+    def product(label, want, needle, home_vm=HOME_VM_MOVED, login_vm=LOGIN_VM_MOVED, start=None):
+        q.reset(start or qbase)
+        move_product(q, login_vm=login_vm, home_vm=home_vm)
+        move_tests(q)
+        c = q.commit(label)
+        e, out = backstop(q.root, '--subst-check', start or qbase, c, '--names', s_row)
+        check('%s — exit %d · %s' % (label, want, needle), e == want and needle in out, 'exit=%d\n%s' % (e, out[-900:]))
+
+    remains = '옛 메서드 def 가 조건문 아래(클래스 본문의 if · try · with · for · while · match 안)에 남아 있다(이동이 아니다)'
+    product('B3 대상 판 옛 클래스 본문 if 아래 옛 def', 2, remains, home_vm=HOME_VM_IF)
+    product('B3 대상 판 옛 클래스 본문 try 아래 옛 def', 2, remains, home_vm=HOME_VM_TRY)
+    unknown = '해석할 수 없다'
+    product('B3 대상 판 같은 이름 옛 클래스 둘', 1, unknown, home_vm=HOME_VM_MOVED + '\n\nclass HomeVM:\n    pass\n')
+    product('B3 대상 판 옛 클래스 본문이 그 이름을 def 아닌 꼴로 묶음(redirect = staticmethod(len))', 1, unknown,
+            home_vm=HOME_VM_MOVED + '\n    redirect = staticmethod(len)\n')
+    product('B3 대상 판 옛 클래스가 모듈 최상위가 아니라 if 아래', 1, unknown,
+            home_vm='if True:\n' + ''.join(('    ' + line) if line.strip() else line
+                                           for line in HOME_VM_MOVED.splitlines(True)))
+    product('B3 대상 판 옛 모듈을 파싱할 수 없음', 1, unknown, home_vm=HOME_VM_MOVED + '\ndef broken(:\n')
+    product('B3 새 판 새 def 가 조건문 아래에만', 1, unknown, login_vm=LOGIN_VM_IF)
+    q.reset(qbase)
+    q.w('web/home/home_vm.py', HOME_VM_IF)
+    nested_base = q.commit('nested-base')
+    product('B3 기준 판 옛 def 가 조건문 아래에만', 1, unknown, start=nested_base)
+
+
 def main():
-    bundles = [bundle_unchanged, bundle_move, bundle_switch, bundle_scene]
+    bundles = [bundle_unchanged, bundle_move, bundle_switch, bundle_scene, bundle_block]
     only = set(sys.argv[1:])
     _OLD['tmp'] = tempfile.TemporaryDirectory(prefix='web231-old-')
     try:

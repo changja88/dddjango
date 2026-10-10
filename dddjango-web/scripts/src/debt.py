@@ -808,7 +808,9 @@ def parse_spec_pairs(text: str, require: bool = False) -> Tuple[List[Tuple[str, 
 
 # 승인 행(`메서드 이동:` · `시험 전환:`)의 꼴은 여기 한 곳이 정한다 — 치환 확인(subst) · plan --names(refactor_audit) ·
 # switch-check(switch_check)가 같은 판독을 쓴다(한 입구가 받는 행을 다른 입구가 버리지 않게). 머리(`- ` · `* `)와 백틱은
-# `경로:` · `이름:` 행과 같은 폭이고, 식별자는 `이름:` 행처럼 ASCII 다.
+# `경로:` · `이름:` 행과 같은 폭이고, 식별자는 `이름:` 행처럼 ASCII 다. 승인 대상은 시험 모듈의 최상위 시험 함수뿐이다 —
+# 꼴은 맞으나 `conftest.py` 이거나 함수 이름이 `test` 로 시작하지 않는 행은 판정 불가다(fixture 장식자는 치환 확인이 본다).
+SPEC_TARGET_NOT_TEST: str = '승인 대상이 시험 함수가 아니다'
 _SPEC_MOVE_PATH: str = r'web(?:\.[a-z_][a-z0-9_]*)+\.[A-Z][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*'
 _SPEC_TEST_REF: str = r'[^\s`:*?\[\]]+\.py::[A-Za-z_][A-Za-z0-9_]*'
 _SPEC_MOVE_ROW_RE = re.compile(r'^\s*(?:[-*] )?메서드 이동:\s*`?(%s)`?\s*→\s*`?(%s)`?\s*·\s*시험((?:\s+`?%s`?)+)\s*$'
@@ -873,18 +875,33 @@ def _spec_test_file(path: str) -> bool:
             and is_test_path(path))
 
 
+def _spec_target_error(path: str, func: str) -> Optional[str]:
+    """승인 행의 시험 대상이 시험 함수가 아닌 까닭 — `conftest.py` 는 대상 파일이 아니고 함수 이름은 `test` 로 시작한다."""
+    if path.rsplit('/', 1)[-1] == 'conftest.py':
+        return 'conftest.py 는 대상 파일이 아니다'
+    if not func.startswith('test'):
+        return '함수 이름이 test 로 시작하지 않는다'
+    return None
+
+
 def parse_spec_moves(text: str) -> List[SpecMove]:
     """`## 슬라이스 0` 절의 `메서드 이동:` 정형 행. 절 밖 · 울타리 안 · 꼴이 어긋난 줄 · 시험 파일이 아닌 경로가 든 줄은
-    읽지 않는다(알림 없음 — 그 시험은 지금처럼 대조된다)."""
+    읽지 않는다(알림 없음 — 그 시험은 지금처럼 대조된다). 꼴은 맞으나 대상이 시험 함수가 아닌 행(`conftest.py` · `test` 로
+    시작하지 않는 함수)은 판정 불가(DebtError)."""
     moves: List[SpecMove] = []
-    for _number, line in _slice0_lines(text)[0]:
+    for number, line in _slice0_lines(text)[0]:
         row = _SPEC_MOVE_ROW_RE.match(line)
         if not row:
             continue
         tests: Tuple[Tuple[str, str], ...] = tuple(
             (ref.split('::')[0], ref.split('::')[1]) for ref in re.findall(_SPEC_TEST_REF, row.group(3)))
-        if all(_spec_test_file(path) for path, _func in tests):
-            moves.append(SpecMove(row.group(1), row.group(2), tests))
+        if not all(_spec_test_file(path) for path, _func in tests):
+            continue
+        for path, func in tests:
+            why: Optional[str] = _spec_target_error(path, func)
+            if why is not None:
+                raise DebtError('`메서드 이동:` %s %d행 — %s::%s(%s)' % (SPEC_TARGET_NOT_TEST, number, path, func, why))
+        moves.append(SpecMove(row.group(1), row.group(2), tests))
     return moves
 
 
@@ -896,8 +913,9 @@ def parse_spec_methods(text: str) -> List[Tuple[str, str]]:
 
 def parse_spec_switches(text: str) -> Tuple[List[SpecSwitch], List[str], int]:
     """`## 슬라이스 0` 절의 `시험 전환:` 정형 행 — (행, 꼴이 어긋난 줄의 사유, 절 머리 수). 꼴이 어긋난 줄은 행으로 읽지
-    않는다 — switch-check 는 그 사유를 내고 멈추고(exit 1), 치환 확인은 알림 없이 건너뛴다(그 0T 커밋은 «행 밖 파일» ·
-    «행에 없는 시험 파일» 로 어긋난다)."""
+    않는다 — switch-check 는 그 사유를 내고 멈추고(exit 1), 치환 확인은 test_switch 기록이 있을 때만 그 사유를 한 줄로 알린다
+    (그 0T 커밋은 «행 밖 파일» · «행에 없는 시험 파일» 로도 어긋난다). 대상이 시험 함수가 아닌 줄의 사유(SPEC_TARGET_NOT_TEST)는
+    치환 확인도 판정 불가로 받는다."""
     lines, heads = _slice0_lines(text)
     rows: List[SpecSwitch] = []
     errors: List[str] = []
@@ -912,8 +930,11 @@ def parse_spec_switches(text: str) -> Tuple[List[SpecSwitch], List[str], int]:
         start, end = int(row['start']), int(row['end'])
         mutants: Tuple[str, ...] = tuple(re.findall(r'[^\s`]+', row['mutants']))
         outside: List[str] = [rel for rel in mutants if not _spec_relative(rel)]
+        target: Optional[str] = _spec_target_error(test, row['func'])
         if not _spec_test_file(test) or test.startswith('web/'):
             errors.append('`시험 전환:` 의 시험 파일은 web/ 밖 저장소 상대 경로의 시험 .py 다 %d행 — %s' % (number, test))
+        elif target is not None:
+            errors.append('`시험 전환:` %s %d행 — %s::%s(%s)' % (SPEC_TARGET_NOT_TEST, number, test, row['func'], target))
         elif not (_DOTTED_RE.match(old) and _DOTTED_RE.match(new)):
             errors.append('`시험 전환:` 의 행위는 web. 으로 시작하는 점 경로 쌍이다 %d행 — %s → %s' % (number, old, new))
         elif not (branch.startswith('web/') and _spec_relative(branch)) or is_test_path(branch):

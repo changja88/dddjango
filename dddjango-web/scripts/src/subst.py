@@ -36,12 +36,15 @@
 #     그 메서드 자리만 양쪽 판에서 같은 표지로 바꾼 뒤 지금처럼 대조한다(자리 = `R(...).m(...)` · `R.m` · 검증된 patch API 의
 #     대상 + 이름 인자 · patch API 대상 인자의 문자열 경로 · 한 번 대입된 지역 이름). 같은 AST 위치의 옛 자리 → 새 자리만
 #     대응하고, 수신자의 이름 부분만 표지로 바꾼다(인자 · 대체값 · 옵션은 그대로). 제품 쪽은 기준 판의 옛 def · 대상 판의
-#     새 def · 대상 판에 옛 def 없음을 본다. 대응 충돌 · 표지 이름이 원문에 있음은 판정 불가.
+#     새 def · 대상 판에 옛 def 없음(클래스 본문 조건문 아래 def 도 남은 것)을 본다. 대응 충돌 · 표지 이름이 원문에 있음 ·
+#     승인 대상이 시험 함수가 아님(conftest.py · test 로 시작하지 않는 함수 · fixture · 판별 못 하는 장식자) · 해석할 수 없는
+#     클래스 구조(같은 이름 클래스 여럿 · 파싱 불가 · def 아닌 바인딩 · 조건문 아래에만 있는 기준 · 새 def)는 판정 불가.
 #   · 0T 시험 전환(build-state slices[0].test_switch 기록이 있을 때만): 0T 커밋 걸음은 슬라이스 0 대조 구간을 끊고
 #     명세 `시험 전환:` 행의 시험 함수마다 행위 문장 하나만 옛 대상 → 새 대상으로 바뀌었는지 대조한다(단언 · patch ·
-#     행 밖 내용 그대로 · 더한 것은 행위 앞 import · 단순 대입). 뒤 구간은 0T 끝 판에서 시작한다. 0T 커밋은 web/ 무변 ·
-#     행에 적힌 시험 파일만 · 첫 0C 커밋보다 앞이고, 검증(verified) 전 0C 커밋은 어긋남이다. 취소(cancelled)는 0T 와
-#     취소 커밋의 합이 무변일 때 둘 다 대조에서 뺀다.
+#     행 밖 내용 그대로 · 더한 것은 행위 앞 import · 단순 대입 — 단언이 읽는 이름을 읽지 않는다). 뒤 구간은 0T 끝 판에서
+#     시작한다. 0T 커밋은 web/ 무변 · 행에 적힌 시험 파일만 · 첫 0C 커밋보다 앞이고, 검증(verified · 증거 파일 있음) 전 0C
+#     커밋은 어긋남이다. 0T 앞 기록 없는 커밋은 행의 시험 파일과 보호 분기 파일만 못 바꾼다(switch-check 와 같은 기준).
+#     취소(cancelled)는 0T 와 취소 커밋의 합이 무변일 때 둘 다 대조에서 뺀다. 꼴이 어긋난 `시험 전환:` 줄은 기록이 있을 때만 알린다.
 
 import ast
 import difflib
@@ -52,7 +55,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Dict, Iterator, List, NamedTuple, Optional, Sequence, Set, Tuple, Union
 
-from .debt import (DebtError, is_test_path, module_of, parse_spec_moves, parse_spec_pairs,
+from .debt import (SPEC_TARGET_NOT_TEST, DebtError, is_test_path, module_of, parse_spec_moves, parse_spec_pairs,
                    parse_spec_switches)
 
 _IDENT: str = 'A-Za-z0-9_'
@@ -70,6 +73,7 @@ class _Pairs:
         self.renames: List[Tuple[str, str]] = []  # web/ 개명 쌍(옛, 새 — web-상대) · 미러 테스트 이동 판정 입력
         self.moves: List['_MethodMove'] = []      # 승인된 메서드 이동(명세 `메서드 이동:` 행)
         self.switches: List['_TestSwitch'] = []   # 승인된 시험 전환(명세 `시험 전환:` 행)
+        self.switch_errors: List[str] = []        # 꼴이 어긋난 `시험 전환:` 줄의 사유(test_switch 기록이 있을 때만 알린다)
         self.resolver: Optional['_Resolver'] = None
         self.infos: List[str] = []                # 메서드 이동 정규화 알림(대조 중 쌓임)
         self._regex: Optional['re.Pattern[str]'] = None
@@ -255,7 +259,7 @@ def build_pairs(root: Path, base: str, target: str, names_file: Optional[str]) -
             pairs.full[new] = old
             if new.rsplit('.', 1)[1] != old.rsplit('.', 1)[1]:
                 pairs.bare[new.rsplit('.', 1)[1]] = old.rsplit('.', 1)[1]
-        pairs.moves, pairs.switches = parse_spec_approvals(text)
+        pairs.moves, pairs.switches, pairs.switch_errors = parse_spec_approvals(text)
         _check_approvals(pairs.moves, pairs.switches, names)
     pairs.resolver = _Resolver(root)
     return pairs
@@ -291,18 +295,23 @@ class _TestSwitch(NamedTuple):
     func: str       # 최상위 시험 함수 이름
     old: str        # 옛 행위 대상(web. 점 경로)
     new: str        # 새 행위 대상
+    branch: str     # 보호 분기 파일(저장소 상대 web/…)
 
 
-def parse_spec_approvals(text: str) -> Tuple[List[_MethodMove], List[_TestSwitch]]:
-    """design-spec.md `## 슬라이스 0` 절 안 승인 행 — (메서드 이동, 시험 전환). 행의 꼴은 debt 의 한 곳이 정한다
-    (parse_spec_moves · parse_spec_switches — plan --names · switch-check 와 같은 판독). 절 밖 줄 · 코드 울타리 안 줄은
-    읽지 않고, 꼴이 어긋난 줄은 승인으로 읽지 않는다(알림 없음 — 그 시험은 지금처럼 대조된다). 절 머리 수와 `경로:` ·
-    `이름:` 행 형식은 parse_spec_pairs 가 먼저 본다."""
+def parse_spec_approvals(text: str) -> Tuple[List[_MethodMove], List[_TestSwitch], List[str]]:
+    """design-spec.md `## 슬라이스 0` 절 안 승인 행 — (메서드 이동, 시험 전환, 꼴이 어긋난 `시험 전환:` 줄의 사유). 행의 꼴은
+    debt 의 한 곳이 정한다(parse_spec_moves · parse_spec_switches — plan --names · switch-check 와 같은 판독). 절 밖 줄 · 코드
+    울타리 안 줄은 읽지 않고, 꼴이 어긋난 줄은 승인으로 읽지 않는다(메서드 이동은 알림 없음 — 그 시험은 지금처럼 대조된다 ·
+    시험 전환은 test_switch 기록이 있을 때만 호출 쪽이 알린다). 꼴은 맞으나 대상이 시험 함수가 아닌 행은 판정 불가. 절 머리
+    수와 `경로:` · `이름:` 행 형식은 parse_spec_pairs 가 먼저 본다."""
     moves: List[_MethodMove] = [_MethodMove(index, row.old, row.new, list(row.tests))
                                 for index, row in enumerate(parse_spec_moves(text))]
-    switches: List[_TestSwitch] = [_TestSwitch(row.test, row.func, row.old, row.new)
-                                   for row in parse_spec_switches(text)[0]]
-    return moves, switches
+    rows, errors, _heads = parse_spec_switches(text)
+    wrong: List[str] = [error for error in errors if SPEC_TARGET_NOT_TEST in error]
+    if wrong:
+        raise DebtError(wrong[0])
+    switches: List[_TestSwitch] = [_TestSwitch(row.test, row.func, row.old, row.new, row.branch) for row in rows]
+    return moves, switches, errors
 
 
 def _check_approvals(moves: List[_MethodMove], switches: List[_TestSwitch], names: List[Tuple[str, str]]) -> None:
@@ -433,17 +442,77 @@ class _Resolver:
             seen.add(dotted)
         return None
 
-    def methods(self, rev: str, class_path: str, method: str) -> List[Func]:
-        """그 판 클래스 본문의 method def(최상위 클래스 하나일 때만)."""
+    def method_defs(self, rev: str, class_path: str, method: str) -> Tuple[str, List[Func], str]:
+        """그 판 클래스 본문의 method def → (종류, def, 해석 불가 사유). 종류: `direct` 직계 def 만 · `nested` 복합문(if · try ·
+        with · for · while · match) 아래 def 가 있음 · `absent` 모듈 · 클래스 · def 가 없음 · `unknown` 해석 불가(모듈을 읽거나
+        파싱할 수 없음 · 클래스 이름이 최상위 class 하나로 묶이지 않음 · 클래스 본문이 메서드 이름을 def 아닌 꼴로 묶음)."""
         module, name = class_path.rsplit('.', 1)
-        tree: Optional[ast.Module] = self.module_ast(rev, module)
-        if tree is None:
-            return []
+        if self.module_file(rev, module) is None:
+            return 'absent', [], ''
+        text: Optional[str] = self.source(rev, module)
+        if text is None:
+            return 'unknown', [], '모듈 %s 를 읽을 수 없다' % module
+        try:
+            tree: ast.Module = ast.parse(text)
+        except SyntaxError:
+            return 'unknown', [], '모듈 %s 를 파싱할 수 없다' % module
         classes: List[ast.ClassDef] = [st for st in tree.body if isinstance(st, ast.ClassDef) and st.name == name]
-        if len(classes) != 1:
-            return []
-        return [st for st in classes[0].body
-                if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)) and st.name == method]
+        bound: int = len(_scope_bindings(tree.body).get(name, []))
+        if not classes and not bound:
+            return 'absent', [], ''
+        if len(classes) != 1 or bound != 1:
+            return 'unknown', [], '모듈 %s 에서 %s 가 최상위 class 하나로 묶이지 않는다(최상위 class %d · 바인딩 %d)' % (
+                module, name, len(classes), bound)
+        direct, nested, others = _member_defs(classes[0].body, method)
+        if others:
+            return 'unknown', [], '클래스 %s 본문이 %s 를 def 아닌 꼴로 %d번 묶는다' % (name, method, others)
+        if nested:
+            return 'nested', direct + nested, ''
+        return ('direct', direct, '') if direct else ('absent', [], '')
+
+
+_COMPOUND: Tuple[type, ...] = tuple(getattr(ast, n) for n in ('If', 'Try', 'TryStar', 'With', 'AsyncWith', 'For', 'AsyncFor',
+                                                             'While', 'Match') if hasattr(ast, n))
+
+
+def _member_defs(body: List[ast.stmt], name: str) -> Tuple[List[Func], List[Func], int]:
+    """클래스 본문에서 name 의 바인딩 → (직계 def, 복합문 아래 def, def 아닌 바인딩 수 — 대입 · import · class · 반복 대상 ·
+    except · with 대상 · del 등). 중첩 def · class · lambda 본문은 들어가지 않는다."""
+    direct: List[Func] = []
+    nested: List[Func] = []
+    others: int = 0
+
+    def visit(node: ast.AST, under: bool) -> None:
+        nonlocal others
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if node.name == name:
+                (nested if under else direct).append(node)
+            return
+        if isinstance(node, ast.ClassDef):
+            others += node.name == name
+            return
+        if isinstance(node, ast.Lambda):
+            return
+        if isinstance(node, ast.Import):
+            others += sum((a.asname or a.name.split('.')[0]) == name for a in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            others += sum((a.asname or a.name) == name for a in node.names)
+        elif isinstance(node, ast.Name):
+            others += node.id == name and isinstance(node.ctx, (ast.Store, ast.Del))
+        elif isinstance(node, ast.ExceptHandler):
+            others += node.name == name
+        elif isinstance(node, (ast.Global, ast.Nonlocal)):
+            others += name in node.names
+        elif _MATCH_NAMES and isinstance(node, _MATCH_NAMES):
+            others += getattr(node, 'name', None) == name
+        elif hasattr(ast, 'MatchMapping') and isinstance(node, ast.MatchMapping):
+            others += node.rest == name
+        for child in ast.iter_child_nodes(node):
+            visit(child, under or isinstance(node, _COMPOUND))
+
+    for st in body:
+        visit(st, False)
+    return direct, nested, others
 
 
 def _mirror(rel: str) -> Optional[str]:
@@ -710,6 +779,20 @@ def _top_function(tree: ast.Module, name: str) -> Optional[Func]:
     return found[0] if len(found) == 1 else None
 
 
+def _not_test_decorator(names: _TestNames, func: Func) -> Optional[str]:
+    """승인 대상 함수를 시험 함수가 아니게 하거나 판별할 수 없는 decorator — fixture(`pytest.fixture` · `pytest_asyncio.fixture` ·
+    `@fixture` · 별칭 — 마지막 이름에 fixture)이거나 import 바인딩으로 풀리지 않는 것(모듈 안 def · 대입 · 식 · 내장).
+    `pytest.mark.*` 는 시험 표지다. 없으면 None."""
+    for deco in func.decorator_list:
+        node: ast.expr = deco.func if isinstance(deco, ast.Call) else deco
+        resolved: Optional[str] = names.expr(None, node) if _dotted(node) is not None else None
+        if resolved is None:
+            return '판별할 수 없는 장식자 @%s' % ast.unparse(deco)
+        if not resolved.startswith('pytest.mark.') and 'fixture' in resolved.rsplit('.', 1)[-1].lower():
+            return 'fixture 장식자 @%s' % ast.unparse(deco)
+    return None
+
+
 def _walk_func(func: Func) -> List[Tuple[ast.AST, Tuple]]:
     """함수 본문의 노드와 위치 경로((필드, 순번) 사슬) — 중첩 함수 · 클래스 · lambda 본문은 들어가지 않는다."""
     out: List[Tuple[ast.AST, Tuple]] = []
@@ -901,6 +984,10 @@ def _mark_moves(path: str, base_src: str, target_src: str, base_tree: ast.Module
             old_func, new_func = _top_function(base_tree, name), _top_function(target_tree, name)
             if old_func is None or new_func is None:
                 continue
+            # 승인 대상은 옛 판의 시험 함수다(새 판 decorator 가 다르면 대조가 어긋남으로 잡는다)
+            why: Optional[str] = _not_test_decorator(sides[0], old_func)
+            if why is not None:
+                raise DebtError('메서드 이동 %s — %s %s::%s(%s)' % (move.label(), SPEC_TARGET_NOT_TEST, path, name, why))
             old_sites = _move_sites(sides[0], old_func, move, True)
             new_sites = _move_sites(sides[1], new_func, move, False)
             for key in sorted(set(old_sites) & set(new_sites), key=repr):
@@ -1286,7 +1373,8 @@ def _def_dump(source: Optional[str], node: Func, pairs: Optional[_Pairs]) -> Opt
 
 def _check_moves(pairs: _Pairs, base: str, target: str) -> Tuple[List[str], List[str]]:
     """메서드 이동 행마다 제품 쪽 확인(git blob) — (어긋남, 알림). 기준 판의 옛 def · 대상 판의 새 def · 대상 판에
-    옛 def 없음. 옮긴 본문(승인 대응 뒤)이 다르면 알림만."""
+    옛 def 없음(클래스 본문 조건문 아래 def 도 남은 것). 옮긴 본문(승인 대응 뒤)이 다르면 알림만. 부재와 해석 불가를 가른다 —
+    해석할 수 없는 클래스 구조 · 조건문 아래에만 있는 기준 판 옛 def · 대상 판 새 def 는 판정 불가(DebtError)."""
     problems: List[str] = []
     notes: List[str] = []
     resolver: Optional[_Resolver] = pairs.resolver
@@ -1295,14 +1383,31 @@ def _check_moves(pairs: _Pairs, base: str, target: str) -> Tuple[List[str], List
     for move in pairs.moves:
         label: str = move.label()
         notes.append('메서드 이동 %s — 승인 시험 함수 %d' % (label, move.functions()))
-        old_defs: List[Func] = resolver.methods(base, move.old_class, move.old_method)
-        new_defs: List[Func] = resolver.methods(target, move.new_class, move.new_method)
-        if not old_defs:
+        old_kind, old_defs, old_why = resolver.method_defs(base, move.old_class, move.old_method)
+        new_kind, new_defs, new_why = resolver.method_defs(target, move.new_class, move.new_method)
+        for kind, why, side in ((old_kind, old_why, '기준 판 %s 의 옛 메서드 %s' % (base[:12], move.old)),
+                                (new_kind, new_why, '대상 판 %s 의 새 메서드 %s' % (target[:12], move.new))):
+            if kind == 'unknown':
+                raise DebtError('메서드 이동 %s — %s 를 해석할 수 없다(%s)' % (label, side, why))
+            if kind == 'nested':
+                raise DebtError('메서드 이동 %s — %s def 가 클래스 본문 직계가 아니라 조건문 아래에 있다 — 해석할 수 없다'
+                                % (label, side))
+        if old_kind == 'absent':
             problems.append('메서드 이동 %s — 기준 판 %s 에 옛 메서드 def 가 없다' % (label, base[:12]))
-        if not new_defs:
+        if new_kind == 'absent':
             problems.append('메서드 이동 %s — 대상 판 %s 에 새 메서드 def 가 없다' % (label, target[:12]))
         module, name = move.old_class.rsplit('.', 1)
-        if any(resolver.methods(target, '%s.%s' % (m, name), move.old_method) for m in sorted(_forward(pairs, module))):
+        left: Set[str] = set()
+        for m in sorted(_forward(pairs, module)):
+            kind, _defs, why = resolver.method_defs(target, '%s.%s' % (m, name), move.old_method)
+            if kind == 'unknown':
+                raise DebtError('메서드 이동 %s — 대상 판 %s 의 옛 클래스 %s.%s 를 해석할 수 없다(%s)'
+                                % (label, target[:12], m, name, why))
+            left.add(kind)
+        if 'nested' in left:
+            problems.append('메서드 이동 %s — 대상 판 %s 에 옛 메서드 def 가 조건문 아래(클래스 본문의 if · try · with · for · '
+                            'while · match 안)에 남아 있다(이동이 아니다)' % (label, target[:12]))
+        elif 'direct' in left:
             problems.append('메서드 이동 %s — 대상 판 %s 에 옛 메서드 def 가 남아 있다(이동이 아니다)' % (label, target[:12]))
         if old_defs and new_defs:
             before = _def_dump(resolver.source(base, module), old_defs[-1], None)
@@ -1318,10 +1423,21 @@ _SWITCH_STATES: Tuple[str, ...] = ('prepared', 'verifying', 'verified', 'cancell
 _PATCH_WORDS: Set[str] = {'mock', 'patch', 'monkeypatch', 'mocker', 'setattr', 'delattr', 'setitem', 'delitem', 'setenv',
                           'delenv', 'spy', 'stub', 'MagicMock', 'Mock', 'AsyncMock', 'NonCallableMock', 'PropertyMock',
                           'create_autospec', 'mock_open', '__setattr__', '__delattr__', '__dict__'}
+# 0T 가 더한 식에서 부르면 안 되는 내장 — 글자 코드 실행 · 이름 공간 사전(단언이 읽는 이름을 글자로 건드릴 수 있다)
+_DYNAMIC_CALLS: Set[str] = {'exec', 'eval', 'compile', 'globals', 'locals', 'vars', '__import__'}
+
+
+def _evidence_file(root: Path, folder: Path, value: object) -> bool:
+    """test_switch.evidence 가 가리키는 파일이 있는가 — 절대 경로 · 프로젝트 루트 기준 · 산출물 폴더 기준 어느 하나(내용은 보지 않는다)."""
+    if not isinstance(value, str) or not value.strip():
+        return False
+    path: Path = Path(value)
+    return any(found.is_file() for found in ([path] if path.is_absolute() else [root / path, folder / path]))
 
 
 def _switch_record(root: Path, folder: Optional[Path], chain: List[Tuple[str, List[str]]], zero: Set[str],
-                   feature: Dict[str, str], switches: List[_TestSwitch]) -> Tuple[Dict[str, str], Optional[str], List[str]]:
+                   feature: Dict[str, str], switches: List[_TestSwitch], base: str
+                   ) -> Tuple[Dict[str, str], Optional[str], List[str]]:
     """build-state slices[0].test_switch → (커밋 → 'T' 0T · 'X' 취소, 상태, 어긋남). 기록이 없으면 ({}, None, [])."""
     if folder is None:
         return {}, None, []
@@ -1374,16 +1490,27 @@ def _switch_record(root: Path, folder: Optional[Path], chain: List[Tuple[str, Li
             problems.append('0T 커밋 %s 가 첫 0C 커밋 %s 뒤 — 0T 는 첫 코드 커밋 앞에서 한 번' % (sha[:12], codes[0][:12]))
     if state in ('prepared', 'verifying') and codes:
         problems.append('0T 검증 전(state=%s)인데 0C 커밋 %s 가 있다 — 0C 는 검증(verified) 뒤' % (state, codes[0][:12]))
-    # 기록 없는 커밋도 슬라이스 0 으로 대조한다 — 0T 보다 앞선 레인 커밋(비병합)이 제품을 바꿨으면 0T 가 기준 판 제품 위가 아니다
+    if state == 'verified' and not _evidence_file(root, folder, record.get('evidence')):
+        problems.append('0T 검증 증거 파일이 없다(test_switch.evidence = %r) — verified 는 switch-check 증거 파일이 있을 때만'
+                        % (record.get('evidence'),))
+    # 0T 앞의 기록 없는 커밋(연결 설정 · SDK 격리 등) — switch-check 와 같은 기준: 행의 시험 파일을 바꾸면 안 되고, 보호 분기
+    # 파일은 마지막 0T 판에서 기준 판 그대로여야 한다(그 밖의 web/ 변경은 받는다 — 0T 의 반례 · 단언 확인은 그 판 제품에서 돈다)
+    allowed: Set[str] = {switch.path for switch in switches}
     last: int = max((order[sha] for sha in tees), default=0) if state != 'cancelled' else 0
     for sha, parents in chain[:last]:
         if sha in kinds or sha in zero or len(parents) != 1:
             continue        # 0T 자신 · 기록된 0C(위 «첫 0C 뒤» 로 잡힌다) · 병합은 여기서 보지 않는다
-        early: List[str] = sorted(_names(root, parents[0], sha, ['web/']))
+        early: List[str] = sorted(_names(root, parents[0], sha, ['.']) & allowed)
         if early:
-            problems.append('0T 앞 커밋 %s 가 web/ 을 바꿨다(%s%s) — 0T 는 첫 코드 커밋 앞에서 한 번'
-                            % (sha[:12], early[0], ' 외 %d' % (len(early) - 1) if len(early) > 1 else ''))
-    allowed: Set[str] = {switch.path for switch in switches}
+            problems.append('0T 앞 커밋 %s 가 행의 시험 파일 %s 를 바꿨다 — T 로 기록하거나 되돌린 뒤 다시'
+                            % (sha[:12], ', '.join(early)))
+    branches: List[str] = sorted({switch.branch for switch in switches})
+    if tees and state != 'cancelled' and branches:
+        for path in sorted(_raw(root, base, chain[last][0], [':(literal)' + b for b in branches])):
+            by: List[str] = [sha for sha, parents in chain[:last]
+                             if len(parents) == 1 and _names(root, parents[0], sha, [':(literal)' + path])]
+            problems.append('0T 앞 커밋 %s 가 보호 분기 파일 %s 를 바꿨다(마지막 0T 판이 기준 판과 다르다) — 반례 · 줄 범위는 '
+                            '기준 판 그대로의 제품에서만 확인한다' % (' '.join(sha[:12] for sha in by) or '-', path))
     touched: Set[str] = set()
     for sha in tees:
         parent: str = parents_of[sha][0]
@@ -1585,7 +1712,9 @@ def _switch_reasons(funcs: Tuple[Func, Func], names: Tuple[_TestNames, _TestName
     """시험 함수 하나의 0T 대조 — [(행, 사유)]. 규칙: 함수 머리 같음 · 단언 차례까지 같음 · patch · mock 문장 차례와
     위치(행위 앞 · 뒤) 같음 · 행위 문장 양쪽 하나씩(새 행위는 첫 단언 앞) · 대응 밖 문장은 순서 · 제어 구조까지 같음 ·
     뺀 문장 = 옛 행위와 그것만 쓰던 함수 안 import · 더한 문장 = 새 행위 앞 import · 단순 대입(patch 아님 · 단언이 읽는
-    이름을 새로 바인딩하지 않음 · 더한 import 는 쓰임) · 옛 행위 인자의 값 잎 ⊆ 더한 문장 · 새 행위의 값 잎."""
+    이름을 새로 바인딩하지도 읽지도 않음 · `:=` · 동적 실행 없음 · 메서드 받는 쪽은 import · 모듈 · 새 준비 · 새 행위 입력만 ·
+    더한 import 는 쓰임) · 새 행위 인자도 같은 조건(단언이 읽는 이름은 옛 행위가 넘긴 만큼만) · 옛 행위 인자의 값 잎 ⊆ 더한
+    문장 · 새 행위의 값 잎."""
     old_func, new_func = funcs
     reasons: List[Tuple[int, str]] = []
 
@@ -1649,6 +1778,47 @@ def _switch_reasons(funcs: Tuple[Func, Func], names: Tuple[_TestNames, _TestName
     # 더한 문장이 바인딩해도 되는 이름 — 옛 판 모듈 · 함수에 없고 옛 함수가 읽지도 않던 새 이름뿐(남은 문장의 뜻을 바꾸지 않게)
     taken: Set[str] = set(names[0].module) | set(names[0].scope(old_func)) | {
         n.id for n in ast.walk(old_func) if isinstance(n, ast.Name)}
+    # 단언이 읽는 이름 가운데 함수 · 모듈이 묶는 것(내장 이름은 객체를 바꿀 수 없다) — 더한 문장은 이 이름을 읽지도 못한다
+    # (메서드 받는 쪽 · 호출 인자 · 별칭 대입 · 같은 이름의 속성)
+    local_new: Dict[str, List[Binding]] = names[1].scope(new_func)
+    star: bool = '*' in names[1].module
+    guarded: Set[str] = {n for n in read if n in local_new or n in names[1].module or star}
+
+    def receiver_ok(name: str) -> bool:
+        """메서드를 불러도 되는 받는 쪽 — import · import_module 로 얻은 모듈 · 내장 · 함수 안 대입으로 만든 새 준비 · 새 행위
+        입력 이름(속성 · 첨자 대입과 같은 조건). 함수 인자(fixture) · 앞서 묶였으나 새 행위에 넘기지 않는 지역 이름 · 모듈이
+        정의 · 대입한 이름은 안 된다(객체를 바꿀 수 있다)."""
+        local: Optional[List[Binding]] = local_new.get(name)
+        if local is not None:
+            kinds: Set[str] = {kind for kind, _value in local}
+            return kinds <= {'import', 'module_call'} or (name in prepared and kinds <= {'other', 'module_call'})
+        module: Optional[List[Binding]] = names[1].module.get(name)
+        return not star if module is None else all(kind == 'import' for kind, _value in module)
+
+    def effect_reasons(node: ast.AST, subject: Tuple[str, str]) -> List[str]:
+        """더한 식이 객체를 바꾸거나 이름을 다시 묶는 길 — `:=` · 동적 실행 · 받는 쪽이 허용 밖인 메서드 호출. subject = (주격, 처소격)."""
+        found: List[str] = []
+        for sub in ast.walk(node):
+            if isinstance(sub, ast.NamedExpr):
+                found.append('%s := 대입이 있다' % subject[1])
+            if not isinstance(sub, ast.Call):
+                continue
+            callee: ast.expr = sub.func
+            if isinstance(callee, ast.Name):
+                if callee.id in _DYNAMIC_CALLS and callee.id not in local_new and callee.id not in names[1].module:
+                    found.append('%s 동적 실행 %s 를 부른다' % (subject[0], callee.id))
+                continue
+            root: ast.expr = callee
+            while isinstance(root, (ast.Attribute, ast.Subscript)):
+                root = root.value
+            if isinstance(root, ast.Name) and root.id in guarded:
+                found.append('%s 단언이 읽는 이름 %s 의 메서드를 부른다' % (subject[0], root.id))
+            elif isinstance(root, ast.Name) and not receiver_ok(root.id):
+                found.append('%s 새 준비 · 새 행위 입력이 아닌 객체 %s 의 메서드를 부른다' % (subject[0], root.id))
+            elif not isinstance(root, (ast.Name, ast.Call, ast.Constant, ast.JoinedStr)):
+                found.append('%s 부르는 대상(%s)을 판별할 수 없다' % (subject[0], ast.unparse(callee)[:60]))
+        return found
+
     for j in added:
         st = new_body[j]
         if j == i_new:
@@ -1672,11 +1842,26 @@ def _switch_reasons(funcs: Tuple[Func, Func], names: Tuple[_TestNames, _TestName
             if unused:
                 reasons.append((st.lineno, '더한 import %s 가 쓰이지 않는다' % ', '.join(unused)))
             continue
+        touched: Set[str] = ({n.id for n in ast.walk(st) if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)}
+                             | {n.attr for n in ast.walk(st) if isinstance(n, ast.Attribute)}) & guarded
+        if touched:
+            reasons.append((st.lineno, '더한 문장이 단언이 읽는 이름 %s 를 읽는다' % ', '.join(sorted(touched))))
+        reasons.extend((st.lineno, why) for why in effect_reasons(st, ('더한 문장이', '더한 문장에')))
         target: ast.expr = st.targets[0] if isinstance(st, ast.Assign) else st.target
         root: Optional[ast.Name] = _target_root(target)
         if not isinstance(target, ast.Name) and root is not None and (root.id in read or root.id not in prepared):
             reasons.append((st.lineno, '더한 문장이 새 준비 · 새 행위 입력이 아닌 객체 %s 를 고친다' % root.id))
         new_leaves.update(_leaves(st.value))
+    # 새 행위 인자도 더한 식이다 — 옛 행위보다 단언이 읽는 이름을 더 넘기거나 객체를 바꾸는 꼴은 같은 조건으로 막는다
+    behaviors: Tuple[ast.Call, ast.Call] = (b_old.value, b_new.value)
+    passed: List[Counter] = [Counter(n.id for arg in list(call.args) + [k.value for k in call.keywords] for n in ast.walk(arg)
+                                     if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load) and n.id in guarded)
+                             for call in behaviors]
+    more: Counter = passed[1] - passed[0]
+    if more:
+        reasons.append((b_new.lineno, '새 행위가 옛 행위보다 단언이 읽는 이름 %s 를 더 읽는다' % ', '.join(sorted(more))))
+    for arg in list(b_new.value.args) + [k.value for k in b_new.value.keywords]:
+        reasons.extend((b_new.lineno, why) for why in effect_reasons(arg, ('새 행위 인자가', '새 행위 인자에')))
     for i, j in matched:
         if _is_patch(names[0], old_func, old_body[i]) and (i < i_old) != (j < i_new):
             reasons.append((new_body[j].lineno, 'patch · mock 문장의 위치(행위 앞 · 뒤)가 바뀌었다'))
@@ -1721,6 +1906,10 @@ def _contrast_switch(root: Path, path: str, before: Entry, after: Entry, pairs: 
         if funcs[0] is None or funcs[1] is None:
             problems.append('%s:1 0T 시험 전환 %s — 최상위 함수가 양쪽 판에 하나씩 있어야 한다' % (path, func_name))
             continue
+        # 승인 대상은 옛 판의 시험 함수다(새 판 decorator 가 다르면 «함수 머리» 로 어긋난다)
+        why: Optional[str] = _not_test_decorator(names[0], funcs[0])
+        if why is not None:
+            raise DebtError('0T 시험 전환 %s::%s — %s(%s)' % (path, func_name, SPEC_TARGET_NOT_TEST, why))
         problems.extend('%s:%d 0T 시험 전환 %s — %s' % (path, line, func_name, reason)
                         for line, reason in dict.fromkeys(_switch_reasons(funcs, names, rows[func_name])))
     return problems
@@ -1766,7 +1955,10 @@ def cli_subst_check(root: Path, base: str, target: str, names_file: Optional[str
         if folder is not None and chain and chain[0][1][:1] != [base_sha]:
             raise DebtError('기준 %s 가 대상의 첫 부모 사슬 밖 — 레인 편집 판정 불가(--build)' % base_sha[:12])
         zero, feature, notes, problems = _records(root, folder, chain)
-        switch, switch_state, switch_problems = _switch_record(root, folder, chain, zero, feature, pairs.switches)
+        switch, switch_state, switch_problems = _switch_record(root, folder, chain, zero, feature, pairs.switches, base_sha)
+        if switch_state is not None:
+            # 기록이 있으면 꼴이 어긋난 `시험 전환:` 줄을 알린다(그 줄은 승인 행이 아니다 — 0T 커밋은 «행 밖 파일» 로도 어긋난다)
+            switch_problems = ['%s — 승인 행으로 읽지 않았다' % error for error in pairs.switch_errors] + switch_problems
         approved, approved_notes = _approved_merges(root, folder, base_sha, chain)
         steps, inflow, history_notes = _history(root, chain, outside, approved, feature, switch)
         notes += approved_notes + history_notes
