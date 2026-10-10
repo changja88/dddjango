@@ -6,6 +6,9 @@
 # 거짓양성 게이트 = added 한정 + 검사별 명시 예외(router·exception.py·Django 고정 자리).
 # (판형: dddart check_naming.dart — NM1~NM17 번호 그대로 · NM7 = @riverpod 허용 위치라 비움 ·
 #  NM8 = common 상태 동작 proxy(common @riverpod 자리) · NM18~NM20 = web 새 검사)
+# 제품 분기(2.3.0 · src/products.py): NM10 · NM11 · NM12 는 어느 제품 뿌리든(`design_system/` · 선언된
+#   `design_system/<id>/`) `foundation/` · `component/` 에 같은 규칙을 건다 — theme · util 로 범위를 넓히지 않는다.
+#   선언이 없으면 뿌리는 평면 하나라 2.2.x 와 같다.
 
 from __future__ import annotations
 
@@ -18,6 +21,7 @@ from .common import (
     is_bc_root_path, is_standard_path, is_string_literal, first_arg_of, parent_dir_of, scan_tokens, segs_of, stem_of,
     top_level_decls,
 )
+from .products import Products, products_state
 
 # 접미사 → 종류 (긴 것 우선 매칭 — 정의 순서)
 _SUFFIX_KIND: Dict[str, str] = {
@@ -184,6 +188,7 @@ def _field_protocols(source: str) -> Set[Tuple[str, int]]:
 def run_naming(ctx: BackstopContext) -> List[Finding]:
     out: List[Finding] = []
     added: List[str] = [f for f in ctx.files if ctx.is_added(f)]
+    products: Products = products_state(ctx)
 
     # BC별 view 접두 수집(파일시스템 기준 — NM4·5·6, 같은 슬라이스 동시 생성 합법)
     view_prefixes: Dict[str, Set[str]] = {}
@@ -209,6 +214,7 @@ def run_naming(ctx: BackstopContext) -> List[Finding]:
             or (len(segs) == 2 and not is_standard_path(f) and base == '%s_router.py' % segs[0]))) or f == 'urls.py'
         if base == '__init__.py':
             continue
+        ds: List[str] = products.ds_rel(f)  # design_system 제품 뿌리 안 상대 경로 성분(밖이면 빈 목록)
 
         # ---- NM1: 종류 폴더 ↔ 접미사 (긴 접미사 우선)
         kind_of_folder: Optional[List[str]] = _KIND_SUFFIXES.get(parent)
@@ -304,7 +310,7 @@ def run_naming(ctx: BackstopContext) -> List[Finding]:
 
         # ---- NM10: 시각 리터럴 금지(색 · typography) — foundation 밖
         in_visual: bool = ((bc is not None and has_seg(f, 'presentation_layer'))
-                           or f.startswith('design_system/component/') or f.startswith('root/scaffold/')
+                           or products.in_component(f) or f.startswith('root/scaffold/')
                            or f.startswith('static/application/') or f.startswith('static/root/'))
         if in_visual and ext in ('.html', '.css'):
             for line, what in _visual_literals(ms, ext):
@@ -313,7 +319,7 @@ def run_naming(ctx: BackstopContext) -> List[Finding]:
                     '`var(--color-…)`·`font: var(--typography-…)` 토큰을 쓴다 — 없는 값이면 foundation에 토큰을 추가하는 것이 먼저.'))
 
         # ---- NM11: foundation 토큰 표기
-        if len(segs) == 3 and segs[0] == 'design_system' and segs[1] == 'foundation' and ext == '.css':
+        if len(ds) == 2 and ds[0] == 'foundation' and ext == '.css':
             token: str = stem[len('app_'):] if stem.startswith('app_') else ''
             allowed: Tuple[str, ...] = _FOUNDATION_PREFIX.get(token, ())
             for m in _CUSTOM_PROP_RE.finditer(ms.no_comments):
@@ -324,8 +330,8 @@ def run_naming(ctx: BackstopContext) -> List[Finding]:
                         '제1 규약 §6', '파일별 접두(--color-*·--typography-* …)와 소문자 kebab 으로 — 표기 혼재 금지.'))
 
         # ---- NM12: component 부품군 표기
-        if len(segs) == 4 and segs[0] == 'design_system' and segs[1] == 'component':
-            group: str = segs[2]
+        if len(ds) == 3 and ds[0] == 'component':
+            group: str = ds[1]
             if base.startswith('ds_'):
                 out.append(Finding('NM12', f, None, '`ds_` 접두 — 컴포넌트는 무접두(종류 접미사가 구별자)',
                     '제1 규약 §6', '접두를 뗀다.'))

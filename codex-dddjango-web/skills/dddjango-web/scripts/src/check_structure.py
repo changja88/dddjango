@@ -6,6 +6,11 @@
 # "규약 밖 경로의 존재"라는 기계적 사실이다. 거짓양성 게이트 = added 한정(레거시 면책).
 # (판형: dddart check_structure.dart — ST0~ST11 번호 그대로 · ST12 = web/static/ 트리 · ST12 vendor 분기 =
 #  v1.3.1 WS6 vendor 분기 — 등재 공식 SDK 사본 자리(discipline-houserules §9))
+# 제품 분기(2.3.0 · web 새 분기 — dddart 대응 없음 · src/products.py): 제품 선언(web/product_registry.json)이 있으면
+#   ST10 은 제품 뿌리(`design_system/` · `design_system/<id>/`)를 뗀 상대 경로에 같은 규칙을 걸고, 뿌리 직속 디렉터리를
+#   허용 목록으로 본다(평면 = 네 종류 + 선언된 own 뿌리 · own = 네 종류만 — 조용한 무검사를 만들지 않는다).
+#   ST4 는 선언된 own 제품의 뿌리 골격(네 폴더 + 표준 7 파일)과 셸을 신설 여부와 무관하게 본다(슬라이스 끝에서는 미룸).
+#   선언이 없으면 뿌리는 평면 하나라 2.2.x 와 같다. Finding 경로는 실제 물리 경로다.
 
 from __future__ import annotations
 
@@ -17,6 +22,7 @@ from .common import (
     WEB_TOP_DIRS, WEB_TOP_FILES, BackstopContext, Finding, base_name_of, bc_index, ext_of,
     is_marker, is_python_path, segs_of,
 )
+from .products import Products, products_state
 from .sdk_registry import VENDOR_DIR, is_os_junk_name, sdk_state
 
 _RULE2: str = '제1 규약 §2 표준 트리'
@@ -180,29 +186,44 @@ def run_structure(ctx: BackstopContext) -> List[Finding]:
             out.append(Finding('ST9', f, None, 'root/ 이하 파일명 `root_` 접두 위반', '제1 규약 §3.6',
                 'root_<이름>으로 개명 — BC 코드의 `web.root…`·`root/…` 참조 한 줄로 위반이 식별되는 설계.'))
 
-    # ---- ST10: design_system
+    # ---- ST10: design_system — 제품 뿌리 안 상대 경로(r)에 같은 규칙(선언이 없으면 뿌리는 평면 하나)
+    products: Products = products_state(ctx)
     for f in added_files:
         s = segs_of(f)
         if s[0] != 'design_system':
             continue
-        if len(s) == 3 and s[1] == 'foundation' and s[2] not in FOUNDATION_FILES:
+        r: List[str] = products.ds_rel(f)
+        if len(r) == 2 and r[0] == 'foundation' and r[1] not in FOUNDATION_FILES:
             out.append(Finding('ST10', f, None,
                 'foundation 표준 7파일 외 — 새 토큰 종류는 규약 개정이 먼저(시각 값 단일 출처 보호)',
                 '제1 규약 §6', '기존 7파일(app_color.css … app_asset.css) 중 해당 토큰으로 합치거나 규약 개정을 제안한다.'))
-        if len(s) == 3 and s[1] == 'theme' and s[2] != 'app_theme.css':
+        if len(r) == 2 and r[0] == 'theme' and r[1] != 'app_theme.css':
             out.append(Finding('ST10', f, None, 'theme/ 직속은 app_theme.css만', '제1 규약 §6',
                 '문서 전역 기본값 조립은 app_theme.css 하나로 — light/dark도 그 안의 확장점.'))
-        if len(s) == 3 and s[1] == 'component':
+        if len(r) == 2 and r[0] == 'component':
             out.append(Finding('ST10', f, None, 'component/ 직속 파일 금지 — 부품군 1차', '제1 규약 §6',
                 '부품군 폴더(button/·dialog/ 등)를 만들어 그 안으로.'))
         if ext_of(f) == '.py':
             out.append(Finding('ST10', f, None, 'design_system 안 Python 파일 — 시각 자리는 템플릿·CSS만',
                 '제1 규약 §6', '도메인→UI 매핑은 BC presentation의 ui_extension/으로, 빈 폴더 표지는 .gitkeep으로.'))
     for d in added_dirs:
-        s = segs_of(d)
-        if len(s) == 3 and s[0] == 'design_system' and s[1] == 'component' and s[2] in {'widget', 'etc', 'common', 'misc'}:
-            out.append(Finding('ST10', d, None, 'component/ 정크드로어 군 `%s/` 금지' % s[2], '제1 규약 §6',
+        split = products.ds_split(d)
+        if split is None:
+            continue
+        pid, r = split
+        if len(r) == 2 and r[0] == 'component' and r[1] in {'widget', 'etc', 'common', 'misc'}:
+            out.append(Finding('ST10', d, None, 'component/ 정크드로어 군 `%s/` 금지' % r[1], '제1 규약 §6',
                 '분류 안 되는 부품은 정크드로어가 아니라 새 부품군 폴더를 만든다.'))
+        if products.declared and len(r) == 1 and r[0] not in DS_DIRS:  # 뿌리 직속 허용 목록(선언이 있을 때만)
+            if pid in products.own:
+                where: str = '제품 `%s` 뿌리(design_system/%s/) 직속 허용 외 디렉터리 `%s/` — 네 종류 폴더만' % (pid, pid, r[0])
+            else:
+                where = ('design_system/ 직속 허용 외 디렉터리 `%s/` — 제품 선언이 있으면 평면 뿌리 직속은 네 종류 폴더와 '
+                         '선언된 제품 뿌리(%s)만' % (r[0], ' · '.join(products.own) or '없음'))
+            out.append(Finding('ST10', d, None, '%s(foundation·theme·component·util)%s' % (
+                where, _typo_hint(r[0], DS_DIRS | set(products.own) if pid not in products.own else DS_DIRS)),
+                '제1 규약 §6', '그 제품 뿌리의 네 종류 폴더 안 제자리로 옮긴다 — 새 제품의 뿌리면 사용자 결정으로 '
+                'web/product_registry.json 에 먼저 선언한다(선언은 Coordinator·호스트가 쓴다).'))
 
     # ---- ST11: common 직속 4종
     for f in added_files:
@@ -220,11 +241,12 @@ def run_structure(ctx: BackstopContext) -> List[Finding]:
     # ---- ST12: web/static/ 트리 — 직속 7칸 · js/·htmx/·root/ 평면 · application/ 은 BC 미러 CSS 만 · vendor/ 는 등재 id
     out.extend(_static_tree(ctx))
 
-    # ---- ST4: 신규 단위 골격 완비
+    # ---- ST4: 신규 단위 골격 완비 · 선언된 own 제품의 뿌리 골격과 셸(신설 여부 · 기준점과 무관)
     if not ctx.can_detect_new_units:
         ctx.notices.append('[info] ST4(골격 완비) 생략 — git 기준점 없음(신규 단위 판별 불가)')
     else:
         out.extend(_skeleton(ctx))
+    out.extend(_product_skeleton(ctx, products))
     return out
 
 
@@ -321,10 +343,12 @@ def _is_bc_dir(ctx: BackstopContext, d: str) -> bool:
 # ---------------------------------------------------------------- ST4 구현
 
 
-def _skeleton(ctx: BackstopContext) -> List[Finding]:
-    out: List[Finding] = []
+def _unit_missing(ctx: BackstopContext, unit_dir: str, layer_kinds: Dict[str, Set[str]],
+                  required_files: List[str]) -> List[str]:
+    """한 단위의 골격 누락 목록 — 종류 폴더 존재 + 표지 + 필수 파일."""
+    missing: List[str] = []
 
-    def kind_ok(path: str, missing: List[str], label: str) -> None:
+    def kind_ok(path: str, label: str) -> None:
         """폴더 존재 + 표지 — Python 경로는 `__init__.py`(패키지 표지 겸), 그 밖은 비면 `.gitkeep`."""
         if path not in ctx.dirs:
             missing.append(label + '/')
@@ -334,20 +358,47 @@ def _skeleton(ctx: BackstopContext) -> List[Finding]:
         elif not any(f.startswith(path + '/') for f in ctx.all_files):
             missing.append(label + '/.gitkeep (빈 폴더 유지)')
 
+    for layer, kinds in layer_kinds.items():
+        layer_path: str = unit_dir if not layer else unit_dir + '/' + layer
+        pre: str = layer + '/' if layer else ''
+        if layer_path not in ctx.dirs:
+            missing.append(pre + ' (계층/단위 폴더 없음)')
+            continue
+        for k in sorted(kinds):
+            kind_ok(layer_path + '/' + k, pre + k)
+    for rf in required_files:
+        if unit_dir + '/' + rf not in ctx.files_set:
+            missing.append(rf)
+    return missing
+
+
+def _product_skeleton(ctx: BackstopContext, products: Products) -> List[Finding]:
+    """ST4 제품 분기 — 선언된 own 제품마다 design_system 뿌리 골격(네 폴더 + 표준 7 파일)과 문서 셸이 있어야 한다.
+    선언이 약속한 자리라 신설 여부 · 기준점과 무관하게 본다(G2 직전 실행 · 빚 스캔 — 슬라이스 끝에서는 ST4 째 미룬다)."""
+    out: List[Finding] = []
+    for pid in products.own:
+        root: str = products.ds_root(pid)
+        missing: List[str] = (['뿌리 폴더 `web/%s/` 째' % root] if root not in ctx.dirs else _unit_missing(
+            ctx, root, {'': DS_DIRS}, ['foundation/app_%s.css' % t for t in FOUNDATION_TOKENS]))
+        if missing:
+            out.append(Finding('ST4', root, None,
+                '선언된 제품 `%s` 의 design_system 뿌리 골격 미완비 — 누락: %s' % (pid, ', '.join(missing)), _RULE5,
+                '선언한 제품 뿌리는 비어 있어도 네 종류 폴더(foundation·theme·component·util — 빈 폴더는 .gitkeep)와 '
+                '표준 7 파일을 갖춘다.'))
+        shell: str = products.shell_of(pid)
+        if shell not in ctx.files_set:
+            out.append(Finding('ST4', shell, None,
+                '선언된 제품 `%s` 의 문서 셸 없음 — own 제품의 셸은 `web/%s`' % (pid, shell), _RULE5,
+                '그 제품의 독립 문서 셸을 이 자리에 둔다(다른 제품 셸을 extends 하지 않는다 · state·view_model 짝은 요구하지 않는다).'))
+    return out
+
+
+def _skeleton(ctx: BackstopContext) -> List[Finding]:
+    out: List[Finding] = []
+
     def require_unit(unit_dir: str, unit_desc: str, layer_kinds: Dict[str, Set[str]],
                      required_files: List[str]) -> None:
-        missing: List[str] = []
-        for layer, kinds in layer_kinds.items():
-            layer_path: str = unit_dir if not layer else unit_dir + '/' + layer
-            pre: str = layer + '/' if layer else ''
-            if layer_path not in ctx.dirs:
-                missing.append(pre + ' (계층/단위 폴더 없음)')
-                continue
-            for k in sorted(kinds):
-                kind_ok(layer_path + '/' + k, missing, pre + k)
-        for rf in required_files:
-            if unit_dir + '/' + rf not in ctx.files_set:
-                missing.append(rf)
+        missing: List[str] = _unit_missing(ctx, unit_dir, layer_kinds, required_files)
         if missing:
             out.append(Finding('ST4', unit_dir, None,
                 '%s 골격 미완비 — 누락: %s' % (unit_desc, ', '.join(missing)), _RULE5,

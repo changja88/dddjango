@@ -28,6 +28,11 @@
 #   치환 확인(src/subst.py — 슬라이스 0 끝 green ④): --subst-check 는 기준..대상 사이 web/ 밖 레인 편집이 슬라이스 0 의
 #   테스트 치환뿐인지 본다(--names·--except·--build 는 그 전용).
 #   모드끼리, 그리고 --diff-base·--all·--only·--design-build·--update-baseline 과 함께 쓰지 않는다.
+# 제품 선언(web/product_registry.json — src/products.py · 2.3.0): 한 web 앱에 화면 제품이 여럿일 때의 design_system 뿌리 · 문서 셸 ·
+#   화면 범위. 새 검사 ID 는 없다 — ST10 · ST4 · NM10~NM12 · IM2 · IM26 · IM13 이 제품 분기를 갖고, 선언이 없으면 2.2.x 와 같다.
+#   선언은 검사 패밀리보다 먼저 읽는다(공통 preflight — 게이트 계열 · --only <무엇이든> · --debt-scan · --debt-residual).
+#   선언 오류는 판정 불가(exit 1)다 — 무선언 동작으로 내려앉지 않는다. 치환 확인(--subst-check)은 선언을 읽지 않는다.
+#   선언 파일이 기준점 뒤 바뀌었으면 [info] 로 알린다(G2 배너에 선언 diff 원문 — 선언은 사용자 결정으로만 바뀐다).
 #
 # 검사 86종 (dddart 번호 그대로 · 옮길 수 없는 번호는 비움 · 새 검사는 패밀리 끝 번호 뒤):
 #   ST 13 — ST0~ST11(dddart) + ST12(web/static/ 트리 — application·root·js·htmx·vendor·images·fonts)
@@ -63,6 +68,7 @@ from src.check_structure import run_structure  # noqa: E402
 from src.check_tests import UnsupportedTestFlow, run_tests  # noqa: E402
 from src.check_vendor import VENDOR_CHECK_IDS, VendorUndecidable, run_vendor  # noqa: E402
 from src.debt import cli_residual, cli_scan  # noqa: E402
+from src.products import ProductError, declaration_error, preflight  # noqa: E402
 from src.subst import cli_subst_check  # noqa: E402
 from src.inflow import split_inflow  # noqa: E402
 
@@ -179,6 +185,10 @@ def main(argv: List[str]) -> int:
                   '서로, 그리고 --diff-base·--all·--only·--design-build·--update-baseline 와 함께 쓰지 않는다'
                   '(--json·--refactor 는 --debt-scan 전용)', file=sys.stderr)
             return 1
+        declared: Optional[str] = declaration_error(root)  # 제품 선언 preflight — 빚 모드도 선언 오류면 판정 불가
+        if declared is not None:
+            print('[backstop] 판정 불가 — %s' % declared)
+            return 1
         return cli_scan(root, json_path, refactor) if debt_scan else cli_residual(root, debt_residual)
 
     # ---- 게이트 모드
@@ -204,6 +214,11 @@ def main(argv: List[str]) -> int:
     elif diff_base is None and not all_mode:
         ctx.notices.append('[info] --diff-base 없음 — 게이트 불가, 전역 검사로 퇴화. '
                            '파이프라인 호출은 Phase 2 진입 스냅샷을 주입한다.')
+    try:  # 제품 선언 preflight — 검사 패밀리보다 먼저(--only 무엇이든 · --slice-end 포함)
+        preflight(ctx)
+    except ProductError as error:
+        print('[backstop] 판정 불가 — %s' % error)
+        return 1
 
     findings: List[Finding] = []
     try:

@@ -4,7 +4,10 @@
 # --subst-check <기준> <대상> [--names <design-spec.md>] [--except <경로>]…: 기준..대상 사이의 web/ 밖
 #   변경이 테스트 파일의 옛 경로·옛 이름 → 새 경로·새 이름 치환뿐인지 본다. 쌍은 web/ 개명(git diff -M
 #   — 누적 1회와 구간 안 커밋별 개명 사슬) · 옛 폴더 전체 이동 · 명세 `## 슬라이스 0` 절의 `이름:` 행에서
-#   만든다. 사슬 쌍은 옛 경로가 기준에만 · 새 경로가 대상에만 있을 때만 쓰고, 구간 안에서 새로 생긴
+#   만든다. static 접두(`web/static/` — 정적 식별자로는 `web/…`)를 건너는 이동(`static/…` ↔ `design_system/…` 등)은 꼬리
+#   하나로 못 받으므로 쌍을 둘로 가른다 — static 식별자 쌍(`{% static %}`·`static(...)` 인자와 `/static/…` URL 의 꼴)과
+#   저장소 파일 경로 쌍(`web/…` 로 시작하는 문자열의 꼴). 같은 쪽 안 이동은 꼬리 쌍 하나 그대로다.
+#   사슬 쌍은 옛 경로가 기준에만 · 새 경로가 대상에만 있을 때만 쓰고, 구간 안에서 새로 생긴
 #   경로(A · 뿌리 커밋이 들인 경로 포함)는 계보를 끊는다. 사슬은 첫 부모 줄기만 본다. 쌍이 없는(fail-closed)
 #   한계 셋: 곁가지 안에서 개명과 대폭 교체를 함께 한 뒤 머지 · 한 커밋 안에서 개명과 대폭 교정을 함께 함 ·
 #   개명된 경로를 한 커밋이 지우고 뒤 커밋이 다시 만듦(트리는 개명+제자리 교체와 같아도). .py 의 import 는 원문을
@@ -39,7 +42,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-from .debt import DebtError, is_test_path, module_of, parse_spec_pairs, tail_of
+from .debt import DebtError, is_test_path, module_of, parse_spec_pairs
 
 _IDENT: str = 'A-Za-z0-9_'
 
@@ -191,6 +194,27 @@ def _strip_static(rel: str) -> str:
     return rel[len('static/'):] if rel.startswith('static/') else rel
 
 
+def _in_static(rel: str) -> bool:
+    return rel == 'static' or rel.startswith('static/')
+
+
+def _static_id(rel: str) -> str:
+    """web 기준 상대 경로 → static 식별자(`{% static %}`·`static(...)` 인자 · `/static/` 뒤 URL 꼬리).
+    STATICFILES_DIRS 접두 둘: `static/<x>` → `web/<x>` · `design_system/<x>` → 그대로(common.static_target 의 거꾸로)."""
+    return 'web' + rel[len('static'):] if _in_static(rel) else rel
+
+
+def _text_pairs(old: str, new: str, tail: str = '') -> List[Tuple[str, str]]:
+    """경로 이동 한 쌍(파일이면 tail = '' · 폴더면 '/')의 거꾸로 치환 꼬리 쌍 [(새, 옛)].
+    같은 쪽(둘 다 static 안 · 둘 다 밖) 이동은 `static/` 을 뗀 꼬리 하나가 식별자와 저장소 경로 문자열을 함께 받는다.
+    static 접두를 건너는 이동은 한 꼬리로 두 꼴을 받을 수 없어 둘로 가른다 — static 식별자 쌍
+    (`design_system/guest/theme/app_theme.css` ↔ `web/css/base.css`)과 저장소 파일 경로 쌍
+    (`web/design_system/guest/theme/app_theme.css` ↔ `web/static/css/base.css`). 긴 쌍이 먼저 맞는다(_Pairs.substitute)."""
+    if _in_static(old) == _in_static(new):
+        return [(_strip_static(new) + tail, _strip_static(old) + tail)]
+    return [(_static_id(new) + tail, _static_id(old) + tail), ('web/' + new + tail, 'web/' + old + tail)]
+
+
 def build_pairs(root: Path, base: str, target: str, names_file: Optional[str]) -> _Pairs:
     pairs: _Pairs = _Pairs()
     base_files: Set[str] = _tree_files(root, base)
@@ -198,13 +222,12 @@ def build_pairs(root: Path, base: str, target: str, names_file: Optional[str]) -
     renames: List[Tuple[str, str]] = _history_renames(root, base, target, base_files, target_files)
     pairs.renames = renames
     for old, new in renames:
-        old_tail, new_tail = tail_of(old), tail_of(new)
-        pairs.text[new_tail[0]] = old_tail[0]
+        pairs.text.update(_text_pairs(old, new))
         old_mod, new_mod = module_of(old), module_of(new)
         if old_mod and new_mod:
             pairs.prefix[new_mod] = old_mod
     for folder, dest in _folder_pairs(renames, base_files, target_files):
-        pairs.text[_strip_static(dest) + '/'] = _strip_static(folder) + '/'
+        pairs.text.update(_text_pairs(folder, dest, '/'))
         pairs.prefix['web.' + dest.replace('/', '.')] = 'web.' + folder.replace('/', '.')
     if names_file is not None:
         try:

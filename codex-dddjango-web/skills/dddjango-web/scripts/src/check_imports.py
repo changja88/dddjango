@@ -9,6 +9,19 @@
 # 레거시라 층 무관 IM(IM24·IM25·IM27)만 건다 — 옛 배치에서는 *_data_source.py 를 DataSource 로 본다.
 # + 주석·문자열 마스킹(교정 주석의 토큰이 재차 blocker가 되는 루프 차단).
 # (판형: dddart check_imports.dart — IM1~IM23 번호 그대로 · IM24~IM27 = web 새 검사)
+# 제품 분기(2.3.0 · web 새 분기 — dddart 대응 없음 · src/products.py — 새 검사 ID 없음). 선언이 없으면 셸은
+#   root_view.html 하나 · 뿌리는 평면 하나라 2.2.x 와 같고, 아래는 제품 선언(web/product_registry.json)이 있을 때만이다.
+#   IM2  — root 참조 예외 = 페이지가 선언된 셸 집합 가운데 하나를 extends 하는 줄(셸 CSS 직접 링크 예외는 없다).
+#   IM26 — 선언 BC 의 템플릿은 그 BC 가 속한 제품의 셸만 · 어느 제품에도 안 든 템플릿(선언 밖 BC · root 게이트 화면)은
+#          선언된 셸 가운데 하나 · 선언된 셸은 독립 문서(extends 없음) · 조각은 어느 뿌리든 `component/**.html`.
+#   IM13 혼입 금지 — 소속이 정해진 문서(선언된 셸 · BC 의 템플릿과 조각 CSS · 틀 CSS · design_system 파일 — 소속 판정은
+#          products.product_of: 페이지는 BC 선언이지 상속한 셸이 아니다)가 **다른 제품의 표준 자리 CSS**(foundation 표준
+#          7 파일 · theme/app_theme.css · component/<군>/*.css · util/*.css)를 `{% static %}` 링크나 CSS `@import`·`url()` 로
+#          실으면 발견. 판정 밖: 표준 7 파일 밖 foundation 파일(옛 값 파일 — 이미 ST10 빚) · 마크업 include/extends(평면
+#          component html 은 공용) · 옛 배치 페이지(소속 없음) · include 된 조각 안의 링크 · 동적 경로 · 옛 값 파일을 거친
+#          간접 @import · `var()` 로 부르는 다른 제품 토큰.
+#          게이트: 그 링크 · @import 줄이 새 줄이면 그 줄, 그 문서의 extends 줄이 새 줄이면 그 문서의 직접 CSS 링크 전부.
+#          파일이 손대졌다는 이유만으로, 또는 선언 파일만 바뀌었다고 옛 링크를 새 위반으로 만들지 않는다. 빚 스캔은 전수.
 
 from __future__ import annotations
 
@@ -20,12 +33,12 @@ from .common import (
     base_name_of, bc_of, ext_of, has_seg, is_bc_root_path, is_standard_path, parent_dir_of, ref_path, scan_tokens,
     segs_of,
 )
+from .products import Products, products_state
 
 # 층과 상관없는 IM — 표준 트리 밖 옛 배치 파일(층 판정 불가 레거시)에도 건다. 나머지 IM 은 전부 층(경로 마디)
 # 의존이라 옛 배치 파일에는 걸지 않는다(houserules §7·§8 — 레거시 불발화 · 이동 요구 없음). 옛 배치에서는
 # *_data_source.py 를 DataSource 로 본다.
 LAYER_FREE_IM: Set[str] = {'IM24', 'IM25', 'IM27'}
-_COMPONENT_PREFIX: str = 'design_system/component/'
 _HTTP_SURFACE: Set[str] = {'requests', 'httpx', 'aiohttp', 'urllib.request', 'http.client', 'django.test'}
 _API_LITERAL_RE = re.compile(r'''["'`]\s*/api/''')
 
@@ -43,6 +56,7 @@ def _http_surface(module: str, names: List[str]) -> Optional[str]:
 def run_imports(ctx: BackstopContext) -> List[Finding]:
     out: List[Finding] = []
     backend: Set[str] = BACKEND_TOP_PKGS | ctx.project_pkgs
+    products: Products = products_state(ctx)
     for f in ctx.files:
         if not ctx.is_touched(f):
             continue
@@ -65,11 +79,16 @@ def run_imports(ctx: BackstopContext) -> List[Finding]:
         in_root: bool = segs[0] == 'root'
         is_page: bool = in_pres and parent == 'view' and ext == '.html'
         is_root_gate_page: bool = (fv.startswith('root/scaffold/view/') and base.startswith('root_')
-                                   and base.endswith('_view.html') and base != 'root_view.html')
+                                   and base.endswith('_view.html') and base != 'root_view.html'
+                                   and f not in products.shells)  # 선언된 제품 셸은 게이트 화면이 아니다
         is_fragment_tpl: bool = ext == '.html' and (
-            (in_pres and parent in ('section', 'widget')) or fv.startswith(_COMPONENT_PREFIX))
+            (in_pres and parent in ('section', 'widget')) or products.in_component(fv))
         in_network: bool = fv.startswith('common/network/')
         legacy: bool = not is_standard_path(f)  # 표준 트리 밖 옛 배치 — 층 판정 불가
+        # 제품 분기 — 이 문서의 소속 제품(선언이 없거나 옛 배치 · 소속 없음이면 None) · extends 줄이 새 줄인가
+        owner: Optional[str] = None if legacy else products.product_of(f, ctx.areas)
+        extends_added: bool = owner is not None and any(
+            x.kind == 'extends' and ctx.line_is_added(f, x.line) for x in ctx.edges_of(f))
 
         def add(cid: str, line: int, msg: str, rule: str, fix: str) -> None:
             if legacy and cid not in LAYER_FREE_IM:
@@ -97,9 +116,10 @@ def run_imports(ctx: BackstopContext) -> List[Finding]:
 
             # ---- IM2: root 참조는 apps.py·urls.py만 (root 내부 상호 참조 · 페이지의 root_view extends 제외)
             if internal and t.startswith('root/') and not in_root and not is_entry:
-                if not (e.kind == 'extends' and t == ROOT_VIEW_TEMPLATE and is_page):
+                if not (e.kind == 'extends' and t in products.shells and is_page):
                     add('IM2', e.line, 'root/ 참조 `%s` — root를 아는 곳은 apps.py·urls.py뿐'
-                        '(페이지 템플릿의 root_view.html extends 1건 예외 · BC가 root를 알면 격리 붕괴)' % t,
+                        '(페이지 템플릿의 %s extends 1건 예외 · BC가 root를 알면 격리 붕괴)' % (
+                            t, '선언된 제품 셸' if products.declared else 'root_view.html'),
                         '제1 규약 §3.6',
                         '필요한 것이 전역 인스턴스면 common으로, 전 BC 배선이면 root handler가 *이쪽을* 호출하는 방향으로 뒤집는다.')
 
@@ -179,6 +199,16 @@ def run_imports(ctx: BackstopContext) -> List[Finding]:
                 if not (in_pres or fv.startswith('root/scaffold/') or segs[0] == 'design_system'):
                     add('IM13', e.line, '`%s` 참조 — design_system은 presentation·root scaffold·design_system 내부만' % t,
                         '제1 규약 §3.7', '시각 토큰이 필요한 로직은 ui_extension(도메인→UI 매핑의 유일한 자리)으로 옮긴다.')
+            # ---- IM13 제품 분기(혼입 금지 — 선언이 있을 때만 · 머리 주석): 소속이 정해진 문서가 다른 제품의 표준 자리 CSS 를 싣는다
+            if owner is not None and internal and e.kind in ('static', 'css'):
+                other: Optional[str] = products.standard_css_owner(t)
+                if other is not None and other != owner and (extends_added or ctx.line_is_added(f, e.line)):
+                    out.append(Finding('IM13', f, e.line,
+                        '제품 `%s` 의 문서가 다른 제품 `%s` 의 표준 자리 CSS `%s` 를 싣는다 — 제품 사이 CSS 혼입 금지' % (owner, other, t),
+                        '제1 규약 §5·§6 제품 자리',
+                        '그 문서의 제품 뿌리(%s/)에 있는 같은 군·같은 이름의 CSS 를 싣는다 — 없으면 그 제품 뿌리에 만든다'
+                        '(마크업은 평면 component html 을 include 해 같이 써도 된다 · 제품은 web/product_registry.json 의 선언).'
+                        % products.ds_root(owner)))
 
             # ---- IM14(import 절반): app service → navigator 금지
             if in_app and parent == 'service' and internal and base_name_of(t).endswith('_navigator.py'):
@@ -245,18 +275,29 @@ def run_imports(ctx: BackstopContext) -> List[Finding]:
             # ---- IM26: extends 대상 — 페이지 템플릿은 root_view.html 만 · 조각 템플릿(section·widget·component)은
             #      design_system component 만(부품이 내놓은 block 채우기 = 위젯 slot 인자 자리) · 그 밖은 root_view.html 만
             if e.kind == 'extends':
+                who: str = '조각 템플릿' if is_fragment_tpl else '페이지(그 밖) 템플릿'
+                fix26: str = ('페이지는 root_view.html 을 extends 하고, 조각은 값은 include … only 로·마크업 자리는 '
+                              'design_system component 를 extends 해 block 만 채운다.')
                 if is_fragment_tpl and not (is_page or is_root_gate_page):
-                    ok26: bool = t.startswith(_COMPONENT_PREFIX) and t.endswith('.html')
+                    ok26: bool = products.in_component(t) and t.endswith('.html')
                     want: str = 'design_system/component/**/*.html(부품의 block 채우기)'
-                else:
+                elif not products.declared:
                     ok26 = t == ROOT_VIEW_TEMPLATE
                     want = 'root_view.html 하나'
+                else:  # 제품 분기 — 셸은 독립 문서 · 선언 BC 의 템플릿은 그 제품 셸만 · 그 밖은 선언된 셸 가운데 하나
+                    fix26 = ('페이지는 그 BC 가 속한 제품의 셸을 extends 한다(제품과 화면 범위는 web/product_registry.json 의 '
+                             '선언 — 선언은 사용자 결정으로만 바뀐다). 제품 셸은 독립 문서라 extends 하지 않는다.')
+                    if f in products.shells:
+                        ok26, who, want = False, '제품 셸', '없다(제품 셸은 독립 문서 — 다른 템플릿을 상속하지 않는다)'
+                    elif owner is not None:
+                        ok26 = t == products.shell_of(owner)
+                        who, want = '제품 `%s` 화면' % owner, '그 제품 셸 `%s` 하나' % products.shell_of(owner)
+                    else:
+                        ok26 = t in products.shells
+                        want = '선언된 제품 셸(%s) 가운데 하나' % ' · '.join(sorted(products.shells))
                 if not ok26:
-                    add('IM26', e.line, '`{%% extends %%}` 대상 `%s` — %s의 상속 대상은 %s' % (
-                        t, '조각 템플릿' if is_fragment_tpl else '페이지(그 밖) 템플릿', want),
-                        '제1 규약 §3.6·§5',
-                        '페이지는 root_view.html 을 extends 하고, 조각은 값은 include … only 로·마크업 자리는 '
-                        'design_system component 를 extends 해 block 만 채운다.')
+                    add('IM26', e.line, '`{%% extends %%}` 대상 `%s` — %s의 상속 대상은 %s' % (t, who, want),
+                        '제1 규약 §3.6·§5', fix26)
 
             # ---- IM27(import 절반): HTTP 호출 표면은 common/network 전속
             if py_ext and not in_network:

@@ -9,6 +9,7 @@ Coordinator 만 돌리고, 산출은 파일로 쓰고 경로만 넘긴다. 규�
 (그 BC 의 `web/static/application/[<area>/]<bc>/` 미러 CSS 와 그 BC 만 참조하는 정적 파일 포함) · `web/root`(+ `web/static/root/`) ·
 `web/common` · `web/design_system` · `web/static/<칸>`(js · images · fonts · htmx …) · 컨테이너 `web/*.py` · 표준 트리 밖 옛 배치
 최상위 폴더 `web/<옛 폴더>`. 외부 JS 고정 사본(`web/static/vendor/`)과 등재 목록(`web/sdk_registry.json`)은 어느 단위도 아니다.
+제품 선언(`web/product_registry.json` — 2.3.0)도 어느 단위가 아니다(사용자 결정으로만 바뀐다). 선언 오류면 `plan` 은 실행 불능이다(exit 1).
 
 사용(대상 프로젝트 루트에서):
   refactor_audit.py plan <단위> --debt <debt-g0.json> --out <audit 폴더>
@@ -51,6 +52,8 @@ from src.debt import (DebtError, DOC_PATHSPEC, SPEC_SLICE0_HEAD, REF_GREP_OPTION
                       debt_universe, doc_reference_lines, module_of, parse_spec_pairs, reference_lines,
                       residual_m_sets, tail_of)
 
+from src.products import REGISTRY as PRODUCT_REGISTRY, declaration_error  # noqa: E402
+
 _QUOTE_HEAD: "re.Pattern[str]" = re.compile(r"^[ \t]*>[ \t]?", re.M)
 _SPACE: "re.Pattern[str]" = re.compile(r"\s+")
 
@@ -90,7 +93,7 @@ LAYERS: "frozenset[str]" = frozenset({"domain_layer", "application_layer", "infr
 CODE_SUFFIXES: "frozenset[str]" = frozenset({".py", ".html", ".css", ".js"})
 # 외부 JS 고정 사본과 등재 목록 — 외부 JS 승인 절차가 맡는다(리팩토링 단위 · 범위 · 소유 판정 밖).
 EXCLUDED_PREFIXES: "tuple[str, ...]" = ("static/vendor/",)
-EXCLUDED_FILES: "frozenset[str]" = frozenset({"sdk_registry.json"})
+EXCLUDED_FILES: "frozenset[str]" = frozenset({"sdk_registry.json", PRODUCT_REGISTRY})  # + 제품 선언(사용자 결정 — 단위 밖)
 
 _DDD: str = "skills/architecture-ddd/references/final.md"
 _UIA: str = "skills/architecture-ui/references/final.md"
@@ -577,7 +580,7 @@ def _bc_unit(rest: "list[str]", areas: "frozenset[str]") -> str:
 def unit_of(rel: str, areas: "frozenset[str]") -> str:
     """web 기준 상대 경로 → 단위 id(`application/[<area>/]<bc>` · `root` · `common` · `design_system` · `static/<칸>` ·
     `*.py` · 옛 배치 최상위 폴더). BC 의 미러 CSS(`static/application/…`)는 그 BC, `static/root/` 는 `root` 가 소유한다.
-    외부 JS 고정 사본 · 등재 목록 · 단위 밖 표지 파일은 빈 문자열(어느 단위도 아니다)."""
+    외부 JS 고정 사본 · 등재 목록 · 제품 선언 · 단위 밖 표지 파일은 빈 문자열(어느 단위도 아니다)."""
     if rel in EXCLUDED_FILES or rel.startswith(EXCLUDED_PREFIXES):
         return ""
     parts: "list[str]" = rel.split("/")
@@ -609,7 +612,8 @@ def _unit_arg(raw: str, files: "list[str]", areas: "frozenset[str]") -> str:
     if not text or text.startswith("/") or ".." in text.split("/"):
         raise ToolError(f"단위 표기 오류 — {raw}")
     if (text + "/").startswith(EXCLUDED_PREFIXES) or text in EXCLUDED_FILES:
-        raise ToolError(f"단위가 아니다 — `web/{text}` 는 외부 JS 승인 절차가 맡는다(리팩토링 단위 밖)")
+        owner: str = "사용자 결정으로만 바뀌는 제품 선언이다" if text == PRODUCT_REGISTRY else "외부 JS 승인 절차가 맡는다"
+        raise ToolError(f"단위가 아니다 — `web/{text}` 는 {owner}(리팩토링 단위 밖)")
     units: "set[str]" = {unit_of(f, areas) for f in files} - {""}
     if text in units:
         return text
@@ -1033,6 +1037,9 @@ def _against_state(project: Path, unit: str, text: str, files: "list[str]") -> "
 
 def cmd_plan(project: Path, raw_unit: str, debt_path: Path, out: "Path | None", against: "Path | None",
              names: "Path | None") -> int:
+    declared: "str | None" = declaration_error(project)  # 제품 선언 preflight — 오류면 판정 불가(exit 1)
+    if declared is not None:
+        raise ToolError(f"판정 불가 — {declared}")
     files: "list[str]" = debt_universe(project)
     areas: "frozenset[str]" = areas_of(files)
     unit: str = _unit_arg(raw_unit, files, areas)

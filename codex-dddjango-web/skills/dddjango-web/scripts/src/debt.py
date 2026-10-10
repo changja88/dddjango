@@ -20,6 +20,9 @@
 #   발견 행에 `undeferrable: true` 를 싣는다(판정 물음 없이 미룰 수 없음).
 #   debt-g0.json 의 `scanner` 검사 집합 해시·키 의미론이 지금과 다르면 판 경계라 잔존 판정 불가다(exit 1).
 #   플러그인 판 글자만 다르면 알림 한 줄을 내고 잔존 판정을 잇는다.
+# 제품 선언(web/product_registry.json — src/products.py · 2.3.0): 스캔은 게이트와 같은 제품 해석을 쓴다(검사 ID · 키 의미론 무변 —
+#   판 경계 없음 · 키는 실제 물리 경로). 선언된 own 제품의 뿌리 골격 · 셸 부재(ST4 제품 분기)는 빚 모드에서도 키다.
+#   선언 오류는 실행 불능이다(DebtError — 러너가 먼저 «판정 불가»로 막는다).
 
 import hashlib
 import json
@@ -37,6 +40,7 @@ from .check_purity import run_purity
 from .check_structure import _skeleton, run_structure
 from .check_vendor import UNDEFERRABLE, VENDOR_CHECK_IDS, VendorUndecidable, run_vendor
 from .common import CORE_CHECK_IDS, ROOT_VIEW_TEMPLATE, BackstopContext, Finding
+from .products import ProductError, preflight
 from .sdk_registry import VENDOR_DIR
 
 SCHEMA: str = 'dddjango-web-debt/1'
@@ -232,6 +236,10 @@ def scan(root: Path, refactor: bool = False) -> Tuple[dict, List[str]]:
         notices.append(FIRST_RUN_NOTICE)
     else:
         ctx: BackstopContext = BackstopContext.from_files(root, files)
+        try:  # 제품 선언 preflight — 게이트(BackstopContext.build)와 같은 resolver · 선언 오류는 판정 불가
+            preflight(ctx)
+        except ProductError as error:
+            raise DebtError(str(error))
         raw.extend(run_structure(ctx))
         if refactor:
             raw.extend(_skeleton(ctx))
