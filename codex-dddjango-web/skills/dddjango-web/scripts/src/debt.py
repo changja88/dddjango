@@ -21,7 +21,8 @@
 #   debt-g0.json 의 `scanner` 검사 집합 해시·키 의미론이 지금과 다르면 판 경계라 잔존 판정 불가다(exit 1).
 #   플러그인 판 글자만 다르면 알림 한 줄을 내고 잔존 판정을 잇는다.
 # 제품 선언(web/product_registry.json — src/products.py · 2.3.0): 스캔은 게이트와 같은 제품 해석을 쓴다(검사 ID · 키 의미론 무변 —
-#   판 경계 없음 · 키는 실제 물리 경로). 선언된 own 제품의 뿌리 골격 · 셸 부재(ST4 제품 분기)는 빚 모드에서도 키다.
+#   판 경계 없음 · 키는 실제 물리 경로). 선언된 own 제품의 뿌리 골격 · 셸 부재(ST4 제품 분기)는 빚 모드에서도 키이고
+#   «미룰 수 없음» 이다(`undeferrable: true` — 게이트가 기준점과 무관하게 늘 선다).
 #   선언 오류는 실행 불능이다(DebtError — 러너가 먼저 «판정 불가»로 막는다).
 
 import hashlib
@@ -37,10 +38,10 @@ from .check_models import run_models
 from .check_naming import run_naming
 from .check_project import _is_htmx_core
 from .check_purity import run_purity
-from .check_structure import _skeleton, run_structure
+from .check_structure import _product_skeleton, _skeleton, run_structure
 from .check_vendor import UNDEFERRABLE, VENDOR_CHECK_IDS, VendorUndecidable, run_vendor
 from .common import CORE_CHECK_IDS, ROOT_VIEW_TEMPLATE, BackstopContext, Finding
-from .products import ProductError, preflight
+from .products import ProductError, Products, preflight
 from .sdk_registry import VENDOR_DIR
 
 SCHEMA: str = 'dddjango-web-debt/1'
@@ -232,14 +233,16 @@ def scan(root: Path, refactor: bool = False) -> Tuple[dict, List[str]]:
     files: List[str] = debt_universe(root)
     raw: List[Finding] = []
     notices: List[str] = []
+    pinned: Set[str] = set()  # 선언된 own 제품의 뿌리 골격 · 셸 부재 키 — 미룰 수 없음
     if not (root / 'web').exists():
         notices.append(FIRST_RUN_NOTICE)
     else:
         ctx: BackstopContext = BackstopContext.from_files(root, files)
         try:  # 제품 선언 preflight — 게이트(BackstopContext.build)와 같은 resolver · 선언 오류는 판정 불가
-            preflight(ctx)
+            products: Products = preflight(ctx)
         except ProductError as error:
             raise DebtError(str(error))
+        pinned = {'ST4|' + f.path for f in _product_skeleton(ctx, products)}
         raw.extend(run_structure(ctx))
         if refactor:
             raw.extend(_skeleton(ctx))
@@ -256,6 +259,10 @@ def scan(root: Path, refactor: bool = False) -> Tuple[dict, List[str]]:
         for n in ctx.notices:
             if not n.startswith(_ST4_NO_BASE):
                 notices.append(n)
+            elif not refactor and products.own:  # 선언된 own 제품이 있으면 알림을 신설 단위 골격으로 좁힌다(그 ST4 는 센다)
+                notices.append('[info] ST4(신설 단위 골격) 빚 모드 제외 — 기존 단위의 골격 미비는 빚이 아니다'
+                               '(브라운필드 허용 · 새 단위 골격은 G2 diff 게이트가 본다) · 선언된 own 제품의 '
+                               '뿌리 골격 · 셸 부재는 빚 모드에서도 센다(미룰 수 없음)')
             elif not refactor:
                 notices.append('[info] ST4(골격 완비) 빚 모드 제외 — 기존 단위의 골격 미비는 빚이 아니다'
                                '(브라운필드 허용 · 새 단위 골격은 G2 diff 게이트가 본다)')
@@ -268,7 +275,7 @@ def scan(root: Path, refactor: bool = False) -> Tuple[dict, List[str]]:
         key: str = '%s|%s' % (f.check_id, f.path)
         counts[key] = counts.get(key, 0) + 1
         row: dict = {'key': key, 'check': f.check_id, 'path': f.path, 'line': f.line, 'message': f.message}
-        if f.check_id in UNDEFERRABLE:
+        if f.check_id in UNDEFERRABLE or key in pinned:
             row['undeferrable'] = True
         if key in folder_of:
             row['folder'] = folder_of[key]

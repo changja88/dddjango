@@ -185,9 +185,9 @@ def main(argv: List[str]) -> int:
                   '서로, 그리고 --diff-base·--all·--only·--design-build·--update-baseline 와 함께 쓰지 않는다'
                   '(--json·--refactor 는 --debt-scan 전용)', file=sys.stderr)
             return 1
-        declared: Optional[str] = declaration_error(root)  # 제품 선언 preflight — 빚 모드도 선언 오류면 판정 불가
-        if declared is not None:
-            print('[backstop] 판정 불가 — %s' % declared)
+        decl_error: Optional[str] = declaration_error(root)  # 제품 선언 preflight — 빚 모드도 선언 오류면 판정 불가
+        if decl_error is not None:
+            print('[backstop] 판정 불가 — %s' % decl_error)
             return 1
         return cli_scan(root, json_path, refactor) if debt_scan else cli_residual(root, debt_residual)
 

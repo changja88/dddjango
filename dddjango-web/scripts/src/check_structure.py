@@ -243,7 +243,8 @@ def run_structure(ctx: BackstopContext) -> List[Finding]:
 
     # ---- ST4: 신규 단위 골격 완비 · 선언된 own 제품의 뿌리 골격과 셸(신설 여부 · 기준점과 무관)
     if not ctx.can_detect_new_units:
-        ctx.notices.append('[info] ST4(골격 완비) 생략 — git 기준점 없음(신규 단위 판별 불가)')
+        ctx.notices.append('[info] ST4(골격 완비) 생략 — git 기준점 없음(신규 단위 판별 불가)'
+                           + (' · 선언된 own 제품의 뿌리 골격 · 셸은 기준점 없이도 본다' if products.own else ''))
     else:
         out.extend(_skeleton(ctx))
     out.extend(_product_skeleton(ctx, products))
@@ -374,8 +375,10 @@ def _unit_missing(ctx: BackstopContext, unit_dir: str, layer_kinds: Dict[str, Se
 
 def _product_skeleton(ctx: BackstopContext, products: Products) -> List[Finding]:
     """ST4 제품 분기 — 선언된 own 제품마다 design_system 뿌리 골격(네 폴더 + 표준 7 파일)과 문서 셸이 있어야 한다.
-    선언이 약속한 자리라 신설 여부 · 기준점과 무관하게 본다(G2 직전 실행 · 빚 스캔 — 슬라이스 끝에서는 ST4 째 미룬다)."""
+    선언이 약속한 자리라 신설 여부 · 기준점과 무관하게 본다(G2 직전 실행 · 빚 스캔 — 슬라이스 끝에서는 ST4 째 미룬다).
+    게이트가 늘 서므로 빚 스캔은 이 키를 «미룰 수 없음» 으로 싣는다(debt.scan)."""
     out: List[Finding] = []
+    landed: str = ' 이 실행이 들인 선언이 아니면 선언을 들인 쪽에서 골격 · 셸을 함께 넣은 뒤 다시 받는다.'
     for pid in products.own:
         root: str = products.ds_root(pid)
         missing: List[str] = (['뿌리 폴더 `web/%s/` 째' % root] if root not in ctx.dirs else _unit_missing(
@@ -384,12 +387,13 @@ def _product_skeleton(ctx: BackstopContext, products: Products) -> List[Finding]
             out.append(Finding('ST4', root, None,
                 '선언된 제품 `%s` 의 design_system 뿌리 골격 미완비 — 누락: %s' % (pid, ', '.join(missing)), _RULE5,
                 '선언한 제품 뿌리는 비어 있어도 네 종류 폴더(foundation·theme·component·util — 빈 폴더는 .gitkeep)와 '
-                '표준 7 파일을 갖춘다.'))
+                '표준 7 파일을 갖춘다.' + landed))
         shell: str = products.shell_of(pid)
         if shell not in ctx.files_set:
             out.append(Finding('ST4', shell, None,
                 '선언된 제품 `%s` 의 문서 셸 없음 — own 제품의 셸은 `web/%s`' % (pid, shell), _RULE5,
-                '그 제품의 독립 문서 셸을 이 자리에 둔다(다른 제품 셸을 extends 하지 않는다 · state·view_model 짝은 요구하지 않는다).'))
+                '그 제품의 독립 문서 셸을 이 자리에 둔다(다른 제품 셸을 extends 하지 않는다 · state·view_model 짝은 요구하지 않는다).'
+                + landed))
     return out
 
 

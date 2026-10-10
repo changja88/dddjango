@@ -12,6 +12,9 @@
 # 선언이 없으면 «기본 한 제품»이다 — 뿌리 하나 · 셸 하나, 모든 해석이 2.2.x 의 상수와 같고 제품 폴더를 자동 발견하지 않는다.
 # 선언 오류는 판정 불가다(ProductError → 러너 exit 1) — 무선언 동작이나 빈 제품 목록으로 내려앉지 않는다. 검증은 검사
 # 패밀리보다 앞선 공통 preflight 다(게이트 계열 · 빚 모드 · refactor_audit plan — `--only <무엇이든>` 에서도).
+# «선언 없음» 은 선언 파일이 실제로 없을 때뿐이다(web/ 가 없는 첫 실행 포함) — 있는지 조사할 수 없으면(탐색 권한 등) 판정 불가다.
+# BC 경로의 성분은 소문자 snake_case 식별자다(층 폴더 이름 불가 · "*" 는 배열 밖 문자열로만) — 어느 BC 와도 맞을 수 없는
+# 이름이 조용히 통과해 그 제품의 화면 범위가 비는 일을 막는다.
 # 제품 뿌리를 뗀 상대 경로는 검사 분류에만 쓴다 — Finding 경로 · import edge · 빚 키는 실제 물리 경로(web 상대) 그대로다.
 # 소속 판정(`product_of`): BC 의 파일(페이지 포함) = 그 BC 의 선언 제품(상속한 셸이 아니다) · 셸 = 선언된 셸의 제품 ·
 #   design_system 파일 = 소유 뿌리의 제품 · BC 조각 CSS(static/application/…) = 그 BC 의 제품 ·
@@ -20,11 +23,13 @@
 from __future__ import annotations
 
 import os
+import posixpath
 import re
+import stat
 from pathlib import Path
 from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 
-from .common import DS_DIRS, FOUNDATION_FILES, ROOT_VIEW_TEMPLATE, bc_index, ext_of, ref_path, segs_of
+from .common import DS_DIRS, FOUNDATION_FILES, LAYER_NAMES, ROOT_VIEW_TEMPLATE, bc_index, ext_of, ref_path, segs_of
 from .sdk_registry import RegistryError, strict_loads
 
 REGISTRY: str = 'product_registry.json'  # web-상대
@@ -33,6 +38,8 @@ FLAT: str = 'flat'
 OWN: str = 'own'
 STAR: str = '*'
 _ID_RE = re.compile(r'^[a-z][a-z0-9_]*$')
+_BC_PART_RE = re.compile(r'^[a-z_][a-z0-9_]*$')  # BC · area 폴더 = Python 패키지 이름(소문자 snake_case)
+_TAIL_RE = re.compile(r'[?#]')
 _DS: str = 'design_system'
 _APP: str = 'application'
 
@@ -114,9 +121,19 @@ class Products:
             return self.product_of_shell(view[:-len('.css')] + '.html')
         return self.product_of_shell(view)
 
+    @staticmethod
+    def loaded_path(rel: str) -> str:
+        """참조 대상 → 실제로 실리는 파일 경로(제품 판정용) — query · fragment 꼬리를 떼고 `.` · `..` 를 접는다
+        (`…/app_color.css?v=1` · `design_system/guest/../foundation/app_color.css`). 판정에만 쓴다 — import edge ·
+        Finding 경로 · 빚 키와 다른 검사는 참조 원문 그대로다."""
+        path: str = _TAIL_RE.split(rel, 1)[0]
+        return posixpath.normpath(path) if path else path
+
     def standard_css_owner(self, rel: str) -> Optional[str]:
         """제품 표준 자리 CSS 의 소유 제품 — foundation 표준 7 파일 · theme/app_theme.css · component/<군>/*.css · util/*.css.
-        그 밖(표준 7 파일 밖 foundation 의 옛 값 파일 · 마크업 · design_system 밖)과 선언이 없을 때는 None(혼입 판정 밖)."""
+        그 밖(표준 7 파일 밖 foundation 의 옛 값 파일 · 마크업 · design_system 밖)과 선언이 없을 때는 None(혼입 판정 밖).
+        대상은 실제로 실리는 파일로 본다(loaded_path — 꼬리 · 정규화 안 된 경로로 판정을 비켜 가지 못한다)."""
+        rel = self.loaded_path(rel)
         split = self.ds_split(rel) if self.declared else None
         if split is None or ext_of(rel) != '.css':
             return None
@@ -147,15 +164,25 @@ def _bc_path(pid: str, value: object) -> str:
     if value.startswith('/') or '' in parts or '.' in parts or '..' in parts or len(parts) > 2:
         raise _fail('제품 `%s` 의 BC 경로 꼴 오류 %r — web/application/ 아래 `<bc>` 또는 `<area>/<bc>`'
                     '(절대 경로 · `..` · 빈 성분 · 세 성분 이상 불가)' % (pid, value))
+    if not all(_BC_PART_RE.fullmatch(x) for x in parts):
+        raise _fail('제품 `%s` 의 BC 이름 꼴 오류 %r — 성분마다 소문자 snake_case 식별자다'
+                    '("*" 는 배열 밖 문자열 `"bcs": "*"` 로만 쓴다)' % (pid, value))
+    if LAYER_NAMES & set(parts):
+        raise _fail('제품 `%s` 의 BC 경로 %r — 층 폴더 이름(%s)은 BC · area 이름이 될 수 없다'
+                    % (pid, value, ' · '.join(sorted(LAYER_NAMES & set(parts)))))
     return value
 
 
 def load_products(root: Path) -> Products:
     """`<root>/web/product_registry.json` 적재 · 검증. 파일이 없으면 «기본 한 제품». 오류는 전부 ProductError."""
     path: Path = root / 'web' / REGISTRY
-    if not os.path.lexists(path):
-        return Products()
-    if path.is_symlink() or not path.is_file():
+    try:
+        mode: int = os.lstat(path).st_mode
+    except (FileNotFoundError, NotADirectoryError):
+        return Products()  # 실제 부재 — 선언 없음(web/ 가 없는 첫 실행 포함)
+    except OSError as error:  # 탐색 권한 등 — 있는지조차 모른다. «선언 없음» 으로 내려앉지 않는다
+        raise _fail('있는지 조사할 수 없다(%s)' % error)
+    if not stat.S_ISREG(mode):
         raise _fail('일반 파일이 아니다(폴더 · 링크)')
     try:
         data: object = strict_loads(path.read_bytes())
@@ -228,7 +255,8 @@ def products_state(ctx: object) -> Products:
 
 def preflight(ctx: object) -> Products:
     """공통 preflight — 검사 패밀리보다 먼저 선언을 적재 · 검증하고(오류면 ProductError) 알림을 싣는다:
-    예정 BC 한 줄 · (게이트가 살아 있을 때) 선언 파일이 기준점 뒤 바뀌었다는 한 줄. 선언이 없으면 아무것도 하지 않는다."""
+    (게이트가 살아 있을 때) 선언 파일이 기준점 뒤 바뀌었다는 한 줄 · 예정 BC 한 줄 · area 폴더 이름만 적은 BC 한 줄.
+    선언이 없으면 아무것도 하지 않는다."""
     state: Products = products_state(ctx)
     notices: List[str] = getattr(ctx, 'notices')
     if getattr(ctx, 'gated') and (REGISTRY in getattr(ctx, 'touched') or (
@@ -238,4 +266,10 @@ def preflight(ctx: object) -> Products:
     planned: List[str] = state.planned_bcs(getattr(ctx, 'dirs')) if state.declared else []
     if planned:
         notices.append('[info] 제품 선언의 BC 가 아직 web/application 에 없다(예정 BC — 오류 아님): %s' % ' · '.join(planned))
+    areas: Set[str] = getattr(ctx, 'areas')
+    as_area: List[str] = ['%s → %s' % (pid, bc) for bc, pid in sorted(state.bcs.items(), key=lambda kv: (kv[1], kv[0]))
+                          if bc in areas]
+    if as_area:  # area 판별은 휴리스틱이라 오류로 막지 않는다 — 한 성분 이름이 area 폴더면 그 아래 BC 와는 맞지 않는다
+        notices.append('[info] 제품 선언의 %s 는 area 폴더다 — BC 는 <area>/<bc> 전체 경로로 적는다'
+                       '(지금은 그 아래 BC 가 이 제품으로 읽히지 않는다)' % ' · '.join(as_area))
     return state

@@ -17,9 +17,11 @@
 #   IM13 혼입 금지 — 소속이 정해진 문서(선언된 셸 · BC 의 템플릿과 조각 CSS · 틀 CSS · design_system 파일 — 소속 판정은
 #          products.product_of: 페이지는 BC 선언이지 상속한 셸이 아니다)가 **다른 제품의 표준 자리 CSS**(foundation 표준
 #          7 파일 · theme/app_theme.css · component/<군>/*.css · util/*.css)를 `{% static %}` 링크나 CSS `@import`·`url()` 로
-#          실으면 발견. 판정 밖: 표준 7 파일 밖 foundation 파일(옛 값 파일 — 이미 ST10 빚) · 마크업 include/extends(평면
-#          component html 은 공용) · 옛 배치 페이지(소속 없음) · include 된 조각 안의 링크 · 동적 경로 · 옛 값 파일을 거친
-#          간접 @import · `var()` 로 부르는 다른 제품 토큰.
+#          실으면 발견. 대상은 실제로 실리는 파일로 본다 — query · fragment 꼬리를 떼고 `.` · `..` 를 접은 경로(제품 판정에만 ·
+#          edge · Finding 경로 · 빚 키와 다른 IM 은 참조 원문 그대로).
+#          판정 밖: 표준 7 파일 밖 foundation 파일(옛 값 파일 — 이미 ST10 빚) · 마크업 include/extends(평면 component html 은
+#          공용) · 옛 배치 페이지(소속 없음) · include 된 조각 안의 링크 · 동적 경로 · 옛 값 파일을 거친 간접 @import ·
+#          `var()` 로 부르는 다른 제품 토큰.
 #          게이트: 그 링크 · @import 줄이 새 줄이면 그 줄, 그 문서의 extends 줄이 새 줄이면 그 문서의 직접 CSS 링크 전부.
 #          파일이 손대졌다는 이유만으로, 또는 선언 파일만 바뀌었다고 옛 링크를 새 위반으로 만들지 않는다. 빚 스캔은 전수.
 
@@ -40,6 +42,9 @@ from .products import Products, products_state
 # *_data_source.py 를 DataSource 로 본다.
 LAYER_FREE_IM: Set[str] = {'IM24', 'IM25', 'IM27'}
 _HTTP_SURFACE: Set[str] = {'requests', 'httpx', 'aiohttp', 'urllib.request', 'http.client', 'django.test'}
+# 제품 분기의 규약 표지(선언이 있을 때만 쓰인다)
+_RULE_MIX: str = 'discipline-houserules §5·§6 제품 CSS 혼입'
+_RULE_SHELL: str = 'discipline-houserules §1·§3·§5 제품 셸'
 _API_LITERAL_RE = re.compile(r'''["'`]\s*/api/''')
 
 
@@ -204,8 +209,8 @@ def run_imports(ctx: BackstopContext) -> List[Finding]:
                 other: Optional[str] = products.standard_css_owner(t)
                 if other is not None and other != owner and (extends_added or ctx.line_is_added(f, e.line)):
                     out.append(Finding('IM13', f, e.line,
-                        '제품 `%s` 의 문서가 다른 제품 `%s` 의 표준 자리 CSS `%s` 를 싣는다 — 제품 사이 CSS 혼입 금지' % (owner, other, t),
-                        '제1 규약 §5·§6 제품 자리',
+                        '제품 `%s` 의 문서가 다른 제품 `%s` 의 표준 자리 CSS `%s` 를 싣는다 — 제품 사이 CSS 혼입 금지'
+                        % (owner, other, products.loaded_path(t)), _RULE_MIX,
                         '그 문서의 제품 뿌리(%s/)에 있는 같은 군·같은 이름의 CSS 를 싣는다 — 없으면 그 제품 뿌리에 만든다'
                         '(마크업은 평면 component html 을 include 해 같이 써도 된다 · 제품은 web/product_registry.json 의 선언).'
                         % products.ds_root(owner)))
@@ -276,15 +281,21 @@ def run_imports(ctx: BackstopContext) -> List[Finding]:
             #      design_system component 만(부품이 내놓은 block 채우기 = 위젯 slot 인자 자리) · 그 밖은 root_view.html 만
             if e.kind == 'extends':
                 who: str = '조각 템플릿' if is_fragment_tpl else '페이지(그 밖) 템플릿'
+                rule26: str = '제1 규약 §3.6·§5'
                 fix26: str = ('페이지는 root_view.html 을 extends 하고, 조각은 값은 include … only 로·마크업 자리는 '
                               'design_system component 를 extends 해 block 만 채운다.')
                 if is_fragment_tpl and not (is_page or is_root_gate_page):
                     ok26: bool = products.in_component(t) and t.endswith('.html')
                     want: str = 'design_system/component/**/*.html(부품의 block 채우기)'
+                    if products.declared:  # 선언 모드의 문구 — 셸 · 부품 뿌리가 하나가 아니다(무선언 문구는 글자 그대로)
+                        want = '어느 제품 뿌리든 design_system component 의 html(부품의 block 채우기)'
+                        fix26 = ('조각은 값은 include … only 로·마크업 자리는 어느 제품 뿌리든 design_system component 를 extends 해 '
+                                 'block 만 채운다(페이지만 그 BC 가 속한 제품의 셸을 extends 한다).')
                 elif not products.declared:
                     ok26 = t == ROOT_VIEW_TEMPLATE
                     want = 'root_view.html 하나'
                 else:  # 제품 분기 — 셸은 독립 문서 · 선언 BC 의 템플릿은 그 제품 셸만 · 그 밖은 선언된 셸 가운데 하나
+                    rule26 = _RULE_SHELL
                     fix26 = ('페이지는 그 BC 가 속한 제품의 셸을 extends 한다(제품과 화면 범위는 web/product_registry.json 의 '
                              '선언 — 선언은 사용자 결정으로만 바뀐다). 제품 셸은 독립 문서라 extends 하지 않는다.')
                     if f in products.shells:
@@ -296,8 +307,7 @@ def run_imports(ctx: BackstopContext) -> List[Finding]:
                         ok26 = t in products.shells
                         want = '선언된 제품 셸(%s) 가운데 하나' % ' · '.join(sorted(products.shells))
                 if not ok26:
-                    add('IM26', e.line, '`{%% extends %%}` 대상 `%s` — %s의 상속 대상은 %s' % (t, who, want),
-                        '제1 규약 §3.6·§5', fix26)
+                    add('IM26', e.line, '`{%% extends %%}` 대상 `%s` — %s의 상속 대상은 %s' % (t, who, want), rule26, fix26)
 
             # ---- IM27(import 절반): HTTP 호출 표면은 common/network 전속
             if py_ext and not in_network:

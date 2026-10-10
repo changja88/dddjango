@@ -1037,9 +1037,9 @@ def _against_state(project: Path, unit: str, text: str, files: "list[str]") -> "
 
 def cmd_plan(project: Path, raw_unit: str, debt_path: Path, out: "Path | None", against: "Path | None",
              names: "Path | None") -> int:
-    declared: "str | None" = declaration_error(project)  # 제품 선언 preflight — 오류면 판정 불가(exit 1)
-    if declared is not None:
-        raise ToolError(f"판정 불가 — {declared}")
+    decl_error: "str | None" = declaration_error(project)  # 제품 선언 preflight — 오류면 판정 불가(exit 1)
+    if decl_error is not None:
+        raise ToolError(f"판정 불가 — {decl_error}")
     files: "list[str]" = debt_universe(project)
     areas: "frozenset[str]" = areas_of(files)
     unit: str = _unit_arg(raw_unit, files, areas)

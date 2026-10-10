@@ -3,7 +3,9 @@
 묶음: U 무변(선언 없는 프로젝트 — 고치기 전 판과 byte 동일) · E 선언 오류 × 입구(exit 1) · P 제품 자리(ST10 · ST4 · NM10~12) ·
 S 셸(IM2 · IM26) · M 혼입(IM13 제품 분기) · R 해석(area · 예정 BC · `"*"` · 빚 스캔 from_files) · N 알림 · A 첫 등록 ·
 I 승인 병합 유입 · X 치환 확인의 static 접두 횡단 이동 · H 호스트 1단계 이관 재현.
-고치기 전 판 = BASELINE 커밋의 scripts(`git show <커밋>:<경로>` 로 임시 폴더에 푼다 — 작업 사본을 stash 하지 않는다)."""
+고치기 전 판 = BASELINE 커밋의 scripts(`git show <커밋>:<경로>` 로 임시 폴더에 푼다 — 작업 사본을 stash 하지 않는다).
+BASELINE 은 판마다 그 판의 바탕 커밋으로 올린다(U 묶음은 «이 판이 선언 없는 프로젝트의 출력을 바꾸지 않았다» 의 대조다).
+그 커밋이 이력에 없으면(얕은 clone 등) U 묶음을 건너뛰고 건너뛴 사실을 출력한다(실패로 세지 않는다)."""
 import json
 import os
 import re
@@ -17,7 +19,9 @@ from pathlib import Path
 TEST = Path(__file__).resolve().parent
 SCRIPTS = TEST.parent
 REPO = SCRIPTS.parents[1]
-BASELINE = '1e4344a6'  # 고치기 전 판(배포된 dddjango-web 2.2.5)
+BASELINE = '1e4344a6'  # 고치기 전 판(배포된 dddjango-web 2.2.5) — 판마다 바탕 커밋으로 올린다
+VERSION_NOTICE = re.compile(r'^\[info\] 플러그인 판 바뀜 — G0 스캔 (\S+) → 지금 (\S+?)'
+                            r'\(검사 집합·키 의미론이 같아 잔존 판정을 잇는다\)\n', re.M)
 ENV = dict(os.environ, GIT_OPTIONAL_LOCKS='0', PYTHONDONTWRITEBYTECODE='1')
 REGISTRY = 'web/product_registry.json'
 FLAT_SHELL = 'root/scaffold/view/root_view.html'
@@ -69,6 +73,15 @@ def blockers(out):
 def message_of(out, cid, path):
     m = re.search(r'^\[%s\] BLOCKER — web/%s(?::\d+)?\n  위반: (.+)$' % (cid, re.escape(path)), out, re.M)
     return m.group(1) if m else ''
+
+
+def fix_of(out, cid, path):
+    m = re.search(r'^\[%s\] BLOCKER — web/%s(?::\d+)?\n  위반: .+\n  교정: (.+)$' % (cid, re.escape(path)), out, re.M)
+    return m.group(1) if m else ''
+
+
+def lines_of(out, cid, path):
+    return sorted(int(n) for n in re.findall(r'^\[%s\] BLOCKER — web/%s:(\d+)$' % (cid, re.escape(path)), out, re.M))
 
 
 class Proj:
@@ -146,8 +159,9 @@ def shell_lines(theme):
             '</head><body>{% block content %}{% endblock %}</body></html>']
 
 
-def mkstd(root):
-    """2.0.0 표준 web/ 트리(빚 0 — fixtures_debt.sh mkproj 와 같은 꼴) · git 초기화만(커밋은 부르는 쪽)."""
+def mkstd(root, git_top=None):
+    """2.0.0 표준 web/ 트리(빚 0 — fixtures_debt.sh mkproj 와 같은 꼴) · git 초기화만(커밋은 부르는 쪽).
+    git_top 을 주면 저장소 뿌리는 거기다(프로젝트 루트가 저장소 하위 폴더인 꼴)."""
     p = Proj(root)
     w = p.w
     o = 'web/application/order/'
@@ -207,7 +221,7 @@ def mkstd(root):
     w('web_test/application/order/application_layer/order_list_vm_test.py', 'def test_order_list_vm() -> None:', '    assert True')
     w('.dddjango-web/backstop-baseline.json', '{"cycle_pairs": []}')
     p.markers()
-    git(p.root, 'init', '-q', '-b', 'main')
+    git(git_top or p.root, 'init', '-q', '-b', 'main')
     return p
 
 
@@ -249,9 +263,9 @@ def own_root(p, pid, shell=True):
         p.w('web/root/scaffold/view/root_%s_view.html' % pid, *shell_lines('design_system/%s/theme/app_theme.css' % pid))
 
 
-def mkdeclared(root):
+def mkdeclared(root, git_top=None):
     """두 제품 표준 트리(빚 0): 운영자(flat · order) + 손님(own · `*` — lobby) · 선언 포함 커밋 → (Proj, BASE)."""
-    p = mkstd(root)
+    p = mkstd(root, git_top)
     mkbc(p, 'application/lobby', shell=GUEST_SHELL)
     own_root(p, 'guest')
     p.declare(PRODUCTS)
@@ -265,6 +279,21 @@ LOBBY_CSS = 'static/application/lobby/lobby_view.css'
 
 def link(target):
     return "<link rel=\"stylesheet\" href=\"{% static '" + target + "' %}\">"
+
+
+def plugin_version(scripts):
+    return json.loads((scripts.parent / '.claude-plugin' / 'plugin.json').read_text(encoding='utf-8'))['version']
+
+
+def bumped_scripts(tmp, version):
+    """지금 scripts(test/ 제외) 사본 + 판 글자만 올린 매니페스트 → 그 scripts 폴더(사본 매니페스트는 건드리지 않는다)."""
+    target = Path(tmp) / 'dddjango-web'
+    shutil.copytree(SCRIPTS, target / 'scripts', ignore=shutil.ignore_patterns('__pycache__', 'test'))
+    manifest = json.loads((SCRIPTS.parent / '.claude-plugin' / 'plugin.json').read_text(encoding='utf-8'))
+    manifest['version'] = version
+    (target / '.claude-plugin').mkdir()
+    (target / '.claude-plugin' / 'plugin.json').write_text(json.dumps(manifest, ensure_ascii=False), encoding='utf-8')
+    return target / 'scripts'
 
 
 def old_scripts(tmp):
@@ -303,11 +332,10 @@ def scope_folder(p, name, a_keys='-', scripts=SCRIPTS):
 # ====================================================================== U — 무변(선언 없는 프로젝트)
 
 def bundle_unchanged(tmp):
-    try:
-        old = old_scripts(tmp / 'old')
-    except (subprocess.CalledProcessError, RuntimeError) as error:
-        check('U0 고치기 전 판(%s) scripts 를 풀 수 있다' % BASELINE, False, error)
+    if subprocess.run(['git', '-C', str(REPO), 'cat-file', '-e', BASELINE + '^{commit}'], capture_output=True, env=ENV).returncode:
+        print('SKIP U — 바탕 커밋 %s 이 이 저장소 이력에 없다(얕은 clone 등) — 무변 묶음(U)을 건너뛴다(실패로 세지 않는다)' % BASELINE)
         return
+    old = old_scripts(tmp / 'old')
     check('U0 고치기 전 판(%s) scripts 를 풀 수 있다' % BASELINE, (old / 'backstop.py').is_file())
     p = mkstd(tmp / 'u')
     mkbc(p, 'application/lobby', shell=GUEST_SHELL)
@@ -374,16 +402,26 @@ def bundle_unchanged(tmp):
         check('U %s 지문 — scanner.checks · scanner.keys 같음' % label,
               data1.get('scanner', {}).get('checks') == data0.get('scanner', {}).get('checks') is not None
               and data1.get('scanner', {}).get('keys') == data0.get('scanner', {}).get('keys') is not None)
-    # 옛 판 G0 동결본으로 새 판이 잔존을 실제로 판정한다(판 경계 없음)
-    new = backstop(p.root, '--debt-residual', g0)
-    g2_new = json.loads((g0 / 'debt-g2.json').read_text(encoding='utf-8'))
-    (g0 / 'debt-g0.json').write_bytes(g0_json)
+    # 옛 판 G0 동결본으로 새 판이 잔존을 실제로 판정한다(판 경계 없음). 매니페스트 판 글자가 다르면 새 판만
+    # «플러그인 판 바뀜» 알림 한 줄을 낸다 — 그 한 줄만 빼고 byte 대조하고, 그 줄은 판이 다를 때만 · 그 꼴로 나오는지 따로 본다.
     before = backstop(p.root, '--debt-residual', g0, scripts=old)
     g2_old = json.loads((g0 / 'debt-g2.json').read_text(encoding='utf-8'))
-    check('U --debt-residual — 고치기 전 판과 byte 동일', new == before, '%r\n%r' % (new, before))
-    check('U --debt-residual — 옛 동결본으로 잔존 판정 수행(판 경계 0)', '판 경계' not in new[1] and '빚 잔존 — ⓐ 잔존 1' in new[1]
-          and new[0] == 2, new[1])
-    check('U --debt-residual 의 debt-g2.json — 같음', strip_stamp(g2_new) == strip_stamp(g2_old))
+    old_version = plugin_version(old)
+    check('U --debt-residual 옛 판 — 판 알림 없음(자기 동결본)', not VERSION_NOTICE.search(before[1]), before[1])
+    for label, scripts in (('지금 매니페스트', SCRIPTS), ('판 올림 변형 99.0.0', bumped_scripts(tmp / 'bumped', '99.0.0'))):
+        (g0 / 'debt-g0.json').write_bytes(g0_json)
+        new = backstop(p.root, '--debt-residual', g0, scripts=scripts)
+        g2_new = json.loads((g0 / 'debt-g2.json').read_text(encoding='utf-8'))
+        version = plugin_version(scripts)
+        notices = VERSION_NOTICE.findall(new[1])
+        check('U --debt-residual(%s) — 판 알림 한 줄을 뺀 나머지가 고치기 전 판과 byte 동일' % label,
+              (new[0], VERSION_NOTICE.sub('', new[1])) == before, '%r\n%r' % (new, before))
+        check('U --debt-residual(%s) — 판 알림은 판이 다를 때만 · 그 꼴로(%s → %s)' % (label, old_version, version),
+              notices == ([(old_version, version)] if version != old_version else [])
+              and (version == old_version or new[1].startswith('[info] 플러그인 판 바뀜 — ')), new[1][:300])
+        check('U --debt-residual(%s) — 옛 동결본으로 잔존 판정 수행(판 경계 0)' % label, '판 경계' not in new[1]
+              and '빚 잔존 — ⓐ 잔존 1' in new[1] and new[0] == 2, new[1])
+        check('U --debt-residual(%s) 의 debt-g2.json — 같음' % label, strip_stamp(g2_new) == strip_stamp(g2_old))
     # 리팩토링 판정 도구 — plan 요약과 plan.md
     plans = []
     for scripts in (SCRIPTS, old):
@@ -402,6 +440,25 @@ def bundle_unchanged(tmp):
               for s in (SCRIPTS, old)]
     check('U 검사 집합 상수(CORE_CHECK_IDS · CHECK_IDS · KEY_SCHEME · DEBT_FAMILIES · 86 · SLICE_END_DEFERRED · 지문) 무변',
           consts[0] == consts[1] and '"IM27"' in consts[0] and json.loads(consts[0])[6] == 86, consts[0][:300] + '\n' + consts[1][:300])
+    # 치환 확인 — static 접두를 건너지 않는 이동(같은 쪽)은 고치기 전 판과 byte 동일
+    q = mkstd(tmp / 'u2')
+    q.w('web/static/css/a.css', 'body { margin: 0; }', 'a { width: 1px; }')
+    q.w('web/design_system/util/x.css', '.x { width: 1px; }', '.x2 { width: 2px; }')
+    q.w('web/legacy/page.html', '<html>', '<body>legacy</body>', '</html>')
+    q.w('tests/test_same_side.py', 'CSS: str = "web/static/css/a.css"', 'URL: str = "/static/web/css/a.css"',
+        'UTIL: str = "design_system/util/x.css"', 'PAGE: str = "legacy/page.html"')
+    q.w('tests/notes.txt', 'web/css/a.css', 'web/design_system/util/x.css')
+    start = q.commit('base')
+    q.mv('web/static/css/a.css', 'web/static/root/root_view.css')
+    q.mv('web/design_system/util/x.css', 'web/design_system/util/y.css')
+    q.mv('web/legacy/page.html', 'web/older/page.html')
+    q.w('tests/test_same_side.py', 'CSS: str = "web/static/root/root_view.css"', 'URL: str = "/static/web/root/root_view.css"',
+        'UTIL: str = "design_system/util/y.css"', 'PAGE: str = "older/page.html"')
+    q.w('tests/notes.txt', 'web/root/root_view.css', 'web/design_system/util/y.css')
+    end = q.commit('same-side move')
+    new = backstop(q.root, '--subst-check', start, end)
+    check('U --subst-check 같은 쪽 이동(static → static · design_system → design_system · 옛 배치 폴더) — 고치기 전 판과 byte 동일',
+          new == backstop(q.root, '--subst-check', start, end, scripts=old) and new[0] == 0 and 'web/ 밖 변경 파일 2' in new[1], new[1][-600:])
 
 
 # ====================================================================== E — 선언 오류 × 입구
@@ -416,13 +473,28 @@ def bundle_errors(tmp):
     (folder / 'design-spec.md').write_text(
         '## 슬라이스 0\n- 경로: application/order/order_router.py → application/order/order_routes.py\n', encoding='utf-8')
 
+    baseline = p.root / '.dddjango-web' / 'backstop-baseline.json'
+    baseline_bytes = baseline.read_bytes()
+    (folder / 'build-state.json').write_text(json.dumps({'git_snapshot': base, 'slices': []}), encoding='utf-8')
+
+    def update_baseline():
+        """--update-baseline 실행 → (exit, 출력 + 기준선 파일을 썼는가 표지) — 끝나면 기준선을 되돌린다."""
+        e, out = backstop(p.root, '--diff-base', base, '--update-baseline')
+        wrote = baseline.read_bytes() != baseline_bytes
+        baseline.write_bytes(baseline_bytes)
+        return e, out + ('\nBLOCKER(픽스처) — 선언 오류인데 기준선 파일을 썼다' if wrote and e == 1 else '')
+
     def entries():
         audit_out = folder / 'audit'
         shutil.rmtree(audit_out, ignore_errors=True)
         return [('게이트', backstop(p.root, '--diff-base', base)),
                 ('--slice-end', backstop(p.root, '--diff-base', base, '--slice-end')),
                 ('--only cy', backstop(p.root, '--only', 'cy')),
+                ('--all', backstop(p.root, '--all')),
+                ('--update-baseline', update_baseline()),
+                ('--design-build', backstop(p.root, '--diff-base', base, '--design-build', folder)),
                 ('--debt-scan', backstop(p.root, '--debt-scan')),
+                ('--debt-scan --refactor', backstop(p.root, '--debt-scan', '--refactor')),
                 ('--debt-residual', backstop(p.root, '--debt-residual', folder)),
                 ('refactor_audit plan', audit(p.root, 'plan', unit, '--debt', debt, '--out', audit_out)),
                 ('refactor_audit plan --names', audit(p.root, 'plan', unit, '--debt', debt, '--out', audit_out,
@@ -486,6 +558,11 @@ def bundle_errors(tmp):
         ('BC 경로 꼴(빈 문자열)', decl({'operator': {'design_system': 'flat', 'bcs': ['']}, 'guest': own})),
         ('BC 경로 꼴(세 성분)', decl({'operator': {'design_system': 'flat', 'bcs': ['a/b/c']}, 'guest': own})),
     ]
+    # BC 이름 꼴 — 성분마다 소문자 snake_case 식별자 · 층 폴더 이름 금지 · "*" 는 배열 밖 문자열로만
+    for bad in ('*', 'Lobby', 'lobby view', ' lobby', 'lobby ', 'lobby.x', 'lobby\\x', 'lobby-x', '1lobby', 'admin/Lobby',
+                'presentation_layer', 'lobby/presentation_layer', 'application_layer/lobby', 'domain_layer', 'infra_layer'):
+        cases.append(('BC 이름 꼴(%r)' % bad, decl({'operator': flat, 'guest': {'design_system': 'own', 'bcs': [bad]}})))
+    cases.append(('BOM', b'\xef\xbb\xbf' + good.encode('utf-8')))
     registry = p.root / REGISTRY
     for label, body in cases:
         registry.write_bytes(body if isinstance(body, bytes) else body.encode('utf-8'))
@@ -499,6 +576,49 @@ def bundle_errors(tmp):
         check('E 선언 자리가 폴더 · %s — exit 1' % name, e == 1 and 'product_registry.json' in out and 'Traceback' not in out,
               'exit=%d\n%s' % (e, out[-500:]))
     registry.rmdir()
+    # 선언 자리가 링크(올바른 내용을 가리켜도) · 끊긴 링크 — 일반 파일만 선언이다
+    p.w('web/registry_target.json', good.rstrip('\n'))
+    for label, target in (('링크', 'registry_target.json'), ('끊긴 링크', 'no_such_file.json')):
+        os.symlink(target, registry)
+        for name, (e, out) in entries():
+            check('E 선언 자리가 %s · %s — exit 1' % (label, name), e == 1 and 'product_registry.json' in out
+                  and 'Traceback' not in out and 'BLOCKER' not in out, 'exit=%d\n%s' % (e, out[-500:]))
+        registry.unlink()
+    p.rm('web/registry_target.json')
+    if os.geteuid() == 0:
+        print('SKIP E 읽기 불능 · web/ 조사 불능 — root 권한이라 chmod 000 이 접근을 막지 못한다(건너뜀)')
+    else:
+        # 선언 파일 읽기 불능
+        registry.write_text(good, encoding='utf-8')
+        registry.chmod(0)
+        try:
+            for name, (e, out) in entries():
+                check('E 선언 읽기 불능(chmod 000) · %s — exit 1' % name, e == 1 and 'product_registry.json' in out
+                      and 'Traceback' not in out and 'BLOCKER' not in out, 'exit=%d\n%s' % (e, out[-500:]))
+        finally:
+            registry.chmod(0o644)
+        # web/ 탐색 권한 없음 — 선언이 있는지조차 조사할 수 없다. «선언 없음 · 빈 목록 · exit 0» 으로 내려앉지 않는다.
+        web = p.root / 'web'
+        web.chmod(0)
+        try:
+            for name, args in (('--all --only im13', ('--all', '--only', 'im13')), ('--only cy', ('--only', 'cy')),
+                               ('--debt-scan', ('--debt-scan',)), ('--debt-residual', ('--debt-residual', folder))):
+                e, out = backstop(p.root, *args)
+                check('E web/ 조사 불능(chmod 000) · %s — exit 1 «판정 불가»(무선언 폴백 아님)' % name,
+                      e == 1 and '[backstop] 판정 불가 — ' in out and 'product_registry.json' in out and 'blocker 0건' not in out
+                      and 'Traceback' not in out, 'exit=%d\n%s' % (e, out[-500:]))
+            e, out = backstop(p.root, '--diff-base', base)
+            check('E web/ 조사 불능 · 게이트(--diff-base) — exit 1', e == 1 and 'blocker 0건' not in out, 'exit=%d\n%s' % (e, out[-500:]))
+            e, out = audit(p.root, 'plan', unit, '--debt', debt, '--out', folder / 'audit-denied')
+            check('E web/ 조사 불능 · refactor_audit plan — exit 1', e == 1 and '실행 불능' in out, 'exit=%d\n%s' % (e, out[-500:]))
+        finally:
+            web.chmod(0o755)
+    # web/ 가 없는 첫 실행은 선언 없음 그대로(빚 0 · 판정 불가 아님)
+    first = tmp / 'first-run'
+    first.mkdir()
+    git(first, 'init', '-q', '-b', 'main')
+    e, out = backstop(first, '--debt-scan')
+    check('E web/ 없는 첫 실행 — 선언 없음 그대로(빚 스캔 exit 0)', e == 0 and '판정 불가' not in out and '첫 실행' in out, out[-400:])
     # 치환 확인은 선언을 읽지 않는다 — 깨진 선언이어도 그대로 돈다
     registry.write_text('{', encoding='utf-8')
     e, out = backstop(p.root, '--subst-check', base, base)
@@ -506,6 +626,30 @@ def bundle_errors(tmp):
     registry.write_text(good, encoding='utf-8')
     e, out = backstop(p.root, '--diff-base', base)
     check('E 선언을 되돌리면 게이트 exit 0', e == 0 and 'blocker 0건' in out, out[-400:])
+
+    # ---- 프로젝트 루트가 저장소 하위 폴더 — 그 루트의 web/ 선언을 읽는다(저장소 뿌리의 것이 아니다)
+    top = tmp / 'sub'
+    q, sub_base = mkdeclared(top / 'server', git_top=top)
+    sub_folder = scope_folder(q, 'run')
+
+    def sub_entries():
+        shutil.rmtree(sub_folder / 'audit', ignore_errors=True)
+        # 게이트는 st·im·nm 만 — 하위 폴더 루트에서는 2.2.5 부터 기준점 트리가 비어 읽혀 새 BC 판별(TG1)이 과하게 선다(이 판 범위 밖)
+        return [('게이트(--only st,im,nm)', backstop(q.root, '--diff-base', sub_base, '--only', 'st,im,nm')),
+                ('--all', backstop(q.root, '--all')),
+                ('--debt-scan', backstop(q.root, '--debt-scan')),
+                ('refactor_audit plan', audit(q.root, 'plan', unit, '--debt', sub_folder / 'debt-g0.json',
+                                              '--out', sub_folder / 'audit'))]
+
+    (top / 'web').mkdir()
+    (top / 'web' / 'product_registry.json').write_text('{', encoding='utf-8')     # 저장소 뿌리의 미끼(깨진 선언) — 읽지 않는다
+    for name, (e, out) in sub_entries():
+        check('E 하위 폴더 루트 · 올바른 선언 · %s — exit 0(저장소 뿌리의 깨진 미끼를 읽지 않는다)' % name,
+              e == 0 and '판정 불가' not in out, 'exit=%d\n%s' % (e, out[-500:]))
+    (q.root / REGISTRY).write_text('{', encoding='utf-8')
+    for name, (e, out) in sub_entries():
+        check('E 하위 폴더 루트 · 깨진 선언 · %s — exit 1' % name, e == 1 and 'product_registry.json' in out
+              and 'BLOCKER' not in out, 'exit=%d\n%s' % (e, out[-500:]))
 
 
 # ====================================================================== P — 제품 자리(ST10 · ST4 · NM10~12)
@@ -579,8 +723,22 @@ def bundle_places(tmp):
     check('P3 슬라이스 끝에서는 지금처럼 미룬다(ST4 0 · exit 0)', e == 0 and 'ST4] BLOCKER' not in out, out[-600:])
     e, out = backstop(p.root, '--only', 'st4')
     check('P3 기준점 없이도 선언된 뿌리 · 셸 ST4', found(out, 'ST4', 'design_system/partner') and found(out, 'ST4', shell), out[-600:])
-    keys = p.keys()
+    e, out, data = p.scan()
+    keys = set(data.get('counts', {}))
     check('P3 빚 스캔에도 선언된 뿌리 · 셸 ST4 키', {'ST4|design_system/partner', 'ST4|' + shell} <= keys, sorted(keys))
+    rows = [r for r in data.get('findings', []) if r['check'] == 'ST4']
+    check('P3 그 ST4 두 키는 «미룰 수 없음»(JSON undeferrable · 출력 표지)',
+          len(rows) == 2 and all(r.get('undeferrable') is True for r in rows) and out.count('[ST4] (미룰 수 없음) web/') == 2, out[-900:])
+    notice = [ln for ln in out.splitlines() if ln.startswith('[info] ST4(')]
+    check('P3 ST4 알림이 그 키와 모순되지 않는다(«신설 단위 골격» 으로 좁힘 · 선언된 own 뿌리 · 셸은 따로 센다고 적는다)',
+          len(notice) == 1 and notice[0].startswith('[info] ST4(신설 단위 골격) 빚 모드 제외') and '미룰 수 없음' in notice[0]
+          and '골격 완비' not in notice[0], notice)
+    e, out = backstop(p.root, '--only', 'st4')
+    notice = [ln for ln in out.splitlines() if ln.startswith('[info] ST4(')]
+    check('P3 기준점 없는 게이트의 ST4 생략 알림도 선언된 own 뿌리 · 셸은 본다고 적는다',
+          len(notice) == 1 and notice[0].startswith('[info] ST4(골격 완비) 생략 — git 기준점 없음') and '기준점 없이도 본다' in notice[0], notice)
+    check('P3 ST4 교정문 — 이 실행이 들인 선언이 아니면 들인 쪽에서 골격 · 셸을 함께',
+          all('선언을 들인 쪽에서 골격 · 셸을 함께 넣은 뒤 다시 받는다' in fix_of(out, 'ST4', x) for x in ('design_system/partner', shell)), out[-900:])
     own_root(p, 'partner')
     p.rm('web/design_system/partner/foundation/app_asset.css')
     p.rm('web/design_system/partner/util/.gitkeep')
@@ -613,7 +771,8 @@ def bundle_shells(tmp):
     e, out = backstop(p.root, '--diff-base', base)
     msg = message_of(out, 'IM26', LOBBY_PAGE)
     check('S1 손님 BC 페이지가 root_view.html 을 extends(새 줄) — IM26 · exit 2', e == 2 and found(out, 'IM26', LOBBY_PAGE, 1), out[-900:])
-    check('S1 사유에 제품과 그 제품 셸', 'guest' in msg and GUEST_SHELL in msg, msg)
+    check('S1 사유에 제품과 그 제품 셸 · 규약 표지(제품 셸)', 'guest' in msg and GUEST_SHELL in msg
+          and msg.endswith('(discipline-houserules §1·§3·§5 제품 셸)'), msg)
     check('S1 선언된 셸의 extends 는 root 참조 예외(IM2 0)', 'IM2] BLOCKER' not in out, out[-600:])
     p.sub(page, FLAT_SHELL, GUEST_SHELL)
     e, out = backstop(p.root, '--diff-base', base)
@@ -653,7 +812,12 @@ def bundle_shells(tmp):
           not found(out, 'IM26', 'application/lobby/presentation_layer/section/lobby_card_section.html'), out[-900:])
     check('S6 조각이 평면 component 를 extends — 통과',
           not found(out, 'IM26', 'application/lobby/presentation_layer/section/lobby_button_section.html'))
-    check('S6 조각이 셸을 extends — IM26 그대로', found(out, 'IM26', 'application/lobby/presentation_layer/widget/badge_widget.html', 1))
+    badge = 'application/lobby/presentation_layer/widget/badge_widget.html'
+    check('S6 조각이 셸을 extends — IM26 그대로', found(out, 'IM26', badge, 1))
+    check('S6 선언 모드의 조각 사유 · 교정 문구 — root_view.html · 평면 component 고정이 아니다',
+          'root_view.html' not in message_of(out, 'IM26', badge) + fix_of(out, 'IM26', badge)
+          and '어느 제품 뿌리든' in message_of(out, 'IM26', badge) and '어느 제품 뿌리든' in fix_of(out, 'IM26', badge),
+          message_of(out, 'IM26', badge) + '\n' + fix_of(out, 'IM26', badge))
     check('S6 공용 마크업(평면 component html) · 제품 마크업 include — 통과', not found(out, 'IM13', LOBBY_PAGE) and not found(out, 'IM2', LOBBY_PAGE), out[-900:])
     p.reset(base)
     # 남의 셸 CSS · 자기 셸 CSS 직접 링크 — IM2 그대로(예외를 만들지 않는다)
@@ -678,6 +842,26 @@ def bundle_shells(tmp):
     e, out = backstop(q.root, '--diff-base', base2)
     check('S8 선언 없음 — 둘째 셸 extends 는 지금처럼 IM2 + IM26',
           found(out, 'IM2', LOBBY_PAGE, 1) and found(out, 'IM26', LOBBY_PAGE, 1) and 'root_view.html 하나' in message_of(out, 'IM26', LOBBY_PAGE), out[-900:])
+    q.w('web/application/lobby/presentation_layer/widget/badge_widget.html', '{% extends "' + FLAT_SHELL + '" %}')
+    e, out = backstop(q.root, '--diff-base', base2, '--only', 'im26')
+    badge = 'application/lobby/presentation_layer/widget/badge_widget.html'
+    check('S8 선언 없음 — 조각 IM26 의 사유 · 교정 문구는 글자 그대로',
+          message_of(out, 'IM26', badge) == '`{% extends %}` 대상 `root/scaffold/view/root_view.html` — 조각 템플릿의 상속 대상은 '
+          'design_system/component/**/*.html(부품의 block 채우기) (제1 규약 §3.6·§5)'
+          and fix_of(out, 'IM26', badge) == '페이지는 root_view.html 을 extends 하고, 조각은 값은 include … only 로·마크업 자리는 '
+          'design_system component 를 extends 해 block 만 채운다.', message_of(out, 'IM26', badge) + '\n' + fix_of(out, 'IM26', badge))
+
+    # ---- 소속 있는 페이지의 개명만 — 전 줄이 새 줄이라 옛 잘못된 셸이 한꺼번에 선다(지금 동작의 단언)
+    r, _ = mkdeclared(tmp / 's3')
+    r.sub('web/' + LOBBY_PAGE, GUEST_SHELL, FLAT_SHELL)
+    wrong = r.commit('wrong shell lands as debt')
+    e, out = backstop(r.root, '--diff-base', wrong)
+    check('S9 옛 잘못된 셸(기준점에 이미 있음) — 게이트 0', e == 0 and 'BLOCKER' not in out, out[-600:])
+    moved = 'application/lobby/presentation_layer/view/lobby_home_view.html'
+    r.mv('web/' + LOBBY_PAGE, 'web/' + moved)
+    r.mv('web/' + LOBBY_PAGE[:-5] + '.py', 'web/' + moved[:-5] + '.py')
+    e, out = backstop(r.root, '--diff-base', wrong, '--only', 'im26')
+    check('S9 그 페이지의 개명만 — 새 경로 전 줄이 새 줄이라 IM26 이 선다', found(out, 'IM26', moved, 1), out[-900:])
 
 
 # ====================================================================== M — 혼입(IM13 제품 분기)
@@ -702,7 +886,8 @@ def bundle_mixing(tmp):
     msg = message_of(out, 'IM13', LOBBY_PAGE)
     check('M2 새 링크 줄 — 그 줄만 IM13(옛 링크 줄은 그대로)', e == 2 and found(out, 'IM13', LOBBY_PAGE, 5)
           and out.count('[IM13] BLOCKER') == 1, out[-900:])
-    check('M2 사유에 두 제품 id 와 실린 경로', '`guest`' in msg and '`operator`' in msg and 'design_system/theme/app_theme.css' in msg, msg)
+    check('M2 사유에 두 제품 id 와 실린 경로 · 규약 표지(제품 CSS 혼입)', '`guest`' in msg and '`operator`' in msg
+          and 'design_system/theme/app_theme.css' in msg and msg.endswith('(discipline-houserules §5·§6 제품 CSS 혼입)'), msg)
     p.reset(base)
 
     p.sub(page, '{% extends "' + GUEST_SHELL + '" %}', "{% extends '" + GUEST_SHELL + "' %}")
@@ -714,6 +899,12 @@ def bundle_mixing(tmp):
     p.declare(dict(PRODUCTS, operator={'design_system': 'flat', 'bcs': ['order', 'admin/desk']}))
     e, out = backstop(p.root, '--diff-base', base)
     check('M4 선언 파일만 바뀜 — 기존 참조를 새 줄로 보지 않는다(blocker 0)', e == 0 and 'BLOCKER' not in out, out[-900:])
+    p.reset(base)
+    # 소속 있는 페이지의 개명만 — 전 줄이 새 줄이라 옛 혼입 링크가 선다(지금 동작의 단언)
+    renamed = 'application/lobby/presentation_layer/view/lobby_home_view.html'
+    p.mv(page, 'web/' + renamed)
+    e, out = backstop(p.root, '--diff-base', base, '--only', 'im13')
+    check('M4 옛 혼입 링크가 있는 페이지의 개명만 — 새 경로에서 IM13 이 선다', lines_of(out, 'IM13', renamed) == [4], out[-900:])
     p.reset(base)
     keys = p.keys()
     check('M4 빚 스캔은 전수 — 옛 링크 · 옛 @import 의 IM13 키', {'IM13|' + LOBBY_PAGE, 'IM13|' + LOBBY_CSS} <= keys, sorted(keys))
@@ -768,6 +959,35 @@ def bundle_mixing(tmp):
           and not found(out, 'IM26', 'auth/login/view/login.html'))
     p.reset(base)
 
+    # 꼬리(query · fragment)가 붙었거나 정규화 안 된(`..` · `./`) 경로 — 제품 판정은 실제로 실리는 파일로 한다
+    theme = 'design_system/guest/theme/app_theme.css'
+    p.append('web/' + theme, '@import url("../../foundation/app_color.css?v=1");',      # 운영자 foundation(꼬리 ?)
+             '@import "../../foundation/app_spacing.css#top";',                           # 운영자 foundation(꼬리 #)
+             '@import url("../../guest/../theme/./app_theme.css");',                      # 운영자 theme(.. · ./)
+             '@import url("../foundation/app_color.css?v=2");',                           # 자기 제품(꼬리 ?) — 통과
+             '@import url("../../guest/foundation/../theme/app_theme.css");')             # 자기 제품(..) — 통과
+    p.sub(page, '<p>lobby</p>', '\n'.join([link('design_system/guest/../foundation/app_color.css'),      # 운영자(..)
+                                          link('design_system/./theme/app_theme.css'),                    # 운영자(./)
+                                          link('web/../design_system/util/flat_util.css'),                # 운영자(static 접두 밖으로 ..)
+                                          link('design_system/guest/theme/../theme/app_theme.css'),       # 자기 제품(..) — 통과
+                                          link('design_system/foundation/../foundation/tokens.css'),      # 7 파일 밖 — 판정 밖
+                                          '<p>lobby</p>']))
+    e, out = backstop(p.root, '--diff-base', base, '--only', 'im13')
+    check('M9 CSS @import 의 꼬리(?v=1 · #top) · `..`/`./` — 실제 대상이 남의 표준 자리면 IM13(자기 제품은 통과)',
+          lines_of(out, 'IM13', theme) == [2, 3, 4], '%r\n%s' % (lines_of(out, 'IM13', theme), out[-1500:]))
+    check('M9 `{% static %}` 의 `..` · `./` · `web/../` — 실제 대상이 남의 표준 자리면 IM13(자기 제품 · 7 파일 밖은 통과)',
+          lines_of(out, 'IM13', LOBBY_PAGE) == [5, 6, 7], '%r\n%s' % (lines_of(out, 'IM13', LOBBY_PAGE), out[-1500:]))
+    msgs = '\n'.join(re.findall(r'^  위반: (.+)$', out, re.M))
+    check('M9 사유의 실린 경로는 정규화한 실제 CSS · Finding 경로는 문서의 물리 경로 그대로',
+          '`design_system/foundation/app_color.css`' in msgs and '`design_system/util/flat_util.css`' in msgs
+          and '?v=1' not in msgs and '/../' not in msgs and '/./' not in msgs, msgs)
+    p.commit('tails and dots land as debt')
+    e, out, data = p.scan()
+    counts = data.get('counts', {})
+    check('M9 빚 스캔도 같은 판정 — 키는 문서의 물리 경로 · 발견 수 3 · 3(+ 옛 링크 1)',
+          counts.get('IM13|' + theme) == 3 and counts.get('IM13|' + LOBBY_PAGE) == 4, sorted(counts.items()))
+    p.reset(base)
+
     # 선언이 없으면 혼입 판정 자체가 없다
     p.rm(REGISTRY)
     base = p.commit('undeclare')
@@ -801,6 +1021,19 @@ def bundle_resolve(tmp):
           found(out, 'IM26', admin, 1) and not found(out, 'IM26', shop) and not found(out, 'IM26', misc)
           and 'IM2] BLOCKER' not in out, out[-900:])
     p.reset(base)
+
+    # area 이름만 적음 — 오류는 아니고(area 판별이 휴리스틱) [info] 한 줄 · 그 아래 BC 와는 맞지 않는다
+    p.declare({'operator': {'design_system': 'flat', 'bcs': ['order', 'admin']}, 'guest': {'design_system': 'own', 'bcs': ['shop']}})
+    e, out = backstop(p.root, '--diff-base', base)
+    info = [ln for ln in out.splitlines() if 'area 폴더다' in ln]
+    check('R1b 선언에 area 이름만 — [info] 한 줄(exit 0 · 예정 BC 알림은 아님)', e == 0 and len(info) == 1
+          and info[0].startswith('[info] 제품 선언의 ') and 'operator → admin' in info[0] and 'guest → shop' in info[0]
+          and '<area>/<bc> 전체 경로로 적는다' in info[0] and '예정 BC' not in out, out[-700:])
+    e, out, _data = p.scan()
+    check('R1b 빚 스캔에도 같은 [info]', sum('area 폴더다' in ln for ln in out.splitlines()) == 1, out[-500:])
+    p.reset(base)
+    e, out = backstop(p.root, '--diff-base', base)
+    check('R1b 전체 경로로 적으면 알림 없음', 'area 폴더다' not in out, out[-400:])
 
     # 예정 BC · "*"
     p.declare({'operator': {'design_system': 'flat', 'bcs': ['order', 'admin/desk', 'admin/operator_teller']},
@@ -986,6 +1219,29 @@ def bundle_inflow(tmp):
     check('I1 선언 유입으로 판정만 바뀐 레인 파일 — 이 레인 몫(유입으로 가르지 않는다) · exit 2',
           e == 2 and found(blocker, 'IM26', event, 1) and '이 레인 몫으로 남김' in blocker, out[-1500:])
     check('I1 선언 변경 [info]', '[info] 제품 선언이 기준점 뒤 바뀌었다' in blocker)
+
+    # 승인 병합으로 «선언만»(골격 · 셸 없이) 받은 레인 — 선언된 뿌리 · 셸 부재 ST4 는 유입으로 갈리지 않고 이 레인 몫이다
+    q = mkstd(tmp / 'i2')
+    base = q.commit('base')
+    git(q.root, 'checkout', '-qb', 'lane')
+    q.w('lane.txt', 'lane')
+    q.commit('lane')
+    folder = q.root / '.dddjango-web' / 'build'
+    folder.mkdir(parents=True)
+    (folder / 'build-state.json').write_text(json.dumps({'git_snapshot': base, 'slices': []}), encoding='utf-8')
+    git(q.root, 'checkout', '-q', 'main')
+    q.declare(PRODUCTS)
+    q.commit('main-declares-only')
+    git(q.root, 'checkout', '-q', 'lane')
+    git(q.root, 'merge', '--no-ff', '-q', '-m', 'receive-main', 'main')
+    (folder / 'approved-merges.txt').write_text(git(q.root, 'rev-parse', 'HEAD') + ' main\n', encoding='utf-8')
+    e, out = backstop(q.root, '--diff-base', base, '--design-build', folder)
+    blocker, _, approved = out.partition('== 승인 유입(')
+    check('I2 선언만 받은 레인 — 선언된 뿌리 · 셸 ST4 두 건은 이 레인 몫(승인 유입 아님) · exit 2',
+          e == 2 and found(blocker, 'ST4', 'design_system/guest') and found(blocker, 'ST4', GUEST_SHELL)
+          and 'ST4] BLOCKER' not in approved and blocker.count('이 레인 몫으로 남김') == 2, out[-1500:])
+    e, out = backstop(q.root, '--diff-base', base, '--design-build', folder, '--slice-end')
+    check('I2 슬라이스 끝에서는 그 ST4 를 미룬다(exit 0)', e == 0 and 'ST4] BLOCKER' not in out, out[-600:])
 
 
 # ====================================================================== X — 치환 확인의 static 접두 횡단 이동
