@@ -1169,6 +1169,10 @@ class CheckerArgumentKindsRegression(unittest.TestCase):
             ("positional", "envelope: EventEnvelope"), ("kw-only", "*, envelope: EventEnvelope"),
             ("pos-only", "envelope: EventEnvelope, /"),
         ), 0, [])
+        # 인자 이름이 봉투가 아니면(`msg`) 이름 갈래가 아니라 주석(`…Envelope`) 갈래만 봉투를 인정한다.
+        self.assert_shapes("check-broker-contract.py", self.external_broker, (
+            ("positional", "msg: EventEnvelope"), ("kw-only", "*, msg: EventEnvelope"), ("pos-only", "msg: EventEnvelope, /"),
+        ), 0, [])
         self.assert_shapes("check-broker-contract.py", self.external_broker, (
             ("positional", "fact: object, event_id: str, source: str"),
             ("kw-only", "fact: object, *, event_id: str, source: str"),

@@ -687,13 +687,13 @@
         "workspace/eval/fixtures/bounce_counter/expected.json": "2de2acde68dd4a255db02dc5316e1263bbb5fbb93b39b86e3b458007626189b9",
         "workspace/tools/collect_violations.py": "b1376af5cab3714a89f4a0b464e8d7c7d3b78ad42b1bfbd1dc74cfce0eff93de",
         "workspace/tools/construct_drift_report.py": "54adb95d6465022a14233f08143cc45c4754228f9beeffc6583ada607ae0bfcd",
-        "workspace/tools/field_report_checker_smoke.py": "fde4f0ab82cd5058d80825ff2d86554b66ca72cae093f1e52a8934dfe25d97a0",
+        "workspace/tools/field_report_checker_smoke.py": "1e33923d415b8f69927db5ac5ae3da3b8575f715d17de24a4eb29116b9b555e1",
         "workspace/tools/findings_count_matrix.py": "583d8c1cc0e6799a59eacf6e544e650d6abd10f644726ac5bc7561ebdd4367cb",
         "workspace/tools/firing_probe.py": "09994ac306dbb06dfce46429bdd8701cdd39bf6964f515e596dbae3dbd918003",
         "workspace/tools/manifest_seal.py": "e54328c0780986131910d57a7086eba9542df71fa8bb0d658ceaf6cb5bee0b72",
         "workspace/tools/ontology-requirements.txt": "0329866c8aeec21f64af929ec52362d6a2ee3058cb9266025b147da367ee77ea",
-        "workspace/tools/pregate_field_report_smoke.py": "620eb8dc30277c52bce06a2948b55e99439387f0dde958c97e6ceaba65ecdfce",
-        "workspace/tools/pregate_transcription_smoke.py": "9e34134b9862d759f144684f074d32d2b76ef27b470b0afc0d0db79cec842139",
+        "workspace/tools/pregate_field_report_smoke.py": "f210a1652ac363d781a219d08757f94d0f18a0718e7910241793900ce13868f8",
+        "workspace/tools/pregate_transcription_smoke.py": "befddbc291e17d210ebdee88a0080f975c58f56849d7b9868f1a95512b77b1fb",
         "workspace/tools/probe-fixture-requirements.txt": "c1836c9352d3af88f43a54a65052411d3eeb3787534a385ca19283a05f0d688b",
         "workspace/tools/query_golden_check.py": "522756a089322ad0dee7af78b741e2fc8dda26cc1b00300a37c5a82ed19c522e",
         "workspace/tools/regen_loop_prototype.py": "206d87a302058303fc68986275ea8624a27ea8fa0654fe2d4e94e71e33fc31f5",
@@ -724,7 +724,7 @@
         "workspace/tools/probe-fixture-requirements.txt"
       ],
       "n_files": 36,
-      "tree_sha256": "6a27686390cb361ede5245842505f54673dfe2a8700423a544101eb8d78a5f99",
+      "tree_sha256": "dfa077fa2de96cd3432a68e33fee9aab942d258d505b5fbf1d6a81f12b0d1f62",
       "why": "측정기. 실런 중 측정기가 바뀌면 앞뒤 런의 수치가 같은 자를 안 쓴 것이 된다(D11)."
     },
     "orders": {
@@ -768,7 +768,7 @@
         "dddjango/commands/refactor.md": "c09a98e3fad8d9b75cca3b0160b2483601c89856d48d61eacad6cacd4101242d",
         "dddjango/scripts/behavior_guard.py": "70a34366665df34d36de0b61f7f0de2b03fc7dc0b3244e31b2ac5f3fbdcceafe",
         "dddjango/scripts/behavior_support.py": "8c28453c2ec4b892f1ee9e942ad22ff92d016944d31474e87a53b2d53eceafb7",
-        "dddjango/scripts/design_pregate.py": "a682a497f471a4bec6afe7b0d87b2c4bec0585ca26a779a89b93abc79eb386b6",
+        "dddjango/scripts/design_pregate.py": "487fde87de66b5389662647fb9b5da70783c601b30834e51970e652ddd3ceb01",
         "dddjango/scripts/pytest_probe/dddjango_collect_probe.py": "b63854eaab2ed08d64e5e786ff0947673ce5f15e7fc3dce59ba59bba1d9b3263",
         "dddjango/scripts/refactor_audit.py": "f12055b9be1f1502cc863f1baf7c85426bcdfc2b92639978f40765896600e6db",
         "dddjango/scripts/regen_core.py": "48181a610743fce534ea4d327d34878863da22b207a08ecc2a88ebbdcb05b763",
@@ -789,7 +789,7 @@
         "codex-dddjango/skills/dddjango/SKILL.md"
       ],
       "n_files": 11,
-      "tree_sha256": "f186a9b877ad7ff9809c2aac4ae8d7cd67bad887a2ca9b5427066751d1e36419",
+      "tree_sha256": "5410d7c33a4a0266b95bab8b2d60d80aa3653c080478d631e82c50eb66290a5a",
       "why": "3암이 공유하는 실행 경로. 암 사이 차이는 스위치 둘뿐이어야 하고, 그 «둘뿐»을 성립시키는 것이 이 파일들의 동일성이다."
     },
     "plugin_payload": {
@@ -1031,11 +1031,11 @@
     "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.19.3/scripts",
     "cache-codex": "d5d6c27dc500a69a843865df68d9a9f2bf75a49b0b97e789f2805e01f6ca3c35",
     "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.19.3/skills/dddjango/scripts",
-    "source-claude": "1078c4c53546f49cc869e23b918420c28285f62bebf3d6ae278f2576ca7fb49a",
-    "source-codex": "1078c4c53546f49cc869e23b918420c28285f62bebf3d6ae278f2576ca7fb49a"
+    "source-claude": "0e1e78e81a3ab30805c29d93909d9fe1d71f618aa2688691e5686defb54011ab",
+    "source-codex": "0e1e78e81a3ab30805c29d93909d9fe1d71f618aa2688691e5686defb54011ab"
   },
-  "sealed_commit": "a79d7cd2dfa9327299a80d959c98f205134c4085",
-  "self_sha256": "a7a2e67ac361c6b77cc7d349e7a6a55d6e115c8f521b9387c914d97cbcea7d53",
+  "sealed_commit": "4edf4e9fd5956ae510f44cfe626bc03255fb55e7",
+  "self_sha256": "06069f0e3985a3d4af3c7e55a4a1c25bac99da862adaeeeaf07f5c57f76bb67f",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [

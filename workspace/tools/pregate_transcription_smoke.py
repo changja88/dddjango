@@ -98,8 +98,17 @@ def heir_reason(ancestor: str, method: str) -> str:
     return f"예보 불확정: 같은 판정문의 기존 줄이 조상 `{ancestor}.{method}` 에 있다"
 
 
+def own_def_reason(ancestor: str, method: str) -> str:
+    return f"예보 불확정: 이 클래스가 기준선에서 직접 정의하던 반환을 조상 `{ancestor}.{method}` 의 기존 빚과 같은 꼴(같은 판정문)로 바꾼다"
+
+
 def heir_question(ancestor: str) -> str:
     return f"물음: 이 메서드는 조상 `{ancestor}` 의 선언을 그대로 물려받는가"
+
+
+def g2_clause(ancestor: str) -> str:
+    return (f"이 클래스에서 재정의하는가(그러면 검사기가 이 클래스에도 새 줄을 낸다 · 조상 `{ancestor}` 의 줄과 같은 판정문이면 "
+            "G2 registry 는 이것을 새 위반으로 귀속하지 않을 수 있다)")
 
 
 def spec_text(paths: list[str], symbols: list[str] = (), imports: list[str] = ()) -> str:
@@ -655,7 +664,7 @@ class RepositoryForecastTest(unittest.TestCase):
         new = [("#355", True), ("#597", True)]
         inherited = [("#355", False), ("#597", False)]
         heirs = {"파일 안 직계 상속", "파일 안 2단 상속", "새 클래스 — 파일 안 베이스", "물려받은 bool/int 후보 다시 적기"}
-        ambiguous =OWNED_BASELINE.replace("from uuid import UUID\n", "from uuid import UUID\n\n"
+        ambiguous = OWNED_BASELINE.replace("from uuid import UUID\n", "from uuid import UUID\n\n"
                                            "from application.legacy.repositories import FortuneRecordRepository\n", 1)
         for label, baseline, owner, methods, expected in [
             ("상속 관계 없는 다른 클래스", OWNED_BASELINE, "UnrelatedRecordRepository(ABC)", restated, new),
@@ -710,8 +719,11 @@ class RepositoryForecastTest(unittest.TestCase):
                 found = self.forecast([method], path=ORDER_REPOSITORY, owner=f"OrderRepository({ancestor})")
                 self.assertEqual([(f.rule, f.path, f.owner, f.confirmed) for f in found],
                                  [("#355", ORDER_REPOSITORY, f"OrderRepository.{name}", False)])
-                self.assertTrue(found[0].detail.startswith(f"{detail} — {heir_reason(ancestor, name)}"), found[0].detail)
+                # 자식이 기준선에서 직계로 정의하던 메서드다 — 사유는 «예보가 가를 수 없다» 가 아니라 그 사실을 적는다.
+                self.assertTrue(found[0].detail.startswith(f"{detail} — {own_def_reason(ancestor, name)} — "), found[0].detail)
+                self.assertNotIn(heir_reason(ancestor, name), found[0].detail)
                 self.assertIn(f" — {heir_question(ancestor)}", found[0].detail)
+                self.assertTrue(found[0].detail.endswith(g2_clause(ancestor)), found[0].detail)
                 # 후상태 대조 — 자식의 반환을 명세대로 바꾼 구현은 실검사기 같은 판정문 줄이 1 → 2.
                 self.assertEqual(order_lines(detail), 1)
                 self.write(ORDER_REPOSITORY, baseline.replace(*changed))
@@ -731,6 +743,71 @@ class RepositoryForecastTest(unittest.TestCase):
         self.assertEqual([(f.rule, f.confirmed) for f in found], [("#355", False)])
         self.assertIn(heir_reason("MiddleOrderRepository", "owner_id"), found[0].detail)
         self.assertNotIn("LegacyOrderRepository", found[0].detail)
+        self.assertTrue(found[0].detail.endswith(g2_clause("MiddleOrderRepository")), found[0].detail)
+
+    def test_heir_candidate_names_the_nearest_definition_when_an_intermediate_ancestor_redefines(self) -> None:
+        # 사이 조상 — 기존 빚은 먼 조상 `A` 에 있고 가까운 조상 `B` 가 같은 메서드를 다른 꼴로 직계 정의한다. 자식이 실제로
+        # 물려받는 정의는 `B` 다 — 사유 · 물음이 «물려받는 정의» 와 «기존 빚이 있는 조상» 을 가른다(판정은 후보 그대로).
+        head = (ORDER_HEAD + "from uuid import UUID\n\n"
+                "from application.orders.domain_layer.order.value_object.owner_id import OwnerId\n\n\n"
+                "class A(ABC):\n    @abstractmethod\n    def b_id(self) -> UUID: ...\n\n\n")
+        middle = "class B(A):\n    @abstractmethod\n    def b_id(self) -> OwnerId: ...\n\n\n"
+        heir = "class OrderRepository(B):\n    pass\n"
+        detail = "`b_id` 반환 `UUID` 이 애그리거트도 값 객체도 아니다"
+        self.write(ORDER_REPOSITORY, head + middle + heir)
+        found = self.forecast(["b_id() -> UUID"], path=ORDER_REPOSITORY, owner="OrderRepository(B)")
+        self.assertEqual([(f.rule, f.path, f.owner, f.confirmed, f.detail) for f in found], [(
+            "#355", ORDER_REPOSITORY, "OrderRepository.b_id", False,
+            f"{detail} — 예보 불확정: 같은 판정문의 기존 줄이 조상 `A.b_id` 에 있지만 이 클래스가 물려받는 정의는 더 가까운 "
+            "조상 `B.b_id` 이고 그 정의에는 같은 판정문의 줄이 없다(이 클래스에서 재정의하는 것인지 예보가 가를 수 없다) — "
+            "물음: 이 메서드는 가장 가까운 정의(`B.b_id`)를 그대로 물려받는가(그러면 검사기는 이 클래스에 줄을 내지 않는다) · "
+            + g2_clause("A"))])
+        # 자식도 기준선에서 직계로 정의하던 꼴 — 사유는 그 사실, 물음의 «물려받는 정의» 는 여전히 가까운 조상 `B`.
+        self.write(ORDER_REPOSITORY, head + middle + heir.replace("    pass\n",
+                                                                "    @abstractmethod\n    def b_id(self) -> OwnerId: ...\n"))
+        found = self.forecast(["b_id() -> UUID"], path=ORDER_REPOSITORY, owner="OrderRepository(B)")
+        self.assertEqual([(f.rule, f.path, f.owner, f.confirmed) for f in found],
+                         [("#355", ORDER_REPOSITORY, "OrderRepository.b_id", False)])
+        self.assertTrue(found[0].detail.startswith(f"{detail} — {own_def_reason('A', 'b_id')} — 물음: 이 메서드는 가장 가까운 "
+                                                   "정의(`B.b_id`)를 그대로 물려받는가"), found[0].detail)
+        # 사이 조상이 그 메서드를 정의하지 않으면 물려받는 정의 = 기존 빚이 있는 조상 — 지금처럼 하나만 적는다.
+        self.write(ORDER_REPOSITORY, head + "class B(A):\n    pass\n\n\n" + heir)
+        found = self.forecast(["b_id() -> UUID"], path=ORDER_REPOSITORY, owner="OrderRepository(B)")
+        self.assertEqual([(f.rule, f.path, f.owner, f.confirmed) for f in found],
+                         [("#355", ORDER_REPOSITORY, "OrderRepository.b_id", False)])
+        self.assertTrue(found[0].detail.startswith(f"{detail} — {heir_reason('A', 'b_id')}(물려받은 빚을"), found[0].detail)
+        self.assertIn(f" — {heir_question('A')}(그러면 기존 빚이다) · {g2_clause('A')}", found[0].detail)
+        self.assertNotIn("`B", found[0].detail)
+        # 후상태 대조 — 사이 조상 꼴에서 명세대로 자식이 재정의하면 실검사기 같은 판정문 줄이 1 → 2(물려받으면 1 그대로).
+        lines = []
+        for body in (head + middle + heir, head + middle + heir.replace(
+                "    pass\n", "    @abstractmethod\n    def b_id(self) -> UUID: ...\n")):
+            self.write(ORDER_REPOSITORY, body)
+            result = subprocess.run([sys.executable, str(SCRIPTS / "check-transaction-boundary.py"), str(self.repo)],
+                                    env=self.env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+            lines.append(len(re.findall(rf"\[#355\] {re.escape(ORDER_REPOSITORY)}:\d+: {re.escape(detail)}", result.stdout)))
+        self.assertEqual(lines, [1, 2])
+
+    def test_heir_candidate_says_the_class_changes_its_own_baseline_definition(self) -> None:
+        # 자식 직계 정의 — 자식이 기준선에서 직접 정의하던 반환을 조상의 기존 빚 꼴로 바꾸는 명세. 예보는 그 사실을 이미 안다 —
+        # 사유를 «예보가 가를 수 없다» 가 아니라 사실대로 적는다(판정은 후보 그대로).
+        self.write(ORDER_REPOSITORY, HEIR_OWNER_BASELINE)
+        found = self.forecast(["owner_id() -> UUID"], path=ORDER_REPOSITORY, owner="OrderRepository(LegacyOrderRepository)")
+        self.assertEqual([(f.rule, f.path, f.owner, f.confirmed, f.detail) for f in found], [(
+            "#355", ORDER_REPOSITORY, "OrderRepository.owner_id", False,
+            f"{OWNER_DETAIL} — 예보 불확정: 이 클래스가 기준선에서 직접 정의하던 반환을 조상 `LegacyOrderRepository.owner_id` "
+            "의 기존 빚과 같은 꼴(같은 판정문)로 바꾼다 — 물음: 이 메서드는 조상 `LegacyOrderRepository` 의 선언을 그대로 "
+            "물려받는가(그러면 기존 빚이다) · " + g2_clause("LegacyOrderRepository"))])
+        # 자식이 기준선에서 정의하지 않던 꼴(물려받은 빚을 다시 적음)은 «가를 수 없다» 사유 그대로다.
+        self.write(ORDER_REPOSITORY, LEGACY_ORDER_BASELINE.replace("class OrderRepository(ABC):",
+                                                                   "class OrderRepository(LegacyOrderRepository):"))
+        found = self.forecast(["owner_id() -> UUID"], path=ORDER_REPOSITORY, owner="OrderRepository(LegacyOrderRepository)")
+        self.assertEqual([(f.rule, f.path, f.owner, f.confirmed) for f in found],
+                         [("#355", ORDER_REPOSITORY, "OrderRepository.owner_id", False)])
+        self.assertTrue(found[0].detail.startswith(f"{OWNER_DETAIL} — {heir_reason('LegacyOrderRepository', 'owner_id')}"
+                                                   "(물려받은 빚을 다시 적은 것인지"), found[0].detail)
+        self.assertNotIn("직접 정의하던", found[0].detail)
 
     def test_method_only_under_a_compound_statement_is_a_candidate(self) -> None:
         self.write(REPOSITORY, DEBT_BASELINE)

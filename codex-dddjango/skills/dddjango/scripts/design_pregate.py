@@ -2510,11 +2510,12 @@ def _repository_entry_forecast(ck: ModuleType, entry: PlanEntry, path: str, scra
     위반이 아니므로 뺀다 — 같은 클래스의 같은 메서드를 철자·감싸개만 바꿔 다시 적은 기존 빚뿐이다. 소유자는 클래스 직계
     정의로만 선다(검사기가 판정하는 자리). 같은 판정문이 그 파일 안에서 확인되는 상속 사슬의 조상에게만 있으면 물려받은 빚을
     다시 적은 것인지 이 클래스에서 새로 생긴 위반(자식이 직접 정의하던 통과 메서드를 조상의 위반 꼴로 바꾼 경우 — 실검사기는
-    자식에게도 줄을 낸다)인지 가를 수 없다 — 지우지 않고 후보로 낸다(처음 겹친 조상 하나를 사유에 적는다). 다른 클래스의
-    같은 이름·같은 판정문은 새 위반이다(실검사기는 그 클래스에도 줄을 낸다). 기준선 클래스·메서드 중복, 그 메서드가 클래스
-    직계가 아니라 복합문 아래에만 있는 경우, 실물 파싱 불능이면 새 서명으로 단정하지 않고(후보) 이 제외도 걸지 않는다.
-    투영은 기준선 import 를 보존하지만(기존 domain import 의 통과를 지킨다) 위반의 확정 근거로는 명세가 말한 출처와 표준
-    라이브러리만 쓴다."""
+    자식에게도 줄을 낸다)인지 가를 수 없다 — 지우지 않고 후보로 낸다(처음 겹친 조상 하나를 사유에 적는다 · 이 클래스가
+    기준선에서 그 메서드를 직계로 정의하던 경우와 실제로 물려받는 정의가 더 가까운 조상인 경우는 그 사실을 적는다).
+    다른 클래스의 같은 이름·같은 판정문은 새 위반이다(실검사기는 그 클래스에도 줄을 낸다). 기준선 클래스·메서드 중복, 그
+    메서드가 클래스 직계가 아니라 복합문 아래에만 있는 경우, 실물 파싱 불능이면 새 서명으로 단정하지 않고(후보) 이 제외도
+    걸지 않는다. 투영은 기준선 import 를 보존하지만(기존 domain import 의 통과를 지킨다) 위반의 확정 근거로는 명세가 말한
+    출처와 표준 라이브러리만 쓴다."""
     stated: "list[ast.Module]" = []
     imports: "list[str]" = []
     unclear: str = ""
@@ -2619,6 +2620,12 @@ def _repository_entry_forecast(ck: ModuleType, entry: PlanEntry, path: str, scra
         ck._check_repository_contract(base, target, aggregate_stem, found, cand)
         return found.entries, cand.entries
 
+    def defines(class_name: str, method_name: str) -> bool:
+        """기준선 파일의 하나뿐인 최상위 클래스 `class_name` 이 그 메서드를 클래스 직계로 정의하는가(검사기가 판정하는 자리)."""
+        matched: "list[ast.ClassDef]" = real_classes.get(class_name, [])
+        return len(matched) == 1 and any(isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == method_name
+                                         for n in matched[0].body)
+
     # 기준선 실물의 판정 줄을 그 행의 소유자(클래스 직계 정의)에 묶는다 — (클래스, 메서드, 규칙, 판정문). 판정문에는 클래스
     # 이름이 없다.
     known: "set[tuple[str, str, str, str]]" = set()
@@ -2650,17 +2657,31 @@ def _repository_entry_forecast(ck: ModuleType, entry: PlanEntry, path: str, scra
             continue
         # 그 클래스 자기의 기존 줄과 같은 판정문이면 새 위반이 아니다(그 클래스의 기존 빚을 다시 적은 것). 그 파일 안에서
         # 확인되는 조상과만 같으면 물려받은 빚인지 이 클래스의 새 위반인지 가를 수 없다 — 지우지 않고 후보로 낸다(처음 겹친
-        # 조상 하나). 비교 불능(`reason`)이면 어느 정의와 견줄지 모르므로 지우지 않는다.
+        # 조상 하나). 비교 불능(`reason`)이면 어느 정의와 견줄지 모르므로 지우지 않는다. 사유·물음은 이 클래스가 기준선에서
+        # 그 메서드를 직계로 정의하던 경우와, 실제로 물려받는 정의(그 메서드를 직계로 정의한 가장 가까운 조상 — 기존 줄이 있는
+        # 조상도 직계 정의자라 그보다 멀지 않다)가 기존 줄이 있는 조상과 다른 경우를 사실대로 가른다(판정은 같다).
         if not reason:
             if (owner_class, method_name, item.rule, item.msg) in known:
                 continue
             ancestor: "str | None" = next(
                 (cls for cls in lineage[owner_class][1:] if (cls, method_name, item.rule, item.msg) in known), None)
             if ancestor is not None:
-                reason = (f"같은 판정문의 기존 줄이 조상 `{ancestor}.{method_name}` 에 있다(물려받은 빚을 다시 적은 것인지 이 "
-                          "클래스에서 새로 생긴 위반인지 예보가 가를 수 없다)")
-                question = (f"이 메서드는 조상 `{ancestor}` 의 선언을 그대로 물려받는가(그러면 기존 빚이다) · 이 클래스에서 "
-                            "재정의하는가(그러면 검사기가 이 클래스에도 새 줄을 낸다)")
+                inherited: str = next((cls for cls in lineage[owner_class][1:] if defines(cls, method_name)), ancestor)
+                if defines(owner_class, method_name):
+                    reason = (f"이 클래스가 기준선에서 직접 정의하던 반환을 조상 `{ancestor}.{method_name}` 의 기존 빚과 같은 "
+                              "꼴(같은 판정문)로 바꾼다")
+                elif inherited != ancestor:
+                    reason = (f"같은 판정문의 기존 줄이 조상 `{ancestor}.{method_name}` 에 있지만 이 클래스가 물려받는 정의는 더 "
+                              f"가까운 조상 `{inherited}.{method_name}` 이고 그 정의에는 같은 판정문의 줄이 없다(이 클래스에서 "
+                              "재정의하는 것인지 예보가 가를 수 없다)")
+                else:
+                    reason = (f"같은 판정문의 기존 줄이 조상 `{ancestor}.{method_name}` 에 있다(물려받은 빚을 다시 적은 것인지 "
+                              "이 클래스에서 새로 생긴 위반인지 예보가 가를 수 없다)")
+                inherit: str = (f"조상 `{ancestor}` 의 선언을 그대로 물려받는가(그러면 기존 빚이다)" if inherited == ancestor
+                                else f"가장 가까운 정의(`{inherited}.{method_name}`)를 그대로 물려받는가(그러면 검사기는 이 "
+                                "클래스에 줄을 내지 않는다)")
+                question = (f"이 메서드는 {inherit} · 이 클래스에서 재정의하는가(그러면 검사기가 이 클래스에도 새 줄을 낸다 · "
+                            f"조상 `{ancestor}` 의 줄과 같은 판정문이면 G2 registry 는 이것을 새 위반으로 귀속하지 않을 수 있다)")
         detail: str = item.msg
         confirmed: bool = False
         if from_candidates:

@@ -1045,8 +1045,11 @@ class BookAdmin(TranslatableAdmin):
         stable = pg._stable_id(f'[#355] {ORDER_REPOSITORY}')
         self.assertNotIn(ORDER_REPOSITORY, pg._subsection(report, '선언 확정'))
         self.assertIn(f'- `{stable}` [#355] {ORDER_REPOSITORY} — OrderRepository.owner_id: `owner_id` 반환 `UUID` 이 '
-                      '애그리거트도 값 객체도 아니다 — 예보 불확정: 같은 판정문의 기존 줄이 조상 '
-                      '`LegacyOrderRepository.owner_id` 에 있다', pg._subsection(report, '선언 후보'))
+                      '애그리거트도 값 객체도 아니다 — 예보 불확정: 이 클래스가 기준선에서 직접 정의하던 반환을 조상 '
+                      '`LegacyOrderRepository.owner_id` 의 기존 빚과 같은 꼴(같은 판정문)로 바꾼다 — 물음: 이 메서드는 조상 '
+                      '`LegacyOrderRepository` 의 선언을 그대로 물려받는가(그러면 기존 빚이다) · 이 클래스에서 재정의하는가'
+                      '(그러면 검사기가 이 클래스에도 새 줄을 낸다 · 조상 `LegacyOrderRepository` 의 줄과 같은 판정문이면 '
+                      'G2 registry 는 이것을 새 위반으로 귀속하지 않을 수 있다)\n', pg._subsection(report, '선언 후보') + '\n')
         code, problems, info = pg.check_report(text, report)
         self.assertEqual(code, 0, problems)
         self.assertEqual((info['declarations'], info['candidates']), ('0', '1'))
