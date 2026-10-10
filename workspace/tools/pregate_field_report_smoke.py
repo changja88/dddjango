@@ -1027,6 +1027,31 @@ class BookAdmin(TranslatableAdmin):
                       '`owner_id` 반환 `UUID` 이 애그리거트도 값 객체도 아니다\n', pg._subsection(report, '선언 확정') + '\n')
         self.assertEqual(pg.check_report(text, report)[0], 3)
 
+    def test_repository_heir_regression_matching_only_an_ancestor_debt_is_a_candidate(self):
+        # 자식이 이미 정상 계약으로 재정의한 메서드를 조상의 기존 빚 꼴로 되돌리는 명세 — 조용히 지우지 않고 후보로 낸다.
+        original = ('from abc import ABC, abstractmethod\nfrom uuid import UUID\n\n'
+                    'from application.orders.domain_layer.order.value_object.owner_id import OwnerId\n\n\n'
+                    'class LegacyOrderRepository(ABC):\n    @abstractmethod\n    def owner_id(self) -> UUID: ...\n\n\n'
+                    'class OrderRepository(LegacyOrderRepository):\n    @abstractmethod\n    def owner_id(self) -> OwnerId: ...\n')
+        self.write(self.source, ORDER_REPOSITORY, original)
+        self.write(self.source, f'{ORDER_DOMAIN}/order.py', 'class Order:\n    pass\n')
+        self.write(self.source, f'{ORDER_DOMAIN}/value_object/owner_id.py', 'class OwnerId:\n    pass\n')
+        _git(self.source, 'add', '-A')
+        _git(self.source, 'commit', '-qm', 'heir order repository fixture')
+        text = spec_text([f'update {ORDER_REPOSITORY}'], [f'{ORDER_REPOSITORY}::OrderRepository(LegacyOrderRepository)',
+                         f'{ORDER_REPOSITORY}::OrderRepository.owner_id() -> UUID'])
+        run, report = self.cli(text)
+        self.assertEqual(run.returncode, 4, run.stdout + run.stderr)
+        stable = pg._stable_id(f'[#355] {ORDER_REPOSITORY}')
+        self.assertNotIn(ORDER_REPOSITORY, pg._subsection(report, '선언 확정'))
+        self.assertIn(f'- `{stable}` [#355] {ORDER_REPOSITORY} — OrderRepository.owner_id: `owner_id` 반환 `UUID` 이 '
+                      '애그리거트도 값 객체도 아니다 — 예보 불확정: 같은 판정문의 기존 줄이 조상 '
+                      '`LegacyOrderRepository.owner_id` 에 있다', pg._subsection(report, '선언 후보'))
+        code, problems, info = pg.check_report(text, report)
+        self.assertEqual(code, 0, problems)
+        self.assertEqual((info['declarations'], info['candidates']), ('0', '1'))
+        self.assertEqual((self.source / ORDER_REPOSITORY).read_text(), original)
+
     def test_repository_source_root_package_is_not_a_standard_library_origin(self):
         nested = f'src/{ORDER_REPOSITORY}'
         self.write(self.source, nested, ('from abc import ABC, abstractmethod\n'

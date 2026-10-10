@@ -128,11 +128,12 @@ first-parent 사슬의 참여 머지가 들여온 verbatim 변경(추가·수정
 도메인 저장소(검사기 선택 그대로 — 채택 BC `domain_layer/<애그리거트>/*_repository.py`) add/update 의 명시 메서드 서명은
 번들 `check-transaction-boundary.py` 의 저장소 계약 판정을 선언만 담은 분석 투영(스크래치 `repository-declarations/`)에
 그대로 돌려 #355(반환)·#597(쓰기 이름)을 선언 확정으로 예보한다(F4-73 — 물리 전사 아님 · 사본 실물 무접촉). update 는
-전사 전 기준선 실물 대비 새 메서드·반환이 바뀐 메서드만(#597 은 새 이름만 · 기준선 실물이 그 소유자 — 같은 클래스 · 그 파일
-안에서 확인되는 조상 — 에게 같은 판정문을 이미 내는 줄은 기존 빚이라 뺀다: 다른 클래스의 같은 이름은 새 위반이다 — 이 구석은
-행 번호만 지운 줄 집합으로 견주는 G2 registry 차분보다 엄격하다) · 검사기 후보(bool/int)와 반환 이름 출처 미해소(import
-무기재·별칭·상충·`import *` · 명세가 적지 않아 기준선에만 있는 프로젝트 출처 — 표준 라이브러리 import 는 확정 근거로
-둔다)·기준선 비교 불능(클래스·메서드 중복 · 그 메서드가 클래스 직계가 아니라 복합문 아래에만 있음 · 파싱 불능)은 선언 후보다.
+전사 전 기준선 실물 대비 새 메서드·반환이 바뀐 메서드만(#597 은 새 이름만 · 기준선 실물이 같은 클래스에 같은 판정문을 이미
+내는 줄은 기존 빚이라 뺀다: 다른 클래스의 같은 이름은 새 위반이다 — 이 구석은 행 번호만 지운 줄 집합으로 견주는 G2 registry
+차분보다 엄격하다) · 검사기 후보(bool/int)와 반환 이름 출처 미해소(import 무기재·별칭·상충·`import *` · 명세가 적지 않아
+기준선에만 있는 프로젝트 출처 — 표준 라이브러리 import 는 확정 근거로 둔다)·기준선 비교 불능(클래스·메서드 중복 · 그
+메서드가 클래스 직계가 아니라 복합문 아래에만 있음 · 파싱 불능 · 같은 판정문의 기존 줄이 그 클래스가 아니라 그 파일 안에서
+확인되는 조상에게만 있음 — 물려받은 빚을 다시 적은 것인지 이 클래스의 새 위반인지 가를 수 없다)은 선언 후보다.
 검사기 로드·투영 실패는 실행 불능(exit 1).
 이 확정 근거의 한계: 표준 라이브러리 이름을 가리는 프로젝트 모듈은 source root(저장소 루트 · 검사기가 고른 `application`
 폴더의 부모)의 폴더·모듈로만 찾는다 — 네임스페이스 패키지·`.pth`·finder 로 바꾼 import 경로는 못 본다. 소문자 내장 이름
@@ -2505,13 +2506,15 @@ def _repository_entry_forecast(ck: ModuleType, entry: PlanEntry, path: str, scra
     """한 저장소 파일(`path` = 정규화한 계획 경로) — 선언만 담은 분석 투영(기준선/명시 import + 대상 메서드 서명)을
     `scratch/repository-declarations/` 아래 원래 상대 경로로 쓰고 검사기 `_check_repository_contract()` 를 부른다. update
     대상 = 기준선 클래스에 없는 메서드(#355·#597) · 반환이 바뀐 메서드(#355만). 그 가운데 기준선 실물(사본 —
-    `scratch/repository-baseline/`)에 같은 판정을 돌려 «그 소유자» 에게 이미 나오는 (클래스, 메서드, 규칙, 판정문)은 새
-    위반이 아니므로 뺀다 — 같은 클래스의 같은 메서드를 철자·감싸개만 바꿔 다시 적은 기존 빚과, 그 파일 안에서 확인되는
-    상속 사슬의 조상에게서 물려받은 메서드를 다시 적은 것뿐이다. 소유자는 클래스 직계 정의로만 선다(검사기가 판정하는 자리).
-    다른 클래스의 같은 이름·같은 판정문은 새 위반이다(실검사기는 그 클래스에도 줄을 낸다). 기준선 클래스·메서드 중복, 그
-    메서드가 클래스 직계가 아니라 복합문 아래에만 있는 경우, 실물 파싱 불능이면 새 서명으로 단정하지 않고(후보) 이 제외도
-    걸지 않는다. 투영은 기준선 import 를 보존하지만(기존 domain import 의 통과를 지킨다) 위반의 확정 근거로는 명세가 말한
-    출처와 표준 라이브러리만 쓴다."""
+    `scratch/repository-baseline/`)에 같은 판정을 돌려 «그 클래스 자기» 에게 이미 나오는 (클래스, 메서드, 규칙, 판정문)은 새
+    위반이 아니므로 뺀다 — 같은 클래스의 같은 메서드를 철자·감싸개만 바꿔 다시 적은 기존 빚뿐이다. 소유자는 클래스 직계
+    정의로만 선다(검사기가 판정하는 자리). 같은 판정문이 그 파일 안에서 확인되는 상속 사슬의 조상에게만 있으면 물려받은 빚을
+    다시 적은 것인지 이 클래스에서 새로 생긴 위반(자식이 직접 정의하던 통과 메서드를 조상의 위반 꼴로 바꾼 경우 — 실검사기는
+    자식에게도 줄을 낸다)인지 가를 수 없다 — 지우지 않고 후보로 낸다(처음 겹친 조상 하나를 사유에 적는다). 다른 클래스의
+    같은 이름·같은 판정문은 새 위반이다(실검사기는 그 클래스에도 줄을 낸다). 기준선 클래스·메서드 중복, 그 메서드가 클래스
+    직계가 아니라 복합문 아래에만 있는 경우, 실물 파싱 불능이면 새 서명으로 단정하지 않고(후보) 이 제외도 걸지 않는다.
+    투영은 기준선 import 를 보존하지만(기존 domain import 의 통과를 지킨다) 위반의 확정 근거로는 명세가 말한 출처와 표준
+    라이브러리만 쓴다."""
     stated: "list[ast.Module]" = []
     imports: "list[str]" = []
     unclear: str = ""
@@ -2547,7 +2550,7 @@ def _repository_entry_forecast(ck: ModuleType, entry: PlanEntry, path: str, scra
     lines: "list[str]" = imports + [""]
     # 투영 행 → (클래스, 메서드, #355 대상, #597 대상, 불확정 사유, 그 사유의 확인 질문)
     rows: "dict[int, tuple[str, str, bool, bool, str, str]]" = {}
-    lineage: "dict[str, list[str]]" = {}  # 명세 클래스 → 자기 + 그 파일 안에서 확인되는 조상(기존 판정문의 소유자 후보)
+    lineage: "dict[str, list[str]]" = {}  # 명세 클래스 → 자기 + 그 파일 안에서 확인되는 조상(가까운 순 · 조상과만 겹치면 후보)
     for symbol in entry.declarations:
         if symbol.kind != "class":
             continue
@@ -2645,10 +2648,19 @@ def _repository_entry_forecast(ck: ModuleType, entry: PlanEntry, path: str, scra
         owner_class, method_name, check355, check597, reason, question = row
         if not (check355 if item.rule == "#355" else check597):
             continue
-        # 그 소유자(자기 · 그 파일 안에서 확인되는 조상)의 기존 줄과 같은 판정문이면 새 위반이 아니다. 비교 불능(`reason`)이면
-        # 어느 정의와 견줄지 모르므로 지우지 않는다.
-        if not reason and any((cls, method_name, item.rule, item.msg) in known for cls in lineage[owner_class]):
-            continue
+        # 그 클래스 자기의 기존 줄과 같은 판정문이면 새 위반이 아니다(그 클래스의 기존 빚을 다시 적은 것). 그 파일 안에서
+        # 확인되는 조상과만 같으면 물려받은 빚인지 이 클래스의 새 위반인지 가를 수 없다 — 지우지 않고 후보로 낸다(처음 겹친
+        # 조상 하나). 비교 불능(`reason`)이면 어느 정의와 견줄지 모르므로 지우지 않는다.
+        if not reason:
+            if (owner_class, method_name, item.rule, item.msg) in known:
+                continue
+            ancestor: "str | None" = next(
+                (cls for cls in lineage[owner_class][1:] if (cls, method_name, item.rule, item.msg) in known), None)
+            if ancestor is not None:
+                reason = (f"같은 판정문의 기존 줄이 조상 `{ancestor}.{method_name}` 에 있다(물려받은 빚을 다시 적은 것인지 이 "
+                          "클래스에서 새로 생긴 위반인지 예보가 가를 수 없다)")
+                question = (f"이 메서드는 조상 `{ancestor}` 의 선언을 그대로 물려받는가(그러면 기존 빚이다) · 이 클래스에서 "
+                            "재정의하는가(그러면 검사기가 이 클래스에도 새 줄을 낸다)")
         detail: str = item.msg
         confirmed: bool = False
         if from_candidates:
@@ -2685,7 +2697,7 @@ def check_repository_forecast(plan: Plan, copy: Path, scratch: Path,
     대상 파일 = 검사기 선택(채택 BC 의 `domain_layer/<애그리거트>/*_repository.py`)을 사본에 그대로 돌린 경로 ∩ file-plan
     add/update(계획 경로는 `_plan_parts` 로 정규화해 견준다 — 앞 `./` · 겹친 `/`). add 는 명시 메서드 전부(자기 스텁을
     기준선으로 쓰지 않는다) · update 는 `baseline`(materialize 전 실물) 대비 새 메서드와 반환 주석이 바뀐 메서드(#597 은 새
-    이름만)에서 기준선 실물이 그 소유자(같은 클래스 · 그 파일 안에서 확인되는 조상)에게 같은 판정문을 이미 내는 줄을 뺀 것.
+    이름만)에서 기준선 실물이 같은 클래스에 같은 판정문을 이미 내는 줄을 뺀 것(그 파일 안에서 확인되는 조상에게만 있으면 후보).
     분석 파일은 `scratch/repository-declarations/`(선언 투영)·
     `scratch/repository-baseline/`(기준선 사본)에만 쓰고 사본 실물은 바꾸지 않는다. 검사기 위반은 그대로 선언 확정 · 검사기
     후보(bool/int)는 선언 후보 · 반환 이름 출처 미해소(import 무기재·별칭·상충·`import *` · 기준선에만 있는 프로젝트 출처 —

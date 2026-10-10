@@ -688,8 +688,8 @@
         "workspace/tools/firing_probe.py": "09994ac306dbb06dfce46429bdd8701cdd39bf6964f515e596dbae3dbd918003",
         "workspace/tools/manifest_seal.py": "e54328c0780986131910d57a7086eba9542df71fa8bb0d658ceaf6cb5bee0b72",
         "workspace/tools/ontology-requirements.txt": "0329866c8aeec21f64af929ec52362d6a2ee3058cb9266025b147da367ee77ea",
-        "workspace/tools/pregate_field_report_smoke.py": "52c91234fd14cddb17363ca18e67e03834a83114f2b3c3ff52f2475bf4b176d5",
-        "workspace/tools/pregate_transcription_smoke.py": "1a934e3d7e0456252db9f92ea40430907318542a8992cdb0bf748bdc90d3e901",
+        "workspace/tools/pregate_field_report_smoke.py": "620eb8dc30277c52bce06a2948b55e99439387f0dde958c97e6ceaba65ecdfce",
+        "workspace/tools/pregate_transcription_smoke.py": "9e34134b9862d759f144684f074d32d2b76ef27b470b0afc0d0db79cec842139",
         "workspace/tools/probe-fixture-requirements.txt": "c1836c9352d3af88f43a54a65052411d3eeb3787534a385ca19283a05f0d688b",
         "workspace/tools/query_golden_check.py": "522756a089322ad0dee7af78b741e2fc8dda26cc1b00300a37c5a82ed19c522e",
         "workspace/tools/regen_loop_prototype.py": "206d87a302058303fc68986275ea8624a27ea8fa0654fe2d4e94e71e33fc31f5",
@@ -720,7 +720,7 @@
         "workspace/tools/probe-fixture-requirements.txt"
       ],
       "n_files": 36,
-      "tree_sha256": "c7e171a947e0c352dd9abf015dd7211638e0484f8c87276f626991cc35299d94",
+      "tree_sha256": "7a6cd76b7419ff0e96ffc13aa9b0c7352f96c434be92ec8615e7074de9581f2a",
       "why": "측정기. 실런 중 측정기가 바뀌면 앞뒤 런의 수치가 같은 자를 안 쓴 것이 된다(D11)."
     },
     "orders": {
@@ -764,7 +764,7 @@
         "dddjango/commands/refactor.md": "c09a98e3fad8d9b75cca3b0160b2483601c89856d48d61eacad6cacd4101242d",
         "dddjango/scripts/behavior_guard.py": "70a34366665df34d36de0b61f7f0de2b03fc7dc0b3244e31b2ac5f3fbdcceafe",
         "dddjango/scripts/behavior_support.py": "8c28453c2ec4b892f1ee9e942ad22ff92d016944d31474e87a53b2d53eceafb7",
-        "dddjango/scripts/design_pregate.py": "d72192b841528f36713a5899d174e0c1826ab7247e9ab9e13405f26097da6d89",
+        "dddjango/scripts/design_pregate.py": "a682a497f471a4bec6afe7b0d87b2c4bec0585ca26a779a89b93abc79eb386b6",
         "dddjango/scripts/pytest_probe/dddjango_collect_probe.py": "b63854eaab2ed08d64e5e786ff0947673ce5f15e7fc3dce59ba59bba1d9b3263",
         "dddjango/scripts/refactor_audit.py": "f12055b9be1f1502cc863f1baf7c85426bcdfc2b92639978f40765896600e6db",
         "dddjango/scripts/regen_core.py": "48181a610743fce534ea4d327d34878863da22b207a08ecc2a88ebbdcb05b763",
@@ -785,7 +785,7 @@
         "codex-dddjango/skills/dddjango/SKILL.md"
       ],
       "n_files": 11,
-      "tree_sha256": "67b3d4ffb8916fde09473888bac8d00be2096b857a1501a69e5df6c7af07dfb7",
+      "tree_sha256": "f186a9b877ad7ff9809c2aac4ae8d7cd67bad887a2ca9b5427066751d1e36419",
       "why": "3암이 공유하는 실행 경로. 암 사이 차이는 스위치 둘뿐이어야 하고, 그 «둘뿐»을 성립시키는 것이 이 파일들의 동일성이다."
     },
     "plugin_payload": {
@@ -1027,11 +1027,11 @@
     "cache-claude_path": "/Users/hyun/.claude/plugins/cache/changja88-dddjango/dddjango/2.19.3/scripts",
     "cache-codex": "d5d6c27dc500a69a843865df68d9a9f2bf75a49b0b97e789f2805e01f6ca3c35",
     "cache-codex_path": "/Users/hyun/.codex/plugins/cache/changja88-dddjango/dddjango/2.19.3/skills/dddjango/scripts",
-    "source-claude": "c817073785d449c5032aa9301eb2cbb619affd4f43d09183bd6946be245c96eb",
-    "source-codex": "c817073785d449c5032aa9301eb2cbb619affd4f43d09183bd6946be245c96eb"
+    "source-claude": "0633c48c266b1f35283c84a318cf22e605ec5ec84811914085e1a0a404d62815",
+    "source-codex": "0633c48c266b1f35283c84a318cf22e605ec5ec84811914085e1a0a404d62815"
   },
-  "sealed_commit": "408bf30fa79d387ca51a7267a4ebef67b1277501",
-  "self_sha256": "917c9b31a5c7bd7a2e9a03bcc1015a362d0284166fe29d3e32d540c828a930c8",
+  "sealed_commit": "e2ee4d1ce2140bc0b9a52805815ca3c6f167b61a",
+  "self_sha256": "5a11c74a41ca302647226829ec5054ef2c6131101315149a7a949aa607d2a0d2",
   "status": "draft",
   "switch_space": {
     "DJR_EXPERIMENT_RUN_ID": [

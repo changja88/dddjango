@@ -55,8 +55,9 @@ ORDER_CLASS = "\n\nclass OrderRepository(ABC):\n    pass\n"
 SUMMARY_VO = "application.orders.domain_layer.order.value_object.summary"
 SUMMARY_DETAIL = "`summary` 반환 `Summary` 이 애그리거트도 값 객체도 아니다"
 BASELINE_ONLY = "기준선에만 있는 출처"
-# 기존 빚을 다시 적은 줄은 새 위반이 아니다(G2 registry 차분으로도 귀속 0) — 철자·감싸개만 바뀐 반환 · 같은 파일의 베이스
-# 클래스에서 물려받은 메서드. 클래스 본문 복합문 아래에만 있는 메서드는 검사기가 판정하지 않는 자리라 다시 적으면 후보다.
+# 같은 클래스의 기존 빚을 다시 적은 줄은 새 위반이 아니다(G2 registry 차분으로도 귀속 0) — 철자·감싸개만 바뀐 반환. 같은
+# 파일의 베이스 클래스(조상)에게만 같은 판정문이 있으면 물려받은 빚인지 이 클래스의 새 위반인지 가를 수 없어 후보다. 클래스
+# 본문 복합문 아래에만 있는 메서드는 검사기가 판정하지 않는 자리라 다시 적으면 후보다.
 DEBT_BASELINE = (
     REPOSITORY_BASELINE.replace("from uuid import UUID\n", "from typing import TYPE_CHECKING, Optional\nfrom uuid import UUID\n")
     + "\n    @abstractmethod\n    def legacy_opt(self, account_id: int) -> Optional[UUID]: ...\n"
@@ -67,7 +68,8 @@ DEBT_BASELINE = (
     "\n\nclass ArchivedFortuneRecordRepository(FortuneRecordRepository):\n    pass\n")
 DEBT_RESTATED = (DEBT_BASELINE.replace("-> Optional[UUID]", "-> UUID | None").replace("-> tuple[UUID, ...]", "-> list[UUID]")
                  .replace("-> dict[str, int]", "-> dict[str, str]"))
-# 기존 빚은 그 줄의 소유자(클래스 · 메서드)와 그 파일 안에서 확인되는 상속 사슬에만 묶인다 — 다른 클래스의 새 메서드는 새 위반이다.
+# 기존 빚은 그 줄의 소유자(클래스 · 메서드)에만 묶인다 — 다른 클래스의 새 메서드는 새 위반이고, 그 파일 안에서 확인되는 상속
+# 사슬의 조상과만 겹치면 후보다.
 OWNED_BASELINE = (
     DEBT_BASELINE.replace("from uuid import UUID\n",
                           f"from uuid import UUID\n\nfrom {DOMAIN}.base_repository import BaseRecordRepository\n")
@@ -80,6 +82,24 @@ OWNED_BASELINE = (
 LEGACY_ORDER_BASELINE = (ORDER_HEAD + "from uuid import UUID\n\n\nclass LegacyOrderRepository(ABC):\n"
                          "    @abstractmethod\n    def owner_id(self) -> UUID: ...\n" + ORDER_CLASS)
 OWNER_DETAIL = "`owner_id` 반환 `UUID` 이 애그리거트도 값 객체도 아니다"
+# 자식이 기준선에서 직접 정의하던 통과 메서드를 조상의 위반 꼴로 바꾸는 명세(재검토 반례 둘) — 실검사기는 자식에게도 새 줄을 낸다.
+HEIR_OWNER_BASELINE = (ORDER_HEAD + "from uuid import UUID\n\n"
+                       "from application.orders.domain_layer.order.value_object.owner_id import OwnerId\n\n\n"
+                       "class LegacyOrderRepository(ABC):\n    @abstractmethod\n    def owner_id(self) -> UUID: ...\n\n\n"
+                       "class OrderRepository(LegacyOrderRepository):\n"
+                       "    @abstractmethod\n    def owner_id(self) -> OwnerId: ...\n")
+HEIR_IDS_BASELINE = (ORDER_HEAD + "from uuid import UUID\n\nfrom application.orders.domain_layer.order.order import Order\n\n\n"
+                     "class BaseOrderRepository(ABC):\n    @abstractmethod\n    def ids(self) -> frozenset[UUID]: ...\n\n\n"
+                     "class OrderRepository(BaseOrderRepository):\n    @abstractmethod\n    def ids(self) -> Order | None: ...\n")
+IDS_DETAIL = "`ids` 반환 `UUID.frozenset` 이 애그리거트도 값 객체도 아니다"
+
+
+def heir_reason(ancestor: str, method: str) -> str:
+    return f"예보 불확정: 같은 판정문의 기존 줄이 조상 `{ancestor}.{method}` 에 있다"
+
+
+def heir_question(ancestor: str) -> str:
+    return f"물음: 이 메서드는 조상 `{ancestor}` 의 선언을 그대로 물려받는가"
 
 
 def spec_text(paths: list[str], symbols: list[str] = (), imports: list[str] = ()) -> str:
@@ -630,16 +650,19 @@ class RepositoryForecastTest(unittest.TestCase):
             ORDER_CLASS, ORDER_CLASS.replace("    pass\n", "    @abstractmethod\n    def owner_id(self) -> UUID: ...\n")))
         self.assertEqual(order_lines(), 2)
 
-    def test_baseline_debt_is_excluded_only_for_its_owner_and_in_file_heirs(self) -> None:
+    def test_baseline_debt_is_excluded_only_for_its_owner_and_in_file_heirs_get_a_candidate(self) -> None:
         restated = ["legacy_ids(account_id: int) -> frozenset[UUID]", "delete_old(account_id: int) -> None"]
         new = [("#355", True), ("#597", True)]
-        ambiguous = OWNED_BASELINE.replace("from uuid import UUID\n", "from uuid import UUID\n\n"
+        inherited = [("#355", False), ("#597", False)]
+        heirs = {"파일 안 직계 상속", "파일 안 2단 상속", "새 클래스 — 파일 안 베이스", "물려받은 bool/int 후보 다시 적기"}
+        ambiguous =OWNED_BASELINE.replace("from uuid import UUID\n", "from uuid import UUID\n\n"
                                            "from application.legacy.repositories import FortuneRecordRepository\n", 1)
         for label, baseline, owner, methods, expected in [
             ("상속 관계 없는 다른 클래스", OWNED_BASELINE, "UnrelatedRecordRepository(ABC)", restated, new),
-            ("파일 안 직계 상속", OWNED_BASELINE, "ArchivedFortuneRecordRepository(FortuneRecordRepository)", restated, []),
-            ("파일 안 2단 상속", OWNED_BASELINE, "DeepArchiveRepository(ArchivedFortuneRecordRepository)", restated, []),
-            ("새 클래스 — 파일 안 베이스", OWNED_BASELINE, "FreshRepository(FortuneRecordRepository)", restated, []),
+            ("파일 안 직계 상속", OWNED_BASELINE, "ArchivedFortuneRecordRepository(FortuneRecordRepository)", restated,
+             inherited),
+            ("파일 안 2단 상속", OWNED_BASELINE, "DeepArchiveRepository(ArchivedFortuneRecordRepository)", restated, inherited),
+            ("새 클래스 — 파일 안 베이스", OWNED_BASELINE, "FreshRepository(FortuneRecordRepository)", restated, inherited),
             ("새 클래스 — 베이스 ABC", OWNED_BASELINE, "FreshRepository(ABC)", restated, new),
             ("같은 클래스지만 명세의 베이스가 다름", OWNED_BASELINE, "ArchivedFortuneRecordRepository(ABC)", restated, new),
             ("베이스가 다른 파일의 클래스", OWNED_BASELINE, "ImportedBaseRepository(BaseRecordRepository)", restated, new),
@@ -650,7 +673,7 @@ class RepositoryForecastTest(unittest.TestCase):
             ("같은 소유자의 bool/int 후보 다시 적기", OWNED_BASELINE, "FortuneRecordRepository(ABC)",
              ["count_records(account_id: int) -> bool"], []),
             ("물려받은 bool/int 후보 다시 적기", OWNED_BASELINE, "ArchivedFortuneRecordRepository(FortuneRecordRepository)",
-             ["count_records(account_id: int) -> bool"], []),
+             ["count_records(account_id: int) -> bool"], [("#355", False)]),
             ("다른 소유자의 같은 bool/int 후보", OWNED_BASELINE, "UnrelatedRecordRepository(ABC)",
              ["count_records(account_id: int) -> bool"], [("#355", False)]),
             ("조상에게는 복합문 아래에만 있는 메서드(검사기 줄 없음)를 자식이 적음", OWNED_BASELINE,
@@ -659,7 +682,55 @@ class RepositoryForecastTest(unittest.TestCase):
         ]:
             with self.subTest(label=label):
                 self.write(REPOSITORY, baseline)
-                self.assertEqual(self.outcome(methods, owner=owner), expected)
+                found = self.forecast(methods, owner=owner)
+                self.assertEqual(sorted((f.rule, f.confirmed) for f in found), expected)
+                # 조상과만 겹친 후보는 겹친 조상(여기서는 줄을 가진 유일한 조상)을 사유에 적는다 — 다른 칸에는 없다.
+                for item in found:
+                    self.assertEqual(heir_reason("FortuneRecordRepository", item.owner.split(".")[1]) in item.detail,
+                                     label in heirs, item.detail)
+
+    def test_heir_turning_its_own_passing_method_into_the_ancestor_debt_is_a_candidate(self) -> None:
+        # 재검토 반례 둘 — 자식이 기준선에서 직접 정의하던 통과 메서드를 조상의 위반 꼴로 바꾼다. 판정문이 조상의 기존 줄과
+        # 같아도 지우지 않는다(실검사기는 자식에게도 새 줄을 낸다 · 1 → 2).
+        def order_lines(detail: str) -> int:
+            result = subprocess.run([sys.executable, str(SCRIPTS / "check-transaction-boundary.py"), str(self.repo)],
+                                    env=self.env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+            return len(re.findall(rf"\[#355\] {re.escape(ORDER_REPOSITORY)}:\d+: {re.escape(detail)}", result.stdout))
+
+        for label, baseline, ancestor, method, detail, changed in [
+            ("값 객체 반환 → 조상의 원시 식별자", HEIR_OWNER_BASELINE, "LegacyOrderRepository", "owner_id() -> UUID",
+             OWNER_DETAIL, ("def owner_id(self) -> OwnerId", "def owner_id(self) -> UUID")),
+            ("애그리거트 반환 → 조상의 frozenset", HEIR_IDS_BASELINE, "BaseOrderRepository", "ids() -> frozenset[UUID]",
+             IDS_DETAIL, ("def ids(self) -> Order | None", "def ids(self) -> frozenset[UUID]")),
+        ]:
+            with self.subTest(label=label):
+                self.write(ORDER_REPOSITORY, baseline)
+                name = method.split("(")[0]
+                found = self.forecast([method], path=ORDER_REPOSITORY, owner=f"OrderRepository({ancestor})")
+                self.assertEqual([(f.rule, f.path, f.owner, f.confirmed) for f in found],
+                                 [("#355", ORDER_REPOSITORY, f"OrderRepository.{name}", False)])
+                self.assertTrue(found[0].detail.startswith(f"{detail} — {heir_reason(ancestor, name)}"), found[0].detail)
+                self.assertIn(f" — {heir_question(ancestor)}", found[0].detail)
+                # 후상태 대조 — 자식의 반환을 명세대로 바꾼 구현은 실검사기 같은 판정문 줄이 1 → 2.
+                self.assertEqual(order_lines(detail), 1)
+                self.write(ORDER_REPOSITORY, baseline.replace(*changed))
+                self.assertEqual(order_lines(detail), 2)
+        # 같은 클래스 자기의 기존 빚을 다시 적으면(조상에도 같은 판정문) 지금처럼 뺀다.
+        own = HEIR_OWNER_BASELINE.replace("def owner_id(self) -> OwnerId", "def owner_id(self) -> UUID")
+        self.write(ORDER_REPOSITORY, own)
+        self.assertEqual(self.outcome(["owner_id() -> UUID"], path=ORDER_REPOSITORY,
+                                      owner="OrderRepository(LegacyOrderRepository)"), [])
+        # 조상이 여럿이면 사슬에서 처음 겹친(가까운) 조상 하나를 적는다.
+        middle = own.replace("class OrderRepository(LegacyOrderRepository):",
+                             "class MiddleOrderRepository(LegacyOrderRepository):")
+        middle += "\n\nclass ArchivedOrderRepository(MiddleOrderRepository):\n    pass\n"
+        self.write(ORDER_REPOSITORY, middle)
+        found = self.forecast(["owner_id() -> UUID"], path=ORDER_REPOSITORY,
+                              owner="ArchivedOrderRepository(MiddleOrderRepository)")
+        self.assertEqual([(f.rule, f.confirmed) for f in found], [("#355", False)])
+        self.assertIn(heir_reason("MiddleOrderRepository", "owner_id"), found[0].detail)
+        self.assertNotIn("LegacyOrderRepository", found[0].detail)
 
     def test_method_only_under_a_compound_statement_is_a_candidate(self) -> None:
         self.write(REPOSITORY, DEBT_BASELINE)
@@ -730,8 +801,8 @@ class RepositoryForecastTest(unittest.TestCase):
             ("Optional → | None", own, ["legacy_opt(account_id: int) -> UUID | None"], []),
             ("tuple → list", own, ["legacy_many(account_id: int) -> list[UUID]"], []),
             ("dict 값 타입만", own, ["legacy_rows(account_id: int) -> dict[str, str]"], []),
-            ("물려받은 메서드", archived, ["legacy_ids(account_id: int) -> frozenset[UUID]",
-                                    "delete_old(account_id: int) -> None"], []),
+            ("물려받은 메서드(조상과만 겹침 = 후보)", archived, ["legacy_ids(account_id: int) -> frozenset[UUID]",
+                                                  "delete_old(account_id: int) -> None"], [("#355", False), ("#597", False)]),
             ("금지 A → 금지 B", own, ["legacy_opt(account_id: int) -> dict[str, int]"], [("#355", True)]),
             ("정상 → 위반", own, ["find(record_id: UUID) -> UUID | None"], [("#355", True)]),
             ("같은 반환의 새 이름", own, ["other_ids(account_id: int) -> frozenset[UUID]"], [("#355", True)]),
