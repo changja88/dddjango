@@ -111,7 +111,7 @@ def _is_target_handler(func: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
             nm = fn.attr if isinstance(fn, ast.Attribute) else getattr(fn, "id", None)
             if nm == "exception_handler" and any(_exc_name(a) in TARGET_EXC for a in dec.args):
                 return True
-    for arg in func.args.args:
+    for arg in (*func.args.posonlyargs, *func.args.args, *func.args.kwonlyargs):
         if arg.annotation is not None and _exc_name(arg.annotation) in TARGET_EXC:
             return True
     return False

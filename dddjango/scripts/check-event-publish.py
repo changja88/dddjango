@@ -355,7 +355,7 @@ def _check_event_router(root: Path, py: Path, mod: ast.Module, f: Findings) -> N
 
 def _event_param_names(fn: ast.FunctionDef | ast.AsyncFunctionDef, event_syms: set[str]) -> set[str]:
     out = set()
-    for a in fn.args.args + fn.args.kwonlyargs:
+    for a in fn.args.posonlyargs + fn.args.args + fn.args.kwonlyargs:
         ann = a.annotation
         names = set()
         for n in ast.walk(ann) if ann else []:

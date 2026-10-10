@@ -1035,5 +1035,336 @@ class DomainServiceArgumentsRegression(unittest.TestCase):
         self.assertEqual(result, (0, "", "", []))
 
 
+ORDER_SOURCE = '''from __future__ import annotations
+
+
+class Order:
+    def __init__(self, order_id: int) -> None:
+        self.id: int = order_id
+        self.status: str = "NEW"
+
+    def place(self) -> None:
+        self.status = "PLACED"
+'''
+ORDER_REPOSITORY_SOURCE = '''from __future__ import annotations
+
+from abc import ABC, abstractmethod
+
+from application.orders.domain_layer.order.order import Order
+
+
+class OrderRepository(ABC):
+    @abstractmethod
+    def get(self, order_id: int) -> Order: ...
+
+    @abstractmethod
+    def save(self, order: Order) -> None: ...
+'''
+ORDERS_UNIT_OF_WORK_SOURCE = '''from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from collections.abc import Callable
+from types import TracebackType
+
+
+class OrdersUnitOfWork(ABC):
+    @abstractmethod
+    def __enter__(self) -> "OrdersUnitOfWork": ...
+
+    @abstractmethod
+    def __exit__(self, exc_type: type[BaseException] | None, exc: BaseException | None,
+                 traceback: TracebackType | None) -> None: ...
+
+    @abstractmethod
+    def after_commit(self, callback: Callable[[], None]) -> None: ...
+'''
+TRANSIENT_CONTRACT = "선행 계약(08-04 API-error) 소유"
+
+
+class CheckerArgumentKindsRegression(unittest.TestCase):
+    """F4-76 과 뿌리가 같은 인자 수집 — 위치 전용 · kw-only 인자도 위치 인자와 같은 판정을 낸다(#287 · #533 · transient
+    핸들러 판별 · #195 · #197 · #280 · #14 · #11 · #545). 꼴마다 첫 항목이 위치 인자 기준이다."""
+
+    IDENTITY = ("schema", "checker", "rule", "contract_ref", "file", "symbol", "severity", "message")
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="field-argument-kinds-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name) / "project"
+        self.records = Path(self.tmp.name) / "findings.jsonl"
+        self.env = dict(os.environ, DJR_FINDINGS_JSON=str(self.records),
+                        DJR_VIOLATIONS_DIR=str(Path(self.tmp.name) / "violations"))
+
+    def run_checker(self, checker, files):
+        for rel, source in files.items():
+            target = self.root / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(source, encoding="utf-8")
+        self.records.unlink(missing_ok=True)
+        result = subprocess.run([sys.executable, "-B", str(SCRIPTS / checker), str(self.root)],
+                                capture_output=True, text=True, env=self.env)
+        records = [json.loads(line) for line in self.records.read_text(encoding="utf-8").splitlines()] \
+            if self.records.exists() else []
+        identities = [{key: row[key] for key in self.IDENTITY} for row in records]
+        return result.returncode, result.stdout, result.stderr, identities
+
+    def assert_shapes(self, checker, build, shapes, exit_code, rules):
+        baseline = None
+        for shape, signature in shapes:
+            with self.subTest(checker=checker, shape=shape, signature=signature):
+                result = self.run_checker(checker, build(signature))
+                if baseline is None:
+                    baseline = result
+                self.assertEqual(result[0], exit_code, result[1] + result[2])
+                self.assertEqual(result[2], "")
+                self.assertEqual([row["rule"] or row["contract_ref"] for row in result[3]], rules, result[1])
+                self.assertEqual(result, baseline, "출력·발견 키·exit 는 위치 인자 꼴과 같아야 한다")
+
+    @staticmethod
+    def repository(method):
+        def build(parameters):
+            return {
+                "application/orders/domain_layer/order/order.py": ORDER_SOURCE,
+                "application/orders/domain_layer/order/order_repository.py":
+                    "from __future__ import annotations\n\nfrom abc import ABC, abstractmethod\n\n"
+                    "from application.orders.domain_layer.order.order import Order\n\n\n"
+                    "class OrderRepository(ABC):\n    @abstractmethod\n"
+                    f"    def {method}(self, {parameters}) -> None: ...\n",
+            }
+        return build
+
+    def test_repository_write_arguments_287(self):
+        self.assert_shapes("check-transaction-boundary.py", self.repository("save"), (
+            ("positional", "order: Order, force: bool"), ("kw-only", "*, order: Order, force: bool"),
+            ("pos-only", "order: Order, force: bool, /"), ("pos-only + positional", "order: Order, /, force: bool"),
+            ("positional + kw-only", "order: Order, *, force: bool = False"),
+        ), 2, ["#287"])
+        self.assert_shapes("check-transaction-boundary.py", self.repository("remove"), (
+            ("positional", "order_id: int"), ("kw-only", "*, order_id: int"), ("pos-only", "order_id: int, /"),
+        ), 2, ["#287"])
+        self.assert_shapes("check-transaction-boundary.py", self.repository("save"), (
+            ("positional", "order: Order"), ("kw-only", "*, order: Order"), ("pos-only", "order: Order, /"),
+        ), 0, [])
+
+    @staticmethod
+    def external_broker(parameters):
+        port = ('"""external 브로커 계약.\n\n'
+                "보장: at-least-once — 반드시 도달하고 두 번 올 수 있다. 발행은 outbox 를 거치고,\n"
+                "실패는 dead_letter 로 간다. ordering 은 보장하지 않는다. 직렬화(serializer)는 JSON,\n"
+                '스키마 version 필드를 싣는다.\n"""\n'
+                "from __future__ import annotations\n\nfrom abc import ABC, abstractmethod\n"
+                "from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass EventEnvelope:\n"
+                "    source: str\n    event_id: str\n    version: int\n    body: bytes\n\n\n"
+                "class ExternalBrokerPort(ABC):\n    @abstractmethod\n"
+                f"    def publish(self, {parameters}) -> None: ...\n")
+        broker = ("from __future__ import annotations\n\n"
+                  "from framework.broker.external.external_broker_port import EventEnvelope, ExternalBrokerPort\n\n\n"
+                  f"class ExternalBroker(ExternalBrokerPort):\n    def publish(self, {parameters}) -> None:\n"
+                  "        raise NotImplementedError\n")
+        return {"framework/broker/external/external_broker_port.py": port,
+                "framework/broker/external/external_broker.py": broker}
+
+    def test_external_publish_envelope_533(self):
+        self.assert_shapes("check-broker-contract.py", self.external_broker, (
+            ("positional", "envelope: EventEnvelope"), ("kw-only", "*, envelope: EventEnvelope"),
+            ("pos-only", "envelope: EventEnvelope, /"),
+        ), 0, [])
+        self.assert_shapes("check-broker-contract.py", self.external_broker, (
+            ("positional", "fact: object, event_id: str, source: str"),
+            ("kw-only", "fact: object, *, event_id: str, source: str"),
+            ("pos-only", "fact: object, event_id: str, source: str, /"),
+        ), 0, [])
+        self.assert_shapes("check-broker-contract.py", self.external_broker, (
+            ("positional", "fact: object"), ("kw-only", "*, fact: object"), ("pos-only", "fact: object, /"),
+        ), 2, ["#533", "#533"])
+
+    @staticmethod
+    def transient_handler(branch):
+        guard = ('    if getattr(exc.__cause__, "sqlstate", None) not in {"40001", "40P01"}:\n'
+                 '        return JsonResponse({"code": "INTERNAL"}, status=500)\n') if branch else ""
+
+        def build(parameters):
+            return {"config/api.py":
+                    "from __future__ import annotations\n\nfrom django.db import OperationalError\n"
+                    "from django.http import HttpRequest, JsonResponse\nfrom ninja_extra import NinjaExtraAPI\n\n"
+                    f"api = NinjaExtraAPI()\n\n\ndef on_operational_error({parameters}) -> JsonResponse:\n{guard}"
+                    '    return JsonResponse({"code": "UNAVAILABLE"}, status=503)\n\n\n'
+                    "api.add_exception_handler(OperationalError, on_operational_error)\n"}
+        return build
+
+    def test_transient_handler_annotation(self):
+        shapes = (("positional", "request: HttpRequest, exc: OperationalError"),
+                  ("kw-only", "request: HttpRequest, *, exc: OperationalError"),
+                  ("pos-only", "request: HttpRequest, exc: OperationalError, /"))
+        self.assert_shapes("check-transient-overmapping.py", self.transient_handler(False), shapes, 2,
+                           [TRANSIENT_CONTRACT])
+        self.assert_shapes("check-transient-overmapping.py", self.transient_handler(True), shapes, 0, [])
+
+    USE_CASE_SHAPES = (
+        ("positional", "order_repository: OrderRepository, unit_of_work: OrdersUnitOfWork"),
+        ("kw-only", "*, order_repository: OrderRepository, unit_of_work: OrdersUnitOfWork"),
+        ("pos-only", "order_repository: OrderRepository, unit_of_work: OrdersUnitOfWork, /"),
+        ("pos-only repository", "order_repository: OrderRepository, /, unit_of_work: OrdersUnitOfWork"),
+        ("pos-only unit of work", "unit_of_work: OrdersUnitOfWork, /, order_repository: OrderRepository"),
+    )
+
+    @staticmethod
+    def use_case(body, returns):
+        def build(parameters):
+            return {
+                "application/orders/domain_layer/order/order.py": ORDER_SOURCE,
+                "application/orders/domain_layer/order/order_repository.py": ORDER_REPOSITORY_SOURCE,
+                "application/orders/application_layer/port/unit_of_work/orders_unit_of_work.py":
+                    ORDERS_UNIT_OF_WORK_SOURCE,
+                "application/orders/application_layer/order/place_order/place_order_use_case.py":
+                    "from __future__ import annotations\n\n"
+                    "from application.orders.application_layer.port.unit_of_work.orders_unit_of_work import "
+                    "OrdersUnitOfWork\nfrom application.orders.domain_layer.order.order import Order\n"
+                    "from application.orders.domain_layer.order.order_repository import OrderRepository\n\n\n"
+                    f"class PlaceOrderUseCase:\n    def __init__(self, {parameters}) -> None:\n"
+                    "        self._order_repository = order_repository\n        self._unit_of_work = unit_of_work\n\n"
+                    f"    def execute(self, order_id: int) -> {returns}:\n        with self._unit_of_work:\n{body}",
+            }
+        return build
+
+    def test_use_case_write_discipline_195_197(self):
+        field_write = ("            order = self._order_repository.get(order_id)\n"
+                       '            order.status = "PLACED"\n            self._order_repository.save(order)\n')
+        root_write = ("            order = self._order_repository.get(order_id)\n            order.place()\n"
+                      "            self._order_repository.save(order)\n")
+        read_only = "            return self._order_repository.get(order_id)\n"
+        self.assert_shapes("check-transaction-boundary.py", self.use_case(field_write, "None"),
+                           self.USE_CASE_SHAPES, 2, ["#195", "#195"])
+        self.assert_shapes("check-transaction-boundary.py", self.use_case(read_only, "Order"),
+                           self.USE_CASE_SHAPES, 2, ["#197"])
+        self.assert_shapes("check-transaction-boundary.py", self.use_case(root_write, "None"),
+                           self.USE_CASE_SHAPES, 0, [])
+
+    @staticmethod
+    def event_handler(argument):
+        def build(parameters):
+            return {
+                "application/orders/published_event/order_placed.py":
+                    "from __future__ import annotations\n\nfrom dataclasses import dataclass\n\n\n"
+                    "@dataclass(frozen=True)\nclass OrderPlaced:\n    sku: str\n    quantity: int\n",
+                "application/orders/domain_layer/order/order.py": ORDER_SOURCE,
+                "application/inventory/domain_layer/stock/stock.py":
+                    "from __future__ import annotations\n\n\nclass Stock:\n"
+                    "    def __init__(self, sku: str, quantity: int) -> None:\n        self.sku: str = sku\n"
+                    "        self.quantity: int = quantity\n\n    def reduce(self, quantity: int) -> None:\n"
+                    "        self.quantity -= quantity\n",
+                "application/inventory/domain_layer/stock/stock_repository.py":
+                    "from __future__ import annotations\n\nfrom abc import ABC, abstractmethod\n\n"
+                    "from application.inventory.domain_layer.stock.stock import Stock\n\n\n"
+                    "class StockRepository(ABC):\n    @abstractmethod\n    def get(self, sku: str) -> Stock: ...\n\n"
+                    "    @abstractmethod\n    def save(self, stock: Stock) -> None: ...\n",
+                "application/inventory/application_layer/stock/reduce_stock/reduce_stock_use_case.py":
+                    "from __future__ import annotations\n\n"
+                    "from application.inventory.domain_layer.stock.stock_repository import StockRepository\n"
+                    "from application.orders.published_event.order_placed import OrderPlaced\n\n\n"
+                    "class ReduceStockUseCase:\n    def __init__(self, stock_repository: StockRepository) -> None:\n"
+                    "        self._stock_repository = stock_repository\n\n"
+                    f"    def execute(self, {parameters}) -> None:\n"
+                    "        stock = self._stock_repository.get(event.sku)\n"
+                    f"        stock.reduce({argument})\n        self._stock_repository.save(stock)\n",
+            }
+        return build
+
+    def test_event_handler_translation_280(self):
+        shapes = (("positional", "event: OrderPlaced"), ("kw-only", "*, event: OrderPlaced"),
+                  ("pos-only", "event: OrderPlaced, /"))
+        self.assert_shapes("check-event-publish.py", self.event_handler("event"), shapes, 2, ["#280"])
+        self.assert_shapes("check-event-publish.py", self.event_handler("event.quantity"), shapes, 0, [])
+
+    @staticmethod
+    def cross_port_use_case(body):
+        def build(parameters):
+            return {
+                "application/orders/application_layer/port/price_quote/price_quote_port.py":
+                    "from __future__ import annotations\n\nfrom abc import ABC, abstractmethod\n\n\n"
+                    "class PriceQuotePort(ABC):\n    @abstractmethod\n"
+                    "    def quote(self, order_id: int) -> int: ...\n",
+                "application/orders/application_layer/port/unit_of_work/orders_unit_of_work.py":
+                    ORDERS_UNIT_OF_WORK_SOURCE,
+                "application/orders/driven_layer/adapter/anticorruption_layer/pricing/pricing_price_quote_adapter.py":
+                    "from __future__ import annotations\n\n"
+                    "from application.orders.application_layer.port.price_quote.price_quote_port import "
+                    "PriceQuotePort\n\n\nclass PricingPriceQuoteAdapter(PriceQuotePort):\n"
+                    "    def quote(self, order_id: int) -> int:\n        return 0\n",
+                "application/orders/application_layer/order/place_order/place_order_use_case.py":
+                    "from __future__ import annotations\n\n"
+                    "from application.orders.application_layer.port.price_quote.price_quote_port import "
+                    "PriceQuotePort\n"
+                    "from application.orders.application_layer.port.unit_of_work.orders_unit_of_work import "
+                    "OrdersUnitOfWork\n\n\n"
+                    f"class PlaceOrderUseCase:\n    def __init__(self, {parameters}) -> None:\n"
+                    "        self._price_quote_port = price_quote_port\n        self._unit_of_work = unit_of_work\n\n"
+                    f"    def execute(self, order_id: int) -> int:\n{body}",
+            }
+        return build
+
+    def test_cross_port_inside_unit_of_work_14(self):
+        shapes = (("positional", "price_quote_port: PriceQuotePort, unit_of_work: OrdersUnitOfWork"),
+                  ("kw-only", "*, price_quote_port: PriceQuotePort, unit_of_work: OrdersUnitOfWork"),
+                  ("pos-only", "price_quote_port: PriceQuotePort, unit_of_work: OrdersUnitOfWork, /"),
+                  ("pos-only port", "price_quote_port: PriceQuotePort, /, unit_of_work: OrdersUnitOfWork"))
+        inside = "        with self._unit_of_work:\n            return self._price_quote_port.quote(order_id)\n"
+        outside = ("        price = self._price_quote_port.quote(order_id)\n        with self._unit_of_work:\n"
+                   "            return price\n")
+        self.assert_shapes("check-context-isolation.py", self.cross_port_use_case(inside), shapes, 2, ["#14"])
+        self.assert_shapes("check-context-isolation.py", self.cross_port_use_case(outside), shapes, 0, [])
+
+    @staticmethod
+    def export_port(parameters):
+        return {"application/orders/application_layer/port/order_export/order_export_port.py":
+                "from __future__ import annotations\n\nfrom abc import ABC, abstractmethod\n\n\n"
+                "class OrderExportPort(ABC):\n    @abstractmethod\n"
+                f"    def export(self, {parameters}) -> int: ...\n"}
+
+    def test_boundary_annotation_11(self):
+        self.assert_shapes("check-context-isolation.py", self.export_port, (
+            ("positional", "rows: QuerySet"), ("kw-only", "*, rows: QuerySet"), ("pos-only", "rows: QuerySet, /"),
+        ), 2, ["#11"])
+        self.assert_shapes("check-context-isolation.py", self.export_port, (
+            ("positional", "order_ids: tuple[int, ...]"), ("kw-only", "*, order_ids: tuple[int, ...]"),
+            ("pos-only", "order_ids: tuple[int, ...], /"),
+        ), 0, [])
+
+    @staticmethod
+    def repository_adapter(guard):
+        guard_source = ('        if order.pending_events:\n            raise RuntimeError("uncollected events")\n'
+                        if guard else "")
+
+        def build(parameters):
+            return {
+                "application/orders/domain_layer/order/order.py":
+                    "from __future__ import annotations\n\n\nclass Order:\n"
+                    "    def __init__(self, order_id: int) -> None:\n        self.id: int = order_id\n"
+                    '        self.status: str = "NEW"\n        self._pending_events: list[object] = []\n\n'
+                    '    def place(self) -> None:\n        self.status = "PLACED"\n'
+                    "        self._pending_events.append(object())\n\n    @property\n"
+                    "    def pending_events(self) -> tuple[object, ...]:\n        return tuple(self._pending_events)\n\n"
+                    "    def pull_events(self) -> tuple[object, ...]:\n"
+                    "        events: tuple[object, ...] = tuple(self._pending_events)\n"
+                    "        self._pending_events.clear()\n        return events\n",
+                "application/orders/domain_layer/order/order_repository.py": ORDER_REPOSITORY_SOURCE,
+                "application/orders/driven_layer/adapter/persistence/repository/order_repository.py":
+                    "from __future__ import annotations\n\n"
+                    "from application.orders.django_orders.models import OrderModel\n"
+                    "from application.orders.domain_layer.order.order import Order\n"
+                    "from application.orders.domain_layer.order.order_repository import OrderRepository\n\n\n"
+                    "class DjangoOrderRepository(OrderRepository):\n"
+                    "    def get(self, order_id: int) -> Order:\n        row = OrderModel.objects.get(id=order_id)\n"
+                    f"        return Order(row.id)\n\n    def save(self, {parameters}) -> None:\n{guard_source}"
+                    '        OrderModel.objects.update_or_create(id=order.id, defaults={"status": order.status})\n',
+            }
+        return build
+
+    def test_repository_save_guard_545(self):
+        shapes = (("positional", "order: Order"), ("kw-only", "*, order: Order"), ("pos-only", "order: Order, /"))
+        self.assert_shapes("check-port-adapter-pairing.py", self.repository_adapter(True), shapes, 0, [])
+        self.assert_shapes("check-port-adapter-pairing.py", self.repository_adapter(False), shapes, 2, ["#545"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

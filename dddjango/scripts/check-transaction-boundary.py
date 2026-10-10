@@ -294,7 +294,8 @@ def _check_repository_contract(root: Path, repo_path: Path, agg_name: str,
             if "abstractmethod" not in decos:
                 f.add("#283", _rel(root, repo_path, m.lineno),
                       f"`{m.name}` 에 @abstractmethod 가 없다 — 리포지토리 선언은 구현이 아니라 계약이다")
-            args = [a for a in m.args.args if a.arg not in ("self", "cls")]
+            args = [a for a in (*m.args.posonlyargs, *m.args.args, *m.args.kwonlyargs)
+                    if a.arg not in ("self", "cls")]
             # #597 — 쓰기 이름은 save·remove 로 시작.
             first = m.name.split("_", 1)[0]
             if first in WRITE_PREFIX_BAN:
@@ -362,7 +363,7 @@ def _check_bypass_query_summary(root: Path, bc: Path, cand: Candidates) -> None:
 
 def _repo_param_names(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
     out = set()
-    for a in fn.args.args + fn.args.kwonlyargs:
+    for a in fn.args.posonlyargs + fn.args.args + fn.args.kwonlyargs:
         if any(n.endswith("Repository") for n in _annotation_names(a.annotation)):
             out.add(a.arg)
     return out
@@ -370,7 +371,7 @@ def _repo_param_names(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
 
 def _uow_param_names(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
     out = set()
-    for a in fn.args.args + fn.args.kwonlyargs:
+    for a in fn.args.posonlyargs + fn.args.args + fn.args.kwonlyargs:
         if any(n.endswith("UnitOfWork") for n in _annotation_names(a.annotation)):
             out.add(a.arg)
     return out

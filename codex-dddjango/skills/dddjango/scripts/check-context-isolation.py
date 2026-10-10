@@ -885,7 +885,7 @@ def _check_uow_cross(bc: Path, bc_rel: Path, cross_ports: set[str], out: Finding
         attr_names: set[str] = set()
         for node in ast.walk(mod):
             if isinstance(node, ast.FunctionDef) and node.name == "__init__":
-                for arg in node.args.args + node.args.kwonlyargs:
+                for arg in node.args.posonlyargs + node.args.args + node.args.kwonlyargs:
                     if _ann_idents(arg.annotation) & cross_ports:
                         attr_names.update({arg.arg, f"_{arg.arg}"})
         if not attr_names:
@@ -1074,7 +1074,7 @@ def _check_boundary_annotations(bc: Path, bc_rel: Path, out: Findings) -> None:
                 if isinstance(node, ast.AnnAssign):
                     anns.append(node.annotation)
                 elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    anns.extend(a.annotation for a in node.args.args + node.args.kwonlyargs)
+                    anns.extend(a.annotation for a in node.args.posonlyargs + node.args.args + node.args.kwonlyargs)
                     anns.append(node.returns)
                 for ann in anns:
                     idents = _ann_idents(ann)

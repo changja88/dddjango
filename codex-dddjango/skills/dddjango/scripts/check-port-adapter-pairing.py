@@ -555,7 +555,8 @@ def _save_event_guard_ok(save_fn: "ast.FunctionDef | ast.AsyncFunctionDef",
     삼켜지지 않음 ⑤ 가드가 save body 의 첫 ORM 접촉(`objects` 체인) 이전. 이름 토큰의 단순
     존재(죽은 분기·지역 이름·무관 수신자)는 가드가 아니다.
     """
-    params = {a.arg for a in save_fn.args.args + save_fn.args.kwonlyargs if a.arg != "self"}
+    params = {a.arg for a in save_fn.args.posonlyargs + save_fn.args.args + save_fn.args.kwonlyargs
+              if a.arg != "self"}
     aliases = set(params)
     for node in ast.walk(save_fn):
         if isinstance(node, ast.Assign) and isinstance(node.value, ast.Name) \

@@ -240,9 +240,10 @@ def _check_broker_file(root: Path, py: Path, mod: ast.Module, side: str,
             if "publish" in m.name:
                 _check_publish_loop(root, py, m, f)
                 if side == "external":
-                    args = [a.arg for a in m.args.args if a.arg not in ("self", "cls")]
+                    args = [a.arg for a in (*m.args.posonlyargs, *m.args.args, *m.args.kwonlyargs)
+                            if a.arg not in ("self", "cls")]
                     ann_names = set()
-                    for a in m.args.args:
+                    for a in (*m.args.posonlyargs, *m.args.args, *m.args.kwonlyargs):
                         for n in ast.walk(a.annotation) if a.annotation else []:
                             if isinstance(n, ast.Name):
                                 ann_names.add(n.id)
