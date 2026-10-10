@@ -1783,6 +1783,18 @@ return Status(403, suspended_error)
             return Status(404, missing)
         return result
 '''), [], {"cj": (0, []), "bl": (0, [])}),
+    # P17 — 꼴 2 에서 값이 늘 있는 다른 승인 필드(`reason_label: str`)는 두 가지 어디서든 읽는다(R-3655 — 값 있는 가지에 묶이는
+    # 것은 검사식이 본 `T | None` 필드뿐 · 그 음성은 N12k).
+    "P17": (ev_files(ev_arm(ev_form2('''until_error: AccountsErrorSchema = AccountSuspendedError(
+    message=f"Account is suspended until {suspended.blocked_until.astimezone(UTC).isoformat()}."
+)
+response[_LOGIN_BLOCKED_REASON_HEADER] = suspended.reason_label
+response[_LOGIN_BLOCKED_UNTIL_HEADER] = suspended.blocked_until.astimezone(UTC).isoformat()
+return Status(403, until_error)
+''', '''indefinite_error: AccountsErrorSchema = AccountSuspendedError(message=suspended.reason_label)
+response[_LOGIN_BLOCKED_REASON_HEADER] = suspended.reason_label
+return Status(403, indefinite_error)
+'''))), [EV_UNTIL, EV_LABEL], {"auto": (0, []), "cj": (0, []), "bl": (0, [])}),
     # ── 음성(변종 하나씩) ───────────────────────────────────────────────────────────────────
     "N1": (ev_files(ev_arm(ev_single("message=str(suspended)"))), [],
            {"auto": (2, [("#474", "message=str(suspended)", T474)]),
@@ -2194,6 +2206,15 @@ for _suffix in ("", "-app"):
         [f"{EV_APP if _suffix else EV_SUSP}.reason_label"],
         {"auto": (0, []), "cj": (2, [("-", "suspended_error: AccountsErrorSchema", EV_ARM), *EV_OWN2]),
          "bl": (2, [("-", "suspended_error: AccountsErrorSchema", EV_ARM), *EV_OWN2])})
+
+# N35 — «선언 필드» 는 클래스 본문 `f: T` 또는 `__init__` 의 `self.f: T = …` 뿐이다(R-3654): 주석 없는 대입 `self.f = f` 만 있는
+# 필드를 읽으면 승인 flag 를 넘겨도 비켜 주지 않는다(상속 필드는 N27).
+EV_UNDECLARED_SRC = EV_SUSPENDED_SRC.replace("    reason_label: str\n\n", "")
+assert EV_UNDECLARED_SRC != EV_SUSPENDED_SRC and "self.reason_label = reason_label" in EV_UNDECLARED_SRC
+EV_CASES["N35"] = (
+    ev_files(ev_arm(ev_single(headers=('response["Login-Blocked-Label"] = suspended.reason_label',))),
+             **{f"{EV_EXC_DIR}/account_suspended.py": EV_UNDECLARED_SRC}),
+    [EV_LABEL], {mode: (2, [("#474", "= suspended.reason_label", T474)]) for mode in ("auto", "cj", "bl", "pre")})
 
 # lesson 꼴(트리 밖 `driving_layer/controller.py` — code lane 행렬 픽스처와 같은 자리)
 EV_LESSON_CTRL = "application/lesson/driving_layer/controller.py"
