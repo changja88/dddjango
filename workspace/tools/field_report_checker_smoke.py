@@ -2555,10 +2555,12 @@ class EventValueRegression(unittest.TestCase):
             "dddjango/agents/design-architect.md": (
                 "사건 값", "operation `description`", "발주자 도출 · 설계 가정", "같은 concrete · 코드 · 실제 status 값으로"),
             "dddjango/commands/dddjango.md": (
-                "`--event-value`", "`response=` 선언 유무와 관계없이", "사건 값 읽기에 승인된 code-json scope 가 없으면"),
+                "`--event-value`", "`response=` 선언 유무와 관계없이",
+                "사건 값을 읽었는데 그 읽기를 승인한 code-json scope 가 없으면(preserve 12-slot 만 있는 표면에서 읽은 경우 포함)"),
             "dddjango/skills/implementation-django-ninja/references/final.md": (
                 "`n.f.astimezone(UTC).isoformat()`", "`if <n>.<f> is not None:`",
-                "`__init__`의 `self.f: T = …`", "값이 늘 있는 다른 승인 필드는 어느 가지에서든 읽을 수 있다"),
+                "`__init__`의 `self.f: T = …`", "`discipline-houserules` 의 타입 어노테이션 절이 정한 꼴",
+                "값이 늘 있는 다른 승인 필드는 어느 가지에서든 읽을 수 있다"),
             "dddjango/skills/discipline-houserules/references/final.md": ("`<project>/settings` 의 문자열로 등록해",),
         }
         for rel, expected in phrases.items():
@@ -2568,7 +2570,8 @@ class EventValueRegression(unittest.TestCase):
                     self.assertIn(phrase, text)
         codex = {
             "codex-dddjango/skills/dddjango/SKILL.md": (
-                "`--event-value`", "`response=` 선언 유무와 관계없이", "사건 값 읽기에 승인된 code-json scope 가 없으면"),
+                "`--event-value`", "`response=` 선언 유무와 관계없이",
+                "사건 값을 읽었는데 그 읽기를 승인한 code-json scope 가 없으면(preserve 12-slot 만 있는 표면에서 읽은 경우 포함)"),
             "codex-dddjango/skills/dddjango-discipline-reviewer/SKILL.md": (
                 "slot 10 이 정한 머리 누락", "시간대를 갖는 aware datetime 인지", "구현된 operation `description`"),
             "codex-dddjango/skills/dddjango-design-review-api/SKILL.md": ("`str(다른 예외)`",),

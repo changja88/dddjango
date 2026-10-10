@@ -775,8 +775,9 @@ return result
 method가 주입된 응답용(temporal) Django `HttpResponse`를 받아 선택된 mapping branch에서 header를 설정한 뒤 두 인자 `Status`를
 반환한다. exception path의 구체 catch는 그 branch의 한 형태다.
 managed catch가 `as`로 잡은 자기 BC 구체 예외 하나의 승인 필드 값(사건 값)은 slot 10이 승인한
-선언 필드(그 예외 클래스 본문의 `f: T` 또는 `__init__`의 `self.f: T = …` — 하우스룰 §4 와 같은 꼴 · 상속 필드
-아님)만 읽어 공통 shape의 유일한 일반 `str` 설명 칸 keyword 값과 승인 머리 값에만 싣고, 꼴은
+선언 필드(그 예외 클래스 본문의 `f: T` — `discipline-houserules` 의 타입 어노테이션 절이 정한 꼴 — 또는
+`__init__`의 `self.f: T = …` · 상속 필드 아님)만 읽어 공통 shape의 유일한 일반 `str` 설명 칸 keyword
+값과 승인 머리 값에만 싣고, 꼴은
 `str` 필드 `n.f` · `datetime` 필드 `n.f.astimezone(UTC).isoformat()` · `int` 필드 f-string `{n.f}`
 뿐이며, 식별자 · status · 그 밖의 칸 · 머리 이름 · helper에는 싣지 않는다.
 승인 필드가 `T | None`이면 값이 없다는 까닭만으로 예외를 나누지 않고 catch 본문을

@@ -3561,7 +3561,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s007/b16": {
-      "h": "4b8561c8b44d7bc1",
+      "h": "d6cfe424f2aeb45b",
       "n": 2,
       "works": [
         "R-0331",
@@ -10859,8 +10859,8 @@
       ]
     },
     "dddjango/skills/implementation-django-ninja/references/final.md/s023-6.2/b27": {
-      "h": "2a470dd49084b127",
-      "n": 17,
+      "h": "5fde6b95b1c78be8",
+      "n": 18,
       "works": [
         "R-0068",
         "R-0069",
@@ -14852,7 +14852,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "9064b9240c2a0cbf89aa050a8e3379f186be4e2510d0fb664e2ff38f7951ed90"
+      "sha256": "0e94549a338a6f5624e1f4f0b7ab44ac88d2da6f49478b14cba54bb85a737c05"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -14884,7 +14884,7 @@
     },
     {
       "path": "ontology/rules/implementation-django-ninja-final.ttl",
-      "sha256": "02c51165f36dcc47b96bb801b4313579c3b9d9b07754d274fe5fce630b1e2b0f"
+      "sha256": "1d9c7757ce20d4d4d1aef387475cba4a65658f5b44455b424a6aa2437cfe3cd8"
     },
     {
       "path": "ontology/rules/implementation-django-ninja-skill.ttl",

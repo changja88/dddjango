@@ -2,7 +2,7 @@
 
 ## 바탕
 - 바탕: R main `d1e2b112`(dddjango 2.19.3 + dddjango-web 2.3.2). minor — 새 트리 칸 하나(`composition_root/wiring_material.py`) · 새 규범 R-3618 ~ R-3659 · 검사기 27종 그대로.
-- 사본 `<S>/core-220z`(가지 `core-220z` · 후보 사슬 16 커밋 + 봉인 재발행 `20d33584`). `<S>` = `/private/tmp/claude-501/-Users-hyun-Desktop-dddjango/ed01792c-e467-4a58-a794-ed16237ffb9e/scratchpad`.
+- 사본 `<S>/core-220z`(가지 `core-220z` · 후보 사슬 16 커밋 + 봉인 재발행 `20d33584` + 이 기록 `087a609c` + 재검토 보완 커밋 셋 — 아래 검토 이력). `<S>` = `/private/tmp/claude-501/-Users-hyun-Desktop-dddjango/ed01792c-e467-4a58-a794-ed16237ffb9e/scratchpad`.
 - 근거 기록: `<S>/core-2200-notes/`(조립 · F4-73 보완 셋 · 인자 읽기 · 다듬기 · 현장 실측) · `<S>/f80/`(F4-80 · F4-79 설계 · 점검 · 구현 · 검토 · 통합 · 배포 노트) · `<S>/rdimpl/br/`(리팩토링 묶음 노트 초안). 근거 기록은 옮기기 전 해시로 적혀 있다 — 이 문서의 해시는 옮긴 뒤 것이고 대응표는 `<S>/f80/integrate-220z.md` §1.
 - 현장 보고(spring_dream 서버 레인 · 장부 field-report-4):
   - **F4-73**: pre-gate 가 `update` 칸 저장소 메서드 서명을 #355 · #597 에 대 보지 못한다(F4-48 과 같은 뿌리 · 막힌 레인 없음). 현장 8-D-2 에서 반환 `frozenset[UUID]` 가 G1 뒤 구현 단계 registry 에서야 드러났다.
@@ -47,23 +47,24 @@
 
 **인자 읽기 아홉 자리**(`e0b16653` · 결정 19) — 검사기 여섯(`check-transaction-boundary` #287 · #195 · #197 / `check-broker-contract` #533 / `check-transient-overmapping` / `check-event-publish` #280 / `check-context-isolation` #14 · #11 / `check-port-adapter-pairing` #545)이 위치 전용 · kw-only 인자도 읽는다. 문구 · 발견 키 · exit · 위치 인자 판정은 그대로.
 
-**F4-80 사건 값**(검사기 `2f93fbf2` · 규범 `bf348486` · 보완 `b81bbff7` · `fc14a7c5` · `24f2be26` · `6f4a5730` — 설계 v2 + 덧붙임 1)
+**F4-80 사건 값**(검사기 `2f93fbf2` · 규범 `bf348486` · 보완 `b81bbff7` · `fc14a7c5` · `24f2be26` · `6f4a5730` · 재검토 보완 `695f633e` + 이 문서를 고친 커밋 — 설계 v2 + 덧붙임 1)
 - 꼴 1: `except <E> as <n>:` 가지에서 «오류 생성(설명 칸 keyword 값에 사건 값) → 고정 이름 머리 대입 0..n(값에 사건 값) → `return Status`». 꼴 2: `if <n>.<f> is not None: … else: …` — 두 가지가 각각 꼴 1 이고 같은 concrete · 식별자 · 실제 status 값. `T | None` 필드는 검사식이 본 그 필드만 값 있는 가지에서 읽는다.
 - 읽기 원자: 자기 BC 구체 예외 하나의 선언 필드(`str` · `int` · `datetime` · 그 `| None`) · `str` 은 `n.f` · `datetime` 은 `n.f.astimezone(UTC).isoformat()` 하나 · `int` 는 f-string 안 `{n.f}`. 설명 칸 = 공통 shape 의 유일한 일반 `str` 칸.
 - 승인 대조: slot 10 «사건 값» 칸 → Coordinator 가 registry #15 에만 `--event-value <예외 모듈>.<클래스>.<필드>` 렌더 → 검사기가 목록 밖 읽기(C1)와 응용 예외의 꼴 밖 읽기(C2)를 낸다. 새 #N 0 · 새 계약 category 2.
 - 프로필별: `auto`(registry_gate · pre-gate)는 꼴만 보고 #474 를 비켜 준다(승인 대조 없음) · `dddjango-code-json` 은 승인 대조 · `preserve-established` 는 지금 그대로(#474 · `--event-value` 는 사용 오류). 비켜 주기는 api 컨트롤러 operation 본문의 `try` handler 에만(webhook · OHS · route 밖 함수 제외).
 - 보완: 잡은 예외 통째를 호출 없이 머리 값 · 키에 싣는 길을 막음(사건 값 없는 가지의 기존 틈 포함) · 비켜 주기를 managed catch 로 좁힘 · C1 겹침 키 제거 · 규범 글 다섯 문장 다듬기.
+- 재검토 보완: 사건 값을 읽는 응용 catch 안에서는 람다 본문처럼 평가되지 않는 자리의 예외 통째 쓰기(`message=(lambda: str(n))()`)도 C2 로 막음 — 사건 값을 읽지 않는 catch 의 같은 꼴 · 평가되는 호출 인자 속 통째 쓰기(forwarding) · 도메인 예외(트리 #474)의 판정은 그대로 · R-0331 · R-3654 문장 다듬기(채번 · Expression 변화 없음).
 - 규범(그래프 정본 → 재투영): 개정 25(R-0331 포함 — 잡은 예외 필드 읽기 · BC 오류 응답 구성이면 `response=` 선언과 관계없이 12-slot 확인 · 사건 값 읽기는 code-json + `--event-value` 가 G2 증거 · 없으면 `auto` green 금지 · G1 반송) · 새 Work 6(R-3654 ~ R-3659). 계수 Norm · Work 3662 → 3668 · Expression 3970 → 4001 · q4 3653 → 3659. R-1992 · R-1995 개정으로 «새 코드는 소비자가 다르게 행동해야 하는 실패에만 · 동적 값은 slot 10 승인 필드뿐» 을 박았다.
 
 **F4-79**(같은 규범 커밋) — 검사기 0. 하우스룰 #90 블록에 한 문장(R-3659): framework 요청 틀(Ninja 인증 · Django 미들웨어)이 설정 문자열로 부르는 BC 해석 함수도 `open_host_service/` 창구. 트리 문서(`docs/mkrev2.py` · `docs/file_tree.html`) · 트리 개정 명세 #420 글.
 
 **설계 에이전트 문장**(R-3657 · 결정 23) — `design-architect` 에 한 bullet: 요구가 규칙과 충돌하면 출처를 사용자 확정 · 발주자 도출 · 설계 가정으로 가르고, 규칙 안 축소안과 바뀌는 사용자 결과를 유지안과 함께 G1 에 올리되 직접 확정하지 않는다. 집행 장치 없음(글만).
 
-**소성물 · 봉인** — `pregate_symbol_kinds.json` 재소성(`775dc2fe` · `12ff0130`) · rulepack 재소성 · Codex byte 미러 · 옮긴 뒤 봉인 재발행(`20d33584` — `sealed_commit` `12ff0130`).
+**소성물 · 봉인** — `pregate_symbol_kinds.json` 재소성(`775dc2fe` · `12ff0130`) · rulepack 재소성 · Codex byte 미러 · 옮긴 뒤 봉인 재발행(`20d33584` — `sealed_commit` `12ff0130`) · 재검토 보완 뒤 한 번 더 재소성 · 재봉인(맨 끝 chore 커밋 — `sealed_commit` 은 그 부모).
 
 ## 넣지 않은 것(다음 판 후보)
 - 사건 값 — 넓히는 것: 본문 칸(concrete 사건 칸) · 설명 칸 명시 flag(일반 `str` 칸이 둘 이상인 shape) · `else` 없는 꼴 · 리뷰어 · Coordinator 쪽 짝 문장.
-- 사건 값 — 좁히는 것: auto 가 비켜 준 읽기를 exit 밖 후보 줄로 알리기 · `--controller-module` 밖 컨트롤러 · 같은 이름 `@property` · 뒤따르는 `import *` · BC base keyword 의 람다 본문 통째 쓰기 · 모듈 별칭 대입 뒤 catch · preserve 의 응용 예외 읽기 · 앵커 시험의 출력 좌표 단언.
+- 사건 값 — 좁히는 것: auto 가 비켜 준 읽기를 exit 밖 후보 줄로 알리기 · `--controller-module` 밖 컨트롤러 · 같은 이름 `@property` · 뒤따르는 `import *` · 사건 값을 읽지 않는 catch 의 BC base keyword 람다 본문 통째 쓰기(행렬이 clean 으로 고정한 2 사례 — 응용 catch 전체를 허용 목록으로 바꾸는 결정과 함께) · 모듈 별칭 대입 뒤 catch · preserve 의 응용 예외 읽기 · 앵커 시험의 출력 좌표 단언.
 - 이미 로그인한 기기의 다른 응답 머리(Z-2 (가) — R-2000 범위 결정): 레인 G1 결정 뒤.
 - 검사기 빈틈: 사설 예외 import(5k) · `_command.py` / `_query.py` 칸의 예외(5m) · 유스케이스 모듈 재수출(5q) · 도메인 예외끼리 상속(e4).
 - 저장소 선언 예보: 자식 직계 정의 시 확정 갈래 · `match/case` 아래 메서드 · 확정 줄 까닭 한 구 · bool/int 후보에 사유 질문 · 상속 해소 정밀화(점 이름 · 제네릭 · 여러 베이스 · 마름모).
@@ -81,6 +82,7 @@
 | F4-80 S1 양성 · S2 음성 | P1 ~ P15 · P12g2 · P17 기대 exit 0 · P16 · P16b 앵커 조합 · 27종 증분 0(P9 는 #15 양성만) · N1 ~ N35 변종 하나씩 줄 원문 고정 |
 | F4-80 S3 무변 | 오류 계약 행렬 714 사례 byte 같음 · 재현 45 사례 가운데 바뀐 것 21(«바뀌는 것» 표 그대로) · 호스트 사본 44 실행 출력 차이 0 |
 | F4-80 변이 | 9종 전건 red |
+| F4-80 재검토 보완(마지막 · 10-11 07:53 ~) | 새 사례를 고치기 전 검사기에 돌리면 6 실행 red(N36a ~ c 응용 판의 code-json · 수집) → 고친 뒤 사례 표 346 실행 green · 변이 5종 전건 red(재검토에서 살아남던 둘 포함) · S3 다시: 행렬 714 사례 byte 같음 · 재현 45 사례는 앞 판(`48cce578` 검사기)과 차이 0(옛 판 대비 바뀐 것 21 — «바뀌는 것» 표와 byte 같음) · 호스트 복제 44 실행 출력이 앞 판과 같음(실행 앞뒤 파일 목록 해시 같음) |
 | 옮기기(사슬 16 → `d1e2b112` 위) | 충돌 0 · `git diff --raw` 49줄(web 쪽) · 243줄(사슬) byte 같음 · 커밋마다 메시지 · patch-id 같음 |
 | 마지막 통합 트리(`20d33584` · 10-11 06:58:02 ~ 07:30:28) — `make verify` | **6/6 green**(868초 — ontology 98 · backstop 165 · core 187 · probe 322 · cross 475 · regen 868) · `make verify-mutation` 12종 전건 red |
 | 같은 트리 — `make verify-web`(web 2.3.2 와 한 트리에 있는 첫 판) | exit 0 · 픽스처 3,281 / 0(1,946초) · 상시 답 인식 블록 core 대조 통과 · self-test Claude · Codex red 0 |
@@ -88,7 +90,7 @@
 | 봉인 | `gen_pregate_symbol_kinds --check` in-sync(종류 56) · `manifest_seal --check --draft` green(그룹 10 · 봉인 파일 269 · draft) |
 | `claude plugin validate dddjango --strict` | 운영자 실행 · 통과 |
 - 리팩토링 묶음: 실제 BC 리허설 1회(G0 → G2 → Phase 3 · 플러그인 결함 멈춤 셋 모두 수리판으로 풀림 · 앞 바탕 사본) · RD 러너 일곱(B0 510/510).
-- 증거: `<S>/f80/z1/logs/`(통합 검증) · `<S>/f80/impl/`(F4-80) · `<S>/core-2200-notes/{k73v,n1,n2,s1,p1,w1}/` · `<S>/core-220m/`(현장 실측).
+- 증거: `<S>/f80/z1/logs/`(통합 검증) · `<S>/f80/impl/`(F4-80) · `<S>/f80/y1/`(재검토 보완 — 재현 · 변이 · S3 · 마지막 검증) · `<S>/core-2200-notes/{k73v,n1,n2,s1,p1,w1}/` · `<S>/core-220m/`(현장 실측).
 
 ## 검토 이력
 **F4-73 저장소 선언 예보 + 인자 읽기**
@@ -102,16 +104,21 @@
 - 설계 v1 → Codex 설계 점검 1 «보완 후 진행»(값 없음을 예외 둘로 강제하지 말 것 등) → 설계 v2 + 운영자 결정.
 - Codex 설계 점검 2 «구현 멈춤»(auto 완화에 따른 G2 누락 경로) → 덧붙임 1(R-0331 개정) → 구현.
 - 구현 검토: Codex 차단 1(예외 통째를 호출 없이 머리에 싣는 길) · Claude 차단 1(비켜 주는 문이 managed catch 보다 넓음) → 둘 다 재현 뒤 보완.
-- 재검토: Codex **«배포 가능 · 차단 0»**(코드와 기록 읽기 · 실행 재현은 하지 않음) · Claude ⟪Claude 재검토 결과⟫.
+- 재검토: Codex **«배포 가능 · 차단 0»**(코드와 기록 읽기 · 실행 재현은 하지 않음) · Claude **«배포 가능 · 차단 0»**(세 판 검사기를 임시 폴더에서 다시 돌린 재현 — 탐침 약 370 사례 · 변이 20종 · 첫 바퀴 차단 둘이 닫혔음을 확인 · `<S>/f80/rereview-claude.md`) · 고치면 좋음 넷.
+- 재검토 보완(마지막): 운영자 결정으로 고치면 좋음 1 · 2 · 3 을 이번 판에 넣었다 — 1 이 사용자 선 ② «`str(exc)` · 임의 내부 값 금지» 에 닿는 길이기 때문이다. 4 는 배포 노트 «새로 막히는 꼴» 표에 이미 있다(사건 값이 없어도 code-json 의 응용 예외 통째 머리 대입은 새로 막힘).
+  - 1(재현 뒤 고침): 응용 예외로 사건 값을 읽는 가지에서 BC base 설명 칸에 `message=(lambda: str(n))()` 를 쓰면 code-json · 수집이 exit 0 이었다(이 수리 전 판은 꼴 2 자체가 red 라 exit 2). `_event_value_findings` 가 «사건 값을 읽는 handler 의 꼴 밖 Load 가운데 평가되는 자리 밖에 있는 잡은 이름» 도 C2 로 낸다.
+  - 2: 살아남던 변이 둘을 잡는 사례 — 모듈 `if` 아래 `@router.post` 함수(N33e) · `except*` handler(N33f).
+  - 3: R-0331 «승인 12-slot 이 없거나, 사건 값을 읽었는데 그 읽기를 승인한 code-json scope 가 없으면(preserve 12-slot 만 있는 표면에서 읽은 경우 포함)» · R-3654 의 «하우스룰 §4» 를 «`discipline-houserules` 의 타입 어노테이션 절이 정한 꼴» 로(클래스 본문 `f: T` 에만 붙임).
+  - 근거 · 마지막 트리의 전체 검증 수치: `<S>/f80/fix2-report.md` · `<S>/f80/y1/logs/`.
 
 **리팩토링 묶음** — 실제 BC 리허설에서 나온 결함을 수리판으로 닫았다(위).
 
 ## 알려진 한계
 - `auto` green 은 승인 검증이 아니다. 승인 대조는 code-json scope 실행에서만 하고, scope 없이 사건 값을 읽은 레인을 막는 것은 Coordinator 규칙(R-0331)뿐이다.
-- 기계가 못 보는 것: 값의 출처 · 메시지와 머리의 대응(누락 · 날짜 불일치) · naive datetime · 요청 값 같은 다른 동적 값 · 오류 머리는 생성 OpenAPI 에 안 보임(operation `description` 글이 유일).
+- 기계가 못 보는 것: 값의 출처 · 메시지와 머리의 대응(누락 · 날짜 불일치) · naive datetime · 요청 값 같은 다른 동적 값 · 사건 값을 읽지 않는 응용 catch 가 BC base 설명 칸의 람다 본문에 싣는 예외 통째(이 판 앞과 같음 · 감수 몫) · 오류 머리는 생성 OpenAPI 에 안 보임(operation `description` 글이 유일).
 - 받는 꼴이 좁다: 구체 예외 하나 · 선언 필드만 · `else` 필수(ruff `RET505` 와 부딪힘) · 날짜 꼴 하나 · 설명 칸 후보가 둘 이상이면 못 씀.
 - 이미 로그인한 기기의 다른 응답에 머리를 다는 것은 이 판이 열지 않는다(R-2000 그대로).
-- 새로 막히는 꼴: code-json 의 응용 예외 필드 읽기(승인 없으면) · 예외 통째를 머리에 · 저장소 `save*` / `remove*` 의 kw-only · 위치 전용 인자(#287) 등 인자 읽기로 더 엄해지는 꼴.
+- 새로 막히는 꼴: code-json 의 응용 예외 필드 읽기(승인 없으면) · 예외 통째를 머리에(사건 값이 없는 가지도) · 저장소 `save*` / `remove*` 의 kw-only · 위치 전용 인자(#287) 등 인자 읽기로 더 엄해지는 꼴.
 - 저장소 선언 후보는 비차단이고, 조상의 빚과 겹친 후보의 새 줄은 G2 registry 가 귀속하지 않을 수 있다. 상속은 파일 안에서만 푼다.
 - 앞뒤 대조는 각 수리를 넣기 직전 판과 견준 것이다(F4-73 현장 대조만 2.19.3 과 견줌). mypy 좁히기 · Django 머리 전달 · 실제 에이전트 레인 실행은 하지 않았다.
 - 리팩토링: 테스트 명령 하나가 1시간을 넘으면 마지막 확인에서 멈춘다 · 시간 초과 때 테스트가 따로 띄운 프로세스가 남을 수 있다 · doctest 수집 프로젝트 · 순환 BC 묶음 · 마이그레이션 이력 다시 쓰기는 지원하지 않고 멈춘다.
