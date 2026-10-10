@@ -28,6 +28,9 @@ Coordinator 만 돌리고, 산출은 파일로 쓰고 경로만 넘긴다. 규�
   refactor_audit.py standing [<산출물 폴더> --gate]
                                       상시 답 인식(`.dddjango/standing-answer.md` — core 와 같은 파일) ·
                                       --gate: `refactor-scope.md` 상시 답 결정 줄 검사(마지막 `## G0` 뒤)
+  refactor_audit.py switch-check <산출물 폴더> --test-cmd '<시험 명령 앞부분>' [--timeout <초>]
+                                      0T 시험 전환 확인(정상 통과 · 반례에서 옛 · 새 같은 단언 실패 · 복구 상태 · 증거 —
+                                      src/switch_check.py)
   refactor_audit.py --self-test       점검 절 실재 · 경로 사상 · 적용 한정 어구 목록 · pathspec · 극성 표본 · 상시 답 문면
 공통: --platform claude|codex(기본: 구조로 판별) · --plugin-root <경로> · --project <대상 루트>
 exit 0 = 통과 · 2 = red(검사 실패·잔존·불일치) · 1 = 실행 불능. 모든 하위 명령이 `요약:` 1행을 낸다.
@@ -2372,6 +2375,14 @@ def cmd_self_test(corpus: Corpus) -> int:
     return EXIT_RED if reds else EXIT_OK
 
 
+# ── switch-check ─────────────────────────────────────────────────────────────
+
+def cmd_switch_check(project: Path, folder: Path, test_cmd: str, timeout: "int | None") -> int:
+    """0T 시험 전환 확인 — 판정 · 시험 실행 · 복구 상태 · 증거는 src/switch_check.py 가 맡는다(출력 · exit 은 그 머리말)."""
+    from src.switch_check import run as switch_run
+    return switch_run(project, folder, test_cmd, timeout)
+
+
 # ── main ─────────────────────────────────────────────────────────────────────
 
 def main(argv: "list[str]") -> int:
@@ -2399,6 +2410,10 @@ def main(argv: "list[str]") -> int:
     p = sub.add_parser("standing")
     p.add_argument("folder", nargs="?")
     p.add_argument("--gate", action="store_true")
+    p = sub.add_parser("switch-check")
+    p.add_argument("folder")
+    p.add_argument("--test-cmd", required=True)
+    p.add_argument("--timeout", type=int)
     try:
         ns = ap.parse_args(argv)
     except SystemExit as exc:
@@ -2417,6 +2432,8 @@ def main(argv: "list[str]") -> int:
             return cmd_residual(project, Path(ns.folder), ns.finalize)
         if ns.command == "standing":
             return cmd_standing(project, Path(ns.folder) if ns.folder else None, ns.gate)
+        if ns.command == "switch-check":
+            return cmd_switch_check(project, Path(ns.folder), ns.test_cmd, ns.timeout)
         corpus: Corpus = Corpus(ns.platform, Path(ns.plugin_root).resolve() if ns.plugin_root else None)
         if ns.self_test:
             return cmd_self_test(corpus)
