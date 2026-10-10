@@ -47,8 +47,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from src.debt import (DebtError, DOC_PATHSPEC, SPEC_SLICE0_HEAD, REF_PATHSPEC, debt_universe,  # noqa: E402
-                      doc_reference_lines, module_of, parse_spec_pairs, reference_lines, residual_m_sets, tail_of)
+from src.debt import (DebtError, DOC_PATHSPEC, SPEC_SLICE0_HEAD, REF_GREP_OPTIONS, REF_PATHSPEC,  # noqa: E402
+                      debt_universe, doc_reference_lines, module_of, parse_spec_pairs, reference_lines,
+                      residual_m_sets, tail_of)
 
 _QUOTE_HEAD: "re.Pattern[str]" = re.compile(r"^[ \t]*>[ \t]?", re.M)
 _SPACE: "re.Pattern[str]" = re.compile(r"\s+")
@@ -190,14 +191,22 @@ CONSUMER_LINE: "re.Pattern[str]" = re.compile(r"\{%\s*(?:include|extends)\b")
 AGAINST_LISTS: "tuple[str, ...]" = ("범위 파일", "경계 교차", "경계 교차 소비자", "줄 편집", "참조 치환 줄", "범위 안 키")
 # 문서 글 적중(알림) 절 머리 — plan.md · plan-names.md 가 같은 머리를 쓴다. 판정 목록(AGAINST_LISTS)·편집 허용 줄이 아니다.
 DOC_SECTION: str = "문서 글 적중(알림 — 이동을 막지 않음)"
-# Coordinator 문면에서 참조 완전성 명령이 적히는 두 자리(문단 표지 → 이름) — self-test 가 자리마다 판정 · 알림 pathspec 을 대조한다.
+# Coordinator 문면에서 참조 완전성 명령이 적히는 두 자리(문단 표지 → 이름) — self-test 가 자리마다 판정 pathspec 과
+# 알림 명령 꼴(조회 옵션 + pathspec)을 대조한다.
 REF_COMMAND_PARAGRAPHS: "tuple[tuple[str, str], ...]" = (("**개명·이동 묶음**", "G0 개명·이동 묶음"),
                                                         ("**슬라이스 0 호출**", "슬라이스 0 끝 green ③"))
+# Coordinator 문면의 알림 명령이 꼬리 자리에 적는 표기.
+DOC_COMMAND_NEEDLE: str = "<꼬리>…"
 
 
-def _pathspec_text(spec: "tuple[str, ...]") -> str:
+def _pathspec_text(spec: "tuple[str, ...] | list[str]") -> str:
     """pathspec 을 커맨드 문면의 꼴로 — 셸이 읽는 글자(`*`·`:`·괄호)가 있는 토큰만 작은따옴표로 감싼다."""
     return "-- " + " ".join(f"'{p}'" if re.search(r"[*:()]", p) else p for p in spec)
+
+
+def _grep_command(needle: str, spec: "tuple[str, ...] | list[str]", word: bool = False) -> str:
+    """참조 조회 한 번을 프로젝트 루트에서 다시 돌리는 명령 — 옵션은 도구의 실제 조회(`reference_lines`)와 같은 상수다."""
+    return " ".join(["git", "grep", *REF_GREP_OPTIONS, *(["-w"] if word else []), "-e", needle, _pathspec_text(spec)])
 
 
 # 극성 표본(설계 6b §5-2) — (문장, 유효한 허용 술어가 있는가).
@@ -1064,8 +1073,6 @@ def _plan_names(project: Path, data: PlanData, debt: dict, names: Path, out: Pat
     commands: "list[str]" = []
     found: "dict[str, str]" = {}
     docs: "dict[str, str]" = {}                       # 문서 글 적중(알림) `경로:행` → 사유 — (나) 줄이 아니다
-    judged: str = _pathspec_text(REF_PATHSPEC)
-    noted: str = _pathspec_text(DOC_PATHSPEC)
 
     def keep(hits: "list[tuple[str, int, str]]", why: str) -> None:
         for path, line, _text in hits:
@@ -1083,10 +1090,11 @@ def _plan_names(project: Path, data: PlanData, debt: dict, names: Path, out: Pat
         for f in members:
             tails = tail_of(f)
             plain.append(tails[0])
-            commands += [f"git grep -n -F -e {tails[0]} {judged}", f"git grep -n -F -e {tails[0]} {noted}"]
+            commands += [_grep_command(tails[0], REF_PATHSPEC), _grep_command(tails[0], DOC_PATHSPEC)]
             if len(tails) > 1:
                 dotted.append(tails[1])
-                commands += [f"git grep -n -F -w -e {tails[1]} {judged}", f"git grep -n -F -w -e {tails[1]} {noted}"]
+                commands += [_grep_command(tails[1], REF_PATHSPEC, word=True),
+                             _grep_command(tails[1], DOC_PATHSPEC, word=True)]
         keep(reference_lines(project, plain), f"경로 `{old}`")
         keep(reference_lines(project, dotted, word=True), f"경로 `{old}`")
         note(doc_reference_lines(project, plain), f"경로 `{old}`")       # 알림 조회도 쌍마다 같은 꼴 두 번
@@ -1094,14 +1102,14 @@ def _plan_names(project: Path, data: PlanData, debt: dict, names: Path, out: Pat
     for old, _new in pairs:
         module, name = old.rsplit(".", 1)
         module_hits = reference_lines(project, [module], word=True)
-        commands += [f"git grep -n -F -w -e {module} {judged}", f"git grep -n -F -w -e {module} {noted}"]
+        commands += [_grep_command(module, REF_PATHSPEC, word=True), _grep_command(module, DOC_PATHSPEC, word=True)]
         keep(module_hits, f"이름 `{old}`(모듈)")
         note(doc_reference_lines(project, [module], word=True), f"이름 `{old}`(모듈)")
         importers: "list[str]" = sorted({p for p, _l, _t in module_hits if p.startswith("web/")})
         if importers:
             # 맨 이름은 옛 모듈을 참조하는 파일에서만 — BC 마다 같은 이름 helper 를 두는 정형(반복 > 상속).
             keep(reference_lines(project, [name], word=True, paths=importers), f"이름 `{old}`")
-            commands.append(f"git grep -n -F -w -e {name} -- {' '.join(importers)}")
+            commands.append(_grep_command(name, importers, word=True))
     findings: "list[dict]" = _findings(debt)
     ids: "dict[str, str]" = _key_ids(debt)
     before: "set[str]" = set(data.line_edits)
@@ -2279,10 +2287,13 @@ def cmd_self_test(corpus: Corpus) -> int:
             if len(found) != 1:
                 reds.append(f"Coordinator «{place}» 문단(표지 {mark})이 {len(found)}개다 — 하나여야 grep 명령을 대조한다")
                 continue
-            for spec, label in ((REF_PATHSPEC, "참조 완전성"), (DOC_PATHSPEC, "문서 글 적중(알림)")):
-                if _pathspec_text(spec) not in found[0]:
-                    reds.append(f"{label} pathspec 상수가 Coordinator «{place}» 문단의 grep 명령과 다르다: "
-                                f"{_pathspec_text(spec)}")
+            if _pathspec_text(REF_PATHSPEC) not in found[0]:
+                reds.append(f"참조 완전성 pathspec 상수가 Coordinator «{place}» 문단의 grep 명령과 다르다: "
+                            f"{_pathspec_text(REF_PATHSPEC)}")
+            notice: str = _grep_command(DOC_COMMAND_NEEDLE, DOC_PATHSPEC)   # 알림은 조회 옵션까지 글자 그대로
+            if notice not in found[0]:
+                reds.append(f"문서 글 적중(알림) 명령이 Coordinator «{place}» 문단에 글자 그대로 없다"
+                            f"(도구의 조회 옵션 · pathspec 과 같아야 한다): {notice}")
         if STANDING_MARK not in coord:
             reds.append(f"상시 답 범주 문면(«{STANDING_MARK}»)을 Coordinator 에서 찾지 못했다")
         else:

@@ -66,6 +66,9 @@ REF_PATHSPEC: Tuple[str, ...] = ('web', 'web_test', '*.py', '*.html', '*.css', '
 # 문서 글 적중(알림)의 pathspec — 판정에 들지 않는다. 조회 옵션은 판정과 같고 pathspec 만 다르다
 # (`*` 가 `/` 를 넘어 docs/ 아래 깊은 파일까지 잡는다 — `:(glob)` 로 바꾸지 않는다).
 DOC_PATHSPEC: Tuple[str, ...] = ('docs/*.py', 'docs/*.html', 'docs/*.css', 'docs/*.js')
+# 참조 조회(판정 · 알림)의 git grep 옵션 — 미추적·비무시 파일도 보고(--untracked) 이진 파일은 건너뛴다(-I).
+# 명령 기록(refactor_audit plan --names)과 커맨드 문면의 알림 명령이 이 꼴 그대로다(refactor_audit --self-test).
+REF_GREP_OPTIONS: Tuple[str, ...] = ('--untracked', '-I', '-n', '-F')
 # 빚 스캔이 도는 패밀리와 그 검사 집합 — 검사 집합이 다른 동결본으로는 잔존을 판정하지 않는다(scanner 지문).
 DEBT_FAMILIES: Tuple[str, ...] = ('st', 'md', 'im', 'nm', 'pu')
 CHECK_IDS: Tuple[str, ...] = tuple([c for c in CORE_CHECK_IDS if c[:2].lower() in DEBT_FAMILIES]
@@ -615,8 +618,7 @@ def reference_lines(root: Path, needles: List[str], word: bool = False,
     word 면 `-w`(점 경로의 성분 경계 — `web.a.q` 가 `web.a.q2` 를 잡지 않는다)."""
     if not needles:
         return []
-    cmd: List[str] = ['git', '-C', str(root), '-c', 'core.quotePath=false', 'grep', '--untracked', '-I',
-                      '-n', '-F']
+    cmd: List[str] = ['git', '-C', str(root), '-c', 'core.quotePath=false', 'grep', *REF_GREP_OPTIONS]
     if word:
         cmd.append('-w')
     for needle in needles:

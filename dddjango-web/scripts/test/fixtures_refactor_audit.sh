@@ -284,6 +284,7 @@ assert "D2 옛 모듈 import 줄 (나)" 0 '`web/application/chart/application_la
 assert "D3 옛 이름 호출 줄 (나)" 0 '`web/application/chart/application_layer/view_model/chart_vm.py:6`' - 0 "$NAMES"
 assert "D4 다른 BC 가 스스로 정의한 같은 이름 helper 는 (나) 밖" 0 - "chart_view.py" 0 "$NAMES"
 assert "D5 home_view2 import 줄은 점 성분 경계로 (나) 밖" 0 - "chart_vm.py:2" 0 "$NAMES"
+assert "D5′ 명령 기록 — 맨 이름 조회(옛 모듈을 참조하는 파일만)도 도구가 돈 옵션 그대로" 0 "git grep --untracked -I -n -F -w -e _render_page -- web/application/chart/application_layer/view_model/chart_vm.py" "git grep -n -F " 0 "$NAMES"
 printf '## 슬라이스 0\n\n' > "$T/spec0.md"
 OUT=$(RA plan web/application/home --debt .dddjango-web/run/debt-g0.json --out "$A" --names "$T/spec0.md"); E=$?
 assert "D6 쌍 0 = exit 0 (나) 0" 0 "(나) 줄 0" - "$E" "$OUT"
@@ -1037,9 +1038,10 @@ assert "DG14 --names 파일 이동 쌍 — 문서 글 적중 절(꼬리 적중 �
 assert "DG14′ 파일 이동 쌍 — 점 경로(-w) 적중 줄 · 다른 파일의 문서 글은 없음" 0 '`docs/tool.py:1`' 'docs/site.css' 0 "$ND"
 assert "DG14″ 파일 이동 쌍 — 꼬리와 점 경로가 같이 걸린 줄은 한 번만" 0 - - "$(ONCE '`docs/official/master.html:4`' "$ND")" "$ND"
 assert "DG14‴ 파일 이동 쌍 — 문서 글은 (나) 줄이 아니다" 0 "(나) 줄 0" - "$E" "$OUT"
-assert "DG15 명령 기록 — 판정 명령(문면과 같은 pathspec 꼴)" 0 "git grep -n -F -e consultation/urls.py -- web web_test '*.py' '*.html' '*.css' '*.js' ':(exclude).dddjango-web' ':(exclude)docs' ':(exclude)web/static/vendor' ':(exclude)web/sdk_registry.json'" - 0 "$NC"
-assert "DG15′ 명령 기록 — 알림 명령(옵션이 같고 pathspec 만 다르다)" 0 "git grep -n -F -e consultation/urls.py -- 'docs/*.py' 'docs/*.html' 'docs/*.css' 'docs/*.js'" - 0 "$NC"
-assert "DG15″ 명령 기록 — 점 경로 알림 명령(-w)" 0 "git grep -n -F -w -e web.consultation.urls -- 'docs/*.py' 'docs/*.html' 'docs/*.css' 'docs/*.js'" - 0 "$NC"
+assert "DG15 명령 기록 — 판정 명령(도구가 돈 옵션 그대로 · 문면과 같은 pathspec 꼴)" 0 "git grep --untracked -I -n -F -e consultation/urls.py -- web web_test '*.py' '*.html' '*.css' '*.js' ':(exclude).dddjango-web' ':(exclude)docs' ':(exclude)web/static/vendor' ':(exclude)web/sdk_registry.json'" - 0 "$NC"
+assert "DG15′ 명령 기록 — 알림 명령(도구가 돈 옵션 그대로 · pathspec 만 다르다)" 0 "git grep --untracked -I -n -F -e consultation/urls.py -- 'docs/*.py' 'docs/*.html' 'docs/*.css' 'docs/*.js'" - 0 "$NC"
+assert "DG15″ 명령 기록 — 점 경로 알림 명령(-w)" 0 "git grep --untracked -I -n -F -w -e web.consultation.urls -- 'docs/*.py' 'docs/*.html' 'docs/*.css' 'docs/*.js'" - 0 "$NC"
+assert "DG15‴ 명령 기록에 옵션 빠진 옛 꼴(git grep -n -F …)이 없다" 0 "git grep --untracked -I -n -F " "git grep -n -F " 0 "$NC"
 OUT=$(cd "$G" && python3 - "$SCRIPTS" "$GA" <<'PY'
 import sys
 from pathlib import Path
@@ -1060,12 +1062,54 @@ assert "DG17″ 폴더 이동 쌍 — 알림 조회를 더해도 git grep 호출
 printf '## 슬라이스 0\n\n이름: web.consultation.urls.urlpatterns → web.application.consultation.consultation_router.urlpatterns\n' > "$T/dg-name.md"
 OUT=$(RG plan web/consultation --debt .dddjango-web/run/debt-g0.json --out "$T/dg-name" --names "$T/dg-name.md"); E=$?
 assert "DG18 --names 이름 쌍 — 모듈 점 경로의 문서 글(꼬리만 적은 줄은 없음)" 0 '`docs/tool.py:1` — 이름 `web.consultation.urls.urlpatterns`(모듈)' 'master.html:2`' "$E" "$(PSEC "$T/dg-name/plan-names.md" "$DOCSEC")"
-assert "DG18′ 이름 쌍 — 모듈 알림 명령 기록" 0 "git grep -n -F -w -e web.consultation.urls -- 'docs/*.py' 'docs/*.html' 'docs/*.css' 'docs/*.js'" - 0 "$(PSEC "$T/dg-name/plan-names.md" 'grep 명령')"
-# self-test — Coordinator 의 두 자리(G0 «개명·이동 묶음» · «슬라이스 0 호출» 끝 green ③)마다 판정 · 알림 pathspec 을 대조한다
+assert "DG18′ 이름 쌍 — 모듈 알림 명령 기록" 0 "git grep --untracked -I -n -F -w -e web.consultation.urls -- 'docs/*.py' 'docs/*.html' 'docs/*.css' 'docs/*.js'" - 0 "$(PSEC "$T/dg-name/plan-names.md" 'grep 명령')"
+# 미추적 문서에만 옛 경로가 있는 저장소 — 도구 알림 · 기록된 명령 · 문면의 알림 명령이 같은 줄을 낸다(도구 조회는 미추적 파일도 본다)
+U="$T/docu"; CO="$PLUGIN/commands/dddjango-web.md"
+mkdir -p "$U/web/consultation"
+: > "$U/web/__init__.py"
+printf 'urlpatterns = []\n' > "$U/web/consultation/urls.py"
+git -C "$U" init -q; commit_all "$U" base >/dev/null
+mkdir -p "$U/docs/draft" "$U/.dddjango-web/run"
+printf '<p>옛 자리 consultation/urls.py</p>\n<p>모듈 web.consultation.urls</p>\n' > "$U/docs/draft/note.html"
+python3 "$SCRIPTS/backstop.py" "$U" --debt-scan --refactor --json "$U/.dddjango-web/run/debt-g0.json" >/dev/null
+RU() { (cd "$U" && python3 "$SCRIPTS/refactor_audit.py" "$@" 2>&1); }
+RECORDED() { PSEC "$1" 'grep 명령' | sed -n 's/^- `\(git grep .*\)`$/\1/p'; }            # RECORDED <plan-names.md> — 기록된 명령(한 줄에 하나)
+AT_ROOT() { (cd "$U" && bash -c "$1" 2>&1); }                                          # AT_ROOT <명령> — 프로젝트 루트에서 글자 그대로 실행
+WHERE() { cut -d: -f1,2 | sort -u | tr '\n' ' '; }                                     # git grep 출력 → `경로:행` 정렬 목록
+LISTED() { sed -n 's/^- `\([^`]*\)`.*$/\1/p' | sort -u | tr '\n' ' '; }                 # 보고 절 → `경로:행` 정렬 목록
+UA="$U/.dddjango-web/run/audit/u1"
+OUT=$(RU plan web/consultation --debt .dddjango-web/run/debt-g0.json --out "$UA"); E=$?
+assert "DG21 미추적 docs/draft/note.html 에만 옛 경로 — plan 알림 절에 그 줄 · 판정(web/ 밖 참조 줄)은 없음" 0 '`docs/draft/note.html:1`' - "$E" "$(PSEC "$UA/plan.md" "$DOCSEC")"
+assert "DG21′ 그 저장소의 web/ 밖 참조 줄 = 없음" 0 "- 없음" "docs/" 0 "$(PSEC "$UA/plan.md" 'web\/ 밖 참조 줄(치환 후보)')"
+printf '## 슬라이스 0\n\n- 경로: `consultation/urls.py` → `application/consultation/consultation_router.py`\n' > "$T/du-file.md"
+OUT=$(RU plan web/consultation --debt .dddjango-web/run/debt-g0.json --out "$UA" --names "$T/du-file.md"); E=$?
+USEC=$(PSEC "$UA/plan-names.md" "$DOCSEC" | LISTED)
+assert "DG21a --names 알림 절 = 미추적 문서의 두 줄(꼬리 · 점 경로)" 0 "docs/draft/note.html:1 docs/draft/note.html:2 " - "$E" "$USEC"
+UPLAIN=$(RECORDED "$UA/plan-names.md" | grep -F "'docs/*.py'" | grep -v -- ' -w '); UDOT=$(RECORDED "$UA/plan-names.md" | grep -F "'docs/*.py'" | grep -- ' -w ')
+OUT=$(AT_ROOT "$UPLAIN"); E=$?
+assert "DG21b 기록된 알림 명령을 그대로 실행 = 같은 줄 · exit 0" 0 "docs/draft/note.html:1:" - "$E" "$OUT"
+OUT=$(AT_ROOT "$UDOT"); E=$?
+assert "DG21c 기록된 점 경로 알림 명령(-w)을 그대로 실행 = 같은 줄 · exit 0" 0 "docs/draft/note.html:2:" - "$E" "$OUT"
+UREC=$( { AT_ROOT "$UPLAIN"; AT_ROOT "$UDOT"; } | WHERE)
+assert "DG21d 기록된 알림 명령 둘의 적중 = 도구 알림 절의 줄 그대로" 0 "$USEC" - "$([ -n "$USEC" ] && [ "$UREC" = "$USEC" ] && echo 0 || echo 9)" "$UREC"
+ALERT_OF() { local q="'"; grep -F -- "$2" "$1" | grep -o "git grep [^\`]*${q}docs/\\*\\.js${q}" | head -1; }   # ALERT_OF <Coordinator> <문단 표지> — 문면의 알림 명령
+for mark in '**개명·이동 묶음**' '**슬라이스 0 호출**'; do
+  CMD=$(ALERT_OF "$CO" "$mark"); OUT=$(AT_ROOT "${CMD//<꼬리>…/consultation/urls.py}"); E=$?
+  assert "DG21e 문면($mark)의 알림 명령을 꼬리만 넣어 그대로 실행 = 도구와 같은 줄 · exit 0" 0 "docs/draft/note.html:1:" - "$E" "$OUT"
+done
+mkdir -p "$U/scratch"; printf "ROUTES = ['web.consultation.urls']\n" > "$U/scratch/routes.py"
+UB="$U/.dddjango-web/run/audit/u2"
+RU plan web/consultation --debt .dddjango-web/run/debt-g0.json --out "$UB" >/dev/null
+OUT=$(RU plan web/consultation --debt .dddjango-web/run/debt-g0.json --out "$UB" --names "$T/du-file.md"); E=$?
+assert "DG21f 미추적 비테스트 .py 의 실제 참조 = 판정(web/ 밖 참조 줄 — 도구는 미추적도 본다)" 0 '`scratch/routes.py:1`' - "$E" "$(PSEC "$UB/plan.md" 'web\/ 밖 참조 줄(치환 후보)')"
+UJUDGE=$(RECORDED "$UB/plan-names.md" | grep -F "':(exclude)docs'" | grep -- ' -w ')
+OUT=$(AT_ROOT "$UJUDGE"); E=$?
+assert "DG21g 기록된 판정 명령(-w)을 그대로 실행 = 도구 판정과 같은 줄 · 문서 줄 없음" 0 "scratch/routes.py:1:" "docs/draft" "$E" "$OUT"
+# self-test — Coordinator 의 두 자리(G0 «개명·이동 묶음» · «슬라이스 0 호출» 끝 green ③)마다 판정 pathspec · 알림 명령 꼴을 대조한다
 SELF() { python3 "$SCRIPTS/refactor_audit.py" --platform "$1" --plugin-root "$2" --self-test 2>&1; }
 G0P='\*\*개명·이동 묶음\*\*'; S0P='\*\*슬라이스 0 호출\*\*'
-OLDJ="s#':(exclude)docs' ##"; BADN="s#'docs/\\*\\.html'#'docs/*.htm'#"
-SC="$T/plug-spec"; CO="$PLUGIN/commands/dddjango-web.md"
+OLDJ="s#':(exclude)docs' ##"; BADN="s#'docs/\\*\\.html'#'docs/*.htm'#"; NOUNT="s#grep --untracked -I #grep #"
+SC="$T/plug-spec"
 mkdir -p "$SC"; cp -R "$PLUGIN/commands" "$PLUGIN/agents" "$PLUGIN/skills" "$SC/"
 OUT=$(SELF claude "$SC"); E=$?
 assert "DG19 설치본 사본 self-test = green(대조 짝)" 0 "red 0" - "$E" "$OUT"
@@ -1074,9 +1118,13 @@ assert "DG19a G0 묶음 문단만 옛 판정 명령 = red" 2 "참조 완전성 p
 sed "/$S0P/$OLDJ" "$CO" > "$SC/commands/dddjango-web.md"; OUT=$(SELF claude "$SC"); E=$?
 assert "DG19b 끝 green ③ 문단만 옛 판정 명령 = red" 2 "참조 완전성 pathspec 상수가 Coordinator «슬라이스 0 끝 green ③» 문단" "«G0 개명·이동 묶음» 문단" "$E" "$OUT"
 sed "/$G0P/$BADN" "$CO" > "$SC/commands/dddjango-web.md"; OUT=$(SELF claude "$SC"); E=$?
-assert "DG19c G0 묶음 문단의 알림 명령만 어긋남 = red" 2 "문서 글 적중(알림) pathspec 상수가 Coordinator «G0 개명·이동 묶음» 문단" "참조 완전성 pathspec 상수" "$E" "$OUT"
+assert "DG19c G0 묶음 문단의 알림 pathspec 만 어긋남 = red" 2 "문서 글 적중(알림) 명령이 Coordinator «G0 개명·이동 묶음» 문단" "참조 완전성 pathspec 상수" "$E" "$OUT"
 sed "/$S0P/$BADN" "$CO" > "$SC/commands/dddjango-web.md"; OUT=$(SELF claude "$SC"); E=$?
-assert "DG19d 끝 green ③ 문단의 알림 명령만 어긋남 = red" 2 "문서 글 적중(알림) pathspec 상수가 Coordinator «슬라이스 0 끝 green ③» 문단" "참조 완전성 pathspec 상수" "$E" "$OUT"
+assert "DG19d 끝 green ③ 문단의 알림 pathspec 만 어긋남 = red" 2 "문서 글 적중(알림) 명령이 Coordinator «슬라이스 0 끝 green ③» 문단" "참조 완전성 pathspec 상수" "$E" "$OUT"
+sed "/$G0P/$NOUNT" "$CO" > "$SC/commands/dddjango-web.md"; OUT=$(SELF claude "$SC"); E=$?
+assert "DG19e G0 묶음 문단의 알림 명령에서 --untracked -I 만 빠짐 = red" 2 "문서 글 적중(알림) 명령이 Coordinator «G0 개명·이동 묶음» 문단" "문서 글 적중(알림) 명령이 Coordinator «슬라이스 0 끝 green ③» 문단" "$E" "$OUT"
+sed "/$S0P/$NOUNT" "$CO" > "$SC/commands/dddjango-web.md"; OUT=$(SELF claude "$SC"); E=$?
+assert "DG19f 끝 green ③ 문단의 알림 명령에서 --untracked -I 만 빠짐 = red" 2 "문서 글 적중(알림) 명령이 Coordinator «슬라이스 0 끝 green ③» 문단" "문서 글 적중(알림) 명령이 Coordinator «G0 개명·이동 묶음» 문단" "$E" "$OUT"
 CX="$PLUGIN/../codex-dddjango-web"   # Codex 벌은 저장소 배치에서만 옆에 있다(설치본에는 없다 — 그때는 건너뛴다)
 if [ -f "$CX/skills/dddjango-web/SKILL.md" ]; then
   SX="$T/codex-spec"; XO="$CX/skills/dddjango-web/SKILL.md"
@@ -1088,9 +1136,17 @@ if [ -f "$CX/skills/dddjango-web/SKILL.md" ]; then
   sed "/$S0P/$OLDJ" "$XO" > "$SX/skills/dddjango-web/SKILL.md"; OUT=$(SELF codex "$SX"); E=$?
   assert "DG20b Codex 끝 green ③ 문단만 옛 판정 명령 = red" 2 "참조 완전성 pathspec 상수가 Coordinator «슬라이스 0 끝 green ③» 문단" "«G0 개명·이동 묶음» 문단" "$E" "$OUT"
   sed "/$G0P/$BADN" "$XO" > "$SX/skills/dddjango-web/SKILL.md"; OUT=$(SELF codex "$SX"); E=$?
-  assert "DG20c Codex G0 묶음 문단의 알림 명령만 어긋남 = red" 2 "문서 글 적중(알림) pathspec 상수가 Coordinator «G0 개명·이동 묶음» 문단" "참조 완전성 pathspec 상수" "$E" "$OUT"
+  assert "DG20c Codex G0 묶음 문단의 알림 pathspec 만 어긋남 = red" 2 "문서 글 적중(알림) 명령이 Coordinator «G0 개명·이동 묶음» 문단" "참조 완전성 pathspec 상수" "$E" "$OUT"
   sed "/$S0P/$BADN" "$XO" > "$SX/skills/dddjango-web/SKILL.md"; OUT=$(SELF codex "$SX"); E=$?
-  assert "DG20d Codex 끝 green ③ 문단의 알림 명령만 어긋남 = red" 2 "문서 글 적중(알림) pathspec 상수가 Coordinator «슬라이스 0 끝 green ③» 문단" "참조 완전성 pathspec 상수" "$E" "$OUT"
+  assert "DG20d Codex 끝 green ③ 문단의 알림 pathspec 만 어긋남 = red" 2 "문서 글 적중(알림) 명령이 Coordinator «슬라이스 0 끝 green ③» 문단" "참조 완전성 pathspec 상수" "$E" "$OUT"
+  sed "/$G0P/$NOUNT" "$XO" > "$SX/skills/dddjango-web/SKILL.md"; OUT=$(SELF codex "$SX"); E=$?
+  assert "DG20e Codex G0 묶음 문단의 알림 명령에서 --untracked -I 만 빠짐 = red" 2 "문서 글 적중(알림) 명령이 Coordinator «G0 개명·이동 묶음» 문단" "문서 글 적중(알림) 명령이 Coordinator «슬라이스 0 끝 green ③» 문단" "$E" "$OUT"
+  sed "/$S0P/$NOUNT" "$XO" > "$SX/skills/dddjango-web/SKILL.md"; OUT=$(SELF codex "$SX"); E=$?
+  assert "DG20f Codex 끝 green ③ 문단의 알림 명령에서 --untracked -I 만 빠짐 = red" 2 "문서 글 적중(알림) 명령이 Coordinator «슬라이스 0 끝 green ③» 문단" "문서 글 적중(알림) 명령이 Coordinator «G0 개명·이동 묶음» 문단" "$E" "$OUT"
+  for mark in '**개명·이동 묶음**' '**슬라이스 0 호출**'; do
+    CMD=$(ALERT_OF "$XO" "$mark"); OUT=$(AT_ROOT "${CMD//<꼬리>…/consultation/urls.py}"); E=$?
+    assert "DG20g Codex 문면($mark)의 알림 명령을 꼬리만 넣어 그대로 실행 = 도구와 같은 줄 · exit 0" 0 "docs/draft/note.html:1:" - "$E" "$OUT"
+  done
 fi
 
 # ---------- N: area 안 BC · 렌즈 점검 절 · Codex 경로 사상 · 설치본 self-test

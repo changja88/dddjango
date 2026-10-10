@@ -466,15 +466,21 @@ OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
 assert "D23′b 대조: 해소 뒤 exit 0(소제목 줄이 정형 행으로 읽히지 않는다)" 0 "ⓐ 잔존 0 · 요구 잔존 0 · 재상정 제외 0" - "$E" "$OUT"
 scope_md "$P" run "## 빚 스캔 @NOW@
 
-$DOCNOTE
+### 문서 글 적중(이동을 막지 않음)
 
 - 없음
 
 ## G0 @NOW@
-ⓐ 키: -
-요구 키: -"
+ⓐ 키: C1
+요구 키: -
+
+끝 green ③ exit 1
+
+### 문서 글 적중(이동을 막지 않음)
+
+- 없음"
 OUT=$(run_backstop "$P" --debt-residual "$P/.dddjango-web/run"); E=$?
-assert "D23′c 소제목 아래 «- 없음» 꼴 — 판독 그대로 exit 0" 0 "ⓐ 잔존 0 · 요구 잔존 0" - "$E" "$OUT"
+assert "D23′c 적중 없이 «- 없음» 만 있는 소제목 — 판독 그대로(C1 해소 뒤) exit 0" 0 "ⓐ 잔존 0 · 요구 잔존 0 · 재상정 제외 0" - "$E" "$OUT"
 
 # ---------- D24: 리팩토링 스캔(--refactor) — 기존 단위 골격 미비(ST4)도 빚 · notice 없음 · mode 기록
 P="$T/d24"; mkproj "$P" >/dev/null
