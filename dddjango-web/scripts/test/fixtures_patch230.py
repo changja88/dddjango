@@ -370,7 +370,11 @@ def bundle_unchanged(tmp):
     g0 = scope_folder(p, 'run-old', 'C1', scripts=old)
     g0_json = (g0 / 'debt-g0.json').read_bytes()
     # 게이트가 볼 미커밋 변경 — 새 파일 · 기존 파일의 새 줄
-    w('web/design_system/guest/theme/dark.css', 'body { color: #000; }')
+    # (dark.css 의 둘째 · 셋째 줄 = 꼬리 안에 경로 꼴이 든 CSS 참조 — 참조 해소(import edge)는 고치기 전 판 그대로다:
+    #  원문 전체를 접은 대상이 IM4 사유에 그 글자로 나오고, 선언이 없으니 혼입 판정(IM13 제품 분기)은 없다)
+    w('web/design_system/guest/theme/dark.css', 'body { color: #000; }',
+      '@import url("../../../web/root/root_guest_view.css?v=/../root_view.css");',
+      '@import url("../../foundation/app_color.css?v=/../marker");')
     w('web/design_system/partner/foundation/app_color.css', ':root { --x: 1px; }')
     w('web/root/scaffold/view/root_partner_view.html', '{% extends "' + GUEST_SHELL + '" %}')
     w('web/application/order/presentation_layer/view/order_extra_view.html', '{% extends "' + GUEST_SHELL + '" %}',
@@ -388,7 +392,11 @@ def bundle_unchanged(tmp):
             check('U %s — 헛대조 아님(%s)' % (name, nonempty), nonempty in new[1], new[1][-600:])
         return new
 
-    both('게이트(--diff-base)', '--diff-base', base, nonempty='IM26] BLOCKER')
+    gate = both('게이트(--diff-base)', '--diff-base', base, nonempty='IM26] BLOCKER')
+    dark = 'design_system/guest/theme/dark.css'
+    check('U 꼬리 안 경로 꼴이 든 CSS 참조 — 다른 IM 의 대상 글자는 고치기 전 판 그대로(IM4 · 원문 전체를 접은 경로) · 혼입 판정 없음',
+          lines_of(gate[1], 'IM4', dark) == [2] and '`root/scaffold/view/root_view.css`' in message_of(gate[1], 'IM4', dark)
+          and not found(gate[1], 'IM13', dark), gate[1][-1500:])
     both('--slice-end', '--diff-base', base, '--slice-end', nonempty='슬라이스 끝')
     both('--only st(전역 퇴화)', '--only', 'st', nonempty='ST10] BLOCKER')
     both('--only im,nm(--diff-base)', '--diff-base', base, '--only', 'im,nm', nonempty='IM2] BLOCKER')
@@ -431,6 +439,13 @@ def bundle_unchanged(tmp):
         plans.append((got, (out_dir / 'plan.md').read_text(encoding='utf-8') if (out_dir / 'plan.md').exists() else None))
     check('U refactor_audit plan — 요약 · plan.md 가 고치기 전 판과 byte 동일', plans[0] == plans[1] and plans[0][0][0] == 0
           and plans[0][1] is not None, '%r\n%r' % (plans[0][0], plans[1][0]))
+    # 선언이 없는 프로젝트에서 선언 경로를 단위로 준 오류 — 예약 이름 진단은 선언 파일이 실제로 있을 때만이다
+    for unit in ('web/product_registry.json', 'product_registry.json'):
+        got = [audit(p.root, 'plan', unit, '--debt', g0 / 'debt-g0.json', '--out', g0 / 'audit-decl-unit', scripts=scripts)
+               for scripts in (SCRIPTS, old)]
+        check('U refactor_audit plan %s(선언 없음) — 고치기 전 판과 byte 동일(exit 1 · 단위 없음)' % unit,
+              got[0] == got[1] and got[0][0] == 1 and '단위 없음 — web/product_registry.json' in got[0][1]
+              and not (g0 / 'audit-decl-unit').exists(), '%r\n%r' % (got[0], got[1]))
     # plan --names 의 명령 기록(plan-names.md «grep 명령») — 판정 명령 줄은 도구가 실제로 돈 pathspec 그대로라, 선언이 없어도
     # 선언 파일 제외 토큰 하나가 붙는다(이 판의 의도된 차이). 그 토큰만 빼면 고치기 전 판과 같다(첫 줄의 실행 시각은 뺀다).
     (g0 / 'design-spec.md').write_text(
@@ -586,6 +601,10 @@ def bundle_errors(tmp):
     for bad in ('*', 'Lobby', 'lobby view', ' lobby', 'lobby ', 'lobby.x', 'lobby\\x', 'lobby-x', '1lobby', 'admin/Lobby',
                 'presentation_layer', 'lobby/presentation_layer', 'application_layer/lobby', 'domain_layer', 'infra_layer'):
         cases.append(('BC 이름 꼴(%r)' % bad, decl({'operator': flat, 'guest': {'design_system': 'own', 'bcs': [bad]}})))
+    # 컨테이너 이름(§1 area 핵심 사실 ⓓ — root · application · common · design_system)도 BC 경로의 어느 성분으로든 쓸 수 없다
+    containers = ('root', 'application', 'common', 'design_system')
+    for bad in containers + ('application/order', 'admin/root', 'common/lobby', 'design_system/lobby'):
+        cases.append(('BC 이름 꼴(컨테이너 이름 %r)' % bad, decl({'operator': flat, 'guest': {'design_system': 'own', 'bcs': [bad]}})))
     cases.append(('BOM', b'\xef\xbb\xbf' + good.encode('utf-8')))
     registry = p.root / REGISTRY
     for label, body in cases:
@@ -594,6 +613,22 @@ def bundle_errors(tmp):
             say = '실행 불능' if name.startswith('refactor_audit') else '[backstop] 판정 불가 — '
             check('E %s · %s — exit 1' % (label, name), e == 1 and say in out and 'product_registry.json' in out
                   and 'Traceback' not in out and 'BLOCKER' not in out, 'exit=%d\n%s' % (e, out[-500:]))
+    # 컨테이너 이름 사유 — 층 폴더 이름 때와 같은 꼴(«… `<이름>`은 BC · area 이름이 될 수 없다»)
+    for bad, name in (('root', 'root'), ('application/order', 'application'), ('admin/design_system', 'design_system')):
+        registry.write_text(decl({'operator': flat, 'guest': {'design_system': 'own', 'bcs': [bad]}}), encoding='utf-8')
+        e, out = backstop(p.root, '--diff-base', base)
+        check('E 컨테이너 이름 %r 사유 — 그 이름은 BC · area 이름이 될 수 없다(층 폴더 이름과 같은 꼴)' % bad,
+              e == 1 and ("BC 경로 '%s' — 컨테이너 이름(%s)은 BC · area 이름이 될 수 없다" % (bad, name)) in out
+              and '예정 BC' not in out, 'exit=%d\n%s' % (e, out[-500:]))
+    # 금지 목록에 없는 평범한 이름(컨테이너 · 층 이름을 품었을 뿐인 이름 포함)은 그대로 통과 — 없는 BC 는 예정 BC 알림만
+    plain = ['order', 'admin/desk', 'root_menu', 'my_application', 'common_area/desk', 'design', 'presentation']
+    registry.write_text(decl({'operator': {'design_system': 'flat', 'bcs': plain}, 'guest': own}), encoding='utf-8')
+    for name, (e, out) in entries():
+        check('E 평범한 BC 이름(컨테이너 이름을 품었거나 금지 목록 밖) · %s — exit 0' % name,
+              e == 0 and '판정 불가' not in out and '실행 불능' not in out, 'exit=%d\n%s' % (e, out[-500:]))
+    e, out = backstop(p.root, '--diff-base', base)
+    check('E 평범한 BC 이름 — 없는 BC 는 예정 BC 알림(오류 아님)', e == 0 and 'operator → root_menu' in out
+          and 'operator → common_area/desk' in out and 'operator → my_application' in out, out[-600:])
     registry.unlink()
     registry.mkdir()
     for name, (e, out) in entries():
@@ -1010,6 +1045,58 @@ def bundle_mixing(tmp):
     counts = data.get('counts', {})
     check('M9 빚 스캔도 같은 판정 — 키는 문서의 물리 경로 · 발견 수 3 · 3(+ 옛 링크 1)',
           counts.get('IM13|' + theme) == 3 and counts.get('IM13|' + LOBBY_PAGE) == 4, sorted(counts.items()))
+    p.reset(base)
+
+    # 꼬리(query · fragment) 안에 경로 꼴(`/../`)이 든 참조 — 원문에서 꼬리를 먼저 떼고 상대 경로를 푼다(꼬리 안의 `..` 가
+    # 실제 대상을 지우거나 다른 파일로 바꾸지 못한다). 참조 꼴 셋(@import · 정적 url() · {% static %}) × 꼬리 둘(? · #).
+    p.append('web/' + theme,
+             '@import url("../../foundation/app_color.css?v=/../marker");',                       # 2 운영자(@import url · ?)
+             '@import url("../../foundation/app_color.css#x=/../marker");',                       # 3 운영자(@import url · #)
+             '@import "../../theme/app_theme.css?v=/../marker";',                                 # 4 운영자(@import 문자열 · ?)
+             '@import url(../../util/flat_util.css#x=/../marker);',                               # 5 운영자(따옴표 없음 · #)
+             '.g { background: url("../../foundation/app_spacing.css?v=/../marker"); }',          # 6 운영자(정적 url() · ?)
+             '.h { background: url(../../foundation/app_radius.css#x=/../marker); }',             # 7 운영자(정적 url() · #)
+             '@import url("../../foundation/app_shadow.css?v=/../../../../x");',                  # 8 운영자(꼬리의 .. 가 정적 뿌리 밖까지)
+             '@import url("/static/design_system/foundation/app_duration.css?v=/../marker");',    # 9 운영자(절대 경로 · ?)
+             '@import url("../foundation/app_color.css?v=/../marker");',                          # 10 자기 제품 — 통과
+             '@import url("../foundation/app_color.css#x=/../marker");',                          # 11 자기 제품 — 통과
+             '.i { background: url("../foundation/app_spacing.css?v=/../marker"); }',             # 12 자기 제품 — 통과
+             '@import url("../foundation/app_color.css?v=/../../../foundation/app_color.css");',  # 13 자기 제품(꼬리가 남의 CSS 꼴) — 통과
+             '@import url("../foundation/app_color.css#x=/../../../theme/app_theme.css");')       # 14 자기 제품(꼬리가 남의 CSS 꼴) — 통과
+    p.sub(page, '<p>lobby</p>', '\n'.join([
+        link('design_system/foundation/app_color.css?v=/../marker'),                              # 5 운영자(인자 안 꼬리 ?)
+        link('design_system/theme/app_theme.css#x=/../marker'),                                   # 6 운영자(인자 안 꼬리 #)
+        "<link rel=\"stylesheet\" href=\"{% static 'design_system/util/flat_util.css' %}?v=/../marker\">",   # 7 운영자(태그 밖 꼬리)
+        link('design_system/guest/foundation/app_color.css?v=/../marker'),                        # 8 자기 제품 — 통과
+        link('design_system/guest/theme/app_theme.css#x=/../../theme/app_theme.css'),             # 9 자기 제품(꼬리가 남의 CSS 꼴) — 통과
+        '<p>lobby</p>']))
+    e, out = backstop(p.root, '--diff-base', base, '--only', 'im13')
+    check('M10 CSS @import · 정적 url() 의 꼬리 안 `/../`(?v=/../marker · #x=/../marker · 정적 뿌리 밖까지 · 절대 경로) — '
+          '실제 대상이 남의 표준 자리면 IM13 · exit 2', e == 2 and set(range(2, 10)) <= set(lines_of(out, 'IM13', theme)),
+          'exit=%d %r\n%s' % (e, lines_of(out, 'IM13', theme), out[-1800:]))
+    check('M10 같은 꼬리로 실은 자기 제품 CSS 는 0 — 꼬리 안 경로 꼴이 남의 CSS 를 가리켜도 대상은 원문의 경로다(과보고 없음)',
+          lines_of(out, 'IM13', theme) == [2, 3, 4, 5, 6, 7, 8, 9], '%r\n%s' % (lines_of(out, 'IM13', theme), out[-1800:]))
+    check('M10 `{% static %}` 링크의 꼬리(인자 안 ? · # · 태그 밖 ?) — 남의 표준 자리면 IM13 · 자기 제품은 통과',
+          lines_of(out, 'IM13', LOBBY_PAGE) == [5, 6, 7], '%r\n%s' % (lines_of(out, 'IM13', LOBBY_PAGE), out[-1800:]))
+    msgs = '\n'.join(re.findall(r'^  위반: (.+)$', out, re.M))
+    check('M10 사유의 실린 경로는 꼬리를 뗀 실제 CSS(꼬리 글자 · marker 없음)',
+          '`design_system/foundation/app_shadow.css`' in msgs and '`design_system/foundation/app_duration.css`' in msgs
+          and '`design_system/util/flat_util.css`' in msgs and 'marker' not in msgs and '?v=' not in msgs and '#x=' not in msgs, msgs)
+    p.commit('tails with path-like text land as debt')
+    e, out, data = p.scan()
+    counts = data.get('counts', {})
+    check('M10 빚 스캔도 같은 판정 — 발견 수 8 · 3(+ 옛 링크 1)',
+          counts.get('IM13|' + theme) == 8 and counts.get('IM13|' + LOBBY_PAGE) == 4, sorted(counts.items()))
+    p.reset(base)
+    # 정규화 안 된 `{% static %}` 인자 — 정적 URL 로 풀어 본 실제 대상이 남의 표준 자리면 IM13(@import · url() 과 같은 술어)
+    p.sub(page, '<p>lobby</p>', '\n'.join([
+        link('web/application/../../design_system/foundation/app_spacing.css'),                   # 5 운영자(web/application/ 을 거쳐 ..)
+        link('./design_system/foundation/app_radius.css'),                                        # 6 운영자(앞머리 ./)
+        link('./design_system/guest/foundation/app_radius.css'),                                  # 7 자기 제품 — 통과
+        '<p>lobby</p>']))
+    e, out = backstop(p.root, '--diff-base', base, '--only', 'im13')
+    check('M10 `{% static %}` 인자의 `web/application/../../` · 앞머리 `./` — 실제 대상이 남의 표준 자리면 IM13(자기 제품은 통과)',
+          lines_of(out, 'IM13', LOBBY_PAGE) == [5, 6], '%r\n%s' % (lines_of(out, 'IM13', LOBBY_PAGE), out[-1500:]))
     p.reset(base)
 
     # 선언이 없으면 혼입 판정 자체가 없다

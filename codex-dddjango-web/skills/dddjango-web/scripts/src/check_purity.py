@@ -215,6 +215,12 @@ def _sdk_global(ctx: BackstopContext, path: str) -> Optional[str]:
 # 점(`.`·`?.`) 바로 뒤 낱말은 이 목록의 글자여도 속성 이름(값)이다 — `range.in / x` 의 `/` 는 나눗셈이다(_JsCode._scan).
 _JS_REGEX_WORDS = frozenset({'return', 'typeof', 'instanceof', 'in', 'new', 'delete', 'void', 'throw', 'case', 'do', 'else'})
 _JS_SPLIT_WORDS = frozenset({'of', 'yield', 'await'})
+_JS_DIGITS = frozenset('0123456789')
+
+
+def _js_word_start(ch: str) -> bool:
+    """식별자(낱말)를 시작할 수 있는 글자인가 — 숫자는 아니다."""
+    return bool(ch) and (ch.isalpha() or ch in '_$' or ord(ch) > 127)
 
 
 class _JsCode:
@@ -223,6 +229,8 @@ class _JsCode:
     나눗셈, 연산자·구두점·식 시작 뒤는 정규식이고, `)`·`}`·`++`·`--`·`.`·of·yield·await 뒤는 둘 다 가능해 나눗셈
     (코드)으로 읽는다. 점 하나(`.`·`?.` — 펼침 `...` 은 아니다) 바로 뒤 낱말은 속성 이름이라 키워드와 글자가 같아도
     값이다(`range.in / x`·`.delete`·`.return`·`.new`·`.case`·`.typeof` 뒤의 `/` 는 나눗셈 — 그 안의 이름은 코드다).
+    점 바로 뒤 private 이름(`this.#in`)도 속성 이름(값)이다. 숫자 리터럴은 한 토큰(값)이다 — 10진 정수부 바로 뒤의 점과 `.5` 의 점은 리터럴의 일부라 속성 접근이 아니고
+    (`1. in /x/` 의 in 은 키워드 · 뒤는 정규식), 리터럴 바로 뒤 `/` 는 나눗셈이다(_number_end).
     확정하지 못한 자리가 있으면 uncertain 이다: 닫히지 않은 문자열·템플릿·`${`·블록 주석·정규식,
     그리고 갈림 자리의 `/` 가 정규식으로도 읽히면서 그 사이에 따옴표·백틱·역슬래시·`/` 가 있어 뒤 판독이 갈리는 경우.
     WV 검사가 쓰는 mask_js·JsView 와는 따로다(그쪽 동작을 바꾸지 않는다)."""
@@ -236,7 +244,8 @@ class _JsCode:
     def _scan(self, i: int, top: bool) -> int:
         """코드 구간을 읽는다 — top 이 아니면 `${` 다음에서 시작해 짝 맞는 `}` 다음 offset 을 돌려준다.
         last = 앞 낱말의 갈래: op(뒤 `/` 는 정규식) · value(나눗셈) · split(갈림).
-        member = 바로 앞 토큰이 점 하나(`.`·`?.`)인가 — 그 뒤 낱말은 속성 이름이다(공백·주석은 사이에 올 수 있다)."""
+        member = 바로 앞 토큰이 속성 접근의 점 하나(`.`·`?.` — 숫자 리터럴의 점 · 펼침은 아니다)인가 — 그 뒤 낱말은
+        속성 이름이다(공백·주석은 사이에 올 수 있다)."""
         t: str = self.text
         n: int = len(t)
         depth: int = 0
@@ -266,6 +275,16 @@ class _JsCode:
                 i, last = self._template(i), 'value'
             elif c == '/':
                 i, last = self._slash(i, last)
+            elif c in _JS_DIGITS or (c == '.' and t[i + 1:i + 2] in _JS_DIGITS):  # 숫자 리터럴 — 한 토큰(값)
+                j = self._number_end(i)
+                self.code[i:j] = [True] * (j - i)
+                i, last = j, 'value'
+            elif c == '#' and after_dot and _js_word_start(t[i + 1:i + 2]):  # 점 뒤 private 이름(`this.#in`) — 속성 이름(값)
+                j = i + 1
+                while j < n and (t[j].isalnum() or t[j] in '_$' or ord(t[j]) > 127):
+                    j += 1
+                self.code[i:j] = [True] * (j - i)
+                i, last = j, 'value'
             elif c.isalnum() or c in '_$' or ord(c) > 127:
                 j: int = i
                 while j < n and (t[j].isalnum() or t[j] in '_$' or ord(t[j]) > 127):
@@ -284,13 +303,49 @@ class _JsCode:
                     self.code[i + 1] = True
                     i, last = i + 2, 'split'
                     continue
-                # 속성 접근의 점 하나만 — 펼침(`...`)의 점은 아니다(그 뒤 낱말은 식의 시작이라 키워드일 수 있다)
-                member = c == '.' and t[i + 1:i + 2] != '.' and t[i - 1:i] != '.'
+                if t.startswith('...', i):  # 펼침 — 속성 접근의 점이 아니다(그 뒤 낱말은 식의 시작이라 키워드일 수 있다)
+                    self.code[i + 1:i + 3] = [True, True]
+                    i, last = i + 3, 'split'
+                    continue
+                member = c == '.'  # 속성 접근의 점(숫자 리터럴의 점은 위 숫자 토큰이 이미 삼켰다 — `1..in` 의 둘째 점이 여기 온다)
                 last = 'value' if c == ']' else 'split' if c in ')}.' else 'op'
                 i += 1
         if not top:
             self.uncertain = True  # `${` 가 닫히지 않았다
         return n
+
+    def _number_end(self, i: int) -> int:
+        """i 에서 시작하는 숫자 리터럴의 끝 offset. 10진 정수부 바로 뒤의 점은 리터럴의 일부다(`1.`·`1.5`·`1.e3` — 소수부 ·
+        지수부 `e[+-]?숫자` 까지 한 토큰이고 점으로 시작하는 `.5` 도 같다). 그 밖의 점은 리터럴에 들지 않는다 — 접두 리터럴
+        (`0x`·`0o`·`0b`) · BigInt 꼬리 `n` · 옛 8진(`017`) · 소수부 · 지수부 뒤의 점은 속성 접근이다(`0x1.in`·`1n.in`·
+        `1.5.in`·`1e3.in`, 그리고 `1..in` 의 둘째 점). 리터럴에 바로 붙은 식별자 글자(잘못된 JS)는 같은 토큰으로 읽는다."""
+        t: str = self.text
+        n: int = len(t)
+
+        def digits(j: int) -> int:
+            while j < n and (t[j] in _JS_DIGITS or t[j] == '_'):
+                j += 1
+            return j
+
+        j: int = i
+        if t[i] == '0' and t[i + 1:i + 2] in ('x', 'X', 'o', 'O', 'b', 'B'):
+            j = i + 2  # 접두 리터럴 — 자리 글자와 BigInt 꼬리는 아래 식별자 글자 걸음이 읽는다
+        else:
+            decimal: bool = True  # 소수부 · 지수부를 받을 수 있는 10진 리터럴인가
+            if t[i] != '.':
+                j = digits(i)
+                legacy_octal: bool = j - i > 1 and t[i] == '0' and all(ch in '01234567' for ch in t[i:j])
+                decimal = not legacy_octal and t[j:j + 1] != 'n'
+            if decimal:
+                if t[j:j + 1] == '.':
+                    j = digits(j + 1)
+                if t[j:j + 1] in ('e', 'E'):
+                    k: int = j + 2 if t[j + 1:j + 2] in ('+', '-') else j + 1
+                    if t[k:k + 1] in _JS_DIGITS:
+                        j = digits(k)
+        while j < n and (t[j].isalnum() or t[j] in '_$' or ord(t[j]) > 127):
+            j += 1
+        return j
 
     def _string(self, i: int) -> int:
         t: str = self.text

@@ -529,6 +529,59 @@ def parse_template_edges(ms: MaskedSource) -> List[ImportEdge]:
     return edges
 
 
+# ---- 실제로 실리는 정적 파일(제품 판정 전용 — import edge 와 따로다)
+# import edge 의 target 은 참조 원문 전체를 접은 경로다(위 parse_css_edges · static_target — 다른 IM · Finding 경로 · 빚 키가
+# 그 글자에 기대므로 바꾸지 않는다). 어느 파일이 실리는가는 그것과 다를 수 있다 — 꼬리(query · fragment) 안의 경로 꼴
+# (`a.css?v=/../x`)이 원문 전체를 접을 때 대상을 지우거나 다른 파일로 바꾼다. 제품 혼입 판정은 아래 한 술어만 쓴다.
+
+_URL_TAIL_RE = re.compile(r'[?#]')
+
+
+def loaded_file(ref: str, base: str = '/static') -> Optional[str]:
+    """정적 참조 원문 → 실제로 실리는 파일(web-상대 · 정적 뿌리나 STATICFILES 접두 둘 밖이면 None).
+    원문에서 query · fragment 꼬리를 **먼저** 떼고, base(그 참조가 풀리는 정적 URL 폴더) 기준으로 상대 경로를 푼 뒤
+    `.` · `..` 를 접는다. `{% static %}` 인자 · CSS `@import` · 정적 경로 `url()` 이 모두 이 술어를 지난다."""
+    path: str = _URL_TAIL_RE.split(ref.strip(), 1)[0]
+    if not path:
+        return None
+    full: str = posixpath.normpath(path if path.startswith('/') else posixpath.join(base, path))
+    if not full.startswith('/static/'):
+        return None
+    return static_target(full[len('/static/'):])
+
+
+def parse_css_loads(ms: MaskedSource, file_rel: str) -> List[Tuple[int, str]]:
+    """CSS 가 직접 싣는 정적 파일 — (행, 실제로 실리는 web-상대 경로). 보는 참조와 걸러내는 꼴은 parse_css_edges 와 같다
+    (`@import`·`url()` 의 정적 경로 — 걸러내는 꼴을 바꾸면 둘 다 바꾼다). 대상만 loaded_file 로 푼다 — 원문 전체를 접으면
+    정적 뿌리 밖으로 나가 edge 가 서지 않는 참조도 여기서는 선다."""
+    if file_rel.startswith('static/'):
+        served: str = '/static/web/' + file_rel[len('static/'):]
+    elif file_rel.startswith('design_system/'):
+        served = '/static/' + file_rel
+    else:
+        return []
+    loads: List[Tuple[int, str]] = []
+    for m in _CSS_REF_RE.finditer(ms.no_comments):
+        u: str = (m.group(1) or m.group(2) or '').strip()
+        if not u or u.startswith(('#', 'data:', '//')) or re.match(r'^[A-Za-z][\w+.-]*:', u):
+            continue
+        t: Optional[str] = loaded_file(u, posixpath.dirname(served))
+        if t is not None:
+            loads.append((ms.line_of(m.start()), t))
+    return loads
+
+
+def parse_template_loads(ms: MaskedSource) -> List[Tuple[int, str]]:
+    """템플릿이 `{% static %}` 으로 직접 싣는 정적 파일 — (행, 실제로 실리는 web-상대 경로). 인자는 정적 뿌리 기준이다
+    (앞머리 `/` 는 뗀다 — static_target 과 같다)."""
+    loads: List[Tuple[int, str]] = []
+    for m in _STATIC_RE.finditer(ms.no_comments):
+        t: Optional[str] = loaded_file(m.group(2).strip().lstrip('/'))
+        if t is not None:
+            loads.append((ms.line_of(m.start()), t))
+    return loads
+
+
 # ------------------------------------------------------------ 컨텍스트(게이트)
 
 
@@ -630,6 +683,16 @@ class BackstopContext:
                 edges = []
             self._edge_cache[f] = edges
         return edges
+
+    def loads_of(self, f: str) -> List[Tuple[int, str]]:
+        """문서가 직접 싣는 정적 파일 — (행, 실제로 실리는 web-상대 경로). 제품 혼입 판정 전용이다(edges_of 와 따로 —
+        import edge 는 참조 원문 전체를 접은 대상 그대로다)."""
+        ext: str = ext_of(f)
+        if ext == '.html':
+            return parse_template_loads(self.mask_of(f))
+        if ext == '.css':
+            return parse_css_loads(self.mask_of(f), f)
+        return []
 
     # ---- 빌드
 

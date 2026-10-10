@@ -17,8 +17,9 @@
 #   IM13 혼입 금지 — 소속이 정해진 문서(선언된 셸 · BC 의 템플릿과 조각 CSS · 틀 CSS · design_system 파일 — 소속 판정은
 #          products.product_of: 페이지는 BC 선언이지 상속한 셸이 아니다)가 **다른 제품의 표준 자리 CSS**(foundation 표준
 #          7 파일 · theme/app_theme.css · component/<군>/*.css · util/*.css)를 `{% static %}` 링크나 CSS `@import`·`url()` 로
-#          실으면 발견. 대상은 실제로 실리는 파일로 본다 — query · fragment 꼬리를 떼고 `.` · `..` 를 접은 경로(제품 판정에만 ·
-#          edge · Finding 경로 · 빚 키와 다른 IM 은 참조 원문 그대로).
+#          실으면 발견. 대상은 실제로 실리는 파일로 본다 — 참조 원문에서 query · fragment 꼬리를 먼저 떼고 상대 경로를 풀어
+#          `.` · `..` 를 접은 경로(common.loaded_file — 세 참조 꼴이 같은 술어를 지난다 · 제품 판정에만 쓴다: import edge ·
+#          Finding 경로 · 빚 키와 다른 IM 은 지금처럼 참조 원문 전체를 접은 대상 그대로).
 #          판정 밖: 표준 7 파일 밖 foundation 파일(옛 값 파일 — 이미 ST10 빚) · 마크업 include/extends(평면 component html 은
 #          공용) · 옛 배치 페이지(소속 없음) · include 된 조각 안의 링크 · 동적 경로 · 옛 값 파일을 거친 간접 @import ·
 #          `var()` 로 부르는 다른 제품 토큰.
@@ -204,16 +205,6 @@ def run_imports(ctx: BackstopContext) -> List[Finding]:
                 if not (in_pres or fv.startswith('root/scaffold/') or segs[0] == 'design_system'):
                     add('IM13', e.line, '`%s` 참조 — design_system은 presentation·root scaffold·design_system 내부만' % t,
                         '제1 규약 §3.7', '시각 토큰이 필요한 로직은 ui_extension(도메인→UI 매핑의 유일한 자리)으로 옮긴다.')
-            # ---- IM13 제품 분기(혼입 금지 — 선언이 있을 때만 · 머리 주석): 소속이 정해진 문서가 다른 제품의 표준 자리 CSS 를 싣는다
-            if owner is not None and internal and e.kind in ('static', 'css'):
-                other: Optional[str] = products.standard_css_owner(t)
-                if other is not None and other != owner and (extends_added or ctx.line_is_added(f, e.line)):
-                    out.append(Finding('IM13', f, e.line,
-                        '제품 `%s` 의 문서가 다른 제품 `%s` 의 표준 자리 CSS `%s` 를 싣는다 — 제품 사이 CSS 혼입 금지'
-                        % (owner, other, products.loaded_path(t)), _RULE_MIX,
-                        '그 문서의 제품 뿌리(%s/)에 있는 같은 군·같은 이름의 CSS 를 싣는다 — 없으면 그 제품 뿌리에 만든다'
-                        '(마크업은 평면 component html 을 include 해 같이 써도 된다 · 제품은 web/product_registry.json 의 선언).'
-                        % products.ds_root(owner)))
 
             # ---- IM14(import 절반): app service → navigator 금지
             if in_app and parent == 'service' and internal and base_name_of(t).endswith('_navigator.py'):
@@ -316,6 +307,19 @@ def run_imports(ctx: BackstopContext) -> List[Finding]:
                     add('IM27', e.line, 'common/network 밖 HTTP 호출 표면 `%s` import' % surf,
                         '제1 규약 §3.4·§6',
                         'API 호출은 common/network/api_client.py·safe_api_call.py 하나로 — DataSource는 그것을 부른다.')
+
+        # ---- IM13 제품 분기(혼입 금지 — 선언이 있을 때만 · 머리 주석): 소속이 정해진 문서가 다른 제품의 표준 자리 CSS 를 싣는다.
+        #      대상은 import edge 가 아니라 그 문서가 실제로 싣는 파일이다(ctx.loads_of — 참조 원문에서 꼬리를 먼저 떼고 푼다)
+        if owner is not None:
+            for line, loaded in ctx.loads_of(f):
+                other: Optional[str] = products.standard_css_owner(loaded)
+                if other is not None and other != owner and (extends_added or ctx.line_is_added(f, line)):
+                    out.append(Finding('IM13', f, line,
+                        '제품 `%s` 의 문서가 다른 제품 `%s` 의 표준 자리 CSS `%s` 를 싣는다 — 제품 사이 CSS 혼입 금지'
+                        % (owner, other, loaded), _RULE_MIX,
+                        '그 문서의 제품 뿌리(%s/)에 있는 같은 군·같은 이름의 CSS 를 싣는다 — 없으면 그 제품 뿌리에 만든다'
+                        '(마크업은 평면 component html 을 include 해 같이 써도 된다 · 제품은 web/product_registry.json 의 선언).'
+                        % products.ds_root(owner)))
 
         # ================= 토큰 검사 (마스킹 본문, added 줄 게이트) =================
         if ext == '.py':

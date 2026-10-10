@@ -1298,6 +1298,79 @@ EOF
 const kinds = [...typeof /Kakao/.source];
 EOF
       ;;
+    # 숫자 리터럴의 점은 속성 접근이 아니다 — 10진 정수부 바로 뒤의 점(`1.`)과 점으로 시작하는 숫자(`.5`)는 리터럴의 일부라
+    # 그 뒤 낱말은 키워드 그대로이고 뒤의 `/` 는 정규식 리터럴이다(참조 아님). 숫자 리터럴 바로 뒤 `/` 는 나눗셈이다.
+    num_dot_in) cat <<'EOF'
+const hasOne = 1. in /Kakao/;
+EOF
+      ;;
+    num_dot_newline) cat <<'EOF'
+function matches(x) {
+  const n = 1.
+  return /Kakao/.test(x);
+}
+EOF
+      ;;
+    num_dot_template) cat <<'EOF'
+const label = `${ 1. in /Kakao/ }`;
+EOF
+      ;;
+    num_lead_dot) cat <<'EOF'
+const has = .5 in /Kakao/;
+EOF
+      ;;
+    num_dot_exponent) cat <<'EOF'
+const has = 1.e3 in /Kakao/;
+EOF
+      ;;
+    num_separator_dot) cat <<'EOF'
+const has = 1_000. in /Kakao/;
+EOF
+      ;;
+    num_dot_division_string) cat <<'EOF'
+const half = 1. / "Kakao" / 2;
+EOF
+      ;;
+    # 리터럴이 삼킨 점 다음의 또 한 점 · 접두(`0x`·`0o`·`0b`) 리터럴 · BigInt 꼬리 `n` · 소수부 · 지수부 뒤의 점은 속성 접근이다
+    # — 그 뒤 낱말은 값이고 `/` 는 나눗셈이라 그 안의 전역은 참조다.
+    num_dot_dot_prop) cat <<'EOF'
+const ratio = 1..in / Kakao.Share.count() / 2;
+EOF
+      ;;
+    num_hex_prop) cat <<'EOF'
+const ratio = 0x1.in / Kakao.Share.count() / 2;
+EOF
+      ;;
+    num_array_prop) cat <<'EOF'
+const ratio = [2.].in / Kakao.Share.count() / 2;
+EOF
+      ;;
+    num_bigint_prop) cat <<'EOF'
+const ratio = 1n.in / Kakao.Share.count() / 2;
+EOF
+      ;;
+    num_fraction_prop) cat <<'EOF'
+const ratio = 1.5.in / Kakao.Share.count() / 2;
+EOF
+      ;;
+    num_exponent_prop) cat <<'EOF'
+const ratio = 1e3.in / Kakao.Share.count() / 2;
+EOF
+      ;;
+    num_dot_division) cat <<'EOF'
+const ratio = 1. / Kakao.Share.count() / 2;
+EOF
+      ;;
+    # 점 바로 뒤 `#이름`(private 이름)도 속성 이름(값)이다 — 그 뒤 `/` 는 나눗셈이고 그 안의 전역은 참조다.
+    # private 이름 뒤에 온 진짜 키워드의 정규식은 그대로 정규식이다(참조 아님).
+    prop_private) cat <<'EOF'
+class Probe { #in = 4; ratio() { return this.#in / Kakao.Share.count() / 2; } }
+EOF
+      ;;
+    private_keyword_regex) cat <<'EOF'
+class Probe { #in = 4; has(o) { return this.#in in o ? typeof /Kakao/.source : ""; } }
+EOF
+      ;;
   esac
 }
 order_three() { # order_three <프로젝트> — 같은 기능 JS 를 SDK 앞에 싣는 템플릿 셋(페이지 둘 · root_view)을 커밋하고 HEAD 를 낸다
@@ -1316,8 +1389,15 @@ for CASE in template_comment template_line_comment postfix_division postfix_decr
             postfix_then_statement open_template regex_quote escaped_quote undecidable unterminated \
             paren_division comment_after_division \
             prop_in prop_delete prop_return prop_new prop_case prop_typeof prop_optional prop_spaced \
-            keyword_regex spread_keyword_regex; do
-  case "$CASE" in paren_division|comment_after_division|keyword_regex|spread_keyword_regex) WANT=0; N=0; M=0 ;; *) WANT=2; N=1; M=3 ;; esac
+            keyword_regex spread_keyword_regex \
+            num_dot_in num_dot_newline num_dot_template num_lead_dot num_dot_exponent num_separator_dot num_dot_division_string \
+            num_dot_dot_prop num_hex_prop num_array_prop num_bigint_prop num_fraction_prop num_exponent_prop num_dot_division \
+            prop_private private_keyword_regex; do
+  case "$CASE" in
+    paren_division|comment_after_division|keyword_regex|spread_keyword_regex|private_keyword_regex) WANT=0; N=0; M=0 ;;
+    num_dot_in|num_dot_newline|num_dot_template|num_lead_dot|num_dot_exponent|num_separator_dot|num_dot_division_string) WANT=0; N=0; M=0 ;;
+    *) WANT=2; N=1; M=3 ;;
+  esac
   P=$(newp "lex-tag-$CASE"); B=$(base_of "$P"); order_page "$P"; lex_js "$CASE" > "$P/web/static/js/order_probe.js"
   OUT=$(BS "$P" --diff-base "$B" --only pu2); E=$?
   check "K226 코드 뷰 $CASE · 태그 added" "$WANT" "$E" "$OUT" "기능 JS 태그보다 뒤=$N"

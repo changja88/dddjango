@@ -144,7 +144,7 @@ class LandingNavigator:
 </html>
 ```
 
-제품 선언이 있으면 flat의 `root_view.html`과 own의 `root_<제품>_view.html`은 모두 위와 같은 독립 문서이며 어떤 템플릿도 extends하지 않는다(백스톱 IM26). own 셸의 예: `root/scaffold/view/root_console_view.html`은 자기 `design_system/console/foundation/`의 표준 7파일 다음에 `design_system/console/theme/app_theme.css`만 링크하고, 틀 CSS는 `web/root/root_console_view.css`다(기존 `root_vm.py`·`root_state.py`를 함께 쓴다).
+제품 선언이 있으면 flat의 `root_view.html`과 own의 `root_<제품>_view.html`은 모두 위와 같은 독립 문서이며 어떤 템플릿도 extends하지 않는다(백스톱 IM26). own 셸의 예: `root/scaffold/view/root_shop_view.html`은 자기 `design_system/shop/foundation/`의 표준 7파일 다음에 `design_system/shop/theme/app_theme.css`만 링크하고, 틀 CSS는 `web/root/root_shop_view.css`다(기존 `root_vm.py`·`root_state.py`를 함께 쓴다).
 
 탭 href는 RootVM이 만든다 — context processor `root_context(request)`가 `request.session`과 현재 BC(`request.resolver_match.namespaces[0]`)를 RootVM에 넘기고, RootVM이 root의 탭 표(BC → 탭)로 탭마다 `href`·`is_current`를 채운다: 현재 탭은 그 탭 첫 화면 href, 다른 탭은 세션 `root.tab_last`의 마지막 경로(없으면 첫 화면 — §3). 탭 기록은 `RootRequestHandler.process_view`가 적는다(아래) — BC는 탭 기록을 모른다(architecture-state §10 "거의 빈 VM").
 

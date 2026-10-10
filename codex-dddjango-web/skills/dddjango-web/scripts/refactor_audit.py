@@ -602,8 +602,9 @@ def is_bc(unit: str) -> bool:
     return unit.startswith("application/")
 
 
-def _unit_arg(raw: str, files: "list[str]", areas: "frozenset[str]") -> str:
-    """단위 인자 → 단위 id. 단위 목록(파일 우주에서 계산)에 있어야 한다 — 단위 안쪽 경로 · area · vendor 는 받지 않는다."""
+def _unit_arg(raw: str, files: "list[str]", areas: "frozenset[str]", project: Path) -> str:
+    """단위 인자 → 단위 id. 단위 목록(파일 우주에서 계산)에 있어야 한다 — 단위 안쪽 경로 · area · vendor 는 받지 않는다.
+    제품 선언 이름의 진단은 그 선언이 실제로 있을 때만이다(링크 · 폴더로 있어도 있는 것) — 없으면 여느 없는 단위와 같다."""
     text: str = raw.strip().rstrip("/")
     if text in ("web/*.py", "*.py"):
         return CONTAINER
@@ -611,9 +612,11 @@ def _unit_arg(raw: str, files: "list[str]", areas: "frozenset[str]") -> str:
         text = text[len("web/"):]
     if not text or text.startswith("/") or ".." in text.split("/"):
         raise ToolError(f"단위 표기 오류 — {raw}")
-    if (text + "/").startswith(EXCLUDED_PREFIXES) or text in EXCLUDED_FILES:
-        owner: str = "사용자 결정으로만 바뀌는 제품 선언이다" if text == PRODUCT_REGISTRY else "외부 JS 승인 절차가 맡는다"
-        raise ToolError(f"단위가 아니다 — `web/{text}` 는 {owner}(리팩토링 단위 밖)")
+    if text == PRODUCT_REGISTRY:
+        if os.path.lexists(project / "web" / PRODUCT_REGISTRY):
+            raise ToolError(f"단위가 아니다 — `web/{text}` 는 사용자 결정으로만 바뀌는 제품 선언이다(리팩토링 단위 밖)")
+    elif (text + "/").startswith(EXCLUDED_PREFIXES) or text in EXCLUDED_FILES:
+        raise ToolError(f"단위가 아니다 — `web/{text}` 는 외부 JS 승인 절차가 맡는다(리팩토링 단위 밖)")
     units: "set[str]" = {unit_of(f, areas) for f in files} - {""}
     if text in units:
         return text
@@ -1042,7 +1045,7 @@ def cmd_plan(project: Path, raw_unit: str, debt_path: Path, out: "Path | None", 
         raise ToolError(f"판정 불가 — {decl_error}")
     files: "list[str]" = debt_universe(project)
     areas: "frozenset[str]" = areas_of(files)
-    unit: str = _unit_arg(raw_unit, files, areas)
+    unit: str = _unit_arg(raw_unit, files, areas, project)
     debt: dict = _load_debt(debt_path)
     data: PlanData = compute_plan(project, unit, debt, files, areas)
     if against is not None:

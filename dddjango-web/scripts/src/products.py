@@ -13,8 +13,8 @@
 # 선언 오류는 판정 불가다(ProductError → 러너 exit 1) — 무선언 동작이나 빈 제품 목록으로 내려앉지 않는다. 검증은 검사
 # 패밀리보다 앞선 공통 preflight 다(게이트 계열 · 빚 모드 · refactor_audit plan — `--only <무엇이든>` 에서도).
 # «선언 없음» 은 선언 파일이 실제로 없을 때뿐이다(web/ 가 없는 첫 실행 포함) — 있는지 조사할 수 없으면(탐색 권한 등) 판정 불가다.
-# BC 경로의 성분은 소문자 snake_case 식별자다(층 폴더 이름 불가 · "*" 는 배열 밖 문자열로만) — 어느 BC 와도 맞을 수 없는
-# 이름이 조용히 통과해 그 제품의 화면 범위가 비는 일을 막는다.
+# BC 경로의 성분은 소문자 snake_case 식별자다(층 폴더 이름 · 컨테이너 이름 불가 · "*" 는 배열 밖 문자열로만) — 어느 BC 와도
+# 맞을 수 없는 이름이 조용히 통과해 그 제품의 화면 범위가 비는 일을 막는다.
 # 제품 뿌리를 뗀 상대 경로는 검사 분류에만 쓴다 — Finding 경로 · import edge · 빚 키는 실제 물리 경로(web 상대) 그대로다.
 # 소속 판정(`product_of`): BC 의 파일(페이지 포함) = 그 BC 의 선언 제품(상속한 셸이 아니다) · 셸 = 선언된 셸의 제품 ·
 #   design_system 파일 = 소유 뿌리의 제품 · BC 조각 CSS(static/application/…) = 그 BC 의 제품 ·
@@ -23,7 +23,6 @@
 from __future__ import annotations
 
 import os
-import posixpath
 import re
 import stat
 from pathlib import Path
@@ -39,7 +38,8 @@ OWN: str = 'own'
 STAR: str = '*'
 _ID_RE = re.compile(r'^[a-z][a-z0-9_]*$')
 _BC_PART_RE = re.compile(r'^[a-z_][a-z0-9_]*$')  # BC · area 폴더 = Python 패키지 이름(소문자 snake_case)
-_TAIL_RE = re.compile(r'[?#]')
+# BC · area 이름으로 금지된 컨테이너 이름(houserules §1 area 핵심 사실 ⓓ — 층 폴더 이름 LAYER_NAMES 와 함께)
+_CONTAINER_NAMES: FrozenSet[str] = frozenset({'root', 'application', 'common', 'design_system'})
 _DS: str = 'design_system'
 _APP: str = 'application'
 
@@ -121,19 +121,11 @@ class Products:
             return self.product_of_shell(view[:-len('.css')] + '.html')
         return self.product_of_shell(view)
 
-    @staticmethod
-    def loaded_path(rel: str) -> str:
-        """참조 대상 → 실제로 실리는 파일 경로(제품 판정용) — query · fragment 꼬리를 떼고 `.` · `..` 를 접는다
-        (`…/app_color.css?v=1` · `design_system/guest/../foundation/app_color.css`). 판정에만 쓴다 — import edge ·
-        Finding 경로 · 빚 키와 다른 검사는 참조 원문 그대로다."""
-        path: str = _TAIL_RE.split(rel, 1)[0]
-        return posixpath.normpath(path) if path else path
-
     def standard_css_owner(self, rel: str) -> Optional[str]:
         """제품 표준 자리 CSS 의 소유 제품 — foundation 표준 7 파일 · theme/app_theme.css · component/<군>/*.css · util/*.css.
         그 밖(표준 7 파일 밖 foundation 의 옛 값 파일 · 마크업 · design_system 밖)과 선언이 없을 때는 None(혼입 판정 밖).
-        대상은 실제로 실리는 파일로 본다(loaded_path — 꼬리 · 정규화 안 된 경로로 판정을 비켜 가지 못한다)."""
-        rel = self.loaded_path(rel)
+        rel 은 실제로 실리는 파일이다 — 참조 원문에서 꼬리를 먼저 떼고 푼 경로(common.loaded_file · ctx.loads_of)를 받는다.
+        import edge 의 target(원문 전체를 접은 경로)을 넘기지 않는다 — 꼬리 · 정규화 안 된 경로로 판정을 비켜 간다."""
         split = self.ds_split(rel) if self.declared else None
         if split is None or ext_of(rel) != '.css':
             return None
@@ -170,6 +162,9 @@ def _bc_path(pid: str, value: object) -> str:
     if LAYER_NAMES & set(parts):
         raise _fail('제품 `%s` 의 BC 경로 %r — 층 폴더 이름(%s)은 BC · area 이름이 될 수 없다'
                     % (pid, value, ' · '.join(sorted(LAYER_NAMES & set(parts)))))
+    if _CONTAINER_NAMES & set(parts):
+        raise _fail('제품 `%s` 의 BC 경로 %r — 컨테이너 이름(%s)은 BC · area 이름이 될 수 없다'
+                    % (pid, value, ' · '.join(sorted(_CONTAINER_NAMES & set(parts)))))
     return value
 
 
@@ -235,7 +230,8 @@ def load_products(root: Path) -> Products:
 
 
 def declaration_error(root: Path) -> Optional[str]:
-    """선언 오류 사유(없으면 None) — 컨텍스트를 만들지 않는 입구(빚 모드 · refactor_audit)의 preflight."""
+    """선언 오류 사유(없으면 None) — 컨텍스트를 만들지 않는 입구(빚 모드 · refactor_audit)의 preflight.
+    오류 여부만 보고 적재 결과는 버린다 — 빚 모드에서는 뒤이은 스캔의 컨텍스트가 선언을 다시 읽는다(`products_state`)."""
     try:
         load_products(root)
     except ProductError as error:
@@ -244,8 +240,9 @@ def declaration_error(root: Path) -> Optional[str]:
 
 
 def products_state(ctx: object) -> Products:
-    """백스톱 컨텍스트의 제품 해석 — 한 실행에 한 번 적재해 컨텍스트에 붙여 둔다(`sdk_state` 꼴).
-    게이트의 `BackstopContext.build` 와 빚 스캔의 `from_files` 가 이 하나를 쓴다. 선언 오류면 ProductError."""
+    """백스톱 컨텍스트의 제품 해석 — 컨텍스트마다 한 번 적재해 그 컨텍스트에 붙여 둔다(`sdk_state` 꼴).
+    게이트의 `BackstopContext.build` 와 빚 스캔의 `from_files` 가 이 하나를 쓴다. 선언 오류면 ProductError.
+    한 실행에 한 번은 아니다 — 빚 모드는 러너의 사전 점검(`declaration_error`)과 스캔의 컨텍스트가 따로 읽는다."""
     state: Optional[Products] = getattr(ctx, '_products', None)
     if state is None:
         state = load_products(getattr(ctx, 'root'))
