@@ -56,16 +56,30 @@ SUMMARY_VO = "application.orders.domain_layer.order.value_object.summary"
 SUMMARY_DETAIL = "`summary` 반환 `Summary` 이 애그리거트도 값 객체도 아니다"
 BASELINE_ONLY = "기준선에만 있는 출처"
 # 기존 빚을 다시 적은 줄은 새 위반이 아니다(G2 registry 차분으로도 귀속 0) — 철자·감싸개만 바뀐 반환 · 같은 파일의 베이스
-# 클래스에서 물려받은 메서드 · 클래스 본문 복합문 아래 메서드.
+# 클래스에서 물려받은 메서드. 클래스 본문 복합문 아래에만 있는 메서드는 검사기가 판정하지 않는 자리라 다시 적으면 후보다.
 DEBT_BASELINE = (
     REPOSITORY_BASELINE.replace("from uuid import UUID\n", "from typing import TYPE_CHECKING, Optional\nfrom uuid import UUID\n")
     + "\n    @abstractmethod\n    def legacy_opt(self, account_id: int) -> Optional[UUID]: ...\n"
     "\n    @abstractmethod\n    def legacy_many(self, account_id: int) -> tuple[UUID, ...]: ...\n"
     "\n    @abstractmethod\n    def legacy_rows(self, account_id: int) -> dict[str, int]: ...\n"
     "\n    if TYPE_CHECKING:\n        def guarded(self, account_id: int) -> frozenset[UUID]: ...\n"
+    "        def delete_guarded(self, account_id: int) -> None: ...\n"
     "\n\nclass ArchivedFortuneRecordRepository(FortuneRecordRepository):\n    pass\n")
 DEBT_RESTATED = (DEBT_BASELINE.replace("-> Optional[UUID]", "-> UUID | None").replace("-> tuple[UUID, ...]", "-> list[UUID]")
                  .replace("-> dict[str, int]", "-> dict[str, str]"))
+# 기존 빚은 그 줄의 소유자(클래스 · 메서드)와 그 파일 안에서 확인되는 상속 사슬에만 묶인다 — 다른 클래스의 새 메서드는 새 위반이다.
+OWNED_BASELINE = (
+    DEBT_BASELINE.replace("from uuid import UUID\n",
+                          f"from uuid import UUID\n\nfrom {DOMAIN}.base_repository import BaseRecordRepository\n")
+    .replace("\n\nclass ArchivedFortuneRecordRepository",
+             "\n    @abstractmethod\n    def count_records(self, account_id: int) -> int: ...\n"
+             "\n\nclass ArchivedFortuneRecordRepository")
+    + "\n\nclass DeepArchiveRepository(ArchivedFortuneRecordRepository):\n    pass\n"
+    "\n\nclass UnrelatedRecordRepository(ABC):\n    pass\n"
+    "\n\nclass ImportedBaseRepository(BaseRecordRepository):\n    pass\n")
+LEGACY_ORDER_BASELINE = (ORDER_HEAD + "from uuid import UUID\n\n\nclass LegacyOrderRepository(ABC):\n"
+                         "    @abstractmethod\n    def owner_id(self) -> UUID: ...\n" + ORDER_CLASS)
+OWNER_DETAIL = "`owner_id` 반환 `UUID` 이 애그리거트도 값 객체도 아니다"
 
 
 def spec_text(paths: list[str], symbols: list[str] = (), imports: list[str] = ()) -> str:
@@ -533,6 +547,8 @@ class RepositoryForecastTest(unittest.TestCase):
              ["token() -> UUID", "seen_at() -> datetime", "total() -> Decimal"], [], [("#355", True)] * 3, ""),
             ("기준선 밖 + 명세의 다른 밖(상충)", outside, ["summary() -> Summary"],
              ["from support.other_models import Summary"], [("#355", False)], "출처 미해소"),
+            ("기준선의 상대 import — 표준 라이브러리와 같은 이름의 형제 모듈", ORDER_HEAD + "from .calendar import Event\n" + ORDER_CLASS,
+             ["events() -> Event"], [], [("#355", False)], BASELINE_ONLY),
             ("기준선 밖 + 명세의 domain(같은 이름) — 실검사기 통과 그대로", outside, ["summary() -> Summary"],
              [f"from {SUMMARY_VO} import Summary"], [], ""),
             ("기준선 파일 자기 클래스", own_class, ["summary() -> Summary"], [], [("#355", False)], BASELINE_ONLY),
@@ -556,6 +572,156 @@ class RepositoryForecastTest(unittest.TestCase):
         self.assertEqual([(f.rule, f.confirmed) for f in found], [("#355", False)])
         self.assertIn(BASELINE_ONLY, found[0].detail)
 
+    def test_source_root_package_shadowing_a_standard_library_name_is_a_project_origin(self) -> None:
+        nested = f"src/{ORDER_REPOSITORY}"
+        order = dict(path=nested, owner="OrderRepository(ABC)")
+        self.write(nested, ORDER_HEAD + "from calendar.read_models import CalendarSummary\n" + ORDER_CLASS)
+        self.write("src/calendar/__init__.py", "")
+        self.write("src/calendar/read_models.py", "class CalendarSummary:\n    pass\n")
+        found = self.forecast(["calendar_summary() -> CalendarSummary"], **order)
+        self.assertEqual([(f.rule, f.path, f.owner, f.confirmed) for f in found],
+                         [("#355", nested, "OrderRepository.calendar_summary", False)])
+        self.assertIn(BASELINE_ONLY, found[0].detail)
+        # 후상태 대조 — 구현이 같은 이름의 domain 값 객체를 들이면 실검사기는 그 메서드를 통과시킨다.
+        self.write(nested, ORDER_HEAD + f"from {SUMMARY_VO.replace('.summary', '.calendar_summary')} import CalendarSummary\n"
+                   + ORDER_CLASS.replace("    pass\n", "    @abstractmethod\n    def calendar_summary(self) -> CalendarSummary: ...\n"))
+        result = subprocess.run([sys.executable, str(SCRIPTS / "check-transaction-boundary.py"), str(self.repo)],
+                                env=self.env, capture_output=True, text=True)
+        self.assertIn(f"[#355] {REPOSITORY}:", result.stdout)
+        self.assertNotIn(nested, result.stdout)
+        for label, baseline, method, expected in [
+            ("source root 의 패키지를 첫 마디로 들임", ORDER_HEAD + "from calendar import Event\n", "events() -> Event", False),
+            ("가림 없는 표준 라이브러리 import", ORDER_HEAD + "from uuid import UUID\n", "token() -> UUID", True),
+            ("표준 라이브러리 패키지의 하위 모듈", ORDER_HEAD + "from collections.abc import Mapping\n",
+             "index() -> Mapping[int, int]", True),
+        ]:
+            with self.subTest(label=label):
+                self.write(nested, baseline + ORDER_CLASS)
+                found = self.forecast([method], **order)
+                self.assertEqual([(f.rule, f.confirmed) for f in found], [("#355", expected)])
+                self.assertEqual(BASELINE_ONLY in found[0].detail, not expected, found[0].detail)
+        # 가리는 폴더를 못 찾아도(다른 import 경로 · 네임스페이스), 표준 `fractions` 는 하위 모듈을 가진 패키지가 아니라서
+        # `fractions.read_models` 는 표준 라이브러리 출처로 치지 않는다. 첫 마디로 들인 표준 모듈은 그대로 확정 근거다.
+        for label, baseline, method, expected in [
+            ("패키지가 아닌 표준 모듈의 하위 모듈 꼴", ORDER_HEAD + "from fractions.read_models import Ratio\n",
+             "ratio() -> Ratio", False),
+            ("표준 모듈 첫 마디(가림 없음)", ORDER_HEAD + "from fractions import Fraction\n", "ratio() -> Fraction", True),
+        ]:
+            with self.subTest(label=label):
+                self.write(ORDER_REPOSITORY, baseline + ORDER_CLASS)
+                found = self.forecast([method], path=ORDER_REPOSITORY, owner="OrderRepository(ABC)")
+                self.assertEqual([(f.rule, f.confirmed) for f in found], [("#355", expected)])
+
+    def test_baseline_debt_of_another_class_does_not_hide_a_new_method(self) -> None:
+        self.write(ORDER_REPOSITORY, LEGACY_ORDER_BASELINE)
+
+        def order_lines() -> int:
+            result = subprocess.run([sys.executable, str(SCRIPTS / "check-transaction-boundary.py"), str(self.repo)],
+                                    env=self.env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+            return len(re.findall(rf"\[#355\] {re.escape(ORDER_REPOSITORY)}:\d+: {re.escape(OWNER_DETAIL)}", result.stdout))
+
+        found = self.forecast(["owner_id() -> UUID"], path=ORDER_REPOSITORY, owner="OrderRepository(ABC)")
+        self.assertEqual([(f.rule, f.owner, f.detail, f.confirmed) for f in found],
+                         [("#355", "OrderRepository.owner_id", OWNER_DETAIL, True)])
+        # 후상태 대조 — 실검사기는 새 클래스의 메서드에도 줄을 낸다(1 → 2).
+        self.assertEqual(order_lines(), 1)
+        self.write(ORDER_REPOSITORY, LEGACY_ORDER_BASELINE.replace(
+            ORDER_CLASS, ORDER_CLASS.replace("    pass\n", "    @abstractmethod\n    def owner_id(self) -> UUID: ...\n")))
+        self.assertEqual(order_lines(), 2)
+
+    def test_baseline_debt_is_excluded_only_for_its_owner_and_in_file_heirs(self) -> None:
+        restated = ["legacy_ids(account_id: int) -> frozenset[UUID]", "delete_old(account_id: int) -> None"]
+        new = [("#355", True), ("#597", True)]
+        ambiguous = OWNED_BASELINE.replace("from uuid import UUID\n", "from uuid import UUID\n\n"
+                                           "from application.legacy.repositories import FortuneRecordRepository\n", 1)
+        for label, baseline, owner, methods, expected in [
+            ("상속 관계 없는 다른 클래스", OWNED_BASELINE, "UnrelatedRecordRepository(ABC)", restated, new),
+            ("파일 안 직계 상속", OWNED_BASELINE, "ArchivedFortuneRecordRepository(FortuneRecordRepository)", restated, []),
+            ("파일 안 2단 상속", OWNED_BASELINE, "DeepArchiveRepository(ArchivedFortuneRecordRepository)", restated, []),
+            ("새 클래스 — 파일 안 베이스", OWNED_BASELINE, "FreshRepository(FortuneRecordRepository)", restated, []),
+            ("새 클래스 — 베이스 ABC", OWNED_BASELINE, "FreshRepository(ABC)", restated, new),
+            ("같은 클래스지만 명세의 베이스가 다름", OWNED_BASELINE, "ArchivedFortuneRecordRepository(ABC)", restated, new),
+            ("베이스가 다른 파일의 클래스", OWNED_BASELINE, "ImportedBaseRepository(BaseRecordRepository)", restated, new),
+            ("베이스 이름이 import 와 그 파일의 클래스 둘", ambiguous,
+             "ArchivedFortuneRecordRepository(FortuneRecordRepository)", restated, new),
+            ("베이스 클래스 정의가 기준선에 둘", OWNED_BASELINE + "\n\nclass FortuneRecordRepository(ABC):\n    pass\n",
+             "FreshRepository(FortuneRecordRepository)", restated, new),
+            ("같은 소유자의 bool/int 후보 다시 적기", OWNED_BASELINE, "FortuneRecordRepository(ABC)",
+             ["count_records(account_id: int) -> bool"], []),
+            ("물려받은 bool/int 후보 다시 적기", OWNED_BASELINE, "ArchivedFortuneRecordRepository(FortuneRecordRepository)",
+             ["count_records(account_id: int) -> bool"], []),
+            ("다른 소유자의 같은 bool/int 후보", OWNED_BASELINE, "UnrelatedRecordRepository(ABC)",
+             ["count_records(account_id: int) -> bool"], [("#355", False)]),
+            ("조상에게는 복합문 아래에만 있는 메서드(검사기 줄 없음)를 자식이 적음", OWNED_BASELINE,
+             "ArchivedFortuneRecordRepository(FortuneRecordRepository)", ["guarded(account_id: int) -> frozenset[UUID]"],
+             [("#355", True)]),
+        ]:
+            with self.subTest(label=label):
+                self.write(REPOSITORY, baseline)
+                self.assertEqual(self.outcome(methods, owner=owner), expected)
+
+    def test_method_only_under_a_compound_statement_is_a_candidate(self) -> None:
+        self.write(REPOSITORY, DEBT_BASELINE)
+        for label, method, expected in [
+            ("반환 그대로", "guarded(account_id: int) -> frozenset[UUID]", [("#355", False)]),
+            ("반환을 금지 이름으로", "guarded(account_id: int) -> dict[str, int]", [("#355", False)]),
+            ("쓰기 이름", "delete_guarded(account_id: int) -> None", [("#597", False)]),
+            ("통과하는 반환", "guarded(account_id: int) -> FortuneRecord | None", []),
+        ]:
+            with self.subTest(label=label):
+                found = self.forecast([method])
+                self.assertEqual([(f.rule, f.confirmed) for f in found], expected)
+                for item in found:
+                    self.assertIn(f"예보 불확정: 기준선 메서드 `FortuneRecordRepository.{method.split('(')[0]}` 가 클래스 직계가 "
+                                  "아니라 조건·복합문 아래에 있다", item.detail)
+                    self.assertIn("물음: 구현 뒤 이 메서드를 클래스 직계에 두는가", item.detail)
+
+        # 후상태 대조 — 실검사기는 클래스 직계 정의만 본다: 직계로 올리면 새 줄이 서고, 그 자리에 두면 반환을 바꿔도 0줄이다.
+        def judged_lines() -> set[str]:
+            result = subprocess.run([sys.executable, str(SCRIPTS / "check-transaction-boundary.py"), str(self.repo)],
+                                    env=self.env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+            return {re.sub(r":\d+", ":N", line.strip()) for line in result.stdout.splitlines()
+                    if REPOSITORY in line and line.strip().startswith(("[#355]", "[#597]"))}
+
+        nested = ("    if TYPE_CHECKING:\n        def guarded(self, account_id: int) -> frozenset[UUID]: ...\n"
+                  "        def delete_guarded(self, account_id: int) -> None: ...\n")
+        self.assertIn(nested, DEBT_BASELINE)
+        before = judged_lines()
+        self.write(REPOSITORY, DEBT_BASELINE.replace(nested, nested.replace("    if TYPE_CHECKING:\n", "").replace("        def", "    def")))
+        self.assertEqual(judged_lines() - before, {
+            f"[#355] {REPOSITORY}:N: `guarded` 반환 `UUID.frozenset` 이 애그리거트도 값 객체도 아니다",
+            f"[#597] {REPOSITORY}:N: 쓰기 메서드 `delete_guarded` — 애그리거트 리포지토리의 쓰기 이름은 save·remove 로 시작한다"
+            "(갈리면 「한 트랜잭션 = 애그리거트 하나」(#546) 검사가 못 선다)"})
+        self.write(REPOSITORY, DEBT_BASELINE.replace("def guarded(self, account_id: int) -> frozenset[UUID]",
+                                                    "def guarded(self, account_id: int) -> dict[str, int]"))
+        self.assertEqual(judged_lines(), before)
+
+    def test_forecast_leaves_no_records_or_violation_history(self) -> None:
+        # 기준선 판정(위반 · 후보)과 대상 선택(#282 — 이름이 어긋난 저장소 파일)이 모두 도는 배치.
+        self.write(REPOSITORY, OWNED_BASELINE)
+        self.write("application/fortune_record/domain_layer/fortune_record/record_repository.py", "class Store:\n    pass\n")
+        marker = self.repo / ".dddjango"
+        marker.mkdir()
+        records = self.root / "records.jsonl"
+        history = self.root / "history"
+        methods = ["other_ids(account_id: int) -> frozenset[UUID]", "delete_new(account_id: int) -> None",
+                   "exists_for(account_id: int) -> bool"]
+        expected = [("#355", False), ("#355", True), ("#597", True)]
+        base = {key: value for key, value in os.environ.items() if key not in ("DJR_FINDINGS_JSON", "DJR_VIOLATIONS_DIR")}
+        for label, extra in [("레코드 파일", {"DJR_FINDINGS_JSON": str(records)}),
+                             ("위반 이력 폴더", {"DJR_VIOLATIONS_DIR": str(history)}),
+                             ("설치 표식 저장소", {})]:
+            with self.subTest(sink=label), mock.patch.dict(os.environ, dict(base, **extra), clear=True), \
+                    mock.patch.object(pg.findings, "_target_root", self.repo), \
+                    contextlib.redirect_stdout(io.StringIO()) as out:
+                self.assertEqual(self.outcome(methods), expected)
+                self.assertEqual(out.getvalue(), "")
+                self.assertFalse(records.exists())
+                self.assertFalse(history.exists())
+                self.assertEqual(list(marker.iterdir()), [])
+
     def test_restated_baseline_debt_is_not_forecast_again(self) -> None:
         self.write(REPOSITORY, DEBT_BASELINE)
         archived = "ArchivedFortuneRecordRepository(FortuneRecordRepository)"
@@ -564,7 +730,6 @@ class RepositoryForecastTest(unittest.TestCase):
             ("Optional → | None", own, ["legacy_opt(account_id: int) -> UUID | None"], []),
             ("tuple → list", own, ["legacy_many(account_id: int) -> list[UUID]"], []),
             ("dict 값 타입만", own, ["legacy_rows(account_id: int) -> dict[str, str]"], []),
-            ("클래스 본문 if 아래 메서드", own, ["guarded(account_id: int) -> frozenset[UUID]"], []),
             ("물려받은 메서드", archived, ["legacy_ids(account_id: int) -> frozenset[UUID]",
                                     "delete_old(account_id: int) -> None"], []),
             ("금지 A → 금지 B", own, ["legacy_opt(account_id: int) -> dict[str, int]"], [("#355", True)]),
@@ -677,6 +842,17 @@ class RepositoryForecastTest(unittest.TestCase):
                 found = self.forecast(["find(record_id: UUID) -> dict[str, int]"])
                 self.assertEqual([(f.rule, f.confirmed) for f in found], [("#355", False)])
                 self.assertIn("예보 불확정", found[0].detail)
+        # 비교 불능(기준선 중복) 후보는 «기준선에 같은 판정문이 있다» 로 지우지 않는다 — 어느 정의와 견줄지 모르기 때문이다.
+        for baseline, method, why in [
+            (duplicate, "legacy_ids(account_id: int) -> frozenset[UUID]", "기준선 클래스 `FortuneRecordRepository` 중복"),
+            (REPOSITORY_BASELINE.replace("def legacy_ids", "def find"), "find(record_id: UUID) -> frozenset[UUID]",
+             "기준선 메서드 `FortuneRecordRepository.find` 중복"),
+        ]:
+            with self.subTest(why=why):
+                self.write(REPOSITORY, baseline)
+                found = self.forecast([method])
+                self.assertEqual([(f.rule, f.confirmed) for f in found], [("#355", False)])
+                self.assertIn(f"예보 불확정: {why}", found[0].detail)
 
     def test_bundled_checker_load_failure_is_run_error(self) -> None:
         plan, _ = pg.parse_spec(spec_text([f"update {REPOSITORY}"], [

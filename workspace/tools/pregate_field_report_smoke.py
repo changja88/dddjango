@@ -963,6 +963,9 @@ class BookAdmin(TranslatableAdmin):
         self.assertEqual(code, 3)
         self.assertTrue(any('stale(툴체인)' in p for p in problems), problems)
         self.assertEqual((self.source / REPOSITORY).read_text(), REPOSITORY_ORIGINAL)
+        # 선언 예보의 검사기 판정은 수집만 한다 — 레코드 파일 · 위반 이력을 남기지 않는다(실체화 0 이라 게이트도 돌지 않았다).
+        self.assertFalse(Path(self.env['DJR_FINDINGS_JSON']).exists())
+        self.assertFalse(Path(self.env['DJR_VIOLATIONS_DIR']).exists())
 
     def test_repository_candidate_is_nonblocking_and_explicit_import_is_clean(self):
         self.repository_fixture()
@@ -1006,6 +1009,43 @@ class BookAdmin(TranslatableAdmin):
         self.assertNotIn(ORDER_REPOSITORY, pg._subsection(report, '선언 후보'))
         self.assertEqual(pg.check_report(text, report)[0], 3)
         self.assertEqual((self.source / ORDER_REPOSITORY).read_text(), ORDER_ORIGINAL)
+
+    def test_repository_new_method_is_not_hidden_by_another_class_debt(self):
+        self.write(self.source, ORDER_REPOSITORY, (
+            'from abc import ABC, abstractmethod\nfrom uuid import UUID\n\n\n'
+            'class LegacyOrderRepository(ABC):\n    @abstractmethod\n    def owner_id(self) -> UUID: ...\n\n\n'
+            'class OrderRepository(ABC):\n    pass\n'))
+        self.write(self.source, f'{ORDER_DOMAIN}/order.py', 'class Order:\n    pass\n')
+        _git(self.source, 'add', '-A')
+        _git(self.source, 'commit', '-qm', 'legacy order repository fixture')
+        text = spec_text([f'update {ORDER_REPOSITORY}'], [f'{ORDER_REPOSITORY}::OrderRepository(ABC)',
+                         f'{ORDER_REPOSITORY}::OrderRepository.owner_id() -> UUID'])
+        run, report = self.cli(text)
+        self.assertEqual(run.returncode, 2, run.stdout + run.stderr)
+        stable = pg._stable_id(f'[#355] {ORDER_REPOSITORY}')
+        self.assertIn(f'- `{stable}` [#355] {ORDER_REPOSITORY} — OrderRepository.owner_id: '
+                      '`owner_id` 반환 `UUID` 이 애그리거트도 값 객체도 아니다\n', pg._subsection(report, '선언 확정') + '\n')
+        self.assertEqual(pg.check_report(text, report)[0], 3)
+
+    def test_repository_source_root_package_is_not_a_standard_library_origin(self):
+        nested = f'src/{ORDER_REPOSITORY}'
+        self.write(self.source, nested, ('from abc import ABC, abstractmethod\n'
+                                         'from calendar.read_models import CalendarSummary\n\n\n'
+                                         'class OrderRepository(ABC):\n    pass\n'))
+        self.write(self.source, f'src/{ORDER_DOMAIN}/order.py', 'class Order:\n    pass\n')
+        self.write(self.source, 'src/calendar/__init__.py', '')
+        self.write(self.source, 'src/calendar/read_models.py', 'class CalendarSummary:\n    pass\n')
+        _git(self.source, 'add', '-A')
+        _git(self.source, 'commit', '-qm', 'src layout fixture')
+        text = spec_text([f'update {nested}'], [f'{nested}::OrderRepository(ABC)',
+                         f'{nested}::OrderRepository.calendar_summary() -> CalendarSummary'])
+        run, report = self.cli(text)
+        self.assertEqual(run.returncode, 4, run.stdout + run.stderr)
+        self.assertNotIn(nested, pg._subsection(report, '선언 확정'))
+        self.assertIn('OrderRepository.calendar_summary: `calendar_summary` 반환 `CalendarSummary` 이 애그리거트도 값 객체도 '
+                      '아니다 — 예보 불확정: 반환 이름 `CalendarSummary` 출처 미해소(기준선에만 있는 출처',
+                      pg._subsection(report, '선언 후보'))
+        self.assertEqual(pg.check_report(text, report)[0], 0)
 
     def test_repository_add_shares_registry_id_and_needs_one_disposition(self):
         self.repository_fixture()
