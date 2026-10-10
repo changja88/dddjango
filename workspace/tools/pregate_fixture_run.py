@@ -46,6 +46,14 @@
   묶음 checkreport(`--check-report` — 전용 저장소·리포트): red-spec 실행 뒤 처분 행 append 를 단계별로 대조 —
   미라벨 3 → ignored 2 append 3(미기재 1) → corrected 3 → filtered 0 → 오염 행(무값 «블록 해시 갱신») 0 → 다른 명세 3(stale) ·
   형식 red 리포트 3 · 블록 부재 리포트 3 · skip·결손 리포트 0 · 해시 토큰 없는 구판 헤더 3 · 표 형식 처분(백틱 라벨) 3 · 리포트 부재 1.
+  묶음 stub(스텁 머리 — 합성 저장소 = `mini_repo` + `stub_overlay/`(포트 · #488 고정 칸) · 리포트 1 — 헤더 10):
+  `stub-adapter-init-*-spec.md` 10 — 재수출만 하는 어댑터 패키지 `__init__.py`(맨 · `./` · 겹친 `/` 경로) · `empty` → exit 0 ·
+  전사 future 명시 · 클래스 · 별칭(타입 없음은 #493 함께) · TYPE_CHECKING 별칭 쌍 · exception-map 창구 → #640 1건(진탐) ·
+  `__init__.py` 스텁 원문(--keep 사본) 대조 3. 그리고 재료 파일 스텁 글 대조 10칸(`stub-material-*-spec.md` 9 ·
+  `render_stub` 직접 — 검사기 무관): 본문 = docstring + `return settings.PREGATE_STUB` · plain settings 결속 한 번(보충 ·
+  괄호 · 공백 원문) · 별칭 · 함수 없는 꼴 보충 0 · `./` · 겹친 `/` = 맨 경로 글 · 재료 자리 밖 둘은 `raise NotImplementedError`.
+  묶음 stub-material(D17 소유 · #652 — 합성 저장소 = `mini_repo` + `stub_overlay/` + `stub_material_overlay/`(값 객체) · 리포트 1 — 헤더 7):
+  재료 명세 7(P1 · P1′ · P1″a · P1″b · P1-dot · P1-dslash → exit 0 · P2 `-> dict` → #652 «반환 주석» 1건(진탐)) — 검사기 결과 단언.
   실행기 exit 규약: 0 green · 2 귀속 red(결손 병기) · 3 형식 red(문법 · 블록 부재·공허 · add 충돌 · update/remove 대상 기준선 부재) ·
   4 skip(실체화 0·결손 0) · 5 결손 ≥1 ∧ (귀속 0 ∨ 실체화 0) · 1 실행 불능 · `--check-report`: 0 정합 · 3 불비 · 1 리포트/절 부재.
   (아래 재발화 판형의 케이스 이름 E1~E4 는 이 러너의 것 — 승격 계획서의 실행기 변경 항목 번호와 무관.)
@@ -1288,6 +1296,207 @@ def _run_execution_modes_bundle(scratch: Path, failures: list[str]) -> None:
                 print(f'{label}: exit {run.returncode} (expected {expected})')
 
 
+# 묶음 stub — 재수출만 하는 어댑터 패키지 `__init__.py` 스텁의 머리(#640 거짓 red 수리 · 진탐 유지).
+STUB_INIT: str = "application/orders/driven_layer/adapter/clock/system_adapter/__init__.py"
+STUB_INIT_640: str = f"[#640] {STUB_INIT}: 어댑터 패키지의 `__init__.py` 는 재수출 전용이다"
+STUB_REEXPORT: str = "from .adapter.system_clock_adapter import SystemClockAdapter as SystemClockAdapter"
+# (명세, exit, 예보 항목 문구 조각들) — 조각마다 예보 항목 한 줄에 정확히 대응한다(건수 = 조각 수).
+STUB_CASES: "tuple[tuple[str, int, tuple[str, ...]], ...]" = (
+    ("stub-adapter-init-spec", 0, ()),                       # 재수출 한 줄 — 머리 future 줄 빼 0
+    ("stub-adapter-init-dotpath-spec", 0, ()),               # 경로 `./application/…` — 정규화 마디로 판정
+    ("stub-adapter-init-dslash-spec", 0, ()),                # 경로 겹친 `/` — 같음
+    ("stub-adapter-init-empty-spec", 0, ()),                 # `empty` — 무변
+    ("stub-adapter-init-future-spec", 2, (STUB_INIT_640,)),  # 전사에 future 명시 — 머리 그대로(진탐)
+    ("stub-adapter-init-red-spec", 2, (STUB_INIT_640,)),     # `__init__.py` 에 클래스 — 진탐
+    ("stub-adapter-init-alias-spec", 2, (STUB_INIT_640,      # 타입 없는 별칭 — 진탐 + 별칭 첫 대입 타입 없음
+                                         f"[#493] {STUB_INIT}:N: 모듈 변수 `DefaultClock` 의 첫 대입에 타입이 없다")),
+    ("stub-adapter-init-alias-typed-spec", 2, (STUB_INIT_640,)),  # 타입 붙은 별칭 — 진탐
+    ("stub-adapter-init-alias-tc-spec", 2, (STUB_INIT_640,)),     # TYPE_CHECKING 별칭 쌍 — 진탐
+    ("stub-adapter-init-raises-spec", 2, (STUB_INIT_640,)),       # exception-map 창구 — 진탐
+)
+# 실체화한 `__init__.py` 스텁 원문(--keep 사본) — 재수출만이면 docstring + 전사, 전사에 future 가 있으면 머리 그대로.
+STUB_INIT_TEXT: "dict[str, str]" = {
+    "stub-adapter-init-spec": f'"""pre-gate 팬텀 스텁."""\n\n{STUB_REEXPORT}\n\n',
+    "stub-adapter-init-dotpath-spec": f'"""pre-gate 팬텀 스텁."""\n\n{STUB_REEXPORT}\n\n',
+    "stub-adapter-init-future-spec": f'"""pre-gate 팬텀 스텁."""\nfrom __future__ import annotations\n\n{STUB_REEXPORT}\n\n',
+}
+
+
+# 재료 파일 스텁 글 대조 — `render_stub` 직접(검사기 · 합성 저장소 무관 · 그래서 검사기 판과 무관하게 같은 기대).
+STUB_MATERIAL: str = "application/orders/composition_root/wiring_material.py"
+STUB_MATERIAL_BODY: str = "return settings.PREGATE_STUB"
+# (명세, 계획 경로(정규화), 꼴) — 꼴: canonical(정형 본문 · plain settings 결속 정확히 한 번) · alias(정형 본문 · 보충 0) ·
+# nofunc(함수 · django.conf import 0) · plain(재료 파일 아님 — `raise NotImplementedError` · 보충 0).
+STUB_MATERIAL_CASES: "tuple[tuple[str, str, str], ...]" = (
+    ("stub-material-spec", STUB_MATERIAL, "canonical"),                    # 전사 settings 있음
+    ("stub-material-nosettings-spec", STUB_MATERIAL, "canonical"),         # 전사 settings 없음 → 한 줄 보충
+    ("stub-material-settings-paren-spec", STUB_MATERIAL, "canonical"),     # `import (settings)` — 구문으로 같은 결속
+    ("stub-material-settings-space-spec", STUB_MATERIAL, "canonical"),     # 겹친 공백 — 같음
+    ("stub-material-dotpath-spec", STUB_MATERIAL, "canonical"),            # `./application/…` — 정규화 마디
+    ("stub-material-dslash-spec", STUB_MATERIAL, "canonical"),             # 겹친 `/` — 같음
+    ("stub-material-settings-alias-spec", STUB_MATERIAL, "alias"),         # `settings as s` — 보충하지 않음
+    ("stub-material-nofunc-spec", STUB_MATERIAL, "nofunc"),                # 함수 symbol 없음 — 보충하지 않음
+    ("stub-material-elsewhere-spec", "application/orders/composition_root/legacy/wiring_material.py", "plain"),
+    ("stub-material-elsewhere-spec", "application/orders/domain_layer/wiring_material.py", "plain"),
+)
+# 원문 표기가 남는지(전사 그대로) — 보충 꼴은 보충 줄 원문이 정확히 한 번.
+STUB_MATERIAL_RAW: "dict[str, str]" = {
+    "stub-material-spec": "from django.conf import settings",
+    "stub-material-nosettings-spec": "from django.conf import settings",
+    "stub-material-settings-paren-spec": "from django.conf import (settings)",
+    "stub-material-settings-space-spec": "from  django.conf  import settings",
+    "stub-material-settings-alias-spec": "from django.conf import settings as s",
+}
+
+
+def _stub_material_text_checks() -> "list[str]":
+    """재료 파일 정형 스텁의 글 — 본문 = docstring + `return settings.PREGATE_STUB` · plain settings 결속 한 번 ·
+    별칭 · 함수 없는 꼴 보충 0 · 정규화 경로(`./` · 겹친 `/`)에서 맨 경로와 같은 글 · 재료 자리 밖은 지금 스텁 그대로."""
+    import ast as _ast
+    from pathlib import PurePosixPath as _P
+    dp: "types.ModuleType" = _load_module(EXECUTOR, "_pregate_stub_material")
+    out: "list[str]" = []
+    texts: "dict[str, str]" = {}
+
+    def binds(tree: "_ast.Module") -> "tuple[int, int]":
+        plain = other = 0
+        for node in tree.body:
+            if isinstance(node, _ast.ImportFrom) and node.module == "django.conf":
+                for alias in node.names:
+                    if alias.name == "settings" and alias.asname is None:
+                        plain += 1
+                    else:
+                        other += 1
+        return plain, other
+
+    for name, rel, kind in STUB_MATERIAL_CASES:
+        label: str = f"[stub 재료 글] {name} · {rel}"
+        plan, errors = dp.parse_spec((FIXTURES / f"{name}.md").read_text(encoding="utf-8"))
+        entries = [e for k, e in (plan.entries.items() if plan else []) if _P(k).parts == _P(rel).parts]
+        if errors or len(entries) != 1:
+            out.append(f"{label}: 파싱 오류 {errors} · 정규화 경로 대응 {len(entries)}개(기대 1)")
+            continue
+        text: str = dp.render_stub(entries[0])
+        texts[name] = text
+        try:
+            tree: "_ast.Module" = _ast.parse(text)
+        except SyntaxError as exc:
+            out.append(f"{label}: 스텁이 파싱되지 않는다 — {exc}")
+            continue
+        funcs = [n for n in tree.body if isinstance(n, _ast.FunctionDef)]
+        plain, other = binds(tree)
+        body: "list[str]" = ([_ast.unparse(s) for s in funcs[0].body] if len(funcs) == 1 else [])
+        doc_ok: bool = len(funcs) == 1 and _ast.get_docstring(funcs[0]) == "계획 스텁."
+        if kind in ("canonical", "alias"):
+            if not (doc_ok and len(body) == 2 and body[1] == STUB_MATERIAL_BODY):
+                out.append(f"{label}: 본문이 docstring + `{STUB_MATERIAL_BODY}` 가 아니다 — {body}")
+        if kind == "canonical" and (plain, other) != (1, 0):
+            out.append(f"{label}: `from django.conf import settings` 결속 {plain}번 · 다른 꼴 {other}번(기대 1 · 0)")
+        if kind == "alias" and (plain, other) != (0, 1):
+            out.append(f"{label}: 별칭 꼴에 보충이 생겼다 — plain {plain} · 별칭 {other}(기대 0 · 1)")
+        if kind == "nofunc" and (funcs or plain or other):
+            out.append(f"{label}: 함수 없는 재료 파일에 함수 {len(funcs)} · django.conf import {plain + other}(기대 0 · 0)")
+        if kind == "plain" and not (doc_ok and len(body) == 2 and body[1] == "raise NotImplementedError" and (plain, other) == (0, 0)):
+            out.append(f"{label}: 재료 자리 밖인데 정형이 붙었다 — 본문 {body} · django.conf import {plain + other}")
+        raw: "str | None" = STUB_MATERIAL_RAW.get(name)
+        if raw is not None and text.splitlines().count(raw) != 1:
+            out.append(f"{label}: 전사 원문 `{raw}` 줄이 정확히 한 번이 아니다({text.splitlines().count(raw)})")
+    for name in ("stub-material-dotpath-spec", "stub-material-dslash-spec"):
+        if name in texts and texts[name] != texts.get("stub-material-spec"):
+            out.append(f"[stub 재료 글] {name}: 정규화 경로의 스텁이 맨 경로와 다르다")
+    if not out:
+        print(f"stub 재료 파일 스텁 글 대조 {len(STUB_MATERIAL_CASES)}칸 — 기대 일치")
+    return out
+
+
+def _kept_text(proc: "subprocess.CompletedProcess[str]", rel: str) -> "str | None":
+    """`--keep` 사본의 계획 경로 원문(없으면 None) — 사본은 읽은 뒤 지운다."""
+    m: "re.Match[str] | None" = _KEEP_RE.search(proc.stdout)
+    if m is None:
+        return None
+    kept: Path = Path(m.group(1))
+    try:
+        target: Path = kept / "copy" / rel
+        return target.read_text(encoding="utf-8") if target.is_file() else None
+    finally:
+        shutil.rmtree(kept, ignore_errors=True)
+
+
+def _run_stub_bundle(scratch: Path, failures: "list[str]") -> None:
+    """스텁 정형 — 재료 파일 스텁 글 대조(`render_stub` 직접) + 재수출 `__init__.py` 머리(합성 저장소 1 =
+    `mini_repo` + `stub_overlay/`: 포트 · #488 고정 칸 · 리포트 1(헤더 = 사례 수))."""
+    failures.extend(_stub_material_text_checks())
+    repo: Path = scratch / "repo-stub"
+    shutil.copytree(FIXTURES / "mini_repo", repo)
+    shutil.copytree(FIXTURES / "stub_overlay", repo, dirs_exist_ok=True)
+    _git(repo, "init", "-q")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "fixture-baseline+stub-overlay")
+    report: Path = scratch / "pregate-report-stub.md"
+    for name, want_exit, want_items in STUB_CASES:
+        keep: bool = name in STUB_INIT_TEXT
+        proc: "subprocess.CompletedProcess[str]" = _run_pregate(FIXTURES / f"{name}.md", repo, report,
+                                                                ["--keep"] if keep else None)
+        items: "list[str]" = [ln.strip() for ln in proc.stdout.splitlines() if re.match(r"^\s*`[0-9a-f]{12}` ", ln)]
+        bad_before: int = len(failures)
+        if proc.returncode != want_exit:
+            failures.append(f"[stub] {name} 기대 exit {want_exit} ≠ 실측 {proc.returncode}")
+        if len(items) != len(want_items) or any(sum(piece in it for it in items) != 1 for piece in want_items):
+            failures.append(f"[stub] {name} 예보 항목 {items} ≠ 기대 조각 {list(want_items)}")
+        if keep:
+            text: "str | None" = _kept_text(proc, STUB_INIT)
+            if text != STUB_INIT_TEXT[name]:
+                failures.append(f"[stub] {name} `__init__.py` 스텁 원문 {text!r} ≠ 기대 {STUB_INIT_TEXT[name]!r}")
+        if len(failures) > bad_before:
+            _dump(f"stub {name}", proc)
+        else:
+            print(f"stub {name}: exit {proc.returncode} · 예보 {len(items)}건 — 기대 일치")
+    if _header_count(report) != len(STUB_CASES):
+        failures.append(f"[stub] 리포트 append 횟수 {_header_count(report)} ≠ 기대 {len(STUB_CASES)}")
+
+
+# 묶음 stub-material — D17 소유 · #652: 재료 파일(`composition_root/wiring_material.py`) 스텁의 검사기 귀속.
+# 재료 파일 규칙 #652 · 그 트리 칸이 있는 검사기 판(D17 이후)에서만 선다 — 스텁 글 대조(`_stub_material_text_checks`)와 달리
+# 검사기 결과를 단언한다. 합성 저장소 = `mini_repo` + `stub_overlay/` + `stub_material_overlay/`(값 객체 `LanguageCode`).
+STUB_MATERIAL_652: str = f"[#652] {STUB_MATERIAL}:N: wiring_material.py 는 결선 재료만 둔다 — `default_language` 의 "
+STUB_MATERIAL_CHECKER_CASES: "tuple[tuple[str, int, tuple[str, ...]], ...]" = (   # D17 소유 · #652
+    ("stub-material-spec", 0, ()),                     # P1 재료 함수 `-> LanguageCode` · 전사 settings — 정형 본문으로 0
+    ("stub-material-badret-spec", 2, (STUB_MATERIAL_652 + "반환 주석이 F2 클래스 이름 하나 또는 str · int · bool · float 가 아니다(F3)",)),
+    ("stub-material-nosettings-spec", 0, ()),          # P1′ settings 전사 없음 — 보충 한 줄
+    ("stub-material-settings-paren-spec", 0, ()),      # P1″a `import (settings)` — 구문으로 같은 결속 · 보충 없음
+    ("stub-material-settings-space-spec", 0, ()),      # P1″b 겹친 공백 — 같음
+    ("stub-material-dotpath-spec", 0, ()),             # P1-dot `./application/…` — 정규화 마디
+    ("stub-material-dslash-spec", 0, ()),              # P1-dslash 겹친 `/` — 같음
+)
+
+
+def _run_stub_material_bundle(scratch: Path, failures: "list[str]") -> None:
+    """D17 소유 · #652 — 재료 파일 스텁이 #652 «본문 꼴» 거짓 red 를 내지 않고(0), 진짜 위반(반환 주석 `dict`)은
+    다음 탈락 문구로 남는지(1건) 검사기로 본다. 합성 저장소 1 · 리포트 1(헤더 = 사례 수 7)."""
+    repo: Path = scratch / "repo-stub-material"
+    shutil.copytree(FIXTURES / "mini_repo", repo)
+    shutil.copytree(FIXTURES / "stub_overlay", repo, dirs_exist_ok=True)
+    shutil.copytree(FIXTURES / "stub_material_overlay", repo, dirs_exist_ok=True)
+    _git(repo, "init", "-q")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "fixture-baseline+stub-overlay+stub-material-overlay")
+    report: Path = scratch / "pregate-report-stub-material.md"
+    for name, want_exit, want_items in STUB_MATERIAL_CHECKER_CASES:
+        proc: "subprocess.CompletedProcess[str]" = _run_pregate(FIXTURES / f"{name}.md", repo, report)
+        items: "list[str]" = [ln.strip() for ln in proc.stdout.splitlines() if re.match(r"^\s*`[0-9a-f]{12}` ", ln)]
+        bad_before: int = len(failures)
+        if proc.returncode != want_exit:
+            failures.append(f"[stub-material · D17 #652] {name} 기대 exit {want_exit} ≠ 실측 {proc.returncode}")
+        if len(items) != len(want_items) or any(sum(piece in it for it in items) != 1 for piece in want_items):
+            failures.append(f"[stub-material · D17 #652] {name} 예보 항목 {items} ≠ 기대 조각 {list(want_items)}")
+        if len(failures) > bad_before:
+            _dump(f"stub-material {name}", proc)
+        else:
+            print(f"stub-material(D17 #652) {name}: exit {proc.returncode} · 예보 {len(items)}건 — 기대 일치")
+    if _header_count(report) != len(STUB_MATERIAL_CHECKER_CASES):
+        failures.append(f"[stub-material · D17 #652] 리포트 append 횟수 {_header_count(report)} ≠ 기대 {len(STUB_MATERIAL_CHECKER_CASES)}")
+
+
 def main(argv: "list[str]") -> int:
     ap: argparse.ArgumentParser = argparse.ArgumentParser(description="pre-gate 픽스처 러너")
     ap.add_argument("--keep", action="store_true", help="합성 저장소 보존(디버그)")
@@ -1308,6 +1517,8 @@ def main(argv: "list[str]") -> int:
         _run_enforce_bundle(scratch, failures)
         _run_checkreport_bundle(scratch, failures)
         _run_inflow_bundle(scratch, failures)
+        _run_stub_bundle(scratch, failures)
+        _run_stub_material_bundle(scratch, failures)      # D17 소유 · #652
 
         if failures:
             print("\nFAIL — pre-gate 픽스처 기대 불일치:")
@@ -1317,7 +1528,8 @@ def main(argv: "list[str]") -> int:
         print("\nPASS — pre-gate 픽스처 15종+E 계열 6단계+유닛 기대 일치 "
               "(green×3 예보 0 · 형식 red exit 3 · red 귀속 3건·red2 귀속 2건 정합 · 재발화 판형 E1~E4+E1′/E2′ · "
               "계약 실존 imports 3종 exit 0/5/5 · 차단 모드 enforce 7(블록 부재·공허·update/remove 부재·승격 예외) · "
-              "--check-report 14단계 + 유닛 매트릭스)")
+              "--check-report 14단계 + 유닛 매트릭스 · 스텁 정형 stub 10 + 재료 글 10(재수출 __init__ 0 · 진탐 #640 유지 · 재료 정형 본문) · "
+              "stub-material 7(D17 #652 — 재료 0 · 반환 주석 진탐 1))")
         return 0
     finally:
         if ns.keep:

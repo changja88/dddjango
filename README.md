@@ -302,7 +302,7 @@ dddjango는 작업 규모를 보고 알맞게 움직인다.
 
 ## 구성 요소
 
-- **커맨드 2개**: `/dddjango:dddjango`(기능 빌드) · `/dddjango:refactor <대상 BC>`(대상 BC 하나의 기존 코드 전체를 표준으로 정리하는 리팩토링 입구 — 동작 불변 · Codex 는 `$dddjango-refactor`)
+- **커맨드 2개**: `/dddjango:dddjango`(기능 빌드) · `/dddjango:refactor <대상 BC>`(대상 BC 하나의 기존 코드 전체를 표준으로 정리하는 리팩토링 입구 — 바뀌는 동작 · DB 는 G1 목록 승인 · Codex 는 `$dddjango-refactor`)
 - **에이전트 7개**: `design-architect`, `design-review-ddd`, `design-review-api`, `design-review-db`, `acceptance-tester`, `coder`, `discipline-reviewer`
 - **스킬 11개**: 아키텍처(`architecture-ddd`/`-api`/`-db`), 규율(`discipline-houserules`/`-cleancode`/`-tdd`), 구현(`implementation-django`/`-django-ninja`/`-django-web`/`-python`/`-test`)
 - **결정적 백스톱 27종**: 구조·계약 회귀를 G2 직전에 자동 차단하는 파이썬 검사 스크립트

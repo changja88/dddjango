@@ -22,7 +22,7 @@
   "interface": {
     "displayName": "dddjango",
     "shortDescription": "Django DDD 기능을 요구→설계→구현(TDD)까지 게이트로 빌드",
-    "longDescription": "dddjango는 기존 Django 프로젝트에 한 기능을 DDD 4계층(domain/application/infra/presentation)으로 추가한다. /dddjango 코디네이터가 design-architect·리뷰어·acceptance-tester·coder·discipline-reviewer 역할을 서브에이전트로 디스패치하고, G0(요구)·G1(설계)·G2(구현) 게이트마다 사용자 승인을 받는다. $dddjango-refactor <대상 BC> 는 리팩토링 입구다 — 대상 BC 하나의 기존 코드 전체를 표준으로 정리한다(동작 불변 · 검사기 빚과 의미 점검 항목을 G0 에서 묻는다). multi_agent 기능 필요.",
+    "longDescription": "dddjango는 기존 Django 프로젝트에 한 기능을 DDD 4계층(domain/application/infra/presentation)으로 추가한다. /dddjango 코디네이터가 design-architect·리뷰어·acceptance-tester·coder·discipline-reviewer 역할을 서브에이전트로 디스패치하고, G0(요구)·G1(설계)·G2(구현) 게이트마다 사용자 승인을 받는다. $dddjango-refactor <대상 BC> 는 리팩토링 입구다 — 대상 BC 하나의 기존 코드 전체를 표준으로 정리한다(바뀌는 동작 · DB 는 G1 목록 승인 · 검사기 빚과 의미 점검 항목을 G0 에서 묻는다). multi_agent 기능 필요.",
     "developerName": "changja88",
     "category": "Coding",
     "capabilities": [

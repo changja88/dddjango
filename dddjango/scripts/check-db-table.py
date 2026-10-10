@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """dddjango `driven_layer/django_<bounded_context>/` 검사기 — 장고 앱 규율의 결정적 백스톱.
 
-트리 75~88행(driven_layer)의 기계 몫 규칙 18개를 강제한다. 경로 기대는
+트리 76~89행(driven_layer)의 기계 몫 규칙 18개를 강제한다. 경로 기대는
 `standard_tree.py` 에서 도출한다 — 이 파일에 트리 경로를 다시 적지 않는다.
 
 무엇을 잡나 (규칙 번호는 트리 개정 명세):
@@ -585,7 +585,7 @@ def main(argv: list[str]) -> int:
         print(f"blocker {len(findings)}건 — driven_layer/django_<bc>/ 규율 위반")
         emit_all(findings, printer=print, indent="  ")
         return 2
-    print(f"clean — django 앱 {len(apps)}개 규율 일치 (트리 75~88행 · standard_tree {tree.SOURCE_SHA})")
+    print(f"clean — django 앱 {len(apps)}개 규율 일치 (트리 76~89행 · standard_tree {tree.SOURCE_SHA})")
     return 0
 
 

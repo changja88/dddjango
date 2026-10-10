@@ -311,12 +311,18 @@ djr:R-3268 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3269 a djr:Obligation ;
-    skos:prefLabel "안정 계약 검증에 따른 리팩터 중 불변성"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3269@2026-08-22> .
+    skos:prefLabel "안정 계약 검증에 따른 TDD Refactor 단계(승인 현행 계약 구현) 불변성"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3269@2026-10-04> .
 
 <https://numchida.com/ns/djr#R-3269@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-3269 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3269@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3269 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3269@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3270 a djr:Obligation ;
     skos:prefLabel "implementation-test 계약 테스트 패턴·discipline-tdd 바깥 루프·architecture-api·architecture-ddd 계약·행위 정의 근거 준수"@ko ;
@@ -711,20 +717,32 @@ djr:R-3318 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3575 a djr:Obligation ;
-    skos:prefLabel "리팩토링 모드 파견 입력 = 모드 리팩토링 · M ⓐ 목록(규칙 인용) · 적용 범위 규범 원문"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3575@2026-09-27> .
+    skos:prefLabel "리팩토링 모드 파견 입력 = 모드 리팩토링 · M ⓐ 목록(규칙 인용) · 적용 범위 규범 원문 · 운영 전 예외 블록 원문 · (변경 슬라이스) 밖 동작 V·딸린 update/add 행"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3575@2026-10-04> .
 
 <https://numchida.com/ns/djr#R-3575@2026-09-27> a djr:Expression ;
     prov:specializationOf djr:R-3575 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-3575@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3575 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3575@2026-09-27> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3576 a djr:Obligation ;
-    skos:prefLabel "파견 입력에 적용 범위 규범이 실려 있으면 그 규범이 정한 몫과 때를 따른다(리팩토링 모드)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3576@2026-09-27> .
+    skos:prefLabel "파견 입력에 적용 범위 규범·운영 전 예외 블록이 실려 있으면 그 규범이 정한 몫과 때를 따른다(리팩토링 모드)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3576@2026-10-04> .
 
 <https://numchida.com/ns/djr#R-3576@2026-09-27> a djr:Expression ;
     prov:specializationOf djr:R-3576 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3576@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3576 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3576@2026-09-27> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3612 a djr:Obligation ;
     skos:prefLabel "PHASE1_ARRANGE_CHECK 는 Coordinator 가 명시할 때만 — G1 전(또는 Phase 2 재진입 전) 판정 대상 명세로 슬라이스별 인수 행 arrange 가능성 읽기 전용 점검"@ko ;
@@ -764,6 +782,14 @@ djr:R-3616 a djr:Obligation ;
 
 <https://numchida.com/ns/djr#R-3616@2026-10-01> a djr:Expression ;
     prov:specializationOf djr:R-3616 ;
+    djr:revision 1 .
+
+djr:R-3652 a djr:Obligation ;
+    skos:prefLabel "변경 슬라이스 밖 동작 V — 딸린 update/add 행만 Red(remove 행은 케이스 삭제) · 바뀌는 기대 원소만 새 기대로(그 밖 기대·케이스 무변) · add 의 새 case 는 바뀐 동작만"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3652@2026-10-04> .
+
+<https://numchida.com/ns/djr#R-3652@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3652 ;
     djr:revision 1 .
 
 <https://numchida.com/ns/djr#d/dddjango/agents/acceptance-tester.md> a djr:Document ;
@@ -823,8 +849,8 @@ djr:R-3616 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s002/b4> ;
-    djr:statesNorm djr:R-3238, djr:R-3239, djr:R-3240, djr:R-3241, djr:R-3242, djr:R-3575, djr:R-3576 ;
-    djr:text "\nCoordinator가 승인된 설계 명세(G1 통과), 최소 열을 갖춘 영구 테스트 입장 표, 네 owner인 행, 관련 기존 test anchor를 준다. decision을 재분류하거나 새 후보를 test 의무로 승격하지 않는다. `pending`이나 종료 근거 없는 `remove/weaken`은 설계로 반송한다. 인수 테스트는 승인된 artifact가 있을 때만 명세의 패키지·테스트 구조에 배치한다. **프로덕션 구현 코드를 보지 않는다** — 기존 테스트와 승인 계약만 본다. 리팩토링 모드 파견이면 입력에 `모드 리팩토링` · `M<n>` ⓐ 목록(규칙 인용 포함) · 적용 범위 규범 원문이 함께 온다. 파견 입력에 적용 범위 규범이 실려 있으면 그 규범이 정한 몫과 때를 따른다.\n\n"@ko .
+    djr:statesNorm djr:R-3238, djr:R-3239, djr:R-3240, djr:R-3241, djr:R-3242, djr:R-3575, djr:R-3576, djr:R-3652 ;
+    djr:text "\nCoordinator가 승인된 설계 명세(G1 통과), 최소 열을 갖춘 영구 테스트 입장 표, 네 owner인 행, 관련 기존 test anchor를 준다. decision을 재분류하거나 새 후보를 test 의무로 승격하지 않는다. `pending`이나 종료 근거 없는 `remove/weaken`은 설계로 반송한다. 인수 테스트는 승인된 artifact가 있을 때만 명세의 패키지·테스트 구조에 배치한다. **프로덕션 구현 코드를 보지 않는다** — 기존 테스트와 승인 계약만 본다. 리팩토링 모드 파견이면 입력에 `모드 리팩토링` · `M<n>` ⓐ 목록(규칙 인용 포함) · 적용 범위 규범 원문 · «운영 전 예외» 블록 원문이 함께 오고, 변경 슬라이스면 그 슬라이스의 밖 동작 V(바뀌는 것 목록의 V 줄 · «바뀌는 기대» · `기대 추가 k`)와 그 V 에 딸린 `update`/`add`/`remove` 행이 온다 — `update`/`add` 행만 Red 로 만들고(`remove` 행은 그 케이스를 지운다), 옛 기대는 «바뀌는 기대»에 적힌 원소만 새 기대로 바꾼다(그 밖 기대 원소 · 케이스는 바꾸지 않고, `add` 의 새 case 는 V 가 바꾼 동작만이다). 파견 입력에 적용 범위 규범·«운영 전 예외» 블록이 실려 있으면 그 규범이 정한 몫과 때를 따른다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s003> a djr:Section ;
     djr:headingSnapshot "## 산출"@ko ;
@@ -864,7 +890,7 @@ djr:R-3616 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 11 ;
     djr:statesNorm djr:R-3269 ;
-    djr:text "- 안정된 계약을 검증하므로 리팩터 중에도 불변이어야 한다.\n"@ko .
+    djr:text "- 안정된 계약을 검증하므로 승인된 현행 계약을 구현하는 TDD Refactor 단계에서 불변이어야 한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004/b12> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s004> ;

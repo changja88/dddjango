@@ -7061,7 +7061,7 @@ def _run(config: Config) -> tuple[list[str], list[Finding]]:
     return sorted(set(analysis)), findings
 
 
-# ── 표준 트리 슬라이스 — 트리 개정 명세 몫 11규칙 (트리 8·11·12행 · D7·D11·D27) ──
+# ── 표준 트리 슬라이스 — 트리 개정 명세 몫 11규칙 (트리 9·12·13행 · D7·D11·D27) ──
 #
 # 모든 프로필(auto 포함)에서 돈다 — 옛 판은 auto 에서 완전 무동작(fail-open)이었다.
 #   #120 api/ 1차 축은 <area>/ — 기술 폴더(ninja/ 등) 금지
@@ -7412,7 +7412,7 @@ def _suppress_overlapped_tree(
 
 def _print_tree_blocks(tree_findings: Findings, tree_candidates: Candidates) -> None:
     if tree_findings:
-        print("[check-api-error-controller-contract] BLOCKER — 입구(컨트롤러) 계약 규율 위반 (트리 8·11·12행):")
+        print("[check-api-error-controller-contract] BLOCKER — 입구(컨트롤러) 계약 규율 위반 (트리 9·12·13행):")
         emit_all(tree_findings, printer=print)
     if tree_candidates:
         print("[check-api-error-controller-contract] ⓓ 후보 — 기계가 후보를 좁혔다 · 마무리 물음은 discipline-reviewer 몫(exit 불산입):")

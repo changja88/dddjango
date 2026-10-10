@@ -10,7 +10,7 @@
   ② 끊긴 참조    «살아 있는 규칙 행» 안의 #N 이 죽은 번호를 가리킴
                  (걷어낸-목록 절은 대상 밖 — 거기는 죽은 번호를 «일부러» 적는 자리다.
                   <span> 정정 이력도 제외)
-  ③ 트리 커버리지 170행 중 규칙 행(자리·문면)이 한 번도 안 가리키는 행 = 0 · 171행 이상 참조 금지
+  ③ 트리 커버리지 171행 중 규칙 행(자리·문면)이 한 번도 안 가리키는 행 = 0 · 172행 이상 참조 금지
   ④ 카드 커버리지 결정 카드 57장(1~59, 19·23 없음) 중 인용 0건 = 0 · 없는 카드(D19·D23) 명시 인용 금지
   ⑤ 죽은 문면    걷어낸 낱말이 규칙 문면에 재등장 (deny-list 를 데이터로 인용하는 행은 allowlist)
   ⑥ 술어 정합    predicates.md 의 #N 전부 생존 · 등급 일치 · ast+ 는 «후보·물음» 필수
@@ -50,7 +50,7 @@ GRADES = ("path", "ast", "ast+", "human")
 WHENS = ("blocker", "검사기", "이행", "면제")
 WORKS = ("재작성", "치환", "무변", "신설")
 LIVE_CARDS = frozenset(set(range(1, 60)) - {19, 23})  # 57장
-TREE_ROW_MAX = 170
+TREE_ROW_MAX = 171
 
 
 class StructureError(Exception):
@@ -125,7 +125,7 @@ def _strip_spans(text: str) -> str:
 
 
 def _expand_row_refs(text: str) -> set[int]:
-    """「트리 97·98행」·「트리 105~111행」·「트리 13·42·44·49행」 → 행 번호 집합."""
+    """「트리 98·99행」·「트리 106~112행」·「트리 14·43·45·50행」 → 행 번호 집합."""
     out: set[int] = set()
     for chunk in re.findall(r"트리\s*([0-9][0-9·~,\s]*)행", text):
         for tok in re.split(r"[·,\s]+", chunk):
@@ -379,37 +379,38 @@ _R = "scripts/"
 ROW_TO_CHECKER: dict[range, str] = {
     range(1, 2): _R + "check-layer-skeleton.py",
     range(2, 5): _R + "check-composition-root.py",
-    range(5, 7): _R + "check-event-publish.py (신설)",
-    range(7, 8): _R + "check-layer-skeleton.py",
-    range(8, 10): _R + "check-composition-root.py",
-    range(10, 11): _R + "check-error-centralization.py",
-    range(11, 13): _R + "check-api-error-controller-contract.py",
-    range(13, 16): _R + "check-usecase-dto-placement.py",
-    range(16, 22): _R + "check-missable-entrance.py (신설)",
-    range(22, 33): _R + "check-context-isolation.py",
-    range(33, 35): _R + "check-missable-entrance.py (신설)",
-    range(35, 38): _R + "check-event-publish.py (신설)",
-    range(38, 45): _R + "check-usecase-dto-placement.py",
-    range(45, 59): _R + "check-port-adapter-pairing.py (신설)",
-    range(59, 68): _R + "check-domain-model.py (신설)",
-    range(68, 69): _R + "check-transaction-boundary.py (신설)",
-    range(69, 75): _R + "check-domain-model.py (신설)",
-    range(75, 80): _R + "check-db-table.py",
-    range(80, 82): _R + "check-mechanism-ownership.py",
-    range(82, 89): _R + "check-naming.py (신설)",
-    range(89, 97): _R + "check-port-adapter-pairing.py (신설)",
-    range(97, 100): _R + "check-context-isolation.py",
-    range(100, 105): _R + "check-port-adapter-pairing.py (신설)",
-    range(105, 110): _R + "check-test-config.py",
-    range(110, 112): _R + "check-port-adapter-pairing.py (신설)",
-    range(112, 113): _R + "check-business-vocabulary.py (신설)",
-    range(113, 120): _R + "check-broker-contract.py (신설)",
-    range(120, 130): _R + "check-business-vocabulary.py (신설)",
-    range(130, 135): _R + "check-business-vocabulary.py (신설)",
-    range(135, 136): _R + "check-layer-skeleton.py",
-    range(136, 138): _R + "check-composition-root.py",
-    range(138, 139): _R + "check-broker-contract.py (신설)",
-    range(139, 141): _R + "check-test-config.py",
+    range(5, 6): _R + "check-composition-root.py",
+    range(6, 8): _R + "check-event-publish.py (신설)",
+    range(8, 9): _R + "check-layer-skeleton.py",
+    range(9, 11): _R + "check-composition-root.py",
+    range(11, 12): _R + "check-error-centralization.py",
+    range(12, 14): _R + "check-api-error-controller-contract.py",
+    range(14, 17): _R + "check-usecase-dto-placement.py",
+    range(17, 23): _R + "check-missable-entrance.py (신설)",
+    range(23, 34): _R + "check-context-isolation.py",
+    range(34, 36): _R + "check-missable-entrance.py (신설)",
+    range(36, 39): _R + "check-event-publish.py (신설)",
+    range(39, 46): _R + "check-usecase-dto-placement.py",
+    range(46, 60): _R + "check-port-adapter-pairing.py (신설)",
+    range(60, 69): _R + "check-domain-model.py (신설)",
+    range(69, 70): _R + "check-transaction-boundary.py (신설)",
+    range(70, 76): _R + "check-domain-model.py (신설)",
+    range(76, 81): _R + "check-db-table.py",
+    range(81, 83): _R + "check-mechanism-ownership.py",
+    range(83, 90): _R + "check-naming.py (신설)",
+    range(90, 98): _R + "check-port-adapter-pairing.py (신설)",
+    range(98, 101): _R + "check-context-isolation.py",
+    range(101, 106): _R + "check-port-adapter-pairing.py (신설)",
+    range(106, 111): _R + "check-test-config.py",
+    range(111, 113): _R + "check-port-adapter-pairing.py (신설)",
+    range(113, 114): _R + "check-business-vocabulary.py (신설)",
+    range(114, 121): _R + "check-broker-contract.py (신설)",
+    range(121, 131): _R + "check-business-vocabulary.py (신설)",
+    range(131, 136): _R + "check-business-vocabulary.py (신설)",
+    range(136, 137): _R + "check-layer-skeleton.py",
+    range(137, 139): _R + "check-composition-root.py",
+    range(139, 140): _R + "check-broker-contract.py (신설)",
+    range(140, 142): _R + "check-test-config.py",
 }
 
 # 자리에 트리 행이 없는 규칙(전역 제약·장 참조)의 키워드 라우팅 — 위에서 먼저 맞은 것이 이긴다.

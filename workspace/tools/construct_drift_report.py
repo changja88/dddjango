@@ -65,10 +65,10 @@ SEALED: "dict[str, str]" = {
 # common-container 는 findings_smoke.BASELINE_SHA 와 동일값(교차 골든 — 2026-08-20 실측).
 EXPECTED_SHA: "dict[str, str]" = {
     "check-domain-model.py": "b571ad8ca4677a586c856199281b6fd4d76a848426e453e147803b1f505f06b7",
-    "check-common-container.py": "5ce9427209a475032bf19b5cf8f16d356e6e976f2119afe1639159cc8afd23fc",
-    "check-api-error-controller-contract.py": "7e3edccdbc2475744d8e842abc8e2a46c9a54d14feaea31ac0bb84bc26f9fad9",
-    "check-error-centralization.py": "5d21b130e5a23bc5c5610ad3ebe29e880e526cd2338ff2377f00cb36294ff191",
-    "check-composition-root.py": "81938fb23b67216c6fc24f8c39fc90564292d6526d09e828d452bc953f0c08ff",
+    "check-common-container.py": "10f52932ce07457413bcb0c580ae8735a33f1ea08f3725a7a370962e1f5d39d0",
+    "check-api-error-controller-contract.py": "0d67284f2cff0187daa8631d3973daac6b4cece9460a8dfe85c69658de72ec46",
+    "check-error-centralization.py": "4360dbfa8557143519bed6c38096004f93213472d4d9a9a7ceff635128ee932f",
+    "check-composition-root.py": "bdb7e5216c51ec841672ede638040a68e7088f4fe99b31daad8bae6e34b54d1c",
     "check-openapi-error-declaration.py": "92eb113f8e75c74ea617737804420f4df82b841996cc910ce3bc3944ded097a0",
     "check-response-schema-bypass.py": "b1a77bebb4272f9eb817feb63f31b6715d52da9d0ad312a2f02d744717428793",
     "check-context-isolation.py": "f87209775b8432b9fbdbe621dd9f2224611596aa006aecf4b24d31c8e1e230b5",

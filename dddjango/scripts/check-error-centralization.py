@@ -4615,7 +4615,7 @@ def _schema_findings(
     )
 
 
-# ── 표준 트리 슬라이스 — 트리 개정 명세 몫 4규칙 (트리 10행 · D27·D55) ──────
+# ── 표준 트리 슬라이스 — 트리 개정 명세 몫 4규칙 (트리 11행 · D27·D55) ──────
 #
 # 모든 프로필(auto 포함)에서 돈다 — 옛 판은 auto 에서 완전 무동작(fail-open)이었다.
 #   #114 `driving_layer/api/bc_error_schema.py` 는 BC 당 정확히 한 파일 · api/ 가
@@ -4793,7 +4793,7 @@ def _suppress_overlapped_tree(
 
 
 def _print_tree_findings(findings: Findings) -> None:
-    print("[check-error-centralization] BLOCKER — BC 오류 스키마 동거 규율 위반 (트리 10행):")
+    print("[check-error-centralization] BLOCKER — BC 오류 스키마 동거 규율 위반 (트리 11행):")
     emit_all(findings, printer=print)
 
 

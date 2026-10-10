@@ -105,6 +105,7 @@ Scheme URI와 `#fragment`만 허용하며 code span·fence·HTML comment·escape
 
 ```bash
 make ontology-env      # python3.14 .venv + rdflib·pySHACL·rdfcanon (버전 고정)
+make probe-env         # python3.14 .venv-probe + pytest·xdist·Django·pytest-django·greenlet (버전 고정 — B0 픽스처 전용)
 make ontology-hooks    # core.hooksPath = workspace/hooks (pre-commit 게이트)
 ```
 
@@ -140,7 +141,7 @@ md에서 `<!-- graph-owned: … -->` 마커가 붙은 절은 **직접 수정 금
 
 | 명령 | 언제 |
 |---|---|
-| `make verify` | **모든 커밋 전 기본** — 온톨로지 단(게이트·SHACL·렌더 동기·구조·질의 골든 12단) + 기존 검증 세트(검사기 매트릭스·미러·봉인 draft 등) |
+| `make verify` | **모든 커밋 전 기본** — 온톨로지 단(게이트·SHACL·렌더 동기·구조·질의 골든 12단) + 기존 검증 세트(검사기 매트릭스·미러·봉인 draft 등) + B0 픽스처 단(`verify-base-probe` — pytest 탐침·지원 확인·증거 실행을 장난감 저장소에서 실제 pytest 로 · `.venv-probe` 없으면 RED → `make probe-env`) |
 | `make verify-mutation` | rulepack·selector를 건드린 커밋 |
 | `make verify-firing` | 설치본 cache 발화 증명 (개발 중엔 `ALLOW_STALE=1`) |
 | `make verify-runready` | 실런(A/B 평가) 진입 직전에만 — verify + 변이 + 발화 + 봉인 엄격 대조 |

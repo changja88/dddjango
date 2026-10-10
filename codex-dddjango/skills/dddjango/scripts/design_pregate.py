@@ -1050,14 +1050,84 @@ def _migration_stub(entry: PlanEntry) -> "str | None":
     return "\n".join(body) + "\n"
 
 
+_MATERIAL_SETTINGS_IMPORT: str = "from django.conf import settings"
+_MATERIAL_STUB_RETURN: str = "    return settings.PREGATE_STUB"
+
+
+def _plan_parts(path: str) -> "tuple[str, ...]":
+    """계획 경로의 정규화 POSIX 마디 — 파서는 원문 표기(앞 `./` · 겹친 `/`)를 키로 두므로 판정은 이 마디로 한다."""
+    return PurePosixPath(path).parts
+
+
+def _is_material_file(path: str) -> bool:
+    """`application/<bc>/composition_root/wiring_material.py` — 정규화한 경로의 마디 넷이 정확히 그 꼴."""
+    parts: "tuple[str, ...]" = _plan_parts(path)
+    return (len(parts) == 4 and parts[0] == "application" and parts[1] not in ("", ".", "..")
+            and parts[2] == "composition_root" and parts[3] == "wiring_material.py")
+
+
+def _import_nodes(stmts: "list[str]") -> "list[ast.stmt]":
+    """전사 import 원문들의 구문 — 파싱 못 하는 행은 건너뛴다(그 행은 compile 격상으로 형식 red 가 따로 선다)."""
+    nodes: "list[ast.stmt]" = []
+    for stmt in stmts:
+        try:
+            nodes.extend(ast.parse(stmt).body)
+        except SyntaxError:
+            continue
+    return nodes
+
+
+def _settings_named(nodes: "list[ast.stmt]") -> bool:
+    """전사 import 가 `settings` 를 어떤 꼴로든 다룬다 — `from django.conf import settings`(공백 · 괄호 표기 무관) ·
+    별칭(`django.conf` 의 `settings as …`) · 다른 출처에서 `settings` 이름을 묶음. 이때는 정형 보충을 하지 않는다."""
+    for node in nodes:
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            for alias in node.names:
+                if (alias.asname or alias.name.split(".")[0]) == "settings":
+                    return True
+                if isinstance(node, ast.ImportFrom) and node.level == 0 and node.module == "django.conf" \
+                        and alias.name == "settings":
+                    return True
+    return False
+
+
+def _declares_future(stmts: "list[str]") -> bool:
+    """전사 import 에 `from __future__ …` 문이 있다(원문 머리 또는 구문)."""
+    if any(stmt.lstrip().startswith("from __future__") for stmt in stmts):
+        return True
+    return any(isinstance(node, ast.ImportFrom) and node.module == "__future__" for node in _import_nodes(stmts))
+
+
+def _reexport_only_init(entry: PlanEntry, sig: Signals) -> bool:
+    """재수출만 하는 `__init__.py` add — symbols · aliases · raises · 물리 신호(markers · client · e2e 자리) 없음 ∧
+    전사 future 없음. 이때만 합성 머리의 `from __future__ import annotations` 줄을 쓰지 않는다(docstring 은 둔다)."""
+    parts: "tuple[str, ...]" = _plan_parts(entry.path)
+    if not parts or parts[-1] != "__init__.py":
+        return False
+    if entry.symbols or entry.aliases or entry.raises or sig.markers or sig.client:
+        return False
+    if "/test/e2e/" in f"/{'/'.join(parts)}":
+        return False
+    return not _declares_future(entry.imports)
+
+
 def render_stub(entry: PlanEntry) -> str:
-    """PlanEntry 하나 → 팬텀 스텁 본문. 산문 추론 재료 0 — 전사·상수·처분표뿐이다."""
+    """PlanEntry 하나 → 팬텀 스텁 본문. 산문 추론 재료 0 — 전사·상수·처분표뿐이다.
+
+    정형 둘(경로는 정규화 마디로 판정): 재료 파일(`application/<bc>/composition_root/wiring_material.py`)의 함수는
+    본문을 `return settings.PREGATE_STUB` 로 쓰고 전사 import 가 `settings` 를 다루지 않으면
+    `from django.conf import settings` 한 줄을 더한다(S1 — 생성식 · 읽는 설정 이름은 미검증) · 재수출만 하는
+    `__init__.py` 는 합성 머리의 future 줄을 쓰지 않는다."""
     canonical: "str | None" = _migration_stub(entry)
     if canonical is not None:
         return canonical
-    lines: "list[str]" = ['"""pre-gate 팬텀 스텁."""', "from __future__ import annotations", ""]
-    emitted: "set[str]" = set()
     sig: Signals = entry.signals or Signals()
+    material: bool = _is_material_file(entry.path)
+    lines: "list[str]" = ['"""pre-gate 팬텀 스텁."""']
+    if not _reexport_only_init(entry, sig):
+        lines.append("from __future__ import annotations")
+    lines.append("")
+    emitted: "set[str]" = set()
     # [신규 4] base 채널 — 무기재 클래스에만 결합(전사 우선·fail-closed). import 합성 «전»에
     # 치환해야 신호 베이스도 화이트리스트 import 를 받는다.
     symbols: "list[Symbol]" = [
@@ -1077,6 +1147,10 @@ def render_stub(entry: PlanEntry) -> str:
         if stmt not in emitted:
             lines.append(stmt)
             emitted.add(stmt)
+    if material and any(sym.kind == "function" for sym in symbols) \
+            and not _settings_named(_import_nodes(entry.imports)):
+        lines.append(_MATERIAL_SETTINGS_IMPORT)            # 정형 본문이 읽는 이름 — 전사가 다루지 않을 때만 한 번
+        emitted.add(_MATERIAL_SETTINGS_IMPORT)
     if sig.markers:
         lines.append("import pytest")
     lines.append("")
@@ -1095,7 +1169,7 @@ def render_stub(entry: PlanEntry) -> str:
             ret: str = sym.ret or "object"
             lines.append(f"def {sym.name}({sym.params}) -> {ret}:")
             lines.append('    """계획 스텁."""')
-            lines.append("    raise NotImplementedError")
+            lines.append(_MATERIAL_STUB_RETURN if material else "    raise NotImplementedError")
         else:
             lines.extend(_class_stub(sym, _derived_db_table(entry.path, sym.name)))
         lines.append("")
@@ -2946,7 +3020,8 @@ def _own_interpreter_note(repo: Path) -> "str | None":
 
 
 BLIND_SPOTS: "tuple[str, ...]" = (
-    "S1 C급(함수 본문·행위 규칙): 생성 본문은 미검증이다. 정확한 생성 위치/슬롯 결합의 #376/#645/#647만 별도 보고하며 실제 구현 검증을 대신하지 않는다.",
+    "S1 C급(함수 본문·행위 규칙): 생성 본문은 미검증이다. 정확한 생성 위치/슬롯 결합의 #376/#645/#647만 별도 보고하며 실제 구현 검증을 대신하지 않는다. "
+    "재료 파일(`composition_root/wiring_material.py`) 함수 본문은 정형 `return settings.PREGATE_STUB` 로 실체화한다(생성식 · 읽는 설정 이름은 미검증).",
     "S2 ④형(명세 내부 의미 모순·규범 과잉결정): 명시 read-only/UoW와 출처 결합 DTO의 선언 확정/후보 밖은 미검증이다. "
     "포트·조회 계약 메서드 인자 `<data>_in` 의 #574 선언 확정은 이 사각이 아니다(S2 인용 filtered 불가 — 명세를 고친다).",
     "S3 BC 내부 계층 의존(#92/#93류): 유도 삽입은 규약 준수형이라 예보 불가 · 블록에 기재된 경계 import 는 스텁에 "

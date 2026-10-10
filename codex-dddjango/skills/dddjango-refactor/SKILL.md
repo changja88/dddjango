@@ -1,6 +1,6 @@
 ---
 name: dddjango-refactor
-description: 사용자가 `$dddjango-refactor <대상 BC> [불편 서술]` 로 명시적으로 부를 때만 쓰는 dddjango 리팩토링 입구. 대상 BC 하나의 기존 코드 전체를 표준으로 정리한다(동작 불변). 자연어 요청에는 쓰지 않는다.
+description: 사용자가 `$dddjango-refactor <대상 BC> [불편 서술]` 로 명시적으로 부를 때만 쓰는 dddjango 리팩토링 입구. 대상 BC 하나의 기존 코드 전체를 표준으로 정리한다(바뀌는 동작 · DB 는 G1 목록 승인). 자연어 요청에는 쓰지 않는다.
 ---
 
 # dddjango 리팩토링 입구

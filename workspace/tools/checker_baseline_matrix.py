@@ -254,7 +254,7 @@ EXPECTED: "dict[str, tuple[int, int, int, int, bool]]" = {
     "check-transient-overmapping.py": (2, 0, 0, 3, True),
     "check-synthetic-infra-exc.py": (2, 1, 1, 2, False),
     "check-api-error-controller-contract.py": (2, 11, 11, 3, False),
-    "check-composition-root.py": (2, 18, 18, 4, False),
+    "check-composition-root.py": (2, 82, 82, 4, False),
     "check-db-table.py": (2, 26, 26, 2, False),
     "check-choices-literal-consumption.py": (2, 0, 0, 6, True),
     "check-usecase-dto-placement.py": (2, 34, 34, 8, False),

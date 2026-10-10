@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""dddjango 유스케이스·경계 자료 계약 검사기 — 트리 39~44행(+13~15행 schema) 규율의 결정적 백스톱.
+"""dddjango 유스케이스·경계 자료 계약 검사기 — 트리 40~45행(+14~16행 schema) 규율의 결정적 백스톱.
 
 `application_layer/<area>/<use_case>/` 의 자료 배치와 `driving_layer/api/**/schema/` 의
 경계 계약을 강제한다. 경로 기대는 `standard_tree.py` 에서 도출한다.
@@ -739,7 +739,7 @@ def main(argv: list[str]) -> int:
         print(f"blocker {len(findings)}건 — 유스케이스·경계 자료 규율 위반")
         emit_all(findings, printer=print, indent="  ")
         return 2
-    print(f"clean — BC {len(bcs)}개 · 자료 계약 규율 일치 (트리 39~44행 · standard_tree {tree.SOURCE_SHA})")
+    print(f"clean — BC {len(bcs)}개 · 자료 계약 규율 일치 (트리 40~45행 · standard_tree {tree.SOURCE_SHA})")
     return 0
 
 

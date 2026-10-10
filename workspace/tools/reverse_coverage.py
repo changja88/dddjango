@@ -8,7 +8,7 @@
 판정:
   ⑴ dddjango/ 아래 모든 파일이 아래 범주 중 하나에 들어야 한다.
       · scripts/check-*.py           — 매핑표 ⓒ 소유 규칙 ≥ 1
-      · scripts/standard_tree.py     — 트리 170행 단일 출처(전 검사기 import)
+      · scripts/standard_tree.py     — 트리 171행 단일 출처(전 검사기 import)
       · scripts/business_vocab.py    — #628 실체(업무 어휘 재료)
       · scripts/checker_target.py    — 호출 계약 공용 모듈(전 검사기 import · 라운드 1 P2)
       · skills/discipline-houserules — ⓐ 정본(final.md)·ⓑ SKILL(값 0)
@@ -108,7 +108,7 @@ def main() -> int:
         why: "str | None" = None
         if parts[0] == "scripts":
             if rel.name == "standard_tree.py":
-                why = "트리 170행 단일 출처 — 전 검사기 import·#79 ROWS 구동·tree_mirror 삼중 동기"
+                why = "트리 171행 단일 출처 — 전 검사기 import·#79 ROWS 구동·tree_mirror 삼중 동기"
             elif rel.name == "business_vocab.py":
                 why = "#628 실체 — 업무 어휘 재료(도메인 공개 심볼 토큰·불용어·기술 이름)"
             elif rel.name == "checker_target.py":
@@ -143,8 +143,18 @@ def main() -> int:
             elif rel.name == "behavior_guard.py":
                 why = ("동작 보존 장치(2026-09-27 로드맵 4 — 슬라이스 0 창의 테스트 고정·마이그레이션 무변 판정) — "
                        "0T(제품 고정)·0C(테스트 고정 · 이동·개명 치환만 허용) 창을 open/close 로 재고 verify 가 "
-                       "G2 배너 `동작 보존:` 행의 기계 출처다(R-3503~R-3506 enforcedBy) · "
-                       "behavior_guard_fixture_run 이 20사례·창 절차로 행동 고정")
+                       "G2 배너 `동작 보존:` 행의 기계 출처다(R-3503~R-3506 enforcedBy) · 리팩토링 모드(2026-10-04 RD)는 "
+                       "창 넷(0T·0C·0F·변경)의 시험 쪽 편집을 감사 키 또는 red 로 처분한다(자동 초록 0 · 감사 키 일대일) · "
+                       "behavior_guard_fixture_run 이 기능 모드 사례·리팩토링 모드 사례·창 절차로 행동 고정")
+            elif rel.name == "behavior_support.py":
+                why = ("지원 확인·증거 실행(2026-10-04 RD — 리팩토링 모드 G0 `support --collect`·G2 `suite`) — "
+                       "기록한 시험 명령을 동결한 실행 정의로 돌려 pytest 탐침 기록을 판정한다(허용 메커니즘 목록·프로젝트 훅 허용 목록·"
+                       "실행 관찰 API 정적 규칙·양 확인·G0 유지·트리 지문) · behavior_guard 의 `support`·`suite`·`verify` 가 부른다 · "
+                       "behavior_probe_fixture_run 이 장난감 저장소 사례로 행동 고정")
+            elif key == "scripts/pytest_probe/dddjango_collect_probe.py":
+                why = ("pytest 탐침(2026-10-04 RD — 판정 없는 기록기) — behavior_support 가 `-p dddjango_collect_probe` 로 붙여 "
+                       "원본 상위 집합·훅 구현·구조 키·결과 증거·양을 프로세스마다 JSON 으로 남긴다(자기 디렉터리 — PYTHONPATH 에 "
+                       "이 디렉터리만 더한다) · behavior_probe_fixture_run 이 행동 고정")
             elif rel.name == "refactor_audit.py":
                 why = ("리팩토링 모드 결정적 도구(2026-09-27 로드맵 5 — BC 점검 R2·판정 R3·G2 잔존) — "
                        "렌즈·조각 계획 · 리뷰어 인용 검사와 블록 결속(팩 blocks 해시) · 판정 네 출구 검사 · "

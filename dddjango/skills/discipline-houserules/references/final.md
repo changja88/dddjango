@@ -28,14 +28,14 @@ dddjango 는 **DDD · 클린 아키텍처 · 헥사고날** 셋을 조합해 Dja
 
 동명 폴더 승격의 형태: 승격 폴더는 안에 **본체 `<이름>.py`** 와 **재수출 전용 `__init__.py`** 를 반드시 가진다 — 본체 없는 폴더는 위장이고, 형제 `<이름>.py` 와 `<이름>/` 의 공존도 위반이다(파일시스템은 공존을 허용하고 import 는 패키지가 이겨 조용한 위장 중복이 된다). 내부는 **1단 평평**이다 — 하위 폴더는 위반이며, 부품 군집이 폴더를 요구하면 그것은 트리 개정 신호이지 중첩 근거가 아니다. `__init__.py` 재수출은 `from .<모듈> import <이름> as <이름>`(redundant alias) 또는 `__all__` 선언으로 한다(mypy strict `--no-implicit-reexport` 가 인정하는 두 형태) — 본체 코드를 `__init__.py` 에 두지 않고, 폴더 내부 상호 참조는 `__init__` 경유 없이 모듈 직접 상대 import 로 한다. 바깥 import 표면(`...<칸>` 모듈 경로로 공개되는 이름 집합)은 승격·환원 어느 방향이든 불변이어야 하고, 승격은 `git mv` 로 이력을 보존한다.
 승격 폴더는 «트리가 리프로 닫은 폴더»가 아니다 — 내부 재량은 **배열·명명 재량**이지 **파일 신설 재량이 아니다**. 부품 파일의 신설 근거는 감사 판정(동명 폴더 승격 발견)의 클러스터 열거 또는 후속 감사 신호뿐이고, #192(사설 조각은 제 파일 안 `_` 함수)·#189(유스케이스 간 돌려쓰기 금지)가 부품 파일 각각에 그대로 적용되며, 정크드로어 이름(`utils.py`·`helpers.py` 류)은 위반이다. 부품이 0개(본체+`__init__.py` 뿐)가 된 승격 폴더는 위반이다(환원 신호 — 이번 작업 산출이면 발견 반영으로, 기존이면 G0 빚 경로로 환원한다). 저장(save)류 쓰기 호출은 본체에만 둔다.
-칸을 «파일»로 명명하는 규범·검사기 문면(#256·#123·#193 …)은 그 칸의 실현 — 파일 또는 승격 본체 — 을 가리킨다. 승격 허용 표기의 값은 §1 트리가 소유한다(정본 `docs/file_tree.html` 의 data-sw · `standard_tree.Row.swappable` — 허용 칸: 트리 12·14·15·18·20·21·24·41·61·74·92·94·96행). 배제는 사유로만 선다 — ⓐ 범위 밖 서브트리(`framework/**`·`<project>/**`)·비-py(templates) ⓑ 도구 생성물(migrations) ⓒ 형태 명문 고정(composition_root #497 · api_router #107 · cron_job #174/#178 · event_subscription #509 · event_router #508 · apps #535/#538 · bc_error_schema #114/#572 · admin panel #342/#343) ⓓ 개념 원자 — 성장 출구가 새 인스턴스 파일(entity·값 객체·event·exception·계약·port 선언·domain repository 선언·`<entity>_model` #335 …). 배제 칸의 비대는 그 칸의 기존 규범이 관할한다 — 승격은 출구가 아니다. 배제·허용 표기를 바꾸는 주어는 정본 트리(트리 개정)다 — 프로젝트 관찰·판정 반복은 개정 제안 신호이지 현장 변경 근거가 아니다.
+칸을 «파일»로 명명하는 규범·검사기 문면(#256·#123·#193 …)은 그 칸의 실현 — 파일 또는 승격 본체 — 을 가리킨다. 승격 허용 표기의 값은 §1 트리가 소유한다(정본 `docs/file_tree.html` 의 data-sw · `standard_tree.Row.swappable` — 허용 칸: 트리 13·15·16·19·21·22·25·42·62·75·93·95·97행). 배제는 사유로만 선다 — ⓐ 범위 밖 서브트리(`framework/**`·`<project>/**`)·비-py(templates) ⓑ 도구 생성물(migrations) ⓒ 형태 명문 고정(composition_root #497 · api_router #107 · cron_job #174/#178 · event_subscription #509 · event_router #508 · apps #535/#538 · bc_error_schema #114/#572 · admin panel #342/#343) ⓓ 개념 원자 — 성장 출구가 새 인스턴스 파일(entity·값 객체·event·exception·계약·port 선언·domain repository 선언·`<entity>_model` #335 …). 배제 칸의 비대는 그 칸의 기존 규범이 관할한다 — 승격은 출구가 아니다. 배제·허용 표기를 바꾸는 주어는 정본 트리(트리 개정)다 — 프로젝트 관찰·판정 반복은 개정 제안 신호이지 현장 변경 근거가 아니다.
 
 **어댑터 고정 골격** — `driven_layer/adapter/` 아래 ACL의 `anticorruption_layer/<other_bounded_context>/<capability>_adapter/`, 외부 시스템의 `external_system/<system>/<capability>_adapter/`, 그 밖 능력의 `<capability>/<technology>_adapter/` 는 처음부터 패키지다. 바깥 패키지와 `adapter/`·`command/`·`constant/`·`contract/`·`schema/` 다섯 역할 폴더에 `__init__.py` 를 반드시 둔다(#488). 역할 폴더는 내용이 없어도 생략하지 않는다. 초기화 파일은 재수출 전용이다(#640). 바깥에 구현 본체를 두거나 단일 `.py` 파일로 대체하지 않으며, 역할 폴더 안에 추가 폴더를 만들지 않는다(#490). 실제 내용 파일은 필요할 때만 만들며 200행 승격 신호의 대상이 아니다.
 
 **#651 클래스별 파일** — `adapter/`·`command/`·`contract/`·`schema/` 의 내용 파일은 비공개 클래스를 포함해 클래스 하나당 파일 하나다. 같은 역할의 클래스가 여러 개면 각각 파일을 만든다. `constant/` 는 클래스 없이 관련 상수끼리 한 파일에 묶는다. 내용 없는 골격 파일과 재수출 초기화 파일은 클래스 수 검사의 대상이 아니다.
 
 **역할 배치** — `adapter/` 는 포트를 구현하는 클래스를 소유한다. 외부 응답을 포트 반환값으로 바꾸는 reader 는 그 구현의 private 메서드 또는 본문에 둔다. `command/` 는 주입되는 호출 계약(Protocol 등)을 클래스별로 둔다. `contract/` 는 내부 계약 클래스를 소유하며 그 계약을 반환하는 builder 도 같은 파일에 둔다. `schema/` 는 외부 입출력 검증 클래스를 소유하며 관련 타입 별칭은 해당 스키마 파일에 둔다. `constant/` 는 프롬프트 등 관련 값을 `prompt.py` 같은 응집된 묶음으로 둔다. 반환 클래스가 포트 소유라는 이유로 외부 스키마를 아는 변환 함수를 포트 파일로 옮기지 않는다. 내부 참조는 모듈 직접 상대 import 로 연결한다. 기존 상속·명명·예외 번역 검사는 구현 역할 파일에, 의존 방향과 격리는 전체 역할 파일에 적용한다.
-## §1 표준 트리 — 170행
+## §1 표준 트리 — 171행
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 행 번호는 정본의 행 번호이고, 규칙·검사기·명세가 「트리 N행」으로 이 번호를 가리킨다. `<…>` 는 자리표시자(§0 유형 ②③)다.
@@ -46,172 +46,173 @@ dddjango 는 **DDD · 클린 아키텍처 · 헥사고날** 셋을 조합해 Dja
   2   composition_root/
   3     dependency_wiring.py
   4     event_wiring.py
-  5   published_event/
-  6     <event>.py
-  7   driving_layer/
-  8     api/
-  9       api_router.py
- 10       bc_error_schema.py
- 11       <area>/
- 12         <area>_controller.py
- 13         schema/
- 14           schema_in.py
- 15           schema_out.py
- 16       webhook/
- 17         <provider>/
- 18           <provider>_controller.py
- 19           schema/
- 20             schema_in.py
- 21             schema_out.py
- 22     open_host_service/
- 23       <service>/
- 24         <service>_service.py
- 25         contract/
- 26           request/
- 27             <request>_request.py
- 28           response/
- 29             <response>_response.py
- 30           exception/
- 31             <service>_published_error.py
- 32             <exception>_exception.py
- 33     cron_job/
- 34       <job>_cron_job.py
- 35     event_subscription/
- 36       event_router.py
- 37       <event>_subscription.py
- 38   application_layer/
- 39     <area>/
- 40       <use_case>/
- 41         <use_case>_use_case.py
- 42         <use_case>_command.py
- 43         <use_case>_query.py
- 44         <use_case>_result.py
- 45     port/
- 46       <capability>/
- 47         <capability>_port.py
- 48         exception.py
- 49         <data>_out.py
- 50         <data>_in.py
- 51       domain_bypass_query/
- 52         <capability>/
- 53           <capability>_query.py
- 54           <data>_out.py
- 55           <data>_in.py
- 56           exception.py
- 57       unit_of_work/
- 58         <boundary>_unit_of_work.py
- 59   domain_layer/
- 60     <aggregate>/
- 61       <aggregate>.py
- 62       entity/
- 63         <entity>.py
- 64       value_object/
- 65         <value_object>.py
- 66       event/
- 67         <event>.py
- 68       <aggregate>_repository.py
- 69       exception/
- 70         <exception>.py
- 71     shared_value_object/
- 72       <value_object>.py
- 73     domain_service/
- 74       <domain_service>.py
- 75   driven_layer/
- 76     django_<bounded_context>/
- 77       apps.py
- 78       models/
- 79         <entity>_model.py
- 80       migrations/
- 81         <migration>.py
- 82       admin/
- 83         <entity>/
- 84           panel.py
- 85           form/<form>_form.py
- 86           feature/<feature>.py
- 87       templates/admin/<bounded_context>/<page>.html
- 88       templates/<bounded_context>/<capability>/<template>.html
- 89     adapter/
- 90       persistence/
- 91         repository/
- 92           <aggregate>_repository.py
- 93         domain_bypass_query/
- 94           <capability>_query.py
- 95         unit_of_work/
- 96           <boundary>_unit_of_work.py
- 97       anticorruption_layer/
- 98         <other_bounded_context>/
- 99           <capability>_adapter/
-100             adapter/
-101               <implementation>_adapter.py
-102             command/
-103               <command>.py
-104             constant/
-105               <constant>.py
-106             contract/
-107               <contract>.py
-108             schema/
-109               <schema>.py
-110       external_system/
-111         <system>/
-112           <capability>_adapter/
-113             adapter/
-114               <implementation>_adapter.py
-115             command/
-116               <command>.py
-117             constant/
-118               <constant>.py
-119             contract/
-120               <contract>.py
-121             schema/
-122               <schema>.py
-123       <capability>/
-124         <technology>_adapter/
-125           adapter/
-126             <implementation>_adapter.py
-127           command/
-128             <command>.py
-129           constant/
-130             <constant>.py
-131           contract/
-132             <contract>.py
-133           schema/
-134             <schema>.py
-135   test/
-136     unit/
-137     integration/
-138     e2e/
-139     factories/
-140     fake/
-141       <declaration>.py
-142 framework/
-143   broker/
-144     internal/
-145       internal_broker_port.py
-146       internal_broker.py
-147     external/
-148       external_broker_port.py
-149       external_broker.py
-150   <capability>/
-151     <capability>_port.py
-152     exception.py
-153     <data>_out.py
-154     <data>_in.py
-155     <technology>_adapter.py
-156   <technology>/
-157     <module>.py
-158   pure/
-159     <module>.py
-160   test/
-161     <module>.py
-162     fake/
-163       <declaration>.py
-164     unit/
-165 <project>/
-166   api.py
-167   urls.py
-168   celery.py
-169   settings/
-170     <environment>.py
+  5     wiring_material.py
+  6   published_event/
+  7     <event>.py
+  8   driving_layer/
+  9     api/
+ 10       api_router.py
+ 11       bc_error_schema.py
+ 12       <area>/
+ 13         <area>_controller.py
+ 14         schema/
+ 15           schema_in.py
+ 16           schema_out.py
+ 17       webhook/
+ 18         <provider>/
+ 19           <provider>_controller.py
+ 20           schema/
+ 21             schema_in.py
+ 22             schema_out.py
+ 23     open_host_service/
+ 24       <service>/
+ 25         <service>_service.py
+ 26         contract/
+ 27           request/
+ 28             <request>_request.py
+ 29           response/
+ 30             <response>_response.py
+ 31           exception/
+ 32             <service>_published_error.py
+ 33             <exception>_exception.py
+ 34     cron_job/
+ 35       <job>_cron_job.py
+ 36     event_subscription/
+ 37       event_router.py
+ 38       <event>_subscription.py
+ 39   application_layer/
+ 40     <area>/
+ 41       <use_case>/
+ 42         <use_case>_use_case.py
+ 43         <use_case>_command.py
+ 44         <use_case>_query.py
+ 45         <use_case>_result.py
+ 46     port/
+ 47       <capability>/
+ 48         <capability>_port.py
+ 49         exception.py
+ 50         <data>_out.py
+ 51         <data>_in.py
+ 52       domain_bypass_query/
+ 53         <capability>/
+ 54           <capability>_query.py
+ 55           <data>_out.py
+ 56           <data>_in.py
+ 57           exception.py
+ 58       unit_of_work/
+ 59         <boundary>_unit_of_work.py
+ 60   domain_layer/
+ 61     <aggregate>/
+ 62       <aggregate>.py
+ 63       entity/
+ 64         <entity>.py
+ 65       value_object/
+ 66         <value_object>.py
+ 67       event/
+ 68         <event>.py
+ 69       <aggregate>_repository.py
+ 70       exception/
+ 71         <exception>.py
+ 72     shared_value_object/
+ 73       <value_object>.py
+ 74     domain_service/
+ 75       <domain_service>.py
+ 76   driven_layer/
+ 77     django_<bounded_context>/
+ 78       apps.py
+ 79       models/
+ 80         <entity>_model.py
+ 81       migrations/
+ 82         <migration>.py
+ 83       admin/
+ 84         <entity>/
+ 85           panel.py
+ 86           form/<form>_form.py
+ 87           feature/<feature>.py
+ 88       templates/admin/<bounded_context>/<page>.html
+ 89       templates/<bounded_context>/<capability>/<template>.html
+ 90     adapter/
+ 91       persistence/
+ 92         repository/
+ 93           <aggregate>_repository.py
+ 94         domain_bypass_query/
+ 95           <capability>_query.py
+ 96         unit_of_work/
+ 97           <boundary>_unit_of_work.py
+ 98       anticorruption_layer/
+ 99         <other_bounded_context>/
+100           <capability>_adapter/
+101             adapter/
+102               <implementation>_adapter.py
+103             command/
+104               <command>.py
+105             constant/
+106               <constant>.py
+107             contract/
+108               <contract>.py
+109             schema/
+110               <schema>.py
+111       external_system/
+112         <system>/
+113           <capability>_adapter/
+114             adapter/
+115               <implementation>_adapter.py
+116             command/
+117               <command>.py
+118             constant/
+119               <constant>.py
+120             contract/
+121               <contract>.py
+122             schema/
+123               <schema>.py
+124       <capability>/
+125         <technology>_adapter/
+126           adapter/
+127             <implementation>_adapter.py
+128           command/
+129             <command>.py
+130           constant/
+131             <constant>.py
+132           contract/
+133             <contract>.py
+134           schema/
+135             <schema>.py
+136   test/
+137     unit/
+138     integration/
+139     e2e/
+140     factories/
+141     fake/
+142       <declaration>.py
+143 framework/
+144   broker/
+145     internal/
+146       internal_broker_port.py
+147       internal_broker.py
+148     external/
+149       external_broker_port.py
+150       external_broker.py
+151   <capability>/
+152     <capability>_port.py
+153     exception.py
+154     <data>_out.py
+155     <data>_in.py
+156     <technology>_adapter.py
+157   <technology>/
+158     <module>.py
+159   pure/
+160     <module>.py
+161   test/
+162     <module>.py
+163     fake/
+164       <declaration>.py
+165     unit/
+166 <project>/
+167   api.py
+168   urls.py
+169   celery.py
+170   settings/
+171     <environment>.py
 ```
 <!-- TREE:END -->
 

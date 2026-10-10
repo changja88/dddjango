@@ -212,7 +212,7 @@ def _check_prefix_suffix(root: Path, bc: Path, f: Findings) -> None:
             kind = suf[1:]
             parent = py.parent.name
             if "open_host_service" in parts and "contract" in parts:
-                continue  # 트리 27·29·32행 — OHS `contract/` 안은 접미형이 정본이다(`<exception>_exception.py`)
+                continue  # 트리 28·30·33행 — OHS `contract/` 안은 접미형이 정본이다(`<exception>_exception.py`)
             if parent == kind or (kind == "value_object" and parent == "shared_value_object"):
                 f.add("#30", _rel(root, py),
                       f"`{suf}` 재접미 — 폴더가 종류를 말하는 자리표시자 자리(`<{kind}>.py`)는 "

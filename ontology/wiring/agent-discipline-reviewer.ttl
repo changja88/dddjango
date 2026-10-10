@@ -779,3 +779,8 @@ djr:R-3567 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 djr:R-3596 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
 djr:R-3605 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3646 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/behavior_guard.py> .
+
+djr:R-3647 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-discipline-reviewer> .

@@ -79,6 +79,10 @@ GROUPS: "dict[str, dict]" = {
             "dddjango/scripts/design_pregate.py",
             # 동작 보존 장치 — 리팩터 창 판정이 G2 배너 `동작 보존:` 행의 근거가 된다(로드맵 4).
             "dddjango/scripts/behavior_guard.py",
+            # 지원 확인·증거 실행과 pytest 탐침 — `support --collect`·`suite` 가 G0·G2 배너(지원 확인·suite 행)의
+            # 근거를 낸다(behavior_guard 와 같은 까닭 · 2026-10-04 RD).
+            "dddjango/scripts/behavior_support.py",
+            "dddjango/scripts/pytest_probe/*.py",
             # 리팩토링 모드 결정적 도구 — R2·R3·G2 잔존 판정이 G0·G2 배너의 근거가 된다(로드맵 5).
             "dddjango/scripts/refactor_audit.py",
             "dddjango/commands/dddjango.md",
@@ -187,6 +191,8 @@ GROUPS: "dict[str, dict]" = {
             # 도구 lockfile — t2-plan §2 T2-0b 명시 항목. 그래프 도구 사슬과 runtime 계약 pin.
             "workspace/tools/ontology-requirements.txt",
             "workspace/eval/fixtures/api_error_contract/requirements.txt",
+            # B0 픽스처 가상환경(.venv-probe) 고정 판 — 탐침·지원 확인 픽스처가 도는 pytest·Django 판의 pin(2026-10-04 RD).
+            "workspace/tools/probe-fixture-requirements.txt",
         ],
     },
 }

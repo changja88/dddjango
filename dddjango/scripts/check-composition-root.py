@@ -53,9 +53,11 @@ from __future__ import annotations
 import argparse
 import ast
 import os
+import re
 import stat
 import subprocess
 import sys
+import warnings
 
 import checker_target
 from findings import Candidates, ContractFindings, Findings, emit_all, lines
@@ -1801,13 +1803,16 @@ def _code_overlap_keys(
     return frozenset(keys)
 
 
-# ── 표준 트리 슬라이스 — 트리 개정 명세 몫 18규칙 (트리 2~4·8·9·136·137행) ──
+# ── 표준 트리 슬라이스 — 트리 개정 명세 몫 20규칙 (트리 2~4·9·10·137·138행) ──
 #
 # 새 트리 모양(composition_root/ 폴더 · api/api_router.py · <project>/{api,urls}.py)에
 # 대한 기계 규칙. 변종(단일 composition_root.py · off-tree composition/)은
 # 위 V1~V3·registrar 검사가 담당한다.
-#   #84/#497 composition_root/ 는 BC 루트의 «폴더»·결선 하나=파일 하나
+#   #84/#497 composition_root/ 는 BC 루트의 «폴더»·결선 하나=파일 하나(결선 둘과 결선 재료 하나)
 #   #85/#86(ⓓ) dependency_wiring.py 는 build_* 팩토리만 · 조건/계산은 후보
+#   #652 wiring_material.py(트리 5행)는 결선 재료만 — 닫힌 허용 목록(F1~F3 · 생성식 셋 ·
+#        값 객체 모듈 V1~V4) · #653 `wiring_material` 낱말은 그 파일 자신과 같은 BC
+#        dependency_wiring.py 의 모듈째 import 한 줄 · `wiring_material.<재료>()` 호출에만
 #   #498/#500/#501 event_wiring.py 는 꽂기만(표 금지·이름 있는 최상단 함수만·DB 금지)
 #   #101 BC 안쪽·composition_root 은 자기 BC 의 driving 층을 import 하지 않는다(타 BC 의
 #        open_host_service 소비는 #13·#102 축 — 2026-08-31 자기-BC 한정 부칙)
@@ -1829,7 +1834,7 @@ _DRIVING_SEGMENTS = frozenset(
     {"driving_layer"}
 )
 _INNER_SEGMENTS = ("application_layer", "domain_layer", "driven_layer", "composition_root")
-_WIRING_FILES = {"dependency_wiring.py", "event_wiring.py"}
+_WIRING_FILES = {"dependency_wiring.py", "event_wiring.py", "wiring_material.py"}
 _STDLIB_OK = {
     "__future__", "typing", "collections", "functools", "itertools", "dataclasses",
     "enum", "abc", "datetime", "decimal", "uuid", "logging",
@@ -1924,6 +1929,648 @@ def _check_event_wiring(f: Path, rel: Path, findings: Findings) -> None:
             )
 
 
+# ── #652 · #653 결선 재료 `wiring_material.py`(트리 5행) ──
+#
+# #652 재료 파일은 닫힌 허용 목록이다(목록 밖은 모두 위반 · 빈 파일 · docstring 뿐이면 건너뛴다):
+#   F1 최상단 = docstring(선택) · F2 import · F3 재료 함수뿐.
+#   F2 import 셋(최상단 · 별칭 없음): `from __future__ import annotations` · `from django.conf
+#      import settings` · `from application.<자기 BC>.domain_layer.<aggregate>.value_object.<모듈>
+#      import <클래스>`(또는 `…domain_layer.shared_value_object.<모듈>`). 셋째는 그 직접 모듈 파일을
+#      읽어 값 객체 모듈 허용 목록 V1 · V1′ · V2 · V3 · V3′ · V4 와 정적으로 대조한다 — 이름
+#      해석기 · 실행 없음(결속 수는 묶는 구문만 센다). 그 `.py` 옆에 같은 이름(대소문자를 접어
+#      대조)의 폴더나 확장 모듈이 있으면 대상 아님이다 — 패키지 초기화 파일이 있는 동명 폴더와
+#      확장 모듈은 `.py` 보다 먼저 선택되고, 초기화 파일 없는 동명 폴더는 실제로는 `.py` 가
+#      선택되지만 초기화 파일의 온갖 꼴과 환경 차이를 가리지 않고 보수 쪽으로 둔다.
+#   F3 `def <이름>() -> <F2 클래스 | str | int | bool | float>:` · 매개변수 · 데코레이터 없음 ·
+#      `_` · `build_` 로 시작하지 않음 · 본문 = docstring(선택) + `return <E>` 한 문장.
+#      E 는 구조 일치(재귀 걷기 아님): (가) `settings.<대문자>` · (다) `<F2 클래스>(<인자>)` ·
+#      (라) `<F2 클래스>.create(<인자>)` — 인자 = (가) 또는 닫힌 상수 · `*`/`**` 없음.
+#      (라) 는 그 값 객체 모듈에 `@classmethod def create` 가 있을 때만 든다(V4 정해진 자리).
+#   재료 파일 결속: settings · import 이름 · 재료 함수 이름은 파일 전체에서 정확히 한 번 묶인다.
+#      (가) 의 `settings` 는 `from django.conf import settings` 한 줄이 묶은 그 이름이어야 하고
+#      (import 없이 쓰면 위반), 재료 이름은 settings · str · int · bool · float 와 달라야 한다.
+# #653 TARGET 아래 모든 .py(SKIP_DIRS 만 뺌 · 시험 · 마이그레이션 포함)의 모든 AST 노드의 str ·
+#   bytes 값 필드에 `wiring_material` 이 있으면, 허용 두 자리(그 파일 자신 · 같은 BC
+#   dependency_wiring.py 의 모듈째 import 한 줄과 인자 없는 `wiring_material.<재료>()` 의 이름) 밖은
+#   위반이다. 파싱이 안 되는 파일은 원문 바이트로 본다. `application/` 컨테이너가 없는 TARGET 도
+#   그대로 걷는다(BC 판정은 허용 두 자리 계산에만 쓴다). 읽지 못한 디렉터리 · 파일은 보수 위반이다.
+
+_MATERIAL_FILE = "wiring_material.py"
+_MATERIAL_WORD = "wiring_material"
+_MATERIAL_SCALARS = frozenset({"str", "int", "bool", "float"})
+_UPPER_NAME = re.compile(r"[A-Z][A-Z0-9_]*")
+_CLOSED_CONSTANT_TYPES = (str, int, float, bool, type(None))
+_DATACLASS_KEYWORDS = frozenset({"frozen", "slots", "kw_only"})
+_TYPE_PARAM_NODES: tuple[type, ...] = tuple(
+    getattr(ast, name) for name in ("TypeVar", "ParamSpec", "TypeVarTuple") if hasattr(ast, name)
+)
+_MATERIAL_MSG = "wiring_material.py 는 결선 재료만 둔다"
+_REFERENCE_MSG = (
+    "`wiring_material` 낱말은 그 파일 자신과 같은 BC dependency_wiring.py 의 모듈째 import 한 줄 · "
+    "`wiring_material.<재료>()` 호출에만 나온다"
+)
+_PARSE_ERRORS = (SyntaxError, ValueError, UnicodeDecodeError, RecursionError)
+
+
+def _parse_quiet(data: bytes) -> ast.Module:
+    """대상 코드의 SyntaxWarning(잘못된 이스케이프 등)을 출력에 흘리지 않고 파싱한다."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        return ast.parse(data)
+
+
+def _is_docstring(node: ast.stmt) -> bool:
+    return (
+        isinstance(node, ast.Expr)
+        and isinstance(node.value, ast.Constant)
+        and isinstance(node.value.value, str)
+    )
+
+
+def _is_dunder(name: str) -> bool:
+    return len(name) > 4 and name.startswith("__") and name.endswith("__")
+
+
+def _closed_constant(node: ast.expr) -> bool:
+    """닫힌 상수(V-상수) — str · int · float · bool · None 리터럴(bytes · 복소수 · `...` · 음수 · f-string 밖)."""
+    return isinstance(node, ast.Constant) and type(node.value) in _CLOSED_CONSTANT_TYPES
+
+
+def _setting_read(node: ast.expr) -> bool:
+    """생성식 (가) `settings.<대문자 이름>` — 한 단계 속성 읽기."""
+    return (
+        isinstance(node, ast.Attribute)
+        and isinstance(node.value, ast.Name)
+        and node.value.id == "settings"
+        and _UPPER_NAME.fullmatch(node.attr) is not None
+    )
+
+
+def _bound_names(root: ast.AST) -> list[str]:
+    """root 아래에서 이름을 묶는 모든 자리를 출현마다 하나씩 센다(V4 · 재료 파일 결속).
+
+    대입 · 주석 대입 · 증강 대입 · del · for 대상 · with … as · 컴프리헨션 대상 · := · type 별칭
+    (Name 의 Store/Del) · def · async def · class · import 이름 · 별칭 · except … as · global ·
+    nonlocal · match 포획(MatchAs · MatchStar · MatchMapping rest) · 함수 · 람다 매개변수 · 타입 매개변수.
+    """
+    out: list[str] = []
+    for node in ast.walk(root):
+        if isinstance(node, ast.Name):
+            if isinstance(node.ctx, (ast.Store, ast.Del)):
+                out.append(node.id)
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            out.append(node.name)
+        elif isinstance(node, ast.Import):
+            out.extend(alias.asname or alias.name.split(".")[0] for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            out.extend(alias.asname or alias.name for alias in node.names if alias.name != "*")
+        elif isinstance(node, (ast.ExceptHandler, ast.MatchAs, ast.MatchStar)):
+            if node.name:
+                out.append(node.name)
+        elif isinstance(node, (ast.Global, ast.Nonlocal)):
+            out.extend(node.names)
+        elif isinstance(node, ast.MatchMapping):
+            if node.rest:
+                out.append(node.rest)
+        elif isinstance(node, ast.arg):
+            out.append(node.arg)
+        elif _TYPE_PARAM_NODES and isinstance(node, _TYPE_PARAM_NODES):
+            out.append(node.name)
+    return out
+
+
+def _re_flags(node: ast.expr) -> bool:
+    """V1′ (ㄴ) 플래그식 — `re.<대문자>` 하나 또는 그것들을 `|` 로 이은 것."""
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
+        return _re_flags(node.left) and _re_flags(node.right)
+    return (
+        isinstance(node, ast.Attribute)
+        and isinstance(node.value, ast.Name)
+        and node.value.id == "re"
+        and _UPPER_NAME.fullmatch(node.attr) is not None
+    )
+
+
+def _re_compile_literal(node: ast.expr) -> bool:
+    """V1′ (ㄴ) `re.compile(<str 리터럴>)` 또는 `re.compile(<str 리터럴>, <플래그식>)` — 키워드 없음."""
+    return (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "compile"
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "re"
+        and not node.keywords
+        and 1 <= len(node.args) <= 2
+        and isinstance(node.args[0], ast.Constant)
+        and type(node.args[0].value) is str
+        and (len(node.args) == 1 or _re_flags(node.args[1]))
+    )
+
+
+def _module_constant(
+    node: ast.Assign | ast.AnnAssign, protected: set[str], after_class: bool
+) -> tuple[str | None, str, bool]:
+    """V1′ 모듈 상수 — (탈락 사유 | None, 이름, re.compile 사용 여부)."""
+    if isinstance(node, ast.Assign):
+        if len(node.targets) != 1 or not isinstance(node.targets[0], ast.Name):
+            return "V1′ 최상단 대입의 대상이 이름 하나가 아니다", "", False
+        name, value = node.targets[0].id, node.value
+    else:
+        if not isinstance(node.target, ast.Name) or not node.simple or node.value is None:
+            return "V1′ 최상단 주석 대입이 `_<이름>: <주석> = <값>` 꼴이 아니다", "", False
+        name, value = node.target.id, node.value
+    if after_class:
+        return f"V1′ 최상단 상수 `{name}` 이 클래스 뒤에 있다(ClassDef 앞에만)", name, False
+    if not name.startswith("_") or name in protected:
+        return f"V1′ 최상단 대입 `{name}` 이 비공개(`_`) 상수 이름이 아니거나 지킬 이름이다", name, False
+    if _closed_constant(value):
+        return None, name, False
+    if _re_compile_literal(value):
+        return None, name, True
+    return (
+        f"V1′ 상수 `{name}` 의 값이 V-상수 리터럴 · `re.compile(<str 리터럴>[, re.<대문자> | …])` 가 아니다",
+        name,
+        False,
+    )
+
+
+def _value_object_class_issue(cls: ast.ClassDef, class_name: str) -> str | None:
+    """V2 클래스 선언."""
+    if cls.name != class_name:
+        return f"V2 모듈의 클래스는 `{cls.name}` 이고 import 한 `{class_name}` 이 아니다"
+    if cls.name.startswith("_"):
+        return "V2 클래스 이름이 공개 이름이 아니다"
+    if cls.bases or cls.keywords or getattr(cls, "type_params", None):
+        return "V2 기반 클래스 · 키워드(메타클래스) · 타입 매개변수가 있다"
+    if len(cls.decorator_list) != 1:
+        return f"V2 클래스 데코레이터가 정확히 하나가 아니다({len(cls.decorator_list)}개)"
+    deco = cls.decorator_list[0]
+    if not (
+        isinstance(deco, ast.Call)
+        and isinstance(deco.func, ast.Name)
+        and deco.func.id == "dataclass"
+        and not deco.args
+    ):
+        return "V2 데코레이터가 위치 인자 없는 `dataclass(…)` 호출이 아니다"
+    keywords: dict[str, bool] = {}
+    for keyword in deco.keywords:
+        if keyword.arg not in _DATACLASS_KEYWORDS or not (
+            isinstance(keyword.value, ast.Constant) and type(keyword.value.value) is bool
+        ):
+            return "V2 dataclass 키워드는 `frozen=True` · `slots=True/False` · `kw_only=True/False` 뿐이다"
+        keywords[keyword.arg] = keyword.value.value
+    if keywords.get("frozen") is not True:
+        return "V2 `frozen=True` 가 없다"
+    return None
+
+
+def _value_object_body_issue(cls: ast.ClassDef) -> str | None:
+    """V3 클래스 몸체 문장 · V3′ dunder 이름 허용 목록(`__post_init__` 하나)."""
+    for index, stmt in enumerate(cls.body):
+        if index == 0 and _is_docstring(stmt):
+            continue
+        if isinstance(stmt, ast.AnnAssign):
+            if not isinstance(stmt.target, ast.Name) or not stmt.simple:
+                return "V3 필드 선언이 `<이름>: <주석>` 꼴이 아니다"
+            if stmt.value is not None and not _closed_constant(stmt.value):
+                return f"V3 필드 `{stmt.target.id}` 의 기본값이 V-상수가 아니다"
+            continue
+        if isinstance(stmt, ast.FunctionDef):
+            if getattr(stmt, "type_params", None):
+                return f"V3 메서드 `{stmt.name}` 에 타입 매개변수가 있다"
+            decorators = stmt.decorator_list
+            if stmt.name == "create" and decorators:
+                if not (
+                    len(decorators) == 1
+                    and isinstance(decorators[0], ast.Name)
+                    and decorators[0].id == "classmethod"
+                ):
+                    return "V3 `create` 의 데코레이터는 `@classmethod` 하나뿐이다"
+            elif decorators:
+                return f"V3 메서드 `{stmt.name}` 에 데코레이터가 있다(허용은 `create` 의 `@classmethod` 하나)"
+            defaults: list[ast.expr] = [
+                *stmt.args.defaults, *(d for d in stmt.args.kw_defaults if d is not None)
+            ]
+            if any(not _closed_constant(default) for default in defaults):
+                return f"V3 메서드 `{stmt.name}` 의 매개변수 기본값이 V-상수가 아니다"
+            continue
+        return f"V3 클래스 몸체에 `{type(stmt).__name__}` 문이 있다(허용: docstring · 필드 선언 · 메서드)"
+    for stmt in cls.body:
+        if isinstance(stmt, ast.FunctionDef) and _is_dunder(stmt.name) and stmt.name != "__post_init__":
+            return f"V3′ dunder 정의 `{stmt.name}`(허용은 `def __post_init__` 하나)"
+        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name) and _is_dunder(stmt.target.id):
+            return f"V3′ dunder 필드 `{stmt.target.id}`"
+    return None
+
+
+def _declares_create(cls: ast.ClassDef) -> bool:
+    """V3 를 지난 클래스 몸체에 `@classmethod def create` 가 있는가 — V4 정해진 자리 · (라) 의 전제."""
+    return any(
+        isinstance(stmt, ast.FunctionDef) and stmt.name == "create" and stmt.decorator_list
+        for stmt in cls.body
+    )
+
+
+def _value_object_issue(path: Path, class_name: str) -> tuple[str | None, bool]:
+    """값 객체 모듈 허용 목록 대조 — (첫 탈락 항목 | None, 통과 모듈의 `@classmethod def create` 유무)."""
+    try:
+        tree = _parse_quiet(path.read_bytes())
+    except (OSError, *_PARSE_ERRORS):
+        return "모듈 파일을 파싱할 수 없다", False
+    problem = _value_object_tree_issue(tree, class_name)
+    if problem is not None:
+        return problem, False
+    return None, _declares_create(next(node for node in tree.body if isinstance(node, ast.ClassDef)))
+
+
+def _value_object_tree_issue(tree: ast.Module, class_name: str) -> str | None:
+    """값 객체 모듈 허용 목록 V1 · V1′ · V2 · V3 · V3′ · V4 — 첫 탈락 항목(통과면 None)."""
+    protected: set[str] = {"dataclass", class_name, "create", "re", "classmethod", "__new__"}
+    has_future = has_dataclass = has_re = uses_compile = False
+    constants: list[str] = []
+    classes: list[ast.ClassDef] = []
+    for index, node in enumerate(tree.body):
+        if index == 0 and _is_docstring(node):
+            continue
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            if any(alias.name == "*" for alias in node.names):
+                return "V1 `*` import"
+            if any(alias.asname in protected for alias in node.names):
+                return "V1 지킬 이름을 묶는 import 별칭"
+            if isinstance(node, ast.Import):
+                has_re = has_re or any(alias.name == "re" and alias.asname is None for alias in node.names)
+            elif node.level == 0:
+                plain: set[str] = {alias.name for alias in node.names if alias.asname is None}
+                has_future = has_future or (node.module == "__future__" and "annotations" in plain)
+                has_dataclass = has_dataclass or (node.module == "dataclasses" and "dataclass" in plain)
+            continue
+        if isinstance(node, ast.ClassDef):
+            classes.append(node)
+            continue
+        if isinstance(node, (ast.Assign, ast.AnnAssign)):
+            problem, name, compiled = _module_constant(node, protected, bool(classes))
+            if problem is not None:
+                return problem
+            constants.append(name)
+            uses_compile = uses_compile or compiled
+            continue
+        return f"V1 최상단 `{type(node).__name__}` 문(허용: docstring · import · V1′ 상수 · 클래스 하나)"
+    if not has_future:
+        return "V1 `from __future__ import annotations` 가 없다"
+    if not has_dataclass:
+        return "V1 `from dataclasses import dataclass`(별칭 없음)가 없다"
+    if len(classes) != 1:
+        return f"V1 최상단 클래스가 정확히 하나가 아니다({len(classes)}개)"
+    if uses_compile and not has_re:
+        return "V1′ `re.compile` 상수에 최상단 `import re`(별칭 없음)가 없다"
+    cls = classes[0]
+    problem = _value_object_class_issue(cls, class_name) or _value_object_body_issue(cls)
+    if problem is not None:
+        return problem
+    has_create = _declares_create(cls)
+    counts: dict[str, int] = {}
+    for name in _bound_names(tree):
+        counts[name] = counts.get(name, 0) + 1
+    expected: dict[str, int] = {
+        "dataclass": 1, class_name: 1, "create": 1 if has_create else 0,
+        "re": 1 if has_re else 0, "classmethod": 0, "__new__": 0,
+    }
+    expected.update({name: 1 for name in constants})
+    for name, want in expected.items():
+        if counts.get(name, 0) != want:
+            return f"V4 `{name}` 이 {counts.get(name, 0)}번 묶인다(정해진 자리 {want}번)"
+    return None
+
+
+def _material_plain_import(node: ast.stmt) -> bool:
+    """F2 의 앞 둘 — `from __future__ import annotations` · `from django.conf import settings`."""
+    return (
+        isinstance(node, ast.ImportFrom)
+        and node.level == 0
+        and len(node.names) == 1
+        and node.names[0].asname is None
+        and (node.module, node.names[0].name) in {("__future__", "annotations"), ("django.conf", "settings")}
+    )
+
+
+def _material_value_object_import(node: ast.stmt, bc: Path) -> tuple[str, str, Path] | None:
+    """F2 셋째 — (클래스, 모듈, 직접 모듈 파일) · 꼴이 아니면 None."""
+    if not (
+        isinstance(node, ast.ImportFrom)
+        and node.level == 0
+        and node.module
+        and len(node.names) == 1
+        and node.names[0].asname is None
+        and node.names[0].name != "*"
+    ):
+        return None
+    parts: list[str] = node.module.split(".")
+    if parts[:3] != ["application", bc.name, "domain_layer"] or parts[-1] == "__init__":
+        return None
+    rest: list[str] = parts[3:]
+    if len(rest) == 3 and rest[1] == "value_object":
+        folder: Path = bc / "domain_layer" / rest[0] / "value_object"
+    elif len(rest) == 2 and rest[0] == "shared_value_object":
+        folder = bc / "domain_layer" / "shared_value_object"
+    else:
+        return None
+    return node.names[0].name, node.module, folder / f"{rest[-1]}.py"
+
+
+def _module_intercepted(path: Path) -> bool:
+    """직접 모듈 파일 `<모듈>.py` 옆에 같은 이름의 폴더 · 확장 모듈이 있는가(F2 «직접 모듈 파일» 아님).
+
+    패키지 초기화 파일이 있는 동명 폴더 `<모듈>/` 와 같은 줄기의 확장 모듈(`<모듈>.so` ·
+    `<모듈>.<태그>.so` · `<모듈>.pyd`)은 `.py` 보다 먼저 선택된다 — 검사한 `.py` 와 실제 import
+    대상이 달라진다. 초기화 파일 없는 동명 폴더는 실제로는 `.py` 가 선택되지만, 초기화 파일의 온갖
+    꼴(.py · .pyc · 확장)과 환경 차이를 가리지 않고 보수 쪽(대상 아님)으로 둔다.
+    이름 · 접미사는 대소문자를 접어 대조한다 — 대상 코드가 대소문자를 완화하는 import 환경(대소문자
+    비구분 파일시스템 + PYTHONCASEOK · Windows 의 `.PYD`)에서 돌 수 있고 검사기는 그 환경을 알 수
+    없다(보수). 확장 모듈 꼴은 «파일»일 때만 본다(같은 줄기 · 확장 접미사의 «폴더»는 다른 이름의 폴더일
+    뿐 import 를 가로채지 않는다). 폴더를 읽지 못해도 보수 쪽으로 본다.
+    """
+    try:
+        siblings: list[Path] = list(path.parent.iterdir())
+    except OSError:
+        return True
+    stem: str = path.stem.casefold()
+    for sibling in siblings:
+        name: str = sibling.name.casefold()
+        if name == stem and sibling.is_dir():
+            return True
+        if Path(name).suffix in (".so", ".pyd") and name.split(".")[0] == stem and sibling.is_file():
+            return True
+    return False
+
+
+def _material_expression_issue(expr: ast.expr, classes: dict[str, bool], settings_bound: bool) -> str | None:
+    """생성식 (가) · (다) · (라) 구조 일치 — 인자 자리만 (가) · 닫힌 상수와 대조한다.
+
+    classes = F2 로 들인 값 객체 클래스 → 그 모듈의 `@classmethod def create` 유무((라) 의 전제 · V4).
+    settings_bound = (가) 의 `settings` 가 `from django.conf import settings` 한 줄로 정확히 한 번 묶였는가.
+    """
+    unbound: str = (
+        "(가) 의 `settings` 가 `from django.conf import settings` 한 줄로 정확히 한 번 묶이지 않았다(F2 · 결속)"
+    )
+    if _setting_read(expr):
+        return None if settings_bound else unbound
+    if not isinstance(expr, ast.Call):
+        return "생성식이 (가) `settings.<대문자 이름>` · (다) 값 객체 생성 · (라) 값 객체 `create` 셋 중 하나가 아니다"
+    func = expr.func
+    if isinstance(func, ast.Name):
+        target: str = func.id
+        via_create: bool = False
+    elif isinstance(func, ast.Attribute) and func.attr == "create" and isinstance(func.value, ast.Name):
+        target = func.value.id
+        via_create = True
+    else:
+        return "호출이 `<값 객체 클래스>(…)` · `<값 객체 클래스>.create(…)` 가 아니다(생성 메서드는 create 하나 — (다)/(라))"
+    if target not in classes:
+        return f"`{target}` 은 허용 import(F2 · 값 객체 모듈 V1~V4)로 들인 값 객체 클래스가 아니다((다)/(라))"
+    if via_create and not classes[target]:
+        return f"`{target}` 의 값 객체 모듈에 `@classmethod def create` 가 없다((라) · V4)"
+    values: list[ast.expr] = []
+    for arg in expr.args:
+        if isinstance(arg, ast.Starred):
+            return "`*` 펼침 인자((다)/(라))"
+        values.append(arg)
+    for keyword in expr.keywords:
+        if keyword.arg is None:
+            return "`**` 펼침 인자((다)/(라))"
+        values.append(keyword.value)
+    for value in values:
+        if _setting_read(value):
+            if not settings_bound:
+                return unbound
+        elif not _closed_constant(value):
+            return "인자가 (가) 설정 이름 · 닫힌 상수(str · int · float · bool · None 리터럴)가 아니다((다)/(라))"
+    return None
+
+
+def _material_function_issue(
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+    classes: dict[str, bool],
+    rebound: str | None,
+    settings_bound: bool,
+) -> str | None:
+    """F3 재료 함수 — 서명 · 이름 · 결속 · 본문 · 생성식 · 반환 주석 순으로 첫 탈락."""
+    if isinstance(node, ast.AsyncFunctionDef):
+        return f"`{node.name}` 은 async 함수다(F3)"
+    if node.decorator_list:
+        return f"`{node.name}` 에 데코레이터가 있다(F3)"
+    args = node.args
+    if args.posonlyargs or args.args or args.vararg or args.kwonlyargs or args.kwarg:
+        return f"`{node.name}` 에 매개변수가 있다(F3 — 매개변수 0)"
+    if getattr(node, "type_params", None):
+        return f"`{node.name}` 에 타입 매개변수가 있다(F3)"
+    if node.name.startswith(("_", "build_")):
+        return f"재료 이름 `{node.name}` 이 `_` · `build_` 로 시작한다(F3)"
+    if node.name == "settings" or node.name in _MATERIAL_SCALARS:
+        return f"재료 이름 `{node.name}` 이 settings · str · int · bool · float 와 같다(F3 결속)"
+    if rebound is not None:
+        return f"`{rebound}` 이 파일에서 두 번 이상 묶인다(F3 결속 — settings · import 이름 · 재료 이름은 각각 한 번)"
+    statements: list[ast.stmt] = node.body[1:] if _is_docstring(node.body[0]) else node.body
+    if len(statements) != 1 or not isinstance(statements[0], ast.Return) or statements[0].value is None:
+        return f"`{node.name}` 의 본문이 docstring 과 `return <생성식>` 한 문장이 아니다(F3)"
+    problem = _material_expression_issue(statements[0].value, classes, settings_bound)
+    if problem is not None:
+        return f"`{node.name}` — {problem}"
+    returns = node.returns
+    if not (isinstance(returns, ast.Name) and (returns.id in classes or returns.id in _MATERIAL_SCALARS)):
+        return f"`{node.name}` 의 반환 주석이 F2 클래스 이름 하나 또는 str · int · bool · float 가 아니다(F3)"
+    return None
+
+
+def _check_wiring_material(f: Path, rel: Path, bc: Path, findings: Findings) -> None:
+    """#652 — 최상단 노드마다 F1 · F2(+ 값 객체 모듈 V1~V4) · F3 · 결속을 보고 어긋난 행에 1건."""
+    try:
+        mod = _parse_quiet(f.read_bytes())
+    except (OSError, *_PARSE_ERRORS) as exc:
+        lineno = getattr(exc, "lineno", None) or 1
+        findings.add("#652", f"{rel}:{lineno}", f"{_MATERIAL_MSG} — 파일을 파싱할 수 없다")
+        return
+    body: list[ast.stmt] = mod.body
+    if not body or (len(body) == 1 and _is_docstring(body[0])):
+        return  # 내용 없는 골격 파일 — 내용 규칙은 내용이 생긴 뒤부터 선다
+    nodes: list[tuple[int, ast.stmt]] = [
+        (index, node) for index, node in enumerate(body) if not (index == 0 and _is_docstring(node))
+    ]
+    issues: dict[int, str] = {}
+    import_names: set[str] = set()
+    value_object_imports: dict[int, tuple[str, str, Path]] = {}
+    for index, node in nodes:
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            target = _material_value_object_import(node, bc)
+            if target is not None:
+                value_object_imports[index] = target
+            elif not _material_plain_import(node):
+                issues[index] = (
+                    f"{_MATERIAL_MSG} — `{ast.unparse(node)}` 는 허용 import 셋(`from __future__ import "
+                    "annotations` · `from django.conf import settings` · 자기 BC 값 객체 모듈의 클래스) 밖이다(F2)"
+                )
+                continue
+            import_names.update(_bound_names(node))
+        elif not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            issues[index] = (
+                f"{_MATERIAL_MSG} — 최상단 `{type(node).__name__}` 문(F1 — docstring · 허용 import · 재료 함수뿐)"
+            )
+    material_names: set[str] = {
+        node.name for _, node in nodes if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    protected: set[str] = import_names | material_names
+    seen: dict[str, int] = {}
+    rebound: dict[int, str] = {}
+    for index, node in nodes:
+        for name in _bound_names(node):
+            if name not in protected:
+                continue
+            seen[name] = seen.get(name, 0) + 1
+            if seen[name] > 1:
+                rebound.setdefault(index, name)
+    classes: dict[str, bool] = {}
+    for index, (class_name, module, path) in value_object_imports.items():
+        problem: str | None = "직접 모듈 파일이 없다(패키지 · `__init__` 아님)"
+        has_create: bool = False
+        if path.is_file():
+            if _module_intercepted(path):
+                problem = (
+                    "직접 모듈 파일 옆에 같은 이름의 패키지 · 확장 모듈이 있다"
+                    "(import 대상이 그 .py 가 아닐 수 있다)"
+                )
+            else:
+                problem, has_create = _value_object_issue(path, class_name)
+        if problem is not None:
+            issues[index] = f"`{module}` 은 값 객체 모듈 허용 목록(V1 ~ V4)에 들지 않는다 — {problem} · 그 생성은 build_ 에 남긴다"
+        elif seen.get(class_name, 0) == 1:
+            classes[class_name] = has_create
+    settings_imports: int = sum(
+        1 for _, node in nodes
+        if isinstance(node, ast.ImportFrom) and node.module == "django.conf" and _material_plain_import(node)
+    )
+    settings_bound: bool = settings_imports == 1 and seen.get("settings", 0) == 1
+    for index, node in nodes:
+        if index in issues:
+            continue
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            if index in rebound:
+                issues[index] = (
+                    f"{_MATERIAL_MSG} — `{rebound[index]}` 이 파일에서 두 번 이상 묶인다"
+                    "(결속 — settings · import 이름 · 재료 이름은 각각 한 번)"
+                )
+            continue
+        assert isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        problem = _material_function_issue(node, classes, rebound.get(index), settings_bound)
+        if problem is not None:
+            issues[index] = f"{_MATERIAL_MSG} — {problem}"
+    for index in sorted(issues):
+        findings.add("#652", f"{rel}:{body[index].lineno}", issues[index])
+
+
+def _python_files(root: Path) -> tuple[list[Path], list[Path]]:
+    """TARGET 아래 (.py 전부, 읽지 못한 디렉터리) — SKIP_DIRS 이름의 폴더만 내려가지 않는다(시험 · 마이그레이션 포함).
+
+    읽지 못한 디렉터리 아래의 파일은 목록에 들 수 없으므로 그 디렉터리를 따로 모아 돌려준다 — 조용히
+    빠뜨리지 않는다(호출자가 보수 위반으로 보고한다).
+    """
+    files: list[Path] = []
+    unreadable: list[Path] = []
+
+    def note_unreadable(exc: OSError) -> None:
+        unreadable.append(Path(exc.filename) if exc.filename else root)
+
+    for current, dirnames, filenames in os.walk(root, onerror=note_unreadable):
+        dirnames[:] = sorted(name for name in dirnames if name not in SKIP_DIRS)
+        files.extend(Path(current) / name for name in filenames if name.endswith(".py"))
+    return sorted(files), sorted(unreadable)
+
+
+def _material_mentioned(node: ast.AST) -> bool:
+    """노드의 str · bytes 값 필드(목록 필드의 원소 · Constant.value 포함)에 낱말이 있는가(표 P)."""
+    for _field, value in ast.iter_fields(node):
+        for item in value if isinstance(value, list) else (value,):
+            if isinstance(item, str) and _MATERIAL_WORD in item:
+                return True
+            if isinstance(item, bytes) and _MATERIAL_WORD.encode() in item:
+                return True
+    return False
+
+
+def _allowed_material_nodes(tree: ast.Module, bc_name: str) -> set[int]:
+    """같은 BC dependency_wiring.py 의 허용 자리 — 최상단 모듈째 import 한 줄 · 인자 없는 호출의 이름."""
+    allowed: set[int] = set()
+    for node in tree.body:
+        if (
+            isinstance(node, ast.ImportFrom)
+            and node.level == 0
+            and node.module == f"application.{bc_name}.composition_root"
+            and len(node.names) == 1
+            and node.names[0].name == _MATERIAL_WORD
+            and node.names[0].asname is None
+        ):
+            allowed.update({id(node), id(node.names[0])})
+            break
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Call)
+            and not node.args
+            and not node.keywords
+            and isinstance(node.func, ast.Attribute)
+            and isinstance(node.func.value, ast.Name)
+            and node.func.value.id == _MATERIAL_WORD
+        ):
+            allowed.add(id(node.func.value))
+    return allowed
+
+
+def _check_wiring_material_references(root: Path, findings: Findings) -> None:
+    """#653 — 허용 두 자리 밖의 `wiring_material` 낱말(노드마다 1건 · 파싱 실패 파일은 원문 첫 출현 1건).
+
+    TARGET 아래 모든 .py 가 대상이다(`application/` 컨테이너 유무와 무관). BC 판정은 허용 두 자리
+    (그 파일 자신 · 같은 BC dependency_wiring.py)를 정하는 데에만 쓴다. 읽지 못한 디렉터리 · 파일은
+    확인할 수 없으므로 보수 위반 1건으로 보고한다.
+    """
+    own_files: set[Path] = set()
+    wiring_files: dict[Path, str] = {}
+    for bc in _find_bc_dirs(root):
+        if not _has_any_layer(bc):
+            continue
+        own_files.add(bc / "composition_root" / _MATERIAL_FILE)
+        wiring_files[bc / "composition_root" / "dependency_wiring.py"] = bc.name
+    needle: bytes = _MATERIAL_WORD.encode()
+    files, unreadable = _python_files(root)
+    for directory in unreadable:
+        try:
+            where: Path = directory.relative_to(root)
+        except ValueError:
+            where = directory
+        findings.add("#653", f"{where}:1", f"{_REFERENCE_MSG}(디렉터리를 읽지 못해 확인할 수 없다 — 보수 위반)")
+    for path in files:
+        if path in own_files or not path.is_file():
+            continue
+        rel: Path = path.relative_to(root)
+        try:
+            data: bytes = path.read_bytes()
+        except OSError:
+            findings.add("#653", f"{rel}:1", f"{_REFERENCE_MSG}(파일을 읽지 못해 확인할 수 없다 — 보수 위반)")
+            continue
+        try:
+            tree = _parse_quiet(data)
+        except _PARSE_ERRORS:
+            if needle in data:
+                lineno = data[: data.index(needle)].count(b"\n") + 1
+                findings.add("#653", f"{rel}:{lineno}", f"{_REFERENCE_MSG}(파싱 실패 파일 — 원문 바이트로 본다)")
+            continue
+        bc_name = wiring_files.get(path)
+        allowed: set[int] = _allowed_material_nodes(tree, bc_name) if bc_name is not None else set()
+        hits: list[tuple[int, int]] = sorted(
+            (getattr(node, "lineno", 1), getattr(node, "col_offset", 0))
+            for node in ast.walk(tree)
+            if id(node) not in allowed and _material_mentioned(node)
+        )
+        for lineno, _col in hits:
+            findings.add("#653", f"{rel}:{lineno}", _REFERENCE_MSG)
+
+
 def _check_composition_dir(bc: Path, bc_rel: Path, findings: Findings, candidates: Candidates) -> None:
     comp = bc / "composition_root"
     if not comp.is_dir():
@@ -1947,13 +2594,13 @@ def _check_composition_dir(bc: Path, bc_rel: Path, findings: Findings, candidate
             findings.add(
                 "#497",
                 f"{bc_rel}/composition_root/{p.name}",
-                "폴더 금지 — «결선 하나 = 파일 하나»(지금은 dependency_wiring.py 와 event_wiring.py 둘)",
+                "폴더 금지 — «결선 하나 = 파일 하나»(지금은 dependency_wiring.py · event_wiring.py 와 결선 재료 wiring_material.py)",
             )
         elif p.suffix == ".py" and p.name != "__init__.py" and p.name not in _WIRING_FILES:
             findings.add(
                 "#497",
                 f"{bc_rel}/composition_root/{p.name}",
-                "결선 파일은 dependency_wiring.py·event_wiring.py 둘이다",
+                "composition_root/ 의 파일은 결선 둘과 결선 재료 하나다 — dependency_wiring.py · event_wiring.py · wiring_material.py",
             )
     dep = comp / "dependency_wiring.py"
     if dep.is_file():
@@ -1961,13 +2608,16 @@ def _check_composition_dir(bc: Path, bc_rel: Path, findings: Findings, candidate
     ev = comp / "event_wiring.py"
     if ev.is_file():
         _check_event_wiring(ev, bc_rel / "composition_root/event_wiring.py", findings)
+    material = comp / _MATERIAL_FILE
+    if material.is_file():
+        _check_wiring_material(material, bc_rel / "composition_root" / _MATERIAL_FILE, bc, findings)
 
 
 def _imports_other_bc_driving(path_str: str, own_bc: str) -> bool:
     """`<container>.<bc>.driving_layer…` 꼴에서 `<bc>` 가 자기 BC 가 아니면 True.
     타 BC driving 층의 소비면(`open_host_service/` 아래만 · ACL 에서만)은 #13·#102 가
     check-context-isolation 에서 집행하므로 #101 은 자기 BC 의 driving 층만 본다 —
-    표준 트리 22~32행이 OHS 계약을 driving_layer 안에 두어 «예외 없음» 문면이 #13·#473 과
+    표준 트리 23~33행이 OHS 계약을 driving_layer 안에 두어 «예외 없음» 문면이 #13·#473 과
     충돌했던 결함의 수리(스펙 #101 2026-08-31 부칙 · 첫 실사례 fortune_intent→llm_access)."""
     parts = path_str.split(".")
     for i, seg in enumerate(parts):
@@ -2276,6 +2926,7 @@ def _standard_tree_slice(
         if urls_py.is_file():
             urls_rel: Path = urls_py.relative_to(root)
             _check_project_urls(urls_py, urls_rel, findings, code_keys=code_keys)
+    _check_wiring_material_references(root, findings)
     return findings, candidates
 
 
@@ -2368,7 +3019,7 @@ def main(argv: list[str]) -> int:
             "BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음)."
         )
     if tree_findings:
-        print("[check-composition-root] BLOCKER — 표준 트리 결선·등록 규율 위반 (트리 2~4·8·9·136·137행):")
+        print("[check-composition-root] BLOCKER — 표준 트리 결선·등록 규율 위반 (트리 2~4·9·10·137·138행):")
         emit_all(tree_findings, printer=print)
     if tree_candidates:
         print("[check-composition-root] ⓓ 후보 — 기계가 후보를 좁혔다 · 마무리 물음은 discipline-reviewer 몫(exit 불산입):")

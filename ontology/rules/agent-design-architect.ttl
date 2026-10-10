@@ -793,12 +793,18 @@ djr:R-1650 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-1651 a djr:Obligation ;
-    skos:prefLabel "G0 ⓐ 승인 항목만 슬라이스 0 으로 전재"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-1651@2026-08-22> .
+    skos:prefLabel "G0 ⓐ 승인 항목만 리팩토링 슬라이스(슬라이스 0·리팩토링 모드 변경 슬라이스)로 전재"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-1651@2026-10-04> .
 
 <https://numchida.com/ns/djr#R-1651@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-1651 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-1651@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-1651 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-1651@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-1652 a djr:Obligation ;
     skos:prefLabel "BC composition_root 의 DI 단독 소유"@ko ;
@@ -1251,7 +1257,7 @@ djr:R-1705 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-1706 a djr:Obligation ;
-    skos:prefLabel "유스케이스의 연산 객체 명세(트리 39~44행 값 준거·execute 규약)"@ko ;
+    skos:prefLabel "유스케이스의 연산 객체 명세(트리 40~45행 값 준거·execute 규약)"@ko ;
     djr:currentExpression <https://numchida.com/ns/djr#R-1706@2026-08-22> .
 
 <https://numchida.com/ns/djr#R-1706@2026-08-22> a djr:Expression ;
@@ -1899,20 +1905,32 @@ djr:R-3431 a djr:Prohibition ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-3568 a djr:Obligation ;
-    skos:prefLabel "리팩토링 모드 파견 입력 = 모드 리팩토링 · M ⓐ 목록(규칙 인용) · 적용 범위 규범 원문 — 슬라이스 0 명세"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3568@2026-09-27> .
+    skos:prefLabel "리팩토링 모드 파견 입력 = 모드 리팩토링 · M ⓐ 목록(규칙 인용) · 적용 범위 규범 원문 · 운영 전 예외 블록 원문 · 해소 판정·바뀌는 것 목록 문단 원문 — 리팩토링 명세(슬라이스 0·변경 슬라이스) · V 항목에 운영 전 예외 적용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3568@2026-10-04> .
 
 <https://numchida.com/ns/djr#R-3568@2026-09-27> a djr:Expression ;
     prov:specializationOf djr:R-3568 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-3568@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3568 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3568@2026-09-27> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3569 a djr:Obligation ;
-    skos:prefLabel "파견 입력에 적용 범위 규범이 실려 있으면 그 규범이 정한 몫과 때를 따른다(리팩토링 모드)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3569@2026-09-27> .
+    skos:prefLabel "파견 입력에 적용 범위 규범·운영 전 예외 블록이 실려 있으면 그 규범이 정한 몫과 때를 따른다(리팩토링 모드)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3569@2026-10-04> .
 
 <https://numchida.com/ns/djr#R-3569@2026-09-27> a djr:Expression ;
     prov:specializationOf djr:R-3569 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3569@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3569 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3569@2026-09-27> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3570 a djr:Obligation ;
     skos:prefLabel "의미 항목 판정 모드는 Coordinator 가 명시할 때만(리팩토링 모드 R3)"@ko ;
@@ -1939,12 +1957,18 @@ djr:R-3572 a djr:Exception ;
     djr:revision 1 .
 
 djr:R-3573 a djr:Obligation ;
-    skos:prefLabel "판정 범주 6(채택·병합·제외·오탐·사용자 판단·별도 요청)과 범주별 근거 형식 — 적용 범위 규범·대상 규범은 제외 근거 불가"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3573@2026-09-27> .
+    skos:prefLabel "판정 범주 6(채택·병합·제외·오탐·사용자 판단·다른 BC 몫)과 범주별 근거 형식 — 두 Override(적용 범위·운영 전 예외)와 그 대상 규범은 제외 근거 불가 · 다른 BC 몫 = 리뷰어 칸 다른 BC 파일 ∧ application/<다른 bc>/ 실재 근거 ∧ 다른 BC 편집 갈래 밖"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3573@2026-10-04> .
 
 <https://numchida.com/ns/djr#R-3573@2026-09-27> a djr:Expression ;
     prov:specializationOf djr:R-3573 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3573@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3573 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3573@2026-09-27> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3574 a djr:Prohibition ;
     skos:prefLabel "비용·일정·규모를 빼는 사유로 쓰기 금지 · 판정 모드에서 코드·명세 무수정·처분 질문 생성 금지"@ko ;
@@ -1955,12 +1979,18 @@ djr:R-3574 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-3585 a djr:Obligation ;
-    skos:prefLabel "리팩토링 모드 architect — 판정 표 작성(요지 단위 해소/불가) · 대체 형태 금지 · ⓐ 요지 미해소를 Z·알려진 한계·잔존 빚에 적지 않음"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3585@2026-09-29> .
+    skos:prefLabel "리팩토링 모드 architect — 판정 표 작성(요지 단위 해소/변경/불가 · 변경은 V 로 · 불가 범주 6 · 인용 밖 반대 규칙 증거 칸) · 대체 형태 금지 · ⓐ 요지 미해소를 Z·알려진 한계·잔존 빚에 적지 않음"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3585@2026-10-04> .
 
 <https://numchida.com/ns/djr#R-3585@2026-09-29> a djr:Expression ;
     prov:specializationOf djr:R-3585 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3585@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3585 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3585@2026-09-29> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3586 a djr:Obligation ;
     skos:prefLabel "판정 표 리뷰어 이의는 기록·반박 아닌 행 수정으로 닫음 · 요지 축소 결정과 표 요지 번호 맞춤(Phase 2 STOP 은 요지 분할) · 전체 제외면 행 전부 불가(해소이던 요지는 재상정 제외)"@ko ;
@@ -1992,6 +2022,22 @@ djr:R-3611 a djr:Obligation ;
 
 <https://numchida.com/ns/djr#R-3611@2026-10-01> a djr:Expression ;
     prov:specializationOf djr:R-3611 ;
+    djr:revision 1 .
+
+djr:R-3644 a djr:Obligation ;
+    skos:prefLabel "리팩토링 명세 바뀌는 것 목록 — V 판형(들여 쓴 - 하위 줄 · 입장 행 = candidate 칸 원문 · 동사 update|add|remove = decision)·다른 BC 편집 목록·슬라이스 계획(0T·0C·0F·S…) · 종류 = 시험 owner · 낮춤 금지 · 기대 의미 그대로 편집은 0F retain 재조직(candidate 칸 재조직 — <무엇을 어디로> · V 금지) · 0T 기대 고침 = V 밖 update 행 + ⓐ 항목(M·C) · 증명 절 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3644@2026-10-04> .
+
+<https://numchida.com/ns/djr#R-3644@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3644 ;
+    djr:revision 1 .
+
+djr:R-3645 a djr:Obligation ;
+    skos:prefLabel "G1 반영 입력 — 고르지 않은 V·그 V 에만 딸린 입장 행·다른 BC 편집 줄·슬라이스 삭제 · 요지 = 불가 · 변경 미승인 · 그 밖 무변(changes --applied 대조)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3645@2026-10-04> .
+
+<https://numchida.com/ns/djr#R-3645@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3645 ;
     djr:revision 1 .
 
 <https://numchida.com/ns/djr#d/dddjango/agents/design-architect.md> a djr:Document ;
@@ -2080,8 +2126,8 @@ djr:R-3611 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s002> ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
-    djr:statesNorm djr:R-1564, djr:R-3568, djr:R-3569, djr:R-3585, djr:R-3586 ;
-    djr:text "- (있으면) **G1 override 입력**: 사용자가 G1에서 기본(미적용)을 뒤집어 채택했거나 미해결 옵션을 정한 결정. 형식 = `[항목] 기본=미적용 → 채택` 또는 `[항목] 옵션A → 옵션B`. 이 입력이 있으면 너는 그 결정만 반영하는 **좁은 재호출**이다 — **해당 절만 제자리 갱신하고 타 절은 불변**으로 둔다(전체 재작성 금지).\n- (리팩토링 모드면) `모드 리팩토링` · `M<n>` ⓐ 목록(규칙 인용 포함) · 적용 범위 규범 원문 — 슬라이스 0 명세를 쓴다. 파견 입력에 적용 범위 규범이 실려 있으면 그 규범이 정한 몫과 때를 따른다.\n  - **슬라이스 0 해소 판정**(2026-09-29): 파견 입력의 «슬라이스 0 해소 판정» 문단대로 명세에 판정 표를 쓴다 — 범위 안 ⓐ `M<n>` 전부를 요지로 나누고, 원 규칙의 처방으로 요지를 없앨 수 있으면 해소(그 처방을 명세에 넣는다), 없으면 불가(닫힌 범주와 막는 `파일:행`)다. 원 규칙의 처방이 아닌 대체 형태를 명세에 넣지 않고, ⓐ 요지의 미해소를 Z·알려진 한계·잔존 빚에 적지 않는다 — 표의 불가로만 적는다(Z 는 스스로 가르지 못한 트레이드오프뿐이다). 판정 표 행에 대한 리뷰어 이의는 기록·반박으로 닫지 않고 행을 이의대로 고친다 — 해소 행 이의면 원 규칙 처방 형태로 고치거나 불가로, 불가·부분 행 이의(과대 제외 · 요지를 좁게 적음)면 해소 처방을 넣는다. `ⓐ 재상정` 의 요지 축소 결정이 오면 표의 요지 번호를 그 결정과 맞춘다 — Phase 2 STOP 이 요지 일부를 빼면 요지를 나누어 뺀 요지를 불가(범주)로 적는다. 전체 제외 결정(요지 축소가 아닌 처분 줄)이 오면 그 항목의 행을 모두 불가로 적는다 — 해소이던 요지는 범주 `재상정 제외` 이고 막는 것은 그 결정 줄(`refactor-scope.md:<행>`)이다.\n\n"@ko .
+    djr:statesNorm djr:R-1564, djr:R-3568, djr:R-3569, djr:R-3585, djr:R-3586, djr:R-3644, djr:R-3645 ;
+    djr:text "- (있으면) **G1 override 입력**: 사용자가 G1에서 기본(미적용)을 뒤집어 채택했거나 미해결 옵션을 정한 결정. 형식 = `[항목] 기본=미적용 → 채택` 또는 `[항목] 옵션A → 옵션B`. 이 입력이 있으면 너는 그 결정만 반영하는 **좁은 재호출**이다 — **해당 절만 제자리 갱신하고 타 절은 불변**으로 둔다(전체 재작성 금지).\n- (리팩토링 모드면) `모드 리팩토링` · `M<n>` ⓐ 목록(규칙 인용 포함) · 적용 범위 규범 원문 · «운영 전 예외» 블록 원문 · Coordinator 의 «해소 판정» · «바뀌는 것 목록» 문단 원문 — 리팩토링 명세(슬라이스 0 · 변경 슬라이스)를 쓴다. 파견 입력에 적용 범위 규범·«운영 전 예외» 블록이 실려 있으면 그 규범이 정한 몫과 때를 따른다. 바뀌는 것 목록의 V 항목에는 «운영 전 예외» 의 대상 규범을 적용하지 않고 조건부 대상은 조건이 설 때만 적용하지 않는다(유지 규범 · V 밖 코드는 그대로).\n  - **해소 판정**(2026-09-29 · 2026-10-04): 파견 입력의 «해소 판정» 문단대로 명세에 판정 표(제목 `슬라이스 0 해소 판정`)를 쓴다 — 범위 안 ⓐ `M<n>` 전부를 요지로 나누고, 원 규칙의 처방으로 요지를 없앨 수 있으면 해소(그 처방을 명세에 넣는다), 그 처방이 동작·계약·DB 구조를 바꾸면 `변경`(처방 앵커 · 6번 칸 `V<n>` — 그 변화를 바뀌는 것 목록에 적는다), 둘 다 아니면 불가(닫힌 범주 여섯과 막는 `파일:행` — 인용 밖 `반대 방향 규칙` 이면 증거 칸)다. 원 규칙의 처방이 아닌 대체 형태를 명세에 넣지 않고, ⓐ 요지의 미해소를 Z·알려진 한계·잔존 빚에 적지 않는다 — 표의 불가로만 적는다(Z 는 스스로 가르지 못한 트레이드오프뿐이다). 판정 표 행에 대한 리뷰어 이의는 기록·반박으로 닫지 않고 행을 이의대로 고친다 — 해소 행 이의면 원 규칙 처방 형태로 고치거나 불가로, 불가·부분 행 이의(과대 제외 · 요지를 좁게 적음)면 해소 처방을 넣는다. `ⓐ 재상정` 의 요지 축소 결정이 오면 표의 요지 번호를 그 결정과 맞춘다 — Phase 2 STOP 이 요지 일부를 빼면 요지를 나누어 뺀 요지를 불가(범주)로 적는다. 전체 제외 결정(요지 축소가 아닌 처분 줄)이 오면 그 항목의 행을 모두 불가로 적는다 — 해소이던 요지는 범주 `재상정 제외` 이고 막는 것은 그 결정 줄(`refactor-scope.md:<행>`)이다.\n  - **바뀌는 것 목록**(2026-10-04): 파견 입력의 «바뀌는 것 목록» 문단대로 명세에 `## 바뀌는 것 목록`(V — 종류 · 근거 · 슬라이스 · 전 → 후 · 시험 · 바뀌는 기대 · 연산 · 데이터 · 영향 — 하위 줄은 그 문단 판형대로 들여 쓴 `- ` 목록 줄이다) · `## 다른 BC 편집 목록` · 슬라이스 계획(`0T` · `0C` · `0F` · `S1…`)을 쓴다. 시험 줄의 `<입장 행>` 은 영구 테스트 입장 표 그 행의 candidate 칸 원문 그대로 옮기고, 동사는 그 행의 decision(`update` · `add` · `remove` — 케이스 삭제는 `remove`)이다. V 의 종류는 시험 줄 owner 로 가르고(밖 = acceptance-tester · 안 = coder) 낮춰 적지 않는다. 기대 의미가 그대로인 시험 편집은 V 로 올리지 않고 0F 의 `retain` 재조직 행(파일 · 케이스 · «기대 의미 그대로» 까닭)으로 적는다 — 그 행의 candidate 칸은 `재조직 — <무엇을 어디로>` 꼴로 쓴다(낱말 `재조직` 표지가 없는 `retain` 행의 파일은 0F 허용 파일이 아니다). 0T 에서 기대를 고치는 ⓐ 시험 항목은 입장 표 `update` 행(V 에 딸리지 않은 행)으로 적고 그 행에 ⓐ 항목(`M<n>` · `C<n>`)을 적는다. «동작 불변 판정 경계»·«배포 DB 점검 조회» 같은 증명 절은 쓰지 않는다 — 바뀌면 V 다. G1 반영 입력(고르지 않은 V)이 오면 그 V · 그 V 에만 딸린 입장 행 · 다른 BC 편집 줄 · 슬라이스를 지우고 그 요지를 `불가 · 변경 미승인` 으로 적는다 — 그 밖은 한 글자도 바꾸지 않는다(Coordinator 가 `changes --applied` 로 대조한다).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s002/b7> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s002> ;
@@ -2188,7 +2234,7 @@ djr:R-3611 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 17 ;
     djr:statesNorm djr:R-1644, djr:R-1645, djr:R-1646, djr:R-1647, djr:R-1648, djr:R-1649, djr:R-1650, djr:R-1651, djr:R-1652, djr:R-1653, djr:R-1654, djr:R-1655, djr:R-1656, djr:R-1657, djr:R-1658 ;
-    djr:text "- **API 스택**(lens 무관, 새 API 표면이 생기면 항상 결정): 외부에 노출되는 새 HTTP/JSON API surface가 있으면 stack을 명세의 1급 결정으로 박는다. 신규 표면(이번 delivery가 새로 노출하는 route/operation — endpoint 단위; 기존 배포 endpoint의 수정은 이 결정의 대상이 아니다 — `implementation-django-ninja` §2.3 touched 조항 관할)의 stack은, 확립 스택(이 작업이 관찰하는 저장소 상태에서 배포·소비 evidence로 확인되는 스택)이 없으면 Django Ninja가 무언 기본이고, 확립 DRF·plain Django 스택이 존재하면 **스택 결정 자체를 `STOP_FOR_USER_APPROVAL`로 표면화**한다(선택지마다 대가 한 줄 — 표준 Ninja 채택: 확립 리소스와의 2-스택 분열 | 확립 스택 답습: 옛 스택 답습은 규약이 아니라 빚). 관찰은 스택 «정체» 식별과 STOP 선택지의 재료이지 답습 «채택»의 확정 근거가 아니며, Ninja 기본에서 벗어나는 신규 표면 스택 결정은 사유를 불문하고(답습·인프라/의존성 실물 부재·비-JSON 반환 메커니즘 포함) 이 STOP 경로로만 확정한다. G0 스코프 메모·발주서에 기록된 사용자의 명시적 스택 지시는 이 STOP 승인과 동격이다 — 명세는 그 기록(경로·인용)을 스택 결정 근거로 인용하고, 인용 가능한 명시 기록이 없으면 STOP이다(승인 효력은 그 발주의 명세에 한한다). 이 결정의 대상은 새 HTTP/JSON API surface뿐이다 — server-render HTML 표면(아래 HTML 문장·`implementation-django-web` §11 관할)·admin·정적 자원은 대상이 아니다. 오류 **wire 계약** 보존(«계약 profile» 축 — preserve-established)은 별개 축이다 — 확립(배포된) 표면의 wire 보존은 그대로되, 신규 endpoint의 error profile은 12-slot `error profile` 기준으로 별도 결정하고(같은 공개 namespace 합류는 스택·컨트롤러 형태 답습의 근거가 아니다), 신규 Ninja 표면에 preserve wire를 지우는 조합은 게이트 미열거라 그 취급 결정을 G1에서 표면화한다(STOP). SSE·스트리밍·파일 반환 표면의 기본 대안은 클래스 컨트롤러의 framework-native 반환(`implementation-django-ninja` §2.2 carveout)이며, plain 채택 선택지가 성립하려면 carveout으로 표현 불가하다는 관찰 근거를 그 STOP 대가 줄에 기록한다. dependency가 아직 manifest에 없다는 사실만으로 plain으로 낮추거나 `preserve-established`로 바꾸지 않는다. 새 Ninja surface는 `NinjaExtraAPI` + `@api_controller` class controller(aggregate 단위)이고, 승인된 scope마다 profile에 맞는 project API instance 하나를 둔다. **composition(배선·등록)은 profile 무관 표준이다**(2026-08-12 라운드 1′): `auto_import=False`의 side-effect-free BC registrar(`register_<bc>_api`), URLconf의 explicit registrar call과 mount로 구성하며 import-time registration은 하지 않는다 — 기존 BC 의 배선 실물(`*_api_router.py` 동형)은 배선 결정의 입력이 아니고, preserve 를 배선 답습의 근거로 명세에 박지 않는다. 이 문장들은 **신규 산출물의 형태**를 정할 뿐 **기존 코드의 처분 권한**이 아니다 — 명세는 승인 스코프의 산출물 목록 밖 기존 파일의 이동·개명·재배선을 결정으로 박지 않는다: 기존 코드의 처분은 G0 빚 결정(ⓐ/ⓑ)이 확정하고 명세는 ⓐ 승인 항목만 슬라이스 0으로 옮겨 적는다(2026-08-13 라운드 2 실증 — 명세가 «canonical 이관·면제 없음»을 자가 결정으로 박자 11 BC 100파일이 이동됐다). BC `composition_root/`(`dependency_wiring.py`의 `build_*` 팩토리 — final.md §1 트리 2~4행)가 DI만 소유한다. Controller는 one-statement application call에서 concrete domain/application exception을 catch하거나 조회의 `None`을 처리하고, no-arg concrete `ErrorSchema` 또는 event-specific 값으로 명시적으로 채운 BC base `ErrorSchema`을 만든 뒤 직접 `Status(<승인된 HTTP status 표현>, error)`를 반환한다. internal failure type과 output object를 명확히 구분하고 error handler/helper/factory/serializer로 빼지 않는다. `preserve-established`이면 관찰된 profile-native controller/handler/schema behavior를 보존하며 code-profile output/direct-`Status` recipe를 도입하지 않는다(보존 대상은 **오류 wire 산출물**까지 — registration/composition·트리·import 방향은 위 표준 그대로다). 성공 응답은 선언한 2xx `response` schema의 `Status`/schema 객체를 반환하고, 입력은 선언적 `payload: Schema`로 받는다. 406/415를 승인한 경우에도 tested version-compatible Ninja-owned pre-body/framework `HttpError` path를 쓰며 함수형 `Router`를 강제하거나 operation에서 raw body를 수동 parsing하지 않는다. **새 surface가 server-render HTML view면**(JSON API 아님) service의 domain/application exception은 view-local form re-render+`messages.error`(200), infra/unknown exception은 project `handler500`+`500.html`(`request`-only·empty Context), 승인된 transient contract는 `process_exception` retryable 503으로 표현하고 출처별 책임을 명세한다(`implementation-django-web` §11).\n"@ko .
+    djr:text "- **API 스택**(lens 무관, 새 API 표면이 생기면 항상 결정): 외부에 노출되는 새 HTTP/JSON API surface가 있으면 stack을 명세의 1급 결정으로 박는다. 신규 표면(이번 delivery가 새로 노출하는 route/operation — endpoint 단위; 기존 배포 endpoint의 수정은 이 결정의 대상이 아니다 — `implementation-django-ninja` §2.3 touched 조항 관할)의 stack은, 확립 스택(이 작업이 관찰하는 저장소 상태에서 배포·소비 evidence로 확인되는 스택)이 없으면 Django Ninja가 무언 기본이고, 확립 DRF·plain Django 스택이 존재하면 **스택 결정 자체를 `STOP_FOR_USER_APPROVAL`로 표면화**한다(선택지마다 대가 한 줄 — 표준 Ninja 채택: 확립 리소스와의 2-스택 분열 | 확립 스택 답습: 옛 스택 답습은 규약이 아니라 빚). 관찰은 스택 «정체» 식별과 STOP 선택지의 재료이지 답습 «채택»의 확정 근거가 아니며, Ninja 기본에서 벗어나는 신규 표면 스택 결정은 사유를 불문하고(답습·인프라/의존성 실물 부재·비-JSON 반환 메커니즘 포함) 이 STOP 경로로만 확정한다. G0 스코프 메모·발주서에 기록된 사용자의 명시적 스택 지시는 이 STOP 승인과 동격이다 — 명세는 그 기록(경로·인용)을 스택 결정 근거로 인용하고, 인용 가능한 명시 기록이 없으면 STOP이다(승인 효력은 그 발주의 명세에 한한다). 이 결정의 대상은 새 HTTP/JSON API surface뿐이다 — server-render HTML 표면(아래 HTML 문장·`implementation-django-web` §11 관할)·admin·정적 자원은 대상이 아니다. 오류 **wire 계약** 보존(«계약 profile» 축 — preserve-established)은 별개 축이다 — 확립(배포된) 표면의 wire 보존은 그대로되, 신규 endpoint의 error profile은 12-slot `error profile` 기준으로 별도 결정하고(같은 공개 namespace 합류는 스택·컨트롤러 형태 답습의 근거가 아니다), 신규 Ninja 표면에 preserve wire를 지우는 조합은 게이트 미열거라 그 취급 결정을 G1에서 표면화한다(STOP). SSE·스트리밍·파일 반환 표면의 기본 대안은 클래스 컨트롤러의 framework-native 반환(`implementation-django-ninja` §2.2 carveout)이며, plain 채택 선택지가 성립하려면 carveout으로 표현 불가하다는 관찰 근거를 그 STOP 대가 줄에 기록한다. dependency가 아직 manifest에 없다는 사실만으로 plain으로 낮추거나 `preserve-established`로 바꾸지 않는다. 새 Ninja surface는 `NinjaExtraAPI` + `@api_controller` class controller(aggregate 단위)이고, 승인된 scope마다 profile에 맞는 project API instance 하나를 둔다. **composition(배선·등록)은 profile 무관 표준이다**(2026-08-12 라운드 1′): `auto_import=False`의 side-effect-free BC registrar(`register_<bc>_api`), URLconf의 explicit registrar call과 mount로 구성하며 import-time registration은 하지 않는다 — 기존 BC 의 배선 실물(`*_api_router.py` 동형)은 배선 결정의 입력이 아니고, preserve 를 배선 답습의 근거로 명세에 박지 않는다. 이 문장들은 **신규 산출물의 형태**를 정할 뿐 **기존 코드의 처분 권한**이 아니다 — 명세는 승인 스코프의 산출물 목록 밖 기존 파일의 이동·개명·재배선을 결정으로 박지 않는다: 기존 코드의 처분은 G0 빚 결정(ⓐ/ⓑ)이 확정하고 명세는 ⓐ 승인 항목만 리팩토링 슬라이스(슬라이스 0 · 리팩토링 모드 변경 슬라이스)로 옮겨 적는다(2026-08-13 라운드 2 실증 — 명세가 «canonical 이관·면제 없음»을 자가 결정으로 박자 11 BC 100파일이 이동됐다). BC `composition_root/`(`dependency_wiring.py`의 `build_*` 팩토리 — final.md §1 트리 2~4행)가 DI만 소유한다. Controller는 one-statement application call에서 concrete domain/application exception을 catch하거나 조회의 `None`을 처리하고, no-arg concrete `ErrorSchema` 또는 event-specific 값으로 명시적으로 채운 BC base `ErrorSchema`을 만든 뒤 직접 `Status(<승인된 HTTP status 표현>, error)`를 반환한다. internal failure type과 output object를 명확히 구분하고 error handler/helper/factory/serializer로 빼지 않는다. `preserve-established`이면 관찰된 profile-native controller/handler/schema behavior를 보존하며 code-profile output/direct-`Status` recipe를 도입하지 않는다(보존 대상은 **오류 wire 산출물**까지 — registration/composition·트리·import 방향은 위 표준 그대로다). 성공 응답은 선언한 2xx `response` schema의 `Status`/schema 객체를 반환하고, 입력은 선언적 `payload: Schema`로 받는다. 406/415를 승인한 경우에도 tested version-compatible Ninja-owned pre-body/framework `HttpError` path를 쓰며 함수형 `Router`를 강제하거나 operation에서 raw body를 수동 parsing하지 않는다. **새 surface가 server-render HTML view면**(JSON API 아님) service의 domain/application exception은 view-local form re-render+`messages.error`(200), infra/unknown exception은 project `handler500`+`500.html`(`request`-only·empty Context), 승인된 transient contract는 `process_exception` retryable 503으로 표현하고 출처별 책임을 명세한다(`implementation-django-web` §11).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b18> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
@@ -2224,14 +2270,14 @@ djr:R-3611 a djr:Obligation ;
     djr:order 21 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b2>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b3>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s001/b1>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/references/final.md/s008/b3> ;
     djr:statesNorm djr:R-1680, djr:R-1681, djr:R-1682, djr:R-1683, djr:R-1684, djr:R-1685, djr:R-1686, djr:R-1687, djr:R-1688, djr:R-1689, djr:R-1690, djr:R-1691, djr:R-1692, djr:R-1693, djr:R-1694, djr:R-1695, djr:R-1696, djr:R-1697, djr:R-1698, djr:R-1699, djr:R-1700, djr:R-1701, djr:R-1702, djr:R-1703, djr:R-1704, djr:R-1705 ;
-    djr:text "- **패키지·테스트 구조**(lens 무관, 항상 결정): 소스 코드의 물리적 배치(레이아웃)와 테스트 디렉터리 조직을 명세가 결정한다. `discipline-houserules` SKILL §1 을 따른다 — **소스 파일트리는 언제나 dddjango 표준 파일트리다(기존 레이아웃은 트리 결정의 입력이 아니다 — 옛 층 이름 답습은 빚 증식)**. (이 문장도 신규 산출물의 형태 문장이다 — 승인 스코프 밖 기존 배치의 이동 지시가 아니다: §API스택의 처분-권한 문구와 같은 한계를 진다.) **`discipline-houserules` `references/final.md`를 읽고 §0 불변식과 §1 표준 트리(140행)의 고정·재등장 칸을 명세에 그대로 박는다** — 컨테이너·4계층 `_layer`(내용이 없어도 폴더로)·칸·파일 이름의 «값»은 final.md 가 소유하니 여기 값을 복사해 두지 않는다(Django 앱 위치·ORM 클래스명 규약 포함 — §1·§3). 이 불변식은 YAGNI·단순성·\"단일 기능이라 불필요\"로 **생략·축소하지 않는다** — 접어야 할 실질 사유가 있으면 명세에 박지 말고 트레이드오프로 G1에 올린다. **빈 계층은 그 관심사가 *실제로 없을 때만*이다 — 그 BC가 HTTP/CLI 진입(컨트롤러 메서드·operation·엔드포인트)을 하나라도 가지면 표현이 있는 것이므로 빈 `driving_layer`로 두지 말고 컨트롤러 메서드(레거시면 함수형 operation)·schema를 실현한다. 표현 없음으로 판단하면 그 근거(예: ACL/`open_host_service`로만 소비되는 내부 전용 BC)를 명세에 1줄 남긴다 — 빈 골격은 표현 *부재*를 표시할 뿐 표현 *불요*를 판정하지 않으니, 빈 폴더가 '표현 검토 완료'의 거짓 신호가 되지 않게 한다.** 입장 표가 승인한 test artifact가 있을 때만 기존 또는 승인된 레이아웃의 의미군에 배치한다. 구조 규칙 자체로 test file·case·assertion·helper·move/split이나 빈 test package를 만들지 않는다. 표준 트리 적용과 **ORM 명명·Django 앱 위치, 그리고 명세가 도입하는 리포지토리·포트(통합 ACL 포트 포함)의 §3 명명**을 명세에 남겨 coder가 그대로 집행하게 한다. 명세가 박는 것은 «칸 결정»이지 «실현 형태 결정»이 아니다 — 산출물 경로는 언제나 `<칸>.py` 로 적는다(동명 폴더 승격 여부는 구현 단계 캐스케이드 소유 — houserules §1). 포트·리포지토리·어댑터의 파일·클래스 명명 규약은 final.md §1(각 칸의 이름 줄 — `<aggregate>_repository.py`·`<capability>_port.py`·`<technology>_adapter.py` 꼴)·§3이 소유한다 — 명세는 그 규약을 «읽고» 구체 이름(어느 애그리거트·어느 능력·어느 기술)만 결정해 박는다(`Interface`/`Impl` 타입표식·파일명 약어 금지 포함 §3). 이름 짓기는 구조·계약 *결정*(경계 참조)의 일부라 설계 단계에서 정하고 사후 교정에 미루지 않는다 — ORM 명명을 명세에 박는 것과 같은 이유다. **다른 바운디드 컨텍스트와의 통신·외부 의존**은 OHS(`open_host_service`)를 우선하고, 직접 통합이 불가피하면 **ACL로 분리**(`application_layer/port/` 협력 포트 + `driven_layer/adapter/anticorruption_layer/` 어댑터, 리포지토리에 섞지 않음; **업스트림 모델·예외 번역을 ACL에 격리해 presentation·application이 타 BC 예외를 직접 잡지 않게** 명세에 박는다)할지, 또는 결과적 일관성으로 충분하면 비동기 **도메인 이벤트**를 쓸지(즉시 일관성=동기 OHS/ACL, 결과적=이벤트; 선택 기준 `architecture-ddd` 규칙4·§6.8)를 명세에서 결정한다(구조·파일 값은 `references/final.md` §1 트리 22~32행 소유). **OHS를 노출·수정하는 스코프면 open_host_service 내부 구조를 명세 1급 결정으로 박는다** — 구조·파일 이름의 값은 final.md §1 트리 22~32행(`driving_layer/open_host_service/<service>/` 아래 `<service>_service.py` + `contract/{request,response,exception}/` — 그중 `contract/exception/` 아래 `<service>_published_error.py`)이 소유한다. 명세가 결정하는 것: 각 공개 함수의 request/response 계약 시그니처(#633 — 파라미터는 계약 1개·0개는 `_query` 위임만), 예외 번역표(도메인→published 매핑·폴백 수위·transient raw 통과), 계약이 담는 보조 자료 타입(주 계약의 어노테이션이 참조하는 같은 계약 파일의 공개 dataclass — 계약 어휘 접미(`Result` 류)·enum 불가, 두 연산이 공유하면 한 파일에 정의하고 다른 계약이 같은 BC 계약 간 import 로 참조 — 2026-08-24). LLM 일반지식으로 재분류하지 않는다(명세에 안 박으면 coder가 즉흥 산출 — 죽은 표준). **포트 선언의 «자리»도 final.md §1·§2가 소유한다 — 애그리거트에 붙는 계약은 `domain_layer/<aggregate>/<aggregate>_repository.py`(#282), 안 붙는 협력·능력 포트는 `application_layer/port/<capability>/`뿐(#187), ACL 구현은 `driven_layer/adapter/anticorruption_layer/<other_bounded_context>/`다(#365). 다른 이름의 재분류('use-case dependency' 등)로 트리 밖 `port/` 칸을 만들지 않는다.** **가드 — `architecture-ddd` §3.3 규칙4(\"동일 DB 단순 케이스에서 한 트랜잭션에 복수 애그리거트 수정 용인\")는 *애그리거트(일관성) 경계* 완화 규칙이지 *두 개념을 같은 BC로 합쳐 ACL을 생략해도 된다는 허가가 아니다.* BC 배치·ACL 생략은 유비쿼터스 언어·소유 경계로 판단하고, 규칙4를 그 근거로 끌어쓰지 마라(애그리거트 레벨 규칙을 컨텍스트 레벨 결정에 오용 금지).** **타 BC 참조는 ID 값 + ACL/OHS로 명세하고 BC 경계 ORM FK(`ForeignKey`·`OneToOneField`·`ManyToManyField`)를 결과 제약으로 금지한다 — 안 박으면 코더가 '참조 무결성' 명분으로 cross-BC FK를 넣어 상류 모델 형상·삭제정책을 하류에 결합시킨다(`architecture-ddd` §3.3 규칙3 영속성 확장; 규칙4의 '동일 DB 용인'은 트랜잭션 원자성이지 FK 허가가 아니다 — ID 값 참조 + ACL 존재검증으로 무결성 보장).**\n"@ko .
+    djr:text "- **패키지·테스트 구조**(lens 무관, 항상 결정): 소스 코드의 물리적 배치(레이아웃)와 테스트 디렉터리 조직을 명세가 결정한다. `discipline-houserules` SKILL §1 을 따른다 — **소스 파일트리는 언제나 dddjango 표준 파일트리다(기존 레이아웃은 트리 결정의 입력이 아니다 — 옛 층 이름 답습은 빚 증식)**. (이 문장도 신규 산출물의 형태 문장이다 — 승인 스코프 밖 기존 배치의 이동 지시가 아니다: §API스택의 처분-권한 문구와 같은 한계를 진다.) **`discipline-houserules` `references/final.md`를 읽고 §0 불변식과 §1 표준 트리(140행)의 고정·재등장 칸을 명세에 그대로 박는다** — 컨테이너·4계층 `_layer`(내용이 없어도 폴더로)·칸·파일 이름의 «값»은 final.md 가 소유하니 여기 값을 복사해 두지 않는다(Django 앱 위치·ORM 클래스명 규약 포함 — §1·§3). 이 불변식은 YAGNI·단순성·\"단일 기능이라 불필요\"로 **생략·축소하지 않는다** — 접어야 할 실질 사유가 있으면 명세에 박지 말고 트레이드오프로 G1에 올린다. **빈 계층은 그 관심사가 *실제로 없을 때만*이다 — 그 BC가 HTTP/CLI 진입(컨트롤러 메서드·operation·엔드포인트)을 하나라도 가지면 표현이 있는 것이므로 빈 `driving_layer`로 두지 말고 컨트롤러 메서드(레거시면 함수형 operation)·schema를 실현한다. 표현 없음으로 판단하면 그 근거(예: ACL/`open_host_service`로만 소비되는 내부 전용 BC)를 명세에 1줄 남긴다 — 빈 골격은 표현 *부재*를 표시할 뿐 표현 *불요*를 판정하지 않으니, 빈 폴더가 '표현 검토 완료'의 거짓 신호가 되지 않게 한다.** 입장 표가 승인한 test artifact가 있을 때만 기존 또는 승인된 레이아웃의 의미군에 배치한다. 구조 규칙 자체로 test file·case·assertion·helper·move/split이나 빈 test package를 만들지 않는다. 표준 트리 적용과 **ORM 명명·Django 앱 위치, 그리고 명세가 도입하는 리포지토리·포트(통합 ACL 포트 포함)의 §3 명명**을 명세에 남겨 coder가 그대로 집행하게 한다. 명세가 박는 것은 «칸 결정»이지 «실현 형태 결정»이 아니다 — 산출물 경로는 언제나 `<칸>.py` 로 적는다(동명 폴더 승격 여부는 구현 단계 캐스케이드 소유 — houserules §1). 포트·리포지토리·어댑터의 파일·클래스 명명 규약은 final.md §1(각 칸의 이름 줄 — `<aggregate>_repository.py`·`<capability>_port.py`·`<technology>_adapter.py` 꼴)·§3이 소유한다 — 명세는 그 규약을 «읽고» 구체 이름(어느 애그리거트·어느 능력·어느 기술)만 결정해 박는다(`Interface`/`Impl` 타입표식·파일명 약어 금지 포함 §3). 이름 짓기는 구조·계약 *결정*(경계 참조)의 일부라 설계 단계에서 정하고 사후 교정에 미루지 않는다 — ORM 명명을 명세에 박는 것과 같은 이유다. **다른 바운디드 컨텍스트와의 통신·외부 의존**은 OHS(`open_host_service`)를 우선하고, 직접 통합이 불가피하면 **ACL로 분리**(`application_layer/port/` 협력 포트 + `driven_layer/adapter/anticorruption_layer/` 어댑터, 리포지토리에 섞지 않음; **업스트림 모델·예외 번역을 ACL에 격리해 presentation·application이 타 BC 예외를 직접 잡지 않게** 명세에 박는다)할지, 또는 결과적 일관성으로 충분하면 비동기 **도메인 이벤트**를 쓸지(즉시 일관성=동기 OHS/ACL, 결과적=이벤트; 선택 기준 `architecture-ddd` 규칙4·§6.8)를 명세에서 결정한다(구조·파일 값은 `references/final.md` §1 트리 23~33행 소유). **OHS를 노출·수정하는 스코프면 open_host_service 내부 구조를 명세 1급 결정으로 박는다** — 구조·파일 이름의 값은 final.md §1 트리 23~33행(`driving_layer/open_host_service/<service>/` 아래 `<service>_service.py` + `contract/{request,response,exception}/` — 그중 `contract/exception/` 아래 `<service>_published_error.py`)이 소유한다. 명세가 결정하는 것: 각 공개 함수의 request/response 계약 시그니처(#633 — 파라미터는 계약 1개·0개는 `_query` 위임만), 예외 번역표(도메인→published 매핑·폴백 수위·transient raw 통과), 계약이 담는 보조 자료 타입(주 계약의 어노테이션이 참조하는 같은 계약 파일의 공개 dataclass — 계약 어휘 접미(`Result` 류)·enum 불가, 두 연산이 공유하면 한 파일에 정의하고 다른 계약이 같은 BC 계약 간 import 로 참조 — 2026-08-24). LLM 일반지식으로 재분류하지 않는다(명세에 안 박으면 coder가 즉흥 산출 — 죽은 표준). **포트 선언의 «자리»도 final.md §1·§2가 소유한다 — 애그리거트에 붙는 계약은 `domain_layer/<aggregate>/<aggregate>_repository.py`(#282), 안 붙는 협력·능력 포트는 `application_layer/port/<capability>/`뿐(#187), ACL 구현은 `driven_layer/adapter/anticorruption_layer/<other_bounded_context>/`다(#365). 다른 이름의 재분류('use-case dependency' 등)로 트리 밖 `port/` 칸을 만들지 않는다.** **가드 — `architecture-ddd` §3.3 규칙4(\"동일 DB 단순 케이스에서 한 트랜잭션에 복수 애그리거트 수정 용인\")는 *애그리거트(일관성) 경계* 완화 규칙이지 *두 개념을 같은 BC로 합쳐 ACL을 생략해도 된다는 허가가 아니다.* BC 배치·ACL 생략은 유비쿼터스 언어·소유 경계로 판단하고, 규칙4를 그 근거로 끌어쓰지 마라(애그리거트 레벨 규칙을 컨텍스트 레벨 결정에 오용 금지).** **타 BC 참조는 ID 값 + ACL/OHS로 명세하고 BC 경계 ORM FK(`ForeignKey`·`OneToOneField`·`ManyToManyField`)를 결과 제약으로 금지한다 — 안 박으면 코더가 '참조 무결성' 명분으로 cross-BC FK를 넣어 상류 모델 형상·삭제정책을 하류에 결합시킨다(`architecture-ddd` §3.3 규칙3 영속성 확장; 규칙4의 '동일 DB 용인'은 트랜잭션 원자성이지 FK 허가가 아니다 — ID 값 참조 + ACL 존재검증으로 무결성 보장).**\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b22> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
     djr:kind djr:kind-norm ;
     djr:order 22 ;
     djr:statesNorm djr:R-1706, djr:R-1707, djr:R-1708, djr:R-1709, djr:R-1710, djr:R-1711 ;
-    djr:text "- **응용 유스케이스 연산·자료 계약**: 유스케이스는 연산 객체로 명세한다 — 파일·이름·시그니처의 값은 final.md §1 트리 39~44행이 소유한다: `application_layer/<area>/<use_case>/` 아래 `<use_case>_use_case.py`(연산 — 공개 클래스 하나·`execute(<command|query>) → <result>` 규약 #635)·`<use_case>_command.py`/`<use_case>_query.py`(들어가는 자료)·`<use_case>_result.py`(나오는 자료 — 연산 모듈에 공개 자료 클래스를 인라인 명세하지 않는다). `dto` 낱말은 어디에도 쓰지 않는다(#567 — `schema`는 기술 실물, 경계 자료는 `_command`/`_query`/`_result`). presentation은 `schema_in`을 command/query로 변환만 하고 operation 본문에서 인프라 어댑터를 직접 생성하지 않는다 — DI 조립은 `composition_root/`(`dependency_wiring.py`의 `build_*` 팩토리 — 트리 2~4행·#85)가 소유하고 presentation은 매요청 호출만 한다(그 위치를 명세에 박는다). 도메인 우회 읽기(`domain_bypass_query`) 채택 여부는 명세 결정으로 남긴다.\n"@ko .
+    djr:text "- **응용 유스케이스 연산·자료 계약**: 유스케이스는 연산 객체로 명세한다 — 파일·이름·시그니처의 값은 final.md §1 트리 40~45행이 소유한다: `application_layer/<area>/<use_case>/` 아래 `<use_case>_use_case.py`(연산 — 공개 클래스 하나·`execute(<command|query>) → <result>` 규약 #635)·`<use_case>_command.py`/`<use_case>_query.py`(들어가는 자료)·`<use_case>_result.py`(나오는 자료 — 연산 모듈에 공개 자료 클래스를 인라인 명세하지 않는다). `dto` 낱말은 어디에도 쓰지 않는다(#567 — `schema`는 기술 실물, 경계 자료는 `_command`/`_query`/`_result`). presentation은 `schema_in`을 command/query로 변환만 하고 operation 본문에서 인프라 어댑터를 직접 생성하지 않는다 — DI 조립은 `composition_root/`(`dependency_wiring.py`의 `build_*` 팩토리 — 트리 2~4행·#85)가 소유하고 presentation은 매요청 호출만 한다(그 위치를 명세에 박는다). 도메인 우회 읽기(`domain_bypass_query`) 채택 여부는 명세 결정으로 남긴다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b23> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005> ;
@@ -2504,7 +2550,7 @@ djr:R-3611 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
     djr:statesNorm djr:R-3573 ;
-    djr:text "**판정 범주와 근거**(증명 책임은 빼는 쪽이다 — `check-verdict` 가 근거를 기계로 대조한다):\n- **채택**.\n- **병합** → `M<k>`(채택 항목만) 또는 `C<n>`(리뷰어가 그 행에 «`C<n>` 과 같음»을 적었을 때만).\n- **제외** — 근거 `R-ID «인용»`: 인용이 든 블록의 허용·예외 규범이거나, 리뷰어가 «반대 방향 규칙» 열에 적은 규칙이다. 적용 범위 규범과 그 대상 목록의 규범은 근거가 될 수 없고, 적용 한정 어구가 든 문장을 인용하지 않는다. 의무·금지와 허용·예외가 한 블록에 섞였으면 위반 행이 인용한 구간과 겹치지 않는 구간을 인용한다.\n- **오탐**(요건 불충족 포함) — 근거는 위반으로 인용된 바로 그 블록의 요건 문구 인용이다(같은 절의 다른 문장은 안 된다).\n- **사용자 판단** — 두 규칙이 반대 방향이고 문면으로 가를 수 없을 때다(반대 방향 규칙이 적용 범위 규범의 대상이면 이미 갈린 충돌이라 여기 들지 않는다).\n- **별도 요청** — 리뷰어가 «동작 불변 정리 가능 = 아니오 — 사유»를 적은 행만이다. 근거는 모델 필드(항목 자기 `파일:행` 이 ORM 모델 파일) · 응답·예외 경로(항목 자기 `파일:행` 이 HTTP 어댑터 층의 응답 스키마·상태 코드·예외 매핑 정의) · 타 BC(편집할 파일이 `application/<다른 bc>/` — `urls.py`·api 등록 같은 프로젝트 합성 파일은 BC 범위다) 중 하나다.\n\n"@ko .
+    djr:text "**판정 범주와 근거**(증명 책임은 빼는 쪽이다 — `check-verdict` 가 근거를 기계로 대조한다):\n- **채택**.\n- **병합** → `M<k>`(채택 항목만) 또는 `C<n>`(리뷰어가 그 행에 «`C<n>` 과 같음»을 적었을 때만).\n- **제외** — 근거 `R-ID «인용»`: 인용이 든 블록의 허용·예외 규범이거나, 리뷰어가 «반대 방향 규칙» 열에 적은 규칙이다. 적용 범위 규범·«운영 전 예외» 규범과 그 대상 목록(조건부 대상 포함)의 규범은 근거가 될 수 없고, 적용 한정 어구가 든 문장을 인용하지 않는다. 의무·금지와 허용·예외가 한 블록에 섞였으면 위반 행이 인용한 구간과 겹치지 않는 구간을 인용한다.\n- **오탐**(요건 불충족 포함) — 근거는 위반으로 인용된 바로 그 블록의 요건 문구 인용이다(같은 절의 다른 문장은 안 된다).\n- **사용자 판단** — 두 규칙이 반대 방향이고 문면으로 가를 수 없을 때다(반대 방향 규칙이 적용 범위 규범·«운영 전 예외»의 대상이면 이미 갈린 충돌이라 여기 들지 않는다).\n- **다른 BC 몫** — 리뷰어가 «바뀌는 것» 칸에 `다른 BC 파일` 을 적은 행만이다. 근거는 타 BC 하나다 — 편집할 파일 `application/<다른 bc>/…:행` 이 실재하고, 그 자리가 이 레인이 고칠 수 있는 다른 BC 편집 갈래(받는 쪽 어댑터 · 받는 쪽 시험 · 직접 import 자리 · HTTP 소비자 · 공유 표면 · 프로젝트 합성 — `urls.py`·api 등록 같은 프로젝트 합성 파일은 BC 범위다) 밖이어야 한다(아니면 `check-verdict` 가 채택으로 재분류한다). 동작·계약·DB 구조가 바뀐다는 것은 빼는 사유가 아니다(바뀌는 것도 정리다 — G1 목록으로 승인).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s008/b5> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s008> ;

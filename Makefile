@@ -3,7 +3,7 @@ SHELL := /bin/bash
 # DRY=1 이면 실제 변경/커밋/푸시/Release 없이 시뮬레이션만 (버전 선택·기록 미리보기까지 실제 로직 실행)
 DRY ?= 0
 
-.PHONY: release release-web _release ontology-env ontology-hooks verify verify-ontology verify-base verify-base-core verify-base-cross verify-base-backstop verify-base-regen verify-web verify-mutation verify-firing verify-runready rulepack
+.PHONY: release release-web _release ontology-env probe-env ontology-hooks verify verify-ontology verify-base verify-base-core verify-base-cross verify-base-backstop verify-base-regen verify-base-probe verify-web verify-mutation verify-firing verify-runready rulepack
 
 VENV_PY := .venv/bin/python
 
@@ -23,7 +23,8 @@ VENV_PY := .venv/bin/python
 # 2026-09-16 hyun 지시 — verify-web 을 자동 경로에서 뺀다. 이번 배치 결함 4건(주석 오탐·
 # 정상 abort 의 staging 삭제·드라이버 8h52m 정지·루트/크롭 모순)을 이 레인은 **한 건도**
 # 잡지 못했고 전부 A8 실사용이 잡았다. 타깃 자체는 남아 있으니 `make verify-web` 으로 직접 돈다.
-VERIFY_TARGETS := verify-ontology verify-base-core verify-base-cross verify-base-backstop verify-base-regen
+# 2026-10-04 RD — verify-base-probe 를 더한다(B0 영구 픽스처 · 실제 pytest 장난감 · `.venv-probe` 필요 — `make probe-env`).
+VERIFY_TARGETS := verify-ontology verify-base-core verify-base-cross verify-base-backstop verify-base-regen verify-base-probe
 
 VERBOSE ?= 0
 
@@ -146,7 +147,7 @@ verify-ontology:
 # 시간 균형 4그룹으로 분할 — `verify` 가 그룹을 병렬로 직접 띄운다(그룹 경계는 실측
 # 프로파일 기준: backstop 75s · cross 계열 69s · regen 계열 63s · 나머지 합 ~36s).
 # 이 타깃 단독 실행은 4그룹 순차와 같다(커버리지 동일).
-verify-base: verify-base-core verify-base-cross verify-base-backstop verify-base-regen
+verify-base: verify-base-core verify-base-cross verify-base-backstop verify-base-regen verify-base-probe
 
 verify-base-core:
 	@set -euo pipefail; \
@@ -207,6 +208,14 @@ verify-base-regen:
 	PYTHONUTF8=1 python3 workspace/tools/pregate_transcription_smoke.py; \
 	PYTHONUTF8=1 python3 workspace/tools/pregate_field_report_smoke.py; \
 	PYTHONUTF8=1 python3 workspace/tools/field_report_checker_smoke.py
+
+# B0 영구 픽스처 — pytest 탐침 · 지원 확인(support --collect) · 증거 실행(suite)을 장난감 저장소에서 실제 pytest 로 돈다.
+# 장난감 인터프리터는 고정 판 `.venv-probe`(러너 자신은 표준 라이브러리만) — 없으면 RED 로 알린다(verify-ontology 의 .venv 확인 꼴).
+verify-base-probe:
+	@set -euo pipefail; \
+	test -x .venv-probe/bin/python || { echo "ERROR: .venv-probe 부재 — make probe-env 필요"; exit 1; }; \
+	echo "[verify-base-probe] B0 영구 픽스처 (pytest 탐침·지원 확인·증거 실행 — behavior_probe_fixture_run)"; \
+	PYTHONUTF8=1 python3 workspace/tools/behavior_probe_fixture_run.py
 
 # 변이 자가검사 — 상시 verify 와 분리(T2-4 적대 리뷰 AQ-10: 검출력 증명은 무겁고 상시 아님).
 # 팩·selector 를 건드린 커밋은 이 타깃도 green 이어야 한다.
@@ -272,6 +281,23 @@ ontology-env:
 	.venv/bin/pip install --quiet --upgrade pip; \
 	.venv/bin/pip install --quiet --no-deps -r workspace/tools/ontology-requirements.txt; \
 	.venv/bin/python workspace/tools/ontology_env_smoke.py
+
+# B0 픽스처 가상환경(.venv-probe) 구축 — 버전 고정: workspace/tools/probe-fixture-requirements.txt
+# pytest·xdist·Django·pytest-django·greenlet 은 이 venv 전용 (플러그인 배포물 침투 금지 — 블루프린트 E7)
+# uv 가 있으면 uv(캐시 우선), 없으면 pip 로 깐다. 설치 실패는 그대로 실패한다.
+probe-env:
+	@set -euo pipefail; \
+	PY=/opt/homebrew/bin/python3.14; \
+	command -v "$$PY" >/dev/null || { echo "ERROR: python3.14 필요 — brew install python@3.14"; exit 1; }; \
+	if command -v uv >/dev/null; then \
+		uv venv --quiet --clear --python "$$PY" .venv-probe; \
+		uv pip install --quiet --no-deps --python .venv-probe/bin/python -r workspace/tools/probe-fixture-requirements.txt; \
+	else \
+		"$$PY" -m venv .venv-probe; \
+		.venv-probe/bin/pip install --quiet --upgrade pip; \
+		.venv-probe/bin/pip install --quiet --no-deps -r workspace/tools/probe-fixture-requirements.txt; \
+	fi; \
+	.venv-probe/bin/python -c "import pytest, xdist, django, pytest_django, greenlet; print('[probe-env] ok — pytest', pytest.__version__, '· Django', django.__version__, '· greenlet', greenlet.__version__)"
 
 # 새 버전 릴리즈 — 플러그인별 타깃이 대상 변수만 지정하고 공통 절차(_release)를 부른다.
 #   release      : dddjango      (태그 dddjango--vX.Y.Z)

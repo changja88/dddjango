@@ -1819,7 +1819,7 @@ python manage.py shell
 - [Django Best Practices (Lincoln Loop)](https://lincolnloop.com/blog/django-anti-patterns-signals/)
 ## 18. Django admin·폼 타이핑 — django-stubs 제네릭 기저
 
-admin 저작 화면(`driven_layer/django_<bc>/admin/` — 배치·import 방향은 `discipline-houserules` §1 트리 82행·§5)의 `ModelForm`·`BaseInlineFormSet`·`ModelAdmin`·`TabularInline`/`StackedInline` 은 django-stubs 가 제네릭으로 선언하지만 런타임 클래스는 subscript 를 못 한다 — 규칙(타입 인자 필수 · `# type: ignore[type-arg]` 금지 · 별칭 기본 / monkeypatch 채택 시 직접)은 houserules §4·§6.1 이 소유하고, 이 절은 그 «어떻게»를 한 벌로 보인다. 웹 폼의 `ModelForm` 도 같은 표기다(`implementation-django-web` §6).
+admin 저작 화면(`driven_layer/django_<bc>/admin/` — 배치·import 방향은 `discipline-houserules` §1 트리 83행·§5)의 `ModelForm`·`BaseInlineFormSet`·`ModelAdmin`·`TabularInline`/`StackedInline` 은 django-stubs 가 제네릭으로 선언하지만 런타임 클래스는 subscript 를 못 한다 — 규칙(타입 인자 필수 · `# type: ignore[type-arg]` 금지 · 별칭 기본 / monkeypatch 채택 시 직접)은 houserules §4·§6.1 이 소유하고, 이 절은 그 «어떻게»를 한 벌로 보인다. 웹 폼의 `ModelForm` 도 같은 표기다(`implementation-django-web` §6).
 
 ```python
 from __future__ import annotations

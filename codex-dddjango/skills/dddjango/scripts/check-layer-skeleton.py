@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """표준 파일트리 골격 검사기 — 제1원칙(#486~#491)의 결정적 백스톱.
 
-트리 데이터는 `standard_tree.py`(정본 170행의 기계 사본) 하나에서 온다 — 이 파일에
+트리 데이터는 `standard_tree.py`(정본 171행의 기계 사본) 하나에서 온다 — 이 파일에
 경로 문자열을 다시 적지 않는다. 정본이 개정되면 데이터만 갈리고 이 검사기는 그대로다.
 
 무엇을 잡나 (규칙 번호는 트리 개정 명세):
   #486  어느 BC 를 열어도 골격이 그대로 있다 — 내용 유무 무관. 채택 저장소에서는
         `application/` 직계 전부가 BC 다(신호 없는 평면 BC 도 검사 대상).
   #488  고정(·재등장) 칸은 부모가 있으면 반드시 있다 — 폴더는 비어도 `__init__.py` 로,
-        파일도 비면 빈 파일로. `<project>/`(트리 166~169행)·`framework/` 고정 서브트리에도 적용.
+        파일도 비면 빈 파일로. `<project>/`(트리 167~170행)·`framework/` 고정 서브트리에도 적용.
   #489  `<…>` 자리표시자 칸만 그 개념이 생길 때 생긴다.
   #490  BC 안에 트리에 없는 경로가 있으면 위반. 재량은 «리프로 닫은 폴더 안»의 추가
         모듈뿐이다(#15 작성자 재량) — 자리표시자 «파일» 칸이 있는 층만 파일 이름이 자유다.
@@ -59,7 +59,7 @@ IGNORE_FILES = {"__init__.py", ".DS_Store"}
 DJANGO_APP_MARKERS = ("models.py", "apps.py", "views.py", "admin.py")
 PROJECT_ALLOWED = {"api.py", "urls.py", "celery.py", "settings"}
 PROJECT_EXEMPT = {"health.py", "home.py", "asgi.py", "wsgi.py", "__init__.py"}
-PROJECT_REQUIRED_FILES = ("api.py", "urls.py", "celery.py")  # 트리 166~168행 fixed (#488)
+PROJECT_REQUIRED_FILES = ("api.py", "urls.py", "celery.py")  # 트리 167~169행 fixed (#488)
 
 NEW_LAYERS = {"driving_layer", "application_layer", "domain_layer", "driven_layer"}
 TOKEN = re.compile(r"<([a-z_]+)>")
@@ -88,9 +88,9 @@ def _has_adoption_signal(bc_dir: Path) -> bool:
 
 # ── 동명 폴더 승격(#490 교체형) — #638~#641·#643 + ⓓ#644 ─────────────────────────
 
-# ⓓ#644 행위 칸 로스터 — 승격 허용 표기(swappable) 중 schema 4행(14·15·20·21) 제외
+# ⓓ#644 행위 칸 로스터 — 승격 허용 표기(swappable) 중 schema 4행(15·16·21·22) 제외
 # (houserules SKILL §1 감사 주도 배정 — 신호는 무조건 방출, 판정 의무의 diff 한정은 감사자 몫)
-PROMO_ACTION_ROWS = frozenset({12, 18, 24, 41, 61, 74, 92, 94, 96})
+PROMO_ACTION_ROWS = frozenset({13, 19, 25, 42, 62, 75, 93, 95, 97})
 PROMO_SIGNAL_LINES = 200   # ⓓ#644 후보 문턱(물리 행·빈 줄 제외)
 JUNK_DRAWER_NAMES = frozenset({"utils.py", "helpers.py", "util.py", "helper.py", "common.py", "misc.py"})
 _CASCADE_Q = "역할 밖 응집 단위가 있는가 — ①이동/②동명 폴더 승격/③유지 (houserules §1 캐스케이드)"
@@ -168,7 +168,7 @@ def _file_pattern_ok(name: str, pattern: str) -> bool:
 
 
 def _check_multi(dir_path: Path, shapes: list[list[str]], out: Findings) -> None:
-    """하위 경로를 품은 행(form/·feature/·templates/ …)의 «모양» 검사 — 트리 85~88행.
+    """하위 경로를 품은 행(form/·feature/·templates/ …)의 «모양» 검사 — 트리 86~89행.
 
     shapes 는 남은 마디 목록들이다. 마지막 마디는 파일 패턴, 그 앞은 폴더 마디
     (`<tok>` 마디는 아무 이름). 어느 모양에도 안 맞는 항목은 트리에 없는 경로다(#490).
@@ -413,11 +413,11 @@ def _check_project(pkg: Path, out: Findings) -> None:
             continue
         hint = " — `settings/` 로 이관한다" if p.name == "settings.py" else ""
         out.add("#429", p, f"`<project>/` 에는 전역에 하나만 요구되는 것만 온다 (api.py·urls.py·celery.py·settings/){hint}")
-    for name in PROJECT_REQUIRED_FILES:  # #488 — 트리 166~168행 fixed
+    for name in PROJECT_REQUIRED_FILES:  # #488 — 트리 167~169행 fixed
         if not (pkg / name).is_file():
-            out.add("#488", pkg / name, "고정 파일 부재 — 비면 빈 파일로 만든다 (`<project>/` · 트리 166~168행)")
+            out.add("#488", pkg / name, "고정 파일 부재 — 비면 빈 파일로 만든다 (`<project>/` · 트리 167~169행)")
     if not (pkg / "settings").is_dir() and not (pkg / "settings.py").is_file():
-        out.add("#488", pkg / "settings", "고정 칸 `settings/` 부재 (트리 169행)")
+        out.add("#488", pkg / "settings", "고정 칸 `settings/` 부재 (트리 170행)")
 
 
 def main(argv: list[str]) -> int:

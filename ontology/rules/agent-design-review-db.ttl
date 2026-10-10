@@ -387,12 +387,18 @@ djr:R-3363 a djr:Prohibition ;
     djr:revision 1 .
 
 djr:R-3545 a djr:Obligation ;
-    skos:prefLabel "파견 입력에 적용 범위 규범이 실려 있으면 그 규범이 정한 몫과 때를 따른다(리팩토링 모드)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3545@2026-09-27> .
+    skos:prefLabel "파견 입력에 적용 범위 규범·운영 전 예외 블록이 실려 있으면 그 규범이 정한 몫과 때를 따른다(리팩토링 모드)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3545@2026-10-04> .
 
 <https://numchida.com/ns/djr#R-3545@2026-09-27> a djr:Expression ;
     prov:specializationOf djr:R-3545 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3545@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3545 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3545@2026-09-27> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3546 a djr:Obligation ;
     skos:prefLabel "BC_AUDIT 은 Coordinator 가 명시할 때만(기본 = Phase 1 리뷰) — 리팩토링 모드 BC 점검·G2 잔존 확인"@ko ;
@@ -419,12 +425,18 @@ djr:R-3548 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3549 a djr:Obligation ;
-    skos:prefLabel "BC_AUDIT 산출 = 정형 표만(규칙 인용 좌표·반대 방향·파일:행·정리 가능·C 동일) — 규칙 없는 항목 불출(불편 근거 없음 행 예외)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3549@2026-09-27> .
+    skos:prefLabel "BC_AUDIT 산출 = 정형 표만(규칙 인용 좌표·반대 방향·파일:행·바뀌는 것(닫힌 5 — 없음·내부 약속·밖 동작·DB 구조·다른 BC 파일 · + · 사유 한 구)·C 동일) — 규칙 없는 항목 불출(불편 근거 없음 행 예외)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3549@2026-10-04> .
 
 <https://numchida.com/ns/djr#R-3549@2026-09-27> a djr:Expression ;
     prov:specializationOf djr:R-3549 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3549@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3549 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3549@2026-09-27> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3550 a djr:Obligation ;
     skos:prefLabel "BC_AUDIT 재인용 — 인용 불일치 행의 인용만 원문대로 고쳐 재산출(코드 재점검 아님)"@ko ;
@@ -515,7 +527,7 @@ djr:R-3604 a djr:Exception ;
     djr:order 1 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s003/b1> ;
     djr:statesNorm djr:R-3323, djr:R-3324, djr:R-3545 ;
-    djr:text "\nCoordinator가 architect의 설계 명세(초안)를 준다. 너는 그 명세만 본다 — 다른 리뷰어의 노트나 구현 코드를 보지 않는다(편향 방지). 재리뷰(확인 모드 포함)에서는 명세와 함께 이 lens 의 처분 파일(`review-disposition-<lens>-<n>.md`) · 직전 자기 노트 · 명세 diff 를 받는다 — 처분 파일의 «까닭»은 판정 근거가 아니다(판정은 명세 본문으로 한다 · 2026-10-01). 로드한 스킬 본문·references 참조는 이 제한 밖이다 — 제한 대상은 타 리뷰어의 노트·구현 코드다. 파견 입력에 적용 범위 규범이 실려 있으면 그 규범이 정한 몫과 때를 따른다.\n\n"@ko .
+    djr:text "\nCoordinator가 architect의 설계 명세(초안)를 준다. 너는 그 명세만 본다 — 다른 리뷰어의 노트나 구현 코드를 보지 않는다(편향 방지). 재리뷰(확인 모드 포함)에서는 명세와 함께 이 lens 의 처분 파일(`review-disposition-<lens>-<n>.md`) · 직전 자기 노트 · 명세 diff 를 받는다 — 처분 파일의 «까닭»은 판정 근거가 아니다(판정은 명세 본문으로 한다 · 2026-10-01). 로드한 스킬 본문·references 참조는 이 제한 밖이다 — 제한 대상은 타 리뷰어의 노트·구현 코드다. 파견 입력에 적용 범위 규범·«운영 전 예외» 블록이 실려 있으면 그 규범이 정한 몫과 때를 따른다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s002/b2> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s002> ;
@@ -700,7 +712,7 @@ djr:R-3604 a djr:Exception ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
     djr:statesNorm djr:R-3549 ;
-    djr:text "**산출**: 표만 낸다(산문 없음) — `행# | 규칙 = <문서 키> §<절> «원문 인용 20~60자» | 반대 방향 규칙(있으면 같은 형식) | 파일:행 | 위반 요지 | 동작 불변 정리 가능(예 / 아니오 — 사유: 계약·마이그레이션·타 BC) | C<n> 과 같음(있으면 ID)`. 문서 키는 플러그인 루트 기준 경로(점검 절 목록의 표기), 절은 번호가 있으면 번호, 없으면 제목 원문이다. `파일:행` 칸에는 위치마다 파일 경로를 적는다(여러 위치는 ` · ` 로 잇고, 같은 파일도 경로를 다시 적는다). 인용은 그 절 본문을 한 글자도 바꾸지 않고 옮기며 R-ID 는 적지 않는다. 규칙 문구를 댈 수 없는 항목은 내지 않는다 — 단 불편 서술 항목을 규칙에 잇지 못하면 `규칙 = 근거 없음(불편 #k)` 행으로 낸다. 두 규칙이 반대 방향이면 두 문구를 모두 적는다.\n\n"@ko .
+    djr:text "**산출**: 표만 낸다(산문 없음) — `행# | 규칙 = <문서 키> §<절> «원문 인용 20~60자» | 반대 방향 규칙(있으면 같은 형식) | 파일:행 | 위반 요지 | 바뀌는 것(없음 / 내부 약속 / 밖 동작 / DB 구조 / 다른 BC 파일 — 사유 한 구) | C<n> 과 같음(있으면 ID)`. 문서 키는 플러그인 루트 기준 경로(점검 절 목록의 표기), 절은 번호가 있으면 번호, 없으면 제목 원문이다. `파일:행` 칸에는 위치마다 파일 경로를 적는다(여러 위치는 ` · ` 로 잇고, 같은 파일도 경로를 다시 적는다). 인용은 그 절 본문을 한 글자도 바꾸지 않고 옮기며 R-ID 는 적지 않는다. 규칙 문구를 댈 수 없는 항목은 내지 않는다 — 단 불편 서술 항목을 규칙에 잇지 못하면 `규칙 = 근거 없음(불편 #k)` 행으로 낸다. 두 규칙이 반대 방향이면 두 문구를 모두 적는다. `바뀌는 것` 칸은 처방이 바꾸는 것을 닫힌 값 `없음` · `내부 약속` · `밖 동작` · `DB 구조` · `다른 BC 파일` 로 적는다 — 여럿이면 ` + ` 로 잇고 뒤에 ` — <사유 한 구>` 를 붙인다(밖 동작 = 외부 HTTP·이벤트·사용자 관찰·공개 계약처럼 밖에서 보이는 결과 · 내부 약속 = BC 안 함수·리포지토리 같은 내부 계약 · DB 구조 = 새 마이그레이션 · 다른 BC 파일 = `application/<다른 bc>/…` 편집). 이 칸은 정리 가능 여부가 아니다 — 바뀌는 것도 정리이고 승인은 G1 이다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s006/b5> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-db.md/s006> ;

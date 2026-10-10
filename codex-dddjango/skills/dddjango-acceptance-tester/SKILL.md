@@ -13,7 +13,7 @@ description: dddjango 코디네이터가 Phase 2(구현) 시작에 spawn_agent�
 
 ## 입력
 
-코디네이터가 승인된 설계 명세(G1 통과), 최소 열을 갖춘 영구 테스트 입장 표, 네 owner인 행, 관련 기존 test anchor를 준다. decision을 재분류하거나 새 후보를 test 의무로 승격하지 않는다. `pending`이나 종료 근거 없는 `remove/weaken`은 설계로 반송한다. 인수 테스트는 승인된 artifact가 있을 때만 명세의 패키지·테스트 구조에 배치한다. **프로덕션 구현 코드를 보지 않는다** — 기존 테스트와 승인 계약만 본다. 리팩토링 모드 파견이면 입력에 `모드 리팩토링` · `M<n>` ⓐ 목록(규칙 인용 포함) · 적용 범위 규범 원문이 함께 온다. 파견 입력에 적용 범위 규범이 실려 있으면 그 규범이 정한 몫과 때를 따른다.
+코디네이터가 승인된 설계 명세(G1 통과), 최소 열을 갖춘 영구 테스트 입장 표, 네 owner인 행, 관련 기존 test anchor를 준다. decision을 재분류하거나 새 후보를 test 의무로 승격하지 않는다. `pending`이나 종료 근거 없는 `remove/weaken`은 설계로 반송한다. 인수 테스트는 승인된 artifact가 있을 때만 명세의 패키지·테스트 구조에 배치한다. **프로덕션 구현 코드를 보지 않는다** — 기존 테스트와 승인 계약만 본다. 리팩토링 모드 파견이면 입력에 `모드 리팩토링` · `M<n>` ⓐ 목록(규칙 인용 포함) · 적용 범위 규범 원문 · «운영 전 예외» 블록 원문이 함께 오고, 변경 슬라이스면 그 슬라이스의 밖 동작 V(바뀌는 것 목록의 V 줄 · «바뀌는 기대» · `기대 추가 k`)와 그 V 에 딸린 `update`/`add`/`remove` 행이 온다 — `update`/`add` 행만 Red 로 만들고(`remove` 행은 그 케이스를 지운다), 옛 기대는 «바뀌는 기대»에 적힌 원소만 새 기대로 바꾼다(그 밖 기대 원소 · 케이스는 바꾸지 않고, `add` 의 새 case 는 V 가 바꾼 동작만이다). 파견 입력에 적용 범위 규범·«운영 전 예외» 블록이 실려 있으면 그 규범이 정한 몫과 때를 따른다.
 
 ## 산출
 
@@ -31,7 +31,7 @@ description: dddjango 코디네이터가 Phase 2(구현) 시작에 spawn_agent�
 - 기존 관련 migration 테스트의 현재 기대가 같으면 그대로 두고, 기대가 바뀌면 기존 assertion만 제자리 갱신·축소하며, 모두 종료됐으면 삭제한다. 새 파일·case·migration 시나리오·coverage가 필요하면 만들지 않고 검증 공백을 보고한다.
 - 입장된 하나의 행위를 읽기 쉽게 표현하되 테스트 분리 자체로 새 case를 늘리지 않는다.
 - 각 변경 테스트가 덮는 승인 행과 독자 failure를 명시한다 — 중복/누락 점검의 근거이고 discipline 감수자가 이를 본다.
-- 안정된 계약을 검증하므로 리팩터 중에도 불변이어야 한다.
+- 안정된 계약을 검증하므로 승인된 현행 계약을 구현하는 TDD Refactor 단계에서 불변이어야 한다.
 - implementation-test의 계약 테스트 패턴(기본은 실제 URLconf에 mount된 public client, 별도 승인된 adapter-local 계약만 그 경계의 client), discipline-tdd의 바깥 루프(Outside-In) 원칙, architecture-api·architecture-ddd의 계약·행위 정의를 근거로 따른다.
 - **Error response contract 12-slot**이 있는 오류 scope는 승인된 `dddjango-code-json | preserve-established` profile과 1~12번 slot 전체를 입장 심사의 contract evidence로 읽고, `add/update` 행이 참조한 public runtime/wire subset만 테스트 오라클로 쓴다. profile·status·shape·header를 기존 구현, 기존 테스트, 파일명에서 추론하거나 발명하지 않는다. 12-slot/profile이 빠지거나 서로 모순되면 설계로 반송한다. `dddjango-code-json`의 공통 shape는 영구 plugin 상수가 아니라 6번 slot의 exact field/type/required/default/nullability/모든 `Field` metadata/model config·legacy `Config`/validator/serializer/computed field/Pydantic hook inventory와 effective semantics/wire 의미 계약이다. 이 shape의 별도 승인은 직접 Python/Schema 테스트를 자동 입장시키지 않는다. `reuse`에는 관찰된 기존 exact-shape evidence가 있어야 하고, `create`와 `approved-change`에는 일반 G1과 분리된 명시적 사용자 shape-승인 evidence가 있어야 하며 없으면 `STOP_FOR_USER_APPROVAL`로 반송한다.
 - 직접 Schema/Python shape test는 HTTP와 별개인 공개 Python consumer 계약이 **별도 `add/update` 행**으로 승인된 경우에만 그 consumer가 의존하는 field·signature·default·생성 의미를 검증한다. Pydantic private API, validator 위치, `ValidationError.loc`, callable source digest, model config/hook inventory, framework 기본 직렬화/coercion은 자동 제품 테스트가 아니다.

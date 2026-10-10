@@ -45,7 +45,9 @@ BASELINE_SHA: "dict[str, str]" = {
     "domain_model/bad_rules": "b571ad8ca4677a586c856199281b6fd4d76a848426e453e147803b1f505f06b7",
     # 계약 레인 이행(3a68fe3)의 의도 변경 열거표 등재분 반영 — `[컨테이너] {rel}/  (내용: …)`
     # → `- {rel}: 횡단 버킷이 application/ 안에 있다 (내용: …)`(계약 문법 정형화).
-    "common_container/bad_rules": "5ce9427209a475032bf19b5cf8f16d356e6e976f2119afe1639159cc8afd23fc",
+    # 2026-10-04 D17 재실측 — 결선 재료 칸(`wiring_material.py`) 삽입 재번호로 문구 속 행 번호만 +1
+    # (행 번호를 가리면 줄 차이 0 · construct_drift_report.EXPECTED_SHA 와 같은 값).
+    "common_container/bad_rules": "10f52932ce07457413bcb0c580ae8735a33f1ea08f3725a7a370962e1f5d39d0",
 }
 
 # DM-red 기대 레코드 표본(내용 단언 — 필드 그대로) · 계수 기대.

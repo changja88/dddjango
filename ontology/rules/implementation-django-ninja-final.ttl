@@ -2402,6 +2402,22 @@ djr:R-3465 a djr:Prohibition ;
     prov:specializationOf djr:R-3465 ;
     djr:revision 1 .
 
+djr:R-3618 a djr:Obligation ;
+    skos:prefLabel "build_ 공유 결선 재료의 wiring_material.py 소유 · 재료 함수 모양 · 모듈째 수입"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3618@2026-10-04> .
+
+<https://numchida.com/ns/djr#R-3618@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3618 ;
+    djr:revision 1 .
+
+djr:R-3619 a djr:Exception ;
+    skos:prefLabel "build_ 마다의 구현 선택 반복은 R-1515 중복이 아니다"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3619@2026-10-04> .
+
+<https://numchida.com/ns/djr#R-3619@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3619 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/skills/implementation-django-ninja/references/final.md> a djr:Document ;
     skos:prefLabel "implementation-django-ninja-final"@ko .
 
@@ -2787,8 +2803,8 @@ djr:R-3465 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;
     djr:kind djr:kind-norm ;
     djr:order 21 ;
-    djr:statesNorm djr:R-0724, djr:R-0725 ;
-    djr:text "- **매요청 호출**: 컨트롤러 메서드에서 `use_case = build_place_order()` 후 `use_case.execute(command)`. 모듈 레벨 전역 인스턴스로 import 시점에 만들지 않는다(import 부작용·테스트 오버라이드 회피).\n"@ko .
+    djr:statesNorm djr:R-0724, djr:R-0725, djr:R-3618, djr:R-3619 ;
+    djr:text "- **매요청 호출**: 컨트롤러 메서드에서 `use_case = build_place_order()` 후 `use_case.execute(command)`. 모듈 레벨 전역 인스턴스로 import 시점에 만들지 않는다(import 부작용·테스트 오버라이드 회피).\n- 여러 `build_<use_case>()` 가 같은 **결선 재료** — 교체 대상이 아닌 공유 생성 지식(설정 값 읽기, 설정 값으로 자기 BC 값 객체 만들기) — 를 쓰면 그 지식은 같은 BC 의 `composition_root/wiring_material.py` 의 재료 함수 하나에 둔다. 재료 파일은 `django.conf.settings` 와, 자기 BC `domain_layer` 의 값 객체 모듈 중 «docstring · import · `@dataclass(frozen=True …)` 클래스 하나»로만 된 모듈의 그 클래스만 import 한다(그 모듈 안에서 클래스 · `dataclass` · `classmethod` · `create` 이름은 정해진 한 자리에서만 묶인다). 재료 함수는 매개변수와 데코레이터가 없고 이름이 `_`·`build_` 로 시작하지 않으며, 본문은 `return` 한 문장이다. 돌려주는 식은 셋 중 하나다 — `settings.<대문자 이름>`, 그 값과 리터럴 상수를 인자로 값 객체를 만든 것, 같은 인자로 값 객체의 `create` 를 부른 것. 설정 값 변환(`int(…)` 등)과 그 밖의 식은 쓰지 않는다 — 변환은 `build_` 본문이나 값 객체 안에서 한다. `dependency_wiring.py` 는 재료 파일을 모듈째(`from application.<bc>.composition_root import wiring_material`) 들여 `wiring_material.<재료>()` 로 부르고, 그 밖의 파일(시험 포함)은 재료 파일을 import 하거나 언급하지 않는다. 어느 구현을 어느 포트에 꽂는지와 유스케이스 생성은 `dependency_wiring.py` 의 `build_` 에만 둔다 — use case 마다 선택이 반복되는 것은 중복이 아니다(교체 지점은 `build_` 마다 보인다). 여러 `build_` 가 같은 하위 유스케이스 조립을 쓰면 그 하위 유스케이스의 `build_<use_case>()` 를 두고 부른다. 시험은 `build_` 를 부른다(설정은 `override_settings`).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3/b22> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/implementation-django-ninja/references/final.md/s010-2.3> ;

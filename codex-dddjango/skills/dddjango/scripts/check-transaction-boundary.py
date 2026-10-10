@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """dddjango 트랜잭션 경계 검사기 — 「한 트랜잭션 = 애그리거트 하나」(D50) 축의 결정적 백스톱.
 
-리포지토리 «파일» 계약(트리 68행)과 유스케이스의 쓰기 규율을 강제한다.
+리포지토리 «파일» 계약(트리 69행)과 유스케이스의 쓰기 규율을 강제한다.
 
 담당 규칙 (rule-owner-map · 총 11 — #343 은 admin 가족이라 check-naming 이관):
   #4   [ast]  `application_layer/**` 의 import 에 django 가 하나라도 있으면 위반 —

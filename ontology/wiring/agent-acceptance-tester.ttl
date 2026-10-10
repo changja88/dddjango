@@ -195,3 +195,6 @@ djr:R-3614 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 djr:R-3615 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
 djr:R-3616 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3652 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/behavior_guard.py> .

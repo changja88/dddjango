@@ -785,12 +785,18 @@ djr:R-2572 a djr:Exception ;
     djr:revision 1 .
 
 djr:R-2573 a djr:Prohibition ;
-    skos:prefLabel "승인 스코프 밖 기존 배선·배치의 이동 금지(강제 전파 금지 — 이동 권한은 G0 사용자 빚 결정→슬라이스 0)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2573@2026-08-22> .
+    skos:prefLabel "승인 스코프 밖 기존 배선·배치의 이동 금지(강제 전파 금지 — 이동 권한은 G0 사용자 빚 결정→리팩토링 슬라이스(슬라이스 0·리팩토링 모드 변경 슬라이스))"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2573@2026-10-04> .
 
 <https://numchida.com/ns/djr#R-2573@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2573 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2573@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-2573 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2573@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-2574 a djr:Obligation ;
     skos:prefLabel "code-json 또는 preserve slot 의 동일 mechanism 명시 승인 시 대상 프로젝트 실제 dependency pin 으로 두 인자 Status·literal/status constant·승인 body-field status 표현·multi-response declaration 실행 계약 검증"@ko ;
@@ -1073,19 +1079,63 @@ djr:R-3506 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3577 a djr:Obligation ;
-    skos:prefLabel "리팩토링 모드 파견 입력 = 모드 리팩토링 · M ⓐ 목록(규칙 인용) · 적용 범위 규범 원문"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3577@2026-09-27> .
+    skos:prefLabel "리팩토링 모드 파견 입력 = 모드 리팩토링 · M ⓐ 목록(규칙 인용) · 적용 범위 규범 원문 · 운영 전 예외 블록 원문 · 창 종류(0T|0C|0F|변경) · (변경) 그 슬라이스 승인 V"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3577@2026-10-04> .
 
 <https://numchida.com/ns/djr#R-3577@2026-09-27> a djr:Expression ;
     prov:specializationOf djr:R-3577 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-3577@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3577 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3577@2026-09-27> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3578 a djr:Obligation ;
-    skos:prefLabel "파견 입력에 적용 범위 규범이 실려 있으면 그 규범이 정한 몫과 때를 따른다(리팩토링 모드)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3578@2026-09-27> .
+    skos:prefLabel "파견 입력에 적용 범위 규범·운영 전 예외 블록이 실려 있으면 그 규범이 정한 몫과 때를 따른다(리팩토링 모드)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3578@2026-10-04> .
 
 <https://numchida.com/ns/djr#R-3578@2026-09-27> a djr:Expression ;
     prov:specializationOf djr:R-3578 ;
+    djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3578@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3578 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3578@2026-09-27> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
+
+djr:R-3648 a djr:Obligation ;
+    skos:prefLabel "리팩토링 모드 변경 슬라이스 입력 = 그 슬라이스 승인 V 에 딸린 행 · 밖 동작 V 의 update/add 는 acceptance-tester Red 뒤 · remove 는 acceptance-tester 의 케이스 삭제 결과(삭제만 있는 V 는 Red 없음)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3648@2026-10-04> .
+
+<https://numchida.com/ns/djr#R-3648@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3648 ;
+    djr:revision 1 .
+
+djr:R-3649 a djr:Obligation ;
+    skos:prefLabel "0T — 기대 변경은 V 밖 update 행 케이스에서만 · 0F(follow) — 명세 retain 재조직 행(재조직 표지) 파일만 기대 의미 그대로 편집(시험 소유 무관 · 기대 원소 변경 = red)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3649@2026-10-04> .
+
+<https://numchida.com/ns/djr#R-3649@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3649 ;
+    djr:revision 1 .
+
+djr:R-3650 a djr:Obligation ;
+    skos:prefLabel "변경 창 — 안 V 몫과 그 시험 update/add/remove(owner coder) 집행 · 밖 V 는 acceptance-tester 시험 편집 뒤 제품(update/add = Red 뒤 · remove = 케이스 삭제 결과 · 삭제만 있는 V 에 Red 를 만들거나 기다리지 않음) · 바뀌는 기대 밖 기대 원소 무변 · 대상 BC 밖은 다른 BC 편집 목록만 · 리팩토링 모드 시험 편집은 감사 키 또는 red"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3650@2026-10-04> .
+
+<https://numchida.com/ns/djr#R-3650@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3650 ;
+    djr:revision 1 .
+
+djr:R-3651 a djr:Prohibition ;
+    skos:prefLabel "DB 구조 V — makemigrations 새 파일(승인 연산 호출식과 같게) · 기존 마이그레이션 수정·삭제·RunPython·RunSQL·SeparateDatabaseAndState 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3651@2026-10-04> .
+
+<https://numchida.com/ns/djr#R-3651@2026-10-04> a djr:Expression ;
+    prov:specializationOf djr:R-3651 ;
     djr:revision 1 .
 
 <https://numchida.com/ns/djr#d/dddjango/agents/coder.md> a djr:Document ;
@@ -1162,15 +1212,15 @@ djr:R-3578 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s002> ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
-    djr:statesNorm djr:R-2487 ;
-    djr:text "- 이번 제품 구현 슬라이스와 연결된 `add/update/reuse/retain/remove/reject` 행. `pending`은 입력되면 구현하지 않고 반송한다.\n"@ko .
+    djr:statesNorm djr:R-2487, djr:R-3648 ;
+    djr:text "- 이번 제품 구현 슬라이스와 연결된 `add/update/reuse/retain/remove/reject` 행. `pending`은 입력되면 구현하지 않고 반송한다. 리팩토링 모드 변경 슬라이스면 그 슬라이스 승인 V 에 딸린 행이다 — 밖 동작 V 의 `update` · `add` 행은 acceptance-tester 의 Red 뒤에 받고, `remove` 행은 acceptance-tester 가 그 케이스를 지운 결과를 받는다(삭제만 있는 V 에는 Red 가 없다).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s002/b5> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s002> ;
     djr:kind djr:kind-prose ;
     djr:order 5 ;
     djr:statesNorm djr:R-3577, djr:R-3578 ;
-    djr:text "- 승인된 명세의 **패키지·테스트 구조 결정 절**(코드·테스트 배치의 근거 — 명세의 일부).\n- (리팩토링 모드면) `모드 리팩토링` · `M<n>` ⓐ 목록(규칙 인용 포함) · 적용 범위 규범 원문. 파견 입력에 적용 범위 규범이 실려 있으면 그 규범이 정한 몫과 때를 따른다.\n\n"@ko .
+    djr:text "- 승인된 명세의 **패키지·테스트 구조 결정 절**(코드·테스트 배치의 근거 — 명세의 일부).\n- (리팩토링 모드면) `모드 리팩토링` · `M<n>` ⓐ 목록(규칙 인용 포함) · 적용 범위 규범 원문 · «운영 전 예외» 블록 원문 · 창 종류(0T | 0C | 0F | 변경) · (변경 창이면) 그 슬라이스의 승인 V(바뀌는 것 목록의 V 줄 · 연산 · 데이터 · 다른 BC 편집 줄). 파견 입력에 적용 범위 규범·«운영 전 예외» 블록이 실려 있으면 그 규범이 정한 몫과 때를 따른다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s003> a djr:Section ;
     djr:headingSnapshot "## 산출"@ko ;
@@ -1294,7 +1344,7 @@ djr:R-3578 a djr:Obligation ;
     djr:order 21 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-architect.md/s005/b17>, <https://numchida.com/ns/djr#s/dddjango/skills/discipline-houserules/SKILL.md/s004-1/b2> ;
     djr:statesNorm djr:R-2567, djr:R-2568, djr:R-2569, djr:R-2570, djr:R-2571, djr:R-2572, djr:R-2573 ;
-    djr:text "- **배선·등록 형태는 profile 무관 표준이다**(2026-08-12 라운드 1′): 승인 scope마다 API 하나, `auto_import=False` controller, side-effect-free BC registrar(`register_<bc>_api`), registrar를 명시적으로 호출해 API를 mount하는 root URL composition. import-time registration을 금지하며 BC `composition_root/`(`dependency_wiring.py` — final.md §1 트리 2~4행)가 dependency injection만 소유한다. framework 오류를 위해 함수형 `Router`를 발명하거나 강제하지 않는다. `preserve-established`가 유지하는 native 는 오류 wire 산출물(schema/handler/body)이지 registration/composition 이 아니다 — **기존 BC 의 배선 실물(`*_api_router.py` 동형)은 배선 결정의 입력이 아니다.** 이 표준의 관할은 승인 스코프가 낳는 산출물(신규 파일·기존 파일에 추가되는 줄)이다 — 승인 스코프 밖 기존 배선·배치는 어떤 위반 판정을 근거로도 이 작업에서 옮기지 않는다(강제 전파 금지 — 이동 권한은 G0 사용자 빚 결정→슬라이스 0 뿐 · `discipline-houserules` SKILL §1.1 판정 물음 · 2026-08-13).\n"@ko .
+    djr:text "- **배선·등록 형태는 profile 무관 표준이다**(2026-08-12 라운드 1′): 승인 scope마다 API 하나, `auto_import=False` controller, side-effect-free BC registrar(`register_<bc>_api`), registrar를 명시적으로 호출해 API를 mount하는 root URL composition. import-time registration을 금지하며 BC `composition_root/`(`dependency_wiring.py` — final.md §1 트리 2~4행)가 dependency injection만 소유한다. framework 오류를 위해 함수형 `Router`를 발명하거나 강제하지 않는다. `preserve-established`가 유지하는 native 는 오류 wire 산출물(schema/handler/body)이지 registration/composition 이 아니다 — **기존 BC 의 배선 실물(`*_api_router.py` 동형)은 배선 결정의 입력이 아니다.** 이 표준의 관할은 승인 스코프가 낳는 산출물(신규 파일·기존 파일에 추가되는 줄)이다 — 승인 스코프 밖 기존 배선·배치는 어떤 위반 판정을 근거로도 이 작업에서 옮기지 않는다(강제 전파 금지 — 이동 권한은 G0 사용자 빚 결정→리팩토링 슬라이스(슬라이스 0 · 리팩토링 모드 변경 슬라이스) 뿐 · `discipline-houserules` SKILL §1.1 판정 물음 · 2026-08-13).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b22> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
@@ -1450,5 +1500,5 @@ djr:R-3578 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s006> ;
     djr:kind djr:kind-norm ;
     djr:order 6 ;
-    djr:statesNorm djr:R-3505, djr:R-3506 ;
-    djr:text "- **슬라이스 0 창**(2026-09-27): Coordinator 가 창 종류(0T | 0C)를 준다. **0C**(코드 정리)에서는 옮긴·개명한 코드를 따라가는 테스트 치환 편집(import·문자열 속 경로·이름)을 테스트 소유와 무관하게(외부 계약 테스트 포함) 네가 한다 — 테스트의 로직·단언은 바꾸지 않고, 판정은 Coordinator 의 `behavior_guard.py close` 다. **0T**(테스트 정리)에서는 입력된 ⓐ 항목을 고치는 테스트 편집만 테스트 소유와 무관하게 한다 — 새 case 를 더하거나 케이스 이름을 바꾸지 않고, 제품 코드를 편집하지 않는다(루트 pytest 설정 절은 테스트 쪽이다). 어느 창이든 반대쪽 본문(0C 의 테스트 로직 · 0T 의 제품 코드)을 고쳐야 정리가 되면 편집하지 말고 그 사실을 보고한다.\n"@ko .
+    djr:statesNorm djr:R-3505, djr:R-3506, djr:R-3649, djr:R-3650, djr:R-3651 ;
+    djr:text "- **슬라이스 0 창**(2026-09-27): Coordinator 가 창 종류(0T | 0C)를 준다. **0C**(코드 정리)에서는 옮긴·개명한 코드를 따라가는 테스트 치환 편집(import·문자열 속 경로·이름)을 테스트 소유와 무관하게(외부 계약 테스트 포함) 네가 한다 — 테스트의 로직·단언은 바꾸지 않고, 판정은 Coordinator 의 `behavior_guard.py close` 다. **0T**(테스트 정리)에서는 입력된 ⓐ 항목을 고치는 테스트 편집만 테스트 소유와 무관하게 한다 — 새 case 를 더하거나 케이스 이름을 바꾸지 않고, 제품 코드를 편집하지 않는다(루트 pytest 설정 절은 테스트 쪽이다). 어느 창이든 반대쪽 본문(0C 의 테스트 로직 · 0T 의 제품 코드)을 고쳐야 정리가 되면 편집하지 말고 그 사실을 보고한다(리팩토링 모드에서는 그 몫을 명세가 0F · 변경 슬라이스로 둔다). **리팩토링 모드 창**(2026-10-04): **0T**(`test`)의 기대 변경은 명세 입장 표 `update` 행(V 에 딸리지 않은 행)의 케이스에서만 한다(그 밖 확정 기대 변화는 red 다). **0F**(`follow` — 구조 추종)에서는 명세의 `retain` 재조직 행(candidate 칸에 낱말 `재조직`)에 적힌 파일만 «기대 의미 그대로» 고친다(시험 소유 무관 — 기대 원소를 바꾸면 red 다). **변경 창**(`change`)에서는 승인 V 의 안(내부 약속 · DB 구조) 몫과 그 시험 `update`/`add`/`remove`(owner coder)를 집행하고, 밖 동작 V 는 acceptance-tester 의 시험 편집 뒤에 제품 코드를 고친다(`update` · `add` 행은 그 Red 뒤 · `remove` 행은 acceptance-tester 가 그 케이스를 지운 결과를 받는다 — 삭제만 있는 V 에 Red 를 만들거나 기다리지 않는다) — «바뀌는 기대» 밖 기대 원소는 바꾸지 않고, 대상 BC 밖 파일은 다른 BC 편집 목록에 적힌 것만 고친다. DB 구조 V 는 `makemigrations` 로 새 마이그레이션 파일을 만들어 승인 연산 호출식과 같게 한다 — 기존 마이그레이션 파일은 고치거나 지우지 않고 `RunPython` · `RunSQL` · `SeparateDatabaseAndState` 는 쓰지 않는다. 리팩토링 모드의 어느 창이든 시험 편집은 close 가 감사 키 또는 red 로 처분한다(자동 초록 없음).\n"@ko .

@@ -562,3 +562,5 @@
 | 649 | ast | scripts/check-api-error-controller-contract.py | — | 신설 | 09-04 현장 보고 3 S-5 — `Schema`+`RootModel` 동시 상속 금지(표준 트리 슬라이스) |
 | 650 | ast+ | scripts/check-public-surface-annotation.py | agents/discipline-reviewer.md | 신설 | 09-04 현장 보고 3 S-4 — `json.load(s)` 무검증 흐름 ⓓ 전용(확정 위반은 #647) |
 | 651 | ast | scripts/check-port-adapter-pairing.py | — | 신설 | 09-09 어댑터 고정 역할의 클래스별 파일·상수 묶음 |
+| 652 | ast | scripts/check-composition-root.py | — | 신설 | 10-04 D17 결선 재료 칸 `wiring_material.py` — 재료 파일 모양 · 생성식 셋 · 값 객체 모듈 허용 목록 |
+| 653 | ast | scripts/check-composition-root.py | — | 신설 | 10-04 D17 결선 재료 칸 — `wiring_material` 낱말 결속(모듈째 수입 한 줄 · 재료 호출만) |

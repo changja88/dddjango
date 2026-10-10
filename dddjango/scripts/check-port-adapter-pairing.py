@@ -1019,7 +1019,7 @@ def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
     # admin/ 면제는 트리 정본과의 짝맞춤이다: §1 트리가 django_<bc>/admin/<entity>/
     # (panel·form/·feature/) 칸을 명시하는데 관리 패널은 ModelAdmin 등록에 ORM 모델이
     # 필수라, 면제 없이는 그 칸의 어떤 준수 구현도 불가능했다(2026-08-15 S3-r2′ 실증).
-    # capability django 어댑터 면제(#462 확장 — 2026-08-24): §1 트리 103~104행
+    # capability django 어댑터 면제(#462 확장 — 2026-08-24): §1 트리 104~105행
     # adapter/<capability>/<technology>_adapter.py 의 django 기술 구현. #319 ORM
     # 갈래의 persistence 셋에는 «비애그리거트 ORM 쓰기 능력»의 칸이 없어(리포지토리=
     # 애그리거트 전용 #354 · bypass=조회 전용 #236) 그 능력 포트 구현이 여기 온다 —

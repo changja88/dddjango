@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """dddjango 횡단 `framework/` 컨테이너 레벨 결정적 백스톱.
 
-표준 트리에서 `framework/`(저장소 횡단 공용 — 트리 112~134행)는 *프로젝트 루트* 에 둔다
+표준 트리에서 `framework/`(저장소 횡단 공용 — 트리 113~135행)는 *프로젝트 루트* 에 둔다
 = `application/` 의 *형제*. `common` 은 옛 이름이다 — 이관 종료(2026-08-12) 후 수용하지
 않고, 오배치 버킷 «검출»(#49)로만 알아본다. 그런데 `application/framework/`
 (또는 `application/common/`)처럼 `application/`(= BC 컨테이너) *안* 에 넣으면 위반이다.
@@ -119,7 +119,7 @@ def main(argv: list[str]) -> int:
         )
 
     if findings:
-        print("blocker — 횡단 `framework/` 버킷이 `application/` 안에 있다 (트리 112행: `framework/` 는 프로젝트 루트 = `application/` 의 형제)")
+        print("blocker — 횡단 `framework/` 버킷이 `application/` 안에 있다 (트리 113행: `framework/` 는 프로젝트 루트 = `application/` 의 형제)")
         emit_all(findings, printer=print)
         print(
             "  근거: `framework/`(저장소 횡단 공용 — 옛 이름 `common/` 도 같은 버킷이다)는 "

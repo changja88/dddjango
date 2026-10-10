@@ -11,7 +11,7 @@
     3) 그 모듈에 DatabaseWrapper 서브클래스 + 트랜잭션/락 의미 변경 마커.
     4) (git 레포면) 이번 변경에서 추가/수정됨 — git 아니면 가드 통과(fail-closed).
 
-⑵ 트리 개정 명세 몫 — migrations 규율 4규칙 (트리 80·81행 · 조각 ⓑ):
+⑵ 트리 개정 명세 몫 — migrations 규율 4규칙 (트리 81·82행 · 조각 ⓑ):
   #336 마이그레이션은 `django_<bounded_context>/migrations/` 에 산다 — 중앙(BC 밖)
        마이그레이션 폴더 금지. BC «안» 오배치는 #325(check-db-table) 소유라 여기서
        중복으로 내지 않는다.
@@ -334,7 +334,7 @@ def main(argv: list[str]) -> int:
         print(f"blocker {len(findings)}건 — 메커니즘 소유권·migrations 규율 위반")
         emit_all(findings, printer=print, indent="  ")
         return 2
-    print(f"clean — settings {len(settings_files)}개 · migrations 폴더 {len(mig_dirs)}개 규율 일치 (트리 80·81행 · standard_tree {tree.SOURCE_SHA})")
+    print(f"clean — settings {len(settings_files)}개 · migrations 폴더 {len(mig_dirs)}개 규율 일치 (트리 81·82행 · standard_tree {tree.SOURCE_SHA})")
     return 0
 
 
