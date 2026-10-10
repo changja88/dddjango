@@ -49,8 +49,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from src.debt import (DebtError, DOC_PATHSPEC, SPEC_SLICE0_HEAD, REF_GREP_OPTIONS, REF_PATHSPEC,  # noqa: E402
-                      debt_universe, doc_reference_lines, module_of, parse_spec_pairs, reference_lines,
-                      residual_m_sets, tail_of)
+                      debt_universe, deferral_active, deferral_m_sets, deferral_tail, doc_reference_lines,
+                      module_of, moved_debt_files, parse_spec_methods, parse_spec_pairs, reference_lines,
+                      residual_m_sets, tail_of, _local_minute)
 
 from src.products import REGISTRY as PRODUCT_REGISTRY, declaration_error  # noqa: E402
 
@@ -1076,7 +1077,9 @@ def cmd_plan(project: Path, raw_unit: str, debt_path: Path, out: "Path | None", 
 def _plan_names(project: Path, data: PlanData, debt: dict, names: Path, out: Path) -> int:
     """명세 `## 슬라이스 0` 절의 `경로:`·`이름:` → 명세 참조 줄 (나) · 편집 줄 키 · 키 전체 줄."""
     try:
-        paths, pairs = parse_spec_pairs(_read(names), require=True)
+        spec_text: str = _read(names)
+        paths, pairs = parse_spec_pairs(spec_text, require=True)
+        methods = parse_spec_methods(spec_text)
     except DebtError as exc:
         raise ToolError(str(exc)) from None
     scope_paths: "set[str]" = {"web/" + f for f in data.scope}
@@ -1121,6 +1124,15 @@ def _plan_names(project: Path, data: PlanData, debt: dict, names: Path, out: Pat
             # 맨 이름은 옛 모듈을 참조하는 파일에서만 — BC 마다 같은 이름 helper 를 두는 정형(반복 > 상속).
             keep(reference_lines(project, [name], word=True, paths=importers), f"이름 `{old}`")
             commands.append(_grep_command(name, importers, word=True))
+    for old, _new in methods:
+        module, _cls, method = old.rsplit('.', 2)
+        module_hits = reference_lines(project, [module], word=True)
+        importers = sorted({p for p, _l, _t in module_hits if p.startswith('web/')})
+        commands.append(_grep_command(module, REF_PATHSPEC, word=True))
+        if importers:
+            keep(reference_lines(project, [method], word=True, paths=importers), f'메서드 이동 `{old}`')
+            commands.append(_grep_command(method, importers, word=True))
+    method_tail: str = f' · 메서드 {len(methods)}' if methods else ''
     findings: "list[dict]" = _findings(debt)
     ids: "dict[str, str]" = _key_ids(debt)
     before: "set[str]" = set(data.line_edits)
@@ -1129,7 +1141,7 @@ def _plan_names(project: Path, data: PlanData, debt: dict, names: Path, out: Pat
     new_keys: "list[str]" = _edit_line_keys(data, findings, ids, lines_set)
     key_full: "list[str]" = sorted(w for w in data.line_edits if w not in before)
     body: "list[str]" = [f"# plan --names — {_now()}", "", f"- 명세: `{names}`",
-                         f"- 쌍: 경로 {len(paths)} · 이름 {len(pairs)}", "", "## 명세 참조 줄 (나)", ""]
+                         f"- 쌍: 경로 {len(paths)} · 이름 {len(pairs)}{method_tail}", "", "## 명세 참조 줄 (나)", ""]
     body += [_item(w, why) for w, why in sorted(found.items())] or ["- 없음"]
     body += ["", "## 편집 줄 키(G0 재승인 대상)", ""]
     body += [_item(k, data.keys[k]) for k in sorted(new_keys)] or ["- 없음"]
@@ -1139,7 +1151,7 @@ def _plan_names(project: Path, data: PlanData, debt: dict, names: Path, out: Pat
     out.mkdir(parents=True, exist_ok=True)
     (out / "plan-names.md").write_text("\n".join(body), encoding="utf-8")
     print(f"요약: plan --names 쌍 경로 {len(paths)} · 이름 {len(pairs)} · (나) 줄 {len(found)} · "
-          f"편집 줄 키 {len(new_keys)} · 키 전체 줄 {len(key_full)} · 문서 글 적중 {len(docs)} → {out / 'plan-names.md'}")
+          f"편집 줄 키 {len(new_keys)} · 키 전체 줄 {len(key_full)} · 문서 글 적중 {len(docs)}{method_tail} → {out / 'plan-names.md'}")
     return EXIT_OK
 
 
@@ -1844,7 +1856,9 @@ def cmd_residual(project: Path, folder: Path, finalize: "str | None") -> int:
     if debt.get("mode") != "refactor":
         raise ToolError("debt-g0.json mode 가 refactor 가 아니다 — 리팩토링 실행의 폴더가 아니다")
     try:
-        _when, audit_ts, adopted, removed = residual_m_sets(_read(folder / "refactor-scope.md"))
+        scope_text: str = _read(folder / "refactor-scope.md")
+        _when, audit_ts, adopted, removed = residual_m_sets(scope_text)
+        active: bool = deferral_active(scope_text)
     except DebtError as exc:
         raise ToolError(str(exc)) from None
     items: "set[str]" = adopted - removed
@@ -1854,6 +1868,29 @@ def cmd_residual(project: Path, folder: Path, finalize: "str | None") -> int:
     verdicts: "dict[str, Verdict]" = {v.mid: v for v in _load_verdicts(audit, VERDICT_FINAL)}
     plan: Plan = Plan(audit)
     rows: "dict[str, Row]" = {r.rid: r for r in _load_rows(audit, plan)}
+    deferred: "dict[str, str]" = {}
+    readopted: "dict[str, str]" = {}
+    if active:
+        try:
+            moved: "set[str]" = moved_debt_files(project, folder, debt)
+            pinned: "set[str]" = {r['key'] for r in _findings(debt) if r.get('undeferrable')}
+            pinned_ids: "set[str]" = {c for c, k in debt['ids'].items() if k in pinned}
+            moving_m: "set[str]" = set()
+            pinned_m: "set[str]" = set()
+            for mid, v in verdicts.items():
+                origin_ids = v.origin + [o for x in verdicts.values() if x.kind == '병합' and x.merge_to == mid
+                                         for o in x.origin]
+                origin_rows = [rows[o] for o in origin_ids if o in rows]
+                if any(l and _repo_path(project, l[0]).removeprefix('web/') in moved
+                       for r in origin_rows for l in (_parse_location(t) for t in _locations(r.where))):
+                    moving_m.add(mid)
+                if any(set(re.findall(r'C[1-9]\d*', r.same_key)) & pinned_ids or any(k in r.same_key for k in pinned)
+                       for r in origin_rows):
+                    pinned_m.add(mid)
+            _active, deferred, readopted = deferral_m_sets(scope_text, set(verdicts), pinned_m, moving_m)
+        except DebtError as exc:
+            raise ToolError(str(exc)) from None
+    legacy_tail: str = deferral_tail(active, deferred)
     state: dict = json.loads(_read(folder / "build-state.json"))
     anchor: str = str(state.get("git_snapshot") or "").strip()
     if not anchor:
@@ -1878,6 +1915,8 @@ def cmd_residual(project: Path, folder: Path, finalize: "str | None") -> int:
                                      for l in (_parse_location(t) for t in _locations(rows[o].where)) if l})
         watched[mid] = sorted(set(files) | {mapping.get(f, f) for f in files})
         before: "dict[str, str | None] | None" = prev_solved.get(mid)
+        if mid in readopted and prev_stamp[:13] <= _local_minute(readopted[mid]).strftime('%Y%m%d-%H%M'):
+            before = None                                # 미룸 전의 해소를 재채택에 이월하지 않는다
         if before is not None and before == {p: _file_sha(project, p) for p in before}:
             carried.append(mid)
             continue
@@ -1892,6 +1931,8 @@ def cmd_residual(project: Path, folder: Path, finalize: "str | None") -> int:
     lines += [f"| {m} | 잔존 | {w} |" for m, w in floor.items()]
     lines += [f"| {m} | 해소 유지 | 직전 확정 {prev_stamp} 뒤 항목 파일·대응 경로 무변 |" for m in carried]
     (out_dir / "bottom.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    for mid, typ in sorted(deferred.items(), key=lambda item: int(item[0][1:])):
+        print(f'legacy 잔존 ⓑ({typ}) {mid} — 발견 1(해소 아님 · 보고만)')
     pending_ids: "list[str]" = sorted({m for ms in to_review.values() for m in ms}, key=lambda k: int(k[1:]))
     if finalize is None:
         for lens, mids in to_review.items():
@@ -1916,9 +1957,9 @@ def cmd_residual(project: Path, folder: Path, finalize: "str | None") -> int:
         tail: str = f" · 해소 유지 {len(carried)}" if carried else ""
         if pending_ids:
             print(f"요약: residual 결정적 잔존 {len(floor)}{tail} · 리뷰어 확인 대상 {len(pending_ids)}"
-                  f"({'·'.join(sorted(to_review))}) · M_m 미정 — --finalize {stamp} → {out_dir}")
+                  f"({'·'.join(sorted(to_review))}) · M_m 미정{legacy_tail} — --finalize {stamp} → {out_dir}")
             return EXIT_OK
-        print(f"요약: residual M_m={len(floor)}(결정적 잔존 {len(floor)}){tail} · 리뷰어 확인 대상 0 → {out_dir}")
+        print(f"요약: residual M_m={len(floor)}(결정적 잔존 {len(floor)}){tail} · 리뷰어 확인 대상 0{legacy_tail} → {out_dir}")
         (out_dir / "result.json").write_text(json.dumps(
             {"stamp": stamp, "audit": audit_ts, "snapshot": anchor, "solved": {m: prev_solved[m] for m in carried}},
             ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
@@ -1934,6 +1975,10 @@ def cmd_residual(project: Path, folder: Path, finalize: "str | None") -> int:
     # (앞 판 해소의 강등은 모두 받는다 · 행이 없으면 앞 판 판정·지문 유지).
     # 판형 아님 이력(`redo`)은 판정과 따로 쌓는다 — 이력 있는 M 이 다시 판형 아님이면 잔존(반복)이다.
     before_states, redo_before, kept = _same_stamp(out_dir / "result.json")
+    for mid, when in readopted.items():
+        if stamp[:13] <= _local_minute(when).strftime('%Y%m%d-%H%M'):
+            before_states.pop(mid, None)
+            kept.pop(mid, None)
     code_changed: "set[str]" = {p for p in changed if not p.startswith(OUTPUT_ROOTS)}   # 산출물 파일은 해소 근거가 아니다
     states: "dict[str, str]" = {}
     unformatted: "dict[str, list[tuple[str, str]]]" = {}     # M → [(렌즈, 불량 토큰)]
@@ -1998,7 +2043,7 @@ def cmd_residual(project: Path, folder: Path, finalize: "str | None") -> int:
                                                     sort_keys=True) + "\n", encoding="utf-8")
     print(f"요약: residual M_m={m_m}(결정적 잔존 {len(floor)} · 리뷰어 잔존 {len(reviewer_left)} · 근거 판형 아님 "
           f"{len(unformed)} · 판단 불가 {len(unknown)}) · 해소 {len(solved) + len(carried)}"
-          f"{f'(이월 {len(carried)})' if carried else ''} → {out_dir / 'result.md'}")
+          f"{f'(이월 {len(carried)})' if carried else ''}{legacy_tail} → {out_dir / 'result.md'}")
     if unformed:                                            # `요약:` 뒤 — 재기재 안내(슬라이스 0 재개봉·새 시각이 아니다)
         notes_redo: str = " · ".join(m + "(" + ", ".join(f"{lens}: `{tok}`" for lens, tok in unformatted[m]) + ")"
                                       for m in unformed)

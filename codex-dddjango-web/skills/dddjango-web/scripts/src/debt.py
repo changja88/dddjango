@@ -57,6 +57,9 @@ ROW_RESUBMIT: str = '재상정 키'
 ROW_M_A: str = '의미 ⓐ 키'
 ROW_M_RESUBMIT: str = '의미 재상정 키'
 ROW_M_AUDIT: str = '의미 audit'
+DEFERRAL_TYPES: Tuple[str, ...] = ('일반', '수리 대기', '다른 요청')
+_DEFERRAL_ROWS: Tuple[str, ...] = ('ⓑ 키', 'ⓑ 수리 대기 키', 'ⓑ 다른 요청 키')
+_DECISIONS: str = '_미룸 결정 줄'
 MODE_FEATURE: str = 'feature'
 MODE_REFACTOR: str = 'refactor'
 # 명세(design-spec.md)의 슬라이스 0 절 머리와 정형 행 — design-architect-web 문면과 같은 문자열이다.
@@ -91,6 +94,8 @@ _HEAD_RE = re.compile(r'^## (G0 재승인|G0 정지|G0|ⓐ 재상정) '
                       r'(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2})?(?:[+-]\d{2}:?\d{2}|Z)?)\s*$')
 _ROW_RE = re.compile(r'^(?:- )?(의미 ⓐ 키|의미 재상정 키|의미 audit|ⓐ 키|요구 키|재상정 키):'
                      r'[ \t]*(.*?)\s*$')
+_DEFERRAL_ROW_RE = re.compile(r'^(?:- )?((?:의미 )?ⓑ(?: 수리 대기| 다른 요청)? 키):[ \t]*(.*?)\s*$')
+_DECISION_FIELD_RE = re.compile(r'(?:^|·)\s*(결정|사유|미룸 유형|수리|충돌 증거|담당 요청|재개 조건|출처)\s*=\s*')
 _ID_RE = re.compile(r'^C[1-9]\d*$')
 _M_ID_RE = re.compile(r'^M[1-9]\d*$')
 _AUDIT_RE = re.compile(r'^\d{8}-\d{6}$')
@@ -374,6 +379,16 @@ def parse_scope(text: str) -> List[Tuple[str, str, Dict[str, List[str]]]]:
         row = _ROW_RE.match(line)
         if row:
             current.setdefault(row.group(1), []).append(row.group(2))
+        deferred = _DEFERRAL_ROW_RE.match(line)
+        if deferred:
+            current.setdefault(deferred.group(1), []).append(deferred.group(2))
+        if re.search(r'·\s*결정\s*=', line) and re.search(r'(?:^|·)\s*미룸 유형\s*=', line):
+            current.setdefault(_DECISIONS, []).append(line)
+    # 활성 조건은 절마다 다르다. 새 결정 칸이 없는 옛 산문은 값 검사도 하지 않는다.
+    for _kind, _when, rows in sections:
+        if _DECISIONS not in rows:
+            for name in (*_DEFERRAL_ROWS, *('의미 ' + n for n in _DEFERRAL_ROWS)):
+                rows.pop(name, None)
     return sections
 
 
@@ -453,6 +468,172 @@ def residual_m_sets(text: str) -> Tuple[str, str, Set[str], Set[str]]:
     return when0, audits[0], m_keys, resubmitted
 
 
+def _deferral_decision(line: str) -> Tuple[Set[str], Dict[str, str]]:
+    cells = list(_DECISION_FIELD_RE.finditer(line))
+    fields: Dict[str, str] = {}
+    for i, cell in enumerate(cells):
+        name: str = cell.group(1)
+        if name in fields:
+            raise DebtError('ⓑ 결정 줄 칸 중복 — %s' % name)
+        fields[name] = line[cell.end():cells[i + 1].start() if i + 1 < len(cells) else len(line)].strip()
+    head: str = re.sub(r'\(\+[^)]*\)', '', line[:cells[0].start()] if cells else line)
+    keys: Set[str] = set(re.findall(r'(?<![A-Za-z0-9_])([CM][1-9]\d*)(?![A-Za-z0-9_])', head))
+    return keys, fields
+
+
+def _check_deferral_decision(cid: str, kind: str, fields: Dict[str, str]) -> None:
+    if fields.get('결정') != 'ⓑ' or fields.get('미룸 유형') != kind:
+        raise DebtError('ⓑ %s 결정·미룸 유형이 정형 행과 다르다' % cid)
+    if not fields.get('사유') or fields['사유'] == '-':
+        raise DebtError('ⓑ %s 결정 줄 사유가 없다' % cid)
+    source: str = fields.get('출처', '')
+    if not re.fullmatch(r'(?:본인 직접|사용자 원문)(?:\([^\n]+\)|\s+\S.*)?', source):
+        raise DebtError('ⓑ %s 출처는 본인 직접·사용자 원문이어야 한다' % cid)
+    if kind == '수리 대기':
+        evidence: List[str] = [p.strip() for p in fields.get('충돌 증거', '').split('·')]
+        if (not fields.get('수리') or fields['수리'] == '-' or len(evidence) != 2
+                or any(not re.fullmatch(r'[^\s:]+:[1-9]\d*', p) for p in evidence)):
+            raise DebtError('ⓑ 수리 대기 %s — 수리·충돌 증거(규칙 파일:행 · 막힌 코드 파일:행)가 필요하다' % cid)
+    if kind == '다른 요청' and any(not fields.get(f) or fields[f] == '-' for f in ('담당 요청', '재개 조건')):
+        raise DebtError('ⓑ 다른 요청 %s — 담당 요청·재개 조건이 필요하다' % cid)
+
+
+def _deferral_sets(text: str, known: Set[str], undeferrable: Set[str], moving: Set[str],
+                   meaning: bool) -> Tuple[bool, Dict[str, str], Dict[str, str]]:
+    sections = parse_scope(text)
+    start: int = max((i for i, (k, _w, _r) in enumerate(sections) if k == SECTION_G0), default=-1)
+    if start < 0:
+        raise DebtError('refactor-scope.md 에 `## G0 <시각>` 절 없음')
+    adopted: Set[str] = set()
+    required: Set[str] = set()
+    removed: Set[str] = set()
+    deferred: Dict[str, str] = {}
+    readopted: Dict[str, str] = {}
+    active: bool = False
+    prefix: str = '의미 ' if meaning else ''
+    parser = _m_ids_of if meaning else _ids_of
+    for kind, when, rows in sections[start:]:
+        if kind == SECTION_STOP:
+            continue
+        added: Set[str] = set()
+        added_r: Set[str] = set()
+        gone: Set[str] = set()
+        if kind in (SECTION_G0, SECTION_REAPPROVAL):
+            added = (_at_most_one(kind, when, rows, ROW_M_A) if meaning
+                     else _one_row(kind, when, rows, ROW_A))
+            added_r = set() if meaning else _one_row(kind, when, rows, ROW_REQUIRED)
+            adopted |= added
+            required |= added_r
+            removed -= added | added_r
+            for cid in added | added_r:
+                if cid in deferred:
+                    readopted[cid] = when
+                    del deferred[cid]
+        elif kind == SECTION_RESUBMIT:
+            gone = (_at_most_one(kind, when, rows, ROW_M_RESUBMIT) if meaning
+                    else _one_row(kind, when, rows, ROW_RESUBMIT))
+            removed |= gone
+        if _DECISIONS not in rows:
+            continue
+        active = True
+        fresh: Dict[str, str] = {}
+        for row_name, typ in zip(_DEFERRAL_ROWS, DEFERRAL_TYPES):
+            values: List[str] = rows.get(prefix + row_name, [])
+            if len(values) > 1:
+                raise DebtError('ⓑ 정형 행 `%s:` 이 두 번 이상 있다' % (prefix + row_name))
+            keys: Set[str] = parser(values[0], prefix + row_name) if values else set()
+            if keys & set(fresh):
+                raise DebtError('ⓑ 유형 겹침 — %s' % ' '.join(sorted(keys & set(fresh))))
+            fresh.update({cid: typ for cid in keys})
+        keys = set(fresh)
+        same_section: Set[str] = added | added_r
+        if kind == SECTION_RESUBMIT:
+            for name in ((ROW_M_A,) if meaning else (ROW_A, ROW_REQUIRED)):
+                for value in rows.get(name, []):
+                    same_section |= parser(value, name)
+        if keys & same_section:
+            raise DebtError('한 절에서 ⓐ·요구 키와 ⓑ 겹침')
+        if keys & required:
+            raise DebtError('요구 키를 ⓑ 로 미룰 수 없음 — 요구 범위 변경 결정이 필요하다')
+        if keys & (adopted - removed):
+            raise DebtError('살아 있는 ⓐ 를 재상정 없이 ⓑ 로 미룰 수 없음')
+        if kind == SECTION_RESUBMIT and not keys <= gone:
+            raise DebtError('재상정 절의 ⓑ 키는 그 절 재상정 키의 부분집합이어야 한다')
+        if keys - known:
+            raise DebtError('동결본 %s 에 없는 ID — %s' % ('의미 audit' if meaning else 'debt-g0.json ids',
+                                                        ' '.join(sorted(keys - known))))
+        if keys & undeferrable:
+            raise DebtError('ⓑ 미룰 수 없음 — %s' % ' '.join(sorted(keys & undeferrable)))
+        decisions: Dict[str, List[Dict[str, str]]] = {}
+        for line in rows[_DECISIONS]:
+            line_keys, fields = _deferral_decision(line)
+            for cid in line_keys:
+                if cid.startswith('M' if meaning else 'C'):
+                    decisions.setdefault(cid, []).append(fields)
+        if set(decisions) - keys:
+            raise DebtError('ⓑ 결정 줄 키가 같은 절의 ⓑ 정형 행에 없다')
+        for cid, typ in fresh.items():
+            matches = decisions.get(cid, [])
+            if len(matches) != 1:
+                raise DebtError('ⓑ %s 결정 줄이 정확히 한 번 있어야 한다' % cid)
+            _check_deferral_decision(cid, typ, matches[0])
+        deferred.update(fresh)
+    if set(deferred) & moving:
+        raise DebtError('ⓑ 이동 묶음 의존 — 이동도 빼고 재상정: %s' % ' '.join(sorted(set(deferred) & moving)))
+    return active, deferred, readopted
+
+
+def deferral_sets(text: str, ids: Dict[str, str], findings: List[dict], moved: Set[str]
+                  ) -> Tuple[bool, Dict[str, str], Dict[str, str]]:
+    pinned: Set[str] = {r['key'] for r in findings if r.get('undeferrable')}
+    return _deferral_sets(text, set(ids), {c for c, k in ids.items() if k in pinned},
+                          {c for c, k in ids.items() if k.split('|', 1)[-1] in moved}, False)
+
+
+def deferral_m_sets(text: str, known: Set[str], undeferrable: Set[str], moving: Set[str]
+                    ) -> Tuple[bool, Dict[str, str], Dict[str, str]]:
+    return _deferral_sets(text, known, undeferrable, moving, True)
+
+
+def deferral_tail(active: bool, deferred: Dict[str, str]) -> str:
+    if not active:
+        return ''
+    return ' · legacy 잔존 ⓑ %d(일반 %d · 수리 대기 %d · 다른 요청 %d)' % (
+        len(deferred), *(sum(t == kind for t in deferred.values()) for kind in DEFERRAL_TYPES))
+
+
+def deferral_active(text: str) -> bool:
+    sections = parse_scope(text)
+    start: int = max((i for i, (k, _w, _r) in enumerate(sections) if k == SECTION_G0), default=len(sections))
+    return any(_DECISIONS in r for k, _w, r in sections[start:] if k != SECTION_STOP)
+
+
+def moved_debt_files(root: Path, folder: Path, g0: dict) -> Set[str]:
+    """명세의 파일·폴더 이동과 git 개명 쌍의 옛 web 파일(활성 입력에서만 호출)."""
+    moved: Set[str] = set()
+    spec: Path = folder / 'design-spec.md'
+    if spec.is_file():
+        paths, _names = parse_spec_pairs(spec.read_text(encoding='utf-8'))
+        for old, _new in paths:
+            moved.update(p for p in g0.get('files', []) if p == old or (old.endswith('/') and p.startswith(old)))
+    anchor: Optional[str] = g0.get('head')
+    state: Path = folder / 'build-state.json'
+    if state.is_file():
+        try:
+            anchor = json.loads(state.read_text(encoding='utf-8')).get('git_snapshot') or anchor
+        except (ValueError, AttributeError) as error:
+            raise DebtError('build-state.json 파싱 실패 — %s' % error) from None
+    if anchor and _is_git(root):
+        result = _git_out(root, ['diff', '-M', '--name-status', str(anchor), '--', 'web'])
+        if result is None:
+            raise DebtError('ⓑ 이동 묶음 의존의 git 개명 쌍 조회 실패')
+        for line in result.splitlines():
+            cells = line.split('\t')
+            if len(cells) == 3 and cells[0].startswith('R') and cells[1].startswith('web/'):
+                moved.add(cells[1][4:])
+    return moved
+
+
 def _local_minute(when: str) -> datetime:
     """절 머리·scanned_at 시각 → 분 단위 로컬 시각(오프셋이 있으면 로컬로 바꾼다)."""
     m = _WHEN_RE.match(when)
@@ -505,8 +686,13 @@ def cli_residual(root: Path, folder_arg: str) -> int:
             notice = ('[info] 플러그인 판 바뀜 — G0 스캔 %s → 지금 %s'
                       '(검사 집합·키 의미론이 같아 잔존 판정을 잇는다)'
                       % (scanner.get('plugin', 'unknown'), stamp['plugin']))
-        g0_when, a_ids, required_ids, resubmit_ids = residual_sets(
-            scope_md.read_text(encoding='utf-8'))
+        scope_text: str = scope_md.read_text(encoding='utf-8')
+        g0_when, a_ids, required_ids, resubmit_ids = residual_sets(scope_text)
+        active: bool = deferral_active(scope_text)
+        deferred: Dict[str, str] = {}
+        if active:
+            _active, deferred, _readopted = deferral_sets(
+                scope_text, ids, g0.get('findings', []), moved_debt_files(root, folder, g0))
         scanned: str = str(g0.get('scanned_at', ''))
         if _local_minute(g0_when) < _local_minute(scanned):
             raise DebtError('마지막 `## G0 %s` 절이 debt-g0.json 스캔(%s)보다 이르다 — '
@@ -521,7 +707,7 @@ def cli_residual(root: Path, folder_arg: str) -> int:
                 print(notice)
             print('[info] git 저장소 아님 — 판정할 ⓐ·요구 키 0 이라 재스캔 생략(G0 첫 실행 · 새 키 보고 없음)')
             print('[backstop] 빚 잔존 — ⓐ 잔존 0 · 요구 잔존 0 · 재상정 제외 %d · G0 에 없던 키 판정 밖(비git)'
-                  % len((a_ids | required_ids) & resubmit_ids))
+                  % len((a_ids | required_ids) & resubmit_ids) + deferral_tail(active, deferred))
             return 0
         g2, _notices = scan(root, mode == MODE_REFACTOR)
         write_json(folder / 'debt-g2.json', g2)
@@ -536,18 +722,25 @@ def cli_residual(root: Path, folder_arg: str) -> int:
     remaining_r: List[str] = [c for c in r_live if counts.get(ids[c], 0) > 0]
     new_keys: List[str] = sorted(set(counts) - g0_keys)
     outside: Dict[str, List[str]] = _outside_left(g0, g2, {ids[c] for c in a_live + r_live})
+    if deferred:
+        outside = {f: [k for k in keys if k not in {ids[c] for c in deferred}] for f, keys in outside.items()}
+        outside = {f: keys for f, keys in outside.items() if keys}
     if notice:
         print(notice)
     for label, rows in (('ⓐ', remaining_a), ('요구', remaining_r)):
         for cid in rows:
             print('잔존 %s %s %s — 발견 %d' % (label, cid, ids[cid], counts[ids[cid]]))
+    for cid, typ in sorted(deferred.items(), key=lambda item: int(item[0][1:])):
+        print('legacy 잔존 ⓑ(%s) %s %s — 발견 %d(해소 아님 · 보고만)'
+              % (typ, cid, ids[cid], counts.get(ids[cid], 0)))
     for key in new_keys:
         print('[info] G0 에 없던 키 %s — 발견 %d(보고만)' % (key, counts[key]))
     for folder, keys in sorted(outside.items()):
         print('[info] 범위 밖 남은 빚 — 폴더 `%s/` 키 %d(이번 ⓐ·요구 키와 같은 폴더 발견 · 범위 밖 파일 — 보고만): %s%s'
               % (folder, len(keys), ' '.join(keys[:5]), ' 외 %d' % (len(keys) - 5) if len(keys) > 5 else ''))
-    print('[backstop] 빚 잔존 — ⓐ 잔존 %d · 요구 잔존 %d · 재상정 제외 %d · G0 에 없던 키 %d · 범위 밖 남은 빚 %d'
-          % (len(remaining_a), len(remaining_r), excluded, len(new_keys), sum(len(k) for k in outside.values())))
+    print(('[backstop] 빚 잔존 — ⓐ 잔존 %d · 요구 잔존 %d · 재상정 제외 %d · G0 에 없던 키 %d · 범위 밖 남은 빚 %d'
+           % (len(remaining_a), len(remaining_r), excluded, len(new_keys), sum(len(k) for k in outside.values())))
+          + deferral_tail(active, {c: t for c, t in deferred.items() if counts.get(ids[c], 0)}))
     return 0 if not remaining_a and not remaining_r else 2
 
 
@@ -611,6 +804,34 @@ def parse_spec_pairs(text: str, require: bool = False) -> Tuple[List[Tuple[str, 
     if require and heads == 0:
         raise DebtError('명세에 `%s` 절이 없다' % SPEC_SLICE0_HEAD)
     return paths, names
+
+
+def parse_spec_methods(text: str) -> List[Tuple[str, str]]:
+    """plan --names 의 메서드 참조 후보. 승인·제품·시험 검증은 치환 확인이 맡는다.
+    슬라이스 0 밖·펜스 안·비정형 줄은 알림 없이 무시한다."""
+    dotted: str = r'web(?:\.[a-z_][a-z0-9_]*)+\.[A-Z]\w*\.[A-Za-z_]\w*'
+    row_re = re.compile(r'^\s*(?:- )?메서드 이동:\s*`?(' + dotted + r')`?\s*→\s*`?('
+                        + dotted + r')`?\s*·\s*시험\s+(.+?)\s*$')
+    inside: bool = False
+    fenced: bool = False
+    pairs: List[Tuple[str, str]] = []
+    for line in text.splitlines():
+        if _FENCE_RE.match(line):
+            fenced = not fenced
+            continue
+        if fenced:
+            continue
+        if line.startswith('#') and not line.startswith('###'):
+            inside = bool(_SPEC_HEAD_RE.match(line))
+            continue
+        row = row_re.match(line) if inside else None
+        if row:
+            tests = row.group(3).split()
+            if all(re.fullmatch(r'`?[^`\s:*?\[\]]+\.py::[A-Za-z_]\w*`?', t)
+                   and not t.strip('`').startswith('/') and '..' not in t.strip('`').split('::')[0].split('/')
+                   for t in tests):
+                pairs.append((row.group(1), row.group(2)))
+    return pairs
 
 
 def module_of(rel: str) -> Optional[str]:
