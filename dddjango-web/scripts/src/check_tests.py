@@ -40,6 +40,29 @@ class TestChange:
     old_to_new: dict[int, int]
 
 
+class UnsupportedTestFlow(str):
+    """TG2 미지원 흐름 고지 — 글은 지금까지의 고지 줄 그대로이고, 출력 분할이 쓰는 경로(root 상대)·행을 함께 든다."""
+
+    path: str
+    lines: tuple[int, ...]
+
+    def __new__(cls, path: str, lines: tuple[int, ...]):
+        notice = super().__new__(cls, '[info] TG2 일부 흐름 자동 판정 밖 — %s:%s 동적/미지원 입력은 무관함의 증명이 아니며 discipline 감수 대상' %
+                                 (path, ','.join(map(str, lines))))
+        notice.path = path
+        notice.lines = lines
+        return notice
+
+
+def conventional_test_path(rel: str) -> bool:
+    """수집 설정·G0 명시 경로와 무관하게 자리·이름만으로 영구 시험·지원 파일인 root 상대 경로 —
+    관례 폴더(web_test·test·tests) 아래 .py 와 conftest.py(기록 폴더 아래는 아니다).
+    TG 수신 증명(inflow)은 이 경로에만 선다 — 설정에 기대 시험이 된 파일의 발견은 레인의 설정 변경 탓일 수 있다."""
+    parts = Path(rel).parts
+    return (rel.endswith('.py') and parts[0] not in ('.dddjango-web', '.dddjango')
+            and (parts[-1] == 'conftest.py' or any(p in ('web_test', 'test', 'tests') for p in parts[:-1])))
+
+
 def _commit_oid(root, ref):
     if not isinstance(ref, str) or not ref or ref.startswith('-'):
         raise ValueError('commit 기준점 없음')
@@ -66,6 +89,8 @@ def _changed_tests(ctx: BackstopContext) -> List[TestChange]:
     rename은 명시 -M50%와 D/A 동일 blob 대응으로 확인한다. 시험→시험 순수 이동은 새 줄 0,
     copy·시험 밖에서 편입·기준판에 없는 미추적은 전 줄 새 줄이다. 기준판 파일의 미추적은 비교한다.
     관례·pytest 설정의 시험/지원 파일과 같은 commit OID의 G0 명시 경로만 수집한다.
+    기록 폴더(.dddjango-web/ · .dddjango/) 아래는 시험·지원 파일이 아니다(추적·미추적·이름·명시 경로 무관).
+    그 사본을 영구 시험으로 옮겨 오면 이동이 아니라 편입이다(전 줄 새 줄).
     기준점·대응 해석 실패는 범위 미확정·미실행으로 고지하며 ctx.files나 파일 전체로 퇴화하지 않는다.
     """
     if not ctx.can_detect_new_units:
@@ -139,22 +164,24 @@ def _changed_tests(ctx: BackstopContext) -> List[TestChange]:
                 i += 2
         def under(rel, folder):
             return rel == folder or rel.startswith(folder.rstrip('/') + '/')
+        def recorded(rel):
+            return under(rel, '.dddjango-web') or under(rel, '.dddjango')
         def candidate(rel):
-            if not rel.endswith('.py'):
+            if recorded(rel) or not rel.endswith('.py'):
                 return False
             parts = Path(rel).parts
             name = parts[-1]
-            conventional = any(p in ('web_test', 'test', 'tests') for p in parts[:-1])
             support = name == 'conftest.py' or name.endswith('_support.py') or name in ('support.py', 'helpers.py') or any(p in ('support', '_support', 'helpers') for p in parts[:-1])
             collected = any(fnmatch.fnmatch(name, pat) for pat in patterns)
-            return conventional or name == 'conftest.py' or any(under(rel, p) for p in explicit) or (
+            return conventional_test_path(rel) or any(under(rel, p) for p in explicit) or (
                 (collected or support) and (collected or any(under(rel, p) for p in roots)))
         contents = {}
         def old_source(rel):
             if rel not in contents:
                 contents[rel] = git('show', base + ':' + rel)
             return contents[rel]
-        gone = {p for p in old_paths if not (ctx.root / p).exists()} - set(pairs.values())
+        # 사라진 기록 사본은 이동 대응에 넣지 않는다 — 같은 내용의 새 시험은 편입(전 줄 새 줄)이다.
+        gone = {p for p in old_paths if not recorded(p) and not (ctx.root / p).exists()} - set(pairs.values())
         out = []
         for rel in sorted(changed):
             if not candidate(rel) or not (ctx.root / rel).is_file():
@@ -991,8 +1018,7 @@ def _content_tests(ctx: BackstopContext) -> List[Finding]:
                 if added or deletion:
                     found.add((probe.check_id, probe.position[0]))
             if unsupported:
-                ctx.notices.append('[info] TG2 일부 흐름 자동 판정 밖 — %s:%s 동적/미지원 입력은 무관함의 증명이 아니며 discipline 감수 대상' %
-                                   (change.path, ','.join(map(str, sorted(unsupported)))))
+                ctx.notices.append(UnsupportedTestFlow(change.path, tuple(sorted(unsupported))))
         except (SyntaxError, ValueError, IndexError, tokenize.TokenError) as error:
             ctx.notices.append('[info] TG2·TG3 미실행 — %s 기준판/현재판·위치 해석 실패 · 변경 시험 범위 미확정: %s' % (change.path, error))
             continue

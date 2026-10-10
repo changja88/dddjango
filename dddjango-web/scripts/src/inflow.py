@@ -2,6 +2,8 @@
 
 서버 registry_gate의 provenance 차분을 본뜬다. F2는 생략하며 CY·WV·ST12·PU1·PU2는
 항상 남긴다. 증명 실패/예외는 blocker 유지, 부모 측정 무효는 해당 병합에서만 불참이다.
+TG2·TG3 은 기준점 없이 못 재므로(부모 측정 불가) L 대신 수신 증명으로 가른다 — 작업 트리가 그대로이고
+기준 뒤 그 파일을 바꾼 첫 부모 걸음이 전부 승인 병합의 상류판 그대로 수신일 때만(_split 의 receipt).
 """
 from __future__ import annotations
 
@@ -16,6 +18,7 @@ import sys
 import tempfile
 from typing import Dict, List, Optional, Set, Tuple
 
+from .check_tests import UnsupportedTestFlow, conventional_test_path
 from .common import BackstopContext, Finding
 
 
@@ -27,6 +30,8 @@ class InflowResult:
     inflow: List[Tuple[Finding, str]] = field(default_factory=list)
     # 승인 사슬 순서: (M, ^1, ^2, 제목, 역방향 의심 알림)
     merges: List[Tuple[str, str, str, str, List[str]]] = field(default_factory=list)
+    # 수신 증명이 선 시험 파일(root 상대) 가운데 미지원 흐름 고지가 있는 것 — 출력이 그 고지를 한 줄로 모은다
+    received_tests: Set[str] = field(default_factory=set)
 
 
 def _git(root: Path, *args: str) -> bytes:
@@ -177,18 +182,106 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
 
     order = {sha: i for i, (sha, _parents) in enumerate(chain)}
 
+    def step_reason(sha: str, parents: List[str], path: str) -> str:
+        if len(parents) >= 2:
+            return ('충돌 해소분(M≠M^2) — ' if sha in approved else '미승인 머지 경유 ') + sha[:12]
+        delivered = next((m for m, ps in active if order[m] < order[sha]
+                          and blob(m, path) != blob(ps[0], path)), None)
+        if delivered:
+            return '레인 커밋 수정 %s(승인 머지 %s 이후)' % (sha[:12], delivered[:12])
+        return '비머지 커밋 경유 ' + sha[:12]
+
     def retained_reason(path: str) -> str:
         for sha, parents in reversed(chain):
             if blob(sha, path) == (blob(parents[0], path) if parents else None):
                 continue
-            if len(parents) >= 2:
-                return ('충돌 해소분(M≠M^2) — ' if sha in approved else '미승인 머지 경유 ') + sha[:12]
-            delivered = next((m for m, ps in active if order[m] < order[sha]
-                              and blob(m, path) != blob(ps[0], path)), None)
-            if delivered:
-                return '레인 커밋 수정 %s(승인 머지 %s 이후)' % (sha[:12], delivered[:12])
-            return '비머지 커밋 경유 ' + sha[:12]
+            return step_reason(sha, parents, path)
         return '유입 증명 실패(경로 추적 불능)'
+
+    links: List[bool] = []
+
+    def lane_links() -> bool:
+        """root 아래에 레인이 손댄, root 밖으로 풀리는 심볼릭 링크가 있는가(한 번만 잰다).
+
+        TG2 의 경로 판정은 링크를 풀어 root 밖인지 본다 — 그대로 받은 시험의 발견도 레인이 더한 링크 탓일 수 있어,
+        그런 링크가 있으면 수신 증명을 하지 않는다. 손댄 링크 = 작업 트리에서 바뀌었거나 미추적인 링크, 또는 HEAD 의
+        링크 가운데 기준과 다르고 그 걸음이 전부 «승인 병합의 상류판 그대로 수신» 은 아닌 것. root 안으로 풀리는
+        링크는 판정을 밖으로 뒤집지 못하므로 세지 않는다."""
+        if not links:
+            inside = os.path.realpath(ctx.root)
+
+            def leaves(path: str) -> bool:
+                target = repo / path
+                return os.path.islink(target) and os.path.commonpath([os.path.realpath(target), inside]) != inside
+
+            found = any(p.startswith(prefix) and leaves(p) for p in dirty)
+            for path, entry in ([] if found else list(tree(head).items())):
+                if (entry[0] != '120000' or not path.startswith(prefix) or tree(base).get(path) == entry
+                        or not leaves(path)):
+                    continue
+                for sha, parents in chain:
+                    current = tree(sha).get(path)
+                    if current == (tree(parents[0]).get(path) if parents else None):
+                        continue
+                    if not (sha in approved and len(parents) == 2 and current == tree(parents[1]).get(path)):
+                        found = True
+                        break
+                if found:
+                    break
+            links.append(found)
+        return links[0]
+
+    receipts: Dict[str, Tuple[Optional[str], str]] = {}
+
+    def receipt(path: str) -> Tuple[Optional[str], str]:
+        """TG 수신 증명 — (그 경로를 마지막으로 들인 승인 병합 | None, 남긴 사유).
+
+        ① 경로가 HEAD tree 의 blob 이고 작업 트리가 그대로다 — git status 에 없고, 현물을 다시 해시한 blob 이
+           HEAD 와 같다(status 가 못 보는 수정을 막는다 · 심볼릭 링크인 시험은 가리키는 파일의 내용이 해시돼 서지 않는다).
+        ② 기준..HEAD 첫 부모 사슬에서 그 blob 을 바꾼 걸음이 하나 이상이고, 전부 승인 병합이며 각각
+           blob(M) == blob(M^2)(상류판 그대로 수신)다.
+        ③ 경로가 관례 시험 자리다(conventional_test_path) — 수집 설정·G0 명시 경로에 기대 시험이 된 파일은
+           레인의 설정 변경 탓일 수 있어 서지 않는다.
+        ④ root 아래에 레인이 손댄, root 밖으로 풀리는 심볼릭 링크가 없다(lane_links).
+        하나라도 어긋나면 이 레인 몫이다 — 사유는 증명을 깬 가장 늦은 걸음의 기존 문구. 부모 측정·스냅숏은 없다
+        (TG2·TG3 은 기준점 없이 못 잰다). git 조회·판독 실패는 그 경로의 면제 증명 실패다(다른 발견으로 번지지 않는다).
+        """
+        if path not in receipts:
+            receipts[path] = (None, '유입 증명 실패(경로 추적 불능)')
+            try:
+                entry = tree(head).get(path)
+                if entry is None:
+                    receipts[path] = (None, '비-blob 경로')
+                elif path in dirty or _git(repo, 'hash-object', '--', path).decode().strip() != entry[1]:
+                    receipts[path] = (None, '작업 트리 수정 중')
+                else:
+                    last: Optional[str] = None
+                    broken: Optional[Tuple[str, List[str]]] = None
+                    for sha, parents in chain:
+                        if blob(sha, path) == (blob(parents[0], path) if parents else None):
+                            continue
+                        if sha in approved and len(parents) == 2 and blob(sha, path) == blob(parents[1], path):
+                            last = sha
+                        else:
+                            broken = (sha, parents)
+                    if broken is not None:
+                        receipts[path] = (None, step_reason(broken[0], broken[1], path))
+                    elif last is None:
+                        pass  # 기준 뒤 이 경로를 바꾼 걸음이 없다 — 기본 사유
+                    elif not conventional_test_path(path[len(prefix):]):
+                        receipts[path] = (None, '유입 증명 실패(수집 설정에 기댄 시험 경로)')
+                    elif lane_links():
+                        receipts[path] = (None, '유입 증명 실패(레인이 손댄 심볼릭 링크)')
+                    else:
+                        receipts[path] = (last, '')
+            except (Exception, SystemExit):
+                pass
+        return receipts[path]
+
+    # 미지원 흐름 고지도 같은 술어로 가른다(그 파일에 TG 발견이 없어도). 승인 병합이 없으면 설 증명이 없다.
+    for notice in (ctx.notices if active else []):
+        if isinstance(notice, UnsupportedTestFlow) and receipt(prefix + notice.path)[0]:
+            res.received_tests.add(notice.path)
 
     candidates: List[Tuple[Finding, str]] = []
     for f in shown:
@@ -199,6 +292,12 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
             res.reasons[id(f)] = '비-blob 경로'
         elif path in dirty:
             res.reasons[id(f)] = '작업 트리 수정 중'
+        elif f.check_id in ('TG2', 'TG3'):
+            deliver, reason = receipt(path)
+            if deliver:
+                res.inflow.append((f, deliver))
+            else:
+                res.reasons[id(f)] = reason
         else:
             deliver = next((sha for sha, ps in active
                             if blob(ps[0], path) != blob(sha, path)
@@ -207,8 +306,17 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
                 candidates.append((f, deliver))
             else:
                 res.reasons[id(f)] = retained_reason(path)
-    if not candidates:
+
+    def settle() -> InflowResult:
+        # 승인 유입 절의 차례는 발견 정렬 그대로다(수신 증명·L 증명이 섞여도).
+        position = {id(f): i for i, f in enumerate(shown)}
+        res.inflow.sort(key=lambda item: position[id(item[0])])
+        moved = {id(f) for f, _sha in res.inflow}
+        res.remaining = [f for f in shown if id(f) not in moved]
         return res
+
+    if not candidates:
+        return settle()
 
     # SHA별 측정 캐시: 실패도 저장한다. 스냅숏은 후보가 있을 때만 만든다.
     td = Path(tempfile.mkdtemp(prefix='dddjango-web-inflow-'))
@@ -263,9 +371,7 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
                     break
             else:
                 res.reasons[id(f)] = invalid[0] if invalid else '유입 증명 실패(이중 원인)'
-        removed = {id(f) for f, _sha in res.inflow}
-        res.remaining = [f for f in shown if id(f) not in removed]
-        return res
+        return settle()
     finally:
         shutil.rmtree(td)
 

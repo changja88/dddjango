@@ -1089,5 +1089,133 @@ OUT=$(BS "$P" --diff-base "$B" --only pu); E=$?
 check "2.2.2 B 옛 view/ 페이지의 등재 SDK — PU2 위치 위반 유지" 2 "$E" "$OUT" \
   '[PU2] BLOCKER — web/chart/chart/view/chart.html=1' '실행 script 위치 위반=1'
 
+# ---------- 소비 JS 순서: 그 SDK 의 등재 전역 코드 참조만 센다.
+order_page() {
+  cat > "$1/$CHART" <<'EOF'
+{% extends "root/scaffold/view/root_view.html" %}
+{% load static %}
+{% block scripts %}
+<script src="{% static 'web/js/order_probe.js' %}" defer></script>
+<script src="{% static 'web/vendor/kakao_js_sdk/kakao.min.js' %}" defer></script>
+<script src="{% static 'web/js/chart_kakao_share.js' %}" defer></script>
+{% endblock scripts %}
+EOF
+}
+for CASE in unrelated other_global comment string regex template_text partial suffix dollar string_access \
+            template nested_template window global_this optional bare division alias local property; do
+  P=$(newp "order-$CASE"); B=$(base_of "$P"); order_page "$P"
+  case "$CASE" in
+    unrelated) JS='const unrelated = 1;' ;;
+    other_global) JS='window.OtherSdk.init();' ;;
+    comment) JS='/* Kakao.init() */ // window.Kakao' ;;
+    string) JS='const name = "Kakao"; const text = `Kakao.x()`;' ;;
+    regex) JS='const pattern = /Kakao.x()/;' ;;
+    template_text) JS='const text = `Kakao ${value} Kakao.x()`;' ;;
+    partial) JS='MyKakao.x();' ;;
+    suffix) JS='KakaoMap.x(); Kakao_x(); Kakao$.x();' ;;
+    dollar) JS='$Kakao.x();' ;;
+    string_access) JS='window["Kakao"].x();' ;;
+    template) JS='const label = `${Kakao.x()}`;' ;;
+    nested_template) JS='const label = `a ${flag ? `${Kakao.x()}` : ""}`;' ;;
+    window) JS='window.Kakao.x();' ;;
+    global_this) JS='globalThis.Kakao.x();' ;;
+    optional) JS='window?.Kakao?.init();' ;;
+    bare) JS='Kakao.Share.sendDefault({});' ;;
+    division) JS='const ratio = total / Kakao.count() / 2;' ;;
+    alias) JS='const k = window.Kakao;' ;;
+    local) JS='const Kakao = {}; Kakao.x();' ;;
+    property) JS='model.Kakao.x();' ;;
+  esac
+  printf '%s\n' "$JS" > "$P/web/static/js/order_probe.js"
+  case "$CASE" in template|nested_template|window|global_this|optional|bare|division|alias|local|property) WANT=2; N=1 ;; *) WANT=0; N=0 ;; esac
+  OUT=$(BS "$P" --diff-base "$B" --only pu2); E=$?
+  check "K226 코드 소비 $CASE" "$WANT" "$E" "$OUT" "기능 JS 태그보다 뒤=$N"
+done
+# 다른 SDK 도 등재돼 있어도 Kakao 태그에는 그 전역을 합치지 않는다.
+P=$(newp order-other-sdk)
+DRAFT_OTHER=$(python3 - "$HERE" <<'PY'
+import json, sys
+sys.path.insert(0, sys.argv[1])
+from sdk_fixture import DRAFT
+print(json.dumps(DRAFT).replace('Kakao', 'OtherSdk'))
+PY
+)
+must 'K226 다른 SDK 등재 준비' FX install "$P" --id other_sdk --draft "$DRAFT_OTHER"
+B=$(base_of "$P"); order_page "$P"
+printf 'window.OtherSdk.init();\n' > "$P/web/static/js/order_probe.js"
+OUT=$(BS "$P" --diff-base "$B" --only pu2); E=$?
+check 'K226 등재 SDK 별 전역' 0 "$E" "$OUT" '기능 JS 태그보다 뒤=0'
+
+# 등재 전역을 못 얻으면(목록의 lifecycle.global 없음) 앞선 기능 JS 를 부르는 것으로 센다(보수).
+P=$(newp order-no-global); FX edit "$P" kakao_js_sdk '{"lifecycle": {"init": "init", "created_by_init": []}}' --rebind >/dev/null
+B=$(commit "$P" registry-without-global); order_page "$P"
+printf 'const unrelated = 1;\n' > "$P/web/static/js/order_probe.js"
+OUT=$(BS "$P" --diff-base "$B" --only pu2); E=$?
+check 'K226 등재 전역 불명 — 보수' 2 "$E" "$OUT" '기능 JS 태그보다 뒤=1'
+
+# SDK 태그·기능 JS 원문은 그대로이고 SDK 앞에 기능 JS 태그만 더한다 — 그 JS 가 SDK 를 부를 때만 낸다.
+for CASE in consumer unrelated; do
+  P=$(newp "order-tag-$CASE")
+  if [ "$CASE" = consumer ]; then printf 'window.Kakao.x();\n' > "$P/web/static/js/order_probe.js"
+  else printf 'const unrelated = 1;\n' > "$P/web/static/js/order_probe.js"; fi
+  B=$(commit "$P" probe-js)
+  python3 - "$P/$CHART" <<'PY'
+from pathlib import Path
+import sys
+p = Path(sys.argv[1]); s = p.read_text()
+mark = '<script src="{% static \'web/vendor/'
+assert s.count(mark) == 1
+p.write_text(s.replace(mark, '<script src="{% static \'web/js/order_probe.js\' %}" defer></script>\n' + mark))
+PY
+  if [ "$CASE" = consumer ]; then WANT=2; N=1; else WANT=0; N=0; fi
+  OUT=$(BS "$P" --diff-base "$B" --only pu2); E=$?
+  check "K226 기능 JS 태그만 added $CASE" "$WANT" "$E" "$OUT" "기능 JS 태그보다 뒤=$N"
+done
+
+for CASE in reference unrelated existing decode; do
+  P=$(newp "order-js-$CASE"); order_page "$P"
+  printf 'const unrelated = 1;\n' > "$P/web/static/js/order_probe.js"
+  # existing: 기준판부터 SDK 를 부르던 JS — 무관한 줄만 바뀌면 내지 않는다(전역 참조 줄이 added 일 때만).
+  if [ "$CASE" = existing ]; then printf 'window.Kakao.x();\n' >> "$P/web/static/js/order_probe.js"; fi
+  cp "$P/$CHART" "${P}/${CHART%/*}/second_view.html"
+  cat > "$P/$ROOTV" <<'EOF'
+{% load static %}
+<script src="{% static 'web/js/order_probe.js' %}" defer></script>
+<script src="{% static 'web/vendor/kakao_js_sdk/kakao.min.js' %}" defer></script>
+{% block scripts %}{% endblock scripts %}
+EOF
+  # 옛 PU2·PU3 위반은 그대로인 템플릿의 JS 교차 검사로 재발화하지 않는다.
+  printf '<button onclick="bad()">old</button>\n<script>old()</script>\n' >> "$P/$CHART"
+  B=$(commit "$P" before-js)
+  case "$CASE" in
+    reference) printf 'window.Kakao.x();\n' >> "$P/web/static/js/order_probe.js" ;;
+    unrelated|existing) printf 'const other = 2;\n' >> "$P/web/static/js/order_probe.js" ;;
+    decode) printf '\377' >> "$P/web/static/js/order_probe.js" ;;
+  esac
+  case "$CASE" in unrelated|existing) WANT=0; N=0 ;; *) WANT=2; N=3 ;; esac
+  OUT=$(BS "$P" --diff-base "$B" --only pu); E=$?
+  check "K226 JS 만 변경 $CASE · 페이지 둘/root" "$WANT" "$E" "$OUT" "기능 JS 태그보다 뒤=$N" 'PU3] BLOCKER=0' '인라인 script 금지=0' '중복 로드=0'
+done
+for CASE in missing decode; do
+  P=$(newp "order-unknown-$CASE"); B=$(base_of "$P"); order_page "$P"
+  if [ "$CASE" = decode ]; then printf '\377' > "$P/web/static/js/order_probe.js"; fi
+  OUT=$(BS "$P" --diff-base "$B" --only pu2); E=$?
+  check "K226 판독 불명 $CASE + SDK added" 2 "$E" "$OUT" '기능 JS 태그보다 뒤=1'
+done
+P=$(newp order-independent); B=$(base_of "$P"); order_page "$P"
+printf 'const unrelated = 1;\n' > "$P/web/static/js/order_probe.js"
+cat > "$P/$ROOTV" <<'EOF'
+{% load static %}
+<script src="{% static 'web/vendor/kakao_js_sdk/kakao.min.js' %}" defer></script>
+{% block scripts %}{% endblock scripts %}
+EOF
+python3 - "$P/$CHART" <<'PY'
+from pathlib import Path
+import sys
+p = Path(sys.argv[1]); p.write_text(p.read_text().replace("kakao.min.js' %}\" defer", "kakao.min.js' %}\" async defer"))
+PY
+OUT=$(BS "$P" --diff-base "$B" --only pu2); E=$?
+check 'K226 비소비에도 ⑤·다른 PU2 유지' 2 "$E" "$OUT" '기능 JS 태그보다 뒤=0' 'root_view·페이지 중복 로드=1' 'async 실행 금지=1'
+
 echo "fixtures_sdk: PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" = 0 ]

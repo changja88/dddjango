@@ -4,8 +4,8 @@
 # *왜 결정적 백스톱인가*: 파일 경로·실행 태그·인라인 JS 채널·자동 이스케이프 우회·동적 실행처럼
 # 형태로 환원되는 경계만 검사한다. 기능 JS의 업무 의미·실제 동작은 감수와 브라우저 테스트가 맡는다.
 # 외부 JS 는 G1 승인·등재된 공식 SDK 사본(web/static/vendor/<sdk_id>/<파일> — discipline-houserules §9)으로만 들이고
-# CDN 실행 태그는 금지한다. 등재 사본의 로드 태그 규칙(속성 · 페이지 block · 기능 JS 앞 · root_view block 여는 줄 앞 ·
-# root_view·페이지 중복)은 PU2 벤더 분기가 본다.
+# CDN 실행 태그는 금지한다. 등재 사본의 로드 태그 규칙(속성 · 페이지 block · 그 SDK 를 부르는 기능 JS 앞 ·
+# root_view block 여는 줄 앞 · root_view·페이지 중복)은 PU2 벤더 분기가 본다.
 # 옛 배치 view/ 페이지는 기능 JS·htmx core 실행 태그의 자리로 받는다 — 벤더 분기는 표준 자리만.
 # (바탕: dddjango-web v1.3.1 check_purity.py WP1~WP6 — 번호 그대로 PU 로 · WP4 색 리터럴은 NM10 으로
 #  옮겨 PU4 비움 · WP5 motion.js 판형은 러너를 들이지 않아 PU5 비움 · PU7·PU8 = 새 검사 · 벤더 분기 = v1.3.1
@@ -18,9 +18,10 @@ import re
 from html.parser import HTMLParser
 from typing import Dict, List, Optional, Tuple
 
+from .check_vendor import JsView
 from .common import (
     HTMX_CORE, JS_EXTS, ROOT_VIEW_TEMPLATE, VERBATIM_RE, BackstopContext, Finding, base_name_of, ext_of, has_seg,
-    is_standard_path, parent_dir_of,
+    is_standard_path, mask_js, parent_dir_of,
 )
 from .sdk_registry import VENDOR_DIR, sdk_state
 
@@ -201,16 +202,121 @@ def _block_ranges(text: str) -> List[Tuple[int, int]]:
     return ranges
 
 
+def _sdk_global(ctx: BackstopContext, path: str) -> Optional[str]:
+    """등재 SDK 사본(web 상대)의 등재 전역 이름 — `files()` 역대응으로 찾은 그 항목의 `lifecycle.global` 하나.
+    이름을 하드코딩하거나 여러 SDK 의 전역을 합치지 않는다. 못 얻으면 None(판독 불명)."""
+    state = sdk_state(ctx)
+    sid = next((sid for sid, file in state.files().items() if file == path), None)
+    lifecycle = state.entries[sid].get('lifecycle') if sid is not None else None
+    name = lifecycle.get('global') if isinstance(lifecycle, dict) else None
+    return name if isinstance(name, str) and name else None
+
+
+def _sdk_reference_lines(ctx: BackstopContext, js: str, name: Optional[str]) -> Optional[Tuple[int, ...]]:
+    """기능 JS(web 상대) 원문의 코드 부분에서 등재 전역 이름이 식별자 경계로 나오는 행 — «그 SDK 를 부르는 JS» 판정.
+
+    코드 부분 = 주석을 지운 원문(`mask_js().no_comments`)의 `JsView` 코드 뷰에서 정규식 리터럴 자리까지 지운 것 —
+    문자열·정규식 리터럴 밖이고 템플릿 리터럴의 `${…}` 안은 코드다. 식별자 경계 = 이름 앞뒤가 영숫자·`_`·`$` 가
+    아님(`window.<전역>`·`globalThis.<전역>` 의 점 뒤는 받는다).
+    판정 범위: 등재 전역 이름을 담은 보수적 소비 후보 판정이다 — 같은 이름의 지역 변수·다른 객체 속성은 소비로
+    센다(과보고). `window["<전역>"]` 같은 문자열 접근과 다른 JS 를 거친 간접 호출은 못 본다(감수 몫).
+    정규식 리터럴과 나눗셈은 `JsView` 의 앞 문자 규칙으로 가른다(그 규칙이 정규식으로 본 자리의 이름은 세지 않는다).
+    판독 불명(원문 없음·디코드 실패·코드 뷰 실패·등재 전역 불명)은 None — 호출 쪽이 «부르는 것» 으로 센다.
+    읽기는 ctx.web / js, 행은 원문 행(added 조회와 같은 web 상대 좌표)이다."""
+    cache: Dict[Tuple[str, Optional[str]], Optional[Tuple[int, ...]]] = getattr(ctx, '_sdk_reference_cache', None)
+    if cache is None:
+        cache = {}
+        setattr(ctx, '_sdk_reference_cache', cache)
+    key = (js, name)
+    if key not in cache:
+        cache[key] = None
+        if name is not None:
+            try:
+                ms = mask_js((ctx.web / js).read_text(encoding='utf-8'))
+                view = JsView(ms.no_comments)
+                code: List[str] = list(view.code_text)
+                for start, end in view.regexes:
+                    for k in range(start, end):
+                        if code[k] != '\n':
+                            code[k] = ' '
+                cache[key] = tuple(sorted({ms.line_of(m.start()) for m in re.finditer(
+                    r'(?<![\w$])' + re.escape(name) + r'(?![\w$])', ''.join(code))}))
+            except (OSError, UnicodeError, ValueError, IndexError, RecursionError):
+                pass
+    return cache[key]
+
+
+def _sdk_reference_added(ctx: BackstopContext, js: str, lines: Optional[Tuple[int, ...]]) -> bool:
+    """그 기능 JS 의 등재 전역 참조 행이 이번 변경의 added 인가 — 판독 불명이면 그 JS 가 touched 인가."""
+    return ctx.is_touched(js) if lines is None else any(ctx.line_is_added(js, line) for line in lines)
+
+
+def _vendor_order_reasons(ctx: BackstopContext, f: str, ms, records) -> List[Tuple[int, str]]:
+    """③ 등재 SDK 태그가 그 SDK 를 부르는 기능 JS 태그보다 뒤 — (태그 offset, 사유).
+
+    소비 JS = SDK 태그보다 앞선 표준 기능 JS 태그 가운데 `_sdk_reference_lines` 가 참조 행을 찾았거나 판독 불명인
+    파일. 발화 게이트 = 앞선 소비 JS 가 하나 이상이고 (가) SDK 태그 줄이 added 이거나 (나) 앞선 소비 JS 태그 줄이
+    added 이거나 (다) 앞선 소비 JS 의 전역 참조 행이 added(판독 불명인 그 JS 가 touched 인 경우 포함). (다) 는
+    템플릿이 그대로여도 낸다 — 그런 템플릿은 `_vendor_order_templates` 가 ③ 에만 올린다."""
+    out: List[Tuple[int, str]] = []
+    features = [(s, e, path) for s, e, _a, path, std in records
+                if path is not None and std and _FEATURE_JS_RE.fullmatch(path)]
+    passed = sdk_state(ctx).passed()
+    for start, end, _attrs, path, std in records:
+        if not (std and path in passed):
+            continue
+        name = _sdk_global(ctx, path)
+        before = []
+        for s, e, js in features:
+            if s < start:
+                lines = _sdk_reference_lines(ctx, js, name)
+                if lines is None or lines:
+                    before.append((s, e, js, lines))
+        if before and (_changed(ctx, f, ms, start, end) or any(
+                _changed(ctx, f, ms, s, e) or _sdk_reference_added(ctx, js, lines) for s, e, js, lines in before)):
+            out.append((start, '등재 SDK 태그가 그 SDK 를 부르는 기능 JS 태그보다 뒤 — %s(앞선: %s)' %
+                        (path, ', '.join(js for _s, _e, js, _lines in before))))
+    return out
+
+
+def _vendor_order_templates(ctx: BackstopContext) -> Dict[str, tuple]:
+    """③ 전용 교차 색인 — 이번 변경에서 등재 전역 참조 행이 added 인 기능 JS(또는 touched 인데 판독 불명인 기능 JS)를
+    그 SDK 태그보다 앞에 싣는, 손 안 댄 템플릿(페이지 view·root_view) → (마스킹 본문, script 기록).
+    그런 JS 가 없으면 템플릿을 읽지 않는다. 다른 PU 검사를 이 템플릿으로 넓히지 않는다."""
+    if not ctx.gated:
+        return {}
+    features = [f for f in ctx.files if _FEATURE_JS_RE.fullmatch(f) and ctx.is_touched(f)]
+    if not features:
+        return {}
+    changed: Dict[str, set] = {}
+    for sdk in sdk_state(ctx).passed():
+        name = _sdk_global(ctx, sdk)
+        consumers = {js for js in features if _sdk_reference_added(ctx, js, _sdk_reference_lines(ctx, js, name))}
+        if consumers:
+            changed[sdk] = consumers
+    if not changed:
+        return {}
+    templates: Dict[str, tuple] = {}
+    for f in ctx.files:
+        if ctx.is_touched(f) or not _script_location_allowed(f):
+            continue
+        ms, records = _script_records(ctx, f)
+        if any(std and path in changed and any(js_std and js in changed[path] and s < start
+               for s, _e, _a, js, js_std in records) for start, _end, _attrs, path, std in records):
+            templates[f] = (ms, records)
+    return templates
+
+
 def _vendor_reasons(ctx: BackstopContext, f: str, ms, records, root_vendor: Dict[str, bool]) -> List[Tuple[int, str]]:
-    """등재 SDK 로드 태그 규칙(discipline-houserules §9 «로드») — ① 속성 ② 페이지 block 밖 ③ 같은 파일 기능 JS 뒤
-    ④ root_view block 여는 줄 뒤 ⑤ root_view·페이지 중복. ③⑤ 는 벤더 태그나 상대 태그 어느 쪽 줄이 added 여도 낸다."""
+    """등재 SDK 로드 태그 규칙(discipline-houserules §9 «로드») — ① 속성 ② 페이지 block 밖 ③ 그 SDK 를 부르는 기능 JS 뒤
+    ④ root_view block 여는 줄 뒤 ⑤ root_view·페이지 중복. ③⑤ 는 벤더 태그나 상대 태그 어느 쪽 줄이 added 여도 낸다
+    (③ 의 소비 JS 판정·게이트는 `_vendor_order_reasons`)."""
     out: List[Tuple[int, str]] = []
     passed = sdk_state(ctx).passed()
     text: str = ms.no_comments
     blocks = _block_ranges(text)
     is_root: bool = f == ROOT_VIEW_TEMPLATE
-    features = [(s, e) for s, e, _a, path, std in records
-                if path is not None and std and _FEATURE_JS_RE.fullmatch(path)]
+    order_reasons = dict(_vendor_order_reasons(ctx, f, ms, records))
     block_lines: bool = any(_changed(ctx, f, ms, m.start(), m.end())
                             for rx in (_BLOCK_SCRIPTS_RE, _ENDBLOCK_RE) for m in rx.finditer(text))
     for start, end, attrs, path, std in records:
@@ -222,9 +328,8 @@ def _vendor_reasons(ctx: BackstopContext, f: str, ms, records, root_vendor: Dict
             out.append((start, '등재 SDK 태그 속성은 src·defer(·CSP nonce)만 — %s · %s' % (', '.join(extra), path)))
         if not is_root and (changed or block_lines) and not any(a <= start < b for a, b in blocks):
             out.append((start, '등재 SDK 태그가 페이지 `{%% block scripts %%}` 밖 — %s' % path))
-        before = [(s, e) for s, e in features if s < start]
-        if before and (changed or any(_changed(ctx, f, ms, s, e) for s, e in before)):
-            out.append((start, '등재 SDK 태그가 같은 파일 기능 JS 태그보다 뒤 — %s' % path))
+        if start in order_reasons:
+            out.append((start, order_reasons[start]))
         if is_root and (changed or block_lines) and any(a < start for a, _b in blocks):
             out.append((start, '등재 SDK 태그가 root_view 의 `{%% block scripts %%}` 여는 줄보다 뒤 — %s' % path))
         if not is_root and path in root_vendor and (changed or root_vendor[path]):
@@ -248,13 +353,16 @@ def _root_vendor(ctx: BackstopContext) -> Dict[str, bool]:
 def run_purity(ctx: BackstopContext) -> List[Finding]:
     out: List[Finding] = []
     root_vendor: Dict[str, bool] = _root_vendor(ctx)
+    order_templates = _vendor_order_templates(ctx)
     vendor_seen: set = set()
     fix_vendor: str = ("등재 SDK 는 `{% static 'web/vendor/<sdk_id>/<파일>' %}` 외부 태그 하나로, 속성 src·defer 만, 그 SDK 를 "
-                       '쓰는 페이지의 `{% block scripts %}` 안 기능 JS 태그보다 앞에 둔다(모든 페이지가 쓰면 root_view 의 '
+                       '쓰는 페이지의 `{% block scripts %}` 안 그 SDK 를 부르는 기능 JS 태그보다 앞에 둔다(모든 페이지가 쓰면 root_view 의 '
                        'block 여는 줄 앞 · 중복 금지 — discipline-houserules §9).')
 
-    def vendor_findings(f: str, ms, records) -> None:
-        for start, reason in _vendor_reasons(ctx, f, ms, records, root_vendor):
+    def vendor_findings(f: str, ms, records, order_only: bool = False) -> None:
+        reasons = (_vendor_order_reasons(ctx, f, ms, records) if order_only
+                   else _vendor_reasons(ctx, f, ms, records, root_vendor))
+        for start, reason in reasons:
             if (f, start, reason) not in vendor_seen:
                 vendor_seen.add((f, start, reason))
                 out.append(Finding('PU2', f, ms.line_of(start), reason, _RULE_SDK, fix_vendor))
@@ -285,6 +393,10 @@ def run_purity(ctx: BackstopContext) -> List[Finding]:
                 and any(root_vendor.values()) and _script_location_allowed(f)):
             page_ms, page_records = _script_records(ctx, f)
             vendor_findings(f, page_ms, page_records)
+
+        if f in order_templates:
+            page_ms, page_records = order_templates[f]
+            vendor_findings(f, page_ms, page_records, order_only=True)
 
         if not ctx.is_touched(f):
             continue

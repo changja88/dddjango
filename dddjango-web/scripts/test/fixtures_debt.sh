@@ -758,5 +758,32 @@ PY
 ); E=$?
 assert "D36b JSON — 인라인 PU2만 · DataSource IM27 없음 · 세 파일 ST0" 0 '역할 키 일치' - "$E" "$KEYS"
 
+# ---------- SDK 비소비 순서는 빚이 아니며 같은 템플릿의 다른 PU2 키는 유지한다.
+P="$T/d226"; python3 "$SCRIPTS/test/sdk_fixture.py" mkproj "$P" >/dev/null
+python3 "$SCRIPTS/test/sdk_fixture.py" install "$P" >/dev/null
+V="$P/web/application/chart/presentation_layer/view/chart_view.html"
+w "$P/web/static/js/unrelated.js" 'const unrelated = 1;'
+w "$V" '{% load static %}' '{% block scripts %}' \
+  "<script defer src=\"{% static 'web/js/unrelated.js' %}\"></script>" \
+  "<script defer src=\"{% static 'web/vendor/kakao_js_sdk/kakao.min.js' %}\"></script>" '{% endblock scripts %}'
+OUT=$(run_backstop "$P" --debt-scan --json "$T/d226.json"); E=$?
+KEYS=$(counts_of "$T/d226.json")
+assert 'D226a 무관 JS 앞 SDK — SDK 순서 빚 0' 0 - '기능 JS 태그보다 뒤' 0 "$OUT"
+assert 'D226b 무관 JS 앞 SDK — PU2 키 0' 0 - 'PU2|application/chart/presentation_layer/view/chart_view.html' 0 "$KEYS"
+w "$V" '{% load static %}' '{% block scripts %}' \
+  "<script defer src=\"{% static 'web/js/unrelated.js' %}\"></script>" \
+  "<script async defer src=\"{% static 'web/vendor/kakao_js_sdk/kakao.min.js' %}\"></script>" '{% endblock scripts %}'
+OUT=$(run_backstop "$P" --debt-scan --json "$T/d226-other.json"); E=$?
+assert 'D226c 같은 파일 다른 PU2 — 키 유지' 0 'PU2|application/chart/presentation_layer/view/chart_view.html=1' - 0 "$(counts_of "$T/d226-other.json")"
+assert 'D226d 다른 PU2 잔존에도 순서 사유 0' 0 'async 실행 금지' '기능 JS 태그보다 뒤' 0 "$OUT"
+# 앞선 JS 가 그 SDK 를 부르면 빚 스캔에서도 순서 빚이다(빚 모드는 모두 새 것 — 게이트가 열린다).
+w "$P/web/static/js/unrelated.js" 'window.Kakao.init("k");'
+w "$V" '{% load static %}' '{% block scripts %}' \
+  "<script defer src=\"{% static 'web/js/unrelated.js' %}\"></script>" \
+  "<script defer src=\"{% static 'web/vendor/kakao_js_sdk/kakao.min.js' %}\"></script>" '{% endblock scripts %}'
+OUT=$(run_backstop "$P" --debt-scan --json "$T/d226-consumer.json"); E=$?
+assert 'D226e 소비 JS 앞 SDK — 순서 빚' 0 '그 SDK 를 부르는 기능 JS 태그보다 뒤 — static/vendor/kakao_js_sdk/kakao.min.js(앞선: static/js/unrelated.js)' - 0 "$OUT"
+assert 'D226f 소비 JS 앞 SDK — PU2 키' 0 'PU2|application/chart/presentation_layer/view/chart_view.html=1' - 0 "$(counts_of "$T/d226-consumer.json")"
+
 echo "fixtures_debt: PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" = 0 ]

@@ -15,7 +15,7 @@
 # 게이트: 구조·명명=added, import=touched의 added 줄, 골격=신규 단위, 순환=전역+베이스라인
 # (.dddjango-web/backstop-baseline.json). 참조 = Python import(함수 안 포함) + 템플릿 extends·include·static
 # + CSS @import·url() — 조각 CSS(static/application/·static/root/)는 소유자의 presentation 자리로 센다.
-# 게이트 출력 직전 승인 유입(W·F1·L)을 분할한다(src/inflow.py) — 종료 코드 밖 발견도 G2 보고 의무다.
+# 게이트 출력 직전 승인 유입(W·F1·L · TG2·TG3 은 수신 증명)을 분할한다(src/inflow.py) — 종료 코드 밖 발견도 G2 보고 의무다.
 # 산출물은 --design-build 또는 git_snapshot 일치 자동 탐색으로 읽는다(승인 목록은 발주자 소유 · 상태를 쓰지 않는다).
 #
 # 슬라이스 끝 실행(--slice-end — Phase 2 에서 슬라이스 커밋 앞): 뒤 슬라이스가 채울 검사(SLICE_END_DEFERRED)를 미룬다 —
@@ -60,7 +60,7 @@ from src.check_naming import run_naming  # noqa: E402
 from src.check_project import run_project  # noqa: E402
 from src.check_purity import run_purity  # noqa: E402
 from src.check_structure import run_structure  # noqa: E402
-from src.check_tests import run_tests  # noqa: E402
+from src.check_tests import UnsupportedTestFlow, run_tests  # noqa: E402
 from src.check_vendor import VENDOR_CHECK_IDS, VendorUndecidable, run_vendor  # noqa: E402
 from src.debt import cli_residual, cli_scan  # noqa: E402
 from src.subst import cli_subst_check  # noqa: E402
@@ -238,7 +238,13 @@ def main(argv: List[str]) -> int:
     inflow = split_inflow(ctx, shown, design_build)
     shown = inflow.remaining
     ctx.notices.extend(inflow.notices)
+    gathered = False
     for n in ctx.notices:
+        if isinstance(n, UnsupportedTestFlow) and n.path in inflow.received_tests:
+            if not gathered:
+                print('[info] TG2 일부 흐름 자동 판정 밖 — 승인 병합이 그대로 들인 시험 %d 파일은 이 레인 감수 대상이 아니다(승인 유입)' % len(inflow.received_tests))
+                gathered = True
+            continue
         print(n)
     if ctx.notices:
         print('')
@@ -256,7 +262,9 @@ def main(argv: List[str]) -> int:
                 print('    ↳ %s' % note)
             for f in group:
                 print(f)
-                print('    ↳ 유입: %s(L 증명) · 파일 그대로' % sha[:12])
+                proof = ('수신 증명 — 기준 뒤 이 파일을 바꾼 걸음 = 승인 병합의 상류판 그대로뿐'
+                         if f.check_id in ('TG2', 'TG3') else 'L 증명')
+                print('    ↳ 유입: %s(%s) · 파일 그대로' % (sha[:12], proof))
                 print('')
     mode: str = ('gated(diff-base %s)' % diff_base[:8]) if ctx.gated and diff_base else ('all' if all_mode else '전역 퇴화')
     suffix: str = ' · 승인 유입 %d건(종료 코드 제외)' % len(inflow.inflow) if inflow.inflow else ''
