@@ -212,6 +212,7 @@ def _sdk_global(ctx: BackstopContext, path: str) -> Optional[str]:
 
 
 # 뒤에 오는 `/` 가 정규식 리터럴인 낱말(값이 아니다). 식별자로도 쓸 수 있는 of·yield·await 는 갈림 자리로 둔다.
+# 점(`.`·`?.`) 바로 뒤 낱말은 이 목록의 글자여도 속성 이름(값)이다 — `range.in / x` 의 `/` 는 나눗셈이다(_JsCode._scan).
 _JS_REGEX_WORDS = frozenset({'return', 'typeof', 'instanceof', 'in', 'new', 'delete', 'void', 'throw', 'case', 'do', 'else'})
 _JS_SPLIT_WORDS = frozenset({'of', 'yield', 'await'})
 
@@ -220,7 +221,9 @@ class _JsCode:
     """PU2 ③ 전용 JS 낱말 가름 — 원문 글자마다 «코드» 인가를 표시한다(주석·문자열·템플릿 글·정규식 리터럴은 코드가
     아니고, 템플릿의 `${…}` 안은 코드다 · 중첩 템플릿과 그 안의 주석을 따라간다). `/` 는 앞 낱말로 가른다 — 값 뒤는
     나눗셈, 연산자·구두점·식 시작 뒤는 정규식이고, `)`·`}`·`++`·`--`·`.`·of·yield·await 뒤는 둘 다 가능해 나눗셈
-    (코드)으로 읽는다. 확정하지 못한 자리가 있으면 uncertain 이다: 닫히지 않은 문자열·템플릿·`${`·블록 주석·정규식,
+    (코드)으로 읽는다. 점 하나(`.`·`?.` — 펼침 `...` 은 아니다) 바로 뒤 낱말은 속성 이름이라 키워드와 글자가 같아도
+    값이다(`range.in / x`·`.delete`·`.return`·`.new`·`.case`·`.typeof` 뒤의 `/` 는 나눗셈 — 그 안의 이름은 코드다).
+    확정하지 못한 자리가 있으면 uncertain 이다: 닫히지 않은 문자열·템플릿·`${`·블록 주석·정규식,
     그리고 갈림 자리의 `/` 가 정규식으로도 읽히면서 그 사이에 따옴표·백틱·역슬래시·`/` 가 있어 뒤 판독이 갈리는 경우.
     WV 검사가 쓰는 mask_js·JsView 와는 따로다(그쪽 동작을 바꾸지 않는다)."""
 
@@ -232,25 +235,32 @@ class _JsCode:
 
     def _scan(self, i: int, top: bool) -> int:
         """코드 구간을 읽는다 — top 이 아니면 `${` 다음에서 시작해 짝 맞는 `}` 다음 offset 을 돌려준다.
-        last = 앞 낱말의 갈래: op(뒤 `/` 는 정규식) · value(나눗셈) · split(갈림)."""
+        last = 앞 낱말의 갈래: op(뒤 `/` 는 정규식) · value(나눗셈) · split(갈림).
+        member = 바로 앞 토큰이 점 하나(`.`·`?.`)인가 — 그 뒤 낱말은 속성 이름이다(공백·주석은 사이에 올 수 있다)."""
         t: str = self.text
         n: int = len(t)
         depth: int = 0
         last: str = 'op'
+        member: bool = False
         while i < n:
             c: str = t[i]
             if c.isspace():
                 i += 1
-            elif t.startswith('//', i):
+                continue
+            if t.startswith('//', i):
                 end: int = t.find('\n', i)
                 i = n if end < 0 else end
-            elif t.startswith('/*', i):
+                continue
+            if t.startswith('/*', i):
                 end = t.find('*/', i + 2)
                 if end < 0:
                     self.uncertain = True
                     return n
                 i = end + 2
-            elif c in '"\'':
+                continue
+            after_dot: bool = member
+            member = False
+            if c in '"\'':
                 i, last = self._string(i), 'value'
             elif c == '`':
                 i, last = self._template(i), 'value'
@@ -262,7 +272,8 @@ class _JsCode:
                     j += 1
                 self.code[i:j] = [True] * (j - i)
                 word: str = t[i:j]
-                last = 'op' if word in _JS_REGEX_WORDS else 'split' if word in _JS_SPLIT_WORDS else 'value'
+                last = ('value' if after_dot else 'op' if word in _JS_REGEX_WORDS
+                        else 'split' if word in _JS_SPLIT_WORDS else 'value')
                 i = j
             else:
                 if not top and c == '}' and depth == 0:
@@ -273,6 +284,8 @@ class _JsCode:
                     self.code[i + 1] = True
                     i, last = i + 2, 'split'
                     continue
+                # 속성 접근의 점 하나만 — 펼침(`...`)의 점은 아니다(그 뒤 낱말은 식의 시작이라 키워드일 수 있다)
+                member = c == '.' and t[i + 1:i + 2] != '.' and t[i - 1:i] != '.'
                 last = 'value' if c == ']' else 'split' if c in ')}.' else 'op'
                 i += 1
         if not top:

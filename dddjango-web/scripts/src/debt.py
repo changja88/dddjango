@@ -65,9 +65,10 @@ SPEC_ROW_PATH: str = '경로'
 SPEC_ROW_NAME: str = '이름'
 # 6a 참조 완전성 grep 의 pathspec(판정) — 커맨드 문면의 명령과 같은 문자열이다(refactor_audit --self-test).
 # 프로젝트 루트 바로 아래 docs/ 는 문서 자리다 — 그 안의 옛 경로 글은 참조가 아니라 판정에 들지 않는다.
+# 선언 파일 둘(SDK 등재 목록 · 제품 선언)은 실행 소비 코드가 아니다 — 그 안의 글자는 참조가 아니다.
 REF_PATHSPEC: Tuple[str, ...] = ('web', 'web_test', '*.py', '*.html', '*.css', '*.js', ':(exclude).dddjango-web',
                                   ':(exclude)docs', ':(exclude)web/static/vendor',
-                                  ':(exclude)web/sdk_registry.json')
+                                  ':(exclude)web/sdk_registry.json', ':(exclude)web/product_registry.json')
 # 문서 글 적중(알림)의 pathspec — 판정에 들지 않는다. 조회 옵션은 판정과 같고 pathspec 만 다르다
 # (`*` 가 `/` 를 넘어 docs/ 아래 깊은 파일까지 잡는다 — `:(glob)` 로 바꾸지 않는다).
 DOC_PATHSPEC: Tuple[str, ...] = ('docs/*.py', 'docs/*.html', 'docs/*.css', 'docs/*.js')

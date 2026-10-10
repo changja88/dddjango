@@ -202,17 +202,22 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
     links: List[bool] = []
 
     def lane_links() -> bool:
-        """root 아래에 레인이 손댄, root 밖으로 풀리는 심볼릭 링크가 있는가(한 번만 잰다 · 현물을 본다).
+        """저장소 안에 레인이 손댄, root 밖으로 풀리는 심볼릭 링크가 있는가(한 번만 잰다 · 현물을 본다).
 
         TG2 의 경로 판정은 현물 링크를 풀어 root 밖인지 본다 — 그대로 받은 시험의 발견도 레인이 바꾼 링크 탓일 수
-        있어, 그런 링크가 있으면 수신 증명을 하지 않는다. 색인(git status)은 assume-unchanged·skip-worktree·무시
-        규칙에 가려지므로 믿지 않고 추적 경로의 현물을 lstat 한다. 손댄 링크 =
+        있어, 그런 링크가 있으면 수신 증명을 하지 않는다. 조사 범위는 root 아래만이 아니라 저장소 전체다 — root 가
+        저장소 하위 폴더면 시험이 root 밖(저장소 안)의 링크를 거쳐 읽을 수 있고, 레인이 그 링크를 root 밖으로 돌리면
+        판정이 뒤집힌다. 색인(git status)은 assume-unchanged·skip-worktree·무시 규칙에 가려지므로 믿지 않고 추적
+        경로의 현물을 lstat 한다. 손댄 링크 =
         ⓐ git status 가 낸 바뀐·미추적 링크
         ⓑ HEAD 가 링크로 아는 경로의 현물이 그 링크가 아닌 것(os.readlink != HEAD blob), 또는 현물은 그대로지만
            기준과 다르고 그 걸음이 전부 «승인 병합의 상류판 그대로 수신» 은 아닌 것
-        ⓒ HEAD 가 일반 파일·폴더로 아는 경로(추적 파일과 root 아래 그 부모 폴더들)가 현물에서는 링크인 것
-        가운데 root 밖으로 풀리는 것이다. root 안으로 풀리는 링크는 판정을 밖으로 뒤집지 못해 세지 않는다.
-        대조 실패·판독 불능은 손댄 링크로 센다(증명 실패). 한계: git 이 무시하는 미추적 링크(.venv 류)는 보지 않는다."""
+        ⓒ HEAD 가 일반 파일·폴더로 아는 경로(추적 파일과 저장소 안 그 부모 폴더들)가 현물에서는 링크인 것
+        가운데 root 밖으로 풀리는 것이다. root 안으로 풀리는 링크는 판정을 밖으로 뒤집지 못해 세지 않는다
+        (기준판부터 있던 링크가 현물 그대로면 어디를 가리키든 손댄 것이 아니다).
+        대조 실패·판독 불능은 손댄 링크로 센다(증명 실패). 한계: git 이 무시하는 미추적 링크(.venv 류)와 저장소 밖의
+        링크는 보지 않는다 · root 밖 자리의 링크는 대개 root 밖으로 풀리므로, root 가 하위 폴더인 저장소에서는 레인이
+        그런 링크를 손대기만 해도 수신 증명이 서지 않는다(막는 쪽)."""
         if not links:
             try:
                 links.append(touched_link())
@@ -226,14 +231,12 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
         def leaves(path: str) -> bool:
             return os.path.commonpath([os.path.realpath(repo / path), inside]) != inside
 
-        if any(p.startswith(prefix) and os.path.islink(repo / p) and leaves(p) for p in dirty):
+        if any(os.path.islink(repo / p) and leaves(p) for p in dirty):
             return True
         folders: Set[str] = set()
         for path, entry in tree(head).items():
-            if not path.startswith(prefix):
-                continue
             parent = os.path.dirname(path)
-            while parent and parent + '/' != prefix and parent not in folders:
+            while parent and parent not in folders:
                 folders.add(parent)
                 parent = os.path.dirname(parent)
             linked = os.path.islink(repo / path)
@@ -265,7 +268,7 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
            blob(M) == blob(M^2)(상류판 그대로 수신)다.
         ③ 경로가 관례 시험 자리다(conventional_test_path) — 수집 설정·G0 명시 경로에 기대 시험이 된 파일은
            레인의 설정 변경 탓일 수 있어 서지 않는다.
-        ④ root 아래에 레인이 손댄, root 밖으로 풀리는 현물 심볼릭 링크가 없다(lane_links).
+        ④ 저장소 안 어디에도 레인이 손댄, root 밖으로 풀리는 현물 심볼릭 링크가 없다(lane_links).
         하나라도 어긋나면 이 레인 몫이다 — 사유는 증명을 깬 가장 늦은 걸음의 기존 문구. 부모 측정·스냅숏은 없다
         (TG2·TG3 은 기준점 없이 못 잰다). git 조회·판독 실패는 그 경로의 면제 증명 실패다(다른 발견으로 번지지 않는다).
         """

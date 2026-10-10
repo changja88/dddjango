@@ -20,7 +20,7 @@ URL·내비게이션·문서 셸(탭) 코드를 쓸 때, DataSource·api_client�
 - URL path·name 리터럴은 `<bc>_router.py`에만 — `class <Bc>Routes` 상수(네임스페이스 붙은 name)로 묶고 `reverse`·`redirect`는 상수·href만 받는다(문자열 리터럴 금지 — NM13) (§2)
 - navigator는 `reverse(<Bc>Routes.…)` 정적 href 헬퍼 — router를 **헬퍼 함수 안에서** import한다(router→view→VM→navigator→router 순환을 첫 import에서 끊는다·국소 ruff에 PLC0415를 켜지 않는다) (§2)
 - 템플릿은 URL을 만들지 않는다 — `{% url %}`·`href="/…"` 금지, State의 href만 (§2·§6)
-- 문서 셸은 선언이 없으면 `root/scaffold/view/root_view.html` — 제품 선언 BC의 페이지는 자기 제품 셸만 extends(own 셸은 독립 문서), htmx core는 build-state `htmx_core_static` 경로를 로드 (§2)
+- 문서 셸은 선언이 없으면 `root/scaffold/view/root_view.html` — 제품 선언 BC의 페이지는 자기 제품 셸만 extends(제품 선언이 있으면 flat·own 셸 모두 독립 문서 — 어떤 템플릿도 extends하지 않는다), htmx core는 build-state `htmx_core_static` 경로를 로드 (§2)
 - extends 대상은 둘뿐 — 페이지 → 문서 셸만(선언이 없으면 `root_view.html`, 제품 선언 BC의 페이지는 자기 제품 셸) · 조각(section·widget·component) → `design_system/[<제품>/]component/**`만(제품 뿌리는 선언이 있을 때만 · IM26) · 공용 부품에 값만 넘기면 `include … with … only`, 마크업 자리는 부품의 `{% block %}`을 extends로 채운다(slot 부품) (§6·§10)
 - 게이트·세션 신원 이월·탭 기록은 `RootRequestHandler.process_view`에서 **view 모듈이 `web.`으로 시작할 때만**(같은 프로세스 API 호출의 재진입 차단) · `__call__`은 응답 뒤 신원 reset + 조각 요청의 3xx를 200 + `HX-Redirect`로 (§2·§6)
 - 다른 화면이 임베드하는 화면은 셸 없는 `<화면>_embed_fragment` + navigator `<화면>_embed_href()` (§2)

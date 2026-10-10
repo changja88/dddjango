@@ -1255,6 +1255,49 @@ EOF
 const r = (a) / b / c; // Kakao
 EOF
       ;;
+    # 점(`.`) 바로 뒤 낱말은 속성 이름(값)이다 — 키워드와 글자가 같아도 그 뒤 `/` 는 나눗셈이고 그 안의 전역은 참조다.
+    prop_in) cat <<'EOF'
+const ratio = range.in / Kakao.Share.count() / 2;
+EOF
+      ;;
+    prop_delete) cat <<'EOF'
+const ratio = store.delete / Kakao.Share.count() / 2;
+EOF
+      ;;
+    prop_return) cat <<'EOF'
+const ratio = flow.return / Kakao.Share.count() / 2;
+EOF
+      ;;
+    prop_new) cat <<'EOF'
+const ratio = stats.new / Kakao.Share.count() / 2;
+EOF
+      ;;
+    prop_case) cat <<'EOF'
+const ratio = rule.case / Kakao.Share.count() / 2;
+EOF
+      ;;
+    prop_typeof) cat <<'EOF'
+const ratio = meta.typeof / Kakao.Share.count() / 2;
+EOF
+      ;;
+    prop_optional) cat <<'EOF'
+const ratio = range?.in / Kakao.Share.count() / 2;
+EOF
+      ;;
+    prop_spaced) cat <<'EOF'
+const ratio = range
+  . /* 속성 */ in / Kakao.Share.count() / 2;
+EOF
+      ;;
+    # 진짜 키워드 뒤의 `/` 는 지금처럼 정규식 리터럴이다(참조 아님) — 펼침(`...`) 뒤 낱말도 속성 이름이 아니다.
+    keyword_regex) cat <<'EOF'
+function isKakaoLink(x) { return /Kakao/.test(x); }
+EOF
+      ;;
+    spread_keyword_regex) cat <<'EOF'
+const kinds = [...typeof /Kakao/.source];
+EOF
+      ;;
   esac
 }
 order_three() { # order_three <프로젝트> — 같은 기능 JS 를 SDK 앞에 싣는 템플릿 셋(페이지 둘 · root_view)을 커밋하고 HEAD 를 낸다
@@ -1271,8 +1314,10 @@ EOF
 }
 for CASE in template_comment template_line_comment postfix_division postfix_decrement nested_template_url \
             postfix_then_statement open_template regex_quote escaped_quote undecidable unterminated \
-            paren_division comment_after_division; do
-  case "$CASE" in paren_division|comment_after_division) WANT=0; N=0; M=0 ;; *) WANT=2; N=1; M=3 ;; esac
+            paren_division comment_after_division \
+            prop_in prop_delete prop_return prop_new prop_case prop_typeof prop_optional prop_spaced \
+            keyword_regex spread_keyword_regex; do
+  case "$CASE" in paren_division|comment_after_division|keyword_regex|spread_keyword_regex) WANT=0; N=0; M=0 ;; *) WANT=2; N=1; M=3 ;; esac
   P=$(newp "lex-tag-$CASE"); B=$(base_of "$P"); order_page "$P"; lex_js "$CASE" > "$P/web/static/js/order_probe.js"
   OUT=$(BS "$P" --diff-base "$B" --only pu2); E=$?
   check "K226 코드 뷰 $CASE · 태그 added" "$WANT" "$E" "$OUT" "기능 JS 태그보다 뒤=$N"

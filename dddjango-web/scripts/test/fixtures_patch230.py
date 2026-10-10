@@ -19,7 +19,7 @@ from pathlib import Path
 TEST = Path(__file__).resolve().parent
 SCRIPTS = TEST.parent
 REPO = SCRIPTS.parents[1]
-BASELINE = '1e4344a6'  # 고치기 전 판(배포된 dddjango-web 2.2.5) — 판마다 바탕 커밋으로 올린다
+BASELINE = 'f19ced8b'  # 고치기 전 판(배포된 dddjango-web 2.2.6) — 판마다 바탕 커밋으로 올린다
 VERSION_NOTICE = re.compile(r'^\[info\] 플러그인 판 바뀜 — G0 스캔 (\S+) → 지금 (\S+?)'
                             r'\(검사 집합·키 의미론이 같아 잔존 판정을 잇는다\)\n', re.M)
 ENV = dict(os.environ, GIT_OPTIONAL_LOCKS='0', PYTHONDONTWRITEBYTECODE='1')
@@ -431,6 +431,24 @@ def bundle_unchanged(tmp):
         plans.append((got, (out_dir / 'plan.md').read_text(encoding='utf-8') if (out_dir / 'plan.md').exists() else None))
     check('U refactor_audit plan — 요약 · plan.md 가 고치기 전 판과 byte 동일', plans[0] == plans[1] and plans[0][0][0] == 0
           and plans[0][1] is not None, '%r\n%r' % (plans[0][0], plans[1][0]))
+    # plan --names 의 명령 기록(plan-names.md «grep 명령») — 판정 명령 줄은 도구가 실제로 돈 pathspec 그대로라, 선언이 없어도
+    # 선언 파일 제외 토큰 하나가 붙는다(이 판의 의도된 차이). 그 토큰만 빼면 고치기 전 판과 같다(첫 줄의 실행 시각은 뺀다).
+    (g0 / 'design-spec.md').write_text(
+        '## 슬라이스 0\n- 경로: application/order/order_router.py → application/order/order_routes.py\n', encoding='utf-8')
+    token = " ':(exclude)web/product_registry.json'"
+    recorded = []
+    for scripts in (SCRIPTS, old):
+        out_dir = g0 / 'audit-names'
+        shutil.rmtree(out_dir, ignore_errors=True)
+        order = ('plan', 'web/application/order', '--debt', g0 / 'debt-g0.json', '--out', out_dir)
+        audit(p.root, *order, scripts=scripts)
+        got = audit(p.root, *order, '--names', g0 / 'design-spec.md', scripts=scripts)
+        names = out_dir / 'plan-names.md'
+        recorded.append((got, names.read_text(encoding='utf-8').partition('\n')[2] if names.exists() else ''))
+    check('U refactor_audit plan --names — 명령 기록의 판정 명령에 선언 파일 제외 토큰만 붙고(의도된 차이) 나머지는 고치기 전 판과 byte 동일',
+          recorded[0][0] == recorded[1][0] and recorded[0][1].count(token) == 2 and token not in recorded[1][1]
+          and '## grep 명령' in recorded[1][1] and recorded[0][1].replace(token, '') == recorded[1][1],
+          '%r\n%s\n---\n%s' % (recorded[0][0], recorded[0][1][-900:], recorded[1][1][-900:]))
     # 검사 집합 상수 — 새 검사 ID 0
     probe = ('import json,sys; sys.path.insert(0, sys.argv[1]); import backstop; from src import common, debt; '
              'print(json.dumps([list(common.CORE_CHECK_IDS), list(common.CORE_FAMILIES), list(debt.CHECK_IDS), debt.KEY_SCHEME, '
@@ -511,6 +529,12 @@ def bundle_errors(tmp):
     scope = plan.partition('## 범위 파일')[2].partition('\n## ')[0]
     check('E 선언 파일은 «어느 단위도 아님» — `web/*.py` 범위 파일에 없다', e == 0 and '`web/urls.py`' in scope
           and 'product_registry.json' not in scope, 'exit=%d\n%s\n%s' % (e, out[-300:], scope[:600]))
+    # 선언 파일은 참조 완전성 grep 에도 들지 않는다 — 단위 `web/*.py` 의 점 경로 꼬리 `web` 이 schema 문자열
+    # (`dddjango-web-products/1`)의 낱말에 `-w` 로 걸려 «경계 교차 소비자» 가 되지 않는다(sdk_registry.json 선례).
+    consumers = plan.partition('## 경계 교차 소비자')[2].partition('\n## ')[0]
+    check('E 선언 파일은 참조 완전성 grep 밖 — `web/*.py` 의 소비자 · 참조 줄 어디에도 없다(헛대조 아님: 진짜 소비자는 그대로)',
+          e == 0 and '`web/root/router/root_router.py:3`' in consumers and 'product_registry.json' not in plan
+          and ' 소비자 6 ' in out, 'exit=%d\n%s\n%s' % (e, out[-300:], consumers[:600]))
     e, out = audit(p.root, 'plan', 'web/product_registry.json', '--debt', debt, '--out', folder / 'audit-x')
     check('E 선언 파일을 단위로 주면 실행 불능(exit 1 · 단위가 아니다)', e == 1 and '단위가 아니다' in out and '제품 선언' in out, out[-300:])
 

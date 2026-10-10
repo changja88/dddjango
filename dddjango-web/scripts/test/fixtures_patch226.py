@@ -26,6 +26,8 @@ LANE_LINE = '    open("/private/tmp/lane").read()\n'
 IMAGE = 'def test_x():\n    expect(page).to_have_screenshot("x.png")\n'
 SAFE = 'def test_x():\n    pass\n'
 LINKED = 'from pathlib import Path\ndef test_x():\n    (Path(__file__).parent / "data" / "x.json").read_text()\n'
+# 프로젝트 루트(저장소 하위 폴더 `host/`) 밖 — 저장소 뿌리의 `shared` 를 거쳐 읽는다(host/web_test/test_x.py 기준 세 칸 위).
+OUTER = 'from pathlib import Path\ndef test_x():\n    (Path(__file__).parent.parent.parent / "shared" / "x.json").read_text()\n'
 PROOF = '(수신 증명 — 기준 뒤 이 파일을 바꾼 걸음 = 승인 병합의 상류판 그대로뿐) · 파일 그대로'
 GATHERED = '[info] TG2 일부 흐름 자동 판정 밖 — 승인 병합이 그대로 들인 시험 %d 파일은 이 레인 감수 대상이 아니다(승인 유입 · 병합 %s)'
 SUSPECT = '[info] 승인 병합 %s 의 ^2 %s 를 담은 ref 가 HEAD 가지뿐 — 역방향/합성 병합 의심(발주자 확인)'
@@ -560,6 +562,33 @@ with tempfile.TemporaryDirectory(prefix='web226-') as tmp:
             f.write('web_test/data\n')
         shape('폴더→링크가 가려짐 ' + flag, hidden(repo, 'web_test/data'))
         retained('추적 폴더를 현물에서 밖 링크로 ' + flag, run(root, base), reason='유입 증명 실패(레인이 손댄 심볼릭 링크)')
+    # 프로젝트 루트가 저장소 하위 폴더 — 링크 조사는 root 아래만이 아니라 저장소 전체다. 저장소 뿌리(root 밖)의 추적 링크가
+    # root 안을 가리키고 그대로 받은 시험이 그 링크를 거쳐 읽는다 → 레인이 그 링크를 root 밖으로 돌리면 그 발견은 이 레인 몫이다.
+    for mode in ('committed', 'worktree'):
+        repo, root, base, folder = project(temp, 'hidden-outer-link-' + mode, {'web_test/fixtures/x.json': '{}\n'}, nested=True,
+                                           prepare=lambda at: os.symlink('host/web_test/fixtures', at.parent / 'shared'))
+        m = incoming(repo, root, {TEST: OUTER}, folder)
+        got = run(root, base)
+        shape('root 밖 링크 변경 앞 발견 0 ' + mode, got[0] == 0 and '[TG2]' not in got[1]
+              and git(repo, 'ls-tree', 'HEAD', 'shared').startswith('120000'), got)
+        (repo / 'shared').unlink()
+        os.symlink(str(outside), repo / 'shared')
+        if mode == 'committed':
+            lane_commit(repo, 'lane-link', 'shared')
+        shape('root 밖 링크를 밖으로 돌림 ' + mode, hidden(repo, 'shared') == (mode == 'committed')
+              and git(repo, 'rev-parse', 'HEAD:host/' + TEST) == git(repo, 'rev-parse', m + '^2:host/' + TEST))
+        retained('하위 폴더 루트 — 저장소 뿌리의 추적 링크를 레인이 root 밖으로 돌림 ' + mode, run(root, base),
+                 reason='유입 증명 실패(레인이 손댄 심볼릭 링크)')
+    # 회귀 방지 — 같은 자리의 링크가 기준판 그대로(root 밖을 가리켜도)이거나 승인 병합이 상류판 그대로 돌린 것이면 증명이 선다.
+    repo, root, base, folder = project(temp, 'outer-base-link', nested=True, prepare=lambda at: os.symlink(str(outside), at.parent / 'shared'))
+    m = incoming(repo, root, {TEST: OUTER}, folder)
+    received('B 하위 폴더 루트 — 저장소 뿌리의 기준판 링크(root 밖) 현물 그대로', run(root, base), m)
+    repo, root, base, folder = project(temp, 'outer-upstream-link', {'web_test/fixtures/x.json': '{}\n'}, nested=True,
+                                       prepare=lambda at: os.symlink('host/web_test/fixtures', at.parent / 'shared'))
+    m = incoming(repo, root, {TEST: OUTER}, folder,
+                 prepare=lambda: ((repo / 'shared').unlink(), os.symlink(str(outside), repo / 'shared')))
+    shape('상류가 저장소 뿌리 링크를 돌림', git(repo, 'rev-parse', 'HEAD:shared') != git(repo, 'rev-parse', base + ':shared'))
+    received('B 하위 폴더 루트 — 상류가 함께 돌린 저장소 뿌리 링크(승인 병합의 상류판 그대로)', run(root, base), m)
     # 현물 대조는 필터 없이 — clean 필터·줄 끝 변환이 가린 차이는 «같음» 의 증명이 아니다.
     # ⓐ 같은 길이 치환 필터 — git status 도 필터 결과만 봐 깨끗하다 ⓑ 금지 줄을 지우는 필터 + 색인 플래그.
     relative = 'def test_x():\n    open("relative/data.txt").read()\n'

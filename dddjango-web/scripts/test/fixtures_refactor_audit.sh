@@ -1038,7 +1038,7 @@ assert "DG14 --names 파일 이동 쌍 — 문서 글 적중 절(꼬리 적중 �
 assert "DG14′ 파일 이동 쌍 — 점 경로(-w) 적중 줄 · 다른 파일의 문서 글은 없음" 0 '`docs/tool.py:1`' 'docs/site.css' 0 "$ND"
 assert "DG14″ 파일 이동 쌍 — 꼬리와 점 경로가 같이 걸린 줄은 한 번만" 0 - - "$(ONCE '`docs/official/master.html:4`' "$ND")" "$ND"
 assert "DG14‴ 파일 이동 쌍 — 문서 글은 (나) 줄이 아니다" 0 "(나) 줄 0" - "$E" "$OUT"
-assert "DG15 명령 기록 — 판정 명령(도구가 돈 옵션 그대로 · 문면과 같은 pathspec 꼴)" 0 "git grep --untracked -I -n -F -e consultation/urls.py -- web web_test '*.py' '*.html' '*.css' '*.js' ':(exclude).dddjango-web' ':(exclude)docs' ':(exclude)web/static/vendor' ':(exclude)web/sdk_registry.json'" - 0 "$NC"
+assert "DG15 명령 기록 — 판정 명령(도구가 돈 옵션 그대로 · 문면과 같은 pathspec 꼴)" 0 "git grep --untracked -I -n -F -e consultation/urls.py -- web web_test '*.py' '*.html' '*.css' '*.js' ':(exclude).dddjango-web' ':(exclude)docs' ':(exclude)web/static/vendor' ':(exclude)web/sdk_registry.json' ':(exclude)web/product_registry.json'" - 0 "$NC"
 assert "DG15′ 명령 기록 — 알림 명령(도구가 돈 옵션 그대로 · pathspec 만 다르다)" 0 "git grep --untracked -I -n -F -e consultation/urls.py -- 'docs/*.py' 'docs/*.html' 'docs/*.css' 'docs/*.js'" - 0 "$NC"
 assert "DG15″ 명령 기록 — 점 경로 알림 명령(-w)" 0 "git grep --untracked -I -n -F -w -e web.consultation.urls -- 'docs/*.py' 'docs/*.html' 'docs/*.css' 'docs/*.js'" - 0 "$NC"
 assert "DG15‴ 명령 기록에 옵션 빠진 옛 꼴(git grep -n -F …)이 없다" 0 "git grep --untracked -I -n -F " "git grep -n -F " 0 "$NC"
