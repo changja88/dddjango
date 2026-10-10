@@ -571,13 +571,15 @@ def parse_css_loads(ms: MaskedSource, file_rel: str) -> List[Tuple[int, str]]:
     return loads
 
 
-_STATIC_LITERAL_END_RE = re.compile(r'(?:\s+as\s+\w+)?\s*-?%\}')
+# 닫는 따옴표 뒤 — 곧바로 태그 끝(`%}` · `as <이름> %}`)이거나, 공백 뒤 다른 토큰이 같은 줄 안에서 `%}` 로 닫힌다.
+_STATIC_LITERAL_END_RE = re.compile(r'(?:\s+as\s+\w+)?\s*-?%\}|[^\S\n]+[^\n]*?%\}')
 
 
 def parse_template_loads(ms: MaskedSource) -> List[Tuple[int, str]]:
     """템플릿이 `{% static %}` 으로 직접 싣는 정적 파일 — (행, 실제로 실리는 web-상대 경로). 인자는 정적 뿌리 기준이다
-    (앞머리 `/` 는 뗀다 — static_target 과 같다). 인자가 따옴표 문자열 하나뿐일 때만(닫는 따옴표 뒤가 `%}` · `as <이름> %}`)
-    싣는 파일로 확정한다 — 필터(`|…`) · 다른 토큰이 붙은 인자는 동적 경로라 넣지 않는다(변수 인자는 _STATIC_RE 가 안 잡는다)."""
+    (앞머리 `/` 는 뗀다 — static_target 과 같다). 따옴표 문자열 인자는 닫는 따옴표 뒤가 태그 끝(`%}` · `as <이름> %}`)이거나
+    공백을 두고 다른 토큰이 올 때(static 태그는 따옴표 문자열만 경로로 읽고 공백 뒤 토큰은 버린다 — 같은 줄에서 닫힐 때만)
+    싣는 파일로 확정한다 — 따옴표에 공백 없이 붙은 필터(`'…'|…`)는 동적 경로라 넣지 않는다(변수 인자는 _STATIC_RE 가 안 잡는다)."""
     loads: List[Tuple[int, str]] = []
     text: str = ms.no_comments
     for m in _STATIC_RE.finditer(text):
