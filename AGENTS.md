@@ -24,7 +24,7 @@ byte-exact로 미러하고, checker script는 별도 byte mirror로 검증한다
 - `dddjango-web/` — **자매 플러그인**(웹 표현계층 빌더 — `/dddjango-web`). 2.0.0부터 Flutter 판 `dddart`와
   같은 절차·구조(간소화 DDD 4층 + MVVM · G0/G1/G2 · 가정 계약 → tracer → 미니 게이트)에 구현 기술만
   Django·HTML·HTMX·JS로 바꾼 판이다. 2.2.0부터 한 가지가 dddart와 다르다 — 구조 검사(백스톱)를 G2 직전에만이 아니라 슬라이스가 끝날 때마다도 돈다(`backstop.py --slice-end`). 2.3.0부터 둘째 차이는 한 web 앱에 제품이 여럿이면 선택형 제품 선언
-  `web/product_registry.json`과 제품별 design_system 뿌리·문서 셸을 쓴다는 것이다. 2.3.2부터 슬라이스 0(리팩터링)은 메서드 이동 승인 행(`메서드 이동:`)과 시험 먼저 바꾸기 0T(`시험 전환:` 행 — 확인 도구 `refactor_audit.py switch-check`)를 받고, 빚 질문의 미룸을 정형 사유(수리 대기 · 다른 요청)로 적는다. 2.3.3부터 판 확인 지문은 조정자가 G1·G1′ 배너와 답 받음 두 자리에서만 재고, 역할은 재지 않는다. 2.3.4부터 Codex 조정자는 일꾼을 짧은 확인을 되풀이하지 않고 `wait_agent`의 긴 대기(600000ms)로 기다린다(core 대기 정책을 옮김). 커맨드 2(메인 + 리팩토링 입구 `/dddjango-web:refactor <대상 단위>`)
+  `web/product_registry.json`과 제품별 design_system 뿌리·문서 셸을 쓴다는 것이다. 2.3.2부터 슬라이스 0(리팩터링)은 메서드 이동 승인 행(`메서드 이동:`)과 시험 먼저 바꾸기 0T(`시험 전환:` 행 — 확인 도구 `refactor_audit.py switch-check`)를 받고, 빚 질문의 미룸을 정형 사유(수리 대기 · 다른 요청)로 적는다. 2.3.3부터 판 확인 지문은 조정자가 G1·G1′ 배너와 답 받음 두 자리에서만 재고, 역할은 재지 않는다. 2.3.4부터 Codex 조정자는 일꾼을 짧은 확인을 되풀이하지 않고 `wait_agent`의 긴 대기(600000ms)로 기다린다(core 대기 정책을 바탕으로). 커맨드 2(메인 + 리팩토링 입구 `/dddjango-web:refactor <대상 단위>`)
   + 에이전트 7(`design-architect-web` · 리뷰어 4 `design-review-{ddd,ui,state,data}-web` · `coder-web` ·
   `discipline-reviewer-web`) + 스킬 12 + `scripts/backstop.py`(검사 86종 — ST·IM·NM·CY·TG·PJ·MD·PU·WV ·
   빚 모드 `--debt-scan`[`--refactor`]·`--debt-residual` · 치환 확인 `--subst-check` · 슬라이스 끝 실행 `--slice-end`) ·
