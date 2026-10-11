@@ -1,7 +1,7 @@
 {
   "name": "dddjango",
   "displayName": "dddjango",
-  "version": "2.19.3",
+  "version": "2.20.0",
   "description": "DDD 방식으로 Django 기능을 설계·구현하는 오케스트레이터. /dddjango로 요구→설계→구현(TDD)을 단계별 게이트로 빌드하고, /dddjango:refactor 로 대상 BC 하나의 기존 코드 전체를 표준으로 정리한다(바뀌는 동작 · DB 는 G1 목록 승인).",
   "author": {
     "name": "changja88",
