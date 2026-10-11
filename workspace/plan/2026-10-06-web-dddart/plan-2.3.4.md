@@ -37,6 +37,7 @@
 | 실행 | 결과 | 증거 |
 |---|---|---|
 | 보완 글 다시 시험 | W-C 3 · M-C 3 모두 기준 통과 | `<S>/loadab/criteria-wait2.md` · `w2/measure.json` |
-| `make verify-web` |  |  |
-| `make verify` |  |  |
+| `make verify-web` | `729f31c4` 통과(rc 0 · 19:34:10 ~ 19:55:10) | `<S>/wait-rule/verify-web-4.log` |
+| `make verify` | `729f31c4` green 6/6(569초 · 19:55:10 ~ 20:04:39) | `<S>/wait-rule/verify-4.log` |
+| 마지막 표현 정리 확인(Codex) | `729f31c4` «그대로 배포 가능»(차단 0) | `<S>/wait-rule/review4-codex.md` |
 | 독립 검토(Codex · Claude) | 1차 `4c1247e2`: 둘 다 «보완 후 배포»(차단 1) · 2차 `82594b4e`: 둘 다 «보완 후 배포»(차단 Codex 2 · Claude 1) → 3차 보완 · 3차 `bcedc2a1`: 둘 다 «그대로 배포 가능»(차단 0) → 지적 표현만 정리(`close_agent` 도구 조건 · architect 산출물 · 진행 소식 · 멈춤 입력 · 받아들인 위험) | `<S>/wait-rule/review{,2,3}-{codex,claude}.md` |
