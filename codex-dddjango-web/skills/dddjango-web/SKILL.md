@@ -15,6 +15,7 @@ description: 기존 Django 프로젝트에 한 기능의 web 화면(HTML·HTMX·
 
 - 역할 위임 = `spawn_agent`로 **새 서브에이전트를 띄운다**. 결과 수신 = `wait_agent`. 슬롯 해제 = `close_agent`. 병렬 작업(리뷰어 4종·R2 단위 점검 다발) = `spawn_agent`를 **여러 번** 호출한다.
 - 서브에이전트는 **실제로 띄워서 실행**한다 — 한 컨텍스트에서 역할을 순서대로 흉내내는 "sequential fallback"으로 후퇴하지 마라. 결과를 받기 전에 완료했다고 보고하지 않는다(`wait_agent` 수신 후에만 통합).
+- **일꾼 기다리기**: `wait_agent`는 `timeout_ms`를 길게(600000 이상) 준다 — 일꾼이 끝나면 그 전에 돌아온다. 시간이 다 돼 돌아와도(`timed_out`) 실패가 아니니 같은 긴 시간으로 다시 기다리고, 기다리는 사이에 다른 확인을 끼워 넣지 않는다.
 - 각 역할 서브에이전트에는 **명령형으로** 지시한다: "역할 스킬 `dddjango-web-<역할>-web`을 로드해 그 역할로서 작동하라. 입력: …". 역할 스킬이 필요 지식 스킬(`dddjango-web-architecture-*`, `dddjango-web-implementation-*`, `dddjango-web-discipline-*`)을 다시 로드한다.
 - `spawn_agent`를 쓸 수 없으면(드물게 `multi_agent`가 꺼져 있는 경우), 임의로 단일 컨텍스트 역할극을 하지 말고 **사용자에게 활성화를 안내하고 멈춘다**.
 - **경로 표기**: 이 문서의 `${SKILL_DIR}`는 이 스킬 폴더(이 `SKILL.md`가 있는 `dddjango-web/` 폴더 — `scripts/`·`assets/`가 그 아래에 있다)다. 실행할 때 절대 경로로 펴서 쓴다.
