@@ -37,7 +37,8 @@ byte-exact로 미러하고, checker script는 별도 byte mirror로 검증한다
   빌드 스펙 정본: `workspace/plan/2026-10-06-web-dddart/mapping.md`(2.0.0) ·
   `workspace/plan/2026-10-06-web-dddart/plan-2.1.0.md` + `build-log-2.1.0.md`(2.1.0 — 빚 정리 · 외부 JS ·
   리팩토링 입구) · `plan-2.2.0.md` + `build-log-2.2.0.md`(2.2.0 — 슬라이스 끝 구조 검사) ·
-  `plan-2.3.2.md` + `build-log-2.3.2.md`(2.3.2 — 메서드 이동 · 시험 먼저 바꾸기 0T · 빚 미룸 정형 사유).
+  `plan-2.3.2.md` + `build-log-2.3.2.md`(2.3.2 — 메서드 이동 · 시험 먼저 바꾸기 0T · 빚 미룸 정형 사유) ·
+  `plan-2.3.3.md` + `build-log-2.3.3.md`(2.3.3 — 판 확인 지문은 조정자가 배너 · 답 받음 두 자리에서만).
 - `ontology/` — 규범 **정본**(그래프): `rules/*.ttl`(30 문서 키) · `vocab/` · `shapes/` ·
   `wiring/` · `ISSUED`(채번 대장) · `LEDGER.tsv`(산문 절 기준선 원장).
 - `workspace/reference/**` — 배포 reference의 출처·P1 메타데이터를 보존하는 소스 미러.
