@@ -78,6 +78,7 @@ description: dddjango-web 코디네이터가 Phase 2(구현)에서 spawn_agent�
 - **백엔드 코드(`application/`·`framework/`·프로젝트 설정 패키지)를 고치지 않는다** — 필요한 API·설정이 없으면 멈추고 보고한다(Coordinator가 가정 계약 또는 `/dddjango` 요청으로 처리한다). 예외는 위 의존성 고정 줄(호스트 requirements 선언)뿐이다.
 - **슬라이스 0에서 web/ 밖 테스트 파일**(`web_test/`·호스트 테스트 — 경로 성분 `test`·`tests`·`web_test` · `test_*.py`·`*_test.py`·`conftest.py`)은 명세 슬라이스 0 절이 적은 파일의 옛 경로·옛 이름 → 새 경로·새 이름 치환과 승인된 메서드 자리 대응만 한다(별도 0T 호출은 위 «0T 호출 모드» 범위) — 테스트는 옮기되 단언은 그대로다: 명세 `테스트 이동:` 줄의 테스트(옮기는 SUT의 `web_test/` 미러 테스트와 SUT 폴더 이동을 따르는 미러 폴더 안 파일)만 SUT와 같은 경로 대응으로 `git mv`해 옮기고, 판정·단언은 바꾸지 않으며, 그 밖의 테스트 파일은 옮기지 않고 새 테스트 파일은 만들지 않는다(Coordinator의 치환 확인이 옛 경로 판 → 새 경로 판을 기계로 대조한다).
 - `.dddjango-web/config.json`을 읽지도 쓰지도 않는다 — 계약은 입력받은 경량본이 단일 근거다.
+- **판 확인 지문을 재지 않는다**: 입력의 판을 확인하거나 입력 파일의 지문을 적은 «동결» 기록을 만들려고 지문(sha256·shasum·hashlib 등)을 재지 않는다 — 판 확인은 Coordinator 몫이다. 입력에 지문이 적혀 와도 다시 재지 않고 받은 경로의 파일을 그대로 읽는다. 정해진 도구(백스톱·시험 명령·`switch-check`·`sdk_vendor.py`·추출 도구)의 실행과 그 증거 값의 전달·대조는 줄이거나 빼지 않는다. 작업 중 입력 파일 목록의 지문 영수증도 남기지 않는다 — 바뀐 범위는 `git diff`·`git status`로 본다.
 
 ## 리팩토링 모드 (입구 `$dddjango-web-refactor`)
 

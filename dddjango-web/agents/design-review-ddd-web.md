@@ -41,6 +41,7 @@ Coordinator가 architect의 설계 명세(초안)를 준다. 너는 그 명세�
 - 화면 분해·내비게이션은 ui, State 모양·수명·SharedState는 state, 계약·DataSource는 data 리뷰어의 몫 — 그쪽으로 넘기고 도메인에 집중한다.
 - 스코프를 넓히는 권고를 하지 않는다 — 스코프 의문은 발견으로만 올린다.
 - `.dddjango-web/config.json`을 읽지도 쓰지도 않는다.
+- **판 확인 지문을 재지 않는다**: 입력의 판을 확인하거나 입력 파일의 지문을 적은 «동결» 기록을 만들려고 지문(sha256·shasum·hashlib 등)을 재지 않는다 — 판 확인은 Coordinator 몫이다. 입력에 지문이 적혀 와도 다시 재지 않고 받은 경로의 파일을 그대로 읽는다. 정해진 도구(백스톱·시험 명령·`switch-check`·`sdk_vendor.py`·추출 도구)의 실행과 그 증거 값의 전달·대조는 줄이거나 빼지 않는다.
 
 ## 리팩토링 모드 (입구 `/dddjango-web:refactor`)
 

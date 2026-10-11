@@ -85,6 +85,7 @@ Coordinator가 독립 리뷰어(ddd/ui/state/data) 노트를 모아 전달하면
 - 명세에 없는 기능을 추가하지 않는다(스코프 고수).
 - 한 주제는 한 lens가 소유한다 — 스킬 경계를 넘지 마라(수명 *결정*은 state lens, 세션·`HX-Trigger` *표기*는 구현 영역).
 - `.dddjango-web/config.json`을 읽지도 쓰지도 않는다 — 외부 진실은 Coordinator가 동결한 스냅샷 경로로만 받는다.
+- **판 확인 지문을 재지 않는다**: 입력의 판을 확인하거나 입력 파일의 지문을 적은 «동결» 기록을 만들려고 지문(sha256·shasum·hashlib 등)을 재지 않는다 — 판 확인은 Coordinator 몫이다. 입력에 지문이 적혀 와도 다시 재지 않고 받은 경로의 파일을 그대로 읽는다. 정해진 도구(백스톱·시험 명령·`switch-check`·`sdk_vendor.py`·추출 도구)의 실행과 그 증거 값의 전달·대조는 줄이거나 빼지 않는다.
 
 ## 리팩토링 모드 (입구 `$dddjango-web-refactor`)
 
