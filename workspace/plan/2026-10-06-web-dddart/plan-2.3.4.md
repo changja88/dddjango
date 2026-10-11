@@ -1,30 +1,39 @@
-# dddjango-web 2.3.4 — Codex 일꾼 기다리기는 긴 대기 한 번 (10-11)
+# dddjango-web 2.3.4 — Codex 일꾼 기다리기는 긴 대기로 (10-11)
 
 ## 바탕
-- 바탕: R main `a73dfadc`(dddjango-web 2.3.3). 2.3.4 는 패치 — Codex Coordinator `SKILL.md` 「Codex 실행 모델」 절에 문단 하나만 더한다. Claude 쪽 글 · 역할 · references · scripts · 검사 86종은 그대로다(Claude 런타임에는 `wait_agent` 가 없다). 매니페스트 판은 `make release-web` 이 올린다.
-- 사본: `<S>/web-wait-1`. `<S>` = `/private/tmp/claude-501/-Users-hyun-Desktop-dddjango/ed01792c-e467-4a58-a794-ed16237ffb9e/scratchpad`. 시험 기록 `<S>/loadab/`(`criteria-wait.md` · `w/measure.json`).
+- 바탕: R main `a73dfadc`(dddjango-web 2.3.3). 2.3.4 는 패치 — Codex Coordinator `SKILL.md` 「Codex 실행 모델」 절에 문단 하나를 더하고 엣지 «서브에이전트 결과 미수신»을 거기에 맞춘다. Claude 쪽 글 · 역할 · references · scripts · 검사 86종은 그대로다(Claude 런타임에는 `wait_agent` 가 없고 Agent 도구가 결과까지 막힌다). 매니페스트 판은 `make release-web` 이 올린다.
+- 사본: `<S>/web-wait-1`. `<S>` = `/private/tmp/claude-501/-Users-hyun-Desktop-dddjango/ed01792c-e467-4a58-a794-ed16237ffb9e/scratchpad`. 시험 기록 `<S>/loadab/`(`criteria-wait.md` · `w/measure.json` · 보완 글 다시 시험 `criteria-wait2.md` · `w2/measure.json`).
 - 사용자 결정: 10-11 «이거 두개는 수리가 가능한지 확인해줘» → 시험 → «우선 배포는 바로해» · «우선 고칠수 있는것은 수리 진행해».
 
 ## 근거(측정)
 - 현장 web 레인 넷: 일꾼이 끝났는지 계속 확인 14.5h / 164.6h(8.8% · 2,864번 · 걸음당 18초). 플러그인 · 레인 지침에 기다리는 시간 규칙 0. Codex 0.160 기본 안내에 «prefer longer waits (minutes)» 가 있는데도 레인이 고른 대기는 10 ~ 60초.
-- 공지 목록 A/B(B1b): `wait_agent` 39번 · 10초 8 · 50초 31 · 39번 모두 «Wait timed out.» 로 돌아옴 — 작은 일감에서도 재현.
+- 공지 목록 A/B(B1b): `wait_agent` 39번 · 10초 8 · 50초 31 · 일꾼이 끝나기 전에는 모두 «Wait timed out.» 로 돌아옴 — 작은 일감에서도 재현.
 - 작은 시험(실행 전 기준 고정 · `criteria-wait.md`):
-  - 상한 확인: `wait_agent` `timeout_ms` 600000 한 번 → 152초 뒤 «Wait completed.» — 긴 대기를 막는 상한 없음.
+  - 긴 대기 확인: `wait_agent` `timeout_ms` 600000 한 번 → 152초 뒤 «Wait completed.» — 기본 설정에서 600000 요청이 받아들여지고(상한 ≥ 600000 · 오류 없음), 일꾼이 끝나면 일찍 돌아온다. 실제로 600초를 다 기다린 경우는 시험하지 않았다.
   - 일꾼 4분 일: 안내 글 없음 = 대기 5 · 5 · 9번(10 ~ 60초) / 안내 글 있음 = 1 · 1 · 1번(600000) · 답 6/6 · 벽시계 263 vs 265초 → 재현 · 효과(−80%) · 정답 · 시간 기준 모두 통과.
+  - 안내 글 없음 쪽에서 일꾼이 끝나기 전에 «Wait completed.» 가 3번씩 돌아온 실행이 있다(WA1 · WA3) — 돌아왔다고 일꾼이 끝난 것은 아니다. 현장 6-3-13 도 `wait_agent` 1,247번 가운데 시간 초과 아닌 반환 411번.
+- 검토 둘(Codex · Claude) 차단 1(같은 것): 처음 글(«시간 초과면 같은 긴 시간으로 다시 · 다른 확인 끼워 넣지 않음»)에 빠져나오는 조건이 없어 멈춘 일꾼 · 결과를 다 받은 뒤의 대기가 10분씩 끝없이 이어질 수 있고, 엣지 «결과 미수신»(결과를 돌려주지 않으면 재spawn)과 엇갈림. Codex `wait_agent`(multi_agent v2)는 특정 일꾼이 아니라 살아 있는 아무 에이전트의 소식을 기다린다. core Codex 판에는 같은 일을 막는 대기 정책이 이미 있다(`codex-dddjango/skills/dddjango/SKILL.md` 「대기 정책(2026-08-13)」 · 엣지 «결과 미수신») → 그 규칙을 web 으로 옮겼다(수치만 600000 — 위 시험 근거).
+- 보완 글 다시 시험(실행 전 기준 고정 · `criteria-wait2.md`): 일꾼 하나(4분) wait 1 · 1 · 1 · 답 3/3 · 중앙 261초 / 일꾼 둘(90초 · 200초) wait 2 · 2 · 2 · 답 3/3 · 중앙 240초 — 모두 600000 · 시간 초과 0 · 결과를 다 받은 뒤 더 기다린 실행 0 → 기준 통과.
 
 ## 넣은 것
 | 자리 | 글 |
 |---|---|
-| `codex-dddjango-web/skills/dddjango-web/SKILL.md` 「Codex 실행 모델」 목록 셋째 | **일꾼 기다리기**: `wait_agent`는 `timeout_ms`를 길게(600000 이상) 준다 — 일꾼이 끝나면 그 전에 돌아온다. 시간이 다 돼 돌아와도(`timed_out`) 실패가 아니니 같은 긴 시간으로 다시 기다리고, 기다리는 사이에 다른 확인을 끼워 넣지 않는다. |
+| `codex-dddjango-web/skills/dddjango-web/SKILL.md` 「Codex 실행 모델」 목록 셋째 | **일꾼 기다리기**: 짧은 대기 · 상태 확인을 되풀이하지 않는다 — `timeout_ms` 600000(상한 오류면 그 상한으로 다시 · 실패도 재spawn 사유도 아님) · 띄운 직후 할 일이 남았으면 먼저(SDK 후보 모으기 등) · 돌아오면 결과가 왔는지 본다(돌아왔다 ≠ 끝났다) · 여럿이면 온 것 처리하고 남은 것 · 아직이면 `list_agents` 로 `running` 인지 한 번 보고 `running` 인 동안 다시 · 다 받았으면 다시 부르지 않음 · 사용자 입력으로 끊기면 그 입력 먼저 · 끝난 상태(errored · closed)나 30분+ 무진행이면 «결과 미수신» |
+| 같은 문서 엣지 «서브에이전트 결과 미수신» | «미수신»은 위 자로만 성립 · `timed_out` 자체는 미수신이 아님 · 미수신이면 옛 일꾼을 `close_agent` 로 닫은 뒤 재spawn 또는 막힘 보고 |
 | `AGENTS.md` | dddjango-web 단락 «2.3.4부터 …» 한 문장 · 정본 목록에 이 문서 |
 
 ## 넣지 않은 것
 - «오래 걸리는 명령은 길게 한 번에 기다리기»(1초 간격 들여다보기 · 현장 12.3h · 7.5%): 작은 시험에서 1초 간격이 재현되지 않아(안내 글 없이도 20 ~ 50초 간격 3번) 기준상 판정 보류 — 신호는 3 → 1. 현장에서 생긴 워크트리 기록으로 재현을 따로 검토한다(사용자 10-11 «1초 간격 들여보기는 재현을 다시 해봐»).
-- dddjango(core) Codex 판의 같은 문단: 이번 요청 범위 밖(후보).
+- core 대기 수치(300000)를 600000 으로 맞추기: 이번 요청 범위 밖(후보).
+- verify-web 에 이 Codex 전용 문단의 표지 확인 줄: 넣지 않음(문단 대조는 공통 문단만 — 새 문단은 대조 목록에 걸리지 않아 깨지지 않음을 검토가 확인).
+
+## 시험 밖(못 한 것)
+- 30분 무진행 · 끝난 상태(errored) · 사용자 끼어듦 · 상한 오류 갈래는 시험하지 않았다(core 대기 정책이 2026-08-13 부터 같은 갈래로 쓰여 온 선례에 기댄다).
 
 ## 검증
 | 실행 | 결과 | 증거 |
 |---|---|---|
+| 보완 글 다시 시험 | W-C 3 · M-C 3 모두 기준 통과 | `<S>/loadab/criteria-wait2.md` · `w2/measure.json` |
 | `make verify-web` |  |  |
 | `make verify` |  |  |
-| 독립 검토(Codex · Claude) |  |  |
+| 독립 검토(Codex · Claude) | 첫 판 `4c1247e2`: 둘 다 «보완 후 배포»(차단 1 — 빠져나오는 조건) → 보완 |  |
