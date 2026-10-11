@@ -1057,11 +1057,23 @@ def finding(name, got, cid, path, message, inflow=False, reason=None, exitcode=N
     result(name, ok, f'exit={e}\n{out}')
 
 
+COUNT_TOKENS: tuple[tuple[str, str], ...] = (
+    ('검사 91종 중 84종', '검사 #종 중 #종'), ('검사 86종 중 79종', '검사 #종 중 #종'),
+    ('[backstop] 검사 91종', '[backstop] 검사 #종'), ('[backstop] 검사 86종', '[backstop] 검사 #종'))
+
+
+def counts_normalized(text: str) -> str:
+    for old, new in COUNT_TOKENS:
+        text = text.replace(old, new)
+    return text
+
+
 def same(name, root, base=None, only='im', extra=(), fault=None):
     now = run(root, base, only, extra, fault=fault)
     before = run(root, base, only, extra, old_runner, fault=fault)
-    # 2.2.5는 검사 합계만 84→86으로 바꾼다. 비교 대상인 유입 판정·발견·종료 코드는 그대로 대조한다.
-    before = (before[0], before[1].replace('[backstop] 검사 84종', '[backstop] 검사 86종'))
+    # 양쪽 같은 정규화 — 검사 합계 글자 넷만 바뀐다(2.4.0).
+    now = (now[0], counts_normalized(now[1]))
+    before = (before[0], counts_normalized(before[1]))
     result(name, now == before, f'현재={now}\nHEAD={before}')
 
 

@@ -2,7 +2,7 @@
 #
 # 파일 수집 · 주석/문자열 마스킹 · import 파서(Python import + 템플릿 extends/include/static,
 # 상대 import 는 web/ 루트 클램핑) · git 게이트(added/touched/added 줄/신규 단위) · 발견 모델.
-# 검사 패밀리 8개(ST·MD·IM·NM·CY·TG·PJ·PU)가 전부 이 모듈 하나를 공유한다.
+# 검사 패밀리 9개(ST·MD·IM·NM·CY·TG·PJ·PU·SH)가 전부 이 모듈 하나를 공유한다.
 #
 # 경로 규약: web/ 내부 파일은 **web-상대 posix 경로**('application/order/…')가 정본.
 # 표시할 때만 'web/' 접두를 붙인다. web/ 밖(web_test/·requirements.txt 등)은 root_rel 발견이다.
@@ -16,6 +16,7 @@ import subprocess
 import sys
 from bisect import bisect_right
 from dataclasses import dataclass, field
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -62,6 +63,7 @@ LOCAL_LINT: str = 'ruff.toml'  # 국소 타입 명시 lint (dddart analysis_opti
 ROOT_VIEW_TEMPLATE: str = 'root/scaffold/view/root_view.html'
 HTMX_CORE: str = 'static/htmx/htmx.min.js'
 HTMX_VERSION: str = '2.0.10'
+HTMX_VERSION_RE = re.compile(r'''version\s*:\s*["'](\d+\.\d+\.\d+[^"']*)["']''')
 API_CLIENT: str = 'common/network/api_client.py'  # dddart dio_client 자리
 JSON_FIELD: str = 'common/util/json_field.py'  # 직파싱 원시 필드 단일 출처(dddart json_serializable 자리) — domain 이 import 하는 유일한 common
 BACKEND_TOP_PKGS: Set[str] = {'application', 'framework'}
@@ -72,13 +74,14 @@ OS_JUNK: Set[str] = {'.DS_Store', 'Thumbs.db', 'desktop.ini'}
 TOOL_CACHE_DIRS: Set[str] = {'__pycache__', '.ruff_cache', '.pytest_cache', '.mypy_cache'}
 # 코어 검사 목록(단일 출처 — backstop CHECK_IDS 는 이것 + check_vendor.VENDOR_CHECK_IDS). dddart 번호 그대로 ·
 # 옮길 수 없는 번호는 비움(NM7 · PU4 · PU5 · PJ3[2.1.0 — vendor 버전 폴더 길이 공식 SDK 등재 절차로 바뀜]).
-CORE_FAMILIES: Tuple[str, ...] = ('st', 'md', 'im', 'nm', 'cy', 'tg', 'pj', 'pu')
+CORE_FAMILIES: Tuple[str, ...] = ('st', 'md', 'im', 'nm', 'cy', 'tg', 'pj', 'pu', 'sh')
 CORE_CHECK_IDS: Tuple[str, ...] = tuple(
     ['ST%d' % n for n in range(0, 13)]                                  # ST0~ST12
     + ['IM%d' % n for n in range(1, 28)]                                # IM1~IM27
     + ['NM%d' % n for n in range(1, 21) if n != 7]                      # NM1~NM20 · NM7 비움
     + ['CY1', 'TG1', 'TG2', 'TG3', 'MD1', 'MD2', 'PJ1', 'PJ2']                        # PJ3 비움
-    + ['PU1', 'PU2', 'PU3', 'PU6', 'PU7', 'PU8'])                       # PU4·PU5 비움
+    + ['PU1', 'PU2', 'PU3', 'PU6', 'PU7', 'PU8']                        # PU4·PU5 비움
+    + ['SH1', 'SH2', 'SH3', 'SH4', 'SH5'])                             # 지속 셸 · 빚 패밀리 밖
 STDLIB: Set[str] = set(getattr(sys, 'stdlib_module_names', ())) | {'__future__', 'typing', 'dataclasses'}
 
 # ------------------------------------------------------------ 경로 술어
@@ -282,6 +285,71 @@ def mask_html(src: str) -> MaskedSource:
 
 def mask_css(src: str) -> MaskedSource:
     return _mask_block_comments(src, '/*', '*/')
+
+
+@dataclass
+class TemplateTag:
+    """주석을 가린 템플릿의 HTML 태그 — 시작 태그 범위와 직접 부모·닫힘 좌표."""
+
+    name: str
+    attrs: Dict[str, Optional[str]]
+    start: int
+    open_end: int
+    close_start: int
+    end: int
+    parent: Optional['TemplateTag'] = field(default=None, repr=False)
+
+
+def template_tags(text: str) -> List[TemplateTag]:
+    """시작 태그 단위로 읽는다. 따옴표 속 `>` · 여러 줄 태그 · 실행 script 본문을 보존한다.
+    HTMLParser 는 엔티티 글자를 태그로 재해석하지 않는다. 마스킹은 호출자의 no_comments 를 쓴다.
+    """
+    starts: List[int] = [0] + [m.end() for m in re.finditer('\n', text)]
+    void: Set[str] = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'}
+
+    class Parser(HTMLParser):
+        def __init__(self) -> None:
+            super().__init__(convert_charrefs=True)
+            self.tags: List[TemplateTag] = []
+            self.stack: List[TemplateTag] = []
+
+        def current_offset(self) -> int:
+            line, col = self.getpos()
+            return starts[line - 1] + col
+
+        def handle_starttag(self, tag: str, attrs: List[Tuple[str, Optional[str]]]) -> None:
+            values: Dict[str, Optional[str]] = {}
+            for name, value in attrs:
+                values.setdefault(name, value)  # 브라우저와 같은 첫 값
+            start = self.current_offset()
+            end = start + len(self.get_starttag_text())
+            node = TemplateTag(tag, values, start, end, len(text), len(text), self.stack[-1] if self.stack else None)
+            self.tags.append(node)
+            if tag in void:
+                node.close_start = node.end = end
+            else:
+                self.stack.append(node)
+
+        def handle_startendtag(self, tag: str, attrs: List[Tuple[str, Optional[str]]]) -> None:
+            self.handle_starttag(tag, attrs)
+            node = self.tags[-1]
+            node.close_start = node.end = node.open_end
+            if self.stack and self.stack[-1] is node:
+                self.stack.pop()
+
+        def handle_endtag(self, tag: str) -> None:
+            for i in range(len(self.stack) - 1, -1, -1):
+                if self.stack[i].name == tag:
+                    node = self.stack[i]
+                    node.close_start = self.current_offset()
+                    closing = text.find('>', node.close_start)
+                    node.end = len(text) if closing < 0 else closing + 1
+                    del self.stack[i:]
+                    break
+
+    parser = Parser()
+    parser.feed(text)
+    return parser.tags
 
 
 # 정규식 리터럴이 올 수 있는 앞 문자·낱말(그 밖의 `/` 는 나눗셈)
@@ -930,4 +998,3 @@ def top_level_decls(ms: MaskedSource) -> List[Tuple[str, str, int, int]]:
     """Python top-level 선언 (종류 class|def, 이름, 줄, 오프셋) — 0열 선언만."""
     return [(m.group(1).split()[-1], m.group(2), ms.line_of(m.start()), m.start())
             for m in _TOP_DECL_RE.finditer(ms.tokens_view)]
-

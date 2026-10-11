@@ -37,6 +37,21 @@ WIDE = 'st,md,im,nm,tg,pj,pu,wv'  # 순환(CY)은 기준선 파일을 쓰므로 
 RELEASE_225 = '1e4344a6e9028ccecee6d358e7781b4c798a4b46'  # dddjango-web 2.2.5 — «고치기 전 러너» 의 고정 판
 
 
+COUNT_TOKENS: tuple[tuple[str, str], ...] = (
+    ('검사 91종 중 84종', '검사 #종 중 #종'), ('검사 86종 중 79종', '검사 #종 중 #종'),
+    ('[backstop] 검사 91종', '[backstop] 검사 #종'), ('[backstop] 검사 86종', '[backstop] 검사 #종'))
+
+
+def counts_normalized(text: str) -> str:
+    for old, new in COUNT_TOKENS:
+        text = text.replace(old, new)
+    return text
+
+
+def output_normalized(result):
+    return (result[0], counts_normalized(result[1]), *result[2:])
+
+
 def git(root, *args, check=True):
     p = subprocess.run(['git', '-C', str(root), '-c', 'user.name=t', '-c', 'user.email=t@t', *args],
                        capture_output=True, text=True, env=ENV)
@@ -181,7 +196,7 @@ def retained(name, got, cid='TG2', reason=None, notice=None, flow=None, same=Non
         ok &= out.count(FLOW % flow) == 1
     if same is not None:
         # 고치기 전에도 같은 글자로 막던 꼴 — 출력 전체가 그대로다.
-        ok &= got == same
+        ok &= output_normalized(got) == output_normalized(same)
     check('숨김 0 ' + name, ok, (got, same))
 
 
@@ -201,7 +216,7 @@ def unchanged(name, now, old, ok=True):
     if old is None:
         print('SKIP ' + name + ' — 2.2.5 러너 없음')
     else:
-        check(name, now == old and ok, (now, old))
+        check(name, output_normalized(now) == output_normalized(old) and ok, (now, old))
 
 
 with tempfile.TemporaryDirectory(prefix='web226-') as tmp:

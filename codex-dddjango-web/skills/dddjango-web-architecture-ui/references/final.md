@@ -91,13 +91,13 @@ BC 루트의 두 파일이 라우팅을 분업한다 (규약 §3.1 — 위치·�
 | `<bc>_navigator.py` | 정적 href 헬퍼(`reverse`) | 일반 이동은 **URL name 참조**(`<Bc>Routes`·`reverse`) — 기본 홈 주소 한 건은 아래 예외, **View import 금지** |
 
 - navigator가 BC 루트(계층 밖)에 있는 이유: presentation에 두면 VM이 호출하는 순간 계층 역류, navigator가 View를 import하면 `VM→navigator→View→VM` import 순환 — BC 루트 + 일반 이동의 이름 참조(기본 홈 주소 한 건은 아래 예외)로 둘 다 해소된다.
-- 일반 이동에서 navigator·root_destination_handler는 `<Bc>Routes` 이름 상수를 참조한다. 기본 홈 목적지 한 건은 아래 예외를 따른다. 탭 조립(셸의 탭 목록·탭 href)은 root 소유 — BC는 urlpatterns만 export하고 탭 기록을 모른다. 탭 href는 `RootVM`이 만든다(현재 탭 = 그 탭 첫 화면 · 다른 탭 = 세션 `root.tab_last`의 마지막 경로 — architecture-state §10).
+- 일반 이동에서 navigator·root_destination_handler는 `<Bc>Routes` 이름 상수를 참조한다. 기본 홈 목적지 한 건은 아래 예외를 따른다. 탭 조립(셸의 탭 목록·탭 href)은 root 소유 — BC는 urlpatterns만 export하고 탭 기록을 모른다. 탭 href는 `RootVM`이 만든다(현재 탭 = 그 탭 첫 화면 · 다른 탭 = 세션 `root.tab_last`의 마지막 경로 — architecture-state §10). 지속 셸이면 탭 막대의 부스트 표기 · 교체 자리 결정 · 재탭 동작도 root 소유다 — BC 는 지속 셸 제품에서 «같은 제품 화면으로 가는 화면 안 링크»에 `hx-boost` 하나만 단다(기본 · 부품이 그리는 링크면 section 이 `<a>` 를 소유 — implementation-htmx §9).
 - **기본 홈 주소의 좁은 예외**: 활성 URLconf와 무관하게 반환해야 하는 **프로젝트의 기본 홈 목적지 한 건**만 예외로 둔다. 명세에 소유 BC·router 상수·navigator 메서드를 적고, 그 단일 상수를 소유 navigator가 가공 없이 반환한다. 다른 BC는 그 navigator를 호출한다. 상수 복제·타 BC router 직접 import(IM5)·BC별 기본 주소·개별 화면·조각 주소로의 확대는 금지한다. 나머지 named href의 역참조 실패를 이 주소로 폴백하지 않는다(`NoReverseMatch`를 잡아 아무 주소로 넘기기 금지). URLconf 독립은 href 반환에 URL 이름 등록이 필요 없다는 뜻이며 모든 격리 URLconf에서 그 주소를 GET할 수 있다는 뜻은 아니다.
 - **정적 href 헬퍼의 수단**: `reverse()`는 urlconf만 알면 되므로 요청·전역 키가 필요 없다 — VM이 navigator로 href를 얻어 State에 담고, view는 그 href로 redirect하며(HTMX 요청이면 `HX-Redirect` 헤더), 템플릿은 State의 href를 링크·`hx-get`·`hx-post`에 쓴다(템플릿이 URL name을 직접 쓰지 않는다). 덕분에 `HttpRequest` 없는 VM도 navigator를 부를 수 있다(architecture-state §2).
 - navigator→router(상수 참조)→view(path 바인딩)는 **같은 BC 안의 합법 import 사슬**이다 — 순환 래칫(CY)은 BC 간 그래프만 본다. 단 Python은 모듈 최상단의 순환 import를 풀지 못한다(`VM→navigator→router→view→VM` 사슬이 첫 import에서 `ImportError`) — navigator는 router를 **href 헬퍼 함수 안에서** import한다(표기는 implementation-django §2). `<Bc>Routes`를 별도 파일로 빼지 않는다(라우트 리터럴의 단일 출처가 우선 — 사슬을 끊겠다고 상수 파일을 신설하는 것은 표준 이탈).
 - VM이 화면 전환할 때 navigator 헬퍼를 부르는 것은 계층 역류가 아니다(architecture-state §2). urls 표기법은 implementation-django §2 소유.
 - **navigator 공개 메서드·router path 바인딩이 넘기는 인자는 원시 path-param이다** — 도메인 VO를 *인자 타입*으로 받지 않는다. VO를 받으면 navigator/router 파일이 domain을 import해 백스톱 IM21(navigator)·IM22(router) 위반이다. VM이 `vo.to_api_path()`로 `str`을 만들어 넘기고, 수신 view가 `Vo.from_api_path(str)`로 복원한다(carrier 경계·*왜*는 architecture-ddd §3).
-- web의 router는 화면 전환 연출을 갖지 않는다 — 전환 연출은 CSS(`--duration-*` 토큰)·HTMX 교체의 일이라 router는 design_system을 참조하지 않는다(§7. 허용 위치 닫힌 열거는 discipline-houserules §5).
+- web의 router는 화면 전환 연출을 갖지 않는다 — 전환 연출은 CSS(`--duration-*` 토큰)·HTMX 교체의 일이라 router는 design_system을 참조하지 않는다(§7. 허용 위치 닫힌 열거는 discipline-houserules §5). 지속 셸의 탭 막대 움직임은 셸 틀 CSS 의 class 전환이다.
 
 ## §7. design_system 사용 — 토큰·컴포넌트·show() 금지
 

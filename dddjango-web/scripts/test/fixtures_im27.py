@@ -30,6 +30,21 @@ LITERAL = 'DataSource 밖 API URL 리터럴 `/api/…`'
 PASS = FAIL = 0
 
 
+COUNT_TOKENS: tuple[tuple[str, str], ...] = (
+    ('검사 91종 중 84종', '검사 #종 중 #종'), ('검사 86종 중 79종', '검사 #종 중 #종'),
+    ('[backstop] 검사 91종', '[backstop] 검사 #종'), ('[backstop] 검사 86종', '[backstop] 검사 #종'))
+
+
+def counts_normalized(text: str) -> str:
+    for old, new in COUNT_TOKENS:
+        text = text.replace(old, new)
+    return text
+
+
+def output_normalized(result):
+    return (result[0], counts_normalized(result[1]), *result[2:])
+
+
 def check(name, ok, detail=''):
     global PASS, FAIL
     PASS += bool(ok)
@@ -1799,7 +1814,7 @@ def bundle_unchanged(tmp):
     def both(name, *args, nonempty=None):
         new = run(p.root, *args)
         before = run(p.root, *args, scripts=old)
-        check('U1 %s — 고치기 전 판과 exit · stdout · stderr byte 동일' % name, new == before,
+        check('U1 %s — 고치기 전 판과 exit · stdout · stderr byte 동일' % name, output_normalized(new) == output_normalized(before),
               '새 판 exit=%d\n%s\nstderr: %s\n옛 판 exit=%d\n%s\nstderr: %s'
               % (new[0], new[1][-900:], new[2][-600:], before[0], before[1][-900:], before[2][-600:]))
         if nonempty:
@@ -1846,7 +1861,7 @@ def bundle_unchanged(tmp):
         trimmed, n = without(before[1], dropped)
         check('U2 %s — 옛 판 stdout 에서 빠질 글자의 IM27 %d건만 빼면 새 판과 byte 동일 · exit · stderr 도 같음'
               % (' '.join(args[:1] + args[2:]), n),
-              n == len(dropped) >= len(CHANGED) and new == (before[0], trimmed, before[2]),
+              n == len(dropped) >= len(CHANGED) and output_normalized(new) == output_normalized((before[0], trimmed, before[2])),
               '새 판 exit=%d\n%s\nstderr: %s\n옛 판(뺀 뒤) exit=%d\n%s\nstderr: %s'
               % (new[0], new[1][-900:], new[2][-600:], before[0], trimmed[-900:], before[2][-600:]))
 
@@ -1872,7 +1887,7 @@ def bundle_unchanged(tmp):
         check('U3 %s%s — 파서가 못 받는 파일 셋 · 경고 파일 하나 · 깊게 겹친 파일 둘: 고치기 전 판과 exit · stderr byte 동일 · stdout 은 '
               '얕게 겹친 파일의 비교 글자 한 건만 다름 · exit 2 · stderr 0 줄 · 각 파일 첫 줄 IM27'
               % (' '.join(args[:1] + args[2:]), ' (-W error)' if flags else ''),
-              n == 1 and new == (before[0], trimmed, before[2]) and new[0] == 2 and new[2] == ''
+              n == 1 and output_normalized(new) == output_normalized((before[0], trimmed, before[2])) and new[0] == 2 and new[2] == ''
               and all(im27(new[1], rel) == [1] for rel in list(hard) + [shallow]),
               '새 판 exit=%d\n%s\nstderr: %s\n옛 판 exit=%d\n%s\nstderr: %s'
               % (new[0], new[1][-900:], new[2][-900:], before[0], trimmed[-600:], before[2][-600:]))

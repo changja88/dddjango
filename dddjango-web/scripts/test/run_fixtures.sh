@@ -606,7 +606,7 @@ expect_ids "F19a 인자 없이 — 일곱이 그대로 난다" "$OUT" ST4 NM4 NM
 OUT=$(run_backstop "$P" --diff-base "$BASE" --slice-end); E=$?
 assert "F19b 슬라이스 끝 — 국소 발견(IM1)은 난다 · exit 2" 2 "IM1\] BLOCKER — web/application/shop/domain_layer/shop/shop.py" - "$E" "$OUT"
 assert "F19b 슬라이스 끝 — 일곱은 발견 줄로 안 난다" 2 - '\[\(ST4\|NM4\|NM5\|NM18\|NM19\|TG1\|CY1\)\] BLOCKER' "$E" "$OUT"
-assert "F19b 슬라이스 끝 — 요약 줄이 미룬 목록을 낸다" 2 "검사 86종 중 79종(슬라이스 끝 — 미룸 7: CY1 · NM4 · NM5 · NM18 · NM19 · ST4 · TG1" - "$E" "$OUT"
+assert "F19b 슬라이스 끝 — 요약 줄이 미룬 목록을 낸다" 2 "검사 91종 중 84종(슬라이스 끝 — 미룸 7: CY1 · NM4 · NM5 · NM18 · NM19 · ST4 · TG1" - "$E" "$OUT"
 w "$H/domain_layer/shop/shop.py" "from dataclasses import dataclass" "" "" \
   "@dataclass(frozen=True, slots=True, kw_only=True)" "class Shop:" "    key: str"
 OUT=$(run_backstop "$P" --diff-base "$BASE" --slice-end); E=$?
@@ -758,6 +758,8 @@ OUT=$(python3 "$(dirname "$0")/fixtures_patch231_subst.py" 2>&1) || SUB=1; echo 
 OUT=$(python3 "$(dirname "$0")/fixtures_patch231_debt.py" 2>&1) || SUB=1; echo "$OUT" | tail -1
 OUT=$(python3 "$(dirname "$0")/fixtures_patch231_switch.py" 2>&1) || SUB=1; echo "$OUT" | tail -1
 OUT=$(python3 "$(dirname "$0")/fixtures_patch231_static.py" 2>&1) || SUB=1; echo "$OUT" | tail -1
+
+OUT=$(python3 "$(dirname "$0")/fixtures_patch240_shell.py" 2>&1) || SUB=1; echo "$OUT" | tail -1
 
 for SUBFIX in fixtures_debt.sh fixtures_subst.sh fixtures_sdk.sh fixtures_refactor_audit.sh; do
   OUT=$(bash "$(dirname "$0")/$SUBFIX" 2>&1) || SUB=1; echo "$SUBFIX: $(echo "$OUT" | tail -1)"

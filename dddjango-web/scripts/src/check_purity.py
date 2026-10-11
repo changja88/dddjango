@@ -6,6 +6,7 @@
 # 외부 JS 는 G1 승인·등재된 공식 SDK 사본(web/static/vendor/<sdk_id>/<파일> — discipline-houserules §9)으로만 들이고
 # CDN 실행 태그는 금지한다. 등재 사본의 로드 태그 규칙(속성 · 페이지 block · 그 SDK 를 부르는 기능 JS 앞 ·
 # root_view block 여는 줄 앞 · root_view·페이지 중복)은 PU2 벤더 분기가 본다.
+# 지속 셸(own 포함)의 <head> 는 셸 자리이며 정확한 ?v={{ root_state.shell_rev }} 꼬리를 받는다.
 # 옛 배치 view/ 페이지는 기능 JS·htmx core 실행 태그의 자리로 받는다 — 벤더 분기는 표준 자리만.
 # (바탕: dddjango-web v1.3.1 check_purity.py WP1~WP6 — 번호 그대로 PU 로 · WP4 색 리터럴은 NM10 으로
 #  옮겨 PU4 비움 · WP5 motion.js 판형은 러너를 들이지 않아 PU5 비움 · PU7·PU8 = 새 검사 · 벤더 분기 = v1.3.1
@@ -23,6 +24,7 @@ from .common import (
     is_standard_path, parent_dir_of,
 )
 from .sdk_registry import VENDOR_DIR, sdk_state
+from .products import persistent_shells
 
 _RULE: str = '제1 규약 §6 출력 안전'
 _RULE_SDK: str = 'discipline-houserules §9 공식 SDK'
@@ -138,11 +140,13 @@ def _has_attr(attrs: List[Tuple[str, Optional[str]]], name: str) -> bool:
     return any(attr_name.lower() == name for attr_name, _ in attrs)
 
 
-def _local_static_path(attrs: List[Tuple[str, Optional[str]]]) -> Tuple[Optional[str], bool]:
+def _local_static_path(attrs: List[Tuple[str, Optional[str]]], persistent: bool = False) -> Tuple[Optional[str], bool]:
     """정확한 `{% static 'web/…' %}` src를 web-상대 파일로 해소한다. 반환 bool은 표준 `web/` 접두 여부."""
     src = _attr_value(attrs, 'src')
     if src is None:
         return None, False
+    if persistent:
+        src = re.sub(r'\?v=\{\{\s*root_state\.shell_rev\s*\}\}$', '', src)
     match = _STATIC_ARG_RE.fullmatch(src.strip())
     if match is None:
         return None, False
@@ -188,7 +192,7 @@ def _script_records(ctx: BackstopContext, f: str):
     records = []
     for start, end, tag in _script_openers(ms.no_comments):
         attrs = _attrs_of(tag)
-        path, std = _local_static_path(attrs)
+        path, std = _local_static_path(attrs, f in persistent_shells(ctx))
         records.append((start, end, attrs, path, std))
     return ms, records
 
@@ -513,7 +517,7 @@ def _vendor_reasons(ctx: BackstopContext, f: str, ms, records, root_vendor: Dict
     passed = sdk_state(ctx).passed()
     text: str = ms.no_comments
     blocks = _block_ranges(text)
-    is_root: bool = f == ROOT_VIEW_TEMPLATE
+    is_root: bool = f == ROOT_VIEW_TEMPLATE or f in persistent_shells(ctx)
     order_reasons = dict(_vendor_order_reasons(ctx, f, ms, records))
     block_lines: bool = any(_changed(ctx, f, ms, m.start(), m.end())
                             for rx in (_BLOCK_SCRIPTS_RE, _ENDBLOCK_RE) for m in rx.finditer(text))
@@ -563,7 +567,10 @@ def run_purity(ctx: BackstopContext) -> List[Finding]:
         for start, reason in reasons:
             if (f, start, reason) not in vendor_seen:
                 vendor_seen.add((f, start, reason))
-                out.append(Finding('PU2', f, ms.line_of(start), reason, _RULE_SDK, fix_vendor))
+                fix = fix_vendor if f not in persistent_shells(ctx) else (
+                    '등재 SDK 는 지속 셸의 셸 `<head>` 의 `root_shell.js` 뒤 · 그 SDK 를 부르는 기능 JS 태그 앞에 '
+                    'src·defer 로 한 번 둔다 · 주소 꼬리 `?v={{ root_state.shell_rev }}` — 페이지에는 두지 않는다(SH3).')
+                out.append(Finding('PU2', f, ms.line_of(start), reason, _RULE_SDK, fix))
 
     for f in ctx.files:
         ext: str = ext_of(f)
@@ -642,7 +649,10 @@ def run_purity(ctx: BackstopContext) -> List[Finding]:
                     out.append(Finding('PU2', f, ms.line_of(start), reason, _RULE,
                         "실재하는 로컬 파일을 `{% static 'web/…' %}`로 한 번 참조하고, classic은 defer·module은 "
                         'type="module"을 쓰며 async와 조각 로드를 제거한다 — 외부 JS 는 G1 승인·등재된 공식 SDK 사본'
-                        "(`{% static 'web/vendor/<sdk_id>/<파일>' %}`)만."))
+                        "(`{% static 'web/vendor/<sdk_id>/<파일>' %}`)만." + (
+                            ' 지속 셸이면 셸 `<head>` 의 `root_shell.js` 뒤 · 그 SDK 를 부르는 기능 JS 태그 앞 · '
+                            '주소 꼬리 `?v={{ root_state.shell_rev }}` — 페이지에는 두지 않는다(SH3).'
+                            if f in persistent_shells(ctx) else '')))
             if _script_location_allowed(f) and (root_vendor or any(_is_vendor(r[3]) for r in records)):
                 vendor_findings(f, ms, records)
 

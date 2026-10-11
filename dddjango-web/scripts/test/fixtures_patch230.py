@@ -30,6 +30,21 @@ TOKENS = ('color', 'typography', 'spacing', 'radius', 'shadow', 'duration', 'ass
 PASS = FAIL = 0
 
 
+COUNT_TOKENS: tuple[tuple[str, str], ...] = (
+    ('검사 91종 중 84종', '검사 #종 중 #종'), ('검사 86종 중 79종', '검사 #종 중 #종'),
+    ('[backstop] 검사 91종', '[backstop] 검사 #종'), ('[backstop] 검사 86종', '[backstop] 검사 #종'))
+
+
+def counts_normalized(text: str) -> str:
+    for old, new in COUNT_TOKENS:
+        text = text.replace(old, new)
+    return text
+
+
+def output_normalized(result):
+    return (result[0], counts_normalized(result[1]), *result[2:])
+
+
 def check(name, ok, detail=''):
     global PASS, FAIL
     PASS += bool(ok)
@@ -386,7 +401,7 @@ def bundle_unchanged(tmp):
     def both(name, *args, nonempty=None):
         new = backstop(p.root, *args)
         before = backstop(p.root, *args, scripts=old)
-        check('U %s — 고치기 전 판과 byte 동일' % name, new == before,
+        check('U %s — 고치기 전 판과 byte 동일' % name, output_normalized(new) == output_normalized(before),
               '새 판 exit=%d\n%s\n옛 판 exit=%d\n%s' % (new[0], new[1][-900:], before[0], before[1][-900:]))
         if nonempty:
             check('U %s — 헛대조 아님(%s)' % (name, nonempty), nonempty in new[1], new[1][-600:])
@@ -464,15 +479,19 @@ def bundle_unchanged(tmp):
           recorded[0][0] == recorded[1][0] and recorded[0][1].count(token) == 2 and token not in recorded[1][1]
           and '## grep 명령' in recorded[1][1] and recorded[0][1].replace(token, '') == recorded[1][1],
           '%r\n%s\n---\n%s' % (recorded[0][0], recorded[0][1][-900:], recorded[1][1][-900:]))
-    # 검사 집합 상수 — 새 검사 ID 0
+    # 빚 상수·지문 무변 — 코어에 SH5만 더함(2.4.0)
     probe = ('import json,sys; sys.path.insert(0, sys.argv[1]); import backstop; from src import common, debt; '
              'print(json.dumps([list(common.CORE_CHECK_IDS), list(common.CORE_FAMILIES), list(debt.CHECK_IDS), debt.KEY_SCHEME, '
              'list(debt.DEBT_FAMILIES), backstop.CHECK_IDS, backstop.TOTAL_CHECKS, backstop.SLICE_END_DEFERRED, '
              '{k: v for k, v in debt.scanner_stamp().items() if k != "plugin"}]))')
     consts = [subprocess.run([sys.executable, '-B', '-c', probe, str(s)], capture_output=True, text=True, env=ENV).stdout
               for s in (SCRIPTS, old)]
-    check('U 검사 집합 상수(CORE_CHECK_IDS · CHECK_IDS · KEY_SCHEME · DEBT_FAMILIES · 86 · SLICE_END_DEFERRED · 지문) 무변',
-          consts[0] == consts[1] and '"IM27"' in consts[0] and json.loads(consts[0])[6] == 86, consts[0][:300] + '\n' + consts[1][:300])
+    now, before = map(json.loads, consts)
+    sh = ['SH1', 'SH2', 'SH3', 'SH4', 'SH5']
+    check('U 빚 상수·지문 무변 · 코어 SH5 추가 · 합계 91 · 슬라이스 미룸 무변',
+          now[0] == before[0] + sh and now[1] == before[1] + ['sh'] and now[2:5] == before[2:5]
+          and now[5] == before[0] + sh + ['WV%d' % n for n in range(1, 14)]
+          and now[6] == 91 and now[7:] == before[7:], (now, before))
     # 치환 확인 — static 접두를 건너지 않는 이동(같은 쪽)은 고치기 전 판과 byte 동일
     q = mkstd(tmp / 'u2')
     q.w('web/static/css/a.css', 'body { margin: 0; }', 'a { width: 1px; }')

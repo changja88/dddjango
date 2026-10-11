@@ -25,6 +25,21 @@ PASS = FAIL = 0
 _OLD = {}
 
 
+COUNT_TOKENS: tuple[tuple[str, str], ...] = (
+    ('검사 91종 중 84종', '검사 #종 중 #종'), ('검사 86종 중 79종', '검사 #종 중 #종'),
+    ('[backstop] 검사 91종', '[backstop] 검사 #종'), ('[backstop] 검사 86종', '[backstop] 검사 #종'))
+
+
+def counts_normalized(text: str) -> str:
+    for old, new in COUNT_TOKENS:
+        text = text.replace(old, new)
+    return text
+
+
+def output_normalized(result):
+    return (result[0], counts_normalized(result[1]), *result[2:])
+
+
 def check(name, ok, detail=''):
     global PASS, FAIL
     PASS += bool(ok)
@@ -77,7 +92,7 @@ def same_as_old(name, root, *args):
     if old is None:
         return new
     before = backstop(root, *args, scripts=old)
-    check('%s — 고치기 전 판(%s)과 byte 동일(exit %d)' % (name, BASELINE, new[0]), new == before,
+    check('%s — 고치기 전 판(%s)과 byte 동일(exit %d)' % (name, BASELINE, new[0]), output_normalized(new) == output_normalized(before),
           'new exit=%d\n%s\n--- old exit=%d\n%s' % (new[0], new[1][-1200:], before[0], before[1][-1200:]))
     return new
 

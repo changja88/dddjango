@@ -314,7 +314,7 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
     candidates: List[Tuple[Finding, str]] = []
     for f in shown:
         path = prefix + ('' if f.root_rel else 'web/') + f.path
-        if f.check_id.startswith(('CY', 'WV')) or f.check_id in ('ST12', 'PU1', 'PU2'):
+        if f.check_id.startswith(('CY', 'WV', 'SH')) or f.check_id in ('ST12', 'PU1', 'PU2'):
             res.reasons[id(f)] = '가름 제외 검사'
         elif path not in tree(head):
             res.reasons[id(f)] = '비-blob 경로'

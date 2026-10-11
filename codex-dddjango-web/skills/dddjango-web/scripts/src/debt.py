@@ -24,6 +24,7 @@
 #   판 경계 없음 · 키는 실제 물리 경로). 선언된 own 제품의 뿌리 골격 · 셸 부재(ST4 제품 분기)는 빚 모드에서도 키이고
 #   «미룰 수 없음» 이다(`undeferrable: true` — 게이트가 기준점과 무관하게 늘 선다).
 #   선언 오류는 실행 불능이다(DebtError — 러너가 먼저 «판정 불가»로 막는다).
+# SH 는 켜는 diff 의 게이트와 G0 «지속 셸 점검» 몫이라 넣지 않는다(지문 무변).
 
 import hashlib
 import json
@@ -79,6 +80,7 @@ DOC_PATHSPEC: Tuple[str, ...] = ('docs/*.py', 'docs/*.html', 'docs/*.css', 'docs
 # 명령 기록(refactor_audit plan --names)과 커맨드 문면의 알림 명령이 이 꼴 그대로다(refactor_audit --self-test).
 REF_GREP_OPTIONS: Tuple[str, ...] = ('--untracked', '-I', '-n', '-F')
 # 빚 스캔이 도는 패밀리와 그 검사 집합 — 검사 집합이 다른 동결본으로는 잔존을 판정하지 않는다(scanner 지문).
+# sh(지속 셸)는 넣지 않는다 — 켜는 diff 전수 · G0 점검 몫. 넣으면 지문이 바뀌어 진행 중 레인이 판 경계를 만난다(2.4.0).
 DEBT_FAMILIES: Tuple[str, ...] = ('st', 'md', 'im', 'nm', 'pu')
 CHECK_IDS: Tuple[str, ...] = tuple([c for c in CORE_CHECK_IDS if c[:2].lower() in DEBT_FAMILIES]
                                    + list(VENDOR_CHECK_IDS))

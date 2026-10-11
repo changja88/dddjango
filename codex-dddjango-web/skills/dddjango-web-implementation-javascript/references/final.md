@@ -22,7 +22,7 @@ native `<details>/<summary>`가 요구를 충족하면 그것을 쓴다. JS 기�
 
 ## §2. 로드·DOM 계약·이벤트
 
-페이지 수명 동안 외부 기능 스크립트를 한 번 로드한다. 실행 태그는 그 기능을 쓰는 페이지 템플릿의 `{% block scripts %}`에 `{% static 'web/js/<기능>.js' %}`로 둔다(implementation-django §2·§11). 조각 응답에 실행 스크립트를 반복 포함하거나 inline handler·`hx-on`/`js:` 표현식으로 기능 코드를 흩어놓지 않는다(implementation-htmx §9).
+페이지 수명 동안 외부 기능 스크립트를 한 번 로드한다. 실행 태그는 그 기능을 쓰는 페이지 템플릿의 `{% block scripts %}`에 `{% static 'web/js/<기능>.js' %}`로 둔다(implementation-django §2·§11). 조각 응답에 실행 스크립트를 반복 포함하거나 inline handler·`hx-on`/`js:` 표현식으로 기능 코드를 흩어놓지 않는다(implementation-htmx §9). 지속 셸 제품이면 셸 `<head>` 가 기능 JS 전부를 경로 순으로 한 번 싣고(주소 꼬리 `?v={{ root_state.shell_rev }}`) 페이지에는 실행 태그를 두지 않는다(implementation-django §2 «지속 셸» · 백스톱 SH3·SH4) — 아래 `{% block scripts %}` 예는 문서 이동 셸의 꼴이다.
 
 ```django
 {% block scripts %}
@@ -31,7 +31,7 @@ native `<details>/<summary>`가 요구를 충족하면 그것을 쓴다. JS 기�
 ```
 
 - classic 스크립트는 `defer`와 파일 내부 범위를 쓴다. 기존 module 정책이 있으면 그 방식을 따른다. module에 defer를 더해도 같은 효과가 추가되는 것은 아니다. `async`는 DOM·의존 스크립트 순서를 보장하는 대체물이 아니다 — 쓰지 않는다. [WHATWG script](https://html.spec.whatwg.org/multipage/scripting.html#the-script-element)
-- 초기 DOM을 읽는 코드가 늦게 실행될 수도 있으면 `document.readyState`가 `loading`인지에 따라 DOMContentLoaded 대기 또는 즉시 초기화한다. 한 번 등록한 이벤트 위임만으로 충분하면 최초 DOM 스캔도 필요 없다. [MDN DOMContentLoaded](https://developer.mozilla.org/en-US/docs/Web/API/Document/DOMContentLoaded_event)
+- 초기 DOM을 읽는 코드가 늦게 실행될 수도 있으면 `document.readyState`가 `loading`인지에 따라 DOMContentLoaded 대기 또는 즉시 초기화한다. 한 번 등록한 이벤트 위임만으로 충분하면 최초 DOM 스캔도 필요 없다. [MDN DOMContentLoaded](https://developer.mozilla.org/en-US/docs/Web/API/Document/DOMContentLoaded_event) 지속 셸에서는 인스턴스 연결을 `htmx:load` 로 한다 — htmx 가 첫 문서에도 준비 뒤 body 에 `htmx:load` 를 한 번 보낸다. DOMContentLoaded · 파일 실행 때 한 번 스캔만으로 연결하는 꼴은 부스트로 들어온 화면에서 연결되지 않으므로 위반이다(§3 «지속 셸의 수명»).
 - 기능은 명시적 root와 그 안의 역할을 나타내는 `data-*` 표식을 사용한다. CSS 클래스 이름을 동작 계약으로 추정하지 않는다. 반복 UI의 전역 ID 중복, document에서 첫 요소만 찾는 선택을 피한다.
 - 위임에서 `event.target`의 Element 여부를 확인하고 `closest`로 실제 제어 요소를 찾는다. 중첩된 독립 기능을 허용하는 명세라면 가장 가까운 소유 root가 일치하는지도 확인한다.
 
@@ -87,6 +87,7 @@ native `<details>/<summary>`가 요구를 충족하면 그것을 쓴다. JS 기�
 | 상황 | 필요한 처리 |
 |---|---|
 | 최초 페이지 | DOM 사용 가능 시 연결. HTMX 최초 load와 겹쳐도 효과 중복 없음 |
+| 지속 셸의 화면 진입(탭 이동 · ‹뒤로› 복원) | 새 HTML 추가와 같다 — `htmx:load` 의 `detail.elt` 에서 연결 · 빠지는 화면은 `htmx:beforeCleanupElement` · 재탭 ②(맨 위로)는 화면을 바꾸지 않아 연결 · 정리 없음 |
 | 새 HTML 추가·root 교체 | 초기화가 필요한 기능은 `htmx:load`의 `detail.elt`와 그 자손을 발견 |
 | DOM 배치 이후 측정 필요 | 목적에 맞는 afterSwap/afterSettle 선택. 둘을 동일 타이밍으로 보지 않음 |
 | HTMX가 노드 정리 | `htmx:beforeCleanupElement`의 `detail.elt`가 무엇을 소유·포함하는지 확인 |
@@ -103,6 +104,33 @@ native `<details>/<summary>`가 요구를 충족하면 그것을 쓴다. JS 기�
 - pre-swap에서 페이지 전체를 무조건 정리하지 않는다. 살아남거나 이동하는 요소가 있는 화면은 그 상태 보존을 실제 swap에서 확인한다. 히스토리 기능이 있는 화면은 저장된 DOM과 JS 인스턴스가 같은 수명을 가진다고 가정하지 않는다. [HTMX history](https://htmx.org/docs/#history)
 
 HTMX 바깥의 DOM 제거 경로가 승인된 기능에 있다면 그 제거 코드도 소유 자원 정리를 호출해야 한다. 단지 가능성이 있다는 이유로 document 전체 MutationObserver를 추가하지 않는다.
+
+**지속 셸의 수명**(implementation-django §2 «지속 셸» — 탭 이동이 문서를 바꾸지 않으므로 «화면 = 문서» 에 기대던 JS 가 깨진다):
+
+- **P1 맨 위 등록은 조건 없이**: 파일의 문서 수명 리스너(`document` · `window` 의 `htmx:load` · `htmx:beforeCleanupElement` · 위임 click · popstate 등)는 파일 실행 때 조건 없이 한 번 등록한다 — 첫 화면에 그 기능의 root 가 없다고 `return` 하지 않는다(그러면 부스트로 들어온 화면에서 기능이 서지 않는다).
+- **P2 인스턴스 연결은 `htmx:load`**: `htmx:load` 의 `detail.elt`(자신 `matches` + 자손)에서 root 를 찾아 연결한다. htmx 는 첫 문서에도 준비 뒤 body 에 `htmx:load` 를 한 번 보낸다 — DOMContentLoaded · `pageshow` · 파일 실행 때 한 번 스캔**만으로** 연결하는 꼴은 위반. 둘 다 두는 것은 멱등이면 허용.
+- **P3 정리는 `htmx:beforeCleanupElement`**: `pagehide` · `beforeunload` · `unload` 는 탭 이동에서 오지 않는다 — 화면 단위 정리를 그것에만 걸지 않는다. **그 화면이 연 진행 중 `fetch` · 타이머도 그때 거둔다**(`AbortController` 등 — 떠난 화면의 늦은 응답이 새 화면을 덮거나 문서를 옮기지 않게 · 문서 이동 셸에서는 문서와 함께 버려졌다 · htmx 조각 요청은 root 가 끊는다 — 요청 요소가 `body` 인 `HX-Location` 후속 · `htmx.ajax` 포함). **`htmx.ajax` 는 그 화면 root 안 요소를 `source` 로 준다** — `source` 가 없거나 화면 밖이면 요청 요소가 `body` 등이 되어 root 가 그 응답의 교체 지연을 없앤다(전환 연출이 사라짐) · 화면 안 `source` 면 root 이동 뒤 그 응답의 교체 · OOB 가 떨어진 조각 안에 머문다. **root 가 끊은 요청은 abort 로 끝난다**: 그 요청 요소에서 `htmx:afterRequest` · `htmx:sendAbort` 가 나고(detail 에 `error` 키만 — `failed` · `successful` 없음 · 요소가 `body` 면 document 까지 옴) `htmx.ajax` 의 promise 는 reject 된다 — 실패 UI 는 `detail.failed === true` · `detail.successful === false` 와 자기 화면 root 가 아직 붙어 있는지로 가른다(`detail.error` 나 promise reject 만으로 실패 문구를 띄우지 않는다).
+- **P4 첫 자료는 인스턴스마다**: 서버가 준 첫 자료(`json_script` · `data-*` · root 셸 자료 — `<main>` 안 `json_script`)는 연결할 때마다 다시 읽는다 — 파일 실행 때 한 번 읽어 모듈 변수 · `document[...]` 에 붙잡지 않는다.
+- **P5 화면 상태는 root 별**: 화면마다 바뀌는 상태를 문서 전역에 두지 않는다(`WeakMap` 등 root 귀속).
+- **P6 문서 전역 리스너는 root 없는 화면에서 무해**: 모든 화면에 실리므로 대상 판정 먼저.
+- **P7 본문에 실행 태그 금지**: 페이지 · 조각 템플릿에 실행 `<script>` · `<link rel="stylesheet">` 를 두지 않는다(백스톱 SH3).
+- **P8 탭 이동 JS 금지**: 탭은 `<a href>` + 셸 부스트뿐 — `location.assign` · `location.href=` 로 탭을 여는 JS 를 두지 않는다(그런 JS 는 재탭 ② · 이동 하나만 · 문서 떠남 지킴을 모두 비켜 간다).
+- **P9 같은 root 중복 금지**: A → B → A 왕복에서도 같은 root 에 리스너 · observer 가 겹치지 않는다.
+- **P10 창 버블 단계에서 뒤늦게 막지 않는다**: 기능 JS 가 링크 · 폼의 기본 이동을 막으려면 그 요소나 `document` 에서 막는다 — `window` 버블 리스너에서 `preventDefault` 하면 root 가 «문서 떠남»으로 잘못 읽어 진행 중 이동을 거둔다. htmx 응답 처리를 막을 때(`htmx:beforeOnLoad` 취소)도 camel 이름으로 요소나 `document` 에서 막는다(root 는 그 뒤에 오는 케밥 이름 `htmx:before-on-load` 로 떠남을 판정한다).
+- **P11 JS 문서 이동은 먼저 알린다**: 기능 JS 가 `location.assign` · `location.replace` · `location.href =` · `location.reload()` · 문서를 넘을 수 있는 `history.back()` · `history.go(n)` 으로 문서를 옮기면 **바로 앞 줄에서 `document.dispatchEvent(new Event("root:leave"))`** 를 낸다 — Navigation API 가 없는 엔진에서도 root 가 진행 중 이동을 거두고, 끊긴 XHR 의 실패 처리가 사용자의 이동을 덮지 않게 한다(같은 문서 안 뒤로였으면 popstate · 복원 시작이 그 표시를 되돌리므로 앞에 둬도 무해). 문서 이동 셸에서는 듣는 쪽이 없어 무해하다(두 셸에서 같은 글). 이 알림은 root 가 듣는 한 방향 알림이다 — BC 가 root 신호를 듣는 «재탭 신호 버스»(비채택 · implementation-django §3)와 방향이 반대다. 탭을 여는 JS 이동은 여전히 P8 이 막는다. htmx 가 여는 문서 이동(`HX-Redirect` · `HX-Refresh`)은 root 가 스스로 알아챈다(알림 불필요).
+
+**history 를 쓰는 기능**(지속 셸):
+
+- **H1 자기 이동만 가로챈다 · 소유하지 않은 이동에서는 주소 · history 를 쓰지 않는다**: popstate 리스너는 파일 맨 위에서 등록한다. 자기가 소유한 이동이면 처리 후 `event.stopImmediatePropagation()`. 소유하지 않은 이동에서는 아무것도 하지 않는다(소유 아닌 popstate 에서 화면을 바꾸며 `pushState` · `replaceState` 하는 꼴은 위반).
+- **H2 state 는 객체로 · 기존 키를 펼쳐 둔다**: `{ ...history.state, <자기 키> }` — `replaceState(null, …)` · `pushState(null, …)` 금지.
+- **H3 htmx 가 덮은 state 는 root 가 되돌린다**: 기능 JS 는 문서 이동 셸과 같은 state 를 본다. 같은 주소 재탭(같은 주소 부스트 — 진행 중 이동이 있을 때)은 그 항목을 새로 시작한다.
+- **H4 Navigation API 소유 판정은 자기 항목 키로만**: 지속 셸에서는 다른 화면 항목도 같은 문서다 — `destination.sameDocument` 를 «내 항목» 판정에 쓰지 않는다. htmx · root 의 `pushState` · `replaceState`(history state 보전 포함)도 `navigate`(push · replace)로 온다 — 소유 판정 밖이면 아무것도 하지 않는다.
+- **H5 문서 수명 값은 «이 화면에 들어온 길»이 아니다**: `document.referrer` · 첫 문서의 navigation 항목은 첫 문서 값으로 굳는다 — 닫기 · 돌아가기 목적지는 State 가 준 href 로.
+- 실제 복원 경로를 브라우저 테스트로 남긴다(§7 history 사용 행).
+
+`root_shell.js` 는 root 소유다 — htmx 가 덮은 항목 state 를 되돌리고(H3) 진행 중 이동을 하나만 남기며(누름 시작 · 철회 구간 · 문서 떠남 · 문서 이동 중 누름은 문서 이동) 떠난 화면의 htmx 조각 요청을 끊고 화면 밖 요청 요소(`body` 등)의 지연 교체를 없애며 본문을 맨 위로 보이고 재탭 ② 를 한다. 기능 JS 는 그 일을 다시 하지 않는다(implementation-django §2 «지속 셸»).
+
+화면 스크롤은 문서 스크롤이다 — 화면이 자기 세로 스크롤 틀을 두면 재탭 ② · 부스트의 맨 위 보이기가 그 틀에 닿지 않는다(dddart 의 명시 ScrollController 화면과 같은 대가).
 
 ## §4. 브라우저 자원·비동기 결과
 
@@ -153,8 +181,9 @@ disclosure에는 펼침 상태와 제어 대상 관계를, dialog에는 초점 �
 | 자원 보유 | 재선택·clear·제거 뒤 해당 자원 종료, 유지된 UI는 정상 |
 | 비동기 완료 | 실패·늦은 완료·새 작업 뒤 오래된 완료·제거된 대상 |
 | 키보드/포커스 기능 | 키보드 조작, 상태 의미, 필요한 초점 이동·복귀 |
-| history 사용 | 해당 화면의 실제 복원 경로 |
+| history 사용 | 해당 화면의 실제 복원 경로 — 지속 셸이면 층 열기 → 뒤로(층만 닫힘 · 화면 그대로) · 층 연 채 탭 이동 → 뒤로 두 번(체인 인계 — 인계된 키 · 슬롯 · 이탈 결과) · 다른 화면 → 앞으로 · 소유 아닌 뒤로에서 주소 불변 · 막힘 중 다른 화면으로 가는 뒤로 |
 | 공식 SDK 호출 | SDK 가 불리지 않은 경우(일시 실패)·키 빈 값(설정 실패)의 실패 동작, 명세가 정한 호출 인자 — 브라우저 테스트는 운영자 호스트를 막고(실제 발송 0) SDK 전역을 테스트 쪽 대역으로 바꿔 단언한다(기능 JS 에 스텁·훅을 넣지 않는다). 실물 SDK 의 호출 경계는 Coordinator 의 G2 «공식 SDK 경계 확인»(`assets/sdk_boundary.js` — init 감싸기·분류표대로 가로채기 · 운영자 window.open·폼 제출 기록 전용)이 본다 |
+| 지속 셸 | 첫 화면에 그 root 가 없는 진입 → 부스트로 그 화면 · A → B → A 왕복의 리스너 · observer 수 불변 · 재탭 ② 뒤 화면 상태 유지 |
 
 브라우저 API의 성공·실패 타이밍을 제어한 테스트는 해당 상태 경로의 증거다. 그것을 실제 OS 권한·클립보드 성공이나 모든 브라우저 호환성 증거로 부르지 않는다. 수동 HTMX 이벤트는 멱등성 확인에 쓸 수 있지만 실제 HTTP swap 검사를 대신하지 않는다.
 
@@ -166,7 +195,7 @@ disclosure에는 펼침 상태와 제어 대상 관계를, dialog에는 초점 �
 
 등재된 공식 플랫폼 SDK(discipline-houserules §9 — G1 승인·`web/sdk_registry.json` 등재·`web/static/vendor/<sdk_id>/<파일>`)를 부르는 기능 JS 의 표기다. 채택·등재·사본은 이 스킬 밖이다(Coordinator 의 `sdk_vendor.py` — 기능 JS 는 사본을 고치거나 복사하지 않는다). 그 밖의 외부 JS(라이브러리)는 들이지 않는다.
 
-- **로드**: 그 SDK 를 쓰는 페이지의 `{% block scripts %}` 안에서, 그 SDK 를 부르는 기능 JS 태그보다 **앞에** `src`·`defer` 만 단 외부 태그 하나로 싣는다(모든 페이지가 쓰면 root_view 의 block 여는 줄 앞 · 중복·조각 안 로드·CDN 실행 태그 금지 — 백스톱 PU2).
+- **로드**: 그 SDK 를 쓰는 페이지의 `{% block scripts %}` 안에서, 그 SDK 를 부르는 기능 JS 태그보다 **앞에** `src`·`defer` 만 단 외부 태그 하나로 싣는다(모든 페이지가 쓰면 root_view 의 block 여는 줄 앞 · 지속 셸이면 셸 `<head>`(주소 꼬리 `?v=`) · 중복·조각 안 로드·CDN 실행 태그 금지 — 백스톱 PU2). 아래는 문서 이동 셸의 꼴이다:
 
 ```django
 {% block scripts %}

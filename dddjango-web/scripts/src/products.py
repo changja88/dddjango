@@ -23,12 +23,14 @@
 from __future__ import annotations
 
 import os
+import posixpath
 import re
 import stat
 from pathlib import Path
 from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 
-from .common import DS_DIRS, FOUNDATION_FILES, LAYER_NAMES, ROOT_VIEW_TEMPLATE, bc_index, ext_of, ref_path, segs_of
+from .common import (DS_DIRS, FOUNDATION_FILES, LAYER_NAMES, ROOT_VIEW_TEMPLATE, MaskedSource, TemplateTag, bc_index, ext_of,
+                     ref_path, segs_of, parse_template_edges, template_tags)
 from .sdk_registry import RegistryError, strict_loads
 
 REGISTRY: str = 'product_registry.json'  # web-상대
@@ -270,3 +272,172 @@ def preflight(ctx: object) -> Products:
         notices.append('[info] 제품 선언의 %s 는 area 폴더다 — BC 는 <area>/<bc> 전체 경로로 적는다'
                        '(지금은 그 아래 BC 가 이 제품으로 읽히지 않는다)' % ' · '.join(as_area))
     return state
+
+
+# html.parser 가 파이썬 판에 따라 내는 예외 — 3.9 는 _markupbase.error 의 NotImplementedError · 3.10+ 는 AssertionError
+_PARSER_ERRORS: Tuple[type, ...] = (AssertionError, NotImplementedError)
+_MARKER_TEXT_RE = re.compile(r'data-root-shell|hx-boost|hx-history-elt', re.I)  # 별칭 data-hx-* 도 이 글자를 품는다
+
+
+def parsed_tags(text: str) -> Optional[List[TemplateTag]]:
+    """template_tags — 이 파이썬의 HTML 파서가 못 읽는 글자(3.9 의 `<![foo` 등)면 None = 판독 불가."""
+    try:
+        return template_tags(text)
+    except _PARSER_ERRORS:
+        return None
+
+
+def shell_candidate(text: str) -> bool:
+    """G0 와 같은 후보 표지 셋 — 완전한 지속 셸 꼴의 판정은 SH2 몫이다.
+    파서가 못 읽는 셸은 표지 글자가 있으면 후보(SH2 가 판독 불가로 붉힌다) · 없으면 표지 없는 셸이다."""
+    tags = parsed_tags(text)
+    if tags is None:
+        return _MARKER_TEXT_RE.search(text) is not None
+    return any((tag.name == 'body' and 'data-root-shell' in tag.attrs)
+               or (tag.name == 'nav' and any(a in tag.attrs for a in ('hx-boost', 'data-hx-boost')))
+               or (tag.name == 'main' and any(a in tag.attrs for a in ('hx-history-elt', 'data-hx-history-elt')))
+               for tag in tags)
+
+
+def persistent_shells(ctx: object) -> FrozenSet[str]:
+    """표준 셸만 후보로 발견한다 — 표준 셸 밖의 표지는 SH1 위반이다."""
+    cached = getattr(ctx, '_persistent_shells', None)
+    if cached is None:
+        cached = frozenset(f for f in products_state(ctx).shells if f in ctx.files_set
+                           and shell_candidate(ctx.mask_of(f).no_comments))
+        setattr(ctx, '_persistent_shells', cached)
+    return cached
+
+
+_DJANGO_TOKEN_RE = re.compile(r'\{%.*?%\}|\{\{.*?\}\}|\{#.*?#\}')  # Django Lexer 의 토큰 경계 — 줄을 넘지 않는다
+
+
+def shell_directives(original: str, no_comments: str) -> str:
+    """SH 지시문 뷰 — Django 가 실제 지시문으로 읽는 `{%` 만 남기고 HTML·좌표·개행은 보존한다.
+    토큰 경계와 verbatim 구간은 원문에서 Django Lexer 와 같게 읽는다: 변수·주석 토큰 안이나 여러 줄에 걸친 `{% %}` 글자,
+    verbatim 안의 지시문은 글자다 · verbatim 은 내용이 `end` + 시작 내용과 글자까지 같은 태그에서만 끝난다.
+    주석 안 지시문은 no_comments 가 이미 가렸다.
+    """
+    real: List[Tuple[int, int]] = []  # 실제 지시문 토큰의 범위(왼쪽부터 · 겹치지 않음)
+    closing: Optional[str] = None
+    for match in _DJANGO_TOKEN_RE.finditer(original):
+        token: str = match.group()
+        if not token.startswith('{%'):
+            continue
+        content: str = token[2:-2].strip()
+        if closing is not None:
+            if content == closing:
+                closing = None
+        elif content[:9] in ('verbatim', 'verbatim '):
+            closing = 'end' + content
+        else:
+            real.append((match.start(), match.end()))
+    chars: List[str] = list(no_comments)
+    index: int = 0
+    at: int = no_comments.find('{%')
+    while at != -1:
+        while index < len(real) and real[index][1] <= at:
+            index += 1
+        if index == len(real) or at < real[index][0]:  # 실제 지시문 토큰 밖 — 토큰 안의 글자(인자)는 건드리지 않는다
+            chars[at:at + 2] = '  '
+        at = no_comments.find('{%', at + 2)
+    return ''.join(chars)
+
+
+def _persistent_graph(ctx: object) -> Dict[str, List[Tuple[str, str, int]]]:
+    """SH 전용 렌더 간선. 기존 parse_template_edges 의 대상·빚 키는 바꾸지 않는다."""
+    cached = getattr(ctx, '_persistent_edges', None)
+    if cached is not None:
+        return cached
+    graph: Dict[str, List[Tuple[str, str, int]]] = {}
+    unreadable: Dict[str, List[Tuple[int, str]]] = {}
+    for f in ctx.files:
+        if ext_of(f) != '.html':
+            continue
+        ms = ctx.mask_of(f)
+        directives = shell_directives(ms.original, ms.no_comments)
+        render_ms = MaskedSource(ms.original, directives, ms.tokens_view, ms.line_starts)
+        graph[f] = []
+        edges = [edge for edge in parse_template_edges(render_ms) if edge.kind in ('extends', 'include')]
+        literals: Set[Tuple[str, str, int]] = set()
+        for match in re.finditer(r'\{%-?\s*(extends|include)\s+(.*?)%\}', directives, re.S):  # 인자 안 % 도 읽는다(`%}` 까지)
+            literal = re.match(r'''(["'])([^"'\n]+)\1(?:\s|$)''', match.group(2).strip())
+            if literal is None:
+                unreadable.setdefault(f, []).append((ms.line_of(match.start()), '글자 아닌 인자'))
+            else:
+                literals.add((match.group(1), literal.group(2).strip().lstrip('/'), ms.line_of(match.start())))
+        for edge in edges:
+            if (edge.kind, edge.target, edge.line) not in literals:
+                continue
+            name: str = edge.target
+            if name.startswith(('./', '../')):
+                name = posixpath.normpath(posixpath.join(posixpath.dirname(f), name))
+            if name == '..' or name.startswith('../') or (edge.kind == 'extends' and name == f):
+                unreadable.setdefault(f, []).append((edge.line, '뿌리 밖 경로 또는 자기 extends'))
+            else:
+                graph[f].append((edge.kind, name, edge.line))
+    setattr(ctx, '_persistent_edges', graph)
+    setattr(ctx, '_persistent_unreadable', unreadable)
+    return graph
+
+
+def render_closure(ctx: object, files: Set[str], parents: bool = False) -> Set[str]:
+    """include 닫힘. include 로 들어온 템플릿과 그 부모에서만 extends 도 따른다.
+    parents=True 는 새 연결 대상의 부모 쪽 닫힘을 검사할 때 쓴다. 방문 집합은 자기 include·순환을 끝낸다.
+    """
+    graph = _persistent_graph(ctx)
+    pending = [(f, parents) for f in files]
+    visited: Set[Tuple[str, bool]] = set()
+    while pending:
+        f, follow_parent = pending.pop()
+        if (f, follow_parent) in visited:
+            continue
+        visited.add((f, follow_parent))
+        for kind, target, _line in graph.get(f, []):
+            if kind == 'include' or follow_parent:
+                pending.append((target, True))
+    return {f for f, _ in visited}
+
+
+def persistent_scope(ctx: object) -> Dict[str, FrozenSet[str]]:
+    """제품 소속 + 지속 셸에 이르는 상속 사슬 + 렌더 의존 닫힘(상대 경로·방문 집합)."""
+    cached = getattr(ctx, '_persistent_scope', None)
+    if cached is not None:
+        return cached
+    state = products_state(ctx)
+    result: Dict[str, FrozenSet[str]] = {}
+    seeds: Dict[str, FrozenSet[str]] = {}
+    chains: Dict[str, FrozenSet[str]] = {}
+    for shell in sorted(persistent_shells(ctx)):
+        graph = _persistent_graph(ctx)
+        pid = state.product_of_shell(shell)
+        seed: Set[str] = set()
+        for f in ctx.files:
+            if ext_of(f) not in ('.html', '.css'):
+                continue
+            if state.declared:
+                if pid is not None and state.product_of(f, ctx.areas) == pid:
+                    seed.add(f)
+            elif (f.startswith('application/') and '/presentation_layer/' in f) or f.startswith((
+                    'root/scaffold/view/', 'design_system/', 'static/application/', 'static/root/')):
+                seed.add(f)
+        if not state.declared:
+            seed.update(path for _line, path in ctx.loads_of(shell) if ext_of(path) == '.css')
+        chain: Set[str] = {shell}
+        reverse: Dict[str, Set[str]] = {}
+        for f, edges in graph.items():
+            for kind, target, _line in edges:
+                if kind == 'extends':
+                    reverse.setdefault(target, set()).add(f)
+        pending = [shell]
+        while pending:
+            for f in reverse.get(pending.pop(), set()) - chain:
+                chain.add(f)
+                pending.append(f)
+        seeds[shell] = frozenset(seed)
+        chains[shell] = frozenset(chain)
+        result[shell] = frozenset(seed | render_closure(ctx, seed | chain))
+    setattr(ctx, '_persistent_scope', result)
+    setattr(ctx, '_persistent_seeds', seeds)
+    setattr(ctx, '_persistent_chains', chains)
+    return result

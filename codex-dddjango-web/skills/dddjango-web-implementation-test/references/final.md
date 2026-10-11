@@ -24,7 +24,7 @@
 - Django 테스트 클라이언트(`django.test.Client` — Django 번들, 설치 0) — 페이지·조각 요청(§4).
 - **더블은 표준 `unittest.mock` + pytest `monkeypatch`**: **추가 설치 0**이라 채택한다. 목 전용 플러그인(`pytest-mock`)을 더하면 같은 일을 하는 두 표기가 생기고 의존이 하나 늘어난다 — 표준 라이브러리만으로 가짜·호출 검증이 된다(§8 pytest-mock 주석-제외).
 - `beautifulsoup4`(HTML 단언 — 응답 HTML을 `BeautifulSoup(response.content, "html.parser")`로 읽어 CSS 선택자로 집는다). Django의 `assertContains(…, html=True)`는 요소를 속성까지 통째로 맞춰야 해 클래스 하나만 바뀌어도 깨지고, 범위를 좁혀 개수를 셀 수 없다.
-- (조건부) `pytest-playwright`(승인된 UI JS 기능이 있는 화면만 — §4) + 브라우저 설치 `playwright install chromium`.
+- (조건부) `pytest-playwright`(승인된 UI JS 기능이 있는 화면 · 지속 셸 — §4) + 브라우저 설치 `playwright install chromium`.
 - 버전 값은 훈련 기억으로 적지 않는다 — 무핀 설치(`pip install <pkg>`)로 resolve된 실버전을 호스트의 개발 의존 선언(호스트가 쓰는 requirements-dev·pyproject dev 그룹)에 `==`로 고정한다(coder 경계 규율과 동일). 테스트 의존은 전부 dev.
 
 ## §2. 격리 seam — dddjango-web no-DI에서 가짜 주입
@@ -87,7 +87,7 @@ rows: BeautifulSoup = BeautifulSoup(fragment_response.content, "html.parser")
 - **CSRF**: 테스트 클라이언트는 CSRF 검사를 하지 않는다(`enforce_csrf_checks=False` 기본) — POST 테스트에 토큰을 넣지 않아도 된다. 토큰 배선 자체는 implementation-django §6 표기로 지킨다.
 - **로그인 화면**: `@login_required` 화면은 `client.force_login(user)`(pytest-django `django_user_model`·`db`) 뒤 요청한다 — 미로그인 GET은 로그인 주소로 302다.
 
-**브라우저 테스트(승인된 UI JS 기능이 있는 화면만)**: 파일은 `<화면>_browser_test.py`(web_test 미러). pytest-playwright `page` + pytest-django `live_server`:
+**브라우저 테스트(승인된 UI JS 기능이 있는 화면 · 지속 셸의 root 시험 하나)**: 파일은 `<화면>_browser_test.py`(web_test 미러). pytest-playwright `page` + pytest-django `live_server`:
 
 ```python
 import os
@@ -108,6 +108,16 @@ def test_password_toggle_reveals_input(page: Page, live_server: LiveServer) -> N
 - **기다림은 `expect(…)`의 자동 재시도 단언만** 쓴다 — `page.wait_for_timeout`·`time.sleep` 고정 대기 금지(느린 기계에서 깨지고 빠른 기계에서 시간을 버린다). 타이머·지연 진행 자체가 필요하면 `page.clock`(`install` 후 `run_for`)으로 결정적으로 진행한다 — 끝나지 않는 대기를 걸어 둔 채 테스트를 끝내지 않는다.
 - 브라우저 테스트도 discipline-test FORM을 그대로 쓴다: 정확 개수 `to_have_count(n)` · 정확 글자 `to_have_text(x)`(부분 일치 `to_contain_text` 금지) · non-edge `nth(2)`.
 - **샌드박스 안 브라우저**: macOS 샌드박스(예: Codex 셸 샌드박스)는 Chrome 시작에 필요한 시스템 서비스를 막아 브라우저가 시작 즉시 죽는다 — 이 환경에서 브라우저 테스트가 섞인 실행은 처음부터 샌드박스 밖에서 돈다(어디서·어떻게는 Coordinator·coder-web의 «브라우저 실행 환경» 규칙). 샌드박스 안에서 돈 실행의 브라우저 시작 실패(`BrowserType.launch: Target page, context or browser has been closed` · 브라우저 프로세스 `SIGABRT`/`SIGTRAP` · `bootstrap_check_in … Permission denied`)는 그것만으로 원인을 정하지 않는다 — 샌드박스 밖에서 다시 돈 결과가 그 테스트의 결과다(밖에서도 실패하면 실제 실패). 같은 실행에서 브라우저 없이 돈 테스트의 결과는 그대로다. 테스트를 건너뛰거나 지우거나 하니스·브라우저 판을 바꿔 우회하지 않는다.
+
+**지속 셸의 root 시험**(브라우저 — implementation-django §2 «지속 셸»): `web_test/root/scaffold/view/root_view_browser_test.py` 하나 — 탭 누름 전 `window.__bar` 를 잡고 누른 뒤 본문 · 주소 · 제목 · `aria-current` 를 기다려 `window.__bar === document.getElementById('root-tab-bar') && window.__bar.isConnected` 참 · **‹뒤로› · ‹앞으로› 뒤에도 같은 단언**(막대 다시 그림 없음) · 같은 주소 부스트에서 `history.length` 불변 · **재탭 ②**(이미 첫 화면 — 서버 요청 0 · `history.length` 불변 · 맨 위 · 입력 글 남음) · 뒤로 직후 탭 · 뒤로 연타 · 화면 안 링크를 요청 중 두 번 누른 뒤 뒤로 · **조각 요청(늦은 `HX-Redirect`) 진행 중 탭 → 끝 = 탭 화면 · 새 문서 0** · **`HX-Location` 후속 GET(늦은 `HX-Redirect`) 진행 중 탭 → 끝 = 탭 화면 · 새 문서 0**(그 기능이 `HX-Location` 을 쓸 때 — 그 `swap` 에 `swap:` 지연이 있으면 후속 응답이 온 뒤 · 교체 전에 탭 → 새 화면 뒤 OOB 적용 0 · 고른 탭 = 누른 탭) — 조용해진 뒤 주소 = 본문 = 고른 탭 · 게이트로 가는 탭 = 새 문서(`performance.getEntriesByType('navigation')` 가 바뀜).
+
+**지속 셸의 root 처리기 시험**(브라우저 없음): `web_test/root/handler/root_request_handler_test.py` — 요청 넷(문서 · 조각 · 부스트 · 복원) × 응답(같은 셸 · 별칭 `data-hx-history-elt` · 다른 판 · 게이트 302 + `Set-Cookie` · 셸 없음 · 주석 속 표지 · `<main>` 없음 · `<main>` 앞 `textarea` · `text/htmlx` · 404 · 500)의 상태(복원 500 은 500 그대로) · `HX-*` · `Location` 지움 · `Set-Cookie` 보존 · `Vary: HX-Request` · `no-store` 와 **탭 기록**을 단언한다. 탭 기록은 실제 탭 페이지 view 로 요청한다(시험 전용 view 를 web 트리에 두지 않는다):
+
+- **동시 요청 흉내**: 처리기가 저장소를 다시 읽기 직전에 `mock.patch` 로 `_stored_tabs` 를 감싸(원래 함수를 부르기 전에) 다른 `SessionStore` 로 더 큰 번호와 다른 탭 기록을 저장소에 적는다 → 작은 번호 부스트: 요청마다 저장이 켜진 설정(`override_settings`)이면 응답 뒤 저장소 값이 그 값 그대로 · 꺼진 설정이면 저장이 일어나지 않음 / 문서 GET 은 그 값의 다른 탭 기록을 지우지 않고 번호를 지움 / 같은 요청에서 `write_tab` 으로 다른 탭을 고침 · 지움 → 응답 뒤 저장소에 그 처분이 남음(늦은 부스트여도).
+- **빈 동작 지움**(사본에도 쓰기 목록에도 없는 탭의 `write_tab` 지움 — 요청마다 저장 끈 설정 · 조각 요청): 쓰기 목록이 비어 처리기는 저장소를 다시 읽지 않으므로 `_stored_tabs` 를 감싸서는 다른 요청의 저장을 흉내 낼 수 없다 — 실제 탭 페이지 view 가 부르는 VM 을 `mock.patch` 로 감싼 시험 장치가 **view 안에서** ① 그 요청의 세션 사본을 먼저 읽어 그 탭이 없음을 확인하고 ② 다른 `SessionStore` 로 그 탭 기록을 저장소에 적어 저장한 뒤(다른 요청의 저장 흉내) ③ `write_tab(request, 그 탭, None)` 을 부른다 → 주입 1 · `_stored_tabs` 불림 0(감싸 세기만) · 그 요청의 세션 저장 0(저장소 행의 `session_data` 가 주입 직후와 같음 · 세션 `Set-Cookie` 없음) · 그 탭 기록 남음.
+- **자기 탭 기록 뒤 같은 탭 지움**: 저장된 세션 · 사본에 그 탭 없음 · 그 탭 페이지의 문서 GET 과 큰 번호 부스트에서 view 안(VM 감싸기) 또는 응답 쪽 처분 자리에서 `write_tab(request, 그 탭, None)` → 응답 뒤 저장소에 그 탭 기록 없음(문서 이동 셸과 같음). 응답 쪽 처분이 있는 호스트면 그 처분이 `_record_page` 앞에서 불려 저장소 최신 값 위에 남음도 단언한다.
+- **세션 끝냄 — 칸마다 따로**: ⓐ 기록 대상 GET 에서 view 가 `logout()`(= `flush()` — 실제 탭 페이지 view 의 VM 을 `mock.patch` 로 감싸 그 안에서 부르게 함 · 쿠키는 바깥 미들웨어가 지움) ⓑ 호스트 꼴 빈 세션 교체(`request.session = SessionStore(None)` + 응답 세션 쿠키 지움 — 그런 처리기 코드가 있는 호스트만 · 객체만 바꾸는 꼴 ⓑ1 과 백엔드 로그아웃이 같은 저장소의 옛 세션 행도 지우는 꼴 ⓑ2 를 따로 — ⓑ2 는 시험 장치가 옛 키의 행을 따로 지운 뒤 교체) ⓒ 저장소 사라짐(감싼 `_stored_tabs` 가 그 세션 행을 지움) → 바깥 `SessionMiddleware` 를 지난 응답(테스트 `Client` 의 응답)에서 새 세션 키 `Set-Cookie` 0 · **추가 세션 행 0**(되살림 0) · ⓐ ⓑ2 ⓒ 는 그 세션 행 0 · ⓑ1 의 옛 행은 그대로(처리기는 지우지도 다시 쓰지도 않음 — 행 수 · `session_data` 가 요청 앞과 같음 · 문서 이동 셸도 같음) · ⓐ ⓑ1 ⓑ2 는 세션 쿠키 지움도 / ⓓ 키는 두고 응답이 세션 쿠키만 지움(문서 GET · 받아들인 부스트) → 끝냄 아님(세션 다시 저장 · 쿠키 다시 달림 · 이 요청의 탭 기록 있음 — 문서 이동 셸과 같음).
+- **세션 쿠키 없는 요청 · 만료 쿠키 요청** 각각에서 실제 탭 페이지 GET 이 `write_tab` 으로 다른 탭을 넣었다 지움(종료 없음) → 새 세션에 자기 탭 기록 있음 · 다른 탭 없음 · 같은 두 요청에서 view 가 `flush()` → 세션 0.
 
 **영구 시험 재현성**: `web_test/`·호스트 시험 트리와 시험 지원 코드(`conftest.py`·`_support.py` 등)는 `.dddjango-web/`를 읽거나 쓰지 않고 프로젝트 루트 밖 머신 고정 고정물·기준판·캐시에 기대지 않는다. 기록 폴더(`.dddjango-web/`·`.dddjango/`)에 둔 시험 원문 사본은 영구 시험이 아니다 — 그 사본을 영구 시험으로 옮겨 오면 새 시험으로 본다. 고정물·기대 자료는 시험 트리에, 실행 기록은 `tmp_path` 등 임시 폴더에 둔다. 선택 도구 부재는 호스트 규칙대로 skip하고 설치된 도구의 고장은 실패로 남긴다. 레인 전용 환경 변수 존재 단언으로 실행 전제를 만들지 않는다 — 정상 환경 변수 행위 시험·필수 settings는 허용하며 환경 변수 의미 판정은 TG2 밖, discipline 감수와 G2 표준 실행이 확인한다.
 

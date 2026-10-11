@@ -28,6 +28,21 @@ THEME = 'design_system/theme/app_theme.css'
 PASS = FAIL = 0
 
 
+COUNT_TOKENS: tuple[tuple[str, str], ...] = (
+    ('검사 91종 중 84종', '검사 #종 중 #종'), ('검사 86종 중 79종', '검사 #종 중 #종'),
+    ('[backstop] 검사 91종', '[backstop] 검사 #종'), ('[backstop] 검사 86종', '[backstop] 검사 #종'))
+
+
+def counts_normalized(text: str) -> str:
+    for old, new in COUNT_TOKENS:
+        text = text.replace(old, new)
+    return text
+
+
+def output_normalized(result):
+    return (result[0], counts_normalized(result[1]), *result[2:])
+
+
 def check(name, ok, detail=''):
     global PASS, FAIL
     PASS += bool(ok)
@@ -218,7 +233,7 @@ def bundle_unchanged(tmp):
                            ('--only im', ('--diff-base', base, '--only', 'im')), ('--all', ('--all',))):
             new = backstop(p.root, *args)
             before = backstop(p.root, *args, scripts=old)
-            check('U %s · %s — 2.3.0 과 byte 동일' % (label, name), new == before,
+            check('U %s · %s — 2.3.0 과 byte 동일' % (label, name), output_normalized(new) == output_normalized(before),
                   '새 판 exit=%d\n%s\n옛 판 exit=%d\n%s' % (new[0], new[1][-900:], before[0], before[1][-900:]))
             if name == '--all' and nonempty:
                 check('U %s · --all — 헛대조 아님(%s)' % (label, nonempty), nonempty in new[1], new[1][-600:])

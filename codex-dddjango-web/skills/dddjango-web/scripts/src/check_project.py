@@ -13,12 +13,11 @@ import re
 from pathlib import Path
 from typing import List, Set
 
-from .common import HTMX_CORE, HTMX_VERSION, BackstopContext, Finding, segs_of
+from .common import HTMX_CORE, HTMX_VERSION, HTMX_VERSION_RE, BackstopContext, Finding, segs_of
 
 _RULE_PJ: str = '토대 규약 — pytest·pytest-django 선언 · htmx core 단일 고정 판'
 _DECL_FILES = ('requirements*.txt', 'requirements/*.txt', 'pyproject.toml', 'Pipfile', 'setup.cfg', 'setup.py')
 _NAME_RE = re.compile(r'''(?<![\w.\-])["']?([A-Za-z][A-Za-z0-9_.\-]*)\s*(?:\[[^\]\n]*\])?\s*(?:==|>=|<=|~=|!=|===|>|<|=|$|["',;\s])''')
-_HTMX_VERSION_RE = re.compile(r'''version\s*:\s*["'](\d+\.\d+\.\d+[^"']*)["']''')
 
 
 def _declared(root: Path) -> Set[str]:
@@ -57,7 +56,7 @@ def run_project(ctx: BackstopContext) -> List[Finding]:
             'htmx core 이중 설치 — %s' % ' · '.join(cores), _RULE_PJ,
             '기존 core(static/js/htmx*.js)가 있으면 그것만 소비하고, 없을 때만 `%s` 하나를 둔다.' % HTMX_CORE))
     if HTMX_CORE in new_cores:
-        m = _HTMX_VERSION_RE.search((ctx.web / HTMX_CORE).read_text(encoding='utf-8', errors='replace'))
+        m = HTMX_VERSION_RE.search((ctx.web / HTMX_CORE).read_text(encoding='utf-8', errors='replace'))
         if m and m.group(1) != HTMX_VERSION:
             out.append(Finding('PJ2', HTMX_CORE, None,
                 'htmx core 판 `%s` — 고정 판은 %s' % (m.group(1), HTMX_VERSION), _RULE_PJ,
