@@ -68,20 +68,20 @@
 
 | 운영자 실행 | 결과 | 증거 |
 |---|---|---|
-| `make verify-web`(기능 커밋 전) | | |
-| `make verify-web`(기능 커밋 뒤 · 봉인 앞) | | |
-| `make verify` | | |
-| `claude plugin validate dddjango-web --strict`(판 올림 뒤) | | |
-| 독립 구현 검토 | | |
-| 지문 무변 실측(`plan-2.4.0.md` 표) | | |
-| 실기기 확인(§8.4 ⑤) | | |
+| `make verify-web`(기능 커밋 전) | rc 0 · 픽스처 16 묶음 3,691 / 0(2.4.0 지속 셸 432 / 0) · 문단 대조 16 · 역할 7 · scripts · references 미러 같음 | `<S>/f81/verify/verify-web-pre5.log`(10-12 03:01:59 ~ 03:24:00 · 보완 4차 뒤 작업 트리) |
+| `make verify-web`(기능 커밋 뒤 · 봉인 앞) | rc 0 · 16 묶음 3,691 / 0 · 대조 단계 모두 통과(10-12 03:24:21 ~ 03:48:49 · HEAD `9132d65a`) | `<S>/f81/verify/verify-web-post.log` |
+| `make verify` | green 6/6(10-12 03:24:41 ~ 03:35:14 · HEAD `82c749ca` · 633초) | `<S>/f81/verify/verify-post.log`(봉인 chore 뒤) — 봉인 앞 10-12 01:36 실행은 «봉인 후 변경 — Makefile» 한 곳만 붉음(`verify-pre.log` — 예상대로) |
+| `claude plugin validate dddjango-web --strict` | 통과(10-12 03:2x · 판 올림 앞 · 사본) | — |
+| 독립 구현 검토 | 3차 — 계획 «구현 검토와 보완» | `<S>/f81/review-impl{,2,3}-*.md` |
+| 지문 무변 실측(`plan-2.4.0.md` 표) | 91 · 84 · `e49c83776ff9faf6`(두 벌) · Z0 단언 통과 | 계획 표 |
+| 실기기 확인(§8.4 ⑤) | 미룸 — 사용자 10-11 23:29:05 «건너뛰어» | 계획 표 |
 
 ## 커밋
 | 커밋 | 내용 |
 |---|---|
-| | 기능 — 규칙 글 · SKILL.md · 역할 · Coordinator · 가이드 · 검사기 · 픽스처 · Makefile · 저장소 문서 |
-| | 봉인 chore(Makefile) |
-| | 계획 · 이 기록 |
+| `9132d65a` | 기능 — 규칙 글 · SKILL.md · 역할 · Coordinator · 가이드 · 검사기 · 픽스처 · Makefile · 저장소 문서 · 계획 · 이 기록(66 파일) |
+| `82c749ca` | 봉인 chore(Makefile) |
+| (이 칸을 채운 커밋) | 계획 · 이 기록의 검증 칸 |
 | `make release-web` | 판 올림 · 태그 · Release |
 
 ## 안 한 것 · 남은 것

@@ -48,7 +48,7 @@
 | `root_initializer.py` | implementation-django §3 «지속 셸이면» | `7ead3edc…37ae7d4` | 설계 v7 §2.4 블록 | 주석 무변 — 바이트 같음 |
 | `root_tab_state.py` · `root_state.py` | 〃 | (구현 검토 뒤 고침) | 설계 v7 §2.4 블록(`root_state.py` 한 파일에 `RootTab` · `RootState`) | **설계와 다름** — 탭 한 칸 레코드를 `root_tab_state.py` 의 `RootTabState` 로 나눔(한 파일 한 클래스 — 백스톱 NM3 · `state/` 는 `_state.py` 만 — NM1). 필드 · 꼴은 설계 블록과 같다(아래 «구현 검토와 보완» I2) |
 - **시험장이 돌린 것**: `root_shell.js` · 처리기는 표준 글과 같은 코드다. 셸 템플릿 · 틀 CSS · root 상태 · `root_initializer` 는 시험장이 계측 판을 돌렸다 — 머리 자산의 `?v=` 를 템플릿 글자가 아니라 static 저장소 클래스가 붙임 · `shell_rev` 가 `root_vm.py` 에 있음(본문은 같음) · 시험 전용 필드 · 배치 속성. 표준 템플릿 글자 그대로는 브라우저 시험장을 지나지 않았고, 검사기 픽스처 «표준 글 그대로 칸»(규칙 글에서 블록을 읽어 그대로 넣음)이 SH · NM 통과를 잰다.
-- 증명: `<S>/f81/verify_comment_strip.py` → `<S>/f81/verify_comment_strip.txt`(판정 «모두 같음 · 메타 0» · 블록 안 설계 메타 잔존 0 줄). 토큰 하나를 바꾸면 비교가 어긋남도 확인했다. 블록 자르기는 시험장 `v7/extract_v7.py` 와 같다(여는 줄 다음 ~ 닫는 줄 앞 · 마지막 줄바꿈 포함). Codex 짝은 references byte 미러라 같다.
+- 증명: `<S>/f81/verify_comment_strip.py` → `<S>/f81/verify_comment_strip.txt`(구현 때 판정 «모두 같음 · 메타 0» — 그 판은 `verify_comment_strip.before-i2.txt` · 검토 보완 뒤 10-12 02:19 다시 돌린 판은 root 상태 블록만 의도대로 다름(«어긋남 있음» — I2) · 블록 안 설계 메타 잔존 0 줄). 토큰 하나를 바꾸면 비교가 어긋남도 확인했다. 블록 자르기는 시험장 `v7/extract_v7.py` 와 같다(여는 줄 다음 ~ 닫는 줄 앞 · 마지막 줄바꿈 포함). Codex 짝은 references byte 미러라 같다.
 - 시험이 고른 손잡이: **없음**(S40 · SYNCP · SCR 모두 쓰지 않음). 손잡이 글은 규칙 글에 넣지 않았다.
 
 ## 시험 결과(시험장 v7 · 운영자 측정 21:24 ~ 22:12 · 시작 전 고정 21:23:55 — 설계 수정 시각 뒤)
@@ -109,10 +109,10 @@
 ## 지문 무변(검사기 구현자 실측 — 운영자가 채움)
 | 항목 | 기대 | 실측 | 근거 |
 |---|---|---|---|
-| `debt.CHECK_IDS` 지문(2.3.3 · 2.4.0) | `e49c83776ff9faf6` 같음 | | |
-| `--debt-scan`(+`--refactor`) 출력 · JSON(`scanned_at` · `scanner.plugin` 빼고) | 바탕 러너와 같음 | | |
-| 2.3.x 동결본으로 `--debt-residual` | 판 경계 없음 · 판 글자 알림 한 줄 | | |
-| `TOTAL_CHECKS` · 슬라이스 끝 | 91 · 84 | | |
+| `debt.CHECK_IDS` 지문(2.3.3 · 2.4.0) | `e49c83776ff9faf6` 같음 | `e49c83776ff9faf6`(두 벌) | 운영자 10-12 03:25 — `sha256(','.join(debt.CHECK_IDS))[:16]` · 픽스처 Z0 «빚 지문 실측» 단언 |
+| `--debt-scan`(+`--refactor`) 출력 · JSON(`scanned_at` · `scanner.plugin` 빼고) | 바탕 러너와 같음 | 같음 | 픽스처 Z0 «빚 출력 · JSON 동일»(바탕 `a73dfadc` 러너와 대조 · 두 갈래 × 선언 없음 · 있음) — `make verify-web` 의 2.4.0 지속 셸 픽스처 432 / 0 안 |
+| 2.3.x 동결본으로 `--debt-residual` | 판 경계 없음 · 판 글자 알림 한 줄 | 잔존 0 · 판 경계 0 · 알림 한 줄 | 픽스처 Z0 «옛 G0 동결본 잔존 0 · 판 경계 0 · 판 글자 알림만» — 같은 432 / 0 안 |
+| `TOTAL_CHECKS` · 슬라이스 끝 | 91 · 84 | 91 · 84(두 벌) | 운영자 10-12 03:25 — `backstop.TOTAL_CHECKS` · `SLICE_END_DEFERRED` |
 
 ## 실기기 확인(§8.4 ⑤ — 배포 전에 사용자에게 권함)
 - iPhone 가장자리 쓸기 ‹뒤로›는 Playwright 가 흉내 내지 못한다. 갈래 ① 이라 운영자가 배포 전에 사용자에게 한 번 권한다 — 시험 대상은 시험장 NA3 판(지속 셸 표지가 달린 후보 셸).
@@ -180,10 +180,10 @@
 |---|---|---|
 | 시험장 v7 · NA3 필수 16/16 · 화면 기준 두 엔진 · 음성 대조 재현 | 갈래 ① | 위 «시험 결과» · `<S>/f81/bench/bench-report-v7.md` |
 | 표준 글 블록 = 시험장 판(주석 걷은 비교) | `root_shell.js` · 처리기 같음 · 셸 템플릿 · 틀 CSS · `root_initializer.py` 는 설계 블록과 바이트 같음 · root 상태 블록만 검토 뒤 고침으로 다름(의도 — I2) | `<S>/f81/verify_comment_strip.txt`(검토 보완 뒤 10-12 02:19 다시 돌림 · 고침 앞 판 `verify_comment_strip.before-i2.txt` = «모두 같음») |
-| references byte 미러(지식 스킬 12) · REQUEST_GUIDE byte 미러 · `request_guide_contract.py` | 같음 · PASS | 〃 |
-| Makefile 문단 대조 16 · 역할 7 · 0T 줄 | 같음 | 〃 |
-| `make verify-web`(기능 커밋 전 · 후) · `make verify` · `claude plugin validate dddjango-web --strict` | | 운영자 |
-| 독립 구현 검토 | | 운영자 |
+| references byte 미러(지식 스킬 12) · REQUEST_GUIDE byte 미러 · `request_guide_contract.py` | 같음 · PASS | `make verify-web` 의 references byte 미러 대조 · `make verify`(그 안의 `request_guide_contract.py` — 아래 verify 행 로그) |
+| Makefile 문단 대조 16 · 역할 7 · 0T 줄 | 같음 | `make verify-web` 로그의 «문단 Claude·Codex 대조» · «역할 7 판 확인 지문 경계 줄» 단계(아래 verify-web 행) |
+| `make verify-web`(기능 커밋 전 · 후) · `make verify` · `claude plugin validate dddjango-web --strict` | verify-web 커밋 전 rc 0 · 커밋 뒤 rc 0(둘 다 16 묶음 3,691 / 0) · `make verify` green 6/6(봉인 chore 뒤) · validate 통과 | `<S>/f81/verify/verify-web-pre5.log` · `verify-web-post.log` · `verify-post.log` |
+| 독립 구현 검토 | 3차 — 1 · 2차 차단 모두 닫힘 · 3차 잔여 ㉠ ㉡ 은 결정 34 로 2.4.1(위 «구현 검토와 보완») | `<S>/f81/review-impl{,2,3}-*.md` |
 | 실기기 확인(§8.4 ⑤) | 미룸(사용자 «건너뛰어») — 배포 진행 | 위 표 |
 
 ## 운영자가 할 일
