@@ -861,10 +861,9 @@ class OtherContainerNameRegression(unittest.TestCase):
         (target / "application/stock/domain_layer").mkdir(parents=True)   # 같은 컨테이너의 다른 서버 BC
         self.rename_copy(port / "order_board", "order_board", "stock_board")
         self.rename_copy(thin / "order_board_query.py", "order_board", "stock_board")
-        code, findings = self.run_checker("check-port-adapter-pairing.py", target)
-        self.assertEqual(code, 2)
-        self.assertIn(("#233", "application/orders/application_layer/port/domain_bypass_query/stock_board"), findings)
-        self.assertNotIn("chart_board", " ".join(f for _rule, f in findings))
+        self.assertEqual(self.run_checker("check-port-adapter-pairing.py", target), (2, [
+            ("#233", "application/orders/application_layer/port/domain_bypass_query/stock_board"),
+        ]))
 
 
 class CacheInstanceRegression(unittest.TestCase):
