@@ -59,6 +59,8 @@ COMP: Path = S / "check-composition-root.py"
 CENT: Path = S / "check-error-centralization.py"
 OPENAPI: Path = S / "check-openapi-error-declaration.py"
 CONTRACT: Path = S / "check-api-error-controller-contract.py"
+# F4-89 바로 앞 배포판(dddjango 2.21.2) — Q40·Q41 «배포판과 같음» 대조의 옛 판. HEAD 로 잡으면 커밋 뒤 새 판 자신이 된다.
+_RELEASED_2212_COMMIT: str = "c4e40615"
 
 _GIT_ID: "list[str]" = ["-c", "user.email=smoke@dddjango", "-c", "user.name=smoke"]
 
@@ -1312,7 +1314,7 @@ class ApprovedInflowPartitionRegression(unittest.TestCase):
     def test_Q40_Q41_released_help_ap_and_noflag(self) -> None:
         old: Path = self.td / "released"
         old.mkdir()
-        archive: subprocess.CompletedProcess[bytes] = subprocess.run(["git", "-C", str(ROOT), "archive", "HEAD", "dddjango/scripts"], capture_output=True, check=True)
+        archive: subprocess.CompletedProcess[bytes] = subprocess.run(["git", "-C", str(ROOT), "archive", _RELEASED_2212_COMMIT, "dddjango/scripts"], capture_output=True, check=True)
         subprocess.run(["tar", "-x", "-C", str(old)], input=archive.stdout, check=True)
         r: ApprovedInflowRepo = self.repo("contract")
         r.project("accounts"); r.controller("accounts"); r.schema("accounts", "acc")

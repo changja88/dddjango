@@ -282,6 +282,8 @@ def _pre_repair_gate(td: Path) -> "Path | None":
 # 새 게이트 자기 설정끼리(워커 1 vs 기본)만 대조하면 병합 결함이 양쪽에 같이 숨는다 — 옛 코드와 직접 잰다.
 
 _SERIAL_GATE_COMMIT: str = "86fc3c24"
+# F4-89 바로 앞 배포판(dddjango 2.21.2) — U2 «옛 출력과 같음» 대조의 옛 게이트. HEAD 로 잡으면 커밋 뒤 새 판 자신이 된다.
+_RELEASED_2212_COMMIT: str = "c4e40615"
 _FIXTURES: Path = ROOT / "workspace" / "eval" / "fixtures"
 # 레코드가 여러 검사기에서 수백 건 나도록 겹치는 bad_rules — 앞 절반은 앵커에 커밋(legacy), 뒤 절반은 작업 트리.
 _MANY_BADS: "tuple[str, ...]" = (
@@ -1150,7 +1152,8 @@ class ApprovedInflowGateRegression(unittest.TestCase):
         r.checkout(anchor, "lane"); r.write("lane.txt", "l"); r.commit("L0")
         r.checkout("main"); r.write("up.txt", "u"); r.commit("U")
         r.checkout("lane"); merge: str = r.merge()
-        old: Path = _gate_copy(self.td, "hint-old", "HEAD")
+        old: "Path | None" = _gate_copy(self.td, "hint-old", _RELEASED_2212_COMMIT)
+        assert old is not None, f"2.21.2 게이트 사본({_RELEASED_2212_COMMIT}) 추출 실패"
         actual, out = _gate(r.root, anchor)
         old_code, old_out = _gate(r.root, anchor, gate=old)
         self.assertEqual(actual, old_code, out)
