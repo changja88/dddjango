@@ -12,7 +12,7 @@
          #594[ast+] 폴더 이름에 누가·언제·어떻게 금지(#595 확정: 기술 이름 정확 일치) ·
          #313 domain_layer/<agg>/port/ 금지
   bypass #229 계약은 port/domain_bypass_query/ · #231 domain_layer 에 조회 계약 금지 ·
-         #232 능력=폴더·셋 낱말 · #233[ast+] 「무엇을 알고 싶은가」(확정: 기술·BC 토큰) ·
+         #232 능력=폴더·셋 낱말 · #233[ast+] 「무엇을 알고 싶은가」(확정: 기술·같은 컨테이너의 BC 토큰) ·
          #234 파일명=폴더명·하나 · #235 <Capability>DomainBypassQuery · #236 반환은 이름
          붙인 정적 타입(QuerySet·dict·Model ✗) · #238 exception.py 필수 · #239 도메인
          예외 비상속 · #465 _repository 접미 금지 · #475[ast+] 날것으로 업무 판정(후보)
@@ -191,7 +191,7 @@ def _check_port_tree(root: Path, bc: Path, bc_vocab_set: set, tech: set,
         _check_capability_folder(root, bc, cap, bc_vocab_set, tech, f, cand)
     bypass = port / "domain_bypass_query"
     if bypass.is_dir():
-        _check_bypass(root, bypass, tech, f, cand)
+        _check_bypass(root, bc, bypass, tech, f, cand)
     uow = port / "unit_of_work"
     if uow.is_dir():
         _check_uow_port(root, uow, f)
@@ -311,7 +311,7 @@ def _check_port_data(root: Path, py: Path, mod: ast.Module, f: Findings, cand: C
 
 # ── domain_bypass_query — #229~#239 · #465 ─────────────────────────────────
 
-def _check_bypass(root: Path, bypass: Path, tech: set, f: Findings, cand: Candidates) -> None:
+def _check_bypass(root: Path, bc: Path, bypass: Path, tech: set, f: Findings, cand: Candidates) -> None:
     for p in sorted(bypass.iterdir()):
         if p.is_file() and p.suffix == ".py" and p.name != "__init__.py":
             f.add("#232", _rel(root, p), "domain_bypass_query/ 직계 파일 — 능력 하나 = 폴더 하나다")
@@ -319,7 +319,7 @@ def _check_bypass(root: Path, bypass: Path, tech: set, f: Findings, cand: Candid
         if checker_target.cache_only_instance(cap):
             continue
         toks = set(cap.name.split("_"))
-        if toks & (TECH_EXACT | vocab.bc_names(root)):
+        if toks & (TECH_EXACT | vocab.container_bc_names(bc)):
             f.add("#233", _rel(root, cap),
                   f"`{cap.name}/` — 「무엇을 알고 싶은가」로 짓고 «누가 주는지»는 이름에 넣지 않는다")
         elif "_" not in cap.name:

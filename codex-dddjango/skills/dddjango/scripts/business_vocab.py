@@ -100,6 +100,15 @@ def bc_names(root: Path) -> set[str]:
     return {bc.name for bc in bc_dirs(root)}
 
 
+def container_bc_names(bc: Path) -> set[str]:
+    """`bc` 가 든 `application/` 컨테이너의 BC 이름(자기 포함) — «타 BC 이름» 낱말 검사(#151·#233·#364)의 재료.
+
+    다른 컨테이너(자매 플러그인 dddjango-web 의 `web/application/<단위>` 등)의 폴더 이름은 이 BC 의
+    공급자가 아니다 — 저장소 전체 이름(`bc_names`)으로 세면 화면 구역 이름이 서버 포트 이름을 붉게 잡는다.
+    """
+    return {p.name for p in bc.parent.iterdir() if p.is_dir() and not p.name.startswith(".")}
+
+
 # python3.9 에는 sys.stdlib_module_names 가 없다 — 기본 목록으로 메운다.
 STDLIB_FALLBACK = frozenset({
     "abc", "ast", "asyncio", "base64", "bisect", "calendar", "collections", "contextlib",

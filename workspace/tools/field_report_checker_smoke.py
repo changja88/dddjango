@@ -782,6 +782,91 @@ class UsecaseAreaPairingRegression(unittest.TestCase):
                          (2, [("#188", "application/orders/driving_layer/api/content_catalog")]))
 
 
+class OtherContainerNameRegression(unittest.TestCase):
+    """F4-87 — «타 BC 이름» 낱말 검사(#151 · #233 · #364)는 같은 `application/` 컨테이너의 BC 만 센다."""
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="field-other-container-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.records = self.root / "records.jsonl"
+        self.env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1",
+                        DJR_FINDINGS_JSON=str(self.records),
+                        DJR_VIOLATIONS_DIR=str(self.root / "violations"))
+
+    def copy_lane(self, fixture: str, name: str) -> Path:
+        target: Path = self.root / name
+        shutil.copytree(FIXTURES / fixture / "good", target)
+        return target
+
+    def add_web_units(self, target: Path) -> None:
+        # 자매 플러그인(dddjango-web)이 짓는 화면 구역 — 서버 BC 와 다른 컨테이너다.
+        for unit, layer in (("chart", "presentation_layer"), ("shared_chart", "domain_layer")):
+            unit_dir: Path = target / "web/application" / unit / layer
+            unit_dir.mkdir(parents=True)
+            (unit_dir / f"{unit}.py").write_text("class Unit:\n    pass\n")
+
+    def rename_copy(self, source: Path, old: str, new: str) -> None:
+        """`source`(파일 · 폴더)를 이름의 `old` 를 `new` 로 바꾼 옆자리에 복사하고 본문도 바꾼다."""
+        target: Path = source.with_name(source.name.replace(old, new))
+        files: "list[Path]" = [source] if source.is_file() else sorted(p for p in source.rglob("*") if p.is_file())
+        camel_old, camel_new = isolation._camel(old), isolation._camel(new)
+        for f in files:
+            rel: Path = f.relative_to(source) if source.is_dir() else Path()
+            dest: Path = target / Path(str(rel).replace(old, new)) if source.is_dir() else target
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(f.read_text().replace(camel_old, camel_new).replace(old, new))
+
+    def run_checker(self, script: str, target: Path) -> tuple[int, list[tuple[str, str]]]:
+        self.records.unlink(missing_ok=True)
+        result = subprocess.run([sys.executable, "-B", str(SCRIPTS / script), str(target)],
+                                capture_output=True, text=True, env=self.env)
+        self.assertEqual(result.stderr, "")
+        rows: list[dict] = [json.loads(line) for line in self.records.read_text().splitlines()] \
+            if self.records.exists() else []
+        return result.returncode, [(row["rule"], row["file"]) for row in rows if row["severity"] == "violation"]
+
+    def test_port_name_ignores_web_unit_but_keeps_server_provider(self) -> None:
+        target: Path = self.copy_lane("context_isolation", "ports")
+        port: Path = target / "application/billing/application_layer/port"
+        self.rename_copy(port / "deck_load", "deck_load", "chart_load")
+        self.add_web_units(target)
+        self.assertEqual(self.run_checker("check-context-isolation.py", target), (0, []))
+        self.rename_copy(port / "deck_load", "deck_load", "orders_load")
+        self.assertEqual(self.run_checker("check-context-isolation.py", target), (2, [
+            ("#364", "application/billing/application_layer/port/orders_load"),
+            ("#364", "application/billing/application_layer/port/orders_load/orders_load_port.py"),
+        ]))
+
+    def test_service_name_ignores_web_unit_but_keeps_server_bc(self) -> None:
+        target: Path = self.copy_lane("context_isolation", "services")
+        ohs: Path = target / "application/orders/driving_layer/open_host_service"
+        self.rename_copy(ohs / "order_lookup", "order_lookup", "chart_lookup")
+        self.add_web_units(target)
+        self.assertEqual(self.run_checker("check-context-isolation.py", target), (0, []))
+        self.rename_copy(ohs / "order_lookup", "order_lookup", "billing_lookup")
+        self.assertEqual(self.run_checker("check-context-isolation.py", target), (2, [
+            ("#151", "application/orders/driving_layer/open_host_service/billing_lookup"),
+        ]))
+
+    def test_bypass_query_name_ignores_web_unit_but_keeps_server_bc(self) -> None:
+        target: Path = self.copy_lane("port_adapter_pairing", "bypass")
+        orders: Path = target / "application/orders"
+        port: Path = orders / "application_layer/port/domain_bypass_query"
+        thin: Path = orders / "driven_layer/adapter/persistence/domain_bypass_query"
+        self.rename_copy(port / "order_board", "order_board", "chart_board")
+        self.rename_copy(thin / "order_board_query.py", "order_board", "chart_board")
+        self.add_web_units(target)
+        self.assertEqual(self.run_checker("check-port-adapter-pairing.py", target), (0, []))
+        (target / "application/stock/domain_layer").mkdir(parents=True)   # 같은 컨테이너의 다른 서버 BC
+        self.rename_copy(port / "order_board", "order_board", "stock_board")
+        self.rename_copy(thin / "order_board_query.py", "order_board", "stock_board")
+        code, findings = self.run_checker("check-port-adapter-pairing.py", target)
+        self.assertEqual(code, 2)
+        self.assertIn(("#233", "application/orders/application_layer/port/domain_bypass_query/stock_board"), findings)
+        self.assertNotIn("chart_board", " ".join(f for _rule, f in findings))
+
+
 class CacheInstanceRegression(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix="field-cache-")

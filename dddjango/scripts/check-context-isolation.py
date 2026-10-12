@@ -22,6 +22,8 @@ Kernel 없음)·#83(BC 삭제 내성)은 아래 각론 진단이 집행한다.
          #633 인자는 request 하나 · #634 공개 표면은 함수만 · #295 raw 재노출 금지
   ACL    #361 상대 BC 하나=폴더 하나 · #363 클래스명 <Bc><Capability>Adapter
          #364 포트 파일명에 공급자 BC 금지 · #450 상호 ACL 금지 · #473 기저 예외를 잡는다
+         (#151·#364 의 «타 BC 이름» = 같은 `application/` 컨테이너의 BC — 자매 플러그인
+         `web/application/<단위>` 같은 다른 컨테이너의 폴더 이름은 세지 않는다)
   기타   #14 `with unit_of_work:` 안에서 크로스-BC 포트 호출 금지 · #110 auto_import=False
          #117 두 번째 ErrorCode 컨테이너 금지 · #291/#292 예외의 자리 셋 · #431 부작용 등록 금지
 
@@ -342,7 +344,7 @@ def _domain_imported_names(mod: ast.Module) -> set[str]:
     return names
 
 
-def _check_ohs(ohs: Path, bc: Path, bc_rel: Path, agg_names: set[str], all_bcs: set[str],
+def _check_ohs(ohs: Path, bc: Path, bc_rel: Path, agg_names: set[str], container_bcs: set[str],
                out: Findings, cand: Candidates) -> None:
     rel0 = bc_rel / ohs.relative_to(bc)
     dirs, files = _entries(ohs)
@@ -355,7 +357,7 @@ def _check_ohs(ohs: Path, bc: Path, bc_rel: Path, agg_names: set[str], all_bcs: 
             continue
         srel = rel0 / svc.name
         tokens = set(svc.name.split("_"))
-        if tokens & TECH_NAME_TOKENS or tokens & (all_bcs - {bc.name}):
+        if tokens & TECH_NAME_TOKENS or tokens & (container_bcs - {bc.name}):
             out.add("#151", srel, "창구 이름은 「무엇을 해 주는가」로 짓는다 — 기술·타 BC 이름 토큰이 들어 있다")
         elif svc.name.removesuffix("_service") in agg_names or svc.name in agg_names:
             cand.add("#151", srel, f"창구 이름 `{svc.name}` 이 애그리거트 이름과 같다", "Q1(이 이름이 «무엇을 해 주는가»를 말하나)")
@@ -838,7 +840,7 @@ def _check_acl(acl: Path, bc: Path, bc_rel: Path, out: Findings) -> set[str]:
 
 # ── 그 밖 — #14 · #110 · #113 · #117 · #146 · #291 · #292 · #364 · #431 · #347 ──
 
-def _check_ports(bc: Path, bc_rel: Path, all_bcs: set[str], out: Findings) -> None:
+def _check_ports(bc: Path, bc_rel: Path, container_bcs: set[str], out: Findings) -> None:
     port = bc / "application_layer" / "port"
     if not port.is_dir():
         return
@@ -847,7 +849,7 @@ def _check_ports(bc: Path, bc_rel: Path, all_bcs: set[str], out: Findings) -> No
         if set(rel_parts) & SKIP_DIRS:
             continue
         tokens = set(p.name.removesuffix(".py").split("_"))
-        if tokens & (all_bcs - {bc.name}):
+        if tokens & (container_bcs - {bc.name}):
             out.add("#364", bc_rel / p.relative_to(bc), "포트는 «필요»(capability)로 이름 붙는다 — 포트 이름에 공급자 BC 이름을 넣지 않는다")
 
 
@@ -1282,6 +1284,8 @@ def main(argv: list[str]) -> int:
 
     for bc in bcs:
         bc_rel = bc.relative_to(target)
+        # #151·#364 의 «타 BC 이름» 은 같은 컨테이너의 BC 뿐이다 — `web/application/<단위>` 같은 다른 컨테이너 이름은 세지 않는다.
+        container_bcs = vocab.container_bc_names(bc)
         dl = bc / "domain_layer"
         agg_names: set[str] = set()
         if dl.is_dir():
@@ -1296,13 +1300,13 @@ def main(argv: list[str]) -> int:
 
         ohs = bc / "driving_layer" / "open_host_service"
         if ohs.is_dir():
-            _check_ohs(ohs, bc, bc_rel, agg_names, all_bcs, findings, cand)
+            _check_ohs(ohs, bc, bc_rel, agg_names, container_bcs, findings, cand)
 
         acl = _acl_dir(bc)
         if acl is not None:
             acl_partners[bc.name] = _check_acl(acl, bc, bc_rel, findings)
         _check_uow_cross(bc, bc_rel, _cross_bc_port_names(acl), findings)
-        _check_ports(bc, bc_rel, all_bcs, findings)
+        _check_ports(bc, bc_rel, container_bcs, findings)
         _check_api_controllers(bc, bc_rel, findings)
         _check_exception_spots(bc, bc_rel, findings)
         _check_banned_entrance_name(bc, bc_rel, findings)
