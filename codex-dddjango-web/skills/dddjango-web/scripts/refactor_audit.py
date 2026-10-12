@@ -1881,7 +1881,10 @@ def cmd_residual(project: Path, folder: Path, finalize: "str | None") -> int:
     readopted: "dict[str, str]" = {}
     if active:
         try:
-            moved: "set[str]" = moved_debt_files(project, folder, debt)
+            move_notes: "list[str]" = []
+            moved: "set[str]" = moved_debt_files(project, folder, debt, move_notes)
+            for line in move_notes:
+                print(line)
             pinned: "set[str]" = {r['key'] for r in _findings(debt) if r.get('undeferrable')}
             pinned_ids: "set[str]" = {c for c, k in debt['ids'].items() if k in pinned}
             moving_m: "set[str]" = set()

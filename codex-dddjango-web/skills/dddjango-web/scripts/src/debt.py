@@ -610,8 +610,71 @@ def deferral_active(text: str) -> bool:
     return any(_DECISIONS in r for k, _w, r in sections[start:] if k != SECTION_STOP)
 
 
-def moved_debt_files(root: Path, folder: Path, g0: dict) -> Set[str]:
-    """명세의 파일·폴더 이동과 git 개명 쌍의 옛 web 파일(활성 입력에서만 호출)."""
+def _inflow_moves(root: Path, folder: Path, anchor: str, pairs: Dict[str, str], notes: List[str]) -> Set[str]:
+    """git 개명 쌍(옛 → 새 web 파일)의 옛 파일 가운데 승인 병합이 들인 이동 — 이 실행의 이동이 아니다.
+
+    ① 옛 자리가 HEAD 에 없고, 기준..HEAD 첫 부모 사슬에서 그 경로를 바꾼 걸음이 하나 이상이며 전부 승인 병합
+    (approved-merges.txt)의 상류판 그대로 수신(병합 판 == 둘째 부모 판)이다(TG 수신 증명과 같은 술어).
+    ② 새 자리가 HEAD 에 있고, 사슬에서 그 자리를 마지막으로 만든 걸음(없음 → 있음)이 승인 병합의 상류판 그대로
+    수신이다.
+    ③ 승인 병합들이 상류에서 들인 개명(병합마다 공통 조상 → 둘째 부모의 git 개명 쌍 · 차례로 이음)이 옛 → 새
+    그대로다 — 받은 파일을 레인이 다시 옮겼으면(레인 커밋 · 병합 안 다른 자리 · 있던 자리에 덮어쓰기 · 작업
+    트리) 이 실행의 이동이다. 상류의 삭제 · 새 파일(개명으로 잡히지 않은 것)은 계보를 끊는다. 새 자리의 뒤 내용
+    고침은 이동이 아니다.
+    기준은 사슬 첫 걸음의 첫 부모여야 한다(TG 와 같은 경계).
+    승인 목록 해석의 의심 알림(역방향/합성 병합)은 notes 에 옮긴다."""
+    # 함수 안 import: subst 가 이 모듈을 import 한다.
+    from .subst import _approved_merges, _chain, _git, _is_ancestor, _raw
+    base: str = _git(root, ['rev-parse', '--verify', anchor + '^{commit}']).decode().strip()
+    head: str = _git(root, ['rev-parse', '--verify', 'HEAD^{commit}']).decode().strip()
+    if not _is_ancestor(root, base, head):
+        raise DebtError('기준 %s 가 HEAD 조상이 아니다' % base[:12])
+    chain: List[Tuple[str, List[str]]] = _chain(root, base, head)
+    if chain and chain[0][1][:1] != [base]:
+        raise DebtError('기준 %s 가 HEAD 첫 부모 사슬 밖' % base[:12])
+    approved, listed = _approved_merges(root, folder, base, chain)
+    notes.extend('[info] %s' % n for n in listed if '기준 이전' not in n)
+    olds: List[str] = ['web/' + p for p in sorted(pairs)]
+    news: Set[str] = {'web/' + n for n in pairs.values()}
+    paths: List[str] = sorted(set(olds) | news)
+    at_head: Set[str] = set(_git(root, ['ls-tree', '-r', '--name-only', head, '--', *paths])
+                            .decode('utf-8', 'surrogateescape').splitlines())
+    received: Set[str] = set()
+    broken: Set[str] = set()
+    made: Dict[str, bool] = {}   # 새 자리 → 마지막으로 만든 걸음이 승인 병합의 상류판 그대로인가
+    lineage: Dict[str, str] = {}   # 지금 자리 → 승인 병합들이 들인 개명으로 거슬러 간 처음 자리
+    for sha, parents in chain:
+        changed = _raw(root, parents[0], sha, paths)
+        upstream = _raw(root, parents[1], sha, paths) if sha in approved and len(parents) == 2 else None
+        if upstream is not None:
+            fork: str = _git(root, ['merge-base', parents[0], parents[1]]).decode().strip()
+            for line in _git(root, ['diff', '-M', '--name-status', fork, parents[1], '--', 'web']
+                             ).decode('utf-8', 'surrogateescape').splitlines():
+                cells = line.split('\t')
+                if len(cells) == 3 and cells[0].startswith('R'):
+                    lineage[cells[2]] = lineage.pop(cells[1], cells[1])
+                elif len(cells) == 2 and cells[0] in ('A', 'D'):
+                    lineage.pop(cells[1], None)   # 삭제 · 새 파일은 계보를 끊는다
+        for path, (before, after) in changed.items():
+            as_is: bool = upstream is not None and path not in upstream
+            if path in news and before is None and after is not None:
+                made[path] = as_is
+            if path in olds:
+                (received if as_is else broken).add(path)
+
+    def delivered(old: str) -> bool:
+        new: str = 'web/' + pairs[old[len('web/'):]]
+        return (old not in at_head and old in received and old not in broken
+                and new in at_head and made.get(new, False) and lineage.get(new) == old)
+
+    return {old[len('web/'):] for old in olds if delivered(old)}
+
+
+def moved_debt_files(root: Path, folder: Path, g0: dict, notes: Optional[List[str]] = None) -> Set[str]:
+    """명세의 파일·폴더 이동과 git 개명 쌍의 옛 web 파일(활성 입력에서만 호출).
+
+    승인 병합이 상류판 그대로 들인 개명(_inflow_moves)은 빼고 notes 에 알린다. 그 판정이 안 서면 개명 쌍을 모두
+    이 실행의 이동으로 센다(2.4.0 판정)."""
     moved: Set[str] = set()
     spec: Path = folder / 'design-spec.md'
     if spec.is_file():
@@ -629,10 +692,25 @@ def moved_debt_files(root: Path, folder: Path, g0: dict) -> Set[str]:
         result = _git_out(root, ['diff', '-M', '--name-status', str(anchor), '--', 'web'])
         if result is None:
             raise DebtError('ⓑ 이동 묶음 의존의 git 개명 쌍 조회 실패')
+        renamed: Dict[str, Optional[str]] = {}   # 옛 → 새(web 밖으로 나갔으면 None)
         for line in result.splitlines():
             cells = line.split('\t')
             if len(cells) == 3 and cells[0].startswith('R') and cells[1].startswith('web/'):
-                moved.add(cells[1][4:])
+                renamed[cells[1][4:]] = cells[2][4:] if cells[2].startswith('web/') else None
+        inflow: Set[str] = set()
+        candidates: Dict[str, str] = {old: new for old, new in renamed.items() if old not in moved and new}
+        if candidates and (folder / 'approved-merges.txt').is_file():
+            try:
+                inflow = _inflow_moves(root, folder, str(anchor), candidates, notes if notes is not None else [])
+            except (DebtError, OSError) as error:
+                if notes is not None:
+                    notes.append('[info] 승인 병합 이동 판정 불가 — %s(git 개명 쌍을 모두 이 실행의 이동으로 센다)'
+                                 % error)
+        if inflow and notes is not None:
+            shown: List[str] = sorted(inflow)
+            notes.append('[info] 승인 병합이 들인 이동 %d파일 — 이 실행의 이동이 아니라 ⓑ 이동 묶음 의존에서 뺀다: %s%s'
+                         % (len(shown), ' '.join(shown[:5]), ' 외 %d' % (len(shown) - 5) if len(shown) > 5 else ''))
+        moved |= set(renamed) - inflow
     return moved
 
 
@@ -663,6 +741,7 @@ def cli_residual(root: Path, folder_arg: str) -> int:
         print('[info] 잔존 판정 해당 없음(규칙 이전 G0) — refactor-scope.md·debt-g0.json 둘 다 없음')
         print('[backstop] 빚 잔존 — 해당 없음')
         return 0
+    move_notes: List[str] = []
     try:
         if not scope_md.is_file():
             raise DebtError('debt-g0.json 은 있는데 refactor-scope.md 가 없음(G0 절 기록 누락)')
@@ -694,7 +773,7 @@ def cli_residual(root: Path, folder_arg: str) -> int:
         deferred: Dict[str, str] = {}
         if active:
             _active, deferred, _readopted = deferral_sets(
-                scope_text, ids, g0.get('findings', []), moved_debt_files(root, folder, g0))
+                scope_text, ids, g0.get('findings', []), moved_debt_files(root, folder, g0, move_notes))
         scanned: str = str(g0.get('scanned_at', ''))
         if _local_minute(g0_when) < _local_minute(scanned):
             raise DebtError('마지막 `## G0 %s` 절이 debt-g0.json 스캔(%s)보다 이르다 — '
@@ -714,6 +793,8 @@ def cli_residual(root: Path, folder_arg: str) -> int:
         g2, _notices = scan(root, mode == MODE_REFACTOR)
         write_json(folder / 'debt-g2.json', g2)
     except (DebtError, OSError) as error:
+        for line in move_notes:
+            print(line)
         print('[backstop] 빚 잔존 판정 불가 — %s' % error)
         return 1
     counts: Dict[str, int] = g2['counts']
@@ -729,6 +810,8 @@ def cli_residual(root: Path, folder_arg: str) -> int:
         outside = {f: keys for f, keys in outside.items() if keys}
     if notice:
         print(notice)
+    for line in move_notes:
+        print(line)
     for label, rows in (('ⓐ', remaining_a), ('요구', remaining_r)):
         for cid in rows:
             print('잔존 %s %s %s — 발견 %d' % (label, cid, ids[cid], counts[ids[cid]]))

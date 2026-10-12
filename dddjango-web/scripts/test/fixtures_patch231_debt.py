@@ -381,6 +381,175 @@ class ContractC(unittest.TestCase):
         git(self.p, 'mv', 'web/legacy/beta.py', 'web/moved/beta.py')
         self.c(text, 1, '이동 묶음 의존')
 
+    def inflow_scene(self, upstream_dest='moved'):
+        # F4-85(2.4.1) — 상류(main)가 legacy/beta.py 를 옮기고, 레인이 그 병합을 받는다(병합 SHA 를 돌려준다).
+        write(self.f / 'build-state.json', json.dumps({'git_snapshot': self.anchor}))
+        lane = git(self.p, 'symbolic-ref', '--short', 'HEAD')
+        git(self.p, 'checkout', '-q', '-b', 'upstream', self.anchor)
+        (self.p / 'web' / upstream_dest).mkdir()
+        git(self.p, 'mv', 'web/legacy/beta.py', 'web/%s/beta.py' % upstream_dest)
+        commit(self.p)
+        git(self.p, 'checkout', '-q', lane)
+        write(self.p / 'web/legacy/alpha.py', 'def a() -> int:\n    return 10\n')
+        commit(self.p)
+        return lane
+
+    def merge(self, *extra):
+        git(self.p, '-c', 'user.name=t', '-c', 'user.email=t@t', 'merge', '-q', '--no-ff', *extra, '-m', 'main', 'upstream')
+        return git(self.p, 'rev-parse', 'HEAD')
+
+    def approve(self, *shas):
+        write(self.f / 'approved-merges.txt', ''.join(s + ' main 받기\n' for s in shas))
+
+    def test_c_approved_merge_inflow_move(self):
+        text = section(body=decision('C2') + 'ⓑ 키: C2\n')
+        self.inflow_scene()
+        merge = self.merge()
+        self.c(text, 1, '이동 묶음 의존')  # 승인 목록 없음 — 2.4.0 판정 그대로
+        self.approve(merge)
+        out = self.c(text, 0, '승인 병합이 들인 이동 1파일 — 이 실행의 이동이 아니라 ⓑ 이동 묶음 의존에서 뺀다: legacy/beta.py')
+        self.assertIn('legacy 잔존 ⓑ(일반) C2 ST0|legacy/beta.py — 발견 0'.encode(), out.stdout)
+        # 받은 뒤 새 자리의 내용 고침은 이동이 아니다
+        write(self.p / 'web/moved/beta.py', 'def b() -> int:\n    return 20\n')
+        commit(self.p)
+        self.c(text, 0, '승인 병합이 들인 이동 1파일')
+        # 이 실행의 이동이 섞이면 그대로 판정 불가 — 명세 경로 · 다른 파일의 레인 개명
+        write(self.f / 'design-spec.md', '## 슬라이스 0\n경로: legacy/beta.py → moved/beta.py\n')
+        self.c(text, 1, '이동 묶음 의존')
+        (self.f / 'design-spec.md').unlink()
+        (self.p / 'web/mine').mkdir()
+        git(self.p, 'mv', 'web/other/gamma.py', 'web/mine/gamma.py')
+        commit(self.p)
+        self.c(section(body=decision('C2') + decision('C3') + 'ⓑ 키: C2 C3\n'), 1, '이동 묶음 의존 — 이동도 빼고 재상정: C3')
+        # 승인 목록에 병합이 아닌 커밋(뿌리)이 있으면 판정이 안 서 2.4.0 판정으로 돈다(알림 줄)
+        self.approve(merge, self.anchor)
+        self.c(text, 1, '승인 병합 이동 판정 불가')
+
+    def test_c_inflow_lane_move_first_is_byte_same(self):
+        # 레인 커밋이 먼저 옮기고 승인 병합도 같은 삭제를 들임 · 승인 목록은 있고 유입은 없는 실행 — 2.4.0 과 같은 끝줄 · 새 알림 없음
+        text = section(body=decision('C2') + 'ⓑ 키: C2\n')
+        self.inflow_scene('mine')
+        (self.p / 'web/mine').mkdir()
+        git(self.p, 'mv', 'web/legacy/beta.py', 'web/mine/beta.py')
+        commit(self.p)
+        self.approve(self.merge())
+        out = self.c(text, 1, absent='승인 병합')
+        self.assertEqual(out.stdout.decode().splitlines()[-1],
+                         '[backstop] 빚 잔존 판정 불가 — ⓑ 이동 묶음 의존 — 이동도 빼고 재상정: C2')
+
+    def test_m_inflow_move_is_excluded_with_notice(self):
+        # 의미 ⓑ(refactor_audit residual)도 같은 판정 · 같은 알림 줄
+        self.m_setup()
+        self.inflow_scene()
+        self.approve(self.merge())
+        text = section(meaning='-', body=decision('M2') + '의미 ⓑ 키: M2\n')
+        self.m(text, want='승인 병합이 들인 이동 1파일 — 이 실행의 이동이 아니라 ⓑ 이동 묶음 의존에서 뺀다: legacy/beta.py')
+
+    def test_c_inflow_then_lane_moves_again(self):
+        # 받은 파일을 레인이 다시 옮기면(레인 커밋 · 작업 트리) 이 실행의 이동이다
+        text = section(body=decision('C2') + 'ⓑ 키: C2\n')
+        self.inflow_scene()
+        self.approve(self.merge())
+        (self.p / 'web/again').mkdir()
+        git(self.p, 'mv', 'web/moved/beta.py', 'web/again/beta.py')
+        self.c(text, 1, '이동 묶음 의존 — 이동도 빼고 재상정: C2', absent='승인 병합이 들인 이동')
+        commit(self.p)
+        self.c(text, 1, '이동 묶음 의존 — 이동도 빼고 재상정: C2', absent='승인 병합이 들인 이동')
+
+    def upstream_commit(self, lane, change):
+        # 상류(upstream 가지)에 커밋 하나를 더한다 — change(self) 가 작업 트리를 바꾼다
+        git(self.p, 'checkout', '-q', 'upstream')
+        change()
+        commit(self.p)
+        git(self.p, 'checkout', '-q', lane)
+
+    def test_c_inflow_overwrite_existing_destination(self):
+        # 승인 병합이 들인 다른 파일 자리에 레인이 덮어써서 옮기면(작업 트리 · 레인 커밋 · 병합 안) 이 실행의 이동이다
+        text = section(body=decision('C2') + 'ⓑ 키: C2\n')
+        lane = self.inflow_scene()
+        self.upstream_commit(lane, lambda: write(self.p / 'web/occupied/beta.py', 'x = 1\n'))
+        self.approve(self.merge())
+        git(self.p, 'mv', '-f', 'web/moved/beta.py', 'web/occupied/beta.py')
+        self.c(text, 1, '이동 묶음 의존 — 이동도 빼고 재상정: C2', absent='승인 병합이 들인 이동')
+        commit(self.p)
+        self.c(text, 1, '이동 묶음 의존 — 이동도 빼고 재상정: C2', absent='승인 병합이 들인 이동')
+
+    def test_c_inflow_overwrite_inside_later_merge(self):
+        text = section(body=decision('C2') + 'ⓑ 키: C2\n')
+        write(self.f / 'build-state.json', json.dumps({'git_snapshot': self.anchor}))
+        lane = git(self.p, 'symbolic-ref', '--short', 'HEAD')
+        git(self.p, 'checkout', '-q', '-b', 'upstream', self.anchor)
+        write(self.p / 'web/occupied/beta.py', 'x = 1\n')
+        commit(self.p)
+        git(self.p, 'checkout', '-q', lane)
+        first = self.merge()
+        self.upstream_commit(lane, lambda: (self.p / 'web/moved').mkdir() or git(
+            self.p, 'mv', 'web/legacy/beta.py', 'web/moved/beta.py'))
+        self.merge('--no-commit')
+        git(self.p, 'mv', '-f', 'web/moved/beta.py', 'web/occupied/beta.py')
+        git(self.p, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'main')
+        self.approve(first, git(self.p, 'rev-parse', 'HEAD'))
+        self.c(text, 1, '이동 묶음 의존 — 이동도 빼고 재상정: C2', absent='승인 병합이 들인 이동')
+
+    def test_c_inflow_two_step_upstream(self):
+        # 상류가 두 번에 걸쳐 옮긴 것을 승인 병합 둘로 받으면 이어서 승인 유입이다
+        text = section(body=decision('C2') + 'ⓑ 키: C2\n')
+        lane = self.inflow_scene()
+        first = self.merge()
+        self.upstream_commit(lane, lambda: (self.p / 'web/final').mkdir() or git(
+            self.p, 'mv', 'web/moved/beta.py', 'web/final/beta.py'))
+        self.approve(first, self.merge())
+        self.c(text, 0, '승인 병합이 들인 이동 1파일 — 이 실행의 이동이 아니라 ⓑ 이동 묶음 의존에서 뺀다: legacy/beta.py')
+
+    def test_c_inflow_lineage_breaks_on_delete_and_add(self):
+        # 상류 이동이 내용을 크게 바꿔 삭제 + 새 파일로 잡히고, 옛 목적지에 별개 파일이 새로 생긴 뒤 레인이 그 자리로
+        # 덮어써 옮기면 이 실행의 이동이다(삭제 · 새 생성은 개명 계보를 끊는다 — C 작업 트리 · 커밋 · 의미 M)
+        text = section(body=decision('C2') + 'ⓑ 키: C2\n')
+        lane = self.inflow_scene()
+        first = self.merge()
+
+        def rewrite():
+            (self.p / 'web/upstream_final').mkdir()
+            git(self.p, 'mv', 'web/moved/beta.py', 'web/upstream_final/beta.py')
+            write(self.p / 'web/upstream_final/beta.py', 'class Totally:\n    value = "different"\n    other = 3\n    more = 4\n')
+        self.upstream_commit(lane, rewrite)
+        second = self.merge()
+        self.upstream_commit(lane, lambda: write(self.p / 'web/moved/beta.py', 'z = "zzz"\n'))
+        self.approve(first, second, self.merge())
+        write(self.p / 'web/upstream_final/beta.py', 'def b() -> int:\n    return 2\n')
+        git(self.p, 'add', 'web')
+        git(self.p, 'mv', '-f', 'web/upstream_final/beta.py', 'web/moved/beta.py')
+        self.c(text, 1, '이동 묶음 의존 — 이동도 빼고 재상정: C2', absent='승인 병합이 들인 이동')
+        commit(self.p)
+        self.c(text, 1, '이동 묶음 의존 — 이동도 빼고 재상정: C2', absent='승인 병합이 들인 이동')
+        self.m_setup()
+        self.m(section(meaning='-', body=decision('M2') + '의미 ⓑ 키: M2\n'), 1, '이동 묶음 의존')
+
+    def test_c_inflow_merge_places_elsewhere(self):
+        # 병합 안에서 상류 자리 대신 다른 자리에 두면 병합 안 레인 이동이다
+        text = section(body=decision('C2') + 'ⓑ 키: C2\n')
+        self.inflow_scene()
+        self.merge('--no-commit')
+        (self.p / 'web/elsewhere').mkdir()
+        git(self.p, 'mv', 'web/moved/beta.py', 'web/elsewhere/beta.py')
+        git(self.p, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'main')
+        self.approve(git(self.p, 'rev-parse', 'HEAD'))
+        self.c(text, 1, '이동 묶음 의존 — 이동도 빼고 재상정: C2', absent='승인 병합이 들인 이동')
+
+    def test_c_inflow_base_off_first_parent_chain(self):
+        # 기준이 둘째 부모로만 닿는 조상이면 TG 와 같이 판정하지 않는다(2.4.0 판정 · 알림)
+        text = section(body=decision('C2') + 'ⓑ 키: C2\n')
+        lane = self.inflow_scene()
+        merge = self.merge()
+        git(self.p, 'checkout', '-q', '-b', 'side', self.anchor)
+        write(self.p / 'web/other/gamma.py', 'def c() -> int:\n    return 30\n')
+        side = commit(self.p)
+        git(self.p, 'checkout', '-q', lane)
+        git(self.p, '-c', 'user.name=t', '-c', 'user.email=t@t', 'merge', '-q', '--no-ff', '-m', 'side', 'side')
+        self.approve(merge)
+        write(self.f / 'build-state.json', json.dumps({'git_snapshot': side}))
+        self.c(text, 1, '승인 병합 이동 판정 불가 — 기준 %s 가 HEAD 첫 부모 사슬 밖' % side[:12])
+
     def test_c_missing_current_key_is_not_solved(self):
         (self.p / 'web/legacy/beta.py').unlink()
         self.c(section(body=decision('C2') + 'ⓑ 키: C2\n'), want='legacy 잔존 ⓑ 0(일반 0')
