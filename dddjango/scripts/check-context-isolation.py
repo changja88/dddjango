@@ -1228,7 +1228,17 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str]) -> int:
-    ns = _build_parser().parse_args(argv)
+    rest: list[str] = argv
+    approved_merge_file: str | None = None
+    approved_merge_error: str | None = None
+    if any(t == anchor_diff.APPROVED_MERGE_FLAG or t.startswith(anchor_diff.APPROVED_MERGE_FLAG + "=") for t in argv):
+        # 플래그가 있을 때만 새 함수를 부른다 — 플래그 없는 실행은 2.21.1 과 같은 argv·같은 anchor_diff 이름만 쓴다.
+        rest, approved_merge_file, approved_merge_error = anchor_diff.split_approved_merge(argv)
+    ns = _build_parser().parse_args(rest)
+    ns.anchor_approved_merge_file: str | None = approved_merge_file
+    if approved_merge_error is not None:
+        print(f"사용 오류: {approved_merge_error}", file=sys.stderr)
+        return 1
     target = Path(ns.target)
     bad_target_reason = checker_target.bc_shaped_target_reason(target)
     if bad_target_reason is not None:
@@ -1243,6 +1253,9 @@ def main(argv: list[str]) -> int:
     if ns.anchor_debt_file is not None and ns.anchor is None:
         print(f"사용 오류: {anchor_diff.DEBT_FLAG} 는 --anchor 와 함께만 쓸 수 있다(차분 전용 빚 채널)", file=sys.stderr)
         return 1
+    if ns.anchor_approved_merge_file is not None and ns.anchor is None:
+        print(f"사용 오류: {anchor_diff.APPROVED_MERGE_FLAG} 는 --anchor 와 함께만 쓸 수 있다(차분 전용 승인 유입 채널)", file=sys.stderr)
+        return 1
     if ns.anchor_baseline and anchor_diff.is_git_worktree(target.resolve()):
         print(
             f"사용 오류: {anchor_diff.BASELINE_FLAG} 는 앵커 스냅숏(비-git) 재실행 전용이다 — "
@@ -1254,7 +1267,9 @@ def main(argv: list[str]) -> int:
         # 재료 선검증 — 무발견 clean 이라도 resolve 불능 앵커·부재/형식 오류 빚 파일·
         # 공허 차분이 침묵 exit 0 되지 않게 여기서 막는다(fail-closed).
         try:
-            anchor_diff.validate_materials(target, ns.anchor, ns.anchor_debt_file)
+            anchor_diff.validate_materials(target, ns.anchor, ns.anchor_debt_file,
+                **({"approved_merge_file": ns.anchor_approved_merge_file}
+                   if ns.anchor_approved_merge_file is not None else {}))
         except anchor_diff.AnchorDiffUsage as exc:
             print(f"사용 오류: {exc}", file=sys.stderr)
             return 1
@@ -1339,6 +1354,8 @@ def main(argv: list[str]) -> int:
                     findings=list(findings),
                     path_flags=frozenset({"--api-module", "--controller-module"}),
                     debt_file=ns.anchor_debt_file,
+                    **({"approved_merge_file": ns.anchor_approved_merge_file, "baseline_collects_all": True}
+                       if ns.anchor_approved_merge_file is not None else {}),
                 )
             except anchor_diff.AnchorDiffUsage as exc:
                 print(f"사용 오류: {exc}", file=sys.stderr)

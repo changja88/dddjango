@@ -25,9 +25,12 @@ G2 를 통과할 수 없었다(같은 게이트를 다른 레인은 «해석»�
   빈 scope BC 집합을 허용하되 분석은 계속한다. 앵커에 없는 정규화 진단문은
   신규로 남는다. 이 모드는 비-git 스냅숏 전용이다(git 저장소 TARGET 에선 사용
   오류 — 실전 렌더 계약 완화로의 오용 차단).
-- 앵커 재실행이 사용/분석 오류(exit 1)면 로스터 positional 기준선(`checker_registry.
+- 앵커 재실행이 사용/분석 오류(exit 1)면 빈 골격 --error-bc 를 걷고 그 영역 아래 줄을 제외하여
+  재실행한다. 그래도 서지 않으면 로스터 positional 기준선(`checker_registry.
   checker_argv` — registry_gate 가 내부 실행하는 그 호출)으로 한 번 강등하고,
-  그마저 오류면 fail-closed(전량 신규 취급 = blocker 유지)한다.
+  그마저 오류면 fail-closed(전량 신규 취급 = blocker 유지)한다. 기준선 오류는 별도 줄로 보고한다.
+- 승인 머지 목록이 있으면 주어 판정·두 부모 차분·병합 결과부터 HEAD까지 줄 이어짐을
+  증명한 줄만 승인 유입으로 분리한다. 증명 불능은 신규에 남기고 사유를 보고한다.
 - 라인 대조는 registry_gate 와 같은 정규화만 한다: 절대 경로 echo 제거·라인번호
   `:N` 치환 — 경로 «파싱»을 하지 않는다.
 """
@@ -36,21 +39,24 @@ from __future__ import annotations
 import os
 import ast
 import re
+import shutil
 import stat
 import subprocess
 import sys
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Callable
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from checker_registry import REGISTRY, checker_argv  # noqa: E402
+import checker_target  # noqa: E402  — 빈 골격 술어(skeleton_placeholder) 단일 출처
 
 # 앵커 스냅숏 재실행 모드 flag — 다섯 검사기(registry 2·5·6·15·16번)가 공통 수용한다.
 BASELINE_FLAG: str = "--anchor-baseline"
 # 사용자 승인 «이관 빚» 목록 flag — registry_gate 와 같은 이름·같은 줄 형식
-# (`#<규칙> <부분문자열>`)·같은 의미(신규분 exit 에서 빼되 «빚» 절로 반드시 보고)·
-# 같은 매칭 코퍼스(정규화 라인 — `debt_match` 하나를 두 도구가 공유한다).
+# (`#<규칙> <부분문자열>` · 번호 없는 줄은 `= <검사기 파일> :: <줄>`)·같은 의미(신규분 exit 에서
+# 빼되 «빚» 절로 반드시 보고)·같은 매칭 코퍼스(정규화 라인 — `debt_match` 하나를 두 도구가 공유한다).
 # 검사기(check-*.py) 소스는 이 리터럴을 직접 쓰지 않고 이 상수만 참조한다(checker_lint ㉢
 # 는 check-*.py 만 훑는다 — registry_gate 처럼 이 모듈은 그 낱말 규율 밖이다).
 DEBT_FLAG: str = "--legacy-debt-file"
@@ -248,7 +254,8 @@ def _bc_root_absent(snapshot: Path, name: str) -> bool:
 
 
 def _baseline_argv(
-    script: Path, snapshot: Path, argv: "list[str]", path_flags: "frozenset[str]"
+    script: Path, snapshot: Path, argv: "list[str]", path_flags: "frozenset[str]",
+    *, drop_error_bcs: "frozenset[str]" = frozenset(),
 ) -> "list[str]":
     """앵커 재실행 argv — 원 argv 에서 --anchor 를 걷고 target 을 스냅숏으로 바꾼다.
 
@@ -265,10 +272,10 @@ def _baseline_argv(
     i: int = 0
     while i < len(argv):
         token: str = argv[i]
-        if token in ("--anchor", DEBT_FLAG):
+        if token in ("--anchor", DEBT_FLAG, APPROVED_MERGE_FLAG):
             i += 2
             continue
-        if token.startswith(("--anchor=", DEBT_FLAG + "=")) or token == BASELINE_FLAG:
+        if token.startswith(("--anchor=", DEBT_FLAG + "=", APPROVED_MERGE_FLAG + "=")) or token == BASELINE_FLAG:
             i += 1
             continue
         if token.startswith("--"):
@@ -277,6 +284,9 @@ def _baseline_argv(
             step: int = 1 if eq or value is None else 2
             if name in path_flags and value is not None and not (snapshot / value).exists():
                 i += step
+                continue
+            if name == "--error-bc" and value in drop_error_bcs:
+                i += step  # (나) 빈 골격 오류 영역 — 호출측이 고른 것만 걷는다
                 continue
             if name in ("--scope-bc", "--error-bc") and value is not None:
                 if value not in absent_bcs:
@@ -294,6 +304,132 @@ def _baseline_argv(
     return out
 
 
+_ERROR_MODULE: str = "application/{bc}/driving_layer/api/bc_error_schema.py"
+_SUBJECT_LINENO_RE: "re.Pattern[str]" = re.compile(r"(?::(?:\d+|N))+$")
+
+
+def _skeleton_error_bcs(snapshot: Path, argv: "list[str]") -> "list[str]":
+    """argv 의 `--error-bc` 값 가운데 스냅숏에서 오류 모듈이 «빈 골격»인 BC(출현 순 · 중복 제거)."""
+    out: "list[str]" = []
+    i: int = 0
+    while i < len(argv):
+        token: str = argv[i]
+        value: "str | None" = None
+        if token == "--error-bc" and i + 1 < len(argv):
+            value = argv[i + 1]
+            i += 1
+        elif token.startswith("--error-bc="):
+            value = token.partition("=")[2]
+        i += 1
+        if value and value not in out and re.fullmatch(r"[a-z][a-z0-9_]*", value) \
+                and checker_target.skeleton_placeholder(snapshot / _ERROR_MODULE.format(bc=value)):
+            out.append(value)
+    return out
+
+
+def _subject_file(normalized_line: str) -> "str | None":
+    """정규화 진단 줄의 주어 경로(끝 `:N` 제거 · 깨끗한 상대 경로만). 아니면 None."""
+    subject: "str | None" = subject_path(normalized_line)
+    if subject is None:
+        return None
+    plain: str = _SUBJECT_LINENO_RE.sub("", subject)
+    if plain.startswith("./"):
+        plain = plain[2:]
+    parts: "list[str]" = plain.split("/")
+    if not plain or plain.startswith("/") or "" in parts or "." in parts or ".." in parts \
+            or re.search(r"[\s,;|<>\\\[\]:]", plain):
+        return None
+    return plain
+
+
+@dataclass
+class _Baseline:
+    code: int                 # 기준선으로 쓴 실행의 exit(불능이면 마지막 실패 exit)
+    lines: "list[str]"
+    used: str
+    error: "str | None" = None          # selector 렌더가 서지 않았을 때 그 실행의 마지막 줄
+    dropped: "tuple[str, ...]" = ()     # (나) 로 --error-bc 를 걷은 BC
+
+
+def _baseline_lines(script: Path, snap: Path, argv: "list[str]", path_flags: "frozenset[str]") -> _Baseline:
+    """한 스냅숏의 기준선 사다리 — ① selector 렌더 ② (서지 않을 때만) 빈 골격 --error-bc 를 걷은 selector 렌더
+    ∪ positional ③ positional ④ 불능. ①이 서면 2.21.1 과 같은 실행·같은 문구다."""
+    code: int
+    lines: "list[str]"
+    code, lines = _run_lines(_baseline_argv(script, snap, argv, path_flags))
+    if code in (0, 2):
+        return _Baseline(code, lines, "selector 렌더 재실행")
+    error: "str | None" = next((l.strip() for l in reversed(lines) if l.strip()), None)
+    auto: bool = dict(REGISTRY).get(script.name, False)
+    pcode: int
+    plines: "list[str]"
+    pcode, plines = _run_lines(checker_argv(sys.executable, script.name, str(snap), auto))
+    skeleton: "list[str]" = _skeleton_error_bcs(snap, argv)
+    if skeleton:
+        acode: int
+        alines: "list[str]"
+        acode, alines = _run_lines(_baseline_argv(script, snap, argv, path_flags,
+                                                  drop_error_bcs=frozenset(skeleton)))
+        if acode in (0, 2):
+            roots: "tuple[str, ...]" = (str(snap) + "/", str(snap))
+            kept: "list[str]" = []
+            for line in alines:
+                subject: "str | None" = _subject_file(_normalize(line, roots))
+                if subject is None:
+                    continue  # 주어를 못 읽는 줄은 조정 기준선에 싣지 않는다(fail-closed)
+                if any(subject == f"application/{bc}" or subject.startswith(f"application/{bc}/")
+                       for bc in skeleton):
+                    continue  # 걷은 영역 아래 줄 — 걷어서 생긴 줄일 수 있다(오퍼레이션→helper 재분류)
+                kept.append(line)
+            names: str = ", ".join(skeleton)
+            if pcode in (0, 2):
+                return _Baseline(acode, plines + kept,
+                                 f"selector 렌더 재실행(빈 골격 --error-bc 걷음: {names} · 그 영역 아래 줄 제외) + positional 기준선",
+                                 None, tuple(skeleton))
+            return _Baseline(acode, kept,
+                             f"selector 렌더 재실행(빈 골격 --error-bc 걷음: {names} · 그 영역 아래 줄 제외)",
+                             None, tuple(skeleton))
+    if pcode in (0, 2):
+        return _Baseline(pcode, plines,
+                         "positional 기준선(selector 렌더 불능 강등 — selector-lane 진단은 전량 신규 취급)", error)
+    return _Baseline(pcode, [], "기준선 불능(fail-closed — 전량 신규 취급)", error)
+
+
+def tree_blobs(root: Path, sha: str) -> "dict[str, str]":
+    """커밋 트리의 경로→blob SHA(`git ls-tree -r -z` 1회) — 폴더·서브모듈은 들어가지 않는다."""
+    proc: "subprocess.CompletedProcess[str]" = run_git(root, "ls-tree", "-r", "-z", sha)
+    out: "dict[str, str]" = {}
+    if proc.returncode != 0:
+        return out
+    for entry in proc.stdout.split("\0"):
+        if not entry:
+            continue
+        meta: str
+        separator: str
+        path: str
+        meta, separator, path = entry.partition("\t")
+        parts: "list[str]" = meta.split()
+        if len(parts) == 3 and parts[1] == "blob" and parts[0] != "120000":
+            out[path] = parts[2]  # 일반 파일만 — 심링크(120000)는 주어로 받지 않는다(내용이 다른 경로에 있다)
+    return out
+
+
+def snapshot_escape(dest: Path) -> "str | None":
+    """스냅숏 사본 안의 심링크 가운데 실경로가 사본 «밖» 인 첫 항목(사본 상대 경로). 없으면 None.
+
+    그런 심링크가 있는 사본에서 돌린 검사는 사본 밖(예: 레인의 작업 트리)을 읽을 수 있다 —
+    그 실행은 «레인 내용이 한 글자도 없다» 를 보장하지 못하므로 감산 증거로 쓰지 않는다."""
+    base: str = os.path.realpath(dest)
+    for current, dirs, files in os.walk(dest):
+        for name in sorted(dirs + files):
+            path: str = os.path.join(current, name)
+            if os.path.islink(path):
+                real: str = os.path.realpath(path)
+                if real != base and not real.startswith(base + os.sep):
+                    return os.path.relpath(path, dest)
+    return None
+
+
 def _run_lines(cmd: "list[str]") -> "tuple[int, list[str]]":
     # 기준선 재실행은 «측정 도구의 내부 호출»이라 구조화 레코드 채널을 상속하면 안 된다 —
     # 부모 stdout 에 나오지 않는 앵커 진단이 레코드 파일에만 별도 run_id 로 쌓여
@@ -304,17 +440,46 @@ def _run_lines(cmd: "list[str]") -> "tuple[int, list[str]]":
     return proc.returncode, (proc.stdout + "\n" + proc.stderr).splitlines()
 
 
+# 번호 없는 빚 줄(`= <검사기 파일> :: - <주어>: <메시지>`)이 맞을 수 있는 검사기 — `partition_exit` 를
+# 부르는 scope 렌더 다섯(registry #2·#5·#6·#15·#16)뿐이다. registry_gate 의 차분 집합은 `[#N]` 줄뿐이라
+# 번호 없는 줄이 거기 들어가지 않는다 — 다른 이름은 어떤 줄과도 맞을 수 없어 형식 오류로 거절한다.
+_DEBT_LINE_CHECKERS: "frozenset[str]" = frozenset({
+    "check-error-centralization.py", "check-openapi-error-declaration.py", "check-context-isolation.py",
+    "check-api-error-controller-contract.py", "check-composition-root.py",
+})
+_DEBT_LINE_RE: "re.Pattern[str]" = re.compile(r"=\s+(\S+) :: (- (?!/)\S.*?: .+)")
+
+
 def load_debt(path: Path) -> "list[tuple[str, str]]":
     """이관 빚 승인 목록 로더 — registry_gate 도 이것을 import 한다(복제 금지).
 
-    줄 형식 `#<규칙번호> <부분문자열>`(빈 줄·`//` 주석 허용). tag 는 `#<숫자>` 만 받는다 —
-    숫자 없는 tag(`#`·`##` 류)는 어떤 진단의 `[#N]` 과도 일치할 수 없는 «발화 불능 규칙»
-    이라 조용히 수용하지 않고 형식 오류로 거절한다(fail-closed).
+    줄 형식 둘(빈 줄·`//` 주석 허용):
+      `#<규칙번호> <부분문자열>` — 번호 있는 줄(`[#N]`)에 부분 일치. tag 는 `#<숫자>` 만 받는다 —
+        숫자 없는 tag(`#`·`##` 류)는 어떤 진단의 `[#N]` 과도 일치할 수 없는 «발화 불능 규칙»
+        이라 조용히 수용하지 않고 형식 오류로 거절한다(fail-closed).
+      `= <검사기 파일> :: - <주어>: <메시지>` — 번호 없는 줄 하나와 **줄 전체 일치**. 줄은 검사기가
+        찍은 그대로 옮겨도 되고(`:<숫자>` 는 읽을 때 `:N` 으로 바꾼다 — 대조 코퍼스와 같은 치환)
+        검사기는 scope 렌더 다섯 가운데 하나이며, 주어가 / 로 시작하는 꼴 등은 형식 오류로 거절한다.
+        반환 원소는 `("=", "<검사기 파일> :: <정규화 줄>")` — registry_gate 귀속 줄과 같은 모양이다.
     """
     out: "list[tuple[str, str]]" = []
     for raw in path.read_text(encoding="utf-8").splitlines():
         line: str = raw.strip()
         if not line or line.startswith("//"):
+            continue
+        if line.startswith("="):
+            match: "re.Match[str] | None" = _DEBT_LINE_RE.fullmatch(line)
+            if match is None:
+                raise AnchorDiffUsage(
+                    f"빚 목록 줄 형식 오류: {raw!r} — 번호 없는 줄은 "
+                    "`= <검사기 파일> :: - <주어>: <메시지>`(검사기가 찍은 줄 전체 · 주어는 상대 경로)"
+                )
+            if match.group(1) not in _DEBT_LINE_CHECKERS:
+                raise AnchorDiffUsage(
+                    f"빚 목록 줄 형식 오류: {raw!r} — 번호 없는 줄의 검사기는 "
+                    f"{' · '.join(sorted(_DEBT_LINE_CHECKERS))} 가운데 하나"
+                )
+            out.append(("=", f"{match.group(1)} :: {_LINENO_RE.sub(':N', match.group(2))}"))
             continue
         parts: "list[str]" = line.split(None, 1)
         if len(parts) != 2 or re.fullmatch(r"#\d+", parts[0]) is None:
@@ -463,17 +628,77 @@ def load_approved_merges(path: Path, root: Path, anchor_sha: str,
     return out, chain
 
 
-def debt_match(normalized_line: str, debt_rules: "list[tuple[str, str]]") -> bool:
+def split_approved_merge(argv: "list[str]") -> "tuple[list[str], str | None, str | None]":
+    """검사기 다섯의 `--approved-merge-file` 을 argparse «앞에서» 걷는다 → (나머지 argv, 값, 사용 오류 글).
+
+    argparse 에 등록하지 않는 까닭: 줄임 옵션(`--ap` = `--api-module`)의 뜻이 바뀌지 않게 — 플래그 없는 실행의
+    argv 해석이 2.21.1 과 같다. 받는 꼴은 정확한 두 꼴(`--approved-merge-file <v>` · `--approved-merge-file=<v>`)뿐이다."""
+    rest: "list[str]" = []
+    values: "list[str]" = []
+    error: "str | None" = None
+    i: int = 0
+    while i < len(argv):
+        token: str = argv[i]
+        if token == APPROVED_MERGE_FLAG:
+            if i + 1 >= len(argv):
+                error = f"{APPROVED_MERGE_FLAG} 에 값이 없다"
+                i += 1
+                continue
+            values.append(argv[i + 1])
+            i += 2
+            continue
+        if token.startswith(APPROVED_MERGE_FLAG + "="):
+            values.append(token.partition("=")[2])
+            i += 1
+            continue
+        rest.append(token)
+        i += 1
+    if len(values) > 1:
+        error = f"{APPROVED_MERGE_FLAG} 는 한 번만 준다"
+    if values and not values[0]:
+        error = f"{APPROVED_MERGE_FLAG} 에 값이 없다"
+    return rest, (values[0] if values else None), error
+
+
+
+def merge_hints(root: Path, anchor_sha: str, head_sha: str) -> "list[tuple[str, str, bool]]":
+    """앵커..HEAD first-parent 사슬의 2-부모 머지 → (sha, ^2 의 name-rev, ^2 를 담은 ref 가 HEAD 브랜치뿐인가).
+
+    registry_gate 의 U2 안내 줄 재료(판정 무접촉). 사슬 밖 앵커면 빈 목록."""
+    chain: "list[ChainCommit] | None" = first_parent_chain(root, anchor_sha, head_sha)
+    if chain is None:
+        return []
+    head_ref: str = run_git(root, "symbolic-ref", "-q", "HEAD").stdout.strip()
+    head_branch: str = head_ref.removeprefix("refs/heads/") if head_ref.startswith("refs/heads/") else ""
+    out: "list[tuple[str, str, bool]]" = []
+    for c in chain:
+        if not c.is_merge:
+            continue
+        ref: str = run_git(root, "name-rev", "--refs=refs/*", "--name-only", c.parents[1]).stdout.strip() or "undefined"
+        containing: "set[str]" = set(
+            run_git(root, "for-each-ref", "--contains", c.parents[1], "--format=%(refname)").stdout.split())
+        only_head: bool = not {r for r in containing if _counts_as_other_ref(r, head_ref, head_branch)}
+        out.append((c.sha, ref, only_head))
+    return out
+
+
+def debt_match(normalized_line: str, debt_rules: "list[tuple[str, str]]", *,
+               checker: "str | None" = None) -> bool:
     """빚 매칭 술어 — 두 도구(직접 계열·registry_gate)가 같은 코퍼스로 판정한다.
 
     코퍼스는 «정규화 라인»(절대 경로 echo 제거·라인번호 `:N` 치환)이다 — 같은 빚 파일이
     도구에 따라 다르게 읽히지 않는다. 레인 실물 형식(`#12 application.pairing` 류
     dotted-module 부분문자열)은 정규화가 건드리지 않으므로 그대로 매칭된다(하위 호환).
+    번호 없는 줄 항목(`=`)은 `<검사기 파일> :: <정규화 라인>` 과 글자 전체가 같을 때만 맞는다 —
+    registry_gate 의 줄은 이미 그 모양이고(checker 없음), scope 렌더는 자기 검사기 파일 이름을 준다.
     """
-    return any(f"[{tag}]" in normalized_line and sub in normalized_line for tag, sub in debt_rules)
+    keyed: str = normalized_line if checker is None else f"{checker} :: {normalized_line}"
+    return any(keyed == sub if tag == "=" else (f"[{tag}]" in normalized_line and sub in normalized_line)
+               for tag, sub in debt_rules)
 
 
-def validate_materials(target: Path, anchor: str, debt_file: "str | None") -> None:
+def validate_materials(target: Path, anchor: str, debt_file: "str | None",
+                       approved_merge_file: "str | None" = None) -> None:
     """`--anchor` 재료 선검증 — findings 유무와 무관하게 parse 직후 호출한다.
 
     무발견 clean 실행에서도 resolve 불능 앵커·부재/형식 오류 빚 파일·공허 차분
@@ -486,6 +711,13 @@ def validate_materials(target: Path, anchor: str, debt_file: "str | None") -> No
         if not debt_path.is_file():
             raise AnchorDiffUsage(f"빚 목록 {debt_path} 없음")
         load_debt(debt_path)
+    if approved_merge_file is not None:
+        merge_path: Path = Path(approved_merge_file)
+        if not merge_path.is_file():
+            raise AnchorDiffUsage(f"승인 머지 목록 {merge_path} 없음")
+        root: Path = target.resolve()
+        load_approved_merges(merge_path, root, run_git(root, "rev-parse", "--verify", f"{anchor}^{{commit}}").stdout.strip(),
+                             run_git(root, "rev-parse", "HEAD").stdout.strip())
 
 
 def _normalize(line: str, roots: "tuple[str, ...]") -> str:
@@ -493,6 +725,279 @@ def _normalize(line: str, roots: "tuple[str, ...]") -> str:
     for prefix in roots:  # 절대 경로 echo 정규화(registry_gate A3 동형)
         out = out.replace(prefix, "")
     return _LINENO_RE.sub(":N", out)  # 라인번호 정규화(상하 이동 오탐 방지)
+
+
+
+# 증명 머지 뒤 조건(ⓒ 미승인 머지 · ⓑ 뒤 승인 머지의 ^2 · ⓓ 사슬 이어짐)이 렌더하는 사슬 커밋(서로 다른 트리)의 최대 수.
+# 넘으면 그 머지로는 증명하지 않는다(`측정 생략(…)` — fail-closed). 결정적 판정을 위해 시간이 아니라 수로 묶는다.
+CHAIN_LIMIT: int = 64
+
+
+@dataclass(frozen=True)
+class Sample:
+    """한 커밋의 측정 — lines None = 증거로 못 씀 · partial = 끝까지 잰 렌더가 아님(«없다» 를 말할 수 없음)."""
+
+    lines: "frozenset[str] | None"
+    partial: bool = False
+
+
+def _prefetch_workers() -> int:
+    """사슬 렌더 병렬 수 — registry_gate 의 `DJR_REGISTRY_WORKERS` 와 같은 손잡이(없으면 4)."""
+    raw: str = os.environ.get("DJR_REGISTRY_WORKERS", "").strip()
+    return int(raw) if raw.isdigit() and int(raw) > 0 else 4
+
+
+def tree_id(root: Path, sha: str) -> str:
+    return run_git(root, "rev-parse", f"{sha}^{{tree}}").stdout.strip() or sha
+
+
+def after_merge_check(*, key: str, m: "ApprovedMerge", active: "list[ApprovedMerge]", chain: "list[ChainCommit]",
+                      sample: "Callable[[str], Sample]", tree_of: "Callable[[str], str]",
+                      limit: int = CHAIN_LIMIT,
+                      prefetch: "Callable[[list[str]], None] | None" = None) -> "str | None":
+    """증명 머지 m 이 L(ℓ ∈ R(m^2) ∖ R(m^1))을 통과한 뒤의 조건 — None 이면 통과, 아니면 귀속 유지 사유.
+
+    ⓒ m 뒤 first-parent 사슬에 승인 목록 밖의 머지(부모 ≥ 2)가 없다
+    ⓑ m 뒤의 모든 참여 승인 머지 m′ 에서 ℓ ∈ R(m′^2)          (상류가 뒤에서 고친 줄을 옛 머지로 증명하지 않는다)
+    ⓓ m(병합 결과 — ⓐ) 부터 HEAD 커밋까지 사슬 커밋마다 ℓ ∈ R(c)  (레인이 없앴다 되살린 줄을 증명하지 않는다)
+    sample(sha) 는 호출측 측정(registry_gate = positional 단일 검사기 · scope 렌더 = 기준선 사다리)."""
+    position: "dict[str, int]" = {c.sha: i for i, c in enumerate(chain)}
+    start: "int | None" = position.get(m.sha)
+    if start is None:
+        return f"유입 증명 실패(승인 머지 {m.sha[:12]} 가 사슬 밖)"
+    approved: "set[str]" = {a.sha for a in active}
+    for c in chain[start + 1:]:
+        if len(c.parents) >= 2 and c.sha not in approved:
+            return f"유입 증명 실패(승인 머지 {m.sha[:12]} 뒤 미승인 머지 {c.sha[:12]})"
+    for later in active:
+        if position.get(later.sha, -1) <= start:
+            continue
+        got: Sample = sample(later.parent2)
+        if got.lines is None or (key not in got.lines and got.partial):
+            return f"측정 무효(뒤 승인 머지 {later.sha[:12]} 의 ^2) — {m.sha[:12]}"
+        if key not in got.lines:
+            return f"유입 증명 실패(뒤 승인 머지 {later.sha[:12]} 의 ^2 에 없음)"
+    commits: "list[ChainCommit]" = chain[start:]
+    trees: "list[str]" = []
+    for c in commits:
+        t: str = tree_of(c.sha)
+        if not trees or trees[-1] != t:
+            trees.append(t)
+    if len(trees) > limit:
+        return f"측정 생략(사슬 커밋 {len(trees)} > 한도 {limit}) — {m.sha[:12]}"
+    if prefetch is not None:
+        prefetch([c.sha for c in commits])  # 사슬 커밋 렌더를 한꺼번에(병렬로) — 판정은 아래 순차 대조가 한다
+    for c in commits:
+        got = sample(c.sha)
+        if got.lines is None or (key not in got.lines and got.partial):
+            return f"측정 무효(사슬 {c.sha[:12]}) — {m.sha[:12]}"
+        if key not in got.lines:
+            if c.sha == m.sha:
+                return f"유입 증명 실패(승인 머지 {m.sha[:12]} 결과에 없음)"
+            return f"유입 증명 실패(승인 머지 {m.sha[:12]} 뒤 사슬 {c.sha[:12]} 에 없음)"
+    return None
+
+
+
+class PathFacts:
+    """한 실행의 git 사실로 주어 파일 p 를 가른다 — registry_gate `_provenance_split` 의 (i)(ii) 와 같은 판정·같은 사유 글자.
+
+    classify(p) = ("파일", 전달 머지) | ("상호작용", None) | 귀속 유지 사유(str)
+      비-blob 경로 — HEAD 의 일반 파일(blob · 심링크 아님)이 아니다
+      worktree 수정 중 — 작업 트리의 p 가 HEAD 와 다르다(미추적·수정·삭제)
+      파일 = F1 · 상호작용 = F2 · 그 밖 = last_toucher 사유(충돌 해소분 · 미승인 머지 경유 · 레인 커밋 수정 · 비머지 커밋 경유)"""
+
+    def __init__(self, root: Path, anchor_sha: str, head_sha: str,
+                 chain: "list[ChainCommit]", active: "list[ApprovedMerge]") -> None:
+        self.root: Path = root
+        self.chain: "list[ChainCommit]" = chain
+        self.active: "list[ApprovedMerge]" = active
+        self._cache: "dict[str, dict[str, str]]" = {}
+        self.head: "dict[str, str]" = self.blobs(head_sha)
+        self.anchor: "dict[str, str]" = self.blobs(anchor_sha)
+        self.dirty: "set[str]" = {entry[3:] for entry in run_git(
+            root, "status", "--porcelain", "--untracked-files=all", "-z").stdout.split("\0") if len(entry) > 3}
+        self.position: "dict[str, int]" = {c.sha: i for i, c in enumerate(chain)}
+
+    def blobs(self, sha: str) -> "dict[str, str]":
+        if sha not in self._cache:
+            self._cache[sha] = tree_blobs(self.root, sha)
+        return self._cache[sha]
+
+    def classify(self, p: str) -> "tuple[str, ApprovedMerge | None] | str":
+        if p not in self.head:
+            return "비-blob 경로"
+        if p in self.dirty:
+            return "worktree 수정 중"
+        deliver: "ApprovedMerge | None" = next(
+            (m for m in self.active if self.blobs(m.parent1).get(p) != self.blobs(m.sha).get(p)
+             and self.blobs(m.sha).get(p) == self.blobs(m.parent2).get(p) == self.head[p]), None)
+        if deliver is not None:
+            return ("파일", deliver)
+        if self.head[p] == self.anchor.get(p):
+            return ("상호작용", None)
+        return self.retained_reason(p)
+
+    def retained_reason(self, p: str) -> str:
+        last: "ChainCommit | None" = next(
+            (c for c in reversed(self.chain)
+             if self.blobs(c.sha).get(p) != (self.blobs(c.parents[0]).get(p) if c.parents else None)), None)
+        if last is None:
+            return "유입 증명 실패(경로 추적 불능)"
+        approved: "set[str]" = {m.sha for m in self.active}
+        if last.is_merge and last.sha in approved:
+            return f"충돌 해소분(M≠M^2) — {last.sha[:12]}"
+        if last.is_merge:
+            return f"미승인 머지 경유 {last.sha[:12]}"
+        before: "ApprovedMerge | None" = next(
+            (m for m in self.active if self.position.get(m.sha, 1 << 30) < self.position[last.sha]
+             and self.blobs(m.sha).get(p) != self.blobs(m.parent1).get(p)), None)
+        if before is not None:
+            return f"레인 커밋 수정 {last.sha[:12]}(승인 머지 {before.sha[:12]} 이후)"
+        return f"비머지 커밋 경유 {last.sha[:12]}"
+
+
+@dataclass
+class _InflowSplit:
+    """scope 렌더의 승인 유입 분할 결과 — inflow(줄, 증명 머지, 종류, 비고) · retained(줄 → 귀속 유지 사유)."""
+
+    inflow: "list[tuple[str, str, str, str | None]]"
+    retained: "dict[str, str]"
+    measured: "dict[str, _Baseline | None]" = field(default_factory=dict)   # 커밋 sha → 기준선(증거로 못 쓰면 None)
+    failures: "dict[str, str]" = field(default_factory=dict)                # 커밋 sha → 왜 못 쓰는가
+    renders: int = 0                                                        # 서로 다른 트리를 잰 수
+
+
+def _approved_inflow_split(
+    *, root: Path, anchor_sha: str, head_sha: str, merges: "list[ApprovedMerge]", new: "list[str]",
+    roots: "tuple[str, ...]", td: Path, script: Path, argv: "list[str]", path_flags: "frozenset[str]",
+    baseline_collects_all: bool, chain: "list[ChainCommit]",
+) -> _InflowSplit:
+    """빚 매칭 뒤 남은 «신규» 줄을 «승인 유입 ⊔ 신규(귀속 유지)» 로 가른다 — 어떤 줄도 버리지 않는다.
+
+    승인 유입(ℓ) ⟺ PathFacts.classify(p) ∈ {파일, 상호작용} ∧ ∃M: L(ℓ, M) ∧ after_merge_check(ℓ, M) 통과
+      L = ℓ ∈ R(M^2) ∧ ( [파일 ∧ M^1 에 p 항목 없음] ∨ [M^1 렌더가 완결 ∧ ℓ ∉ R(M^1)] )
+      R(S) = 커밋 S 의 git archive 사본(사본 밖 심링크 없음)에서 같은 검사기·같은 argv 로 돌린 기준선 사다리 줄 집합
+      완결 = 사다리 1칸(조정 없는 selector 렌더)이 섰고 ∧ (exit 0 ∨ baseline_collects_all)"""
+    out: _InflowSplit = _InflowSplit([], {})
+    active: "list[ApprovedMerge]" = sorted((m for m in merges if m.participates), key=lambda m: m.position or 0)
+    by_tree: "dict[str, tuple[Sample, _Baseline | None, str | None]]" = {}
+    tree_cache: "dict[str, str]" = {}
+
+    def tree_of(sha: str) -> str:
+        if sha not in tree_cache:
+            tree_cache[sha] = tree_id(root, sha)
+        return tree_cache[sha]
+
+    def measure(sha: str) -> "tuple[Sample, _Baseline | None]":
+        t: str = tree_of(sha)
+        if t not in by_tree:
+            dest: Path = td / f"tree-{t[:12]}"
+            failure: "str | None" = None
+            base: "_Baseline | None" = None
+            got: Sample = Sample(None)
+            try:
+                snapshot_anchor(root, sha, dest)
+                escape: "str | None" = snapshot_escape(dest)
+            except (AnchorDiffUsage, OSError) as exc:
+                failure = f"스냅숏 실패 — {type(exc).__name__}: {str(exc).strip()}"
+            else:
+                if escape is not None:
+                    failure = f"사본 밖을 가리키는 심링크 {escape}"
+                else:
+                    base = _baseline_lines(script, dest, argv, path_flags)
+                    r: "tuple[str, ...]" = (str(dest) + "/", str(dest))
+                    if base.error is not None:
+                        base.error = base.error.replace(str(dest) + "/", "").replace(str(dest), "")
+                    if base.code in (0, 2) and not measurement_failed(base.lines):
+                        # «없다» 를 말할 수 있는 렌더 = 사다리 1칸 ∧ (exit 0 ∨ 기준선 모드에서 모든 슬라이스를 모으는 검사기)
+                        got = Sample(frozenset(_normalize(line, r) for line in base.lines),
+                                     partial=(base.used != "selector 렌더 재실행"
+                                              or (base.code == 2 and not baseline_collects_all)))
+            finally:
+                shutil.rmtree(dest, ignore_errors=True)  # 실패한 사본도 바로 지운다(사슬 길이만큼 디스크가 늘지 않게)
+            by_tree[t] = (got, base, failure)
+            out.renders += 1
+        got, base, failure = by_tree[t]
+        out.measured.setdefault(sha, base)
+        if failure is not None:
+            out.failures.setdefault(sha, failure)
+        return got, base
+
+    def sample(sha: str) -> Sample:
+        return measure(sha)[0]
+
+    def prefetch(shas: "list[str]") -> None:
+        todo: "dict[str, str]" = {}
+        for sha in shas:
+            t: str = tree_of(sha)
+            if t not in by_tree and t not in todo:
+                todo[t] = sha
+        if len(todo) > 1:
+            from concurrent.futures import ThreadPoolExecutor
+            with ThreadPoolExecutor(max_workers=_prefetch_workers()) as pool:
+                list(pool.map(measure, todo.values()))
+
+    def exists_at(sha: str, path: str) -> bool:
+        """커밋 sha 의 트리에 path 라는 항목(파일·폴더·링크 무엇이든)이 있는가."""
+        return run_git(root, "cat-file", "-e", f"{sha}:{path}").returncode == 0
+
+    facts: PathFacts = PathFacts(root, anchor_sha, head_sha, chain, active)
+    for line in new:
+        key: str = _normalize(line, roots)
+        p: "str | None" = _subject_file(key)
+        if p is None:
+            out.retained[line] = "주어 경로 없음"
+            continue
+        judged: "tuple[str, ApprovedMerge | None] | str" = facts.classify(p)
+        if isinstance(judged, str):
+            out.retained[line] = judged   # registry_gate 와 같은 사유 글자(같은 함수)
+            continue
+        kind: str
+        deliver: "ApprovedMerge | None"
+        kind, deliver = judged
+        order: "list[ApprovedMerge]" = ([deliver] + [m for m in active if m is not deliver]
+                                        if deliver is not None else list(active))
+        proven: "tuple[str, str | None] | None" = None
+        invalid: "str | None" = None
+        after: "str | None" = None
+        for m in order:
+            incoming: Sample
+            incoming_base: "_Baseline | None"
+            incoming, incoming_base = measure(m.parent2)
+            if incoming.lines is None or (key not in incoming.lines and incoming.partial):
+                invalid = invalid or f"측정 무효(M^2) — {m.sha[:12]}"
+                continue
+            if key not in incoming.lines:
+                continue
+            note: "str | None" = None
+            if kind == "파일" and not exists_at(m.parent1, p):
+                note = "^1 에 주어 파일 없음"   # 주어 파일이 레인 쪽 직전 트리에 없었다 — 그 파일 주어의 같은 줄은 거기서 날 수 없다
+            else:
+                lane: Sample
+                _lane_base: "_Baseline | None"
+                lane, _lane_base = measure(m.parent1)
+                if lane.lines is None or lane.partial:
+                    invalid = invalid or f"측정 무효(M^1) — {m.sha[:12]}"
+                    continue
+                if key in lane.lines:  # type: ignore[operator]
+                    continue  # 레인 쪽 직전에도 있던 줄 — 이 머지가 들인 줄이 아니다(이중 원인)
+                note = ""
+            reason: "str | None" = after_merge_check(key=key, m=m, active=active, chain=chain,
+                                                     sample=sample, tree_of=tree_of, prefetch=prefetch)
+            if reason is None:
+                proven = (m.sha, note)
+                break
+            after = after or reason
+        if proven is not None:
+            out.inflow.append((line, proven[0], kind, proven[1]))
+        elif after is not None:
+            out.retained[line] = after
+        elif invalid is not None:
+            out.retained[line] = invalid
+        else:
+            out.retained[line] = "유입 증명 실패(이중 원인)" if kind == "파일" else "상호작용 미증명"
+    return out
 
 
 def partition_exit(
@@ -506,18 +1011,10 @@ def partition_exit(
     path_flags: "frozenset[str]" = frozenset(),
     debt_file: "str | None" = None,
     analysis_pending: bool = False,
+    approved_merge_file: "str | None" = None,
+    baseline_collects_all: bool = False,
 ) -> int:
-    """현재 findings 를 앵커 기준선과 대조해 차분 절을 출력하고 exit 를 정한다.
-
-    반환 2 = 신규분 존재(현행대로 blocker) · 0 = 전건 앵커 기존분(강등 + 보고).
-    debt_file(사용자 승인 목록)에 맞는 신규분은 exit 에서 빼되 «빚» 절로 보고한다
-    (registry_gate 와 동일 — 빚은 기록 근거이지 모양 복사 근거가 아니다). 빚 매칭은
-    분류와 같은 «정규화 라인» 코퍼스에 건다(debt_match — registry_gate 동일 판정).
-    재료 결손·공허 차분은 AnchorDiffUsage — 호출측 사용 오류 경로(exit 1)가 받는다.
-    호출측은 findings 를 이미 전량 출력한 «뒤» 이 함수를 부른다(정보 손실 0).
-    analysis_pending=True 는 호출측에 강등으로 소거되지 않는 잔여 분석/토큰 진단이
-    남아 있다는 표식이다 — 판정 문구만 그 사실에 맞춘다(exit 계산 무변).
-    """
+    """현재 진단을 앵커 기준선·승인 빚·증명한 승인 유입으로 나누어 보고하고 신규분의 exit를 정한다."""
     debt_rules: "list[tuple[str, str]]" = []
     if debt_file is not None:
         debt_path: Path = Path(debt_file)
@@ -527,20 +1024,23 @@ def partition_exit(
     resolved_target: Path = target.resolve()
     has_sister: bool = sister_owned(resolved_target)
     sha: str = resolve_anchor(resolved_target, anchor)
+    merges: "list[ApprovedMerge]" = []
+    chain: "list[ChainCommit]" = []
+    head_sha: str = ""
+    if approved_merge_file is not None:
+        merge_path: Path = Path(approved_merge_file)
+        if not merge_path.is_file():
+            raise AnchorDiffUsage(f"승인 머지 목록 {merge_path} 없음")
+        head_sha = run_git(resolved_target, "rev-parse", "HEAD").stdout.strip()
+        merges, chain = load_approved_merges(merge_path, resolved_target, sha, head_sha)
+    split: "_InflowSplit | None" = None
     with tempfile.TemporaryDirectory() as td:
         snap: Path = Path(td) / "anchor"
         snapshot_anchor(resolved_target, sha, snap)
-        code, lines = _run_lines(_baseline_argv(script, snap, argv, path_flags))
-        used: str = "selector 렌더 재실행"
-        if code not in (0, 2):
-            # 앵커에서 렌더가 성립하지 않음(예: 필수 단일 selector 부재) —
-            # 로스터 positional 기준선으로 강등(registry_gate 내부 실행과 같은 호출).
-            auto: bool = dict(REGISTRY).get(script.name, False)
-            code, lines = _run_lines(checker_argv(sys.executable, script.name, str(snap), auto))
-            used = "positional 기준선(selector 렌더 불능 강등 — selector-lane 진단은 전량 신규 취급)"
-        if code not in (0, 2):
-            lines = []
-            used = "기준선 불능(fail-closed — 전량 신규 취급)"
+        base: _Baseline = _baseline_lines(script, snap, argv, path_flags)
+        if base.error is not None:
+            base.error = base.error.replace(str(snap) + "/", "").replace(str(snap), "")
+        code, lines, used = base.code, base.lines, base.used
         normal_measurement: bool = (code in (0, 2) and not analysis_pending
                                     and not measurement_failed(lines) and not measurement_failed(findings))
         roots: "tuple[str, ...]" = (
@@ -552,32 +1052,77 @@ def partition_exit(
         for finding in findings:
             (existing if _normalize(finding, roots) in anchor_set else new).append(finding)
 
-    debt: "list[str]" = []
-    if debt_rules:  # 빚 매칭은 «신규분»에만 건다(registry_gate 동형 — 기존분은 이미 비-blocker).
-        rest: "list[str]" = []
-        for line in new:
-            # 분류와 같은 정규화 라인에 매칭 — registry_gate 와 같은 빚 파일을 같은 판정으로 읽는다.
-            hit: bool = debt_match(_normalize(line, roots), debt_rules)
-            (debt if hit else rest).append(line)
-        new = rest
+        debt: "list[str]" = []
+        if debt_rules:  # 빚 매칭은 «신규분»에만 건다(registry_gate 동형 — 기존분은 이미 비-blocker).
+            rest: "list[str]" = []
+            for line in new:
+                hit: bool = debt_match(_normalize(line, roots), debt_rules, checker=script.name)
+                (debt if hit else rest).append(line)
+            new = rest
+
+        if approved_merge_file is not None:
+            # 순서: 신규 → 빚 분리 → 승인 유입 분리(빚 우선) → 자매 → 잔여 = exit 근거(registry_gate 와 같은 순서).
+            if new and not measurement_failed(findings):
+                split = _approved_inflow_split(
+                    root=resolved_target, anchor_sha=sha, head_sha=head_sha, merges=merges, new=new,
+                    roots=roots, td=Path(td), script=script, argv=argv, path_flags=path_flags,
+                    baseline_collects_all=baseline_collects_all, chain=chain)
+                proven: "set[str]" = {line for line, _m, _k, _n in split.inflow}
+                new = [line for line in new if line not in proven]
+            else:
+                split = _InflowSplit([], {})
 
     sister: "list[str]" = []
     if has_sister and normal_measurement:
         rest = []
         for line in new:
-            (sister if sister_path(subject_path(line)) else rest).append(line)
+            invalid: bool = split is not None and split.retained.get(line, "").startswith(("측정 무효(", "측정 생략("))
+            (sister if not invalid and sister_path(subject_path(line)) else rest).append(line)
         new = rest
 
     print(f"{label} 앵커 차분(--anchor {sha[:12]} · 기준선={used}):")
-    print(f"  신규분(앵커 이후) {len(new)}건 · 앵커 기존분(잔존) {len(existing)}건 · 이관 빚 {len(debt)}건")
+    counts: str = f"  신규분(앵커 이후) {len(new)}건 · 앵커 기존분(잔존) {len(existing)}건 · 이관 빚 {len(debt)}건"
+    if split is not None:
+        counts += f" · 승인 유입 {len(split.inflow)}건"
+    print(counts)
+    if base.error is not None:
+        print(f"  기준선 오류: {base.error}")
     if new:
         print("  == 신규분 — 차분에 종속되지 않는 직접 blocker ==")
         for line in new:
             print(f"  {line.strip()}")
+            if split is not None:
+                print(f"    ↳ 귀속 유지: {split.retained.get(line, '판정 미도달')}")
     if debt:
         print("  == 이관 빚(사용자 승인 목록 매칭 — exit 제외·기록 의무) ==")
         for line in debt:
             print(f"  {line.strip()}")
+    if split is not None:
+        print(f"  == 승인 유입(발주자 승인 머지 경유 · provenance 증명 — exit 제외·기록 의무) {len(split.inflow)}건 ==")
+        for m in merges:
+            if not m.participates:
+                print(f"  [M {m.sha[:12]}] {m.subject} · 앵커 이전 — 판정 불참")
+                continue
+            files: int = sum(1 for _l, s, k, _n in split.inflow if s == m.sha and k == "파일")
+            inter: int = sum(1 for _l, s, k, _n in split.inflow if s == m.sha and k == "상호작용")
+            print(f"  [M {m.sha[:12]}] {m.subject} · ^1 {m.parent1[:12]} · ^2 {m.parent2[:12]}({m.parent2_ref}) · "
+                  f"파일 {files} · 상호작용 {inter}")
+            if m.parent2_only_head:
+                print(f"    ↳ 주의: ^2 {m.parent2[:12]} 를 포함하는 ref 가 HEAD 브랜치뿐 — 역방향/합성 머지 의심"
+                      "(발주자 확인 — 등재 전 `^2` 가 main(상류) 이력에 있는지 확인 · exit 무변)")
+            for side, commit in (("^2", m.parent2), ("^1", m.parent1)):
+                if commit not in split.measured:
+                    continue
+                measured: "_Baseline | None" = split.measured[commit]
+                if measured is None:
+                    print(f"    ↳ {side} 기준선: 측정 무효 — {split.failures.get(commit, '스냅숏 실패')}")
+                else:
+                    print(f"    ↳ {side} 기준선: {measured.used}"
+                          + (f" — 오류: {measured.error}" if measured.error is not None else ""))
+        for line, m_sha, kind, note in split.inflow:
+            print(f"  {line.strip()}")
+            print(f"    ↳ 유입: {m_sha[:12]}(L 증명{' · ' + note if note else ''}) · "
+                  f"{'파일 verbatim' if kind == '파일' else '상호작용'}")
     if sister:
         print(f"  == {SISTER_TITLE} {len(sister)}건 ==")
         for line in sister:
@@ -586,19 +1131,26 @@ def partition_exit(
         print("  == 앵커 기존분 — blocker 아님·보고 의무(침묵 금지)·이 빌드에서 즉석 수리하지 않는다 ==")
         for line in existing:
             print(f"  {line.strip()}")
+    tail: str = ""
+    if split is not None:
+        approved: "set[str]" = {m.sha for m in merges if m.participates}
+        in_chain: "list[ChainCommit]" = [c for c in chain if c.is_merge]
+        unapproved: "list[str]" = [c.sha[:12] for c in in_chain if c.sha not in approved]
+        print(f"  provenance: first-parent 사슬 {sha[:12]}..HEAD 머지 {len(in_chain)}"
+              f"(승인 {len(in_chain) - len(unapproved)} · 미승인 {len(unapproved)}"
+              + (": " + " ".join(unapproved) if unapproved else "") + f") · 스냅숏 기준선 실행 {split.renders}")
+        tail = f"(승인 유입 {len(split.inflow)}건 제외)"
     if new:
-        print(f"판정: 신규분 {len(new)}건 → blocker(exit 2) — 기존분 {len(existing)}건은 별도 보고")
+        print(f"판정: 신규분 {len(new)}건 → blocker(exit 2) — 기존분 {len(existing)}건은 별도 보고{tail}")
         return 2
     if analysis_pending:
-        # 잔여 분석/토큰 진단이 남은 호출측 — «exit 0» 을 단정하면 실제 exit(proof 경로
-        # exit 1)와 어긋난다. 차분 몫의 판정만 말한다(동작 무변·문구 조건화).
         print(
             f"판정: 신규분 0건 → 차분 계열 강등 — 잔여 분석/토큰 진단의 exit 가 우선한다"
-            f"(앵커 기존분 {len(existing)}건과 빚 {len(debt)}건은 위 보고 채널로만 남긴다)"
+            f"(앵커 기존분 {len(existing)}건과 빚 {len(debt)}건은 위 보고 채널로만 남긴다){tail}"
         )
         return 0
     print(
         f"판정: 신규분 0건 → exit 0 (신규 0 ≠ 전체 clean — 앵커 기존분 {len(existing)}건과 "
-        f"빚 {len(debt)}건은 위 보고 채널로만 남긴다)"
+        f"빚 {len(debt)}건은 위 보고 채널로만 남긴다){tail}"
     )
     return 0

@@ -124,6 +124,7 @@ class Config:
     error_bcs: tuple[str, ...]
     anchor: str | None
     anchor_debt_file: str | None
+    anchor_approved_merge_file: str | None = None
 
 
 @dataclass(frozen=True)
@@ -279,7 +280,13 @@ def _validate_selected_source(
 
 
 def _parse_config(argv: list[str]) -> Config:
+    approved_merge_file: "str | None" = None
+    approved_merge_error: "str | None" = None
+    if any(t == anchor_diff.APPROVED_MERGE_FLAG or t.startswith(anchor_diff.APPROVED_MERGE_FLAG + "=") for t in argv):
+        # 플래그가 있을 때만 새 함수를 부른다 — 플래그 없는 실행은 2.21.1 과 같은 argv·같은 anchor_diff 이름만 쓴다.
+        argv, approved_merge_file, approved_merge_error = anchor_diff.split_approved_merge(argv)
     namespace = _argument_parser().parse_args(argv)
+    namespace.anchor_approved_merge_file: str | None = approved_merge_file
     try:
         root = Path(namespace.target).resolve()
         root_is_dir = root.is_dir()
@@ -315,6 +322,10 @@ def _parse_config(argv: list[str]) -> Config:
         issues.append(f"--anchor 와 {anchor_diff.BASELINE_FLAG} 는 함께 전달할 수 없음")
     if namespace.anchor_debt_file is not None and namespace.anchor is None:
         issues.append(f"{anchor_diff.DEBT_FLAG} 는 --anchor 와 함께만 쓸 수 있음(차분 전용 빚 채널)")
+    if namespace.anchor_approved_merge_file is not None and namespace.anchor is None:
+        issues.append(f"{anchor_diff.APPROVED_MERGE_FLAG} 는 --anchor 와 함께만 쓸 수 있음(차분 전용 승인 유입 채널)")
+    if approved_merge_error is not None:
+        issues.append(approved_merge_error)
     if namespace.anchor_baseline and anchor_diff.is_git_worktree(root):
         issues.append(
             f"{anchor_diff.BASELINE_FLAG} 는 앵커 스냅숏(비-git) 재실행 전용 — git 저장소 TARGET 금지"
@@ -383,6 +394,7 @@ def _parse_config(argv: list[str]) -> Config:
         error_bcs=error_bcs,
         anchor=namespace.anchor,
         anchor_debt_file=namespace.anchor_debt_file,
+        anchor_approved_merge_file=namespace.anchor_approved_merge_file,
     )
 
 
@@ -3517,7 +3529,9 @@ def main(argv: list[str]) -> int:
         if config.anchor is not None:
             # 재료 선검증 — 무발견 clean 이라도 resolve 불능 앵커·부재/형식 오류 빚
             # 파일·공허 차분이 침묵 exit 0 되지 않게 parse 직후 막는다(fail-closed).
-            anchor_diff.validate_materials(config.root, config.anchor, config.anchor_debt_file)
+            anchor_diff.validate_materials(config.root, config.anchor, config.anchor_debt_file,
+                **({"approved_merge_file": config.anchor_approved_merge_file}
+                   if config.anchor_approved_merge_file is not None else {}))
         bcs = _tree_bcs63(config.root)
         if not any(
             (bc / d).is_dir() for bc in bcs for d in _TREE_DRIVING_SET
@@ -3587,6 +3601,8 @@ def main(argv: list[str]) -> int:
                 findings=collected,
                 path_flags=frozenset({"--api-module", "--controller-module"}),
                 debt_file=config.anchor_debt_file,
+                **({"approved_merge_file": config.anchor_approved_merge_file}
+                   if config.anchor_approved_merge_file is not None else {}),
                 analysis_pending=bool(pending_analysis),
             )
             if verdict == 0 and pending_analysis:

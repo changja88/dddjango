@@ -1659,8 +1659,8 @@ djr:R-0305 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0306 a djr:Obligation ;
-    skos:prefLabel "게이트 증거 = 귀속 0 + legacy 잔존 별도 보고"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0306@2026-09-03> .
+    skos:prefLabel "게이트 증거 = 귀속 0 + legacy 잔존 별도 보고 · 승인 유입은 provenance 증명(주어 판정 ∧ R(M^2)∖R(M^1) ∧ 뒤 미승인 머지 없음 · 뒤 승인 머지 ^2 에도 있음 · 병합 결과부터 HEAD 까지 사슬마다 있음)된 것만 exit 제외"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0306@2026-10-13> .
 
 <https://numchida.com/ns/djr#R-0306@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0306 ;
@@ -1670,6 +1670,12 @@ djr:R-0306 a djr:Obligation ;
     prov:specializationOf djr:R-0306 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-0306@2026-08-22> ;
     djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-0306@2026-10-13> a djr:Expression ;
+    prov:specializationOf djr:R-0306 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0306@2026-09-03> ;
+    djr:revision 3 ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-0307 a djr:Prohibition ;
@@ -3303,8 +3309,8 @@ djr:R-3438 a djr:Obligation ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-3439 a djr:Obligation ;
-    skos:prefLabel "승인 머지 목록 approved-merges.txt — 발주자 소유·머지 승인 시 append·레인 first-parent 사슬 위 2-부모 머지만·도구는 소유를 검증하지 않는다·registry_gate 와 pre-gate 재발화에 동반"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3439@2026-09-27> .
+    skos:prefLabel "승인 머지 목록 approved-merges.txt — 발주자 소유·머지 승인 시 append·레인 first-parent 사슬 위 2-부모 머지만·도구는 소유를 검증하지 않는다·registry_gate · --anchor scope 렌더(registry #2·#5·#6·#15·#16) · pre-gate 재발화에 동반"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3439@2026-10-13> .
 
 <https://numchida.com/ns/djr#R-3439@2026-09-03> a djr:Expression ;
     prov:specializationOf djr:R-3439 ;
@@ -3316,21 +3322,39 @@ djr:R-3439 a djr:Obligation ;
     djr:revision 2 ;
     djr:revisionKind djr:revision-amendment .
 
+<https://numchida.com/ns/djr#R-3439@2026-10-13> a djr:Expression ;
+    prov:specializationOf djr:R-3439 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3439@2026-09-27> ;
+    djr:revision 3 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3440 a djr:Obligation ;
-    skos:prefLabel "approved-merges.txt 가 있으면 registry_gate 에 --approved-merge-file 동반 · G2 배너 «승인 유입 N건(머지 SHA 열거)» 별도 항목"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3440@2026-09-03> .
+    skos:prefLabel "approved-merges.txt 가 있으면 registry_gate 와 --anchor scope 렌더(registry #2·#5·#6·#15·#16)에 --approved-merge-file 동반 · G2 배너 «승인 유입 N건(검사기별 건수 · 머지 SHA 열거)» 별도 항목 · registry_gate `안내:` 줄은 배너(멈추면 STOP 문서)에 글자 그대로(곁가지 의심 SHA 를 등재 후보로 내밀지 않음) · `기준선 오류:` 줄은 그 검사기 신규분 옆에 인용"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3440@2026-10-13> .
 
 <https://numchida.com/ns/djr#R-3440@2026-09-03> a djr:Expression ;
     prov:specializationOf djr:R-3440 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-3440@2026-10-13> a djr:Expression ;
+    prov:specializationOf djr:R-3440 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3440@2026-09-03> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3441 a djr:Exception ;
-    skos:prefLabel "승인 유입은 철회 대상 아님 · 상호작용 미증명 귀속은 STOP_FOR_USER_APPROVAL(빚 등재·상류 해소·레인 설계 반송) — R-0310/R-3133 의 예외"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3441@2026-09-03> .
+    skos:prefLabel "승인 유입은 철회 대상 아님 · 상호작용 미증명·부재 미증명 귀속은 STOP_FOR_USER_APPROVAL(빚 등재·상류 해소·레인 설계 반송) · 유입 증명 실패(결과·사슬·뒤 ^2 에 없음)는 레인 설계 반송 또는 STOP · 뒤 미승인 머지는 STOP→목록 보완 · 측정 무효·측정 생략·기준선 오류 신규 줄은 철회할 레인 변경이 없으면 STOP(빚 등재 꼴 인용) — R-0310/R-3133 의 예외"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3441@2026-10-13> .
 
 <https://numchida.com/ns/djr#R-3441@2026-09-03> a djr:Expression ;
     prov:specializationOf djr:R-3441 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3441@2026-10-13> a djr:Expression ;
+    prov:specializationOf djr:R-3441 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3441@2026-09-03> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3444 a djr:Obligation ;
     skos:prefLabel "G2 배너 pre-gate 최신성 1행 — --check-report 요약 행 기계 출처(기준선 행 대조 포함) · 불비면 G2 미제시(R-0411) · 앞 실행 예보 머리 · 구형 명세·변경 0 레인은 미실행 표기"@ko ;
@@ -4256,8 +4280,8 @@ djr:R-3609 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3617 a djr:Obligation ;
-    skos:prefLabel "정상 측정된 dddjango-web 소유 주어는 서버 게이트 판정 밖에서 보고하며 측정 실패·다른 차단은 유지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3617@2026-10-09b> .
+    skos:prefLabel "정상 측정된 dddjango-web 소유 주어는 서버 게이트 판정 밖에서 보고하며 측정 실패(승인 유입의 측정 무효·측정 생략 포함)·다른 차단은 유지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3617@2026-10-13> .
 
 <https://numchida.com/ns/djr#R-3617@2026-10-09> a djr:Expression ;
     prov:specializationOf djr:R-3617 ;
@@ -4267,6 +4291,12 @@ djr:R-3617 a djr:Obligation ;
     prov:specializationOf djr:R-3617 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-3617@2026-10-09> ;
     djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
+<https://numchida.com/ns/djr#R-3617@2026-10-13> a djr:Expression ;
+    prov:specializationOf djr:R-3617 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3617@2026-10-09b> ;
+    djr:revision 3 ;
     djr:revisionKind djr:revision-amendment .
 
 djr:R-3620 a djr:Override ;
@@ -4488,6 +4518,22 @@ djr:R-3660 a djr:Obligation ;
     prov:specializationOf djr:R-3660 ;
     djr:revision 1 .
 
+djr:R-3661 a djr:Prohibition ;
+    skos:prefLabel "이관 빚 목록(`--legacy-debt-file`)은 발주자 소유 — 코디네이터·실행자는 쓰지 않는다(등재는 사용자 승인 뒤 발주자 · 코디네이터는 재실행)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3661@2026-10-13> .
+
+<https://numchida.com/ns/djr#R-3661@2026-10-13> a djr:Expression ;
+    prov:specializationOf djr:R-3661 ;
+    djr:revision 1 .
+
+djr:R-3662 a djr:Obligation ;
+    skos:prefLabel "«빚 등재» STOP 문서에 등재할 줄을 목록 꼴로 인용 — 번호 있는 줄 `#<규칙번호> <부분문자열>` · 번호 없는 줄 `= <검사기 파일> :: <신규분 줄 그대로>`(그 검사기의 같은 줄 전체 일치 · 꼴이 틀린 항목은 exit 1 · 꼴은 맞으나 글자가 다르면 맞지 않아 신규로 남음)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3662@2026-10-13> .
+
+<https://numchida.com/ns/djr#R-3662@2026-10-13> a djr:Expression ;
+    prov:specializationOf djr:R-3662 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/commands/dddjango.md> a djr:Document ;
     skos:prefLabel "command-dddjango"@ko .
 
@@ -4616,7 +4662,7 @@ djr:R-3660 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 9 ;
     djr:statesNorm djr:R-3439 ;
-    djr:text "- 승인 머지 목록 → `<산출물 폴더>/approved-merges.txt` (**발주자 소유** — Phase 2 중 main→레인 머지는 발주자 승인 사안이며, 발주자가 **머지 승인 시점에** 그 머지 SHA 를 `<SHA> [메모]` 1행으로 append 한다(`//` 주석 허용). 등재 대상은 **레인 first-parent 사슬 위의 2-부모 머지**뿐이다 — 역방향 머지(레인→main)·squash·rebase 결과는 등재 대상이 아니다(게이트가 subject·부모·^2 ref 를 표기해 오기입을 가시화한다). 코디네이터·실행자는 이 파일을 쓰지 않는다 — 앵커를 actor 가 고르지 않는 것과 같은 이유(자기 세탁 차단)다. **도구는 소유를 검증하지 않는다** — 빚 목록과 같은 «사용자 승인 입력»이다. 발주자는 append 전에 그 머지의 `^2`(incoming 측)가 main(상류) 이력에 있는지 확인한 뒤 등재한다 — 게이트는 `^2` 를 포함하는 ref 가 HEAD 브랜치뿐이면 «역방향/합성 머지 의심» 진단을 내되 exit 은 바꾸지 않는다(custody 는 발주자 소유). 있으면 Phase 2 6번 registry_gate 실행과 Phase 1 pre-gate 재발화(«캐시 skip·재발화 판형» ②)에 `--approved-merge-file` 로 동반한다 · 2026-09-03 · pre-gate 2026-09-27)\n\n"@ko .
+    djr:text "- 승인 머지 목록 → `<산출물 폴더>/approved-merges.txt` (**발주자 소유** — Phase 2 중 main→레인 머지는 발주자 승인 사안이며, 발주자가 **머지 승인 시점에** 그 머지 SHA 를 `<SHA> [메모]` 1행으로 append 한다(`//` 주석 허용). 등재 대상은 **레인 first-parent 사슬 위의 2-부모 머지**뿐이다 — 역방향 머지(레인→main)·squash·rebase 결과는 등재 대상이 아니다(게이트가 subject·부모·^2 ref 를 표기해 오기입을 가시화한다). 코디네이터·실행자는 이 파일을 쓰지 않는다 — 앵커를 actor 가 고르지 않는 것과 같은 이유(자기 세탁 차단)다. **도구는 소유를 검증하지 않는다** — 빚 목록과 같은 «사용자 승인 입력»이다. 발주자는 append 전에 그 머지의 `^2`(incoming 측)가 main(상류) 이력에 있는지 확인한 뒤 등재한다 — 게이트는 `^2` 를 포함하는 ref 가 HEAD 브랜치뿐이면 «역방향/합성 머지 의심» 진단을 내되 exit 은 바꾸지 않는다(custody 는 발주자 소유). 있으면 Phase 2 6번 registry_gate 실행 · `--anchor` 를 붙이는 scope 렌더 명령(registry #2·#5·#6·#15·#16) · Phase 1 pre-gate 재발화(«캐시 skip·재발화 판형» ②)에 `--approved-merge-file` 로 동반한다 · 2026-09-03 · pre-gate 2026-09-27)\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s003> a djr:Section ;
     djr:headingSnapshot "## 진행 가시성"@ko ;
@@ -4946,7 +4992,7 @@ djr:R-3660 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 12 ;
     djr:statesNorm djr:R-0301, djr:R-0302, djr:R-0303, djr:R-0304, djr:R-0305, djr:R-0306, djr:R-0307, djr:R-0308, djr:R-0309, djr:R-0310 ;
-    djr:text "6. **결정적 백스톱(27종)**: G2 배너 직전 타깃 프로젝트 루트(`manage.py check`와 같은 cwd)에서 아래 registry를 사용한다. **positional TARGET 도 그 «루트»다(`.`)** — BC 폴더나 `application/` 컨테이너를 TARGET 으로 주면 검사기가 사용 오류 exit 1 로 거절한다(«표준 미채택 clean» 조용 통과 사각은 2026-08-12 라운드 1 실측 후 닫혔다). **게이트 판정은 «판정 차분»이다**(2026-08-12 라운드 1′ — brownfield 에선 legacy 위반이 상존해 «전체 green»이 문자 그대로 성립하지 않고, 그 모순이 세션의 자체 귀속 발명을 낳았다): Phase 2 의 **첫 서브에이전트 파견 직전**(acceptance-tester 포함 어떤 역할이든 파견 전 — 실행자가 앵커를 고르지 못하게)에 `git rev-parse HEAD` 값을 산출물 폴더의 `build_anchor` 파일에 기록해 두고(전체 SHA — 기존 산출물의 축약 해시도 저장소 안에서 유일하면 소비자 rev-parse 검증이 수용한다 · 2026-08-15), 여기서 `${CLAUDE_PLUGIN_ROOT}/scripts/registry_gate.py . --anchor $(cat <산출물 폴더>/build_anchor)` 를 실행한다 — 게이트 증거는 **귀속(앵커 대비 신규 위반) 0 + legacy 잔존 별도 보고**다(`<산출물 폴더>/approved-merges.txt` 가 있으면 `--approved-merge-file` 로 동반한다 — 발주자 승인 머지 목록으로 provenance 증명(blob 3중 일치 ∧ `R(M^2)∖R(M^1)`)된 **승인 유입은 exit 제외·별도 보고(기록 의무·즉석 수리 금지)**이고, **상호작용 위반(파일 무변·미증명)은 귀속 유지·별도 표기(`↳ 귀속 유지: 상호작용 미증명`)**다 · 2026-09-03). **귀속 0 ≠ 전체 clean** 이며, 좁힌 TARGET·즉석 selector 부분 실행 green 은 여전히 게이트 증거가 아니다(registry 전체 실행은 차분의 재료로 그대로 수행된다 · **귀속 목록을 경로 필터(sed/grep)로 나눈 서술도 게이트 증거가 아니다** — 유입 분리는 provenance 채널뿐이다 · 2026-09-03). Phase 0의 빚 스캔과 별개로 여기서 **한 번 더** 실행한다 — 스캔은 이 실행의 «이동»이 아니다. **`build_anchor` 는 실행마다 한 번 쓴다**(실행 = Phase 0 «실행과 앵커» · 2026-09-26) — 최신 실행 줄에 앵커가 없을 때만 파일을 이 실행의 SHA 로 쓰고 그 줄에 `· build_anchor <SHA>` 를 덧붙이며(같은 때 `pregate-report.md` 에 `pre-gate 기준선` 행 — Phase 0 «실행과 앵커»), 실행 안(G1′ 반송·회전·STOP 재개·세션 재시작·머지 뒤 재개)에서는 재기록하지 않는다: 앵커는 이 실행의 어떤 작업 커밋보다 앞서야 하며, 작업 중간 커밋을 앵커로 삼는 것은 차분 세탁이다(2026-08-13). 새 앵커 이전의 승인 머지는 판정에 참여하지 않는다(승인 머지 목록과 양립). 실행 경계 밖 재앵커는 Phase 0 «실행과 앵커»의 폐기(새 실행) 경로뿐이다. 그리고 승인 스코프의 산출물 목록에 없는 파일에서 귀속이 나면 1차 처방은 **그 변경의 철회**다 — 수리·재설계로 귀속을 0으로 만드는 것이 아니다(라운드 2 — 귀속 138건 «closure» 재설계 소용돌이).\n\n"@ko .
+    djr:text "6. **결정적 백스톱(27종)**: G2 배너 직전 타깃 프로젝트 루트(`manage.py check`와 같은 cwd)에서 아래 registry를 사용한다. **positional TARGET 도 그 «루트»다(`.`)** — BC 폴더나 `application/` 컨테이너를 TARGET 으로 주면 검사기가 사용 오류 exit 1 로 거절한다(«표준 미채택 clean» 조용 통과 사각은 2026-08-12 라운드 1 실측 후 닫혔다). **게이트 판정은 «판정 차분»이다**(2026-08-12 라운드 1′ — brownfield 에선 legacy 위반이 상존해 «전체 green»이 문자 그대로 성립하지 않고, 그 모순이 세션의 자체 귀속 발명을 낳았다): Phase 2 의 **첫 서브에이전트 파견 직전**(acceptance-tester 포함 어떤 역할이든 파견 전 — 실행자가 앵커를 고르지 못하게)에 `git rev-parse HEAD` 값을 산출물 폴더의 `build_anchor` 파일에 기록해 두고(전체 SHA — 기존 산출물의 축약 해시도 저장소 안에서 유일하면 소비자 rev-parse 검증이 수용한다 · 2026-08-15), 여기서 `${CLAUDE_PLUGIN_ROOT}/scripts/registry_gate.py . --anchor $(cat <산출물 폴더>/build_anchor)` 를 실행한다 — 게이트 증거는 **귀속(앵커 대비 신규 위반) 0 + legacy 잔존 별도 보고**다(`<산출물 폴더>/approved-merges.txt` 가 있으면 `--approved-merge-file` 로 동반한다 — 발주자 승인 머지 목록으로 provenance 증명(주어 판정 ∧ `R(M^2)∖R(M^1)` ∧ 증명 머지 뒤 조건 — 뒤 미승인 머지 없음 · 뒤 승인 머지의 `^2` 에도 있음 · 병합 결과부터 HEAD 까지 first-parent 사슬 커밋마다 있음)된 **승인 유입은 exit 제외·별도 보고(기록 의무·즉석 수리 금지)**이고, **상호작용 위반(파일 무변·미증명)은 귀속 유지·별도 표기(`↳ 귀속 유지: 상호작용 미증명`)**다 · 2026-09-03). **귀속 0 ≠ 전체 clean** 이며, 좁힌 TARGET·즉석 selector 부분 실행 green 은 여전히 게이트 증거가 아니다(registry 전체 실행은 차분의 재료로 그대로 수행된다 · **귀속 목록을 경로 필터(sed/grep)로 나눈 서술도 게이트 증거가 아니다** — 유입 분리는 provenance 채널뿐이다 · 2026-09-03). Phase 0의 빚 스캔과 별개로 여기서 **한 번 더** 실행한다 — 스캔은 이 실행의 «이동»이 아니다. **`build_anchor` 는 실행마다 한 번 쓴다**(실행 = Phase 0 «실행과 앵커» · 2026-09-26) — 최신 실행 줄에 앵커가 없을 때만 파일을 이 실행의 SHA 로 쓰고 그 줄에 `· build_anchor <SHA>` 를 덧붙이며(같은 때 `pregate-report.md` 에 `pre-gate 기준선` 행 — Phase 0 «실행과 앵커»), 실행 안(G1′ 반송·회전·STOP 재개·세션 재시작·머지 뒤 재개)에서는 재기록하지 않는다: 앵커는 이 실행의 어떤 작업 커밋보다 앞서야 하며, 작업 중간 커밋을 앵커로 삼는 것은 차분 세탁이다(2026-08-13). 새 앵커 이전의 승인 머지는 판정에 참여하지 않는다(승인 머지 목록과 양립). 실행 경계 밖 재앵커는 Phase 0 «실행과 앵커»의 폐기(새 실행) 경로뿐이다. 그리고 승인 스코프의 산출물 목록에 없는 파일에서 귀속이 나면 1차 처방은 **그 변경의 철회**다 — 수리·재설계로 귀속을 0으로 만드는 것이 아니다(라운드 2 — 귀속 138건 «closure» 재설계 소용돌이).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b13> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
@@ -4959,15 +5005,17 @@ djr:R-3660 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
     djr:kind djr:kind-norm ;
     djr:order 15 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b58> ;
     djr:statesNorm djr:R-0317, djr:R-0318, djr:R-0319, djr:R-0320, djr:R-0321, djr:R-0322 ;
-    djr:text "   - **네 API-error checker command**: 승인된 각 error-response scope마다 registry #2·#15·#6·#5의 positional target 뒤에 `--error-profile <dddjango-code-json|preserve-established>`, `--scope <stable-scope-id>`, `--api-module <project-relative-path>`, 반복 `--controller-module <project-relative-path>`, 반복 `--scope-bc <snake_case>`, 반복 `--error-bc <snake_case>`를 모두 렌더하고, registry #15에만 slot 10 «사건 값» 칸의 필드마다 `--event-value`(값 `<예외 모듈>.<클래스>.<필드>`)를 한 번씩(같은 필드가 메시지 · 머리 여러 행에 나와도 한 번) 더 렌더한다 — registry #2·#6·#5에는 붙이지 않고, 칸이 비면 발명하지 않는다. registry #2에는 dedupe한 complete project inventories를 반복 `--project-code-error-module <project-relative-path>`와 반복 `--project-preserve-error-module <project-relative-path>`로 추가한다 — 단 **내용 없는 골격 파일(빈 모듈)은 inventory에서 제외한다**(골격 실현 의무 #114로 만든 빈 칸은 내용이 생긴 뒤부터 검사한다 — 검사기도 빈 골격의 union 부재를 분석 오류로 세지 않는다 · 2026-08-15). registry #2·#15·#6·#5에는 `--anchor $(cat <산출물 폴더>/build_anchor)` 를 함께 렌더하고, 사용자 승인 «이관 빚» 목록이 있으면 registry_gate 에 주는 같은 파일을 `--legacy-debt-file <path>` 로 함께 준다(scope-렌더 판정 차분 — 실행·종료 계약 ⓐ 참조 · 2026-08-15). 빈 반복 집합은 flag를 발명하지 않되 inventory가 비었다는 승인 근거는 12-slot에 있어야 한다.\n"@ko .
+    djr:text "   - **네 API-error checker command**: 승인된 각 error-response scope마다 registry #2·#15·#6·#5의 positional target 뒤에 `--error-profile <dddjango-code-json|preserve-established>`, `--scope <stable-scope-id>`, `--api-module <project-relative-path>`, 반복 `--controller-module <project-relative-path>`, 반복 `--scope-bc <snake_case>`, 반복 `--error-bc <snake_case>`를 모두 렌더하고, registry #15에만 slot 10 «사건 값» 칸의 필드마다 `--event-value`(값 `<예외 모듈>.<클래스>.<필드>`)를 한 번씩(같은 필드가 메시지 · 머리 여러 행에 나와도 한 번) 더 렌더한다 — registry #2·#6·#5에는 붙이지 않고, 칸이 비면 발명하지 않는다. registry #2에는 dedupe한 complete project inventories를 반복 `--project-code-error-module <project-relative-path>`와 반복 `--project-preserve-error-module <project-relative-path>`로 추가한다 — 단 **내용 없는 골격 파일(빈 모듈)은 inventory에서 제외한다**(골격 실현 의무 #114로 만든 빈 칸은 내용이 생긴 뒤부터 검사한다 — 검사기도 빈 골격의 union 부재를 분석 오류로 세지 않는다 · 2026-08-15). registry #2·#15·#6·#5에는 `--anchor $(cat <산출물 폴더>/build_anchor)` 를 함께 렌더하고, 사용자 승인 «이관 빚» 목록이 있으면 registry_gate 에 주는 같은 파일을 `--legacy-debt-file <path>` 로 함께 주고(scope-렌더 판정 차분 — 실행·종료 계약 ⓐ 참조 · 2026-08-15), `<산출물 폴더>/approved-merges.txt` 가 있으면 그 파일을 `--approved-merge-file <path>` 로도 함께 준다(아래 «승인 머지 목록·provenance 차분»). 빈 반복 집합은 flag를 발명하지 않되 inventory가 비었다는 승인 근거는 12-slot에 있어야 한다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b15> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
     djr:kind djr:kind-norm ;
     djr:order 16 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b58> ;
     djr:statesNorm djr:R-0323, djr:R-0324, djr:R-0325, djr:R-0326, djr:R-0327, djr:R-0328, djr:R-0329, djr:R-0330 ;
-    djr:text "   - **composition command**: registry #16에는 positional target과 relevant common selectors인 `--error-profile`, `--scope`, `--api-module`을 렌더하고, `--anchor`(+승인 빚 목록이 있으면 `--legacy-debt-file`)를 위 네 checker 렌더와 같은 값으로 준다. `dddjango-code-json`에서만 정확히 하나의 `--urlconf-module <project-relative-path>`와 반복 `--registrar-module <project-relative-path>`가 필수다. `preserve-established`는 승인 evidence에 native URLconf/registrar selector가 있으면 전달할 수 있지만 새 registrar slice는 N/A이고 code-profile selector를 발명하지 않는다. `auto`도 새 registrar slice는 N/A다. **N/A 는 검사 슬라이스의 생략이지 배선 표준의 면제가 아니다** — 배선·등록 형태는 profile 무관 표준(#105~#112)이다(2026-08-12. 그리고 «면제가 아니다»는 신규 산출물의 형태 문장이다 — 승인 스코프 밖 기존 배선을 옮길 근거가 아니다 · 2026-08-13). project URLconf/side-effect-free registrar assembly slice와 기존 BC DI V1(단일 파일 `composition_root.py` — #497) slice는 별도 책임이며 기존 DI slice는 모든 mode에서 항상 실행한다(V2 `composition/` 폴더·V3 `composition_root/` 부재 사건은 #81/#488 소유=check-layer-skeleton 로 이관 — 귀속 매핑표 v2 §3.2). BC `composition_root/`(`dependency_wiring.py`)는 DI owner이지 URL registrar owner가 아니다.\n"@ko .
+    djr:text "   - **composition command**: registry #16에는 positional target과 relevant common selectors인 `--error-profile`, `--scope`, `--api-module`을 렌더하고, `--anchor`(+승인 빚 목록이 있으면 `--legacy-debt-file` · `approved-merges.txt` 가 있으면 `--approved-merge-file`)를 위 네 checker 렌더와 같은 값으로 준다. `dddjango-code-json`에서만 정확히 하나의 `--urlconf-module <project-relative-path>`와 반복 `--registrar-module <project-relative-path>`가 필수다. `preserve-established`는 승인 evidence에 native URLconf/registrar selector가 있으면 전달할 수 있지만 새 registrar slice는 N/A이고 code-profile selector를 발명하지 않는다. `auto`도 새 registrar slice는 N/A다. **N/A 는 검사 슬라이스의 생략이지 배선 표준의 면제가 아니다** — 배선·등록 형태는 profile 무관 표준(#105~#112)이다(2026-08-12. 그리고 «면제가 아니다»는 신규 산출물의 형태 문장이다 — 승인 스코프 밖 기존 배선을 옮길 근거가 아니다 · 2026-08-13). project URLconf/side-effect-free registrar assembly slice와 기존 BC DI V1(단일 파일 `composition_root.py` — #497) slice는 별도 책임이며 기존 DI slice는 모든 mode에서 항상 실행한다(V2 `composition/` 폴더·V3 `composition_root/` 부재 사건은 #81/#488 소유=check-layer-skeleton 로 이관 — 귀속 매핑표 v2 §3.2). BC `composition_root/`(`dependency_wiring.py`)는 DI owner이지 URL registrar owner가 아니다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b16> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
@@ -5206,8 +5254,8 @@ djr:R-3660 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
     djr:kind djr:kind-norm ;
     djr:order 47 ;
-    djr:statesNorm djr:R-0365, djr:R-0366, djr:R-0367, djr:R-0368, djr:R-0369, djr:R-0370, djr:R-0371, djr:R-0372, djr:R-0373, djr:R-0374, djr:R-0375, djr:R-0376, djr:R-0377, djr:R-0378 ;
-    djr:text "   - **실행·종료 계약**: 각 승인 scope에 렌더된 required command와 나머지 required checker를 `Bash`로 정확히 1회 실행하고, 모든 run의 exact command·exit·diagnostic을 모은다(exact command 기록은 재현·감사용이지 **경로 고정 계약이 아니다** — 같은 플러그인 버전·같은 실행 트리 digest(registry_gate 헤더 «툴체인» 행 `툴체인: dddjango vX.Y.Z · pyX.Y · 실행 트리 digest <16hex>(N파일) · 경로 <scripts>` — 이 stdout 수집 의무로 자연히 증거에 실린다)면 설치 경로가 달라도 같은 측정이다 · 발주서·래퍼가 캐시 경로를 pin 하는 것은 이 규범의 요구가 아니다 · 2026-09-03). scope 별 selector 가 칸 경로를 받는 검사기에서 그 칸이 동명 폴더 승격 실현이면 칸 경로는 본체 경로(`…/<칸>/<칸>.py`)로 렌더한다. `0=clean/not-applicable/help`, `1=usage/selectors/incomplete scope/analysis failure`, `2=deterministic contract violation`이다. 판정은 두 실행 계열로 갈린다(2026-08-13 명문화 — 두 문장의 긴장이 라운드 2 오독을 낳았다): ⓐ **직접 실행 계열** — 위에서 렌더한 scope 별 command 와 나머지 required checker 를 네가 직접 실행한 결과. 이 계열의 **exit 1 전부는 현행 유지 — 차분에 종속되지 않는 직접 G2 blocker** 이고(단 잔여 diagnostic 전건이 `DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED` 인 exit 1 은 아래 runtime proof 경로다 — registry #2 의 토큰 발화 케이스 포함), **scope-렌더 command 의 exit 2 는 검사기 자신의 `--anchor` 판정 차분을 거친다(2026-08-15 r2″ — registry #2·#5·#6·#15·#16 · registry #2 는 토큰-only exit 1 proof 경로를 강등으로 소거하지 않는다)**: 진단이 «앵커 이후 신규분»과 «앵커 기존분»으로 분류되어, **신규분(승인 빚 목록 매칭 제외)이 하나라도 있으면 현행대로 직접 blocker(exit 2)** 이며 한꺼번에 coder/design/G1 로 반송하고, **진단 전건이 앵커 기존분이면 검사기가 exit 0 + 기존분 별도 보고로 강등한다(blocker 아님 — legacy 잔존 보고 채널과 같은 보고 의무·즉석 수리 금지)**. `--anchor` 없이 실행됐거나 `--anchor` 를 받지 않는 검사기의 scope-렌더 exit 2 는 현행 그대로 직접 blocker 다(측정 실패는 위반 목록이 없어 차분이 불가능하고, registry_gate 는 auto 렌더만 내부 실행하므로 scope-렌더 위반은 registry_gate 차분 시야 밖이다 — 그 구멍은 검사기 자신의 앵커 차분이 진다. 측정되지 않은 검사기의 green 을 주장하지 않는다). ⓑ **차분 계열** — auto-렌더 **위반 red(exit 2)의 게이트 판정 주체는 6번의 registry_gate(판정 차분)다**: 귀속 red 만 blocker 이고 legacy 잔존·**승인 유입(`--approved-merge-file` provenance 증명분 · 2026-09-03)**은 별도 보고 의무다(잔존을 이유로 G2 를 영구 차단하지도, 귀속 red 를 «확립 규약» 논리로 수용하지도 않는다 — 2026-08-12 라운드 1′). 게이트 자신의 exit 1(공허 차분·앵커 재료 결손·사용 오류)은 측정 실패로서 blocker 이고, 잔존 절의 「[진단 미파싱] fail-closed 귀속」은 legacy 로 읽지 않고 측정 실패로 반송한다(앵커·현재 양측 동일 crash 의 상쇄 사각). **legacy 잔존 red 는 이 빌드에서 즉석 수리하지 않는다 — 보고 채널로만 남긴다**(이 금지의 주어는 checker 위반 red 다 — 테스트 실패 채널(5번)과 섞지 않는다). 예외 둘: `refactor-scope.md`에 G0-ⓐ로 기재된 항목의 슬라이스 0 수리는 승인된 작업이고, G2 시점 신규 발견이 «미룰 수 없음» 판정이면 조용히 고치지도 미루지도 않고 AskUserQuestion 으로 G0 빚 결정을 재상정한다(채택 시 G1′ 경유로 슬라이스 0 편입). 미이관 표준 경로 의존이 유일한 잔존 귀속이면 임의 수용하지 않고 `STOP_FOR_USER_APPROVAL` 로 표면화한다 — 승인되면 사용자 승인 «이관 빚» 목록(`registry_gate.py --legacy-debt-file`)으로 기록·격리하되, **빚 분류는 red 를 기록하는 근거이지 legacy 모양을 «추가로» 복사할 근거가 아니다.** 단, 남은 exit 1 diagnostic **전부**가 `DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED`이고 canonical common/BC schema 정의의 dynamic field default·method/hook·config/decorator·project/relative import/binding·BC ErrorCode 의 dynamic Enum wire 멤버/값(2026-08-15 — legacy 동적 StrEnum 이 일반 분석 오류로 죽어 proof 경로가 막히던 토큰 커버리지 구멍을 닫음) 때문에 해당 diagnostic 을 내는 검사기(registry #2·#5·#15)가 의도적으로 낸 경우에는 warning으로 낮추지 말고 target의 실제 dependency pin에서 runtime proof를 수행한다. action별 기준 evidence는 `reuse`면 관찰된 exact baseline이고 `create | approved-change`면 일반 G1과 분리해 받은 명시적 사용자 shape 승인이다. 그 기준선과 runtime의 **field name/type/required/default/nullability, validation·serialization alias/path를 포함한 모든 `Field` metadata, `model_config`와 legacy `Config`, decorator·validator·serializer·Pydantic hook inventory와 effective semantics, 실제 wire 직렬화**를 전부 대조한다. 또한 각 실제 direct BC-base 생성문을 승인 key와 `<Bc>ErrorCode` 멤버로 생성해 exact dump를 검증하고 mounted endpoint status/body와 generated OpenAPI를 함께 검증한다. API reviewer가 `DYNAMIC_ERROR_SHAPE_PROOF_REVIEW` 모드에서 `RESOLVED_DYNAMIC_ERROR_SHAPE_ANALYSIS_API_CONFIRMATION`을, discipline reviewer가 `DYNAMIC_ERROR_SHAPE_DISCIPLINE_REVIEW` 모드에서 `RESOLVED_DYNAMIC_ERROR_SHAPE_ANALYSIS_DISCIPLINE_CONFIRMATION`을 서로의 노트를 받지 않고 각각 낸 경우에만 `RESOLVED_DYNAMIC_ERROR_SHAPE_ANALYSIS`로 기록할 수 있다. 미승인 shape이거나 proof 시점 결과가 action별 승인 기준선과 하나라도 다르거나 다른 exit 1 또는 «귀속» exit 2가 섞이거나 proof가 실패하면 blocker다(legacy 잔존 exit 2 는 proof 를 막지 않는다 — brownfield 상존 잔존과의 상시 충돌 방지 · 2026-08-13). 이 proof와 reviewer token은 shape 승인을 새로 만들거나 대신하지 않는다. 한 실패 뒤 나머지 결과를 버리지 않는다.\n"@ko .
+    djr:statesNorm djr:R-0365, djr:R-0366, djr:R-0367, djr:R-0368, djr:R-0369, djr:R-0370, djr:R-0371, djr:R-0372, djr:R-0373, djr:R-0374, djr:R-0375, djr:R-0376, djr:R-0377, djr:R-0378, djr:R-3661, djr:R-3662 ;
+    djr:text "   - **실행·종료 계약**: 각 승인 scope에 렌더된 required command와 나머지 required checker를 `Bash`로 정확히 1회 실행하고, 모든 run의 exact command·exit·diagnostic을 모은다(exact command 기록은 재현·감사용이지 **경로 고정 계약이 아니다** — 같은 플러그인 버전·같은 실행 트리 digest(registry_gate 헤더 «툴체인» 행 `툴체인: dddjango vX.Y.Z · pyX.Y · 실행 트리 digest <16hex>(N파일) · 경로 <scripts>` — 이 stdout 수집 의무로 자연히 증거에 실린다)면 설치 경로가 달라도 같은 측정이다 · 발주서·래퍼가 캐시 경로를 pin 하는 것은 이 규범의 요구가 아니다 · 2026-09-03). scope 별 selector 가 칸 경로를 받는 검사기에서 그 칸이 동명 폴더 승격 실현이면 칸 경로는 본체 경로(`…/<칸>/<칸>.py`)로 렌더한다. `0=clean/not-applicable/help`, `1=usage/selectors/incomplete scope/analysis failure`, `2=deterministic contract violation`이다. 판정은 두 실행 계열로 갈린다(2026-08-13 명문화 — 두 문장의 긴장이 라운드 2 오독을 낳았다): ⓐ **직접 실행 계열** — 위에서 렌더한 scope 별 command 와 나머지 required checker 를 네가 직접 실행한 결과. 이 계열의 **exit 1 전부는 현행 유지 — 차분에 종속되지 않는 직접 G2 blocker** 이고(단 잔여 diagnostic 전건이 `DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED` 인 exit 1 은 아래 runtime proof 경로다 — registry #2 의 토큰 발화 케이스 포함), **scope-렌더 command 의 exit 2 는 검사기 자신의 `--anchor` 판정 차분을 거친다(2026-08-15 r2″ — registry #2·#5·#6·#15·#16 · registry #2 는 토큰-only exit 1 proof 경로를 강등으로 소거하지 않는다)**: 진단이 «앵커 이후 신규분»과 «앵커 기존분»으로 분류되어, **신규분(승인 빚 목록 매칭 제외)이 하나라도 있으면 현행대로 직접 blocker(exit 2)** 이며 한꺼번에 coder/design/G1 로 반송하고, **진단 전건이 앵커 기존분이면 검사기가 exit 0 + 기존분 별도 보고로 강등한다(blocker 아님 — legacy 잔존 보고 채널과 같은 보고 의무·즉석 수리 금지)**. `--anchor` 없이 실행됐거나 `--anchor` 를 받지 않는 검사기의 scope-렌더 exit 2 는 현행 그대로 직접 blocker 다(측정 실패는 위반 목록이 없어 차분이 불가능하고, registry_gate 는 auto 렌더만 내부 실행하므로 scope-렌더 위반은 registry_gate 차분 시야 밖이다 — 그 구멍은 검사기 자신의 앵커 차분이 진다. 측정되지 않은 검사기의 green 을 주장하지 않는다). ⓑ **차분 계열** — auto-렌더 **위반 red(exit 2)의 게이트 판정 주체는 6번의 registry_gate(판정 차분)다**: 귀속 red 만 blocker 이고 legacy 잔존·**승인 유입(`--approved-merge-file` provenance 증명분 · 2026-09-03)**은 별도 보고 의무다(잔존을 이유로 G2 를 영구 차단하지도, 귀속 red 를 «확립 규약» 논리로 수용하지도 않는다 — 2026-08-12 라운드 1′). 게이트 자신의 exit 1(공허 차분·앵커 재료 결손·사용 오류)은 측정 실패로서 blocker 이고, 잔존 절의 「[진단 미파싱] fail-closed 귀속」은 legacy 로 읽지 않고 측정 실패로 반송한다(앵커·현재 양측 동일 crash 의 상쇄 사각). **legacy 잔존 red 는 이 빌드에서 즉석 수리하지 않는다 — 보고 채널로만 남긴다**(이 금지의 주어는 checker 위반 red 다 — 테스트 실패 채널(5번)과 섞지 않는다). 예외 둘: `refactor-scope.md`에 G0-ⓐ로 기재된 항목의 슬라이스 0 수리는 승인된 작업이고, G2 시점 신규 발견이 «미룰 수 없음» 판정이면 조용히 고치지도 미루지도 않고 AskUserQuestion 으로 G0 빚 결정을 재상정한다(채택 시 G1′ 경유로 슬라이스 0 편입). 미이관 표준 경로 의존이 유일한 잔존 귀속이면 임의 수용하지 않고 `STOP_FOR_USER_APPROVAL` 로 표면화한다 — 승인되면 사용자 승인 «이관 빚» 목록(`registry_gate.py --legacy-debt-file`)으로 기록·격리하되, **빚 분류는 red 를 기록하는 근거이지 legacy 모양을 «추가로» 복사할 근거가 아니다.** 이관 빚 목록(위 scope 렌더와 registry_gate 에 주는 `--legacy-debt-file`)은 **발주자 소유**다 — 코디네이터·실행자는 이 파일을 쓰지 않는다(승인 머지 목록과 같은 자리 · 자기 세탁 차단 · 2026-10-12). «빚 등재»를 선택지로 올리는 STOP 문서에는 등재할 줄을 목록 꼴 그대로 인용한다 — 번호 있는 줄(`[#N] …`)은 `#<규칙번호> <부분문자열>`, 번호 없는 줄(scope 렌더의 `- <주어>: <메시지>`)은 `= <검사기 파일> :: <신규분 줄 그대로>`(예: `= check-error-centralization.py :: - <주어>:<행>: <메시지>`)다. 번호 없는 줄 항목은 그 검사기가 찍은 같은 줄 전체에만 맞는다(행 번호는 `:N` 으로 맞춘다). 꼴이 틀린 항목(검사기가 scope 렌더 다섯 밖 · `[#N]` 줄 · 절대 경로 주어 · 메시지 없음 · 구분자 틀림)은 검사기·게이트가 사용 오류(exit 1)로 거절하고, 꼴은 맞으나 찍힌 줄과 글자가 다른 항목은 아무 줄에도 맞지 않아 그 줄이 신규로 남는다(registry_gate 차분에는 번호 없는 줄이 없어 `=` 항목이 맞을 줄이 없다). 등재는 Phase 0 «결정 출처»의 미룸 규칙대로 사용자 승인을 받아 발주자가 하고, 코디네이터는 그 뒤 다시 실행한다. 단, 남은 exit 1 diagnostic **전부**가 `DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED`이고 canonical common/BC schema 정의의 dynamic field default·method/hook·config/decorator·project/relative import/binding·BC ErrorCode 의 dynamic Enum wire 멤버/값(2026-08-15 — legacy 동적 StrEnum 이 일반 분석 오류로 죽어 proof 경로가 막히던 토큰 커버리지 구멍을 닫음) 때문에 해당 diagnostic 을 내는 검사기(registry #2·#5·#15)가 의도적으로 낸 경우에는 warning으로 낮추지 말고 target의 실제 dependency pin에서 runtime proof를 수행한다. action별 기준 evidence는 `reuse`면 관찰된 exact baseline이고 `create | approved-change`면 일반 G1과 분리해 받은 명시적 사용자 shape 승인이다. 그 기준선과 runtime의 **field name/type/required/default/nullability, validation·serialization alias/path를 포함한 모든 `Field` metadata, `model_config`와 legacy `Config`, decorator·validator·serializer·Pydantic hook inventory와 effective semantics, 실제 wire 직렬화**를 전부 대조한다. 또한 각 실제 direct BC-base 생성문을 승인 key와 `<Bc>ErrorCode` 멤버로 생성해 exact dump를 검증하고 mounted endpoint status/body와 generated OpenAPI를 함께 검증한다. API reviewer가 `DYNAMIC_ERROR_SHAPE_PROOF_REVIEW` 모드에서 `RESOLVED_DYNAMIC_ERROR_SHAPE_ANALYSIS_API_CONFIRMATION`을, discipline reviewer가 `DYNAMIC_ERROR_SHAPE_DISCIPLINE_REVIEW` 모드에서 `RESOLVED_DYNAMIC_ERROR_SHAPE_ANALYSIS_DISCIPLINE_CONFIRMATION`을 서로의 노트를 받지 않고 각각 낸 경우에만 `RESOLVED_DYNAMIC_ERROR_SHAPE_ANALYSIS`로 기록할 수 있다. 미승인 shape이거나 proof 시점 결과가 action별 승인 기준선과 하나라도 다르거나 다른 exit 1 또는 «귀속» exit 2가 섞이거나 proof가 실패하면 blocker다(legacy 잔존 exit 2 는 proof 를 막지 않는다 — brownfield 상존 잔존과의 상시 충돌 방지 · 2026-08-13). 이 proof와 reviewer token은 shape 승인을 새로 만들거나 대신하지 않는다. 한 실패 뒤 나머지 결과를 버리지 않는다.\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b47> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
@@ -5299,7 +5347,7 @@ djr:R-3660 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 59 ;
     djr:statesNorm djr:R-3440, djr:R-3441 ;
-    djr:text "**승인 머지 목록·provenance 차분 — 병렬 머지 유입의 분할**(2026-09-03): ① 코디네이터는 `<산출물 폴더>/approved-merges.txt` 가 있으면 6번의 registry_gate 실행에 `--approved-merge-file` 로 반드시 동반한다(플래그를 줬으나 목록에 SHA 가 빠지면 게이트가 잔여 라인에 `미승인 머지 경유 <sha>` 로 표면화한다 · 플래그 자체를 안 주면 채널이 돌지 않으므로 증거 불비다). 이 파일은 쓰지 않는다(«산출물 위치» 절 — 발주자 소유). G2 배너에는 legacy 잔존과 별도로 «승인 유입 N건(머지 SHA 열거 — 게이트의 머지 표 `[M <sha12>] <subject> · ^1 · ^2(<ref>) · 파일 n · 상호작용 m`)» 항목을 둔다. ② 승인 유입은 레인의 변경이 아니므로 «스코프 밖 귀속의 1차 처방 = 철회»(위 6번·houserules §1)의 대상이 아니다 — 본체는 그대로이고 이것은 그 예외다. 파일 무변 귀속(게이트 표기 `↳ 귀속 유지: 상호작용 미증명`)은 철회할 변경이 없다 — 1차 처방은 `STOP_FOR_USER_APPROVAL` 이며(닫힌 선택지: 빚 등재 · 상류 소유 레인 해소 · 레인 설계 반송(레인 원인)), STOP 문서에 게이트의 그 표기 행을 그대로 인용한다. 상호작용 미증명분을 exit 에서 빼는 것은 채택하지 않는다(이중 원인 배제 불가). 잔여 사유별 처방: `유입 증명 실패(이중 원인)` 은 레인 원인일 수 있으므로 레인 설계 반송 또는 STOP · `미승인 머지 경유 <sha>` 는 STOP → 발주자가 목록을 보완하면 재실행한다(코디네이터가 목록에 쓰지 않는다) · `측정 무효(…)` 는 그 머지의 증명 기회만 잃은 것이라 다른 승인 머지가 증명하면 유입이고 전건 무효면 귀속 유지다(∃M). 게이트의 «앵커가 HEAD 의 조상이 아니다»·«비머지 커밋이 첫 승인 머지보다 앞선다» 진단은 코디네이터의 재앵커 사유가 아니라 발주자 결정 사안이다 — `build_anchor` 는 재기록하지 않는다.\n\n"@ko .
+    djr:text "**승인 머지 목록·provenance 차분 — 병렬 머지 유입의 분할**(2026-09-03): ① 코디네이터는 `<산출물 폴더>/approved-merges.txt` 가 있으면 6번의 registry_gate 실행과 `--anchor` 를 붙이는 scope 렌더 명령(registry #2·#5·#6·#15·#16)에 `--approved-merge-file` 로 반드시 동반한다(플래그를 줬으나 목록에 SHA 가 빠지면 게이트·검사기가 잔여 라인에 `미승인 머지 경유 <sha>` 로 표면화한다 · 플래그 자체를 안 주면 채널이 돌지 않으므로 증거 불비다). 이 파일은 쓰지 않는다(«산출물 위치» 절 — 발주자 소유). G2 배너에는 legacy 잔존과 별도로 «승인 유입 N건(검사기별 건수 · 머지 SHA 열거 — 게이트·검사기의 머지 표 `[M <sha12>] <subject> · ^1 · ^2(<ref>) · 파일 n · 상호작용 m[ · 부재 k]`)» 항목을 둔다. registry_gate 가 `안내:` 줄(`--approved-merge-file` 없이 돈 실행에서 앵커..HEAD first-parent 사슬에 2-부모 머지가 있을 때)을 찍으면 그 줄을 G2 배너(멈추면 STOP 문서)에 글자 그대로 옮긴다 — 코디네이터는 목록을 쓰지 않고, 그 줄의 «레인 곁가지 의심» 묶음의 SHA 를 등재 후보로 내밀지 않는다. scope 렌더 검사기가 `기준선 오류:` 줄을 찍으면 G2 배너의 그 검사기 신규분 옆에 그 줄을 그대로 인용한다(판정은 바뀌지 않는다). ② 승인 유입은 레인의 변경이 아니므로 «스코프 밖 귀속의 1차 처방 = 철회»(위 6번·houserules §1)의 대상이 아니다 — 본체는 그대로이고 이것은 그 예외다. 파일 무변 귀속(게이트 표기 `↳ 귀속 유지: 상호작용 미증명`)은 철회할 변경이 없다 — 1차 처방은 `STOP_FOR_USER_APPROVAL` 이며(닫힌 선택지: 빚 등재 · 상류 소유 레인 해소 · 레인 설계 반송(레인 원인)), STOP 문서에 게이트의 그 표기 행을 그대로 인용한다. 상호작용 미증명분을 exit 에서 빼는 것은 채택하지 않는다(이중 원인 배제 불가). 잔여 사유별 처방: `유입 증명 실패(이중 원인)` 은 레인 원인일 수 있으므로 레인 설계 반송 또는 STOP · `유입 증명 실패(… 결과에 없음 | … 뒤 사슬 … 에 없음 | … 뒤 승인 머지 … 의 ^2 에 없음)` 도 레인 원인일 수 있으므로 레인 설계 반송 또는 STOP · `미승인 머지 경유 <sha>` 와 `유입 증명 실패(… 뒤 미승인 머지 …)` 는 STOP → 발주자가 목록을 보완하면 재실행한다(코디네이터가 목록에 쓰지 않는다) · `부재 미증명` 은 `상호작용 미증명` 과 같은 STOP 이다(빠진 파일이 레인이 만들 파일이면 만든다) · `측정 무효(…)` 는 그 머지의 증명 기회만 잃은 것이라 다른 승인 머지가 증명하면 유입이고 전건 무효면 귀속 유지다(∃M) — `측정 생략(사슬 커밋 …)` 도 같다. 귀속 유지 사유가 `측정 무효(…)` · `측정 생략(…)` 이거나 그 검사기가 `기준선 오류:` 줄을 찍은 신규 줄은, 철회할 레인 변경이 확인되지 않았으면 `STOP_FOR_USER_APPROVAL` 이고 닫힌 선택지는 빚 등재 · 상류 소유 레인 해소 · 레인 설계 반송(레인 원인)이다 — 빚 등재 꼴은 «실행·종료 계약»의 이관 빚 목록 문장(번호 있는 줄 `#<규칙번호> <부분문자열>` · 번호 없는 줄 `= <검사기 파일> :: <신규분 줄 그대로>`)을 따르고, STOP 문서에 그 꼴로 인용한다. 코디네이터는 사슬 커밋을 합치거나 고쳐 측정을 세우지 않는다. 게이트의 «앵커가 HEAD 의 조상이 아니다»·«비머지 커밋이 첫 승인 머지보다 앞선다» 진단은 코디네이터의 재앵커 사유가 아니라 발주자 결정 사안이다 — `build_anchor` 는 재기록하지 않는다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b59> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
@@ -5320,7 +5368,7 @@ djr:R-3660 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 13 ;
     djr:statesNorm djr:R-3617 ;
-    djr:text "   - **자매 플러그인 영역의 정상 지적은 보고만 한다(R-3617)**: 소유는 검사 사본이나 앵커 archive가 아닌 원 TARGET에서 한 번 판정한다. 루트의 `.dddjango-web/`이 링크가 아닌 실제 폴더이고, `manage.py`의 `DJANGO_SETTINGS_MODULE` 설정이 정확히 하나이고 `os.environ.setdefault(키, 값)` 또는 `os.environ[키] = 값`의 리터럴로 읽히며, 그 첫 마디 프로젝트 패키지의 실제 경로가 루트 직계 `web/`·`web_test/`·`.dddjango-web/`과 같거나 그 안이 아닐 때만 자매 영역이 있다. 세 뿌리는 있는 것마다 링크가 아닌 실제 폴더여야 하고, 프로젝트 경로는 realpath와 samefile로 링크·대소문자 별칭까지 확인한다. keyword·mapping `update`·`putenv` 등 다른 설정 꼴도 세며, 지원하지 않는 꼴·manage 값의 부재·동적·복수·동적 환경 키나 mapping·경로 확인 불능 등 하나라도 불명확하면 기존 판정을 유지한다.\n     `registry_gate`는 빚 → 승인 유입 → 정상 측정된 자매 지적 → 남은 귀속 순으로 가른다. 숫자 규칙 줄의 주어는 `_line_paths`가 대응 레코드에서 읽은 경로이고, 정형 `(pre-scan) :: [#parse-fail] <경로>: …`는 그 경로다. `registry_gate`의 판정 차분 집합은 숫자 규칙 줄과 pre-scan만이다. 정상 측정된 신규 `rule=null` 계약 레코드는 별도로 `- <경로>: …`의 주어 칸을 읽어 자매 보고 절에 싣고 `contract.json`에서 제외하며, 서버 계약과 legacy 계약은 보존한다. `anchor_diff.partition_exit`는 `[#N] <경로>: …`와 계약 `- <경로>: …`의 주어 칸만 읽는다. 메시지 안 경로는 쓰지 않으며, 저장소 상대 첫 성분이 세 뿌리 중 하나일 때만 자매다. `..`·절대·바깥 경로, 대응 레코드 없음, 알 수 없는 꼴·여러 주어·`[분석]`·`[진단 미파싱 …]`·`(target)` 주어(#74)·경로 없는 합성 줄은 남긴다.\n     측정 실패가 먼저다. 그 검사기의 현재 또는 앵커 실행이 exit ∉ {0, 2}이거나 미파싱 합성 줄이 있거나, 차분 기준선이 «기준선 불능»이거나, 승인 유입 증명에서 `측정 무효(…)`로 남은 줄이면 web 경로여도 자매로 가르지 않는다. `registry_gate`는 원 stdout·stderr의 `[분석]` 표지와 레코드 채널 실패(쓰기 경고·깨진 JSON 줄·숫자 진단 줄 수와 숫자 레코드 수 불일치)를 검사기별 «자매 분류 불가»로 전달한다. 그 검사기의 지적은 레코드에서 분석 표지가 유실돼도 기존 귀속을 유지한다. 차분 라인과 기존 출력은 바꾸지 않는다. 재료 검증·사용 오류·공허 차분·archive 실패의 exit 1 경로를 자매 판정으로 건너뛰지 않는다.\n     갈린 줄은 지우지 않고 `== 자매 플러그인 영역(dddjango-web 소유 — 서버 판정 밖 · 보고만) <n>건 ==` 절에 검사기별로 보고한다. 판정 줄과 exit는 남은 귀속 또는 남은 신규분으로만 정하고, `introduced.json`·`contract.json`에는 갈린 줄의 레코드를 싣지 않으며 서버 레코드는 보존한다. 소유 판정 불가 또는 자매 줄 0인 실행은 기존 출력 그대로다(툴체인 digest·rulepack 출처 해시 같은 변경 메타데이터 제외). G2 배너에는 «자매 플러그인 영역 n건»을 함께 적는다. pre-gate 사본에도 원 저장소의 소유 판정이 닿게 하되 최신성 검사와 재예보 의무는 유지한다. 직접 실행 exit 1, `--anchor` 없는 scope 실행 exit 2, #74, `behavior_guard`와 그 밖의 G2 차단은 풀지 않는다. 검사기 27종·BC 목록·어휘·인벤토리는 그대로 사용한다.\n\n"@ko .
+    djr:text "   - **자매 플러그인 영역의 정상 지적은 보고만 한다(R-3617)**: 소유는 검사 사본이나 앵커 archive가 아닌 원 TARGET에서 한 번 판정한다. 루트의 `.dddjango-web/`이 링크가 아닌 실제 폴더이고, `manage.py`의 `DJANGO_SETTINGS_MODULE` 설정이 정확히 하나이고 `os.environ.setdefault(키, 값)` 또는 `os.environ[키] = 값`의 리터럴로 읽히며, 그 첫 마디 프로젝트 패키지의 실제 경로가 루트 직계 `web/`·`web_test/`·`.dddjango-web/`과 같거나 그 안이 아닐 때만 자매 영역이 있다. 세 뿌리는 있는 것마다 링크가 아닌 실제 폴더여야 하고, 프로젝트 경로는 realpath와 samefile로 링크·대소문자 별칭까지 확인한다. keyword·mapping `update`·`putenv` 등 다른 설정 꼴도 세며, 지원하지 않는 꼴·manage 값의 부재·동적·복수·동적 환경 키나 mapping·경로 확인 불능 등 하나라도 불명확하면 기존 판정을 유지한다.\n     `registry_gate`는 빚 → 승인 유입 → 정상 측정된 자매 지적 → 남은 귀속 순으로 가른다. 숫자 규칙 줄의 주어는 `_line_paths`가 대응 레코드에서 읽은 경로이고, 정형 `(pre-scan) :: [#parse-fail] <경로>: …`는 그 경로다. `registry_gate`의 판정 차분 집합은 숫자 규칙 줄과 pre-scan만이다. 정상 측정된 신규 `rule=null` 계약 레코드는 별도로 `- <경로>: …`의 주어 칸을 읽어 자매 보고 절에 싣고 `contract.json`에서 제외하며, 서버 계약과 legacy 계약은 보존한다. `anchor_diff.partition_exit`는 `[#N] <경로>: …`와 계약 `- <경로>: …`의 주어 칸만 읽는다. 메시지 안 경로는 쓰지 않으며, 저장소 상대 첫 성분이 세 뿌리 중 하나일 때만 자매다. `..`·절대·바깥 경로, 대응 레코드 없음, 알 수 없는 꼴·여러 주어·`[분석]`·`[진단 미파싱 …]`·`(target)` 주어(#74)·경로 없는 합성 줄은 남긴다.\n     측정 실패가 먼저다. 그 검사기의 현재 또는 앵커 실행이 exit ∉ {0, 2}이거나 미파싱 합성 줄이 있거나, 차분 기준선이 «기준선 불능»이거나, 승인 유입 증명에서 `측정 무효(…)`나 `측정 생략(…)`으로 남은 줄이면 web 경로여도 자매로 가르지 않는다. `registry_gate`는 원 stdout·stderr의 `[분석]` 표지와 레코드 채널 실패(쓰기 경고·깨진 JSON 줄·숫자 진단 줄 수와 숫자 레코드 수 불일치)를 검사기별 «자매 분류 불가»로 전달한다. 그 검사기의 지적은 레코드에서 분석 표지가 유실돼도 기존 귀속을 유지한다. 차분 라인과 기존 출력은 바꾸지 않는다. 재료 검증·사용 오류·공허 차분·archive 실패의 exit 1 경로를 자매 판정으로 건너뛰지 않는다.\n     갈린 줄은 지우지 않고 `== 자매 플러그인 영역(dddjango-web 소유 — 서버 판정 밖 · 보고만) <n>건 ==` 절에 검사기별로 보고한다. 판정 줄과 exit는 남은 귀속 또는 남은 신규분으로만 정하고, `introduced.json`·`contract.json`에는 갈린 줄의 레코드를 싣지 않으며 서버 레코드는 보존한다. 소유 판정 불가 또는 자매 줄 0인 실행은 기존 출력 그대로다(툴체인 digest·rulepack 출처 해시 같은 변경 메타데이터 제외). G2 배너에는 «자매 플러그인 영역 n건»을 함께 적는다. pre-gate 사본에도 원 저장소의 소유 판정이 닿게 하되 최신성 검사와 재예보 의무는 유지한다. 직접 실행 exit 1, `--anchor` 없는 scope 실행 exit 2, #74, `behavior_guard`와 그 밖의 G2 차단은 풀지 않는다. 검사기 27종·BC 목록·어휘·인벤토리는 그대로 사용한다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b7> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;

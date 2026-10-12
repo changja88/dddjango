@@ -24,20 +24,24 @@ legacy 위반이 상존해 「루트 registry 전체 green」이 문자 그대�
   두 도구는 같은 로스터(`checker_registry.py`)를 쓰되 묻는 것이 다르다.
 - **이관 빚 채널**: `--legacy-debt-file` 의 사용자 승인 목록(줄 형식: `#<규칙> <부분문자열>`)
   에 맞는 귀속은 exit 에서 빼되 «빚» 절로 반드시 보고한다 — 빚은 기록 근거이지 legacy
-  모양을 «추가로» 복사할 근거가 아니다.
+  모양을 «추가로» 복사할 근거가 아니다. 번호 없는 줄 `= <검사기 파일> :: <줄>`은
+  scope 렌더 전용 — 이 게이트의 차분 집합엔 맞을 줄이 없다.
 - 비-git TARGET 은 fail-closed: 차분 불능이므로 현재 위반 전부를 귀속으로 본다.
 - 검사기가 red 인데 위반 라인을 못 파싱하면 그 검사기 몫을 합성 귀속으로 남긴다(fail-closed).
 - **승인 유입 채널(provenance 차분 · 2026-09-03)**: `--approved-merge-file` 의 발주자 승인
   «main→레인 머지» 목록(줄 형식: `<SHA> [메모]`)이 주어지면, 빚 매칭 뒤 남은 귀속 라인 ℓ
   (파일 p · 검사기 c)마다 다음을 결정적으로 증명한 것만 exit 에서 빼고 «승인 유입» 절로 보고한다:
 
-    승인 유입(ℓ) ⟺ W(p) ∧ (F1(p) ∨ F2(p)) ∧ L(ℓ)
+    승인 유입(ℓ) ⟺ (W(p) ∧ (F1(p) ∨ F2(p)) ∨ G(p)) ∧ ∃M: L(ℓ, M) ∧ P(ℓ, M)
     W  worktree 의 p 가 HEAD 와 동일(porcelain 공백)
     F1 ∃M∈𝓜: blob(M^1:p) ≠ blob(M:p) ∧ blob(M:p) = blob(M^2:p) = blob(HEAD:p)
        — 승인 머지의 incoming 측에서 verbatim 전달·레인 미수정(충돌 해소분은 M≠M^2 라 탈락)
     F2 blob(HEAD:p) = blob(anchor:p) — 파일 무변 = «상호작용 서명»(검사기 환경만 바뀜)
-    L  ∃M∈𝓜: ℓ ∈ R_c(M^2) ∖ R_c(M^1) — 검사기 c 를 M^2(incoming)·M^1(레인 측 직전)
+    G  깨끗한 상대 .py 경로 · HEAD와 작업 트리에 없음 · 부모는 HEAD의 tree(부재 주어)
+    L  ℓ ∈ R_c(M^2) ∖ R_c(M^1) — 검사기 c 를 M^2(incoming)·M^1(레인 측 직전)
        스냅숏에서 재실행해 «incoming 측에는 있고 레인 측 직전에는 없던» 진단임을 증명
+    P  M 뒤 미승인 머지 없음 · 뒤 승인 머지의 ^2에도 있음 · 병합 결과부터 HEAD까지 사슬마다 있음
+       사슬은 앞 커밋과 다른 트리 64개까지 잰다. 측정 불능·한도 초과는 귀속을 유지한다.
 
   판정 불능(레코드 없음·비-blob 경로·worktree 수정·측정 무효·스냅숏 실패)은 전부 귀속 유지(fail-closed)다.
   L 은 **∃M 의미론**이다 — 승인 머지 하나에서라도 증명되면 유입이고, 전 승인 머지가 무효(측정 무효·
@@ -51,11 +55,12 @@ legacy 위반이 상존해 「루트 registry 전체 green」이 문자 그대�
 provenance 차분 — 귀속의 분할이지 재정의가 아니다
   귀속 산식 N∖L 은 그대로다. 새 채널은 «감산»이 아니라 «분할»이다 — N∖L = 빚 ⊔ 승인 유입 ⊔
   귀속(잔여)이고 어떤 라인도 인쇄되지 않는 채널로 가지 않는다. exit 에서 빠지는 유일한 새 경로는
-  «발주자 소유 목록 ∧ blob 3중 일치 ∧ R(M^2)∖R(M^1) 증명»이며 빚 채널과 같은 «사용자 승인 입력»
+  «발주자 소유 목록 ∧ 주어 판정 ∧ R(M^2)∖R(M^1) ∧ 증명 머지 뒤 조건»이며 빚 채널과 같은 «사용자 승인 입력»
   부류다(도구는 목록의 소유를 검증하지 않는다 — 앵커·빚 목록과 같은 자리). 위 다섯 계열 공격과의
   정합: ① base 자기 선택 — 앵커도 승인 목록도 actor 밖이고, 앵커는 HEAD first-parent 사슬 위
   (도달 필수)·머지는 그 구간 안이어야 한다(역방향 합성·타 가지 머지는 형식 오류) ② 부재(#488)
-  위반 — blob 없는 경로는 귀속 유지 ③ 출력 형식 이질 — `findings` 레코드가 단일 출처이고 대응
+  위반 — 없는 파일은 G(깨끗한 상대 .py · HEAD와 작업 트리에 없음 · 부모는 HEAD의 tree)와
+  P(두 부모 차분 뒤 병합 결과·사슬 이어짐)가 서야 유입, 그 밖은 귀속 유지 ③ 출력 형식 이질 — `findings` 레코드가 단일 출처이고 대응
   레코드가 없으면 귀속 유지 ④ 빈 변경 집합 — 변경 집합을 쓰지 않고 L 이 incoming 측 존재를
   요구한다 ⑤ .gitignore 은닉 — 커밋 blob 이 없으면 F1·F2 가 성립하지 않는다. 귀속 목록을
   경로 필터(sed/grep)로 나눈 서술은 게이트 증거가 아니다 — 유입 분리는 이 채널뿐이다.
@@ -596,18 +601,24 @@ class _ProvenanceResult:
 
 
 def _tree_blobs(root: Path, sha: str) -> "dict[str, str]":
-    """커밋 트리의 경로→blob SHA 사전(`git ls-tree -r -z` 1회) — 디렉터리·서브모듈은 들어가지 않는다."""
-    proc: "subprocess.CompletedProcess[str]" = anchor_diff.run_git(root, "ls-tree", "-r", "-z", sha)
+    """커밋 트리의 경로→blob SHA — 단일 출처는 `anchor_diff.tree_blobs`(심링크 제외)."""
+    return anchor_diff.tree_blobs(root, sha)
+
+
+def _tree_entries(root: Path, sha: str) -> "dict[str, str]":
+    """커밋 트리의 «모든» 항목 경로 → 종류(blob·tree·commit — `git ls-tree -r -t -z` 1회)."""
+    proc: "subprocess.CompletedProcess[str]" = anchor_diff.run_git(root, "ls-tree", "-r", "-t", "-z", sha)
     out: "dict[str, str]" = {}
     if proc.returncode != 0:
         return out
     for entry in proc.stdout.split("\0"):
-        if not entry:
-            continue
-        meta, _, path = entry.partition("\t")
+        meta: str
+        tab: str
+        path: str
+        meta, tab, path = entry.partition("\t")
         parts: "list[str]" = meta.split()
-        if len(parts) == 3 and parts[1] == "blob":
-            out[path] = parts[2]
+        if tab and len(parts) == 3:
+            out[path] = parts[1]
     return out
 
 
@@ -639,62 +650,37 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
                       prefixes: "tuple[str, ...]", td: Path) -> _ProvenanceResult:
     """빚 매칭 뒤 남은 귀속을 «승인 유입 ⊔ 귀속(잔여)» 로 분할한다 — 어떤 라인도 버려지지 않는다.
 
-    (i) 경로 (ii) W·F1·F2 blob 판정 (iii) 후보 라인의 검사기만 M^1·M^2 스냅숏(`anchor_diff.snapshot_anchor`
-    · `git_root=None` — 스냅숏은 커밋 트리라 원본 porcelain 이 참이 아니다)에서 재실행해 R_c 캐시
-    (iv) L 탐색 — F1 은 전달 머지 먼저·다음 first-parent 순, F2 는 first-parent 순 · 첫 적중 중단
-    (v) 후보 0 이면 스냅숏 0. 측정 무효(exit∉{0,2} ∨ 미파싱 합성행 ∨ M^1/M^2 parse-fail 집합 비대칭 ∨ 스냅숏
-    실패)는 **그 머지에서의** 증명 기회만 잃는다 — L 은 ∃M 의미론이라 다른 승인 머지가 증명하면 유입이고,
-    전 승인 머지가 무효/미증명이면 귀속 유지(사유 = 첫 무효 머지 · `측정 무효(M^1|M^2) — <M>` 또는
-    `측정 무효(스냅숏 실패) — <M>` · R-0372 «미파싱=측정 실패» 정합). 스냅숏 실패는 `AnchorDiffUsage` 를 여기서
-    포착해 진단 절에 git 오류를 싣는다 — traceback 으로 출력 전체를 잃지 않는다.
+    (i) 경로 (ii) 주어 판정 = `anchor_diff.PathFacts.classify`(scope 렌더와 같은 함수) — 파일·상호작용, 또는
+    «없는 파일» 주어(G(p))는 부재 (iii) 후보 라인의 검사기만 커밋 스냅숏(트리 단위 캐시)에서 positional 재실행
+    (iv) L 탐색 — F1 은 전달 머지 먼저·다음 first-parent 순 · L(ℓ ∈ R(M^2) ∖ R(M^1)) 이 서면
+    `anchor_diff.after_merge_check`(ⓒ 뒤 미승인 머지 없음 · ⓑ 뒤 승인 머지 ^2 에도 있음 · ⓓ M 부터 HEAD 커밋까지
+    사슬마다 있음)까지 통과해야 유입이다. 측정 무효는 그 머지의 증명 기회만 잃는다(∃M).
     """
     res: _ProvenanceResult = _ProvenanceResult(merges=merges, chain=chain)
     active: "list[anchor_diff.ApprovedMerge]" = sorted(
         (m for m in merges if m.participates), key=lambda m: m.position or 0)
     if not attributed:
         return res
-    dirty_proc: "subprocess.CompletedProcess[str]" = anchor_diff.run_git(
-        root, "status", "--porcelain", "--untracked-files=all", "-z")
-    dirty: "set[str]" = set()
-    for entry in dirty_proc.stdout.split("\0"):
-        if len(entry) > 3:
-            dirty.add(entry[3:])
-    blob_cache: "dict[str, dict[str, str]]" = {}
-
-    def blobs(sha: str) -> "dict[str, str]":
-        if sha not in blob_cache:
-            blob_cache[sha] = _tree_blobs(root, sha)
-        return blob_cache[sha]
-
-    head_blobs: "dict[str, str]" = blobs(head_sha)
-    anchor_blobs: "dict[str, str]" = blobs(anchor_sha)
-    chain_by_sha: "dict[str, int]" = {c.sha: i for i, c in enumerate(chain)}
+    facts: anchor_diff.PathFacts = anchor_diff.PathFacts(root, anchor_sha, head_sha, chain, active)
     paths: "dict[str, str | None]" = _line_paths(attributed, records, prefixes)
+    path_cache: "dict[str, dict[str, str]]" = {}
 
-    def last_toucher(p: str) -> "anchor_diff.ChainCommit | None":
-        for c in reversed(chain):  # 최신 → 오래된 순
-            parent_blobs: "dict[str, str]" = blobs(c.parents[0]) if c.parents else {}
-            if blobs(c.sha).get(p) != parent_blobs.get(p):
-                return c
-        return None
+    def paths_of(sha: str) -> "dict[str, str]":
+        if sha not in path_cache:
+            path_cache[sha] = _tree_entries(root, sha)
+        return path_cache[sha]
 
-    def retained_reason(p: str) -> str:
-        last: "anchor_diff.ChainCommit | None" = last_toucher(p)
-        if last is None:
-            return "유입 증명 실패(경로 추적 불능)"
-        approved: "dict[str, anchor_diff.ApprovedMerge]" = {m.sha: m for m in active}
-        if last.is_merge and last.sha in approved:
-            return f"충돌 해소분(M≠M^2) — {last.sha[:12]}"
-        if last.is_merge:
-            return f"미승인 머지 경유 {last.sha[:12]}"
-        delivered_before: "anchor_diff.ApprovedMerge | None" = next(
-            (m for m in active if chain_by_sha.get(m.sha, 1 << 30) < chain_by_sha[last.sha]
-             and blobs(m.sha).get(p) != blobs(m.parent1).get(p)), None)
-        if delivered_before is not None:
-            return f"레인 커밋 수정 {last.sha[:12]}(승인 머지 {delivered_before.sha[:12]} 이후)"
-        return f"비머지 커밋 경유 {last.sha[:12]}"
+    def absent_file(p: str) -> bool:
+        """G(p) — «없는 파일» 주어인가: 깨끗한 상대 경로 · .py · HEAD 에 어떤 항목도 없음 · 작업 트리에도 없음 · 부모는 HEAD 의 폴더."""
+        parts: "list[str]" = p.split("/")
+        if len(parts) < 2 or p.startswith("/") or any(seg in ("", ".", "..") for seg in parts) \
+                or not parts[-1].endswith(".py") or re.search(r"[\s,;|<>\\\[\]:]", p):
+            return False
+        if p in paths_of(head_sha) or os.path.lexists(root / p):
+            return False
+        return paths_of(head_sha).get("/".join(parts[:-1])) == "tree"
 
-    # (i)(ii) 후보 선별 — candidates: line → (path, checker, kind, 전달 머지)
+    # (i)(ii) 후보 선별 — candidates: (line, path, checker, kind, 전달 머지)
     candidates: "list[tuple[str, str, str, str, anchor_diff.ApprovedMerge | None]]" = []
     for line in attributed:
         checker: str = line.split(" :: ", 1)[0]
@@ -702,96 +688,181 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
         if p is None:
             res.retained[line] = "레코드 없음"
             continue
-        if p not in head_blobs:
-            res.retained[line] = "비-blob 경로"
+        if p not in facts.head and absent_file(p):
+            candidates.append((line, p, checker, "부재", None))
             continue
-        if p in dirty:
-            res.retained[line] = "worktree 수정 중"
+        judged: "tuple[str, anchor_diff.ApprovedMerge | None] | str" = facts.classify(p)
+        if isinstance(judged, str):
+            res.retained[line] = judged
             continue
-        deliver: "anchor_diff.ApprovedMerge | None" = next(
-            (m for m in active
-             if blobs(m.parent1).get(p) != blobs(m.sha).get(p)
-             and blobs(m.sha).get(p) == blobs(m.parent2).get(p) == head_blobs[p]), None)
-        if deliver is not None:
-            candidates.append((line, p, checker, "파일", deliver))
-        elif head_blobs[p] == anchor_blobs.get(p):
-            candidates.append((line, p, checker, "상호작용", None))
-        else:
-            res.retained[line] = retained_reason(p)
+        candidates.append((line, p, checker, judged[0], judged[1]))
     if not candidates:
         return res
 
-    # (iii) 스냅숏·검사기 캐시 — 스냅숏 실패(git archive 불능 등)는 그 sha 의 측정을 무효로 캐시한다(재시도 0 ·
-    # traceback 0 — 후보 라인은 `측정 무효(스냅숏 실패) — <M>` 로 귀속 유지, git 오류는 진단 절에).
+    # (iii) 스냅숏·검사기 캐시(트리 단위) — 스냅숏 실패·사본 밖 심링크는 그 sha 의 측정을 무효로 캐시한다(traceback 0).
+    tree_cache: "dict[str, str]" = {}
     snap_cache: "dict[str, Path]" = {}
+    failure_cache: "dict[str, str]" = {}
     parse_fail_cache: "dict[str, set[str]]" = {}
-    run_cache: "dict[tuple[str, str], tuple[bool, set[str]]]" = {}  # (sha, checker) → (유효, 라인)
+    run_cache: "dict[tuple[str, str], tuple[bool, set[str]]]" = {}  # (tree, checker) → (유효, 라인)
+    snapshot_lock: threading.Lock = threading.Lock()
+    candidate_checkers: "frozenset[str]" = frozenset(row[2] for row in candidates)
+
+    def tree_of(sha: str) -> str:
+        if sha not in tree_cache:
+            tree_cache[sha] = anchor_diff.tree_id(root, sha)
+        return tree_cache[sha]
 
     def snapshot(sha: str) -> "Path | None":
-        if sha in res.snapshot_failures:
+        t: str = tree_of(sha)
+        if t in failure_cache:
+            res.snapshot_failures[sha] = failure_cache[t]
             return None
-        if sha not in snap_cache:
-            dest: Path = td / f"snap-{sha[:12]}"
+        if t not in snap_cache:
+            dest: Path = td / f"snap-{t[:12]}"
             try:
                 anchor_diff.snapshot_anchor(root, sha, dest)
             except (anchor_diff.AnchorDiffUsage, OSError) as exc:  # git/tar 불능 + mkdir·디스크 오류 — traceback 0
-                res.snapshot_failures[sha] = f"{type(exc).__name__}: {str(exc).strip()}"
+                failure_cache[t] = f"{type(exc).__name__}: {str(exc).strip()}"
+                res.snapshot_failures[sha] = failure_cache[t]
+                shutil.rmtree(dest, ignore_errors=True)
                 return None
-            snap_cache[sha] = dest
-            parse_fail_cache[sha] = {
+            escape: "str | None" = anchor_diff.snapshot_escape(dest)
+            if escape is not None:  # 사본 밖을 읽을 수 있는 스냅숏은 증거로 쓰지 않는다(fail-closed)
+                failure_cache[t] = f"사본 밖을 가리키는 심링크 {escape}"
+                res.snapshot_failures[sha] = failure_cache[t]
+                shutil.rmtree(dest, ignore_errors=True)
+                return None
+            snap_cache[t] = dest
+            parse_fail_cache[t] = {
                 l.split(" :: ", 1)[1].split(":", 1)[0] for l in _parse_fail_findings(dest)}
             res.snapshots_run += 1
-        return snap_cache[sha]
+        return snap_cache[t]
+
+    def run_batch(shas: "list[str]", checkers: "frozenset[str]") -> None:
+        """한 증명 머지의 검사기별 사슬 작업을 함께 제출하고, 트리의 마지막 작업 뒤 사본을 지운다."""
+        trees: "dict[str, str]" = {}
+        jobs: "list[tuple[str, str, str]]" = []
+        remaining: "dict[str, int]" = {}
+        for sha in shas:
+            trees.setdefault(tree_of(sha), sha)
+        for t, sha in trees.items():
+            for checker in sorted(checkers):
+                if (t, checker) not in run_cache:
+                    jobs.append((t, sha, checker))
+                    remaining[t] = remaining.get(t, 0) + 1
+
+        def task(job: "tuple[str, str, str]") -> None:
+            t: str
+            sha: str
+            checker: str
+            t, sha, checker = job
+            try:
+                with snapshot_lock:
+                    snap: "Path | None" = snapshot(sha)
+                if snap is None:
+                    result: "tuple[bool, set[str]]" = (False, set())
+                else:
+                    exits: "dict[str, int]"
+                    lines: "set[str]"
+                    _recs: "list[dict]"
+                    _cands: "set[str]"
+                    exits, lines, _recs, _cands = _run_registry(snap, only=frozenset({checker}))
+                    valid: bool = exits.get(checker) in (0, 2) and not any(_SYNTHETIC_MARK in l for l in lines)
+                    result = (valid, lines)
+                    with snapshot_lock:
+                        res.checker_runs += 1
+                with snapshot_lock:
+                    run_cache[(t, checker)] = result
+            finally:
+                with snapshot_lock:
+                    remaining[t] -= 1
+                    if remaining[t] == 0:
+                        dest: "Path | None" = snap_cache.pop(t, None)
+                        if dest is not None:
+                            shutil.rmtree(dest, ignore_errors=True)
+
+        if jobs:
+            with ThreadPoolExecutor(max_workers=_registry_workers(), thread_name_prefix="chain") as chain_pool:
+                list(chain_pool.map(task, jobs))
+        # 같은 트리의 다른 SHA도 실패 진단을 가진다. 줄 캐시는 트리·검사기 단위로 남는다.
+        for sha in shas:
+            t = tree_of(sha)
+            if t in failure_cache:
+                res.snapshot_failures[sha] = failure_cache[t]
 
     def run(sha: str, checker: str) -> "tuple[bool, set[str]]":
-        key: "tuple[str, str]" = (sha, checker)
+        key: "tuple[str, str]" = (tree_of(sha), checker)
         if key not in run_cache:
-            snap: "Path | None" = snapshot(sha)
-            if snap is None:
-                run_cache[key] = (False, set())
-            else:
-                exits, lines, _recs, _cands = _run_registry(snap, only=frozenset({checker}))
-                res.checker_runs += 1
-                valid: bool = exits.get(checker) in (0, 2) and not any(_SYNTHETIC_MARK in l for l in lines)
-                run_cache[key] = (valid, lines)
+            run_batch([sha], candidate_checkers)
+        if tree_of(sha) in failure_cache:
+            res.snapshot_failures[sha] = failure_cache[tree_of(sha)]
         return run_cache[key]
 
-    # (iv) L 탐색 — ∃M: 어느 머지든 증명하면 유입 · 전건 무효/미증명이면 귀속 유지
+    # (iv) L 탐색 + 증명 머지 뒤 조건 — ∃M: 어느 머지든 끝까지 증명하면 유입 · 아니면 귀속 유지
     for line, p, checker, kind, deliver in candidates:
         order: "list[anchor_diff.ApprovedMerge]" = (
             [deliver] + [m for m in active if m is not deliver]) if deliver is not None else list(active)
+
+        def sample(sha: str, _checker: str = checker) -> anchor_diff.Sample:
+            ok: bool
+            lines: "set[str]"
+            ok, lines = run(sha, _checker)
+            return anchor_diff.Sample(frozenset(lines) if ok else None)
+
         proven: "str | None" = None
         invalid: "list[str]" = []
+        after: "str | None" = None
         for m in order:
             ok1, r1 = run(m.parent1, checker)
             ok2, r2 = run(m.parent2, checker)
             if m.parent1 in res.snapshot_failures or m.parent2 in res.snapshot_failures:
                 invalid.append(f"측정 무효(스냅숏 실패) — {m.sha[:12]}")
                 continue
-            symmetric: bool = parse_fail_cache[m.parent1] == parse_fail_cache[m.parent2]
+            pf1: "set[str]" = parse_fail_cache[tree_of(m.parent1)]
+            pf2: "set[str]" = parse_fail_cache[tree_of(m.parent2)]
+            symmetric: bool = pf1 == pf2
             if not (ok1 and ok2 and symmetric):
                 sides: "list[str]" = []
-                if not ok1 or (not symmetric and parse_fail_cache[m.parent1] - parse_fail_cache[m.parent2]):
+                if not ok1 or (not symmetric and pf1 - pf2):
                     sides.append("M^1")
-                if not ok2 or (not symmetric and parse_fail_cache[m.parent2] - parse_fail_cache[m.parent1]):
+                if not ok2 or (not symmetric and pf2 - pf1):
                     sides.append("M^2")
                 invalid.append(f"측정 무효({'|'.join(sides) or 'M^1|M^2'}) — {m.sha[:12]}")
                 continue
             if line in r2 and line not in r1:
-                proven = m.sha
-                break
+                # 같은 머지에서 L이 선 검사기만 사슬을 잰다. 사본은 그 트리의 필요한 검사기가
+                # 모두 끝나면 바로 지운다(사슬 길이만큼 디스크에 쥐고 있지 않는다).
+                proving: "frozenset[str]" = frozenset(
+                    c for other, _p, c, _kind, _deliver in candidates
+                    if run(m.parent1, c)[0] and run(m.parent2, c)[0]
+                    and other in run(m.parent2, c)[1] and other not in run(m.parent1, c)[1])
+
+                def prefetch(shas: "list[str]") -> None:
+                    run_batch(shas, proving)
+
+                reason: "str | None" = anchor_diff.after_merge_check(
+                    key=line, m=m, active=active, chain=chain, sample=sample, tree_of=tree_of, prefetch=prefetch)
+                if reason is None:
+                    proven = m.sha
+                    break
+                after = after or reason
         if proven is not None:
             res.inflow.append((line, proven, kind))
+        elif after is not None:
+            res.retained[line] = after
         elif invalid:
             res.retained[line] = invalid[0]
+        elif kind == "부재":
+            res.retained[line] = "부재 미증명"
         elif kind == "파일":
             # 전달 머지보다 앞선 «미승인» 머지가 p 를 바꿨다면 진단은 그때 들어왔을 수 있다 — 목록 누락을
             # 표면화한다(부분 목록 실측: 이중 원인과 구별 불가 — 발주자가 목록을 보완하면 L 이 그 머지에서 선다).
             earlier_unapproved: "list[str]" = [
                 c.sha for c in chain
                 if c.is_merge and c.sha not in {m.sha for m in active}
-                and deliver is not None and chain_by_sha[c.sha] < chain_by_sha.get(deliver.sha, 1 << 30)
-                and blobs(c.sha).get(p) != blobs(c.parents[0]).get(p)]
+                and deliver is not None and facts.position[c.sha] < facts.position.get(deliver.sha, 1 << 30)
+                and facts.blobs(c.sha).get(p) != facts.blobs(c.parents[0]).get(p)]
             hint: str = (f" — 미승인 머지 {earlier_unapproved[-1][:12]} 경유 가능" if earlier_unapproved else "")
             res.retained[line] = f"유입 증명 실패(이중 원인{hint})"
         else:
@@ -909,6 +980,20 @@ def main(argv: "list[str]") -> int:
                 # «이번 런»이 아니라 두 가지의 차이를 잰다. 승격은 별도 결정 게이트.
                 print(f"주의: 앵커 {anchor_sha[:12]} 는 HEAD {head[:12]} 의 조상이 아니다 — "
                       "차분이 «이번 런의 변경»을 재지 않을 수 있다(앵커 재료를 확인하라 · exit 무변)")
+            if approved_path is None:
+                hints: "list[tuple[str, str, bool]]" = anchor_diff.merge_hints(root, anchor_sha, head)
+                if hints:
+                    def _shown(items: "list[str]") -> str:
+                        return " ".join(items[:6]) + (f" 외 {len(items) - 6}" if len(items) > 6 else "")
+                    listed: "list[str]" = [f"{sha[:12]}(^2 {ref})" for sha, ref, only_head in hints if not only_head]
+                    side: "list[str]" = [sha[:12] for sha, _ref, only_head in hints if only_head]
+                    groups: "list[str]" = ([_shown(listed)] if listed else []) + (
+                        [f"레인 곁가지 의심(^2 를 담은 ref 가 HEAD 브랜치뿐 — 등재 대상 아님): {_shown(side)}"] if side else [])
+                    print(f"안내: 앵커 {anchor_sha[:12]}..HEAD first-parent 사슬에 2-부모 머지 {len(hints)}건이 있고 "
+                          f"{anchor_diff.APPROVED_MERGE_FLAG} 가 없다 — {' · '.join(groups)} · 발주자가 승인한 "
+                          "main→레인 머지라면 발주자가 `<산출물 폴더>/approved-merges.txt` 에 그 SHA 를 적은 뒤"
+                          "(코디네이터·실행자는 이 파일을 쓰지 않는다) 그 파일을 붙여 다시 실행하면 승인 유입을 따로 가른다"
+                          "(이 줄은 판정·exit 를 바꾸지 않는다)")
             if approved_path is not None:
                 try:
                     merges, chain = anchor_diff.load_approved_merges(approved_path, root, anchor_sha, head)
@@ -978,7 +1063,7 @@ def main(argv: "list[str]") -> int:
                         r"\(pre-scan\) :: \[#parse-fail\] (.+?): (.*)", line)
                     path = match.group(1) if match is not None else None
                 normal: bool = (checker not in invalid and not (
-                    provenance is not None and provenance.retained.get(line, "").startswith("측정 무효(")))
+                    provenance is not None and provenance.retained.get(line, "").startswith(("측정 무효(", "측정 생략("))))
                 (sister if normal and anchor_diff.sister_path(path) else rest).append(line)
             attributed = rest
             # 계약은 숫자 차분 집합에 넣지 않는다. 신규 계약 레코드의 주어를 따로 가르고 보고한다.
@@ -1055,14 +1140,16 @@ def _print_inflow(prov: _ProvenanceResult) -> None:
             print(f"  [M {m.sha[:12]}] {m.subject} · 앵커 이전 — 판정 불참")
             continue
         files, inter = prov.per_merge(m.sha)
+        absent: int = sum(1 for _l, s, k in prov.inflow if s == m.sha and k == "부재")
         print(f"  [M {m.sha[:12]}] {m.subject} · ^1 {m.parent1[:12]} · ^2 {m.parent2[:12]}({m.parent2_ref}) · "
-              f"파일 {files} · 상호작용 {inter}")
+              f"파일 {files} · 상호작용 {inter}" + (f" · 부재 {absent}" if absent else ""))
         if m.parent2_only_head:
             print(f"    ↳ 주의: ^2 {m.parent2[:12]} 를 포함하는 ref 가 HEAD 브랜치뿐 — 역방향/합성 머지 의심"
                   "(발주자 확인 — 등재 전 `^2` 가 main(상류) 이력에 있는지 확인 · exit 무변)")
     for line, m, kind in prov.inflow:
         print(f"  {line}")
-        print(f"    ↳ 유입: {m[:12]}(L 증명) · {'파일 verbatim' if kind == '파일' else '상호작용'}")
+        print(f"    ↳ 유입: {m[:12]}(L 증명) · "
+              + {"파일": "파일 verbatim", "부재": "부재(상류에도 없던 파일)"}.get(kind, "상호작용"))
 
 
 def _print_provenance_diag(prov: _ProvenanceResult, anchor_sha: str) -> None:

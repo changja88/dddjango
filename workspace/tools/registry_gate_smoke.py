@@ -74,6 +74,8 @@ import contextlib
 import io
 from unittest.mock import patch
 from pathlib import Path
+from types import ModuleType
+from anchor_diff_smoke import ApprovedInflowRepo
 
 ROOT: Path = Path(__file__).resolve().parents[2]
 GATE: Path = ROOT / "dddjango" / "scripts" / "registry_gate.py"
@@ -939,9 +941,294 @@ class SisterGateRegression(unittest.TestCase):
         self.assertIn("ShopModel.objects.filter/exclude(status=리터럴)", rec["message"])
 
 
+class ApprovedInflowGateRegression(unittest.TestCase):
+    """설계 v3 §7-1의 부재·공통 P·사본·안내 줄 계약."""
+
+    def setUp(self) -> None:
+        from anchor_diff_smoke import ApprovedInflowRepo
+        sys.path.insert(0, str(GATE.parent))
+        self.repo_type: type[ApprovedInflowRepo] = ApprovedInflowRepo
+        self.temp: tempfile.TemporaryDirectory[str] = tempfile.TemporaryDirectory(prefix="approved-gate-")
+        self.addCleanup(self.temp.cleanup)
+        self.td: Path = Path(self.temp.name)
+
+    def verdict(self, r, anchor: str, merges: tuple[str, ...], code: int, reason: str) -> str:
+        actual: int
+        out: str
+        actual, out = _gate(r.root, anchor, ["--approved-merge-file", str(r.approved(*merges))])
+        self.assertEqual(actual, code, out)
+        self.assertIn(reason, out)
+        return out
+
+    def absent(self, name: str, *, drop_parent: bool = False):
+        r: ApprovedInflowRepo = self.repo_type(self.td, name)
+        r.project("orders", "xbc")
+        anchor: str = r.commit("A")
+        r.checkout(anchor, "lane"); r.write("lane.txt", "lane"); r.commit("L0")
+        r.checkout("main"); r.rm(r.fixed); r.commit("upstream deletion")
+        r.checkout("lane"); r.merge(pending=drop_parent)
+        if drop_parent:
+            r.rm("application/xbc/composition_root"); r.commit("merge deletes parent")
+        return r, anchor, r.git("rev-parse", "HEAD")
+
+    def test_P13_P14_P14b_upstream_absence_and_parent_gap(self) -> None:
+        r: ApprovedInflowRepo
+        anchor: str
+        merge: str
+        for mode in ("inflow", "merge-gap", "chain-gap"):
+            with self.subTest(mode=mode):
+                r, anchor, merge = self.absent(mode, drop_parent=mode == "merge-gap")
+                if mode != "inflow":
+                    saved: dict[str, str] = {p.name: p.read_text() for p in (r.root / "application/xbc/composition_root").glob("*") if p.is_file()}
+                    if mode == "chain-gap":
+                        r.rm("application/xbc/composition_root"); gap: str = r.commit("remove parent")
+                    if not saved:
+                        saved = {"__init__.py": "", "dependency_wiring.py": "", "dependency_wiring_test.py": ""}
+                    for name, source in saved.items():
+                        r.write("application/xbc/composition_root/" + name, source)
+                    r.commit("restore parent without file")
+                    reason: str = f"유입 증명 실패(승인 머지 {merge[:12]} " + ("결과에 없음)" if mode == "merge-gap" else f"뒤 사슬 {gap[:12]} 에 없음)")
+                    self.verdict(r, anchor, (merge,), 2, reason)
+                else:
+                    out: str = self.verdict(r, anchor, (merge,), 0, "부재(상류에도 없던 파일)")
+                    self.assertIn(" · 부재 1", out)
+
+    def test_P14c_P14d_P14e_restore_delete_resolution_and_later_proof(self) -> None:
+        r: ApprovedInflowRepo
+        anchor: str
+        merge: str
+        for mode in ("lane-delete", "resolution-delete", "later-delete"):
+            with self.subTest(mode=mode):
+                r, anchor, merge = self.absent(mode)
+                r.checkout("main"); r.write(r.fixed); r.commit("upstream restores")
+                r.checkout("lane"); m2: str = r.merge(pending=mode == "resolution-delete")
+                if mode == "resolution-delete":
+                    r.rm(r.fixed); m2 = r.commit("merge keeps deletion")
+                else:
+                    r.rm(r.fixed); r.commit("lane deletes")
+                merges: tuple[str, ...] = (merge, m2)
+                if mode == "later-delete":
+                    r.write(r.fixed); r.commit("lane restores before upstream deletion")
+                    r.checkout("main"); r.rm(r.fixed); r.commit("upstream deletes again")
+                    r.checkout("lane"); m3: str = r.merge(); merges += (m3,)
+                    self.verdict(r, anchor, merges, 0, f"유입: {m3[:12]}(L 증명) · 부재")
+                else:
+                    self.verdict(r, anchor, merges, 2, f"유입 증명 실패(뒤 승인 머지 {m2[:12]} 의 ^2 에 없음)")
+
+    def test_P14f_P14g_P15_P15prime_lane_created_absence(self) -> None:
+        r: ApprovedInflowRepo
+        anchor: str
+        merge: str
+        for mode in ("bc-recreate", "side-merge", "lane-delete", "new-bc"):
+            with self.subTest(mode=mode):
+                r, anchor, merge = self.absent(mode)
+                if mode == "bc-recreate":
+                    r.checkout("main"); r.rm("application/xbc"); r.commit("upstream removes BC")
+                    r.checkout("lane"); m2: str = r.merge()
+                    r.bc("xbc"); r.rm(r.fixed); r.commit("lane creates BC")
+                    self.verdict(r, anchor, (merge, m2), 2, f"뒤 승인 머지 {m2[:12]} 의 ^2 에 없음)")
+                elif mode == "side-merge":
+                    r.checkout(anchor, "side"); r.write("side.txt", "s"); r.commit("side")
+                    r.checkout("lane"); m2 = r.merge("side")
+                    self.verdict(r, anchor, (merge,), 2, f"뒤 미승인 머지 {m2[:12]})")
+                else:
+                    # P15: 승인 머지는 무관한 변경만 들였고 누락은 레인이 만든다.
+                    r.checkout(anchor, "own"); r.write("own.txt", "o"); r.commit("own")
+                    r.checkout("main"); r.write(r.fixed); r.commit("restore before unrelated merge")
+                    r.checkout("own"); m2 = r.merge()
+                    if mode == "new-bc":
+                        r.bc("lane_bc"); r.rm("application/lane_bc/composition_root/wiring_material.py")
+                    else:
+                        r.rm(r.fixed)
+                    r.commit("lane omission")
+                    self.verdict(r, anchor, (m2,), 2, "부재 미증명")
+
+    def test_P16_to_P20_existing_channels_share_chain_proof(self) -> None:
+        anchor: str
+        merge: str
+        for mode in ("later-fix", "merge-gap", "octopus", "over", "invalid"):
+            with self.subTest(mode=mode):
+                r: ApprovedInflowRepo = self.repo_type(self.td, mode)
+                anchor, merge = r.cause_merge(drop_in_merge=mode == "merge-gap")
+                merges: tuple[str, ...] = (merge,)
+                if mode == "later-fix":
+                    r.checkout("main"); r.rm("application/billing"); r.commit("upstream fixes")
+                    r.checkout("lane"); m2: str = r.merge(); merges += (m2,)
+                    r.bc("billing"); r.commit("own cause")
+                    reason: str = f"뒤 승인 머지 {m2[:12]} 의 ^2 에 없음)"
+                elif mode == "merge-gap":
+                    r.bc("zulu"); r.commit("own cause")
+                    reason = f"유입 증명 실패(승인 머지 {merge[:12]} 결과에 없음)"
+                elif mode == "over":
+                    for index in range(64):
+                        r.write("lane.txt", str(index)); r.commit(str(index))
+                    reason = f"측정 생략(사슬 커밋 65 > 한도 64) — {merge[:12]}"
+                elif mode == "invalid":
+                    r.write("pyproject.toml", '[project]\nrequires-python = ">=3.99"\n'); gap: str = r.commit("invalid interpreter")
+                    r.rm("pyproject.toml"); r.commit("fixed")
+                    reason = f"측정 무효(사슬 {gap[:12]}) — {merge[:12]}"
+                else:
+                    for branch in ("s1", "s2"):
+                        r.checkout(merge, branch); r.write(branch + ".txt", branch); r.commit(branch); r.checkout("lane")
+                    r.git("merge", "-q", "--no-ff", "-m", "octopus", "s1", "s2")
+                    reason = f"뒤 미승인 머지 {r.git('rev-parse', 'HEAD')[:12]})"
+                out: str = self.verdict(r, anchor, merges, 2, reason)
+                if mode == "later-fix":
+                    retained: str = _section(out, "귀속(N∖L)")
+                    self.assertIn("[#364]", retained)
+                    self.assertIn("[#329]", retained)
+                    self.assertEqual(retained.count(reason), 2)
+
+    def test_G1_subject_guards_and_P21_P22_P23_links(self) -> None:
+        r: ApprovedInflowRepo
+        anchor: str
+        merge: str
+        merges: list[anchor_diff.ApprovedMerge]
+        chain: list[anchor_diff.ChainCommit]
+        import anchor_diff
+        gate_module: ModuleType = __import__("registry_gate")
+        r, anchor, merge = self.absent("guards")
+        head: str = r.git("rev-parse", "HEAD")
+        merges, chain = anchor_diff.load_approved_merges(r.approved(merge), r.root, anchor, head)
+        for mode in ("absolute", "dotdot", "punctuation", "not-py", "directory", "ignored-live"):
+            with self.subTest(mode=mode):
+                p: str = {"absolute": "/abs/a.py", "dotdot": "application/../a.py", "punctuation": "application/a:b.py", "not-py": "application/xbc/composition_root/no.txt"}.get(mode, r.fixed)
+                if mode == "directory":
+                    (r.root / p).mkdir()
+                elif mode == "ignored-live":
+                    r.write(".gitignore", p + "\n"); r.write(p)
+                line: str = "check-layer-skeleton.py :: [#488] " + p + ": 고정 파일 부재"
+                result: gate_module._ProvenanceResult = gate_module._provenance_split(r.root, anchor, head, merges, chain, [line], [{"file": p, "rule": "#488", "checker": "check-layer-skeleton.py", "message": "고정 파일 부재"}], (), self.td / mode)
+                self.assertEqual(result.inflow, [])
+                self.assertEqual(result.retained[line], "비-blob 경로")
+                def render(snapshot: Path, *args, **kwargs):
+                    current: bool = snapshot.name == "current"
+                    return ({"check-layer-skeleton.py": 2 if current else 0}, {line} if current else set(),
+                            [{"file": p, "rule": "#488", "checker": "check-layer-skeleton.py", "message": "고정 파일 부재"}] if current else [], set())
+                output: io.StringIO = io.StringIO()
+                # 주어 가드만 겨냥한 합성 레코드다. 코드 파스 선점은 이 가드의 측정 재료가 아니다.
+                with patch.object(gate_module, "_run_registry", side_effect=render), \
+                        patch.object(gate_module, "_parse_fail_findings", return_value=set()), contextlib.redirect_stdout(output):
+                    code: int = gate_module.main([str(r.root), "--anchor", anchor, "--approved-merge-file", str(r.approved(merge))])
+                self.assertEqual(code, 2, output.getvalue())
+                self.assertIn("↳ 귀속 유지: 비-blob 경로", output.getvalue())
+                if mode in ("directory", "ignored-live"):
+                    r.rm(p)
+        for folder in (False, True):
+            r = self.repo_type(self.td, "link-" + str(folder))
+            r.project("orders"); anchor = r.commit("A")
+            r.checkout(anchor, "lane"); r.write("lane.txt", "l"); r.commit("L0")
+            r.checkout("main")
+            rel: str = "application/orders/domain_layer/bad.py"
+            r.write(rel, "from django.db import models\n")
+            outside: Path = self.td / ("outside-" + str(folder)); outside.mkdir()
+            if folder:
+                r.write("external/__init__.py"); r.rm("external"); (r.root / "external").symlink_to(outside, target_is_directory=True)
+            else:
+                (outside / "target.py").write_text("from django.db import models\n", encoding="utf-8")
+                (r.root / "extra.py").symlink_to(outside / "target.py")
+            r.commit("upstream symlink"); r.checkout("lane"); merge = r.merge()
+            out: str = self.verdict(r, anchor, (merge,), 2, f"측정 무효(스냅숏 실패) — {merge[:12]}")
+            self.assertIn("사본 밖을 가리키는 심링크", out)
+        r = self.repo_type(self.td, "subject-link"); r.project("orders"); anchor = r.commit("A")
+        r.checkout(anchor, "lane"); r.write("lane.txt", "l"); r.commit("L0")
+        r.checkout("main"); r.write("payload.txt", "from django.db import models\n")
+        for index in range(4):
+            (r.root / f"application/orders/domain_layer/link{index}.py").symlink_to("../../../payload.txt")
+        r.commit("upstream subject links"); r.checkout("lane"); merge = r.merge()
+        out = self.verdict(r, anchor, (merge,), 2, "비-blob 경로")
+        self.assertGreaterEqual(out.count("↳ 귀속 유지: 비-blob 경로"), 4)
+
+    def test_U2a_U2b_U2c_U2d_exact_hint_and_old_outputs(self) -> None:
+        actual: int
+        out: str
+        old_code: int
+        old_out: str
+        code: int
+        text: str
+        r: ApprovedInflowRepo = self.repo_type(self.td, "hint"); r.project("orders"); anchor: str = r.commit("A")
+        r.checkout(anchor, "lane"); r.write("lane.txt", "l"); r.commit("L0")
+        r.checkout("main"); r.write("up.txt", "u"); r.commit("U")
+        r.checkout("lane"); merge: str = r.merge()
+        old: Path = _gate_copy(self.td, "hint-old", "HEAD")
+        actual, out = _gate(r.root, anchor)
+        old_code, old_out = _gate(r.root, anchor, gate=old)
+        self.assertEqual(actual, old_code, out)
+        expected: str = (f"안내: 앵커 {anchor[:12]}..HEAD first-parent 사슬에 2-부모 머지 1건이 있고 --approved-merge-file 가 없다 — {merge[:12]}(^2 main) · 발주자가 승인한 main→레인 머지라면 발주자가 `<산출물 폴더>/approved-merges.txt` 에 그 SHA 를 적은 뒤(코디네이터·실행자는 이 파일을 쓰지 않는다) 그 파일을 붙여 다시 실행하면 승인 유입을 따로 가른다(이 줄은 판정·exit 를 바꾸지 않는다)")
+        self.assertEqual([l for l in out.splitlines() if l.startswith("안내:")], [expected])
+        self.assertEqual(_mask("\n".join(l for l in out.splitlines() if not l.startswith("안내:"))), _mask(old_out))
+        new_run: dict[str, object] = _par_run(GATE, r.root, anchor, self.td, "4")
+        old_run: dict[str, object] = _par_run(old, r.root, anchor, self.td, "4")
+        new_run["stdout"] = "\n".join(l for l in str(new_run["stdout"]).splitlines() if not l.startswith("안내:"))
+        self.assertTrue(_same_output(new_run, old_run))
+        self.assertEqual(new_run["leaked"], [])
+        for ref, flag in ((anchor, True), (merge, False)):
+            extra: list[str] = ["--approved-merge-file", str(r.approved(merge))] if flag else []
+            r.write("working.txt", "w")
+            code, text = _gate(r.root, ref, extra)
+            self.assertIn("판정:", text)
+            self.assertNotIn("안내:", text)
+            self.assertEqual(code, 0, text)
+        r.checkout("lane", "feature-x"); r.write("side.txt", "s"); r.commit("side")
+        r.checkout("lane"); side: str = r.merge("feature-x")
+        code, out = _gate(r.root, anchor)
+        self.assertEqual(code, 0, out); self.assertIn(f"{side[:12]}(^2 feature-x)", out)
+        r.git("branch", "-D", "feature-x")
+        code, out = _gate(r.root, anchor)
+        self.assertEqual(code, 0, out)
+        self.assertIn("레인 곁가지 의심(^2 를 담은 ref 가 HEAD 브랜치뿐 — 등재 대상 아님): " + side[:12], out)
+
+    def test_U2b_no_merge_octopus_only_and_nonancestor(self) -> None:
+        code: int
+        out: str
+        r: ApprovedInflowRepo = self.repo_type(self.td, "no-hints"); r.project("orders"); anchor: str = r.commit("A")
+        r.checkout(anchor, "lane"); r.write("lane.txt", "l"); r.commit("L")
+        code, out = _gate(r.root, anchor)
+        self.assertEqual(code, 0, out); self.assertIn("판정:", out); self.assertNotIn("안내:", out)
+        for branch in ("s1", "s2"):
+            r.checkout(anchor, branch); r.write(branch + ".txt", branch); r.commit(branch); r.checkout("lane")
+        r.git("merge", "-q", "--no-ff", "-m", "octopus", "s1", "s2")
+        code, out = _gate(r.root, anchor)
+        self.assertEqual(code, 0, out); self.assertIn("판정:", out); self.assertNotIn("안내:", out)
+        r.checkout(anchor, "unrelated"); r.write("unrelated.txt", "u"); other: str = r.commit("other")
+        r.checkout("lane")
+        code, out = _gate(r.root, other)
+        self.assertEqual(code, 0, out); self.assertIn("조상이 아니다", out); self.assertNotIn("안내:", out)
+
+
+def _unnumbered_debt_rows(td: Path, repo: Path, anchor: str, debt: Path,
+                          e_out: str) -> "list[tuple[str, int, int, bool, str]]":
+    """E3 · E4 — 번호 없는 줄 빚(`= <검사기 파일> :: <줄>`)을 섞은 목록: 새 게이트와 옛 직렬 게이트 사본
+    (`_SERIAL_GATE_COMMIT` — 현행 anchor_diff 를 import)이 E 와 같은 판정 · 같은 출력, 맞을 수 없는 줄은 exit 1."""
+    code: int
+    out: str
+    old_code: int
+    old_out: str
+    mixed: Path = td / "debt-mixed.txt"
+    mixed.write_text(debt.read_text(encoding="utf-8")
+                     + "= check-error-centralization.py :: - application/orders/x.py:1: 줄 전체 일치 항목\n",
+                     encoding="utf-8")
+    rows: "list[tuple[str, int, int, bool, str]]" = []
+    code, out = _gate(repo, anchor, ["--legacy-debt-file", str(mixed)])
+    rows.append(("E3 번호 없는 줄 섞은 빚 목록", 0, code, _mask(out) == _mask(e_out), "E 와 같은 출력(게이트 차분 집합엔 번호 없는 줄이 없다)"))
+    old: "Path | None" = _gate_copy(td, "e3-serial-gate", _SERIAL_GATE_COMMIT)
+    assert old is not None
+    old_code, old_out = _gate(repo, anchor, ["--legacy-debt-file", str(mixed)], gate=old)
+    rows.append(("E3′ 옛 게이트 사본 + 현행 anchor_diff", 0, old_code, _mask(old_out) == _mask(e_out),
+                 "load_debt 반환 꼴 호환(옛 사본은 debt_match 에 그대로 넘긴다)"))
+    bad: Path = td / "debt-bad.txt"
+    bad.write_text("= check-naming.py :: - application/orders/x.py:1: m\n", encoding="utf-8")
+    code, out = _gate(repo, anchor, ["--legacy-debt-file", str(bad)])
+    rows.append(("E4 맞을 수 없는 번호 없는 줄", 1, code,
+                 "사용 오류: 빚 목록 줄 형식 오류: '= check-naming.py :: - application/orders/x.py:1: m' — 번호 없는 줄의 검사기는" in out,
+                 "fail-closed 사용 오류"))
+    return rows
+
+
 def main() -> int:
     suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case)
-                               for case in (CacheSnapshotRegression, IdempotencySnapshotRegression, SisterGateRegression))
+                               for case in (CacheSnapshotRegression, IdempotencySnapshotRegression, SisterGateRegression,
+                                            ApprovedInflowGateRegression))
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     if not result.wasSuccessful():
         return 2
@@ -1064,6 +1351,7 @@ def main() -> int:
         )
         code, out = _gate(repo, anchor, ["--legacy-debt-file", str(debt)])
         rows.append(("E 빚 채널", 0, code, "이관 빚" in out and "schema_smoke" in out, "exit 제외·보고 필수"))
+        rows.extend(_unnumbered_debt_rows(td, repo, anchor, debt, out))
 
         # U — usage 오류: 알 수 없는 flag → 문면 계약 exit 1(F3 — argparse 기본 2 봉합).
         proc: "subprocess.CompletedProcess[str]" = subprocess.run(
@@ -1104,8 +1392,10 @@ def main() -> int:
             return 1
         side0p: Path = td / "p0p-introduced.json"
         code0p, out0p = _gate(repo, anchor, ["--introduced-json", str(side0p)], gate=pre_gate)
-        rows.append(("P0′ 수리 전 사본 byte 동일", 2, code0p,
-                     _mask(out0) == _mask(out0p) and _mask_sidecar(side0) == _mask_sidecar(side0p),
+        rows.append(("P0′ 수리 전 사본 byte 동일 + 안내", 2, code0p,
+                     len([l for l in out0.splitlines() if l.startswith("안내:")]) == 1
+                     and _mask("\n".join(l for l in out0.splitlines() if not l.startswith("안내:"))) == _mask(out0p)
+                     and _mask_sidecar(side0) == _mask_sidecar(side0p),
                      f"툴체인 행·sidecar 식별자 마스킹 후 diff 0(사본 {_PRE_REPAIR_COMMIT})"))
 
         # P1 — 목록={M} → 유입 3(파일)·귀속 0·exit 0·sidecar attributed_lines=[]

@@ -1081,6 +1081,23 @@ class NormativeContractRegression(unittest.TestCase):
                 with self.subTest(path=rel, phrase=phrase):
                     self.assertIn(phrase, text)
 
+    def test_unnumbered_debt_custody_and_quote_form_are_written(self) -> None:
+        """번호 없는 줄 이관 빚 — 목록은 발주자 소유 · STOP 인용 꼴 둘이 두 Coordinator에 있다(문장 있음 대조)."""
+        phrases: tuple[str, ...] = (
+            "은 **발주자 소유**다 — 코디네이터·실행자는 이 파일을 쓰지 않는다(승인 머지 목록과 같은 자리 · 자기 세탁 차단 · 2026-10-12)",
+            "«빚 등재»를 선택지로 올리는 STOP 문서에는 등재할 줄을 목록 꼴 그대로 인용한다",
+            "번호 있는 줄(`[#N] …`)은 `#<규칙번호> <부분문자열>`",
+            "번호 없는 줄(scope 렌더의 `- <주어>: <메시지>`)은 `= <검사기 파일> :: <신규분 줄 그대로>`",
+            "꼴이 틀린 항목(검사기가 scope 렌더 다섯 밖 · `[#N]` 줄 · 절대 경로 주어 · 메시지 없음 · 구분자 틀림)은 검사기·게이트가 사용 오류(exit 1)",
+            "꼴은 맞으나 찍힌 줄과 글자가 다른 항목은 아무 줄에도 맞지 않아 그 줄이 신규로 남는다",
+            "등재는 Phase 0 «결정 출처»의 미룸 규칙대로 사용자 승인을 받아 발주자가 하고, 코디네이터는 그 뒤 다시 실행한다",
+        )
+        for rel in ("dddjango/commands/dddjango.md", "codex-dddjango/skills/dddjango/SKILL.md"):
+            text: str = (ROOT / rel).read_text(encoding="utf-8")
+            for phrase in phrases:
+                with self.subTest(path=rel, phrase=phrase):
+                    self.assertTrue(phrase in text, f"{rel}: 문구 없음 — {phrase}")
+
     def test_internal_normalization_and_public_500_are_distinct_in_six_sources(self):
         for rel in (
             "dddjango/agents/design-architect.md", "dddjango/agents/design-review-api.md",
@@ -2779,6 +2796,63 @@ class EventValueRegression(unittest.TestCase):
             for phrase in expected:
                 with self.subTest(path=rel, phrase=phrase):
                     self.assertIn(phrase, text)
+
+
+class ApprovedMergeFlagRegression(unittest.TestCase):
+    """설계 v3 §7-3와 Q42: 발견 0에서도 재료 오류를 먼저 거절한다."""
+
+    def test_all_five_usage_errors_equal_form_and_ap_contract(self) -> None:
+        from anchor_diff_smoke import ApprovedInflowRepo
+        with tempfile.TemporaryDirectory(prefix="approved-flags-") as td_s:
+            td: Path = Path(td_s)
+            r: ApprovedInflowRepo = ApprovedInflowRepo(td, "repo")
+            r.project("accounts"); r.controller("accounts"); r.schema("accounts", "acc")
+            anchor: str = r.commit("A")
+            r.checkout(anchor, "lane"); r.write("lane.txt", "l"); lane: str = r.commit("L")
+            r.checkout("main"); r.write("up.txt", "u"); upstream: str = r.commit("U")
+            r.checkout("lane"); merge: str = r.merge()
+            good: Path = r.approved(merge)
+            bad: Path = td / "bad.txt"
+            bad.write_text("not-a-sha\n", encoding="utf-8")
+            nonmerge: Path = td / "nonmerge.txt"
+            nonmerge.write_text(lane + "\n", encoding="utf-8")
+            outside: Path = td / "outside.txt"
+            r.checkout(anchor, "other")
+            r.write("other.txt", "other"); r.commit("other lane")
+            offchain: str = r.merge("main")
+            r.checkout("lane")
+            outside.write_text(offchain + "\n", encoding="utf-8")
+            for name in ("check-error-centralization.py", "check-openapi-error-declaration.py",
+                         "check-context-isolation.py", "check-api-error-controller-contract.py", "check-composition-root.py"):
+                with self.subTest(checker=name):
+                    base: list[str] = ["--error-profile", "auto"]
+                    cases: list[tuple[list[str], str]] = [
+                        (["--approved-merge-file", str(good)], "는 --anchor 와 함께만"),
+                        (["--anchor", anchor, "--approved-merge-file", str(td / "missing")], "없음"),
+                        (["--anchor", anchor, "--approved-merge-file", str(bad)], "형식 오류"),
+                        (["--anchor", anchor, "--approved-merge-file"], "값이 없다"),
+                        (["--anchor", anchor, "--approved-merge-file="], "값이 없다"),
+                        (["--anchor", anchor, "--approved-merge-file", str(good), "--approved-merge-file=" + str(good)], "한 번만 준다"),
+                        (["--anchor", anchor, "--approved-merge-file", str(nonmerge)], "승인 목록은 2-부모 머지만 받는다"),
+                        (["--anchor", anchor, "--approved-merge-file", str(outside)], "사슬 밖"),
+                        (["--approved-merge-file=" + str(td / "missing")], "는 --anchor 와 함께만"),
+                        (["--approved-merge-file", str(bad)], "는 --anchor 와 함께만"),
+                    ]
+                    for args, reason in cases:
+                        with self.subTest(checker=name, args=args):
+                            proc: subprocess.CompletedProcess[str] = subprocess.run([sys.executable, str(SCRIPTS / name), str(r.root), *base, *args], capture_output=True, text=True)
+                            self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+                            self.assertIn(reason, proc.stdout + proc.stderr)
+                    args: list[str] = ["--anchor", anchor, "--approved-merge-file=" + str(good)]
+                    proc = subprocess.run([sys.executable, str(SCRIPTS / name), str(r.root), *base, *args], capture_output=True, text=True)
+                    self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+                    plain: subprocess.CompletedProcess[str] = subprocess.run([sys.executable, str(SCRIPTS / name), str(r.root), *base, "--anchor", anchor], capture_output=True, text=True)
+                    self.assertEqual((proc.stdout, proc.stderr), (plain.stdout, plain.stderr))
+                    args = ["--anchor", anchor, "--ap", "config/api.py"]
+                    plain = subprocess.run([sys.executable, str(SCRIPTS / name), str(r.root), *base, *args], capture_output=True, text=True)
+                    proc = subprocess.run([sys.executable, str(SCRIPTS / name), str(r.root), *base, *args, "--approved-merge-file=" + str(good)], capture_output=True, text=True)
+                    self.assertEqual((proc.returncode, proc.stdout, proc.stderr), (plain.returncode, plain.stdout, plain.stderr))
+                    self.assertNotIn("unrecognized arguments", proc.stdout + proc.stderr)
 
 
 if __name__ == "__main__":
