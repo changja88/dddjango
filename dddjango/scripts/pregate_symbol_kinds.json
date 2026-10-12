@@ -27,7 +27,7 @@
     "check-test-config.py": "9dc712848f36c526",
     "check-transaction-boundary.py": "21da8cad9f49ae0e",
     "check-transient-overmapping.py": "35ac532566baaf46",
-    "check-usecase-dto-placement.py": "993f70e4416c94ef"
+    "check-usecase-dto-placement.py": "52948a2027b84552"
   },
   "kinds": [
     {

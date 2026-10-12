@@ -1977,8 +1977,8 @@ HTTP 면 <code>api/</code>, 같은 프로세스 함수 호출이면 <code>open_h
           </li>
           <li class="rd" id="rd-40">
             <div class="rd-p" style="--d:2"><b class="rd-n">&lt;area&gt;/</b><span class="tb-z z-clean">Clean</span><span class="chg fix">확정</span><button type="button" class="pin d" data-k="d14">D14</button></div>
-            <div class="rd-w"><p>유스케이스를 업무 영역으로 묶는다. <code>driving_layer/api/&lt;area&gt;/</code> 와 이름이 대응한다. 영역 직계에 공통 helper·validation·DTO 모듈을 올리지 않는다.</p><p>유스케이스 사이의 공유 모듈 칸은 없다(#189). 업무 판정은 도메인, 외부 능력은 포트, BC 소유가 아닌 기술은 framework 가 맡는다. 어디에도 해당하지 않는 짧은 사설 조각은 각 진입점 안의 <code>_</code> 함수로 둔다(#192).</p></div>
-            <div class="rd-nm"><span class="rd-k">이름</span>바깥 <code>driving_layer/api/&lt;area&gt;/</code> 와 <b>글자까지 같다</b>.</div>
+            <div class="rd-w"><p>유스케이스를 업무 영역으로 묶는다. <code>driving_layer/api/&lt;area&gt;/</code> 와 이름이 대응한다(창구로만 열리는 영역은 <code>driving_layer/open_host_service/&lt;area&gt;/</code> 와). 영역 직계에 공통 helper·validation·DTO 모듈을 올리지 않는다.</p><p>유스케이스 사이의 공유 모듈 칸은 없다(#189). 업무 판정은 도메인, 외부 능력은 포트, BC 소유가 아닌 기술은 framework 가 맡는다. 어디에도 해당하지 않는 짧은 사설 조각은 각 진입점 안의 <code>_</code> 함수로 둔다(#192).</p></div>
+            <div class="rd-nm"><span class="rd-k">이름</span>바깥 <code>driving_layer/api/&lt;area&gt;/</code>(창구로만 열리면 <code>open_host_service/&lt;area&gt;/</code>) 와 <b>글자까지 같다</b>.</div>
           </li>
           <li class="rd" id="rd-41">
             <div class="rd-p" style="--d:3"><b class="rd-n">&lt;use_case&gt;/</b><span class="tb-z z-clean">Clean</span><span class="chg fix">확정</span><button type="button" class="pin d" data-k="d14">D14</button><button type="button" class="pin d" data-k="d28">D28</button></div>

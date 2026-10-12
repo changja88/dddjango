@@ -7,7 +7,9 @@
 무엇을 잡나 (규칙 번호는 트리 개정 명세):
   구조   #182 `application_layer/` 직계는 `<area>/`·`port/` 둘뿐(종류 폴더 금지)
          #183 `validation/`·`*_validation.py` 금지 · #192 `<area>/` 직계 종류 폴더 금지
-         #188 `<area>` 는 `driving_layer/api/<area>` 와 1:1 · #190/#193 유스케이스
+         #188 응용 `<area>` 는 같은 이름의 `driving_layer/api/<area>` 또는
+         `driving_layer/open_host_service/<area>` 와 짝 · api → 응용은 1:1
+         #190/#193 유스케이스
          하나=폴더 하나=진입점 하나(`<use_case>_use_case.py`)
   자료   #201 자료는 세 파일(`_command`·`_query`·`_result`) — `dto/` 겹 금지
          #569 command·query 는 둘 다 오되 클래스는 한쪽에만 · #570 `_result.py` 는
@@ -311,9 +313,13 @@ def _check_structure(root: Path, bc: Path, bc_rel: Path, out: Findings) -> list[
         api_dirs, _ = _entries(api)
         api_areas = {p.name for p in api_dirs if p.name != "webhook"
                      and not checker_target.cache_only_instance(p)}
+        ohs = api.parent / "open_host_service"
+        ohs_dirs, _ = _entries(ohs) if ohs.is_dir() else ([], [])
+        ohs_areas = {p.name for p in ohs_dirs
+                     if not checker_target.cache_only_instance(p)}
         app_areas = {p.name for p in areas}
-        for name in sorted(app_areas - api_areas):
-            out.add("#188", rel / name, f"`<area>` 는 `driving_layer/api/<area>` 와 1:1 이다 — api 쪽에 `{name}/` 이 없다")
+        for name in sorted(app_areas - (api_areas | ohs_areas)):
+            out.add("#188", rel / name, f"`<area>` 는 `driving_layer/api/<area>` 또는 `driving_layer/open_host_service/<area>` 와 짝이다 — 둘 다 `{name}/` 이 없다")
         for name in sorted(api_areas - app_areas):
             out.add("#188", bc_rel / api.relative_to(bc) / name, f"`<area>` 는 `application_layer/<area>` 와 1:1 이다 — application_layer 쪽에 `{name}/` 이 없다")
 

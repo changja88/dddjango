@@ -929,3 +929,5 @@ djr:R-3642 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
 
 djr:R-3643 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> ;
     djr:enforcedBy <https://numchida.com/ns/djr#c/behavior_guard.py> .
+
+djr:R-3660 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .

@@ -263,8 +263,8 @@ djr:R-0156 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-0157 a djr:Prohibition ;
-    skos:prefLabel "사용자 승인 전 다음 단계 진행 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0157@2026-09-26> .
+    skos:prefLabel "사용자 승인 전 다음 단계 진행 금지 · 사전 위임도 G0 수행 필수(발주 고정 ⓐ·상시 미룸 항목은 질문 없이 결정 줄 기록)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-0157@2026-10-12> .
 
 <https://numchida.com/ns/djr#R-0157@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0157 ;
@@ -280,6 +280,12 @@ djr:R-0157 a djr:Prohibition ;
     prov:specializationOf djr:R-0157 ;
     prov:wasRevisionOf <https://numchida.com/ns/djr#R-0157@2026-09-10> ;
     djr:revision 3 ;
+    djr:revisionKind djr:revision-clarification .
+
+<https://numchida.com/ns/djr#R-0157@2026-10-12> a djr:Expression ;
+    prov:specializationOf djr:R-0157 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0157@2026-09-26> ;
+    djr:revision 4 ;
     djr:revisionKind djr:revision-clarification .
 
 djr:R-0158 a djr:Obligation ;
@@ -3405,20 +3411,32 @@ djr:R-3473 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3474 a djr:Obligation ;
-    skos:prefLabel "ⓑ 출처는 본인 직접(대화형 요청문 포함 · 대리 위임 실행 제외)·사용자 원문(절대 경로 파일:행 Read 확인·미룸 명시 내용) 둘뿐"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3474@2026-09-26> .
+    skos:prefLabel "ⓑ 출처는 본인 직접(대화형 요청문 포함 · 대리 위임 실행 제외)·사용자 원문(절대 경로 파일:행 Read 확인 · 이 실행·이름 든 BC·항목의 미룸 또는 상시 미룸) 둘뿐 — 상시 미룸 = 사용자 본인 턴 한 줄의 ㉠㉡㉢ · 기능·수정 G0 «미룰 수 있는» 항목 한정 · 앞섬·거둠 · 질문 생략·결정 줄 · 미성립 STOP 기록"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3474@2026-10-12> .
 
 <https://numchida.com/ns/djr#R-3474@2026-09-26> a djr:Expression ;
     prov:specializationOf djr:R-3474 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-3474@2026-10-12> a djr:Expression ;
+    prov:specializationOf djr:R-3474 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3474@2026-09-26> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-3475 a djr:Prohibition ;
-    skos:prefLabel "쓰기 경계·선례·발주 승인·일정 발화·일반 방침·대리 판단·코디 추론을 ⓑ 출처로 쓰기 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3475@2026-09-26> .
+    skos:prefLabel "쓰기 경계·선례·발주 승인·일정 발화·일반 방침(사용자 본인 상시 미룸 제외 · 발주자·대리·다른 레인의 전재·요약은 포함)·대리 판단·코디 추론을 ⓑ 출처로 쓰기 금지"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3475@2026-10-12> .
 
 <https://numchida.com/ns/djr#R-3475@2026-09-26> a djr:Expression ;
     prov:specializationOf djr:R-3475 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3475@2026-10-12> a djr:Expression ;
+    prov:specializationOf djr:R-3475 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3475@2026-09-26> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3476 a djr:Obligation ;
     skos:prefLabel "출처 없는 ⓑ 는 불수용·재질문 없이 STOP(ⓐ/(ⓐ′)/원문 갖춘 ⓑ/중단) — 재차 출처 없는 ⓑ 면 작업 중단"@ko ;
@@ -3445,12 +3463,18 @@ djr:R-3478 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-3479 a djr:Obligation ;
-    skos:prefLabel "이관 빚 목록 등재 = 미룸 — 같은 출처 규칙"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3479@2026-09-26> .
+    skos:prefLabel "이관 빚 목록 등재 = 미룸 — 같은 출처 규칙 · 상시 미룸은 불가(이 실행 코드의 귀속)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3479@2026-10-12> .
 
 <https://numchida.com/ns/djr#R-3479@2026-09-26> a djr:Expression ;
     prov:specializationOf djr:R-3479 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3479@2026-10-12> a djr:Expression ;
+    prov:specializationOf djr:R-3479 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3479@2026-09-26> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-3480 a djr:Obligation ;
     skos:prefLabel "환경 사실(쓰기 경계·금지 경로·동시 작업)이 ⓐ 를 막으면 ⓑ 아닌 충돌 — G0 표면화(넓혀 정리/순서 조정/출처 있는 ⓑ)"@ko ;
@@ -4456,6 +4480,14 @@ djr:R-3643 a djr:Obligation ;
     prov:specializationOf djr:R-3643 ;
     djr:revision 1 .
 
+djr:R-3660 a djr:Obligation ;
+    skos:prefLabel "상시 미룸 적용 건수·사용자 원문을 G0·G2 배너와 마무리 보고에 1행으로 표시"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3660@2026-10-12> .
+
+<https://numchida.com/ns/djr#R-3660@2026-10-12> a djr:Expression ;
+    prov:specializationOf djr:R-3660 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/commands/dddjango.md> a djr:Document ;
     skos:prefLabel "command-dddjango"@ko .
 
@@ -4603,7 +4635,7 @@ djr:R-3643 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 10 ;
     djr:statesNorm djr:R-0151, djr:R-0152, djr:R-0153, djr:R-0154, djr:R-0155, djr:R-0156, djr:R-0157, djr:R-3437 ;
-    djr:text "\n배너를 출력한 뒤 AskUserQuestion으로 승인 여부를 묻는다(승인 / 수정 요청). 배너 하단 두 필드는 상시 필드다(2026-08-17) — «task 리스트»는 보조 채널 이행 여부를, «슬라이스 감사»는 슬라이스별 실시/갈음을 매 게이트에 기재한다(해당 없는 게이트는 «해당 없음» — 조건부 자기보고가 아니라 무조건 필드라 조용한 생략이 없다). **닫힌 선택지를 제시할 때는 선택지마다 그 선택의 대가 한 줄을 병기한다**(2026-08-13 — 대가 없는 선택지 목록은 결정 비용을 사용자에게 전가한다). **감수 리포트 권고나 명백한 수정 후보가 있으면**(예: G2에서 discipline-reviewer가 남긴 구조 개선·리팩터 권고), 수정 요청 시 그 후보들을 AskUserQuestion 선택지로 제시하고(권고 1건=선택지, 복수면 multiSelect) **기타=자유입력은 항상 함께 유지**한다. 후보가 도구 옵션 한도를 넘으면 전체 번호 목록을 배너에 먼저 출력하고 도구 질문은 그 목록을 가리킨다 — 후보 무언 탈락 금지(2026-08-15 codex 동형 이식). 후보가 없으면 자유 피드백을 받는다. 단 discipline-reviewer 의 캐스케이드 ①/②(이동·동명 폴더 승격) 발견은 이 «권고» 채널이 아니라 반송 대상 발견이다 — 슬라이스 수와 무관하게 다음 게이트 전 원작성자 반영을 완료한다. 선택·입력된 피드백과 함께 해당 단계를 재실행한다. 사용자가 승인하기 전에는 다음 단계로 넘어가지 않는다. **응답 없는 종료는 미결정이다**: `unanswered`·빈 답·timeout·auto-resolve·UI 닫기와 미제출 기본 선택을 승인이나 수정 요청으로 해석하지 않는다. 미결정 상태를 메인 대화에 알리고 실제 사용자 답을 기다리며 다음 Phase·coder dispatch를 시작하지 않는다. 사용자가 기본 옵션을 확정한 응답은 유효하고, 명시 거부·수정·작업 취소는 그 입력대로 처리한다. 사전 위임은 해당 게이트를 포함하는 명시 지시가 있을 때만 그 범위 안에서 적용하며, 경계 절의 STOP·blocker·shape·사후 scope 개정·출처 없는 G0 ⓑ·출처 없는 실행 폐기·리팩토링 모드의 사용자 판단 항목 제외와 최신 사용자 범위를 그대로 지킨다. 사전 위임은 G0 를 수행한 뒤의 승인 입력에만 적용된다 — 스캔·배너·빚 질문(발주가 빚 답을 ⓐ 로 고정했으면 질문 없이 결정 줄을 기록한다)·기록의 생략이 아니다(2026-09-26). **G1/G1′ 배너에는 pre-gate 예보 1행을 병기한다** — 형식 `pre-gate: 귀속 N건 · 실존 결손 M건 · 커버 P/S/I · 기준선 <SHA 축약>`(기계 출처는 `--check-report` 의 `요약:` 행이다 — exit 0 일 때만 배너가 있다: red 0 이면 `귀속 0` · 결손 0 이면 `실존 결손 0` · 실체화 0 이면 `실체화 0 — skip`(결손 M>0 이면 `실체화 0 · 실존 결손 M건`) · 귀속 red 를 처분 전건 경로로 통과시키면 `귀속 N건(처분 전건 기재)` · 형식 red(블록 부재·공허 포함)·stale(툴체인 stale 포함)·처분 미기재·기준선 치환·기준선 대조 누락·기준선 행 중복이면 이 배너 자체가 없다(반송 메시지가 그 자리 — 침묵이 아니다) · 실행 불능이면 그 사실 그대로 — 어느 경우도 침묵 없음). 이 1행은 언제나 **배너 직전 최종본**에 대한 것이다(Phase 1 pre-gate 문단 — 낡은 green 금지). 요약이 «앞 실행 예보»로 시작하면 그 예보는 이번 실행의 것이 아니라 배너의 근거가 되지 않는다 — 최종본에 pre-gate 를 다시 돌린다(2026-09-27).\n\n"@ko .
+    djr:text "\n배너를 출력한 뒤 AskUserQuestion으로 승인 여부를 묻는다(승인 / 수정 요청). 배너 하단 두 필드는 상시 필드다(2026-08-17) — «task 리스트»는 보조 채널 이행 여부를, «슬라이스 감사»는 슬라이스별 실시/갈음을 매 게이트에 기재한다(해당 없는 게이트는 «해당 없음» — 조건부 자기보고가 아니라 무조건 필드라 조용한 생략이 없다). **닫힌 선택지를 제시할 때는 선택지마다 그 선택의 대가 한 줄을 병기한다**(2026-08-13 — 대가 없는 선택지 목록은 결정 비용을 사용자에게 전가한다). **감수 리포트 권고나 명백한 수정 후보가 있으면**(예: G2에서 discipline-reviewer가 남긴 구조 개선·리팩터 권고), 수정 요청 시 그 후보들을 AskUserQuestion 선택지로 제시하고(권고 1건=선택지, 복수면 multiSelect) **기타=자유입력은 항상 함께 유지**한다. 후보가 도구 옵션 한도를 넘으면 전체 번호 목록을 배너에 먼저 출력하고 도구 질문은 그 목록을 가리킨다 — 후보 무언 탈락 금지(2026-08-15 codex 동형 이식). 후보가 없으면 자유 피드백을 받는다. 단 discipline-reviewer 의 캐스케이드 ①/②(이동·동명 폴더 승격) 발견은 이 «권고» 채널이 아니라 반송 대상 발견이다 — 슬라이스 수와 무관하게 다음 게이트 전 원작성자 반영을 완료한다. 선택·입력된 피드백과 함께 해당 단계를 재실행한다. 사용자가 승인하기 전에는 다음 단계로 넘어가지 않는다. **응답 없는 종료는 미결정이다**: `unanswered`·빈 답·timeout·auto-resolve·UI 닫기와 미제출 기본 선택을 승인이나 수정 요청으로 해석하지 않는다. 미결정 상태를 메인 대화에 알리고 실제 사용자 답을 기다리며 다음 Phase·coder dispatch를 시작하지 않는다. 사용자가 기본 옵션을 확정한 응답은 유효하고, 명시 거부·수정·작업 취소는 그 입력대로 처리한다. 사전 위임은 해당 게이트를 포함하는 명시 지시가 있을 때만 그 범위 안에서 적용하며, 경계 절의 STOP·blocker·shape·사후 scope 개정·출처 없는 G0 ⓑ·출처 없는 실행 폐기·리팩토링 모드의 사용자 판단 항목 제외와 최신 사용자 범위를 그대로 지킨다. 사전 위임은 G0 를 수행한 뒤의 승인 입력에만 적용된다 — 스캔·배너·빚 질문(발주가 빚 답을 ⓐ 로 고정했거나 Phase 0 «결정 출처»의 상시 미룸이 선 항목이면 질문 없이 결정 줄을 기록한다)·기록의 생략이 아니다(2026-09-26). **G1/G1′ 배너에는 pre-gate 예보 1행을 병기한다** — 형식 `pre-gate: 귀속 N건 · 실존 결손 M건 · 커버 P/S/I · 기준선 <SHA 축약>`(기계 출처는 `--check-report` 의 `요약:` 행이다 — exit 0 일 때만 배너가 있다: red 0 이면 `귀속 0` · 결손 0 이면 `실존 결손 0` · 실체화 0 이면 `실체화 0 — skip`(결손 M>0 이면 `실체화 0 · 실존 결손 M건`) · 귀속 red 를 처분 전건 경로로 통과시키면 `귀속 N건(처분 전건 기재)` · 형식 red(블록 부재·공허 포함)·stale(툴체인 stale 포함)·처분 미기재·기준선 치환·기준선 대조 누락·기준선 행 중복이면 이 배너 자체가 없다(반송 메시지가 그 자리 — 침묵이 아니다) · 실행 불능이면 그 사실 그대로 — 어느 경우도 침묵 없음). 이 1행은 언제나 **배너 직전 최종본**에 대한 것이다(Phase 1 pre-gate 문단 — 낡은 green 금지). 요약이 «앞 실행 예보»로 시작하면 그 예보는 이번 실행의 것이 아니라 배너의 근거가 되지 않는다 — 최종본에 pre-gate 를 다시 돌린다(2026-09-27).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s003/b11> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s003> ;
@@ -4706,8 +4738,8 @@ djr:R-3643 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s005> ;
     djr:kind djr:kind-norm ;
     djr:order 10 ;
-    djr:statesNorm djr:R-3474, djr:R-3475, djr:R-3476, djr:R-3477, djr:R-3478, djr:R-3479 ;
-    djr:text "   - **결정 출처(2026-09-26)**: ⓑ(미룸)는 출처가 있어야 결정이다 — **본인 직접**: 이 실행에서 사용자가 직접 답함(시각) — 대화형 세션에서 사용자가 직접 입력한 요청문에 적은 미룸도 본인 직접이다(요청 시각). 게이트 답을 대리에게 맡긴 실행(발주가 «게이트 답은 발주자» 류로 위임했거나 입력이 대리 답임을 밝힌 경우)에서는 본인 직접을 쓸 수 없다. **사용자 원문**: 절대 경로 `<파일:행>` 과 시각 — 너는 Read 로 그 줄에 인용 문자열이 실재하는지 확인하고, 원문은 이 실행 또는 이름을 든 BC·항목의 기존 코드 정리를 미룬다는 뜻이어야 한다. **출처가 아닌 것**: 쓰기 경계·금지 경로·편집 금지, 선례·다른 레인의 처분, 발주·투입 승인, 일정·순서 발화, 일반 방침, 대리 세션의 판단, 너의 추론. 출처 없는 ⓑ 는 받지 않고 같은 질문을 다시 내지 않으며 `STOP_FOR_USER_APPROVAL` 로 간다(경계 절의 실행 모드별 절차) — 선택지는 «ⓐ 지금 정리 / 사용자 원문을 갖춘 ⓑ / 작업 중단»(빚이 있는 대상 BC 가 2개 이상이면 ⓐ′ 포함)이고, 이 STOP 에 다시 출처 없는 ⓑ 가 오면 그 답을 기록에 추기하고 «작업 중단»으로 정지한다(세 번째 질문은 없다). 발주가 빚 답을 ⓐ 로 미리 정했으면 그대로 받는다. `refactor-scope.md` 의 결정 줄 정형은 `<항목 ID 목록> · 결정 = ⓐ|ⓐ′|ⓑ · 사유 = … · 출처 = 본인 직접(<시각>) | 사용자 원문 <파일:행>(<시각>) | 발주 고정 ⓐ <발주서:행> | 대리 답 ⓐ <기록:행>(<시각>)` 이다 — ⓑ 는 앞 둘만 쓸 수 있고, «사용자 결정»이라는 표기는 본인 직접·사용자 원문 출처에만 쓴다. 리팩토링 모드의 항목 ID 는 `C<n>`·`M<n>` 이고(ⓐ′ 없음), 사용자 판단 항목의 결정 줄은 `M<n> · 사용자 판단 = 위반|허용 · 출처 = 본인 직접(<시각>) | 사용자 원문 <파일:행>(<시각>)` 이다(대리 답 불가 · 2026-09-27). 사용자 승인 «이관 빚» 목록(Phase 2 6번 `--legacy-debt-file`)에 올리는 것도 미룸이다 — 같은 출처 규칙을 따른다.\n"@ko .
+    djr:statesNorm djr:R-3474, djr:R-3475, djr:R-3476, djr:R-3477, djr:R-3478, djr:R-3479, djr:R-3660 ;
+    djr:text "   - **결정 출처(2026-09-26)**: ⓑ(미룸)는 출처가 있어야 결정이다 — **본인 직접**: 이 실행에서 사용자가 직접 답함(시각) — 대화형 세션에서 사용자가 직접 입력한 요청문에 적은 미룸도 본인 직접이다(요청 시각). 게이트 답을 대리에게 맡긴 실행(발주가 «게이트 답은 발주자» 류로 위임했거나 입력이 대리 답임을 밝힌 경우)에서는 본인 직접을 쓸 수 없다. **사용자 원문**: 절대 경로 `<파일:행>` 과 시각 — 너는 Read 로 그 줄에 인용 문자열이 실재하는지 확인하고, 원문은 이 실행 또는 이름을 든 BC·항목의 기존 코드 정리를 미룬다는 뜻이거나 **상시 미룸**(2026-10-12)이어야 한다. 상시 미룸은 같은 대상 프로젝트에서 사용자 본인 턴의 한 줄이(입력이 그 줄이 답한 물음 `<파일:행>` 을 함께 주면 Read 해 둘을 한 뜻으로 읽는다) ㉠ 기존 코드 정리·빚을 ㉡ 미루고 ㉢ 그 뒤의 발주·요청에서도 묻지 말라(«앞으로»·«이제 그만 물어»·«다시 묻지 마»·«모든 발주» 류)는 셋을 모두 말하는 것이다. 같은 대상 프로젝트는 이 실행의 저장소와 같은 저장소(워크트리 포함)를 작업 폴더로 둔 대화이고, 사용자 본인 턴은 사용자가 직접 친 입력이나 질문 도구에 직접 한 답이다 — 도구 결과에 실린 인용과, 게이트 답을 대리에게 맡긴 실행의 세션에 들어온 입력 줄은 본인 턴이 아니다. 둘은 그 기록 줄에서 확인한다 — 기록에 적힌 작업 폴더가 이 실행과 같은 저장소(워크트리는 `git worktree list` 로 견준다)이고 그 줄이 도구 결과가 아닌 사용자 입력 줄이면 확인된 것이다. 그 기록이 게이트 답을 대리에게 맡긴 실행의 세션임이 드러나면 본인 턴이 아니다. 작업 폴더나 턴 종류가 기록에 없으면 상시가 아니다. ㉢ 은 원문이나 물음 가운데 한쪽에 있으면 되고, 셋 가운데 하나라도 없으면 상시가 아니다. 이름 목록이나 기간으로 닫은 범위(«남은 발주 26개»·«오늘 발주» 류)와 항목 범위만 넓히는 말(«전부»·«다» 류)은 ㉢ 이 아니다 — 닫은 범위 안의 실행에는 그 원문을 «이 실행 또는 이름을 든» 원문으로 쓴다(물음과 한 뜻으로 읽는 것은 같다 · 범위 안인지는 원문·물음에 적힌 이름과 기간으로 가린다 — 이 실행의 발주 이름이 그 줄들에 보이지 않거나 G0 시각이 그 기간 밖이면 범위 밖이다 · 닫은 범위를 든 줄은 «그만 물어» 류가 같이 있어도 그 범위 안에서만 쓴다). ㉡ 은 사용자가 미룸을 고르거나 미룸 물음에 그렇다고 답한 것이다 — «판단은 네게 맡긴다» 류의 맡김은 ㉡ 이 아니다. 상시 미룸은 원문 시각 뒤에 내는 기능·수정 모드의 G0 빚 질문(첫 G0 · 재개 G0 의 새 빚 · 스캔 단위 확인으로 더한 BC 의 G0 재승인)에서 «미룰 수 있는» 항목의 ⓑ 출처로만 쓴다. 실행마다 새 스캔 목록 전체에 다시 적용하며 목록 이월이 아니다. «미룰 수 없음» 항목, 리팩토링 모드 실행, 이미 승인된 ⓐ(동결), 그리고 G0 뒤의 STOP·`ⓐ 재상정`·이관 빚 목록·사용자 판단·운영 단계·밖 동작 V·순서 예외·실행 폐기에는 출처가 아니다. 발주 고정 ⓐ, 이 실행의 G0 수정 요청에 항목 ID 를 든 정리(본인 직접 또는 대리 답 ⓐ), 이 실행이나 이름을 든 BC·항목을 가리키는 본인 직접·사용자 원문은 상시 미룸보다 앞선다. 입력에 같은 사용자가 원문 시각 뒤에 상시 미룸을 거두거나 좁힌 원문이 있으면 그 뒤 원문을 따른다. 상시 미룸이 선 항목은 빚 질문을 내지 않는다(발주 고정 ⓐ 와 같은 자리). 결정 줄은 `<항목 ID 목록> · 결정 = ⓑ · 사유 = 상시 미룸 — 물음 <파일:행> · 출처 = 사용자 원문 <파일:행>(<원문 시각>)` 이다(물음을 받지 않았으면 `물음 <파일:행>` 자리에 `물음 없음`). G0 배너의 빚 행 뒤에 `상시 미룸 <n>건 — 원문 <파일:행>(<시각>) · 이번에 정리하려면 G0 수정 요청에 항목 ID` 1행을 싣고, G2 배너 · 마무리 보고에는 `상시 미룸 <n>건 — 원문 <파일:행>(<시각>) · 거두려면 사용자 새 원문 · 정리는 다음 실행 G0 수정 요청에 항목 ID` 1행을 싣는다(n 과 원문은 `refactor-scope.md` 의 이번 실행 몫(`# 앞 실행` 절 앞) `사유 = 상시 미룸` 결정 줄에서 옮긴다). **출처가 아닌 것**: 쓰기 경계·금지 경로·편집 금지, 선례·다른 레인의 처분, 발주·투입 승인, 일정·순서 발화, 일반 방침(사용자 본인의 상시 미룸은 위 사용자 원문의 한 꼴이다 — 발주자·대리·다른 레인이 옮겨 적거나 요약한 방침은 여전히 출처가 아니다), 대리 세션의 판단, 너의 추론. 상시 미룸 후보가 서지 않고(㉠ ㉡ ㉢ 가운데 빠진 것이 있거나 본인 턴·같은 프로젝트·원문 시각 조건이 안 맞음) 위 «이 실행 또는 이름을 든» 원문으로도 서지 않으면 출처 없는 ⓑ 다 — 정지 기록에 서지 않은 까닭과 다시 받을 물음 꼴(«앞으로 모든 발주의 기존 코드 정리(미룰 수 있는 항목)는 어느 쪽으로 할까요? ① 묻지 않고 미룸 — 기존 위반이 발주마다 남는다 · 거두려면 새 말씀 ② 발주마다 물음 — 빚이 있으면 발주마다 정리·미룸 결정을 다시 받는다»)을 적는다. 출처 없는 ⓑ 는 받지 않고 같은 질문을 다시 내지 않으며 `STOP_FOR_USER_APPROVAL` 로 간다(경계 절의 실행 모드별 절차) — 선택지는 «ⓐ 지금 정리 / 사용자 원문을 갖춘 ⓑ / 작업 중단»(빚이 있는 대상 BC 가 2개 이상이면 ⓐ′ 포함)이고, 이 STOP 에 다시 출처 없는 ⓑ 가 오면 그 답을 기록에 추기하고 «작업 중단»으로 정지한다(세 번째 질문은 없다). 발주가 빚 답을 ⓐ 로 미리 정했으면 그대로 받는다. `refactor-scope.md` 의 결정 줄 정형은 `<항목 ID 목록> · 결정 = ⓐ|ⓐ′|ⓑ · 사유 = … · 출처 = 본인 직접(<시각>) | 사용자 원문 <파일:행>(<시각>) | 발주 고정 ⓐ <발주서:행> | 대리 답 ⓐ <기록:행>(<시각>)` 이다 — ⓑ 는 앞 둘만 쓸 수 있고, «사용자 결정»이라는 표기는 본인 직접·사용자 원문 출처에만 쓴다. 리팩토링 모드의 항목 ID 는 `C<n>`·`M<n>` 이고(ⓐ′ 없음), 사용자 판단 항목의 결정 줄은 `M<n> · 사용자 판단 = 위반|허용 · 출처 = 본인 직접(<시각>) | 사용자 원문 <파일:행>(<시각>)` 이다(대리 답 불가 · 2026-09-27). 사용자 승인 «이관 빚» 목록(Phase 2 6번 `--legacy-debt-file`)에 올리는 것도 미룸이다 — 같은 출처 규칙을 따르되 상시 미룸은 쓰지 않는다(이관 빚은 이 실행 코드의 귀속이다).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s005/b11> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s005> ;
@@ -5258,8 +5290,9 @@ djr:R-3643 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
     djr:kind djr:kind-norm ;
     djr:order 58 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s005/b10> ;
     djr:statesNorm djr:R-0406, djr:R-0407, djr:R-0408, djr:R-0409, djr:R-0410, djr:R-0411, djr:R-3490, djr:R-3491, djr:R-3504 ;
-    djr:text "7. **G2 배너**로 구현 코드·테스트·검증 결과 + 감수 리포트와 일곱 decision의 최종 실행 결과를 함께 제시하고 승인받는다. Error response contract scope에서 `dddjango-code-json`이면 canonical common action/path/승인 shape, controller direct mapping별 승인 HTTP 결과와 입장된 mounted OpenAPI/public Python 검증을 표시한다. `preserve-established`이면 승인된 native runtime/mounted 증거를 표시한다. 승인되지 않은 framework/private test를 증거로 발명하지 않는다. 기존 27-registry checker와 12-slot evidence는 그대로 실행·표시한다. Red, `pending`, 입장-diff 불일치, 첫-Green 비계, 미해소 직접-실행 exit 1·scope-렌더 exit 2, 미해소 «귀속» red, 미해소 캐스케이드 ①/②(이동·동명 폴더 승격) 발견, pre-gate 최신성 불비(`--check-report` exit ≠ 0 — 아래 최신성 항목 · 2026-09-03), 동작 보존 불비(`scripts/behavior_guard.py verify <산출물 폴더>` exit ≠ 0 — 열린 창·창 누락 · 2026-09-27), 또는 contract mismatch가 하나라도 남거나 G0 ⓐ 잔존 M>0(아래)이면 G2를 제시하지 않는다(legacy 잔존은 — G0 ⓐ 잔존을 빼고 — 차단 사유가 아니라 배너의 별도 보고 항목이다 — 2026-08-13 · **승인 유입도 별도 항목**이다 — «승인 유입 N건(머지 SHA 열거)» · 2026-09-03). G2 배너에 `G0 ⓐ N건 중 잔존 M` 1행을 둔다 — N 은 G0 에 동결된 ⓐ 건수이고, registry_gate 의 legacy 잔존 목록과 `refactor-scope.md` ⓐ 목록(경로·규칙 — `ⓐ 재상정` 절로 뺀 항목은 제외)의 교집합이 M 이다. 재상정으로 뺀 항목은 `재상정 제외 K건(처분별)`으로 따로 적는다(2026-09-26). 리팩토링 모드의 M 은 «리팩토링 모드» 절의 `M_c + M_m` 이다(2026-09-27). G2 배너에 `동작 보존: <요약>` 1행을 둔다 — 기계 출처는 배너 직전 `scripts/behavior_guard.py verify <산출물 폴더>` 의 `요약:` 행이다(슬라이스 0 창이 없으면 «해당 없음» · 2026-09-27). 리팩토링 모드는 verify 가 내는 `동작 보존:`(창 종류 넷 0T · 0C · 0F · 변경 · 열린 창 0 · 시험 쪽 바뀐 단위의 묶음 감사 · 개별 감사 · 승인 변경 · red 0 · 자동 초록 0 · 감사 키 일대일) · `바뀐 것 실행:` · `suite:` 세 줄을 그대로 옮긴다(«리팩토링 모드» 절 G2 · 2026-10-04). G2 승인을 받으면 `refactor-scope.md` 실행 줄에 `· G2 승인 <시각>` 을 덧붙여 그 승인분 커밋에 포함한다(실행 종료 — Phase 0 «실행과 앵커»).\n\n"@ko .
+    djr:text "7. **G2 배너**로 구현 코드·테스트·검증 결과 + 감수 리포트와 일곱 decision의 최종 실행 결과를 함께 제시하고 승인받는다. Error response contract scope에서 `dddjango-code-json`이면 canonical common action/path/승인 shape, controller direct mapping별 승인 HTTP 결과와 입장된 mounted OpenAPI/public Python 검증을 표시한다. `preserve-established`이면 승인된 native runtime/mounted 증거를 표시한다. 승인되지 않은 framework/private test를 증거로 발명하지 않는다. 기존 27-registry checker와 12-slot evidence는 그대로 실행·표시한다. Red, `pending`, 입장-diff 불일치, 첫-Green 비계, 미해소 직접-실행 exit 1·scope-렌더 exit 2, 미해소 «귀속» red, 미해소 캐스케이드 ①/②(이동·동명 폴더 승격) 발견, pre-gate 최신성 불비(`--check-report` exit ≠ 0 — 아래 최신성 항목 · 2026-09-03), 동작 보존 불비(`scripts/behavior_guard.py verify <산출물 폴더>` exit ≠ 0 — 열린 창·창 누락 · 2026-09-27), 또는 contract mismatch가 하나라도 남거나 G0 ⓐ 잔존 M>0(아래)이면 G2를 제시하지 않는다(legacy 잔존은 — G0 ⓐ 잔존을 빼고 — 차단 사유가 아니라 배너의 별도 보고 항목이다 — 2026-08-13 · **승인 유입도 별도 항목**이다 — «승인 유입 N건(머지 SHA 열거)» · 2026-09-03). `refactor-scope.md` 의 이번 실행 몫(`# 앞 실행` 절 앞)에 `사유 = 상시 미룸` 결정 줄이 있으면 Phase 0 «결정 출처»의 상시 미룸 1행(G2 · 마무리 꼴)도 별도 항목이다. G2 배너에 `G0 ⓐ N건 중 잔존 M` 1행을 둔다 — N 은 G0 에 동결된 ⓐ 건수이고, registry_gate 의 legacy 잔존 목록과 `refactor-scope.md` ⓐ 목록(경로·규칙 — `ⓐ 재상정` 절로 뺀 항목은 제외)의 교집합이 M 이다. 재상정으로 뺀 항목은 `재상정 제외 K건(처분별)`으로 따로 적는다(2026-09-26). 리팩토링 모드의 M 은 «리팩토링 모드» 절의 `M_c + M_m` 이다(2026-09-27). G2 배너에 `동작 보존: <요약>` 1행을 둔다 — 기계 출처는 배너 직전 `scripts/behavior_guard.py verify <산출물 폴더>` 의 `요약:` 행이다(슬라이스 0 창이 없으면 «해당 없음» · 2026-09-27). 리팩토링 모드는 verify 가 내는 `동작 보존:`(창 종류 넷 0T · 0C · 0F · 변경 · 열린 창 0 · 시험 쪽 바뀐 단위의 묶음 감사 · 개별 감사 · 승인 변경 · red 0 · 자동 초록 0 · 감사 키 일대일) · `바뀐 것 실행:` · `suite:` 세 줄을 그대로 옮긴다(«리팩토링 모드» 절 G2 · 2026-10-04). G2 승인을 받으면 `refactor-scope.md` 실행 줄에 `· G2 승인 <시각>` 을 덧붙여 그 승인분 커밋에 포함한다(실행 종료 — Phase 0 «실행과 앵커»).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007/b58> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s007> ;
@@ -5320,8 +5353,9 @@ djr:R-3643 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s008> ;
     djr:kind djr:kind-norm ;
     djr:order 1 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s005/b10> ;
     djr:statesNorm djr:R-0412, djr:R-0413, djr:R-0414 ;
-    djr:text "\n실행한 검증만 보고한다(관련 테스트·전체 suite·마이그레이션·`manage.py check`·(타입 검사가 구성돼 있으면) mypy strict 결과 + discipline-reviewer 점검 결과). 관련 검증과 전체 suite 결과를 구분하고, 무관 실패가 있으면 편집하지 않은 채 별도 표시한다. 실행하지 않은 것은 실행한 것처럼 보고하지 않고 미실행 사유를 명시한다.\n\n"@ko .
+    djr:text "\n실행한 검증만 보고한다(관련 테스트·전체 suite·마이그레이션·`manage.py check`·(타입 검사가 구성돼 있으면) mypy strict 결과 + discipline-reviewer 점검 결과). 관련 검증과 전체 suite 결과를 구분하고, 무관 실패가 있으면 편집하지 않은 채 별도 표시한다. 실행하지 않은 것은 실행한 것처럼 보고하지 않고 미실행 사유를 명시한다. `refactor-scope.md` 의 이번 실행 몫(`# 앞 실행` 절 앞)에 `사유 = 상시 미룸` 결정 줄이 있으면 Phase 0 «결정 출처»의 상시 미룸 1행(G2 · 마무리 꼴)을 함께 싣는다(검증 결과가 아니라 결정 기록의 보고다).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/commands/dddjango.md/s009> a djr:Section ;
     djr:headingSnapshot "## 수정 모드 (부분 수정)"@ko ;

@@ -700,6 +700,88 @@ class BookAdmin(TranslatableAdmin):
         partition.assert_not_called()
 
 
+class UsecaseAreaPairingRegression(unittest.TestCase):
+    """F4-86 — REST BC 의 응용 영역은 API 또는 같은 이름의 창구와 짝이다."""
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="field-area-pairing-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.records = self.root / "records.jsonl"
+        self.env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1",
+                        DJR_FINDINGS_JSON=str(self.records),
+                        DJR_VIOLATIONS_DIR=str(self.root / "violations"))
+
+    def copy_lane(self, lane: str) -> Path:
+        target: Path = self.root / lane
+        shutil.copytree(FIXTURES / "usecase_dto" / lane, target)
+        return target
+
+    def run_checker(self, target: Path) -> tuple[int, list[tuple[str, str, str]]]:
+        self.records.unlink(missing_ok=True)
+        result = subprocess.run(
+            [sys.executable, "-B", str(SCRIPTS / "check-usecase-dto-placement.py"), str(target)],
+            capture_output=True, text=True, env=self.env)
+        self.assertEqual(result.stderr, "")
+        rows: list[dict] = [json.loads(line) for line in self.records.read_text().splitlines()] \
+            if self.records.exists() else []
+        return result.returncode, [(row["rule"], row["file"], row["message"]) for row in rows]
+
+    def test_required_lanes_keep_exact_findings(self) -> None:
+        cases = (
+            ("ohs_only_area", 0, []),
+            ("orphan_area", 2, [("#188", "application/orders/application_layer/content_catalog",
+                                "`<area>` 는 `driving_layer/api/<area>` 또는 `driving_layer/open_host_service/<area>` 와 짝이다 — 둘 다 `content_catalog/` 이 없다")]),
+            ("api_only_area", 2, [("#188", "application/orders/driving_layer/api/content_catalog",
+                                  "`<area>` 는 `application_layer/<area>` 와 1:1 이다 — application_layer 쪽에 `content_catalog/` 이 없다")]),
+        )
+        for lane, code, findings in cases:
+            with self.subTest(lane=lane):
+                self.assertEqual(self.run_checker(self.copy_lane(lane)), (code, findings))
+
+    def test_ohs_partner_counts_empty_directory_but_not_cache_file_or_different_name(self) -> None:
+        target: Path = self.copy_lane("ohs_only_area")
+        ohs: Path = target / "application/orders/driving_layer/open_host_service/content_catalog"
+        (ohs / "__init__.py").unlink()
+        self.assertEqual(self.run_checker(target), (0, []))
+        (ohs / "__pycache__").mkdir()
+        (ohs / "__pycache__/stale.pyc").write_bytes(b"cache")
+        code, findings = self.run_checker(target)
+        self.assertEqual((code, [row[0] for row in findings]), (2, ["#188"]))
+        (ohs / "real.py").write_text("pass\n")
+        self.assertEqual(self.run_checker(target), (0, []))
+        shutil.rmtree(ohs)
+        ohs.write_text("")
+        code, findings = self.run_checker(target)
+        self.assertEqual((code, [row[0] for row in findings]), (2, ["#188"]))
+        ohs.unlink()
+        other: Path = ohs.with_name("different_catalog")
+        other.mkdir()
+        (other / "__init__.py").write_text("")
+        code, findings = self.run_checker(target)
+        self.assertEqual((code, [row[0] for row in findings]), (2, ["#188"]))
+        shutil.rmtree(other)
+        for wrong in ("Content_Catalog", "group/content_catalog"):   # 대소문자만 다름 · 직계가 아닌 중첩
+            near: Path = ohs.parent / wrong
+            near.mkdir(parents=True)
+            (near / "__init__.py").write_text("")
+            code, findings = self.run_checker(target)
+            self.assertEqual((code, [row[0] for row in findings]), (2, ["#188"]), wrong)
+            shutil.rmtree(ohs.parent / wrong.split("/")[0])
+
+    def test_rest_skip_and_api_reverse_pairing_are_preserved(self) -> None:
+        target: Path = self.copy_lane("orphan_area")
+        (target / "application/orders/driving_layer/api/order/order_controller.py").unlink()
+        self.assertEqual(self.run_checker(target), (0, []))
+        target = self.copy_lane("api_only_area")
+        ohs: Path = target / "application/orders/driving_layer/open_host_service/content_catalog"
+        ohs.mkdir(parents=True)
+        (ohs / "__init__.py").write_text("")
+        code, findings = self.run_checker(target)
+        self.assertEqual((code, [row[:2] for row in findings]),
+                         (2, [("#188", "application/orders/driving_layer/api/content_catalog")]))
+
+
 class CacheInstanceRegression(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix="field-cache-")
@@ -884,6 +966,36 @@ class CacheInstanceRegression(unittest.TestCase):
 
 class NormativeContractRegression(unittest.TestCase):
     """문면 전파 대조이며 역할 에이전트의 실제 수행 증명은 아니다."""
+
+    def test_standing_deferral_duties_are_written(self) -> None:
+        """F4-84 — 상시 미룸 핵심 구와 보고 의무가 두 Coordinator에 있다(문장 있음 대조)."""
+        phrases = (
+            "**상시 미룸**(2026-10-12)", "㉠ 기존 코드 정리·빚을 ㉡ 미루고 ㉢",
+            "같은 저장소(워크트리 포함)를 작업 폴더로 둔 대화",
+            "게이트 답을 대리에게 맡긴 실행의 세션에 들어온 입력 줄은 본인 턴이 아니다",
+            "그 줄이 도구 결과가 아닌 사용자 입력 줄이면 확인된 것이다",
+            "작업 폴더나 턴 종류가 기록에 없으면 상시가 아니다",
+            "발주자·대리·다른 레인이 옮겨 적거나 요약한 방침은 여전히 출처가 아니다",
+            "닫은 범위를 든 줄은 «그만 물어» 류가 같이 있어도 그 범위 안에서만 쓴다",
+            "이름 목록이나 기간으로 닫은 범위", "«판단은 네게 맡긴다» 류의 맡김은 ㉡ 이 아니다",
+            "«미룰 수 없음» 항목, 리팩토링 모드 실행, 이미 승인된 ⓐ(동결)",
+            "같은 출처 규칙을 따르되 상시 미룸은 쓰지 않는다(이관 빚은 이 실행 코드의 귀속이다)",
+            "상시 미룸이 선 항목이면 질문 없이 결정 줄을 기록한다",
+            "<항목 ID 목록> · 결정 = ⓑ · 사유 = 상시 미룸 — 물음 <파일:행> · 출처 = 사용자 원문 <파일:행>(<원문 시각>)",
+            "`물음 <파일:행>` 자리에 `물음 없음`",
+            "상시 미룸 <n>건 — 원문 <파일:행>(<시각>) · 이번에 정리하려면 G0 수정 요청에 항목 ID",
+            "상시 미룸 <n>건 — 원문 <파일:행>(<시각>) · 거두려면 사용자 새 원문 · 정리는 다음 실행 G0 수정 요청에 항목 ID",
+            "n 과 원문은 `refactor-scope.md` 의 이번 실행 몫(`# 앞 실행` 절 앞) `사유 = 상시 미룸` 결정 줄에서 옮긴다",
+            "위 «이 실행 또는 이름을 든» 원문으로도 서지 않으면 출처 없는 ⓑ 다",
+            "① 묻지 않고 미룸 — 기존 위반이 발주마다 남는다 · 거두려면 새 말씀 ② 발주마다 물음 — 빚이 있으면 발주마다 정리·미룸 결정을 다시 받는다",
+            "Phase 0 «결정 출처»의 상시 미룸 1행(G2 · 마무리 꼴)도 별도 항목이다",
+            "Phase 0 «결정 출처»의 상시 미룸 1행(G2 · 마무리 꼴)을 함께 싣는다(검증 결과가 아니라 결정 기록의 보고다)",
+        )
+        for rel in ("dddjango/commands/dddjango.md", "codex-dddjango/skills/dddjango/SKILL.md"):
+            text = (ROOT / rel).read_text(encoding="utf-8")
+            for phrase in phrases:
+                with self.subTest(path=rel, phrase=phrase):
+                    self.assertIn(phrase, text)
 
     def test_internal_normalization_and_public_500_are_distinct_in_six_sources(self):
         for rel in (

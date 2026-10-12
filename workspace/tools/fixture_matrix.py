@@ -79,6 +79,8 @@ NEGATIVE_LANES: "list[tuple[str, str, str]]" = [
     ("check-broker-contract.py", "broker_contract", "no_adoption"),
     ("check-composition-root.py", "composition_root", "no_api"),
     ("check-usecase-dto-placement.py", "usecase_dto", "no_api"),
+    # F4-86 — REST BC 안의 창구 전용 영역도 응용 영역의 짝이다.
+    ("check-usecase-dto-placement.py", "usecase_dto", "ohs_only_area"),
     ("check-naming.py", "naming", "domain_results"),
     # 결정 2(2026-09-04) — 내용 없는 골격 파일(skeleton_placeholder)은 내용 규칙(#219·#635)의 대상이 아니다.
     ("check-port-adapter-pairing.py", "port_adapter_pairing", "skeleton_placeholder"),
@@ -87,6 +89,8 @@ NEGATIVE_LANES: "list[tuple[str, str, str]]" = [
 
 POSITIVE_LANES: "list[tuple[str, str, str]]" = [
     ("check-usecase-dto-placement.py", "usecase_dto", "registrar_only"),
+    ("check-usecase-dto-placement.py", "usecase_dto", "orphan_area"),
+    ("check-usecase-dto-placement.py", "usecase_dto", "api_only_area"),
 ]
 
 
