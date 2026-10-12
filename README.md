@@ -60,16 +60,16 @@ codex plugin add dddjango-web@changja88-dddjango         # Codex
 
 설치한 플러그인(`dddjango`·`dddjango-web`) 루트의 `REQUEST_GUIDE.md`가 해당 runtime의 권위 있는 가이드 사본이다. 아래 링크는 저장소에서 최신 가이드를 찾는 진입점이다.
 
-`dddjango`는 한 기능과 원하는 업무 변화로 시작할 수 있다. `dddjango-web`은 셋을 준다 — 만들 화면 기능의 설명, OpenAPI 3 JSON 문서의 위치(이 프로젝트 안 경로 `/api/openapi.json` 꼴·파일 경로·`http(s)://` 주소), 디자인(Claude Code는 Claude Design 화면 주소를 따옴표 안에 · Codex는 내려받은 시안 폴더 경로와 화면 이름). 디자인을 주지 않으면 G0에서 로컬 이미지·자체 설계 가운데서 함께 정한다. 그 밖의 정보는 이미 알고 있거나 정한 부분만 보태면 된다.
+`dddjango`는 두 칸만 쓴다 — 필요한 동작(고칠 때는 바꿀 동작)과 사용자가 직접 정한 특별 기술 요청 사항. `dddjango-web`은 세 칸을 쓴다 — 필요한 화면(고칠 때는 바꿀 동작), 시안(Claude Code는 Claude Design 화면 주소 또는 내려받은 시안 폴더 경로 · Codex는 내려받은 시안 폴더 경로와 화면 이름), 사용자가 직접 정한 특별 기술 요청 사항. 닫는 따옴표 뒤에는 OpenAPI 3 JSON 문서의 위치(이 프로젝트 안 경로 `/api/openapi.json` 꼴·파일 경로·`http(s)://` 주소)를 붙인다.
 
 | 플러그인 | 요청 정보 | 작업 경계 | 가이드 |
 |---|---|---|---|
-| **dddjango** | 원하는 업무 변화·대표 성공 결과·이미 정한 핵심 규칙과 실패 뒤 상태·보존/변경/제외 범위 | 화면 작업은 `dddjango-web`으로 이어간다. Django admin 등 기존 업무 기능에 포함된 화면은 `dddjango`가 담당하는 경우도 있으며, 플러그인이 코드를 조사해 안내한다. | [dddjango 작업 요청 가이드](dddjango/REQUEST_GUIDE.md) |
-| **dddjango-web** | 만들 화면 기능의 설명·OpenAPI 3 JSON 문서 위치(이 프로젝트 안 경로·파일 경로·`http(s)://` 주소)·디자인(Claude Code=Claude Design 화면 주소 · Codex=내려받은 시안 폴더 경로) | 백엔드 코드는 고치지 않는다. 필요한 API가 없으면 가정 계약으로 짓고 실제 API는 `dddjango`로 요청하도록 안내한다. 브라우저 UI 동작에 필요한 경우 JavaScript를 쓴다. | [dddjango-web 작업 요청 가이드](dddjango-web/REQUEST_GUIDE.md) |
+| **dddjango** | ① 필요한 동작(결과로 — 성공하면·실패하면 · 고칠 때는 «지금 → 바뀐 뒤») ② 특별 기술 요청 사항(사용자가 직접 정한 것만 · 없으면 비움) | 화면 작업은 `dddjango-web`으로 이어간다. Django admin 등 기존 업무 기능에 포함된 화면은 `dddjango`가 담당하는 경우도 있으며, 플러그인이 코드를 조사해 안내한다. | [dddjango 작업 요청 가이드](dddjango/REQUEST_GUIDE.md) |
+| **dddjango-web** | ① 필요한 화면(고칠 때는 «지금 → 바뀐 뒤») ② 시안(Claude Code=Claude Design 화면 주소 또는 내려받은 시안 폴더 · Codex=내려받은 시안 폴더 경로) ③ 특별 기술 요청 사항(사용자가 직접 정한 것만) + OpenAPI 3 JSON 문서 위치(이 프로젝트 안 경로·파일 경로·`http(s)://` 주소) | 백엔드 코드는 고치지 않는다. 필요한 API가 없으면 가정 계약으로 짓고 실제 API는 `dddjango`로 요청하도록 안내한다. 브라우저 UI 동작에 필요한 경우 JavaScript를 쓴다. | [dddjango-web 작업 요청 가이드](dddjango-web/REQUEST_GUIDE.md) |
 
-알고 있는 코드·문서·테스트 경로, 별도 이미지·폰트, API 자료 위치는 조사를 빠르게 하는 선택 정보다. API 위치를 모르면 플러그인이 조사하거나 묻는다. `dddjango-web`에서 Claude Design 시안을 쓰려면 Claude Code는 앱 화면 시안 프로젝트의 주소를 준다(플러그인이 보여 주는 목록에 나오지 않는다). Codex는 Claude Design에서 내려받은 시안 폴더의 경로를 준다.
+`dddjango` 요청에는 두 칸 밖의 내용(조사한 코드 목록·파일 위치·진행 방식)을 적지 않는다 — 자료 위치는 플러그인이 찾을 수 없는 바깥 것만 2번 칸에 적는다. `dddjango-web` 요청도 세 칸 밖의 내용을 적지 않고, 시안의 문구·색·크기를 글로 옮기지 않고 위치만 준다. OpenAPI 문서 위치는 한 번 주면 저장되고, 모르면 플러그인이 조사하거나 묻는다.
 
-플러그인이 프로젝트와 자료를 조사하고 설계·agent/skill 선택·구현·테스트·검증 방법을 맡는다. 그래서 요청에는 진행 방식·파일 위치·경로 목록·선례·구현 수단을 적지 않는다. 조사만으로 정할 수 없는 제품 결정과 필요한 승인은 플러그인이 질문한다. 자세한 요청 예시, 요청에 적지 않을 것, 다른 세션에 맡겨 요청할 때의 규칙은 각 가이드에서 확인할 수 있다.
+플러그인이 프로젝트와 자료를 조사하고 설계·agent/skill 선택·구현·테스트·검증 방법을 맡는다. 그래서 요청에는 진행 방식·파일 위치·경로 목록·선례·구현 수단을 적지 않는다. 조사만으로 정할 수 없는 제품 결정과 필요한 승인은 플러그인이 질문한다. 자세한 요청 틀과 좋은 예·나쁜 예, 요청에 적지 않을 것은 각 가이드에서 확인할 수 있다.
 
 ---
 

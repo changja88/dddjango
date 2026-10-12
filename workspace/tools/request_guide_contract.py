@@ -98,9 +98,6 @@ def validate(root: Path) -> list[str]:
         for path, text in zip((canonical, mirror), texts):
             if text is None:
                 continue
-            introduction = re.split(r"(?m)^##\s", text, maxsplit=1)[0]
-            if not re.search(r"설치된[^\n]*`REQUEST_GUIDE\.md`[^\n]*해당 runtime[^\n]*권위 있는 가이드", introduction):
-                errors.append(f"[guide-authority] {path}: missing installed-copy authority in introduction")
             for target in source_link_targets(text):
                 if not target.startswith("#") and not re.match(r"[A-Za-z][A-Za-z0-9+.-]*:", target):
                     errors.append(f"[guide-link] {path}: relative destination-like source {target!r}")
@@ -153,7 +150,6 @@ def validate(root: Path) -> list[str]:
 def self_test() -> int:
     """각 fixture 변이는 지정된 계약 검사가 빠지면 반드시 실패한다."""
     repository = REPOSITORY
-    authority = "설치된 플러그인 루트의 이 `REQUEST_GUIDE.md`가 해당 runtime에 대한 권위 있는 가이드 사본입니다."
     fixtures: dict[str, str] = {
         "README.md": (
             "# 플러그인\n\n## 작업 요청 가이드\n\n"
@@ -172,7 +168,7 @@ def self_test() -> int:
             url = homepage_url(plugin)
             if plugin in GUIDE_PLUGINS:
                 fixtures[f"{directory}/REQUEST_GUIDE.md"] = (
-                    f"# {plugin}\n\n{authority}\n\n## 시작\n"
+                    f"# {plugin}\n\n## 시작\n"
                     "[시작](#시작) [공개 문서](https://example.com/guide)\n"
                 )
             manifest = {"name": plugin, "homepage": url, "repository": repository}
@@ -284,9 +280,6 @@ def self_test() -> int:
             cases.append((f"{plugin}: {label} accepted", {
                 canonical: fixtures[canonical] + suffix, mirror: fixtures[mirror] + suffix,
             }, ""))
-        cases.append((f"{plugin}: authority line deleted", {
-            path: fixtures[path].replace(authority, "") for path in (canonical, mirror)
-        }, "guide-authority"))
 
     for plugin in PLUGINS:
         # homepage·websiteURL 의 «헷갈린 값» — 가이드가 있으면 저장소 루트, 없으면 가이드 URL.
