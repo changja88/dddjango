@@ -136,13 +136,42 @@ def _sh1(ctx: BackstopContext, scopes: Dict[str, frozenset]) -> List[Finding]:
     state = products_state(ctx)
     pages: Set[str] = set()
     scope: Set[str] = set()
+    document: Set[str] = set()
+    if scopes:  # 렌더 간선은 지속 셸이 있을 때만 계산된다
+        # 문서 이동 셸(지속 아닌 표준 셸)의 상속 사슬과 그 렌더 닫힘 — 새로 넓힌 화면에서만 뺀다
+        reverse: Dict[str, Set[str]] = {}
+        for f, edges in ctx._persistent_edges.items():
+            for kind, target, _line in edges:
+                if kind == 'extends':
+                    reverse.setdefault(target, set()).add(f)
+        doc_chain: Set[str] = set(state.shells) - set(scopes)
+        pending: List[str] = list(doc_chain)
+        while pending:
+            for f in reverse.get(pending.pop(), set()) - doc_chain:
+                doc_chain.add(f)
+                pending.append(f)
+        document = render_closure(ctx, doc_chain)
     for shell, members in scopes.items():
         scope.update(members)
-        pages.update(f for f in ctx._persistent_seeds[shell] | ctx._persistent_chains[shell]
-                     if f not in state.shells and ext_of(f) == '.html' and (
-                         (f.startswith('application/') and re.search(r'/presentation_layer/(?:view|section|widget)/', f))
-                         or f.startswith('root/scaffold/view/')
-                         or (f in ctx._persistent_chains[shell] and not is_standard_path(f))))
+        chain = ctx._persistent_chains[shell]
+        drawn: Set[str] = set(chain)  # 사슬 + 사슬이 글자 include 로 그리는 템플릿(include 대상의 extends 부모는 따르지 않는다)
+        pending = list(drawn)
+        while pending:
+            for kind, target, _line in ctx._persistent_edges.get(pending.pop(), []):
+                if kind == 'include' and target not in drawn:
+                    drawn.add(target)
+                    pending.append(target)
+        old = {f for f in ctx._persistent_seeds[shell] | chain
+               if f not in state.shells and ext_of(f) == '.html' and (
+                   (f.startswith('application/') and re.search(r'/presentation_layer/(?:view|section|widget)/', f))
+                   or f.startswith('root/scaffold/view/')
+                   or (f in chain and not is_standard_path(f)))}
+        new = {f for f in ctx._persistent_seeds[shell] | drawn
+               if f not in state.shells and ext_of(f) == '.html' and (
+                   (f.startswith('application/') and re.search(r'/presentation_layer/(?:[^/]+/)?(?:view|section|widget)/', f))
+                   or f.startswith('root/scaffold/view/')
+                   or (f in drawn and not is_standard_path(f)))}
+        pages.update(old | (new - document))
     out: List[Finding] = []
     for f in ctx.files:
         if ext_of(f) != '.html' or not ctx.is_touched(f):

@@ -819,11 +819,141 @@ def bundle_minor(tmp):
               and ('판독 불가' in out) == bool(probe.returncode), (probe.returncode, r.returncode, out))
 
 
+# F4-91 바로 앞 배포판(dddjango-web 2.4.3) — SH1 밖 출력 대조의 옛 러너. HEAD 로 잡으면 커밋 뒤 새 판 자신이 된다.
+DRAWN_BASELINE = '1328eba4'
+BOOST = '<a href="/next/" hx-boost="true">next</a>'
+
+
+def drawn_project(tmp, declared):
+    """F4-91 경우표 — 지속 셸 화면이 그리는 조각. 이름 → (파일, SH1 붉음)."""
+    p, shell, page, _ = prepare(tmp, declared)
+    bc = page.split('/presentation_layer/')[0]
+    stem = bc.rsplit('/', 1)[1]
+    concept = bc + '/presentation_layer/%s_pick/' % stem
+    cases, drawn = {}, []
+
+    def case(name, file, red, text=None, include=True):
+        cases[name] = (file, red)
+        if text is not None:
+            p.w('web/' + file, text)
+        if include:
+            drawn.append(file)
+
+    def inc(file):
+        return '{% include "' + file + '" %}'
+
+    view = concept + 'view/%s_pick_view.html' % stem
+    section = concept + 'section/%s_pick_card_section.html' % stem
+    p.w('web/' + view, '{% extends "' + shell + '" %}', '{% block title %}pick{% endblock title %}',
+        '{% block content %}' + inc(section) + '{% endblock content %}')
+    case('① 개념 폴더 section', section, False, '<div>card</div>', False)
+    case('개념 폴더 view 화면 자체', view, False, None, False)
+    p.w('web/parlor/talk/section/talk_mount.html', inc('parlor/talk/section/talk_header.html'))
+    p.w('web/parlor/talk/section/talk_header.html', '<header>' + inc('parlor/talk/section/talk_back_link_section.html') + '</header>')
+    drawn.append('parlor/talk/section/talk_mount.html')
+    case('② 옛 배치 include 세 단', 'parlor/talk/section/talk_back_link_section.html', False, '<span>back</span>', False)
+    case('include 안 된 옛 조각(hx-get 응답 포함 — 한계)', 'parlor/stray/stray_link.html', True, '<span>stray</span>', False)
+    case('design_system 부품', 'design_system/component/button/primary_button.html', True)
+    case('개념 폴더 두 단', bc + '/presentation_layer/a_pick/b_sub/section/deep_section.html', True, '<span>deep</span>')
+    case('view/x/section 씨앗', bc + '/presentation_layer/view/x/section/odd_section.html', False, '<span>odd</span>', False)
+    case('변수 include 대상(한계)', 'parlor/var/var_part.html', True, '<span>var</span>', False)
+    p.w('web/parlor/layout/doc_base.html', '<html><body>' + inc('parlor/layout/doc_nav.html'),
+        '{% block content %}{% endblock content %}</body></html>')
+    p.w('web/parlor/doc/view/doc_page.html', '{% extends "parlor/layout/doc_base.html" %}',
+        '{% block content %}' + inc('parlor/docpart/doc_only.html') + '{% endblock content %}')
+    p.w('web/parlor/card/card.html', '{% extends "parlor/layout/doc_base.html" %}', '{% block content %}c{% endblock content %}')
+    drawn.append('parlor/card/card.html')
+    case('include 대상이 extends 하는 옛 문서 레이아웃의 조각', 'parlor/layout/doc_nav.html', True, '<nav>n</nav>', False)
+    case('옛 문서 레이아웃만 그리는 조각', 'parlor/docpart/doc_only.html', True, '<span>doc</span>', False)
+    p.w('web/parlor/rel/rel_mid.html', '{% include "./rel_part.html" with a=1 only %}')
+    drawn.append('parlor/rel/rel_mid.html')
+    case('상대 경로 · with only include', 'parlor/rel/rel_part.html', False, '<span>rel</span>', False)
+    p.w('web/parlor/cardbase/card_base.html', '<div>' + inc('parlor/cardbase/card_title.html') + '{% block body %}{% endblock body %}</div>')
+    p.w('web/parlor/cardbase/user_card.html', '{% extends "parlor/cardbase/card_base.html" %}', '{% block body %}u{% endblock body %}')
+    drawn.append('parlor/cardbase/user_card.html')
+    case('카드 base 부모가 include 하는 조각(보수)', 'parlor/cardbase/card_title.html', True, '<h3>t</h3>', False)
+    case('common 조각', 'common/util/common_part.html', True, '<span>c</span>')
+    p.sub('web/' + shell, '</head>', inc('root/scaffold/view/root_head_part.html') + '\n</head>')
+    case('셸 머리 root 조각', 'root/scaffold/view/root_head_part.html', False, '<meta name="x" content="y">', False)
+    menu = 'root/scaffold/view/root_doc_menu.html'
+    case('문서 셸이 그리는 root 조각', menu, declared, '<div>menu</div>', False)
+    if declared:
+        p.sub('web/' + FLAT_SHELL, '<body>', '<body>' + inc(menu))
+        p.w('web/parlor/embed/doc_embed.html', '{% extends "' + FLAT_SHELL + '" %}', '{% block content %}e{% endblock %}')
+        drawn.append('parlor/embed/doc_embed.html')
+        order = 'application/order/presentation_layer/section/'
+        case('다른 제품 BC 조각을 지속 옛 화면만 그림', order + 'order_extra_section.html', False, '<div>x</div>')
+        doc = []
+        for name, file, red, persistent in [
+                ('문서 화면과 함께 그리는 다른 제품 조각', order + 'order_shared_section.html', True, True),
+                ('문서 화면만 그리는 조각', order + 'order_doc_only_section.html', True, False),
+                ('문서 화면과 함께 그리는 옛 조각', 'parlor/shared/shared_badge.html', True, True),
+                ('지속 제품 자기 section 을 문서 화면도 그림(한계)', bc + '/presentation_layer/section/%s_flat_section.html' % stem, False, False),
+                ('개념 폴더 section 을 문서 화면도 그림', concept + 'section/%s_doc_section.html' % stem, True, False)]:
+            case(name, file, red, '<div>s</div>', persistent)
+            doc.append(file)
+        p.w('web/parlor/flatdoc/view/flat_doc.html', '{% extends "' + FLAT_SHELL + '" %}',
+            '{% block content %}' + ''.join(inc(f) for f in doc) + '{% endblock content %}')
+        hidden = 'parlor/shared/hidden_pick_section.html'
+        case('문서 화면이 변수 include 로 함께 그리는 옛 조각(한계)', hidden, False, '<div>h</div>')
+        p.w('web/parlor/flatdoc/view/flat_var.html', '{% extends "' + FLAT_SHELL + '" %}',
+            '{% block content %}{% with part_name="' + hidden + '" %}{% include part_name %}{% endwith %}{% endblock content %}')
+    p.w('web/parlor/front/view/front.html', '{% extends "' + shell + '" %}', '{% block title %}front{% endblock title %}',
+        '{% block content %}' + ''.join(inc(f) for f in drawn) + '{% include part_name %}{% endblock content %}')
+    return p, p.commit('drawn-base'), cases
+
+
+def without_sh1(text):
+    out, skip = [], False
+    for line in text.splitlines():
+        if line.startswith('[SH1] BLOCKER'):
+            skip = True
+        elif not (skip and line.startswith('  ')):
+            skip = False
+            if line:  # 발견 사이 빈 줄 수는 SH1 발견 수를 따라 바뀐다
+                out.append(re.sub(r'blocker \d+건', 'blocker #건', line))
+    return counts_normalized('\n'.join(out))
+
+
+def bundle_z9(tmp):
+    # F4-91: SH1 화면 = 옛 몫 ∪ (사슬 + 글자 include 닫힘 · 개념 폴더 한 단 − 표준 문서 셸이 그리는 것).
+    old = None
+    archive = subprocess.run(['git', '-C', str(REPO), 'archive', DRAWN_BASELINE, 'dddjango-web/scripts',
+                              'dddjango-web/.claude-plugin'], capture_output=True, env=ENV)
+    if archive.returncode:
+        print('SKIP Z9 — 바탕 커밋 %s 없음: 옛 러너 대조만 건너뜀' % DRAWN_BASELINE)
+    else:
+        (tmp / 'old').mkdir()
+        subprocess.run(['tar', '-xf', '-', '-C', str(tmp / 'old')], input=archive.stdout, check=True)
+        old = tmp / 'old/dddjango-web/scripts'
+    for declared in (False, True):
+        p, base, cases = drawn_project(tmp / str(declared), declared)
+        for name, (file, red) in cases.items():
+            p.reset(base)
+            p.append('web/' + file, BOOST)
+            expect(p, base, 'sh1', red, 'Z9 %s %s' % (declared, name), file if red else None)
+        p.reset(base)
+        for file, _ in cases.values():
+            p.append('web/' + file, BOOST)
+        if old is None:
+            continue
+        for args in (('--diff-base', base), ('--diff-base', base, '--slice-end'), ('--all',)):
+            new_code, new_out = backstop(p.root, *args)
+            old_code, old_out = backstop(p.root, *args, scripts=old)
+            check('Z9 대조 실행이 검사까지 돎(%s %s)' % (declared, args[-1]),
+                  new_code in (0, 2) and old_code in (0, 2), (new_code, old_code, new_out[-300:]))
+            check('Z9 SH1 밖 출력 2.4.3 과 같음(%s %s)' % (declared, args[-1]),
+                  without_sh1(new_out) == without_sh1(old_out), (new_out, old_out))
+            heads = lambda out: {line for line in out.splitlines() if line.startswith('[SH1] BLOCKER')}
+            check('Z9 SH1 은 줄기만 한다(%s %s)' % (declared, args[-1]), heads(new_out) <= heads(old_out),
+                  sorted(heads(new_out) - heads(old_out)))
+
+
 def main():
     only = set(sys.argv[1:])
     for bundle in (bundle_z0, bundle_z1, bundle_z1_alias, bundle_z2, bundle_z2_tabs, bundle_z3, bundle_z3_verbatim,
                    bundle_z4, bundle_z4_legacy, bundle_z4_order, bundle_z5, bundle_z6, bundle_z7, bundle_z8,
-                   bundle_minor, bundle_standard):
+                   bundle_minor, bundle_standard, bundle_z9):
         if only and bundle.__name__[7:] not in only:
             continue
         with tempfile.TemporaryDirectory(prefix='web240-') as tmp:

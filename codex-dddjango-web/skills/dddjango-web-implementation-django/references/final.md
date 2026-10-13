@@ -201,6 +201,9 @@ class LandingNavigator:
 - **root 가 요청마다 바뀌는 자료를 화면 JS 에 줘야 하면** `<main>` 안 · `{% block content %}` 앞에 `{{ root_state.<값>|json_script:"root-<이름>" }}` 한 줄씩 둔다 — 탭 이동마다 본문과 함께 바뀐다. body 바로 아래에 두면 첫 문서 값으로 굳는다(꼴 ⑫ 위반). 읽는 JS 는 `htmx:load` 마다 다시 읽는다(implementation-javascript §3 «지속 셸의 수명» P4).
 - 탭 목록 반복문이 두 번이다(첫 문서용 · OOB 용) — 새 파일을 만들지 않으려는 것이다(discipline-houserules §4). 두 반복문의 글자가 같은지는 꼴 ⑨ 가 본다.
 - 페이지는 지금처럼 셸을 extends 하고 `{% block title %}` · `{% block content %}` 만 채운다(중간 base 를 거쳐도 된다 — 그 사슬 전체와 그 사슬이 include 하는 템플릿이 지속 셸 소속이다 · 백스톱 SH3). `{% block head %}` · `{% block scripts %}` 는 셸에 없다(정의하면 죽은 글 — SH3).
+- 백스톱 SH1 이 부스트 `<a>` 를 허용하는 «화면»은 이 소속 안에서 셋이다: ① 지속 셸 제품의 `presentation_layer/{view,section,widget}/` 조각과 `root/scaffold/view/` 조각(제품 선언이 없을 때 — 선언이 있으면 root 조각은 ③ 으로만) — 어디서 그려지든 ② 지속 셸 제품의 개념 폴더 한 단 아래(`presentation_layer/<개념>/section/` 등) view · section · widget ③ 사슬과 사슬이 글자 include 로 거듭 그리는 템플릿 — 옛 배치 · 다른 제품 템플릿 포함 · `application/` 아래는 view · section · widget(개념 폴더 한 단까지)만(include 대상이 extends 하는 부모 쪽은 따르지 않는다 · design_system 부품 · `common/` 은 화면이 아니다). ② · ③ 가운데 표준 문서 이동 셸 화면도 글자 extends · include 로 그리는 템플릿은 화면으로 세지 않는다.
+  - SH1 이 막지만 규칙상 허용인 꼴: 변수 include 로만 그리는 옛 조각(글자 include 로 고친다) · hx-get 응답으로만 지속 화면에 들어가는 옛 조각 · 조각 레이아웃 부모가 include 하는 조각(카드 base 꼴) — 이 둘은 검사기 이의로 올린다.
+  - SH1 이 통과시키지만 위반일 수 있는 꼴: ① 자리 조각을 문서 이동 셸 화면도 그리는 경우 · 옛 문서 레이아웃(표준 셸 밖)이 함께 그리는 조각 · 문서 화면이 SH1 이 못 보는 길(변수 include · 변수 extends · hx-get 조각 응답)로 함께 그리는 조각(지속 제품 · 옛 배치 · 다른 제품 모두) — 감수가 그 링크가 지속 셸 아래에서만 그려지는지 확인한다.
 - **별칭 한 계약**: 이 꼴의 `hx-*` 는 모두 `data-hx-*` 별칭으로 써도 된다 — htmx · 서버 판별(아래 처리기의 `HISTORY_ELT_ATTRS`) · 백스톱 SH 가 같게 받는다. 같은 요소에 두 이름을 함께 쓰면 값이 같아야 한다(htmx 는 `hx-` 값을 먼저 읽는다). 표준 글은 `hx-*` 로 쓴다.
 
 **지속 셸의 고정 꼴**(백스톱 SH2 가 본다 — `hx-*` 는 `data-hx-*` 별칭도 같은 속성으로 본다):
@@ -864,7 +867,7 @@ class RootInitializer:
 ```
 
 - **BC 화면의 전제(유일한 접점 — "아무것도 하지 않기")**: 화면 최상위에 별도 스크롤 컨테이너(높이 고정 + `overflow: auto` 래퍼)를 두지 않는다 — 문서 스크롤이 기본이라 새 이동이 맨 위에서 시작한다. 내부 스크롤 패널을 쓰는 화면은 그 패널만 재탭 스크롤톱이 무반응이 된다(의도된 트레이드오프 — BC에 결합을 만들지 않는 것이 우선). 지속 셸의 재탭 ② 는 요청 없이 문서 맨 위로(화면 상태 유지) · 부스트 이동은 교체 직후 `root_shell.js` 가 문서를 맨 위로 보낸다(htmx 정착 스크롤은 `show:none` 으로 끔).
-- **탭 링크에 `hx-get`을 붙이지 않는다 — `hx-boost` 는 지속 셸의 탭 막대 `<nav>` 한 곳에만 단다**(§2 «지속 셸» · 백스톱 SH1 · `data-hx-boost` 별칭도 같은 속성이다). 문서 이동 셸의 탭은 브라우저 이동이다. 지속 셸의 부스트 이동은 주소 쌓기를 htmx core 가 하고, 교체 자리 · 같은 주소의 기록 대체 · 탭 기록 · 실패의 전체 이동은 `RootRequestHandler` 가, 진행 중 이동 거두기 · 떠난 화면의 조각 요청 끊기 · 화면 밖 요청 요소(`body` 등)의 지연 교체 없앰 · 본문 맨 위 · 재탭 ②(요청 없이 맨 위로) · history state 보전은 `root_shell.js` 가 한다 — 같은 동작을 기능 JS 로 다시 만들지 않는다. 조각 요청(`hx-get`)은 주소 · 기록을 바꾸지 않으므로 탭 기록에 적히지 않는다.
+- **탭 링크에 `hx-get`을 붙이지 않는다 — 탭 링크의 `hx-boost` 는 지속 셸의 탭 막대 `<nav>` 에 단다**(화면 안 같은 제품 링크는 implementation-htmx §9 · §2 «지속 셸» · 백스톱 SH1 · `data-hx-boost` 별칭도 같은 속성이다). 문서 이동 셸의 탭은 브라우저 이동이다. 지속 셸의 부스트 이동은 주소 쌓기를 htmx core 가 하고, 교체 자리 · 같은 주소의 기록 대체 · 탭 기록 · 실패의 전체 이동은 `RootRequestHandler` 가, 진행 중 이동 거두기 · 떠난 화면의 조각 요청 끊기 · 화면 밖 요청 요소(`body` 등)의 지연 교체 없앰 · 본문 맨 위 · 재탭 ②(요청 없이 맨 위로) · history state 보전은 `root_shell.js` 가 한다 — 같은 동작을 기능 JS 로 다시 만들지 않는다. 조각 요청(`hx-get`)은 주소 · 기록을 바꾸지 않으므로 탭 기록에 적히지 않는다.
 - 세션 값은 JSON 직렬화 가능한 원시값이라 `root.tab_last`는 `{탭: 경로}` dict 하나다 — 키 대입만 변경으로 저장되므로 항상 새 dict를 대입한다(implementation-htmx §3).
 - **재탭 신호 버스(과거 HaffHaff `scroll_to_top_notifier` — BC가 전역 신호를 listen)는 비채택**이다: 금지 채널의 재생산(architecture-state §8). web에서는 전역 JS 이벤트로 BC 스크립트에 재탭을 알리는 형태가 그 재생산이다.
 - 상태바 탭 같은 기기 셸 동작은 web에는 해당 없음(브라우저가 소유한다). 2단 동작·전환 복원의 브라우저 확인(중첩 화면에서 탭 → 첫 화면 URL · 첫 화면 스크롤 뒤 탭 → 맨 위 · A 상세 → B → A 탭 → A 상세)은 골격 구현 시 1회. 지속 셸이면 root 브라우저 시험 하나와 root 처리기 시험 하나(implementation-test §4 «지속 셸의 root 시험»)가 이 확인을 남긴다.
