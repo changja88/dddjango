@@ -1006,19 +1006,33 @@ def main(argv: "list[str]") -> int:
             except anchor_diff.AnchorDiffUsage as exc:
                 print(f"재료 결손: {exc}", file=sys.stderr)
                 return 1
-            # 앵커·현재 두 벌을 동시에 돈다 — 검사기 동시 실행 한도는 두 벌이 나눠 쓰는 공용 풀이 정한다.
-            # `with` 를 나갈 때 두 벌이 모두 끝나 있으므로 한쪽 예외도 임시 폴더 정리와 겹치지 않는다.
-            with ThreadPoolExecutor(max_workers=2, thread_name_prefix="registry-side") as sides:
-                anchor_run: "Future[tuple[dict[str, int], set[str], list[dict], set[str]]]" = sides.submit(
-                    _run_registry, anc, sink_l, unclassifiable=unclassifiable_l)
-                current_run: "Future[tuple[dict[str, int], set[str], list[dict], set[str]]]" = sides.submit(
-                    _run_registry, cur, sink_n, git_root=root, unclassifiable=unclassifiable_n)
-                exits_l, l_set, _l_records, l_cands = anchor_run.result()
-                exits_n, n_set, n_records, n_cands = current_run.result()
-            l_records = _l_records
-            anc_prefixes = (str(anc) + "/", str(anc))
-            l_set |= _parse_fail_findings(anc)
-            n_set |= _parse_fail_findings(cur)
+            anchor_escape: "str | None" = anchor_diff.snapshot_escape(anc)
+            if anchor_escape is not None:
+                # 앵커 사본의 심링크가 사본 밖(예: 이 작업 트리)을 가리키면 앵커 실행이 «지금» 내용을 읽는다 —
+                # 그 실행은 기준선이 못 된다. 비-git 가지와 같이 현재 위반 전량을 귀속한다(fail-closed).
+                print(f"주의: 앵커 {anchor_sha[:12]} 사본에 사본 밖을 가리키는 심링크 {anchor_escape} — "
+                      "기준선 불능이라 fail-closed(현재 위반 전량 귀속)")
+                has_sister = False  # 기준선 불능이면 자매로 가르지 않는다(«측정 실패가 먼저다»)
+                exits_n, n_set, n_records, n_cands = _run_registry(
+                    cur, sink_n, git_root=root, unclassifiable=unclassifiable_n)
+                exits_l = {}
+                l_set = set()
+                l_cands = set()
+                n_set |= _parse_fail_findings(cur)
+            else:
+                # 앵커·현재 두 벌을 동시에 돈다 — 검사기 동시 실행 한도는 두 벌이 나눠 쓰는 공용 풀이 정한다.
+                # `with` 를 나갈 때 두 벌이 모두 끝나 있으므로 한쪽 예외도 임시 폴더 정리와 겹치지 않는다.
+                with ThreadPoolExecutor(max_workers=2, thread_name_prefix="registry-side") as sides:
+                    anchor_run: "Future[tuple[dict[str, int], set[str], list[dict], set[str]]]" = sides.submit(
+                        _run_registry, anc, sink_l, unclassifiable=unclassifiable_l)
+                    current_run: "Future[tuple[dict[str, int], set[str], list[dict], set[str]]]" = sides.submit(
+                        _run_registry, cur, sink_n, git_root=root, unclassifiable=unclassifiable_n)
+                    exits_l, l_set, _l_records, l_cands = anchor_run.result()
+                    exits_n, n_set, n_records, n_cands = current_run.result()
+                l_records = _l_records
+                anc_prefixes = (str(anc) + "/", str(anc))
+                l_set |= _parse_fail_findings(anc)
+                n_set |= _parse_fail_findings(cur)
 
         attributed: "list[str]" = sorted(n_set - l_set)
         resolved: "list[str]" = sorted(l_set - n_set)

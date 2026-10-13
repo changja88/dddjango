@@ -63,6 +63,8 @@ CONTRACT: Path = S / "check-api-error-controller-contract.py"
 _RELEASED_2212_COMMIT: str = "c4e40615"
 # #2 · #5 기준선이 코드 슬라이스까지 모으기 바로 앞 배포판(dddjango 2.22.1) — «트리 진단만 있는 앵커는 옛 판과 글자 같음» 대조의 옛 판(HEAD 금지).
 _RELEASED_2221_COMMIT: str = "62a5e5db"
+# F4-89 남은 몫(BC 이름 바꾸기 대응) · 앵커 사본 심링크 고침 바로 앞 배포판(dddjango 2.22.2) — «짝이 서지 않으면 옛 판과 글자 같음» 대조의 옛 판(HEAD 금지).
+_RELEASED_2222_COMMIT: str = "2e86346f"
 
 _GIT_ID: "list[str]" = ["-c", "user.email=smoke@dddjango", "-c", "user.name=smoke"]
 
@@ -1380,15 +1382,17 @@ class ApprovedInflowPartitionRegression(unittest.TestCase):
         self.assertIn(reason, out)
         return out
 
-    def test_Q1_ledger_inflow_and_retained_M1(self) -> None:
+    def test_Q1_ledger_inflow_and_anchor_existing(self) -> None:
+        """장부 꼴 — 2.22.3 부터 앵커 사본을 옛 BC 이름으로 렌더해 accounts 줄이 앵커 기존분(2.22.2 까지는 `측정 무효(M^1)` · exit 2)."""
         anchor: str
         merge: str
         r: ApprovedInflowRepo = self.repo("ledger")
         anchor, merge = r.ledger()
         argv: list[str] = r.selectors(("accounts", "fortune_saju", "service_policy"), inventory=True)
-        out: str = self.verdict(self.run_scope(r, anchor, (merge,), CENT, argv), 2, "측정 무효(M^1)")
-        self.assertEqual(out.count("↳ 귀속 유지: 측정 무효(M^1)"), 1)
-        self.assertEqual(out.count("  기준선 오류:"), 1)
+        out: str = self.verdict(self.run_scope(r, anchor, (merge,), CENT, argv), 0, "앵커 기존분(잔존) 1건")
+        self.assertNotIn("측정 무효(M^1)", out)
+        self.assertNotIn("  기준선 오류:", out)
+        self.assertIn("영역 이름 대응(승인 머지가 가져온 BC 이름 바꾸기 — 앵커 사본은 그 이름으로 렌더): fortune_saju→decisive_fortune", out)
         self.assertIn("승인 유입 2건", out)
         self.assertIn("^1 에 주어 파일 없음", out)
 
@@ -1406,7 +1410,7 @@ class ApprovedInflowPartitionRegression(unittest.TestCase):
         debt: Path = self.td / "exact-debt.txt"
         debt.write_text("= check-error-centralization.py :: " + line + "\n", encoding="utf-8")
         self.verdict(self.run_scope(r, anchor, (merge,), CENT, argv + ["--legacy-debt-file", str(debt)]),
-                     0, "이관 빚 1건 · 승인 유입 2건")
+                     0, "앵커 기존분(잔존) 1건 · 이관 빚 0건 · 승인 유입 2건")  # 2.22.2 까지는 «이관 빚 1건»
 
     def test_Q2_ladder_reg15_reg05_with_and_without_flag(self) -> None:
         anchor: str
@@ -1840,10 +1844,1007 @@ class ApprovedInflowPartitionRegression(unittest.TestCase):
         self.verdict(self.run_scope(r, anchor, (merge,)), 0, f"유입: {merge[:12]}(L 증명) · 상호작용")
 
 
+class BcRenamePairingRegression(unittest.TestCase):
+    """짝 규칙의 안전 장치를 반환값으로 바로 단언한다(검사기를 돌리지 않는다) — `merge_bc_renames` · `snapshot_bc_aliases`.
+
+    후보와 «서로 가장 닮은 하나» 는 상류 사실(병합 기준 B · 상류 쪽 M^2)만으로 정하고, 레인 쪽(M^1 · M)은 선 짝을 버리는
+    데만 쓴다. 문턱 0.5 · 겹친 경로 바닥 3 · 동률 · 병합 기준 여럿 · 되짚기 가드를 하나씩 고정한다."""
+
+    def setUp(self) -> None:
+        sys.path.insert(0, str(S))
+        import anchor_diff
+        self.ad = anchor_diff
+        self.ad._RENAME_CACHE.clear()
+        self.temp: tempfile.TemporaryDirectory[str] = tempfile.TemporaryDirectory(prefix="bc-pair-")
+        self.addCleanup(self.temp.cleanup)
+        self.td: Path = Path(self.temp.name)
+
+    def bc(self, root: Path, name: str, *areas: str, extra: tuple[str, ...] = ()) -> None:
+        base: str = f"application/{name}"
+        for rel in ("__init__.py", "driving_layer/__init__.py", "driving_layer/api/__init__.py", "driving_layer/api/api_router.py",
+                    "driving_layer/api/bc_error_schema.py", f"driven_layer/django_{name}/apps.py", *extra):
+            _write(root, f"{base}/{rel}", "")
+        for area in areas:
+            api: str = f"{base}/driving_layer/api/{area}"
+            for rel in (f"{base}/application_layer/{area}/__init__.py", api + "/__init__.py", api + f"/{area}_controller.py",
+                        api + "/schema/__init__.py", api + "/schema/schema_in.py", api + "/schema/schema_out.py"):
+                _write(root, rel, "")
+
+    def scene(self, name: str, base: "dict[str, tuple[str, ...]]", upstream, *, lane_pre=None, in_merge=None, lane_post=None,
+              directory_renames: str = "false") -> tuple[Path, str, str]:
+        """앵커(main) → 레인 커밋 → 상류 커밋 → 레인이 main 을 병합 → 레인 후속. (root, anchor, merge) 를 돌려준다."""
+        root: Path = self.td / name
+        root.mkdir()
+        self.assertEqual(_git(root, "init", "-q", "-b", "main").returncode, 0)
+        _write(root, "application/__init__.py", "")
+        for bc, areas in base.items():
+            self.bc(root, bc, *areas)
+        anchor: str = _commit_all(root, "anchor")
+        _git(root, "checkout", "-q", "-b", "lane")
+        _write(root, "lane.txt", "lane\n")
+        if lane_pre is not None:
+            lane_pre(root)
+        _commit_all(root, "lane")
+        _git(root, "checkout", "-q", "main")
+        upstream(root)
+        _commit_all(root, "upstream")
+        _git(root, "checkout", "-q", "lane")
+        merged = _git(root, "-c", f"merge.directoryRenames={directory_renames}", "merge", "-q", "--no-ff",
+                      *(["--no-commit"] if in_merge is not None else ["-m", "approved merge"]), "main")
+        if in_merge is not None:
+            in_merge(root)
+            _commit_all(root, "approved merge (lane-made result)")
+        else:
+            self.assertEqual(merged.returncode, 0, merged.stdout + merged.stderr)
+        merge: str = _git(root, "rev-parse", "HEAD").stdout.strip()
+        self.assertEqual(len(_git(root, "show", "-s", "--format=%P", merge).stdout.split()), 2)
+        _write(root, "lane2.txt", "lane\n")
+        if lane_post is not None:
+            lane_post(root)
+        _commit_all(root, "lane follow-up")
+        return root, anchor, merge
+
+    @staticmethod
+    def rename(root: Path, old: str, new: str, *, inner: bool = True) -> None:
+        dest: Path = root / "application" / new
+        (root / "application" / old).rename(dest)
+        if inner:
+            for path in sorted(dest.rglob(f"*{old}*"), key=lambda p: -len(p.parts)):
+                path.rename(path.with_name(path.name.replace(old, new)))
+
+    def merges(self, root: Path, anchor: str, *shas: str) -> list:
+        listing: Path = self.td / (root.name + "-approved.txt")
+        listing.write_text("".join(sha + " approved\n" for sha in shas), encoding="utf-8")
+        head: str = _git(root, "rev-parse", "HEAD").stdout.strip()
+        return self.ad.load_approved_merges(listing, root, anchor, head)[0]
+
+    def pairs(self, root: Path, anchor: str, merge: str) -> tuple:
+        self.ad._RENAME_CACHE.clear()
+        return self.ad.merge_bc_renames(root, self.merges(root, anchor, merge)[0])
+
+    def aliases(self, root: Path, anchor: str, *shas: str) -> dict:
+        self.ad._RENAME_CACHE.clear()
+        head: str = _git(root, "rev-parse", "HEAD").stdout.strip()
+        return self.ad.snapshot_bc_aliases(root, anchor, head, self.merges(root, anchor, *shas))
+
+    def test_P1_plain_rename_pairs_and_inner_old_name_is_the_same_shape(self) -> None:
+        inner: tuple[str, ...] = ("driven_layer/django_alpha/migrations/0001_initial.py", "driven_layer/django_alpha/migrations/0002_more.py",
+                                  "driven_layer/django_alpha/models/thing.py", "driven_layer/django_alpha/models/other.py")
+        for keep_inner in (False, True):
+            with self.subTest(keep_inner=keep_inner):
+                root, anchor, merge = self.scene(f"plain-{keep_inner}", {"alpha": ("place",), "keep": ("place",)},
+                                                 lambda r, k=keep_inner: self.rename(r, "alpha", "beta", inner=not k))
+                self.assertEqual(self.pairs(root, anchor, merge), (("alpha", "beta"),))
+                self.assertEqual(self.aliases(root, anchor, merge), {"beta": "alpha"})
+        # 안쪽 `django_<옛 이름>/` 아래에 고정 칸 밖 파일이 많은 개명 — 새 쪽 모양에서 옛 이름도 토큰이어야 닮음이 선다
+        root = self.td / "inner-kept"
+        root.mkdir()
+        _git(root, "init", "-q", "-b", "main")
+        self.bc(root, "alpha", "place", extra=inner)
+        anchor = _commit_all(root, "anchor")
+        _git(root, "checkout", "-q", "-b", "lane"); _write(root, "lane.txt", "l\n"); _commit_all(root, "lane")
+        _git(root, "checkout", "-q", "main"); self.rename(root, "alpha", "beta", inner=False); _commit_all(root, "upstream")
+        _git(root, "checkout", "-q", "lane"); _git(root, "merge", "-q", "--no-ff", "-m", "approved merge", "main")
+        merge = _git(root, "rev-parse", "HEAD").stdout.strip()
+        _write(root, "lane2.txt", "l\n"); _commit_all(root, "follow-up")
+        self.assertTrue((root / "application/beta/driven_layer/django_alpha/models/thing.py").exists())
+        self.assertEqual(self.pairs(root, anchor, merge), (("alpha", "beta"),))
+
+    def test_P2_tie_two_renames_or_two_old_one_new_is_no_pair(self) -> None:
+        def two(root: Path) -> None:
+            self.rename(root, "alpha", "beta")
+            self.rename(root, "gamma", "delta")
+        root, anchor, merge = self.scene("tie-two", {"alpha": ("place",), "gamma": ("place",)}, two)
+        self.assertEqual(self.pairs(root, anchor, merge), ())
+        self.assertEqual(self.aliases(root, anchor, merge), {})
+
+        def absorb(root: Path) -> None:      # 모양이 같은 옛 영역 둘이 사라지고 새 영역 하나 — 새 쪽에서 보면 동률
+            self.rename(root, "alpha", "beta")
+            shutil.rmtree(root / "application/gamma")
+        root, anchor, merge = self.scene("tie-absorb", {"alpha": ("place",), "gamma": ("place",)}, absorb)
+        self.assertEqual(self.pairs(root, anchor, merge), ())
+        # 두 옛 후보가 한 새 후보를 서로 다른 점수(12/12 · 6/12)로 «가장 닮은 것» 으로 고른다 — 새 쪽에서 본 유일 최고만 짝이다
+        root, anchor, merge = self.scene("two-pick-one", {"alpha": ("place", "detail"), "gamma": ("place",)}, absorb)
+        self.assertEqual(self.pairs(root, anchor, merge), (("alpha", "beta"),))
+        self.assertEqual(self.aliases(root, anchor, merge), {"beta": "alpha"})
+
+    def test_P3_threshold_and_common_floor(self) -> None:
+        def unrelated(areas: tuple[str, ...]):
+            def run(root: Path) -> None:
+                shutil.rmtree(root / "application/alpha")
+                self.bc(root, "beta", *areas)
+            return run
+        root, anchor, merge = self.scene("below", {"alpha": ("place",)}, unrelated(("place", "issue", "redeem")))
+        self.assertEqual(self.pairs(root, anchor, merge), ())                       # 닮음 6/18 — 0 초과 문턱 미만
+        root, anchor, merge = self.scene("edge", {"alpha": ("place",)}, unrelated(("place", "detail")))
+        self.assertEqual(self.pairs(root, anchor, merge), (("alpha", "beta"),))     # 닮음 6/12 — 정확히 문턱
+        for count, want in ((2, ()), (3, (("alpha", "beta"),))):                    # 닮음 1.0 이어도 겹친 경로 바닥 3
+            with self.subTest(common=count):
+                files: tuple[str, ...] = tuple(f"domain_layer/thing/part{i}.py" for i in range(count))
+                root = self.td / f"floor-{count}"
+                root.mkdir()
+                _git(root, "init", "-q", "-b", "main")
+                self.bc(root, "alpha", extra=files)
+                anchor = _commit_all(root, "anchor")
+                _git(root, "checkout", "-q", "-b", "lane"); _write(root, "lane.txt", "l\n"); _commit_all(root, "lane")
+                _git(root, "checkout", "-q", "main"); self.rename(root, "alpha", "beta"); _commit_all(root, "upstream")
+                _git(root, "checkout", "-q", "lane"); _git(root, "merge", "-q", "--no-ff", "-m", "approved merge", "main")
+                merge = _git(root, "rev-parse", "HEAD").stdout.strip()
+                _write(root, "lane2.txt", "l\n"); _commit_all(root, "follow-up")
+                self.assertEqual(self.pairs(root, anchor, merge), want)
+
+    def test_P4_two_merge_bases_is_no_pair(self) -> None:
+        root: Path = self.td / "crisscross"
+        root.mkdir()
+        _git(root, "init", "-q", "-b", "main")
+        self.bc(root, "alpha", "place")
+        anchor: str = _commit_all(root, "anchor")
+        _git(root, "checkout", "-q", "-b", "lane"); _write(root, "lane.txt", "l\n"); lane1: str = _commit_all(root, "lane 1")
+        _git(root, "checkout", "-q", "main"); _write(root, "docs/n.txt", "n\n"); _commit_all(root, "upstream note")
+        _git(root, "checkout", "-q", "lane"); _git(root, "merge", "-q", "--no-ff", "-m", "lane takes main", "main")
+        first: str = _git(root, "rev-parse", "HEAD").stdout.strip()
+        _git(root, "checkout", "-q", "main"); _git(root, "merge", "-q", "--no-ff", "-m", "main takes lane 1", lane1)
+        self.rename(root, "alpha", "beta"); _commit_all(root, "upstream rename")
+        _git(root, "checkout", "-q", "lane"); _git(root, "merge", "-q", "--no-ff", "-m", "approved merge", "main")
+        merge: str = _git(root, "rev-parse", "HEAD").stdout.strip()
+        _write(root, "lane2.txt", "l\n"); _commit_all(root, "follow-up")
+        self.assertEqual(len(_git(root, "merge-base", "--all", merge + "^1", merge + "^2").stdout.split()), 2)
+        self.ad._RENAME_CACHE.clear()
+        self.assertEqual(self.ad.merge_bc_renames(root, self.merges(root, anchor, first, merge)[1]), ())
+
+    def test_P5_lane_side_can_only_discard_a_pair(self) -> None:
+        """레인이 옛 폴더를 병합 결과에 남기거나 새 이름을 미리 만들어도 다른 후보로 돌아가지 않는다 — 짝이 사라질 뿐이다."""
+        base: "dict[str, tuple[str, ...]]" = {"alpha": ("place", "detail"), "decoy": ("place",)}
+
+        def upstream(root: Path) -> None:      # alpha → beta 개명 · 절반 겹치는 decoy 는 지움
+            self.rename(root, "alpha", "beta")
+            shutil.rmtree(root / "application/decoy")
+        root, anchor, merge = self.scene("natural", base, upstream)
+        self.assertEqual(self.pairs(root, anchor, merge), (("alpha", "beta"),))
+        root, anchor, merge = self.scene("steered", base, upstream,
+                                         lane_pre=lambda r: _write(r, "application/alpha/lane_keep.py", "# keep\n"),
+                                         lane_post=lambda r: shutil.rmtree(r / "application/alpha"))
+        self.assertTrue(_git(root, "cat-file", "-e", merge + ":application/alpha/lane_keep.py").returncode == 0)
+        self.assertEqual(self.pairs(root, anchor, merge), ())          # 1판은 (decoy → beta) 로 돌아갔다
+        self.assertEqual(self.aliases(root, anchor, merge), {})
+        root, anchor, merge = self.scene("precreated", base, upstream,
+                                         lane_pre=lambda r: _write(r, "application/beta/lane_pre.py", "# pre\n"))
+        self.assertEqual(self.pairs(root, anchor, merge), ())
+        same: "dict[str, tuple[str, ...]]" = {"alpha": ("place",), "gamma": ("place",)}
+
+        def two(root: Path) -> None:
+            self.rename(root, "alpha", "beta")
+            self.rename(root, "gamma", "delta")
+
+        def cross(root: Path) -> None:         # gamma 를 남기고 beta 를 미리 만들어 (alpha → delta) 엇짝을 노린다
+            _write(root, "application/gamma/lane_keep.py", "# keep\n")
+            _write(root, "application/beta/lane_pre.py", "# pre\n")
+        root, anchor, merge = self.scene("crossed", same, two, lane_pre=cross)
+        self.assertEqual(self.pairs(root, anchor, merge), ())          # 1판은 (alpha → delta)
+
+        def prune_new(root: Path) -> None:     # (Codex «prune») 병합 결과에서 새 이름 하나(delta)를 지운다
+            shutil.rmtree(root / "application/delta")
+        root, anchor, merge = self.scene("pruned", same, two, lane_pre=lambda r: shutil.rmtree(r / "application/gamma"),
+                                         in_merge=lambda r: (_git(r, "checkout", "main", "--", "application/beta", "application/delta"),
+                                                             shutil.rmtree(r / "application/gamma", ignore_errors=True), prune_new(r)))
+        self.assertEqual(self.pairs(root, anchor, merge), ())          # 1판은 남은 후보끼리 (alpha → beta)
+
+        def take_upstream(root: Path) -> None: # (Codex «redirect») 레인이 진짜 옛 영역(alpha)을 병합 전에 지움 — 병합은 상류 결과를 받는다
+            _git(root, "checkout", "main", "--", "application/beta")
+            for name in ("alpha", "decoy"):
+                shutil.rmtree(root / "application" / name, ignore_errors=True)
+        root, anchor, merge = self.scene("redirected", base, upstream, lane_pre=lambda r: shutil.rmtree(r / "application/alpha"),
+                                         in_merge=take_upstream)
+        self.assertEqual(self.pairs(root, anchor, merge), ())          # 1판은 (decoy → beta) 로 돌아갔다
+
+        def drop_new(root: Path) -> None:      # 병합 결과에서 상류의 새 영역(beta)을 뺀다 — 레인은 병합 뒤 beta 를 스스로 다시 만든다
+            for name in ("alpha", "beta"):
+                shutil.rmtree(root / "application" / name, ignore_errors=True)
+        root, anchor, merge = self.scene("new-dropped-in-merge", base, upstream, in_merge=drop_new,
+                                         lane_post=lambda r: self.bc(r, "beta", "place", "detail"))
+        self.assertEqual(_git(root, "cat-file", "-e", merge + ":application/beta").returncode != 0, True)
+        self.assertEqual(self.pairs(root, anchor, merge), ())          # 버리기 «새 이름이 병합 결과에 있다» 가 막는다
+        self.assertEqual(self.aliases(root, anchor, merge), {})
+
+        def add_only(root: Path) -> None:      # 상류는 같은 모양의 beta 를 더하기만 — alpha 는 그대로 둔다
+            self.bc(root, "beta", "place", "detail")
+        root, anchor, merge = self.scene("lane-deletes-in-merge", base, add_only,
+                                         in_merge=lambda r: shutil.rmtree(r / "application/alpha"))
+        self.assertFalse((root / "application/alpha").exists())
+        self.assertEqual(self.pairs(root, anchor, merge), ())
+
+        def grow(root: Path) -> None:          # 병합 커밋에서 레인이 새 영역에 파일을 잔뜩 더해도 모양은 상류 쪽에서 읽는다
+            for i in range(20):
+                _write(root, f"application/beta/domain_layer/lane_made/part{i}.py", "")
+        root, anchor, merge = self.scene("lane-grows-new", base, upstream, in_merge=grow)
+        self.assertEqual(self.pairs(root, anchor, merge), (("alpha", "beta"),))
+
+    def test_P6_snapshot_alias_walk_guards(self) -> None:
+        ad = self.ad
+
+        def merge(sha: str, position: "int | None", only_head: bool = False):
+            return ad.ApprovedMerge(sha, sha + "^1", sha + "^2", "approved", position, "", "main", only_head)
+
+        def aliases(pairs: "dict[str, tuple]", merges: list, head: set, snap: set) -> dict:
+            roots = {"HEAD": frozenset(head), "SNAP": frozenset(snap)}
+            with patch.object(ad, "merge_bc_renames", lambda root, m: pairs[m.sha]), \
+                    patch.object(ad, "_bc_roots", lambda root, rev: roots[rev]):
+                return ad.snapshot_bc_aliases(self.td, "SNAP", "HEAD", merges)
+
+        chain: "dict[str, tuple]" = {"m1": (("a", "b"),), "m2": (("b", "c"),)}
+        two: list = [merge("m1", 1), merge("m2", 3)]
+        self.assertEqual(aliases(chain, two, {"c", "k"}, {"a", "k"}), {"c": "a"})            # 두 번 개명을 되짚어 잇는다
+        self.assertEqual(aliases(chain, two, {"c", "k"}, {"b", "k"}), {"c": "b"})            # 사이 사본은 사이 이름으로
+        self.assertEqual(aliases(chain, two, {"c", "k"}, {"c", "k"}), {})                    # 새 이름이 이미 있는 사본
+        self.assertEqual(aliases(chain, two, {"c", "a", "k"}, {"a", "k"}), {})               # 레인이 옛 이름을 되살림
+        self.assertEqual(aliases({"m1": (("a", "b"),), "m3": (("a", "c"),)}, [merge("m1", 1), merge("m3", 5)],
+                                 {"b", "c"}, {"a"}), {})                                      # 한 옛 이름에 둘이 겹침 → 둘 다 버림
+        self.assertEqual(aliases({"m1": (("a", "b"),)}, [merge("m1", None)], {"b"}, {"a"}), {})          # 판정 불참 머지
+        self.assertEqual(aliases({"m1": (("a", "b"),)}, [merge("m1", 1, True)], {"b"}, {"a"}), {})       # ^2 가 HEAD 브랜치뿐
+        self.assertEqual(aliases({"m1": (("a", "b"),)}, [merge("m1", 1)], {"b"}, {"a"}), {"b": "a"})
+        with patch.object(ad, "run_git", side_effect=AssertionError("승인 목록이 없으면 git 을 부르지 않는다")):
+            self.assertEqual(ad.snapshot_bc_aliases(self.td, "SNAP", "", []), {})
+
+    def test_P7_fixed_slots_leave_before_names_become_tokens(self) -> None:
+        """BC 이름이 트리 낱말(`api`)이어도 고정 칸이 모양에 남아 상관없는 영역과 닮아 보이지 않는다."""
+        def upstream(root: Path) -> None:      # 고정 칸뿐인 `api` 를 지우고 고정 칸뿐인 상관없는 영역을 만든다
+            shutil.rmtree(root / "application/api")
+            self.bc(root, "coupon")
+        root, anchor, merge = self.scene("tree-word", {"api": ()}, upstream)
+        self.assertEqual(self.pairs(root, anchor, merge), ())
+        self.assertEqual(self.ad._bc_shape(frozenset({"driving_layer/api/api_router.py", "driving_layer/api/hello/hello_controller.py",
+                                                      "driven_layer/django_api/apps.py"}), "api"),
+                         frozenset({"driving_layer/<bc>/hello/hello_controller.py"}))
+
+    def test_P10_short_new_names_do_not_rewrite_the_token(self) -> None:
+        """새 이름이 `bc` · `b` · `c` 여도(토큰 `<bc>` 의 글자) BC 이름을 따른 도메인 경로가 같은 모양이 된다 — 한 번에 치환.
+        한 이름이 다른 이름의 앞머리인 개명(`fortune → fortune_saju`)은 긴 이름부터 맞춰야 같은 모양이 된다."""
+        def named(name: str) -> tuple[str, ...]:
+            return (f"domain_layer/{name}/{name}.py", f"domain_layer/{name}/{name}_repository.py",
+                    f"domain_layer/{name}/exception/{name}_missing.py")
+        for old, new in (("zeta_domain", "bc"), ("zeta_domain", "b"), ("zeta_domain", "c"), ("fortune", "fortune_saju")):
+            with self.subTest(new=new):
+                root: Path = self.td / f"token-{new}"
+                root.mkdir()
+                _git(root, "init", "-q", "-b", "main")
+                self.bc(root, old, extra=named(old))
+                anchor: str = _commit_all(root, "anchor")
+                _git(root, "checkout", "-q", "-b", "lane"); _write(root, "lane.txt", "l\n"); _commit_all(root, "lane")
+                _git(root, "checkout", "-q", "main"); self.rename(root, old, new); _commit_all(root, "upstream")
+                self.assertTrue((root / f"application/{new}/{named(new)[1]}").exists())
+                _git(root, "checkout", "-q", "lane"); _git(root, "merge", "-q", "--no-ff", "-m", "approved merge", "main")
+                merge: str = _git(root, "rev-parse", "HEAD").stdout.strip()
+                _write(root, "lane2.txt", "l\n"); _commit_all(root, "follow-up")
+                self.assertEqual(self.ad._bc_shape(frozenset(named(old)), old, new), self.ad._bc_shape(frozenset(named(new)), old, new))
+                self.assertEqual(self.pairs(root, anchor, merge), ((old, new),))
+
+    def test_P8_alias_argv_touches_only_the_bc_root_and_django_segment(self) -> None:
+        alias: dict[str, str] = {"fortune_saju": "decisive_fortune", "place": "place_core"}
+        argv: list[str] = ["/target", "--scope", "fortune_saju", "--api-module", "config/api.py",
+            "--scope-bc", "fortune_saju", "--error-bc=fortune_saju", "--scope-bc", "accounts",
+            "--controller-module", "application/fortune_saju/driven_layer/django_fortune_saju/apps.py",
+            "--project-preserve-error-module=application/fortune_saju/driving_layer/api/bc_error_schema.py",
+            "--controller-module", "application/place/driving_layer/api/place/place_controller.py",
+            "--registrar-module", "application/accounts/driving_layer/api/fortune_saju/api_router.py",
+            "--event-value", "application.fortune_saju.domain_layer.place.exception.place_gone.FortuneSajuPlaceGone.place_id",
+            "--anchor", "abc", "--approved-merge-file=fortune_saju.txt"]
+        self.assertEqual(self.ad._alias_argv(argv, alias), ["/target", "--scope", "fortune_saju", "--api-module", "config/api.py",
+            "--scope-bc", "decisive_fortune", "--error-bc=decisive_fortune", "--scope-bc", "accounts",
+            "--controller-module", "application/decisive_fortune/driven_layer/django_decisive_fortune/apps.py",
+            "--project-preserve-error-module=application/decisive_fortune/driving_layer/api/bc_error_schema.py",
+            "--controller-module", "application/place_core/driving_layer/api/place/place_controller.py",
+            "--registrar-module", "application/accounts/driving_layer/api/fortune_saju/api_router.py",
+            "--event-value", "application.fortune_saju.domain_layer.place.exception.place_gone.FortuneSajuPlaceGone.place_id",
+            "--anchor", "abc", "--approved-merge-file=fortune_saju.txt"])
+        # 새 이름이 고정 파일명 · 층 이름 · 안쪽 이름과 겹치는 재료 — BC 뿌리 조각만 바뀐다
+        for now, path in (("error", "application/error/driving_layer/api/bc_error_schema.py"),
+                          ("bc", "application/bc/driving_layer/api/bc_error_schema.py"),
+                          ("api", "application/api/driving_layer/api/api_router.py"),
+                          ("order", "application/order/driving_layer/api/order_total/order_total_controller.py"),
+                          ("place", "application/place/driving_layer/api/place/place_controller.py"),
+                          ("schema", "application/schema/driving_layer/api/place/schema/schema_in.py")):
+            with self.subTest(now=now):
+                want: str = "application/decisive_fortune/" + path.split("/", 2)[2]
+                self.assertEqual(self.ad._alias_argv(["--project-code-error-module", path, "--scope-bc", now, f"--controller-module={path}"],
+                                                     {now: "decisive_fortune"}),
+                                 ["--project-code-error-module", want, "--scope-bc", "decisive_fortune", f"--controller-module={want}"])
+
+    def test_P9_ladder_prefers_the_plain_render_and_takes_the_renamed_one_only_when_higher(self) -> None:
+        """지금 이름의 1칸이 서면 그대로(2.22.2 와 같은 실행) · 서지 않을 때만 옛 이름 사다리 · 그쪽이 더 높은 칸일 때만."""
+        ad = self.ad
+        argv: list[str] = ["/target", "--scope-bc", "fortune_saju"]
+        alias: dict[str, str] = {"fortune_saju": "decisive_fortune"}
+        rung2: str = "selector 렌더 재실행(빈 골격 --error-bc 걷음: x · 그 영역 아래 줄 제외)"
+
+        def ladder(plain: str, renamed: str):
+            calls: list[bool] = []
+
+            def fake(script, snap, args, flags, alias=None):
+                is_renamed: bool = "decisive_fortune" in args
+                calls.append(is_renamed)
+                return ad._Baseline(0, ["- renamed" if is_renamed else "- plain"], renamed if is_renamed else plain)
+            real = ad._baseline_lines
+            with patch.object(ad, "_baseline_lines", fake):
+                got = real(CTX, self.td, argv, frozenset(), alias)
+            return got.lines, got.aliases, calls
+        positional: str = "positional 기준선(selector 렌더 불능 강등 — selector-lane 진단은 전량 신규 취급)"
+        pair: tuple = (("fortune_saju", "decisive_fortune"),)
+        self.assertEqual(ladder("selector 렌더 재실행", "selector 렌더 재실행"), (["- plain"], (), [False]))   # 옛 이름 사다리를 타지도 않는다
+        self.assertEqual(ladder(positional, "selector 렌더 재실행"), (["- renamed"], pair, [False, True]))
+        self.assertEqual(ladder(positional, rung2), (["- renamed"], pair, [False, True]))
+        self.assertEqual(ladder(rung2, "selector 렌더 재실행"), (["- renamed"], pair, [False, True]))
+        self.assertEqual(ladder(rung2, rung2), (["- plain"], (), [False, True]))
+        self.assertEqual(ladder(positional, positional), (["- plain"], (), [False, True]))
+        self.assertEqual(ladder(positional, "기준선 불능(fail-closed — 전량 신규 취급)"), (["- plain"], (), [False, True]))
+
+
+class RenamedBcBaselineRegression(unittest.TestCase):
+    """승인 머지가 상류의 BC 이름 바꾸기를 가져왔고 지금 이름의 selector 렌더가 서지 않을 때, 앵커 · 병합 전 사본의 기준선을
+    그 사본의 옛 이름으로 렌더한다(F4-89 남은 몫 — 실제로는 #2 만 해당한다).
+
+    풀리는 쪽(앵커부터 있던 줄 → 앵커 기존분) · 2.22.2 에서 서던 렌더와 유입 증명은 글자 그대로 · 1:1 로 서지 않거나 상황 밖이면
+    2.22.2 와 글자 같음(fail-closed) · 레인이 만든 줄은 그대로 신규 · 받아들인 한계를 실제 렌더로 단언한다. 옛 판은 배포 커밋 상수."""
+
+    pair: str = "fortune_saju→decisive_fortune"
+    alias_head: str = "  기준선 영역 이름 대응(승인 머지가 가져온 BC 이름 바꾸기 — 앵커 사본은 그 이름으로 렌더): "
+    dup: str = ("- application/accounts/driving_layer/api/bc_error_schema.py:N: duplicate project code wire value: "
+                "unknown_place_code: from enum import StrEnum")
+    extra_lines: set[str] = {
+        '- application/accounts/driving_layer/api/bc_error_schema.py:N: additional public field: missing: str = ""',
+        '- application/accounts/driving_layer/api/bc_error_schema.py:N: concrete adds field outside common shape: missing: str = ""'}
+
+    def setUp(self) -> None:
+        self.temp: tempfile.TemporaryDirectory[str] = tempfile.TemporaryDirectory(prefix="renamed-bc-")
+        self.addCleanup(self.temp.cleanup)
+        self.td: Path = Path(self.temp.name)
+        self.areas: dict[str, str] = {}
+
+    def released(self) -> Path:
+        """2.22.2 배포 커밋의 scripts 사본(HEAD 금지 — 이 고침을 커밋한 뒤에도 옛 판이다)."""
+        old: Path = self.td / "released-2222"
+        if not old.exists():
+            old.mkdir()
+            archive: subprocess.CompletedProcess[bytes] = subprocess.run(
+                ["git", "-C", str(ROOT), "archive", _RELEASED_2222_COMMIT, "dddjango/scripts"], capture_output=True, check=True)
+            subprocess.run(["tar", "-x", "-C", str(old)], input=archive.stdout, check=True)
+        return old / "dddjango" / "scripts"
+
+    @staticmethod
+    def urls(r: ApprovedInflowRepo) -> None:
+        bcs: list[str] = sorted(p.parent.parent.parent.name for p in (r.root / "application").glob("*/driving_layer/api/api_router.py"))
+        r.write("config/urls.py", "from django.urls import path\nfrom config.api import api\n"
+                + "".join(f"from application.{bc}.driving_layer.api.api_router import register_{bc}_api\n" for bc in bcs)
+                + "".join(f"register_{bc}_api(api)\n" for bc in bcs) + 'urlpatterns = [path("api/", api.urls)]\n')
+
+    def area(self, r: ApprovedInflowRepo, bc: str, area: str) -> None:
+        """place 가 아닌 영역 이름의 최소 컨트롤러(고정 칸 밖 경로 모양이 BC 마다 달라지게)."""
+        api: str = f"application/{bc}/driving_layer/api/{area}"
+        for rel in (f"application/{bc}/application_layer/{area}/__init__.py", api + "/__init__.py", api + "/schema/__init__.py",
+                    api + "/schema/schema_in.py", api + "/schema/schema_out.py"):
+            r.write(rel)
+        r.write(api + f"/{area}_controller.py", 'from ninja import Router\n\nrouter: Router = Router()\n')
+
+    def anchor(self, name: str, *, df_value: str = "unknown_place_code", df_extra: bool = True,
+               acc_extra: bool = False, charm: str | None = None, heavy: bool = False,
+               legacy: bool = False) -> tuple[ApprovedInflowRepo, str]:
+        r: ApprovedInflowRepo = ApprovedInflowRepo(self.td, name)
+        r.project("accounts", "decisive_fortune", "service_policy", *(("lucky_charm",) if charm else ()))
+        r.schema("accounts", "unknown_place_code", extra=acc_extra)
+        r.schema("decisive_fortune", df_value, extra=df_extra)
+        r.controller("accounts", legacy=legacy)
+        r.controller("decisive_fortune")
+        if charm is not None:
+            r.schema("lucky_charm", "charm_unknown", extra=True)
+            if charm == "place":
+                r.controller("lucky_charm")
+            else:
+                self.area(r, "lucky_charm", charm)
+                self.areas["fortune_charm"] = charm
+        if heavy:  # 파일마다 BC 이름이 든 한 줄 — 이름 바꾸기 뒤 git 의 내용 닮음으로는 짝이 0 이 된다
+            base: Path = r.root / "application/decisive_fortune"
+            for path in sorted(base.rglob("*.py")):
+                if path.name != "bc_error_schema.py":
+                    path.write_text(f'"""decisive_fortune {path.relative_to(base).as_posix()}."""\n', encoding="utf-8")
+        self.urls(r)
+        anchor: str = r.commit("anchor")
+        r.checkout(anchor, "lane")
+        r.schema("service_policy", "policy_unknown")
+        r.controller("service_policy")
+        self.urls(r)
+        r.commit("lane")
+        return r, anchor
+
+    @staticmethod
+    def full_rename(r: ApprovedInflowRepo, old: str, new: str) -> None:
+        """폴더 · 파일 안 이름과 함께 안쪽 경로의 이름(`django_<bc>/`)까지 바꾸는 개명."""
+        r.rename_bc(old, new)
+        for path in sorted((r.root / "application" / new).rglob(f"*{old}*"), key=lambda p: -len(p.parts)):
+            path.rename(path.with_name(path.name.replace(old, new)))
+
+    def upstream(self, r: ApprovedInflowRepo, *steps: tuple[str, str], value: str | None = None, full: bool = False) -> str:
+        r.checkout("main")
+        for old, new in steps:
+            if full:
+                self.full_rename(r, old, new)
+            else:
+                r.rename_bc(old, new)
+        if value is not None:
+            r.schema(steps[-1][1], value)
+        self.urls(r)
+        r.commit("upstream rename")
+        r.checkout("lane")
+        merge: str = r.merge()
+        r.write("application/service_policy/application_layer/place/__init__.py", f"# lane follow-up {merge[:7]}\n")
+        r.commit("lane follow-up")
+        return merge
+
+    def note_merge(self, r: ApprovedInflowRepo, tag: str) -> str:
+        r.checkout("main")
+        r.write(f"docs/{tag}.txt", tag + "\n")
+        r.commit("upstream note " + tag)
+        r.checkout("lane")
+        merge: str = r.merge()
+        r.write(f"lane-{tag}.txt", tag + "\n")
+        r.commit("lane after " + tag)
+        return merge
+
+    def argv(self, *bcs: str, inventory: bool = True) -> list[str]:
+        out: list[str] = ["--error-profile", "dddjango-code-json", "--scope", "f89-code", "--api-module", "config/api.py"]
+        for bc in bcs:
+            area: str = self.areas.get(bc, "place")
+            out += ["--controller-module", f"application/{bc}/driving_layer/api/{area}/{area}_controller.py",
+                    "--scope-bc", bc, "--error-bc", bc]
+        if inventory:
+            for rel in ("framework/ninja/framework_error_schema.py",
+                        *(f"application/{bc}/driving_layer/api/bc_error_schema.py" for bc in bcs)):
+                out += ["--project-code-error-module", rel]
+        return out
+
+    def run_both(self, r: ApprovedInflowRepo, anchor: str, merges: tuple[str, ...], argv: list[str],
+                 script: Path = CENT) -> tuple[tuple[int, str], tuple[int, str]]:
+        extra: list[str] = ["--anchor", anchor] + (["--approved-merge-file", str(r.approved(*merges))] if merges else [])
+        return _run(script, r.root, argv + extra), _run(self.released() / script.name, r.root, argv + extra)
+
+    def assert_existing(self, new: tuple[int, str], lines: set[str], *, inflow: int, pairs: str) -> str:
+        code: int
+        out: str
+        code, out = new
+        self.assertEqual(code, 0, out)
+        self.assertIn(self.alias_head + pairs + "\n", out)
+        self.assertNotIn("  기준선 오류:", out)
+        self.assertIn(f"승인 유입 {inflow}건", out)
+        self.assertEqual({re.sub(r":\d+:", ":N:", l) for l in _section(out, "앵커 기존분") if l.startswith(("- ", "[#"))},
+                         lines, out)
+        return out
+
+    def test_R1_ledger_line_moves_to_existing_and_debt_entry_unused(self) -> None:
+        r: ApprovedInflowRepo = ApprovedInflowRepo(self.td, "ledger")
+        anchor: str
+        merge: str
+        anchor, merge = r.ledger()
+        argv: list[str] = r.selectors(("accounts", "fortune_saju", "service_policy"), inventory=True)
+        new, old = self.run_both(r, anchor, (merge,), argv)
+        self.assertEqual(old[0], 2, old[1])
+        self.assertIn("↳ 귀속 유지: 측정 무효(M^1)", old[1])
+        self.assert_existing(new, {self.dup}, inflow=2, pairs=self.pair)
+        debt: Path = self.td / "exact-debt.txt"
+        debt.write_text("= check-error-centralization.py :: " + self.dup.replace(":N:", ":1:") + "\n", encoding="utf-8")
+        new, old = self.run_both(r, anchor, (merge,), argv + ["--legacy-debt-file", str(debt)])
+        self.assertEqual(old[0], 0, old[1])
+        self.assertIn("이관 빚 1건 · 승인 유입 2건", old[1])
+        out: str = self.assert_existing(new, {self.dup}, inflow=2, pairs=self.pair)
+        self.assertIn("앵커 기존분(잔존) 1건 · 이관 빚 0건 · 승인 유입 2건", out)
+
+    def test_R2_old_file_subject_lines_also_existing(self) -> None:
+        r: ApprovedInflowRepo
+        anchor: str
+        r, anchor = self.anchor("acc-extra", acc_extra=True)
+        merge: str = self.upstream(r, ("decisive_fortune", "fortune_saju"))
+        new, old = self.run_both(r, anchor, (merge,), self.argv("accounts", "fortune_saju", "service_policy"))
+        self.assertEqual(old[0], 2, old[1])
+        self.assertIn("신규분(앵커 이후) 3건", old[1])
+        out: str = self.assert_existing(new, {self.dup} | self.extra_lines, inflow=2, pairs=self.pair)
+        self.assertIn("신규분(앵커 이후) 0건", out)
+
+    def test_R3_two_merges_rename_in_first_second_and_chain(self) -> None:
+        for shape in ("first", "second", "chain"):
+            with self.subTest(shape=shape):
+                r: ApprovedInflowRepo
+                anchor: str
+                r, anchor = self.anchor("two-" + shape)
+                if shape == "second":
+                    m1: str = self.note_merge(r, "one")
+                    m2: str = self.upstream(r, ("decisive_fortune", "fortune_saju"))
+                else:
+                    m1 = self.upstream(r, ("decisive_fortune", "fortune_saju"))
+                    m2 = self.note_merge(r, "two") if shape == "first" else self.upstream(r, ("fortune_saju", "saju"))
+                now: str = "saju" if shape == "chain" else "fortune_saju"
+                new, old = self.run_both(r, anchor, (m1, m2), self.argv("accounts", now, "service_policy"))
+                self.assertEqual(old[0], 2, old[1])
+                self.assert_existing(new, {self.dup}, inflow=2, pairs=f"{now}→decisive_fortune")
+
+    def test_R4_name_in_every_line_and_small_files_still_pairs(self) -> None:
+        """파일 안 이름까지 모두 바뀌어 git 의 내용 닮음(-M)으로는 짝이 0 인 꼴 — 경로 구조로만 짝짓는다."""
+        r: ApprovedInflowRepo
+        anchor: str
+        r, anchor = self.anchor("heavy", heavy=True)
+        merge: str = self.upstream(r, ("decisive_fortune", "fortune_saju"))
+        renames: list[str] = [l for l in r.git("diff", "-M", "--name-status", anchor, "HEAD", "--", "application/").splitlines()
+                              if l.startswith("R") and "application/decisive_fortune/" in l]
+        self.assertEqual(renames, [])
+        new, old = self.run_both(r, anchor, (merge,), self.argv("accounts", "fortune_saju", "service_policy"))
+        self.assertEqual(old[0], 2, old[1])
+        self.assert_existing(new, {self.dup}, inflow=2, pairs=self.pair)
+
+    def test_R5_two_bcs_in_one_merge_pair_by_shape(self) -> None:
+        r: ApprovedInflowRepo
+        anchor: str
+        r, anchor = self.anchor("multi", charm="charm")
+        merge: str = self.upstream(r, ("decisive_fortune", "fortune_saju"), ("lucky_charm", "fortune_charm"))
+        new, old = self.run_both(r, anchor, (merge,), self.argv("accounts", "fortune_charm", "fortune_saju", "service_policy"))
+        self.assertEqual(old[0], 2, old[1])
+        self.assert_existing(new, {self.dup}, inflow=4, pairs="fortune_charm→lucky_charm, fortune_saju→decisive_fortune")
+
+    def test_R6_rename_with_new_duplicate_from_upstream_is_inflow(self) -> None:
+        r: ApprovedInflowRepo
+        anchor: str
+        r, anchor = self.anchor("newdup", df_value="df_unknown", df_extra=False)
+        merge: str = self.upstream(r, ("decisive_fortune", "fortune_saju"), value="unknown_place_code")
+        new, old = self.run_both(r, anchor, (merge,), self.argv("accounts", "fortune_saju", "service_policy"))
+        self.assertEqual(old[0], 2, old[1])
+        self.assertIn("↳ 귀속 유지: 측정 무효(M^1)", old[1])
+        code: int
+        out: str
+        code, out = new
+        self.assertEqual(code, 0, out)
+        self.assertIn(self.dup.replace(":N:", ":1:") + "\n    ↳ 유입: " + merge[:12] + "(L 증명) · 상호작용", out)
+        self.assertIn("    ↳ ^1 기준선: selector 렌더 재실행 — 영역 이름 대응: " + self.pair + "\n", out)
+
+    def test_R7_other_four_scope_renders_are_byte_identical_to_released(self) -> None:
+        """#6 · #5 · #15 · #16 은 사본 대응을 받지 않으므로 이름 바꾼 승인 병합 뒤에도 2.22.2 와 글자 같다(정보 줄도 없다 ·
+        preserve-established #16 처럼 지금 이름 렌더가 서지 않는 꼴도)."""
+        r: ApprovedInflowRepo
+        anchor: str
+        r, anchor = self.anchor("others", legacy=True)
+        merge: str = self.upstream(r, ("decisive_fortune", "fortune_saju"))
+        bcs: tuple[str, ...] = ("accounts", "fortune_saju", "service_policy")
+        comp: list[str] = ["--error-profile", "dddjango-code-json", "--scope", "f89-code", "--api-module", "config/api.py",
+                           "--urlconf-module", "config/urls.py"] + [x for bc in bcs
+                           for x in ("--registrar-module", f"application/{bc}/driving_layer/api/api_router.py")]
+        seen: int = 0
+        for script, argv in ((CTX, self.argv(*bcs, inventory=False)), (OPENAPI, self.argv(*bcs, inventory=False)),
+                             (CONTRACT, self.argv(*bcs, inventory=False)), (COMP, comp)):
+            with self.subTest(script=script.name):
+                new, old = self.run_both(r, anchor, (merge,), argv, script)
+                self.assertEqual(new, old)
+                self.assertNotIn("영역 이름 대응", new[1])
+                seen += "앵커 차분(" in old[1]
+        self.assertGreaterEqual(seen, 3)
+        new, _old = self.run_both(r, anchor, (merge,), self.argv(*bcs))          # 같은 저장소의 #2 는 풀린다
+        self.assert_existing(new, {self.dup}, inflow=2, pairs=self.pair)
+        # #16 preserve-established · 새 이름 registrar 하나만 고름 — 앵커 사본에서 그 registrar 가 걷혀 URLconf 만 남으면 지금 이름
+        # 렌더가 사용 오류로 서지 않는다. 대응은 #2 에만 넘기므로 옛 registrar 를 되살리지 않는다(2.22.2 와 글자 같음).
+        r, anchor = self.anchor("preserve16")
+        r.checkout(anchor)
+        r.write("application/accounts/composition_root/dependency_wiring.py",
+                "from application.accounts.driving_layer.api.bc_error_schema import AccountsErrorSchema\n\n_E = AccountsErrorSchema\n")
+        r.git("checkout", "-q", "-B", "main")
+        anchor = r.commit("anchor with an accounts #101 line")
+        r.git("checkout", "-q", "-B", "lane", anchor)
+        r.schema("service_policy", "policy_unknown"); r.controller("service_policy"); self.urls(r); r.commit("lane")
+        merge = self.upstream(r, ("decisive_fortune", "fortune_saju"))
+        preserve: list[str] = ["--error-profile", "preserve-established", "--scope", "f89-code", "--api-module", "config/api.py",
+                               "--urlconf-module", "config/urls.py",
+                               "--registrar-module", "application/fortune_saju/driving_layer/api/api_router.py"]
+        new, old = self.run_both(r, anchor, (merge,), preserve, COMP)
+        self.assertIn("기준선 오류: [check-composition-root] 사용 오류: preserve-established의 --urlconf-module/--registrar-module", old[1])
+        self.assertEqual(new, old)
+        # #15 · 다른 영역(accounts)이 개명된 영역의 오류 클래스를 import — 지금 이름 렌더가 `re-export provenance 분석 불능` 으로
+        # 서지 않는 꼴. 대응은 #2 에만 넘기므로 #15 는 2.22.2 와 글자 같다(풀리지 않음 — 뒤 판 후보).
+        def xref(rr: ApprovedInflowRepo, other: str) -> None:
+            prefix: str = "".join(word.title() for word in other.split("_"))
+            rr.write("application/accounts/driving_layer/api/place/place_controller.py",
+                     "from ninja import Router, Status\n"
+                     f"from application.{other}.driving_layer.api.bc_error_schema import UnknownPlaceError, {prefix}ErrorSchema\n\n"
+                     "router: Router = Router()\n\n"
+                     '@router.get("/place", response={200: str, 404: UnknownPlaceError})\n'
+                     f"def get_place(request: object, place_id: int) -> str | Status[{prefix}ErrorSchema]:\n"
+                     "    try:\n        result: str = str(place_id)\n"
+                     "    except ValueError:\n        return Status(404, UnknownPlaceError())\n"
+                     "    return result\n")
+        r, anchor = self.anchor("xref15", df_value="df_unknown", df_extra=False)
+        r.checkout(anchor)
+        xref(r, "decisive_fortune"); r.controller("decisive_fortune", legacy=True)
+        r.git("checkout", "-q", "-B", "main")
+        anchor = r.commit("anchor: accounts controller imports decisive_fortune errors")
+        r.git("checkout", "-q", "-B", "lane", anchor)
+        r.schema("service_policy", "policy_unknown"); r.controller("service_policy"); self.urls(r); r.commit("lane")
+        r.checkout("main"); r.rename_bc("decisive_fortune", "fortune_saju"); xref(r, "fortune_saju"); self.urls(r)
+        r.commit("upstream rename + accounts import"); r.checkout("lane"); merge = r.merge()
+        r.write("lane2.txt", "lane\n"); r.commit("lane follow-up")
+        new, old = self.run_both(r, anchor, (merge,), self.argv(*bcs, inventory=False), CONTRACT)
+        self.assertIn("re-export provenance 분석 불능", old[1])
+        self.assertEqual(new, old)
+
+    def test_R8_real_shape_two_old_bcs_gone_one_new(self) -> None:
+        """현장 모양 — 옛 영역 둘(내용 있는 오류 모듈 하나 · 빈 골격 하나)이 사라지고 새 영역 하나: 개명 + 삭제 / 개명 + 흡수."""
+        for shape in ("deleted", "absorbed"):
+            with self.subTest(shape=shape):
+                r: ApprovedInflowRepo = ApprovedInflowRepo(self.td, "real-" + shape)
+                r.project("accounts", "decisive_fortune", "story_content", "service_policy")
+                r.schema("accounts", "unknown_place_code")
+                r.schema("decisive_fortune", "unknown_place_code", extra=True)
+                r.controller("accounts")
+                r.controller("decisive_fortune")
+                self.area(r, "decisive_fortune", "detail")
+                self.area(r, "story_content", "content")          # story_content 의 오류 모듈은 0 바이트 골격 그대로
+                self.urls(r)
+                anchor: str = r.commit("anchor")
+                r.checkout(anchor, "lane")
+                r.schema("service_policy", "policy_unknown"); r.controller("service_policy"); self.urls(r); r.commit("lane")
+                r.checkout("main")
+                r.rename_bc("decisive_fortune", "fortune_saju")
+                r.rm("application/story_content")
+                if shape == "absorbed":
+                    self.area(r, "fortune_saju", "content")
+                self.urls(r)
+                r.commit("upstream: rename decisive_fortune, " + shape + " story_content")
+                r.checkout("lane")
+                merge: str = r.merge()
+                r.write("lane2.txt", "lane\n"); r.commit("lane follow-up")
+                new, old = self.run_both(r, anchor, (merge,), self.argv("accounts", "fortune_saju", "service_policy"))
+                self.assertEqual(old[0], 2, old[1])
+                self.assertIn("↳ 귀속 유지: 측정 무효(M^1)", old[1])
+                self.assert_existing(new, {self.dup}, inflow=2, pairs=self.pair)
+
+    def test_R9_new_names_that_collide_with_fixed_or_inner_names_still_resolve(self) -> None:
+        """새 이름이 `error` · `bc` · `api`(고정 파일명 · 층 이름) · `order`(영역 `order_total`) · `place`(영역 `place`)여도 STOP-3 꼴이 풀린다."""
+        for now in ("error", "bc", "api", "order", "place"):
+            with self.subTest(now=now):
+                self.areas = {now: "order_total"} if now == "order" else {}
+                r: ApprovedInflowRepo = ApprovedInflowRepo(self.td, "collide-" + now)
+                r.project("accounts", "decisive_fortune", "service_policy")
+                r.schema("accounts", "unknown_place_code")
+                r.schema("decisive_fortune", "unknown_place_code", extra=True)
+                r.controller("accounts")
+                if now == "order":
+                    self.area(r, "decisive_fortune", "order_total")
+                else:
+                    r.controller("decisive_fortune")
+                self.urls(r)
+                anchor: str = r.commit("anchor")
+                r.checkout(anchor, "lane")
+                r.schema("service_policy", "policy_unknown"); r.controller("service_policy"); self.urls(r); r.commit("lane")
+                merge: str = self.upstream(r, ("decisive_fortune", now))
+                bcs: tuple[str, ...] = tuple(sorted(("accounts", now, "service_policy")))
+                new, old = self.run_both(r, anchor, (merge,), self.argv(*bcs))
+                self.assertEqual(old[0], 2, old[1])
+                self.assert_existing(new, {self.dup}, inflow=2, pairs=f"{now}→decisive_fortune")
+
+    def test_B_released_inflow_and_standing_renders_are_kept(self) -> None:
+        """2.22.2 에서 «승인 유입» 이던 실행이 대응 때문에 `측정 무효(M^1)` 로 바뀌지 않는다(검토 차단 1 의 세 재현 — 옛 판과 글자 같음)."""
+        def scene(name: str, *, df_schema: "str | None", df_legacy: bool, up_schema: "str | None", up_accounts_legacy: bool):
+            r: ApprovedInflowRepo = ApprovedInflowRepo(self.td, name)
+            r.project("accounts", "decisive_fortune", "service_policy")
+            r.schema("accounts", "unknown_place_code")
+            r.controller("accounts")
+            if df_schema is not None:
+                r.schema("decisive_fortune", df_schema)
+            r.controller("decisive_fortune", legacy=df_legacy)
+            self.urls(r)
+            anchor: str = r.commit("anchor")
+            r.checkout(anchor, "lane")
+            r.schema("service_policy", "policy_unknown"); r.controller("service_policy"); self.urls(r); r.commit("lane")
+            r.checkout("main")
+            r.rename_bc("decisive_fortune", "fortune_saju")
+            if up_schema is not None:
+                r.schema("fortune_saju", up_schema)
+            if up_accounts_legacy:
+                r.controller("accounts", legacy=True)
+            self.urls(r)
+            r.commit("upstream rename and more")
+            r.checkout("lane")
+            merge: str = r.merge()
+            r.write("lane2.txt", "lane\n"); r.commit("lane follow-up")
+            return r, anchor, merge
+        bcs: tuple[str, ...] = ("accounts", "fortune_saju", "service_policy")
+        cases = (   # (이름, 재료, 검사기들)
+            ("b3", dict(df_schema=None, df_legacy=False, up_schema="unknown_place_code", up_accounts_legacy=False), (CENT,)),
+            ("b2", dict(df_schema="df_unknown", df_legacy=True, up_schema=None, up_accounts_legacy=True), (OPENAPI,)),
+            ("b1", dict(df_schema=None, df_legacy=False, up_schema="saju_unknown", up_accounts_legacy=True), (CONTRACT, OPENAPI)),
+        )
+        for name, material, scripts in cases:
+            r, anchor, merge = scene(name, **material)
+            for script in scripts:
+                with self.subTest(case=name, script=script.name):
+                    new, old = self.run_both(r, anchor, (merge,), self.argv(*bcs, inventory=script is CENT), script)
+                    self.assertEqual(old[0], 0, old[1])
+                    self.assertIn("↳ 유입: " + merge[:12], old[1])
+                    self.assertEqual(new, old)
+
+    def test_A_lane_cannot_steer_or_forge_a_pair(self) -> None:
+        """레인이 옛 폴더를 병합 결과에 남기거나 새 이름을 미리 만들어도 짝이 다른 옛 영역으로 가지 않는다(검토 차단 2 의 두 재현)."""
+        # a1 — 상류: decisive_fortune(빈 골격 · 영역 둘) → fortune_saju 개명 + lucky_charm(같은 값 · 절반 겹침) 삭제. 레인: 옛 폴더를 남김.
+        r: ApprovedInflowRepo = ApprovedInflowRepo(self.td, "steered")
+        r.project("accounts", "decisive_fortune", "lucky_charm", "service_policy")
+        r.schema("accounts", "unknown_place_code"); r.controller("accounts")
+        r.controller("decisive_fortune"); self.area(r, "decisive_fortune", "detail")
+        r.schema("lucky_charm", "unknown_place_code"); r.controller("lucky_charm")
+        self.urls(r)
+        anchor: str = r.commit("anchor")
+        r.checkout(anchor, "lane")
+        r.schema("service_policy", "policy_unknown"); r.controller("service_policy")
+        r.write("application/decisive_fortune/lane_keep.py", "# lane keeps the old folder alive\n"); self.urls(r); r.commit("lane")
+        r.checkout("main")
+        r.rename_bc("decisive_fortune", "fortune_saju"); r.schema("fortune_saju", "saju_unknown"); r.rm("application/lucky_charm")
+        self.urls(r); r.commit("upstream rename + delete lucky_charm")
+        r.checkout("lane")
+        self.assertEqual(_git(r.root, "-c", "merge.directoryRenames=false", "merge", "-q", "--no-ff", "-m", "approved merge", "main").returncode, 0)
+        merge: str = r.git("rev-parse", "HEAD")
+        self.assertEqual(_git(r.root, "cat-file", "-e", merge + ":application/decisive_fortune/lane_keep.py").returncode, 0)
+        r.rm("application/decisive_fortune"); r.schema("service_policy", "unknown_place_code"); self.urls(r)
+        r.commit("lane removes the kept folder and duplicates the accounts value")
+        new, old = self.run_both(r, anchor, (merge,), self.argv("accounts", "fortune_saju", "service_policy"))
+        self.assertEqual(old[0], 2, old[1])
+        self.assertEqual(new, old)
+        # a2 — 상류: 모양이 같은 두 영역을 한 병합에서 개명(동률). 레인: 옛 이름 하나를 남기고 새 이름 하나를 미리 만든다.
+        r = ApprovedInflowRepo(self.td, "crossed")
+        r.project("accounts", "decisive_fortune", "lucky_charm", "service_policy")
+        r.schema("accounts", "unknown_place_code"); r.controller("accounts")
+        r.schema("decisive_fortune", "unknown_place_code", extra=True); r.controller("decisive_fortune"); r.controller("lucky_charm")
+        self.urls(r)
+        anchor = r.commit("anchor")
+        r.checkout(anchor, "lane")
+        r.schema("service_policy", "policy_unknown"); r.controller("service_policy")
+        r.write("application/lucky_charm/lane_keep.py", "# keep\n"); r.write("application/fortune_saju/lane_pre.py", "# pre\n")
+        self.urls(r); r.commit("lane")
+        r.checkout("main")
+        self.full_rename(r, "decisive_fortune", "fortune_saju"); self.full_rename(r, "lucky_charm", "fortune_charm")
+        self.urls(r); r.commit("upstream renames two same-shaped BCs")
+        r.checkout("lane")
+        self.assertEqual(_git(r.root, "-c", "merge.directoryRenames=false", "merge", "-q", "--no-ff", "-m", "approved merge", "main").returncode, 0)
+        merge = r.git("rev-parse", "HEAD")
+        r.rm("application/lucky_charm"); r.rm("application/fortune_saju/lane_pre.py"); self.urls(r); r.commit("lane follow-up")
+        new, old = self.run_both(r, anchor, (merge,), self.argv("accounts", "fortune_charm", "fortune_saju", "service_policy"))
+        self.assertEqual(old[0], 2, old[1])
+        self.assertEqual(new, old)
+
+    def test_G1_no_one_to_one_pair_or_outside_is_byte_identical_to_released(self) -> None:
+        """짝이 서지 않거나 상황 밖이면 2.22.2 와 글자 같음 — 동률 · 상관없는 BC 지우고 만들기 · 같은 이름 파일 하나뿐인 작은 영역 ·
+        레인 자기 이름 바꾸기(그대로 · 자기 곁가지 병합을 승인 목록에 올림) · 옛 이름 되살림 · 승인 목록 없음."""
+        cases: dict[str, tuple[ApprovedInflowRepo, str, tuple[str, ...], tuple[str, ...]]] = {}
+        r, anchor = self.anchor("tie", charm="place")
+        merge = self.upstream(r, ("decisive_fortune", "fortune_saju"), ("lucky_charm", "fortune_charm"), full=True)
+        cases["tie"] = (r, anchor, (merge,), ("accounts", "fortune_charm", "fortune_saju", "service_policy"))
+        r, anchor = self.anchor("delete-add")
+        r.checkout("main"); r.rm("application/decisive_fortune"); r.bc("coupon"); r.schema("coupon", "unknown_place_code")
+        self.area(r, "coupon", "coupon_issue"); self.areas["coupon"] = "coupon_issue"; self.urls(r)
+        r.commit("upstream deletes decisive_fortune, adds coupon"); r.checkout("lane"); merge = r.merge()
+        cases["delete-add"] = (r, anchor, (merge,), ("accounts", "coupon", "service_policy"))
+        r, anchor = self.anchor("lane-rename")
+        r.rename_bc("decisive_fortune", "fortune_saju"); self.urls(r); r.commit("lane renames the partner itself")
+        merge = self.note_merge(r, "lr")
+        cases["lane-rename"] = (r, anchor, (merge,), ("accounts", "fortune_saju", "service_policy"))
+        r, anchor = self.anchor("recreate")
+        merge = self.upstream(r, ("decisive_fortune", "fortune_saju"))
+        r.bc("decisive_fortune"); r.schema("decisive_fortune", "unknown_place_code"); r.controller("decisive_fortune")
+        self.urls(r); r.commit("lane re-creates the old BC name")
+        cases["recreate"] = (r, anchor, (merge,), ("accounts", "decisive_fortune", "fortune_saju", "service_policy"))
+        r, anchor = self.anchor("anchor-only")
+        self.upstream(r, ("decisive_fortune", "fortune_saju"))
+        cases["anchor-only"] = (r, anchor, (), ("accounts", "fortune_saju", "service_policy"))
+        # 고정 칸 밖 파일이 같은 이름 하나뿐인 작은 영역 둘(지우고 만들기) — 닮음 1.0 이어도 겹친 경로 바닥(3) 아래라 짝이 아니다
+        r = ApprovedInflowRepo(self.td, "tiny-mirror")
+        r.project("accounts", "lucky_charm", "service_policy")
+        r.schema("accounts", "unknown_place_code"); r.controller("accounts"); r.schema("lucky_charm", "unknown_place_code")
+        r.write("application/lucky_charm/driven_layer/django_lucky_charm/migrations/0001_initial.py")
+        self.urls(r)
+        anchor = r.commit("anchor")
+        r.checkout(anchor, "lane"); r.schema("service_policy", "policy_unknown"); r.controller("service_policy"); self.urls(r); r.commit("lane")
+        r.checkout("main"); r.rm("application/lucky_charm"); r.bc("coupon")
+        r.write("application/coupon/driven_layer/django_coupon/migrations/0001_initial.py"); self.urls(r)
+        r.commit("upstream deletes lucky_charm, adds an unrelated small coupon"); r.checkout("lane"); merge = r.merge()
+        r.schema("service_policy", "unknown_place_code"); r.commit("lane duplicates the accounts value")
+        cases["tiny-mirror"] = (r, anchor, (merge,), ("accounts", "service_policy"))
+        # 레인이 곁가지에서 이름을 바꿔 자기 가지에 병합하고 그 병합을 승인 목록에 올림 — ^2 를 담은 ref 가 HEAD 브랜치뿐이라 짝을 쓰지 않는다
+        r, anchor = self.anchor("own-side-merge", df_value="df_unknown")
+        r.checkout("lane", "side"); r.rename_bc("decisive_fortune", "fortune_saju"); self.urls(r); r.commit("lane-made rename on a side branch")
+        r.checkout("lane"); r.write("lane-own.txt", "lane\n"); r.commit("lane")
+        merge = r.merge("side")
+        r.git("branch", "-q", "-D", "side")
+        r.schema("fortune_saju", "unknown_place_code", extra=True); r.commit("lane makes the duplicate in the renamed BC")
+        cases["own-side-merge"] = (r, anchor, (merge,), ("accounts", "fortune_saju", "service_policy"))
+        for name, (r, anchor, merges, bcs) in cases.items():
+            for script in (CENT, CTX):
+                with self.subTest(case=name, script=script.name):
+                    new, old = self.run_both(r, anchor, merges, self.argv(*bcs, inventory=script is CENT), script)
+                    self.assertEqual(new, old)
+                    self.assertNotIn("영역 이름 대응", new[1])
+
+    def test_G2_lane_made_duplicates_stay_new(self) -> None:
+        """레인이 옛 이름 BC 에 중복을 만든 뒤 상류가 이름을 바꿈 · 레인이 짝 BC 를 지우고 중복을 옮김 — 둘 다 신규로 남는다."""
+        r: ApprovedInflowRepo
+        anchor: str
+        r, anchor = self.anchor("old-name-dup", df_value="df_unknown")
+        r.schema("decisive_fortune", "unknown_place_code", extra=True); r.commit("lane makes the duplicate")
+        r.checkout("main"); r.rename_bc("decisive_fortune", "fortune_saju"); self.urls(r); r.commit("upstream rename")
+        r.checkout("lane")
+        _git(r.root, "merge", "-q", "--no-ff", "--no-commit", "main")
+        _git(r.root, "checkout", "--theirs", "--", ".")
+        if (r.root / "application/decisive_fortune").exists():
+            r.rm("application/decisive_fortune")
+        r.schema("fortune_saju", "unknown_place_code", extra=True); self.urls(r)
+        merge: str = r.commit("approved merge keeps the lane value")
+        self.assertEqual(len(r.git("show", "-s", "--format=%P", merge).split()), 2)
+        new, _old = self.run_both(r, anchor, (merge,), self.argv("accounts", "fortune_saju", "service_policy"))
+        self.assertEqual(new[0], 2, new[1])
+        self.assertIn(self.dup, {re.sub(r":\d+:", ":N:", l) for l in _section(new[1], "신규분")}, new[1])
+        r, anchor = self.anchor("moves-dup")
+        r.rm("application/decisive_fortune"); r.schema("service_policy", "unknown_place_code"); self.urls(r)
+        r.commit("lane moves the duplicate")
+        merge = self.note_merge(r, "mv")
+        new, old = self.run_both(r, anchor, (merge,), self.argv("accounts", "service_policy"))
+        self.assertEqual(new, old)
+        self.assertEqual(new[0], 2, new[1])
+
+    def test_한계_same_text_third_owner_mirrored_delete_add_and_subject_flip(self) -> None:
+        """받아들인 한계(성공 보장 아님): ① 레인이 셋째 모듈에 같은 값 — 줄 글자가 같아 앵커 기존분(이름 바꾸기 없을 때와 같은 모델)
+        ② 상류가 BC 를 지우고 고정 칸 밖 경로가 똑같은(겹친 경로 3 이상 · 절반 이상) 새 BC 를 만들면 이름 바꾸기로 짝지어진다
+        ③ 옛 이름이 짝 모듈보다 알파벳 앞이면 짝이 서도 그대로 막힌다(중복 값 줄의 주어가 알파벳 첫 모듈이라)."""
+        r: ApprovedInflowRepo
+        anchor: str
+        r, anchor = self.anchor("third-owner")
+        merge: str = self.upstream(r, ("decisive_fortune", "fortune_saju"))
+        r.schema("service_policy", "unknown_place_code"); r.commit("lane adds a third owner of the value")
+        new, old = self.run_both(r, anchor, (merge,), self.argv("accounts", "fortune_saju", "service_policy"))
+        self.assertEqual(old[0], 2, old[1])
+        self.assert_existing(new, {self.dup}, inflow=2, pairs=self.pair)
+        r, anchor = self.anchor("mirror")
+        r.checkout("main"); r.rm("application/decisive_fortune"); r.bc("coupon"); r.schema("coupon", "unknown_place_code")
+        r.controller("coupon"); self.urls(r); r.commit("upstream deletes decisive_fortune, adds coupon of the same shape")
+        r.checkout("lane"); merge = r.merge()
+        new, old = self.run_both(r, anchor, (merge,), self.argv("accounts", "coupon", "service_policy"))
+        self.assertEqual(old[0], 2, old[1])
+        self.assertIn(self.alias_head + "coupon→decisive_fortune\n", new[1])
+        self.assertEqual(new[0], 0, new[1])
+        # ③ 옛 이름이 짝 모듈보다 알파벳 앞(`aaa_fortune` → `zzz_saju`): 앵커 줄의 주어가 옛 영역 쪽이라 글자가 달라 그대로 막힌다
+        r = ApprovedInflowRepo(self.td, "subject-flip")
+        r.project("accounts", "aaa_fortune", "service_policy")
+        r.schema("accounts", "unknown_place_code"); r.controller("accounts")
+        r.schema("aaa_fortune", "unknown_place_code"); r.controller("aaa_fortune"); self.urls(r)
+        anchor = r.commit("anchor")
+        r.checkout(anchor, "lane"); r.schema("service_policy", "policy_unknown"); r.controller("service_policy"); self.urls(r); r.commit("lane")
+        merge = self.upstream(r, ("aaa_fortune", "zzz_saju"))
+        new, old = self.run_both(r, anchor, (merge,), self.argv("accounts", "service_policy", "zzz_saju"))
+        self.assertEqual((old[0], new[0]), (2, 2), new[1])
+        self.assertIn(self.alias_head + "zzz_saju→aaa_fortune\n", new[1])
+        self.assertIn(self.dup.replace(":N:", ":1:") + "\n    ↳ 귀속 유지: 측정 무효(M^1)", new[1])
+
+
+class AnchorSnapshotEscapeRegression(unittest.TestCase):
+    """앵커 사본에 사본 밖을 가리키는 심링크가 있으면 앵커 실행을 기준선으로 쓰지 않는다(기존 결함 ⓑ 후보 A) — 지금 내용을
+    읽어 레인 위반이 «원래 있던 것» 으로 빠지던 길. 저장소 안 상대 심링크는 2.22.2 와 글자 같음."""
+
+    ctx: list[str] = ["--error-profile", "dddjango-code-json", "--scope", "sym", "--api-module", "config/api.py", "--scope-bc", "accounts"]
+    gate: Path = S / "registry_gate.py"
+
+    def setUp(self) -> None:
+        self.temp: tempfile.TemporaryDirectory[str] = tempfile.TemporaryDirectory(prefix="anchor-escape-")
+        self.addCleanup(self.temp.cleanup)
+        self.td: Path = Path(self.temp.name)
+
+    def repo(self, kind: str) -> tuple[Path, str]:
+        root: Path = self.td / kind
+        for rel in ("application/__init__.py", "application/accounts/__init__.py",
+                    "application/accounts/domain_layer/__init__.py", "config/__init__.py", "shared/payload_impl.py"):
+            _write(root, rel, "")
+        _write(root, "config/api.py", "from ninja_extra import NinjaExtraAPI\n\napi: NinjaExtraAPI = NinjaExtraAPI()\n")
+        target: str = str((root / "shared/payload_impl.py").resolve()) if kind == "abs" else "../../../shared/payload_impl.py"
+        os.symlink(target, root / "application/accounts/domain_layer/payload.py")
+        self.assertEqual(_git(root, "init", "-q").returncode, 0)
+        anchor: str = _commit_all(root, "anchor")
+        _write(root, "shared/payload_impl.py", "from django.db import models\n")
+        return root, anchor
+
+    def released(self) -> Path:
+        old: Path = self.td / "released-2222"
+        if not old.exists():
+            old.mkdir()
+            archive: subprocess.CompletedProcess[bytes] = subprocess.run(
+                ["git", "-C", str(ROOT), "archive", _RELEASED_2222_COMMIT, "dddjango/scripts"], capture_output=True, check=True)
+            subprocess.run(["tar", "-x", "-C", str(old)], input=archive.stdout, check=True)
+        return old / "dddjango" / "scripts"
+
+    @staticmethod
+    def masked(result: tuple[int, str]) -> tuple[int, str]:
+        return result[0], "\n".join("툴체인: (가림)" if l.startswith("툴체인:") else l for l in result[1].splitlines())
+
+    def test_E1_absolute_link_at_anchor_is_fail_closed(self) -> None:
+        root: Path
+        anchor: str
+        root, anchor = self.repo("abs")
+        code: int
+        out: str
+        code, out = _run(CTX, root, self.ctx + ["--anchor", anchor])
+        self.assertEqual(code, 2, out)
+        self.assertIn("기준선=기준선 불능(fail-closed — 전량 신규 취급)", out)
+        self.assertIn("  기준선 오류: 앵커 사본에 사본 밖을 가리키는 심링크 application/accounts/domain_layer/payload.py", out)
+        self.assertEqual(_run(self.released() / CTX.name, root, self.ctx + ["--anchor", anchor])[0], 0)
+        code, out = _run(self.gate, root, ["--anchor", anchor])
+        self.assertEqual(code, 2, out)
+        self.assertIn(f"주의: 앵커 {anchor[:12]} 사본에 사본 밖을 가리키는 심링크 application/accounts/domain_layer/payload.py — "
+                      "기준선 불능이라 fail-closed(현재 위반 전량 귀속)", out)
+        self.assertEqual(_run(self.released() / "registry_gate.py", root, ["--anchor", anchor])[0], 0)
+
+    def test_E3_gate_does_not_split_sister_lines_when_the_anchor_is_unusable(self) -> None:
+        """«기준선 불능 … 전량 귀속» 을 찍은 실행은 자매 영역(web) 줄도 가르지 않는다(조정자 글 «측정 실패가 먼저다»)."""
+        gate = _checker_module(self.gate)
+        line: str = "check-context-isolation.py :: [#95] web/a.py: 위반"
+        record: dict = {"checker": "check-context-isolation.py", "rule": "#95", "file": "web/a.py", "message": "위반",
+                        "kind": "violation", "severity": "error"}
+
+        def fake(target, sink=None, git_root=None, only=None, unclassifiable=None):
+            current: bool = Path(target).name == "current"                         # web 줄은 현재 쪽에만(= 귀속 후보)
+            return {"check-context-isolation.py": 2 if current else 0}, ({line} if current else set()), ([record] if current else []), set()
+        for kind, want_code, sister in (("plain", 0, True), ("escape", 2, False)):
+            with self.subTest(kind=kind):
+                root: Path = self.td / ("sister-" + kind)
+                _write(root, "manage.py", 'import os\nos.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")\n')
+                for rel in ("config/settings.py", "shared/x.py"):
+                    _write(root, rel, "")
+                _write(root, ".gitignore", ".dddjango-web/\n")
+                _write(root, "web/a.py", "x = 1\n")
+                (root / ".dddjango-web").mkdir()
+                if kind == "escape":
+                    os.symlink("/dev/null", root / "shared/disabled.conf")
+                self.assertEqual(_git(root, "init", "-q").returncode, 0)
+                anchor: str = _commit_all(root, "anchor")
+                _write(root, "note.md", "dirty\n")
+                out: io.StringIO = io.StringIO()
+                with patch.object(gate, "_run_registry", side_effect=fake), contextlib.redirect_stdout(out):
+                    code: int = gate.main([str(root), "--anchor", anchor])
+                text: str = out.getvalue()
+                self.assertEqual(code, want_code, text)
+                self.assertEqual("자매 플러그인 영역" in text, sister, text)
+                if kind == "escape":
+                    self.assertIn("기준선 불능이라 fail-closed(현재 위반 전량 귀속)", text)
+                    self.assertIn("== 귀속(N∖L) 1건 ==", text)
+
+    def test_E2_in_repo_relative_link_is_byte_identical_to_released(self) -> None:
+        root: Path
+        anchor: str
+        root, anchor = self.repo("rel")
+        for script, argv in ((CTX, self.ctx), (self.gate, [])):
+            with self.subTest(script=script.name):
+                self.assertEqual(self.masked(_run(script, root, argv + ["--anchor", anchor])),
+                                 self.masked(_run(self.released() / script.name, root, argv + ["--anchor", anchor])))
+
+
 def main() -> int:
     suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case) for case in (
         BaselineBcArgvRegression, EmptyScopeBcRegression, BcSelectorPartitionRegression, SisterAnchorRegression,
-        UnnumberedDebtRegression, BaselineSliceRegression, ApprovedInflowPartitionRegression))
+        UnnumberedDebtRegression, BaselineSliceRegression, ApprovedInflowPartitionRegression,
+        BcRenamePairingRegression, RenamedBcBaselineRegression, AnchorSnapshotEscapeRegression))
     result = unittest.TextTestRunner(verbosity=2).run(
         suite)
     if not result.wasSuccessful():

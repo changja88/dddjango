@@ -85,12 +85,27 @@ NEGATIVE_LANES: "list[tuple[str, str, str]]" = [
     # 결정 2(2026-09-04) — 내용 없는 골격 파일(skeleton_placeholder)은 내용 규칙(#219·#635)의 대상이 아니다.
     ("check-port-adapter-pairing.py", "port_adapter_pairing", "skeleton_placeholder"),
     ("check-usecase-dto-placement.py", "usecase_dto", "skeleton_placeholder"),
+    # F4-92 — `event` 는 기술 낱말(불용어)이다: 영역이 `OrderPlacedEvent`·`shipment_event.py` 같은 이름을 가져도
+    # broker(#518 — 봉투 `event_id`)·framework 계약(#47·#617)이 그 낱말을 쓰는 것은 clean.
+    ("check-broker-contract.py", "broker_contract", "event_kind_word"),
+    ("check-business-vocabulary.py", "business_vocabulary", "event_kind_word"),
+    # F4-92 «받아들인 한계» — 바라는 동작이 아니라 선언한 한계의 고정이다: `event` 를 업무 명사로 쓰는 영역
+    # (`EventBooking`)을 framework 가 `event_id`·`event_name` 꼴로만 알면 이 검사기는 못 잡는다(exit 0 — 따로 보게 하는 규칙도 없다).
+    ("check-business-vocabulary.py", "business_vocabulary", "event_noun_leak_limit"),
 ]
 
 POSITIVE_LANES: "list[tuple[str, str, str]]" = [
     ("check-usecase-dto-placement.py", "usecase_dto", "registrar_only"),
     ("check-usecase-dto-placement.py", "usecase_dto", "orphan_area"),
     ("check-usecase-dto-placement.py", "usecase_dto", "api_only_area"),
+    # F4-92 가드 — 위 한계의 경계: 같은 영역의 다른 업무 낱말(`booked` — 폴더 이름에는 없는 낱말)이 `event` 와 함께
+    # 새면 그 낱말로 계속 잡는다.
+    ("check-business-vocabulary.py", "business_vocabulary", "event_noun_leak_guard"),
+    # F4-92 가드 — 같은 칸 낱말 `entity`·`object` 와 복수형 `events` 는 불용어가 아니다(현장 근거 없음): 영역 낱말이면
+    # 그 낱말 하나로 잡는다(낱말마다 픽스처 하나 — 레인은 exit 만 본다).
+    ("check-business-vocabulary.py", "business_vocabulary", "entity_word_guard"),
+    ("check-business-vocabulary.py", "business_vocabulary", "object_word_guard"),
+    ("check-business-vocabulary.py", "business_vocabulary", "events_word_guard"),
 ]
 
 

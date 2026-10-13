@@ -31,6 +31,12 @@ STOPWORDS = frozenset({
     "error", "exception", "base", "main", "init", "self", "none", "true", "false",
     "str", "int", "bool", "float", "dict", "code", "message", "at", "of", "to", "in",
     "is", "has", "can", "not", "and", "or", "for", "with", "by", "on", "from",
+    # 기술 낱말 `event` — 표준 트리의 고정 칸(`event/`)이고 브로커 봉투의 식별 수단(`event_id` — #533)이라 framework 가
+    # 일반 뜻으로 쓴다(`message`·`request`·`error` 와 같은 부류). 받아들인 한계: `event` 를 업무 명사로 쓰는 영역의
+    # `event_id` 꼴 누설은 이 낱말로는 못 잡는다 — 그 영역의 다른 낱말이 함께 새면 잡는다. 감수가 짚을 수는 있지만
+    # 따로 보게 하는 규칙은 없다(`message` 와 같은 처지).
+    # 같은 칸 낱말 `entity`·`object` 는 현장 근거가 없어 넣지 않았다(`object` 는 넣으면 기존 #518 줄 글자가 바뀐다).
+    "event",
 })
 
 _TOKEN_RE = re.compile(r"[A-Z][a-z0-9]*|[a-z][a-z0-9]*|[0-9]+")

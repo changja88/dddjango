@@ -31,6 +31,11 @@ G2 를 통과할 수 없었다(같은 게이트를 다른 레인은 «해석»�
   그마저 오류면 fail-closed(전량 신규 취급 = blocker 유지)한다. 기준선 오류는 별도 줄로 보고한다.
 - 승인 머지 목록이 있으면 주어 판정·두 부모 차분·병합 결과부터 HEAD까지 줄 이어짐을
   증명한 줄만 승인 유입으로 분리한다. 증명 불능은 신규에 남기고 사유를 보고한다.
+- 승인 머지가 상류의 BC 이름 바꾸기를 가져왔고(`merge_bc_renames` — 상류 쪽 경로 구조만 보는 1:1 대응)
+  지금 이름의 selector 렌더가 그 사본에서 서지 않을 때만, 앵커·병합 전 사본의 기준선을 그 사본의 옛 BC
+  이름으로 렌더한다(`snapshot_bc_aliases` — inventory 검사 때문에 서지 못하는 registry #2 에만 넘긴다). 지금 이름으로 서는 렌더는 그대로 쓴다. 대응이 1:1 로 서지
+  않거나 승인 목록이 없으면 지금과 같다. 앵커 사본에 사본 밖을 가리키는 심링크가 있으면 앵커 실행을
+  기준선으로 쓰지 않는다(fail-closed).
 - 라인 대조는 registry_gate 와 같은 정규화만 한다: 절대 경로 echo 제거·라인번호
   `:N` 치환 — 경로 «파싱»을 하지 않는다.
 """
@@ -51,6 +56,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from checker_registry import REGISTRY, checker_argv  # noqa: E402
 import checker_target  # noqa: E402  — 빈 골격 술어(skeleton_placeholder) 단일 출처
+import standard_tree  # noqa: E402  — BC 고정 칸(이름 바꾸기 대응에서 모든 BC 가 같이 가진 경로를 뺀다)
 
 # 앵커 스냅숏 재실행 모드 flag — 다섯 검사기(registry 2·5·6·15·16번)가 공통 수용한다.
 BASELINE_FLAG: str = "--anchor-baseline"
@@ -349,13 +355,31 @@ class _Baseline:
     used: str
     error: "str | None" = None          # selector 렌더가 서지 않았을 때 그 실행의 마지막 줄
     dropped: "tuple[str, ...]" = ()     # (나) 로 --error-bc 를 걷은 BC
+    aliases: "tuple[tuple[str, str], ...]" = ()   # selector 렌더에 쓴 (지금 이름, 사본 이름) — 승인 머지가 가져온 BC 이름 바꾸기
+
+    def alias_note(self) -> str:
+        return ", ".join(f"{now}→{old}" for now, old in self.aliases)
 
 
-def _baseline_lines(script: Path, snap: Path, argv: "list[str]", path_flags: "frozenset[str]") -> _Baseline:
+def _baseline_lines(script: Path, snap: Path, argv: "list[str]", path_flags: "frozenset[str]",
+                    alias: "dict[str, str] | None" = None) -> _Baseline:
     """한 스냅숏의 기준선 사다리 — ① selector 렌더 ② (서지 않을 때만) 빈 골격 --error-bc 를 걷은 selector 렌더
-    ∪ positional ③ positional ④ 불능. ①이 서면 2.21.1 과 같은 실행·같은 문구다."""
+    ∪ positional ③ positional ④ 불능. ①이 서면 2.21.1 과 같은 실행·같은 문구다.
+    alias(지금 BC 이름 → 사본 BC 이름)가 있어도 alias 없는 사다리를 먼저 탄다. 그것이 ①로 서면 그대로 쓴다(2.22.2 와
+    같은 실행 · 같은 결과). 서지 않을 때만 selector 를 사본의 이름으로 바꾼 argv(`_alias_argv`)로 같은 사다리를 타고,
+    그쪽이 더 높은 칸(① 또는, alias 없는 쪽이 selector 렌더가 아닐 때의 ②)일 때만 쓴다."""
     code: int
     lines: "list[str]"
+    if alias:
+        plain: _Baseline = _baseline_lines(script, snap, argv, path_flags)
+        if plain.used == "selector 렌더 재실행":
+            return plain
+        renamed: _Baseline = _baseline_lines(script, snap, _alias_argv(argv, alias), path_flags)
+        if renamed.used == "selector 렌더 재실행" or (
+                renamed.used.startswith("selector 렌더 재실행") and not plain.used.startswith("selector 렌더 재실행")):
+            renamed.aliases = tuple(sorted(alias.items()))
+            return renamed
+        return plain
     code, lines = _run_lines(_baseline_argv(script, snap, argv, path_flags))
     if code in (0, 2):
         return _Baseline(code, lines, "selector 렌더 재실행")
@@ -393,6 +417,183 @@ def _baseline_lines(script: Path, snap: Path, argv: "list[str]", path_flags: "fr
         return _Baseline(pcode, plines,
                          "positional 기준선(selector 렌더 불능 강등 — selector-lane 진단은 전량 신규 취급)", error)
     return _Baseline(pcode, [], "기준선 불능(fail-closed — 전량 신규 취급)", error)
+
+
+def _bc_roots(root: Path, rev: str) -> "frozenset[str] | None":
+    """커밋 rev 의 `application/` 바로 아래 폴더 이름(BC 뿌리). 읽을 수 없으면 None."""
+    proc: "subprocess.CompletedProcess[str]" = run_git(root, "ls-tree", "-d", "--name-only", "-z", f"{rev}:application")
+    if proc.returncode != 0:
+        return None if run_git(root, "cat-file", "-e", f"{rev}^{{commit}}").returncode != 0 else frozenset()
+    return frozenset(name for name in proc.stdout.split("\0") if name)
+
+
+_FIXED_BC_PATHS: "dict[str, frozenset[str]]" = {}
+
+
+def _fixed_bc_paths(token: str) -> "frozenset[str]":
+    """표준 트리의 고정 칸(모든 BC 가 같이 가진 경로 — fixed 와 BC 이름만 재등장하는 칸) — BC 뿌리 아래 상대 경로 · 폴더는 `__init__.py`.
+    이름마다 한 번만 만든다."""
+    if token in _FIXED_BC_PATHS:
+        return _FIXED_BC_PATHS[token]
+    out: "set[str]" = {"__init__.py"}
+
+    def walk(prefix: str, row: "standard_tree.Row") -> None:
+        for child in standard_tree.children(row):
+            name: str = child.name.replace("<bounded_context>", token)
+            if child.kind == "placeholder" or "<" in name.replace(token, ""):
+                continue
+            if name.endswith("/"):
+                out.add(prefix + name + "__init__.py")
+                walk(prefix + name, child)
+            else:
+                out.add(prefix + name)
+    walk("", standard_tree.bc_root())
+    _FIXED_BC_PATHS[token] = frozenset(out)
+    return _FIXED_BC_PATHS[token]
+
+
+_BC_TOKEN: str = "<bc>"
+# 사본 대응을 넘기는 검사기 — 옛 BC 의 오류 모듈이 inventory 밖이라 지금 이름 렌더가 사용 오류로 서지 못하는 registry #2 뿐.
+# 나머지 넷(registry #5 · #6 · #15 · #16)은 대응을 받지 않는다(출력이 2.22.2 와 같음을 구조로 지킨다).
+_ALIAS_CHECKERS: "frozenset[str]" = frozenset({"check-error-centralization.py"})
+_RENAME_MIN_SHARE: float = 0.5   # 닮음(Jaccard) 문턱
+_RENAME_MIN_COMMON: int = 3      # 겹친 «고정 칸 밖 경로» 수의 바닥 — 파일 한두 개가 같다고 개명으로 보지 않는다
+
+
+def _bc_paths(root: Path, rev: str, bc: str) -> "frozenset[str]":
+    """커밋 rev 의 application/<bc>/ 아래 상대 경로(파일 안 글자는 보지 않는다)."""
+    proc: "subprocess.CompletedProcess[str]" = run_git(root, "ls-tree", "-r", "--name-only", "-z", rev, "--", f"application/{bc}/")
+    prefix: str = f"application/{bc}/"
+    return frozenset(p[len(prefix):] for p in proc.stdout.split("\0") if p.startswith(prefix))
+
+
+def _bc_shape(paths: "frozenset[str]", *names: str) -> "frozenset[str]":
+    """한 (옛, 새) 짝을 견줄 때의 모양 — 두 쪽에 **같은 이름 둘**을 넘겨 같은 변환을 건다.
+    ① 고정 칸을 먼저 뺀다(두 이름으로 채운 고정 경로 — 이름이 `api`·`error` 같은 트리 낱말이어도 고정 칸이 모양에 남지 않게)
+    ② 남은 경로 안의 두 이름 글자를 한 번의 치환(긴 것 먼저)으로 토큰으로 바꾼다(안쪽 이름을 옛 이름 그대로 둔 개명 · 안쪽 이름까지
+       바꾼 개명이 같아진다 · 이름이 `bc`·`b`·`c` 여도 만든 토큰을 다시 바꾸지 않는다).
+    이 치환은 닮음을 재는 데만 쓴다 — argv 를 바꾸는 `_alias_argv` 는 글자를 바꾸지 않는다."""
+    fixed: "frozenset[str]" = frozenset().union(*(_fixed_bc_paths(name) for name in names))
+    pattern: "re.Pattern[str]" = re.compile("|".join(re.escape(name) for name in sorted(set(names), key=len, reverse=True)))
+    return frozenset(pattern.sub(_BC_TOKEN, path) for path in paths - fixed)   # 한 번에 — 만든 토큰을 다시 읽지 않는다
+
+
+_RENAME_CACHE: "dict[tuple[str, str], tuple[tuple[str, str], ...]]" = {}
+
+
+def merge_bc_renames(root: Path, m: "ApprovedMerge") -> "tuple[tuple[str, str], ...]":
+    """승인 머지 m 이 상류에서 가져온 BC 이름 바꾸기 (옛 이름, 새 이름) — 결정적 · 내용 닮음을 쓰지 않는다.
+
+    병합 기준 B = merge-base(m^1, m^2)(하나일 때만). 후보와 짝은 상류 사실(B · m^2)만으로 정한다.
+      옛 이름 후보 y: B 에 있고 m^2 에 없다          새 이름 후보 x: m^2 에 있고 B 에 없다
+      닮음(y, x) = 두 BC 의 «고정 칸 밖 상대 경로»(경로 속 y · x 글자는 토큰 — 두 쪽에 같은 변환) 집합의 Jaccard
+    짝 = 닮음 ≥ 0.5 ∧ 겹친 경로 ≥ 3 ∧ y 의 가장 닮은 x 와 x 의 가장 닮은 y 가 서로를 하나로(동률 없이) 가리킨다.
+    레인 쪽 사실(m^1 · m 의 BC 뿌리)은 그렇게 선 짝을 **버리는 데만** 쓴다 — y 가 m^1 에 없거나 m 에 남았거나,
+    x 가 m 에 없거나 m^1 에 이미 있으면 버린다(다른 후보로 넘어가지 않는다).
+    그 밖(병합 기준이 여럿 · 고정 칸뿐인 BC · 동률 · 문턱 · 바닥 미달)도 짝 없음 — 기준선은 지금처럼 렌더된다."""
+    key: "tuple[str, str]" = (str(root), m.sha)
+    if key not in _RENAME_CACHE:
+        _RENAME_CACHE[key] = _merge_bc_renames(root, m)
+    return _RENAME_CACHE[key]
+
+
+def _merge_bc_renames(root: Path, m: "ApprovedMerge") -> "tuple[tuple[str, str], ...]":
+    bases: "list[str]" = run_git(root, "merge-base", "--all", m.parent1, m.parent2).stdout.split()
+    if len(bases) != 1:
+        return ()
+    rb, r1, r2, rm = (_bc_roots(root, rev) for rev in (bases[0], m.parent1, m.parent2, m.sha))
+    if rb is None or r1 is None or r2 is None or rm is None:
+        return ()
+    gone: "list[str]" = sorted(rb - r2)
+    born: "list[str]" = sorted(r2 - rb)
+    if not gone or not born:
+        return ()
+    old_paths: "dict[str, frozenset[str]]" = {y: _bc_paths(root, bases[0], y) for y in gone}
+    new_paths: "dict[str, frozenset[str]]" = {x: _bc_paths(root, m.parent2, x) for x in born}
+
+    score: "dict[tuple[str, str], float]" = {}     # (옛, 새) 닮음 — 한 번 재서 두 방향(옛 → 새 · 새 → 옛)에 같이 쓴다
+    for y in gone:
+        for x in born:
+            a: "frozenset[str]" = _bc_shape(old_paths[y], y, x)
+            b: "frozenset[str]" = _bc_shape(new_paths[x], y, x)
+            common: int = len(a & b)
+            score[(y, x)] = common / len(a | b) if common >= _RENAME_MIN_COMMON else 0.0
+
+    def unique_best(scores: "dict[str, float]") -> "str | None":
+        if not scores:
+            return None
+        top: float = max(scores.values())
+        winners: "list[str]" = [k for k, v in scores.items() if v == top]
+        return winners[0] if len(winners) == 1 and top >= _RENAME_MIN_SHARE else None
+
+    out: "list[tuple[str, str]]" = []
+    for y in gone:
+        best: "str | None" = unique_best({x: score[(y, x)] for x in born})
+        if best is not None and unique_best({yy: score[(yy, best)] for yy in gone}) == y \
+                and y in r1 and y not in rm and best in rm and best not in r1:
+            out.append((y, best))
+    return tuple(out)
+
+
+def snapshot_bc_aliases(root: Path, snap_sha: str, head_sha: str,
+                        merges: "list[ApprovedMerge]") -> "dict[str, str]":
+    """사본 snap_sha 를 렌더할 때 쓸 BC 이름 대응(지금 이름 → 사본 이름) — 참여 승인 머지가 가져온 이름 바꾸기만.
+
+    HEAD 에 있고 사본에 없는 이름 z 를 승인 머지의 (옛, 새) 짝으로 사슬 거꾸로 되짚어(z → … → n), 사본에 있고
+    HEAD 에 없는 첫 이름 n 을 쓴다. 한 사본 이름에 둘이 겹치면 둘 다 버린다. 승인 목록이 없으면 늘 빈 대응이다.
+    ^2 를 담은 ref 가 HEAD 브랜치뿐인 머지(역방향 · 합성 의심 — `parent2_only_head`)의 짝은 쓰지 않는다."""
+    active: "list[ApprovedMerge]" = sorted((m for m in merges if m.participates and not m.parent2_only_head),
+                                           key=lambda m: m.position or 0)
+    pairs: "list[tuple[str, str]]" = [pair for m in active for pair in merge_bc_renames(root, m)]
+    if not pairs:
+        return {}
+    head_roots: "frozenset[str] | None" = _bc_roots(root, head_sha)
+    snap_roots: "frozenset[str] | None" = _bc_roots(root, snap_sha)
+    if not head_roots or not snap_roots:
+        return {}
+    out: "dict[str, str]" = {}
+    for z in sorted(head_roots - snap_roots):
+        cur: str = z
+        for old, new in reversed(pairs):
+            if new == cur:
+                cur = old
+                if cur in snap_roots and cur not in head_roots:
+                    out[z] = cur
+                    break
+    targets: "list[str]" = list(out.values())
+    return {z: n for z, n in out.items() if targets.count(n) == 1}
+
+
+def _alias_argv(argv: "list[str]", alias: "dict[str, str]") -> "list[str]":
+    """BC 이름이 든 argv 값만 사본 이름으로 — `--scope-bc`·`--error-bc` 값이 그 이름일 때, 그리고 `application/<bc>/…`
+    경로 값의 BC 뿌리 조각(둘째 조각)과 `django_<이름>` 조각만(글자 치환이 아니다 — 영역 폴더 · 파일 이름은 그대로)."""
+    def tr(flag: str, value: str) -> str:
+        if flag in ("--scope-bc", "--error-bc"):
+            return alias.get(value, value)
+        parts: "list[str]" = value.split("/")
+        if len(parts) > 2 and parts[0] == "application" and parts[1] in alias:
+            now: str = parts[1]
+            old: str = alias[now]
+            return "/".join(["application", old] + [f"django_{old}" if part == f"django_{now}" else part for part in parts[2:]])
+        return value
+
+    out: "list[str]" = []
+    i: int = 0
+    while i < len(argv):
+        token: str = argv[i]
+        if token.startswith("--"):
+            name, eq, inline = token.partition("=")
+            if eq:
+                out.append(f"{name}={tr(name, inline)}")
+            elif i + 1 < len(argv) and not argv[i + 1].startswith("--"):
+                out += [token, tr(name, argv[i + 1])]
+                i += 1
+            else:
+                out.append(token)
+        else:
+            out.append(token)
+        i += 1
+    return out
 
 
 def tree_blobs(root: Path, sha: str) -> "dict[str, str]":
@@ -905,7 +1106,9 @@ def _approved_inflow_split(
                 if escape is not None:
                     failure = f"사본 밖을 가리키는 심링크 {escape}"
                 else:
-                    base = _baseline_lines(script, dest, argv, path_flags)
+                    base = _baseline_lines(script, dest, argv, path_flags,
+                                           snapshot_bc_aliases(root, sha, head_sha, merges)
+                                           if script.name in _ALIAS_CHECKERS else None)
                     r: "tuple[str, ...]" = (str(dest) + "/", str(dest))
                     if base.error is not None:
                         base.error = base.error.replace(str(dest) + "/", "").replace(str(dest), "")
@@ -1037,7 +1240,13 @@ def partition_exit(
     with tempfile.TemporaryDirectory() as td:
         snap: Path = Path(td) / "anchor"
         snapshot_anchor(resolved_target, sha, snap)
-        base: _Baseline = _baseline_lines(script, snap, argv, path_flags)
+        anchor_escape: "str | None" = snapshot_escape(snap)
+        base: _Baseline = (_baseline_lines(script, snap, argv, path_flags,
+                                           snapshot_bc_aliases(resolved_target, sha, head_sha, merges)
+                                           if script.name in _ALIAS_CHECKERS else None)
+                           if anchor_escape is None else
+                           _Baseline(1, [], "기준선 불능(fail-closed — 전량 신규 취급)",
+                                     f"앵커 사본에 사본 밖을 가리키는 심링크 {anchor_escape}"))
         if base.error is not None:
             base.error = base.error.replace(str(snap) + "/", "").replace(str(snap), "")
         code, lines, used = base.code, base.lines, base.used
@@ -1085,6 +1294,8 @@ def partition_exit(
     if split is not None:
         counts += f" · 승인 유입 {len(split.inflow)}건"
     print(counts)
+    if base.aliases:
+        print(f"  기준선 영역 이름 대응(승인 머지가 가져온 BC 이름 바꾸기 — 앵커 사본은 그 이름으로 렌더): {base.alias_note()}")
     if base.error is not None:
         print(f"  기준선 오류: {base.error}")
     if new:
@@ -1118,6 +1329,7 @@ def partition_exit(
                     print(f"    ↳ {side} 기준선: 측정 무효 — {split.failures.get(commit, '스냅숏 실패')}")
                 else:
                     print(f"    ↳ {side} 기준선: {measured.used}"
+                          + (f" — 영역 이름 대응: {measured.alias_note()}" if measured.aliases else "")
                           + (f" — 오류: {measured.error}" if measured.error is not None else ""))
         for line, m_sha, kind, note in split.inflow:
             print(f"  {line.strip()}")
