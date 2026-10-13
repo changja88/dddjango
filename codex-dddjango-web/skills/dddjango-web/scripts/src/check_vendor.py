@@ -42,7 +42,10 @@ def _f(check: str, path: str, line: Optional[int], message: str, fix: str) -> Fi
 
 
 def _git(root: Path, *args: str) -> subprocess.CompletedProcess:
-    return subprocess.run(['git', '-C', str(root), *args], capture_output=True)
+    # diff · log · show 경로는 저장소 기준으로 읽는다 — 사용자 git 설정 diff.relative 를 따르지 않는다.
+    # 비ASCII 경로는 따옴표 없이(core.quotePath) · 첫 커밋의 변경도 늘 낸다(log.showRoot)
+    return subprocess.run(['git', '-C', str(root), '-c', 'diff.relative=false', '-c', 'core.quotePath=false',
+                           '-c', 'log.showRoot=true', *args], capture_output=True)
 
 
 def _git_text(root: Path, *args: str) -> str:
@@ -52,7 +55,7 @@ def _git_text(root: Path, *args: str) -> str:
 
 def _repo_prefix(root: Path) -> Optional[str]:
     r = _git(root, 'rev-parse', '--show-prefix')
-    return r.stdout.decode('utf-8', 'surrogateescape').strip() if r.returncode == 0 else None
+    return r.stdout.decode('utf-8', 'surrogateescape').rstrip('\n') if r.returncode == 0 else None
 
 
 # ------------------------------------------------------------------ JS 리터럴 · 코드 뷰

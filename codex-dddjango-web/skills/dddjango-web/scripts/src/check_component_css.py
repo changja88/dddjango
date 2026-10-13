@@ -217,7 +217,7 @@ class Tree:
         if ctx.gated:
             cached = getattr(ctx, '_component_css_base_files', None)
             if cached is None:
-                prefix = (_git_raw(ctx.root, ['rev-parse', '--show-prefix']) or '').strip() + 'web/'
+                prefix = (_git_raw(ctx.root, ['rev-parse', '--show-prefix']) or '').rstrip('\n') + 'web/'
                 listing = _git_raw(ctx.root, ['ls-tree', '--full-tree', '-r', '--name-only', '-z', ctx.diff_base])
                 cached = {f[len(prefix):] for f in (listing or '').split('\x00') if f.startswith(prefix)}
                 setattr(ctx, '_component_css_base_files', cached)
@@ -235,7 +235,7 @@ class Tree:
         self.symlinks: Set[str] = set()
         self.symlink_listing_failed = False
         if baseline:
-            prefix = (_git_raw(ctx.root, ['rev-parse', '--show-prefix']) or '').strip() + 'web/'
+            prefix = (_git_raw(ctx.root, ['rev-parse', '--show-prefix']) or '').rstrip('\n') + 'web/'
             listing = _git_raw(ctx.root, ['ls-tree', '--full-tree', '-r', '-z', ctx.diff_base])
             self.symlink_listing_failed = listing is None
             self.symlinks = {entry.split('\t', 1)[1][len(prefix):] for entry in (listing or '').split('\x00')
@@ -595,7 +595,7 @@ def _calculate(tree: Tree) -> Results:
 def _moves(ctx: BackstopContext, design_build: Optional[str], base_files: Set[str]) -> Dict[str, str]:
     from .debt import DebtError, parse_spec_pairs
     # CS 전용 개명 읽기 — 공용 touched/added 의미론은 그대로 둔다.
-    prefix = (_git_raw(ctx.root, ['rev-parse', '--show-prefix']) or '').strip() + 'web/'
+    prefix = (_git_raw(ctx.root, ['rev-parse', '--show-prefix']) or '').rstrip('\n') + 'web/'
     tokens = (_git_raw(ctx.root, ['diff', '-M100%', '--name-status', '-z', ctx.diff_base]) or '').split('\x00')
     pairs = []
     i = 0

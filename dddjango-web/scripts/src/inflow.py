@@ -100,9 +100,8 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
     res = InflowResult(list(shown))
     # 병합 존재 확인 전 조회 실패는 새 출력 없이 2.2.2의 발견을 보존한다.
     try:
-        repo = Path(_git(ctx.root, 'rev-parse', '--show-toplevel').decode().strip())
-        prefix = ctx.root.relative_to(repo).as_posix()
-        prefix = '' if prefix == '.' else prefix + '/'
+        repo = Path(_git(ctx.root, 'rev-parse', '--show-toplevel').decode().removesuffix('\n'))  # 이름 끝 공백을 깎지 않는다
+        prefix = _git(ctx.root, 'rev-parse', '--show-prefix').decode().rstrip('\n')  # 넘겨받은 루트 글자로 셈하지 않는다
         merging = subprocess.run(['git', '-C', str(repo), 'rev-parse', '-q', '--verify', 'MERGE_HEAD'],
                                  capture_output=True, env=dict(os.environ, GIT_OPTIONAL_LOCKS='0'))
         if merging.returncode == 0:
@@ -226,7 +225,7 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
         return links[0]
 
     def touched_link() -> bool:
-        inside = os.path.realpath(ctx.root)
+        inside = os.path.realpath(repo / prefix)
 
         def leaves(path: str) -> bool:
             return os.path.commonpath([os.path.realpath(repo / path), inside]) != inside

@@ -804,11 +804,8 @@ class BackstopContext:
         added_spans: Dict[str, List[Tuple[int, int]]] = {}
 
         if git_repo and diff_base is not None:
-            repo_top: str = os.path.realpath(_git(root, ['rev-parse', '--show-toplevel']) or '')
-            root_abs: str = os.path.realpath(str(root))
-            repo_prefix: str = ''
-            if root_abs != repo_top:
-                repo_prefix = os.path.relpath(root_abs, repo_top).replace(os.sep, '/') + '/'
+            # 저장소 안 프로젝트 접두는 git 에게 묻는다 — 넘겨받은 루트 글자(대소문자만 다른 철자 등)로 셈하지 않는다
+            repo_prefix: str = (_git_raw(root, ['rev-parse', '--show-prefix']) or '').rstrip('\n')
 
             def to_web_rel(repo_path: str) -> Optional[str]:
                 if not repo_path.startswith(repo_prefix):
@@ -868,7 +865,7 @@ class BackstopContext:
                         added.add(wr)
                 i += 2 if is_rename else 1  # 리네임은 다음 필드가 old 경로
             # 3) 기준점 트리 (added 디렉터리·신규 단위 판별)
-            ls: str = _git_raw(root, ['ls-tree', '-r', '--name-only', '-z', diff_base]) or ''
+            ls: str = _git_raw(root, ['ls-tree', '--full-tree', '-r', '--name-only', '-z', diff_base]) or ''
             for p in ls.split('\x00'):
                 wr = to_web_rel(p)
                 if wr is not None:
@@ -953,7 +950,8 @@ def _git(root: Path, args: List[str]) -> Optional[str]:
 
 
 def _git_raw(root: Path, args: List[str]) -> Optional[str]:
-    r = subprocess.run(['git', '-C', str(root)] + args,
+    # 사용자 git 설정 diff.relative 가 켜져 있어도 diff · log · show 경로는 저장소 기준이다(명시 `--relative` 는 그대로 이긴다)
+    r = subprocess.run(['git', '-C', str(root), '-c', 'diff.relative=false'] + args,
                        capture_output=True, text=True, errors='replace')
     return r.stdout if r.returncode == 0 else None
 

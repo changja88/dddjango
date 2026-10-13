@@ -49,6 +49,7 @@
 import ast
 import difflib
 import json
+import posixpath
 import re
 import subprocess
 from collections import Counter
@@ -128,7 +129,12 @@ def _commit(root: Path, rev: str) -> str:
 
 
 def _blob(root: Path, rev: str, rel: str) -> bool:
-    result = subprocess.run(['git', '-C', str(root), 'cat-file', '-t', '%s:%s' % (rev, rel)],
+    norm: str = posixpath.normpath(rel)
+    if norm == '..' or norm.startswith('../'):
+        return False  # 프로젝트 밖(`../a` · `./../a`) — 맨 위(저장소 밖 → 없음)와 같게 하위 폴더에서도 받지 않는다
+    # 정규형 경로만 프로젝트 루트 기준(`:./`)으로 읽는다 — 그 밖의 글자(`a//b` · `x/../a`)는 2.5.0 처럼 그대로 넘겨 거절되게 둔다
+    spec: str = '%s:./%s' % (rev, rel) if norm == rel else '%s:%s' % (rev, rel)
+    result = subprocess.run(['git', '-C', str(root), 'cat-file', '-t', spec],
                             capture_output=True)
     return result.returncode == 0 and result.stdout.strip() == b'blob'
 
@@ -140,7 +146,7 @@ def _tree_files(root: Path, rev: str) -> Set[str]:
 
 def _web_changes(root: Path, base: str, target: str) -> Tuple[List[Tuple[str, str]], Set[str]]:
     """기준..대상의 web/ 개명 쌍(옛·새 모두 web/)과 새로 생긴 web/ 경로(A · web/ 밖에서 들어온 것 포함)."""
-    out: List[str] = _git(root, ['diff', '-M', '--name-status', '-z', base, target,
+    out: List[str] = _git(root, ['diff', '-M', '--name-status', '-z', '--relative', base, target,
                                  '--', 'web/']).decode('utf-8').split('\0')
     pairs: List[Tuple[str, str]] = []
     added: Set[str] = set()
@@ -370,7 +376,7 @@ class _Resolver:
             text: Optional[str] = None
             if path is not None:
                 try:
-                    text = _git(self.root, ['cat-file', 'blob', '%s:%s' % (rev, path)]).decode('utf-8')
+                    text = _git(self.root, ['cat-file', 'blob', '%s:./%s' % (rev, path)]).decode('utf-8')
                 except (DebtError, UnicodeDecodeError):
                     text = None
             self._sources[(rev, dotted)] = text
@@ -1091,7 +1097,7 @@ def _is_ancestor(root: Path, older: str, newer: str) -> bool:
 
 
 def _names(root: Path, a: str, b: str, pathspec: List[str]) -> Set[str]:
-    out: bytes = _git(root, ['diff', '--no-renames', '--name-only', '-z', a, b, '--', *pathspec])
+    out: bytes = _git(root, ['diff', '--no-renames', '--name-only', '-z', '--relative', a, b, '--', *pathspec])
     return {p for p in out.decode('utf-8', 'surrogateescape').split('\0') if p}
 
 
@@ -1103,7 +1109,7 @@ Step = Tuple[str, str, Entry, Entry, bool, Entry]
 
 def _raw(root: Path, a: str, b: str, pathspec: List[str]) -> Dict[str, Tuple[Entry, Entry]]:
     """a → b 에서 바뀐 경로 → (a 판 항목, b 판 항목)."""
-    out: List[str] = _git(root, ['diff', '--raw', '-z', '--no-renames', '--no-abbrev', a, b, '--',
+    out: List[str] = _git(root, ['diff', '--raw', '-z', '--no-renames', '--no-abbrev', '--relative', a, b, '--',
                                  *pathspec]).decode('utf-8', 'surrogateescape').split('\0')
     found: Dict[str, Tuple[Entry, Entry]] = {}
     i: int = 0
@@ -1119,8 +1125,8 @@ def _raw(root: Path, a: str, b: str, pathspec: List[str]) -> Dict[str, Tuple[Ent
 
 
 def _tree(root: Path, rev: str) -> Dict[str, Tuple[str, str]]:
-    """판의 파일 → (모드, blob) — 저장소 최상위 기준 경로(diff 출력과 같은 표기)."""
-    out: str = _git(root, ['ls-tree', '-r', '-z', '--full-name', rev, '--', '.']).decode('utf-8', 'surrogateescape')
+    """판의 파일 → (모드, blob) — 프로젝트 루트 기준 경로(`--relative` diff 출력과 같은 표기)."""
+    out: str = _git(root, ['ls-tree', '-r', '-z', rev, '--', '.']).decode('utf-8', 'surrogateescape')
     found: Dict[str, Tuple[str, str]] = {}
     for rec in out.split('\0'):
         if rec and '\t' in rec:

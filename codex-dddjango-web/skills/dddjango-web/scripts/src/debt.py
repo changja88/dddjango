@@ -638,8 +638,9 @@ def _inflow_moves(root: Path, folder: Path, anchor: str, pairs: Dict[str, str], 
     olds: List[str] = ['web/' + p for p in sorted(pairs)]
     news: Set[str] = {'web/' + n for n in pairs.values()}
     paths: List[str] = sorted(set(olds) | news)
-    at_head: Set[str] = set(_git(root, ['ls-tree', '-r', '--name-only', head, '--', *paths])
-                            .decode('utf-8', 'surrogateescape').splitlines())
+    # 비ASCII 이름도 따옴표 없이 읽는다(git 기본값 core.quotePath=true 는 `"web/…"` 로 감싸 낸다)
+    at_head: Set[str] = set(_git(root, ['-c', 'core.quotePath=false', 'ls-tree', '-r', '--name-only', head, '--',
+                                        *paths]).decode('utf-8', 'surrogateescape').splitlines())
     received: Set[str] = set()
     broken: Set[str] = set()
     made: Dict[str, bool] = {}   # 새 자리 → 마지막으로 만든 걸음이 승인 병합의 상류판 그대로인가
@@ -649,7 +650,8 @@ def _inflow_moves(root: Path, folder: Path, anchor: str, pairs: Dict[str, str], 
         upstream = _raw(root, parents[1], sha, paths) if sha in approved and len(parents) == 2 else None
         if upstream is not None:
             fork: str = _git(root, ['merge-base', parents[0], parents[1]]).decode().strip()
-            for line in _git(root, ['diff', '-M', '--name-status', fork, parents[1], '--', 'web']
+            for line in _git(root, ['-c', 'core.quotePath=false', 'diff', '-M', '--name-status', '--relative', fork,
+                                    parents[1], '--', 'web']
                              ).decode('utf-8', 'surrogateescape').splitlines():
                 cells = line.split('\t')
                 if len(cells) == 3 and cells[0].startswith('R'):
@@ -690,7 +692,8 @@ def moved_debt_files(root: Path, folder: Path, g0: dict, notes: Optional[List[st
         except (ValueError, AttributeError) as error:
             raise DebtError('build-state.json 파싱 실패 — %s' % error) from None
     if anchor and _is_git(root):
-        result = _git_out(root, ['diff', '-M', '--name-status', str(anchor), '--', 'web'])
+        result = _git_out(root, ['-c', 'core.quotePath=false', 'diff', '-M', '--name-status', '--relative', str(anchor),
+                                 '--', 'web'])
         if result is None:
             raise DebtError('ⓑ 이동 묶음 의존의 git 개명 쌍 조회 실패')
         renamed: Dict[str, Optional[str]] = {}   # 옛 → 새(web 밖으로 나갔으면 None)
@@ -1055,7 +1058,9 @@ def reference_lines(root: Path, needles: List[str], word: bool = False,
     word 면 `-w`(점 경로의 성분 경계 — `web.a.q` 가 `web.a.q2` 를 잡지 않는다)."""
     if not needles:
         return []
-    cmd: List[str] = ['git', '-C', str(root), '-c', 'core.quotePath=false', 'grep', *REF_GREP_OPTIONS]
+    # 사용자 git 설정 grep.fullName 이 켜져 있어도 적중 경로는 프로젝트 루트 기준이다(읽는 쪽이 `web/` 로 시작하는지 본다)
+    cmd: List[str] = ['git', '-C', str(root), '-c', 'core.quotePath=false', '-c', 'grep.fullName=false', 'grep',
+                      *REF_GREP_OPTIONS]
     if word:
         cmd.append('-w')
     for needle in needles:

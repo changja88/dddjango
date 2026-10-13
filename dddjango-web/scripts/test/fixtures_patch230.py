@@ -718,8 +718,7 @@ def bundle_errors(tmp):
 
     def sub_entries():
         shutil.rmtree(sub_folder / 'audit', ignore_errors=True)
-        # 게이트는 st·im·nm 만 — 하위 폴더 루트에서는 2.2.5 부터 기준점 트리가 비어 읽혀 새 BC 판별(TG1)이 과하게 선다(이 판 범위 밖)
-        return [('게이트(--only st,im,nm)', backstop(q.root, '--diff-base', sub_base, '--only', 'st,im,nm')),
+        return [('게이트', backstop(q.root, '--diff-base', sub_base)),
                 ('--all', backstop(q.root, '--all')),
                 ('--debt-scan', backstop(q.root, '--debt-scan')),
                 ('refactor_audit plan', audit(q.root, 'plan', unit, '--debt', sub_folder / 'debt-g0.json',

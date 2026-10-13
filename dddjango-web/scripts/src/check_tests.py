@@ -178,7 +178,7 @@ def _changed_tests(ctx: BackstopContext) -> List[TestChange]:
         contents = {}
         def old_source(rel):
             if rel not in contents:
-                contents[rel] = git('show', base + ':' + rel)
+                contents[rel] = git('show', base + ':./' + rel)
             return contents[rel]
         # 사라진 기록 사본은 이동 대응에 넣지 않는다 — 같은 내용의 새 시험은 편입(전 줄 새 줄)이다.
         gone = {p for p in old_paths if not recorded(p) and not (ctx.root / p).exists()} - set(pairs.values())

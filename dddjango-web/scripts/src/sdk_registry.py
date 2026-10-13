@@ -11,6 +11,7 @@ import base64
 import hashlib
 import json
 import os
+import posixpath
 import re
 import stat
 import subprocess
@@ -716,7 +717,11 @@ def source_line(root: Path, info: dict) -> Tuple[Optional[bytes], List[str], Lis
     if path.startswith('/') or '\\' in path or '..' in parts or not path:
         problems.append('원문 경로가 저장소 상대 경로가 아니다 — %s' % raw_path)
         return None, problems, notes
-    if parts[0] in ('web', '.dddjango-web'):
+    # 프로젝트 루트가 저장소 하위 폴더면 그 폴더의 web/ · .dddjango-web/ 도 같은 금지 자리다(경로는 저장소 상대).
+    # `./` 로 시작하면 git 이 프로젝트 루트 기준으로 읽는다 — 접두를 붙여 접은 저장소 경로로 자리를 본다.
+    prefix: str = _git(root, 'rev-parse', '--show-prefix').stdout.decode('utf-8', 'surrogateescape').rstrip('\n')
+    full: str = posixpath.normpath(prefix + path) if path.startswith('./') else path
+    if parts[0] in ('web', '.dddjango-web') or (full + '/').startswith((prefix + 'web/', prefix + '.dddjango-web/')):
         problems.append('원문 경로가 web/·.dddjango-web/ 안 — 화면 코드·빌드 기록 안 문장은 출처가 아니다(%s)'
                         % raw_path)
         return None, problems, notes

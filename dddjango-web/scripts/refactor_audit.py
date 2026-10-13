@@ -42,6 +42,7 @@ import ast
 import hashlib
 import json
 import os
+import posixpath
 import re
 import subprocess
 import sys
@@ -705,9 +706,19 @@ def _repo_path(project: Path, rel: str) -> str:
     return norm
 
 
+def _inside(project: Path, rel: str) -> bool:
+    """작업 트리의 `rel` 이 프로젝트 안의 실제 파일인가 — 심볼릭 링크를 따라 프로젝트 밖으로 풀리는 경로는 읽지 않는다
+    (프로젝트 안을 가리키는 링크 · 루트 자체가 링크인 꼴은 안이다 · 같은 폴더인지는 글자가 아니라 samefile 로 본다)."""
+    try:
+        real: Path = Path(os.path.realpath(project / rel))
+        return real.is_file() and any(parent.samefile(project) for parent in real.parents)
+    except (ValueError, OSError):        # NUL 이 든 글자 등 — 경로가 될 수 없다(2.5.0 의 is_file 처럼 «없음»)
+        return False
+
+
 def _location_ok(project: Path, loc: "tuple[str, int, int]") -> bool:
     rel, a, b = loc
-    return (project / rel).is_file() and 1 <= a <= b <= _lines_of(project, rel)
+    return _inside(project, rel) and 1 <= a <= b <= _lines_of(project, rel)
 
 
 def _findings(debt: dict) -> "list[dict]":
@@ -1810,13 +1821,13 @@ def cmd_check_verdict(corpus: Corpus, project: Path, audit: Path, feedback: "Pat
 # ── residual ─────────────────────────────────────────────────────────────────
 
 def _changed_since(project: Path, anchor: str) -> "set[str]":
-    changed: "set[str]" = {p for p in _git(project, "diff", "--no-renames", "--name-only", anchor).splitlines() if p}
+    changed: "set[str]" = {p for p in _git(project, "diff", "--no-renames", "--name-only", "--relative", anchor).splitlines() if p}
     return changed | {p for p in _git(project, "ls-files", "--others", "--exclude-standard").splitlines() if p}
 
 
 def _renamed_since(project: Path, anchor: str) -> "dict[str, str]":
     out: "dict[str, str]" = {}
-    for ln in _git(project, "diff", "-M", "--name-status", anchor).splitlines():
+    for ln in _git(project, "diff", "-M", "--name-status", "--relative", anchor).splitlines():
         parts: "list[str]" = ln.split("\t")
         if parts and parts[0].startswith("R") and len(parts) == 3:
             out[parts[1]] = parts[2]
@@ -1825,7 +1836,7 @@ def _renamed_since(project: Path, anchor: str) -> "dict[str, str]":
 
 def _file_sha(project: Path, rel: str) -> "str | None":
     path: Path = project / rel
-    return hashlib.sha256(path.read_bytes()).hexdigest()[:16] if path.is_file() else None
+    return hashlib.sha256(path.read_bytes()).hexdigest()[:16] if _inside(project, rel) else None
 
 
 def _stamp_dir(folder: Path, finalize: "str | None") -> "tuple[str, Path]":
@@ -2147,7 +2158,7 @@ def _standing_source_ok(project: Path, path: str, row: int, commit: str) -> str:
         return f"커밋 {commit} 이 없다"
     if _git_try(project, "merge-base", "--is-ancestor", full.strip(), "HEAD")[0] != 0:
         return f"커밋 {commit} 이 HEAD 의 조상이 아니다"
-    code, body = _git_try(project, "show", f"{full.strip()}:{STANDING_FILE}")
+    code, body = _git_try(project, "show", f"{full.strip()}:./{STANDING_FILE}")
     if code != 0:
         return f"커밋 {commit} 판에 파일이 없다"
     if _standing_verdict(body)[0] != row:
@@ -2202,8 +2213,13 @@ def _snapshot_lines(project: Path, snap: str, rel: str, memo: "dict[str, int | N
     if rel not in memo:
         memo[rel] = None
         for cand in (rel, "web/" + rel) if not rel.startswith("web/") else (rel,):
+            norm: str = posixpath.normpath(cand)
+            if norm == ".." or norm.startswith("../"):
+                continue                                                                # 프로젝트 밖(`../a` · `./../a`) — 맨 위(저장소 밖 → 없음)와 같게
             try:
-                code, out = _git_try(project, "cat-file", "blob", f"{snap}:{cand}")     # 디렉터리(트리)는 실패
+                # 정규형 경로만 프로젝트 루트 기준(`:./`) — 그 밖의 글자(`x/../a` · `a/./b`)는 2.5.0 처럼 그대로(거절)
+                spec: str = f"{snap}:./{cand}" if norm == cand else f"{snap}:{cand}"
+                code, out = _git_try(project, "cat-file", "blob", spec)                 # 디렉터리(트리)는 실패
             except UnicodeDecodeError:
                 code, out = 0, ""                                                       # 비UTF-8 은 0행(`_lines_of` 와 같다)
             if code == 0:

@@ -761,8 +761,8 @@ def cmd_restore(ns: argparse.Namespace) -> int:
 
 def _no_template_refs(root: Path, name: str, needle: str) -> None:
     """저장소 템플릿(추적 + 미추적)이 needle 을 가리키면 거절 — 참조 줄을 보인다."""
-    result = subprocess.run(['git', '-C', str(root), 'grep', '--untracked', '-n', '-F', '-e', needle, '--', '*.html'],
-                            capture_output=True)
+    result = subprocess.run(['git', '-C', str(root), '-c', 'grep.fullName=false', 'grep', '--untracked', '-n', '-F',
+                             '-e', needle, '--', '*.html'], capture_output=True)
     if result.returncode not in (0, 1):
         raise UsageError('저장소 템플릿 참조 조회 실패 — %s' % result.stderr.decode('utf-8', 'replace').strip())
     hits: List[str] = [h for h in result.stdout.decode('utf-8', 'replace').splitlines() if h]

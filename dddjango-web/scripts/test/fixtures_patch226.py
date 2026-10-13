@@ -356,7 +356,7 @@ with tempfile.TemporaryDirectory(prefix='web226-') as tmp:
         repo, root, base, folder = project(temp, 'place-' + rel.replace('/', '-'))
         m = incoming(repo, root, {rel: BAD}, folder)
         received('B 관례 시험 자리 ' + rel, run(root, base), m, info=True)
-    # 지금 동작의 단언 — 모드만 바꾼 레인 커밋(내용 그대로)은 걸음으로 세지 않는다 · 하위 폴더 root 의 기존 시험 변경.
+    # 지금 동작의 단언 — 모드만 바꾼 레인 커밋(내용 그대로)은 걸음으로 세지 않는다.
     repo, root, base, folder = project(temp, 'mode-only')
     m = incoming(repo, root, {TEST: BAD}, folder)
     os.chmod(root / TEST, 0o755)
@@ -366,9 +366,7 @@ with tempfile.TemporaryDirectory(prefix='web226-') as tmp:
     received('B 모드만 바꾼 레인 커밋 — 내용 그대로', run(root, base), m, info=True)
     repo, root, base, folder = project(temp, 'prefix-existing', {TEST: SAFE}, nested=True)
     m = incoming(repo, root, {TEST: BAD}, folder)
-    got = run(root, base)
-    check('B root 하위 폴더의 기존 시험 변경 — TG2·TG3 미실행 고지(지금 동작)', got[0] == 0 and '[TG' not in got[1]
-          and '[info] TG2·TG3 미실행 — 기준점·설정·대응 해석 실패 · 변경 시험 범위 미확정' in got[1], got)
+    received('B root 하위 폴더의 기존 시험 변경 — 맨 위와 같은 수신 증명', run(root, base), m, info=True)
     repo, root, base, folder = project(temp, 'inside-link')
     m = incoming(repo, root, {TEST: BAD}, folder)
     write(root, 'web_test/fixtures/a.json', '{}\n')
