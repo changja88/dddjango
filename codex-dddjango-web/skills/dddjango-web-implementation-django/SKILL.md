@@ -30,7 +30,7 @@ URL·내비게이션·문서 셸(탭) 코드를 쓸 때, DataSource·api_client�
 - DataSource는 `ApiClient`로 엔드포인트를 부르는 plain class — 도메인 엔티티 직반환, 백엔드 경로 리터럴의 유일 거처(Python 코드에서 들어온 요청의 경로를 비교만 하는 글자는 API 호출 주소가 아니다) (§4)
 - VM은 요청마다 새로 — 요청 사이 값을 VM·모듈 전역에 두지 않는다 · POST는 CSRF(`{% csrf_token %}`·`hx-headers`) · 출력은 자동 이스케이프만(`|safe` 금지) · Django Form 층 없음 (§6)
 - 정적 이미지 `<img src="{% static 'web/images/…' %}">` — 경로는 asset-manifest `local_path` 그대로 (§8) · 형상은 동결 시안을 템플릿+CSS로 빠짐없이 재현·직수입 금지 (§9)
-- 색·글자 리터럴은 `design_system/[<제품>/]foundation/*.css` 안에서만(제품 뿌리는 선언이 있을 때만) — 조각 CSS·부품 CSS·`style` 속성 금지(NM10) · 부품 CSS 클래스는 `<수식>-<군>` 접두·상태는 BEM `--`·`aria-*`/`data-*`(NM12) · 초기화·웹폰트는 theme(제품 선언이 있으면 자기 제품 것만 · own theme의 상대 `url()`은 한 칸 깊어짐) (§10)
+- 색·글자 리터럴은 `design_system/[<제품>/]foundation/*.css` 안에서만(제품 뿌리는 선언이 있을 때만) — 조각 CSS·부품 CSS·`style` 속성 금지(NM10) · 부품 CSS 클래스는 `<수식>-<군>` 접두·상태는 BEM `--`·`aria-*`/`data-*`(NM12) · 부품 CSS는 그 부품을 쓰는 문서 머리에 한 번(페이지 `{% block head %}` · 지속 셸은 셸 `<head>`) — CS1·SH4 · 초기화·웹폰트는 theme(제품 선언이 있으면 자기 제품 것만 · own theme의 상대 `url()`은 한 칸 깊어짐) (§10)
 - 외부 JS는 G1 승인·등재된 공식 플랫폼 SDK 사본(`web/static/vendor/<sdk_id>/<파일>`)뿐 — 사본·등재 목록은 Coordinator 의 `sdk_vendor.py` 소관(읽기만) · 로드 태그는 페이지 `{% block scripts %}` 안(지속 셸은 셸 `<head>` · 주소 꼬리 `?v=`)에서 그 SDK 를 부르는 기능 JS 태그보다 앞 · `src`·`defer` 만 · CDN 실행 태그 금지 (§11)
 - **테스트는 전용 스킬로 이전**: 무엇을/오라클/비-vacuity/단언 FORM은 `dddjango-web-discipline-test`, Django 메커니즘(VM 대체·테스트 클라이언트·HTML 단언·HTMX 헤더·`unittest.mock`·날짜 주입·브라우저 테스트)은 `dddjango-web-implementation-test` (§7)
 

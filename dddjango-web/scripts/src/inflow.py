@@ -316,6 +316,22 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
         path = prefix + ('' if f.root_rel else 'web/') + f.path
         if f.check_id.startswith(('CY', 'WV', 'SH')) or f.check_id in ('ST12', 'PU1', 'PU2'):
             res.reasons[id(f)] = '가름 제외 검사'
+        elif f.check_id == 'CS1':
+            causes = [prefix + c for c in f.causes]
+            deliver = next((sha for sha, ps in active
+                            if causes and not any(c in dirty for c in causes)
+                            # 무시 파일은 dirty 에 없다 — HEAD 에 없는 원인이 작업 트리에 있으면 이 레인 것이다.
+                            and not any(blob(head, c) is None and os.path.lexists(repo / c) for c in causes)
+                            and all(blob(sha, c) == blob(ps[1], c) == blob(head, c) for c in causes)
+                            # 두 병합의 상류판이 누적되면 blob 등식만으로 둘째 병합에 묶여 버린다.
+                            # 기준 뒤 원인 파일을 바꾼 걸음도 이 승인 병합 하나여야 한다.
+                            and all(blob(step, c) == blob(parents[0], c)
+                                    for step, parents in chain if step != sha for c in causes)
+                            and any(blob(ps[0], c) != blob(sha, c) for c in causes)), None)
+            if deliver:
+                candidates.append((f, deliver))
+            else:
+                res.reasons[id(f)] = '원인 파일이 한 승인 병합의 상류판 그대로가 아님'
         elif path not in tree(head):
             res.reasons[id(f)] = '비-blob 경로'
         elif path in dirty:
@@ -374,7 +390,7 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
                         if archive.returncode or untar.returncode:
                             raise ValueError('스냅숏 실패 — ' + error.decode('utf-8', 'replace').strip())
                 failed = _parse_fail_paths(dest)
-                proc = subprocess.run([sys.executable, '-B', str(script), str(dest / prefix), '--only', 'st,md,im,nm,tg,pj,pu'],
+                proc = subprocess.run([sys.executable, '-B', str(script), str(dest / prefix), '--only', 'st,md,im,nm,tg,pj,pu,cs'],
                                       capture_output=True, env=dict(os.environ, GIT_OPTIONAL_LOCKS='0'))
                 if proc.returncode not in (0, 2) or proc.stderr:
                     raise ValueError('부모 실행 실패')
@@ -387,7 +403,8 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
         for f, deliver in candidates:
             invalid: List[str] = []
             parents = dict(active)
-            for sha in [deliver] + [m for m, _ps in active if m != deliver]:
+            # CS 는 원인 파일 전부가 같은 병합의 상류판이어야 한다 — 다른 병합의 L 증명으로 대신하지 않는다.
+            for sha in ([deliver] if f.check_id == 'CS1' else [deliver] + [m for m, _ps in active if m != deliver]):
                 r1, fail1, error1 = measure(parents[sha][0])
                 r2, fail2, error2 = measure(parents[sha][1])
                 if error1 or error2 or fail1 != fail2:

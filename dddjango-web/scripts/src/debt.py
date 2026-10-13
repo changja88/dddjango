@@ -25,6 +25,7 @@
 #   «미룰 수 없음» 이다(`undeferrable: true` — 게이트가 기준점과 무관하게 늘 선다).
 #   선언 오류는 실행 불능이다(DebtError — 러너가 먼저 «판정 불가»로 막는다).
 # SH 는 켜는 diff 의 게이트와 G0 «지속 셸 점검» 몫이라 넣지 않는다(지문 무변).
+# CS 는 새로 빠진 부품 CSS 게이트와 G0 «부품 CSS 점검» 몫이라 넣지 않는다(지문 무변).
 
 import hashlib
 import json

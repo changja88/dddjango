@@ -317,5 +317,8 @@ def channel_summary_embed_fragment(request: HttpRequest) -> HttpResponse:
 | SH3 — 지속 셸 제품(셸에 이르는 상속 사슬 · include 포함)의 페이지 · 조각 자산 자리 · 빈 제목 | implementation-django §2·§10 · implementation-javascript §3 |
 | SH4 — 지속 셸 공유 머리 완비 · core 판 | implementation-django §2·§10·§11 |
 | SH5 — 공유 머리 CSS 선택자 범위 | implementation-django §10 |
+| CS1 — 문서가 쓰는 부품 CSS가 그 문서 머리에 실림(문서 이동 셸·지속 셸 모두 · 지속 셸 공유 머리는 SH4도 확인) | implementation-django §10 · discipline-houserules §8 |
+
+조각 응답(임베드·hx-get 전용)이 쓰는 부품 CSS는 조각 안 link가 아니라 받는 문서 머리에 둔다. CS1 미검증(조각·조건부·못 읽음)은 명세 «부품 CSS 표»와 G2 감수로 확인한다 — 동적 link 주소는 살아 있는 머리 link에서만 못 읽음으로 보고한다. 못 읽음 줄은 받는 문서(또는 조각 뿌리)와 지시문 파일을 함께 적으며 자기 지시문이면 자기 자리만 적는다. 템플릿이 파일 목록에 없음·상속 대상이 파일 목록에 없음은 부재이며 기준점 판독 실패가 아니다. HTML·실제 현재/기준점 파일 판독 실패와 block.super 필터 판독 불가도 못 읽음이고 새 미검증은 변경 파일 거름 없이 키로만 기준점과 대조한다.
 
 - **러너가 못 잡는 것**: hx-* 주소가 State의 href에서 왔는지(값의 출처)·GET 조각이 쓰기를 하는지·이벤트 이름 규칙(명사 관심사)·오류 조각의 상태 200 — 표기 규율과 discipline-reviewer 감사로만 강제된다.

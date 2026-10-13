@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-# dddjango-web 결정적 백스톱 러너 — 단일 엔트리, 검사 91종 인프로세스 실행.
+# dddjango-web 결정적 백스톱 러너 — 단일 엔트리, 검사 92종 인프로세스 실행.
 # (판형: dddart scripts/backstop.dart — 같은 인자·같은 종료 코드·같은 게이트)
 #
 # 사용:
 #   python3 backstop.py <대상 프로젝트 루트> [--diff-base <commit>] [--all] [--slice-end]
-#                       [--only st,im,nm,cy,tg,pj,md,pu,sh,wv|<검사ID>…] [--update-baseline]
+#                       [--only st,im,nm,cy,tg,pj,md,pu,sh,cs,wv|<검사ID>…] [--update-baseline]
 #                       [--design-build <산출물 폴더>]
 #   python3 backstop.py <대상 프로젝트 루트> --debt-scan [--refactor] [--json <경로>]
 #   python3 backstop.py <대상 프로젝트 루트> --debt-residual <.dddjango-web/<산출물 폴더>>
@@ -34,7 +34,7 @@
 #   선언 오류는 판정 불가(exit 1)다 — 무선언 동작으로 내려앉지 않는다. 치환 확인(--subst-check)은 선언을 읽지 않는다.
 #   선언 파일이 기준점 뒤 바뀌었으면 [info] 로 알린다(G2 배너에 선언 diff 원문 — 선언은 사용자 결정으로만 바뀐다).
 #
-# 검사 91종 (dddart 번호 그대로 · 옮길 수 없는 번호는 비움 · 새 검사는 패밀리 끝 번호 뒤):
+# 검사 92종 (dddart 번호 그대로 · 옮길 수 없는 번호는 비움 · 새 검사는 패밀리 끝 번호 뒤):
 #   ST 13 — ST0~ST11(dddart) + ST12(web/static/ 트리 — application·root·js·htmx·vendor·images·fonts)
 #   IM 27 — IM1~IM23(dddart) + IM24(상대 import) · IM25(백엔드 import) · IM26(extends 대상) · IM27(HTTP 표면·API URL 리터럴)
 #   NM 19 — NM1~NM6 · NM8(common 상태 동작 proxy — common @riverpod 자리) · NM9~NM17(dddart)
@@ -46,6 +46,7 @@
 #   PU 6  — PU1 · PU2 · PU3 · PU6(v1.3.1 WP 번호 그대로) + PU7(자동 이스케이프 우회) · PU8(JS 동적 실행)
 #           · PU4 비움(색 리터럴 → NM10) · PU5 비움(motion.js 판형 — 러너 없음)
 #   SH 5  — SH1~SH5(지속 셸 · 2.4.0 — 빚 스캔 밖)
+#   CS 1  — CS1(부품 CSS 실림 · 2.5.0 — 빚 스캔 밖)
 #   WV 13 — WV1~WV13(공식 SDK 등재 — src/check_vendor.py · v1.3.1 번호 그대로)
 #   (RV·HV 는 옮기지 않는다 — riverpod·hive 없음)
 
@@ -60,6 +61,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from src.common import CORE_CHECK_IDS, CORE_FAMILIES, BackstopContext, Finding  # noqa: E402
 from src.check_cycles import run_cycles  # noqa: E402
+from src.check_component_css import run_component_css  # noqa: E402
 from src.check_imports import run_imports  # noqa: E402
 from src.check_models import run_models  # noqa: E402
 from src.check_naming import run_naming  # noqa: E402
@@ -76,12 +78,12 @@ from src.inflow import split_inflow  # noqa: E402
 
 FAMILIES: List[str] = list(CORE_FAMILIES) + ['wv']
 CHECK_IDS: List[str] = list(CORE_CHECK_IDS) + list(VENDOR_CHECK_IDS)
-TOTAL_CHECKS: int = len(CHECK_IDS)  # 91 = ST13 + IM27 + NM19 + CY1 + TG3 + MD2 + PJ2 + PU6 + SH5 + WV13
+TOTAL_CHECKS: int = len(CHECK_IDS)  # 92 = ST13 + IM27 + NM19 + CY1 + TG3 + MD2 + PJ2 + PU6 + SH5 + CS1 + WV13
 # 슬라이스 끝(--slice-end)에 미루는 검사 — 짝 · 골격 · 미러 · 순환은 뒤 슬라이스가 채운다(G2 직전 실행이 본다 · 이 목록이 단일 출처)
 SLICE_END_DEFERRED: List[str] = ['CY1', 'NM4', 'NM5', 'NM18', 'NM19', 'ST4', 'TG1']
 
 _USAGE: str = ('사용: python3 backstop.py <대상 프로젝트 루트> '
-               '[--diff-base <commit>] [--all] [--slice-end] [--only st,md,im,nm,cy,tg,pj,pu,sh,wv] [--update-baseline] '
+               '[--diff-base <commit>] [--all] [--slice-end] [--only st,md,im,nm,cy,tg,pj,pu,sh,cs,wv] [--update-baseline] '
                '[--design-build <폴더>] | --debt-scan [--refactor] [--json <경로>] | --debt-residual <폴더> | '
                '--subst-check <기준> <대상> [--names <명세>] [--except <경로>]… [--build <폴더>]')
 
@@ -242,6 +244,8 @@ def main(argv: List[str]) -> int:
             findings.extend(run_purity(ctx))
         if family_on('sh'):
             findings.extend(run_shell(ctx))
+        if family_on('cs'):
+            findings.extend(run_component_css(ctx, design_build))
         if family_on('wv'):
             findings.extend(run_vendor(ctx, design_build=design_build))
     except VendorUndecidable as error:

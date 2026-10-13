@@ -31,8 +31,8 @@ PASS = FAIL = 0
 
 
 COUNT_TOKENS: tuple[tuple[str, str], ...] = (
-    ('검사 91종 중 84종', '검사 #종 중 #종'), ('검사 86종 중 79종', '검사 #종 중 #종'),
-    ('[backstop] 검사 91종', '[backstop] 검사 #종'), ('[backstop] 검사 86종', '[backstop] 검사 #종'))
+    ('검사 92종 중 85종', '검사 #종 중 #종'), ('검사 86종 중 79종', '검사 #종 중 #종'),
+    ('[backstop] 검사 92종', '[backstop] 검사 #종'), ('[backstop] 검사 86종', '[backstop] 검사 #종'))
 
 
 def counts_normalized(text: str) -> str:
@@ -401,7 +401,13 @@ def bundle_unchanged(tmp):
     def both(name, *args, nonempty=None):
         new = backstop(p.root, *args)
         before = backstop(p.root, *args, scripts=old)
-        check('U %s — 고치기 전 판과 byte 동일' % name, output_normalized(new) == output_normalized(before),
+        # CS1 판독 불가 알림은 새 검사 출력이다. 기존 검사 byte 대조에서는 그 알림만 뺀다.
+        def previous_checks(got):
+            out = re.sub(r'^\[info\] CS1 미검증(?:\(| ).*\n', '', got[1], flags=re.M)
+            if out != got[1] and out.startswith('\n'):
+                out = out[1:]  # 새 알림 묶음이 남긴 빈 줄 하나만 뺀다.
+            return output_normalized((got[0], out, *got[2:]))
+        check('U %s — 고치기 전 판과 byte 동일' % name, previous_checks(new) == previous_checks(before),
               '새 판 exit=%d\n%s\n옛 판 exit=%d\n%s' % (new[0], new[1][-900:], before[0], before[1][-900:]))
         if nonempty:
             check('U %s — 헛대조 아님(%s)' % (name, nonempty), nonempty in new[1], new[1][-600:])
@@ -488,10 +494,10 @@ def bundle_unchanged(tmp):
               for s in (SCRIPTS, old)]
     now, before = map(json.loads, consts)
     sh = ['SH1', 'SH2', 'SH3', 'SH4', 'SH5']
-    check('U 빚 상수·지문 무변 · 코어 SH5 추가 · 합계 91 · 슬라이스 미룸 무변',
-          now[0] == before[0] + sh and now[1] == before[1] + ['sh'] and now[2:5] == before[2:5]
-          and now[5] == before[0] + sh + ['WV%d' % n for n in range(1, 14)]
-          and now[6] == 91 and now[7:] == before[7:], (now, before))
+    check('U 빚 상수·지문 무변 · 코어 SH5·CS1 추가 · 합계 92 · 슬라이스 미룸 무변',
+          now[0] == before[0] + sh + ['CS1'] and now[1] == before[1] + ['sh', 'cs'] and now[2:5] == before[2:5]
+          and now[5] == before[0] + sh + ['CS1'] + ['WV%d' % n for n in range(1, 14)]
+          and now[6] == 92 and now[7:] == before[7:], (now, before))
     # 치환 확인 — static 접두를 건너지 않는 이동(같은 쪽)은 고치기 전 판과 byte 동일
     q = mkstd(tmp / 'u2')
     q.w('web/static/css/a.css', 'body { margin: 0; }', 'a { width: 1px; }')

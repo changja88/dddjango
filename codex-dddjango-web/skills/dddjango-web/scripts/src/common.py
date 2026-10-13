@@ -2,7 +2,7 @@
 #
 # 파일 수집 · 주석/문자열 마스킹 · import 파서(Python import + 템플릿 extends/include/static,
 # 상대 import 는 web/ 루트 클램핑) · git 게이트(added/touched/added 줄/신규 단위) · 발견 모델.
-# 검사 패밀리 9개(ST·MD·IM·NM·CY·TG·PJ·PU·SH)가 전부 이 모듈 하나를 공유한다.
+# 검사 패밀리 10개(ST·MD·IM·NM·CY·TG·PJ·PU·SH·CS)가 전부 이 모듈 하나를 공유한다.
 #
 # 경로 규약: web/ 내부 파일은 **web-상대 posix 경로**('application/order/…')가 정본.
 # 표시할 때만 'web/' 접두를 붙인다. web/ 밖(web_test/·requirements.txt 등)은 root_rel 발견이다.
@@ -32,6 +32,7 @@ class Finding:
     rule: str  # 제1 규약 조항
     fix: str  # 교정 안내
     root_rel: bool = False  # path가 web/ 밖(requirements.txt·web_test/ 등) — 'web/' 접두 생략
+    causes: Tuple[str, ...] = ()  # 판정에 쓰인 변경·삭제 파일(프로젝트 루트-상대 · CS 승인 유입)
 
     def __str__(self) -> str:
         prefix: str = '' if self.root_rel else 'web/'
@@ -74,14 +75,15 @@ OS_JUNK: Set[str] = {'.DS_Store', 'Thumbs.db', 'desktop.ini'}
 TOOL_CACHE_DIRS: Set[str] = {'__pycache__', '.ruff_cache', '.pytest_cache', '.mypy_cache'}
 # 코어 검사 목록(단일 출처 — backstop CHECK_IDS 는 이것 + check_vendor.VENDOR_CHECK_IDS). dddart 번호 그대로 ·
 # 옮길 수 없는 번호는 비움(NM7 · PU4 · PU5 · PJ3[2.1.0 — vendor 버전 폴더 길이 공식 SDK 등재 절차로 바뀜]).
-CORE_FAMILIES: Tuple[str, ...] = ('st', 'md', 'im', 'nm', 'cy', 'tg', 'pj', 'pu', 'sh')
+CORE_FAMILIES: Tuple[str, ...] = ('st', 'md', 'im', 'nm', 'cy', 'tg', 'pj', 'pu', 'sh', 'cs')
 CORE_CHECK_IDS: Tuple[str, ...] = tuple(
     ['ST%d' % n for n in range(0, 13)]                                  # ST0~ST12
     + ['IM%d' % n for n in range(1, 28)]                                # IM1~IM27
     + ['NM%d' % n for n in range(1, 21) if n != 7]                      # NM1~NM20 · NM7 비움
     + ['CY1', 'TG1', 'TG2', 'TG3', 'MD1', 'MD2', 'PJ1', 'PJ2']                        # PJ3 비움
     + ['PU1', 'PU2', 'PU3', 'PU6', 'PU7', 'PU8']                        # PU4·PU5 비움
-    + ['SH1', 'SH2', 'SH3', 'SH4', 'SH5'])                             # 지속 셸 · 빚 패밀리 밖
+    + ['SH1', 'SH2', 'SH3', 'SH4', 'SH5']                              # 지속 셸 · 빚 패밀리 밖
+    + ['CS1'])                                                       # 부품 CSS 실림 · 빚 패밀리 밖
 STDLIB: Set[str] = set(getattr(sys, 'stdlib_module_names', ())) | {'__future__', 'typing', 'dataclasses'}
 
 # ------------------------------------------------------------ 경로 술어

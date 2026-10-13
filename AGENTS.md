@@ -24,9 +24,9 @@ byte-exact로 미러하고, checker script는 별도 byte mirror로 검증한다
 - `dddjango-web/` — **자매 플러그인**(웹 표현계층 빌더 — `/dddjango-web`). 2.0.0부터 Flutter 판 `dddart`와
   같은 절차·구조(간소화 DDD 4층 + MVVM · G0/G1/G2 · 가정 계약 → tracer → 미니 게이트)에 구현 기술만
   Django·HTML·HTMX·JS로 바꾼 판이다. 2.2.0부터 한 가지가 dddart와 다르다 — 구조 검사(백스톱)를 G2 직전에만이 아니라 슬라이스가 끝날 때마다도 돈다(`backstop.py --slice-end`). 2.3.0부터 둘째 차이는 한 web 앱에 제품이 여럿이면 선택형 제품 선언
-  `web/product_registry.json`과 제품별 design_system 뿌리·문서 셸을 쓴다는 것이다. 2.3.2부터 슬라이스 0(리팩터링)은 메서드 이동 승인 행(`메서드 이동:`)과 시험 먼저 바꾸기 0T(`시험 전환:` 행 — 확인 도구 `refactor_audit.py switch-check`)를 받고, 빚 질문의 미룸을 정형 사유(수리 대기 · 다른 요청)로 적는다. 2.3.3부터 판 확인 지문은 조정자가 G1·G1′ 배너와 답 받음 두 자리에서만 재고, 역할은 재지 않는다. 2.3.4부터 Codex 조정자는 일꾼을 기다릴 때 짧은 확인을 되풀이하지 않고 `wait_agent`의 긴 대기(600000ms)로 기다린다(core 대기 정책을 바탕으로). 2.4.0부터 새로 짓는 탭 셸은 앱 · dddart 와 같이 탭 막대가 남고 본문만 바뀌는 지속 셸(탭 이동 · ‹뒤로› 모두 막대 그대로 — 탭 막대 `hx-boost` · 응답 머리 `HX-Retarget` · 사본 없는 서버 복원 · 공유 머리 `?v=` · `root_shell.js`)이고, 이미 지은 문서 이동 셸은 G1 결정으로만 바꾼다(기능 슬라이스). 2.4.1부터 G2 빚 잔존 검사는 승인 병합(main 받기)이 상류판 그대로 들인 개명을 «이 실행의 이동»에서 뺀다 — 미룸 키의 파일을 다른 레인이 옮겨 착륙했어도 «이동 묶음 의존»으로 멈추지 않는다. 커맨드 2(메인 + 리팩토링 입구 `/dddjango-web:refactor <대상 단위>`)
+  `web/product_registry.json`과 제품별 design_system 뿌리·문서 셸을 쓴다는 것이다. 2.3.2부터 슬라이스 0(리팩터링)은 메서드 이동 승인 행(`메서드 이동:`)과 시험 먼저 바꾸기 0T(`시험 전환:` 행 — 확인 도구 `refactor_audit.py switch-check`)를 받고, 빚 질문의 미룸을 정형 사유(수리 대기 · 다른 요청)로 적는다. 2.3.3부터 판 확인 지문은 조정자가 G1·G1′ 배너와 답 받음 두 자리에서만 재고, 역할은 재지 않는다. 2.3.4부터 Codex 조정자는 일꾼을 기다릴 때 짧은 확인을 되풀이하지 않고 `wait_agent`의 긴 대기(600000ms)로 기다린다(core 대기 정책을 바탕으로). 2.4.0부터 새로 짓는 탭 셸은 앱 · dddart 와 같이 탭 막대가 남고 본문만 바뀌는 지속 셸(탭 이동 · ‹뒤로› 모두 막대 그대로 — 탭 막대 `hx-boost` · 응답 머리 `HX-Retarget` · 사본 없는 서버 복원 · 공유 머리 `?v=` · `root_shell.js`)이고, 이미 지은 문서 이동 셸은 G1 결정으로만 바꾼다(기능 슬라이스). 2.4.1부터 G2 빚 잔존 검사는 승인 병합(main 받기)이 상류판 그대로 들인 개명을 «이 실행의 이동»에서 뺀다 — 미룸 키의 파일을 다른 레인이 옮겨 착륙했어도 «이동 묶음 의존»으로 멈추지 않는다. 2.5.0부터 문서가 쓰는 부품 CSS의 머리 실림을 CS1이 슬라이스 끝과 G2에서 확인하고(빚 스캔 밖), G0 기존 누락 점검·명세 부품 CSS 표·미검증 감수를 잇고 상태 단언 뒤 완성 화면 그림을 남긴다. 커맨드 2(메인 + 리팩토링 입구 `/dddjango-web:refactor <대상 단위>`)
   + 에이전트 7(`design-architect-web` · 리뷰어 4 `design-review-{ddd,ui,state,data}-web` · `coder-web` ·
-  `discipline-reviewer-web`) + 스킬 12 + `scripts/backstop.py`(검사 91종 — ST·IM·NM·CY·TG·PJ·MD·PU·WV·SH(빚 스캔 밖 — 지문 무변) ·
+  `discipline-reviewer-web`) + 스킬 12 + `scripts/backstop.py`(검사 92종 — ST·IM·NM·CY·TG·PJ·MD·PU·WV·SH·CS(CS1)(SH·CS는 빚 스캔 밖 — 지문 무변) ·
   빚 모드 `--debt-scan`[`--refactor`]·`--debt-residual` · 치환 확인 `--subst-check` · 슬라이스 끝 실행 `--slice-end`) ·
   `scripts/refactor_audit.py`(리팩토링 모드 판정 도구) · 공식 SDK 등재 도구 `scripts/sdk_vendor.py` ·
   추출 도구 4(`extract_contract`·`extract_design`·`extract_dc`·`fetch_images`) + `REQUEST_GUIDE.md`(사람용 작업 요청 가이드 — 2.0.1부터 · Codex byte 미러).
@@ -41,7 +41,8 @@ byte-exact로 미러하고, checker script는 별도 byte mirror로 검증한다
   `plan-2.3.3.md` + `build-log-2.3.3.md`(2.3.3 — 판 확인 지문은 조정자가 배너 · 답 받음 두 자리에서만) ·
   `plan-2.3.4.md`(2.3.4 — Codex 일꾼 기다리기는 긴 대기로) ·
   `plan-2.4.0.md` + `build-log-2.4.0.md`(2.4.0 — 지속 탭 셸) ·
-  `plan-2.4.1.md`(2.4.1 — 승인 병합이 들인 이동은 빚 잔존의 이동 묶음 의존 밖).
+  `plan-2.4.1.md`(2.4.1 — 승인 병합이 들인 이동은 빚 잔존의 이동 묶음 의존 밖) ·
+  `plan-2.5.0.md` + `build-log-2.5.0.md`(2.5.0 — 부품 CSS 실림 CS1 · 미검증 감수 · 상태 단언 뒤 완성 화면 그림).
 - `ontology/` — 규범 **정본**(그래프): `rules/*.ttl`(30 문서 키) · `vocab/` · `shapes/` ·
   `wiring/` · `ISSUED`(채번 대장) · `LEDGER.tsv`(산문 절 기준선 원장).
 - `workspace/reference/**` — 배포 reference의 출처·P1 메타데이터를 보존하는 소스 미러.

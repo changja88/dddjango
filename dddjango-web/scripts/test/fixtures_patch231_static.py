@@ -29,8 +29,8 @@ PASS = FAIL = 0
 
 
 COUNT_TOKENS: tuple[tuple[str, str], ...] = (
-    ('검사 91종 중 84종', '검사 #종 중 #종'), ('검사 86종 중 79종', '검사 #종 중 #종'),
-    ('[backstop] 검사 91종', '[backstop] 검사 #종'), ('[backstop] 검사 86종', '[backstop] 검사 #종'))
+    ('검사 92종 중 85종', '검사 #종 중 #종'), ('검사 86종 중 79종', '검사 #종 중 #종'),
+    ('[backstop] 검사 92종', '[backstop] 검사 #종'), ('[backstop] 검사 86종', '[backstop] 검사 #종'))
 
 
 def counts_normalized(text: str) -> str:

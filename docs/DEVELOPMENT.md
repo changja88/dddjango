@@ -31,6 +31,7 @@ dddjango-web/             ← 자매 플러그인 (웹 표현계층 빌더 — /
                            Django·HTML·HTMX·JS.
                            빌드 스펙 정본: workspace/plan/2026-10-06-web-dddart/mapping.md(2.0.0)
                            · plan-2.1.0.md + build-log-2.1.0.md(2.1.0 — 빚 정리 · 외부 JS 승인 · 리팩토링 입구)
+                           · plan-2.5.0.md + build-log-2.5.0.md(부품 CSS 실림 CS1 · 미검증 감수 · 상태 단언 뒤 완성 화면 그림)
 ├── REQUEST_GUIDE.md           사람용 작업 요청 가이드 정본(2.0.1부터 — 2.1.0에서 빚 정리 · 리팩토링 입구 · 외부 JS 줄을 더함)
 ├── commands/dddjango-web.md   Coordinator
 ├── commands/refactor.md       리팩토링 입구 /dddjango-web:refactor <대상 단위> — Coordinator 로 Skill 위임(동작 불변)
@@ -38,7 +39,7 @@ dddjango-web/             ← 자매 플러그인 (웹 표현계층 빌더 — /
 ├── skills/*/                  지식 스킬 12 — architecture-ddd·ui·state·data · discipline-cleancode·houserules·test
 │                              · implementation-test·python·django·htmx·javascript
 ├── assets/sdk_boundary.js     외부 JS 경계 검사 보조(공식 SDK 승인 절차)
-└── scripts/backstop.py        결정적 백스톱 — 검사 91종(ST·IM·NM·CY·TG·PJ·MD·PU·WV·SH)
+└── scripts/backstop.py        결정적 백스톱 — 검사 92종(ST·IM·NM·CY·TG·PJ·MD·PU·WV·SH·CS — SH·CS는 빚 스캔 밖)
                                · 빚 모드 --debt-scan [--refactor] · --debt-residual · 치환 확인 --subst-check
                                + refactor_audit.py(리팩토링 모드 판정) · sdk_vendor.py(공식 SDK 등재)
                                + 추출 도구 4(extract_contract·extract_design·extract_dc·fetch_images)
