@@ -61,6 +61,8 @@ OPENAPI: Path = S / "check-openapi-error-declaration.py"
 CONTRACT: Path = S / "check-api-error-controller-contract.py"
 # F4-89 바로 앞 배포판(dddjango 2.21.2) — Q40·Q41 «배포판과 같음» 대조의 옛 판. HEAD 로 잡으면 커밋 뒤 새 판 자신이 된다.
 _RELEASED_2212_COMMIT: str = "c4e40615"
+# #2 · #5 기준선이 코드 슬라이스까지 모으기 바로 앞 배포판(dddjango 2.22.1) — «트리 진단만 있는 앵커는 옛 판과 글자 같음» 대조의 옛 판(HEAD 금지).
+_RELEASED_2221_COMMIT: str = "62a5e5db"
 
 _GIT_ID: "list[str]" = ["-c", "user.email=smoke@dddjango", "-c", "user.name=smoke"]
 
@@ -864,6 +866,305 @@ class UnnumberedDebtRegression(unittest.TestCase):
         self.assertEqual(_section(out, "신규분"), {line})
 
 
+class BaselineSliceRegression(unittest.TestCase):
+    """기준선 재실행(`--anchor-baseline`)도 트리 · 코드 슬라이스를 끝까지 모은다 — #2 · #5(#15 는 2026-09-10 F4-8).
+
+    앵커에 트리 진단이 하나라도 있으면 기준선이 트리 줄에서 끝나 옛 코드 줄이 전부 «신규» 가 되던 결함의 고정이다.
+    풀리는 쪽 · 여전히 막는 쪽 · 반대로 막히는 쪽 · 기준선 사다리 두 갈래 · 받아들인 한계를 실제 렌더로 단언한다."""
+
+    api: str = "application/billing/driving_layer/api"
+    ctrl: str = "application/lesson/driving_layer/controller.py"
+    note: dict[str, str] = {"docs/lane_note.md": "레인은 문서 한 장만 더했다\n"}
+    # 무관한 영역(billing)의 트리 진단 — 코드 슬라이스가 대표하지 않는 꼴(scope 밖 #114 · 고른 모듈 밖 monkeypatch).
+    tree02: dict[str, str] = {api + "/api_router.py": "ROUTES: list = []\n"}
+    tree05: dict[str, str] = {api + "/docs_patch.py": "def patch(api):\n    api.openapi_schema = None\n"}
+    t114: str = ("[#114] " + api + ": `bc_error_schema.py` 가 없다 — HTTP 오류를 아직 안 여는 BC 에도 "
+                 "«빈 파일»로 항상 있다(부모 api/ 가 항상이라)")
+    t63: str = "[#63] " + api + "/docs_patch.py:N: `openapi_schema` monkeypatch — OpenAPI 를 사후 변형하지 않는다"
+    c572: str = ("[#572] " + _LESSON_SCHEMA_REL + ":N: BC base must preserve common required/default semantics: "
+                 "code: LessonErrorCode = LessonErrorCode.NOT_FOUND")
+    # #2 «트리 줄 = 코드 줄» 재료 — 정본 ErrorCode 가 StrEnum 이 아니다(#636). 둘째 컨테이너(legacy)는 트리 슬라이스만 본다.
+    code636: str = _LESSON_STATIC_SRC.replace("class LessonErrorCode(StrEnum)", "class LessonErrorCode(str)")
+    legacy: str = '\n\nclass LessonLegacyErrorCode(str):\n    OLD = "lesson_old"\n'
+    c636: str = "[#636] " + _LESSON_SCHEMA_REL + ":N: LessonErrorCode must directly inherit enum.StrEnum: class LessonErrorCode(str):"
+    t636: str = ("[#636] " + _LESSON_SCHEMA_REL + ": `LessonLegacyErrorCode` 는 `StrEnum` 이어야 한다 — "
+                 "Literal·맨 문자열 상수 모음으로 대신하지 않는다")
+    # #5 코드 줄 재료 — 404 를 직접 돌려주는데 response= 에 없다.
+    missing: str = ("from ninja import Router, Status\n"
+                    "from application.lesson.driving_layer.api.bc_error_schema import LessonNotFoundError\n\n"
+                    "router = Router()\n\n\n"
+                    '@router.get("/{lesson_id}", response={200: dict})\n'
+                    "def get_lesson(request, lesson_id: int):\n"
+                    "    if lesson_id == 0:\n"
+                    "        error = LessonNotFoundError()\n"
+                    "        return Status(error.status, error)\n"
+                    '    return {"id": lesson_id}\n')
+    c404: str = "[#63] " + ctrl + ":N: missing-response: " + ctrl + ":N:get_lesson 직접 반환 오류 status 404가 response=에서 누락"
+    # #5 «사건 하나» 재료 — 트리 줄(responses 보충)과 코드 줄(openapi-extra)이 같은 사건을 가리킨다.
+    extra: str = ("from ninja import Router\n\nrouter = Router()\n\n\n"
+                  '@router.get("/{lesson_id}", response={200: dict}, '
+                  'openapi_extra={"responses": {404: {"description": "none"}}})\n'
+                  "def get_lesson(request, lesson_id: int):\n"
+                  '    return {"id": lesson_id}\n')
+    extra_code: str = "[#63] " + ctrl + ":N: openapi-extra: " + ctrl + ":N:get_lesson 오류 responses [404]를 openapi_extra로 수동 선언"
+    extra_tree: str = ("[#63] " + ctrl + ":N: `openapi_extra` 의 responses 보충 — 오류 응답은 `response=` 에 그 status 의 실제 오류 타입 "
+                       "그대로 직접 선언한다(허용은 `response=` 에 선언된 성공 status 의 리터럴 메타데이터 보충뿐)")
+    sel05: list[str] = _T_ARGS[:-4]  # #5 는 inventory selector(--project-code-error-module)를 받지 않는다
+    pre05: list[str] = ["--error-profile", "preserve-established", "--scope", "public-v1", "--api-module", "config/api.py",
+                        "--controller-module", ctrl, "--scope-bc", "lesson"]
+    selector: str = "기준선=selector 렌더 재실행):"
+
+    def setUp(self) -> None:
+        self.temp: tempfile.TemporaryDirectory[str] = tempfile.TemporaryDirectory(prefix="baseline-slice-")
+        self.addCleanup(self.temp.cleanup)
+        self.td: Path = Path(self.temp.name)
+
+    def tree(self, name: str, files: dict[str, str]) -> Path:
+        root: Path = self.td / name
+        for rel, source in {**_T_FILES, **files}.items():
+            _write(root, rel, source)
+        return root
+
+    def lane(self, name: str, anchor: dict[str, str], change: dict[str, str], *, commit: bool = True) -> tuple[Path, str]:
+        """앵커 커밋(_T_FILES + anchor) 위에 레인 변경을 얹는다 — commit=False 면 작업 트리에만 둔다."""
+        repo: Path = self.tree(name, anchor)
+        self.assertEqual(_git(repo, "init", "-q").returncode, 0)
+        sha: str = _commit_all(repo, "anchor")
+        for rel, source in change.items():
+            _write(repo, rel, source)
+        if commit:
+            _commit_all(repo, "lane")
+        return repo, sha
+
+    def assert_diff(self, result: tuple[int, str], code: int, new: set[str], existing: set[str],
+                    baseline: str | None = None) -> str:
+        actual: int
+        out: str
+        actual, out = result
+        normalize = lambda lines: {re.sub(r":\d+(?=:|\b)", ":N", line) for line in lines}
+        self.assertEqual(actual, code, out)
+        self.assertIn(self.selector if baseline is None else baseline, out)
+        self.assertEqual(normalize(_section(out, "신규분")), new, out)
+        self.assertEqual(normalize(_section(out, "앵커 기존분")), existing, out)
+        return out
+
+    def released(self) -> Path:
+        """2.22.1 배포 커밋의 scripts 사본 — 옛 판은 HEAD 가 아니라 상수에 묶는다(이 고침을 커밋한 뒤에도 옛 판이다)."""
+        old: Path = self.td / "released-2221"
+        old.mkdir()
+        archive: subprocess.CompletedProcess[bytes] = subprocess.run(
+            ["git", "-C", str(ROOT), "archive", _RELEASED_2221_COMMIT, "dddjango/scripts"], capture_output=True, check=True)
+        subprocess.run(["tar", "-x", "-C", str(old)], input=archive.stdout, check=True)
+        return old / "dddjango" / "scripts"
+
+    def test_A1_reg02_other_bc_tree_diagnostic_keeps_old_code_line_existing(self) -> None:
+        repo: Path
+        anchor: str
+        repo, anchor = self.lane("a1", {_LESSON_SCHEMA_REL: _LESSON_BASE_DEFAULT_SRC, **self.tree02}, self.note)
+        self.assert_diff(_run(CENT, repo, [*_T_ARGS, "--anchor", anchor]), 0, set(), {self.t114, self.c572})
+
+    def test_A5b_reg02_single_old_event_code_text_is_existing(self) -> None:
+        # 옛 사건 하나(#636 StrEnum 아님)가 inventory 에만 있다 — 현재는 코드 줄이 대표하고 트리 줄은 지워진다.
+        repo: Path
+        anchor: str
+        rel: str = self.api + "/bc_error_schema.py"
+        source: str = (_LESSON_STATIC_SRC.replace("Lesson", "Billing").replace("lesson_", "billing_")
+                       .replace("(StrEnum)", "(str)"))
+        repo, anchor = self.lane("a5b", {rel: source}, self.note)
+        self.assert_diff(_run(CENT, repo, [*_T_ARGS, "--project-code-error-module", rel, "--anchor", anchor]), 0, set(),
+                         {"[#636] " + rel + ":N: BillingErrorCode must directly inherit enum.StrEnum: class BillingErrorCode(str):"})
+
+    def test_B1_reg05_other_bc_tree_diagnostic_keeps_old_code_line_existing(self) -> None:
+        repo: Path
+        anchor: str
+        repo, anchor = self.lane("b1", {self.ctrl: self.missing, **self.tree05}, self.note)
+        self.assert_diff(_run(OPENAPI, repo, [*self.sel05, "--anchor", anchor]), 0, set(), {self.t63, self.c404})
+
+    def test_B3_reg05_single_old_event_code_text_is_existing(self) -> None:
+        repo: Path
+        anchor: str
+        repo, anchor = self.lane("b3", {self.ctrl: self.extra}, self.note)
+        self.assert_diff(_run(OPENAPI, repo, [*self.sel05, "--anchor", anchor]), 0, set(), {self.extra_code})
+
+    def test_B4b_reg05_preserve_touched_file_keeps_repo_scan_line_existing(self) -> None:
+        # preserve 렌더: 옛 연산이 있는 파일을 레인이 커밋 전에 주석 한 줄만 건드렸다 — 저장소 전수 줄도 앵커에 있던 줄이다.
+        repo: Path
+        anchor: str
+        repo, anchor = self.lane("b4b", {self.ctrl: self.extra}, {self.ctrl: self.extra + "\n\n# 레인이 주석 한 줄만 더했다\n"},
+                                 commit=False)
+        self.assert_diff(_run(OPENAPI, repo, [*self.pre05, "--anchor", anchor]), 0, set(), {
+            self.extra_tree,
+            "[#63] " + self.ctrl + ": operation 'get_lesson' (오류 [404] 가 openapi_extra 에만·response= 누락)"})
+
+    def test_guard_reg02_only_lane_lines_stay_new(self) -> None:
+        # 막는 쪽 가드: 옛 줄이 기존분으로 가도 레인이 만든 다른 글자 줄은 신규로 남는다.
+        repo: Path
+        anchor: str
+        repo, anchor = self.lane("guard02", {_LESSON_SCHEMA_REL: _LESSON_BASE_DEFAULT_SRC, **self.tree02},
+                                 {_LESSON_SCHEMA_REL: _LESSON_BASE_DEFAULT_SRC + _LESSON_RAW_CONCRETE_SRC})
+        prefix: str = "- " + _LESSON_SCHEMA_REL + ":N: "
+        out: str = self.assert_diff(_run(CENT, repo, [*_T_ARGS, "--anchor", anchor]), 2, {
+            prefix + 'raw string FrameworkErrorSchema discriminator: code: LessonErrorCode = "lesson_expired"',
+            prefix + 'concrete discriminator default must use own ErrorCode member: code: LessonErrorCode = "lesson_expired"',
+        }, {self.t114, self.c572})
+        self.assertIn("신규분(앵커 이후) 2건 · 앵커 기존분(잔존) 2건", out)
+
+    def test_guard_reg05_only_lane_line_stays_new(self) -> None:
+        repo: Path
+        anchor: str
+        added: str = ('\n\n@router.get("/other", response={200: dict}, openapi_extra={"responses": {410: {"description": "gone"}}})\n'
+                      "def get_other(request):\n    return {}\n")
+        repo, anchor = self.lane("guard05", {self.ctrl: self.missing, **self.tree05}, {self.ctrl: self.missing + added})
+        out: str = self.assert_diff(_run(OPENAPI, repo, [*self.sel05, "--anchor", anchor]), 2, {
+            "[#63] " + self.ctrl + ":N: openapi-extra: " + self.ctrl + ":N:get_other 오류 responses [410]를 openapi_extra로 수동 선언",
+        }, {self.t63, self.c404})
+        self.assertIn("신규분(앵커 이후) 1건 · 앵커 기존분(잔존) 2건", out)
+
+    def test_reverse_reg05_event_edited_to_tree_only_becomes_new(self) -> None:
+        # 반대 방향: 앵커에서 코드 줄이 대표하던 사건을 레인이 손대(dict 를 모듈 상수로 뺌) 현재에는 트리 줄로만 나온다.
+        # 기준선에는 코드 글자만 있으므로 그 트리 줄은 신규다 — 레인이 그 자리를 건드렸을 때만 · #15 와 같은 동작.
+        repo: Path
+        anchor: str
+        moved: str = (self.extra.replace("router = Router()\n", 'router = Router()\n\nNOT_FOUND = {404: {"description": "none"}}\n')
+                      .replace('{"responses": {404: {"description": "none"}}}', '{"responses": NOT_FOUND}'))
+        self.assertIn('openapi_extra={"responses": NOT_FOUND}', moved)
+        repo, anchor = self.lane("reverse", {self.ctrl: self.extra}, {self.ctrl: moved})
+        self.assert_diff(_run(OPENAPI, repo, [*self.sel05, "--anchor", anchor]), 2, {self.extra_tree}, set())
+
+    def test_reverse_reg02_fixing_canonical_code_makes_other_old_tree_line_new(self) -> None:
+        # 반대 방향의 넓은 꼴: #2 는 코드 줄 하나가 같은 (규칙, 파일)의 트리 줄을 모두 지운다. 앵커의 옛 #636 둘 가운데
+        # 레인이 정본만 고치면, 기준선에서 지워졌던 다른 옛 트리 줄이 현재에 드러나 신규가 된다(레인이 손대지 않은 줄).
+        repo: Path
+        anchor: str
+        repo, anchor = self.lane("reverse02", {_LESSON_SCHEMA_REL: self.code636 + self.legacy},
+                                 {_LESSON_SCHEMA_REL: _LESSON_STATIC_SRC + self.legacy})
+        self.assert_diff(_run(CENT, repo, [*_T_ARGS, "--anchor", anchor]), 2, {self.t636}, set())
+
+    def test_debt_entry_for_old_code_line_moves_to_existing(self) -> None:
+        # 2.22.1 에서 우회로로 빚 목록에 적어 둔 옛 코드 줄(A-1 · B-1 꼴): 빚은 남은 신규에만 걸리므로 이제 기존분으로 가고
+        # 이관 빚은 0건이다(exit 는 그대로 0 — 그 빚 줄은 지워도 된다).
+        repo: Path
+        anchor: str
+        for name, script, selectors, files, entry, existing in (
+            ("debt02", CENT, _T_ARGS, {_LESSON_SCHEMA_REL: _LESSON_BASE_DEFAULT_SRC, **self.tree02},
+             "#572 BC base must preserve", {self.t114, self.c572}),
+            ("debt05", OPENAPI, self.sel05, {self.ctrl: self.missing, **self.tree05}, "#63 missing-response", {self.t63, self.c404}),
+        ):
+            with self.subTest(checker=script.name):
+                repo, anchor = self.lane(name, files, self.note)
+                debt: Path = self.td / (name + ".txt")
+                debt.write_text(entry + "\n", encoding="utf-8")
+                out: str = self.assert_diff(
+                    _run(script, repo, [*selectors, "--anchor", anchor, "--legacy-debt-file", str(debt)]), 0, set(), existing)
+                self.assertIn("신규분(앵커 이후) 0건 · 앵커 기존분(잔존) 2건 · 이관 빚 0건", out)
+                self.assertEqual(_section(out, "이관 빚"), set(), out)
+
+    def test_ladder_rung2_reg05_skeleton_error_bc_keeps_old_code_line_existing(self) -> None:
+        # 앵커의 selector 렌더가 서지 않는 까닭이 빈 골격 --error-bc 면 사다리 2칸이 선다 — 트리 진단이 있어도
+        # 걷은 렌더가 코드 줄까지 모으므로 옛 코드 줄은 기존분이다(`기준선 오류:` 줄 없음).
+        repo: Path
+        anchor: str
+        report: str = "application/report/driving_layer"
+        repo, anchor = self.lane("rung2", {
+            self.ctrl: self.missing, **self.tree05,
+            report + "/api/bc_error_schema.py": "", report + "/controller.py": "def get_report(request): return {}\n",
+        }, {report + "/api/bc_error_schema.py": _LESSON_STATIC_SRC.replace("Lesson", "Report").replace("lesson_", "report_")})
+        out: str = self.assert_diff(
+            _run(OPENAPI, repo, [*self.sel05, "--controller-module", report + "/controller.py", "--scope-bc", "report",
+                                 "--error-bc", "report", "--anchor", anchor]),
+            0, set(), {self.t63, self.c404},
+            "기준선=selector 렌더 재실행(빈 골격 --error-bc 걷음: report · 그 영역 아래 줄 제외) + positional 기준선):")
+        self.assertNotIn("기준선 오류:", out)
+
+    def test_ladder_positional_reg02_unanalyzable_anchor_shows_baseline_error(self) -> None:
+        # 앵커의 코드 분석이 서지 않고(동적 Enum 값) 2칸도 없으면 positional 로 내려간다 — 가려져 있던 오류가
+        # `기준선 오류:` 로 보이고, 셈과 exit 는 트리 줄만 있던 옛 기준선과 같다.
+        repo: Path
+        anchor: str
+        repo, anchor = self.lane("positional", {_LESSON_SCHEMA_REL: _LESSON_DYNAMIC_SRC, **self.tree02},
+                                 {_LESSON_SCHEMA_REL: _LESSON_DYNAMIC_SRC + _LESSON_RAW_CONCRETE_SRC})
+        out: str = self.assert_diff(_run(CENT, repo, [*_T_ARGS, "--anchor", anchor]), 2, {
+            "- " + _LESSON_SCHEMA_REL + ':N: raw string FrameworkErrorSchema discriminator: code: LessonErrorCode = "lesson_expired"',
+        }, {self.t114}, "기준선=positional 기준선(selector 렌더 불능 강등 — selector-lane 진단은 전량 신규 취급)):")
+        self.assertIn("  기준선 오류: [check-error-centralization] 사용 오류: DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED ", out)
+
+    def test_direct_baseline_exit_codes_tree_only_tree_code_and_analysis_failure(self) -> None:
+        # 끝 블록의 계약: 진단 없음 = 0(아무것도 찍지 않는다) · 트리 줄만 = 2(차분으로 되들어가지 않고 끝난다) ·
+        # 트리 + 코드 = 2(둘 다 찍는다) · 코드 분석 불능 = 1.
+        code: int
+        out: str
+        for script, args, tree, coded, broken, tree_mark, code_mark in (
+            (CENT, _T_ARGS, self.tree02, {_LESSON_SCHEMA_REL: _LESSON_BASE_DEFAULT_SRC},
+             {_LESSON_SCHEMA_REL: _LESSON_DYNAMIC_SRC}, "[#114] " + self.api + ":", "BC base must preserve"),
+            (OPENAPI, self.sel05, self.tree05, {self.ctrl: self.missing},
+             {"framework/ninja/framework_error_schema.py": "invalid syntax ???\n"}, "`openapi_schema` monkeypatch", "missing-response"),
+        ):
+            for kind, files, want in (("clean", {}, 0), ("tree", tree, 2), ("tree-code", {**tree, **coded}, 2),
+                                      ("analysis", {**tree, **broken}, 1)):
+                with self.subTest(checker=script.name, kind=kind):
+                    code, out = _run(script, self.tree(script.stem + "-" + kind, files), [*args, "--anchor-baseline"])
+                    self.assertEqual(code, want, out)
+                    if kind == "clean":
+                        # 깨끗한 사본의 exit 0 은 승인 병합의 «M^1 에 없다» 증명이 기대는 값이다(끝 블록의 `else 0`).
+                        self.assertEqual(out, "")
+                        continue
+                    self.assertIn(tree_mark, out)
+                    self.assertEqual(code_mark in out, kind == "tree-code", out)
+                    self.assertEqual("사용 오류" in out, kind == "analysis", out)
+                    self.assertNotIn("앵커 차분", out)
+
+    def test_tree_only_anchor_output_matches_released_2221(self) -> None:
+        # 코드 슬라이스가 대표하지 않는 트리 진단만 있는 앵커 — 출력이 2.22.1 과 글자 그대로다(끝 블록이 없으면 머리 줄이 바뀐다).
+        repo: Path
+        anchor: str
+        old: Path = self.released()
+        wrong_name: dict[str, str] = {self.api + "/bc_error_schema.py": "", self.api + "/error_schemas.py": "X: int = 1\n"}  # #568
+        for name, script, files, selectors in (("r02-114", CENT, self.tree02, _T_ARGS), ("r02-568", CENT, wrong_name, _T_ARGS),
+                                               ("r05-63", OPENAPI, self.tree05, self.sel05)):
+            repo, anchor = self.lane(name, files, self.note)
+            for argv in ([*selectors, "--anchor", anchor], ["--anchor", anchor]):
+                with self.subTest(case=name, selector=len(argv) > 2):
+                    result: tuple[int, str] = _run(script, repo, argv)
+                    self.assertEqual(result, _run(old / script.name, repo, argv))
+                    self.assertEqual(result[0], 0, result[1])
+                    self.assertIn(self.selector, result[1])
+                    self.assertIn("신규분(앵커 이후) 0건 · 앵커 기존분(잔존) 1건", result[1])
+        # 옛 판이 정말 옛 판인지 — 옛 코드 줄이 함께 있는 앵커(A-1)에서는 두 판이 갈려야 한다.
+        repo, anchor = self.lane("contrast", {_LESSON_SCHEMA_REL: _LESSON_BASE_DEFAULT_SRC, **self.tree02}, self.note)
+        self.assertEqual(_run(old / CENT.name, repo, [*_T_ARGS, "--anchor", anchor])[0], 2)
+        self.assertEqual(_run(CENT, repo, [*_T_ARGS, "--anchor", anchor])[0], 0)
+
+    def test_한계_same_text_line_added_by_lane_is_existing(self) -> None:
+        # 알려진 한계(2.22.0 노트 «같은 글자의 줄»): 대조는 줄 번호를 지운 글자의 집합이다. 레인이 옛 줄과 글자가 같은
+        # 새 위반을 더하면 기존분으로 간다 — 앵커에 트리 진단이 있어도 없는 앵커와 같은 모델이다(성공 보장이 아니라 고정).
+        repo: Path
+        anchor: str
+        field: str = ('\n\nclass Lesson{name}Error(LessonErrorSchema):\n    code: LessonErrorCode = LessonErrorCode.NOT_FOUND\n'
+                      '    title: str = "Lesson {name}"\n    status: int = 410\n    detail: str = "The lesson is {name}."\n'
+                      '    missing: str = ""\n')
+        before: str = _LESSON_STATIC_SRC + field.format(name="Gone")
+        prefix: str = "- " + _LESSON_SCHEMA_REL + ":N: "
+        same: set[str] = {prefix + 'additional public field: missing: str = ""',
+                          prefix + 'concrete adds field outside common shape: missing: str = ""'}
+        for name, tree, lines in (("plain", {}, same), ("tree", self.tree02, same | {self.t114})):
+            with self.subTest(anchor=name):
+                repo, anchor = self.lane("limit-" + name, {_LESSON_SCHEMA_REL: before, **tree},
+                                         {_LESSON_SCHEMA_REL: before + field.format(name="Locked")})
+                out: str = self.assert_diff(_run(CENT, repo, [*_T_ARGS, "--anchor", anchor]), 0, set(), lines)
+                self.assertIn(f"앵커 기존분(잔존) {4 + len(tree)}건", out)  # 레인의 두 줄도 기존분에 섞여 보고된다
+
+    def test_한계_reg02_code_line_hides_other_tree_lines_of_same_rule_and_file(self) -> None:
+        # 알려진 한계: #2 의 억제 키는 (규칙, 파일)이라 코드 #636 한 줄이 그 파일의 트리 #636 을 모두 지운다. 정본 ErrorCode 가
+        # 이미 StrEnum 이 아닌 파일에 레인이 StrEnum 아닌 둘째 `*ErrorCode` 를 더하면, 그 줄은 찍히지도 않고 이 검사기는 exit 0 이다.
+        # 같은 꼴을 registry_gate(positional #2 의 트리 줄)와 #117(check-context-isolation — 둘째 ErrorCode 컨테이너)이 막으므로
+        # G2 전체로는 통과하지 않는다. 트리 진단 없는 앵커에서는 배포판도 이렇게 센다(성공 보장이 아니라 고정).
+        repo: Path
+        anchor: str
+        repo, anchor = self.lane("limit-636", {_LESSON_SCHEMA_REL: self.code636}, {_LESSON_SCHEMA_REL: self.code636 + self.legacy})
+        out: str = self.assert_diff(_run(CENT, repo, [*_T_ARGS, "--anchor", anchor]), 0, set(), {self.c636})
+        self.assertNotIn("LessonLegacyErrorCode", out)
+
+
 class ApprovedInflowRepo:
     """설계 v3 §7의 실제 검사기용 git 재료. 모든 쓰기는 시험 임시 폴더 안이다."""
 
@@ -1403,15 +1704,49 @@ class ApprovedInflowPartitionRegression(unittest.TestCase):
         r: ApprovedInflowRepo
         anchor: str
         merge: str
-        for mode in ("d16", "c8"):
+        for mode in ("d16", "c8", "c8-gap"):
             with self.subTest(mode=mode):
                 r, anchor, merge = self.code_merge(mode, before="partial")
                 r.schema("policy", "policy_unknown"); r.commit("finish policy")
-                reason: str = "측정 무효(M^1)" if mode == "d16" else "측정 무효(사슬 "
+                reason: str = "측정 무효(M^1)"
                 if mode == "c8":
-                    # 새 주어 zulu는 M^1 부재 지름길을 거친 뒤 부분 병합 결과에서 막힌다.
-                    reason = f"측정 무효(사슬 {merge[:12]})"
-                self.verdict(self.run_scope(r, anchor, (merge,), CENT, r.selectors(("accounts", "orders", "policy", "zulu"), inventory=True)), 2, reason)
+                    # 새 주어 zulu는 M^1 부재 지름길을 거친다. 병합 결과에 레인의 트리 진단(policy #572)이 있어도 #2 기준선이
+                    # 코드 줄까지 모으므로 사슬 이어짐이 보인다 — zulu 두 줄만 유입이고 accounts 줄은 부분 M^1 로 남는다.
+                    reason = f"↳ 유입: {merge[:12]}(L 증명 · ^1 에 주어 파일 없음) · 파일 verbatim"
+                if mode == "c8-gap":
+                    # 부분 렌더(exit 2)에 줄이 없으면 «없다» 가 아니라 측정 무효다 — 레인이 상류 줄을 지웠다가 다음 커밋에서 되살린다.
+                    p: str = r.error.format(bc="zulu")
+                    source: str = (r.root / p).read_text()
+                    r.write(p, source.replace('    missing: str = ""\n', "")); gap: str = r.commit("lane drops upstream line")
+                    r.write(p, source); r.commit("lane restores upstream line")
+                    reason = f"측정 무효(사슬 {gap[:12]}) — {merge[:12]}"
+                out: str = self.verdict(self.run_scope(r, anchor, (merge,), CENT, r.selectors(("accounts", "orders", "policy", "zulu"), inventory=True)), 2, reason)
+                if mode != "d16":
+                    self.assertEqual(out.count("↳ 귀속 유지: 측정 무효(M^1)"), 1, out)
+                    self.assertIn("승인 유입 2건" if mode == "c8" else "승인 유입 0건", out)
+                    self.assertEqual(out.count("↳ 유입: "), 2 if mode == "c8" else 0, out)
+                    self.assertEqual(out.count("측정 무효(사슬 "), 0 if mode == "c8" else 2, out)
+
+    def test_M2_upstream_event_with_tree_and_code_text_is_inflow(self) -> None:
+        # 상류가 들인 사건 하나가 트리 줄(#636 StrEnum 아님)이자 코드 줄이다 — ^2 기준선이 트리에서 끝나지 않고
+        # 코드 줄까지 모아야 «^2 에 있다» 가 선다. 앵커 · 레인 쪽에는 트리 진단이 없다.
+        r: ApprovedInflowRepo = self.repo("m2-tree")
+        r.project("accounts", "orders")
+        for bc in ("accounts", "orders"):
+            r.controller(bc)
+        r.schema("accounts", "wire_x"); r.schema("orders", "wire_b")
+        anchor: str = r.commit("A")
+        r.checkout(anchor, "lane"); r.write("lane.txt", "l"); r.commit("L0")
+        r.checkout("main"); r.bc("zulu"); r.controller("zulu"); r.schema("zulu", "wire_z")
+        p: str = r.error.format(bc="zulu")
+        r.write(p, (r.root / p).read_text().replace("class ZuluErrorCode(StrEnum)", "class ZuluErrorCode(str)"))
+        r.commit("U"); r.checkout("lane"); merge: str = r.merge()
+        r.write("lane.txt", "after"); r.commit("lane after merge")
+        out: str = self.verdict(self.run_scope(r, anchor, (merge,), CENT, r.selectors(("accounts", "orders", "zulu"), inventory=True)),
+                                0, f"↳ 유입: {merge[:12]}(L 증명 · ^1 에 주어 파일 없음) · 파일 verbatim")
+        self.assertIn("신규분(앵커 이후) 0건 · 앵커 기존분(잔존) 0건 · 이관 빚 0건 · 승인 유입 1건", out)
+        self.assertIn("ZuluErrorCode must directly inherit enum.StrEnum: class ZuluErrorCode(str):", out)
+        self.assertNotIn("측정 무효(", out)
 
     def test_Q9_reg02_hybrid_commit_and_worktree(self) -> None:
         for mode in ("commit", "working"):
@@ -1508,7 +1843,7 @@ class ApprovedInflowPartitionRegression(unittest.TestCase):
 def main() -> int:
     suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case) for case in (
         BaselineBcArgvRegression, EmptyScopeBcRegression, BcSelectorPartitionRegression, SisterAnchorRegression,
-        UnnumberedDebtRegression, ApprovedInflowPartitionRegression))
+        UnnumberedDebtRegression, BaselineSliceRegression, ApprovedInflowPartitionRegression))
     result = unittest.TextTestRunner(verbosity=2).run(
         suite)
     if not result.wasSuccessful():
