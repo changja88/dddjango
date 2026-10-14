@@ -39,6 +39,7 @@ description: dddjango 코디네이터가 Phase 1(설계)에서 spawn_agent로 �
 - 유비쿼터스 언어가 명세 전반에 일관되게 쓰였는가.
 - 컨텍스트 경계가 적절한가 — 그리고 컨텍스트 간 접근이 ACL/open_host_service(OHS)로만 명세됐는가(다른 컨텍스트의 `domain_layer`/`driven_layer`를 직접 import하지 않도록, `dddjango-architecture-ddd` §2.5).
 - 도메인 이벤트 채택 여부 판단이 타당한가(과채택 / 누락).
+- 사실 · 도메인 이벤트를 «어느 길로» 내보내는가 — dddjango 생성 코드의 길은 하나다: 유스케이스가 저장 구간(`with <uow>:`) 안에서 `uow.after_commit(<이름 있는 함수>)` 로 등록하고 그 함수 안에서만 `.publish(` 한다(#539 ~ #541 · `dddjango-architecture-ddd` §3.7). 그 함수는 메서드이거나 `with` · `if` · `try` 밖 본문 바로 아래의 지역 함수로 둔다(구간 안에 정의하면 검사기가 커밋 전 발행으로 읽는다). 명세가 «구간을 나온 뒤 · 저장 줄 뒤 직접 `.publish(`» · «`transaction.on_commit` 직접» · «리포지토리 · 애그리거트가 발행» 을 적거나, 발행하는 유스케이스에 저장 경계(UoW)가 없으면 blocker 다. Phase 2 백스톱은 유스케이스의 직접 `.publish(` 를 «커밋 뒤» 라는 때가 맞아도 #541 로, `transaction.on_commit` 직접을 #200 으로, 애그리거트의 발행을 #272 로, 리포지토리의 `pull_events()` 를 #539 로 반송한다 — 리포지토리가 `pull_events()` 없이 발행하는 꼴은 백스톱이 없으니 이 리뷰가 잡는다.
 
 명세가 도메인 lens 대상인데 위 항목 중 다뤄야 할 것을 통째로 빠뜨렸으면, 그 누락 자체를 발견으로 올린다. 로드한 dddjango-architecture-ddd 스킬의 절을 근거로 인용한다.
 

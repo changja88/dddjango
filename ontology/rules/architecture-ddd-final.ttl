@@ -882,11 +882,17 @@ djr:R-0541 a djr:Exception ;
 
 djr:R-0542 a djr:Exception ;
     skos:prefLabel "Outbox 회피 조건 — transaction.on_commit()으로 충분한 in-process 후속"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-0542@2026-08-22> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-0542@2026-10-14> .
 
 <https://numchida.com/ns/djr#R-0542@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-0542 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-0542@2026-10-14> a djr:Expression ;
+    prov:specializationOf djr:R-0542 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-0542@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-0543 a djr:Exception ;
     skos:prefLabel "Outbox 회피 조건 — 유실 수용 또는 운영 부담 과다"@ko ;
@@ -2583,7 +2589,7 @@ djr:R-3449 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 4 ;
     djr:statesNorm djr:R-0541, djr:R-0542, djr:R-0543 ;
-    djr:text "**회피하는 조건:**\n- 외부 부수효과가 없다.\n- 단순 in-process 후속 작업이며 `transaction.on_commit()`으로 충분하다.\n- 유실 가능성을 제품이 수용하거나 별도 운영 부담이 과하다.\n\n"@ko .
+    djr:text "**회피하는 조건:**\n- 외부 부수효과가 없다.\n- 단순 in-process 후속 작업이며 `transaction.on_commit()`(dddjango 생성 코드의 응용 계층은 `uow.after_commit` 한 길이다: #200 · #539~#541)으로 충분하다.\n- 유실 가능성을 제품이 수용하거나 별도 운영 부담이 과하다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s025/b5> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s025> ;

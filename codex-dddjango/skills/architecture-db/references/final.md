@@ -425,7 +425,7 @@ Idempotency storage는 API 계약과 연결되지만, DB 설계에서는 최소�
 
 **`add`된 동시성 테스트의 mechanics는 결정적으로.** concurrent request·CAS 경합 테스트가 입장 승인된 뒤에는 **결정적 CAS-충돌 주입(스파이)** 으로 증명하는 것을 기본으로 한다 — 실제 스레드·커스텀 DB 백엔드 없이 `version` 경합을 1회 주입해 재시도 수렴을 검증한다(`implementation-test` §20.5). 스레드 기반 race 재현(`implementation-test` §20.4)은 보조이며, 그것을 위해 연결 *메커니즘*을 커스텀 백엔드로 바꾸지 않는다(stock `OPTIONS`만 — §9.5 연결 설정 경계·`implementation-django` §16.4).
 
-외부 결제, 알림, SDK 호출, message publish는 DB 트랜잭션 내부에서 실행하지 않는 것을 기본으로 한다. 같은 transaction에 묶어야 하는 명확한 이유가 없으면 commit 이후 handoff(`transaction.on_commit()`, domain event, outbox 등)를 사용한다. 메시지 유실이 허용되지 않으면 Outbox로 전달을 보장한다(§9.7)(듣는 쪽이 별도 배포 단위일 때만 — #529 · in-repo 소비자의 유실 불허는 받는 쪽 `cron_job/`→주인 OHS 폴링 #626).
+외부 결제, 알림, SDK 호출, message publish는 DB 트랜잭션 내부에서 실행하지 않는 것을 기본으로 한다. 같은 transaction에 묶어야 하는 명확한 이유가 없으면 commit 이후 handoff(`transaction.on_commit()`, domain event, outbox 등 — dddjango 생성 코드의 응용 계층은 `uow.after_commit` 한 길이다: #200 · #539~#541)를 사용한다. 메시지 유실이 허용되지 않으면 Outbox로 전달을 보장한다(§9.7)(듣는 쪽이 별도 배포 단위일 때만 — #529 · in-repo 소비자의 유실 불허는 받는 쪽 `cron_job/`→주인 OHS 폴링 #626).
 
 > 출처: [PostgreSQL Documentation: Transaction Isolation](https://www.postgresql.org/docs/current/transaction-iso.html)
 
@@ -445,7 +445,7 @@ DB 상태 변경과 외부 메시지 발행을 함께 해야 할 때, 둘은 서
 | 디스패처 동시성 | 여러 디스패처가 같은 행을 집지 않도록 행 잠금(`FOR UPDATE SKIP LOCKED`)이나 단일 워커로 직렬화 |
 | 순서 보장 | 전역 순서가 필요하면 aggregate 단위로 직렬화하거나 정렬 키를 둔다. 필요 없으면 명시적으로 포기한다 |
 
-**Outbox를 피하는 경우**: 외부 부수효과가 없거나, 단순 in-process 후속 작업이라 `transaction.on_commit()`으로 충분하거나, 유실을 제품이 수용할 수 있을 때. 채택 여부의 도메인 측면은 `architecture-ddd` §3.7, Django 구체 구현은 `implementation-django` §16.5를 따른다.
+**Outbox를 피하는 경우**: 외부 부수효과가 없거나, 단순 in-process 후속 작업이라 `transaction.on_commit()`(dddjango 생성 코드의 응용 계층은 `uow.after_commit` 한 길이다: #200 · #539~#541)으로 충분하거나, 유실을 제품이 수용할 수 있을 때. 채택 여부의 도메인 측면은 `architecture-ddd` §3.7, Django 구체 구현은 `implementation-django` §16.5를 따른다.
 
 ---
 

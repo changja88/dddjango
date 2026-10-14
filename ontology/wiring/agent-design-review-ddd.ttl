@@ -100,3 +100,6 @@ djr:R-3544 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 djr:R-3593 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
 
 djr:R-3602 djr:delegatedTo <https://numchida.com/ns/djr#a/command-dddjango> .
+
+djr:R-3663 djr:delegatedTo <https://numchida.com/ns/djr#a/agent-design-review-ddd> ;
+    djr:enforcedBy <https://numchida.com/ns/djr#c/check-usecase-dto-placement.py>, <https://numchida.com/ns/djr#c/design_pregate.py> .

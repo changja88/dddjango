@@ -406,6 +406,14 @@ djr:R-3602 a djr:Exception ;
     prov:specializationOf djr:R-3602 ;
     djr:revision 1 .
 
+djr:R-3663 a djr:Obligation ;
+    skos:prefLabel "사실 발행 길 점검 — 유스케이스가 저장 구간 안 `uow.after_commit` 에 이름 있는 함수(메서드 · 구간 밖 지역 함수)를 등록하는 한 길 · 구간 밖·저장 줄 뒤 직접 발행·`transaction.on_commit` 직접·리포지토리/애그리거트 발행·저장 경계 없는 발행 = blocker(백스톱 #541 · #200 · #272 · #539 — `pull_events` 없는 리포지토리 발행은 리뷰 몫)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-3663@2026-10-14> .
+
+<https://numchida.com/ns/djr#R-3663@2026-10-14> a djr:Expression ;
+    prov:specializationOf djr:R-3663 ;
+    djr:revision 1 .
+
 <https://numchida.com/ns/djr#d/dddjango/agents/design-review-ddd.md> a djr:Document ;
     skos:prefLabel "agent-design-review-ddd"@ko .
 
@@ -580,15 +588,23 @@ djr:R-3602 a djr:Exception ;
     djr:kind djr:kind-norm ;
     djr:order 7 ;
     djr:statesNorm djr:R-3395 ;
-    djr:text "- 도메인 이벤트 채택 여부 판단이 타당한가(과채택 / 누락).\n\n"@ko .
+    djr:text "- 도메인 이벤트 채택 여부 판단이 타당한가(과채택 / 누락).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-ddd.md/s004/b8> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-ddd.md/s004> ;
     djr:kind djr:kind-norm ;
-    djr:order 8 ;
+    djr:order 9 ;
     djr:restates <https://numchida.com/ns/djr#s/dddjango/agents/design-review-api.md/s006/b20> ;
     djr:statesNorm djr:R-3396, djr:R-3397 ;
     djr:text "명세가 도메인 lens 대상인데 위 항목 중 다뤄야 할 것을 통째로 빠뜨렸으면, 그 누락 자체를 발견으로 올린다. 로드한 architecture-ddd 스킬의 절을 근거로 인용한다.\n\n"@ko .
+
+<https://numchida.com/ns/djr#s/dddjango/agents/design-review-ddd.md/s004/b9> a djr:Block ;
+    djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/design-review-ddd.md/s004> ;
+    djr:kind djr:kind-norm ;
+    djr:order 8 ;
+    djr:restates <https://numchida.com/ns/djr#s/dddjango/skills/architecture-ddd/references/final.md/s024-3.7/b3> ;
+    djr:statesNorm djr:R-3663 ;
+    djr:text "- 사실 · 도메인 이벤트를 «어느 길로» 내보내는가 — dddjango 생성 코드의 길은 하나다: 유스케이스가 저장 구간(`with <uow>:`) 안에서 `uow.after_commit(<이름 있는 함수>)` 로 등록하고 그 함수 안에서만 `.publish(` 한다(#539 ~ #541 · `architecture-ddd` §3.7). 그 함수는 메서드이거나 `with` · `if` · `try` 밖 본문 바로 아래의 지역 함수로 둔다(구간 안에 정의하면 검사기가 커밋 전 발행으로 읽는다). 명세가 «구간을 나온 뒤 · 저장 줄 뒤 직접 `.publish(`» · «`transaction.on_commit` 직접» · «리포지토리 · 애그리거트가 발행» 을 적거나, 발행하는 유스케이스에 저장 경계(UoW)가 없으면 blocker 다. Phase 2 백스톱은 유스케이스의 직접 `.publish(` 를 «커밋 뒤» 라는 때가 맞아도 #541 로, `transaction.on_commit` 직접을 #200 으로, 애그리거트의 발행을 #272 로, 리포지토리의 `pull_events()` 를 #539 로 반송한다 — 리포지토리가 `pull_events()` 없이 발행하는 꼴은 백스톱이 없으니 이 리뷰가 잡는다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/design-review-ddd.md/s005> a djr:Section ;
     djr:headingSnapshot "## 경계"@ko ;

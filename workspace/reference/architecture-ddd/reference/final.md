@@ -1212,7 +1212,7 @@ class UnitOfWork:
 
 **회피하는 조건:**
 - 외부 부수효과가 없다.
-- 단순 in-process 후속 작업이며 `transaction.on_commit()`으로 충분하다.
+- 단순 in-process 후속 작업이며 `transaction.on_commit()`(dddjango 생성 코드의 응용 계층은 `uow.after_commit` 한 길이다: #200 · #539~#541)으로 충분하다.
 - 유실 가능성을 제품이 수용하거나 별도 운영 부담이 과하다.
 
 **Outbox 채택 시 명시할 항목:** 애그리거트와 outbox 메시지를 쓰는 트랜잭션 owner, dispatcher owner, 전달 보장(delivery guarantee), consumer 멱등성 기준, retry/dead-letter 정책의 소유 영역, 발행 언어(published language) 필드. 전달 메커니즘(at-least-once, consumer 멱등성, retry/dead-letter, 디스패처 운영)은 `architecture-db`(§9.7)가 소유하고, Django 트랜잭셔널 outbox 구체 구현은 `implementation-django`(§16.5)가 담당한다. 신뢰성 검증 항목은 자동 테스트 세트가 아니라 `discipline-tdd` 입장 심사에 제출할 위험·failure 후보이며, `add` 결정 뒤의 작성 mechanics만 `implementation-test`가 담당한다.

@@ -500,11 +500,17 @@ djr:R-2439 a djr:Obligation ;
 
 djr:R-2440 a djr:Obligation ;
     skos:prefLabel "외부 부수효과는 트랜잭션 밖 — commit 이후 handoff, 유실 불허 시 Outbox(듣는 쪽이 별도 배포 단위일 때만)"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2440@2026-08-22> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-2440@2026-10-14> .
 
 <https://numchida.com/ns/djr#R-2440@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2440 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2440@2026-10-14> a djr:Expression ;
+    prov:specializationOf djr:R-2440 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2440@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-2441 a djr:Obligation ;
     skos:prefLabel "이중 쓰기 유실이 치명적이면 Outbox 로 해결 — 듣는 쪽이 별도 배포 단위일 때만"@ko ;
@@ -588,11 +594,17 @@ djr:R-2450 a djr:Obligation ;
 
 djr:R-2451 a djr:Exception ;
     skos:prefLabel "외부 부수효과 없음·on_commit 충분·유실 수용 가능이면 Outbox 회피"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2451@2026-08-22> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-2451@2026-10-14> .
 
 <https://numchida.com/ns/djr#R-2451@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2451 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2451@2026-10-14> a djr:Expression ;
+    prov:specializationOf djr:R-2451 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2451@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-2452 a djr:Obligation ;
     skos:prefLabel "Outbox 채택의 도메인 측면은 architecture-ddd §3.7, Django 구현은 implementation-django §16.5 를 따른다"@ko ;
@@ -1513,7 +1525,7 @@ djr:R-2481 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 14 ;
     djr:statesNorm djr:R-2440 ;
-    djr:text "외부 결제, 알림, SDK 호출, message publish는 DB 트랜잭션 내부에서 실행하지 않는 것을 기본으로 한다. 같은 transaction에 묶어야 하는 명확한 이유가 없으면 commit 이후 handoff(`transaction.on_commit()`, domain event, outbox 등)를 사용한다. 메시지 유실이 허용되지 않으면 Outbox로 전달을 보장한다(§9.7)(듣는 쪽이 별도 배포 단위일 때만 — #529 · in-repo 소비자의 유실 불허는 받는 쪽 `cron_job/`→주인 OHS 폴링 #626).\n\n"@ko .
+    djr:text "외부 결제, 알림, SDK 호출, message publish는 DB 트랜잭션 내부에서 실행하지 않는 것을 기본으로 한다. 같은 transaction에 묶어야 하는 명확한 이유가 없으면 commit 이후 handoff(`transaction.on_commit()`, domain event, outbox 등 — dddjango 생성 코드의 응용 계층은 `uow.after_commit` 한 길이다: #200 · #539~#541)를 사용한다. 메시지 유실이 허용되지 않으면 Outbox로 전달을 보장한다(§9.7)(듣는 쪽이 별도 배포 단위일 때만 — #529 · in-repo 소비자의 유실 불허는 받는 쪽 `cron_job/`→주인 OHS 폴링 #626).\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s043-9.6/b15> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s043-9.6> ;
@@ -1600,7 +1612,7 @@ djr:R-2481 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 11 ;
     djr:statesNorm djr:R-2451, djr:R-2452 ;
-    djr:text "**Outbox를 피하는 경우**: 외부 부수효과가 없거나, 단순 in-process 후속 작업이라 `transaction.on_commit()`으로 충분하거나, 유실을 제품이 수용할 수 있을 때. 채택 여부의 도메인 측면은 `architecture-ddd` §3.7, Django 구체 구현은 `implementation-django` §16.5를 따른다.\n\n"@ko .
+    djr:text "**Outbox를 피하는 경우**: 외부 부수효과가 없거나, 단순 in-process 후속 작업이라 `transaction.on_commit()`(dddjango 생성 코드의 응용 계층은 `uow.after_commit` 한 길이다: #200 · #539~#541)으로 충분하거나, 유실을 제품이 수용할 수 있을 때. 채택 여부의 도메인 측면은 `architecture-ddd` §3.7, Django 구체 구현은 `implementation-django` §16.5를 따른다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s044-9.7/b12> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/skills/architecture-db/references/final.md/s044-9.7> ;

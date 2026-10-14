@@ -138,6 +138,15 @@ first-parent 사슬의 참여 머지가 들여온 verbatim 변경(추가·수정
 이 확정 근거의 한계: 표준 라이브러리 이름을 가리는 프로젝트 모듈은 source root(저장소 루트 · 검사기가 고른 `application`
 폴더의 부모)의 폴더·모듈로만 찾는다 — 네임스페이스 패키지·`.pth`·finder 로 바꾼 import 경로는 못 본다. 소문자 내장 이름
 (`type`·`set` 류)과 같은 이름의 domain 값 객체도 가르지 못한다(확정으로 선다).
+사실 발행의 길(F4-93 · #541): 검사기 #541 의 진입점 칸(`application/<bc>/application_layer/<area>/<uc>/<uc>_use_case.py` · 승격
+본체) add/update 에서 symbols 가 그 유스케이스의 `__init__` 행을 인자 타입까지 모두 적었고, 그 인자에 framework 브로커 포트가
+있고, 저장 경계(`…UnitOfWork` — 별칭 · 신원 포함)가 없다고 선언으로 정해지면(effects `uow=none`, 없으면 그 `__init__` 에 저장 경계
+인자 없음) 선언 확정 #541 이다(발행은 저장 구간 안 `uow.after_commit` 등록 한 길뿐이다). 확정은 명세가 스스로 선언한 사실로만
+선다 — `__init__` 행 없음(dataclass 유스케이스 포함) · `__init__` 행 둘 이상 · import 만 · 기준선 실물 생성자 · 알아볼 수 없는
+인자 타입(의존 묶음 · 컨테이너 · 도메인 값 객체 · 표준 라이브러리 · 표준 밖 · 읽지 못한 타입식 — 서로게이트 문자 · 아주 깊은 식) ·
+읽지 못한 필드 타입식 · 타입 없는 인자 · 채널 상충 · 기준선 실물이 이미 브로커를 import 하는 update 는 선언 후보다.
+effects 의 bare `None` · `NONE` 과 짝 맞는 문자열 상수(`'none'`)는 `none` 으로 읽는다(짝이 틀린 따옴표는 형식 red).
+저장 경계는 있는데 구간 밖에서 직접 발행하는 꼴은 본문 일이라 보지 못한다(도메인 리뷰 점검 항목의 몫).
 `--base` 명시(재발화 판형 — Phase 2 진입 후 명세 개정 재실행): 기준선 ≠ HEAD 면 dirty overlay 를 생략한다(사본 =
 기준선 트리 · 작업 트리 미커밋분은 사본 밖 — 규약 준수 실행과 같다 · 헤더 «dirty overlay 생략» 행). 기준선 = HEAD
 (명시 `--base HEAD` 포함)일 때만 오버레이가 있고, 기준선 트리에 없던 계획 add 가
@@ -868,6 +877,9 @@ def _parse_effects(rows: list[str] | None, plan: Plan, errors: list[str]) -> Non
             continue
         seen.add((path, owner))
         uow = uow.strip()
+        bare: str = uow[1:-1] if len(uow) >= 2 and uow[0] == uow[-1] and uow[0] in "'\"" else uow
+        if bare.lower() == "none":
+            uow = "none"  # bare `None` · `NONE` 과 짝 맞는 문자열 상수(`'none'`)만 «없음» 으로 읽는다(F4-93) — 짝이 틀린 따옴표는 아래 형식 red
         try:
             if uow != "none":
                 ast.parse(f"value: {uow}")
@@ -2751,6 +2763,354 @@ def check_repository_forecast(plan: Plan, copy: Path, scratch: Path,
     return out
 
 
+# ── #541 예보(F4-93) — 브로커 포트를 주입받는 유스케이스의 저장 경계 ────────────────────────────────────────────
+# 사실 발행의 길은 하나다: 유스케이스가 저장 구간 안에서 `uow.after_commit(<이름 있는 함수>)` 로 등록한다(#539~#541 · R-0533 ·
+# architecture-ddd §3.7). 확정은 «명세가 스스로 선언한 사실» 로만 선다 — symbols 가 그 유스케이스의 `__init__` 행을 인자 타입까지
+# 모두 적었고, 그 인자에 framework 브로커 포트가 있고(발행 주입의 선언), 저장 경계가 없다는 것이 선언으로 정해질 때(effects
+# `uow=none`, effects 가 없으면 그 `__init__` 에 저장 경계 인자 없음). 그 밖(`__init__` 행 없음 — dataclass 유스케이스 포함 · `__init__`
+# 행 둘 이상 · import 만 · 기준선 실물 생성자 · 알아볼 수 없는 인자 타입 · 읽지 못한 필드 타입식 · 타입 없는 인자 · 채널 상충)은 후보다.
+# 저장 경계는 있는데 구간 밖에서 직접 발행하는 꼴은 본문 일이라 여기서 못 본다(도메인 리뷰 점검 항목 «사실을 어느 길로 내보내는가» 의
+# 몫 — R-3663).
+# 대상 칸 = 검사기 #541 의 대상과 같은 진입점 칸 — `…/application/<bc>/application_layer/<area>/<uc>/<uc>_use_case.py` 와 그 승격
+# 본체 `…/<uc>/<uc>_use_case/<uc>_use_case.py`(경로 앞 마디 `src/` 등 무관 · `<area>` 가 `port` 이거나 `<area>`·`<uc>` 가 종류 폴더면
+# 검사기가 진입점으로 읽지 않는다). 종류 폴더 목록은 `check-usecase-dto-placement.py` 의 `KIND_FOLDER_NAMES` 와 같다(러너 드리프트 가드).
+_USE_CASE_KIND_FOLDERS: "frozenset[str]" = frozenset({
+    "unit_of_work", "domain_bypass_query", "dto", "service", "services",
+    "validation", "validators", "common", "shared", "util", "utils",
+    "helper", "helpers", "command", "query", "use_case", "use_cases",
+})
+# 브로커 표면 — 표준 트리 144~150행 `framework/broker/{internal,external}/`(포트 · 구현 모두). 표준에서 유스케이스가 브로커 포트를 받는
+# 까닭은 발행뿐이다(구독 결선은 `composition_root/event_wiring.py` — R-0720 · #498 · 사실→핸들러 표는 `event_router.py` — #508 ·
+# 유스케이스는 핸들러다 — #279). 그래서 «브로커 포트를 받고 발행하지 않는» 유스케이스도 확정으로 둔다(처분 `filtered` ⓑ 로 넘긴다).
+_BROKER_PACKAGE: str = "framework.broker"
+_BROKER_PORT_NAMES: "frozenset[str]" = frozenset({"InternalBrokerPort", "ExternalBrokerPort"})
+_UOW_SUFFIX: str = "UnitOfWork"
+# 알아볼 수 있는 생성자 인자 타입 — 표준 계약의 이름 접미(포트 `…Port` · 도메인 저장소 `…Repository` · 도메인 우회 조회 `…Query`)와
+# 원시 타입, 또는 표준 계약 모듈(`port/` · 도메인 저장소 · `framework/<능력>/…_port`)로 풀리는 신원. 그 밖(의존 묶음 · 컨테이너 ·
+# 합집합 · 도메인 값 객체 · 도메인 서비스 · 표준 라이브러리 · 표준 밖 타입)은 저장 경계를 품을 수 있어 «없음» 을 확정하지 못한다.
+_KNOWN_ARG_SUFFIXES: "tuple[str, ...]" = ("Port", "Repository", "Query")
+_PRIMITIVE_ARGS: "frozenset[str]" = frozenset({"str", "int", "float", "bool", "bytes"})
+_CONTRACT_MODULE_RE: "re.Pattern[str]" = re.compile(
+    r"^(?:.*\.)?application\.[^.]+\.(?:application_layer\.port\.|domain_layer\.[^.]+\.[^.]+_repository$)"
+    r"|^framework\.[^.]+\.[^.]+_port$")
+_PUBLISH_PATH_TAIL: str = (" — 발행은 저장 구간 안 `uow.after_commit(<이름 있는 함수>)` 등록 한 길뿐이라(#539~#541 · `architecture-ddd` "
+                           "§3.7) 저장 경계 없이 브로커 포트를 받는 유스케이스는 발행하려면 `.publish(` 를 직접 부르게 된다(Phase 2 #541) · "
+                           "고침: 저장 경계를 생성자에 들이고 effects 를 `uow=<타입>` 으로 — 발행하지 않으면 브로커 포트 인자와 import 를 뺀다")
+
+
+def _publish_use_case_slot(path: str) -> bool:
+    """검사기 #541 의 진입점 칸인가 — 정규화 마디의 꼬리 여섯(파일) 또는 일곱(승격 본체)으로 가른다."""
+    parts: "tuple[str, ...]" = _plan_parts(path)
+    for size in (6, 7):
+        if len(parts) < size:
+            continue
+        tail: "tuple[str, ...]" = parts[-size:]
+        if tail[0] != "application" or tail[2] != "application_layer":
+            continue
+        area: str = tail[3]
+        use_case: str = tail[4]
+        if area == "port" or area in _USE_CASE_KIND_FOLDERS or use_case in _USE_CASE_KIND_FOLDERS:
+            continue
+        stem: str = f"{use_case}_use_case"
+        if size == 6 and tail[5] == f"{stem}.py":
+            return True
+        if size == 7 and tail[5] == stem and tail[6] == f"{stem}.py":
+            return True
+    return False
+
+
+def _is_broker_module(dotted: str) -> bool:
+    return dotted == _BROKER_PACKAGE or dotted.startswith(_BROKER_PACKAGE + ".")
+
+
+def _broker_names(nodes: "list[ast.stmt]") -> "list[str]":
+    """import 문들에서 브로커 표면(`framework.broker` 와 그 아래)에 닿는 이름 — 점 경로로, 처음 나온 순서."""
+    found: "list[str]" = []
+    for node in nodes:
+        if isinstance(node, ast.ImportFrom) and not node.level and node.module:
+            for alias in node.names:
+                dotted: str = node.module if alias.name == "*" else f"{node.module}.{alias.name}"
+                if _is_broker_module(node.module) or _is_broker_module(dotted):
+                    found.append(dotted)
+        elif isinstance(node, ast.Import):
+            found += [a.name for a in node.names if _is_broker_module(a.name)]
+    return list(dict.fromkeys(found))
+
+
+def _statement_nodes(statements: "list[str]") -> "list[ast.stmt]":
+    nodes: "list[ast.stmt]" = []
+    for statement in statements:
+        try:
+            nodes += ast.parse(statement).body
+        except SyntaxError:
+            continue  # 문법 불량 행은 계약 실존 채널이 판정 불능으로 보고한다
+    return nodes
+
+
+def _real_module(copy: Path, path: str) -> "ast.Module | None":
+    """update 대상의 기준선 실물 — 파일, 없으면 유효 승격 본체(`<stem>/<stem>.py`). 읽기 · 파싱 불능은 None."""
+    target: Path = copy / path
+    if not target.is_file() and path.endswith(".py"):
+        target = copy / path[:-3] / f"{PurePosixPath(path).stem}.py"
+    if not target.is_file() or target.is_symlink():
+        return None
+    try:
+        return ast.parse(target.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, SyntaxError):
+        return None
+
+
+# 타입식을 읽다 나는 두 예외 — 서로게이트 문자가 든 문자열 타입(`UnicodeError`) · 아주 깊은 합집합 · 점 경로(`RecursionError`).
+# #541 예보에서는 «알아볼 수 없는 타입» 으로 읽는다(후보). 실패한 타입식은 진단 글을 만들려고 다시 읽지 않는다(이름만 적는다).
+_UNREADABLE_TYPE_ERRORS: "tuple[type[Exception], ...]" = (UnicodeError, RecursionError)
+
+
+def _walked_names(annotation: ast.expr) -> "set[str]":
+    return {n.id if isinstance(n, ast.Name) else n.attr
+            for n in ast.walk(_StrAnnotations().visit(copy_module.deepcopy(annotation)))
+            if isinstance(n, (ast.Name, ast.Attribute))}
+
+
+def _uow_names(types: _DeclarationTypes, module: str, annotation: ast.expr,
+               aliases: "dict[str, list[str]]") -> "list[str]":
+    """주석이 저장 경계를 가리키면 그 이름들 — `…UnitOfWork` 이름(별칭 · forward 문자열 · 컨테이너 안쪽 포함) · symbols 별칭 행의
+    두 갈래(`alias[TYPE_CHECKING]` · `alias[else]`) 안쪽 · `application_layer.port.unit_of_work` 모듈의 신원."""
+    referenced: "set[str]" = set()
+    identities, _issues = types.resolve(module, annotation, referenced_names=referenced)
+    walked: "set[str]" = _walked_names(annotation)
+    for name in sorted(walked):
+        for statement in aliases.get(name, []):
+            try:
+                walked |= {n.id if isinstance(n, ast.Name) else n.attr for n in ast.walk(ast.parse(statement))
+                           if isinstance(n, (ast.Name, ast.Attribute))}
+            except SyntaxError:
+                continue
+    names: "set[str]" = {n for n in walked | referenced if n.endswith(_UOW_SUFFIX)}
+    names |= {n for m, n, _ in identities if ".application_layer.port.unit_of_work." in m + "."}
+    return sorted(names)
+
+
+def _arg_kind(types: _DeclarationTypes, module: str, annotation: ast.expr) -> str:
+    """저장 경계가 아닌 인자 주석의 종류 — `broker` · `known`(표준 계약 · 원시 타입) · `unknown`(그 밖)."""
+    expr: ast.expr = _StrAnnotations().visit(copy_module.deepcopy(annotation))
+    if not isinstance(expr, (ast.Name, ast.Attribute)):
+        return "unknown"  # 컨테이너 · 합집합 · 호출 꼴 — 안쪽에 무엇이 실릴지 가를 수 없다
+    name: str = expr.id if isinstance(expr, ast.Name) else expr.attr
+    identities, _issues = types.resolve(module, expr)
+    modules: "list[str]" = [m for m, _n, _node in identities]
+    if name in _BROKER_PORT_NAMES or any(_is_broker_module(m) for m in modules):
+        return "broker"
+    if name in _PRIMITIVE_ARGS or name.endswith(_KNOWN_ARG_SUFFIXES) or any(_CONTRACT_MODULE_RE.match(m) for m in modules):
+        return "known"
+    return "unknown"
+
+
+@dataclass
+class _Constructor:
+    """유스케이스 생성자 한 벌 — 어디서 읽었나(`symbols` · `baseline`) · 인자 종류별 이름."""
+    source: str
+    where: str
+    uow: "list[str]" = field(default_factory=list)
+    broker: "list[str]" = field(default_factory=list)
+    untyped: "list[str]" = field(default_factory=list)
+    unknown: "list[str]" = field(default_factory=list)
+
+
+def _classify(found: _Constructor, types: _DeclarationTypes, module: str, aliases: "dict[str, list[str]]",
+              label: str, annotation: "ast.expr | None", variadic: bool) -> None:
+    if annotation is None:
+        found.untyped.append(f"`{label}`")
+        return
+    uow: "list[str]" = _uow_names(types, module, annotation, aliases)
+    if uow:
+        found.uow += uow
+        return
+    if variadic:
+        found.untyped.append(f"`{label}`")  # 가변 인자는 타입이 저장 경계가 아니어도 무엇이든 실을 수 있다
+        return
+    kind: str = _arg_kind(types, module, annotation)
+    if kind == "broker":
+        found.broker.append(f"`{label}: {ast.unparse(annotation)}`")
+    elif kind == "unknown":
+        found.unknown.append(f"`{label}: {ast.unparse(annotation)}`")
+
+
+def _classify_or_unread(found: _Constructor, types: _DeclarationTypes, module: str, aliases: "dict[str, list[str]]",
+                        label: str, annotation: "ast.expr | None", variadic: bool) -> None:
+    """`_classify` — 타입식을 읽지 못하면(`_UNREADABLE_TYPE_ERRORS`) 알아볼 수 없는 인자 타입으로 둔다(후보)."""
+    try:
+        _classify(found, types, module, aliases, label, annotation, variadic)
+    except _UNREADABLE_TYPE_ERRORS:
+        found.unknown.append(f"`{label}`(타입식을 읽지 못했다)")
+
+
+def _field_uow_names(types: _DeclarationTypes, module: str, annotation: ast.expr,
+                     aliases: "dict[str, list[str]]") -> "list[str] | None":
+    """필드 주석의 저장 경계 이름(`_uow_names`) — 타입식을 읽지 못하면(`_UNREADABLE_TYPE_ERRORS`) None(후보)."""
+    try:
+        return _uow_names(types, module, annotation, aliases)
+    except _UNREADABLE_TYPE_ERRORS:
+        return None
+
+
+def _constructor(types: _DeclarationTypes, module: str, aliases: "dict[str, list[str]]", source: str, where: str,
+                 fn: "ast.FunctionDef | ast.AsyncFunctionDef") -> _Constructor:
+    found: _Constructor = _Constructor(source, where)
+    args: ast.arguments = fn.args
+    positional: "list[ast.arg]" = [*args.posonlyargs, *args.args]
+    if positional and positional[0].arg in ("self", "cls"):
+        positional = positional[1:]
+    for arg in [*positional, *args.kwonlyargs]:
+        _classify_or_unread(found, types, module, aliases, arg.arg, arg.annotation, False)
+    for arg, star in ((args.vararg, "*"), (args.kwarg, "**")):
+        if arg is not None:
+            _classify_or_unread(found, types, module, aliases, f"{star}{arg.arg}", arg.annotation, True)
+    return found
+
+
+def _field_annotations(texts: "list[str]") -> "list[ast.expr]":
+    """symbols 필드 행의 주석 — 저장 경계 «있음» 증거로만 쓴다(필드는 생성자 선언이 아니다)."""
+    out: "list[ast.expr]" = []
+    for text in texts:
+        try:
+            node: ast.stmt = ast.parse(text).body[0]
+        except (SyntaxError, IndexError):
+            continue
+        if isinstance(node, ast.AnnAssign):
+            out.append(node.annotation)
+    return out
+
+
+def check_publish_path_forecast(plan: Plan, copy: Path) -> list[DeclarationFinding]:
+    """#541 예보(F4-93) — 브로커 포트를 주입받는데 저장 경계가 없다고 «명세가 선언한» 유스케이스(add/update)는 선언 확정이다.
+
+    대상: file-plan add/update 가운데 검사기 #541 의 진입점 칸(`_publish_use_case_slot`) ∧ (그 파일의 boundary-imports 행(소비 경로
+    정규화)이 `framework.broker` 와 그 아래를 import ∨ 선언 생성자 인자에 브로커 포트). 클래스 = symbols 가 그 경로에 적은 공개 클래스,
+    하나도 없을 때만 update 기준선 실물의 공개 클래스. 생성자 = symbols `__init__` 행, 없으면 update 기준선 실물 `__init__`(dataclass
+    필드는 생성자 선언으로 읽지 않는다 — 저장 경계 «있음» 증거로만).
+    확정(전부): 생성자가 명세 선언(`__init__` 행)이고 · 모든 인자의 타입이 적혔고 알아볼 수 있으며(`_arg_kind`) ·
+    그 가운데 브로커 포트가 있고 · 저장 경계 증거가 없고(생성자 · symbols 필드 · 별칭) · effects 가 `uow=none` 이거나 없을 때.
+    후보: 채널 상충(effects `uow=none` ∧ 저장 경계 / effects `uow=<타입>` ∧ 선언 생성자에 저장 경계 없음) · `__init__` 행 둘 이상 ·
+    생성자 서명 없음 · 기준선 실물 생성자뿐 · 타입 없는 인자 · 알아볼 수 없는 타입(읽지 못한 타입식 포함) · 읽지 못한 필드 타입식 ·
+    import 만(생성자에 브로커 포트 없음) · 클래스 없음 ·
+    update 기준선 실물이 이미 브로커를 import(기존 빚일 수 있다 — 확정을 낮춘다). 사본 파일은 바꾸지 않는다."""
+    rows: "dict[str, list[str]]" = {}
+    for row in plan.import_rows:
+        rows.setdefault("/".join(_plan_parts(row.consumer)), []).append(row.stmt)
+    types: "_DeclarationTypes | None" = None
+    out: list[DeclarationFinding] = []
+    for entry in plan.entries.values():
+        if entry.tag not in ("add", "update") or not _publish_use_case_slot(entry.path):
+            continue
+        path: str = "/".join(_plan_parts(entry.path))
+        brokers: "list[str]" = _broker_names(_statement_nodes(rows.get(path, [])))
+        declared: "dict[str, Symbol]" = {s.name: s for s in entry.declarations
+                                         if s.kind == "class" and not s.name.startswith("_")}
+        if not brokers and not any(any(m.name == "__init__" for m in s.methods) for s in declared.values()):
+            continue  # 브로커 import 도 선언 생성자도 없다 — 발행 혐의 밖(빠른 길)
+        if types is None:
+            types = _DeclarationTypes(plan, copy)
+        module: str = types.module(entry.path)
+        aliases: "dict[str, list[str]]" = {}
+        for alias in entry.declaration_aliases:
+            aliases.setdefault(alias.name, []).extend(s for s in (alias.statement, alias.runtime) if s)
+        real_tree: "ast.Module | None" = _real_module(copy, path) if entry.tag == "update" else None
+        legacy: bool = real_tree is not None and bool(_broker_names(
+            [n for n in ast.walk(real_tree) if isinstance(n, (ast.Import, ast.ImportFrom))]))
+        real: "dict[str, ast.ClassDef]" = {n.name: n for n in (real_tree.body if real_tree is not None else [])
+                                           if isinstance(n, ast.ClassDef) and not n.name.startswith("_")}
+        effects: "dict[str, UseCaseEffect]" = {e.owner: e for e in plan.effects if e.path == entry.path}
+        owners: "list[str]" = sorted(set(declared) or set(real))
+        ctors: "dict[str, _Constructor | None]" = {}
+        fields: "dict[str, list[str]]" = {}
+        doubled: "set[str]" = set()  # `__init__` 행이 둘 이상인 클래스 — 어느 선언이 생성자인지 가를 수 없다(후보)
+        unread: "dict[str, int]" = {}  # 타입식을 읽지 못한 필드 수 — 저장 경계 유무를 가를 수 없다(후보)
+        for owner in owners:
+            symbol: "Symbol | None" = declared.get(owner)
+            inits: "list[Method]" = [m for m in (symbol.methods if symbol else []) if m.name == "__init__"]
+            method: "Method | None" = inits[0] if len(inits) == 1 else None
+            field_rows: "list[ast.expr]" = _field_annotations(symbol.fields if symbol else [])
+            ctor: "_Constructor | None" = None
+            uow_fields: "list[str]" = []
+            unread[owner] = 0
+            if method is not None:
+                fn: "ast.FunctionDef | None" = _method_def("__init__", method.params, method.ret)
+                if fn is not None:
+                    ctor = _constructor(types, module, aliases, "symbols", "symbols `__init__`", fn)
+            elif len(inits) > 1:
+                doubled.add(owner)
+            elif owner in real:
+                body: "list[ast.stmt]" = real[owner].body
+                init: "ast.FunctionDef | ast.AsyncFunctionDef | None" = next(
+                    (n for n in body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == "__init__"), None)
+                if init is not None:
+                    ctor = _constructor(types, module, aliases, "baseline", "기준선 실물 `__init__`", init)
+                    for n in body:
+                        if isinstance(n, ast.AnnAssign):
+                            uow_fields += _field_uow_names(types, module, n.annotation, aliases) or []
+            for annotation in field_rows:
+                names: "list[str] | None" = _field_uow_names(types, module, annotation, aliases)
+                uow_fields += names or []
+                unread[owner] += names is None
+            ctors[owner] = ctor
+            fields[owner] = uow_fields
+        if not brokers and not any(c is not None and c.broker for c in ctors.values()):
+            continue  # 브로커 import 도 브로커 포트 인자도 없다 — 발행 혐의 밖
+        if not owners:
+            out.append(DeclarationFinding("#541", path, "-", f"브로커 `{brokers[0]}` 를 import 하는데 유스케이스 클래스가 명세 symbols · "
+                                          "기준선 어디에도 없다 — 저장 경계 유무를 가를 수 없다(클래스와 `__init__` 행을 적는다)", False))
+            continue
+        any_broker_arg: bool = any(c is not None and c.broker for c in ctors.values())
+        for owner in owners:
+            ctor = ctors[owner]
+            if any_broker_arg and (ctor is None or not ctor.broker):
+                continue  # 같은 파일의 다른 클래스가 브로커 포트를 받는다 — 이 클래스는 발행 혐의 밖
+            has_uow: "list[str]" = sorted(set(fields[owner]) | set(ctor.uow if ctor else []))
+            effect: "UseCaseEffect | None" = effects.get(owner)
+            stated: str = "" if effect is None else effect.uow
+            declared_ctor: bool = ctor is not None and ctor.source == "symbols"
+            head: str = (f"브로커 포트({' · '.join(ctor.broker)})를 받는데 " if ctor is not None and ctor.broker
+                         else f"브로커(`{brokers[0]}`)를 import 하는데 ")
+            if has_uow or (stated and stated != "none"):
+                if stated == "none" and has_uow:
+                    detail, confirmed = (head + "use-case-effects 는 `uow=none` · 생성자 · 필드에는 저장 경계 "
+                                         + ", ".join(f"`{n}`" for n in has_uow) + " — 두 채널을 맞춘다(발행하면 effects `uow=<타입>`)",
+                                         False)
+                elif stated and stated != "none" and declared_ctor and not has_uow and not ctor.untyped and not ctor.unknown:
+                    detail, confirmed = (head + f"use-case-effects 는 `uow={stated}` · {ctor.where} 에는 저장 경계 인자가 없다 — "
+                                         "두 채널을 맞춘다", False)
+                else:
+                    continue
+            elif owner in doubled:
+                detail, confirmed = (head + "symbols `__init__` 행이 둘 이상이다 — 어느 선언이 생성자인지 가를 수 없다(한 행만 "
+                                     "남긴다)", False)
+            elif ctor is None:
+                detail, confirmed = (head + "생성자 서명이 명세(symbols `__init__` 행)에 없다 — 저장 경계 유무를 가를 수 "
+                                     "없다(`__init__` 행을 적는다)", False)
+            elif ctor.source == "baseline":
+                detail, confirmed = (head + "명세가 생성자를 적지 않았고 기준선 실물 `__init__` 에는 저장 경계가 없다 — 이 update 가 저장 "
+                                     "경계를 들이는지 가를 수 없다(들이면 symbols `__init__` 행에 적는다)", False)
+            elif ctor.untyped:
+                detail, confirmed = (head + f"{ctor.where} 의 타입 없는 인자 " + ", ".join(ctor.untyped)
+                                     + " 때문에 저장 경계 유무를 가를 수 없다(인자 타입을 적는다)", False)
+            elif ctor.unknown:
+                detail, confirmed = (head + f"{ctor.where} 의 인자 타입 " + ", ".join(ctor.unknown) + " 을 알아볼 수 없다(의존 묶음 · "
+                                     "컨테이너 · 표준 밖 타입은 저장 경계를 품을 수 있다) — 저장 경계 유무를 가를 수 없다", False)
+            elif unread[owner]:
+                detail, confirmed = (head + "symbols 필드의 타입식을 읽지 못했다(서로게이트 문자 · 아주 깊은 식) — 저장 경계 유무를 가를 "
+                                     "수 없다(필드 타입을 고쳐 적는다)", False)
+            elif not ctor.broker:
+                detail, confirmed = (head + f"{ctor.where} 인자에는 브로커 포트가 없다 — import 만으로는 발행 주입이 아니다", False)
+            else:
+                said: str = "use-case-effects 가 `uow=none` 이고 " if stated == "none" else ""
+                detail, confirmed = head + said + f"{ctor.where} 에 저장 경계(`…{_UOW_SUFFIX}`) 인자가 없다" + _PUBLISH_PATH_TAIL, True
+            if confirmed and legacy:
+                detail, confirmed = (detail + " — 단 기준선 실물이 이미 브로커를 import 한다: 이 명세가 새로 들이는 발행인지 기존 빚인지 "
+                                     "가를 수 없다(기존 빚이면 G2 차분은 귀속하지 않는다)", False)
+            out.append(DeclarationFinding("#541", path, owner, detail, confirmed))
+    return out
+
+
 def _generated_methods(module: ast.Module) -> list[GeneratedMethod]:
     """이번 렌더의 함수·메서드 범위만 기록한다(기존 실물의 스텁 문구는 근거가 아니다)."""
     result: list[GeneratedMethod] = []
@@ -4111,7 +4471,8 @@ def _main(argv: "list[str]") -> int:
 
         # 계약 실존 — materialize(+골격·`__init__` 체인) 뒤 · 실체화-0 분기 앞(update 소비자만의 명세도 판정한다).
         declarations = (check_declarations(plan, copy) + check_in_argument_forecast(plan, copy)
-                        + check_repository_forecast(plan, copy, scratch, repository_material))
+                        + check_repository_forecast(plan, copy, scratch, repository_material)
+                        + check_publish_path_forecast(plan, copy))
         declaration_count = len({(item.rule, item.path) for item in declarations if item.confirmed})
         for line in _declaration_lines(declarations):
             print(line)

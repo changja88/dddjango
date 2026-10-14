@@ -54,6 +54,12 @@
   괄호 · 공백 원문) · 별칭 · 함수 없는 꼴 보충 0 · `./` · 겹친 `/` = 맨 경로 글 · 재료 자리 밖 둘은 `raise NotImplementedError`.
   묶음 stub-material(D17 소유 · #652 — 합성 저장소 = `mini_repo` + `stub_overlay/` + `stub_material_overlay/`(값 객체) · 리포트 1 — 헤더 7):
   재료 명세 7(P1 · P1′ · P1″a · P1″b · P1-dot · P1-dslash → exit 0 · P2 `-> dict` → #652 «반환 주석» 1건(진탐)) — 검사기 결과 단언.
+  묶음 publish(F4-93 — 합성 저장소 = `mini_repo` + `publish_overlay/`(브로커 포트 internal · external · 저장 경계 포트 · 기존 유스케이스
+  rename_order(저장 경계 있음) · close_order · archive_order(없음)) · 리포트 각 1):
+  publish-red-spec.md   — 브로커 포트를 받는 유스케이스 넷: place_order(add · effects `uow=none`) · close_order(update · symbols
+                          `__init__` · external) → 선언 확정 #541 2 · notify_order(생성자 없음) · archive_order(update · 기준선 생성자뿐)
+                          → 후보 2 · rename_order(기준선 저장 경계) 0 · 귀속 0 → exit 2 · `--check-report` 미처분 3 → ignored 2 → 0.
+  publish-green-spec.md — 저장 경계를 받는 발행 유스케이스 + 브로커 없는 `uow=none` 유스케이스 → exit 0 · #541 0.
   실행기 exit 규약: 0 green · 2 귀속 red(결손 병기) · 3 형식 red(문법 · 블록 부재·공허 · add 충돌 · update/remove 대상 기준선 부재) ·
   4 skip(실체화 0·결손 0) · 5 결손 ≥1 ∧ (귀속 0 ∨ 실체화 0) · 1 실행 불능 · `--check-report`: 0 정합 · 3 불비 · 1 리포트/절 부재.
   (아래 재발화 판형의 케이스 이름 E1~E4 는 이 러너의 것 — 승격 계획서의 실행기 변경 항목 번호와 무관.)
@@ -76,6 +82,7 @@ green 이 깨져 여기서 드러난다(설계 §9-3 드리프트 하네스의 �
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import shutil
@@ -1497,6 +1504,490 @@ def _run_stub_material_bundle(scratch: Path, failures: "list[str]") -> None:
         failures.append(f"[stub-material · D17 #652] 리포트 append 횟수 {_header_count(report)} ≠ 기대 {len(STUB_MATERIAL_CHECKER_CASES)}")
 
 
+def _publish_path_unit_checks() -> "list[str]":
+    """F4-93 — 브로커 포트를 주입받는 유스케이스의 저장 경계 #541 예보. 확정은 명세가 스스로 선언한 사실로만 — symbols 가 명시
+    `__init__` 행 하나로 모든 인자 타입을 알아볼 수 있게 적었고 · 브로커 포트를 받고 · 저장 경계가 없다고 선언될 때(필드는 저장 경계가
+    있다는 증거로만 쓴다 — 생성자 선언이 아니다).
+    판정 표 전 칸 · 저장 경계 이름 풀기(별칭 · TYPE_CHECKING · forward · 공장 · 필드 · 신원) · 알아볼 수 있는 타입(접미 · 원시 · 계약
+    신원) · import 표기 · 대상 칸 · update(기준선 생성자는 후보 · 클래스는 선언 우선) · effects 철자 · 드리프트 가드 · 처분."""
+    dp = _load_module(EXECUTOR, "_design_pregate_publish")
+    out: "list[str]" = []
+    uc = "application/orders/application_layer/order/place_order/place_order_use_case.py"
+    owner = "PlaceOrderUseCase"
+    internal = "from framework.broker.internal.internal_broker_port import InternalBrokerPort"
+    external = "from framework.broker.external.external_broker_port import ExternalBrokerPort"
+    uow_import = "from application.orders.application_layer.port.unit_of_work.orders_unit_of_work import OrdersUnitOfWork"
+    repo_import = "from application.orders.domain_layer.order.order_repository import OrderRepository"
+    base_init = "order_repository: OrderRepository, broker: InternalBrokerPort"
+
+    def spec(plan: "list[str]", symbols: "list[str]", imports: "list[str]", effects: "list[str] | None" = None) -> str:
+        text = ("# publish\n\n<!-- machine: file-plan -->\n```paths\n" + "\n".join(plan) + "\n```\n\n"
+                "<!-- machine: symbols -->\n```symbols\n" + "\n".join(symbols) + "\n```\n\n"
+                "<!-- machine: boundary-imports -->\n```imports\n" + "\n".join(imports) + "\n```\n")
+        if effects is not None:
+            text += "\n<!-- machine: use-case-effects -->\n```effects\n" + "\n".join(effects) + "\n```\n"
+        return text
+
+    def run(label: str, text: str, real: "dict[str, str]", want: "list[tuple[str, str, bool]]",
+            detail: str = "") -> None:
+        plan, errors = dp.parse_spec(text)
+        if errors or plan is None:
+            out.append(f"F4-93[{label}] 명세 파싱 실패: {errors}")
+            return
+        with tempfile.TemporaryDirectory(prefix="pregate-publish-") as td:
+            copy = Path(td)
+            for rel, body in real.items():
+                (copy / rel).parent.mkdir(parents=True, exist_ok=True)
+                (copy / rel).write_text(body, encoding="utf-8")
+            found = dp.check_publish_path_forecast(plan, copy)
+        got = [(f.path, f.owner, f.confirmed) for f in found]
+        if any(f.rule != "#541" for f in found) or got != want:
+            out.append(f"F4-93[{label}] = {got} ≠ 기대 {want}")
+        elif detail and not all(detail in f.detail for f in found):
+            out.append(f"F4-93[{label}] 문면에 «{detail}» 없음: {[f.detail for f in found]}")
+
+    def simple(label: str, *, init: "str | None" = None, imports: "tuple[str, ...]" = (internal, repo_import),
+               effects: "list[str] | None" = None, cls: str = "", extra: "tuple[str, ...]" = (),
+               want: "bool | None" = None, detail: str = "", path: str = uc) -> None:
+        symbols = [*extra, f"{path}::{owner}{cls}"]
+        if init is not None:
+            symbols.append(f"{path}::{owner}.__init__(self, *, {init}) -> None")
+        run(label, spec([f"add\t{path}"], symbols, [f"{path}\t{i}" for i in imports], effects), {},
+            [] if want is None else [("/".join(dp._plan_parts(path)), owner, want)], detail)
+
+    none_effect = [f"{uc}::{owner} write uow=none"]
+    typed_effect = [f"{uc}::{owner} write uow=OrdersUnitOfWork"]
+    # 판정 표 — 확정은 «선언 생성자 · 모든 타입 알아봄 · 브로커 포트 인자 · 저장 경계 없음» 일 때만
+    simple("effects uow=none · 선언 생성자 → 확정", init=base_init, effects=none_effect, want=True,
+           detail="use-case-effects 가 `uow=none` 이고 symbols `__init__` 에 저장 경계")
+    simple("effects 없음 · 선언 생성자 저장 경계 없음 → 확정", init=base_init, want=True,
+           detail="브로커 포트(`broker: InternalBrokerPort`)를 받는데 symbols `__init__` 에 저장 경계(`…UnitOfWork`) 인자가 없다")
+    simple("external 브로커 → 확정", init="broker: ExternalBrokerPort", imports=(external,), want=True)
+    simple("effects uow=none 이어도 생성자 없음 → 후보", effects=none_effect, want=False, detail="생성자 서명이 명세")
+    simple("생성자 · effects 둘 다 없음 → 후보", want=False, detail="생성자 서명이 명세")
+    simple("브로커 import · 브로커 인자 없음 · uow=none → 대상 아님", init="order_repository: OrderRepository",
+           imports=(repo_import,), effects=none_effect)
+    simple("__init__ 에 저장 경계 → 대상 아님", init="unit_of_work: OrdersUnitOfWork, " + base_init,
+           imports=(internal, uow_import, repo_import))
+    simple("effects uow=타입 · __init__ 저장 경계 → 대상 아님", init="unit_of_work: OrdersUnitOfWork, " + base_init,
+           imports=(internal, uow_import, repo_import), effects=typed_effect)
+    simple("effects uow=타입 · 생성자 없음 → 대상 아님", effects=typed_effect)
+    simple("상충: effects uow=none · __init__ 저장 경계 → 후보", init="unit_of_work: OrdersUnitOfWork, " + base_init,
+           imports=(internal, uow_import, repo_import), effects=none_effect, want=False, detail="두 채널을 맞춘다")
+    simple("상충: effects uow=타입 · __init__ 저장 경계 없음 → 후보", init=base_init, effects=typed_effect, want=False,
+           detail="두 채널을 맞춘다")
+    simple("타입 없는 인자 → 후보", init="unit_of_work, broker: InternalBrokerPort", want=False, detail="`unit_of_work`")
+    simple("타입 없는 인자는 effects uow=none 이어도 후보", init="unit_of_work, broker: InternalBrokerPort", effects=none_effect,
+           want=False, detail="`unit_of_work`")
+    simple("가변 키워드 인자 → 후보", init="broker: InternalBrokerPort, **dependencies: object", want=False,
+           detail="`**dependencies`")
+    # 알아볼 수 없는 인자 타입 → 후보(의존 묶음 · 컨테이너 · 합집합 · 표준 밖 이름)
+    simple("의존 묶음 → 후보", init="dependencies: Dependencies, broker: InternalBrokerPort", want=False,
+           detail="`dependencies: Dependencies` 을 알아볼 수 없다")
+    simple("컨테이너 인자 → 후보", init="repositories: list[OrderRepository], broker: InternalBrokerPort", want=False,
+           detail="알아볼 수 없다")
+    simple("합집합 인자 → 후보", init="order_repository: OrderRepository | None, broker: InternalBrokerPort", want=False,
+           detail="알아볼 수 없다")
+    simple("풀리지 않는 비-UnitOfWork 이름 → 후보", init="unit_of_work: Boundary, broker: InternalBrokerPort", want=False,
+           detail="`unit_of_work: Boundary`")
+    # 알아볼 수 있는 인자 타입 → 확정 그대로(접미 · 원시 · 계약 신원)
+    simple("원시 타입 인자 → 확정", init="page_size: int, " + base_init, want=True)
+    simple("포트 · 조회 접미 → 확정", init="clock: ClockPort, board: OrderBoardQuery, " + base_init, want=True)
+    simple("계약 모듈 신원(접미 없음) → 확정", init="clock: Clock, " + base_init,
+           imports=(internal, repo_import, "from application.orders.application_layer.port.clock.clock_port import Clock"),
+           want=True)
+    simple("브로커 별칭 import → 확정", init="order_repository: OrderRepository, broker: Broker",
+           imports=(internal + " as Broker", repo_import), want=True)
+    simple("브로커 import 행 없이 표준 이름 인자 → 확정", init=base_init, imports=(repo_import,), want=True)
+    # 저장 경계 이름 풀기 → 대상 아님
+    simple("import as 별칭 저장 경계 → 대상 아님", init="unit_of_work: Boundary, " + base_init,
+           imports=(internal, uow_import + " as Boundary", repo_import))
+    simple("symbols 별칭 행 → 대상 아님", init="unit_of_work: Boundary, " + base_init,
+           extra=(f"{uc}::alias Boundary = OrdersUnitOfWork",))
+    simple("TYPE_CHECKING 별칭 행 → 대상 아님", init="unit_of_work: Boundary, " + base_init,
+           extra=(f"{uc}::alias[TYPE_CHECKING] Boundary = OrdersUnitOfWork", f"{uc}::alias[else] Boundary = object"))
+    simple("forward 문자열 저장 경계 → 대상 아님", init="unit_of_work: 'OrdersUnitOfWork', " + base_init)
+    simple("저장 경계 공장 → 대상 아님", init="unit_of_work: Callable[[], OrdersUnitOfWork], " + base_init)
+    simple("필드 저장 경계 → 대상 아님", init=base_init, cls=" {_unit_of_work: OrdersUnitOfWork}")
+    simple("저장 경계 모듈 신원(이름 규칙 밖) → 대상 아님", init="unit_of_work: OrdersTransaction, " + base_init,
+           imports=(internal, repo_import,
+                    "from application.orders.application_layer.port.unit_of_work.orders_transaction import OrdersTransaction"))
+    # dataclass · 필드는 생성자 선언이 아니다(후보)
+    simple("필드만(dataclass 아님) → 후보", cls=" {order_repository: OrderRepository, broker: InternalBrokerPort}",
+           want=False, detail="생성자 서명이 명세")
+    run("dataclass 유스케이스(`__init__` 행 없음) → 후보", spec([f"add\t{uc}"], [
+        f"{uc}::{owner} {{order_repository: OrderRepository, broker: InternalBrokerPort}}", f"{uc}::{owner} @dataclass(frozen=True)"],
+        [f"{uc}\t{internal}", f"{uc}\t{repo_import}"]), {}, [(uc, owner, False)], "생성자 서명이 명세(symbols `__init__` 행)에 없다")
+    run("dataclass 필드에 저장 경계 → 대상 아님", spec([f"add\t{uc}"], [
+        f"{uc}::{owner} {{unit_of_work: OrdersUnitOfWork, broker: InternalBrokerPort}}", f"{uc}::{owner} @dataclass"],
+        [f"{uc}\t{internal}"]), {}, [])
+    # effects 철자 — 파서가 받는 `None` 류는 `none`
+    for spelling in ("None", "NONE", "'none'"):
+        simple(f"effects uow={spelling} → uow=none 과 같다", init=base_init, effects=[f"{uc}::{owner} write uow={spelling}"],
+               want=True, detail="use-case-effects 가 `uow=none` 이고")
+    plan_, _errors = dp.parse_spec(spec([f"add\t{uc}"], [f"{uc}::{owner}"], [], [f"{uc}::{owner} read-only uow=None"]))
+    if plan_ is None or [e.uow for e in plan_.effects] != ["none"] or dp.check_declarations(plan_, Path(".")):
+        out.append("F4-93 effects `uow=None` 정규화 — read-only · `None` 이 #197 모순으로 서면 안 된다")
+    # import 표기 — 생성자에 브로커 포트가 없으면 «import 만» 후보
+    for statement in ("import framework.broker.internal.internal_broker_port",
+                      "from framework.broker.internal import internal_broker_port",
+                      "from framework.broker import internal",
+                      "from framework.broker.internal.internal_broker import internal_broker",
+                      "from framework.broker.internal.internal_broker_port import *"):
+        simple(f"import 만 `{statement}` → 후보", init="order_repository: OrderRepository", imports=(statement, repo_import),
+               want=False, detail="import 만으로는 발행 주입이 아니다")
+    for statement in ("from framework.cache.cache_port import CachePort", "import framework",
+                      "from application.orders.application_layer.port.notify.notify_port import NotifyPort"):
+        simple(f"표기 `{statement}` → 대상 아님", init="order_repository: OrderRepository", imports=(statement, repo_import))
+    # 대상 칸
+    promoted = "application/orders/application_layer/order/place_order/place_order_use_case/place_order_use_case.py"
+    simple("승격 본체 → 확정", init=base_init, path=promoted, want=True)
+    simple("src/ 아래 → 확정", init=base_init, path=f"src/{uc}", want=True)
+    run("`./` 계획 경로 · 맨 import 행 → 확정(경로 정규화)", spec([f"add\t./{uc}"], [f"./{uc}::{owner}",
+        f"./{uc}::{owner}.__init__(self, *, {base_init}) -> None"], [f"{uc}\t{internal}", f"{uc}\t{repo_import}"]), {},
+        [(uc, owner, True)])
+    run("맨 계획 경로 · `./` import 행만 → import 만 후보(행 쪽 정규화)", spec([f"add\t{uc}"], [f"{uc}::{owner}",
+        f"{uc}::{owner}.__init__(self, *, order_repository: OrderRepository) -> None"], [f"./{uc}\t{internal}"]), {},
+        [(uc, owner, False)], "import 만")
+    for other in ("application/orders/application_layer/port/notify/notify_port.py",
+                  "application/orders/application_layer/order/place_order/place_order_helper.py",
+                  "application/orders/application_layer/service/place_order/place_order_use_case.py",
+                  "application/orders/driving_layer/event_subscription/order_placed_subscription.py",
+                  "application/orders/composition_root/dependency_wiring.py",
+                  "application/orders/application_layer/port/notify/notify_use_case.py",
+                  "application/orders/application_layer/order/dto/dto_use_case.py",
+                  "application/orders/driven_layer/order/place_order/place_order_use_case.py"):
+        run(f"진입점 칸 밖 `{other}` → 대상 아님", spec([f"add\t{other}"], [f"{other}::{owner}",
+            f"{other}::{owner}.__init__(self, *, {base_init}) -> None"], [f"{other}\t{internal}"]), {}, [])
+    run("유스케이스 클래스 없음 → 후보", spec([f"add\t{uc}"], [], [f"{uc}\t{internal}"]), {}, [(uc, "-", False)])
+    # update — 기준선 실물 생성자는 후상태가 아니다(후보) · 클래스는 명세 선언이 있으면 그것만
+    real_no = ("class PlaceOrderUseCase:\n    def __init__(self, *, order_repository: OrderRepository) -> None:\n"
+               "        self._order_repository = order_repository\n")
+    real_uow = ("class PlaceOrderUseCase:\n    def __init__(self, *, unit_of_work: OrdersUnitOfWork) -> None:\n"
+                "        self._unit_of_work = unit_of_work\n")
+    real_legacy = "from framework.broker.internal.internal_broker_port import InternalBrokerPort\n\n\n" + real_no
+    run("update · 클래스 행만 · 기준선 생성자 저장 경계 없음 → 후보", spec([f"update\t{uc}"], [f"{uc}::{owner}"],
+        [f"{uc}\t{internal}"]), {uc: real_no}, [(uc, owner, False)], "기준선 실물 `__init__` 에는 저장 경계가 없다")
+    run("update · symbols 무기재 · 기준선 생성자 → 후보", spec([f"update\t{uc}"], [], [f"{uc}\t{internal}"]),
+        {uc: real_no}, [(uc, owner, False)], "기준선 실물 `__init__`")
+    run("update · 산문으로 저장 경계를 더함(U4 꼴) → 후보", spec([f"update\t{uc}"], [f"{uc}::{owner}"],
+        [f"{uc}\t{internal}", f"{uc}\t{uow_import}"]), {uc: real_no}, [(uc, owner, False)], "들이는지 가를 수 없다")
+    run("update · 기준선 생성자 저장 경계 → 대상 아님", spec([f"update\t{uc}"], [f"{uc}::{owner}"], [f"{uc}\t{internal}"]),
+        {uc: real_uow}, [])
+    run("update · symbols __init__ 이 저장 경계를 뺀다 → 확정", spec([f"update\t{uc}"], [f"{uc}::{owner}",
+        f"{uc}::{owner}.__init__(self, *, {base_init}) -> None"], [f"{uc}\t{internal}", f"{uc}\t{repo_import}"]),
+        {uc: real_uow}, [(uc, owner, True)])
+    run("update · 기준선 실물이 이미 브로커 import → 후보(기존 빚)", spec([f"update\t{uc}"], [f"{uc}::{owner}",
+        f"{uc}::{owner}.__init__(self, *, {base_init}) -> None"], [f"{uc}\t{internal}", f"{uc}\t{repo_import}"]),
+        {uc: real_legacy}, [(uc, owner, False)], "기존 빚")
+    run("update · 승격 본체 기준선 → 후보(기준선)", spec([f"update\t{uc}"], [f"{uc}::{owner}"], [f"{uc}\t{internal}"]),
+        {uc[:-3] + "/place_order_use_case.py": real_no}, [(uc, owner, False)], "기준선 실물 `__init__`")
+    legacy_name = ("class PlaceOrder:\n    def __init__(self, *, order_repository: OrderRepository) -> None:\n"
+                   "        self._order_repository = order_repository\n")
+    run("update · 기준선 클래스 이름을 고치며 저장 경계를 들임(B2 꼴) → 대상 아님", spec([f"update\t{uc}"], [f"{uc}::{owner}",
+        f"{uc}::{owner}.__init__(self, *, unit_of_work: OrdersUnitOfWork, {base_init}) -> None"],
+        [f"{uc}\t{internal}", f"{uc}\t{uow_import}", f"{uc}\t{repo_import}"], typed_effect), {uc: legacy_name}, [])
+    second_public = real_uow + ("\n\nclass PlaceOrderRejected(Exception):\n    def __init__(self, reason: str) -> None:\n"
+                                "        super().__init__(reason)\n")
+    run("update · 기준선의 명세 밖 공개 클래스(B 꼴) → 대상 아님", spec([f"update\t{uc}"], [f"{uc}::{owner}"],
+        [f"{uc}\t{internal}"]), {uc: second_public}, [])
+    # 4판 — dataclass 는 어떤 꼴이든 생성자 선언이 아니다(후보) · `__init__` 행을 적으면 확정 판정 · 기준선 UoW 생성자면 대상 아님
+    dc_fields = " {order_repository: OrderRepository, broker: InternalBrokerPort}"
+    for label, rows_, extra_import in (
+            ("import 별칭 `as dc`", [f"{uc}::{owner}{dc_fields}", f"{uc}::{owner} @dc(frozen=True)"],
+             "from dataclasses import dataclass as dc"),
+            ("`dataclasses.dataclass`", [f"{uc}::{owner}{dc_fields}", f"{uc}::{owner} @dataclasses.dataclass(frozen=True)"],
+             "import dataclasses"),
+            ("`init=True`", [f"{uc}::{owner}{dc_fields}", f"{uc}::{owner} @dataclass(init=True)"], "from dataclasses import dataclass"),
+            ("`init=False`", [f"{uc}::{owner}{dc_fields}", f"{uc}::{owner} @dataclass(init=False)"], "from dataclasses import dataclass"),
+            ("`field(init=False)` · 별칭 `f`", [f"{uc}::{owner} {{order_repository: OrderRepository, broker: InternalBrokerPort = f(init=False)}}",
+                                                f"{uc}::{owner} @dataclass"], "from dataclasses import dataclass, field as f"),
+            ("다른 출처 `mylib.dataclasses`", [f"{uc}::{owner}{dc_fields}", f"{uc}::{owner} @dataclass"],
+             "from mylib.dataclasses import dataclass"),
+            ("상속(같은 파일 사설 기반의 저장 경계 필드)", [f"{uc}::_Boundary {{unit_of_work: OrdersUnitOfWork}}",
+                                                     f"{uc}::_Boundary @dataclass(frozen=True)",
+                                                     f"{uc}::{owner}(_Boundary) {{broker: InternalBrokerPort}}",
+                                                     f"{uc}::{owner} @dataclass(frozen=True)"], "from dataclasses import dataclass")):
+        run(f"dataclass {label} → 후보", spec([f"add\t{uc}"], rows_, [f"{uc}\t{internal}", f"{uc}\t{repo_import}",
+            f"{uc}\t{extra_import}"]), {}, [(uc, owner, False)], "생성자 서명이 명세(symbols `__init__` 행)에 없다")
+    run("dataclass 라도 `__init__` 행을 적으면 확정 판정", spec([f"add\t{uc}"], [f"{uc}::{owner}{dc_fields}",
+        f"{uc}::{owner} @dataclass(init=False)", f"{uc}::{owner}.__init__(self, *, {base_init}) -> None"],
+        [f"{uc}\t{internal}", f"{uc}\t{repo_import}"]), {}, [(uc, owner, True)], "symbols `__init__` 에 저장 경계")
+    real_dc_uow = ("from dataclasses import dataclass\n\n\n@dataclass(init=False)\nclass PlaceOrderUseCase:\n"
+                   "    def __init__(self, *, unit_of_work: OrdersUnitOfWork) -> None:\n        self._unit_of_work = unit_of_work\n")
+    run("`@dataclass(init=False)` update · 기준선 생성자 저장 경계 → 대상 아님", spec([f"update\t{uc}"], [
+        f"{uc}::{owner} {{broker: InternalBrokerPort}}", f"{uc}::{owner} @dataclass(init=False)"], [f"{uc}\t{internal}"]),
+        {uc: real_dc_uow}, [])
+    # 3판 — effects 따옴표: 짝이 틀리면 형식 red(정규화하지 않는다) · 짝이 맞으면 none
+    for spelling in ("'none", "'none\"", "\"none'"):
+        _plan, bad = dp.parse_spec(spec([f"add\t{uc}"], [f"{uc}::{owner}"], [], [f"{uc}::{owner} read-only uow={spelling}"]))
+        if not any("uow 타입식 파싱 불가" in e for e in bad):
+            out.append(f"F4-93 effects `uow={spelling}`(짝 틀림)은 형식 red 여야 한다: {bad}")
+    simple('effects uow="None" → uow=none 과 같다', init=base_init, effects=[f'{uc}::{owner} write uow="None"'], want=True)
+    # 4판 — 도메인 값 객체 · 도메인 서비스 · 표준 라이브러리 · Optional 은 후보(신원만으로 저장 경계 없음을 가를 수 없다)
+    simple("도메인 값 객체 신원 → 후보", init="limit: OrderLimit, " + base_init, imports=(internal, repo_import,
+           "from application.orders.domain_layer.order.value_object.order_limit import OrderLimit"), want=False,
+           detail="`limit: OrderLimit` 을 알아볼 수 없다")
+    simple("도메인 서비스 신원 → 후보", init="pricing: OrderPricing, " + base_init, imports=(internal, repo_import,
+           "from application.orders.domain_layer.domain_service.order_pricing import OrderPricing"), want=False,
+           detail="`pricing: OrderPricing` 을 알아볼 수 없다")
+    simple("도메인 저장소 별칭(접미 없음) → 확정", init="orders: Orders, broker: InternalBrokerPort",
+           imports=(internal, repo_import + " as Orders"), want=True)
+    simple("표준 라이브러리 datetime → 후보", init="cutoff: datetime, " + base_init,
+           imports=(internal, repo_import, "from datetime import datetime"), want=False, detail="`cutoff: datetime`")
+    simple("Optional[포트] → 후보", init="order_repository: Optional[OrderRepository], broker: InternalBrokerPort", want=False,
+           detail="알아볼 수 없다")
+    # 3판 — 살아남던 하위 갈래(B6 · U9 · R7 · B4 · U7 · U10)
+    simple("external 별칭 import(`as Outbound`) → 확정(모듈 신원)", init="order_repository: OrderRepository, broker: Outbound",
+           imports=(external + " as Outbound", repo_import), want=True)
+    simple("alias[else] 쪽 저장 경계 → 대상 아님", init="unit_of_work: Boundary, " + base_init,
+           extra=(f"{uc}::alias[TYPE_CHECKING] Boundary = object", f"{uc}::alias[else] Boundary = OrdersUnitOfWork"))
+    simple("framework 포트 모듈 신원(접미 없음) → 확정", init="clock: Clock, " + base_init,
+           imports=(internal, repo_import, "from framework.clock.clock_port import Clock"), want=True)
+    simple("별칭 사슬 두 겹 저장 경계 → 대상 아님", init="unit_of_work: U, " + base_init,
+           extra=(f"{uc}::alias U = V", f"{uc}::alias V = OrdersUnitOfWork"))
+    run("같은 파일 유스케이스 + 공개 예외 클래스 → 유스케이스만 확정", spec([f"add\t{uc}"], [
+        f"{uc}::{owner}", f"{uc}::{owner}.__init__(self, *, {base_init}) -> None",
+        f"{uc}::PlaceOrderRejected(Exception)", f"{uc}::PlaceOrderRejected.__init__(self, reason: str) -> None"],
+        [f"{uc}\t{internal}", f"{uc}\t{repo_import}"]), {}, [(uc, owner, True)])
+    real_field_uow = ("class PlaceOrderUseCase:\n    _unit_of_work: OrdersUnitOfWork\n\n"
+                      "    def __init__(self, *, order_repository: OrderRepository) -> None:\n"
+                      "        self._order_repository = order_repository\n")
+    run("update · 기준선 클래스 필드 저장 경계 → 대상 아님", spec([f"update\t{uc}"], [f"{uc}::{owner}"], [f"{uc}\t{internal}"]),
+        {uc: real_field_uow}, [])
+    # 5판 — 4판 동작을 못박는 칸(검토 4차 산 변이 25 · 입력 = 갈리는 입력 · 기대 = 4판 판정) + `__init__` 행 둘 이상
+    def raw(label: str, init: "str | None", imports: "tuple[str, ...]", want: "list[tuple[str, str, bool]]",
+            effects: "list[str] | None" = None, extra: "tuple[str, ...]" = (), tag: str = "add",
+            real: "dict[str, str] | None" = None, detail: str = "") -> None:
+        symbols = [*extra, f"{uc}::{owner}"] + ([f"{uc}::{owner}.__init__({init}) -> None"] if init is not None else [])
+        run(label, spec([f"{tag}\t{uc}"], symbols, [f"{uc}\t{i}" for i in imports], effects), real or {}, want, detail)
+    b_arg = "broker: InternalBrokerPort"
+    # ⓐ 확정을 넓히는 변이를 잡는 칸
+    raw("위치 인자 저장 경계 → 대상 아님(K3)", f"self, unit_of_work: OrdersUnitOfWork, *, {b_arg}", (internal, uow_import), [])
+    raw("위치 전용 인자 저장 경계 → 대상 아님(K4)", f"self, unit_of_work: OrdersUnitOfWork, /, *, {b_arg}", (internal, uow_import), [])
+    raw("`*args: object` → 후보(K5)", f"self, *args: object, {b_arg}", (internal, repo_import), [(uc, owner, False)], detail="`*args`")
+    raw("같은 파일 사설 발행 클래스는 대상 아님(D3)", "self, *, unit_of_work: OrdersUnitOfWork, publisher: _Publisher",
+        (internal, uow_import), [], extra=(f"{uc}::_Publisher", f"{uc}::_Publisher.__init__(self, *, {b_arg}) -> None"))
+    for label_, line_ in (("`order_repository_helpers`(꼬리 `$`) → 후보(R8c)",
+                           "from application.orders.domain_layer.order.order_repository_helpers import Helper"),
+                          ("도메인 저장소 깊이 셋 → 후보(R8d)",
+                           "from application.orders.domain_layer.order.sub.order_repository import Orders"),
+                          ("`framework.db.session`(꼬리 `_port` 아님) → 후보(R12)", "from framework.db.session import Session")):
+        name_ = line_.rsplit(" ", 1)[1]
+        raw(label_, f"self, *, dep: {name_}, {b_arg}", (internal, line_), [(uc, owner, False)], detail=f"`dep: {name_}`")
+    # ⓑ 그 밖
+    raw("`src.` 접두 계약 모듈 신원 → 확정(R11)", f"self, *, clock: Clock, {b_arg}",
+        (internal, "from src.application.orders.application_layer.port.clock.clock_port import Clock"), [(uc, owner, True)])
+    raw("문자열 주석 브로커 → 확정(R14)", "self, *, order_repository: OrderRepository, broker: 'InternalBrokerPort'",
+        (internal, repo_import), [(uc, owner, True)])
+    raw("`ExternalBrokerPort` 이름만(import 행 없음) → 확정(B7)", "self, *, broker: ExternalBrokerPort", (repo_import,),
+        [(uc, owner, True)])
+    for label_, line_, want_ in (("`framework.brokerage` 는 브로커가 아니다(B8)", "from framework.brokerage.fees import FeeTable", []),
+                                 ("`import framework.broker` → import 만 후보(B9)", "import framework.broker", [(uc, owner, False)]),
+                                 ("`from framework import broker` → import 만 후보(B11)", "from framework import broker",
+                                  [(uc, owner, False)]),
+                                 ("상대 import 는 브로커로 세지 않는다(B13)",
+                                  "from ......framework.broker.internal.internal_broker_port import InternalBrokerPort", [])):
+        raw(label_, "self, *, order_repository: OrderRepository", (line_, repo_import), want_)
+    raw("update · 기준선 생성자만 · effects 타입 → 대상 아님(C3)", None, (internal, uow_import), [], tag="update",
+        effects=[f"{uc}::{owner} write uow=OrdersUnitOfWork"], real={uc: real_no})
+    raw("타입 없는 인자 · effects 타입 → 대상 아님(U5b)", f"self, *, unit_of_work, {b_arg}", (internal, repo_import), [],
+        effects=typed_effect)
+    raw("알아볼 수 없는 인자 · effects 타입 → 대상 아님(U5c)", f"self, *, dependencies: Dependencies, {b_arg}", (internal, repo_import),
+        [], effects=typed_effect)
+    raw("공장 안 문자열 저장 경계 → 대상 아님(U13)", f"self, *, uow_factory: Callable[[], 'OrdersUnitOfWork'], {b_arg}",
+        (internal, repo_import), [])
+    run("update · 기준선 사설 발행 클래스는 대상 아님(D4)", spec([f"update\t{uc}"], [], [f"{uc}\t{internal}"]),
+        {uc: ("class _Publisher:\n    def __init__(self, *, broker: InternalBrokerPort) -> None:\n        self._broker = broker\n\n\n"
+              "class PlaceOrderUseCase:\n    def __init__(self, *, unit_of_work: OrdersUnitOfWork, publisher: _Publisher) -> None:\n"
+              "        self._unit_of_work = unit_of_work\n")}, [])
+    run("`remove` 태그 유스케이스는 대상 아님(O9)", spec([f"remove\t{uc}"], [], [f"{uc}\t{internal}"]), {}, [])
+    body_path = uc[:-3] + "/place_order_use_case.py"
+    run("같은 클래스 두 경로 · effects 는 한쪽만 → 그쪽만 후보(O12)", spec([f"add\t{uc}", f"add\t{body_path}"], [
+        f"{uc}::{owner}", f"{uc}::{owner}.__init__(self, *, unit_of_work: OrdersUnitOfWork, {b_arg}) -> None",
+        f"{body_path}::{owner}", f"{body_path}::{owner}.__init__(self, *, unit_of_work: OrdersUnitOfWork, {b_arg}) -> None"],
+        [f"{uc}\t{internal}", f"{uc}\t{uow_import}", f"{body_path}\t{internal}", f"{body_path}\t{uow_import}"],
+        [f"{uc}::{owner} write uow=none"]), {}, [(uc, owner, False)], "두 채널을 맞춘다")
+    plan_l, _e = dp.parse_spec(spec([f"update\t{uc}"], [], [f"{uc}\t{internal}"]))
+    with tempfile.TemporaryDirectory(prefix="pregate-publish-link-") as td:
+        copy_ = Path(td)
+        (copy_ / "elsewhere.py").write_text(real_no, encoding="utf-8")
+        (copy_ / uc).parent.mkdir(parents=True)
+        (copy_ / uc).symlink_to(copy_ / "elsewhere.py")
+        got_l = [(f.owner, f.confirmed) for f in dp.check_publish_path_forecast(plan_l, copy_)]
+    if got_l != [("-", False)]:
+        out.append(f"F4-93[update · 기준선 실물이 심링크면 읽지 않는다(RM1)] = {got_l} ≠ 기대 [('-', False)]")
+    # 검토 4차가 동치로 본 넷 가운데 둘(D5 · F5)은 판정이 갈린다 — 칸으로 못박는다(B12 · K10 은 동치)
+    raw("import 만 · 공개 모듈 함수 행은 클래스가 아니다(D5)", "self, *, order_repository: OrderRepository", (internal, repo_import),
+        [(uc, owner, False)], extra=(f"{uc}::build_payload(order_id: int) -> dict",))
+    run("update · 브로커 import 행 · `__init__` 행 없음 · 기준선 생성자만 브로커 → 대상 아님(빠른 길 · F5)",
+        spec([f"update\t{uc}"], [f"{uc}::{owner}"], []),
+        {uc: "class PlaceOrderUseCase:\n    def __init__(self, *, broker: InternalBrokerPort) -> None:\n        self._broker = broker\n"}, [])
+    # `__init__` 행이 둘 이상이면 어느 선언이 생성자인지 가를 수 없다 → 후보(첫 행으로 확정하지 않는다)
+    run("`__init__` 행 둘(둘째에 저장 경계) → 후보", spec([f"add\t{uc}"], [f"{uc}::{owner}",
+        f"{uc}::{owner}.__init__(self, *, {b_arg}) -> None",
+        f"{uc}::{owner}.__init__(self, *, unit_of_work: OrdersUnitOfWork, {b_arg}) -> None"],
+        [f"{uc}\t{internal}", f"{uc}\t{uow_import}"]), {}, [(uc, owner, False)], "`__init__` 행이 둘 이상이다")
+    # 행 둘 이상 갈래의 자리 — update 라도 기준선 생성자로 넘어가지 않고(E6), effects · 상충 갈래가 먼저다(E7)
+    two_rows = [f"{uc}::{owner}", f"{uc}::{owner}.__init__(self, *, {b_arg}) -> None",
+                f"{uc}::{owner}.__init__(self, *, {b_arg}) -> None"]
+    run("update · `__init__` 행 둘 · 기준선 생성자 UoW → 후보(둘 이상)", spec([f"update\t{uc}"], two_rows, [f"{uc}\t{internal}"]),
+        {uc: real_uow}, [(uc, owner, False)], "`__init__` 행이 둘 이상이다")
+    run("`__init__` 행 둘 · effects `uow=OrdersUnitOfWork` → 대상 아님", spec([f"add\t{uc}"], two_rows,
+        [f"{uc}\t{internal}", f"{uc}\t{uow_import}"], typed_effect), {}, [])
+    # 5b — 타입식을 읽다 나는 두 예외(서로게이트 문자열 `UnicodeError` · 아주 깊은 식 `RecursionError`)는 traceback 이 아니라 후보다
+    def unreadable(label: str, symbols: "list[str]", imports: "list[str]", want: "list[tuple[str, str, bool]]",
+                   detail: str = "", tag: str = "add", real: "dict[str, str] | None" = None) -> None:
+        try:
+            run(label, spec([f"{tag}\t{uc}"], symbols, imports), real or {}, want, detail)
+        except Exception as exc:  # 예외가 새면 칸 실패로 적는다(러너는 멈추지 않는다)
+            out.append(f"F4-93[{label}] = 예외 {type(exc).__name__} ≠ 기대 {want}")
+    deep_union: str = " | ".join(["X"] * 256)
+    unreadable("서로게이트 문자열 인자 타입 → 후보(surrogate-forward)", [f"{uc}::{owner}",
+               f"{uc}::{owner}.__init__(self, *, {b_arg}, data: '\\ud800') -> None"], [f"{uc}\t{internal}"],
+               [(uc, owner, False)], "`data`(타입식을 읽지 못했다)")
+    unreadable("서로게이트 문자열 필드 타입 → 후보(surrogate-field)", [f"{uc}::{owner} {{data: '\\ud800'}}",
+               f"{uc}::{owner}.__init__(self, *, {b_arg}) -> None"], [f"{uc}\t{internal}"],
+               [(uc, owner, False)], "필드의 타입식을 읽지 못했다")
+    unreadable("합집합 256 항 인자 타입 → 후보(union-256)", [f"{uc}::{owner}",
+               f"{uc}::{owner}.__init__(self, *, {b_arg}, data: {deep_union}) -> None"], [f"{uc}\t{internal}"],
+               [(uc, owner, False)], "`data`(타입식을 읽지 못했다)")
+    unreadable("합집합 256 항 필드 타입 → 후보", [f"{uc}::{owner} {{data: {deep_union}}}",
+               f"{uc}::{owner}.__init__(self, *, {b_arg}) -> None"], [f"{uc}\t{internal}"],
+               [(uc, owner, False)], "필드의 타입식을 읽지 못했다")
+    unreadable("점 경로 300 마디 인자 타입 → 후보", [f"{uc}::{owner}",
+               f"{uc}::{owner}.__init__(self, *, {b_arg}, data: {'.'.join(['a'] * 300)}.T) -> None"], [f"{uc}\t{internal}"],
+               [(uc, owner, False)], "`data`(타입식을 읽지 못했다)")
+    unreadable("update · 기준선 실물 필드 서로게이트 · `__init__` 행 없음 → 후보(기준선)", [], [f"{uc}\t{internal}"],
+               [(uc, owner, False)], "기준선 실물 `__init__`", tag="update",
+               real={uc: "class PlaceOrderUseCase:\n    data: '\\ud800'\n\n" + real_no.split("\n", 1)[1]})
+    unreadable("effects 없는 유스케이스 `__init__` · 합집합 1500 항 · 브로커 없음 → 대상 아님(W5)", [f"{uc}::{owner}",
+               f"{uc}::{owner}.__init__(self, *, x: {' | '.join(['int'] * 1500)}) -> None"], [], [])
+    # 드리프트 가드 — 종류 폴더 목록은 검사기 #541 의 진입점 선택과 같아야 한다
+    checker = _load_module(REPO_ROOT / "dddjango" / "scripts" / "check-usecase-dto-placement.py", "_usecase_checker_kinds")
+    if frozenset(checker.KIND_FOLDER_NAMES) != dp._USE_CASE_KIND_FOLDERS:
+        out.append(f"F4-93 종류 폴더 드리프트: 검사기 {sorted(checker.KIND_FOLDER_NAMES)} ≠ 실행기 {sorted(dp._USE_CASE_KIND_FOLDERS)}")
+    # 처분 — 선언 확정 #541 은 ignored · filtered 둘 다 처분으로 인정(#574 만 filtered 불인정)
+    text = spec([f"add\t{uc}"], [f"{uc}::{owner}"], [f"{uc}\t{internal}"], [f"{uc}::{owner} write uow=none"])
+    stable = dp._stable_id(f"[#541] {uc}")
+    head_ = (f"\n## pre-gate 예보 — 2026-10-14T00:00:00Z · s.md\n\n- 기준선 SHA: `{'a' * 40}` (--base HEAD) · "
+             f"{dp._executor_stamp(dp.block_hash(text))}\n- 판정: 예보 red — P/S/I급 결정 계약 위반 예보 0건 · 선언 확정 1건 · "
+             f"계약 실존 결손 0건(권고·비차단)\n\n### 예보 항목 (0건)\n\n- (없음)\n\n### 선언 확정 (1건)\n\n"
+             f"- `{stable}` [#541] {uc} — {owner}: x\n\n### 선언 후보 (0건)\n\n- (없음)\n")
+    for label, tail, code in (("미처분", "", 3), ("ignored", f"- `{stable}` [#541] {uc} → **ignored**(빚)\n", 0),
+                              ("filtered", f"- `{stable}` [#541] {uc} → **filtered**(ⓑ 실코드 exit 0)\n", 0)):
+        got = dp.check_report(text, head_ + tail)[0]
+        if got != code:
+            out.append(f"F4-93 check-report #541 {label} = exit {got} ≠ 기대 {code}")
+    return out
+
+
+def _run_publish_bundle(scratch: Path, failures: "list[str]") -> None:
+    """F4-93 e2e — 합성 저장소 `mini_repo` + `publish_overlay/`(브로커 포트 둘 · 저장 경계 포트 · 기존 유스케이스 셋) · 리포트 각 1.
+    red: 선언 확정 #541 2(add effects `uow=none` · update symbols `__init__` · external) + 후보 2(생성자 없음 · update 기준선
+    생성자뿐) · 귀속 0 → exit 2 · `--check-report` 미처분 3 → ignored 2 → 0. green: 저장 경계를 받는 발행 유스케이스 + 브로커 없는
+    `uow=none` 유스케이스 + 기준선 저장 경계 update → exit 0. 읽지 못한 타입식(5b): 서로게이트 인자 · 서로게이트 필드 · 합집합 256 항
+    update 셋 → traceback 없이 후보 3 · exit 4(실체화 0 skip — 옛 판과 같은 종료 코드)."""
+    repo: Path = scratch / "repo-publish"
+    shutil.copytree(FIXTURES / "mini_repo", repo)
+    shutil.copytree(FIXTURES / "publish_overlay", repo, dirs_exist_ok=True)
+    _git(repo, "init", "-q")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "fixture-baseline+publish-overlay")
+    area: str = "application/orders/application_layer/order"
+    place: str = f"{area}/place_order/place_order_use_case.py"
+    close: str = f"{area}/close_order/close_order_use_case.py"
+    notify: str = f"{area}/notify_order/notify_order_use_case.py"
+    archive: str = f"{area}/archive_order/archive_order_use_case.py"
+    internal: str = "framework.broker.internal.internal_broker_port.InternalBrokerPort"
+    tail: str = ("발행은 저장 구간 안 `uow.after_commit(<이름 있는 함수>)` 등록 한 길뿐이라(#539~#541 · `architecture-ddd` §3.7) 저장 경계 "
+                 "없이 브로커 포트를 받는 유스케이스는 발행하려면 `.publish(` 를 직접 부르게 된다(Phase 2 #541) · 고침: 저장 경계를 생성자에 "
+                 "들이고 effects 를 `uow=<타입>` 으로 — 발행하지 않으면 브로커 포트 인자와 import 를 뺀다")
+    want_confirmed: "list[str]" = [
+        f"- `{_sid(place)}` [#541] {place} — PlaceOrderUseCase: 브로커 포트(`broker: InternalBrokerPort`)를 받는데 use-case-effects 가 "
+        f"`uow=none` 이고 symbols `__init__` 에 저장 경계(`…UnitOfWork`) 인자가 없다 — {tail}",
+        f"- `{_sid(close)}` [#541] {close} — CloseOrderUseCase: 브로커 포트(`broker: ExternalBrokerPort`)를 받는데 symbols `__init__` 에 "
+        f"저장 경계(`…UnitOfWork`) 인자가 없다 — {tail}"]
+    want_candidate: "list[str]" = [
+        f"- `{_sid(notify)}` [#541] {notify} — NotifyOrderUseCase: 브로커(`{internal}`)를 import 하는데 생성자 서명이 명세(symbols "
+        "`__init__` 행)에 없다 — 저장 경계 유무를 가를 수 없다(`__init__` 행을 적는다)",
+        f"- `{_sid(archive)}` [#541] {archive} — ArchiveOrderUseCase: 브로커(`{internal}`)를 import 하는데 명세가 생성자를 적지 않았고 "
+        "기준선 실물 `__init__` 에는 저장 경계가 없다 — 이 update 가 저장 경계를 들이는지 가를 수 없다(들이면 symbols `__init__` 행에 "
+        "적는다)"]
+    report_r: Path = scratch / "pregate-report-publish-red.md"
+    red: "subprocess.CompletedProcess[str]" = _run_pregate(FIXTURES / "publish-red-spec.md", repo, report_r)
+    text_r: str = report_r.read_text(encoding="utf-8") if report_r.is_file() else ""
+    confirmed_r: str = text_r[text_r.find("### 선언 확정"):text_r.find("### 선언 후보")]
+    candidate_r: str = text_r[text_r.find("### 선언 후보"):text_r.find("### 계약 실존")]
+    verdict: str = "- 판정: 예보 red — P/S/I급 결정 계약 위반 예보 0건 · 선언 확정 2건 · 계약 실존 결손 0건(권고·비차단)"
+    if (red.returncode != 2 or _FORECAST_RULE_RE.search(red.stdout) or "### 선언 확정 (2건)" not in red.stdout
+            or "### 선언 후보 (2건)" not in red.stdout
+            or any(line not in red.stdout or line not in confirmed_r for line in want_confirmed)
+            or any(line not in red.stdout or line not in candidate_r for line in want_candidate)
+            or "rename_order" in confirmed_r + candidate_r
+            or verdict not in text_r or _header_count(report_r) != 1):
+        failures.append(f"publish-red-spec 기대 exit 2 · 귀속 0 · 선언 확정 #541 2 · 후보 2(문면 그대로) ≠ 실측 exit {red.returncode}")
+        _dump("publish-red", red)
+    else:
+        print("publish-red-spec: exit 2 · 귀속 0 · 선언 확정 #541 2(effects uow=none · update symbols __init__ · external) · "
+              "후보 2(생성자 없음 · 기준선 생성자뿐) — 기대 일치")
+    steps: "list[tuple[str, str, int]]" = [
+        ("미처분", "", 3),
+        ("ignored 2", "".join(f"\n- `{_sid(p)}` [#541] {p} → **ignored**(빚: legacy-debt.md:1 · STOP x)" for p in (place, close)), 0)]
+    check_ok: bool = True
+    for index, (label, extra, code) in enumerate(steps):
+        report_c: Path = scratch / f"pregate-report-publish-check-{index}.md"
+        report_c.write_text(text_r + extra + "\n", encoding="utf-8")
+        check: "subprocess.CompletedProcess[str]" = _run_check(FIXTURES / "publish-red-spec.md", report_c)
+        if check.returncode != code or "선언 확정 2건 · 선언 후보 2건" not in check.stdout:
+            check_ok = False
+            failures.append(f"publish-red --check-report {label} 기대 exit {code} ≠ 실측 {check.returncode}")
+            _dump(f"publish-check-{label}", check)
+    if check_ok:
+        print("publish-red --check-report: 미처분 exit 3 → ignored 2 exit 0(후보는 처분 대상 아님) — 기대 일치")
+
+    report_g: Path = scratch / "pregate-report-publish-green.md"
+    green: "subprocess.CompletedProcess[str]" = _run_pregate(FIXTURES / "publish-green-spec.md", repo, report_g)
+    text_g: str = report_g.read_text(encoding="utf-8") if report_g.is_file() else ""
+    if (green.returncode != 0 or "[#541]" in green.stdout or "[#541]" in text_g or _FORECAST_RULE_RE.search(green.stdout)
+            or "### 선언 확정 (0건)" not in text_g or "### 선언 후보 (0건)" not in text_g):
+        failures.append(f"publish-green-spec 기대 exit 0 · #541 0 ≠ 실측 exit {green.returncode}")
+        _dump("publish-green", green)
+    else:
+        print("publish-green-spec: exit 0 · #541 0(저장 경계를 받는 발행 · 브로커 없는 uow=none · 기준선 저장 경계 update) — 기대 일치")
+
+    # 읽지 못한 타입식(5b) — 명세는 여기서 만든다(픽스처 파일 없음)
+    broker_arg: str = "broker: InternalBrokerPort"
+    internal_import: str = "from framework.broker.internal.internal_broker_port import InternalBrokerPort"
+    rename: str = f"{area}/rename_order/rename_order_use_case.py"
+    spec_u: Path = scratch / "publish-unreadable-spec.md"
+    spec_u.write_text(
+        "# 미니 설계 — 읽지 못한 타입식(F4-93 5b)\n\n<!-- machine: file-plan -->\n```paths\n"
+        + "".join(f"update\t{p}\n" for p in (archive, close, rename)) + "```\n\n<!-- machine: symbols -->\n```symbols\n"
+        f"{archive}::ArchiveOrderUseCase\n{archive}::ArchiveOrderUseCase.__init__(self, *, {broker_arg}, data: '\\ud800') -> None\n"
+        f"{close}::CloseOrderUseCase {{data: '\\ud800'}}\n{close}::CloseOrderUseCase.__init__(self, *, {broker_arg}) -> None\n"
+        f"{rename}::RenameOrderUseCase\n{rename}::RenameOrderUseCase.__init__(self, *, {broker_arg}, data: {' | '.join(['X'] * 256)}) -> None\n"
+        "```\n\n<!-- machine: boundary-imports -->\n```imports\n"
+        + "".join(f"{p}\t{internal_import}\n" for p in (archive, close, rename)) + "```\n", encoding="utf-8")
+    report_u: Path = scratch / "pregate-report-publish-unreadable.md"
+    unread: "subprocess.CompletedProcess[str]" = _run_pregate(spec_u, repo, report_u)
+    unread_lines: "list[str]" = [line for line in unread.stdout.splitlines() if "[#541]" in line]
+    if (unread.returncode != 4 or "Traceback" in unread.stderr or "### 선언 확정 (0건)" not in unread.stdout
+            or "### 선언 후보 (3건)" not in unread.stdout or len(unread_lines) != 3
+            or sum("`data`(타입식을 읽지 못했다)" in line for line in unread_lines) != 2
+            or sum("필드의 타입식을 읽지 못했다" in line for line in unread_lines) != 1):
+        failures.append(f"publish-unreadable 기대 exit 4 · traceback 없음 · 후보 3(읽지 못한 타입식) ≠ 실측 exit {unread.returncode}")
+        _dump("publish-unreadable", unread)
+    else:
+        print("publish-unreadable: exit 4(실체화 0 skip) · traceback 없음 · 후보 3(서로게이트 인자 · 서로게이트 필드 · 합집합 256) — "
+              "기대 일치")
+
+
+def _sid(path: str) -> str:
+    """선언 #541 행의 안정 ID — 실행기 `_stable_id` 와 같은 결합(sha256(규칙#+경로)[:12])을 러너가 독립으로 계산한다."""
+    return hashlib.sha256(f"#541+{path}".encode("utf-8")).hexdigest()[:12]
+
+
 def main(argv: "list[str]") -> int:
     ap: argparse.ArgumentParser = argparse.ArgumentParser(description="pre-gate 픽스처 러너")
     ap.add_argument("--keep", action="store_true", help="합성 저장소 보존(디버그)")
@@ -1508,6 +1999,7 @@ def main(argv: "list[str]") -> int:
     failures.extend(_existence_unit_checks())
     failures.extend(_enforce_unit_checks())
     failures.extend(_in_argument_unit_checks())
+    failures.extend(_publish_path_unit_checks())       # F4-93 · #541 선언 예보
     try:
         _run_execution_modes_bundle(scratch, failures)
         _run_base_bundle(scratch, failures)
@@ -1519,6 +2011,7 @@ def main(argv: "list[str]") -> int:
         _run_inflow_bundle(scratch, failures)
         _run_stub_bundle(scratch, failures)
         _run_stub_material_bundle(scratch, failures)      # D17 소유 · #652
+        _run_publish_bundle(scratch, failures)            # F4-93 · #541 선언 예보
 
         if failures:
             print("\nFAIL — pre-gate 픽스처 기대 불일치:")
@@ -1529,7 +2022,8 @@ def main(argv: "list[str]") -> int:
               "(green×3 예보 0 · 형식 red exit 3 · red 귀속 3건·red2 귀속 2건 정합 · 재발화 판형 E1~E4+E1′/E2′ · "
               "계약 실존 imports 3종 exit 0/5/5 · 차단 모드 enforce 7(블록 부재·공허·update/remove 부재·승격 예외) · "
               "--check-report 14단계 + 유닛 매트릭스 · 스텁 정형 stub 10 + 재료 글 10(재수출 __init__ 0 · 진탐 #640 유지 · 재료 정형 본문) · "
-              "stub-material 7(D17 #652 — 재료 0 · 반환 주석 진탐 1))")
+              "stub-material 7(D17 #652 — 재료 0 · 반환 주석 진탐 1) · "
+              "publish 2(F4-93 #541 선언 확정 2·후보 2 / 0) + 유닛 매트릭스)")
         return 0
     finally:
         if ns.keep:
