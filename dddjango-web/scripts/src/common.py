@@ -20,6 +20,12 @@ from html.parser import HTMLParser
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
+# 사용자 · 저장소 git 설정이 기계가 읽는 git 출력의 꼴을 바꾸지 못하게 박는다 — 색(color.*) · grep 열 번호 ·
+# 서명 확인 줄(log.showSignature) · 가까운 diff 덩이 합치기(diff.interHunkContext). 파이프로 읽는 출력을 고정하는 값이다
+# (파이프 출력에서는 git 기본과 같다 — 색 기본 `auto` 는 파이프에 색을 내지 않는다). 명령 줄 `-c` 라 어느 설정도 이긴다.
+GIT_PINS: Tuple[str, ...] = ('-c', 'color.ui=never', '-c', 'color.diff=never', '-c', 'color.grep=never',
+                             '-c', 'grep.column=false', '-c', 'log.showSignature=false', '-c', 'diff.interHunkContext=0')
+
 # ---------------------------------------------------------------- 발견 모델
 
 
@@ -874,7 +880,10 @@ class BackstopContext:
             hunk_re = re.compile(r'^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@', re.M)
             for f in sorted(touched - added):
                 # pathspec은 -C(=대상 루트) 기준 — repo 접두를 붙이지 않는다
-                d: str = _git_raw(root, ['diff', '-U0', diff_base, '--', 'web/' + f]) or ''
+                # 줄 범위는 git 기본 diff 그대로 — 사용자 · 저장소의 외부 diff · textconv · 알고리즘(설정 · 속성 드라이버) ·
+                # `-diff`/binary 속성을 따르지 않는다
+                d: str = _git_raw(root, ['diff', '--no-ext-diff', '--no-textconv', '--text', '--diff-algorithm=myers',
+                                         '-U0', diff_base, '--', 'web/' + f]) or ''
                 spans: List[Tuple[int, int]] = []
                 for m in hunk_re.finditer(d):
                     start: int = int(m.group(1))
@@ -951,7 +960,7 @@ def _git(root: Path, args: List[str]) -> Optional[str]:
 
 def _git_raw(root: Path, args: List[str]) -> Optional[str]:
     # 사용자 git 설정 diff.relative 가 켜져 있어도 diff · log · show 경로는 저장소 기준이다(명시 `--relative` 는 그대로 이긴다)
-    r = subprocess.run(['git', '-C', str(root), '-c', 'diff.relative=false'] + args,
+    r = subprocess.run(['git', *GIT_PINS, '-C', str(root), '-c', 'diff.relative=false'] + args,
                        capture_output=True, text=True, errors='replace')
     return r.stdout if r.returncode == 0 else None
 

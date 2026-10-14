@@ -764,6 +764,8 @@ OUT=$(python3 "$(dirname "$0")/fixtures_patch240_shell.py" 2>&1) || SUB=1; echo 
 OUT=$(python3 "$(dirname "$0")/fixtures_patch250_component_css.py" 2>&1) || SUB=1; echo "$OUT" | tail -1
 # 프로젝트 루트가 저장소 하위 폴더 — 맨 위 프로젝트와 같은 판정(게이트 · 치환 확인 · 빚 잔존 · refactor_audit · SDK 출처)
 OUT=$(python3 "$(dirname "$0")/fixtures_patch251_subfolder.py" 2>&1) || SUB=1; echo "$OUT" | tail -1
+# 사용자 git 설정 · 파일 이름 · 밖으로 풀리는 링크에 판정이 흔들리지 않는다(git 출력 고정 · -z 읽기 · 링크 너머 읽지 않음)
+OUT=$(python3 "$(dirname "$0")/fixtures_patch252_gitout.py" 2>&1) || SUB=1; echo "$OUT" | tail -1
 
 for SUBFIX in fixtures_debt.sh fixtures_subst.sh fixtures_sdk.sh fixtures_refactor_audit.sh; do
   OUT=$(bash "$(dirname "$0")/$SUBFIX" 2>&1) || SUB=1; echo "$SUBFIX: $(echo "$OUT" | tail -1)"

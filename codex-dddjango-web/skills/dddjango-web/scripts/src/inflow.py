@@ -19,7 +19,7 @@ import tempfile
 from typing import Dict, List, Optional, Set, Tuple
 
 from .check_tests import UnsupportedTestFlow, conventional_test_path
-from .common import BackstopContext, Finding
+from .common import GIT_PINS, BackstopContext, Finding
 
 
 @dataclass
@@ -36,7 +36,7 @@ class InflowResult:
 
 
 def _git(root: Path, *args: str) -> bytes:
-    proc = subprocess.run(['git', '-C', str(root), *args], capture_output=True,
+    proc = subprocess.run(['git', *GIT_PINS, '-C', str(root), *args], capture_output=True,
                           env=dict(os.environ, GIT_OPTIONAL_LOCKS='0'))
     if proc.returncode:
         raise RuntimeError('git %s 실패 — %s' % (' '.join(args[:2]), proc.stderr.decode('utf-8', 'replace').strip()))
@@ -102,7 +102,7 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
     try:
         repo = Path(_git(ctx.root, 'rev-parse', '--show-toplevel').decode().removesuffix('\n'))  # 이름 끝 공백을 깎지 않는다
         prefix = _git(ctx.root, 'rev-parse', '--show-prefix').decode().rstrip('\n')  # 넘겨받은 루트 글자로 셈하지 않는다
-        merging = subprocess.run(['git', '-C', str(repo), 'rev-parse', '-q', '--verify', 'MERGE_HEAD'],
+        merging = subprocess.run(['git', *GIT_PINS, '-C', str(repo), 'rev-parse', '-q', '--verify', 'MERGE_HEAD'],
                                  capture_output=True, env=dict(os.environ, GIT_OPTIONAL_LOCKS='0'))
         if merging.returncode == 0:
             res.notices.append('[info] 병합 중(MERGE_HEAD) — 승인 유입을 가르지 않는다(병합을 커밋하고 승인 목록에 적은 뒤 다시 돈다)')
@@ -377,7 +377,7 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
                         _git(repo, 'ls-tree', '-z', '--name-only', sha).split(b'\0')
                         if p and p not in (b'.dddjango-web', b'.dddjango')]
                 if tops:
-                    with subprocess.Popen(['git', '-C', str(repo), 'archive', sha, '--', *tops],
+                    with subprocess.Popen(['git', *GIT_PINS, '-C', str(repo), 'archive', sha, '--', *tops],
                                           stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                           env=dict(os.environ, GIT_OPTIONAL_LOCKS='0')) as archive:
                         try:

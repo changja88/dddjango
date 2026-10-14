@@ -54,9 +54,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from src.debt import (DebtError, DOC_PATHSPEC, SPEC_SLICE0_HEAD, REF_GREP_OPTIONS, REF_PATHSPEC,  # noqa: E402
                       debt_universe, deferral_active, deferral_m_sets, deferral_tail, doc_reference_lines,
-                      module_of, moved_debt_files, parse_spec_methods, parse_spec_pairs, reference_lines,
+                      module_of, moved_debt_files, name_status_z, parse_spec_methods, parse_spec_pairs, reference_lines,
                       residual_m_sets, tail_of, _local_minute)
 
+from src.common import GIT_PINS  # noqa: E402
 from src.products import REGISTRY as PRODUCT_REGISTRY, declaration_error  # noqa: E402
 
 _QUOTE_HEAD: "re.Pattern[str]" = re.compile(r"^[ \t]*>[ \t]?", re.M)
@@ -261,12 +262,15 @@ def _read(path: Path) -> str:
         raise ToolError(f"파일 없음 — {path}") from None
 
 
-def _git(project: Path, *args: str) -> str:
-    result = subprocess.run(["git", "-C", str(project), "-c", "core.quotePath=false", *args],
-                            capture_output=True, text=True)
+def _git(project: Path, *args: str, nul: bool = False) -> str:
+    """nul 이면 bytes 로 받아 줄바꿈을 바꾸지 않고 UTF-8 로 읽는다 — 글 모드는 `-z` 응답의 이름 속 CR 을 LF 로 바꾼다."""
+    result = subprocess.run(["git", *GIT_PINS, "-C", str(project), "-c", "core.quotePath=false", *args],
+                            capture_output=True, text=not nul)
+    out: str = result.stdout.decode("utf-8") if nul else result.stdout
+    err: str = result.stderr.decode("utf-8") if nul else result.stderr
     if result.returncode != 0:
-        raise ToolError(f"git {' '.join(args[:2])} 실패 — {result.stderr.strip()[:200]}")
-    return result.stdout
+        raise ToolError(f"git {' '.join(args[:2])} 실패 — {err.strip()[:200]}")
+    return out
 
 
 # ── 문서 색인(절·문장·문단) ─────────────────────────────────────────────────
@@ -640,6 +644,8 @@ def _unit_arg(raw: str, files: "list[str]", areas: "frozenset[str]", project: Pa
 
 
 def _lines_of(project: Path, rel: str) -> int:
+    if not _inside(project, rel):                    # 프로젝트 밖으로 풀리는 링크는 읽지 않는다(없는 파일처럼 0행)
+        return 0
     try:
         return len((project / rel).read_text(encoding="utf-8").splitlines())
     except (OSError, UnicodeDecodeError):
@@ -1821,17 +1827,16 @@ def cmd_check_verdict(corpus: Corpus, project: Path, audit: Path, feedback: "Pat
 # ── residual ─────────────────────────────────────────────────────────────────
 
 def _changed_since(project: Path, anchor: str) -> "set[str]":
-    changed: "set[str]" = {p for p in _git(project, "diff", "--no-renames", "--name-only", "--relative", anchor).splitlines() if p}
-    return changed | {p for p in _git(project, "ls-files", "--others", "--exclude-standard").splitlines() if p}
+    # -z: 이름 속 따옴표 · 탭 · 줄바꿈 · CR 을 git 이 감싸지 않은 그대로 읽는다
+    changed: "set[str]" = {p for p in _git(project, "diff", "--no-renames", "--name-only", "-z", "--relative", anchor,
+                                           nul=True).split("\0") if p}
+    return changed | {p for p in _git(project, "ls-files", "--others", "--exclude-standard", "-z", nul=True).split("\0") if p}
 
 
 def _renamed_since(project: Path, anchor: str) -> "dict[str, str]":
-    out: "dict[str, str]" = {}
-    for ln in _git(project, "diff", "-M", "--name-status", "--relative", anchor).splitlines():
-        parts: "list[str]" = ln.split("\t")
-        if parts and parts[0].startswith("R") and len(parts) == 3:
-            out[parts[1]] = parts[2]
-    return out
+    return {old: new for status, old, new in name_status_z(_git(project, "diff", "-M", "--name-status", "-z", "--relative", anchor,
+                                                                nul=True))
+            if status.startswith("R") and new is not None}
 
 
 def _file_sha(project: Path, rel: str) -> "str | None":
@@ -2126,7 +2131,7 @@ _FIX: str = " — 고친 줄을 새 `ⓐ 재상정` 절에 적는다"
 
 
 def _git_try(project: Path, *args: str) -> "tuple[int, str]":
-    p = subprocess.run(["git", "-C", str(project), *args], capture_output=True, text=True)
+    p = subprocess.run(["git", *GIT_PINS, "-C", str(project), *args], capture_output=True, text=True)
     return p.returncode, p.stdout
 
 

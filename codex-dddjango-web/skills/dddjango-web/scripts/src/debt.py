@@ -42,7 +42,7 @@ from .check_project import _is_htmx_core
 from .check_purity import run_purity
 from .check_structure import _product_skeleton, _skeleton, run_structure
 from .check_vendor import UNDEFERRABLE, VENDOR_CHECK_IDS, VendorUndecidable, run_vendor
-from .common import CORE_CHECK_IDS, ROOT_VIEW_TEMPLATE, BackstopContext, Finding
+from .common import GIT_PINS, CORE_CHECK_IDS, ROOT_VIEW_TEMPLATE, BackstopContext, Finding
 from .products import ProductError, Products, preflight
 from .sdk_registry import VENDOR_DIR
 
@@ -154,7 +154,7 @@ def debt_universe(root: Path) -> List[str]:
         raise DebtError('web/ 가 심볼릭 링크 — git 우주로 스캔할 수 없다(%s)' % web)
     if not web.exists():
         return []
-    result = subprocess.run(['git', '-C', str(root), 'ls-files', '-co', '--exclude-standard',
+    result = subprocess.run(['git', *GIT_PINS, '-C', str(root), 'ls-files', '-co', '--exclude-standard',
                              '-z', '--', 'web/'], capture_output=True)
     if result.returncode != 0:
         raise DebtError('git ls-files 실패(git 저장소 아님?) — %s' %
@@ -228,12 +228,40 @@ def _exempt(findings: List[Finding], files: List[str], refactor: bool = False) -
     return kept
 
 
+def name_status_z(out: 'bytes | str') -> List[Tuple[str, str, Optional[str]]]:
+    """`git diff --name-status -z` 출력 → [(상태, 경로, 개명 · 복사의 새 경로 | None)] — 이름 속 따옴표 · 탭 · 줄바꿈을
+    git 이 감싸지 않은 그대로 읽는다."""
+    tok: List[str] = (out.decode('utf-8', 'surrogateescape') if isinstance(out, bytes) else out).split('\0')
+    rows: List[Tuple[str, str, Optional[str]]] = []
+    i: int = 0
+    while i + 1 < len(tok) and tok[i]:
+        if tok[i][:1] in ('R', 'C') and i + 2 < len(tok):
+            rows.append((tok[i], tok[i + 1], tok[i + 2]))
+            i += 3
+        else:
+            rows.append((tok[i], tok[i + 1], None))
+            i += 2
+    return rows
+
+
+def _diff_moves(root: Path, revs: List[str], paths: List[str]) -> List[Tuple[str, str, Optional[str]]]:
+    """revs 사이의 상태 줄(name_status_z 꼴 · 저장소 기준 경로) — paths(저장소 기준 · 글자 그대로 · 빚 잔존은 프로젝트
+    web 하나)로 좁힌다. 개명 탐지 한도 없이(`-l0` · 사용자 diff.renameLimit 도 이긴다) · 사용자 diff.relative 를 따르지
+    않는다(`--no-relative`). 작업 트리와 견줄 때 git 이 끝에 색인 전체를 새로 고치며 pathspec 밖(프로젝트 밖) 파일을
+    읽지 않게 한다(diff.autoRefreshIndex=false — stat 만 바뀐 파일은 `M` 으로 남고 개명 · 지움 · 새 파일은 같다)."""
+    out: Optional[str] = _git_out(root, ['-c', 'diff.autoRefreshIndex=false', 'diff', '-M', '-l0', '--name-status', '-z',
+                                         '--no-relative', *revs, '--', *(':(top,literal)' + p for p in paths)])
+    if out is None:
+        raise DebtError('ⓑ 이동 묶음 의존의 git 개명 쌍 조회 실패')
+    return name_status_z(out)
+
+
 def _is_git(root: Path) -> bool:
     return _git_out(root, ['rev-parse', '--is-inside-work-tree']) is not None
 
 
 def _git_out(root: Path, args: List[str]) -> Optional[str]:
-    result = subprocess.run(['git', '-C', str(root), *args], capture_output=True)
+    result = subprocess.run(['git', *GIT_PINS, '-C', str(root), *args], capture_output=True)
     return result.stdout.decode('utf-8', 'replace') if result.returncode == 0 else None
 
 
@@ -611,7 +639,8 @@ def deferral_active(text: str) -> bool:
     return any(_DECISIONS in r for k, _w, r in sections[start:] if k != SECTION_STOP)
 
 
-def _inflow_moves(root: Path, folder: Path, anchor: str, pairs: Dict[str, str], notes: List[str]) -> Set[str]:
+def _inflow_moves(root: Path, folder: Path, anchor: str, pairs: Dict[str, str], notes: List[str],
+                  prefix: str) -> Set[str]:
     """git 개명 쌍(옛 → 새 web 파일)의 옛 파일 가운데 승인 병합이 들인 이동 — 이 실행의 이동이 아니다.
 
     ① 옛 자리가 HEAD 에 없고, 기준..HEAD 첫 부모 사슬에서 그 경로를 바꾼 걸음이 하나 이상이며 전부 승인 병합
@@ -623,7 +652,9 @@ def _inflow_moves(root: Path, folder: Path, anchor: str, pairs: Dict[str, str], 
     트리) 이 실행의 이동이다. 상류의 삭제 · 새 파일(개명으로 잡히지 않은 것)은 계보를 끊는다. 새 자리의 뒤 내용
     고침은 이동이 아니다.
     기준은 사슬 첫 걸음의 첫 부모여야 한다(TG 와 같은 경계).
-    승인 목록 해석의 의심 알림(역방향/합성 병합)은 notes 에 옮긴다."""
+    승인 목록 해석의 의심 알림(역방향/합성 병합)은 notes 에 옮긴다.
+    pairs = 옛 web-상대 경로 → 새 저장소 경로(web 안) · prefix = 저장소 안 프로젝트 접두. 경로는 저장소 기준으로 읽는다
+    (계보 조회도 프로젝트 web 범위 — 2.5.1 짝)."""
     # 함수 안 import: subst 가 이 모듈을 import 한다.
     from .subst import _approved_merges, _chain, _git, _is_ancestor, _raw
     base: str = _git(root, ['rev-parse', '--verify', anchor + '^{commit}']).decode().strip()
@@ -635,29 +666,27 @@ def _inflow_moves(root: Path, folder: Path, anchor: str, pairs: Dict[str, str], 
         raise DebtError('기준 %s 가 HEAD 첫 부모 사슬 밖' % base[:12])
     approved, listed = _approved_merges(root, folder, base, chain)
     notes.extend('[info] %s' % n for n in listed if '기준 이전' not in n)
-    olds: List[str] = ['web/' + p for p in sorted(pairs)]
-    news: Set[str] = {'web/' + n for n in pairs.values()}
+    web: str = prefix + 'web/'
+    olds: List[str] = [web + p for p in sorted(pairs)]
+    news: Set[str] = set(pairs.values())
     paths: List[str] = sorted(set(olds) | news)
-    # 비ASCII 이름도 따옴표 없이 읽는다(git 기본값 core.quotePath=true 는 `"web/…"` 로 감싸 낸다)
-    at_head: Set[str] = set(_git(root, ['-c', 'core.quotePath=false', 'ls-tree', '-r', '--name-only', head, '--',
-                                        *paths]).decode('utf-8', 'surrogateescape').splitlines())
+    at_head: Set[str] = set(_git(root, ['ls-tree', '-r', '--name-only', '-z', '--full-tree', head, '--',
+                                        *(':(top,literal)' + p for p in paths)]).decode('utf-8', 'surrogateescape')
+                            .split('\0')) - {''}
     received: Set[str] = set()
     broken: Set[str] = set()
     made: Dict[str, bool] = {}   # 새 자리 → 마지막으로 만든 걸음이 승인 병합의 상류판 그대로인가
     lineage: Dict[str, str] = {}   # 지금 자리 → 승인 병합들이 들인 개명으로 거슬러 간 처음 자리
     for sha, parents in chain:
-        changed = _raw(root, parents[0], sha, paths)
-        upstream = _raw(root, parents[1], sha, paths) if sha in approved and len(parents) == 2 else None
+        changed = _raw(root, parents[0], sha, paths, repo=True)
+        upstream = _raw(root, parents[1], sha, paths, repo=True) if sha in approved and len(parents) == 2 else None
         if upstream is not None:
             fork: str = _git(root, ['merge-base', parents[0], parents[1]]).decode().strip()
-            for line in _git(root, ['-c', 'core.quotePath=false', 'diff', '-M', '--name-status', '--relative', fork,
-                                    parents[1], '--', 'web']
-                             ).decode('utf-8', 'surrogateescape').splitlines():
-                cells = line.split('\t')
-                if len(cells) == 3 and cells[0].startswith('R'):
-                    lineage[cells[2]] = lineage.pop(cells[1], cells[1])
-                elif len(cells) == 2 and cells[0] in ('A', 'D'):
-                    lineage.pop(cells[1], None)   # 삭제 · 새 파일은 계보를 끊는다
+            for status, old, new in _diff_moves(root, [fork, parents[1]], [prefix + 'web']):
+                if status.startswith('R') and new is not None:
+                    lineage[new] = lineage.pop(old, old)
+                elif status in ('A', 'D'):
+                    lineage.pop(old, None)   # 삭제 · 새 파일은 계보를 끊는다
         for path, (before, after) in changed.items():
             as_is: bool = upstream is not None and path not in upstream
             if path in news and before is None and after is not None:
@@ -666,11 +695,11 @@ def _inflow_moves(root: Path, folder: Path, anchor: str, pairs: Dict[str, str], 
                 (received if as_is else broken).add(path)
 
     def delivered(old: str) -> bool:
-        new: str = 'web/' + pairs[old[len('web/'):]]
+        new: str = pairs[old[len(web):]]
         return (old not in at_head and old in received and old not in broken
                 and new in at_head and made.get(new, False) and lineage.get(new) == old)
 
-    return {old[len('web/'):] for old in olds if delivered(old)}
+    return {old[len(web):] for old in olds if delivered(old)}
 
 
 def moved_debt_files(root: Path, folder: Path, g0: dict, notes: Optional[List[str]] = None) -> Set[str]:
@@ -692,20 +721,18 @@ def moved_debt_files(root: Path, folder: Path, g0: dict, notes: Optional[List[st
         except (ValueError, AttributeError) as error:
             raise DebtError('build-state.json 파싱 실패 — %s' % error) from None
     if anchor and _is_git(root):
-        result = _git_out(root, ['-c', 'core.quotePath=false', 'diff', '-M', '--name-status', '--relative', str(anchor),
-                                 '--', 'web'])
-        if result is None:
-            raise DebtError('ⓑ 이동 묶음 의존의 git 개명 쌍 조회 실패')
-        renamed: Dict[str, Optional[str]] = {}   # 옛 → 새(web 밖으로 나갔으면 None)
-        for line in result.splitlines():
-            cells = line.split('\t')
-            if len(cells) == 3 and cells[0].startswith('R') and cells[1].startswith('web/'):
-                renamed[cells[1][4:]] = cells[2][4:] if cells[2].startswith('web/') else None
+        # 개명 쌍(옛 web-상대 경로 → 새 저장소 경로) — 프로젝트 web 범위(2.5.1 짝). web/ 밖으로 옮긴 파일은 지움으로 보인다
+        prefix: str = (_git_out(root, ['rev-parse', '--show-prefix']) or '').removesuffix('\n')
+        web: str = prefix + 'web/'
+        renamed: Dict[str, str] = {old[len(web):]: new
+                                   for status, old, new in _diff_moves(root, [str(anchor)], [prefix + 'web'])
+                                   if status.startswith('R') and new is not None and old.startswith(web)}
         inflow: Set[str] = set()
-        candidates: Dict[str, str] = {old: new for old, new in renamed.items() if old not in moved and new}
+        candidates: Dict[str, str] = {old: new for old, new in renamed.items() if old not in moved}
         if candidates and (folder / 'approved-merges.txt').is_file():
             try:
-                inflow = _inflow_moves(root, folder, str(anchor), candidates, notes if notes is not None else [])
+                inflow = _inflow_moves(root, folder, str(anchor), candidates, notes if notes is not None else [],
+                                       prefix)
             except (DebtError, OSError) as error:
                 if notes is not None:
                     notes.append('[info] 승인 병합 이동 판정 불가 — %s(git 개명 쌍을 모두 이 실행의 이동으로 센다)'
@@ -1058,9 +1085,11 @@ def reference_lines(root: Path, needles: List[str], word: bool = False,
     word 면 `-w`(점 경로의 성분 경계 — `web.a.q` 가 `web.a.q2` 를 잡지 않는다)."""
     if not needles:
         return []
-    # 사용자 git 설정 grep.fullName 이 켜져 있어도 적중 경로는 프로젝트 루트 기준이다(읽는 쪽이 `web/` 로 시작하는지 본다)
-    cmd: List[str] = ['git', '-C', str(root), '-c', 'core.quotePath=false', '-c', 'grep.fullName=false', 'grep',
-                      *REF_GREP_OPTIONS]
+    # 사용자 git 설정 grep.fullName 이 켜져 있어도 적중 경로는 프로젝트 루트 기준이다(읽는 쪽이 `web/` 로 시작하는지 본다).
+    # 사용자 전역 속성(core.attributesFile · 기본 자리 포함)의 `-diff` 가 글 파일을 바이너리로 보이게 해 `-I` 가 건너뛰지
+    # 않게 그 파일을 끈다 — 저장소 속성은 따른다
+    cmd: List[str] = ['git', *GIT_PINS, '-C', str(root), '-c', 'core.quotePath=false', '-c', 'grep.fullName=false',
+                      '-c', 'core.attributesFile=', 'grep', '-z', *REF_GREP_OPTIONS]
     if word:
         cmd.append('-w')
     for needle in needles:
@@ -1071,10 +1100,19 @@ def reference_lines(root: Path, needles: List[str], word: bool = False,
         return []
     if result.returncode != 0:
         raise DebtError('git grep 실패 — %s' % result.stderr.decode('utf-8', 'replace').strip())
+    # -z: 경로 · 행 뒤가 NUL 이다(이름 속 `:` · 따옴표 · 탭 · 줄바꿈을 그대로 읽는다) — 한 적중 = 경로 NUL 행 NUL 줄 LF
     hits: List[Tuple[str, int, str]] = []
-    for raw in result.stdout.decode('utf-8', 'replace').splitlines():
-        path, line, text = raw.split(':', 2)
-        hits.append((path, int(line), text))
+    data: bytes = result.stdout
+    at: int = 0
+    while at < len(data):
+        path_end: int = data.index(b'\0', at)
+        line_end: int = data.index(b'\0', path_end + 1)
+        text_end: int = data.find(b'\n', line_end + 1)
+        text_end = len(data) if text_end < 0 else text_end
+        text: bytes = data[line_end + 1:text_end]
+        hits.append((data[at:path_end].decode('utf-8', 'replace'), int(data[path_end + 1:line_end]),
+                     (text[:-1] if text.endswith(b'\r') else text).decode('utf-8', 'replace')))
+        at = text_end + 1
     return hits
 
 

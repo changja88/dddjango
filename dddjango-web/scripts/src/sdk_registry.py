@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 from urllib.parse import urlsplit
 
-from .common import mask_js
+from .common import GIT_PINS, mask_js
 
 # houserules §9 — 공식 플랫폼 SDK 등재(web-상대 경로)
 SDK_REGISTRY: str = 'sdk_registry.json'
@@ -697,7 +697,7 @@ def parse_source(source: object) -> Optional[dict]:
 
 
 def _git(root: Path, *args: str) -> subprocess.CompletedProcess:
-    return subprocess.run(['git', '-C', str(root), *args], capture_output=True)
+    return subprocess.run(['git', *GIT_PINS, '-C', str(root), *args], capture_output=True)
 
 
 def is_shallow(root: Path) -> bool:
@@ -853,6 +853,30 @@ def _lstat_link(path: Path) -> bool:
         return False
 
 
+def link_component(root: Path, rel: str) -> Optional[str]:
+    """`root/rel` 의 경로 성분 가운데 첫 심볼릭 링크(root 기준 경로) — 없으면 None. 링크를 따라 읽기 전에 거른다."""
+    cur: Path = root
+    for part in rel.split('/'):
+        cur = cur / part
+        if _lstat_link(cur):
+            return cur.relative_to(root).as_posix()
+    return None
+
+
+def registered_copy_bytes(root: Path, entry: dict) -> Optional[bytes]:
+    """O7 판정용 등재 사본 바이트 — `static/vendor/` 아래 정규형 경로(`..` · `.` · 빈 성분 없음)이고 링크 성분이 없는
+    일반 파일만 읽는다(아니면 None · 바이트 결함은 WV2 가 낸다). 프로젝트 밖으로 풀리는 자리는 읽지 않는다."""
+    rel = entry.get('file')
+    if (not isinstance(rel, str) or not rel.startswith(VENDOR_DIR + '/') or posixpath.normpath(rel) != rel
+            or '..' in rel.split('/') or link_component(root, 'web/' + rel) is not None):
+        return None
+    path: Path = root / 'web' / rel
+    try:
+        return path.read_bytes() if path.is_file() else None
+    except OSError:
+        return None
+
+
 def git_blob_id(data: bytes, width: int) -> str:
     header: bytes = b'blob %d\0' % len(data)
     return (hashlib.sha256 if width == 64 else hashlib.sha1)(header + data).hexdigest()
@@ -865,6 +889,8 @@ def wv2_problems(root: Path, entries: Dict[str, dict]) -> Dict[str, List[str]]:
                              if isinstance(e, dict) and isinstance(e.get('file'), str)
                              and e['file'].startswith(VENDOR_DIR + '/') and '..' not in e['file'].split('/')}
     rels: List[str] = ['web/' + f for f in files.values()]
+    # 링크 성분이 있는 등재 파일 → 첫 링크 성분(그 뒤는 git 입력에도 · 바이트 읽기에도 넣지 않는다)
+    linked: Dict[str, str] = {r_: link for r_ in rels for link in [link_component(root, r_)] if link}
     index: Dict[str, Tuple[str, str]] = {}
     attrs: Dict[str, Dict[str, str]] = {}
     ignored: Set[str] = set()
@@ -876,18 +902,18 @@ def wv2_problems(root: Path, entries: Dict[str, dict]) -> Dict[str, List[str]]:
                 meta, name = rec.split('\t', 1)
                 mode, blob = meta.split()[:2]
                 index[name] = (mode, blob)
-        r = subprocess.run(['git', '-C', str(root), 'check-attr', '-z', '--stdin', 'text', 'eol', 'filter',
+        r = subprocess.run(['git', *GIT_PINS, '-C', str(root), 'check-attr', '-z', '--stdin', 'text', 'eol', 'filter',
                             'ident', 'working-tree-encoding'], input=('\0'.join(rels) + '\0').encode('utf-8'),
                            capture_output=True)
         fields = r.stdout.decode('utf-8', 'surrogateescape').split('\0')
         for i in range(0, len(fields) - 2, 3):
             attrs.setdefault(fields[i], {})[fields[i + 1]] = fields[i + 2]
-        r = subprocess.run(['git', '-C', str(root), 'check-ignore', '--no-index', '-z', '--stdin'],
+        r = subprocess.run(['git', *GIT_PINS, '-C', str(root), 'check-ignore', '--no-index', '-z', '--stdin'],
                            input=('\0'.join(rels) + '\0').encode('utf-8'), capture_output=True)
         ignored = {p for p in r.stdout.decode('utf-8', 'surrogateescape').split('\0') if p}
-        present: List[str] = [r_ for r_ in rels if (root / r_).is_file()]
+        present: List[str] = [r_ for r_ in rels if r_ not in linked and (root / r_).is_file()]
         if present:
-            r = subprocess.run(['git', '-C', str(root), 'hash-object', '--stdin-paths'],
+            r = subprocess.run(['git', *GIT_PINS, '-C', str(root), 'hash-object', '--stdin-paths'],
                                input=('\n'.join(present) + '\n').encode('utf-8'), capture_output=True)
             ids: List[str] = r.stdout.decode('ascii', 'replace').split()
             if r.returncode == 0 and len(ids) == len(present):
@@ -897,13 +923,19 @@ def wv2_problems(root: Path, entries: Dict[str, dict]) -> Dict[str, List[str]]:
         entry: dict = entries[sid]
         problems: List[str] = []
         path: Path = web / rel
-        cur: Path = root
-        for part in ['web'] + rel.split('/'):
-            cur = cur / part
-            if _lstat_link(cur):
-                problems.append('심볼릭 링크 성분 %s — 사본은 일반 파일이어야 한다'
-                                % cur.relative_to(root).as_posix())
-                break
+        git_rel: str = 'web/' + rel
+        if git_rel in linked:
+            # 링크 너머는 읽지 않는다 — 색인 · 무시 · 속성으로 아는 문제만 같은 차례로 적는다
+            problems.append('심볼릭 링크 성분 %s — 사본은 일반 파일이어야 한다' % linked[git_rel])
+            if git_rel in ignored:
+                problems.append('등재 파일이 git 무시 규칙에 걸린다 — clone·배포에 사본이 없다')
+            if git_rel in index and index[git_rel][0] != '100644':
+                problems.append('인덱스 모드 %s — 일반 파일(100644)이 아니다' % index[git_rel][0])
+            for name, value in sorted(attrs.get(git_rel, {}).items()):
+                if value not in ('unspecified', 'unset'):
+                    problems.append('변환 속성 %s=%s — vendor 표지(.gitattributes)가 막아야 한다' % (name, value))
+            out[sid] = problems
+            continue
         try:
             listed: List[str] = os.listdir(path.parent)
         except OSError:
@@ -916,7 +948,6 @@ def wv2_problems(root: Path, entries: Dict[str, dict]) -> Dict[str, List[str]]:
             problems.append('등재 파일이 일반 파일이 아니다 — web/%s' % rel)
             out[sid] = problems
             continue
-        git_rel: str = 'web/' + rel
         if git_rel in ignored:
             problems.append('등재 파일이 git 무시 규칙에 걸린다 — clone·배포에 사본이 없다')
         data: bytes = path.read_bytes()

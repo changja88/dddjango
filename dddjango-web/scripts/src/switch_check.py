@@ -60,6 +60,7 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .common import GIT_PINS
 from .debt import SPEC_SLICE0_HEAD, SpecSwitch, parse_spec_switches
 
 OUTPUT_ROOT: str = '.dddjango-web'
@@ -233,7 +234,7 @@ class Git:
         self.root = root
 
     def call(self, *args: str) -> subprocess.CompletedProcess:
-        return subprocess.run(['git', '-C', str(self.root), '-c', 'core.quotePath=false', *args], capture_output=True,
+        return subprocess.run(['git', *GIT_PINS, '-C', str(self.root), '-c', 'core.quotePath=false', *args], capture_output=True,
                               env=dict(os.environ, GIT_OPTIONAL_LOCKS='0'))
 
     def text(self, *args: str) -> str:
@@ -728,7 +729,7 @@ class SwitchCheck:
     # 시작 전 ---------------------------------------------------------------
 
     def locate(self) -> None:
-        top: str = self.git.text('rev-parse', '--show-toplevel').strip()
+        top: str = self.git.text('rev-parse', '--show-toplevel').removesuffix('\n')  # 이름 끝 공백 · 줄바꿈을 깎지 않는다
         if Path(top).resolve() != self.project:
             raise Unverified('대상 프로젝트 루트가 git 저장소 최상위가 아니다 — %s' % self.project)
         folder: Path = self.folder_arg if self.folder_arg.is_absolute() else Path.cwd() / self.folder_arg
@@ -1038,7 +1039,7 @@ class SwitchCheck:
 
     def check_apply(self) -> None:
         for mutant in self.mutants.values():
-            result = self.git.call('apply', '--check', str(mutant.path))
+            result = self.git.call('apply', '--check', '--whitespace=nowarn', str(mutant.path))  # 사용자 apply.whitespace 를 따르지 않는다(적용 줄과 같게)
             if result.returncode:
                 raise Unverified('반례 %s 가 적용되지 않는다(git apply --check) — %s'
                                  % (mutant.rel, result.stderr.decode('utf-8', 'replace').strip()[:200]))

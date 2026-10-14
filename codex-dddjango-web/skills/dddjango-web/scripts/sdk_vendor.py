@@ -39,12 +39,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from src.check_vendor import (JsView, VendorUndecidable, run_vendor, unregistered_units,  # noqa: E402
                               _tracked_vendor)
-from src.common import BackstopContext, mask_js  # noqa: E402
+from src.common import GIT_PINS, BackstopContext, mask_js  # noqa: E402
 from src.sdk_registry import (AT_RE, DRAFT_FIELDS, FILE_NAME_RE, GATES, ID_RE, IDENT_RE, SCHEMA,  # noqa: E402
                               SDK_REGISTRY, VENDOR_ATTRS, VENDOR_ATTRS_BYTES, VENDOR_DIR, RegistryError, approval_problems, canonical_bytes, candidate_token, check_source,
                               compute_origins, entry_sha256, host_of, https_hosts, lib_cdn_reason, operator_words,
-                              parse_scope_item, scope_unit, service_hosts, sri, strict_loads, trap_hits, under,
-                              url_problems, validate_entry, validate_registry)
+                              parse_scope_item, registered_copy_bytes, scope_unit, service_hosts, sri, strict_loads,
+                              trap_hits, under, url_problems, validate_entry, validate_registry)
 
 EXIT_OK, EXIT_ERR, EXIT_RED = 0, 1, 2
 CANDIDATE_SCHEMA: str = 'dddjango-web-sdk-candidate/2'
@@ -338,16 +338,6 @@ def _unit_groups(entry: dict, units: List[Tuple[str, str, str, str]], source_kin
     return groups
 
 
-def _registered_bytes(root: Path, entry: dict) -> Optional[bytes]:
-    """범위 넓힘(바이트 그대로)의 O7 판정용 — 등재 사본 바이트(없거나 읽을 수 없으면 None)."""
-    rel = entry.get('file')
-    path: Path = root / 'web' / str(rel)
-    try:
-        return path.read_bytes() if isinstance(rel, str) and path.is_file() else None
-    except OSError:
-        return None
-
-
 def _existing_place(root: Path, sid: str, target: str, existing: Path) -> None:
     """기존 등록의 지금 자리 — 등재할 id 디렉터리(`static/vendor/<id>/`) 안의 다른 자리(2.0.0 의 `<라이브러리>/<버전>/` 판
     폴더 등)면 거절한다. 등재 id 디렉터리는 등재 파일 하나만 두는 자리라, 옛 사본과 그 로드 줄이 남는 동안 늘 검사(WV5·WV6)가
@@ -560,7 +550,7 @@ def cmd_install(ns: argparse.Namespace) -> int:
                       str(entry.get('source_url', '')))
     if traps:
         problems.append('제외 범주 낱말 %s' % ', '.join(traps))
-    if not service_hosts(entry, data_bytes if data_bytes is not None else _registered_bytes(root, entry)):
+    if not service_hosts(entry, data_bytes if data_bytes is not None else registered_copy_bytes(root, entry)):
         problems.append('주석 밖 코드가 운영자 서비스 호스트를 부르지 않는다(O7 — 배포·문서 자원 경로만 부른다)')
     if problems:
         raise Refused('항목 거절 — ' + ' · '.join(problems))
@@ -761,8 +751,9 @@ def cmd_restore(ns: argparse.Namespace) -> int:
 
 def _no_template_refs(root: Path, name: str, needle: str) -> None:
     """저장소 템플릿(추적 + 미추적)이 needle 을 가리키면 거절 — 참조 줄을 보인다."""
-    result = subprocess.run(['git', '-C', str(root), '-c', 'grep.fullName=false', 'grep', '--untracked', '-n', '-F',
-                             '-e', needle, '--', '*.html'], capture_output=True)
+    # 사용자 전역 속성의 `-diff` 가 참조 줄을 «Binary file … matches» 로 바꾸지 않게 그 파일을 끈다(저장소 속성은 따른다)
+    result = subprocess.run(['git', *GIT_PINS, '-C', str(root), '-c', 'grep.fullName=false', '-c', 'core.attributesFile=',
+                             'grep', '--untracked', '-n', '-F', '-e', needle, '--', '*.html'], capture_output=True)
     if result.returncode not in (0, 1):
         raise UsageError('저장소 템플릿 참조 조회 실패 — %s' % result.stderr.decode('utf-8', 'replace').strip())
     hits: List[str] = [h for h in result.stdout.decode('utf-8', 'replace').splitlines() if h]

@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-from .common import (BackstopContext, Finding, _areas, _git_raw, loaded_file, mask_css, mask_html,
+from .common import (GIT_PINS, BackstopContext, Finding, _areas, _git_raw, loaded_file, mask_css, mask_html,
                      parent_dir_of)
 from .products import (REGISTRY, ProductError, load_products, parsed_tags, products_state,
                        shell_directives)
@@ -282,7 +282,7 @@ class Tree:
                     continue
                 try:
                     content = os.fsencode(os.readlink(path)) if symlink else path.read_bytes()
-                    old = subprocess.run(['git', '-C', str(self.ctx.root), 'show',
+                    old = subprocess.run(['git', *GIT_PINS, '-C', str(self.ctx.root), 'show',
                                           '%s:./web/%s' % (self.ctx.diff_base, file)], capture_output=True)
                 except OSError:
                     continue
@@ -317,7 +317,7 @@ class Tree:
                     return None
                 if '\ufffd' in text:
                     # 공용 git 읽기의 대체 글자가 실제 UTF-8 글자인지 CS 에서만 확인한다.
-                    raw = subprocess.run(['git', '-C', str(self.ctx.root), 'show',
+                    raw = subprocess.run(['git', *GIT_PINS, '-C', str(self.ctx.root), 'show',
                                           '%s:./web/%s' % (self.ctx.diff_base, file)], capture_output=True)
                     if raw.returncode:
                         self.read_errors[file] = 'git show 실패'

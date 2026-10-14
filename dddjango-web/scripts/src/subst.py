@@ -56,6 +56,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Dict, Iterator, List, NamedTuple, Optional, Sequence, Set, Tuple, Union
 
+from .common import GIT_PINS
 from .debt import (SPEC_TARGET_NOT_TEST, DebtError, is_test_path, module_of, parse_spec_moves, parse_spec_pairs,
                    parse_spec_switches)
 
@@ -117,7 +118,7 @@ class _Pairs:
 
 
 def _git(root: Path, args: List[str]) -> bytes:
-    result = subprocess.run(['git', '-C', str(root), *args], capture_output=True)
+    result = subprocess.run(['git', *GIT_PINS, '-C', str(root), *args], capture_output=True)
     if result.returncode != 0:
         raise DebtError('git %s 실패 — %s' % (' '.join(args[:2]),
                                              result.stderr.decode('utf-8', 'replace').strip()))
@@ -134,7 +135,7 @@ def _blob(root: Path, rev: str, rel: str) -> bool:
         return False  # 프로젝트 밖(`../a` · `./../a`) — 맨 위(저장소 밖 → 없음)와 같게 하위 폴더에서도 받지 않는다
     # 정규형 경로만 프로젝트 루트 기준(`:./`)으로 읽는다 — 그 밖의 글자(`a//b` · `x/../a`)는 2.5.0 처럼 그대로 넘겨 거절되게 둔다
     spec: str = '%s:./%s' % (rev, rel) if norm == rel else '%s:%s' % (rev, rel)
-    result = subprocess.run(['git', '-C', str(root), 'cat-file', '-t', spec],
+    result = subprocess.run(['git', *GIT_PINS, '-C', str(root), 'cat-file', '-t', spec],
                             capture_output=True)
     return result.returncode == 0 and result.stdout.strip() == b'blob'
 
@@ -1088,7 +1089,7 @@ def _status_entries(root: Path, args: List[str]) -> List[str]:
 
 
 def _is_ancestor(root: Path, older: str, newer: str) -> bool:
-    result = subprocess.run(['git', '-C', str(root), 'merge-base', '--is-ancestor', older, newer],
+    result = subprocess.run(['git', *GIT_PINS, '-C', str(root), 'merge-base', '--is-ancestor', older, newer],
                             capture_output=True)
     if result.returncode not in (0, 1):
         raise DebtError('git merge-base --is-ancestor 실패 — %s'
@@ -1107,10 +1108,12 @@ Step = Tuple[str, str, Entry, Entry, bool, Entry]
 # U = 승인 병합이 들여온 그대로 · M = 승인 병합 안 레인 몫 · T = 0T 시험 전환 커밋 · X = 0T 취소 커밋(둘은 test_switch 기록이 있을 때만)
 
 
-def _raw(root: Path, a: str, b: str, pathspec: List[str]) -> Dict[str, Tuple[Entry, Entry]]:
-    """a → b 에서 바뀐 경로 → (a 판 항목, b 판 항목)."""
-    out: List[str] = _git(root, ['diff', '--raw', '-z', '--no-renames', '--no-abbrev', '--relative', a, b, '--',
-                                 *pathspec]).decode('utf-8', 'surrogateescape').split('\0')
+def _raw(root: Path, a: str, b: str, pathspec: List[str], repo: bool = False) -> Dict[str, Tuple[Entry, Entry]]:
+    """a → b 에서 바뀐 경로 → (a 판 항목, b 판 항목). repo 면 경로 · pathspec 이 저장소 기준(글자 그대로)이다."""
+    where: List[str] = (['--no-relative', a, b, '--', *(':(top,literal)' + p for p in pathspec)] if repo
+                        else ['--relative', a, b, '--', *pathspec])
+    out: List[str] = _git(root, ['diff', '--raw', '-z', '--no-renames', '--no-abbrev',
+                                 *where]).decode('utf-8', 'surrogateescape').split('\0')
     found: Dict[str, Tuple[Entry, Entry]] = {}
     i: int = 0
     while i + 1 < len(out):
@@ -1157,7 +1160,7 @@ def _approved_merges(root: Path, folder: Optional[Path], base: str,
     if not listed.is_file():
         return {}, []
     in_range: Set[str] = {sha for sha, _parents in chain}
-    head_ref: str = subprocess.run(['git', '-C', str(root), 'symbolic-ref', '-q', 'HEAD'],
+    head_ref: str = subprocess.run(['git', *GIT_PINS, '-C', str(root), 'symbolic-ref', '-q', 'HEAD'],
                                    capture_output=True).stdout.decode().strip()
     head_branch: str = head_ref[len('refs/heads/'):] if head_ref.startswith('refs/heads/') else ''
     try:
@@ -1173,7 +1176,7 @@ def _approved_merges(root: Path, folder: Optional[Path], base: str,
         token: str = line.split(' ', 1)[0]
         if re.fullmatch(r'[0-9a-fA-F]{7,40}', token) is None:
             raise DebtError('approved-merges.txt 줄 형식 오류 %r — `<SHA> [메모]`(SHA 7~40 hex)' % raw)
-        found = subprocess.run(['git', '-C', str(root), 'rev-parse', '--verify', '-q', token + '^{commit}'],
+        found = subprocess.run(['git', *GIT_PINS, '-C', str(root), 'rev-parse', '--verify', '-q', token + '^{commit}'],
                                capture_output=True)
         if found.returncode != 0:
             raise DebtError('approved-merges.txt 의 %s 를 커밋으로 풀 수 없다' % token)
@@ -1235,7 +1238,7 @@ def _records(root: Path, folder: Optional[Path], chain: List[Tuple[str, List[str
             if not isinstance(value, str) or re.fullmatch(r'[0-9a-fA-F]{7,40}', text) is None:
                 notes.append('build-state %s 기록 %r 거부 — 커밋 해시(7~40 hex)만 받는다' % (name, text[:40]))
                 continue
-            found = subprocess.run(['git', '-C', str(root), 'rev-parse', '--verify', '-q', text + '^{commit}'],
+            found = subprocess.run(['git', *GIT_PINS, '-C', str(root), 'rev-parse', '--verify', '-q', text + '^{commit}'],
                                    capture_output=True)
             sha: str = found.stdout.decode().strip()
             if found.returncode != 0:
@@ -1275,7 +1278,7 @@ def _history(root: Path, chain: List[Tuple[str, List[str]]], outside: List[str],
     for sha, parents in chain:
         if sha in approved:
             p1, p2 = parents
-            found = subprocess.run(['git', '-C', str(root), 'merge-base', p1, p2], capture_output=True)
+            found = subprocess.run(['git', *GIT_PINS, '-C', str(root), 'merge-base', p1, p2], capture_output=True)
             if found.returncode != 0:
                 raise DebtError('승인 병합 %s 의 공통 조상을 찾지 못함 — 판정 불가(얕은 이력이면 git fetch '
                                 '--unshallow 뒤 다시)' % sha[:12])
@@ -1469,7 +1472,7 @@ def _switch_record(root: Path, folder: Optional[Path], chain: List[Tuple[str, Li
             text: str = value.strip()
             sha: str = ''
             if re.fullmatch(r'[0-9a-fA-F]{7,40}', text):
-                result = subprocess.run(['git', '-C', str(root), 'rev-parse', '--verify', '-q', text + '^{commit}'],
+                result = subprocess.run(['git', *GIT_PINS, '-C', str(root), 'rev-parse', '--verify', '-q', text + '^{commit}'],
                                         capture_output=True)
                 sha = result.stdout.decode().strip() if result.returncode == 0 else ''
             if not sha:

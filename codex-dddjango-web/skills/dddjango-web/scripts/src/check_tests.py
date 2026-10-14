@@ -25,7 +25,7 @@ import subprocess
 from pathlib import Path
 from typing import List, Set
 
-from .common import BackstopContext, Finding, base_name_of, segs_of
+from .common import GIT_PINS, BackstopContext, Finding, base_name_of, segs_of
 
 _RULE_TG: str = 'discipline-test — coder 행위검증 테스트 산출(green=pytest web_test)'
 
@@ -66,7 +66,7 @@ def conventional_test_path(rel: str) -> bool:
 def _commit_oid(root, ref):
     if not isinstance(ref, str) or not ref or ref.startswith('-'):
         raise ValueError('commit 기준점 없음')
-    r = subprocess.run(['git', '-C', str(root), 'rev-parse', '--verify', ref + '^{commit}'], capture_output=True)
+    r = subprocess.run(['git', *GIT_PINS, '-C', str(root), 'rev-parse', '--verify', ref + '^{commit}'], capture_output=True)
     if r.returncode:
         raise ValueError('commit 기준점 해소 실패: ' + ref)
     return r.stdout.decode().strip()
@@ -139,7 +139,7 @@ def _changed_tests(ctx: BackstopContext) -> List[TestChange]:
                 if not word.startswith('-') and (ctx.root / candidate_path).exists():
                     explicit.append(candidate_path.rstrip('/'))
         def git(*args):
-            r = subprocess.run(['git', '-C', str(ctx.root), *args], capture_output=True)
+            r = subprocess.run(['git', *GIT_PINS, '-C', str(ctx.root), *args], capture_output=True)
             if r.returncode:
                 raise ValueError('root diff/대응 수집 실패')
             return r.stdout.decode('utf-8', 'surrogateescape')
@@ -1073,7 +1073,7 @@ def _rename_targets(ctx: BackstopContext) -> Set[str]:
     """기준점 → 작업 트리에서 기준점 파일을 옮겨 온 경로(web-상대) — git 개명(유사도 30% 이상) 대상과, 이름이 같은
     기준점 파일이 사라진 경로. 슬라이스 0 은 옮기며 import·템플릿 이름을 치환하므로 작은 파일은 git 기본 개명
     유사도(50%) 밑으로 떨어진다 — 그래도 옮긴 파일이다."""
-    r = subprocess.run(['git', '-C', str(ctx.root), 'diff', '-M30%', '--name-status', '-z', '--relative',
+    r = subprocess.run(['git', *GIT_PINS, '-C', str(ctx.root), 'diff', '-M30%', '--name-status', '-z', '--relative',
                         str(ctx.diff_base), '--', 'web/'], capture_output=True)
     if r.returncode != 0:
         return set()

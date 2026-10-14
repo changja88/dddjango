@@ -20,11 +20,11 @@ import subprocess
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-from .common import VERBATIM_RE, BackstopContext, Finding
+from .common import GIT_PINS, VERBATIM_RE, BackstopContext, Finding
 from .sdk_registry import (HOSTING_SUFFIXES, SDK_REGISTRY, VENDOR_ATTRS, VENDOR_ATTRS_BYTES, VENDOR_DIR,
                            RegistryError, SdkState, approval_problems, canonical_bytes, is_os_junk_name,
-                           lib_cdn_reason, normalize_gateway_url, parse_scope_item, sdk_state, service_hosts,
-                           trap_hits, validate_registry)
+                           lib_cdn_reason, normalize_gateway_url, parse_scope_item, registered_copy_bytes, sdk_state,
+                           service_hosts, trap_hits, validate_registry)
 
 VENDOR_CHECK_IDS: Tuple[str, ...] = tuple('WV%d' % n for n in range(1, 14))
 UNDEFERRABLE: Set[str] = {'WV1', 'WV2', 'WV3', 'WV4', 'WV5', 'WV6', 'WV13'}
@@ -44,7 +44,7 @@ def _f(check: str, path: str, line: Optional[int], message: str, fix: str) -> Fi
 def _git(root: Path, *args: str) -> subprocess.CompletedProcess:
     # diff · log · show 경로는 저장소 기준으로 읽는다 — 사용자 git 설정 diff.relative 를 따르지 않는다.
     # 비ASCII 경로는 따옴표 없이(core.quotePath) · 첫 커밋의 변경도 늘 낸다(log.showRoot)
-    return subprocess.run(['git', '-C', str(root), '-c', 'diff.relative=false', '-c', 'core.quotePath=false',
+    return subprocess.run(['git', *GIT_PINS, '-C', str(root), '-c', 'diff.relative=false', '-c', 'core.quotePath=false',
                            '-c', 'log.showRoot=true', *args], capture_output=True)
 
 
@@ -567,17 +567,22 @@ def classify_units(root: Path, units: List[str], tracked: Set[str], current_shas
     head_era: bool = registry_now or head in era
     births: Dict[str, Set[Tuple[str, str]]] = {}
     current: Optional[str] = None
-    raw: str = _git_text(root, 'log', '--full-history', '-m', '--raw', '--no-abbrev', '--no-renames',
-                         '--format=%x00%H', 'HEAD', '--', 'web/static/')
-    for line in raw.split('\n'):
-        if line.startswith('\0'):
-            current = line[1:].strip()
+    # -z: 경로를 git 이 감싸지 않은 그대로 읽는다(따옴표 · 탭 · 줄바꿈이 든 이름) — 커밋 머리(`%x01` 표지 뒤 해시) · `:메타` ·
+    # 경로가 NUL 로 갈린다. 표지 앞에 다른 글(서명 확인 줄 등)이 붙어도 표지 뒤 해시만 읽는다
+    tokens: List[str] = _git_text(root, 'log', '-z', '--full-history', '-m', '--raw', '--no-abbrev', '--no-renames',
+                                  '--format=%x01%H', 'HEAD', '--', 'web/static/').split('\0')
+    i: int = 0
+    while i < len(tokens):
+        token: str = tokens[i].lstrip('\n')
+        if token.startswith(':') and i + 1 < len(tokens):
+            fields: List[str] = token[1:].split()
+            if current and len(fields) >= 5 and fields[4][:1] in 'AMT' and set(fields[3]) != {'0'}:
+                births.setdefault(fields[3], set()).add((current, tokens[i + 1]))
+            i += 2
             continue
-        if line.startswith(':') and current:
-            meta, _tab, path = line.partition('\t')
-            fields: List[str] = meta.split()
-            if len(fields) >= 5 and fields[4][:1] in 'AMT' and set(fields[3]) != {'0'}:
-                births.setdefault(fields[3], set()).add((current, path))
+        if '\x01' in token:
+            current = token.rsplit('\x01', 1)[1].strip()
+        i += 1
     history: Set[str] = set(current_shas)
     for c in _git_text(root, 'log', '--full-history', '-m', '--format=%H', 'HEAD', '--', reg_spec).split():
         history |= _registry_shas(_git_text(root, 'show', '%s:%s%s' % (c, prefix, reg_spec)))
@@ -764,18 +769,6 @@ def _wv10(ctx: BackstopContext, design_build: Optional[str]) -> List[Finding]:
 # ------------------------------------------------------------------ 실행
 
 
-def _copy_bytes(root: Path, entry: dict) -> Optional[bytes]:
-    """O7 판정용 등재 사본 바이트 — 꼴이 맞는 일반 파일만(없거나 링크면 None · 바이트 결함은 WV2 가 낸다)."""
-    rel = entry.get('file')
-    if not isinstance(rel, str) or not rel.startswith(VENDOR_DIR + '/') or '..' in rel.split('/'):
-        return None
-    path: Path = root / 'web' / rel
-    try:
-        return path.read_bytes() if path.is_file() and not path.is_symlink() else None
-    except OSError:
-        return None
-
-
 def _feature_js(f: str) -> bool:
     return f.startswith('static/js/') and f.lower().endswith('.js')
 
@@ -827,7 +820,7 @@ def run_vendor(ctx: BackstopContext, debt: bool = False, design_build: Optional[
                                   % (sid, ', '.join(traps)), '서버가 만드는 설계나 범위 조정으로 간다(§9 제외).'))
                 origins = entry.get('origins')
                 if isinstance(origins, dict) and isinstance(origins.get('operator_in_code'), list):
-                    if not service_hosts(entry, _copy_bytes(root, entry)):
+                    if not service_hosts(entry, registered_copy_bytes(root, entry)):
                         out.append(_f('WV4', SDK_REGISTRY, None, '%s: 주석 밖 코드가 운영자 서비스 호스트를 부르지 않는다'
                                       '(O7 — 배포·문서 자원 경로만 부른다 · 자기 서비스 API 클라이언트가 아니다)' % sid,
                                       '운영자 자기 서비스를 부르지 않으면 제외다.'))
