@@ -184,7 +184,7 @@ def _check_broker_file(root: Path, py: Path, mod: ast.Module, side: str,
     hit = idents & union
     if hit:
         f.add("#518", _rel(root, py),
-              f"broker 에 업무 어휘 {sorted(hit)[:5]} — framework/broker/ 아래에는 어느 BC 의 "
+              f"broker 에 업무 어휘 {sorted(hit)} — framework/broker/ 아래에는 어느 BC 의 "
               "업무 어휘도 나오지 않는다(#628)")
 
     for node in ast.walk(mod):

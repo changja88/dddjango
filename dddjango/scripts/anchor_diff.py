@@ -219,8 +219,50 @@ def resolve_anchor(root: Path, anchor: str) -> str:
     return sha
 
 
-def snapshot_anchor(root: Path, sha: str, dest: Path) -> None:
-    """앵커 커밋의 트리를 dest 에 푼다 — registry_gate 도 이것을 import 한다(복제 금지)."""
+DOC_INPUTS: "tuple[str, ...]" = ("scope.md", "design-spec.md")  # `.dddjango/<폴더>/` 아래 — 검사기가 문서로 읽는다
+
+
+def prunable_link(rel: str) -> bool:
+    """사본에서 빼도 되는 링크 자리 — 숨김 경로(성분 하나라도 `.` 으로 시작)이되, 검사기가 문서로 읽는
+    `.dddjango/<폴더>/{scope,design-spec}.md` 와 그 조상(`.dddjango` · `.dddjango/<폴더>`)은 아니다 — 대소문자를 접어
+    비교한다(대소문자를 가리지 않는 파일 시스템에서 `.DDDJANGO/…/DESIGN-SPEC.MD` 도 같은 문서다)."""
+    parts: "tuple[str, ...]" = Path(rel).parts
+    if not any(part.startswith(".") for part in parts):
+        return False
+    folded: "list[str]" = [part.casefold() for part in parts]
+    return not (folded[0] == ".dddjango" and (len(folded) <= 2 or (len(folded) == 3 and folded[2] in DOC_INPUTS)))
+
+
+def _outside_links(dest: Path) -> "list[str]":
+    """실경로가 사본 «밖» 인 심링크(사본 상대 경로 · 걷는 순서) — 링크를 따라 내려가지 않는다."""
+    base: str = os.path.realpath(dest)
+    out: "list[str]" = []
+    for current, dirs, files in os.walk(dest):
+        dirs.sort()
+        for name in sorted(dirs + files):
+            path: str = os.path.join(current, name)
+            if os.path.islink(path):
+                real: str = os.path.realpath(path)
+                if real != base and not real.startswith(base + os.sep):
+                    out.append(os.path.relpath(path, dest))
+    return out
+
+
+def prune_hidden_escapes(dest: Path) -> "list[str]":
+    """사본 밖 링크가 «모두» 빼도 되는 자리(`prunable_link`)에 있을 때만 그것들을 걷는다 — 하나라도 아니면
+    아무것도 걷지 않는다(뒤의 `snapshot_escape` 가 fail-closed). 실경로는 걷기 «전» 에 잰다 — 숨김 링크를 거쳐
+    밖으로 나가는 표면 링크도 «밖» 이다."""
+    outside: "list[str]" = _outside_links(dest)
+    if not outside or not all(prunable_link(rel) for rel in outside):
+        return []
+    for rel in outside:
+        os.unlink(dest / rel)
+    return outside
+
+
+def snapshot_anchor(root: Path, sha: str, dest: Path) -> "list[str]":
+    """앵커 커밋의 트리를 dest 에 푼다 — registry_gate 도 이것을 import 한다(복제 금지).
+    풀고 나서 사본 밖 링크가 모두 빼도 되는 자리면 걷고 그 목록을 돌려준다(`prune_hidden_escapes` · 없으면 빈 목록)."""
     dest.mkdir(parents=True)
     archive: "subprocess.Popen[bytes]" = subprocess.Popen(
         ["git", "-C", str(root), "archive", sha],
@@ -239,6 +281,7 @@ def snapshot_anchor(root: Path, sha: str, dest: Path) -> None:
         raise AnchorDiffUsage(
             f"tar 실패: {untar.stderr.decode(errors='replace').strip()}"
         )
+    return prune_hidden_escapes(dest)
 
 
 def _bc_root_absent(snapshot: Path, name: str) -> bool:
@@ -615,20 +658,24 @@ def tree_blobs(root: Path, sha: str) -> "dict[str, str]":
     return out
 
 
+def unmeasured(reason: str) -> bool:
+    """승인 유입을 잴 수 없어 남긴 사유인가 — `측정 무효(` · `측정 생략(`(자매 가르기의 «측정 실패가 먼저다» 분류)."""
+    return reason.startswith(("측정 무효(", "측정 생략("))
+
+
+def unmeasured_count(lines: "list[str]", retained: "dict[str, str]") -> int:
+    """귀속으로 남은 줄 가운데 승인 유입을 잴 수 없어 남긴 수(`unmeasured`)."""
+    return sum(1 for line in lines if unmeasured(retained.get(line, "")))
+
+
 def snapshot_escape(dest: Path) -> "str | None":
-    """스냅숏 사본 안의 심링크 가운데 실경로가 사본 «밖» 인 첫 항목(사본 상대 경로). 없으면 None.
+    """스냅숏 사본 안의 심링크 가운데 실경로가 사본 «밖» 인 항목 하나(사본 상대 경로 — 빼도 되는 자리 밖의 것을
+    먼저). 없으면 None.
 
     그런 심링크가 있는 사본에서 돌린 검사는 사본 밖(예: 레인의 작업 트리)을 읽을 수 있다 —
     그 실행은 «레인 내용이 한 글자도 없다» 를 보장하지 못하므로 감산 증거로 쓰지 않는다."""
-    base: str = os.path.realpath(dest)
-    for current, dirs, files in os.walk(dest):
-        for name in sorted(dirs + files):
-            path: str = os.path.join(current, name)
-            if os.path.islink(path):
-                real: str = os.path.realpath(path)
-                if real != base and not real.startswith(base + os.sep):
-                    return os.path.relpath(path, dest)
-    return None
+    outside: "list[str]" = _outside_links(dest)
+    return next((rel for rel in outside if not prunable_link(rel)), outside[0] if outside else None)
 
 
 def _run_lines(cmd: "list[str]") -> "tuple[int, list[str]]":
@@ -1065,6 +1112,7 @@ class _InflowSplit:
     inflow: "list[tuple[str, str, str, str | None]]"
     retained: "dict[str, str]"
     measured: "dict[str, _Baseline | None]" = field(default_factory=dict)   # 커밋 sha → 기준선(증거로 못 쓰면 None)
+    pruned: int = 0                                                         # 숨김 경로 사본 밖 링크를 뺀 사본 수
     failures: "dict[str, str]" = field(default_factory=dict)                # 커밋 sha → 왜 못 쓰는가
     renders: int = 0                                                        # 서로 다른 트리를 잰 수
 
@@ -1098,7 +1146,8 @@ def _approved_inflow_split(
             base: "_Baseline | None" = None
             got: Sample = Sample(None)
             try:
-                snapshot_anchor(root, sha, dest)
+                if snapshot_anchor(root, sha, dest):
+                    out.pruned += 1
                 escape: "str | None" = snapshot_escape(dest)
             except (AnchorDiffUsage, OSError) as exc:
                 failure = f"스냅숏 실패 — {type(exc).__name__}: {str(exc).strip()}"
@@ -1239,7 +1288,7 @@ def partition_exit(
     split: "_InflowSplit | None" = None
     with tempfile.TemporaryDirectory() as td:
         snap: Path = Path(td) / "anchor"
-        snapshot_anchor(resolved_target, sha, snap)
+        anchor_pruned: "list[str]" = snapshot_anchor(resolved_target, sha, snap)
         anchor_escape: "str | None" = snapshot_escape(snap)
         base: _Baseline = (_baseline_lines(script, snap, argv, path_flags,
                                            snapshot_bc_aliases(resolved_target, sha, head_sha, merges)
@@ -1285,7 +1334,7 @@ def partition_exit(
     if has_sister and normal_measurement:
         rest = []
         for line in new:
-            invalid: bool = split is not None and split.retained.get(line, "").startswith(("측정 무효(", "측정 생략("))
+            invalid: bool = split is not None and unmeasured(split.retained.get(line, ""))
             (sister if not invalid and sister_path(subject_path(line)) else rest).append(line)
         new = rest
 
@@ -1298,6 +1347,9 @@ def partition_exit(
         print(f"  기준선 영역 이름 대응(승인 머지가 가져온 BC 이름 바꾸기 — 앵커 사본은 그 이름으로 렌더): {base.alias_note()}")
     if base.error is not None:
         print(f"  기준선 오류: {base.error}")
+    if anchor_pruned:
+        print(f"  기준선 정보: 앵커 사본에서 숨김 경로의 사본 밖 심링크 {len(anchor_pruned)}개를 뺐다(판정 무관): "
+              + anchor_pruned[0] + (f" 외 {len(anchor_pruned) - 1}" if len(anchor_pruned) > 1 else ""))
     if new:
         print("  == 신규분 — 차분에 종속되지 않는 직접 blocker ==")
         for line in new:
@@ -1350,7 +1402,8 @@ def partition_exit(
         unapproved: "list[str]" = [c.sha[:12] for c in in_chain if c.sha not in approved]
         print(f"  provenance: first-parent 사슬 {sha[:12]}..HEAD 머지 {len(in_chain)}"
               f"(승인 {len(in_chain) - len(unapproved)} · 미승인 {len(unapproved)}"
-              + (": " + " ".join(unapproved) if unapproved else "") + f") · 스냅숏 기준선 실행 {split.renders}")
+              + (": " + " ".join(unapproved) if unapproved else "") + f") · 스냅숏 기준선 실행 {split.renders}"
+              + (f" · 숨김 경로 링크를 뺀 사본 {split.pruned}" if split.pruned else ""))
         tail = f"(승인 유입 {len(split.inflow)}건 제외)"
     if new:
         print(f"판정: 신규분 {len(new)}건 → blocker(exit 2) — 기존분 {len(existing)}건은 별도 보고{tail}")

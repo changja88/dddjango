@@ -17,7 +17,9 @@
               재발화 사본 = 기준선 트리 ⊕ 승인 유입 + 이 명세 스텁)
               (non-ignored 미커밋·미추적 실물 겹침 — D1-1) → `git init`+전량 commit
               (이 커밋이 앵커). 모든 git 호출은 이 스크립트 내부에서만, 훅은 전 호출
-              `core.hooksPath=` 억제.
+              `core.hooksPath=` 억제. 사본 밖을 가리키는 링크는 풀기 · 유입 · 겹침 뒤마다 정리한다 —
+              모두 숨김 경로(문서 입력 `.dddjango/<폴더>/{scope,design-spec}.md` 와 그 조상 제외)면 걷고(머리 메모),
+              하나라도 그 밖이면 계획 스텁을 쓰기 전에 이름 붙은 실행 불능이다(F4-97). 겹침은 링크를 따라 쓰지 않는다.
   3) 실체화 — 조치 태그 의미론(D2)대로 팬텀 스텁을 겹친다. 자동 삽입은 닫힌
               화이트리스트(②상수-배선형)뿐: 신규 BC 표준 골격 전량(`standard_tree`
               재사용)·apps.py 정형(#329/#535~#538)·e2e client 입구 상수(#390)·
@@ -1230,21 +1232,72 @@ def _git(cwd: Path, *args: str, check: bool = True) -> "subprocess.CompletedProc
     return proc
 
 
+_LINK_REFUSALS: "tuple[type, ...]" = tuple(
+    getattr(tarfile, name) for name in ("AbsoluteLinkError", "LinkOutsideDestinationError") if hasattr(tarfile, name))
+
+
 def _extract_archive(repo: Path, base_sha: str, copy: Path) -> None:
-    """`git archive <BASE>` 를 사본 디렉터리로 푼다(훅 억제·저장소 트리 밖)."""
+    """`git archive <BASE>` 를 사본 디렉터리로 푼다(훅 억제·저장소 트리 밖).
+
+    빼도 되는 자리(`anchor_diff.prunable_link`)의 링크는 대상 확인 없이 링크 그대로 풀고(뒤의 `_settle_links` 가
+    사본 밖 것을 걷는다), 그 밖 항목은 `data` 필터로 푼다 — 거절은 traceback 이 아니라 이름 붙은 실행 불능이다."""
     proc: "subprocess.CompletedProcess[bytes]" = _git(repo, "archive", base_sha)
+    data_filter = getattr(tarfile, "data_filter", None)
+    tar_filter = getattr(tarfile, "tar_filter", None)
+
+    def keep(member: tarfile.TarInfo, dest: str) -> "tarfile.TarInfo | None":
+        if member.issym() and anchor_diff.prunable_link(member.name):
+            return tar_filter(member, dest)
+        return data_filter(member, dest)
+
     with tarfile.open(fileobj=io.BytesIO(proc.stdout), mode="r:") as tf:
         try:
-            tf.extractall(copy, filter="data")
-        except TypeError:  # python < 3.12 — filter 미지원
-            tf.extractall(copy)
+            if data_filter is None or tar_filter is None:  # 필터 없는 판 — 같은 규칙은 `_settle_links` 가 건다
+                tf.extractall(copy)
+            else:
+                tf.extractall(copy, filter=keep)
+        except _LINK_REFUSALS as exc:
+            name: str = getattr(getattr(exc, "tarinfo", None), "name", "?")
+            kind: str = "절대 경로" if type(exc).__name__ == "AbsoluteLinkError" else "저장소 밖 상대 경로"
+            raise RunError(f"기준선 {base_sha[:12]} 트리의 심링크 {name} 가 사본 밖을 가리킨다({kind}) — "
+                           "검사 표면 안이라 격리 사본을 만들 수 없다(fail-closed)") from exc
+        except tarfile.TarError as exc:
+            raise RunError(f"기준선 {base_sha[:12]} 트리를 격리 사본으로 풀 수 없다 — "
+                           f"{type(exc).__name__}: {exc}") from exc
+
+
+def _settle_links(copy: Path, origin: str) -> "list[str]":
+    """사본의 사본 밖 링크 — 모두 빼도 되는 자리면 걷고(목록 반환), 하나라도 그 밖이면 실행 불능(계획 스텁을 쓰기 전)."""
+    dropped: "list[str]" = anchor_diff.prune_hidden_escapes(copy)
+    escape: "str | None" = anchor_diff.snapshot_escape(copy)
+    if escape is not None:
+        raise RunError(f"격리 사본에 사본 밖을 가리키는 심링크 {escape}({origin}) — 검사 표면 안이라 예보할 수 "
+                       "없다(fail-closed · 계획 스텁을 쓰기 전에 멈춘다)")
+    return dropped
+
+
+def _link_note(dropped: "list[str]") -> "str | None":
+    """걷은 링크 메모 한 줄(stdout · 리포트 머리) — 없으면 None."""
+    if not dropped:
+        return None
+    return (f"숨김 경로의 사본 밖 심링크 {len(dropped)}개는 사본에서 뺐다(사본 밖 내용을 읽지 않게 · 판정 무관): "
+            + dropped[0] + (f" 외 {len(dropped) - 1}" if len(dropped) > 1 else ""))
+
+
+def _copy_no_follow(src: str, dst: str) -> str:
+    """목적지가 링크나 파일이면 먼저 지운다 — 복사가 링크를 따라 다른 자리에 쓰지 않고, 일반 파일이 링크로 바뀐
+    미커밋 변경(`T`)도 링크 그대로 옮긴다."""
+    if os.path.islink(dst) or os.path.isfile(dst):
+        os.unlink(dst)
+    return shutil.copy2(src, dst, follow_symlinks=False)
 
 
 def _overlay_dirty(repo: Path, copy: Path) -> "list[str]":
     """dirty overlay(D1-1) — non-ignored 미커밋·미추적 실물을 사본 위에 겹친다.
 
     porcelain v1 -z 기준: 수정·신규는 working tree 실물 복사, 삭제는 사본에서 제거,
-    rename 은 to 복사 + from 제거로 수렴한다(실물 존재 여부가 판정 기준).
+    rename 은 to 복사 + from 제거로 수렴한다(실물 존재 여부가 판정 기준). 조상이 링크인 자리에는 쓰지 않고
+    (실행 불능), 목적지 링크는 따라가지 않고 지운 뒤 쓴다.
     """
     proc: "subprocess.CompletedProcess[bytes]" = _git(
         repo, "status", "--porcelain=v1", "-z", "--untracked-files=all")
@@ -1263,13 +1316,15 @@ def _overlay_dirty(repo: Path, copy: Path) -> "list[str]":
             idx += 1
         for rel in rels:
             src: Path = repo / rel
-            dst: Path = copy / rel
+            dst: Path = _inflow_target(copy, rel, "미커밋 작업 트리")
             if src.is_file() or src.is_symlink():
                 dst.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(src, dst, follow_symlinks=False)
+                _copy_no_follow(str(src), str(dst))
                 touched.append(rel)
             elif src.is_dir():
-                shutil.copytree(src, dst, dirs_exist_ok=True, symlinks=True)
+                if dst.is_symlink():
+                    dst.unlink()
+                shutil.copytree(src, dst, dirs_exist_ok=True, symlinks=True, copy_function=_copy_no_follow)
                 touched.append(rel + "/")
             elif dst.is_file() or dst.is_symlink():
                 dst.unlink()
@@ -1384,13 +1439,13 @@ def approved_inflow(repo: Path, base_sha: str, head_sha: str, list_path: Path) -
                           [m.sha for m in participating if m.parent2_only_head])
 
 
-def _inflow_target(copy: Path, rel: str) -> Path:
-    """사본 안의 유입 경로 — 조상에 symlink 가 있으면 사본 밖 쓰기가 되므로 거절한다(fail-closed)."""
+def _inflow_target(copy: Path, rel: str, what: str = "승인 유입") -> Path:
+    """사본 안의 쓰기 경로 — 조상에 symlink 가 있으면 사본 밖 쓰기가 되므로 거절한다(fail-closed)."""
     cur: Path = copy
     for part in PurePosixPath(rel).parts[:-1]:
         cur = cur / part
         if cur.is_symlink():
-            raise RunError(f"승인 유입 경로의 조상이 symlink 다(사본 밖 쓰기 위험): {rel}")
+            raise RunError(f"{what} 경로의 조상이 symlink 다(링크를 따라 쓸 위험): {rel}")
     return copy / rel
 
 
@@ -4407,6 +4462,7 @@ def _main(argv: "list[str]") -> int:
     try:
         copy.mkdir(parents=True)
         _extract_archive(repo, base_sha, copy)
+        dropped_links: "list[str]" = _settle_links(copy, "기준선")
         # archive == 기준선 트리 — 오버레이 «전»에 계획 경로의 실존을 재서 «기준선 실존 add»(형식 red 유지)와
         # «오버레이 실존 add»(재발화 판형의 기실현)를 가른다(git 추가 호출 0·결정적).
         in_baseline: "frozenset[str]" = frozenset(
@@ -4427,9 +4483,15 @@ def _main(argv: "list[str]") -> int:
             in_base_tree: "frozenset[str]" = frozenset(
                 c.path for c in inflow.changes.values() if (copy / c.path).exists() or (copy / c.path).is_symlink())
             apply_inflow(repo, copy, inflow)
+            dropped_links += _settle_links(copy, "승인 유입")
             inflow_note: str = inflow.header_line(lambda path: path in in_base_tree)
             print(inflow_note)
             header_notes = header_notes + (inflow_note,)
+        # 걷은 링크 메모는 형식 red 반송(아래)에도 실리게 여기서 먼저 만든다 — 겹침이 더 걷으면 그 뒤 수만 고친다.
+        link_note: "str | None" = _link_note(dropped_links)
+        if link_note is not None:
+            print(link_note)
+            header_notes = header_notes + (link_note,)
         app_root: Path = copy / "application"
         baseline_bcs: "frozenset[str]" = frozenset(
             d.name for d in app_root.iterdir() if d.is_dir()) if app_root.is_dir() else frozenset()
@@ -4452,6 +4514,13 @@ def _main(argv: "list[str]") -> int:
                   f"기준선 {base_sha[:12]} · 모드 차단")
             return 3
         overlaid: "list[str]" = [] if skip_overlay else _overlay_dirty(repo, copy)
+        overlay_dropped: "list[str]" = _settle_links(copy, "미커밋 작업 트리") if overlaid else []
+        if overlay_dropped:
+            dropped_links += overlay_dropped
+            header_notes = tuple(note for note in header_notes if note != link_note)
+            link_note = _link_note(dropped_links)
+            print(link_note)
+            header_notes = header_notes + (link_note,)
         # 기실현 add 는 앵커 커밋 «전»에 걷어낸다 — 앵커 스냅숏(L)에 실물이 남으면 스텁 진단이 잔존으로 빠진다.
         realized: "frozenset[str]" = lift_realized_adds(copy, plan, explicit_base, in_baseline)
         _git(copy, "init", "-q")

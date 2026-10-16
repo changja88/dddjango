@@ -2840,11 +2840,97 @@ class AnchorSnapshotEscapeRegression(unittest.TestCase):
                                  self.masked(_run(self.released() / script.name, root, argv + ["--anchor", anchor])))
 
 
+class SnapshotLinkHelperRegression(unittest.TestCase):
+    """F4-97 · F4-98 · F4-96(2.23.1) — 사본 속 링크 도우미(빼도 되는 자리 · 걷기 전에 재기 · 이름 순서) ·
+    잴 수 없음 셈 · scope 렌더 승인 유입 · #15 새 꼴의 앵커 차분."""
+
+    def setUp(self) -> None:
+        self.temp: tempfile.TemporaryDirectory[str] = tempfile.TemporaryDirectory(prefix="anchor-link-")
+        self.addCleanup(self.temp.cleanup)
+        self.td: Path = Path(self.temp.name)
+        self.ad: ModuleType = _checker_module(S / "anchor_diff.py")
+
+    def test_prunable_link_protects_document_inputs_in_any_case(self) -> None:
+        expect: dict[str, bool] = {
+            ".dddjango-web/r/basetemp/test_xcurrent": True, ".dddjango/run/sub/x": True, ".dddjango/run/other.md": True,
+            ".github/x": True, "zz/.x": True, "application/orders/x.py": False, ".dddjango": False,
+            ".dddjango/run": False, ".dddjango/run/scope.md": False, ".dddjango/run/design-spec.md": False,
+            ".DDDJANGO/run/design-spec.md": False, ".dddjango/run/DESIGN-SPEC.MD": False, ".DDDJANGO/run/SCOPE.MD": False}
+        self.assertEqual({rel: self.ad.prunable_link(rel) for rel in expect}, expect)
+
+    def test_prune_measures_before_removing_and_names_surface_links_first(self) -> None:
+        outside: Path = self.td / "outside"
+        outside.mkdir()
+        hidden_only: Path = self.td / "hidden-only"
+        (hidden_only / ".dddjango-web").mkdir(parents=True)
+        os.symlink(str(outside), hidden_only / ".dddjango-web" / "current")
+        self.assertEqual(self.ad.prune_hidden_escapes(hidden_only), [".dddjango-web/current"])
+        self.assertFalse(os.path.lexists(hidden_only / ".dddjango-web" / "current"))
+        self.assertIsNone(self.ad.snapshot_escape(hidden_only))
+        through: Path = self.td / "through"
+        (through / "application").mkdir(parents=True)
+        os.symlink(str(outside), through / ".x")
+        os.symlink("../.x/y.py", through / "application" / "y.py")
+        self.assertEqual(self.ad.prune_hidden_escapes(through), [])
+        self.assertTrue(os.path.islink(through / ".x"))
+        self.assertEqual(self.ad.snapshot_escape(through), "application/y.py")
+
+    def test_unmeasured_count_reads_both_measurement_failure_prefixes(self) -> None:
+        retained: dict[str, str] = {"a": "측정 무효(스냅숏 실패) — 0123456789ab",
+                                    "b": "측정 생략(사슬 커밋 65 > 한도 64) — 0123456789ab",
+                                    "c": "유입 증명 실패(이중 원인)"}
+        self.assertEqual(self.ad.unmeasured_count(["a", "b", "c", "d"], retained), 2)
+
+    def test_L4_scope_render_inflow_through_record_link_history_is_proven(self) -> None:
+        repo: Path
+        anchor: str
+        repo, anchor = _init_repo(self.td, "l4", F / "skeleton" / "good_bc")
+        base: str = _git(repo, "branch", "--show-current").stdout.strip()
+        _git(repo, "checkout", "-q", "-b", "lane"); _write(repo, "lane_note.md", "lane\n"); _commit_all(repo, "lane")
+        _git(repo, "checkout", "-q", base)
+        _write(repo, _VIOLATION_REL, _VIOLATION_SRC)
+        link_dir: Path = repo / ".dddjango-web" / "r" / "basetemp"
+        link_dir.mkdir(parents=True)
+        os.symlink(str(self.td / "gone" / "x1"), link_dir / "test_xcurrent")
+        _commit_all(repo, "X1")
+        _git(repo, "checkout", "-q", "lane"); _git(repo, "merge", "-q", "--no-ff", "-m", "M1", base)
+        m1: str = _git(repo, "rev-parse", "HEAD").stdout.strip()
+        _git(repo, "checkout", "-q", base); _git(repo, "rm", "-q", ".dddjango-web/r/basetemp/test_xcurrent"); _commit_all(repo, "X2")
+        _git(repo, "checkout", "-q", "lane"); _git(repo, "merge", "-q", "--no-ff", "-m", "M2", base)
+        m2: str = _git(repo, "rev-parse", "HEAD").stdout.strip()
+        approved: Path = self.td / "l4-approved.txt"
+        approved.write_text(f"{m1} M1\n{m2} M2\n", encoding="utf-8")
+        code, out = _run(CTX, repo, ["--anchor", anchor, "--approved-merge-file", str(approved)])
+        self.assertEqual(code, 0, out)
+        self.assertIn("숨김 경로 링크를 뺀 사본", out)
+        self.assertNotIn("측정 무효", out)
+
+    def test_C1a_new_predicate_forms_in_an_untouched_controller_are_existing_findings(self) -> None:
+        import api_error_backstop_matrix as matrix
+        files: dict[str, str] = matrix._f496_files(matrix._f496_body(
+            "readiness: LessonReadiness = inspect_lesson(lesson_id)\nmissing: tuple[str, ...] = readiness.missing\n"
+            "if missing:\n    incomplete: LessonErrorSchema = LessonIncompleteError()\n    return Status(400, incomplete)\n"
+            "return recalculate_lesson(lesson_id)"))
+        repo: Path = self.td / "c1a"
+        for rel, src in files.items():
+            _write(repo, rel, src)
+        _git(repo, "init", "-q")
+        anchor: str = _commit_all(repo, "anchor")
+        _write(repo, "notes.md", "lane\n")
+        _commit_all(repo, "lane: unrelated")
+        args: list[str] = [a for a in matrix.controller_args() if a != matrix.TARGET_DIR]
+        code, out = _run(CONTRACT, repo, [*args, "--anchor", anchor])
+        self.assertEqual(code, 0, out)
+        self.assertIn("신규분(앵커 이후) 0건", out)
+        self.assertIn("Result variant/outcome failure branch forbidden", out)
+
+
 def main() -> int:
     suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case) for case in (
         BaselineBcArgvRegression, EmptyScopeBcRegression, BcSelectorPartitionRegression, SisterAnchorRegression,
         UnnumberedDebtRegression, BaselineSliceRegression, ApprovedInflowPartitionRegression,
-        BcRenamePairingRegression, RenamedBcBaselineRegression, AnchorSnapshotEscapeRegression))
+        BcRenamePairingRegression, RenamedBcBaselineRegression, AnchorSnapshotEscapeRegression,
+        SnapshotLinkHelperRegression))
     result = unittest.TextTestRunner(verbosity=2).run(
         suite)
     if not result.wasSuccessful():

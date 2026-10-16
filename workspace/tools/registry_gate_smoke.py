@@ -1199,6 +1199,193 @@ class ApprovedInflowGateRegression(unittest.TestCase):
         self.assertEqual(code, 0, out); self.assertIn("조상이 아니다", out); self.assertNotIn("안내:", out)
 
 
+_PREGATE_MINI: Path = ROOT / "workspace" / "eval" / "fixtures" / "pregate" / "mini_repo"
+_LINK_DIR: str = ".dddjango-web/20261012-0717-x/return1/browser-basetemp-2"
+_PURE_REL: str = "framework/pure/json_value.py"
+_PURE_SRC: str = ('from typing import Mapping, Sequence, Union\n\nJsonScalar = Union[str, int, float, bool, None]\n'
+                  'JsonValue = Union[JsonScalar, Sequence["JsonValue"], Mapping[str, "JsonValue"]]\n')
+
+
+def _gate_module() -> ModuleType:
+    import importlib.util
+    sys.path.insert(0, str(GATE.parent))
+    name: str = "registry_gate_smoke_gate"
+    if name not in sys.modules:
+        spec = importlib.util.spec_from_file_location(name, GATE)
+        module: ModuleType = importlib.util.module_from_spec(spec)
+        sys.modules[name] = module  # dataclass 가 모듈 이름으로 자기 모듈을 찾는다(3.14)
+        spec.loader.exec_module(module)
+    return sys.modules[name]
+
+
+class SnapshotLinkRegression(unittest.TestCase):
+    """F4-97 · F4-98(2.23.1) — 사본 밖 링크가 모두 숨김 경로(문서 입력 제외)에 있으면 걷고 재고, 그 밖이면 fail-closed ·
+    판정 줄에 «잴 수 없어 남긴» 수를 따로 적는다."""
+
+    def setUp(self) -> None:
+        self.temp: tempfile.TemporaryDirectory[str] = tempfile.TemporaryDirectory(prefix="gate-link-")
+        self.addCleanup(self.temp.cleanup)
+        self.td: Path = Path(self.temp.name)
+        (self.td / "outside").mkdir()
+
+    def chain(self, name: str, link_dir: str) -> "tuple[Path, str, str, Path]":
+        """앵커 → 레인 커밋 → main X1(위반 + 링크) → 승인 머지 M1 → main X2(링크 걷기) → 승인 머지 M2."""
+        repo: Path
+        anchor: str
+        repo, anchor = _make_repo(self.td, name)
+        base: str = _git(repo, "branch", "--show-current").stdout.strip()
+        _git(repo, "checkout", "-q", "-b", "lane"); _write(repo, "lane_note.md", "lane\n"); _commit_all(repo, "lane")
+        _git(repo, "checkout", "-q", base)
+        _write(repo, _VIOLATION_REL, _VIOLATION_SRC)
+        (repo / link_dir).mkdir(parents=True)
+        os.symlink(str(self.td / "gone" / "x1"), repo / link_dir / "test_xcurrent")
+        _commit_all(repo, "X1 main: violation + record link")
+        _git(repo, "checkout", "-q", "lane"); _git(repo, "merge", "-q", "--no-ff", "-m", "M1", base)
+        m1: str = _head(repo)
+        _git(repo, "checkout", "-q", base); _git(repo, "rm", "-q", f"{link_dir}/test_xcurrent"); _commit_all(repo, "X2 main: link removed")
+        _git(repo, "checkout", "-q", "lane"); _git(repo, "merge", "-q", "--no-ff", "-m", "M2", base)
+        m2: str = _head(repo)
+        approved: Path = self.td / f"{name}-approved.txt"
+        approved.write_text(f"{m1} M1\n{m2} M2\n", encoding="utf-8")
+        return repo, anchor, m1, approved
+
+    def test_L3_history_record_link_no_longer_voids_inflow_proof(self) -> None:
+        repo, anchor, _m1, approved = self.chain("l3", _LINK_DIR)
+        code, out = _gate(repo, anchor, ["--approved-merge-file", str(approved)])
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("측정 무효(스냅숏 실패)", out)
+        self.assertIn("숨김 경로의 사본 밖 심링크를 뺀 스냅숏", out)
+
+    def test_L3b_anchor_inside_the_link_window_is_a_normal_baseline(self) -> None:
+        repo, _anchor, m1, approved = self.chain("l3b", _LINK_DIR)
+        code, out = _gate(repo, m1, ["--approved-merge-file", str(approved)])
+        self.assertEqual(code, 0, out)
+        self.assertIn(f"정보: 앵커 {m1[:12]} 사본에서 숨김 경로의 사본 밖 심링크 1개를 뺐다", out)
+        self.assertNotIn("기준선 불능", out)
+
+    def test_L6_surface_link_stays_unmeasured_and_is_counted_on_the_verdict(self) -> None:
+        repo, anchor, _m1, approved = self.chain("l6", "records/x")
+        code, out = _gate(repo, anchor, ["--approved-merge-file", str(approved)])
+        self.assertEqual(code, 2, out)
+        self.assertIn("측정 무효(스냅숏 실패)", out)
+        self.assertRegex(out, r"판정: 귀속 (\d+)건 → red\(승인 유입 0건 제외 · 귀속 \1건 가운데 잴 수 없어 남긴 \d+건 — 위 provenance 진단\)")
+
+    def test_L8_surface_link_escaping_through_a_hidden_link_is_named_without_traceback(self) -> None:
+        repo, _anchor = _make_repo(self.td, "l8")
+        (self.td / "outside" / "y.py").write_text("X = 1\n", encoding="utf-8")
+        os.symlink(str(self.td / "outside"), repo / ".x")
+        os.symlink("../../.x/y.py", repo / "application" / "orders" / "y.py")
+        anchor: str = _commit_all(repo, "anchor with links")
+        _write(repo, "lane_note.md", "lane\n"); _commit_all(repo, "lane")
+        code, out = _gate(repo, anchor)
+        self.assertEqual(code, 2, out)
+        self.assertNotIn("Traceback", out)
+        self.assertIn(f"주의: 앵커 {anchor[:12]} 사본에 사본 밖을 가리키는 심링크 application/orders/y.py", out)
+        self.assertIn("(기준선 불능 — 앵커 사본 밖 심링크 · 현재 위반 전량 귀속)", out)
+
+    def test_L10_document_inputs_and_case_variants_stay_fail_closed(self) -> None:
+        approval: Path = self.td / "outside" / "approval.md"
+        approval.write_text("# 설계\n- 멱등성 채택 — G1 결정(사용자 승인)\n", encoding="utf-8")
+        for index, rel in enumerate((".dddjango/run/design-spec.md", ".DDDJANGO/run/design-spec.md",
+                                     ".dddjango/run/DESIGN-SPEC.MD", ".DDDJANGO/run/SCOPE.MD", ".dddjango")):
+            with self.subTest(rel=rel):
+                repo, _pre = _make_repo(self.td, f"l10-{index}")
+                _write(repo, "application/orders/domain_layer/order/idempotency_record.py", 'class IdempotencyRecord:\n    """x."""\n')
+                link: Path = repo / rel
+                link.parent.mkdir(parents=True, exist_ok=True)
+                os.symlink(str(approval if rel != ".dddjango" else self.td / "outside"), link)
+                anchor: str = _commit_all(repo, "anchor with document link")
+                link.unlink()
+                _write(repo, rel if rel != ".dddjango" else ".dddjango/run/scope.md", "# 승인 없음\n")
+                _commit_all(repo, "lane: approval removed")
+                code, out = _gate(repo, anchor)
+                self.assertEqual(code, 2, out)
+                self.assertIn("(기준선 불능 — 앵커 사본 밖 심링크 · 현재 위반 전량 귀속)", out)
+
+
+class ListShrinkRegression(unittest.TestCase):
+    """F4-99(2.23.1) — 줄 번호 없는 줄의 문자열 목록 칸만 줄었고 그 파일이 앵커와 바이트까지 같으면 잔존이다."""
+
+    def setUp(self) -> None:
+        self.temp: tempfile.TemporaryDirectory[str] = tempfile.TemporaryDirectory(prefix="gate-list-")
+        self.addCleanup(self.temp.cleanup)
+        self.td: Path = Path(self.temp.name)
+
+    def repo(self, name: str, extra: str = "") -> Path:
+        repo: Path = self.td / name
+        shutil.copytree(_PREGATE_MINI, repo)
+        _write(repo, "application/orders/domain_layer/order_sequence/__init__.py", "")
+        _write(repo, "application/orders/domain_layer/order_sequence/order_sequence.py",
+               "class OrderSequence:\n    def next_json_scalar(self) -> int:\n        return 1\n")
+        for rel in ("application/library/__init__.py", "application/library/domain_layer/__init__.py",
+                    "application/library/domain_layer/search_term_mapping/__init__.py",
+                    "framework/__init__.py", "framework/pure/__init__.py"):
+            _write(repo, rel, "")
+        _write(repo, "application/library/domain_layer/search_term_mapping/search_term_mapping.py",
+               "class SearchTermMapping:\n    pass\n")
+        _write(repo, _PURE_REL, _PURE_SRC + extra)
+        _git(repo, "init", "-q")
+        _commit_all(repo, "anchor")
+        return repo
+
+    def test_V1_deleting_a_bc_only_shrinks_the_untouched_pure_list(self) -> None:
+        repo: Path = self.repo("v1")
+        shutil.rmtree(repo / "application" / "library")
+        code, out = _gate(repo, "HEAD")
+        self.assertEqual(code, 0, out)
+        self.assertIn("목록만 줄어 잔존으로 센 줄 1건", out)
+        self.assertIn("↳ 앵커: check-business-vocabulary.py :: [#562] framework/pure/json_value.py: pure/ 에 업무 어휘 "
+                      "['json', 'mapping', 'scalar', 'sequence']", out)
+        self.assertIn("== ⓓ 신규(N′∖L′) 0건 · legacy 1건 · 해소 0건", out)
+        self.assertIn("  legacy check-business-vocabulary.py: 1", out)
+        self.assertIn("  목록만 줄어 legacy 로 센 ⓓ 줄 1건", out)
+        self.assertIn("↳ 앵커: check-business-vocabulary.py :: [ⓓ#448] framework/pure/json_value.py: framework 파일에 업무 어휘 "
+                      "['json', 'mapping', 'scalar', 'sequence']", out)
+
+    def test_V3_lists_longer_than_five_words_are_not_cut(self) -> None:
+        repo: Path = self.repo("v3", '\n\nclass NextOrderSearchTerm:\n    """x."""\n')
+        shutil.rmtree(repo / "application" / "library")
+        code, out = _gate(repo, "HEAD")
+        self.assertEqual(code, 0, out)
+        self.assertIn("['json', 'mapping', 'next', 'order', 'scalar', 'search', 'sequence', 'term']", out)
+
+    def test_V4_V5_A1_C3_growth_swap_and_edited_file_stay_attributed(self) -> None:
+        def edit(repo: Path, replace: "tuple[str, str] | None", append: str, delete_bc: bool) -> None:
+            path: Path = repo / _PURE_REL
+            text: str = path.read_text(encoding="utf-8")
+            if replace is not None:
+                text = text.replace(*replace)
+            path.write_text(text + append, encoding="utf-8")
+            if delete_bc:
+                shutil.rmtree(repo / "application" / "library")
+        variants = {
+            "v4-growth": (None, "\n\nclass JsonTerm:\n    pass\n", False),
+            "v5-swap": (None, "\n\nclass JsonOrder:\n    pass\n", True),
+            "a1-edited-same-words": (None, "\n\nclass JsonScalarSequence:\n    pass\n", True),
+            "c3-edited-shrunk": (("Mapping[str, \"JsonValue\"]", "dict[str, \"JsonValue\"]"),
+                                 "\n\ndef json_scalar_sequence(value: JsonScalar) -> Sequence[JsonScalar]:\n    return [value]\n", False),
+        }
+        for name, (replace, append, delete_bc) in variants.items():
+            with self.subTest(name=name):
+                repo: Path = self.repo(name)
+                edit(repo, replace, append, delete_bc)
+                code, out = _gate(repo, "HEAD")
+                self.assertEqual(code, 2, out)
+                self.assertIn("[#562] framework/pure/json_value.py", _section(out, "귀속(N∖L)"))
+                self.assertNotIn("목록만 줄어", out)
+
+    def test_list_shrunk_pairs_one_to_one_only_for_file_level_string_lists(self) -> None:
+        gate: ModuleType = _gate_module()
+        old: str = "c.py :: [#562] f/x.py: 업무 어휘 ['a', 'b', 'c'] — 끝"
+        self.assertEqual(gate._list_shrunk(["c.py :: [#562] f/x.py: 업무 어휘 ['a', 'c'] — 끝",
+                                            "c.py :: [#562] f/x.py: 업무 어휘 ['b'] — 끝"], [old]),
+                         {"c.py :: [#562] f/x.py: 업무 어휘 ['a', 'c'] — 끝": old})
+        self.assertEqual(gate._list_shrunk(["c.py :: [#616] f/x.py:N: 애그리거트 ['A'] — 끝"],
+                                           ["c.py :: [#616] f/x.py:N: 애그리거트 ['A', 'B'] — 끝"]), {})
+        self.assertEqual(gate._list_shrunk(["c.py :: [#562] f/x.py: 업무 어휘 ['a', 'd'] — 끝"], [old]), {})
+        self.assertEqual(gate._list_shrunk(["c.py :: [#562] f/x.py: 수 [1] — 끝"], ["c.py :: [#562] f/x.py: 수 [1, 2] — 끝"]), {})
+
+
 def _unnumbered_debt_rows(td: Path, repo: Path, anchor: str, debt: Path,
                           e_out: str) -> "list[tuple[str, int, int, bool, str]]":
     """E3 · E4 — 번호 없는 줄 빚(`= <검사기 파일> :: <줄>`)을 섞은 목록: 새 게이트와 옛 직렬 게이트 사본
@@ -1231,7 +1418,7 @@ def _unnumbered_debt_rows(td: Path, repo: Path, anchor: str, debt: Path,
 def main() -> int:
     suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case)
                                for case in (CacheSnapshotRegression, IdempotencySnapshotRegression, SisterGateRegression,
-                                            ApprovedInflowGateRegression))
+                                            ApprovedInflowGateRegression, SnapshotLinkRegression, ListShrinkRegression))
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     if not result.wasSuccessful():
         return 2

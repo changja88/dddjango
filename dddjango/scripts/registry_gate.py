@@ -12,6 +12,13 @@ legacy 위반이 상존해 「루트 registry 전체 green」이 문자 그대�
   현재 상태에서 registry 실행 → 위반 라인 집합 N
   귀속 = N ∖ L  (라인번호·스냅숏 경로만 정규화 — 경로 «파싱»을 하지 않는다)
 
+- **목록만 줄어든 줄**(F4-99): 줄 번호 없는 줄이 앵커 줄과 문자열 목록 칸(`['a', 'b']`)만 다르고 칸마다 부분집합이며
+  그 주어 파일(레코드 경로)이 앵커 · 현재 사본에서 바이트까지 같으면 잔존(L∩N)으로 센다 — 다른 파일(합집합)이
+  바뀌어 목록이 준 것이지 늘린 위반이 아니다. 짝은 1:1 이고 legacy 잔존 절에 앵커 줄과 함께 찍는다.
+- **사본 속 링크**(F4-97 · F4-98): 앵커 · 승인 유입 측정 사본에서 사본 밖을 가리키는 링크가 모두 숨김 경로
+  (문서 입력 `.dddjango/<폴더>/{scope,design-spec}.md` 와 그 조상은 빼고)에 있으면 그 링크를 걷고 잰다. 하나라도
+  그 밖이면 지금처럼 그 사본을 증거로 쓰지 않는다(fail-closed · 판정 줄에 «잴 수 없어 남긴» 수를 따로 적는다).
+
 - **앵커는 actor 가 고르지 않는다** — 라운드에선 대장의 앵커 커밋, 파이프라인에선
   Phase 2 진입 직전 기록되는 build-start 앵커(`commands/dddjango.md` 절차 소유)를
   호출자가 그대로 넘긴다. 앵커=HEAD 이고 working tree 가 clean 이면 차분이 공허하므로
@@ -182,7 +189,7 @@ def _snapshot_current(root: Path, dest: Path) -> None:
         return ignore(directory, names) | {name for name in names if parent / name in omitted}
 
     shutil.copytree(root, dest, ignore=ignore_current)
-    for name in ("scope.md", "design-spec.md"):
+    for name in anchor_diff.DOC_INPUTS:
         for source in sorted((root / ".dddjango").glob(f"*/{name}")):
             if source.is_file():
                 target = dest / source.relative_to(root)
@@ -219,6 +226,50 @@ def _strip_snapshot(text: str, prefixes: "tuple[str, ...]") -> str:
 def _normalize(line: str, prefixes: "tuple[str, ...]") -> str:
     """차분 키용 정규화 — 경로 제거 + 라인번호 정규화(상하 이동 오탐 방지)."""
     return _LINENO_RE.sub(":N", _strip_snapshot(line, prefixes))
+
+
+_STR_LIST_RE: "re.Pattern[str]" = re.compile(r"\[(?:'[^'\\\n]*'(?:, '[^'\\\n]*')*)?\]")
+
+
+def _list_shrunk(new: "list[str]", gone: "list[str]") -> "dict[str, str]":
+    """N∖L 줄 → 짝 L∖N 줄 — 두 줄이 문자열 목록 칸(`['a', 'b']`)만 다르고 칸마다 N 쪽이 L 쪽의 부분집합일 때(1:1)."""
+    def split(line: str) -> "tuple[str, list[set[str]]]":
+        found: "list[set[str]]" = [set(ast.literal_eval(m.group(0))) for m in _STR_LIST_RE.finditer(line)]
+        return _STR_LIST_RE.sub("[…]", line), found
+    file_level: "re.Pattern[str]" = re.compile(r"^\S+ :: \[(?:ⓓ)?#\d+\] [^:\s]+: ")
+    pool: "dict[str, list[tuple[str, list[set[str]]]]]" = {}
+    for line in gone:
+        if not file_level.match(line):
+            continue
+        key, found = split(line)
+        if found:
+            pool.setdefault(key, []).append((line, found))
+    pairs: "dict[str, str]" = {}
+    for line in new:
+        if not file_level.match(line):
+            continue
+        key, found = split(line)
+        if not found:
+            continue
+        for index, (old, old_found) in enumerate(pool.get(key, [])):
+            if len(old_found) == len(found) and all(a <= b for a, b in zip(found, old_found)):
+                pairs[line] = old
+                del pool[key][index]
+                break
+    return pairs
+
+
+def _same_file(anchor: Path, current: Path, rel: "str | None") -> bool:
+    """앵커 사본과 현재 사본의 `rel` 이 둘 다 링크 아닌 일반 파일이고 바이트까지 같은가 — 모르면 거짓(짝 안 지음)."""
+    if not rel:
+        return False
+    a: Path = anchor / rel
+    b: Path = current / rel
+    try:
+        return (a.is_file() and b.is_file() and not a.is_symlink() and not b.is_symlink()
+                and a.read_bytes() == b.read_bytes())
+    except OSError:
+        return False
 
 
 def plugin_version() -> str:
@@ -556,6 +607,7 @@ class _ProvenanceResult:
     snapshot_failures: "dict[str, str]" = field(default_factory=dict)    # sha → git 오류(진단 절 — 출력 소실 0)
     snapshots_run: int = 0
     checker_runs: int = 0
+    pruned_snapshots: "list[str]" = field(default_factory=list)          # 숨김 경로 사본 밖 링크를 뺀 스냅숏의 첫 경로
 
     @property
     def inflow_lines(self) -> "set[str]":
@@ -721,7 +773,9 @@ def _provenance_split(root: Path, anchor_sha: str, head_sha: str,
         if t not in snap_cache:
             dest: Path = td / f"snap-{t[:12]}"
             try:
-                anchor_diff.snapshot_anchor(root, sha, dest)
+                pruned: "list[str]" = anchor_diff.snapshot_anchor(root, sha, dest)
+                if pruned:
+                    res.pruned_snapshots.append(pruned[0])
             except (anchor_diff.AnchorDiffUsage, OSError) as exc:  # git/tar 불능 + mkdir·디스크 오류 — traceback 0
                 failure_cache[t] = f"{type(exc).__name__}: {str(exc).strip()}"
                 res.snapshot_failures[sha] = failure_cache[t]
@@ -947,6 +1001,8 @@ def main(argv: "list[str]") -> int:
         anc_prefixes: "tuple[str, ...]" = ()
         unclassifiable_n: "set[str]" = set()
         unclassifiable_l: "set[str]" = set()
+        anchor_escape: "str | None" = None
+        pair_root: "Path | None" = None   # 목록 짝을 지을 앵커 사본(정상 차분일 때만)
 
         if not is_git:
             print("주의: 비-git TARGET — 차분 불능이라 fail-closed(현재 위반 전량 귀속)")
@@ -1002,11 +1058,15 @@ def main(argv: "list[str]") -> int:
                     return 1
             anc: Path = Path(td) / "anchor"
             try:
-                anchor_diff.snapshot_anchor(root, anchor_sha, anc)
+                anchor_pruned: "list[str]" = anchor_diff.snapshot_anchor(root, anchor_sha, anc)
             except anchor_diff.AnchorDiffUsage as exc:
                 print(f"재료 결손: {exc}", file=sys.stderr)
                 return 1
-            anchor_escape: "str | None" = anchor_diff.snapshot_escape(anc)
+            if anchor_pruned:
+                print(f"정보: 앵커 {anchor_sha[:12]} 사본에서 숨김 경로의 사본 밖 심링크 {len(anchor_pruned)}개를 뺐다"
+                      "(사본 밖 내용을 읽지 않게 — 현재 쪽 사본은 숨김 경로를 복사하지 않는다 · 판정 무관): "
+                      + anchor_pruned[0] + (f" 외 {len(anchor_pruned) - 1}" if len(anchor_pruned) > 1 else ""))
+            anchor_escape = anchor_diff.snapshot_escape(anc)
             if anchor_escape is not None:
                 # 앵커 사본의 심링크가 사본 밖(예: 이 작업 트리)을 가리키면 앵커 실행이 «지금» 내용을 읽는다 —
                 # 그 실행은 기준선이 못 된다. 비-git 가지와 같이 현재 위반 전량을 귀속한다(fail-closed).
@@ -1020,6 +1080,7 @@ def main(argv: "list[str]") -> int:
                 l_cands = set()
                 n_set |= _parse_fail_findings(cur)
             else:
+                pair_root = anc
                 # 앵커·현재 두 벌을 동시에 돈다 — 검사기 동시 실행 한도는 두 벌이 나눠 쓰는 공용 풀이 정한다.
                 # `with` 를 나갈 때 두 벌이 모두 끝나 있으므로 한쪽 예외도 임시 폴더 정리와 겹치지 않는다.
                 with ThreadPoolExecutor(max_workers=2, thread_name_prefix="registry-side") as sides:
@@ -1037,9 +1098,23 @@ def main(argv: "list[str]") -> int:
         attributed: "list[str]" = sorted(n_set - l_set)
         resolved: "list[str]" = sorted(l_set - n_set)
         residual: "list[str]" = sorted(l_set & n_set)
-        cand_new: "list[str]" = sorted(n_cands - l_cands)      # ⓓ 신규(N′∖L′) — 감수자 입력
-        cand_legacy: int = len(n_cands & l_cands)               # ⓓ legacy — 보고만
-        cand_resolved: int = len(l_cands - n_cands)
+        shrunk: "dict[str, str]" = {}
+        cand_shrunk: "dict[str, str]" = {}
+        if pair_root is not None:
+            # 목록 칸만 줄어든 줄은 그 파일이 앵커와 바이트까지 같을 때만 잔존으로 센다(F4-99 — 고치지 않은 파일).
+            subjects: "dict[str, str | None]" = _line_paths(attributed + sorted(n_cands - l_cands), n_records, cur_prefixes)
+
+            def untouched(line: str, _anchor: Path = pair_root) -> bool:
+                return _same_file(_anchor, cur, subjects.get(line))
+            shrunk = _list_shrunk([line for line in attributed if untouched(line)], resolved)
+            cand_shrunk = _list_shrunk([line for line in sorted(n_cands - l_cands) if untouched(line)],
+                                       sorted(l_cands - n_cands))
+        attributed = [line for line in attributed if line not in shrunk]
+        resolved = [line for line in resolved if line not in set(shrunk.values())]
+        residual = sorted(set(residual) | set(shrunk))
+        cand_new: "list[str]" = sorted((n_cands - l_cands) - set(cand_shrunk))      # ⓓ 신규(N′∖L′) — 감수자 입력
+        cand_legacy: int = len(n_cands & l_cands) + len(cand_shrunk)               # ⓓ legacy — 보고만
+        cand_resolved: int = len(l_cands - n_cands) - len(cand_shrunk)
 
         debt: "list[str]" = []
         if debt_rules:
@@ -1077,7 +1152,7 @@ def main(argv: "list[str]") -> int:
                         r"\(pre-scan\) :: \[#parse-fail\] (.+?): (.*)", line)
                     path = match.group(1) if match is not None else None
                 normal: bool = (checker not in invalid and not (
-                    provenance is not None and provenance.retained.get(line, "").startswith(("측정 무효(", "측정 생략("))))
+                    provenance is not None and anchor_diff.unmeasured(provenance.retained.get(line, ""))))
                 (sister if normal and anchor_diff.sister_path(path) else rest).append(line)
             attributed = rest
             # 계약은 숫자 차분 집합에 넣지 않는다. 신규 계약 레코드의 주어를 따로 가르고 보고한다.
@@ -1119,15 +1194,25 @@ def main(argv: "list[str]") -> int:
     print(f"\n== legacy 잔존(L∩N) {len(residual)}건 · 해소(L∖N) {len(resolved)}건 ==")
     for script in sorted(by_checker):
         print(f"  {script}: {by_checker[script]}")
+    if shrunk:
+        print(f"  목록만 줄어 잔존으로 센 줄 {len(shrunk)}건(진단 글의 낱말 목록이 앵커 줄의 부분집합 — 늘린 위반이 아니다):")
+        for line, anchor_line in sorted(shrunk.items()):
+            print(f"    {line}")
+            print(f"      ↳ 앵커: {anchor_line}")
     if n_cands or l_cands:
         print(f"\n== ⓓ 신규(N′∖L′) {len(cand_new)}건 · legacy {cand_legacy}건 · 해소 {cand_resolved}건 — exit 불산입 · 감수자 입력은 신규분만(R-0284) ==")
         for line in cand_new:
             print(f"  {line}")
         legacy_by: "dict[str, int]" = {}
-        for line in (n_cands & l_cands):
+        for line in (n_cands & l_cands) | set(cand_shrunk):
             legacy_by[line.split(" :: ", 1)[0]] = legacy_by.get(line.split(" :: ", 1)[0], 0) + 1
         for script in sorted(legacy_by):
             print(f"  legacy {script}: {legacy_by[script]}")
+        if cand_shrunk:
+            print(f"  목록만 줄어 legacy 로 센 ⓓ 줄 {len(cand_shrunk)}건(진단 글의 낱말 목록이 앵커 줄의 부분집합):")
+            for line, anchor_line in sorted(cand_shrunk.items()):
+                print(f"    {line}")
+                print(f"      ↳ 앵커: {anchor_line}")
     if provenance is not None:
         _print_provenance_diag(provenance, anchor_sha)
     if ns.introduced_json is not None:
@@ -1142,6 +1227,12 @@ def main(argv: "list[str]") -> int:
                         l_records, cur_prefixes, anc_prefixes)
 
     tail: str = f"(승인 유입 {len(provenance.inflow)}건 제외)" if provenance is not None else ""
+    unmeasured: int = anchor_diff.unmeasured_count(attributed, provenance.retained) if provenance is not None else 0
+    if unmeasured:
+        tail = f"(승인 유입 {len(provenance.inflow)}건 제외 · 귀속 {len(attributed)}건 가운데 잴 수 없어 남긴 {unmeasured}건 — 위 provenance 진단)"
+    if anchor_escape is not None:
+        note: str = "기준선 불능 — 앵커 사본 밖 심링크 · 현재 위반 전량 귀속"
+        tail = f"{tail[:-1]} · {note})" if tail else f"({note})"
     print(f"\n판정: 귀속 {len(attributed)}건 → {'green(신규 위반 없음)' if not attributed else 'red'}{tail}")
     return 0 if not attributed else 2
 
@@ -1175,6 +1266,9 @@ def _print_provenance_diag(prov: _ProvenanceResult, anchor_sha: str) -> None:
     print(f"  스냅숏 실행 {st['snapshots_run']} · 검사기 재실행 {st['checker_runs']}")
     for sha, why in prov.snapshot_failures.items():
         print(f"  스냅숏 실패(측정 무효 — 해당 머지의 후보 라인은 귀속 유지): {sha[:12]} — {why}")
+    if prov.pruned_snapshots:
+        print(f"  숨김 경로의 사본 밖 심링크를 뺀 스냅숏 {len(prov.pruned_snapshots)}개(판정 무관 · 첫 경로 "
+              f"{prov.pruned_snapshots[0]})")
     unapproved: "list[str]" = list(st["unapproved_merges"])  # type: ignore[arg-type]
     if unapproved:
         print(f"  미승인 머지: {' '.join(sha[:12] for sha in unapproved)}")

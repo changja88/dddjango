@@ -1108,5 +1108,229 @@ class BookAdmin(TranslatableAdmin):
         self.assertEqual(pg.check_report(text, report)[0], 3)
 
 
+class SnapshotLinkPregateTest(unittest.TestCase):
+    """F4-97(2.23.1) — 격리 사본의 링크: 숨김 경로(문서 입력 제외)의 사본 밖 링크는 걷고 예보하며, 그 밖은 계획 스텁을
+    쓰기 전에 이름 붙은 실행 불능이다. 겹침은 링크를 따라 쓰지 않는다."""
+
+    SPEC: Path = ROOT / "workspace/eval/fixtures/pregate/green-spec.md"
+    LINK_DIR: str = ".dddjango-web/20261012-0717-x/return1/browser-basetemp-2"
+
+    def setUp(self) -> None:
+        self.temp = tempfile.TemporaryDirectory(prefix="pregate-link-")
+        self.addCleanup(self.temp.cleanup)
+        self.td = Path(self.temp.name)
+        self.outside = self.td / "outside"
+        self.outside.mkdir()
+
+    def run_pregate(self, repo: Path, *extra: str) -> "tuple[subprocess.CompletedProcess[str], Path]":
+        report = self.td / f"{repo.name}-report.md"
+        report.write_text("SENTINEL\n", encoding="utf-8")
+        env = dict(os.environ)
+        env.pop("DJR_FINDINGS_JSON", None)
+        run = subprocess.run([sys.executable, str(SCRIPTS / "design_pregate.py"), str(self.SPEC), str(repo),
+                              "--report", str(report), *extra], capture_output=True, text=True, env=env)
+        return run, report
+
+    def commit(self, repo: Path, message: str) -> str:
+        _git(repo, "add", "-A")
+        _git(repo, "commit", "-q", "-m", message)
+        return _git(repo, "rev-parse", "HEAD")
+
+    def assert_forecast_with_note(self, run, report: Path, path: str) -> None:
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertNotIn("Traceback", run.stderr)
+        note = f"숨김 경로의 사본 밖 심링크 1개는 사본에서 뺐다(사본 밖 내용을 읽지 않게 · 판정 무관): {path}"
+        self.assertIn(note, run.stdout)
+        self.assertIn(note, report.read_text(encoding="utf-8"))
+
+    def assert_named_stop(self, run, report: Path, message: str) -> None:
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertNotIn("Traceback", run.stderr)
+        self.assertIn(message, run.stderr)
+        self.assertEqual(report.read_text(encoding="utf-8"), "SENTINEL\n")
+
+    def test_L1_committed_record_links_forecast_normally(self) -> None:
+        targets = {"abs-dangling": str(self.td / "gone" / "x1"), "abs-live": str(self.outside),
+                   "rel-outside": "../../../../../outside-target"}
+        for name, target in targets.items():
+            with self.subTest(kind=name):
+                repo = _make_repo(self.td, "l1-" + name)
+                (repo / self.LINK_DIR).mkdir(parents=True)
+                os.symlink(target, repo / self.LINK_DIR / "test_xcurrent")
+                self.commit(repo, "record link")
+                run, report = self.run_pregate(repo)
+                self.assert_forecast_with_note(run, report, f"{self.LINK_DIR}/test_xcurrent")
+
+    def test_L1c_old_base_holding_the_link(self) -> None:
+        repo = _make_repo(self.td, "l1c")
+        (repo / self.LINK_DIR).mkdir(parents=True)
+        os.symlink(str(self.td / "gone" / "x1"), repo / self.LINK_DIR / "test_xcurrent")
+        linked = self.commit(repo, "record link")
+        _git(repo, "rm", "-q", f"{self.LINK_DIR}/test_xcurrent")
+        self.commit(repo, "record link removed")
+        run, report = self.run_pregate(repo, "--base", linked)
+        self.assert_forecast_with_note(run, report, f"{self.LINK_DIR}/test_xcurrent")
+
+    def test_L1d_uncommitted_record_link_and_regular_file_replaced_by_link(self) -> None:
+        repo = _make_repo(self.td, "l1d")
+        (repo / self.LINK_DIR).mkdir(parents=True)
+        os.symlink(str(self.td / "gone" / "x1"), repo / self.LINK_DIR / "test_xcurrent")
+        run, report = self.run_pregate(repo)
+        self.assert_forecast_with_note(run, report, f"{self.LINK_DIR}/test_xcurrent")
+        replaced = _make_repo(self.td, "l1d-replaced")
+        (replaced / ".dddjango-web/x").mkdir(parents=True)
+        (replaced / ".dddjango-web/x/current").write_text("regular\n", encoding="utf-8")
+        self.commit(replaced, "regular record file")
+        (replaced / ".dddjango-web/x/current").unlink()
+        os.symlink(str(self.outside / "t.txt"), replaced / ".dddjango-web/x/current")
+        run, report = self.run_pregate(replaced)
+        self.assert_forecast_with_note(run, report, ".dddjango-web/x/current")
+
+    def test_L1e_record_link_arriving_by_approved_merge(self) -> None:
+        repo = _make_repo(self.td, "l1e")
+        base = _git(repo, "branch", "--show-current")
+        _git(repo, "checkout", "-q", "-b", "lane")
+        (repo / "lane_note.md").write_text("note\n", encoding="utf-8")
+        before = self.commit(repo, "lane work")
+        _git(repo, "checkout", "-q", base)
+        (repo / self.LINK_DIR).mkdir(parents=True)
+        os.symlink(str(self.td / "gone" / "x1"), repo / self.LINK_DIR / "test_xcurrent")
+        self.commit(repo, "main: record link")
+        _git(repo, "checkout", "-q", "lane")
+        _git(repo, "merge", "-q", "--no-ff", "-m", "M merge main", base)
+        merge = _git(repo, "rev-parse", "HEAD")
+        approved = self.td / "l1e-approved.txt"
+        approved.write_text(f"{merge} M\n", encoding="utf-8")
+        run, report = self.run_pregate(repo, "--base", before, "--approved-merge-file", str(approved))
+        self.assert_forecast_with_note(run, report, f"{self.LINK_DIR}/test_xcurrent")
+        run, report = self.run_pregate(repo)
+        self.assert_forecast_with_note(run, report, f"{self.LINK_DIR}/test_xcurrent")
+
+    def test_L2_surface_links_stop_by_name_before_any_write(self) -> None:
+        repo = _make_repo(self.td, "l2-committed")
+        os.symlink(str(self.outside / "x.py"), repo / "application/orders/x.py")
+        self.commit(repo, "surface link")
+        run, report = self.run_pregate(repo)
+        self.assert_named_stop(run, report, "트리의 심링크 application/orders/x.py 가 사본 밖을 가리킨다(절대 경로)")
+        through = _make_repo(self.td, "l2-through")
+        os.symlink(str(self.outside), through / ".x")
+        os.symlink("../../.x/y.py", through / "application/orders/y.py")
+        self.commit(through, "surface link through a hidden link")
+        run, report = self.run_pregate(through)
+        self.assert_named_stop(run, report, "트리의 심링크 application/orders/y.py 가 사본 밖을 가리킨다(저장소 밖 상대 경로)")
+        order = _make_repo(self.td, "l2-order")
+        (order / "zz").mkdir()
+        os.symlink(str(self.outside), order / "zz/.x")
+        os.symlink("../../zz/.x/y.py", order / "application/orders/y.py")
+        self.commit(order, "surface link extracted before the hidden link")
+        run, report = self.run_pregate(order)
+        self.assert_named_stop(run, report, "격리 사본에 사본 밖을 가리키는 심링크 application/orders/y.py(기준선)")
+
+    def test_L2b_uncommitted_and_inflow_surface_links_write_nothing_outside(self) -> None:
+        billing = self.td / "outside-billing"
+        billing.mkdir()
+        repo = _make_repo(self.td, "l2b")
+        os.symlink(str(billing), repo / "application/billing")
+        run, report = self.run_pregate(repo)
+        self.assert_named_stop(run, report, "격리 사본에 사본 밖을 가리키는 심링크 application/billing(미커밋 작업 트리)")
+        self.assertEqual(sorted(billing.rglob("*")), [])
+        replaced = _make_repo(self.td, "l2b-replaced")
+        (replaced / "application/orders/x.py").write_text("X = 1\n", encoding="utf-8")
+        self.commit(replaced, "regular file")
+        (replaced / "application/orders/x.py").unlink()
+        os.symlink(str(self.outside / "t.txt"), replaced / "application/orders/x.py")
+        run, report = self.run_pregate(replaced)
+        self.assert_named_stop(run, report, "격리 사본에 사본 밖을 가리키는 심링크 application/orders/x.py(미커밋 작업 트리)")
+        inflow_out = self.td / "outside-inflow"
+        inflow_out.mkdir()
+        lane = _make_repo(self.td, "l2b-inflow")
+        base = _git(lane, "branch", "--show-current")
+        _git(lane, "checkout", "-q", "-b", "lane")
+        (lane / "lane_note.md").write_text("note\n", encoding="utf-8")
+        before = self.commit(lane, "lane work")
+        _git(lane, "checkout", "-q", base)
+        os.symlink(str(inflow_out), lane / "application/billing")
+        self.commit(lane, "main: billing link")
+        _git(lane, "checkout", "-q", "lane")
+        _git(lane, "merge", "-q", "--no-ff", "-m", "M merge main", base)
+        approved = self.td / "l2b-approved.txt"
+        approved.write_text(f"{_git(lane, 'rev-parse', 'HEAD')} M\n", encoding="utf-8")
+        run, report = self.run_pregate(lane, "--base", before, "--approved-merge-file", str(approved))
+        self.assert_named_stop(run, report, "격리 사본에 사본 밖을 가리키는 심링크 application/billing(승인 유입)")
+        self.assertEqual(sorted(inflow_out.rglob("*")), [])
+
+    def test_overlay_never_writes_through_a_destination_link(self) -> None:
+        repo = _make_repo(self.td, "overlay-in-copy")
+        (repo / "application/orders/b.py").write_text("B = 1\n", encoding="utf-8")
+        os.symlink("b.py", repo / "application/orders/a.py")
+        self.commit(repo, "in-copy link a -> b")
+        (repo / "application/orders/a.py").unlink()
+        (repo / "application/orders/a.py").write_text("A = 2\n", encoding="utf-8")
+        run, _report = self.run_pregate(repo, "--keep")
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        kept = Path(run.stdout.rsplit("격리 사본 보존: ", 1)[1].splitlines()[0])
+        self.addCleanup(shutil.rmtree, kept, True)
+        self.assertFalse((kept / "copy/application/orders/a.py").is_symlink())
+        self.assertEqual((kept / "copy/application/orders/a.py").read_text(encoding="utf-8"), "A = 2\n")
+        self.assertEqual((kept / "copy/application/orders/b.py").read_text(encoding="utf-8"), "B = 1\n")
+        target = self.outside / "record.txt"
+        target.write_text("OUTSIDE-ORIGINAL\n", encoding="utf-8")
+        hidden = _make_repo(self.td, "overlay-hidden")
+        (hidden / ".dddjango-web/x").mkdir(parents=True)
+        os.symlink(str(target), hidden / ".dddjango-web/x/out.txt")
+        self.commit(hidden, "record link to an outside file")
+        (hidden / ".dddjango-web/x/out.txt").unlink()
+        (hidden / ".dddjango-web/x/out.txt").write_text("LANE-REGULAR\n", encoding="utf-8")
+        run, _report = self.run_pregate(hidden)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertEqual(target.read_text(encoding="utf-8"), "OUTSIDE-ORIGINAL\n")
+        # 커밋된 사본 안 폴더 링크 lnk -> real_dir — (가) 작업 트리에서 진짜 폴더로 바꿈: 링크를 지우고 폴더를 겹친다.
+        dir_repo = self.inside_dir_link("overlay-dir")
+        orders = dir_repo / "application/orders"
+        (orders / "lnk").unlink()
+        (orders / "lnk").mkdir()
+        (orders / "lnk/new.txt").write_text("NEW\n", encoding="utf-8")
+        run, _report = self.run_pregate(dir_repo, "--keep")
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        kept = Path(run.stdout.rsplit("격리 사본 보존: ", 1)[1].splitlines()[0])
+        self.addCleanup(shutil.rmtree, kept, True)
+        self.assertFalse((kept / "copy/application/orders/lnk").is_symlink())
+        self.assertEqual((kept / "copy/application/orders/lnk/new.txt").read_text(encoding="utf-8"), "NEW\n")
+        self.assertFalse((kept / "copy/application/orders/real_dir/new.txt").exists())
+        # (나) git mv 로 링크를 옮기고 옛 이름에 새 폴더를 들임: 링크가 조상인 자리에는 쓰지 않고 이름 붙여 멈춘다.
+        moved = self.inside_dir_link("overlay-moved")
+        _git(moved, "mv", "application/orders/lnk", "application/orders/lnk2")
+        (moved / "application/orders/lnk").mkdir()
+        (moved / "application/orders/lnk/new.txt").write_text("NEW\n", encoding="utf-8")
+        _git(moved, "add", "application/orders/lnk/new.txt")
+        run, report = self.run_pregate(moved)
+        self.assert_named_stop(run, report, "미커밋 작업 트리 경로의 조상이 symlink 다(링크를 따라 쓸 위험): "
+                                            "application/orders/lnk/new.txt")
+
+    def inside_dir_link(self, name: str) -> Path:
+        repo = _make_repo(self.td, name)
+        orders = repo / "application/orders"
+        (orders / "real_dir").mkdir()
+        (orders / "real_dir/keep.txt").write_text("keep\n", encoding="utf-8")
+        os.symlink("real_dir", orders / "lnk")
+        self.commit(repo, "in-copy directory link")
+        return repo
+
+    def test_L1f_form_red_report_still_names_removed_links(self) -> None:
+        repo = _make_repo(self.td, "l1f")
+        (repo / self.LINK_DIR).mkdir(parents=True)
+        os.symlink(str(self.td / "gone" / "x1"), repo / self.LINK_DIR / "test_xcurrent")
+        self.commit(repo, "record link")
+        report = self.td / "l1f-report.md"
+        env = dict(os.environ)
+        env.pop("DJR_FINDINGS_JSON", None)
+        run = subprocess.run([sys.executable, str(SCRIPTS / "design_pregate.py"),
+                              str(ROOT / "workspace/eval/fixtures/pregate/update-target-spec.md"), str(repo),
+                              "--report", str(report)], capture_output=True, text=True, env=env)
+        self.assertEqual(run.returncode, 3, run.stdout + run.stderr)
+        note = f"숨김 경로의 사본 밖 심링크 1개는 사본에서 뺐다(사본 밖 내용을 읽지 않게 · 판정 무관): {self.LINK_DIR}/test_xcurrent"
+        self.assertIn(note, run.stdout)
+        self.assertIn(note, report.read_text(encoding="utf-8"))
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

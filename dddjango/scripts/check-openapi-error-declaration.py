@@ -31,7 +31,7 @@ import sys
 
 import checker_target
 from findings import Findings, emit_all, lines, zero_target_guard
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from http import HTTPStatus
 from pathlib import Path
 from typing import Callable
@@ -182,6 +182,7 @@ class Operation:
     bindings: dict[str, str]
     body_bindings: dict[str, str]
     annotations_evaluated: bool
+    type_aliases: "dict[str, tuple[ast.expr, dict[str, str]]]" = field(default_factory=dict)  # 이름 → (식, 별칭 문장 앞 바인딩)
 
     @property
     def identity(self) -> str:
@@ -2310,8 +2311,63 @@ def _operation_decorator(
     return None
 
 
+_TYPE_ALIAS_ANNOTATIONS: "frozenset[str]" = frozenset({"typing.TypeAlias", "typing_extensions.TypeAlias"})
+
+
+def _bound_name_count(tree: ast.Module, name: str) -> int:
+    """모듈 어디서든(함수 · 클래스 몸통 · 조건 · 반복 · 컴프리헨션 포함) `name` 을 묶는 자리 수 — `import *` 가 있으면 2."""
+    count: int = 0
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Name):
+            count += int(node.id == name and isinstance(node.ctx, (ast.Store, ast.Del)))
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            count += int(node.name == name)
+        elif isinstance(node, (ast.Import, ast.ImportFrom)):
+            for alias in node.names:
+                if alias.name == "*":
+                    return 2
+                count += int((alias.asname or alias.name.split(".", 1)[0]) == name)
+        elif isinstance(node, (ast.Global, ast.Nonlocal)):
+            count += int(name in node.names)
+        elif isinstance(node, ast.ExceptHandler):
+            count += int(node.name == name)
+        elif isinstance(node, ast.arg):
+            count += int(node.arg == name)
+        else:
+            for attr in ("name", "rest"):  # match 패턴 · PEP 695 형 매개변수
+                value = getattr(node, attr, None)
+                if isinstance(value, str) and not isinstance(node, ast.alias):
+                    count += int(value == name)
+    return count
+
+
+def _module_type_aliases(
+    tree: ast.Module, before: "dict[int, dict[str, str]]"
+) -> "dict[str, tuple[ast.expr, dict[str, str]]]":
+    """F4-96 — 모듈 최상위 별칭 문장(`type X = 식`(형 매개변수 없음) · `X = 식` · `X: TypeAlias = 식`) 가운데
+    그 이름을 묶는 자리가 모듈 전체에서 그 문장 하나뿐인 것 → (식, 그 문장 앞 바인딩)."""
+    type_alias = getattr(ast, "TypeAlias", None)
+    found: "dict[str, tuple[ast.expr, dict[str, str]]]" = {}
+    for statement in tree.body:
+        bindings: "dict[str, str]" = before.get(id(statement), {})
+        name: "str | None" = None
+        value: "ast.expr | None" = None
+        if type_alias is not None and isinstance(statement, type_alias) and not getattr(statement, "type_params", None):
+            name, value = statement.name.id, statement.value
+        elif isinstance(statement, ast.Assign) and len(statement.targets) == 1 and isinstance(statement.targets[0], ast.Name):
+            name, value = statement.targets[0].id, statement.value
+        elif (isinstance(statement, ast.AnnAssign) and isinstance(statement.target, ast.Name)
+              and statement.value is not None
+              and _resolve_expression(statement.annotation, bindings) in _TYPE_ALIAS_ANNOTATIONS):
+            name, value = statement.target.id, statement.value
+        if name is not None and value is not None and _bound_name_count(tree, name) == 1:
+            found[name] = (value, dict(bindings))
+    return found
+
+
 def _collect_operations(parsed: ParsedSource) -> list[Operation]:
     operations: list[Operation] = []
+    module_aliases = _module_type_aliases(parsed.tree, _module_symbol_bindings_before(parsed))
     annotations_evaluated = _annotations_are_evaluated(parsed.tree)
     final_module_bindings = _bindings_after_block(
         parsed.tree.body,
@@ -2347,6 +2403,7 @@ def _collect_operations(parsed: ParsedSource) -> list[Operation]:
                         dict(state.bindings),
                         dict(final_module_bindings),
                         annotations_evaluated,
+                        module_aliases,
                     )
                 )
             _drop_provenance_names(
@@ -2592,11 +2649,16 @@ def _declared_schema_symbols(
     expression: ast.expr,
     bindings: dict[str, str],
     catalog: dict[str, ErrorSymbol],
+    operation: "Operation | None" = None,
+    depth: int = 0,
 ) -> list[ErrorSymbol | str] | None:
-    """`response=` 값 하나가 선언하는 schema 집합 — `Union[A, B]`·`A | B` 는 원소로 편다. 해석 불능이면 None."""
+    """`response=` 값 하나가 선언하는 schema 집합 — `Union[A, B]`·`A | B` 는 원소로 편다. 해석 불능이면 None.
+
+    `operation` 을 주면 모듈 별칭 이름(`Operation.type_aliases`)도 편다 — 별칭 식을 «별칭 문장 앞» · «오퍼레이션
+    자리» · «모듈 끝» 세 바인딩으로 풀어 셋이 같을 때만(평가 시점에 흔들리지 않을 때만) 쓰고, 3단까지만."""
     if isinstance(expression, ast.BinOp) and isinstance(expression.op, ast.BitOr):
-        left = _declared_schema_symbols(expression.left, bindings, catalog)
-        right = _declared_schema_symbols(expression.right, bindings, catalog)
+        left = _declared_schema_symbols(expression.left, bindings, catalog, operation, depth)
+        right = _declared_schema_symbols(expression.right, bindings, catalog, operation, depth)
         return None if left is None or right is None else [*left, *right]
     if isinstance(expression, ast.Subscript) and _resolve_expression(
         expression.value, bindings
@@ -2606,12 +2668,21 @@ def _declared_schema_symbols(
         )
         symbols: list[ErrorSymbol | str] = []
         for member in members:
-            resolved = _declared_schema_symbols(member, bindings, catalog)
+            resolved = _declared_schema_symbols(member, bindings, catalog, operation, depth)
             if resolved is None:
                 return None
             symbols.extend(resolved)
         return symbols
     symbol = _schema_symbol(expression, bindings, catalog)
+    if (symbol is None and operation is not None and depth < 3 and isinstance(expression, ast.Name)
+            and expression.id not in bindings and expression.id in operation.type_aliases):
+        value, at_alias = operation.type_aliases[expression.id]
+        readings = [_declared_schema_symbols(value, scope, catalog, operation, depth + 1)
+                    for scope in (at_alias, operation.bindings, operation.body_bindings)]
+        if any(reading is None for reading in readings):
+            return None
+        keys = [sorted(s.full_path if isinstance(s, ErrorSymbol) else s for s in reading) for reading in readings]
+        return readings[0] if keys[0] == keys[1] == keys[2] else None
     return None if symbol is None else [symbol]
 
 
@@ -2675,7 +2746,7 @@ def _response_findings(
                 )
             )
             continue
-        declared = _declared_schema_symbols(value, operation.bindings, catalog)
+        declared = _declared_schema_symbols(value, operation.bindings, catalog, operation)
         if declared is None:
             raise UsageError(
                 "required response schema provenance 분석 불능: "
@@ -2703,7 +2774,7 @@ def _response_findings(
     for status, value in sorted(final_values.items()):
         if status in uncertain or not 400 <= status <= 599:
             continue
-        declared = _declared_schema_symbols(value, operation.bindings, catalog) or []
+        declared = _declared_schema_symbols(value, operation.bindings, catalog, operation) or []
         if not any(isinstance(schema, ErrorSymbol) for schema in declared):
             continue
         schema = next(schema for schema in declared if isinstance(schema, ErrorSymbol))

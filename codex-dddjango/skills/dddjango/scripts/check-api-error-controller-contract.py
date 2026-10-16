@@ -4463,7 +4463,27 @@ def _subject_root_name(node: ast.AST) -> str | None:
     return None
 
 
-def _result_test_name(test: ast.AST) -> str | None:
+def _extended_result_subject(operation: Operation, test: ast.AST) -> ast.AST | None:
+    """F4-96 — 지금 꼴 밖에서 새로 읽는 술어 둘의 주어: 참·거짓 그대로(`if <주어>:` — `not` 은 받지 않는다) ·
+    이름 상수와 같음(`<주어> == <이름>[.<이름>…]` — 뿌리 이름이 이 함수 안에서 묶이지 않은 것)."""
+    if isinstance(test, (ast.Name, ast.Attribute)):
+        return test
+    if (
+        isinstance(test, ast.Compare)
+        and len(test.ops) == 1
+        and isinstance(test.ops[0], ast.Eq)
+        and len(test.comparators) == 1
+    ):
+        root = test.comparators[0]
+        while isinstance(root, ast.Attribute):
+            root = root.value
+        if isinstance(root, ast.Name) and root.id not in operation.local_names:
+            return test.left
+    return None
+
+
+def _result_test_name(test: ast.AST, operation: Operation | None = None) -> str | None:
+    """분기 주어의 뿌리 이름 — `operation` 을 주면 F4-96 의 새 두 꼴도 읽는다(없으면 지금 꼴만)."""
     if _result_compare_kind(test) is not None:
         return _subject_root_name(test.left)
     if (
@@ -4475,6 +4495,10 @@ def _result_test_name(test: ast.AST) -> str | None:
         and isinstance(test.args[0], ast.Name)
     ):
         return test.args[0].id
+    if operation is not None:
+        subject = _extended_result_subject(operation, test)
+        if subject is not None:
+            return _subject_root_name(subject)
     return None
 
 
@@ -4533,6 +4557,11 @@ def _supported_result_test(
     # predicate 형태를 `is None`/`isinstance` 둘로 좁히지 않는다).
     if _result_compare_kind(test) is not None:
         return _result_subject_name(test.left, result_name, alias) is not None
+    extended = _extended_result_subject(operation, test)
+    if extended is not None:
+        if isinstance(test, ast.Name) and test.id == result_name:
+            return False  # 결과 이름 자체의 참·거짓 — None 길의 표준 꼴은 `is None` 하나다(지금처럼 분석 불능)
+        return _result_subject_name(extended, result_name, alias) is not None
     # (b) `isinstance(result, <DirectOwnBcType>)` — 타입은 Name 또는 `<Result>.<Variant>`.
     if (
         isinstance(test, ast.Call)
@@ -4950,6 +4979,9 @@ def _analyze_results(
                 ):
                     break
                 test_name = _result_test_name(branch.test)
+                if test_name is None:  # 새 두 꼴(F4-96)은 이 호출의 결과 · 별칭이 주어일 때만
+                    extended = _result_test_name(branch.test, operation)
+                    test_name = extended if extended in (result_name, alias) else None
                 if test_name is not None and test_name != result_name and test_name != alias:
                     break
                 if not _analyze_result_if_chain(
@@ -4998,6 +5030,11 @@ def _analyze_results(
             break
         index = max(cursor, index + 1)
 
+    # 새 두 꼴(F4-96)은 «호출 대입으로 묶인 이름» 이 주어일 때만 읽는다 — 매개변수 · request 같은 호출 전 검사는
+    # 지금처럼 분석 불능으로 남긴다(«바로 뒤로 옮기라» 는 헛걸음 지적을 내지 않게).
+    call_names: set[str] = {
+        assigned[0] for statement in body
+        for assigned in (_call_assignment(statement) or _try_assignment(statement),) if assigned is not None}
     for index, statement in enumerate(body):
         if not isinstance(statement, ast.If):
             continue
@@ -5008,6 +5045,10 @@ def _analyze_results(
         ):
             continue
         test_name = _result_test_name(statement.test)
+        if test_name is None and not isinstance(statement.test, ast.Name):
+            # 결과 이름 자체의 참·거짓(`if result:`)은 어느 자리에서든 읽지 않는다(None 길의 표준 꼴은 `is None`).
+            extended = _result_test_name(statement.test, operation)
+            test_name = extended if extended in call_names else None
         if test_name is None:
             analysis.append(
                 f"{operation.parsed.relative_path}:{statement.lineno} unsupported Result/error candidate predicate"
@@ -8531,6 +8572,10 @@ def main(argv: list[str]) -> int:
         # tree 위반이 code 레인 전에 exit 2 를 선점한다(현행) — code 미실행이라
         # 선점 억제 없음(tree 단독 그대로).
         _print_tree_blocks(tree_findings, tree_candidates)
+        if config.profile != "auto":
+            print("[check-api-error-controller-contract] 안내: 트리 진단이 먼저 서서 이 실행은 컨트롤러 코드 검사"
+                  "(오류 매핑 · 분석 불능 포함)를 돌지 않았다 — `--anchor` · `--anchor-baseline` 실행은 끝까지 돈다"
+                  "(이 줄은 판정 · exit 를 바꾸지 않는다)")
         return 2
 
     if config.profile != "auto":

@@ -6772,6 +6772,330 @@ def initialize_git_fixture(root: Path, baseline_files: dict[str, str]) -> None:
             )
 
 
+# ── F4-96(2.23.1): #15 술어 두 꼴 · #5 모듈 별칭 ─────────────────────────────────────────────
+F496_ERRORS: Final = """from enum import StrEnum
+from framework.ninja.framework_error_schema import FrameworkErrorSchema
+
+
+class LessonErrorCode(StrEnum):
+    NOT_FOUND = "lesson_not_found"
+    CONFLICT = "lesson_conflict"
+    INCOMPLETE = "lesson_incomplete"
+
+
+class LessonErrorSchema(FrameworkErrorSchema):
+    code: LessonErrorCode
+
+
+class LessonNotFoundError(LessonErrorSchema):
+    code: LessonErrorCode = LessonErrorCode.NOT_FOUND
+    title: str = "Lesson not found"
+    status: int = 404
+    detail: str = "The lesson does not exist."
+
+
+class LessonConflictError(LessonErrorSchema):
+    code: LessonErrorCode = LessonErrorCode.CONFLICT
+    title: str = "Lesson conflict"
+    status: int = 409
+    detail: str = "The lesson cannot be changed."
+
+
+class LessonIncompleteError(LessonErrorSchema):
+    code: LessonErrorCode = LessonErrorCode.INCOMPLETE
+    title: str = "Lesson incomplete"
+    status: int = 400
+    detail: str = "The lesson input is incomplete."
+"""
+F496_USE_CASES: Final = """class LessonMissing(Exception):
+    pass
+
+
+def get_lesson(lesson_id: int):
+    return {"id": lesson_id}
+
+
+class LessonReadiness:
+    missing: tuple[str, ...] = ()
+
+
+def inspect_lesson(lesson_id: int) -> LessonReadiness:
+    return LessonReadiness()
+
+
+def recalculate_lesson(lesson_id: int):
+    return {"id": lesson_id}
+"""
+F496_CONTROLLER_HEAD: Final = """from ninja import Router, Status
+from application.lesson.application_layer.use_cases import (
+    LessonMissing,
+    LessonReadiness,
+    get_lesson,
+    inspect_lesson,
+    recalculate_lesson,
+)
+from application.lesson.driving_layer.api.bc_error_schema import (
+    LessonErrorSchema,
+    LessonIncompleteError,
+    LessonNotFoundError,
+    LessonErrorCode,
+)
+NOT_CALCULATED: str = "not_calculated"
+
+router = Router()
+
+
+@router.post("/{lesson_id}", response={200: dict, 400: LessonIncompleteError, 404: LessonNotFoundError})
+def op(request, lesson_id: int, kind: str = "x"):
+"""
+F496_OPENAPI_HEAD: Final = """from typing import TypeAlias
+from ninja import Router, Status
+from application.lesson.application_layer.use_cases import LessonMissing, get_lesson
+from application.lesson.driving_layer.api.bc_error_schema import (
+    LessonErrorSchema,
+    LessonIncompleteError,
+    LessonNotFoundError,
+    LessonConflictError,
+)
+FLAG: bool = False
+"""
+F496_OPENAPI_OP: Final = """
+router = Router()
+
+
+@router.get("/{lesson_id}", response={200: dict, 404: _E})
+def get_lesson_controller(request, lesson_id: int):
+    try:
+        lesson = get_lesson(lesson_id)
+    except LessonMissing:
+        error = LessonNotFoundError()
+        return Status(error.status, error)
+    return lesson
+"""
+F496_LEGACY_TREE_FINDING: Final = """from ninja import Router, Status
+
+router = Router()
+
+
+@router.get("/legacy")
+def legacy_lesson(request) -> Status[dict] | Status[str]:
+    return Status(200, {})
+"""
+
+
+def _f496_files(controller: str) -> dict[str, str]:
+    return with_files(
+        ("application/lesson/driving_layer/api/bc_error_schema.py", F496_ERRORS),
+        ("application/lesson/application_layer/use_cases.py", F496_USE_CASES),
+        ("application/lesson/driving_layer/controller.py", controller),
+        base=CONTROLLER_FILES,
+    )
+
+
+def _f496_body(body: str) -> str:
+    lines = [line for line in body.strip("\n").splitlines()]
+    return F496_CONTROLLER_HEAD + "".join(f"    {line}\n" if line else "\n" for line in lines)
+
+
+F496_RESULT_BRANCH: Final = "Result variant/outcome failure branch forbidden"
+F496_PREDICATE: Final = "Result candidate predicate 분석 불능"
+F496_UNSUPPORTED: Final = "unsupported Result/error candidate predicate"
+F496_OPENAPI_PROVENANCE: Final = "required response schema provenance 분석 불능"
+F496_OPENAPI_MISMATCH: Final = "직접 반환 BC 오류와 response= 선언 계약 불일치"
+
+
+def f496_cases() -> list[Case]:
+    """F4-96 — #15 는 별칭 · 결과 칸의 참·거짓과 이름 상수와 같음을 #571 로 읽고, #5 는 모듈 별칭을 세 시점 일치로 푼다.
+    `red-first` 는 2.23.0 에서 exit 1(분석 불능)이던 꼴, `guard` 는 2.23.0 그대로 남아야 하는 꼴이다."""
+    controller = "check-api-error-controller-contract.py"
+    openapi = "check-openapi-error-declaration.py"
+    cases: list[Case] = []
+
+    def c15(name: str, body: str, code: int, fragment: str, note: str) -> None:
+        cases.append(Case(name, _f496_files(_f496_body(body)), controller, controller_args(), code, fragment, note=note))
+
+    c15("f496-c1-alias-truthy", """readiness: LessonReadiness = inspect_lesson(lesson_id)
+missing: tuple[str, ...] = readiness.missing
+if missing:
+    incomplete: LessonErrorSchema = LessonIncompleteError()
+    return Status(400, incomplete)
+return recalculate_lesson(lesson_id)""", 2, F496_RESULT_BRANCH, "red-first · 별칭 참·거짓")
+    c15("f496-c2-named-constant", """result = get_lesson(lesson_id)
+if result.reason == NOT_CALCULATED:
+    error = LessonNotFoundError()
+    return Status(404, error)
+return result""", 2, F496_RESULT_BRANCH, "red-first · 모듈 상수")
+    c15("f496-c2b-enum-member", """result = get_lesson(lesson_id)
+if result.code == LessonErrorCode.NOT_FOUND:
+    error = LessonNotFoundError()
+    return Status(404, error)
+return result""", 2, F496_RESULT_BRANCH, "red-first · enum 멤버")
+    c15("f496-c2c-result-field-truthy-else", """result = get_lesson(lesson_id)
+if result.ok:
+    return result.value
+else:
+    error = LessonNotFoundError()
+    return Status(404, error)""", 2, "is not owned by an approved catch/Result arm", "red-first · 결과 칸 참·거짓")
+    c15("f496-c6-success-arm-then-constant", """result = get_lesson(lesson_id)
+if result.found:
+    return result
+if result.reason == NOT_CALCULATED:
+    error = LessonNotFoundError()
+    return Status(404, error)
+return result""", 2, "Result/error mapping must immediately follow its try-free call assignment",
+        "red-first · 성공 가지 뒤 오류 가지 = «바로 뒤» 지적(체인 소속 무변)")
+    c15("f496-c3-local-comparator", """result = get_lesson(lesson_id)
+if result.kind == kind:
+    error = LessonNotFoundError()
+    return Status(404, error)
+return result""", 1, F496_PREDICATE, "guard · 지역 이름 비교")
+    c15("f496-c4-not-result", """result = get_lesson(lesson_id)
+if not result:
+    error = LessonNotFoundError()
+    return Status(404, error)
+return result""", 1, F496_PREDICATE, "guard · `not` 꼴")
+    c15("f496-c4b-bare-result-truthy", """result = get_lesson(lesson_id)
+if result:
+    error = LessonNotFoundError()
+    return Status(404, error)
+return result""", 1, F496_PREDICATE, "guard · 결과 이름 자체")
+    c15("f496-c4c-bare-result-nonadjacent", """result = get_lesson(lesson_id)
+marker = 1
+if result:
+    error = LessonNotFoundError()
+    return Status(404, error)
+return result""", 1, F496_UNSUPPORTED, "guard · 떨어진 결과 이름 자체")
+    c15("f496-c5-precall-attr", """if request.auth:
+    error = LessonNotFoundError()
+    return Status(404, error)
+result = get_lesson(lesson_id)
+return result""", 1, F496_UNSUPPORTED, "guard · 호출 전 입력 검사")
+    c15("f496-c5b-precall-param-constant", """if kind == NOT_CALCULATED:
+    error = LessonNotFoundError()
+    return Status(404, error)
+result = get_lesson(lesson_id)
+return result""", 1, F496_UNSUPPORTED, "guard · 매개변수 상수 비교")
+    c15("f496-c5c-precall-not", """if not lesson_id:
+    error = LessonNotFoundError()
+    return Status(404, error)
+result = get_lesson(lesson_id)
+return result""", 1, F496_UNSUPPORTED, "guard · `not` 호출 전")
+    c15("f496-c5d-other-name-after-call", """result = get_lesson(lesson_id)
+if request.auth:
+    error = LessonNotFoundError()
+    return Status(404, error)
+return result""", 1, F496_PREDICATE, "guard · 호출 뒤 다른 이름")
+    # C-8 — 차분 없는 code 프로필 선점 실행의 안내 한 줄(auto 는 무변 — C-7 바이트 비교가 박는다).
+    preempt_files = with_files(("application/lesson/driving_layer/api/legacy/__init__.py", ""),
+                               ("application/lesson/driving_layer/api/legacy/legacy_controller.py", F496_LEGACY_TREE_FINDING),
+                               base=_f496_files(_f496_body("return get_lesson(lesson_id)")))
+    cases.append(Case("f496-c8-preemption-note", preempt_files, controller, controller_args(), 2,
+                      "안내: 트리 진단이 먼저 서서 이 실행은 컨트롤러 코드 검사", note="red-first · 선점 안내"))
+    cases.append(Case("f496-c8b-preemption-auto", preempt_files, controller,
+                      (TARGET_DIR, "--error-profile", "auto"), 2, "[#648]", note="guard · auto 는 안내 없음(C-7)"))
+
+    def c5(name: str, module: str, code: int, fragment: str, note: str) -> None:
+        source = F496_OPENAPI_HEAD + module
+        cases.append(Case(name, _f496_files(source), openapi, controller_args(), code, fragment, note=note))
+
+    op = F496_OPENAPI_OP
+    c5("f496-d1-pep695-alias", "type _E = LessonNotFoundError\n" + op, 0, "", "red-first · `type` 별칭")
+    c5("f496-d1b-pep695-union", "type _E = LessonNotFoundError | LessonNotFoundError\n" + op, 0, "", "red-first · `type` 합집합")
+    c5("f496-d1c-alias-of-alias", "type _F = LessonNotFoundError\ntype _E = _F | LessonNotFoundError\n" + op, 0, "",
+       "red-first · 별칭의 별칭")
+    c5("f496-d2-typing-typealias-attr", "import typing\n_E: typing.TypeAlias = LessonNotFoundError | LessonNotFoundError\n" + op,
+       0, "", "red-first · typing.TypeAlias")
+    c5("f496-d3-pep695-overdeclared", "type _E = LessonNotFoundError | LessonConflictError\n" + op, 2, F496_OPENAPI_MISMATCH,
+       "red-first · 별칭 과다 선언 = #63")
+    c5("f496-d5-extra-advertisement",
+       "type _C = LessonConflictError\n" + op.replace("404: _E}", "404: LessonNotFoundError, 409: _C}"), 2,
+       "선언에 직접 BC 오류 반환 없음", "red-first · 별칭 선언의 extra-bc-advertisement(불변식의 유일한 예외)")
+    c5("f496-d4-augassign", "_E = LessonNotFoundError\n_E |= LessonConflictError\n" + op, 1, F496_OPENAPI_PROVENANCE,
+       "guard · `|=` 다시 묶기")
+    c5("f496-d4b-walrus", "_E = LessonNotFoundError | LessonNotFoundError\n(_E := LessonNotFoundError | LessonConflictError)\n" + op,
+       1, F496_OPENAPI_PROVENANCE, "guard · 바다코끼리")
+    c5("f496-d4c-cond-shadow", "_E = LessonNotFoundError | LessonNotFoundError\nif FLAG:\n    _E = LessonConflictError | LessonNotFoundError\n" + op,
+       1, F496_OPENAPI_PROVENANCE, "guard · 조건 안 다시 묶기")
+    c5("f496-d4d-eager-member-rebind", "_E = LessonConflictError | LessonNotFoundError\nLessonConflictError = LessonNotFoundError\n" + op,
+       1, F496_OPENAPI_PROVENANCE, "guard · 평 대입 뒤 원소 이름 다시 묶기(세 시점 불일치)")
+    c5("f496-d4e-typed-params", "type _E[T] = LessonNotFoundError\n" + op, 1, F496_OPENAPI_PROVENANCE, "guard · 형 매개변수")
+    c5("f496-d4f-param-named-alias", "_E = LessonNotFoundError | LessonNotFoundError\n\n\ndef _helper(_E: int) -> int:\n    return _E\n" + op,
+       1, F496_OPENAPI_PROVENANCE, "guard · 같은 이름 매개변수(보수)")
+    class_shadow = """
+from ninja_extra import api_controller, route
+
+type _E = LessonNotFoundError
+
+
+@api_controller("/lesson")
+class LessonController:
+    _E = LessonNotFoundError | LessonConflictError
+
+    @route.get("/{lesson_id}", response={200: dict, 404: _E})
+    def get_lesson(self, lesson_id: int):
+        try:
+            lesson = get_lesson(lesson_id)
+        except LessonMissing:
+            error = LessonNotFoundError()
+            return Status(error.status, error)
+        return lesson
+"""
+    c5("f496-d4g-class-shadow", class_shadow, 1, F496_OPENAPI_PROVENANCE, "guard · 클래스 몸통이 가림")
+    c5("f496-d1d-three-level-alias", "type _G = LessonNotFoundError\ntype _F = _G\ntype _E = _F\n" + op, 0, "",
+       "red-first · 별칭 3단(상한 안)")
+    c5("f496-d4h-alias-cycle", "type _A = _B | LessonNotFoundError\ntype _B = _A | LessonNotFoundError\ntype _E = _A\n" + op,
+       1, F496_OPENAPI_PROVENANCE, "guard · 별칭 고리(깊이 상한 — traceback 없이 분석 불능)")
+    c5("f496-d4i-four-level-alias", "type _H = LessonNotFoundError\ntype _G = _H\ntype _F = _G\ntype _E = _F\n" + op,
+       1, F496_OPENAPI_PROVENANCE, "guard · 별칭 4단(상한 밖)")
+    return cases
+
+
+# ── C-7(2.23.1 불변식): #15 출력은 새 두 꼴이 «호출의 결과 · 별칭 · 호출 대입 이름» 을 주어로 삼은 실행에서만 바뀐다 —
+# 2.23.0(배포 커밋 고정)과 같은 픽스처에서 나란히 돌려, 다른 실행은 옛 출력에 두 분석 불능 글 가운데 하나가 있어야 한다.
+# 예외는 차분 없는 code 프로필 선점 실행의 `안내:` 한 줄뿐이다.
+RELEASED_2230_COMMIT: Final = "e1f6cb74"
+F496_PREEMPTION_NOTE: Final = "[check-api-error-controller-contract] 안내: 트리 진단이 먼저 서서"
+
+
+def _released_checker_dir(scratch: Path) -> Path:
+    archive = subprocess.run(["git", "-C", str(REPOSITORY_ROOT), "archive", RELEASED_2230_COMMIT, "dddjango/scripts"],
+                             capture_output=True, check=True)
+    subprocess.run(["tar", "-x", "-C", str(scratch)], input=archive.stdout, check=True)
+    return scratch / "dddjango" / "scripts"
+
+
+def controller_invariant_failures(cases: list[Case]) -> list[str]:
+    failures: list[str] = []
+    env = dict(os.environ)
+    env.pop("DJR_FINDINGS_JSON", None)
+    with tempfile.TemporaryDirectory(prefix="dddjango-api-error-released-") as released_root:
+        released = _released_checker_dir(Path(released_root))
+        for case in cases:
+            if case.checker != "check-api-error-controller-contract.py":
+                continue
+            with tempfile.TemporaryDirectory(prefix="dddjango-api-error-c7-") as directory:
+                fixture_root = Path(directory)
+                if case.baseline_files is not None:
+                    initialize_git_fixture(fixture_root, case.baseline_files)
+                write_fixture(fixture_root, case.files)
+                args = [str(fixture_root) if arg == TARGET_DIR else arg for arg in case.checker_args]
+                runs = [subprocess.run([sys.executable, str(scripts / case.checker), *args],
+                                       capture_output=True, text=True, check=False, env=env)
+                        for scripts in (released, CHECKER_DIR)]
+            old, new = runs
+            new_stdout = new.stdout
+            if "auto" not in case.checker_args:
+                new_stdout = "".join(line for line in new.stdout.splitlines(keepends=True)
+                                     if not line.startswith(F496_PREEMPTION_NOTE))
+            if (old.returncode, old.stdout, old.stderr) == (new.returncode, new_stdout, new.stderr):
+                continue
+            if F496_PREDICATE in old.stderr or F496_UNSUPPORTED in old.stderr:
+                continue
+            failures.append(f"[C-7 {case.name}] 2.23.0 과 출력이 다른데 옛 출력에 분석 불능 글이 없다\n"
+                            f"old exit={old.returncode}\n{old.stdout}{old.stderr}\nnew exit={new.returncode}\n{new.stdout}{new.stderr}")
+    return failures
+
+
 def run_case(case: Case) -> tuple[bool, str, int]:
     validate_checker_args(case)
     checker = CHECKER_DIR / case.checker
@@ -6809,6 +7133,7 @@ def main() -> int:
         *composition_cases(),
         *openapi_cases(),
         *success_cases(),
+        *f496_cases(),
     ]
     passed = 0
     checker_mismatches = 0
@@ -6827,12 +7152,16 @@ def main() -> int:
         else:
             checker_mismatches += 1
             print(detail)
+    invariant = controller_invariant_failures(cases)
+    for detail in invariant:
+        print(detail)
     print(
         "api-error backstop matrix: "
         f"passed={passed} checker_mismatches={checker_mismatches} "
-        f"runner_failures={runner_failures} tracebacks={tracebacks} total={len(cases)}"
+        f"runner_failures={runner_failures} tracebacks={tracebacks} total={len(cases)} "
+        f"c7_invariant_failures={len(invariant)}"
     )
-    return 1 if checker_mismatches or runner_failures or tracebacks else 0
+    return 1 if checker_mismatches or runner_failures or tracebacks or invariant else 0
 
 
 if __name__ == "__main__":

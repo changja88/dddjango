@@ -340,19 +340,19 @@ def _check_isolation(root: Path, fw: Path, union: set, bc_names: set, agg_camels
                 if cap_dir.is_dir() else False
             if is_cap and py.stem.endswith("_out"):
                 f.add("#617", _rel(root, py),
-                      f"<data>_out.py 에 업무 어휘 {hit[:5]} — 한 글자라도 나오면 위반이다(#628)")
+                      f"<data>_out.py 에 업무 어휘 {hit} — 한 글자라도 나오면 위반이다(#628)")
             elif is_cap and py.stem.endswith("_in"):
                 f.add("#587", _rel(root, py),
-                      f"<data>_in.py 에 업무 어휘 {hit[:5]} — 검사 둘 중 하나(어휘 0)에 걸렸다")
+                      f"<data>_in.py 에 업무 어휘 {hit} — 검사 둘 중 하나(어휘 0)에 걸렸다")
             elif is_cap and _is_contract_file(py):
                 f.add("#47", _rel(root, py),
-                      f"capability 계약의 이름·시그니처에 업무 어휘 {hit[:5]} — 한 글자도 없어야 "
+                      f"capability 계약의 이름·시그니처에 업무 어휘 {hit} — 한 글자도 없어야 "
                       "framework 에 들어온다")
             elif in_test:
-                cand.add("#425", _rel(root, py), f"framework/test/ 재료에 업무 어휘 {hit[:5]}",
+                cand.add("#425", _rel(root, py), f"framework/test/ 재료에 업무 어휘 {hit}",
                          "이 재료의 뜻을 밖(HTTP·pytest·시간)이 정하나")
             else:
-                cand.add("#448", _rel(root, py), f"framework 파일에 업무 어휘 {hit[:5]}",
+                cand.add("#448", _rel(root, py), f"framework 파일에 업무 어휘 {hit}",
                          "이 낱말의 뜻을 저장소 밖이 정하나")
         # 계약·자료 파일 — #615 프레임워크 타입 · #616 애그리거트 · #618 · #619.
         if _is_contract_file(py) and not in_test:
@@ -545,7 +545,7 @@ def _check_pure(root: Path, fw: Path, union: set, f: Findings) -> None:
         hit = sorted((idents & union) - _PURE_TECH_STOPWORDS)
         if hit:
             f.add("#562", _rel(root, py),
-                  f"pure/ 에 업무 어휘 {hit[:5]} — 한 글자라도 나오면 위반(Shared Kernel 차단 기계)")
+                  f"pure/ 에 업무 어휘 {hit} — 한 글자라도 나오면 위반(Shared Kernel 차단 기계)")
 
 
 # ── BC 쪽 — #393 · #119 · #294 · #420 ──────────────────────────────────────
