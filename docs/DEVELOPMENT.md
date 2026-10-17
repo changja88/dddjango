@@ -32,6 +32,7 @@ dddjango-web/             ← 자매 플러그인 (웹 표현계층 빌더 — /
                            빌드 스펙 정본: workspace/plan/2026-10-06-web-dddart/mapping.md(2.0.0)
                            · plan-2.1.0.md + build-log-2.1.0.md(2.1.0 — 빚 정리 · 외부 JS 승인 · 리팩토링 입구)
                            · plan-2.5.0.md + build-log-2.5.0.md(부품 CSS 실림 CS1 · 미검증 감수 · 상태 단언 뒤 완성 화면 그림)
+                           · plan-2.6.0.md(지속 셸 떠난 화면 보관 · ‹뒤로›는 지나온 차례 · SH5 순서 · 공백 · 주석만 바뀐 기존 규칙)
 ├── REQUEST_GUIDE.md           사람용 작업 요청 가이드 정본(2.0.1부터 — 2.1.0에서 빚 정리 · 리팩토링 입구 · 외부 JS 줄을 더함)
 ├── commands/dddjango-web.md   Coordinator
 ├── commands/refactor.md       리팩토링 입구 /dddjango-web:refactor <대상 단위> — Coordinator 로 Skill 위임(동작 불변)

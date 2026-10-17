@@ -9,7 +9,7 @@ import re
 from collections import Counter
 from typing import Dict, List, Optional, Set, Tuple
 
-from .common import (FOUNDATION_TOKENS, HTMX_CORE, HTMX_VERSION, HTMX_VERSION_RE, BackstopContext, Finding,
+from .common import (FOUNDATION_TOKENS, mask_css, HTMX_CORE, HTMX_VERSION, HTMX_VERSION_RE, BackstopContext, Finding,
                      TemplateTag, _git_raw, ext_of, is_standard_path, loaded_file, mask_html, stem_of)
 from .check_purity import (_FEATURE_JS_RE, _HTMX_LEGACY, _STATIC_ARG_RE, _changed, _sdk_global,
                            _sdk_reference_added, _sdk_reference_lines)
@@ -497,10 +497,13 @@ def _split_selector(text: str) -> List[Tuple[int, str]]:
     return parts
 
 
-def _css_selectors(text: str, start: int = 0, end: Optional[int] = None) -> List[Tuple[int, int, str]]:
-    """CSS 규칙의 시작. 그룹 at-rule 은 내려가고 정의 at-rule 은 건너뛴다."""
+def _css_selectors(text: str, start: int = 0, end: Optional[int] = None,
+                   context: str = '', raw: Optional[str] = None) -> List[Tuple[int, int, str, str, str]]:
+    """CSS 규칙의 시작. 그룹 at-rule 은 내려가고 정의 at-rule 은 건너뛴다 — 넷째 값은 둘러싼 묶음 at-rule 머리(문맥) · 다섯째는 그 규칙의 몸(선언).
+    raw(주석을 가리지 않은 원문 — 같은 자리)를 주면 문맥 · 몸은 원문에서 주석을 지운 글자로 접는다(`.a/**/.b` = `.a.b`)."""
+    raw = text if raw is None else raw
     end = len(text) if end is None else end
-    out: List[Tuple[int, int, str]] = []
+    out: List[Tuple[int, int, str, str, str]] = []
     pos = start
     while pos < end:
         while pos < end and text[pos].isspace():
@@ -550,12 +553,84 @@ def _css_selectors(text: str, start: int = 0, end: Optional[int] = None) -> List
             j += 1
         selector = text[pos:i].strip()
         if re.match(r'@(?:media|supports|container|layer)\b', selector, re.I):
-            out.extend(_css_selectors(text, i + 1, j - 1))
+            out.extend(_css_selectors(text, i + 1, j - 1, context + ' ' + _norm(raw[pos:i], 'body'), raw))
         elif not selector.startswith('@'):
-            out.extend((pos + offset + len(part) - len(part.lstrip()), pos + offset + len(part.rstrip()), part.strip())
+            out.extend((pos + offset + len(part) - len(part.lstrip()), pos + offset + len(part.rstrip()), part.strip(), context,
+                        _norm(raw[i + 1:j - 1], 'body'))
                        for offset, part in _split_selector(text[pos:i]) if part.strip())
         pos = j
     return out
+
+
+_CSS_ESCAPE_RE = re.compile(r'\\(?:[0-9a-fA-F]{1,6}(?:\r\n|[ \t\r\n\f])?|.)', re.S)
+_CSS_STRING_RE = re.compile(r'"(?:\\.|[^"\\])*"?|\'(?:\\.|[^\'\\])*\'?', re.S)
+_TIGHT = {'sel': ('>+~,=([', '>+~,=)]'), 'body': (':,;(', ';,)!')}  # (뒤 공백이 뜻 없는 글자, 앞 공백이 뜻 없는 글자)
+
+
+def _norm(text: str, kind: str = 'sel') -> str:
+    """같은 규칙인지 가르는 열쇠 — 문자열 · 이스케이프(끝 공백 포함)는 글자 그대로 한 단위로, 그 밖의 주석은 지우고(빈 글자),
+    공백은 한 칸으로 접되 뜻 없는 자리(선택자: 결합자 · 쉼표 · 괄호 둘레 / 몸 · at-rule 머리: `:` `,` `;` `(` 뒤 · `;` `,` `)` `!` 앞)는 지우고,
+    몸의 끝 `;` 는 뗀다. `:` 앞 · `!` 뒤 공백(`a :hover` ≠ `a:hover`)과 값 안 `+` `-` 둘레(`calc`)는 그대로 둔다."""
+    after, before = _TIGHT[kind]
+    units: List[Tuple[str, str]] = []  # ('c' 글자 | 'u' 문자열·이스케이프 단위 | 's' 공백, 글자)
+    i = 0
+    while i < len(text):
+        char = text[i]
+        if text.startswith('/*', i):  # 문자열 · 이스케이프 밖 주석만(`"/*a*/"` 은 문자열) — 닫히지 않으면 끝까지
+            close = text.find('*/', i + 2)
+            i = len(text) if close < 0 else close + 2
+            continue
+        match = (_CSS_ESCAPE_RE.match(text, i) if char == '\\' else
+                 _CSS_STRING_RE.match(text, i) if char in ('"', "'") else None)
+        if match:
+            unit = match.group()
+            if char == '\\' and unit[-1:].isspace() and len(unit) > 2:
+                unit = unit.rstrip() + ' '  # 16진 이스케이프의 끝 공백 하나는 이스케이프의 일부
+            units.append(('u', unit))
+            i = match.end()
+        elif char.isspace():
+            j = i
+            while j < len(text) and text[j].isspace():
+                j += 1
+            if not units or units[-1][0] != 's':  # 주석 양쪽 공백은 한 칸
+                units.append(('s', ' '))
+            i = j
+        else:
+            units.append(('c', char))
+            i += 1
+    out: List[str] = []
+    square = 0  # 속성 선택자 안 — 값(문자열) 뒤 깃발 앞 공백도 뜻 없음(`[a="b" i]` = `[a="b"i]`)
+    for k, (sort, value) in enumerate(units):
+        if sort != 's':
+            square += (value == '[') - (value == ']') if sort == 'c' else 0
+            out.append(value)
+            continue
+        prev = units[k - 1] if k else None
+        nxt = units[k + 1] if k + 1 < len(units) else None
+        if (prev is None or nxt is None or (prev[0] == 'c' and prev[1] in after) or (nxt[0] == 'c' and nxt[1] in before)
+                or (kind == 'sel' and square > 0 and prev[0] == 'u' and prev[1][:1] in '"\'')):
+            continue
+        out.append(' ')
+    key = ''.join(out)
+    return key.rstrip(';') if kind == 'body' else key
+
+
+def _base_loads(ctx: BackstopContext, shell: str) -> Optional[Set[str]]:
+    """기준점 셸 머리가 싣던 CSS 경로 — 기준점 본문이 없거나 못 읽으면 None(줄 기준으로 내려간다)."""
+    before = _base_text(ctx, shell)
+    tags = parsed_tags(mask_html(before).no_comments) if before is not None else None
+    if tags is None:
+        return None
+    return {path for path in (_path(tag) for tag in tags if _stylesheet(tag)) if path is not None}
+
+
+def _base_rules(ctx: BackstopContext, file: str) -> Optional[Counter]:
+    """기준점 CSS 파일의 (문맥, 선택자, 몸) 갈래 — 문자열 밖 공백만 접어 글자 그대로 센다. 기준점에 없으면 None."""
+    before = _base_text(ctx, file)
+    if before is None:
+        return None
+    return Counter((context, _norm(before[start:end]), body)
+                   for start, end, _selector, context, body in _css_selectors(mask_css(before).no_comments, raw=before))
 
 
 def _first_compound(selector: str) -> Tuple[str, bool, Optional[str]]:
@@ -597,6 +672,7 @@ def _sh5(ctx: BackstopContext, shell: str, scope: Set[str]) -> List[Finding]:
     frame = 'static/root/' + stem_of(shell) + '.css'
     files: Set[str] = set()
     full: Set[str] = set()
+    loaded_before = _base_loads(ctx, shell)
     for tag in tags or []:
         if not _stylesheet(tag):
             continue
@@ -604,22 +680,36 @@ def _sh5(ctx: BackstopContext, shell: str, scope: Set[str]) -> List[Finding]:
         if path is None or path == frame or '/foundation/' in path or '/theme/' in path or path not in ctx.files_set:
             continue
         files.add(path)
-        if (_activated(ctx, shell) or path in _moved(ctx, shell, scope) or ctx.is_added(path)
-                or _changed(ctx, shell, ms, tag.start, tag.open_end)):
+        # 새로 실린 파일만 전수 — load 태그 줄의 자리(순서)는 보지 않는다. 기준점을 못 읽으면 줄 기준(2.5.2) 그대로.
+        newly = (_changed(ctx, shell, ms, tag.start, tag.open_end) if loaded_before is None
+                 else path not in loaded_before)
+        if _activated(ctx, shell) or path in _moved(ctx, shell, scope) or ctx.is_added(path) or newly:
             full.add(path)
-    selectors: Dict[str, list] = {file: _css_selectors(ctx.mask_of(file).no_comments) for file in sorted(files)}
+    selectors: Dict[str, list] = {file: _css_selectors(ctx.mask_of(file).no_comments, raw=ctx.mask_of(file).original)
+                                  for file in sorted(files)}
     owners: Dict[str, Set[str]] = {}
     for file, records in selectors.items():
-        for _start, _end, selector in records:
+        for _start, _end, selector, _context, _body in records:
             _first, _uncertain, block = _first_compound(selector)
             if block:
                 owners.setdefault(block, set()).add(file)
     out: List[Finding] = []
     for file, records in selectors.items():
         css = ctx.mask_of(file)
-        for start, end, selector in records:
-            if file not in full and not (ctx.is_touched(file) and _changed(ctx, file, css, start, end)):
-                continue
+        before = _base_rules(ctx, file) if file not in full and ctx.is_touched(file) else None
+        if before is not None:  # 새 줄 밖에 그대로 남은 갈래가 기준점 몫을 먼저 쓴다(개수 — 같은 갈래를 하나 더 쓰면 그것은 새것)
+            for start, end, selector, context, body in records:
+                key = (context, _norm(css.original[start:end]), body)
+                if not _changed(ctx, file, css, start, end) and before[key] > 0:
+                    before[key] -= 1
+        for start, end, selector, context, body in records:
+            if file not in full:
+                if not (ctx.is_touched(file) and _changed(ctx, file, css, start, end)):
+                    continue  # 2.5.2 그대로 — 새 줄에 걸친 갈래만
+                key = (context, _norm(css.original[start:end]), body)
+                if before is not None and before[key] > 0:
+                    before[key] -= 1  # 새 줄이어도 기준점에 글자 그대로 있던 규칙(자리 · 차례 · 공백 · 주석만 바뀜) — 이 diff 밖
+                    continue
             first, uncertain, block = _first_compound(selector)
             if uncertain or '\\' in first or '&' in first:
                 ctx.notices.append('[info] SH5 판독 불가 — web/%s:%d · %s(알려진 미탐과 함께 감수)' % (file, css.line_of(start), selector))

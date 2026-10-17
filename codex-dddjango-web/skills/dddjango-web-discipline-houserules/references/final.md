@@ -213,7 +213,7 @@ select = ["E4", "E7", "E9", "F", "ANN"]
 | pres 조각 CSS | 템플릿과 같은 stem | `web/static/application/[<area>/]<bc>/<조각 stem>.css` | — |
 | root scaffold 조각 CSS | 템플릿과 같은 stem | `web/static/root/<조각 stem>.css` | — |
 | 지속 셸 root JS | 고정 | `web/static/js/root_shell.js`(지속 셸만) | — |
-| 지속 셸 고정 id | 고정 | `root-content` · `root-tab-bar` · `root-tab-items` · `root-tab-<탭 키>` · 표지 `data-root-shell="<셸 stem>@<판>"` · root 알림 이벤트 이름 `root:leave` | — |
+| 지속 셸 고정 id | 고정 | `root-content` · `root-tab-bar` · `root-tab-items` · `root-tab-<탭 키>` · `root-toast` · `root-announce` · `root-who` · 표지 `data-root-shell="<셸 stem>@<판>"` · 속성 `data-root-first` · `data-root-arm` · root 알림 이벤트 이름 `root:leave` · `root:screen-hide` · `root:screen-show` | — |
 | UI 동작 JS | 기능 | `web/static/js/<기능>.js` | — |
 | ds `foundation/` | 토큰 종류 | `app_<토큰>.css` | 변수 접두 `--color-*`·`--typography-*`·`--spacing-*`·`--radius-*`·`--shadow-*`·`--duration-*`/`--easing-*`·`--asset-*` |
 | ds `component/<군>/` | 수식·변형 | `<수식>_<군>.html` + `<수식>_<군>.css` | CSS 클래스 접두 `<수식>-<군>` (무접두 — 종류 접미사가 구별자) |

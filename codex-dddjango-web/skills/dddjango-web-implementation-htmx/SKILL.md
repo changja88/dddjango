@@ -19,7 +19,7 @@ VM·SharedState·Service·root_vm·handler의 요청 구동 코드, view 함수�
 
 ## 핵심 운영 원칙
 
-- htmx는 2.0.10 한 파일 — 새 설치는 `web/static/htmx/htmx.min.js`, 기존 설치는 그대로 소비 · root_view는 build-state `htmx_core_static` 경로를 한 번 `defer` 로드 · 판 올림·이중 설치 금지 · 지속 셸은 `htmx-config` `{"historyCacheSize":0}` + `root_shell.js`(‹뒤로› = 사본 없는 서버 복원 · 이동 하나만 · 재탭 ②) · core 2.0.10 전제 (§1)
+- htmx는 2.0.10 한 파일 — 새 설치는 `web/static/htmx/htmx.min.js`, 기존 설치는 그대로 소비 · root_view는 build-state `htmx_core_static` 경로를 한 번 `defer` 로드 · 판 올림·이중 설치 금지 · 지속 셸은 `htmx-config` `{"historyCacheSize":0}` + `root_shell.js`(지속 셸 = 떠난 화면 보관 · 돌아오면 그대로 · ‹뒤로›는 지나온 차례 — ‹뒤로› = 보관 화면 그대로 · 없으면 사본 없는 서버 복원 · 보관 중 htmx 요청 · 폴링 멈춤 · 이동 하나만 · 재탭 ②) · core 2.0.10 전제 (§1)
 - 요청 구동은 둘뿐 — 페이지 view가 `<화면>VM().build(…)`로 첫 렌더, `<화면>_<조각>_fragment`가 같은 VM으로 section 조각 응답(임베드 첫 렌더 `<화면>_embed_fragment` 포함) (§2)
 - VM은 `build(...) -> <화면>State` — 조회 실패는 `BadRequestResponse` raise(에러 채널 ①), **view(페이지·조각 함수)가 잡아 같은 section을 맥락 `load_error`·`retry_href`로 그린다**(section 루트 id 유지·`error_feedback.html`은 그 안에서 include) · 요청 입력은 메서드 인자로 (§2·§5)
 - `hx-trigger="load"`는 다른 view를 임베드하는 자리 하나만 — 부모는 자식 VM을 부르지 않고 navigator `<화면>_embed_href()`의 주소를 둔다 (§4·§7)

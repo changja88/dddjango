@@ -114,7 +114,7 @@ class LandingNavigator:
 `<bc>_router.py`는 path 바인딩 때문에 view를 import하고, view→VM→navigator로 이어진다. navigator가 모듈 머리에서 router를 import하면 첫 import에서 router가 아직 `ChannelRoutes`를 정의하기 전이라 `ImportError`(부분 초기화 모듈)가 난다 — 그래서 **router import는 navigator 헬퍼 함수 안에 둔다**(호출 시점에는 urlconf가 다 올라와 있다). 이 자리가 dddjango-web의 정당한 함수 안 import다 — 국소 `ruff.toml`(discipline-houserules §3)에 `PLC0415`(import-outside-toplevel)를 켜지 않는다. `<Bc>Routes`를 별도 파일로 빼서 사슬을 끊지 않는다(architecture-ui §6).
 
 - **템플릿은 URL을 만들지 않는다**: `{% url %}`·`href="/…"` 경로 리터럴을 쓰지 않고 State가 준 href를 쓴다(`<a href="{{ state.detail_href }}">` — 백스톱 NM13). 정적 파일만 `{% static %}`(§8).
-- **문서 셸·탭** — `root/scaffold/view/root_view.html`이 기본 문서 셸이다. 탭 셸은 두 꼴이다 — **지속 셸**(새로 짓는 탭 셸의 기본 · 탭 막대는 탭 이동·‹뒤로›에도 남고 본문만 바뀜 · 앱 탭 바 · dddart `StatefulShellRoute` 대응 · 아래 «지속 셸») · **문서 이동 셸**(아래 예 · 이미 지은 셸을 G1 에서 바꾸지 않았으면 그대로 둔다 — 탭 = 브라우저 이동). 제품 선언이 없으면 모든 페이지가 extends하고, 선언 BC의 페이지는 자기 제품 셸만 extends한다(탭 프레임 — 페이지가 셸을 가리키는 방향은 Django 템플릿 상속의 방향이라 BC가 root를 아는 유일한 예외 — discipline-houserules §5):
+- **문서 셸·탭** — `root/scaffold/view/root_view.html`이 기본 문서 셸이다. 탭 셸은 두 꼴이다 — **지속 셸**(새로 짓는 탭 셸의 기본 · 탭 막대는 탭 이동·‹뒤로›에도 남고 본문만 바뀜 · 떠난 화면은 보관돼 돌아오면 떠날 때 그대로 · 앱 탭 바 · dddart `StatefulShellRoute` 대응 — 단 ‹뒤로›는 탭별이 아니라 지나온 차례 · 아래 «지속 셸») · **문서 이동 셸**(아래 예 · 이미 지은 셸을 G1 에서 바꾸지 않았으면 그대로 둔다 — 탭 = 브라우저 이동). 제품 선언이 없으면 모든 페이지가 extends하고, 선언 BC의 페이지는 자기 제품 셸만 extends한다(탭 프레임 — 페이지가 셸을 가리키는 방향은 Django 템플릿 상속의 방향이라 BC가 root를 아는 유일한 예외 — discipline-houserules §5):
 
 ```django
 {# root/scaffold/view/root_view.html — 문서 이동 셸(이미 지은 셸 · 탭 = 브라우저 이동) #}
@@ -146,7 +146,7 @@ class LandingNavigator:
 
 제품 선언이 있으면 flat의 `root_view.html`과 own의 `root_<제품>_view.html`은 모두 위와 같은 독립 문서이며 어떤 템플릿도 extends하지 않는다(백스톱 IM26). own 셸의 예: `root/scaffold/view/root_shop_view.html`은 자기 `design_system/shop/foundation/`의 표준 7파일 다음에 `design_system/shop/theme/app_theme.css`만 링크하고, 틀 CSS는 `web/root/root_shop_view.css`다(기존 `root_vm.py`·`root_state.py`를 함께 쓴다).
 
-**지속 셸(새로 짓는 탭 셸의 기본)** — 탭 막대 `<nav>` 하나에 `hx-boost` 를 달고, 부스트 · 복원 응답은 `RootRequestHandler` 가 응답 머리로 `<main>` 안만 바꾸게 한다(아래 처리기 표). 앱처럼 막대는 탭 이동 · ‹뒤로› · ‹앞으로›에도 같은 요소로 남고, 같은 탭을 이미 첫 화면에서 다시 누르면 요청 없이 맨 위로 간다. 화면 HTML 사본은 브라우저에 남기지 않는다(`historyCacheSize` 0).
+**지속 셸(새로 짓는 탭 셸의 기본)** — 탭 막대 `<nav>` 하나에 `hx-boost` 를 달고, 부스트 · 복원 응답은 `RootRequestHandler` 가 응답 머리로 `<main>` 안만 바꾸게 한다(아래 처리기 표). 앱처럼 막대는 탭 이동 · ‹뒤로› · ‹앞으로›에도 같은 요소로 남고, 같은 탭을 이미 첫 화면에서 다시 누르면 요청 없이 맨 위로 간다. 떠난 화면은 그 문서 기억 안에 보관되어 탭 · ‹뒤로› · ‹앞으로›로 돌아오면 떠날 때 그대로다(기록 차례는 지나온 그대로 — 탭별 ‹뒤로› 아님). 화면 HTML 사본은 브라우저 저장소에 남기지 않는다(`historyCacheSize` 0).
 
 ```django
 {# root/scaffold/view/root_view.html — 지속 셸: 머리 · 탭 막대 · 본문 틀은 남고 <main> 안만 바뀐다 #}
@@ -172,12 +172,13 @@ class LandingNavigator:
 </head>
 <body data-testid="root-view" data-root-shell="root_view@{{ root_state.shell_rev }}">
   <main id="root-content" hx-history-elt>
+    {{ root_state.who|json_script:"root-who" }}
     {% block content %}{% endblock content %}
     <template>
       <div id="root-tab-items" class="root-tab-bar__items" hx-swap-oob="innerHTML">
         {% for tab in root_state.tabs %}
           <a id="root-tab-{{ tab.key }}" class="root-tab-bar__tab root-tab-bar__tab--{{ tab.key }}{% if tab.is_current %} root-tab-bar__tab--current{% endif %}"
-             href="{{ tab.href }}"{% if tab.is_current %} aria-current="page"{% endif %}>{{ tab.label }}</a>
+             href="{{ tab.href }}" data-root-first="{{ tab.first_href }}"{% if tab.is_current %} aria-current="page"{% endif %}>{{ tab.label }}</a>
         {% endfor %}
       </div>
     </template>
@@ -186,7 +187,7 @@ class LandingNavigator:
     <div id="root-tab-items" class="root-tab-bar__items">
       {% for tab in root_state.tabs %}
         <a id="root-tab-{{ tab.key }}" class="root-tab-bar__tab root-tab-bar__tab--{{ tab.key }}{% if tab.is_current %} root-tab-bar__tab--current{% endif %}"
-           href="{{ tab.href }}"{% if tab.is_current %} aria-current="page"{% endif %}>{{ tab.label }}</a>
+           href="{{ tab.href }}" data-root-first="{{ tab.first_href }}"{% if tab.is_current %} aria-current="page"{% endif %}>{{ tab.label }}</a>
       {% endfor %}
     </div>
   </nav>
@@ -196,10 +197,11 @@ class LandingNavigator:
 
 - htmx core 줄은 build-state `htmx_core_static` 경로다(새 설치 `web/htmx/htmx.min.js` · 브라운필드 `web/js/htmx.min.js` 등 — 지속 셸이면 그 파일이 2.0.10 이어야 한다 · implementation-htmx §1).
 - 첫 문서: `<template>` 안은 그려지지 않고(문서 트리 밖 — id 겹침 없음) htmx 도 처리하지 않는다. 탭 막대는 `<nav>` 안의 목록으로 그려진다.
-- 부스트 응답(같은 셸): core 가 template 안 OOB 를 처리해 살아 있는 `#root-tab-items` 의 **자식만** 바꾸고(막대 요소는 그대로) template 를 지운 뒤, `HX-Reselect: #root-content > *` 로 응답 `<main>` 의 자식을 골라 살아 있는 `<main>` 안에 넣는다. 응답의 `<nav>` 는 버려진다. OOB 로 새로 놓인 탭 링크는 정착(20ms) 뒤에야 부스트가 걸린다 — 그 사이 누름은 문서 이동이다(안전한 쪽).
-- 복원 응답(‹뒤로›·‹앞으로›): core 가 응답을 `[hx-history-elt],[data-hx-history-elt]`(= 응답 `<main>`)로 좁히고 그 안 template OOB 를 같은 방식으로 처리한 뒤 `<main>` 안을 바꾼다 — 탭 목록 · 제목도 함께 맞는다.
-- **root 가 요청마다 바뀌는 자료를 화면 JS 에 줘야 하면** `<main>` 안 · `{% block content %}` 앞에 `{{ root_state.<값>|json_script:"root-<이름>" }}` 한 줄씩 둔다 — 탭 이동마다 본문과 함께 바뀐다. body 바로 아래에 두면 첫 문서 값으로 굳는다(꼴 ⑫ 위반). 읽는 JS 는 `htmx:load` 마다 다시 읽는다(implementation-javascript §3 «지속 셸의 수명» P4).
+- 부스트 응답(같은 셸): core 가 template 안 OOB 를 처리해 살아 있는 `#root-tab-items` 의 **자식만** 바꾸고(막대 요소는 그대로) template 를 지운 뒤, `HX-Reselect: #root-content > *` 로 응답 `<main>` 의 자식을 골라 살아 있는 `<main>` 안에 넣는다. 응답의 `<nav>` 는 버려진다. OOB 로 새로 놓인 탭 링크는 정착(20ms) 뒤에야 부스트가 걸린다 — 그 사이 누름은 문서 이동이다(안전한 쪽). 보관 화면이 있는 탭은 응답 없이 `root_shell.js` 가 다시 붙인다(아래 «보관»).
+- 복원 응답(‹뒤로›·‹앞으로› — 보관 화면이 없는 항목만: 새로고침 앞 칸 · 버린 칸 · 다시 받기): core 가 응답을 `[hx-history-elt],[data-hx-history-elt]`(= 응답 `<main>`)로 좁히고 그 안 template OOB 를 같은 방식으로 처리한 뒤 `<main>` 안을 바꾼다 — 탭 목록 · 제목도 함께 맞는다.
+- **root 가 요청마다 바뀌는 자료를 화면 JS 에 줘야 하면** `<main>` 안 · `{% block content %}` 앞에 `{{ root_state.<값>|json_script:"root-<이름>" }}` 한 줄씩 둔다 — 탭 이동마다 본문과 함께 바뀐다(보관 화면이 다시 보이면 그 화면을 받을 때의 값이다 — P4 의 다시 읽기는 새 화면 · 떼어 둔 동안 새로 생긴 노드에서). body 바로 아래에 두면 첫 문서 값으로 굳는다(꼴 ⑫ 위반). 읽는 JS 는 `htmx:load` 마다 다시 읽는다(implementation-javascript §3 «지속 셸의 수명» P4).
 - 탭 목록 반복문이 두 번이다(첫 문서용 · OOB 용) — 새 파일을 만들지 않으려는 것이다(discipline-houserules §4). 두 반복문의 글자가 같은지는 꼴 ⑨ 가 본다.
+- **셸 자료 두 줄(2.6 — 판 올림)**: 탭 링크의 `data-root-first`(그 탭 첫 화면 href — `root_shell.js` 가 재탭 ① · 탭 첫 화면을 안다) · `<main>` 안 `root-who`(계정 경계 표지 — 다른 계정의 보관 화면을 버림 · §3 «지속 셸이면»). 둘이 없으면 `root_shell.js` 가 `console.warn` 한 줄을 내고 계정 지킴 · 탭 첫 화면 판정이 꺼진다.
 - 페이지는 지금처럼 셸을 extends 하고 `{% block title %}` · `{% block content %}` 만 채운다(중간 base 를 거쳐도 된다 — 그 사슬 전체와 그 사슬이 include 하는 템플릿이 지속 셸 소속이다 · 백스톱 SH3). `{% block head %}` · `{% block scripts %}` 는 셸에 없다(정의하면 죽은 글 — SH3).
 - 백스톱 SH1 이 부스트 `<a>` 를 허용하는 «화면»은 이 소속 안에서 셋이다: ① 지속 셸 제품의 `presentation_layer/{view,section,widget}/` 조각과 `root/scaffold/view/` 조각(제품 선언이 없을 때 — 선언이 있으면 root 조각은 ③ 으로만) — 어디서 그려지든 ② 지속 셸 제품의 개념 폴더 한 단 아래(`presentation_layer/<개념>/section/` 등) view · section · widget ③ 사슬과 사슬이 글자 include 로 거듭 그리는 템플릿 — 옛 배치 · 다른 제품 템플릿 포함 · `application/` 아래는 view · section · widget(개념 폴더 한 단까지)만(include 대상이 extends 하는 부모 쪽은 따르지 않는다 · design_system 부품 · `common/` 은 화면이 아니다). ② · ③ 가운데 표준 문서 이동 셸 화면도 글자 extends · include 로 그리는 템플릿은 화면으로 세지 않는다.
   - SH1 이 막지만 규칙상 허용인 꼴: 변수 include 로만 그리는 옛 조각(글자 include 로 고친다) · hx-get 응답으로만 지속 화면에 들어가는 옛 조각 · 조각 레이아웃 부모가 include 하는 조각(카드 base 꼴) — 이 둘은 검사기 이의로 올린다.
@@ -232,7 +234,12 @@ class LandingNavigator:
 .root-tab-bar__tab--current { background-color: var(--color-primary); }
 .root-tab-bar__tab.htmx-request { opacity: 0.6; }  /* 누른 즉시 표시 — htmx 상태 class 는 접두 class 와 겹쳐서만 */
 @media (prefers-reduced-motion: reduce) { .root-tab-bar, .root-tab-bar__tab { transition: none; } }
+.root-toast { position: fixed; inset-inline: 0; bottom: var(--spacing-8); display: grid; justify-items: center; pointer-events: none; }  /* 화면을 넘어 사는 알림 자리 — 높이는 시안의 알림 자리 값 · 그림 값 없음 */
+.root-toast > * { pointer-events: auto; }
+.root-announce { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }  /* 새 화면 읽기 알림 — 보이지 않음 */
 ```
+
+- **root 가 만드는 자리 둘**(템플릿 밖 — 꼴 ⑫ 무변): `root_shell.js` 가 문서 시작 때 `body` 끝에 `div#root-toast.root-toast`(화면을 넘어 사는 알림 자리 — 기능 JS 가 넣음 · implementation-javascript P13) · `div#root-announce.root-announce[aria-live=polite]`(새 화면 제목 읽기 알림)를 만든다. 틀 CSS 의 두 규칙은 자리 · 숨김만이다.
 
 - **막대(`<nav>`)의 움직임**은 막대 요소가 남아 있으므로 `:has()` 결과가 바뀌는 순간 보통 CSS 전환으로 돈다 — 정착 20ms 와 무관하다. `:has()` 는 Chromium 105 · Safari 15.4 · Firefox 121 부터다(못 쓰는 옛 브라우저는 크기만 안 바뀐다).
 - **전환 속성은 물리 속성으로 적는다**: 값은 논리 축약 `padding-block` 으로 써도 되지만 `transition` 목록에는 `padding-top` · `padding-bottom` 을 적는다 — WebKit 은 `padding-block` 전환을 그리지 않는다.
@@ -243,8 +250,9 @@ class LandingNavigator:
 **`root_shell.js` — 지속 셸의 root 소유 JS**(`web/static/js/root_shell.js` · 아래 글 그대로 · 고칠 값 없음 — 셸이 htmx core 바로 뒤에 싣는다):
 
 ```javascript
-// web/static/js/root_shell.js — 지속 셸: 셸 표지 · 이동 번호 머리 · 이동 하나만(누름 시작 철회 · 철회 구간 · 적용 직전 지킴 · 문서 떠남)
+// web/static/js/root_shell.js — root_shell 2.6 · 지속 셸: 셸 표지 · 이동 번호 머리 · 이동 하나만(누름 시작 철회 · 철회 구간 · 적용 직전 지킴 · 문서 떠남)
 //                                · 떠난 화면의 조각 요청 끊기 · 화면 밖 요청 요소의 지연 교체 없앰 · 맨 위 보이기 · 기능 history state 보전 · 재탭 ② · 실패 길
+//                                · 떠난 화면 보관 — 탭 · ‹뒤로› · ‹앞으로› 로 돌아오면 떠날 때 그대로(기록 차례는 htmx 그대로)
 (() => {
   const here = () => location.pathname + location.search;
   const mark = () => document.body.dataset.rootShell || "";
@@ -254,12 +262,211 @@ class LandingNavigator:
   const nextSeq = () => String((navSeq = Math.max(clock(), navSeq + 1)));  // 늘 커지는 이동 번호
   let boost = null;  // 진행 중 부스트 XHR
   let restore = null;  // 진행 중 복원 XHR — htmx 는 복원 요청을 내부 자료에 걸지 않아 hx-sync · htmx:abort 가 닿지 않는다
-  let depth = 0;  // 철회 구간 깊이 — 이 구간(동기) 안에서 core 가 대기 큐로 다시 연 부스트는 철회된 이동이다
+  let depth = 0;  // 철회 구간 깊이 — 이 구간(동기) 안에서 core 가 대기 큐로 다시 연 요청은 철회된 이동이다
   let leaving = false;  // 사용자가 고른 문서 이동이 시작됨 — 끊긴 XHR 의 error · 실패로 다른 이동을 일으키지 않는다
   let discarded = false;  // 적용 직전 지킴이 버린 복원 — 그 복원의 완료 이벤트를 기능 JS 에 알리지 않는다
-  let saved;  // htmx 가 {htmx:true} 로 덮기 직전 그 항목의 state
-  let screen = 0;  // 화면 세대 — root 이동(부스트 · 실제 복원)이 <main> 안을 바꿀 때마다 1 늘어난다
-  const pending = new Map();  // 진행 중 조각(부스트 아닌) 요청 XHR → 그 요청을 시작한 화면 세대 — 화면이 바뀌면 앞 세대 것을 모두 끊는다
+  let screen = 0;  // 화면 세대 — <main> 안 화면이 바뀔 때마다 1 늘어난다
+  const pending = new Map();  // 진행 중 조각 요청 XHR → {born: 화면 세대, sid: 시작한 화면, verb}
+  const body = document.body;
+  const main = document.getElementById("root-content");
+  const isObj = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+  const at = (href) => new URL(href, location.href);
+
+  // ── 기록 쓰기 — htmx 의 {htmx:true} 쓰기가 항목의 표지 · 기능 state 를 덮지 않게, 바뀜 없는 쓰기는 부르지 않게(WebKit: 10 초 100 회 한도)
+  const nativePush = History.prototype.pushState;
+  const nativeReplace = History.prototype.replaceState;
+  const bare = (state) => isObj(state) && state.htmx === true && Object.keys(state).length === 1;
+  let nextSid = null;  // 부스트가 곧 밀 항목의 화면
+  let follow = (_samePathOnly) => {};  // 보이는 화면의 주소 · 기능 state 를 지금 항목 값으로(아래에서 채움)
+  history.pushState = function (state, unused, url) {
+    if (bare(state) && nextSid) state = { htmx: true, root: { sid: nextSid } };
+    nativePush.call(this, state, unused, url);
+    follow(false);  // 기능 JS 의 층 등 새 항목 — 경로가 달라도 그 화면 것
+  };
+  history.replaceState = function (state, unused, url) {
+    if (bare(state) && isObj(history.state)) {
+      if (history.state.htmx === true && (url == null || at(url).href === location.href)) return;
+      state = { ...history.state, htmx: true };
+    }
+    nativeReplace.call(this, state, unused, url);
+    follow(true);  // 지금 항목 고쳐 쓰기 — 같은 경로만(보관 화면의 늦은 다른 경로 쓰기를 받지 않게)
+  };
+  const sidHere = () => (isObj(history.state) && isObj(history.state.root) ? history.state.root.sid ?? null : null);
+  const stamp = (sid) => history.replaceState({ ...(isObj(history.state) ? history.state : {}), htmx: true, root: { sid } }, "", location.href);
+  const featureState = () => { const st = isObj(history.state) ? { ...history.state } : {}; delete st.root; delete st.htmx; return st; };
+
+  // ── 화면 보관 — 떠난 화면은 문서에서 떼어(htmx 요청 · 폴링이 멈춘다) 그 문서 기억 안에만 둔다 ───────────────────
+  const LIMIT = 30;  // 보관 상한 — 넘치면 가장 오래 안 본 것부터 버린다(그 기록 칸은 서버에서 새로)
+  const place = (id, attrs) => { const el = document.createElement("div"); el.id = id; for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v); body.append(el); return el; };
+  place("root-toast", { class: "root-toast" });  // 화면을 넘어 사는 알림 자리(기능 JS 가 넣는다)
+  const announcer = place("root-announce", { class: "root-announce", "aria-live": "polite", "aria-atomic": "true" });
+  main.tabIndex = -1;
+  history.scrollRestoration = "manual";  // 스크롤은 화면마다 적어 되돌린다(서버에서 받은 화면은 맨 위)
+  const tabLinks = () => [...document.querySelectorAll("#root-tab-bar a[href]")];
+  const keyOf = (a) => a.id.slice("root-tab-".length);
+  const firstOf = (key) => { const a = document.getElementById("root-tab-" + key); return at(a?.dataset.rootFirst || a?.getAttribute("href") || "/").pathname; };
+  const servedTab = () => { const a = tabLinks().find((x) => x.getAttribute("aria-current") === "page"); return a ? keyOf(a) : null; };
+  const doc = Math.random().toString(36).slice(2, 8);
+  let seq = 0;
+  const screens = new Map();  // sid → {sid, tab, url, title, frag, y, inner, focus, state, missed, changed, stale, used}
+  const tabLast = new Map();  // 탭 → 그 탭에서 마지막으로 보인 화면
+  const tabFirst = new Map();  // 탭 → 그 탭 첫 화면
+  let used = 0;
+  let visible = null;  // <main> 안 화면
+  let currentTab = servedTab();
+  let holder = null;  // 부스트 교체 동안 떠나는 화면을 두는 문서 안 숨은 자리(htmx 가 누른 링크의 뿌리에서 OOB 를 찾는다)
+  let incoming = null;  // 부스트가 민 항목의 화면
+  const screenOf = (sid) => {
+    if (!screens.has(sid)) screens.set(sid, { sid, tab: null, url: "", title: "", frag: null, y: 0, inner: [], focus: null, state: {}, missed: new Set(), changed: false, stale: false, used: 0 });
+    return screens.get(sid);
+  };
+  const whoIn = () => { const s = main.querySelector("#root-who"); return s ? s.textContent.trim() : "null"; };
+  let who = whoIn();
+  const tell = (type) => { for (const el of main.children) if (el.localName !== "script" && el.localName !== "template") el.dispatchEvent(new CustomEvent(type, { bubbles: true })); };  // 기능 JS 의 멈춤 · 이어 감 신호(화면 최상위 요소에서)
+  const hold = (s) => {  // 떠나는 화면의 자리를 적는다(주소 · 기능 state 는 follow 가 늘 지금 값으로 둔다)
+    tell("root:screen-hide");
+    s.y = window.scrollY;
+    s.inner = [...main.querySelectorAll("*")].filter((el) => el.scrollTop || el.scrollLeft).map((el) => [el, el.scrollTop, el.scrollLeft]);
+    s.focus = main.contains(document.activeElement) ? document.activeElement : null;
+    s.title = document.title;
+    s.used = ++used;
+  };
+  const subs = (el) => (el.getAttribute("hx-trigger") ?? el.getAttribute("data-hx-trigger") ?? "").split(",")  // from:body 갈래의 이벤트 이름(첫 낱말 — htmx 문법)
+    .filter((spec) => /(^|\s)from:body(\s|$)/.test(spec)).map((spec) => spec.trim().split(/[\s[]/)[0]).filter(Boolean);
+  const watch = new Map();  // 이벤트 이름 → {fn, sids} — 보관 중인 화면의 from:body 구독 이름을 body 에서 듣는다(실제로 난 것만 놓친 갱신으로)
+  const listen = (name, sid) => {
+    let w = watch.get(name);
+    if (!w) {
+      w = { sids: new Set(), fn: () => { for (const id of w.sids) screens.get(id)?.missed.add(name); } };
+      watch.set(name, w);
+      body.addEventListener(name, w.fn);
+    }
+    w.sids.add(sid);
+  };
+  const unlisten = (sid) => { for (const [name, w] of watch) if (w.sids.delete(sid) && !w.sids.size) { body.removeEventListener(name, w.fn); watch.delete(name); } };
+  const keep = (s, nodes) => {  // 문서 밖 조각으로 — 떼어 둔 동안 지연 교체 등으로 새 노드가 생기면 돌아올 때 htmx:load 한 번(P9 멱등)
+    const frag = document.createDocumentFragment();
+    frag.append(...nodes);
+    frag.addEventListener("htmx:load", () => { s.changed = true; });
+    s.frag = frag;
+    for (const el of frag.querySelectorAll("[hx-trigger], [data-hx-trigger]")) if (el.hasAttribute("hx-get") || el.hasAttribute("data-hx-get")) for (const n of subs(el)) listen(n, s.sid);
+  };
+  const detach = () => {
+    const s = screens.get(visible);
+    visible = null;
+    if (!s) { main.replaceChildren(); return; }
+    hold(s);
+    keep(s, main.childNodes);
+  };
+  const clean = (s) => {  // 보관 조각을 버린다 — 문서에 잠깐 붙여 htmx 정리(기능 JS 의 htmx:beforeCleanupElement)를 거친다
+    if (!s.frag) return;
+    const box = document.createElement("div");
+    box.hidden = true;
+    box.append(s.frag);
+    body.append(box);
+    htmx.swap(box, "", { swapStyle: "innerHTML", swapDelay: 0, settleDelay: 0 });
+    box.remove();
+    s.frag = null;
+  };
+  const dispose = (s) => {
+    unlisten(s.sid);
+    clean(s);
+    screens.delete(s.sid);
+    for (const m of [tabLast, tabFirst]) for (const [k, v] of m) if (v === s.sid) m.delete(k);
+  };
+  const disposeAll = (except) => { for (const s of [...screens.values()]) if (s.sid !== visible && s.sid !== except) dispose(s); };
+  const evict = () => {  // 보관 전체 상한 — 탭 마지막 · 첫 화면도 넘치면 가장 오래 안 본 것부터(그 탭은 서버에서 받는다)
+    const kept = [...screens.values()].filter((s) => s.frag);
+    if (kept.length <= LIMIT) return;
+    const pinned = new Set([...tabLast.values(), ...tabFirst.values()]);
+    const order = kept.sort((a, b) => (pinned.has(a.sid) - pinned.has(b.sid)) || a.used - b.used);
+    for (const s of order.slice(0, kept.length - LIMIT)) dispose(s);
+  };
+  let arms = 0;
+  const rearm = () => {  // 떼어 둔 동안 멈춘 폴링(every)과 다른 요소에 단 리스너(from:)를 다시 건다 — 속성이 바뀐 요소만 htmx 가 다시 연결(load 는 다시 쏘지 않음)
+    arms += 1;
+    let any = false;
+    for (const el of main.querySelectorAll("[hx-trigger], [data-hx-trigger]")) {
+      if (/(^|[\s,])every\s|from:/.test(el.getAttribute("hx-trigger") ?? el.getAttribute("data-hx-trigger") ?? "")) { el.setAttribute("data-root-arm", String(arms)); any = true; }
+    }
+    if (any) htmx.process(main);
+  };
+  const replay = (s) => {  // 떼어 둔 동안 body 에서 실제로 난 구독 이벤트를 그 화면의 from:body GET 구독에 한 번
+    unlisten(s.sid);
+    if (!s.missed.size) return;
+    for (const el of main.querySelectorAll("[hx-get], [data-hx-get]")) {
+      if (!subs(el).some((n) => s.missed.has(n))) continue;
+      htmx.ajax("GET", el.getAttribute("hx-get") ?? el.getAttribute("data-hx-get"), { source: el }).catch(() => {});  // 끊긴 재조회(abort)는 실패가 아니다
+    }
+    s.missed.clear();
+  };
+  const paintTab = (key) => {  // 고른 탭 표시(누르자마자 · 화면이 들어오면)
+    for (const a of tabLinks()) {
+      const on = keyOf(a) === key;
+      a.classList.toggle("root-tab-bar__tab--current", on);
+      if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    }
+  };
+  const settleOn = (s) => {  // 보이는 화면이 바뀌었다 — 고른 탭 · 탭 주소 · 탭 마지막 위치 · 읽기 알림
+    visible = s.sid;
+    currentTab = s.tab;
+    tabLast.set(s.tab, s.sid);
+    if (at(s.url).pathname === firstOf(s.tab)) tabFirst.set(s.tab, s.sid);
+    s.used = ++used;
+    evict();
+    paintTab(currentTab);
+    for (const a of tabLinks()) {
+      const key = keyOf(a);
+      const last = screens.get(tabLast.get(key));
+      const want = key === currentTab ? firstOf(key) : last ? last.url : null;
+      if (want && a.getAttribute("href") !== want) { a.setAttribute("href", want); htmx.process(a); }  // htmx 부스트는 처리 때 href 를 잡는다
+    }
+    saveTab(s);
+    announcer.textContent = "";
+    requestAnimationFrame(() => { announcer.textContent = document.title; });
+  };
+  const product = mark().split("@")[0];
+  const tabsOf = () => {  // 이 브라우저 탭의 탭 마지막 주소 — 같은 신원 · 같은 제품 셸 것만
+    if (who === "null") return {};  // 신원 표지가 없는 호스트(서명 쿠키 · 세션 인증 아닌 백엔드) — 계정을 가를 수 없어 쓰지 않는다(서버 탭 기록만)
+    try { const m = JSON.parse(sessionStorage.getItem("root.tabs") || "null"); return isObj(m) && m.who === who && m.product === product && isObj(m.tabs) ? m.tabs : {}; } catch { return {}; }
+  };
+  const saveTab = (s) => { if (who === "null") return; try { sessionStorage.setItem("root.tabs", JSON.stringify({ who, product, tabs: { ...tabsOf(), [s.tab]: s.url } })); } catch { /* 저장 못 함 — 서버 탭 기록만 */ } };
+  follow = (samePathOnly) => {  // 기능 JS · htmx 의 기록 쓰기 뒤 · 같은 화면 항목 사이 이동 뒤 — 보이는 화면의 주소 · 기능 state 를 지금 항목 값으로
+    const s = screens.get(visible);
+    if (!s || sidHere() !== s.sid || (samePathOnly && location.pathname !== at(s.url).pathname)) return;  // replaceState 는 같은 경로(쿼리 · 해시 · state)만 — 다른 경로 고쳐 쓰기(보관 화면의 늦은 타이머 등)는 이 화면 주소로 받지 않는다
+    s.url = here();
+    s.state = featureState();
+    if (s.tab) saveTab(s);
+  };
+  const reveal = (s, focusBack) => {  // 보관 화면을 다시 붙인다 — 스크롤 · 초점 · 제목까지 떠날 때 그대로
+    const focusWasIn = main.contains(document.activeElement) || document.activeElement === body || document.activeElement === null;
+    main.replaceChildren(s.frag);
+    s.frag = null;
+    document.title = s.title;
+    rearm();
+    replay(s);
+    if (s.changed) { s.changed = false; for (const el of main.children) if (el.localName !== "script" && el.localName !== "template") htmx.trigger(el, "htmx:load", { elt: el }); }  // 떼어 둔 동안 새 노드(지연 교체) — 연결은 멱등(P9)
+    window.scrollTo({ top: s.y, left: 0, behavior: "instant" });
+    for (const [el, top, left] of s.inner) if (el.isConnected) { el.scrollTop = top; el.scrollLeft = left; }
+    if (focusBack && focusWasIn) (s.focus?.isConnected ? s.focus : main).focus({ preventScroll: true });
+    tell("root:screen-show");
+    settleOn(s);
+  };
+  const usable = (sid) => { const s = sid ? screens.get(sid) : null; return s && s.frag && !s.stale ? s : null; };
+  const nextScreen = () => {  // 화면이 바뀌었다 — 앞 화면에서 시작한 조각 요청을 끊는다(늦은 HX-Redirect · OOB 가 다음 화면에 닿지 않게 · 보관 화면은 멈춘다)
+    screen += 1;
+    depth += 1;  // 끊는 동안 core 가 대기 큐로 다시 연 앞 화면 요청은 beforeRequest 가 막는다
+    try {
+      for (const [xhr, req] of pending) {
+        if (req.born >= screen) continue;
+        pending.delete(xhr);
+        if (xhr.readyState !== XMLHttpRequest.DONE && req.verb !== "get") { const s = screens.get(req.sid); if (s) s.stale = true; }  // 끊은 동작 — 돌아오면 서버에서 새로
+        cancel(xhr);
+      }
+    } finally {
+      depth -= 1;
+    }
+  };
 
   const cancel = (xhr) => {
     if (xhr && xhr.readyState !== XMLHttpRequest.DONE) xhr.abort();  // 끝나지 않은 것만 — abort 이벤트는 그 자리에서(동기) 난다
@@ -300,16 +507,44 @@ class LandingNavigator:
     if (!event.defaultPrevented && (xhr.getResponseHeader("HX-Redirect") || xhr.getResponseHeader("HX-Refresh") === "true")) leave();
   };
   const outsideScreen = (node) => {  // 붙어 있고 화면(<main> 의 자식 트리) 밖인 요소 — body · <main> 자신 · 막대: root 이동 뒤에도 문서에 남는다
-    const content = document.getElementById("root-content");
-    return node instanceof Node && node.isConnected && !(content && node !== content && content.contains(node));
+    return node instanceof Node && node.isConnected && !(node !== main && main.contains(node));
   };
 
-  const first = history.state;  // 첫 문서 항목에도 htmx 표지 — 기능 JS 가 state 를 펼쳐 복사할 때 표지가 따라가게(H2)
-  if (first === null || (typeof first === "object" && !first.htmx)) history.replaceState({ ...first, htmx: true }, "", location.href);
+  if (!main.querySelector("#root-who") || tabLinks().some((a) => !a.dataset.rootFirst)) console.warn("root_shell: 셸 템플릿의 2.6 두 줄(root-who · data-root-first)이 없다 — 계정 지킴 · 탭 첫 화면 판정이 꺼진다");
 
-  window.addEventListener("popstate", withdraw);  // 셸 머리 defer — htmx 의 window.onpopstate(DOMContentLoaded) · 기능 JS 보다 먼저 돈다
+  // ── 신원 — 다른 계정의 화면이 보관 화면으로 남지 않게 ─────────────────────────────────────────────────────
+  const share = () => { try { localStorage.setItem("root.who", who); } catch { /* 다른 창 알림만 빠진다 */ } };
+  const fromCache = performance.getEntriesByType?.("navigation")?.[0]?.transferSize === 0;  // HTTP 캐시가 준 옛 문서 — 옛 신원을 남에게 알리지 않는다
+  if (!fromCache) share();
+  window.addEventListener("storage", (event) => {  // 다른 창이 다른 신원으로 셸 화면을 받았다 — 보관을 버리고 지금 주소를 새로
+    if (event.key !== "root.who" || event.newValue === null || event.newValue === who) return;
+    try { sessionStorage.removeItem("root.tabs"); } catch { /* 없음 */ }
+    disposeAll();
+    leave();
+    window.location.reload();
+  });
+
+  window.addEventListener("popstate", (event) => {  // 셸 머리 defer — htmx 의 window.onpopstate(DOMContentLoaded) · 기능 JS 보다 먼저 돈다
+    withdraw();
+    const st = isObj(event.state) && isObj(event.state.root) ? event.state.root : null;
+    if (!st) return;
+    leaving = false;  // 같은 문서 안 이동
+    if (st.sid === visible) {  // 같은 화면의 항목(#링크 · 기능 층) — 화면 그대로 · 주소 · 기능 state 는 이 항목 값
+      follow(false);  // 같은 화면 항목 사이 이동 — 경로가 달라도(층) 그 항목 값
+      if (typeof st.y === "number") window.scrollTo({ top: st.y, behavior: "instant" });
+      return;
+    }
+    const s = usable(st.sid);
+    if (!s) return;  // 보관이 없다 — htmx 가 서버에서 받는다(아래 복원 갈래)
+    detach();  // 보관 화면 — 기능 JS 의 popstate 보다 먼저 붙인다(그 기능은 자기 root 가 붙은 채로 받는다)
+    nextScreen();
+    reveal(s, true);
+  });
   window.addEventListener("pagehide", () => { leaving = true; });
-  window.addEventListener("pageshow", () => { leaving = false; });
+  window.addEventListener("pageshow", (event) => {
+    leaving = false;
+    if (event.persisted) disposeAll();  // bfcache 로 되살린 문서 — 그 사이 계정이 바뀌었을 수 있다(보관 화면만 버림 · 지금 화면은 그대로)
+  });
   window.navigation?.addEventListener("navigate", (event) => {  // 기능 JS 의 location.assign 등 — Navigation API 가 있는 엔진만
     if (!event.destination.sameDocument && event.downloadRequest === null) leave();
   });
@@ -318,33 +553,81 @@ class LandingNavigator:
       if (!event.defaultPrevented && leavesDocument(event)) leave();
     });
   }
-  document.addEventListener("root:leave", leave);  // 기능 JS 가 JS 로 문서를 옮기기 바로 앞의 알림(P11) — Navigation API 와 무관하게 선다
-  window.addEventListener("htmx:before-on-load", leaveOnMove);  // 붙은 요청 요소의 응답 — 케밥 이름 · 창 버블: core 는 camel 이름이 취소되지 않았을 때만
-  //                                                              이 이름을 같은 detail 로 이어 내므로 기능 JS 가 취소한 응답(이동 없음)은 여기 오지 않는다
+  document.addEventListener("root:leave", leave);  // 기능 JS 가 JS 로 문서를 옮기기 바로 앞의 알림(P11)
+  const toShell = (event) => {  // 보이는 화면 조각 응답 — 취소 판정이 다 끝난 뒤(창 버블 · 케밥)에만 움직인다
+    if (event.defaultPrevented) return;
+    const xhr = event.detail.xhr;
+    if (leaving || event.detail.boosted || !main.contains(event.detail.elt)) return;
+    const loc = (xhr.getResponseHeader("HX-Location") || "").trim();
+    const to = xhr.getResponseHeader("HX-Redirect") || (loc && !loc.startsWith("{") ? loc : "");  // 같은 출처 화면으로 — 문서를 새로 열지 않고 부스트 이동으로(보관 화면을 지킨다)
+    if (!to || xhr.getResponseHeader("HX-Refresh") === "true" || at(to).origin !== location.origin) return;
+    event.preventDefault();
+    const a = document.createElement("a");  // 화면 밖 부스트 링크 — 부스트 길(철회 · 실패 · 게이트 → 문서 이동)을 그대로 탄다
+    a.href = at(to).pathname + at(to).search + at(to).hash;
+    a.setAttribute("hx-boost", "true");
+    a.hidden = true;
+    body.append(a);
+    htmx.process(a);
+    a.addEventListener("htmx:beforeSwap", (swap) => {  // 셸 처리기가 받지 않은 화면(HX-Retarget 없음 — 로그인 등)이면 문서로
+      if (swap.detail.xhr.getResponseHeader("HX-Retarget")) return;
+      swap.detail.shouldSwap = false;
+      leave();
+      window.location.assign(a.href);
+    });
+    a.addEventListener("htmx:afterRequest", () => a.remove(), { once: true });
+    a.click();
+  };
+  window.addEventListener("htmx:before-on-load", toShell);
+  window.addEventListener("htmx:before-on-load", leaveOnMove);  // 붙은 요청 요소의 응답 — 케밥 이름 · 창 버블: core 는 camel 이름이 취소되지 않았을 때만 이어 낸다
 
   document.addEventListener("click", (event) => {  // 재탭 ② — 이미 그 탭 첫 화면이면 요청 없이 맨 위로(앱과 같음)
     const link = event.target instanceof Element ? event.target.closest("#root-tab-bar a[href]") : null;
     if (!link || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
     if (leaving || restore || link.getAttribute("aria-current") !== "page") return;  // 문서 이동 · 복원 중이면 아래 confirm 갈래로
-    if (link.origin !== location.origin || link.pathname + link.search !== here()) return;  // 중첩 화면 = 재탭 ① → 첫 화면 부스트
+    if (link.origin !== location.origin || link.pathname + link.search !== here()) return;  // 안쪽 화면 = 재탭 ① → 첫 화면
     event.preventDefault();
     event.stopPropagation();  // 포착 단계 — 링크 위 core 부스트 리스너까지 가지 않는다
-    withdraw();  // 진행 중 부스트(다른 탭으로 가던 것)는 거둔다 — 주소 · 화면은 아직 이 화면이다
-    window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });  // "auto" 는 CSS scroll-behavior 를 따르므로 값을 정해 준다
+    withdraw();
+    window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
   }, true);
+  window.addEventListener("click", (event) => {  // 같은 문서 안 #링크 — 떠나는 자리의 스크롤을 그 항목에 적는다(‹뒤로› 때 되돌림)
+    const link = event.target instanceof Element ? event.target.closest('a[href^="#"]') : null;
+    if (link && !event.defaultPrevented && isObj(history.state)) nativeReplace.call(history, { ...history.state, root: { ...(history.state.root || {}), y: window.scrollY } }, "", location.href);
+  });
+  window.addEventListener("hashchange", () => { if (!sidHere() && visible) stamp(visible); });  // #링크가 민 항목 = 같은 화면
 
   document.addEventListener("htmx:confirm", (event) => {  // 부스트 누름의 시작 — core 가 hx-sync · 대기 큐를 고르기 전
     if (!isBoostLink(event.detail.elt)) return;
     if (depth > 0) {
-      event.preventDefault();  // 철회 구간 안 = core 가 큐에서 다시 연 철회된 이동(사용자 입력은 이 동기 구간에 들어오지 않는다)
+      event.preventDefault();  // 철회 구간 안 = core 가 큐에서 다시 연 철회된 이동
       return;
     }
-    if (leaving) {  // 문서 이동이 진행 중 — 이 누름도 문서 이동으로(새 이동이 앞 이동을 대체 · 마지막 누름이 이김)
+    if (leaving) {  // 문서 이동이 진행 중 — 이 누름도 문서 이동으로(마지막 누름이 이김)
       event.preventDefault();
       window.location.assign(event.detail.elt.href);
       return;
     }
-    withdraw();  // 앞 이동을 거둬 같은 링크의 대기 큐가 생기지 않게 — 화면 안 링크도 «새 누름이 대체»
+    withdraw();  // 앞 이동을 거둬 같은 링크의 대기 큐가 생기지 않게 — «새 누름이 대체»
+  });
+  window.addEventListener("htmx:confirm", (event) => {  // 탭 누름 — 창 버블(기능 JS 가 요소 · document 에서 취소할 수 있는 판정이 끝난 뒤)
+    const link = event.detail.elt;
+    if (event.defaultPrevented || !isBoostLink(link) || !link.closest("#root-tab-bar")) return;
+    const key = keyOf(link);
+    paintTab(key);  // 누르자마자 고른 탭
+    const s = usable(key !== currentTab ? tabLast.get(key) : tabFirst.get(key));  // 다른 탭 = 그 탭 마지막 화면 · 지금 탭(안쪽 화면) = 그 탭 첫 화면
+    if (!s || s.sid === visible) return;  // 보관이 없다 — 서버에서(탭 링크 주소)
+    event.preventDefault();  // 요청 없이 보관 화면을 — 기록은 부스트처럼 한 칸 민다(이 누름 안)
+    try {
+      nativePush.call(history, { ...s.state, htmx: true, root: { sid: s.sid } }, "", s.url);  // 기록이 먼저 — 실패하면 지금 화면 그대로
+    } catch {
+      paintTab(currentTab);
+      return;
+    }
+    const was = screens.get(visible);
+    visible = null;
+    if (was) { hold(was); keep(was, main.childNodes); } else main.replaceChildren();
+    nextScreen();
+    reveal(s, false);
   });
   document.addEventListener("htmx:configRequest", (event) => {
     if (!event.detail.boosted) return;
@@ -354,21 +637,21 @@ class LandingNavigator:
   document.addEventListener("htmx:beforeRequest", (event) => {
     if (!event.detail.boosted) {  // 조각 요청 — 요청 요소가 body 여도(HX-Location 후속 · source 없는 htmx.ajax) 이 화면에서 시작한 요청이다
       if (depth > 0) {
-        event.preventDefault();  // 철회 구간 안 = 끊은 조각 요청의 대기 큐가 다시 연 앞 화면 요청 — core 는 보내지 않고 잠금을 푼다
+        event.preventDefault();  // 철회 구간 안 = 끊은 조각 요청의 대기 큐가 다시 연 앞 화면 요청
         return;
       }
       const xhr = event.detail.xhr;
-      const source = event.detail.elt;  // 요청 요소(= requestConfig.elt)
-      const target = event.detail.target;  // core 가 htmx:beforeSwap 을 내는 요소 — HX-Retarget 이 와도 요청 시작 때 잡은 이 대상에서 낸다
+      const source = event.detail.elt;
+      const target = event.detail.target;
       const onMove = (load) => {  // 조각 교체로 떨어진 요청 요소의 응답은 창까지 오지 않는다 — 그 요소에 직접 단 리스너는 돈다
         if (load.detail.xhr === xhr && !source.isConnected) leaveOnMove(load);
       };
-      const noDelay = (swap) => {  // 화면 밖에 붙은 요청 요소(body 등)의 지연 교체는 root 이동이 거두지 못하고 OOB 를 문서에서 찾는다 — 지연을 없앤다
-        if (swap.detail.xhr === xhr && outsideScreen(source)) swap.detail.swapOverride = `${swap.detail.swapOverride ?? ""} swap:0ms`.trim();  // 마지막 swap: 이 이긴다
+      const noDelay = (swap) => {  // 화면 밖에 붙은 요청 요소(body 등)의 지연 교체를 없앤다(OOB 가 다음 화면을 덮지 않게)
+        if (swap.detail.xhr === xhr && outsideScreen(source)) swap.detail.swapOverride = `${swap.detail.swapOverride ?? ""} swap:0ms`.trim();
       };
       source.addEventListener("htmx:before-on-load", onMove);
       target.addEventListener("htmx:beforeSwap", noDelay);
-      pending.set(xhr, screen);
+      pending.set(xhr, { born: screen, sid: visible, verb: String(event.detail.requestConfig?.verb || "get").toLowerCase() });
       xhr.addEventListener("loadend", () => {
         pending.delete(xhr);
         source.removeEventListener("htmx:before-on-load", onMove);
@@ -377,7 +660,7 @@ class LandingNavigator:
       return;
     }
     if (depth > 0) {
-      event.preventDefault();  // 같은 지킴의 두 번째 자리 — core 는 취소된 요청을 보내지 않고 잠금을 푼다
+      event.preventDefault();  // 같은 지킴의 두 번째 자리
       return;
     }
     const xhr = event.detail.xhr;
@@ -385,38 +668,63 @@ class LandingNavigator:
     if (boost !== xhr) withdraw();
     leaving = false;
     boost = xhr;
-    xhr.addEventListener("error", () => { if (!leaving) window.location.assign(path); });  // 연결 실패 → 문서 이동(누른 요소가 떨어져 나가도 듣는다)
+    xhr.addEventListener("error", () => { if (!leaving) window.location.assign(path); });  // 연결 실패 → 문서 이동
     xhr.addEventListener("loadend", () => { if (boost === xhr) boost = null; });
   });
-  window.addEventListener("htmx:afterSwap", (event) => {  // root 이동(부스트 · 실제 복원)이 <main> 안을 바꾼 직후 — 창 포착이라 다른 afterSwap 리스너보다 먼저 ·
-    if (event.target.id !== "root-content") return;      // 버린 복원은 떼어 낸 <main> 이라 오지 않는다
-    screen += 1;
-    depth += 1;  // 끊는 동안 core 가 대기 큐로 다시 연 앞 화면 조각 요청은 위 beforeRequest 가 막는다
-    try {
-      for (const [xhr, born] of pending) {
-        if (born < screen) {  // 앞 화면에서 시작한 조각 요청 — 요청 요소 · 대상이 아직 붙어 있어도 끊는다(늦은 HX-Redirect · HX-Refresh · OOB 가 새 화면을 덮지 않게 — 문서 이동 셸에서는 새 문서와 함께 모두 버려졌다)
-          pending.delete(xhr);
-          cancel(xhr);
-        }
-      }
-    } finally {
-      depth -= 1;
+  document.addEventListener("htmx:beforeHistoryUpdate", (event) => {  // 부스트가 기록을 쓰기 직전(교체 직전) — 떠나는 화면의 자리를 적는다
+    const s = screens.get(visible);
+    if (!s || event.detail.history?.type !== "push" || event.detail.target !== main) return;  // 같은 주소(대체) = 같은 화면을 새로 — htmx 가 옛 노드를 정리
+    nextSid = `${doc}.${++seq}`;
+  });
+  document.addEventListener("htmx:pushedIntoHistory", () => {  // 밀기가 됐다 — 떠나는 화면을 교체 동안 문서 안 숨은 자리로(밀기가 실패하면 교체도 없다)
+    if (!nextSid) { if (visible) stamp(visible); return; }  // <main> 교체가 아닌 밀기(규칙 밖) — 같은 화면의 항목
+    incoming = nextSid;
+    nextSid = null;
+    if (sidHere() !== incoming) stamp(incoming);
+    const s = screens.get(visible);
+    if (!s) return;
+    hold(s);
+    holder = document.createElement("div");
+    holder.hidden = true;
+    holder.dataset.sid = s.sid;
+    holder.append(...main.childNodes);
+    body.append(holder);
+    visible = null;
+  });
+  window.addEventListener("htmx:afterSwap", (event) => {  // 부스트 · 실제 복원이 <main> 안을 바꾼 직후 — 창 포착이라 다른 afterSwap 리스너보다 먼저
+    if (event.target !== main) return;  // 버린 복원은 떼어 낸 <main> 이라 오지 않는다
+    nextScreen();
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });  // 서버에서 받은 화면 = 맨 위(core 정착 스크롤은 show:none 으로 끔)
+    if (holder) {
+      const s = screens.get(holder.dataset.sid);
+      if (s) keep(s, holder.childNodes);
+      holder.remove();
+      holder = null;
     }
-    if (event.detail.boosted) window.scrollTo({ top: 0, left: 0, behavior: "instant" });  // 부스트 = 맨 위 — 교체 직후 그 자리에서 · CSS scroll-behavior 를 비켜 감(core 와 같음 · core 정착 스크롤은 show:none 으로 끔)
+    const sid = incoming || sidHere() || `${doc}.${++seq}`;
+    incoming = null;
+    const s = screenOf(sid);
+    clean(s);  // 다시 받기 표시된 옛 보관(드묾) — 새로 받은 화면이 갈음
+    s.stale = false;
+    s.url = here();
+    s.state = featureState();
+    s.tab = servedTab() || currentTab;
+    if (sidHere() !== sid) stamp(sid);
+    const now = whoIn();
+    if (now !== who) {  // 서버가 다른 신원으로 그렸다 — 앞 계정의 보관 화면 · 탭 마지막 주소를 버린다(새로 받은 이 화면은 남김)
+      who = now;
+      try { sessionStorage.removeItem("root.tabs"); } catch { /* 없음 */ }
+      disposeAll(s.sid);
+      share();
+    }
+    settleOn(s);
   }, true);
 
-  document.addEventListener("htmx:beforeHistorySave", () => { saved = history.state; });
-  const keep = () => {  // htmx 의 replaceState({htmx:true}) 직후 · 같은 항목이 아직 현재일 때 그 항목의 기능 state 를 표지와 함께 되돌린다
-    const state = saved;
-    saved = undefined;
-    if (state && typeof state === "object" && Object.keys(state).some((key) => key !== "htmx")) {
-      history.replaceState({ ...state, htmx: true }, "", location.href);
+  document.addEventListener("htmx:historyCacheMiss", (event) => {  // 보관 화면이 없는 항목 — 서버에서(사본 없음)
+    if (visible && sidHere() === visible) {  // 보관 화면을 popstate 에서 이미 붙였다 · 같은 화면 항목 — 요청 없음
+      event.preventDefault();
+      return;
     }
-  };
-  document.addEventListener("htmx:beforeHistoryUpdate", keep);  // 부스트로 떠나는 항목 — push 직전
-
-  document.addEventListener("htmx:historyCacheMiss", (event) => {  // 뒤로 · 앞으로로 도착한 항목(사본이 없어 늘 여기로 온다)
-    keep();
     withdraw();
     leaving = false;
     const xhr = event.detail.xhr;  // open 뒤 · send 앞 — 머리를 더할 수 있다
@@ -427,19 +735,32 @@ class LandingNavigator:
     xhr.addEventListener("loadend", () => { if (restore === xhr) restore = null; });
   });
   document.addEventListener("htmx:historyCacheMissLoad", (event) => {
-    if (event.detail.path === here()) return;
-    // 목적지가 지금 주소가 아니다(복원 중 기능 JS 가 다른 주소로 옮김) — 이 응답을 버린다. core 는 반환값을 보지 않지만 detail 이
-    // core 의 요청 기록 그 자체라 교체 자리 · 응답 · 경로를 바꾸면 떼어 낸 요소에 빈 본문을 넣고 지금 주소를 기록한다.
+    if (event.detail.path === here()) {
+      detach();  // 지금 화면은 보관 — 교체 자리는 이 <main>
+      return;
+    }
+    // 목적지가 지금 주소가 아니다(복원 중 기능 JS 가 다른 주소로 옮김) — 이 응답을 버린다. detail 이 core 의 요청 기록 그 자체라
+    // 교체 자리 · 응답 · 경로를 바꾸면 떼어 낸 요소에 빈 본문을 넣고 지금 주소를 기록한다.
     event.detail.historyElt = document.createElement("main");
     event.detail.response = "<main hx-history-elt></main>";
     event.detail.path = here();
     discarded = true;
-    queueMicrotask(() => { discarded = false; });  // 같은 onload 안에서 이어 나는 완료 이벤트 둘(camel · kebab)이 지난 뒤
+    queueMicrotask(() => { discarded = false; });
   });
   for (const type of ["htmx:historyRestore", "htmx:history-restore"]) {
     window.addEventListener(type, (event) => { if (discarded) event.stopImmediatePropagation(); }, true);  // 버린 복원은 «복원됨»으로 알리지 않는다
   }
   document.addEventListener("htmx:historyCacheMissLoadError", () => { if (!leaving) window.location.reload(); });  // 409 · 그 밖 실패 → 지금 주소를 문서로
+
+  // 첫 문서 — 이 화면이 첫 보관 단위 · 이 브라우저 탭에서 본 탭 마지막 위치가 서버 탭 기록보다 앞선다
+  { const m = tabsOf(); for (const a of tabLinks()) { const k = keyOf(a); if (k !== currentTab && typeof m[k] === "string") a.setAttribute("href", m[k]); } }
+  const s0 = screenOf(sidHere() || `${doc}.${++seq}`);
+  s0.url = here();
+  s0.tab = currentTab;
+  s0.title = document.title;
+  s0.state = featureState();
+  stamp(s0.sid);
+  settleOn(s0);
 })();
 ```
 
@@ -447,32 +768,49 @@ class LandingNavigator:
 
 - *누름 시작 철회 · 대기 큐*: htmx 는 부스트 링크 누름에서 `htmx:confirm` 을 먼저 내고 그 뒤에 `hx-sync` · 대기 큐를 고른다. 그 자리에서 앞 이동을 `abort()` 하면 진행 중 요청이 비어 새 요청이 큐 없이 열린다 — 화면 안 링크를 요청 중 다시 눌러도 둘째가 큐에 들지 않는다(탭 막대의 `this:replace` 와 같은 «새 누름이 대체»).
 - *철회 구간*: 끝나지 않은 XHR 의 `abort()` 는 abort 이벤트를 그 자리에서(동기) 내고, htmx 는 그 안에서 대기 큐의 맨 앞을 다시 부른다 — 다시 불린 요청의 `htmx:confirm` · `htmx:beforeRequest` 는 `depth > 0` 구간 안이라 취소된다(취소된 confirm 은 요청 없이 끝나고, 취소된 beforeRequest 는 보내지 않고 잠금을 푼다). 사용자 입력은 이 동기 구간에 끼어들 수 없어 «구간 안 = 철회된 큐 · 구간 밖 = 새 사용자 이동» 이 정확히 갈린다. 기능 JS 가 abort 관련 이벤트 안에서 동기로 연 요청도 같은 구간이라 막힌다(철회된 이동의 부수 효과).
-- *이동 하나만*: 새 이동의 시작 넷 — popstate(기능 JS 의 `history.back()` 포함) · 부스트 누름 · 복원 시작(`htmx:historyCacheMiss`) · 문서 이동 — 모두에서 진행 중 복원 · 부스트를 거둔다. 복원 요청은 htmx 내부 자료에 걸리지 않아 `hx-sync` · `htmx:abort` 가 닿지 않으므로 root 가 직접 거둔다. 문서 이동이 진행 중일 때의 부스트 누름은 문서 이동으로 낸다(마지막 누름이 이김 — 문서 이동 셸에서 탭 누름이 새 문서 이동이던 것과 같은 결과). popstate 리스너는 셸 머리(defer)에서 등록돼 htmx 의 `window.onpopstate` · 기능 JS 리스너보다 먼저 돈다.
+- *이동 하나만*: 새 이동의 시작 넷 — popstate(기능 JS 의 `history.back()` 포함) · 부스트 누름 · 복원 시작(`htmx:historyCacheMiss`) · 문서 이동 — 모두에서 진행 중 복원 · 부스트를 거둔다(보관 화면 이동도 같은 자리에서 — 아래 «보관»). 복원 요청은 htmx 내부 자료에 걸리지 않아 `hx-sync` · `htmx:abort` 가 닿지 않으므로 root 가 직접 거둔다. 문서 이동이 진행 중일 때의 부스트 누름은 문서 이동으로 낸다(마지막 누름이 이김 — 문서 이동 셸에서 탭 누름이 새 문서 이동이던 것과 같은 결과). popstate 리스너는 셸 머리(defer)에서 등록돼 htmx 의 `window.onpopstate` · 기능 JS 리스너보다 먼저 돈다.
 - *문서 떠남*: 막히지 않은 같은 창 링크 · 폼 제출(창 버블 단계에서 `defaultPrevented` 가 거짓) · Navigation API 가 있는 엔진의 문서 간 `navigate` · 기능 JS 의 `root:leave` 알림 · htmx 가 여는 문서 이동(`HX-Redirect` · `HX-Refresh` — 창 버블의 케밥 이름 `htmx:before-on-load` 에서 응답 머리로 · 조각 교체로 떨어진 요청 요소의 응답은 그 요소에 직접 단 리스너로)에서 `leaving` 을 세우고 진행 중 이동을 거둔다 — 늦은 부스트가 새 문서 전에 그려지지 않고, 엔진이 문서를 내리며 끊은 XHR 에 `error` 를 내도 `assign` · `reload` 가 사용자 이동을 덮지 않는다. htmx 는 camel 이름(`htmx:beforeOnLoad`)이 취소되지 않았을 때만 케밥 이름을 이어 내므로 기능 JS 가 취소한 응답(이동 없음)은 떠남으로 읽지 않는다. `pagehide` 도 `leaving` 을 세우고 `pageshow` · 새 root 이동 시작이 푼다. 남는 것(`root:leave` 를 빠뜨린 JS 이동 · 주소창 · 새로고침 단추 같은 브라우저 UI 이동)은 판정이 틀려도 진행 중 이동을 거둘 뿐이다(다음 이동에서 풀림).
-- *떠난 화면의 조각 요청*: 교체로 빠지는 옛 요소의 진행 중 XHR 은 htmx 가 끊지 않고, 그 응답 처리는 요소가 문서에 붙었는지 보지 않는다 — 늦은 `HX-Redirect` · `HX-Refresh` · OOB 가 새 화면을 덮을 수 있다(문서 이동 셸에서는 새 문서와 함께 모두 버려졌다). 그래서 root 는 조각 요청을 시작한 화면 세대로 모으고(`htmx:beforeRequest` — 요청 요소가 `body` 인 `HX-Location` 후속 요청 · `source` 없는 `htmx.ajax` 포함), root 이동이 `<main>` 을 실제로 바꾼 직후(창 포착 `htmx:afterSwap` — 기능 JS 의 afterSwap 리스너보다 먼저) 앞 세대 XHR 을 모두 끊는다. 끊는 동안 `body` 대기 큐가 다시 연 앞 화면 요청은 같은 `depth` 구간이 막는다. 새 화면의 요청(`hx-trigger="load"` · `htmx:load` 연결)은 정착 일에서 나므로 새 세대다. 새 화면이 그려지기 **전**에 온 응답은 적용된다(문서 이동 셸의 «새 문서가 들어서기 전» 창과 같다) · 서버는 끊긴 요청도 끝까지 처리한다.
+- *떠난 화면의 조각 요청*: 보관 이동(보관 탭 · 보관 ‹뒤로›)도 같은 화면 세대 바꿈이라 그 자리에서 끊는다 — 끊긴 것이 동작(GET 아님)이면 그 화면에 «다시 받기»를 달아 돌아올 때 서버에서 새로 받는다. 교체로 빠지는 옛 요소의 진행 중 XHR 은 htmx 가 끊지 않고, 그 응답 처리는 요소가 문서에 붙었는지 보지 않는다 — 늦은 `HX-Redirect` · `HX-Refresh` · OOB 가 새 화면을 덮을 수 있다(문서 이동 셸에서는 새 문서와 함께 모두 버려졌다). 그래서 root 는 조각 요청을 시작한 화면 세대로 모으고(`htmx:beforeRequest` — 요청 요소가 `body` 인 `HX-Location` 후속 요청 · `source` 없는 `htmx.ajax` 포함), root 이동이 `<main>` 을 실제로 바꾼 직후(창 포착 `htmx:afterSwap` — 기능 JS 의 afterSwap 리스너보다 먼저) 앞 세대 XHR 을 모두 끊는다. 끊는 동안 `body` 대기 큐가 다시 연 앞 화면 요청은 같은 `depth` 구간이 막는다. 새 화면의 요청(`hx-trigger="load"` · `htmx:load` 연결)은 정착 일에서 나므로 새 세대다. 새 화면이 그려지기 **전**에 온 응답은 적용된다(문서 이동 셸의 «새 문서가 들어서기 전» 창과 같다) · 서버는 끊긴 요청도 끝까지 처리한다.
 - *화면 밖 요청 요소의 지연 교체*: 응답이 이미 와 `swap:` 지연 타이머로 미뤄진 교체는 끊을 수 없다. 그 교체는 OOB 대상을 요청 요소의 뿌리에서 찾으므로, 화면 안 요청 요소는 root 이동 뒤 떨어진 조각 안에 머물지만 `body` · `<main>` 자신 · 막대처럼 화면 밖에 붙은 요청 요소의 OOB 는 새 화면 · 셸의 같은 id(`#root-tab-items` 등)를 덮는다. 그래서 root 는 그런 요청의 교체 대상에 직접 단 `htmx:beforeSwap` 에서 `swapOverride` 끝에 ` swap:0ms` 를 붙인다(htmx 는 마지막 `swap:` 을 쓴다 · 교체 방식은 그대로) — 그 요청의 전환 연출은 없어진다. 화면 안 요청 요소는 건드리지 않는다(implementation-htmx §7 의 전환 그대로). 그래서 `htmx.ajax` 는 그 화면 root 안 요소를 `source` 로 준다(implementation-javascript §3 «지속 셸의 수명» P3). 남는 것(규칙 밖): 화면 안 요소가 셸 id 를 `hx-target` 으로 삼은 지연 교체 · 기능 JS 가 그 요청의 `swapOverride` 를 다시 바꿈.
-- *맨 위 보이기*: 처리기가 `HX-Reswap: innerHTML show:none` 으로 htmx 의 정착 뒤 스크롤을 끄고, root 가 교체 직후(`htmx:afterSwap`) `behavior: "instant"` 로 문서 맨 위로 보낸다 — 철회 뒤 늦게 돌 스크롤 타이머가 남지 않고 프로젝트 CSS 의 `scroll-behavior` 를 비켜 간다. 링크 주소에 `#앵커` 가 있으면 htmx 정착이 그 자리로 보낸다.
+- *맨 위 보이기*(서버에서 받은 화면만 — 보관 화면은 적어 둔 자리): 처리기가 `HX-Reswap: innerHTML show:none` 으로 htmx 의 정착 뒤 스크롤을 끄고, root 가 교체 직후(`htmx:afterSwap`) `behavior: "instant"` 로 문서 맨 위로 보낸다 — 철회 뒤 늦게 돌 스크롤 타이머가 남지 않고 프로젝트 CSS 의 `scroll-behavior` 를 비켜 간다. 링크 주소에 `#앵커` 가 있으면 htmx 정착이 그 자리로 보낸다.
 - *적용 직전 지킴*: 복원이 가는 중 기능 JS 가 `pushState` · `replaceState` 로 다른 주소로 옮기면 `htmx:historyCacheMissLoad` 에서 목적지(경로+쿼리) ≠ 지금 주소다 — 그 이벤트의 detail 은 htmx 의 요청 기록 그 객체라 교체 자리 · 응답 · 경로를 바꿔 응답을 버리고(떼어 낸 `<main>` 에 빈 본문 · 막대 · 제목 그대로) 지금 주소를 기록한다. 버린 복원의 완료 이벤트(`htmx:historyRestore` · `htmx:history-restore`)는 창 포착 단계에서 막아 기능 JS 에 «복원됨» 으로 알리지 않는다. 이동 식별은 경로+쿼리다 — 같은 주소 `replaceState`(흔한 항목 stamp)면 응답을 적용한다(«주소 = 본문 = 고른 탭»).
-- *history state 보전*: htmx 는 이동 때 현재 항목을 `replaceState({htmx:true})` 로 덮는다 — root 가 `htmx:beforeHistorySave` 에서 그 항목의 state 를 잡아 두었다가 떠나는 항목(`htmx:beforeHistoryUpdate` — push 직전)과 도착 항목(`htmx:historyCacheMiss`)에 표지와 함께 되돌린다(`replaceState` 는 항목 키를 바꾸지 않는다). 같은 주소 부스트는 그 항목의 기능 state 를 지운다 — 그 항목을 새로 시작하는 것이라 되돌리지 않는다(같은 주소 링크 = 새 문서이던 문서 이동 셸과 같음). `hx-history="false"` 가 있으면 되돌릴 사본이 없다(꼴 ⑪ · 백스톱 SH1).
+- *기록 쓰기 감싸기*(2.4.0 «history state 보전»을 갈음): htmx 는 이동 때 항목을 `replaceState({htmx:true})` 로 덮는다 — root 가 `history.pushState` · `replaceState` 를 감싸 htmx 의 «맨 `{htmx:true}`» 쓰기가 항목의 화면 표지 · 기능 state 를 덮지 않게(이미 htmx 표지가 있고 주소가 같으면 부르지 않음 · 주소가 다르면 다른 키를 펼쳐 둠 · 부스트 밀기에 새 화면 표지를 실음) 한다. 기능 JS 가 보는 state 는 2.4.0 과 같다. 이동마다 기록 호출이 한 번이라 WebKit 의 «10 초에 `pushState` · `replaceState` 100 회» 한도에 덜 닿고, 닿아도(밀기 실패) 화면은 그대로다. 같은 주소 부스트는 그 항목을 새로 시작한다(같은 주소 링크 = 새 문서이던 문서 이동 셸과 같음). `hx-history="false"` 가 있으면 htmx 가 저장 단계를 건너뛴다(꼴 ⑪ · 백스톱 SH1).
+- *보이는 화면을 따라 적기*: 모든 기록 쓰기 뒤와 같은 화면 항목 사이 popstate 뒤에, 지금 항목이 보이는 화면의 것이면 그 화면의 주소 · 기능 state · 탭 마지막 위치를 지금 값으로 둔다 — `pushState`(기능 JS 의 층 등 · 경로가 달라도) · 같은 화면 popstate 는 받고, `replaceState` 는 경로가 그 화면 경로와 같을 때만(쿼리 · 해시 · state) 받는다(보관 화면의 늦은 다른 경로 고쳐 쓰기가 보이는 화면 주소가 되지 않게).
 - *재탭 ②*: 포착 단계 document 리스너라 링크 위 htmx 부스트 리스너보다 먼저 돈다 — 요청 0 · 기록 무변. 조건은 «고른 탭 · 그 href 의 경로+쿼리 = 지금 주소 · 진행 중 복원 · 문서 이동 없음» 이고, 진행 중인 것이 부스트면 그 부스트를 거두고 맨 위로 간다(화면 상태 유지). 초점은 누른 탭에 그대로 둔다.
 - *실패 길*: 부스트 연결 실패 → 그 주소를 문서로 · 복원 연결 실패 · 409 · 그 밖 실패 → 지금 주소를 새로 엶 — 셋 다 문서 떠남 중이면 하지 않는다. 실패 표시를 더 친절하게 하려면 명세가 승인한 UI JS 가 같은 이벤트를 듣는다.
 - *켜짐 조건*: body 표지가 없으면 아무 리스너도 걸지 않는다 — 표지를 걷은 셸에 이 파일 줄이 남아도 문서 이동 셸과 같다.
-- 이 파일은 명세가 승인하는 UI 기능 JS 가 아니라 지속 셸의 일부다(root 소유) — 백스톱은 내용을 보지 않고 discipline 감수가 «위 글과 같음» 을 본다. 같은 동작을 기능 JS 로 다시 만들지 않는다.
+- *보관*: 화면을 떠날 때(보관 탭 · 부스트 · ‹뒤로›·‹앞으로› · 서버 복원) `<main>` 의 자식 노드를 문서 밖 조각(`DocumentFragment`)으로 옮긴다 — 쓰던 글 · 펼친 것 · 기능 JS 상태는 노드에 남고 스크롤(문서 · 안쪽 칸) · 초점 · 제목은 root 가 적는다. htmx 는 문서 밖 요소의 요청을 보내지 않고 폴링을 다시 예약하지 않으며 다른 요소에 단 `from:` 리스너는 스스로 떨어진다 — 보관 중에는 서버를 부르지 않는다. 대상 · OOB 찾기는 요소의 뿌리에서 하므로 보관 화면 안에 갇힌다. 단위는 서버에서 받은 화면 하나다 — 보관 탭 이동이 미는 기록 항목은 그 화면을 다시 가리킨다(같은 화면이 여러 항목에 걸림).
+- *돌아올 때*: 노드를 다시 붙이고 폴링 · `from:` 요소에 속성 한 줄(`data-root-arm`)을 바꿔 `htmx.process` 한다(htmx 는 속성이 바뀐 요소만 다시 연결 · `load` 는 다시 쏘지 않음 · 떠날 때 진행 중 요청을 끊었으므로 겹침 없음). 떼어 둔 동안 지연 교체로 새 노드가 생겼으면(그 `htmx:load` 는 조각에 머문다) 그 화면 최상위 요소(스크립트 · template 빼고)에 `htmx:load` 를 한 번 낸다(P2 · P9 — 연결은 멱등). 기능 JS 에는 떠날 때 `root:screen-hide` · 돌아올 때 `root:screen-show` 를 그 화면 최상위 요소에서 낸다(P12).
+- *놓친 공유 값 갱신*: 보관할 때 그 조각의 GET 구독(`hx-get` · `data-hx-get`)에서 `hx-trigger` · `data-hx-trigger` 의 `from:body` 갈래 첫 낱말(이벤트 이름)을 모아 `document.body` 에 그 이름의 듣개를 건다 — body 에서 실제로 난 것만(숨은 지연 교체가 body 에 낸 `After-Swap` 포함 · 취소된 응답의 `HX-Trigger` 는 htmx 가 내지 않아 빠짐) 적었다가 돌아올 때 그 구독만 `htmx.ajax("GET", …)` 로 한 번 다시 받는다(끊긴 재조회의 거절은 소비). GET 아닌 구독은 다시 보내지 않는다.
+- *보관 ‹뒤로› · ‹앞으로›*: root 의 popstate(셸 머리 defer — 가장 먼저 돈다)가 도착 항목의 화면 표지가 보관 화면이면 그 자리에서 다시 붙인다 — 기능 JS 의 popstate 는 자기 root 가 붙은 채로 받는다. 그다음 htmx 의 복원 시작 `htmx:historyCacheMiss`(취소 가능)를 취소해 서버 요청을 막는다. 보관이 없으면 위 «복원» 길이다(교체 직전 `historyCacheMissLoad` 에서 지금 화면을 보관).
+- *부스트 밀기 · 교체 사이*: `htmx:pushedIntoHistory`(밀기가 된 뒤 · 교체 직전)에서 떠나는 화면의 자리를 적고 `root:screen-hide` 를 낸 뒤 노드를 문서 안 숨은 자리로 옮기고, `htmx:afterSwap`(`<main>`)에서 조각으로 옮긴다 — htmx 가 OOB(`#root-tab-items`)를 누른 링크의 뿌리에서 찾으므로 교체 동안은 문서 안이어야 한다. 밀기가 실패하면 교체도 신호도 없다.
+- *보관 탭*: 탭 누름은 창 버블 `htmx:confirm`(기능 JS 가 요소 · `document` 에서 취소할 판정이 끝난 뒤)에서 고른 탭 표시를 바로 옮기고, 그 탭의 마지막 화면(지금 탭이면 첫 화면)이 보관돼 있으면 요청을 취소하고 **먼저 기록에 한 칸 민 뒤**(실패면 고른 탭을 되돌리고 그대로) 지금 화면을 떼고 그 화면을 붙인다. 보관이 없으면 부스트가 그대로 간다.
+- *동작 뒤 같은 출처 이동*: 보이는 화면 조각 응답의 `HX-Redirect`(또는 글자 꼴 `HX-Location`)는 창 버블 케밥 `htmx:before-on-load` 에서 본다(취소 판정이 끝난 뒤) — 같은 출처면 응답 처리를 취소하고 화면 밖 숨은 부스트 링크를 눌러 부스트 길(철회 · 실패 · 게이트 → 문서 이동 · 셸 아닌 응답이면 문서 이동)로 간다. **이 듣개는 `leaveOnMove`(문서 떠남)보다 먼저 등록한다** — 뒤바꾸면 이 이동이 문서 떠남으로 먼저 읽혀 문서 이동으로 샌다.
+- *보관 상한 30*: 탭마다 마지막 · 첫 화면도 센다. 넘치면 고정 아닌 것부터, 그다음 가장 오래 안 본 고정 화면도 htmx 정리(`htmx:beforeCleanupElement`)를 거쳐 버린다 — 그 화면의 기록 칸 · 탭은 서버에서 새로 받는다.
+- *신원*: `<main>` 안 `root-who` 가 이 문서 값과 다른 화면을 받으면 앞 계정의 보관 화면 · 탭 마지막 위치를 버린다(새로 받은 화면은 남김). 다른 창이 다른 값으로 셸 화면을 받으면(`localStorage["root.who"]` · `storage`) 이 창을 새로 연다. bfcache 로 되살아나면 보관 화면만 버린다. HTTP 캐시가 준 옛 문서는 자기 값을 알리지 않는다.
+- *탭 마지막 위치*: 같은 브라우저 탭의 새 문서(새로고침 · 다시 엶)는 `sessionStorage["root.tabs"] = {who, product, tabs}` 에서 같은 신원 · 같은 제품 셸(셸 표지 stem) 것만 읽어 탭 주소를 고친다(보관 ‹뒤로›는 서버가 모름). `who` 가 null 이면 쓰지도 읽지도 않는다. 새 창은 서버 탭 기록이다.
+- 이 파일은 명세가 승인하는 UI 기능 JS 가 아니라 지속 셸의 일부다(root 소유) — 백스톱은 내용을 보지 않고 discipline 감수가 «위 글과 같음» 을 본다. 같은 동작을 기능 JS 로 다시 만들지 않는다. 첫 줄의 `root_shell 2.6` 은 판 표지다(Coordinator G0 가 `head -1` 로 옛 판을 가린다).
 
 - 제품 선언이 있으면 own 제품 셸(`root_<제품>_view.html`)도 같은 꼴이고 표지는 `data-root-shell="root_<제품>_view@{{ root_state.shell_rev }}"` 다. id 는 모든 셸이 같다 — 다른 셸끼리는 표지가 달라 처리기가 전체 이동으로 보낸다.
 - **셸 전환은 기능 슬라이스다**(문서 이동 셸 → 지속 셸은 동작이 바뀐다 — 슬라이스 0 · 리팩토링 모드로 하지 않는다) · **표지는 마지막 슬라이스에 단다**: 앞 슬라이스(문서 이동 셸 그대로)가 CSS 겹침 해소 · 기능 JS 수명 이관(implementation-javascript §3 «지속 셸의 수명» — `root:leave` 알림은 문서 이동 셸에서도 무해해 앞 슬라이스에 넣는다) · root 코드(`shell_rev` · `RootTabState.key` · 처리기 · `write_tab` 처분 옮김 · `root_shell.js` 파일 · 틀 CSS 상태를 class 로)를 먼저 하고, 마지막 슬라이스가 셸 꼴 · 공유 머리 · `?v=` · 표지 · 그 제품 페이지(사슬 · include 포함)의 `{% block head %}` · `{% block scripts %}` · 본문 안 실행 태그 걷기 · body 자료를 `<main>` 안으로 옮기기 · root 브라우저 시험을 한다.
-- **앱과 다른 점**(웹 한계 · 지속 셸이 택한 미지원 범위 — 막대 유지 · 재탭 ② · 탭 안 중첩 이동은 앱과 같다):
-  - 탭별 화면 상태 · 스크롤을 기억하지 않는다 — 탭마다 마지막 주소만 기억하고 서버가 다시 그린다(맨 위).
-  - ‹뒤로› 순서는 브라우저 기록 하나다 — 지나온 순서대로 탭을 넘나든다(막대를 다시 그리지 않는 것만 앱과 같다).
-  - 재탭 ①(중첩 화면에서 같은 탭)은 첫 화면으로의 push 다 — 기록에 중첩 화면이 남는다.
-  - 첫 반응은 서버 왕복 뒤다 — 누른 탭에 즉시 눌림 표시(`htmx-request`)만 주고 고른 탭 상태를 응답 전에 바꾸지 않는다.
-  - 본문 교체를 넘어 살아야 하는 전역 알림(토스트) 자리가 셸에 없다(꼴 ⑫) — 알림은 본문 안에서 그 화면과 함께 사라진다.
-  - ‹뒤로›로 돌아간 화면은 서버가 다시 그린다 — 입력 글 · 펼침 · 기능 JS 상태가 없다(기능이 입력을 지켜야 하면 그 기능의 명세가 정한다).
-  - 화면 읽기 프로그램에 «새 화면» 알림이 없다(본문만 바뀜) — 명세가 필요하면 live 영역을 정한다.
+- **지속 셸 판 올림(2.4.0 ~ 2.5.x → 2.6)도 기능 슬라이스다**(기능 요청에서만 — 리팩토링 · 수정 실행은 옛 판 그대로): `root_shell.js` 를 위 표준 글로 · 셸 템플릿 두 줄(`data-root-first` · `root-who`) · RootTabState `first_href` · RootState `who` · RootVM(§3) · 틀 CSS 두 규칙 · 기능 JS 의 P12(보관 중 멈춤) · P13(알림 자리) 처분 · root 브라우저 시험.
+- **앱과 다른 점**(웹 한계 · 지속 셸이 택한 범위 — 막대 유지 · 탭 · ‹뒤로› · ‹앞으로›로 돌아온 화면이 떠날 때 그대로 · 재탭 ①(첫 화면 그대로) · 재탭 ② · 누르자마자 고른 탭 · 화면을 넘어 사는 알림 · 새 화면 읽기 알림은 앱과 같다):
+  - **‹뒤로›는 탭마다 따로가 아니다** — 브라우저 기록 하나를 지나온 차례대로 탭을 넘나든다. 탭마다 따로 쌓이는 ‹뒤로›(앱의 하단 내비)는 사용자 결정으로 이 판 밖이다.
+  - 재탭 ①(중첩 화면에서 같은 탭)은 첫 화면을 떠날 때 그대로 보이지만 기록에 한 칸을 민다 — 그 뒤 ‹뒤로›는 중첩 화면이다.
+  - 떠난 화면은 그 문서의 기억 안에만 산다 — 새로고침 · 주소로 다시 열기 · 문서 이동(셸 아닌 화면 · 서버 오류 · 배포 뒤 첫 서버 이동) 뒤에는 보관 화면이 없고, 그 앞 기록 칸은 서버가 다시 그린다(맨 위). 한 문서에서 30 화면을 넘게 오가면 가장 오래 안 본 화면부터 같은 꼴이 된다.
+  - 보관 화면은 멈춰 있다 — htmx 요청 · 폴링은 서버를 부르지 않고, 다시 보이면 이어 돌며 그동안 body 에서 실제로 난 공유 값 갱신은 GET 구독만 한 번 다시 받는다(GET 아닌 구독은 다시 보내지 않는다). 기능 JS 의 타이머 · 연결은 그 기능이 P12 를 지킬 때 멈춘다. 재생 중이던 소리 · 영상은 멈춘 채 돌아온다. iframe 은 다시 읽히고, 떠 있던 popover 는 닫힌다.
+  - 화면을 떠날 때 진행 중이던 그 화면의 요청은 끊긴다. 끊긴 것이 동작(GET 아님)이면 그 화면은 돌아올 때 서버에서 새로 받는다. 그 동작이 다른 화면에 보내려던 공유 값 갱신은 오지 않는다(서버는 동작을 끝까지 한다).
+  - 화면 안 동작 뒤 같은 출처 셸 화면으로 가는 이동은 셸 안 부스트다. 셸 아닌 화면(로그인 등) · 실패면 문서 이동이고, 그때는 보관 화면이 사라진다.
+  - 이 창이 다른 신원으로 그린 화면을 받으면 앞 계정의 보관 화면을 버린다(새로 받은 화면은 남음). 다른 창이 다른 신원으로 셸 화면을 받으면 이 창을 새로 연다 — 지금 화면의 쓰던 글도 사라진다(같은 계정 다시 로그인 포함). 다른 창의 로그아웃 · 로그인이 셸 아닌 화면에서 끝나면 이 창은 다음 서버 화면까지 모르고, 그동안 보관 화면이 보일 수 있다(그 화면의 다음 요청은 로그인으로 간다). 세션 인증이 아닌 백엔드 · 서명 쿠키 세션 엔진에서는 이 계정 지킴이 꺼진다.
+  - 서버의 탭 기록은 «서버가 마지막으로 그린 그 탭 화면»이다. 같은 브라우저 탭의 새 문서는 root 가 적어 둔 탭 마지막 위치(같은 신원 · 같은 제품 셸 것만 — 신원 표지가 없는 호스트는 쓰지 않음)를 먼저 쓰고, 새 창은 서버 기록을 쓴다.
+  - 기능 JS 가 보이는 화면의 경로를 `replaceState` 로 바꾸면 root 는 그 화면 주소로 받지 않는다 — 경로를 바꾸는 층은 `pushState` 로 연다(implementation-javascript H1 ~ H5).
+  - 주소로 바로 들어온 화면의 ‹뒤로›는 브라우저대로 떠난다.
+  - iPhone 가장자리 쓸기 · 안드로이드 Chrome 의 시스템 ‹뒤로›는 실기기로 확인하지 않았다.
+  - (2.4.0 한계 — OOB 로 새로 놓인 탭 링크의 정착 전 누름 · Shift-클릭 · CSP · 롤링 배포 창 · `?` 꼬리 · 경합 창 — 는 그대로다.)
 - **지속 셸 후보 표지 셋**: `<body>` 의 `data-root-shell` · `<nav>` 의 `hx-boost` · `<main>` 의 `hx-history-elt`(`data-hx-*` 별칭 포함). 표준 셸 파일에 하나라도 있으면 지속 셸 후보로 보고 백스톱 SH2 가 나머지 꼴을 모두 본다 — 일부만 있으면 blocker(런타임은 판별이 서지 않아 모든 이동이 전체 이동으로 내려앉는다). 표준 셸 밖 템플릿(옛 `base/base.html` 등)에는 표지를 달지 않는다(SH1).
 - **되돌리기**: 셸의 후보 표지 셋을 모두 걷으면 문서 이동 셸이다 — `root_shell.js` 줄도 함께 걷는다(남아도 body 표지가 없으면 그 파일은 아무 리스너도 걸지 않는다). 셸 방식 바꾸기는 G1 결정이다.
 
-탭 href는 RootVM이 만든다 — context processor `root_context(request)`가 `request.session`과 현재 BC(`request.resolver_match.namespaces[0]`)를 RootVM에 넘기고, RootVM이 root의 탭 표(BC → 탭)로 탭마다 `href`·`is_current`를 채운다: 현재 탭은 그 탭 첫 화면 href, 다른 탭은 세션 `root.tab_last`의 마지막 경로(없으면 첫 화면 — §3). 탭 기록은 `RootRequestHandler` 가 응답 뒤 세션 저장 바로 앞에서 적는다(아래) — BC는 탭 기록을 모른다(architecture-state §10 "거의 빈 VM"). 지속 셸이면 RootState 는 `shell_rev`(머리 판 — `root_initializer.shell_rev()` 가 시동 때 정한 값)를, RootTabState 는 `key` 를 함께 싣는다(§3 «지속 셸이면»).
+탭 href는 RootVM이 만든다 — context processor `root_context(request)`가 `request.session`과 현재 BC(`request.resolver_match.namespaces[0]`)를 RootVM에 넘기고, RootVM이 root의 탭 표(BC → 탭)로 탭마다 `href`·`is_current`를 채운다: 현재 탭은 그 탭 첫 화면 href, 다른 탭은 세션 `root.tab_last`의 마지막 경로(없으면 첫 화면 — §3). 탭 기록은 `RootRequestHandler` 가 응답 뒤 세션 저장 바로 앞에서 적는다(아래) — BC는 탭 기록을 모른다(architecture-state §10 "거의 빈 VM"). 지속 셸이면 RootState 는 `shell_rev`(머리 판 — `root_initializer.shell_rev()` 가 시동 때 정한 값) · `who`(계정 경계 표지)를, RootTabState 는 `key` · `first_href` 를 함께 싣는다(§3 «지속 셸이면»). 지속 셸은 문서 안에서 `root_shell.js` 가 보관 화면 · 이 브라우저 탭의 탭 마지막 위치(같은 신원 · 같은 제품)로 탭 주소를 고친다.
 
 - **top-level redirect(게이트)의 자리** — 요청 수명 handler `RootRequestHandler`(미들웨어 — `MIDDLEWARE` 등록은 G0 점검)의 `process_view(request, view_func, view_args, view_kwargs)`다. **view 모듈이 `web.`으로 시작할 때만** 게이트·세션 신원 이월·탭 기록(§3)을 한다 — 같은 프로세스 API 호출(§4)이 닿는 백엔드 view(모듈이 `web.` 밖)에는 아무것도 하지 않으므로 middleware → RootVM → UseCase → Client → middleware 재진입이 끊긴다(테스트 `Client`도 미들웨어를 그대로 지난다). 게이트 여부는 root_vm이 UseCase를 직접 호출해 얻는다(architecture-state §10 — UseCase에 `request`를 넘기지 않는다). 신원 contextvar는 `process_view`에서 set하고 그 토큰을 `request`에 두었다가 `__call__`의 응답 뒤 reset한다. 지속 셸의 부스트 · 복원 요청은 아래 표의 계약이다:
 
@@ -768,14 +1106,14 @@ def _uncached(response: HttpResponse) -> HttpResponse:
 - web view 의 GET 응답에는 모두 `Vary: HX-Request` 를, 처리기가 HX 요청에 따라 바꾼 응답에는 `Cache-Control: no-store` 도 단다.
 - 탭 기록은 `__call__` 끝 한 자리(`_record_page`)에서 세션 저장소를 다시 읽고 이 요청의 탭 기록 쓰기(자기 탭 · root 처분)를 적힌 순서대로 그 최신 값 위에 다시 놓는다(위 «탭 기록») — root 가 이 요청에서 탭 기록을 고치거나 지우는 처분은 `write_tab` 으로만 하고 `_record_page` 앞에서 부른다(응답 쪽 처분도 `__call__` 에서 `_record_page` 호출 전). 사본을 통째로 덮지 않는다.
 
-- **전환**: 문서 이동 셸은 페이지 이동 전환을 두지 않는다(브라우저 기본 이동). 지속 셸은 본문 전환을 두지 않고(앱 탭 전환과 같음), 탭 막대 · 탭별 모습의 상태 변화만 CSS 전환으로 움직인다 — 막대 요소는 남으므로 그 상태는 고른 탭 class 를 `:has()` 로 읽어 정하고, 새로 놓이는 탭 링크 안의 움직임은 htmx 정착으로 이어진다 — 그래서 움직이는 상태 선택자는 BEM `--` class 로 쓰고 `aria-current` 는 접근성 값으로만 둔다(`--duration-*` · `--easing-*` 토큰 · `prefers-reduced-motion` 에서 끔). `transition` 목록에는 물리 속성(`padding-top` · `padding-bottom` 등)을 적는다 — WebKit 은 논리 축약 `padding-block` 의 전환을 그리지 않는다. 조각 교체 전환은 두 셸 모두 implementation-htmx §7의 `htmx-swapping`·`htmx-settling` 클래스 + 토큰이다 — router는 전환 연출을 갖지 않아 design_system을 참조하지 않는다(architecture-ui §6).
+- **전환**: 문서 이동 셸은 페이지 이동 전환을 두지 않는다(브라우저 기본 이동). 지속 셸은 본문 전환을 두지 않고(앱 탭 전환과 같음), 탭 막대 · 탭별 모습의 상태 변화만 CSS 전환으로 움직인다 — 막대 요소는 남으므로 그 상태는 고른 탭 class 를 `:has()` 로 읽어 정하고, 새로 놓이는 탭 링크 안의 움직임은 htmx 정착으로 이어진다(보관 탭은 `root_shell.js` 가 누름 때 고른 탭 class 를 바꾼다) — 그래서 움직이는 상태 선택자는 BEM `--` class 로 쓰고 `aria-current` 는 접근성 값으로만 둔다(`--duration-*` · `--easing-*` 토큰 · `prefers-reduced-motion` 에서 끔). `transition` 목록에는 물리 속성(`padding-top` · `padding-bottom` 등)을 적는다 — WebKit 은 논리 축약 `padding-block` 의 전환을 그리지 않는다. 조각 교체 전환은 두 셸 모두 implementation-htmx §7의 `htmx-swapping`·`htmx-settling` 클래스 + 토큰이다 — router는 전환 연출을 갖지 않아 design_system을 참조하지 않는다(architecture-ui §6).
 - Django 판 메모: 본문 표기(`path`·`reverse`·`redirect`·`app_name` 네임스페이스·미들웨어 판형)는 4.2~5.x에서 같다.
 
 ## §3. 탭 재탭 2단 동작 — 규약 §10-5 ④ 확정 (root_view 소유)
 
-**확정(2026-06-12 사용자 — 규약 §10-5 ④): 현재 탭을 재탭하면 ① 탭 안 중첩 화면에 들어가 있으면 탭 첫 화면으로 복귀(스택 리셋) ② 이미 첫 화면이면 스크롤 최상단.** 다른 탭으로 가는 일반 탭 전환은 **그 탭의 마지막 위치를 복원**한다(재탭만 초기화한다). 전부 root(root_view·RootVM·RootRequestHandler)가 처리하고 **BC는 무관여**다 — 신호를 듣지도, 스크립트를 받지도, 탭 기록을 알지도 않는다(규약 §9-11).
+**확정(2026-06-12 사용자 — 규약 §10-5 ④): 현재 탭을 재탭하면 ① 탭 안 중첩 화면에 들어가 있으면 탭 첫 화면으로 복귀(스택 리셋) ② 이미 첫 화면이면 스크롤 최상단.** (지속 셸은 ① 에서 첫 화면을 떠날 때 그대로 보이지만 중첩 화면이 기록에 남는다 — 앱과 다른 점.) 다른 탭으로 가는 일반 탭 전환은 **그 탭의 마지막 위치를 복원**한다(재탭만 초기화한다). 전부 root(root_view·RootVM·RootRequestHandler)가 처리하고 **BC는 무관여**다 — 신호를 듣지도, 스크립트를 받지도, 탭 기록을 알지도 않는다(규약 §9-11).
 
-**web에서의 메커니즘 — 탭 href를 둘로 가른다**: ⓐ `RootRequestHandler` 가 web 페이지 요청이 끝날 때(`__call__` 끝 — 세션 저장 바로 앞) 세션 저장소의 최신 기록 위에 그 탭 자리(`request.get_full_path()`)와 이 요청의 root 처분(`write_tab`)을 적힌 순서대로 놓는다(문서 GET · 지속 셸의 부스트 이동 · ‹뒤로›·‹앞으로› 복원 — 부스트 · 복원은 응답이 같은 셸이고 이동 번호가 클 때 · 조각 요청 제외 · 저장된 세션이 없는 요청은 view 앞 사본에 · 응답 때 세션 키가 없으면 쓰지 않음 · 탭 = 그 view의 URL 네임스페이스 첫 마디 = BC → root의 탭 표 — §2). ⓑ RootVM이 탭 href를 만든다 — **현재 탭은 그 탭 첫 화면 href**, **다른 탭은 세션의 마지막 경로**(없으면 첫 화면). 그래서 ① 현재 탭 중첩 화면(`/channels/ch-1/`)에서 탭을 누르면 첫 화면(`/channels/`)으로 돌아가고 ② 첫 화면에서 누르면 같은 주소로 새로 이동해 맨 위에서 다시 그린다(스크롤 복원은 뒤로·앞으로 이동과 새로고침에만 걸리고 링크 이동에는 걸리지 않는다 · 지속 셸은 앱 · dddart 와 같이 요청 없이 문서 스크롤만 맨 위로 — 화면 상태가 남는다 · `root_shell.js` · 진행 중 이동이 있으면 같은 주소 부스트로 앞 이동을 거둔다) ③ 다른 탭에서 이 탭을 누르면 마지막에 보던 주소(`/channels/ch-1/`)로 돌아온다:
+**web에서의 메커니즘 — 탭 href를 둘로 가른다**: ⓐ `RootRequestHandler` 가 web 페이지 요청이 끝날 때(`__call__` 끝 — 세션 저장 바로 앞) 세션 저장소의 최신 기록 위에 그 탭 자리(`request.get_full_path()`)와 이 요청의 root 처분(`write_tab`)을 적힌 순서대로 놓는다(문서 GET · 지속 셸의 부스트 이동 · ‹뒤로›·‹앞으로› 복원 — 부스트 · 복원은 응답이 같은 셸이고 이동 번호가 클 때 · 조각 요청 제외 · 저장된 세션이 없는 요청은 view 앞 사본에 · 응답 때 세션 키가 없으면 쓰지 않음 · 탭 = 그 view의 URL 네임스페이스 첫 마디 = BC → root의 탭 표 — §2). ⓑ RootVM이 탭 href를 만든다 — **현재 탭은 그 탭 첫 화면 href**, **다른 탭은 세션의 마지막 경로**(없으면 첫 화면). 그래서 ① 현재 탭 중첩 화면(`/channels/ch-1/`)에서 탭을 누르면 첫 화면(`/channels/`)으로 돌아가고 ② 첫 화면에서 누르면 같은 주소로 새로 이동해 맨 위에서 다시 그린다(스크롤 복원은 뒤로·앞으로 이동과 새로고침에만 걸리고 링크 이동에는 걸리지 않는다 · 지속 셸은 앱 · dddart 와 같이 요청 없이 문서 스크롤만 맨 위로 — 화면 상태가 남는다 · `root_shell.js` · 진행 중 이동이 있으면 같은 주소 부스트로 앞 이동을 거둔다) ③ 다른 탭에서 이 탭을 누르면 마지막에 보던 주소(`/channels/ch-1/`)로 돌아온다(지속 셸은 문서 안이면 보관 화면 그대로 · 같은 브라우저 탭의 새 문서면 그 탭 기억(`sessionStorage` — 같은 신원 · 같은 제품) · 새 창이면 세션 마지막 주소):
 
 ```python
 # root/scaffold/view_model/root_vm.py — root의 탭 표·탭 href
@@ -815,27 +1153,43 @@ def root_context(request: HttpRequest) -> dict[str, RootState]:
     return {"root_state": RootVM(session=request.session).build(namespaces[0] if namespaces else None)}
 ```
 
-탭 한 칸의 표시 상태는 `root/scaffold/state/root_tab_state.py` 의 `RootTabState`(`label` · `href` · `is_current`)이고 `RootState` 는 `root_state.py` 에 따로 둔다(한 파일 한 클래스 — 백스톱 NM3). **지속 셸이면** RootTabState 는 `key`, RootState 는 머리 판 `shell_rev` 를 더한다 — 문서 이동 셸의 RootVM · RootState 는 위 그대로 둔다:
+탭 한 칸의 표시 상태는 `root/scaffold/state/root_tab_state.py` 의 `RootTabState`(`label` · `href` · `is_current`)이고 `RootState` 는 `root_state.py` 에 따로 둔다(한 파일 한 클래스 — 백스톱 NM3). **지속 셸이면** RootTabState 는 `key` · `first_href`, RootState 는 머리 판 `shell_rev` · 계정 경계 표지 `who` 를 더한다 — 문서 이동 셸의 RootVM · RootState 는 위 그대로 둔다:
 
 ```python
-# root/scaffold/state/root_tab_state.py — 지속 셸이면 key 를 더한다
+# root/scaffold/state/root_tab_state.py — 지속 셸이면 key · first_href 를 더한다
 @dataclass(frozen=True, slots=True, kw_only=True)
 class RootTabState:
     key: str  # 탭 표의 키 — 지속 셸 탭 링크 id · class 수식 재료
     label: str
     href: str
+    first_href: str  # 그 탭 첫 화면 href — 지속 셸 탭 링크 data-root-first(root_shell.js 의 재탭 ① · 탭 첫 화면)
     is_current: bool
 ```
 
 ```python
-# root/scaffold/state/root_state.py — 지속 셸이면 shell_rev 를 더한다
+# root/scaffold/state/root_state.py — 지속 셸이면 shell_rev · who 를 더한다
 @dataclass(frozen=True, slots=True, kw_only=True)
 class RootState:
     tabs: tuple[RootTabState, ...]
     shell_rev: str  # 지속 셸 머리 판 — <body data-root-shell="<셸 stem>@<판>"> 의 뒤쪽 · 머리 자산 주소의 ?v=
+    who: str | None  # 계정 경계 표지 — <main> 안 root-who(json_script) · 없으면 None(계정 지킴 꺼짐)
 ```
 
-- RootVM 은 `RootTabState(key=tab, label=…, href=…, is_current=…)` 와 `return RootState(tabs=tabs, shell_rev=shell_rev())` 로 채운다(`from web.root.initializer.root_initializer import shell_rev` — 탭 href 규칙은 그대로).
+- RootVM 은 `RootTabState(key=tab, label=…, href=…, first_href=first_href, is_current=…)` 와 `return RootState(tabs=tabs, shell_rev=shell_rev(), who=root_who(self._session))` 로 채운다(`from web.root.initializer.root_initializer import shell_rev` — 탭 href 규칙은 그대로).
+- `who` 는 root 의 계정 경계 표지다 — 세션의 인증 여부와 세션 키만 읽어 불투명 해시를 만든다(업무 판단이 아니라 UseCase 를 거치지 않는다 · architecture-state §10 의 예외). 로그인 때 세션 키가 바뀌므로(`cycle_key`) 같은 계정으로 다시 로그인해도 바뀌고, 세션 저장만으로는 바뀌지 않는다. 서명 쿠키 세션 엔진은 저장마다 키가 바뀌어 `None` 이다(G0 정보 줄 «계정 지킴 꺼짐»):
+
+```python
+# root/scaffold/view_model/root_vm.py — 지속 셸이면 더하는 것(계정 경계 표지)
+SIGNED_COOKIES: str = "django.contrib.sessions.backends.signed_cookies"
+
+
+def root_who(session: MutableMapping[str, object]) -> str | None:
+    """인증된 세션의 키에서 만든 불투명 해시 — 세션 인증이 아니거나 서명 쿠키 엔진이면 None."""
+    session_key: object = getattr(session, "session_key", None)  # Django SessionBase — 세션 키(로그인마다 바뀜)
+    if settings.SESSION_ENGINE == SIGNED_COOKIES or SESSION_KEY not in session or not isinstance(session_key, str):
+        return None
+    return salted_hmac("root.who", session_key).hexdigest()[:16]  # from django.contrib.auth import SESSION_KEY · django.utils.crypto
+```
 - `shell_rev()` 는 `root/initializer/root_initializer.py` 의 함수다 — `RootInitializer.start()`(`WebConfig.ready()`)가 한 번 불러 값을 정하고(`functools.cache`), `RootVM.build` 는 그 값을 읽기만 한다(VM = 표시 상태만 · 요청 안 파일 I/O 없음):
 
 ```python
@@ -866,8 +1220,8 @@ class RootInitializer:
 <a href="{{ tab.href }}"{% if tab.is_current %} aria-current="page"{% endif %}>{{ tab.label }}</a>
 ```
 
-- **BC 화면의 전제(유일한 접점 — "아무것도 하지 않기")**: 화면 최상위에 별도 스크롤 컨테이너(높이 고정 + `overflow: auto` 래퍼)를 두지 않는다 — 문서 스크롤이 기본이라 새 이동이 맨 위에서 시작한다. 내부 스크롤 패널을 쓰는 화면은 그 패널만 재탭 스크롤톱이 무반응이 된다(의도된 트레이드오프 — BC에 결합을 만들지 않는 것이 우선). 지속 셸의 재탭 ② 는 요청 없이 문서 맨 위로(화면 상태 유지) · 부스트 이동은 교체 직후 `root_shell.js` 가 문서를 맨 위로 보낸다(htmx 정착 스크롤은 `show:none` 으로 끔).
-- **탭 링크에 `hx-get`을 붙이지 않는다 — 탭 링크의 `hx-boost` 는 지속 셸의 탭 막대 `<nav>` 에 단다**(화면 안 같은 제품 링크는 implementation-htmx §9 · §2 «지속 셸» · 백스톱 SH1 · `data-hx-boost` 별칭도 같은 속성이다). 문서 이동 셸의 탭은 브라우저 이동이다. 지속 셸의 부스트 이동은 주소 쌓기를 htmx core 가 하고, 교체 자리 · 같은 주소의 기록 대체 · 탭 기록 · 실패의 전체 이동은 `RootRequestHandler` 가, 진행 중 이동 거두기 · 떠난 화면의 조각 요청 끊기 · 화면 밖 요청 요소(`body` 등)의 지연 교체 없앰 · 본문 맨 위 · 재탭 ②(요청 없이 맨 위로) · history state 보전은 `root_shell.js` 가 한다 — 같은 동작을 기능 JS 로 다시 만들지 않는다. 조각 요청(`hx-get`)은 주소 · 기록을 바꾸지 않으므로 탭 기록에 적히지 않는다.
+- **BC 화면의 전제(유일한 접점 — "아무것도 하지 않기")**: 화면 최상위에 별도 스크롤 컨테이너(높이 고정 + `overflow: auto` 래퍼)를 두지 않는다 — 문서 스크롤이 기본이라 새 이동이 맨 위에서 시작한다. 내부 스크롤 패널을 쓰는 화면은 그 패널만 재탭 스크롤톱이 무반응이 된다(의도된 트레이드오프 — BC에 결합을 만들지 않는 것이 우선). 지속 셸의 재탭 ② 는 요청 없이 문서 맨 위로(화면 상태 유지) · 부스트 이동은 교체 직후 `root_shell.js` 가 문서를 맨 위로 보낸다(htmx 정착 스크롤은 `show:none` 으로 끔) · 보관 화면으로 돌아오면 문서 · 안쪽 스크롤 칸의 자리를 root 가 적어 둔 대로 되돌린다.
+- **탭 링크에 `hx-get`을 붙이지 않는다 — 탭 링크의 `hx-boost` 는 지속 셸의 탭 막대 `<nav>` 에 단다**(화면 안 같은 제품 링크는 implementation-htmx §9 · §2 «지속 셸» · 백스톱 SH1 · `data-hx-boost` 별칭도 같은 속성이다). 문서 이동 셸의 탭은 브라우저 이동이다. 지속 셸의 부스트 이동은 주소 쌓기를 htmx core 가 하고(보관 탭은 `root_shell.js` 가 민다), 교체 자리 · 같은 주소의 기록 대체 · 탭 기록 · 실패의 전체 이동은 `RootRequestHandler` 가, 진행 중 이동 거두기 · 떠난 화면 보관 · 떠난 화면의 조각 요청 끊기 · 화면 밖 요청 요소(`body` 등)의 지연 교체 없앰 · 본문 맨 위 · 재탭 ②(요청 없이 맨 위로) · htmx 의 state 덮기 막기(기록 쓰기 감싸기)는 `root_shell.js` 가 한다 — 같은 동작을 기능 JS 로 다시 만들지 않는다. 조각 요청(`hx-get`)은 주소 · 기록을 바꾸지 않으므로 탭 기록에 적히지 않는다.
 - 세션 값은 JSON 직렬화 가능한 원시값이라 `root.tab_last`는 `{탭: 경로}` dict 하나다 — 키 대입만 변경으로 저장되므로 항상 새 dict를 대입한다(implementation-htmx §3).
 - **재탭 신호 버스(과거 HaffHaff `scroll_to_top_notifier` — BC가 전역 신호를 listen)는 비채택**이다: 금지 채널의 재생산(architecture-state §8). web에서는 전역 JS 이벤트로 BC 스크립트에 재탭을 알리는 형태가 그 재생산이다.
 - 상태바 탭 같은 기기 셸 동작은 web에는 해당 없음(브라우저가 소유한다). 2단 동작·전환 복원의 브라우저 확인(중첩 화면에서 탭 → 첫 화면 URL · 첫 화면 스크롤 뒤 탭 → 맨 위 · A 상세 → B → A 탭 → A 상세)은 골격 구현 시 1회. 지속 셸이면 root 브라우저 시험 하나와 root 처리기 시험 하나(implementation-test §4 «지속 셸의 root 시험»)가 이 확인을 남긴다.

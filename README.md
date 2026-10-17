@@ -318,6 +318,7 @@ dddjango는 작업 규모를 보고 알맞게 움직인다.
 - **표준**: 요청마다 view가 VM을 만들어 State를 그리고 HTMX 조각 응답으로 부분 교체 · design_system 토큰 · UI 동작 JavaScript는 기능당 한 파일
 - **경계**: `web/` 트리는 «내부의 외부 클라이언트» — 백엔드 코드를 import하지 않고(백스톱이 차단) in-process HTTP로 계약만 소비한다. 필요한 API가 없으면 가정 계약으로 짓고(tracer → 미니 게이트) 실제 API는 `/dddjango:dddjango`로 요청하도록 안내한다.
 - **구성**: 커맨드 2(`/dddjango-web:dddjango-web`(화면 빌드) · `/dddjango-web:refactor <대상 단위>`(대상 단위 하나의 기존 web 코드 전체를 표준으로 정리하는 리팩토링 입구 — 동작 불변 · Codex 는 `$dddjango-web-refactor`)) · 에이전트 7(`design-architect-web`·`design-review-ddd-web`·`design-review-ui-web`·`design-review-state-web`·`design-review-data-web`·`coder-web`·`discipline-reviewer-web`) · 스킬 12(`architecture-ddd`/`-ui`/`-state`/`-data`·`discipline-cleancode`/`-houserules`/`-test`·`implementation-test`/`-python`/`-django`/`-htmx`/`-javascript`) · 결정적 백스톱(검사 92종 — 구조·import·명명·순환·테스트·토대·모델·출력 안전·외부 JS·지속 셸·부품 CSS(CS1)) + 추출 도구 4 + 외부 JS 등재 도구
+- **탭 셸**: 새로 짓는 탭 셸은 지속 셸이다 — 탭 막대가 남고 본문만 바뀐다. 2.6.0부터 떠난 화면을 그 문서 기억 안에 보관해 탭 · ‹뒤로› · ‹앞으로›로 돌아오면 떠날 때 그대로 보인다(‹뒤로›는 지나온 차례 — 탭마다 따로 쌓이지 않는다 · 새로고침은 주소대로 새로 그린다). 이미 지은 지속 셸은 다음 기능 요청에서 «지속 셸 판 올림»을 묻는다.
 - **부품 CSS**: CS1이 문서가 쓰는 부품 CSS의 머리 실림을 슬라이스 끝·G2에서 확인한다(새로 빠진 쌍만 차단 · 빚 스캔 밖). 기존 누락은 G0에서 보고하고, 조각·조건부·못 읽음은 명세 표와 감수로 확인한다.
 - **빚 정리**: 기능 요청이 손대는 파일과 그 파일을 부르는 곳에 남은 옛 위반은 G0에서 묻고, 기능 구현 전에 슬라이스 0에서 동작 그대로 정리한다. 남은 빚은 G2에서 다시 판정한다.
 - **외부 JS**: 외부 JS 라이브러리는 공식 배포 파일을 등재 도구로 버전 고정해 들이고, G1에서 따로 승인받는다.

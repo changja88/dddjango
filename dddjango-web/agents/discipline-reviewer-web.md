@@ -137,16 +137,19 @@ Coordinator가 감사 범위와 시점을 정해 호출한다 — 너는 받은 
 
 아래 가운데 하나라도 어기면 blocker 다(규칙 본문은 implementation-javascript §3 «지속 셸의 수명» · implementation-django §2 «지속 셸»):
 
-- P1 · P2 · P3(진행 중 fetch · 타이머 정리 포함 · `htmx.ajax` 는 화면 root 안 `source` · root 가 끊은 요청을 실패로 띄우지 않음) · P4(root 셸 자료 포함) · P5 · P6 · P8 을 지킨다
+- P1 · P2 · P3(화면 단위 정리는 `htmx:beforeCleanupElement` — 지속 셸에서는 버릴 때 · `htmx.ajax` 는 화면 root 안 `source` · root 가 끊은 요청을 실패로 띄우지 않음) · P4(root 셸 자료 포함) · P5 · P6 · P8 을 지킨다
 - P10 — 창 버블 단계 `preventDefault` 가 없다 · `htmx:beforeOnLoad` 취소는 camel 이름으로 요소 · `document` 에서 한다
 - P11 — JS 문서 이동(문서를 넘을 수 있는 `history.back()` · `history.go(n)` 포함) 바로 앞에 `root:leave` 알림이 있다
+- P12 — 보관 중 멈춘다: 타이머 · `fetch` · `EventSource` · WebSocket · observer 가 `root:screen-hide` 에서 멈추거나 완료 때 자기 root 가 붙어 있는지(`isConnected`)로 가르고, 보관 중 기록 · 제목 · 주소 · 초점 · 크기 재기 · 서버 쓰기가 없으며 `root:screen-show` 에서 잇는다
+- P13 — 화면을 넘어 사는 알림은 그 화면이 그린 design_system 알림 부품(또는 화면의 `<template>`)을 `#root-toast` 로 옮겨 띄운다(보이는 화면에서 생긴 것만)
 - root 코드가 `root.tab_last` · `root.nav_seq` 를 `write_tab` · `process_view`(키 없는 세션의 view 앞 자기 탭 기록) · `_record_page` 밖에서 쓰지 않고, `write_tab` 을 `_record_page` 호출 뒤에 부르지 않는다(응답 쪽 처분 포함)
 - H1(소유 아닌 popstate 에서 주소 · history 를 쓰지 않음 포함) · H2(`null` state 금지) · H4(`sameDocument` 로 소유 판정 금지) · H5(`document.referrer` 를 목적지로 쓰지 않음)
 - 조각 CSS 선택자가 자기 block 아래다(SH5 가 못 보는 같은 요소 · 같은 특이도 겹침 포함)
 - 화면 안 부스트 링크의 목적지가 같은 제품 화면이고, 조상의 `hx-indicator` · `hx-headers` 가 그 이동에 엉뚱하게 걸리지 않는다
 - 페이지 제목이 런타임에 비지 않는다(빈 `{{ }}` 값)
 - SH3 의 `[info] 판독 불가`(글자 아닌 extends · include 인자) 파일을 열어 자산 자리를 손으로 본다 · `[info] SH 판독 불가`(파서가 못 읽어 태그 검사를 건너뛴 파일)도 열어 부스트 자리 · 본문 실행 script · stylesheet 를 손으로 본다 · 지속 셸 제품 화면이 Django 태그 글자를 `{% verbatim %}` 이나 변수 값(`{{ "{% … %}" }}`) 안에 글자로 찍으면 그 줄 둘레의 include · 실행 태그를 손으로 본다(검사기의 주석 · verbatim 판독이 그런 꼴에서 Django 와 다를 수 있다)
-- `root_shell.js` 가 표준 글(implementation-django §2 «지속 셸»)과 같다
+- `root_shell.js` 가 표준 글(2.6 · implementation-django §2 «지속 셸»)과 같다 — 판 올림 전 실행(리팩토링 · 수정 · 판 올림 «둠»)이면 2.4.0 표준 글과 같다: 파일 바이트 그대로의 sha256 = `288e252753ad8df71764bd7117be4dd70485c99e97b0d56261805c93cd018754`(블록 글자 + 끝 줄바꿈 하나 · `shasum -a 256` 으로 대조). 옛 판 셸 제품은 지속 셸 수명 규칙(P3 · P12 · P13 없음)을 2.5.2 판으로 읽는다
+- 판 2.6 셸이면 셸 템플릿 두 줄(탭 링크 두 벌의 같은 `data-root-first` · `<main>` 안 `{% block content %}` 앞 `root-who`)이 있고, 틀 CSS 의 `.root-toast`(자리만) · `.root-announce`(1px · `clip-path` 숨김) 두 규칙에 그림 값(색 · 그림자 · 글꼴 등)이 없다
 
 ### 12. 부품 CSS 미검증 (G2 감수)
 

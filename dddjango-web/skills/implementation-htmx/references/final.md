@@ -25,7 +25,7 @@
 htmx는 **2.0.10 고정 판 한 파일**이다 — 새 설치는 `web/static/htmx/htmx.min.js` 하나이고 Coordinator가 G0에 공식 배포본(`https://unpkg.com/htmx.org@2.0.10/dist/htmx.min.js`)을 받아 설치한다. 기존 프로젝트에 `web/static/js/htmx.min.js`·`htmx.js`가 있으면 그 설치를 그대로 소비한다(브라운필드 — 판이 달라도 그대로) — 이중 설치·조용한 이동·판 올림 금지(백스톱 PJ2는 새로 더한 htmx 파일만 본다·PU1). G0가 확인한 실제 core 경로는 build-state `htmx_core_static`(예 `web/htmx/htmx.min.js` · 브라운필드 `web/js/htmx.min.js`)에 적히고 coder-web 입력으로 온다. **지속 셸은 core 2.0.10 을 전제한다** — `root_shell.js` 가 2.0.10 의 이벤트 순서 · 요청 기록 객체에 기댄다. 판은 core 파일의 `version` 값으로 읽는다(따옴표 · 공백 무관 — 압축 `htmx.min.js` 의 `version:"2.0.10"` · 비압축 `htmx.js` 의 `version: '2.0.10'` 둘 다 2.0.10 · 백스톱 PJ2 와 같은 읽기 · 판 글자를 못 읽으면 2.0.10 으로 치지 않는다). 브라운필드 core 가 다른 판이면 지속 셸을 켜지 않는다(G0 이 «판단 불가»로 사용자에게 — core 판 맞추기는 따로 요청 · 이 규칙의 «판이 달라도 그대로 소비»는 문서 이동 셸에서 그대로다).
 
 - 로드는 root_view의 한 줄 `<script src="{% static '<htmx_core_static>' %}" defer></script>` — `htmx_core_static` 경로 그대로다(새 설치면 `{% static 'web/htmx/htmx.min.js' %}` · implementation-django §2). 다른 경로를 짐작해 넣지 않는다 — 조각 응답에 다시 넣지 않는다. 지속 셸은 그 다음 줄에 `root_shell.js` 를 싣고, 두 줄 모두 주소 꼬리 `?v={{ root_state.shell_rev }}` 를 단다(implementation-django §2 «지속 셸»).
-- 2.x 기본값 중 dddjango-web에 닿는 것: 같은 출처 요청만(`selfRequestsOnly`) · **4xx·5xx 응답은 교체하지 않는다**(§5) · 204 응답은 교체하지 않는다 · 확장은 core 밖 별도 배포(§9) · 요청마다 `HX-Request: true` 헤더(조각 요청 식별 — implementation-test §4) · 지속 셸은 `<meta name="htmx-config" content='{"historyCacheSize":0}'>` 로 화면 사본 저장을 끈다(사본 0 · `sessionStorage` 에는 지금 주소 글자 하나만) — ‹뒤로›·‹앞으로›는 `root_shell.js` 가 사본 없이 서버에서 받아 `<main>` 안만 바꾼다.
+- 2.x 기본값 중 dddjango-web에 닿는 것: 같은 출처 요청만(`selfRequestsOnly`) · **4xx·5xx 응답은 교체하지 않는다**(§5) · 204 응답은 교체하지 않는다 · 확장은 core 밖 별도 배포(§9) · 요청마다 `HX-Request: true` 헤더(조각 요청 식별 — implementation-test §4) · 지속 셸은 `<meta name="htmx-config" content='{"historyCacheSize":0}'>` 로 화면 사본 저장을 끈다(사본 0 · `sessionStorage` 에는 htmx 의 지금 주소 글자 하나와 root 의 탭 마지막 위치 한 칸) — ‹뒤로›·‹앞으로›는 떠난 화면이 보관돼 있으면 `root_shell.js` 가 그대로 다시 붙이고, 없으면(새로고침 뒤 등) 사본 없이 서버에서 받아 `<main>` 안만 바꾼다.
 - 1.x 표기(`hx-on="click: …"` 옛 문법·`hx-ws`·`hx-sse` 속성)는 2.x에 없다 — 옛 예제를 옮겨 쓰지 않는다.
 
 ## §2. 요청 구동 형태 — 페이지 view·조각 응답 (dddjango-web 화이트리스트)
@@ -112,7 +112,7 @@ def _record_login(sender: type, user: AbstractBaseUser, **kwargs: object) -> Non
 ```
 
 - `dispatch_uid`로 같은 수신이 두 번 연결되지 않게 한다 — `ready()`가 다시 불려도 한 번이다. 시그널 수신은 그 시그널을 보낸 요청 안에서 동기로 불린다(별도 스레드·큐가 아니다). 프로세스 수명은 워커 프로세스마다 따로다 — 워커 사이로 공유되는 상태를 모듈 전역에 두지 않는다.
-- 화면 밖 조각의 «일시정지» 같은 축은 web에는 해당 없음 — 보이지 않는 조각은 요청이 없을 뿐이다.
+- 화면 밖 조각의 «일시정지» 같은 축은 web에는 해당 없음 — 보이지 않는 조각은 요청이 없을 뿐이다. 지속 셸의 보관 화면도 요청이 없다(htmx 요청 · 폴링만 저절로 — 기능 JS 몫은 implementation-javascript P12) · 다시 보이면 폴링 · `from:body` 가 다시 걸리고 놓친 공유 갱신을 한 번 받는다(§6).
 
 ## §4. hx-* 규율 — get/post/target/swap/trigger/headers/indicator
 
@@ -178,8 +178,8 @@ def channel_summary_list_fragment(request: HttpRequest) -> HttpResponse:  # 조�
 
 - **액션 성공 후 재조회**: 조각 응답 함수가 VM 액션 메서드를 부르고, 액션 메서드는 성공하면 `self.build()`로 다시 조회한 State를 돌려준다 — 그 State로 같은 section을 render한 응답이 곧 재조회 결과다(architecture-state §4 정식 예제 — 응답 한 번에 액션과 재조회가 끝난다).
 - 재조회 중 이전 값 유지는 htmx 기본이다(응답 전까지 교체하지 않는다). 페이지 전체를 처음부터 다시 그려야 하면 응답 헤더 `HX-Refresh: true` — 일상 재조회에 쓰지 않는다.
-- **조각 요청 뒤 다른 페이지로 가야 하면** view는 `redirect(href)`를 돌려준다 — `RootRequestHandler.__call__`이 조각(`HX-Request`) 요청의 3xx를 200 + `HX-Redirect: <Location>`으로 바꿔 htmx가 전체 페이지 이동을 한다(로그인 이동 포함 — 조각 자리에 다른 페이지가 끼지 않는다 · implementation-django §2·§6). 조각 view가 `HX-Redirect`를 손으로 만들지 않는다. 부스트 · ‹뒤로›·‹앞으로› 복원 요청의 응답 계약(교체 자리 · 전체 이동 · 복원 실패 409)은 implementation-django §2 «지속 셸» 표다 — 조각 view 는 이것도 모른다.
-- **같은 BC의 다른 조각 갱신 — `HX-Trigger` 응답 헤더**: 공유 값(SharedState)을 보여 주는 다른 조각이 있으면, 변화를 일으킨 응답이 그 SharedState의 이벤트 이름을 `HX-Trigger` 헤더에 싣고, 그 조각이 `hx-trigger="<이벤트> from:body"`로 다시 요청한다(architecture-state §5·§8):
+- **조각 요청 뒤 다른 페이지로 가야 하면** view는 `redirect(href)`를 돌려준다 — `RootRequestHandler.__call__`이 조각(`HX-Request`) 요청의 3xx를 200 + `HX-Redirect: <Location>`으로 바꿔 htmx가 전체 페이지 이동을 한다(로그인 이동 포함 — 조각 자리에 다른 페이지가 끼지 않는다 · implementation-django §2·§6). 지속 셸은 그 이동이 같은 출처 셸 화면이면 `root_shell.js` 가 부스트 이동으로 하고(떠난 화면 보관이 남는다), 아니면 전체 이동이다. 조각 view가 `HX-Redirect`를 손으로 만들지 않는다. BC 는 `HX-Location` 을 쓰지 않는다(쓰면 지속 셸에서 글자 꼴만 부스트 이동 · 대상 지정 꼴은 셸을 깰 수 있다). 부스트 · ‹뒤로›·‹앞으로› 복원 요청의 응답 계약(교체 자리 · 전체 이동 · 복원 실패 409)은 implementation-django §2 «지속 셸» 표다 — 조각 view 는 이것도 모른다.
+- **같은 BC의 다른 조각 갱신 — `HX-Trigger` 응답 헤더**: 공유 값(SharedState)을 보여 주는 다른 조각이 있으면, 변화를 일으킨 응답이 그 SharedState의 이벤트 이름을 `HX-Trigger` 헤더에 싣고, 그 조각이 `hx-trigger="<이벤트> from:body"`로 다시 요청한다(architecture-state §5·§8). 지속 셸의 보관 화면은 돌아올 때 한 번 받는다 — 보관 중 body 에서 실제로 난 이벤트를 듣는 GET 구독만(GET 아닌 구독은 다시 보내지 않는다):
 
 ```python
 def order_list_add_fragment(request: HttpRequest, item_id: str) -> HttpResponse:
@@ -263,7 +263,7 @@ def channel_summary_embed_fragment(request: HttpRequest) -> HttpResponse:
 - `outerHTML` 교체 응답의 section은 **같은 id 루트를 다시 포함**한다 — 교체 뒤에도 다음 요청의 대상이 살아 있다.
 - 행마다 다른 주소(`row.leave_href`)는 VM이 navigator로 만들어 State의 행 값에 담는다 — 템플릿이 id를 이어 붙여 주소를 만들지 않는다(§4).
 - 요청 원소는 의미에 맞게 — 동작 단추는 `<button type="button">`, 이동은 `<a href>`. 조각 응답 함수에도 페이지와 같은 `@login_required`를 붙인다 — 미로그인 302는 `RootRequestHandler`가 200 + `HX-Redirect`로 바꿔 전체 로그인 이동이 된다(§6·implementation-django §6).
-- **전환이 명세된 교체**: htmx는 교체 중 `htmx-swapping`(나가는 쪽)·`htmx-settling`(들어오는 쪽) 클래스를 붙인다 — 그 클래스에 CSS 전환을 걸고(`--duration-*`·`--easing-*` 토큰 — implementation-django §10) `hx-swap`에 `swap:`/`settle:` 수식어를 함께 단다(`hx-swap="outerHTML swap:200ms settle:100ms"`). 기본 swap 지연 0ms·settle 20ms로는 클래스가 전환보다 먼저 사라진다. 지속 셸의 탭 막대 움직임도 이 채널이다 — 남는 막대는 CSS 전환, 새로 놓이는 탭 링크는 정착의 class 바꿈(implementation-django §2).
+- **전환이 명세된 교체**: htmx는 교체 중 `htmx-swapping`(나가는 쪽)·`htmx-settling`(들어오는 쪽) 클래스를 붙인다 — 그 클래스에 CSS 전환을 걸고(`--duration-*`·`--easing-*` 토큰 — implementation-django §10) `hx-swap`에 `swap:`/`settle:` 수식어를 함께 단다(`hx-swap="outerHTML swap:200ms settle:100ms"`). 기본 swap 지연 0ms·settle 20ms로는 클래스가 전환보다 먼저 사라진다. 지속 셸의 탭 막대 움직임도 이 채널이다 — 남는 막대는 CSS 전환, 새로 놓이는 탭 링크는 정착의 class 바꿈 · 보관 탭은 root 가 누름 때 고른 탭 class 를 바꾼다(implementation-django §2).
 - **`request`를 view 밖으로 반출하지 않는다**: VM·SharedState·UseCase에 `HttpRequest`를 넘기지 않는다 — 필요한 값만 꺼내 인자로 넘긴다(§3). `request`를 필드로 들고 다니는 객체는 이 위반이다.
 - 커스텀 템플릿 태그로 VM·UseCase를 부르는 우회는 쓰지 않는다 — view 함수 + 템플릿 둘로 전 화면을 덮는다(architecture-ui §3).
 

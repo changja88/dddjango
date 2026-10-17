@@ -87,7 +87,7 @@ native `<details>/<summary>`가 요구를 충족하면 그것을 쓴다. JS 기�
 | 상황 | 필요한 처리 |
 |---|---|
 | 최초 페이지 | DOM 사용 가능 시 연결. HTMX 최초 load와 겹쳐도 효과 중복 없음 |
-| 지속 셸의 화면 진입(탭 이동 · ‹뒤로› 복원) | 새 HTML 추가와 같다 — `htmx:load` 의 `detail.elt` 에서 연결 · 빠지는 화면은 `htmx:beforeCleanupElement` · 재탭 ②(맨 위로)는 화면을 바꾸지 않아 연결 · 정리 없음 |
+| 지속 셸의 화면 진입(탭 이동 · ‹뒤로›·‹앞으로›) | 서버에서 받은 화면은 새 HTML 추가와 같다 — `htmx:load` 의 `detail.elt` 에서 연결 · 보관 화면 복귀에는 보통 `htmx:load` 가 없고(DOM 그대로), 보관 중 지연 교체로 새 노드가 생겼으면 그 화면 최상위에서 한 번 난다(P9 멱등) · 떠나는 화면은 정리되지 않고 보관된다 — 정리(`htmx:beforeCleanupElement`)는 버릴 때 · 멈춤 · 이어 감은 `root:screen-hide` · `root:screen-show`(P12) · 재탭 ②(맨 위로)는 화면을 바꾸지 않아 연결 · 정리 없음 |
 | 새 HTML 추가·root 교체 | 초기화가 필요한 기능은 `htmx:load`의 `detail.elt`와 그 자손을 발견 |
 | DOM 배치 이후 측정 필요 | 목적에 맞는 afterSwap/afterSettle 선택. 둘을 동일 타이밍으로 보지 않음 |
 | HTMX가 노드 정리 | `htmx:beforeCleanupElement`의 `detail.elt`가 무엇을 소유·포함하는지 확인 |
@@ -109,7 +109,7 @@ HTMX 바깥의 DOM 제거 경로가 승인된 기능에 있다면 그 제거 코
 
 - **P1 맨 위 등록은 조건 없이**: 파일의 문서 수명 리스너(`document` · `window` 의 `htmx:load` · `htmx:beforeCleanupElement` · 위임 click · popstate 등)는 파일 실행 때 조건 없이 한 번 등록한다 — 첫 화면에 그 기능의 root 가 없다고 `return` 하지 않는다(그러면 부스트로 들어온 화면에서 기능이 서지 않는다).
 - **P2 인스턴스 연결은 `htmx:load`**: `htmx:load` 의 `detail.elt`(자신 `matches` + 자손)에서 root 를 찾아 연결한다. htmx 는 첫 문서에도 준비 뒤 body 에 `htmx:load` 를 한 번 보낸다 — DOMContentLoaded · `pageshow` · 파일 실행 때 한 번 스캔**만으로** 연결하는 꼴은 위반. 둘 다 두는 것은 멱등이면 허용.
-- **P3 정리는 `htmx:beforeCleanupElement`**: `pagehide` · `beforeunload` · `unload` 는 탭 이동에서 오지 않는다 — 화면 단위 정리를 그것에만 걸지 않는다. **그 화면이 연 진행 중 `fetch` · 타이머도 그때 거둔다**(`AbortController` 등 — 떠난 화면의 늦은 응답이 새 화면을 덮거나 문서를 옮기지 않게 · 문서 이동 셸에서는 문서와 함께 버려졌다 · htmx 조각 요청은 root 가 끊는다 — 요청 요소가 `body` 인 `HX-Location` 후속 · `htmx.ajax` 포함). **`htmx.ajax` 는 그 화면 root 안 요소를 `source` 로 준다** — `source` 가 없거나 화면 밖이면 요청 요소가 `body` 등이 되어 root 가 그 응답의 교체 지연을 없앤다(전환 연출이 사라짐) · 화면 안 `source` 면 root 이동 뒤 그 응답의 교체 · OOB 가 떨어진 조각 안에 머문다. **root 가 끊은 요청은 abort 로 끝난다**: 그 요청 요소에서 `htmx:afterRequest` · `htmx:sendAbort` 가 나고(detail 에 `error` 키만 — `failed` · `successful` 없음 · 요소가 `body` 면 document 까지 옴) `htmx.ajax` 의 promise 는 reject 된다 — 실패 UI 는 `detail.failed === true` · `detail.successful === false` 와 자기 화면 root 가 아직 붙어 있는지로 가른다(`detail.error` 나 promise reject 만으로 실패 문구를 띄우지 않는다).
+- **P3 정리는 `htmx:beforeCleanupElement`**: `pagehide` · `beforeunload` · `unload` 는 탭 이동에서 오지 않는다 — 화면 단위 정리를 그것에만 걸지 않는다. 지속 셸에서는 이 정리가 화면을 **버릴 때** 온다(떠날 때는 보관 — 버림은 보관 상한 · 신원 바뀜 · bfcache 되살림). 그 화면이 연 진행 중 `fetch` · 타이머 · 연결은 P12 가 맡는다. htmx 조각 요청은 떠날 때 root 가 끊는다(요청 요소가 `body` 인 `HX-Location` 후속(그 기능이 `HX-Location` 을 쓸 때 — 지속 셸 BC 는 쓰지 않는다 · 2.4.0 지킴 시험으로만 남김) · `htmx.ajax` 포함). **`htmx.ajax` 는 그 화면 root 안 요소를 `source` 로 준다** — `source` 가 없거나 화면 밖이면 요청 요소가 `body` 등이 되어 root 가 그 응답의 교체 지연을 없앤다(전환 연출이 사라짐) · 화면 안 `source` 면 root 이동 뒤 그 응답의 교체 · OOB 가 떨어진 조각 안에 머문다. **root 가 끊은 요청은 abort 로 끝난다**: 그 요청 요소에서 `htmx:afterRequest` · `htmx:sendAbort` 가 나고(detail 에 `error` 키만 — `failed` · `successful` 없음 · 요소가 `body` 면 document 까지 옴) `htmx.ajax` 의 promise 는 reject 된다 — 실패 UI 는 `detail.failed === true` · `detail.successful === false` 와 자기 화면 root 가 아직 붙어 있는지로 가른다(`detail.error` 나 promise reject 만으로 실패 문구를 띄우지 않는다).
 - **P4 첫 자료는 인스턴스마다**: 서버가 준 첫 자료(`json_script` · `data-*` · root 셸 자료 — `<main>` 안 `json_script`)는 연결할 때마다 다시 읽는다 — 파일 실행 때 한 번 읽어 모듈 변수 · `document[...]` 에 붙잡지 않는다.
 - **P5 화면 상태는 root 별**: 화면마다 바뀌는 상태를 문서 전역에 두지 않는다(`WeakMap` 등 root 귀속).
 - **P6 문서 전역 리스너는 root 없는 화면에서 무해**: 모든 화면에 실리므로 대상 판정 먼저.
@@ -118,17 +118,19 @@ HTMX 바깥의 DOM 제거 경로가 승인된 기능에 있다면 그 제거 코
 - **P9 같은 root 중복 금지**: A → B → A 왕복에서도 같은 root 에 리스너 · observer 가 겹치지 않는다.
 - **P10 창 버블 단계에서 뒤늦게 막지 않는다**: 기능 JS 가 링크 · 폼의 기본 이동을 막으려면 그 요소나 `document` 에서 막는다 — `window` 버블 리스너에서 `preventDefault` 하면 root 가 «문서 떠남»으로 잘못 읽어 진행 중 이동을 거둔다. htmx 응답 처리를 막을 때(`htmx:beforeOnLoad` 취소)도 camel 이름으로 요소나 `document` 에서 막는다(root 는 그 뒤에 오는 케밥 이름 `htmx:before-on-load` 로 떠남을 판정한다).
 - **P11 JS 문서 이동은 먼저 알린다**: 기능 JS 가 `location.assign` · `location.replace` · `location.href =` · `location.reload()` · 문서를 넘을 수 있는 `history.back()` · `history.go(n)` 으로 문서를 옮기면 **바로 앞 줄에서 `document.dispatchEvent(new Event("root:leave"))`** 를 낸다 — Navigation API 가 없는 엔진에서도 root 가 진행 중 이동을 거두고, 끊긴 XHR 의 실패 처리가 사용자의 이동을 덮지 않게 한다(같은 문서 안 뒤로였으면 popstate · 복원 시작이 그 표시를 되돌리므로 앞에 둬도 무해). 문서 이동 셸에서는 듣는 쪽이 없어 무해하다(두 셸에서 같은 글). 이 알림은 root 가 듣는 한 방향 알림이다 — BC 가 root 신호를 듣는 «재탭 신호 버스»(비채택 · implementation-django §3)와 방향이 반대다. 탭을 여는 JS 이동은 여전히 P8 이 막는다. htmx 가 여는 문서 이동(`HX-Redirect` · `HX-Refresh`)은 root 가 스스로 알아챈다(알림 불필요).
+- **P12 보관 중에는 멈춘다**: 보관 중인 화면은 문서에서 떨어져 있다(`root.isConnected === false`). 떠날 때 `root:screen-hide`, 돌아올 때 `root:screen-show` 가 그 화면 최상위 요소에서 문서로 버블된다. 기능 JS 의 타이머 · `fetch` · `EventSource` · WebSocket · observer 는 hide 에서 멈추거나 완료 때 자기 root 가 붙어 있는지로 가르고, 보관 중에는 기록 · 제목 · 주소 · 초점 · 크기 재기 · 서버 쓰기를 하지 않는다(떠난 화면의 늦은 응답이 보이는 화면을 덮거나 문서를 옮기지 않게 · 문서 이동 셸에서는 문서와 함께 버려졌다). show 에서 잇는다. 떼어 둔 동안 교체로 빠진 노드의 정리 이벤트는 오지 않는다.
+- **P13 화면을 넘어 사는 알림은 `#root-toast`**: 화면을 넘어 살아야 하는 알림은 그 화면이 그린 design_system 알림 부품(또는 화면의 `<template>`)을 보일 때 `#root-toast` 로 옮겨 띄운다 — 보이는 화면에서 생긴 것만 · 시간 · 닫기는 그 기능 JS.
 
 **history 를 쓰는 기능**(지속 셸):
 
-- **H1 자기 이동만 가로챈다 · 소유하지 않은 이동에서는 주소 · history 를 쓰지 않는다**: popstate 리스너는 파일 맨 위에서 등록한다. 자기가 소유한 이동이면 처리 후 `event.stopImmediatePropagation()`. 소유하지 않은 이동에서는 아무것도 하지 않는다(소유 아닌 popstate 에서 화면을 바꾸며 `pushState` · `replaceState` 하는 꼴은 위반).
-- **H2 state 는 객체로 · 기존 키를 펼쳐 둔다**: `{ ...history.state, <자기 키> }` — `replaceState(null, …)` · `pushState(null, …)` 금지.
-- **H3 htmx 가 덮은 state 는 root 가 되돌린다**: 기능 JS 는 문서 이동 셸과 같은 state 를 본다. 같은 주소 재탭(같은 주소 부스트 — 진행 중 이동이 있을 때)은 그 항목을 새로 시작한다.
-- **H4 Navigation API 소유 판정은 자기 항목 키로만**: 지속 셸에서는 다른 화면 항목도 같은 문서다 — `destination.sameDocument` 를 «내 항목» 판정에 쓰지 않는다. htmx · root 의 `pushState` · `replaceState`(history state 보전 포함)도 `navigate`(push · replace)로 온다 — 소유 판정 밖이면 아무것도 하지 않는다.
+- **H1 자기 이동만 가로챈다 · 소유하지 않은 이동에서는 주소 · history 를 쓰지 않는다**: popstate 리스너는 파일 맨 위에서 등록한다. 자기가 소유한 이동이면 처리 후 `event.stopImmediatePropagation()`. 소유하지 않은 이동에서는 아무것도 하지 않는다(소유 아닌 popstate 에서 화면을 바꾸며 `pushState` · `replaceState` 하는 꼴은 위반). 보관 화면의 항목에 도착한 popstate 는 root 가 그 화면을 먼저 붙인 뒤 기능 JS 에 온다.
+- **H2 state 는 객체로 · 기존 키를 펼쳐 둔다**: `{ ...history.state, <자기 키> }` — `replaceState(null, …)` · `pushState(null, …)` 금지(펼쳐 둬야 root 의 화면 표지가 따라간다). 지금 항목의 경로를 바꾸는 `replaceState` 는 root 가 그 화면 주소로 받지 않는다 — 경로를 바꾸는 층은 `pushState` 로 열고, 경로를 바꾸는 이동은 부스트 링크로 한다.
+- **H3 htmx 의 state 덮기는 root 가 막는다(같은 계약)**: 기능 JS 는 문서 이동 셸과 같은 state 를 본다(root 가 기록 쓰기를 감싸 htmx 의 맨 `{htmx:true}` 쓰기가 기존 키를 지우지 않게 한다). 같은 주소 재탭(같은 주소 부스트 — 진행 중 이동이 있을 때)은 그 항목을 새로 시작한다.
+- **H4 Navigation API 소유 판정은 자기 항목 키로만**: 지속 셸에서는 다른 화면 항목도 같은 문서다 — `destination.sameDocument` 를 «내 항목» 판정에 쓰지 않는다. htmx · root 의 `pushState` · `replaceState`(보관 탭 밀기 · 기록 쓰기 감싸기 포함)도 `navigate`(push · replace)로 온다 — 소유 판정 밖이면 아무것도 하지 않는다.
 - **H5 문서 수명 값은 «이 화면에 들어온 길»이 아니다**: `document.referrer` · 첫 문서의 navigation 항목은 첫 문서 값으로 굳는다 — 닫기 · 돌아가기 목적지는 State 가 준 href 로.
 - 실제 복원 경로를 브라우저 테스트로 남긴다(§7 history 사용 행).
 
-`root_shell.js` 는 root 소유다 — htmx 가 덮은 항목 state 를 되돌리고(H3) 진행 중 이동을 하나만 남기며(누름 시작 · 철회 구간 · 문서 떠남 · 문서 이동 중 누름은 문서 이동) 떠난 화면의 htmx 조각 요청을 끊고 화면 밖 요청 요소(`body` 등)의 지연 교체를 없애며 본문을 맨 위로 보이고 재탭 ② 를 한다. 기능 JS 는 그 일을 다시 하지 않는다(implementation-django §2 «지속 셸»).
+`root_shell.js` 는 root 소유다 — htmx 의 항목 state 덮기를 막고(H3 · 기록 쓰기 감싸기) 진행 중 이동을 하나만 남기며(누름 시작 · 철회 구간 · 문서 떠남 · 문서 이동 중 누름은 문서 이동) 떠난 화면의 htmx 조각 요청을 끊고 화면 밖 요청 요소(`body` 등)의 지연 교체를 없앤다. 떠난 화면을 보관했다가 다시 붙이고(스크롤 · 안쪽 칸 · 초점 · 제목) 멈춘 폴링 · `from:` 구독을 다시 걸며 놓친 공유 갱신을 한 번 받는다. 서버에서 받은 화면만 맨 위로 보이고 재탭 ② 를 한다. 신원 표지(`root-who`)로 다른 계정 화면의 보관을 버리고, 알림 자리 `#root-toast` · 읽기 알림 `#root-announce` · 탭 마지막 위치를 맡는다. 기능 JS 는 그 일을 다시 하지 않는다(implementation-django §2 «지속 셸»).
 
 화면 스크롤은 문서 스크롤이다 — 화면이 자기 세로 스크롤 틀을 두면 재탭 ② · 부스트의 맨 위 보이기가 그 틀에 닿지 않는다(dddart 의 명시 ScrollController 화면과 같은 대가).
 
@@ -159,7 +161,7 @@ Promise 뒤에 UI를 갱신하는 코드는 두 가지를 확인한다.
 
 서버에서 전달한 구조화 값이 필요하면 템플릿의 자동 이스케이프(implementation-django §6)를 지난 값만 소비한다. Django `json_script`는 비실행 JSON 데이터이며 `textContent`를 JSON.parse하여 읽는다. 이를 실행 JS 허용과 혼동하지 않는다. 수동 JSON 문자열 조립, 템플릿 값을 실행 소스에 끼워 넣기, eval은 데이터 전달 방식이 아니다. 단일 값은 정상 escape된 quoted `data-*` 속성으로 충분할 수 있다. 값은 State가 준 것이다 — 템플릿이 계산해 넣지 않는다. [Django json_script](https://docs.djangoproject.com/en/5.2/ref/templates/builtins/#json-script)
 
-클라이언트 표시 검사는 사용자 편의를 위한 것이다. HTML 조작이나 JS 생략으로 우회해도 서버의 입력 검증·인증·인가가 유지되어야 한다. 이 스킬의 UI 요구를 계기로 토큰·세션·업무 상태를 localStorage에 옮기거나 별도 API 호출 계층을 만들지 않는다.
+클라이언트 표시 검사는 사용자 편의를 위한 것이다. HTML 조작이나 JS 생략으로 우회해도 서버의 입력 검증·인증·인가가 유지되어야 한다. 이 스킬의 UI 요구를 계기로 토큰·세션·업무 상태를 localStorage에 옮기거나 별도 API 호출 계층을 만들지 않는다. 예외 한 줄: 지속 셸 root 의 `localStorage["root.who"]`(불투명 해시) · `sessionStorage["root.tabs"]`(탭 → 주소)는 root 소유다 — 기능 JS 가 따라 하지 않는다.
 
 ## §6. 키보드·포커스·시각 상태
 
@@ -183,7 +185,7 @@ disclosure에는 펼침 상태와 제어 대상 관계를, dialog에는 초점 �
 | 키보드/포커스 기능 | 키보드 조작, 상태 의미, 필요한 초점 이동·복귀 |
 | history 사용 | 해당 화면의 실제 복원 경로 — 지속 셸이면 층 열기 → 뒤로(층만 닫힘 · 화면 그대로) · 층 연 채 탭 이동 → 뒤로 두 번(체인 인계 — 인계된 키 · 슬롯 · 이탈 결과) · 다른 화면 → 앞으로 · 소유 아닌 뒤로에서 주소 불변 · 막힘 중 다른 화면으로 가는 뒤로 |
 | 공식 SDK 호출 | SDK 가 불리지 않은 경우(일시 실패)·키 빈 값(설정 실패)의 실패 동작, 명세가 정한 호출 인자 — 브라우저 테스트는 운영자 호스트를 막고(실제 발송 0) SDK 전역을 테스트 쪽 대역으로 바꿔 단언한다(기능 JS 에 스텁·훅을 넣지 않는다). 실물 SDK 의 호출 경계는 Coordinator 의 G2 «공식 SDK 경계 확인»(`assets/sdk_boundary.js` — init 감싸기·분류표대로 가로채기 · 운영자 window.open·폼 제출 기록 전용)이 본다 |
-| 지속 셸 | 첫 화면에 그 root 가 없는 진입 → 부스트로 그 화면 · A → B → A 왕복의 리스너 · observer 수 불변 · 재탭 ② 뒤 화면 상태 유지 |
+| 지속 셸 | 첫 화면에 그 root 가 없는 진입 → 부스트로 그 화면 · A → B → A 왕복의 리스너 · observer 수 불변 · 재탭 ② 뒤 화면 상태 유지 · 탭 왕복 · ‹뒤로› 뒤 화면 상태 그대로 · 보관 중 타이머 · 요청 멈춤(P12) · `root:screen-hide`/`root:screen-show` 짝 |
 
 브라우저 API의 성공·실패 타이밍을 제어한 테스트는 해당 상태 경로의 증거다. 그것을 실제 OS 권한·클립보드 성공이나 모든 브라우저 호환성 증거로 부르지 않는다. 수동 HTMX 이벤트는 멱등성 확인에 쓸 수 있지만 실제 HTTP swap 검사를 대신하지 않는다.
 
