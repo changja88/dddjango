@@ -57,4 +57,8 @@
 - 설계 · 검토 기록은 운영 scratch `w260/`.
 
 ## 검증
-@@VERIFY_WEB@@
+- `make verify-web`(최종 트리 `c6266bdb` · 2026-10-17 18:40 ~ 19:20): 통과 — 모든 픽스처 묶음 실패 0(묶음 요약 합 PASS 4,800 / FAIL 0 · 새 묶음 지속 셸 표준 글 11 · SH5 230 · 2.4.0 지속 셸 487 · 2.5.1 하위 폴더 339 포함) · self-test · Codex 미러 · 문단 대조 green.
+- `make verify` green 6/6(`4948bfa5` — 그 뒤 고침은 web 규칙 글 한 구뿐).
+- `claude plugin validate dddjango-web --strict` 통과.
+- 배포 전 작은 브라우저 확인: 규칙 글에서 뽑은 최종 `root_shell.js` 블록(sha256 `10ff490d143ef0e7…` · 시험판과 바이트 같음)으로 Chromium · WebKit 230/230.
+- 구현 검토 두 갈래(Claude · Codex) 차단 0 — 둘이 함께 짚은 사소 하나(탭 링크 움직임 문단의 보관 탭 한 구)를 `2099bf35` 로 고침.
