@@ -387,20 +387,32 @@ djr:R-2526 a djr:Obligation ;
     djr:revision 1 .
 
 djr:R-2527 a djr:Prohibition ;
-    skos:prefLabel "프로젝트 전역 스위트(make test 류)의 내부 루프 실행 금지"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2527@2026-08-22> .
+    skos:prefLabel "프로젝트 전역 스위트(make test 류)의 내부 루프 실행 금지 — 명세 완료 조건이 까닭과 함께 적은 소비자 경로는 돎 · 까닭 없는 «전체 suite» 완료 조건 · Coordinator 입력의 전역 실행만으로는 돌지 않음(전역 판정은 G2 앞 Coordinator 전체 suite · 게이트 몫 · 완료 보고에 돌리지 않음 표기)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2527@2026-10-20> .
 
 <https://numchida.com/ns/djr#R-2527@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2527 ;
     djr:revision 1 .
 
+<https://numchida.com/ns/djr#R-2527@2026-10-20> a djr:Expression ;
+    prov:specializationOf djr:R-2527 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2527@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
+
 djr:R-2528 a djr:Exception ;
-    skos:prefLabel "BC 폴더 밖·타 BC 소비 표면(open_host_service/·published_event/·broker 계약) 수정 시 영향 소비자 테스트 경로(불명확 시 전역 1회) 포함"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-2528@2026-08-22> .
+    skos:prefLabel "BC 폴더 밖 · 타 BC 소비 표면(open_host_service/·published_event/·broker 계약) · BC 밖 시험 쪽(conftest · 공용 시험 · 다른 BC 시험 · conftest 가 import 하는 모듈)이 import 하는 이 BC 모듈과 거기서 닿는 파일(시험 재료 포함 · conftest 고정물이 깔리는 시험 전부) · 다른 BC 시험이 경로 글자로 부르는 API 의 라우트 · 컨트롤러 · 요청/응답 꼴을 바꾸면 영향 소비자 테스트 경로 포함(⑶ 은 시험 쪽 파일 · conftest 가 직접 import 하는 모듈(다른 BC 제품 모듈 포함)이 이 BC 를 직접 import 하는 길만 — 그 밖 사슬 · 제품 코드 · 배선 길은 ⑶ 도 불명확도 아님 · 찾기 git grep · 명세가 까닭과 함께 적은 경로 포함 · 불명확 시 전역 1회 — 그 파견의 마지막 바꿈 뒤 한 번 · 고친 뒤는 붉었던 시험과 BC 경로 · 목록과 같은 붉음은 고치지 않고 보고 · 시험 쪽 파일의 주석 · docstring 만이면 소비자 더하지 않음)"@ko ;
+    djr:currentExpression <https://numchida.com/ns/djr#R-2528@2026-10-20> .
 
 <https://numchida.com/ns/djr#R-2528@2026-08-22> a djr:Expression ;
     prov:specializationOf djr:R-2528 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-2528@2026-10-20> a djr:Expression ;
+    prov:specializationOf djr:R-2528 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-2528@2026-08-22> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-amendment .
 
 djr:R-2529 a djr:Prohibition ;
     skos:prefLabel "이번 슬라이스 인수 테스트 전부 실행과 축소 금지"@ko ;
@@ -1271,7 +1283,7 @@ djr:R-3651 a djr:Prohibition ;
     djr:kind djr:kind-norm ;
     djr:order 10 ;
     djr:statesNorm djr:R-2524, djr:R-2525, djr:R-2526, djr:R-2527, djr:R-2528, djr:R-2529, djr:R-2530, djr:R-2531, djr:R-2532, djr:R-2533 ;
-    djr:text "- 한 슬라이스를 통과시킬 만큼만 구현한다(YAGNI). 관련 단위 테스트와, 존재하는 경우 인수 테스트를 Bash로 실행해 Green을 확인한다. **내부 루프 실행 범위는 BC-범위가 기본이다(2026-08-13)** — 슬라이스 래칫의 pytest 는 대상 BC 의 테스트 경로(예: `application/<bc>/test/`)와 이번 슬라이스의 인수 테스트로 한정하고, 프로젝트 전역 스위트(`make test` 류)는 내부 루프에서 돌리지 않는다(전역 판정은 게이트·완료 기준 소유 — 이 규칙은 실행 «범위»만 줄이고 판정 «기준»은 바꾸지 않는다). 예외: 슬라이스가 **BC 폴더 밖**(framework/·프로젝트 settings·urls 등 — 슬라이스 0 의 빚 수리 포함)이나 **타 BC 가 소비하는 표면**(open_host_service/·published_event/·broker 계약)을 수정하면, 그 슬라이스의 래칫에는 영향 소비자의 테스트 경로를(불명확하면 전역 스위트 1회를) 포함한다 — 금지의 주어는 «관행적 전역 반복»이지 «영향 경로 실행»이 아니다. «이번 슬라이스의 인수 테스트»의 자는 이번 슬라이스에 붙은 입장 행과 입력으로 받은 acceptance 결과의 테스트 **전부**다 — 축소는 네 소유가 아니며, 0건 주장은 사유를 완료 보고에 명시한다. 완료 보고에 **pytest 호출 횟수·총 소요 한 줄**(형식 `pytest N회 · 총 M초`)을 남긴다 — **관찰 전용**이며 판정·평가에 쓰지 않는다: 수치를 줄이려는 실행 생략은 위반이다(Red→Green 사이클 규율 불변).\n"@ko .
+    djr:text "- 한 슬라이스를 통과시킬 만큼만 구현한다(YAGNI). 관련 단위 테스트와, 존재하는 경우 인수 테스트를 Bash로 실행해 Green을 확인한다. **내부 루프 실행 범위는 BC-범위가 기본이다(2026-08-13)** — 슬라이스 래칫의 pytest 는 대상 BC 의 테스트 경로(예: `application/<bc>/test/`)와 이번 슬라이스의 인수 테스트로 한정하고, 프로젝트 전역 스위트(`make test` 류)는 내부 루프에서 돌리지 않는다(전역 판정은 G2 앞 Coordinator 의 전체 suite 와 게이트 몫이다 — 명세 완료 조건이 까닭과 함께 적은 소비자 시험 경로(까닭이 곧 전체면 전역 1회)는 돌고, 까닭 없이 «전체 suite» 만 적은 완료 조건과 Coordinator 입력이 적은 전역 실행만으로는 돌지 않으며, 그때 완료 보고에 `전역 스위트 — G2 앞 Coordinator 몫(돌리지 않음)` 을 적는다 · 이 규칙은 실행 «범위»만 줄이고 판정 «기준»은 바꾸지 않는다). 예외: 슬라이스가 ⑴ **BC 폴더 밖**(framework/·프로젝트 settings·urls 등 — 슬라이스 0 의 빚 수리 포함)이나 ⑵ **타 BC 가 소비하는 표면**(open_host_service/·published_event/·broker 계약)을 수정하거나, ⑶ **BC 밖 시험 쪽이 싣는 길**의 파일 — BC 밖 시험 쪽 파이썬 파일(루트 · 다른 BC 의 conftest · 공용 시험 · 다른 BC 시험)이나 그 conftest 가 import 하는 모듈(`scripts/` 같은 그 밖 모듈 포함)이 import 하는 이 BC 모듈과, 거기서 BC 안 import 를 따라 닿는 파일(시험 재료 · 흉내 · 고정물 포함) — 을 바꾸거나, ⑷ 다른 BC 시험이 경로 글자 · URL 이름으로 부르는 API 의 라우트 · 컨트롤러 · 요청/응답 꼴을 바꾸면(그 아래 유스케이스 · 도메인 · 저장소 코드만 바꾼 것은 ⑷ 가 아니다 — 명세 까닭과 G2 앞 전체 suite 몫이다), 그 슬라이스의 래칫에 영향 소비자의 테스트 경로를 포함한다. ⑶ 의 길은 두 꼴뿐이다 — BC 밖 시험 쪽 파일이 이 BC 모듈을 직접 import 하거나, BC 밖 conftest 가 직접 import 하는 모듈이 이 BC 모듈을 직접 import 한다(그 모듈이 다른 BC 제품 모듈이나 `scripts/` 같은 그 밖 모듈이어도 ⑶ 이고, 배선 모듈(urls · settings · api 라우터 결선)이면 ⑶ 이 아니다). 그 밖의 길 — 시험 쪽 파일이 다른 BC 제품 모듈 · 배선을 거쳐 닿는 길과 제품 코드 · 프로젝트 배선에서 시작하는 import 길 — 은 ⑶ 이 아니고 아래 «불명확»에도 들지 않는다. 그 소비는 ⑵ 표면과 ⑷ 경로 글자로 본다. ⑶ 은 이 BC 의 패키지 점 경로를 찾고(`git grep -l -F <패키지 점 경로> -- '*.py' ':!<BC 폴더>' ':!.dddjango*'` 가운데 시험 쪽 파일과 conftest 가 import 하는 모듈 — `from <패키지> import <모듈>` 꼴도 걸린다), conftest 이거나 conftest 가 import 하는 모듈이면 그 conftest 를 읽어 그 고정물(autouse 포함)이 깔리는 시험 전부를 더한다(어느 표식에만 깔면 그 표식 단계 · 자기 BC 를 빼면 뺀 나머지). ⑷ 는 그 경로 글자를 BC 밖 시험에서 찾는다. 명세 완료 조건이 까닭과 함께 적은 소비자 경로도 더한다. 찾기로 가릴 수 없으면(점 경로를 글자 조각으로 짓는 동적 import · 따라가기 어려운 import 사슬) 불명확이고 전역 스위트를 1회 돈다. 소비자 · 전역 실행은 그 파견에서 그 파일을 마지막으로 바꾼 뒤 한 번이고(반송 재파견이 다시 바꾸면 다시 한 번), 그 실행에서 붉었던 것을 고친 뒤의 확인은 붉었던 시험과 BC 경로로 한다. 소비자 실행의 붉음이 명세 `## G2 전체 확인` 목록(없으면 완료 조건 · 검증 절의 같은 꼴 닫힌 목록)과 같은 시험 · 같은 까닭이면 고치지 않고 보고에 `목록과 같음` 으로 적는다. 바뀐 줄이 모두 시험 쪽 파일(경로 조각 `test`·`tests`·`factories`·`fake`·`fakes`·`fixtures` 아래이거나 `test_*.py`·`*_test.py`·`conftest.py`)의 주석 · docstring 안이면 ⑶ ⑷ 의 소비자를 더하지 않는다(`--doctest-modules` 를 쓰는 프로젝트는 빼지 않는다) — 금지의 주어는 «관행적 전역 반복»이지 «영향 경로 실행»이 아니다. «이번 슬라이스의 인수 테스트»의 자는 이번 슬라이스에 붙은 입장 행과 입력으로 받은 acceptance 결과의 테스트 **전부**다 — 축소는 네 소유가 아니며, 0건 주장은 사유를 완료 보고에 명시한다. 완료 보고에 **pytest 호출 횟수·총 소요 한 줄**(형식 `pytest N회 · 총 M초`)을 남긴다 — **관찰 전용**이며 판정·평가에 쓰지 않는다: 수치를 줄이려는 실행 생략은 위반이다(Red→Green 사이클 규율 불변).\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004/b11> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s004> ;
