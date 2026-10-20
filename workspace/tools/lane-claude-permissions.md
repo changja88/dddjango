@@ -4,7 +4,7 @@
 
 1. `cp /Users/hyun/Desktop/dddjango/workspace/tools/lane-claude-permissions.json <레인 저장소>/.claude/settings.local.json`
 2. 대상에 settings.local.json 이 이미 있으면 덮지 말고 `permissions.allow` 배열만 병합한다 (`.claude/settings.json` 은 hooks 전용 — 건드리지 않는다).
-3. 레인 세션 기동 후 `/permissions` 로 allow 7규칙 로드를 확인한다.
+3. 레인 세션 기동 후 `/permissions` 로 allow 6규칙 로드를 확인한다.
 
 ## 근거 — S3-r2″ 레인 A 세션(09566ef7) 실측
 
@@ -19,7 +19,6 @@
 | `Bash(cat:*)` | 5회 — 파일 읽기 체인. **4h33m 방치 1건 포함 클래스** |
 | `Bash(sed -n:*)` | 6회 — 읽기 전용 범위 출력(`sed -n '…p'`)만. `-i` 는 prefix 밖 |
 | `Bash(mkdir -p:*)` + `Bash(touch:*)` | 5회 — BC 골격·`__init__.py` 스캐폴딩. 생성 전용(파괴 불가) |
-| `Bash(graphify query:*)` | r2″ 0회(전부 ~2s 무프롬프트)·이전 라운드 2회 실측 — 예방 등록. 읽기 전용 조회 |
 
 **커버 합계: 59회 중 확실 ~29회 + cat 루프형 ~5회(엔진의 루프 정적 분석 여하에 따라 부분적) ≈ 34회(58%).**
 

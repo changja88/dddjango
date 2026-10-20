@@ -6,8 +6,7 @@
       "Bash(cat:*)",
       "Bash(sed -n:*)",
       "Bash(mkdir -p:*)",
-      "Bash(touch:*)",
-      "Bash(graphify query:*)"
+      "Bash(touch:*)"
     ]
   }
 }

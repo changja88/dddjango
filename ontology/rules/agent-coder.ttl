@@ -1193,7 +1193,7 @@ djr:R-3651 a djr:Prohibition ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s001> ;
     djr:kind djr:kind-prose ;
     djr:order 3 ;
-    djr:text "tools: Read, Grep, Glob, Edit, Write, Bash, ToolSearch, mcp__serena__*\n"@ko .
+    djr:text "tools: Read, Grep, Glob, Edit, Write, Bash\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s001/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/coder.md/s001> ;

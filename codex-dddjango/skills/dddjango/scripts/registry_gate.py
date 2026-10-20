@@ -116,7 +116,7 @@ _CANDIDATE_RE: "re.Pattern[str]" = re.compile(r"^\s*(\[ⓓ#\d+\].*)$")  # ⓓ �
 _LINENO_RE: "re.Pattern[str]" = re.compile(r":\d+")
 _IGNORE_COPY: "tuple[str, ...]" = (
     ".git", ".venv", "venv", "__pycache__", "*.pyc", "node_modules",
-    "graphify-out", ".mypy_cache", ".pytest_cache", ".ruff_cache", "staticfiles",
+    ".mypy_cache", ".pytest_cache", ".ruff_cache", "staticfiles",
     # F-C: 숨김 경로는 도구·하네스 영역 — 검사 표면에서 제외한다.
     # 멱등성 검사 입력인 .dddjango/*/{scope,design-spec}.md 만 복사 뒤 별도로 보존한다.
     ".*", "site-packages", "build", "dist",

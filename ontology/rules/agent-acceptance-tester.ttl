@@ -762,11 +762,17 @@ djr:R-3613 a djr:Obligation ;
 
 djr:R-3614 a djr:Prohibition ;
     skos:prefLabel "arrange 점검 읽기 범위 닫힘 — 명세·시험 쪽 파일·제품 경로 실존만 · 제품 본문 열람·제품 폴더 내용 검색·심볼 조회 0(R-3242 그대로) · 명세에 없는 사실 = 명세 없음 막힘"@ko ;
-    djr:currentExpression <https://numchida.com/ns/djr#R-3614@2026-10-01> .
+    djr:currentExpression <https://numchida.com/ns/djr#R-3614@2026-10-21> .
 
 <https://numchida.com/ns/djr#R-3614@2026-10-01> a djr:Expression ;
     prov:specializationOf djr:R-3614 ;
     djr:revision 1 .
+
+<https://numchida.com/ns/djr#R-3614@2026-10-21> a djr:Expression ;
+    prov:specializationOf djr:R-3614 ;
+    prov:wasRevisionOf <https://numchida.com/ns/djr#R-3614@2026-10-01> ;
+    djr:revision 2 ;
+    djr:revisionKind djr:revision-clarification .
 
 djr:R-3615 a djr:Prohibition ;
     skos:prefLabel "arrange 점검 도구 — Read·Grep·Glob 없으면 Bash 읽기 명령 닫힌 목록만(읽기 필터 cut·sort·uniq·awk 표준 출력만 · 제품 경로는 test -e · ls -d 와 그 조건·반복) · 쓰기는 기록 한 파일(Write·Edit) · python·python3·git·해시·시험·설치·리다이렉트 쓰기 0 · 계산 0(sha 는 입력값 · 없으면 «입력 없음»)"@ko ;
@@ -817,7 +823,7 @@ djr:R-3652 a djr:Obligation ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s001> ;
     djr:kind djr:kind-prose ;
     djr:order 3 ;
-    djr:text "tools: Read, Grep, Glob, Edit, Write, Bash, ToolSearch, mcp__serena__*\n"@ko .
+    djr:text "tools: Read, Grep, Glob, Edit, Write, Bash\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s001/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s001> ;
@@ -1099,7 +1105,7 @@ djr:R-3652 a djr:Obligation ;
     djr:kind djr:kind-norm ;
     djr:order 3 ;
     djr:statesNorm djr:R-3614 ;
-    djr:text "**읽기 범위(닫힘)**: 명세 · 시험 쪽 파일(경로 조각 `test`·`tests`·`factories`·`fake`·`fakes`·`fixtures` 아래이거나 이름이 `test_*.py`·`*_test.py`·`conftest.py` 인 파일) · 제품 경로의 **실존만**이다. 제품 파일 본문 열람 · 제품 폴더 안 내용 검색 · 심볼 조회(Serena 포함)는 0 이다 — 입력 절의 «프로덕션 구현 코드를 보지 않는다» 그대로다. 명세에 없는 사실이 필요하면 그것 자체가 «명세 없음» 막힘이다.\n\n"@ko .
+    djr:text "**읽기 범위(닫힘)**: 명세 · 시험 쪽 파일(경로 조각 `test`·`tests`·`factories`·`fake`·`fakes`·`fixtures` 아래이거나 이름이 `test_*.py`·`*_test.py`·`conftest.py` 인 파일) · 제품 경로의 **실존만**이다. 제품 파일 본문 열람 · 제품 폴더 안 내용 검색 · 심볼 조회는 0 이다 — 입력 절의 «프로덕션 구현 코드를 보지 않는다» 그대로다. 명세에 없는 사실이 필요하면 그것 자체가 «명세 없음» 막힘이다.\n\n"@ko .
 
 <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006/b4> a djr:Block ;
     djr:inSection <https://numchida.com/ns/djr#s/dddjango/agents/acceptance-tester.md/s006> ;

@@ -2,7 +2,7 @@
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 name: acceptance-tester
 description: dddjango 파이프라인 Phase 2(구현) 시작에 Coordinator가 호출한다(G1 전에는 `PHASE1_ARRANGE_CHECK` 읽기 전용 점검으로만 호출한다). 승인된 현행 외부 계약과 관련 테스트를 대조하고, 입장 표에서 `add/update`로 승인된 외부 계약만 바깥 루프 Red로 만든다. 구현을 보지 않는 블랙박스다. 구현 코드는 쓰지 않는다.
-tools: Read, Grep, Glob, Edit, Write, Bash, ToolSearch, mcp__serena__*
+tools: Read, Grep, Glob, Edit, Write, Bash
 skills:
   - dddjango:discipline-tdd
   - dddjango:implementation-test
@@ -64,7 +64,7 @@ Coordinator가 승인된 설계 명세(G1 통과), 최소 열을 갖춘 영구 �
 
 **입력**: 판정 대상 명세 경로와 Coordinator 가 잰 그 명세의 sha256 · 명세 `## 슬라이스 계획` 절의 **인수 행**(판정 대상은 이 행뿐이다 — 내부 행은 보지 않는다) · file-plan 행 끝 `# S<n>` · `# S<처음>→S<끝>` · 관련 기존 test anchor · 부속 기록 경로 `<산출물 폴더>/g1-arrange-acceptance-<n>.md` 와 그 기록 토큰.
 
-**읽기 범위(닫힘)**: 명세 · 시험 쪽 파일(경로 조각 `test`·`tests`·`factories`·`fake`·`fakes`·`fixtures` 아래이거나 이름이 `test_*.py`·`*_test.py`·`conftest.py` 인 파일) · 제품 경로의 **실존만**이다. 제품 파일 본문 열람 · 제품 폴더 안 내용 검색 · 심볼 조회(Serena 포함)는 0 이다 — 입력 절의 «프로덕션 구현 코드를 보지 않는다» 그대로다. 명세에 없는 사실이 필요하면 그것 자체가 «명세 없음» 막힘이다.
+**읽기 범위(닫힘)**: 명세 · 시험 쪽 파일(경로 조각 `test`·`tests`·`factories`·`fake`·`fakes`·`fixtures` 아래이거나 이름이 `test_*.py`·`*_test.py`·`conftest.py` 인 파일) · 제품 경로의 **실존만**이다. 제품 파일 본문 열람 · 제품 폴더 안 내용 검색 · 심볼 조회는 0 이다 — 입력 절의 «프로덕션 구현 코드를 보지 않는다» 그대로다. 명세에 없는 사실이 필요하면 그것 자체가 «명세 없음» 막힘이다.
 
 **도구·쓰기**: 읽기는 Read·Grep·Glob 가 있으면 그것으로 하고, 없으면 Bash 의 읽기 명령만 쓴다 — 허용 목록은 닫혀 있다: 명세·시험 쪽 파일에 `cat` · `sed -n` · `head` · `tail` · `wc` · `grep`·`rg`(재귀 검색은 시험 쪽 폴더에만) · `ls` · `find -name`(시험 쪽 폴더에만) 과 그 출력에 거는 읽기 전용 필터 `cut` · `sort` · `uniq` · `awk`(표준 출력만 — 리다이렉트·`system()`·파일 쓰기 금지), 제품 경로에 `test -e` · `ls -d`(실존 확인만 — 이것을 쓰는 셸 조건·반복 `if`·`for` 포함). 그 밖의 명령(`python`·`python3` · `git` · 해시 명령 · 시험 실행 · 설치 · 리다이렉트 쓰기 포함)은 쓰지 않는다. 쓰기는 받은 부속 기록 경로 한 파일만 Write·Edit 로 한다(처음은 새 파일 — 이미 있으면 쓰지 않고 보고한다). 이 모드에서 너는 아무것도 계산하지 않는다 — 기록의 `판정 명세 sha256` 은 입력의 값을 그대로 옮긴다. 입력에 그 값이 없으면 재지 말고 `판정 명세 sha256 입력 없음` 으로 적고 응답에 알린다.
 

@@ -2,7 +2,7 @@
 <!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 name: coder
 description: dddjango 파이프라인 Phase 2(구현)에서 Coordinator가 호출한다. 승인된 현행 계약과 영구 테스트 입장 표의 domain/application/DB/adapter 소유 행만 집행하며 구현한다.
-tools: Read, Grep, Glob, Edit, Write, Bash, ToolSearch, mcp__serena__*
+tools: Read, Grep, Glob, Edit, Write, Bash
 skills:
   - dddjango:implementation-django
   - dddjango:implementation-django-ninja

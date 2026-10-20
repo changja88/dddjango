@@ -292,7 +292,7 @@
       ]
     },
     "dddjango/agents/acceptance-tester.md/s006/b3": {
-      "h": "8f6dcfedb71aebf1",
+      "h": "943d2e82a1841660",
       "n": 2,
       "works": [
         "R-3614"
@@ -2103,7 +2103,7 @@
       ]
     },
     "dddjango/agents/discipline-reviewer.md/s001/b1": {
-      "h": "f834ce83b196da53",
+      "h": "7c9f660432105c11",
       "n": 9,
       "works": [
         "R-0831",
@@ -3000,7 +3000,7 @@
       ]
     },
     "dddjango/commands/dddjango.md/s001/b1": {
-      "h": "20c0f785a7d8a964",
+      "h": "4eb61319fee903fb",
       "n": 5,
       "works": [
         "R-0126",
@@ -14820,31 +14820,31 @@
   "built_from": [
     {
       "path": "ontology/rules/agent-acceptance-tester.ttl",
-      "sha256": "58099dad65c94c5d884184fc54ce7ac49b77876e15cf1c97cd5aa1087f912f3d"
+      "sha256": "b8ed557c1d5b4861c041c80d6874bf6a403517b8e928545706014d1173c6e808"
     },
     {
       "path": "ontology/rules/agent-coder.ttl",
-      "sha256": "df86890a5d32e6ba645b1f9b25b083fb5f01f387685a6a37f1768e9a4ab072bd"
+      "sha256": "8a5e40bbafb2cda65d2d882e1e5dbbd2f056b82f3954937b59dd07975c6c5bf7"
     },
     {
       "path": "ontology/rules/agent-design-architect.ttl",
-      "sha256": "668d58e695c6693cbe30ab0d1ab71157bc1da1d7cf61530795fa0125ad4e2145"
+      "sha256": "ab2fd70aff64c7fe3c674619d7ecc3caab4a4904e38b6375354fceb65b86367d"
     },
     {
       "path": "ontology/rules/agent-design-review-api.ttl",
-      "sha256": "0af3f16e494c9e7f79fbec36fdac3bd298664a41074187bbfed1df2b4806daa2"
+      "sha256": "0ed32006cd328dcd614d9e0084715fec8d63435bce8e4e010cf393a2bc7219a1"
     },
     {
       "path": "ontology/rules/agent-design-review-db.ttl",
-      "sha256": "62ec5eb972a6659d786247fc22f0f2215d1cc8e04c7c81e083537446b7c65b8b"
+      "sha256": "f4e52209e8fd390b40ac7cea0a3d27357d512ec11c645bfa092a788dc055f6b9"
     },
     {
       "path": "ontology/rules/agent-design-review-ddd.ttl",
-      "sha256": "a8c30ebca7e23176079ee030319616399af0fa308e677cbe77df29a09a9be36c"
+      "sha256": "de2477df91bb21bbb28b5cb8618f5ea15874f6d6bc145beddaadabef62ef9953"
     },
     {
       "path": "ontology/rules/agent-discipline-reviewer.ttl",
-      "sha256": "60e1a5025f01759a821aa3c1962c5e66a84a6fcd4aedf36097d3cde6e7d49426"
+      "sha256": "a07c036a4aee6e8efbad9562f9c406a3eab24e61177d128bd962ff81eb56ea5f"
     },
     {
       "path": "ontology/rules/architecture-api-final.ttl",
@@ -14872,7 +14872,7 @@
     },
     {
       "path": "ontology/rules/command-dddjango.ttl",
-      "sha256": "f94093ac8f5955e371b6d527323cf0592a490ef51eae1f20ccc0abdfc98d7ac7"
+      "sha256": "692b109d75a21be2e3abb05a7412e63b93e9028f449ba3b7a222fd6adf315677"
     },
     {
       "path": "ontology/rules/discipline-cleancode-final.ttl",
@@ -85879,7 +85879,7 @@
       "block_order": 3,
       "checkers": [],
       "document": "dddjango/agents/acceptance-tester.md",
-      "expression": "https://numchida.com/ns/djr#R-3614@2026-10-01",
+      "expression": "https://numchida.com/ns/djr#R-3614@2026-10-21",
       "label": "arrange 점검 읽기 범위 닫힘 — 명세·시험 쪽 파일·제품 경로 실존만 · 제품 본문 열람·제품 폴더 내용 검색·심볼 조회 0(R-3242 그대로) · 명세에 없는 사실 = 명세 없음 막힘",
       "norm_kind": "Prohibition",
       "order_rank": 92,
