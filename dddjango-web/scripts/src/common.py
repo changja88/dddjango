@@ -17,7 +17,7 @@ import sys
 from bisect import bisect_right
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Dict, List, Optional, Set, Tuple
 
 # 사용자 · 저장소 git 설정이 기계가 읽는 git 출력의 꼴을 바꾸지 못하게 박는다 — 색(color.*) · grep 열 번호 ·
@@ -86,7 +86,7 @@ CORE_CHECK_IDS: Tuple[str, ...] = tuple(
     ['ST%d' % n for n in range(0, 13)]                                  # ST0~ST12
     + ['IM%d' % n for n in range(1, 28)]                                # IM1~IM27
     + ['NM%d' % n for n in range(1, 21) if n != 7]                      # NM1~NM20 · NM7 비움
-    + ['CY1', 'TG1', 'TG2', 'TG3', 'MD1', 'MD2', 'PJ1', 'PJ2']                        # PJ3 비움
+    + ['CY1', 'TG1', 'TG2', 'TG3', 'TG4', 'MD1', 'MD2', 'PJ1', 'PJ2']                 # PJ3 비움 · TG4 = check_browser.py
     + ['PU1', 'PU2', 'PU3', 'PU6', 'PU7', 'PU8']                        # PU4·PU5 비움
     + ['SH1', 'SH2', 'SH3', 'SH4', 'SH5']                              # 지속 셸 · 빚 패밀리 밖
     + ['CS1'])                                                       # 부품 CSS 실림 · 빚 패밀리 밖
@@ -484,6 +484,22 @@ def _names_after(tv: str, offset: int) -> List[str]:
         if re.fullmatch(r'\w+', name):
             out.append(name)
     return out
+
+
+def module_candidates(dotted: str, origin: str = '.', level: int = 0) -> Tuple[str, ...]:
+    """점 모듈 이름 → 프로젝트 루트 상대 후보 파일(`x.py` · `x/__init__.py`). level 이 있으면 origin 파일 폴더 기준
+    상대 import 다. 루트 자체(`.`)나 루트 밖(`..`)으로 풀리면 후보가 없다 — 존재 확인 · 거르기는 부르는 쪽 몫(TG4 · 시험 범위)."""
+    parts: List[str] = [p for p in dotted.split('.') if p]
+    if level:
+        base: PurePosixPath = PurePosixPath(origin).parent
+        for _ in range(level - 1):
+            base = base.parent
+        stem: str = posixpath.normpath(str(base.joinpath(*parts)))
+    else:
+        stem = posixpath.normpath('/'.join(parts))
+    if stem == '.' or stem.startswith('..'):
+        return ()
+    return stem + '.py', stem + '/__init__.py'
 
 
 def _resolve(parts: List[str], names: List[str], files: Set[str], dirs: Set[str]) -> List[str]:

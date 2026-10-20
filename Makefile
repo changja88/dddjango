@@ -94,7 +94,7 @@ verify:
 
 verify-web:
 	@set -euo pipefail; \
-	echo "[verify-web] dddjango-web 픽스처(백스톱 검사 92종 · 빚 · 치환 · SDK · 리팩토링 판정 · 추출 도구 — run_fixtures.sh 가 이어 부른다)"; \
+	echo "[verify-web] dddjango-web 픽스처(백스톱 검사 93종 · 빚 · 치환 · 시험 범위 · SDK · 리팩토링 판정 · 추출 도구 — run_fixtures.sh 가 이어 부른다)"; \
 	bash dddjango-web/scripts/test/run_fixtures.sh; \
 	echo "[verify-web] refactor_audit self-test(Claude·Codex 두 자리 — 플랫폼 구조 판별) · 상시 답 블록 core 대조"; \
 	python3 dddjango-web/scripts/refactor_audit.py --self-test; \
@@ -104,7 +104,7 @@ verify-web:
 	m='리팩토링 모드(입구 /dddjango-web:refactor) · 대상: '; grep -qF "$$m" dddjango-web/commands/refactor.md && grep -qF "$$m" dddjango-web/commands/dddjango-web.md || { echo "ERROR: Claude 리팩토링 입구 표지 불일치"; exit 1; }; \
 	m='리팩토링 모드(입구 $$dddjango-web-refactor) · 대상: '; grep -qF "$$m" codex-dddjango-web/skills/dddjango-web-refactor/SKILL.md && grep -qF "$$m" codex-dddjango-web/skills/dddjango-web/SKILL.md && test -f codex-dddjango-web/skills/dddjango-web-refactor/agents/openai.yaml || { echo "ERROR: Codex 리팩토링 입구 표지 불일치 또는 agents/openai.yaml 없음"; exit 1; }; \
 	echo "[verify-web] 문단 Claude·Codex 대조(플랫폼 토큰 치환 뒤)"; \
-	for p in '**discipline 감사 = touched 파일 한정 경량 1회**' '**적용 범위 규범**:' '**Phase 1~2**' '**상시 답**' '**슬라이스 0 호출**' '**끝 green 뒤 재확인**' '그 커밋을 만든 파견 슬라이스의' '**SDK 채택 확인(G1 배너 직전' '**슬라이스 끝 구조 검사**' '**검사기 이의**' '**시험 방법 채택 확인**' '**영구 시험 표준 실행**' '**명세 sha**(G1·G1′)' '**지문은 정해진 두 자리에서만 잰다**' '**탭 셸 방식 행**' '**지속 셸 점검(빚 밖)**' '**부품 CSS 점검(빚 밖)**' '**부품 CSS 미검증**' '**완성 화면 그림**' '**미디어 사용자 확인**'; do c=$$(grep -F "$$p" dddjango-web/commands/dddjango-web.md | sed -e 's/[$$]{CLAUDE_PLUGIN_ROOT}/$${SKILL_DIR}/g' -e 's/Bash로/네이티브 셸로/g' -e 's/dddjango-web:/dddjango-web-/g'); [ -n "$$c" ] && cmp -s <(printf '%s\n' "$$c") <(grep -F "$$p" codex-dddjango-web/skills/dddjango-web/SKILL.md) || { echo "ERROR: $$p 문단 Claude·Codex 불일치(또는 문단 없음)"; exit 1; }; done; \
+	for p in '**discipline 감사 = touched 파일 한정 경량 1회**' '**적용 범위 규범**:' '**Phase 1~2**' '**상시 답**' '**슬라이스 0 호출**' '**끝 green 뒤 재확인**' '그 커밋을 만든 파견 슬라이스의' '**SDK 채택 확인(G1 배너 직전' '**슬라이스 끝 구조 검사**' '**검사기 이의**' '**시험 방법 채택 확인**' '**영구 시험 표준 실행**' '**명세 sha**(G1·G1′)' '**지문은 정해진 두 자리에서만 잰다**' '**탭 셸 방식 행**' '**지속 셸 점검(빚 밖)**' '**부품 CSS 점검(빚 밖)**' '**부품 CSS 미검증**' '**완성 화면 그림**' '**미디어 사용자 확인**' '**시험 범위**(모든 모드' '"test_command": "<' '"test_command_source": "<' '"test_web_paths": [' '**세션 사멸 후 재개**'; do c=$$(grep -F "$$p" dddjango-web/commands/dddjango-web.md | sed -e 's/[$$]{CLAUDE_PLUGIN_ROOT}/$${SKILL_DIR}/g' -e 's/Bash로/네이티브 셸로/g' -e 's/dddjango-web:/dddjango-web-/g'); [ -n "$$c" ] && cmp -s <(printf '%s\n' "$$c") <(grep -F "$$p" codex-dddjango-web/skills/dddjango-web/SKILL.md) || { echo "ERROR: $$p 문단 Claude·Codex 불일치(또는 문단 없음)"; exit 1; }; done; \
 	echo "[verify-web] 역할 7 판 확인 지문 경계 줄 Claude·Codex 대조"; \
 	for r in coder-web design-architect-web design-review-data-web design-review-ddd-web design-review-state-web design-review-ui-web discipline-reviewer-web; do c=$$(grep -F '**판 확인 지문을 재지 않는다**' dddjango-web/agents/$$r.md); [ -n "$$c" ] && cmp -s <(printf '%s\n' "$$c") <(grep -F '**판 확인 지문을 재지 않는다**' codex-dddjango-web/skills/dddjango-web-$$r/SKILL.md) || { echo "ERROR: $$r 판 확인 지문 경계 줄 Claude·Codex 불일치(또는 줄 없음)"; exit 1; }; done; \
 	c=$$(grep -F '**0T 경량 감수**' dddjango-web/agents/discipline-reviewer-web.md); [ -n "$$c" ] && cmp -s <(printf '%s\n' "$$c") <(grep -F '**0T 경량 감수**' codex-dddjango-web/skills/dddjango-web-discipline-reviewer-web/SKILL.md) || { echo "ERROR: discipline-reviewer-web 0T 경량 감수 줄 Claude·Codex 불일치(또는 줄 없음)"; exit 1; }; \

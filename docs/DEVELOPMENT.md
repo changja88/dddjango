@@ -33,6 +33,7 @@ dddjango-web/             ← 자매 플러그인 (웹 표현계층 빌더 — /
                            · plan-2.1.0.md + build-log-2.1.0.md(2.1.0 — 빚 정리 · 외부 JS 승인 · 리팩토링 입구)
                            · plan-2.5.0.md + build-log-2.5.0.md(부품 CSS 실림 CS1 · 미검증 감수 · 상태 단언 뒤 완성 화면 그림)
                            · plan-2.6.0.md(지속 셸 떠난 화면 보관 · ‹뒤로›는 지나온 차례 · SH5 순서 · 공백 · 주석만 바뀐 기존 규칙)
+                           · plan-2.7.0.md + build-log-2.7.0.md(시험 범위 좁히기 · 넓이 확인 --test-scope · 브라우저 시험 꼴 TG4)
 ├── REQUEST_GUIDE.md           사람용 작업 요청 가이드 정본(2.0.1부터 — 2.1.0에서 빚 정리 · 리팩토링 입구 · 외부 JS 줄을 더함)
 ├── commands/dddjango-web.md   Coordinator
 ├── commands/refactor.md       리팩토링 입구 /dddjango-web:refactor <대상 단위> — Coordinator 로 Skill 위임(동작 불변)
@@ -40,8 +41,8 @@ dddjango-web/             ← 자매 플러그인 (웹 표현계층 빌더 — /
 ├── skills/*/                  지식 스킬 12 — architecture-ddd·ui·state·data · discipline-cleancode·houserules·test
 │                              · implementation-test·python·django·htmx·javascript
 ├── assets/sdk_boundary.js     외부 JS 경계 검사 보조(공식 SDK 승인 절차)
-└── scripts/backstop.py        결정적 백스톱 — 검사 92종(ST·IM·NM·CY·TG·PJ·MD·PU·WV·SH·CS — SH·CS는 빚 스캔 밖)
-                               · 빚 모드 --debt-scan [--refactor] · --debt-residual · 치환 확인 --subst-check
+└── scripts/backstop.py        결정적 백스톱 — 검사 93종(ST·IM·NM·CY·TG·PJ·MD·PU·WV·SH·CS — SH·CS는 빚 스캔 밖 · TG4 브라우저 시험 꼴)
+                               · 빚 모드 --debt-scan [--refactor] · --debt-residual · 치환 확인 --subst-check · 시험 범위 --test-scope
                                + refactor_audit.py(리팩토링 모드 판정) · sdk_vendor.py(공식 SDK 등재)
                                + 추출 도구 4(extract_contract·extract_design·extract_dc·fetch_images)
                                · 픽스처 scripts/test/run_fixtures.sh(백스톱 뒤 빚 · 치환 · SDK · 리팩토링 판정 · 추출 도구 픽스처를 이어 부른다)

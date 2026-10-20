@@ -22,7 +22,8 @@ from fixtures_patch230 import (ENV, FLAT_SHELL, GUEST_SHELL, ORDER_PAGE, LOBBY_P
 
 BASELINE = 'a73dfadc'
 RULE = REPO / 'dddjango-web/skills/implementation-django/references/final.md'
-COUNT_TOKENS = (('검사 92종 중 85종', '검사 #종 중 #종'), ('검사 86종 중 79종', '검사 #종 중 #종'),
+COUNT_TOKENS = (('검사 93종 중 86종', '검사 #종 중 #종'), ('검사 92종 중 85종', '검사 #종 중 #종'),
+                ('검사 86종 중 79종', '검사 #종 중 #종'), ('[backstop] 검사 93종', '[backstop] 검사 #종'),
                 ('[backstop] 검사 92종', '[backstop] 검사 #종'), ('[backstop] 검사 86종', '[backstop] 검사 #종'))
 PASS = FAIL = 0
 REV = '?v={{ root_state.shell_rev }}'
@@ -34,7 +35,8 @@ SECTION = 'application/order/presentation_layer/section/order_list_summary_secti
 def counts_normalized(text):
     for old, new in COUNT_TOKENS:
         text = text.replace(old, new)
-    return text
+    # 2.7.0 — 새 검사 TG4 의 알림 줄은 옛 판 출력에 없다(TG4 는 fixtures_patch270_browser.py 가 본다)
+    return '\n'.join(line for line in text.split('\n') if not line.startswith('[info] TG4 '))
 
 
 def normalized(result):
@@ -595,9 +597,9 @@ def bundle_z6(tmp):
 def bundle_z7(tmp):
     p, shell, page, base = prepare(tmp / 'runner', persistent=False)
     got = backstop(p.root, '--diff-base', base)
-    check('Z7 합계 정확', got[0] == 0 and '[backstop] 검사 92종' in got[1], got)
+    check('Z7 합계 정확', got[0] == 0 and '[backstop] 검사 93종' in got[1], got)
     got = backstop(p.root, '--diff-base', base, '--slice-end')
-    check('Z7 슬라이스 끝 정확', got[0] == 0 and '검사 92종 중 85종(슬라이스 끝 — 미룸 7:' in got[1], got)
+    check('Z7 슬라이스 끝 정확', got[0] == 0 and '검사 93종 중 86종(슬라이스 끝 — 미룸 7:' in got[1], got)
     expect(p, base, 'sh', False, 'Z7 --only sh')
     got = backstop(p.root, '--only', 'shx')
     check('Z7 알 수 없는 패밀리', got[0] == 1 and '알 수 없는 --only 값 shx' in got[1], got)
@@ -904,14 +906,14 @@ def drawn_project(tmp, declared):
 
 
 def without_sh1(text):
-    # 2.4.3 러너에는 CS1(2.5.0)이 없다 — CS1 줄과 검사 종수는 대조에서 뺀다.
+    # 2.4.3 러너에는 CS1(2.5.0) · TG4(2.7.0)가 없다 — CS1 줄 · TG4 알림 줄과 검사 종수는 대조에서 뺀다.
     out, skip = [], False
     for line in text.splitlines():
         if line.startswith(('[SH1] BLOCKER', '[CS1] BLOCKER')):
             skip = True
         elif not (skip and line.startswith('  ')):
             skip = False
-            if line and not line.startswith('[info] CS1'):  # 발견 사이 빈 줄 수는 발견 수를 따라 바뀐다
+            if line and not line.startswith(('[info] CS1', '[info] TG4 ')):  # 발견 사이 빈 줄 수는 발견 수를 따라 바뀐다
                 out.append(re.sub(r'blocker \d+건', 'blocker #건', line))
     return re.sub(r'검사 \d+종(?: 중 \d+종)?', '검사 #종', '\n'.join(out))
 

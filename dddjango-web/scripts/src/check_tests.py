@@ -1,4 +1,5 @@
-# TG — 3종: TG1 신규 BC 시험 존재 · TG2 변경 영구 시험 재현성 · TG3 비채택 이미지 비교.
+# TG — 3종: TG1 신규 BC 시험 존재 · TG2 변경 영구 시험 재현성 · TG3 비채택 이미지 비교
+# (+ TG4 브라우저 시험 꼴은 check_browser.py — 변경 수집 _collect 를 함께 쓴다).
 #
 # *왜 결정적 백스톱인가*: coder 산출이 green=py_compile·manage.py check 신규 0으로만 정의되면
 # 행위검증 테스트가 창발에 맡겨진다. 신규 BC가 대응 `web_test/`에 행위 테스트를 *갖는가*는
@@ -23,9 +24,9 @@ import re
 import shlex
 import subprocess
 from pathlib import Path
-from typing import List, Set
+from typing import Callable, Dict, List, Set
 
-from .common import GIT_PINS, BackstopContext, Finding, base_name_of, segs_of
+from .common import GIT_PINS, JS_EXTS, BackstopContext, Finding, base_name_of, segs_of
 
 _RULE_TG: str = 'discipline-test — coder 행위검증 테스트 산출(green=pytest web_test)'
 
@@ -84,6 +85,142 @@ def _line_delta(before, source):
     return added, deleted, mapping
 
 
+@dataclass
+class Collected:
+    """기준 commit → 현재 트리의 변경 수집(TG2·TG3 · TG4 가 함께 쓴다 — 한 실행에 한 번)."""
+    base: str                  # 기준 commit OID
+    old_paths: Set[str]        # 기준판 트리 경로(root 상대)
+    changed: Set[str]          # 현재 쪽 바뀐 경로(현물이 있는 기준판 파일 · rename 대상 · 미추적)
+    removed: Set[str]          # 기준판 쪽에만 남은 경로(지운 파일 · rename 원본)
+    pairs: Dict[str, str]      # rename 새 경로 → 옛 경로
+    candidate: Callable[[str], bool]  # 시험·지원 파일 술어(관례 · pytest 설정 · G0 명시 경로)
+    old_source: Callable[[str], str]  # 기준판 내용(root 상대)
+
+
+def _recorded(rel: str) -> bool:
+    """기록 폴더(.dddjango-web/ · .dddjango/) 아래인가 — 시험·지원 파일 · 시험 범위 어디에도 들지 않는다."""
+    return any(rel == folder or rel.startswith(folder + '/') for folder in ('.dddjango-web', '.dddjango'))
+
+
+def _support_name(rel: str) -> bool:
+    parts = Path(rel).parts
+    name = parts[-1]
+    return (name == 'conftest.py' or name.endswith('_support.py') or name in ('support.py', 'helpers.py')
+            or any(p in ('support', '_support', 'helpers') for p in parts[:-1]))
+
+
+def js_in_test_tree(rel: str) -> bool:
+    """시험 트리(`web_test`·`test`·`tests` 아래 — 기록 폴더 밖)의 `.js`·`.cjs`·`.mjs` — TG4 · 시험 범위의 시험 쪽 JS."""
+    parts = Path(rel).parts
+    return (not _recorded(rel) and Path(rel).suffix.lower() in JS_EXTS
+            and any(p in ('web_test', 'test', 'tests') for p in parts[:-1]))
+
+
+def _collect(ctx: BackstopContext) -> Collected:
+    """기준 commit→현재 트리의 바뀐 경로와 old/new 대응을 한 번 모아 ctx 에 둔다(staged·unstaged·커밋 포함).
+    rename 은 명시 -M50% 로 본다. 실패는 그 예외를 그대로 ctx 에 두고 다시 던진다 — 고지 머리는 부른 검사가 붙인다.
+    """
+    cached = getattr(ctx, '_tests_collected', None)
+    if isinstance(cached, Collected):
+        return cached
+    if isinstance(cached, Exception):
+        raise cached
+    try:
+        result = _collect_once(ctx)
+    except (OSError, ValueError, IndexError, TypeError, configparser.Error, ImportError) as error:
+        ctx._tests_collected = error
+        raise
+    ctx._tests_collected = result
+    return result
+
+
+def _collect_once(ctx: BackstopContext) -> Collected:
+    roots = ['web_test', 'test', 'tests']
+    patterns = ['test_*.py', '*_test.py', 'tests.py']
+    explicit = []
+    base = _commit_oid(ctx.root, ctx.diff_base)
+    for name, section in [('pytest.ini', 'pytest'), ('tox.ini', 'pytest'), ('setup.cfg', 'tool:pytest')]:
+        path = ctx.root / name
+        if not path.is_file():
+            continue
+        cfg = configparser.ConfigParser(interpolation=None)
+        cfg.read(path, encoding='utf-8')
+        if cfg.has_section(section):
+            roots += shlex.split(cfg.get(section, 'testpaths', fallback=''))
+            value = cfg.get(section, 'python_files', fallback='')
+            if value:
+                patterns = shlex.split(value)
+    path = ctx.root / 'pyproject.toml'
+    if path.is_file():
+        import tomllib
+        options = tomllib.loads(path.read_text(encoding='utf-8')).get('tool', {}).get('pytest', {}).get('ini_options', {})
+        def words(value):
+            return shlex.split(value) if isinstance(value, str) else value
+        roots += words(options.get('testpaths', []))
+        if options.get('python_files'):
+            patterns = words(options['python_files'])
+    for path in sorted((ctx.root / '.dddjango-web').glob('*/build-state.json')):
+        try:
+            state = json.loads(path.read_text(encoding='utf-8'))
+            snapshot = _commit_oid(ctx.root, state.get('git_snapshot'))
+            command = state.get('test_command', '')
+            if not isinstance(command, str):
+                continue
+            words = shlex.split(command)
+        except (OSError, ValueError, TypeError, AttributeError):
+            # 읽기·JSON·기준점·명령 필드/quoting 실패는 해당 기록만 건너뛴다.
+            continue
+        if snapshot != base:
+            continue
+        for word in words:
+            candidate_path = word.split('::')[0]
+            if not word.startswith('-') and (ctx.root / candidate_path).exists():
+                explicit.append(candidate_path.rstrip('/'))
+    def git(*args):
+        r = subprocess.run(['git', *GIT_PINS, '-C', str(ctx.root), *args], capture_output=True)
+        if r.returncode:
+            raise ValueError('root diff/대응 수집 실패')
+        return r.stdout.decode('utf-8', 'surrogateescape')
+    old_paths = set(git('ls-tree', '-rz', '--name-only', base, '--', '.').split('\0')) - {''}
+    tokens = git('-c', 'diff.renames=true', 'diff', '--no-ext-diff', '--no-textconv',
+                 '--find-renames=50%', '-l0', '--name-status', '-z', '--relative', base, '--', '.').split('\0')
+    untracked = set(git('ls-files', '--others', '--exclude-standard', '-z', '--', '.').split('\0')) - {''}
+    pairs, changed, removed = {}, set(untracked), set()
+    i = 0
+    while i < len(tokens) and tokens[i]:
+        status, old = tokens[i], tokens[i + 1]
+        if status.startswith(('R', 'C')):
+            new = tokens[i + 2]
+            if status.startswith('R'):
+                pairs[new] = old
+                removed.add(old)
+            changed.add(new)
+            i += 3
+        else:
+            # index에서 빠져도 현물이 있는 기준판 파일은 기존 파일로 비교한다.
+            if not status.startswith('D') or (ctx.root / old).is_file():
+                changed.add(old)
+            else:
+                removed.add(old)
+            i += 2
+    def under(rel, folder):
+        return rel == folder or rel.startswith(folder.rstrip('/') + '/')
+    def candidate(rel):
+        if _recorded(rel) or not rel.endswith('.py'):
+            return False
+        name = Path(rel).parts[-1]
+        support = _support_name(rel)
+        collected = any(fnmatch.fnmatch(name, pat) for pat in patterns)
+        return conventional_test_path(rel) or any(under(rel, p) for p in explicit) or (
+            (collected or support) and (collected or any(under(rel, p) for p in roots)))
+    contents = {}
+    def old_source(rel):
+        if rel not in contents:
+            contents[rel] = git('show', base + ':./' + rel)
+        return contents[rel]
+    return Collected(base, old_paths, changed, removed, pairs, candidate, old_source)
+
+
 def _changed_tests(ctx: BackstopContext) -> List[TestChange]:
     """기준 commit→현재 트리의 새쪽 hunk와 old/new 대응을 수집한다(staged·unstaged·커밋 포함).
     rename은 명시 -M50%와 D/A 동일 blob 대응으로 확인한다. 시험→시험 순수 이동은 새 줄 0,
@@ -92,98 +229,18 @@ def _changed_tests(ctx: BackstopContext) -> List[TestChange]:
     기록 폴더(.dddjango-web/ · .dddjango/) 아래는 시험·지원 파일이 아니다(추적·미추적·이름·명시 경로 무관).
     그 사본을 영구 시험으로 옮겨 오면 이동이 아니라 편입이다(전 줄 새 줄).
     기준점·대응 해석 실패는 범위 미확정·미실행으로 고지하며 ctx.files나 파일 전체로 퇴화하지 않는다.
+    변경 수집(_collect)은 TG4 와 함께 쓴다 — 판정은 그대로다.
     """
     if not ctx.can_detect_new_units:
         ctx.notices.append('[info] TG2·TG3 미실행 — git 기준점 없음 · 변경 시험 범위 미확정')
         return []
-    roots = ['web_test', 'test', 'tests']
-    patterns = ['test_*.py', '*_test.py', 'tests.py']
-    explicit = []
     try:
-        base = _commit_oid(ctx.root, ctx.diff_base)
-        for name, section in [('pytest.ini', 'pytest'), ('tox.ini', 'pytest'), ('setup.cfg', 'tool:pytest')]:
-            path = ctx.root / name
-            if not path.is_file():
-                continue
-            cfg = configparser.ConfigParser(interpolation=None)
-            cfg.read(path, encoding='utf-8')
-            if cfg.has_section(section):
-                roots += shlex.split(cfg.get(section, 'testpaths', fallback=''))
-                value = cfg.get(section, 'python_files', fallback='')
-                if value:
-                    patterns = shlex.split(value)
-        path = ctx.root / 'pyproject.toml'
-        if path.is_file():
-            import tomllib
-            options = tomllib.loads(path.read_text(encoding='utf-8')).get('tool', {}).get('pytest', {}).get('ini_options', {})
-            def words(value):
-                return shlex.split(value) if isinstance(value, str) else value
-            roots += words(options.get('testpaths', []))
-            if options.get('python_files'):
-                patterns = words(options['python_files'])
-        for path in sorted((ctx.root / '.dddjango-web').glob('*/build-state.json')):
-            try:
-                state = json.loads(path.read_text(encoding='utf-8'))
-                snapshot = _commit_oid(ctx.root, state.get('git_snapshot'))
-                command = state.get('test_command', '')
-                if not isinstance(command, str):
-                    continue
-                words = shlex.split(command)
-            except (OSError, ValueError, TypeError, AttributeError):
-                # 읽기·JSON·기준점·명령 필드/quoting 실패는 해당 기록만 건너뛴다.
-                continue
-            if snapshot != base:
-                continue
-            for word in words:
-                candidate_path = word.split('::')[0]
-                if not word.startswith('-') and (ctx.root / candidate_path).exists():
-                    explicit.append(candidate_path.rstrip('/'))
-        def git(*args):
-            r = subprocess.run(['git', *GIT_PINS, '-C', str(ctx.root), *args], capture_output=True)
-            if r.returncode:
-                raise ValueError('root diff/대응 수집 실패')
-            return r.stdout.decode('utf-8', 'surrogateescape')
-        old_paths = set(git('ls-tree', '-rz', '--name-only', base, '--', '.').split('\0')) - {''}
-        tokens = git('-c', 'diff.renames=true', 'diff', '--no-ext-diff', '--no-textconv',
-                     '--find-renames=50%', '-l0', '--name-status', '-z', '--relative', base, '--', '.').split('\0')
-        untracked = set(git('ls-files', '--others', '--exclude-standard', '-z', '--', '.').split('\0')) - {''}
-        pairs, changed = {}, set(untracked)
-        i = 0
-        while i < len(tokens) and tokens[i]:
-            status, old = tokens[i], tokens[i + 1]
-            if status.startswith(('R', 'C')):
-                new = tokens[i + 2]
-                if status.startswith('R'):
-                    pairs[new] = old
-                changed.add(new)
-                i += 3
-            else:
-                # index에서 빠져도 현물이 있는 기준판 파일은 기존 파일로 비교한다.
-                if not status.startswith('D') or (ctx.root / old).is_file():
-                    changed.add(old)
-                i += 2
-        def under(rel, folder):
-            return rel == folder or rel.startswith(folder.rstrip('/') + '/')
-        def recorded(rel):
-            return under(rel, '.dddjango-web') or under(rel, '.dddjango')
-        def candidate(rel):
-            if recorded(rel) or not rel.endswith('.py'):
-                return False
-            parts = Path(rel).parts
-            name = parts[-1]
-            support = name == 'conftest.py' or name.endswith('_support.py') or name in ('support.py', 'helpers.py') or any(p in ('support', '_support', 'helpers') for p in parts[:-1])
-            collected = any(fnmatch.fnmatch(name, pat) for pat in patterns)
-            return conventional_test_path(rel) or any(under(rel, p) for p in explicit) or (
-                (collected or support) and (collected or any(under(rel, p) for p in roots)))
-        contents = {}
-        def old_source(rel):
-            if rel not in contents:
-                contents[rel] = git('show', base + ':./' + rel)
-            return contents[rel]
+        got = _collect(ctx)
+        candidate, old_source, old_paths, pairs = got.candidate, got.old_source, got.old_paths, got.pairs
         # 사라진 기록 사본은 이동 대응에 넣지 않는다 — 같은 내용의 새 시험은 편입(전 줄 새 줄)이다.
-        gone = {p for p in old_paths if not recorded(p) and not (ctx.root / p).exists()} - set(pairs.values())
+        gone = {p for p in old_paths if not _recorded(p) and not (ctx.root / p).exists()} - set(pairs.values())
         out = []
-        for rel in sorted(changed):
+        for rel in sorted(got.changed):
             if not candidate(rel) or not (ctx.root / rel).is_file():
                 continue
             source = (ctx.root / rel).read_text(encoding='utf-8')

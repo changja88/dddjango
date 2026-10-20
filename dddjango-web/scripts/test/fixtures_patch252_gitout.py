@@ -908,7 +908,7 @@ EXPECTED_LAUNCH = {
     ('refactor_audit.py', '_git', 'git'): 1, ('refactor_audit.py', '_git_try', 'git'): 1,
     ('sdk_vendor.py', '_no_template_refs', 'git'): 1,
     ('src/check_component_css.py', 'Tree._content_changes', 'git'): 1, ('src/check_component_css.py', 'Tree.read', 'git'): 1,
-    ('src/check_tests.py', '_changed_tests.git', 'git'): 1, ('src/check_tests.py', '_commit_oid', 'git'): 1,
+    ('src/check_tests.py', '_collect_once.git', 'git'): 1, ('src/check_tests.py', '_commit_oid', 'git'): 1,
     ('src/check_tests.py', '_rename_targets', 'git'): 1,
     ('src/check_vendor.py', '_git', 'git'): 1, ('src/common.py', '_git_raw', 'git'): 1,
     ('src/debt.py', '_git_out', 'git'): 1, ('src/debt.py', 'debt_universe', 'git'): 1,
@@ -916,6 +916,7 @@ EXPECTED_LAUNCH = {
     ('src/inflow.py', '_git', 'git'): 1, ('src/inflow.py', '_split', 'git'): 1, ('src/inflow.py', '_split.measure', 'git'): 1,
     ('src/inflow.py', '_split.measure', 'sys.executable'): 1,           # 부모 판 스냅숏에 backstop.py
     ('src/inflow.py', '_split.measure', 'tar'): 1,                      # git archive 풀기
+    ('src/scope.py', '_git', 'git'): 1,                                # 2.7.0 시험 범위(--test-scope)
     ('src/sdk_registry.py', '_git', 'git'): 1, ('src/sdk_registry.py', 'wv2_problems', 'git'): 3,
     ('src/subst.py', '_approved_merges', 'git'): 2, ('src/subst.py', '_blob', 'git'): 1, ('src/subst.py', '_git', 'git'): 1,
     ('src/subst.py', '_history', 'git'): 1, ('src/subst.py', '_is_ancestor', 'git'): 1, ('src/subst.py', '_records', 'git'): 1,

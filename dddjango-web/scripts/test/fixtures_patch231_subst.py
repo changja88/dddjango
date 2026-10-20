@@ -26,14 +26,16 @@ _OLD = {}
 
 
 COUNT_TOKENS: tuple[tuple[str, str], ...] = (
-    ('검사 92종 중 85종', '검사 #종 중 #종'), ('검사 86종 중 79종', '검사 #종 중 #종'),
-    ('[backstop] 검사 92종', '[backstop] 검사 #종'), ('[backstop] 검사 86종', '[backstop] 검사 #종'))
+    ('검사 93종 중 86종', '검사 #종 중 #종'), ('검사 92종 중 85종', '검사 #종 중 #종'), ('검사 86종 중 79종', '검사 #종 중 #종'),
+    ('[backstop] 검사 93종', '[backstop] 검사 #종'), ('[backstop] 검사 92종', '[backstop] 검사 #종'),
+    ('[backstop] 검사 86종', '[backstop] 검사 #종'))
 
 
 def counts_normalized(text: str) -> str:
     for old, new in COUNT_TOKENS:
         text = text.replace(old, new)
-    return text
+    # 2.7.0 — 새 검사 TG4 의 알림 줄은 옛 판 출력에 없다(TG4 는 fixtures_patch270_browser.py 가 본다)
+    return '\n'.join(line for line in text.split('\n') if not line.startswith('[info] TG4 '))
 
 
 def output_normalized(result):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# dddjango-web 결정적 백스톱 러너 — 단일 엔트리, 검사 92종 인프로세스 실행.
+# dddjango-web 결정적 백스톱 러너 — 단일 엔트리, 검사 93종 인프로세스 실행.
 # (판형: dddart scripts/backstop.dart — 같은 인자·같은 종료 코드·같은 게이트)
 #
 # 사용:
@@ -10,12 +10,14 @@
 #   python3 backstop.py <대상 프로젝트 루트> --debt-residual <.dddjango-web/<산출물 폴더>>
 #   python3 backstop.py <대상 프로젝트 루트> --subst-check <기준 커밋> <대상 커밋>
 #                       [--names <design-spec.md>] [--except <web/ 밖 비테스트 경로>]… [--build <산출물 폴더>]
+#   python3 backstop.py <대상 프로젝트 루트> --test-scope <산출물 폴더> [--since <커밋>]
 #
 # 종료코드: 0=잔여 blocker 0 / 1=사용·내부 오류·판정 불가(미실행 — 통과가 아니다) / 2=잔여 blocker 있음(발견 일괄 출력).
 # 게이트: 구조·명명=added, import=touched의 added 줄, 골격=신규 단위, 순환=전역+베이스라인
 # (.dddjango-web/backstop-baseline.json). 참조 = Python import(함수 안 포함) + 템플릿 extends·include·static
 # + CSS @import·url() — 조각 CSS(static/application/·static/root/)는 소유자의 presentation 자리로 센다.
 # 게이트 출력 직전 승인 유입(W·F1·L · TG2·TG3 은 수신 증명)을 분할한다(src/inflow.py) — 종료 코드 밖 발견도 G2 보고 의무다.
+# TG4 는 기준판이 승인 병합을 흡수한다(파일마다 상류판 그대로 들인 마지막 승인 병합의 판) — 승인 유입 가름 밖.
 # 산출물은 --design-build 또는 git_snapshot 일치 자동 탐색으로 읽는다(승인 목록은 발주자 소유 · 상태를 쓰지 않는다).
 #
 # 슬라이스 끝 실행(--slice-end — Phase 2 에서 슬라이스 커밋 앞): 뒤 슬라이스가 채울 검사(SLICE_END_DEFERRED)를 미룬다 —
@@ -27,6 +29,9 @@
 #   동결하고(ST·MD·IM·NM·PU·WV), --debt-residual 은 G0 절의 ⓐ·요구 키 잔존을 센다. --refactor 는 --debt-scan 전용.
 #   치환 확인(src/subst.py — 슬라이스 0 끝 green ④): --subst-check 는 기준..대상 사이 web/ 밖 레인 편집이 슬라이스 0 의
 #   테스트 치환뿐인지 본다(--names·--except·--build 는 그 전용).
+#   시험 범위(src/scope.py — G0 test_command 고르기 · coder-web 좁힌 실행 · G2 한 번): --test-scope 는 산출물 폴더
+#   build-state.json 의 test_command · test_web_paths 를 읽어 넓이를 확인하고(시험은 돌지 않는다), --since <커밋> 이면
+#   계층 중 · 슬라이스 끝 · G2 더할 시험 줄과 프로젝트 전체 필요 줄을 낸다(--since 는 그 전용).
 #   모드끼리, 그리고 --diff-base·--all·--only·--design-build·--update-baseline 과 함께 쓰지 않는다.
 # 제품 선언(web/product_registry.json — src/products.py · 2.3.0): 한 web 앱에 화면 제품이 여럿일 때의 design_system 뿌리 · 문서 셸 ·
 #   화면 범위. 새 검사 ID 는 없다 — ST10 · ST4 · NM10~NM12 · IM2 · IM26 · IM13 이 제품 분기를 갖고, 선언이 없으면 2.2.x 와 같다.
@@ -34,13 +39,13 @@
 #   선언 오류는 판정 불가(exit 1)다 — 무선언 동작으로 내려앉지 않는다. 치환 확인(--subst-check)은 선언을 읽지 않는다.
 #   선언 파일이 기준점 뒤 바뀌었으면 [info] 로 알린다(G2 배너에 선언 diff 원문 — 선언은 사용자 결정으로만 바뀐다).
 #
-# 검사 92종 (dddart 번호 그대로 · 옮길 수 없는 번호는 비움 · 새 검사는 패밀리 끝 번호 뒤):
+# 검사 93종 (dddart 번호 그대로 · 옮길 수 없는 번호는 비움 · 새 검사는 패밀리 끝 번호 뒤):
 #   ST 13 — ST0~ST11(dddart) + ST12(web/static/ 트리 — application·root·js·htmx·vendor·images·fonts)
 #   IM 27 — IM1~IM23(dddart) + IM24(상대 import) · IM25(백엔드 import) · IM26(extends 대상) · IM27(HTTP 표면·API URL 리터럴)
 #   NM 19 — NM1~NM6 · NM8(common 상태 동작 proxy — common @riverpod 자리) · NM9~NM17(dddart)
 #           + NM18(view 짝) · NM19(조각 CSS 짝 — BC·root) · NM20(snake_case) · NM7 비움(@riverpod 허용 위치)
 #   CY 1  — CY1
-#   TG 3  — TG1(web_test/ 미러) · TG2(변경 영구 시험 재현성) · TG3(비채택 이미지 비교)
+#   TG 4  — TG1(web_test/ 미러) · TG2(변경 영구 시험 재현성) · TG3(비채택 이미지 비교) · TG4(브라우저 시험 꼴 · 빚 스캔 밖)
 #   MD 2  — MD1(frozen dataclass 형태) · MD2(from_json 형태)
 #   PJ 2  — PJ1(pytest·pytest-django 선언) · PJ2(htmx core 단일 고정 판) · PJ3 비움(2.1.0 — vendor 는 공식 SDK 등재 절차 WV)
 #   PU 6  — PU1 · PU2 · PU3 · PU6(v1.3.1 WP 번호 그대로) + PU7(자동 이스케이프 우회) · PU8(JS 동적 실행)
@@ -60,6 +65,7 @@ from typing import List, Optional, Set
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from src.common import CORE_CHECK_IDS, CORE_FAMILIES, BackstopContext, Finding  # noqa: E402
+from src.check_browser import run_browser  # noqa: E402
 from src.check_cycles import run_cycles  # noqa: E402
 from src.check_component_css import run_component_css  # noqa: E402
 from src.check_imports import run_imports  # noqa: E402
@@ -75,17 +81,19 @@ from src.debt import cli_residual, cli_scan  # noqa: E402
 from src.products import ProductError, declaration_error, preflight  # noqa: E402
 from src.subst import cli_subst_check  # noqa: E402
 from src.inflow import split_inflow  # noqa: E402
+from src.scope import cli_test_scope  # noqa: E402
 
 FAMILIES: List[str] = list(CORE_FAMILIES) + ['wv']
 CHECK_IDS: List[str] = list(CORE_CHECK_IDS) + list(VENDOR_CHECK_IDS)
-TOTAL_CHECKS: int = len(CHECK_IDS)  # 92 = ST13 + IM27 + NM19 + CY1 + TG3 + MD2 + PJ2 + PU6 + SH5 + CS1 + WV13
+TOTAL_CHECKS: int = len(CHECK_IDS)  # 93 = ST13 + IM27 + NM19 + CY1 + TG4 + MD2 + PJ2 + PU6 + SH5 + CS1 + WV13
 # 슬라이스 끝(--slice-end)에 미루는 검사 — 짝 · 골격 · 미러 · 순환은 뒤 슬라이스가 채운다(G2 직전 실행이 본다 · 이 목록이 단일 출처)
 SLICE_END_DEFERRED: List[str] = ['CY1', 'NM4', 'NM5', 'NM18', 'NM19', 'ST4', 'TG1']
 
 _USAGE: str = ('사용: python3 backstop.py <대상 프로젝트 루트> '
                '[--diff-base <commit>] [--all] [--slice-end] [--only st,md,im,nm,cy,tg,pj,pu,sh,cs,wv] [--update-baseline] '
                '[--design-build <폴더>] | --debt-scan [--refactor] [--json <경로>] | --debt-residual <폴더> | '
-               '--subst-check <기준> <대상> [--names <명세>] [--except <경로>]… [--build <폴더>]')
+               '--subst-check <기준> <대상> [--names <명세>] [--except <경로>]… [--build <폴더>] | '
+               '--test-scope <폴더> [--since <커밋>]')
 
 
 def main(argv: List[str]) -> int:
@@ -104,8 +112,11 @@ def main(argv: List[str]) -> int:
     names: Optional[str] = None
     excepts: List[str] = []
     build: Optional[str] = None
+    test_scope: Optional[str] = None
+    since: Optional[str] = None
 
-    valued = ('--diff-base', '--only', '--design-build', '--json', '--debt-residual', '--names', '--except', '--build')
+    valued = ('--diff-base', '--only', '--design-build', '--json', '--debt-residual', '--names', '--except', '--build',
+              '--test-scope', '--since')
     i: int = 0
     while i < len(argv):
         a: str = argv[i]
@@ -128,6 +139,10 @@ def main(argv: List[str]) -> int:
                 names = value
             elif a == '--build':
                 build = value
+            elif a == '--test-scope':
+                test_scope = value
+            elif a == '--since':
+                since = value
             else:
                 excepts.append(value)
             i += 2
@@ -171,9 +186,17 @@ def main(argv: List[str]) -> int:
         return 1
     root = root.resolve()
 
-    # ---- 러너 모드(단독) — 빚 스캔 · 빚 잔존 · 치환 확인
+    # ---- 러너 모드(단독) — 빚 스캔 · 빚 잔존 · 치환 확인 · 시험 범위
     gate_flags: bool = (diff_base is not None or all_mode or bool(only) or design_build is not None
                         or update_baseline or slice_end)
+    if test_scope is not None or since is not None:
+        if (test_scope is None or gate_flags or debt_scan or debt_residual is not None or json_path is not None
+                or refactor or subst is not None or names is not None or excepts or build is not None):
+            print('[backstop] 사용 오류: --test-scope 는 단독 모드다 — --debt-scan·--debt-residual·--subst-check·'
+                  '--diff-base·--all·--only·--slice-end·--design-build·--update-baseline 와 함께 쓰지 않는다'
+                  '(--since 는 --test-scope 전용)', file=sys.stderr)
+            return 1
+        return cli_test_scope(root, test_scope, since)
     if subst is not None or names is not None or excepts or build is not None:
         if (subst is None or gate_flags or debt_scan or debt_residual is not None
                 or json_path is not None or refactor):
@@ -238,6 +261,7 @@ def main(argv: List[str]) -> int:
             findings.extend(run_cycles(ctx, update_baseline))
         if family_on('tg'):
             findings.extend(run_tests(ctx))
+            findings.extend(run_browser(ctx, design_build))
         if family_on('pj'):
             findings.extend(run_project(ctx))
         if family_on('pu'):

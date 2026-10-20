@@ -20,7 +20,8 @@ dddjango-web 테스트의 **Django 메커니즘·결정성·더블 표기**가 �
 
 ## 핵심 운영 원칙
 
-- 실행은 **build-state의 `test_command`** 한 줄(G0가 settings 지정까지 확정 — 예 `pytest web_test --import-mode=importlib --ds=config.settings`) — Coordinator 전수 테스트·coder-web green 래칫과 같은 명령 (§1)
+- 실행은 **build-state의 `test_command`** 한 줄(web 시험 경로만 · G0가 settings 지정까지 확정 — 예 `pytest web_test --import-mode=importlib --ds=config.settings`) — G2 한 번은 그대로, coder-web 은 결정적 러너가 낸 좁힌 실행 줄 (§1)
+- **브라우저는 공용 고정물만**: pytest-playwright `page`/`context`(시험마다 새 context) — 하위 프로세스 · 직접 띄우기 · 자체 브라우저 고정물 · 브라우저 실행 파일 · 외부 E2E 러너 금지 · 호스트에 없으면 설치(안 되면 멈추고 보고) · 백스톱 TG4 (§4)
 - 격리 seam은 셋 — **순수 도메인 직접**(판정)·**VM 대체**(view — view 모듈이 부르는 VM 이름을 `monkeypatch`로 바꾼다)·**ApiClient 목**(통합 드물게); repo·usecase 주입 자리는 dddjango-web에 없다(DI 없음) (§2)
 - VM 단위는 VM을 직접 생성해 `build(...)`가 돌려준 State를 단언한다 — 조회 실패는 `pytest.raises`, 액션 실패는 State의 `error` 필드 (§2)
 - 더블은 **표준 `unittest.mock` + pytest `monkeypatch`**(추가 설치 0): `MagicMock(return_value=…)`·`create_autospec`·`assert_called_once_with`·`ANY` — 바꿀 이름은 «찾는 자리»(쓰는 모듈)에서 바꾼다 (§3)

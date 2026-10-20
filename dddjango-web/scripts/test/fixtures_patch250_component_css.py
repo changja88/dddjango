@@ -425,7 +425,7 @@ def bundle_i(tmp):
     page(p)
     expect(p, base, 1, 'I --only cs1', only='cs1')
     got = expect(p, base, 1, 'I 슬라이스 끝', args=('--slice-end',), only=None)
-    check('I 92종 중 85종', '검사 92종 중 85종(슬라이스 끝 — 미룸 7:' in got[1], got)
+    check('I 93종 중 86종', '검사 93종 중 86종(슬라이스 끝 — 미룸 7:' in got[1], got)
     for kind in ('document', 'head', 'head-deleted', 'import'):
         p, base = project(tmp / kind)
         head = 'root/scaffold/view/root_head.html'
@@ -515,7 +515,8 @@ def baseline_scripts(tmp):
 
 
 def normalized(out):
-    return re.sub(r'검사 (?:92|91)종(?: 중 (?:85|84)종)?',
+    out = '\n'.join(line for line in out.split('\n') if not line.startswith('[info] TG4 '))  # 2.7.0 새 검사 TG4 의 알림 줄
+    return re.sub(r'검사 (?:93|92|91)종(?: 중 (?:86|85|84)종)?',
                   lambda m: '검사 #종 중 #종' if ' 중 ' in m[0] else '검사 #종', out)
 
 
@@ -534,7 +535,7 @@ def bundle_u(tmp):
     from src import debt
     import backstop as runner
     check('U 지문·상수', (debt.scanner_stamp()['checks'], runner.TOTAL_CHECKS, len(runner.SLICE_END_DEFERRED)) ==
-          ('e49c83776ff9faf6', 92, 7))
+          ('e49c83776ff9faf6', 93, 7))
     f = Finding('IM1', 'x.py', 2, '위반', '규약', '고침')
     check('U Finding 출력 무변', str(f) == '[IM1] BLOCKER — web/x.py:2\n  위반: 위반 (규약)\n  교정: 고침')
     check('U causes 기본값', getattr(f, 'causes', None) == ())

@@ -31,14 +31,16 @@ PASS = FAIL = 0
 
 
 COUNT_TOKENS: tuple[tuple[str, str], ...] = (
-    ('검사 92종 중 85종', '검사 #종 중 #종'), ('검사 86종 중 79종', '검사 #종 중 #종'),
-    ('[backstop] 검사 92종', '[backstop] 검사 #종'), ('[backstop] 검사 86종', '[backstop] 검사 #종'))
+    ('검사 93종 중 86종', '검사 #종 중 #종'), ('검사 92종 중 85종', '검사 #종 중 #종'), ('검사 86종 중 79종', '검사 #종 중 #종'),
+    ('[backstop] 검사 93종', '[backstop] 검사 #종'), ('[backstop] 검사 92종', '[backstop] 검사 #종'),
+    ('[backstop] 검사 86종', '[backstop] 검사 #종'))
 
 
 def counts_normalized(text: str) -> str:
     for old, new in COUNT_TOKENS:
         text = text.replace(old, new)
-    return text
+    # 2.7.0 — 새 검사 TG4 의 알림 줄은 옛 판 출력에 없다(TG4 는 fixtures_patch270_browser.py 가 본다)
+    return '\n'.join(line for line in text.split('\n') if not line.startswith('[info] TG4 '))
 
 
 def output_normalized(result):
@@ -494,10 +496,11 @@ def bundle_unchanged(tmp):
               for s in (SCRIPTS, old)]
     now, before = map(json.loads, consts)
     sh = ['SH1', 'SH2', 'SH3', 'SH4', 'SH5']
-    check('U 빚 상수·지문 무변 · 코어 SH5·CS1 추가 · 합계 92 · 슬라이스 미룸 무변',
-          now[0] == before[0] + sh + ['CS1'] and now[1] == before[1] + ['sh', 'cs'] and now[2:5] == before[2:5]
-          and now[5] == before[0] + sh + ['CS1'] + ['WV%d' % n for n in range(1, 14)]
-          and now[6] == 92 and now[7:] == before[7:], (now, before))
+    core = [c for cid in before[0] for c in ([cid, 'TG4'] if cid == 'TG3' else [cid])]  # 2.7.0 — TG4 는 TG3 뒤
+    check('U 빚 상수·지문 무변 · 코어 TG4·SH5·CS1 추가 · 합계 93 · 슬라이스 미룸 무변',
+          now[0] == core + sh + ['CS1'] and now[1] == before[1] + ['sh', 'cs'] and now[2:5] == before[2:5]
+          and now[5] == core + sh + ['CS1'] + ['WV%d' % n for n in range(1, 14)]
+          and now[6] == 93 and now[7:] == before[7:], (now, before))
     # 치환 확인 — static 접두를 건너지 않는 이동(같은 쪽)은 고치기 전 판과 byte 동일
     q = mkstd(tmp / 'u2')
     q.w('web/static/css/a.css', 'body { margin: 0; }', 'a { width: 1px; }')

@@ -1,7 +1,7 @@
 """출력 직전 승인 유입 분할: W ∧ F1 ∧ L. 검사·게이트 집합은 건드리지 않는다.
 
 서버 registry_gate의 provenance 차분을 본뜬다. F2는 생략하며 CY·WV·ST12·PU1·PU2는
-항상 남긴다. 증명 실패/예외는 blocker 유지, 부모 측정 무효는 해당 병합에서만 불참이다.
+항상 남긴다(TG4 도 — 기준판이 승인 병합을 이미 흡수한다). 증명 실패/예외는 blocker 유지, 부모 측정 무효는 해당 병합에서만 불참이다.
 TG2·TG3 은 기준점 없이 못 재므로(부모 측정 불가) L 대신 수신 증명으로 가른다 — 작업 트리가 그대로이고
 기준 뒤 그 파일을 바꾼 첫 부모 걸음이 전부 승인 병합의 상류판 그대로 수신일 때만(_split 의 receipt).
 """
@@ -313,7 +313,7 @@ def _split(ctx: BackstopContext, shown: List[Finding], design_build: Optional[st
     candidates: List[Tuple[Finding, str]] = []
     for f in shown:
         path = prefix + ('' if f.root_rel else 'web/') + f.path
-        if f.check_id.startswith(('CY', 'WV', 'SH')) or f.check_id in ('ST12', 'PU1', 'PU2'):
+        if f.check_id.startswith(('CY', 'WV', 'SH')) or f.check_id in ('ST12', 'PU1', 'PU2', 'TG4'):
             res.reasons[id(f)] = '가름 제외 검사'
         elif f.check_id == 'CS1':
             causes = [prefix + c for c in f.causes]
