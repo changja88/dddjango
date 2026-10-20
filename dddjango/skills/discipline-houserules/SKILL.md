@@ -72,6 +72,7 @@ user-invocable: false
 - `for x in xs:` · `with f() as x:` · `except E as e:` · 언패킹(`a, b = pair`) · 다중 대입(`a = b = 0`) · 증강 대입(`x += 1`)
 - 재대입(첫 바인딩에서 1회만 단다) · 인스턴스 속성 `self.x = ...`(타입은 클래스 본문에 `x: T`)
 - 프레임워크 선언: Django 모델 필드(`name = models.CharField(...)`)·폼 필드 · `class Meta` 옵션 · enum 멤버(`RED = 1`) — 달면 프레임워크 의미가 오작동한다 · admin 패널 클래스 본문의 Django 선언 속성(`model`·`inlines`·`list_display`·`readonly_fields` …) — 타입은 스텁의 `ClassVar` 가 소유하고 `inlines` 처럼 재선언이 불변성 red 가 되는 자리가 있어 적지 않는다(달 수 있는 자리라도 스텁 타입과 같아야 하고 그 타입에 `Any` 가 있으면(`inlines`) 달 수 없다 · 선언적 클래스 본문의 메서드는 면제가 아니다)
+- 함수 꼴 타입 선언: `X = TypedDict("X", {...})` · `NamedTuple("X", [...])` · `NewType("X", T)` · `TypeVar` · `ParamSpec` · `TypeVarTuple`(`typing`·`typing_extensions` 의 것) — 그 대입이 곧 타입 선언이라 달 문법이 없다(주석을 달면 타입 검사기가 거절하거나 타입이 사라진다)
 
 pydantic·ninja `Schema`·`dataclass` 필드는 `x: T` 가 있어야 동작한다 — bare 대입이면 규칙 위반이기 전에 버그다. 표준 문서군의 코드 예시는 개념 전달용 발췌라 적용 대상이 아니다 — 규칙은 생성하는 프로덕션·테스트 코드에 건다.
 

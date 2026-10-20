@@ -216,10 +216,10 @@ class TranscriptionTest(unittest.TestCase):
     def surface(self, source: str) -> tuple[list[str], list[str]]:
         mod = ast.parse(source)
         findings, candidates = ps.Findings(defer=True), ps.Candidates(defer=True)
-        bindings, aliases = ps._module_bindings(mod), ps._alias_defs(mod)
-        ps._scan_stmts(mod.body, "module", set(), Path(PANEL), findings, False, bindings, aliases)
+        bindings, aliases, origins = ps._module_bindings(mod), ps._alias_defs(mod), ps._origin_bindings(mod)
+        ps._scan_stmts(mod.body, "module", set(), Path(PANEL), findings, False, bindings, aliases, origins)
         ps._check_stub_generic_bases(mod, source, Path(PANEL), findings, candidates,
-                                     ps._origin_bindings(mod), bindings, aliases)
+                                     origins, bindings, aliases)
         return [e.rule for e in findings.entries], [e.rule for e in candidates.entries]
 
     def response_rules(self, decorator: str, import_stmt: str, referenced: bool = True) -> list[str]:

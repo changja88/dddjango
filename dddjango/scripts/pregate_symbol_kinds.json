@@ -21,7 +21,7 @@
     "check-ninja-boundary-middleware.py": "e2f4aed8fef47305",
     "check-openapi-error-declaration.py": "e196158592637bc4",
     "check-port-adapter-pairing.py": "a66676f664764313",
-    "check-public-surface-annotation.py": "b94b4101403d5992",
+    "check-public-surface-annotation.py": "754d584604da35dc",
     "check-response-schema-bypass.py": "0fd510470a0ac985",
     "check-synthetic-infra-exc.py": "f30d0f3e8320ee6b",
     "check-test-config.py": "9dc712848f36c526",

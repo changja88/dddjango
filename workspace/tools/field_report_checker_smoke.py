@@ -411,6 +411,77 @@ class CheckerRegression(unittest.TestCase):
                 self.assertNotIn("#557", f)
                 self.assertIn("#557", c)
 
+    def annotation_493_names(self, source):
+        self.write("application/shelf/domain_layer/shelf.py", source)
+        records = self.root / "findings.jsonl"
+        records.unlink(missing_ok=True)
+        run = subprocess.run([sys.executable, '-B', str(SCRIPTS / 'check-public-surface-annotation.py'),
+                              str(self.root)], env=self.env, text=True, capture_output=True)
+        self.assertIn(run.returncode, (0, 2), run.stdout + run.stderr)
+        rows = [json.loads(line) for line in records.read_text().splitlines()] if records.exists() else []
+        return sorted(r['message'].split('`')[1] for r in rows if r['rule'] == '#493')
+
+    def test_functional_type_declarations_are_not_first_assignment_493(self):
+        """F4-104 — 함수 꼴 타입 선언은 그 대입이 곧 타입 선언(달 문법 없음) · 출처가 typing 계열일 때만 면제."""
+        exempt = textwrap.dedent('''\
+            import typing
+            import typing as t
+            import typing_extensions as te
+            from typing import NamedTuple, NewType, ParamSpec, TypedDict, TypeVar
+            from typing import TypedDict as _TypedDict
+            from typing_extensions import TypeVarTuple
+
+            Cut = TypedDict("Cut", {"pass": bool})
+            Aliased = _TypedDict("Aliased", {"pass": bool})
+            Prefixed = typing.TypedDict("Prefixed", {"pass": bool})
+            Pair = NamedTuple("Pair", [("left", int)])
+            UserId = NewType("UserId", int)
+            ModuleAliasId = t.NewType("ModuleAliasId", int)
+            ExtensionId = te.NewType("ExtensionId", str)
+            T = TypeVar("T")
+            P = ParamSpec("P")
+            Ts = TypeVarTuple("Ts")
+
+
+            class Holder:
+                Page = TypedDict("Page", {"number": int})
+
+
+            def build() -> int:
+                Local = NamedTuple("Local", [("kind", int)])
+                return Local(1).kind
+            ''')
+        self.assertEqual(self.annotation_493_names(exempt), [])
+        caught = textwrap.dedent('''\
+            from collections.abc import Callable
+            from typing import TypedDict, TypeVar
+
+            from .labels import NewType
+
+
+            def TypedDict(name: str, fields: dict[str, type]) -> type:
+                return type(name, (), dict(fields))
+
+
+            Shadowed = TypedDict("Shadowed", {"count": int})
+            Borrowed = NewType("Borrowed", int)
+            Unresolved = NamedTuple("Unresolved", [("x", int)])
+            plain = 3
+
+
+            def parameter(TypeVar: Callable[[str], str]) -> str:
+                Param = TypeVar("Param")
+                return Param
+
+
+            def local_import() -> int:
+                from typing import NewType
+                LocalId = NewType("LocalId", int)
+                return LocalId(1)
+            ''')
+        self.assertEqual(self.annotation_493_names(caught),
+                         ['Borrowed', 'LocalId', 'Param', 'Shadowed', 'Unresolved', 'plain'])
+
     def admin_records(self, source):
         self.write("framework/admin/book.py", source)
         records = self.root / "findings.jsonl"

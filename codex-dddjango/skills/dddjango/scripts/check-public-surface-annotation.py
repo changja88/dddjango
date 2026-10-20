@@ -10,6 +10,13 @@
        `a, b = pair` · `a = b = 0` · `x += 1` · walrus · 컴프리헨션. 그리고
        **재대입**(첫 바인딩이 아니다)과 **선언적 클래스 본문**(ORM 모델 필드·
        ninja Schema 필드·enum 멤버 — 그 안의 «메서드»는 면제가 아니다)은 면제다.
+       **함수 꼴 타입 선언**(`X = TypedDict("X", {…})` · `NamedTuple("X", […])` · `NewType("X", T)` ·
+       `TypeVar` · `ParamSpec` · `TypeVarTuple`)도 면제다 — 그 대입이 곧 타입 선언이라 달 문법이 없다
+       (주석을 달면 타입 검사기가 거절하거나 타입이 사라진다). 값이 그 생성자 호출이고 출처가
+       `typing`·`typing_extensions` 일 때만이다(모듈 수준 import 로 푼다 — 별칭·`typing.`/`t.` 접두 포함 ·
+       모듈·클래스·함수 스코프 모두). 이름만 같은 사용자 정의(뒤따르는 모듈 수준 재정의는 그림자)·다른
+       모듈의 import·미해소 이름·그 스코프에서 먼저 묶인 이름(매개변수·함수/클래스 본문 안 import)은
+       면제가 아니다.
   #358 Thin Read 구현(`adapter/**/domain_bypass_query/`)이 바깥으로 내보내는 것은
        «이름 붙인 정적 타입»뿐 — 반환 애너테이션에 `QuerySet`·`<Name>Model` 금지.
   #456 모양이 틀린 요청은 계약 위반이라 `contract/exception/` 이 아니라 테스트·타입
@@ -166,6 +173,12 @@ FRAMEWORK_OVERRIDE_EXEMPT = {  # 스텁이 `dict[str, Any]` 반환을 강제하�
 }
 JSON_LOAD_NAMES = {"load", "loads"}
 PROTOCOL_NAMES = {"urlpatterns"}
+# #493 — 함수 꼴 타입 선언 생성자(출처 dotted 이름). 그 대입이 곧 타입 선언이라 주석 문법이 없다.
+FUNCTIONAL_TYPE_FORMS = frozenset(
+    f"{module}.{name}"
+    for module in ("typing", "typing_extensions")
+    for name in ("TypedDict", "NamedTuple", "NewType", "TypeVar", "ParamSpec", "TypeVarTuple")
+)
 
 VALIDATION_TOKENS = ("invalid", "validation", "malformed", "badrequest", "unprocessable")
 GUARD_EXC = {"TypeError", "ValueError"}
@@ -409,19 +422,40 @@ def _record_syntax_bindings(node: ast.AST, bound: set[str]) -> None:
             bound.update(n.names)
 
 
+def _is_functional_type_decl(value: ast.AST, scope: str, bound: set[str], origins: dict[str, str]) -> bool:
+    """값이 `typing`·`typing_extensions` 의 함수 꼴 타입 생성자 호출인가(`X = TypedDict("X", {…})` 꼴).
+
+    출처는 모듈 수준 import 바인딩(`_origin_bindings`)으로 푼다 — 호출 이름의 뿌리가 거기 없으면 출처를 모르니
+    아니다(fail-closed). 함수·클래스 스코프에서 그 뿌리가 이 스코프 안에서 먼저 묶였으면(매개변수·지역 정의·
+    본문 안 import) 모듈 수준 출처가 아니므로 아니다."""
+    if not isinstance(value, ast.Call):
+        return False
+    root: ast.AST = value.func
+    while isinstance(root, ast.Attribute):
+        root = root.value
+    if not isinstance(root, ast.Name) or root.id not in origins:
+        return False
+    if scope != "module" and root.id in bound:
+        return False
+    return _dotted(value.func, origins) in FUNCTIONAL_TYPE_FORMS
+
+
 def _scan_stmts(
     stmts: list[ast.stmt], scope: str, bound: set[str], rel: Path,
     out: Findings, declarative: bool, bindings: dict[str, str],
     aliases: "dict[str, list[tuple[ast.AST, bool]]] | None" = None,
+    origins: "dict[str, str] | None" = None,
 ) -> None:
     """한 스코프의 문장열을 소스 순서로 걸으며 «첫 단순대입»의 타입 누락을 모은다.
 
     scope ∈ {module, class, function}. 제어 블록(if/try/for/while/with) 안은 같은
-    스코프라 본문을 이어 걷는다(첫 바인딩 판정은 소스 순서)."""
+    스코프라 본문을 이어 걷는다(첫 바인딩 판정은 소스 순서). `origins`(모듈 수준 import 출처 —
+    `_origin_bindings`)가 없으면 함수 꼴 타입 선언도 출처를 모르니 면제하지 않는다."""
+    origins = origins if origins is not None else {}
     for stmt in stmts:
         if isinstance(stmt, ast.ClassDef):
             bound.add(stmt.name)
-            _scan_class(stmt, rel, out, bindings, aliases)
+            _scan_class(stmt, rel, out, bindings, aliases, origins)
             continue
         if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
             bound.add(stmt.name)
@@ -432,7 +466,7 @@ def _scan_stmts(
             for va in (stmt.args.vararg, stmt.args.kwarg):
                 if va is not None:
                     fn_bound.add(va.arg)
-            _scan_stmts(stmt.body, "function", fn_bound, rel, out, False, bindings, aliases)
+            _scan_stmts(stmt.body, "function", fn_bound, rel, out, False, bindings, aliases, origins)
             continue
         if isinstance(stmt, ast.AnnAssign):
             if isinstance(stmt.target, ast.Name):
@@ -442,45 +476,47 @@ def _scan_stmts(
             if len(stmt.targets) == 1 and isinstance(stmt.targets[0], ast.Name):
                 name = stmt.targets[0].id
                 first = name not in bound
+                type_decl = _is_functional_type_decl(stmt.value, scope, bound, origins)  # 문법 면제(달 자리 없음)
                 bound.add(name)
-                if first and not declarative and not _is_dunder(name) and name not in PROTOCOL_NAMES:
+                if first and not declarative and not type_decl and not _is_dunder(name) and name not in PROTOCOL_NAMES:
                     where = {"module": "모듈 변수", "class": "클래스 변수", "function": "지역 변수"}[scope]
                     out.add("#493", f"{rel}:{stmt.lineno}", f"{where} `{name}` 의 첫 대입에 타입이 없다 — `name: T = …`")
             else:
                 _record_syntax_bindings(stmt, bound)  # 언패킹·다중·비-Name 타깃(문법 면제)
             continue
         if isinstance(stmt, (ast.If, ast.While)):
-            _scan_stmts(stmt.body, scope, bound, rel, out, declarative, bindings, aliases)
-            _scan_stmts(stmt.orelse, scope, bound, rel, out, declarative, bindings, aliases)
+            _scan_stmts(stmt.body, scope, bound, rel, out, declarative, bindings, aliases, origins)
+            _scan_stmts(stmt.orelse, scope, bound, rel, out, declarative, bindings, aliases, origins)
             continue
         if isinstance(stmt, (ast.For, ast.AsyncFor)):
             _record_syntax_bindings(stmt.target, bound)
-            _scan_stmts(stmt.body, scope, bound, rel, out, declarative, bindings, aliases)
-            _scan_stmts(stmt.orelse, scope, bound, rel, out, declarative, bindings, aliases)
+            _scan_stmts(stmt.body, scope, bound, rel, out, declarative, bindings, aliases, origins)
+            _scan_stmts(stmt.orelse, scope, bound, rel, out, declarative, bindings, aliases, origins)
             continue
         if isinstance(stmt, (ast.With, ast.AsyncWith)):
             for item in stmt.items:
                 if item.optional_vars is not None:
                     _record_syntax_bindings(item.optional_vars, bound)
-            _scan_stmts(stmt.body, scope, bound, rel, out, declarative, bindings, aliases)
+            _scan_stmts(stmt.body, scope, bound, rel, out, declarative, bindings, aliases, origins)
             continue
         if isinstance(stmt, ast.Try):
-            _scan_stmts(stmt.body, scope, bound, rel, out, declarative, bindings, aliases)
+            _scan_stmts(stmt.body, scope, bound, rel, out, declarative, bindings, aliases, origins)
             for h in stmt.handlers:
                 if h.name:
                     bound.add(h.name)
-                _scan_stmts(h.body, scope, bound, rel, out, declarative, bindings, aliases)
-            _scan_stmts(stmt.orelse, scope, bound, rel, out, declarative, bindings, aliases)
-            _scan_stmts(stmt.finalbody, scope, bound, rel, out, declarative, bindings, aliases)
+                _scan_stmts(h.body, scope, bound, rel, out, declarative, bindings, aliases, origins)
+            _scan_stmts(stmt.orelse, scope, bound, rel, out, declarative, bindings, aliases, origins)
+            _scan_stmts(stmt.finalbody, scope, bound, rel, out, declarative, bindings, aliases, origins)
             continue
         _record_syntax_bindings(stmt, bound)  # AugAssign·Import·Expr(walrus 포함) — 기록만
 
 
 def _scan_class(cls: ast.ClassDef, rel: Path, out: Findings, bindings: dict[str, str],
-                aliases: "dict[str, list[tuple[ast.AST, bool]]] | None" = None) -> None:
+                aliases: "dict[str, list[tuple[ast.AST, bool]]] | None" = None,
+                origins: "dict[str, str] | None" = None) -> None:
     declarative = _is_declarative_class(cls, bindings, aliases)
     bound: set[str] = set()
-    _scan_stmts(cls.body, "class", bound, rel, out, declarative, bindings, aliases)
+    _scan_stmts(cls.body, "class", bound, rel, out, declarative, bindings, aliases, origins)
     if declarative:
         return  # 선언적 본문 — 속성 규칙도 프레임워크 관용에 맡긴다
     # 속성(#493) — self.x 의 첫 대입: 클래스 본문 `x: T` 나 `self.x: T = …` 가 어디에도 없으면 위반.
@@ -1541,7 +1577,7 @@ def main(argv: list[str]) -> int:
         bindings = _module_bindings(mod)
         aliases = _alias_defs(mod)
         origins = _origin_bindings(mod)
-        _scan_stmts(mod.body, "module", set(), rel, findings, False, bindings, aliases)
+        _scan_stmts(mod.body, "module", set(), rel, findings, False, bindings, aliases, origins)
         _check_explicit_any(mod, rel, findings, candidates, bindings, aliases)
         _check_stub_generic_bases(mod, src, rel, findings, candidates, origins, bindings, aliases)
         _check_json_load(mod, rel, candidates, origins, bindings)
